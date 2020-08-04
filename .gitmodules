@@ -1,0 +1,3 @@
+[submodule "Assets/SiMP"]
+	path = Assets/SiMP
+	url = https://github.com/Bagoum/danmokou-simp.git

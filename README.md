@@ -21,11 +21,13 @@ You might know this project by the name NotDnh, ph4mmo, or Bagoum Danmaku Script
 
 To build this project, follow the following steps:
 
+- Run `git submodule update --init --recursive`. This imports code from SiMP which has some useful default values for getting started. This is not required but will help as a reference. (**Note: the SiMP repository is currently private, so this command probably won't work.**)
 - Open Scenes/BasicSceneOPENME
 
 - Import TextMeshPro essentials 
-  - You should see a prompt to do this as soon as you open the scene above
-  - You may need to run the project, stop the project, and run it again to fix lingering metadata bugs in UXML. 
+
+- You should see a prompt to do this as soon as you open the scene above
+- You may need to run the project, stop the project, and run it again to fix lingering metadata bugs in UXML. 
 
 - (Optional) Build the F# project in the `FS` folder targeted at 4.7.2. I have provided DLLs so you don't have to do this unless you make changes to the F# code.
   - Copy the output DLLs (Common, FParsec, FParsecCS, FSharp.Core, Parser, System.ValueTuple) to `Assets/Plugins/Self/Core`
