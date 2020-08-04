@@ -1,0 +1,7 @@
+pattern { }
+phase 0
+	action block 0
+		position 0 0
+		sync gem-red/w <> s nroffset ss0 px * 1 t
+		sync gem-green/w <> s nroffset ss 3f px * 1 t
+		

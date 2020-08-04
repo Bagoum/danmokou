@@ -1,0 +1,31 @@
+pattern { }
+## Draws a cube using a radius/theta model. Note that this doesn't `look like a cube` because lines aren't drawn along the sides, rather along the spherical intersection. This is generalizable to any prism shape (use rx for the cross-section).
+phase 0
+    action block 0
+        clear bullet
+        position 0 0
+        bullet ellipse-purple/w <> conce repeat 1440 <> s 
+		e:: {
+			hpi hpi
+		} :: {
+			thd	* 10 // p 20
+			phd	* 9 mod 20 p
+			th	degrad &thd
+			ph	degrad &phd
+			phe	fsoftmod &hpi &ph
+			R	5
+			h	/ &R sqrt 2
+			rx	regpolyr &R  4 &th
+			## if -rx/h < tan phi < rh/h then h*sec(th) else rx*csc(th)
+			phc	fatan2 &rx &h
+			r	if <(&phe; fatan2 &rx &h)
+					/ &h fcos &phe
+					/ &rx fsin &phe
+		} offset zero
+			projectview
+				* 10 t * 10 t 0
+				* * &r fcos(&th) fsin(&ph)
+				* * &r fsin(&th) fsin(&ph)
+				* &r fcos(&ph)
+        
+        

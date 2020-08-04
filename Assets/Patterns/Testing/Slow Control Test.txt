@@ -1,0 +1,11 @@
+pattern { }
+phase 0
+	action block 0
+		position 0 0
+		async strip-red/w <> gcr {
+			t	2
+			w	2
+		} s tprot cx 1
+		bullet-control persist strip-red/w slowdown 0.5 relcirc mokou <,,0.9f>
+		_ 3f
+			pool-control strip-red/w reset

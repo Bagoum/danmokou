@@ -1,0 +1,885 @@
+pattern { }
+phase 0 #{
+	action block 0
+		@ { nl nz nr nb nt nlb nrt nlt nrb }
+			cull
+		clear phase
+		clear bullet
+		summon inode <> nb <> null null
+		summon inode <> nz <> null null
+		summon inode <> nt <> null null
+		summon inode <> nlb <> null null
+		summon inode <> nrt <> null null
+		summon inode <> nlt <> null null
+		summon inode <> nrb <> null null
+		summon inode <> nr <x> null null
+		shift-phase-to 10
+#}
+
+## 1. NON rolling stone (requires a small extra layer)
+<!> type non `Night Travel: Rolling Stones`
+<!> hp 22000
+<!> hpbar 0.5
+phase 33 #{
+	end
+		clear bullet-control
+		pool-control gcircle-* allowcull true
+		pool-control { { gcircle-* } { blue/b pink/b green/w orange/w } } softcullall cwheel
+    action block 0
+        move 2 tp-nrot eased out-sine 2 stopsampling 0 vhometime 2 cxy 0 3
+	action block 0
+		setstate vulnerable true
+		position 0 3
+		pool-control gcircle-* allowcull false
+		bullet-control persist gcircle-blue/b cull > x 8
+		bullet-control persist gcircle-pink/b cull < x -8
+		bullet-control persist gcircle-green/w cull < y -5
+		bullet-control persist gcircle-orange/w cull > y 5
+		@ nlb
+			position -7 -4
+		@ nrt
+			position 7 4.5
+		@ nlt
+			position -6 6.5
+		@ nrb
+			position 6 -6.5
+!{
+regpolyeq(R; n; trate)
+	:: { 	R	%R
+		n	%n
+		f	/ pi &n
+		2f	* 2 &f
+		ang0	- - pi *(*(1.5; pi); /(-(&n; 2); &n)) &2f
+		ang0d	raddeg(&ang0)
+		s 	* 2 *(&R; sin(&f))
+		efft	* t %trate
+		effp	* 12 p
+		j 	// &efft &2f
+		modt 	mod(&2f; &efft)
+		smt	+ * 0.5 &modt * 0.5 smoothloopr(io-sine; &2f; &modt)	
+		angj	+ &ang0 *(&2f; &j)
+		prm 	+ &ang0 degrad(&effp)
+		r	regpolyr &R &n - &prm &ang0
+		##r 	/ *(&R; cos(&f)) cos(- mod(&2f; +(*(3; &2f) -(&prm; &ang0))) &f)
+		x 	- *(&r; cos(&prm)) *(&R; cos(&angj))
+		y 	- *(&r; sin(&prm)) *(&R; sin(&angj))	
+		}
+	offset
+	##+  cr &R &ang0d
+	+  rx
+			mag2(&x; &y)
+			raddeg(-(atan2(&y; &x); +(*(&2f; &j); &smt)))
+		pxy *(&j; &s) 0 
+	zero
+!}
+		@ nlb
+			bullet gcircle-blue/b <> gcr {
+				wait	clamp 5s 8s linear 8.5s -1.4s &i
+				t	12
+				start	rv2.rx +=f rand -1 0
+			} pssfx x-fire-burst-1 repeat 30 <> s $regpolyeq(4.5; 5; 0.4)
+		@ nrt
+			bullet gcircle-pink/b <,:180> gcr {
+				wait	clamp 5s 8s linear 8.5s -1.2s &i
+				t	12
+				start	rv2.rx +=f rand -1 0
+			} repeat 30 <> s $regpolyeq(4.5; 5; 0.44)
+		@ nlt
+			bullet gcircle-green/w <,:-90> idelay 4s gcr {
+				wait	clamp 5s 8s linear 8.5s -1.4s &i
+				t	12
+				start	rv2.rx +=f rand -1 0
+			} pssfx x-fire-burst-1 repeat 30 <> s $regpolyeq(5; 6; 0.32)
+		@ nrb
+			bullet gcircle-orange/w <,:90> idelay 4s gcr {
+				wait	clamp 5s 8s linear 8.5s -1.2s &i
+				t	12
+				start	rv2.rx +=f rand -1 0
+			} repeat 30 <> s $regpolyeq(5; 6; 0.36)
+#}
+
+## 2. Spell: Christmas Tree (cu: come on boy fall)
+<!> type spell `Sign of Spring: Taking Down the Christmas Tree`
+<!> hp 27000
+<!> hpbar 1
+phase 36 #{
+	end
+		clear bullet-control
+		pool-control { { arrow-* } { blue/w pink/w teal/w } } allowcull true
+		behpool-control gpather18-* softcullall cwheel
+		pool-control arrow-* softcullall cwheel
+	action nb 0
+		@ nt
+			action block 0
+			position 0 6
+			bullet gpather18-* <-6,:> gcr2 360 _ <> {
+				p this 
+				color { blue* pink* green* orange* }
+			} gsr2 2 <,0.05:> {
+				color { /b /w }
+			} gsr2 4 <4,:> {
+				p add
+			} pather 3 2.5 nroffset
+				rotate 180
+					treefire 0.2 1.1 0.3 0.5 bp :: {
+							n	(+ 3 p2)
+							th0e	+ (* pi / + 2 (fsoftmod 2 p1) 3) * &bp pi
+							thr	* tau t
+							r 	regpolyr 1 &n &thr
+							r0 	regpolyr 1 &n 0
+						} - polartoxy &r raddeg + &thr &th0e polartoxy &r0 raddeg &th0e
+						t
+				{ smooth }
+			break
+    action block 0
+        move 2 tp-nrot eased out-sine 2 stopsampling 0 vhometime 2 cxy 0 2
+        wait-for 4
+	action block 0
+		setstate vulnerable true
+		position 0 2
+		bullet arrow-purple/w <> cre 30 10 <,:10h> pssfx x-fire-burst-2 repeat 36 <,:10> s polar
+			* (+ 1 * 2 t) regpolyr 1 3 degrad * 10 p
+			0
+	action block 1.5
+		bullet arrow-red/w <> cre 30 10 <,:10h> pssfx x-fire-burst-1repeat 36 <,:10> s polar
+			* (+ 1 * 2 t) regpolyr 1 4 degrad * 10 p
+			0
+	action nb 1.5
+		bullet arrow-green/w <> cre 30 10 <,:10h> pssfx x-fire-burst-2 repeat 36 <,:10> s polar
+			* (+ 1 * 2 t) regpolyr 1 5 degrad * 10 p
+			0
+	action block 0
+		pool-control { { arrow-* } { blue/w pink/w teal/w } } allowcull false
+		bullet-control persist { { arrow-* } { blue/w pink/w teal/w } } cull relcirc mokou <0,0,0.1>
+		bullet arrow-blue/w <> cre 60 10 <,:10h> repeat 36 <,:10> s polar
+			* (- 20 * 1.5 t) regpolyr 1 3 degrad * 10 p
+			0
+	action block 0
+		bullet arrow-pink/w <> cre 60 10 <,:10h> repeat 36 <,:10> s polar
+			* (- 20 * 1.5 t) regpolyr 1 4 degrad * 10 p
+			0
+	action block 0
+		bullet arrow-teal/w <> cre 60 10 <,:10h> repeat 36 <,:10> s polar
+			* (- 20 * 1.5 t) regpolyr 1 5 degrad * 10 p
+			0
+#}
+
+## 3. NON dew hunting
+<!> type non `Starry Night: Hunting the Morning Dew`
+<!> hp 32000
+<!> hpbar 0.5
+phase 38 #{
+	end
+		pool-control { { arrow-*  } { yellow/w blue/w } } softcullall cwheel
+    action block 0
+        move 2 tp-nrot eased out-sine 2 stopsampling 0 vhometime 2 cxy 0 2
+	action block 0
+		setstate vulnerable true
+		position 0 2
+		bullet arrow-yellow/w <> cre 120 _ <,:19.9> pssfx x-fire-burst-1repeatp add 60 <,:6> s polar
+			* (+ 0.5 * 1.2 t) regpolyr 1 5 degrad * 6 p2
+			softmaxshift t 0.5 2 0 * (+ 12 * 0.32 p1) t
+		bullet arrow-blue/w <> idelay 60 cre 120 _ <,:-24.875> pssfx x-fire-burst-2 repeatp add 60 <,:6> s polar
+			* (+ 0.5 * 1.4 t) regpolyr 1 4 degrad * 6 p2
+			 softmaxshift t -0.1 2 * (+ 60 * 5 p1) t 0
+#}
+
+
+## 4. SPELL constellations of earth (cu: mokou baller bounce)
+<!> type spell `Starry Night: Constellations of Earth, Frost Quakes of Sky`
+<!> hp 15000
+<!> hpbar 1
+phase 39 #{
+!{
+innerfire2(method; n; ct; angd; angoff; rot)
+repeatp add %ct <> s :: { 
+		thd	* %angd p2
+		r	regpolyr 1 %n degrad &thd
+	} polar 
+		* &r softmaxshift t 1 0.4 (+ 0.2 * 0.3 t) (* 1.4 t)
+		+ + &thd %angoff * %rot t
+!}
+!{
+polyfire2(n; ct; angd; angoff; rot)
+$innerfire2(regpolyr; %n%; %ct%; %angd%; %angoff%; %rot%)
+!}
+!{
+starfire2(n; ct; angd; angoff; rot)
+$innerfire2(reg2starr; %n%; %ct%; %angd%; %angoff%; %rot%)
+!}
+
+	end
+		pool-control { { arrow-* keine-* ellipse-* strip-* } } softcullall cwheel
+    action block 0
+        move 2 tp-nrot eased out-sine 2 stopsampling 0 vhometime 2 cxy 4 2
+        summon cu-mokou-baller <> _ <> null file bounce-0
+        wait-for 3
+	action block 0
+		setstate vulnerable true
+	gtr { wt 0 _ wait-child } seq
+		action block 0
+			position 4 2
+			move 0.25 tpnrot eased io-sine 0.25 cx -32
+			bullet x-move-anime <> conce sfx
+			bullet arrow-* <,:> gir2 15 3 <,:25> { p this  color { pink/w blue/w orange/w } } icacheloc idelay 30 isfx x-fire-burst-1crepeatp defer 60 3 <,:30> $polyfire2((+ 3 p1); 60; 6; 90; 6)
+			bullet arrow-* <,:> gir2 15 3 <,:25> { p this  color { red/w purple/w yellow/w } } icacheloc idelay 75 isfx x-fire-burst-1crepeatp defer 60 3 <,:60> $polyfire2((+ 3 p1); 60; 6; + 90 / 180 (+ 3 p1); 6)
+		action block 3
+			move 1 tpnrot eased io-sine 1 ss 0 vhometime 1 cxy -5 -3.5
+		action block 0
+			position -5 -3.5
+			bullet strip-* <,:> gir2 60 3 <> { p this  color { pink/w blue/w orange/w } } icacheloc itarget Lplayer idelay 30 isfx x-fire-burst-2 crepeatp defer 60 3 <,:6p> $polyfire2(3; 60; 6; 0; 0)
+			bullet ellipse-* <,:> gir2 60 3 <> { p this  color { red/w purple/w yellow/w } } icacheloc itarget Lplayer idelay 45 isfx x-fire-burst-2 crepeatp defer 60 3 <,:5p> $polyfire2(4; 72; 5; 0; 0)
+			bullet x-move-anime <> cre 60 3 <> sfx
+			move 1 tpnrot eased io-sine 1 multiplyy
+				if (> t 0.5) -1 1 
+				ss 0 vhometime 0.5 cxy 0 2
+		action block 0
+			move 1 tpnrot eased io-sine 1 ss 0 vhometime 1 cxy 4.5 -6
+		action block 5
+			position 4.5 -6
+			move 1 tpnrot eased out-sine 1 cy 16
+			bullet keine-yellow/w <> cre 10 6 <> target Lplayer pssfx x-keine repeat 60 <,:6> s polar 
+				* * 1.7 t regpolyr 1 3 degrad * 6 p
+				0
+		action block 1
+			position -4.5 6
+			move 1 tpnrot eased out-sine 1 cy -16
+			bullet keine-orange/w <> cre 10 6 <> target Lplayer pssfx x-fire-burst-2 repeat 60 <,:6> s polar 
+				* * 1.7 t regpolyr 1 4 degrad * 6 p
+				0
+		action block 2
+			position 4.5 -6
+			move 1 tpnrot eased out-sine 1 cy 16
+			bullet keine-blue/w <> cre 10 6 <> target Lplayer pssfx x-keine repeat 60 <,:6> s polar 
+				* * 1.7 t regpolyr 1 6 degrad * 6 p
+				0
+		action block 1
+			position -4.5 6
+			move 1 tpnrot eased out-sine 1 cy -16
+			bullet keine-teal/w <> cre 10 6 <> target Lplayer pssfx x-fire-burst-2 repeat 60 <,:6> s polar 
+				* * 1.7 t regpolyr 1 5 degrad * 6 p
+				0
+		action block 0
+			position 0 8
+			move 2 tpnrot eased out-sine 2 cy -3
+		action block 0
+			move 1 tpnrot eased out-sine 1 cx 4
+			break
+		break
+#}
+
+## 5. NON cube
+<!> type non `Quantum Theory: Gods' Throwing Dice`
+<!> hp 28000
+<!> hpbar 0.5
+phase 37 #{
+	end
+		pool-control { { circle-* } { pink/ purple/ red/ } } softcullall cwheel
+		poolf-control {{ laser16-teal/ws laser16-yellow/ws }} softcullall cwheel
+    action block 0
+        move 2 tp-nrot eased out-sine 2 ss 0 vhometime 2 cxy 0 2
+        ##summon cu-mokou-square <> _ <> null file slide-rl
+        ##wait-for 3
+	action nb 0
+		setstate vulnerable true
+		position 0 2
+		event playerinvuln 240
+		@ nz
+			action block 0
+				position 0 0
+				bullet laser16-yellow/ws <-4.5,8:> conce repeat 5 <> slaser 0 -90
+					offset zero pxy 
+						sine 5 1.5 (+ t * 0.5 p) 
+						0
+					0 100
+				bullet laser16-teal/ws <4.5,8:> conce repeat 5 <> slaser 0 -90
+					offset zero pxy 
+						sine 5 1.5 (* -1 +(t * 0.5 p))
+						0
+					0 100
+				bullet circle-* <> conce repeatcolorp this { pink/ purple/ red/ } 6 <> repeatp add 121 <> s :: {
+					q	11
+					fi	p1
+					fmul	if <(&fi 3) 1 -1
+					nfmul	* -1 &fmul
+					sfi	if <(&fi 3) &fi (- &fi 3)
+					i1	* (// p2 &q)  / &q - &q 1
+					i2	* (mod &q p2) / &q - &q 1
+					s	7.8
+					hs	/ &s 2
+					stp	/ &s &q	
+					px	* &hs &fmul
+					py	* &hs &fmul
+					pz	* &hs &fmul
+					stp1x	* &nfmul if =(&sfi 1) 0 &stp
+					stp1y	* &nfmul if =(&sfi 1) &stp 0
+					stp1z	0
+					stp2x	0
+					stp2y	* &nfmul if =(&sfi 0) &stp 0
+					stp2z	* &nfmul if =(&sfi 0) 0 &stp
+					x	+ + &px * &i1 &stp1x * &i2 &stp2x
+					y	+ + &py * &i1 &stp1y * &i2 &stp2y
+					z	+ + &pz * &i1 &stp1z * &i2 &stp2z
+					ts	+ /(-(1; cos t); +(1; t)) *  ^(t; 1.02) / atan2(t; 3) hpi
+				} offset zero projectview
+					* 10 * 1 &ts
+					* 8 * 1 &ts
+					30
+					&x
+					&y
+					&z
+#}
+
+
+## 6. Spell: Prison (cu: come on boy fall)
+<!> type spell `Official Seal: Tripartite Prison`
+<!> hp 21000
+<!> hpbar 1
+<!> event0 REFRACT evRight evLeft
+<!> event0 REFRACT evLeft evRight
+phase 42 #{
+	end
+		clear phase
+		pool-control { { shell-red/ ellipse-orange/ circle-yellow/ strip-teal/w arrow-* strip-pink/w } } softcullall cwheel
+		poolf-control {{ laser16-teal/bs gpather18* }} softcullall cwheel
+    action block 0
+        move 2 tp-nrot eased out-sine 2 stopsampling 0 vhometime 2 cxy 0 2
+        summon cu-mokou-come-on-boy <> _ <> null file fall
+        wait-for 3
+	action nb 0
+		setstate vulnerable true
+		position 0 2
+		bullet x-fire-burst-2 <> cre 48 12 <> sfx
+		bullet arrow-pink/w <> idelay 0 cre 144 4 <,:5p> repeatp add 72 <,:5> s offset pxy
+			* (- 72f t) regpolyr 2.8 (+ 3 p1) degrad * 5 p2
+			0 zero
+		bullet arrow-purple/w <> idelay 48 cre 144 4 <,:12p> repeatp add 60 <,:12> s tprot pxy
+			reg2starr 2.2 (+ 5 * 2 p1) degrad * 12 p2
+			0
+		bullet arrow-blue/w <> idelay 96 cre 144 4 <,:12h> repeatp add 60 <,:12> s offset pxy
+			* (- 144f t) + 1 * 0.4 ^^(cos(* (+ 0.5 p1) (degrad * 12 p2)); 0.2)
+			0 zero
+		@ wingL
+			bullet strip-pink/w <,:90> gcr {
+				wait	2
+				t	300
+				frv2	a soscillateto 150 40 1 2 1.8 * &i 2f
+			} s tprot cx 7
+		@ wingR
+			bullet strip-pink/w <,:90> gcr {
+				wait	2
+				t	300
+				fang soscillateto -150 -40 1 2 1.8 * &i 2f
+			} s tprot cx 7
+	action block 4
+		bullet-control persist empty savev2 { pl p loc       pd p dir } _
+		bullet-control persist empty flipx> 4 _
+		bullet-control persist empty flipx< -4 _
+		bullet-control persist empty flipy> 3 _
+		bullet-control persist empty flipy< -3 _
+		bullet-control persist empty event evRight > x 3
+		bullet-control persist empty event evLeft < x -3
+		event-listen evRight #{
+			action block 0
+				move 1 tpnrot eased io-sine 1 ss 0 vhometime 1 pxy -4 [Lplayer].y
+				bullet gpather18-* <,:-15> idelay 60 cre 60 3 <,:15> target Lplayer pssfx x-fire-tech-6 repeatcolorp this { red/w purple/w green/w yellow/w } 4 <> spather 1 1
+					:: {
+						r	0.3
+						pr	0.3
+						p1	// p 2
+						p2	mod 2 p
+						t	* pm1mod &p2 + t *(&pr / &p1 2)
+					} offset projectview 
+						0 40 0
+						* 4 t
+						cosine &pr &r &t
+						sine &pr &r &t
+						zero
+				break
+		event-listen evLeft
+			action block 0
+				move 1 tpnrot eased io-sine 1 ss 0 vhometime 1 pxy 4 [Lplayer].y
+				bulletf-control persist gpather18-red/b flipy> 4.5 _
+				bulletf-control persist gpather18-red/b flipy< -4.5 _
+				bullet gpather18-* <> idelay 60 cre 60 3 <> target bouncey 4.5 loc + Lplayer pxy * 1.5 p 0 pssfx x-fire-tech-8 
+					repeatcolorp this { red/b purple/b } 2 <> pather 1 1 tprot cx 4
+				bullet gpather18-* <> idelay 60 cre 60 3 <> target bouncey -4.5 loc + Lplayer pxy * 1.5 p 0
+					repeatcolorp this { red/b purple/b } 2 <> pather 1 1 tprot cx 4
+				break
+#}
+		@ nt
+			action block 0
+				position 0 -2
+				bullet empty <0,:-43> conce s tprot growbyadd 0.01 0 cx 1.05
+				break
+		@ nlt
+			action block 0.1
+				position 0 0
+				move 100 offset zero @ pl 0
+				bullet strip-teal/w <> cre 24 _ <,:5.0267> repeat 40 <> s :: {
+					thd	* 9 p
+					th	degrad &thd
+					br	regpolyr 4 3 &th
+				} polar
+					* (+ 1 t) &br
+					+ 90 &thd
+				break
+		@ nz
+			action block 0
+				position 0 0
+				bullet laser16-teal/bs <> conce pssfx x-laser-on repeat 3 <> emlaser 5.1 ept
+					offset zero @ pl 0
+					 :: {
+							thd	+ * 24 t * 120 p
+							th	degrad &thd
+							R	- 4.1 * 0.04 &lt
+							br	regpolyr &R 3 &th
+					} polar
+						&br
+						+ + 79 &thd * * &lt 5 5.0267
+					0 100
+				break
+!!{ fbf btf fswitchH 10 linear 60 5 t linear 110 -0.5 t
+		bullet x-fire-burst-1<> cre $fbf() _ <> sfx
+		~@ ept
+			bullet _ <> crepeatcolorp this { shell-red/ ellipse-orange/ circle-yellow/ } $fbf() _ <> gsr {
+				t		12
+				p	add
+				face	v
+			} s :: {
+					thd	* 30 p2
+					p	mod 3 p1
+					br	regpolyr 0.4  (+ 3 if < &p 2 &p 3) (degrad &thd)
+			} polar
+				* (+ 1 * t 2) &br
+				+ 90 &thd	
+#}
+
+## 7. NON Washing Machine 1
+<!> type non `Euclidean Space: Washing Machine`
+<!> hp 27000
+<!> hpbar 0.5
+phase 35 #{
+!{
+sqf(pr; thdr; th0r)
+:: {
+	t		* 0.5 t
+	ts		smoothloopr io-sine 1π &t
+	j		mod tau &ts
+	jb		if > &j pi (- tau &j; &j)
+	js		+ 0.6 * / -(pi; 1.2) pi &jb
+	thd		+ * %pr p raddeg * %thdr &t
+	th0		+ * 0.5 &js * %th0r &t ##0.5 gives a convulsing box
+	th		mod pi - &th0 fdegRad &thd
+	thp		&js
+	thq		- pi &thp
+	thpq		if >(&th; &thp) &thq &thp
+	thc		- hpi / &thpq 2
+	the		if >(&th; &thp) -(&th; &thp) &th
+	R		4.6
+	r		* &R / sin(&thc) sin(- - pi &thc &the)
+} polar
+	&r
+	&thd
+!}
+!!{ patherc1 { teal/w red/w pink/w orange/w }
+!!{ patherc2 { teal/b red/b pink/b orange/b }
+!{
+pc(pc)
+{{ pather18-* } %pc }
+!}
+	end
+		pool-control gcircle-* softcullall cwheel
+		pool-control arrow-* softcullall cwheel
+		bullet-control once sun-red/w softcull cwheel-red/w _
+		poolf-control gpather18-* softcullall cwheel
+    action block 0
+        move 2 tp-nrot eased out-sine 2 stopsampling 0 vhometime 2 cxy 0 2
+	action block 0
+		position 0 2
+        setstate vulnerable true
+		event playerinvuln 240
+		@ nt
+			action block 0
+				position 0 0
+				bullet gpather18-* <> conce repeatcolorp this $patherc1() 20 <> pather 1 0.4 polar
+					+ 0.1 * 0.072 p
+					+ * 240h p *  -(500; * 20 p) t
+				bullet sun-red/w <> conce ss 0.1 null
+				bullet gcircle-blue/b <> idelay 1s conce pssfx x-bubble repeat 36 <> s $sqf(10; 1; 1.4)
+				bullet gcircle-pink/b <,:124> idelay 1s conce repeat 36 <> s $sqf(10; 1.4; 1.4)
+				bullet gcircle-green/b <,:248> idelay 1s conce repeat 36 <> s $sqf(10; 0.7; 1.4)
+				bullet arrow-* <4.5,:> cre 12 _ <,:5h> repeatcolorp this { red/w yellow/w green/w blue/w } 36 <,:10> s tp-rot cx 1
+				break
+#}			
+
+
+## 8. Spell: starfall (cu: mokou sleep slidefall)
+<!> type spell `Starry Night: Sky Ablaze with Falling Stars`
+<!> hp 30000
+<!> hpbar 1
+phase 37 #{
+	end
+		clear phase
+		bullet-control once empty* cull _
+		pool-control circle-* softcullall cwheel
+		bullet-control once sun-* softcull cwheel-red/w _
+		poolf-control gpather18-* softcullall cwheel
+    action block 0
+        move 2 tp-nrot eased out-sine 2 ss 0 vhometime 2 cxy 0 3
+        summon cu-mokou-sleep <> _ <> null file slide-fall-0
+	action block 0
+		setstate vulnerable true
+		position 0 3
+		@ nt
+			position 0 6.5
+!{
+regstar(R; n)
+	:: { R %R		n %n		ia * 2 / tau &n
+		sa0	  seedrand 0 tau p1
+		ap	* / p2 15 tau
+		sap	smoothloopr io-sine &ia &ap
+		et		@ et p1
+		nt		- t &et
+		sa		if > &et 0
+					+ * 0.2 &et &sap
+					+ * 0.2 t &sap
+		r		+ if > &et 0
+						* 0.5 + &nt * ^(&nt; 2) /(1; + 1 /(^(&nt; 3); 4))
+						0
+					reg2starr &R &n &sap
+	}
+	offset zero
+	+	@ cl p1
+		polartoxy
+			&r
+			raddeg(+ &sa0 &sa)
+!}
+!{
+firef()
+	btf fswitchH 10
+		linear 30 +4.2 t
+		clamp 55 72 linear 72 -0.2 t
+!}
+		@ nt
+			action block 0
+				bullet empty <2,:-20> gcr {
+					p	this
+					t	_
+					w	$firef
+					frv2	a * -1 fsoftmod 140 * 53.48 p
+				} s tp
+					cx 0.7 
+					growbyadd 0 -0.06 zero
+				bullet sun-red/w <> cre $firef _ <> world ss
+					+ 0.15 sine 3.5 0.04 + t * 0.2 p
+					offset zero @ cl p
+				bullet circle-* <> crepeatcolorp this 
+					{ purple/w red/w green/w pink/b orange/b teal/b black/w yellow/w pink/w blue/b red/b green/b teal/w pink/w }
+				$firef _ <> pssfx x-fire-burst-1repeatp add 30 <> world s $regstar(2; 5)
+				bullet gpather18-* <> crepeatcolorp this
+					{ purple/w red/w green/w pink/b orange/b teal/b black/w yellow/w pink/w blue/b red/b green/b teal/w pink/w }
+				$firef _  <> world pather 4 3 offset zero @ cl p
+				break
+		bullet-control persist empty FLIPX> 6 _
+		bullet-control persist empty FLIPX< -6 _
+		bullet-control persist empty savev2 cl p loc _
+!!{ yb -5
+		bullet-control persist empty savef et p time < y $yb
+		bullet-control persist empty.2 savev2 { pl p loc       pd p dir } _
+		bullet-control-sm persist empty < y $yb
+			action block 0
+				bullet empty.2 <> conce s tpnrot
+						growbyratioc -0.27 2 superpose 1 cy 4 0.0 ss 0 vhome 4 Lbeh mokou
+				bullet gpather18-* <> conce world pssfx x-boom repeatcolorp add {
+						blue/w pink/w blue/b pink/b
+					} 4 <> pather 4
+						+ 2 sine 3.4 0.1 p2
+					offset zero
+						+ @ pl p1
+							rotatebydir @ pd p1
+								pxy 0 sine 0.8 0.1 + t * 0.8 / p2 4
+				break
+		bullet-control persist empty cull < y $yb
+		
+#}
+
+
+## 9. NON Washing Machine 2 (Blender edition)
+<!> type non `Euclidean Space: Blender`
+<!> hp 27000
+<!> hpbar 0.5
+phase 35 #{
+	end
+		pool-control gcircle-* softcullall cwheel
+		pool-control arrow-* softcullall cwheel
+		bullet-control once sun-red/w softcull cwheel-red/w _
+		poolf-control gpather18-* softcullall cwheel
+    action block 0
+        move 2 tp-nrot eased out-sine 2 stopsampling 0 vhometime 2 cxy 0 2
+	action block 0
+		position 0 2
+        setstate vulnerable true
+		event playerinvuln 240
+		@ nt
+			action block 0
+				position 0 0
+				bullet gpather18-* <> conce repeatcolorp this $patherc2() 20 <> pather 1 0.4 polar
+					+ 0.1 * 0.072 p
+					+ * 240h p *  -(500; * 20 p) * t pm1mod p
+				bullet sun-red/w <> conce ss 0.1 null
+				bullet gcircle-pink/w <> idelay 1s conce pssfx x-bubble repeat 40 <> s $sqf(9; 1.3; 1.6)
+				bullet gcircle-teal/w <,:182> idelay 1s conce repeat 40 <> s $sqf(9; -1.5; -1.8)
+				bullet arrow-* <4.5,:> cre 12 _ <,:-5h> repeatcolorp this { purple/w teal/w pink/w pink/w } 36 <,:10> s tp-rot cx 1
+				break
+		
+#}
+
+
+## 10. [Spell] Dancing Where the Sun Dares Not Rise (cu: mokou sun slide)
+<!> type spell `Starry Night: Dancing Where the Sun Dares Not Rise`
+<!> hp 22000
+<!> hpbar 1
+<!> event0 CONTINUOUS evPoly1
+<!> event0 CONTINUOUS evPoly2
+<!> event0 CONTINUOUS evPoly3
+phase 33 #{ 
+	end
+		clear bullet-control
+		pool-control {{ shell* ellipse* strip-orange/b sun-red/w }} softcullall cwheel
+		poolf-control { { lightning-* } { red* purple* green* black* } } softcullall cwheel
+    action block 0
+        move 2 tp-nrot eased out-sine 2 stopsampling 0 vhometime 2 cxy 0 3
+        summon cu-mokou-sun <> _ <> null file slide-lr
+        wait-for 3
+	action nb 0
+		setstate vulnerable true
+		position 0 3
+		bullet sun-red/w <> conce ss 0.5 null
+!!{ firef clamp 160 300 linear 300 -10 t
+		bullet lightning-* <0.5,:-40> gir2 $firef() _ <,:51.43h> { p this color { red* purple* green* black* } sfx x-lightning } {
+			event { evPoly1 `` evPoly2 `` evPoly3 `` }
+			gcr2 12 8 <> { p add color { /w /b } } repeatp defer 7 <,:51.43> 
+			pather 1.2 1.2 tprot 
+				pxy
+					1.5
+					dsine 1 0.3 +(t * p2 / 1 8)
+		}
+!{
+innerfire(method; color; n; ct; angd; angoff)
+@ nt
+	pos Lplayer
+@ nt
+	bullet %color <> conce  gsr {
+		p				this
+		t	%ct
+		preloop	rv2 =rv rot 
+										%method 4 %n degrad + %angoff * %angd t
+										0
+										* t %angd
+	} s tprot lerpin 0 2 rotate
+			* %n + %angoff *  %angd p
+			cx 0.8
+!}
+!{
+polyfire(color; n; ct; angd; angoff)
+$innerfire(regpolyr; %color%; %n%; %ct%; %angd%; %angoff%)
+!}
+!{
+starfire(color; n; ct; angd; angoff)
+$innerfire(reg2starr; %color%; %n%; %ct%; %angd%; %angoff%)
+!}
+		event-listen evPoly1 #{
+			action block 0
+				sfx x-boom
+				$polyfire(shell-pink/w; 4; 60; 6; 0)
+				$polyfire(shell-pink/b; 4; 60; 6; 45)
+				$polyfire(ellipse-pink/; 8; 60; 6; 0)
+				break
+		event-listen evPoly2
+			action block 0
+				sfx x-boom
+				$polyfire(ellipse-orange/; 5; 60; 6; -90)
+				$starfire(strip-orange/b; 5; 120; 6; -90)
+				break
+		event-listen evPoly3
+			action block 0
+				sfx x-boom
+				$polyfire(ellipse-teal/w; 3; 60; 6; 0)
+				$polyfire(ellipse-teal/b; 3; 60; 6; 60)
+				$polyfire(ellipse-teal/; 6; 60; 6; 0)
+				break
+#}
+#}
+
+<!> type non `Thanks for playing` `(I didn't program anything for boss death yet)`
+phase 0
+	action block 0
+		noop
+
+///
+###below are bad
+
+## 2 bouncing spinner (nothing really worthwhile here)
+phase 32 #{
+	action block 0
+		bulletf-control-sm persist laser16r-white | > x 5.2 | < x -5.2 | < y -3.7 > y 3.7
+			action block 0
+				bpat motk4spinnertriangle
+				bullet pointy-purple/w <0,:> conce target Lplayer repeat 9 <,:40> modifybs
+					:: {	
+						R	1
+						n	3
+						f	/ pi &n
+						2f	* 2 &f
+						offs	- pi *(*(1.5; pi); /(-(&n; 2); &n))
+						ang0	- &offs &2f
+						effp	* 40 p
+						prm 	+ &ang0 degrad(&effp)
+						r 	/ *(&R; cos(&f)) cos(- mod(&2f; +(*(3; &2f) -(&prm; &offs))) &f)
+						}
+					&r
+					0 0 s tpnrot 
+				::v2 { toplayer ss 0 vhome 3 superpose 0.01 Lplayer 0.99 loc }
+				lerpinout 0 1 2 3 &toplayer
+				break
+		bulletf-control persist laser16r-white flipx> 5.2 _
+		bulletf-control persist laser16r-white flipx< -5.2 _
+		bulletf-control persist laser16r-white flipy< -3.7 _
+		bulletf-control persist laser16r-white flipy> 3.7 _
+	action block 0
+		bullet laser16r-white <> cre 12s 2 <,:160> mlaser 5
+			tp-rot growbyadd .07 .1 cr 4 50
+			polar
+				* 
+					* 0.3 t
+					+ 1 sine 4.6 0.3 &lt
+				* 
+					+ 1 * pm1mod p + 5 * 1.4 &lt
+					* 0.7 raddeg t
+			5 2.4
+#}
+
+## 3 rolling star with pathers (not sure where to take this)
+phase 32 #{
+	end
+		clear bullet-control
+		poolf-control pather18-* allowcull true
+		bulletf-control once pather18-purple/w softcull cwheel-purple/w _
+		bulletf-control once pather18-red/w softcull cwheel-red/w _
+	action nb 0
+		poolf-control pather18-* allowcull false
+		bulletf-control persist pather18-purple/w cull > y 12
+		bulletf-control persist pather18-red/w cull < y -12
+		position 0 4
+		@ nlb
+			position -6.1 -6.5
+		@ nrt
+			position 6.1 6.5
+		~@ pt3
+			bullet pointy-blue/w <> idelay 20 cre 20 _ <> targetdir s tp-rot cx 1
+		~@ pt24
+			bullet pointy-red/w <> idelay 20 cre 120 _ <> targetdir s tp-rot cx 1
+!{
+regpolyeq(R; n; trate)
+:: { 	R	%R
+		n	%n
+		f	/ pi &n	
+		2f	* 2 &f
+		ang0	- - pi *(*(1.5; pi); /(-(&n; 2); &n)) &2f	
+		ang0d	raddeg(&ang0)
+		s 	* 2 *(&R; sin(&f))
+		efft		* t %trate
+		effp		* 1 + * 18 p * 60 t
+		j 	// &efft &2f
+		modt 	mod(&2f; &efft)
+		smt	+ * 0.5 &modt * 0.5 smoothloopr(io-sine; &2f; &modt)	
+		angj	+ &ang0 *(&2f; &j)
+		prm 	+ &ang0 degrad(&effp)
+		r	regsoftstarr &R &n - &prm &ang0
+		##r 	/ *(&R; cos(&f)) cos(- mod(&2f; +(*(3; &2f) -(&prm; &ang0))) &f)
+		x 	- *(&r; cos(&prm)) *(&R; cos(&angj))
+		y 	- *(&r; sin(&prm)) *(&R; sin(&angj))	
+		}
+	offset
+	##+  cr &R &ang0d
+	+  polartoxy
+			mag(&x; &y)
+			raddeg(-(atan2(&y; &x); +(*(&2f; &j); &smt)))
+		pxy *(&j; &s) 0 
+	zero
+!}
+		
+		@ nlb
+			bullet pather18-purple/w <,:-90> cre 
+				clamp 7s 8s linear 8s -0.2s x
+			12 <>  pssfx x-fire-tech-8 repeat 20 <> epather pt 1 0.5 $regpolyeq(2.8; 5; -0.5)
+		@ nrt
+			bullet pather18-red/w <,:90> cre
+				clamp 7s 8s linear 8s -0.2s x
+			12 <> repeat 30 <> epather pt2 1 0.4 $regpolyeq(2.8; 5; -0.5)
+!!{ colors1 {{ *red/ *pink/ } { ellipse- pointy- shell- strip- }}
+!{
+verymean(s)
+action block 0
+	move 2 tpnrot eased io-sine 2 ss 0 vhometime 2 randxy -4 4 -3 3
+	bullet laser24-red/ws <> iparent mokou conce repeat 3 <> mlaser 0 null 
+		tpnrot ss 1 vhome 1 pxy -%s%5.5 * %s%1 linear 0.9 0.9 p
+		14 0
+action block 0
+	op sbulletfadecull $colors1 3
+	bullet strip-green/w <> idelay 2s csummonalongpolarf rel 0 1 180 4
+		+ 2 * 0.8 ^^(cos(* 2.5 degrad t); 0.2)
+		t
+	s ::v2 { 
+	mf 	rotate
+		* 10 p
+		cx 1 
+	} tprot setzerotp &mf
+	phastendelta 1f lerpin 1.6 2 
+	lerpoutin 4 5 5 20 &mf
+	bullet strip-teal/w <,:180> idelay 0s csummonalongpolarf rel 0 1 180 4
+		+ 1 * 1 ^^(cos(* 1.5 degrad t); / 1 7)
+		t
+	s ::v2 { 
+	mf 	rotate
+		* 12 p
+		cx 1 
+	} tprot setzerotp &mf
+	phastendelta 1f lerpin 1.6 2
+	lerpoutin 6 8 8 24 &mf
+	bullet x-fire-burst-1<> cre 24 15 <> sfx
+	_ 12
+		bullet _ <,:45> isimulate 3s crepeatcolorp this {
+			*red/ *pink/
+		} 1 720 <> repeatcolorp add { 
+			pointy- ellipse- shell- strip-
+		} 4 <,:90> s :: {
+			r	linear 0.3 0.5 t
+			r2	linear 0.25 0.1 t
+			per	3
+			per2	4
+			thr	[* 0.1h p1]+ * 0.4 t
+			th	[&per]* &thr
+			gt	[t]+ [1f]* p1
+			s	pm1mod p2
+		} offset projectview
+				* 30 &s
+				 0
+				 * * &s 55 &gt 
+				[sine &per &r &th]+
+					sine &per2 &r2 [* 2 t]+ &gt
+				* 4 t
+				[cosine &per &r &th]+
+					cosine &per2 &r2 [* 2 t]+ &gt
+			zero
+	pool-control $colors1 reset
+	bullet-control persist $colors1 CULL circ <-%s%5.5,%s%1.8,1.5>
+!}
+	
+	$verymean(-)
+	$verymean(+)
+		
+#}
+
+

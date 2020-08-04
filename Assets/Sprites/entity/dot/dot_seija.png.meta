@@ -1,0 +1,757 @@
+fileFormatVersion: 2
+guid: c2dd5232b8ca33d45b07a232cf94cbdd
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 7133738721219535352
+    second: dot_seija_0
+  - first:
+      213: 6314400240168996867
+    second: dot_seija_1
+  - first:
+      213: 3348506157055319471
+    second: dot_seija_2
+  - first:
+      213: 622314643438429640
+    second: dot_seija_3
+  - first:
+      213: -379120280066626220
+    second: dot_seija_4
+  - first:
+      213: -2218437613254501192
+    second: dot_seija_5
+  - first:
+      213: -2828082551551452504
+    second: dot_seija_6
+  - first:
+      213: -7589178556584208352
+    second: dot_seija_7
+  - first:
+      213: 9038616394982709060
+    second: dot_seija_8
+  - first:
+      213: -4795075812769898233
+    second: dot_seija_9
+  - first:
+      213: -7235573060338212469
+    second: dot_seija_10
+  - first:
+      213: -3244958546652643192
+    second: dot_seija_11
+  - first:
+      213: -8019572438980128620
+    second: dot_seija_12
+  - first:
+      213: -3562600043446698044
+    second: dot_seija_13
+  - first:
+      213: -392416666293839715
+    second: dot_seija_14
+  - first:
+      213: 1532716261802642979
+    second: dot_seija_15
+  - first:
+      213: -8098905224844234260
+    second: dot_seija_16
+  - first:
+      213: -1812640961967387636
+    second: dot_seija_17
+  - first:
+      213: 6560547652378049071
+    second: dot_seija_18
+  - first:
+      213: 7394811867034373937
+    second: dot_seija_19
+  - first:
+      213: -31953878790694915
+    second: dot_seija_20
+  - first:
+      213: 5988655812207155565
+    second: dot_seija_21
+  - first:
+      213: 5931237646626189666
+    second: dot_seija_22
+  - first:
+      213: -2495116838265583366
+    second: dot_seija_23
+  - first:
+      213: -2984886632309582850
+    second: dot_seija_24
+  - first:
+      213: 3238035267447112726
+    second: dot_seija_25
+  - first:
+      213: -1171891958356697579
+    second: dot_seija_26
+  - first:
+      213: 8172846840732836817
+    second: dot_seija_27
+  - first:
+      213: -874497706705746006
+    second: dot_seija_28
+  - first:
+      213: -7966541364651423908
+    second: dot_seija_29
+  - first:
+      213: 8877468348995243757
+    second: dot_seija_30
+  - first:
+      213: 7916608258795388113
+    second: dot_seija_31
+  - first:
+      213: 1121139496292005868
+    second: dot_seija_32
+  - first:
+      213: -4441525252276481102
+    second: dot_seija_33
+  - first:
+      213: 2239698849525797454
+    second: dot_seija_34
+  - first:
+      213: -4521299013799281777
+    second: dot_seija_35
+  - first:
+      213: -1785617933667672886
+    second: dot_seija_36
+  - first:
+      213: -8912552448116321577
+    second: dot_seija_37
+  - first:
+      213: -7574105500476684247
+    second: dot_seija_38
+  - first:
+      213: -7797118489275852187
+    second: dot_seija_39
+  - first:
+      213: 2066341330600584374
+    second: dot_seija_40
+  - first:
+      213: -1308375523256311198
+    second: dot_seija_41
+  - first:
+      213: 1885919065366078607
+    second: dot_seija_42
+  - first:
+      213: -1130393934432891752
+    second: dot_seija_43
+  - first:
+      213: 2865878672087736278
+    second: dot_seija_44
+  - first:
+      213: 7028927391716777828
+    second: dot_seija_45
+  - first:
+      213: -4492926665055170728
+    second: dot_seija_46
+  - first:
+      213: -1898417166666123805
+    second: dot_seija_47
+  - first:
+      213: -5042188281396198793
+    second: dot_seija_48
+  - first:
+      213: -2318092225250744763
+    second: dot_seija_49
+  - first:
+      213: 619584736813285896
+    second: dot_seija_50
+  - first:
+      213: -5109093873578775089
+    second: dot_seija_51
+  - first:
+      213: 2167592787187186894
+    second: dot_seija_52
+  - first:
+      213: 5539027212290207167
+    second: dot_seija_53
+  - first:
+      213: 118325037868918601
+    second: dot_seija_54
+  - first:
+      213: -3590337907291768860
+    second: dot_seija_55
+  - first:
+      213: 4206585541038235341
+    second: dot_seija_56
+  - first:
+      213: 4226878640512358217
+    second: dot_seija_57
+  - first:
+      213: 7084128078250340272
+    second: dot_seija_58
+  - first:
+      213: -7751538674750631433
+    second: dot_seija_59
+  - first:
+      213: -5466595464827035950
+    second: dot_seija_60
+  - first:
+      213: -3093705270571052597
+    second: dot_seija_61
+  - first:
+      213: -4311090378687872203
+    second: dot_seija_62
+  - first:
+      213: -1915471851137851108
+    second: dot_seija_0
+  - first:
+      213: 3972925862315726879
+    second: dot_seija_1
+  - first:
+      213: -6525483750777670926
+    second: dot_seija_2
+  - first:
+      213: 8549784842965292671
+    second: dot_seija_3
+  - first:
+      213: -8738757610328342559
+    second: dot_seija_4
+  - first:
+      213: -298660614106381319
+    second: dot_seija_5
+  - first:
+      213: -8444785896604266630
+    second: dot_seija_8
+  - first:
+      213: 8259477330225533680
+    second: dot_seija_9
+  - first:
+      213: 1352411276099684362
+    second: dot_seija_10
+  - first:
+      213: -4209048661213221600
+    second: dot_seija_11
+  - first:
+      213: 5757879789718125966
+    second: dot_seija_12
+  - first:
+      213: -1710514824288955600
+    second: dot_seija_13
+  - first:
+      213: 4366824433129040047
+    second: dot_seija_14
+  - first:
+      213: -6573787439834020959
+    second: dot_seija_15
+  - first:
+      213: 2680842207399861440
+    second: dot_seija_16
+  - first:
+      213: -1341439978275228711
+    second: dot_seija_17
+  - first:
+      213: 2067111816120975175
+    second: dot_seija_18
+  externalObjects: {}
+  serializedVersion: 11
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: -1
+    mipBias: -100
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 40
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  platformSettings:
+  - serializedVersion: 3
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: dot_seija_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 384
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c112bafff70ea65e0800000000000000
+      internalID: -1915471851137851108
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_seija_1
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 384
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f189a46b50ba22730800000000000000
+      internalID: 3972925862315726879
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_seija_2
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 384
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2f230572a13d075a0800000000000000
+      internalID: -6525483750777670926
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_seija_3
+      rect:
+        serializedVersion: 2
+        x: 384
+        y: 384
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f7617f61400f6a670800000000000000
+      internalID: 8549784842965292671
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_seija_4
+      rect:
+        serializedVersion: 2
+        x: 512
+        y: 384
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1ef332ad042b9b680800000000000000
+      internalID: -8738757610328342559
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_seija_5
+      rect:
+        serializedVersion: 2
+        x: 640
+        y: 384
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9f30acbf0c1fadbf0800000000000000
+      internalID: -298660614106381319
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_seija_6
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 256
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8aa9b4737e1a0c8d0800000000000000
+      internalID: -2828082551551452504
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_seija_7
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 256
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 02859cddf42dda690800000000000000
+      internalID: -7589178556584208352
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_seija_8
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 256
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a7f8cac28f71eca80800000000000000
+      internalID: -8444785896604266630
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_seija_9
+      rect:
+        serializedVersion: 2
+        x: 384
+        y: 256
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0f21c7a0fde8f9270800000000000000
+      internalID: 8259477330225533680
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_seija_10
+      rect:
+        serializedVersion: 2
+        x: 512
+        y: 256
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a088726e3eab4c210800000000000000
+      internalID: 1352411276099684362
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_seija_11
+      rect:
+        serializedVersion: 2
+        x: 640
+        y: 256
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 02d6d0a0b847695c0800000000000000
+      internalID: -4209048661213221600
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_seija_12
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 128
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e8dbc85892918ef40800000000000000
+      internalID: 5757879789718125966
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_seija_13
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 128
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 033973b74d70348e0800000000000000
+      internalID: -1710514824288955600
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_seija_14
+      rect:
+        serializedVersion: 2
+        x: 512
+        y: 128
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: fa8272d7fa31a9c30800000000000000
+      internalID: 4366824433129040047
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_seija_15
+      rect:
+        serializedVersion: 2
+        x: 640
+        y: 128
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1a3c4c3272735c4a0800000000000000
+      internalID: -6573787439834020959
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_seija_16
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 0
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0cc51fea8c3443520800000000000000
+      internalID: 2680842207399861440
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_seija_17
+      rect:
+        serializedVersion: 2
+        x: 512
+        y: 0
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9d3b56f627f326de0800000000000000
+      internalID: -1341439978275228711
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_seija_18
+      rect:
+        serializedVersion: 2
+        x: 640
+        y: 0
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 74f37e6ae3bdfac10800000000000000
+      internalID: 2067111816120975175
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+  spritePackingTag: 
+  pSDRemoveMatte: 0
+  pSDShowRemoveMatteOption: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

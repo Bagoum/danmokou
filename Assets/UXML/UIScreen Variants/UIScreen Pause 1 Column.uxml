@@ -1,0 +1,8 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
+    <ui:VisualElement name="Container">
+        <Style src="UIScreen.uss" />
+        <ui:VisualElement class="column nopad">
+            <ui:ListView focusable="True" show-border="false" show-bound-collection-size="true" class="columnList" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

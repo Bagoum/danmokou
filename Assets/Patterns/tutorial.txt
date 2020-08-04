@@ -1,0 +1,149 @@
+pattern {
+	boss tutorial
+}
+phase 0
+	action block 0
+		setstate vulnerable false
+		position 2 10
+		shift-phase-to 1
+
+phase 0
+	action block 0
+		move-target 1 io-sine cy 1
+		
+<!> type non `This is a Nonspell`
+<!> hp 4000
+<!> hpbar 1
+phase 0
+	action block 0
+		position 0 1
+		setstate vulnerable true
+		move _ nroffset px sine 4 0.5 t
+
+		
+<!> type non `This is a Nonspell`
+<!> hp 4000
+phase 0
+	action block 0
+		setstate vulnerable true
+		move _ nroffset py sine 4 0.5 t
+		
+<!> type spell `This is a Spell`
+<!> hp 4000
+phase 0
+	action block 0
+		setstate vulnerable true
+		move _ nroffset px sine 4 0.5 t
+		
+<!> type timeout `This is a Timeout Spell`
+<!> hp 4000
+phase 9
+	action block 0
+		move _ nroffset py sine 4 0.5 t
+		
+		
+phase 0
+	action block 0
+		move-target 1 io-sine cy 1
+		
+<!> type non `This is a Nonspell`
+<!> hp 4000
+phase 0
+	action block 0
+		position 0 1
+		setstate vulnerable true
+		async fireball-*/b <0.5,:12> gcr2 180 _ <8c> {
+		} gsr2 2 <> {
+			p this
+			color { red blue }
+		} gsr2c 8 {
+		} s tprot px + 1 * 0.3 p
+
+phase 0
+	action block 0
+		noop
+
+phase 0
+	action block 0
+		position 0 1
+		async glcircle-*/b <0.5,:12> gcr2 180 _ <12c> {
+			color { red blue }
+		} gsr2c 12 {
+		} s tprot px + 1 * 0.7 p
+
+phase 0
+	action block 0
+		move-target 1 io-sine cxy -2 1
+
+phase 0
+	action block 0
+		position -2 1
+		async _ <1,:12> gcr2 90 _ <20c> {
+		} gsr2c 20 {
+		} lifeitem
+		
+phase 0
+	action block 0
+		noop
+		
+phase 0
+	action block 0
+		async _ <1,:12> gcr2 160 _ <20c> {
+		} gsr2c 8 {
+		} valueitem
+		
+phase 0
+	action block 0
+		noop
+		
+phase 0
+	action block 0
+		async _ <1,:12> gcr2 180 _ <8c> {
+		} gsr2c 8 {
+		} pointppitem
+		
+phase 0
+	action block 0
+		noop
+		
+phase 0
+	action block 0
+		async _ <1,:12> gcr2 60 _ <8c> {
+			alternate t
+		} {
+			gsr2c 10 {
+			} valueitem
+			gsr2c 100 {
+				start rv2.nx +=f 2
+			} pointppitem
+		}
+		
+phase 0
+	action block 0
+		noop
+		
+phase 0
+	action block 0
+		async sun-red* <90> gcr2 240 _ <120> {
+		} gsr2c 3 {
+			color { / /w /b }
+		} ss 0.6 tprot cx 2
+
+phase 0
+	action block 0
+		move-target 1 io-sine cy 1
+	action block 0
+		async _ <-6,:> gsr2 3 <,1:> {
+			color { gdlaser-blue* laser-red* glaser-pink* }
+		} gsr2 3 <,0.33:> {
+			color { / /w /b }
+		} laser null 2 2 { repeat dsfx }
+		async _ <-6,-0.5:> gsr2 2 <,-1.4:> {
+			color { */ */b }
+		} gsr2 2 <,-0.7:> {
+			color { mulaser-green zonelaser-teal }
+		} safelaser 999 { }
+
+phase 0
+	action block 0
+		noop

@@ -1,0 +1,10 @@
+pattern { }
+phase 0
+	action block 0
+		shift-phase-to 1
+
+<!> type non `1. Non`
+phase 0
+	action block 0
+		debugf dh
+	

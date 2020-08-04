@@ -1,0 +1,11 @@
+pattern { }
+phase 0
+	action block 0
+		position 0 0
+		gtr {
+			wt	2 3
+			wait-child
+		} {
+			async strip-red/w <1,:> gcr2 1 2 <10> . s tprot cx 10
+			async strip-blue/w <1,:180> gcr2 1 2 <10> . s tprot cx 10
+		}

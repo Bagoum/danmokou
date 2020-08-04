@@ -1,0 +1,87 @@
+Copyright (c) 2020 <reneedebatz@gmail.com>
+
+Danmokou is a danmaku (bullet hell) engine built in C# for Unity. It is free (as in free speech) software. The source code is on Github: https://github.com/Bagoum/danmokou
+
+All source code, including script files, in this project is distributed under the GNU GPL v3 or any later version. Some non-code resources are distributed under CC BY 4. See the Licenses folder for copies, or visit https://www.gnu.org/licenses/gpl-3.0.html and https://creativecommons.org/licenses/by/4.0/ .
+
+The Licenses folder also contains licenses for the following packages used by this project:
+Easing Equations by C.J. Kimberlin and Robert Penner
+Hash Without Sine by David Hoskins
+Newtonsoft.Json by Kalle Jillheden
+Some files from these projects exists in the source code. Those files have the original licenses at the top for convenience. 
+
+Code is present primarily under the directories FS, Assets/Plugins/Self, Assets/Rendering/Shaders, Assets/CG, Assets/UXML (normal code), as well as Assets/Patterns and Assets/SiMP/Scripts (script files).
+Present dialogue files (Assets/SiMP/Dialogue/Scripts) are not considered code. They may be used under CC BY 4.
+This project also includes other assets such as images and audio. Many of these assets are not by me. See below for details.
+
+To clarify on your obligations under the GPL (IANAL): Modifications, additions, or extensions made to the C#/F# engine, shaders, UXML, etc. must also be distributed under the terms of the GPL. However, if you use this engine to make and run your own pattern scripts, you may license those scripts as you like. 
+
+This said, I would encourage you to publicly publish your pattern scripts as well in the spirit of community danmaku. 
+
+The directory Assets/Plugins/Self/Core/FS contains compiled binaries of the directory FS.
+
+Touhou Project is owned by Team Shanghai Alice.
+
+---
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+---
+
+Other resources are sourced as follows:
+
+Sound effects (Assets/Audio/SFX)
+- Files under "manual" are licensed by me under CC BY 4.
+- Files under "OSA" are from here: http://osabisi.sakura.ne.jp/m2/ . They are licensed permissively; the license is in the README file in that directory.
+- Files under "taisei" and "taisei2" are from Taisei Project. They have been converted into different formats for use with Unity. Their license is in the Licenses folder.
+- Files under "sourced":
+	- The "fire shaker" sound effects are licensed under CC0 from here: https://freesound.org/people/shpira/sounds/317102/
+	- The "crow caw" sound effect is licensed under CC0 from here: https://freesound.org/people/_nuel/sounds/54973/
+
+All fonts (Assets/Fonts) are licensed permissively. Licenses are in the Licenses folder.
+
+All assets under Assets/Kenney were created by Kenny Vleugels (kenney.nl) and are licensed thereby under CC0.
+
+Images (Assets/Sprites and Assets/SiMP)
+- Files under "BGPatterns/nasa" are from NASA, see below.
+- Files under "BGPatterns/unsplash" are from Unsplash, credited as follows:
+	- bamboo: https://unsplash.com/photos/AEmqD6qu434
+	- torii: https://unsplash.com/photos/gvc0PL77hxU
+	- shrine: https://unsplash.com/photos/mHtQ7rWEC4U
+	- mountain: https://unsplash.com/photos/JgOeRuGD_Y4
+- Files under "entity/dot/kmap" were created by danmaq. The license is in the folder. 
+- "entity/dot/dot_seija" was created by Len.
+- "entity/dot/dot_kasen" was created by Kirbio.
+- There are some Python scripts under ".py", as stated above they are licensed under GPL.
+- Image files (psds included) under "bullets", "ui", "util" are licensed by me under CC BY 4.
+
+
+Some image resources were created with patterns from http://www.sda.nagoya-cu.ac.jp/sa08m13/image.html , which are licensed permissively ("日本の伝統模様のフリー素材。商用利用可・加工可能。").
+
+Some image resources were created with patterns from http://www.ikiya.jp/anounce.html , which are open for noncommercial use.
+
+Some images are from NASA. (NASA does not endorse this project.) Here are all usages:
+https://photojournal.jpl.nasa.gov/catalog/PIA22567
+ https://images.nasa.gov/details-PIA21073
+https://images.nasa.gov/details-GSFC_20171208_Archive_e001925
+https://images.nasa.gov/details-PIA19821
+https://images.nasa.gov/details-PIA08653
+https://images.nasa.gov/details-PIA17563
+https://images.nasa.gov/details-PIA15415
+https://images.nasa.gov/details-PIA00404
+https://images.nasa.gov/details-PIA03096
+https://unsplash.com/photos/rTZW4f02zY8
+https://unsplash.com/photos/-hI5dX2ObAs
+https://images.nasa.gov/details-PIA07841
+https://images.nasa.gov/details-PIA03515
+https://images.nasa.gov/details-PIA09962
+
+

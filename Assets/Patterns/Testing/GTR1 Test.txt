@@ -1,0 +1,14 @@
+pattern { }
+phase 0
+	action block 0
+		position 0 0
+		gtr {
+			wt	2 2
+			wait-child
+			start	c =f 1
+			postloop c +=f 1
+		} action block 0
+			pos px &c
+			async strip-red/w <> gcr {
+				wt	1 + 1 &c
+			} s tprot zero

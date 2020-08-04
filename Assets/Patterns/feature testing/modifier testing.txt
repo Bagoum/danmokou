@@ -1,0 +1,38 @@
+pattern    
+phase 40 
+    action block 0
+		position 0 0
+        setstate vulnerable false
+        clear bullet
+		@ { n1 n2 }
+			cull
+        summon inode <> n1 <> null null
+        summon inode <> n2 <x> null null
+        shift-phase-to 2
+        
+## Testing modifiers on bullets.
+phase 40 #{
+    action block 0
+        position 2 0
+        @ n1
+            position -3 0
+        @ n2
+            position 3 0
+		@ { n1 n2 }
+            bullet gem-red/w <0.5,:30> cre 6 _ <,:2> s tp-rot cx 2
+#}
+
+## Testing modifiers on summons.
+phase 40 #{
+    action block 0
+        position 2 0
+        @ n1
+            position -3 0
+        @ n2
+            position 3 0
+		@ { n1 n2 }
+            bullet enemy01 <1,:30> cre 360 _ <,:90> summon eff <x> tprot cx 1 here bullet gem-red/w <0.5,:0> cre 12 _ <,:2> s tp-rot cx 2
+
+
+#}
+   

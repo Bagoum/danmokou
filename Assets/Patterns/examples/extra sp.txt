@@ -1,0 +1,67 @@
+pattern { }
+phase 0
+	action block 0
+		shift-phase-to 3
+		
+!!{ me mokou
+!!{ allc { black purple teal green orange yellow red pink blue }	
+##funny trees
+phase 0
+    action block 0
+		position -2 0
+		async _ <1,:> gcr2 600 _ <360h> {
+			p this
+		} {
+			color sakura-green* treearrow p 7  0.3 0.35 {
+				color  { /w / }
+			} roffset pxy * 1 t sine 4 1 t
+				_circle-orange/b 6 3 0.2 0.2
+		}
+
+##Arrow structure with head on top
+phase 0
+    action block 0
+		position 0 0
+		async lcircle-blue/w <2,1:180> gir2 160 _ <360h> . oarrowi 9 0.4 0.2 {} s tprot cx 2
+		async lcircle-red/w <2,1:> gir2 160 _ <360h> . gsrf 8 rxy * -0.4 &aixd * 0.3 &aiyd {
+			bindArrow
+		} s tprot cx 2
+		
+
+##2d wings
+phase 0
+	action block 0
+		position 0 0
+!!{ w 30
+!!{ n 5
+		move _ roffset px sine 4 2 t
+		sync circle-*/ <> loc0 gsr {
+			tmmod $n
+		} gsr {
+			tmimod $w
+			colorf	{ pink } t
+		} gsr {
+			tmmod 2
+		} s roffset :: {
+			px	pma $w { 2 }
+			py	pma $n { $w 2 }
+			plr	pm1 pma 2 { 1 } 
+		}  + lbeh $me
+		wings2 $w $n 1.8
+///
+		:: {
+			pxr	/ &px $w
+			pyr	/ &py $n
+			per	1.8
+			hper	/ &per 2
+			swa	 * (linear 0.9 0.4 &pxr) * (linear 0.9 0.3 &pyr) swing2 0.35 &per -80 35 50 (+ t * -0.2 &pxr)
+			sws	 swing2 0.55 &per 1.03 1 0.85 ( + &hper - t * 0.2 &pxr)
+		} multiplyx &plr +
+				cxy 0.3 0.2
+				rxy
+					&swa
+					+ 0.2 * &sws * opacity 0.4 &pyr * 0.1 &px 
+					* 0.3 * opacity 0.9 &pxr &py
+        
+            
+            

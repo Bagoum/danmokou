@@ -1,0 +1,14 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <ui:VisualElement name="Wrapper" class="Wrapper">
+        <Style src="UIScreen.uss" />
+        <ui:Label text="Shot Selection" class="shotHeader" />
+        <ui:VisualElement name="Container">
+            <ui:VisualElement class="column">
+                <ui:ListView focusable="True" show-border="false" show-bound-collection-size="true" class="columnList" />
+            </ui:VisualElement>
+            <ui:VisualElement class="column columnWide">
+                <ui:ListView focusable="True" show-border="false" show-bound-collection-size="true" class="columnList" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

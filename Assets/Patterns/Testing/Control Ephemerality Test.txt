@@ -1,0 +1,15 @@
+pattern { }
+phase 0
+	action block 0
+		clear bullet
+		position 0 0
+		##Note that updater adds are queued, so this is not set to 1 until the frame AFTER beh starts.
+		timer restart ff 
+		bullet-control persist strip-red/w slowdown 0.5 _
+		##Controls first run, then are checked. So this runs for three frames and gets deleted on the third frame (1-indxed)
+		bullet-control < timer(ff) 3 strip-red/w slowdown 0.5 _
+		bullet-control < timer(ff) 2 strip-red/w restyle sun-red/w _
+		bullet-control < timer(ff) 4 strip-red/w restyle sun-red/w _
+		bullet-control < timer(ff) 5 strip-red/w slowdown 0.5 _
+		bullet-control < timer(ff) 1 strip-red/w slowdown 0.5 _
+		

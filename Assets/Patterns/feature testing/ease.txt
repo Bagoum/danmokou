@@ -1,0 +1,16 @@
+pattern { }
+phase 0
+    action block 0
+		position 4 0
+		##Slows to stop halfway
+		move 4 tpnrot eased out-sine 2 cx -2
+		
+		##Slows to stop halfway, then continues
+		##move 4 offset zero ease out-sine 2 cm -2 0
+		
+		##Speeds up and keeps going
+		##move 4 tpnrot eased in-sine 2 cx -2
+		
+		##Speeds up, after halfway keeps going at original speed
+		##move 4 offset zero ease in-sine 2 cm -2 0
+            

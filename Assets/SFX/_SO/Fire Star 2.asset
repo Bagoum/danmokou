@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1fa61efa6fe65e0459ee271ffb7e08d1, type: 3}
+  m_Name: Fire Star 2
+  m_EditorClassIdentifier: 
+  defaultName: x-fire-star-2
+  clip: {fileID: 8300000, guid: cbd720b4a158d1046bc17a8f33bf47a2, type: 3}
+  volume: 0.26
+  timeout: 0.065

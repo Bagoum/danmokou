@@ -1,0 +1,89 @@
+﻿#include "Hash.cginc"
+
+static float PI = 3.14159265358979323846264338327950288419716939937510;
+static float TAU = 2 * PI;
+static float HPI = PI / 2;
+static float SQR2 = 1.41421356237;
+static float ISQR2 = 0.70710678119;
+static float _2ISQR3 = 1.154700538379251529018297561;
+static float2 center = float2(0.5, 0.5);
+
+static float REHASH = 43758.5453123;
+
+float mod(float x, float by) {
+    return x - by * floor(x/by);
+}
+float mod1(float x, float by) {
+    return x - by*floor(x/by);
+}
+float2 mod2(float2 x, float2 by) {
+    return x - by*floor(x/by);
+}
+float3 mod3(float3 x, float3 by) {
+    return x - by*floor(x/by);
+}
+
+float rehash(float x, int ii) {
+    return x + REHASH * ii;
+}
+			
+float cq(float w) {
+    return w * w * (3.0 - 2.0 * w);
+}	
+float2 cq2(float2 xy) {
+    return float2(cq(xy.x), cq(xy.y));
+}
+float c01(float x) {
+    return clamp(x, 0, 1);
+}
+			
+float2 s(float2 uv, float bx, float by) {
+    return float2(uv.x * bx, uv.y * by);
+}
+float2 ds(float2 uv, float bx, float by) {
+    return float2(uv.x / bx, uv.y / by);
+}
+bool approx(float3 x, float3 y) {
+    x = abs(x - y);
+    return x.x + x.y + x.z < 0.01;
+}
+float z1pm(float z1) {
+    return 2 * z1 - 1;
+}
+float4 z1pm4(float4 z1) {
+    return 2 * z1 - 1;
+}
+float pm01(float pm) {
+    return 0.5 + pm / 2;
+}
+float pm01c(float pm) {
+    return clamp(0.5 + pm / 2, 0, 1);
+}
+float2 rotv2(float2 rot, float2 vec) {
+    return float2(rot.x * vec.x - rot.y * vec.y, rot.y * vec.x + rot.x * vec.y);
+}
+float2 rot2(float angle, float2 vec) {
+    return rotv2(float2(cos(angle), sin(angle)), vec);
+}
+float2 rot2c(float angle, float2 vec) {
+    return center + rot2(angle, vec - center);
+}
+//-pi to pi
+float2 uvToPolar(float2 uv) {
+    uv -= float2(0.5, 0.5);
+    return float2(length(uv), atan2(uv.y, uv.x));
+}
+//0 to 2pi
+float2 uvToPolar2(float2 uv) {
+    uv -= float2(0.5, 0.5);
+    return float2(length(uv), mod1(atan2(uv.y, uv.x), TAU));
+}
+//theta in radians
+float2 polarToUV(float2 rt) {
+    return float2(0.5 + rt.x * cos(rt.y), 0.5 + rt.x * sin(rt.y));
+}
+float3 hueShift(float3 color, float hue) {
+    const float3 k = float3(0.57735, 0.57735, 0.57735);
+    float cosAngle = cos(hue);
+    return float3(color * cosAngle + cross(k, color) * sin(hue) + k * dot(k, color) * (1.0 - cosAngle));
+}

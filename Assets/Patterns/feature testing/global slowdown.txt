@@ -1,0 +1,25 @@
+pattern { }
+phase 0
+	action block 0
+		slowdownreset
+		clear phase
+		clear bullet
+	action block 0.1
+		shift-phase-to 1
+		
+<!> hp 600
+phase 10
+	action block 0
+		setstate vulnerable true
+    action block 0
+        position -3 0
+		slowdown 0.1
+		bullet strip-red/w <1,:> gcr {
+			wt	1	_
+			rpp	<-2>
+		} s tprot cx 6
+		_ 1
+			slowdownreset
+        
+            
+            

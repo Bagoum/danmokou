@@ -1,0 +1,6 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
+    <ui:ListView focusable="True" show-border="false" show-bound-collection-size="true" name="mylist" style="width: 100%;
+ height: 100%;">
+        <Style src="test1.uss" />
+    </ui:ListView>
+</ui:UXML>

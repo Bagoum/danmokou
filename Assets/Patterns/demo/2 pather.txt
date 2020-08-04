@@ -1,0 +1,337 @@
+pattern { }
+<!> hide-timeout
+phase 0
+    action block 0.2
+        setstate vulnerable false
+        @ n1,n2,nb,nt
+            cull
+        clear phase
+        summon inode <> nb <> null null
+        summon inode <> nt <> null null
+        summon inode <> n1 <> null null
+        summon inode <> n2 <> null null
+        shift-phase-to 6
+
+##1. keine abuse
+<!> spellname `Starry Night: Piercing Rain`
+<!> hp 25000
+<!> hpbar 1
+phase 35 #{
+    end
+        clear bullet-fancy
+        bullet-control ONCE keine-blue/w SOFTCULL cwheel-blue/w _
+        bullet-control ONCE keine-yellow/w SOFTCULL cwheel-yellow/w _
+    action block 0
+        move 2 tp-nrot eased out-sine 2 stopsampling 0 vhometime 2 cxy 0 2
+        summon cutin-mokou <> _ <> null file slide-rl
+        wait-for 3
+    action block 0
+        setstate vulnerable true
+        position 0 2
+        bullet x-keine <> cre 50 _ <> sfx
+        @ nt
+            position 0 4
+        @ nt
+            bullet keine-blue/w <-10,:> crepeatfuncangle 100 _
+                - 10 mod 30 * 11.459 x
+                 repeatp mod 40 <> 
+                 modifybs
+                        * p2m 40
+                            clamp .7 1.2 linear 1.2 -0.01 p1m 40
+                        0 0
+                 s tp-rot cy -1.3
+        @ nt
+            bullet keine-yellow/w <-9.65,:> idelay 50 crepeatfuncangle 100 _
+                - 25 mod 40 * 24.72 x
+                repeatp mod 40 <>
+                    modifybs
+                        * p2m 40
+                            clamp .5 1 linear 1 -0.01 p1m 40
+                        0 0
+                s tp-rot cy -2.2
+#}
+
+##2. mega arrows and flower
+<!> spellname `Creation: Blooming Flowers, Falling Petals`
+<!> hp 27000
+<!> hpbar 1
+phase 36 #{
+    end
+        clear bullet-fancy
+        bullet-control ONCE circle-red/ws SOFTCULL cwheel-red/w _
+        bullet-control ONCE circle-blue/ws SOFTCULL cwheel-blue/w _
+        bullet-control ONCE arrow-red/w SOFTCULL cwheel-red/ _
+    action block 0
+        move 2 tp-nrot eased out-sine 2 stopsampling 0 vhometime 2 cxy 0 2.5
+        summon cutin-mokou <> _ <> null file slide-rl
+        wait-for 3
+    action block 0
+        setstate vulnerable true
+        position 0 2.5
+!{
+arrowf()
+    clamp 24 40 linear 40 -0.22 x
+!}
+!{
+circlef()
+    clamp 20 30 linear 30 -0.1 x
+!}
+        bullet arrow-red/w <1,:-90> cre $arrowf() _ <,:74.164> repeat 3 <,:120> repeat 17 <> 
+            modifybs
+                * -0.15 fhmod 8.5 p
+                * 0.1 fhnmod 8.5 p
+                0
+            s tp-rot
+                lerpoutin 0 0.5 0.5 1
+                    cx 3
+        bullet x-fire-burst-1<> cre $arrowf() _ <> sfx
+        bullet circle-red/ws <0,:> cre $circlef() _ <,:4.1773> repeat 10 <,:36> s tp-rot
+            switch 0.8
+                cx 2
+                lerpin 1 3 cx 2
+        bullet circle-blue/ws <0,:> cre $circlef() _ <,:-4.1773> repeat 10 <,:36> s tp-rot
+            switch 0.8
+                cx 2
+                lerpin 1 3 cx 2
+#}
+
+##3. fancy circle pathers and then the tight claws
+<!> spellname `Starry Night: Eye of the Storm`
+<!> hp 27000
+<!> hpbar 1
+phase 40 #{
+    end
+		pool-control keine-red/w softcullall cwheel
+		poolf-control  pather18-* softcullall cwheel
+    action block 0
+        move 2 tp-nrot eased out-sine 2 stopsampling 0 vhometime 2 cxy 0 2
+        summon cutin-mokou <> _ <> null file slide-rl
+        wait-for 3
+    action block 0
+        setstate vulnerable true
+        position 0 2
+        @ nt
+            position 0 3
+!{
+yeet(color; s; sp)
+        bullet %color% <1,:> conce repeat 24 <,:15> pather 4
+            b 3.5
+            tp-rot switchH 0.25
+                vcircle %s%1 1
+                switchH 0.5
+                    hastendelta 0.25 vcircle %sp%1 0.5
+                    switchH 0.5
+                        hastendelta 0.75 vcircle %s%1 0.5
+                        cx -6
+!}
+!{
+act(ang)
+    action block 0
+        bullet x-fire-tech-8 <> idelay 30 cre 120 2 <> sfx
+        $yeet(pather18-blue/ws; +; -)
+        _ 1
+            $yeet(pather18-yellow/ws; -; +)  
+        bullet x-keine <> cre 40 6 <> sfx
+        bullet x-keine <> idelay 360 cre 40 6 <> sfx
+        @ nt
+            bullet keine-red/w <> cre 40 6 <1,:> repeat 2 <,:180> repeat 5 <> s tpnrot
+                switchH 3
+                    lerpout 0 2 vhome 0.02 Lplayer
+                    rotate * %ang% - p 2
+                        stopsampling 0 vhome 5.4 Lplayer
+    action block 0
+        move 1.5 tp-nrot eased io-sine 1.5 stopsampling 1.5 vhometime 1.5 randomxy -4 4 1 3
+!}
+    
+    $act(5.5)
+    $act(5)
+    $act(4.5)
+    $act(4)
+    $act(3.5)
+    $act(3.5)
+    $act(3)
+#}
+        
+##4. the sine pathers from the ceiling
+<!> spellname `Starry Night: Shooting Stars`
+<!> hp 27000
+<!> hpbar 1
+phase 35 #{
+    end
+        bulletf-control ONCE pather18-red/w SOFTCULL cwheel-red/w _
+        bullet-control ONCE keine-purple/w SOFTCULL cwheel-purple/w _
+        bullet-control ONCE keine-pink/w SOFTCULL cwheel-pink/w _
+    action block 0
+        move 2 tp-nrot eased out-sine 2 stopsampling 0 vhometime 2 cxy 0 2
+    action block 0
+        setstate vulnerable true
+        position 0 2
+        @ nt
+            position 0 5
+        @ n1
+            position -3 3.5
+        @ n2
+            position 3 3.5
+!{
+wave(offset; times)
+        bullet pather18-red/w %offset% cre 20 %times% <1,:> repeat 2 <,:180> pather 4
+            b 4 tpnrot
+            tptf
+                dsine 2 1 x
+                -4
+        bullet pather18-red/w %offset% cre 20 %times% <1,:> repeat 2 <,:180> pather 4
+            b 4 tpnrot
+            tptf
+                dsine 2 -1 x
+                -4
+        bullet x-fire-tech-8 <> cre 20 7 <> sfx
+!}
+!{
+spikef()
+    16
+!}
+!{
+spike(color)
+    bullet %color% <2,:> cre $spikef() _ <,:37.08> repeat 6 <,:60> s tp-rot
+            cx 3
+!}
+        @ nt
+            seq
+                action block 0
+                    $wave(<-6.5,:>; 7)
+                action block 6
+                    $wave(<-7,:>; 8)
+                action block 4
+                    $wave(<-6.5,:>; 7)
+                action block 3
+                    $wave(<-7,:>; 8)
+                repeat-every 4 9999
+                    action block 2.5
+                        $wave(<-6.5,:>; 7)
+                    action block 2.5
+                        $wave(<-7,:>; 8)
+                        break
+                    break
+                break
+        @ n1
+            $spike(keine-purple/w)
+        @ n2
+            $spike(keine-pink/w)
+#}
+
+##5. claws and homing pathers
+<!> spellname `Creation: Beating Heart`
+<!> hp 29000
+<!> hpbar 1
+phase 40 #{
+    end
+        clear bullet-fancy
+        bullet-control ONCE keine-red/w SOFTCULL cwheel-red/w _
+    action block 0
+        @ n1
+            position -3 3.5
+        @ n2
+            position 3 3.5
+        move 2 tp-nrot eased out-sine 2 stopsampling 0 vhometime 2 cxy 0 2
+        summon cutin-mokou <> _ <> null file slide-rl
+        wait-for 3
+    action block 0
+        setstate vulnerable true
+        position 0 2
+!{
+prisonf()
+    clamp 90 160 linear 160 -4 x
+!}
+!{
+prison()
+    bullet keine-red/w <2,0:-40> cre $prisonf _ <> target Lplayer repeat 9 <,:10> s tp-rot
+        lerpin 0.3 0.8
+            cx 3
+!}
+    @ { n1 n2 }
+        $prison()
+    bullet x-keine <> cre $prisonf() _ <> sfx
+!{
+heartf()
+    clamp 200 240 linear 240 -8 x
+!}
+    bullet x-fire-tech-8 <> cre $heartf() _ <> sfx
+    bullet pather18-blue/ws <> cre $heartf() _ <> pather 3
+        b 3 tpnrot
+        growbyratio 0.15
+            truerotatelerprate 150
+                pperiod 2 protate 50 randomdir 4 50 80
+                stopsampling 1.5 vhome 4 Lplayer
+#}
+
+##6. keine and stream
+<!> spellname `Starry Night: Hiding From the Rain`
+<!> hp 26000
+<!> hpbar 1
+phase 45 #{
+    end
+        clear bullet-fancy
+        bullet-control ONCE ellipse-green/w SOFTCULL cwheel-green/w _
+        bullet-control ONCE ellipse-blue/w SOFTCULL cwheel-blue/w _
+        bullet-control ONCE keine-red/w SOFTCULL cwheel-red/w _
+    action block 0
+        @ n1
+            position -3 3.5
+        @ n2
+            position 3 3.5
+        move 2 tp-nrot eased out-sine 2 stopsampling 0 vhometime 2 cxy 0 2.5
+    action block 0
+        setstate vulnerable true
+        position 0 2.5
+!{
+stream(color)
+    bullet %color% <0,0:-20> cre 100 _ <> repeat 3 <,:20> repeat 4 <> s tp-rot
+        lerpfromto 1 2
+            randomdir 0.7 -50 -130
+            stopsampling 1 vhome 1.5 Lplayer
+!}
+!{
+prisonf()
+    clamp 170 240 linear 240 -4 x
+!}
+!{
+prison(s)
+    bullet keine-red/w <2,0:%s%2> irepeat $prisonf() _ <> itarget Lplayer cre 10 8 <,:%s%4> s tp-rot
+        lerpin 0.3 0.8
+            cx 3
+!}
+        bullet x-keine <> irepeat $prisonf() _ <> cre 10 8 <> sfx
+        @ { n1 n2 }
+            $prison(+)
+        @ { n1 n2 }
+            $prison(-)
+        @ n1
+            $stream(ellipse-green/w)
+        @ n2
+            $stream(ellipse-blue/w)
+#}
+    
+##end card
+<!> spellname `Thanks for playing` `(I didn't program anything for boss death yet)`
+phase 0
+    action block 0
+		noop
+    
+!{
+circ(s)
+    bullet pather18-blue/w <0.5,0:90> cre 4 _ <,:%s%222.5> pather 3
+        b 1 tp-rot
+        switchH 0.5
+            vcircle %s%0.5 0.5
+            growbyadd 4 0 cy %s%5
+!}
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    

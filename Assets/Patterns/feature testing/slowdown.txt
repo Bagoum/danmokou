@@ -1,0 +1,21 @@
+pattern { }
+phase 0
+	action block 0
+		clear phase
+		clear bullet
+	action block 0.1
+		shift-phase-to 1
+phase 0
+    action block 0
+        position 0 0
+		bullet ellipse-purple/w <> gcr2 6 _ <> {
+			root	cxy 0 6
+		} gsr2 12 <> {
+		} randomx -6 6 s tprot pxy
+			dsine 6 0.2 (+ t brand 0 6)
+			+ -2.5 dcosine 6h 0.3 (+ t brand 0 6h)
+		bullet-control persist ellipse-purple/w slowdown (opacity .8 (/ (distto Lbeh mima) 4)) relcirc mima <0,0,4> 
+		move _ nroffset px sine 6 2 t
+        
+            
+            

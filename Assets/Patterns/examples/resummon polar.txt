@@ -1,0 +1,26 @@
+pattern { }
+phase 0
+	action block 0
+		clear phase
+		clear bullet
+	action block 0.1
+		shift-phase-to 1
+phase 0
+    action block 0
+        position -1 0
+		sync lightning-blue/w <1,:> pather 3 3 tprot cx 2 {
+			sm
+				async gem-red/b <0.9,:90> idelay 90 gcr {
+					rootadjust	lbeh aya
+					start {
+						rt =v2 rv2topolar &rv2
+						rv2 =rv zero
+					}
+				} s polar
+					[&rt].x
+					+ [&rt].y * 70 t
+		}
+		bullet-control persist gem-red/b restyle gem-blue/b > (+ * 70 t [&.rt].y)  90
+        
+            
+            

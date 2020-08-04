@@ -1,0 +1,16 @@
+pattern { }
+phase 0
+	action block 0
+		position 0 0
+		sync gdlaser-*/ <> gsr2c 6 {
+			color { red black }
+		} laser null 2 10 {
+			##length 30
+			s 0.5
+			dynamic :: {
+				rc		0.24
+				trc	* &rc t
+			} polar 
+				* 2 &trc
+				+ * -23 &lt sine 2.1 24 + * 1.1 &lt &trc
+		}

@@ -1,0 +1,53 @@
+pattern { }
+phase 0
+	action block 0
+        position 0 0
+        clear bullet
+		clear phase
+		shift-phase-to 2
+		
+!{ show(gsrrules360; gsrrules720)
+ saction 0
+	async strip-*/b <> gcr2 120 3 <> {
+		color { red blue green }
+		preloop {
+			sides =f + 5 * 2 t
+		}
+	} gsr2 120 <6> {
+		%gsrrules720
+	} s polar
+		reg2star (* 2 t) (& sides) a
+		* 5 t
+	wait 1
+	async gcircle-*/ <> gcr2 120 3 <> {
+		color { red blue green }
+		preloop {
+			sides =f + 5 * 2 t
+		}
+	} gsr2c 120 {
+		%gsrrules360
+	} s polar
+		regsoftstar (* 2 t) (& sides) a
+		* 5 t
+	wait 1
+	async ellipse-*/w <> gcr2 120 4 <> {
+		color { red blue green }
+		preloop {
+			sides =f + 3 t
+		}
+	} gsr2c 30 {
+		%gsrrules360
+	} s polar
+		regpoly (* 2 t) (&sides) a
+		* 5 t
+!}
+
+phase 0
+    saction 0
+		$show(noop; noop)
+##with more concentration at ends
+phase 0
+    action block 0
+		$show(mutateang	smoothloopr io-sine (/ 360 &sides) [&rv2].a;
+					mutateang	smoothloopr io-sine (/ 720 &sides) [&rv2].a)
+        

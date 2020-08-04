@@ -1,0 +1,35 @@
+pattern { }
+<!> title `Mima` `God of the<br>Eighty-Sixth<br>Crescent Moon`
+<!> uicolor superposec 0.5 black teal
+<!> typecircle green teal blue lerpback 10 14 20 24 (mod 24 t) 90 -200
+<!> track `mima` `魅魔`
+phase 0
+	action block 0
+		position 0 0
+	action block 0.1
+		shift-phase-to 1
+	
+
+<!> type spell `1`
+<!> hp 6000
+<!> hpbar 1
+phase 9
+    action block 0
+		setstate vulnerable true
+		move _ nroffset px sine 4 2 t
+        noop
+
+<!> type spell `2`
+phase 20
+    action block 0
+        noop
+		
+<!> type non `3`
+phase 10
+    action block 0
+        noop
+		
+<!> type spell `4`
+phase 10
+    action block 0
+        noop

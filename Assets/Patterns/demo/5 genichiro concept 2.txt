@@ -1,0 +1,180 @@
+pattern { }
+phase 0 #{
+	action block 0
+		clear phase
+		clear bullet
+	action block 0.1
+		shift-phase-to 3
+#}
+
+!!{ me mima
+
+##1 -- simple circle fire nonspell
+<!> type non  `Bladed Wings: Walls in the Ocean`
+<!> hp 20000
+<!> hpbar 1
+phase 26 #{
+    action block 0
+        ##move 2 tp-nrot eased out-sine 2 stopsampling 0 vhometime 2 cxy 0 3
+        ##summon cu-$me-come-on-boy <> _ <> null file fall
+        ##wait-for 4
+	action block 0
+		position 0 2
+		setstate vulnerable true
+		async gcircle-*/b <0.4,:> gir2 0 2 <> { 
+			p this 
+			color { green orange }
+		} gcr {
+			wt	4 _
+			frv2	angle + * 0.5 t  (* pm1mod p  + (* 4 t) * 3 softmod 6 t)
+		} repeat 5 <72> s tprot lerpfromto 0.5 1 cx 3 cx 1.7
+		gtr {
+			wt 240 _
+			wait-child
+			alternate t
+		} {
+			move 2 tpnrot eased io-sine 2 ssvhomet 2 pxy brand -2 -0.5 brand 1 3
+			move 2 tpnrot eased io-sine 2 ssvhomet 2 pxy brand 0.5 2 brand 1 3
+		}
+#}
+
+
+##2 -- decent spell
+<!> type spell `Bladed Wings: Walls in the Ocean`
+<!> hp 20000
+<!> hpbar 1
+phase 46 #{
+    action block 0
+        ##move 2 tp-nrot eased out-sine 2 stopsampling 0 vhometime 2 cxy 0 3
+        ##summon cu-$me-come-on-boy <> _ <> null file fall
+        ##wait-for 4
+	action block 0
+		position 0 2.5
+		pool-control {{ gcircle-* }}  allowcull false
+		bullet-control persist {{ gcircle-* }} cull < y -6
+		beh-control-sm persist lightning-orange/b onlyonce offscreen loc
+			action block 0 :2
+				async glcircle-green/ <> gcr2 72 2 <12h> { sfx x-fire-burst-1 } gsr2 30 <12> . s tp
+					cx 1
+					py * -2 (-m t 0.2)
+				async lightning-green/ <> gcr { 
+					face d 
+					wt	10 90
+					start {
+						dir =f if (> x 0) -1 1
+						rv2.a +=f if (= &dir -1) 180 0
+					}
+					preloop {
+						rv2.ry =f * * &dir 0.1 rangesoftmod 15 - t 7
+					}
+				} pather 0.2 0.2 tprot lerpfromtoback 0.3 0.8 1.2 1.8 cx 3 cx 0.5 { }
+		gtr {
+			wt 120 _
+			wait-child
+		} {
+			async x-boom <> gcr2 24 4 <> . sfx
+			shake 1.5 2 smooth smod-010 / x 2
+			savev2 ploc 0 Lplayer
+			async gcircle-*/b <1,:-90> gcr {
+				delay	40
+				root	cy 5.5
+				target nx * -1 @0 ploc
+				color { yellow green }
+				wt	0.05 1000
+				preloop {
+					rv2.rx +=f -0.03
+					rv2.ry =f * min t 170 sine 1p 0.04 t
+				}
+			} s tprot lerpfromtoback 1 2 3 10 cx 2.8 cx 0.8
+			_ 2
+				move 2 tpnrot eased io-sine 2 ssvhomet 2 pxy * -1 [@0 ploc].x y
+			async lightning-orange/b <> gcr {
+				delay	240
+				wt	20 7
+				p	this
+				sfx	x-lightning
+			} gsr {
+				target 	a pxy
+						tolr @0 ploc
+						+ -6 * 2 p
+			} pather 2 2 tprot cx 4 { }
+			_ 12
+				move 2 tpnrot eased io-sine 2 ssvhomet 2 pxy * -1 [Lplayer].x y
+		}
+		
+#}
+
+
+##3 -- skyfall
+<!> type spell `Thunder God's Wrath: Where the Phoenix Fells the Sky`
+<!> hp 20000
+<!> hpbar 1
+<!> root 0 10
+phase 46 #{
+	action block 0
+		pool-control {{ gcircle-* sakura-* fireball-* }} allowcull false
+	action block 0
+		position 10 6
+		async lightning-yellow/ <> gcr2 120 _ <> {
+			p this
+			root	cxy -10 5
+		} gsr2 11 <2,:,:> { alternate p } {
+			pather 1 1 tprot pxy dsine 7 0.6 t -1.5 { }
+			pather 1 1 tprot pxy dsine 7 -0.6 t -1.5 { }
+		}
+		gtr {
+			wait-child
+			wt	0	_
+			p	this
+			preloop lr =f pm1 p
+		} seq
+			action block 0
+		!!{ wl 15
+		!!{ ww 10
+				sync gcircle-* <> loc0 gsr {
+						color { blue/b red/b }
+						tmmod	$ww
+					} gsr {
+						tmmod	$wl
+					} gsr {
+						tmmod	2
+					} s nroffset :: {
+						px	pma $ww { $wl 2 }
+						py	pm $wl 2
+						plr	pm1 pm 2 1
+					} + lbeh $me qrotate * pm1 (p1ma { $ww $wl 2 }) py + 30 sine 4p 8 t  
+						wings1 $ww $wl 2
+				move 2 tpnrot eased out-sine 2 ssvhomet 2 pxy * &lr 2.5 2.5
+				async gpather-pink/w <,0.75:> gcr2 24 5 <,1.5:>  {
+					target a Lplayer
+					sfx x-fire-tech-8
+				} gsr2 2 <> {
+					postloop rv2.ry *=f -1
+				} pather 4 4 tprot lerpfromtoback 0.8 1.2 1.5 1.9 cx 7 cx 2 { }
+			action nb 0
+				async scircle-*/b <> gir2 240 4 <20h> { delay 10 } gcr2 25 3 <0> {
+						sfx x-fire-burst-2
+						p this
+					} gsr2 18 <20> . gsr2 2 <> {
+						color { red pink }
+						p add
+					} s polar
+						+ 0.5 * (- 2.1 * 0.24 p1) t
+						* pm1mod p2 logsumshiftt -1 (- 1.6 * 0.5 p1) * 25 t * 12 t
+			action block 5
+				async gpather-red/w <> gcr2 24 5 <15> { sfx x-fire-tech-6 } doubleflipy target Lplayer 
+					pather 3 3 tprot lerpfromtoback 0.3 0.4 0.7 1.2 cx 5 cx 0.3 { }
+				move 4 tpnrot eased out-sine 4 ssvhomet 4 pxy * &lr 9.5 6
+				_ 3
+					bullet-control once {{ gcircle-* }} cull _
+			action block 0
+				pos pxy * &lr -9.5 6
+				
+			
+		
+#}
+
+
+
+
+

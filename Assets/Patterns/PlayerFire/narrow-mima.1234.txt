@@ -1,0 +1,19 @@
+gtr {
+	wt 12 _
+	wait-child
+} fire
+	## free fire
+	async lstar-*/b <> gcr2 12 _ <> { 
+		delay * 3 p
+		sfx pc-fire
+		colorf { blue teal } p
+	} pssdd 24 24 oh1 0.7 * pm1 // p 2 * 400 t tprot py 13
+	## free cancellation
+	noop
+	## focus
+	async lstar-*/ <> gcr2 12 _ <> { 
+		sfx pc-fire 
+		colorf { blue teal } // p 2
+	} pssdd 27 27 oh1 0.7 * pm1 p * 500 t tprot py + 13 * 3.5 // p 2
+	## focus cancellation
+	noop

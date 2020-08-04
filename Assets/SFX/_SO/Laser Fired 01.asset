@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1fa61efa6fe65e0459ee271ffb7e08d1, type: 3}
+  m_Name: Laser Fired 01
+  m_EditorClassIdentifier: 
+  defaultName: x-laser-fire
+  clip: {fileID: 8300000, guid: 540356e5b2eb1c84db5e6c7b81cf0ff3, type: 3}
+  volume: 0.16
+  timeout: 0.06

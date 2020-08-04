@@ -1,0 +1,69 @@
+pattern { }
+phase 0 #{
+    action block 0
+        shift-phase-to 1
+#}
+!{ 
+mimapower1()
+sync powerup1 <> powerup2
+	x-powerup-1 x-powerdown-1
+	witha 0.9 lerp 0 1 t green teal
+	witha 0.9 blue
+	1.5 2 0 0.5
+!}
+phase 0 #{
+	action block 0
+		position 0 2.5
+		gtr {
+			wt	240 _
+			rpp	<40h>
+			wait-child
+		} action block 0
+			$mimapower1
+			async lightning-* <> gcr2 150 2 <20h> {
+				delay 1.5s
+				color { red* pink* }
+				p this
+				sfx  { x-lightning }
+			} gsr2 18 <20> {
+				color { /w / }
+			} pather 3 2
+				polar
+					* 4 t
+					* pm1mod p * 20 t
+				{ }
+			break
+		beh-control-sm persist lightning-* onlyonce  & (in y 0 ymax)  (in abs x xmax ++ xmax)
+			async fireball-red/w <0,:180> gir {
+				face v
+				sfx x-fire-burst-3
+			} {
+				eruption 10 5
+					* 25 rangemod 1 * 1h &i
+					brand 0.8 1.9
+					max -2.2 * -0.35 t
+					{ }
+				icolor glcircle-pink/b eruption 10 3
+					* 35 rangemod 1 * 1h &i
+					brand 0.4 1.5
+					max -1.7 * -0.26 t
+					{ }
+			}
+
+
+#}
+		
+!!{ colors { blue purple pink red orange yellow green teal black  }
+phase 40 #{
+    action block 0
+		position 0 4
+		async x-lightning <> gcr2 25 4 <> . sfx
+		##sync glcircle-* <-4.7,3:> gsr2 3 <0.7,:> color { */  */w */b }  gsr2 9 <,-.7:> color $colors s tprot zero
+		async lightning-* <0.5,:180> gir2 25 3 <60> color { */ */w */b */b */w  } gcr2 8 9 <6> color { black purple teal green orange yellow red pink blue } pather 3 2
+			roffset
+				pxy
+					* 1 t
+					0 ##sine 1 0.2 t
+			{ }
+		##async pather18-* <0.5,:2> gsr2 3 <50> color { */ */w */b */bs */ws  } gsr2 9 <5> color { black purple teal green orange yellow red pink blue } pather 1 1 tprot cx 1
+   

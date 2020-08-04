@@ -1,0 +1,5 @@
+fm0, 1, 3, 7 might serve as death sounds, also fall6
+
+anything in up/ can be used for powerup-style stuff (has to not be repeating)
+
+on11 might be usable for some kind of graze/coin effect

@@ -1,0 +1,20 @@
+.node {
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.optionsCont {
+    flex-direction: row;
+    justify-content: space-between;
+    width: 50%;
+}
+
+#Value {
+    flex-grow: 1;
+}
+
+#Key {
+    flex-grow: 1;
+    -unity-text-align: upper-left;
+}
+

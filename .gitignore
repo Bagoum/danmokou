@@ -1,0 +1,35 @@
+.vs
+.idea
+Library
+Logs
+Temp
+obj
+bin
+Builds
+Design
+ScriptDrafts
+Saves
+Source
+
+*.csproj
+*.unityproj
+*.sln
+*.tmp
+*.user
+*.userprefs
+*.pdb
+
+CodeCoverage
+MemoryCaptures
+Assets/ReferenceOnly
+Assets/TextMesh Pro
+
+docs
+
+# these are compiled from the FS project
+# Assets/Plugins/Self/Core/FS/*.dll
+
+Assets/SiMP
+Assets/SiMP/UI/.psd
+
+Assets/Audio/Tracks/raw

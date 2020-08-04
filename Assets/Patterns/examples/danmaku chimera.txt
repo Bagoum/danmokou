@@ -1,0 +1,50 @@
+pattern { }
+phase 0
+	action block 0
+		shift-phase-to 1
+
+phase 40
+!!{ circt 3
+	action block 0
+		position 0 0.5
+		move _ offset zero pxy sine 8.2 0.5 t 0
+		async keine-purple/w <1,:> gcr {
+			p	this
+			t 	_
+			w	* 120 ++ $circt
+			frv2	a * pm1mod &i 10
+			savev2	root t loc
+			sfx	x-fire-tech-8
+		} gsr2c 16 {
+		} s tprot px 2
+		async x-fire-tech-6 <> gcr {
+			t	_
+			w	* 120 ++ $circt
+			delay	120
+		} sfx
+!{ subsummon()
+sync gcircle-blue/w <> gsr {
+	root	@ root p
+	start	r =f dist loc @ root p
+	p	add
+	postloop	r -=f 0.2
+	face	v
+	t	13
+} s polar
+	&r
+	ease io-sine $circt * pm1mod p2 * * 22.5 / 2.5 $circt  t
+!}
+		bullet-control-sm persist keine-purple/w > t 1
+			$subsummon()
+		bullet-control persist keine-purple/w cull > t 1
+		bullet-control-sm persist keine-purple/w.1 > t 2
+			$subsummon()
+		bullet-control persist keine-purple/w.1 cull > t 2
+		bullet-control-sm persist gcircle-blue/w & > t $circt = p2 0
+		##Advance time by one (120 frames) so the reconstructed bullets do not fade in. 
+			sync keine-purple/w.1 <-90> addtime 120 gsr {
+				pm	defer p1
+				face	v
+			} s tprot switchH 1 zero cx 2
+		bullet-control persist gcircle-blue/w cull > t $circt
+

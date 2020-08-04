@@ -1,0 +1,20 @@
+gtr {
+	wt 0 _
+	wait-child
+} fire
+	## free fire
+	async sakura-pink/b <34> gcr2 18 _ <> { 
+		delay 12
+		start rv2.a *=f pm1 p
+		sfx pc-fire
+	} gsr {
+	} ps 18 oh1 tprot cy 6
+	## free cancellation
+	noop
+	## focus
+	async sakura-pink/w <> gcr2 12 _ <> { 
+		delay 12
+		sfx pc-fire
+	} ps 12 oh1 tprot cy 9
+	## focus cancellation
+	noop

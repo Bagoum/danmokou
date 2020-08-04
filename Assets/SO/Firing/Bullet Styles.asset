@@ -1,0 +1,114 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f94335465055a404498dd05058aa17e4, type: 3}
+  m_Name: Bullet Styles
+  m_EditorClassIdentifier: 
+  prefabs:
+  - groupTitle: Priority
+    prefabs:
+    - name: empty
+      prefab: {fileID: 4623879621751819397, guid: d8fc742f09281af43ba731c2c5c4638d,
+        type: 3}
+  - groupTitle: Small
+    prefabs:
+    - name: ellipse
+      prefab: {fileID: 4623879621751819397, guid: 1c8c16034e435454182d352fef19f295,
+        type: 3}
+    - name: gem
+      prefab: {fileID: 4623879621751819397, guid: 7b69fabc0824755469ebb79869d78184,
+        type: 3}
+    - name: circle
+      prefab: {fileID: 2677688450528804024, guid: b047f16d41292634c8d9327611784d4d,
+        type: 3}
+    - name: shell
+      prefab: {fileID: 4623879621751819397, guid: 971b7f3ff93bb344e9384bb52380460f,
+        type: 3}
+    - name: arrow
+      prefab: {fileID: 2677688450528804024, guid: 5d38347e9da000f43958c2c98f217071,
+        type: 3}
+    - name: strip
+      prefab: {fileID: 4623879621751819397, guid: f67731f26baa05f41bae7a82ac01d63a,
+        type: 3}
+    - name: gcircle
+      prefab: {fileID: 5118737884568401888, guid: 82bce57f53a948d4fa843d035d63ad6a,
+        type: 3}
+    - name: fireball
+      prefab: {fileID: 2677688450528804024, guid: ded13edf79c2fcb4eba80365e4f46e80,
+        type: 3}
+    - name: star
+      prefab: {fileID: 2677688450528804024, guid: f10f1a5ace368b649a20f7ffa0c5ce1a,
+        type: 3}
+    - name: sakura
+      prefab: {fileID: 4623879621751819397, guid: 1f9ac88ff2d9de441bc37a5b95d37bde,
+        type: 3}
+    - name: amulet
+      prefab: {fileID: 4623879621751819397, guid: e0f00fc172e1a4f4c9b8faa3d64c2a71,
+        type: 3}
+    - name: triangle
+      prefab: {fileID: 2677688450528804024, guid: cf92e50b2ce36444f84d4ea597a62b87,
+        type: 3}
+  - groupTitle: Large
+    prefabs:
+    - name: scircle
+      prefab: {fileID: 2677688450528804024, guid: d2f07e03abd84044b926b8513ea7df64,
+        type: 3}
+    - name: lcircle
+      prefab: {fileID: 2677688450528804024, guid: db3f2c44901c06743b9d508148757cc6,
+        type: 3}
+    - name: sun
+      prefab: {fileID: 2677688450528804024, guid: 0e77cceb33038f74390d7df79177d493,
+        type: 3}
+    - name: keine
+      prefab: {fileID: 1599799849191244851, guid: 8689c8c9aeb133243a5d6cdd512d2fde,
+        type: 3}
+    - name: glcircle
+      prefab: {fileID: 925695241363563048, guid: 896d35a912957784d80249984725a92f,
+        type: 3}
+    - name: lellipse
+      prefab: {fileID: 2677688450528804024, guid: edec2c09e66798544a500812d8ac1be9,
+        type: 3}
+    - name: lstar
+      prefab: {fileID: 2677688450528804024, guid: f1b221edff064a44d9da989ec3b58124,
+        type: 3}
+  - groupTitle: Laser
+    prefabs:
+    - name: laser
+      prefab: {fileID: 3764406661813136865, guid: 0a784eeed2c48cc4497011ac484eedd3,
+        type: 3}
+    - name: glaser
+      prefab: {fileID: 4351406186802378309, guid: 33512ebca480f4f44bac2105265c3626,
+        type: 3}
+    - name: pather
+      prefab: {fileID: 2951577401640358139, guid: 2740f5514453c754e8cf32fbc01a04d2,
+        type: 3}
+    - name: lightning
+      prefab: {fileID: 2951577401640358139, guid: ed233c03892d0484fa4db87de21e57d9,
+        type: 3}
+    - name: gpather
+      prefab: {fileID: 5885705073638309461, guid: 151531d07df3a8d419fbbcbbdc3f3ec0,
+        type: 3}
+    - name: mulaser
+      prefab: {fileID: 5375908486119241891, guid: da7d451c790a2af43be4bea2cdbef84e,
+        type: 3}
+    - name: gdlaser
+      prefab: {fileID: 4339981538987090487, guid: db5a3a672b4eca44783c6b35cf3a86ac,
+        type: 3}
+    - name: zonelaser
+      prefab: {fileID: 3320499245639640377, guid: 5cafb0e64c3cb9d45a4c09c03180561d,
+        type: 3}
+  - groupTitle: Player
+    prefabs: []
+  - groupTitle: Cull
+    prefabs:
+    - name: cwheel
+      prefab: {fileID: 2677688450528804024, guid: 98b63d55d8fc83341a6b624147a27d8d,
+        type: 3}

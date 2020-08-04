@@ -1,0 +1,15 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
+    <ui:Template name="test_label" src="test_label.uxml" />
+    <ui:ListView focusable="True" show-border="false" show-bound-collection-size="true" name="mylist" tooltip="yeet" show-alternating-row-backgrounds="ContentOnly" reorderable="false" style="width: 100%; height: 100%; flex-direction: column; overflow: visible;">
+        <Style src="test1.uss" />
+        <ui:Instance template="test_label" />
+        <ui:Instance template="test_label" />
+        <ui:Instance template="test_label" />
+        <ui:Instance template="test_label" />
+        <ui:Instance template="test_label" />
+        <ui:Instance template="test_label" />
+        <ui:Instance template="test_label" />
+        <ui:Instance template="test_label" />
+        <ui:Instance template="test_label" />
+    </ui:ListView>
+</ui:UXML>

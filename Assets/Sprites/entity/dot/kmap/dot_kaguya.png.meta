@@ -1,0 +1,691 @@
+fileFormatVersion: 2
+guid: 81cdd3d60d7508b41ac11722a6555940
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 2223920096743656307
+    second: dot_kaguya_0
+  - first:
+      213: -7718228992152264792
+    second: dot_kaguya_1
+  - first:
+      213: 1367657959182735635
+    second: dot_kaguya_2
+  - first:
+      213: 1459876936820550490
+    second: dot_kaguya_3
+  - first:
+      213: 7713473369878693175
+    second: dot_kaguya_4
+  - first:
+      213: -4446768744277037364
+    second: dot_kaguya_5
+  - first:
+      213: 601528327962448728
+    second: dot_kaguya_6
+  - first:
+      213: -4495309697200839941
+    second: dot_kaguya_7
+  - first:
+      213: 3489113278030162731
+    second: dot_kaguya_8
+  - first:
+      213: 6551713848503580499
+    second: dot_kaguya_9
+  - first:
+      213: 4379338163918800768
+    second: dot_kaguya_10
+  - first:
+      213: 6096128209302534778
+    second: dot_kaguya_11
+  - first:
+      213: -7475759738567070736
+    second: dot_kaguya_12
+  - first:
+      213: -780390794769647622
+    second: dot_kaguya_13
+  - first:
+      213: -2010519230302348111
+    second: dot_kaguya_14
+  - first:
+      213: 3316190028476425825
+    second: dot_kaguya_15
+  - first:
+      213: -5296800634049787768
+    second: dot_kaguya_16
+  - first:
+      213: -5387682382971021026
+    second: dot_kaguya_17
+  - first:
+      213: -6399734733105872611
+    second: dot_kaguya_18
+  - first:
+      213: -323397634700953386
+    second: dot_kaguya_19
+  - first:
+      213: 2112566406144623873
+    second: dot_kaguya_20
+  - first:
+      213: -4977892987645694587
+    second: dot_kaguya_21
+  - first:
+      213: -8007298356801422587
+    second: dot_kaguya_22
+  - first:
+      213: -951764791189768687
+    second: dot_kaguya_23
+  - first:
+      213: -180068575955727509
+    second: dot_kaguya_24
+  - first:
+      213: -4578254276836946717
+    second: dot_kaguya_25
+  - first:
+      213: -2204038260629929162
+    second: dot_kaguya_26
+  - first:
+      213: -7972649230860115717
+    second: dot_kaguya_27
+  - first:
+      213: -3609006725189641464
+    second: dot_kaguya_28
+  - first:
+      213: -2105111086157523488
+    second: dot_kaguya_29
+  - first:
+      213: -6810970760713510684
+    second: dot_kaguya_30
+  - first:
+      213: -3633073343258469532
+    second: dot_kaguya_31
+  - first:
+      213: -5197076106052524486
+    second: dot_kaguya_32
+  - first:
+      213: 2412714216905043502
+    second: dot_kaguya_33
+  - first:
+      213: -7496000800142298970
+    second: dot_kaguya_34
+  - first:
+      213: 5776249704702558384
+    second: dot_kaguya_35
+  - first:
+      213: 5064029778536793609
+    second: dot_kaguya_36
+  - first:
+      213: -2925653061939772743
+    second: dot_kaguya_37
+  - first:
+      213: -8604919428947416531
+    second: dot_kaguya_38
+  - first:
+      213: -782678144335185384
+    second: dot_kaguya_39
+  - first:
+      213: -5419703008917044312
+    second: dot_kaguya_40
+  - first:
+      213: 8261053591311306773
+    second: dot_kaguya_41
+  - first:
+      213: 9185637732915917029
+    second: dot_kaguya_42
+  - first:
+      213: 6828705777167337270
+    second: dot_kaguya_43
+  - first:
+      213: 4937372943195493957
+    second: dot_kaguya_44
+  - first:
+      213: 6618188841528495457
+    second: dot_kaguya_45
+  - first:
+      213: 9062107640497490454
+    second: dot_kaguya_46
+  - first:
+      213: 8176806895269094141
+    second: dot_kaguya_47
+  - first:
+      213: -7160602839782420619
+    second: dot_kaguya_48
+  - first:
+      213: 3333772894367819995
+    second: dot_kaguya_49
+  - first:
+      213: -3754601494768838127
+    second: dot_kaguya_50
+  - first:
+      213: 961602171028934173
+    second: dot_kaguya_51
+  - first:
+      213: -5451406428199590905
+    second: dot_kaguya_52
+  - first:
+      213: 4698660571401469149
+    second: dot_kaguya_53
+  - first:
+      213: -8910286527245667657
+    second: dot_kaguya_54
+  - first:
+      213: -1146354830284275646
+    second: dot_kaguya_55
+  - first:
+      213: -3314006571500795736
+    second: dot_kaguya_56
+  - first:
+      213: 5436440376758673439
+    second: dot_kaguya_57
+  - first:
+      213: 9016199765492836741
+    second: dot_kaguya_58
+  - first:
+      213: -8801587671881094417
+    second: dot_kaguya_59
+  - first:
+      213: -75789285550154374
+    second: dot_kaguya_60
+  - first:
+      213: 4831372207215834922
+    second: dot_kaguya_61
+  - first:
+      213: -757775416942007737
+    second: dot_kaguya_62
+  - first:
+      213: -5898357541655376861
+    second: dot_kaguya_63
+  - first:
+      213: -3243943744792250197
+    second: dot_kaguya_64
+  - first:
+      213: 4686830424712517515
+    second: dot_kaguya_65
+  - first:
+      213: -8991264304957342498
+    second: dot_kaguya_66
+  - first:
+      213: -6960210594312758548
+    second: dot_kaguya_67
+  externalObjects: {}
+  serializedVersion: 11
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: -1
+    mipBias: -100
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 60
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  platformSettings:
+  - serializedVersion: 3
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: Windows Store Apps
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: dot_kaguya_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 384
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 37b024f8b83fcde10800000000000000
+      internalID: 2223920096743656307
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_kaguya_1
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 384
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8af94a3ef9753e490800000000000000
+      internalID: -7718228992152264792
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_kaguya_2
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 384
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 319925feaa5eaf210800000000000000
+      internalID: 1367657959182735635
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_kaguya_3
+      rect:
+        serializedVersion: 2
+        x: 384
+        y: 384
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a5b69fad656824410800000000000000
+      internalID: 1459876936820550490
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_kaguya_4
+      rect:
+        serializedVersion: 2
+        x: 512
+        y: 384
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7350e048923cb0b60800000000000000
+      internalID: 7713473369878693175
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_kaguya_5
+      rect:
+        serializedVersion: 2
+        x: 640
+        y: 384
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: cceae071367e942c0800000000000000
+      internalID: -4446768744277037364
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_kaguya_6
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 256
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8535986c3de095800800000000000000
+      internalID: 601528327962448728
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_kaguya_7
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 256
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bf2a9f6c5a37d91c0800000000000000
+      internalID: -4495309697200839941
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_kaguya_8
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 256
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b2b261e4a02db6030800000000000000
+      internalID: 3489113278030162731
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_kaguya_9
+      rect:
+        serializedVersion: 2
+        x: 384
+        y: 256
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3573012680d5cea50800000000000000
+      internalID: 6551713848503580499
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_kaguya_10
+      rect:
+        serializedVersion: 2
+        x: 512
+        y: 256
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 08701bb7bd886cc30800000000000000
+      internalID: 4379338163918800768
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_kaguya_11
+      rect:
+        serializedVersion: 2
+        x: 640
+        y: 256
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a7a37b4ce4cc99450800000000000000
+      internalID: 6096128209302534778
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_kaguya_12
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 128
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0fbea844024c04890800000000000000
+      internalID: -7475759738567070736
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_kaguya_13
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 128
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: af735c3f4be7b25f0800000000000000
+      internalID: -780390794769647622
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_kaguya_14
+      rect:
+        serializedVersion: 2
+        x: 384
+        y: 128
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1bc9cb789633914e0800000000000000
+      internalID: -2010519230302348111
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_kaguya_15
+      rect:
+        serializedVersion: 2
+        x: 640
+        y: 128
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 166a70fc249750e20800000000000000
+      internalID: 3316190028476425825
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_kaguya_16
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 0
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 888066113ebfd76b0800000000000000
+      internalID: -5296800634049787768
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+  spritePackingTag: 
+  pSDRemoveMatte: 0
+  pSDShowRemoveMatteOption: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

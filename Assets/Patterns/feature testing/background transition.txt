@@ -1,0 +1,24 @@
+pattern { }
+
+phase 1
+	action block 0
+		noop 
+		
+<!> bgt-in shatter4
+<!> bg black
+<!> bgt-out shatter4
+phase 5
+	action block 0
+		position 0 0
+
+<!> bg bamboo.forest
+<!> bgt-out shatter4
+phase 4
+	action block 0
+		position 0 0
+
+<!> bg black
+phase 3
+	action block 0
+		noop
+            

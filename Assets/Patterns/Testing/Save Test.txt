@@ -1,0 +1,17 @@
+pattern { }
+phase 0
+	action block 0
+		clear bullet
+		position 1 0
+		async strip-red/w <2,:> gcr {
+			t	10
+			w	1
+			start	qw =f 1
+			postloop qw +=f 1
+		} gsr {
+			t	10
+			savef	pqw &i + &i * 10 &qw
+		} s tprot cx 1
+		savef pqw2 3 + x 16
+		savev2 pqw2 3 loc
+		sync sun-red/w <> world s offset zero rotate 90 @ pqw2 3

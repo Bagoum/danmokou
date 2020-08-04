@@ -1,0 +1,490 @@
+pattern 
+ phase 0 
+ declaration 
+ declare hide-timeout 
+ action block 0.5 
+ setstate vulnerable false 
+ @ n1,n2,nb,nt 
+ cull 
+ clear bullet 
+ clear bullet-control 
+ material sear true bullet circle-red/w 
+ material sear true bullet circle-purple/b 
+ material sear true bullet circle-azure/w 
+ material sear true bullet lcircle-blue/w 
+ material sear true bullet laser24-yellow/w 
+ material sear true bullet laser24-blue/w 
+ material sear true bullet laser24-red/w 
+ material sear true bullet laser16-red/w 
+ summon inode <> nb <> null null 
+ summon inode <> nt <> null null 
+ summon inode <> n1 <> null null 
+ summon inode <> n2 <> null null 
+ position 2 7 
+ shift-phase 8 
+ 
+ 
+ phase 40 
+ declaration 
+ declare spell-name 星空〔吹き飛ばし〕 Starry Night: Dispulsion 
+ declare hp 22000 
+ declare hpbar 1 
+ action block 0 
+ move 2 tpnrot eased out-sine 2 stopsampling 0 vhometime 2 cxy 0 2.5 
+ summon cutin-mokou <> _ <> null file slide-rl 
+ wait-for 3 
+ action block 0 
+ setstate vulnerable true 
+ position 0 2.5 
+ bullet x-laser-fire <> idelay 960 irepeat 960 _ <> cre 10 10 <> sfx 
+ bullet x-laser-on <> idelay 1320 irepeat 960 _ <> cre 10 10 <> sfx 
+ bullet laser24-yellow/w <-1,3:> idelay 960 irepeat 960 99 <> itargetx Lplayer cre 5 20 <0.1,:> slaser 0 -90 
+ null 
+ 3 0.5 
+ bullet x-bubble <> irepeat 
+ fclamp 130 200 flinear 200 -5 x 
+ _ <> cre 24 5 <> sfx 
+ bullet x-fire-burst <> idelay 120 cre 
+ fclamp 130 200 flinear 200 -5 x 
+ _ <> sfx 
+ bullet circle-red/w <2,:> irepeat 
+ fclamp 130 200 flinear 200 -5 x 
+ _ <> 
+ irandomanglet 0 360 irepeat 0 3 <,:120> itarget Lplayer csummonalongpolarf REL 0 2 60 12 
+ btf srstar 2 5 x 
+ btf ucossmooth 144 144 x 
+ s tp-rot phastendelta 0.016 lerpin 1 1.4 lerpfromto 2 3 cx 2 cx 1 
+ end 
+ clear bullet-fancy 
+ bullet-control ONCE circle-red/w SOFTCULL cwheel-red/w _ 
+ sfx phase-shift-1 
+ 
+ 
+ 
+ phase 30 
+ declaration 
+ declare spell-name 境符〔線が合う所〕 Boundary: Where Lines Meet 
+ declare hp 14000 
+ declare hpbar 0.5 
+ action block 0 
+ move 2 tpnrot eased out-sine 2 stopsampling 0 vhometime 2 cxy 0 3 
+ action block 0 
+ setstate vulnerable true 
+ position 0 3 
+ move 9999 tpnrot TPbTPtF 
+ max 
+ vhometime 2 Lplayer 
+ vhome 1 Lplayer 
+ 0 
+ bullet sun-red/w <,2:> idelay 240 cre 
+ fclamp 120 360 flinear 360 -40 x 
+ _ <> targetx Lplayer ss 
+ btf flinear 1 0.18 x 
+ tp-rot clampy -4 0 growbyadd 0 -2 zero 
+ bullet x-fire-metal <> idelay 240 cre 
+ fclamp 120 360 flinear 360 -40 x 
+ _ <> sfx 
+ bullet x-fire-burst <> cre 
+ fclamp 20 30 flinear 32 -.1 x 
+ _ <> sfx 
+ @ wingL 
+ bullet arrow-red//w <> cre 
+ fclamp 20 30 flinear 32 -.1 x 
+ _ <> s tprot growbyadd 0 -1.5 rotatef 
+ fsine 60 60 p 
+ randomrotate -20 20 cr 5 135 
+ @ wingR 
+ bullet arrow-orange//w <> cre 
+ fclamp 20 30 flinear 32 -.1 x 
+ _ <> s tprot growbyadd 0 -1.5 rotatef 
+ fsine 80 60 p 
+ randomrotate -20 20 cr 5 135 
+ bullet-control PERSIST arrow-red//w DY -10 > y 5 
+ bullet-control PERSIST arrow-red//w DX 13 < x -6.5 
+ bullet-control PERSIST arrow-orange//w DY -10 > y 5 
+ bullet-control PERSIST arrow-orange//w DX -13 > x 6.5 
+ end 
+ clear bullet-control 
+ clear bullet-fancy 
+ bullet-control ONCE arrow-orange//w SOFTCULL cwheel-orange/ _ 
+ bullet-control ONCE arrow-red//w SOFTCULL cwheel-red/ _ 
+ bullet-control ONCE sun-red/w SOFTCULL cwheel-red/ _ 
+ sfx phase-shift-1 
+ 
+ 
+ 
+ phase 40 
+ declaration 
+ declare spell-name 創造〔焼却灰の山岳〕 Creation: Ashen Appalachia 
+ declare hp 22000 
+ declare hpbar 1 
+ action block 0 
+ move 2 tpnrot eased out-sine 2 stopsampling 0 vhometime 2 cxy 0 2.5 
+ summon cutin-mokou <> _ <> null file slide-rl 
+ wait-for 3 
+ action block 0 
+ setstate vulnerable true 
+ position 0 2.5 
+ @ n1 
+ position -6.1 0 
+ @ n2 
+ position 6.1 0 
+ pool-control sc-* allowcull false 
+ bullet-control persist sc-guanyin cull > x 8 
+ bullet-control persist sc-smoke cull < x -8 
+ bullet x-fire-tech-8 <> cre 
+ fclamp 240 480 flinear 480 -30 x 
+ _ <> sfx 
+ bullet x-fire-tech-6 <> idelay 120 cre 
+ fclamp 300 480 flinear 480 -25 x 
+ _ <> sfx 
+ @ n1 
+ bullet sc-guanyin <> cre 
+ fclamp 240 480 flinear 480 -30 x 
+ _ <> randomy -4 4 repeatinner 2 <,:150> <,:60> repeat 30 <0.6,:> s tpnrot cx 2.5 
+ @ n2 
+ bullet sc-smoke <> idelay 120 cre 
+ fclamp 300 480 flinear 480 -25 x 
+ _ <> randomy -4 4 repeatinner 2 <,:-30> <,:60> repeat 30 <0.6,:> s tpnrot cx -2 
+ bullet x-knock-grain <> cre 
+ fclamp 30 120 flinear 120 -3 x 
+ _ <> sfx 
+ bullet lcircle-oblack/w <> cre 
+ fclamp 30 120 flinear 120 -3 x 
+ _ <> 
+ randomx -2 2 randomy -1 1 s tp 
+ randomrotate 60 120 cx 2 
+ growbyadd 0 -1.2 cy 0.3 
+ repeat _ wait 
+ move 1 tpnrot eased io-sine 1 stopsampling 0 TPbTP 
+ vhometime 0.8 Lplayer 
+ zero 
+ end 
+ pool-control sc-* allowcull true 
+ clear bullet-control 
+ bullet-control ONCE sc-guanyin SOFTCULL cwheel-red/ _ 
+ bullet-control ONCE sc-smoke SOFTCULL cwheel-purple/ _ 
+ bullet-control ONCE lcircle-oblack/w SOFTCULL cwheel-oblack/w _ 
+ sfx phase-shift-1 
+ 
+ 
+ 
+ phase 30 
+ declaration 
+ declare spell-name 戦術〔裏技〕 Art of War: Coup de Vache 
+ declare hp 17000 
+ declare hpbar 0.5 
+ action block 0 
+ move 2 tpnrot eased out-sine 2 stopsampling 0 vhometime 2 cxy 0 -3 
+ action block 0 
+ setstate vulnerable true 
+ position 0 -3 
+ bullet x-fire-burst <> cre 24 _ <> sfx 
+ bullet sc-smoke <> cre 12 _ <> repeatp defer 8 <0,0:45> 
+ s tp-rot rotatef f-sine 420 700 p 
+ clampx 1.5 2 growbyadd -0.1 0 cx 2 
+ bullet sun-red/w <,-2:> idelay 120 cre 
+ fclamp 360 480 flinear 480 -40 x 
+ _ <> targetx Lplayer ss 
+ btf flinear 1.2 0.2 x 
+ tp-rot clampy 1.5 5 growbyadd 0 -2 cy 5 
+ bullet x-fire-metal <> idelay 120 cre 
+ fclamp 360 480 flinear 480 -40 x 
+ _ <> sfx 
+ end 
+ clear bullet-control 
+ bullet-control ONCE * SOFTCULL cwheel-purple/ _ 
+ sfx phase-shift-1 
+ 
+ 
+ 
+ phase 45 
+ declaration 
+ declare spell-name 原子封〔熱線〕 Atomic Seal: Heat Ray 
+ declare hp 18000 
+ declare hpbar 1 
+ action block 0 
+ move 2 tpnrot eased out-sine 2 stopsampling 0 vhometime 2 cxy 0 1.5 
+ summon cutin-mokou <> _ <> null file slide-rl 
+ wait-for 3 
+ action block 0 
+ 
+ position 0 1.5 
+ anim attack 
+ bullet-control PERSIST circle-* FLIPX> 6 _ 
+ bullet-control PERSIST circle-* FLIPX< -6 _ 
+ bullet-control PERSIST circle-* FLIPY> 4.5 _ 
+ bullet-control PERSIST circle-* FLIPY< -4.5 _ 
+ bullet-control PERSIST circle-azure/w SFX x-bubble relcirc mokou <0,0,0.8> 
+ bullet-control PERSIST circle-azure/w TIME 100 relcirc mokou <0,0,0.8> 
+ bullet-control PERSIST circle-azure/w RESTYLE circle-red/w > t 100 
+ bullet-control PERSIST circle-red/w TIME 4 > t 105 
+ bullet-control PERSIST circle-red/w RESTYLE circle-azure/w < t 5 
+ bullet laser24-red/w <> iparent mokou c-once repeat 3 <0,0:120> mlaser 3 
+ polar 
+ btf 1.73205 
+ btf * -60 x 
+ tp-rot rotatef * -60 &lt 
+ cr 1 150 
+ 1 99 
+ bullet x-fire-metal <> cre 30 8 <> sfx 
+ bullet circle-azure/w <0,3.5:0> cre 30 8 <0,-1:0> repeat 55 <> randomx -6 6 randomy -1 0 s tp-rot 
+ switch 1.5 zero 
+ lerpfromtoback 100 101 104 105 
+ randomrotate 0 360 cx 0.15 
+ randomrotate -60 60 stopsampling 100.5 vhome 1.4 Lplayer 
+ action block 0 
+ setstate vulnerable true 
+ move 9999 tpnrot max 
+ vhometime 5 Lplayer 
+ vhome 0.5 Lplayer 
+ end 
+ clear bullet-control 
+ clear bullet-fancy 
+ bullet-control ONCE * SOFTCULL cwheel-azure/ _ 
+ sfx phase-shift-1 
+ 
+ 
+ 
+ phase 35 
+ declaration 
+ declare spell-name 花火〔光に導かれ〕 Fireworks: Led by the Light 
+ declare hp 26000 
+ declare hpbar 0.5 
+ action block 0 
+ move 2 tpnrot eased out-sine 2 stopsampling 0 vhometime 2 cxy 0 1 
+ action block 0 
+ setstate vulnerable true 
+ pos cxy 0 1 
+ bullet sc-guanyin <> cre 60 _ <> pssfx x-fire-burst randomx -3 -1 randomy 1 3 repeatinnerp defer 40 <0.3,:> <,:9> s tp-rot protate 7.416 cx 2 
+ bullet sc-smoke <> cre 90 _ <> pssfx x-fire-burst randomx 1 3 randomy 0 2 repeatinnerp defer 45 <0.3,:> <,:8> s tp-rot protate 7.416 cx 1.5 
+ bullet x-bubble <> idelay 600 cre 600 _ <> sfx 
+ bullet scircle-red//w <> idelay 0 cre 1200 _ <> s tp-rot 
+ stopsampling 0 vhome 6 TPtFbTP 
+ -6.5 
+ Lplayer 
+ bullet scircle-red//w <> idelay 600 cre 1200 _ <> s tp-rot 
+ stopsampling 0 vhome 6 TPtFbTP 
+ 6.5 
+ Lplayer 
+ bullet-control-sm PERSIST scircle-red//w < x -6.5 
+ action block 0 
+ bullet laser24-red/w <,-.5:> cre 20 5 <,.2:> slaser 0 0 
+ null 
+ 1.5 3 
+ bullet x-laser-fire <> cre 20 5 <> sfx 
+ _ 1.5 
+ bullet x-laser-on <> cre 20 5 <> sfx 
+ break 
+ bullet-control-sm PERSIST scircle-red//w > x 6.5 
+ action block 0 
+ bullet laser24-red/w <> cre 80 5 <> targety Lplayer slaser 0 180 
+ null 
+ 1 0.5 
+ bullet x-laser-fire <> cre 80 5 <> sfx 
+ _ 1 
+ bullet x-laser-on <> cre 80 5 <> sfx 
+ break 
+ bullet-control PERSIST scircle-red//w CULL < x -6.5 
+ bullet-control PERSIST scircle-red//w CULL > x 6.5 
+ end 
+ clear bullet-control 
+ clear bullet-fancy 
+ bullet-control ONCE * SOFTCULL cwheel-red/ _ 
+ sfx phase-shift-1 
+ 
+ 
+ 
+ phase 47 
+ declaration 
+ declare spell-name 消火〔広げた翼〕 Extinguished: Wings Spread Wide 
+ declare hp 33000 
+ declare hpbar 1 
+ action block 0 
+ @ nt 
+ position 0 5 
+ move 2 tpnrot eased out-sine 2 stopsampling 0 vhometime 2 constant 0 2 
+ summon cutin-mokou <> _ <> null file slide-rl 
+ wait-for 3 
+ action nb 0 
+ setstate vulnerable true 
+ position 0 2 
+ bullet-control PERSIST strip-blue/b CULL relrect mokou <0,0.2:0.6,0.2:0> 
+ bullet x-fire-burst <> cre fclamp 48 64 flinear 64 -0.2 x _ <> sfx 
+ @ wingL 
+ bullet sc-guanyin <,:-110> crepeatfuncangle fclamp 48 64 flinear 64 -0.2 x _ 
+ fmod 10 flinear 0 6.18 x 
+ repeat 6 <,:8> s tp-rot cx 1.8 
+ @ wingR 
+ bullet sc-smoke <,:-110> crepeatfuncangle fclamp 48 64 flinear 64 -0.2 x _ 
+ fmod 10 flinear 0 3.82 x 
+ repeat 6 <,:8> s tp-rot cx 2.3 
+ ~ 
+ repeat-every 10 9999 
+ action block 0 
+ _ 7 
+ bullet ellipse-red/w <> cre 90 4 <> repeat 31 <,:-6> s tp-rot cx 3 
+ bullet x-bubble <> idelay 840 cre 90 4 <> sfx 
+ _ 4.5 
+ bullet x-incoming-2 <> conce sfx 
+ _ 4 
+ @ nt 
+ bullet strip-blue/b <0,0:0> cre 2 50 <> repeat 50 <> randomx -7 7 randomy 0 2 s tp-rot growbyadd 0 -3 cy -4 
+ bullet x-fire-tech-8 <> cre 24 5 <> sfx 
+ @ wingL 
+ bullet laser16-red/w <,:-80> conce repeat 30 <> rslaser 0 0 
+ + 
+ bpf fsine 51 -20 x 
+ * 
+ + 
+ b 1.07 
+ bpf fcosine 120 -1 x 
+ btf fclamp 0 -160 flinear 0 -180 ^ x 2 
+ null 
+ 1.5 flinear 4 -0.04 x 
+ @ wingR 
+ bullet laser16-red/w <,:-80> conce repeat 30 <> rslaser 0 0 
+ + 
+ bpf fsine 51 +20 x 
+ * 
+ + 
+ b 1.07 
+ bpf fcosine 120 -1 x 
+ btf fclamp 0 +160 flinear 0 +180 ^ x 2 
+ null 
+ 1.5 flinear 4 -0.04 x 
+ repeat-every 0 9999 
+ action block 6 
+ move 4 tpnrot eased io-sine 4 stopsampling 0 vhometime 4 randomxy 3 4 1 3 
+ action block 6 
+ move 4 tpnrot eased io-sine 4 stopsampling 0 vhometime 4 randomxy -4 -3 1 3 
+ end 
+ clear bullet-control 
+ clear bullet-fancy 
+ bullet-control ONCE strip-blue/b SOFTCULL cwheel-blue/b _ 
+ bullet-control ONCE sc-guanyin SOFTCULL cwheel-red/ _ 
+ bullet-control ONCE sc-smoke SOFTCULL cwheel-purple/ _ 
+ sfx phase-shift-1 
+ 
+ 
+ 
+ phase 45 
+ end 
+ pool-control strip-blue/b reset 
+ clear bullet-fancy 
+ bullet-control ONCE strip-blue/b SOFTCULL cwheel-blue/b _ 
+ bullet-control ONCE lcircle-blue/w SOFTCULL cwheel-blue/w _ 
+ sfx phase-shift-1 
+ declaration 
+ declare spell-name 消火〔不死鳥の飛翔〕 Extinguished: Flight of the Phoenix 
+ declare hp 30000 
+ declare hpbar 0.5 
+ action block 0 
+ @ nt 
+ position 0 5 
+ move 2 tpnrot eased out-sine 2 stopsampling 0 vhometime 2 cxy 0 0 
+ action block 0 
+ setstate vulnerable true 
+ position 0 0 
+ @ nt 
+ bullet strip-blue/b <> cre 2 _ <> repeat 10 <> randomx -7 7 randomy 0 3 s tp-rot growbyadd 0 -0.7 cy -1 
+ @ nt 
+ bullet lcircle-blue/w <> cre 
+ fclamp 5 20 flinear 20 -0.2 x 
+ _ <> randomx -7 7 randomy 0 3 s tp-rot growbyadd 0 -0.4 cy -1 
+ bullet-control PERSIST strip-blue/b CULL relrect mokou <0,0.2:3,0.2:0> 
+ _ 0.2 
+ repeat _ wait 
+ move 4 tpnrot switch 2 
+ stopsampling 0 vhometime 2 randomxy -2 2 -0.5 0.5 
+ zero 
+ bullet x-up-dual <> idelay 60 cre 480 _ <> sfx 
+ bullet x-fire-burst <> idelay 240 cre 480 _ <> sfx 
+ bullet x-laser-on <> idelay 460 cre 480 _ <> sfx 
+ bullet laser24-red/w <> iparent mokou conce emlaser 4 tn1 
+ null 
+ tp-rot rotatelerprate 22 
+ cr 1 40 
+ rotatef 
+ + 40 swing 4 +70 &lt 
+ cx 1 
+ 1 999 
+ bullet laser24-red/w <> iparent mokou conce emlaser 4 tn2 
+ null 
+ tp-rot rotatelerprate 22 
+ cr 1 140 
+ rotatef 
+ + 140 swing 4 -70 &lt 
+ cx 1 
+ 1 999 
+ bullet laser16-red/w <> iparent tn1 irepeat 480 _ <> conce repeat 12 <,:-10> rslaser 0 -50 
+ btf fcosine 4 -15 x 
+ null 
+ 4 0.1 
+ bullet laser16-red/w <> iparent tn2 irepeat 480 _ <> conce repeat 12 <,:+10> rslaser 0 +50 
+ btf fcosine 4 +15 x 
+ null 
+ 4 0.1 
+ 
+ 
+ 
+ phase 40 
+ declaration 
+ declare spell-name 境符〔夕暮れの火花〕 Boundary Sign: Embers At Dusk 
+ declare hp 18000 
+ declare hpbar 1 
+ action block 0 
+ @ nb 
+ position 0 -5 
+ move 2 tpnrot eased out-sine 2 stopsampling 0 vhometime 2 cxy 0 3.5 
+ summon cutin-mokou <> _ <> null file slide-rl 
+ wait-for 3 
+ action nb 0 
+ setstate vulnerable true 
+ position 0 3.5 
+ @ nb 
+ bullet circle-azure/w <> cre 6 _ <> randomx -6 6 s tp-rot 
+ randomtime 4 period 4 
+ lerpfromtoback 0.5 1.5 2.5 3.5 cy 0.4 cy 0.7 
+ repeat-every 3 9999 
+ action block 0 
+ move 0.5 tpnrot eased out-sine 0.5 stopsampling 0.1 tpbtp 
+ vhometime 0.5 Lplayer 
+ zero 
+ action block 0 
+ bullet x-fire-metal <> conce sfx 
+ bullet sun-red/w <-4,:> conce rpt 3 <4,:> ss 
+ btf fclamp 1.75 4 flinear 3 -0.4 x 
+ tpnrot 
+ growbyadd 0 -0.3 cy -1 
+ end 
+ bullet-control ONCE sun-red/w SOFTCULL cwheel-red/ _ 
+ bullet-control ONCE circle-azure/w SOFTCULL cwheel-azure/w _ 
+ sfx phase-shift-1 
+ 
+ 
+ 
+ phase 44 
+ declaration 
+ declare spell-name 爆符〔不死鳥の蝶〕 Explosive Sign: Phoenix Butterfly 
+ declare hp 24000 
+ declare hpbar 1 
+ action block 0 
+ move 2 tpnrot eased out-sine 2 stopsampling 0 vhometime 2 cxy 0 3 
+ summon cutin-mokou <> _ <> null file slide-rl 
+ wait-for 3 
+ action block 0 
+ setstate vulnerable true 
+ position 0 3 
+ bpat mokou01oscar 
+ end 
+ bullet-control ONCE circle-red/w SOFTCULL cwheel-red/w _ 
+ bullet-control ONCE lcircle-blue/w SOFTCULL cwheel-blue/ _ 
+ sfx phase-shift-1 
+ 
+ 
+ 
+ phase 0 
+ declaration 
+ declare spell-name Thanks for playing (I didn't program anything for boss death yet) 
+ 

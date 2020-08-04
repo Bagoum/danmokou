@@ -1,0 +1,12 @@
+pattern { }
+phase 0
+	action block 0
+        position 0 0
+		slowdown 0.25
+		async strip-red/w <> gcr {
+			wt	1	_
+			rpp <2>
+		} s tprot cx 6
+		_ 2f
+			slowdownreset
+        

@@ -1,0 +1,25 @@
+pattern { }
+phase 0
+	action block 0
+		clear phase
+		clear bullet
+	action block 0.1
+		shift-phase-to 1
+phase 0
+	end
+		clear phase
+    action block 0
+        position 0 0
+		pool-control gem-red/w allowcull false
+		pool-control gem-purple/w cullrad 20
+		##This stays normally
+		sync gem-red/w <3,:5> gsr2 36 <10> . s null
+		##These get culled normally
+		sync gem-purple/w <40,:> gsr2 36 <10> . s null
+		##These two remain until "clear phase" is triggered, then get culled
+		sync gem-purple/w <20,:> gsr2 36 <10> . s null
+		sync gem-red/w <20,:5> gsr2 36 <10> . s null
+phase 0
+	action block 0
+        position 0 1
+            

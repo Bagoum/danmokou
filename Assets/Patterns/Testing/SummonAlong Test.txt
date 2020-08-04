@@ -1,0 +1,20 @@
+pattern { }
+phase 0
+	action block 0
+		position 1 0
+		sync gem-red/w <1,:80> gsr {
+			t	2
+			saoffset	o 30 py t
+		} s tprot cx 1
+		sync gem-green/w <1,:160> gsr {
+			t	2
+			saoffset	bo 30 py t
+		} s tprot cx 1
+		sync gem-blue/w <1,:240> gsr {
+			t	2
+			saoffset	br 30 py t
+		} s tprot cx 1
+		sync gem-teal/w <1,:320> gsr {
+			t	2
+			saoffset	bt 30 py t
+		} s tprot cx 1

@@ -1,0 +1,21 @@
+pattern { }
+phase 0
+	action block 0
+		clear phase
+		clear bullet
+	action block 0.1
+		shift-phase-to 1
+phase 0
+    action block 0
+        position -3 0
+		crosshair crosshair Lplayer 4 2 ploc 0
+		async laser-red/w <> gcr {
+			wt	1480	_
+		} laser null 2 12 {
+			rotate 0 switchHt 1
+				50
+				ease io-sine 2 lerpt 0 2 50 (angleto @ ploc 0)
+		}
+        
+            
+            

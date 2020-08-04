@@ -1,0 +1,21 @@
+pattern { }
+phase 0
+    saction 0
+        position -2 0
+		##Offset version of below, no error
+		move 2 nroffset easetotarget out-sine 2 cx 4
+		##This has a significant amount of error, about 0.3% (.02 units)
+		##Same func as below
+		move 2 tpnrot eased out-sine 2 * 0.5 ss 0 - cx 4 loc
+		wait-for 2
+        position -3 0
+		move 2 tpnrot eased out-sine 2 cx 3
+		wait-for 2
+        position 3 0
+		move 2 tpnrot eased io-sine 2 cx -3
+		wait-for 2
+        position -3 0
+		move 2 tpnrot cx 3
+        
+            
+            

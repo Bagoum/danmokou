@@ -1,0 +1,97 @@
+pattern { }
+phase 0
+	action block 0
+        position 0 0
+		shift-phase-to 1
+##Laser stress tester (pooling -- set repeat to off)
+phase 0
+    action block .4
+        async laser-blue/ <0.4,0:0> gcr2 16 _ <0,0:2.93> { } gsr2c 100 { } laser null 0.6 0.4 { }
+///
+##Basic stress tester
+phase 0
+    action block 0
+        async ellipse-green/w <0.5,0:0> cre 1 _ <0,0:11.386> 
+            repeat 90 <0,0:4> s tprot cx 2
+///
+##GPU stress tester
+phase 0
+    action block 0
+        clear async-control
+		async-control persist circle-purple/w restyle circle-red/w > x 10
+        position 0 0
+        async scircle-purple/w <1,0:0> cre 4 _ <0,0:11.386> 
+            repeat 60 <0,0:4> s tprot cx 2
+///
+##Maximal stress tester
+phase 0
+    action block 0
+        position 0 0
+        async ellipse-green/w <0.5,0:0> cre 1 _ <0,0:11.386> 
+            repeat 150 <0,0:2> s tprot cx 2
+///
+##Basic stress tester with controls
+phase 0
+    action block 0
+        clear async-control
+		async-control persist circle-purple/w restyle circle-red/w > x 10
+        position 0 0
+        async circle-purple/w <0.5,0:0> cre 1 _ <0,0:11.386> 
+            repeat 90 <0,0:4> s tprot cx 2
+///
+##Basic stress tester-offset
+phase 0
+    action block 0
+        async sc-guanyin <0.5,0:0> cre 1 _ <0,0:11.386> 
+            repeat 90 <0,0:4> s roffset px * 2 t
+///
+##Slaser volume tester
+phase 0
+    action block 0.2
+        async laser16-blue/w <0,0:0> cre 1 250 <,:1> repeat 20 <,:0.05> laser null 1 200 { }
+///
+##Laser stress tester (mlaser mesh updating)
+phase 0
+    action block 0.2
+        position -5 3
+        async laser24r-blue/ <0,0:0> c-once repeat 160 <0,-0.03:0> laser null 1 200 {
+			dynamic	tpnrot multiplyy sine 4.22 1 &lt
+					pxy 1
+						sine 6 1 *(+ * 0.5 &lt t; + 1 * 0.01 p)
+		}
+///
+##Basic stress tester-polar
+phase 0
+    action block 0
+        async ellipse-green/w <0.5,0:0> cre 1 _ <0,0:11.386> 
+            repeat 90 <0,0:4> s 
+				polar * 2 t t
+///
+##Pather stress tester
+phase 0
+    action block 0
+        async pather18-blue/w <0.5,0:0> cre 13 _ <0,0:10> 
+            repeat 13 <0,0:4.3> pather 3 3 tp-rot cx 2
+///
+##Basic stress tester with public hoisting
+phase 0
+    action block 0
+		savef val2 0 2
+        async ellipse-green/w <0.5,0:0> cre 1 _ <0,0:11.386> 
+            repeat 90 <0,0:4> s tprot px @ val2 0
+///
+##Basic stress tester
+phase 0
+    action block 0
+        position 0 0
+        async ellipse-purple/ <0,0:0> cre 2 _ <0,0:5> 
+            repeat 40 <0,0:4> s tp-rot constant 2 0
+            ##repeat 40 <0,0:4> s tp-rot nest nest nest nest nest constant 2 0
+///
+##Polar stress tester
+phase 0
+    action block 0
+        async circle-purple/ <0,0:0> c-repeatevery 2 7200 <0,0:5> 
+            repeat 80 <0,0:4> polar
+				bpi- f-linear 0 2
+				bpi- f- 0

@@ -1,0 +1,25 @@
+pattern { }
+phase 0
+	action block 0
+		shift-phase-to 2
+
+phase 0
+	action block 0
+		savef v1 1 5
+		shift-phase
+
+phase 0
+	action block 1f
+		savef v1 2 6
+		shift-phase
+
+phase 0
+	action block 1f
+		savef v1 3 7
+		shift-phase
+
+phase 0
+	action block 0
+		savef v1 4 8
+		shift-phase
+	

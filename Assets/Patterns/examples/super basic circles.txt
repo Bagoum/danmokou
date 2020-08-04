@@ -1,0 +1,75 @@
+pattern { }
+phase 0 #{
+    action block 0
+        shift-phase-to 3
+#}
+
+<!> type non `Wintry Night: Sun and Moon`
+phase 0 #{
+	end
+		clear phase
+        clear bullet
+	action block 0
+		position 0 2
+		async gcircle-* <0.5,:> gcr { wt 50 _ rpp <6h> color { red/b purple/b } } repeat 20 <18> repeat 10 <1> s tprot cx 2
+#}
+
+<!> type non `Onion Layer Cutting 1`
+phase 0 #{
+	end
+		clear phase
+        clear bullet
+	action block 0
+		position 0 2
+		async gcircle-* <0.5,:> gcr { 
+			wt 60 _ 
+			rpp <5h> 
+			color { red/b purple/b }
+			preloop { pm =f pm1mod t }
+		} repeat 20 <18> repeat 15 <1> s :: {
+			pi	--- 15 p
+		} tprot px + 2 * 0.02 if (= 1 &pm) p &pi
+#}
+
+<!> type non `Shameless O'Rin Ripoff`
+phase 0 #{
+	end
+		clear phase
+        clear bullet
+	action block 0
+		position 0 2
+		async gcircle-* <,:10> gcr2 45 _ <> { 
+			color { red/ purple/ }
+			preloop { 
+				pm =f pm1mod t 
+				rv2.a +=f * -1 &pm
+			}
+!!{ ctp 16
+		} gsr2c 18 {
+		} gsr2 $ctp <1.5> {
+			p this
+		} s :: {
+			pi	if (= 1 &pm) p (--- $ctp p)
+			pr	/ &pi $ctp
+		} roffset 
+			px + * 2 t * -m * 0.7 t 1 smooth io-sine &pr
+#}
+
+<!> type non `Onion Layer Cutting 2`
+phase 0 #{
+	end
+		clear phase
+        clear bullet
+	action block 0
+		position 0 2
+		async gcircle-* <> gcr { 
+			wt 60 _ 
+			rpp <6h> 
+			color { red/b purple/b }
+			preloop { pm =f pm1mod t }
+!!{ ctp 12
+		} repeat 20 <18> repeat $ctp <1> s :: {
+			pi	if (= 1 &pm) p (--- $ctp p)
+		} roffset 
+			px + * 2 t sine 5 (* 0.07 &pi) t
+#}

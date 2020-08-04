@@ -1,0 +1,745 @@
+fileFormatVersion: 2
+guid: 347818370a7e3584191cdbc95c84b6f0
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 1137612091383390734
+    second: dot_yukari_0
+  - first:
+      213: 6913222898937227915
+    second: dot_yukari_1
+  - first:
+      213: 5137366316676129292
+    second: dot_yukari_2
+  - first:
+      213: 840542075216457026
+    second: dot_yukari_3
+  - first:
+      213: 4567967756971835665
+    second: dot_yukari_4
+  - first:
+      213: 4019702906392781505
+    second: dot_yukari_5
+  - first:
+      213: 8551701744100241179
+    second: dot_yukari_6
+  - first:
+      213: -9032954120529215921
+    second: dot_yukari_7
+  - first:
+      213: 3402740035640928073
+    second: dot_yukari_8
+  - first:
+      213: 8020867022085194496
+    second: dot_yukari_9
+  - first:
+      213: -8311386427450513689
+    second: dot_yukari_10
+  - first:
+      213: -1555008823806241571
+    second: dot_yukari_11
+  - first:
+      213: -1066902029978057144
+    second: dot_yukari_12
+  - first:
+      213: 6074309837464311532
+    second: dot_yukari_13
+  - first:
+      213: 1770305988859114157
+    second: dot_yukari_14
+  - first:
+      213: -7759905073421334503
+    second: dot_yukari_15
+  - first:
+      213: -5196547242194625444
+    second: dot_yukari_16
+  - first:
+      213: 1086530972797456270
+    second: dot_yukari_17
+  - first:
+      213: 1014569644837593047
+    second: dot_yukari_18
+  - first:
+      213: 7217069425039247524
+    second: dot_yukari_19
+  - first:
+      213: -568198278247521516
+    second: dot_yukari_20
+  - first:
+      213: -1147627359471893697
+    second: dot_yukari_21
+  - first:
+      213: 4950736383840907839
+    second: dot_yukari_22
+  - first:
+      213: -7017112340015949884
+    second: dot_yukari_23
+  - first:
+      213: -194495685574236582
+    second: dot_yukari_24
+  - first:
+      213: 7769159013405518645
+    second: dot_yukari_25
+  - first:
+      213: -6427351635060939044
+    second: dot_yukari_26
+  - first:
+      213: -5165390764555382855
+    second: dot_yukari_27
+  - first:
+      213: 1126570434219000881
+    second: dot_yukari_28
+  - first:
+      213: -8962427489060995
+    second: dot_yukari_29
+  - first:
+      213: 1964228319469848409
+    second: dot_yukari_30
+  - first:
+      213: -5809952745236436313
+    second: dot_yukari_31
+  - first:
+      213: 3314612615747776138
+    second: dot_yukari_32
+  - first:
+      213: 6293744494833298123
+    second: dot_yukari_33
+  - first:
+      213: -6807248458358625955
+    second: dot_yukari_34
+  - first:
+      213: 8197853718540543667
+    second: dot_yukari_35
+  - first:
+      213: 2916121704216082131
+    second: dot_yukari_36
+  - first:
+      213: -1046709804539007479
+    second: dot_yukari_37
+  - first:
+      213: -1665367330613504565
+    second: dot_yukari_38
+  - first:
+      213: -3838398238600204628
+    second: dot_yukari_39
+  - first:
+      213: 7845921180678810121
+    second: dot_yukari_40
+  - first:
+      213: -3771729025059100521
+    second: dot_yukari_41
+  - first:
+      213: -8473930863724849067
+    second: dot_yukari_42
+  - first:
+      213: 5337953741261574002
+    second: dot_yukari_43
+  - first:
+      213: -8178457805402479571
+    second: dot_yukari_44
+  - first:
+      213: -2641328153302678071
+    second: dot_yukari_45
+  - first:
+      213: 6495699148487953334
+    second: dot_yukari_46
+  - first:
+      213: -6807293931901374699
+    second: dot_yukari_47
+  - first:
+      213: -7663146733362680052
+    second: dot_yukari_48
+  - first:
+      213: 6614289561362851099
+    second: dot_yukari_49
+  - first:
+      213: 930497551554741728
+    second: dot_yukari_50
+  - first:
+      213: 5525912730828552590
+    second: dot_yukari_51
+  - first:
+      213: -8501809083040059181
+    second: dot_yukari_52
+  - first:
+      213: -1717927882856353640
+    second: dot_yukari_53
+  - first:
+      213: 5147758161780016721
+    second: dot_yukari_54
+  - first:
+      213: 2078943308670858887
+    second: dot_yukari_55
+  - first:
+      213: -8576842241505040823
+    second: dot_yukari_56
+  - first:
+      213: -8254671506923185500
+    second: dot_yukari_57
+  - first:
+      213: -5813942372203724606
+    second: dot_yukari_58
+  - first:
+      213: -8942424150180162138
+    second: dot_yukari_59
+  - first:
+      213: -270556666008711287
+    second: dot_yukari_60
+  - first:
+      213: 3168147724979956445
+    second: dot_yukari_61
+  - first:
+      213: 2748470065385991229
+    second: dot_yukari_62
+  - first:
+      213: 1464208880736995479
+    second: dot_yukari_63
+  - first:
+      213: 8725906278761597101
+    second: dot_yukari_64
+  - first:
+      213: 7653662040737413674
+    second: dot_yukari_65
+  - first:
+      213: -5927906380269637320
+    second: dot_yukari_66
+  - first:
+      213: 8760424513067023562
+    second: dot_yukari_67
+  - first:
+      213: -1617374765475524918
+    second: dot_yukari_68
+  - first:
+      213: 8659697738572753741
+    second: dot_yukari_69
+  - first:
+      213: 1593688606344635921
+    second: dot_yukari_70
+  - first:
+      213: 5230518457191298911
+    second: dot_yukari_71
+  - first:
+      213: 1226245649160801480
+    second: dot_yukari_72
+  - first:
+      213: -2168018810028686498
+    second: dot_yukari_73
+  - first:
+      213: -1023303926290266961
+    second: dot_yukari_74
+  - first:
+      213: -1801165388041925972
+    second: dot_yukari_75
+  externalObjects: {}
+  serializedVersion: 11
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: -1
+    mipBias: -100
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 60
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  platformSettings:
+  - serializedVersion: 3
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: dot_yukari_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 384
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e02a8177b2c99cf00800000000000000
+      internalID: 1137612091383390734
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_yukari_1
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 384
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b8aef384993b0ff50800000000000000
+      internalID: 6913222898937227915
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_yukari_2
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 384
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c02a98232779b4740800000000000000
+      internalID: 5137366316676129292
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_yukari_3
+      rect:
+        serializedVersion: 2
+        x: 384
+        y: 384
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 24deb0460943aab00800000000000000
+      internalID: 840542075216457026
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_yukari_4
+      rect:
+        serializedVersion: 2
+        x: 512
+        y: 384
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1118ebb097ea46f30800000000000000
+      internalID: 4567967756971835665
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_yukari_5
+      rect:
+        serializedVersion: 2
+        x: 640
+        y: 384
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1c2a52efe7ad8c730800000000000000
+      internalID: 4019702906392781505
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_yukari_6
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 256
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b1fee2a6d6fbda670800000000000000
+      internalID: 8551701744100241179
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_yukari_7
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 256
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f4e7475061084a280800000000000000
+      internalID: -9032954120529215921
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_yukari_8
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 256
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 947a06fa806f83f20800000000000000
+      internalID: 3402740035640928073
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_yukari_9
+      rect:
+        serializedVersion: 2
+        x: 384
+        y: 256
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 003880a6f08df4f60800000000000000
+      internalID: 8020867022085194496
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_yukari_10
+      rect:
+        serializedVersion: 2
+        x: 512
+        y: 256
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7e62fc0741608ac80800000000000000
+      internalID: -8311386427450513689
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_yukari_11
+      rect:
+        serializedVersion: 2
+        x: 640
+        y: 256
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: dd45e6aa6bf7b6ae0800000000000000
+      internalID: -1555008823806241571
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_yukari_12
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 128
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 846c305a14a9131f0800000000000000
+      internalID: -1066902029978057144
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_yukari_13
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 128
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ce698b53d984c4450800000000000000
+      internalID: 6074309837464311532
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_yukari_14
+      rect:
+        serializedVersion: 2
+        x: 384
+        y: 128
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: da2b1b9dae3619810800000000000000
+      internalID: 1770305988859114157
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_yukari_15
+      rect:
+        serializedVersion: 2
+        x: 512
+        y: 128
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 91848ff03774f4490800000000000000
+      internalID: -7759905073421334503
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_yukari_16
+      rect:
+        serializedVersion: 2
+        x: 640
+        y: 128
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c5c1472d0d722e7b0800000000000000
+      internalID: -5196547242194625444
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_yukari_17
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 0
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e8f4d0fb922241f00800000000000000
+      internalID: 1086530972797456270
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_yukari_18
+      rect:
+        serializedVersion: 2
+        x: 384
+        y: 0
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7df507077b9741e00800000000000000
+      internalID: 1014569644837593047
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+  spritePackingTag: 
+  pSDRemoveMatte: 0
+  pSDShowRemoveMatteOption: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

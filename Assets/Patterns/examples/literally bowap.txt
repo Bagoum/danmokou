@@ -1,0 +1,23 @@
+pattern { }
+phase 0
+	action block 0
+		clear phase
+		clear bullet
+	action block 0.1
+		shift-phase-to 1
+phase 0
+    action block 0
+        position 0 2
+		bullet ellipse-*/w <> gir2 0 2 <120> {
+			p	this
+			color	{ purple red green }
+		} gcr {
+			wt	2 _
+			frv2	a * 1200 ^ (sine 400p 1 * t linear 1 0.1 p) 3
+		} gsr2 2 <180> {
+		} s tprot lerpfromto 0.5 1.5 
+			px + 2 * 2.5 p
+			px - 3.5 * 2.5 p
+        
+            
+            

@@ -1,0 +1,13 @@
+pattern { }
+phase 0
+	action block 0
+		position 1 0
+		sync enemy01 <2,:45> gsr2 4 <,:90> { p this } summons tprot cx 1
+			action block 0 :2
+				sync gem-red/b <0.2,:32> guideempty .1 p { myloc loc } { mydir dir }
+					roffset py + 1 t {
+						gsr { start rv2.a =f 80 } s offset 
+							rotate @ mydir p px 1
+							@ myloc p
+					}
+				wait 4

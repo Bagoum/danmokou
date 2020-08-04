@@ -1,0 +1,52 @@
+pattern { }
+phase 0
+	action block 0
+		@ { nl nr nu nd }
+			cull
+		clear phase
+		clear bullet
+		summon inode <> nl <> null null
+		summon inode <> nr <> null null
+		summon inode <> nu <> null null
+		summon inode <> nd <> null null
+	action block 0.05
+		shift-phase-to 1
+phase 0
+	action block 0
+		position 0 0.5
+		timer restart phaser
+		pool-control gem-red/ allowcull false
+!!{ t1 1
+!!{ t2 2
+!!{ tp + $t1 $t2
+!!{ np mod 4 // timersec(phaser) $tp
+		sync gem-red/ <> gsr {
+			root	cxy -50 -12
+			t	25
+			rpp	<4,:>
+		
+		} gsr {
+			bank	<>
+			t	80
+			rpp	<0.4,0.4:>
+		} gsr {
+			t	2
+			preloop rv2.rx *=f pm1mod t
+		} s tprot lerpin 0.1 1 :: { np $np }
+			if = &np 0 
+				cx 1.5
+			if = &np 1
+				cy 1.5
+			if = &np 2
+				cx -1.5
+				cy -1.5
+		bullet-control once gem-red/ cull | > abs x 16 > abs y 12
+	action block 0.1
+		bullet-control persist gem-red/ dx -32 > x 16
+		bullet-control persist gem-red/ dx 32 < x -16
+		bullet-control persist gem-red/ dy -24 > y 12
+		bullet-control persist gem-red/ dy 24 < y -12
+
+		
+		
+

@@ -1,0 +1,5 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
+    <ui:Label text="tktktktkt" name="hello" focusable="true" class="testhello">
+        <Style src="test_label.uss" />
+    </ui:Label>
+</ui:UXML>

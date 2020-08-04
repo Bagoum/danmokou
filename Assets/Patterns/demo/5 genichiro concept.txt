@@ -1,0 +1,176 @@
+pattern { }
+phase 0 #{
+	action block 0
+		@ { nb }
+			cull
+		clear phase
+		clear bullet
+		summon inode <> nb <> null null
+	action block 0.1
+		##track playbgms { liq-brainwash liq-blacklist }
+		shift-phase-to 3
+#}
+
+!{ 
+crosshair(time; speed; loc)
+sync crosshair <> pssfx x-crosshair summon  _ <> tprot
+			vhome %speed %loc
+			here sprite opacity %time equad0m10 0.5 %time t
+!}
+!{
+moveio(time; target)
+move %time nroffset ease io-sine %time * t / %time %target
+!}
+!{ moveto(time; target)
+move %time tpnrot eased io-sine %time ss 0 vhometime %time %target
+!}
+!{
+moveioanime(time; target)
+$moveio(%time; %target)
+sfx x-move-anime
+!}
+
+##1 -- this is ok
+<!> type spell `Bladed Wings: Flying Duck Strike`
+<!> hp 22000
+<!> hpbar 1
+phase 33 #{
+	end
+		clear phase
+		pool-control { { circle-* sun-* } } softcullall cwheel
+    action block 0
+        ##move 2 tp-nrot eased out-sine 2 stopsampling 0 vhometime 2 cxy 0 3
+        ##summon cu-mokou-come-on-boy <> _ <> null file fall
+        ##wait-for 4
+	action block 0
+		position 0 2
+!!{ ctp 50
+!!{ ctl 7
+!{ slice(color; ratio; rotate; angler; delay)
+async %color <> gcr { wt 0.5 $ctp p this } gsr { tm $ctl $ctl p add } s :: {
+		pr	/ p1 $ctp
+		angle	* %ratio * 360 &pr
+		r1	+ 1.2 * 0.8 p2
+		lerpt	* (+ 2.2 * 0.1 p2) (logsumshiftt 0.5 (+ + %delay 2.4 * -0.1 p2) 0 t)
+	} nroffset
+		qrotate %rotate
+			+ pr &r1 &angle
+			pr 
+				&lerpt
+				+ %angler &angle 
+!}
+##RDLU LDRU jump LURU RDLU land LDRU RULD swipe RDLD
+	action block 0
+		$moveio(0.08 ; cr 2 200)
+		sfx x-metal
+	action block 0
+		$slice(arrow-red/w; 0.75; pxyz 45 60 240; + 20 * 2 t; 0) ## RDLU
+		$slice(arrow-red/w; 0.75; pxyz 45 60 240; * -1 + 20 * 2 t; 0) ## RDLU
+	action block 0.5
+		$moveio(0.08 ; cr 4 -20)
+		sfx x-metal
+	action block 0
+		$slice(arrow-pink/w; 0.75; pxyz 135 60 60; + 40 * 1 t; 0) ## LDRU
+		$slice(arrow-pink/w; 0.75; pxyz 135 60 60; * -1 + 40 * 1 t; 0) ## LDRU
+	action block 0
+		$moveto(3; cy 3)
+	action block 1
+		$moveio(0.04 ; cr 0.5 330)
+		sfx x-metal
+	action block 0
+		$slice(arrow-red/b; 0.75; pxyz 75 0 -30; + 125 * 0 t; 0) ## LURU
+		$slice(arrow-red/b; 0.75; pxyz 75 0 -30; * -1 + 125 * 0 t; 0) ## LURU
+	action block 0.2
+		$moveio(0.04 ; cr 1.5 190)
+		sfx x-metal
+	action block 0
+		$slice(arrow-red/w; 0.75; pxyz 45 60 240; + 25 * 1 t; 0.5) ## RDLU
+		$slice(arrow-red/w; 0.75; pxyz 45 60 240; * -1 + 25 * 1 t; 0.5) ## RDLU
+	action block 0.2
+		$moveio(0.04 ; cr 1.5  -10)
+		sfx x-metal
+	action block 0
+		$slice(arrow-pink/w; 0.75; pxyz 135 60 60; + 40 * 1.5 t; 2) ## LDRU
+		$slice(arrow-pink/w; 0.75; pxyz 135 60 60; * -1 + 40 * 1.5 t; 2) ## LDRU
+	action block 0.2
+		$moveio(0.04 ; cr 2 280)
+		sfx x-metal
+	action block 0
+		$slice(arrow-black/w; 0.75; pxyz 135 120 240; + 30 * 1 t; 1) ## RULD
+		$slice(arrow-black/w; 0.75; pxyz 135 120 240; * -1 + 30 * 1 t; 1) ## RULD
+		
+		
+			
+#}
+
+
+
+##2 -- kind of an experiment with movement fire, but not useful
+<!> type spell `Bl`
+<!> hp 22000
+<!> hpbar 1
+phase 33 #{
+	end
+		clear phase
+		pool-control { { circle-* sun-* } } softcullall cwheel
+    action block 0
+        ##move 2 tp-nrot eased out-sine 2 stopsampling 0 vhometime 2 cxy 0 3
+        ##summon cu-mokou-come-on-boy <> _ <> null file fall
+        ##wait-for 4
+	action block 0
+		position -5 4
+!!{ ht 0.1
+		sync danger <8.5,:> world gsr2 4 <,:90> . summonup d <> 
+			roffset px * -5 esine010 / t 3
+			here wait-for 4
+	action block 3
+		async gcircle-red/w <> gcr2 4 60 <30h> . gsr2 12 <30> . s tprot
+			switchH 0.5 zero eased io-sine 2 ssvhomet 3.2 Lplayer
+		gtr { wt 0 12 wait-child } saction 0 :6
+		##also set sprite invis otherwise its distracting
+			sfx x-move-anime
+			move $ht tpnrot ssvhomet $ht pxy -5 -4
+			move $ht tpnrot ssvhomet $ht pxy 5 -4
+			sfx x-move-anime
+			move $ht tpnrot ssvhomet $ht pxy 5 4
+			move $ht tpnrot ssvhomet $ht pxy -5 4
+	action block 0
+		savev2 target 0 pxy brand -2 2 y
+		savev2 ploc 0 Lplayer
+		$crosshair(4; 4; @0 target)
+		move 4 tpnrot easedvhomet io-sine 4 @0 target
+		async laser24-pink/ws <> iparent mokou rslaser 0 0 angleto @0 ploc
+			null
+			4 0
+	action block 0
+		sfx x-move-anime
+		move 0.25 tpnrot  if > y -4 
+			ss 0 vhome 40 @0 ploc
+			zero
+		async x-boom <> gir {
+			while <= y -4
+		} {
+			conce sfx
+			gcr2 2 10 <> {
+				face v
+				color gcircle-red/b 
+			} s tprot cx -1
+		}
+#}
+
+
+///
+		async gcircle-red/b <180> gir { face v  } {
+			 geruption 1.5 400
+					cosine 30.5 20 p
+					+ 2.9 cosine 30h 0.7 p
+					max -4.2 * -0.7 t
+					{ p this }
+			gir { color glcircle-pink/b } geruption 6 100
+				cosine 10 20 p
+				+ 2.0 cosine 10h 0.6 p
+				max -3.1 * -0.4 t
+				{ p this }
+		} 
+
+

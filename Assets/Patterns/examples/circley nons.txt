@@ -1,0 +1,50 @@
+pattern { }
+phase 0 #{
+    action block 0
+        shift-phase-to 1
+#}
+
+<!> type non `Wintry Night: Sun and Moon`
+phase 0 #{
+	end
+		clear phase
+	action block 0
+		position 0 3
+		async empty <> gcr2 360 _ <,:60h> {
+			p this
+		} gsr2c 6 {
+			p add
+		} s polar
+			* 2.9 t
+			* pm1mod p1 softmaxshiftt 0.4 1 0 (* 25 t)
+		bullet-control persist empty savev2 el p loc _
+		async inode <> gcr2 360 _ <> { 
+			p this 
+			root zero
+		} gsr2 6 <> { 
+			p add
+			alternate p1 
+		} { 
+				summons offset zero @ el p
+					action block 0
+						sync scircle-red/w <> world s offset zero @ el p
+						async amulet-red/ <0.1,:> gcr2 60 _ <> {
+							delay	60
+							while	onscreen loc
+							sfx	x-fire-burst-1
+							##I think this bullet is better homing.
+						} gsr2c 20 {
+						} s tprot lerpin 0 1.5 ss 0 vhome 1 Lplayer ##cx 0.8
+						break
+				summons offset zero @ el p
+					action block 0
+						sync scircle-red/b <> world  s offset zero @ el p
+						async amulet-purple/ <0.1,:> gcr2 90 _ <20h> {
+							delay	90
+							while	onscreen loc
+							sfx	x-fire-burst-2
+						} gsr2c 15 {
+						} s tprot lerpin 0 1.5 cx 2.2
+						break
+			}
+#}

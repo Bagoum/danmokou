@@ -1,0 +1,27 @@
+pattern { }
+phase 0
+    action block 0
+        position 0 0
+		## Only two are fired
+		gtr {
+			wt	1 5
+			cancel	= t 2
+			rpp	<5>
+		} sync gem-red/w <1,:> s tprot cx 2
+		## Only one is fired
+		async gem-green/w <1,:30> gir2 1 _ <5> {
+			cancel	= t 1
+		} s tprot cx 2
+		## Nothing is fired
+		async gem-blue/w <1,:60> gcr2 1 5 <5> {
+			cancel	= t 0
+		} s tprot cx 2
+		## Only four are fired
+		sync gem-orange/w <1,:90> gsr2 6 <6> {
+			cancel > t 3
+		} s tprot cx 2
+	action block 0
+		shift-phase-to 1
+		
+
+            

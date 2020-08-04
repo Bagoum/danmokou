@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4f64d4a00c194018afbe5db3323da211, type: 3}
+  m_Name: Test Campaign
+  m_EditorClassIdentifier: 
+  description: 
+  stages:
+  - {fileID: 11400000, guid: e260128b7ced79349bfb2aa73d8e3c5c, type: 2}
+  - {fileID: 11400000, guid: e71e127be0995ab4f960e686128d5629, type: 2}
+  practiceBosses:
+  - {fileID: 11400000, guid: fbf1044b75a1ecd468ff97b8acca7b7a, type: 2}
+  - {fileID: 11400000, guid: dc2b4c390da211341a9b0d0c3356edf7, type: 2}
+  practiceStages:
+  - {fileID: 11400000, guid: e260128b7ced79349bfb2aa73d8e3c5c, type: 2}

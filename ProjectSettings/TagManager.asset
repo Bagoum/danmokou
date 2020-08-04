@@ -1,0 +1,74 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!78 &1
+TagManager:
+  serializedVersion: 2
+  tags:
+  - FxTemporaire
+  layers:
+  - Default
+  - TransparentFX
+  - Ignore Raycast
+  - 
+  - Water
+  - UI
+  - 
+  - 
+  - Player
+  - LowDirectRender
+  - HighDirectRender
+  - LowProjectile
+  - HighProjectile
+  - 
+  - 
+  - Enemy
+  - Wall
+  - LowEffects
+  - 3DEffects
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - ARBITRARY_CAPTURE
+  - SpecialMainCamera
+  - PostProcessing
+  m_SortingLayers:
+  - name: Default
+    uniqueID: 0
+    locked: 0
+  - name: Background
+    uniqueID: 3856203509
+    locked: 0
+  - name: Walls
+    uniqueID: 945552623
+    locked: 0
+  - name: LowFX
+    uniqueID: 4047857803
+    locked: 0
+  - name: Player
+    uniqueID: 3761398657
+    locked: 0
+  - name: PlayerHitbox
+    uniqueID: 425919585
+    locked: 0
+  - name: Projectile
+    uniqueID: 711697775
+    locked: 0
+  - name: Enemy
+    uniqueID: 4285678959
+    locked: 0
+  - name: Foreground
+    uniqueID: 487110511
+    locked: 0
+  - name: FX
+    uniqueID: 2488654819
+    locked: 0
+  - name: UI
+    uniqueID: 2580262927
+    locked: 0

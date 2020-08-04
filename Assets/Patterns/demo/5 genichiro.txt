@@ -1,0 +1,252 @@
+pattern { }
+phase 0 #{
+	action block 0
+		@ { nb }
+			cull
+		clear phase
+		clear bullet
+		summon inode <> nb <> null null
+	action block 0.1
+		##track playbgms { liq-brainwash liq-blacklist }
+		shift-phase-to 1
+#}
+
+## 1
+<!> type non `Crossed Swords: Spiretop Shrieking Stars`
+<!> hp 13000
+<!> hpbar 0.5
+phase 27 #{
+	end
+		clear phase
+		pool-control { { circle-* sun-* } } softcullall cwheel
+    action block 0
+        move 2 tp-nrot eased out-sine 2 stopsampling 0 vhometime 2 cxy -2 2
+	action block 0
+		position -2 2
+		setstate vulnerable true
+		gtr {
+			p	this
+			wait-child
+			wt	max 0 linear 120 -15 &i _
+			rpp	<120>
+		} saction 0
+			~
+				##Even though this sound is not synced with the actual arrow collision, it sounds better like this.
+				async x-boom <> gcr { delay 30 wt 10 6 } sfx
+			async empty <2,:-75> gcr {
+				p	mod
+				wtm	10 6 6
+				rpp	<30>
+				sfx	x-fire-burst
+			} target Lplayer { #{
+				s tprot switch 100 cx 15 zero
+				loc0 color circle-* gsr {
+					colorf	{ pink/bs red/bs } p2m 6
+!!{ arrowt 13
+!!{ harrowt 6.5
+					t	$arrowt
+				} s expose { f i } :: {
+					narrow	p2m 6
+					ctime	@ ctime p
+					xm	-0.2
+					ym	0.08
+					ox	* &xm fhmod $harrowt &i
+					oy	* &ym fhnmod $harrowt &i
+					lstart	+ 0.1  + + &ctime * -0.1 &ox * 0.1 &narrow
+				} offset zero
+					+ @ pl p
+						rotate @ pd p
+							+ pxy &ox &oy
+							if (= &ctime 0) zero
+								pxy 
+									softmaxshiftt -1 &lstart 0 * * 6 t &xm
+									* (if (< &i $harrowt ) 1 -1) softmaxshiftt 1 &lstart 0 * * 6 t &ym
+				loc0 color circle-* gsr { #{
+					t	24
+					preloop {
+						ox =f * -0.2 t
+						oy =f 0
+					}
+					colorf	{ red/ pink/ } p2m 6
+				} s expose { f ox f oy } :: {
+					narrow	p2m 6
+					ctime	@ ctime p
+					lstart	+ 0.1  + + &ctime * -0.1 &ox * 0.05 &narrow
+				} offset zero
+					+ @ pl p
+						+ rotate @ pd p 
+								+ pxy &ox &oy
+								if (= &ctime 0) zero
+									rxy + * &ox 90 * 170 [@ pl p].x
+										* (pm1mod &narrow) logsumshiftt 4 &lstart 0 * t 1
+										0
+							if (= &ctime 0) zero
+								py height 0 0.5 -0.3 - t &ctime #}
+			} #}
+			_ 1 
+				move 1 expose { f i } tpnrot eased io-sine 1 vhometime 1 pxy
+					* pm1mod &i brand 3 5
+					brand 2 3.5
+			break
+		bullet-control persist empty savev2 pl p loc _
+		bullet-control persist empty savef pd p dir _
+		bullet-control persist empty savef ctime p t onlyonce offscreen loc
+		bullet-control-sm persist empty onlyonce offscreen loc
+			sync sun-red/w <> ss * 0.5 - 4 ^(- t 2; 2) tprot zero
+		bullet-control persist sun-red/w cull > t 4
+		bullet-control persist empty time 101 > @ ctime p 0
+		
+#}
+
+!{ 
+crosshair(time; speed; loc)
+sync crosshair <> pssfx x-crosshair summon  _ <> tprot
+			eased in-sine %time vhome %speed %loc
+			here sprite opacity %time equad0m10 0.5 %time t
+!}
+!{
+moveio(time; target)
+move %time nroffset ease io-sine %time * t / %time %target
+!}
+!{
+moveioanime(time; target)
+$moveio(%time; %target)
+sfx x-move-anime
+!}
+!{
+fdsfiremove(color; root; beh; time; dist)
+sync pather18-%color% %root pssfx x-metal gsr {
+	preloop rv2.ry =f * 0.1 fhnmod 3.5 t
+	t 7
+	p	this
+} epather %beh 1 0.5 tprot lerpfromto 0.2 0.5 cx 12 cx 4
+savev2 pdiff 0 (- Lplayer loc)
+$moveio(%time ; * %dist normalize @0 pdiff)
+!}
+!{
+fdsboommove(target)
+savev2 _mb1 0 (- %target loc)
+$moveioanime(0.5; @0 _mb1)
+async sun-red/w.2 <> gcr {
+	delay	5
+	p	this
+	wt	12 4
+	sfx	x-boom
+} ss * linear 1.4 -0.2 p equad0m10 0.5 2 t null
+!}
+
+## 2
+<!> type spell `Bladed Wings: Flying Duck Strike`
+<!> hp 17000
+<!> hpbar 1
+phase 27 #{
+	end
+		clear phase
+		pool-control { { lcircle-* circle-* sun-* shell-* ellipse-* strip-*  } } softcullall cwheel
+		behpool-control { { pather18-* laser24-red/ws laser16-black/bs } } softcullall cwheel 
+		bullet-control once sc-guanyin softcull cwheel-red/ _
+!!{ d6b ellipse-teal/
+		pool-control $d6b allowcull true
+    action block 0
+        move 2 tp-nrot eased out-sine 2 stopsampling 0 vhometime 2 cxy 0 3
+        summon cu-mokou-come-on-boy <> _ <> null file fall
+        wait-for 3
+	action block 0
+		pool-control $d6b allowcull false
+		bullet-control persist sun-red/w.2 cull > t 2
+		position 0 3 
+		setstate vulnerable true
+		~@ d1 #{
+			async strip-red/ <> gcr {
+				delay	* 10 p
+				wt	60 2
+				start	rv2.a +=f * 60 p
+				rpp	<36h>
+			} circlep defer 20 s tprot lerpin 0 0.2 cx 2
+		~@ d2
+			async circle-pink/ <> gcr {
+				delay	* 10 p
+				wt	60 2
+				start	rv2.a +=f * 60 p
+				rpp	<36h>
+			} circlep defer 8 repeatp this 2 <> s polar
+				* 2 t
+				* pm1mod p logsumshiftt -0.2 2.5 * 30 t * 13 t
+		~@ d3
+			async ellipse-* <> gcr {
+				delay	* 15 p
+				start	rv2.a +=f * 60 p
+				rpp	<36h>
+			} circlep defer 10 gsr { p this t 5 color { pink/w pink/b } }  repeatp add 5 <> s polar
+			* t linear 2 0.03 p2
+			* pm1mod p1 logsumshiftt -0.2 2.5 * 27 t * 10 t
+		~@ d4
+			async laser24-red/ws <> gcr {
+				delay	+ 20 * 15 p
+				start	rv2.a +=f * 60 p
+			} circlep defer 10 slaser 0 0 null 0.8 0.3
+		~@ d5
+			async lcircle-purple/ <> gcr { delay + 60 * 15 p } target Lplayer s tprot lerpout 0.5 1.1 cx 3
+		bullet-control persist lcircle-purple/ cull > t 1
+		bullet-control-sm persist lcircle-purple/ > t 1
+			sync shell-purple/ <0.1,:> gsr { start rv2.a +=f * 30 fsoftmod 1p p } circlep defer 12 repeatp this 5 <> s tprot * (linear 1 0.03 p) lerpfromto 0.2 0.6 cx 2.3 cx 1.3
+		~@ d6
+			async $d6b <0> gcr { delay * 15 p wt 35 2 } repeat 19 <10> s tp px 3.8 py * -1.2 t 
+		~@ d7
+			async laser16-black/bs <> gcr {
+				delay * 1 p
+			} gsr { clip > 20 p } target Lplayer circlep defer 12 slaser 25 0 null 0.5 0.1
+#}
+
+		gtr {
+			p	this
+			wait-child
+			wt	0 _
+		} seq
+		##RDLU LDRU jump LURU RDLU land LDRU RULD swipe RDLD
+			action block 1
+				$fdsfiremove(red/bs; <-3,:45>; d1; 0.08; 1)
+			action block 0.5
+				$fdsfiremove(pink/bs; <-3,:135>; d2; 0.08; 1)
+			action block 0.5
+				sfx x-incoming-2
+				savev2 pdiff 0 (- Lplayer loc)
+				savev2 tocenter 0 (- zero loc)
+				$moveio(2; + cy 3 * 1 normalize @0 pdiff)
+			action block 0.5
+				$fdsfiremove(red/bs; <0,1:-3,:180>; d3; 0.06; 1)
+			action block 0.2
+				$fdsfiremove(pink/bs; <-3,:45>; d4; 0.06; 1)
+			action block 0.2
+				$fdsfiremove(red/ws; <-3,:135>; d5; 0.04; 1)
+			action block 0.2
+				$fdsfiremove(pink/ws; <-3,:-135>; d6; 0.04; 1)
+			action block 0.2 
+				async _ <> gcr { wt 1 120 } savev2 ploc 0 Lplayer
+				savev2 tocenter 0 - (pxy (* 4 pm1mod p) 3) loc
+				$crosshair(3; 12; @0 ploc)
+				$moveio(1; @0 tocenter)
+			action block 0.5
+				sfx x-incoming-2
+			action block 1.5
+				$fdsboommove(@0 ploc)
+			action block 0.1
+				async x-metal <> gcr { wt 10 6 } sfx
+				async pather18-black/bs <-8,1:> gcr {
+					root	loc
+					preloop rv2.ry -=f 0.1
+					wt	1 80
+					p	this
+				} epather d7 0.5 0.2 tprot cx 20
+				sync sc-guanyin <> target Lplayer repeat 12 <30> repeatp this 20 <> s tprot
+					px + 0.4 * 0.25 / (^ p 1.5) 10
+				savev2 pdiff 0 (- Lplayer loc)
+				$moveio(0.16; * 1 normalize @0 pdiff)
+			action block 1
+				savev2 tocenter 0 - cy 3 loc
+				$moveio(1; @0 tocenter)
+				break
+			break
+		
+			
+#}

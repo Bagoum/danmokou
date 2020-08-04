@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9a92301f86b4dd690557658c7243e8b, type: 3}
+  m_Name: Tutorial Boss
+  m_EditorClassIdentifier: 
+  boss: {fileID: 6003014192476353498, guid: 0623db11f1c15fc409072cf3af7a2a95, type: 3}
+  CardPracticeName: 
+  stateMachine: {fileID: 4900000, guid: 641d26273f4f7d64e964c82881c8fd15, type: 3}
+  key: tutorial
+  displayName: Tutorial<br>Boss
+  displayTitle: This is an<br>Excessively<br>Descriptive<br>Boss Title
+  trackName: Boss
+  uiColor: {r: 0.5471698, g: 0, b: 0.116646215, a: 1}
+  uiHPColor: {r: 0.8113208, g: 0, b: 0, a: 1}
+  cardColorR: {r: 0.10208259, g: 0.5849056, b: 0.20500185, a: 1}
+  cardColorG: {r: 0.05339978, g: 0.65704066, b: 0.754717, a: 1}
+  cardColorB: {r: 0, g: 0.072839774, b: 0.6156863, a: 1}
+  spellColor1: {r: 0.8396226, g: 0, b: 0.11615339, a: 0.68235296}
+  spellColor2: {r: 0.9433962, g: 0.013349922, b: 0.7500941, a: 0.7372549}
+  spellColor3: {r: 0.6859027, g: 0.019357419, b: 0.8207547, a: 0.6862745}
+  rotator: 
+  profile:
+    image: {fileID: 0}
+    offsetX: 0
+    offsetY: 0
+    zoom: 0
+  defaultNonBG: {fileID: 0}
+  defaultSpellBG: {fileID: 0}
+  defaultIntoSpellTransition: {fileID: 0}
+  defaultIntoNonTransition: {fileID: 0}
+  bossCutin: {fileID: 0}

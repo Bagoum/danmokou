@@ -1,0 +1,18 @@
+pattern { }
+phase 0
+    action block 0
+		@ nl,nr
+			cull
+		clear bullet
+        position 0 0
+        summon enemy01 <3,:> nr <> tpnrot cx 0.2 here 
+			action block 0 
+				bullet ellipse-red/w <,:> cre 2 3000 <,:-2> s tprot cx -1
+				bullet strip-yellow/b <> cre 2 3000 <> ignoremods s tpnrot ss 0 vhome 2 Lplayer
+				break
+        summon enemy01 <3,:> nl <x> tpnrot cx 0.2 here 
+			action block 0 
+				bullet ellipse-green/w <,:> cre 2 3000 <,:-2> s tprot cx -1
+				bullet strip-teal/b <> cre 2 3000 <> ignoremods s tpnrot ss 0 vhome 2 Lplayer
+				break
+            

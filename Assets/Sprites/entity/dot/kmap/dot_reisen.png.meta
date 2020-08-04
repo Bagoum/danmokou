@@ -1,0 +1,745 @@
+fileFormatVersion: 2
+guid: cfd1f24b5664ce24091f3a52e98976f7
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -1689499577261684444
+    second: dot_reisen_0
+  - first:
+      213: 5826663988598648592
+    second: dot_reisen_1
+  - first:
+      213: -4783677840014394338
+    second: dot_reisen_2
+  - first:
+      213: -2398663687062852532
+    second: dot_reisen_3
+  - first:
+      213: -5606279122655163781
+    second: dot_reisen_4
+  - first:
+      213: -8064172180848285870
+    second: dot_reisen_5
+  - first:
+      213: 7977949110546701668
+    second: dot_reisen_6
+  - first:
+      213: -535643753816095210
+    second: dot_reisen_7
+  - first:
+      213: 6370312030271544338
+    second: dot_reisen_8
+  - first:
+      213: -2350118482015447062
+    second: dot_reisen_9
+  - first:
+      213: -9185848084752832331
+    second: dot_reisen_10
+  - first:
+      213: -2296597520054010974
+    second: dot_reisen_11
+  - first:
+      213: 2273963727564342367
+    second: dot_reisen_12
+  - first:
+      213: 2888149957335003787
+    second: dot_reisen_13
+  - first:
+      213: 4646069417139567282
+    second: dot_reisen_14
+  - first:
+      213: -8138333371448345922
+    second: dot_reisen_15
+  - first:
+      213: -5734100650574932995
+    second: dot_reisen_16
+  - first:
+      213: -5813401515490803257
+    second: dot_reisen_17
+  - first:
+      213: 5448944023848377741
+    second: dot_reisen_18
+  - first:
+      213: 585066798453820729
+    second: dot_reisen_19
+  - first:
+      213: -2824393493620972315
+    second: dot_reisen_20
+  - first:
+      213: 1154887260446050271
+    second: dot_reisen_21
+  - first:
+      213: -8947537256568839803
+    second: dot_reisen_22
+  - first:
+      213: -4537728711562396142
+    second: dot_reisen_23
+  - first:
+      213: -702972790070211778
+    second: dot_reisen_24
+  - first:
+      213: -2880295292786008972
+    second: dot_reisen_25
+  - first:
+      213: 768027673570681756
+    second: dot_reisen_26
+  - first:
+      213: -6657117875608810200
+    second: dot_reisen_27
+  - first:
+      213: 2800380537628222595
+    second: dot_reisen_28
+  - first:
+      213: -5875875452853847329
+    second: dot_reisen_29
+  - first:
+      213: -34168327201375019
+    second: dot_reisen_30
+  - first:
+      213: 5060781608007935587
+    second: dot_reisen_31
+  - first:
+      213: -4314101810132825610
+    second: dot_reisen_32
+  - first:
+      213: -2010920401763132461
+    second: dot_reisen_33
+  - first:
+      213: 3330268978819890596
+    second: dot_reisen_34
+  - first:
+      213: -2056473746066515566
+    second: dot_reisen_35
+  - first:
+      213: -506491460959742074
+    second: dot_reisen_36
+  - first:
+      213: 2250043644945882969
+    second: dot_reisen_37
+  - first:
+      213: -4415127863477370539
+    second: dot_reisen_38
+  - first:
+      213: 1031833589064428515
+    second: dot_reisen_39
+  - first:
+      213: 7697641645027141529
+    second: dot_reisen_40
+  - first:
+      213: 8147952414680023958
+    second: dot_reisen_41
+  - first:
+      213: -7694131582738578067
+    second: dot_reisen_42
+  - first:
+      213: -8144501733090159254
+    second: dot_reisen_43
+  - first:
+      213: -4642290292387997504
+    second: dot_reisen_44
+  - first:
+      213: -8083721751187213463
+    second: dot_reisen_45
+  - first:
+      213: 1043263085251318223
+    second: dot_reisen_46
+  - first:
+      213: -5905115669758778269
+    second: dot_reisen_47
+  - first:
+      213: -5414815121056971344
+    second: dot_reisen_48
+  - first:
+      213: -8420342181258655478
+    second: dot_reisen_49
+  - first:
+      213: -2593312501127698845
+    second: dot_reisen_50
+  - first:
+      213: 3398817665832036834
+    second: dot_reisen_51
+  - first:
+      213: 8318750699465050879
+    second: dot_reisen_52
+  - first:
+      213: -1737916735273843749
+    second: dot_reisen_53
+  - first:
+      213: -135744942515928063
+    second: dot_reisen_54
+  - first:
+      213: 2772289442341803816
+    second: dot_reisen_55
+  - first:
+      213: -1158338643061553139
+    second: dot_reisen_56
+  - first:
+      213: -3305360507339236970
+    second: dot_reisen_57
+  - first:
+      213: 8292667742704056851
+    second: dot_reisen_58
+  - first:
+      213: 4301766185014391882
+    second: dot_reisen_59
+  - first:
+      213: -2132042869264025714
+    second: dot_reisen_60
+  - first:
+      213: -4768010317407298990
+    second: dot_reisen_61
+  - first:
+      213: -4165776469354874655
+    second: dot_reisen_62
+  - first:
+      213: 2494878688481143468
+    second: dot_reisen_63
+  - first:
+      213: 7738721843796766393
+    second: dot_reisen_64
+  - first:
+      213: 4624587679398593727
+    second: dot_reisen_65
+  - first:
+      213: 8872116407309967170
+    second: dot_reisen_66
+  - first:
+      213: 5892328991024687235
+    second: dot_reisen_67
+  - first:
+      213: 8612075692587651257
+    second: dot_reisen_68
+  - first:
+      213: 5511029101614250499
+    second: dot_reisen_69
+  - first:
+      213: -245451674246989652
+    second: dot_reisen_70
+  - first:
+      213: -4711440799284688803
+    second: dot_reisen_71
+  - first:
+      213: -3332248078039343727
+    second: dot_reisen_72
+  - first:
+      213: -7168636739206213001
+    second: dot_reisen_73
+  - first:
+      213: 6502543712357592676
+    second: dot_reisen_74
+  - first:
+      213: -5037136617616193029
+    second: dot_reisen_75
+  externalObjects: {}
+  serializedVersion: 11
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: -1
+    mipBias: -100
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 60
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  platformSettings:
+  - serializedVersion: 3
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 2
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 2
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 2
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: dot_reisen_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 384
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4290529f511bd88e0800000000000000
+      internalID: -1689499577261684444
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_reisen_1
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 384
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 01fabf1d6087cd050800000000000000
+      internalID: 5826663988598648592
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_reisen_2
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 384
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e1cb80a7956fc9db0800000000000000
+      internalID: -4783677840014394338
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_reisen_3
+      rect:
+        serializedVersion: 2
+        x: 384
+        y: 384
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c4c6df4d51c36bed0800000000000000
+      internalID: -2398663687062852532
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_reisen_4
+      rect:
+        serializedVersion: 2
+        x: 512
+        y: 384
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b7a437e57de7232b0800000000000000
+      internalID: -5606279122655163781
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_reisen_5
+      rect:
+        serializedVersion: 2
+        x: 640
+        y: 384
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 25763f8902e461090800000000000000
+      internalID: -8064172180848285870
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_reisen_6
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 256
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 46d9742727e57be60800000000000000
+      internalID: 7977949110546701668
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_reisen_7
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 256
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 61682a708d20198f0800000000000000
+      internalID: -535643753816095210
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_reisen_8
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 256
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 21c9bb84a05e76850800000000000000
+      internalID: 6370312030271544338
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_reisen_9
+      rect:
+        serializedVersion: 2
+        x: 384
+        y: 256
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ae7936b21b3b26fd0800000000000000
+      internalID: -2350118482015447062
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_reisen_10
+      rect:
+        serializedVersion: 2
+        x: 512
+        y: 256
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5b8ea9be5df458080800000000000000
+      internalID: -9185848084752832331
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_reisen_11
+      rect:
+        serializedVersion: 2
+        x: 640
+        y: 256
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2ab332139b8d020e0800000000000000
+      internalID: -2296597520054010974
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_reisen_12
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 128
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f54889556fdbe8f10800000000000000
+      internalID: 2273963727564342367
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_reisen_13
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 128
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b8233098515c41820800000000000000
+      internalID: 2888149957335003787
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_reisen_14
+      rect:
+        serializedVersion: 2
+        x: 384
+        y: 128
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2baf86ad4872a7040800000000000000
+      internalID: 4646069417139567282
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_reisen_15
+      rect:
+        serializedVersion: 2
+        x: 512
+        y: 128
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: eba3d1bdae4de0f80800000000000000
+      internalID: -8138333371448345922
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_reisen_16
+      rect:
+        serializedVersion: 2
+        x: 640
+        y: 128
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: df31520c6d16c60b0800000000000000
+      internalID: -5734100650574932995
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_reisen_17
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 0
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7c104745f16a25fa0800000000000000
+      internalID: -5813401515490803257
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot_reisen_18
+      rect:
+        serializedVersion: 2
+        x: 640
+        y: 0
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d8d587e48b98e9b40800000000000000
+      internalID: 5448944023848377741
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+  spritePackingTag: 
+  pSDRemoveMatte: 0
+  pSDShowRemoveMatteOption: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

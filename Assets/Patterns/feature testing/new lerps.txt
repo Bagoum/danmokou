@@ -1,0 +1,10 @@
+pattern { }
+phase 0
+	action block 0
+		position -3 0
+		sync sun-red/b <3,:> ss
+			ebounce2 min 1 / t 2
+			null
+
+
+            

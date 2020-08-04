@@ -1,0 +1,28 @@
+pattern { }
+phase 0
+	action block 0
+        position 0 2
+		clear phase
+		clear bullet
+	action block 0.1
+		shift-phase-to 1
+phase 0
+    action block 0
+		position 4 -3
+		async gem-*/bs <> gir2 50 _ <> {
+			root pxy 8 5
+			preloop rv2.nx =f * 1 mod 1 * / 5 7 t
+		} 
+			gcr2 6 20 <-1,:,:> { 
+				preloop {
+					rv2.a =f linear 8 -2 t
+				}
+			}
+			##gsr2 20 <1,:> . 
+			gsr2 4 <-0.15,-0.07:3> {
+			color { green yellow red blue  }
+			p this
+		} s tprot * linear 1 0.2 p rotatelerppercent 0.6 py -1.8
+			rotate * 4 p py -1
+
+            

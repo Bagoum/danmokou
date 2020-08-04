@@ -1,0 +1,17 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <ui:VisualElement name="Container">
+        <Style src="UIScreen.uss" />
+        <ui:VisualElement class="column">
+            <ui:ListView focusable="True" show-border="false" show-bound-collection-size="true" class="columnList" />
+        </ui:VisualElement>
+        <ui:VisualElement class="column">
+            <ui:ListView focusable="True" show-border="false" show-bound-collection-size="true" class="columnList" />
+        </ui:VisualElement>
+        <ui:VisualElement class="column">
+            <ui:ListView focusable="True" show-border="false" show-bound-collection-size="true" class="columnList" />
+        </ui:VisualElement>
+        <ui:VisualElement class="column">
+            <ui:ListView focusable="True" show-border="false" show-bound-collection-size="true" class="columnList" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

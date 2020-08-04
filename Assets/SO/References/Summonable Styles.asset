@@ -1,0 +1,79 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f94335465055a404498dd05058aa17e4, type: 3}
+  m_Name: Summonable Styles
+  m_EditorClassIdentifier: 
+  prefabs:
+  - groupTitle: Basic Enemies
+    prefabs:
+    - name: enemy01
+      prefab: {fileID: 4607728708591253777, guid: 7342b4e4c4806e842931df0c1db15b48,
+        type: 3}
+    - name: fairy1
+      prefab: {fileID: 3407124447063394658, guid: f28167148c8e8b247be3b31472dceb43,
+        type: 3}
+    - name: _fairy2
+      prefab: {fileID: 3725089065751357892, guid: fa88a8aab85c8b34d9552d8aadd06337,
+        type: 3}
+    - name: fairy3
+      prefab: {fileID: 4572983790785171941, guid: 92335b8e782357c4d8ac0d5f95112e75,
+        type: 3}
+    - name: fairy4
+      prefab: {fileID: 1245647418676755633, guid: 500b201cce4fae448aed763e67b0044b,
+        type: 3}
+    - name: fairy5
+      prefab: {fileID: 6918561875651822535, guid: 56a225a3f422e8b40aa4eac887301ef4,
+        type: 3}
+    - name: ifairy4
+      prefab: {fileID: 7186086442913961588, guid: 966cc1e3a04168d4ab92a047fe3d340a,
+        type: 3}
+    - name: ifairy5
+      prefab: {fileID: 3252280146336937133, guid: b7c932e37b285774d8e8ad7b17108215,
+        type: 3}
+    - name: crow
+      prefab: {fileID: 3725089065751357892, guid: 5c573faeb0ee7b3408825d9e890a635f,
+        type: 3}
+    - name: icrow
+      prefab: {fileID: 7245980951421395705, guid: c3897796be307ff47bae8d4746df6bf4,
+        type: 3}
+  - groupTitle: Nodes
+    prefabs:
+    - name: inode
+      prefab: {fileID: 4607728708591253777, guid: d0dd09c7056e88d4ea59254738f4e621,
+        type: 3}
+  - groupTitle: Utility
+    prefabs:
+    - name: danger
+      prefab: {fileID: 4685143078324242898, guid: c1eaf0859857ae2478c1a66078ad831d,
+        type: 3}
+    - name: crosshair
+      prefab: {fileID: 134863981350681112, guid: 6e7c0c8985185204dab1594dc5a567f1,
+        type: 3}
+    - name: rect
+      prefab: {fileID: 8071127415623182345, guid: 8d50c37e8adc9344f9847dbb9b35de4b,
+        type: 3}
+    - name: negative
+      prefab: {fileID: 2001368550244813539, guid: 93f1a80cc2b0a3943a8f35c1f06bc893,
+        type: 3}
+  - groupTitle: Powerup
+    prefabs:
+    - name: powerup1
+      prefab: {fileID: 7829823132156703741, guid: 6fb5b4d07adb97d4f81e6e3daaf437c8,
+        type: 3}
+  - groupTitle: Sub-Bosses
+    prefabs:
+    - name: kaguya
+      prefab: {fileID: 3158588245573588644, guid: 403abf52053147b44b8f276702818066,
+        type: 3}
+    - name: keine
+      prefab: {fileID: 5188976871280437473, guid: 3f74c05d54dfae94ab79f9fa4ea75188,
+        type: 3}

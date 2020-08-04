@@ -1,0 +1,114 @@
+.node {
+    font-size: 120px;
+    background-color: rgba(0, 0, 0, 0);
+    -unity-font: url('/Assets/Fonts/Odibee/OdibeeSans-Regular.ttf');
+    color: rgb(255, 255, 255);
+    background-image: url('/Assets/Sprites/util/underline.png');
+    width: 100%;
+    -unity-text-align: upper-center;
+    padding-right: 0;
+    padding-left: 0;
+    white-space: normal;
+    margin-top: 4px;
+    margin-bottom: 4px;
+}
+
+.node {
+    color: rgb(255, 255, 255);
+    white-space: normal;
+}
+
+.node .text {
+    color: rgb(255, 255, 255);
+    white-space: normal;
+}
+
+.node.node80 {
+    font-size: 80px;
+}
+
+.node.node80 .text {
+    font-size: 80px;
+}
+
+.node.invisible {
+    display: none;
+}
+
+.node.visible {
+    -unity-background-image-tint-color: rgba(255, 255, 255, 0);
+}
+
+.node.visible {
+    color: rgb(125, 125, 125);
+}
+
+.node.disabled.group {
+    color: rgb(125, 125, 125);
+}
+
+.node.disabled.focus {
+    color: rgb(125, 125, 125);
+}
+
+.node.visible .text {
+    color: rgb(125, 125, 125);
+}
+
+.node.disabled.group .text {
+    color: rgb(125, 125, 125);
+}
+
+.node.disabled.focus .text {
+    color: rgb(125, 125, 125);
+}
+
+.node.group {
+    -unity-background-image-tint-color: rgba(255, 255, 255, 0);
+}
+
+.node.group {
+    color: rgb(200, 200, 200);
+}
+
+.node.descriptor.visible {
+    color: rgb(200, 200, 200);
+}
+
+.node.group .text {
+    color: rgb(200, 200, 200);
+}
+
+.node.descriptor.visible .text {
+    color: rgb(200, 200, 200);
+}
+
+.node.selected {
+    -unity-background-image-tint-color: rgba(77, 77, 77, 0.78);
+}
+
+.node.selected {
+    color: rgb(200, 200, 200);
+}
+
+.node.selected .text {
+    color: rgb(200, 200, 200);
+}
+
+.node.focus {
+    -unity-background-image-tint-color: rgb(118, 118, 118);
+}
+
+.node.small {
+    font-size: 80px;
+}
+
+.node.descriptor {
+    -unity-background-image-tint-color: rgba(26, 26, 26, 0);
+    min-height: 800px;
+}
+
+.node.empty {
+    opacity: 0.3;
+}
+

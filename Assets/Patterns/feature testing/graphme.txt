@@ -1,0 +1,24 @@
+pattern { }
+phase 0
+    action block 0
+        clear bullet
+    action block 0
+        position -4 -1
+        sync gcircle-red/w <> gsr {
+			t	200
+			p	this
+		} s :: {
+			x	* 0.05 p
+			y	swing 2 1 &x
+		} nroffset pxy &x &y
+		position -4 1
+		sync gcircle-blue/w <> gsr {
+			t	200
+			p	this
+		} s :: {
+			x	* 0.05 p
+			y	swing2 0.3 2 -1 0.8 1 &x
+		} nroffset pxy &x &y
+			
+        
+        
