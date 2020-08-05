@@ -259,7 +259,7 @@ GameObject:
   - component: {fileID: 5738943023965476947}
   - component: {fileID: 2839687353931545650}
   m_Layer: 15
-  m_Name: mokou
+  m_Name: mokou-boss
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -347,11 +347,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dcd38e9f7d55e7f42b4df572b17094ca, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  deathItems:
-    value: 0
-    pointPP: 0
-    life: 0
-    autocollect: 0
   behaviorScript: {fileID: 0}
   ID: mokou
   displayChangedPosition: 1
@@ -361,7 +356,6 @@ MonoBehaviour:
   triggersUITimeout: 1
   cullable: 0
   ScreenCullRadius: 4
-  canFireOffscreen: 1
   animate:
     method: 1
     LRRelation: 4
@@ -371,47 +365,60 @@ MonoBehaviour:
       - sprite: {fileID: 6949950310475035180, guid: 6b6c9cdfffd032f46b84a568f7adcdec,
           type: 3}
         time: 0.2
+        skipLoop: 0
       - sprite: {fileID: -7765548884560559549, guid: 6b6c9cdfffd032f46b84a568f7adcdec,
           type: 3}
         time: 0.2
+        skipLoop: 0
       - sprite: {fileID: 1895516984077120733, guid: 6b6c9cdfffd032f46b84a568f7adcdec,
           type: 3}
         time: 0.2
+        skipLoop: 0
       - sprite: {fileID: 1291590531183723985, guid: 6b6c9cdfffd032f46b84a568f7adcdec,
           type: 3}
         time: 0.2
+        skipLoop: 0
       - sprite: {fileID: 1628687553487415765, guid: 6b6c9cdfffd032f46b84a568f7adcdec,
           type: 3}
         time: 0.2
+        skipLoop: 0
       rightAnim:
       - sprite: {fileID: -3037338780845439362, guid: 6b6c9cdfffd032f46b84a568f7adcdec,
           type: 3}
         time: 0.2
+        skipLoop: 0
       leftAnim:
       - sprite: {fileID: -2096312558618100486, guid: 6b6c9cdfffd032f46b84a568f7adcdec,
           type: 3}
         time: 1
+        skipLoop: 0
       upAnim:
       - sprite: {fileID: 6147347496250323771, guid: 6b6c9cdfffd032f46b84a568f7adcdec,
           type: 3}
         time: 1
+        skipLoop: 0
       downAnim: []
       attackAnim:
       - sprite: {fileID: -6954695978459786279, guid: 6b6c9cdfffd032f46b84a568f7adcdec,
           type: 3}
         time: 0.24
+        skipLoop: 0
       - sprite: {fileID: -1080689748102512313, guid: 6b6c9cdfffd032f46b84a568f7adcdec,
           type: 3}
         time: 0.12
+        skipLoop: 0
       - sprite: {fileID: 757061716661768037, guid: 6b6c9cdfffd032f46b84a568f7adcdec,
           type: 3}
         time: 0.45
+        skipLoop: 0
       - sprite: {fileID: -1080689748102512313, guid: 6b6c9cdfffd032f46b84a568f7adcdec,
           type: 3}
         time: 0.24
+        skipLoop: 0
       - sprite: {fileID: -6954695978459786279, guid: 6b6c9cdfffd032f46b84a568f7adcdec,
           type: 3}
         time: 0.24
+        skipLoop: 0
       deathAnim: []
   movementModifiers:
     flipX: 0
@@ -432,11 +439,12 @@ MonoBehaviour:
   takesBossDamage: 1
   HP: 900
   maxHP: 1000
+  suicideFireType: 
   collisionRadius:
     useConstant: 0
     constVal: 0
     refVal: {fileID: 11400000, guid: 60ca16a1aefba664990f0efd02fe82f4, type: 2}
-  alertLowHP: 1
+  modifyDamageSound: 1
   healthbarSprite: {fileID: 564064160}
   cardCircle: {fileID: 6239955699839352181}
   spellCircle: {fileID: 3112859572604580512}

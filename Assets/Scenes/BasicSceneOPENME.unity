@@ -1199,12 +1199,6 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
-      propertyPath: defaultShot
-      value: 
-      objectReference: {fileID: 11400000, guid: 9d87ccfc21c12b040b4518d5a552aa13,
-        type: 2}
-    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
       propertyPath: animate.frames.idleAnim.Array.data[4].sprite
       value: 
       objectReference: {fileID: 5105359810620478622, guid: 5ebd21235de640f43b1f97bb6799ee74,

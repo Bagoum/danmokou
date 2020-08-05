@@ -35,8 +35,8 @@ public class FrameAnimBullet : Bullet {
     public DefaultColorizing colorizing;
     public SimpleBulletEmptyScript.DisplacementInfo displacement;
     [Tooltip("Special gradients")] public BulletManager.GradientVariant[] gradients;
-    public BulletAnimSprite[] defaultFrames;
-    private BulletAnimSprite[] frames;
+    public BulletAnimSprite[] frames;
+    private BulletAnimSprite[] realizedFrames;
     private int currFrame = 0;
     private float frameTime = 0f;
     public int coldFrame;
@@ -46,15 +46,15 @@ public class FrameAnimBullet : Bullet {
     public override void ResetV() {
         base.ResetV();
         frameTime = 0f;
-        frames = defaultFrames.ToArray();
+        realizedFrames = frames.ToArray();
         SetFrame(0);
     }
 
     protected override void RegularUpdateRender() {
         base.RegularUpdateRender();
         frameTime += ETime.FRAME_TIME;
-        while (frameTime >= frames[currFrame].time) {
-            frameTime -= frames[currFrame].time;
+        while (frameTime >= realizedFrames[currFrame].time) {
+            frameTime -= realizedFrames[currFrame].time;
             if (SetFrame(currFrame + 1)) {
                 return;
             } //Avoid calling InvokeCull here and in base.Upd
@@ -75,32 +75,32 @@ public class FrameAnimBullet : Bullet {
         //For cold=0, use the transition cold frames.
         //For hot=0, use only the single main cold frame, unless ANIMATE_COLD is set.
         if (hot < float.Epsilon && !animateCold) {
-            for (int ii = 0; ii < frames.Length; ++ii) frames[ii].time = 0f;
-            frames[coldFrame].time = cold;
+            for (int ii = 0; ii < realizedFrames.Length; ++ii) realizedFrames[ii].time = 0f;
+            realizedFrames[coldFrame].time = cold;
         } else {
-            for (int ii = 0; ii < frames.Length; ++ii) {
+            for (int ii = 0; ii < realizedFrames.Length; ++ii) {
                 if (ii == coldFrame || ii == hotFrame) {
-                } else if (frames[ii].collisionActive) {
-                    frames[ii].time = Share(frames[ii].time, ref hot);
+                } else if (realizedFrames[ii].collisionActive) {
+                    realizedFrames[ii].time = Share(realizedFrames[ii].time, ref hot);
                 } else if (countPostHotColdFrames || ii < hotFrame) {
-                    cold -= frames[ii].time;
+                    cold -= realizedFrames[ii].time;
                 }
             }
-            frames[coldFrame].time = Mathf.Max(0f, cold);
-            frames[hotFrame].time = hot;
+            realizedFrames[coldFrame].time = Mathf.Max(0f, cold);
+            realizedFrames[hotFrame].time = hot;
         }
     }
 
     public bool countPostHotColdFrames;
 
     private bool SetFrame(int f) {
-        if (f < frames.Length) {
+        if (f < realizedFrames.Length) {
             currFrame = f;
-            if (frames[f].collisionActive && !collisionActive && frames[f].time > 0f) {
+            if (realizedFrames[f].collisionActive && !collisionActive && realizedFrames[f].time > 0f) {
                 SFXService.Request(hotSfx);
             }
-            collisionActive = frames[f].collisionActive;
-            SetSprite(frames[f].s, frames[f].yscale);
+            collisionActive = realizedFrames[f].collisionActive;
+            SetSprite(realizedFrames[f].s, realizedFrames[f].yscale);
         } else if (repeat) {
             SetFrame(0);
         } else {
@@ -119,7 +119,7 @@ public class FrameAnimBullet : Bullet {
         if (r.sprites == null) return;
         material = r.material;
         for (int ii = 0; ii < r.sprites.Length; ++ii) {
-            frames[ii] = r.sprites[ii];
+            realizedFrames[ii] = r.sprites[ii];
         }
         SetFrame(currFrame);
     }

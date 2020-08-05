@@ -385,12 +385,12 @@ public partial class BulletManager : RegularUpdater {
 
         public FrameAnimBullet.Recolor GetOrLoadRecolor() {
             if (!loaded) {
-                var sprites = new FrameAnimBullet.BulletAnimSprite[fab.defaultFrames.Length];
-                for (int si = 0; si < fab.defaultFrames.Length; ++si) {
-                    sprites[si] = fab.defaultFrames[si];
-                    FrameRecolorConfig frc = new FrameRecolorConfig(fab.defaultFrames[si].s.name, paletteVariant);
+                var sprites = new FrameAnimBullet.BulletAnimSprite[fab.frames.Length];
+                for (int si = 0; si < fab.frames.Length; ++si) {
+                    sprites[si] = fab.frames[si];
+                    FrameRecolorConfig frc = new FrameRecolorConfig(fab.frames[si].s.name, paletteVariant);
                     if (frameCache.ContainsKey(frc)) sprites[si].s = frameCache[frc];
-                    else sprites[si].s = frameCache[frc] = creator(fab.defaultFrames[si].s);
+                    else sprites[si].s = frameCache[frc] = creator(fab.frames[si].s);
                 }
                 recolor = new FrameAnimBullet.Recolor(sprites, recolor.prefab, NewMaterial(), recolor.style);
                 loaded = true;

@@ -17,11 +17,12 @@ You might know this project by the name NotDnh, ph4mmo, or Bagoum Danmaku Script
 - Built-in dialogue engine with Ace Attorney-style text unrolling
 - Built-in script analysis and practice architecture
 
-# Building This Project
+# Running This Project
 
-To build this project, follow the following steps:
+To build/run this project, follow the following steps:
 
-- Run `git submodule update --init --recursive`. This imports code from SiMP which has some useful default values for getting started. This is not required but will help as a reference. (**Note: the SiMP repository is currently private, so this command probably won't work.**)
+- Install Unity version 2020.1.f1 or later.
+- Run `git submodule update --init --recursive`. This imports code from SiMP which has some useful default values for getting started. This is not required but will help as a reference. (**Note: the SiMP repository is currently private, so this command won't work.**)
 - Open Scenes/BasicSceneOPENME
 
 - Import TextMeshPro essentials 
@@ -31,7 +32,6 @@ To build this project, follow the following steps:
 
 - (Optional) Build the F# project in the `FS` folder targeted at 4.7.2. I have provided DLLs so you don't have to do this unless you make changes to the F# code.
   - Copy the output DLLs (Common, FParsec, FParsecCS, FSharp.Core, Parser, System.ValueTuple) to `Assets/Plugins/Self/Core`
-- Then build it in Unity. The current version I am using is 2020.1.0b14. Any version above 2020 should work (there are some new mesh functions in 2020 that are not present in 2019). 
 
 # Documentation
 
