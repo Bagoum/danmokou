@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using Danmaku;
@@ -34,7 +35,8 @@ public static class SaveData {
 
     public class Record {
         public bool TutorialDone = false;
-        public bool CompletedMain = false;
+        public HashSet<string> CompletedCampaigns = new HashSet<string>();
+        public bool MainCampaignCompleted => CompletedCampaigns.Contains(MainMenu.main.campaign.key);
     }
     public class Settings {
         public bool Shaders = true;

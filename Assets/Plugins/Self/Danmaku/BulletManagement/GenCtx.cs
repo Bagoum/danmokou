@@ -107,9 +107,9 @@ public class GenCtx : IDisposable {
         return cp;
     }
 
-    public void FinishIteration(List<GCRule> postloop, float angleIncrement) {
+    public void FinishIteration(List<GCRule> postloop, V2RV2 rv2Increment) {
         UpdateRules(postloop);
-        RV2 += angleIncrement;
+        RV2 += rv2Increment;
         ++i;
     }
 

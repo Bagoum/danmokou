@@ -11,6 +11,6 @@ public class StageConfig : ScriptableObject {
     public SceneConfig sceneConfig;
     [CanBeNull] public TextAsset stateMachine;
     public string description;
-    public int stageNumber;
+    public string stageNumber;
     public string defaultSuicideStyle;
 }

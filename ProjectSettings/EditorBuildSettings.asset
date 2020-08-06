@@ -9,7 +9,7 @@ EditorBuildSettings:
     path: Assets/SiMP/Scenes/Working Scene.unity
     guid: 2cda990e2423bbf4892e6590ba056729
   - enabled: 1
-    path: Assets/Scenes/MainMenu.unity
+    path: Assets/SiMP/Scenes/MainMenu.unity
     guid: 98bb7eef89754ca45821ce3925f444c0
   - enabled: 1
     path: Assets/Scenes/Tutorial.unity

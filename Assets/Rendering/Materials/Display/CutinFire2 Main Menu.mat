@@ -64,8 +64,8 @@ Material:
         m_Scale: {x: 0, y: 0}
         m_Offset: {x: 0, y: 0}
     m_Floats:
-    - _BX: 25
-    - _BY: 40
+    - _BX: 30
+    - _BY: 50
     - _BlendTo: 10
     - _BumpScale: 1
     - _Cutoff: 0.5

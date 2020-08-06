@@ -33,7 +33,7 @@ public class AudioTrackService : CoroutineRegularUpdater {
     public void Update() {
         if (bgm != null && bgm.Loop) {
             //Debug.Log(
-            //    $"{currSrc.isPlaying} {currSrc.time} {currSrc.volume};; {nextSrc.isPlaying} {nextSrc.time} {nextSrc.volume}");
+            //    $"{currSrc.isPlaying} {currSrc.time} {currSrc.volume};; {nextSrc.isPlaying} {nextSrc.time} {nextSrc//.volume}");
             //currentSource is the last source that was assigned to play.
             //We only send the fade request when currSrc is near its end in order to avoid desync
             if (!nextSrc.isPlaying && currSrc.time + 2 * fadeTime > bgm.LoopSeconds.y) {
@@ -46,8 +46,8 @@ public class AudioTrackService : CoroutineRegularUpdater {
         }
     }
 
-    private const float fadeDeOverlap = 0f;
-    private const float fadeTime = 0.5f;
+    private const float fadeDeOverlap = 0.2f;
+    private const float fadeTime = 0.3f;
 
     private static readonly HashSet<AudioSource> fading = new HashSet<AudioSource>();
 

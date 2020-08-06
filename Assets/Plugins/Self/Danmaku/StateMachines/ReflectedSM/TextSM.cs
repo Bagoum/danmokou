@@ -102,6 +102,10 @@ public static class TSMReflection {
     public static TaskPattern SpeakL(string profile) => _Speak(LR.LEFT, profile, null);
     [Alias("SR")]
     public static TaskPattern SpeakR(string profile) => _Speak(LR.RIGHT, profile, null);
+    [Alias("SLE")]
+    public static TaskPattern SpeakLE(string profile, Emote e) => _Speak(LR.LEFT, profile, e);
+    [Alias("SRE")]
+    public static TaskPattern SpeakRE(string profile, Emote e) => _Speak(LR.RIGHT, profile, e);
     [Alias("SLC")]
     public static TaskPattern SpeakLC() => _Speak(LR.LEFT, null, null);
     [Alias("SRC")]

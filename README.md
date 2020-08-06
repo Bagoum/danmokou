@@ -24,10 +24,7 @@ To build/run this project, follow the following steps:
 - Install Unity version 2020.1.f1 or later.
 - Run `git submodule update --init --recursive`. This imports code from SiMP which has some useful default values for getting started. This is not required but will help as a reference. (**Note: the SiMP repository is currently private, so this command won't work.**)
 - Open Scenes/BasicSceneOPENME
-
-- Import TextMeshPro essentials 
-
-- You should see a prompt to do this as soon as you open the scene above
+  - Import TextMeshPro essentials (You should see a prompt to do this as soon as you open the scene)
 - You may need to run the project, stop the project, and run it again to fix lingering metadata bugs in UXML. 
 
 - (Optional) Build the F# project in the `FS` folder targeted at 4.7.2. I have provided DLLs so you don't have to do this unless you make changes to the F# code.

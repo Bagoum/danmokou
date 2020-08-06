@@ -30,11 +30,12 @@ public class XMLMainMenu : XMLMenu {
     }
 
     private UIScreen CampaignSelectScreen;
+    private UIScreen ExtraSelectScreen;
     private UIScreen StagePracticeScreen;
     private UIScreen BossPracticeScreen;
     private UIScreen ShotSelectScreen;
 
-    protected override UIScreen[] Screens => new[] { CampaignSelectScreen, StagePracticeScreen, BossPracticeScreen,
+    protected override UIScreen[] Screens => new[] { CampaignSelectScreen, ExtraSelectScreen, StagePracticeScreen, BossPracticeScreen,
         ShotSelectScreen, MainScreen };
 
     public VisualTreeAsset GenericUIScreen;
@@ -74,6 +75,8 @@ public class XMLMainMenu : XMLMenu {
         
         CampaignSelectScreen = new UIScreen(DifficultyThenShot((d, sh) => 
             MainScenario(new GameReq(CampaignMode.MAIN, null, d, shot: sh))));
+        ExtraSelectScreen = new UIScreen(DifficultyFuncNodes(d => 
+            () => ExtraScenario(new GameReq(CampaignMode.MAIN, null, d))));
         StagePracticeScreen =
             new LazyUIScreen(() => Stages.Select(s =>
                 (UINode)new NavigateUINode($"Stage {s.stage.stageNumber}", s.phases.Select(p =>
@@ -96,8 +99,9 @@ public class XMLMainMenu : XMLMenu {
             ).ToArray()).With(PracticeUIScreen);
         MainScreen = new UIScreen(
             new TransferNode(CampaignSelectScreen.top[2], "Main Scenario"),
-            new TransferNode(StagePracticeScreen, "Stage Practice").EnabledIf(SaveData.r.CompletedMain),
-            new TransferNode(BossPracticeScreen, "Boss Card Practice").EnabledIf(SaveData.r.CompletedMain),
+            new TransferNode(ExtraSelectScreen.top[2], "Extra Stage").EnabledIf(SaveData.r.MainCampaignCompleted),
+            new TransferNode(StagePracticeScreen, "Stage Practice").EnabledIf(Stages.Length > 0),
+            new TransferNode(BossPracticeScreen, "Boss Card Practice").EnabledIf(Bosses.Length > 0),
             new FuncNode(RunTutorial, "Tutorial"),
             new FuncNode(Application.Quit, "Quit"),
             new OpenUrlNode("https://twitter.com/rdbatz", "Twitter (Browser)"),

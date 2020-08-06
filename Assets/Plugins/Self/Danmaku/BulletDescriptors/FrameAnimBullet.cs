@@ -124,6 +124,16 @@ public class FrameAnimBullet : Bullet {
         SetFrame(currFrame);
     }
 
+    public void ColorizeOverwrite(Recolor r) {
+        style = r.style;
+        if (r.sprites == null) return;
+        material = r.material;
+        for (int ii = 0; ii < r.sprites.Length; ++ii) {
+            realizedFrames[ii].s = r.sprites[ii].s;
+        }
+        SetFrame(currFrame);
+    }
+
     protected virtual void SetSprite(Sprite s, float yscale) {
         //sprite renderer or something
     }

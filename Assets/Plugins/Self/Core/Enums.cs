@@ -13,7 +13,8 @@ public enum Emote {
     ANGRY,
     WORRY,
     CRY,
-    SURPRISE
+    SURPRISE,
+    SPECIAL
 }
 
 public enum LR {

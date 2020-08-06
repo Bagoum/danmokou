@@ -458,19 +458,22 @@ public static partial class Parametrics {
     /// Switch between functions based on time, and subtract the switch reference from the time
     /// passed to the second function.
     /// </summary>
-    /// <param name="at_time">Switch reference</param>
+    /// <param name="at">Switch reference</param>
     /// <param name="from">Parametric to return before switch</param>
     /// <param name="to">Parametric to return after switch</param>
     /// <returns></returns>
-    public static ExTP SwitchH(float at_time, ExTP from, ExTP to) {
-        Ex d = ExC(at_time);
+    public static ExTP SwitchH(ExBPY at, ExTP from, ExTP to) {
+        var pivot = VFloat();
         var copy = new TExPI();
-        return bpi => Ex.Condition(Ex.GreaterThan(bpi.t, d),
-            Ex.Block(new ParameterExpression[] {copy},
-                Ex.Assign(copy, bpi),
-                ExUtils.AddAssign(copy.t, Ex.Negate(d)),
-                to(copy)
-            ), from(bpi));
+        return bpi => Ex.Block(new[] { pivot }, 
+            pivot.Is(at(bpi)), 
+            Ex.Condition(Ex.GreaterThan(bpi.t, pivot),
+                Ex.Block(new ParameterExpression[] {copy},
+                    Ex.Assign(copy, bpi),
+                    ExUtils.SubAssign(copy.t, pivot),
+                    to(copy)
+                ), 
+                from(bpi)));
     }
     
     /// <summary>

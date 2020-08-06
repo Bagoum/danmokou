@@ -5,7 +5,7 @@ using UnityEngine;
 
 [CreateAssetMenu(menuName = "Data/Campaign Configuration")]
 public class CampaignConfig : ScriptableObject {
-    public string description;
+    public string key;
     public StageConfig[] stages;
 
     public BossConfig[] practiceBosses;

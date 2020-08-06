@@ -280,7 +280,7 @@ public class GameManagement : RegularUpdater {
     /// </summary>
     public static float DifficultyValue => Difficulty.Value();
     /// <summary>
-    /// A fixed-step difficulty value. By default, Easy=0, Normal=1, etc.
+    /// A fixed-step difficulty value. By default, Easy=1, Normal=2, etc.
     /// </summary>
     public static float DifficultyCounter => Difficulty.Counter();
     public static string DifficultyString => Difficulty.Describe();

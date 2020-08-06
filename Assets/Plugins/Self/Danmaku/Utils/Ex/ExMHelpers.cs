@@ -59,6 +59,7 @@ public static class ExMHelpers {
     public static readonly Ex E1 = Ex.Constant(1.0f);
     public static readonly Ex E2 = Ex.Constant(2.0f);
     public static readonly Ex EN1 = Ex.Constant(-1f);
+    public static readonly Ex EN2 = Ex.Constant(-2f);
     public static readonly Ex EN05 = Ex.Constant(-0.5f);
     public static readonly Ex v20 = Ex.Constant(Vector2.zero);
 

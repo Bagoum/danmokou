@@ -546,7 +546,7 @@ public struct LoopControl<T> {
         ch.gcx.BaseRV2 = ch.gcx.RV2;
         ch.gcx.UpdateRules(props.start);
         times = (int)props.times(ch.gcx);
-        if (props.centered) ch.gcx.RV2 -= (times - 1f) / 2f * props.rv2pp(ch.gcx);
+        if (props.centered) ch.gcx.RV2 -= (times - 1f) / 2f * props.PostloopRV2Incr(ch.gcx, times);
         isClipped = isClipped || (props.clipIf?.Invoke(ch.gcx) ?? false);
         elapsed_frames = 0;
         float? af = props.fortime?.Invoke(ch.gcx);
@@ -618,7 +618,7 @@ public struct LoopControl<T> {
         if (props.sah != null) {
             GCX.RV2 = GCX.BaseRV2 + V2RV2.Rot(props.sah.Locate(GCX));
             var simp_gcx = GCX.Copy();
-            simp_gcx.FinishIteration(props.postloop, 0);
+            simp_gcx.FinishIteration(props.postloop, V2RV2.Zero);
             simp_gcx.UpdateRules(props.preloop);
             GCX.RV2 = props.sah.Angle(GCX, GCX.RV2, GCX.BaseRV2 + V2RV2.Rot(props.sah.Locate(simp_gcx)));
             simp_gcx.Dispose();
@@ -660,7 +660,7 @@ public struct LoopControl<T> {
         //TODO reconciliation
         for (int ii = 0; ii < childGen.Count; ++ii) childGen[ii].Dispose();
         childGen.Clear();
-        GCX.FinishIteration(props.postloop, props.rv2IncrCircle ?  360f/times : 0);
+        GCX.FinishIteration(props.postloop, props.PostloopRV2Incr(GCX, times));
     }
 
     public GenCtx IAmDone() {

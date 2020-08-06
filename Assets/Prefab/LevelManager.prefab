@@ -72,7 +72,7 @@ SpriteRenderer:
   m_SortingLayer: 3
   m_SortingOrder: -32000
   m_Sprite: {fileID: 21300000, guid: ae3d1104823b0d945ab8193e22813c6e, type: 3}
-  m_Color: {r: 0.5283019, g: 0.21680315, b: 0.21680315, a: 0.5529412}
+  m_Color: {r: 1, g: 1, b: 1, a: 0.30588236}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -172,11 +172,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b68829511f862034f94b909c10fc82ff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  deathItems:
-    value: 0
-    pointPP: 0
-    life: 0
-    autocollect: 0
   behaviorScript: {fileID: 0}
   ID: level
   displayChangedPosition: 1
@@ -186,7 +181,6 @@ MonoBehaviour:
   triggersUITimeout: 1
   cullable: 0
   ScreenCullRadius: 4
-  canFireOffscreen: 1
   animate:
     method: 0
     LRRelation: 0

@@ -21,6 +21,7 @@ public class DialogueProfile : ScriptableObject, IDialogueProfile {
         [CanBeNull] public Sprite worry;
         [CanBeNull] public Sprite cry;
         [CanBeNull] public Sprite surprise;
+        [CanBeNull] public Sprite special;
 
         [CanBeNull]
         public Sprite Find(Emote e) {
@@ -29,6 +30,7 @@ public class DialogueProfile : ScriptableObject, IDialogueProfile {
             if (e == Emote.WORRY) return worry;
             if (e == Emote.CRY) return cry;
             if (e == Emote.SURPRISE) return surprise;
+            if (e == Emote.SPECIAL) return special;
             return normal;
         }
         public (bool, Sprite)? Find0(Emote e) {

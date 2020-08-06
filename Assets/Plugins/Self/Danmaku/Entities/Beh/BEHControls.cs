@@ -103,6 +103,7 @@ public partial class BehaviorEntity {
         }
         /// <summary>
         /// Change the style of bullets.
+        /// Note: should only be used between the same type, eg pather->pather, laser->laser. Otherwise, weird shit might happen.
         /// </summary>
         /// <param name="target">New style</param>
         /// <param name="cond">Filter condition</param>
@@ -111,7 +112,7 @@ public partial class BehaviorEntity {
             FrameAnimBullet.Recolor r = BulletManager.GetRecolor(target);
             return b => {
                 if (cond(b.rBPI)) {
-                    ((FrameAnimBullet) b).Colorize(r);
+                    ((FrameAnimBullet) b).ColorizeOverwrite(r);
                     b.UpdateStyleInformation();
                 }
             };

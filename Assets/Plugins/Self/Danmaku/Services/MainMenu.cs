@@ -66,20 +66,28 @@ public class MainMenu: MonoBehaviour {
     public SceneConfig bossPractice;
     public SceneConfig tutorial;
     public CampaignConfig campaign;
+    public CampaignConfig extraCampaign;
+    public static IEnumerable<CampaignConfig> Campaigns => new[] {main.campaign, main.extraCampaign}.Where(c => c != null);
+    public static IEnumerable<CampaignConfig> FinishedCampaigns =>
+        Campaigns.Where(c => SaveData.r.CompletedCampaigns.Contains(c.key));
     public ShotConfig[] shotOptions;
     [CanBeNull] public AudioTrack bgm;
 
     [CanBeNull] private static AnalyzedBoss[] _bosses;
     [CanBeNull] private static AnalyzedStage[] _stages;
-    public static AnalyzedBoss[] Bosses => _bosses ?? (_bosses = 
-        main.campaign.practiceBosses.Select(x => new AnalyzedBoss(x)).ToArray());
-    public static AnalyzedStage[] Stages => _stages ?? (_stages =
-        main.campaign.practiceStages.Select(x => new AnalyzedStage(x)).ToArray());
+    public static AnalyzedBoss[] Bosses => _bosses = 
+        _bosses == null || _bosses.Length != FinishedCampaigns.SelectMany(c => c.practiceBosses).Count() ?
+        FinishedCampaigns.SelectMany(c => c.practiceBosses.Select(x => new AnalyzedBoss(x))).ToArray() 
+        : _bosses;
+    public static AnalyzedStage[] Stages => _stages =
+        _stages == null || _stages.Length != FinishedCampaigns.SelectMany(c => c.practiceStages).Count() ?
+        FinishedCampaigns.SelectMany(c => c.practiceStages.Select(x => new AnalyzedStage(x))).ToArray()
+        : _stages;
     public static MainMenu main { get; private set; }
 
     private void Awake() {
         main = this;
-        if (campaign == null) Log.UnityError("You do not have a Campaign set in the Main Menu object. The Main Scenario and practice options will not work.");
+        if (campaign == null) Log.UnityError("You do not have a Campaign set in the Main Menu object. The Main Scenario option will not work.");
     }
 
     private void Start() {
@@ -100,21 +108,24 @@ public class MainMenu: MonoBehaviour {
 
     public SceneConfig miniTutorial;
 
-    public static void MainScenario(GameReq req) {
-        if (SaveData.r.TutorialDone) _MainScenario(req);
+    public static void MainScenario(GameReq req) => RunCampaign(main.campaign, req);
+
+    public static void ExtraScenario(GameReq req) => RunCampaign(main.extraCampaign, req);
+
+    public static void RunCampaign(CampaignConfig campaign, GameReq req) {
+        void Inner() => PlaySequential(req.WithCB(req.cb.Then(() => SceneIntermediary.LoadScene(main.returnTo, () => {
+                GameManagement.CheckpointCampaignData();
+                SaveData.r.CompletedCampaigns.Add(campaign.key);
+                SaveData.SaveRecord();
+            }))), campaign.stages);
+
+        if (SaveData.r.TutorialDone) Inner();
         else SceneIntermediary.LoadScene(new SceneIntermediary.SceneRequest(main.miniTutorial,
             //Prevents hangover information from previous campaign, will be overriden anyways
             req.SetupOrCheckpoint,
             null, 
-            () => MiniTutorial.RunMiniTutorial(() => _MainScenario(req))));
+            () => MiniTutorial.RunMiniTutorial(Inner)));
     }
-
-    private static bool _MainScenario(GameReq req) => 
-        PlaySequential(req.WithCB(req.cb.Then(() => SceneIntermediary.LoadScene(main.returnTo, () => {
-            GameManagement.CheckpointCampaignData();
-            SaveData.r.CompletedMain = true;
-            SaveData.SaveRecord();
-        }))), main.campaign.stages);
 
     private static bool SelectBoss(BossConfig b, Action<BehaviorEntity> cont, GameReq req) =>
         SceneIntermediary.LoadScene(new SceneIntermediary.SceneRequest(main.bossPractice,

@@ -229,8 +229,8 @@ MonoBehaviour:
   movementModifiers:
     flipX: 0
     flipY: 0
-  XBounds: {x: -4.8, y: 4.8}
-  YBounds: {x: -3.9, y: 3.8}
+  XBounds: {x: -4.9, y: 4.9}
+  YBounds: {x: -3.9, y: 3.9}
   hitbox: {fileID: 11400000, guid: d20af02baec12db42baba53da24bff95, type: 2}
   hitboxSprite: {fileID: 4368200938196667491}
   blueBoxRadius: 1
@@ -253,7 +253,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   OnHitEffect: {fileID: 11400000, guid: d2db9c4dbbeaef849ad718763815dc02, type: 2}
   GoldenAuraEffect: {fileID: 11400000, guid: a1c3240c402ae7845a6ce71818692082, type: 2}
-  hitInvuln: 6
+  hitInvuln: 5
 --- !u!1 &8363361056155616002
 GameObject:
   m_ObjectHideFlags: 0

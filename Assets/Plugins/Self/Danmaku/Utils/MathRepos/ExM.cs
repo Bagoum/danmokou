@@ -1595,6 +1595,31 @@ public static partial class ExM {
     /// </summary>
     public static tfloat DL() => Ex.Constant(DifficultyValue / DifficultySet.Lunatic.Value());
 
+    /// <summary>
+    /// 1 / DL
+    /// </summary>
+    public static tfloat iDL() => Ex.Constant(DifficultySet.Lunatic.Value() / DifficultyValue);
+
+    private static tfloat ResolveD3(tfloat n, tfloat h, tfloat u) =>
+        DifficultyValue < DifficultySet.Hard.Value() ? n :
+        DifficultyValue < DifficultySet.Ultra.Value() ? h :
+        u;
+
+    /// <summary>
+    /// Return -2 if the difficulty is less than Hard,
+    /// else 0 if less than Ultra,
+    /// else 2.
+    /// </summary>
+    /// <returns></returns>
+    public static tfloat D3d2() => ResolveD3(EN2, E0, E2);
+    /// <summary>
+    /// Return -1 if the difficulty is less than Hard,
+    /// else 0 if less than Ultra,
+    /// else 1.
+    /// </summary>
+    /// <returns></returns>
+    public static tfloat D3d1() => ResolveD3(EN1, E0, E1);
+
     #endregion
 
     #region Remappers

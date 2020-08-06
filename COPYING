@@ -14,7 +14,7 @@ Code is present primarily under the directories FS, Assets/Plugins/Self, Assets/
 Present dialogue files (Assets/SiMP/Dialogue/Scripts) are not considered code. They may be used under CC BY 4.
 This project also includes other assets such as images and audio. Many of these assets are not by me. See below for details.
 
-To clarify on your obligations under the GPL (IANAL): Modifications, additions, or extensions made to the C#/F# engine, shaders, UXML, etc. must also be distributed under the terms of the GPL. However, if you use this engine to make and run your own pattern scripts, you may license those scripts as you like. 
+To clarify on your obligations under the GPL (IANAL): Modifications, additions, or extensions (including incorporating these modules into a larger project) made to the C#/F# engine, shaders, UXML, etc. must also be distributed under the terms of the GPL. However, if you make your own pattern scripts and use this engine to run them, you may license those scripts as you like. 
 
 This said, I would encourage you to publicly publish your pattern scripts as well in the spirit of community danmaku. 
 
@@ -57,6 +57,7 @@ Images (Assets/Sprites and Assets/SiMP)
 	- torii: https://unsplash.com/photos/gvc0PL77hxU
 	- shrine: https://unsplash.com/photos/mHtQ7rWEC4U
 	- mountain: https://unsplash.com/photos/JgOeRuGD_Y4
+	- space: https://unsplash.com/photos/4dpAqfTbvKA
 - Files under "entity/dot/kmap" were created by danmaq. The license is in the folder. 
 - "entity/dot/dot_seija" was created by Len.
 - "entity/dot/dot_kasen" was created by Kirbio.

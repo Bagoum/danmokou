@@ -1,17 +1,17 @@
 pattern { }
 phase 0
 	action block 0
-		shift-phase-to 1
+		shift-phase-to 2
 	
 !!{ allc { black purple teal green orange yellow red pink blue }	
 ##1. Draw-circular bank:nest circular
 phase 0 #{
 	action block 0
 		position 0 1
-		async gem-* <2,:-90> gcr2 19 _ <20p> {
+		async gem-* <2,:-90> gcr2 19 _ <35> {
 			color { */b */ */w }
 		} gsr2 16 <20> {
-			bank <0.6,:90>
+			bank <0.4,:90>
 			color $allc
 		} s tprot lerpin 0.3 1 cx 3
 #}
@@ -21,11 +21,13 @@ phase 0 #{
 	action block 0
 		position 0 2
 		async gem-*/w <0.5,:> gcr2 30 _ <6h> {
-			p this
+			bindLR ##bindLR is simpler to use than pm1 p
+			##p this
 			color { blue red }
 		} gsr2c 30 { } s polar
 			* 1.5 t
-			* pm1 p * 8 t
+			* &lr * 8 t
+			##* pm1 p * 8 t
 #}
 
 ##3. Circular Sector-turn/ RT-turn

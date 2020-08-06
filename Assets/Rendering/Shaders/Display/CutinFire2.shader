@@ -68,7 +68,9 @@
 			    //uv.x = mod1(uv.x, 1);
                 float3 suvt = float3(s(uv, _BX, _BY), _T / 1);
                 //float noise = c01(voronoi3D(suvt).z * 4);
-                float noise = pm01(perlin3Dmlayer(suvt, float3(_BX, _BY, 10)));
+                
+                //This shader is used on the main menu, so I am avoiding using Layer in order to keep execution fast on first initialization.
+                float noise = pm01(perlin3Dm(suvt, float3(_BX, _BY, 10)));
                 float grad = tex2D(_MainTex, f.uv).r;
                 grad = pow(1-grad, _Mult);
 			    

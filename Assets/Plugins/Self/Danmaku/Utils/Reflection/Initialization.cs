@@ -165,7 +165,8 @@ public static partial class Reflector {
             ("hap", Emote.HAPPY),
             ("w", Emote.WORRY),
             ("c", Emote.CRY),
-            ("s", Emote.SURPRISE)
+            ("su", Emote.SURPRISE),
+            ("sp", Emote.SPECIAL)
         });
         SEnum<Dialoguer.StandLocation>(new[] {
             ("l1", Dialoguer.StandLocation.LEFT1),

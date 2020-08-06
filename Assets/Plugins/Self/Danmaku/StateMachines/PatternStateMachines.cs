@@ -144,11 +144,13 @@ public class PhaseSM : SequentialSM {
         UIManager.ShowPhaseType(props.phaseType);
         if (!props.hideTimeout && smh.Exec.triggersUITimeout) UIManager.ShowStaticTimeout(timeout);
         if (props.livesOverride.HasValue) UIManager.ShowBossLives(props.livesOverride.Value);
-        var hp = props.hp ?? props.phaseType?.DefaultHP();
-        if (hp.HasValue) smh.Exec.Enemy.SetHP(hp.Value, hp.Value);
-        var hpbar = props.hpbar ?? props.phaseType?.HPBarLength();
-        if (hpbar.HasValue) smh.Exec.Enemy.SetHPBar(hpbar.Value, props.phaseType ?? PhaseType.NONSPELL);
-        if (props.phaseType?.RequiresHPGuard() ?? false) smh.Exec.Enemy.SetDamageable(false);
+        if (smh.Exec.isEnemy) {
+            var hp = props.hp ?? props.phaseType?.DefaultHP();
+            if (hp.HasValue) smh.Exec.Enemy.SetHP(hp.Value, hp.Value);
+            var hpbar = props.hpbar ?? props.phaseType?.HPBarLength();
+            if (hpbar.HasValue) smh.Exec.Enemy.SetHPBar(hpbar.Value, props.phaseType ?? PhaseType.NONSPELL);
+            if (props.phaseType?.RequiresHPGuard() ?? false) smh.Exec.Enemy.SetDamageable(false);
+        }
         if (props.bossCutin && GameManagement.campaign.mode != CampaignMode.CARD_PRACTICE && !SaveData.Settings.TeleportAtPhaseStart) {
             GameManagement.campaign.ExternalLenience(props.Boss.bossCutinTime);
             SFXService.Request("x-boss-cutin");

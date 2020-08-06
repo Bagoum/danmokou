@@ -219,6 +219,10 @@ public class GenCtxProperty {
     /// You can use this with RV2Incr, this one will take effect second.
     /// </summary>
     public static GenCtxProperty Circle() => new RV2CircleTag();
+    /// <summary>
+    /// Spread the RV2 evenly over a total width, so each increment is totalWidth/({times}-1).
+    /// </summary>
+    public static GenCtxProperty Spread(GCXF<V2RV2> totalWidth) => new RV2SpreadProp(totalWidth);
 
     /// <summary>
     /// Right before invocation, applies a contortion to RV2.a, which is undone after the invocation.
@@ -588,6 +592,11 @@ public class GenCtxProperty {
     }
 
     public class RV2CircleTag : GenCtxProperty { }
+
+    public class RV2SpreadProp : ValueProp<GCXF<V2RV2>> { 
+        public RV2SpreadProp(GCXF<V2RV2> f) : base(f) { }
+        
+    }
     public class TimeResetTag : GenCtxProperty { }
     public class CenterTag : GenCtxProperty { }
 
@@ -653,12 +662,32 @@ public class GenCtxProperties<T> {
     public readonly bool bindLR;
     [CanBeNull] public readonly string bindItr;
     [CanBeNull] public readonly GCXF<float> laserIndexer;
-    public readonly bool rv2IncrCircle;
+    private readonly RV2IncrType? rv2IncrType = null;
+    [CanBeNull] private readonly GCXF<V2RV2> rv2Spread = null;
+    private enum RV2IncrType {
+        FUNC,
+        CIRCLE,
+        SPREAD
+    }
+
+    public V2RV2 PostloopRV2Incr(GenCtx gcx, int t) {
+        if (rv2IncrType == RV2IncrType.FUNC) return rv2pp?.Invoke(gcx) ?? V2RV2.Zero;
+        if (rv2IncrType == RV2IncrType.CIRCLE) return V2RV2.Angle(360f / t);
+        else if (rv2IncrType == RV2IncrType.SPREAD) return 1f / (t-1) * (rv2Spread?.Invoke(gcx) ?? V2RV2.Zero);
+        else return V2RV2.Zero;
+    }
+    
+    
     [CanBeNull] public readonly GCXF<float> rv2aMutater;
     /// <summary>
     /// This is present to allow integration with other props, it is handled automatically via postloop.
     /// </summary>
-    [CanBeNull] public readonly GCXF<V2RV2> rv2pp;
+    [CanBeNull] private readonly GCXF<V2RV2> rv2pp;
+
+    /*public V2RV2 AnyRV2Increment(GenCtx gcx, int t) {
+        if (specialIncrType != null) return SpecialRV2Incr(gcx, t);
+        return rv2pp(gcx);
+    }*/
 
     public GenCtxProperties(params GenCtxProperty[] props) : this(props as IEnumerable<GenCtxProperty>) { }
 
@@ -688,9 +717,14 @@ public class GenCtxProperties<T> {
             } else if (prop is BankProp bp) bank = (bp.toZero, bp.banker);
             else if (prop is PreLoopProp prel) prel.rules.AssignOrExtend(ref preloop);
             else if (prop is PostLoopProp pol) pol.rules.AssignOrExtend(ref postloop);
-            else if (prop is RV2IncrProp rvp) rv2pp = rvp.value;
-            else if (prop is RV2CircleTag) rv2IncrCircle = true;
-            else if (prop is MAngProp map) rv2aMutater = map.value;
+            else if (prop is RV2IncrProp rvp) {
+                rv2IncrType = RV2IncrType.FUNC;
+                rv2pp = rvp.value;
+            } else if (prop is RV2CircleTag) rv2IncrType = RV2IncrType.CIRCLE;
+            else if (prop is RV2SpreadProp rsp) {
+                rv2IncrType = RV2IncrType.SPREAD;
+                rv2Spread = rsp.value;
+            } else if (prop is MAngProp map) rv2aMutater = map.value;
             else if (prop is FRV2Prop frv2p) frv2 = frv2p.value;
             else if (prop is StartProp sp) sp.rules.AssignOrExtend(ref start);
             else if (prop is EndProp ep) ep.rules.AssignOrExtend(ref end);
@@ -729,18 +763,11 @@ public class GenCtxProperties<T> {
             else throw new Exception($"{t.RName()} is not allowed to have properties of type {prop.GetType()}.");
         }
         if (sah != null) {
-            if (rv2pp != null) throw new Exception("A summon-along handler cannot be declared with an RV2 incrementer. You should probably remove the incrementer.");
             if (frv2 != null) throw new Exception("A summon-along handler cannot be declared with an RV2 function handler.");
-            if (rv2IncrCircle)
-                throw new Exception("A summon-along handler cannot be declared with an RV2 circle incrementer.");
+            rv2IncrType = null;
         }
-        if (frv2 != null && rv2pp != null) {
-            //throw new Exception("An RV2 function handler cannot be declared with an RV2 incrementer. You should probably remove the incrementer.");
-            rv2pp = null;
-        }
+        if (frv2 != null) rv2IncrType = null;
         if (wait == null) wait = (waitChild) ? zeroWait : defltWait;
-        if (rv2pp != null) postloop.Add(new GCRule<V2RV2>(Reflector.ExType.RV2, "rv2", GCOperator.AddAssign, rv2pp));
-        else if (centered) throw new Exception("Cannot have a centered fire without an RV2 incrementer.");
         if (unpause != null && runWhile == null) throw new Exception("Unpause requires While to run. Unpause is only invoked when the While statement is set to false, and then set back to true.");
     }
 }
