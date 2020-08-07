@@ -212,19 +212,8 @@ namespace Tests {
             ((double)func(x + (float)delta / 2f) - func(x - (float)delta / 2f)) / delta;
         [Test]
         public static void TestDerivatives() {
-            var funcs = new[] {
-                ("sine", "sine 3 1 t".Into<ExFXY>(), "dsine 3 1 t".Into<ExFXY>()),
-                ("cosine", "cosine 3 1 t".Into<ExFXY>(), "dcosine 3 1 t".Into<ExFXY>()),
-                ("einsine", EInSine, EDInSine),
-                ("eoutsine", EOutSine, EDOutSine),
-                ("eiosine", EIOSine, EDIOSine),
-                ("elinear", ELinear, EDLinear),
-                ("einquad", EInQuad, EDInQuad),
-                ("esine010", ESine010, EDSine010),
-                //("esoftmod010", ESoftmod010(X()), EDSoftmod010(X()))
-            };
-            foreach (var (name, exf, exfd) in funcs) {
-                var (f, fd) = (FXY(exf), FXY(exfd));
+            foreach (var name in EaseHelpers.Functions) {
+                var (f, fd) = (FXY(EaseHelpers.GetFunc(name)), FXY(EaseHelpers.GetDeriv(name)));
                 for (float x = -1.01f; x < 2f; x += 0.1f) {
                     AreEqual(fd(x), DerivativeAt(f, x), 0.01f, $"{name} at {x}");
                 }

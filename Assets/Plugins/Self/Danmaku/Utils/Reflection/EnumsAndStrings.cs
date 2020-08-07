@@ -26,6 +26,12 @@ public static partial class Reflector {
         if (ext == ExType.RV2) return typeof(TEx<V2RV2>);
         return typeof(TEx<float>);
     }
+    private static Type AsType(ExType ext) {
+        if (ext == ExType.V2) return typeof(Vector2);
+        if (ext == ExType.V3) return typeof(Vector3);
+        if (ext == ExType.RV2) return typeof(V2RV2);
+        return typeof(float);
+    }
     private static Type AsTExType(ExType ext) {
         if (ext == ExType.V2) return typeof(TExV2);
         if (ext == ExType.V3) return typeof(TExV3);

@@ -16,7 +16,7 @@ public static class PrivateDataHoisting {
         lastKey = 0;
     }
 
-    private static uint GetKey(string name) {
+    public static uint GetKey(string name) {
         if (keyNames.TryGetValue(name, out var res)) return res;
         keyNames[name] = lastKey;
         return lastKey++;
@@ -37,8 +37,20 @@ public static class PrivateDataHoisting {
     }
 
     private static TEx GetValue<K1, K2, V>(Dictionary<K1, Dictionary<K2, V>> dict, TExPI bpi, string name) =>
-        Expression.Constant(dict).DictGet(bpi.id).DictSafeGet<K2, V>(Expression.Constant(GetKey(name)), 
-            $"<{typeof(K2).RName()},{typeof(V).RName()}>: {name}, {GetKey(name)}");
+        Expression.Constant(dict).DictGet(bpi.id).DictGet(Expression.Constant(GetKey(name)));
+        /*Expression.Constant(dict)
+            .DictSafeGet<K1, Dictionary<K2, V>>(bpi.id, "PrivateHoist data")
+            .DictSafeGet<K2, V>(Expression.Constant(GetKey(name)), 
+            $"<{typeof(K2).RName()},{typeof(V).RName()}>: {name}, {GetKey(name)}");*/
+    
+    private static TEx UpdateValue<K1, K2, V>(Dictionary<K1, Dictionary<K2, V>> dict, TExPI bpi, string name, Expression value) =>
+        Expression.Constant(dict).DictGet(bpi.id).DictSet(Expression.Constant(GetKey(name)), value);
+    public static Expression UpdateValue(TExPI bpi, Reflector.ExType typ, string name, Expression value) {
+        if (typ == Reflector.ExType.RV2) return UpdateValue(rv2Data, bpi, name, value);
+        if (typ == Reflector.ExType.V3) return UpdateValue(v3Data, bpi, name, value);
+        if (typ == Reflector.ExType.V2) return UpdateValue(v2Data, bpi, name, value);
+        return UpdateValue(fData, bpi, name, value);
+    }
 
     public static void ClearValues() {
         idsInUse.Clear();

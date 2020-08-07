@@ -514,6 +514,18 @@ public partial class BulletManager {
         /// <param name="cond">Filter condition</param>
         public static SBCFp SaveF((ReflectEx.Hoist<float> target, ExBPY indexer, ExSBF valuer)[] targets, ExPred cond) => new SBCFp((sbc, ii, bpi) =>
             bpi.When(cond, Ex.Block(targets.Select(t => t.target.Save(((Ex)t.indexer(bpi)).As<int>(), t.valuer(sbc[ii]))))), BulletControl.P_SAVE);
+        
+        /// <summary>
+        /// Update existing V2 values in the private data hoisting for the bullet.
+        /// </summary>
+        public static SBCFp UpdateV2((string target, ExSBV2 valuer)[] targets, ExPred cond) => new SBCFp((sbc, ii, bpi) =>
+            bpi.When(cond, Ex.Block(targets.Select(t => PrivateDataHoisting.UpdateValue(bpi, Reflector.ExType.V2, t.target, t.valuer(sbc[ii]))))), BulletControl.P_SAVE);
+        
+        /// <summary>
+        /// Update existing float values in the private data hoisting for the bullet.
+        /// </summary>
+        public static SBCFp UpdateF((string target, ExSBF valuer)[] targets, ExPred cond) => new SBCFp((sbc, ii, bpi) =>
+            bpi.When(cond, Ex.Block(targets.Select(t => PrivateDataHoisting.UpdateValue(bpi, Reflector.ExType.Float, t.target, t.valuer(sbc[ii]))))), BulletControl.P_SAVE);
 
         /// <summary>
         /// Execute an event if the condition is satisfied.

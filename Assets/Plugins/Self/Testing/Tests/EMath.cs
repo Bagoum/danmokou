@@ -123,13 +123,20 @@ namespace Tests {
         
         [Test]
         public static void TestConvert() {
-            var x = new TExV3();
-            var f = Ex.Lambda<Func<Vector3, Vector2>>(ToSphere(x), x).Compile();
+            var r = new TEx<float>();
+            var x2 = new TExV2();
+            var x3 = new TExV3();
+            var f = Ex.Lambda<Func<Vector3, Vector2>>(ToSphere(x3), x3).Compile();
+            var f2 = Ex.Lambda<Func<float, Vector2, Vector3>>(FromSphere(r, x2), r, x2).Compile();
             VecEq(f(V3(0,0,1)), V2(0, 0));
+            VecEq(f2(3f, V2(0, 0)), V3(0,0,3));
             VecEq(f(V3(0,1,0)), V2(90, 90));
+            VecEq(f2(3f, V2(90, 90)), V3(0,3,0));
             VecEq(f(V3(1,0,0)), V2(0, 90));
+            VecEq(f2(3f, V2(0, 90)), V3(3,0,0));
             VecEq(f(V3(1,1,0)), V2(45, 90));
             VecEq(f(V3(0.5f, 0.5f, Mathf.Sqrt(0.5f))), V2(45, 45));
+            VecEq(f2(2f, V2(45, 45)), V3(1f, 1f, 2*Mathf.Sqrt(0.5f)));
         }
 
         private static float Rt(float x) => Mathf.Sqrt(x);

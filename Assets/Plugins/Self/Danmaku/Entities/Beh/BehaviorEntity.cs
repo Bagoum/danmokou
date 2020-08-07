@@ -844,7 +844,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     }
 
     protected override void OnDisable() {
-        DestroyInitial(false);
+        ExternalDestroy();
         base.OnDisable();
     }
 

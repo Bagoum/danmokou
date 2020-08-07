@@ -153,6 +153,12 @@ public static class DictExtensions {
         return dict.TryGetValue(key, out var dct2) && dct2.TryGetValue(key2, out val);
     }
 
+    public static V SetDefault<K, V>(this Dictionary<K, V> dict, K key) where V: new() {
+        if (!dict.TryGetValue(key, out var data)) {
+            data = dict[key] = new V();
+        }
+        return data;
+    }
     public static void SetDefaultSet<K, K2, V>(this Dictionary<K, Dictionary<K2, V>> dict, K key, K2 key2, V value) {
         if (!dict.TryGetValue(key, out var data)) {
             data = dict[key] = DictCache<K2, V>.Get();

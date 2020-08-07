@@ -454,7 +454,8 @@ public partial class BulletManager {
                     sb.direction.x = sb.accDelta.x * mag;
                     sb.direction.y = sb.accDelta.y * mag;
                 }
-                for (int pi = postDirPcs; pi < numPcs; ++pi) pcs[pi].action(this, ii, sb.bpi);
+                //Post-vel controls may destroy the bullet. As soon as this occurs, stop iterating
+                for (int pi = postDirPcs; pi < numPcs && !rem[ii]; ++pi) pcs[pi].action(this, ii, sb.bpi);
             }
             PruneControls();
         }

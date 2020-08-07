@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 using Ex = System.Linq.Expressions.Expression;
 using ExFXY = System.Func<TEx<float>, TEx<float>>;
@@ -28,19 +29,8 @@ public static class EaseHelpers {
         { "smod-010", ESoftmod010 },
         { "bounce2", EBounce2 }
     };
-    private static readonly Dictionary<string, ExFXY> derivatives = new Dictionary<string, ExFXY>() {
-        { "linear", EDLinear },
-        { "in-quad" , EDInQuad },
-        { "in-sine", EDInSine },
-        { "out-sine", EDOutSine },
-        { "io-sine", EDIOSine },
-        { "in-hsine", t => SuperposeC(E05, EDLinear(t), EDInSine(t)) },
-        { "out-hsine", t => SuperposeC(E05, EDLinear(t), EDOutSine(t)) },
-        { "io-hsine", t => SuperposeC(E05, EDLinear(t), EDIOSine(t)) },
-        { "sine-010", EDSine010 },
-        { "smod-010", EDSoftmod010 }
-    };
     private static readonly Dictionary<string, FXY> cfuncs = new Dictionary<string, FXY>();
+    public static string[] Functions => funcs.Keys.ToArray();
 
     private static bool TryGetOrCacheFXY(string name, out FXY fxy) {
         if (cfuncs.TryGetValue(name, out fxy)) return true;
@@ -52,7 +42,8 @@ public static class EaseHelpers {
     }
 
     public static ExFXY GetFunc(string name) => funcs.GetOrThrow(name, "easing functions");
-    public static ExFXY GetDeriv(string name) => derivatives.GetOrThrow(name, "easing function derivatives");
+    public static ExFXY GetDeriv(string name) => x => 
+        DerivativeVisitor.Derivate(x, E1, funcs.GetOrThrow(name, "easing functions (from derivative call)")(x));
     
     public static FXY GetFuncOrRemoteOrLinear(string name) {
         if (TryGetOrCacheFXY(name, out var f)) return f;

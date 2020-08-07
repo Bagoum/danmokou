@@ -283,6 +283,16 @@ public static partial class ExM {
         ACos(v.z.Div(v3Mag(v)))
     )));
 
+    public static tv3 FromSphere(tfloat radius, ev2 sphere) => radius.Mul(EEx.ResolveV2(sphere, s => {
+        var cst = new TExV2();
+        var csp = new TExV2();
+        return Ex.Block(new ParameterExpression[] {cst, csp},
+            cst.Is(CosSinDeg(s.x)),
+            csp.Is(CosSinDeg(s.y)),
+            V3(cst.x.Mul(csp.y), cst.y.Mul(csp.y), csp.x)
+        );
+    }));
+
     public static tv3 CrossProduct(ev3 v1, ev3 v2) => EEx.ResolveV3(v1, v2, (a, b) => V3(
         a.y.Mul(b.z).Sub(a.z.Mul(b.y)), 
         a.z.Mul(b.x).Sub(a.x.Mul(b.z)), 
@@ -660,6 +670,13 @@ public static partial class ExM {
     /// Round a number to the nearest intereger.
     /// </summary>
     public static tfloat Round(tfloat ex) => OfDFD(_Round, ex);
+
+    /// <summary>
+    /// = Round(ex / block) * block
+    /// </summary>
+    public static tfloat BlockRound(efloat block, tfloat ex) => EEx.Resolve(block,
+        b => Round(ex.Div(b)).Mul(b));
+    
     /// <summary>
     /// Returns the floor of a float value.
     /// </summary>
@@ -1122,57 +1139,29 @@ public static partial class ExM {
     /// </summary>
     public static tfloat EInSine(tfloat x) => E1.Sub(Cos(hpi.Mul(x)));
     /// <summary>
-    /// Derivative of In-Sine easing function.
-    /// </summary>
-    public static tfloat EDInSine(tfloat x) =>  hpi.Mul(Sin(hpi.Mul(x)));
-    /// <summary>
     /// Out-Sine easing function.
     /// </summary>
     public static tfloat EOutSine(tfloat x) => Sin(hpi.Mul(x));
-    /// <summary>
-    /// Derivative of Out-Sine easing function.
-    /// </summary>
-    public static tfloat EDOutSine(tfloat x) => hpi.Mul(Cos(hpi.Mul(x)));
     /// <summary>
     /// In-Out-Sine easing function.
     /// </summary>
     public static tfloat EIOSine(tfloat x) => E05.Sub(E05.Mul(Cos(pi.Mul(x))));
     /// <summary>
-    /// Derivative of In-Out-Sine easing function.
-    /// </summary>
-    public static tfloat EDIOSine(tfloat x) => hpi.Mul(Sin(pi.Mul(x)));
-    /// <summary>
     /// Linear easing function (ie. y = x).
     /// </summary>
     public static tfloat ELinear(tfloat x) => x;
-    /// <summary>
-    /// Derivative of Linear easing function (ie. y = 1).
-    /// </summary>
-    public static tfloat EDLinear(tfloat x) => E1;
     /// <summary>
     /// In-Quad easing function.
     /// </summary>
     public static tfloat EInQuad(tfloat x) => Sqr(x);
     /// <summary>
-    /// Derivative of In-Quad easing function.
-    /// </summary>
-    public static tfloat EDInQuad(tfloat x) => E2.Mul(x);
-    /// <summary>
     /// Sine easing function with 010 pattern.
     /// </summary>
     public static tfloat ESine010(tfloat x) => Sin(pi.Mul(x));
     /// <summary>
-    /// Derivative of Sine easing function with 010 pattern.
-    /// </summary>
-    public static tfloat EDSine010(tfloat x) => pi.Mul(Cos(pi.Mul(x)));
-    /// <summary>
     /// Softmod easing function with 010 pattern.
     /// </summary>
     public static tfloat ESoftmod010(tfloat x) => Mul(E2, SoftMod(E05, x));
-    /// <summary>
-    /// Derivative of Softmod easing function with 010 pattern.
-    /// </summary>
-    public static tfloat EDSoftmod010(tfloat x) => Ex.Condition(E05.GT(x), ExC(2f), ExC(-2f));
 
     public static tfloat EBounce2(tfloat x) => EEx.Resolve<float>((Ex)x, c => {
         var c1 = VFloat();

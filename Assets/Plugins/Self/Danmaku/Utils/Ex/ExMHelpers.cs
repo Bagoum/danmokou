@@ -168,8 +168,9 @@ public static class MoreExExtensions {
     public static Ex GT<T>(this TEx<T> tex, Ex than) => ((Ex) tex).GT(than);
     public static Ex GT0<T>(this TEx<T> tex) => ((Ex) tex).GT0();
     
-    public static Ex Flatten(this Ex ex) => FlattenVisitor.Flatten(ex);
+    public static Ex Flatten(this Ex ex, bool reduceMethod=true) => FlattenVisitor.Flatten(ex, reduceMethod);
     public static Ex Flatten(this TEx ex) => FlattenVisitor.Flatten(ex);
+    public static Ex Derivate(this Ex ex, Ex x, Ex dx) => DerivativeVisitor.Derivate(x, dx, ex);
     public static string Debug(this Ex ex) => new DebugVisitor().Export(ex);
     public static string FlatDebug(this Ex ex) => ex.Flatten().Debug();
 }
@@ -220,6 +221,9 @@ public class EEx {
     public static Ex ResolveV2(EEx<Vector2> t1, EEx<Vector2> t2, 
         Func<TExV2, TExV2, Ex> resolver) =>
         ResolveCopy(x => resolver(new TExV2(x[0]), new TExV2(x[1])), t1, t2);
+    public static Ex ResolveV2(EEx<Vector2> t1, EEx<float> t2, 
+        Func<TExV2, TEx<float>, Ex> resolver) =>
+        ResolveCopy(x => resolver(new TExV2(x[0]), x[1]), t1, t2);
     public static Ex ResolveV3(EEx<Vector3> t1, EEx<Vector3> t2, 
         Func<TExV3, TExV3, Ex> resolver) =>
         ResolveCopy(x => resolver(new TExV3(x[0]), new TExV3(x[1])), t1, t2);

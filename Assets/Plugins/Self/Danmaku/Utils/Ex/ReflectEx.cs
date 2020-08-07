@@ -98,6 +98,8 @@ public static class ReflectEx {
     
     public static Ex ReferenceExpr<T>(string alias, [CanBeNull] TExPI bpi) {
         if (alias[0] == Parser.SM_REF_KEY_C) alias = alias.Substring(1); //Important for reflector handling of &x
+        bool isExplicit = alias.StartsWith(".");
+        if (isExplicit) alias = alias.Substring(1);
         //Standard method, used by ::{} and GCXPath.expose
         if (alias_stack.TryGetValue(alias, out var f)) return f.Peek();
         //Used by GCXF<T>, ie. when a fixed GCX exists. This is for slower pattern expressions
@@ -108,9 +110,8 @@ public static class ReflectEx {
         //The reason for using the special marker is that we cannot give good errors if an incorrect value is entered
         //(good error handling would make lookup slower, and this is hotpath),
         //so we need to make opting into this completely explicit. 
-        if (alias.StartsWith(".") && bpi != null) {
-            string halias = alias.Substring(1);
-            return PrivateDataHoisting.GetValue(bpi, Reflector.AsExType<T>(), halias);
+        if (isExplicit && bpi != null) {
+            return PrivateDataHoisting.GetValue(bpi, Reflector.AsExType<T>(), alias);
         }
         throw new Exception($"The reference {alias} is used, but does not have a value.");
     }
@@ -118,6 +119,7 @@ public static class ReflectEx {
     public static Func<WF, TEx<T>> ReferenceLet<WF, T>(string alias) => t => ReferenceExpr<T>(alias, null);
     public static Func<TEx<T>> ReferenceLet<T>(string alias) => () => ReferenceExpr<T>(alias, null);
 
+    //TODO consider replacing SafeResizeable here with a dictionary
     public readonly struct Hoist<T> {
         private readonly SafeResizableArray<T> data;
 

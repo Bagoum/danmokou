@@ -46,7 +46,12 @@ class FlattenVisitor : ExpressionVisitor {
         ExpressionType.LeftShiftAssign, ExpressionType.ExclusiveOrAssign, ExpressionType.MultiplyAssignChecked, 
         ExpressionType.PostDecrementAssign, ExpressionType.PreDecrementAssign, ExpressionType.RightShiftAssign
     };
-    public static Ex Flatten(Ex ex) => new FlattenVisitor().Visit(ex);
+
+    private readonly bool reduceMethod;
+    public FlattenVisitor(bool reduceMethod) {
+        this.reduceMethod = reduceMethod;
+    }
+    public static Ex Flatten(Ex ex, bool reduceMethod = true) => new FlattenVisitor(reduceMethod).Visit(ex);
     protected override Expression VisitBinary(BinaryExpression node) {
         var l = AssignTypes.Contains(node.NodeType) ? node.Left : Visit(node.Left);
         var r = Visit(node.Right);
@@ -67,10 +72,14 @@ class FlattenVisitor : ExpressionVisitor {
             return false;
         }
         bool Bifocal(Func<float,bool> cond, Func<Ex, Ex> ret, out Ex early) {
-            if (LeftIs(cond, ret, out early)) return true;
-            if (RightIs(cond, ret, out early)) return true;
-            return false;
-        }
+            return LeftIs(cond, ret, out early) || RightIs(cond, ret, out early);
+        }/*
+        bool Bifocal2(Func<Ex, bool> cond2, Func<float, Ex, Ex> ret, out Ex early) {
+            early = null;
+            if (l.TryAsConst(out float f) && cond2(r)) early = ret(f, r);
+            else if (r.TryAsConst(out f) && cond2(l)) early = ret(f, l);
+            return early != null;
+        }*/
         if (l.TryAsConst(out float vl) && r.TryAsConst(out float vr) &&
             BinOpReducers.TryGetValue(node.NodeType, out var reducer)) {
             return ExC(reducer(vl, vr));
@@ -123,13 +132,14 @@ class FlattenVisitor : ExpressionVisitor {
     protected override Expression VisitUnary(UnaryExpression node) {
         var o = Visit(node.Operand);
         if (node.NodeType == ExpressionType.Convert) {
-            if (o.IsConstant()) {
-                return ExC(Ex.Lambda(Ex.Convert(o, node.Type)).Compile().DynamicInvoke());
-            }
+            if (o.IsConstant()) return ExC(Ex.Lambda(Ex.Convert(o, node.Type)).Compile().DynamicInvoke());
             if (o is UnaryExpression ue && ue.NodeType == ExpressionType.Convert) {
                 o = ue.Operand;
             }
             if (node.Type == o.Type) return o;
+        } else if (node.NodeType == ExpressionType.Negate) {
+            if (o.TryAsConst(out float f)) return ExC(-1f * f);
+            if (o.NodeType == ExpressionType.Negate && o is UnaryExpression ue) return ue.Operand;
         }
         if (o == node.Operand) return node;
         return Ex.MakeUnary(node.NodeType, o, node.Type);
@@ -156,7 +166,7 @@ class FlattenVisitor : ExpressionVisitor {
             }
         }
         if (isAllConst) return Ex.Constant(node.Method.Invoke(null, newArgs));
-        if (node.Method.DeclaringType == mathType) {
+        if (reduceMethod && node.Method.DeclaringType == mathType) {
             var v = Visit(visited[0].As<double>());
             if (node.Method.Name == "Sin") return ExMHelpers.dLookupSinRad(v);
             if (node.Method.Name == "Cos") return ExMHelpers.dLookupCosRad(v);
@@ -246,6 +256,10 @@ class DebugVisitor : ExpressionVisitor {
         if (node.NodeType == ExpressionType.Convert) {
             Visit(node.Operand);
             acc.Append($":>{node.Type.Name}");
+            return node;
+        } else if (node.NodeType == ExpressionType.Negate) {
+            acc.Append("-");
+            Visit(node.Operand);
             return node;
         }
         return base.VisitUnary(node);

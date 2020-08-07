@@ -134,11 +134,6 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3407124447063394663, guid: f28167148c8e8b247be3b31472dceb43,
         type: 3}
-      propertyPath: animate.LRRelation
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3407124447063394663, guid: f28167148c8e8b247be3b31472dceb43,
-        type: 3}
       propertyPath: animate.frames.leftAnim.Array.data[0].sprite
       value: 
       objectReference: {fileID: 21300000, guid: d3439a2ebccce1144a3300d039339492,
@@ -158,6 +153,11 @@ PrefabInstance:
         type: 3}
       propertyPath: animate.frames.leftAnim.Array.data[1].time
       value: 0.2
+      objectReference: {fileID: 0}
+    - target: {fileID: 3407124447063394663, guid: f28167148c8e8b247be3b31472dceb43,
+        type: 3}
+      propertyPath: animate.LRRelation
+      value: 2
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: f28167148c8e8b247be3b31472dceb43, type: 3}

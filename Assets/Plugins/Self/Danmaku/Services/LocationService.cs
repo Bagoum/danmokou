@@ -101,7 +101,7 @@ public static partial class ExMPred {
             .And(l.x.LT(LocationService.right))
             .And(l.y.GT(LocationService.bot))
             .And(l.y.LT(LocationService.top)));
-    public static TEx<bool> OnScreenBy(float f, EEx<Vector2> loc) => EEx.ResolveV2(loc, l =>
+    public static TEx<bool> OnScreenBy(EEx<float> by, EEx<Vector2> loc) => EEx.ResolveV2(loc, by, (l, f) =>
             l.x.GT(LocationService.left.Sub(f))
             .And(l.x.LT(LocationService.right.Add(f)))
             .And(l.y.GT(LocationService.bot.Sub(f)))
@@ -109,7 +109,7 @@ public static partial class ExMPred {
 
     public static TEx<bool> OffScreen(TEx<Vector2> loc) => Not(OnScreen(loc));
     
-    public static TEx<bool> OffScreenBy(float f, TEx<Vector2> loc) => Not(OnScreenBy(f, loc));
+    public static TEx<bool> OffScreenBy(TEx<float> f, TEx<Vector2> loc) => Not(OnScreenBy(f, loc));
 
 }
 public static partial class ExM {
@@ -130,9 +130,16 @@ public static partial class ExM {
     public static TEx<Vector2> LPlayer() => GetEnemyVisiblePlayer.Of();
 
     public static TEx<Vector2> LBEH(BEHPointer beh)  => BehaviorEntity.retrieveBEHPosition.Of(Ex.Constant(beh));
+    
+    private static readonly ExFunction distToWall =
+        ExUtils.Wrap<LocationService>("DistToWall", typeof(Vector2), typeof(Vector2));
+
+    public static tfloat DistToWall(tv2 from, tv2 dir) => distToWall.Of(from, dir);
 }
 
 public static partial class BPYRepo {
+    
+    
     /// <summary>
     /// Returns Atan(Player.Loc - this.Loc) in degrees.
     /// </summary>

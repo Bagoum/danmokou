@@ -403,11 +403,11 @@ public static partial class AtomicPatterns {
 
     public static SyncPattern SummonR(RootedVTP path, [CanBeNull] StateMachine sm, BehOptions options) => sbh => {
         sbh.ch.bc.Root(path.root(sbh.GCX));
-        return _Summon(sbh, false, path.path, sm, options);
+        return _Summon(sbh, true, path.path, sm, options);
     };
     public static SyncPattern SummonRUP(RootedVTP path, [CanBeNull] StateMachine sm, BehOptions options) => sbh => {
         sbh.ch.bc.Root(path.root(sbh.GCX));
-        return _Summon(sbh, true, path.path, sm, options);
+        return _Summon(sbh, false, path.path, sm, options);
     };
 
     public static SyncPattern SummonRZ([CanBeNull] StateMachine sm, BehOptions options) =>
@@ -605,6 +605,7 @@ public struct LoopControl<T> {
             ch.gcx.fs["aiyd"] = M.HNMod(times, times - 1 - GCX.i);
         }
         if (props.bindLR) ch.gcx.fs["rl"] = -1 * (ch.gcx.fs["lr"] = M.PM1Mod(GCX.i));
+        if (props.bindUD) ch.gcx.fs["du"] = -1 * (ch.gcx.fs["ud"] = M.PM1Mod(GCX.i));
         if (props.bindItr != null) ch.gcx.fs[props.bindItr] = GCX.i;
         //
         ch.gcx.UpdateRules(props.preloop);
