@@ -1328,6 +1328,20 @@ public static partial class ExM {
     }
 
     /// <summary>
+    /// Select one of an array of values. If OOB, selects the last element.
+    /// Note: this expands to (if i = 0) arr[0] (if i = 1) arr[1] ....
+    /// This may sound stupid, but since each value is a function, there's no way to actually store it in an array.
+    /// </summary>
+    public static TEx<T> Select<T>(tfloat index, TEx<T>[] points) => EEx.Resolve((EEx<int>) ((Ex) index).As<int>(),
+        i => {
+            Ex ifNeq = points[points.Length - 1];
+            for (int ii = points.Length - 2; ii >= 0; --ii) {
+                ifNeq = Ex.Condition(Ex.Equal(i, ExC(ii)), points[ii], ifNeq);
+            }
+            return ifNeq;
+        });
+
+    /// <summary>
     /// Return 0 if the controller is leq the lower bound, 1 if the controller is geq the lower bound, and
     /// a linear interpolation in between.
     /// </summary>

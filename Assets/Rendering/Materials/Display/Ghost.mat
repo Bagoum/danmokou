@@ -9,7 +9,7 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: Ghost
   m_Shader: {fileID: 4800000, guid: b16e50c61bfba0a4fb5f7bc393741e95, type: 3}
-  m_ShaderKeywords: DO_BLUR ETC1_EXTERNAL_ALPHA
+  m_ShaderKeywords: ETC1_EXTERNAL_ALPHA
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -77,7 +77,7 @@ Material:
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
-    - _ToggleBlur: 1
+    - _ToggleBlur: 0
     - _UVSec: 0
     - _ZWrite: 1
     m_Colors:

@@ -64,13 +64,15 @@ public class FireCutin : BehaviorEntity {
             $"lerpsmooth in-sine {timeToFirstHit} {timeToSecondHit} t {CXYZ(lowerTextOffset)} zero".Into<TP3>();
         upperTextScaler = $"lerpsmooth out-sine {sx} {sy} (- t {timeToFirstHit}) {textScale.x} {textScale.y}".Into<BPY>();
         lowerTextScaler = $"lerpsmooth out-sine {sx} {sy} (- t {timeToSecondHit}) {textScale.x} {textScale.y}".Into<BPY>();
-        fireSprite.GetPropertyBlock(firePB = new MaterialPropertyBlock());
-        firePB.SetFloat(PropConsts.xBlocks, xBlocks);
-        firePB.SetFloat(PropConsts.yBlocks, yBlocks);
-        firePB.SetColor(PropConsts.color1, color1);
-        firePB.SetColor(PropConsts.color2, color2);
-        firePB.SetColor(PropConsts.color3, color3);
-        firePB.SetFloat(PropConsts.multiplier, fireScaler(bpi));
+        if (fireSprite != null) {
+            fireSprite.GetPropertyBlock(firePB = new MaterialPropertyBlock());
+            firePB.SetFloat(PropConsts.xBlocks, xBlocks);
+            firePB.SetFloat(PropConsts.yBlocks, yBlocks);
+            firePB.SetColor(PropConsts.color1, color1);
+            firePB.SetColor(PropConsts.color2, color2);
+            firePB.SetColor(PropConsts.color3, color3);
+            firePB.SetFloat(PropConsts.multiplier, fireScaler(bpi));
+        }
         //SetColorA(upperText, 0);
         //SetColorA(lowerText, 0);
         //upperTr = upperText.transform;
@@ -107,9 +109,11 @@ public class FireCutin : BehaviorEntity {
         upperTr.localScale = (new Vector3(1, 1, 1)) * upperTextScaler(bpi);
         lowerTr.localPosition = lowerTextBaseLoc + lowerTextLerp(bpi);
         lowerTr.localScale = (new Vector3(1, 1, 1)) * lowerTextScaler(bpi);
-        firePB.SetFloat(PropConsts.multiplier, fireScaler(bpi));
-        firePB.SetFloat(PropConsts.time, bpi.t);
-        fireSprite.SetPropertyBlock(firePB);
+        if (fireSprite != null) {
+            firePB.SetFloat(PropConsts.multiplier, fireScaler(bpi));
+            firePB.SetFloat(PropConsts.time, bpi.t);
+            fireSprite.SetPropertyBlock(firePB);
+        }
         textBackPB.SetFloat(PropConsts.time, bpi.t);
         textBackPB.SetFloat(PropConsts.fillRatio, textBackFiller(bpi));
         textBacker.SetPropertyBlock(textBackPB);

@@ -95,7 +95,7 @@ public class PlayerInput : BehaviorEntity {
         //TODO not sure if this works with the current two-updates-per-frame model.
         Physics2D.SyncTransforms();
         bpi.loc = tr.position = hitbox.location = pos + MoveAgainstWall(pos, blueBoxRadius, velocity * dT, collMask);
-        positions.Add(hitbox.location);
+        //positions.Add(hitbox.location);
     }
 
     protected override void RegularUpdateMove() {

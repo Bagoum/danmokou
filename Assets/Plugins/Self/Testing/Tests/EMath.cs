@@ -118,6 +118,23 @@ namespace Tests {
             AreEqual(f(5.9f), 11.8f);
         }
 
+        [Test]
+        public static void TestSelect() {
+            var x = VFloat();
+            var ex = Select(x, new TEx<float>[] {
+                10,
+                20,
+                30
+            });
+            var f = Ex.Lambda<FXY>(ex, x).Compile();
+            AreEqual(f(0), 10);
+            AreEqual(f(0.5f), 10);
+            AreEqual(f(1), 20);
+            AreEqual(f(2), 30);
+            AreEqual(f(3), 30);
+            
+        }
+
         private static Vector2 V2(float x, float y) => new Vector2(x,y);
         private static Vector3 V3(float x, float y,float z) => new Vector3(x,y,z);
         

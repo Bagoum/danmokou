@@ -184,6 +184,12 @@ public class PhaseProperty {
     /// Perform the boss cutin before starting this phase. This should be done once per script.
     /// </summary>
     public static PhaseProperty BossCutin() => new BossCutinFlag();
+
+    /// <summary>
+    /// Perform a spell cutin before starting this phase. This is done automatically with index 0 for all
+    /// spell-type cards. If the index is invalid, then no cutin will be summoned.
+    /// </summary>
+    public static PhaseProperty SpellCutin(int index) => new SpellCutinProp(index);
     
     #region Impls
 
@@ -250,6 +256,13 @@ public class PhaseProperty {
             lives = l;
         }
     }
+    public class SpellCutinProp : PhaseProperty {
+        public readonly int index;
+
+        public SpellCutinProp(int x) {
+            index = x;
+        }
+    }
 
     public class RootProp : PhaseProperty {
         public readonly float t;
@@ -288,6 +301,16 @@ public class PhaseProperties {
     private readonly bool? lenient = null;
     public bool Lenient => lenient ?? phaseType?.IsLenient() ?? false;
     public readonly bool bossCutin = false;
+    private readonly int? spellCutinIndex = null;
+
+    public bool GetSpellCutin(out GameObject go) {
+        go = null;
+        if (Boss != null) {
+            var index = spellCutinIndex ?? ((phaseType?.IsSpell() ?? false) ? (int?)0 : null);
+            if (index.HasValue) return Boss.spellCutins.Try(index.Value, out go);
+        }
+        return false;
+    }
 
     public void LoadDefaults(PatternProperties pat) {
         if (pat.boss != null) {
@@ -320,6 +343,7 @@ public class PhaseProperties {
                 autocullTarget = cp.target ?? autocullTarget;
                 autocullDefault = cp.defaulter ?? autocullDefault;
             } else if (prop is LivesOverrideProp lop) livesOverride = lop.lives;
+            else if (prop is SpellCutinProp scp) spellCutinIndex = scp.index;
             else if (prop is RootProp rp)
                 rootMove = 
                     SaveData.Settings.TeleportAtPhaseStart ? 

@@ -10,9 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1fa61efa6fe65e0459ee271ffb7e08d1, type: 3}
-  m_Name: Boss Cutin
+  m_Name: Boss Spell Cutin
   m_EditorClassIdentifier: 
-  defaultName: x-boss-cutin
-  clip: {fileID: 8300000, guid: ba527260869e40b49a99d1e451792597, type: 3}
-  volume: 0.2
+  defaultName: x-spell-cutin
+  clip: {fileID: 8300000, guid: dbb228c76d1311d4c91c6e2f154212b4, type: 3}
+  volume: 0.23
   timeout: -1

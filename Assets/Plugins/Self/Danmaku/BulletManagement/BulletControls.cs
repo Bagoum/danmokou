@@ -204,7 +204,10 @@ public partial class BulletManager {
     public static void ControlPoolSM(Pred persist, StyleSelector styles, SM.StateMachine sm, CancellationToken cT, Pred condFunc) {
         BulletControl pc = new BulletControl((sbc, ii, bpi) => {
             if (condFunc(bpi)) {
-                _ = sbc.GetINodeAt(ii, "pool-triggered", null, out uint sbid).RunExternalSM(SMRunner.Cull(sm, cT, PrivateDataHoisting.GetGCX(sbid)));
+                var inode = sbc.GetINodeAt(ii, "pool-triggered", null, out uint sbid);
+                using (var gcx = PrivateDataHoisting.GetGCX(sbid)) {
+                    _ = inode.RunExternalSM(SMRunner.Cull(sm, cT, gcx));
+                }
             }
         }, persist, BulletControl.P_RUN);
         for (int ii = 0; ii < styles.Simple.Length; ++ii) {

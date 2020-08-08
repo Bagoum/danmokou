@@ -236,7 +236,7 @@ MonoBehaviour:
   blueBoxRadius: 1
   freeSpeed: 6
   focusSpeed: 2.5
-  lnrizeSpeed: 10
+  lnrizeSpeed: 6
   lnrizeRatio: 0.7
   defaultShot: {fileID: 11400000, guid: 94c9dbd65f23dec46894ae6f01f35d23, type: 2}
 --- !u!114 &-5849642184187897924

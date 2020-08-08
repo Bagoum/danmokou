@@ -45,9 +45,18 @@ public static class ArrayExtensions {
 
     public static T ModIndex<T>(this T[] arr, int index) => arr[M.Mod(arr.Length, index)];
 
+    [CanBeNull]
     public static T Try<T>(this T[] arr, int index) where T : class {
         if (index >= 0 && index < arr.Length) return arr[index];
         return null;
+    }
+    public static bool Try<T>(this T[] arr, int index, out T res) where T : class {
+        if (index >= 0 && index < arr.Length) {
+            res = arr[index];
+            return true;
+        }
+        res = null;
+        return false;
     }
     public static T Try<T>(this T[] arr, int index, T deflt) {
         if (index >= 0 && index < arr.Length) return arr[index];

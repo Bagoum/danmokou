@@ -140,7 +140,7 @@ public class PhaseSM : SequentialSM {
 
     private void PrepareGraphics(SMHandoff smh, out Task cutins) {
         cutins = Task.CompletedTask;
-        UIManager.SetSpellname(props.cardTitle);
+        if (props.cardTitle != null || props.phaseType != null) UIManager.SetSpellname(props.cardTitle);
         UIManager.ShowPhaseType(props.phaseType);
         if (!props.hideTimeout && smh.Exec.triggersUITimeout) UIManager.ShowStaticTimeout(timeout);
         if (props.livesOverride.HasValue) UIManager.ShowBossLives(props.livesOverride.Value);
@@ -151,18 +151,27 @@ public class PhaseSM : SequentialSM {
             if (hpbar.HasValue) smh.Exec.Enemy.SetHPBar(hpbar.Value, props.phaseType ?? PhaseType.NONSPELL);
             if (props.phaseType?.RequiresHPGuard() ?? false) smh.Exec.Enemy.SetDamageable(false);
         }
-        if (props.bossCutin && GameManagement.campaign.mode != CampaignMode.CARD_PRACTICE && !SaveData.Settings.TeleportAtPhaseStart) {
-            GameManagement.campaign.ExternalLenience(props.Boss.bossCutinTime);
-            SFXService.Request("x-boss-cutin");
-            RaikoCamera.Shake(props.Boss.bossCutinTime / 2f, null, 1f, smh.cT, () => { });
-            UnityEngine.Object.Instantiate(props.Boss.bossCutin);
-            BackgroundOrchestrator.QueueTransition(props.Boss.bossCutinTrIn);
-            BackgroundOrchestrator.ConstructTarget(props.Boss.bossCutinBg, true);
-            cutins = WaitingUtils.WaitFor(smh, props.Boss.bossCutinTime, false).ContinueWithSync(_ => {
-                BackgroundOrchestrator.QueueTransition(props.Boss.bossCutinTrOut);
-                BackgroundOrchestrator.ConstructTarget(props.Background, true);
-            }, smh.cT);
-        } else if (props.Background != null) {
+        bool forcedBG = false;
+        if (GameManagement.campaign.mode != CampaignMode.CARD_PRACTICE && !SaveData.Settings.TeleportAtPhaseStart) {
+            if (props.bossCutin) {
+                GameManagement.campaign.ExternalLenience(props.Boss.bossCutinTime);
+                SFXService.Request("x-boss-cutin");
+                RaikoCamera.Shake(props.Boss.bossCutinTime / 2f, null, 1f, smh.cT, () => { });
+                UnityEngine.Object.Instantiate(props.Boss.bossCutin);
+                BackgroundOrchestrator.QueueTransition(props.Boss.bossCutinTrIn);
+                BackgroundOrchestrator.ConstructTarget(props.Boss.bossCutinBg, true);
+                cutins = WaitingUtils.WaitFor(smh, props.Boss.bossCutinTime, false).ContinueWithSync(_ => {
+                    BackgroundOrchestrator.QueueTransition(props.Boss.bossCutinTrOut);
+                    BackgroundOrchestrator.ConstructTarget(props.Background, true);
+                }, smh.cT);
+                forcedBG = true;
+            } else if (props.GetSpellCutin(out var sc)) {
+                SFXService.Request("x-spell-cutin");
+                RaikoCamera.Shake(1.5f, null, 1f, smh.cT, () => { });
+                UnityEngine.Object.Instantiate(sc);
+            }
+        }
+        if (!forcedBG && props.Background != null) {
             if (props.BgTransitionIn != null) BackgroundOrchestrator.QueueTransition(props.BgTransitionIn);
             BackgroundOrchestrator.ConstructTarget(props.Background, true);
         }

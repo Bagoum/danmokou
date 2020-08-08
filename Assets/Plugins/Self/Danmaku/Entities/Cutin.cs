@@ -1,36 +1,43 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Danmaku;
 using JetBrains.Annotations;
 
 public class Cutin : RegularUpdater {
-    protected MaterialPropertyBlock pb;
-    private SpriteRenderer sr;
     private BehaviorEntity beh;
     public float recordPositionEvery = 1f;
     private float recordCtr;
-    [Header("Afterimages")] [CanBeNull] public GameObject afterImage;
+    [Header("Ghosts")]
     [Tooltip("Velocity of an AI is by default the velocity of the BEH at time of creation")]
     public float AIVelocityRotationDeg;
     public float AIVelocitySpeedRatio;
+
+    [Serializable]
+    public struct GhostConfig {
+        public Sprite sprite;
+        public float ttl;
+        public Color startColor;
+        public Color endColor;
+        public Vector2 scale;
+        public Vector2 blurRad;
+        public float blurMaxAt;
+    }
+
+    public GhostConfig ghost;
     
     protected virtual void Awake() {
         beh = GetComponent<BehaviorEntity>();
-        sr = GetComponent<SpriteRenderer>();
-        pb = new MaterialPropertyBlock();
     }
 
     public override void RegularUpdate() {
         recordCtr += ETime.FRAME_TIME;
         if (recordCtr > recordPositionEvery) {
             recordCtr -= recordPositionEvery;
-            if (afterImage != null) {
-                CutinGhost cg = Instantiate(afterImage).GetComponent<CutinGhost>();
-                cg.Initialize(beh.GlobalPosition(),
-                    DMath.M.RotateVectorDeg(beh.LastDelta * (AIVelocitySpeedRatio / ETime.FRAME_TIME),
-                        AIVelocityRotationDeg));
-            }
+            GhostPooler.Request(beh.GlobalPosition(),
+                DMath.M.RotateVectorDeg(beh.LastDelta * (AIVelocitySpeedRatio / ETime.FRAME_TIME),
+                    AIVelocityRotationDeg), ghost);
         }
     }
 

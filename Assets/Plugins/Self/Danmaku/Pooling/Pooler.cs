@@ -101,6 +101,21 @@ public static class BEHPooler {
     }
 }
 
+public static class GhostPooler {
+    private static GameObject ghostPrefab;
+
+    public static void Prepare(GameObject ghost) {
+        ghostPrefab = ghost;
+        Pooler<CutinGhost>.Prepare();
+    }
+
+    public static CutinGhost Request(Vector2 loc, Vector2 dir, Cutin.GhostConfig cfg) {
+        var cg = Pooler<CutinGhost>.Request(ghostPrefab, out _);
+        cg.Initialize(loc, dir, cfg);
+        return cg;
+    } 
+}
+
 public static class ItemPooler {
     private static GameObject lifeItemPrefab;
     private static GameObject valueItemPrefab;

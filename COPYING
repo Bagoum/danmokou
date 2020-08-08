@@ -11,7 +11,6 @@ Newtonsoft.Json by Kalle Jillheden
 Some files from these projects exists in the source code. Those files have the original licenses at the top for convenience. 
 
 Code is present primarily under the directories FS, Assets/Plugins/Self, Assets/Rendering/Shaders, Assets/CG, Assets/UXML (normal code), as well as Assets/Patterns and Assets/SiMP/Scripts (script files).
-Present dialogue files (Assets/SiMP/Dialogue/Scripts) are not considered code. They may be used under CC BY 4.
 This project also includes other assets such as images and audio. Many of these assets are not by me. See below for details.
 
 To clarify on your obligations under the GPL (IANAL): Modifications, additions, or extensions (including incorporating these modules into a larger project) made to the C#/F# engine, shaders, UXML, etc. must also be distributed under the terms of the GPL. However, if you make your own pattern scripts and use this engine to run them, you may license those scripts as you like. 
@@ -36,13 +35,13 @@ GNU General Public License for more details.
 
 ---
 
-Other resources are sourced as follows:
+Other resources are sourced as follows.
 
 Sound effects (Assets/Audio/SFX)
-- Files under "manual" are licensed by me under CC BY 4.
-- Files under "OSA" are from here: http://osabisi.sakura.ne.jp/m2/ . They are licensed permissively; the license is in the README file in that directory.
-- Files under "taisei" and "taisei2" are from Taisei Project. They have been converted into different formats for use with Unity. Their license is in the Licenses folder.
-- Files under "sourced":
+- manual: by me, licensed under CC BY 4.
+- OSA: http://osabisi.sakura.ne.jp/m2/ (license in folder).
+- taisei, taisei2: by Taisei Project. They have been converted into different formats for use with Unity. Their license is in the Licenses folder.
+- sourced:
 	- The "fire shaker" sound effects are licensed under CC0 from here: https://freesound.org/people/shpira/sounds/317102/
 	- The "crow caw" sound effect is licensed under CC0 from here: https://freesound.org/people/_nuel/sounds/54973/
 
@@ -50,24 +49,23 @@ All fonts (Assets/Fonts) are licensed permissively. Licenses are in the Licenses
 
 All assets under Assets/Kenney were created by Kenny Vleugels (kenney.nl) and are licensed thereby under CC0.
 
-Images (Assets/Sprites and Assets/SiMP)
-- Files under "BGPatterns/nasa" are from NASA, see below.
-- Files under "BGPatterns/unsplash" are from Unsplash, credited as follows:
+Images (Assets/Sprites)
+- BGPatterns/nasa: by NASA, see below.
+- BGPatterns/unsplash: miscellaneous Unsplash users, credited as follows:
 	- bamboo: https://unsplash.com/photos/AEmqD6qu434
 	- torii: https://unsplash.com/photos/gvc0PL77hxU
 	- shrine: https://unsplash.com/photos/mHtQ7rWEC4U
 	- mountain: https://unsplash.com/photos/JgOeRuGD_Y4
 	- space: https://unsplash.com/photos/4dpAqfTbvKA
-- Files under "entity/dot/kmap" were created by danmaq. The license is in the folder. 
-- "entity/dot/dot_seija" was created by Len.
-- "entity/dot/dot_kasen" was created by Kirbio.
-- There are some Python scripts under ".py", as stated above they are licensed under GPL.
-- Image files (psds included) under "bullets", "ui", "util" are licensed by me under CC BY 4.
+- entity/dot/kmap:  by danmaq (license in folder).
+- entity/dot/dot_seija: by Len.
+- entity/dot/dot_kasen: by Kirbio.
+- .py: Python scripts licensed under GPL.
+- bullets, UI, util, TransitionTextures, items: by me, licensed under CC BY 4.
 
 
-Some image resources were created with patterns from http://www.sda.nagoya-cu.ac.jp/sa08m13/image.html , which are licensed permissively ("日本の伝統模様のフリー素材。商用利用可・加工可能。").
-
-Some image resources were created with patterns from http://www.ikiya.jp/anounce.html , which are open for noncommercial use.
+Some image resources were created with patterns from http://www.sda.nagoya-cu.ac.jp/sa08m13/image.html 
+Some image resources were created with patterns from http://www.ikiya.jp/anounce.html
 
 Some images are from NASA. (NASA does not endorse this project.) Here are all usages:
 https://photojournal.jpl.nasa.gov/catalog/PIA22567

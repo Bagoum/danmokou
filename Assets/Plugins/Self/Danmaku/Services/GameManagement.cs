@@ -314,6 +314,7 @@ public class GameManagement : RegularUpdater {
     private static GameManagement gm;
     public SOTextAssets stateMachines;
     public SODialogue dialogue;
+    public GameObject ghostPrefab;
     public GameObject inodePrefab;
     public GameObject lifeItem;
     public GameObject valueItem;
@@ -334,6 +335,7 @@ public class GameManagement : RegularUpdater {
         DontDestroyOnLoad(this);
         RNG.Reseed();
         ParticlePooler.Prepare();
+        GhostPooler.Prepare(ghostPrefab);
         BEHPooler.Prepare(inodePrefab);
         ItemPooler.Prepare(lifeItem, valueItem, pointppItem);
         ETime.RegisterPersistentEOFInvoke(BehaviorEntity.PruneControls);

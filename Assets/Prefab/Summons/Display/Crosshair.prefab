@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 134863981335635776}
   - component: {fileID: 134863981335635777}
-  m_Layer: 17
+  m_Layer: 1
   m_Name: Reticle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -93,7 +93,7 @@ GameObject:
   - component: {fileID: 134863981350681115}
   - component: {fileID: 134863981350681114}
   - component: {fileID: 134863981350681113}
-  m_Layer: 17
+  m_Layer: 1
   m_Name: Crosshair
   m_TagString: Untagged
   m_Icon: {fileID: 0}

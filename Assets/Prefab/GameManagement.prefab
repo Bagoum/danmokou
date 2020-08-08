@@ -909,6 +909,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 9644b230a63010748a8d84a712782f00, type: 2}
   - {fileID: 11400000, guid: 316f7308e58eafb46a19e376765e933e, type: 2}
   - {fileID: 11400000, guid: 9ac0181c9d3955243a65d96ad79b477e, type: 2}
+  - {fileID: 11400000, guid: 019473fee49b95540b0a17fa569c7bea, type: 2}
 --- !u!1 &5563600862267143790
 GameObject:
   m_ObjectHideFlags: 0
@@ -1240,6 +1241,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   stateMachines: {fileID: 11400000, guid: 28890f15cbfab39418486f3c2dfefc31, type: 2}
   dialogue: {fileID: 11400000, guid: 61ec3aa170f0d4f4981fc1a306cfe2e6, type: 2}
+  ghostPrefab: {fileID: 2099033134796106231, guid: e6a113662f3191448a2d38649dbb91b5,
+    type: 3}
   inodePrefab: {fileID: 4607728708591253777, guid: d0dd09c7056e88d4ea59254738f4e621,
     type: 3}
   lifeItem: {fileID: 359774600689030096, guid: 434a5ca1d0d99c6439e6da4390e24d0b, type: 3}

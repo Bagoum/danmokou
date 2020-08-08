@@ -15,3 +15,4 @@ MonoBehaviour:
   defaultName: x-fire-tech-6
   clip: {fileID: 8300000, guid: 95d93bddbe0dcda418ab00ec854c77f2, type: 3}
   volume: 0.2
+  timeout: 0.1

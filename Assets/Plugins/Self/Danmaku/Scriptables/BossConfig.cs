@@ -41,10 +41,11 @@ public class BossConfig : ScriptableObject {
     [CanBeNull] public SOBgTransition defaultIntoSpellTransition;
     [CanBeNull] public SOBgTransition defaultIntoNonTransition;
     [CanBeNull] public GameObject bossCutin;
+    public GameObject[] spellCutins;
     public SOBgTransition bossCutinTrIn => ResourceManager.WipeTex1;
     public SOBgTransition bossCutinTrOut => ResourceManager.WipeTex1;
     public GameObject bossCutinBg => ResourceManager.BlackBG;
-    public float bossCutinTime => 6f;
+    public float bossCutinTime => 5.6f;
 
     [CanBeNull]
     public GameObject Background(PhaseType pt) => pt.IsSpell() ? defaultSpellBG : defaultNonBG;
