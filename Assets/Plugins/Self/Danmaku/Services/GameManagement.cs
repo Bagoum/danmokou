@@ -7,6 +7,7 @@ using Danmaku;
 using DMath;
 using JetBrains.Annotations;
 using SM;
+using UnityEditor;
 
 public struct CampaignData {
     private const int startLives = 14;
@@ -276,7 +277,7 @@ public class GameManagement : RegularUpdater {
     public static bool Initialized { get; private set; } = false;
     public static DifficultySet Difficulty { get; set; } = DifficultySet.Lunatic;
     /// <summary>
-    /// A difficulty value is a multiplier. By default, Easy=1 and Lunatic=2.5.
+    /// A difficulty value is a multiplier. By default, Easy=1 and Lunatic~2.3.
     /// </summary>
     public static float DifficultyValue => Difficulty.Value();
     /// <summary>
@@ -341,6 +342,10 @@ public class GameManagement : RegularUpdater {
         ETime.RegisterPersistentEOFInvoke(BehaviorEntity.PruneControls);
         ETime.RegisterPersistentEOFInvoke(CurvedTileRenderLaser.PruneControls);
         SceneIntermediary.RegisterSceneUnload(ClearForScene);
+    #if UNITY_EDITOR
+        Log.Unity($"Graphics Jobs: {PlayerSettings.graphicsJobs} {PlayerSettings.graphicsJobMode}; MTR {PlayerSettings.MTRendering}");
+    #endif
+        Log.Unity($"Graphics Render mode {SystemInfo.renderingThreadingMode}");
         //AudioPooler.Prepare(audioClipPrefab);
     }
 

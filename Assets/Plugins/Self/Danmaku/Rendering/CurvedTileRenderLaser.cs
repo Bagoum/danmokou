@@ -10,20 +10,29 @@ namespace Danmaku {
 public delegate void LCF(CurvedTileRenderLaser ctr);
 public delegate void LPCF(string pool);
 
+[Serializable]
+public class LaserRenderCfg : TiledRenderCfg {
+    public float lineRadius;
+    public bool alignEnd;
+}
 
 //These are always initialized manually, and may or may not be pooled.
 public class CurvedTileRenderLaser : CurvedTileRender {
     private LaserVelocity path;
     private Vector3 simpleEulerRotation = new Vector3(0, 0, 0);
     private ParametricInfo bpi = new ParametricInfo();
-    public ref ParametricInfo rBPI => ref bpi;
-    public float lineRadius;
+    private readonly float lineRadius;
     private const float defaultUpdateStagger = 0.1f;
     private float updateStagger;
-    public bool alignEnd = false;
+    private readonly bool alignEnd = false;
     private Laser laser;
     private float scaledLineRadius;
     private Laser.PointContainer endpt = new Laser.PointContainer(null);
+
+    public CurvedTileRenderLaser(LaserRenderCfg cfg) : base(cfg) {
+        alignEnd = cfg.alignEnd;
+        lineRadius = cfg.lineRadius;
+    }
 
     public void SetYScale(float scale) {
         PersistentYScale = scale;
@@ -105,7 +114,6 @@ public class CurvedTileRenderLaser : CurvedTileRender {
         if (endpt.exists) endpt.beh.TakeParent(laser);
     }
 
-    //TODO move this into laser only
     /// <summary>
     /// </summary>
     /// <param name="localPos"></param>
@@ -122,11 +130,10 @@ public class CurvedTileRenderLaser : CurvedTileRender {
         int vw = texRptWidth + 1;
         path.rootPos = bpi.loc;
         bpi.t = 0;
-        path.Update(in lifetime, ref bpi, out Vector2 accP, out centers[0], 0f);
+        path.Update(in lifetime, ref bpi, out Vector2 accP, out var d1, 0f);
+        centers[0] = d1;
         if (!renderRequired) {
-            Profiler.BeginSample("Center-only");
             UpdateCentersOnly();
-            Profiler.EndSample();
         } else {
             float ddf = spriteBounds.y / 2f;
             float distToSpriteWMult = 1f / spriteBounds.x;
@@ -233,7 +240,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
     }
     
 #if UNITY_EDITOR
-    public unsafe void OnDrawGizmosSelected() {
+    public unsafe void Draw() {
         Handles.color = Color.cyan;
         GenericColliderInfo.DrawGizmosForSegments(centers, 0, 1, centers.Length, locater.GlobalPosition(), scaledLineRadius, 0);
         

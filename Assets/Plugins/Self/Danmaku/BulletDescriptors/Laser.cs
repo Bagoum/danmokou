@@ -5,6 +5,8 @@ using UnityEngine;
 
 namespace Danmaku {
 public class Laser : FrameAnimBullet {
+    public LaserRenderCfg config;
+    public CurvedTileRenderLaser ctr;
     public readonly struct PointContainer {
         [CanBeNull] public readonly BehaviorEntity beh;
         public readonly bool exists;
@@ -15,11 +17,10 @@ public class Laser : FrameAnimBullet {
         }
     }
 
-    private CurvedTileRenderLaser ctr;
     private PointContainer endpt;
 
     protected override void Awake() {
-        ctr = GetComponent<CurvedTileRenderLaser>();
+        ctr = new CurvedTileRenderLaser(config);
         rotationMethod = RotationMethod.Manual;
         base.Awake();
     }
@@ -27,7 +28,7 @@ public class Laser : FrameAnimBullet {
         float hot, Recolor recolor, ref RealizedLaserOptions options) {
         ctr.SetYScale(options.yScale); //Needs to be done before Colorize sets first frame
         Colorize(recolor);
-        base.Initialize(options.AsBEH, parent, velocity, firingIndex, bpiid, _target); // Call after Awake/Reset
+        base.Initialize(options.AsBEH, parent, velocity, firingIndex, bpiid, _target, out _); // Call after Awake/Reset
         if (options.endpoint != null) {
             var beh = BEHPooler.INode(Vector2.zero, DMath.V2RV2.Zero, Vector2.right, firingIndex, null, options.endpoint);
             endpt = new PointContainer(beh);
@@ -51,7 +52,7 @@ public class Laser : FrameAnimBullet {
 
     protected override DMath.CollisionResult CollisionCheck() => ctr.CheckCollision(collisionTarget);
 
-    protected override void SetSprite(Sprite s, float yscale) {
+    protected override void SetSprite(Sprite s, float yscale = 1f) {
         ctr.SetSprite(s, yscale);
     }
 
@@ -89,5 +90,13 @@ public class Laser : FrameAnimBullet {
     }
 
     public V2RV2? Index(float time) => ctr.Index(time);
+    
+    private void OnDestroy() => ctr.Destroy();
+    
+#if UNITY_EDITOR
+    private void OnDrawGizmosSelected() {
+        ctr.Draw();
+    }
+#endif
 }
 }

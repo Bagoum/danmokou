@@ -99,7 +99,6 @@ public static class SceneIntermediary {
         }
     }
     private static void StaticSceneUnloaded(Scene s) {
-        KVR.ClearWatchers();
         for (int ii = 0; ii < sceneUnloadDelegates.Count; ++ii) {
             sceneUnloadDelegates[ii]();
         }

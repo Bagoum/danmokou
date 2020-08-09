@@ -113,12 +113,6 @@ public static class InputManager {
         UIDown, UIUp, UILeft, UIRight, UIConfirm, UIBack, UISkipDialogue, Pause
     };
 
-    //TODO adding joystick support is not too hard.
-    //AxisRaw already includes joystick movement.
-    //And you can access joystick keys via eg. KeyCode.
-    //The order on my stick is:
-    // 2 3 5 4
-    // 0 1 z- z+
 
     private static KeyCode editorReloadHook = KeyCode.R;
     public static float HorizontalSpeed => Input.GetAxisRaw(aHoriz) + Input.GetAxisRaw(aCDPadX);

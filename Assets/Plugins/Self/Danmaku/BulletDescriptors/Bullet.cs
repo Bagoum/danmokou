@@ -20,15 +20,24 @@ public abstract class Bullet : BehaviorEntity {
     public int renderPriority;
     private static short rendererIndex = short.MinValue;
     private static readonly HashSet<Bullet> allBullets = new HashSet<Bullet>();
-    public ushort grazeEveryFrames;
-    private int grazeFrameCounter = 0;
 
     protected SOCircle collisionTarget;
-    public int damage = 1;
-    public bool destructible;
-    protected bool collisionActive = false;
 
     private int defaultLayer;
+
+    [CanBeNull] public Sprite sprite;
+    public virtual FrameAnimBullet.BulletAnimSprite[] Frames =>
+        (sprite == null) ? throw new Exception("Cannot generate frames for null sprite in Bullet") :
+        new[] {new FrameAnimBullet.BulletAnimSprite {s = sprite}};
+    
+    
+    public float fadeInTime;
+    public float cycleSpeed;
+    public RenderMode renderMode;
+    public SimpleBulletEmptyScript.DisplacementInfo displacement;
+
+    public DefaultColorizing colorizing;
+    [Tooltip("Special gradients")] public BulletManager.GradientVariant[] gradients;
 
     protected override void Awake() {
         base.Awake();
@@ -53,47 +62,18 @@ public abstract class Bullet : BehaviorEntity {
         allBullets.Add(this);
     }
 
-    protected void Initialize(RealizedBehOptions options, [CanBeNull] BehaviorEntity parent, Velocity _velocity, int firingIndex, uint bpiid, SOCircle _target) {
+    protected void Initialize(RealizedBehOptions options, [CanBeNull] BehaviorEntity parent, Velocity _velocity, int firingIndex, uint bpiid, SOCircle _target, out int layer) {
         base.Initialize(_velocity, new MovementModifiers(), options.smr, firingIndex, bpiid, parent, options: options);
-        gameObject.layer = options.layer ?? defaultLayer;
+        gameObject.layer = layer = options.layer ?? defaultLayer;
         collisionTarget = _target;
     }
 
-    protected virtual CollisionResult CollisionCheck() => CollisionResult.noColl;
-
-    /// <summary>
-    /// Check for collision and proc it on BulletManager.
-    /// </summary>
-    /// <returns>True iff the bullet should be destroyed (Caller must destroy)</returns>
-    private bool CollisionCheckReport() {
-        var cr = CollisionCheck();
-        bool checkGraze = false;
-        if (grazeFrameCounter-- == 0) {
-            grazeFrameCounter = 0;
-            checkGraze = true;
-        }
-        bool grazeIfCheckable = cr.graze & checkGraze;
-        if (cr.collide) {
-            BulletManager.ExternalBulletProc(damage, 0);
-            return destructible;
-        }
-        if (grazeIfCheckable) {
-            grazeFrameCounter = grazeEveryFrames - 1;
-            BulletManager.ExternalBulletProc(0, 1);
-        }
-        return false;
-    }
 
     public override void InvokeCull() {
         if (dying) return;
         collisionActive = false;
         allBullets.Remove(this);
         base.InvokeCull();
-    }
-
-    protected sealed override void RegularUpdateCollide() {
-        if (collisionActive && CollisionCheckReport()) InvokeCull();
-        else base.RegularUpdateCollide();
     }
 
     public static void OrphanAll() {
@@ -106,6 +86,18 @@ public abstract class Bullet : BehaviorEntity {
             throw new Exception("Some bullets remain after clear: " + allBullets.Count);
         }
     }
+    
+    protected virtual void Colorize(FrameAnimBullet.Recolor r) {
+        style = r.style;
+        if (r.sprites == null) return;
+        material = r.material;
+        SetSprite(r.sprites[0].s);
+    }
+
+    public virtual void ColorizeOverwrite(FrameAnimBullet.Recolor r) => Colorize(r);
+
+    protected abstract void SetSprite(Sprite s, float yscale = 1f);
+    
 
 #if UNITY_EDITOR
     public static int NumBullets => allBullets.Count;

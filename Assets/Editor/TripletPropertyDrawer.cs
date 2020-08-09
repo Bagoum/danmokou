@@ -57,18 +57,6 @@ public class SpriteVariantDrawer : TripletPropertyDrawer {
     protected override float w3 => 0.4f;
 }
 
-[CustomPropertyDrawer(typeof(KVR.Restraint))]
-public class KVRRestraintDrawer : TripletPropertyDrawer {
-    protected override string arg1 => "key";
-    protected override string arg2 => "relation";
-    protected override string arg3 => "value";
-
-    protected override float sw => -0.4f;
-    protected override float w1 => 0.42f;
-    protected override float w2 => 0.16f;
-    protected override float w3 => 0.42f;
-}
-
 [CustomPropertyDrawer(typeof(PalettePoint))]
 public class PalettePointDrawer : TripletPropertyDrawer {
     protected override string arg1 => "palette";

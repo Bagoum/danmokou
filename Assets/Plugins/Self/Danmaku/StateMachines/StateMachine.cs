@@ -462,7 +462,7 @@ public abstract class SequentialSM : StateMachine {
     }
 }
 
-public abstract class ParallelSM : StateMachine {
+public class ParallelSM : StateMachine {
     private readonly Blocking blocking;
 
     public ParallelSM(List<StateMachine> states, Blocking blocking) : base(states) {
@@ -471,10 +471,8 @@ public abstract class ParallelSM : StateMachine {
 
     public override Task Start(SMHandoff smh) {
         if (blocking == Blocking.BLOCKING) {
-            Task[] tasks = new Task[states.Count];
-            for (int ii = 0; ii < tasks.Length; ++ii) tasks[ii] = states[ii].Start(smh);
             //WARNING: Due to how WhenAll works, any child exceptions will only be thrown at the end of execution.
-            return Task.WhenAll(tasks);
+            return Task.WhenAll(states.Select(s => s.Start(smh)));
         } else {
             for (int ii = 0; ii < states.Count; ++ii) {
                 _ = states[ii].Start(smh);
@@ -500,11 +498,19 @@ public class RetargetUSM : UniversalSM {
         this.targets = targets;
     }
 
+    public static RetargetUSM Retarget(StateMachine state, params string[] targets) => new RetargetUSM(state, targets);
+    public static RetargetUSM Retarget(TaskPattern state, params string[] targets) => Retarget(new ReflectableLASM(state), targets);
+
     public override Task Start(SMHandoff smh) {
-        BehaviorEntity[] behs = BehaviorEntity.GetExecsForIDs(targets);
-        Task[] tasks = new Task[behs.Length];
-        for (int ii = 0; ii < behs.Length; ++ii) tasks[ii] = behs[ii].RunExternalSM(SMRunner.Run(states[0], smh.cT, smh.GCX));
-        return Task.WhenAll(tasks);
+        var behs = BehaviorEntity.GetExecsForIDs(targets);
+        if (behs.Length == 0) {
+            Log.Unity($"Retarget operation with targets {string.Join(", ", targets)} found no BEH", level: Log.Level.WARNING);
+            return Task.CompletedTask;
+        } else if (behs.Length == 1) {
+            return behs[0].RunExternalSM(SMRunner.Run(states[0], smh.cT, smh.GCX));
+        } else {
+            return Task.WhenAll(behs.Select(x => x.RunExternalSM(SMRunner.Run(states[0], smh.cT, smh.GCX))));
+        }
     }
 }
 

@@ -733,7 +733,7 @@ public partial class BulletManager {
         ScriptableObject.Destroy(throwaway_gm);
     }
 
-    public static FrameAnimBullet.Recolor GetRecolor(string fabName) => faBulletStyles[fabName].GetOrLoadRecolor();
+    public static FrameAnimBullet.Recolor GetRecolor(string fabName) => bulletStyles[fabName].GetOrLoadRecolor();
     
     #if UNITY_EDITOR
     [ContextMenu("Debug bullet numbers")]

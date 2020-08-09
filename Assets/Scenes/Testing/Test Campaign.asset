@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4f64d4a00c194018afbe5db3323da211, type: 3}
   m_Name: Test Campaign
   m_EditorClassIdentifier: 
-  description: 
+  key: test_campaign
   stages:
   - {fileID: 11400000, guid: e260128b7ced79349bfb2aa73d8e3c5c, type: 2}
   - {fileID: 11400000, guid: e71e127be0995ab4f960e686128d5629, type: 2}

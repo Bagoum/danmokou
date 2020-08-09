@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using JetBrains.Annotations;
 using UnityEngine;
+using UnityEngine.Profiling;
 
 public class CoroutineRegularUpdater : RegularUpdater {
     /// <summary>
@@ -13,7 +14,9 @@ public class CoroutineRegularUpdater : RegularUpdater {
     /// </summary>
     public static CoroutineRegularUpdater GlobalDuringPause;
     private readonly Coroutines coroutines = new Coroutines();
-    public override void RegularUpdate() => coroutines.Step();
+    public override void RegularUpdate() {
+        if (coroutines.Count > 0) coroutines.Step();
+    }
 
     protected void ForceClosingFrame() {
         coroutines.Close();

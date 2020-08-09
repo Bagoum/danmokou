@@ -123,6 +123,7 @@ public partial class BulletManager : RegularUpdater {
             material = mat;
         }
     }
+    /*
     /// <summary>
     /// Complex bullets that have no handling outside of generic Bullet.Instantiate.
     /// </summary>
@@ -130,19 +131,20 @@ public partial class BulletManager : RegularUpdater {
     private static void AddComplexStyle(string key, ComplexBullet cb) {
         bulletStyles[key] = cb;
         nonSimplePoolNames.Add(key);
-    }
+    }*/
     /// <summary>
-    /// Complex bullets that subclass FrameAnimBullet (lasers, pathers).
+    /// Complex bullets (lasers, pathers).
     /// </summary>
-    private static readonly Dictionary<string, DeferredFramesRecoloring> faBulletStyles = new Dictionary<string, DeferredFramesRecoloring>();
+    private static readonly Dictionary<string, DeferredFramesRecoloring> bulletStyles = new Dictionary<string, DeferredFramesRecoloring>();
 
     private static void AddFaBStyle(string key, DeferredFramesRecoloring dfr) {
-        faBulletStyles[key] = dfr;
+        bulletStyles[key] = dfr;
         nonSimplePoolNames.Add(key);
     }
 
     public static bool CheckOrCopyFancy(string pool) {
-        return bulletStyles.ContainsKey(pool) || faBulletStyles.ContainsKey(pool);
+        return bulletStyles.ContainsKey(pool);
+        //return bulletStyles.ContainsKey(pool) || faBulletStyles.ContainsKey(pool);
     }
     private static readonly HashSet<string> nonSimplePoolNames = new HashSet<string>();
     
@@ -301,14 +303,15 @@ public partial class BulletManager : RegularUpdater {
                         Create(x.name, 0, () => sbes.spriteSheet);
                     }
                 } else {
-                    var fa = x.prefab.GetComponent<FrameAnimBullet>();
+                    var fa = x.prefab.GetComponent<Bullet>();
+                    /*
                     if (fa == null) {
                         var bl = x.prefab.GetComponent<Bullet>();
                         var material = Instantiate(bl.material);
                         material.renderQueue += bl.renderPriority;
                         AddComplexStyle(x.name, new ComplexBullet(x.prefab, material));
                         continue;
-                    }
+                    }*/
                     var colors = fa.colorizing;
                     colors.AssertValidity();
                     if (!colors.Any) {
@@ -368,15 +371,15 @@ public partial class BulletManager : RegularUpdater {
         private readonly Func<Sprite, Sprite> creator;
         private readonly string paletteVariant;
         private readonly int renderPriorityOffset;
-        private readonly FrameAnimBullet fab;
+        private readonly Bullet b;
 
-        public DeferredFramesRecoloring(GameObject prefab, FrameAnimBullet fab, int renderPriorityOffset, string paletteVariant, string style, [CanBeNull] Func<Sprite, Sprite> creator=null) {
-            this.fab = fab;
+        public DeferredFramesRecoloring(GameObject prefab, Bullet b, int renderPriorityOffset, string paletteVariant, string style, [CanBeNull] Func<Sprite, Sprite> creator=null) {
+            this.b = b;
             if (creator == null) { //Don't recolor
                 recolor = new FrameAnimBullet.Recolor(null, prefab, NewMaterial(), style);
                 loaded = true;
             } else {
-                recolor = new FrameAnimBullet.Recolor(null, prefab, fab.material, style);
+                recolor = new FrameAnimBullet.Recolor(null, prefab, b.material, style);
             }
             this.renderPriorityOffset = renderPriorityOffset;
             this.paletteVariant = paletteVariant;
@@ -385,12 +388,13 @@ public partial class BulletManager : RegularUpdater {
 
         public FrameAnimBullet.Recolor GetOrLoadRecolor() {
             if (!loaded) {
-                var sprites = new FrameAnimBullet.BulletAnimSprite[fab.frames.Length];
-                for (int si = 0; si < fab.frames.Length; ++si) {
-                    sprites[si] = fab.frames[si];
-                    FrameRecolorConfig frc = new FrameRecolorConfig(fab.frames[si].s.name, paletteVariant);
+                var frames = b.Frames;
+                var sprites = new FrameAnimBullet.BulletAnimSprite[frames.Length];
+                for (int si = 0; si < frames.Length; ++si) {
+                    sprites[si] = frames[si];
+                    FrameRecolorConfig frc = new FrameRecolorConfig(frames[si].s.name, paletteVariant);
                     if (frameCache.ContainsKey(frc)) sprites[si].s = frameCache[frc];
-                    else sprites[si].s = frameCache[frc] = creator(fab.frames[si].s);
+                    else sprites[si].s = frameCache[frc] = creator(frames[si].s);
                 }
                 recolor = new FrameAnimBullet.Recolor(sprites, recolor.prefab, NewMaterial(), recolor.style);
                 loaded = true;
@@ -399,17 +403,17 @@ public partial class BulletManager : RegularUpdater {
         }
 
         private Material NewMaterial() {
-            var m = Instantiate(fab.material);
-            if (fab.fadeInTime > 0f) {
+            var m = Instantiate(b.material);
+            if (b.fadeInTime > 0f) {
                 m.EnableKeyword("FT_FADE_IN");
-                m.SetFloat(PropConsts.fadeInT, fab.fadeInTime);
+                m.SetFloat(PropConsts.fadeInT, b.fadeInTime);
             }
             m.EnableKeyword("FT_HUESHIFT");
-            m.SetFloat(PropConsts.cycleSpeed, fab.cycleSpeed);
-            if (Mathf.Abs(fab.cycleSpeed) > 0f) m.EnableKeyword(PropConsts.cycleKW);
-            fab.displacement.SetOnMaterial(m);
-            MaterialUtils.SetBlendMode(m, fab.renderMode);
-            m.renderQueue += fab.renderPriority + renderPriorityOffset;
+            m.SetFloat(PropConsts.cycleSpeed, b.cycleSpeed);
+            if (Mathf.Abs(b.cycleSpeed) > 0f) m.EnableKeyword(PropConsts.cycleKW);
+            b.displacement.SetOnMaterial(m);
+            MaterialUtils.SetBlendMode(m, b.renderMode);
+            m.renderQueue += b.renderPriority + renderPriorityOffset;
             return m;
         }
         

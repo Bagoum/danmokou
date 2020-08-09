@@ -1,6 +1,6 @@
 ﻿Shader "_SMFriendly/SpriteRenderer" {
 	Properties {
-		[PerRendererData] _MainTex("Sprite Texture", 2D) = "white" {}
+		_MainTex("Sprite Texture", 2D) = "white" {}
         _Tint("Tint", Color) = (1,1,1,1)
         _HueShift("Hue Shift", Float) = 0
 		//SpriteRenderer sets color in the vertex struct.

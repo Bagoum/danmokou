@@ -59,18 +59,18 @@ public static class M {
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static float Sin(float rad) => Mathf.Sin(rad);
+    public static float Sin(float rad) => (float)Math.Sin(rad);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static float Cos(float rad) => Mathf.Cos(rad);
+    public static float Cos(float rad) => (float)Math.Cos(rad);
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector2 CosSin(float rad) => new Vector2(Mathf.Cos(rad), Mathf.Sin(rad));
     
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static float SinDeg(float deg) => Mathf.Sin(deg * degRad);
+    public static float SinDeg(float deg) => (float)Math.Sin(deg * degRad);
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static float CosDeg(float deg) => Mathf.Cos(deg * degRad);
+    public static float CosDeg(float deg) => (float)Math.Cos(deg * degRad);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector2 CosSinDeg(float deg) => CosSin(deg * degRad);
@@ -84,12 +84,12 @@ public static class M {
         return new Vector2(r * CosDeg(deg), r * SinDeg(deg));
     }
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static float AtanD(Vector2 v2) => radDeg * Mathf.Atan2(v2.y, v2.x);
+    public static float AtanD(Vector2 v2) => radDeg * (float)Math.Atan2(v2.y, v2.x);
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static float ToDeg(this Vector2 v2) => radDeg * Mathf.Atan2(v2.y, v2.x);
+    public static float ToDeg(this Vector2 v2) => radDeg * (float)Math.Atan2(v2.y, v2.x);
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static float Atan2D(float y, float x) => radDeg * Mathf.Atan2(y, x);
+    public static float Atan2D(float y, float x) => radDeg * (float)Math.Atan2(y, x);
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector2 RadToDir(float rad) => new Vector2(Mathf.Cos(rad), Mathf.Sin(rad));
 
@@ -402,7 +402,6 @@ public struct MutV2RV2 {
 public static class Parser {
     public const char SM_REF_KEY_C = '&';
     public const string SM_REF_KEY = "&";
-    //TODO support basic mathematical operations here.
     private const char decpt = '.';
     private const char zero = '0';
 

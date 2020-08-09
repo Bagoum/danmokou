@@ -22,7 +22,6 @@ public class ExDerivTests {
     private static float Compile(Ex ex) => Expression.Lambda<Func<float>>(ex).Compile()();
     private static T Compile<T>(Ex ex) => Expression.Lambda<Func<T>>(ex).Compile()();
     private static Func<float,float> Compile1(Ex ex, ParameterExpression pex) => Expression.Lambda<Func<float, float>>(ex, pex).Compile();
-    private static float err = 0.00001f;
 
     private static ParameterExpression VF(string name) => Ex.Variable(typeof(float), name);
     private static ParameterExpression V<T>(string name) => Ex.Variable(typeof(T), name);

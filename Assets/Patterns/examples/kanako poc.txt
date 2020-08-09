@@ -14,19 +14,19 @@ phase 0
 			color { sc- }
 		} saction 0 :3
 ## r = 1, c = 1
-			async sc-guanyin <1,:> gir2 0 5 <72> . gcr2 1 72 <4> { 
+			async amulet-red/ <1,:> gir2 0 5 <72> . gcr2 1 72 <4> { 
 				bank <1,:-144>
 				p this 
 			} s tprot  rotate + 160 * -1.5 (mod 4 p)
 				px lerp 2 3 (+ t * 1f p) 0 + 2.5 * -0.01 mod 4 p
 ## r' = (r+c)cos 36, c' = (r+c)sin 36,  where 36 = 180 / 5
-			async sc-smoke <1.618,:180> gir2 0 5 <72> . gcr2 2 44 <4> { 
+			async amulet-orange/ <1.618,:180> gir2 0 5 <72> . gcr2 2 44 <4> { 
 				bank <1.17557,:-90>
 				p this 
 			} s tprot  rotate + 160 * -2 (mod 4 p)
 				px lerp 2 3.2 (+ t * 2f p) 0 + 2.7 * -0.01 mod 4 p
 ## r'' = (r'+c')cos 36, c'' = (r'+c')sin 36
-			async sc-wukong <2.2604,:> gir2 0 5 <72> . gcr2 1 60 <3> { 
+			async amulet-black/ <2.2604,:> gir2 0 5 <72> . gcr2 1 60 <3> { 
 				bank <1.6423,:-90>
 				p this 
 			} s tprot  rotate + 160 * -1.5 (mod 4 p)

@@ -9,7 +9,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3764406661813136869}
-  - component: {fileID: 3764406661813136868}
   - component: {fileID: 6730949535145078042}
   - component: {fileID: -3480641359565364707}
   - component: {fileID: 6913393782953646631}
@@ -34,22 +33,6 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &3764406661813136868
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3764406661813136865}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b5a22d25d5d1bf847ae4a9d45c31ae0a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  sortingLayer: Projectile
-  DontUpdateTimeAfter: 999
-  lineRadius: 0.18
-  alignEnd: 0
 --- !u!114 &6730949535145078042
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -91,20 +74,10 @@ MonoBehaviour:
   grazeEveryFrames: 20
   damage: 1
   destructible: 0
+  sprite: {fileID: 0}
   fadeInTime: 0.2
   cycleSpeed: 0
   renderMode: 0
-  colorizing:
-    FlatLight: 1
-    Light: 0
-    FlatColor: 1
-    Color: 0
-    FlatDark: 1
-    Dark: 0
-    Full: 0
-    Inverted: 0
-    FullInvertedAsLightDark: 0
-    TwoPaletteColorings: 0
   displacement:
     displaceTex: {fileID: 0}
     displaceMask: {fileID: 0}
@@ -112,6 +85,20 @@ MonoBehaviour:
     displaceSpeed: 0.2
     displaceMethod: 2
     displaceXMul: 0.4
+  colorizing:
+    FlatLight: 1
+    Light: 0
+    WideLight: 0
+    FlatColor: 1
+    Color: 0
+    WideColor: 0
+    FlatDark: 1
+    Dark: 0
+    WideDark: 0
+    Full: 0
+    Inverted: 0
+    FullInvertedAsLightDark: 0
+    TwoPaletteColorings: 0
   gradients: []
   frames:
   - s: {fileID: 21300000, guid: 1c4eb1a6220852d4b8a74b67609a977d, type: 3}
@@ -163,6 +150,14 @@ MonoBehaviour:
   repeat: 0
   animateCold: 0
   countPostHotColdFrames: 0
+  config:
+    mr: {fileID: -3480641359565364707}
+    mf: {fileID: 6913393782953646631}
+    tr: {fileID: 3764406661813136869}
+    sortingLayer: Projectile
+    dontUpdateTimeAfter: 999
+    lineRadius: 0.18
+    alignEnd: 0
 --- !u!23 &-3480641359565364707
 MeshRenderer:
   m_ObjectHideFlags: 0

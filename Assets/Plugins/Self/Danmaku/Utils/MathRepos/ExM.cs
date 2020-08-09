@@ -1378,10 +1378,9 @@ public static partial class ExM {
     });
     
     /// <summary>
-    /// Calculate the logsum of several values ( (ln Sum e^ax) / a )
+    /// Calculate the logsum of several values ( (ln Sum e^ax) / a ), which is approximately equal to the largest number (smallest if sharpness is negative).
     /// </summary>
-    /// <param name="sharpness">The higher the absolute value of this, the more quickly the result will converge.
-    /// Set negative for softmin.</param>
+    /// <param name="sharpness">The higher the absolute value of this, the more quickly the result will converge.</param>
     /// <param name="against">Values</param>
     /// <returns></returns>
     public static tfloat Logsum(efloat sharpness, tfloat[] against)  => EEx.Resolve(sharpness, sharp => {
@@ -1577,11 +1576,11 @@ public static partial class ExM {
     #region Difficulty
 
     /// <summary>
-    /// Get the difficulty multiplier. 1 is easy, 2.5 is lunatic. POSITIVE values outside this range are possible.
+    /// Get the difficulty multiplier. 1 is easy, ~2.3 is lunatic. POSITIVE values outside this range are possible.
     /// </summary>
     public static tfloat D() => Ex.Constant(DifficultyValue);
     /// <summary>
-    /// Get the difficulty counter. 0 is easy, 3 is lunatic.
+    /// Get the difficulty counter. 1 is easy, 4 is lunatic.
     /// </summary>
     public static tfloat Dc() => Ex.Constant(DifficultyCounter);
     

@@ -5,6 +5,9 @@ using UnityEngine;
 
 public abstract class CurvedTileRender : TiledRender {
     protected Vector2[] centers;
+    
+    public CurvedTileRender(TiledRenderCfg cfg): base(cfg) {}
+    
     // Start is called before the first frame update
     public void Initialize(ITransformHandler locationer, Material mat, bool isNew, bool is_static, int newTexW, float hueShift=0f) {
         base.Initialize(locationer, mat, is_static);
@@ -132,12 +135,5 @@ public abstract class CurvedTileRender : TiledRender {
         
     }
     
-    
-#if UNITY_EDITOR
-    [ContextMenu("Debug Length")]
-    public void DebugTransform() {
-        Log.Unity($"CTR: {texRptWidth} points. First: {centers[0]*1000f}; Second: {centers[1]*1000f}; Last: {centers[texRptWidth]*1000f}", level: Log.Level.INFO);
-    }
-#endif
 
 }

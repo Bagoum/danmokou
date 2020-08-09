@@ -9,11 +9,6 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 4351406186802378304, guid: 33512ebca480f4f44bac2105265c3626,
         type: 3}
-      propertyPath: DontUpdateTimeAfter
-      value: 999
-      objectReference: {fileID: 0}
-    - target: {fileID: 4351406186802378304, guid: 33512ebca480f4f44bac2105265c3626,
-        type: 3}
       propertyPath: sortingLayer
       value: LowFX
       objectReference: {fileID: 0}
@@ -243,6 +238,11 @@ PrefabInstance:
         type: 3}
       propertyPath: cycleSpeed
       value: -2
+      objectReference: {fileID: 0}
+    - target: {fileID: 6140576478511871678, guid: 33512ebca480f4f44bac2105265c3626,
+        type: 3}
+      propertyPath: config.sortingLayer
+      value: LowFX
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 33512ebca480f4f44bac2105265c3626, type: 3}

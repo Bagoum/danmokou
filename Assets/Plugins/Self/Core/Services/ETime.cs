@@ -169,7 +169,7 @@ public class ETime : MonoBehaviour {
         countdown.Reset(NTHREADS);
         for (int offi = 0; offi < NTHREADS; ++offi) {
             ThreadPool.QueueUserWorkItem(offset => {
-                for (int ii = (int)offset; ii < temp_last; ii += NTHREADS) {
+                for (int ii = (int)offset; ii < updaters.Count; ii += NTHREADS) {
                     DeletionMarker<IRegularUpdater> updater = updaters.arr[ii];
                     if (!updater.markedForDeletion) updater.obj.RegularUpdateParallel();
                 }
@@ -237,18 +237,19 @@ public class ETime : MonoBehaviour {
         }
         GameStateManager.UpdateGameState();
     }
-    private IEnumerator NoVsyncHandler() {
+    private static IEnumerator NoVsyncHandler() {
         while (true) {
             yield return new WaitForEndOfFrame();
             lastFrameTime += ASSUME_SCREEN_FRAME_TIME;
             if (ThreadWaiter) {
-                Profiler.BeginSample("No-Vsync Synchronizer");
+                //Profiler.BeginSample("No-Vsync Synchronizer");
                 var sleepTime = lastFrameTime - Time.realtimeSinceStartup - 0.01f;
                 if (sleepTime > 0) Thread.Sleep((int)(sleepTime * 1000));
                 while (Time.realtimeSinceStartup < lastFrameTime) { }
-                Profiler.EndSample();
+                //Profiler.EndSample();
             }
         }
+        // ReSharper disable once IteratorNeverReturns
     }
     
     

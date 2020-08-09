@@ -139,8 +139,10 @@ public abstract class Pooled : CoroutineRegularUpdater {
         //This is the easiest way to ensure that no remaining display objects, like child SpriteRenders,
         //are visible after pooled return.
         tr.localPosition = new Vector3(50f, 50f, 0f);
-        foreach (var d in dependents.ToList()) {
-            d.ExternalDestroy();
+        if (dependents.Count > 0) {
+            foreach (var d in dependents.ToList()) {
+                d.ExternalDestroy();
+            }
         }
         dependents.Clear();
     }

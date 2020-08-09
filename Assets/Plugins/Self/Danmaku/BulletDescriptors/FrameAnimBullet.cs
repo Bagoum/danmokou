@@ -5,7 +5,7 @@ using UnityEngine.Serialization;
 
 
 namespace Danmaku {
-public class FrameAnimBullet : Bullet {
+public abstract class FrameAnimBullet : Bullet {
 //Inspector-exposed structs cannot be readonly
     [System.Serializable]
     public struct BulletAnimSprite {
@@ -28,14 +28,8 @@ public class FrameAnimBullet : Bullet {
             this.style = style;
         }
     }
-
-    public float fadeInTime;
-    public float cycleSpeed;
-    public RenderMode renderMode;
-    public DefaultColorizing colorizing;
-    public SimpleBulletEmptyScript.DisplacementInfo displacement;
-    [Tooltip("Special gradients")] public BulletManager.GradientVariant[] gradients;
     public BulletAnimSprite[] frames;
+    public override BulletAnimSprite[] Frames => frames;
     private BulletAnimSprite[] realizedFrames;
     private int currFrame = 0;
     private float frameTime = 0f;
@@ -114,7 +108,7 @@ public class FrameAnimBullet : Bullet {
     /// Call this before SetHotCold, as this resets the frame timings.
     /// </summary>
     /// <param name="r"></param>
-    public void Colorize(Recolor r) {
+    protected override void Colorize(Recolor r) {
         style = r.style;
         if (r.sprites == null) return;
         material = r.material;
@@ -124,7 +118,7 @@ public class FrameAnimBullet : Bullet {
         SetFrame(currFrame);
     }
 
-    public void ColorizeOverwrite(Recolor r) {
+    public override void ColorizeOverwrite(Recolor r) {
         style = r.style;
         if (r.sprites == null) return;
         material = r.material;
@@ -134,8 +128,5 @@ public class FrameAnimBullet : Bullet {
         SetFrame(currFrame);
     }
 
-    protected virtual void SetSprite(Sprite s, float yscale) {
-        //sprite renderer or something
-    }
 }
 }

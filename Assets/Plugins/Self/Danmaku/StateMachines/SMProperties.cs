@@ -160,13 +160,18 @@ public class PhaseProperty {
     public static PhaseProperty Root(float x, float y) => RootT(2, x, y);
 
     /// <summary>
+    /// Set the starting boss position for a persistent BEH entity, with a default time of 2 seconds.
+    /// </summary>
+    public static PhaseProperty RootOther(string who, float x, float y) => new RootProp(2, who, x, y);
+
+    /// <summary>
     /// Set the starting boss position for this phase. The boss will move here before the phase timer starts.
     /// </summary>
     /// <param name="t">Time (seconds) to move to position</param>
     /// <param name="x">X position</param>
     /// <param name="y">Y position</param>
     /// <returns></returns>
-    public static PhaseProperty RootT(float t, float x, float y) => new RootProp(t, x, y);
+    public static PhaseProperty RootT(float t, float x, float y) => new RootProp(t, null, x, y);
     
     /// <summary>
     /// Override the UI lives display to show a specific number.
@@ -268,11 +273,13 @@ public class PhaseProperty {
         public readonly float t;
         public readonly float x;
         public readonly float y;
+        [CanBeNull] public readonly string who;
 
-        public RootProp(float t, float x, float y) {
+        public RootProp(float t, [CanBeNull] string who, float x, float y) {
             this.t = t;
             this.x = x;
             this.y = y;
+            this.who = who;
         }
     }
 
@@ -296,7 +303,7 @@ public class PhaseProperties {
     public readonly string autocullTarget = "cwheel";
     public readonly string autocullDefault = "red/b";
     public readonly int? livesOverride = null;
-    [CanBeNull] public readonly TaskPattern rootMove = null;
+    [CanBeNull] public readonly StateMachine rootMove = null;
     public readonly bool skip = false;
     private readonly bool? lenient = null;
     public bool Lenient => lenient ?? phaseType?.IsLenient() ?? false;
@@ -322,6 +329,7 @@ public class PhaseProperties {
         }
     }
     public PhaseProperties(IReadOnlyList<PhaseProperty> props) {
+        List<StateMachine> rootMoves = new List<StateMachine>();
         foreach (var prop in props) {
             if (prop is HideTimeoutFlag) hideTimeout = true;
             else if (prop is SkipFlag) skip = true;
@@ -344,13 +352,15 @@ public class PhaseProperties {
                 autocullDefault = cp.defaulter ?? autocullDefault;
             } else if (prop is LivesOverrideProp lop) livesOverride = lop.lives;
             else if (prop is SpellCutinProp scp) spellCutinIndex = scp.index;
-            else if (prop is RootProp rp)
-                rootMove = 
-                    SaveData.Settings.TeleportAtPhaseStart ? 
-                        SMReflection.Position(_ => rp.x, _ => rp.y) : 
-                        SMReflection.MoveTarget(BPYRepo.Const(rp.t), "io-sine", Parametrics.CXY(rp.x, rp.y));
-            else if (prop is PhaseProperty.EmptyProp) { }
+            else if (prop is RootProp rp) {
+                StateMachine rm = new ReflectableLASM(SaveData.Settings.TeleportAtPhaseStart ? 
+                    SMReflection.Position(_ => rp.x, _ => rp.y) : 
+                    SMReflection.MoveTarget(BPYRepo.Const(rp.t), "io-sine", Parametrics.CXY(rp.x, rp.y)));
+                rootMoves.Add(rp.who == null ? rm : RetargetUSM.Retarget(rm, rp.who));
+            } else if (prop is PhaseProperty.EmptyProp) { }
             else throw new Exception($"Phase is not allowed to have properties of type {prop.GetType()}");
+            
+            if (rootMoves.Count > 0) rootMove = new ParallelSM(rootMoves, Enums.Blocking.BLOCKING);
         }
     }
 }

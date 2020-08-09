@@ -36,6 +36,7 @@ public static class SaveData {
     public class Record {
         public bool TutorialDone = false;
         public HashSet<string> CompletedCampaigns = new HashSet<string>();
+        [JsonIgnore]
         public bool MainCampaignCompleted => CompletedCampaigns.Contains(MainMenu.main.campaign.key);
     }
     public class Settings {

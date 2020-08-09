@@ -146,7 +146,6 @@ public class Enemy : RegularUpdater {
 
     private CancellationToken spellCircleCancel = CancellationToken.None;
     [CanBeNull] private FXY spellCircleRadiusFunc;
-    //TODO: Get spell circle colors from somewhere
     private float MinSCRadius => hpRadius + hpThickness;
     private float lastSpellCircleRadius;
     private const float SpellCircleLerpTime = 0.6f;

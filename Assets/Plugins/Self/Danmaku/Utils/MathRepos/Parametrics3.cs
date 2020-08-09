@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using UnityEngine;
 using System.Linq.Expressions;
@@ -100,7 +101,8 @@ $@"                     *c 73 &pxr
     /// <param name="wy"></param>
     /// <param name="per"></param>
     /// <returns></returns>
-    public static ExTP3 Wings2(float wx, float wy, float per) => ($@":: {{
+    /// TODO WARNING if you throw variables into code like this, you MUST use FormattableString.Invariant! The SM parser will not recognize decimal commas!
+    public static ExTP3 Wings2(float wx, float wy, float per) => FormattableString.Invariant($@":: {{
 	pxr	/ &px {wx}
 	pyr	/ &py {wy}
 	swa	 * (linear 0.9 0.4 &pxr) * (linear 0.9 0.3 &pyr) swing2 0.35 {per} -80 35 50 (+ t * -0.2 &pxr)

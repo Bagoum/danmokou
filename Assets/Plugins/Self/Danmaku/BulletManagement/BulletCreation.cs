@@ -136,14 +136,14 @@ public partial class BulletManager {
         RequestSimple(styleName, null, null, new Velocity(loc, dir), 0, 0, null);
 
     public static void RequestPather(string styleName, Velocity velocity, int firingIndex, uint bpiid, float maxRemember, BPY remember, ref RealizedBehOptions opts) {
-        if (faBulletStyles.ContainsKey(styleName)) {
-            Pather.Request(faBulletStyles[styleName].GetOrLoadRecolor(), velocity, firingIndex, bpiid, maxRemember, remember, main.bulletCollisionTarget, ref opts);
+        if (bulletStyles.ContainsKey(styleName)) {
+            Pather.Request(bulletStyles[styleName].GetOrLoadRecolor(), velocity, firingIndex, bpiid, maxRemember, remember, main.bulletCollisionTarget, ref opts);
         } else throw new Exception("Pather must be an faBulletStyle: " + styleName);
     }
     public static void RequestLaser(BehaviorEntity parent, string style, Velocity vel, int firingIndex,
         uint bpiid, float cold, float hot, ref RealizedLaserOptions options) {
-        if (faBulletStyles.ContainsKey(style)) {
-            Laser.Request(faBulletStyles[style].GetOrLoadRecolor(), parent, vel, firingIndex, bpiid, cold, hot, main.bulletCollisionTarget, ref options);
+        if (bulletStyles.ContainsKey(style)) {
+            Laser.Request(bulletStyles[style].GetOrLoadRecolor(), parent, vel, firingIndex, bpiid, cold, hot, main.bulletCollisionTarget, ref options);
         } else throw new Exception("Laser must be an faBulletStyle: " + style);
     }
     

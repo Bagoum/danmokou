@@ -376,11 +376,6 @@ public class UIManager : MonoBehaviour {
 
     private void HidePauseMenu(bool doSave) => PauseManager.HideOptions(doSave);
 
-    public static Camera RegisterPauseMenu(ShowHideMenu menu) {
-        throw new Exception("Not handled currently");
-        //main.PauseMenu = menu;
-        return main.cam;
-    }
 
     public static BottomTracker TrackBEH(BehaviorEntity beh, string title, CancellationToken cT) => 
         Instantiate(main.trackerPrefab).GetComponent<BottomTracker>().Initialize(beh, title, cT);

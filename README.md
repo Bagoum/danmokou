@@ -36,9 +36,7 @@ To build/run this project, follow the following steps:
 
 # Licensing
 
-The source code is licensed under GPL v3 or later. Most other non-code resources are licensed under miscellaneous mostly-permissive licenses, preferably CC-BY. See the COPYING file for details.
-
-The documentation site is almost entirely exported from the source code and is therefore also licensed under GPL, see the site for more information.
+The source code is licensed under MIT. See the COPYING file for details, as well as information on non-code assets.
 
 # Some Important Terminology
 
@@ -67,7 +65,7 @@ You'd have to rewrite any scripts from scratch. The scripting language is highly
 
 **Can I submit PRs?**
 
-You may freely submit PRs for bugfixes or new features. **If you submit a PR, you agree to license that code under the GNU GPL v3 or later.** If you would like to submit non-code resources, please contact me.
+You may freely submit PRs for bugfixes or new features. **If you submit a PR, you agree to license that code under MIT or a weaker license.** If you would like to submit non-code resources, please contact me.
 
 **How do I contact you?**
 

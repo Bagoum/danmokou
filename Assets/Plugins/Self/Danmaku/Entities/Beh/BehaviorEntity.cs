@@ -115,6 +115,12 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     public float ScreenCullRadius = 4;
     private const int checkCullEvery = 120;
     private int beh_cullCtr = 0;
+    
+    protected bool collisionActive = false;
+    public int damage = 1;
+    public bool destructible;
+    public ushort grazeEveryFrames = 20;
+    private int grazeFrameCounter = 0;
 
     /// <summary>
     /// Sets the transform position iff `doMovement` is enabled.
@@ -352,6 +358,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         ResetV();
         animate.Initialize(this);
         RegisterID();
+        UpdateStyleInformation();
     }
 
     // Do this in Start to make sure that services are loaded...
@@ -652,22 +659,38 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
             if (parented) bpi.loc = tr.position;
         }
     }
+    
     private void RegularUpdateControl()  {
         var curr_pcs = thisStyleControls; //thisStyleControls may change during iteration. Don't respect changes
-        if (curr_pcs == null) return;
         int ct = curr_pcs.Count;
         for (int ii = 0; ii < ct; ++ii) {
             curr_pcs[ii].action(this);
         }
     }
 
-    protected virtual void RegularUpdateCollide() {
+    private void RegularUpdateCollide() {
+        if (collisionActive) {
+            var cr = CollisionCheck();
+            if (grazeFrameCounter-- == 0) {
+                grazeFrameCounter = 0;
+                if (cr.graze) {
+                    grazeFrameCounter = grazeEveryFrames - 1;
+                    BulletManager.ExternalBulletProc(0, 1);
+                }
+            }
+            if (cr.collide) {
+                BulletManager.ExternalBulletProc(damage, 0);
+                if (destructible) InvokeCull();
+            }
+        }
         beh_cullCtr = (beh_cullCtr + 1) % checkCullEvery;
         if (beh_cullCtr == 0 && cullable && styleIsCameraCullable 
             && bpi.t > FIRST_CULLCHECK_TIME && LocationService.OffPlayableScreenBy(ScreenCullRadius, bpi.loc)) {
             InvokeCull();
         }
     }
+    
+    protected virtual CollisionResult CollisionCheck() => CollisionResult.noColl;
 
     protected virtual bool Contains(Vector2 pt) => throw new Exception($"The BEH {ID} does not have a collision method.");
 
@@ -688,15 +711,11 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         } else {
             if (nextUpdateAllowed) {
                 //Note: Don't profile during parallelization
-                //Profiler.BeginSample("BEH Movement");
                 RegularUpdateMove();
-                //Profiler.EndSample();
                 base.RegularUpdate();
             } else nextUpdateAllowed = true;
             RegularUpdateControl();
-            //Profiler.BeginSample("Regular Update Collide");
             RegularUpdateCollide();
-            //Profiler.EndSample();
             RegularUpdateRender();
         }
     }
@@ -922,15 +941,6 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     [UsedImplicitly]
     public static bool Contains(BEHPointer behp, Vector2 pt) => behp.beh.Contains(pt);
 
-    private static BehaviorEntity[] GetExecsForID(string id) {
-        //Reason for BehaviorEntity[] over IEnumerable:
-        //If you are running `cull` or something similar in a loop using the return from this,
-        //the hash set will change size and break enumeration.
-        //To solve this, we copy into an array first.
-        BehaviorEntity[] ret = new BehaviorEntity[idLookup[id].Count];
-        idLookup[id].CopyTo(ret);
-        return ret;
-    }
     public static BehaviorEntity[] GetExecsForIDs(string[] ids) {
         int totalct = 0;
         for (int ii = 0; ii < ids.Length; ++ii) {

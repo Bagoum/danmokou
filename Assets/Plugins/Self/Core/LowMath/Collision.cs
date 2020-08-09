@@ -2,6 +2,7 @@
 using System.Runtime.CompilerServices;
 using JetBrains.Annotations;
 using UnityEngine;
+using UnityEngine.Profiling;
 
 namespace DMath {
 public readonly struct CollisionResult {
@@ -200,24 +201,22 @@ public static class Collision {
     public static readonly ExFunction pointInRect = ExUtils.Wrap(t, "PointInRect", new[] {ExUtils.tv2, ExUtils.tcr});
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool CircleOnRect(SOCircle circ, Vector2 rect, float rectHalfX, float rectHalfY, float cos_rot, float sin_rot) {
-        rect.x = circ.location.x - rect.x;
-        rect.y = circ.location.y - rect.y;
-        //First DErotate the delta vector and get its absolutes. Note we use -sin_rot
-        Vector2 delta = new Vector2(Math.Abs(cos_rot * rect.x + sin_rot * rect.y), 
-                                    Math.Abs(cos_rot * rect.y - sin_rot * rect.x));
+    public static bool CircleOnAABB(float dx, float dy, float rhx, float rhy, float r, float r2) {
+        //Inlined absolutes are much faster
+        if (dx < 0) dx *= -1;
+        if (dy < 0) dy *= -1;
         //Then we are in one of three locations:
-        if (delta.y < rectHalfY) {
+        if (dy < rhy) {
             //In "front" of the rectangle.
-            return delta.x - rectHalfX < circ.radius;
-        } else if (delta.x < rectHalfX) {
+            return dx - rhx < r;
+        } else if (dx < rhx) {
             // On "top" of the rectangle. 
-            return delta.y - rectHalfY < circ.radius;
+            return dy - rhy < r;
         } else {
             //In front and on top.
-            delta.x -= rectHalfX;
-            delta.y -= rectHalfY;
-            return (delta.x * delta.x + delta.y * delta.y) < circ.radius2;
+            dx -= rhx;
+            dy -= rhy;
+            return (dx * dx + dy * dy) < r2;
         }
     }
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

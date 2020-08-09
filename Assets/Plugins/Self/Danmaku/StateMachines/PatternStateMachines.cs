@@ -192,7 +192,7 @@ public class PhaseSM : SequentialSM {
     public override async Task Start(SMHandoff smh) {
         PrepareGraphics(smh, out Task cutins);
         if (props.Lenient) GameManagement.campaign.Lenience = true;
-        if (props.rootMove != null) await props.rootMove(smh);
+        if (props.rootMove != null) await props.rootMove.Start(smh);
         await cutins;
         smh.ThrowIfCancelled();
         using (CancellationTokenSource pcTS = new CancellationTokenSource()) {

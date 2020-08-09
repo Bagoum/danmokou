@@ -112,7 +112,7 @@ public partial class BehaviorEntity {
             FrameAnimBullet.Recolor r = BulletManager.GetRecolor(target);
             return b => {
                 if (cond(b.rBPI)) {
-                    ((FrameAnimBullet) b).ColorizeOverwrite(r);
+                    ((Bullet)b).ColorizeOverwrite(r);
                     b.UpdateStyleInformation();
                 }
             };

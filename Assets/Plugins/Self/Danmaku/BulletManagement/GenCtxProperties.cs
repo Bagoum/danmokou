@@ -672,9 +672,14 @@ public class GenCtxProperties<T> {
     private readonly RV2IncrType? rv2IncrType = null;
     [CanBeNull] private readonly GCXF<V2RV2> rv2Spread = null;
     private enum RV2IncrType {
-        FUNC,
-        CIRCLE,
-        SPREAD
+        FUNC = 1,
+        CIRCLE = 2,
+        SPREAD = 3
+    }
+    
+    private RV2IncrType Max(RV2IncrType typ) {
+        if (rv2IncrType == null || (int) rv2IncrType.Value <= (int) typ) return typ;
+        return rv2IncrType.Value;
     }
 
     public V2RV2 PostloopRV2Incr(GenCtx gcx, int t) {
@@ -725,11 +730,11 @@ public class GenCtxProperties<T> {
             else if (prop is PreLoopProp prel) prel.rules.AssignOrExtend(ref preloop);
             else if (prop is PostLoopProp pol) pol.rules.AssignOrExtend(ref postloop);
             else if (prop is RV2IncrProp rvp) {
-                rv2IncrType = RV2IncrType.FUNC;
+                rv2IncrType = Max(RV2IncrType.FUNC);
                 rv2pp = rvp.value;
-            } else if (prop is RV2CircleTag) rv2IncrType = RV2IncrType.CIRCLE;
+            } else if (prop is RV2CircleTag) rv2IncrType = Max(RV2IncrType.CIRCLE);
             else if (prop is RV2SpreadProp rsp) {
-                rv2IncrType = RV2IncrType.SPREAD;
+                rv2IncrType = Max(RV2IncrType.SPREAD);
                 rv2Spread = rsp.value;
             } else if (prop is MAngProp map) rv2aMutater = map.value;
             else if (prop is FRV2Prop frv2p) frv2 = frv2p.value;

@@ -1,0 +1,13 @@
+pattern { }
+<!> clear
+phase 0
+	action block 0
+		position -2 0
+		sync pather-blue/w <1,:> pather 2 + 1.6 sine 1 0.3 t 
+			roffset :: {
+			##t	if (> t 2) (max 2 - t 1.2) t
+			t * 0.5 t
+		} pxy
+			+ * 1 &t cosine 0.2 0.1 &t
+			sine 0.2 0.3 &t
+			{ }

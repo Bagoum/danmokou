@@ -2,6 +2,7 @@
 using System.Reflection;
 using Danmaku;
 using DMath;
+using JetBrains.Annotations;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
@@ -10,30 +11,36 @@ using UnityEngine.Rendering;
 using InternalSetVertexData = System.Action<UnityEngine.Mesh, 
     int, System.IntPtr, int, int, int, int, UnityEngine.Rendering.MeshUpdateFlags>;
 
-public abstract class TiledRender : MonoBehaviour {
-    protected MaterialPropertyBlock pb;
-    [Tooltip("Standard is Projectile")]
-    public string sortingLayer = "Projectile";
-    private MeshRenderer mr;
-    private MeshFilter mf;
+[Serializable]
+public class TiledRenderCfg {
+    public MeshRenderer mr;
+    public MeshFilter mf;
+    public Transform tr;
+    public string sortingLayer;
+    public float dontUpdateTimeAfter;
+}
+public abstract class TiledRender {
+    protected readonly MaterialPropertyBlock pb;
+    protected readonly MeshRenderer mr;
+    private readonly MeshFilter mf;
     private Mesh mesh;
-    protected Transform tr;
+    protected readonly Transform tr;
     protected ITransformHandler locater;
     protected bool parented;
 
     protected int texRptHeight;
     protected int texRptWidth;
     private int numVerts;
+    protected virtual bool UseMR => true;
 
     protected Vector2 spriteBounds;
-    //protected Bounds bds;
 
     protected float lifetime = 0f;
     public void SetLifetime(float t) => lifetime = t;
     /// <summary>
     /// Updating PropertyBlock is expensive-- better to skip it once time-based effects are in place.
     /// </summary>
-    public float DontUpdateTimeAfter = 1f;
+    protected readonly float DontUpdateTimeAfter;
     private bool active = false;
     private bool isStatic;
 
@@ -52,18 +59,19 @@ public abstract class TiledRender : MonoBehaviour {
         public Vector2 uv;
     }
 
-    protected static readonly int VertexDataSize = UnsafeUtility.SizeOf<VertexData>();
+    private static readonly int VertexDataSize = UnsafeUtility.SizeOf<VertexData>();
 
     protected NativeArray<VertexData> verts;
     protected unsafe VertexData* vertsPtr = (VertexData*) 0x0;
     private IntPtr roVertsPtr = (IntPtr) 0x0;
 
-    protected virtual void Awake() {
-        mr = GetComponent<MeshRenderer>();
-        mf = GetComponent<MeshFilter>();
+    protected TiledRender(TiledRenderCfg cfg) {
         pb = new MaterialPropertyBlock();
-        tr = transform;
-        mr.sortingLayerID = SortingLayer.NameToID(sortingLayer);
+        mr = cfg.mr;
+        mf = cfg.mf;
+        tr = cfg.tr;
+        DontUpdateTimeAfter = cfg.dontUpdateTimeAfter;
+        mr.sortingLayerID = SortingLayer.NameToID(cfg.sortingLayer);
     }
 
     //TileRenders are always Initialize-initialized.
@@ -88,12 +96,14 @@ public abstract class TiledRender : MonoBehaviour {
     //Queried every frame (in subclasses); therefore we store an array and update it.
     protected abstract void UpdateVerts(bool renderRequired);
     protected void PrepareNewMesh() {
+        if (!UseMR) return;
         numVerts = (texRptHeight + 1) * (texRptWidth + 1);
         int[] tris = CustomMeshUtils.WHTris(texRptHeight, texRptWidth);
         mf.mesh = mesh = new Mesh();
         mesh.SetVertexBufferParams(numVerts, layout);
         mesh.bounds = new Bounds(Vector3.zero, Vector3.one * 100f);
         DisposeOldVerts();
+        mesh.MarkDynamic();
         verts = new NativeArray<VertexData>(numVerts, Allocator.Persistent);
         unsafe {
             vertsPtr = (VertexData*)verts.GetUnsafePtr();
@@ -120,13 +130,16 @@ public abstract class TiledRender : MonoBehaviour {
     }
 
     private void ReassignMeshVerts() {
-        SetVertexBufferData(mesh, 0, roVertsPtr, 0, 0, numVerts, VertexDataSize, noValidation);
+        if (UseMR) SetVertexBufferData(mesh, 0, roVertsPtr, 0, 0, numVerts, VertexDataSize, noValidation);
         //mesh.SetVertexBufferData(verts, 0, 0, numVerts, 0, noValidation);
         
         //Don't recalculate mesh bounds-- just set them to max from the start. Based on testing,
         //using large mesh bounds does not incur any costs (and it saves assignment overhead).
         //mesh.bounds = bds;
         //m.RecalculateBounds(); 
+    }
+    public void DebugMeshBounds() {
+        Debug.Log(mesh.bounds);
     }
 
     public virtual void UpdateMovement(float dT) {
@@ -138,8 +151,9 @@ public abstract class TiledRender : MonoBehaviour {
 
     public virtual void UpdateRender() {
         if (ETime.LastUpdateForScreen) {
-            if (!isStatic) {
-                ReassignMeshVerts();
+            if (!isStatic && UseMR) {
+                //Inlined from ReassignMeshVerts
+                SetVertexBufferData(mesh, 0, roVertsPtr, 0, 0, numVerts, VertexDataSize, noValidation);
             }
             if (lifetime < DontUpdateTimeAfter) {
                 pb.SetFloat(PropConsts.time, lifetime);
@@ -153,7 +167,7 @@ public abstract class TiledRender : MonoBehaviour {
     /// <summary>
     /// This will update the mesh iff the sprite has a different size.
     /// </summary>
-    public void SetSprite(Sprite s, float yscale) {
+    public virtual void SetSprite(Sprite s, float yscale) {
         bool diffSize = spriteBounds != (Vector2) s.bounds.size;
         spriteBounds.x = s.bounds.size.x;
         spriteBounds.y = s.bounds.size.y * yscale * PersistentYScale;
@@ -174,7 +188,7 @@ public abstract class TiledRender : MonoBehaviour {
     }
     public virtual void Activate() {
         lifetime = 0f;
-        mr.enabled = true;
+        if (UseMR) mr.enabled = true;
         UpdateVertsAndMesh();
         pb.SetFloat(PropConsts.time, 0f);
         mr.SetPropertyBlock(pb);
@@ -185,9 +199,7 @@ public abstract class TiledRender : MonoBehaviour {
         if (vertsPtr != (VertexData*) 0x0) verts.Dispose();
     }
 
-    private void OnDestroy() {
-        DisposeOldVerts();
-    }
+    public void Destroy() => DisposeOldVerts();
     
 #if UNITY_EDITOR
     [ContextMenu("Debug sizes")]
