@@ -232,15 +232,25 @@ public static partial class Parametrics {
     }
 
     /// <summary>
-    /// Derive a parametric equation from two parametric-float functions.
+    /// Derive a Vector2 from two floats.
     /// </summary>
-    /// <param name="x">Parametric-float function assigned to X-component</param>
-    /// <param name="y">Parametric-float function assigned to Y-component</param>
+    /// <param name="x">Float assigned to X-component</param>
+    /// <param name="y">Float assigned to Y-component</param>
     /// <returns></returns>
     public static ExTP PXY(ExBPY x, ExBPY y) => t => ExUtils.V2(x(t), y(t));
+    /// <summary>
+    /// = PXY x 0
+    /// </summary>
     public static ExTP PX(ExBPY x) => PXY(x, _ => E0);
+    /// <summary>
+    /// = PXY 0 y
+    /// </summary>
     public static ExTP PY(ExBPY y) => PXY(_ => E0, y);
 
+    /// <summary>
+    /// Derive a Vector2 from a Vector3 by dropping the Z-component.
+    /// This is applied automatically if no other methods are found.
+    /// </summary>
     [Fallthrough(100, true)]
     public static ExTP TP3XY(ExTP3 xyz) {
         var v3 = TExV3.Variable();

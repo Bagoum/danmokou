@@ -114,7 +114,7 @@ public class ETime : MonoBehaviour {
         PrepareSceneClose();
     }
 
-    private void PrepareSceneClose() {
+    private static void PrepareSceneClose() {
         updaters.ForEachIfNotCancelled(x => x.PreSceneClose());
     }
     

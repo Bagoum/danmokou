@@ -8,10 +8,10 @@ phase 0
 phase 0 #{
 	action block 0
 		position 0 1
-		async gem-* <2,:-90> gcr2 19 _ <35> {
+		async gem-* <2;:-90> gcr2 19 _ <35> {
 			color { */b */ */w }
 		} gsr2 16 <20> {
-			bank <0.4,:90>
+			bank <0.4;:90>
 			color $allc
 		} s tprot lerpin 0.3 1 cx 3
 #}
@@ -20,7 +20,7 @@ phase 0 #{
 phase 0 #{
 	action block 0
 		position 0 2
-		async gem-*/w <0.5,:> gcr2 30 _ <6h> {
+		async gem-*/w <0.5;:> gcr2 30 _ <6h> {
 			bindLR ##bindLR is simpler to use than pm1 p
 			##p this
 			color { blue red }
@@ -34,7 +34,7 @@ phase 0 #{
 phase 0 #{
 	action block 0
 		position 0 2
-		async gem-*/b <,:> gir2 250 _ <> { 
+		async gem-*/b <;:> gir2 250 _ <> { 
 			p this
 			color { blue red }
 		} gcr {
@@ -46,7 +46,7 @@ phase 0 #{
 			logsumshiftt 0.1 1 0 
 				logsumshiftt -0.1 2 * 90 t 0
 		
-		async gem-*/b <,:> gir2 250 0 <> { 
+		async gem-*/b <;:> gir2 250 0 <> { 
 			p this
 			color { blue red }
 		} gcr {
@@ -66,9 +66,9 @@ phase 0 #{
 phase 0 #{
 	action block 0
 		position 0 2
-		sync inode <-3,1:> gsr { root zero } summons
+		sync inode <-3;1:> gsr { root zero } summons
 			tprot * sign (rangemod 4 t) cxy 1.6 0.5
-			async gem-*/b <,:> gir2 250 _ <> { 
+			async gem-*/b <;:> gir2 250 _ <> { 
 				p this
 				color $allc
 			} gcr {
@@ -87,7 +87,7 @@ phase 0 #{
 phase 0 #{
 	action block 0
 		position 0 2
-		async gem-*/b <0.5,:> gir2 150 _ <> { 
+		async gem-*/b <0.5;:> gir2 150 _ <> { 
 			p this
 			color { blue red }
 		} gcr {
@@ -123,7 +123,7 @@ phase 0 #{
 phase 0 #{
 	action block 0
 		position 0 2
-		async strip-red/w <1,:-90> gcr {
+		async strip-red/w <1;:-90> gcr {
 			wt		8 10
 			saoffset	bo  (+ 70 * 8 t) px * 0.2 t
 			p this
@@ -135,7 +135,7 @@ phase 0 #{
 phase 0 #{
 	action block 0
 		position 0 1
-		async gcircle-blue/w <0.5,:> gcr2 2 120 <0.015,:9> {
+		async gcircle-blue/w <0.5;:> gcr2 2 120 <0.015;:9> {
 			p this
 		} gsr2 2 <> {
 			p add
@@ -180,7 +180,7 @@ phase 0 #{
 	action block 0
 		position 0 1
 		## Generalized method (kinda painful, but this is necessary when not strictly homing on player)
-		async arrow-** <,0.67:> gcr2 180 _ <5c> {
+		async arrow-** <;0.67:> gcr2 180 _ <5c> {
 			colorf $allc t
 		} gsr2c 5 {
 		} gsr2 20 <> {
@@ -202,7 +202,7 @@ phase 0 #{
 ##12 2-backfire regpoly:5 reg2star:5
 phase 0 #{
 	action block 0
-		async ellipse-*/w <1,:> gcrf (lerpt 0 100 16 12) _ (angle sine 180 270 t) {
+		async ellipse-*/w <1;:> gcrf (lerpt 0 100 16 12) _ (angle sine 180 270 t) {
 			sfxif x-fire-burst-2 divby 2 t
 		} gsr2c 5 {
 		} gsr2 4 <> {
@@ -214,7 +214,7 @@ phase 0 #{
 ##13 2-backfire regpoly:6 reg2star:6
 phase 0 #{
 	action block 0
-		async ellipse-*/w <1,:> gcrf (lerpt 0 100 16 12) _ (angle sine 180 270 t) {
+		async ellipse-*/w <1;:> gcrf (lerpt 0 100 16 12) _ (angle sine 180 270 t) {
 			sfxif x-fire-burst-2 divby 2 t
 		} gsr2c 6 {
 		} gsr2 4 <> {

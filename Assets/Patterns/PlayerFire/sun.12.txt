@@ -3,7 +3,7 @@ gtr {
 	wait-child
 } fire
 	## free fire
-	async sun-red/b <,-0.2:> gcr2 120 _ <> { 
+	async sun-red/b <;-0.2:> gcr2 120 _ <> { 
 		delay + 60 * 60 p
 	} pss 220 90 oh1 0.4 tprot cy 3
 	## free cancellation

@@ -505,8 +505,8 @@ public static class Parser {
     }
 
     public static CCircle ParseCircle(string s) {
-        //<x,y,r>
-        string[] parts = s.Split(',');
+        //<x;y;r>
+        string[] parts = s.Split(';');
         return new CCircle(
             Float(parts[0].Substring(1)),
             Float(parts[1]),
@@ -515,10 +515,10 @@ public static class Parser {
     }
 
     public static CRect ParseRect(string s) {
-        //<x,y:hW,hH:ang>
+        //<x;y:hW;hH:ang>
         string[] parts = s.Split(':');
-        int comma = parts[0].IndexOf(",");
-        int comma2 = parts[1].IndexOf(",");
+        int comma = parts[0].IndexOf(";");
+        int comma2 = parts[1].IndexOf(";");
         return new CRect(
             Parser.Float(parts[0].Substring(1, comma - 1)),
             Parser.Float(parts[0].Substring(comma + 1, parts[0].Length - comma - 1)),
@@ -539,27 +539,27 @@ public static class Parser {
         throw new Exception("Couldn't find enough float values in the string.");
     }
     public static V2RV2 ParseV2RV2(string s) {
-        // Format: <float,float:float,float:float> (nx,ny,rx,ry,angle)
+        // Format: <float;float:float;float:float> (nx,ny,rx,ry,angle)
         // OR the RV2 format (rx,ry,angle).
         if (s == "<>") return V2RV2.Zero;
         if (s.CountOf(':') == 0) return V2RV2.Angle(Float(s, 1, s.Length - 1));
         if (s.CountOf(':') == 1) return ParseShortV2RV2(s);
         int ii = 0;
         int from = 1;
-        var nx = NextFloat(s, ref from, ref ii, ',');
+        var nx = NextFloat(s, ref from, ref ii, ';');
         var ny = NextFloat(s, ref from, ref ii, ':');
-        var rx = NextFloat(s, ref from, ref ii, ',');
+        var rx = NextFloat(s, ref from, ref ii, ';');
         var ry = NextFloat(s, ref from, ref ii, ':');
         return new V2RV2(nx, ny, rx, ry, Float(s, from, s.Length - 1));
     }
 
     private static V2RV2 ParseShortV2RV2(string s) {
-        // Format: <float,float:float> ; args are rx,ry,angle resp.
+        // Format: <float;float:float> ; args are rx,ry,angle resp.
         int ii = 0;
         int from = 1;
         float x = 0;
         while (++ii < s.Length) {
-            if (s[ii] == ',') {
+            if (s[ii] == ';') {
                 x = Float(s, from, ii);
                 from = ii + 1;
                 break;

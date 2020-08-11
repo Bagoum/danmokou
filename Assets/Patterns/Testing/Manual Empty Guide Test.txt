@@ -4,8 +4,8 @@ phase 0
 		position 1 0
 		bullet-control persist empty savev2 { myloc p loc } _
 		bullet-control persist empty savef { mydir p dir } _
-		sync enemy01 <2,:45> gsr2 4 <,:90> { p this } summons tprot cx 1
-			sync empty <0.2,:32> gsr . {
+		sync enemy01 <2;:45> gsr2 4 <;:90> { p this } summons tprot cx 1
+			sync empty <0.2;:32> gsr . {
 				s roffset py + 1 t
 				loc0c gem-red/b gsr { start rv2.a =f 80 } s offset 
 					rotate @ mydir p px 1

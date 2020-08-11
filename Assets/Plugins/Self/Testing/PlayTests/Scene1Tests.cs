@@ -92,10 +92,10 @@ public static class Scene1 {
             AreEqual(blue.Count, 2);
             VecEq(red[0].bpi.loc, 2 * Vector2.right);
             VecEq(red[1].bpi.loc, M.PolarToXY(2, 10));
-            //Bank <1,:> off <1,:90>
+            //Bank <1;:> off <1,:90>
             VecEq(green[0].bpi.loc, 2 * Vector2.up);
             VecEq(green[1].bpi.loc, Vector2.up + M.PolarToXY(1, 100));
-            //Bank0 <1,:> off <1,:90>
+            //Bank0 <1;:> off <1,:90>
             VecEq(blue[0].bpi.loc, new Vector2(1f, 1f));
             VecEq(blue[1].bpi.loc, Vector2.up + M.PolarToXY(1, 10));
         });

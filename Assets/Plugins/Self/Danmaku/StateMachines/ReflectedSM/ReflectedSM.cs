@@ -50,7 +50,7 @@ public static class SMReflection {
     public static TaskPattern Crosshair(string style, GCXF<Vector2> locator, GCXF<float> homeSec, GCXF<float> stickSec,
         ReflectEx.Hoist<Vector2> locSave, ExBPY indexer) {
         var cindexer = GCXF(indexer);
-        var saver = Async("_$CROSSHAIR_INVALID", V2RV2.Zero, AsyncPatterns.GCRepeat2(
+        var saver = Async("_$CROSSHAIR_INVALID", _ => V2RV2.Zero, AsyncPatterns.GCRepeat2(
             x => 1,
             x => ETime.ENGINEFPS * homeSec(x),
             GCXFRepo.RV2Zero,
@@ -65,7 +65,7 @@ public static class SMReflection {
             locSave.Save((int) cindexer(smh.GCX), locator(smh.GCX));
             if (homesec > 0) SFXService.Request("x-crosshair");
             float fadein = Mathf.Max(0.15f, homesec / 5f);
-            _ = Sync(style, V2RV2.Zero, SyncPatterns.Loc0(Summon(path,
+            _ = Sync(style, _ => V2RV2.Zero, SyncPatterns.Loc0(Summon(path,
                 new SpriteControlLASM(SpriteControlLASM.Opacity(homesec + sticksec,
                     bpi => CrosshairOpacity(fadein, homesec, sticksec, bpi))), new BehOptions())))(smh);
             await saver(smh);
@@ -186,8 +186,9 @@ public static class SMReflection {
     /// <summary>
     /// Asynchronous bullet pattern fire.
     /// </summary>
-    public static TaskPattern Async(string style, V2RV2 rv2, AsyncPattern ap) => smh => {
-        AsyncHandoff abh = new AsyncHandoff(new DelegatedCreator(smh.Exec, BulletManager.StyleSelector.MergeStyles(smh.ch.bc.style, style)), rv2 + smh.GCX.RV2, 
+    public static TaskPattern Async(string style, GCXF<V2RV2> rv2, AsyncPattern ap) => smh => {
+        AsyncHandoff abh = new AsyncHandoff(new DelegatedCreator(smh.Exec, 
+                BulletManager.StyleSelector.MergeStyles(smh.ch.bc.style, style)), rv2(smh.GCX) + smh.GCX.RV2, 
             WaitingUtils.GetAwaiter(out Task t), smh);
         smh.RunRIEnumerator(ap(abh));
         return t;
@@ -195,8 +196,8 @@ public static class SMReflection {
     /// <summary>
     /// Synchronous bullet pattern fire.
     /// </summary>
-    public static TaskPattern Sync(string style, V2RV2 rv2, SyncPattern sp) => smh => {
-        sp(new SyncHandoff(new DelegatedCreator(smh.Exec, style, null), rv2 + smh.GCX.RV2, smh, out var newGcx));
+    public static TaskPattern Sync(string style, GCXF<V2RV2> rv2, SyncPattern sp) => smh => {
+        sp(new SyncHandoff(new DelegatedCreator(smh.Exec, style, null), rv2(smh.GCX) + smh.GCX.RV2, smh, out var newGcx));
         newGcx.Dispose();
         return Task.CompletedTask;
     };
@@ -434,23 +435,23 @@ public static class SMReflection {
     
     #region Shortcuts
 
-    public static TaskPattern DangerBot() => Sync("danger", V2RV2.Rot(-3.2f, -6), 
-        "gsr2 3 <3.2,:> { root zero } summonsup tpnrot py lerp3 1 1.5 2 2.5 t 2.2 0 -2 wait".Into<SyncPattern>());
+    public static TaskPattern DangerBot() => Sync("danger", _ => V2RV2.Rot(-3.2f, -6), 
+        "gsr2 3 <3.2;:> { root zero } summonsup tpnrot py lerp3 1 1.5 2 2.5 t 2.2 0 -2 wait".Into<SyncPattern>());
     
-    public static TaskPattern DangerTop() => Sync("danger", V2RV2.Rot(-3.2f, 6), 
-        "gsr2 3 <3.2,:> { root zero } summonsup tpnrot py lerp3 1 1.5 2 2.5 t -2.2 0 2 wait".Into<SyncPattern>());
+    public static TaskPattern DangerTop() => Sync("danger", _ => V2RV2.Rot(-3.2f, 6), 
+        "gsr2 3 <3.2;:> { root zero } summonsup tpnrot py lerp3 1 1.5 2 2.5 t -2.2 0 2 wait".Into<SyncPattern>());
 
-    public static TaskPattern DangerLeft() => Async("danger", V2RV2.Rot(-7f, -3f),
-        "gcr2 24 4 <,2:> { root zero } summonsup tpnrot px lerp3 1 1.5 2 2.5 t 2.2 0 -2 wait".Into<AsyncPattern>());
+    public static TaskPattern DangerLeft() => Async("danger", _ => V2RV2.Rot(-7f, -3f),
+        "gcr2 24 4 <;2:> { root zero } summonsup tpnrot px lerp3 1 1.5 2 2.5 t 2.2 0 -2 wait".Into<AsyncPattern>());
     
-    public static TaskPattern DangerRight() => Async("danger", V2RV2.Rot(7f, -3f),
-        "gcr2 24 4 <,2:> { root zero } summonsup tpnrot px lerp3 1 1.5 2 2.5 t -2.2 0 2 wait".Into<AsyncPattern>());
+    public static TaskPattern DangerRight() => Async("danger", _ => V2RV2.Rot(7f, -3f),
+        "gcr2 24 4 <;2:> { root zero } summonsup tpnrot px lerp3 1 1.5 2 2.5 t -2.2 0 2 wait".Into<AsyncPattern>());
 
-    public static TaskPattern DangerLeft2() => Async("danger", V2RV2.Rot(-7f, -1f),
-        "gcr2 24 2 <,2:> { root zero } summonsup tpnrot px lerp3 1 1.5 2 2.5 t 2.2 0 -2 wait".Into<AsyncPattern>());
+    public static TaskPattern DangerLeft2() => Async("danger", _ => V2RV2.Rot(-7f, -1f),
+        "gcr2 24 2 <;2:> { root zero } summonsup tpnrot px lerp3 1 1.5 2 2.5 t 2.2 0 -2 wait".Into<AsyncPattern>());
     
-    public static TaskPattern DangerRight2() => Async("danger", V2RV2.Rot(7f, -1f),
-        "gcr2 24 2 <,2:> { root zero } summonsup tpnrot px lerp3 1 1.5 2 2.5 t -2.2 0 2 wait".Into<AsyncPattern>());
+    public static TaskPattern DangerRight2() => Async("danger", _ => V2RV2.Rot(7f, -1f),
+        "gcr2 24 2 <;2:> { root zero } summonsup tpnrot px lerp3 1 1.5 2 2.5 t -2.2 0 2 wait".Into<AsyncPattern>());
     
     #endregion
     

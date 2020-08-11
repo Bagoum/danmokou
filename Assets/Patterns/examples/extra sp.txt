@@ -9,7 +9,7 @@ phase 0
 phase 0
     action block 0
 		position -2 0
-		async _ <1,:> gcr2 600 _ <360h> {
+		async _ <1;:> gcr2 600 _ <360h> {
 			p this
 		} {
 			color sakura-green* treearrow p 7  0.3 0.35 {
@@ -22,8 +22,8 @@ phase 0
 phase 0
     action block 0
 		position 0 0
-		async lcircle-blue/w <2,1:180> gir2 160 _ <360h> . oarrowi 9 0.4 0.2 {} s tprot cx 2
-		async lcircle-red/w <2,1:> gir2 160 _ <360h> . gsrf 8 rxy * -0.4 &aixd * 0.3 &aiyd {
+		async lcircle-blue/w <2;1:180> gir2 160 _ <360h> . oarrowi 9 0.4 0.2 {} s tprot cx 2
+		async lcircle-red/w <2;1:> gir2 160 _ <360h> . gsrf 8 rxy * -0.4 &aixd * 0.3 &aiyd {
 			bindArrow
 		} s tprot cx 2
 		

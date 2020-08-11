@@ -6,6 +6,6 @@ phase 0
 			wt	2 3
 			wait-child
 		} {
-			async strip-red/w <1,:> gcr2 1 2 <10> . s tprot cx 10
-			async strip-blue/w <1,:180> gcr2 1 2 <10> . s tprot cx 10
+			async strip-red/w <1;:> gcr2 1 2 <10> . s tprot cx 10
+			async strip-blue/w <1;:180> gcr2 1 2 <10> . s tprot cx 10
 		}

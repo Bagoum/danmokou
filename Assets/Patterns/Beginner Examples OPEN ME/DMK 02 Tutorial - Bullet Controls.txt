@@ -1,0 +1,162 @@
+pattern { }
+phase 0
+	action block 0
+		shift-phase-to 1
+		
+## In this tutorial, we're going to take a look at bullet-controls, which is the easiest way to apply fancy effects to bullets.
+## To go between sections of the tutorial, change the "shift-phase-to" value above, and then press R in the game view to reload the script.
+
+<!> type non  `Bullet Controls 1` #{
+<!> root 0 1
+phase 0
+	action block 0
+		## First, let's set up a persistent bullet control on circle bullets, that causes them to flip off the ceiling (y = 4). 
+		## The arguments to bullet-control are: a function that returns whether or not the control should continue existing every frame,
+		##	 a list of lists of bullet styles (see next section), and a bullet control function.
+		## "persist" is an alias for "true", so the control continues indefinitely.
+		## We are using flipy> (flipygt), which takes as arguments a y-value to flip against, and a condition for flipping. y=4 is the highest visible point on the screen.
+			## You can find the list of bullet controls in Danmaku/BulletManagement/BulletControls.cs.
+		## We don't need to apply an extra condition yet, so we'll use the trivial condition "_", which is an alias for "true".
+		bullet-control(persist, { { circle-* } }, flipy>(4, _))
+		async circle-red/w <1;:> gcrepeat {
+			wait(60)
+			times(_)
+		} gsrepeat {
+			times(60)
+			circle
+		## Note: for various reasons, you should only use flip commands with velocity-based movement.
+		} s(rvelocity(cx(4)))
+		## Bullet controls and bullets are destroyed by default at the end of a phase if you declare a phase type that is a card type (ie. nonspell, spell, timeout, final).
+		## We can also delete them manually by using pool-control.
+		## pool-control is similar to bullet-control, but applies to the entire set of bullets rather than individual bullets. The RESET pool control removes all current bullet controls.
+		## _(4, child) delays the child by 4 seconds. 
+		_(4, pool-control({ { circle-* } }, reset))
+#}
+		
+
+## This time, we'll take a closer look at the style selector.
+<!> type non  `Bullet Controls 2` #{
+<!> root 0 1
+phase 0
+	action block 0
+		## In the first section, we used { { circle-* } } as the style selector. The style selector can use wildcards at the beginning or end of strings to select all matching styles. However, we can be more specific.
+		## This time, we'll take advantage of the list of lists. We declare two lists. The first one contains wildcards, and the second one doesn't. Internally, these lists will be merged using recursive wildcard merging, to create one list with the Cartesian product of merges: { circle-red/w circle-blue/w ellipse-red/w ellipse-blue/w }.
+		bullet-control(persist, { { circle-* ellipse-* } { red/w blue/w } }, flipy>(4, _))
+		## Now, we'll summon a lot of different bullet styles. In the upper loop, we'll switch between colors. In the lower loop, we'll switch between shapes.
+		## When we do this, observe that the triangle bullets do not flip, and the green bullets do not flip. That is because our style selector only encompasses bullets that are circle/ellipse and red/blue. 
+		async(*/w, <1;:5>, girepeat({
+				wait(60)
+				times(_)
+				color({ *-red *-blue *-green })
+			}, gcrepeat({
+					wait(10)
+					times(3)
+					color({ circle ellipse triangle })
+					rv2incr(<2>)
+				}, gsrepeat({
+						times(20)
+						circle
+					}, s(rvelocity(cx(2)))
+					)
+				)
+			)
+		)
+#}	
+	
+
+## This time, we'll add a non-persistent control that only lasts for two seconds. 
+<!> type non  `Bullet Controls 3` #{
+<!> root 0 1
+phase 0
+	action block 0
+		## Let's create a timer object to keep track of time. 
+		timer restart mytimer
+		## The condition is "the number of seconds on mytimer is less than 2", ie. bullets will only bounce for 2 seconds.
+		bullet-control(< timersec(mytimer) 2, { { circle-* } }, flipy>(3.5, _))
+		async circle-red/w <1;:> gcrepeat {
+			wait 30
+			times _
+		} gsrepeat {
+			times 60
+			circle
+		} s rvelocity cx 2
+#}
+		
+
+## This time, we'll add a non-persistent control that lasts for one frame.
+<!> type non  `Bullet Controls 4` #{
+<!> root 0 1
+phase 0
+	action block 0
+		##Every 40 frames, we will turn all the circle-red/w bullets that are more than 1 second old into arrow-red/b bullets.
+		gtr {
+			wait 40
+			times _
+			for 3s
+			## once is an alias for false, so the control operates one and then deletes itself.
+			## The "batch" control allows us to run several commands together when a condition is satisfied. 
+			## The condition > t 1 means that only bullets older than one second will be affected.
+		} bullet-control(once, circle-red/w, batch(> t 1, {
+			## This time, we will use the "restyleeffect" control, which changes the style of the bullet while summoning an effect bullet at the location.
+			## cwheel is the only currently implemented effect bullet.
+			## We can set the condition to _ here because  > t 1 is already checked in the batch command.
+			restyleeffect(arrow-red/b, cwheel-red/, _))
+			## The sfx command simply plays a sound effect. The set of sound effects that can be accessed like this is visible in the game object GameManagement/SFXService/SFX. 
+			sfx(x-transform-1, _)
+		})
+		async circle-red/w <1;:> gcrepeat {
+			wait 10
+			times _
+			for 4s
+			rv2incr <6>
+		} gsrepeat {
+			times 30
+			circle
+		} s rvelocity cx 2
+#}
+
+
+## This time, we'll look at the SM control.
+<!> type non `Bullet Controls 5` #{
+<!> root 0 0
+phase 0
+	action block 0
+		sync lstar-blue/w <> gsr {
+			times 8
+			circle
+			## Bullets have a "firing index", which is generally used to store the iteration number within a repeat.
+			## By writing "p this", we tell the repeater to save its iteration number (0 through 7 in this case) in each bullet.
+			## We can also use bindItr to achieve this.
+			p this
+			## sdd summons a bullet with an angular rotation function and a path.
+			## The angular rotation is * 200 t, which makes the bullet rotate very fast around its center.
+			## The lerp function here signifies that between t=0.2 and t=1, the bullet speed will lerp from 3 to 0.
+		} sdd(* 200 t, rvelocity(lerp(0.2, 1, t, cx 3, zero)))
+		## Once the bullet is 1.2 seconds old, with an offset based on the firing index, we will destroy it while summoning an effect bullet in its place. This process is called softculling.
+		## By using the firing index as an offset for the condition, we can make the control behave differently on each bullet.
+		## Let's define the condition in a macro. Macros are realized during the parsing step, so the text is effectively copied wherever the macro is used.
+		## We will discuss the power of macros more later, but for now, this is a simple one-line macro, which has the format !!{ macroName macroValue
+!!{ cond > t (+ 1.2 * 0.4 p)
+		## You might wonder why the softcull command comes first here. If we destroy the bullet, then how can we run the SM control below it?
+		## The answer is that bullet controls have an enforced internal ordering. Cull/Softcull are always run last. Even if we write Cull down first, the SM command will occur first.
+		## Note that this ordering is not enforced for pathers/lasers/summons (to be discussed in a later tutorial).
+		## We can invoke one-line macros by using $macroName.
+		bullet-control(persist, lstar-blue/w, softcull(cwheel-blue/w, $cond))
+		## bullet-control-sm is a special control. When the condition is satisfied, the bullet will spawn an invisible node (inode) at its position, which then runs the StateMachine defined.
+		bullet-control-sm(persist, lstar-blue/w, $cond,
+			async sakura-*/w <> gir {
+				## Let's play the SFX only once when the firing starts. 
+				## Since sfx commands are resolved on every loop, we need a container to run the sfx command.
+				## Try putting the sfx command in the gcrepeat below and see what happens.
+				sfx(x-fire-burst-1)
+			} gcrepeat {
+				wait(16)
+				times(12)
+				## We want to color the bullets according to the firing index of the original bullet, so we use "p" as an indexer to colorf.
+				colorf({ red pink purple blue teal green yellow orange }, p)
+			} s(rvelocity(lerp(0.2, 1, t, cx 2, cx 4)))
+			)
+#}
+
+
+

@@ -1,0 +1,99 @@
+pattern { }
+phase 0
+	action block 0
+		shift-phase-to 1
+## In this script, we're going to replicate Nue's card from UFO extra, Danmaku Chimera.
+## I have made the code here as friendly as possible, but it could definitely be made more efficient. This said, DMK is a powerful enough engine that you generally don't need to worry about optimizing scripts.
+
+<!> type spell  `Danmokou Chimera` #{
+<!> root 0 0.5
+phase 40
+## First, let's define macros for the time that the bullets will remain in the "circle" and "line" states, in seconds.
+!!{ linet 1
+!!{ circt 3
+## This is the number of keine bullets we will fire in a circle.
+!!{ crpt 16
+	action block 0
+		## We'll define a movement function to keep the boss shifting around. 
+		## It's much larger than the actual Danmaku Chimera movement, but it will allow you to see the effects of some of the stranger code. 
+		move _ nroffset px sine 8p 2 t
+	
+		gtrepeat {
+			wait(0)
+			times(_)
+			rv2incr(<22h>)
+			wait-child
+		## saction = sequential actions
+		} saction 0
+			## For every line-circle loop, the boss will fire another circle of keine (long arrow) bullets.
+			sync keine-purple/w <1;:> gsrepeat {
+				times($crpt)
+				circle
+				sfx(x-fire-tech-8)
+				## When the circle bullets rotate, they need to rotate around the point the boss was at when the keine bullets were summoned.
+				## To do this, we save the boss' current position (`loc`) to per-bullet data.
+				start {
+					rootloc =v2 loc
+				}
+				## Any variables within the gXr context will be saved to private bullet information if they are used in the path functions.
+				## However, since we are not using rootloc in the path function below, we need to expose it manually.
+				## Expose takes an array of (type, variable)s to expose.
+				expose { 
+					v2 rootloc
+				}
+			} s(rvelocity(px(2)))
+			wait($linet)
+			## Once the keine bullets are more than LINET seconds old, we need to destroy them and summon circles in their place.
+			bullet-control(once, keine-purple/w, cull, _)
+			bullet-control-sm(once, keine-purple/w, _)
+				## Each keine bullet will summon 13 glowy circles in its place.
+				sync gcircle-*/w <> gsrepeat {
+					times(13)
+					sfx(x-fire-tech-6)
+					## By default, the firing root is the location of the executor. 
+					## We need to move it back to the location where the keine bullets were fired from.
+					root	(&rootloc)
+					## Since we want to use angular rotation, we get the position from the root to the keine bullet as a distance. 
+					## This will be our base polar radius.
+					start	 {
+						r =f dist(loc, &rootloc)
+					}
+					## Alternating circles will rotate in opposite directions. To emphasize this, we'll give them different colors as well.
+					bindLR
+					color({ blue purple })
+					## When we resummon the keine bullets, we will do so by spawning them from the first bullet summoned here, ie. checking bulletn=0.
+					## Also, we will use bulletn to give each bullet a different radius of rotation.
+					bindItr(bulletn)
+					expose { 
+						## We don't use rootloc below, so we need to manually expose it.
+						## However, we do use bulletn below, so we don't have to expose it.
+						v2 rootloc
+					}
+				} s polar
+					## The radius of rotation decreases by 0.2 for each bullet summoned.
+					- &r * 0.2 &bulletn
+					## For the angle, we want to move the bullets two keine bullets worth of angle over. The keine bullets are spread evenly over 360 degrees, so two keine bullets worth of angle is * 2 / 360 $crpt.
+					## We want to move through this angle smoothly, so we use the LerpSmooth(smoother, time0, time1, controller, value0, value1) command. We set the controller to `t`. At t = 0, the value is 0. At t = $circt, the value is * &lr * 2 / 360 $crpt. 
+					## Note that the angle offset of the original keine bullet is automatically passed down and applied. If we use `face(derot)` above, then all of these bullets would summon with a real angle of 0 and overlap in quite ugly fashion.
+					lerpsmooth(io-sine, 0, $circt, t,  0, (* &lr * 2 / 360 $crpt))
+			wait($circt)
+			## After $circt, we destroy the circle bullets, and resummon the keine bullets from them. 
+			bullet-control(once, gcircle-*, cull, _)
+			## Note that there is a period in &.bulletn. For scripting safety, when accessing private bullet data from external sources, you must use &. instead of & to explicitly mark your intention. This is because if you use an incorrect variable here, for example &.undeclaredvariable, then the engine will throw strange and undebuggable errors, so this is enforced to keep debuggability reasonable.
+			## You can remove this functionality in Danmaku/Utils/Ex/ReflectEx.cs:ReferenceExpr<T>.
+			bullet-control-sm(once, gcircle-*, = &.bulletn 0,
+			## addtime allows us to add time offset to bullets. This is used internally to support half-frame summoning. Here, we are using it to get around a feature of the engine.
+			## Notice that whenever bullets are summoned, they initially have zero size and then scale into their full size. (If you are using the Legacy  Renderer, you cannot see this.) This is set by "ScaleInTime" on bullet prefabs. However, we don't want that to happen to the resummoned bullets. By adding one second to their time, we ensure that they appear instantaneously. 
+				sync keine-purple/w <-90> addtime 1s gsrepeat {
+					## We don't know the angle that the keine bullet should be fired at given that the circle bullets have changed position.
+					## But since the circle bullets have only radial movement, we can summon perpendicular to the velocity vector in order to summon outwards in a circle. Thus, face(velocity) with a -90 angle offset.
+					face(velocity)
+					expose {
+						v2 rootloc
+					}
+					## Since we artificially added time to the bullet, we need to set its velocity to zero during the missing time.
+					## If we don't, the engine will simulate the missing time for us. This is a highly useful feature, but it's not what we want here.
+					## You can try replacing the below with just `s rvelocity cx 2`, see what happens!
+				} s rvelocity if((> t 1), cx 2, zero)
+			)
+

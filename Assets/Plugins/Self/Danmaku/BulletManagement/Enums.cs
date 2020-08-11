@@ -116,5 +116,95 @@ public static class Enums {
         /// </summary>
         RANG
     }
+    
+
+    /// <summary>
+    /// Enum describing the direction in which a bullet is fired from a parent.
+    /// </summary>
+    public enum Facing {
+        /// <summary>
+        /// Starts from beh.original_angle. This is zero except for summons,
+        /// for which it is set to the V2RV2 angle of the summon.
+        /// </summary>
+        ORIGINAL,
+        /// <summary>
+        /// Starts from 0.
+        /// </summary>
+        DEROT, 
+        /// <summary>
+        /// Starts from the velocity direction of the BEH.
+        /// </summary>
+        VELOCITY, 
+        /// <summary>
+        /// Starts from original_angle + the velocity direction.
+        /// </summary>
+        ROTVELOCITY
+    }
+    
+
+    /// <summary>
+    /// Enum describing the type of a phase within a pattern script.
+    /// </summary>
+    public enum PhaseType {
+        /// <summary>
+        /// Nonspells.
+        /// </summary>
+        NONSPELL,
+        /// <summary>
+        /// Spells. Automatically summons a spell cutin and spell circle if applicable.
+        /// </summary>
+        SPELL,
+        /// <summary>
+        /// Timeouts. Same as SPELL, but also sets the HP to infinity and gives full rewards for timing out.
+        /// </summary>
+        TIMEOUT,
+        /// <summary>
+        /// Final spell. Same as SPELL, but doesn't drop value items on completion.
+        /// </summary>
+        FINAL,
+        /// <summary>
+        /// Dialogue section. The score multiplier is granted lenience and the executor is granted infinite health during this.
+        /// </summary>
+        DIALOGUE,
+        /// <summary>
+        /// Standard stage section. Only use in stage scripts.
+        /// </summary>
+        STAGE,
+        /// <summary>
+        /// A stage section wrapping a midboss summon. Only use in stage scripts.
+        /// </summary>
+        STAGEMIDBOSS,
+        /// <summary>
+        /// A stage section wrapping an endboss summon. Only use in stage scripts.
+        /// </summary>
+        STAGEENDBOSS
+    }
+
+    public static bool IsStageBoss(this PhaseType st) => st == PhaseType.STAGEENDBOSS || st == PhaseType.STAGEMIDBOSS;
+    public static bool IsPattern(this PhaseType st) => st.IsCard() || st.IsStage();
+    public static bool IsLenient(this PhaseType st) => st == PhaseType.DIALOGUE;
+    public static bool IsStage(this PhaseType st) => st == PhaseType.STAGE;
+    public static bool RequiresHPGuard(this PhaseType st) => st == PhaseType.DIALOGUE || st.IsCard();
+    public static bool RequiresFullHPBar(this PhaseType st) => st == PhaseType.FINAL || st == PhaseType.TIMEOUT;
+    public static bool IsCard(this PhaseType st) => st == PhaseType.NONSPELL || st.IsSpell();
+    public static bool IsSpell(this PhaseType st) =>
+        st == PhaseType.SPELL || st == PhaseType.TIMEOUT || st == PhaseType.FINAL;
+    public static PhaseType Invert(this PhaseType st) {
+        if (st.IsSpell()) return PhaseType.NONSPELL;
+        if (st == PhaseType.NONSPELL) return PhaseType.SPELL;
+        return st;
+    }
+
+    public static float? HPBarLength(this PhaseType st) {
+        if (st.IsSpell()) return 1f;
+        if (st == PhaseType.NONSPELL) return 0.5f;
+        return null;
+    }
+    public static int? DefaultHP(this PhaseType st) {
+        if (st == PhaseType.TIMEOUT || st == PhaseType.DIALOGUE) return 1000000000;
+        return null;
+    }
+
+
 }
 }

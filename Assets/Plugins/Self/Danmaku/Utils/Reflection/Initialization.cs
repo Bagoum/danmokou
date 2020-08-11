@@ -117,18 +117,18 @@ public static partial class Reflector {
             ('p', Enums.Persistence.PERSISTENT),
             ('o', Enums.Persistence.ONCE)
         });
-        CEnum<Facing>(new[] {
-            ('o', Facing.ORIGINAL),
-            ('d', Facing.DEROT),
-            ('v', Facing.VELOCITY),
-            ('r', Facing.ROTVELOCITY)
+        CEnum<Enums.Facing>(new[] {
+            ('o', Enums.Facing.ORIGINAL),
+            ('d', Enums.Facing.DEROT),
+            ('v', Enums.Facing.VELOCITY),
+            ('r', Enums.Facing.ROTVELOCITY)
         });
-        SEnum<PhaseType>(new[] {
-            ("non", PhaseType.NONSPELL),
-            ("spell", PhaseType.SPELL),
-            ("final", PhaseType.FINAL),
-            ("timeout", PhaseType.TIMEOUT),
-            ("dialogue", PhaseType.DIALOGUE)
+        SEnum<Enums.PhaseType>(new[] {
+            ("non", Enums.PhaseType.NONSPELL),
+            ("spell", Enums.PhaseType.SPELL),
+            ("final", Enums.PhaseType.FINAL),
+            ("timeout", Enums.PhaseType.TIMEOUT),
+            ("dialogue", Enums.PhaseType.DIALOGUE)
         });
         SEnum<ExType>(new[] {
             ("f", ExType.Float),

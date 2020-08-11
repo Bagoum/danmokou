@@ -16,7 +16,7 @@ phase 0
 			rx		regpolyr &R 5 &th
 			## if -rx/h < tan phi < rh/h then h*sec(th) else rx*csc(th)
 			##phc	atan2 &rx &h
-			r	if <(&phe; atanr2 &rx &h)
+			r	if <(&phe, atanr2 &rx &h)
 					/ &h cos &phe
 					/ &rx sin &phe
 		} offset zero

@@ -11,7 +11,7 @@ phase 0 #{
         clear bullet
 	action block 0
 		position 0 2
-		async gcircle-* <0.5,:> gcr { wt 50 _ rpp <6h> color { red/b purple/b } } repeat 20 <18> repeat 10 <1> s tprot cx 2
+		async gcircle-* <0.5;:> gcr { wt 50 _ rpp <6h> color { red/b purple/b } } repeat 20 <18> repeat 10 <1> s tprot cx 2
 #}
 
 <!> type non `Onion Layer Cutting 1`
@@ -21,7 +21,7 @@ phase 0 #{
         clear bullet
 	action block 0
 		position 0 2
-		async gcircle-* <0.5,:> gcr { 
+		async gcircle-* <0.5;:> gcr { 
 			wt 60 _ 
 			rpp <5h> 
 			color { red/b purple/b }
@@ -38,7 +38,7 @@ phase 0 #{
         clear bullet
 	action block 0
 		position 0 2
-		async gcircle-* <,:10> gcr2 45 _ <> { 
+		async gcircle-* <;:10> gcr2 45 _ <> { 
 			color { red/ purple/ }
 			preloop { 
 				pm =f pm1mod t 

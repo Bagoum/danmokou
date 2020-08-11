@@ -44,32 +44,32 @@ phase 33 #{
 		@ nrb
 			position 6 -6.5
 !{
-regpolyeq(R; n; trate)
+regpolyeq(R, n, trate)
 	:: { 	R	%R
 		n	%n
 		f	/ pi &n
 		2f	* 2 &f
-		ang0	- - pi *(*(1.5; pi); /(-(&n; 2); &n)) &2f
+		ang0	- - pi *(*(1.5, pi), /(-(&n, 2), &n)) &2f
 		ang0d	raddeg(&ang0)
-		s 	* 2 *(&R; sin(&f))
+		s 	* 2 *(&R, sin(&f))
 		efft	* t %trate
 		effp	* 12 p
 		j 	// &efft &2f
-		modt 	mod(&2f; &efft)
-		smt	+ * 0.5 &modt * 0.5 smoothloopr(io-sine; &2f; &modt)	
-		angj	+ &ang0 *(&2f; &j)
+		modt 	mod(&2f, &efft)
+		smt	+ * 0.5 &modt * 0.5 smoothloopr(io-sine, &2f, &modt)	
+		angj	+ &ang0 *(&2f, &j)
 		prm 	+ &ang0 degrad(&effp)
 		r	regpolyr &R &n - &prm &ang0
-		##r 	/ *(&R; cos(&f)) cos(- mod(&2f; +(*(3; &2f) -(&prm; &ang0))) &f)
-		x 	- *(&r; cos(&prm)) *(&R; cos(&angj))
-		y 	- *(&r; sin(&prm)) *(&R; sin(&angj))	
+		##r 	/ *(&R, cos(&f)) cos(- mod(&2f, +(*(3, &2f) -(&prm, &ang0))) &f)
+		x 	- *(&r, cos(&prm)) *(&R, cos(&angj))
+		y 	- *(&r, sin(&prm)) *(&R, sin(&angj))	
 		}
 	offset
 	##+  cr &R &ang0d
 	+  rx
-			mag2(&x; &y)
-			raddeg(-(atan2(&y; &x); +(*(&2f; &j); &smt)))
-		pxy *(&j; &s) 0 
+			mag2(&x, &y)
+			raddeg(-(atan2(&y, &x), +(*(&2f, &j), &smt)))
+		pxy *(&j, &s) 0 
 	zero
 !}
 		@ nlb
@@ -77,25 +77,25 @@ regpolyeq(R; n; trate)
 				wait	clamp 5s 8s linear 8.5s -1.4s &i
 				t	12
 				start	rv2.rx +=f rand -1 0
-			} pssfx x-fire-burst-1 repeat 30 <> s $regpolyeq(4.5; 5; 0.4)
+			} pssfx x-fire-burst-1 repeat 30 <> s $regpolyeq(4.5, 5, 0.4)
 		@ nrt
-			bullet gcircle-pink/b <,:180> gcr {
+			bullet gcircle-pink/b <;:180> gcr {
 				wait	clamp 5s 8s linear 8.5s -1.2s &i
 				t	12
 				start	rv2.rx +=f rand -1 0
-			} repeat 30 <> s $regpolyeq(4.5; 5; 0.44)
+			} repeat 30 <> s $regpolyeq(4.5, 5, 0.44)
 		@ nlt
-			bullet gcircle-green/w <,:-90> idelay 4s gcr {
+			bullet gcircle-green/w <;:-90> idelay 4s gcr {
 				wait	clamp 5s 8s linear 8.5s -1.4s &i
 				t	12
 				start	rv2.rx +=f rand -1 0
-			} pssfx x-fire-burst-1 repeat 30 <> s $regpolyeq(5; 6; 0.32)
+			} pssfx x-fire-burst-1 repeat 30 <> s $regpolyeq(5, 6, 0.32)
 		@ nrb
-			bullet gcircle-orange/w <,:90> idelay 4s gcr {
+			bullet gcircle-orange/w <;:90> idelay 4s gcr {
 				wait	clamp 5s 8s linear 8.5s -1.2s &i
 				t	12
 				start	rv2.rx +=f rand -1 0
-			} repeat 30 <> s $regpolyeq(5; 6; 0.36)
+			} repeat 30 <> s $regpolyeq(5, 6, 0.36)
 #}
 
 ## 2. Spell: Christmas Tree (cu: come on boy fall)
@@ -112,12 +112,12 @@ phase 36 #{
 		@ nt
 			action block 0
 			position 0 6
-			bullet gpather18-* <-6,:> gcr2 360 _ <> {
+			bullet gpather18-* <-6;:> gcr2 360 _ <> {
 				p this 
 				color { blue* pink* green* orange* }
-			} gsr2 2 <,0.05:> {
+			} gsr2 2 <;0.05:> {
 				color { /b /w }
-			} gsr2 4 <4,:> {
+			} gsr2 4 <4;:> {
 				p add
 			} pather 3 2.5 nroffset
 				rotate 180
@@ -137,29 +137,29 @@ phase 36 #{
 	action block 0
 		setstate vulnerable true
 		position 0 2
-		bullet arrow-purple/w <> cre 30 10 <,:10h> pssfx x-fire-burst-2 repeat 36 <,:10> s polar
+		bullet arrow-purple/w <> cre 30 10 <;:10h> pssfx x-fire-burst-2 repeat 36 <;:10> s polar
 			* (+ 1 * 2 t) regpolyr 1 3 degrad * 10 p
 			0
 	action block 1.5
-		bullet arrow-red/w <> cre 30 10 <,:10h> pssfx x-fire-burst-1repeat 36 <,:10> s polar
+		bullet arrow-red/w <> cre 30 10 <;:10h> pssfx x-fire-burst-1repeat 36 <;:10> s polar
 			* (+ 1 * 2 t) regpolyr 1 4 degrad * 10 p
 			0
 	action nb 1.5
-		bullet arrow-green/w <> cre 30 10 <,:10h> pssfx x-fire-burst-2 repeat 36 <,:10> s polar
+		bullet arrow-green/w <> cre 30 10 <;:10h> pssfx x-fire-burst-2 repeat 36 <;:10> s polar
 			* (+ 1 * 2 t) regpolyr 1 5 degrad * 10 p
 			0
 	action block 0
 		pool-control { { arrow-* } { blue/w pink/w teal/w } } allowcull false
-		bullet-control persist { { arrow-* } { blue/w pink/w teal/w } } cull relcirc mokou <0,0,0.1>
-		bullet arrow-blue/w <> cre 60 10 <,:10h> repeat 36 <,:10> s polar
+		bullet-control persist { { arrow-* } { blue/w pink/w teal/w } } cull relcirc mokou <0;0;0.1>
+		bullet arrow-blue/w <> cre 60 10 <;:10h> repeat 36 <;:10> s polar
 			* (- 20 * 1.5 t) regpolyr 1 3 degrad * 10 p
 			0
 	action block 0
-		bullet arrow-pink/w <> cre 60 10 <,:10h> repeat 36 <,:10> s polar
+		bullet arrow-pink/w <> cre 60 10 <;:10h> repeat 36 <;:10> s polar
 			* (- 20 * 1.5 t) regpolyr 1 4 degrad * 10 p
 			0
 	action block 0
-		bullet arrow-teal/w <> cre 60 10 <,:10h> repeat 36 <,:10> s polar
+		bullet arrow-teal/w <> cre 60 10 <;:10h> repeat 36 <;:10> s polar
 			* (- 20 * 1.5 t) regpolyr 1 5 degrad * 10 p
 			0
 #}
@@ -176,10 +176,10 @@ phase 38 #{
 	action block 0
 		setstate vulnerable true
 		position 0 2
-		bullet arrow-yellow/w <> cre 120 _ <,:19.9> pssfx x-fire-burst-1repeatp add 60 <,:6> s polar
+		bullet arrow-yellow/w <> cre 120 _ <;:19.9> pssfx x-fire-burst-1repeatp add 60 <;:6> s polar
 			* (+ 0.5 * 1.2 t) regpolyr 1 5 degrad * 6 p2
 			softmaxshift t 0.5 2 0 * (+ 12 * 0.32 p1) t
-		bullet arrow-blue/w <> idelay 60 cre 120 _ <,:-24.875> pssfx x-fire-burst-2 repeatp add 60 <,:6> s polar
+		bullet arrow-blue/w <> idelay 60 cre 120 _ <;:-24.875> pssfx x-fire-burst-2 repeatp add 60 <;:6> s polar
 			* (+ 0.5 * 1.4 t) regpolyr 1 4 degrad * 6 p2
 			 softmaxshift t -0.1 2 * (+ 60 * 5 p1) t 0
 #}
@@ -191,7 +191,7 @@ phase 38 #{
 <!> hpbar 1
 phase 39 #{
 !{
-innerfire2(method; n; ct; angd; angoff; rot)
+innerfire2(method, n, ct, angd, angoff, rot)
 repeatp add %ct <> s :: { 
 		thd	* %angd p2
 		r	regpolyr 1 %n degrad &thd
@@ -200,12 +200,12 @@ repeatp add %ct <> s :: {
 		+ + &thd %angoff * %rot t
 !}
 !{
-polyfire2(n; ct; angd; angoff; rot)
-$innerfire2(regpolyr; %n%; %ct%; %angd%; %angoff%; %rot%)
+polyfire2(n, ct, angd, angoff, rot)
+$innerfire2(regpolyr, %n%, %ct%, %angd%, %angoff%, %rot%)
 !}
 !{
-starfire2(n; ct; angd; angoff; rot)
-$innerfire2(reg2starr; %n%; %ct%; %angd%; %angoff%; %rot%)
+starfire2(n, ct, angd, angoff, rot)
+$innerfire2(reg2starr, %n%, %ct%, %angd%, %angoff%, %rot%)
 !}
 
 	end
@@ -221,14 +221,14 @@ $innerfire2(reg2starr; %n%; %ct%; %angd%; %angoff%; %rot%)
 			position 4 2
 			move 0.25 tpnrot eased io-sine 0.25 cx -32
 			bullet x-move-anime <> conce sfx
-			bullet arrow-* <,:> gir2 15 3 <,:25> { p this  color { pink/w blue/w orange/w } } icacheloc idelay 30 isfx x-fire-burst-1crepeatp defer 60 3 <,:30> $polyfire2((+ 3 p1); 60; 6; 90; 6)
-			bullet arrow-* <,:> gir2 15 3 <,:25> { p this  color { red/w purple/w yellow/w } } icacheloc idelay 75 isfx x-fire-burst-1crepeatp defer 60 3 <,:60> $polyfire2((+ 3 p1); 60; 6; + 90 / 180 (+ 3 p1); 6)
+			bullet arrow-* <;:> gir2 15 3 <;:25> { p this  color { pink/w blue/w orange/w } } icacheloc idelay 30 isfx x-fire-burst-1crepeatp defer 60 3 <;:30> $polyfire2((+ 3 p1), 60, 6, 90, 6)
+			bullet arrow-* <;:> gir2 15 3 <;:25> { p this  color { red/w purple/w yellow/w } } icacheloc idelay 75 isfx x-fire-burst-1crepeatp defer 60 3 <;:60> $polyfire2((+ 3 p1), 60, 6, + 90 / 180 (+ 3 p1), 6)
 		action block 3
 			move 1 tpnrot eased io-sine 1 ss 0 vhometime 1 cxy -5 -3.5
 		action block 0
 			position -5 -3.5
-			bullet strip-* <,:> gir2 60 3 <> { p this  color { pink/w blue/w orange/w } } icacheloc itarget Lplayer idelay 30 isfx x-fire-burst-2 crepeatp defer 60 3 <,:6p> $polyfire2(3; 60; 6; 0; 0)
-			bullet ellipse-* <,:> gir2 60 3 <> { p this  color { red/w purple/w yellow/w } } icacheloc itarget Lplayer idelay 45 isfx x-fire-burst-2 crepeatp defer 60 3 <,:5p> $polyfire2(4; 72; 5; 0; 0)
+			bullet strip-* <;:> gir2 60 3 <> { p this  color { pink/w blue/w orange/w } } icacheloc itarget Lplayer idelay 30 isfx x-fire-burst-2 crepeatp defer 60 3 <;:6p> $polyfire2(3, 60, 6, 0, 0)
+			bullet ellipse-* <;:> gir2 60 3 <> { p this  color { red/w purple/w yellow/w } } icacheloc itarget Lplayer idelay 45 isfx x-fire-burst-2 crepeatp defer 60 3 <;:5p> $polyfire2(4, 72, 5, 0, 0)
 			bullet x-move-anime <> cre 60 3 <> sfx
 			move 1 tpnrot eased io-sine 1 multiplyy
 				if (> t 0.5) -1 1 
@@ -238,25 +238,25 @@ $innerfire2(reg2starr; %n%; %ct%; %angd%; %angoff%; %rot%)
 		action block 5
 			position 4.5 -6
 			move 1 tpnrot eased out-sine 1 cy 16
-			bullet keine-yellow/w <> cre 10 6 <> target Lplayer pssfx x-keine repeat 60 <,:6> s polar 
+			bullet keine-yellow/w <> cre 10 6 <> target Lplayer pssfx x-keine repeat 60 <;:6> s polar 
 				* * 1.7 t regpolyr 1 3 degrad * 6 p
 				0
 		action block 1
 			position -4.5 6
 			move 1 tpnrot eased out-sine 1 cy -16
-			bullet keine-orange/w <> cre 10 6 <> target Lplayer pssfx x-fire-burst-2 repeat 60 <,:6> s polar 
+			bullet keine-orange/w <> cre 10 6 <> target Lplayer pssfx x-fire-burst-2 repeat 60 <;:6> s polar 
 				* * 1.7 t regpolyr 1 4 degrad * 6 p
 				0
 		action block 2
 			position 4.5 -6
 			move 1 tpnrot eased out-sine 1 cy 16
-			bullet keine-blue/w <> cre 10 6 <> target Lplayer pssfx x-keine repeat 60 <,:6> s polar 
+			bullet keine-blue/w <> cre 10 6 <> target Lplayer pssfx x-keine repeat 60 <;:6> s polar 
 				* * 1.7 t regpolyr 1 6 degrad * 6 p
 				0
 		action block 1
 			position -4.5 6
 			move 1 tpnrot eased out-sine 1 cy -16
-			bullet keine-teal/w <> cre 10 6 <> target Lplayer pssfx x-fire-burst-2 repeat 60 <,:6> s polar 
+			bullet keine-teal/w <> cre 10 6 <> target Lplayer pssfx x-fire-burst-2 repeat 60 <;:6> s polar 
 				* * 1.7 t regpolyr 1 5 degrad * 6 p
 				0
 		action block 0
@@ -287,12 +287,12 @@ phase 37 #{
 		@ nz
 			action block 0
 				position 0 0
-				bullet laser16-yellow/ws <-4.5,8:> conce repeat 5 <> slaser 0 -90
+				bullet laser16-yellow/ws <-4.5;8:> conce repeat 5 <> slaser 0 -90
 					offset zero pxy 
 						sine 5 1.5 (+ t * 0.5 p) 
 						0
 					0 100
-				bullet laser16-teal/ws <4.5,8:> conce repeat 5 <> slaser 0 -90
+				bullet laser16-teal/ws <4.5;8:> conce repeat 5 <> slaser 0 -90
 					offset zero pxy 
 						sine 5 1.5 (* -1 +(t * 0.5 p))
 						0
@@ -320,7 +320,7 @@ phase 37 #{
 					x	+ + &px * &i1 &stp1x * &i2 &stp2x
 					y	+ + &py * &i1 &stp1y * &i2 &stp2y
 					z	+ + &pz * &i1 &stp1z * &i2 &stp2z
-					ts	+ /(-(1; cos t); +(1; t)) *  ^(t; 1.02) / atan2(t; 3) hpi
+					ts	+ /(-(1, cos t), +(1, t)) *  ^(t, 1.02) / atan2(t, 3) hpi
 				} offset zero projectview
 					* 10 * 1 &ts
 					* 8 * 1 &ts
@@ -350,23 +350,23 @@ phase 42 #{
 		setstate vulnerable true
 		position 0 2
 		bullet x-fire-burst-2 <> cre 48 12 <> sfx
-		bullet arrow-pink/w <> idelay 0 cre 144 4 <,:5p> repeatp add 72 <,:5> s offset pxy
+		bullet arrow-pink/w <> idelay 0 cre 144 4 <;:5p> repeatp add 72 <;:5> s offset pxy
 			* (- 72f t) regpolyr 2.8 (+ 3 p1) degrad * 5 p2
 			0 zero
-		bullet arrow-purple/w <> idelay 48 cre 144 4 <,:12p> repeatp add 60 <,:12> s tprot pxy
+		bullet arrow-purple/w <> idelay 48 cre 144 4 <;:12p> repeatp add 60 <;:12> s tprot pxy
 			reg2starr 2.2 (+ 5 * 2 p1) degrad * 12 p2
 			0
-		bullet arrow-blue/w <> idelay 96 cre 144 4 <,:12h> repeatp add 60 <,:12> s offset pxy
-			* (- 144f t) + 1 * 0.4 ^^(cos(* (+ 0.5 p1) (degrad * 12 p2)); 0.2)
+		bullet arrow-blue/w <> idelay 96 cre 144 4 <;:12h> repeatp add 60 <;:12> s offset pxy
+			* (- 144f t) + 1 * 0.4 ^^(cos(* (+ 0.5 p1) (degrad * 12 p2)), 0.2)
 			0 zero
 		@ wingL
-			bullet strip-pink/w <,:90> gcr {
+			bullet strip-pink/w <;:90> gcr {
 				wait	2
 				t	300
 				frv2	a soscillateto 150 40 1 2 1.8 * &i 2f
 			} s tprot cx 7
 		@ wingR
-			bullet strip-pink/w <,:90> gcr {
+			bullet strip-pink/w <;:90> gcr {
 				wait	2
 				t	300
 				fang soscillateto -150 -40 1 2 1.8 * &i 2f
@@ -382,7 +382,7 @@ phase 42 #{
 		event-listen evRight #{
 			action block 0
 				move 1 tpnrot eased io-sine 1 ss 0 vhometime 1 pxy -4 [Lplayer].y
-				bullet gpather18-* <,:-15> idelay 60 cre 60 3 <,:15> target Lplayer pssfx x-fire-tech-6 repeatcolorp this { red/w purple/w green/w yellow/w } 4 <> spather 1 1
+				bullet gpather18-* <;:-15> idelay 60 cre 60 3 <;:15> target Lplayer pssfx x-fire-tech-6 repeatcolorp this { red/w purple/w green/w yellow/w } 4 <> spather 1 1
 					:: {
 						r	0.3
 						pr	0.3
@@ -410,13 +410,13 @@ phase 42 #{
 		@ nt
 			action block 0
 				position 0 -2
-				bullet empty <0,:-43> conce s tprot growbyadd 0.01 0 cx 1.05
+				bullet empty <0;:-43> conce s tprot growbyadd 0.01 0 cx 1.05
 				break
 		@ nlt
 			action block 0.1
 				position 0 0
 				move 100 offset zero @ pl 0
-				bullet strip-teal/w <> cre 24 _ <,:5.0267> repeat 40 <> s :: {
+				bullet strip-teal/w <> cre 24 _ <;:5.0267> repeat 40 <> s :: {
 					thd	* 9 p
 					th	degrad &thd
 					br	regpolyr 4 3 &th
@@ -461,21 +461,21 @@ phase 42 #{
 <!> hpbar 0.5
 phase 35 #{
 !{
-sqf(pr; thdr; th0r)
+sqf(pr, thdr, th0r)
 :: {
 	t		* 0.5 t
 	ts		smoothloopr io-sine 1π &t
 	j		mod tau &ts
-	jb		if > &j pi (- tau &j; &j)
-	js		+ 0.6 * / -(pi; 1.2) pi &jb
+	jb		if > &j pi (- tau &j, &j)
+	js		+ 0.6 * / -(pi, 1.2) pi &jb
 	thd		+ * %pr p raddeg * %thdr &t
 	th0		+ * 0.5 &js * %th0r &t ##0.5 gives a convulsing box
 	th		mod pi - &th0 fdegRad &thd
 	thp		&js
 	thq		- pi &thp
-	thpq		if >(&th; &thp) &thq &thp
+	thpq		if >(&th, &thp) &thq &thp
 	thc		- hpi / &thpq 2
-	the		if >(&th; &thp) -(&th; &thp) &th
+	the		if >(&th, &thp) -(&th, &thp) &th
 	R		4.6
 	r		* &R / sin(&thc) sin(- - pi &thc &the)
 } polar
@@ -504,12 +504,12 @@ pc(pc)
 				position 0 0
 				bullet gpather18-* <> conce repeatcolorp this $patherc1() 20 <> pather 1 0.4 polar
 					+ 0.1 * 0.072 p
-					+ * 240h p *  -(500; * 20 p) t
+					+ * 240h p *  -(500, * 20 p) t
 				bullet sun-red/w <> conce ss 0.1 null
-				bullet gcircle-blue/b <> idelay 1s conce pssfx x-bubble repeat 36 <> s $sqf(10; 1; 1.4)
-				bullet gcircle-pink/b <,:124> idelay 1s conce repeat 36 <> s $sqf(10; 1.4; 1.4)
-				bullet gcircle-green/b <,:248> idelay 1s conce repeat 36 <> s $sqf(10; 0.7; 1.4)
-				bullet arrow-* <4.5,:> cre 12 _ <,:5h> repeatcolorp this { red/w yellow/w green/w blue/w } 36 <,:10> s tp-rot cx 1
+				bullet gcircle-blue/b <> idelay 1s conce pssfx x-bubble repeat 36 <> s $sqf(10, 1, 1.4)
+				bullet gcircle-pink/b <;:124> idelay 1s conce repeat 36 <> s $sqf(10, 1.4, 1.4)
+				bullet gcircle-green/b <;:248> idelay 1s conce repeat 36 <> s $sqf(10, 0.7, 1.4)
+				bullet arrow-* <4.5;:> cre 12 _ <;:5h> repeatcolorp this { red/w yellow/w green/w blue/w } 36 <;:10> s tp-rot cx 1
 				break
 #}			
 
@@ -534,7 +534,7 @@ phase 37 #{
 		@ nt
 			position 0 6.5
 !{
-regstar(R; n)
+regstar(R, n)
 	:: { R %R		n %n		ia * 2 / tau &n
 		sa0	  seedrand 0 tau p1
 		ap	* / p2 15 tau
@@ -545,7 +545,7 @@ regstar(R; n)
 					+ * 0.2 &et &sap
 					+ * 0.2 t &sap
 		r		+ if > &et 0
-						* 0.5 + &nt * ^(&nt; 2) /(1; + 1 /(^(&nt; 3); 4))
+						* 0.5 + &nt * ^(&nt, 2) /(1, + 1 /(^(&nt, 3), 4))
 						0
 					reg2starr &R &n &sap
 	}
@@ -563,7 +563,7 @@ firef()
 !}
 		@ nt
 			action block 0
-				bullet empty <2,:-20> gcr {
+				bullet empty <2;:-20> gcr {
 					p	this
 					t	_
 					w	$firef
@@ -576,7 +576,7 @@ firef()
 					offset zero @ cl p
 				bullet circle-* <> crepeatcolorp this 
 					{ purple/w red/w green/w pink/b orange/b teal/b black/w yellow/w pink/w blue/b red/b green/b teal/w pink/w }
-				$firef _ <> pssfx x-fire-burst-1repeatp add 30 <> world s $regstar(2; 5)
+				$firef _ <> pssfx x-fire-burst-1repeatp add 30 <> world s $regstar(2, 5)
 				bullet gpather18-* <> crepeatcolorp this
 					{ purple/w red/w green/w pink/b orange/b teal/b black/w yellow/w pink/w blue/b red/b green/b teal/w pink/w }
 				$firef _  <> world pather 4 3 offset zero @ cl p
@@ -626,11 +626,11 @@ phase 35 #{
 				position 0 0
 				bullet gpather18-* <> conce repeatcolorp this $patherc2() 20 <> pather 1 0.4 polar
 					+ 0.1 * 0.072 p
-					+ * 240h p *  -(500; * 20 p) * t pm1mod p
+					+ * 240h p *  -(500, * 20 p) * t pm1mod p
 				bullet sun-red/w <> conce ss 0.1 null
-				bullet gcircle-pink/w <> idelay 1s conce pssfx x-bubble repeat 40 <> s $sqf(9; 1.3; 1.6)
-				bullet gcircle-teal/w <,:182> idelay 1s conce repeat 40 <> s $sqf(9; -1.5; -1.8)
-				bullet arrow-* <4.5,:> cre 12 _ <,:-5h> repeatcolorp this { purple/w teal/w pink/w pink/w } 36 <,:10> s tp-rot cx 1
+				bullet gcircle-pink/w <> idelay 1s conce pssfx x-bubble repeat 40 <> s $sqf(9, 1.3, 1.6)
+				bullet gcircle-teal/w <;:182> idelay 1s conce repeat 40 <> s $sqf(9, -1.5, -1.8)
+				bullet arrow-* <4.5;:> cre 12 _ <;:-5h> repeatcolorp this { purple/w teal/w pink/w pink/w } 36 <;:10> s tp-rot cx 1
 				break
 		
 #}
@@ -657,16 +657,16 @@ phase 33 #{
 		position 0 3
 		bullet sun-red/w <> conce ss 0.5 null
 !!{ firef clamp 160 300 linear 300 -10 t
-		bullet lightning-* <0.5,:-40> gir2 $firef() _ <,:51.43h> { p this color { red* purple* green* black* } sfx x-lightning } {
+		bullet lightning-* <0.5;:-40> gir2 $firef() _ <;:51.43h> { p this color { red* purple* green* black* } sfx x-lightning } {
 			event { evPoly1 `` evPoly2 `` evPoly3 `` }
-			gcr2 12 8 <> { p add color { /w /b } } repeatp defer 7 <,:51.43> 
+			gcr2 12 8 <> { p add color { /w /b } } repeatp defer 7 <;:51.43> 
 			pather 1.2 1.2 tprot 
 				pxy
 					1.5
 					dsine 1 0.3 +(t * p2 / 1 8)
 		}
 !{
-innerfire(method; color; n; ct; angd; angoff)
+innerfire(method, color, n, ct, angd, angoff)
 @ nt
 	pos Lplayer
 @ nt
@@ -682,32 +682,32 @@ innerfire(method; color; n; ct; angd; angoff)
 			cx 0.8
 !}
 !{
-polyfire(color; n; ct; angd; angoff)
-$innerfire(regpolyr; %color%; %n%; %ct%; %angd%; %angoff%)
+polyfire(color, n, ct, angd, angoff)
+$innerfire(regpolyr, %color%, %n%, %ct%, %angd%, %angoff%)
 !}
 !{
-starfire(color; n; ct; angd; angoff)
-$innerfire(reg2starr; %color%; %n%; %ct%; %angd%; %angoff%)
+starfire(color, n, ct, angd, angoff)
+$innerfire(reg2starr, %color%, %n%, %ct%, %angd%, %angoff%)
 !}
 		event-listen evPoly1 #{
 			action block 0
 				sfx x-boom
-				$polyfire(shell-pink/w; 4; 60; 6; 0)
-				$polyfire(shell-pink/b; 4; 60; 6; 45)
-				$polyfire(ellipse-pink/; 8; 60; 6; 0)
+				$polyfire(shell-pink/w, 4, 60, 6, 0)
+				$polyfire(shell-pink/b, 4, 60, 6, 45)
+				$polyfire(ellipse-pink/, 8, 60, 6, 0)
 				break
 		event-listen evPoly2
 			action block 0
 				sfx x-boom
-				$polyfire(ellipse-orange/; 5; 60; 6; -90)
-				$starfire(strip-orange/b; 5; 120; 6; -90)
+				$polyfire(ellipse-orange/, 5, 60, 6, -90)
+				$starfire(strip-orange/b, 5, 120, 6, -90)
 				break
 		event-listen evPoly3
 			action block 0
 				sfx x-boom
-				$polyfire(ellipse-teal/w; 3; 60; 6; 0)
-				$polyfire(ellipse-teal/b; 3; 60; 6; 60)
-				$polyfire(ellipse-teal/; 6; 60; 6; 0)
+				$polyfire(ellipse-teal/w, 3, 60, 6, 0)
+				$polyfire(ellipse-teal/b, 3, 60, 6, 60)
+				$polyfire(ellipse-teal/, 6, 60, 6, 0)
 				break
 #}
 #}
@@ -726,17 +726,17 @@ phase 32 #{
 		bulletf-control-sm persist laser16r-white | > x 5.2 | < x -5.2 | < y -3.7 > y 3.7
 			action block 0
 				bpat motk4spinnertriangle
-				bullet pointy-purple/w <0,:> conce target Lplayer repeat 9 <,:40> modifybs
+				bullet pointy-purple/w <0;:> conce target Lplayer repeat 9 <;:40> modifybs
 					:: {	
 						R	1
 						n	3
 						f	/ pi &n
 						2f	* 2 &f
-						offs	- pi *(*(1.5; pi); /(-(&n; 2); &n))
+						offs	- pi *(*(1.5, pi), /(-(&n, 2), &n))
 						ang0	- &offs &2f
 						effp	* 40 p
 						prm 	+ &ang0 degrad(&effp)
-						r 	/ *(&R; cos(&f)) cos(- mod(&2f; +(*(3; &2f) -(&prm; &offs))) &f)
+						r 	/ *(&R, cos(&f)) cos(- mod(&2f, +(*(3, &2f) -(&prm, &offs))) &f)
 						}
 					&r
 					0 0 s tpnrot 
@@ -748,7 +748,7 @@ phase 32 #{
 		bulletf-control persist laser16r-white flipy< -3.7 _
 		bulletf-control persist laser16r-white flipy> 3.7 _
 	action block 0
-		bullet laser16r-white <> cre 12s 2 <,:160> mlaser 5
+		bullet laser16r-white <> cre 12s 2 <;:160> mlaser 5
 			tp-rot growbyadd .07 .1 cr 4 50
 			polar
 				* 
@@ -781,43 +781,43 @@ phase 32 #{
 		~@ pt24
 			bullet pointy-red/w <> idelay 20 cre 120 _ <> targetdir s tp-rot cx 1
 !{
-regpolyeq(R; n; trate)
+regpolyeq(R, n, trate)
 :: { 	R	%R
 		n	%n
 		f	/ pi &n	
 		2f	* 2 &f
-		ang0	- - pi *(*(1.5; pi); /(-(&n; 2); &n)) &2f	
+		ang0	- - pi *(*(1.5, pi), /(-(&n, 2), &n)) &2f	
 		ang0d	raddeg(&ang0)
-		s 	* 2 *(&R; sin(&f))
+		s 	* 2 *(&R, sin(&f))
 		efft		* t %trate
 		effp		* 1 + * 18 p * 60 t
 		j 	// &efft &2f
-		modt 	mod(&2f; &efft)
-		smt	+ * 0.5 &modt * 0.5 smoothloopr(io-sine; &2f; &modt)	
-		angj	+ &ang0 *(&2f; &j)
+		modt 	mod(&2f, &efft)
+		smt	+ * 0.5 &modt * 0.5 smoothloopr(io-sine, &2f, &modt)	
+		angj	+ &ang0 *(&2f, &j)
 		prm 	+ &ang0 degrad(&effp)
 		r	regsoftstarr &R &n - &prm &ang0
-		##r 	/ *(&R; cos(&f)) cos(- mod(&2f; +(*(3; &2f) -(&prm; &ang0))) &f)
-		x 	- *(&r; cos(&prm)) *(&R; cos(&angj))
-		y 	- *(&r; sin(&prm)) *(&R; sin(&angj))	
+		##r 	/ *(&R, cos(&f)) cos(- mod(&2f, +(*(3, &2f) -(&prm, &ang0))) &f)
+		x 	- *(&r, cos(&prm)) *(&R, cos(&angj))
+		y 	- *(&r, sin(&prm)) *(&R, sin(&angj))	
 		}
 	offset
 	##+  cr &R &ang0d
 	+  polartoxy
-			mag(&x; &y)
-			raddeg(-(atan2(&y; &x); +(*(&2f; &j); &smt)))
-		pxy *(&j; &s) 0 
+			mag(&x, &y)
+			raddeg(-(atan2(&y, &x), +(*(&2f, &j), &smt)))
+		pxy *(&j, &s) 0 
 	zero
 !}
 		
 		@ nlb
-			bullet pather18-purple/w <,:-90> cre 
+			bullet pather18-purple/w <;:-90> cre 
 				clamp 7s 8s linear 8s -0.2s x
-			12 <>  pssfx x-fire-tech-8 repeat 20 <> epather pt 1 0.5 $regpolyeq(2.8; 5; -0.5)
+			12 <>  pssfx x-fire-tech-8 repeat 20 <> epather pt 1 0.5 $regpolyeq(2.8, 5, -0.5)
 		@ nrt
-			bullet pather18-red/w <,:90> cre
+			bullet pather18-red/w <;:90> cre
 				clamp 7s 8s linear 8s -0.2s x
-			12 <> repeat 30 <> epather pt2 1 0.4 $regpolyeq(2.8; 5; -0.5)
+			12 <> repeat 30 <> epather pt2 1 0.4 $regpolyeq(2.8, 5, -0.5)
 !!{ colors1 {{ *red/ *pink/ } { ellipse- pointy- shell- strip- }}
 !{
 verymean(s)
@@ -829,7 +829,7 @@ action block 0
 action block 0
 	op sbulletfadecull $colors1 3
 	bullet strip-green/w <> idelay 2s csummonalongpolarf rel 0 1 180 4
-		+ 2 * 0.8 ^^(cos(* 2.5 degrad t); 0.2)
+		+ 2 * 0.8 ^^(cos(* 2.5 degrad t), 0.2)
 		t
 	s ::v2 { 
 	mf 	rotate
@@ -838,8 +838,8 @@ action block 0
 	} tprot setzerotp &mf
 	phastendelta 1f lerpin 1.6 2 
 	lerpoutin 4 5 5 20 &mf
-	bullet strip-teal/w <,:180> idelay 0s csummonalongpolarf rel 0 1 180 4
-		+ 1 * 1 ^^(cos(* 1.5 degrad t); / 1 7)
+	bullet strip-teal/w <;:180> idelay 0s csummonalongpolarf rel 0 1 180 4
+		+ 1 * 1 ^^(cos(* 1.5 degrad t), / 1 7)
 		t
 	s ::v2 { 
 	mf 	rotate
@@ -850,11 +850,11 @@ action block 0
 	lerpoutin 6 8 8 24 &mf
 	bullet x-fire-burst-1<> cre 24 15 <> sfx
 	_ 12
-		bullet _ <,:45> isimulate 3s crepeatcolorp this {
+		bullet _ <;:45> isimulate 3s crepeatcolorp this {
 			*red/ *pink/
 		} 1 720 <> repeatcolorp add { 
 			pointy- ellipse- shell- strip-
-		} 4 <,:90> s :: {
+		} 4 <;:90> s :: {
 			r	linear 0.3 0.5 t
 			r2	linear 0.25 0.1 t
 			per	3
@@ -874,7 +874,7 @@ action block 0
 					cosine &per2 &r2 [* 2 t]+ &gt
 			zero
 	pool-control $colors1 reset
-	bullet-control persist $colors1 CULL circ <-%s%5.5,%s%1.8,1.5>
+	bullet-control persist $colors1 CULL circ <-%s%5.5;%s%1.8;1.5>
 !}
 	
 	$verymean(-)

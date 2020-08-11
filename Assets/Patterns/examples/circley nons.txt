@@ -10,7 +10,7 @@ phase 0 #{
 		clear phase
 	action block 0
 		position 0 3
-		async empty <> gcr2 360 _ <,:60h> {
+		async empty <> gcr2 360 _ <;:60h> {
 			p this
 		} gsr2c 6 {
 			p add
@@ -28,7 +28,7 @@ phase 0 #{
 				summons offset zero @ el p
 					action block 0
 						sync scircle-red/w <> world s offset zero @ el p
-						async amulet-red/ <0.1,:> gcr2 60 _ <> {
+						async amulet-red/ <0.1;:> gcr2 60 _ <> {
 							delay	60
 							while	onscreen loc
 							sfx	x-fire-burst-1
@@ -39,7 +39,7 @@ phase 0 #{
 				summons offset zero @ el p
 					action block 0
 						sync scircle-red/b <> world  s offset zero @ el p
-						async amulet-purple/ <0.1,:> gcr2 90 _ <20h> {
+						async amulet-purple/ <0.1;:> gcr2 90 _ <20h> {
 							delay	90
 							while	onscreen loc
 							sfx	x-fire-burst-2

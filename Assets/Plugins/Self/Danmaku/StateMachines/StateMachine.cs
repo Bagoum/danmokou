@@ -200,9 +200,11 @@ public abstract class StateMachine {
                 if (IsChildCountMarker(p.Scan(), out int ct)) {
                     p.Next();
                     childCt = ct;
-                } else if (p.Prev() != "}" && !allowSameLine.Contains(first)) { 
+                } 
+                //Disabling same-line checks since they don't work with parentheses
+                /*else if (p.Prev() != "}" && !allowSameLine.Contains(first)) { 
                     throw new Exception($"Line {p.GetLastLine()} is missing a newline after the inline arguments.");
-                }
+                }*/
             }
             if (requires_children) reflect_args[0] = CreateChildren(myType, p, childCt);
             else if (requires_arr_children) {
@@ -221,7 +223,7 @@ public abstract class StateMachine {
         return (StateMachine) Activator.CreateInstance(myType, reflect_args);
     }
 
-    private static readonly HashSet<string> allowSameLine = new HashSet<string>() { "~", ">>", "_" };
+    //private static readonly HashSet<string> allowSameLine = new HashSet<string>() { "~", ">>", "_" };
 
     private static bool IsChildCountMarker(string s, out int ct) {
         if (s[0] == ':') {

@@ -20,7 +20,7 @@ public struct DelegatedCreator {
     /// </summary>
     private Vector2? forceRoot;
     private bool useParentMoveMod;
-    public Facing facing;
+    public Enums.Facing facing;
     public MovementModifiers modifiers;
 
     //Constructor may be called from any thread; .transform is unsafe. Variable reference is safe.
@@ -32,14 +32,14 @@ public struct DelegatedCreator {
         cacheLoc = false;
         cachedLoc = Vector2.zero;
         useParentMoveMod = true;
-        facing = Facing.ORIGINAL;
+        facing = Enums.Facing.ORIGINAL;
         modifiers = MovementModifiers.Default;
     }
 
     private float ResolveFacing() {
-        if (facing == Facing.DEROT) return 0f;
-        if (facing == Facing.VELOCITY) return parent.RotationDeg;
-        if (facing == Facing.ROTVELOCITY) return parent.RotationDeg + parent.original_angle;
+        if (facing == Enums.Facing.DEROT) return 0f;
+        if (facing == Enums.Facing.VELOCITY) return parent.RotationDeg;
+        if (facing == Enums.Facing.ROTVELOCITY) return parent.RotationDeg + parent.original_angle;
         return parent.original_angle;
     }
 

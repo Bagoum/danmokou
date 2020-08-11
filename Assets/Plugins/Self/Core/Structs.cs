@@ -110,53 +110,6 @@ public struct Color2 {
     public Color color1;
     public Color color2;
 }
-
-public enum PhaseType {
-    NONSPELL,
-    SPELL,
-    TIMEOUT,
-    FINAL,
-    DIALOGUE,
-    STAGE,
-    STAGEMIDBOSS,
-    STAGEENDBOSS
-}
-
-public static class EnumExtensions {
-    public static bool IsStageBoss(this PhaseType st) => st == PhaseType.STAGEENDBOSS || st == PhaseType.STAGEMIDBOSS;
-    public static bool IsPattern(this PhaseType st) => st.IsCard() || st.IsStage();
-    public static bool IsLenient(this PhaseType st) => st == PhaseType.DIALOGUE;
-    public static bool IsStage(this PhaseType st) => st == PhaseType.STAGE;
-    public static bool RequiresHPGuard(this PhaseType st) => st == PhaseType.DIALOGUE || st.IsCard();
-    public static bool RequiresFullHPBar(this PhaseType st) => st == PhaseType.FINAL || st == PhaseType.TIMEOUT;
-    public static bool IsCard(this PhaseType st) => st == PhaseType.NONSPELL || st.IsSpell();
-    public static bool IsSpell(this PhaseType st) =>
-        st == PhaseType.SPELL || st == PhaseType.TIMEOUT || st == PhaseType.FINAL;
-    public static PhaseType Invert(this PhaseType st) {
-        if (st.IsSpell()) return PhaseType.NONSPELL;
-        if (st == PhaseType.NONSPELL) return PhaseType.SPELL;
-        return st;
-    }
-
-    public static float? HPBarLength(this PhaseType st) {
-        if (st.IsSpell()) return 1f;
-        if (st == PhaseType.NONSPELL) return 0.5f;
-        return null;
-    }
-    public static int? DefaultHP(this PhaseType st) {
-        if (st == PhaseType.TIMEOUT || st == PhaseType.DIALOGUE) return 1000000000;
-        return null;
-    }
-
-    public static float ToAngle(this ShootDirection sd) {
-        if (sd == ShootDirection.UP) return 90;
-        else if (sd == ShootDirection.LEFT) return 180;
-        else if (sd == ShootDirection.DOWN) return 270;
-        else return 0;
-    }
-}
-
-
 //I like the idea of level-based cancellation but there's currently not really a use case for it. 
 public class CancelException : Exception {
     public CancelException() : base() { }

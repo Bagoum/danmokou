@@ -8,6 +8,7 @@ using static NUnit.Framework.Assert;
 using static DMath.Parser;
 using static Tests.TAssert;
 using static Core.Events;
+using static Danmaku.Enums;
 
 namespace Tests {
 

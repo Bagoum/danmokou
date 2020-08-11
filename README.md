@@ -29,6 +29,7 @@ To build/run this project, follow the following steps:
 
 - (Optional) Build the F# project in the `FS` folder targeted at 4.7.2. I have provided DLLs so you don't have to do this unless you make changes to the F# code.
   - Copy the output DLLs (Common, FParsec, FParsecCS, FSharp.Core, Parser, System.ValueTuple) to `Assets/Plugins/Self/Core`
+- To edit behavior scripts, you should use Notepad++ with the `notepadPlusPlus.xml` language definition. The language name is "BDSL". To update the language definition, copy it directly into `AppData/Roaming/Notepad++/userDefineLangs`. 
 
 # Documentation
 

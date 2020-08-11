@@ -3,7 +3,7 @@ phase 0
 	action block 0
 		clear bullet
 		position 0 0
-		async strip-red/w <1,:> gir {
+		async strip-red/w <1;:> gir {
 			t	2
 			w	1
 			rpp	<90>
@@ -13,7 +13,7 @@ phase 0
 			w	1
 			rpp	<180>
 		} s tprot cx 1
-		async strip-green/w <1,:> gir {
+		async strip-green/w <1;:> gir {
 			t	2
 			w	1
 			rpp	<90>

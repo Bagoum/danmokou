@@ -239,10 +239,5 @@ let private ExportToCommands<'t,'u,'v> (cfg:Config<'t,'u,'v>) (tus:TextUnit<'t,'
    
 let ParseAndExport cfg parser = parser >> Errorable<_>.Fmap (ExportToCommands <| cfg)
 
-let toMatch kvs =
-    let kvm = kvs |> Map.ofList
-    kvm.TryFind
-let parseme = CreateParser1<int> "sfx" ([("abc", 5)] |> toMatch) ([ ("npc", [("blue", WikiEntry.Default)] |> toMatch) ] |> Map.ofList)
-parseme "h $$npc(blu2e) h"
-let exportme = parseme |> ParseAndExport (Config.Default)
+
 

@@ -31,8 +31,8 @@ phase 38 #{
             position 0 5
         @ nt
             bullet ellipse-blue/w <> cre 5 _ <> repeat 4 <> randomx -8 8 randomy 0 2 s tpnrot pxy
-                dsine(4; 0.15; + t brand 0 4)
-                + -1.6 dsine(4.2; 0.2; + t brand 0 3.2)
+                dsine(4, 0.15, + t brand 0 4)
+                + -1.6 dsine(4.2, 0.2, + t brand 0 3.2)
     repeat-every 18 9
 !{
 blockf(s)
@@ -40,16 +40,16 @@ action block 0
     pool-control ellipse-blue/w reset
     move 3 tpnrot eased io-sine 3 stopsampling 0 vhometime 3 tpbtp cx %s%-5 superpose 0.3 loc 0.7 Lplayer
 action block 0
-    bullet pather18-purple/b <%s%-1.2,:> cre 40 18 <> randomy -4 4 pather 4 btf + 0.8 sine 4 0.3 t
+    bullet pather18-purple/b <%s%-1.2;:> cre 40 18 <> randomy -4 4 pather 4 btf + 0.8 sine 4 0.3 t
         tpnrot lerpin 0 0.5 pxy %s%6
-            sine(1; 0.3; + t * 1.618 p) 
+            sine(1, 0.3, + t * 1.618 p) 
     bullet trigger-down-2 <> cre 40 5 <> sfx
     wait-for 6
     timer restart fmult
-    bullet-control PERSIST ellipse-blue/w FORCE relrect mokou <%s%5,:8,2:0>
+    bullet-control PERSIST ellipse-blue/w FORCE relrect mokou <%s%5;:8;2:0>
         tpnrot pxy
             *   - 2 dist y [Lbeh mokou].y
-                * %s%1.4  clamp(0; 1; fsoftmod(2.5; clamp(0; 99; - timersec(fmult) 1)))
+                * %s%1.4  clamp(0, 1, fsoftmod(2.5, clamp(0, 99, - timersec(fmult) 1)))
             0
 !}
         $blockf(+)
@@ -81,26 +81,26 @@ phase 38 #{
                     zero
                     eased io-sine 2 stopsampling 0 vhometime 2 randomxy -3 3 1 3
 !{
-drawc(mult; rdi)
+drawc(mult, rdi)
 pxy
     * 0.1 * %mult% t
     * * 0.1 ^ * %mult% t 1.4
         bpf pm1mod %rdi%
 !}
-        bullet laser16-yellow/w <1,:> irepeat 720 _ <,:27.811> crepeatp defer 20 8 <,:45> pssfx x-laser-fire laser 0 null
-            offset $drawc(2; p)
+        bullet laser16-yellow/w <1;:> irepeat 720 _ <;:27.811> crepeatp defer 20 8 <;:45> pssfx x-laser-fire laser 0 null
+            offset $drawc(2, p)
                 zero
             3 0
-        bullet _ <1,:> irepeat 720 _ <,:27.811> irepeatp defer 20 8 <,:45> csummonalongoffsetp add tangent 0 40 10 3
-             $drawc(1; p1)
-            repeatinnercolorp defer { arrow-teal/w arrow-red/w arrow-green/w } 9 <0.2,:> <,:40>
+        bullet _ <1;:> irepeat 720 _ <;:27.811> irepeatp defer 20 8 <;:45> csummonalongoffsetp add tangent 0 40 10 3
+             $drawc(1, p1)
+            repeatinnercolorp defer { arrow-teal/w arrow-red/w arrow-green/w } 9 <0.2;:> <;:40>
                 s tp-rot bhastendeltaf 
                     bpf * 0.2 p2 
                     switch 2 zero
                         lerpin 0 1 growbyadd -0.1 0 cx -1
-        bullet pather18-red/w <1,:> idelay 240 irepeat 720 _ <,:27.811> crepeatp defer 20 8 <,:45> pssfx x-laser-on pather 2 b 1
+        bullet pather18-red/w <1;:> idelay 240 irepeat 720 _ <;:27.811> crepeatp defer 20 8 <;:45> pssfx x-laser-on pather 2 b 1
             ##22.5 = (3*120) / (40 - 0.2*120)
-            offset  $drawc(22.5; x)
+            offset  $drawc(22.5, x)
                 zero
 #}
 
@@ -120,13 +120,13 @@ phase 30 #{
         position 0 3
         bulletf-control-sm persist pather18-purple/w < 4 abs x
             action block 0
-                bullet strip-purple/w <> cre 60 3 <,:12h> pssfx x-fire-tech-6 repeatp defer 30 <,:12> s tprot
+                bullet strip-purple/w <> cre 60 3 <;:12h> pssfx x-fire-tech-6 repeatp defer 30 <;:12> s tprot
                     switchH 1 cx 3
                         switchH 4.2 period 1 switchH 0.5
                                 zero
                                 cx 1
                             cx 2.2
-                bullet pather18-blue/w <> conce repeat 4 <,:90> pather 4 3.3
+                bullet pather18-blue/w <> conce repeat 4 <;:90> pather 4 3.3
                     tpnrot truerotatelerprate 70 
                         protate 90 cx 2 
                         stopsampling 1.5 vhome 2 Lplayer
@@ -162,9 +162,9 @@ phase 36 #{
             setstate vulnerable true
         position 0 3
         bulletf-control-sm persist pather18-red/w & > x 6 > y -4.5
-            bullet pointy-green/ <> conce pssfx x-fire-burst-1repeat 36 <,:10> s tp-rot lerpfromtoback 0.5 1 2 2.5 cx 1.5 cx 0.5
+            bullet pointy-green/ <> conce pssfx x-fire-burst-1repeat 36 <;:10> s tp-rot lerpfromtoback 0.5 1 2 2.5 cx 1.5 cx 0.5
         bulletf-control-sm persist pather18-red/w & < x -6 > y -4.5
-            bullet pointy-yellow/ <> conce pssfx x-fire-burst-2 repeat 30 <,:12> s tp-rot lerpfromtoback 0.3 0.6 1.2 1.5 cx 2.5 cx 0
+            bullet pointy-yellow/ <> conce pssfx x-fire-burst-2 repeat 30 <;:12> s tp-rot lerpfromtoback 0.3 0.6 1.2 1.5 cx 2.5 cx 0
         bulletf-control persist pather18-red/w flipx> 6 _
         bulletf-control persist pather18-red/w flipx< -6 _
         bulletf-control persist laser16r-blue/w cull < y -8
@@ -179,11 +179,11 @@ phase 36 #{
                     1
                     *  + 0.7 sine 6 0.3 &lt
                     *  linear 0.2 0.1 fsoftmod 8 t
-                        dsine 2 1 +(t; + *(2h; p) sine(4; 0.7; &lt))
+                        dsine 2 1 +(t, + *(2h, p) sine(4, 0.7, &lt))
                 + 1.5 sine 3p 0.3 p
                 2
     action block 0
-        bullet pather18-red/w <1,:> cre 
+        bullet pather18-red/w <1;:> cre 
             clamp 120 240 linear 240 -8 x
             _ <> pssfx x-fire-tech-8 modifybs
                 * -2 (mod 2 p)
@@ -209,9 +209,9 @@ phase 32 #{
         setstate vulnerable true
         position 0 3
         poolf-control pather18-purple* allowcull false
-        bullet pather18-purple/w <1,:180> cre 30 15 <,:24> pssfx x-fire-tech-8 epather pp1 1 1
+        bullet pather18-purple/w <1;:180> cre 30 15 <;:24> pssfx x-fire-tech-8 epather pp1 1 1
             tprot rotatewithtime 120 cx 4
-        bullet pather18-purple/b <1,:> cre 30 15 <,:-24> epather pp2 1 1
+        bullet pather18-purple/b <1;:> cre 30 15 <;:-24> epather pp2 1 1
             tprot rotatewithtime -120 cx 4
 !{
 pc(color)
@@ -243,7 +243,7 @@ phase 42 #{
         position -5.5 5
 !{
 shellf(color)
-bullet %color% <> cre 180 3 <,:20h> repeat 18 <,:20> repeat 18 <,:0.6> s tprot lerpfromto 0 1 cx 5 cx 0.7
+bullet %color% <> cre 180 3 <;:20h> repeat 18 <;:20> repeat 18 <;:0.6> s tprot lerpfromto 0 1 cx 5 cx 0.7
 !}
 !{
 btshellf()
@@ -259,7 +259,7 @@ action nb 0
     bullet x-fire-burst-1<> idelay 1s cre 30 4 <> sfx
     bullet x-laser-on <> cre 30 4 <> sfx
     bullet x-incoming-2 <> idelay 9s conce sfx
-    bullet circle-blue/w <,:> idelay 2 irepeat 2 60 <> itarget Lplayer icacheloc idelay 120 conce repeatp add 10 <> modifybs
+    bullet circle-blue/w <;:> idelay 2 irepeat 2 60 <> itarget Lplayer icacheloc idelay 120 conce repeatp add 10 <> modifybs
         0 0  * 8 - 7 mod 15 p1
     s tp-rot pxy
         * bpf + 0.1 * 0.3 p2
@@ -321,7 +321,7 @@ phase 34 #{
             bullet x-fire-burst-1<> cre 32 17 <> sfx
             _ 6.5
                 bullet x-incoming-2 <> conce sfx
-            bullet circle-purple/w <> cre 16 30 <,:10.2> repeatp defer 36 <,:10> s tp-rot
+            bullet circle-purple/w <> cre 16 30 <;:10.2> repeatp defer 36 <;:10> s tp-rot
                 bhastendeltaf bpf * 16f p
                     lerpfromtoback 3.6 4.8 8.5 10
                         switch 5
@@ -332,7 +332,7 @@ phase 34 #{
             _ 3
                 move 4 tpnrot eased io-sine 4 ss 0 vhometime 4 randomxy -3.2 3.2 1.9 2.2
             _ 3
-                bullet circle-teal/ <> cre 20 25 <,:6.18> target Lplayer pssfx x-fire-burst-2 repeat 36 <,:10> s tp-rot lerpfromto 0 1 cx 5 cx 2.5
+                bullet circle-teal/ <> cre 20 25 <;:6.18> target Lplayer pssfx x-fire-burst-2 repeat 36 <;:10> s tp-rot lerpfromto 0 1 cx 5 cx 2.5
 #}
 
 ## 8 New Sun [READY]
@@ -358,15 +358,15 @@ phase 72 #{
         @ nt
             position 0 -9
         @ nt
-            bullet sun-red/w <,-6:> conce pssfx x-metal ss 8
+            bullet sun-red/w <;-6:> conce pssfx x-metal ss 8
                 offset zero switch 6 tptf 0 sine 24 6 t cy 6
         wait-for 6
     action nb 0
         setstate vulnerable true
         @ nt       
-            bullet pather18-red/w <8.2,:30> crepeatfuncangle 180 _
+            bullet pather18-red/w <8.2;:30> crepeatfuncangle 180 _
                     mod 9 * 9p t
-                repeatp add 16 <,:9>
+                repeatp add 16 <;:9>
                     pather 4 1.5
                     tprot pxy
                         btf clamp 0 1 linear 0.4 0.2 t
@@ -376,12 +376,12 @@ phase 72 #{
             @ nt
                 bullet circle-black/ <> cre
                     clamp 200 260 linear 260 -10 x
-                _ <> pssfx x-boom randomx -4 4 randomy 5 6.2 repeatinner 45 <> <,:8> s tp-rot lerpin -0.2 0.7 cx 1.1
+                _ <> pssfx x-boom randomx -4 4 randomy 5 6.2 repeatinner 45 <> <;:8> s tp-rot lerpin -0.2 0.7 cx 1.1
         _ 18
             @ nt
-                bullet circle-purple/w <8.2,:> cre
+                bullet circle-purple/w <8.2;:> cre
                     clamp 120 140 linear 140 -2 x
-                _ <,:8h> repeat 45 <,:8> s tp-rot lerpin 0 0.5 cx 0.6
+                _ <;:8h> repeat 45 <;:8> s tp-rot lerpin 0 0.5 cx 0.6
     repeat-every 6 5
         action block 0
             position -8 0
@@ -390,7 +390,7 @@ phase 72 #{
 !{
 keinef(color)
 bullet x-keine <> cre 12 5 <> sfx
-bullet %color% <,5:> cre 3 20 <,-.5:> s tprot 
+bullet %color% <;5:> cre 3 20 <;-.5:> s tprot 
     phastendelta -0.05 switchH 1
         vhome 0.01 Lplayer
         ss 0 vhome 5 Lplayer
@@ -413,19 +413,19 @@ bullet %color% <,5:> cre 3 20 <,-.5:> s tprot
     action block 0
         bullet x-laser-fire <> irepeat 4s 8 <> cre 8 9 <> sfx
         bullet x-laser-on <> idelay 220 irepeat 4s 8 <> cre 8 9 <> sfx
-        bullet laser16-blue/w <> irepeat 4s 8 <> itarget Lplayer cre 8 9 <,:12> slaser 0 0 null 2 1
-        bullet laser16-blue/w <> irepeat 4s 8 <> itarget Lplayer cre 8 9 <,:-12> slaser 0 0 null 2 1
+        bullet laser16-blue/w <> irepeat 4s 8 <> itarget Lplayer cre 8 9 <;:12> slaser 0 0 null 2 1
+        bullet laser16-blue/w <> irepeat 4s 8 <> itarget Lplayer cre 8 9 <;:-12> slaser 0 0 null 2 1
         bullet x-fire-tech-6 <> idelay 9s irepeat 4s 6 <> cre 8 9 <> sfx
-        bullet pather18-green/w <> idelay 8s irepeat 4s 6 <> itarget Lplayer idelay 1s cre 8 9 <,:12> pather 4 1.4 tprot cx 6
-        bullet pather18-green/w <> idelay 8s irepeat 4s 6 <> itarget Lplayer idelay 1s cre 8 9 <,:-12> pather 4 1.4 tprot cx 6
+        bullet pather18-green/w <> idelay 8s irepeat 4s 6 <> itarget Lplayer idelay 1s cre 8 9 <;:12> pather 4 1.4 tprot cx 6
+        bullet pather18-green/w <> idelay 8s irepeat 4s 6 <> itarget Lplayer idelay 1s cre 8 9 <;:-12> pather 4 1.4 tprot cx 6
         _ 20
-            bullet sun-red/w <,12:> conce pssfx x-metal ss 8
+            bullet sun-red/w <;12:> conce pssfx x-metal ss 8
                 offset zero switch 12 tptf 0 sine 48 -7.5 t cy -7.5
         bullet x-laser-fire <> idelay 32s cre 8 45 <> sfx
         _ 32
-            bullet laser16-blue/w <,:180> itarget Lplayer cre 1 360 <,:0.5> slaser 0 0 null 10 0
+            bullet laser16-blue/w <;:180> itarget Lplayer cre 1 360 <;:0.5> slaser 0 0 null 10 0
         _ 32
-            bullet laser16-blue/w <,:180> itarget Lplayer cre 1 360 <,:-0.5> slaser 0 0 null 10 0
+            bullet laser16-blue/w <;:180> itarget Lplayer cre 1 360 <;:-0.5> slaser 0 0 null 10 0
         
 #}
    
@@ -445,7 +445,7 @@ phase 28 #{
     action block 0
         setstate vulnerable true
         position 0 3
-        bullet pointy-blue/w <-1,0:> cre 12 _ <> repeatp add 2 <2,:> repeatinnerp defer 3 <,:-60> <,:60> s tprot brotatef 
+        bullet pointy-blue/w <-1;0:> cre 12 _ <> repeatp add 2 <2;:> repeatinnerp defer 3 <;:-60> <;:60> s tprot brotatef 
             bpf * pm1mod p2 * 0.4 + -10 fsoftmod 20 p1
             cy -3
                
@@ -455,7 +455,7 @@ phase 28 #{
 
 
 ///  
-        bullet laser24-purple/b <1,:> conce repeat 2 <-2,:> rslaser 0 0
+        bullet laser24-purple/b <1;:> conce repeat 2 <-2;:> rslaser 0 0
             +  bpf - * -30 pm1mod p 90
                 * bpf pm1mod p btf clamp -320 0 linear 60 -130 t
             null
@@ -465,5 +465,5 @@ phase 28 #{
     repeat-every 8 9999 
     action block 5
         move 3 tpnrot eased io-sine 3 ss 0 vhometime 3 randomxy -5 5 0 4
-        bullet pather18-green/w <1,:> idelay 60 cre 120 3 <> pssfx x-fire-tech-8 pather 1 1
+        bullet pather18-green/w <1;:> idelay 60 cre 120 3 <> pssfx x-fire-tech-8 pather 1 1
             tpnrot eased in-sine 4 ss 0 vhome 5 Lplayer

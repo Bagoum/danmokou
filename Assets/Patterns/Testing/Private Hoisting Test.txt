@@ -2,7 +2,7 @@ pattern { }
 phase 0
 	action block 0
 		position 0 0
-		sync strip-red/w <0,:> gsr2 3 <> {
+		sync strip-red/w <0;:> gsr2 3 <> {
 			preloop {
 				var =f t
 			}

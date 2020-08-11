@@ -7,7 +7,7 @@ phase 0
 	action block 0
 		position 0 2
 		move _ offset zero pxy sine 4 3 t 0
-		async circle-red/w <1,:> gcrepeat {
+		async circle-red/w <1;:> gcrepeat {
 			t	_
 			w	2
 			rpp	<8>

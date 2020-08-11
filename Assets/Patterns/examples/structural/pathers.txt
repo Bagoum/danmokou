@@ -10,7 +10,7 @@ phase 0
 phase 0 #{
 	action block 0
 		position 0 1
-		async lightning-orange/w <1,:> gcr2 600 _ <> {
+		async lightning-orange/w <1;:> gcr2 600 _ <> {
 			p this
 		} gsr2c 6 {
 			target a Lplayer

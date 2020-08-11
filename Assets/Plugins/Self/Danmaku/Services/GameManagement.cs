@@ -8,6 +8,7 @@ using DMath;
 using JetBrains.Annotations;
 using SM;
 using UnityEditor;
+using static Danmaku.Enums;
 
 public struct CampaignData {
     private const int startLives = 14;

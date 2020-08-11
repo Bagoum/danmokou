@@ -8,7 +8,7 @@ phase 40
 	action block 0
 		position 0 0.5
 		move _ offset zero pxy sine 8.2 0.5 t 0
-		async keine-purple/w <1,:> gcr {
+		async keine-purple/w <1;:> gcr {
 			p	this
 			t 	_
 			w	* 120 ++ $circt

@@ -9,8 +9,8 @@ phase 0
     action block 0
         position 1 1
 		bullet-control persist ellipse-purple/w flipx> 5 _
-        bullet ellipse-purple/w <,:-5> cre 6 _ <> s tprot cx 2
-        bullet ellipse-purple/w.2 <,0.1:-5> cre 6 _ <> s tprot cx 2
+        bullet ellipse-purple/w <;:-5> cre 6 _ <> s tprot cx 2
+        bullet ellipse-purple/w.2 <;0.1:-5> cre 6 _ <> s tprot cx 2
             
 phase 0
     action block 0
@@ -18,4 +18,4 @@ phase 0
 		##try restyling to .2
 		bullet-control persist ellipse-purple/w time 100 > x 3
 		bullet-control persist ellipse-purple/w restyle ellipse-purple/w.2 > x 3
-        bullet ellipse-purple/w <,:-5> cre 6 _ <> s tprot lerpfromto 100 101 cx 2 cx 6
+        bullet ellipse-purple/w <;:-5> cre 6 _ <> s tprot lerpfromto 100 101 cx 2 cx 6

@@ -45,7 +45,7 @@ public static partial class AtomicPatterns {
         "tprot px lerpt3 0 0.2 0.5 1 4 2 6".Into<GCXU<VTP>>(), new BehOptions());
 }
 public static partial class SyncPatterns {
-    public static SyncPattern Aim1(ExBPY speed) => Target(GCXF(_ => LPlayer()), new[] {S(GCXU(VTPRepo.TPRot(TPr.PX(speed))))});
+    public static SyncPattern Aim1(ExBPY speed) => Target(GCXF(_ => LPlayer()), new[] {S(GCXU(VTPRepo.RVelocity(TPr.PX(speed))))});
     
     
     public static SyncPattern oArrowI(ExBPY times, ExBPY xstep, ExBPY ystep, GenCtxProperty[] props,
@@ -123,7 +123,7 @@ public static partial class AsyncPatterns {
     public static AsyncPattern gEruption(GCXF<float> wait, GCXF<float> times, ExBPY angleOffset,
         ExBPY speed, ExBPY gravity) => Eruption(wait, times, angleOffset, speed, gravity, new GenCtxProperty[] { });
     public static AsyncPattern Eruption(GCXF<float> wait, GCXF<float> times, ExBPY angleOffset,
-        ExBPY speed, ExBPY gravity, GenCtxProperty[] props) => _AsGCR(S(GCXU(VTPRepo.TP(
+        ExBPY speed, ExBPY gravity, GenCtxProperty[] props) => _AsGCR(S(GCXU(VTPRepo.Velocity(
         TPr.PX(speed),
         TPr.PY(gravity)
     ))), props, GenCtxProperty.WT(wait, times), GenCtxProperty.PreLoop(new GCRule[] {

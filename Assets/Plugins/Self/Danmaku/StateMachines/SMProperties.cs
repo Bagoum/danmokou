@@ -12,6 +12,7 @@ using UnityEngine;
 using UnityEngine.Profiling;
 using static SM.PatternProperty;
 using static SM.PhaseProperty;
+using static Danmaku.Enums;
 
 
 namespace SM {

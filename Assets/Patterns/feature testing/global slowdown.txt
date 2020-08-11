@@ -14,7 +14,7 @@ phase 10
     action block 0
         position -3 0
 		slowdown 0.1
-		bullet strip-red/w <1,:> gcr {
+		bullet strip-red/w <1;:> gcr {
 			wt	1	_
 			rpp	<-2>
 		} s tprot cx 6

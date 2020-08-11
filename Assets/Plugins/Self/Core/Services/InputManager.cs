@@ -81,7 +81,8 @@ public static class InputManager {
     private const KC cY = KC.JoystickButton3;
     private const KC cSelect = KC.JoystickButton6;
     private const KC cStart = KC.JoystickButton7;
-    private static InputChecker Key(KC key) => new InputChecker(() => Input.GetKey(key), key.ToString());
+    private static InputChecker Key(KC key) => Key(() => key);
+    private static InputChecker Key(Func<KC> key) => new InputChecker(() => Input.GetKey(key()), key().ToString());
     private static InputChecker AxisL0(string axis) => new InputChecker(() => Input.GetAxisRaw(axis) < -0.1f, axis);
     private static InputChecker AxisG0(string axis) => new InputChecker(() => Input.GetAxisRaw(axis) > 0.1f, axis);
     

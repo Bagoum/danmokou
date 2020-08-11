@@ -3,7 +3,7 @@ phase 0
 	action block 0
 		clear bullet
 		position 1 0
-		async strip-red/w <2,:> gcr {
+		async strip-red/w <2;:> gcr {
 			t	10
 			w	1
 			start	qw =f 1

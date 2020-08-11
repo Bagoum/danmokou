@@ -52,7 +52,7 @@ public static class TAssert {
             Assert.Fail($"Could not find pattern `{pattern}` in `{message}`");
         }
     }
-    private const float err = 0.00001f;
+    private const float err = 0.0001f;
 
     public static void VecEq(Vector2 left, Vector2 right, string msg="", float error=err) {
         if (msg == "") msg = $"Comparing vectors {left}, {right}";

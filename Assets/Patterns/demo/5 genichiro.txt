@@ -33,7 +33,7 @@ phase 27 #{
 			~
 				##Even though this sound is not synced with the actual arrow collision, it sounds better like this.
 				async x-boom <> gcr { delay 30 wt 10 6 } sfx
-			async empty <2,:-75> gcr {
+			async empty <2;:-75> gcr {
 				p	mod
 				wtm	10 6 6
 				rpp	<30>
@@ -92,41 +92,41 @@ phase 27 #{
 		bullet-control persist empty savef pd p dir _
 		bullet-control persist empty savef ctime p t onlyonce offscreen loc
 		bullet-control-sm persist empty onlyonce offscreen loc
-			sync sun-red/w <> ss * 0.5 - 4 ^(- t 2; 2) tprot zero
+			sync sun-red/w <> ss * 0.5 - 4 ^(- t 2, 2) tprot zero
 		bullet-control persist sun-red/w cull > t 4
 		bullet-control persist empty time 101 > @ ctime p 0
 		
 #}
 
 !{ 
-crosshair(time; speed; loc)
+crosshair(time, speed, loc)
 sync crosshair <> pssfx x-crosshair summon  _ <> tprot
 			eased in-sine %time vhome %speed %loc
 			here sprite opacity %time equad0m10 0.5 %time t
 !}
 !{
-moveio(time; target)
+moveio(time, target)
 move %time nroffset ease io-sine %time * t / %time %target
 !}
 !{
-moveioanime(time; target)
-$moveio(%time; %target)
+moveioanime(time, target)
+$moveio(%time, %target)
 sfx x-move-anime
 !}
 !{
-fdsfiremove(color; root; beh; time; dist)
+fdsfiremove(color, root, beh, time, dist)
 sync pather18-%color% %root pssfx x-metal gsr {
 	preloop rv2.ry =f * 0.1 fhnmod 3.5 t
 	t 7
 	p	this
 } epather %beh 1 0.5 tprot lerpfromto 0.2 0.5 cx 12 cx 4
 savev2 pdiff 0 (- Lplayer loc)
-$moveio(%time ; * %dist normalize @0 pdiff)
+$moveio(%time , * %dist normalize @0 pdiff)
 !}
 !{
 fdsboommove(target)
 savev2 _mb1 0 (- %target loc)
-$moveioanime(0.5; @0 _mb1)
+$moveioanime(0.5, @0 _mb1)
 async sun-red/w.2 <> gcr {
 	delay	5
 	p	this
@@ -189,7 +189,7 @@ phase 27 #{
 			async lcircle-purple/ <> gcr { delay + 60 * 15 p } target Lplayer s tprot lerpout 0.5 1.1 cx 3
 		bullet-control persist lcircle-purple/ cull > t 1
 		bullet-control-sm persist lcircle-purple/ > t 1
-			sync shell-purple/ <0.1,:> gsr { start rv2.a +=f * 30 fsoftmod 1p p } circlep defer 12 repeatp this 5 <> s tprot * (linear 1 0.03 p) lerpfromto 0.2 0.6 cx 2.3 cx 1.3
+			sync shell-purple/ <0.1;:> gsr { start rv2.a +=f * 30 fsoftmod 1p p } circlep defer 12 repeatp this 5 <> s tprot * (linear 1 0.03 p) lerpfromto 0.2 0.6 cx 2.3 cx 1.3
 		~@ d6
 			async $d6b <0> gcr { delay * 15 p wt 35 2 } repeat 19 <10> s tp px 3.8 py * -1.2 t 
 		~@ d7
@@ -205,34 +205,34 @@ phase 27 #{
 		} seq
 		##RDLU LDRU jump LURU RDLU land LDRU RULD swipe RDLD
 			action block 1
-				$fdsfiremove(red/bs; <-3,:45>; d1; 0.08; 1)
+				$fdsfiremove(red/bs, <-3;:45>, d1, 0.08, 1)
 			action block 0.5
-				$fdsfiremove(pink/bs; <-3,:135>; d2; 0.08; 1)
+				$fdsfiremove(pink/bs, <-3;:135>, d2, 0.08, 1)
 			action block 0.5
 				sfx x-incoming-2
 				savev2 pdiff 0 (- Lplayer loc)
 				savev2 tocenter 0 (- zero loc)
-				$moveio(2; + cy 3 * 1 normalize @0 pdiff)
+				$moveio(2, + cy 3 * 1 normalize @0 pdiff)
 			action block 0.5
-				$fdsfiremove(red/bs; <0,1:-3,:180>; d3; 0.06; 1)
+				$fdsfiremove(red/bs, <0;1:-3;:180>, d3, 0.06, 1)
 			action block 0.2
-				$fdsfiremove(pink/bs; <-3,:45>; d4; 0.06; 1)
+				$fdsfiremove(pink/bs, <-3;:45>, d4, 0.06, 1)
 			action block 0.2
-				$fdsfiremove(red/ws; <-3,:135>; d5; 0.04; 1)
+				$fdsfiremove(red/ws, <-3;:135>, d5, 0.04, 1)
 			action block 0.2
-				$fdsfiremove(pink/ws; <-3,:-135>; d6; 0.04; 1)
+				$fdsfiremove(pink/ws, <-3;:-135>, d6, 0.04, 1)
 			action block 0.2 
 				async _ <> gcr { wt 1 120 } savev2 ploc 0 Lplayer
 				savev2 tocenter 0 - (pxy (* 4 pm1mod p) 3) loc
-				$crosshair(3; 12; @0 ploc)
-				$moveio(1; @0 tocenter)
+				$crosshair(3, 12, @0 ploc)
+				$moveio(1, @0 tocenter)
 			action block 0.5
 				sfx x-incoming-2
 			action block 1.5
 				$fdsboommove(@0 ploc)
 			action block 0.1
 				async x-metal <> gcr { wt 10 6 } sfx
-				async pather18-black/bs <-8,1:> gcr {
+				async pather18-black/bs <-8;1:> gcr {
 					root	loc
 					preloop rv2.ry -=f 0.1
 					wt	1 80
@@ -241,10 +241,10 @@ phase 27 #{
 				sync sc-guanyin <> target Lplayer repeat 12 <30> repeatp this 20 <> s tprot
 					px + 0.4 * 0.25 / (^ p 1.5) 10
 				savev2 pdiff 0 (- Lplayer loc)
-				$moveio(0.16; * 1 normalize @0 pdiff)
+				$moveio(0.16, * 1 normalize @0 pdiff)
 			action block 1
 				savev2 tocenter 0 - cy 3 loc
-				$moveio(1; @0 tocenter)
+				$moveio(1, @0 tocenter)
 				break
 			break
 		

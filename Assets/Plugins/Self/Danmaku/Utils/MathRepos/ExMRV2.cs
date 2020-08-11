@@ -101,6 +101,9 @@ public static partial class ExMRV2 {
     [Alias("a")]
     public static trv2 Angle(tfloat a) => VRV2(E0, E0, E0, E0, a);
 
+    /// <summary>
+    /// = Angle / 360h RPT
+    /// </summary>
     [Alias("aphi")]
     public static trv2 AnglePhi(tfloat rpt) => Angle(iphi360.Div(rpt));
 

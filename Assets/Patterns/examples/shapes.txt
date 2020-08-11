@@ -6,7 +6,7 @@ phase 0
 		clear phase
 		shift-phase-to 2
 		
-!{ show(gsrrules360; gsrrules720)
+!{ show(gsrrules360, gsrrules720)
  saction 0
 	async strip-*/b <> gcr2 120 3 <> {
 		color { red blue green }
@@ -44,10 +44,10 @@ phase 0
 
 phase 0
     saction 0
-		$show(noop; noop)
+		$show(noop, noop)
 ##with more concentration at ends
 phase 0
     action block 0
-		$show(mutateang	smoothloopr io-sine (/ 360 &sides) [&rv2].a;
+		$show(mutateang	smoothloopr io-sine (/ 360 &sides) [&rv2].a,
 					mutateang	smoothloopr io-sine (/ 720 &sides) [&rv2].a)
         

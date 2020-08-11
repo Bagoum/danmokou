@@ -6,12 +6,12 @@ phase 0
 phase 0
     action block 0
         position 0 1
-        bullet arrow-teal/b <1,:> gcr2 24 5 <50> {
+        bullet arrow-teal/b <1;:> gcr2 24 5 <50> {
 		} gsrf 5 (rot
 				* -0.15 &aixd
 				* 0.1 &aiyd
 				0) {
-			bank <0.1,:>
+			bank <0.1;:>
 			bindArrow
 		} gsr {
 		
@@ -23,9 +23,9 @@ phase 0
 phase 0
     action block 0
         position 0 1
-        bullet arrow-teal/b <1,:> gcr2 24 5 <50> {
+        bullet arrow-teal/b <1;:> gcr2 24 5 <50> {
 		} gsr2 5 <30> {
 			center
-			bank <0.2,:>
+			bank <0.2;:>
 		} s tprot cx 1
             

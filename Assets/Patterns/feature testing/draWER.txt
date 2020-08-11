@@ -14,7 +14,7 @@ phase 0
 		move _ roffset pxy
 			sine 6 1.5 t
 			sine 6h 1 t
-		sync powerup1 <1,:170> powerup2
+		sync powerup1 <1;:170> powerup2
 			x-powerup-1 x-powerdown-1
 			witha 0.9 lerp 0 3 t green blue
 			witha 0.9 red
@@ -27,9 +27,9 @@ phase 0
 		move _ tprot pxy
 			dsine 14 1.5 t
 			dcosine 14h 1 t
-		sync _ <1,:170> relrect mima
+		sync _ <1;:170> relrect mima
 			witha 0.7 purple
-			<1,0:3,1:40>
+			<1;0:3;1:40>
         
             
             

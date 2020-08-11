@@ -695,29 +695,6 @@ public abstract class SummonAlongHandler {
         return result + offsetAngle(gcx);
     }
 }
-
-/// <summary>
-/// Enum describing the direction in which a bullet is fired from a parent.
-/// </summary>
-public enum Facing {
-    /// <summary>
-    /// Starts from beh.original_angle. This is zero except for summons,
-    /// for which it is set to the V2RV2 angle of the summon.
-    /// </summary>
-    ORIGINAL,
-    /// <summary>
-    /// Starts from 0.
-    /// </summary>
-    DEROT, 
-    /// <summary>
-    /// Starts from the velocity direction of the BEH.
-    /// </summary>
-    VELOCITY, 
-    /// <summary>
-    /// Starts from original_angle + the velocity direction.
-    /// </summary>
-    ROTVELOCITY
-}
 public class SAOffsetHandler : SummonAlongHandler {
     private readonly GCXF<Vector2> nextLocation;
     public SAOffsetHandler(SAAngle sah, GCXF<float> offsetAngle, GCXF<Vector2> nextLocation): base(sah, offsetAngle) {

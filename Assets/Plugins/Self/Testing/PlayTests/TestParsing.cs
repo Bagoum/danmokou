@@ -10,6 +10,7 @@ using UnityEngine.TestTools;
 using static NUnit.Framework.Assert;
 using static DMath.Parser;
 using static Tests.TAssert;
+using static Danmaku.Enums;
 
 namespace Tests {
 
@@ -33,10 +34,10 @@ public static class TestParsing {
     public static void TestV2RV2() {
         AreEqual(V2RV2.Zero, ParseV2RV2("<>"));
         AreEqual(V2RV2.Angle(2 * M.IPHI), ParseV2RV2("<2h>"));
-        AreEqual(V2RV2.Rot(4.0f, -2.5f, 2 * M.IPHI), ParseV2RV2("<4.0,-2.5:2h>"));
-        ThrowsAny(() => ParseV2RV2("<gf,-2.5:2h>"));
-        AreEqual(new V2RV2(2f, 3f, 4.0f, -2.5f, 2 * M.IPHI), ParseV2RV2("<2,3:4.0,-2.5:2h>"));
-        AreEqual(new V2RV2(2f, 3f, 0, 0, 2 * M.IPHI), ParseV2RV2("<2,3:,:2h>"));
+        AreEqual(V2RV2.Rot(4.0f, -2.5f, 2 * M.IPHI), ParseV2RV2("<4.0;-2.5:2h>"));
+        ThrowsAny(() => ParseV2RV2("<gf;-2.5:2h>"));
+        AreEqual(new V2RV2(2f, 3f, 4.0f, -2.5f, 2 * M.IPHI), ParseV2RV2("<2;3:4.0,-2.5:2h>"));
+        AreEqual(new V2RV2(2f, 3f, 0, 0, 2 * M.IPHI), ParseV2RV2("<2;3:;:2h>"));
     }
 
     private static void TestSMExceptionRegex(string sm, string pattern) =>
@@ -48,28 +49,28 @@ public static class TestParsing {
         SceneManager.LoadScene(baseScenePath);
         yield return null;
         TestSMExceptionRegex(@"
-async shell-teal/b <2,:> gcr2 60 5 <-0.2,:10> { } gsr2 5 <,:72> { } s tp-rot cxfff 2", "cxfff.*type TP");
+async shell-teal/b <2;:> gcr2 60 5 <-0.2;:10> { } gsr2 5 <;:72> { } s tp-rot cxfff 2", "cxfff.*type TP");
         TestSMExceptionRegex(@"
-async shell-teal/b <2,:> gcr2 20 _ <,:5> { } gsr2 5 <,:72> { } s :: {
+async shell-teal/b <2;:> gcr2 20 _ <;:5> { } gsr2 5 <;:72> { } s :: {
 			R	w
 		} tp-rot pxy 2 &R", "failed to cast.*\"w\".* to type BPY");
         /* No longer an error, as R will be looked up in private data hoisting instead.
         TestSMExceptionRegex(@"
-bullet shell-teal/b <2,:> cre 20 _ <,:5> repeat 5 <,:72> s :: {
+bullet shell-teal/b <2;:> cre 20 _ <;:5> repeat 5 <;:72> s :: {
 			R	5
 		} tp-rot pxy 2 &R2", "The reference R2 is used, but does not have a value.");*/
-        TestSMExceptionRegex(@"sync danger <2,:> summons tprot cx 1 file YEET", "file by name YEET");
-        TestSMExceptionRegex(@"sync danger <2,:> summons tprot cx 1 blarg", "blarg is not a StateMachine");
-        TestSMExceptionRegex(@"sync danger <2,:> summons tprot cx 1 here sad", 
+        TestSMExceptionRegex(@"sync danger <2;:> summons tprot cx 1 file YEET", "file by name YEET");
+        TestSMExceptionRegex(@"sync danger <2;:> summons tprot cx 1 blarg", "blarg is not a StateMachine");
+        TestSMExceptionRegex(@"sync danger <2;:> summons tprot cx 1 here sad", 
             "Nested StateMachine construction.*sad is not a StateMachine");
-        TestSMExceptionRegex(@"async shell-teal/b <2,:> gcr2 60 5 <-0.2,:10> { } gsr2 5 <,:72> { } s tp-rot cx sad", 
+        TestSMExceptionRegex(@"async shell-teal/b <2;:> gcr2 60 5 <-0.2;:10> { } gsr2 5 <;:72> { } s tp-rot cx sad", 
             "Cannot convert \"sad\" to float");
-        TestSMExceptionRegex(@"async shell-teal/b <2,:> gcr2 60 5 <-0.2,:10> { } gsr2 5 <,:72> { } s tp-rot cxy 2", 
+        TestSMExceptionRegex(@"async shell-teal/b <2;:> gcr2 60 5 <-0.2;:10> { } gsr2 5 <;:72> { } s tp-rot cxy 2", 
             "TP.*ran out of text");
         TestSMExceptionRegex(@"async shell-teal/b", "ran out of text");
         TestSMExceptionRegex(@"
-async shell-teal/b <2,:> gcr2 60 5 <-0.2,:10> { } gsr2 5 <,:72> { } s tp-rot cxy 2
-async shell-teal/b <2,:> gcr2 60 5 <-0.2,:10> { } gsr2 5 <,:72> { } s tp-rot cxy 2 3",
+async shell-teal/b <2;:> gcr2 60 5 <-0.2;:10> { } gsr2 5 <;:72> { } s tp-rot cxy 2
+async shell-teal/b <2;:> gcr2 60 5 <-0.2;:10> { } gsr2 5 <;:72> { } s tp-rot cxy 2 3",
             "async.* to float");
     }
 

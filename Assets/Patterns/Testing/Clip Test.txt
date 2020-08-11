@@ -3,24 +3,24 @@ phase 0
 	action block 0
 		clear bullet
 		position 0 0
-		sync strip-red/w <2,:> gsr {
+		sync strip-red/w <2;:> gsr {
 			clip 	true
 			t	2
 			rpp	<10>
 		} s null
-		async strip-red/w <1,:90> gcr {
+		async strip-red/w <1;:90> gcr {
 			clip 	true
-			bank	<1,:>
+			bank	<1;:>
 			wt	20 2
 			rpp	<10>
 		} s null
-		async strip-green/w <1,:90> gcr {
+		async strip-green/w <1;:90> gcr {
 			clip 	false
-			bank	<1,:>
+			bank	<1;:>
 			wt	1 2
 			rpp	<10>
 		} s null
-		async strip-red/w <3,:> gir {
+		async strip-red/w <3;:> gir {
 			clip 	true
 			wt	20 2
 			rpp	<40>

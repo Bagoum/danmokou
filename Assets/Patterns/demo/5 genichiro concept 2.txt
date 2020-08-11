@@ -21,7 +21,7 @@ phase 26 #{
 	action block 0
 		position 0 2
 		setstate vulnerable true
-		async gcircle-*/b <0.4,:> gir2 0 2 <> { 
+		async gcircle-*/b <0.4;:> gir2 0 2 <> { 
 			p this 
 			color { green orange }
 		} gcr {
@@ -75,7 +75,7 @@ phase 46 #{
 			async x-boom <> gcr2 24 4 <> . sfx
 			shake 1.5 2 smooth smod-010 / x 2
 			savev2 ploc 0 Lplayer
-			async gcircle-*/b <1,:-90> gcr {
+			async gcircle-*/b <1;:-90> gcr {
 				delay	40
 				root	cy 5.5
 				target nx * -1 @0 ploc
@@ -118,7 +118,7 @@ phase 46 #{
 		async lightning-yellow/ <> gcr2 120 _ <> {
 			p this
 			root	cxy -10 5
-		} gsr2 11 <2,:,:> { alternate p } {
+		} gsr2 11 <2;:;:> { alternate p } {
 			pather 1 1 tprot pxy dsine 7 0.6 t -1.5 { }
 			pather 1 1 tprot pxy dsine 7 -0.6 t -1.5 { }
 		}
@@ -145,7 +145,7 @@ phase 46 #{
 					} + lbeh $me qrotate * pm1 (p1ma { $ww $wl 2 }) py + 30 sine 4p 8 t  
 						wings1 $ww $wl 2
 				move 2 tpnrot eased out-sine 2 ssvhomet 2 pxy * &lr 2.5 2.5
-				async gpather-pink/w <,0.75:> gcr2 24 5 <,1.5:>  {
+				async gpather-pink/w <;0.75:> gcr2 24 5 <;1.5:>  {
 					target a Lplayer
 					sfx x-fire-tech-8
 				} gsr2 2 <> {

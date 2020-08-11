@@ -8,9 +8,9 @@ phase 0
 phase 0
     action block 0
         position -1 0
-		sync lightning-blue/w <1,:> pather 3 3 tprot cx 2 {
+		sync lightning-blue/w <1;:> pather 3 3 tprot cx 2 {
 			sm
-				async gem-red/b <0.9,:90> idelay 90 gcr {
+				async gem-red/b <0.9;:90> idelay 90 gcr {
 					rootadjust	lbeh aya
 					start {
 						rt =v2 rv2topolar &rv2

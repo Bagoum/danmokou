@@ -70,12 +70,12 @@ $block()
     public void TestNoSpace() {
         AssertSMEq(@"
 !{ m(n)
-    *%n,%n>
-    %n,%n
+    *%n;%n>
+    %n;%n
 !}
 $m(5)
-", @"*5,5>
-5,5");
+", @"*5;5>
+5;5");
     }
 
     [Test]
@@ -130,17 +130,17 @@ line2");
     [Test]
     public void TestMacroDefault() {
         AssertSMEq(@"
-!{ f(x 5; y 4)
+!{ f(x 5, y 4)
 + %x %y
 !}
-$f(3; 2)
+$f(3, 2)
 $f
 $f(3)
 ", @"+ 3 2
 + 5 4
 + 3 4");
         AssertSMEq(@"
-!{ f(x; y * 2 4)
+!{ f(x, y * 2 4)
 + %x %y
 !}
 $f(3)
@@ -176,10 +176,10 @@ z %f z
 !}
 $AddX($AddY($AddZ(1)))
 ", @"x y z 1 z y x");
-        AssertSMEq(@"!{ AddX(x; f)
+        AssertSMEq(@"!{ AddX(x, f)
 %x%%f%
 !}
-$AddX(x; $AddX(` !HELLO WORLD! `; $AddX(z; 1)))
+$AddX(x, $AddX(` !HELLO WORLD! `, $AddX(z, 1)))
 ", @"x !HELLO WORLD! z1");
     }
 
@@ -200,17 +200,17 @@ me
     [Test]
     public void TestPartial1() {
         AssertSMEq(@"!{
-add(x;y)
+add(x,y)
 + %x %y
 !}
 !{
 apply5(func)
 $%func(5)
 !}
-$apply5($add(!$; 4))
+$apply5($add(!$, 4))
 ", @"+ 5 4
 ");
-        AssertSMEq(@"!{ add(x;y)
+        AssertSMEq(@"!{ add(x,y)
 + %x %y
 !}
 !{ apply5(func)
@@ -219,10 +219,10 @@ $%func(5)
 !{ apply6(func)
 $%func(6)
 !}
-$apply6($apply5($add(!$; !$)))
+$apply6($apply5($add(!$, !$)))
 ", @"+ 5 6
 ");
-        AssertSMEq(@"!{ fadd(x;fz;y)
+        AssertSMEq(@"!{ fadd(x,fz,y)
 + %x $%fz(%y)
 !}
 !{ double(x)
@@ -232,9 +232,9 @@ $apply6($apply5($add(!$; !$)))
 apply5(func)
 $%func(5)
 !}
-$fadd(6; $double(!$); 4)
-$apply5($fadd(!$; $double(!$); 4))
-$apply5($fadd(9; $double(!$); !$))
+$fadd(6, $double(!$), 4)
+$apply5($fadd(!$, $double(!$), 4))
+$apply5($fadd(9, $double(!$), !$))
 ", @"+ 6 * 2 4
 + 5 * 2 4
 + 9 * 2 5
@@ -243,13 +243,10 @@ $apply5($fadd(9; $double(!$); !$))
 
     [Test]
     public void TestProperty() {
-        AssertSMEq(@"<[ hello world ]>
-<[goodbye `my friend`]>
+        AssertSMEq(@"
 <!>hello new world
 yeet
 ", $@"
-{PROP_KW} hello world
-{PROP_KW} goodbye my friend
 {PROP_KW} hello new world
 yeet
 ");
@@ -352,16 +349,5 @@ $add(4;5;6)
 "), "unbound macro argument");
     }
     
-    [Test]
-    public void WriteTest() {
-        switch (SMParser2(System.IO.File.ReadAllText("../../../test.txt"))) {
-            case Errorable<string>.OK sm:
-                System.IO.File.WriteAllText("../../../test.out.txt", sm.Item);
-                break;
-            case Errorable<string>.Failed errs:
-                Assert.Fail(string.Join("\n;", errs.Item));
-                break;
-        }
-    }
 }
 }

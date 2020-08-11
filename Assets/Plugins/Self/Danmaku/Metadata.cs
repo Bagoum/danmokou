@@ -2,6 +2,7 @@
 using Core;
 using JetBrains.Annotations;
 using SM;
+using static Danmaku.Enums;
 
 namespace Danmaku {
 

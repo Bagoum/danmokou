@@ -80,9 +80,13 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     [CanBeNull] protected MaterialPropertyBlock pb;
     [CanBeNull] private Enemy enemy;
     [CanBeNull] public EffectStrategy deathEffect;
+
+    private string NameMe => string.IsNullOrWhiteSpace(ID) ? gameObject.name : ID;
     public Enemy Enemy {
         get {
-            if (enemy == null) throw new Exception($"BEH {ID} is not an Enemy. Do not access this property.");
+            if (enemy == null) {
+                throw new Exception($"BEH {NameMe} is not an Enemy, but you are trying to access the Enemy component.");
+            }
             return enemy;
         }
     }

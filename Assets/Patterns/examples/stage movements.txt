@@ -12,7 +12,7 @@ sync fairy1 <> summonr
 	{ }
 !}
 !{ exfire()
-async arrow-red/w <0.5,:> gcr2 60 3 <> {
+async arrow-red/w <0.5;:> gcr2 60 3 <> {
 	target a Lplayer
 } gsr2 5 <10> {
 	center
@@ -32,7 +32,7 @@ phase 0 #{
 		
 phase 0
 	action block 0
-		sync fairy1 <2,4:> gsr { 
+		sync fairy1 <2;4:> gsr { 
 		} summonrz
 			movewrap 1 pxy -2 2 2 goside 0
 				$exfire

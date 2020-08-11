@@ -5,8 +5,9 @@ using UnityEngine;
 namespace Danmaku {
 public class LevelController : BehaviorEntity {
     public StageConfig stage;
+    private string _DefaultSuicideStyle => (stage == null) ? null : stage.defaultSuicideStyle;
     private static LevelController main;
-    public static string DefaultSuicideStyle => (main == null) ? null : main.stage.defaultSuicideStyle;
+    public static string DefaultSuicideStyle => (main == null) ? null : main._DefaultSuicideStyle;
 
     //[Header("On Level Completion")] public RString KVRKey;
     //public RInt KVRValue;

@@ -10,7 +10,7 @@ open System
 
 let OPEN_ARG = '('
 let CLOSE_ARG = ')'
-let ARG_SEP = ';'
+let ARG_SEP = ','
 
 let betweenChars c1 c2 p = pchar c1 >>. p .>> pchar c2
 let betweenStr s1 s2 p = pstring s1 >>. p .>> pstring s2

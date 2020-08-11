@@ -14,8 +14,8 @@ phase 0
         position 0 0
 		@ nl
 			position 0 6
-		bullet ellipse-blue/w <> cre 20 _ <,:6h> repeat 60 <,:6> s tprot cx 1
-        bullet-control PERSIST ellipse-blue/w FORCE relrect mokou <1,:3,2:0>
+		bullet ellipse-blue/w <> cre 20 _ <;:6h> repeat 60 <;:6> s tprot cx 1
+        bullet-control PERSIST ellipse-blue/w FORCE relrect mokou <1;:3;2:0>
 		##With tpnrot, mokou fires heart-shaped (!) blocks that hit a wall and then leak backwards or go forwards slowly.
 		##With tprot, mokou fires bullets very quickly in a circle, and they slow down in such a way that you can see a rectangle, slightly offset to the right, around mokou which is the speed zone.
         tpnrot pxy

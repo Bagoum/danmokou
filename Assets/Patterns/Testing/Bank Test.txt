@@ -3,17 +3,17 @@ phase 0
 	action block 0
 		clear bullet
 		position 0 0
-		sync strip-red/w <2,:> gsr {
+		sync strip-red/w <2;:> gsr {
 			t	2
 			rpp	<10>
 		} s null
-		sync strip-green/w <1,:90> gsr {
-			bank	<1,:>
+		sync strip-green/w <1;:90> gsr {
+			bank	<1;:>
 			t	2
 			rpp	<10>
 		} s null
-		sync strip-purple/w <1,:90> gsr {
-			bank0	<1,:>
+		sync strip-purple/w <1;:90> gsr {
+			bank0	<1;:>
 			t	2
 			rpp	<10>
 		} s null

@@ -249,3 +249,13 @@ public static class NullableExtensions {
         => x.HasValue ? f(x.Value) : null;
     
 }
+
+public static class LowEnumExtensions {
+    
+    public static float ToAngle(this ShootDirection sd) {
+        if (sd == ShootDirection.UP) return 90;
+        else if (sd == ShootDirection.LEFT) return 180;
+        else if (sd == ShootDirection.DOWN) return 270;
+        else return 0;
+    }
+}

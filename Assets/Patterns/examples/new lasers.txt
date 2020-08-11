@@ -7,7 +7,7 @@ phase 0
 ##1. Straight lasers, size control
 phase 0
 	action block 0
-		sync glaser-blue/b <1,:30> gsr2 4 <40> p this
+		sync glaser-blue/b <1;:30> gsr2 4 <40> p this
 			laser roffset px sine 3 0.5 t
 				1 1 {
 					dsfx
@@ -20,7 +20,7 @@ phase 0
 ##2. Rotated lasers
 phase 0
 	action block 0
-		sync laser-green/w <1,:30> gsr2 4 <40> . 
+		sync laser-green/w <1;:30> gsr2 4 <40> . 
 			laser roffset px sine 3 0.5 t
 				10 10 {
 					rotate -50 (* 10 t)
@@ -29,7 +29,7 @@ phase 0
 ##3. Static lasers
 phase 0
 	action block 0
-		sync laser-green/w <1,:30> gsr2 4 <40> . 
+		sync laser-green/w <1;:30> gsr2 4 <40> . 
 			laser roffset px sine 3 0.5 t
 				1 10 {
 					##Note: &lt here creates slightly buggy behavior where the laser jumps on frame change,
@@ -42,7 +42,7 @@ phase 0
 ##4. Dynamic lasers
 phase 0
 	action block 0
-		sync laser-green/w <1,:30> gsr2 4 <40> . 
+		sync laser-green/w <1;:30> gsr2 4 <40> . 
 			laser roffset px sine 3 0.5 t
 				1 10 {
 					stagger	 0.4
@@ -53,7 +53,7 @@ phase 0
 phase 0
 	action block 0
 		position -1 -2
-			sync laser-red/ <1.5,:90> gsr { face d } laser null 2 2 {
+			sync laser-red/ <1.5;:90> gsr { face d } laser null 2 2 {
 				sm	async gem-green/w <90> gcr2 6 _ <> . gsr { onlaser * 0.1 &pi } s tprot cx 1
 				rotate	-50 * -40 t
 			}
@@ -62,7 +62,7 @@ phase 0
 phase 0
 	action block 0
 		position -1 0
-		sync laser-green/w <1,:10> gsr2 2 <180> .
+		sync laser-green/w <1;:10> gsr2 2 <180> .
 			laser roffset px  sine 4 0.5 t
 				1 10 {
 					length	10
@@ -74,7 +74,7 @@ phase 0
 phase 0
 	action block 0
 		position -1 0
-		sync laser-green/w <1,:10> gsr2 2 <180> {
+		sync laser-green/w <1;:10> gsr2 2 <180> {
 			preloop i =f t
 			p this
 		} laser nroffset px * pm1 &i * t 0.5
@@ -88,10 +88,10 @@ phase 0
 phase 0
 	action block 0
 		position 0 0
-		sync mulaser-green* <1,:> gsr2c 3 {
+		sync mulaser-green* <1;:> gsr2c 3 {
 			color { /b / /w }
 		} safelaser 10 { }
-		sync zonelaser-blue* <1,:20> gsr2c 3 {
+		sync zonelaser-blue* <1;:20> gsr2c 3 {
 			color { /b / /w }
 		} safelaser 10 { rotate 0 * 20 t }
 
@@ -99,7 +99,7 @@ phase 0
 phase 0
 	action block 0
 		position -3 0
-		sync gdlaser-green/b <1,:> gsr  {
+		sync gdlaser-green/b <1;:> gsr  {
 		} laser null 1 1 {
 			stagger 0.4
 			dynamic polar 
@@ -107,7 +107,7 @@ phase 0
 				sine 2.1 44 + * 1.1 &lt  t
 		}
 	action block 3
-		sync gdlaser-green/b <1,:> gsr  {
+		sync gdlaser-green/b <1;:> gsr  {
 		} laser null 2 2 {
 			dynamic polar 
 				* 2 t

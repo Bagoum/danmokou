@@ -34,7 +34,7 @@ phase 0 #{
 				{ }
 			break
 		beh-control-sm persist lightning-* onlyonce  & (in y 0 ymax)  (in abs x xmax ++ xmax)
-			async fireball-red/w <0,:180> gir {
+			async fireball-red/w <0;:180> gir {
 				face v
 				sfx x-fire-burst-3
 			} {
@@ -58,12 +58,12 @@ phase 40 #{
     action block 0
 		position 0 4
 		async x-lightning <> gcr2 25 4 <> . sfx
-		##sync glcircle-* <-4.7,3:> gsr2 3 <0.7,:> color { */  */w */b }  gsr2 9 <,-.7:> color $colors s tprot zero
-		async lightning-* <0.5,:180> gir2 25 3 <60> color { */ */w */b */b */w  } gcr2 8 9 <6> color { black purple teal green orange yellow red pink blue } pather 3 2
+		##sync glcircle-* <-4.7;3:> gsr2 3 <0.7;:> color { */  */w */b }  gsr2 9 <;-.7:> color $colors s tprot zero
+		async lightning-* <0.5;:180> gir2 25 3 <60> color { */ */w */b */b */w  } gcr2 8 9 <6> color { black purple teal green orange yellow red pink blue } pather 3 2
 			roffset
 				pxy
 					* 1 t
 					0 ##sine 1 0.2 t
 			{ }
-		##async pather18-* <0.5,:2> gsr2 3 <50> color { */ */w */b */bs */ws  } gsr2 9 <5> color { black purple teal green orange yellow red pink blue } pather 1 1 tprot cx 1
+		##async pather18-* <0.5;:2> gsr2 3 <50> color { */ */w */b */bs */ws  } gsr2 9 <5> color { black purple teal green orange yellow red pink blue } pather 1 1 tprot cx 1
    

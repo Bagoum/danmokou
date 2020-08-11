@@ -8,8 +8,6 @@ open FParser.ParserCommon
 
 
 let COMMENT = '#'
-let OPEN_PROP = "<["
-let CLOSE_PROP = "]>"
 let PROP_MARKER = "<!>"
 let PROP_KW = "!$_PROPERTY_$!"
 let OPEN_PF = '['
@@ -22,12 +20,10 @@ let MACRO_OPEN = "!{"
 let MACRO_CLOSE = "!}"
 let LAMBDA_MACRO_PRM = "!$"
 let MACRO_REINVOKE = "$%"
-let REF = '&'
-let REF_STR = "&"
 let private isLetter c =
     c <> COMMENT && c <> MACRO_INVOKE && c <> MACRO_VAR && c <> '!'
     && c <> OPEN_ARG && c <> CLOSE_ARG && c <> ARG_SEP
-    && c <> OPEN_PF && c <> CLOSE_PF //&& c <> REF
+    && c <> OPEN_PF && c <> CLOSE_PF
     && c <> QUOTE && not <| Char.IsWhiteSpace c
     
 let failErrorable = function
@@ -206,8 +202,7 @@ and private mainParser = choice [
             updateUserState (fun state -> { state with macros = state.macros.Add(n, m) }) >>% MacroDef n)
         parenArgs |>> Words
         //pchar REF >>. simpleString0 |>> fun x -> Words [ Atom REF_STR; Atom x ]
-        //Property syntax is either <[key value value value]> or <!>key value value value
-        betweenStr OPEN_PROP CLOSE_PROP (ilspaces >>. wordsInline .>> ilspaces) |>> (fun words -> (Atom PROP_KW::words) |> Words)
+        //Property syntax: <!> value value value
         pstring PROP_MARKER >>. ilspaces >>. wordsInline |>> (fun words -> (Atom PROP_KW::words) |> Words)
         //Note: this requires priority so A%B%C gets parsed as one NoSpace block.
         //Because it has priority, it requires attempt so it doesn't break on a normal string like ABC.
@@ -216,7 +211,7 @@ and private mainParser = choice [
         attempt <| sepByAll2 simpleString0 (pchar MACRO_VAR >>. Macro.Prm) |>> compileMacro
         simpleString1 |>> Atom
         betweenChars OPEN_PF CLOSE_PF wordsInBlock |>> Postfix 
-        pstring MACRO_REINVOKE >>. Macro.Prm .>>. parenArgs |>> MacroReinvocation
+        pstring MACRO_REINVOKE >>. simpleString1 .>>. parenArgs |>> MacroReinvocation
         pchar MACRO_INVOKE >>. simpleString1 .>>. (parenArgs <|>% []) >>= invokeMacroByName
         bounded QUOTE |>> Quote
     ]

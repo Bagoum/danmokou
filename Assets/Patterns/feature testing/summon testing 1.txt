@@ -12,16 +12,16 @@ phase 40 #{
 		clear bullet
     action block 0
         position 0 0
-        bullet enemy01 <2,:45> cre 240 4 <,:80> summon eff <>
+        bullet enemy01 <2;:45> cre 240 4 <;:80> summon eff <>
             tpnrot cy 0.2
             here action block 0
-				async gem-orange/b <0.5,:> gcr2 70 3 <> { delay 40 } gsr2 10 <36> . s tprot cx 1
-                bullet enemy01 <1,:> cre 60 8 <,:45> summon eff <>
+				async gem-orange/b <0.5;:> gcr2 70 3 <> { delay 40 } gsr2 10 <36> . s tprot cx 1
+                bullet enemy01 <1;:> cre 60 8 <;:45> summon eff <>
                     tprot cxy 1 0.4
                     here action block 0
-                ## purple streams in direciton of movement, red slightly lower (red is equiv. to <1,0>, where movement is <1,0.4>)
-                        bullet gem-red/w <0.5,:> cre 20 _ <> s tp-rot cx 1.5
-                        bullet gem-purple/w <0.5,:> gcr2 20 _ <> { face v } s tp-rot cx 2
+                ## purple streams in direciton of movement, red slightly lower (red is equiv. to <1;0>, where movement is <1;0.4>)
+                        bullet gem-red/w <0.5;:> cre 20 _ <> s tp-rot cx 1.5
+                        bullet gem-purple/w <0.5;:> gcr2 20 _ <> { face v } s tp-rot cx 2
 						break
 				break
         move 2 tpnrot cx -0.5
@@ -32,9 +32,9 @@ phase 40 #{
 phase 40 #{
     action block 0
         position 0 0
-        bullet enemy01 <2,-2:> cre 60 5 <,1:> summon eff <>
+        bullet enemy01 <2;-2:> cre 60 5 <;1:> summon eff <>
             tpnrot cx 0.2
-            here bullet gem-red/w <0.5,:> conce s tp-rot rotate 20 cx 1
+            here bullet gem-red/w <0.5;:> conce s tp-rot rotate 20 cx 1
 
 #}
    

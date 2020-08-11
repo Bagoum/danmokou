@@ -205,7 +205,7 @@ PrefabInstance:
         type: 3}
       propertyPath: behaviorScript
       value: 
-      objectReference: {fileID: 4900000, guid: 9929cb1f75a795f408a01e01e7ce9c2b, type: 3}
+      objectReference: {fileID: 4900000, guid: 39fe09ec9c9eb5746b25a5cf383b4f49, type: 3}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 567949ea02f82894482d1922e940c492, type: 3}
 --- !u!1001 &2128149462

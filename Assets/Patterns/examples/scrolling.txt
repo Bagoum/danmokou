@@ -23,12 +23,12 @@ phase 0
 		sync gem-red/ <> gsr {
 			root	cxy -50 -12
 			t	25
-			rpp	<4,:>
+			rpp	<4;:>
 		
 		} gsr {
 			bank	<>
 			t	80
-			rpp	<0.4,0.4:>
+			rpp	<0.4;0.4:>
 		} gsr {
 			t	2
 			preloop rv2.rx *=f pm1mod t

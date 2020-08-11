@@ -7,6 +7,7 @@ using JetBrains.Annotations;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Serialization;
+using static Danmaku.Enums;
 
 namespace Danmaku {
 public class Enemy : RegularUpdater {

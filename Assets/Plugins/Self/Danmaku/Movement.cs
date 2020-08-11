@@ -175,7 +175,7 @@ public static class VTPControllers {
 public static class VTPRepo {
         [DontReflect]
         public static bool IsNone(this VTP func) => func == NoVTP;
-        public static readonly ExVTP ExNoVTP = Velocity(CartesianNRot(Parametrics.Zero()));
+        public static readonly ExVTP ExNoVTP = VTPControllers.Velocity(CartesianNRot(Parametrics.Zero()));
         public static readonly VTP NoVTP = Compilers.VTP_Force(ExNoVTP);
         /// <summary>
         /// No movement.
@@ -186,20 +186,23 @@ public static class VTPRepo {
         /// </summary>
         /// <param name="rv">Rotational velocity parametric</param>
         /// <returns></returns>
-        public static ExVTP TPRot(ExTP rv) => Velocity(CartesianRot(rv));
+        [Alias("tprot")]
+        public static ExVTP RVelocity(ExTP rv) => VTPControllers.Velocity(CartesianRot(rv));
         /// <summary>
         /// Movement with Cartesian nonrotational velocity only.
         /// </summary>
         /// <param name="nrv">Nonrotational velocity parametric</param>
         /// <returns></returns>
-        public static ExVTP TPNRot(ExTP nrv) => Velocity(CartesianNRot(nrv));
+        [Alias("tpnrot")]
+        public static ExVTP NRVelocity(ExTP nrv) => VTPControllers.Velocity(CartesianNRot(nrv));
         /// <summary>
         /// Movement with Cartesian rotational velocity and nonrotational velocity.
         /// </summary>
         /// <param name="rv">Rotational velocity parametric</param>
         /// <param name="nrv">Nonrotational velocity parametric</param>
         /// <returns></returns>
-        public static ExVTP TP(ExTP rv, ExTP nrv) => Velocity(Cartesian(rv, nrv));
+        [Alias("tp")]
+        public static ExVTP Velocity(ExTP rv, ExTP nrv) => VTPControllers.Velocity(Cartesian(rv, nrv));
         /// <summary>
         /// Movement with Cartesian rotational offset only.
         /// </summary>
@@ -269,7 +272,7 @@ public static class VTPRepo {
         /// <param name="radius">Radius derivative function</param>
         /// <param name="theta">Theta derivative function (degrees)</param>
         /// <returns></returns>
-        public static ExVTP VPolar(ExBPY radius, ExBPY theta) => Velocity(VTPConstructors.Polar(radius, theta));
+        public static ExVTP VPolar(ExBPY radius, ExBPY theta) => VTPControllers.Velocity(VTPConstructors.Polar(radius, theta));
 
         private static ExVTP WrapLet<T>((string, Func<TExPI, TEx<T>>)[] aliases, ExVTP inner) => 
             new ExVTP((v,t,bpi,nrv) => ReflectEx.Let(aliases, () => inner(v,t,bpi,nrv), bpi));

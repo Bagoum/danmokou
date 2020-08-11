@@ -2,6 +2,7 @@
 using DMath;
 using JetBrains.Annotations;
 using UnityEngine;
+using static Danmaku.Enums;
 
 /// <summary>
 /// Provides centralized scene information to teleporter objects.

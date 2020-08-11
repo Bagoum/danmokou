@@ -47,7 +47,7 @@ public static class SaveData {
         public (int, int) Resolution = Consts.BestResolution;
         public bool Dialogue = true;
     #if UNITY_EDITOR
-        public static bool TeleportAtPhaseStart => false;
+        public static bool TeleportAtPhaseStart => true;
     #else
         public static bool TeleportAtPhaseStart => false;
     #endif

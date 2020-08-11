@@ -8,6 +8,7 @@ using Danmaku;
 using JetBrains.Annotations;
 using UnityEngine.UIElements;
 using static GameManagement;
+using static Danmaku.Enums;
 
 [Serializable]
 public struct PrioritySprite {

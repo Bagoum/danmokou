@@ -1,0 +1,187 @@
+pattern { }
+phase 0
+	action block 0
+		shift-phase-to 1
+		
+
+## In this tutorial, we'll learn about the more complex summonable objects. 
+
+<!> type non  `Summonables 1: Pathers` #{
+<!> root 0 0
+phase 0
+	action block 0
+		## Pathers are often called "curvy lasers" in other engines. However, this engine supports actual curved lasers, so we use different terminology.
+		##Basically, they draw a trail through a pathing function.
+		## Let's make some pathers that squiggle around. 
+		## There are three pather styles: pather (opaque), gpather (glowy), and lightning.
+		sync gpather-red* <0.5;:> gsrepeat {
+			times 20
+			circle
+			color { /b / /w }
+		} pather(
+			##A pather remembers the positions it has gone through for a limited amount of time. The first number here is a function containing the maximum amount of time to allocate to the pather, and the second argument is a function containing the amount of time to remember at any given point in the pather's lifetime.
+			## You should try to keep the maximum time low, since the time it takes for pathers to update is proportional to the maximum time. 
+			## The function here makes the pather's remember time vary drastically. Try changing the function or setting it to a constant value.
+			1, (+ 0.6 sine 1.6 0.4 t), 
+			## This is a simple movement function which moves in the X direction at a constant speed while moving sinusoidally on the Y axis.
+			roffset(pxy(* 1 t, sine 1 0.2 t)),
+			## The last argument to the pather function is a list of BEHOptions. We will discuss these later, but in most cases this should be empty.
+			{ })
+			## ADVANCED NOTE: Consider what happens when the remember time increases faster then the number of new points being added. Internally, the pather will recuperate its old points and *extend backwards* when this occurs. However, in the current iteration of the engine, pathers use the Unity Trail Renderer for rendering, and the trail renderer does not do this. This means that if you drastically vary the remember time, pathers might have a larger hitbox than their visible renderer. There is another renderer implementation in the engine which supports this, but it is significantly slower.
+#}
+
+<!> type non  `Summonables 2: Lasers` #{
+<!> root 0 0
+phase 0
+	action block 0
+		## There are several lasers styles: laser (opaque), glaser (glowy), gdlaser (glowy with a super sick shader effect), mulaser (glowy with giant kanji scrolling down), zonelaser (opaque with a texture scrolling up).
+		## Mulaser and Zonelaser should only be used as safe lasers; ie. they should not be given a hitbox.
+		
+		## By default, lasers are summoned as straight lasers. This is the way lasers work in most other engines.
+		sync laser-red/ <1;:> 
+			## The laser function takes the following arguments:
+			## A path describing the movement of the laser origin
+			## A function returning the "cold time", ie. the delay time, of the laser
+			## A function returning the "hot time", ie. the collision time, of the laser
+			## A list of LaserOptions
+			laser(rvelocity(cy(-1)), 1, 2, {
+				sfx2(x-laser-fire, x-laser-on) ## This option automatically triggers sound effects when the laser is fired and when the laser activates collision. 
+			})
+			
+		## The safelaser command only takes a cold time and a list of LaserOptions. Use this to avoid accidentally hitting the player.
+		sync mulaser-orange/b <-90> safelaser(4, { })
+		sync zonelaser-teal/b <90> safelaser(4, { })
+		
+		## We can explicitly state that a laser is straight. In this case, we can also provide a base rotation angle.
+		sync glaser-green/ <1;:> laser(rvelocity(cy(1)), 1, 2, {
+				dsfx ## This internally resolves to "sfx2(x-laser-fire, x-laser-on)".
+				straight(-30)
+			})
+			
+		## We can declare that a laser is straight but rotating, and provide a rotation function after the base rotation angle.
+		## This blue laser moves in the same path as the green laser, but observe how it rotates.
+		sync gdlaser-blue/b <1;:> laser(rvelocity(cy(1)), 1, 2, {
+				rotate(-30, * 30 t)
+			})
+			
+		## We can also make non-straight lasers. These curved lasers are either dynamic (if they should redraw every frame) or static (if they should be drawn once). 
+		sync gdlaser-yellow/b <1;:-140> laser null 1 4 {
+			## s controls the width of the laser as a multiplier.
+			s(0.5)
+			## stagger controls the resolution of curved laser as a multiplier. 
+			## By lowering the stagger, we increase the resolution, and proportionally increase the cost of the laser.
+			## Try increasing the stagger to 1.5 and note how the laser becomes jagged.
+			stagger(0.24)
+			## The "static" option takes a path function which draws the path of the laser.
+			## Within this function, 't' is the simulated time of the laser path. You can think of a laser path as drawing all the positions that a bullet would go through in a single instant.
+			## Note that you must ensure that this function does not change over time. Otherwise, when the laser changes its frame during animations, the path will skip around.
+			static(polar(
+				* 2 t,
+				sine 1.4 12 t
+				)
+			)
+		}
+		sync laser-pink/b <1;:90> laser null 1 4 {
+			stagger(0.24)
+			## The "dynamic" option takes a path function which draws the path of the laser.
+			## Within this function, you can also use &lt, which is the real lifetime of the laser.
+			## Here, we rotate the laser and offset the sine function using the real lifetime. 
+			dynamic(polar(
+				* 2 t,
+				+ * 29 &lt (sine 1.4 16 + * 1.1 &lt t)
+				)
+			)
+		}
+#}
+
+<!> type non  `Summonables 3: Subfiring` #{
+<!> root -4 0
+phase 0
+	action block 0
+		## Subfiring is a powerful capability for lasers and pathers. Since lasers and pathers are BehaviorEntities, they can run StateMachines natively. What happens if we do just that?
+		
+		sync lightning-blue/w <;2:;:-40> pather 2 2 roffset(pxy(* 2 t, sine 1 0.2 t)) {
+				## We use the "sm" option to run a StateMachine on the pather. Here, we'll fire in the reverse of the velocity direction by using face(velocity) and a negative movement velocity
+				sm(async(amulet-pink/b, <>, gcrepeat({
+							wait(10)
+							times(_)
+							##We probably don't want the pather to keep firing once it's gone offscreen. We can use the "cancel" option to terminate execution as soon as this occurs. Otherwise, the pather will keep firing until it gets autoculled for being too far from the camera, which may take a while. 
+							cancel(offscreen(loc))
+							face(velocity)
+						}, s(rvelocity(cx(-2)))
+						)
+					)
+				)
+		}
+		
+		sync gdlaser-red/ <;0.7:20> laser(rvelocity(cy(-1)), 2, 2, {
+				## We use the "sm" option to run a StateMachine on the laser.
+				## Here, we'll just summon some bullets from it.
+				## By setting the angle to 90 and the path to rvelocity cx 1, we fire perpendicular to the laser. 
+				sm(async(gem-green/w, <90>, gcrepeat({
+							wait(4)
+							times(_)
+							bindItr(itr)
+							cancel(offscreen(loc))
+						}, gsrepeat({ 
+							## OnLaser is a powerful option that allows us to summon bullets from arbitrary points on the laser.
+							## It takes a function for the time-index we want to get from the laser. Recall that lasers are simulated along a time axis.
+							## OnLaser will also add the tangent of the laser at the given point in time to the V2RV2 position.
+							## Observe how the green bullets are always firing normal to the laser point they are summoned from. This is due to the combination of the onlaser angle, which gives the tangent, and the <90> offset.
+							## Try using onlaser on another entity, like the pather above. Do you think it'll work?
+							## Also try using a modifier like rv2incr in the gcrepeat parenting this to see how it changes the summoning pattern.
+							onlaser(* 0.05 &itr) 
+						}, s(rvelocity(cx(1)))
+						))
+					)
+				)
+				## This is the function from the previous example, with some numbers shifted around.
+				dynamic(polar(
+					* 2 t,
+					+ * -10 &lt (sine 3.1 12 + * 1.1 &lt t)
+					)
+				)
+			})
+#}
+
+<!> type non  `Summonables 4: Subsummons` #{
+<!> root 0 1
+phase 0
+	## This is a simplified version of Yukari's `Rabenflug: Flight-Path of the Crow Intoxicated on Lunar Wine` from SiMP.
+	action block 0
+		## icrow is a summonable BehaviorEntity. icrow is invincible, as opposed to crow. It has no Enemy component and therefore cannot be attacked by the player.
+		async icrow <0.5;:> gcrepeat {
+			wait(30)
+			times(4)
+			circle
+			sfx(x-crow)
+			##The target modifier allows modifying the V2RV2 in accordance with some target position.
+			## Here, we use the Angle targeting method, targeted at the player location, to fire the crow in the direction of the player.
+			target(angle, Lplayer)
+			p	this
+		} 
+		## To summon a BehaviorEntity, we use the summon command. By default, these entities are pooled (use summonup instead for unpooled summons). Summon takes three arguments:
+		summon(
+			## 1. A path for the entity to move along. This works the same way as a bullet path. 
+			roffset(+ px(* 1.3 t) circle(1, 0.4, t)),
+			## 2. A StateMachine for the entity to execute. If you don't want the entity to execute anything, use the default state machine `wait` here. Do NOT use `null`. Summoned entities are automatically destroyed along with bullets when a non/spell phase ends. However, if you use `null`, they will not be destroyed. As such, you should only use `null` state machines on summons if you're setting them up for usage across several phases.
+			async(gem-*/, <90>, gcrepeat({
+					wait(4)
+					times(_)
+					cancel(offscreen(loc))
+					colorf({ red pink blue teal }, p)
+					sfx(x-fire-burst-1)
+					face(velocity)
+				} s(rvelocity(lerp(0.6, 0.9, t, cy 0.7, cx 1.5)))
+				)
+			),
+			## 3. A list of BEHOptions. This is the same option type as Pather, but the valid values may be different.
+			## For example, if your summonable entity has an Enemy component, you can use the HP option here.
+			## Try uncommenting the HP option below. You'll get an error in the console. You can fix this by summoning "crow" instead of "icrow", and then the player will be able to kill the summons.
+			## Note that enemies do have default HP values, but it's better to set them explicitly.
+			{
+				##hp(300)
+			}
+		)
+	
+#}

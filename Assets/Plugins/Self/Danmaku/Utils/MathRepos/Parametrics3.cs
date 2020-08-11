@@ -64,7 +64,7 @@ public static partial class Parametrics3 {
 	pxr	  / &px {wx}
 	pyr	  / &py {wy} " +
 	//Farther away feathers have longer distance between bones
-$@" xs    * -1 + 2.5 cosine(3.5; 2; - 0.9 &pxr)
+$@" xs    * -1 + 2.5 cosine(3.5, 2, - 0.9 &pxr)
 	sw	  swing2 0.35 {per} 0 0.8 1 (- t * 0.18 &pxr)
 	swc   c &sw
 	sws	  swing2 0.55 {per} 1.03 1 0.9 (+ {per/2f} - t * 0.18 &pxr)
@@ -80,7 +80,7 @@ $@" xs    * -1 + 2.5 cosine(3.5; 2; - 0.9 &pxr)
     //Raw wing position equation (relative to wing anchor)
 $@"              + pxy
                     * -0.13 &px
-                    * 0.1 * {wx} ^(&pxr; .7)
+                    * 0.1 * {wx} ^(&pxr, .7)
                   * " + 
     //##This kind of dynamic effect is SUPER EFFECTIVE for making danmaku limbs feel alive
 $@"                 * &sws + 1 sine 0.4 0.00 - t &pyr 
@@ -88,8 +88,8 @@ $@"                 * &sws + 1 sine 0.4 0.00 - t &pyr
     //Closer feathers are rotated inwards (this is the visible left wing)
 $@"                     *c 73 &pxr
 			            * 0.06 * &xs &py " +
-    //Feathers rotate inwards (^-(&pyr; ...) < 0 when &pyr < 1) and then back into normal position, more so at farther feathers
-			            "* 1.5 ^-(&pyr; + 1.1 * 0.5 &pxr)").Into<ExTP3>();
+    //Feathers rotate inwards (^-(&pyr, ...) < 0 when &pyr < 1) and then back into normal position, more so at farther feathers
+			            "* 1.5 ^-(&pyr, + 1.1 * 0.5 &pxr)").Into<ExTP3>();
 
     /// <summary>
     /// Generate an offset for a wing pattern. Requires the following bindings:
