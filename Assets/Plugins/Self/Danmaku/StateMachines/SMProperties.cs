@@ -25,6 +25,8 @@ public class PatternProperty {
     /// <returns></returns>
     public static PatternProperty Boss(string key) => new BossProp(key);
 
+    public static PatternProperty Bosses(string[] keys, (int phase, int index)[] uiUsage) => new BossesProp(keys, uiUsage);
+
     public static PatternProperty BGM((int, string)[] phasesAndTracks) => new BGMProp(phasesAndTracks);
 
     #region Impls
@@ -41,6 +43,10 @@ public class PatternProperty {
     public class BossProp : ValueProp<BossConfig> {
         public BossProp(string key): base(ResourceManager.GetBoss(key)) { }
     }
+    public class BossesProp : ValueProp<(BossConfig[], (int, int)[])> {
+        public BossesProp(string[] keys, (int, int)[] uiUsage): 
+            base((keys.Select(ResourceManager.GetBoss).ToArray(), uiUsage)) { }
+    }
 
     public class BGMProp : ValueProp<(int, string)[]> {
         public BGMProp((int, string)[] tracks) : base(tracks) { }
@@ -51,11 +57,16 @@ public class PatternProperty {
 
 public class PatternProperties {
     [CanBeNull] public readonly BossConfig boss;
-    [CanBeNull] public readonly (int, string)[] bgms;
+    [CanBeNull] public readonly BossConfig[] bosses;
+    [CanBeNull] public readonly (int phase, int index)[] bossUI;
+    [CanBeNull] public readonly (int phase, string)[] bgms;
     public PatternProperties(PatternProperty[] props) {
         foreach (var prop in props) {
             if (prop is BossProp bp) boss = bp.value;
-            else if (prop is BGMProp bgm) bgms = bgm.value;
+            else if (prop is BossesProp bsp) {
+                (bosses, bossUI) = bsp.value;
+                boss = bosses[0];
+            } else if (prop is BGMProp bgm) bgms = bgm.value;
             else if (prop is PatternProperty.EmptyProp) { }
             else throw new Exception($"Pattern is not allowed to have properties of type {prop.GetType()}");
         }

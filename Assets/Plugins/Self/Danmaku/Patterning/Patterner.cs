@@ -461,6 +461,20 @@ public static partial class AtomicPatterns {
         return sbh;
     };
     /// <summary>
+    /// Create a powerup effect, using the V2RV2 offset to position.
+    /// </summary>
+    /// <param name="sfx">Sound effect to play when the powerup starts</param>
+    /// <param name="color">Color multiplier function</param>
+    /// <param name="time">Time the powerup exists</param>
+    /// <param name="itrs">Number of cycles the powerup goes through</param>
+    /// <returns></returns>
+    public static SyncPattern PowerupStatic(string sfx, TP4 color, GCXF<float> time, GCXF<float> itrs) => sbh => {
+        uint id = sbh.GCX.NextID();
+        SFXService.Request(sfx);
+        sbh.bc.SummonPowerupStatic(sbh, color, time(sbh.GCX), itrs(sbh.GCX), id);
+        return sbh;
+    };
+    /// <summary>
     /// Create a powerup effect twice.
     /// <br/>The second time, it goes outwards with one iteration.
     /// <br/>This abbreviation is useful for common use cases of powerups.
@@ -484,6 +498,32 @@ public static partial class AtomicPatterns {
                 Powerup(sfx2, color2, time2, _ => -1),
                 GenCtxProperty.Delay(_ => ETime.ENGINEFPS * wait))
             )(sbh);
+        return sbh;
+    };
+    /// <summary>
+    /// Create a powerup effect twice, using the V2RV2 offset to position.
+    /// <br/>The second time, it goes outwards with one iteration.
+    /// <br/>This abbreviation is useful for common use cases of powerups.
+    /// </summary>
+    /// <param name="sfx1">SFX to play when the first powerup starts</param>
+    /// <param name="sfx2">SFX to play when the second powerup starts</param>
+    /// <param name="color1">Color function for the first powerup</param>
+    /// <param name="color2">Color function for the second powerup</param>
+    /// <param name="time1">Time the first powerup exists</param>
+    /// <param name="itrs1">Number of cycles the first powerup goes through</param>
+    /// <param name="delay">Delay after the first powerup dies before spawning the second powerup</param>
+    /// <param name="time2">Time the second powerup exists</param>
+    /// <returns></returns>
+    public static SyncPattern Powerup2Static(string sfx1, string sfx2, TP4 color1, TP4 color2, GCXF<float> time1, GCXF<float> itrs1, GCXF<float> delay, GCXF<float> time2) => sbh => {
+        uint id = sbh.GCX.NextID();
+        float t1 = time1(sbh.GCX);
+        SFXService.Request(sfx1);
+        sbh.bc.SummonPowerupStatic(sbh, color1, t1, itrs1(sbh.GCX), id);
+        float wait = t1 + delay(sbh.GCX);
+        SyncPatterns.Reexec(AsyncPatterns.ICacheLoc(AsyncPatterns._AsGCR(
+            PowerupStatic(sfx2, color2, time2, _ => -1),
+            GenCtxProperty.Delay(_ => ETime.ENGINEFPS * wait))
+        ))(sbh);
         return sbh;
     };
 

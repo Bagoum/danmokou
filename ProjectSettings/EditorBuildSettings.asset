@@ -6,9 +6,6 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/SiMP/Scenes/Working Scene.unity
-    guid: 2cda990e2423bbf4892e6590ba056729
-  - enabled: 1
     path: Assets/SiMP/Scenes/MainMenu.unity
     guid: 98bb7eef89754ca45821ce3925f444c0
   - enabled: 1
@@ -53,4 +50,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Testing/TestStage2.unity
     guid: 3b03034d05acffc4ba4cecf3e22c7fbe
+  - enabled: 0
+    path: Assets/SiMP/Scenes/Working Scene.unity
+    guid: 2cda990e2423bbf4892e6590ba056729
   m_configObjects: {}

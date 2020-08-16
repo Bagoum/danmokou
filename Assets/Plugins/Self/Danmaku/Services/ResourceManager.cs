@@ -28,7 +28,7 @@ public class ResourceManager : MonoBehaviour {
     /// </summary>
     public BossConfig[] bossMetadata;
     private static readonly Dictionary<string, EffectStrategy> effectMap = new Dictionary<string, EffectStrategy>();
-    private static readonly Dictionary<string, GameObject> BehStyles = new Dictionary<string, GameObject>();
+    private static readonly Dictionary<string, GameObject> Summonables = new Dictionary<string, GameObject>();
     private static readonly Dictionary<string, GameObject> Backgrounds = new Dictionary<string, GameObject>();
     private static readonly Dictionary<string, SOBgTransition> Transitions = new Dictionary<string, SOBgTransition>();
 
@@ -38,7 +38,7 @@ public class ResourceManager : MonoBehaviour {
             effectMap[effects[ii].name] = effects[ii].effect;
         }
         foreach (var tr in bgTransitions) Transitions[tr.name] = tr.transition;
-        LoadSOPrefabs(summonables, BehStyles);
+        LoadSOPrefabs(summonables, Summonables);
         LoadSOPrefabs(backgrounds, Backgrounds);
     }
 
@@ -57,8 +57,8 @@ public class ResourceManager : MonoBehaviour {
         throw new Exception($"No boss configuration exists for key {key}.");
     }
 
-    public static GameObject GetBEHPrefab(string style) {
-        if (BehStyles.TryGetValue(style, out GameObject prefab)) return prefab;
+    public static GameObject GetSummonable(string style) {
+        if (Summonables.TryGetValue(style, out GameObject prefab)) return prefab;
         throw new Exception($"No summonable by name {style}");
     }
 

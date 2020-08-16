@@ -12,7 +12,7 @@ public class ScriptTSM : SequentialSM {
     public override Task Start(SMHandoff smh) {
         PlayerInput.AllowPlayerInput = false;
         Dialoguer.ShowAndResetDialogue();
-        return base.Start(smh).ContinueWithSync(_ => {
+        return base.Start(smh).ContinueWithSync(() => {
             PlayerInput.AllowPlayerInput = true;
             Dialoguer.HideDialogue();
         });

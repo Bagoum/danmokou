@@ -910,6 +910,8 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 316f7308e58eafb46a19e376765e933e, type: 2}
   - {fileID: 11400000, guid: 9ac0181c9d3955243a65d96ad79b477e, type: 2}
   - {fileID: 11400000, guid: 019473fee49b95540b0a17fa569c7bea, type: 2}
+  - {fileID: 11400000, guid: bcec7eb3f54fb7e4abb92b4c70300fef, type: 2}
+  - {fileID: 11400000, guid: ec75cb7ac0342f9489ad6e5610810bfc, type: 2}
 --- !u!1 &5563600862267143790
 GameObject:
   m_ObjectHideFlags: 0
@@ -1332,6 +1334,8 @@ MonoBehaviour:
   effects:
   - name: oh1
     effect: {fileID: 11400000, guid: 75cc0777895fcab479af0fb195a7eae1, type: 2}
+  - name: oh2
+    effect: {fileID: 11400000, guid: bebe33c111a31ad44a3e541c4e14122a, type: 2}
   bgTransitions:
   - name: shatter4
     transition: {fileID: 11400000, guid: ee89dae89d15f34418474c82d6d3a3ba, type: 2}
@@ -1356,6 +1360,10 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 4379d9182e52b6a4abe194c7f626f164, type: 2}
   - {fileID: 11400000, guid: 83c45aeaab26c764084f505d8ca238cd, type: 2}
   - {fileID: 11400000, guid: 214dfc15532abf8488c4daa08ac45624, type: 2}
+  - {fileID: 11400000, guid: d4227c053899414498c119b794fe3e57, type: 2}
+  - {fileID: 11400000, guid: b99d57e36ac55d04e9c979423aeb2fb2, type: 2}
+  - {fileID: 11400000, guid: 17201d06832c65444b4e2faa8c5666a4, type: 2}
+  - {fileID: 11400000, guid: 57918be07b2fa984ea3cd0c2bb9637b8, type: 2}
 --- !u!114 &2062655874892461090
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1389,6 +1397,9 @@ MonoBehaviour:
   triggersUITimeout: 0
   cullable: 0
   ScreenCullRadius: 4
+  damage: 1
+  destructible: 0
+  grazeEveryFrames: 20
   animate:
     method: 0
     LRRelation: 0
@@ -1425,6 +1436,9 @@ MonoBehaviour:
   triggersUITimeout: 0
   cullable: 0
   ScreenCullRadius: 4
+  damage: 1
+  destructible: 0
+  grazeEveryFrames: 20
   animate:
     method: 0
     LRRelation: 0

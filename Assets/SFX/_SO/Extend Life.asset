@@ -10,8 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1fa61efa6fe65e0459ee271ffb7e08d1, type: 3}
-  m_Name: Life Extend
+  m_Name: Extend Life
   m_EditorClassIdentifier: 
   defaultName: extend-life
   clip: {fileID: 8300000, guid: 7dd20577a1ab05746a68db7d61e3e87a, type: 3}
   volume: 0.25
+  timeout: -1

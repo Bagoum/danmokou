@@ -18,6 +18,7 @@ public abstract class CurvedTileRender : TiledRender {
             centers = new Vector2[newTexW + 1];
         }
         pb.SetFloat(PropConsts.HueShift, hueShift * M.degRad);
+        if (Math.Abs(hueShift) > 0.1) DontUpdateTimeAfter = M.IntFloatMax;
     }
 
     protected override unsafe void OnNewMesh() {

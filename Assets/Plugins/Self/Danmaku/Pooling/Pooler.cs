@@ -95,7 +95,7 @@ public static class BEHPooler {
 
     public static BehaviorEntity INode(Vector2 parentLoc, DMath.V2RV2 localLoc, Vector2 rotation, int firingIndex, uint? bpiid, string behName) {
         var beh = RequestUninitialized(inodePrefab, out _);
-        beh.Initialize(parentLoc, localLoc, new MovementModifiers(), SMRunner.Null, firingIndex, bpiid ?? RNG.GetUInt(), behName);
+        beh.Initialize(parentLoc, localLoc, new MovementModifiers(), SMRunner.Null, firingIndex, bpiid, behName);
         beh.FaceInDirection(rotation);
         return beh;
     }

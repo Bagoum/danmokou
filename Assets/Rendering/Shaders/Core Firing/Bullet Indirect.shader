@@ -112,7 +112,7 @@
 	            DISPLACE(f.uv, INSTANCE_TIME);
 				float4 c = tex2D(_MainTex, f.uv) * f.c;
     #ifdef FT_PLAYER_OPACITY
-                c.a *= 0.35;
+                c.a *= 0.4;
     #endif
 				return c;
 			}

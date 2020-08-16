@@ -91,7 +91,7 @@ MonoBehaviour:
       prefab: {fileID: 2951577401640358139, guid: 2740f5514453c754e8cf32fbc01a04d2,
         type: 3}
     - name: lightning
-      prefab: {fileID: 2951577401640358139, guid: ed233c03892d0484fa4db87de21e57d9,
+      prefab: {fileID: 8297057866658897379, guid: 067082e3765007e43a6c7187e96acda1,
         type: 3}
     - name: gpather
       prefab: {fileID: 5885705073638309461, guid: 151531d07df3a8d419fbbcbbdc3f3ec0,

@@ -70,9 +70,14 @@ public class XMLMainMenu : XMLMenu {
             cont(s);
             return true;
         });
-        UINode[] DifficultyThenShot(Action<DifficultySet, ShotConfig> cb) => DifficultyNodes(d =>
-            new FuncNode(() => SetShotContinuationA(s => cb(d, s)), d.Describe(), shotTop));
-        
+        UINode[] DifficultyThenShot(Action<DifficultySet, ShotConfig> cb) {
+            if (MainMenu.main.shotOptions.Length == 1) {
+                return DifficultyFuncNodes(d => () => cb(d, MainMenu.main.shotOptions[0]));
+            }
+            return DifficultyNodes(d =>
+                new FuncNode(() => SetShotContinuationA(s => cb(d, s)), d.Describe(), shotTop));
+        }
+
         CampaignSelectScreen = new UIScreen(DifficultyThenShot((d, sh) => 
             MainScenario(new GameReq(CampaignMode.MAIN, null, d, shot: sh))));
         ExtraSelectScreen = new UIScreen(DifficultyFuncNodes(d => 
@@ -105,7 +110,8 @@ public class XMLMainMenu : XMLMenu {
             new FuncNode(RunTutorial, "Tutorial"),
             new FuncNode(Application.Quit, "Quit"),
             new OpenUrlNode("https://twitter.com/rdbatz", "Twitter (Browser)"),
-            new OpenUrlNode("https://github.com/Bagoum/danmokou", "Github (Browser)")
+            new OpenUrlNode("https://github.com/Bagoum/danmokou", "Github (Browser)"),
+            new OpenUrlNode("https://www.youtube.com/watch?v=cBNnNJrA5_w&list=PLkd4SjCCKjq6B5u_5DrSU4Qz0QgZfgnh7", "OST (Browser)")
             ).With(MainScreenV);
         base.Awake();
     }

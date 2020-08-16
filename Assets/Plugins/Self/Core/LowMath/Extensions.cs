@@ -17,10 +17,14 @@ public static class Extensions {
         return ct;
     }
 
-    public static Task ContinueWithSync(this Task t, Action<Task> done, CancellationToken cT) =>
-        t.ContinueWith(done, cT, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Current);
-    public static Task ContinueWithSync(this Task t, Action<Task> done) =>
-        t.ContinueWith(done, TaskContinuationOptions.ExecuteSynchronously);
+    private static Action<Task> WrapRethrow(Action cb) => t => {
+        cb();
+        if (t.IsFaulted && t.Exception != null) throw t.Exception;
+    };
+    public static Task ContinueWithSync(this Task t, Action done, CancellationToken cT) =>
+        t.ContinueWith(WrapRethrow(done), cT, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Current);
+    public static Task ContinueWithSync(this Task t, Action done) =>
+        t.ContinueWith(WrapRethrow(done), TaskContinuationOptions.ExecuteSynchronously);
     
     private static T Private<T>(this object obj, string privateField) => (T)obj?.GetType().GetField(privateField, BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(obj);
     
@@ -74,10 +78,10 @@ public static class ArrayExtensions {
     /// Returns the first T such that the associated priority is LEQ the given priority.
     /// Make sure the array is sorted from lowest to highest priority.
     /// </summary>
-    public static T GetBounded<T>(this (int, T)[] arr, int priority, T deflt) {
+    public static T GetBounded<T>(this (int priority, T)[] arr, int priority, T deflt) {
         var result = deflt;
         for (int ii = 0; ii < arr.Length; ++ii) {
-            if (priority >= arr[ii].Item1) result = arr[ii].Item2;
+            if (priority >= arr[ii].priority) result = arr[ii].Item2;
             else break;
         }
         return result;

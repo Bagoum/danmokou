@@ -11,7 +11,7 @@ using UnityEditor;
 using static Danmaku.Enums;
 
 public struct CampaignData {
-    private const int startLives = 14;
+    private const int startLives = 12;
     private const int defltContinues = 42;
     public const long valueItemPoints = 3142;
     public long maxScore { get; private set; }
@@ -326,7 +326,6 @@ public class GameManagement : RegularUpdater {
 
     public SceneConfig mainMenu;
 
-    //public static int frameCtr = 0;
     private void Awake() {
         if (gm != null) {
             DestroyImmediate(gameObject);
@@ -347,7 +346,7 @@ public class GameManagement : RegularUpdater {
         Log.Unity($"Graphics Jobs: {PlayerSettings.graphicsJobs} {PlayerSettings.graphicsJobMode}; MTR {PlayerSettings.MTRendering}");
     #endif
         Log.Unity($"Graphics Render mode {SystemInfo.renderingThreadingMode}");
-        //AudioPooler.Prepare(audioClipPrefab);
+        Log.Unity("Danmokou v1.2.0, SiMP v1.4.0");
     }
 
     public static bool GoToMainMenu() => SceneIntermediary.LoadScene(

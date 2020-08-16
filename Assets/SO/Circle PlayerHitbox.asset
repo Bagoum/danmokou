@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fce4178c62dbe634cb2fb4b61c491402, type: 3}
   m_Name: Circle PlayerHitbox
   m_EditorClassIdentifier: 
-  location: {x: 1.4103618, y: -3.4703288}
+  location: {x: 0, y: -43}
   radius: 0.034
   largeRadius: 0.3
   itemCollectRadius: 0.2

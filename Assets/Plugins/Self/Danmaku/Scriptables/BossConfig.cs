@@ -4,9 +4,6 @@ using JetBrains.Annotations;
 using UnityEngine;
 using static Danmaku.Enums;
 
-/// <summary>
-/// Provides centralized scene information to teleporter objects.
-/// </summary>
 
 [CreateAssetMenu(menuName = "Data/Boss Configuration")]
 public class BossConfig : ScriptableObject {
@@ -17,18 +14,24 @@ public class BossConfig : ScriptableObject {
     public string displayName;
     public string displayTitle;
     public string trackName;
-    public Color uiColor;
-    public Color uiHPColor;
-    public Color cardColorR;
-    public Color cardColorG;
-    public Color cardColorB;
-    public Color spellColor1;
-    public Color spellColor2;
-    public Color spellColor3;
+    public BossColorScheme colors;
+
     public string rotator;
     public BPY Rotator => (string.IsNullOrWhiteSpace(rotator) ? defaultRotator : rotator).Into<BPY>();
     private const string defaultRotator = "lerpback 10 14 20 24 (mod 24 t) 90 -200";
 
+    /*[ContextMenu("AssignColors")]
+    public void AssignColors() {
+        colors.uiColor = uiColor;
+        colors.uiHPColor = uiHPColor;
+        colors.cardColorR = cardColorR;
+        colors.cardColorG = cardColorG;
+        colors.cardColorB = cardColorB;
+        colors.spellColor1 = spellColor1;
+        colors.spellColor2 = spellColor2;
+        colors.spellColor3 = spellColor3;
+
+    }*/
     [Serializable]
     public struct ProfileRender {
         public Texture2D image;

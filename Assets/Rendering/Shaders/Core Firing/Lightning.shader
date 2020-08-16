@@ -2,6 +2,7 @@
 	Properties {
 		[PerRendererData] _MainTex("Sprite Texture", 2D) = "white" {}
 		_LNTex("Lightning Texture", 2D) = "white" {}
+		_DisplaceTex("(Low-Res) Displacement Texture", 2D) = "white" {}
         _HueShift("Hue Shift", Float) = 0
 		[Enum(One,1,OneMinusSrcAlpha,10)] _BlendTo("Blend mode", Float) = 10
 		_BX("BlocksX", Float) = 6
@@ -45,14 +46,20 @@
     float _BY;
     float _NM;
     sampler2D _LNTex;
+    sampler2D _DisplaceTex;
     float _PPU; //Global
 	float _HueShift;
+	static float _DisplaceSpeed = 0.4;
+	static float _DisplaceMagnitude = 1;
 
     float4 fragLightning(fragment f, int ii) {
     #ifdef FANCY
         return tex2D(_LNTex, lightningDistort2(f.uv, s(f.loc.xy/_PPU, _BX, _BY), rehash(_T * _TM, ii), _NM));
     #else
-        return float4(0,0,0,0);
+        float disp = tex2D(_DisplaceTex, f.loc.xy/_PPU * 0.3 + float2(0, ii * _DisplaceSpeed)).x;
+        disp = ((disp * 2) - 1) * _DisplaceMagnitude;
+        f.uv.y += disp * (1-cos(HPI * f.uv.x)) * _NM * cos(PI * (f.uv.y - 0.5));
+        return tex2D(_LNTex, f.uv);
     #endif
     }
 	
@@ -72,7 +79,11 @@
 		    Blend SrcAlpha One
 			CGPROGRAM
 		    float4 frag(fragment f) : SV_Target {
+            #ifdef FANCY
 		        return fragLightning(f, 0);
+            #else
+		        return float4(0,0,0,0);
+            #endif
 		    }
 		    ENDCG
 		}

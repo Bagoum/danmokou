@@ -70,7 +70,7 @@ You may freely submit PRs for bugfixes or new features. **If you submit a PR, yo
 
 **How do I contact you?**
 
-Email `reneedebatz@gmail.com` (keys on https://keys.openpgp.org/) or contact me on Discord (`Bagoum#4773`, [server](https://discord.gg/9GfkagF)).
+Email `reneedebatz@gmail.com` (keys on https://keys.openpgp.org/) or contact me on Discord (`Bagoum#4773`).
 
 **Why Unity?**
 

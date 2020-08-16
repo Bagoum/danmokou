@@ -79,17 +79,26 @@ public static class SMReflection {
     public static TaskPattern ZaWarudo(GCXF<float> time, GCXF<Vector2> loc, [CanBeNull] GCXF<float> t1r, [CanBeNull] GCXF<float> t2r, GCXF<float> scale) => smh => {
         float t = time(smh.GCX);
         SFXService.Request("x-zawarudo");
-        var anim = Object.Instantiate(ResourceManager.GetBEHPrefab("negative")).GetComponent<ScaleAnimator>();
+        var anim = Object.Instantiate(ResourceManager.GetSummonable("negative")).GetComponent<ScaleAnimator>();
         anim.transform.position = loc(smh.GCX);
         anim.AssignScales(0, scale(smh.GCX), 0);
         anim.AssignRatios(t1r?.Invoke(smh.GCX), t2r?.Invoke(smh.GCX));
         anim.Initialize(smh.cT, t);
         PlayerInput.AllowPlayerInput = false;
         Core.Events.MakePlayerInvincible.Invoke((int)(t * 120), false);
-        return WaitingUtils.WaitFor(smh, t, false).ContinueWithSync(_ => {
+        return WaitingUtils.WaitFor(smh, t, false).ContinueWithSync(() => {
             PlayerInput.AllowPlayerInput = true;
         });
     };
+
+    public static TaskPattern dBossExplode(TP4 powerupColor, TP4 powerdownColor) {
+        var sp = Sync("powerup1", _ => V2RV2.Zero, Powerup2Static("_", "_", powerupColor, powerdownColor, _ => 1.8f, _ => 4f, _ => 0f, _ => 2f));
+        var ev = EventLASM.BossExplode();
+        return smh => {
+            sp(smh);
+            return ev(smh);
+        };
+    }
 
     #region ScreenManip
     
@@ -471,7 +480,7 @@ public static class SMReflection {
             var joint = CancellationTokenSource.CreateLinkedTokenSource(smh.cT, fireCTS.Token);
             var joint_smh = smh;
             joint_smh.ch.cT = joint.Token;
-            _ = firer.Start(joint_smh).ContinueWithSync(_ => {
+            _ = firer.Start(joint_smh).ContinueWithSync(() => {
                 joint.Dispose();
                 fireCTS.Dispose();
             });
@@ -490,7 +499,7 @@ public static class SMReflection {
             var joint = CancellationTokenSource.CreateLinkedTokenSource(smh.cT, fireCTS.Token);
             var joint_smh = smh;
             joint_smh.ch.cT = joint.Token;
-            _ = fire.Start(joint_smh).ContinueWithSync(_ => {
+            _ = fire.Start(joint_smh).ContinueWithSync(() => {
                 joint.Dispose();
                 fireCTS.Dispose();
             });
@@ -511,14 +520,14 @@ public static class SMReflection {
         joint_smh.ch.cT = joint.Token;
         int remCancels = 2;
         joint_smh.Exec = o.freeFirer;
-        _ = fireFree.Start(joint_smh).ContinueWithSync(_ => {
+        _ = fireFree.Start(joint_smh).ContinueWithSync(() => {
             if (--remCancels == 0) {
                 joint.Dispose();
                 fireCTS.Dispose();
             }
         });
         joint_smh.Exec = o.focusFirer;
-        _ = fireFocus.Start(joint_smh).ContinueWithSync(_ => {
+        _ = fireFocus.Start(joint_smh).ContinueWithSync(() => {
             if (--remCancels == 0) {
                 joint.Dispose();
                 fireCTS.Dispose();

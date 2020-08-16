@@ -10,7 +10,7 @@ phase 0
 <!> root 0 0
 phase 0
 	action block 0
-		## Pathers are often called "curvy lasers" in other engines. However, this engine supports actual curved lasers, so we use different terminology.
+		## Pathers are often called "curvy lasers" in other engines. However, this engine supports REAL curved lasers, so we use different terminology.
 		##Basically, they draw a trail through a pathing function.
 		## Let's make some pathers that squiggle around. 
 		## There are three pather styles: pather (opaque), gpather (glowy), and lightning.
@@ -25,8 +25,11 @@ phase 0
 			1, (+ 0.6 sine 1.6 0.4 t), 
 			## This is a simple movement function which moves in the X direction at a constant speed while moving sinusoidally on the Y axis.
 			roffset(pxy(* 1 t, sine 1 0.2 t)),
-			## The last argument to the pather function is a list of BEHOptions. We will discuss these later, but in most cases this should be empty.
-			{ })
+			## The last argument to the pather function is a list of BEHOptions. We will discuss these later, but in most cases this should be empty. However, for vanity purposes, let's use the hue shift option.
+			{
+				## The hue spectrum is 360 degrees. We will use a shift speed of 120 degrees per second.
+				hueshift(120)
+			})
 			## ADVANCED NOTE: Consider what happens when the remember time increases faster then the number of new points being added. Internally, the pather will recuperate its old points and *extend backwards* when this occurs. However, in the current iteration of the engine, pathers use the Unity Trail Renderer for rendering, and the trail renderer does not do this. This means that if you drastically vary the remember time, pathers might have a larger hitbox than their visible renderer. There is another renderer implementation in the engine which supports this, but it is significantly slower.
 #}
 
@@ -82,6 +85,8 @@ phase 0
 			)
 		}
 		sync laser-pink/b <1;:90> laser null 1 4 {
+			## HueShift works on lasers too.
+			hueshift(120)
 			stagger(0.24)
 			## The "dynamic" option takes a path function which draws the path of the laser.
 			## Within this function, you can also use &lt, which is the real lifetime of the laser.
@@ -165,10 +170,12 @@ phase 0
 			## 1. A path for the entity to move along. This works the same way as a bullet path. 
 			roffset(+ px(* 1.3 t) circle(1, 0.4, t)),
 			## 2. A StateMachine for the entity to execute. If you don't want the entity to execute anything, use the default state machine `wait` here. Do NOT use `null`. Summoned entities are automatically destroyed along with bullets when a non/spell phase ends. However, if you use `null`, they will not be destroyed. As such, you should only use `null` state machines on summons if you're setting them up for usage across several phases.
+			## Note that as soon as this state machine finishes, the entity will disappear. (This applies to summons exclusively and not lasers or pathers). There are various design reasons for this, tag me in Discord if you want to know why.
 			async(gem-*/, <90>, gcrepeat({
 					wait(4)
 					times(_)
-					cancel(offscreen(loc))
+					## Since the entity will disappear once cancel is triggered, we want to make sure that it is triggered when the entire sprite is offscreen. As such, we use the `offscreenby` command, which effectively extends the bounds of the screen by a number for position testing.
+					cancel(offscreenby(0.5, loc))
 					colorf({ red pink blue teal }, p)
 					sfx(x-fire-burst-1)
 					face(velocity)

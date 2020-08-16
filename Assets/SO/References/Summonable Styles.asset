@@ -77,3 +77,11 @@ MonoBehaviour:
     - name: keine
       prefab: {fileID: 5188976871280437473, guid: 3f74c05d54dfae94ab79f9fa4ea75188,
         type: 3}
+    - name: junko
+      prefab: {fileID: 6003014192476353498, guid: cb2d4430c7bd48848833db5439ec92c6,
+        type: 3}
+  - groupTitle: Effects
+    prefabs:
+    - name: bossexplode
+      prefab: {fileID: 3595199586132266324, guid: 645c08559f5cad34790737062cea3a35,
+        type: 3}

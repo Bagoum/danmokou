@@ -46,7 +46,7 @@ public class Enemy : RegularUpdater {
     public SpriteRenderer cardCircle;
     public SpriteRenderer spellCircle;
     private Transform cardtr;
-    public SpriteRenderer distorter;
+    [CanBeNull] public SpriteRenderer distorter;
     private MaterialPropertyBlock distortPB;
     private MaterialPropertyBlock scPB;
     private float healthbarStart; // 0-1
@@ -65,6 +65,8 @@ public class Enemy : RegularUpdater {
     private const float HPLerpRate = 14f;
 
     private BPY cardRotator = _ => 60;
+
+    private static short renderCounter = short.MinValue;
     
     public ItemDrops AutoDeathItems => new ItemDrops(
         Mathf.CeilToInt(maxHP/1500f), 
@@ -76,8 +78,13 @@ public class Enemy : RegularUpdater {
     private static readonly HashSet<Enemy> allEnemies = new HashSet<Enemy>();
     private static readonly List<FrozenCollisionInfo> fci = new List<FrozenCollisionInfo>();
 
-    public void Initialize(BehaviorEntity _beh) {
+    public void Initialize(BehaviorEntity _beh, [CanBeNull] SpriteRenderer sr) {
         beh = _beh;
+        var sortOrder = renderCounter++;
+        if (sr != null) sr.sortingOrder = sortOrder;
+        if (spellCircle != null) spellCircle.sortingOrder = sortOrder;
+        if (cardCircle != null) cardCircle.sortingOrder = sortOrder;
+        if (healthbarSprite != null) healthbarSprite.sortingOrder = sortOrder;
         //enemyIndex = enemyIndexCtr++;
         //allEnemies[enemyIndex] = this;
         allEnemies.Add(this);
@@ -127,8 +134,7 @@ public class Enemy : RegularUpdater {
     public void RequestCardCircle(Color colorR, Color colorG, Color colorB, BPY rotator) {
         if (cardCircle != null) {
             cardCircle.enabled = true;
-            distorter.enabled = SaveData.s.Shaders;
-            var bpi = beh.rBPI;
+            if (distorter != null) distorter.enabled = SaveData.s.Shaders;
             var cpb = new MaterialPropertyBlock();
             cardCircle.GetPropertyBlock(cpb);
             cpb.SetColor(PropConsts.redColor, colorR);
@@ -140,7 +146,7 @@ public class Enemy : RegularUpdater {
     }
 
     private void RecheckGraphicsSettings() {
-        if (cardCircle != null) {
+        if (cardCircle != null && distorter != null) {
             distorter.enabled = cardCircle.enabled & SaveData.s.Shaders;
         }
     }
@@ -171,15 +177,6 @@ public class Enemy : RegularUpdater {
         RecheckGraphicsSettings();
     }
 
-    [ContextMenu("Show in Editor")]
-    private void ShowInEditor() {
-        var hp = HP;
-        Initialize(null);
-        HP = hp;
-        SetHPBar(0.5f, PhaseType.NONSPELL);
-        currHPRatio = HPRatio;
-        RegularUpdate();
-    }
     public float HPRatio => (float) HP / maxHP;
 
     public Color HPColor => Color.Lerp(currPhase.color2, currPhase.color1, Mathf.Pow(currHPRatio, 1.5f));
@@ -192,10 +189,12 @@ public class Enemy : RegularUpdater {
             hpPB.SetFloat(PropConsts.time, beh.rBPI.t);
             healthbarSprite.SetPropertyBlock(hpPB);
         }
-        if (cardCircle != null) {
+        if (distorter != null) {
             distortPB.SetFloat(PropConsts.time, beh.rBPI.t);
             MainCamera.SetPBScreenLoc(distortPB, beh.GlobalPosition());
             distorter.SetPropertyBlock(distortPB);
+        }
+        if (cardCircle != null) {
             Vector3 rt = cardtr.localEulerAngles;
             rt.z += ETime.FRAME_TIME * cardRotator(beh.rBPI);
             cardtr.localEulerAngles = rt;

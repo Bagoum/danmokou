@@ -70,20 +70,6 @@ public static class Enums {
         /// </summary>
         NONBLOCKING
     }
-
-    /// <summary>
-    /// Enum to describe an event that may trigger once or trigger persistently.
-    /// </summary>
-    public enum Persistence {
-        /// <summary>
-        /// The event is persistent and must be manually destroyed.
-        /// </summary>
-        PERSISTENT,
-        /// <summary>
-        /// The event will trigger once and destroy itself.
-        /// </summary>
-        ONCE
-    }
     
     
     /// <summary>

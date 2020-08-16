@@ -133,7 +133,12 @@ public abstract class Pooled : CoroutineRegularUpdater {
         ForceClosingFrame();
         DisableRegularUpdates();
         if (parented) {
-            tr.SetParent(Container, false);
+            if (parent.gameObject.activeSelf) tr.SetParent(Container, false);
+            else {
+                //This case occurs when disabling due to scene end, which can occur naturally via eg. scene reload
+                //In which case we just don't do the parenting step
+                int k = 5;
+            }
             parent.dependents.Remove(this);
         }
         //This is the easiest way to ensure that no remaining display objects, like child SpriteRenders,

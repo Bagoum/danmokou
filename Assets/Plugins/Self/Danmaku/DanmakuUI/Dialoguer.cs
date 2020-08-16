@@ -140,18 +140,22 @@ public class Dialoguer : CoroutineRegularUpdater {
     public static void SetLeftSpeaker([CanBeNull] IDialogueProfile speaker, Emote? emote) {
         currLeft = speaker ?? currLeft ?? throw new Exception("No left speaker is set");
         main.leftSpeaker.text = currLeft.DisplayName;
-        var e = emote ?? GetStandEmote(currLeft) ?? throw new Exception("Could not resolve emote");
-        main.leftIcon.sprite = currLeft.FindIcon(e);
-        UpdateStandEmote(currLeft, e);
+        if (stands.ContainsKey(currLeft)) {
+            var e = emote ?? GetStandEmote(currLeft) ?? throw new Exception("Could not resolve emote");
+            UpdateStandEmote(currLeft, e);
+        }
+        main.leftIcon.sprite = currLeft.FindIcon(emote ?? GetStandEmote(currLeft) ?? Emote.NORMAL);
         SetLeftSpeakerActive();
     }
 
     public static void SetRightSpeaker([CanBeNull] IDialogueProfile speaker, Emote? emote) {
         currRight = speaker ?? currRight ?? throw new Exception("No right speaker is set");
         main.rightSpeaker.text = currRight.DisplayName;
-        var e = emote ?? GetStandEmote(currRight) ?? throw new Exception("Could not resolve emote");
-        main.rightIcon.sprite = currRight.FindIcon(e);
-        UpdateStandEmote(currRight, e);
+        if (stands.ContainsKey(currRight)) {
+            var e = emote ?? GetStandEmote(currRight) ?? throw new Exception("Could not resolve emote");
+            UpdateStandEmote(currRight, e);
+        }
+        main.rightIcon.sprite = currRight.FindIcon(emote ?? GetStandEmote(currRight) ?? Emote.NORMAL);
         SetRightSpeakerActive();
     }
 
@@ -218,7 +222,6 @@ public class Dialoguer : CoroutineRegularUpdater {
         var emt = emote ?? (stands.TryGetValue(profile, out le) ?
             le.e :
             throw new Exception($"No existing emote for profile {profile.DisplayName}"));
-        stands.Remove(profile);
         stands[profile] = (location, emt);
         UpdateStandEmote(profile, emt);
     }

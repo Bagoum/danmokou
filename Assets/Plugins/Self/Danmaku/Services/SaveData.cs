@@ -44,10 +44,10 @@ public static class SaveData {
         public bool AllowInputLinearization = false;
         public bool LegacyRenderer = false;
         public int RefreshRate = 60;
-        public (int, int) Resolution = Consts.BestResolution;
+        public (int w, int h) Resolution = Consts.BestResolution;
         public bool Dialogue = true;
     #if UNITY_EDITOR
-        public static bool TeleportAtPhaseStart => true;
+        public static bool TeleportAtPhaseStart => false;
     #else
         public static bool TeleportAtPhaseStart => false;
     #endif
@@ -56,7 +56,7 @@ public static class SaveData {
         public int Vsync = 1;
         public bool UnfocusedHitbox = true;
         public float DialogueWaitMultiplier = 1f;
-        //public bool Backgrounds = true;
+        public bool Backgrounds = true;
 
         public static int DefaultRefresh {
             get {
@@ -107,10 +107,13 @@ public static class SaveData {
 
     //Screen.setRes does not take effect immediately, so we need to do this on-change instead of together with
     //shader variable reassignment
-    public static void UpdateResolution((int w, int h) wh) {
-        s.Resolution = (wh.w, wh.h);
-        Screen.SetResolution(wh.w, wh.h, s.Fullscreen);
+    public static void UpdateResolution((int w, int h)? wh = null) {
+        if (wh.HasValue) {
+            s.Resolution = wh.Value;
+            Screen.SetResolution(s.Resolution.w, s.Resolution.h, s.Fullscreen);
+        }
         BackgroundOrchestrator.RecreateTextures();
+        BackgroundCombiner.Reconstruct();
     }
 
     public static void UpdateFullscreen(FullScreenMode mode) {

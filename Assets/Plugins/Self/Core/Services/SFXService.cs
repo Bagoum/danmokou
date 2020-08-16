@@ -47,7 +47,7 @@ public class SFXService : MonoBehaviour {
     private static Dictionary<string, float> _timeouts = new Dictionary<string,float>();
 
     public static void Request(string style) {
-        if (string.IsNullOrWhiteSpace(style)) return;
+        if (string.IsNullOrWhiteSpace(style) || style == "_") return;
         if (timeouts.ContainsKey(style)) return;
         if (dcont.ContainsKey(style)) {
             dcont[style].Proc();

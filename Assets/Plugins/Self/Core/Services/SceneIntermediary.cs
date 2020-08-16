@@ -63,7 +63,7 @@ public static class SceneIntermediary {
 
     //Use a bool here since GameStateManager is updated at end of frame.
     //We need to keep track of whether or not this process has been queued
-    private static bool LOADING = false;
+    public static bool LOADING { get; private set; } = false;
     private static IEnumerator WaitForSceneLoad(SceneRequest req, bool transitionOnSame) {
         var currScene = SceneManager.GetActiveScene().name;
         if (req.delay > 0) Log.Unity($"Performing delay for {req.delay}s before loading scene.");

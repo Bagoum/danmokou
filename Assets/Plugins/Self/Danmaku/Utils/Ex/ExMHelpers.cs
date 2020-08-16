@@ -251,6 +251,8 @@ public class EEx<T> : EEx {
         ex.NodeType != ExpressionType.MemberAccess);
     public static implicit operator Ex(EEx<T> ex) => ex.ex;
     public static implicit operator (Ex, bool)(EEx<T> exx) => (exx.ex, exx.requiresCopy);
+    
+    public static implicit operator EEx<T>(T obj) => Ex.Constant(obj);
 }
 
 }

@@ -15,13 +15,6 @@ public class RaikoCamera : CoroutineRegularUpdater {
         main = this;
         tr = transform;
     }
-    public float per;
-    public float mag;
-    [ContextMenu("Shake")]
-    public void ShakeMe() {
-        float p = per;
-        RunRIEnumerator(IShake(p, "smooth smod-010 / t {p}".Into<FXY>(), mag, () => false, () => { }));
-    }
 
     private const float ScreenshakeMultiplier = 0.04f;
     public static void Shake(float time, [CanBeNull] FXY magnitude, float magMul, CancellationToken cT, Action done) {

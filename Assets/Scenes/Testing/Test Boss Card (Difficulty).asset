@@ -20,7 +20,23 @@ MonoBehaviour:
   displayTitle: 
   trackName: 
   uiColor: {r: 0, g: 0, b: 0, a: 0}
+  uiHPColor: {r: 0, g: 0, b: 0, a: 0}
   cardColorR: {r: 0, g: 0, b: 0, a: 0}
   cardColorG: {r: 0, g: 0, b: 0, a: 0}
   cardColorB: {r: 0, g: 0, b: 0, a: 0}
+  spellColor1: {r: 0, g: 0, b: 0, a: 0}
+  spellColor2: {r: 0, g: 0, b: 0, a: 0}
+  spellColor3: {r: 0, g: 0, b: 0, a: 0}
+  colors: {fileID: 11400000, guid: 3c0a387600bcbb94c8b98ae17cbe910c, type: 2}
   rotator: 
+  profile:
+    image: {fileID: 0}
+    offsetX: 0
+    offsetY: 0
+    zoom: 0
+  defaultNonBG: {fileID: 0}
+  defaultSpellBG: {fileID: 0}
+  defaultIntoSpellTransition: {fileID: 0}
+  defaultIntoNonTransition: {fileID: 0}
+  bossCutin: {fileID: 0}
+  spellCutins: []

@@ -63,7 +63,7 @@ Images (Assets/Sprites)
 	- space: https://unsplash.com/photos/4dpAqfTbvKA
 - entity/dot/kmap:  by danmaq (license in folder).
 - entity/dot/dot_seija: by Len.
-- entity/dot/dot_kasen: by Kirbio.
+- entity/dot/dot_kasen, dot_junko: by Kirbio.
 - .py: Python scripts licensed under MIT.
 - bullets, UI, util, TransitionTextures, items: by me, licensed under CC BY 4.
 

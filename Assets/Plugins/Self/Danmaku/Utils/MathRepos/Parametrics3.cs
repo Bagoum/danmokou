@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using UnityEngine;
 using System.Linq.Expressions;
+using System.Runtime.CompilerServices;
 using Ex = System.Linq.Expressions.Expression;
 using ExTP = System.Func<DMath.TExPI, TEx<UnityEngine.Vector2>>;
 using ExTP3 = System.Func<DMath.TExPI, TEx<UnityEngine.Vector3>>;
@@ -13,6 +14,7 @@ using static DMath.ExMHelpers;
 using static ExUtils;
 using FR = DMath.FXYRepo;
 using static DMath.ExM;
+using B = DMath.BPYRepo;
 
 namespace DMath {
 /// <summary>
@@ -60,14 +62,16 @@ public static partial class Parametrics3 {
     /// <param name="wy">Length along feather</param>
     /// <param name="per">Period of movement</param>
     /// <returns></returns>
-    public static ExTP3 Wings1(float wx, float wy, float per) => ($@":: {{
-	pxr	  / &px {wx}
-	pyr	  / &py {wy} " +
+    /// TODO WARNING if you throw variables into code like this, you MUST use FormattableString.Invariant! The SM parser will not recognize decimal commas!
+    public static ExTP3 Wings1(float wx, float wy, float per) => 
+	    FormattableString.Invariant(FormattableStringFactory.Create(@":: {{
+	pxr	  / &px {0}
+	pyr	  / &py {1} " +
 	//Farther away feathers have longer distance between bones
-$@" xs    * -1 + 2.5 cosine(3.5, 2, - 0.9 &pxr)
-	sw	  swing2 0.35 {per} 0 0.8 1 (- t * 0.18 &pxr)
+@" xs    * -1 + 2.5 cosine(3.5, 2, - 0.9 &pxr)
+	sw	  swing2 0.35 {2} 0 0.8 1 (- t * 0.18 &pxr)
 	swc   c &sw
-	sws	  swing2 0.55 {per} 1.03 1 0.9 (+ {per/2f} - t * 0.18 &pxr)
+	sws	  swing2 0.55 {2} 1.03 1 0.9 (+ * 0.5 {2} - t * 0.18 &pxr)
 }} " +
 @"       multiplyx &plr
 			qrotate py 45 " +  //pushes wing towards spine
@@ -78,18 +82,18 @@ $@" xs    * -1 + 2.5 cosine(3.5, 2, - 0.9 &pxr)
 				"* 0.8 &swc " + //Only perform rotation when wings are closed
 				"+ -1.3 * 0.9 &swc " + //Start (swc=0) by rotating downwards, then close (swc) by rotating inwards
     //Raw wing position equation (relative to wing anchor)
-$@"              + pxy
+@"              + pxy
                     * -0.13 &px
-                    * 0.1 * {wx} ^(&pxr, .7)
+                    * 0.1 * {0} ^(&pxr, .7)
                   * " + 
-    //##This kind of dynamic effect is SUPER EFFECTIVE for making danmaku limbs feel alive
-$@"                 * &sws + 1 sine 0.4 0.00 - t &pyr 
+    //Removed this dynamic effect: * &sws + 1 sine 0.4 0.04 - t &pyr 
+@"                 &sws 
 			        rxy " + 
     //Closer feathers are rotated inwards (this is the visible left wing)
-$@"                     *c 73 &pxr
+@"                     *c 73 &pxr
 			            * 0.06 * &xs &py " +
     //Feathers rotate inwards (^-(&pyr, ...) < 0 when &pyr < 1) and then back into normal position, more so at farther feathers
-			            "* 1.5 ^-(&pyr, + 1.1 * 0.5 &pxr)").Into<ExTP3>();
+			            "* 1.5 ^-(&pyr, + 1.1 * 0.5 &pxr)", wx, wy, per)).Into<ExTP3>();
 
     /// <summary>
     /// Generate an offset for a wing pattern. Requires the following bindings:

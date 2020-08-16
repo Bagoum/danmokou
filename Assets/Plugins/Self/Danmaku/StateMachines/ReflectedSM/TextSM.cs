@@ -17,6 +17,7 @@ using static FSInterop;
 
 namespace SM {
 public static class TSMReflection {
+    public static TaskPattern Re(StateMachine sm) => sm.Start;
     public static TaskPattern Wait(Synchronizer synchr) => SMReflection.Wait(synchr);
     
     [Alias("z")]
@@ -62,7 +63,7 @@ public static class TSMReflection {
         //method 1: sound on spaces (ie words)
         //var cfg = new C(12, 1, 0.3, F<Punct, double>(p => p.Resolve(0.35, 2.5, 3.5, 4.5, 5.0)), noAR, F<Punct, QAR>(p => p.Resolve(rollSfx,noAR,noAR,noAR, rollSfx)));
         //method 2: sound on char blocks
-        var cfg = new C(18, 8, 3, 
+        var cfg = new C(36, 8, 3, 
             F<Punct, double>(p => p.Resolve(0, 3.0, 4.0, 5.0, 7.0)), rollSfx, 
             F<Punct, QAR>(p => p.Resolve(noAR,noAR,noAR,noAR, rollSfx)));
         var textCmds = ParseAndExport(cfg, parser).Invoke(text).Try.ToArray();

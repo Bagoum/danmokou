@@ -52,12 +52,6 @@ phase 0
 		##sync mulaser-*/b <1;:3> gsr2 9 <40> { color $colors }  safelaser 4 { }
 		##sync lightning-** <1;:183> gsr2 9 <40> { color $colors } gsr2 3 <13> { color $csuff }  pather 3 3 tprot cx 2 { }
 
-## 6 multipalette test
-phase 0
-	action block 0
-		position 3 3
-		async scircle-* <-8.5;1:> gir2 15 1 <4;:> color { *,*/b } gir2 15 9 <;-1.2:> color $colors gcr2 10 9 <1.2;:> color $colors s tprot lerpout 0 0.1 cy 0.1
-		##async fireball-* <-8.5;1:> gir2 15 3 <4;:> color { *,*/w *,*/b *,*/ } gir2 15 9 <;-0.9:> color $colors gcr2 10 9 <0.42;:> color $colors s tprot lerpout 0 0.1 cy 0.1
 	
 ## 7 Large bullets
 phase 0

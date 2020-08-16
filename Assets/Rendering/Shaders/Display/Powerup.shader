@@ -71,11 +71,7 @@
                 float4 c = f.color;
                 c.a *= 1 - smoothstep(0.45, 0.5, rt.x);
                 rt.x += _T * _Speed;
-            #ifdef FANCY
                 return c * tex2D(_MainTex, rt + getDisplace(rt, _T));
-            #else
-                return c * tex2D(_MainTex, rt);
-            #endif
             }
             ENDCG
         }

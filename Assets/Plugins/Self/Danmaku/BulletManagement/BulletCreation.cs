@@ -93,6 +93,9 @@ public struct DelegatedCreator {
     public void SummonPowerup(SyncHandoff sbh, TP4 color, float time, float itrs, uint bpiid) {
         BulletManager.RequestPowerup(style, color, time, itrs, sbh.GCX.exec, sbh.index, bpiid);
     }
+    public void SummonPowerupStatic(SyncHandoff sbh, TP4 color, float time, float itrs, uint bpiid) {
+        BulletManager.RequestPowerup(style, color, time, itrs, null, sbh.index, bpiid, FacedRV2(sbh.rv2).TrueLocation + ParentOffset);
+    }
 
     private MovementModifiers Modifiers =>
         modifiers.ApplyOver(useParentMoveMod ?
@@ -150,14 +153,14 @@ public partial class BulletManager {
     public static BehaviorEntity RequestSummon(bool pooled, string prefabName, MovementModifiers m, Velocity path, 
         int firingIndex, uint bpiid, string behName, [CanBeNull] BehaviorEntity parent, SMRunner sm, RealizedBehOptions? opts) {
         BehaviorEntity beh = pooled ?
-            BEHPooler.RequestUninitialized(ResourceManager.GetBEHPrefab(prefabName), out _) :
-            GameObject.Instantiate(ResourceManager.GetBEHPrefab(prefabName)).GetComponent<BehaviorEntity>();
+            BEHPooler.RequestUninitialized(ResourceManager.GetSummonable(prefabName), out _) :
+            GameObject.Instantiate(ResourceManager.GetSummonable(prefabName)).GetComponent<BehaviorEntity>();
         beh.Initialize(path, m, sm, firingIndex, bpiid, parent, behName, opts);
         return beh;
     }
 
     public static BehaviorEntity RequestRawSummon(string prefabName) {
-        return GameObject.Instantiate(ResourceManager.GetBEHPrefab(prefabName)).GetComponent<BehaviorEntity>();
+        return GameObject.Instantiate(ResourceManager.GetSummonable(prefabName)).GetComponent<BehaviorEntity>();
     }
 
     public static RectDrawer RequestRect(TP4 color, BPRV2 locScaleRot, int firingIndex, 
@@ -169,8 +172,9 @@ public partial class BulletManager {
     }
 
     public static PowerUp RequestPowerup(string style, TP4 color, float time, float itrs, [CanBeNull] BehaviorEntity parent, 
-        int firingIndex, uint bpiid) {
-        var pw = RequestSummon(true, style, MovementModifiers.Default, Velocity.None, firingIndex, bpiid, "_", parent,
+        int firingIndex, uint bpiid, Vector2? offset = null) {
+        Velocity vel = offset.HasValue ? new Velocity(offset.Value, 0f) : Velocity.None;
+        var pw = RequestSummon(true, style, MovementModifiers.Default, vel, firingIndex, bpiid, "_", parent,
             new SMRunner(), null).GetComponent<PowerUp>();
         pw.Initialize(color, time, itrs);
         return pw;

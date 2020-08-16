@@ -97,7 +97,7 @@ public class Tutorial : BehaviorEntity {
         var nrx = new RealizedLaserOptions(new LaserOptions(LaserOption.S(_ => 1/RealizedLaserOptions.DEFAULT_LASER_WIDTH)), GenCtx.New(this, V2RV2.Zero), 5, new Vector2(3, 5), V2RV2.Angle(-90), MovementModifiers.Default, CancellationToken.None);
         BulletManager.RequestLaser(null, "mulaser-blue/b", new Velocity(new Vector2(3, 5), -90), 0, 5, 999, 0, ref nrx);
         BulletManager.RequestLaser(null, "zonelaser-green/b", new Velocity(new Vector2(4, 5), -90), 0, 5, 999, 0, ref nrx);
-        "sync _ <> relrect greenrect level <-3,-2.5:1.4,1.4:0> witha 0.7 green".Into<StateMachine>()
+        "sync _ <> relrect greenrect level <-3;-2.5:1.4;1.4:0> witha 0.7 green".Into<StateMachine>()
             .Start(new SMHandoff(this, CancellationToken.None));
         Message(text10, "You should now see a large red circle on a green box in the bottom left corner, and two lasers on the right side of the screen.");
         yield return confirm();
@@ -232,6 +232,6 @@ It will empty over time, but graze and point++ items will restore it. When empty
         SaveData.SaveRecord();
     }
     
-    private const int SKIP = 60;
+    private const int SKIP = 0;
 
 }

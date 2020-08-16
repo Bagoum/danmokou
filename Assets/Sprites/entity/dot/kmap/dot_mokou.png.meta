@@ -62,6 +62,15 @@ TextureImporter:
   - first:
       213: -323371812825467840
     second: dot_mokou_19
+  - first:
+      213: 1348355599960013938
+    second: dot_mokou_12
+  - first:
+      213: 9112845425937399011
+    second: dot_mokou_13
+  - first:
+      213: 7659275484720238951
+    second: dot_mokou_17
   externalObjects: {}
   serializedVersion: 11
   mipmaps:
@@ -177,9 +186,9 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 0
-        y: 384
-        width: 128
-        height: 128
+        y: 216
+        width: 72
+        height: 72
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -187,7 +196,7 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 58b106054c1892b44a85ebddaab14df3
+      spriteID: c22fa762cfe237060800000000000000
       internalID: 6949950310475035180
       vertices: []
       indices: 
@@ -197,10 +206,10 @@ TextureImporter:
       name: dot_mokou_1
       rect:
         serializedVersion: 2
-        x: 128
-        y: 384
-        width: 128
-        height: 128
+        x: 72
+        y: 216
+        width: 72
+        height: 72
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -208,7 +217,7 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: a2249912a7bd4f542ac21757a81ec126
+      spriteID: 1d5c676beb6ace110800000000000000
       internalID: 1291590531183723985
       vertices: []
       indices: 
@@ -218,10 +227,10 @@ TextureImporter:
       name: dot_mokou_2
       rect:
         serializedVersion: 2
-        x: 256
-        y: 384
-        width: 128
-        height: 128
+        x: 144
+        y: 216
+        width: 72
+        height: 72
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -229,7 +238,7 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: d8816b76f0b9beb4fa9a1270014d244f
+      spriteID: 7df87f119757ba010800000000000000
       internalID: 1201182888477298647
       vertices: []
       indices: 
@@ -239,10 +248,10 @@ TextureImporter:
       name: dot_mokou_3
       rect:
         serializedVersion: 2
-        x: 384
-        y: 384
-        width: 128
-        height: 128
+        x: 216
+        y: 216
+        width: 72
+        height: 72
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -250,7 +259,7 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 9d526cda79cf1b048a985f05005431a0
+      spriteID: 9d3111bead4fb7f90800000000000000
       internalID: -6954695978459786279
       vertices: []
       indices: 
@@ -260,10 +269,10 @@ TextureImporter:
       name: dot_mokou_4
       rect:
         serializedVersion: 2
-        x: 512
-        y: 384
-        width: 128
-        height: 128
+        x: 288
+        y: 216
+        width: 72
+        height: 72
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -271,7 +280,7 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 7a7be9e3cc071544380a93e0b407f522
+      spriteID: f4acdca6a7afa69e0800000000000000
       internalID: -1627212911656187313
       vertices: []
       indices: 
@@ -281,10 +290,10 @@ TextureImporter:
       name: dot_mokou_5
       rect:
         serializedVersion: 2
-        x: 640
-        y: 384
-        width: 128
-        height: 128
+        x: 360
+        y: 216
+        width: 72
+        height: 72
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -292,7 +301,7 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: a4ff7d891202d7547a3052d6a6c4ba58
+      spriteID: 7ee20b1791189c820800000000000000
       internalID: 2939022178117496551
       vertices: []
       indices: 
@@ -303,9 +312,9 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 0
-        y: 256
-        width: 128
-        height: 128
+        y: 144
+        width: 72
+        height: 72
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -313,7 +322,7 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 4e61868aad9acc14888ea35ab43684f7
+      spriteID: 34246d1ee6a3b3490800000000000000
       internalID: -7765548884560559549
       vertices: []
       indices: 
@@ -323,10 +332,10 @@ TextureImporter:
       name: dot_mokou_7
       rect:
         serializedVersion: 2
-        x: 128
-        y: 256
-        width: 128
-        height: 128
+        x: 72
+        y: 144
+        width: 72
+        height: 72
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -334,7 +343,7 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 1e40be8697680f74ba858ccb10197e73
+      spriteID: 5d9a7b363b24a9610800000000000000
       internalID: 1628687553487415765
       vertices: []
       indices: 
@@ -344,10 +353,10 @@ TextureImporter:
       name: dot_mokou_8
       rect:
         serializedVersion: 2
-        x: 256
-        y: 256
-        width: 128
-        height: 128
+        x: 144
+        y: 144
+        width: 72
+        height: 72
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -355,7 +364,7 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: b35498ccd4872a948b27c3c46316d58d
+      spriteID: afcb06da5d668e2e0800000000000000
       internalID: -2096312558618100486
       vertices: []
       indices: 
@@ -365,10 +374,10 @@ TextureImporter:
       name: dot_mokou_9
       rect:
         serializedVersion: 2
-        x: 384
-        y: 256
-        width: 128
-        height: 128
+        x: 216
+        y: 144
+        width: 72
+        height: 72
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -376,7 +385,7 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 670757de5a7db5641a65fb1e9bf15113
+      spriteID: 74181fb566e9001f0800000000000000
       internalID: -1080689748102512313
       vertices: []
       indices: 
@@ -386,10 +395,10 @@ TextureImporter:
       name: dot_mokou_10
       rect:
         serializedVersion: 2
-        x: 512
-        y: 256
-        width: 128
-        height: 128
+        x: 288
+        y: 144
+        width: 72
+        height: 72
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -397,7 +406,7 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 0985311a0773e8c41b4c59d4fa82ae2c
+      spriteID: 084ac9ce15f8c6be0800000000000000
       internalID: -1482652595286924160
       vertices: []
       indices: 
@@ -407,10 +416,10 @@ TextureImporter:
       name: dot_mokou_11
       rect:
         serializedVersion: 2
-        x: 640
-        y: 256
-        width: 128
-        height: 128
+        x: 360
+        y: 144
+        width: 72
+        height: 72
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -418,7 +427,7 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 04063c2c9d1e5f244a59f28ebcb72bb3
+      spriteID: b53d331dae9bb80b0800000000000000
       internalID: -5725278083088133285
       vertices: []
       indices: 
@@ -429,9 +438,9 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 0
-        y: 128
-        width: 128
-        height: 128
+        y: 72
+        width: 72
+        height: 72
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -439,8 +448,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: be943bcf3ea0f244e810c4d18e876c63
-      internalID: 1895516984077120733
+      spriteID: 27c7686364256b210800000000000000
+      internalID: 1348355599960013938
       vertices: []
       indices: 
       edges: []
@@ -449,10 +458,10 @@ TextureImporter:
       name: dot_mokou_13
       rect:
         serializedVersion: 2
-        x: 256
-        y: 128
-        width: 128
-        height: 128
+        x: 144
+        y: 72
+        width: 72
+        height: 72
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -460,8 +469,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: a5cf5e2f3b7c0c24888ea5787a6ec909
-      internalID: 6147347496250323771
+      spriteID: 3ecba0a02a4577e70800000000000000
+      internalID: 9112845425937399011
       vertices: []
       indices: 
       edges: []
@@ -470,10 +479,10 @@ TextureImporter:
       name: dot_mokou_14
       rect:
         serializedVersion: 2
-        x: 384
-        y: 128
-        width: 128
-        height: 128
+        x: 216
+        y: 72
+        width: 72
+        height: 72
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -481,7 +490,7 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 76c6293443a28a74da0f4b12e2be13b7
+      spriteID: 56f0ca6ce9f918a00800000000000000
       internalID: 757061716661768037
       vertices: []
       indices: 
@@ -491,10 +500,10 @@ TextureImporter:
       name: dot_mokou_15
       rect:
         serializedVersion: 2
-        x: 512
-        y: 128
-        width: 128
-        height: 128
+        x: 288
+        y: 72
+        width: 72
+        height: 72
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -502,7 +511,7 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 9280210f68dcbe24fb0269345d6f1f3d
+      spriteID: d647f5cf42197e9d0800000000000000
       internalID: -2745065859820063635
       vertices: []
       indices: 
@@ -512,10 +521,10 @@ TextureImporter:
       name: dot_mokou_16
       rect:
         serializedVersion: 2
-        x: 640
-        y: 128
-        width: 128
-        height: 128
+        x: 360
+        y: 72
+        width: 72
+        height: 72
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -523,7 +532,7 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 5642ad25904139f479ea2020d68c6ac0
+      spriteID: a0ad3ceb12effff60800000000000000
       internalID: 8070448478159100426
       vertices: []
       indices: 
@@ -533,10 +542,10 @@ TextureImporter:
       name: dot_mokou_17
       rect:
         serializedVersion: 2
-        x: 256
+        x: 144
         y: 0
-        width: 128
-        height: 128
+        width: 72
+        height: 72
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -544,8 +553,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: e6085adff25425946ba8ef385cc929c0
-      internalID: -3037338780845439362
+      spriteID: 7619b9709763b4a60800000000000000
+      internalID: 7659275484720238951
       vertices: []
       indices: 
       edges: []
@@ -554,10 +563,10 @@ TextureImporter:
       name: dot_mokou_18
       rect:
         serializedVersion: 2
-        x: 640
+        x: 360
         y: 0
-        width: 128
-        height: 128
+        width: 72
+        height: 72
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -565,7 +574,7 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 854b36e2d447d424986e22a734d3f609
+      spriteID: 2458621c6d4f7eff0800000000000000
       internalID: -6767671217060542
       vertices: []
       indices: 

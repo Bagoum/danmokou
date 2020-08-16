@@ -91,6 +91,11 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         }
     }
     public bool isEnemy => enemy != null;
+
+    public bool TryAsEnemy(out Enemy e) {
+        e = enemy;
+        return isEnemy;
+    }
     public bool triggersUITimeout = false;
     public SMPhaseController phaseController;
     //These values are only set for Initialize-based BEH (via SM summon command)
@@ -351,8 +356,6 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     public MovementModifiers movementModifiers;
     private bool isSummoned = false;
 
-    private static short renderCounter = short.MinValue;
-
     protected override void Awake() {
         base.Awake();
         bpi = ParametricInfo.WithRandomId(tr.position, 0);
@@ -376,15 +379,13 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         return Task.CompletedTask;
     }
     public void Initialize(Vector2 parentLoc, V2RV2 position, MovementModifiers m,
-        SMRunner sm, int firingIndex, uint bpiid, string behName = "") =>
+        SMRunner sm, int firingIndex, uint? bpiid, string behName = "") =>
         Initialize(new Velocity(parentLoc, position, m), m, sm, firingIndex, bpiid, null, behName);
 
     /// <summary>
     /// If parented, we need firing offset to update Velocity's root position with parent.pos + offset every frame.
     /// </summary>
     private Vector2 firedOffset;
-    
-    public const string EnemySortingLayer = "Enemy";
 
     /// <summary>
     /// Initialize a BEH. You are not required to call this, but all BEH that are generated in code should use this.
@@ -397,14 +398,14 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     /// <param name="parent">Transform parent of this BEH. Use sparingly</param>
     /// <param name="behName"></param>
     /// <param name="options"></param>
-    public void Initialize(Velocity _velocity, MovementModifiers m, SMRunner smr, int firingIndex, uint bpiid, [CanBeNull] BehaviorEntity parent, string behName="", RealizedBehOptions? options=null) {
-        if (sr != null && sr.sortingLayerName == EnemySortingLayer) sr.sortingOrder = renderCounter++;
+    public void Initialize(Velocity _velocity, MovementModifiers m, SMRunner smr, int firingIndex=0, 
+        uint? bpiid=null, [CanBeNull] BehaviorEntity parent=null, string behName="", RealizedBehOptions? options=null) {
         if (parent != null) TakeParent(parent);
         isSummoned = true;
         tr.localPosition = firedOffset = _velocity.rootPos;
         _velocity.rootPos = bpi.loc = tr.position;
         original_angle = _velocity.angle;
-        bpi = new ParametricInfo(_velocity.rootPos, firingIndex, bpiid);
+        bpi = new ParametricInfo(_velocity.rootPos, firingIndex, bpiid ?? RNG.GetUInt());
         AssignVelocity(_velocity);
         if (doVelocity) {
             FaceInDirection(velocity.UpdateZero(ref bpi, 0f));
@@ -432,7 +433,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
             sr.GetPropertyBlock(pb = new MaterialPropertyBlock());
         }
         tr.localEulerAngles = facingVec = new Vector3(0, 0, 0);
-        if (enemy != null) enemy.Initialize(this);
+        if (enemy != null) enemy.Initialize(this, sr);
         //Pooled objects should not be running SMs from the inspector, only via Initialize,
         //so there is no RunImmediateSM in ResetV.
     }
@@ -481,7 +482,6 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     /// <returns></returns>
     public IEnumerator ExecuteVelocity(LimitedTimeVelocity ltv, uint newId) {
         if (ltv.cT.IsCancellationRequested) { ltv.done(); yield break; }
-        if (parented) throw new Exception("BEH cannot use a move command when parented");
         Velocity vel = new Velocity(ltv.VTP2, GlobalPosition(), V2RV2.Angle(original_angle), movementModifiers);
         float doTime = (ltv.enabledFor < float.Epsilon) ? float.MaxValue : ltv.enabledFor;
         ParametricInfo tbpi = new ParametricInfo(bpi.loc, ltv.firingIndex, newId);
@@ -579,13 +579,14 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     }
 
     private void TryDeathEffect() {
-        if (deathEffect != null) deathEffect.Proc(GlobalPosition(), GlobalPosition(), 1f);
+        if (deathEffect != null && !SceneIntermediary.LOADING) deathEffect.Proc(GlobalPosition(), GlobalPosition(), 1f);
     }
     
     /// <summary>
     /// Call instead of InvokeCull when you need to show death animations and trigger finalize effects.
     /// </summary>
     public void Poof(bool? drops=null) {
+        if (SceneIntermediary.LOADING) InvokeCull();
         if (dying) return;
         DestroyInitial(true, drops ?? AmIOutOfHP);
         if (enemy != null) enemy.DoSuicideFire();
@@ -847,7 +848,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     /// </summary>
     public void HardCancel(bool allowFinishCB) {
         if (behaviorToken.Count == 0) return;
-        AllowFinishCalls = allowFinishCB;
+        AllowFinishCalls = allowFinishCB && !SceneIntermediary.LOADING;
         try {
             foreach (var cT in behaviorToken.ToArray()) {
                 cT.Cancel();
@@ -929,11 +930,6 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         if (!pointersToResolve.ContainsKey(id)) pointersToResolve[id] = new BEHPointer();
         return pointersToResolve[id];
     }
-
-    public static readonly ExFunction retrieveBEHPosition =
-        ExUtils.Wrap<BehaviorEntity, BEHPointer>("RetrieveBEHPosition");
-    [UsedImplicitly]
-    public static Vector2 RetrieveBEHPosition(BEHPointer behp) => behp.beh.bpi.loc;
 
     public static readonly ExFunction hpRatio =
         ExUtils.Wrap<BehaviorEntity, BEHPointer>("HPRatio");

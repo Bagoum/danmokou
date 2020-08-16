@@ -3,6 +3,8 @@ using System;
 using Danmaku;
 using DMath;
 using Core;
+using JetBrains.Annotations;
+using UnityEngine;
 
 namespace SM {
 
@@ -48,7 +50,19 @@ public class EventLASM : ReflectableLASM {
         Events.MakePlayerInvincible.Invoke(frames, true);
         return Task.CompletedTask;
     };
-    
+
+    [CanBeNull] private static FXY _shakeMag = null;
+    private const float t = 1.8f;
+    private const float st = 2.5f;
+    private static FXY ShakeMag => _shakeMag = _shakeMag ?? Compilers.FXY(b => ExM.EQuad0m10(t, st, FXYRepo.T()(b)));
+
+    public static TaskPattern BossExplode() => smh => {
+        UnityEngine.Object.Instantiate(ResourceManager.GetSummonable("bossexplode")).GetComponent<ExplodeEffect>().Initialize(t, smh.Exec.rBPI.loc);
+        RaikoCamera.Shake(st, ShakeMag, 2, smh.cT, WaitingUtils.GetAwaiter(out Task _));
+        SFXService.Request("x-boss-explode");
+        return WaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, t, false);
+    };
+
 }
 
 /// <summary>

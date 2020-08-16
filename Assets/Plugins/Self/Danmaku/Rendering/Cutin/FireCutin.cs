@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using Danmaku;
 using DMath;
@@ -46,24 +47,23 @@ public class FireCutin : BehaviorEntity {
     private MaterialPropertyBlock textBackPB;
     private BPY textBackFiller;
 
-    private string CXY(Vector2 loc) => $"cxy {loc.x} {loc.y}";
-    private string CXYZ(Vector3 loc) => $"pxyz {loc.x} {loc.y} {loc.z}";
 
     private const float sx = -0.1f;
     private const float sy = 0.2f;
     public Texture2D textBackSprite;
     protected override void Awake() {
+        string CXYZ(Vector3 loc) => $"pxyz {loc.x} {loc.y} {loc.z}";
         base.Awake();
         velMov = movement.Into<TP>();
         tr.localPosition = startLoc;
         fireScaler = 
-            $"lerpsmooth bounce2 {timeToFirstHit} {timeToSecondHitPost} t {fireMultiplier.x} {fireMultiplier.y}".Into<BPY>();
+            FormattableString.Invariant($"lerpsmooth bounce2 {timeToFirstHit} {timeToSecondHitPost} t {fireMultiplier.x} {fireMultiplier.y}").Into<BPY>();
         upperTextLerp =
-            $"lerpsmooth in-sine {timeToLerpStart} {timeToFirstHit} t {CXYZ(upperTextOffset)} zero".Into<TP3>();
+            FormattableString.Invariant($"lerpsmooth in-sine {timeToLerpStart} {timeToFirstHit} t {CXYZ(upperTextOffset)} zero").Into<TP3>();
         lowerTextLerp =
-            $"lerpsmooth in-sine {timeToFirstHit} {timeToSecondHit} t {CXYZ(lowerTextOffset)} zero".Into<TP3>();
-        upperTextScaler = $"lerpsmooth out-sine {sx} {sy} (- t {timeToFirstHit}) {textScale.x} {textScale.y}".Into<BPY>();
-        lowerTextScaler = $"lerpsmooth out-sine {sx} {sy} (- t {timeToSecondHit}) {textScale.x} {textScale.y}".Into<BPY>();
+            FormattableString.Invariant($"lerpsmooth in-sine {timeToFirstHit} {timeToSecondHit} t {CXYZ(lowerTextOffset)} zero").Into<TP3>();
+        upperTextScaler = FormattableString.Invariant($"lerpsmooth out-sine {sx} {sy} (- t {timeToFirstHit}) {textScale.x} {textScale.y}").Into<BPY>();
+        lowerTextScaler = FormattableString.Invariant($"lerpsmooth out-sine {sx} {sy} (- t {timeToSecondHit}) {textScale.x} {textScale.y}").Into<BPY>();
         if (fireSprite != null) {
             fireSprite.GetPropertyBlock(firePB = new MaterialPropertyBlock());
             firePB.SetFloat(PropConsts.xBlocks, xBlocks);
@@ -84,7 +84,7 @@ public class FireCutin : BehaviorEntity {
         textBacker.GetPropertyBlock(textBackPB = new MaterialPropertyBlock());
         textBackPB.SetFloat(PropConsts.fillRatio, 0);
         textBackPB.SetTexture(PropConsts.trueTex, textBackSprite);
-        textBackFiller = $"lerpt {textBackFillTime.x} {textBackFillTime.y} 0 1".Into<BPY>();
+        textBackFiller = FormattableString.Invariant($"lerpt {textBackFillTime.x} {textBackFillTime.y} 0 1").Into<BPY>();
     }
 
     private void SetColorA(TextMeshPro t, float a) {

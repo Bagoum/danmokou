@@ -11,7 +11,7 @@ namespace Danmaku {
 public class BackgroundOrchestrator : MonoBehaviour {
     private static BackgroundOrchestrator main;
     private Transform tr;
-    public static BackgroundController FromBG { get; private set; }
+    [CanBeNull] public static BackgroundController FromBG { get; private set; }
     [CanBeNull] public static BackgroundController ToBG { get; private set; }
     private static BackgroundTransition? nextRequestedTransition;
 
@@ -21,13 +21,31 @@ public class BackgroundOrchestrator : MonoBehaviour {
     public static float Time { get; private set; }
 
     public static void RecreateTextures() {
-        if (FromBG != null) FromBG.Capturer.RecreateTexture();
+        if (main == null) return; //Kinda awk but this can be called before Awake
+        if (FromBG == null) main.MaybeCreateFirst();
+        else {
+            if (SaveData.s.Backgrounds) FromBG.Capturer.RecreateTexture();
+            else {
+                FromBG.Kill();
+                if (ToBG != null) ToBG.Kill();
+            }
+        }
+    }
+
+    [CanBeNull] private static GameObject lastRequestedBGC;
+    private void MaybeCreateFirst() {
+        if (SaveData.s.Backgrounds) {
+            var bgc = (lastRequestedBGC == null) ? defaultBGCPrefab : lastRequestedBGC;
+            FromBG = Instantiate(bgc, tr, false)
+                .GetComponent<BackgroundController>().Initialize(bgc);
+        }
     }
 
     private void Awake() {
         tr = transform;
         main = this;
-        FromBG = Instantiate(defaultBGCPrefab, tr, false).GetComponent<BackgroundController>().Initialize(defaultBGCPrefab);
+        lastRequestedBGC = null;
+        MaybeCreateFirst();
         Time = 0f;
     }
 
@@ -35,30 +53,24 @@ public class BackgroundOrchestrator : MonoBehaviour {
         Time += ETime.dT;
     }
 
-    [ContextMenu("Debug fromto")]
-    public void Debugfromto() {
-        Debug.Log(ToBG == null ?
-            $"From: {FromBG.gameObject.name}" :
-            $"From: {FromBG.gameObject.name}; To: {ToBG.gameObject.name}");
-    }
-
 
     public static void QueueTransition(BackgroundTransition bgt) => nextRequestedTransition = bgt;
 
     private static void FinishTransition() {
-        if (ToBG != null) {
+        if (ToBG != null && FromBG != null) {
             FromBG.Kill();
             FromBG = ToBG;
             ToBG = null;
         }
-
     }
-
     public static void ConstructTarget(GameObject bgp, bool withTransition, bool destroyIfExists=false) {
+        lastRequestedBGC = bgp;
+        if (FromBG == null) return;
         if (destroyIfExists || 
             (ToBG == null && FromBG.source != bgp) ||
             (ToBG != null && ToBG.source != bgp)) {
-            SetTarget(Instantiate(bgp, main.tr, false).GetComponent<BackgroundController>().Initialize(bgp), withTransition);
+            SetTarget(Instantiate(bgp, main.tr, false).GetComponent<BackgroundController>()
+                .Initialize(bgp), withTransition);
         }
     }
 
@@ -75,9 +87,8 @@ public class BackgroundOrchestrator : MonoBehaviour {
     }
 
     private static readonly HashSet<CancellationTokenSource> transitionCTS = new HashSet<CancellationTokenSource>();
-    private static void DoTransition(BackgroundTransition bgt) => main._DoTransition(bgt);
-
-    private void _DoTransition(BackgroundTransition bgt) {
+    private static void DoTransition(BackgroundTransition bgt) {
+        if (FromBG == null) return;
         if (ToBG == null) throw new Exception("Cannot do transition when target BG is null");
         var pb = new MaterialPropertyBlock();
         var mat = Instantiate(main.baseMixerMaterial);

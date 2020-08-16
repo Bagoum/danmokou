@@ -21,7 +21,7 @@ public class BackgroundCombiner : RegularUpdater {
         renderMask = LayerMask.GetMask(LayerMask.LayerToName(gameObject.layer));
         pb = new MaterialPropertyBlock();
         sr = GetComponent<SpriteRenderer>();
-        sr.enabled = true;
+        sr.enabled = SaveData.s.Backgrounds;
         mat = sr.material;
         mat.EnableKeyword("MIX_FROM_ONLY");
         sr.SetPropertyBlock(pb);
@@ -38,7 +38,14 @@ public class BackgroundCombiner : RegularUpdater {
         time = 0f;
     }
 
+    public static void Reconstruct() {
+        if (main == null) return;
+        main.sr.enabled = SaveData.s.Backgrounds;
+        main.UpdateTextures();
+    }
+
     private void UpdateTextures() {
+        if (!SaveData.s.Backgrounds || BackgroundOrchestrator.FromBG == null) return;
         //Update PB
         var fromTex = BackgroundOrchestrator.FromBG.Capturer.Captured;
         var toTex = (BackgroundOrchestrator.ToBG == null) ? null : BackgroundOrchestrator.ToBG.Capturer.Captured;

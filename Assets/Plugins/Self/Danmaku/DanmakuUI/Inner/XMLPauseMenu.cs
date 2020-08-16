@@ -33,7 +33,7 @@ public class XMLPauseMenu : XMLMenu {
         MainScreen = new UIScreen(
             new OptionNodeLR<bool>("Shaders", yn => SaveData.s.Shaders = yn, YNOption, SaveData.s.Shaders)
                 .With(OptionNode),
-            new OptionNodeLR<(int, int)>("Resolution", SaveData.UpdateResolution, new[] {
+            new OptionNodeLR<(int, int)>("Resolution", b => SaveData.UpdateResolution(b), new[] {
                 ("3840x2160", (3840, 2160)),
                 ("1920x1080", (1920, 1080)),
                 ("1280x720", (1280, 720)),
@@ -77,6 +77,11 @@ public class XMLPauseMenu : XMLMenu {
             }, SaveData.s.DialogueWaitMultiplier).With(OptionNode),
             new OptionNodeLR<bool>("Unfocused Hitbox", b => SaveData.s.UnfocusedHitbox = b, YNOption,
                 SaveData.s.UnfocusedHitbox).With(OptionNode),
+            new OptionNodeLR<bool>("Backgrounds", b => {
+                    SaveData.s.Backgrounds = b;
+                    SaveData.UpdateResolution();
+                }, YNOption,
+                SaveData.s.Backgrounds).With(OptionNode),
             new FuncNode(GameStateManager.ForceUnpause, "Unpause", true),
             new ConfirmFuncNode(() => {
                 HideOptions(true);

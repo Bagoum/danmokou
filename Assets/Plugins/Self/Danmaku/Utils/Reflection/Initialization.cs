@@ -113,10 +113,6 @@ public static partial class Reflector {
             ('b', Enums.Blocking.BLOCKING),
             ('n', Enums.Blocking.NONBLOCKING)
         });
-        CEnum<Enums.Persistence>(new[] {
-            ('p', Enums.Persistence.PERSISTENT),
-            ('o', Enums.Persistence.ONCE)
-        });
         CEnum<Enums.Facing>(new[] {
             ('o', Enums.Facing.ORIGINAL),
             ('d', Enums.Facing.DEROT),

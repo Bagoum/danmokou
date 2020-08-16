@@ -36,7 +36,7 @@ public static class TestParsing {
         AreEqual(V2RV2.Angle(2 * M.IPHI), ParseV2RV2("<2h>"));
         AreEqual(V2RV2.Rot(4.0f, -2.5f, 2 * M.IPHI), ParseV2RV2("<4.0;-2.5:2h>"));
         ThrowsAny(() => ParseV2RV2("<gf;-2.5:2h>"));
-        AreEqual(new V2RV2(2f, 3f, 4.0f, -2.5f, 2 * M.IPHI), ParseV2RV2("<2;3:4.0,-2.5:2h>"));
+        AreEqual(new V2RV2(2f, 3f, 4.0f, -2.5f, 2 * M.IPHI), ParseV2RV2("<2;3:4.0;-2.5:2h>"));
         AreEqual(new V2RV2(2f, 3f, 0, 0, 2 * M.IPHI), ParseV2RV2("<2;3:;:2h>"));
     }
 

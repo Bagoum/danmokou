@@ -15,8 +15,8 @@ public static class Log {
         ERROR = 7
     }
 
-    private const int MIN_LEVEL = (int) Level.DEBUG2;
-    private const int BUILD_MIN = (int) Level.INFO;
+    private const int MIN_LEVEL = (int) Level.DEBUG1;
+    private const int BUILD_MIN = (int) Level.DEBUG1;
 
     public static void Unity(string msg, bool stackTrace = true, Level level = Level.INFO) {
         msg = $"Frame {ETime.FrameNumber}: {msg}";

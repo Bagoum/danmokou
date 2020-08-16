@@ -8,6 +8,7 @@ using Danmaku;
 using Core;
 using DMath;
 using JetBrains.Annotations;
+using UnityEngine;
 using static Danmaku.Enums;
 
 namespace SM {
@@ -41,20 +42,43 @@ public class PatternSM : SequentialSM {
         return ct;
     }
 
+    private static void SetUniqueBossUI(SMHandoff smh, BossConfig b) {
+        UIManager.SetNameTitle(b.displayName, b.displayTitle);
+        UIManager.SetProfile(b.profile);
+        UIManager.SetBossColor(b.colors.uiColor, b.colors.uiHPColor);
+    }
+
+    private static List<BottomTracker> ConfigureAllBosses(SMHandoff smh, BossConfig main,
+        [CanBeNull] BossConfig[] all) {
+        all = all ?? new[] {main};
+        var bts = new List<BottomTracker>();
+        foreach (var (i,b) in all.Enumerate()) {
+            var target = smh.Exec;
+            Enemy e;
+            if (i > 0) {
+                target = UnityEngine.Object.Instantiate(b.boss).GetComponent<BehaviorEntity>();
+                if (target.TryAsEnemy(out e)) e.distorter = null; // i dont really like this but it overlaps weirdly
+                target.Initialize(new Velocity(new Vector2(-50f, 0f), 0f), MovementModifiers.Default, SMRunner.Null);
+            }
+            if (target.TryAsEnemy(out e)) {
+                if (b.colors.cardColorR.a > 0 || b.colors.cardColorG.a > 0 || b.colors.cardColorB.a > 0) {
+                    e.RequestCardCircle(b.colors.cardColorR, b.colors.cardColorG, b.colors.cardColorB, b.Rotator);
+                }
+                e.SetSpellCircleColors(b.colors.spellColor1, b.colors.spellColor2, b.colors.spellColor3);
+                e.SetDamageable(false);
+            }
+            if (b.trackName.Length > 0) bts.Add(UIManager.TrackBEH(target, b.trackName, smh.cT));
+        }
+        return bts;
+    }
+
     public override async Task Start(SMHandoff smh) {
-        BottomTracker bt = null;
+        var bts = new List<BottomTracker>();
         if (props.boss != null) {
-            var b = props.boss;
-            UIManager.SetNameTitle(b.displayName, b.displayTitle);
-            UIManager.SetProfile(b.profile);
-            if (b.trackName.Length > 0) bt = UIManager.TrackBEH(smh.Exec, b.trackName, smh.cT);
-            UIManager.SetBossColor(b.uiColor, b.uiHPColor);
-            if (b.cardColorR.a > 0 || b.cardColorG.a > 0 || b.cardColorB.a > 0)
-                smh.Exec.Enemy.RequestCardCircle(b.cardColorR, b.cardColorG, b.cardColorB, b.Rotator);
-            smh.Exec.Enemy.SetSpellCircleColors(b.spellColor1, b.spellColor2, b.spellColor3);
-            smh.Exec.Enemy.SetDamageable(false);
             GameManagement.campaign.OpenBoss();
             UIManager.SetBossHPLoader(smh.Exec.Enemy);
+            SetUniqueBossUI(smh, props.boss);
+            bts = ConfigureAllBosses(smh, props.boss, props.bosses);
         }
         for (var next = smh.Exec.phaseController.WhatIsNextPhase();
             next > -1 && next < phases.Length;
@@ -63,11 +87,14 @@ public class PatternSM : SequentialSM {
             if (PHASE_BUFFER) await WaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, ETime.FRAME_TIME * 2f, false);
             smh.ThrowIfCancelled();
             if (props.bgms != null) AudioTrackService.InvokeBGM(props.bgms.GetBounded(next, null));
+            if (props.bossUI != null && props.bosses != null) {
+                SetUniqueBossUI(smh, props.bosses[props.bossUI.GetBounded(next, 0)]); 
+            }
             //don't show lives on setup phase
             if (next > 0 && props.boss != null) UIManager.ShowBossLives(RemainingLives(next));
             await phases[next].Start(smh);
         }
-        if (bt != null) bt.Finish();
+        foreach (var bt in bts) bt.Finish();
         if (props.boss != null) {
             UIManager.ShowBossLives(0);
             GameManagement.campaign.CloseBoss();
@@ -160,7 +187,7 @@ public class PhaseSM : SequentialSM {
                 UnityEngine.Object.Instantiate(props.Boss.bossCutin);
                 BackgroundOrchestrator.QueueTransition(props.Boss.bossCutinTrIn);
                 BackgroundOrchestrator.ConstructTarget(props.Boss.bossCutinBg, true);
-                cutins = WaitingUtils.WaitFor(smh, props.Boss.bossCutinTime, false).ContinueWithSync(_ => {
+                cutins = WaitingUtils.WaitFor(smh, props.Boss.bossCutinTime, false).ContinueWithSync(() => {
                     BackgroundOrchestrator.QueueTransition(props.Boss.bossCutinTrOut);
                     BackgroundOrchestrator.ConstructTarget(props.Background, true);
                 }, smh.cT);
@@ -210,7 +237,7 @@ public class PhaseSM : SequentialSM {
                 } catch (OperationCanceledException) {
                     if (props.Lenient) GameManagement.campaign.Lenience = false;
                     //TODO generalize targets in props
-                    Log.Unity($"Cleared phase: {props.cardTitle ?? ""}");
+                    if (props.phaseType != null) Log.Unity($"Cleared {props.phaseType.Value} phase: {props.cardTitle ?? ""}");
                     if (props.Cleanup) GameManagement.ClearPhaseAutocull(props.autocullTarget, props.autocullDefault);
                     if (smh.Exec.AllowFinishCalls) {
                         finishPhase?.Trigger(smh.Exec, smh.GCX, smh.parentCT);

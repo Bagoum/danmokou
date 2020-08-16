@@ -40,7 +40,7 @@ public abstract class TiledRender {
     /// <summary>
     /// Updating PropertyBlock is expensive-- better to skip it once time-based effects are in place.
     /// </summary>
-    protected readonly float DontUpdateTimeAfter;
+    protected float DontUpdateTimeAfter;
     private bool active = false;
     private bool isStatic;
 

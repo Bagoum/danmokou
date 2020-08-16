@@ -51,7 +51,7 @@ public static partial class PredicateLogic {
     /// <returns></returns>
     public static ExPred RelCirc(BEHPointer beh, ExTP3 circ) {
         return bpi => Collision.pointInCircle.Of(
-            Ex.Subtract(bpi.loc, BehaviorEntity.retrieveBEHPosition.Of(ExC(beh))),
+            Ex.Subtract(bpi.loc, LBEH(beh)),
             Ex.Convert(circ(bpi), typeof(CCircle))
         );
     }
@@ -73,7 +73,7 @@ public static partial class PredicateLogic {
     /// <returns></returns>
     public static ExPred RelRect(BEHPointer beh, CRect rect) {
         return bpi => Collision.pointInRect.Of(
-            Ex.Subtract(bpi.loc, BehaviorEntity.retrieveBEHPosition.Of(ExC(beh))),
+            Ex.Subtract(bpi.loc, LBEH(beh)),
             ExC(rect)
         );
     }

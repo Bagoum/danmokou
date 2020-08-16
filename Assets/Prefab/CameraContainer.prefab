@@ -223,7 +223,7 @@ SpriteRenderer:
   m_SortingLayerID: -438763787
   m_SortingLayer: 1
   m_SortingOrder: 6
-  m_Sprite: {fileID: 21300000, guid: 826ec254b75d43a4ea2d79ec60c7e808, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 24dc4ecc95c04074fad48ae14af3862a, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -392,8 +392,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e526229b3ab78954e996d1d2b6a9573a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  per: 0
-  mag: 0
 --- !u!1 &4677735063398321848
 GameObject:
   m_ObjectHideFlags: 0
@@ -1297,31 +1295,6 @@ PrefabInstance:
         type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8114072030993951174, guid: 2a75209a30e145949a5bc2f614255ea8,
-        type: 3}
-      propertyPath: m_textInfo.characterCount
-      value: 16
-      objectReference: {fileID: 0}
-    - target: {fileID: 8114072030993951174, guid: 2a75209a30e145949a5bc2f614255ea8,
-        type: 3}
-      propertyPath: m_textInfo.spaceCount
-      value: 3
-      objectReference: {fileID: 0}
-    - target: {fileID: 8114072030993951174, guid: 2a75209a30e145949a5bc2f614255ea8,
-        type: 3}
-      propertyPath: m_textInfo.wordCount
-      value: 3
-      objectReference: {fileID: 0}
-    - target: {fileID: 8114072030993951174, guid: 2a75209a30e145949a5bc2f614255ea8,
-        type: 3}
-      propertyPath: m_textInfo.lineCount
-      value: 3
-      objectReference: {fileID: 0}
-    - target: {fileID: 8114072030993951174, guid: 2a75209a30e145949a5bc2f614255ea8,
-        type: 3}
-      propertyPath: m_textInfo.pageCount
-      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8790444109873417041, guid: 2a75209a30e145949a5bc2f614255ea8,
         type: 3}
