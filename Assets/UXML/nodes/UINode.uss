@@ -1,7 +1,7 @@
 .node {
     font-size: 120px;
     background-color: rgba(0, 0, 0, 0);
-    -unity-font: url('/Assets/Fonts/Odibee/OdibeeSans-Regular.ttf');
+    -unity-font: url('/Assets/Fonts/Odibee-YoZ Joint.ttf');
     color: rgb(255, 255, 255);
     background-image: url('/Assets/Sprites/util/underline.png');
     width: 100%;
@@ -31,6 +31,22 @@
     font-size: 80px;
 }
 
+.node.node100 {
+    font-size: 100px;
+}
+
+.node.node100 .text {
+    font-size: 100px;
+}
+
+.node.node140 {
+    font-size: 140px;
+}
+
+.node.node140 .text {
+    font-size: 140px;
+}
+
 .node.invisible {
     display: none;
 }
@@ -51,6 +67,10 @@
     color: rgb(125, 125, 125);
 }
 
+.node.disabled.visible {
+    color: rgb(95, 95, 95);
+}
+
 .node.visible .text {
     color: rgb(125, 125, 125);
 }
@@ -63,6 +83,10 @@
     color: rgb(125, 125, 125);
 }
 
+.node.disabled.visible .text {
+    color: rgb(95, 95, 95);
+}
+
 .node.group {
     -unity-background-image-tint-color: rgba(255, 255, 255, 0);
 }
@@ -71,11 +95,11 @@
     color: rgb(200, 200, 200);
 }
 
-.node.descriptor.visible {
+.node.group .text {
     color: rgb(200, 200, 200);
 }
 
-.node.group .text {
+.node.descriptor.visible {
     color: rgb(200, 200, 200);
 }
 
@@ -96,7 +120,7 @@
 }
 
 .node.focus {
-    -unity-background-image-tint-color: rgb(118, 118, 118);
+    -unity-background-image-tint-color: rgb(100, 100, 100);
 }
 
 .node.small {
@@ -112,3 +136,69 @@
     opacity: 0.3;
 }
 
+.node.lblue.visible {
+    color: rgb(75, 95, 116);
+}
+
+.node.lblue.visible .text {
+    color: rgb(75, 95, 116);
+}
+
+.node.lblue.selected {
+    color: rgb(98, 134, 184);
+}
+
+.node.lblue.selected .text {
+    color: rgb(98, 134, 184);
+}
+
+.node.lblue.group {
+    color: rgb(98, 134, 184);
+}
+
+.node.lblue.group .text {
+    color: rgb(98, 134, 184);
+}
+
+.node.lblue.focus {
+    color: rgb(183, 214, 255);
+}
+
+.node.lblue.focus .text {
+    color: rgb(183, 214, 255);
+}
+
+.node.lgreen.visible {
+    color: rgb(76, 117, 92);
+}
+
+.node.lgreen.visible .text {
+    color: rgb(76, 117, 92);
+}
+
+.node.lgreen.selected {
+    color: rgb(90, 183, 127);
+}
+
+.node.lgreen.selected .text {
+    color: rgb(90, 183, 127);
+}
+
+.node.lgreen.group {
+    color: rgb(90, 183, 127);
+}
+
+.node.lgreen.group .text {
+    color: rgb(90, 183, 127);
+}
+
+.node.lgreen.focus {
+    color: rgb(172, 255, 205);
+}
+
+.node.lgreen.focus .text {
+    color: rgb(172, 255, 205);
+}
+
+.node {
+}

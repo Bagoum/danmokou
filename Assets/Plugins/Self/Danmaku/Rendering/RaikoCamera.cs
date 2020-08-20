@@ -17,19 +17,32 @@ public class RaikoCamera : CoroutineRegularUpdater {
     }
 
     private const float ScreenshakeMultiplier = 0.04f;
-    public static void Shake(float time, [CanBeNull] FXY magnitude, float magMul, CancellationToken cT, Action done) {
+
+    public static void ShakeExtra(float time, float magMul) {
+        if (main.cancelTokens.Count == 0) Shake(time, null, magMul, null, () => { });
+    }
+    public static void Shake(float time, [CanBeNull] FXY magnitude, float magMul, CancellationToken? cT, Action done) {
         foreach (var cts in main.cancelTokens) {
             cts.Cancel();
         }
         magnitude = magnitude ?? (t => M.Sin(M.PI * (0.4f + 0.6f * t / time)));
         var x = new CancellationTokenSource();
         main.cancelTokens.Add(x);
-        main.RunRIEnumerator(main.IShake(time, magnitude, magMul, 
-            () => x.IsCancellationRequested || cT.IsCancellationRequested, () => {
-                main.cancelTokens.Remove(x);
-                x.Dispose();
-                done();
-            }));
+        if (cT == null) {
+            main.RunDroppableRIEnumerator(main.IShake(time, magnitude, magMul, 
+                () => x.IsCancellationRequested, () => {
+                    main.cancelTokens.Remove(x);
+                    x.Dispose();
+                    done();
+                }));
+        } else {
+            main.RunRIEnumerator(main.IShake(time, magnitude, magMul, 
+                () => x.IsCancellationRequested || cT.Value.IsCancellationRequested, () => {
+                    main.cancelTokens.Remove(x);
+                    x.Dispose();
+                    done();
+                }));
+        }
     }
     private readonly HashSet<CancellationTokenSource> cancelTokens = new HashSet<CancellationTokenSource>();
 

@@ -95,7 +95,7 @@ GameObject:
   - component: {fileID: 5693660460388628107}
   - component: {fileID: -5849642184187897924}
   m_Layer: 8
-  m_Name: Player
+  m_Name: Player - Mokou
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -190,6 +190,9 @@ MonoBehaviour:
   triggersUITimeout: 0
   cullable: 1
   ScreenCullRadius: 4
+  damage: 1
+  destructible: 0
+  grazeEveryFrames: 20
   animate:
     method: 1
     LRRelation: 4
@@ -253,7 +256,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   OnHitEffect: {fileID: 11400000, guid: d2db9c4dbbeaef849ad718763815dc02, type: 2}
   GoldenAuraEffect: {fileID: 11400000, guid: a1c3240c402ae7845a6ce71818692082, type: 2}
-  hitInvuln: 5
+  hitInvuln: 5.5
 --- !u!1 &8363361056155616002
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,6 +1,6 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <ui:VisualElement class="node">
         <Style src="UINode.uss" />
-        <ui:Label text="one two three fourone two three fourone two three fourone two three fourone two three fourone two three four" focusable="true" class="text" />
+        <ui:Label text="one two three日本語 fourone two three fourone two three fourone two three fourone two three fourone two three four" focusable="true" class="text" />
     </ui:VisualElement>
 </ui:UXML>

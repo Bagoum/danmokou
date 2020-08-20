@@ -14,4 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   defaultName: x-lockon
   clip: {fileID: 8300000, guid: 473c54d80c16efc43a45271f5b58d4a3, type: 3}
-  volume: 0.45
+  volume: 0.4
+  timeout: -1

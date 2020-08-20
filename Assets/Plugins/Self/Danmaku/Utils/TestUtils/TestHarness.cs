@@ -41,7 +41,7 @@ public class TestHarness : RegularUpdater {
             }
         }
         if (script == null) throw new Exception($"Couldn't find testing script {sname}");
-        return StateMachineManager.GetSMFromTextAsset(script);
+        return StateMachineManager.FromText(script);
     }
     
     #if UNITY_EDITOR

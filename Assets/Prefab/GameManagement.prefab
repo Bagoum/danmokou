@@ -432,19 +432,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a936baf045189b14f96a8a683dbf37ef, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tracks:
-  - {fileID: 11400000, guid: 57741b93b464a784196f81a1cc50b6ca, type: 2}
-  - {fileID: 11400000, guid: a6ff62661b444af41a43f397ba8d2779, type: 2}
-  - {fileID: 11400000, guid: 31d3b25ba58c7244aa7bff9a60b9f407, type: 2}
-  - {fileID: 11400000, guid: 747d7e582cbb2364998b53986e7e7685, type: 2}
-  - {fileID: 11400000, guid: e93bd795cdb731647a6c20de3d7ec518, type: 2}
-  - {fileID: 11400000, guid: 489273bb6ef4e3847abc35b4662e4c92, type: 2}
-  - {fileID: 11400000, guid: 25a0de06d5f63ab4a8f1b3495f1b61e0, type: 2}
-  - {fileID: 11400000, guid: 62e3302d4e206bb4ba1788332d918205, type: 2}
-  - {fileID: 11400000, guid: 8c797139c4b829843b86c315389cab68, type: 2}
-  - {fileID: 11400000, guid: 1a7a0f5a8eebce341acbbfccf5b3f8e5, type: 2}
-  - {fileID: 11400000, guid: 209dcf1a453903d41a2fff56885fa33b, type: 2}
-  - {fileID: 11400000, guid: ab1e7964542a5b14ea6113eb50c0f46a, type: 2}
   src1: {fileID: 2187956389826444098}
   src2: {fileID: 3761705333699546620}
 --- !u!1 &1276158174
@@ -1241,8 +1228,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 49133f89c0d0cd84086c069534d99c37, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  stateMachines: {fileID: 11400000, guid: 28890f15cbfab39418486f3c2dfefc31, type: 2}
-  dialogue: {fileID: 11400000, guid: 61ec3aa170f0d4f4981fc1a306cfe2e6, type: 2}
+  references: {fileID: 11400000, guid: 3435cd7b9a88a3d4db4849dae203de60, type: 2}
   ghostPrefab: {fileID: 2099033134796106231, guid: e6a113662f3191448a2d38649dbb91b5,
     type: 3}
   inodePrefab: {fileID: 4607728708591253777, guid: d0dd09c7056e88d4ea59254738f4e621,
@@ -1254,7 +1240,7 @@ MonoBehaviour:
     type: 3}
   arbitraryCapturer: {fileID: 3557489986302996358, guid: 328052995b995fa4c8266a313c6d38f4,
     type: 3}
-  mainMenu: {fileID: 11400000, guid: 977bd9744ba2d3a42a39a6092cb8e0e5, type: 2}
+  defaultSceneConfig: {fileID: 11400000, guid: 77878c984265b1b40b9f529bb9192688, type: 2}
 --- !u!114 &2094832129283138134
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1336,6 +1322,8 @@ MonoBehaviour:
     effect: {fileID: 11400000, guid: 75cc0777895fcab479af0fb195a7eae1, type: 2}
   - name: oh2
     effect: {fileID: 11400000, guid: bebe33c111a31ad44a3e541c4e14122a, type: 2}
+  - name: oh3
+    effect: {fileID: 11400000, guid: 64fbb7d0f33980a448bfe0f5cca8c765, type: 2}
   bgTransitions:
   - name: shatter4
     transition: {fileID: 11400000, guid: ee89dae89d15f34418474c82d6d3a3ba, type: 2}
@@ -1343,27 +1331,7 @@ MonoBehaviour:
     transition: {fileID: 11400000, guid: e1bb44032ed73714d82a52d080ff3017, type: 2}
   - name: wipetex1
     transition: {fileID: 11400000, guid: 9b0abf82e07299741a4d64ecd57ff7e6, type: 2}
-  summonables: {fileID: 11400000, guid: 38afc312ddb0ac242b8cfb301b1b4237, type: 2}
   backgrounds: {fileID: 11400000, guid: 8675ebbd3b5ac6d43baf451998b4fabb, type: 2}
-  bossMetadata:
-  - {fileID: 11400000, guid: 061f122427d8e1e418fbe6a8e4252d31, type: 2}
-  - {fileID: 11400000, guid: 5d6d4963e0f6b7544a9b64095bb1e76d, type: 2}
-  - {fileID: 11400000, guid: da15df684a7eec947ac0846219c4461f, type: 2}
-  - {fileID: 11400000, guid: 2a8da76a930486b49aebfdb0e223c0fc, type: 2}
-  - {fileID: 11400000, guid: 2f31385c7b8745b498c8cb0cbc5ac0b0, type: 2}
-  - {fileID: 11400000, guid: c1bc569dd2c107245bb9c2f98ab5bcd9, type: 2}
-  - {fileID: 11400000, guid: a50fb6bf14fe55c42ae6b1f031c5a69a, type: 2}
-  - {fileID: 11400000, guid: 99cd8b998316e6a4eae1f8894a706193, type: 2}
-  - {fileID: 11400000, guid: 43e8e3031b95bc8498525b35ec31b1c9, type: 2}
-  - {fileID: 11400000, guid: 1a0ddcbc2a436e8438020c8f8384c55a, type: 2}
-  - {fileID: 11400000, guid: 5d20410abda162f4b86c5b5511038e76, type: 2}
-  - {fileID: 11400000, guid: 4379d9182e52b6a4abe194c7f626f164, type: 2}
-  - {fileID: 11400000, guid: 83c45aeaab26c764084f505d8ca238cd, type: 2}
-  - {fileID: 11400000, guid: 214dfc15532abf8488c4daa08ac45624, type: 2}
-  - {fileID: 11400000, guid: d4227c053899414498c119b794fe3e57, type: 2}
-  - {fileID: 11400000, guid: b99d57e36ac55d04e9c979423aeb2fb2, type: 2}
-  - {fileID: 11400000, guid: 17201d06832c65444b4e2faa8c5666a4, type: 2}
-  - {fileID: 11400000, guid: 57918be07b2fa984ea3cd0c2bb9637b8, type: 2}
 --- !u!114 &2062655874892461090
 MonoBehaviour:
   m_ObjectHideFlags: 0

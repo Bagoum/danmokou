@@ -5,8 +5,8 @@ using ExTP = System.Func<DMath.TExPI, TEx<UnityEngine.Vector2>>;
 using ExBPRV2 = System.Func<DMath.TExPI, TEx<DMath.V2RV2>>;
 using static DMath.BPYRepo;
 using GCP = Danmaku.GenCtxProperty;
-using ExSBF = System.Func<Danmaku.TExSB, TEx<float>>;
-using ExSBV2 = System.Func<Danmaku.TExSB, TEx<UnityEngine.Vector2>>;
+using ExSBF = System.Func<Danmaku.RTExSB, TEx<float>>;
+using ExSBV2 = System.Func<Danmaku.RTExSB, TEx<UnityEngine.Vector2>>;
 using static Danmaku.Enums;
 using DMath;
 using JetBrains.Annotations;
@@ -37,7 +37,7 @@ public static partial class AtomicPatterns {
     /// <br/>Note: when following polar bullets, you should use this.
     /// </summary>
     public static SyncPattern DS(ReflectEx.Hoist<Vector2> hoistLoc, ReflectEx.Hoist<Vector2> hoistDir, ExBPY indexer, ExTP offset) => 
-            SD(GCXU(x => RetrieveHoisted(hoistDir, indexer(x))),
+            SD(GCXU(x => RetrieveHoisted(hoistDir, indexer(x.bpi))),
                 GCXU(VTPRepo.DTPOffset(hoistLoc, hoistDir, indexer, offset))
         );
 

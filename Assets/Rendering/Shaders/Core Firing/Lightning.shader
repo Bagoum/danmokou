@@ -79,11 +79,7 @@
 		    Blend SrcAlpha One
 			CGPROGRAM
 		    float4 frag(fragment f) : SV_Target {
-            #ifdef FANCY
 		        return fragLightning(f, 0);
-            #else
-		        return float4(0,0,0,0);
-            #endif
 		    }
 		    ENDCG
 		}

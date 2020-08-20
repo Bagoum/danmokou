@@ -1,0 +1,12 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <ui:VisualElement class="attribute node">
+        <Style src="UINodeLRSwitch.uss" />
+        <Style src="UINode.uss" />
+        <ui:Label name="Key" class="text" />
+        <ui:VisualElement class="optionsCont">
+            <ui:Label text="&lt;" class="text" />
+            <ui:VisualElement name="LR2ChildContainer" />
+            <ui:Label text="&gt;" class="text" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

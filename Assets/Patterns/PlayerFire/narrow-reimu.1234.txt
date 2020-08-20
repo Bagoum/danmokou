@@ -1,0 +1,19 @@
+gtr {
+	wt 12 _
+	wait-child
+} fire
+	## free fire
+	async amulet-*/ <> gcr2 12 _ <> { 
+		delay * 3 p
+		sfx pc-fire
+		colorf { red black } p
+	} pss 25 25 oh1 1.4 tprot py 13
+	## free cancellation
+	noop
+	## focus
+	async amulet-*/w <> gcr2 12 _ <> { 
+		sfx pc-fire 
+		colorf { red black } // p 2
+	} pss 28 28 oh1 1.4 tprot py + 13 * 3.5 // p 2
+	## focus cancellation
+	noop

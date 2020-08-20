@@ -8,11 +8,34 @@ using static Danmaku.Enums;
 [CreateAssetMenu(menuName = "Data/Boss Configuration")]
 public class BossConfig : ScriptableObject {
     public GameObject boss;
+    /// <summary>
+    /// For display on the Boss Practice screen, eg. "Yukari (Ex)"
+    /// </summary>
     public string CardPracticeName;
     public TextAsset stateMachine;
+    /// <summary>
+    /// For invocation in scripts, eg. "simp.mima"
+    /// </summary>
     public string key;
+    /// <summary>
+    /// Eg. in a challenge screen string, "Kurokoma Card 1"
+    /// </summary>
+    public string casualName;
+    public string casualNameJP;
+    public string CasualName => SaveData.s.Locale == Locale.JP ? casualNameJP : casualName;
+    /// <summary>
+    /// For display in the boss profile in the bottom left,
+    /// eg. "Kurokoma&lt;br&gt;Saki"
+    /// </summary>
     public string displayName;
+    /// <summary>
+    /// For display in the boss profile in the bottom left,
+    /// eg. "Purple Haze&lt;br&gt;Lurking Beyond&lt;br&gt;The Pale"
+    /// </summary>
     public string displayTitle;
+    /// <summary>
+    /// For display in the tracker in the bottom gutter, eg. "黒駒"
+    /// </summary>
     public string trackName;
     public BossColorScheme colors;
 

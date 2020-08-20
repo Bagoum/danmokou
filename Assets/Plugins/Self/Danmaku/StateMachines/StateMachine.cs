@@ -54,6 +54,7 @@ public abstract class StateMachine {
     private static readonly Dictionary<string, Type> smInitMap = new Dictionary<string, Type>() {
         {"pattern", typeof(PatternSM)},
         {"phase", typeof(PhaseSM)},
+        {"phased", typeof(DialoguePhaseSM)},
         {"phasej", typeof(PhaseJSM)},
         {"finish", typeof(FinishPSM)},
         {"action", typeof(PhaseActionSM)},

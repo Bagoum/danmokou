@@ -54,6 +54,7 @@ All fonts (Assets/Fonts) are licensed permissively. Licenses are in the Licenses
 All assets under Assets/Kenney were created by Kenny Vleugels (kenney.nl) and are licensed thereby under CC0.
 
 Images (Assets/Sprites)
+- BGPatterns/buson-crows-crop: by Yosa Buson.
 - BGPatterns/nasa: by NASA, see below.
 - BGPatterns/unsplash: miscellaneous Unsplash users, credited as follows:
 	- bamboo: https://unsplash.com/photos/AEmqD6qu434
@@ -64,16 +65,21 @@ Images (Assets/Sprites)
 - entity/dot/kmap:  by danmaq (license in folder).
 - entity/dot/dot_seija: by Len.
 - entity/dot/dot_kasen, dot_junko: by Kirbio.
+- reimu: by DD (https://www.pixiv.net/en/users/4650367).
 - .py: Python scripts licensed under MIT.
 - bullets, UI, util, TransitionTextures, items: by me, licensed under CC BY 4.
 
+MiniProjects
+- Cutins/junko: dairi
 
 Some image resources were created with patterns from http://www.sda.nagoya-cu.ac.jp/sa08m13/image.html 
 Some image resources were created with patterns from http://www.ikiya.jp/anounce.html
+Some image resources were created from the following specific resources:
+	https://unsplash.com/photos/PpYRtDK8l0g (smaller-width game UI)
 
 Some images are from NASA. (NASA does not endorse this project.) Here are all usages:
 https://photojournal.jpl.nasa.gov/catalog/PIA22567
- https://images.nasa.gov/details-PIA21073
+https://images.nasa.gov/details-PIA21073
 https://images.nasa.gov/details-GSFC_20171208_Archive_e001925
 https://images.nasa.gov/details-PIA19821
 https://images.nasa.gov/details-PIA08653

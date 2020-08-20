@@ -7,13 +7,13 @@ gtr {
 		delay * 3 p
 		sfx pc-fire
 		colorf { blue teal } p
-	} pssdd 24 24 oh2 0.7 * pm1 // p 2 * 400 t tprot py 13
+	} pssdd 25 25 oh2 0.7 * pm1 // p 2 * 400 t tprot py 13
 	## free cancellation
 	noop
 	## focus
 	async lstar-*/ <> gcr2 12 _ <> { 
 		sfx pc-fire 
 		colorf { blue teal } // p 2
-	} pssdd 27 27 oh2 0.7 * pm1 p * 500 t tprot py + 13 * 3.5 // p 2
+	} pssdd 28 28 oh2 0.7 * pm1 p * 500 t tprot py + 13 * 3.5 // p 2
 	## focus cancellation
 	noop

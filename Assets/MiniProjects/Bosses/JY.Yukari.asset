@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9a92301f86b4dd690557658c7243e8b, type: 3}
+  m_Name: JY.Yukari
+  m_EditorClassIdentifier: 
+  boss: {fileID: 6274564262994426332, guid: 2e4cfe2f6f8095747a49bcb45d5dea46, type: 3}
+  CardPracticeName: Yukari
+  stateMachine: {fileID: 4900000, guid: 55eb144e102f2a849b905b076fcb5506, type: 3}
+  key: jy.yukari
+  casualName: 
+  casualNameJP: 
+  displayName: Yakumo<br>Yukari
+  displayTitle: Purple Haze<br>Lurking Beyond<br>The Pale
+  trackName: "\u7D2B"
+  colors: {fileID: 11400000, guid: 149feb9b514a85740b57d74694671283, type: 2}
+  rotator: 
+  profile:
+    image: {fileID: 2800000, guid: 588dac9d75d4260489e6425d3ddf45a0, type: 3}
+    offsetX: 0.42
+    offsetY: 0.72
+    zoom: 5.7
+  defaultNonBG: {fileID: 5180723301924424041, guid: ddaded76ccac01d46b1e0de9b3cd2b53,
+    type: 3}
+  defaultSpellBG: {fileID: 5180723301924424041, guid: 560f5baeda61def45ad4e941fc6813ca,
+    type: 3}
+  defaultIntoSpellTransition: {fileID: 11400000, guid: 23d9a9fbcd555004c9905acab3bc372a,
+    type: 2}
+  defaultIntoNonTransition: {fileID: 11400000, guid: 76e812b8d330cbe43b048748bf21ae77,
+    type: 2}
+  bossCutin: {fileID: 1176886499574204291, guid: 664f8cf416a239247abf86e4e66da994,
+    type: 3}
+  spellCutins:
+  - {fileID: 753286342040255458, guid: b1d44d9ee45c29242bfaf2ac5eb5e523, type: 3}

@@ -30,6 +30,7 @@ public class UIManager : MonoBehaviour {
     public TextMeshPro lifePoints;
     public TextMeshPro graze;
     public TextMeshPro message;
+    public TextMeshPro centerMessage;
     private const string deathCounterFormat = "死{0:D2}";
     private const string timeoutTextFormat = "<mspace=4.3>{0:F1}</mspace>";
     private const string fpsFormat = "FPS: <mspace=1.6>{0:F0}</mspace>";
@@ -65,7 +66,8 @@ public class UIManager : MonoBehaviour {
         bossName.text = "";
         bossTitle.text = "";
         spellnameText.text = "";
-        message.text = "";
+        message.text = centerMessage.text = "";
+        challengeHeader.text = challengeText.text = "";
         UpdateTags();
         ShowBossLives(0);
         CloseProfile();
@@ -100,7 +102,7 @@ public class UIManager : MonoBehaviour {
         bossHPPB.SetFloat(PropConsts.time, time);
         if (bossHP != null) {
             main.bossHPPB.SetColor(PropConsts.fillColor, bossHP.HPColor);
-            bossHPPB.SetFloat(PropConsts.fillRatio, bossHP.HPRatio);
+            bossHPPB.SetFloat(PropConsts.fillRatio, bossHP.DisplayHPRatio);
         }
         BossHPBar.SetPropertyBlock(bossHPPB);
     }
@@ -322,7 +324,16 @@ public class UIManager : MonoBehaviour {
     public static void UpdatePlayerUI() => campaignRequiresUpdate = true;
 
     private IEnumerator FadeMessage(string msg, CancellationToken cT, float timeIn = 1f, float timeStay = 4f,
-        float timeOut = 1f) => FadeSprite(message.color, c => message.color = c, timeIn, timeStay, timeOut, cT);
+        float timeOut = 1f) {
+        message.text = msg;
+        return FadeSprite(message.color, c => message.color = c, timeIn, timeStay, timeOut, cT);
+    }
+    private IEnumerator FadeMessageCenter(string msg, CancellationToken cT, out float totalTime, 
+        float timeIn = 0.5f, float timeStay = 1f, float timeOut = 0.5f) {
+        centerMessage.text = msg;
+        totalTime = timeIn + timeStay + timeOut;
+        return FadeSprite(centerMessage.color, c => centerMessage.color = c, timeIn, timeStay, timeOut, cT);
+    }
 
     private static IEnumerator FadeSprite(Color c, Action<Color> apply, float timeIn, float timeStay,
         float timeOut, CancellationToken cT) {
@@ -351,9 +362,23 @@ public class UIManager : MonoBehaviour {
     [CanBeNull] private static CancellationTokenSource messageFadeToken;
 
     private void _Message(string msg) {
+        //TODO this isn't everdisposed is it? im really leaning towards making a custom CTS to avoid this kinda stuff...
         messageFadeToken?.Cancel();
         StartCoroutine(FadeMessage(msg, (messageFadeToken = new CancellationTokenSource()).Token));
     }
+    [CanBeNull] private static CancellationTokenSource cmessageFadeToken;
+
+    private void _CMessage(string msg, out float totalTime) {
+        //TODO this isn't everdisposed is it? im really leaning towards making a custom CTS to avoid this kinda stuff...
+        cmessageFadeToken?.Cancel();
+        StartCoroutine(FadeMessageCenter(msg, (cmessageFadeToken = new CancellationTokenSource()).Token, out totalTime));
+    }
+
+    public static void MessageChallengeEnd(bool success, out float totalTime) => main._CMessage(
+        success ?
+            "Challenge Pass!" :
+            "Challenge Fail..."
+        , out totalTime);
 
     private static void Message(string msg) => main._Message(msg);
     public static void LifeExtendScore() => Message("Score Extend Acquired!");
@@ -382,13 +407,30 @@ public class UIManager : MonoBehaviour {
         Instantiate(main.trackerPrefab).GetComponent<BottomTracker>().Initialize(beh, title, cT);
 
     public SpriteRenderer stageAnnouncer;
+    public TextMeshPro stageDeannouncer;
 
-    private const float stageAnnounceIn = 2f;
-    private const float stageAnnounceStay = 4f;
+    private const float stageAnnounceIn = 1f;
+    private const float stageAnnounceStay = 3f;
     private const float stageAnnounceOut = 1f;
     public static void AnnounceStage(CancellationToken cT, out float time) {
         time = stageAnnounceIn + stageAnnounceOut + stageAnnounceStay;
         main.StartCoroutine(FadeSprite(Color.white, c => main.stageAnnouncer.color = c, stageAnnounceIn, stageAnnounceStay,
             stageAnnounceOut, cT));
+    }
+    private const float stageDAnnounceIn = 0.5f;
+    private const float stageDAnnounceStay = 3f;
+    private const float stageDAnnounceOut = 1f;
+    public static void DeannounceStage(CancellationToken cT, out float time) {
+        time = stageDAnnounceIn + stageDAnnounceOut + stageDAnnounceStay;
+        main.StartCoroutine(FadeSprite(Color.white, c => main.stageDeannouncer.color = c, stageDAnnounceIn, stageDAnnounceStay,
+            stageDAnnounceOut, cT));
+    }
+
+    public TextMeshPro challengeHeader;
+    public TextMeshPro challengeText;
+
+    public static void RequestChallengeDisplay(ChallengeRequest cr) {
+        main.challengeHeader.text = cr.phase.Title;
+        main.challengeText.text = cr.Description;
     }
 }

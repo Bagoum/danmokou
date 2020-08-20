@@ -23,3 +23,4 @@ MonoBehaviour:
     time: 0.4
     reverse: 1
     fixedType: 1
+  forceMidHold: 1

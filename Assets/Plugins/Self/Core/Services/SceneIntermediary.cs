@@ -34,28 +34,41 @@ public static class SceneIntermediary {
     }
 
     private static SceneRequest? LastSceneRequest = null;
+    public static bool IsReloading => LOADING && LastSceneRequest?.reload == true;
+    
+    private static SceneConfig false_scfg;
+
+    public static void Setup(SceneConfig sc) {
+        false_scfg = sc;
+    }
 
     /// <summary>
     /// Use GameManagement.ReloadScene instead.
     /// </summary>
-    public static bool _ReloadScene(Action onLoaded) {
+    /// <param name="onLoadedOnce">A function to call once loading is complete. This function will not be called again if ReloadScene is reinvoked, unlike explicit requests in SceneRequest.</param>
+    public static bool _ReloadScene(Action onLoadedOnce) {
         if (LastSceneRequest != null) {
             var lsr = LastSceneRequest.Value;
-            return LoadScene(new SceneRequest(lsr.scene, null, lsr.onLoaded + onLoaded, lsr.onFinished, true));
+            return LoadScene(new SceneRequest(lsr.scene, null, OverrideOnLoad ?? lsr.onLoaded, lsr.onFinished, true), onLoadedOnce);
+        } else {
+            false_scfg.sceneName = SceneManager.GetActiveScene().name;
+            return LoadScene(new SceneRequest(false_scfg, null, null, null, true), onLoadedOnce);
         }
-        return false;
     }
+
+    public static Action OverrideOnLoad { private get; set; }
 
     public static bool LoadScene(SceneConfig sc, [CanBeNull] Action onQueued=null, float? delay = null) => 
         LoadScene(new SceneRequest(sc, onQueued, null, null, delay: delay));
-    public static bool LoadScene(SceneRequest req) {
+    public static bool LoadScene(SceneRequest req, [CanBeNull] Action onLoadedOnce=null) {
         if (!GameStateManager.IsLoading && !LOADING) {
             Log.Unity($"Successfully requested scene load for {req}.");
             req.onQueued?.Invoke();
             IsFirstScene = false;
+            OverrideOnLoad = null;
             LastSceneRequest = req;
             LOADING = true;
-            CoroutineRegularUpdater.GlobalDuringPause.RunRIEnumerator(WaitForSceneLoad(req, true));
+            CoroutineRegularUpdater.GlobalDuringPause.RunRIEnumerator(WaitForSceneLoad(req, true, onLoadedOnce));
             return true;
         } else Log.Unity($"REJECTED scene load for {req}.");
         return false;
@@ -64,7 +77,7 @@ public static class SceneIntermediary {
     //Use a bool here since GameStateManager is updated at end of frame.
     //We need to keep track of whether or not this process has been queued
     public static bool LOADING { get; private set; } = false;
-    private static IEnumerator WaitForSceneLoad(SceneRequest req, bool transitionOnSame) {
+    private static IEnumerator WaitForSceneLoad(SceneRequest req, bool transitionOnSame, [CanBeNull] Action onLoadedOnce=null) {
         var currScene = SceneManager.GetActiveScene().name;
         if (req.delay > 0) Log.Unity($"Performing delay for {req.delay}s before loading scene.");
         for (float t = req.delay; t > ETime.FRAME_YIELD; t -= ETime.FRAME_TIME) yield return null;
@@ -83,6 +96,7 @@ public static class SceneIntermediary {
         }
         Log.Unity($"Scene loading processed. Waiting for transition ({waitOut}s) before yielding control to player.", level: Log.Level.DEBUG3);
         req.onLoaded?.Invoke();
+        onLoadedOnce?.Invoke();
         for (; waitOut > ETime.FRAME_YIELD; waitOut -= ETime.FRAME_TIME) yield return null;
         LOADING = false;
         GameStateManager.SetLoading(false);

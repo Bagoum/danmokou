@@ -6,8 +6,8 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/SiMP/Scenes/MainMenu.unity
-    guid: 98bb7eef89754ca45821ce3925f444c0
+    path: Assets/SiMP/Scenes/SiMP.MainMenu.unity
+    guid: 6b2d775f9661bd44da76415034461224
   - enabled: 1
     path: Assets/Scenes/Tutorial.unity
     guid: 87ca619c61e1cae45a2a3be45c7b4706
@@ -38,19 +38,28 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/SiMP/Scenes/SiMP.StageExtra.unity
     guid: 20d3967e96a90074bafb766ea2992624
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/Testing/TestMainMenu.unity
     guid: 886b7f78af1f2414b9ebe8f58314f3ed
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/Testing/TestPractice.unity
     guid: db0004c4979324b4abc8a32c2bf7e046
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/Testing/TestStage1.unity
     guid: f986fda46ab1ebf4c958b3578925f3d5
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/Testing/TestStage2.unity
     guid: 3b03034d05acffc4ba4cecf3e22c7fbe
   - enabled: 0
     path: Assets/SiMP/Scenes/Working Scene.unity
     guid: 2cda990e2423bbf4892e6590ba056729
+  - enabled: 0
+    path: Assets/BRuH/BRuH.MainMenu.unity
+    guid: 6000a27509ee77e46a0be12e6ec5cb24
+  - enabled: 0
+    path: Assets/BRuH/BRuH.SceneLevel.unity
+    guid: f9e387d84dd4a8b4da399f433aa3f559
+  - enabled: 1
+    path: Assets/MiniProjects/Scenes/MiniprojectLevel.unity
+    guid: 2a1f4e4cd49e99341855fa916af2cc1f
   m_configObjects: {}

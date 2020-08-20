@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using JetBrains.Annotations;
 using static Danmaku.Enums;
 
@@ -112,6 +113,9 @@ public struct SMPhaseController {
 
 }
 public static class SMAnalysis {
+    /// <summary>
+    /// Analyzed phase construct for normal game card selection.
+    /// </summary>
     public readonly struct Phase {
         public readonly PhaseType type;
         [CanBeNull] private readonly string title;
@@ -133,18 +137,146 @@ public static class SMAnalysis {
         }
     }
 
-    public static List<Phase> Analyze(PatternSM pat, PhaseType? deflt = null, bool ignoreZero = true) {
+    /// <summary>
+    /// Analyzed phase construct for scene game menus.
+    /// </summary>
+    public class DayPhase {
+        public enum DayPhaseType {
+            DIALOGUE_INTRO,
+            CARD,
+            DIALOGUE_END
+        }
+
+        public readonly Phase phase;
+        public readonly Challenge[] challenges;
+        public readonly DayPhaseType type;
+        private readonly int cardIndex;
+        private readonly int combatCardIndex;
+        private string Introduction => "Introduction".Locale("紹介");
+        private string Conclusion => "Conclusion".Locale("結末");
+        [CanBeNull]
+        private string _Title {
+            get {
+                if (type == DayPhaseType.DIALOGUE_INTRO) return $"{boss.boss.CasualName} {Introduction}";
+                else if (type == DayPhaseType.DIALOGUE_END) return $"{boss.boss.CasualName} {Conclusion}";
+                else return $"{boss.boss.CasualName} {combatCardIndex}";
+                
+            }
+        }
+        public string Title => (boss.Enabled) ? (_Title ?? phase.Title) : "??? Locked ???";
+        public readonly AnalyzedDayBoss boss;
+        public bool Completed(int cIndex) => SaveData.r.ChallengeCompleted(this, cIndex);
+        public bool CompletedOne => SaveData.r.PhaseCompletedOne(this);
+        public bool CompletedAll => SaveData.r.PhaseCompletedAll(this);
+        public bool Enabled {
+            get {
+                if (!boss.Enabled) return false;
+                else if (type == DayPhaseType.DIALOGUE_INTRO) {
+                    return boss.bossIndex == 0 || boss.day.bosses[boss.bossIndex - 1].FirstPhaseCompletedOne;
+                } else if (type == DayPhaseType.CARD) return boss.phases[0].CompletedOne;
+                else if (type == DayPhaseType.DIALOGUE_END) return boss.phases.All(p => p == this || p.CompletedOne);
+                else return false;
+            }
+        }
+        [CanBeNull] public DayPhase Next => boss.phases.Try(cardIndex + 1);
+
+        public DayPhase(AnalyzedDayBoss b, Phase p, 
+            IEnumerable<Challenge> challenges, DayPhaseType type, int cardIndex, int combatCardIndex) {
+            this.phase = p;
+            this.challenges = challenges.ToArray();
+            this.type = type;
+            this.cardIndex = cardIndex;
+            this.combatCardIndex = combatCardIndex;
+            boss = b;
+        }
+    }
+
+    public static List<Phase> Analyze(PatternSM pat, bool ignoreZero = true) {
         var ret = new List<Phase>();
-        foreach (var (i, phase) in pat.phases.Enumerate()) {
+        foreach (var (i, p) in pat.phases.Enumerate()) {
             if (ignoreZero && i == 0) continue;
-            var assumedCardType = phase.props.phaseType ?? deflt;
-            if (assumedCardType.HasValue) {
-                ret.Add(new Phase(assumedCardType.Value, i, phase.props.cardTitle));
+            if (p.props.phaseType.HasValue) {
+                ret.Add(new Phase(p.props.phaseType.Value, i, p.props.cardTitle));
+            }
+        }
+        return ret;
+    }
+
+    public static List<DayPhase> AnalyzeDay(AnalyzedDayBoss boss, PatternSM pat, bool ignoreZero = true) {
+        var ret = new List<DayPhase>();
+        int combatCardNumber = 0;
+        int cardNumber = 0;
+        foreach (var (i, p) in pat.phases.Enumerate()) {
+            if (ignoreZero && i == 0) continue;
+            if (p.props.phaseType.HasValue && p.props.challenges.Count > 0) {
+                var asDp = (p.props.challenges.Try(0) as Challenge.DialogueC)?.point;
+                var typ = asDp == Challenge.DialogueC.DialoguePoint.INTRO ? DayPhase.DayPhaseType.DIALOGUE_INTRO :
+                    asDp == Challenge.DialogueC.DialoguePoint.CONCLUSION ? DayPhase.DayPhaseType.DIALOGUE_END :
+                    DayPhase.DayPhaseType.CARD;
+                if (typ == DayPhase.DayPhaseType.CARD) ++combatCardNumber;
+                ret.Add(new DayPhase(boss, new Phase(p.props.phaseType.Value, i, p.props.cardTitle),
+                    p.props.challenges, typ, cardNumber++, combatCardNumber));
             }
         }
         return ret;
     }
     
     
+    public readonly struct AnalyzedStage {
+        public readonly StageConfig stage;
+        public readonly List<Phase> phases;
+        public AnalyzedStage(StageConfig s) {
+            stage = s;
+            phases = SMAnalysis.Analyze(StateMachineManager.FromText(s.stateMachine) as PatternSM);
+        }
+    }
+    public readonly struct AnalyzedBoss {
+        public readonly BossConfig boss;
+        public readonly List<Phase> phases;
+
+        public AnalyzedBoss(BossConfig sb) {
+            boss = sb;
+            phases = SMAnalysis.Analyze(StateMachineManager.FromText(sb.stateMachine) as PatternSM);
+        }
+    }
+    public class AnalyzedDayBoss {
+        public readonly BossConfig boss;
+        public readonly List<DayPhase> phases;
+        public readonly AnalyzedDay day;
+        public readonly int bossIndex;
+        public bool Enabled => day.Enabled;
+        public bool Concluded => phases.All(p => p.CompletedOne);
+        public bool FirstPhaseCompletedOne => phases[0].CompletedOne;
+
+        public AnalyzedDayBoss(AnalyzedDay day, DayConfig d, int index) {
+            boss = d.bosses[bossIndex = index];
+            this.day = day;
+            phases = SMAnalysis.AnalyzeDay(this, StateMachineManager.FromText(boss.stateMachine) as PatternSM);
+        }
+    }
+
+    public class AnalyzedDay {
+        public readonly DayConfig day;
+        public readonly AnalyzedDayBoss[] bosses;
+        public IEnumerable<DayPhase> Phases => bosses.SelectMany(b => b.phases);
+        public bool Enabled => dayIndex == 0 || all.days[dayIndex - 1].OneBossesConcluded;
+        public bool OneBossesConcluded => bosses.Any(b => b.Concluded);
+        public bool AllBossesConcluded => bosses.All(b => b.Concluded);
+        public readonly int dayIndex;
+        private readonly AnalyzedDays all;
+
+        public AnalyzedDay(AnalyzedDays all, DayConfig[] days, int index) {
+            this.all = all;
+            this.day = days[dayIndex = index];
+            bosses = day.bosses.Length.Range().Select(i => new AnalyzedDayBoss(this, day, i)).ToArray();
+        }
+    }
+
+    public class AnalyzedDays {
+        public readonly AnalyzedDay[] days;
+        public AnalyzedDays(DayConfig[] days) {
+            this.days = days.Length.Range().Select(i => new AnalyzedDay(this, days, i)).ToArray();
+        }
+    }
 }
 }

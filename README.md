@@ -2,17 +2,21 @@
 
 **Danmokou** is a danmaku (bullet hell) engine built in C# for Unity. It is free (as in free speech) software. The source code is on Github: https://github.com/Bagoum/danmokou
 
-You might know this project by the name NotDnh, ph4mmo, or Bagoum Danmaku Scripting Markup.
+The official abbreviation for this engine is **dmk**.
+
+You might know this project by the name NotDnh, ph4mmo, DanMaKufu, or Bagoum Danmaku Scripting Markup.
 
 ## Features
 
-- Supports 100,000 bullets updating at native 4k 120 FPS (on my machine anyways)
-- Extremely optimized mathematics logic that allow using arbitrary function for movement via expression trees
+- Supports 100,000 bullets updating at native 4k 120 FPS (on my machine anyways), far more than any other engine
+- Extremely optimized mathematics logic that allow using arbitrary functions for bullet movement. No other engine supports this.
 - Extremely optimized rendering pathway that batches 1000 bullets at a time
 - Zero-allocation bullets
+- Curved lasers, curvy lasers, and wavy lasers (yes, they're all different)
+- Scene game architecture with extensible support for challenges
 - Concise, opinionated, and always-correct model for summoning more than one bullet
 - Efficient compiled scripting language with the same interfaces as native code
-- Instantaneous runtime script recompilation
+- Instantaneous runtime script recompilation using expression trees
 - Simple logic for unbounded difficulty controls
 - Built-in dialogue engine with Ace Attorney-style text unrolling
 - Built-in script analysis and practice architecture
@@ -22,14 +26,14 @@ You might know this project by the name NotDnh, ph4mmo, or Bagoum Danmaku Script
 To build/run this project, follow the following steps:
 
 - Install Unity version 2020.1.f1 or later.
-- Run `git submodule update --init --recursive`. This imports code from SiMP which has some useful default values for getting started. This is not required but will help as a reference. (**Note: the SiMP repository is currently private, so this command won't work.**)
+- Run `git submodule update --init --recursive`. This imports code from SiMP and my challenge-scene game jam project which have some useful default values for getting started. This is not required but will help as a reference. (Note: the Yukari/Junko script in Assets/MiniProjects has some dependencies on the SiMP repository.)
 - Open Scenes/BasicSceneOPENME
   - Import TextMeshPro essentials (You should see a prompt to do this as soon as you open the scene)
 - You may need to run the project, stop the project, and run it again to fix lingering metadata bugs in UXML. 
-
 - (Optional) Build the F# project in the `FS` folder targeted at 4.7.2. I have provided DLLs so you don't have to do this unless you make changes to the F# code.
   - Copy the output DLLs (Common, FParsec, FParsecCS, FSharp.Core, Parser, System.ValueTuple) to `Assets/Plugins/Self/Core`
 - To edit behavior scripts, you should use Notepad++ with the `notepadPlusPlus.xml` language definition. The language name is "BDSL". To update the language definition, copy it directly into `AppData/Roaming/Notepad++/userDefineLangs`. 
+- You may want to delete `Assets/TextMesh Pro/Resources/TMP Settings`, as DMK contains an alternate settings object in `Assets/Resources`. 
 
 # Documentation
 
@@ -42,19 +46,23 @@ The source code is licensed under MIT. See the COPYING file for details, as well
 # Some Important Terminology
 
 - "Curvy lasers" (as in Mysterious Snake Show) are in this engine called **pathers**.
-- This engine splits lasers into several different functionalities. There are **straight lasers**, which are straight. Straight lasers may have a rotation function, which makes them **rotating lasers**. There are also **curved lasers**, which follow some arbitrary trajectory defined by a math function. A curved laser can be **static** or **dynamic**.
+- This engine splits lasers into several different functionalities. There are **straight lasers**, which are straight. Straight lasers may have a rotation function, which makes them **rotating lasers**. There are also **curved lasers**, which follow some arbitrary trajectory defined by a math function. A curved laser can be **static** (if it does not change) or **dynamic** (if it does change).
   - See `Patterns/examples/new lasers` to compare the laser variants.
 
 # Feature Wishlist
 
+- Replays
 - GFW-style gameplay
-- Replays (this is probably possible)
 
 # FAQ
 
+**Is there a tutorial?**
+
+Open `Assets/Scenes/BasicSceneOPENME`. The Mokou boss has a tutorial script attached. Open it in a text editor (preferably Notepad++ with the style definition) and read the comments. There are several more tutorial scripts in `Assets/Patterns/Tutorial`.
+
 **Are there any examples?**
 
-Under the `Patterns` folder, everything in `examples` and `feature testing` should work. The scripts here are fairly simple.
+Under the `Patterns` folder, everything in `examples` and `feature testing` should work. The scripts here are fairly simple. Unlike the tutorial, these are not commented. 
 
 The files under `demo` are from old scripts. They may not work, as the engine has gone through a lot of changes since then. 
 
@@ -87,7 +95,7 @@ See Chapter 18 of IoMIoE.
 
 **What does 陰陽葬 mean?**
 
-This is the Japanese title for my Touhou fangame **Spirits in Memetic Paradise**. You can play the demo [here](https://www.bulletforge.org/u/bagoum/p/dong-fang-yin-yang-zang-spirits-in-memetic-paradise-demo).
+This is the Japanese title for my Touhou fangame **Spirits in Memetic Paradise**. You can play it [here](https://www.bulletforge.org/u/bagoum/p/dong-fang-yin-yang-zang-spirits-in-memetic-paradise).
 
 # Testing
 

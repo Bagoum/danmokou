@@ -232,6 +232,6 @@ It will empty over time, but graze and point++ items will restore it. When empty
         SaveData.SaveRecord();
     }
     
-    private const int SKIP = 0;
+    private const int SKIP = 100;
 
 }

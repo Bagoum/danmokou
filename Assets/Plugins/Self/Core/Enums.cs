@@ -34,7 +34,8 @@ public enum SeijaMethod {
 }
 
 public enum Locale {
-    EN
+    EN,
+    JP
 }
 public enum ShootDirection {
     LEFT,
@@ -46,14 +47,14 @@ public enum ShootDirection {
 
 namespace Danmaku {
 public enum DifficultySet {
-    Easier,
-    Easy,
-    Normal,
-    Hard,
-    Lunatic,
-    Ultra,
-    Abex,
-    Assembly,
+    Easier = 10,
+    Easy = 20,
+    Normal = 30,
+    Hard = 40,
+    Lunatic = 50,
+    Ultra = 60,
+    Abex = 70,
+    Assembly = 80,
 }
 public enum AnimationType {
     None,
@@ -65,10 +66,12 @@ public enum AnimationType {
     Death
 }
 public enum CampaignMode {
+    NULL,
     MAIN,
     STAGE_PRACTICE,
     CARD_PRACTICE,
-    TUTORIAL
+    TUTORIAL,
+    SCENE_CHALLENGE,
 }
 
 public enum Layer {
@@ -88,14 +91,14 @@ public static class EnumHelpers {
         return Vector2.right;
     }
     public static float Value(this DifficultySet d) {
-        if (d == DifficultySet.Easier) return 0.7579f;      // 2^-0.4
+        if (d == DifficultySet.Easier) return 0.707f;       // 2^-0.5
         else if (d == DifficultySet.Easy) return 1f;        // 2^0.0
-        else if (d == DifficultySet.Normal) return 1.3195f; // 2^0.4
-        else if (d == DifficultySet.Hard) return 1.741f;    // 2^0.8
-        else if (d == DifficultySet.Lunatic) return 2.297f; // 2^1.2
-        else if (d == DifficultySet.Ultra) return 3.031f;   // 2^1.6
-        else if (d == DifficultySet.Abex) return 4f;        // 2^2.0
-        else if (d == DifficultySet.Assembly) return 4.925f;// 2^2.3
+        else if (d == DifficultySet.Normal) return 1.414f;  // 2^0.5
+        else if (d == DifficultySet.Hard) return 1.803f;    // 2^1.0
+        else if (d == DifficultySet.Lunatic) return 2.828f; // 2^1.5
+        else if (d == DifficultySet.Ultra) return 3.732f;   // 2^1.9
+        else if (d == DifficultySet.Abex) return 4.925f;    // 2^2.3
+        else if (d == DifficultySet.Assembly) return 6.063f;// 2^2.6
         throw new Exception($"Couldn't resolve difficulty setting {d}");
     }
     public static float Counter(this DifficultySet d) {
@@ -111,15 +114,22 @@ public static class EnumHelpers {
     }
 
     public static string Describe(this DifficultySet d) {
-        if (d == DifficultySet.Easier) return "Easier";
-        else if (d == DifficultySet.Easy) return "Easy";
-        else if (d == DifficultySet.Normal) return "Normal";
-        else if (d == DifficultySet.Hard) return "Hard";
+        if (d == DifficultySet.Easier) return "Easy";
+        else if (d == DifficultySet.Easy) return "Normal";
+        else if (d == DifficultySet.Normal) return "Hard";
+        else if (d == DifficultySet.Hard) return "Very Hard";
         else if (d == DifficultySet.Lunatic) return "Lunatic";
         else if (d == DifficultySet.Ultra) return "Ultra";
         else if (d == DifficultySet.Abex) return "Abex";
         else if (d == DifficultySet.Assembly) return "Assembly";
         throw new Exception($"Couldn't resolve difficulty setting {d}");
     }
+
+    public static bool IsOneCard(this CampaignMode mode) =>
+        mode == CampaignMode.CARD_PRACTICE || mode == CampaignMode.SCENE_CHALLENGE;
+    public static bool OneLife(this CampaignMode mode) => mode.IsOneCard();
+    public static bool DisallowItems(this CampaignMode mode) => mode.IsOneCard();
+    public static bool IsReloadable(this CampaignMode mode) => mode.IsOneCard();
+
 }
 }

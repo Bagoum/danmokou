@@ -44,10 +44,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 499fbec8aa3caaf469398df8501aed70, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  deathItems:
-    value: 0
-    pointPP: 0
-    life: 0
   behaviorScript: {fileID: 0}
   ID: 
   displayChangedPosition: 1
@@ -57,7 +53,9 @@ MonoBehaviour:
   triggersUITimeout: 0
   cullable: 0
   ScreenCullRadius: 4
-  canFireOffscreen: 1
+  damage: 1
+  destructible: 0
+  grazeEveryFrames: 20
   animate:
     method: 0
     LRRelation: 0
@@ -110,8 +108,8 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: -247109493
-  m_SortingLayer: 3
+  m_SortingLayerID: -438763787
+  m_SortingLayer: 1
   m_SortingOrder: 1
   m_Sprite: {fileID: 21300000, guid: 001024098b6c2264ea398d43a2067f4c, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}

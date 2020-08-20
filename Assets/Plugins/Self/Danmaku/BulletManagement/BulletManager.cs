@@ -166,7 +166,7 @@ public partial class BulletManager {
             }
         }
         if (dmg > 0) {
-            Events.TryHitPlayer.Invoke(dmg);
+            Events.TryHitPlayer.Invoke((dmg, false));
         }
         if (graze > 0) {
             GameManagement.campaign.AddGraze(graze);
@@ -189,7 +189,7 @@ public partial class BulletManager {
 
     public static void ExternalBulletProc(int dmg, int graze) {
         if (dmg > 0) {
-            Events.TryHitPlayer.Invoke(dmg);
+            Events.TryHitPlayer.Invoke((dmg, false));
         }
         if (graze > 0) {
             GameManagement.campaign.AddGraze(graze);
@@ -269,7 +269,7 @@ public partial class BulletManager {
             //V2   = 8
             //Sx2  = 4
         [CanBeNull] public readonly BPY scaleFunc;
-        [CanBeNull] public readonly TP dirFunc;
+        [CanBeNull] public readonly SBV2 dirFunc;
         public Velocity velocity; //Don't make this readonly
         /// <summary>
         /// Accumulated position delta for each frame.
@@ -284,7 +284,7 @@ public partial class BulletManager {
         public ushort grazeFrameCounter;
         public ushort cullFrameCounter;
 
-        public SimpleBullet([CanBeNull] BPY scaleF, [CanBeNull] TP dirF, Velocity velocity, int firingIndex, uint id, float timeOffset) {
+        public SimpleBullet([CanBeNull] BPY scaleF, [CanBeNull] SBV2 dirF, Velocity velocity, int firingIndex, uint id, float timeOffset) {
             scaleFunc = scaleF;
             dirFunc = dirF;
             scale = 1f;
@@ -293,8 +293,8 @@ public partial class BulletManager {
             this.accDelta = Vector2.zero;
             bpi = new ParametricInfo(velocity.rootPos, firingIndex, id, timeOffset);
             direction = this.velocity.UpdateZero(ref bpi, timeOffset);
-            if (dirFunc != null) direction = dirFunc(bpi);
             scale = scaleFunc?.Invoke(bpi) ?? 1f;
+            if (dirFunc != null) direction = dirFunc(ref this);
         }
     }
     private readonly struct CollisionCheckResults {
@@ -348,7 +348,11 @@ public partial class BulletManager {
             }
         }
 
-        public void Deactivate() => Active = false;
+        public void Deactivate() {
+            Active = false;
+            temp_last = 0;
+        }
+
         public override string Style => bc.name;
         protected BulletInCode bc;
 
@@ -447,12 +451,14 @@ public partial class BulletManager {
                 sb.scale = sb.scaleFunc?.Invoke(sb.bpi) ?? 1f;
                 //See Bullet Notes > Colliding Pool Controls for details
                 for (int pi = postVelPcs; pi < postDirPcs; ++pi) pcs[pi].action(this, ii, sb.bpi);
-                float mag = sb.accDelta.x * sb.accDelta.x + sb.accDelta.y * sb.accDelta.y;
-                if (sb.dirFunc != null) sb.direction = sb.dirFunc(sb.bpi);
-                else if (mag > M.MAG_ERR) {
-                    mag = 1f / (float)Math.Sqrt(mag);
-                    sb.direction.x = sb.accDelta.x * mag;
-                    sb.direction.y = sb.accDelta.y * mag;
+                if (sb.dirFunc != null) sb.direction = sb.dirFunc(ref sb);
+                else {
+                    float mag = sb.accDelta.x * sb.accDelta.x + sb.accDelta.y * sb.accDelta.y;
+                    if (mag > M.MAG_ERR) {
+                        mag = 1f / (float)Math.Sqrt(mag);
+                        sb.direction.x = sb.accDelta.x * mag;
+                        sb.direction.y = sb.accDelta.y * mag;
+                    }
                 }
                 //Post-vel controls may destroy the bullet. As soon as this occurs, stop iterating
                 for (int pi = postDirPcs; pi < numPcs && !rem[ii]; ++pi) pcs[pi].action(this, ii, sb.bpi);
@@ -530,6 +536,7 @@ public partial class BulletManager {
             // This should free links to BPY/VTP constructed by SMs going out of scope
             Empty(true);
             ResetPoolMetadata();
+            temp_last = 0;
         }
 
         public void AssertControls(IReadOnlyList<BulletControl> new_controls) {

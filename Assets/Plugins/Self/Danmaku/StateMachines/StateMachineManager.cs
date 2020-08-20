@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Danmaku;
 using JetBrains.Annotations;
 using UnityEngine;
@@ -17,36 +18,31 @@ public static class StateMachineManager  {
     private static readonly Dictionary<string, Dictionary<Locale, TextAsset>> Dialogue = new Dictionary<string, Dictionary<Locale, TextAsset>>();
     
     static StateMachineManager() {
-        var (sms, dialogue) = GameManagement.StateMachineAssets;
-        if (sms != null) {
-            foreach (var group in sms.assetGroups) {
-                foreach (var sminfo in group.assets) {
-                    SMFileByName[sminfo.name] = sminfo.file;
-                    //Don't load SMs on init
-                }
-            }
+        foreach (var sm in GameManagement.References.fileStateMachines.SelectMany(x => x.assetGroups)
+            .SelectMany(x => x.assets)) {
+            SMFileByName[sm.name] = sm.file;
+            //Don't load SMs on init
         }
-        if (dialogue != null) {
-            foreach (var group in dialogue.assetGroups) {
-                Dialogue[group.name] = new Dictionary<Locale, TextAsset>();
-                foreach (var lc in group.files) {
-                    Dialogue[group.name][lc.locale] = lc.file;
-                }
+        foreach (var group in GameManagement.References.dialogue.SelectMany(d => d.assetGroups)) {
+            Dialogue[group.name] = new Dictionary<Locale, TextAsset>();
+            foreach (var lc in group.files) {
+                Dialogue[group.name][lc.locale] = lc.file;
             }
         }
     }
 
-    public static StateMachine LoadDialogue(string file, Locale lc = Locale.EN) {
+    public static StateMachine LoadDialogue(string file, Locale? lc = null) {
+        var locale = lc ?? SaveData.s.Locale;
         if (!Dialogue.TryGetValue(file, out var locales)) 
             throw new Exception($"No dialogue file by name {file}");
-        if (!locales.TryGetValue(lc, out var tx) && !locales.TryGetValue(Locale.EN, out tx)) 
+        if (!locales.TryGetValue(locale, out var tx) && !locales.TryGetValue(Locale.EN, out tx)) 
             throw new Exception($"Dialogue file has no applicable localization");
         //No need to cache this, since dialogue files are effectively never referenced from more than one place
         return StateMachine.CreateFromDump(tx.text);
     }
     
-    public static StateMachine GetSMFromName(string name) {
-        if (SMFileByName.TryGetValue(name, out TextAsset txt)) return GetSMFromTextAsset(txt);
+    public static StateMachine FromName(string name) {
+        if (SMFileByName.TryGetValue(name, out TextAsset txt)) return FromText(txt);
         throw new Exception($"No StateMachine file by name {name} exists.");
     }
 
@@ -56,7 +52,7 @@ public static class StateMachineManager  {
 
     //SMs can be lazy-loaded over the course of a game, but most are loaded on the InitOnLoad method.
     [CanBeNull]
-    public static StateMachine GetSMFromTextAsset([CanBeNull] TextAsset t) {
+    public static StateMachine FromText([CanBeNull] TextAsset t) {
         if (t == null) return null;
         int id = t.GetInstanceID();
         if (!SMMapByFile.ContainsKey(id)) {

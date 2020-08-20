@@ -8,9 +8,9 @@ TrueTypeFontImporter:
   characterSpacing: 0
   characterPadding: 1
   includeFontData: 1
-  fontNames:
-  - Odibee Sans
-  fallbackFontReferences: []
+  fontNames: []
+  fallbackFontReferences:
+  - {fileID: 12800000, guid: afa792ce4640b9c47b8909feb1ffaaa1, type: 3}
   customCharacters: 
   fontRenderingMode: 0
   ascentCalculationMode: 1

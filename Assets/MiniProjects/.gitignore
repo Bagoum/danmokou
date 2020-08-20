@@ -1,0 +1,14 @@
+.vs
+.idea
+obj
+bin
+
+*.csproj
+*.unityproj
+*.sln
+*.tmp
+*.user
+*.userprefs
+*.pdb
+
+raw

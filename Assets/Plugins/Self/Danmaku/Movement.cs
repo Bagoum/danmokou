@@ -224,8 +224,8 @@ public static class VTPRepo {
         public static ExVTP Offset(ExTP rp, ExTP nrp) => VTPControllers.Offset(Cartesian(rp, nrp));
 
         /// <summary>
-        /// Offset function for dependent (ie. empty-guided) fires.
-        /// Reduces to `offset * RADIUS @ HOISTDIR p @ HOISTLOC p`
+        /// Offset function for dependent (empty-guided) fires.
+        /// Reduces to `offset (* RADIUS (@ HOISTDIR p)) (@ HOISTLOC p)`
         /// </summary>
         /// <param name="hoistLoc">Location of empty guider</param>
         /// <param name="hoistDir">Direction of empty guider</param>
@@ -238,8 +238,8 @@ public static class VTPRepo {
             bpi => RetrieveHoisted(hoistLoc, indexer(bpi))
         );
         /// <summary>
-        /// Offset function for dependent (ie. empty-guided) fires.
-        /// Reduces to `offset rotatev @ HOISTDIR p OFFSET @ HOISTLOC p`
+        /// Offset function for dependent (empty-guided) fires.
+        /// Reduces to `offset (rotatev (@ HOISTDIR p) OFFSET) (@ HOISTLOC p)`
         /// </summary>
         /// <param name="hoistLoc">Location of empty guider</param>
         /// <param name="hoistDir">Direction of empty guider</param>
@@ -433,7 +433,12 @@ public struct Velocity {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void UpdateDeltaAssignAcc(ref ParametricInfo bpi, out Vector2 delta, in float dT) {
         bpi.t += dT;
-        vtp(in this, in dT, bpi, out delta);
+        try {
+            vtp(in this, in dT, bpi, out delta);
+        } catch (Exception e) {
+            int k = 5;
+            delta = Vector2.down;
+        }
         bpi.loc.x += delta.x;
         bpi.loc.y += delta.y;
     }

@@ -22,8 +22,8 @@ using ExPred = System.Func<DMath.TExPI, TEx<bool>>;
 using ExVTP = System.Func<Danmaku.ITExVelocity, TEx<float>, DMath.TExPI, DMath.RTExV2, TEx<UnityEngine.Vector2>>;
 using ExLVTP = System.Func<Danmaku.ITExVelocity, RTEx<float>, RTEx<float>, DMath.TExPI, DMath.RTExV2, TEx<UnityEngine.Vector2>>;
 using ExGCXF = System.Func<DMath.TExGCX, TEx>;
-using ExSBF = System.Func<Danmaku.TExSBC, TEx<int>, TEx<float>>;
-using ExSBV2 = System.Func<Danmaku.TExSBC, TEx<int>, TEx<UnityEngine.Vector2>>;
+using ExSBF = System.Func<Danmaku.RTExSB, TEx<float>>;
+using ExSBV2 = System.Func<Danmaku.RTExSB, TEx<UnityEngine.Vector2>>;
 using ExSBCF = System.Func<Danmaku.TExSBC, TEx<int>, DMath.TExPI, TEx>;
 using ExSBPred = System.Func<Danmaku.TExSBC, TEx<int>, DMath.TExPI, TEx<bool>>;
 
@@ -48,7 +48,7 @@ public static partial class Reflector {
         string method = q.Scan(out int index);
         if (method == "file") {
             q.Next();
-            return StateMachineManager.GetSMFromName(q.Next());
+            return StateMachineManager.FromName(q.Next());
         } else if (method == "null") {
             q.Next();
             return null;
@@ -148,9 +148,8 @@ public static partial class Reflector {
         return true;
     }
 
-    public static bool UseConstructor(Type t) => classAutoReflectTypes.Contains(t) || (t.IsValueType
-                                                                                        && !t.IsPrimitive &&
-                                                                                        !t.IsEnum);
+    public static bool UseConstructor(Type t) => classAutoReflectTypes.Contains(t) || 
+                                                 (t.IsValueType && !t.IsPrimitive && !t.IsEnum);
     private static readonly HashSet<Type> classAutoReflectTypes = new HashSet<Type>() {
         typeof(GenCtxProperties<SyncPattern>),
         typeof(GenCtxProperties<AsyncPattern>),

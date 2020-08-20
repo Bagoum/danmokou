@@ -59,10 +59,13 @@ MonoBehaviour:
   colorizing:
     FlatLight: 1
     Light: 0
+    WideLight: 0
     FlatColor: 1
     Color: 0
-    FlatDark: 1
-    Dark: 0
+    WideColor: 0
+    FlatDark: 0
+    Dark: 1
+    WideDark: 0
     Full: 0
     Inverted: 0
     FullInvertedAsLightDark: 0

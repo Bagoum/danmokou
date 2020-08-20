@@ -49,7 +49,7 @@ public class BottomTracker : RegularUpdater {
                 p.x = source.GlobalPosition().x;
                 if (Mathf.Abs(p.x) > maxF) p.x = Mathf.Sign(p.x) * maxF;
                 tr.localPosition = p;
-                text.color = new Color(1, 1, 1, Mathf.Clamp01(Mathf.Lerp(0.1f, 1.5f, enemy == null ? 1 : enemy.HPRatio)));
+                text.color = new Color(1, 1, 1, Mathf.Clamp01(Mathf.Lerp(0.1f, 1.5f, enemy == null ? 1 : enemy.DisplayHPRatio)));
             }
         }
     }

@@ -2,11 +2,12 @@ pattern { }
 <!> clear
 phase 0
 	action block 0
-		position -2 0
-		sync circle-*/w <1;:> gsrepeat({
-			times 4
-			circle
-		}, {
-		 color red s tprot cy 1
-		 color blue s tprot cy -0.6
-		})
+		position 0 2
+		async triangle-blue/w <1;:> gcr2 8 _ <-6h> {
+		} gsr2c 4 { } s(rvelocity(cx(2)))
+		async triangle-orange/w <1;:> gcr2 8 _ <6h> {
+		} gsr2c 4 { } s(rvelocity(cx(2)))
+		async triangle-green/w <0.5;:> gcr2 8 _ <-9h> {
+		} gsr2c 4 { } s(rvelocity(cx(2)))
+		async triangle-purple/w <0.5;:> gcr2 8 _ <9h> {
+		} gsr2c 4 { } s(rvelocity(cx(2)))

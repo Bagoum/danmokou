@@ -99,6 +99,7 @@ public class CurvedTileRenderPather : CurvedTileRender {
             }
             centers[cL - 1] = bpi.loc - velocity.rootPos;
         }
+        prevRemember = trailR.time = 0f;
         trailR.sharedMaterial = material;
         trailR.sortingLayerID = mr.sortingLayerID;
         trailR.sortingOrder = mr.sortingOrder;
@@ -137,10 +138,16 @@ public class CurvedTileRenderPather : CurvedTileRender {
 
         if (ETime.LastUpdateForScreen) {
             trail.localPosition = centers[cL - 1];
-            trailR.time = remember(bpi);
+            //trailR.AddPosition(bpi.loc);
+            if (prevRemember != nextRemember) {
+                trailR.time = prevRemember = nextRemember;
+            }
             if (lifetime < DontUpdateTimeAfter) trailR.SetPropertyBlock(pb);
         }
     }
+
+    private float prevRemember = 0f;
+    private float nextRemember = 0f;
 
     private bool skipNextCollisionCheck;
 
@@ -197,7 +204,7 @@ public class CurvedTileRenderPather : CurvedTileRender {
         lastDataIndex = (lastDataIndex > 0) ? lastDataIndex - 1 : 0;
         if (lastDataIndex == cL - 1) return; //Need at least two frames to draw
 
-        int remembered = (int) Math.Ceiling(remember(bpi) * updateRate);
+        int remembered = (int) Math.Ceiling((nextRemember = remember(bpi)) * updateRate);
         if (remembered < 2) remembered = 2;
         if (remembered > cL - lastDataIndex) remembered = cL - lastDataIndex;
         
@@ -273,6 +280,7 @@ public class CurvedTileRenderPather : CurvedTileRender {
     public override void Activate() {
         base.Activate();
         trail.localPosition = centers[cL - 1];
+        trailR.SetPropertyBlock(pb);
         trailR.Clear();
         trailR.emitting = true;
     }

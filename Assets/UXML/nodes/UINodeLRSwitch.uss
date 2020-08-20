@@ -1,0 +1,30 @@
+.node {
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.optionsCont {
+    flex-direction: row;
+    justify-content: space-between;
+    width: 50%;
+    align-items: center;
+}
+
+.node.nokey .optionsCont {
+    width: 100%;
+}
+
+#Value {
+    flex-grow: 1;
+}
+
+#LR2ChildContainer {
+    flex-grow: 1;
+    flex-direction: row;
+    justify-content: center;
+}
+
+#Key {
+    flex-grow: 1;
+    -unity-text-align: upper-left;
+}

@@ -11,7 +11,12 @@ using UnityEditor;
 using static Danmaku.Enums;
 
 public struct CampaignData {
-    private const int startLives = 12;
+    private const int startLives = 7;
+    public static int? StartLives(CampaignMode mode) {
+        if (mode == CampaignMode.MAIN || mode == CampaignMode.TUTORIAL || mode == CampaignMode.STAGE_PRACTICE) return 14;
+        if (mode.OneLife()) return 1;
+        return null;
+    }
     private const int defltContinues = 42;
     public const long valueItemPoints = 3142;
     public long maxScore { get; private set; }
@@ -31,16 +36,18 @@ public struct CampaignData {
     public double PIVDecay { get; private set; }
     private double pivDecayLenience;
     public double UIVisiblePIVDecayLenienceRatio { get; private set; }
-    private const double pivDecayRate = 0.14;
+    private const double pivDecayRate = 0.12;
     private double pivDecayRateMultiplier;
     private const double pivDecayRateMultiplierBoss = 0.7;
     private const double pivDecayLenienceFall = 3;
+    private const double pivDecayLenienceValue = 0.4;
     private const double pivDecayLeniencePointPP = 0.5;
     private const double pivDecayLenienceGraze = 0.2;
     private const double pivDecayLenienceEnemyDestroy = 0.3;
+    private const double pivDecayBoostValue = 0.02;
     private const double pivDecayBoostPointPP = 0.4;
     private const double pivDecayBoostGraze = 0.03;
-    private const double pivDecayBoostEnemyDestroy = 0.06;
+    private const double pivDecayBoostEnemyDestroy = 0.07;
     
     private const double pivDecayLeniencePhase = 3;
     public bool Reloaded { get; set; }
@@ -90,28 +97,22 @@ public struct CampaignData {
         100000000,
     };
     private static readonly int[] pointLives = {
-        42,
         69,
-        87,
         127,
         255,
-        272,
         314,
-        368,
         420,
         533,
-        628,
         666,
         789,
-        808,
         859,
         999,
         1111,
         1204,
         1337,
-        1378,
         1414,
         1667,
+        1799,
         2048,
         2718,
         3142,
@@ -121,13 +122,13 @@ public struct CampaignData {
     };
 
     public CampaignData(CampaignMode mode, long maxScore, ShotConfig shot = null) {
+        this.mode = mode;
         this.maxScore = maxScore;
-        this.Lives = startLives;
+        this.Lives = StartLives(mode) ?? startLives;
         this.score = 0;
         this.PIV = 1;
         nextScoreLifeIndex = 0;
         nextItemLifeIndex = 0;
-        this.mode = mode;
         remVisibleScoreLerpTime = 0;
         lastScore = 0;
         UIVisibleScore = 0;
@@ -135,8 +136,7 @@ public struct CampaignData {
         PIVDecay = 1f;
         pivDecayLenience = 0f;
         UIVisiblePIVDecayLenienceRatio = 0f;
-        if (mode == CampaignMode.CARD_PRACTICE) Continues = 0;
-        else Continues = defltContinues;
+        Continues = mode.OneLife() ? 0 : defltContinues;
         Continued = false;
         Reloaded = false;
         HitsTaken = 0;
@@ -153,7 +153,7 @@ public struct CampaignData {
             --Continues;
             score = lastScore = UIVisibleScore = nextItemLifeIndex = nextScoreLifeIndex = LifeItems = 0;
             PIV = 1;
-            Lives = startLives;
+            Lives = StartLives(mode) ?? startLives;
             remVisibleScoreLerpTime = PIVDecay = pivDecayLenience = 0;
             UIManager.UpdatePlayerUI();
             return true;
@@ -162,7 +162,7 @@ public struct CampaignData {
 
     public void AddLives(int delta) {
         if (delta < 0) ++HitsTaken;
-        if (delta < 0 && mode == CampaignMode.CARD_PRACTICE) Lives = 0;
+        if (delta < 0 && mode.OneLife()) Lives = 0;
         else Lives = Math.Max(0, Lives + delta);
         if (Lives == 0) Events.PlayerHasDied.Invoke(mode);
         UIManager.UpdatePlayerUI();
@@ -178,6 +178,8 @@ public struct CampaignData {
     public void ExternalLenience(double time) => AddPIVDecayLenience(time);
 
     public void AddValueItems(int delta) {
+        AddPIVDecay(delta * pivDecayBoostValue);
+        AddPIVDecayLenience(pivDecayLenienceValue);
         AddScore((long)Math.Round(delta * valueItemPoints * EffectivePIV));
     }
     public void AddGraze(int delta) {
@@ -205,6 +207,7 @@ public struct CampaignData {
         SFXService.PhaseEndSound(pc.Captured);
         if (pc.props.phaseType == PhaseType.STAGE) SFXService.StageSectionEndSound();
         UIManager.CardCapture(pc);
+        ChallengeManager.ReceivePhaseCompletion(pc);
     }
     
     private void AddScore(long delta) {
@@ -276,7 +279,12 @@ public struct CampaignData {
 /// </summary>
 public class GameManagement : RegularUpdater {
     public static bool Initialized { get; private set; } = false;
-    public static DifficultySet Difficulty { get; set; } = DifficultySet.Lunatic;
+    public static DifficultySet Difficulty { get; set; } = 
+#if UNITY_EDITOR
+        DifficultySet.Lunatic;
+#else
+        DifficultySet.Easy;
+#endif
     /// <summary>
     /// A difficulty value is a multiplier. By default, Easy=1 and Lunatic~2.3.
     /// </summary>
@@ -289,12 +297,13 @@ public class GameManagement : RegularUpdater {
 
     public static float RelativeDifficulty(DifficultySet basis) => DifficultyValue / basis.Value();
 
-    public static CampaignData campaign = new CampaignData(CampaignMode.MAIN, 9001);
-    private static CampaignData lastinfo;
+    public static CampaignData campaign = new CampaignData(CampaignMode.NULL, 9001);
+    private static CampaignData lastinfo = campaign;
 
     public static void NewCampaign(CampaignMode mode, ShotConfig shot) => lastinfo = campaign = new CampaignData(mode, 9002, shot);
     public static void CheckpointCampaignData() => lastinfo = campaign;
     public static void ReloadCampaignData(bool markAsReloaded) {
+        Debug.Log("Reloading campaign");
         if (markAsReloaded) lastinfo.Reloaded = true;
         campaign = lastinfo;
         UIManager.UpdatePlayerUI();
@@ -309,13 +318,13 @@ public class GameManagement : RegularUpdater {
     public void YeetLife() => campaign.AddLifeItems(40);
     public static IEnumerable<DifficultySet> VisibleDifficulties => new[] {
         DifficultySet.Easier, DifficultySet.Easy, DifficultySet.Normal, DifficultySet.Hard,
-        DifficultySet.Lunatic, DifficultySet.Ultra, DifficultySet.Abex, 
-        //DifficultySet.Assembly
+        DifficultySet.Lunatic, DifficultySet.Ultra, 
+        //DifficultySet.Abex, DifficultySet.Assembly
     };
     
     private static GameManagement gm;
-    public SOTextAssets stateMachines;
-    public SODialogue dialogue;
+    public GameUniqueReferences references;
+    public static GameUniqueReferences References => gm.references;
     public GameObject ghostPrefab;
     public GameObject inodePrefab;
     public GameObject lifeItem;
@@ -323,14 +332,14 @@ public class GameManagement : RegularUpdater {
     public GameObject pointppItem;
     public GameObject arbitraryCapturer;
     public static GameObject ArbitraryCapturer => gm.arbitraryCapturer;
-
-    public SceneConfig mainMenu;
+    public SceneConfig defaultSceneConfig;
 
     private void Awake() {
         if (gm != null) {
             DestroyImmediate(gameObject);
             return;
         }
+        SceneIntermediary.Setup(defaultSceneConfig);
         Initialized = true;
         gm = this;
         DontDestroyOnLoad(this);
@@ -346,16 +355,17 @@ public class GameManagement : RegularUpdater {
         Log.Unity($"Graphics Jobs: {PlayerSettings.graphicsJobs} {PlayerSettings.graphicsJobMode}; MTR {PlayerSettings.MTRendering}");
     #endif
         Log.Unity($"Graphics Render mode {SystemInfo.renderingThreadingMode}");
-        Log.Unity("Danmokou v1.2.0, SiMP v1.4.0");
+        Log.Unity("Danmokou v1.2.0, SiMP v1.5.1");
     }
 
+    public static bool MainMenuExists => References.mainMenu != null;
     public static bool GoToMainMenu() => SceneIntermediary.LoadScene(
-            new SceneIntermediary.SceneRequest(gm.mainMenu, null, null, null));
+            new SceneIntermediary.SceneRequest(References.mainMenu, null, null, null));
 
     public static bool ReloadLevel() => SceneIntermediary._ReloadScene(() => ReloadCampaignData(true));
     
     public static void ClearForScene() {
-        AudioTrackService.ClearAllAudio();
+        if (!SceneIntermediary.IsReloading || !campaign.mode.IsReloadable()) AudioTrackService.ClearAllAudio();
         Events.Event0.DestroyAll();
         ETime.SlowdownReset();
         ETime.Timer.ResetAll();
@@ -377,6 +387,7 @@ public class GameManagement : RegularUpdater {
         BulletManager.ClearEmpty();
         BulletManager.ClearAllBullets();
         BulletManager.DestroyCopiedPools();
+        campaign = new CampaignData(CampaignMode.MAIN, 9001);
     }
 
     public static void ClearPhase() {
@@ -398,11 +409,6 @@ public class GameManagement : RegularUpdater {
         BehaviorEntity.Autocull(cullPool, defaulter);
     }
     
-    public static (SOTextAssets, SODialogue) StateMachineAssets => (gm.stateMachines, gm.dialogue);
-    /*
-    public static void ReloadStateMachines() {
-        StateMachineManager.LoadStateMachines();
-    }*/
 
 
     [ContextMenu("Unload unused")]

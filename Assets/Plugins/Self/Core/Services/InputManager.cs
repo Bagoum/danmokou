@@ -2,6 +2,7 @@
 using System.Linq;
 using UnityEngine;
 using KC = UnityEngine.KeyCode;
+using static SaveUtils;
 
 public enum InputTriggerMethod {
     ONCE,
@@ -88,13 +89,13 @@ public static class InputManager {
     
     
     //public static readonly InputHandler FocusToggle = InputHandler.Toggle(Key(KC.Space).Or(Key(cRightShoulder)));
-    public static readonly InputHandler FocusHold = InputHandler.Hold(Key(KC.LeftShift).Or(AxisG0(aCRightTrigger)));
-    public static readonly InputHandler AimLeft = InputHandler.Trigger(Key(KC.A).Or(AxisL0(aCRightX)));
-    public static readonly InputHandler AimRight = InputHandler.Trigger(Key(KC.D).Or(AxisG0(aCRightX)));
-    public static readonly InputHandler AimUp = InputHandler.Trigger(Key(KC.W).Or(AxisG0(aCRightY)));
-    public static readonly InputHandler AimDown = InputHandler.Trigger(Key(KC.S).Or(AxisL0(aCRightY)));
-    public static readonly InputHandler ShootToggle = InputHandler.Toggle(Key(KC.X).Or(Key(cLeftShoulder)));
-    public static readonly InputHandler ShootHold = InputHandler.Hold(Key(KC.Z).Or(AxisG0(aCLeftTrigger)));
+    public static readonly InputHandler FocusHold = InputHandler.Hold(Key(i.FocusHold).Or(AxisG0(aCRightTrigger)));
+    public static readonly InputHandler AimLeft = InputHandler.Trigger(Key(i.AimLeft).Or(AxisL0(aCRightX)));
+    public static readonly InputHandler AimRight = InputHandler.Trigger(Key(i.AimRight).Or(AxisG0(aCRightX)));
+    public static readonly InputHandler AimUp = InputHandler.Trigger(Key(i.AimUp).Or(AxisG0(aCRightY)));
+    public static readonly InputHandler AimDown = InputHandler.Trigger(Key(i.AimDown).Or(AxisL0(aCRightY)));
+    public static readonly InputHandler ShootToggle = InputHandler.Toggle(Key(i.ShootToggle).Or(Key(cLeftShoulder)));
+    public static readonly InputHandler ShootHold = InputHandler.Hold(Key(i.ShootHold).Or(AxisG0(aCLeftTrigger)));
     
     public static readonly InputHandler UILeft = InputHandler.Trigger(AxisL0(aHoriz).Or(AxisL0(aCDPadX)));
     public static readonly InputHandler UIRight = InputHandler.Trigger(AxisG0(aHoriz).Or(AxisG0(aCDPadX)));
@@ -146,15 +147,21 @@ public static class InputManager {
 
     public static bool IsFocus => FocusHold.Active;
     public static ShootDirection? FiringDir { get {
+    #if VER_SIMP
         if (AimUp.Active) return ShootDirection.UP;
         if (AimRight.Active) return ShootDirection.RIGHT;
         if (AimLeft.Active) return ShootDirection.LEFT;
         if (AimDown.Active) return ShootDirection.DOWN;
+    #endif
         return null;
     }}
     public static float? FiringAngle => FiringDir?.ToAngle();
 
+#if VER_SIMP
     public static bool IsFiring => ShootHold.Active || ShootToggle.Active;
+#else
+    public static bool IsFiring => ShootHold.Active;
+#endif
 
     public static bool EditorReloadActivated() {
         return Input.GetKeyDown(editorReloadHook);

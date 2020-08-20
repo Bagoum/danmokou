@@ -15,14 +15,13 @@ using TC = FParser.AAParser.TextCommand<float, Dialoguer.EventType, string>;
 using AR = FParser.AAParser.ArgRef<float, Dialoguer.EventType, string>;
 
 public class Dialoguer : CoroutineRegularUpdater {
-    public static Dialoguer main { get; private set; }
+    private static Dialoguer main { get; set; }
     public TextMeshProUGUI mainText;
     public TextMeshProUGUI leftSpeaker;
     public TextMeshProUGUI rightSpeaker;
     public Image leftIcon;
     public Image rightIcon;
     public Canvas total;
-    public List<DialogueProfile> profiles;
     private static readonly Dictionary<string, IDialogueProfile> profilesByKey = new Dictionary<string, IDialogueProfile>();
 
     public SpriteRenderer left1;
@@ -37,7 +36,7 @@ public class Dialoguer : CoroutineRegularUpdater {
         HideDialogue();
         
         profilesByKey.Clear();
-        foreach (var p in profiles) {
+        foreach (var p in GameManagement.References.dialogueProfiles) {
             if (p != null) profilesByKey[p.key] = p;
         }
         
@@ -103,6 +102,7 @@ public class Dialoguer : CoroutineRegularUpdater {
                 var s = tw.Item.Item1;
                 float wait_per = (float)tw.Item.Item2 / s.Length;
                 AddWithLookahead(s.Substring(0, 1), s.Substring(1), out int i1, out int i2);
+                mainText.text = string.Concat(sb);
                 for (int ci = 1; ci < s.Length; ++ci) {
                     for (AddWait(wait_per); wait_time > ETime.FRAME_YIELD; wait_time -= ETime.FRAME_TIME) {
                         yield return null;

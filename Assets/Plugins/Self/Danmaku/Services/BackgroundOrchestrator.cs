@@ -41,10 +41,12 @@ public class BackgroundOrchestrator : MonoBehaviour {
         }
     }
 
+    [CanBeNull] public static GameObject NextSceneStartupBGC { get; set; }
     private void Awake() {
         tr = transform;
         main = this;
-        lastRequestedBGC = null;
+        lastRequestedBGC = NextSceneStartupBGC;
+        NextSceneStartupBGC = null;
         MaybeCreateFirst();
         Time = 0f;
     }

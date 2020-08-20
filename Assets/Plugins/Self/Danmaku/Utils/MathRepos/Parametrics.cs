@@ -335,11 +335,23 @@ public static partial class Parametrics {
     /// <param name="time">Time at which to stop sampling</param>
     /// <param name="p">Target parametric</param>
     /// <returns></returns>
-    public static ExTP StopSampling(float time, ExTP p) {
+    public static ExTP StopSampling(ExBPY time, ExTP p) {
         Ex data = DataHoisting.GetClearableDictV2();
-        return bpi => ExUtils.DictIfCondSetElseGet(data, Ex.OrElse(Ex.LessThan(bpi.t, ExC(time)),
+        return bpi => ExUtils.DictIfCondSetElseGet(data, Ex.OrElse(Ex.LessThan(bpi.t, time(bpi)),
             Ex.Not(ExUtils.DictContains<uint, Vector2>(data, bpi.id))), bpi.id, p(bpi));
     }
+    
+    /// <summary>
+    /// If the condition is true, evaluate the invokee. Otherwise, return the last returned evaluation.
+    /// <para>You can call this with zero sampling time, and it will sample the invokee once. However, in this case SS0 is preferred.</para>
+    /// </summary>
+    public static ExTP SampleIf(ExPred cond, ExTP p) {
+        Ex data = DataHoisting.GetClearableDictV2();
+        return bpi => ExUtils.DictIfCondSetElseGet(data, Ex.OrElse(cond(bpi),
+            Ex.Not(ExUtils.DictContains<uint, Vector2>(data, bpi.id))), bpi.id, p(bpi));
+    }
+    
+    
     /// <summary>
     /// Samples an invokee exactly once.
     /// </summary>

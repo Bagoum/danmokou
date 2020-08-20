@@ -174,10 +174,9 @@ public static class Events {
     //Events with "Verb Noun" are messages that are sent to request invoking an action.
     public static readonly Event1<Danmaku.CampaignMode> PlayerHasDied = new Event1<Danmaku.CampaignMode>();
     /// <summary>
-    /// Nothing will occur if the player is in an invulnerable state.
-    /// Argument 1: damage number.
+    /// If the player is in an invulnerable state, then nothing will occur unless FORCED is set.
     /// </summary>
-    public static readonly Event1<int> TryHitPlayer = new Event1<int>();
+    public static readonly Event1<(int dmg, bool forced)> TryHitPlayer = new Event1<(int, bool)>();
     /// <summary>
     /// Argument 1: number of invulnerability frames.
     /// Argument 2: Whether or not to show effect.

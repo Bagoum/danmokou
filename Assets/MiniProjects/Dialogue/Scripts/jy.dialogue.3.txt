@@ -1,0 +1,36 @@
+script
+place l1 reimu
+place r1 junko
+place r2 yukari
+sre junko _
+sle reimu worry
+sre yukari angry
+.z `You did it again!`
+sre junko worry
+.z `What? No, no, this time I did not turn it into a circle.`
+srce special
+.z `You were firing danmaku from the middle of nowhere. That is sloppy and visually unclear style. All danmaku should be fired from one's own position or from a subsummon.`
+.z `I simply moved your danmaku back to a single origin. I did not change the structure.`
+slc
+.z `Yeah, and as a result there were two BoWaPs...`
+sre yukari worry
+.z `From now on, if you want to screw with my BoWaP, only do the yellow ones, alright?`
+sre junko _
+.z `If you insist.`
+srce special
+.z `Ah, also, why not show us your crows? I would very much like to purify their beautiful lasers. I myself cannot, regrettably, create textures that vibrant.`
+sre yukari worry
+.z `...Fine.`
+slc
+.z `What about you? I haven't seen you fire a single bullet yet. Are you even taking this seriously?`
+sr junko
+.z `Naive words, little miko.`
+.z `Anyone can fire their own danmaku. Such is a task worthy of bugs and fairies.`
+srce normal
+.z `But to take another's danmaku and make it one's own, to redefine it, to reinterpret it... this is a task only achievable with a great mind and an untiring soul.`
+.z `My strength lies not in creating pure danmaku. It lies in purifying all phenomena under the skies.`
+srce special
+.z `How regrettable it is that I was not able to show to you this power when first we met. Had you not driven off my little burger-loving friend, we would have been together able to put on display some true horrors.`
+sre yukari angry
+.z `Silence, both of you. I'm starting the next card.`
+

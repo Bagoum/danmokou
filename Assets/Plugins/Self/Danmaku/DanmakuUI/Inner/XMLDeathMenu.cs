@@ -11,7 +11,7 @@ using UnityEngine.Scripting;
 using UnityEngine.UIElements;
 using Object = UnityEngine.Object;
 using static GameManagement;
-using static Danmaku.MainMenu;
+using static Danmaku.MainMenuCampaign;
 
 
 /// <summary>
@@ -49,10 +49,12 @@ public class XMLDeathMenu : XMLMenu {
                 HideMe();
                 GameManagement.ReloadLevel();
             }, "Reload Level", true),
-            new ConfirmFuncNode(() => {
-                HideMe();
-                GameManagement.GoToMainMenu();
-            }, "Quit to Menu", true));
+            GameManagement.MainMenuExists ?
+                new ConfirmFuncNode(() => {
+                    HideMe();
+                    GameManagement.GoToMainMenu();
+                }, "Quit to Menu", true) : null
+            );
         base.Awake();
     }
 

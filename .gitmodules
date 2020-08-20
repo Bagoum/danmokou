@@ -1,3 +1,6 @@
 [submodule "Assets/SiMP"]
 	path = Assets/SiMP
 	url = https://github.com/Bagoum/danmokou-simp.git
+[submodule "Assets/BRuH"]
+	path = Assets/BRuH
+	url = https://github.com/Bagoum/danmokou-bruh.git

@@ -24,6 +24,7 @@ public readonly struct RootedVTP {
 }
 
 public delegate Vector2 TP(ParametricInfo bpi);
+public delegate Vector2 SBV2(ref BulletManager.SimpleBullet sb);
 
 public delegate Vector3 TP3(ParametricInfo bpi);
 

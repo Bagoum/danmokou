@@ -11,13 +11,24 @@ using UnityEngine.Scripting;
 using UnityEngine.UIElements;
 using Object = UnityEngine.Object;
 using static GameManagement;
-using static Danmaku.MainMenu;
+using static Danmaku.MainMenuCampaign;
 
 /// <summary>
 /// Abstract class for all in-game UI based on UIBuilder.
 /// </summary>
 [Preserve]
 public abstract class XMLMenu : MonoBehaviour {
+    [CanBeNull] protected virtual List<int> ReturnTo { get; set; }
+    [CanBeNull] private List<int> tentativeReturnTo;
+
+    protected void TentativeCache(List<int> indices) {
+        tentativeReturnTo = indices;
+    }
+
+    protected void ConfirmCache() {
+        if (tentativeReturnTo != null) Log.Unity($"Caching menu position with indices {string.Join(", ", tentativeReturnTo)}");
+        ReturnTo = tentativeReturnTo;
+    }
     public VisualElement UI { get; private set; }
     [CanBeNull] protected VisualElement UITop;
 
@@ -58,8 +69,20 @@ public abstract class XMLMenu : MonoBehaviour {
         UITop = UI.Q(UITopID);
         var container = UI.Q(ScreenContainerID);
         foreach (var s in Screens) container.Add(s.Build(TypeMap));
-        Redraw();
         if (HeaderOverride != null) UI.Q<Label>("Header").text = HeaderOverride;
+        
+        if (ReturnTo != null) {
+            for (int ii = 0; ii < ReturnTo.Count; ++ii) {
+                var prev = Current;
+                if (ii > 0) {
+                    if (Current.children.Length > 0) Current = Current.children[ReturnTo[ii]];
+                    else Current = Current.Confirm().Item2.Siblings[ReturnTo[ii]];
+                } else Current = Current.Siblings[ReturnTo[ii]];
+                Current.OnVisit(prev);
+            }
+        }
+        Redraw();
+        ReturnTo = null;
         return null;
     }
 
@@ -80,37 +103,38 @@ public abstract class XMLMenu : MonoBehaviour {
             Current.ScrollTo();
         }
     }
-    protected void SimulateSelectIndex(int index) {
-        Current = Current.siblings[index].Confirm().Item2;
-        Redraw();
-    }
 
     public new void Update() {
         if (!Application.isPlaying) return;
         if (Current != null && MenuActive) {
-            var from_current = Current;
-            if (InputManager.UILeft.Active) {
-                SFXService.Request(leftRightSound);
-                Current = Current.Left();
-            } else if (InputManager.UIRight.Active) {
-                SFXService.Request(leftRightSound);
-                Current = Current.Right();
-            } else if (InputManager.UIUp.Active) {
-                SFXService.Request(upDownSound);
-                Current = Current.Up();
-            } else if (InputManager.UIDown.Active) {
-                SFXService.Request(upDownSound);
-                Current = Current.Down();
-            } else if (InputManager.UIConfirm.Active) {
-                var (succ, nxt) = Current.Confirm();
-                Current = nxt;
-                if (succ) SFXService.Request(confirmSound);
-                else SFXService.Request(failureSound);
-            } else if (InputManager.UIBack.Active) {
-                SFXService.Request(backSound);
-                Current = Current.Back();
-            }
-            if (from_current != Current) {
+            bool tried_change = true;
+            bool allowsfx = true;
+            var last = Current;
+            do {
+                if (InputManager.UILeft.Active) {
+                    if (allowsfx) SFXService.Request(leftRightSound);
+                    Current = Current.Left();
+                } else if (InputManager.UIRight.Active) {
+                    if (allowsfx) SFXService.Request(leftRightSound);
+                    Current = Current.Right();
+                } else if (InputManager.UIUp.Active) {
+                    if (allowsfx) SFXService.Request(upDownSound);
+                    Current = Current.Up();
+                } else if (InputManager.UIDown.Active) {
+                    if (allowsfx) SFXService.Request(upDownSound);
+                    Current = Current.Down();
+                } else if (InputManager.UIConfirm.Active) {
+                    var (succ, nxt) = Current.Confirm();
+                    if (succ) Current = nxt;
+                    if (allowsfx) SFXService.Request(succ ? confirmSound : failureSound);
+                } else if (InputManager.UIBack.Active) {
+                    if (allowsfx) SFXService.Request(backSound);
+                    Current = Current.Back();
+                } else tried_change = false;
+                allowsfx = false;
+            } while (Current?.Passthrough ?? false);
+            if (tried_change) {
+                if (last != Current) Current?.OnVisit(last);
                 Redraw();
             }
         }

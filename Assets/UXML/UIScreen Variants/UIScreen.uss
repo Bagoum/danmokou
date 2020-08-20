@@ -59,3 +59,13 @@
     padding-top: 500px;
 }
 
+.column.w40 {
+    flex-grow: 2;
+}
+
+.column.w60 {
+    flex-grow: 3;
+}
+
+.columnWide {
+}

@@ -93,7 +93,7 @@ public static class ColorHelpers {
         } else if (gt == GradientModifier.LIGHTWIDE){
             return ig.RemapTime(0.25f, 0.95f);
         } else if (gt == GradientModifier.COLORFLAT) {
-            return ig.RemapTime(0.2f, 0.65f).RemapTime(0f, 1.5f);
+            return ig.RemapTime(0.2f, 0.65f).RemapTime(-0.1f, 1.3f);
         } else if (gt == GradientModifier.COLOR) {
             return ig.RemapTime(0.2f, 0.7f);
         } else if (gt == GradientModifier.COLORWIDE){

@@ -9,6 +9,7 @@ phase 0
 
 
 ## 1 all small bullets
+<!> type non `紫`
 phase 0
 	action block 0
 		position 0 2
@@ -31,29 +32,17 @@ phase 0
 		} s tprot zero
 		##sync sun-* <-2;1.3:>  gsr2 3 <2;:> color { */ */w */b }  gsr2 4 <;-2:> color $colors ss 1 tprot zero
 		
-## 3 siner???
-phase 0 
-	action block 0
-	position 0 0
-	sync siner72r-bpw <0.5;:> laser null 1 4 { }
-	##sync siner72r-** <0.5;:> gsr2 9 <12> color $colors gsr2 3 <120> color { / /w /b } slaser 0 0 null 1 4
-
-## 4 spellcards
-phase 0
-	action block 0
-		position 0 0
-		sync sc-* <-3;3.5:> gsr2 6 <;-0.5:> color { guanyin wukong smoke } s tprot zero
 	
-## 5 lasers pather
+## 3 lasers pather
 phase 0
 	action block 0 
 		position 0 0
-		sync gdlaser-** <1;:3> gsr2 9 <40> { color $colors } gsr2  3 <14> { color $csuff1  }  laser null 2 2 { s 1 }
+		sync gdlaser-** <1;:3> gsr2 9 <40> { color $colors } gsr2  3 <14> { color $csuff1  }  laser null 2 20 { s 1 }
 		##sync mulaser-*/b <1;:3> gsr2 9 <40> { color $colors }  safelaser 4 { }
 		##sync lightning-** <1;:183> gsr2 9 <40> { color $colors } gsr2 3 <13> { color $csuff }  pather 3 3 tprot cx 2 { }
 
 	
-## 7 Large bullets
+## 4 Large bullets
 phase 0
 	action block 0
 		position 4 0

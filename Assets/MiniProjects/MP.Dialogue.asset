@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e3bf11572e58e644b8d52bbf0f0bb284, type: 3}
+  m_Name: MP.Dialogue
+  m_EditorClassIdentifier: 
+  assetGroups:
+  - name: jy.1
+    files:
+    - locale: 0
+      file: {fileID: 4900000, guid: 22f1edefe0fe5e2438ba50e9605ddad2, type: 3}
+  - name: jy.2
+    files:
+    - locale: 0
+      file: {fileID: 4900000, guid: e7db115f64e6f5d4fb02942f78cebed7, type: 3}
+  - name: jy.3
+    files:
+    - locale: 0
+      file: {fileID: 4900000, guid: e9e153d3423848a40aefaf1a10d646bf, type: 3}
+  - name: jy.4
+    files:
+    - locale: 0
+      file: {fileID: 4900000, guid: 27652c3ce365fb14196f3df80a97688f, type: 3}

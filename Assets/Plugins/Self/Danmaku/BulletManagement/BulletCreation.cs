@@ -58,7 +58,7 @@ public struct DelegatedCreator {
 
     public void SFX() => SFXService.Request(style);
 
-    public void Simple(SyncHandoff sbh, [CanBeNull] BPY scale, [CanBeNull] TP dir, VTP path, uint? id) {
+    public void Simple(SyncHandoff sbh, [CanBeNull] BPY scale, [CanBeNull] SBV2 dir, VTP path, uint? id) {
         BulletManager.RequestSimple(style, scale, dir, new Velocity(path, ParentOffset, FacedRV2(sbh.rv2), Modifiers), 
             sbh.index, sbh.timeOffset, id);
     }
@@ -90,6 +90,9 @@ public struct DelegatedCreator {
     public void SummonRect(SyncHandoff sbh, string behid, TP4 color, BPRV2 loc, SMRunner sm, uint bpiid) {
         BulletManager.RequestRect(color, loc, sbh.index, bpiid, behid,transformParent, sm);
     }
+    public void SummonCirc(SyncHandoff sbh, string behid, TP4 color, BPRV2 loc, SMRunner sm, uint bpiid) {
+        BulletManager.RequestCirc(color, loc, sbh.index, bpiid, behid,transformParent, sm);
+    }
     public void SummonPowerup(SyncHandoff sbh, TP4 color, float time, float itrs, uint bpiid) {
         BulletManager.RequestPowerup(style, color, time, itrs, sbh.GCX.exec, sbh.index, bpiid);
     }
@@ -120,7 +123,7 @@ public struct DelegatedCreator {
 }
 
 public partial class BulletManager {
-    public static void RequestSimple(string styleName, [CanBeNull] BPY scale, [CanBeNull] TP dir, Velocity velocity, int firingIndex,
+    public static void RequestSimple(string styleName, [CanBeNull] BPY scale, [CanBeNull] SBV2 dir, Velocity velocity, int firingIndex,
         float timeOffset, uint? bpiid) {
         SimpleBullet sb = new SimpleBullet(scale, dir, velocity, firingIndex, bpiid ?? RNG.GetUInt(), timeOffset);
         GetMaybeCopyPool(styleName).Add(ref sb, true);
@@ -163,12 +166,21 @@ public partial class BulletManager {
         return GameObject.Instantiate(ResourceManager.GetSummonable(prefabName)).GetComponent<BehaviorEntity>();
     }
 
-    public static RectDrawer RequestRect(TP4 color, BPRV2 locScaleRot, int firingIndex, 
+    public static Drawer RequestDrawer(string kind, int firingIndex, 
+        uint bpiid, string behName, [CanBeNull] BehaviorEntity parent, SMRunner sm) => RequestSummon(true, kind, MovementModifiers.Default, Velocity.None, firingIndex, bpiid, behName,
+            parent, sm, null).GetComponent<Drawer>();
+
+    public static RectDrawer RequestRect(TP4 color, BPRV2 locScaleRot, int firingIndex,
         uint bpiid, string behName, [CanBeNull] BehaviorEntity parent, SMRunner sm) {
-        var rect = RequestSummon(true, "rect", MovementModifiers.Default, Velocity.None, firingIndex, bpiid, behName,
-            parent, sm, null).GetComponent<RectDrawer>();
+        var rect = RequestDrawer("rect", firingIndex, bpiid, behName, parent, sm) as RectDrawer;
         rect.Initialize(color, locScaleRot);
         return rect;
+    }
+    public static CircDrawer RequestCirc(TP4 color, BPRV2 locScaleRot, int firingIndex,
+        uint bpiid, string behName, [CanBeNull] BehaviorEntity parent, SMRunner sm) {
+        var circ = RequestDrawer("circ", firingIndex, bpiid, behName, parent, sm) as CircDrawer;
+        circ.Initialize(color, locScaleRot);
+        return circ;
     }
 
     public static PowerUp RequestPowerup(string style, TP4 color, float time, float itrs, [CanBeNull] BehaviorEntity parent, 

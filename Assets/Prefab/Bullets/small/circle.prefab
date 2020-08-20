@@ -63,8 +63,8 @@ MonoBehaviour:
     FlatColor: 1
     Color: 0
     WideColor: 0
-    FlatDark: 1
-    Dark: 0
+    FlatDark: 0
+    Dark: 1
     WideDark: 0
     Full: 0
     Inverted: 0

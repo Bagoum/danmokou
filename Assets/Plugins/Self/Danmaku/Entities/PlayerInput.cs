@@ -13,7 +13,6 @@ public class PlayerInput : BehaviorEntity {
     public SpriteRenderer hitboxSprite;
 
     [Header("Movement")] public float blueBoxRadius = .1f;
-    private Vector2 velocity = Vector2.zero;
     public float freeSpeed;
     public float focusSpeed;
     [Tooltip("120 frames per sec")] public int lnrizeSpeed = 10;
@@ -49,15 +48,18 @@ public class PlayerInput : BehaviorEntity {
 
     private float partialFatigue = 0f;
 
+    public static bool IsFocus => ChallengeManager.r.FocusAllowed && (ChallengeManager.r.FocusForced || InputManager.IsFocus);
+
     private void MovementUpdate(float dT, out float horiz_input, out float vert_input) {
         horiz_input = InputManager.HorizontalSpeed;
         vert_input = InputManager.VerticalSpeed;
-        hitboxSprite.enabled = InputManager.IsFocus || SaveData.s.UnfocusedHitbox;
+        hitboxSprite.enabled = IsFocus || SaveData.s.UnfocusedHitbox;
+        Vector2 velocity = Vector2.zero;
         if (AllowPlayerInput) {
-            velocity.x = horiz_input;
-            velocity.y = vert_input;
+            if (ChallengeManager.r.HorizAllowed) velocity.x = horiz_input;
+            if (ChallengeManager.r.VertAllowed) velocity.y = vert_input;
             lastDelta = velocity;
-        } else velocity = Vector2.zero;
+        }
         var velMag = velocity.magnitude;
         if (velMag > float.Epsilon) {
             velocity /= velMag;
@@ -69,7 +71,7 @@ public class PlayerInput : BehaviorEntity {
         } else {
             timeSinceLastStandstill = 0f;
         }
-        velocity *= InputManager.IsFocus ? focusSpeed : freeSpeed;
+        velocity *= IsFocus ? focusSpeed : freeSpeed;
         //Check bounds
         Vector2 pos = tr.position;
         if (pos.x <= XBounds.x) {

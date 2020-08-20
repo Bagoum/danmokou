@@ -441,9 +441,9 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     /// <summary>
     /// Run the attached behaviorScript.
     /// </summary>
-    protected void RunAttachedSM() {
+    public void RunAttachedSM() {
         if (behaviorScript != null) {
-            _ = BeginBehaviorSM(SMRunner.RunNoCancel(StateMachineManager.GetSMFromTextAsset(behaviorScript)), phaseController.WhatIsNextPhase(0));
+            _ = BeginBehaviorSM(SMRunner.RunNoCancel(StateMachineManager.FromText(behaviorScript)), phaseController.WhatIsNextPhase(0));
         }
     }
 
@@ -934,7 +934,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     public static readonly ExFunction hpRatio =
         ExUtils.Wrap<BehaviorEntity, BEHPointer>("HPRatio");
     [UsedImplicitly]
-    public static float HPRatio(BEHPointer behp) => behp.beh.Enemy.HPRatio;
+    public static float HPRatio(BEHPointer behp) => behp.beh.Enemy.EffectiveHPRatio;
 
     public static readonly ExFunction contains =
         ExUtils.Wrap<BehaviorEntity>("Contains", typeof(BEHPointer), typeof(Vector2));

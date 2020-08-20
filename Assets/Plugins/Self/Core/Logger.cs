@@ -15,16 +15,16 @@ public static class Log {
         ERROR = 7
     }
 
-    private const int MIN_LEVEL = (int) Level.DEBUG1;
-    private const int BUILD_MIN = (int) Level.DEBUG1;
+    private const int MIN_LEVEL = (int) Level.DEBUG2;
+    private const int BUILD_MIN = (int) Level.DEBUG2;
 
     public static void Unity(string msg, bool stackTrace = true, Level level = Level.INFO) {
-        msg = $"Frame {ETime.FrameNumber}: {msg}";
         if ((int) level < MIN_LEVEL) return;
 #if UNITY_EDITOR
 #else
         if ((int) level < BUILD_MIN) return;
 #endif
+        msg = $"Frame {ETime.FrameNumber}: {msg}";
         LogOption lo = stackTrace ? LogOption.None : LogOption.NoStacktrace;
         LogType unityLT = LogType.Log;
         if (level == Level.WARNING) unityLT = LogType.Warning;

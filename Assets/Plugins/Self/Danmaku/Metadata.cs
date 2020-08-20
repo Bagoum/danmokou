@@ -67,6 +67,7 @@ public readonly struct PhaseCompletion {
 
     public ItemDrops? DropItems {
         get {
+            if (GameManagement.campaign.mode.DisallowItems()) return null;
             if (Captured == true) return DropCapture;
             else if (Cleared == true) return DropClear;
             else if (noHits) return DropNoHit;

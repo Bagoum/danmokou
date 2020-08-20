@@ -207,6 +207,8 @@ public class PhaseProperty {
     /// spell-type cards. If the index is invalid, then no cutin will be summoned.
     /// </summary>
     public static PhaseProperty SpellCutin(int index) => new SpellCutinProp(index);
+
+    public static PhaseProperty Challenge(Challenge c) => new ChallengeProp(c);
     
     #region Impls
 
@@ -295,6 +297,11 @@ public class PhaseProperty {
         }
     }
 
+    public class ChallengeProp : PhaseProperty {
+        public readonly Challenge c;
+        public ChallengeProp(Challenge c) => this.c = c;
+    }
+
     #endregion
 }
 
@@ -321,6 +328,8 @@ public class PhaseProperties {
     public bool Lenient => lenient ?? phaseType?.IsLenient() ?? false;
     public readonly bool bossCutin = false;
     private readonly int? spellCutinIndex = null;
+
+    public readonly List<Challenge> challenges = new List<Challenge>();
 
     public bool GetSpellCutin(out GameObject go) {
         go = null;
@@ -365,11 +374,12 @@ public class PhaseProperties {
             } else if (prop is LivesOverrideProp lop) livesOverride = lop.lives;
             else if (prop is SpellCutinProp scp) spellCutinIndex = scp.index;
             else if (prop is RootProp rp) {
-                StateMachine rm = new ReflectableLASM(SaveData.Settings.TeleportAtPhaseStart ? 
-                    SMReflection.Position(_ => rp.x, _ => rp.y) : 
+                StateMachine rm = new ReflectableLASM(SaveData.Settings.TeleportAtPhaseStart ?
+                    SMReflection.Position(_ => rp.x, _ => rp.y) :
                     SMReflection.MoveTarget(BPYRepo.Const(rp.t), "io-sine", Parametrics.CXY(rp.x, rp.y)));
                 rootMoves.Add(rp.who == null ? rm : RetargetUSM.Retarget(rm, rp.who));
-            } else if (prop is PhaseProperty.EmptyProp) { }
+            } else if (prop is ChallengeProp clp) challenges.Add(clp.c);
+            else if (prop is PhaseProperty.EmptyProp) { }
             else throw new Exception($"Phase is not allowed to have properties of type {prop.GetType()}");
             
             if (rootMoves.Count > 0) rootMove = new ParallelSM(rootMoves, Enums.Blocking.BLOCKING);

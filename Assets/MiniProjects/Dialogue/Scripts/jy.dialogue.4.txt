@@ -1,0 +1,53 @@
+script
+place l1 reimu
+place l2 kasen
+place r1 junko
+place r2 yukari
+sre junko _
+sle reimu worry
+sre yukari worry
+sle kasen worry
+.z `What's going on here, Reimu?`
+sle reimu angry
+.z `These two were making a ruckus, so I started exterminating them.`
+sl kasen
+.z `Yukari and the nine-tails? 
+Yukari, can you and your friends at least avoid bothering us in the middle of the night?`
+sre yukari _
+.z `Yet naive you are, young hermit. Gensoukyou only continues to exist so long as we youkai create disturbances, at all times of year and under all colors of sky. You ought to be thanking us for our service.`
+slc
+.z `Yeah, sure, whatever you say.`
+sre junko _
+. `Oh, Skyf--`
+wait 1
+sle kasen cry
+.z `I hope you're not mixing me up with someone else, nine-tails. I am Kasen, the Hermit of Flower and Fruit.`
+sre junko worry
+.z `Huh? No, this can't be right. Am I missing something?`
+sre yukari worry
+.z `Junko, listen here. (whisper whisper whisper)`
+sre junko special
+.z `Oh, I see. Is that how it is? Interpersonal politics are so confounding a matter.`
+slce worry
+.z `Reimu, all the animals around the village are in a stir. Do you know what's going on?`
+sle reimu _
+.z `No.`
+sl kasen
+.z `In that case, you may want to go to the village to stand guard. It would be terrible if something happened there.`
+sle reimu worry
+.z `It's past midnight, Kasen. The only place I'm going is to sleep.`
+sre junko _
+.z `We have business in the village today, don't we, old crow?`
+sre yukari _
+.z `Well, now we do.`
+sle reimu angry
+.z `Geh!`
+sle kasen worry
+.z `Reimu, are you going to sleep in with someone as dangerous as Junko loitering around the village? Is that how a shrine maiden ought to carry out her duties?`
+sl reimu
+.z `Fine! I guess I have no choice but to look out for the villagers, do I? Especially if this psycho will be there.`
+sle junko special
+.z `I am no longer the one you should worry about, little miko. Your keepers hide much from you.`
+sle mima _
+.z `The End! Thanks for playing!`
+

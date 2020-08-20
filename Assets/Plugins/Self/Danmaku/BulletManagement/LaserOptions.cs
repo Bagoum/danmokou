@@ -183,7 +183,7 @@ public readonly struct RealizedLaserOptions {
             lpath = new LaserVelocity(localOffset.angle + (opts.rotateOffset?.Invoke(gcx) ?? 0f), opts.rotate?.Add?.Invoke(gcx, bpiid), modifiers);
             isStatic = true;
         }
-        smr = SMRunner.Run(opts.sm, cT);
+        smr = SMRunner.Run(opts.sm, cT, gcx);
         yScale = (opts.yScale?.Invoke(gcx) ?? 1f) * DEFAULT_LASER_WIDTH;
         hueShift = opts.hueShift?.Invoke(gcx) ?? 0f;
     }

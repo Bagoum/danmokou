@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9a92301f86b4dd690557658c7243e8b, type: 3}
+  m_Name: JY.Junko
+  m_EditorClassIdentifier: 
+  boss: {fileID: 6003014192476353498, guid: cb2d4430c7bd48848833db5439ec92c6, type: 3}
+  CardPracticeName: 
+  stateMachine: {fileID: 0}
+  key: jy.junko
+  casualName: 
+  casualNameJP: 
+  displayName: Junko
+  displayTitle: Nine-Tailed<br>Demon of<br>Hatred
+  trackName: "\u7D14\u5F27"
+  colors: {fileID: 11400000, guid: 82c24e8b13f850f4497e2c3002e3fcaa, type: 2}
+  rotator: lerpback 10 14 20 24 (mod 24 * 1h t) -90 200
+  profile:
+    image: {fileID: 2800000, guid: 3572dc5b1c7361a49bcc1242b282703b, type: 3}
+    offsetX: 0.497
+    offsetY: 0.635
+    zoom: 6.99
+  defaultNonBG: {fileID: 0}
+  defaultSpellBG: {fileID: 0}
+  defaultIntoSpellTransition: {fileID: 0}
+  defaultIntoNonTransition: {fileID: 0}
+  bossCutin: {fileID: 0}
+  spellCutins:
+  - {fileID: 160725723660692450, guid: a87c0f655e476a5468a29ec2ce5e2246, type: 3}

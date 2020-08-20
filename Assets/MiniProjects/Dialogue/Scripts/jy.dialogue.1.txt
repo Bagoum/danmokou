@@ -1,0 +1,89 @@
+script
+place l1 reimu
+place r2 yukari
+sle reimu worry
+sre yukari happy
+.z `Ah, Reimu, how are you doing?`
+slc
+.z `I thought I heard some suspicious noises, but it was just you?
+What are you doing outside this late?`
+srce _
+.z `After our little escapade during the Imperishable Night incident, I've really grown to like the sounds of the night. So sometimes I sit outside and listen to the nightbugs.`
+slc
+.z `Thanks to our little escapade, I have flashbacks of getting blasted by Marisa's lasers whenever I hear the sound of crickets. But if you're into that, then sure. Have fun.`
+.z `Next time, don't make so much noise, OK? See ya.`
+sre junko _
+.z `Ah, old crow! I was looking for you.`
+place r1 junko
+setstandopacity junko 0
+fadestandin junko 1
+.z `What do you think about publicly announcing that little incident in the morning? The Skyfeller estimates that the information will leak either way by tomorrow evening.`
+srce special
+.z `And if you wish to stand above the village gates, backlit by the dawn sun, holding high the decapitated head of an overthrown monarch, then you ought to do it when this day breaks.`
+.z `I prefer not to engage in such aesthetics, but I know how you revolutionaries adore them.`
+sre yukari surprise
+.z `Junko?! Don't discuss sensitive matters in front of others!`
+sre junko worry
+.z `Others? Oh, now that I look closer, is that the Hakurei shrine maiden there? I was so sure it was just a tree.`
+sre junko normal
+.z `Little miko, I have a proposition for you.`
+slce angry
+.z `Huh? I don't want anything to do with you. Leave me out of your youkai conspiracies. I'll exterminate you <i>after</i> you do something bad.`
+srce special
+.z `Little miko, you resent the Lunarians for taking Gensoukyou hostage and tricking you into helping them, do you not?`
+slce worry
+.z `...Well, yeah, I guess.`
+srce _
+.z `And you know the real reason for your rocket trip to the moon, do you not?`
+slce _
+.z `Real reason? We just went there for fun.`
+srce worry
+.z `...Well, it is not within my right to disabuse you of this notion, but let it be said that Yukari also resents the Lunarians in no small amount. Especially those two protégés of the lunar sage. `
+srce special
+.z `While you were cosplaying astronauts, Yukari was-- in the lack of better phrasing-- trolling the Watatsukis.` 
+srce angry
+.z `And of course, you know that my sole reason for existing is to annihilate the Lunarians.`
+slce worry
+.z `Okay, sure, but what does any of this mean?`
+srce special
+.z `It means the two of us have decided to work together to bring down the moon.`
+slce surprise
+.z `What?! You can't just bring the moon down here! That'd cause massive meteorological destruction!`
+srce worry
+.z `...Metaphorically speaking. To be more literal, we will take over control of the Lunar Capital and bring it under the control of the youkai here on Earth. The physical body of the moon will stay where it is.`
+srce special
+.z `Though, to be clear, I have no interest in anything but the end of Lunarian rule. It is Yukari and her allies who are invested in bolstering the position of the Earth youkai.`
+.z `So. Why don't you join us? You may be able to negotiate a partition for the humans as well.`
+srce angry
+.z `Let us together shoot down the moon, as they shot down our suns!`
+slce worry
+.z `Hmm...`
+sre yukari worry
+.z `Junko, I don't think we can just ask her like that. She's too stup-- excuse me, she, uh, prefers to think of ethics in terms of abstract rules rather than concrete empirical terms.`
+sre junko worry
+.z `Is that so? I was thoroughly impressed by her feats during my botched attempt at invading the moon. Though it is true that I only got to see her strength, not her... mental fortitude.`
+slce angry
+.z `No!`
+srce surprise
+.z `What?!`
+slc
+.z `If we take control of the moon, that would just mean more people showing up at my shrine to bother me! More incidents! More annoyances!
+I won't accept that!`
+srce angry
+.z `I did not expect that your heart would be this small, little miko.`
+.z `You firsthand saw the technology and military might of the Capital, and you still do not fear the day they shall break their centuries-long silence to rain hellfire upon this impure land?`
+.z `Surely you have heard tales of the uninhabitable wastes that became of Gensoukyou during the closing act of the Second War of the Skies? The old crow and I both suffered through those times. The stories do not justice to the horrors.`
+.z `Our very existence continues or ceases at the whim of the Lunarians. As a steward of the barrier, it is your duty to defend it against the them.`
+.z `To think that it is a child of such impure thought and middling empathy that stands guard over the frontier that maintains this plane... You leave me no choice, little miko.`
+srce special
+.z `We'll have to go find someone else. As it stands, we don't have enough people.`
+sre yukari worry
+.z `Sorry to bother you, Reimu. We'll take our leave now.`
+slc
+.z `No! I won't let you two go!
+I will defend the borders of Gensoukyou at any cost, even if that means fighting you both!`
+src
+.z `But Reimu, we're not infringing upon the borders. If anything, we're expanding them. `
+slc
+.z `I don't care! It's all the same to me!
+I'll show you my resolve as a shrine maiden!`

@@ -65,7 +65,7 @@ PrefabInstance:
     - target: {fileID: 4351406186802378309, guid: 33512ebca480f4f44bac2105265c3626,
         type: 3}
       propertyPath: m_Name
-      value: gdlaser1u
+      value: gdlaser
       objectReference: {fileID: 0}
     - target: {fileID: 6140576478511871678, guid: 33512ebca480f4f44bac2105265c3626,
         type: 3}

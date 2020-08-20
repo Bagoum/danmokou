@@ -21,12 +21,7 @@ public class ResourceManager : MonoBehaviour {
     private static ResourceManager main;
     public NamedEffectStrategy[] effects;
     public NamedBackgroundTransition[] bgTransitions;
-    public SOPrefabs summonables;
     public SOPrefabs backgrounds;
-    /// <summary>
-    /// Boss metadata used by PatternProperties.
-    /// </summary>
-    public BossConfig[] bossMetadata;
     private static readonly Dictionary<string, EffectStrategy> effectMap = new Dictionary<string, EffectStrategy>();
     private static readonly Dictionary<string, GameObject> Summonables = new Dictionary<string, GameObject>();
     private static readonly Dictionary<string, GameObject> Backgrounds = new Dictionary<string, GameObject>();
@@ -38,7 +33,9 @@ public class ResourceManager : MonoBehaviour {
             effectMap[effects[ii].name] = effects[ii].effect;
         }
         foreach (var tr in bgTransitions) Transitions[tr.name] = tr.transition;
-        LoadSOPrefabs(summonables, Summonables);
+        foreach (var summonables in GameManagement.References.summonables) {
+            if (summonables != null) LoadSOPrefabs(summonables, Summonables);
+        }
         LoadSOPrefabs(backgrounds, Backgrounds);
     }
 
@@ -51,7 +48,7 @@ public class ResourceManager : MonoBehaviour {
     }
 
     public static BossConfig GetBoss(string key) {
-        foreach (var b in main.bossMetadata) {
+        foreach (var b in GameManagement.References.bossMetadata) {
             if (b  != null && b.key == key) return b;
         }
         throw new Exception($"No boss configuration exists for key {key}.");

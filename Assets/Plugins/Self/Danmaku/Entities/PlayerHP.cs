@@ -10,7 +10,7 @@ public class PlayerHP : CoroutineRegularUpdater {
     private Transform tr;
     private int invulnerabilityCounter = 0;
 
-    private DeletionMarker<Action<int>> damageListener;
+    private DeletionMarker<Action<(int, bool)>> damageListener;
     private DeletionMarker<Action<int, bool>> invulnListener;
 
 
@@ -51,11 +51,14 @@ public class PlayerHP : CoroutineRegularUpdater {
         return effectGO;
     }
 
-    public void Hit(int dmg) {
-        if (dmg == 0) return;
-        if (dmg > 0 && invulnerabilityCounter > 0) return;
-        GameManagement.campaign.AddLives(-dmg);
-        if (dmg > 0) {
+    [ContextMenu("Take 1 Damage")]
+    public void _takedmg() => Hit((1, false));
+    public void Hit((int dmg, bool force) req) {
+        if (req.dmg == 0) return;
+        if (req.dmg > 0 && invulnerabilityCounter > 0 && !req.force) return;
+        GameManagement.campaign.AddLives(-req.dmg);
+        if (req.dmg > 0) {
+            RaikoCamera.ShakeExtra(2, 0.5f);
             InvokeEffectWithTime(OnHitEffect, hitInvuln);
             Invuln(hitInvulnFrames);
         }

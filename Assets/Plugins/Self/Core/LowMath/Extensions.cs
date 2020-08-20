@@ -50,8 +50,8 @@ public static class ArrayExtensions {
     public static T ModIndex<T>(this T[] arr, int index) => arr[M.Mod(arr.Length, index)];
 
     [CanBeNull]
-    public static T Try<T>(this T[] arr, int index) where T : class {
-        if (index >= 0 && index < arr.Length) return arr[index];
+    public static T Try<T>(this IList<T> arr, int index) where T : class {
+        if (index >= 0 && index < arr.Count) return arr[index];
         return null;
     }
     public static bool Try<T>(this T[] arr, int index, out T res) where T : class {
@@ -93,7 +93,7 @@ public interface IUnrollable<T> {
 }
 
 public static class IEnumExtensions {
-    public static IEnumerable<(int, T)> Enumerate<T>(this IEnumerable<T> arr) => arr.Select((x, i) => (i, x));
+    public static IEnumerable<(int idx, T val)> Enumerate<T>(this IEnumerable<T> arr) => arr.Select((x, i) => (i, x));
 
     public static void ForEachI<T>(this IEnumerable<T> arr, Action<int,T> act) {
         foreach (var (i,ele) in arr.Enumerate()) {
@@ -109,6 +109,10 @@ public static class IEnumExtensions {
                 yield return p;
             }
         }
+    }
+
+    public static IEnumerable<int> Range(this int max) {
+        for (int ii = 0; ii < max; ++ii) yield return ii;
     }
 }
 
@@ -196,6 +200,11 @@ public static class DictExtensions {
 
     public static V GetOrDefault<K, V>(this Dictionary<K, V> dict, K key) {
         if (dict.TryGetValue(key, out var res)) return res;
+        return default;
+    }
+
+    public static V GetOrDefault2<K1, K2, V>(this Dictionary<K1, Dictionary<K2, V>> dict, K1 key, K2 key2) {
+        if (dict.TryGetValue(key, out var res) && res.TryGetValue(key2, out var res2)) return res2;
         return default;
     }
 

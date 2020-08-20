@@ -16,8 +16,6 @@ using ExPred = System.Func<DMath.TExPI, TEx<bool>>;
 using ExVTP = System.Func<Danmaku.ITExVelocity, TEx<float>, DMath.TExPI, DMath.RTExV2, TEx<UnityEngine.Vector2>>;
 using ExLVTP = System.Func<Danmaku.ITExVelocity, RTEx<float>, RTEx<float>, DMath.TExPI, DMath.RTExV2, TEx<UnityEngine.Vector2>>;
 using ExGCXF = System.Func<DMath.TExGCX, TEx>;
-using ExSBF = System.Func<Danmaku.TExSBC, TEx<int>, TEx<float>>;
-using ExSBV2 = System.Func<Danmaku.TExSBC, TEx<int>, TEx<UnityEngine.Vector2>>;
 using ExSBCF = System.Func<Danmaku.TExSBC, TEx<int>, DMath.TExPI, TEx>;
 using ExSBPred = System.Func<Danmaku.TExSBC, TEx<int>, DMath.TExPI, TEx<bool>>;
 
@@ -33,7 +31,7 @@ public static partial class Reflector {
             typeof(BehaviorEntity.BulletControls), typeof(BulletManager.SimplePoolControls), typeof(BehaviorEntity.PoolControls),
             typeof(CurvedTileRenderLaser.PoolControls), typeof(SBFRepo), typeof(SBV2Repo), 
             typeof(BPRV2Repo), typeof(GenCtxProperty), typeof(LaserOption), typeof(BehOption), typeof(SBPredicates), typeof(Compilers),
-            typeof(Synchronization), typeof(PhaseProperty), typeof(PatternProperty)
+            typeof(Synchronization), typeof(PhaseProperty), typeof(PatternProperty), typeof(Challenge)
         }) {
             ReflConfig.RecordPublic(t);
         }
@@ -56,12 +54,12 @@ public static partial class Reflector {
         AllowMath<TExPI, TEx<Vector3>>();
         AllowMath<TExPI, TEx<Vector4>>();
         AllowMath<TExPI, TEx<V2RV2>>();
-        AllowMath<TExSB, TEx<float>>();
-        AllowMath<TExSB, TEx<bool>>();
-        AllowMath<TExSB, TEx<Vector2>>();
-        AllowMath<TExSB, TEx<Vector3>>();
-        AllowMath<TExSB, TEx<Vector4>>();
-        AllowMath<TExSB, TEx<V2RV2>>();
+        AllowMath<RTExSB, TEx<float>>();
+        AllowMath<RTExSB, TEx<bool>>();
+        AllowMath<RTExSB, TEx<Vector2>>();
+        AllowMath<RTExSB, TEx<Vector3>>();
+        AllowMath<RTExSB, TEx<Vector4>>();
+        AllowMath<RTExSB, TEx<V2RV2>>();
         foreach (var t in FallThroughOptions) {
             t.Value.Sort((x,y) => x.Item1.priority.CompareTo(y.Item1.priority));
         }

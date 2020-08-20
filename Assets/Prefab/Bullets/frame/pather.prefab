@@ -107,7 +107,7 @@ MonoBehaviour:
     tr: {fileID: 2951577401640358143}
     sortingLayer: Projectile
     dontUpdateTimeAfter: 0
-    lineRadius: 0.015
+    lineRadius: 0.012
     headCutoffRatio: 0.05
     tailCutoffRatio: 0.05
     trail: {fileID: 5759808010037363730}

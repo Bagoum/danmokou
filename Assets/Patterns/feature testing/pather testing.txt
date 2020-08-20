@@ -7,11 +7,11 @@ phase 0
 <!> type non "hello"
 phase 0
     action block 0
-		beh-control persist pather18-blue/w flipx< -4.8 _
-		async pather18-blue/w <.5;:120> gsr2 20 <5.87> {
+		beh-control persist pather-blue/w flipx< -4.8 _
+		async pather-blue/w <.5;:120> gsr2 20 <5.87> {
 		} pather 2 2 tprot cx 1 { }
 		position -3 0
-		async pather18-red/w <2.5;:> pather 2 2 :: {
+		async pather-red/w <2.5;:> pather 2 2 :: {
 			t	* 5 t
 		} roffset pxy
 			+ * 0.4 &t cosine 3 0.2 &t

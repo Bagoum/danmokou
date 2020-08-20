@@ -26,6 +26,7 @@ public class Enemy : RegularUpdater {
 
     private BehaviorEntity beh;
     public bool takesBossDamage;
+    [CanBeNull] private (bool _, Enemy to)? divertHP = null;
     public int HP = 500;
     public int maxHP = 1000;
     private bool suicideFire = true;
@@ -60,7 +61,6 @@ public class Enemy : RegularUpdater {
     public RFloat hpRadius;
     public RFloat hpThickness;
 
-    private float currHPRatio;
     //Previously 6f, increasing for fire shader
     private const float HPLerpRate = 14f;
 
@@ -102,8 +102,8 @@ public class Enemy : RegularUpdater {
             healthbarSize = 1f;
             SetHPBarColors(PhaseType.NONSPELL);
             hpPB.SetColor(PropConsts.unfillColor, unfilledColor);
-            currHPRatio = HPRatio;
-            hpPB.SetFloat(PropConsts.fillRatio, currHPRatio);
+            _displayHPRatio = HPRatio;
+            hpPB.SetFloat(PropConsts.fillRatio, DisplayHPRatio);
             hpPB.SetColor(PropConsts.fillColor, currPhase.color1);
             healthbarSprite.SetPropertyBlock(hpPB);
         }
@@ -177,13 +177,17 @@ public class Enemy : RegularUpdater {
         RecheckGraphicsSettings();
     }
 
-    public float HPRatio => (float) HP / maxHP;
+    public void DivertHP(Enemy to) => divertHP = (false, to);
+    private float HPRatio => (float) HP / maxHP;
+    private float _displayHPRatio;
+    public float EffectiveHPRatio => divertHP?.to.EffectiveHPRatio ?? HPRatio;
+    public float DisplayHPRatio => divertHP?.to.DisplayHPRatio ?? _displayHPRatio;
 
-    public Color HPColor => Color.Lerp(currPhase.color2, currPhase.color1, Mathf.Pow(currHPRatio, 1.5f));
+    public Color HPColor => Color.Lerp(currPhase.color2, currPhase.color1, Mathf.Pow(_displayHPRatio, 1.5f));
     public override void RegularUpdate() {
         if (healthbarSprite != null) {
-            currHPRatio = Mathf.Lerp(currHPRatio, HPRatio, HPLerpRate * ETime.FRAME_TIME);
-            hpPB.SetFloat(PropConsts.fillRatio, currHPRatio);
+            _displayHPRatio = Mathf.Lerp(_displayHPRatio, HPRatio, HPLerpRate * ETime.FRAME_TIME);
+            hpPB.SetFloat(PropConsts.fillRatio, DisplayHPRatio);
             //Approximation to make the max color appear earlier
             hpPB.SetColor(PropConsts.fillColor, HPColor);
             hpPB.SetFloat(PropConsts.time, beh.rBPI.t);
@@ -236,6 +240,10 @@ public class Enemy : RegularUpdater {
     private float SHOTGUN_MIN => takesBossDamage ? SHOTGUN_DIST_MIN_BOSS : SHOTGUN_DIST_MIN;
     private const float SHOTGUN_MULTIPLIER = 1.2f;
     public void DamageMe(int dmg, SOCircle firer) {
+        if (divertHP != null) {
+            divertHP.Value.to.DamageMe(dmg, firer);
+            return;
+        }
         if (!Vulnerable) return;
         float dstToFirer = (firer.location - beh.rBPI.loc).magnitude;
         float shotgun = (SHOTGUN_MIN - dstToFirer) / (SHOTGUN_MIN - SHOTGUN_MAX);
@@ -273,15 +281,20 @@ public class Enemy : RegularUpdater {
         hpPB.SetFloat(PropConsts.R2CPhaseStart, healthbarStart + healthbarSize);
         hpPB.SetFloat(PropConsts.R2NPhaseStart, healthbarStart);
     }
+
+    [CanBeNull] public IReadOnlyList<Enemy> Subbosses { get; set; } = null;
     public void SetHPBar(float portion, PhaseType color) {
         if (healthbarStart < 0.1f || color.RequiresFullHPBar()) {
             healthbarStart = 1f;
         } else {
-            currHPRatio = 1f + currHPRatio * healthbarSize / (healthbarStart * portion);
+            _displayHPRatio = 1f + _displayHPRatio * healthbarSize / (healthbarStart * portion);
         }
         healthbarSize = healthbarStart * portion;
         healthbarStart -= healthbarSize;
         SetHPBarColors(color);
+        if (Subbosses != null) {
+            foreach (var e in Subbosses) e.SetHPBar(portion, color);
+        }
     }
 
     //"Slower" than using a dictionary, but there are few enough colliding persistent objects at a time that 

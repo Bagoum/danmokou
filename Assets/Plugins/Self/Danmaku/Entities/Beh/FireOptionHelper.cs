@@ -11,7 +11,7 @@ public class FireOptionHelper : BehaviorEntity {
     public override void RegularUpdate() {
         //If the player is not firing, we have to cancel.
         //However, if the player is firing but in the other method, we pause.
-        if (!FireOption.FiringAndAllowed || (fireIfFocus == InputManager.IsFocus)) {
+        if (!FireOption.FiringAndAllowed || (fireIfFocus == PlayerInput.IsFocus)) {
             base.RegularUpdate();
         }
     }

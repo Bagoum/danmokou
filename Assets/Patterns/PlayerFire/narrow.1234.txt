@@ -7,13 +7,13 @@ gtr {
 		delay * 3 p
 		sfx pc-fire
 		colorf { red pink } p
-	} ps 24 24 oh1 tprot py 13
+	} ps 25 25 oh1 tprot py 13
 	## free cancellation
 	noop
 	## focus
 	async fireball-*/ <> gcr2 12 _ <> { 
 		sfx pc-fire 
 		colorf { red pink } // p 2
-	} ps 27 27 oh1 tprot py + 13 * 3.5 // p 2
+	} ps 28 28 oh1 tprot py + 13 * 3.5 // p 2
 	## focus cancellation
 	noop

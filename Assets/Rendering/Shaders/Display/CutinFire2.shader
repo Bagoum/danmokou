@@ -3,7 +3,6 @@
 		[PerRendererData] _MainTex("Sprite Texture", 2D) = "white" {}
 		 _Content("Texture", 2D) = "white" {}
 		[Enum(One,1,OneMinusSrcAlpha,10)] _BlendTo("Blend mode", Float) = 10
-		_T("Time", Range(0, 5)) = 1
 		_BX("BlocksX", Float) = 6
 		_BY("BlocksY", Float) = 6
 		_Mult("Multiplier", Range(0.5, 2)) = 1
@@ -50,7 +49,6 @@
 
             float _BX;
             float _BY;
-            float _T;
             
             float _Mult;
             
@@ -63,10 +61,10 @@
 			    float2 uv = f.uv - center;
 			    //when this mod loops, a separation line will appear
 			    //uv = float2(length(uv), (PI + atan2(uv.y, uv.x)) / TAU);
-			    uv.y -= _T / 20; //rotation effect
-			    uv.x += _T / 7 * _XSpeed;
+			    uv.y -= _Time.y / 20; //rotation effect
+			    uv.x += _Time.y / 7 * _XSpeed;
 			    //uv.x = mod1(uv.x, 1);
-                float3 suvt = float3(s(uv, _BX, _BY), _T / 1);
+                float3 suvt = float3(s(uv, _BX, _BY), _Time.y / 1);
                 //float noise = c01(voronoi3D(suvt).z * 4);
                 
                 //This shader is used on the main menu, so I am avoiding using Layer in order to keep execution fast on first initialization.

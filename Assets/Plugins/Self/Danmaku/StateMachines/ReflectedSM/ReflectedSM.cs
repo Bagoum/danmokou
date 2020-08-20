@@ -43,6 +43,7 @@ public static class SMReflection {
         }
     }
 
+    #region Effects
     /// <summary>
     /// `crosshair`: Create a crosshair that follows the target for a limited amount of time
     /// and saves the target's position in public data hoisting.
@@ -91,6 +92,8 @@ public static class SMReflection {
         });
     };
 
+    #endregion
+    
     public static TaskPattern dBossExplode(TP4 powerupColor, TP4 powerdownColor) {
         var sp = Sync("powerup1", _ => V2RV2.Zero, Powerup2Static("_", "_", powerupColor, powerdownColor, _ => 1.8f, _ => 4f, _ => 0f, _ => 2f));
         var ev = EventLASM.BossExplode();
@@ -149,6 +152,11 @@ public static class SMReflection {
         GameManagement.campaign.ExternalLenience(t);
         return WaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, t, false);
     };
+    public static TaskPattern StageDeannounce() => smh => {
+        UIManager.DeannounceStage(smh.cT, out float t);
+        GameManagement.campaign.ExternalLenience(t);
+        return WaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, t, false);
+    };
     
     #endregion
 
@@ -163,7 +171,7 @@ public static class SMReflection {
         return smh => {
             var beh = Object.Instantiate(bossCfg.boss).GetComponent<BehaviorEntity>();
             beh.phaseController.SetGoTo(1, null);
-            return beh.Initialize(SMRunner.Cull(StateMachineManager.GetSMFromTextAsset(bossCfg.stateMachine), smh.cT));
+            return beh.Initialize(SMRunner.Cull(StateMachineManager.FromText(bossCfg.stateMachine), smh.cT));
         };
     }
 
@@ -411,6 +419,13 @@ public static class SMReflection {
         return Task.CompletedTask;
     };
 
+    /// <summary>
+    /// Link this entity's HP pool to another enemy. The other enemy will serve as the source and this will simply redirect damage.
+    /// </summary>
+    public static TaskPattern DivertHP(BEHPointer target) => smh => {
+        smh.Exec.Enemy.DivertHP(target.beh.Enemy);
+        return Task.CompletedTask;
+    };
     
     #endregion
     
@@ -473,9 +488,9 @@ public static class SMReflection {
                     throw new Exception("Cannot use fire command on a BehaviorEntity that is not an Option");
             if (!FireOption.FiringAndAllowed) await WaitingUtils.WaitForUnchecked(o, smh.cT, () => FireOption.FiringAndAllowed);
             smh.ThrowIfCancelled();
-            var (firer, onCancel, inputReq) = InputManager.IsFocus ?  
-                (focusFire, focusCancel, (Func<bool>) (() => InputManager.IsFocus)) :
-                (freeFire, freeCancel, (Func<bool>) (() => !InputManager.IsFocus));
+            var (firer, onCancel, inputReq) = PlayerInput.IsFocus ?  
+                (focusFire, focusCancel, (Func<bool>) (() => PlayerInput.IsFocus)) :
+                (freeFire, freeCancel, (Func<bool>) (() => !PlayerInput.IsFocus));
             var fireCTS = new CancellationTokenSource();
             var joint = CancellationTokenSource.CreateLinkedTokenSource(smh.cT, fireCTS.Token);
             var joint_smh = smh;

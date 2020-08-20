@@ -1,0 +1,19 @@
+gtr {
+	wt 12 _
+	wait-child
+} fire
+	## free fire
+	async sakura-*/ <> gcr2 12 _ <> { 
+		delay * 3 p
+		sfx pc-fire
+		colorf { red green } p
+	} ps 25 25 oh3 tprot py 13
+	## free cancellation
+	noop
+	## focus
+	async sakura-*/ <> gcr2 12 _ <> { 
+		sfx pc-fire 
+		colorf { red green } // p 2
+	} ps 28 28 oh3 tprot py + 13 * 3.5 // p 2
+	## focus cancellation
+	noop

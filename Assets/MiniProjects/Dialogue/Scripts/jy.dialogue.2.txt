@@ -1,0 +1,36 @@
+script
+place l1 reimu
+place r1 junko
+place r2 yukari
+sre junko special
+sle reimu worry
+sre yukari angry
+.z `Hey, Junko.`
+sr junko
+.z `Is there something wrong, old crow?`
+sre yukari surprise
+.z `Of course there is! Why won't you let me do my Border of Wave and Particle?`
+sre junko worry
+.z `Your... what?`
+sre yukari angry
+.z `My Border of Wave and Particle! I keep trying to fire one, and you keep turning it into a circle!`
+sre junko special
+.z `I am certain that, at the least just now, I was using spheres and not circles.`
+sre yukari cry
+.z `That's not the point!`
+sre junko worry
+.z `It seems that I do not understand your actions here, old crow. Are you telling me that just now, when you were firing danmaku in childishly spiral-shaped patterns, that you were in fact using a complex spellcard technique?`
+sre junko special
+.z `It appeared to me that you were just dropping fodder randomly for me to purify.`
+slc
+.z `Wait, Yukari, you're still using BoWaP? It's 2020, Mima is back, and you're still using BoWaP?`
+sr yukari
+.z `I...`
+sre junko _
+.z `Well, I suppose the Skyfeller attracts all kinds of followers. I may not understand your reasons, but I shall try to avoid entirely purifying your, uh, Barter of Wafer and Barnacle.`
+.z `My circles would be somewhat impure as a result, but I suppose it bears no real consequence for this sparring match.`
+sre junko special
+.z `Or, if you run two of them at a time, I can purify one and leave the other. Would you like to take a break for a short strategy meeting?`
+sre yukari angry
+.z `No. We'll do it live.`
+

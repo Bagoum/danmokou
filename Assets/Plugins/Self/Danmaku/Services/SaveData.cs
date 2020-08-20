@@ -1,48 +1,72 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Danmaku;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.Profiling;
+using KC = UnityEngine.KeyCode;
+using static SaveUtils;
+using static SM.SMAnalysis;
 
 public static class Consts {
     public static readonly (int w, int h) BestResolution = (3840, 2160);
 }
 public static class SaveData {
-    private const string DIR = "Saves/";
     private const string SETTINGS = "settings.txt";
     private const string RECORD = "record.txt";
-    private static void Write(string file, object obj) {
-        if (!Directory.Exists(DIR)) Directory.CreateDirectory(DIR);
-        using (StreamWriter sw = new StreamWriter($"{DIR}{file}")) {
-            sw.WriteLine(JsonConvert.SerializeObject(obj, Formatting.Indented));
-        }
-    }
-    [CanBeNull]
-    private static T Read<T>(string file) where T : class {
-        try {
-            using (StreamReader sr = new StreamReader($"{DIR}{file}")) {
-                return JsonConvert.DeserializeObject<T>(sr.ReadToEnd());
-            }
-        } catch (Exception e) {
-            Log.Unity($"Couldn't read {typeof(T).RName()} from file {DIR}{file}.", false, Log.Level.WARNING);
-            return null;
-        }
-    }
 
     public class Record {
         public bool TutorialDone = false;
         public HashSet<string> CompletedCampaigns = new HashSet<string>();
         [JsonIgnore]
-        public bool MainCampaignCompleted => CompletedCampaigns.Contains(MainMenu.main.campaign.key);
+        public bool MainCampaignCompleted => CompletedCampaigns.Contains(MainMenuCampaign.main.campaign.key);
+        //day key, boss key, raw phase index, challenge index
+        public Dictionary<string, Dictionary<string, Dictionary<int, Dictionary<int, Dictionary<DifficultySet, ChallengeCompletion>>>>> SceneRecord = new Dictionary<string, Dictionary<string, Dictionary<int, Dictionary<int, Dictionary<DifficultySet, ChallengeCompletion>>>>>();
+
+        [CanBeNull]
+        private Dictionary<int, Dictionary<int, Dictionary<DifficultySet, ChallengeCompletion>>>
+            BossRecord(DayPhase phase) => SceneRecord.GetOrDefault2(phase.boss.day.day.key, phase.boss.boss.key);
+
+        public bool ChallengeCompleted(DayPhase phase, int c) =>
+            (BossRecord(phase)?.GetOrDefault2(phase.phase.index, c)?.Count ?? 0) > 0;
+
+        public bool ChallengeCompleted(DayPhase phase, Challenge c) =>
+            ChallengeCompleted(phase, phase.challenges.IndexOf(c));
+
+        public bool PhaseCompletedOne(DayPhase phase) {
+            for (int ii = 0; ii < phase.challenges.Length; ++ii) {
+                if (ChallengeCompleted(phase, ii)) return true;
+            }
+            return false;
+        }
+        public bool PhaseCompletedAll(DayPhase phase) {
+            for (int ii = 0; ii < phase.challenges.Length; ++ii) {
+                if (!ChallengeCompleted(phase, ii)) return false;
+            }
+            return true;
+        }
+
+        public void CompleteChallenge(ChallengeRequest cr) {
+            var dfcMap = SceneRecord.SetDefault(cr.Day.key).SetDefault(cr.Boss.key)
+                .SetDefault(cr.phase.phase.index).SetDefault(cr.ChallengeIdx);
+            dfcMap[cr.difficulty] = new ChallengeCompletion();
+        }
     }
     public class Settings {
-        public bool Shaders = true;
         public bool AllowInputLinearization = false;
+    #if VER_BRUH
+        public Locale Locale = Locale.JP;
+        public bool Shaders = false;
+        public bool LegacyRenderer = true;
+    #else
+        public Locale Locale = Locale.EN;
+        public bool Shaders = true;
         public bool LegacyRenderer = false;
+    #endif
         public int RefreshRate = 60;
         public (int w, int h) Resolution = Consts.BestResolution;
         public bool Dialogue = true;
@@ -56,6 +80,7 @@ public static class SaveData {
         public int Vsync = 1;
         public bool UnfocusedHitbox = true;
         public float DialogueWaitMultiplier = 1f;
+        public float BGMVolume = 1f;
         public bool Backgrounds = true;
 
         public static int DefaultRefresh {

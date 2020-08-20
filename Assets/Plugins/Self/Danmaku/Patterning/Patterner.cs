@@ -16,8 +16,6 @@ using ExBPY = System.Func<DMath.TExPI, TEx<float>>;
 using ExTP = System.Func<DMath.TExPI, TEx<UnityEngine.Vector2>>;
 using ExBPRV2 = System.Func<DMath.TExPI, TEx<DMath.V2RV2>>;
 using GCP = Danmaku.GenCtxProperty;
-using ExSBF = System.Func<Danmaku.TExSBC, TEx<int>, TEx<float>>;
-using ExSBV2 = System.Func<Danmaku.TExSBC, TEx<int>, TEx<UnityEngine.Vector2>>;
 using static Danmaku.Enums;
 using static Compilers;
 using static DMath.ExMHelpers;
@@ -256,7 +254,7 @@ public static partial class AtomicPatterns {
     /// <param name="dir">Direction function (cos,sin pair)</param>
     /// <param name="path">Movement descriptor</param>
     /// <returns></returns>
-    public static SyncPattern SD(GCXU<TP> dir, GCXU<VTP> path) {
+    public static SyncPattern SD(GCXU<SBV2> dir, GCXU<VTP> path) {
         return sbh => {
             uint id = sbh.GCX.NextID();
             sbh.bc.Simple(sbh, null, dir.New(sbh.GCX, ref id), path.Add(sbh.GCX, id), id);
@@ -270,7 +268,7 @@ public static partial class AtomicPatterns {
     /// <param name="dir">Direction (degrees)</param>
     /// <param name="path">Movement descriptor</param>
     /// <returns></returns>
-    public static SyncPattern SDD(ExBPY dir, GCXU<VTP> path) => SD(GCXU(x => CosSinDeg(dir(x))), path);
+    public static SyncPattern SDD(ExBPY dir, GCXU<VTP> path) => SD(GCXU(x => CosSinDeg(dir(x.bpi))), path);
 
     /// <summary>
     /// Fires a scalable simple bullet.
@@ -278,25 +276,25 @@ public static partial class AtomicPatterns {
     /// <param name="scale">Scaling function</param>
     /// <param name="path">Movement descriptor</param>
     /// <returns></returns>
-    public static SyncPattern SS(BPY scale, GCXU<VTP> path) => sbh => {
+    public static SyncPattern SS(GCXU<BPY> scale, GCXU<VTP> path) => sbh => {
         uint id = sbh.GCX.NextID();
-        sbh.bc.Simple(sbh, scale, null, path.New(sbh.GCX, ref id), id);
+        sbh.bc.Simple(sbh, scale.New(sbh.GCX, ref id), null, path.Add(sbh.GCX, id), id);
         return sbh;
     };
     /// <summary>
     /// Fires a scalable simple bullet with custom diction.
     /// </summary>
-    public static SyncPattern SSD(BPY scale, GCXU<TP> dir, GCXU<VTP> path) => sbh => {
+    public static SyncPattern SSD(GCXU<BPY> scale, GCXU<SBV2> dir, GCXU<VTP> path) => sbh => {
         uint id = sbh.GCX.NextID();
-        sbh.bc.Simple(sbh, scale, dir.New(sbh.GCX, ref id), path.Add(sbh.GCX, id), id);
+        sbh.bc.Simple(sbh, scale.New(sbh.GCX, ref id), dir.Add(sbh.GCX, id), path.Add(sbh.GCX, id), id);
         return sbh;
     };
 
     /// <summary>
     /// Fires a scalable simple bullet with custom diction.
     /// </summary>
-    public static SyncPattern SSDD(BPY scale, ExBPY dir, GCXU<VTP> path) =>
-        SSD(scale, GCXU(x => CosSinDeg(dir(x))), path);
+    public static SyncPattern SSDD(GCXU<BPY> scale, ExBPY dir, GCXU<VTP> path) =>
+        SSD(scale, GCXU(x => CosSinDeg(dir(x.bpi))), path);
 
     /// <summary>
     /// Fires a player bullet with a damage value and an on-hit effect.
@@ -329,7 +327,7 @@ public static partial class AtomicPatterns {
     /// </summary>
     public static SyncPattern PSSDD(int bossDmg, int stageDmg, string effectStrategy, BPY scaler, ExBPY dir, VTP path) {
         var effect = ResourceManager.GetEffect(effectStrategy);
-        var dir2 = TP(x => CosSinDeg(dir(x)));
+        var dir2 = SBV2(x => CosSinDeg(dir(x.bpi)));
         return sbh => {
             sbh.ch.bc.style = BulletManager.GetOrMakePlayerCopy(sbh.bc.style);
             uint id = sbh.GCX.NextID();
@@ -413,32 +411,40 @@ public static partial class AtomicPatterns {
     public static SyncPattern SummonRZ([CanBeNull] StateMachine sm, BehOptions options) =>
         SummonR(new RootedVTP(0, 0, VTPRepo.Null()), sm, options);
 
-    public static SyncPattern Rect(TP4 color, ExBPRV2 locScaleAngle) => sbh => {
-        uint id = sbh.GCX.NextID();
-        var summonLoc = sbh.bc.FacedRV2(sbh.rv2) + sbh.bc.ParentOffset;
-        var locator = BPRV2(bpi => EEx.Resolve<V2RV2>(locScaleAngle(bpi), _lcs => {
+    private static BPRV2 DrawerLoc(SyncHandoff sbh, ExBPRV2 locScaleAngle, [CanBeNull] ExTP offset = null) {
+        var summonLoc = sbh.bc.FacedRV2(sbh.rv2) + ((offset == null) ? sbh.bc.ParentOffset : Vector2.zero);
+        return BPRV2(bpi => EEx.Resolve<V2RV2>(locScaleAngle(bpi), _lcs => {
             var lcs = new TExRV2(_lcs);
+            TEx<V2RV2> offsetLoc = (offset == null) ? summonLoc : AddNV(summonLoc, offset(bpi));
             return V2V2F(
-                RV2ToXY(AddRVA(summonLoc, ExUtils.V3(lcs.nx, lcs.ny, E0))), //locScaleAng offset is rotational
+                RV2ToXY(AddRVA(offsetLoc, ExUtils.V3(lcs.nx, lcs.ny, E0))), //locScaleAng offset is rotational
                 ExUtils.V2(lcs.rx, lcs.ry),
                 Add<float>(lcs.angle, summonLoc.angle)
             );
         }));
-        sbh.bc.SummonRect(sbh, "_", color, locator, SMRunner.Cull(Reflector.WaitForPhaseSM, sbh.ch.cT), id);
+    }
+
+    public static SyncPattern Circ(TP4 color, ExBPRV2 locScaleAngle) => sbh => {
+        uint id = sbh.GCX.NextID();
+        sbh.bc.SummonCirc(sbh, "_", color, DrawerLoc(sbh, locScaleAngle), SMRunner.Cull(Reflector.WaitForPhaseSM, sbh.ch.cT), id);
+        return sbh;
+    };
+    public static SyncPattern gRelCirc(string behId, ExTP loc, ExBPRV2 locScaleAngle, TP4 color) => sbh => {
+        uint id = sbh.GCX.NextID();
+        sbh.bc.SummonCirc(sbh, behId, color, DrawerLoc(sbh, locScaleAngle, loc), SMRunner.Cull(Reflector.WaitForPhaseSM, sbh.ch.cT), id);
+        return sbh;
+    };
+
+    public static SyncPattern RelCirc(string behId, BEHPointer beh, ExBPRV2 locScaleAngle, TP4 color) =>
+        gRelCirc(behId, _ => LBEH(beh), locScaleAngle, color);
+    public static SyncPattern Rect(TP4 color, ExBPRV2 locScaleAngle) => sbh => {
+        uint id = sbh.GCX.NextID();
+        sbh.bc.SummonRect(sbh, "_", color, DrawerLoc(sbh, locScaleAngle), SMRunner.Cull(Reflector.WaitForPhaseSM, sbh.ch.cT), id);
         return sbh;
     };
     public static SyncPattern gRelRect(string behId, ExTP loc, ExBPRV2 locScaleAngle, TP4 color) => sbh => {
         uint id = sbh.GCX.NextID();
-        var summonLoc = sbh.bc.FacedRV2(sbh.rv2);
-        var locator = BPRV2(bpi => EEx.Resolve<V2RV2>(locScaleAngle(bpi), _lcs => {
-            var lcs = new TExRV2(_lcs);
-            return V2V2F(
-                RV2ToXY(AddRVA(AddNV(summonLoc, loc(bpi)), ExUtils.V3(lcs.nx, lcs.ny, E0))), //locScaleAng offset is rotational
-                ExUtils.V2(lcs.rx, lcs.ry),
-                Add<float>(lcs.angle, summonLoc.angle)
-            );
-        }));
-        sbh.bc.SummonRect(sbh, behId, color, locator, SMRunner.Cull(Reflector.WaitForPhaseSM, sbh.ch.cT), id);
+        sbh.bc.SummonRect(sbh, behId, color, DrawerLoc(sbh, locScaleAngle, loc), SMRunner.Cull(Reflector.WaitForPhaseSM, sbh.ch.cT), id);
         return sbh;
     };
 

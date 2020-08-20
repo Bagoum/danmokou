@@ -2,8 +2,8 @@
 using DMath;
 using JetBrains.Annotations;
 using Ex = System.Linq.Expressions.Expression;
-using ExSBF = System.Func<Danmaku.TExSB, TEx<float>>;
-using ExSBV2 = System.Func<Danmaku.TExSB, TEx<UnityEngine.Vector2>>;
+using ExSBF = System.Func<Danmaku.RTExSB, TEx<float>>;
+using ExSBV2 = System.Func<Danmaku.RTExSB, TEx<UnityEngine.Vector2>>;
 using ExBPY = System.Func<DMath.TExPI, TEx<float>>;
 using ExTP = System.Func<DMath.TExPI, TEx<UnityEngine.Vector2>>;
 
@@ -66,6 +66,7 @@ public class TExSB : TEx<BulletManager.SimpleBullet> {
     public readonly TEx<float> scale;
     public readonly TExV2 direction;
     public readonly TExVel velocity;
+    public TExV2 accDelta => new TExV2(Ex.Field(ex, "accDelta"));
 
     public TExSB(Expression ex) : base(ex) {
         bpi = TExPI.Box(Ex.Field(ex, "bpi"));
@@ -73,6 +74,18 @@ public class TExSB : TEx<BulletManager.SimpleBullet> {
         direction = new TExV2(Ex.Field(ex, "direction"));
         velocity = new TExVel(Ex.Field(ex, "velocity"));
     }
+
+    protected TExSB(ExMode m) : base(m) {
+        bpi = TExPI.Box(Ex.Field(ex, "bpi"));
+        scale = Ex.Field(ex, "scale");
+        direction = new TExV2(Ex.Field(ex, "direction"));
+        velocity = new TExVel(Ex.Field(ex, "velocity"));
+    }
+}
+
+public class RTExSB : TExSB {
+    public RTExSB() : base(ExMode.RefParameter) { }
+    public RTExSB(Expression ex) : base(ex) { }
 }
 
 public class TExSBC : TEx<BulletManager.AbsSimpleBulletCollection> {
@@ -86,7 +99,7 @@ public class TExSBC : TEx<BulletManager.AbsSimpleBulletCollection> {
         arr = Ex.Field(ex, "arr");
     }
 
-    public TExSB this[Ex index] => new TExSB(arr.Index(index));
+    public RTExSB this[Ex index] => new RTExSB(arr.Index(index));
     private static readonly ExFunction delete = ExUtils.Wrap<BulletManager.AbsSimpleBulletCollection>("Delete",
         new[] {typeof(int), typeof(bool)});
     public Ex Delete(Ex index) => delete.InstanceOf(this, index, Ex.Constant(false));
@@ -142,6 +155,8 @@ public static class SBV2Repo {
     /// </summary>
     /// <returns></returns>
     public static ExSBV2 Dir() => sb => sb.direction;
+
+    public static ExSBV2 AccDelta() => sb => sb.accDelta;
     /// <summary>
     /// Return the value of a function executed on the bullet's parametric information.
     /// This function is automatically applied if no other is applicable.

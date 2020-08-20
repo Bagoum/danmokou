@@ -78,3 +78,8 @@
     flex-grow: 1;
 }
 
+#Pause.plus1 {
+    right: 960px;
+    position: absolute;
+}
+

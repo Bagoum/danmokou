@@ -15,8 +15,13 @@ using ev2 = DMath.EEx<UnityEngine.Vector2>;
 
 namespace Danmaku {
 public class LocationService : MonoBehaviour {
+#if VER_BRUH
+    public const float Left = -4f;
+    public const float Right = 4f;
+#else
     public const float Left = -5f;
     public const float Right = 5f;
+#endif
     public const float Bot = -4.5f;
     public const float Top = 4f;
     public const float Width = Right - Left;

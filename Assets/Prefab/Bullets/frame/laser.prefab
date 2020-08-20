@@ -54,6 +54,9 @@ MonoBehaviour:
   triggersUITimeout: 0
   cullable: 0
   ScreenCullRadius: 4
+  damage: 1
+  destructible: 0
+  grazeEveryFrames: 20
   animate:
     method: 0
     LRRelation: 0
@@ -71,9 +74,6 @@ MonoBehaviour:
     flipY: 0
   material: {fileID: 2100000, guid: 5458891e477bea5438b857b92a28ba0c, type: 2}
   renderPriority: 100
-  grazeEveryFrames: 20
-  damage: 1
-  destructible: 0
   sprite: {fileID: 0}
   fadeInTime: 0.2
   cycleSpeed: 0
@@ -84,7 +84,7 @@ MonoBehaviour:
     displaceMagnitude: 0.03
     displaceSpeed: 0.2
     displaceMethod: 2
-    displaceXMul: 0.4
+    displaceXMul: 0.3
   colorizing:
     FlatLight: 1
     Light: 0

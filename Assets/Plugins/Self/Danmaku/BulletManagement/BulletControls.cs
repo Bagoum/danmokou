@@ -11,8 +11,8 @@ using UnityEngine;
 using Ex = System.Linq.Expressions.Expression;
 using ExBPY = System.Func<DMath.TExPI, TEx<float>>;
 using ExPred = System.Func<DMath.TExPI, TEx<bool>>;
-using ExSBF = System.Func<Danmaku.TExSB, TEx<float>>;
-using ExSBV2 = System.Func<Danmaku.TExSB, TEx<UnityEngine.Vector2>>;
+using ExSBF = System.Func<Danmaku.RTExSB, TEx<float>>;
+using ExSBV2 = System.Func<Danmaku.RTExSB, TEx<UnityEngine.Vector2>>;
 using static DMath.PredicateLogic;
 using static ExUtils;
 

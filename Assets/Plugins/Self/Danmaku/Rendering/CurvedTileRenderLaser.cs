@@ -68,7 +68,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
         if (idx - idxL < ToNearestIndexCutoff) {
             ang = M.Atan(locH - centers[Math.Max(0, idxL - 1)]);
         } else if (idxH - idx < ToNearestIndexCutoff) {
-            ang = M.Atan(centers[Math.Min(centers.Length - 1, idxL - 1)] - locH);
+            ang = M.Atan(centers[Math.Min(centers.Length - 1, idxH + 1)] - locL);
         } else ang = Mathf.Lerp(M.Atan(loc - locL), M.Atan(locH - loc), idx - idxL);
         return V2RV2.NRotAngled(loc, ang * M.radDeg).RotateAll(simpleEulerRotation.z);
     }

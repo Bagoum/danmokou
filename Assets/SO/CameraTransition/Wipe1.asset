@@ -16,10 +16,11 @@ MonoBehaviour:
   fadeIn:
     transitionTexture: {fileID: 2800000, guid: d6a5650515d2d3341b74a2464bb42cdd, type: 3}
     time: 0.4
-    reverse: 0
+    reverse: 1
     fixedType: 2
   fadeOut:
     transitionTexture: {fileID: 2800000, guid: d6a5650515d2d3341b74a2464bb42cdd, type: 3}
     time: 0.4
-    reverse: 0
+    reverse: 1
     fixedType: 2
+  forceMidHold: 1

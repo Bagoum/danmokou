@@ -75,7 +75,12 @@
 		        //This makes nonrotational bullets more expensive! Don't use them for normal circles.
 				posdir.zw = float2(length(posdir.zw), 0.0);
 		#endif
+		//Player bullets scale in faster
+		#ifdef FT_PLAYER_OPACITY
+		        SCALEIN(posdir.zw, INSTANCE_TIME * 2);
+		#else
 		        SCALEIN(posdir.zw, INSTANCE_TIME);
+		#endif
 
 				unity_ObjectToWorld = float4x4(
 					posdir.z, -posdir.w, 0, posdir.x,
@@ -112,7 +117,7 @@
 	            DISPLACE(f.uv, INSTANCE_TIME);
 				float4 c = tex2D(_MainTex, f.uv) * f.c;
     #ifdef FT_PLAYER_OPACITY
-                c.a *= 0.4;
+                c.a *= 0.45;
     #endif
 				return c;
 			}

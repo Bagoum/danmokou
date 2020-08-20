@@ -3,11 +3,23 @@ phase 0
 	action block 0
         position 0 0
 		shift-phase-to 1
+##Basic stress tester with dir control
+phase 0
+    action block 0
+        async circle-green/w <0.5;0:0> gcr2 1 _ <0;0:11.386> {
+		} gsr2c 150 { } sdd 0 tprot cx 2
+///
+##Basic stress tester
+phase 0
+    action block 0
+        async circle-green/w <0.5;0:0> gcr2 1 _ <0;0:11.386> {
+		} gsr2c 150 { } s tprot cx 2
+///
 ##Pather stress tester
 phase 0
     action block 0
-        async pather-blue/w <0.5;0:0> gcr2 2.5 _ <0;0:20p> {
-		} gsr2 14 <0;0:4.3> { p this } pather 1 1 tprot cx 3 { s 1 }
+        async pather-blue/w <0.5;0:0> gcr2 2 _ <0;0:20p> {
+		} gsr2 10 <0;0:4.3> { p this } pather 1 1 tprot cx 3 { s 1 }
 ///
 ##Laser stress tester (mlaser mesh updating)
 phase 0
@@ -23,12 +35,6 @@ phase 0
 phase 0
     action block .4
         async laser-blue/ <0.4;0:0> gcr2 16 _ <0;0:2.93> { } gsr2c 100 { } laser null 0.6 0.4 { }
-///
-##Basic stress tester
-phase 0
-    action block 0
-        async circle-green/w <0.5;0:0> gcr2 1 _ <0;0:11.386> {
-		} gsr2c 200 { } s tprot cx 2
 ///
 ##GPU stress tester
 phase 0

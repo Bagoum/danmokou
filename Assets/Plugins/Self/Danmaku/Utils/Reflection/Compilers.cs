@@ -16,8 +16,7 @@ using ExPred = System.Func<DMath.TExPI, TEx<bool>>;
 using ExVTP = System.Func<Danmaku.ITExVelocity, TEx<float>, DMath.TExPI, DMath.RTExV2, TEx<UnityEngine.Vector2>>;
 using ExLVTP = System.Func<Danmaku.ITExVelocity, RTEx<float>, RTEx<float>, DMath.TExPI, DMath.RTExV2, TEx<UnityEngine.Vector2>>;
 using ExGCXF = System.Func<DMath.TExGCX, TEx>;
-using ExSBF = System.Func<Danmaku.TExSBC, TEx<int>, TEx<float>>;
-using ExSBV2 = System.Func<Danmaku.TExSBC, TEx<int>, TEx<UnityEngine.Vector2>>;
+using ExSBV2 = System.Func<Danmaku.RTExSB, TEx<UnityEngine.Vector2>>;
 using ExSBCF = System.Func<Danmaku.TExSBC, TEx<int>, DMath.TExPI, TEx>;
 using ExSBPred = System.Func<Danmaku.TExSBC, TEx<int>, DMath.TExPI, TEx<bool>>;
 
@@ -83,6 +82,8 @@ public static class Compilers {
 
     [Fallthrough]
     public static TP TP(ExTP ex) => CompileDelegateLambda<TP, TExPI>(ex);
+    [Fallthrough]
+    public static SBV2 SBV2(ExSBV2 ex) => CompileDelegateLambda<SBV2, RTExSB>(ex);
     [Fallthrough]
     public static TP3 TP3(ExTP3 ex) => CompileDelegateLambda<TP3, TExPI>(ex);
     [Fallthrough]
@@ -164,6 +165,8 @@ public static class Compilers {
 
     private static GCXU<T2> GCXU11<T1, T2>(Func<Func<TExPI, TEx<T1>>, T2> compiler, Func<TExPI, TEx<T1>> f) =>
         Automatic(compiler, f, aliases => bpi => ReflectEx.Let2(aliases, () => f(bpi), bpi));
+    private static GCXU<T2> GCXUsb11<T1, T2>(Func<Func<RTExSB, TEx<T1>>, T2> compiler, Func<RTExSB, TEx<T1>> f) =>
+        Automatic(compiler, f, aliases => sb => ReflectEx.Let2(aliases, () => f(sb), sb.bpi));
     [Fallthrough]
     public static GCXU<BPY> GCXU(ExBPY f) => GCXU11(BPY, f);
     [Fallthrough]
@@ -176,6 +179,8 @@ public static class Compilers {
     public static GCXU<TP4> GCXU(ExTP4 f) => GCXU11(TP4, f);
     [Fallthrough]
     public static GCXU<BPRV2> GCXU(ExBPRV2 f) => GCXU11(BPRV2, f);
+    [Fallthrough]
+    public static GCXU<SBV2> GCXU(ExSBV2 f) => GCXUsb11(SBV2, f);
 
     [Fallthrough]
     public static GCXU<VTP> GCXU(ExVTP f) => Automatic(VTP, f, aliases => VTPRepo.LetDecl(aliases, f));
