@@ -8,10 +8,7 @@ using JetBrains.Annotations;
 using UnityEngine.UIElements;
 using UnityEngine;
 using UnityEngine.Scripting;
-using UnityEngine.UIElements;
-using Object = UnityEngine.Object;
-using static GameManagement;
-using static Danmaku.MainMenuCampaign;
+using static XMLUtils;
 
 
 /// <summary>
@@ -44,16 +41,18 @@ public class XMLDeathMenu : XMLMenu {
                     GameStateManager.ForceUnpause();
                     return true;
                 } else return false;
-            }, () => $"Continue ({GameManagement.campaign.Continues})", true),
+            }, () => $"Continue ({GameManagement.campaign.Continues})", true).With(smallClass),
             new ConfirmFuncNode(() => {
-                HideMe();
-                GameManagement.ReloadLevel();
-            }, "Reload Level", true),
+                if (GameManagement.Restart()) {
+                    HideMe();
+                    return true;
+                } else return false;
+            }, "Restart", true).With(smallClass),
             GameManagement.MainMenuExists ?
                 new ConfirmFuncNode(() => {
                     HideMe();
                     GameManagement.GoToMainMenu();
-                }, "Quit to Menu", true) : null
+                }, "Return to Menu", true).With(smallClass) : null
             );
         base.Awake();
     }

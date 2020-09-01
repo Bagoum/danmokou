@@ -85,10 +85,10 @@ public static class SMReflection {
         anim.AssignScales(0, scale(smh.GCX), 0);
         anim.AssignRatios(t1r?.Invoke(smh.GCX), t2r?.Invoke(smh.GCX));
         anim.Initialize(smh.cT, t);
-        PlayerInput.AllowPlayerInput = false;
-        Core.Events.MakePlayerInvincible.Invoke((int)(t * 120), false);
+        ++PlayerInput.SMPlayerControlDisable;
+        Events.MakePlayerInvincible.Invoke((int)(t * 120), false);
         return WaitingUtils.WaitFor(smh, t, false).ContinueWithSync(() => {
-            PlayerInput.AllowPlayerInput = true;
+            --PlayerInput.SMPlayerControlDisable;
         });
     };
 
@@ -220,19 +220,21 @@ public static class SMReflection {
     };
 
     public static TaskPattern Dialogue(string file) {
-        StateMachine sm = null; 
+        StateMachine sm = null;
         return async smh => {
-            if (SaveData.s.Dialogue) {
-                if (sm == null) sm = StateMachineManager.LoadDialogue(file);
-                bool done = false;
-                var cts = new CancellationTokenSource();
-                smh.RunRIEnumerator(WaitingUtils.WaitWhileWithCancellable(() => done, cts, () => InputManager.UISkipDialogue.Active,
-                    smh.cT, cts.Dispose));
-                using (var jcts = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, smh.cT)) {
-                    smh.ch.cT = jcts.Token;
-                    await sm.Start(smh);
+            Log.Unity($"Opening dialogue section {file}");
+            if (sm == null) sm = StateMachineManager.LoadDialogue(file);
+            bool done = false;
+            var cts = new CancellationTokenSource();
+            smh.RunRIEnumerator(WaitingUtils.WaitWhileWithCancellable(() => done, cts,
+                () => InputManager.DialogueSkip,
+                smh.cT, () => { }));
+            using (var jcts = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, smh.cT)) {
+                smh.ch.cT = jcts.Token;
+                await sm.Start(smh).ContinueWithSync(() => {
                     done = true;
-                }
+                    cts.Dispose();
+                });
             }
         };
     }
@@ -495,11 +497,13 @@ public static class SMReflection {
             var joint = CancellationTokenSource.CreateLinkedTokenSource(smh.cT, fireCTS.Token);
             var joint_smh = smh;
             joint_smh.ch.cT = joint.Token;
+            //order is important to ensure cancellation works on the correct frame
+            var waiter = WaitingUtils.WaitForUnchecked(o, smh.cT, () => !FireOption.FiringAndAllowed || !inputReq());
             _ = firer.Start(joint_smh).ContinueWithSync(() => {
                 joint.Dispose();
                 fireCTS.Dispose();
             });
-            await WaitingUtils.WaitForUnchecked(o, smh.cT, () => !FireOption.FiringAndAllowed || !inputReq());
+            await waiter;
             fireCTS.Cancel();
             smh.ThrowIfCancelled();
             if (PlayerInput.AllowPlayerInput) _ = onCancel.Start(smh);
@@ -514,11 +518,13 @@ public static class SMReflection {
             var joint = CancellationTokenSource.CreateLinkedTokenSource(smh.cT, fireCTS.Token);
             var joint_smh = smh;
             joint_smh.ch.cT = joint.Token;
+            //order is important to ensure cancellation works on the correct frame
+            var waiter = WaitingUtils.WaitForUnchecked(o, smh.cT, () => !FireOption.FiringAndAllowed);
             _ = fire.Start(joint_smh).ContinueWithSync(() => {
                 joint.Dispose();
                 fireCTS.Dispose();
             });
-            await WaitingUtils.WaitForUnchecked(o, smh.cT, () => !FireOption.FiringAndAllowed);
+            await waiter;
             fireCTS.Cancel();
             smh.ThrowIfCancelled();
             if (PlayerInput.AllowPlayerInput) _ = cancel.Start(smh);
@@ -535,6 +541,8 @@ public static class SMReflection {
         joint_smh.ch.cT = joint.Token;
         int remCancels = 2;
         joint_smh.Exec = o.freeFirer;
+        //order is important to ensure cancellation works on the correct frame
+        var waiter = WaitingUtils.WaitForUnchecked(o, smh.cT, () => !FireOption.FiringAndAllowed);
         _ = fireFree.Start(joint_smh).ContinueWithSync(() => {
             if (--remCancels == 0) {
                 joint.Dispose();
@@ -548,7 +556,7 @@ public static class SMReflection {
                 fireCTS.Dispose();
             }
         });
-        await WaitingUtils.WaitForUnchecked(o, smh.cT, () => !FireOption.FiringAndAllowed);
+        await waiter;
         fireCTS.Cancel();
         smh.ThrowIfCancelled();
     };

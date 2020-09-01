@@ -74,10 +74,10 @@ phase 0
 ") as PatternSM;
         AreEqual(new List<SMAnalysis.Phase>() {
                 //phase 0,3 are ignored since they don't have type
-                new SMAnalysis.Phase(PhaseType.DIALOGUE, 1, null),
-                new SMAnalysis.Phase(PhaseType.NONSPELL, 2, "My First Non"),
-                new SMAnalysis.Phase(PhaseType.SPELL, 4, "My First Spell"),
-            }, SMAnalysis.Analyze(sm));
+                new SMAnalysis.Phase(null, PhaseType.DIALOGUE, 1, null),
+                new SMAnalysis.Phase(null, PhaseType.NONSPELL, 2, "My First Non"),
+                new SMAnalysis.Phase(null, PhaseType.SPELL, 4, "My First Spell"),
+            }, SMAnalysis.Analyze(null, sm));
     }
     
 

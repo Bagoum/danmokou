@@ -11,38 +11,36 @@ public readonly struct ChallengeRequest {
     public BossConfig Boss => phase.boss.boss;
     public readonly DayPhase phase;
     public readonly Challenge challenge;
-    public readonly DifficultySet difficulty;
     public int ChallengeIdx => phase.challenges.IndexOf(challenge);
-    public readonly Action cb;
     public string Description => challenge.Description(Boss);
     public ChallengeRequest? NextChallenge {
         get {
             if (challenge is Challenge.DialogueC dc && dc.point == Challenge.DialogueC.DialoguePoint.INTRO) {
-                if (phase.Next?.CompletedOne == false) return new ChallengeRequest(phase.Next, difficulty, cb);
+                if (phase.Next?.CompletedOne == false) return new ChallengeRequest(phase.Next);
             } else if (phase.Next?.challenges?.Try(0) is Challenge.DialogueC dce &&
                        dce.point == Challenge.DialogueC.DialoguePoint.CONCLUSION && phase.Next?.Enabled == true
                        && phase.Next?.CompletedOne == false) {
-                return new ChallengeRequest(phase.Next, difficulty, cb);
+                return new ChallengeRequest(phase.Next);
             }
             return null;
         }
     }
 
-
-    public ChallengeRequest(DayPhase p, DifficultySet dfc, Action cb=null) {
+    public ChallengeRequest(DayPhase p) {
         phase = p;
         challenge = p.challenges[0];
-        difficulty = dfc;
-        this.cb = cb ?? (() => { });
     }
-    public ChallengeRequest(DayPhase p, Challenge c, DifficultySet dfc, Action cb=null) {
+    public ChallengeRequest(DayPhase p, Challenge c) {
         phase = p;
         challenge = c;
-        difficulty = dfc;
-        this.cb = cb ?? (() => { });
     }
 
-    public ChallengeRequest WithCB(Action ncb) => new ChallengeRequest(phase, challenge, difficulty, ncb);
+    public (((string, int), int), int) Key => (phase.Key, ChallengeIdx);
+
+    public static ChallengeRequest Reconstruct((((string, int), int), int) key) {
+        var phase = DayPhase.Reconstruct(key.Item1);
+        return new ChallengeRequest(phase, phase.challenges[key.Item2]);
+    }
 }
 public abstract class Challenge {
     public abstract string Description(BossConfig boss);

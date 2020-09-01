@@ -3,4 +3,8 @@
     height: 100%;
     background-color: rgba(0, 0, 0, 0);
     display: flex;
+    padding-left: 90px;
+    padding-right: 90px;
+    padding-top: 90px;
+    padding-bottom: 60px;
 }

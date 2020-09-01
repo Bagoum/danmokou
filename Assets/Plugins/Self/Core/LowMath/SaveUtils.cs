@@ -7,10 +7,16 @@ using Newtonsoft.Json;
 using UnityEngine;
 
 public static class SaveUtils {
-    private const string DIR = "Saves/";
+    public const string DIR = "Saves/";
+
+    public static void CheckDirectory(string final) {
+        var dir = Path.GetDirectoryName(final);
+        if (dir != null && !Directory.Exists(dir)) Directory.CreateDirectory(dir);
+    }
     public static void Write(string file, object obj) {
-        if (!Directory.Exists(DIR)) Directory.CreateDirectory(DIR);
-        using (StreamWriter sw = new StreamWriter($"{DIR}{file}")) {
+        file = DIR + file;
+        CheckDirectory(file);
+        using (StreamWriter sw = new StreamWriter(file)) {
             sw.WriteLine(JsonConvert.SerializeObject(obj, Formatting.Indented));
         }
     }
@@ -20,7 +26,7 @@ public static class SaveUtils {
             using (StreamReader sr = new StreamReader($"{DIR}{file}")) {
                 return JsonConvert.DeserializeObject<T>(sr.ReadToEnd());
             }
-        } catch (Exception e) {
+        } catch (Exception) {
             Log.Unity($"Couldn't read {typeof(T)} from file {DIR}{file}.", false, Log.Level.WARNING);
             return null;
         }

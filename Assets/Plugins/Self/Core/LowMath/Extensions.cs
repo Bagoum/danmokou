@@ -54,6 +54,11 @@ public static class ArrayExtensions {
         if (index >= 0 && index < arr.Count) return arr[index];
         return null;
     }
+
+    public static T? TryN<T>(this IList<T> arr, int index) where T : struct {
+        if (index >= 0 && index < arr.Count) return arr[index];
+        return null;
+    }
     public static bool Try<T>(this T[] arr, int index, out T res) where T : class {
         if (index >= 0 && index < arr.Length) {
             res = arr[index];
@@ -113,6 +118,13 @@ public static class IEnumExtensions {
 
     public static IEnumerable<int> Range(this int max) {
         for (int ii = 0; ii < max; ++ii) yield return ii;
+    }
+
+    public static IEnumerable<U> SelectNotNull<T, U>(this IEnumerable<T> arr, Func<T, U?> f) where U : struct {
+        foreach (var x in arr) {
+            var y = f(x);
+            if (y.HasValue) yield return y.Value;
+        }
     }
 }
 
@@ -240,6 +252,10 @@ public static class FuncExtensions {
         x?.Invoke();
         y?.Invoke();
     };
+    public static Func<T> Then<T>([CanBeNull] this Action x, Func<T> y) => () => {
+        x?.Invoke();
+        return y();
+    };
 
     public static Func<bool> Then([CanBeNull] this Func<bool> x, [CanBeNull] Action y) => () => {
         if (x?.Invoke() ?? true) {
@@ -265,10 +281,20 @@ public static class NullableExtensions {
 
 public static class LowEnumExtensions {
     
-    public static float ToAngle(this ShootDirection sd) {
-        if (sd == ShootDirection.UP) return 90;
+    public static float? ToAngle(this ShootDirection sd) {
+        if (sd == ShootDirection.RIGHT) return 0;
+        else if (sd == ShootDirection.UP) return 90;
         else if (sd == ShootDirection.LEFT) return 180;
         else if (sd == ShootDirection.DOWN) return 270;
-        else return 0;
+        else return null;
     }
+}
+
+public static class FormattingExtensions {
+    public static string PadRight(this int x, int by) => x.ToString().PadRight(by);
+    public static string PadLZero(this int x, int by) => x.ToString().PadLeft(by, '0');
+
+    public static string SimpleTime(this DateTime d) =>
+        $"{d.Year}/{d.Month.PadLZero(2)}/{d.Day.PadLZero(2)} " +
+        $"{d.Hour.PadLZero(2)}:{d.Minute.PadLZero(2)}:{d.Second.PadLZero(2)}";
 }

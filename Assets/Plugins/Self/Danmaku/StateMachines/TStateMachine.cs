@@ -10,12 +10,8 @@ public class ScriptTSM : SequentialSM {
     public ScriptTSM(List<StateMachine> states) : base(states) {}
 
     public override Task Start(SMHandoff smh) {
-        PlayerInput.AllowPlayerInput = false;
         Dialoguer.ShowAndResetDialogue();
-        return base.Start(smh).ContinueWithSync(() => {
-            PlayerInput.AllowPlayerInput = true;
-            Dialoguer.HideDialogue();
-        });
+        return base.Start(smh).ContinueWithSync(Dialoguer.HideDialogue);
     }
 }
 public abstract class ScriptLineSM : StateMachine {}

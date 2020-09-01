@@ -50,7 +50,8 @@ public class CurvedTileRenderPather : CurvedTileRender {
     /// For pathers with a lot of bending effects, use "smooth" to force it to update every engine frame
     /// instead of only on camera-render frames. This gives it twice as much resolution for collision and mesh.
     /// </summary>
-    private bool updateEveryFrame = false;
+    //Note: this must be true for pathers to be correct w.r.t replays.
+    private bool updateEveryFrame = true;
     private float updateRate;
 
     private Pather exec;
@@ -78,6 +79,7 @@ public class CurvedTileRenderPather : CurvedTileRender {
         updateEveryFrame = true;//options.smooth;
                                 //Now that we are using TrailRender, we should always update centers for accuracy.
                                 //Consider removing code related to smooth later.
+                                //Note: this must be true for pathers to be correct w.r.t replays.
         updateRate = updateEveryFrame ? ETime.ENGINEFPS : ETime.SCREENFPS;
         int newTexW = (int) Math.Ceiling(maxRememberTime * updateRate) + 1; 
         base.Initialize(locationer, material, isNew, false, newTexW, options.hueShift);

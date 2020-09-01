@@ -12,6 +12,11 @@ public class BossConfig : ScriptableObject {
     /// For display on the Boss Practice screen, eg. "Yukari (Ex)"
     /// </summary>
     public string CardPracticeName;
+    /// <summary>
+    /// For display in replay titles. Will use CardPracticeName if not provided.
+    /// </summary>
+    public string replayNameOverride;
+    public string ReplayName => string.IsNullOrWhiteSpace(replayNameOverride) ? CardPracticeName : replayNameOverride;
     public TextAsset stateMachine;
     /// <summary>
     /// For invocation in scripts, eg. "simp.mima"

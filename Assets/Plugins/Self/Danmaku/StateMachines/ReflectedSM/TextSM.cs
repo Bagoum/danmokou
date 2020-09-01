@@ -23,7 +23,7 @@ public static class TSMReflection {
     [Alias("z")]
     public static TaskPattern Confirm() => async smh => {
         Dialoguer.WaitingOnConfirm = true;
-        smh.RunRIEnumerator(WaitingUtils.WaitForConfirm(smh.cT, WaitingUtils.GetAwaiter(out Task t)));
+        smh.RunRIEnumerator(WaitingUtils.WaitForDialogueConfirm(smh.cT, WaitingUtils.GetAwaiter(out Task t)));
         await t;
         Dialoguer.WaitingOnConfirm = false;
     };
@@ -72,8 +72,8 @@ public static class TSMReflection {
             using (var cts = new CancellationTokenSource()) {
                 var joint = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, smh.cT);
                 Dialoguer.RunDialogue(textCmds, joint.Token, WaitingUtils.GetAwaiter(out Func<bool> isDone), continued);
-                smh.RunRIEnumerator(WaitingUtils.WaitWhileWithCancellable(isDone, cts, () => InputManager.UIBack.ClaimActive(),
-                    joint.Token, WaitingUtils.GetAwaiter(out Task t)));
+                smh.RunRIEnumerator(WaitingUtils.WaitWhileWithCancellable(isDone, cts, () => InputManager.DialogueToEnd,
+                    joint.Token, WaitingUtils.GetAwaiter(out Task t), ETime.FRAME_TIME * 10f));
                 await t;
             }
         };

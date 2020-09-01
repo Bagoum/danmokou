@@ -3,6 +3,7 @@ phase 0
 	action block 0
 		shift-phase-to 1
 
+<!> stage
 phase 0
 	action block 0
 		debugf dh

@@ -433,12 +433,7 @@ public struct Velocity {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void UpdateDeltaAssignAcc(ref ParametricInfo bpi, out Vector2 delta, in float dT) {
         bpi.t += dT;
-        try {
-            vtp(in this, in dT, bpi, out delta);
-        } catch (Exception e) {
-            int k = 5;
-            delta = Vector2.down;
-        }
+        vtp(in this, in dT, bpi, out delta);
         bpi.loc.x += delta.x;
         bpi.loc.y += delta.y;
     }

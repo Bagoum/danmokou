@@ -42,6 +42,10 @@ public class GenCtx : IDisposable {
     /// Firing BEH (copied from DelegatedCreator)
     /// </summary>
     public BehaviorEntity exec;
+    /// <summary>
+    /// BPI id. Don't use this in code (use rand instead).
+    /// </summary>
+    public uint id = 0;
     public V2RV2 RV2 {
         get => rv2s["rv2"];
         set => rv2s["rv2"] = value;
@@ -55,7 +59,8 @@ public class GenCtx : IDisposable {
         set => fs["st"] = value;
     }
     public Vector2 Loc => exec.GlobalPosition();
-    public ParametricInfo AsBPI => ParametricInfo.WithRandomId(Loc, index, (float) i);
+    [UsedImplicitly]
+    public ParametricInfo AsBPI => new ParametricInfo(Loc, index, id, i);
     private static readonly Stack<GenCtx> cache = new Stack<GenCtx>();
     private GenCtx() { }
 

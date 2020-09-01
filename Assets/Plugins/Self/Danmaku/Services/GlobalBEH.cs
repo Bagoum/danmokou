@@ -16,12 +16,5 @@ public class GlobalBEH : BehaviorEntity {
         CoroutineRegularUpdater.Global = this;
     }
     public override int UpdatePriority => UpdatePriorities.SOF;
-
-    public override bool OutOfHP() {
-        throw new InvalidOperationException("Cannot call hp-death on global BEH");
-    }
-
-    public static Task Wait(float seconds) =>
-        WaitingUtils.WaitForUnchecked(Main, CancellationToken.None, seconds, false);
 }
 }

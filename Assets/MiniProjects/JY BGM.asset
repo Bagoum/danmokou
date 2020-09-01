@@ -15,7 +15,7 @@ MonoBehaviour:
   clip: {fileID: 8300000, guid: b670629eb61b2d94bb9929efa7232e4c, type: 3}
   key: jy.bgm
   title: akatsuki
-  volume: 0.2
+  volume: 0.17
   pitch: 1
   stopOnPause: 0
   loop: 1

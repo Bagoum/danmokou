@@ -119,7 +119,7 @@ Transform:
   - {fileID: 4329909053363881828}
   - {fileID: 8337196642679869514}
   m_Father: {fileID: 1122796421477933676}
-  m_RootOrder: 6
+  m_RootOrder: 7
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &8310869502830836994
 MonoBehaviour:
@@ -195,7 +195,7 @@ Transform:
   - {fileID: 697710846122490241}
   - {fileID: 6422885924469980131}
   m_Father: {fileID: 1122796421477933676}
-  m_RootOrder: 5
+  m_RootOrder: 6
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &360868847808864212
 GameObject:
@@ -1434,6 +1434,7 @@ GameObject:
   - component: {fileID: 1122796421477933683}
   - component: {fileID: 1122796421477933682}
   - component: {fileID: 5227399965167740208}
+  - component: {fileID: 7788789127666986127}
   m_Layer: 0
   m_Name: UICamera
   m_TagString: Untagged
@@ -1456,6 +1457,7 @@ Transform:
   - {fileID: 2711482933580531371}
   - {fileID: 710886541475354596}
   - {fileID: 2017053948283245586}
+  - {fileID: 1613418740836234897}
   - {fileID: 3872143706028053736}
   - {fileID: 3731892095659257998}
   - {fileID: 3744097534567344709}
@@ -1519,6 +1521,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   PauseManager: {fileID: 3027501465724843395}
   DeathManager: {fileID: 4519490449391299623}
+  PracticeSuccessMenu: {fileID: 4731142642884387514}
   spellnameText: {fileID: 1753189278345701264}
   timeout: {fileID: 4111207538512305449}
   difficulty: {fileID: 2949524807233276489}
@@ -1649,6 +1652,45 @@ MonoBehaviour:
   m_CancelButton: Cancel
   m_InputActionsPerSecond: 10
   m_RepeatDelay: 0.5
+--- !u!114 &7788789127666986127
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1122796421477933681}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ed3cb397ab8ecca4685e56f552cab2c8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  behaviorScript: {fileID: 0}
+  ID: 
+  displayChangedPosition: 1
+  rotationMethod: 0
+  rotateTransform: 0
+  deathEffect: {fileID: 0}
+  triggersUITimeout: 0
+  cullable: 1
+  ScreenCullRadius: 4
+  damage: 1
+  destructible: 0
+  grazeEveryFrames: 20
+  animate:
+    method: 0
+    LRRelation: 0
+    UDRelation: 0
+    frames:
+      idleAnim: []
+      rightAnim: []
+      leftAnim: []
+      upAnim: []
+      downAnim: []
+      attackAnim: []
+      deathAnim: []
+  movementModifiers:
+    flipX: 0
+    flipY: 0
 --- !u!1 &1122796421992089895
 GameObject:
   m_ObjectHideFlags: 0
@@ -5009,6 +5051,77 @@ MonoBehaviour:
   m_maskType: 0
   _SortingLayerID: 0
   _SortingOrder: 0
+--- !u!1 &4180238909120975347
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1613418740836234897}
+  - component: {fileID: 4731142642884387514}
+  - component: {fileID: 5345937184621745826}
+  m_Layer: 8
+  m_Name: Success XML
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1613418740836234897
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4180238909120975347}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 1122796421477933676}
+  m_RootOrder: 4
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4731142642884387514
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4180238909120975347}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 76d5cdaac6992744c8820b4535eeaff4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  MainScreenOnlyObjects: {fileID: 0}
+  upDownSound: {fileID: 11400000, guid: 0333a90f360fc1f429670fdbcd980092, type: 2}
+  leftRightSound: {fileID: 11400000, guid: 1b9f20d147bf4da4dbd1e986d09942b4, type: 2}
+  confirmSound: {fileID: 11400000, guid: 0575ca7e870172446b6877f8b91c7636, type: 2}
+  failureSound: {fileID: 11400000, guid: d27fed347086bd648aad28a9b2fa76d8, type: 2}
+  backSound: {fileID: 11400000, guid: d23b067b4fe25b04199a60093042cd98, type: 2}
+  UIScreen: {fileID: 9197481963319205126, guid: 922fb6b84b6a8c14e850d8a158241d3a,
+    type: 3}
+  UINode: {fileID: 9197481963319205126, guid: a814838ea7fd5364e96b285b2bfd246b, type: 3}
+  openPauseSound: {fileID: 11400000, guid: 39c182daf18c49a498de6d96c7954706, type: 2}
+  closePauseSound: {fileID: 11400000, guid: ae28e1c6c483e1548943d8262b94e1bf, type: 2}
+--- !u!114 &5345937184621745826
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4180238909120975347}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f21c074d86024caca2a0034ce4f53f73, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_PanelSettings: {fileID: 11400000, guid: 9859cc4a0115c984db28be38f2fbec8a, type: 2}
+  m_ParentUI: {fileID: 0}
+  sourceAsset: {fileID: 9197481963319205126, guid: f61be2e73e0a08847a1ba3ecfe0c1f78,
+    type: 3}
 --- !u!1 &4301537708580615073
 GameObject:
   m_ObjectHideFlags: 0
@@ -6927,11 +7040,11 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6470744415728988369}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -8, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 1122796421477933676}
-  m_RootOrder: 4
+  m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &3027501465724843395
 MonoBehaviour:
@@ -6953,7 +7066,7 @@ MonoBehaviour:
   backSound: {fileID: 11400000, guid: d23b067b4fe25b04199a60093042cd98, type: 2}
   UIScreen: {fileID: 9197481963319205126, guid: 922fb6b84b6a8c14e850d8a158241d3a,
     type: 3}
-  UINode: {fileID: 9197481963319205126, guid: 4fa2030e97851b14ab9ab9939fb099d2, type: 3}
+  UINode: {fileID: 9197481963319205126, guid: a814838ea7fd5364e96b285b2bfd246b, type: 3}
   OptionNode: {fileID: 9197481963319205126, guid: a129df1a3ee772343969c49a05d98d02,
     type: 3}
   openPauseSound: {fileID: 11400000, guid: 39c182daf18c49a498de6d96c7954706, type: 2}
@@ -8050,7 +8163,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7299676273012080350}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -8, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 1122796421477933676}
@@ -8076,7 +8189,7 @@ MonoBehaviour:
   backSound: {fileID: 11400000, guid: d23b067b4fe25b04199a60093042cd98, type: 2}
   UIScreen: {fileID: 9197481963319205126, guid: 922fb6b84b6a8c14e850d8a158241d3a,
     type: 3}
-  UINode: {fileID: 9197481963319205126, guid: 4fa2030e97851b14ab9ab9939fb099d2, type: 3}
+  UINode: {fileID: 9197481963319205126, guid: a814838ea7fd5364e96b285b2bfd246b, type: 3}
   openPauseSound: {fileID: 11400000, guid: 39c182daf18c49a498de6d96c7954706, type: 2}
   closePauseSound: {fileID: 11400000, guid: ae28e1c6c483e1548943d8262b94e1bf, type: 2}
 --- !u!114 &1382339890747444701

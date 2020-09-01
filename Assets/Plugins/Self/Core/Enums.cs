@@ -37,7 +37,8 @@ public enum Locale {
     EN,
     JP
 }
-public enum ShootDirection {
+public enum ShootDirection: byte {
+    INHERIT,
     LEFT,
     RIGHT,
     UP,
@@ -125,11 +126,13 @@ public static class EnumHelpers {
         throw new Exception($"Couldn't resolve difficulty setting {d}");
     }
 
+    public static string DescribePadR(this DifficultySet d) => d.Describe().PadRight(9);
+
     public static bool IsOneCard(this CampaignMode mode) =>
         mode == CampaignMode.CARD_PRACTICE || mode == CampaignMode.SCENE_CHALLENGE;
     public static bool OneLife(this CampaignMode mode) => mode.IsOneCard();
     public static bool DisallowItems(this CampaignMode mode) => mode.IsOneCard();
-    public static bool IsReloadable(this CampaignMode mode) => mode.IsOneCard();
+    public static bool PreserveReloadAudio(this CampaignMode mode) => mode.IsOneCard();
 
 }
 }

@@ -137,7 +137,6 @@ public abstract class Pooled : CoroutineRegularUpdater {
             else {
                 //This case occurs when disabling due to scene end, which can occur naturally via eg. scene reload
                 //In which case we just don't do the parenting step
-                int k = 5;
             }
             parent.dependents.Remove(this);
         }

@@ -10,7 +10,6 @@ using UnityEngine;
 using UnityEngine.Scripting;
 using Object = UnityEngine.Object;
 using static GameManagement;
-using static Danmaku.MainMenuDays;
 using static SM.SMAnalysis;
 
 /// <summary>
@@ -25,12 +24,14 @@ public class XMLMainMenuDays : XMLMenu {
     }
 
     private UIScreen SceneSelectScreen;
+    private UIScreen ReplayScreen;
 
-    protected override UIScreen[] Screens => new[] { SceneSelectScreen, MainScreen };
+    protected override UIScreen[] Screens => new[] { SceneSelectScreen, ReplayScreen, MainScreen };
 
     public VisualTreeAsset GenericUIScreen;
     public VisualTreeAsset GenericUINode;
     public VisualTreeAsset MainScreenV;
+    public VisualTreeAsset ReplayScreenV;
     public VisualTreeAsset LROptionNode;
     public VisualTreeAsset VTASceneSelect;
     public VisualTreeAsset VTALR2OptionNode;
@@ -41,31 +42,28 @@ public class XMLMainMenuDays : XMLMenu {
         {typeof(UINode), GenericUINode},
     };
 
-    private const string smallDescrClass = "node80";
+    private const string smallDescrClass = "small";
     private const string medDescrClass = "node100";
     private const string shotDescrClass = "descriptor";
     private const string completed1Class = "lblue";
     private const string completedAllClass = "lgreen";
     private static UINode[] DifficultyNodes(Func<DifficultySet, UINode> map) =>
-        MainMenuDays.VisibleDifficulties.Select(map).ToArray();
+        GameManagement.VisibleDifficulties.Select(map).ToArray();
 
     private static UINode[] DifficultyFuncNodes(Func<DifficultySet, Action> map) =>
         DifficultyNodes(d => new FuncNode(map(d), d.Describe()));
     protected override void Awake() {
         if (!Application.isPlaying) return;
+        /*
         UINode[] DifficultyThenShot(Action<DifficultySet, ShotConfig> cb) {
-            if (MainMenuCampaign.main.shotOptions.Length == 1) {
-                return DifficultyFuncNodes(d => () => cb(d, MainMenuCampaign.main.shotOptions[0]));
+            if (GameManagement.References.shots.Length == 1) {
+                return DifficultyFuncNodes(d => () => cb(d, GameManagement.References.shots[0]));
             }
             throw new Exception("Days-Campaign WIP: one shot only");
-        }
+        }*/
 
         DifficultySet dfc = DifficultySet.Normal;
         (DayPhase p, Challenge c)? current = null;
-        (string, Challenge)[] CurrentChallenges2() {
-            if (current == null) return new (string, Challenge)[0];
-            return current.Value.p.challenges.Enumerate().Select(c => (c.idx.ToString(), c.val)).ToArray();
-        }
 
         UINode detailParent = null;
 
@@ -78,9 +76,7 @@ public class XMLMainMenuDays : XMLMenu {
                 if (!current.HasValue) return (false, x);
                 var (p, c) = current.Value;
                 ConfirmCache();
-                MainMenuDays.SelectBossChallenge(
-                    new GameReq(CampaignMode.SCENE_CHALLENGE, DefaultReturn, dfc, toPhase: p.phase.index), p.phase.type,
-                    new ChallengeRequest(p, c, dfc));
+                new GameRequest(GameRequest.ShowPracticeSuccessMenu, dfc, challenge: new ChallengeRequest(p, c)).Run();
                 return (true, null);
             })
         ;
@@ -136,6 +132,7 @@ public class XMLMainMenuDays : XMLMenu {
             //    ).With(LROptionNode)), 
             }).ToArray()
         ).With(VTASceneSelect);
+        ReplayScreen = XMLUtils.ReplayScreen(TentativeCache, ConfirmCache).With(ReplayScreenV);
 
         MainScreen = new UIScreen(
             new TransferNode(SceneSelectScreen, "Game Start"),
@@ -143,10 +140,10 @@ public class XMLMainMenuDays : XMLMenu {
                 ("English", Locale.EN),
                 ("日本語", Locale.JP)
             }, SaveData.s.Locale).With(LROptionNode),
+            new TransferNode(ReplayScreen, "Replays").EnabledIf(SaveData.p.ReplayData.Count > 0),
             //new FuncNode(RunTutorial, "Tutorial"),
             new FuncNode(Application.Quit, "Quit"),
-            new OpenUrlNode("https://twitter.com/rdbatz", "Twitter (Browser)"),
-            new OpenUrlNode("https://github.com/Bagoum/danmokou", "Github (Browser)")
+            new OpenUrlNode("https://twitter.com/rdbatz", "Twitter (Browser)")
             ).With(MainScreenV);
         base.Awake();
     }

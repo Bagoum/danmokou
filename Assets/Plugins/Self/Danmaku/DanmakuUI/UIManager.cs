@@ -21,6 +21,7 @@ public class UIManager : MonoBehaviour {
     public XMLPauseMenu PauseManager;
     public static XMLPauseMenu PauseMenu => main.PauseManager;
     public XMLDeathMenu DeathManager;
+    public XMLPracticeSuccessMenu PracticeSuccessMenu;
     public TextMeshPro spellnameText;
     public TextMeshPro timeout;
     public TextMeshPro difficulty;
@@ -267,7 +268,8 @@ public class UIManager : MonoBehaviour {
             ShowPauseMenu();
         } else if (state == GameState.DEATH) {
             DeathManager.ShowMe();
-            Message("YOU DIED");
+        } else if (state == GameState.SUCCESS) {
+            PracticeSuccessMenu.ShowMe();
         }
     }
 
@@ -329,7 +331,7 @@ public class UIManager : MonoBehaviour {
         return FadeSprite(message.color, c => message.color = c, timeIn, timeStay, timeOut, cT);
     }
     private IEnumerator FadeMessageCenter(string msg, CancellationToken cT, out float totalTime, 
-        float timeIn = 0.5f, float timeStay = 1f, float timeOut = 0.5f) {
+        float timeIn = 0.2f, float timeStay = 0.8f, float timeOut = 0.3f) {
         centerMessage.text = msg;
         totalTime = timeIn + timeStay + timeOut;
         return FadeSprite(centerMessage.color, c => centerMessage.color = c, timeIn, timeStay, timeOut, cT);

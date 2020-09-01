@@ -13,4 +13,5 @@ public class StageConfig : ScriptableObject {
     public string description;
     public string stageNumber;
     public string defaultSuicideStyle;
+    public bool practiceable = true;
 }

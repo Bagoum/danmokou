@@ -12,21 +12,26 @@ using Random = System.Random;
 /// </summary>
 public static class RNG {
     private static Random rand = new Random();
-    private static int seed;
     //Use this instead when the code is not in the RU loop
     private static readonly Random offFrame = new Random();
     
-    // Before starting a replay-recordable section, we need to seed the RNG with a known number, and store that in the replay.
-    // However, we definitely don't want to fix the RNG for the replay-recordable section. Here is the easy solution.
-    // Note this is not cryptographically secure, etc etc. 
-    public static int Reseed() {
-        seed = rand.Next();
+    public static void Seed(int seed) {
         rand = new Random(seed);
-        return seed;
+    }
+
+    private static void RNGGuard() {
+        if (GameStateManager.IsLoadingOrPaused && !SceneIntermediary.LOADING) {
+            Log.Unity("You are invoking random functions while replay data is not being saved. " +
+                      "This will desync replays.", true, Log.Level.WARNING);
+        }
     }
 
     public static uint GetUInt() {
-        return (((uint) rand.Next(1 << 30)) << 2) | (uint) rand.Next(1 << 2) ;
+        RNGGuard();
+        /*var u = (((uint) rand.Next(1 << 30)) << 2) | (uint) rand.Next(1 << 2);
+        Log.Unity(u.ToString());
+        return u;*/
+        return (((uint) rand.Next(1 << 30)) << 2) | (uint) rand.Next(1 << 2);
     }
 
     public const uint HalfMax = uint.MaxValue / 2;
@@ -41,19 +46,15 @@ public static class RNG {
         return r.Next(low, high);
     }
 
-    /// <summary>
-    /// Return a random integer.
-    /// </summary>
-    /// <param name="low">Minimum number (inclusive)</param>
-    /// <param name="high">Maximum number (exclusive)</param>
-    /// <returns></returns>
-    public static int GetInt(int low, int high) => GetInt(low, high, rand);
     public static int GetIntOffFrame(int low, int high) => GetInt(low, high, offFrame);
     private static float GetFloat(float low, float high, Random r) {
         return low + (high - low) * r.Next() / int.MaxValue;
     }
 
-    public static float GetFloat(float low, float high) => GetFloat(low, high, rand);
+    public static float GetFloat(float low, float high) {
+        RNGGuard();
+        return GetFloat(low, high, rand);
+    }
 
     public static Vector2 GetPointInCircle(float lowR, float highR) =>
         GetFloat(lowR, highR) * M.RadToDir(GetFloat(0, M.TAU));
@@ -71,11 +72,18 @@ public static class RNG {
     }
 
     private const string CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-    public static string RandString(int len=8) {
+    public static string _RandString(Random r, int len) {
         var stringChars = new char[len];
         for (int i = 0; i < stringChars.Length; i++) {
-            stringChars[i] = CHARS[offFrame.Next(CHARS.Length)];
+            stringChars[i] = CHARS[r.Next(CHARS.Length)];
         }
         return new string(stringChars);
     }
+
+    public static string RandString(int len = 8) {
+        RNGGuard();
+        return _RandString(rand, len);
+    }
+
+    public static string RandStringOffFrame(int len = 16) => _RandString(offFrame, len);
 }

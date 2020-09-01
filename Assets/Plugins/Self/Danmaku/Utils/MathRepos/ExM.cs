@@ -695,6 +695,8 @@ public static partial class ExM {
     /// <param name="var">Target</param>
     /// <returns></returns>
     public static tfloat Abs(tfloat var) => _Abs.Of(var);
+    
+    
 
     /// <summary>
     /// Returns the nonnegative difference between two numbers.

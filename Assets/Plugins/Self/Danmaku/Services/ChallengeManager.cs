@@ -75,15 +75,15 @@ public class ChallengeManager : CoroutineRegularUpdater {
         else if (cr.challenge is WithoutC outside) StayOutRange(Exec, outside.units)(smh);
     }
 
-    public static void TrackChallenge(ChallengeRequest c) {
+    public static void TrackChallenge(GameRequest gr, ChallengeRequest c) {
         IEnumerator cor;
-        if (c.challenge is TrivialConditionC) cor = TrackTrivial(c);
-        else if (c.challenge is DestroyTimedC dt) cor = TrackDestroyTimed(c, dt);
-        else if (c.challenge is DestroyC d) cor = TrackDestroy(c, d);
-        else if (c.challenge is GrazeC g) cor = TrackGraze(c, g);
-        else if (c.challenge is DialogueC dg) cor = TrackDialogue(c, dg);
-        else if (c.challenge is WithinC within) cor = TrackWithin(c, within);
-        else if (c.challenge is WithoutC without) cor = TrackWithout(c, without);
+        if (c.challenge is TrivialConditionC) cor = TrackTrivial(gr, c);
+        else if (c.challenge is DestroyTimedC dt) cor = TrackDestroyTimed(gr, c, dt);
+        else if (c.challenge is DestroyC d) cor = TrackDestroy(gr, c, d);
+        else if (c.challenge is GrazeC g) cor = TrackGraze(gr, c, g);
+        else if (c.challenge is DialogueC dg) cor = TrackDialogue(gr, c, dg);
+        else if (c.challenge is WithinC within) cor = TrackWithin(gr, c, within);
+        else if (c.challenge is WithoutC without) cor = TrackWithout(gr, c, without);
         else throw new Exception($"Couldn't resolve challenge type for {c.Description}");
         Log.Unity($"Tracking challenge {c.Description}");
         //Prevents load lag if this is executed on scene change while camera transition is up
@@ -96,7 +96,7 @@ public class ChallengeManager : CoroutineRegularUpdater {
         main.RunDroppableRIEnumerator(cor);
     }
 
-    private static void ChallengeFailed(ChallengeRequest cr) {
+    private static void ChallengeFailed(GameRequest gr, ChallengeRequest cr) {
         Log.Unity($"FAILED challenge {cr.Description}");
         UIManager.MessageChallengeEnd(false, out float t);
         if (Exec != null) Exec.ShiftPhase();
@@ -105,71 +105,73 @@ public class ChallengeManager : CoroutineRegularUpdater {
         });
     }
 
-    private static void ChallengeSuccess(ChallengeRequest cr) {
+    private static void ChallengeSuccess(GameRequest gr, ChallengeRequest cr) {
         Log.Unity($"PASSED challenge {cr.Description}");
-        SaveData.r.CompleteChallenge(cr);
+        if (!Replayer.IsReplaying) {
+            Log.Unity("Committing challenge to save data");
+            SaveData.r.CompleteChallenge(gr, cr);
+            SaveData.SaveRecord();
+        }
         var next = cr.NextChallenge;
         if (next != null && Exec != null) {
             var e = Exec;
-            SaveData.SaveRecord();
+            Replayer.Cancel(); //can't replay both scenes together
             Log.Unity($"Autoproceeding to next challenge: {next.Value.Description}");
-            SceneIntermediary.OverrideOnLoad = () => TrackChallenge(next.Value);
-            TrackChallenge(next.Value);
+            GameRequest.LastGame = new GameRequest(gr.cb, gr.difficulty, challenge: next.Value, shot: gr.shot);
+            TrackChallenge(gr, next.Value);
             LinkBEH(e);
             e.RunAttachedSM();
         } else {
             UIManager.MessageChallengeEnd(true, out float t);
-            WaitingUtils.WaitThenCB(main, CancellationToken.None, t, false, () => {
-                cr.cb();
-            });
+            WaitingUtils.WaitThenCB(main, CancellationToken.None, t, false, gr.vFinishAndPostReplay);
         }
     }
 
-    private static void ChallengeSuccessIf(ChallengeRequest cr, bool cond) {
-        if (cond) ChallengeSuccess(cr);
-        else ChallengeFailed(cr);
+    private static void ChallengeSuccessIf(GameRequest gr, ChallengeRequest cr, bool cond) {
+        if (cond) ChallengeSuccess(gr, cr);
+        else ChallengeFailed(gr, cr);
     }
 
-    private static IEnumerator TrackDialogue(ChallengeRequest cr, DialogueC c) => TrackTrivial(cr);
-    private static IEnumerator TrackTrivial(ChallengeRequest cr) {
+    private static IEnumerator TrackDialogue(GameRequest gr, ChallengeRequest cr, DialogueC c) => TrackTrivial(gr, cr);
+    private static IEnumerator TrackTrivial(GameRequest gr, ChallengeRequest cr) {
         while (Completion == null) yield return null;
-        ChallengeSuccess(cr);
+        ChallengeSuccess(gr, cr);
     }
-    private static IEnumerator TrackDestroy(ChallengeRequest cr, DestroyC c) {
+    private static IEnumerator TrackDestroy(GameRequest gr, ChallengeRequest cr, DestroyC c) {
         while (Completion == null) yield return null;
-        ChallengeSuccessIf(cr, Completion.Value.Cleared == true);
+        ChallengeSuccessIf(gr, cr, Completion.Value.Cleared == true);
     }
 
     /// <summary>
     /// TimeoutOverride handles timeout shenanigans
     /// </summary>
-    private static IEnumerator TrackDestroyTimed(ChallengeRequest cr, DestroyTimedC c) => TrackDestroy(cr, c);
-    private static IEnumerator TrackGraze(ChallengeRequest cr, GrazeC c) {
+    private static IEnumerator TrackDestroyTimed(GameRequest gr, ChallengeRequest cr, DestroyTimedC c) => TrackDestroy(gr, cr, c);
+    private static IEnumerator TrackGraze(GameRequest gr, ChallengeRequest cr, GrazeC c) {
         while (Completion == null) yield return null;
-        ChallengeSuccessIf(cr, GameManagement.campaign.Graze >= c.graze);
+        ChallengeSuccessIf(gr, cr, GameManagement.campaign.Graze >= c.graze);
     }
 
-    private static IEnumerator TrackWithin(ChallengeRequest cr, WithinC c) {
+    private static IEnumerator TrackWithin(GameRequest gr, ChallengeRequest cr, WithinC c) {
         while (Exec == null) yield return null;
         for (float t = 0; Completion == null; t += ETime.FRAME_TIME) {
             if (t > c.yield && (Exec.rBPI.loc - main.player.location).magnitude > c.units) {
-                ChallengeFailed(cr);
+                ChallengeFailed(gr, cr);
                 yield break;
             }
             yield return null;
         }
-        ChallengeSuccess(cr);
+        ChallengeSuccess(gr, cr);
     }
-    private static IEnumerator TrackWithout(ChallengeRequest cr, WithoutC c) {
+    private static IEnumerator TrackWithout(GameRequest gr, ChallengeRequest cr, WithoutC c) {
         while (Exec == null) yield return null;
         for (float t = 0; Completion == null; t += ETime.FRAME_TIME) {
             if (t > c.yield && (Exec.rBPI.loc - main.player.location).magnitude < c.units) {
-                ChallengeFailed(cr);
+                ChallengeFailed(gr, cr);
                 yield break;
             }
             yield return null;
         }
-        ChallengeSuccess(cr);
+        ChallengeSuccess(gr, cr);
     }
 
     public SOCircle player;

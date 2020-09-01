@@ -404,7 +404,7 @@ public static class WaitingUtils {
     /// Inner waiter-- Will cb if cancelled. This is necessary so awaiters can be informed of errors,
     /// specifically the task-style waiter, which would otherwise spin infinitely.
     /// </summary>
-    private static IEnumerator WaitFor(float wait_time, CancellationToken cT, Action done) {
+    public static IEnumerator WaitFor(float wait_time, CancellationToken cT, Action done) {
         for (; wait_time > ETime.FRAME_YIELD && !cT.IsCancellationRequested; 
             wait_time -= ETime.FRAME_TIME) yield return null;
         done();
@@ -424,21 +424,22 @@ public static class WaitingUtils {
             wait_time -= ETime.FRAME_TIME) yield return null;
         done();
     }
-    public static IEnumerator WaitForConfirm(CancellationToken cT, Action done) {
+    public static IEnumerator WaitForDialogueConfirm(CancellationToken cT, Action done) {
         while (!cT.IsCancellationRequested) {
-            if (InputManager.UIConfirm.Active) break;
+            if (InputManager.DialogueConfirm) break;
             yield return null;
         }
         done();
     }
 
-    public static IEnumerator WaitWhileWithCancellable(Func<bool> amIFinishedWaiting, CancellationTokenSource canceller, Func<bool> cancelIf, CancellationToken cT, Action done) {
+    public static IEnumerator WaitWhileWithCancellable(Func<bool> amIFinishedWaiting, CancellationTokenSource canceller, Func<bool> cancelIf, CancellationToken cT, Action done, float delay=0f) {
         while (!amIFinishedWaiting() && !cT.IsCancellationRequested) {
-            if (cancelIf()) {
+            if (delay < ETime.FRAME_YIELD && cancelIf()) {
                 canceller.Cancel();
                 break;
             }
             yield return null;
+            delay -= ETime.FRAME_TIME;
         }
         done();
     }

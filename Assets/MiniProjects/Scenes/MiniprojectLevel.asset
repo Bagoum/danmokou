@@ -13,4 +13,4 @@ MonoBehaviour:
   m_Name: MiniprojectLevel
   m_EditorClassIdentifier: 
   sceneName: MiniprojectLevel
-  transitionIn: {fileID: 11400000, guid: c8577b9207247ff4b92b5c2e2cc31ec0, type: 2}
+  transitionIn: {fileID: 0}

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using KC = UnityEngine.KeyCode;
@@ -23,22 +24,11 @@ public readonly struct InputChecker {
         new InputChecker(checker.Or(other.checker), $"{keyDescr} or {other.keyDescr}");
 }
 
-public abstract class InputChecker2 {
-    public abstract bool Check(InputTriggerMethod method);
-}
 public class InputHandler {
     private bool refractory;
     private readonly InputTriggerMethod trigger;
     private bool toggledValue;
     public bool Active { get; private set; }
-
-    public bool ClaimActive() {
-        if (Active) {
-            Active = false;
-            return true;
-        }
-        return false;
-    }
     public InputChecker checker;
     public string Desc => checker.keyDescr;
 
@@ -65,6 +55,13 @@ public class InputHandler {
     }
 }
 public static class InputManager {
+    public static readonly IReadOnlyList<KC> Alphanumeric = new[] {
+        KC.A, KC.B, KC.C, KC.D, KC.E, KC.F, KC.G, KC.H, KC.I, KC.L, KC.M, KC.N,
+        KC.O, KC.P, KC.Q, KC.R, KC.T, KC.U, KC.V, KC.W, KC.X, KC.Y, KC.Z,
+        KC.Alpha0, KC.Alpha1, KC.Alpha2, KC.Alpha3, KC.Alpha4, 
+        KC.Alpha5, KC.Alpha6, KC.Alpha7, KC.Alpha8, KC.Alpha9
+    };
+    
     private const string aHoriz = "Horizontal";
     private const string aVert = "Vertical";
     private const string aCRightX = "ControllerRightX";
@@ -104,10 +101,43 @@ public static class InputManager {
     
     public static readonly InputHandler UIConfirm = InputHandler.Trigger(Key(KC.Z).Or(Key(cA)));
     public static readonly InputHandler UIBack = InputHandler.Trigger(Key(KC.X).Or(Key(cB)));
-    public static readonly InputHandler UISkipDialogue = InputHandler.Trigger(Key(KC.LeftControl));
+    private static readonly InputHandler UISkipDialogue = InputHandler.Trigger(Key(KC.LeftControl));
     
     public static readonly InputHandler Pause = InputHandler.Trigger(Key(KC.Escape).Or(Key(cStart)));
     
+    [Serializable]
+    public struct FrameInput {
+        //16 bytes (14 unpadded)
+        // float(4)x2 = 8
+        // enum(1)    = 1
+        // bool(1)x5  = 5
+        public float horizontal;
+        public float vertical;
+        public ShootDirection shootDir;
+        public bool fire;
+        public bool focus;
+        public bool dialogueConfirm;
+        public bool dialogueToEnd;
+        public bool dialogueSkip;
+    }
+    
+    public static FrameInput RecordFrame => new FrameInput() {
+        horizontal = HorizontalSpeed,
+        vertical = VerticalSpeed,
+        shootDir = FiringDir,
+        fire = IsFiring,
+        focus = IsFocus,
+        dialogueConfirm = DialogueConfirm,
+        dialogueToEnd = DialogueToEnd,
+        dialogueSkip = DialogueSkip,
+    };
+
+    public static bool DialogueConfirm => replay?.dialogueConfirm ?? UIConfirm.Active;
+    public static bool DialogueToEnd => replay?.dialogueToEnd ?? UIBack.Active;
+    public static bool DialogueSkip => replay?.dialogueSkip ?? UISkipDialogue.Active;
+
+    private static FrameInput? replay = null;
+    public static void ReplayFrame(FrameInput? fi) => replay = fi;
 
     private static readonly InputHandler[] Updaters = {
         //FocusToggle, 
@@ -117,21 +147,12 @@ public static class InputManager {
 
 
     private static KeyCode editorReloadHook = KeyCode.R;
-    public static float HorizontalSpeed => Input.GetAxisRaw(aHoriz) + Input.GetAxisRaw(aCDPadX);
-        /*if (Input.GetKey(left)) {
-            return -1;
-        } else if (Input.GetKey(right)) {
-            return 1;
-        }
-        return 0;*/
-    public static float VerticalSpeed => Input.GetAxisRaw(aVert) + Input.GetAxisRaw(aCDPadY);
-        /*if (Input.GetKey(up)) {
-            return 1;
-        } else if (Input.GetKey(down)) {
-            return -1;
-        }
-        return 0;*/
-        
+    public static float HorizontalSpeed => replay?.horizontal ?? 
+                                           (Input.GetAxisRaw(aHoriz) + Input.GetAxisRaw(aCDPadX));
+
+    public static float VerticalSpeed => replay?.vertical ??
+                                         (Input.GetAxisRaw(aVert) + Input.GetAxisRaw(aCDPadY));
+
 
     //Called by GameManagement
     public static void OncePerFrameToggleControls() {
@@ -145,20 +166,21 @@ public static class InputManager {
 
     }
 
-    public static bool IsFocus => FocusHold.Active;
-    public static ShootDirection? FiringDir { get {
+    public static bool IsFocus => replay?.focus ?? FocusHold.Active;
+    public static ShootDirection FiringDir { get {
+        if (replay.HasValue) return replay.Value.shootDir;
     #if VER_SIMP
         if (AimUp.Active) return ShootDirection.UP;
         if (AimRight.Active) return ShootDirection.RIGHT;
         if (AimLeft.Active) return ShootDirection.LEFT;
         if (AimDown.Active) return ShootDirection.DOWN;
     #endif
-        return null;
+        return ShootDirection.INHERIT;
     }}
-    public static float? FiringAngle => FiringDir?.ToAngle();
+    public static float? FiringAngle => FiringDir.ToAngle();
 
 #if VER_SIMP
-    public static bool IsFiring => ShootHold.Active || ShootToggle.Active;
+    public static bool IsFiring => replay?.fire ?? (ShootHold.Active || ShootToggle.Active);
 #else
     public static bool IsFiring => ShootHold.Active;
 #endif

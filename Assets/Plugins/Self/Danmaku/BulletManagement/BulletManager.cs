@@ -722,9 +722,7 @@ public partial class BulletManager {
     private unsafe void PrepareRendering() {
         Debug.Log($"BS size: {Marshal.SizeOf(typeof(SimpleBullet))}, VelStruct size: {Marshal.SizeOf(typeof(Velocity))}");
         Debug.Log($"BPI size: {Marshal.SizeOf(typeof(ParametricInfo))}, CollInfo side: {Marshal.SizeOf(typeof(CollisionResult))}");
-        unsafe {
-            Debug.Log($"Float size: {sizeof(float)}, Long size: {sizeof(long)} V2 size: {sizeof(Vector2)}");
-        }
+        Debug.Log($"Float size: {sizeof(float)} (4), Long size: {sizeof(long)} (8), V2 size: {sizeof(Vector2)} (8)");
     }
 
     private const int batchSize = 1023; //duplicated in BulletIndirect array lens

@@ -33,7 +33,7 @@ public class PlayerInput : BehaviorEntity {
     protected override void Start() {
         var sc = GameManagement.campaign.Shot;
         var scd = sc == null ? "Default" : sc.description;
-        Log.Unity($"Loading player shot: {scd}", level: Log.Level.DEBUG1);
+        Log.Unity($"Loading player shot: {scd}", level: Log.Level.DEBUG2);
         if (sc == null) sc = defaultShot;
         if (sc != null) GameObject.Instantiate(sc.prefab, tr);
     }
@@ -112,7 +112,8 @@ public class PlayerInput : BehaviorEntity {
         MovementUpdate(frame_time, out _, out _);
     }
 
-    public static bool AllowPlayerInput { get; set; } = true;
+    public static int SMPlayerControlDisable { get; set; } = 0;
+    public static bool AllowPlayerInput => (SMPlayerControlDisable == 0) && !Dialoguer.DialogueActive;
 
     private static Vector2 MoveAgainstWall(Vector2 source, float blueBoxRadius, Vector2 delta, LayerMask mask) {
         RaycastHit2D ray = Physics2D.CircleCast(source, blueBoxRadius, delta.normalized, delta.magnitude, mask);
@@ -144,7 +145,7 @@ public class PlayerInput : BehaviorEntity {
         }
     }
 
-    private readonly List<Vector2> positions = new List<Vector2>();
+    //private readonly List<Vector2> positions = new List<Vector2>();
 
 #if UNITY_EDITOR
     private void OnDrawGizmos() {
@@ -157,9 +158,9 @@ public class PlayerInput : BehaviorEntity {
         Handles.DrawLine(position + Vector3.up * .5f, position + Vector3.down * .5f);
         Handles.DrawLine(position + Vector3.right * .2f, position + Vector3.left * .2f);
         Handles.color = Color.yellow;
-        for (int ii = 0; ii < 30 && ii < positions.Count; ++ii) {
+        /*for (int ii = 0; ii < 30 && ii < positions.Count; ++ii) {
             Handles.DrawWireDisc(positions[positions.Count - 1 - ii], Vector3.forward, hitbox.radius);
-        }
+        }*/
     }
 #endif
 }

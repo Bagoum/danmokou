@@ -101,6 +101,11 @@ public class ETime : MonoBehaviour {
     public static float dT => noSlowDT * Slowdown;
     private static float noSlowDT;
     public static int FrameNumber { get; private set; }
+    public static void ResetFrameNumber() {
+        Log.Unity("Resetting frame counter");
+        FrameNumber = 0;
+    }
+
     public static float SCREENFPS { get; private set; }
     public static bool LastUpdateForScreen { get; private set; }
     public static float ENGINEPERSCREENFPS => ENGINEFPS / SCREENFPS;
@@ -195,6 +200,9 @@ public class ETime : MonoBehaviour {
             for (; noSlowDT > FRAME_BOUNDARY; ) {
                 noSlowDT -= FRAME_TIME;
                 LastUpdateForScreen = noSlowDT <= FRAME_BOUNDARY;
+                GameStateManager.CheckForStateUpdates();
+                if (GameStateManager.PendingChange) continue;
+                
                 for (int ii = 0; ii < updaters.Count; ++ii) {
                     DeletionMarker<IRegularUpdater> updater = updaters.arr[ii];
                     if (!updater.markedForDeletion && updater.obj.UpdateDuringPause) updater.obj.RegularUpdate();
@@ -205,9 +213,10 @@ public class ETime : MonoBehaviour {
         } else {
             if (untilNextRegularFrame + dT > FRAME_BOUNDARY) {
                 for (; untilNextRegularFrame + dT > FRAME_BOUNDARY; ) {
-                    FrameNumber++;
                     untilNextRegularFrame -= FRAME_TIME;
                     LastUpdateForScreen = untilNextRegularFrame + dT <= FRAME_BOUNDARY;
+                    GameStateManager.CheckForStateUpdates();
+                    if (GameStateManager.PendingChange) continue;
                     StartOfFrameInvokes();
                     //Note: The updaters array is only modified by this command. 
                     FlushUpdaterAdds();
@@ -224,6 +233,7 @@ public class ETime : MonoBehaviour {
                     }
                     updaters.Compact();
                     EndOfFrameInvokes();
+                    FrameNumber++;
                 }
             } else {
                 for (int ii = 0; ii < updaters.Count; ++ii) {
@@ -376,16 +386,8 @@ public class ETime : MonoBehaviour {
         public Expression exFrames => Expression.PropertyOrField(Expression.Constant(this), "frames");
         public Expression exSeconds => Expression.PropertyOrField(Expression.Constant(this), "seconds");
     }
-    
-    
-    #if UNITY_EDITOR
 
-    public static void FlushRegularUpdate() {
-        updaters.ForEachIfNotCancelled(x => {
-            x.RegularUpdateParallel();
-            x.RegularUpdate();
-        });
+    public void OnDestroy() {
+        Log.CloseLog();
     }
-
-#endif
 }

@@ -20,6 +20,7 @@ You might know this project by the name NotDnh, ph4mmo, DanMaKufu, or Bagoum Dan
 - Simple logic for unbounded difficulty controls
 - Built-in dialogue engine with Ace Attorney-style text unrolling
 - Built-in script analysis and practice architecture
+- Replays
 
 # Running This Project
 
@@ -51,7 +52,6 @@ The source code is licensed under MIT. See the COPYING file for details, as well
 
 # Feature Wishlist
 
-- Replays
 - GFW-style gameplay
 
 # FAQ

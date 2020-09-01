@@ -133,7 +133,7 @@ public class AudioTrackService : CoroutineRegularUpdater {
 
     protected override void OnDisable() {
         gameStateListener.MarkForDeletion();
-        ClearAllAudio();
+        ClearAllAudio(true);
         base.OnDisable();
     }
     private void HandleGameStateChange(GameState state) {
@@ -147,12 +147,27 @@ public class AudioTrackService : CoroutineRegularUpdater {
     }
     
     public override int UpdatePriority => UpdatePriorities.SYSTEM;
-    
 
-    public static void ClearAllAudio() {
-        main.src1.Stop();
-        main.src2.Stop();
-        bgm = null;
+
+    private static bool _doPreserveBGM = false;
+    private static bool DoPreserveBGM {
+        get {
+            if (_doPreserveBGM) {
+                _doPreserveBGM = false;
+                return true;
+            } else return false;
+        }
+    }
+    public static void ClearAllAudio(bool force) {
+        if (force || !DoPreserveBGM) {
+            main.src1.Stop();
+            main.src2.Stop();
+            bgm = null;
+        }
+    }
+
+    public static void PreserveBGM() {
+        _doPreserveBGM = true;
     }
     
 

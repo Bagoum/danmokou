@@ -1184,7 +1184,6 @@ GameObject:
   - component: {fileID: 2094832129283138134}
   - component: {fileID: 420902573}
   - component: {fileID: 1369188325}
-  - component: {fileID: 1369188327}
   - component: {fileID: 374624785}
   - component: {fileID: 2062655874892461090}
   - component: {fileID: 374624784}
@@ -1293,18 +1292,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   enemyVisiblePlayer: {fileID: 11400000, guid: d20af02baec12db42baba53da24bff95, type: 2}
---- !u!114 &1369188327
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6701421480483869186}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 843d18268cbdade40b7f7506e7400cb9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &374624785
 MonoBehaviour:
   m_ObjectHideFlags: 0

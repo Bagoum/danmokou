@@ -29,11 +29,11 @@ public class FireOption : BehaviorEntity {
 
     protected override void RegularUpdateMove() {
         //Shot files are oriented upwards by default
+        base.RegularUpdateMove();
         if (InputManager.FiringAngle.HasValue) original_angle = InputManager.FiringAngle.Value - 90;
         var lerpDir = PlayerInput.IsFocus ? 1 : -1;
         currLerpRatio = Mathf.Clamp01(currLerpRatio + lerpDir * ETime.FRAME_TIME / offsetLerpTime);
         tr.localPosition = M.RotateVectorDeg(freeOffset(bpi) * (1 - currLerpRatio) + focusOffset(bpi) * currLerpRatio, original_angle);
-        base.RegularUpdateMove();
     }
-    public override int UpdatePriority => UpdatePriorities.PLAYER;
+    public override int UpdatePriority => UpdatePriorities.PLAYER2;
 }

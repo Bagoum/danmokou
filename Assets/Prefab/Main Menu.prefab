@@ -1,0 +1,98 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &2608984647256760459
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2608984647256760457}
+  - component: {fileID: 5056947543014307461}
+  - component: {fileID: 2157362365230339333}
+  - component: {fileID: 4437263624821381404}
+  m_Layer: 0
+  m_Name: Main Menu
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2608984647256760457
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2608984647256760459}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5056947543014307461
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2608984647256760459}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 952bb4ca235e4678b1013c9f1883e37c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  bgm: {fileID: 11400000, guid: 7d1138de9ee25e14ea3511ee4271d517, type: 2}
+--- !u!114 &2157362365230339333
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2608984647256760459}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e2235d1846914bb1b76a37adc19be5cd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  MainScreenOnlyObjects: {fileID: 0}
+  upDownSound: {fileID: 11400000, guid: 0333a90f360fc1f429670fdbcd980092, type: 2}
+  leftRightSound: {fileID: 11400000, guid: 1b9f20d147bf4da4dbd1e986d09942b4, type: 2}
+  confirmSound: {fileID: 11400000, guid: 0575ca7e870172446b6877f8b91c7636, type: 2}
+  failureSound: {fileID: 11400000, guid: d27fed347086bd648aad28a9b2fa76d8, type: 2}
+  backSound: {fileID: 11400000, guid: d23b067b4fe25b04199a60093042cd98, type: 2}
+  GenericUIScreen: {fileID: 9197481963319205126, guid: 58cc57315529ed24e8ba9a35d694475e,
+    type: 3}
+  GenericUINode: {fileID: 9197481963319205126, guid: a814838ea7fd5364e96b285b2bfd246b,
+    type: 3}
+  PracticeUIScreen: {fileID: 9197481963319205126, guid: 0c2379617f659804ab2c8980bf868fdd,
+    type: 3}
+  ShotScreen: {fileID: 9197481963319205126, guid: 19cf5ec62a08c5f4ba4171cb39602cf4,
+    type: 3}
+  MainScreenV: {fileID: 9197481963319205126, guid: 9df71962724dfc94a866da0361a56733,
+    type: 3}
+  OptionsScreenV: {fileID: 9197481963319205126, guid: c351cf4d7a48e78498c81917bbb9fae7,
+    type: 3}
+  ReplayScreenV: {fileID: 9197481963319205126, guid: 5a9c5714206d24643a465a99b8fb475a,
+    type: 3}
+  GenericOptionNodeV: {fileID: 9197481963319205126, guid: a129df1a3ee772343969c49a05d98d02,
+    type: 3}
+--- !u!114 &4437263624821381404
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2608984647256760459}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f21c074d86024caca2a0034ce4f53f73, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_PanelSettings: {fileID: 11400000, guid: 9859cc4a0115c984db28be38f2fbec8a, type: 2}
+  m_ParentUI: {fileID: 0}
+  sourceAsset: {fileID: 9197481963319205126, guid: e49b073a71eaa5b42abc32228551e3c9,
+    type: 3}

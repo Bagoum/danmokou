@@ -1,13 +1,56 @@
 pattern { }
-<!> clear
+phase 0
+	action block 0
+		shift-phase-to 1
+		
+phase 0 
+	action block 0
+		position 0 1
+		async circle-blue/w <> gcrepeat {
+			wait(30)
+			times(_)
+			bindItr(layer)
+		} gsrepeat {
+			times(60)
+			circle
+		} s polar
+			regpoly(* 2 t, 5, &a)
+			* 162.4 &layer
+		
+
+phase 0
+	action block 0
+		position 0 0
+		async arrow-*/w <> gcrepeat {
+			wait(16)
+			times(_)
+			rpp(<6>)
+		} gsrepeat {
+			times(21)
+			circle
+			colorf({ purple, blue, teal, green, yellow, orange, red }, // t 3)
+		} s(rvelocity(cx(1.5)))
+
 phase 0
 	action block 0
 		position 0 2
-		async triangle-blue/w <1;:> gcr2 8 _ <-6h> {
-		} gsr2c 4 { } s(rvelocity(cx(2)))
-		async triangle-orange/w <1;:> gcr2 8 _ <6h> {
-		} gsr2c 4 { } s(rvelocity(cx(2)))
-		async triangle-green/w <0.5;:> gcr2 8 _ <-9h> {
-		} gsr2c 4 { } s(rvelocity(cx(2)))
-		async triangle-purple/w <0.5;:> gcr2 8 _ <9h> {
-		} gsr2c 4 { } s(rvelocity(cx(2)))
+		async _ <> gcr {
+			wait(30)
+			times(_)
+			color({ circle-** ellipse-** })
+		} gsr {
+			times(24)
+			circle
+			color({ green orange red yellow blue pink })
+		} gsr {
+			colorf({ /w /b }, (< &pi 12))
+		} s(rvelocity(cx(2)))
+
+phase 0
+	action block 0
+		position 0 2
+		async circle-* <> gcr2 30 _ <> {
+			color { */w */b }
+		} gsr2c 30 {
+			color { green orange red yellow blue pink }
+		} s rvelocity cx 2

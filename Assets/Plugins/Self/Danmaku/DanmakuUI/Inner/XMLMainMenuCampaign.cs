@@ -10,7 +10,7 @@ using UnityEngine;
 using UnityEngine.Scripting;
 using Object = UnityEngine.Object;
 using static GameManagement;
-using static Danmaku.MainMenuCampaign;
+using static XMLUtils;
 
 /// <summary>
 /// Class to manage the main menu UI for campaign-type games.
@@ -28,23 +28,24 @@ public class XMLMainMenuCampaign : XMLMenu {
     private UIScreen StagePracticeScreen;
     private UIScreen BossPracticeScreen;
     private UIScreen ShotSelectScreen;
+    private UIScreen OptionsScreen;
+    private UIScreen ReplayScreen;
 
-    protected override UIScreen[] Screens => new[] { CampaignSelectScreen, ExtraSelectScreen, StagePracticeScreen, BossPracticeScreen,
-        ShotSelectScreen, MainScreen };
+    protected override UIScreen[] Screens => new[] { CampaignSelectScreen, ExtraSelectScreen, StagePracticeScreen, BossPracticeScreen, ShotSelectScreen, OptionsScreen, ReplayScreen, MainScreen };
 
     public VisualTreeAsset GenericUIScreen;
     public VisualTreeAsset GenericUINode;
     public VisualTreeAsset PracticeUIScreen;
     public VisualTreeAsset ShotScreen;
     public VisualTreeAsset MainScreenV;
-
+    public VisualTreeAsset OptionsScreenV;
+    public VisualTreeAsset ReplayScreenV;
+    public VisualTreeAsset GenericOptionNodeV;
+    
     protected override Dictionary<Type, VisualTreeAsset> TypeMap => new Dictionary<Type, VisualTreeAsset>() {
         {typeof(UIScreen), GenericUIScreen},
         {typeof(UINode), GenericUINode},
     };
-
-    private const string smallDescrClass = "small";
-    private const string shotDescrClass = "descriptor";
     private static UINode[] DifficultyNodes(Func<DifficultySet, UINode> map) =>
         VisibleDifficulties.Select(map).ToArray();
 
@@ -53,12 +54,12 @@ public class XMLMainMenuCampaign : XMLMenu {
     protected override void Awake() {
         if (!Application.isPlaying) return;
         Func<ShotConfig, bool> shotCont = null;
-        var shots = MainMenuCampaign.main.shotOptions.Select(s => new FuncNode(() => shotCont(s), s.title, false, new InheritNode(s.description).With(shotDescrClass))).ToArray();
+        var shots = GameManagement.References.shots.Select(s => new FuncNode(() => shotCont(s), s.title, false, new InheritNode(s.description).With(shotDescrClass))).ToArray();
         ShotSelectScreen = new UIScreen(shots.Select(x => (UINode) x).ToArray()).With(ShotScreen);
         var shotTop = ShotSelectScreen.top[0];
         UINode[] DifficultyThenShot(Action<DifficultySet, ShotConfig> cb) {
-            if (MainMenuCampaign.main.shotOptions.Length == 1) {
-                return DifficultyFuncNodes(d => () => cb(d, MainMenuCampaign.main.shotOptions[0]));
+            if (GameManagement.References.shots.Length == 1) {
+                return DifficultyFuncNodes(d => () => cb(d, GameManagement.References.shots[0]));
             }
             return DifficultyNodes(d => new FuncNode(() => shotCont = s => {
                     cb(d, s);
@@ -67,38 +68,45 @@ public class XMLMainMenuCampaign : XMLMenu {
         }
 
         CampaignSelectScreen = new UIScreen(DifficultyThenShot((d, sh) => 
-            MainScenario(new GameReq(CampaignMode.MAIN, null, d, shot: sh))));
+            GameRequest.RunCampaign(MainCampaign, null, d, sh)));
         ExtraSelectScreen = new UIScreen(DifficultyFuncNodes(d => 
-            () => ExtraScenario(new GameReq(CampaignMode.MAIN, null, d))));
+            () => GameRequest.RunCampaign(ExtraCampaign, null, d, null)));
         StagePracticeScreen =
-            new LazyUIScreen(() => Stages.Select(s =>
+            new LazyUIScreen(() => PStages.Select(s =>
                 (UINode)new NavigateUINode($"Stage {s.stage.stageNumber}", s.phases.Select(p =>
                     (UINode)new CacheNavigateUINode(TentativeCache, p.Title, DifficultyThenShot((d, sh) => {
                         ConfirmCache();
-                        new GameReq(CampaignMode.STAGE_PRACTICE, DefaultReturn, d, toPhase: p.index, shot: sh).SelectStageContinue(s.stage);
+                        new GameRequest(GameRequest.WaitDefaultReturn, d, 
+                            stage: new StagePracticeRequest(s, p.index), shot: sh).Run();
                     }))
                 ).ToArray())
             ).ToArray()).With(PracticeUIScreen);
         BossPracticeScreen = 
-            new LazyUIScreen(() => Bosses.Select(b => 
+            new LazyUIScreen(() => PBosses.Select(b => 
                 (UINode)new NavigateUINode(b.boss.CardPracticeName, b.phases.Select(p =>
                     new CacheNavigateUINode(TentativeCache, p.Title, DifficultyThenShot((d, sh) => {
                         ConfirmCache();
-                        SelectBossSinglePhase(b.boss, new GameReq(CampaignMode.CARD_PRACTICE, 
-                            DefaultReturn, d, toPhase: p.index, shot: sh), p.type);
-                    })).With(smallDescrClass)
+                        new GameRequest(GameRequest.WaitShowPracticeSuccessMenu, d, 
+                            boss: new BossPracticeRequest(b, p), shot: sh).Run();
+                    })).With(smallClass)
                 ).ToArray())
             ).ToArray()).With(PracticeUIScreen);
+        OptionsScreen = new UIScreen(XMLPauseMenu.GetOptions(true, x => x.With(GenericOptionNodeV)).ToArray())
+            .With(OptionsScreenV).OnExit(SaveData.AssignSettingsChanges);
+        ReplayScreen = XMLUtils.ReplayScreen(TentativeCache, ConfirmCache).With(ReplayScreenV);
         MainScreen = new UIScreen(
             new TransferNode(CampaignSelectScreen.top[1], "Main Scenario"),
-            new TransferNode(ExtraSelectScreen.top[1], "Extra Stage").EnabledIf(SaveData.r.MainCampaignCompleted),
-            new TransferNode(StagePracticeScreen, "Stage Practice").EnabledIf(Stages.Length > 0),
-            new TransferNode(BossPracticeScreen, "Boss Card Practice").EnabledIf(Bosses.Length > 0),
-            new FuncNode(RunTutorial, "Tutorial"),
+            References.exCampaign == null ? null :
+                new TransferNode(ExtraSelectScreen.top[1], "Extra Stage").EnabledIf(SaveData.r.MainCampaignCompleted),
+            new TransferNode(StagePracticeScreen, "Stage Practice").EnabledIf(PStages.Length > 0),
+            new TransferNode(BossPracticeScreen, "Boss Practice").EnabledIf(PBosses.Length > 0),
+            new TransferNode(ReplayScreen, "Replays").EnabledIf(SaveData.p.ReplayData.Count > 0),
+            References.tutorial == null ? null :
+                new FuncNode(GameRequest.RunTutorial, "Tutorial"),
+            new TransferNode(OptionsScreen, "Options"),
             new FuncNode(Application.Quit, "Quit"),
-            new OpenUrlNode("https://twitter.com/rdbatz", "Twitter (Browser)"),
-            new OpenUrlNode("https://github.com/Bagoum/danmokou", "Github (Browser)"),
-            new OpenUrlNode("https://www.youtube.com/watch?v=cBNnNJrA5_w&list=PLkd4SjCCKjq6B5u_5DrSU4Qz0QgZfgnh7", "OST (Browser)")
+            new OpenUrlNode("https://twitter.com/rdbatz", "Twitter (Browser)")
+            //new OpenUrlNode("https://www.youtube.com/watch?v=cBNnNJrA5_w&list=PLkd4SjCCKjq6B5u_5DrSU4Qz0QgZfgnh7", "OST (Browser)")
             ).With(MainScreenV);
         base.Awake();
     }

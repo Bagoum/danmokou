@@ -110,6 +110,31 @@ public struct Color2 {
     public Color color1;
     public Color color2;
 }
+
+[Serializable]
+public struct Version {
+    public int major;
+    public int minor;
+    public int patch;
+
+    public Version(int maj, int min, int ptch) {
+        major = maj;
+        minor = min;
+        patch = ptch;
+    }
+    
+    public override string ToString() => $"v{major}.{minor}.{patch}";
+
+    private (int, int, int) Tuple => (major, minor, patch);
+
+    public static bool operator ==(Version b1, Version b2) => b1.Tuple == b2.Tuple;
+
+    public static bool operator !=(Version b1, Version b2) => b1.Tuple != b2.Tuple;
+
+    public override int GetHashCode() => Tuple.GetHashCode();
+}
+
+
 //I like the idea of level-based cancellation but there's currently not really a use case for it. 
 public class CancelException : Exception {
     public CancelException() : base() { }

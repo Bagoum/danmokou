@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using UnityEngine;
 
@@ -17,6 +18,22 @@ public static class Log {
 
     private const int MIN_LEVEL = (int) Level.DEBUG2;
     private const int BUILD_MIN = (int) Level.DEBUG2;
+    
+    
+    private static StreamWriter file;
+    private const string LOGDIR = "DLogs/";
+    
+    static Log() {
+        var d = DateTime.Now;
+        var log = $"{LOGDIR}log_{d.Year}-{d.Month}-{d.Day}-{d.Hour}-{d.Minute}-{DateTime.Now.Second}.log";
+        SaveUtils.CheckDirectory(log);
+        file = new StreamWriter(log);
+    }
+
+    public static void CloseLog() {
+        file.Close();
+        file = null;
+    }
 
     public static void Unity(string msg, bool stackTrace = true, Level level = Level.INFO) {
         if ((int) level < MIN_LEVEL) return;
@@ -27,6 +44,7 @@ public static class Log {
         msg = $"Frame {ETime.FrameNumber}: {msg}";
         LogOption lo = stackTrace ? LogOption.None : LogOption.NoStacktrace;
         LogType unityLT = LogType.Log;
+        file?.WriteLine(msg);
         if (level == Level.WARNING) unityLT = LogType.Warning;
         if (level == Level.ERROR) {
             unityLT = LogType.Error;

@@ -32,7 +32,10 @@ public class UIScreen {
     public UINode StartingNode => lastCaller ?? top[0];
 
     [CanBeNull]
-    public UINode TryGoBack() => calledBy?.StartingNode;
+    public UINode TryGoBack() {
+        if (calledBy?.StartingNode != null) onExit?.Invoke();
+        return calledBy?.StartingNode;
+    }
 
     public UIScreen(params UINode[] nodes) {
         top = nodes.Where(x => x != null).ToArray();
@@ -85,6 +88,12 @@ public class UIScreen {
         overrideBuilder = builder;
         return this;
     }
+
+    [CanBeNull] private Action onExit;
+    public UIScreen OnExit(Action cb) {
+        onExit = cb;
+        return this;
+    }
 }
 
 public class LazyUIScreen : UIScreen {
@@ -112,7 +121,8 @@ public class UINode {
 
 
     public string Description => descriptor();
-    private readonly Func<string> descriptor;
+    //sorry but there's a use case where i need to modify this in the initializer. see TextInputNode
+    protected Func<string> descriptor;
     public UIScreen screen;
     public NodeState state = NodeState.Invisible;
 
@@ -162,7 +172,12 @@ public class UINode {
 
     private const string disabledClass = "disabled";
 
-    public UINode EnabledIf(bool s) =>  With(s ? null : disabledClass);
+    [CanBeNull] private Func<bool> enableCheck;
+    public UINode EnabledIf(Func<bool> s) {
+        enableCheck = s;
+        return this;
+    }
+    public UINode EnabledIf(bool s) => EnabledIf(() => s);
 
     public void ApplyState() {
         BindText();
@@ -174,7 +189,11 @@ public class UINode {
         foreach (var cls in overrideClasses) {
             boundNode.AddToClassList(cls);
         }
+        confirmEnabled = (enableCheck?.Invoke() ?? true);
+        if (!confirmEnabled) boundNode.AddToClassList(disabledClass);
     }
+
+    private bool confirmEnabled = true; //otherwise doesn't work with ReturnTo
     
     public virtual void Reset() { }
 
@@ -192,6 +211,7 @@ public class UINode {
         return this;
     }
 
+    [CanBeNull] public virtual UINode CustomEventHandling() => null;
     public virtual UINode Left() => _overrideLeft?.Invoke() ?? Parent ?? this;
     public virtual UINode Up() => SameDepthSiblings.ModIndex(SameDepthSiblings.IndexOf(this) - 1);
     public virtual UINode Down() => SameDepthSiblings.ModIndex(SameDepthSiblings.IndexOf(this) + 1);
@@ -225,7 +245,7 @@ public class UINode {
     }
 
     public (bool success, UINode target) Confirm() =>
-        overrideClasses.Contains(disabledClass) ? (false, this) : _Confirm();
+        confirmEnabled ? _Confirm() : (false, this);
 
     protected const string NodeClass = "node";
 
@@ -387,6 +407,7 @@ public class OpenUrlNode : FuncNode {
 public class ConfirmFuncNode : FuncNode {
     private bool isConfirm;
     public ConfirmFuncNode(Action target, string description, bool returnSelf=false, params UINode[] children) : base(target, description, returnSelf, children) { }
+    public ConfirmFuncNode(Func<bool> target, string description, bool returnSelf=false, params UINode[] children) : base(target, description, returnSelf, children) { }
 
     private void SetConfirm(bool newConfirm) {
         isConfirm = newConfirm;
@@ -420,8 +441,10 @@ public class ConfirmFuncNode : FuncNode {
     }
 
     protected override (bool success, UINode target) _Confirm() {
-        if (isConfirm) return base._Confirm();
-        else {
+        if (isConfirm) {
+            SetConfirm(false);
+            return base._Confirm();
+        } else {
             SetConfirm(true);
             return (true, this);
         }
@@ -599,19 +622,48 @@ public class OptionNodeLR<T> : UINode {
     }
 }
 
-public class FixedNode : UINode {
-    [CanBeNull] private UINode pseudoParent;
-    public FixedNode(int depth, Func<string> description) : base(description) {
-        FixDepth(depth);
-        SetOnVisit(from => {
-            if (from.Depth < Depth) {
-                pseudoParent = from;
-                SetLeftOverride(() => from);
-            } else if (from.Depth > Depth) SetRightOverride(() => from);
-        });
+public class TextInputNode : UINode {
+    public string DataWIP { get; private set; } = "";
+    private int cursorIdx = 0;
+    private int bdCursorIdx => Math.Min(cursorIdx, DataWIP.Length);
+    private string DisplayWIP => DataWIP.Insert(bdCursorIdx, "|");
+
+    public TextInputNode(string title) : base((Func<string>) null) {
+        descriptor = () => $"{title}: {DisplayWIP}";
     }
 
-    protected override void AssignParentStatesFromSelected() => UINode.AssignParentingStates(pseudoParent);
+    private static readonly string[] alphanumeric = 
+        "abcdefghijklmnopqrstuvwxyz0123456789".Select(x => x.ToString()).ToArray();
+    
+    public override UINode CustomEventHandling() {
+        foreach (var kc in alphanumeric) {
+            if (Input.GetKeyDown(kc)) {
+                DataWIP = DataWIP.Insert(bdCursorIdx, (Input.GetKey(KeyCode.LeftShift) || 
+                                                       Input.GetKey(KeyCode.RightShift)) ? kc.ToUpper() : kc);
+                ++cursorIdx;
+                return this;
+            }
+        }
+        if (Input.GetKeyDown(KeyCode.Backspace)) {
+            DataWIP =
+                ((cursorIdx > 1) ? DataWIP.Substring(0, cursorIdx - 1) : "") +
+                ((cursorIdx < DataWIP.Length) ? DataWIP.Substring(cursorIdx) : "");
+            cursorIdx = Math.Max(0, cursorIdx - 1);
+            return this;
+        } else if (Input.GetKeyDown(KeyCode.Return)) {
+            return Parent;
+        } else return null;
+    }
+
+    public override UINode Left() {
+        cursorIdx = Math.Max(0, cursorIdx - 1);
+        return this;
+    }
+    public override UINode Right() {
+        cursorIdx = Math.Min(DataWIP.Length, cursorIdx + 1);
+        return this;
+    }
+    
 }
 
 }

@@ -691,14 +691,15 @@ public static class Scene1 {
     public static IEnumerator TestPracticeSelector1() {
         bool cb = false;
         //Running Static Analysis 1
-        MainMenuCampaign.SelectBossSinglePhase(MainMenuCampaign.Bosses[0].boss, new GameReq(
-            CampaignMode.CARD_PRACTICE, () => cb = true, toPhase: 3), Enums.PhaseType.SPELL);
+        new GameRequest(() => cb = true, 
+            boss: new BossPracticeRequest(PBosses[0], new SMAnalysis.Phase(null, Enums.PhaseType.NONSPELL, 3, "_"))).Run();
         IsFalse(cb);
+        yield return WaitForLoad();
         for (int ii = 0; ii < 10; ++ii) yield return null;
         var m = BehaviorEntity.GetExecForID("mokou");
         AreEqual(0, PublicDataHoisting.GetF("v1", 1));
         AreEqual(0, PublicDataHoisting.GetF("v1", 2));
-        //Go to third phase (3 in selectboss call) and then callback
+        //Go to third phase and then callback
         AreEqual(7, PublicDataHoisting.GetF("v1", 3));
         AreEqual(0, PublicDataHoisting.GetF("v1", 4));
         AreEqual(0, m.NumRunningSMs);
@@ -710,7 +711,8 @@ public static class Scene1 {
         foreach (var dff in Enum.GetValues(typeof(DifficultySet)).Cast<DifficultySet>()) {
             //Running Difficulty Display Test
             DebugFloat.values.Clear();
-            MainMenuCampaign.SelectBossSinglePhase(MainMenuCampaign.Bosses[1].boss, new GameReq(CampaignMode.CARD_PRACTICE, null, dff), Enums.PhaseType.NONSPELL);
+            new GameRequest(null, dff,
+                boss: new BossPracticeRequest(PBosses[1])).Run();
             yield return WaitForLoad();
             AreEqual(campaign.mode, CampaignMode.CARD_PRACTICE);
             AreEqual(GameManagement.Difficulty, dff);
@@ -725,7 +727,7 @@ public static class Scene1 {
         SaveData.r.TutorialDone = true;
         AreEqual(SceneManager.GetActiveScene().name, baseScene);
         bool campaignComplete = false;
-        MainMenuCampaign.MainScenario(new GameReq(CampaignMode.MAIN, () => campaignComplete = true, DifficultySet.Abex));
+        GameRequest.RunCampaign(MainCampaign, () => campaignComplete = true, DifficultySet.Abex, null);
         AreEqual(GameManagement.Difficulty, DifficultySet.Abex);
         IsFalse(campaignComplete);
         yield return WaitForLoad();
@@ -752,45 +754,16 @@ public static class Scene1 {
     }
 
     [UnityTest]
-    public static IEnumerator TestCampaignReload() {
-        SaveData.r.TutorialDone = true;
-        AreEqual(SceneManager.GetActiveScene().name, baseScene);
-        MainMenuCampaign.MainScenario(new GameReq(CampaignMode.MAIN, null, DifficultySet.Abex));
-        AreEqual(GameManagement.Difficulty, DifficultySet.Abex);
-        yield return WaitForLoad();
-        AreEqual(SceneManager.GetActiveScene().name, "TestStage1");
-        int s1L = campaign.Lives;
-        campaign.AddLives(-1);
-        AreEqual(s1L - 1, campaign.Lives);
-        yield return Reload();
-        AreEqual(s1L, campaign.Lives);
-        campaign.AddLives(-1);
-        AreEqual(s1L - 1, campaign.Lives);
-        LevelController.Main.ShiftPhase();
-        yield return WaitForLoad();
-        AreEqual(SceneManager.GetActiveScene().name, "TestStage2");
-        AreEqual(s1L - 1, campaign.Lives);
-        yield return Reload();
-        AreEqual(s1L - 1, campaign.Lives);
-        campaign.AddLives(-1);
-        AreEqual(s1L - 2, campaign.Lives);
-        yield return Reload();
-        AreEqual(s1L - 1, campaign.Lives);
-        LevelController.Main.ShiftPhase();
-        yield return WaitForLoad();
-        AreEqual(SceneManager.GetActiveScene().name, baseScene);
-    }
-    [UnityTest]
     public static IEnumerator TestCampaignQuit() {
         SaveData.r.TutorialDone = true;
         AreEqual(SceneManager.GetActiveScene().name, baseScene);
-        MainMenuCampaign.MainScenario(new GameReq(CampaignMode.MAIN, null, DifficultySet.Abex));
+        GameRequest.RunCampaign(MainCampaign, null, DifficultySet.Abex, null);
         AreEqual(GameManagement.Difficulty, DifficultySet.Abex);
         yield return WaitForLoad();
         AreEqual(SceneManager.GetActiveScene().name, "TestStage1");
         GameManagement.GoToMainMenu();
-        for (int ii = 0; ii < 60; ++ii) yield return null; //Main menu has a transition...
-        AreEqual(SceneManager.GetActiveScene().name, "SiMP.MainMenu");
+        yield return WaitForLoad();
+        AreEqual(SceneManager.GetActiveScene().name, "TestMainMenu");
     }
 
 }

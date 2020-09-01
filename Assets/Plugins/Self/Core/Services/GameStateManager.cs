@@ -9,29 +9,27 @@ public enum GameState {
     PAUSE = 2,
     DEATH = 3,
     LOADING = 4,
+    //Same basic structure as DEATH, but without killing the player.
+    SUCCESS = 5,
 }
 
 public static class GSHelpers {
-    public static bool IsPaused(this GameState gs) => gs == GameState.PAUSE || gs == GameState.DEATH;
+    public static bool IsPaused(this GameState gs) => gs == GameState.PAUSE || 
+                                                      gs == GameState.DEATH || 
+                                                      gs == GameState.SUCCESS;
 }
-public class GameStateManager : MonoBehaviour {
-    private static GameStateManager main;
+public static class GameStateManager {
     private static GameState state = GameState.RUN;
     [CanBeNull] private static Action stateUpdate;
     private static float prePauseTimeScale = 1f;
 
-    private void Awake() {
-        main = this;
-    }
 
-    private void Update() {
-        if (!IsLoading) {
-            if (PauseAllowed && InputManager.Pause.Active) {
-                if (state == GameState.RUN) {
-                    stateUpdate = _Pause;
-                } else if (state == GameState.PAUSE) {
-                    stateUpdate = _Unpause;
-                }
+    public static void CheckForStateUpdates() {
+        if (PauseAllowed && InputManager.Pause.Active) {
+            if (state == GameState.RUN) {
+                stateUpdate = _Pause;
+            } else if (state == GameState.PAUSE) {
+                stateUpdate = _Unpause;
             }
         }
     }
@@ -43,6 +41,8 @@ public class GameStateManager : MonoBehaviour {
         stateUpdate?.Invoke();
         stateUpdate = null;
     }
+
+    public static bool PendingChange => stateUpdate != null;
 
     public static bool PauseAllowed { get; set; } = true;
     public static bool IsLoading => state == GameState.LOADING;
@@ -56,16 +56,16 @@ public class GameStateManager : MonoBehaviour {
         state = s;
         Core.Events.GameStateHasChanged.Invoke(s);
     }
-    private static void _Death() {
+
+    private static void _PauseType(GameState gs) {
         prePauseTimeScale = Time.timeScale;
         Time.timeScale = 0f;
-        __SetAndRaise(GameState.DEATH);
+        __SetAndRaise(gs);
     }
-    private static void _Pause() {
-        prePauseTimeScale = Time.timeScale;
-        Time.timeScale = 0f;
-        __SetAndRaise(GameState.PAUSE);
-    }
+
+    private static void _Sucess() => _PauseType(GameState.SUCCESS);
+    private static void _Death() => _PauseType(GameState.DEATH);
+    private static void _Pause() => _PauseType(GameState.PAUSE);
     private static void _Unpause() {
         Time.timeScale = prePauseTimeScale;
         __SetAndRaise(GameState.RUN);
@@ -78,14 +78,10 @@ public class GameStateManager : MonoBehaviour {
 
     public static void SetLoading(bool on) => stateUpdate = () => _SetLoading(on);
 
-    private DeletionMarker<Action<CampaignMode>> playerDeathListener;
-    public void OnEnable() {
-        playerDeathListener = Core.Events.PlayerHasDied.Listen(HandlePlayerDeath);
-    }
-    private void OnDisable() {
-        playerDeathListener.MarkForDeletion();
-    }
+    private static DeletionMarker<Action<CampaignMode>> playerDeathListener = Core.Events.PlayerHasDied.Listen(HandlePlayerDeath);
     private static void HandlePlayerDeath(CampaignMode m) {
         stateUpdate = _Death;
     }
+
+    public static void SendSuccessEvent() => stateUpdate = _Sucess;
 }

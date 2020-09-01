@@ -13,6 +13,10 @@
     margin-bottom: 4px;
 }
 
+.node.monospace, .node.monospace .text {
+    -unity-font: url('/Assets/Fonts/Monoid/Monoid-Regular.ttf');
+}
+
 .node {
     color: rgb(255, 255, 255);
     white-space: normal;
@@ -21,14 +25,6 @@
 .node .text {
     color: rgb(255, 255, 255);
     white-space: normal;
-}
-
-.node.node80 {
-    font-size: 80px;
-}
-
-.node.node80 .text {
-    font-size: 80px;
 }
 
 .node.node100 {
@@ -125,6 +121,9 @@
 
 .node.small {
     font-size: 80px;
+}
+.node.smaller {
+    font-size: 60px;
 }
 
 .node.descriptor {

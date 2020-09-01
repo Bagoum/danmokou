@@ -590,8 +590,8 @@ public struct LoopControl<T> {
         parent_style = ch.bc.style;
         if (props.facing != null) ch.bc.facing = props.facing.Value;
         ch.gcx.BaseRV2 = ch.gcx.RV2;
+        ch.gcx.fs["times"] = times = (int)props.times(ch.gcx);
         ch.gcx.UpdateRules(props.start);
-        times = (int)props.times(ch.gcx);
         if (props.centered) ch.gcx.RV2 -= (times - 1f) / 2f * props.PostloopRV2Incr(ch.gcx, times);
         isClipped = isClipped || (props.clipIf?.Invoke(ch.gcx) ?? false);
         elapsed_frames = 0;

@@ -15,7 +15,7 @@ public class RefreshRateWarning : MonoBehaviour {
         if (Math.Abs(Screen.currentResolution.refreshRate - SaveData.s.RefreshRate) > 2) {
             int ratio = Mathf.RoundToInt((Screen.currentResolution.refreshRate /SaveData.s.RefreshRate  - 1) * 100);
             string error = ratio < 0 ? "slower" : "faster";
-            return (true, $"<size=8>WARNING</size>\n{baseStr} ({Math.Abs(ratio)}% {error})" +
+            return (true, $"{baseStr} ({Math.Abs(ratio)}% {error})" +
                           $"\nPlease change your monitor refresh rate to one of 30, 40, 60, 120.");
         } else return (false, baseStr);
     }

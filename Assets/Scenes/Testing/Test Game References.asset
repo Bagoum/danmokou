@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8d7768018aff40589017a165e079b3c1, type: 3}
+  m_Name: Test Game References
+  m_EditorClassIdentifier: 
+  gameIdentifier: test game
+  gameVersion:
+    major: 0
+    minor: 0
+    patch: 0
+  mainMenu: {fileID: 11400000, guid: 607369d75fc81704c97d214f709b210e, type: 2}
+  replaySaveMenu: {fileID: 0}
+  unitScene: {fileID: 11400000, guid: 29bbe3a711aa9374dbc9b14293a24f80, type: 2}
+  tutorial: {fileID: 0}
+  miniTutorial: {fileID: 0}
+  campaign: {fileID: 11400000, guid: 285817fcbc1f31b4aa400d7917e73636, type: 2}
+  exCampaign: {fileID: 0}
+  dayCampaign: {fileID: 0}
+  defaultTransition: {fileID: 11400000, guid: 3c14665e4a4fb3946bb268167ef5cb40, type: 2}
+  shots:
+  - {fileID: 11400000, guid: 94c9dbd65f23dec46894ae6f01f35d23, type: 2}
+  dialogue: []
+  bossMetadata:
+  - {fileID: 11400000, guid: dc2b4c390da211341a9b0d0c3356edf7, type: 2}
+  - {fileID: 11400000, guid: fbf1044b75a1ecd468ff97b8acca7b7a, type: 2}
+  dialogueProfiles: []
+  tracks: []
+  summonables:
+  - {fileID: 11400000, guid: 38afc312ddb0ac242b8cfb301b1b4237, type: 2}
+  fileStateMachines: []

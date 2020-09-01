@@ -10,9 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c2cda3e0fe1645a43baac47f4aada44a, type: 3}
-  m_Name: Wipe1
+  m_Name: Wipe-Buson
   m_EditorClassIdentifier: 
-  fadeToTex: {fileID: 2800000, guid: 2dbe17d5dcb5b964c9cba6d428dc9970, type: 3}
+  fadeToTex: {fileID: 2800000, guid: f521ea7e2d9e1a8458b7e69dba7bfabd, type: 3}
   fadeIn:
     transitionTexture: {fileID: 2800000, guid: d6a5650515d2d3341b74a2464bb42cdd, type: 3}
     time: 0.4
@@ -23,4 +23,3 @@ MonoBehaviour:
     time: 0.4
     reverse: 1
     fixedType: 2
-  forceMidHold: 1

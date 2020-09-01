@@ -8,10 +8,8 @@ using JetBrains.Annotations;
 using UnityEngine.UIElements;
 using UnityEngine;
 using UnityEngine.Scripting;
-using UnityEngine.UIElements;
 using Object = UnityEngine.Object;
 using static GameManagement;
-using static Danmaku.MainMenuCampaign;
 
 /// <summary>
 /// Abstract class for all in-game UI based on UIBuilder.
@@ -104,14 +102,18 @@ public abstract class XMLMenu : MonoBehaviour {
         }
     }
 
-    public new void Update() {
+    public void Update() {
         if (!Application.isPlaying) return;
         if (Current != null && MenuActive) {
             bool tried_change = true;
             bool allowsfx = true;
             var last = Current;
             do {
-                if (InputManager.UILeft.Active) {
+                var custom = Current.CustomEventHandling();
+                if (custom != null) {
+                    SFXService.Request(leftRightSound); //add another sound
+                    Current = custom;
+                } else if (InputManager.UILeft.Active) {
                     if (allowsfx) SFXService.Request(leftRightSound);
                     Current = Current.Left();
                 } else if (InputManager.UIRight.Active) {

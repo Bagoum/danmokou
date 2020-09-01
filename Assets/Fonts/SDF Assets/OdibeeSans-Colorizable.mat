@@ -98,9 +98,9 @@ Material:
     - _FaceColor: {r: 1, g: 1, b: 1, a: 1}
     - _GlowColor: {r: 1, g: 0, b: 0.8531437, a: 1}
     - _MaskCoord: {r: 0, g: 0, b: 32767, a: 32767}
-    - _OutlineColor: {r: 0.4716981, g: 0, b: 0, a: 1}
+    - _OutlineColor: {r: 0.08699717, g: 0.34491795, b: 0.8018868, a: 1}
     - _ReflectFaceColor: {r: 0, g: 0, b: 0, a: 1}
     - _ReflectOutlineColor: {r: 0, g: 0, b: 0, a: 1}
     - _SpecularColor: {r: 1, g: 1, b: 1, a: 1}
-    - _UnderlayColor: {r: 0.4716981, g: 0, b: 0, a: 1}
+    - _UnderlayColor: {r: 0.08699717, g: 0.34491795, b: 0.8018868, a: 1}
   m_BuildTextureStacks: []

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading.Tasks;
 using Danmaku;
 using JetBrains.Annotations;
@@ -18,12 +19,14 @@ public static class Consts {
 public static class SaveData {
     private const string SETTINGS = "settings.txt";
     private const string RECORD = "record.txt";
+    private const string REPLAYS_LIST = "replays.txt";
+    private const string REPLAYS_DIR = "Replays/";
 
     public class Record {
         public bool TutorialDone = false;
         public HashSet<string> CompletedCampaigns = new HashSet<string>();
         [JsonIgnore]
-        public bool MainCampaignCompleted => CompletedCampaigns.Contains(MainMenuCampaign.main.campaign.key);
+        public bool MainCampaignCompleted => CompletedCampaigns.Contains(GameManagement.References.campaign.key);
         //day key, boss key, raw phase index, challenge index
         public Dictionary<string, Dictionary<string, Dictionary<int, Dictionary<int, Dictionary<DifficultySet, ChallengeCompletion>>>>> SceneRecord = new Dictionary<string, Dictionary<string, Dictionary<int, Dictionary<int, Dictionary<DifficultySet, ChallengeCompletion>>>>>();
 
@@ -50,26 +53,19 @@ public static class SaveData {
             return true;
         }
 
-        public void CompleteChallenge(ChallengeRequest cr) {
+        public void CompleteChallenge(GameRequest gr, ChallengeRequest cr) {
             var dfcMap = SceneRecord.SetDefault(cr.Day.key).SetDefault(cr.Boss.key)
                 .SetDefault(cr.phase.phase.index).SetDefault(cr.ChallengeIdx);
-            dfcMap[cr.difficulty] = new ChallengeCompletion();
+            dfcMap[gr.difficulty] = new ChallengeCompletion();
         }
     }
     public class Settings {
         public bool AllowInputLinearization = false;
-    #if VER_BRUH
-        public Locale Locale = Locale.JP;
-        public bool Shaders = false;
-        public bool LegacyRenderer = true;
-    #else
         public Locale Locale = Locale.EN;
         public bool Shaders = true;
         public bool LegacyRenderer = false;
-    #endif
         public int RefreshRate = 60;
         public (int w, int h) Resolution = Consts.BestResolution;
-        public bool Dialogue = true;
     #if UNITY_EDITOR
         public static bool TeleportAtPhaseStart => false;
     #else
@@ -106,8 +102,73 @@ public static class SaveData {
             }
         }
     }
+
+    public class Replays {
+        public List<string> ReplayFiles { get; }
+        [JsonIgnore]
+        public List<Replay> ReplayData { get; }
+        public Replays(string[] files) {
+            ReplayFiles = new List<string>();
+            ReplayData = files.SelectNotNull<string, Replay>(f => {
+                try {
+                    var metadata = Read<ReplayMetadata>(f + RMETAEXT);
+                    if (metadata == null || ReplayFiles.Contains(f)) return null;
+                    ReplayFiles.Add(f);
+                    if (metadata.GameIdentifier != GameManagement.References.gameIdentifier) return null;
+                    return new Replay(LoadReplayFrames(f), metadata);
+                } catch (Exception e) {
+                    Log.Unity($"Failed to read replay data: {e.Message}", true, Log.Level.WARNING);
+                    return null;
+                }
+            }).OrderByDescending(r => r.metadata.Now).ToList();
+        }
+
+        public bool TryDeleteReplay(int i) {
+            if (i < ReplayData.Count) {
+                var filename = ReplayFilename(ReplayData[i]);
+                ReplayFiles.Remove(filename);
+                try {
+                    File.Delete(SaveUtils.DIR + filename + RMETAEXT);
+                    File.Delete(SaveUtils.DIR + filename + RFRAMEEXT);
+                } catch (Exception e) {
+                    Log.Unity(e.Message, true, Log.Level.WARNING);
+                }
+                Write(REPLAYS_LIST, ReplayFiles);
+                ReplayData.RemoveAt(i);
+                return true;
+            } else return false;
+        }
+
+        private const string RMETAEXT = ".txt";
+        private const string RFRAMEEXT = ".dat";
+        private static string ReplayFilename(Replay r) => REPLAYS_DIR + r.metadata.AsFilename;
+
+        private static Func<InputManager.FrameInput[]> LoadReplayFrames(string file) => () => {
+            var w = new BinaryFormatter();
+            using (var fr = File.OpenRead(SaveUtils.DIR + file + RFRAMEEXT)) {
+                return (InputManager.FrameInput[]) w.Deserialize(fr);
+            }
+        };
+        public bool SaveNewReplay(Replay r) {
+            var filename = ReplayFilename(r);
+            if (ReplayFiles.Contains(filename)) return false;
+            var f = r.frames();
+            Log.Unity($"Saving replay {filename} with {f.Length} frames.");
+            Write(filename + RMETAEXT, r.metadata);
+            var w = new BinaryFormatter();
+            using (var fw = File.OpenWrite(SaveUtils.DIR + filename + RFRAMEEXT)) {
+                w.Serialize(fw, f);
+            }
+            ReplayFiles.Add(filename);
+            ReplayData.Insert(0, new Replay(LoadReplayFrames(filename), r.metadata));
+            Write(REPLAYS_LIST, ReplayFiles);
+            return true;
+        }
+    }
     public static Settings s { get; }
     public static Record r { get; }
+    
+    public static Replays p { get; }
 
     static SaveData() {
         s = Read<Settings>(SETTINGS) ?? Settings.Default;
@@ -117,9 +178,7 @@ public static class SaveData {
         UpdateFullscreen(s.Fullscreen);
         _ = DelayInitialVSyncWrite();
         r = Read<Record>(RECORD) ?? new Record();
-        //Profiler.logFile = "profilerLog.raw";
-        //Profiler.enabled = true;
-        //Profiler.enableBinaryLog = true;
+        p = new Replays(Read<string[]>(REPLAYS_LIST) ?? new string[0]);
     }
 
     private static async Task DelayInitialVSyncWrite() {

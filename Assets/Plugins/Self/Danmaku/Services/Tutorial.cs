@@ -227,7 +227,7 @@ It will empty over time, but graze and point++ items will restore it. When empty
         yield return confirm();
         yield return shift();
         
-        Prompt(text10, "That's all! To finish the tutorial, select \"Quit to Menu\" from the pause menu.");
+        Prompt(text10, "That's all! To finish the tutorial, select \"Return to Menu\" from the pause menu.");
         SaveData.r.TutorialDone = true;
         SaveData.SaveRecord();
     }

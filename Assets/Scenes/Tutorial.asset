@@ -13,5 +13,4 @@ MonoBehaviour:
   m_Name: Tutorial
   m_EditorClassIdentifier: 
   sceneName: Tutorial
-  transitionIn: {fileID: 11400000, guid: c8577b9207247ff4b92b5c2e2cc31ec0, type: 2}
-  validTeleporterIDs: 
+  transitionIn: {fileID: 0}

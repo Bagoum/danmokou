@@ -1,7 +1,7 @@
-﻿using System.Collections;
-using UnityEngine;
+﻿using UnityEngine;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Core;
 using Danmaku;
 using DMath;
@@ -9,11 +9,12 @@ using JetBrains.Annotations;
 using SM;
 using UnityEditor;
 using static Danmaku.Enums;
+using static SM.SMAnalysis;
 
 public struct CampaignData {
     private const int startLives = 7;
     public static int? StartLives(CampaignMode mode) {
-        if (mode == CampaignMode.MAIN || mode == CampaignMode.TUTORIAL || mode == CampaignMode.STAGE_PRACTICE) return 14;
+        if (mode == CampaignMode.MAIN || mode == CampaignMode.TUTORIAL || mode == CampaignMode.STAGE_PRACTICE) return 7;
         if (mode.OneLife()) return 1;
         return null;
     }
@@ -97,6 +98,7 @@ public struct CampaignData {
         100000000,
     };
     private static readonly int[] pointLives = {
+        42,
         69,
         127,
         255,
@@ -150,6 +152,7 @@ public struct CampaignData {
     public bool TryContinue() {
         if (Continues > 0) {
             Continued = true;
+            Replayer.Cancel();
             --Continues;
             score = lastScore = UIVisibleScore = nextItemLifeIndex = nextScoreLifeIndex = LifeItems = 0;
             PIV = 1;
@@ -161,6 +164,7 @@ public struct CampaignData {
     }
 
     public void AddLives(int delta) {
+        Log.Unity($"Adding player lives: {delta}");
         if (delta < 0) ++HitsTaken;
         if (delta < 0 && mode.OneLife()) Lives = 0;
         else Lives = Math.Max(0, Lives + delta);
@@ -278,6 +282,7 @@ public struct CampaignData {
 /// This is the only scene-persistent object in the game.
 /// </summary>
 public class GameManagement : RegularUpdater {
+    public static readonly Version EngineVersion = new Version(2, 0, 0);
     public static bool Initialized { get; private set; } = false;
     public static DifficultySet Difficulty { get; set; } = 
 #if UNITY_EDITOR
@@ -302,9 +307,10 @@ public class GameManagement : RegularUpdater {
 
     public static void NewCampaign(CampaignMode mode, ShotConfig shot) => lastinfo = campaign = new CampaignData(mode, 9002, shot);
     public static void CheckpointCampaignData() => lastinfo = campaign;
-    public static void ReloadCampaignData(bool markAsReloaded) {
-        Debug.Log("Reloading campaign");
-        if (markAsReloaded) lastinfo.Reloaded = true;
+    public static void ReloadCampaignData() {
+        Debug.Log("Reloading campaign from last stage.");
+        lastinfo.Reloaded = true;
+        Replayer.Cancel();
         campaign = lastinfo;
         UIManager.UpdatePlayerUI();
     }
@@ -339,33 +345,48 @@ public class GameManagement : RegularUpdater {
             DestroyImmediate(gameObject);
             return;
         }
-        SceneIntermediary.Setup(defaultSceneConfig);
         Initialized = true;
         gm = this;
         DontDestroyOnLoad(this);
-        RNG.Reseed();
+        SceneIntermediary.Setup(defaultSceneConfig, References.defaultTransition);
         ParticlePooler.Prepare();
         GhostPooler.Prepare(ghostPrefab);
         BEHPooler.Prepare(inodePrefab);
         ItemPooler.Prepare(lifeItem, valueItem, pointppItem);
+        ETime.RegisterPersistentSOFInvoke(Replayer.BeginFrame);
         ETime.RegisterPersistentEOFInvoke(BehaviorEntity.PruneControls);
         ETime.RegisterPersistentEOFInvoke(CurvedTileRenderLaser.PruneControls);
         SceneIntermediary.RegisterSceneUnload(ClearForScene);
+        SceneIntermediary.RegisterSceneLoad(Replayer.LoadLazy);
     #if UNITY_EDITOR
         Log.Unity($"Graphics Jobs: {PlayerSettings.graphicsJobs} {PlayerSettings.graphicsJobMode}; MTR {PlayerSettings.MTRendering}");
     #endif
         Log.Unity($"Graphics Render mode {SystemInfo.renderingThreadingMode}");
-        Log.Unity("Danmokou v1.2.0, SiMP v1.5.1");
+        Log.Unity($"Danmokou {EngineVersion}, {References.gameIdentifier} {References.gameVersion}");
     }
 
     public static bool MainMenuExists => References.mainMenu != null;
     public static bool GoToMainMenu() => SceneIntermediary.LoadScene(
-            new SceneIntermediary.SceneRequest(References.mainMenu, null, null, null));
+            new SceneIntermediary.SceneRequest(References.mainMenu, 
+                SceneIntermediary.SceneRequest.Reason.ABORT_RETURN, Replayer.Cancel));
+    public static bool GoToReplayScreen() => SceneIntermediary.LoadScene(
+        new SceneIntermediary.SceneRequest(References.replaySaveMenu, 
+            SceneIntermediary.SceneRequest.Reason.FINISH_RETURN));
 
-    public static bool ReloadLevel() => SceneIntermediary._ReloadScene(() => ReloadCampaignData(true));
+    /// <summary>
+    /// Reloads the specific level that is being run.
+    /// This is for single-scene mini projects and is not generally exposed.
+    /// </summary>
+    /// <returns></returns>
+    public static bool ReloadLevel() => SceneIntermediary._ReloadScene(ReloadCampaignData);
+    /// <summary>
+    /// Restarts the existing game if it exists, or reloads the specific level.
+    /// </summary>
+    /// <returns></returns>
+    public static bool Restart() => GameRequest.Rerun() ?? ReloadLevel();
     
     public static void ClearForScene() {
-        if (!SceneIntermediary.IsReloading || !campaign.mode.IsReloadable()) AudioTrackService.ClearAllAudio();
+        AudioTrackService.ClearAllAudio(false);
         Events.Event0.DestroyAll();
         ETime.SlowdownReset();
         ETime.Timer.ResetAll();
@@ -421,4 +442,26 @@ public class GameManagement : RegularUpdater {
     public override void RegularUpdate() {
         campaign.RegularUpdate();
     }
+
+    
+
+    [CanBeNull] private static AnalyzedDays _days;
+    public static AnalyzedDays Days => _days = _days ?? new AnalyzedDays(References.dayCampaign.days);
+    private static IEnumerable<CampaignConfig> AllCampaignsRaw => new[] {References.campaign, References.exCampaign}.Where(c => c != null);
+
+    [CanBeNull] private static AnalyzedCampaign[] _campaigns;
+    public static AnalyzedCampaign[] Campaigns => _campaigns =
+        _campaigns ?? AllCampaignsRaw.Select(c => new AnalyzedCampaign(c)).ToArray();
+
+    public static IEnumerable<AnalyzedCampaign> FinishedCampaigns =>
+        Campaigns.Where(c => SaveData.r.CompletedCampaigns.Contains(c.campaign.key));
+    
+    [CanBeNull]
+    public static AnalyzedCampaign MainCampaign => Campaigns.First(c => c.campaign.key == References.campaign.key);
+    [CanBeNull]
+    public static AnalyzedCampaign ExtraCampaign => Campaigns.First(c => c.campaign.key == References.exCampaign.key);
+    public static AnalyzedBoss[] PBosses => FinishedCampaigns.SelectMany(c => c.bosses).ToArray();
+    public static AnalyzedStage[] PStages => FinishedCampaigns.SelectMany(c => c.practiceStages).ToArray();
+    
+    
 }

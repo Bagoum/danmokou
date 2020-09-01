@@ -34,7 +34,7 @@ public static class TAssert {
         try {
             code();
             Assert.Fail("Expected code to fail");
-        } catch (Exception e) {
+        } catch (Exception) {
             // ignored
         }
     }

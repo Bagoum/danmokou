@@ -72,3 +72,14 @@ public class BEHAnimFrameDrawer : TripletPropertyDrawer {
     protected override string arg3 => "skipLoop";
     protected override float sw => 0f;
 }
+
+[CustomPropertyDrawer(typeof(Version))]
+public class VersionDrawer : TripletPropertyDrawer {
+    protected override string arg1 => "major";
+    protected override string arg2 => "minor";
+    protected override string arg3 => "patch";
+    protected override float w1 => 0.35f;
+    protected override float w2 => 0.35f;
+    protected override float w3 => 0.3f;
+    protected override float sw => 0f;
+}

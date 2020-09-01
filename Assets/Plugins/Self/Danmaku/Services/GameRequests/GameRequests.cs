@@ -1,101 +1,268 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
 using JetBrains.Annotations;
 using SM;
 using UnityEngine;
+using static SM.SMAnalysis;
+using GameLowRequest = DU<Danmaku.CampaignRequest, Danmaku.BossPracticeRequest, 
+    ChallengeRequest, Danmaku.StagePracticeRequest>;
+using static GameManagement;
+using static SceneIntermediary;
 
 namespace Danmaku {
-public readonly struct GameReq {
-    [CanBeNull] public readonly Func<bool> cb;
-    public readonly int toPhase;
-    public readonly bool newCampaign;
-    [CanBeNull] public readonly ShotConfig shot;
-    public readonly DifficultySet? difficulty;
-    public readonly CampaignMode mode;
 
-    public GameReq(CampaignMode mode, Func<bool> cb, DifficultySet? difficulty = DifficultySet.Abex,
-        bool newCampaign = true, int toPhase = 1, ShotConfig shot = null) {
-        this.mode = mode;
-        this.cb = cb;
-        this.newCampaign = newCampaign;
-        this.toPhase = toPhase;
-        this.shot = shot;
-        this.difficulty = difficulty;
+public readonly struct BossPracticeRequest {
+    public readonly AnalyzedBoss boss;
+    public readonly Phase phase;
+    public Enums.PhaseType PhaseType => phase.type;
+
+    public BossPracticeRequest(AnalyzedBoss boss, Phase? phase = null) {
+        this.boss = boss;
+        //0th listed phase is phase index 1
+        this.phase = phase ?? boss.phases[0];
     }
 
-    public GameReq WithCB([CanBeNull] Func<bool> newCB, int newPhase = 1) =>
-        new GameReq(mode, newCB, difficulty, newCampaign, newPhase, shot);
+    public ((string, int), int) Key => (boss.Key, phase.index);
+    public static BossPracticeRequest Reconstruct(((string, int), int) key) {
+        var boss = AnalyzedBoss.Reconstruct(key.Item1);
+        return new BossPracticeRequest(boss, boss.phases.First(p => p.index == key.Item2));
+    }
+}
 
-    public GameReq NotNew() => new GameReq(mode, cb, difficulty, false, toPhase, shot);
+public readonly struct StagePracticeRequest {
+    public readonly AnalyzedStage stage;
+    public readonly int phase;
+    public readonly LevelController.LevelRunMethod method;
+
+    public StagePracticeRequest(AnalyzedStage stage, int phase, LevelController.LevelRunMethod method = LevelController.LevelRunMethod.CONTINUE) {
+        this.stage = stage;
+        this.phase = phase;
+        this.method = method;
+    }
+    
+    public ((string, int), int) Key => (stage.Key, phase);
+    public static StagePracticeRequest Reconstruct(((string, int), int) key) =>
+        new StagePracticeRequest(AnalyzedStage.Reconstruct(key.Item1), key.Item2);
+}
+
+public readonly struct CampaignRequest {
+    public readonly AnalyzedCampaign campaign;
+
+    public CampaignRequest(AnalyzedCampaign campaign) {
+        this.campaign = campaign;
+    }
+    
+    public string Key => campaign.Key;
+    public static CampaignRequest Reconstruct(string key) =>
+        new CampaignRequest(AnalyzedCampaign.Reconstruct(key));
+    
+}
+
+public readonly struct GameRequest {
+    [CanBeNull] public readonly Func<bool> cb;
+    public readonly bool newCampaign;
+    [CanBeNull] public readonly ShotConfig shot;
+    public readonly DifficultySet difficulty;
+    public readonly CampaignMode mode;
+    public readonly Replay? replay;
+    public readonly GameLowRequest lowerRequest;
+    public readonly int seed;
+
+    public GameRequest(Func<bool> cb, GameLowRequest lowerRequest, 
+        Replay replay) : this(cb, replay.metadata.Difficulty, lowerRequest, true, 
+        replay.metadata.Shot, replay) {}
+
+    public GameRequest(Func<bool> cb, 
+        DifficultySet difficulty = DifficultySet.Abex, CampaignRequest? campaign = null,
+        BossPracticeRequest? boss = null, ChallengeRequest? challenge = null, StagePracticeRequest? stage = null,
+        bool newCampaign = true, ShotConfig shot = null, Replay? replay = null) : 
+        this(cb, difficulty,  GameLowRequest.FromNullable(
+            campaign, boss, challenge, stage) ?? throw new Exception("No valid request type made of GameReq"), 
+            newCampaign, shot, replay) { }
+
+    private GameRequest(Func<bool> cb, DifficultySet difficulty,
+        GameLowRequest lowerRequest,
+        bool newCampaign, ShotConfig shot, Replay? replay) {
+        this.mode = lowerRequest.Resolve(
+            _ => CampaignMode.MAIN, 
+            _ => CampaignMode.CARD_PRACTICE, 
+            _ => CampaignMode.SCENE_CHALLENGE, 
+            _ => CampaignMode.STAGE_PRACTICE);
+        this.cb = cb;
+        this.newCampaign = newCampaign;
+        this.shot = shot;
+        this.difficulty = difficulty;
+        this.replay = replay;
+        this.lowerRequest = lowerRequest;
+        this.seed = replay?.metadata.Seed ?? new System.Random().Next();
+    }
 
     public void SetupOrCheckpoint() {
         if (newCampaign) {
-            if (difficulty.HasValue) GameManagement.Difficulty = difficulty.Value;
+            Log.Unity(
+                $"Starting game with mode {mode} on difficulty {difficulty.Describe()}.");
+            GameManagement.Difficulty = difficulty;
             GameManagement.NewCampaign(mode, shot);
-        } else GameManagement.CheckpointCampaignData();
+            if (replay == null) Replayer.BeginRecording();
+            else Replayer.BeginReplaying(replay.Value.frames);
+        } else Checkpoint();
     }
 
-    public LevelController.LevelRunRequest LevelRequest(StageConfig s, LevelController.LevelRunMethod method) =>
-        new LevelController.LevelRunRequest(toPhase, cb.Void(), method, s);
+    private void Checkpoint() {
+        GameManagement.CheckpointCampaignData();
+    }
 
-    public void RequestLevel(StageConfig s, LevelController.LevelRunMethod method) =>
-        LevelController.Request(LevelRequest(s, method));
+    public bool Finish() => cb?.Invoke() ?? true;
+    public bool FinishAndPostReplay() {
+        if (Finish()) {
+            Replayer.End(this);
+            return true;
+        } else return false;
+    }
+    public void vFinishAndPostReplay() => FinishAndPostReplay();
 
+    public static GameRequest? LastGame { get; set; } = null;
+    public bool Run() {
+        var r = this;
+        LastGame = r;
+        RNG.Seed(seed);
+        replay?.metadata.ApplySettings();
+        return lowerRequest.Resolve(
+            c => SelectCampaign(c, r),
+            b => SelectBoss(b, r),
+            c => SelectChallenge(c, r),
+            s => SelectStage(s, r));
+    }
 
-    private static bool _SelectStage(StageConfig s, LevelController.LevelRunMethod method, GameReq req) =>
-        SceneIntermediary.LoadScene(new SceneIntermediary.SceneRequest(s.sceneConfig,
+    public static bool? Rerun() {
+        if (LastGame == null) return null;
+        else if (LastGame.Value.Run()) {
+            if (LastGame.Value.mode.PreserveReloadAudio()) AudioTrackService.PreserveBGM();
+            return true;
+        } else return false;
+    }
+
+    public void vRun() => Run();
+
+    private static bool SelectCampaign(CampaignRequest c, GameRequest req) {
+        bool ExecuteStage(int index) {
+            if (index < c.campaign.stages.Length) {
+                var s = c.campaign.stages[index];
+                return SceneIntermediary.LoadScene(new SceneRequest(s.stage.sceneConfig,
+                    SceneRequest.Reason.RUN_SEQUENCE,
+                    (index == 0) ? req.SetupOrCheckpoint : (Action)req.Checkpoint,
+                    //Note: this load during onHalfway is for the express purpose of preventing load lag
+                    () => StateMachineManager.FromText(s.stage.stateMachine),
+                    () => LevelController.Request(new LevelController.LevelRunRequest(1, () => ExecuteStage(index + 1), 
+                        LevelController.LevelRunMethod.CONTINUE, s.stage))));
+            } else if (req.FinishAndPostReplay()) {
+                Log.Unity("Stage sequence finished.");
+                return true;
+            } else return false;
+        }
+        return ExecuteStage(0);
+    }
+    
+    private static bool SelectStage(StagePracticeRequest s, GameRequest req) =>
+        SceneIntermediary.LoadScene(new SceneRequest(s.stage.stage.sceneConfig,
+            SceneRequest.Reason.START_ONE,
             req.SetupOrCheckpoint,
             //Note: this load during onHalfway is for the express purpose of preventing load lag
-            () => StateMachineManager.FromText(s.stateMachine),
-            () => req.RequestLevel(s, method)));
+            () => StateMachineManager.FromText(s.stage.stage.stateMachine),
+            () => LevelController.Request(
+                new LevelController.LevelRunRequest(s.phase, req.vFinishAndPostReplay, s.method, s.stage.stage))));
+    
 
-    public bool SelectStageSinglePhase(StageConfig s) => _SelectStage(s, LevelController.LevelRunMethod.SINGLE, this);
-
-    public bool SelectStageContinue(StageConfig s) => _SelectStage(s, LevelController.LevelRunMethod.CONTINUE, this);
-
-
-    private static bool SelectBoss(SceneConfig scene, BossConfig b, Action<BehaviorEntity> cont, GameReq req, Enums.PhaseType pt) {
-        BackgroundOrchestrator.NextSceneStartupBGC = b.Background(pt);
-        return SceneIntermediary.LoadScene(new SceneIntermediary.SceneRequest(scene,
+    private static bool SelectBoss(BossPracticeRequest ab, GameRequest req) {
+        var b = ab.boss.boss;
+        BackgroundOrchestrator.NextSceneStartupBGC = b.Background(ab.PhaseType);
+        return SceneIntermediary.LoadScene(new SceneRequest(References.unitScene,
+            SceneRequest.Reason.START_ONE,
             req.SetupOrCheckpoint,
             //Note: this load during onHalfway is for the express purpose of preventing load lag
             () => StateMachineManager.FromText(b.stateMachine),
             () => {
                 var beh = UnityEngine.Object.Instantiate(b.boss).GetComponent<BehaviorEntity>();
                 beh.behaviorScript = b.stateMachine;
-                cont(beh);
+                beh.phaseController.Override(ab.phase.index, req.vFinishAndPostReplay);
             }));
     }
 
-    public static bool SelectBossChallenge(SceneConfig scene, GameReq req, Enums.PhaseType pt, ChallengeRequest cr) {
-        BackgroundOrchestrator.NextSceneStartupBGC = cr.Boss.Background(pt);
-        return SceneIntermediary.LoadScene(new SceneIntermediary.SceneRequest(scene,
+    private static bool SelectChallenge(ChallengeRequest cr, GameRequest req) {
+        BackgroundOrchestrator.NextSceneStartupBGC = cr.Boss.Background(cr.phase.phase.type);
+        return SceneIntermediary.LoadScene(new SceneRequest(References.unitScene,
+            SceneRequest.Reason.START_ONE,
             req.SetupOrCheckpoint,
-            () => ChallengeManager.TrackChallenge(cr.WithCB(() => req.cb?.Invoke())),
+            () => ChallengeManager.TrackChallenge(req, cr),
             () => {
                 var beh = UnityEngine.Object.Instantiate(cr.Boss.boss).GetComponent<BehaviorEntity>();
                 ChallengeManager.LinkBEH(beh);
             }));
-        
-        
     }
     
 
-    public static bool SelectBossSinglePhase(SceneConfig scene, BossConfig b, GameReq req, Enums.PhaseType pt) =>
-        SelectBoss(scene, b, beh => beh.phaseController.Override(req.toPhase, req.cb.Void()), req, pt);
 
-    public static bool SelectBossContinue(SceneConfig scene, BossConfig b, GameReq req, Enums.PhaseType pt) =>
-        SelectBoss(scene, b, beh => beh.phaseController.SetGoTo(req.toPhase, req.cb.Void()), req, pt);
+    private static SceneConfig MaybeSaveReplayScene => 
+        (References.replaySaveMenu != null && (Replayer.IsRecording || Replayer.PostedReplay != null)) ?
+        References.replaySaveMenu : References.mainMenu;
+
+    public static bool WaitDefaultReturn() {
+        if (SceneIntermediary.LOADING) return false;
+        GlobalSceneCRU.Main.RunDroppableRIEnumerator(WaitingUtils.WaitFor(1f, CancellationToken.None, () =>
+            LoadScene(new SceneRequest(MaybeSaveReplayScene,
+                SceneRequest.Reason.FINISH_RETURN))));
+        return true;
+    }
+
+    public static bool DefaultReturn() => SceneIntermediary.LoadScene(
+        new SceneRequest(MaybeSaveReplayScene, SceneRequest.Reason.FINISH_RETURN)
+    );
+    
+    public static bool ShowPracticeSuccessMenu() {
+        GameStateManager.SendSuccessEvent();
+        return true;
+    }
+    public static bool WaitShowPracticeSuccessMenu() {
+        if (SceneIntermediary.LOADING) return false;
+        GlobalSceneCRU.Main.RunDroppableRIEnumerator(WaitingUtils.WaitFor(1f, CancellationToken.None, GameStateManager.SendSuccessEvent));
+        return true;
+    }
+    public static bool ViewReplay(Replay r) {
+        return new GameRequest(WaitDefaultReturn, r.metadata.ReconstructedRequest, r).Run();
+    }
+
+    public static bool ViewReplay(Replay? r) => r != null && ViewReplay(r.Value);
     
 
-}
+    public static void RunCampaign([CanBeNull] AnalyzedCampaign campaign, [CanBeNull] Func<bool> cb, DifficultySet difficulty, 
+        [CanBeNull] ShotConfig shot) {
+        if (campaign == null) return;
+        var req = new GameRequest(cb.Then(() => LoadScene(new SceneRequest(MaybeSaveReplayScene, 
+            SceneRequest.Reason.FINISH_RETURN, () => {
+                GameManagement.CheckpointCampaignData();
+                if (!Replayer.IsReplaying) {
+                    SaveData.r.CompletedCampaigns.Add(campaign.campaign.key);
+                    SaveData.SaveRecord();
+                }
+            }))), difficulty, campaign: new CampaignRequest(campaign), shot: shot);
 
-public abstract class MainMenu : MonoBehaviour {
-    [CanBeNull] public AudioTrack bgm;
 
-    private void Start() {
-        AudioTrackService.InvokeBGM(bgm);
+        if (SaveData.r.TutorialDone || References.miniTutorial == null) req.Run();
+        else LoadScene(new SceneRequest(References.miniTutorial,
+            SceneRequest.Reason.START_ONE,
+            //Prevents hangover information from previous campaign, will be overriden anyways
+            req.SetupOrCheckpoint,
+            null, 
+            () => MiniTutorial.RunMiniTutorial(req.vRun)));
     }
+
+    public static bool RunTutorial() => 
+        SceneIntermediary.LoadScene(new SceneRequest(References.tutorial, SceneRequest.Reason.START_ONE, 
+            () => GameManagement.NewCampaign(CampaignMode.TUTORIAL, null)));
+
+
 }
 }
