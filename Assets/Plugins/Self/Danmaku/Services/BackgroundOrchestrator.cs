@@ -24,7 +24,7 @@ public class BackgroundOrchestrator : MonoBehaviour {
         if (main == null) return; //Kinda awk but this can be called before Awake
         if (FromBG == null) main.MaybeCreateFirst();
         else {
-            if (SaveData.s.Backgrounds) FromBG.Capturer.RecreateTexture();
+            if (SaveData.s.Backgrounds) FromBG.capturer.RecreateTexture();
             else {
                 FromBG.Kill();
                 if (ToBG != null) ToBG.Kill();

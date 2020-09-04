@@ -287,11 +287,18 @@ let internal _lSMParser s =
                             { macros = Map.empty } "StateMachineLexer" s) with
                  | Success (result, state, pos) -> OK result
                  | Failure (errStr, err, state) -> Failed [errStr]
+        
+ 
+//Avoids a nesting error in il2cpp
+let typed_partialZip (ls: (string list * Position) list) =
+    let ls = List.map (fun (i, j) -> (i, firstSome j (List.length i))) ls
+    ls |> List.map fst |> List.concat, ls |> List.map snd |> List.concat
+
           
 let SMParser s = (_SMParser s).bind(sort >> flatten).fmap(Array.ofList)
 let lSMParser s =( _lSMParser s).bind(List.takeWhile (LPUF.IMap cutoff) >> lsort >>
                            LPUF.Remap flatten >> List.map (Errorable<_>.DeTuple printPosition)
-                           >> Errorable<_>.Acc).fmap(partialZip)
+                           >> Errorable<_>.Acc).fmap(typed_partialZip)
 let SMParser2 s = (_SMParser s).bind(sort >> flatten).fmap(String.concat " ")
 let lSMParser2 = lSMParser >> (function
                                 | OK (ss, pos) ->

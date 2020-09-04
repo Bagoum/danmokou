@@ -11,6 +11,12 @@ using GameLowRequest = DU<Danmaku.CampaignRequest, Danmaku.BossPracticeRequest,
     ChallengeRequest, Danmaku.StagePracticeRequest>;
 using static GameManagement;
 using static SceneIntermediary;
+using static StaticNullableStruct;
+
+//https://issuetracker.unity3d.com/issues/build-that-contains-a-script-with-a-struct-which-has-a-static-nullable-reference-to-itself-fails-on-il2cpp
+public static class StaticNullableStruct {
+    public static Danmaku.GameRequest? LastGame { get; set; } = null;
+}
 
 namespace Danmaku {
 
@@ -124,7 +130,6 @@ public readonly struct GameRequest {
     }
     public void vFinishAndPostReplay() => FinishAndPostReplay();
 
-    public static GameRequest? LastGame { get; set; } = null;
     public bool Run() {
         var r = this;
         LastGame = r;

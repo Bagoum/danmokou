@@ -117,7 +117,7 @@ public class ChallengeManager : CoroutineRegularUpdater {
             var e = Exec;
             Replayer.Cancel(); //can't replay both scenes together
             Log.Unity($"Autoproceeding to next challenge: {next.Value.Description}");
-            GameRequest.LastGame = new GameRequest(gr.cb, gr.difficulty, challenge: next.Value, shot: gr.shot);
+            StaticNullableStruct.LastGame = new GameRequest(gr.cb, gr.difficulty, challenge: next.Value, shot: gr.shot);
             TrackChallenge(gr, next.Value);
             LinkBEH(e);
             e.RunAttachedSM();

@@ -19,7 +19,6 @@
             #pragma multi_compile_instancing
             #include "UnityCG.cginc"
             #include "Assets/CG/Math.cginc"
-            #pragma instancing_options procedural:setup
             
             struct vertex {
                 float4 loc  : POSITION;
@@ -63,6 +62,12 @@
             
             float4 uvRBuffer[1023];
             
+        #ifdef UNITY_INSTANCING_ENABLED
+			#define UVR uvRBuffer[unity_InstanceID]
+		#else
+			#define UVR uvRBuffer[0]
+		#endif
+            
             fragment vert(vertex v) {
                 UNITY_SETUP_INSTANCE_ID(v);
                 fragment f;
@@ -70,7 +75,7 @@
                 f.loc = UnityObjectToClipPos(v.loc);
                 f.buv = (v.uv - float2(0.5,0.5));
                 
-                f.uv = uvRBuffer[unity_InstanceID].xy + f.buv * 
+                f.uv = UVR.xy + f.buv * 
                     float2(_SqrWidth/_ScreenWidth, _SqrWidth/_ScreenHeight);
                 //This mitigates a few issues with shattering backgrounds that are not particularly wide
                 f.uv = mod2(f.uv, float2(1,1));
@@ -88,7 +93,7 @@
             float4 frag(fragment f) : SV_Target{
                 UNITY_SETUP_INSTANCE_ID(f);
                 float r = length(f.buv) * 2;
-                clip(polyRad(atan02pi(f.buv) + uvRBuffer[unity_InstanceID].z, PI/4) - r);
+                clip(polyRad(atan02pi(f.buv) + UVR.z, PI/4) - r);
                 float4 c = tex2D(_MainTex, f.uv);
                 return c;
             }

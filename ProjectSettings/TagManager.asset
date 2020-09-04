@@ -34,8 +34,8 @@ TagManager:
   - 
   - 
   - 
-  - 
-  - ARBITRARY_CAPTURE
+  - ARBITRARY_CAPTURE_1
+  - ARBITRARY_CAPTURE_2
   - SpecialMainCamera
   - PostProcessing
   m_SortingLayers:

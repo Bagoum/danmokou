@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   boss: {fileID: 6274564262994426332, guid: 2e4cfe2f6f8095747a49bcb45d5dea46, type: 3}
   CardPracticeName: Yukari
+  replayNameOverride: 
   stateMachine: {fileID: 4900000, guid: 55eb144e102f2a849b905b076fcb5506, type: 3}
   key: jy.yukari
   casualName: 

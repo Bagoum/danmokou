@@ -36,12 +36,17 @@ type Errorable<'t> =
         | Failed errs -> Failed errs
     static member Fmap f (x:Errorable<'t>) = x.fmap(f)
     static member Bind f (x:Errorable<'t>) = x.bind(f)
-    static member Acc errbs = 
-        List.foldBack (fun x acc ->
-            match (x, acc) with
-            | OK x, OK acc -> OK (x::acc)
-            | _, _ -> Failed <| List.append x.asErrs acc.asErrs
-        ) errbs (OK [])
+    static member Acc errbs =
+        //ugly solution to avoid a type depth annoyance in il2cpp
+        if List.forall (function | OK _ -> true | _ -> false) errbs
+        then errbs |> List.map (function | OK x -> x) |> OK
+        else errbs |> List.map (fun x -> x.asErrs) |> List.concat |> Failed
+        
+        //List.foldBack (fun x acc ->
+        //    match (x, acc) with
+        //    | OK x, OK acc -> OK (x::acc)
+        //    | _, _ -> Failed <| List.append x.asErrs acc.asErrs
+        //) errbs (OK [])
     static member AccFmap f errbs = Errorable<_>.Acc errbs |> Errorable.Fmap f
     static member AccConcat errbs = Errorable<_>.AccFmap List.concat errbs
     

@@ -65,11 +65,14 @@ public static class Log {
     /// <exception cref="Exception"></exception>
     public static Exception StackInnerException(Exception e) {
         StringBuilder msg = new StringBuilder();
+        var e0 = e;
         while (e != null) {
             msg.Append(e.Message);
             msg.Append("\n");
             e = e.InnerException;
         }
+        msg.Append("\n");
+        msg.Append(e0.StackTrace);
         return new Exception(msg.ToString());
     }
 }

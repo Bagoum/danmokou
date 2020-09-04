@@ -26,10 +26,10 @@ You might know this project by the name NotDnh, ph4mmo, DanMaKufu, or Bagoum Dan
 
 To build/run this project, follow the following steps:
 
-- Install Unity version 2020.1.f1 or later.
+- Install Unity version 2020.1.f1 or later. (Note: I do not think 2020.2.bx is compatible at the moment.)
 - Run `git submodule update --init --recursive`. This imports code from SiMP and my challenge-scene game jam project which have some useful default values for getting started. This is not required but will help as a reference. (Note: the Yukari/Junko script in Assets/MiniProjects has some dependencies on the SiMP repository.)
 - Open Scenes/BasicSceneOPENME
-  - Import TextMeshPro essentials (You should see a prompt to do this as soon as you open the scene)
+  - Import TextMeshPro essentials (You should see a prompt to do this as soon as you open the scene, or you can do it from Window > TextMesh Pro > Import TMP Essential Resources)
 - You may need to run the project, stop the project, and run it again to fix lingering metadata bugs in UXML. 
 - (Optional) Build the F# project in the `FS` folder targeted at 4.7.2. I have provided DLLs so you don't have to do this unless you make changes to the F# code.
   - Copy the output DLLs (Common, FParsec, FParsecCS, FSharp.Core, Parser, System.ValueTuple) to `Assets/Plugins/Self/Core`
@@ -53,6 +53,7 @@ The source code is licensed under MIT. See the COPYING file for details, as well
 # Feature Wishlist
 
 - GFW-style gameplay
+- WebGL (see the Pitfalls section)
 
 # FAQ
 
@@ -109,3 +110,12 @@ Most play-mode tests operate by running some state machine and checking the outp
 
 Scenes used for play-mode tests are in the folder `Assets/Scenes/Testing`.
 
+# Pitfalls
+
+This is a collection of miscellaneous small warnings you may need to heed when using this engine.
+
+- If you are making complex backgrounds, do not use functions in the class `RNG`, and do not inherit from `BehaviorEntity` or use `ParametricInfo.WithRandomID` in the objects under the background. The reason for this is that backgrounds can be turned off, so these random functions can cause replay desyncing. Alternatively, you can disable the ability to turn off backgrounds. 
+- IL2CPP (including WebGL) builds do not currently work for two reasons:
+  - IL2CPP cannot handle expressions compiled to byref functions. [Related Github issue](https://github.com/dotnet/runtime/issues/31075). The root cause seems to be a dotnet policy, but this is solvable with a few minor engine deoptimizations.
+  - IL2CPP cannot handle expressions compiled to functions using value types. [Related forum thread](https://forum.unity.com/threads/are-c-expression-trees-or-ilgenerator-allowed-on-ios.489498/). As far as I can tell this is not solvable except by boxing, which would be far too heavy on the GC, but Unity should eventually get around to fixing the root cause. When that happens, I will standardize IL2CPP support. 
+  - 

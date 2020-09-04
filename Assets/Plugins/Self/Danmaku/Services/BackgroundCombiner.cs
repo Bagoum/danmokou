@@ -47,8 +47,8 @@ public class BackgroundCombiner : RegularUpdater {
     private void UpdateTextures() {
         if (!SaveData.s.Backgrounds || BackgroundOrchestrator.FromBG == null) return;
         //Update PB
-        var fromTex = BackgroundOrchestrator.FromBG.Capturer.Captured;
-        var toTex = (BackgroundOrchestrator.ToBG == null) ? null : BackgroundOrchestrator.ToBG.Capturer.Captured;
+        var fromTex = BackgroundOrchestrator.FromBG.capturer.Captured;
+        var toTex = (BackgroundOrchestrator.ToBG == null) ? null : BackgroundOrchestrator.ToBG.capturer.Captured;
         if (toTex == null) {
             mat.EnableKeyword("MIX_FROM_ONLY");
             pb.SetTexture(PropConsts.fromTex, fromTex);

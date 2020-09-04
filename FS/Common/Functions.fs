@@ -6,11 +6,15 @@ let firstSome x i =
     else (Some x)::[for _ in 2 .. i -> None]
     
 let partialZip ls =
+    let ls = List.map (fun (i, j) -> (i, firstSome j (List.length i))) ls
+    ls |> List.map fst |> List.concat, ls |> List.map snd |> List.concat
+    
+let partialZip2 ls =
     let is, js = List.foldBack (fun (is, j) (accis, accj)
                                     -> (is::accis, (firstSome j (List.length is))::accj))
                                         ls ([], [])
     (is |> List.concat, js |> List.concat)
-    
+
 
 let maxConsecutive x =
     List.fold (fun (max, curr) y ->

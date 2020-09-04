@@ -24,8 +24,6 @@ public static class Compilers {
     #region RawCompilers
     private static D CompileDelegateLambda<D, ExT1>(Func<ExT1, TEx> exConstructor) where ExT1 : TEx, new() {
         ExT1 t1 = new ExT1();
-        var w = exConstructor(t1);
-        var wf = w.Flatten();
         return Ex.Lambda<D>(exConstructor(t1).Flatten(), t1).Compile();
     }
 
@@ -44,8 +42,6 @@ public static class Compilers {
         ExT1 t1 = new ExT1();
         ExT2 t2 = new ExT2();
         ExT3 t3 = new ExT3();
-        var w = exConstructor(t1, t2, t3);
-        var wf = w.Flatten();
         return Ex.Lambda<D>(exConstructor(t1, t2, t3).Flatten(), t1, t2, t3).Compile();
     }
 
@@ -58,8 +54,6 @@ public static class Compilers {
         ExT2 t2 = new ExT2();
         ExT3 t3 = new ExT3();
         ExT4 t4 = new ExT4();
-        var w = exConstructor(t1, t2, t3, t4);
-        var wf = w.Flatten();
         return Ex.Lambda<D>(exConstructor(t1, t2, t3, t4).Flatten(), t1, t2, t3, t4).Compile();
     }
 
@@ -74,8 +68,6 @@ public static class Compilers {
         ExT3 t3 = new ExT3();
         ExT4 t4 = new ExT4();
         ExT5 t5 = new ExT5();
-        var w = exConstructor(t1, t2, t3, t4, t5);
-        var wf = w.Flatten();
         return Ex.Lambda<D>(exConstructor(t1, t2, t3, t4, t5).Flatten(), t1, t2, t3, t4, t5).Compile();
     }
     #endregion
@@ -139,8 +131,6 @@ public static class Compilers {
     private static GCXF<T> GCXF<T>(ExGCXF ex) {
         TExGCX t1 = new TExGCX();
         ReflectEx.SetGCX(t1);
-        var ef = ex(t1);
-        var wf = ex(t1).Flatten();
         var gcxf = Ex.Lambda<GCXF<T>>(ex(t1).Flatten(), t1).Compile();
         ReflectEx.RemoveGCX();
         return gcxf;
