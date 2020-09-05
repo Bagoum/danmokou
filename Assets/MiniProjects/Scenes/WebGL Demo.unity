@@ -294,7 +294,7 @@ PrefabInstance:
         type: 3}
       propertyPath: behaviorScript
       value: 
-      objectReference: {fileID: 4900000, guid: 1964495b92fa3a742a307256ecece82c, type: 3}
+      objectReference: {fileID: 4900000, guid: a2b3a4a307eac9a45908a491049ef3b8, type: 3}
     - target: {fileID: 4602661400090615120, guid: 2e4cfe2f6f8095747a49bcb45d5dea46,
         type: 3}
       propertyPath: linkToEditorReload
@@ -374,6 +374,11 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 2884352696324497620, guid: fde376048de61e241998f004239cd358,
+        type: 3}
+      propertyPath: defaultShot
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 2884352696324497640, guid: fde376048de61e241998f004239cd358,
         type: 3}
       propertyPath: m_Name

@@ -126,36 +126,39 @@ phase 0
 			circle
 			## Bullets have a "firing index", which is generally used to store the iteration number within a repeat.
 			## By writing "p this", we tell the repeater to save its iteration number (0 through 7 in this case) in each bullet.
-			## We can also use bindItr to achieve this.
 			p this
+			## We can also use bindItr to achieve this.
+			bindItr(nStar)
+			## For reasons discussed in another tutorial, we need to expose the nStar variable to use it down below. 
+			expose { f nStar }
 			## sdd summons a bullet with an angular rotation function and a path.
 			## The angular rotation is * 200 t, which makes the bullet rotate very fast around its center.
 			## The lerp function here signifies that between t=0.2 and t=1, the bullet speed will lerp from 3 to 0.
 		} sdd(* 200 t, rvelocity(lerp(0.2, 1, t, cx 3, zero)))
-		## Once the bullet is 1.2 seconds old, with an offset based on the firing index, we will destroy it while summoning an effect bullet in its place. This process is called softculling.
+		## Once the bullet is 1.2 seconds old, with an offset based on the firing index, we will destroy it while summoning an effect bullet in its place. This process is called softculling. We will also spawn some normal bullets from the position.
 		## By using the firing index as an offset for the condition, we can make the control behave differently on each bullet.
 		## Let's define the condition in a macro. Macros are realized during the parsing step, so the text is effectively copied wherever the macro is used.
 		## We will discuss the power of macros more later, but for now, this is a simple one-line macro, which has the format !!{ macroName macroValue
 !!{ cond > t (+ 1.2 * 0.4 p)
-		## You might wonder why the softcull command comes first here. If we destroy the bullet, then how can we run the SM control below it?
-		## The answer is that bullet controls have an enforced internal ordering. Cull/Softcull are always run last. Even if we write Cull down first, the SM command will occur first.
-		## Note that this ordering is not enforced for pathers/lasers/summons (to be discussed in a later tutorial).
 		## We can invoke one-line macros by using $macroName.
-		bullet-control(persist, lstar-blue/w, softcull(cwheel-blue/w, $cond))
-		## bullet-control-sm is a special control. When the condition is satisfied, the bullet will spawn an invisible node (inode) at its position, which then runs the StateMachine defined.
-		bullet-control-sm(persist, lstar-blue/w, $cond,
-			async sakura-*/w <> gir {
-				## Let's play the SFX only once when the firing starts. 
-				## Since sfx commands are resolved on every loop, we need a container to run the sfx command.
-				## Try putting the sfx command in the gcrepeat below and see what happens.
-				sfx(x-fire-burst-1)
-			} gcrepeat {
-				wait(16)
-				times(12)
-				## We want to color the bullets according to the firing index of the original bullet, so we use "p" as an indexer to colorf.
-				colorf({ red pink purple blue teal green yellow orange }, p)
-			} s(rvelocity(lerp(0.2, 1, t, cx 2, cx 4)))
-			)
+		bullet-control(persist, lstar-blue/w, batch($cond, {
+			## The "sm" control spawns an invisible node (inode) at the position to run the target StateMachine. We will use this control to spawn some normal bullets.
+			## Due to my formatting preferences, the condition is the first argument to an "sm" control.
+			## You can change argument order and functions freely in Danmaku/BulletManagement/BulletControls.cs; look for the function named SM.
+			sm(_, async sakura-*/w <> gir {
+					## Let's play the SFX only once when the firing starts. 
+					## Since sfx commands are resolved on every loop, we need a container to run the sfx command.
+					## Try putting the sfx command in the gcrepeat below and see what happens.
+					sfx(x-fire-burst-1)
+				} gcrepeat {
+					wait(16)
+					times(12)
+					## We want to color the bullets according to the firing index of the original bullet, so we use "p" as an indexer to colorf.
+					## Try using the nStar variable instead of p. 
+					colorf({ red pink purple blue teal green yellow orange }, p)
+				} s(rvelocity(lerp(0.2, 1, t, cx 2, cx 4))))
+			softcull(cwheel-blue/w, _)
+		}))
 #}
 
 

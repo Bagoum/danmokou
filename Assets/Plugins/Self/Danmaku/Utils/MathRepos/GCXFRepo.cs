@@ -29,9 +29,9 @@ public static class GCXFRepo {
     public static ExGCXF GCX_TP(ExTP target) => _Fake(target);
     public static ExGCXF GCX_BPY(ExBPY target) => _Fake(target);
     public static ExGCXF GCX_Pred(ExPred target) => _Fake(target);
-    public static readonly GCXF<Vector2> V2Zero = Compilers.GCXF(Parametrics.Zero());
-    public static readonly GCXF<V2RV2> RV2Zero = Compilers.GCXF(_ => ExMRV2.Zero());
+    public static readonly GCXF<Vector2> V2Zero = _ => Vector2.zero;
+    public static readonly GCXF<V2RV2> RV2Zero = _ => V2RV2.Zero;
 
-    public static readonly GCXF<float> Max = "_".Into<GCXF<float>>();
+    public static readonly GCXF<float> Max = _ => M.IntFloatMax;
 }
 }

@@ -24,7 +24,11 @@ public static partial class Reflector {
     static Reflector() {
         MathConfig = GenericReflectionConfig.ManyPublic(typeof(ExM), typeof(ExMV2), typeof(ExMRV2), typeof(ExMV3), 
             typeof(ExMV4), typeof(ExMPred));
-        foreach (var t in new[] { typeof(VTPRepo), typeof(SyncPatterns), typeof(AtomicPatterns),
+        foreach (var t in new[] { 
+        #if NO_EXPR
+            typeof(NoExprMath_1), typeof(NoExprMath_2), 
+        #endif
+            typeof(VTPRepo), typeof(SyncPatterns), typeof(AtomicPatterns),
             typeof(AsyncPatterns), typeof(Parametrics), typeof(Parametrics3), typeof(Parametrics4), typeof(MovementPatterns),
             typeof(BPYRepo), typeof(FXYRepo), typeof(ExtraMovementFuncs),
             typeof(PredicateLogic), typeof(BulletManager.SimpleBulletControls), typeof(CurvedTileRenderLaser.LaserControls),

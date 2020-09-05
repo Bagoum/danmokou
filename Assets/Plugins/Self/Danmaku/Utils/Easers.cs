@@ -29,7 +29,9 @@ public static class EaseHelpers {
         { "smod-010", ESoftmod010 },
         { "bounce2", EBounce2 }
     };
-    private static readonly Dictionary<string, FXY> cfuncs = new Dictionary<string, FXY>();
+    private static readonly Dictionary<string, FXY> cfuncs = new Dictionary<string, FXY>() {
+        { "linear", x => x }
+    };
     public static string[] Functions => funcs.Keys.ToArray();
 
     private static bool TryGetOrCacheFXY(string name, out FXY fxy) {
@@ -46,7 +48,10 @@ public static class EaseHelpers {
         DerivativeVisitor.Derivate(x, E1, funcs.GetOrThrow(name, "easing functions (from derivative call)")(x));
     
     public static FXY GetFuncOrRemoteOrLinear(string name) {
-        if (TryGetOrCacheFXY(name, out var f)) return f;
+        FXY f;
+#if !NO_EXPR
+        if (TryGetOrCacheFXY(name, out f)) return f;
+#endif
         if (EasingFunctionRemote.easingMethodStrAccess.ContainsKey(name)) {
             Func<float, float, float, float> ffunc =
                 EasingFunctionRemote.GetEasingFunction(EasingFunctionRemote.easingMethodStrAccess[name]);

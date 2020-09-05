@@ -14,6 +14,11 @@ public class FallthroughAttribute : Attribute {
     }
 }
 
+[AttributeUsage(AttributeTargets.Method)]
+public class ExprCompilerAttribute : Attribute {
+    
+}
+
 [AttributeUsage(AttributeTargets.All)]
 public class DontReflectAttribute : Attribute {
 }

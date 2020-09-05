@@ -90,11 +90,6 @@ public static class M {
     public static float ToDeg(this Vector2 v2) => radDeg * (float)Math.Atan2(v2.y, v2.x);
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static float Atan2D(float y, float x) => radDeg * (float)Math.Atan2(y, x);
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Vector2 RadToDir(float rad) => new Vector2(Mathf.Cos(rad), Mathf.Sin(rad));
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Vector2 DegToDir(float deg) => RadToDir(degRad * deg);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static float Atan(Vector2 v2) => Mathf.Atan2(v2.y, v2.x);

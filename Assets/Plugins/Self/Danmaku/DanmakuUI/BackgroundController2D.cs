@@ -21,7 +21,7 @@ public struct Kakera {
         loc = location;
         this.baseShapeRot = baseShapeRot;
         uv = MainCamera.RelativeToScreenUV(loc);
-        vel = M.RadToDir(RNG.GetFloatOffFrame(0f, M.TAU)) * RNG.GetFloatOffFrame(0f, maxInitVelMag);
+        vel = M.CosSin(RNG.GetFloatOffFrame(0f, M.TAU)) * RNG.GetFloatOffFrame(0f, maxInitVelMag);
         this.gravity = gravity;
         rotationAccels =
             M.Spherical(RNG.GetFloatOffFrame(0f, M.TAU), RNG.GetFloatOffFrame(0f, M.PI)) *

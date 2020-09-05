@@ -1,78 +1,81 @@
-
-## Please make sure you are using a syntax highlighter, otherwise this tutorial will be a nightmare to read.
-## The repository contains a notepadPlusPlus.xml file which can be used as a Notepad++ language definition. To update the language definition, copy it directly into `AppData/Roaming/Notepad++/userDefineLangs`. Then you can select "BDSL" from the "Language" option in the header.
-
-## The first line of a pattern script is always pattern, followed by an array of pattern properties.
-## Boss scripts will put values in this array, but we can leave it empty.
+##See Tutorial 00 for an introduction to the basic structure of these scripts.
 pattern({ })
-## A pattern is broken up into any number of PHASEs.
-## By convention, the first phase (#0) is used for setup, and has a "shift-phase-to" command used for going to the phase we want to test.
 phase(0)
 	action(block, 0)
-		shift-phase-to(2)
+		shift-phase-to(1)
 		
-## This is phase #1. Because we set shift-phase-to 2 in the first phase, this will be skipped.
-## Phases can have properties (see Danmaku/StateMachines/SMProperties.cs), formatted as follows.
-<!> type(non, `Phase 1 (Nonspell)`)
+## This is phase #1. 
+<!> type(non, `The First Bullet`)
 <!> hp(20000)
+<!> root(-1, 1)
 phase(0)
 	action(block, 0)
-		noop
+		## Let's fire one bullet.
+		sync(fireball-red/w, <0;0:2;0:0>, s(rvelocity(cxy(0, -2))))
+		## At a high level, the way this works is as follows:
+			## sync : fire bullets synchronously, ie. instantaneously.
+			## fireball-red/w : bullet style (fireball = base bullet style, red = color, /w = colorization method). There are three standard colorization methods: /w, /, and /b.
+			## <0;0:1;0:0> : starting offset. For now, note that this is effectively a vector <1,0>.
+			## s : command to create a simple bullet.
+			## rvelocity: velocity-based movement function. 
+			## cxy(0, -2): the vector <0,-2>.
+		## We can describe this as "fire a fireball, in red/w color, starting at the position <1,0>, with velocity <0,-2>."
+		## For reference, the screen is 16 units wide and 9 units high. The playable area goes from X=[-5, 5] and Y=[-4.5, 4].
 		
-<!> type(spell,  `GSRepeat, GCRepeat (2)`)
-<!> hp(20000)
-## The root command sets the starting position of the executor when this phase is run. 
-## By default, the executor will take 2 seconds to move to this position, and then the phase will start.
-## However, by setting `TeleportAtPhaseStart` to true in Danmaku/Services/SaveData.cs, the executor will teleport to the position instantaneously. This is useful for testing.
-<!> root(0, 1)
-## The number after "phase" is the timeout. If it is zero, then there is no timeout.
-phase(0)
-	## The sections of a phase are executed in sequence.
-	## "Action" is a group of simple commands that are executed in parallel. (Use "saction" to run simple commands in sequence.)
-	## They can be either "blocking" or "nonblocking". If they are nonblocking, then the next phase section will start immediately.
-	## The number after "block" is a delay timer.
-	action(block, 0)
-		## A sync(hronous) command executes instantaneously.
-		## arrow-red/w is a bullet style (arrow = base bullet style, red = color, /w = colorization method).
+		## Let's take a closer look at the starting offset. 
 		## <0;0:1;0:0> is an V2RV2 position. A V2RV2 is composed of five numbers:
 			## - Nonrotational X offset (NX)
 			## - Nonrotational Y offset (NY)
 			## - Rotational X offset (RX)
 			## - Rotational Y offset (RY)
 			## - Angle (A)
-		## Normally, you only need to use the last three. In this case, we will set the rotational X offset to 1, and increment the angle.
-		## Note that there are reduced ways to write V2RV2s. You can omit zeros (eg. <;:1;:>), you can write them with only RX/RY/A (eg. <1;:>), or you can write them with only angle (see below for an example). You cannot put spaces within a V2RV2. Don't even try.
-		## The <XXX> format constructs a constant V2RV2. We can create function-based V2RV2s by using functions in Danmaku/Utils/MathRepos/ExMRV2.cs. For example, `<0;0:1;0:0>` is the same as `rx(1)`. 
+		## Let's change the angle on the previous example and see what happens.
+		sync(sakura-green/, <0;0:2;0:50>, s(rvelocity(cxy(0, -2))))
+		## Notice that the offset rotates by 50 degrees, and the velocity also rotates by 50 degrees.
+		## There are options to prevent this from occuring. 
+		## We can use "nrvelocity" to make the velocity not rotate.
+		sync(fireball-blue/b, <0;0:2;0:50>, s(nrvelocity(cxy(0, -2))))
+		## Only the rotational offset will rotate. If we use the nonrotational offset, the offset will not rotate.
+		sync(sakura-pink/, <2;0:0;0:50>, s(rvelocity(cxy(0, -2))))
+		
+	## Set the shift-phase-to to `2` and press `R` in the game view to reload the script and go to the next phase.
+		
+<!> type(spell,  `GSRepeat, GCRepeat (2)`)
+<!> hp(20000)
+<!> root(0, 1)
+phase(0)
+	action(block, 0)
+		## Now let's summon multiple bullets.
+
 		## Parentheses and argument separators (commas) in method calls are optional, with one exception (see the tutorial on parser macros). Using newlines/ indentation within parentheses is optional.
+		## To summon multiple bullets at the same time, we use the GSRepeat (Generalized Synchronous Repeat) command.
 		## gsrepeat takes two arguments: an array of modifiers and an array of children. We provide only one child `s(...)`, but the language will automatically convert this to an array.
 		sync(arrow-red/w, <0;0:1;0:0>, gsrepeat({
-				## gsrepeat = Generalized Synchronous Repeat. The gXr commands are compatible with a set of common modifiers in Danmaku/BulletManagement/GenCtxProperties.cs. Here; we use the "times" modifier (repeat X times); and the "rv2incr" modifier (increment the position after every repeat).
+				## The gXr commands are compatible with a set of common modifiers in Danmaku/BulletManagement/GenCtxProperties.cs. Here; we use the "times" modifier (repeat X times); and the "rv2incr" modifier (increment the position after every repeat).
 				times(30)
-				## Can also be written as <10> (just the angle) or angle(10) (as a function).
 				rv2incr(<0;0:0;0:10>)
-			## s is the command that summons a simple bullet. There are also commands like ss (simple scalable bullet), sdd (simple bullet with custom rotation handling), pather, laser, summon (for enemies and complex objects), etc, which we will see later.
-			}, s(
-			## rvelocity gives a bullet rotational velocity. We see the other movement methods later.
-					rvelocity(
-					## cx 2 is the constant vector <2;0>. This means that the bullet will move in the direction of its V2RV2 angle with a speed of 2 units per second. The screen is 16x9 units and the play area is 10x8 units.
-						cx(2)
-					)
-				)
-			)
+			}, s(rvelocity(cx(2))))
 		)
 	action(block, 1)
 		## Now we'll do the same thing with an asynchronous command.
+		## There are reduced ways to write V2RV2 positions.
+		## - We can leave zeros blank, eg. <;:1;:>
+		## - If the NX and NY components are zero, we only need to provide the last three numbers, eg. <1;0:0>
+		## - If the NX, NY, RX, RY components are zero, we only need to provide the angle, eg. <15>
+		## <1;:> is the same as <0;0:1;0:0>.
 		async(circle-yellow/, <1;:>, gcrepeat({
 				## gcrepeat = Generalized Coroutine (Asynchronous) Repeat. When using GCRepeat, GIRepeat, or GTRepeat (see next sections), you have access to time-based modifiers like "wait", "while", and "unpause". 
 				## We will wait for 4 frames after each repeat. There are 120 frames per second.
 				wait(4)
 				times(30)
+				## <10> is the same as <0;0:0;0:10>.
 				rv2incr(<10>)
 			}, s(rvelocity(cx(2)))
 			)
 		)
 	## Set the shift-phase-to to `3` and press `R` in the game view to reload the script and go to the next phase.
-		
+	
+	
 ## I have added #{ at the end of the next line. This is a comment and does not affect the parser. However; if you are using the Notepad++ styler; then this allows you to collapse the code until the closing #}
 ## I have also omitted some parentheses and indentation in this section. The parser effectively ignores parentheses, newlines, and indentation, so they are primarily used to keep code organized.
 <!> type spell  `GIRepeat (3)` #{
@@ -98,6 +101,7 @@ phase 0
 			color	{ pink blue green }
 		} s(rvelocity(cx(2))))
 		))
+		## Set the shift-phase-to to `4` and press `R` in the game view to reload the script and go to the next phase. (This is the last time I'll say this!)
 #}
 
 

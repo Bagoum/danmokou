@@ -21,18 +21,58 @@ namespace Danmaku {
 public readonly struct SBCFp {
     public readonly ExSBCF func;
     public readonly int priority;
+    public readonly Func<CancellationToken, SBCF> lazyFunc;
     public SBCFp(ExSBCF f, int p) {
         func = f;
         priority = p;
+        lazyFunc = null;
+    }
+
+    public SBCFp(Func<CancellationToken, SBCF> lazy, int p) {
+        func = null;
+        priority = p;
+        lazyFunc = lazy;
     }
 }
 public readonly struct SBCFc {
-    public readonly SBCF func;
+    private readonly SBCF func;
+    private readonly Func<CancellationToken, SBCF> lazyFunc;
     public readonly int priority;
     public SBCFc(SBCFp p) {
-        func = Compilers.SBCF(p.func);
+        func = p.func == null ? null : Compilers.SBCF(p.func);
         priority = p.priority;
+        lazyFunc = p.lazyFunc;
     }
+
+    public SBCF Func(CancellationToken cT) => func ?? lazyFunc(cT);
+
+    private SBCFc(SBCF f, int p) {
+        func = f;
+        priority = p;
+        lazyFunc = null;
+    }
+
+    public static SBCFc Manual(SBCF f, int p) => new SBCFc(f, p);
+}
+//Not compiled but using this for priority and lazy alternates
+public readonly struct BehCFc {
+    private readonly BehCF func;
+    private readonly Func<CancellationToken, BehCF> lazyFunc;
+    public readonly int priority;
+
+    public BehCFc(BehCF f, int p) {
+        func = f;
+        priority = p;
+        lazyFunc = null;
+    }
+    public BehCFc(Func<CancellationToken, BehCF> f, int p) {
+        func = null;
+        priority = p;
+        lazyFunc = f;
+    }
+    
+    public BehCF Func(CancellationToken cT) => func ?? lazyFunc(cT);
+    
 }
 
 public partial class BulletManager {
@@ -74,13 +114,6 @@ public partial class BulletManager {
     }
 
     public static bool PoolExists(string pool) => simpleBulletPools.ContainsKey(pool);
-    public static void CopyPoolWithDefaultControls(string newPool, string from, SBCFc[] controls) {
-        CopyPool(newPool, from);
-        var sbc = simpleBulletPools[newPool];
-        for (int ii = 0; ii < controls.Length; ++ii) {
-            sbc.AddPoolControl(new BulletControl(controls[ii], Consts.PERSISTENT));
-        }
-    }
 
     public static void AssertControls(string pool, IReadOnlyList<BulletControl> controls) => GetMaybeCopyPool(pool).AssertControls(controls);
 

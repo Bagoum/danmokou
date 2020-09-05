@@ -72,17 +72,17 @@ public static class Compilers {
     }
     #endregion
 
-    [Fallthrough]
+    [Fallthrough] [ExprCompiler]
     public static TP TP(ExTP ex) => CompileDelegateLambda<TP, TExPI>(ex);
-    [Fallthrough]
+    [Fallthrough] [ExprCompiler]
     public static SBV2 SBV2(ExSBV2 ex) => CompileDelegateLambda<SBV2, RTExSB>(ex);
-    [Fallthrough]
+    [Fallthrough] [ExprCompiler]
     public static TP3 TP3(ExTP3 ex) => CompileDelegateLambda<TP3, TExPI>(ex);
-    [Fallthrough]
+    [Fallthrough] [ExprCompiler]
     public static TP4 TP4(ExTP4 ex) => CompileDelegateLambda<TP4, TExPI>(ex);
     
     public static VTP VTP_Force(ExVTP ex) => CompileDelegateLambda<VTP, RTExVel, RTEx<float>, TExPI, RTExV2>(ex);
-    [Fallthrough]
+    [Fallthrough] [ExprCompiler]
     public static VTP VTP(ExVTP ex) {
         if (ex == VTPRepo.ExNoVTP) return VTPRepo.NoVTP;
         return VTP_Force(ex);
@@ -91,40 +91,40 @@ public static class Compilers {
 
     public const string LASER_TIME_ALIAS = "lt";
 
-    [Fallthrough]
+    [Fallthrough] [ExprCompiler]
     public static ExLVTP ExLVTP(ExVTP vtp) => (vel, dt, lt, bpi, nrv) => {
         using (new ReflectEx.LetDirect(LASER_TIME_ALIAS, lt)) {
             return vtp(vel, dt, bpi, nrv);
         }
     };
     
-    [Fallthrough]
+    [Fallthrough] [ExprCompiler]
     public static LVTP LVTP(ExLVTP ex) => CompileDelegateLambda<LVTP, RTExLVel, RTEx<float>, RTEx<float>, TExPI, RTExV2>(ex);
     private static LVTP _LVTP(ExVTP ex) => CompileDelegateLambda<LVTP, RTExLVel, RTEx<float>, RTEx<float>, TExPI, RTExV2>(ExLVTP(ex));
 
-    [Fallthrough]
+    [Fallthrough] [ExprCompiler]
     public static FXY FXY(ExFXY ex) => CompileDelegateLambda<FXY, TEx<float>>(ex);
-    [Fallthrough]
+    [Fallthrough] [ExprCompiler]
     public static BPY BPY(ExBPY ex) => CompileDelegateLambda<BPY, TExPI>(ex);
 
-    [Fallthrough]
+    [Fallthrough] [ExprCompiler]
     public static LBPY LBPY(ExBPY ex) => CompileDelegateLambda<LBPY, TExPI, TEx<float>>((pi, lt) => {
         using (new ReflectEx.LetDirect(LASER_TIME_ALIAS, lt)) {
             return ex(pi);
         }
     });
     
-    [Fallthrough]
+    [Fallthrough] [ExprCompiler]
     public static BPRV2 BPRV2(ExBPRV2 ex) => CompileDelegateLambda<BPRV2, TExPI>(ex);
-    [Fallthrough]
+    [Fallthrough] [ExprCompiler]
     public static Pred Pred(ExPred ex) => CompileDelegateLambda<Pred, TExPI>(ex);
-    [Fallthrough]
+    [Fallthrough] [ExprCompiler]
     public static LPred LPred(ExPred ex) => CompileDelegateLambda<LPred, TExPI, TEx<float>>((pi, lt) => {
         using (new ReflectEx.LetDirect(LASER_TIME_ALIAS, lt)) {
             return ex(pi);
         }
     });
-    [Fallthrough]
+    [Fallthrough] [ExprCompiler]
     public static SBCF SBCF(ExSBCF ex) => CompileDelegateLambda<SBCF, TExSBC, TEx<int>, TExPI>(ex);
 
     //requires manual handling for wrapper
@@ -136,19 +136,19 @@ public static class Compilers {
         return gcxf;
     }
 
-    [Fallthrough]
+    [Fallthrough] [ExprCompiler]
     public static GCXF<bool> GCXF(ExPred f) => GCXF<bool>(GCXFRepo.GCX_Pred(f));
-    [Fallthrough]
+    [Fallthrough] [ExprCompiler]
     public static GCXF<float> GCXF(ExBPY f) => GCXF<float>(GCXFRepo.GCX_BPY(f));
 
     public static GCXF<float> GCXFf(ExBPY f) => GCXF(f);
-    [Fallthrough]
+    [Fallthrough] [ExprCompiler]
     public static GCXF<Vector2> GCXF(ExTP f) => GCXF<Vector2>(GCXFRepo.GCX_TP(f));
-    [Fallthrough]
+    [Fallthrough] [ExprCompiler]
     public static GCXF<Vector3> GCXF(ExTP3 f) => GCXF<Vector3>(GCXFRepo.GCX_TP3(f));
-    [Fallthrough]
+    [Fallthrough] [ExprCompiler]
     public static GCXF<Vector4> GCXF(ExTP4 f) => GCXF<Vector4>(GCXFRepo.GCX_TP4(f));
-    [Fallthrough]
+    [Fallthrough] [ExprCompiler]
     public static GCXF<V2RV2> GCXF(ExBPRV2 f) => GCXF<V2RV2>(GCXFRepo.GCX_BPRV2(f));
 
     public static GCXF<V2RV2> GCXFrv2(ExBPRV2 f) => GCXF(f);
@@ -157,25 +157,25 @@ public static class Compilers {
         Automatic(compiler, f, aliases => bpi => ReflectEx.Let2(aliases, () => f(bpi), bpi));
     private static GCXU<T2> GCXUsb11<T1, T2>(Func<Func<RTExSB, TEx<T1>>, T2> compiler, Func<RTExSB, TEx<T1>> f) =>
         Automatic(compiler, f, aliases => sb => ReflectEx.Let2(aliases, () => f(sb), sb.bpi));
-    [Fallthrough]
+    [Fallthrough] [ExprCompiler]
     public static GCXU<BPY> GCXU(ExBPY f) => GCXU11(BPY, f);
-    [Fallthrough]
+    [Fallthrough] [ExprCompiler]
     public static GCXU<Pred> GCXU(ExPred f) => GCXU11(Pred, f);
-    [Fallthrough]
+    [Fallthrough] [ExprCompiler]
     public static GCXU<TP> GCXU(ExTP f) => GCXU11(TP, f);
-    [Fallthrough]
+    [Fallthrough] [ExprCompiler]
     public static GCXU<TP3> GCXU(ExTP3 f) => GCXU11(TP3, f);
-    [Fallthrough]
+    [Fallthrough] [ExprCompiler]
     public static GCXU<TP4> GCXU(ExTP4 f) => GCXU11(TP4, f);
-    [Fallthrough]
+    [Fallthrough] [ExprCompiler]
     public static GCXU<BPRV2> GCXU(ExBPRV2 f) => GCXU11(BPRV2, f);
-    [Fallthrough]
+    [Fallthrough] [ExprCompiler]
     public static GCXU<SBV2> GCXU(ExSBV2 f) => GCXUsb11(SBV2, f);
 
-    [Fallthrough]
+    [Fallthrough] [ExprCompiler]
     public static GCXU<VTP> GCXU(ExVTP f) => Automatic(VTP, f, aliases => VTPRepo.LetDecl(aliases, f));
     
-    [Fallthrough]
+    [Fallthrough] [ExprCompiler]
     public static GCXU<LVTP> LGCXU(ExVTP f) => Automatic(_LVTP, f, aliases => VTPRepo.LetDecl(aliases, f));
     
     private class GCXCompileResolver : ReflectEx.ICompileReferenceResolver {

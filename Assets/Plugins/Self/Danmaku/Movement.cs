@@ -176,7 +176,11 @@ public static class VTPRepo {
         [DontReflect]
         public static bool IsNone(this VTP func) => func == NoVTP;
         public static readonly ExVTP ExNoVTP = VTPControllers.Velocity(CartesianNRot(Parametrics.Zero()));
+    #if NO_EXPR
+        public static readonly VTP NoVTP = VTPControllers.Velocity(CartesianNRot(_ => Vector2.zero));
+    #else
         public static readonly VTP NoVTP = Compilers.VTP_Force(ExNoVTP);
+    #endif
         /// <summary>
         /// No movement.
         /// </summary>

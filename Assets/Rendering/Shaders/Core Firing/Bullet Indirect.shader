@@ -48,7 +48,7 @@
 			#include "UnityCG.cginc"
 			#include "BagoumShaders.cginc"
 			#pragma instancing_options procedural:setup
-        #ifdef UNITY_INSTANCING_ENABLED
+        #if defined(UNITY_INSTANCING_ENABLED) || defined(UNITY_PROCEDURAL_INSTANCING_ENABLED)
 			#define INSTANCE_TIME timeBuffer[unity_InstanceID]
 		#else
 			#define INSTANCE_TIME timeBuffer[0]

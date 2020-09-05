@@ -47,7 +47,7 @@ namespace Tests {
                 for (float y = -3; y < 3; y += 0.5f) {
                     var v2 = new Vector2(x, y);
                     for (float ang = -300; ang < 400; ang += 24) {
-                        var dir = M.DegToDir(ang);
+                        var dir = M.CosSinDeg(ang);
                         VecEq(rot(new Vector2(x,y),ang), M.RotateVectorDeg(x, y, ang));
                         VecEq(M.ConvertBasis(v2, dir), conv(v2, dir));
                         VecEq(M.DeconvertBasis(v2, dir), deconv(v2, dir));

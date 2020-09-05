@@ -7,6 +7,7 @@ using System.Threading;
 using DMath;
 using Core;
 using JetBrains.Annotations;
+using SM;
 using UnityEngine;
 using Ex = System.Linq.Expressions.Expression;
 using ExBPY = System.Func<DMath.TExPI, TEx<float>>;
@@ -31,8 +32,8 @@ public partial class BulletManager {
         public readonly Pred persist;
         public readonly int priority;
 
-        public BulletControl(SBCFc act, [CanBeNull] Pred persistent = null) {
-            action = act.func;
+        public BulletControl(SBCFc act, [CanBeNull] Pred persistent = null, CancellationToken? cT = null) {
+            action = act.Func(cT ?? CancellationToken.None);
             persist = persistent ?? Consts.PERSISTENT;
             this.priority = act.priority;
         }
@@ -50,6 +51,7 @@ public partial class BulletManager {
         public override int GetHashCode() => (action, persist, priority).GetHashCode();
 
         //Pre-velocity
+        public const int P_SETTINGS = -20;
         public const int P_TIMECONTROL = -10;
         public const int POST_VEL_PRIORITY = 0;
         public const int P_DEFAULT = 20;
@@ -200,7 +202,9 @@ public partial class BulletManager {
         }
     }
 
-    //Warning: these commands MUST be destroyed in the scope in which they are created, otherwise you will get cT disposal errors.
+    /// <summary>
+    /// DEPRECATED
+    /// </summary>
     public static void ControlPoolSM(Pred persist, StyleSelector styles, SM.StateMachine sm, CancellationToken cT, Pred condFunc) {
         BulletControl pc = new BulletControl((sbc, ii, bpi) => {
             if (condFunc(bpi)) {
@@ -337,6 +341,18 @@ public partial class BulletManager {
                 //Note that we have to still use the getMaybeCopyPool since the pool may have been destroyed when the code is run
                 SimpleBulletCollection.appendSoftcull.InstanceOf(getMaybeCopyPool.Of(Ex.Constant(target)), sbc, ii)), BulletControl.P_CULL);
         }
+
+#if NO_EXPR
+        public static SBCFc Softcull_noexpr(string target, Pred cond) {
+            SimpleBulletCollection toPool = GetMaybeCopyPool(target);
+            if (toPool.MetaType != SimpleBulletCollection.CollectionType.Softcull) {
+                throw new InvalidOperationException("Cannot softcull to a non-softcull pool: " + target);
+            }
+            return SBCFc.Manual((sbc, ii, bpi) => {
+                if (cond(bpi)) GetMaybeCopyPool(target).AppendSoftcull(sbc, ii);
+            }, BulletControl.P_CULL);
+        }
+#endif
         
         /// <summary>
         /// Destroy bullets.
@@ -346,8 +362,6 @@ public partial class BulletManager {
         public static SBCFp Cull(ExPred cond) {
             return new SBCFp((sbc, ii, bpi) => bpi.When(cond, sbc.DeleteDestroy(ii)), BulletControl.P_CULL);
         }
-
-        public static SBCFc CullAll = new SBCFc(Cull(_ => ExMPred.True()));
         
         /// <summary>
         /// Flip the X-velocity of bullets.
@@ -537,21 +551,48 @@ public partial class BulletManager {
 
         /// <summary>
         /// Batch several controls together under a single condition.
-        /// <br/>This is useful primarily when `restyle` is combined with other conditions.
+        /// <br/>This is useful primarily when `restyle` or `cull` is combined with other conditions.
         /// </summary>
         public static SBCFp Batch(ExPred cond, SBCFp[] over) {
-            int priority = over[0].priority;
-            for (int ii = 1; ii < over.Length; ++ii) priority = Math.Max(priority, over[ii].priority);
+            if (over.Any(o => o.func == null)) return BatchSM(Compilers.Pred(cond), over.Select(o => new SBCFc(o)).ToArray());
+            var priority = over.Max(o => o.priority);
             return new SBCFp((sbc, ii, bpi) =>
                     bpi.When(cond, Ex.Block(over.Select(x => (Ex)x.func(sbc, ii, bpi)))), 
                 priority);
-        } 
+        }
+        /// <summary>
+        /// Batch several controls together under a single condition.
+        /// <br/>This is slightly slower but is compatible with the SM control.
+        /// </summary>
+        private static SBCFp BatchSM(Pred cond, SBCFc[] over) {
+            var priority = over.Max(o => o.priority);
+            return new SBCFp(ct => {
+                var funcs = over.Select(o => o.Func(ct)).ToArray();
+                return (sbc, ii, bpi) => {
+                    if (cond(bpi)) {
+                        for (int j = 0; j < funcs.Length; ++j) funcs[j](sbc, ii, bpi);
+                    }
+                };
+            }, priority);
+        }
+
+        /// <summary>
+        /// If the condition is true, spawn an iNode at the position and run an SM on it.
+        /// </summary>
+        public static SBCFp SM(Pred cond, StateMachine target) => new SBCFp(cT => (sbc, ii, bpi) => {
+            if (cond(bpi)) {
+                var inode = sbc.GetINodeAt(ii, "pool-triggered", null, out uint sbid);
+                using (var gcx = PrivateDataHoisting.GetGCX(sbid)) {
+                    _ = inode.RunExternalSM(SMRunner.Cull(target, cT, gcx));
+                }
+            }
+        }, BulletControl.P_RUN);
 
     }
     //Since sb controls are cleared immediately after velocity update,
     //it does not matter when in the frame they are added.
-    public static void ControlPool(Pred persist, StyleSelector styles, SBCFc control) {
-        BulletControl pc = new BulletControl(control, persist);
+    public static void ControlPool(Pred persist, StyleSelector styles, SBCFc control, CancellationToken cT) {
+        BulletControl pc = new BulletControl(control, persist, cT);
         for (int ii = 0; ii < styles.Simple.Length; ++ii) {
             GetMaybeCopyPool(styles.Simple[ii]).AddPoolControl(pc);
         }
@@ -611,8 +652,13 @@ public partial class BulletManager {
             if (pool.MetaType == SimpleBulletCollection.CollectionType.Softcull) return;
             if (pool.Count == 0) return;
             string targetPool = PortColorFormat(pool.Style, targetFormat, defaulter);
-            pool.AddPoolControl(new BulletControl(new SBCFc(
-                SimpleBulletControls.Softcull(targetPool, _ => ExMPred.True())), Consts.NOTPERSISTENT));
+            pool.AddPoolControl(new BulletControl(
+#if NO_EXPR
+                SimpleBulletControls.Softcull_noexpr(targetPool, _ => true)
+#else
+                new SBCFc(SimpleBulletControls.Softcull(targetPool, _ => ExMPred.True()))
+#endif
+                , Consts.NOTPERSISTENT));
             //Log.Unity($"Autoculled {pool.style} to {targetPool}");
         }
         //CEmpty is destroyed via DestroyedCopyPools

@@ -268,9 +268,9 @@ public static class SMReflection {
         return Task.CompletedTask;
     };
 
-    //Note: as of now you can't merge this into normal controls since cT is deferred to runtime
     /// <summary>
     /// Add a control to bullets that makes them summon an inode to run a state machine when the predicate is satisfied.
+    /// DEPRECATED. USE THE NORMAL CONTROL FUNCTIONS WITH THE "SM" CONTROL.
     /// </summary>
     [GAlias(typeof(BulletManager.SimpleBullet), "BulletControlSM")]
     [GAlias(typeof(BehaviorEntity), "BEHControlSM")]
@@ -291,13 +291,13 @@ public static class SMReflection {
     /// Apply a controller function to individual entities.
     /// </summary>
     [GAlias(typeof(SBCFc), "BulletControl")]
-    [GAlias(typeof(BehCF), "BEHControl")]
+    [GAlias(typeof(BehCFc), "BEHControl")]
     [GAlias(typeof(LCF), "BulletlControl")]
     public static TaskPattern ParticleControl<CF>(Pred persist, BulletManager.StyleSelector style, CF control) =>
         smh => {
-            if (control is BehCF bc) BehaviorEntity.ControlPool(persist, style, bc);
+            if (control is BehCFc bc) BehaviorEntity.ControlPool(persist, style, bc, smh.cT);
             else if (control is LCF lc) CurvedTileRenderLaser.ControlPool(persist, style, lc);
-            else if (control is SBCFc pc) BulletManager.ControlPool(persist, style, pc);
+            else if (control is SBCFc pc) BulletManager.ControlPool(persist, style, pc, smh.cT);
             else throw new Exception("Couldn't realize bullet-control type");
             return Task.CompletedTask;
         };
@@ -374,6 +374,12 @@ public static class SMReflection {
     /// </summary>
     public static TaskPattern MoveTarget(ExBPY time, string ease, ExTP target) => Move(GCXF(time),
         Compilers.GCXU(VTPRepo.NROffset(Parametrics.EaseToTarget(ease, time, target))));
+    
+    /// <summary>
+    /// Move the executing entity to a target position over time. This has zero error.
+    /// </summary>
+    public static TaskPattern MoveTarget_noexpr(BPY time, string ease, TP target) => Move(g => time(g.AsBPI),
+        NoExprMath_1.GCXU(NoExprMath_1.NROffset(NoExprMath_1.EaseToTarget(ease, time, target))));
 
     /// <summary>
     /// Move to a target position, run a state machine, and then move to another target position.

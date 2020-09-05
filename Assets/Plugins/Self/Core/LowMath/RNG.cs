@@ -57,7 +57,7 @@ public static class RNG {
     }
 
     public static Vector2 GetPointInCircle(float lowR, float highR) =>
-        GetFloat(lowR, highR) * M.RadToDir(GetFloat(0, M.TAU));
+        GetFloat(lowR, highR) * M.CosSin(GetFloat(0, M.TAU));
     
     private static readonly ExFunction getFloat = ExUtils.Wrap(typeof(RNG), "GetFloat", new[] {typeof(float), typeof(float)});
     public static Expression GetFloat(Expression low, Expression high) => getFloat.Of(low, high);

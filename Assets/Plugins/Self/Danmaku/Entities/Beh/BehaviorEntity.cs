@@ -879,8 +879,8 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         oldSPT?.Cancel(); 
     }
     
-    public BehaviorEntity GetINode(string behName, uint? bpiid) => BEHPooler.INode(bpi.loc, 
-        V2RV2.Angle(original_angle), M.PolarToXY(facingVec.z), bpi.index, bpiid, behName);
+    public BehaviorEntity GetINode(string behName, uint? bpiid) => BEHPooler.INode(rBPI.loc, 
+        V2RV2.Angle(original_angle), GetGlobalDirection(), rBPI.index, bpiid, behName);
 
 
 #if UNITY_EDITOR

@@ -5,6 +5,8 @@ using System.Linq;
 using System.Threading;
 using DMath;
 using JetBrains.Annotations;
+using SM;
+using BM = Danmaku.BulletManager;
 
 namespace Danmaku {
 
@@ -17,10 +19,17 @@ public partial class BehaviorEntity {
     private readonly struct BEHControl {
         public readonly BehCF action;
         public readonly Pred persist;
+        public readonly int priority;
 
-        public BEHControl(BehCF act, Pred persistent) {
+        public BEHControl(BehCFc act, Pred persistent, CancellationToken? cT = null) {
+            action = act.Func(cT ?? CancellationToken.None);
+            persist = persistent;
+            priority = act.priority;
+        }
+        public BEHControl(BehCF act, Pred persistent, int priorty) {
             action = act;
             persist = persistent;
+            priority = priorty;
         }
     }
     /// <summary>
@@ -66,14 +75,18 @@ public partial class BehaviorEntity {
         }
         return controls[style];
     }
-    //Warning: these commands MUST be destroyed in the scope in which they are created, otherwise you will get cT disposal errors.
+
+    /// <summary>
+    /// DEPRECATED
+    /// </summary>
     public static void ControlPoolSM(Pred persist, BulletManager.StyleSelector styles, SM.StateMachine sm, CancellationToken cT, Pred condFunc) {
         BEHControl pc = new BEHControl(b => {
             if (condFunc(b.rBPI)) {
-                _ = BEHPooler.INode(b.rBPI.loc, V2RV2.Angle(b.original_angle), b.GetGlobalDirection(), 
-                    b.rBPI.index, null, "f-pool-triggered").RunExternalSM(SMRunner.Cull(sm, cT));
+                using (var gcx = PrivateDataHoisting.GetGCX(b.rBPI.id)) {
+                    _ = b.GetINode("f-pool-triggered", null).RunExternalSM(SMRunner.Cull(sm, cT, gcx));
+                }
             }
-        }, persist);
+        }, persist, BulletManager.BulletControl.P_RUN);
         for (int ii = 0; ii < styles.Complex.Length; ++ii) {
             AddControlAtEOF(styles.Complex[ii], pc);
         }
@@ -81,7 +94,7 @@ public partial class BehaviorEntity {
 
     //This is done at end-of-frame to ensure that temporary controls are seen by every bullet before being pruned
     private static void AddControlAtEOF(string style, BEHControl pc) {
-        ETime.QueueEOFInvoke(() => LazyGetControls(style).Add(pc));
+        ETime.QueueEOFInvoke(() => LazyGetControls(style).AddPriority(pc, pc.priority));
     }
 
     /// <summary>
@@ -96,10 +109,10 @@ public partial class BehaviorEntity {
         /// <param name="time">Time to set</param>
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
-        public static BehCF Time(float time, Pred cond) {
-            return b => {
+        public static BehCFc Time(float time, Pred cond) {
+            return new BehCFc(b => {
                 if (cond(b.rBPI)) b.SetTime(time);
-            };
+            }, BM.BulletControl.P_MOVE_1);
         }
         /// <summary>
         /// Change the style of bullets.
@@ -108,14 +121,14 @@ public partial class BehaviorEntity {
         /// <param name="target">New style</param>
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
-        public static BehCF Restyle(string target, Pred cond) {
+        public static BehCFc Restyle(string target, Pred cond) {
             FrameAnimBullet.Recolor r = BulletManager.GetRecolor(target);
-            return b => {
+            return new BehCFc(b => {
                 if (cond(b.rBPI)) {
                     ((Bullet)b).ColorizeOverwrite(r);
                     b.UpdateStyleInformation();
                 }
-            };
+            }, BM.BulletControl.P_CULL);
         }
         /// <summary>
         /// Change the bullets into a softcull-type bullet rather than destroying them directly.
@@ -123,13 +136,13 @@ public partial class BehaviorEntity {
         /// <param name="target">New style</param>
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
-        public static BehCF Softcull(string target, Pred cond) {
-            return b => {
+        public static BehCFc Softcull(string target, Pred cond) {
+            return new BehCFc(b => {
                 if (cond(b.rBPI)) {
                     b.SpawnSimple(target);
                     b.InvokeCull();
                 }
-            };
+            }, BM.BulletControl.P_CULL);
         }
         /// <summary>
         /// Run a spawn effect on objects.
@@ -137,19 +150,19 @@ public partial class BehaviorEntity {
         /// <param name="target">New style</param>
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
-        public static BehCF Effect(string target, Pred cond) => b => {
+        public static BehCFc Effect(string target, Pred cond) => new BehCFc(b => {
             if (cond(b.rBPI)) b.SpawnSimple(target);
-        };
+        }, BM.BulletControl.P_RUN);
         
         /// <summary>
         /// Destroy bullets.
         /// </summary>
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
-        public static BehCF Cull(Pred cond) {
-            return b => {
+        public static BehCFc Cull(Pred cond) {
+            return new BehCFc(b => {
                 if (cond(b.rBPI)) b.InvokeCull();
-            };
+            }, BM.BulletControl.P_CULL);
         }
         
         /// <summary>
@@ -158,10 +171,10 @@ public partial class BehaviorEntity {
         /// </summary>
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
-        public static BehCF FlipX(Pred cond) {
-            return b => {
+        public static BehCFc FlipX(Pred cond) {
+            return new BehCFc(b => {
                 if (cond(b.rBPI)) b.FlipVelX();
-            };
+            }, BM.BulletControl.P_MOVE_3);
         }
         
         /// <summary>
@@ -170,10 +183,10 @@ public partial class BehaviorEntity {
         /// </summary>
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
-        public static BehCF FlipY(Pred cond) {
-            return b => {
+        public static BehCFc FlipY(Pred cond) {
+            return new BehCFc(b => {
                 if (cond(b.rBPI)) b.FlipVelY();
-            };
+            }, BM.BulletControl.P_MOVE_3);
         }
         
         /// <summary>
@@ -182,14 +195,14 @@ public partial class BehaviorEntity {
         /// <param name="wall">X-position of wall</param>
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
-        public static BehCF FlipXGT(BPY wall, Pred cond) {
-            return b => {
+        public static BehCFc FlipXGT(BPY wall, Pred cond) {
+            return new BehCFc(b => {
                 var bpi = b.rBPI;
                 if (bpi.loc.x > wall(bpi) && cond(bpi)) {
                     b.rBPI.FlipSimple(false, wall(bpi));
                     b.FlipVelX();
                 }
-            };
+            }, BM.BulletControl.P_MOVE_3);
         }
         
         /// <summary>
@@ -198,14 +211,14 @@ public partial class BehaviorEntity {
         /// <param name="wall">X-position of wall</param>
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
-        public static BehCF FlipXLT(BPY wall, Pred cond) {
-            return b => {
+        public static BehCFc FlipXLT(BPY wall, Pred cond) {
+            return new BehCFc(b => {
                 var bpi = b.rBPI;
                 if (bpi.loc.x < wall(bpi) && cond(bpi)) {
                     b.rBPI.FlipSimple(false, wall(bpi));
                     b.FlipVelX();
                 }
-            };
+            }, BM.BulletControl.P_MOVE_3);
         }
         /// <summary>
         /// Flip the y-velocity and y-position of bullets around a wall on the top.
@@ -213,14 +226,14 @@ public partial class BehaviorEntity {
         /// <param name="wall">Y-position of wall</param>
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
-        public static BehCF FlipYGT(BPY wall, Pred cond) {
-            return b => {
+        public static BehCFc FlipYGT(BPY wall, Pred cond) {
+            return new BehCFc(b => {
                 var bpi = b.rBPI;
                 if (bpi.loc.y > wall(bpi) && cond(bpi)) {
                     b.rBPI.FlipSimple(true, wall(bpi));
                     b.FlipVelY();
                 }
-            };
+            }, BM.BulletControl.P_MOVE_3);
         }
         
         /// <summary>
@@ -229,14 +242,14 @@ public partial class BehaviorEntity {
         /// <param name="wall">Y-position of wall</param>
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
-        public static BehCF FlipYLT(BPY wall, Pred cond) {
-            return b => {
+        public static BehCFc FlipYLT(BPY wall, Pred cond) {
+            return new BehCFc(b => {
                 var bpi = b.rBPI;
                 if (bpi.loc.y < wall(bpi) && cond(bpi)) {
                     b.rBPI.FlipSimple(true, wall(bpi));
                     b.FlipVelY();
                 }
-            };
+            }, BM.BulletControl.P_MOVE_3);
         }
         /// <summary>
         /// Add to the x-position of bullets. Useful for teleporting around the sides.
@@ -244,12 +257,12 @@ public partial class BehaviorEntity {
         /// <param name="by">Delta position</param>
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
-        public static BehCF DX(float by, Pred cond) {
-            return b => {
+        public static BehCFc DX(float by, Pred cond) {
+            return new BehCFc(b => {
                 if (cond(b.rBPI)) {
                     b.rBPI.loc.x += by;
                 }
-            };
+            }, BM.BulletControl.P_MOVE_2);
         }
         /// <summary>
         /// Add to the y-position of bullets. Useful for teleporting around the sides.
@@ -257,12 +270,12 @@ public partial class BehaviorEntity {
         /// <param name="by">Delta position</param>
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
-        public static BehCF DY(float by, Pred cond) {
-            return b => {
+        public static BehCFc DY(float by, Pred cond) {
+            return new BehCFc(b => {
                 if (cond(b.rBPI)) {
                     b.rBPI.loc.y += by;
                 }
-            };
+            }, BM.BulletControl.P_MOVE_2);
         }
         /// <summary>
         /// Add to the time of objects.
@@ -270,12 +283,12 @@ public partial class BehaviorEntity {
         /// <param name="by">Delta time</param>
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
-        public static BehCF DT(float by, Pred cond) {
-            return b => {
+        public static BehCFc DT(float by, Pred cond) {
+            return new BehCFc(b => {
                 if (cond(b.rBPI)) {
                     b.SetTime(b.rBPI.t + by);
                 }
-            };
+            }, BM.BulletControl.P_MOVE_1);
         }
         /// <summary>
         /// Create a sound effect.
@@ -283,27 +296,48 @@ public partial class BehaviorEntity {
         /// <param name="sfx">Sound effect</param>
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
-        public static BehCF SFX(string sfx, Pred cond) {
-            return b => {
+        public static BehCFc SFX(string sfx, Pred cond) {
+            return new BehCFc(b => {
                 if (cond(b.rBPI)) SFXService.Request(sfx);
-            };
+            }, BM.BulletControl.P_RUN);
         }
 
         /// <summary>
         /// Freeze an object. It will still collide but it will not move.
         /// </summary>
-        public static BehCF Freeze(Pred cond) => b => {
+        public static BehCFc Freeze(Pred cond) => new BehCFc(b => {
             if (cond(b.rBPI)) b.nextUpdateAllowed = false;
-        };
+        }, BM.BulletControl.P_TIMECONTROL);
 
-        public static BehCF Batch(Pred cond, BehCF[] over) => b => {
+        /// <summary>
+        /// Batch several commands together under one predicate.
+        /// </summary>
+        public static BehCFc Batch(Pred cond, BehCFc[] over) {
+            var priority = over.Max(o => o.priority);
+            return new BehCFc(ct => {
+                var funcs = over.Select(o => o.Func(ct)).ToArray();
+                return b => {
+                    if (cond(b.rBPI)) {
+                        for (int ii = 0; ii < over.Length; ++ii) funcs[ii](b);
+                    } };
+            }, priority);
+        }
+
+        
+        /// <summary>
+        /// If the condition is true, spawn an iNode at the position and run an SM on it.
+        /// </summary>
+        public static BehCFc SM(Pred cond, StateMachine target) => new BehCFc(cT => b => {
             if (cond(b.rBPI)) {
-                for (int ii = 0; ii < over.Length; ++ii) over[ii](b);
+                using (var gcx = PrivateDataHoisting.GetGCX(b.rBPI.id)) {
+                    _ = b.GetINode("f-pool-triggered", null).RunExternalSM(SMRunner.Cull(target, cT, gcx));
+                }
             }
-        };
+        }, BulletManager.BulletControl.P_RUN);
     }
-    public static void ControlPool(Pred persist, BulletManager.StyleSelector styles, BehCF control) {
-        BEHControl pc = new BEHControl(control, persist);
+    
+    public static void ControlPool(Pred persist, BM.StyleSelector styles, BehCFc control, CancellationToken cT) {
+        BEHControl pc = new BEHControl(control, persist, cT);
         for (int ii = 0; ii < styles.Complex.Length; ++ii) {
             AddControlAtEOF(styles.Complex[ii], pc);
         }
@@ -330,7 +364,8 @@ public partial class BehaviorEntity {
         /// <param name="cullActive">True iff camera culling is allowed.</param>
         /// <returns></returns>
         public static BehPF AllowCull(bool cullActive) {
-            var _pc = new BEHControl(b => b.UpdateStyleCullable(), BulletManager.Consts.NOTPERSISTENT);
+            var _pc = new BEHControl(b => b.UpdateStyleCullable(), BulletManager.Consts.NOTPERSISTENT, 
+                BM.BulletControl.P_SETTINGS);
             return pool => {
                 if (cullActive) ignoreCullStyles.Remove(pool);
                 else ignoreCullStyles.Add(pool);

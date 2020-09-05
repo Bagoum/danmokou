@@ -5,7 +5,7 @@ namespace Danmaku {
 public partial class BehaviorEntity {
     private static void DropEvenly(ItemType t, Vector2 baseLoc, int count, bool autocollect, float r, float a0 = -90f) {
         for (int ii = 0; ii < count; ++ii) {
-            ItemPooler.RequestItem(baseLoc + r * M.DegToDir(a0 + ii * 360f / count), t).Autocollect(autocollect);
+            ItemPooler.RequestItem(baseLoc + r * M.CosSinDeg(a0 + ii * 360f / count), t).Autocollect(autocollect);
         }
     }
 

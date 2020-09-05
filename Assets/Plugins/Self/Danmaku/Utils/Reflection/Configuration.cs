@@ -253,6 +253,9 @@ public static partial class Reflector {
         private static void RecordMethod(MethodInfo mi) {
             var attrs = Attribute.GetCustomAttributes(mi);
             if (attrs.Any(x => x is DontReflectAttribute)) return;
+        #if NO_EXPR
+            if (attrs.Any(x => x is ExprCompilerAttribute)) return;
+        #endif
             methods.SetDefaultSet(mi.ReturnType, mi.Name.ToLower(), mi);
             foreach (var attr in attrs) {
                 if (attr is AliasAttribute aa) methods.SetDefaultSet(mi.ReturnType, aa.alias.ToLower(), mi);

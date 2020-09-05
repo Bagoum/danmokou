@@ -42,5 +42,11 @@ public static class DataHoisting {
         keyData.Add(d);
         return Ex.Constant(d);
     }
+    
+    public static Dictionary<uint, Vector2> GetClearableDictV2_() {
+        var d = new Dictionary<uint, Vector2>();
+        v2Data.Add(d);
+        return d;
+    }
 }
 }

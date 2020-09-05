@@ -58,8 +58,13 @@ public static class ExUtils {
                 ;
             }
         }
+#if NO_EXPR
+        Log.Unity($"STATIC ERROR: Method {t.Name}.{methodName} not found. This is probably due to code stripping. Will assume that this code is not called and return null.");
+        return null;
+#else
         throw new NotImplementedException(
             $"STATIC ERROR: Method {t.Name}.{methodName} not found.");
+#endif
     }
     public static ExFunction Wrap<C>(string methodName, params Type[] types) {
         return Wrap(typeof(C), methodName, types);
