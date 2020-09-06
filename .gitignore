@@ -25,7 +25,8 @@ MemoryCaptures
 Assets/ReferenceOnly
 Assets/TextMesh Pro
 
-docs
+docs/*
+!docs/articles
 
 # these are compiled from the FS project
 # Assets/Plugins/Self/Core/FS/*.dll

@@ -1,0 +1,37 @@
+gtr {
+	wt 12 _
+	wait-child
+} fire
+	## free fire (homing)
+	async amulet-*/ <> gcr2 12 _ <> { 
+		delay(* 3 p)
+		sfx(pc-fire)
+		colorf({ red black } p)
+	} simple(tpnrot(
+		truerotatelerprate(60,
+			rotify(py 10)
+			(- LNearestEnemy loc)))
+		{ 
+			scale(1.4)
+			player(21, 21, oh1)
+		})
+	## free cancellation
+	noop
+	## focus
+	sync p-gdlaser-*/b <> gsr {
+		root zero
+		preloop { 
+			lastActiveTime =f _
+		}
+		colorf { red black } // p 2
+	} laser(nroffset(OptionLocation),
+		0, _, {
+			start(* 30 (- t &lastActiveTime))
+			varLength(15, * 30 t)
+			dynamic(tpnrot(rotate(OptionAngle, cy 1)))
+			delete(> (- t &lastActiveTime) 1)
+			deactivate(> playerUnfiringTimeFocus 0)
+			player(12, 25, 15, oh1)
+	})
+	## focus cancellation
+	noop

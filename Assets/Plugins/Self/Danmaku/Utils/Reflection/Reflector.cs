@@ -154,6 +154,7 @@ public static partial class Reflector {
         typeof(GenCtxProperties<SyncPattern>),
         typeof(GenCtxProperties<AsyncPattern>),
         typeof(GenCtxProperties<StateMachine>),
+        typeof(SBOptions),
         typeof(LaserOptions),
         typeof(BehOptions),
         typeof(PatternProperties)

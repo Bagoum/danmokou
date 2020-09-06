@@ -1,6 +1,6 @@
 pattern { }
 <!> type spell `1`
-<!> hp 100000
+<!> hp 3000
 <!> hpbar 1
 phase 200
 	action block 0

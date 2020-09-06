@@ -15,7 +15,7 @@ public static partial class Reflector {
     public static ExType AsExType<T>() => AsExType(typeof(T));
     public static ExType AsExType(Type t) {
         if (t == ExUtils.tv2) return ExType.V2;
-        if (t == ExUtils.tv3) return ExType.V2;
+        if (t == ExUtils.tv3) return ExType.V3;
         if (t == ExUtils.tvrv2) return ExType.RV2;
         return ExType.Float;
     }

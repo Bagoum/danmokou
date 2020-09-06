@@ -130,6 +130,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     public bool destructible;
     public ushort grazeEveryFrames = 20;
     private int grazeFrameCounter = 0;
+    [CanBeNull] private Pred delete;
 
     /// <summary>
     /// Sets the transform position iff `doMovement` is enabled.
@@ -418,6 +419,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         RegisterID();
         UpdateStyleInformation();
         deathDrops = options?.drops;
+        delete = options?.delete;
         if (options.HasValue) {
             var o = options.Value;
             if (o.hp.HasValue) Enemy.SetHP(o.hp.Value, o.hp.Value);
@@ -562,7 +564,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         if (dying) return;
         dying = true;
         if (allowDrops) DropItemsOnDeath();
-        if (isSummoned) PrivateDataHoisting.Destroy(bpi.id);
+        if (isSummoned) DataHoisting.Destroy(bpi.id);
         UnregisterID();
         if (enemy != null) enemy.IAmDead();
         HardCancel(allowFinalize);
@@ -668,7 +670,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     private void RegularUpdateControl()  {
         var curr_pcs = thisStyleControls; //thisStyleControls may change during iteration. Don't respect changes
         int ct = curr_pcs.Count;
-        for (int ii = 0; ii < ct; ++ii) {
+        for (int ii = 0; ii < ct && !dying; ++ii) {
             curr_pcs[ii].action(this);
         }
     }
@@ -689,7 +691,8 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
             }
         }
         beh_cullCtr = (beh_cullCtr + 1) % checkCullEvery;
-        if (beh_cullCtr == 0 && cullable && styleIsCameraCullable 
+        if (delete?.Invoke(rBPI) == true) InvokeCull();
+        else if (beh_cullCtr == 0 && cullable && styleIsCameraCullable 
             && bpi.t > FIRST_CULLCHECK_TIME && LocationService.OffPlayableScreenBy(ScreenCullRadius, bpi.loc)) {
             InvokeCull();
         }
@@ -720,6 +723,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
                 base.RegularUpdate();
             } else nextUpdateAllowed = true;
             RegularUpdateControl();
+            if (dying) return; //controls may cause destruction
             RegularUpdateCollide();
             RegularUpdateRender();
         }

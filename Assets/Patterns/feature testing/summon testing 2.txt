@@ -1,0 +1,21 @@
+pattern { }
+phase 40 
+    action block 0
+        shift-phase-to 1 
+        
+##
+<!> type non summon
+<!> hp 20000
+phase 40 #{
+    action block 0
+        position 0 2
+        async enemy01 <;-2:> gsr2 4 <2;:> {
+			center
+		} summon
+            tpnrot cx 1
+            wait
+			{ hp 500 }
+        move 2 tpnrot cx -2
+#}
+
+   

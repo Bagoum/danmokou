@@ -197,6 +197,13 @@ public partial class BulletManager {
                     foreach (var s in styles) {
                         if (s.StartsWith(style)) yield return s;
                     }
+                } else if (style.IndexOf('*') > -1) {
+                    var ic = style.IndexOf('*');
+                    var s1 = style.Substring(0, ic);
+                    var s2 = style.Substring(ic + 1);
+                    foreach (var s in styles) {
+                        if (s.StartsWith(s1) && s.EndsWith(s2)) yield return s;
+                    }
                 } else if (doErr) throw new InvalidDataException($"Not a valid {errTyp}: {style}");
             }
         }

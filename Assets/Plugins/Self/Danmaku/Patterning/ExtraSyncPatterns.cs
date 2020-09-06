@@ -25,7 +25,7 @@ using static Danmaku.GenCtxProperty;
 
 namespace Danmaku {
 public static class PatternUtils {
-    public static ExBPRV2 BRV2 => RV2r.Reference("brv2");
+    public static ExBPRV2 BRV2 => ExM.Reference<V2RV2>("brv2");
     public static GCXF<V2RV2> RV2Zero => GCXFRepo.RV2Zero;
 
     public static ReflectEx.Hoist<Vector2> HV2(string key) => new ReflectEx.Hoist<Vector2>(key);
@@ -70,8 +70,8 @@ public static partial class SyncPatterns {
 
     private const string xi = "xi";
     private const string yi = "yi";
-    private static readonly ExBPY rxi = Reference(xi);
-    private static readonly ExBPY ryi = Reference(yi);
+    private static readonly ExBPY rxi = Reference<float>(xi);
+    private static readonly ExBPY ryi = Reference<float>(yi);
     private static SyncPattern _FArrow(ExBPY indexer, ExBPY n, ExBPY xstep, ExBPY ystep, GenCtxProperty[] props,
         GCXU<VTP> path, [CanBeNull] string poolSuffix, [CanBeNull] string locSave, [CanBeNull] string dirSave, params SyncPattern[] extraSp) {
         return GuideEmpty(poolSuffix, indexer, AutoSaveV2(locSave = locSave ?? V2Key, dirSave = dirSave ?? V2Key), 

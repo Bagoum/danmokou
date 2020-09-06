@@ -620,7 +620,6 @@ public class GenCtxProperty {
 
 public static class GenCtxUtils {
     public static readonly GCXF<float> defltTimes = gcx => 1.0f;
-    public static readonly GCXF<float> defltWait = gcx => 10.0f;
     public static readonly GCXF<float> zeroWait = gcx => 0.0f;
     public static readonly Type tSP = typeof(SyncPattern);
     public static readonly Type tAP = typeof(AsyncPattern);
@@ -629,7 +628,7 @@ public static class GenCtxUtils {
 public class GenCtxProperties<T> {
     public readonly GCXF<float> times = defltTimes;
     public readonly int? maxTimes;
-    public readonly GCXF<float> wait;
+    public readonly GCXF<float> wait = zeroWait;
     [CanBeNull] public readonly GCXF<float> fortime;
     public readonly GCXF<float> delay = zeroWait;
     public readonly bool waitChild;
@@ -780,7 +779,6 @@ public class GenCtxProperties<T> {
             rv2IncrType = null;
         }
         if (frv2 != null) rv2IncrType = null;
-        if (wait == null) wait = (waitChild) ? zeroWait : defltWait;
         if (unpause != null && runWhile == null) throw new Exception("Unpause requires While to run. Unpause is only invoked when the While statement is set to false, and then set back to true.");
     }
 }

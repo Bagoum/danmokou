@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using System.Threading;
 using DMath;
+using JetBrains.Annotations;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Profiling;
+using Collision = DMath.Collision;
 
 namespace Danmaku {
 public delegate void LCF(CurvedTileRenderLaser ctr);
@@ -24,10 +26,14 @@ public class CurvedTileRenderLaser : CurvedTileRender {
     private readonly float lineRadius;
     private const float defaultUpdateStagger = 0.1f;
     private float updateStagger;
+    [CanBeNull] private BPY variableLength;
+    [CanBeNull] private BPY variableStart;
+    [CanBeNull] private Pred deactivator;
     private readonly bool alignEnd = false;
     private Laser laser;
     private float scaledLineRadius;
     private Laser.PointContainer endpt = new Laser.PointContainer(null);
+    private PlayerBulletCfg? playerBullet;
 
     public CurvedTileRenderLaser(LaserRenderCfg cfg) : base(cfg) {
         alignEnd = cfg.alignEnd;
@@ -43,7 +49,11 @@ public class CurvedTileRenderLaser : CurvedTileRender {
     public void Initialize(Laser locationer, Material material, bool isNew, uint bpiId, int firingIndex, ref RealizedLaserOptions options) {
         laser = locationer;
         updateStagger = options.staggerMultiplier * defaultUpdateStagger;
-        int newTexW = Mathf.CeilToInt(options.length / updateStagger);
+        variableLength = options.varLength;
+        variableStart = options.start;
+        deactivator = options.deactivate;
+        playerBullet = options.playerBullet;
+        int newTexW = Mathf.CeilToInt(options.maxLength / updateStagger);
         base.Initialize(locationer, material, isNew, options.isStatic, newTexW, options.hueShift); //doesn't do any mesh generation, safe to call first
         path = options.lpath;
         bpi = new ParametricInfo(locater.GlobalPosition(), firingIndex, bpiId);
@@ -85,17 +95,6 @@ public class CurvedTileRenderLaser : CurvedTileRender {
     /// </summary>
     private Vector2 nextDirectionalDelta;
 
-    private void UpdateCentersOnly() {
-        int vw = texRptWidth + 1;
-        path.Update(in lifetime, ref bpi, out nextDirectionalDelta, out nextTrueDelta, in updateStagger);
-        for (int iw = 1; iw < vw; ++iw) {
-            int styleCt = thisStyleControls.Count;
-            for (int ii = 0; ii < styleCt; ++ii) thisStyleControls[ii].action(this);
-            centers[iw].x = centers[iw - 1].x + nextTrueDelta.x;
-            centers[iw].y = centers[iw - 1].y + nextTrueDelta.y;
-            path.Update(in lifetime, ref bpi, out nextDirectionalDelta, out nextTrueDelta, in updateStagger);
-        }
-    }
 
     public override void UpdateMovement(float dT) {
         bpi.loc = locater.GlobalPosition();
@@ -125,15 +124,39 @@ public class CurvedTileRenderLaser : CurvedTileRender {
         }
     }
 
+    private void UpdateCentersOnly(int startP, int endP) {
+        int vw = texRptWidth + 1;
+        path.Update(in lifetime, ref bpi, out nextDirectionalDelta, out nextTrueDelta, in updateStagger);
+        for (int iw = 1; iw < endP; ++iw) {
+            int styleCt = thisStyleControls.Count;
+            for (int ii = 0; ii < styleCt; ++ii) thisStyleControls[ii].action(this);
+            centers[iw].x = centers[iw - 1].x + nextTrueDelta.x;
+            centers[iw].y = centers[iw - 1].y + nextTrueDelta.y;
+            path.Update(in lifetime, ref bpi, out nextDirectionalDelta, out nextTrueDelta, in updateStagger);
+        }
+        for (int iw = 0; iw < startP; ++iw) {
+            centers[iw] = centers[startP];
+        }
+        for (int iw = endP; iw < vw; ++iw) {
+            centers[iw] = centers[endP - 1];
+        }
+    }
     protected override unsafe void UpdateVerts(bool renderRequired) {
         path.ResetFlip();
         int vw = texRptWidth + 1;
         path.rootPos = bpi.loc;
+        bpi.t = lifetime;
+        if (deactivator?.Invoke(bpi) == true) {
+            deactivator = null;
+            PrivateDataHoisting.UpdateValue(bpi.id, PrivateDataHoisting.GetKey("lastActiveTime"), bpi.t);
+        }
+        int endP = (variableLength == null) ? vw : M.Clamp(1, vw, (int) (variableLength(bpi) / updateStagger));
+        int startP = M.Clamp(0, endP - 1, (int) ((variableStart?.Invoke(bpi) ?? 0) / updateStagger));
         bpi.t = 0;
         path.Update(in lifetime, ref bpi, out Vector2 accP, out var d1, 0f);
         centers[0] = d1;
         if (!renderRequired) {
-            UpdateCentersOnly();
+            UpdateCentersOnly(startP, endP);
         } else {
             float ddf = spriteBounds.y / 2f;
             float distToSpriteWMult = 1f / spriteBounds.x;
@@ -149,7 +172,8 @@ public class CurvedTileRenderLaser : CurvedTileRender {
             vertsPtr[0].loc.y = accP.y + denormedDirF * -nextTrueDelta.x;
             vertsPtr[vw].loc.x = accP.x + denormedDirF * -nextTrueDelta.y;
             vertsPtr[vw].loc.y = accP.y + denormedDirF * nextTrueDelta.x;
-            for (int iw = 1; iw < vw; ++iw) {
+            //You still need to update starting from zero, not startP, so that the displayed points will be in the correct position for eg. velocity equations.
+            for (int iw = 1; iw < endP; ++iw) {
                 int styleCt = thisStyleControls.Count;
                 for (int ii = 0; ii < styleCt; ++ii) thisStyleControls[ii].action(this);
                 accP.x += nextTrueDelta.x;
@@ -168,6 +192,16 @@ public class CurvedTileRenderLaser : CurvedTileRender {
                 }
                 path.Update(in lifetime, ref bpi, out nextDirectionalDelta, out nextTrueDelta, in updateStagger);
             }
+            for (int iw = 0; iw < startP; ++iw) {
+                centers[iw] = centers[startP];
+                vertsPtr[iw] = vertsPtr[startP];
+                vertsPtr[iw + vw] = vertsPtr[startP + vw];
+            }
+            for (int iw = endP; iw < vw; ++iw) {
+                centers[iw] = centers[endP - 1];
+                vertsPtr[iw] = vertsPtr[endP - 1];
+                vertsPtr[iw + vw] = vertsPtr[endP - 1 + vw];
+            }
         }
         if (alignEnd) {
             for (int ii = 0; ii < vw; ++ii) {
@@ -184,9 +218,23 @@ public class CurvedTileRenderLaser : CurvedTileRender {
 
     public CollisionResult CheckCollision(SOCircle target) {
         float rot = M.degRad * (parented ? tr.eulerAngles.z : simpleEulerRotation.z);
+        if (playerBullet.Try(out var plb)) {
+            var fe = Enemy.FrozenEnemies;
+            var loc = locater.GlobalPosition();
+            for (int ii = 0; ii < fe.Count; ++ii) {
+                if (fe[ii].Active && Collision.CircleOnSegments(fe[ii].pos, fe[ii].radius, loc, 
+                        centers, 0, 1, centers.Length, scaledLineRadius, (float)Math.Cos(rot), (float)Math.Sin(rot)) &&
+                    fe[ii].enemy.TryHitIndestructible(bpi.id, plb.cdFrames)) {
+                    fe[ii].enemy.QueueDamage(plb.bossDmg, plb.stageDmg, loc);
+                    fe[ii].enemy.ProcOnHit(plb.effect, loc);
+                }
+            }
+            return CollisionResult.noColl;
+        }
+        
         // 10000 is a number that is big enough to usually ensure only one collision iteration for simple lasers.
         // If it's not big enough, then you'll have two collision iteration, which is fine.
-        return DMath.Collision.GrazeCircleOnSegments(target, locater.GlobalPosition(), centers, 0, path.isSimple ? 10000 : 1, centers.Length, scaledLineRadius, Mathf.Cos(rot), Mathf.Sin(rot));
+        return DMath.Collision.GrazeCircleOnSegments(target, locater.GlobalPosition(), centers, 0, path.isSimple ? 10000 : 1, centers.Length, scaledLineRadius, (float)Math.Cos(rot), (float)Math.Sin(rot));
     }
 
     private bool requiresTrRotUpdate = false;

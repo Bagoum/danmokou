@@ -12,9 +12,23 @@ using Collision = DMath.Collision;
 
 namespace Danmaku {
 
+public readonly struct PlayerBulletCfg {
+    public readonly int cdFrames;
+    public readonly int bossDmg;
+    public readonly int stageDmg;
+    public readonly EffectStrategy effect;
+
+    public PlayerBulletCfg(int cd, int boss, int stage, EffectStrategy eff) {
+        cdFrames = cd;
+        bossDmg = boss;
+        stageDmg = stage;
+        effect = eff;
+    }
+}
 //This is for complex bullets with custom behavior
 public abstract class Bullet : BehaviorEntity {
-    [Header("Bullet Config")]
+    [Header("Bullet Config")] 
+    private PlayerBulletCfg? playerBullet = null;
     [Tooltip("This will be instantiated once per recoloring, and used for SM material editing.")]
     public Material material;
     public int renderPriority;
@@ -53,6 +67,8 @@ public abstract class Bullet : BehaviorEntity {
         ResetV();
     }
 
+    public override int UpdatePriority => UpdatePriorities.BULLET;
+
     /// <summary>
     /// Reset is used to put a bullet in a start-of-life state, eg. when pooling. It is also called in Awake.
     /// It is called BEFORE initialize (Awake is called synchronously by Instantiate)
@@ -66,6 +82,7 @@ public abstract class Bullet : BehaviorEntity {
         base.Initialize(_velocity, new MovementModifiers(), options.smr, firingIndex, bpiid, parent, options: options);
         gameObject.layer = layer = options.layer ?? defaultLayer;
         collisionTarget = _target;
+        if ((playerBullet = options.playerBullet) != null) DataHoisting.PreserveID(bpiid);
     }
 
 

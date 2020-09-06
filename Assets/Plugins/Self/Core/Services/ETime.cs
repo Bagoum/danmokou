@@ -82,6 +82,7 @@ public static class UpdatePriorities {
     public const int PLAYER = -30;
     public const int PLAYER2 = -29;
     public const int BM = -20;
+    public const int BULLET = -15;
     public const int BEH = -10;
     public const int DEFAULT = 0;
     public const int SLOW = 20;

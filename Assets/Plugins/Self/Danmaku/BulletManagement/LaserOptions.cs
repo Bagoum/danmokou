@@ -22,7 +22,30 @@ public class LaserOption {
     /// <summary>
     /// Set the length, in time, of a laser.
     /// </summary>
-    public static LaserOption Length(GCXF<float> len) => new LengthProp(len);
+    public static LaserOption Length(GCXF<float> maxLength) => new LengthProp(maxLength);
+    /// <summary>
+    /// Set the length, in time, of a laser. The length may be variable but bounded by a maximum.
+    /// </summary>
+    public static LaserOption VarLength(GCXF<float> maxLength, GCXU<BPY> length) => new LengthProp(maxLength, length);
+
+    /// <summary>
+    /// Set the time along the laser length at which the laser starts drawing.
+    /// </summary>
+    public static LaserOption Start(GCXU<BPY> time) => new StartProp(time);
+
+    /// <summary>
+    /// Every frame, the laser will check the condition and destroy itself if it is true.
+    /// <br/>Note: This is generally only necessary for player lasers.
+    /// <br/>Note: This is the same as BehOption.Delete.
+    /// </summary>
+    public static LaserOption Delete(GCXU<Pred> cond) => new DeleteProp(cond);
+
+    /// <summary>
+    /// Every frame, if the condition is true, sets lastActiveTime in private data hoisting to the current laser time (but only once).
+    /// <br/>Note: This is probably unnecessary except for player bullets, which currently have limited support for controls such as updatef. 
+    /// </summary>
+    public static LaserOption Deactivate(GCXU<Pred> cond) => new DeactivateProp(cond);
+    
     /// <summary>
     /// Set a laser to repeat.
     /// </summary>
@@ -87,7 +110,11 @@ public class LaserOption {
     public static LaserOption Stagger(float mult) => new StaggerProp(mult);
     
     public static LaserOption HueShift(GCXF<float> dps) => new HueShiftProp(dps);
+
+    public static LaserOption Player(int cdFrames, int bossDmg, int stageDmg, string effect) =>
+        new PlayerBulletProp(new PlayerBulletCfg(cdFrames, bossDmg, stageDmg, ResourceManager.GetEffect(effect)));
     
+    #region impl
     public class CompositeProp : ValueProp<LaserOption[]>, IUnrollable<LaserOption> {
         public IEnumerable<LaserOption> Values => value;
         public CompositeProp(params LaserOption[] props) : base(props) { }
@@ -112,8 +139,19 @@ public class LaserOption {
             this.onOn = onOn;
         }
     }
-    public class LengthProp : ValueProp<GCXF<float>> {
-        public LengthProp(GCXF<float> f) : base(f) { }
+    public class LengthProp : ValueProp<(GCXF<float>, GCXU<BPY>?)> {
+        public LengthProp(GCXF<float> f, GCXU<BPY>? var = null) : base((f, var)) { }
+    }
+
+    public class StartProp : ValueProp<GCXU<BPY>> {
+        public StartProp(GCXU<BPY> f) : base(f) {}
+    }
+
+    public class DeleteProp : ValueProp<GCXU<Pred>> {
+        public DeleteProp(GCXU<Pred> f) : base(f) { }
+    }
+    public class DeactivateProp : ValueProp<GCXU<Pred>> {
+        public DeactivateProp(GCXU<Pred> f) : base(f) { }
     }
     public class RotateOffsetProp : ValueProp<GCXF<float>> {
         public RotateOffsetProp(GCXF<float> f) : base(f) { }
@@ -148,12 +186,22 @@ public class LaserOption {
     public class HueShiftProp : ValueProp<GCXF<float>> {
         public HueShiftProp(GCXF<float> v) : base(v) { }
     }
+
+    public class PlayerBulletProp : ValueProp<PlayerBulletCfg> {
+        public PlayerBulletProp(PlayerBulletCfg cfg) : base(cfg) { }
+    }
+    
+    #endregion
 }
 
 public readonly struct RealizedLaserOptions {
     private const float DEFAULT_LASER_LEN = 15;
     public const float DEFAULT_LASER_WIDTH = 0.5f;
-    public readonly float length;
+    public readonly float maxLength;
+    [CanBeNull] public readonly BPY varLength;
+    [CanBeNull] public readonly BPY start;
+    [CanBeNull] public readonly Pred delete;
+    [CanBeNull] public readonly Pred deactivate;
     public readonly bool repeat;
     [CanBeNull] public readonly string endpoint;
     [CanBeNull] public readonly string firesfx;
@@ -165,11 +213,16 @@ public readonly struct RealizedLaserOptions {
     public readonly int? layer;
     public readonly float staggerMultiplier;
     public readonly float hueShift;
+    public readonly PlayerBulletCfg? playerBullet;
 
-    public RealizedBehOptions AsBEH => new RealizedBehOptions(smr, layer);
+    public RealizedBehOptions AsBEH => new RealizedBehOptions(this);
 
     public RealizedLaserOptions(LaserOptions opts, GenCtx gcx, uint bpiid, Vector2 parentOffset, V2RV2 localOffset, MovementModifiers modifiers, CancellationToken cT) {
-        length = opts.length?.Invoke(gcx) ?? DEFAULT_LASER_LEN;
+        maxLength = opts.length?.max.Invoke(gcx) ?? DEFAULT_LASER_LEN;
+        varLength = opts.length?.var?.Add(gcx, bpiid);
+        start = opts.start?.Add(gcx, bpiid);
+        delete = opts.delete?.Add(gcx, bpiid);
+        deactivate = opts.deactivate?.Add(gcx, bpiid);
         repeat = opts.repeat?.Invoke(gcx) ?? false;
         endpoint = opts.endpoint;
         firesfx = opts.firesfx;
@@ -186,11 +239,15 @@ public readonly struct RealizedLaserOptions {
         smr = SMRunner.Run(opts.sm, cT, gcx);
         yScale = (opts.yScale?.Invoke(gcx) ?? 1f) * DEFAULT_LASER_WIDTH;
         hueShift = opts.hueShift?.Invoke(gcx) ?? 0f;
+        playerBullet = opts.playerBullet;
     }
 }
 
 public class LaserOptions {
-    [CanBeNull] public readonly GCXF<float> length;
+    public readonly (GCXF<float> max, GCXU<BPY>? var)? length;
+    public readonly GCXU<BPY>? start;
+    public readonly GCXU<Pred>? delete;
+    public readonly GCXU<Pred>? deactivate;
     [CanBeNull] public readonly GCXF<bool> repeat;
     [CanBeNull] public readonly string endpoint;
     [CanBeNull] public readonly string firesfx;
@@ -204,12 +261,16 @@ public class LaserOptions {
     public readonly int? layer = null;
     public readonly float staggerMultiplier = 1f;
     [CanBeNull] public readonly GCXF<float> hueShift;
+    public readonly PlayerBulletCfg? playerBullet;
 
     public LaserOptions(params LaserOption[] props) : this(props as IEnumerable<LaserOption>) { }
 
     public LaserOptions(IEnumerable<LaserOption> props) {
         foreach (var prop in props.Unroll()) {
             if (prop is LengthProp l) length = l.value;
+            else if (prop is StartProp stp) start = stp.value;
+            else if (prop is DeleteProp dp) delete = dp.value;
+            else if (prop is DeactivateProp dcp) deactivate = dcp.value;
             else if (prop is RepeatProp r) repeat = r.value;
             else if (prop is RotateOffsetProp roff) rotateOffset = roff.value;
             else if (prop is RotateProp rotp) rotate = rotp.value;
@@ -226,7 +287,11 @@ public class LaserOptions {
             else if (prop is LayerProp lp) layer = lp.value.Int();
             else if (prop is StaggerProp sp) staggerMultiplier = sp.value;
             else if (prop is HueShiftProp hshp) hueShift = hshp.value;
+            else if (prop is PlayerBulletProp pbp) playerBullet = pbp.value;
             else throw new Exception($"Laser property {prop.GetType()} not handled.");
+        }
+        if (length?.var != null || start != null) {
+            if (!dynamic) throw new Exception("Variable length or variable start lasers must be used with DYNAMIC.");
         }
         if (curve != null) {
             if (rotate != null || rotateOffset != null)

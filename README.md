@@ -22,19 +22,9 @@ You might know this project by the name NotDnh, ph4mmo, DanMaKufu, or Bagoum Dan
 - Built-in script analysis and practice architecture
 - Replays
 
-# Running This Project
+# Setup/Tutorials
 
-To build/run this project, follow the following steps:
-
-- Install Unity version 2020.1.f1 or later. (Note: I do not think 2020.2.bx is compatible at the moment.)
-- Run `git submodule update --init --recursive`. This imports code from SiMP and my challenge-scene game jam project which have some useful default values for getting started. This is not required but will help as a reference. (Note: the Yukari/Junko script in Assets/MiniProjects has some dependencies on the SiMP repository.)
-- Open Scenes/BasicSceneOPENME
-  - Import TextMeshPro essentials (You should see a prompt to do this as soon as you open the scene, or you can do it from Window > TextMesh Pro > Import TMP Essential Resources)
-- You may need to run the project, stop the project, and run it again to fix lingering metadata bugs in UXML. 
-- (Optional) Build the F# project in the `FS` folder targeted at 4.7.2. I have provided DLLs so you don't have to do this unless you make changes to the F# code.
-  - Copy the output DLLs (Common, FParsec, FParsecCS, FSharp.Core, Parser, System.ValueTuple) to `Assets/Plugins/Self/Core`
-- To edit behavior scripts, you should use Notepad++ with the `notepadPlusPlus.xml` language definition. The language name is "BDSL". To update the language definition, copy it directly into `AppData/Roaming/Notepad++/userDefineLangs`. 
-- You may want to delete `Assets/TextMesh Pro/Resources/TMP Settings`, as DMK contains an alternate settings object in `Assets/Resources`. 
+## Go to [https://dnh.bagoum.com/docs/articles/setup.html](https://dnh.bagoum.com/docs/articles/setup.html) for setup and tutorial instructions
 
 # Documentation
 
@@ -59,7 +49,7 @@ The source code is licensed under MIT. See the COPYING file for details, as well
 
 **Is there a tutorial?**
 
-Open `Assets/Scenes/BasicSceneOPENME`. The Mokou boss has a tutorial script attached. Open it in a text editor (preferably Notepad++ with the style definition) and read the comments. There are several more tutorial scripts in `Assets/Patterns/Tutorial`.
+*Go to [https://dnh.bagoum.com/docs/articles/setup.html](https://dnh.bagoum.com/docs/articles/setup.html) for setup and tutorial instructions*
 
 **Are there any examples?**
 

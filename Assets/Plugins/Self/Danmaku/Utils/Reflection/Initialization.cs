@@ -34,14 +34,12 @@ public static partial class Reflector {
             typeof(PredicateLogic), typeof(BulletManager.SimpleBulletControls), typeof(CurvedTileRenderLaser.LaserControls),
             typeof(BehaviorEntity.BulletControls), typeof(BulletManager.SimplePoolControls), typeof(BehaviorEntity.PoolControls),
             typeof(CurvedTileRenderLaser.PoolControls), typeof(SBFRepo), typeof(SBV2Repo), 
-            typeof(BPRV2Repo), typeof(GenCtxProperty), typeof(LaserOption), typeof(BehOption), typeof(SBPredicates), typeof(Compilers),
+            typeof(BPRV2Repo), typeof(GenCtxProperty), typeof(LaserOption), typeof(BehOption), typeof(SBOption), typeof(SBPredicates), typeof(Compilers),
             typeof(Synchronization), typeof(PhaseProperty), typeof(PatternProperty), typeof(Challenge)
         }) {
             ReflConfig.RecordPublic(t);
         }
         ReflConfig.RecordPublic<Events.EventDeclaration<Events.Event0>>(typeof(Events.Event0));
-        ReflConfig.ShortcutAll("reference", Parser.SM_REF_KEY);
-        ReflConfig.ShortcutAll("letfloats", "::");
         ReflConfig.ShortcutAll("letdecl", ":::");
         ReflConfig.ShortcutAll("letv2s", "::v2");
         ReflConfig.ShortcutAll("divide", "/");

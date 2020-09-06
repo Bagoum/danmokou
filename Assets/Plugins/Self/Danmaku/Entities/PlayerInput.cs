@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq.Expressions;
+using System.Reflection;
 using DMath;
 using UnityEditor;
 using UnityEngine;
@@ -49,8 +51,40 @@ public class PlayerInput : BehaviorEntity {
     private float partialFatigue = 0f;
 
     public static bool IsFocus => ChallengeManager.r.FocusAllowed && (ChallengeManager.r.FocusForced || InputManager.IsFocus);
+    public static bool FiringAndAllowed => InputManager.IsFiring && PlayerInput.AllowPlayerInput;
+
+    public static float FiringTimeFree { get; private set; }
+    public static float FiringTimeFocus { get; private set; }
+    public static float UnFiringTimeFree { get; private set; }
+    public static float UnFiringTimeFocus { get; private set; }
+    public static readonly Expression firingTimeFree = Expression.Property(null, 
+        typeof(PlayerInput).GetProperty("FiringTimeFree"));
+    public static readonly Expression firingTimeFocus = Expression.Property(null, 
+        typeof(PlayerInput).GetProperty("FiringTimeFocus"));
+    public static readonly Expression unfiringTimeFree = Expression.Property(null, 
+        typeof(PlayerInput).GetProperty("UnFiringTimeFree"));
+    public static readonly Expression unfiringTimeFocus = Expression.Property(null, 
+        typeof(PlayerInput).GetProperty("UnFiringTimeFocus"));
 
     private void MovementUpdate(float dT, out float horiz_input, out float vert_input) {
+        if (FiringAndAllowed) {
+            if (IsFocus) {
+                FiringTimeFree = 0;
+                FiringTimeFocus += dT;
+                UnFiringTimeFree += dT;
+                UnFiringTimeFocus = 0;
+            } else {
+                FiringTimeFree += dT;
+                FiringTimeFocus = 0;
+                UnFiringTimeFree = 0;
+                UnFiringTimeFocus += dT;
+            }
+        } else {
+            FiringTimeFree = 0;
+            FiringTimeFocus = 0;
+            UnFiringTimeFree += dT;
+            UnFiringTimeFocus += dT;
+        }
         horiz_input = InputManager.HorizontalSpeed;
         vert_input = InputManager.VerticalSpeed;
         hitboxSprite.enabled = IsFocus || SaveData.s.UnfocusedHitbox;

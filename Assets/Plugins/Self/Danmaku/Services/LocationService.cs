@@ -40,7 +40,7 @@ public class LocationService : MonoBehaviour {
     }
 
     public static Vector2 GetEnemyVisiblePlayer() {
-        return main.enemyVisiblePlayer.Locate();
+        return main.enemyVisiblePlayer.location;
     }
 
     /// <summary>
@@ -166,6 +166,25 @@ public static partial class BPYRepo {
         Ex.Condition(new TExV2(loc(bpi)).x.LT0(), LocationService.right, LocationService.left);
 }
 public static partial class Parametrics {
+
+    public static ExTP LNearestEnemy() => b => {
+        Ex data = DataHoisting.GetClearableDictInt();
+        var eid_in = ExUtils.V<int?>();
+        var eid = ExUtils.V<int>();
+        var loc = new TExV2();
+        return Ex.Block(new[] { eid_in, eid, loc },
+            eid_in.Is(Ex.Condition(ExUtils.DictContains<uint, int>(data, b.id),
+                    data.DictGet(b.id).As<int?>(),
+                    Ex.Constant(null).As<int?>())
+            ),
+            Ex.IfThenElse(Enemy.findNearest.Of(b.loc, eid_in, eid, loc),
+                data.DictSet(b.id, eid),
+                loc.Is(Ex.Constant(new Vector2(0f, 50f)))
+            ),
+            loc
+        );
+    };
+
     /*
     /// <summary>
     /// Find the location such that a ray fired from the source would bounce

@@ -3,6 +3,49 @@ phase 0
 	action block 0
 		shift-phase-to 1
 		
+
+<!> type non `hello world`
+<!> hp 1000
+phase 0
+	action block 0
+		position 0 2
+		sync gpather-purple/w <> pather 2 2
+			polar
+				letfloats2 { 
+					k 3
+				} * &k t
+				* -30 t
+			{ }
+
+		
+<!> type non `hello world`
+<!> hp 1000
+phase 0
+	action block 0
+		position 0 2
+		move _ nroffset px sine 5 4 t
+		bullet-control persist arrow-red/w restyle arrow-blue/w > t 1
+		beh-control persist gpather-red/w restyle gpather-blue/w > t 1
+		async arrow-red/w <> gcr2 120 _ <> {
+		} gsr2c 20 {
+		} s tprot cx 2
+		_ 10000 async gpather-red/w <> gcr2 120 _ <> {
+		} gsr2c 20 {
+		} pather 2 2 tprot cx 2 { }
+
+<!> type non `hello world2`
+<!> hp 4000
+phase 0
+	action block 0
+		position 0 2
+		move _ nroffset px sine 5 4 t
+		async arrow-red/w <> gcr2 120 _ <> {
+		} gsr2c 20 {
+		} s tprot cx 2
+		_ 10000 async gpather-red/w <> gcr2 120 _ <> {
+		} gsr2c 20 {
+		} pather 2 2 tprot cx 2 { }
+		
 phase 0 
 	action block 0
 		position 0 1

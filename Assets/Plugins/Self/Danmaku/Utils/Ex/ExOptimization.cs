@@ -132,7 +132,10 @@ class FlattenVisitor : ExpressionVisitor {
     protected override Expression VisitUnary(UnaryExpression node) {
         var o = Visit(node.Operand);
         if (node.NodeType == ExpressionType.Convert) {
-            if (o.IsConstant()) return ExC(Ex.Lambda(Ex.Convert(o, node.Type)).Compile().DynamicInvoke());
+            //Null typecasts don't work correctly with nullable types
+            if (o.TryAsAnyConst(out var notNull) && notNull != null) { 
+                return ExC(Ex.Lambda(Ex.Convert(o, node.Type)).Compile().DynamicInvoke());
+            }
             if (o is UnaryExpression ue && ue.NodeType == ExpressionType.Convert) {
                 o = ue.Operand;
             }

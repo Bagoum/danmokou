@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Threading;
 using Danmaku;
 using DMath;
 using UnityEngine;
 
 public class FireOption : BehaviorEntity {
-    public static bool FiringAndAllowed => InputManager.IsFiring && PlayerInput.AllowPlayerInput;
     public string offsetFree;
     public string offsetFocus;
     private TP freeOffset;
@@ -19,12 +19,15 @@ public class FireOption : BehaviorEntity {
     public int findex;
     public BehaviorEntity freeFirer;
     public BehaviorEntity focusFirer;
+
+    private static readonly Dictionary<int, FireOption> optionsByIndex = new Dictionary<int, FireOption>();
     protected override void Awake() {
         base.Awake();
         bpi = new ParametricInfo(bpi.loc, findex, bpi.id, bpi.t);
         original_angle = 0; //Shoot up by default
         freeOffset = offsetFree.Into<TP>();
         focusOffset = offsetFocus.Into<TP>();
+        optionsByIndex[findex] = this;
     }
 
     protected override void RegularUpdateMove() {
@@ -36,4 +39,18 @@ public class FireOption : BehaviorEntity {
         tr.localPosition = M.RotateVectorDeg(freeOffset(bpi) * (1 - currLerpRatio) + focusOffset(bpi) * currLerpRatio, original_angle);
     }
     public override int UpdatePriority => UpdatePriorities.PLAYER2;
+
+    protected override void OnDisable() {
+        optionsByIndex.Remove(findex);
+        base.OnDisable();
+    }
+
+    public static Vector2 OptionLocation(int index) =>
+        optionsByIndex.TryGetValue(index, out var v) ? (Vector2)v.tr.position : Vector2.zero;
+    
+    public static float OptionAngle(int index) =>
+        optionsByIndex.TryGetValue(index, out var v) ? v.original_angle : 0f;
+
+    public static readonly ExFunction optionLocation = ExUtils.Wrap<FireOption>("OptionLocation", typeof(int));
+    public static readonly ExFunction optionAngle = ExUtils.Wrap<FireOption>("OptionAngle", typeof(int));
 }

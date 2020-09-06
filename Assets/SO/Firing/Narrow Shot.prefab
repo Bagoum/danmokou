@@ -27,6 +27,7 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
+  - {fileID: 5679003816772601028}
   - {fileID: 3699725305095162970}
   - {fileID: 5372707082005671356}
   - {fileID: 313746017871523284}
@@ -64,7 +65,7 @@ Transform:
   m_LocalScale: {x: 0.5, y: 0.5, z: 1}
   m_Children: []
   m_Father: {fileID: 3643135156715668705}
-  m_RootOrder: 2
+  m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &5208583182303352509
 SpriteRenderer:
@@ -129,11 +130,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0abe240f83e4ccf4e85ab2078ca8a89f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  deathItems:
-    value: 0
-    pointPP: 0
-    life: 0
-    autocollect: 0
   behaviorScript: {fileID: 4900000, guid: 2329205515a83f54e9338e7d50137410, type: 3}
   ID: 
   displayChangedPosition: 1
@@ -143,7 +139,9 @@ MonoBehaviour:
   triggersUITimeout: 0
   cullable: 0
   ScreenCullRadius: 4
-  canFireOffscreen: 1
+  damage: 1
+  destructible: 0
+  grazeEveryFrames: 20
   animate:
     method: 0
     LRRelation: 0
@@ -159,11 +157,12 @@ MonoBehaviour:
   movementModifiers:
     flipX: 0
     flipY: 0
-  linkToEditorReload: 0
   offsetFree: qrotate px * 15 t rx 0.9 + 225 softmod 2200 * 222.49 t
   offsetFocus: pxy -0.4 -0.5
   offsetLerpTime: 0.2
   findex: 2
+  freeFirer: {fileID: 0}
+  focusFirer: {fileID: 0}
 --- !u!1 &6562263471563620302
 GameObject:
   m_ObjectHideFlags: 0
@@ -194,7 +193,7 @@ Transform:
   m_LocalScale: {x: 0.5, y: 0.5, z: 1}
   m_Children: []
   m_Father: {fileID: 3643135156715668705}
-  m_RootOrder: 1
+  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &1567104009568579313
 SpriteRenderer:
@@ -259,11 +258,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0abe240f83e4ccf4e85ab2078ca8a89f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  deathItems:
-    value: 0
-    pointPP: 0
-    life: 0
-    autocollect: 0
   behaviorScript: {fileID: 4900000, guid: 2329205515a83f54e9338e7d50137410, type: 3}
   ID: 
   displayChangedPosition: 1
@@ -273,7 +267,9 @@ MonoBehaviour:
   triggersUITimeout: 0
   cullable: 0
   ScreenCullRadius: 4
-  canFireOffscreen: 1
+  damage: 1
+  destructible: 0
+  grazeEveryFrames: 20
   animate:
     method: 0
     LRRelation: 0
@@ -289,11 +285,88 @@ MonoBehaviour:
   movementModifiers:
     flipX: 0
     flipY: 0
-  linkToEditorReload: 0
   offsetFree: qrotate px * 15 t rx 0.9 + 135 softmod 2200 * 222.49 t
   offsetFocus: pxy -0.2 0.5
   offsetLerpTime: 0.2
   findex: 1
+  freeFirer: {fileID: 0}
+  focusFirer: {fileID: 0}
+--- !u!1 &6709644725308408875
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5679003816772601028}
+  - component: {fileID: 1184719792133759125}
+  m_Layer: 0
+  m_Name: Option0
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5679003816772601028
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6709644725308408875}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 3643135156715668705}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1184719792133759125
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6709644725308408875}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0abe240f83e4ccf4e85ab2078ca8a89f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  behaviorScript: {fileID: 0}
+  ID: 
+  displayChangedPosition: 1
+  rotationMethod: 0
+  rotateTransform: 0
+  deathEffect: {fileID: 0}
+  triggersUITimeout: 0
+  cullable: 0
+  ScreenCullRadius: 4
+  damage: 1
+  destructible: 0
+  grazeEveryFrames: 20
+  animate:
+    method: 0
+    LRRelation: 0
+    UDRelation: 0
+    frames:
+      idleAnim: []
+      rightAnim: []
+      leftAnim: []
+      upAnim: []
+      downAnim: []
+      attackAnim: []
+      deathAnim: []
+  movementModifiers:
+    flipX: 0
+    flipY: 0
+  offsetFree: zero
+  offsetFocus: zero
+  offsetLerpTime: 1
+  findex: 0
+  freeFirer: {fileID: 0}
+  focusFirer: {fileID: 0}
 --- !u!1 &8899738008739235951
 GameObject:
   m_ObjectHideFlags: 0
@@ -324,7 +397,7 @@ Transform:
   m_LocalScale: {x: 0.5, y: 0.5, z: 1}
   m_Children: []
   m_Father: {fileID: 3643135156715668705}
-  m_RootOrder: 3
+  m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &9098874390167328791
 SpriteRenderer:
@@ -389,11 +462,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0abe240f83e4ccf4e85ab2078ca8a89f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  deathItems:
-    value: 0
-    pointPP: 0
-    life: 0
-    autocollect: 0
   behaviorScript: {fileID: 4900000, guid: 2329205515a83f54e9338e7d50137410, type: 3}
   ID: 
   displayChangedPosition: 1
@@ -403,7 +471,9 @@ MonoBehaviour:
   triggersUITimeout: 0
   cullable: 0
   ScreenCullRadius: 4
-  canFireOffscreen: 1
+  damage: 1
+  destructible: 0
+  grazeEveryFrames: 20
   animate:
     method: 0
     LRRelation: 0
@@ -419,11 +489,12 @@ MonoBehaviour:
   movementModifiers:
     flipX: 0
     flipY: 0
-  linkToEditorReload: 0
   offsetFree: qrotate px * 15 t  rx 0.9 + 315 softmod 2200 * 222.49 t
   offsetFocus: pxy 0.4 -0.5
   offsetLerpTime: 0.2
   findex: 3
+  freeFirer: {fileID: 0}
+  focusFirer: {fileID: 0}
 --- !u!1 &8947838892524233215
 GameObject:
   m_ObjectHideFlags: 0
@@ -454,7 +525,7 @@ Transform:
   m_LocalScale: {x: 0.5, y: 0.5, z: 1}
   m_Children: []
   m_Father: {fileID: 3643135156715668705}
-  m_RootOrder: 0
+  m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &7280190049924880140
 SpriteRenderer:
@@ -519,11 +590,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0abe240f83e4ccf4e85ab2078ca8a89f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  deathItems:
-    value: 0
-    pointPP: 0
-    life: 0
-    autocollect: 0
   behaviorScript: {fileID: 4900000, guid: 2329205515a83f54e9338e7d50137410, type: 3}
   ID: 
   displayChangedPosition: 1
@@ -533,7 +599,9 @@ MonoBehaviour:
   triggersUITimeout: 0
   cullable: 0
   ScreenCullRadius: 4
-  canFireOffscreen: 1
+  damage: 1
+  destructible: 0
+  grazeEveryFrames: 20
   animate:
     method: 0
     LRRelation: 0
@@ -549,8 +617,9 @@ MonoBehaviour:
   movementModifiers:
     flipX: 0
     flipY: 0
-  linkToEditorReload: 0
   offsetFree: qrotate px * 15 t rx 0.9 + 45 softmod 2200 * 222.49 t
   offsetFocus: pxy 0.2 0.5
   offsetLerpTime: 0.2
   findex: 0
+  freeFirer: {fileID: 0}
+  focusFirer: {fileID: 0}

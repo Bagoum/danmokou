@@ -8,8 +8,8 @@ public static class PlayerFireDataHoisting {
      public static void DestroyAll() {
           fires.Clear();
      }
-     public static void Record(uint id, int bossDmg, int stageDmg, EffectStrategy effect) {
-          fires[id] = (bossDmg, stageDmg, effect);
+     public static void Record(uint id, (int, int, EffectStrategy) cfg) {
+          fires[id] = cfg;
      }
 
      public static (int bossDmg, int stageDmg, EffectStrategy eff)? Retrieve(uint id) {

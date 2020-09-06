@@ -248,6 +248,25 @@ public static partial class AtomicPatterns {
     }
 
     /// <summary>
+    /// Fires a simple bullet. Takes an array of simple bullet options as modifiers.
+    /// See BulletManagement/SimpleBulletOptions.cs.
+    /// </summary>
+    /// <param name="path"></param>
+    /// <param name="options"></param>
+    /// <returns></returns>
+    public static SyncPattern Simple(GCXU<VTP> path, SBOptions options) => sbh => {
+        uint id = sbh.GCX.NextID();
+        var p = path.New(sbh.GCX, ref id);
+        if (options.player.Try(out var player)) {
+            sbh.ch.bc.style = BulletManager.GetOrMakePlayerCopy(sbh.bc.style);
+            PlayerFireDataHoisting.Record(id, player);
+            DataHoisting.PreserveID(id);
+        }
+        sbh.bc.Simple(sbh, options.scale?.Add(sbh.GCX, id), options.direction?.Add(sbh.GCX, id), p, id);
+        return sbh;
+    };
+
+    /// <summary>
     /// Fires a simple bullet with custom direction.
     /// <br/>Note: Direction must be provided as a cos,sin pair. Use CosSinDeg or CosSin.
     /// </summary>
@@ -299,16 +318,9 @@ public static partial class AtomicPatterns {
     /// <summary>
     /// Fires a player bullet with a damage value and an on-hit effect.
     /// </summary>
-    public static SyncPattern PS(int bossDmg, int stageDmg, string effectStrategy, VTP path) {
-        var effect = ResourceManager.GetEffect(effectStrategy);
-        return sbh => {
-            sbh.ch.bc.style = BulletManager.GetOrMakePlayerCopy(sbh.bc.style);
-            uint id = sbh.GCX.NextID();
-            sbh.bc.Simple(sbh, null, null, path, id);
-            PlayerFireDataHoisting.Record(id, bossDmg, stageDmg, effect);
-            return sbh;
-        };
-    }
+    public static SyncPattern PS(int bossDmg, int stageDmg, string effectStrategy, VTP path) =>
+        PSS(bossDmg, stageDmg, effectStrategy, null, path);
+    
     /// <summary>
     /// Fires a player bullet with a damage value, a scaling function, and an on-hit effect.
     /// </summary>
@@ -318,7 +330,8 @@ public static partial class AtomicPatterns {
             sbh.ch.bc.style = BulletManager.GetOrMakePlayerCopy(sbh.bc.style);
             uint id = sbh.GCX.NextID();
             sbh.bc.Simple(sbh, scaler, null, path, id);
-            PlayerFireDataHoisting.Record(id, bossDmg, stageDmg, effect);
+            PlayerFireDataHoisting.Record(id, (bossDmg, stageDmg, effect));
+            DataHoisting.PreserveID(id);
             return sbh;
         };
     }
@@ -332,7 +345,8 @@ public static partial class AtomicPatterns {
             sbh.ch.bc.style = BulletManager.GetOrMakePlayerCopy(sbh.bc.style);
             uint id = sbh.GCX.NextID();
             sbh.bc.Simple(sbh, scaler, dir2, path, id);
-            PlayerFireDataHoisting.Record(id, bossDmg, stageDmg, effect);
+            PlayerFireDataHoisting.Record(id, (bossDmg, stageDmg, effect));
+            DataHoisting.PreserveID(id);
             return sbh;
         };
     }

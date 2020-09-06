@@ -119,7 +119,7 @@ public partial class BulletManager {
 
     private static SimpleBulletCollection GetMaybeCopyPool(string pool) {
         if (CheckOrCopyPool(pool, out var sbc)) return sbc;
-        throw new Exception($"Could not parse pool name \"{pool}\".");
+        throw new Exception($"Could not find simple bullet style by name \"{pool}\".");
     }
     private static readonly ExFunction getMaybeCopyPool = ExUtils.Wrap<string>(typeof(BulletManager), "GetMaybeCopyPool");
 
@@ -205,17 +205,10 @@ public partial class BulletManager {
             GameManagement.campaign.AddGraze(graze);
         }
         //Collision check (player bullets)
-        var fci = Enemy.GetAllEnemyPositions();
-        //Batch damage counters so enemies do not get killed halfway through calculation
-        enemyDamageAcc.ResizeClear(fci.Count);
+        var fci = Enemy.FrozenEnemies;
         for (int ii = 0; ii < playerStyles.Count; ++ii) {
             sbc = playerStyles[ii];
-            if (sbc.Count > 0) sbc.CheckCollision(fci, enemyDamageAcc);
-        }
-        for (int ii = 0; ii < fci.Count; ++ii) {
-            if (enemyDamageAcc[ii] > 0) {
-                fci[ii].enemy.DamageMe(enemyDamageAcc[ii], PlayerTarget);
-            }
+            if (sbc.Count > 0) sbc.CheckCollision(fci);
         }
         
     }
@@ -372,7 +365,12 @@ public partial class BulletManager {
         public bool Active { get; private set; } = false;
         private readonly List<SimpleBulletCollection> targetList;
 
-        public void SetPlayer() => bc.SetPlayer();
+        public bool IsPlayer { get; private set; } = false;
+        public void SetPlayer() {
+            IsPlayer = true;
+            bc.SetPlayer();
+        }
+
         public void Activate() {
             if (!Active) {
                 targetList.Add(this);
@@ -432,7 +430,7 @@ public partial class BulletManager {
 
         public void AddPoolControl(BulletControl pc) => pcs.AddPriority(pc, pc.priority);
         public override void Delete(int ind, bool destroy) {
-            if (destroy) PrivateDataHoisting.Destroy(arr[ind].bpi.id);
+            if (destroy) DataHoisting.Destroy(arr[ind].bpi.id);
             base.Delete(ind);
         }
 
@@ -532,7 +530,7 @@ public partial class BulletManager {
         /// Note that all damage is recorded.
         /// Note that player bullets must be circular.
         /// </summary>
-        public void CheckCollision(IReadOnlyList<Enemy.FrozenCollisionInfo> fci, List<int> damageAcc) {
+        public void CheckCollision(IReadOnlyList<Enemy.FrozenCollisionInfo> fci) {
             int fciL = fci.Count;
             for (int ii = 0; ii < count; ++ii) {
                 if (!rem[ii]) {
@@ -541,15 +539,15 @@ public partial class BulletManager {
                         PlayerFireDataHoisting.Delete(sbn.bpi.id);
                         Delete(ii, true);
                     } else {
-                        for (int iif = 0; iif < fciL; ++iif) {
-                            if (Collision.CircleOnCircle(fci[iif].pos, fci[iif].radius, sbn.bpi.loc, bc.cc.effRadius)) {
+                        for (int ff = 0; ff < fciL; ++ff) {
+                            if (fci[ff].Active && 
+                                Collision.CircleOnCircle(fci[ff].pos, fci[ff].radius, sbn.bpi.loc, bc.cc.effRadius)) {
                                 //Stage enemies don't absorb bullets if they're invulnerable
-                                if (!fci[iif].enemy.takesBossDamage && !fci[iif].enemy.Vulnerable) continue;
-                                if (bc.destructible || fci[iif].enemy.TryHitIndestructible(sbn.bpi.id, bc.againstEnemyCooldown)) {
-                                    var de = PlayerFireDataHoisting.Retrieve(sbn.bpi.id);
-                                    if (de != null) {
-                                        damageAcc[iif] += fci[iif].enemy.takesBossDamage ? de.Value.bossDmg : de.Value.stageDmg;
-                                        fci[iif].enemy.ProcOnHit(de.Value.eff, sbn.bpi.loc);
+                                if (!fci[ff].enemy.takesBossDamage && !fci[ff].enemy.Vulnerable) continue;
+                                if (bc.destructible || fci[ff].enemy.TryHitIndestructible(sbn.bpi.id, bc.againstEnemyCooldown)) {
+                                    if (PlayerFireDataHoisting.Retrieve(sbn.bpi.id).Try(out var de)) {
+                                        fci[ff].enemy.QueueDamage(de.bossDmg, de.stageDmg, PlayerTarget.location);
+                                        fci[ff].enemy.ProcOnHit(de.eff, sbn.bpi.loc);
                                     }
                                     if (bc.destructible) {
                                         PlayerFireDataHoisting.Delete(sbn.bpi.id);

@@ -280,6 +280,7 @@ public static class VTPRepo {
 
         private static ExVTP WrapLet<T>((string, Func<TExPI, TEx<T>>)[] aliases, ExVTP inner) => 
             new ExVTP((v,t,bpi,nrv) => ReflectEx.Let(aliases, () => inner(v,t,bpi,nrv), bpi));
+        [Alias("::")]
         public static ExVTP LetFloats((string, ExBPY)[] aliases, ExVTP inner) => WrapLet(aliases, inner);
         public static ExVTP LetV2s((string, ExTP)[] aliases, ExVTP inner) => WrapLet(aliases, inner);
 

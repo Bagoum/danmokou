@@ -27,29 +27,18 @@ namespace DMath {
 public static partial class Parametrics {
     private static readonly Ex EPS = Ex.Constant(M.MAG_ERR);
     /// <summary>
-    /// Assign local variables that can be repeatedly used without reexecution. Shortcut: ::
-    /// </summary>
-    /// <param name="aliases">List of each variable and its assigned float value</param>
-    /// <param name="inner">Code to execute within the scope of the variables</param>
-    public static ExTP LetFloats((string, ExBPY)[] aliases, ExTP inner) => bpi => ReflectEx.Let(aliases, () => inner(bpi), bpi);
-    /// <summary>
     /// Assign local variables that can be repeatedly used without reexecution. Shortcut: ::v2
     /// </summary>
     /// <param name="aliases">List of each variable and its assigned vector value</param>
     /// <param name="inner">Code to execute within the scope of the variables</param>
     public static ExTP LetV2s((string, ExTP)[] aliases, ExTP inner) => bpi => ReflectEx.Let(aliases, () => inner(bpi), bpi);
-    /// <summary>
-    /// Reference a value defined in a let function. Shortcut: &amp;
-    /// </summary>
-    /// <returns></returns>
-    public static ExTP Reference(string alias) => ReflectEx.ReferenceLetBPI<Vector2>(alias);
     
     public static ExTP Zero() => CXY(0, 0);
     
     /// <summary>
     /// Returns the root location of the entity's velocity struct.
     /// </summary>
-    public static ExTP Root() => Reference("root");
+    public static ExTP Root() => Reference<Vector2>("root");
 
     #region Shapes
 
@@ -988,6 +977,8 @@ public static partial class Parametrics {
 
     #endregion
     
+    
+    public static ExTP OptionLocation() => b => FireOption.optionLocation.Of(b.index);
 }
 
 

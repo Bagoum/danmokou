@@ -358,7 +358,7 @@ public static class SMReflection {
         uint randId = RNG.GetUInt();
         var cor = smh.Exec.ExecuteVelocity(new LimitedTimeVelocity(
             path.New(smh.GCX, ref randId), time(smh.GCX), 
-                Functions.Link(PrivateDataHoisting.DestroyCallback(randId),
+                Functions.Link(() => DataHoisting.Destroy(randId),
                 WaitingUtils.GetAwaiter(out Task t)), smh.cT, smh.GCX.index, condition), randId);
         smh.RunRIEnumerator(cor);
         return t;
@@ -494,7 +494,7 @@ public static class SMReflection {
         async smh => {
             var o = smh.Exec as FireOption ??
                     throw new Exception("Cannot use fire command on a BehaviorEntity that is not an Option");
-            if (!FireOption.FiringAndAllowed) await WaitingUtils.WaitForUnchecked(o, smh.cT, () => FireOption.FiringAndAllowed);
+            if (!PlayerInput.FiringAndAllowed) await WaitingUtils.WaitForUnchecked(o, smh.cT, () => PlayerInput.FiringAndAllowed);
             smh.ThrowIfCancelled();
             var (firer, onCancel, inputReq) = PlayerInput.IsFocus ?  
                 (focusFire, focusCancel, (Func<bool>) (() => PlayerInput.IsFocus)) :
@@ -504,7 +504,7 @@ public static class SMReflection {
             var joint_smh = smh;
             joint_smh.ch.cT = joint.Token;
             //order is important to ensure cancellation works on the correct frame
-            var waiter = WaitingUtils.WaitForUnchecked(o, smh.cT, () => !FireOption.FiringAndAllowed || !inputReq());
+            var waiter = WaitingUtils.WaitForUnchecked(o, smh.cT, () => !PlayerInput.FiringAndAllowed || !inputReq());
             _ = firer.Start(joint_smh).ContinueWithSync(() => {
                 joint.Dispose();
                 fireCTS.Dispose();
@@ -518,14 +518,14 @@ public static class SMReflection {
         async smh => {
             var o = smh.Exec as FireOption ??
                     throw new Exception("Cannot use fire command on a BehaviorEntity that is not an Option");
-            if (!FireOption.FiringAndAllowed) await WaitingUtils.WaitForUnchecked(o, smh.cT, () => FireOption.FiringAndAllowed);
+            if (!PlayerInput.FiringAndAllowed) await WaitingUtils.WaitForUnchecked(o, smh.cT, () => PlayerInput.FiringAndAllowed);
             smh.ThrowIfCancelled();
             var fireCTS = new CancellationTokenSource();
             var joint = CancellationTokenSource.CreateLinkedTokenSource(smh.cT, fireCTS.Token);
             var joint_smh = smh;
             joint_smh.ch.cT = joint.Token;
             //order is important to ensure cancellation works on the correct frame
-            var waiter = WaitingUtils.WaitForUnchecked(o, smh.cT, () => !FireOption.FiringAndAllowed);
+            var waiter = WaitingUtils.WaitForUnchecked(o, smh.cT, () => !PlayerInput.FiringAndAllowed);
             _ = fire.Start(joint_smh).ContinueWithSync(() => {
                 joint.Dispose();
                 fireCTS.Dispose();
@@ -539,7 +539,7 @@ public static class SMReflection {
     public static TaskPattern FireContinued(StateMachine fireFree, StateMachine fireFocus) => async smh => {
         var o = smh.Exec as FireOption ??
                 throw new Exception("Cannot use fire command on a BehaviorEntity that is not an Option");
-        if (!FireOption.FiringAndAllowed) await WaitingUtils.WaitForUnchecked(o, smh.cT, () => FireOption.FiringAndAllowed);
+        if (!PlayerInput.FiringAndAllowed) await WaitingUtils.WaitForUnchecked(o, smh.cT, () => PlayerInput.FiringAndAllowed);
         smh.ThrowIfCancelled();
         var fireCTS = new CancellationTokenSource();
         var joint = CancellationTokenSource.CreateLinkedTokenSource(smh.cT, fireCTS.Token);
@@ -548,7 +548,7 @@ public static class SMReflection {
         int remCancels = 2;
         joint_smh.Exec = o.freeFirer;
         //order is important to ensure cancellation works on the correct frame
-        var waiter = WaitingUtils.WaitForUnchecked(o, smh.cT, () => !FireOption.FiringAndAllowed);
+        var waiter = WaitingUtils.WaitForUnchecked(o, smh.cT, () => !PlayerInput.FiringAndAllowed);
         _ = fireFree.Start(joint_smh).ContinueWithSync(() => {
             if (--remCancels == 0) {
                 joint.Dispose();

@@ -19,6 +19,7 @@ using ev2 = DMath.EEx<UnityEngine.Vector2>;
 using ev3 = DMath.EEx<UnityEngine.Vector3>;
 using erv2 = DMath.EEx<DMath.V2RV2>;
 using static GameManagement;
+using ExBPY = System.Func<DMath.TExPI, TEx<float>>;
 
 namespace DMath {
 /// <summary>
@@ -29,21 +30,26 @@ namespace DMath {
 /// </summary>
 public static partial class ExM {
     #region Aliasing
-    //Can't use lets here since they require performing bindings before children are resolved.
-    //If I could put lets here and also figure out how to do pivoting, I could get rid of the entire Func<Ex,Ex> paradigm...
+    //I have type-generalized the code for Reference/Lets but it's not possible to turn them into math expressions.
+    // The reason is because they require binding information before realizing the child expression.
+    // This is actually what prevents me from trashing the Func<Ex, Ex> paradigm.
 
     /// <summary>
-    /// Reference a value defined in a let function.
+    /// Reference a value defined in a let function, or bound within a GCX, or bound within bullet data,
+    /// or saved within bullet data.
+    /// <br/>&amp;x = &amp; x = reference(x)
     /// </summary>
     /// <returns></returns>
-    /// This only works for FXY, since BPY/TP must also pass the bpi object for private hoisting access
     [Alias(Parser.SM_REF_KEY)]
-    public static TEx<T> Reference<T>(string alias) => ReflectEx.ReferenceExpr<T>(alias, null);
+    public static Func<TExPI, TEx<T>> Reference<T>(string alias) => ReflectEx.ReferenceLetBPI<T>(alias);
     [Alias("@")]
     public static TEx<T> RetrieveHoisted<T>(ReflectEx.Hoist<T> hoist, tfloat indexer) => hoist.Retrieve(indexer);
     [Alias("@0")]
     public static TEx<T> RetrieveHoisted0<T>(ReflectEx.Hoist<T> hoist) => hoist.Retrieve(E0);
     
+    [Alias("::")]
+    public static Func<TExPI, TEx<T>> LetFloats<T>((string, ExBPY)[] aliases, Func<TExPI, TEx<T>> inner) => bpi => 
+        ReflectEx.Let(aliases, () => inner(bpi), bpi);
     
     #endregion
     
@@ -1228,6 +1234,8 @@ public static partial class ExM {
     
     #endregion
     
+    #region Lerp
+    
     /// <summary>
     /// Lerp between two functions.
     /// <br/>Note: Unless marked otherwise, all lerp functions clamp the controller.
@@ -1328,6 +1336,8 @@ public static partial class ExM {
         }
         return Ex.Condition(controller.LT(points[points.Length-1].bd), ifLt, points[points.Length-1].val);
     }
+    
+    #endregion
 
     /// <summary>
     /// Select one of an array of values. If OOB, selects the last element.
@@ -1669,6 +1679,11 @@ public static partial class ExM {
     /// <br/>The BEH must be an enemy, or this will cause errors.
     /// </summary>
     public static tfloat HPRatio(BEHPointer beh) => BehaviorEntity.hpRatio.Of(ExC(beh));
+
+    public static tfloat PlayerFiringTimeFree() => PlayerInput.firingTimeFree;
+    public static tfloat PlayerFiringTimeFocus() => PlayerInput.firingTimeFocus;
+    public static tfloat PlayerUnFiringTimeFree() => PlayerInput.unfiringTimeFree;
+    public static tfloat PlayerUnFiringTimeFocus() => PlayerInput.unfiringTimeFocus;
 
     #endregion
 }

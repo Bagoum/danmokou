@@ -113,7 +113,10 @@ public static class ReflectEx {
         if (isExplicit && bpi != null) {
             return PrivateDataHoisting.GetValue(bpi, Reflector.AsExType<T>(), alias);
         }
-        throw new Exception($"The reference {alias} is used, but does not have a value.");
+        var maybe_outofscope = isExplicit ?
+            "" : "\n\tIf you are defining a bullet control or some other unscoped function, " +
+                 "then you may need to make the reference explicit by prefixing it with \"&.\" instead of \"&\".";
+        throw new Exception($"The reference {alias} is used, but does not have a value.{maybe_outofscope}");
     }
     public static Func<TExPI, TEx<T>> ReferenceLetBPI<T>(string alias) => bpi => ReferenceExpr<T>(alias, bpi);
     public static Func<WF, TEx<T>> ReferenceLet<WF, T>(string alias) => t => ReferenceExpr<T>(alias, null);

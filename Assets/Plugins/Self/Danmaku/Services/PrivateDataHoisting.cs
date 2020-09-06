@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 using DMath;
 using UnityEngine;
@@ -7,9 +8,9 @@ using UnityEngine;
 namespace Danmaku {
 
 public static class PrivateDataHoisting {
-    public static void ClearValuesAndNames() {
+    public static void DestroyAll() {
         ClearNames();
-        ClearValues();
+        ClearAllValues();
     }
     private static void ClearNames() {
         keyNames.Clear();
@@ -52,7 +53,23 @@ public static class PrivateDataHoisting {
         return UpdateValue(fData, bpi, name, value);
     }
 
-    public static void ClearValues() {
+    private static void UpdateValue<T>(Dictionary<uint, Dictionary<uint, T>> dict, uint id, uint key, T value) {
+        dict[id][key] = value;
+    }
+
+    public static void UpdateValue(uint id, uint key, float value) => UpdateValue(fData, id, key, value);
+
+    public static void ClearValues(HashSet<uint> preserve) {
+        foreach (var id in idsInUse.ToArray()) {
+            if (!preserve.Contains(id)) idsInUse.Remove(id);
+        }
+        fData.TryRemoveAndCacheAllExcept(preserve);
+        v2Data.TryRemoveAndCacheAllExcept(preserve);
+        v3Data.TryRemoveAndCacheAllExcept(preserve);
+        rv2Data.TryRemoveAndCacheAllExcept(preserve);
+    }
+
+    private static void ClearAllValues() {
         idsInUse.Clear();
         fData.TryRemoveAndCacheAll();
         v2Data.TryRemoveAndCacheAll();
@@ -60,8 +77,10 @@ public static class PrivateDataHoisting {
         rv2Data.TryRemoveAndCacheAll();
     }
 
-    public static Action DestroyCallback(uint id) => () => Destroy(id);
-    public static void Destroy(uint id) {
+    /// <summary>
+    /// DO NOT USE, THIS IS FOR ACCESS BY DATAHOISTING ONLY
+    /// </summary>
+    public static void __Destroy(uint id) {
         idsInUse.Remove(id);
         fData.TryRemoveAndCache(id);
         v2Data.TryRemoveAndCache(id);

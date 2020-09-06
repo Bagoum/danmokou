@@ -59,6 +59,66 @@ public static class Collision {
         return new CollisionResult(d2 < c2r * c2r,  d2 < lr * lr);
     }
 
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool CircleOnSegments(Vector2 c_src, float c_rad, Vector2 src, Vector2[] points, int start, int skip, int end, float radius, float cos_rot, float sin_rot) {
+        if (start >= end) return false;
+        // use src.x to store delta vector to target, derotated.
+        src.x = c_src.x - src.x;
+        src.y = c_src.y - src.y;
+        float _gbg = cos_rot * src.x + sin_rot * src.y;
+        src.y = cos_rot * src.y - sin_rot * src.x;
+        src.x = _gbg;
+
+        float radius2 = (radius + c_rad) * (radius + c_rad);
+        Vector2 delta; Vector2 g;
+        float projection_unscaled; float d2;
+        --end; //Now end refers to the index we will look at for the final check; ie it is inclusive.
+        int ii = start + skip;
+        for (; ii < end; ii += skip) {
+            delta.x = points[ii].x - points[ii - skip].x;
+            delta.y = points[ii].y - points[ii - skip].y;
+            g.x = src.x - points[ii - skip].x;
+            g.y = src.y - points[ii - skip].y;
+            projection_unscaled = g.x * delta.x + g.y * delta.y;
+            d2 = g.x * g.x + g.y * g.y;
+            if (projection_unscaled < 0) {
+                //We only check endpoint collision on the first point;
+                //due to segmenting we will end by checking on all points except the last, which is handled outside.
+                if (d2 < radius2) return true;
+            } else {
+                float dmag2 = delta.x * delta.x + delta.y * delta.y;
+                if (projection_unscaled < dmag2) {
+                    float norm2 = d2 - projection_unscaled * projection_unscaled / dmag2;
+                    if (norm2 < radius2) return true;
+                }
+            }
+        }
+        //Now perform the last point check
+        ii -= skip;
+        delta.x = points[end].x - points[ii].x;
+        delta.y = points[end].y - points[ii].y;
+        g.x = src.x - points[ii].x;
+        g.y = src.y - points[ii].y;
+        projection_unscaled = g.x * delta.x + g.y * delta.y;
+        d2 = g.x * g.x + g.y * g.y;
+        if (projection_unscaled < 0) {
+            if (d2 < radius2) return true;
+        } else {
+            float dmag2 = delta.x * delta.x + delta.y * delta.y;
+            if (projection_unscaled < dmag2) {
+                float norm2 = d2 - projection_unscaled * projection_unscaled / dmag2;
+                if (norm2 < radius2) return true;
+            }
+        }
+        //Last point circle collision
+        g.x = src.x - points[end].x;
+        g.y = src.y - points[end].y;
+        d2 = g.x * g.x + g.y * g.y;
+        return d2 < radius2;
+    }
+
+    
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static CollisionResult GrazeCircleOnSegments(SOCircle c1, Vector2 src, Vector2[] points, int start, int skip, int end, float radius, float cos_rot, float sin_rot) {
         if (start >= end) return CollisionResult.noColl;

@@ -309,6 +309,18 @@ public partial class BehaviorEntity {
             if (cond(b.rBPI)) b.nextUpdateAllowed = false;
         }, BM.BulletControl.P_TIMECONTROL);
 
+        public static BehCFc UpdateF((string target, BPY valuer)[] targets, Pred cond) {
+            var ftargets = targets.Select(t => (PrivateDataHoisting.GetKey(t.target), t.valuer)).ToArray();
+            return new BehCFc(b => {
+                if (cond(b.rBPI)) {
+                    var bpi = b.rBPI;
+                    for (int ii = 0; ii < ftargets.Length; ++ii) {
+                        PrivateDataHoisting.UpdateValue(bpi.id, ftargets[ii].Item1, ftargets[ii].valuer(bpi));
+                    }
+                }
+            }, BM.BulletControl.P_SAVE);
+        }
+
         /// <summary>
         /// Batch several commands together under one predicate.
         /// </summary>
@@ -397,6 +409,7 @@ public partial class BehaviorEntity {
     public static void Autocull(string targetFormat, string defaulter, [CanBeNull] string[] pools = null) {
         void CullPool(string pool) {
             if (!controls.ContainsKey(pool)) return;
+            if (pool.StartsWith("p-")) return; //Player bullets
             if (!BulletManager.PortColorFormat(pool, targetFormat, defaulter, out string target)) return;
             AddControlAtEOF(pool, new BEHControl(
                 BulletControls.Softcull(target, _ => true), BulletManager.Consts.NOTPERSISTENT));

@@ -50,24 +50,24 @@ public static partial class Reflector {
                 if (attr is AliasAttribute aa) methods.SetDefaultSet(rt, aa.alias.ToLower(), mi);
             }
         }
-        public bool HasMember(Type rt, string member) {
-            ResolveGeneric(rt, member);
+        public bool HasMember(Type rt, Type gt, string member) {
+            ResolveGeneric(rt, member, gt);
             return methodsByReturnType.Has2(rt, member);
         }
-        public bool HasMember<RT>(string member) => HasMember(typeof(RT), member);
+        public bool HasMember<RT, GT>(string member) => HasMember(typeof(RT), typeof(GT), member);
 
-        private void ResolveGeneric(Type rt, string member) {
-            if (methodsByReturnType.Has2(rt, member) || !genericMathTypes.Contains(rt)) return;
+        private void ResolveGeneric(Type rt, string member, [CanBeNull] Type gt = null) {
+            if (methodsByReturnType.Has2(rt, member) || !genericMathTypes.Contains(gt ?? rt)) return;
             if (rt.IsConstructedGenericType &&
                 methodsByReturnType.TryGetValue(rt.GetGenericTypeDefinition(), out var dct) && 
                 dct.TryGetValue(member, out var mi) &&
                 rt.GetGenericTypeDefinition() == mi.ReturnType.GetGenericTypeDefinition()) {
-                methodsByReturnType.SetDefaultSet(rt, member, mi.MakeGenericMethod(rt.GenericTypeArguments));
+                methodsByReturnType.SetDefaultSet(rt, member, mi.MakeGenericMethod((gt ?? rt).GenericTypeArguments));
             }
         }
-        public Type[] LazyGetTypes(Type rt, string member) {
+        public Type[] LazyGetTypes(Type rt, string member, [CanBeNull] Type gt = null) {
             if (!lazyTypes.ContainsKey((member, rt))) {
-                ResolveGeneric(rt, member);
+                ResolveGeneric(rt, member, gt);
                 if (methodsByReturnType.TryGetValue(rt, out var dct) && dct.TryGetValue(member, out var mi)) {
                     ParameterInfo[] prms = mi.GetParameters();
                     Type[] typs = new Type[prms.Length];
@@ -81,7 +81,7 @@ public static partial class Reflector {
             return lazyTypes[(member, rt)];
         }
 
-        public Type[] LazyGetTypes<R>(string member) => LazyGetTypes(typeof(R), member);
+        public Type[] LazyGetTypes<RT, GT>(string member) => LazyGetTypes(typeof(RT), member, typeof(GT));
         
         //dst type, (source type, converter)
         private static readonly Dictionary<Type, (Type, object)> conversions = new Dictionary<Type, (Type, object)>() {
@@ -215,6 +215,9 @@ public static partial class Reflector {
         }
 
         public object Invoke(Type rt, string member, object[] prms) => methodsByReturnType[rt][member].Invoke(null, prms);
+
+        public bool TryInvoke<T>(string member, object[] prms, out object result) =>
+            TryInvoke(typeof(T), member, prms, out result);
         public bool TryInvoke(Type rt, string member, object[] prms, out object result) {
             ResolveGeneric(rt, member);
             if (methodsByReturnType.Has2(rt, member)) {

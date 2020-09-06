@@ -43,6 +43,12 @@ public class BehOption {
     public static BehOption High() => new LayerProp(Layer.HighProjectile);
     
     public static BehOption HueShift(GCXF<float> dps) => new HueShiftProp(dps);
+    /// <summary>
+    /// Every frame, the entity will check the condition and destroy itself if it is true.
+    /// <br/>Note: This is generally only necessary for player lasers. 
+    /// </summary>
+    public static BehOption Delete(GCXU<Pred> cond) => new DeleteProp(cond);
+
 
     
     public class CompositeProp : ValueProp<BehOption[]>, IUnrollable<BehOption> {
@@ -77,6 +83,9 @@ public class BehOption {
     public class HueShiftProp : ValueProp<GCXF<float>> {
         public HueShiftProp(GCXF<float> f) : base(f) { }
     }
+    public class DeleteProp : ValueProp<GCXU<Pred>> {
+        public DeleteProp(GCXU<Pred> f) : base(f) { }
+    }
     
 }
 
@@ -88,8 +97,10 @@ public readonly struct RealizedBehOptions {
     public readonly int? layer;
     public readonly ItemDrops? drops;
     public readonly float hueShift;
+    [CanBeNull] public readonly Pred delete;
+    public readonly PlayerBulletCfg? playerBullet;
 
-    public RealizedBehOptions(BehOptions opts, GenCtx gcx, Vector2 parentOffset, V2RV2 localOffset, CancellationToken cT) {
+    public RealizedBehOptions(BehOptions opts, GenCtx gcx, uint bpiid, Vector2 parentOffset, V2RV2 localOffset, CancellationToken cT) {
         smooth = opts.smooth;
         smr = SMRunner.Run(opts.sm, cT, gcx);
         scale = opts.scale?.Invoke(gcx) ?? 1f;
@@ -97,16 +108,20 @@ public readonly struct RealizedBehOptions {
         layer = opts.layer;
         drops = opts.drops;
         hueShift = opts.hueShift?.Invoke(gcx) ?? 0f;
+        delete = opts.delete?.Add(gcx, bpiid);
+        playerBullet = null;
     }
 
-    public RealizedBehOptions(SMRunner smr, int? layer) {
-        this.smr = smr;
-        this.layer = layer;
+    public RealizedBehOptions(RealizedLaserOptions rlo) {
+        this.smr = rlo.smr;
+        this.layer = rlo.layer;
         smooth = false;
         scale = 1f;
         hp = null;
         drops = null;
         hueShift = 0f;
+        this.delete = rlo.delete;
+        playerBullet = rlo.playerBullet;
     }
 }
 
@@ -115,6 +130,7 @@ public class BehOptions {
     [CanBeNull] public readonly StateMachine sm;
     [CanBeNull] public readonly GCXF<float> scale;
     [CanBeNull] public readonly GCXF<float> hp;
+    public readonly GCXU<Pred>? delete;
     public readonly MovementModifiers modifiers = MovementModifiers.Default;
     public readonly int? layer = null;
     public readonly ItemDrops? drops = null;
@@ -132,6 +148,7 @@ public class BehOptions {
             else if (p is LayerProp lp) layer = lp.value.Int();
             else if (p is ItemsProp ip) drops = ip.value;
             else if (p is HueShiftProp hsp) hueShift = hsp.value;
+            else if (p is DeleteProp dp) delete = dp.value;
             else throw new Exception($"Bullet property {p.GetType()} not handled.");
         }
     }

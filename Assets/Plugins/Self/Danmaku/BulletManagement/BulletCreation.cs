@@ -67,7 +67,7 @@ public struct DelegatedCreator {
     public void Pather(SyncHandoff sbh, float? maxLength, BPY remember, VTP path, uint bpiid, BehOptions options) {
         V2RV2 lrv2 = FacedRV2(sbh.rv2);
         var m = Modifiers.ApplyOver(options.modifiers);
-        var opts = new RealizedBehOptions(options, sbh.GCX, ParentOffset, lrv2, sbh.ch.cT);
+        var opts = new RealizedBehOptions(options, sbh.GCX, bpiid, ParentOffset, lrv2, sbh.ch.cT);
         BulletManager.RequestPather(style, new Velocity(path, ParentOffset, lrv2, m), sbh.index, bpiid, 
             maxLength.GetValueOrDefault(DEFAULT_REMEMBER), remember, ref opts);
     }
@@ -84,7 +84,7 @@ public struct DelegatedCreator {
         var m = Modifiers.ApplyOver(options.modifiers);
         Velocity vel = new Velocity(path, ParentOffset, lrv2, m);
         BulletManager.RequestSummon(pooled, style, m, vel, sbh.index, bpiid, options.ID, transformParent, sm,
-            new RealizedBehOptions(options, sbh.GCX, ParentOffset, lrv2, sbh.ch.cT));
+            new RealizedBehOptions(options, sbh.GCX, bpiid, ParentOffset, lrv2, sbh.ch.cT));
     }
 
     public void SummonRect(SyncHandoff sbh, string behid, TP4 color, BPRV2 loc, SMRunner sm, uint bpiid) {

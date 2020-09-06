@@ -17,17 +17,6 @@ namespace DMath {
 /// </summary>
 public class BPRV2Repo {
     /// <summary>
-    /// Assign local variables that can be repeatedly used without reexecution. Shortcut: ::
-    /// </summary>
-    /// <param name="aliases">List of each variable and its assigned float value</param>
-    /// <param name="inner">Code to execute within the scope of the variables</param>
-    public static ExBPRV2 LetFloats((string, ExBPY)[] aliases, ExBPRV2 inner) => bpi => ReflectEx.Let(aliases, () => inner(bpi), bpi);
-    /// <summary>
-    /// Reference a value defined in a let function. Shortcut: &amp;
-    /// </summary>
-    /// <returns></returns>
-    public static ExBPRV2 Reference(string alias) => ReflectEx.ReferenceLetBPI<V2RV2>(alias);
-    /// <summary>
     /// Return a constant V2RV2.
     /// </summary>
     /// <param name="rv2"></param>

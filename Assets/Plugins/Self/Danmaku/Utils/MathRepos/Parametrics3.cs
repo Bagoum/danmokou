@@ -24,22 +24,11 @@ namespace DMath {
 [SuppressMessage("ReSharper", "UnusedMember.Global")]
 public static partial class Parametrics3 {
     /// <summary>
-    /// Assign local variables that can be repeatedly used without reexecution. Shortcut: ::
-    /// </summary>
-    /// <param name="aliases">List of each variable and its assigned float value</param>
-    /// <param name="inner">Code to execute within the scope of the variables</param>
-    public static ExTP3 LetFloats((string, ExBPY)[] aliases, ExTP3 inner) => bpi => ReflectEx.Let(aliases, () => inner(bpi), bpi);
-    /// <summary>
     /// Assign local variables that can be repeatedly used without reexecution. Shortcut: ::v2
     /// </summary>
     /// <param name="aliases">List of each variable and its assigned vector value</param>
     /// <param name="inner">Code to execute within the scope of the variables</param>
     public static ExTP3 LetV2s((string, ExTP)[] aliases, ExTP3 inner) => bpi => ReflectEx.Let(aliases, () => inner(bpi), bpi);
-    /// <summary>
-    /// Reference a v2 value defined in a let function. Shortcut: &amp;
-    /// </summary>
-    /// <returns></returns>
-    public static ExTP3 Reference(string alias) => TP(ReflectEx.ReferenceLetBPI<Vector2>(alias));
 
     /// <summary>
     /// Derive a parametric3 equation from a parametric2 function (Z is set to zero)

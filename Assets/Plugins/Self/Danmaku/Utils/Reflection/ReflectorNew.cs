@@ -14,10 +14,12 @@ public static partial class Reflector {
     private delegate bool HasMember(string member);
     private delegate Type[] TypeGet(string member);
     private delegate bool TryInvoke(string member, object[] prms, out object result);
+    private static readonly Dictionary<Type, (HasMember has, TypeGet get, TryInvoke inv)> MathAllowedFuncify = new Dictionary<Type, (HasMember, TypeGet, TryInvoke)>();
     private static readonly Dictionary<Type, (HasMember has, TypeGet get, TryInvoke inv)> MathAllowed = new Dictionary<Type, (HasMember, TypeGet, TryInvoke)>();
 
     private static void AllowMath<ExT, ExR>() {
-        MathAllowed[typeof(Func<ExT, ExR>)] = (MathConfig.HasMember<ExR>, MathConfig.FuncifyTypes<ExT, ExR>, MathConfig.TryInvokeFunced<ExT, ExR>);
+        MathAllowedFuncify[typeof(Func<ExT, ExR>)] = (MathConfig.HasMember<ExR, ExR>, MathConfig.FuncifyTypes<ExT, ExR>, MathConfig.TryInvokeFunced<ExT, ExR>);
+        MathAllowed[typeof(Func<ExT, ExR>)] = (MathConfig.HasMember<Func<ExT, ExR>, ExR>, MathConfig.LazyGetTypes<Func<ExT, ExR>, ExR>, MathConfig.TryInvoke<Func<ExT, ExR>>);
         ReflConfig.AddType(typeof(Func<ExT, ExR>));
     }
 
@@ -31,7 +33,8 @@ public static partial class Reflector {
             } catch (Exception) { return null; }
         }
         if (ReflConfig.HasMember(rt, member, out _)) return ReflConfig.LazyGetTypes(rt, member);
-        if (MathAllowed.TryGetValue(rt, out var fs) && fs.has(member)) return fs.get(member);
+        if (MathAllowedFuncify.TryGetValue(rt, out var fs) && fs.has(member)) return fs.get(member);
+        if (MathAllowed.TryGetValue(rt, out fs) && fs.has(member)) return fs.get(member);
         if (FallThroughOptions.TryGetValue(rt, out var mis)) {
             foreach (var (ft, mi) in mis) {
                 if (ft.upwardsCast && !allowUpcast) continue;
@@ -63,7 +66,8 @@ public static partial class Reflector {
             } catch (Exception) { return null; }
         }
         if (ReflConfig.HasMember(rt, member, out _)) return ReflConfig.Invoke(rt, member, prms);
-        if (MathAllowed.TryGetValue(rt, out var fs) && fs.inv(member, prms, out var res)) return res;
+        if (MathAllowedFuncify.TryGetValue(rt, out var fs) && fs.inv(member, prms, out var res)) return res;
+        if (MathAllowed.TryGetValue(rt, out fs) && fs.inv(member, prms, out res)) return res;
         if (FallThroughOptions.TryGetValue(rt, out var mis)) {
             foreach (var (ft, mi) in mis) {
                 if (ft.upwardsCast && !allowUpcast) continue;

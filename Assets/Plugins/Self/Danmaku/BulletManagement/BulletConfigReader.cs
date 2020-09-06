@@ -180,8 +180,6 @@ public partial class BulletManager : RegularUpdater {
     private int epRenderLayer;
     private int ppLayerMask;
     private int ppRenderLayer;
-    //TODO test that this works against large numbers of enemies...
-    private readonly List<int> enemyDamageAcc = new List<int>() { 0 };
     private static GradientMap throwaway_gm;
 
     private readonly struct DeferredTextureConstruction {

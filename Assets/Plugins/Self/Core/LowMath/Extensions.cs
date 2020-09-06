@@ -209,6 +209,22 @@ public static class DictExtensions {
     public static void TryRemoveAndCacheAll<K, K2, V>(this Dictionary<K, Dictionary<K2, V>> dict) {
         foreach (var k in dict.Keys.ToArray()) dict.TryRemoveAndCache(k);
     }
+    public static void TryRemoveAndCacheAllExcept<K, K2, V>(this Dictionary<K, Dictionary<K2, V>> dict, HashSet<K> exceptions) {
+        foreach (var k in dict.Keys.ToArray()) {
+            if (!exceptions.Contains(k)) dict.TryRemoveAndCache(k);
+        }
+    }
+
+    public static void ClearExcept<K, V>(this Dictionary<K, V> dict, HashSet<K> exceptions) {
+        foreach (var k in dict.Keys.ToArray()) {
+            if (!exceptions.Contains(k)) dict.Remove(k);
+        }
+    }
+    public static void ClearExcept<K>(this HashSet<K> dict, HashSet<K> exceptions) {
+        foreach (var k in dict.ToArray()) {
+            if (!exceptions.Contains(k)) dict.Remove(k);
+        }
+    }
 
     public static V GetOrDefault<K, V>(this Dictionary<K, V> dict, K key) {
         if (dict.TryGetValue(key, out var res)) return res;
@@ -276,6 +292,16 @@ public static class NullableExtensions {
         => x.HasValue ? (U?) f(x.Value) : null;
     public static U? Bind<T, U>(this T? x, Func<T, U?> f) where T : struct where U : struct 
         => x.HasValue ? f(x.Value) : null;
+
+    public static bool Try<T>(this T? x, out T y) where T : struct {
+        if (x.HasValue) {
+            y = x.Value;
+            return true;
+        } else {
+            y = default;
+            return false;
+        }
+    }
     
 }
 

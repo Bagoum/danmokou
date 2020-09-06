@@ -138,7 +138,7 @@ public static partial class SyncPatterns {
     public static SyncPattern DoubleFlipY(SyncPattern sp) => _AsGSR(sp, GCP.Times(_ => 2),
         GCP.PostLoop(new GCRule[] {
             new GCRule<float>(ExType.Float, "rv2.a", GCOperator.Assign,
-                GCXF(x => Mul(EN1, RV2A(Reference<V2RV2>("rv2")))))
+                GCXF(x => Mul(EN1, RV2A(Reference<V2RV2>("rv2")(x)))))
         }));
     /// <summary>
     /// Run the child SyncPattern twice, once without modification
@@ -149,7 +149,7 @@ public static partial class SyncPatterns {
     public static SyncPattern DoubleFlipX(SyncPattern sp) => _AsGSR(sp, GCP.Times(_ => 2),
         GCP.PostLoop(new GCRule[] {
             new GCRule<float>(ExType.Float, "rv2.a", GCOperator.Assign,
-                GCXF(x => Sub(ExC(180f), RV2A(Reference<V2RV2>("rv2")))))
+                GCXF(x => Sub(ExC(180f), RV2A(Reference<V2RV2>("rv2")(x)))))
         }));
     /// <summary>
     /// Run the child SyncPattern twice, once without modification
@@ -160,7 +160,7 @@ public static partial class SyncPatterns {
     public static SyncPattern DoubleFlipXY(SyncPattern sp) => _AsGSR(sp, GCP.Times(_ => 2),
         GCP.PostLoop(new GCRule[] {
             new GCRule<float>(ExType.Float, "rv2.a", GCOperator.Assign,
-                GCXF(x => Sub(ExC(90f), RV2A(Reference<V2RV2>("rv2")))))
+                GCXF(x => Sub(ExC(90f), RV2A(Reference<V2RV2>("rv2")(x)))))
         }));
 
     public static SyncPattern DoubleMMX(SyncPattern sp) => sbh => {

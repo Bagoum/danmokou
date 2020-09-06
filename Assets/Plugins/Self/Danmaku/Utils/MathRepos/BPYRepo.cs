@@ -22,17 +22,6 @@ namespace DMath {
 /// </summary>
 [SuppressMessage("ReSharper", "UnusedMember.Global")]
 public static partial class BPYRepo {
-    /// <summary>
-    /// Assign local variables that can be repeatedly used without reexecution. Shortcut: ::
-    /// </summary>
-    /// <param name="aliases">List of each variable and its assigned float value</param>
-    /// <param name="inner">Code to execute within the scope of the variables</param>
-    public static ExBPY LetFloats((string, ExBPY)[] aliases, ExBPY inner) => bpi => ReflectEx.Let(aliases, () => inner(bpi), bpi);
-    /// <summary>
-    /// Reference a value defined in a let function. Shortcut: &amp;
-    /// </summary>
-    /// <returns></returns>
-    public static ExBPY Reference(string alias) => ReflectEx.ReferenceLetBPI<float>(alias);
 
     /// <summary>
     /// Random calls are dependent on the object's parametric ID.
@@ -104,15 +93,15 @@ public static partial class BPYRepo {
     /// <summary>
     /// Returns the cosine of rotation of the entity's velocity struct.
     /// </summary>
-    public static ExBPY AC() => Reference("ac");
+    public static ExBPY AC() => Reference<float>("ac");
     /// <summary>
     /// Returns the sine of rotation of the entity's velocity struct.
     /// </summary>
-    public static ExBPY AS() => Reference("as");
+    public static ExBPY AS() => Reference<float>("as");
     /// <summary>
     /// Returns the angle (degrees) of rotation of the entity's velocity struct.
     /// </summary>
-    public static ExBPY A() => Reference("a");
+    public static ExBPY A() => Reference<float>("a");
     
     /// <summary>
     /// Wrap a number-number function to take a function of parametric info as input.
@@ -343,5 +332,7 @@ public static partial class BPYRepo {
     /// Returns P / DL.
     /// </summary>
     public static ExBPY pDL() => bpi => bpi.findex.Div(DL());
+
+    public static ExBPY OptionAngle() => b => FireOption.optionAngle.Of(b.index);
 }
 }

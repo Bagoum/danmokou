@@ -354,6 +354,7 @@ public class GameManagement : RegularUpdater {
         BEHPooler.Prepare(inodePrefab);
         ItemPooler.Prepare(lifeItem, valueItem, pointppItem);
         ETime.RegisterPersistentSOFInvoke(Replayer.BeginFrame);
+        ETime.RegisterPersistentSOFInvoke(Enemy.FreezeEnemies);
         ETime.RegisterPersistentEOFInvoke(BehaviorEntity.PruneControls);
         ETime.RegisterPersistentEOFInvoke(CurvedTileRenderLaser.PruneControls);
         SceneIntermediary.RegisterSceneUnload(ClearForScene);
@@ -387,6 +388,7 @@ public class GameManagement : RegularUpdater {
     
     public static void ClearForScene() {
         AudioTrackService.ClearAllAudio(false);
+        BulletManager.ClearPoolControls();
         Events.Event0.DestroyAll();
         ETime.SlowdownReset();
         ETime.Timer.ResetAll();

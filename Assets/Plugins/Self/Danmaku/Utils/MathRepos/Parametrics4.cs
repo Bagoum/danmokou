@@ -23,12 +23,6 @@ namespace DMath {
 [SuppressMessage("ReSharper", "UnusedMember.Global")]
 public static partial class Parametrics4 {
     /// <summary>
-    /// Assign local variables that can be repeatedly used without reexecution. Shortcut: ::
-    /// </summary>
-    /// <param name="aliases">List of each variable and its assigned float value</param>
-    /// <param name="inner">Code to execute within the scope of the variables</param>
-    public static ExTP4 LetFloats((string, ExBPY)[] aliases, ExTP4 inner) => bpi => ReflectEx.Let(aliases, () => inner(bpi), bpi);
-    /// <summary>
     /// Assign local variables that can be repeatedly used without reexecution. Shortcut: ::v2
     /// </summary>
     /// <param name="aliases">List of each variable and its assigned vector value</param>

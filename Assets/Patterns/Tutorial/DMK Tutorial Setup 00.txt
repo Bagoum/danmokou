@@ -1,0 +1,16 @@
+
+## Go to dnh.bagoum.com/docs/tutorials/00.html for the tutorial. 
+pattern({ })
+phase(0)
+	action(block, 0)
+		shift-phase-to(1)
+		
+## This is phase #1. 
+<!> type(non, `Hello World`)
+<!> hp(4000)
+phase(0)
+	action(block, 0)
+	position(0, 1)
+		
+		
+
