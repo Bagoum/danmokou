@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using DMath;
+using Core;
 using JetBrains.Annotations;
 using SM;
 using UnityEngine;
@@ -174,7 +175,7 @@ public static partial class AsyncPatterns {
 
         private static Action ReconcileAndCallback([CanBeNull] Action parent_done, List<GenCtx> tmp_ret, LoopControl<AsyncPattern> looper) {
             return () => {
-                if (!looper.Handoff.cT.IsCancellationRequested) {
+                if (!looper.Handoff.cT.Cancelled) {
                     looper.FinishIteration(tmp_ret);
                 }
                 ListCache<GenCtx>.Consign(tmp_ret);

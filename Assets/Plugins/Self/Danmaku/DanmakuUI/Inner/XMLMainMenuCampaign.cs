@@ -8,9 +8,9 @@ using JetBrains.Annotations;
 using UnityEngine.UIElements;
 using UnityEngine;
 using UnityEngine.Scripting;
-using Object = UnityEngine.Object;
 using static GameManagement;
 using static XMLUtils;
+using static Danmaku.Enums;
 
 /// <summary>
 /// Class to manage the main menu UI for campaign-type games.

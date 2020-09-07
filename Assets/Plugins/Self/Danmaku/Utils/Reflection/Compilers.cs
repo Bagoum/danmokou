@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Danmaku;
 using DMath;
+using Core;
 using UnityEngine;
 using Ex = System.Linq.Expressions.Expression;
 using Vector2 = UnityEngine.Vector2;

@@ -10,7 +10,7 @@ phase(0)
 <!> hp(4000)
 phase(0)
 	action(block, 0)
-	position(0, 1)
+		position(0, 1)
 		
 		
 

@@ -12,6 +12,7 @@ using static Tests.TAssert;
 using static DMath.ExM;
 using static DMath.ExMV2;
 using static DMath.ExMRV2;
+using static DMath.ExMConversions;
 
 namespace Tests {
 
@@ -19,7 +20,8 @@ namespace Tests {
         
         [Test]
         public static void TPivot() {
-            var pivoter = TP(Pivot(BPYRepo.T(), _ => 3f, bp => PolarToXY(1f, bp.t.Mul(90f)), CM(2, 0)));
+            var pivoter = TP(Pivot(BPYRepo.T(), _ => 3f, bp => PolarToXY(1f, bp.t.Mul(90f)), 
+                PX(bp => Mul<float>(bp.t, 2f))));
             var bpi = ParametricInfo.WithRandomId(Vector2.down * 100f, 0);
             bpi.t = 0f;
             TAssert.VecEq(pivoter(bpi), Vector2.right);

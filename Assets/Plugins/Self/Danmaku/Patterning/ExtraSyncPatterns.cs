@@ -22,6 +22,7 @@ using static DMath.ExMHelpers;
 using static Danmaku.AtomicPatterns;
 using static Danmaku.PatternUtils;
 using static Danmaku.GenCtxProperty;
+using static DMath.ExMMod;
 
 namespace Danmaku {
 public static class PatternUtils {
@@ -36,10 +37,11 @@ public static partial class AtomicPatterns {
     /// Empty-guided fire that points in the same direction as the empty bullet.
     /// <br/>Note: when following polar bullets, you should use this.
     /// </summary>
-    public static SyncPattern DS(ReflectEx.Hoist<Vector2> hoistLoc, ReflectEx.Hoist<Vector2> hoistDir, ExBPY indexer, ExTP offset) => 
-            SD(GCXU(x => RetrieveHoisted(hoistDir, indexer(x.bpi))),
-                GCXU(VTPRepo.DTPOffset(hoistLoc, hoistDir, indexer, offset))
-        );
+    public static SyncPattern DS(ReflectEx.Hoist<Vector2> hoistLoc, ReflectEx.Hoist<Vector2> hoistDir, ExBPY indexer,
+        ExTP offset) =>
+        Simple(GCXU(VTPRepo.DTPOffset(hoistLoc, hoistDir, indexer, offset)), new SBOptions(new[] {
+            SBOption.Dir2(GCXU(x => RetrieveHoisted(hoistDir, indexer(x.bpi))))
+        }));
 
     public static SyncPattern dPather() => Pather(0.5f, _ => 0.3f,
         "tprot px lerpt3 0 0.2 0.5 1 4 2 6".Into<GCXU<VTP>>(), new BehOptions());

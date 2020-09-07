@@ -1,5 +1,7 @@
 ﻿using System;
 
+namespace Core {
+
 /// <summary>
 /// Attribute marking a reflection method that is automatically applied if none other match.
 /// </summary>
@@ -45,4 +47,5 @@ public class GAliasAttribute : Attribute {
         type = t;
         this.alias = alias;
     }
+}
 }

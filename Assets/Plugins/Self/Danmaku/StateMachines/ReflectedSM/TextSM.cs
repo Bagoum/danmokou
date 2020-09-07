@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using DMath;
+using Core;
 using JetBrains.Annotations;
 using Microsoft.FSharp.Collections;
 using Microsoft.FSharp.Core;
@@ -69,13 +70,12 @@ public static class TSMReflection {
             F<Punct, QAR>(p => p.Resolve(noAR,noAR,noAR,noAR, rollSfx)));
         var textCmds = ParseAndExport(cfg, parser).Invoke(text).Try.ToArray();
         return async smh => {
-            using (var cts = new CancellationTokenSource()) {
-                var joint = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, smh.cT);
-                Dialoguer.RunDialogue(textCmds, joint.Token, WaitingUtils.GetAwaiter(out Func<bool> isDone), continued);
-                smh.RunRIEnumerator(WaitingUtils.WaitWhileWithCancellable(isDone, cts, () => InputManager.DialogueToEnd,
-                    joint.Token, WaitingUtils.GetAwaiter(out Task t), ETime.FRAME_TIME * 10f));
-                await t;
-            }
+            var cts = new Cancellable();
+            var joint = new JointCancellee(cts, smh.cT);
+            Dialoguer.RunDialogue(textCmds, joint, WaitingUtils.GetAwaiter(out Func<bool> isDone), continued);
+            smh.RunRIEnumerator(WaitingUtils.WaitWhileWithCancellable(isDone, cts, () => InputManager.DialogueToEnd,
+                joint, WaitingUtils.GetAwaiter(out Task t), ETime.FRAME_TIME * 10f));
+            await t;
         };
     }
 

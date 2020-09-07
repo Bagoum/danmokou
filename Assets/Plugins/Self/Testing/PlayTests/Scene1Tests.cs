@@ -19,7 +19,7 @@ using static NUnit.Framework.Assert;
 using static Tests.TAssert;
 using PDH = PublicDataHoisting;
 using static GameManagement;
-
+using static Danmaku.Enums;
 
 namespace Tests {
 

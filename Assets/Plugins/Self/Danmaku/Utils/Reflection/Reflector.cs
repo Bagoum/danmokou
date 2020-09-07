@@ -53,7 +53,7 @@ public static partial class Reflector {
             q.Next();
             return null;
         }
-        else if (method == "wait") {
+        else if (method == "wait" || method == "wait-phase") {
             q.Next();
             return WaitForPhaseSM;
         } else {

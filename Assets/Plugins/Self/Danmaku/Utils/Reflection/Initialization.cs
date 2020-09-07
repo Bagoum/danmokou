@@ -22,7 +22,9 @@ using ExSBPred = System.Func<Danmaku.TExSBC, TEx<int>, DMath.TExPI, TEx<bool>>;
 public static partial class Reflector {
 
     static Reflector() {
-        MathConfig = GenericReflectionConfig.ManyPublic(typeof(ExM), typeof(ExMV2), typeof(ExMRV2), typeof(ExMV3), 
+        MathConfig = GenericReflectionConfig.ManyPublic(typeof(ExM), typeof (ExMLerps), typeof(ExMSamplers),
+            typeof(ExMConditionals), typeof(ExMDifficulty), typeof(ExMConversions), typeof(ExMMod),
+            typeof(ExMV2), typeof(ExMRV2), typeof(ExMV3), 
             typeof(ExMV4), typeof(ExMPred));
         foreach (var t in new[] { 
         #if NO_EXPR
@@ -43,7 +45,6 @@ public static partial class Reflector {
         ReflConfig.ShortcutAll("letdecl", ":::");
         ReflConfig.ShortcutAll("letv2s", "::v2");
         ReflConfig.ShortcutAll("divide", "/");
-        ReflConfig.ShortcutAll("stopsampling", "ss");
         ReflConfig.ShortcutAll("flipxgt", "flipx>");
         ReflConfig.ShortcutAll("flipxlt", "flipx<");
         ReflConfig.ShortcutAll("flipygt", "flipy>");

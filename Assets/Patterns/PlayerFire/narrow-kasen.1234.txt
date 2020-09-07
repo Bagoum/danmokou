@@ -7,13 +7,13 @@ gtr {
 		delay * 3 p
 		sfx pc-fire
 		colorf { red green } p
-	} ps 25 25 oh3 tprot py 13
+	} simple tprot py 13 { player  25 25 oh3 }
 	## free cancellation
 	noop
 	## focus
 	async sakura-*/ <> gcr2 12 _ <> { 
 		sfx pc-fire 
 		colorf { red green } // p 2
-	} ps 28 28 oh3 tprot py + 13 * 3.5 // p 2
+	} simple tprot py + 13 * 3.5 // p 2 { player  28 28 oh3 }
 	## focus cancellation
 	noop

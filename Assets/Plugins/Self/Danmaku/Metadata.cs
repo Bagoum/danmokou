@@ -8,16 +8,16 @@ namespace Danmaku {
 
 public readonly struct SMRunner {
     [CanBeNull] public readonly StateMachine sm;
-    public readonly CancellationToken cT;
+    public readonly ICancellee cT;
     public readonly bool cullOnFinish;
     [CanBeNull] private readonly GenCtx gcx;
     [CanBeNull] public GenCtx NewGCX => gcx?.Copy();
 
-    public static SMRunner Null => new SMRunner(null, CancellationToken.None, false, null);
-    public static SMRunner Cull(StateMachine sm, CancellationToken cT, [CanBeNull] GenCtx gcx=null) => new SMRunner(sm, cT, true, gcx);
-    public static SMRunner Run(StateMachine sm, CancellationToken cT, [CanBeNull] GenCtx gcx=null) => new SMRunner(sm, cT, false, gcx);
-    public static SMRunner RunNoCancel(StateMachine sm) => Run(sm, CancellationToken.None);
-    public SMRunner(StateMachine sm, CancellationToken cT, bool cullOnFinish, [CanBeNull] GenCtx gcx) {
+    public static SMRunner Null => new SMRunner(null, Cancellable.Null, false, null);
+    public static SMRunner Cull(StateMachine sm, ICancellee cT, [CanBeNull] GenCtx gcx=null) => new SMRunner(sm, cT, true, gcx);
+    public static SMRunner Run(StateMachine sm, ICancellee cT, [CanBeNull] GenCtx gcx=null) => new SMRunner(sm, cT, false, gcx);
+    public static SMRunner RunNoCancel(StateMachine sm) => Run(sm, Cancellable.Null);
+    public SMRunner(StateMachine sm, ICancellee cT, bool cullOnFinish, [CanBeNull] GenCtx gcx) {
         this.sm = sm;
         this.cT = cT;
         this.cullOnFinish = cullOnFinish;

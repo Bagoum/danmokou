@@ -21,8 +21,8 @@ public partial class BehaviorEntity {
         public readonly Pred persist;
         public readonly int priority;
 
-        public BEHControl(BehCFc act, Pred persistent, CancellationToken? cT = null) {
-            action = act.Func(cT ?? CancellationToken.None);
+        public BEHControl(BehCFc act, Pred persistent, [CanBeNull] ICancellee cT = null) {
+            action = act.Func(cT ?? Cancellable.Null);
             persist = persistent;
             priority = act.priority;
         }
@@ -79,7 +79,7 @@ public partial class BehaviorEntity {
     /// <summary>
     /// DEPRECATED
     /// </summary>
-    public static void ControlPoolSM(Pred persist, BulletManager.StyleSelector styles, SM.StateMachine sm, CancellationToken cT, Pred condFunc) {
+    public static void ControlPoolSM(Pred persist, BulletManager.StyleSelector styles, SM.StateMachine sm, ICancellee cT, Pred condFunc) {
         BEHControl pc = new BEHControl(b => {
             if (condFunc(b.rBPI)) {
                 using (var gcx = PrivateDataHoisting.GetGCX(b.rBPI.id)) {
@@ -348,7 +348,7 @@ public partial class BehaviorEntity {
         }, BulletManager.BulletControl.P_RUN);
     }
     
-    public static void ControlPool(Pred persist, BM.StyleSelector styles, BehCFc control, CancellationToken cT) {
+    public static void ControlPool(Pred persist, BM.StyleSelector styles, BehCFc control, ICancellee cT) {
         BEHControl pc = new BEHControl(control, persist, cT);
         for (int ii = 0; ii < styles.Complex.Length; ++ii) {
             AddControlAtEOF(styles.Complex[ii], pc);

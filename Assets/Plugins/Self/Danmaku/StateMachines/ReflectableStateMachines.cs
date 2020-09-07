@@ -54,7 +54,7 @@ public class EventLASM : ReflectableLASM {
     [CanBeNull] private static FXY _shakeMag = null;
     private const float t = 1.8f;
     private const float st = 2.5f;
-    private static FXY ShakeMag => _shakeMag = _shakeMag ?? Compilers.FXY(b => ExM.EQuad0m10(t, st, FXYRepo.T()(b)));
+    private static FXY ShakeMag => _shakeMag = _shakeMag ?? Compilers.FXY(b => ExMLerps.EQuad0m10(t, st, FXYRepo.T()(b)));
 
     public static TaskPattern BossExplode() => smh => {
         UnityEngine.Object.Instantiate(ResourceManager.GetSummonable("bossexplode")).GetComponent<ExplodeEffect>().Initialize(t, smh.Exec.rBPI.loc);

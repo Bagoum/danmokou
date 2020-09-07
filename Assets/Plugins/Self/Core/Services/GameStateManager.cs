@@ -78,8 +78,7 @@ public static class GameStateManager {
 
     public static void SetLoading(bool on) => stateUpdate = () => _SetLoading(on);
 
-    private static DeletionMarker<Action<CampaignMode>> playerDeathListener = Core.Events.PlayerHasDied.Listen(HandlePlayerDeath);
-    private static void HandlePlayerDeath(CampaignMode m) {
+    public static void HandlePlayerDeath() {
         stateUpdate = _Death;
     }
 

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using Core;
 using DMath;
 using JetBrains.Annotations;
 using UnityEngine;
@@ -17,19 +18,19 @@ using ExLVTP = System.Func<Danmaku.ITExVelocity, RTEx<float>, RTEx<float>, DMath
 using ExBPY = System.Func<DMath.TExPI, TEx<float>>;
 using ExTBPY = System.Func<TEx<float>, DMath.TExPI, TEx<float>>;
 using static Danmaku.VTPConstructors;
-using static Danmaku.VTPControllers;
+using static DMath.ExMConversions;
 
 namespace Danmaku {
 public readonly struct LimitedTimeVelocity {
     public readonly VTP VTP2;
     public readonly float enabledFor;
     public readonly Action done;
-    public readonly CancellationToken cT;
+    public readonly ICancellee cT;
     public readonly int firingIndex;
     [CanBeNull] public readonly Pred condition;
     public bool ThisCannotContinue(ParametricInfo bpi) => !(condition?.Invoke(bpi) ?? true);
 
-    public LimitedTimeVelocity(VTP path, float enabledFor, Action done, CancellationToken cT, int p, [CanBeNull] Pred condition=null) {
+    public LimitedTimeVelocity(VTP path, float enabledFor, Action done, ICancellee cT, int p, [CanBeNull] Pred condition=null) {
         this.VTP2 = path;
         this.enabledFor = enabledFor;
         this.done = done;

@@ -23,10 +23,9 @@ Source
 CodeCoverage
 MemoryCaptures
 Assets/ReferenceOnly
-Assets/TextMesh Pro
 
-docs/*
-!docs/articles
+docs/_site
+docs/api
 
 # these are compiled from the FS project
 # Assets/Plugins/Self/Core/FS/*.dll

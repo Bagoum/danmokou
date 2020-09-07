@@ -12,6 +12,7 @@ using UnityEngine.Profiling;
 using KC = UnityEngine.KeyCode;
 using static SaveUtils;
 using static SM.SMAnalysis;
+using static Danmaku.Enums;
 
 public static class Consts {
     public static readonly (int w, int h) BestResolution = (3840, 2160);

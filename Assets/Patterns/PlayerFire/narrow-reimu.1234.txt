@@ -7,13 +7,19 @@ gtr {
 		delay * 3 p
 		sfx pc-fire
 		colorf { red black } p
-	} pss 25 25 oh1 1.4 tprot py 13
+	} simple tprot py 13 {
+		scale 1.4
+		player 25 25 oh1
+	}
 	## free cancellation
 	noop
 	## focus
 	async amulet-*/w <> gcr2 12 _ <> { 
 		sfx pc-fire 
 		colorf { red black } // p 2
-	} pss 28 28 oh1 1.4 tprot py + 13 * 3.5 // p 2
+	} simple tprot py + 13 * 3.5 // p 2 {
+		scale 1.4
+		player 28 28 oh1
+	}
 	## focus cancellation
 	noop

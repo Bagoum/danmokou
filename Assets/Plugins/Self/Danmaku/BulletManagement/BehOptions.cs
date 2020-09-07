@@ -6,6 +6,7 @@ using JetBrains.Annotations;
 using SM;
 using UnityEngine;
 using static Danmaku.BehOption;
+using static Danmaku.Enums;
 
 namespace Danmaku {
 
@@ -100,7 +101,7 @@ public readonly struct RealizedBehOptions {
     [CanBeNull] public readonly Pred delete;
     public readonly PlayerBulletCfg? playerBullet;
 
-    public RealizedBehOptions(BehOptions opts, GenCtx gcx, uint bpiid, Vector2 parentOffset, V2RV2 localOffset, CancellationToken cT) {
+    public RealizedBehOptions(BehOptions opts, GenCtx gcx, uint bpiid, Vector2 parentOffset, V2RV2 localOffset, ICancellee cT) {
         smooth = opts.smooth;
         smr = SMRunner.Run(opts.sm, cT, gcx);
         scale = opts.scale?.Invoke(gcx) ?? 1f;

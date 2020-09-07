@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using DMath;
+using Core;
 using JetBrains.Annotations;
 using SM;
 using UnityEngine;
@@ -344,14 +345,14 @@ public class GenCtxProperty {
     /// </summary>
     /// <param name="targets"></param>
     /// <returns></returns>
-    public static GenCtxProperty SaveF((ReflectEx.Hoist<float> target, GCXF<float> indexer, GCXF<float> valuer)[] targets) =>
+    public static GenCtxProperty SaveF(params (ReflectEx.Hoist<float> target, GCXF<float> indexer, GCXF<float> valuer)[] targets) =>
         new SaveFProp(targets);
     /// <summary>
     /// Save some values into public hoisting for each fire. Resolved after PreLoop, right before invocation.
     /// </summary>
     /// <param name="targets"></param>
     /// <returns></returns>
-    public static GenCtxProperty SaveV2((ReflectEx.Hoist<Vector2> target, GCXF<float> indexer, GCXF<Vector2> valuer)[] targets) =>
+    public static GenCtxProperty SaveV2(params (ReflectEx.Hoist<Vector2> target, GCXF<float> indexer, GCXF<Vector2> valuer)[] targets) =>
         new SaveV2Prop(targets);
 
     /// <summary>

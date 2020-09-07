@@ -31,7 +31,7 @@ public delegate IEnumerator PAsyncPattern(FixedPatternHandoff fph);
 
 
 public struct CommonHandoff {
-    public CancellationToken cT;
+    public ICancellee cT;
     public DelegatedCreator bc;
     public readonly GenCtx gcx;
     public V2RV2 RV2 {
@@ -39,12 +39,12 @@ public struct CommonHandoff {
         set => gcx.RV2 = value;
     }
 
-    public CommonHandoff(CancellationToken cT, DelegatedCreator bc, GenCtx gcx) {
+    public CommonHandoff(ICancellee cT, DelegatedCreator bc, GenCtx gcx) {
         this.cT = cT;
         this.bc = bc;
         this.gcx = gcx;
     }
-    public CommonHandoff(CancellationToken cT, GenCtx gcx) {
+    public CommonHandoff(ICancellee cT, GenCtx gcx) {
         this.cT = cT;
         this.bc = new DelegatedCreator(gcx.exec, "");
         this.gcx = gcx;
@@ -96,7 +96,7 @@ public struct SyncHandoff {
 
 public struct AsyncHandoff {
     public CommonHandoff ch;
-    public bool Cancelled => ch.cT.IsCancellationRequested;
+    public bool Cancelled => ch.cT.Cancelled;
     public Action done;
     private readonly BehaviorEntity exec;
     /// <summary>
@@ -151,7 +151,7 @@ public struct AsyncHandoff {
 }
 
 public readonly struct FixedPatternHandoff {
-    public readonly CancellationToken cT;
+    public readonly ICancellee cT;
     public readonly Action done;
     public readonly BehaviorEntity exec;
 
@@ -192,30 +192,6 @@ public static partial class AtomicPatterns {
         return sbh;
     };
 
-    /// <summary>
-    /// Save a float value to external data hoisting.
-    /// </summary>
-    /// <param name="name">Name of the hoisted variable</param>
-    /// <param name="indexer">Indexing method</param>
-    /// <param name="valuer">Value</param>
-    /// <returns></returns>
-    public static SyncPattern SaveF(ReflectEx.Hoist<float> name, GCXF<float> indexer, GCXF<float> valuer) => sbh => {
-        name.Save((int) indexer(sbh.GCX), valuer(sbh.GCX));
-        return sbh.GCX;
-    };
-
-    /// <summary>
-    /// Save a vector2 value to external data hoisting.
-    /// </summary>
-    /// <param name="name">Name of the hoisted variable</param>
-    /// <param name="indexer">Indexing method</param>
-    /// <param name="valuer">Value</param>
-    /// <returns></returns>
-    public static SyncPattern SaveV2(ReflectEx.Hoist<Vector2> name, GCXF<float> indexer, GCXF<Vector2> valuer) => sbh => {
-        name.Save((int) indexer(sbh.GCX), valuer(sbh.GCX));
-        return sbh.GCX;
-    };
-    
     #region Items
 
     public static SyncPattern LifeItem() => sbh => {
@@ -266,20 +242,6 @@ public static partial class AtomicPatterns {
         return sbh;
     };
 
-    /// <summary>
-    /// Fires a simple bullet with custom direction.
-    /// <br/>Note: Direction must be provided as a cos,sin pair. Use CosSinDeg or CosSin.
-    /// </summary>
-    /// <param name="dir">Direction function (cos,sin pair)</param>
-    /// <param name="path">Movement descriptor</param>
-    /// <returns></returns>
-    public static SyncPattern SD(GCXU<SBV2> dir, GCXU<VTP> path) {
-        return sbh => {
-            uint id = sbh.GCX.NextID();
-            sbh.bc.Simple(sbh, null, dir.New(sbh.GCX, ref id), path.Add(sbh.GCX, id), id);
-            return sbh;
-        };
-    }
 
     /// <summary>
     /// Fires a simple bullet with custom direction.
@@ -287,7 +249,14 @@ public static partial class AtomicPatterns {
     /// <param name="dir">Direction (degrees)</param>
     /// <param name="path">Movement descriptor</param>
     /// <returns></returns>
-    public static SyncPattern SDD(ExBPY dir, GCXU<VTP> path) => SD(GCXU(x => CosSinDeg(dir(x.bpi))), path);
+    public static SyncPattern SDD(ExBPY dir, GCXU<VTP> path) {
+        var dir2 = GCXU(x => CosSinDeg(dir(x.bpi)));
+        return sbh => {
+            uint id = sbh.GCX.NextID();
+            sbh.bc.Simple(sbh, null, dir2.New(sbh.GCX, ref id), path.Add(sbh.GCX, id), id);
+            return sbh;
+        };
+    }
 
     /// <summary>
     /// Fires a scalable simple bullet.
@@ -300,56 +269,20 @@ public static partial class AtomicPatterns {
         sbh.bc.Simple(sbh, scale.New(sbh.GCX, ref id), null, path.Add(sbh.GCX, id), id);
         return sbh;
     };
-    /// <summary>
-    /// Fires a scalable simple bullet with custom diction.
-    /// </summary>
-    public static SyncPattern SSD(GCXU<BPY> scale, GCXU<SBV2> dir, GCXU<VTP> path) => sbh => {
-        uint id = sbh.GCX.NextID();
-        sbh.bc.Simple(sbh, scale.New(sbh.GCX, ref id), dir.Add(sbh.GCX, id), path.Add(sbh.GCX, id), id);
-        return sbh;
-    };
 
     /// <summary>
-    /// Fires a scalable simple bullet with custom diction.
+    /// Fires a scalable simple bullet with custom direction.
     /// </summary>
-    public static SyncPattern SSDD(GCXU<BPY> scale, ExBPY dir, GCXU<VTP> path) =>
-        SSD(scale, GCXU(x => CosSinDeg(dir(x.bpi))), path);
+    public static SyncPattern SSDD(GCXU<BPY> scale, ExBPY dir, GCXU<VTP> path) {
+        var dir2 = GCXU(x => CosSinDeg(dir(x.bpi)));
+        return sbh => {
+            uint id = sbh.GCX.NextID();
+            sbh.bc.Simple(sbh, scale.New(sbh.GCX, ref id), dir2.Add(sbh.GCX, id), path.Add(sbh.GCX, id), id);
+            return sbh;
+        };
+    }
 
-    /// <summary>
-    /// Fires a player bullet with a damage value and an on-hit effect.
-    /// </summary>
-    public static SyncPattern PS(int bossDmg, int stageDmg, string effectStrategy, VTP path) =>
-        PSS(bossDmg, stageDmg, effectStrategy, null, path);
     
-    /// <summary>
-    /// Fires a player bullet with a damage value, a scaling function, and an on-hit effect.
-    /// </summary>
-    public static SyncPattern PSS(int bossDmg, int stageDmg, string effectStrategy, BPY scaler, VTP path) {
-        var effect = ResourceManager.GetEffect(effectStrategy);
-        return sbh => {
-            sbh.ch.bc.style = BulletManager.GetOrMakePlayerCopy(sbh.bc.style);
-            uint id = sbh.GCX.NextID();
-            sbh.bc.Simple(sbh, scaler, null, path, id);
-            PlayerFireDataHoisting.Record(id, (bossDmg, stageDmg, effect));
-            DataHoisting.PreserveID(id);
-            return sbh;
-        };
-    }
-    /// <summary>
-    /// Fires a player bullet with a damage value, a direction function, and an on-hit effect.
-    /// </summary>
-    public static SyncPattern PSSDD(int bossDmg, int stageDmg, string effectStrategy, BPY scaler, ExBPY dir, VTP path) {
-        var effect = ResourceManager.GetEffect(effectStrategy);
-        var dir2 = SBV2(x => CosSinDeg(dir(x.bpi)));
-        return sbh => {
-            sbh.ch.bc.style = BulletManager.GetOrMakePlayerCopy(sbh.bc.style);
-            uint id = sbh.GCX.NextID();
-            sbh.bc.Simple(sbh, scaler, dir2, path, id);
-            PlayerFireDataHoisting.Record(id, (bossDmg, stageDmg, effect));
-            DataHoisting.PreserveID(id);
-            return sbh;
-        };
-    }
 
     #endregion
 
@@ -431,7 +364,7 @@ public static partial class AtomicPatterns {
             var lcs = new TExRV2(_lcs);
             TEx<V2RV2> offsetLoc = (offset == null) ? summonLoc : AddNV(summonLoc, offset(bpi));
             return V2V2F(
-                RV2ToXY(AddRVA(offsetLoc, ExUtils.V3(lcs.nx, lcs.ny, E0))), //locScaleAng offset is rotational
+                ExMConversions.RV2ToXY(AddRVA(offsetLoc, ExUtils.V3(lcs.nx, lcs.ny, E0))), //locScaleAng offset is rotational
                 ExUtils.V2(lcs.rx, lcs.ry),
                 Add<float>(lcs.angle, summonLoc.angle)
             );

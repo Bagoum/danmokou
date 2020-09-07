@@ -172,7 +172,6 @@ public static class Events {
     
     //Events with "Noun Has Verbed" are messages that go out after the action has occured.
     //Events with "Verb Noun" are messages that are sent to request invoking an action.
-    public static readonly Event1<Danmaku.CampaignMode> PlayerHasDied = new Event1<Danmaku.CampaignMode>();
     /// <summary>
     /// If the player is in an invulnerable state, then nothing will occur unless FORCED is set.
     /// </summary>

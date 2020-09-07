@@ -338,7 +338,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
     
     
     //Warning: these commands MUST be destroyed in the scope in which they are created, otherwise you will get cT disposal errors.
-    public static void ControlPoolSM(Pred persist, BulletManager.StyleSelector styles, SM.StateMachine sm, CancellationToken cT, LPred condFunc) {
+    public static void ControlPoolSM(Pred persist, BulletManager.StyleSelector styles, SM.StateMachine sm, ICancellee cT, LPred condFunc) {
         LaserControl lc = new LaserControl(b => {
             if (condFunc(b.bpi, b.lifetime)) {
                 //TODO (iparent) rotate lastDelta by global euler angle

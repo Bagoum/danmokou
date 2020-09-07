@@ -12,6 +12,7 @@ using GameLowRequest = DU<Danmaku.CampaignRequest, Danmaku.BossPracticeRequest,
 using static GameManagement;
 using static SceneIntermediary;
 using static StaticNullableStruct;
+using static Danmaku.Enums;
 
 //https://issuetracker.unity3d.com/issues/build-that-contains-a-script-with-a-struct-which-has-a-static-nullable-reference-to-itself-fails-on-il2cpp
 public static class StaticNullableStruct {
@@ -216,7 +217,7 @@ public readonly struct GameRequest {
 
     public static bool WaitDefaultReturn() {
         if (SceneIntermediary.LOADING) return false;
-        GlobalSceneCRU.Main.RunDroppableRIEnumerator(WaitingUtils.WaitFor(1f, CancellationToken.None, () =>
+        GlobalSceneCRU.Main.RunDroppableRIEnumerator(WaitingUtils.WaitFor(1f, Cancellable.Null, () =>
             LoadScene(new SceneRequest(MaybeSaveReplayScene,
                 SceneRequest.Reason.FINISH_RETURN))));
         return true;
@@ -232,7 +233,7 @@ public readonly struct GameRequest {
     }
     public static bool WaitShowPracticeSuccessMenu() {
         if (SceneIntermediary.LOADING) return false;
-        GlobalSceneCRU.Main.RunDroppableRIEnumerator(WaitingUtils.WaitFor(1f, CancellationToken.None, GameStateManager.SendSuccessEvent));
+        GlobalSceneCRU.Main.RunDroppableRIEnumerator(WaitingUtils.WaitFor(1f, Cancellable.Null, GameStateManager.SendSuccessEvent));
         return true;
     }
     public static bool ViewReplay(Replay r) {

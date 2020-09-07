@@ -24,7 +24,7 @@ You might know this project by the name NotDnh, ph4mmo, DanMaKufu, or Bagoum Dan
 
 # Setup/Tutorials
 
-## Go to [https://dnh.bagoum.com/docs/articles/setup.html](https://dnh.bagoum.com/docs/articles/setup.html) for setup and tutorial instructions
+## Go to [https://dmk.bagoum.com/docs/articles/setup.html](https://dmk.bagoum.com/docs/articles/setup.html) for setup and tutorial instructions
 
 # Documentation
 
@@ -49,7 +49,7 @@ The source code is licensed under MIT. See the COPYING file for details, as well
 
 **Is there a tutorial?**
 
-*Go to [https://dnh.bagoum.com/docs/articles/setup.html](https://dnh.bagoum.com/docs/articles/setup.html) for setup and tutorial instructions*
+*Go to [https://dmk.bagoum.com/docs/articles/setup.html](https://dmk.bagoum.com/docs/articles/setup.html) for setup and tutorial instructions*
 
 **Are there any examples?**
 

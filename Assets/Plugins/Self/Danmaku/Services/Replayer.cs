@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Danmaku;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
-using SM;
+using static Danmaku.Enums;
 using static InputManager;
 using GameLowRequest = DU<Danmaku.CampaignRequest, Danmaku.BossPracticeRequest, 
     ChallengeRequest, Danmaku.StagePracticeRequest>;

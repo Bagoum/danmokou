@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using Core;
 using UnityEngine;
 using System.Linq.Expressions;
 using Ex = System.Linq.Expressions.Expression;
@@ -14,6 +15,7 @@ using ExBPRV2 = System.Func<DMath.TExPI, TEx<DMath.V2RV2>>;
 using static DMath.ExMHelpers;
 using static ExUtils;
 using static DMath.ExM;
+using static DMath.ExMDifficulty;
 
 namespace DMath {
 
@@ -103,13 +105,6 @@ public static partial class BPYRepo {
     /// </summary>
     public static ExBPY A() => Reference<float>("a");
     
-    /// <summary>
-    /// Wrap a number-number function to take a function of parametric info as input.
-    /// </summary>
-    /// <param name="map">Control function of parametric info</param>
-    /// <param name="f">Target number-number function</param>
-    /// <returns></returns>
-    public static ExBPY BfF(ExBPY map, ExFXY f) => bpi => f(map(bpi));
     
     private static readonly ExFunction SeedRandUint = Wrap(typeof(RNG), "GetSeededFloat", new[] {typeof(float), typeof(float), typeof(uint)});
 
@@ -120,6 +115,13 @@ public static partial class BPYRepo {
     /// <param name="to">Maximum</param>
     /// <returns></returns>
     public static ExBPY BRand(ExBPY from, ExBPY to) => bpi => SeedRandUint.Of(from(bpi), to(bpi), bpi.id);
+    /// <summary>
+    /// Return a random number as a deterministic function of the parametric ID.
+    /// <br/>This function returns a different value from `<see cref="BRand"/>`.
+    /// </summary>
+    /// <param name="from">Minimum</param>
+    /// <param name="to">Maximum</param>
+    /// <returns></returns>
     public static ExBPY BRand2(ExBPY from, ExBPY to) => bpi => SeedRandUint.Of(from(bpi), to(bpi), RNG.Rehash(bpi.id));
 
     /// <summary>
@@ -224,50 +226,6 @@ public static partial class BPYRepo {
     /// </summary>
     [Alias("lsshat")]
     public static ExBPY LogsumShiftAT(ExBPY sharpness, ExBPY pivot, ExBPY f1, ExBPY f2) => LogsumShift("&t", sharpness, pivot, f1, f2);
-
-    /// <summary>
-    /// Apply a ease function on top of a target that uses time as a controller.
-    /// </summary>
-    /// <param name="name">Easing function name</param>
-    /// <param name="maxTime">Time over which to perform easing</param>
-    /// <param name="f">Target function</param>
-    /// <returns></returns>
-    public static ExBPY Ease(string name, float maxTime, ExBPY f) => ExMHelpers.Ease(name, maxTime, f);
-
-
-    /// <summary>
-    /// Apply a ease function on top of a target derivative function that uses time as a controller.
-    /// </summary>
-    /// <param name="name">Easing function name</param>
-    /// <param name="maxTime">Time over which to perform easing</param>
-    /// <param name="fd">Target function</param>
-    /// <returns></returns>
-    public static ExBPY EaseD(string name, float maxTime, ExBPY fd) => ExMHelpers.EaseD(name, maxTime, fd);
-    
-    /// <summary>
-    /// See <see cref="ExM.Lerp{T}"/>
-    /// </summary>
-    public static ExBPY LerpT(ExBPY zeroBound, ExBPY oneBound, ExBPY f1, ExBPY f2) => bpi =>
-    ExM.Lerp(zeroBound(bpi), oneBound(bpi), T()(bpi), f1(bpi), f2(bpi));
-
-    public static ExBPY LerpT3(ExBPY zeroBound, ExBPY oneBound, ExBPY twoBound, ExBPY threeBound, ExBPY f1, ExBPY f2, ExBPY f3) =>
-        bpi => ExM.Lerp3(zeroBound(bpi), oneBound(bpi), twoBound(bpi), threeBound(bpi), T()(bpi), f1(bpi), f2(bpi), f3(bpi));
-
-    /// <summary>
-    /// See <see cref="ExM.LerpBack{T}"/>
-    /// </summary>
-    public static ExBPY LerpBackT(ExBPY zeroBound, ExBPY oneBound, ExBPY oneBound2, ExBPY zeroBound2, ExBPY f1,
-        ExBPY f2) => bpi =>
-        ExM.LerpBack(zeroBound(bpi), oneBound(bpi), oneBound2(bpi), zeroBound2(bpi), T()(bpi), f1(bpi), f2(bpi));
-
-    /// <summary>
-    /// Lerp into a function, using time as the lerp controller.
-    /// </summary>
-    /// <param name="zeroBound">Lower bound for lerp controller</param>
-    /// <param name="oneBound">Upper bound for lerp controller</param>
-    /// <param name="f">Target function</param>
-    /// <returns></returns>
-    public static ExBPY LerpTIn(ExBPY zeroBound, ExBPY oneBound, ExBPY f) => LerpT(zeroBound, oneBound, _ => 0f, f);
 
     /// <summary>
     /// Default randomized star rotation (slow) in one direction.

@@ -8,32 +8,7 @@ public class BossBEH : BehaviorEntity {
 #if UNITY_EDITOR
     private void Update() {
         if (linkToEditorReload) {
-            if (Input.GetKeyDown(KeyCode.R)) Restart();
-            else if (Input.GetKeyDown(KeyCode.Keypad5)) {
-                GameManagement.Difficulty = DifficultySet.Easier;
-                Restart();
-            } else if (Input.GetKeyDown(KeyCode.T)) {
-                GameManagement.Difficulty = DifficultySet.Easy;
-                Restart();
-            } else if (Input.GetKeyDown(KeyCode.Y)) {
-                GameManagement.Difficulty = DifficultySet.Normal;
-                Restart();
-            } else if (Input.GetKeyDown(KeyCode.U)) {
-                GameManagement.Difficulty = DifficultySet.Hard;
-                Restart();
-            } else if (Input.GetKeyDown(KeyCode.I)) {
-                GameManagement.Difficulty = DifficultySet.Lunatic;
-                Restart();
-            } else if (Input.GetKeyDown(KeyCode.O)) {
-                GameManagement.Difficulty = DifficultySet.Ultra;
-                Restart();
-            } else if (Input.GetKeyDown(KeyCode.P)) {
-                GameManagement.Difficulty = DifficultySet.Abex;
-                Restart();
-            } else if (Input.GetKeyDown(KeyCode.LeftBracket)) {
-                GameManagement.Difficulty = DifficultySet.Assembly;
-                Restart();
-            }
+            if (LevelController.ShouldRestart()) Restart();
         }
     }
 

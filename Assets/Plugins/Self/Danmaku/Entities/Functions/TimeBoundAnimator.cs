@@ -1,13 +1,11 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using System.Threading;
+﻿using Core;
 using UnityEngine;
 
 public abstract class TimeBoundAnimator : MonoBehaviour {
     public bool destroyOnDone;
-    protected CancellationToken cT = CancellationToken.None;
+    protected ICancellee cT = Cancellable.Null;
 
-    public void Initialize(CancellationToken canceller, float time) {
+    public void Initialize(ICancellee canceller, float time) {
         cT = canceller;
         AssignTime(time);
     }

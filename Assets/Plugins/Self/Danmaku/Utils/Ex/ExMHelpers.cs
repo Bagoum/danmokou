@@ -5,11 +5,11 @@ using System.Linq;
 using UnityEngine;
 using System.Linq.Expressions;
 using Danmaku;
-using JetBrains.Annotations;
 using Ex = System.Linq.Expressions.Expression;
 using static ExUtils;
 using F = DMath.FXYRepo;
 using static DMath.ExM;
+using static DMath.ExMConversions;
 
 namespace DMath {
 /// <summary>
@@ -88,8 +88,6 @@ public static class ExMHelpers {
     }
 
     //See Design/Engine Math Tips for details on these two functions. They are not raw easing.
-    public static Func<TExPI, TEx<R>> Ease<R>(string name, float maxTime, Func<TExPI, TEx<R>> f) =>
-        Ease<TExPI,R>(name, maxTime, f, bpi => bpi.t, (bpi, t) => bpi.CopyWithT(t));
     public static Func<T, TEx<R>> Ease<T, R>(string name, float maxTime, Func<T, TEx<R>> f, Func<T, Ex> t, Func<T, Ex, T> withT) {
         // x = f(g(t)), where g(t) = T e(t/T)
         return bpi => Ex.Condition(Ex.GreaterThan(t(bpi), ExC(maxTime)), f(bpi),
@@ -99,8 +97,6 @@ public static class ExMHelpers {
             ));
     }
 
-    public static Func<TExPI, TEx<R>> EaseD<R>(string name, float maxTime, Func<TExPI, TEx<R>> fd) =>
-        EaseD<TExPI,R>(name, maxTime, fd, bpi => bpi.t, (bpi, t) => bpi.CopyWithT(t));
     public static Func<T, TEx<R>> EaseD<T, R>(string name, float maxTime, Func<T, TEx<R>> fd, Func<T, Ex> t, Func<T, Ex, T> withT) {
         var ratTime = ExUtils.VFloat();
         // x'(t) = f'(g(t)) g'(t). Where g(t) = T e(t/T): g'(t) = e'(t/T)

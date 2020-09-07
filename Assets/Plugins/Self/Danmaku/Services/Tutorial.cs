@@ -94,11 +94,11 @@ public class Tutorial : BehaviorEntity {
         Prompt(text00, $"Unpause by pressing {Pause.Desc} or selecting the unpause option.");
         yield return waitlf(() => !GameStateManager.IsLoadingOrPaused);
         BulletManager.RequestSimple("lcircle-red/", _ => 4f, null, new Velocity(new Vector2(-3, -2.5f), 0), 0, 0, null);
-        var nrx = new RealizedLaserOptions(new LaserOptions(LaserOption.S(_ => 1/RealizedLaserOptions.DEFAULT_LASER_WIDTH)), GenCtx.New(this, V2RV2.Zero), 5, new Vector2(3, 5), V2RV2.Angle(-90), MovementModifiers.Default, CancellationToken.None);
+        var nrx = new RealizedLaserOptions(new LaserOptions(LaserOption.S(_ => 1/RealizedLaserOptions.DEFAULT_LASER_WIDTH)), GenCtx.New(this, V2RV2.Zero), 5, new Vector2(3, 5), V2RV2.Angle(-90), MovementModifiers.Default, Cancellable.Null);
         BulletManager.RequestLaser(null, "mulaser-blue/b", new Velocity(new Vector2(3, 5), -90), 0, 5, 999, 0, ref nrx);
         BulletManager.RequestLaser(null, "zonelaser-green/b", new Velocity(new Vector2(4, 5), -90), 0, 5, 999, 0, ref nrx);
         "sync _ <> relrect greenrect level <-3;-2.5:1.4;1.4:0> witha 0.7 green".Into<StateMachine>()
-            .Start(new SMHandoff(this, CancellationToken.None));
+            .Start(new SMHandoff(this));
         Message(text10, "You should now see a large red circle on a green box in the bottom left corner, and two lasers on the right side of the screen.");
         yield return confirm();
         Message(text10, "If you cannot see the red circle, or the red circle appears to be in the center of the screen, turn the legacy renderer option to YES in the pause menu.");
@@ -127,14 +127,14 @@ public class Tutorial : BehaviorEntity {
         Prompt(text10, $"Hold {FocusHold.Desc} to move slow (focus mode).");
         yield return waiti(FocusHold);
         
-        var bcs = new CancellationTokenSource();
+        var bcs = new Cancellable();
         var boss = GameObject.Instantiate(tutorialBoss).GetComponent<BehaviorEntity>();
-        boss.Initialize(SMRunner.Cull(StateMachine.CreateFromDump(bossSM.text), bcs.Token));
+        boss.Initialize(SMRunner.Cull(StateMachine.CreateFromDump(bossSM.text), bcs));
         IEnumerator phase() {
             for (int ii = 0; ii < 4; ++ii) yield return null; //phase delay
-            var pct = boss.PhaseShifter.Token;
+            var pct = boss.PhaseShifter;
             if (canSkip()) boss.ShiftPhase();
-            else yield return wait(() => pct.IsCancellationRequested);
+            else yield return wait(() => pct.Cancelled);
             for (int ii = 0; ii < 4; ++ii) yield return null; //phase delay
         }
         IEnumerator shift() {

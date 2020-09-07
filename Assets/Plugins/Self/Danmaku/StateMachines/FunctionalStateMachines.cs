@@ -117,13 +117,13 @@ public class GTRepeat : UniversalSM {
             looper.IAmDone();
         }
         
-        public static IEnumerator Wait(float elapsedFrames, float waitFrames, LoopControl<StateMachine> looper, [CanBeNull] Func<bool> childAwaiter, Action<(float, LoopControl<StateMachine>)> cb, CancellationToken cT) {
+        public static IEnumerator Wait(float elapsedFrames, float waitFrames, LoopControl<StateMachine> looper, [CanBeNull] Func<bool> childAwaiter, Action<(float, LoopControl<StateMachine>)> cb, ICancellee cT) {
             elapsedFrames -= waitFrames;
-            if (cT.IsCancellationRequested) { cb((elapsedFrames, looper)); yield break; }
+            if (cT.Cancelled) { cb((elapsedFrames, looper)); yield break; }
             bool wasPaused = false;
             while (!looper.IsUnpaused || !(childAwaiter?.Invoke() ?? true) || elapsedFrames < 0) {
                 yield return null;
-                if (cT.IsCancellationRequested) { cb((elapsedFrames, looper)); yield break; }
+                if (cT.Cancelled) { cb((elapsedFrames, looper)); yield break; }
                 looper.WaitStep();
                 if (!looper.IsUnpaused) wasPaused = true;
                 else {

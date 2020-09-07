@@ -7,6 +7,7 @@ using UnityEngine;
 using UnityEngine.Scripting;
 using UnityEngine.UIElements;
 using static XMLUtils;
+using static Danmaku.Enums;
 
 /// <summary>
 /// Class to manage the main menu UI.

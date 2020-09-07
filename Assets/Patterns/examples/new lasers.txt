@@ -2,7 +2,7 @@ pattern { }
 phase 0
 	action block 0
 		position 0 0
-		shift-phase-to 11
+		shift-phase-to 10
 
 ##1. Straight lasers, size control
 phase 0 #{
@@ -124,9 +124,9 @@ phase 0 #{
 #}
 
 ##10. Variable laser end
-<!> root 0 3
 phase 0 #{
 	action block 0
+		position 0 3
 		sync gdlaser-green/w <1;:210> gsr2 4 <40> . 
 			laser roffset px sine 3 0.5 t
 				1 300 {
@@ -134,40 +134,9 @@ phase 0 #{
 					varlength 10 + 8 sine 3 4 t
 					start + 2 sine 3h 2 t
 					s 2
-					dynamic 	roffset pxy * 0.5 t  sine 5 0.2 (+ t * 3 &lt)
-					delete > t 5
+					dynamic 	roffset pxy * 0.5 t  sine 5 0.2 (+ t * 8 &lt)
+					delete > t 10
 				}
 #}
-
-
-
-##11. simulating player lasers i guess
-<!> root 0 3
-phase 0 #{
-	action block 0
-		sync gdlaser-red/w <1;:230> gsr2 3 <40> {
-			preloop lastActiveTime =f _
-		} laser roffset px sine 3 0.5 t
-				1 300 {
-					stagger 0.4
-					start * 12 (- t &lastActiveTime)
-					varLength 15 * 5 t
-					s 2
-					dynamic 	roffset pxy * 0.5 t  sine 5 0.2 (+ t * 3 &lt)
-					delete > t 5
-				}
-		sync gdlaser-green/w <1;:210> gsr2 4 <40> {
-			preloop lastActiveTime =f _
-		} laser roffset px sine 3 0.5 t
-				1 300 {
-					stagger 0.4
-					start * 4 (- t &lastActiveTime)
-					varLength 15 * 5 t
-					s 2
-					dynamic 	roffset pxy * 0.5 t  sine 5 0.2 (+ t * 3 &lt)
-					delete > t 5
-				}
-#}
-
 
 

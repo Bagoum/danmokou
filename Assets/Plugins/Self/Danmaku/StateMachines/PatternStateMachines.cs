@@ -115,7 +115,7 @@ public class FinishPSM : StateMachine {
 
     public FinishPSM(StateMachine state) : base(state) { }
 
-    public void Trigger(BehaviorEntity Exec, GenCtx gcx, CancellationToken cT) {
+    public void Trigger(BehaviorEntity Exec, GenCtx gcx, ICancellee cT) {
         _ = Exec.GetINode("finish-triggered", null).RunExternalSM(SMRunner.Cull(this.states[0], cT, gcx));
     }
 
@@ -129,8 +129,7 @@ public class FinishPSM : StateMachine {
 /// `phase`: A high-level SM that controls a "phase", which is a sequence of SMs that may run for variable time
 /// under various ending conditions.
 /// <br/>Phases are the basic unit for implementing cards or similar concepts.
-/// <br/>Phases also generally share some state due to data hoisting, events, etc. Use `ClearLASM` to destroy this state
-/// during the `EndPSM` section.
+/// <br/>Phases also generally share some state due to data hoisting, events, etc. If you use the `type` property to declare a card type, or you use the `clear` property, then this state and all bullets will be cleared on phase end.
 /// </summary>
 public class PhaseSM : SequentialSM {
     //Note that this is only for planned cancellation (eg. phase shift/ synchronization),
@@ -208,7 +207,7 @@ public class PhaseSM : SequentialSM {
         }
     }
 
-    private void PrepareCancellationTrigger(SMHandoff smh, CancellationTokenSource toCancel) {
+    private void PrepareCancellationTrigger(SMHandoff smh, Cancellable toCancel) {
         smh.Exec.PhaseShifter = toCancel;
         var timeout = Timeout;
         if (props.invulnTime != null && props.phaseType != PhaseType.TIMEOUT)
@@ -227,33 +226,28 @@ public class PhaseSM : SequentialSM {
         if (props.rootMove != null) await props.rootMove.Start(smh);
         await cutins;
         smh.ThrowIfCancelled();
-        using (CancellationTokenSource pcTS = new CancellationTokenSource()) {
-            using (CancellationTokenSource joint = CancellationTokenSource.CreateLinkedTokenSource(smh.cT, pcTS.Token)
-            ) {
-                var joint_smh = smh;
-                joint_smh.ch.cT = joint.Token;
-                PrepareCancellationTrigger(joint_smh, pcTS);
-                var start_campaign = GameManagement.campaign;
-                if (props.phaseType != null) ChallengeManager.SetupBEHPhase(joint_smh);
-                try {
-                    await base.Start(joint_smh);
-                    await WaitingUtils.WaitForUnchecked(smh.Exec, joint.Token, 0f,
-                        true); //Wait for synchronization before returning to parent
-                    joint_smh.ThrowIfCancelled();
-                } catch (OperationCanceledException) {
-                    if (smh.Exec.PhaseShifter == pcTS) smh.Exec.PhaseShifter = null;
-                    if (props.Lenient) GameManagement.campaign.Lenience = false;
-                    //TODO generalize targets in props
-                    if (props.phaseType != null) Log.Unity($"Cleared {props.phaseType.Value} phase: {props.cardTitle ?? ""}");
-                    if (props.Cleanup) GameManagement.ClearPhaseAutocull(props.autocullTarget, props.autocullDefault);
-                    if (smh.Exec.AllowFinishCalls) {
-                        finishPhase?.Trigger(smh.Exec, smh.GCX, smh.parentCT);
-                        OnFinish(smh, pcTS, in start_campaign);
-                    }
-                    if (smh.Cancelled) throw;
-                    if (endPhase != null) await endPhase.Start(smh);
-                }
+        var pcTS = new Cancellable();
+        var joint_smh = smh.CreateJointCancellee(pcTS, out var joint);
+        PrepareCancellationTrigger(joint_smh, pcTS);
+        var start_campaign = GameManagement.campaign;
+        if (props.phaseType != null) ChallengeManager.SetupBEHPhase(joint_smh);
+        try {
+            await base.Start(joint_smh);
+            await WaitingUtils.WaitForUnchecked(smh.Exec, joint, 0f,
+                true); //Wait for synchronization before returning to parent
+            joint_smh.ThrowIfCancelled();
+        } catch (OperationCanceledException) {
+            if (smh.Exec.PhaseShifter == pcTS) smh.Exec.PhaseShifter = null;
+            if (props.Lenient) GameManagement.campaign.Lenience = false;
+            //TODO generalize targets in props
+            if (props.phaseType != null) Log.Unity($"Cleared {props.phaseType.Value} phase: {props.cardTitle ?? ""}");
+            if (props.Cleanup) GameManagement.ClearPhaseAutocull(props.autocullTarget, props.autocullDefault);
+            if (smh.Exec.AllowFinishCalls) {
+                finishPhase?.Trigger(smh.Exec, smh.GCX, smh.parentCT);
+                OnFinish(smh, pcTS, in start_campaign);
             }
+            if (smh.Cancelled) throw;
+            if (endPhase != null) await endPhase.Start(smh);
         }
     }
 
@@ -261,10 +255,10 @@ public class PhaseSM : SequentialSM {
     private const float defaultShakeTime = 0.6f;
     private static readonly FXY defaultShakeMult = x => M.Sin(M.PI * (x + 0.4f));
 
-    private void OnFinish(SMHandoff smh, CancellationTokenSource prepared, in CampaignData start_campaign) {
+    private void OnFinish(SMHandoff smh, ICancellee prepared, in CampaignData start_campaign) {
         if (props.BgTransitionOut != null) BackgroundOrchestrator.QueueTransition(props.BgTransitionOut);
         //The shift-phase token is cancelled by timeout or by HP. 
-        var completedBy = prepared.IsCancellationRequested ?
+        var completedBy = prepared.Cancelled ?
             (smh.Exec.isEnemy ?
                 (smh.Exec.Enemy.HP <= 0 && (props.hp ?? 0) > 0) ?
                     (PhaseClearMethod?) PhaseClearMethod.HP :
@@ -328,6 +322,13 @@ public class PhaseActionSM : ParallelSM {
         smh.ThrowIfCancelled();
         await base.Start(smh);
     }
+}
+
+/// <summary>
+/// `paction`: same as `action`, but always blocking.
+/// </summary>
+public class PhaseParallelActionSM : PhaseActionSM {
+    public PhaseParallelActionSM(List<StateMachine> states, float wait) : base(states, Blocking.BLOCKING, wait) { }
 }
 /// <summary>
 /// `saction`: A list of actions that are run in sequence. Place this under a PhaseSM.

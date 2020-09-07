@@ -168,7 +168,7 @@ public struct CampaignData {
         if (delta < 0) ++HitsTaken;
         if (delta < 0 && mode.OneLife()) Lives = 0;
         else Lives = Math.Max(0, Lives + delta);
-        if (Lives == 0) Events.PlayerHasDied.Invoke(mode);
+        if (Lives == 0) GameStateManager.HandlePlayerDeath();
         UIManager.UpdatePlayerUI();
     }
 

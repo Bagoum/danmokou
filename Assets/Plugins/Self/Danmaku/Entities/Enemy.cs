@@ -154,14 +154,14 @@ public class Enemy : RegularUpdater {
         }
     }
 
-    private CancellationToken spellCircleCancel = CancellationToken.None;
+    private ICancellee spellCircleCancel = Cancellable.Null;
     [CanBeNull] private FXY spellCircleRadiusFunc;
     private float MinSCRadius => hpRadius + hpThickness;
     private float lastSpellCircleRadius;
     private const float SpellCircleLerpTime = 0.6f;
     private const float SCBREATHMAG = 0.15f;
     private const float SCBREATHPER = 5f;
-    public void RequestSpellCircle(float timeout, CancellationToken cT, float startRad=3f) {
+    public void RequestSpellCircle(float timeout, ICancellee cT, float startRad=3f) {
         if (timeout < 0.1) timeout = M.IntFloatMax;
         if (spellCircle == null) return;
         spellCircleCancel = cT;
@@ -209,10 +209,10 @@ public class Enemy : RegularUpdater {
         }
         if (spellCircle != null) {
             scPB.SetFloat(PropConsts.time, beh.rBPI.t);
-            if (spellCircleCancel.IsCancellationRequested) {
+            if (spellCircleCancel.Cancelled) {
                 float baseT = beh.rBPI.t;
                 spellCircleRadiusFunc = t => Mathf.Lerp(lastSpellCircleRadius, MinSCRadius - 0.1f, (t - baseT) / SpellCircleLerpTime);
-                spellCircleCancel = CancellationToken.None;
+                spellCircleCancel = Cancellable.Null;
             }
             lastSpellCircleRadius = spellCircleRadiusFunc?.Invoke(beh.rBPI.t) ?? lastSpellCircleRadius;
             if (lastSpellCircleRadius < MinSCRadius) spellCircle.enabled = false;

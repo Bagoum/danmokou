@@ -78,26 +78,26 @@ namespace Tests {
             Assert.AreEqual(cru.NumRunningCoroutines, 0);
         }
 
-        private static IEnumerator LeaveOnCancel(CancellationToken cT) {
+        private static IEnumerator LeaveOnCancel(ICancellee cT) {
             while (true) {
-                if (cT.IsCancellationRequested) yield break;
+                if (cT.Cancelled) yield break;
                 yield return null;
             }
         }
-        private static IEnumerator OnePlusTwoFrames(CancellationToken cT) {
+        private static IEnumerator OnePlusTwoFrames(ICancellee cT) {
             IEnumerator TwoFrames() {
-                if (cT.IsCancellationRequested) yield break;
+                if (cT.Cancelled) yield break;
                 yield return null;
-                if (cT.IsCancellationRequested) yield break;
+                if (cT.Cancelled) yield break;
                 yield return null;
             }
-            if (cT.IsCancellationRequested) yield break;
+            if (cT.Cancelled) yield break;
             yield return TwoFrames();
         }
         [Test]
         public static void TestTimingParenting() {
             CoroutineRegularUpdater cru = new GameObject().AddComponent<CoroutineRegularUpdater>();
-            cru.RunRIEnumerator(OnePlusTwoFrames(CancellationToken.None));
+            cru.RunRIEnumerator(OnePlusTwoFrames(Cancellable.Null));
             cru.RegularUpdate();
             cru.RegularUpdate();
             Assert.AreEqual(cru.NumRunningCoroutines, 1);
@@ -107,8 +107,8 @@ namespace Tests {
         [Test]
         public static void TestCancellation() {
             CoroutineRegularUpdater cru = new GameObject().AddComponent<CoroutineRegularUpdater>();
-            var cts = new CancellationTokenSource();
-            cru.RunRIEnumerator(LeaveOnCancel(cts.Token));
+            var cts = new Cancellable();
+            cru.RunRIEnumerator(LeaveOnCancel(cts));
             cru.RegularUpdate();
             cru.RegularUpdate();
             Assert.AreEqual(cru.NumRunningCoroutines, 1);
@@ -120,7 +120,7 @@ namespace Tests {
         [Test]
         public static void TestConversion() {
             Coroutines cors = new Coroutines();
-            cors.Run(OnePlusTwoFrames(CancellationToken.None));
+            cors.Run(OnePlusTwoFrames(Cancellable.Null));
             cors.Step();
             Assert.AreEqual(cors.Count, 1);
             IEnumerator ienum = cors.AsIEnum();

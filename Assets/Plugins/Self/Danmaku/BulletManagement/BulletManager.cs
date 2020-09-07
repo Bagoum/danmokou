@@ -21,14 +21,14 @@ namespace Danmaku {
 public readonly struct SBCFp {
     public readonly ExSBCF func;
     public readonly int priority;
-    public readonly Func<CancellationToken, SBCF> lazyFunc;
+    public readonly Func<ICancellee, SBCF> lazyFunc;
     public SBCFp(ExSBCF f, int p) {
         func = f;
         priority = p;
         lazyFunc = null;
     }
 
-    public SBCFp(Func<CancellationToken, SBCF> lazy, int p) {
+    public SBCFp(Func<ICancellee, SBCF> lazy, int p) {
         func = null;
         priority = p;
         lazyFunc = lazy;
@@ -36,7 +36,7 @@ public readonly struct SBCFp {
 }
 public readonly struct SBCFc {
     private readonly SBCF func;
-    private readonly Func<CancellationToken, SBCF> lazyFunc;
+    private readonly Func<ICancellee, SBCF> lazyFunc;
     public readonly int priority;
     public SBCFc(SBCFp p) {
         func = p.func == null ? null : Compilers.SBCF(p.func);
@@ -44,7 +44,7 @@ public readonly struct SBCFc {
         lazyFunc = p.lazyFunc;
     }
 
-    public SBCF Func(CancellationToken cT) => func ?? lazyFunc(cT);
+    public SBCF Func(ICancellee cT) => func ?? lazyFunc(cT);
 
     private SBCFc(SBCF f, int p) {
         func = f;
@@ -57,7 +57,7 @@ public readonly struct SBCFc {
 //Not compiled but using this for priority and lazy alternates
 public readonly struct BehCFc {
     private readonly BehCF func;
-    private readonly Func<CancellationToken, BehCF> lazyFunc;
+    private readonly Func<ICancellee, BehCF> lazyFunc;
     public readonly int priority;
 
     public BehCFc(BehCF f, int p) {
@@ -65,13 +65,13 @@ public readonly struct BehCFc {
         priority = p;
         lazyFunc = null;
     }
-    public BehCFc(Func<CancellationToken, BehCF> f, int p) {
+    public BehCFc(Func<ICancellee, BehCF> f, int p) {
         func = null;
         priority = p;
         lazyFunc = f;
     }
     
-    public BehCF Func(CancellationToken cT) => func ?? lazyFunc(cT);
+    public BehCF Func(ICancellee cT) => func ?? lazyFunc(cT);
     
 }
 

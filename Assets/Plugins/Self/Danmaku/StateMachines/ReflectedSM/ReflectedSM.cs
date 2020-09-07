@@ -14,6 +14,8 @@ using static Danmaku.AtomicPatterns;
 using ExBPY = System.Func<DMath.TExPI, TEx<float>>;
 using Object = UnityEngine.Object;
 using ExTP = System.Func<DMath.TExPI, TEx<UnityEngine.Vector2>>;
+using static DMath.ExMConditionals;
+using static DMath.ExMLerps;
 
 namespace SM {
 /// <summary>
@@ -55,7 +57,7 @@ public static class SMReflection {
             x => 1,
             x => ETime.ENGINEFPS * homeSec(x),
             GCXFRepo.RV2Zero,
-            new GenCtxProperty[0], new[] {SaveV2(locSave, cindexer, locator)}
+            new[] { GenCtxProperty.SaveV2((locSave, cindexer, locator)) }, new[] {AtomicPatterns.Noop()}
         ));
         var path = Compilers.GCXU(VTPRepo.NROffset(
             bpi => RetrieveHoisted(locSave, indexer(bpi))
@@ -225,17 +227,13 @@ public static class SMReflection {
             Log.Unity($"Opening dialogue section {file}");
             if (sm == null) sm = StateMachineManager.LoadDialogue(file);
             bool done = false;
-            var cts = new CancellationTokenSource();
+            var cts = new Cancellable();
             smh.RunRIEnumerator(WaitingUtils.WaitWhileWithCancellable(() => done, cts,
-                () => InputManager.DialogueSkip,
-                smh.cT, () => { }));
-            using (var jcts = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, smh.cT)) {
-                smh.ch.cT = jcts.Token;
-                await sm.Start(smh).ContinueWithSync(() => {
-                    done = true;
-                    cts.Dispose();
-                });
-            }
+                () => InputManager.DialogueSkip, smh.cT, () => { }));
+            var jsmh = smh.CreateJointCancellee(cts, out _);
+            await sm.Start(jsmh).ContinueWithSync(() => {
+                done = true;
+            });
         };
     }
 
@@ -499,16 +497,11 @@ public static class SMReflection {
             var (firer, onCancel, inputReq) = PlayerInput.IsFocus ?  
                 (focusFire, focusCancel, (Func<bool>) (() => PlayerInput.IsFocus)) :
                 (freeFire, freeCancel, (Func<bool>) (() => !PlayerInput.IsFocus));
-            var fireCTS = new CancellationTokenSource();
-            var joint = CancellationTokenSource.CreateLinkedTokenSource(smh.cT, fireCTS.Token);
-            var joint_smh = smh;
-            joint_smh.ch.cT = joint.Token;
+            var fireCTS = new Cancellable();
+            var joint_smh = smh.CreateJointCancellee(fireCTS, out _);
             //order is important to ensure cancellation works on the correct frame
             var waiter = WaitingUtils.WaitForUnchecked(o, smh.cT, () => !PlayerInput.FiringAndAllowed || !inputReq());
-            _ = firer.Start(joint_smh).ContinueWithSync(() => {
-                joint.Dispose();
-                fireCTS.Dispose();
-            });
+            _ = firer.Start(joint_smh);
             await waiter;
             fireCTS.Cancel();
             smh.ThrowIfCancelled();
@@ -520,16 +513,11 @@ public static class SMReflection {
                     throw new Exception("Cannot use fire command on a BehaviorEntity that is not an Option");
             if (!PlayerInput.FiringAndAllowed) await WaitingUtils.WaitForUnchecked(o, smh.cT, () => PlayerInput.FiringAndAllowed);
             smh.ThrowIfCancelled();
-            var fireCTS = new CancellationTokenSource();
-            var joint = CancellationTokenSource.CreateLinkedTokenSource(smh.cT, fireCTS.Token);
-            var joint_smh = smh;
-            joint_smh.ch.cT = joint.Token;
+            var fireCTS = new Cancellable();
+            var joint_smh = smh.CreateJointCancellee(fireCTS, out _);
             //order is important to ensure cancellation works on the correct frame
             var waiter = WaitingUtils.WaitForUnchecked(o, smh.cT, () => !PlayerInput.FiringAndAllowed);
-            _ = fire.Start(joint_smh).ContinueWithSync(() => {
-                joint.Dispose();
-                fireCTS.Dispose();
-            });
+            _ = fire.Start(joint_smh);
             await waiter;
             fireCTS.Cancel();
             smh.ThrowIfCancelled();
@@ -541,27 +529,14 @@ public static class SMReflection {
                 throw new Exception("Cannot use fire command on a BehaviorEntity that is not an Option");
         if (!PlayerInput.FiringAndAllowed) await WaitingUtils.WaitForUnchecked(o, smh.cT, () => PlayerInput.FiringAndAllowed);
         smh.ThrowIfCancelled();
-        var fireCTS = new CancellationTokenSource();
-        var joint = CancellationTokenSource.CreateLinkedTokenSource(smh.cT, fireCTS.Token);
-        var joint_smh = smh;
-        joint_smh.ch.cT = joint.Token;
-        int remCancels = 2;
+        var fireCTS = new Cancellable();
+        var joint_smh = smh.CreateJointCancellee(fireCTS, out _);
         joint_smh.Exec = o.freeFirer;
         //order is important to ensure cancellation works on the correct frame
         var waiter = WaitingUtils.WaitForUnchecked(o, smh.cT, () => !PlayerInput.FiringAndAllowed);
-        _ = fireFree.Start(joint_smh).ContinueWithSync(() => {
-            if (--remCancels == 0) {
-                joint.Dispose();
-                fireCTS.Dispose();
-            }
-        });
+        _ = fireFree.Start(joint_smh);
         joint_smh.Exec = o.focusFirer;
-        _ = fireFocus.Start(joint_smh).ContinueWithSync(() => {
-            if (--remCancels == 0) {
-                joint.Dispose();
-                fireCTS.Dispose();
-            }
-        });
+        _ = fireFocus.Start(joint_smh);
         await waiter;
         fireCTS.Cancel();
         smh.ThrowIfCancelled();

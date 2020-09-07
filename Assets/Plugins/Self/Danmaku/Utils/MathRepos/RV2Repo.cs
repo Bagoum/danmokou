@@ -1,14 +1,7 @@
-﻿using System.Linq.Expressions;
-using UnityEngine;
+﻿using Core;
 using Ex = System.Linq.Expressions.Expression;
-using ExTP = System.Func<DMath.TExPI, TEx<UnityEngine.Vector2>>;
-using ExTP3 = System.Func<DMath.TExPI, TEx<UnityEngine.Vector3>>;
-using ExFXY = System.Func<TEx<float>, TEx<float>>;
-using ExBPY = System.Func<DMath.TExPI, TEx<float>>;
 using ExBPRV2 = System.Func<DMath.TExPI, TEx<DMath.V2RV2>>;
-using ExPred = System.Func<DMath.TExPI, TEx<bool>>;
 using static DMath.ExMHelpers;
-using static ExUtils;
 using FR = DMath.FXYRepo;
 
 namespace DMath {

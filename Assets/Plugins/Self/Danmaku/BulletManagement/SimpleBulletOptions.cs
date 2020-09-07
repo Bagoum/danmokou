@@ -16,6 +16,10 @@ public class SBOption {
     /// Give the bullet a custom rotation function, in degrees.
     /// </summary>
     public static SBOption Dir(ExBPY dir) => new DirProp(Compilers.GCXU(x => CosSinDeg(dir(x.bpi))));
+    /// <summary>
+    /// Give the bullet a custom rotation function, in cos/sin coordinates.
+    /// </summary>
+    public static SBOption Dir2(GCXU<SBV2> dir) => new DirProp(dir);
 
     /// <summary>
     /// Mark the bullet as a player shot.

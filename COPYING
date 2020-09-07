@@ -13,6 +13,8 @@ Some files from these projects exists in the source code. Those files have the o
 
 The directory Assets/Plugins/Self/Core/FS contains compiled binaries of the directory FS.
 
+The directory Assets/TextMeshPro contains default imports from the TextMeshPro plugin for Unity. TextMeshPro is licensed under the Unity Companion License (https://docs.unity3d.com/Packages/com.unity.textmeshpro@3.0/license/LICENSE.html). 
+
 See below for licenses for non-code assets.
 
 The copyright of Touhou Project is owned by Team Shanghai Alice.

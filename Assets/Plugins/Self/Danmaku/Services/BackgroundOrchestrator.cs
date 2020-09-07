@@ -78,6 +78,7 @@ public class BackgroundOrchestrator : MonoBehaviour {
 
     private static void SetTarget(BackgroundController bgc, bool withTransition) {
         foreach (var cts in transitionCTS) cts.Cancel();
+        transitionCTS.Clear();
         FinishTransition();
         if (withTransition && nextRequestedTransition.HasValue) {
             ToBG = bgc;
@@ -88,14 +89,14 @@ public class BackgroundOrchestrator : MonoBehaviour {
         }
     }
 
-    private static readonly HashSet<CancellationTokenSource> transitionCTS = new HashSet<CancellationTokenSource>();
+    private static readonly HashSet<Cancellable> transitionCTS = new HashSet<Cancellable>();
     private static void DoTransition(BackgroundTransition bgt) {
         if (FromBG == null) return;
         if (ToBG == null) throw new Exception("Cannot do transition when target BG is null");
         var pb = new MaterialPropertyBlock();
         var mat = Instantiate(main.baseMixerMaterial);
         float timeout = bgt.TimeToFinish();
-        var cts = new CancellationTokenSource();
+        var cts = new Cancellable();
         transitionCTS.Add(cts);
         Func<bool> condition = null;
         if (bgt.type == BackgroundTransition.EffectType.WipeTex) {
@@ -117,19 +118,20 @@ public class BackgroundOrchestrator : MonoBehaviour {
         }
         BackgroundCombiner.SetMaterial(mat, pb);
         void Finish() {
-            if (!cts.IsCancellationRequested) FinishTransition();
+            if (!cts.Cancelled) FinishTransition();
             transitionCTS.Remove(cts);
         }
         if (condition == null) {
-            if (timeout > 0) WaitingUtils.WaitThenCBEvenIfCancelled(GlobalBEH.Main, cts.Token, timeout, false, Finish);
+            if (timeout > 0) WaitingUtils.WaitThenCBEvenIfCancelled(GlobalBEH.Main, cts, timeout, false, Finish);
             else throw new Exception("Cannot wait for transition without a timeout or condition");
         } else {
-            WaitingUtils.WaitThenCBEvenIfCancelled(GlobalBEH.Main, cts.Token, timeout, condition, Finish);
+            WaitingUtils.WaitThenCBEvenIfCancelled(GlobalBEH.Main, cts, timeout, condition, Finish);
         }
     }
 
     private void OnDisable() {
         foreach (var cts in transitionCTS) cts.Cancel();
+        transitionCTS.Clear();
         FromBG = ToBG = null;
     }
 

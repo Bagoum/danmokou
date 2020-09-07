@@ -100,7 +100,7 @@ public class ChallengeManager : CoroutineRegularUpdater {
         Log.Unity($"FAILED challenge {cr.Description}");
         UIManager.MessageChallengeEnd(false, out float t);
         if (Exec != null) Exec.ShiftPhase();
-        WaitingUtils.WaitThenCB(main, CancellationToken.None, t, false, () => {
+        WaitingUtils.WaitThenCB(main, Cancellable.Null, t, false, () => {
             Core.Events.TryHitPlayer.Invoke((999, true));
         });
     }
@@ -123,7 +123,7 @@ public class ChallengeManager : CoroutineRegularUpdater {
             e.RunAttachedSM();
         } else {
             UIManager.MessageChallengeEnd(true, out float t);
-            WaitingUtils.WaitThenCB(main, CancellationToken.None, t, false, gr.vFinishAndPostReplay);
+            WaitingUtils.WaitThenCB(main, Cancellable.Null, t, false, gr.vFinishAndPostReplay);
         }
     }
 

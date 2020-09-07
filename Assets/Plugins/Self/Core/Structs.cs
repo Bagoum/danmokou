@@ -147,47 +147,30 @@ public enum CancelLevel: int {
     Operation = 100,
     Scene = 1000
 }
-public class CancelSource {
-    private CancelLevel level = CancelLevel.None;
 
-    public void Cancel() => Cancel(CancelLevel.Operation);
-
-    public void Cancel(CancelLevel toLevel) {
-        if (level == CancelLevel.None) level = toLevel;
-        else throw new CancelException("Source has already been cancelled");
-    }
-
-    public class SourcedCancelToken : CancelToken {
-        private readonly CancelSource src;
-        public SourcedCancelToken(CancelSource src) {
-            this.src = src;
-        }
-        public override CancelLevel CancelLevel => src.level;
+public static class CancelHelpers {
+    public static void ThrowIfCancelled(this ICancellee c) {
+        if (c.Cancelled) throw new OperationCanceledException();
     }
 }
-
-public class JointCancelToken : CancelToken {
-    private readonly CancelToken c1;
-    private readonly CancelToken c2;
-    public JointCancelToken(CancelToken c1, CancelToken c2) {
+public interface ICancellee {
+    bool Cancelled { get; }
+}
+public class Cancellable : ICancellee {
+    public static readonly ICancellee Null = new Cancellable();
+    private CancelLevel level = CancelLevel.None;
+    public void Cancel() => Cancel(CancelLevel.Operation);
+    public bool Cancelled => level > CancelLevel.None;
+    public void Cancel(CancelLevel toLevel) {
+        if (toLevel > level) level = toLevel;
+    }
+}
+public class JointCancellee : ICancellee {
+    private readonly ICancellee c1;
+    private readonly ICancellee c2;
+    public JointCancellee(ICancellee c1, ICancellee c2) {
         this.c1 = c1;
         this.c2 = c2;
     }
-    public override CancelLevel CancelLevel { get {
-            var c1t = c1.CancelLevel;
-            var c2t = c2.CancelLevel;
-            return (c1t > c2t) ? c1t : c2t;
-        }
-    }
-}
-//This should be a trait... rip c#8
-public abstract class CancelToken {
-    public abstract CancelLevel CancelLevel { get; }
-    public bool Cancelled => CancelLevel > CancelLevel.None;
-    
-    public void ThrowIfCancelled() {
-        if (Cancelled) throw new OperationCanceledException();
-    }
-    
-    public CancelToken JoinWith(CancelToken other) => new JointCancelToken(this, other);
+    public bool Cancelled => c1.Cancelled || c2.Cancelled;
 }

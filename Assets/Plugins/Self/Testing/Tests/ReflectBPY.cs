@@ -10,7 +10,7 @@ using static DMath.BPYRepo;
 using static NUnit.Framework.Assert;
 using ExBPY = System.Func<DMath.TExPI, TEx<float>>;
 using F = DMath.FXYRepo;
-using static DMath.ExM;
+using static DMath.ExMLerps;
 
 namespace Tests {
 

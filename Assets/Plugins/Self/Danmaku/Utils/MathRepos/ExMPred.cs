@@ -5,6 +5,7 @@ using System.Linq;
 using UnityEngine;
 using System.Linq.Expressions;
 using Danmaku;
+using Core;
 using JetBrains.Annotations;
 using Ex = System.Linq.Expressions.Expression;
 using static ExUtils;
@@ -18,6 +19,7 @@ using efloat = DMath.EEx<float>;
 using ev2 = DMath.EEx<UnityEngine.Vector2>;
 using ev3 = DMath.EEx<UnityEngine.Vector3>;
 using erv2 = DMath.EEx<DMath.V2RV2>;
+using static DMath.ExMMod;
 
 namespace DMath {
 /// <summary>
@@ -136,15 +138,15 @@ public static partial class ExMPred {
         );
     }
 
-    public static tbool DivBy(tfloat by, tfloat x) => E0.Eq(ExM.Mod(by, x));
+    public static tbool DivBy(tfloat by, tfloat x) => E0.Eq(Mod(by, x));
     /// <summary>
     /// Returns true if the number is even.
     /// </summary>
-    public static tbool Even(tfloat b) => E0.Eq(ExM.z1Mod(b));
+    public static tbool Even(tfloat b) => E0.Eq(z1Mod(b));
     /// <summary>
     /// Returns true if the number is odd.
     /// </summary>
-    public static tbool Odd(tfloat b) => E1.Eq(ExM.z1Mod(b));
+    public static tbool Odd(tfloat b) => E1.Eq(z1Mod(b));
 
 }
 }

@@ -51,18 +51,21 @@ MonoBehaviour:
   renderPriority: 1900
   renderMode: 1
   fadeInTime: 0
-  slideInTime: 0
+  slideInTime: 0.5
   scaleInTimeMin:
-    var1: 0.9
+    var1: 0.8
     var2: 0
   rotational: 1
   colorizing:
     FlatLight: 0
     Light: 1
+    WideLight: 0
     FlatColor: 0
     Color: 1
+    WideColor: 0
     FlatDark: 0
     Dark: 1
+    WideDark: 0
     Full: 0
     Inverted: 0
     FullInvertedAsLightDark: 0

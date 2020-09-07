@@ -132,7 +132,7 @@ public class UIManager : MonoBehaviour {
         main.timeout.text = (maxTime < float.Epsilon) ? "" : string.Format(timeoutTextFormat, maxTime);
     }
     public static void DoTimeout(bool withSound, float maxTime, 
-        CancellationToken cT, float stayOnZero=3f) {
+        ICancellee cT, float stayOnZero=3f) {
         EndTimeout();
         if (maxTime < float.Epsilon) {
             main.timeout.text = "";
@@ -149,7 +149,7 @@ public class UIManager : MonoBehaviour {
     }
 
     public SFXConfig[] countdownSounds;
-    private IEnumerator Timeout(float maxTime, bool withSound, float stayOnZero, CancellationToken cT) {
+    private IEnumerator Timeout(float maxTime, bool withSound, float stayOnZero, ICancellee cT) {
         float currTime = maxTime;
         var currTimeIdent = -2;
         while (currTime > 0) {
@@ -158,7 +158,7 @@ public class UIManager : MonoBehaviour {
                 currTimeIdent = Mathf.RoundToInt(currTime * 10);
             }
             yield return null;
-            if (cT.IsCancellationRequested) { break; }
+            if (cT.Cancelled) { break; }
             var tryCross = Mathf.FloorToInt(currTime);
             currTime -= ETime.dT;
             if (withSound && currTime < tryCross) {
@@ -325,12 +325,12 @@ public class UIManager : MonoBehaviour {
 
     public static void UpdatePlayerUI() => campaignRequiresUpdate = true;
 
-    private IEnumerator FadeMessage(string msg, CancellationToken cT, float timeIn = 1f, float timeStay = 4f,
+    private IEnumerator FadeMessage(string msg, ICancellee cT, float timeIn = 1f, float timeStay = 4f,
         float timeOut = 1f) {
         message.text = msg;
         return FadeSprite(message.color, c => message.color = c, timeIn, timeStay, timeOut, cT);
     }
-    private IEnumerator FadeMessageCenter(string msg, CancellationToken cT, out float totalTime, 
+    private IEnumerator FadeMessageCenter(string msg, ICancellee cT, out float totalTime, 
         float timeIn = 0.2f, float timeStay = 0.8f, float timeOut = 0.3f) {
         centerMessage.text = msg;
         totalTime = timeIn + timeStay + timeOut;
@@ -338,42 +338,40 @@ public class UIManager : MonoBehaviour {
     }
 
     private static IEnumerator FadeSprite(Color c, Action<Color> apply, float timeIn, float timeStay,
-        float timeOut, CancellationToken cT) {
+        float timeOut, ICancellee cT) {
         for (float t = 0; t < timeIn; t += ETime.dT) {
             c.a = t / timeIn;
             apply(c);
-            if (cT.IsCancellationRequested) break;
+            if (cT.Cancelled) break;
             yield return null;
         }
         c.a = 1;
         apply(c);
         for (float t = 0; t < timeStay; t += ETime.dT) {
-            if (cT.IsCancellationRequested) break;
+            if (cT.Cancelled) break;
             yield return null;
         }
         for (float t = 0; t < timeOut; t += ETime.dT) {
             c.a = 1 - t / timeOut;
             apply(c);
-            if (cT.IsCancellationRequested) break;
+            if (cT.Cancelled) break;
             yield return null;
         }
         c.a = 0;
         apply(c);
     }
 
-    [CanBeNull] private static CancellationTokenSource messageFadeToken;
+    [CanBeNull] private static Cancellable messageFadeToken;
 
     private void _Message(string msg) {
-        //TODO this isn't everdisposed is it? im really leaning towards making a custom CTS to avoid this kinda stuff...
         messageFadeToken?.Cancel();
-        StartCoroutine(FadeMessage(msg, (messageFadeToken = new CancellationTokenSource()).Token));
+        StartCoroutine(FadeMessage(msg, messageFadeToken = new Cancellable()));
     }
-    [CanBeNull] private static CancellationTokenSource cmessageFadeToken;
+    [CanBeNull] private static Cancellable cmessageFadeToken;
 
     private void _CMessage(string msg, out float totalTime) {
-        //TODO this isn't everdisposed is it? im really leaning towards making a custom CTS to avoid this kinda stuff...
         cmessageFadeToken?.Cancel();
-        StartCoroutine(FadeMessageCenter(msg, (cmessageFadeToken = new CancellationTokenSource()).Token, out totalTime));
+        StartCoroutine(FadeMessageCenter(msg, cmessageFadeToken = new Cancellable(), out totalTime));
     }
 
     public static void MessageChallengeEnd(bool success, out float totalTime) => main._CMessage(
@@ -405,7 +403,7 @@ public class UIManager : MonoBehaviour {
     private void HidePauseMenu(bool doSave) => PauseManager.HideOptions(doSave);
 
 
-    public static BottomTracker TrackBEH(BehaviorEntity beh, string title, CancellationToken cT) => 
+    public static BottomTracker TrackBEH(BehaviorEntity beh, string title, ICancellee cT) => 
         Instantiate(main.trackerPrefab).GetComponent<BottomTracker>().Initialize(beh, title, cT);
 
     public SpriteRenderer stageAnnouncer;
@@ -414,7 +412,7 @@ public class UIManager : MonoBehaviour {
     private const float stageAnnounceIn = 1f;
     private const float stageAnnounceStay = 3f;
     private const float stageAnnounceOut = 1f;
-    public static void AnnounceStage(CancellationToken cT, out float time) {
+    public static void AnnounceStage(ICancellee cT, out float time) {
         time = stageAnnounceIn + stageAnnounceOut + stageAnnounceStay;
         main.StartCoroutine(FadeSprite(Color.white, c => main.stageAnnouncer.color = c, stageAnnounceIn, stageAnnounceStay,
             stageAnnounceOut, cT));
@@ -422,7 +420,7 @@ public class UIManager : MonoBehaviour {
     private const float stageDAnnounceIn = 0.5f;
     private const float stageDAnnounceStay = 3f;
     private const float stageDAnnounceOut = 1f;
-    public static void DeannounceStage(CancellationToken cT, out float time) {
+    public static void DeannounceStage(ICancellee cT, out float time) {
         time = stageDAnnounceIn + stageDAnnounceOut + stageDAnnounceStay;
         main.StartCoroutine(FadeSprite(Color.white, c => main.stageDeannouncer.color = c, stageDAnnounceIn, stageDAnnounceStay,
             stageDAnnounceOut, cT));

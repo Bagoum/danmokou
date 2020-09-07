@@ -1,6 +1,7 @@
 ﻿using System;
 using JetBrains.Annotations;
 using UnityEngine;
+using static Danmaku.Enums;
 
 namespace Danmaku {
 public class LevelController : BehaviorEntity {
@@ -53,33 +54,30 @@ public class LevelController : BehaviorEntity {
     }
 
 #if UNITY_EDITOR
-    private void Update() {
-        if (Input.GetKeyDown(KeyCode.R)) Restart();
-        else if (Input.GetKeyDown(KeyCode.Keypad5)) {
+    public static bool ShouldRestart() {
+        if (Input.GetKeyDown(KeyCode.R)) {
+        } else if (Input.GetKeyDown(KeyCode.Alpha5)) {
             GameManagement.Difficulty = DifficultySet.Easier;
-            Restart();
         } else if (Input.GetKeyDown(KeyCode.T)) {
             GameManagement.Difficulty = DifficultySet.Easy;
-            Restart();
         } else if (Input.GetKeyDown(KeyCode.Y)) {
             GameManagement.Difficulty = DifficultySet.Normal;
-            Restart();
         } else if (Input.GetKeyDown(KeyCode.U)) {
             GameManagement.Difficulty = DifficultySet.Hard;
-            Restart();
         } else if (Input.GetKeyDown(KeyCode.I)) {
             GameManagement.Difficulty = DifficultySet.Lunatic;
-            Restart();
         } else if (Input.GetKeyDown(KeyCode.O)) {
             GameManagement.Difficulty = DifficultySet.Ultra;
-            Restart();
         } else if (Input.GetKeyDown(KeyCode.P)) {
             GameManagement.Difficulty = DifficultySet.Abex;
-            Restart();
         } else if (Input.GetKeyDown(KeyCode.LeftBracket)) {
             GameManagement.Difficulty = DifficultySet.Assembly;
-            Restart();
-        }
+        } else return false;
+        return true;
+    }
+
+    private void Update() {
+        if (ShouldRestart()) Restart();
     }
 
     private void Restart() {

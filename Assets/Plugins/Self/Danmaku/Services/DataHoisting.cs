@@ -40,6 +40,18 @@ public static class DataHoisting {
     private static readonly List<Dictionary<uint, Vector2>> v2Data = new List<Dictionary<uint, Vector2>>();
     private static readonly List<HashSet<uint>> keyData = new List<HashSet<uint>>();
     private static readonly HashSet<uint> preserve = new HashSet<uint>();
+
+    public static Ex GetClearableDict<T>() {
+        var t = typeof(T);
+        if (t == ExUtils.tfloat) return GetClearableDictF();
+        else if (t == ExUtils.tv2) return GetClearableDictV2();
+        else throw new Exception($"No generic clearable-dict handling in DataHoisting for type {t.RName()}");
+    }
+    public static Ex GetClearableDictF() {
+        var d = new Dictionary<uint, float>();
+        fData.Add(d);
+        return Ex.Constant(d);
+    }
     public static Ex GetClearableDictV2() {
         var d = new Dictionary<uint, Vector2>();
         v2Data.Add(d);

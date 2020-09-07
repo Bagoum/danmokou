@@ -64,7 +64,7 @@ public class Dialoguer : CoroutineRegularUpdater {
         if (ev == EventType.SPEAKER_SFX) SFXService.Request(currSpeaker.SpeakSFX);
     }
 
-    private IEnumerator _RunDialogue(TC[] words, CancellationToken cT, Action done, bool continued) {
+    private IEnumerator _RunDialogue(TC[] words, ICancellee cT, Action done, bool continued) {
         float wait_time = 0f;
         List<string> sb = new List<string>();
         int lookaheadStartsAt = 0;
@@ -92,7 +92,7 @@ public class Dialoguer : CoroutineRegularUpdater {
         for (; ii < words.Length; ++ii) {
             for (; wait_time > ETime.FRAME_YIELD; wait_time -= ETime.FRAME_TIME) {
                 yield return null;
-                if (cT.IsCancellationRequested) {
+                if (cT.Cancelled) {
                     wait_time = -100000f;
                 }
             }
@@ -106,7 +106,7 @@ public class Dialoguer : CoroutineRegularUpdater {
                 for (int ci = 1; ci < s.Length; ++ci) {
                     for (AddWait(wait_per); wait_time > ETime.FRAME_YIELD; wait_time -= ETime.FRAME_TIME) {
                         yield return null;
-                        if (cT.IsCancellationRequested) {
+                        if (cT.Cancelled) {
                             wait_time = -100000f;
                         }
                     }
@@ -189,21 +189,21 @@ public class Dialoguer : CoroutineRegularUpdater {
         tr.localScale = ls;
     }
 
-    private static IEnumerator _FadeStand(SpriteRenderer sr, float time, bool fadeIn, CancellationToken cT, Action done) {
+    private static IEnumerator _FadeStand(SpriteRenderer sr, float time, bool fadeIn, ICancellee cT, Action done) {
         var (t0, d) = fadeIn ? (0, ETime.FRAME_TIME) : (time - ETime.FRAME_TIME, -ETime.FRAME_TIME);
         Color c = sr.color;
         for (; 0 <= t0 && t0 < time; t0 += d) {
             c.a = t0 / time;
             sr.color = c;
             yield return null;
-            if (cT.IsCancellationRequested) break;
+            if (cT.Cancelled) break;
         }
         c.a = fadeIn ? 1 : 0;
         sr.color = c;
         done();
     }
 
-    public static void FadeStand(IDialogueProfile profile, float time, bool fadeIn, CancellationToken cT, Action done) {
+    public static void FadeStand(IDialogueProfile profile, float time, bool fadeIn, ICancellee cT, Action done) {
         main.RunRIEnumerator(_FadeStand(main.Target(stands[profile].loc), time, fadeIn, cT, done));
     }
 
@@ -228,7 +228,7 @@ public class Dialoguer : CoroutineRegularUpdater {
 
     private static readonly Color activeSpeaker = Color.white;
     private static readonly Color inactiveSpeaker = new Color(0.4f, 0.4f, 0.4f, 1f);
-    public static void RunDialogue(TC[] words, CancellationToken cT, Action done, bool continued=false) {
+    public static void RunDialogue(TC[] words, ICancellee cT, Action done, bool continued=false) {
         main.RunRIEnumerator(main._RunDialogue(words, cT, done, continued));
     }
 

@@ -10,6 +10,8 @@ using static DMath.FXYRepo;
 using static NUnit.Framework.Assert;
 using ExFXY = System.Func<TEx<float>, TEx<float>>;
 using static DMath.ExM;
+using static DMath.ExMMod;
+using static DMath.ExMLerps;
 
 namespace Tests {
 

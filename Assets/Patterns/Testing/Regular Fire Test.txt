@@ -3,4 +3,4 @@ phase 0
 	action block 0
 		position 0 0
 		async strip-red/w <1;:> gcr2 2 3 <;:15> { p this } gsr2 2 <;:180> { } s tprot cx 1
-		async strip-green/w <1;:> gcr2 2 3 <;:15> { p this } gsr2 2 <;:180> { } s offset cm 1 0 zero
+		async strip-green/w <1;:> gcr2 2 3 <;:15> { p this } gsr2 2 <;:180> { } s offset px t zero

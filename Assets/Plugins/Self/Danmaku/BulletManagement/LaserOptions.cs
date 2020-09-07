@@ -217,7 +217,7 @@ public readonly struct RealizedLaserOptions {
 
     public RealizedBehOptions AsBEH => new RealizedBehOptions(this);
 
-    public RealizedLaserOptions(LaserOptions opts, GenCtx gcx, uint bpiid, Vector2 parentOffset, V2RV2 localOffset, MovementModifiers modifiers, CancellationToken cT) {
+    public RealizedLaserOptions(LaserOptions opts, GenCtx gcx, uint bpiid, Vector2 parentOffset, V2RV2 localOffset, MovementModifiers modifiers, ICancellee cT) {
         maxLength = opts.length?.max.Invoke(gcx) ?? DEFAULT_LASER_LEN;
         varLength = opts.length?.var?.Add(gcx, bpiid);
         start = opts.start?.Add(gcx, bpiid);

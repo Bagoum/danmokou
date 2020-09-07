@@ -32,8 +32,8 @@ public partial class BulletManager {
         public readonly Pred persist;
         public readonly int priority;
 
-        public BulletControl(SBCFc act, [CanBeNull] Pred persistent = null, CancellationToken? cT = null) {
-            action = act.Func(cT ?? CancellationToken.None);
+        public BulletControl(SBCFc act, [CanBeNull] Pred persistent = null, [CanBeNull] ICancellee cT = null) {
+            action = act.Func(cT ?? Cancellable.Null);
             persist = persistent ?? Consts.PERSISTENT;
             this.priority = act.priority;
         }
@@ -212,7 +212,7 @@ public partial class BulletManager {
     /// <summary>
     /// DEPRECATED
     /// </summary>
-    public static void ControlPoolSM(Pred persist, StyleSelector styles, SM.StateMachine sm, CancellationToken cT, Pred condFunc) {
+    public static void ControlPoolSM(Pred persist, StyleSelector styles, SM.StateMachine sm, ICancellee cT, Pred condFunc) {
         BulletControl pc = new BulletControl((sbc, ii, bpi) => {
             if (condFunc(bpi)) {
                 var inode = sbc.GetINodeAt(ii, "pool-triggered", null, out uint sbid);
@@ -598,7 +598,7 @@ public partial class BulletManager {
     }
     //Since sb controls are cleared immediately after velocity update,
     //it does not matter when in the frame they are added.
-    public static void ControlPool(Pred persist, StyleSelector styles, SBCFc control, CancellationToken cT) {
+    public static void ControlPool(Pred persist, StyleSelector styles, SBCFc control, ICancellee cT) {
         BulletControl pc = new BulletControl(control, persist, cT);
         for (int ii = 0; ii < styles.Simple.Length; ++ii) {
             GetMaybeCopyPool(styles.Simple[ii]).AddPoolControl(pc);

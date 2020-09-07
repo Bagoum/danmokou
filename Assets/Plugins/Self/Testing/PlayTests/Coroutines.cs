@@ -8,30 +8,30 @@ using UnityEngine.TestTools;
 
 namespace Tests {
 public class Coroutines {
-    private static IEnumerator NestLoC(CancellationToken cT) {
-        if (cT.IsCancellationRequested) yield break;
+    private static IEnumerator NestLoC(ICancellee cT) {
+        if (cT.Cancelled) yield break;
         yield return LeaveOnCancel(cT);
     }
-    private static IEnumerator LeaveOnCancel(CancellationToken cT) {
+    private static IEnumerator LeaveOnCancel(ICancellee cT) {
         while (true) {
-            if (cT.IsCancellationRequested) yield break;
+            if (cT.Cancelled) yield break;
             yield return null;
         }
     }
     [UnityTest]
     public static IEnumerator TestAutoCancellation() {
         CoroutineRegularUpdater cru = new GameObject().AddComponent<CoroutineRegularUpdater>();
-        var cts = new CancellationTokenSource();
-        cru.RunRIEnumerator(NestLoC(cts.Token));
+        var cts = new Cancellable();
+        cru.RunRIEnumerator(NestLoC(cts));
         cts.Cancel();
         cru.gameObject.SetActive(false);
         Assert.AreEqual(cru.NumRunningCoroutines, 0);
         cru.gameObject.SetActive(true);
-        cru.RunDroppableRIEnumerator(NestLoC(CancellationToken.None));
+        cru.RunDroppableRIEnumerator(NestLoC(Cancellable.Null));
         cru.gameObject.SetActive(false);
         Assert.AreEqual(cru.NumRunningCoroutines, 0);
         cru.gameObject.SetActive(true);
-        cru.RunRIEnumerator(NestLoC(CancellationToken.None));
+        cru.RunRIEnumerator(NestLoC(Cancellable.Null));
         LogAssert.Expect(LogType.Error, new Regex(".*1 leftover coroutine.*"));
         cru.gameObject.SetActive(false);
         Assert.AreEqual(cru.NumRunningCoroutines, 1);

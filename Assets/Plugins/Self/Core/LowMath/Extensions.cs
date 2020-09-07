@@ -21,8 +21,14 @@ public static class Extensions {
         cb();
         if (t.IsFaulted && t.Exception != null) throw t.Exception;
     };
-    public static Task ContinueWithSync(this Task t, Action done, CancellationToken cT) =>
-        t.ContinueWith(WrapRethrow(done), cT, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Current);
+    private static Action<Task> WrapRethrow(Action cb, ICancellee cT) => t => {
+        if (!cT.Cancelled) {
+            cb();
+            if (t.IsFaulted && t.Exception != null) throw t.Exception;
+        }
+    };
+    public static Task ContinueWithSync(this Task t, Action done, ICancellee cT) =>
+        t.ContinueWith(WrapRethrow(done, cT), TaskContinuationOptions.ExecuteSynchronously);
     public static Task ContinueWithSync(this Task t, Action done) =>
         t.ContinueWith(WrapRethrow(done), TaskContinuationOptions.ExecuteSynchronously);
     

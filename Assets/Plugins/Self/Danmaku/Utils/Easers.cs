@@ -9,10 +9,8 @@ using ExPred = System.Func<DMath.TExPI, TEx<bool>>;
 using ExTP = System.Func<DMath.TExPI, TEx<UnityEngine.Vector2>>;
 using ExBPRV2 = System.Func<DMath.TExPI, TEx<DMath.V2RV2>>;
 using static DMath.ExMHelpers;
-using static ExUtils;
-using static DMath.EaseHelpers;
-using static DMath.FXYRepo;
 using static DMath.ExM;
+using static DMath.ExMLerps;
 
 namespace DMath {
 public static class EaseHelpers {

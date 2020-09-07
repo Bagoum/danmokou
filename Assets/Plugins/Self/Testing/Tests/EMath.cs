@@ -19,6 +19,9 @@ using static Tests.TAssert;
 using static DMath.ExMV3;
 using static Compilers;
 using ExTP = System.Func<DMath.TExPI, TEx<UnityEngine.Vector2>>;
+using static DMath.ExMLerps;
+using static DMath.ExMConversions;
+using static DMath.ExMMod;
 
 namespace Tests {
 
@@ -39,7 +42,7 @@ namespace Tests {
             var exv2 = new TExV2();
             var exb = new TExV2();
             var r = VFloat();
-            var rot = Ex.Lambda<Func<Vector2, float, Vector2>>(ExM.Rotate(r, exv2), exv2, r).Compile();
+            var rot = Ex.Lambda<Func<Vector2, float, Vector2>>(Rotate(r, exv2), exv2, r).Compile();
             var norm = Ex.Lambda<Func<Vector2, Vector2>>(Norm(exv2), exv2).Compile();
             var conv = Ex.Lambda<Func<Vector2, Vector2, Vector2>>(ConvertBasis(exv2, exb), exv2, exb).Compile();
             var deconv = Ex.Lambda<Func<Vector2, Vector2, Vector2>>(DeconvertBasis(exv2, exb), exv2, exb).Compile();

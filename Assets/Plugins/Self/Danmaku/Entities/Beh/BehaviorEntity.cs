@@ -51,8 +51,8 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     public string ID;
     private static readonly Dictionary<string, HashSet<BehaviorEntity>> idLookup = new Dictionary<string, HashSet<BehaviorEntity>>();
     //This is automatically disposed by the state machine that generates it
-    [CanBeNull] public CancellationTokenSource PhaseShifter { get; set; }
-    private readonly HashSet<CancellationTokenSource> behaviorToken = new HashSet<CancellationTokenSource>();
+    [CanBeNull] public Cancellable PhaseShifter { get; set; }
+    private readonly HashSet<Cancellable> behaviorToken = new HashSet<Cancellable>();
     public int NumRunningSMs => behaviorToken.Count;
     protected Vector2 lastDelta;
     public Vector2 LastDelta => lastDelta;
@@ -483,7 +483,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     /// </summary>
     /// <returns></returns>
     public IEnumerator ExecuteVelocity(LimitedTimeVelocity ltv, uint newId) {
-        if (ltv.cT.IsCancellationRequested) { ltv.done(); yield break; }
+        if (ltv.cT.Cancelled) { ltv.done(); yield break; }
         Velocity vel = new Velocity(ltv.VTP2, GlobalPosition(), V2RV2.Angle(original_angle), movementModifiers);
         float doTime = (ltv.enabledFor < float.Epsilon) ? float.MaxValue : ltv.enabledFor;
         ParametricInfo tbpi = new ParametricInfo(bpi.loc, ltv.firingIndex, newId);
@@ -502,7 +502,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
             }
             SetTransformGlobalPosition(bpi.loc = tbpi.loc);
             yield return null;
-            if (ltv.cT.IsCancellationRequested) {
+            if (ltv.cT.Cancelled) {
                 lastDelta = Vector2.zero;
                 ltv.done(); yield break;
             }
@@ -514,20 +514,20 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         ltv.done();
     }
 
-    public void FadeSpriteOpacity(BPY fader01, float time, CancellationToken cT, Action done) {
+    public void FadeSpriteOpacity(BPY fader01, float time, ICancellee cT, Action done) {
         Color c = sr.color;
         var tbpi = ParametricInfo.WithRandomId(bpi.loc, bpi.index);
         c.a = fader01(tbpi);
         sr.color = c;
         RunRIEnumerator(_FadeSpriteOpacity(fader01, tbpi, time, cT, done));
     }
-    private IEnumerator _FadeSpriteOpacity(BPY fader01, ParametricInfo tbpi, float time, CancellationToken cT, Action done) {
-        if (cT.IsCancellationRequested) { done(); yield break; }
+    private IEnumerator _FadeSpriteOpacity(BPY fader01, ParametricInfo tbpi, float time, ICancellee cT, Action done) {
+        if (cT.Cancelled) { done(); yield break; }
         if (sr == null) throw new Exception($"Tried to fade sprite on BEH without sprite {ID}");
         Color c = sr.color;
         for (tbpi.t = 0f; tbpi.t < time - ETime.FRAME_YIELD; tbpi.t += ETime.FRAME_TIME) {
             yield return null;
-            if (cT.IsCancellationRequested) { break; } //Set to target and then leave
+            if (cT.Cancelled) { break; } //Set to target and then leave
             tbpi.loc = bpi.loc;
             c.a = fader01(tbpi);
             sr.color = c;
@@ -773,38 +773,37 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     /// While you can pass null here, that will still allocate some Task garbage.
     /// </summary>
     protected async Task BeginBehaviorSM(SMRunner sm, int startAtPatternId) {
-        if (sm.sm == null || sm.cT.IsCancellationRequested) return;
+        if (sm.sm == null || sm.cT.Cancelled) return;
         HardCancel(false);
         phaseController.SetDesiredNext(startAtPatternId);
-        using (CancellationTokenSource cT = new CancellationTokenSource()) {
-            using (CancellationTokenSource joint = CancellationTokenSource.CreateLinkedTokenSource(cT.Token, sm.cT)) {
-                using (var smh = new SMHandoff(this, sm, joint.Token)) {
-                    behaviorToken.Add(cT);
-                    try {
-                        await sm.sm.Start(smh);
-                        behaviorToken.Remove(cT);
-                    } catch (Exception e) {
-                        behaviorToken.Remove(cT);
-                        if (!(e is OperationCanceledException)) {
-                            Log.UnityError(Log.StackInnerException(e).Message); //This is only here for the vaguest of debugging purposes.
-                        }
-                    }
-                    phaseController.RunEndingCallback();
-                    if (IsNontrivialID(ID)) {
-                        Log.Unity(
-                            $"BehaviorEntity {ID} finished running its SM{(sm.cullOnFinish ? " and will destroy itself." : ".")}",
-                            level: Log.Level.DEBUG2);
-                    }
-                    if (sm.cullOnFinish) {
-                        if (PoofOnPhaseEnd) Poof();
-                        else {
-                            if (DeathEffectOnParentCull && sm.cT.IsCancellationRequested) TryDeathEffect();
-                            InvokeCull();
-                        }
-                    }
+        var cT = new Cancellable();
+        var joint = new JointCancellee(cT, sm.cT);
+        using (var smh = new SMHandoff(this, sm, joint)) {
+            behaviorToken.Add(cT);
+            try {
+                await sm.sm.Start(smh);
+                behaviorToken.Remove(cT);
+            } catch (Exception e) {
+                behaviorToken.Remove(cT);
+                if (!(e is OperationCanceledException)) {
+                    Log.UnityError(Log.StackInnerException(e).Message); //This is only here for the vaguest of debugging purposes.
+                }
+            }
+            phaseController.RunEndingCallback();
+            if (IsNontrivialID(ID)) {
+                Log.Unity(
+                    $"BehaviorEntity {ID} finished running its SM{(sm.cullOnFinish ? " and will destroy itself." : ".")}",
+                    level: Log.Level.DEBUG2);
+            }
+            if (sm.cullOnFinish) {
+                if (PoofOnPhaseEnd) Poof();
+                else {
+                    if (DeathEffectOnParentCull && sm.cT.Cancelled) TryDeathEffect();
+                    InvokeCull();
                 }
             }
         }
+        
     }
 
     private bool AmIOutOfHP => enemy != null && enemy.HP <= 0;
@@ -816,30 +815,28 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     /// Do not call with pattern SMs.
     /// </summary>
     public async Task RunExternalSM(SMRunner sm) {
-        if (sm.sm == null || sm.cT.IsCancellationRequested) return;
-        using (CancellationTokenSource pcTS = new CancellationTokenSource()) {
-            using (CancellationTokenSource joint = CancellationTokenSource.CreateLinkedTokenSource(sm.cT, pcTS.Token)) {
-                using (var smh = new SMHandoff(this, sm, joint.Token)) {
-                    behaviorToken.Add(pcTS);
-                    try {
-                        await sm.sm.Start(smh);
-                        behaviorToken.Remove(pcTS);
-                    } catch (Exception e) {
-                        behaviorToken.Remove(pcTS);
-                        if (!(e is OperationCanceledException)) {
-                            Log.UnityError(Log.StackInnerException(e)
-                                .Message); //This is only here for the vaguest of debugging purposes.
-                        }
-                        //When ending a level, the order of OnDisable is random, so a node running a sub-SM may
-                        //be cancelled before its caller, so the caller cannot rely on this line throwing.
-                        //This is OK under the standard design pattern which is "check cT after awaiting".
-                        if (sm.cT.IsCancellationRequested) throw;
-                        //When running external SM, "local cancel" (due to death) is a valid output, and we should not throw.
-                        //Same as how Phase does not throw if OpCanceled is raised via shiftphasetoken.
-                    }
-                    if (sm.cullOnFinish) InvokeCull();
+        if (sm.sm == null || sm.cT.Cancelled) return;
+        var cT = new Cancellable();
+        var joint = new JointCancellee(cT, sm.cT);
+        using (var smh = new SMHandoff(this, sm, joint)) {
+            behaviorToken.Add(cT);
+            try {
+                await sm.sm.Start(smh);
+                behaviorToken.Remove(cT);
+            } catch (Exception e) {
+                behaviorToken.Remove(cT);
+                if (!(e is OperationCanceledException)) {
+                    Log.UnityError(Log.StackInnerException(e)
+                        .Message); //This is only here for the vaguest of debugging purposes.
                 }
+                //When ending a level, the order of OnDisable is random, so a node running a sub-SM may
+                //be cancelled before its caller, so the caller cannot rely on this line throwing.
+                //This is OK under the standard design pattern which is "check cT after awaiting".
+                if (sm.cT.Cancelled) throw;
+                //When running external SM, "local cancel" (due to death) is a valid output, and we should not throw.
+                //Same as how Phase does not throw if OpCanceled is raised via shiftphasetoken.
             }
+            if (sm.cullOnFinish) InvokeCull();
         }
     }
 

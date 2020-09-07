@@ -40,28 +40,28 @@ public class Endcards : CoroutineRegularUpdater {
         main.sr.enabled = false;
     }
 
-    public static void FadeIn(float t, string key, CancellationToken cT, Action cb) {
+    public static void FadeIn(float t, string key, ICancellee cT, Action cb) {
         main.sr.sprite = images.GetOrThrow(key, "Endcards");
         main.RunRIEnumerator(main._FadeIn(t, cT, cb));
     }
-    public static void FadeOut(float t, CancellationToken cT, Action cb) {
+    public static void FadeOut(float t, ICancellee cT, Action cb) {
         main.RunRIEnumerator(main._FadeOut(t, cT, cb));
     }
 
-    private IEnumerator _FadeIn(float t, CancellationToken cT, Action cb) {
+    private IEnumerator _FadeIn(float t, ICancellee cT, Action cb) {
         for (float elapsed = 0; elapsed < t; elapsed += ETime.FRAME_TIME) {
             main.sr.color = Color.Lerp(Color.black, Color.white, elapsed / t);
             yield return null;
-            if (cT.IsCancellationRequested) break;
+            if (cT.Cancelled) break;
         }
         main.sr.color = Color.white;
         cb();
     }
-    private IEnumerator _FadeOut(float t, CancellationToken cT, Action cb) {
+    private IEnumerator _FadeOut(float t, ICancellee cT, Action cb) {
         for (float elapsed = 0; elapsed < t; elapsed += ETime.FRAME_TIME) {
             main.sr.color = Color.Lerp(Color.black, Color.white, 1 - elapsed / t);
             yield return null;
-            if (cT.IsCancellationRequested) break;
+            if (cT.Cancelled) break;
         }
         main.sr.color = Color.black;
         cb();

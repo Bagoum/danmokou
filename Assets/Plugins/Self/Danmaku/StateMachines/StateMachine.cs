@@ -22,20 +22,20 @@ public struct SMHandoff : IDisposable {
         set => GCX.exec = value;
     }
     public CommonHandoff ch;
-    public CancellationToken cT => ch.cT;
-    public readonly CancellationToken parentCT;
+    public ICancellee cT => ch.cT;
+    public readonly ICancellee parentCT;
     public GenCtx GCX => ch.gcx;
-    public bool Cancelled => ch.cT.IsCancellationRequested;
+    public bool Cancelled => ch.cT.Cancelled;
 
-    public void ThrowIfCancelled() => ch.cT.ThrowIfCancellationRequested();
+    public void ThrowIfCancelled() => ch.cT.ThrowIfCancelled();
 
-    public SMHandoff(BehaviorEntity exec, CancellationToken cT, int? index = null) {
-        this.ch = new CommonHandoff(cT, GenCtx.New(exec, V2RV2.Zero));
+    public SMHandoff(BehaviorEntity exec, [CanBeNull] ICancellee cT = null, int? index = null) {
+        this.ch = new CommonHandoff(cT ?? Cancellable.Null, GenCtx.New(exec, V2RV2.Zero));
         ch.gcx.index = index.GetValueOrDefault(exec.rBPI.index);
-        parentCT = CancellationToken.None;
+        parentCT = Cancellable.Null;
     }
 
-    public SMHandoff(BehaviorEntity exec, SMRunner smr, CancellationToken? cT = null) {
+    public SMHandoff(BehaviorEntity exec, SMRunner smr, [CanBeNull] ICancellee cT = null) {
         var gcx = smr.NewGCX ?? GenCtx.New(exec, V2RV2.Zero);
         gcx.OverrideScope(exec, V2RV2.Zero, exec.rBPI.index);
         this.ch = new CommonHandoff(cT ?? smr.cT, gcx);
@@ -45,6 +45,13 @@ public struct SMHandoff : IDisposable {
     public void Dispose() => GCX.Dispose();
 
     public void RunRIEnumerator(IEnumerator cor) => Exec.RunRIEnumerator(cor);
+
+    public SMHandoff CreateJointCancellee(ICancellee other, out ICancellee joint) {
+        joint = new JointCancellee(cT, other);
+        var nsmh = this;
+        nsmh.ch.cT = joint;
+        return nsmh;
+    }
 }
 // WARNING: StateMachines must NOT store any state. As in, you must be able to call the same SM twice concurrently,
 // and it should run twice without interfering.
@@ -57,7 +64,8 @@ public abstract class StateMachine {
         {"phased", typeof(DialoguePhaseSM)},
         {"phasej", typeof(PhaseJSM)},
         {"finish", typeof(FinishPSM)},
-        {"action", typeof(PhaseActionSM)},
+        {"action", typeof(PhaseActionSM)}, //DEPRECATE
+        {"paction", typeof(PhaseParallelActionSM)},
         {"saction", typeof(PhaseSequentialActionSM)},
         {"end", typeof(EndPSM)},
         //{"bpat", typeof(BulletPatternLASM)},
@@ -111,7 +119,7 @@ public abstract class StateMachine {
         return false;
     }
 
-    public enum SMConstruction {
+    private enum SMConstruction {
         ILLEGAL,
         CONSTRUCTOR,
         ANY,
@@ -162,7 +170,8 @@ public abstract class StateMachine {
     private static readonly ISet<Type> specialTypes = new HashSet<Type>() { reflectStartTyp };
     private static readonly Dictionary<Type, Type[]> constructorSigs = new Dictionary<Type, Type[]>();
 
-    public static StateMachine Create(ParsingQueue p, SMConstruction method = SMConstruction.ANY) {
+    public static StateMachine Create(ParsingQueue p) => Create(p, SMConstruction.ANY);
+    private static StateMachine Create(ParsingQueue p, SMConstruction method) {
         if (method == SMConstruction.ILLEGAL)
             throw new Exception("Somehow received a Create(ILLEGAL) call in SM. This should not occur.");
         MaybeQueueProperties(p);
@@ -273,22 +282,22 @@ public static class WaitingUtils {
     /// so you do not need to check it after awaiting this.
     /// </summary>
     /// <returns></returns>
-    public static async Task WaitFor(BehaviorEntity Exec, CancellationToken cT, float time, bool zeroToInfinity) {
-        cT.ThrowIfCancellationRequested();
+    public static async Task WaitFor(BehaviorEntity Exec, ICancellee cT, float time, bool zeroToInfinity) {
+        cT.ThrowIfCancelled();
         if (zeroToInfinity && time < float.Epsilon) time = float.MaxValue;
         if (time < float.Epsilon) return;
         Exec.RunRIEnumerator(WaitFor(time, cT, GetAwaiter(out Task t)));
         await t;
         //I do want this throw here, which is why I don't 'return t'
-        cT.ThrowIfCancellationRequested();
+        cT.ThrowIfCancelled();
     }
     /// <summary>
     /// Task style. Will return as soon as the time is up or cancellation is triggered.
     /// You must check cT.IsCancelled after awaiting this.
     /// </summary>
     /// <returns></returns>
-    public static Task WaitForUnchecked(CoroutineRegularUpdater Exec, CancellationToken cT, float time, bool zeroToInfinity) {
-        cT.ThrowIfCancellationRequested();
+    public static Task WaitForUnchecked(CoroutineRegularUpdater Exec, ICancellee cT, float time, bool zeroToInfinity) {
+        cT.ThrowIfCancelled();
         if (zeroToInfinity && time < float.Epsilon) time = float.MaxValue;
         if (time < float.Epsilon) return Task.CompletedTask;
         Exec.RunRIEnumerator(WaitFor(time, cT, GetAwaiter(out Task t)));
@@ -299,8 +308,8 @@ public static class WaitingUtils {
     /// You must check cT.IsCancelled after awaiting this.
     /// </summary>
     /// <returns></returns>
-    public static Task WaitForUnchecked(CoroutineRegularUpdater Exec, CancellationToken cT, Func<bool> condition) {
-        cT.ThrowIfCancellationRequested();
+    public static Task WaitForUnchecked(CoroutineRegularUpdater Exec, ICancellee cT, Func<bool> condition) {
+        cT.ThrowIfCancelled();
         Exec.RunRIEnumerator(WaitFor(condition, cT, GetAwaiter(out Task t)));
         return t;
     }
@@ -308,52 +317,52 @@ public static class WaitingUtils {
     /// <summary>
     /// Outer waiter-- Will not cb if cancelled
     /// </summary>
-    public static void WaitThenCB(CoroutineRegularUpdater Exec, CancellationToken cT, float time, bool zeroToInfinity,
+    public static void WaitThenCB(CoroutineRegularUpdater Exec, ICancellee cT, float time, bool zeroToInfinity,
         Action cb) {
-        cT.ThrowIfCancellationRequested();
+        cT.ThrowIfCancelled();
         if (zeroToInfinity && time < float.Epsilon) time = float.MaxValue;
         Exec.RunRIEnumerator(WaitFor(time, cT, () => {
-            if (!cT.IsCancellationRequested) cb();
+            if (!cT.Cancelled) cb();
         }));
     }
     /// <summary>
     /// Outer waiter-- Will cb if cancelled
     /// </summary>
-    public static void WaitThenCBEvenIfCancelled(CoroutineRegularUpdater Exec, CancellationToken cT, float time, bool zeroToInfinity,
+    public static void WaitThenCBEvenIfCancelled(CoroutineRegularUpdater Exec, ICancellee cT, float time, bool zeroToInfinity,
         Action cb) {
-        cT.ThrowIfCancellationRequested();
+        cT.ThrowIfCancelled();
         if (zeroToInfinity && time < float.Epsilon) time = float.MaxValue;
         Exec.RunRIEnumerator(WaitFor(time, cT, cb));
     }
     /// <summary>
     /// Outer waiter-- Will not cb if cancelled
     /// </summary>
-    public static void WaitThenCB(CoroutineRegularUpdater Exec, CancellationToken cT, float time, Func<bool> condition,
+    public static void WaitThenCB(CoroutineRegularUpdater Exec, ICancellee cT, float time, Func<bool> condition,
         Action cb) {
-        cT.ThrowIfCancellationRequested();
+        cT.ThrowIfCancelled();
         Exec.RunRIEnumerator(WaitForBoth(time, condition, cT, () => {
-            if (!cT.IsCancellationRequested) cb();
+            if (!cT.Cancelled) cb();
         }));
     }
     /// <summary>
     /// Outer waiter-- Will cb if cancelled
     /// </summary>
-    public static void WaitThenCBEvenIfCancelled(CoroutineRegularUpdater Exec, CancellationToken cT, float time, Func<bool> condition, Action cb) {
-        cT.ThrowIfCancellationRequested();
+    public static void WaitThenCBEvenIfCancelled(CoroutineRegularUpdater Exec, ICancellee cT, float time, Func<bool> condition, Action cb) {
+        cT.ThrowIfCancelled();
         Exec.RunRIEnumerator(WaitForBoth(time, condition, cT, cb));
     }
 
     /// <summary>
     /// Outer waiter-- Will not cancel if cancelled
     /// </summary>
-    public static void WaitThenCancel(CoroutineRegularUpdater Exec, CancellationToken cT, float time, bool zeroToInfinity,
-        CancellationTokenSource toCancel) {
-        cT.ThrowIfCancellationRequested();
+    public static void WaitThenCancel(CoroutineRegularUpdater Exec, ICancellee cT, float time, bool zeroToInfinity,
+        Cancellable toCancel) {
+        cT.ThrowIfCancelled();
         if (zeroToInfinity && time < float.Epsilon) {
             time = float.MaxValue;
         }
         Exec.RunRIEnumerator(WaitFor(time, cT, () => {
-            if (!cT.IsCancellationRequested) toCancel.Cancel();
+            if (!cT.Cancelled) toCancel.Cancel();
         }));
     }
 
@@ -404,36 +413,36 @@ public static class WaitingUtils {
     /// Inner waiter-- Will cb if cancelled. This is necessary so awaiters can be informed of errors,
     /// specifically the task-style waiter, which would otherwise spin infinitely.
     /// </summary>
-    public static IEnumerator WaitFor(float wait_time, CancellationToken cT, Action done) {
-        for (; wait_time > ETime.FRAME_YIELD && !cT.IsCancellationRequested; 
+    public static IEnumerator WaitFor(float wait_time, ICancellee cT, Action done) {
+        for (; wait_time > ETime.FRAME_YIELD && !cT.Cancelled; 
             wait_time -= ETime.FRAME_TIME) yield return null;
         done();
     }
     /// <summary>
     /// Returns when the condition is true
     /// </summary>
-    private static IEnumerator WaitFor(Func<bool> condition, CancellationToken cT, Action done) {
-        while (!condition() && !cT.IsCancellationRequested) yield return null;
+    private static IEnumerator WaitFor(Func<bool> condition, ICancellee cT, Action done) {
+        while (!condition() && !cT.Cancelled) yield return null;
         done();
     }
     /// <summary>
     /// Returns when the condition is true AND time is up
     /// </summary>
-    private static IEnumerator WaitForBoth(float wait_time, Func<bool> condition, CancellationToken cT, Action done) {
-        for (; (wait_time > ETime.FRAME_YIELD || !condition()) && !cT.IsCancellationRequested; 
+    private static IEnumerator WaitForBoth(float wait_time, Func<bool> condition, ICancellee cT, Action done) {
+        for (; (wait_time > ETime.FRAME_YIELD || !condition()) && !cT.Cancelled; 
             wait_time -= ETime.FRAME_TIME) yield return null;
         done();
     }
-    public static IEnumerator WaitForDialogueConfirm(CancellationToken cT, Action done) {
-        while (!cT.IsCancellationRequested) {
+    public static IEnumerator WaitForDialogueConfirm(ICancellee cT, Action done) {
+        while (!cT.Cancelled) {
             if (InputManager.DialogueConfirm) break;
             yield return null;
         }
         done();
     }
 
-    public static IEnumerator WaitWhileWithCancellable(Func<bool> amIFinishedWaiting, CancellationTokenSource canceller, Func<bool> cancelIf, CancellationToken cT, Action done, float delay=0f) {
-        while (!amIFinishedWaiting() && !cT.IsCancellationRequested) {
+    public static IEnumerator WaitWhileWithCancellable(Func<bool> amIFinishedWaiting, Cancellable canceller, Func<bool> cancelIf, ICancellee cT, Action done, float delay=0f) {
+        while (!amIFinishedWaiting() && !cT.Cancelled) {
             if (delay < ETime.FRAME_YIELD && cancelIf()) {
                 canceller.Cancel();
                 break;

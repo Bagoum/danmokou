@@ -19,6 +19,7 @@ using ev2 = DMath.EEx<UnityEngine.Vector2>;
 using ev3 = DMath.EEx<UnityEngine.Vector3>;
 using erv2 = DMath.EEx<DMath.V2RV2>;
 using static DMath.ExM;
+using static DMath.ExMConversions;
 
 namespace DMath {
 /// <summary>
@@ -141,7 +142,7 @@ public static partial class ExMV3 {
         v
     ));
     /// <summary>
-    /// Multiply the y-component of a parametric equation by a function of input.
+    /// Multiply the z-component of a parametric equation by a function of input.
     /// </summary>
     /// <param name="f">Function of input</param>
     /// <param name="tp">Parametric equation</param>

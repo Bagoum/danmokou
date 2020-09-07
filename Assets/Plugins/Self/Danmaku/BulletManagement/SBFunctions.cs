@@ -1,5 +1,6 @@
 ﻿using System.Linq.Expressions;
 using DMath;
+using Core;
 using JetBrains.Annotations;
 using Ex = System.Linq.Expressions.Expression;
 using ExSBF = System.Func<Danmaku.RTExSB, TEx<float>>;

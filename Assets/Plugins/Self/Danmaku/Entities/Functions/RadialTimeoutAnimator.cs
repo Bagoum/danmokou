@@ -49,17 +49,17 @@ public class RadialTimeoutAnimator : TimeBoundAnimator {
         FXY e1 = EaseHelpers.GetFuncOrRemoteOrLinear(ease1);
         FXY e2 = EaseHelpers.GetFuncOrRemoteOrLinear(ease2);
         for (float t = 0; t < time1; t += ETime.dT) {
-            if (cT.IsCancellationRequested) break;
+            if (cT.Cancelled) break;
             yield return null;
             AssignScale(startScale + (midScale - startScale) * e1(t/time1));
         }
         AssignScale(midScale);
         for (float t = 0; t < holdtime; t += ETime.dT) {
-            if (cT.IsCancellationRequested) break;
+            if (cT.Cancelled) break;
             yield return null;
         }
         for (float t = 0; t < time2; t += ETime.dT) {
-            if (cT.IsCancellationRequested) break;
+            if (cT.Cancelled) break;
             yield return null;
             AssignScale(midScale + (endScale - midScale) * e2(t/time2));
         }
@@ -71,13 +71,13 @@ public class RadialTimeoutAnimator : TimeBoundAnimator {
         for (; t < time * lerpInTimeRatio; t += ETime.dT) {
             pb.SetFloat(PropConsts.fillRatio, M.SinDeg(90 * t / lit));
             sr.SetPropertyBlock(pb);
-            if (cT.IsCancellationRequested) break;
+            if (cT.Cancelled) break;
             yield return null;
         }
         for (; t < time; t += ETime.dT) {
             pb.SetFloat(PropConsts.fillRatio, 1 - (t - lit) / (time * (1 - endEarlyRatio) - lit));
             sr.SetPropertyBlock(pb);
-            if (cT.IsCancellationRequested) break;
+            if (cT.Cancelled) break;
             yield return null;
         }
         if (destroyOnDone) {

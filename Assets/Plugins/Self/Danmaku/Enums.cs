@@ -1,4 +1,7 @@
-﻿namespace Danmaku {
+﻿using System;
+using UnityEngine;
+
+namespace Danmaku {
 public static class Enums {
     /// <summary>
     /// Handling for setting the firing index. The generic repeaters use DEFER by default.
@@ -109,7 +112,7 @@ public static class Enums {
     /// </summary>
     public enum Facing {
         /// <summary>
-        /// Starts from beh.original_angle. This is zero except for summons,
+        /// Starts from original_angle. This is zero except for summons/bullets,
         /// for which it is set to the V2RV2 angle of the summon.
         /// </summary>
         ORIGINAL,
@@ -118,7 +121,7 @@ public static class Enums {
         /// </summary>
         DEROT, 
         /// <summary>
-        /// Starts from the velocity direction of the BEH.
+        /// Starts from the angle of the last nonzero velocity delta.
         /// </summary>
         VELOCITY, 
         /// <summary>
@@ -165,6 +168,30 @@ public static class Enums {
         /// </summary>
         STAGEENDBOSS
     }
+    
+    public enum DifficultySet {
+        Easier = 10,
+        Easy = 20,
+        Normal = 30,
+        Hard = 40,
+        Lunatic = 50,
+        Ultra = 60,
+        Abex = 70,
+        Assembly = 80,
+    }
+    public enum CampaignMode {
+        NULL,
+        MAIN,
+        STAGE_PRACTICE,
+        CARD_PRACTICE,
+        TUTORIAL,
+        SCENE_CHALLENGE,
+    }
+
+    public enum Layer {
+        LowProjectile,
+        HighProjectile
+    }
 
     public static bool IsStageBoss(this PhaseType st) => st == PhaseType.STAGEENDBOSS || st == PhaseType.STAGEMIDBOSS;
     public static bool IsPattern(this PhaseType st) => st.IsCard() || st.IsStage();
@@ -190,7 +217,53 @@ public static class Enums {
         if (st == PhaseType.TIMEOUT || st == PhaseType.DIALOGUE) return 1000000000;
         return null;
     }
+    public static int Int(this Layer l) {
+        if (l == Layer.LowProjectile) return LayerMask.NameToLayer("LowProjectile");
+        else  return LayerMask.NameToLayer("HighProjectile");
+    }
 
+    public static float Value(this DifficultySet d) {
+        if (d == DifficultySet.Easier) return 0.707f;       // 2^-0.5
+        else if (d == DifficultySet.Easy) return 1.00f;     // 2^0.0
+        else if (d == DifficultySet.Normal) return 1.414f;  // 2^0.5
+        else if (d == DifficultySet.Hard) return 2.00f;     // 2^1.0
+        else if (d == DifficultySet.Lunatic) return 2.828f; // 2^1.5
+        else if (d == DifficultySet.Ultra) return 3.732f;   // 2^1.9
+        else if (d == DifficultySet.Abex) return 4.925f;    // 2^2.3
+        else if (d == DifficultySet.Assembly) return 6.063f;// 2^2.6
+        throw new Exception($"Couldn't resolve difficulty setting {d}");
+    }
+    public static float Counter(this DifficultySet d) {
+        if (d == DifficultySet.Easier) return 0;
+        else if (d == DifficultySet.Easy) return 1;
+        else if (d == DifficultySet.Normal) return 2;
+        else if (d == DifficultySet.Hard) return 3;
+        else if (d == DifficultySet.Lunatic) return 4;
+        else if (d == DifficultySet.Ultra) return 5;
+        else if (d == DifficultySet.Abex) return 6;
+        else if (d == DifficultySet.Assembly) return 7;
+        throw new Exception($"Couldn't resolve difficulty setting {d}");
+    }
+
+    public static string Describe(this DifficultySet d) {
+        if (d == DifficultySet.Easier) return "Easier";
+        else if (d == DifficultySet.Easy) return "Easy";
+        else if (d == DifficultySet.Normal) return "Normal";
+        else if (d == DifficultySet.Hard) return "Hard";
+        else if (d == DifficultySet.Lunatic) return "Lunatic";
+        else if (d == DifficultySet.Ultra) return "Ultra";
+        else if (d == DifficultySet.Abex) return "Abex";
+        else if (d == DifficultySet.Assembly) return "Assembly";
+        throw new Exception($"Couldn't resolve difficulty setting {d}");
+    }
+
+    public static string DescribePadR(this DifficultySet d) => d.Describe().PadRight(9);
+
+    public static bool IsOneCard(this CampaignMode mode) =>
+        mode == CampaignMode.CARD_PRACTICE || mode == CampaignMode.SCENE_CHALLENGE;
+    public static bool OneLife(this CampaignMode mode) => mode.IsOneCard();
+    public static bool DisallowItems(this CampaignMode mode) => mode.IsOneCard();
+    public static bool PreserveReloadAudio(this CampaignMode mode) => mode.IsOneCard();
 
 }
 }

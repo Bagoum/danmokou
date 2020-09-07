@@ -13,7 +13,7 @@ public class BottomTracker : RegularUpdater {
     [CanBeNull] private Enemy enemy;
     private Transform tr;
     public TextMeshPro text;
-    private CancellationToken cT;
+    private ICancellee cT;
     public GameObject container;
     private bool containerActive = true;
 
@@ -21,7 +21,7 @@ public class BottomTracker : RegularUpdater {
         tr = transform;
     }
 
-    public BottomTracker Initialize(BehaviorEntity beh, string sname, CancellationToken canceller) {
+    public BottomTracker Initialize(BehaviorEntity beh, string sname, ICancellee canceller) {
         source = beh;
         source.TryAsEnemy(out enemy);
         text.text = sname;
@@ -37,7 +37,7 @@ public class BottomTracker : RegularUpdater {
     }
 
     public override void RegularUpdate() {
-        if (cT.IsCancellationRequested) {
+        if (cT.Cancelled) {
             Finish();
         } else {
             var target = source.GlobalPosition();

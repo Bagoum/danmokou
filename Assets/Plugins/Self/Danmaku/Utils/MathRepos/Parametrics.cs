@@ -5,6 +5,7 @@ using UnityEngine;
 using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 using Danmaku;
+using Core;
 using Ex = System.Linq.Expressions.Expression;
 using ExTP = System.Func<DMath.TExPI, TEx<UnityEngine.Vector2>>;
 using ExTP3 = System.Func<DMath.TExPI, TEx<UnityEngine.Vector3>>;
@@ -16,6 +17,9 @@ using static DMath.ExMHelpers;
 using static ExUtils;
 using FR = DMath.FXYRepo;
 using static DMath.ExM;
+using static DMath.ExMLerps;
+using static DMath.ExMConversions;
+using static DMath.ExMMod;
 
 namespace DMath {
 /// <summary>
@@ -40,30 +44,6 @@ public static partial class Parametrics {
     /// </summary>
     public static ExTP Root() => Reference<Vector2>("root");
 
-    #region Shapes
-
-    public static ExTP PRect(float period, float r1, float r2) {
-        Ex switchPt = ExC(Mathf.Atan2(r2, r1));
-        Ex w = ExC(M.TAU / period);
-        var ang = ExUtils.VFloat();
-        var eang = ExUtils.VFloat();
-        return bpi => Ex.Block(new[] {ang, eang},
-            Ex.Assign(eang, Ex.Assign(ang, Ex.Multiply(w, bpi.findex))),
-            //Map the angle into the (0,90) space
-            eang.Is(Mod(pi, eang)),
-            Ex.IfThen(Ex.GreaterThan(eang, hpi), Ex.Assign(eang, Ex.Subtract(pi, eang))),
-            //Get the radius, put in eang
-            //Note: don't coalesce this, it would execute twice.
-            Ex.Assign(eang, Ex.Condition(Ex.GreaterThan(eang, switchPt),
-                Ex.Divide(ExC(r2), Sin(eang)),
-                Ex.Divide(ExC(r1), Cos(eang))
-            )),
-            PolarToXY(eang, ang)
-        );
-    }
-    
-    #endregion
-    
     #region ConstantVectors
 
     /// <summary>
@@ -106,19 +86,6 @@ public static partial class Parametrics {
 
     #endregion
 
-    /// <summary>
-    /// Returns a base vector multiplied by time.
-    /// </summary>
-    /// <param name="x">Base X-component</param>
-    /// <param name="y">Base Y-component</param>
-    /// <returns></returns>
-    public static ExTP CM(float x, float y) {
-        return bpi => ExUtils.V2(
-            Ex.Multiply(ExC(x), bpi.t), 
-            Ex.Multiply(ExC(y), bpi.t)    
-        );
-    }
-    
     /// <summary>
     /// Divide a vector equation by a float equation.
     /// </summary>
@@ -285,19 +252,19 @@ public static partial class Parametrics {
     /// Short for `ss0 vhometime TIME LOCATION`.
     /// </summary>
     /// <returns></returns>
-    public static ExTP SSVHomeT(ExBPY time, ExTP location) => SS0(VHomeTime(time, location));
+    public static ExTP SSVHomeT(ExBPY time, ExTP location) => ExMSamplers.SS0(VHomeTime(time, location));
 
     /// <summary>
     /// Short for `eased EASE TIME ss0 vhometime TIME LOCATION`.
     /// <br/>Note: EaseToTarget with NROFFSET is preferred. It has the same signature and avoids Riemann errors.
     /// </summary>
-    public static ExTP EaseDVHomeT(string ease, float time, ExTP location) => EaseD(ease, time, SS0(VHomeTime(_ => ExC(time), location)));
+    public static ExTP EaseDVHomeT(string ease, float time, ExTP location) => EaseD(ease, time, ExMSamplers.SS0(VHomeTime(_ => ExC(time), location)));
 
     /// <summary>
     /// Short for `* smooth / t TIME ss0 - LOCATION loc`. Use with NROFFSET.
     /// </summary>
     public static ExTP EaseToTarget(string ease, ExBPY time, ExTP location) => bpi =>
-        ExM.Mul(Smooth(ease, Div(bpi.t, time(bpi))), SS0(x => Sub(location(x), x.loc))(bpi));
+        ExM.Mul(Smooth(ease, Div(bpi.t, time(bpi))), ExMSamplers.SS0(x => Sub(location(x), x.loc))(bpi));
         
     
     #endregion
@@ -317,40 +284,6 @@ public static partial class Parametrics {
 
     #endregion
     
-    /// <summary>
-    /// If the input time is less than the reference time, evaluate the invokee. Otherwise, return the last returned evaluation.
-    /// <para>You can call this with zero sampling time, and it will sample the invokee once. However, in this case SS0 is preferred.</para>
-    /// </summary>
-    /// <param name="time">Time at which to stop sampling</param>
-    /// <param name="p">Target parametric</param>
-    /// <returns></returns>
-    public static ExTP StopSampling(ExBPY time, ExTP p) {
-        Ex data = DataHoisting.GetClearableDictV2();
-        return bpi => ExUtils.DictIfCondSetElseGet(data, Ex.OrElse(Ex.LessThan(bpi.t, time(bpi)),
-            Ex.Not(ExUtils.DictContains<uint, Vector2>(data, bpi.id))), bpi.id, p(bpi));
-    }
-    
-    /// <summary>
-    /// If the condition is true, evaluate the invokee. Otherwise, return the last returned evaluation.
-    /// <para>You can call this with zero sampling time, and it will sample the invokee once. However, in this case SS0 is preferred.</para>
-    /// </summary>
-    public static ExTP SampleIf(ExPred cond, ExTP p) {
-        Ex data = DataHoisting.GetClearableDictV2();
-        return bpi => ExUtils.DictIfCondSetElseGet(data, Ex.OrElse(cond(bpi),
-            Ex.Not(ExUtils.DictContains<uint, Vector2>(data, bpi.id))), bpi.id, p(bpi));
-    }
-    
-    
-    /// <summary>
-    /// Samples an invokee exactly once.
-    /// </summary>
-    /// <param name="p">Target parametric</param>
-    /// <returns></returns>
-    public static ExTP SS0(ExTP p) {
-        Ex data = DataHoisting.GetClearableDictV2();
-        return bpi => ExUtils.DictIfCondSetElseGet(data, Ex.Not(ExUtils.DictContains<uint, Vector2>(data, bpi.id)), bpi.id, p(bpi));
-    }
-
     
     #region RotateLerp
     /* TO UNDERSTAND THE DIFFERENCE BETWEEN ROTATELERP AND TRUE-ROTATELERP, CONSIDER THESE TWO PATTERNS:
@@ -432,17 +365,6 @@ public static partial class Parametrics {
 
     #region Switchers
 
-    /// <summary>
-    /// If the predicate is true, return the first expression, otherwise the second expression.
-    /// </summary>
-    /// <param name="pred">Predicate to evaluate over the input</param>
-    /// <param name="iftrue">Function to eval if predicate is true</param>
-    /// <param name="iffalse">Function to eval if predicate is false</param>
-    /// <returns></returns>
-    public static ExTP If(ExPred pred, ExTP iftrue, ExTP iffalse) {
-        return bpi => Ex.Condition(pred(bpi), iftrue(bpi), iffalse(bpi));
-    }
-    
     /// <summary>
     /// Switch between two parametrics based on time.
     /// </summary>
@@ -568,37 +490,6 @@ public static partial class Parametrics {
     }
 
     #region TimeLerp
-    
-    /// <summary>
-    /// See <see cref="ExM.Lerp{T}"/>
-    /// </summary>
-    public static ExTP LerpT(ExBPY zeroBound, ExBPY oneBound, ExTP f1, ExTP f2) => bpi =>
-        ExM.Lerp(zeroBound(bpi), oneBound(bpi), BPYRepo.T()(bpi), f1(bpi), f2(bpi));
-
-    /// <summary>
-    /// Lerp between two parametric equations.
-    /// </summary>
-    /// <param name="from_time">Time to begin lerping</param>
-    /// <param name="end_time">Time to end lerping</param>
-    /// <param name="from">Source parametric</param>
-    /// <param name="to">Target parametric</param>
-    /// <returns></returns>
-    public static ExTP LerpFromTo(ExBPY from_time, ExBPY end_time, ExTP from, ExTP to) =>
-        bpi => Lerp(from_time(bpi), end_time(bpi), bpi.t, from(bpi), to(bpi));
-
-
-    /// <summary>
-    /// Lerp between two parametric equations.
-    /// </summary>
-    /// <param name="from_t">Time to begin lerping from source to target</param>
-    /// <param name="to_t">Time to end lerping from source to target</param>
-    /// <param name="to_t2">Time to begin lerping from target to source</param>
-    /// <param name="from_t2">Time to end lerping from target to source</param>
-    /// <param name="from">Source parametric</param>
-    /// <param name="to">Target parametric</param>
-    /// <returns></returns>
-    public static ExTP LerpFromToBack(ExBPY from_t, ExBPY to_t, ExBPY to_t2, ExBPY from_t2, ExTP from, ExTP to) => bpi
-        => LerpBack(from_t(bpi), to_t(bpi), to_t2(bpi), from_t2(bpi), bpi.t, from(bpi), to(bpi));
 
     /// <summary>
     /// Lerp from zero to the target parametric.
@@ -618,22 +509,6 @@ public static partial class Parametrics {
     }
 
     /// <summary>
-    /// Lerp from zero to the target parametric and then back.
-    /// </summary>
-    /// <param name="start">Time to start lerping from zero to target</param>
-    /// <param name="mid">Time to end lerping from zero to target</param>
-    /// <param name="mid2">Time to start lerping from target to zero</param>
-    /// <param name="end">Time to end lerping from target to zero</param>
-    /// <param name="p">Target parametric</param>
-    /// <returns></returns>
-    public static ExTP LerpInOut(float start, float mid, float mid2, float end, ExTP p) {
-        var p_in = LerpIn(start, mid, p);
-        var p_out = LerpOut(mid2, end, p);
-        return bpi => Ex.Condition(Ex.LessThan(bpi.t, ExC(mid2)), 
-            p_in(bpi), p_out(bpi));
-    }
-
-    /// <summary>
     /// Lerp from the target parametric to zero.
     /// </summary>
     /// <param name="from_time">Time to start lerping</param>
@@ -650,121 +525,10 @@ public static partial class Parametrics {
         );
     }
 
-    /// <summary>
-    /// Lerp from the target parametric to zero and then back.
-    /// </summary>
-    /// <param name="start">Time to start lerping from target to zero</param>
-    /// <param name="mid">Time to end lerping from target to zero</param>
-    /// <param name="mid2">Time to start lerping from zero to target</param>
-    /// <param name="end">Time to end lerping from zero to target</param>
-    /// <param name="p">Target parametric</param>
-    /// <returns></returns>
-    public static ExTP LerpOutIn(float start, float mid, float mid2, float end, ExTP p) {
-        var p_out = LerpOut(start, mid, p);
-        var p_in = LerpIn(mid2, end, p);
-        return bpi => Ex.Condition(Ex.LessThan(bpi.t, ExC(mid2)), 
-            p_out(bpi), p_in(bpi));
-    }
-
-    #endregion
-
-    #region GrowFuncs
-
-    /// <summary>
-    /// Grow a target parametric by increasing its X and Y components
-    /// at constant additive rates multiplied by time.
-    /// </summary>
-    /// <remarks>
-    /// At time t, returns (p(t).x + xr*t, p(t).y + yr*t).
-    /// </remarks>
-    /// <param name="xr">Additive rate for X-component</param>
-    /// <param name="yr">Additive rate for Y-component</param>
-    /// <param name="p">Target parametric</param>
-    /// <returns></returns>
-    public static ExTP GrowByAdd(float xr, float yr, ExTP p) {
-        var v = TExV2.Variable();
-        return bpi => Ex.Block(new ParameterExpression[] {v},
-            Ex.Assign(v, p(bpi)),
-            ExUtils.AddAssign(v.x, Ex.Multiply(ExC(xr), bpi.t)),
-            ExUtils.AddAssign(v.y, Ex.Multiply(ExC(yr), bpi.t)),
-            v
-        );
-    }
-
-    /// <summary>
-    /// Grow a target parametric by increasing its X and Y components
-    /// at constant additive rates multiplied by firing index.
-    /// </summary>
-    /// <remarks>
-    /// At time t and firing index i, returns (p(t).x + xr*i, p(t).y + yr*i).
-    /// </remarks>
-    /// <param name="xr">Additive rate for X-component</param>
-    /// <param name="yr">Additive rate for Y-component</param>
-    /// <param name="p">Target parametric</param>
-    /// <returns></returns>
-    public static ExTP PGrowByAdd(float xr, float yr, ExTP p) {
-        var v = TExV2.Variable();
-        return bpi => Ex.Block(new ParameterExpression[] {v},
-            Ex.Assign(v, p(bpi)),
-            ExUtils.AddAssign(v.x, Ex.Multiply(ExC(xr), bpi.findex)),
-            ExUtils.AddAssign(v.y, Ex.Multiply(ExC(yr), bpi.findex)),
-            v
-        );
-    }
-
-
-    /// <summary>
-    /// Grow a target parametric at a constant multiplicative rate.
-    /// </summary>
-    /// <remarks>
-    /// At time t, returns (1+r*t)*p(t).
-    /// </remarks>
-    /// <param name="r">Growth rate</param>
-    /// <param name="p">Target parametric</param>
-    /// <returns></returns>
-    public static ExTP GrowByRatio(float r, ExTP p) {
-        var v = TExV2.Variable();
-        return bpi => Ex.Block(new ParameterExpression[] {v},
-            Ex.Assign(v, p(bpi)),
-            ExUtils.MulAssign(v.x, Ex.Add(E1, Ex.Multiply(ExC(r), bpi.t))),
-            ExUtils.MulAssign(v.y, Ex.Add(E1, Ex.Multiply(ExC(r), bpi.t))),
-            v
-        );
-    }
-    /// <summary>
-    /// Grow a target parametric at a constant multiplicative rate, limiting the rate input.
-    /// </summary>
-    /// <remarks>
-    /// At time t, returns (1+r*t)*p(t).
-    /// </remarks>
-    /// <param name="r">Growth rate</param>
-    /// <param name="maxt">Max t value</param>
-    /// <param name="p">Target parametric</param>
-    /// <returns></returns>
-    public static ExTP GrowByRatioC(float r, float maxt, ExTP p) {
-        return bpi => Ex.Multiply(p(bpi), Ex.Add(E1, Ex.Multiply(ExC(r),
-            Ex.Condition(Ex.GreaterThan(bpi.t, ExC(maxt)),
-                ExC(maxt), bpi.t))));
-    }
-
     #endregion
 
     /// <summary>
-    /// Flip the X-component of the target parametric.
-    /// </summary>
-    /// <param name="p">Target parametric</param>
-    /// <returns></returns>
-    public static ExTP FlipX(ExTP p) {
-        var v = TExV2.Variable();
-        return bpi => Ex.Block(new ParameterExpression[] {v},
-            Ex.Assign(v, p(bpi)),
-            ExUtils.MulAssign(v.x, ExC(-1f)),
-            v
-        );
-    }
-
-    /// <summary>
-    /// On every invocation, select the parametric equation with the smaller magnitude.
+    /// Select the parametric equation with the smaller magnitude.
     /// </summary>
     /// <param name="p1">One parametric equation</param>
     /// <param name="p2">Other parametric eqution</param>
@@ -780,7 +544,7 @@ public static partial class Parametrics {
     }
 
     /// <summary>
-    /// On every invocation, select the parametric equation with the larger magnitude.
+    /// Select the parametric equation with the larger magnitude.
     /// </summary>
     /// <param name="p1">One parametric equation</param>
     /// <param name="p2">Other parametric eqution</param>
@@ -795,51 +559,6 @@ public static partial class Parametrics {
         );
     }
 
-
-    
-    //Bullet Velocity updates use t=0 to get direction, and do not move on that frame. 
-    //You therefore can and should use this to set initial direction on bullet parametrics that "stop" at the beginning.
-    //Generally, no entity uses t=0 for velocity (it underestimates the integral so we use midpoint instead), so it's not "incorrect" to set this in other places.
-    /// <summary>
-    /// Set the return value at t=0 for a target parametric.
-    /// </summary>
-    /// <remarks>
-    /// This is generally only used to determine the direction of the firee at t=0,
-    /// which is only useful for movement patterns where there is no movement at t=0.
-    /// </remarks>
-    /// <param name="x">X-component</param>
-    /// <param name="y">Y-component</param>
-    /// <param name="p">Target parametric</param>
-    /// <returns></returns>
-    public static ExTP SetZero(float x, float y, ExTP p) {
-        return bpi => Ex.Condition(Ex.LessThan(bpi.t, EPS), ExC(new Vector2(x, y)), p(bpi));
-    }
-    public static ExTP SetZeroTP(ExTP z, ExTP p) {
-        return bpi => Ex.Condition(Ex.LessThan(bpi.t, EPS), z(bpi), p(bpi));
-    }
-    
-    #region Easers
-
-    /// <summary>
-    /// Apply a ease function on top of a target derivative function that uses time as a controller.
-    /// Primarily used for velocity parametrics.
-    /// </summary>
-    /// <param name="name">Easing function name</param>
-    /// <param name="maxTime">Time over which to perform easing</param>
-    /// <param name="f">Target parametric (describing velocity)</param>
-    /// <returns></returns>
-    public static ExTP EaseD(string name, float maxTime, ExTP f) => ExMHelpers.EaseD(name, maxTime, f);
-
-    /// <summary>
-    /// Apply a ease function on top of a target function that uses time as a controller.
-    /// </summary>
-    /// <param name="name">Easing function name</param>
-    /// <param name="maxTime">Time over which to perform easing</param>
-    /// <param name="f">Target parametric (describing offset)</param>
-    /// <returns></returns>
-    public static ExTP Ease(string name, float maxTime, ExTP f) => ExMHelpers.Ease(name, maxTime, f);
-    #endregion
-    
     #region Mathy
 
     private static readonly ExFunction qRotate = ExUtils.Wrap<Quaternion>("op_Multiply", 
@@ -864,59 +583,6 @@ public static partial class Parametrics {
             Ex.Assign(by, qRotate.Of(ExUtils.QuaternionEuler(xr(bpi), yr(bpi), zr(bpi)), by)),
             ExUtils.V2(by.x, by.y)
         );
-    }
-    
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="Ts">Time for straight section</param>
-    /// <param name="Tl">Time for kazari section</param>
-    /// <param name="Rx">Radius of x-component of straight section</param>
-    /// <param name="Ry">Radius of y-component of straight section</param>
-    /// <param name="bit_alias">Alias to which will be bound 0 if drawing kazari on the right side, and 1 if on the left</param>
-    /// <param name="kazari">The function to draw the decoration. Must take t=[0,1], and must have p(0)={0,0}</param>
-    /// <param name="time"></param>
-    /// <returns></returns>
-    public static ExTP TreeFireOld(float Ts, float Tl, float Rx, float Ry, string bit_alias, ExTP kazari, ExBPY time) {
-        var eTs = ExC(Ts);
-        var eTp = ExC(Ts + Tl);
-        var J = ExUtils.VFloat(); //period number
-        var j = ExUtils.VFloat(); //time in period
-        var ts = ExUtils.VFloat(); //simulated time for straight line
-        var xs = ExUtils.VFloat();
-        var ys = ExUtils.VFloat();
-        var t = ExUtils.VFloat();
-        var tp = ExUtils.VFloat(); //simulated time for kazari
-        var bp = ExUtils.VFloat(); // 0 if draw kazari on right, 1 if on left
-        var b = ExUtils.VFloat(); // 0 if in straight phase, 1 if in kazari
-        var v2 = TExV2.Variable(); // 0 if in straight phase, 1 if in kazari
-        return bpi => {
-            var yeet = Ex.Block(new[] {J, j, t, ts, xs, ys, bp, b, tp, v2},
-                Ex.Assign(t, time(bpi)),
-                Ex.Assign(j, Mod(eTp, t)),
-                Ex.Assign(J, Floor(Ex.Divide(t, eTp))),
-                Ex.Assign(ts, eTs.Mul(J).Add(ExM.Min(eTs, j))),
-                Ex.Assign(xs, ExC(Rx).Div(eTs).Mul(
-                    //2 | ts - (t+ts % 2ts) | - ts
-                    E2.Mul(Abs(eTs.Sub(
-                            Mod(E2.Mul(eTs), ts.Add(eTs)
-                        )))).Sub(eTs)
-                )),
-                Ex.Assign(ys, ExC(Ry).Div(eTs).Mul(E2).Mul(ts)),
-                Ex.Assign(bp, Mod(E2, J)),
-                Ex.Assign(tp, Ex.Condition(Ex.GreaterThan(j, eTs),
-                    Ex.Condition(Ex.Equal(bp, E1),
-                        j.Sub(eTs),
-                        eTp.Sub(j)),
-                    E0)),
-                Ex.Assign(v2, ReflectEx.Let<TExPI, Vector2, float>(bit_alias, _ => bp, () => 
-                    kazari(bpi.CopyWithT(tp.Div(Tl))), bpi)),
-                ExUtils.AddAssign(v2.x, xs),
-                ExUtils.AddAssign(v2.y, ys),
-                v2
-            );
-            return yeet;
-        };
     }
     
     

@@ -21,32 +21,20 @@ public class RaikoCamera : CoroutineRegularUpdater {
     public static void ShakeExtra(float time, float magMul) {
         if (main.cancelTokens.Count == 0) Shake(time, null, magMul, null, () => { });
     }
-    public static void Shake(float time, [CanBeNull] FXY magnitude, float magMul, CancellationToken? cT, Action done) {
+    public static void Shake(float time, [CanBeNull] FXY magnitude, float magMul, [CanBeNull] ICancellee cT, Action done) {
         foreach (var cts in main.cancelTokens) {
             cts.Cancel();
         }
+        main.cancelTokens.Clear();
         magnitude = magnitude ?? (t => M.Sin(M.PI * (0.4f + 0.6f * t / time)));
-        var x = new CancellationTokenSource();
+        var x = new Cancellable();
         main.cancelTokens.Add(x);
-        if (cT == null) {
-            main.RunDroppableRIEnumerator(main.IShake(time, magnitude, magMul, 
-                () => x.IsCancellationRequested, () => {
-                    main.cancelTokens.Remove(x);
-                    x.Dispose();
-                    done();
-                }));
-        } else {
-            main.RunRIEnumerator(main.IShake(time, magnitude, magMul, 
-                () => x.IsCancellationRequested || cT.Value.IsCancellationRequested, () => {
-                    main.cancelTokens.Remove(x);
-                    x.Dispose();
-                    done();
-                }));
-        }
+        var joint = (cT == null) ? (ICancellee)x : new JointCancellee(x, cT);
+        main.RunDroppableRIEnumerator(main.IShake(time, magnitude, magMul, joint, done));
     }
-    private readonly HashSet<CancellationTokenSource> cancelTokens = new HashSet<CancellationTokenSource>();
+    private readonly HashSet<Cancellable> cancelTokens = new HashSet<Cancellable>();
 
-    private IEnumerator IShake(float time, FXY magnitude, float magMul, Func<bool> isCancelled, Action done) {
+    private IEnumerator IShake(float time, FXY magnitude, float magMul, ICancellee cT, Action done) {
         Vector3 pp = transform.localPosition; // Should be (0, 0, ?)
         for (float elapsed = 0; elapsed < time;) {
             float m = magnitude(elapsed) * magMul * ScreenshakeMultiplier * SaveData.s.Screenshake;
@@ -54,10 +42,10 @@ public class RaikoCamera : CoroutineRegularUpdater {
             Vector2 quake = M.PolarToXY(m, deg);
             transform.localPosition = pp + (Vector3) quake;
             yield return null;
-            if (isCancelled()) break;
+            if (cT.Cancelled) break;
             elapsed += ETime.FRAME_TIME;
             yield return null;
-            if (isCancelled()) break;
+            if (cT.Cancelled) break;
             elapsed += ETime.FRAME_TIME;
         }
         //Future: If you want to move the camera, do so by moving the Camera Container object.
