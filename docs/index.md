@@ -1,9 +1,13 @@
 # Danmokou Documentation
 This is documentation for **Danmokou**, Bagoum's Unity-based danmaku engine.
 
+If you're not sure what's going on, head on over to the [What Is Danmokou?](articles/top.md) page.
 
+The setup guide is [here](articles/setup.md) and the first tutorial is [here](articles/t01.md).
 
-If you are looking for the setup guide, it is [here](articles/setup.md).
+![Danmokou_4tf92tmfkn](images/Danmokou_4tf92tmfkn.jpg)
+
+(Screenshot from [Spirits in Memetic Paradise](https://www.bulletforge.org/u/bagoum/p/dong-fang-yin-yang-zang-spirits-in-memetic-paradise))
 
 If you have any comments, you can email me at `reneedebatz@gmail.com` or you can message me on Discord. My username is `Bagoum#4773`. 
 

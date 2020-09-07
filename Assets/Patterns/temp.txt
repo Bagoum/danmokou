@@ -1,21 +1,66 @@
-pattern { }
-phase 0
-	action block 0
-		shift-phase-to 1
+pattern({ })
+phase(0)
+	action(block, 0)
+		shift-phase-to(1)
 		
-
-<!> type non `hello world`
-<!> hp 1000
-phase 0
-	action block 0
-		position 0 2
-		sync gpather-purple/w <> pather 2 2
-			polar
-				letfloats2 { 
-					k 3
-				} * &k t
-				* -30 t
-			{ }
+<!> type(spell, `Danmokou Chimera`)
+<!> hp(14000)
+<!> root 0 0.5
+phase(40)
+	action(block, 0)
+	sync(fireball-red/w, <>, s(polar(
+	* 2 t,
+	* 40 t
+)))
+		move(_, nroffset(px(sine(8p, 2, t))))
+		gtrepeat {
+			wait(0s)
+			times(_)
+			rv2incr(<22h>)
+			wait-child
+		} saction(0)
+!!{ crpt 16
+			sync keine-purple/w <1;:> gsrepeat {
+				times($crpt)
+				circle
+				sfx(x-fire-tech-8)
+				start {
+					rootloc =v2 loc
+				}
+				expose { 
+					v2 rootloc
+				}
+			} s(rvelocity(px(2)))
+!!{ linet 1
+!!{ circt 3
+			wait($linet)
+			bullet-control(once, keine-purple/w, cull, _)
+			bullet-control once keine-purple/w sm _
+				sync gcircle-*/w <> gsrepeat {
+					times(13)
+					sfx(x-fire-tech-6)
+					root(&rootloc)
+					start	 {
+						r =f dist(loc, &rootloc)
+					}
+					bindItr(bulletn)
+					expose { 
+						v2 rootloc
+					}
+					color({ blue purple })
+					bindLR
+				} s polar
+					- &r * 0.2 &bulletn
+					lerpsmooth(io-sine, 0, $circt, t,  0, (* &lr * 1.5 / 360 $crpt))
+			wait($circt)
+			bullet-control(once, gcircle-*, cull, _)
+			bullet-control once gcircle-* sm (= &.bulletn 0)
+				sync keine-purple/w <-90> addtime 1s gsrepeat {
+					face(velocity)
+					expose {
+						v2 rootloc
+					}
+				} s rvelocity if((> t 1), cx 2, zero)
 
 		
 <!> type non `hello world`

@@ -25,7 +25,7 @@ These are verbose instructions on how to set up Danmokou on your first run.
 - Your text editor should now open the file. It should have the following contents:
 
 ```python
-## Go to dnh.bagoum.com/docs/tutorials/00.html for the tutorial. 
+## Go to https://dmk.bagoum.com/docs/articles/t01.html for the tutorial. 
 pattern({ })
 phase(0)
 	action(block, 0)

@@ -43,21 +43,23 @@ When inside a repeater function (GTRepeat/GIRepeat/GCRepeat/GSRepeat), you have 
 
 GenCtx provides these automatic aliases in `GCXF<T>` functions:
 
-| Alias         | Description                                              |
-| ------------- | -------------------------------------------------------- |
-| t (bpi.t)     | gcx.i -- iteration number                                |
-| p (bpi.index) | gcx.index -- firing index as determined by `p` modifiers |
-| loc (bpi.loc) | gcx.beh.globalLoc -- location of executor                |
-| &i            | gcx.i -- iteration number                                |
-| &pi           | gcx.pi -- parent interation number                       |
-| &times        | number of times the repeater is running for              |
-| &rv2          | running RV2 value                                        |
-| &brv2         | parent RV2 value                                         |
-| &st           | gcx.summonTime                                           |
-| &axd          | Arrow formation X index (bindArrow)                      |
-| &ayd          | Arrow formation Y index (bindArrow)                      |
-| &aixd         | Inverted arrow formation X index (bindArrow)             |
-| &aiyd         | Inverted arrow formation Y index (bindArrow)             |
+| Alias         | Description                                                  |
+| ------------- | ------------------------------------------------------------ |
+| t (bpi.t)     | gcx.i -- iteration number                                    |
+| p (bpi.index) | gcx.index -- firing index as determined by `p` modifiers     |
+| loc (bpi.loc) | gcx.beh.globalLoc -- location of executor                    |
+| &i            | gcx.i -- iteration number                                    |
+| &pi           | gcx.pi -- parent interation number                           |
+| &times        | number of times the repeater is running for                  |
+| &rv2          | running RV2 value                                            |
+| &brv2         | parent RV2 value                                             |
+| &st           | gcx.summonTime                                               |
+| &lr/&ud       | 1 when iteration number is even and -1 when odd (bindLR/bindUD) |
+| &rl/&du       | -1 when iteration number is even and 1 when odd (bindLR/bindUD) |
+| &axd          | Arrow formation X index (bindArrow)                          |
+| &ayd          | Arrow formation Y index (bindArrow)                          |
+| &aixd         | Inverted arrow formation X index (bindArrow)                 |
+| &aiyd         | Inverted arrow formation Y index (bindArrow)                 |
 
 Variables inside the GenCtx can be accessed several ways:
 

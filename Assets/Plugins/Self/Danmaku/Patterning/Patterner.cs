@@ -27,8 +27,6 @@ public delegate GenCtx SyncPattern(SyncHandoff sbh);
 
 public delegate IEnumerator AsyncPattern(AsyncHandoff abh);
 
-public delegate IEnumerator PAsyncPattern(FixedPatternHandoff fph);
-
 
 public struct CommonHandoff {
     public ICancellee cT;
@@ -147,18 +145,6 @@ public struct AsyncHandoff {
 
     public void AddSimulatedTime(float frames) {
         framesOffset += frames;
-    }
-}
-
-public readonly struct FixedPatternHandoff {
-    public readonly ICancellee cT;
-    public readonly Action done;
-    public readonly BehaviorEntity exec;
-
-    public FixedPatternHandoff(SMHandoff smh, Action onDone) {
-        exec = smh.Exec;
-        done = onDone;
-        cT = smh.ch.cT;
     }
 }
 

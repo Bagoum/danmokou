@@ -1,6 +1,6 @@
-- name: Tutorials and References
+- name: What is Danmokou?
   href: top.md
-- name: Setup
+- name: First-Time Setup
   href: setup.md
 - name: References
   items:
@@ -10,6 +10,8 @@
       href: parsing.md
     - name: Player Firing Conventions
       href: playerFire1.md
+    - name: Pitfalls and Warnings
+      href: warnings.md
 - name: References (Advanced)
   items:
     - name: Shader Features

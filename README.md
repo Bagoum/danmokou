@@ -6,21 +6,7 @@ The official abbreviation for this engine is **dmk**.
 
 You might know this project by the name NotDnh, ph4mmo, DanMaKufu, or Bagoum Danmaku Scripting Markup.
 
-## Features
-
-- Supports 100,000 bullets updating at native 4k 120 FPS (on my machine anyways), far more than any other engine
-- Extremely optimized mathematics logic that allow using arbitrary functions for bullet movement. No other engine supports this.
-- Extremely optimized rendering pathway that batches 1000 bullets at a time
-- Zero-allocation bullets
-- Curved lasers, curvy lasers, and wavy lasers (yes, they're all different)
-- Scene game architecture with extensible support for challenges
-- Concise, opinionated, and always-correct model for summoning more than one bullet
-- Efficient compiled scripting language with the same interfaces as native code
-- Instantaneous runtime script recompilation using expression trees
-- Simple logic for unbounded difficulty controls
-- Built-in dialogue engine with Ace Attorney-style text unrolling
-- Built-in script analysis and practice architecture
-- Replays
+See [the website](https://dmk.bagoum.com/) for a friendly introduction to what DMK can do.
 
 # Setup/Tutorials
 
@@ -28,17 +14,11 @@ You might know this project by the name NotDnh, ph4mmo, DanMaKufu, or Bagoum Dan
 
 # Documentation
 
-`https://dnh.bagoum.com/docs`
+`https://dmk.bagoum.com/docs`
 
 # Licensing
 
 The source code is licensed under MIT. See the COPYING file for details, as well as information on non-code assets.
-
-# Some Important Terminology
-
-- "Curvy lasers" (as in Mysterious Snake Show) are in this engine called **pathers**.
-- This engine splits lasers into several different functionalities. There are **straight lasers**, which are straight. Straight lasers may have a rotation function, which makes them **rotating lasers**. There are also **curved lasers**, which follow some arbitrary trajectory defined by a math function. A curved laser can be **static** (if it does not change) or **dynamic** (if it does change).
-  - See `Patterns/examples/new lasers` to compare the laser variants.
 
 # Feature Wishlist
 

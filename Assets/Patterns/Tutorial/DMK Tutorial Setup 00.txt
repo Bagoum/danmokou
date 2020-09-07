@@ -1,5 +1,5 @@
 
-## Go to dnh.bagoum.com/docs/tutorials/00.html for the tutorial. 
+## Go to https://dmk.bagoum.com/docs/articles/t01.html for the tutorial. 
 pattern({ })
 phase(0)
 	action(block, 0)
