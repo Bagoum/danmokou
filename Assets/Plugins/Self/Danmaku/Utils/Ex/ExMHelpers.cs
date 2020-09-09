@@ -86,6 +86,32 @@ public static class ExMHelpers {
         }
         return Ex.Block(new ParameterExpression[] {v, ang}, exprs);
     }
+    public static BlockExpression LaserRotateLerp(Ex target, Ex source, TExPI bpi, Ex rate) {
+        var r1 = rate.Mul(ExC(ETime.FRAME_TIME));
+        TExV2 v = TExV2.Variable();
+        TEx<float> ang = ExUtils.VFloat();
+        Ex dirD = DataHoisting.GetClearableDictV2();
+        Ex sideD = DataHoisting.GetClearableDictF();
+        var inter_ang = HighPass(ExC(0.01f), RadDiff(target, v));
+        return Ex.Block(new ParameterExpression[] {v, ang},
+            Ex.Condition(DictContains<uint, Vector2>(dirD, bpi.id).And(bpi.t.GT0()),
+                Ex.Block(
+                    v.Is(dirD.DictGet(bpi.id)),
+                    ang.Is(Ex.Condition(sideD.DictGet(bpi.id).LT0(),
+                        RadToNeg(inter_ang),
+                        RadToPos(inter_ang)
+                    )),
+                    dirD.DictSet(bpi.id, RotateRad(Limit(r1, ang), v))
+                ),
+                Ex.Block(
+                    v.Is(source),
+                    ang.Is(RadDiff(target, v)),
+                    sideD.DictSet(bpi.id, Sign(ang)),
+                    dirD.DictSet(bpi.id, RotateRad(Limit(r1, ang), v))
+                )
+            )
+        );
+    }
 
     //See Design/Engine Math Tips for details on these two functions. They are not raw easing.
     public static Func<T, TEx<R>> Ease<T, R>(string name, float maxTime, Func<T, TEx<R>> f, Func<T, Ex> t, Func<T, Ex, T> withT) {

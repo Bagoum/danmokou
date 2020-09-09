@@ -52,7 +52,7 @@ public struct DefaultColorizing {
 //Simple bullets do not support: animation, custom behavior. Also, the sprite must be rotated to face to the right
 public class SimpleBulletEmptyScript : MonoBehaviour {
 //Inspector-exposed structs cannot be readonly
-    [System.Serializable]
+    [Serializable]
     public struct SpriteSpecificGradient {
         public string color;
         [Tooltip("If null, won't recolor")] [CanBeNull]
@@ -98,7 +98,10 @@ public class SimpleBulletEmptyScript : MonoBehaviour {
         public float framesPerSecond;
     }
 
+    [Tooltip("Is the bullet destroyed on collision?")]
     public bool destructible;
+    [Tooltip("Is the bullet destroyed by global deletion effects like bombs?")]
+    public bool deletable;
     public ushort grazeEveryFrames = 30;
     public float screenCullRadius = 3f;
     [Header("Rendering Info")] public int renderPriority;

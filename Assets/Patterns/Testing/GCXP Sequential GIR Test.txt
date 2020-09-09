@@ -1,0 +1,22 @@
+pattern { }
+phase 0
+	saction 0
+		position 0 0
+		async _ <> gir2 2 2 <> {
+			sequential
+			wait-child
+		} {
+			icolor sakura-pink/w gcr2 1 2 <> {
+			} s tprot cx 2
+			icolor fireball-pink/w gcr2 1 2 <> {
+			} s tprot cx 3
+		}
+		async _ <> gir2 2 2 <> {
+			sequential
+		} {
+			icolor sakura-red/w gcr2 1 2 <> {
+			} s tprot cx 2
+			icolor fireball-red/w gcr2 1 2 <> {
+			} s tprot cx 3
+		}
+		position 2 0

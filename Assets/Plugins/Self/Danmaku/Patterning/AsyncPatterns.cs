@@ -11,6 +11,7 @@ using Core;
 using JetBrains.Annotations;
 using SM;
 using UnityEngine;
+using UnityEngine.Profiling;
 using static Core.Events;
 using ExFXY = System.Func<TEx<float>, TEx<float>>;
 using ExBPY = System.Func<DMath.TExPI, TEx<float>>;
@@ -98,7 +99,7 @@ public static partial class AsyncPatterns {
             parent_done?.Invoke();
         }
     }
-    private struct IPExecutionTracker {
+    private class IPExecutionTracker {
         private LoopControl<AsyncPattern> looper;
         /// <summary>
         /// Basic AsyncHandoff to pass around. Note that this is dirty and the ch property is repeatedly modified.
@@ -106,6 +107,7 @@ public static partial class AsyncPatterns {
         private AsyncHandoff abh;
         [CanBeNull] private readonly Action parent_done;
         private readonly bool waitChild;
+        private readonly bool sequential;
         public IPExecutionTracker(GenCtxProperties<AsyncPattern> props, AsyncHandoff abh, out bool isClipped) {
             looper = new LoopControl<AsyncPattern>(props, abh.ch, out isClipped);
             this.abh = abh;
@@ -114,6 +116,7 @@ public static partial class AsyncPatterns {
             tmp_ret = null;
             elapsedFrames = 0f;
             waitChild = props.waitChild;
+            sequential = props.sequential;
             checkIsChildDone = null;
             wasPaused = false;
             tmp_ret = ListCache<GenCtx>.Get();
@@ -149,25 +152,52 @@ public static partial class AsyncPatterns {
         public void DoAIteration(AsyncPattern[] target) {
             if (looper.props.childSelect == null) {
                 Action cb = null;
-                if (waitChild) {
-                    cb = WaitingUtils.GetManyCondition(target.Length, out checkIsChildDone);
-                    //On the frame that the child finishes, the waitstep will increment elapsedFrames
-                    //even though it should not. However, it is difficult to tell the waitstep whether
-                    //the child was finished or not finished before that frame. This is the easiest solution.
-                    --elapsedFrames; 
-                } else checkIsChildDone = null;
-                for (int ii = 0; ii < target.Length; ++ii) {
-                    DoAIteration(target[ii], cb);
+                if (sequential) {
+                    bool done = false;
+                    GenCtx base_gcx = null;
+                    if (waitChild) {
+                        checkIsChildDone = () => done;
+                        //See below for explanation
+                        --elapsedFrames; 
+                    } else {
+                        //To prevent secondary sequential children from trying to copy this object's GCX
+                        // which will have already changed when the next loop starts.
+                        base_gcx = looper.GCX.Copy();
+                    }
+                    void DoNext(int ii) {
+                        if (ii >= target.Length) {
+                            done = true;
+                            base_gcx?.Dispose();
+                        } else DoAIteration(target[ii], () => DoNext(ii + 1), base_gcx);
+                    }
+                    DoNext(0);
+                } else {
+                    if (waitChild) {
+                        cb = WaitingUtils.GetManyCondition(target.Length, out checkIsChildDone);
+                        //On the frame that the child finishes, the waitstep will increment elapsedFrames
+                        //even though it should not. However, it is difficult to tell the waitstep whether
+                        //the child was finished or not finished before that frame. This is the easiest solution.
+                        --elapsedFrames; 
+                    } else checkIsChildDone = null;
+                    for (int ii = 0; ii < target.Length; ++ii) {
+                        DoAIteration(target[ii], cb);
+                    }
                 }
             } else DoAIteration(target[(int) looper.props.childSelect(looper.GCX) % target.Length]);
         }
 
-        private void DoAIteration(AsyncPattern target, [CanBeNull] Action waitChildDone=null) {
-            abh.ch = looper.Handoff.CopyGCX();
+        private void DoAIteration(AsyncPattern target, [CanBeNull] Action waitChildDone=null, 
+            [CanBeNull] GenCtx overrideGCX = null) {
+            abh.ch = looper.Handoff.CopyGCX(overrideGCX);
+            //Critical for the abh.done = () => {
+            var lgcx = abh.ch.gcx;
             if (waitChild) {
-                tmp_ret.Add(abh.ch.gcx);
+                tmp_ret.Add(lgcx);
                 abh.done = waitChildDone ?? WaitingUtils.GetCondition(out checkIsChildDone);
-            } else abh.done = abh.ch.gcx.Dispose;
+            } else abh.done = () => {
+                waitChildDone?.Invoke();
+                lgcx.Dispose();
+            };
             //RunPrepend steps the coroutine and places it before the current one,
             //so we can continue running on the same frame that the child finishes (if using waitchild). 
             abh.RunPrependRIEnumerator(target(abh));
@@ -187,11 +217,20 @@ public static partial class AsyncPatterns {
         public void ForceADone() => ReconcileAndCallback(parent_done, tmp_ret, looper)();
         public void DoLastAIteration(AsyncPattern[] target) {
             if (looper.props.childSelect == null) {
-                //Always track the done command. Even if we are not waiting-child, a IRepeat is only done
-                //when its last invokee is done.
-                var cb = WaitingUtils.GetManyCallback(target.Length, ReconcileAndCallback(parent_done, tmp_ret, looper));
-                for (int ii = 0; ii < target.Length; ++ii) {
-                    DoLastAIteration(target[ii], cb);
+                if (sequential) {
+                    void DoNext(int ii) {
+                        if (ii >= target.Length) ReconcileAndCallback(parent_done, tmp_ret, looper)();
+                        else DoLastAIteration(target[ii], () => DoNext(ii + 1));
+                    }
+                    DoNext(0);
+                } else {
+                    //Always track the done command. Even if we are not waiting-child, a IRepeat is only done
+                    //when its last invokee is done.
+                    var cb = WaitingUtils.GetManyCallback(target.Length,
+                        ReconcileAndCallback(parent_done, tmp_ret, looper));
+                    for (int ii = 0; ii < target.Length; ++ii) {
+                        DoLastAIteration(target[ii], cb);
+                    }
                 }
             } else DoLastAIteration(target[(int) looper.props.childSelect(looper.GCX) % target.Length]);
         }

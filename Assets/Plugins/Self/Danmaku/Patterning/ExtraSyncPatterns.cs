@@ -62,11 +62,6 @@ public static partial class SyncPatterns {
                 )),
             })
         ).ToArray(), inner);
-    private static (string, ExSBV2)[] AutoSaveV2(string loc, string dir) => new[] {
-        (loc, SBV2Repo.Loc()),
-        (dir, SBV2Repo.Dir())
-    };
-    private static readonly (string, ExSBF)[] AutoSaveF = { };
 
     private static string V2Key => PublicDataHoisting.GetRandomValidKey<Vector2>();
 

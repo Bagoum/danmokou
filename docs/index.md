@@ -1,5 +1,5 @@
 # Danmokou Documentation
-This is documentation for **Danmokou**, Bagoum's Unity-based danmaku engine.
+This is documentation for **Danmokou**, a Unity-based bullet hell engine.
 
 If you're not sure what's going on, head on over to the [What Is Danmokou?](articles/top.md) page.
 

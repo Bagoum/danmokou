@@ -1,8 +1,6 @@
 pattern { }
 phase 0
     action block 0
-        clear bullet
-    action block 0
         position -4 -1
         sync gcircle-red/w <> gsr {
 			t	200

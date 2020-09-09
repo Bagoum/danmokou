@@ -29,17 +29,19 @@ public class GTRepeat2 : GTRepeat {
 /// <br/>Note: the constructor takes StateMachine[] and not List{SM}, which means you must explicitly wrap multiple SMs in brackets.
 /// </summary>
 public class GTRepeat : UniversalSM {
-    private struct SMExecutionTracker {
+    private class SMExecutionTracker {
         public LoopControl<StateMachine> looper;
         /// <summary>
         /// SMHandoff to pass around. Note that this is dirty and the ch/Exec/GCX properties are repeatedly modified.
         /// </summary>
         private SMHandoff smh;
         private readonly bool waitChild;
+        private readonly bool sequential;
         public SMExecutionTracker(GenCtxProperties<StateMachine> props, SMHandoff smh, out bool isClipped) {
             looper = new LoopControl<StateMachine>(props, smh.ch, out isClipped);
             this.smh = smh;
             waitChild = props.waitChild;
+            sequential = props.sequential;
             checkIsChildDone = null;
             tmp_ret = ListCache<GenCtx>.Get();
         }
@@ -73,24 +75,47 @@ public class GTRepeat : UniversalSM {
         public void DoAIteration(ref float elapsedFrames, IReadOnlyList<StateMachine> target) {
             if (looper.props.childSelect == null) {
                 Action cb = null;
-                if (waitChild) {
-                    cb = WaitingUtils.GetManyCondition(target.Count, out checkIsChildDone);
-                    //See IPExecutionTracker for explanation
-                    --elapsedFrames; 
-                } else checkIsChildDone = null;
-                for (int ii = 0; ii < target.Count; ++ii) {
-                    DoAIteration(target[ii], cb);
+                if (sequential) {
+                    //See IPExecution tracker for comments on this code
+                    bool done = false;
+                    GenCtx base_gcx = null;
+                    if (waitChild) {
+                        checkIsChildDone = () => done;
+                        --elapsedFrames; 
+                    } else {
+                        base_gcx = looper.GCX.Copy();
+                    }
+                    void DoNext(int ii) {
+                        if (ii >= target.Count) {
+                            done = true;
+                            base_gcx?.Dispose();
+                        } else DoAIteration(target[ii], () => DoNext(ii + 1), base_gcx);
+                    }
+                    DoNext(0);
+                } else {
+                    if (waitChild) {
+                        cb = WaitingUtils.GetManyCondition(target.Count, out checkIsChildDone);
+                        --elapsedFrames; 
+                    } else checkIsChildDone = null;
+                    for (int ii = 0; ii < target.Count; ++ii) {
+                        DoAIteration(target[ii], cb);
+                    }
                 }
             } else DoAIteration(target[(int) looper.props.childSelect(looper.GCX) % target.Count]);
         }
 
-        private void DoAIteration(StateMachine target, [CanBeNull] Action waitChildDone=null) {
-            smh.ch = looper.Handoff.CopyGCX();
+        private void DoAIteration(StateMachine target, [CanBeNull] Action waitChildDone=null, 
+            [CanBeNull] GenCtx overrideGCX = null) {
+            smh.ch = looper.Handoff.CopyGCX(overrideGCX);
+            var lgcx = smh.GCX;
             Action cb;
             if (waitChild) {
-                tmp_ret.Add(smh.GCX);
+                tmp_ret.Add(lgcx);
                 cb = waitChildDone ?? WaitingUtils.GetCondition(out checkIsChildDone);
-            } else cb = smh.GCX.Dispose;
+            } else cb = () => {
+                waitChildDone?.Invoke();
+                lgcx.Dispose();
+            };
             target.Start(smh).ContinueWithSync(cb);
         }
 
@@ -98,9 +123,19 @@ public class GTRepeat : UniversalSM {
             //Always track the done command. Even if we are not waiting-child, a TRepeat is only done
             //when its last invokee is done.
             if (looper.props.childSelect == null) {
-                var cb = WaitingUtils.GetManyCondition(target.Count, out checkIsChildDone);
-                for (int ii = 0; ii < target.Count; ++ii) {
-                    DoLastAIteration(target[ii], cb);
+                if (sequential) {
+                    bool done = false;
+                    checkIsChildDone = () => done;
+                    void DoNext(int ii) {
+                        if (ii >= target.Count) done = true;
+                        else DoLastAIteration(target[ii], () => DoNext(ii + 1));
+                    }
+                    DoNext(0);
+                } else {
+                    var cb = WaitingUtils.GetManyCondition(target.Count, out checkIsChildDone);
+                    for (int ii = 0; ii < target.Count; ++ii) {
+                        DoLastAIteration(target[ii], cb);
+                    }
                 }
             } else DoLastAIteration(target[(int) looper.props.childSelect(looper.GCX) % target.Count]);
         }

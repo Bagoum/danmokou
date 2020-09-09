@@ -35,7 +35,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
     private Laser.PointContainer endpt = new Laser.PointContainer(null);
     private PlayerBulletCfg? playerBullet;
 
-    public CurvedTileRenderLaser(LaserRenderCfg cfg) : base(cfg) {
+    public CurvedTileRenderLaser(LaserRenderCfg cfg, GameObject obj) : base(cfg, obj) {
         alignEnd = cfg.alignEnd;
         lineRadius = cfg.lineRadius;
     }
@@ -223,10 +223,10 @@ public class CurvedTileRenderLaser : CurvedTileRender {
             var loc = locater.GlobalPosition();
             for (int ii = 0; ii < fe.Count; ++ii) {
                 if (fe[ii].Active && Collision.CircleOnSegments(fe[ii].pos, fe[ii].radius, loc, 
-                        centers, 0, 1, centers.Length, scaledLineRadius, (float)Math.Cos(rot), (float)Math.Sin(rot)) &&
+                        centers, 0, 1, centers.Length, scaledLineRadius, (float)Math.Cos(rot), (float)Math.Sin(rot), out int segment) &&
                     fe[ii].enemy.TryHitIndestructible(bpi.id, plb.cdFrames)) {
                     fe[ii].enemy.QueueDamage(plb.bossDmg, plb.stageDmg, loc);
-                    fe[ii].enemy.ProcOnHit(plb.effect, loc);
+                    fe[ii].enemy.ProcOnHit(plb.effect, loc + centers[segment]);
                 }
             }
             return CollisionResult.noColl;

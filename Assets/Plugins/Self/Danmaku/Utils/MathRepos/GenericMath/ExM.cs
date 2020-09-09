@@ -20,6 +20,7 @@ using ev2 = DMath.EEx<UnityEngine.Vector2>;
 using ev3 = DMath.EEx<UnityEngine.Vector3>;
 using erv2 = DMath.EEx<DMath.V2RV2>;
 using ExBPY = System.Func<DMath.TExPI, TEx<float>>;
+using ExTP = System.Func<DMath.TExPI, TEx<UnityEngine.Vector2>>;
 using static DMath.ExMMod;
 
 namespace DMath {
@@ -46,8 +47,24 @@ public static partial class ExM {
     [Alias("@0")]
     public static TEx<T> RetrieveHoisted0<T>(ReflectEx.Hoist<T> hoist) => hoist.Retrieve(E0);
     
+    /// <summary>
+    /// Assign local variables that can be repeatedly used without reexecution via the Reference (&amp;) function.
+    /// Shortcut: ::
+    /// </summary>
+    /// <param name="aliases">List of each variable and its assigned vector value</param>
+    /// <param name="inner">Code to execute within the scope of the variables</param>
     [Alias("::")]
     public static Func<TExPI, TEx<T>> LetFloats<T>((string, ExBPY)[] aliases, Func<TExPI, TEx<T>> inner) => bpi => 
+        ReflectEx.Let(aliases, () => inner(bpi), bpi);
+    
+    /// <summary>
+    /// Assign local variables that can be repeatedly used without reexecution via the Reference (&amp;) function.
+    /// Shortcut: ::v2
+    /// </summary>
+    /// <param name="aliases">List of each variable and its assigned vector value</param>
+    /// <param name="inner">Code to execute within the scope of the variables</param>
+    [Alias("::v2")]
+    public static Func<TExPI, TEx<T>> LetV2s<T>((string, ExTP)[] aliases, Func<TExPI, TEx<T>> inner) => bpi => 
         ReflectEx.Let(aliases, () => inner(bpi), bpi);
     
     #endregion

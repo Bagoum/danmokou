@@ -172,7 +172,7 @@ public class PhaseSM : SequentialSM {
         cutins = Task.CompletedTask;
         if (props.cardTitle != null || props.phaseType != null) UIManager.SetSpellname(props.cardTitle);
         UIManager.ShowPhaseType(props.phaseType);
-        if (!props.hideTimeout && smh.Exec.triggersUITimeout) UIManager.ShowStaticTimeout(Timeout);
+        if (!props.hideTimeout && smh.Exec.TriggersUITimeout) UIManager.ShowStaticTimeout(Timeout);
         if (props.livesOverride.HasValue) UIManager.ShowBossLives(props.livesOverride.Value);
         if (smh.Exec.isEnemy) {
             var hp = props.hp ?? props.phaseType?.DefaultHP();
@@ -191,9 +191,11 @@ public class PhaseSM : SequentialSM {
                 BackgroundOrchestrator.QueueTransition(props.Boss.bossCutinTrIn);
                 BackgroundOrchestrator.ConstructTarget(props.Boss.bossCutinBg, true);
                 cutins = WaitingUtils.WaitFor(smh, props.Boss.bossCutinTime, false).ContinueWithSync(() => {
-                    BackgroundOrchestrator.QueueTransition(props.Boss.bossCutinTrOut);
-                    BackgroundOrchestrator.ConstructTarget(props.Background, true);
-                }, smh.cT);
+                    if (!smh.Cancelled) {
+                        BackgroundOrchestrator.QueueTransition(props.Boss.bossCutinTrOut);
+                        BackgroundOrchestrator.ConstructTarget(props.Background, true);
+                    }
+                });
                 forcedBG = true;
             } else if (props.GetSpellCutin(out var sc)) {
                 SFXService.Request("x-spell-cutin");
@@ -216,7 +218,7 @@ public class PhaseSM : SequentialSM {
         WaitingUtils.WaitThenCancel(smh.Exec, smh.cT, timeout, true, toCancel);
         if (props.phaseType?.IsSpell() ?? false) smh.Exec.Enemy.RequestSpellCircle(timeout, smh.cT);
         //else smh.exec.Enemy.DestroySpellCircle();
-        if (!props.hideTimeout && smh.Exec.triggersUITimeout)
+        if (!props.hideTimeout && smh.Exec.TriggersUITimeout)
             UIManager.DoTimeout(props.phaseType?.IsCard() ?? false, timeout, smh.cT);
     }
 
@@ -351,11 +353,6 @@ public class PhaseSequentialActionSM : SequentialSM {
         await base.Start(smh);
     }
 }
-
-public abstract class MetaPASM : SequentialSM {
-    public MetaPASM(List<StateMachine> states) : base(states) { }
-}
-
 
 /// <summary>
 /// `end`: Child of PhaseSM. When a phase ends under normal conditions,

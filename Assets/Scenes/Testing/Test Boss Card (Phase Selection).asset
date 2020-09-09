@@ -13,20 +13,15 @@ MonoBehaviour:
   m_Name: Test Boss Card (Phase Selection)
   m_EditorClassIdentifier: 
   boss: {fileID: 2839687353931545823, guid: 567949ea02f82894482d1922e940c492, type: 3}
-  CardPracticeName: 
+  CardPracticeName: TestBoss-Sel
+  replayNameOverride: 
   stateMachine: {fileID: 4900000, guid: b046426b4373c7a4198c30abe559050c, type: 3}
   key: 
+  casualName: 
+  casualNameJP: 
   displayName: 
   displayTitle: 
   trackName: 
-  uiColor: {r: 0, g: 0, b: 0, a: 0}
-  uiHPColor: {r: 0, g: 0, b: 0, a: 0}
-  cardColorR: {r: 0, g: 0, b: 0, a: 0}
-  cardColorG: {r: 0, g: 0, b: 0, a: 0}
-  cardColorB: {r: 0, g: 0, b: 0, a: 0}
-  spellColor1: {r: 0, g: 0, b: 0, a: 0}
-  spellColor2: {r: 0, g: 0, b: 0, a: 0}
-  spellColor3: {r: 0, g: 0, b: 0, a: 0}
   colors: {fileID: 11400000, guid: 3c0a387600bcbb94c8b98ae17cbe910c, type: 2}
   rotator: 
   profile:

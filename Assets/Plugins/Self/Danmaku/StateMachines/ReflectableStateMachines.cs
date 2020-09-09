@@ -18,23 +18,6 @@ public class ReflectableLASM : LineActionSM {
     }
     public override Task Start(SMHandoff smh) => func(smh);
 }
-/// <summary>
-/// `track`: Play a music track.
-/// </summary>
-public class TrackControlLASM : ReflectableLASM {
-    private static readonly Action noop = () => { };
-    public TrackControlLASM(TaskPattern rs) : base(rs) { }
-
-    /*
-    /// <summary>
-    /// Play a music track as BGM. There may only be one BGM active at a time.
-    /// The music will continue playing even when the scene changes.
-    /// </summary>
-    public static TaskPattern Play(string trackName) => smh => {
-        AudioTrackService.InvokeBGM(trackName);
-        return Task.CompletedTask;
-    };*/
-}
 
 /// <summary>
 /// `event`: Trigger events.
@@ -126,30 +109,5 @@ public class TimerControllerLASM : ReflectableLASM {
         return Task.CompletedTask;
     };
 }
-/// <summary>
-/// `sprite`: Control the sprite of the executing BEH.
-/// </summary>
-public class SpriteControlLASM : ReflectableLASM {
-    public SpriteControlLASM(TaskPattern rs) : base(rs) { }
 
-    public static TaskPattern Opacity(float time, BPY fader01) => smh => {
-        smh.Exec.FadeSpriteOpacity(fader01, time, smh.cT, WaitingUtils.GetAwaiter(out Task t));
-        return t;
-    };
-}
-
-/// <summary>
-/// `setstate`: Set a state variable of the executing entity.
-/// </summary>
-public class SetStateLASM : ReflectableLASM {
-    public SetStateLASM(TaskPattern rs) : base(rs) { }
-
-    /// <summary>
-    /// Set whether or not the enemy can be damaged.
-    /// </summary>
-    public static TaskPattern Vulnerable(bool isVulnerable) => smh => {
-        smh.Exec.Enemy.SetDamageable(isVulnerable);
-        return Task.CompletedTask;
-    };
-}
 }

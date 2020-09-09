@@ -1,9 +1,6 @@
 pattern { }
 phase 0 #{
 	action block 0
-		clear phase
-		clear bullet
-	action block 0.1
 		shift-phase-to 3
 #}
 
@@ -20,7 +17,7 @@ phase 26 #{
         ##wait-for 4
 	action block 0
 		position 0 2
-		setstate vulnerable true
+		vulnerable true
 		async gcircle-*/b <0.4;:> gir2 0 2 <> { 
 			p this 
 			color { green orange }

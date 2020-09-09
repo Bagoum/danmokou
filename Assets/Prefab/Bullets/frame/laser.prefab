@@ -47,14 +47,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorScript: {fileID: 0}
   ID: 
-  displayChangedPosition: 1
   rotationMethod: 0
-  rotateTransform: 0
   deathEffect: {fileID: 0}
-  triggersUITimeout: 0
-  cullable: 0
-  ScreenCullRadius: 4
-  damage: 1
+  cullableRadius:
+    cullable: 0
+    cullRadius: {fileID: 0}
+  collisionInfo:
+    CollisionActiveOnInit: 0
+    destructible: 0
+    grazeEveryFrames: 20
+  CollisionActiveOnInit: 0
   destructible: 0
   grazeEveryFrames: 20
   animate:
@@ -69,9 +71,6 @@ MonoBehaviour:
       downAnim: []
       attackAnim: []
       deathAnim: []
-  movementModifiers:
-    flipX: 0
-    flipY: 0
   material: {fileID: 2100000, guid: 5458891e477bea5438b857b92a28ba0c, type: 2}
   renderPriority: 100
   sprite: {fileID: 0}

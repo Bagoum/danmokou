@@ -58,12 +58,6 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     public Vector2 LastDelta => lastDelta;
     private Vector3 facingVec = Vector3.zero;
     /// <summary>
-    /// Do not modify this at runtime.
-    /// </summary>
-    [FormerlySerializedAs("doMovement")] 
-    [Tooltip("If set to false, will calculate movement in cposition but not actually move after Initialize.")]
-    public bool displayChangedPosition = true;
-    /// <summary>
     /// Only the original firing angle matters for rotational movement velocity
     /// </summary>
     public float original_angle { get; protected set; }
@@ -72,7 +66,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     /// Whether or not rotationMethod affects the transform. In the case of iparent,
     /// entities parented to this will be modified by transform rotation.
     /// </summary>
-    public bool rotateTransform;
+    private bool RotateTransform => false;
 
     protected bool dying { get; private set; } = false;
     [CanBeNull] private Animator anim;
@@ -96,7 +90,8 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         e = enemy;
         return isEnemy;
     }
-    public bool triggersUITimeout = false;
+
+    public virtual bool TriggersUITimeout => false;
     public SMPhaseController phaseController;
     //These values are only set for Initialize-based BEH (via SM summon command)
     //All bullets are initialize-based and use these
@@ -120,15 +115,30 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     }
     
     private const float FIRST_CULLCHECK_TIME = 2;
-    public bool cullable = true;
-    public float ScreenCullRadius = 4;
+
+    [Serializable]
+    public struct CullableRadius {
+        public bool cullable;
+        public SOFloat cullRadius;
+    }
+
+    public CullableRadius cullableRadius;
+    public float ScreenCullRadius => (cullableRadius.cullRadius == null) ?  4f :
+        cullableRadius.cullRadius.value;
     private const int checkCullEvery = 120;
     private int beh_cullCtr = 0;
     
     protected bool collisionActive = false;
-    public int damage = 1;
-    public bool destructible;
-    public ushort grazeEveryFrames = 20;
+    protected int Damage => 1;
+
+    [Serializable]
+    public struct CollisionInfo {
+        public bool CollisionActiveOnInit;
+        public bool destructible;
+        public ushort grazeEveryFrames;
+    }
+
+    public CollisionInfo collisionInfo;
     private int grazeFrameCounter = 0;
     [CanBeNull] private Pred delete;
 
@@ -138,10 +148,8 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     /// </summary>
     /// <param name="p">Target global position</param>
     private void SetTransformGlobalPosition(Vector2 p) {
-        if (displayChangedPosition) {
-            if (parented) tr.position = p;
-            else tr.localPosition = p; // Slightly faster pathway
-        }
+        if (parented) tr.position = p;
+        else tr.localPosition = p; // Slightly faster pathway
     }
     
     /// <summary>
@@ -150,13 +158,9 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     /// </summary>
     /// <param name="p">Target local position</param>
     public void ExternalSetLocalPosition(Vector2 p) {
-        p = movementModifiers.ApplyOver(p);
-        if (displayChangedPosition) {
-            tr.localPosition = p;
-            bpi.loc = tr.position;
-        } else {
-            bpi.loc = (Vector2)tr.position + p;
-        }
+        p = MovementModifiers.ApplyOver(p);
+        tr.localPosition = p;
+        bpi.loc = tr.position;
     }
 
     public enum DirectionRelation {
@@ -354,12 +358,12 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     }
 
     public Animation animate;
-    public MovementModifiers movementModifiers;
+    public MovementModifiers MovementModifiers { get; set; }
     private bool isSummoned = false;
-
+    protected virtual int Findex => 0;
     protected override void Awake() {
         base.Awake();
-        bpi = ParametricInfo.WithRandomId(tr.position, 0);
+        bpi = ParametricInfo.WithRandomId(tr.position, Findex);
         anim = GetComponent<Animator>();
         sr = GetComponent<SpriteRenderer>();
         enemy = GetComponent<Enemy>();
@@ -367,10 +371,8 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         animate.Initialize(this);
         RegisterID();
         UpdateStyleInformation();
+        RunAttachedSM();
     }
-
-    // Do this in Start to make sure that services are loaded...
-    protected virtual void Start() => RunAttachedSM();
 
     public Task Initialize(SMRunner smr) {
         if (smr.sm != null) {
@@ -413,7 +415,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
             tr.position = bpi.loc;
         }
         if (IsNontrivialID(behName)) ID = behName;
-        movementModifiers = m;
+        MovementModifiers = m;
         Initialize(smr);
         //This comes after so SMs run due to ~@ commands are not destroyed by BeginBehaviorSM
         RegisterID();
@@ -428,6 +430,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
 
     public override void ResetV() {
         base.ResetV();
+        collisionActive = collisionInfo.CollisionActiveOnInit;
         phaseController = SMPhaseController.Normal(0);
         dying = false;
         if (sr != null) {
@@ -484,7 +487,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     /// <returns></returns>
     public IEnumerator ExecuteVelocity(LimitedTimeVelocity ltv, uint newId) {
         if (ltv.cT.Cancelled) { ltv.done(); yield break; }
-        Velocity vel = new Velocity(ltv.VTP2, GlobalPosition(), V2RV2.Angle(original_angle), movementModifiers);
+        Velocity vel = new Velocity(ltv.VTP2, GlobalPosition(), V2RV2.Angle(original_angle), MovementModifiers);
         float doTime = (ltv.enabledFor < float.Epsilon) ? float.MaxValue : ltv.enabledFor;
         ParametricInfo tbpi = new ParametricInfo(bpi.loc, ltv.firingIndex, newId);
         //Sets initial position correctly for offset-based velocity
@@ -563,6 +566,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     private void DestroyInitial(bool allowFinalize, bool allowDrops=false) {
         if (dying) return;
         dying = true;
+        collisionActive = false;
         if (allowDrops) DropItemsOnDeath();
         if (isSummoned) DataHoisting.Destroy(bpi.id);
         UnregisterID();
@@ -638,7 +642,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
 
     public void FaceInDirectionRaw(float deg) {
         facingVec.z = deg;
-        if (rotateTransform) {
+        if (RotateTransform) {
             tr.eulerAngles = facingVec;
         }
     }
@@ -681,18 +685,18 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
             if (grazeFrameCounter-- == 0) {
                 grazeFrameCounter = 0;
                 if (cr.graze) {
-                    grazeFrameCounter = grazeEveryFrames - 1;
+                    grazeFrameCounter = collisionInfo.grazeEveryFrames - 1;
                     BulletManager.ExternalBulletProc(0, 1);
                 }
             }
             if (cr.collide) {
-                BulletManager.ExternalBulletProc(damage, 0);
-                if (destructible) InvokeCull();
+                BulletManager.ExternalBulletProc(Damage, 0);
+                if (collisionInfo.destructible) InvokeCull();
             }
         }
         beh_cullCtr = (beh_cullCtr + 1) % checkCullEvery;
         if (delete?.Invoke(rBPI) == true) InvokeCull();
-        else if (beh_cullCtr == 0 && cullable && styleIsCameraCullable 
+        else if (beh_cullCtr == 0 && cullableRadius.cullable && styleIsCameraCullable 
             && bpi.t > FIRST_CULLCHECK_TIME && LocationService.OffPlayableScreenBy(ScreenCullRadius, bpi.loc)) {
             InvokeCull();
         }
@@ -736,11 +740,8 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     #region Interfaces
 
     public Vector2 LocalPosition() {
-        if (displayChangedPosition) {
-            if (parented) return tr.localPosition;
-            return bpi.loc;
-        }
-        throw new NotImplementedException("Cannot get local position on BEH with ignoreMovement");
+        if (parented) return tr.localPosition;
+        return bpi.loc; 
     }
 
     /// <summary>

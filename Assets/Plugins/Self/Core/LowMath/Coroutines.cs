@@ -113,7 +113,11 @@ public class Coroutines {
         }
         itrNode = lastItrNode;
     }
-    
+
+    public void RunTryPrepend(IEnumerator ienum) {
+        if (itrNode == null) Run(ienum);
+        else StepInPlace(coroutines.AddBefore(itrNode, new RCoroutine(ienum, null, itrNode.obj.droppable)));
+    }
     
     /// <summary>
     /// Run a couroutine that will be updated once every engine frame (120 fps).

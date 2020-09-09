@@ -30,9 +30,11 @@ public class PlayerInput : BehaviorEntity {
         collMask = LayerMask.GetMask("Wall");
         hitbox.location = tr.position;
         hitboxSprite.enabled = SaveData.s.UnfocusedHitbox;
+        
+        LoadShot();
     }
 
-    protected override void Start() {
+    private void LoadShot() {
         var sc = GameManagement.campaign.Shot;
         var scd = sc == null ? "Default" : sc.description;
         Log.Unity($"Loading player shot: {scd}", level: Log.Level.DEBUG2);

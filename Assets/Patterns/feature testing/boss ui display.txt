@@ -15,7 +15,7 @@ phase 0
 <!> hpbar 1
 phase 9
     action block 0
-		setstate vulnerable true
+		vulnerable true
 		move _ nroffset px sine 4 2 t
         noop
 

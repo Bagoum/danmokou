@@ -14,7 +14,7 @@ using tv2 = TEx<UnityEngine.Vector2>;
 using ev2 = DMath.EEx<UnityEngine.Vector2>;
 
 namespace Danmaku {
-public class LocationService : MonoBehaviour {
+public static class LocationService {
 #if VER_BRUH
     public const float Left = -4f;
     public const float Right = 4f;
@@ -32,16 +32,8 @@ public class LocationService : MonoBehaviour {
     public static readonly Ex top = Ex.Constant(Top);
     public static readonly Ex width = Ex.Constant(Width);
     public static readonly Ex height = Ex.Constant(Height);
-    private static LocationService main;
-    public SOCircle enemyVisiblePlayer;
 
-    private void Awake() {
-        main = this;
-    }
-
-    public static Vector2 GetEnemyVisiblePlayer() {
-        return main.enemyVisiblePlayer.location;
-    }
+    public static Vector2 GetEnemyVisiblePlayer() => GameManagement.VisiblePlayerLocation;
 
     /// <summary>
     /// Assumes that v2 is in bounds. Dir need not be normalized.
@@ -126,7 +118,7 @@ public static partial class ExM {
     public static TEx<float> YHeight() => LocationService.height;
     
     private static readonly ExFunction GetEnemyVisiblePlayer =
-        ExUtils.Wrap<LocationService>("GetEnemyVisiblePlayer");
+        ExUtils.Wrap(typeof(LocationService), "GetEnemyVisiblePlayer");
     
     /// <summary>
     /// Get the location of the player as visible to enemies.
@@ -137,7 +129,7 @@ public static partial class ExM {
     public static TEx<Vector2> LBEH(BEHPointer beh) => Ex.Constant(beh).Field("beh").Field("bpi").Field("loc");
     
     private static readonly ExFunction distToWall =
-        ExUtils.Wrap<LocationService>("DistToWall", typeof(Vector2), typeof(Vector2));
+        ExUtils.Wrap(typeof(LocationService), "DistToWall", typeof(Vector2), typeof(Vector2));
 
     public static tfloat DistToWall(tv2 from, tv2 dir) => distToWall.Of(from, dir);
 }

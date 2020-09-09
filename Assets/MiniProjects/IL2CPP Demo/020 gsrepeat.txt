@@ -1,0 +1,18 @@
+pattern({ })
+<!> type non `Synchronous Repeat (Press R to reload)`
+phase(0)
+	action(block, 0)
+		position(0, 0)
+		sync(scircle-blue/b, <>, gsrepeat({
+				times(14)
+				circle
+			}, s(rvelocity(px(2)))
+			)
+		)
+	action(block, 1)
+		sync(scircle-red/w, <>, gsrepeat({
+				times(10)
+				circle
+			}, s(rvelocity(px(3)))
+			)
+		)

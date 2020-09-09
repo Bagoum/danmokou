@@ -13,9 +13,6 @@ using InternalSetVertexData = System.Action<UnityEngine.Mesh,
 
 [Serializable]
 public class TiledRenderCfg {
-    public MeshRenderer mr;
-    public MeshFilter mf;
-    public Transform tr;
     public string sortingLayer;
     public float dontUpdateTimeAfter;
 }
@@ -65,11 +62,11 @@ public abstract class TiledRender {
     protected unsafe VertexData* vertsPtr = (VertexData*) 0x0;
     private IntPtr roVertsPtr = (IntPtr) 0x0;
 
-    protected TiledRender(TiledRenderCfg cfg) {
+    protected TiledRender(TiledRenderCfg cfg, GameObject obj) {
         pb = new MaterialPropertyBlock();
-        mr = cfg.mr;
-        mf = cfg.mf;
-        tr = cfg.tr;
+        mr = obj.GetComponent<MeshRenderer>();
+        mf = obj.GetComponent<MeshFilter>();
+        tr = obj.transform;
         DontUpdateTimeAfter = cfg.dontUpdateTimeAfter;
         mr.sortingLayerID = SortingLayer.NameToID(cfg.sortingLayer);
     }

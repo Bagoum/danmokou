@@ -2,8 +2,7 @@ pattern
 phase 40 
     action block 0
 		position 0 0
-        setstate vulnerable false
-        clear bullet
+        vulnerable false
 		@ { n1 n2 }
 			cull
         summon inode <> n1 <> null null

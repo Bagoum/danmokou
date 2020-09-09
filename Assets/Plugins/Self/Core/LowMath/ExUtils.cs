@@ -130,7 +130,9 @@ public static class ExUtils {
         CacheGeneric1Method<HashSet<K>>("Add", typeof(K)).InstanceOf(dict, key);
 
     public static Ex DictIfExistsGetElseSet<K, V>(Ex dict, Ex key, Ex value) =>
-        Ex.Condition(DictContains<K, V>(dict, key), dict.DictGet(key), dict.DictSet(key, value));
+        DictIfPredGetElseSet(dict, DictContains<K, V>(dict, key), key, value);
+    public static Ex DictIfPredGetElseSet(Ex dict, Ex pred, Ex key, Ex value) =>
+        Ex.Condition(pred, dict.DictGet(key), dict.DictSet(key, value));
 }
 
 public class ExFunction {

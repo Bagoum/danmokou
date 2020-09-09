@@ -283,6 +283,7 @@ public static class VTPRepo {
             new ExVTP((v,t,bpi,nrv) => ReflectEx.Let(aliases, () => inner(v,t,bpi,nrv), bpi));
         [Alias("::")]
         public static ExVTP LetFloats((string, ExBPY)[] aliases, ExVTP inner) => WrapLet(aliases, inner);
+        [Alias("::v2")]
         public static ExVTP LetV2s((string, ExTP)[] aliases, ExVTP inner) => WrapLet(aliases, inner);
 
         public static ExVTP LetDecl(ReflectEx.Alias<TExPI>[] aliases, ExVTP inner) => (c, s, bpi, nrv) =>

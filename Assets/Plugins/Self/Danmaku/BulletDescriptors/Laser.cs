@@ -20,7 +20,7 @@ public class Laser : FrameAnimBullet {
     private PointContainer endpt;
 
     protected override void Awake() {
-        ctr = new CurvedTileRenderLaser(config);
+        ctr = new CurvedTileRenderLaser(config, gameObject);
         rotationMethod = RotationMethod.Manual;
         base.Awake();
     }

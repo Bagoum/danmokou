@@ -3,6 +3,9 @@ using System.Collections;
 using DMath;
 using UnityEngine;
 
+/// <summary>
+/// Graphical only. Not on RU loop.
+/// </summary>
 public class ScaleAnimator : TimeBoundAnimator {
     public float startScale = 0f;
     public float midScale = 3f;
@@ -17,11 +20,16 @@ public class ScaleAnimator : TimeBoundAnimator {
 
     private Transform tr;
 
-    public override void AssignTime(float total) {
+    private void Awake() {
+        tr = transform;
+    }
+
+    public override void Initialize(ICancellee cT, float total) {
         time1 = time1Ratio * total;
         time2 = time2Ratio * total;
         holdtime = total - time1 - time2;
         //Share(ref time1, out holdtime, ref time2, total);
+        RunDroppableRIEnumerator(DoScale(cT));
     }
 
     public void AssignRatios(float? t1r, float? t2r) {
@@ -34,30 +42,25 @@ public class ScaleAnimator : TimeBoundAnimator {
         endScale = end;
     }
 
-    private void Start() {
-        tr = transform;
-        StartCoroutine(DoScale());
-    }
-
     private void AssignScale(float x) {
         tr.localScale = new Vector3(x, x, 1f);
     }
 
-    private IEnumerator DoScale() {
+    private IEnumerator DoScale(ICancellee cT) {
         AssignScale(startScale);
         FXY e1 = EaseHelpers.GetFuncOrRemoteOrLinear(ease1);
         FXY e2 = EaseHelpers.GetFuncOrRemoteOrLinear(ease2);
-        for (float t = 0; t < time1; t += ETime.dT) {
+        for (float t = 0; t < time1; t += ETime.FRAME_TIME) {
             if (cT.Cancelled) break;
             yield return null;
             AssignScale(startScale + (midScale - startScale) * e1(t/time1));
         }
         AssignScale(midScale);
-        for (float t = 0; t < holdtime; t += ETime.dT) {
+        for (float t = 0; t < holdtime; t += ETime.FRAME_TIME) {
             if (cT.Cancelled) break;
             yield return null;
         }
-        for (float t = 0; t < time2; t += ETime.dT) {
+        for (float t = 0; t < time2; t += ETime.FRAME_TIME) {
             if (cT.Cancelled) break;
             yield return null;
             AssignScale(midScale + (endScale - midScale) * e2(t/time2));

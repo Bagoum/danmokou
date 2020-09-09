@@ -46,6 +46,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   destructible: 1
+  deletable: 1
   grazeEveryFrames: 60
   screenCullRadius: 3
   renderPriority: 500

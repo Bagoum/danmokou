@@ -1,9 +1,6 @@
 pattern { }
 phase 0
 	action block 0
-		clear phase
-		clear bullet
-	action block 0.05
 		shift-phase-to 3
 phase 0
 	action block 0

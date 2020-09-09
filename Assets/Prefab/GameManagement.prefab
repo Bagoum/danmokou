@@ -1183,7 +1183,6 @@ GameObject:
   - component: {fileID: 6701421480483869197}
   - component: {fileID: 2094832129283138134}
   - component: {fileID: 420902573}
-  - component: {fileID: 1369188325}
   - component: {fileID: 374624785}
   - component: {fileID: 2062655874892461090}
   - component: {fileID: 374624784}
@@ -1240,6 +1239,8 @@ MonoBehaviour:
   arbitraryCapturer: {fileID: 3557489986302996358, guid: 328052995b995fa4c8266a313c6d38f4,
     type: 3}
   defaultSceneConfig: {fileID: 11400000, guid: 77878c984265b1b40b9f529bb9192688, type: 2}
+  playerHitbox: {fileID: 11400000, guid: d20af02baec12db42baba53da24bff95, type: 2}
+  visiblePlayer: {fileID: 11400000, guid: d20af02baec12db42baba53da24bff95, type: 2}
 --- !u!114 &2094832129283138134
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1279,19 +1280,6 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 42498a8c6ac2af148ac2f461b2023cb9, type: 2}
   - {fileID: 11400000, guid: b508df520f17b0d4494860e2aa647f3d, type: 2}
   - {fileID: 11400000, guid: 2cf5eba374e111145b64859ef8a15788, type: 2}
---- !u!114 &1369188325
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6701421480483869186}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: abcd04adee1661b46987b7a49e514c1f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  enemyVisiblePlayer: {fileID: 11400000, guid: d20af02baec12db42baba53da24bff95, type: 2}
 --- !u!114 &374624785
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1345,16 +1333,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorScript: {fileID: 0}
   ID: global
-  displayChangedPosition: 0
   rotationMethod: 0
-  rotateTransform: 0
   deathEffect: {fileID: 0}
-  triggersUITimeout: 0
-  cullable: 0
-  ScreenCullRadius: 4
-  damage: 1
-  destructible: 0
-  grazeEveryFrames: 20
+  cullableRadius:
+    cullable: 0
+    cullRadius: {fileID: 0}
+  collisionInfo:
+    CollisionActiveOnInit: 0
+    destructible: 0
+    grazeEveryFrames: 0
   animate:
     method: 0
     LRRelation: 0
@@ -1367,9 +1354,6 @@ MonoBehaviour:
       downAnim: []
       attackAnim: []
       deathAnim: []
-  movementModifiers:
-    flipX: 0
-    flipY: 0
 --- !u!114 &2149118795591872921
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1384,16 +1368,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorScript: {fileID: 0}
   ID: 
-  displayChangedPosition: 1
   rotationMethod: 0
-  rotateTransform: 0
   deathEffect: {fileID: 0}
-  triggersUITimeout: 0
-  cullable: 0
-  ScreenCullRadius: 4
-  damage: 1
-  destructible: 0
-  grazeEveryFrames: 20
+  cullableRadius:
+    cullable: 0
+    cullRadius: {fileID: 0}
+  collisionInfo:
+    CollisionActiveOnInit: 0
+    destructible: 0
+    grazeEveryFrames: 0
   animate:
     method: 0
     LRRelation: 0
@@ -1406,6 +1389,3 @@ MonoBehaviour:
       downAnim: []
       attackAnim: []
       deathAnim: []
-  movementModifiers:
-    flipX: 0
-    flipY: 0

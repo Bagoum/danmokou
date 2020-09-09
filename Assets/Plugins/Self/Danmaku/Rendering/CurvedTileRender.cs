@@ -6,7 +6,7 @@ using UnityEngine;
 public abstract class CurvedTileRender : TiledRender {
     protected Vector2[] centers;
     
-    public CurvedTileRender(TiledRenderCfg cfg): base(cfg) {}
+    public CurvedTileRender(TiledRenderCfg cfg, GameObject obj): base(cfg, obj) {}
     
     // Start is called before the first frame update
     public void Initialize(ITransformHandler locationer, Material mat, bool isNew, bool is_static, int newTexW, float hueShift=0f) {

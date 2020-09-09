@@ -19,9 +19,7 @@ using static DMath.ExM;
 namespace DMath {
 
 /// <summary>
-/// Functions that take in a number and return a number (FXY).
-/// Best used for adjusting parametrics when a "function of time"
-/// or "function of firing index" is necessary.
+/// Number>number functions. 
 /// </summary>
 [SuppressMessage("ReSharper", "UnusedMember.Global")]
 public static class FXYRepo {

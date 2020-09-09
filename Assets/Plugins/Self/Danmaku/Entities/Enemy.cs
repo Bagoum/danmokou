@@ -29,10 +29,8 @@ public class Enemy : RegularUpdater {
     private BehaviorEntity beh;
     public bool takesBossDamage;
     [CanBeNull] private (bool _, Enemy to)? divertHP = null;
-    public int HP = 500;
+    public int HP { get; private set; }
     public int maxHP = 1000;
-    private bool suicideFire = true;
-    public string suicideFireType;
     public bool Vulnerable { get; private set; }= true;
     //private static int enemyIndexCtr = 0;
     //private int enemyIndex;
@@ -327,9 +325,8 @@ public class Enemy : RegularUpdater {
     [CanBeNull] private static VTP _suicideVTP = null;
     private static VTP SuicideVTP => _suicideVTP = _suicideVTP ?? "tprot cx 1.6".Into<VTP>();
     public void DoSuicideFire() {
-        if (!suicideFire || GameManagement.DifficultyCounter < DifficultySet.Hard.Counter()) return;
-        var bt = suicideFireType;
-        if (string.IsNullOrWhiteSpace(bt)) bt = LevelController.DefaultSuicideStyle;
+        if (GameManagement.DifficultyCounter < DifficultySet.Hard.Counter()) return;
+        var bt = LevelController.DefaultSuicideStyle;
         if (string.IsNullOrWhiteSpace(bt)) bt = "triangle-black/w";
         var angleTo = M.AtanD(BulletManager.PlayerTarget.location - beh.rBPI.loc);
         int numBullets = (GameManagement.DifficultyCounter <= DifficultySet.Lunatic.Counter()) ? 1 : 3;

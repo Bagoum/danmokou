@@ -148,7 +148,13 @@ public class GenCtxProperty {
     /// GIRepeat/GTRepeat only.
     /// </summary>
     /// <returns></returns>
-    public static GenCtxProperty WaitChild() => new WaitChildProp();
+    public static GenCtxProperty WaitChild() => new WaitChildFlag();
+    /// <summary>
+    /// Flag that forces the repeater to run child invocations sequentially.
+    /// GIRepeat/GTRepeat only.
+    /// </summary>
+    /// <returns></returns>
+    public static GenCtxProperty Sequential() => new SequentialFlag();
     /// <summary>
     /// When executing a function with multiple children,
     /// instead of executing all of them simultaneously,
@@ -489,7 +495,8 @@ public class GenCtxProperty {
         }
     }
 
-    public class WaitChildProp : GenCtxProperty { }
+    public class WaitChildFlag : GenCtxProperty { }
+    public class SequentialFlag : GenCtxProperty { }
 
     public class RootProp : TPProp {
         public readonly bool doAdjust;
@@ -633,6 +640,7 @@ public class GenCtxProperties<T> {
     [CanBeNull] public readonly GCXF<float> fortime;
     public readonly GCXF<float> delay = zeroWait;
     public readonly bool waitChild;
+    public readonly bool sequential;
     [CanBeNull] public readonly GCXF<Vector2> forceRoot;
     public readonly bool forceRootAdjust;
     public readonly (bool, GCXF<V2RV2>)? bank;
@@ -722,7 +730,8 @@ public class GenCtxProperties<T> {
             } else if (prop is WaitProp wt && allowWait) wait = wt.value;
             else if (prop is ForTimeProp ftp && allowWait) fortime = ftp.value;
             else if (prop is DelayProp dp && allowWait) delay = dp.value;
-            else if (prop is WaitChildProp && allowWaitChild) waitChild = true;
+            else if (prop is WaitChildFlag && allowWaitChild) waitChild = true;
+            else if (prop is SequentialFlag && allowWaitChild) sequential = true;
             else if (prop is RootProp rp) {
                 forceRoot = rp.value;
                 forceRootAdjust = rp.doAdjust;

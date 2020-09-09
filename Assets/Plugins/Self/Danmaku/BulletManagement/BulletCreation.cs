@@ -102,7 +102,7 @@ public struct DelegatedCreator {
 
     private MovementModifiers Modifiers =>
         modifiers.ApplyOver(useParentMoveMod ?
-            parent.movementModifiers : MovementModifiers.Default);
+            parent.MovementModifiers : MovementModifiers.Default);
 
     //If there is a transform-parent, then the effective parent offset is zero.
     public Vector2 ParentOffset => 

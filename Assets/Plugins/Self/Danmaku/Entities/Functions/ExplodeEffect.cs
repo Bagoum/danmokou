@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ExplodeEffect : MonoBehaviour {
+public class ExplodeEffect : CoroutineRegularUpdater {
     public ParticleSystem[] particles;
     public ScaleAnimator neg1;
     public ScaleAnimator neg2;
@@ -20,21 +20,21 @@ public class ExplodeEffect : MonoBehaviour {
             m.duration = time;
             p.Play();
         }
-        StartCoroutine(Operate(time));
+        RunDroppableRIEnumerator(Operate(time));
     }
 
     private IEnumerator Operate(float timeMain, float timeExplode = 1f, float secondExplodeDelay = 0.6f) {
-        for (float t = 0; t < timeMain; t += ETime.dT) {
+        for (float t = 0; t < timeMain; t += ETime.FRAME_TIME) {
             yield return null;
         }
         neg1.gameObject.SetActive(true);
-        neg1.AssignTime(timeExplode);
-        for (float t = 0; t < secondExplodeDelay; t += ETime.dT) {
+        neg1.Initialize(Cancellable.Null, timeExplode);
+        for (float t = 0; t < secondExplodeDelay; t += ETime.FRAME_TIME) {
             yield return null;
         }
         neg2.gameObject.SetActive(true);
-        neg2.AssignTime(timeExplode);
-        for (float t = 0; t < timeExplode; t += ETime.dT) {
+        neg2.Initialize(Cancellable.Null,timeExplode);
+        for (float t = 0; t < timeExplode; t += ETime.FRAME_TIME) {
             yield return null;
         }
         Destroy(gameObject);

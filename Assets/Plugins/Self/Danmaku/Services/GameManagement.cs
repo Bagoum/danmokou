@@ -339,6 +339,9 @@ public class GameManagement : RegularUpdater {
     public GameObject arbitraryCapturer;
     public static GameObject ArbitraryCapturer => gm.arbitraryCapturer;
     public SceneConfig defaultSceneConfig;
+    public SOCircle playerHitbox;
+    public SOCircle visiblePlayer;
+    public static Vector2 VisiblePlayerLocation => gm.visiblePlayer.location;
 
     private void Awake() {
         if (gm != null) {
@@ -364,6 +367,13 @@ public class GameManagement : RegularUpdater {
     #endif
         Log.Unity($"Graphics Render mode {SystemInfo.renderingThreadingMode}");
         Log.Unity($"Danmokou {EngineVersion}, {References.gameIdentifier} {References.gameVersion}");
+
+        //The reason we do this instead of Awake is that we want all resources to be
+        //loaded before any State Machines are constructed, which may occur in other entities' Awake calls.
+        GetComponent<BulletManager>().Setup();
+        GetComponent<ResourceManager>().Setup();
+        GetComponentInChildren<SFXService>().Setup();
+        GetComponentInChildren<AudioTrackService>().Setup();
     }
 
     public static bool MainMenuExists => References.mainMenu != null;
@@ -413,7 +423,7 @@ public class GameManagement : RegularUpdater {
         campaign = new CampaignData(CampaignMode.MAIN, 9001);
     }
 
-    public static void ClearPhase() {
+    private static void ClearPhase() {
         BulletManager.ClearPoolControls();
         BulletManager.ClearEmpty();
         Events.Event0.Reset();

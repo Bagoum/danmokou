@@ -6,7 +6,7 @@ namespace Danmaku {
 public class RunBGM : MonoBehaviour {
     [CanBeNull] public AudioTrack bgm;
 
-    private void Start() {
+    private void Awake() {
         AudioTrackService.InvokeBGM(bgm);
     }
 }

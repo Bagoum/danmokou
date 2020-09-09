@@ -46,6 +46,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   destructible: 1
+  deletable: 1
   grazeEveryFrames: 60
   screenCullRadius: 3
   renderPriority: 400
@@ -59,8 +60,13 @@ MonoBehaviour:
   colorizing:
     FlatLight: 0
     Light: 1
+    WideLight: 0
+    FlatColor: 0
     Color: 1
+    WideColor: 0
+    FlatDark: 0
     Dark: 1
+    WideDark: 0
     Full: 0
     Inverted: 0
     FullInvertedAsLightDark: 0

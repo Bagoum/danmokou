@@ -355,8 +355,18 @@ public static partial class ExM {
     /// <param name="by">Positive number for absolute value comparison</param>
     /// <param name="x">Number to be limited</param>
     /// <returns></returns>
-    public static tfloat Limit(efloat by, efloat x) => EEx.Resolve(by, x, Limit);
-    private static Ex Limit(tfloat by, tfloat x) => Ex.Condition(x.GT0(), Min(x, by), Max(x, Ex.Negate(by)));
+    public static tfloat Limit(efloat by, efloat x) => EEx.Resolve(by, x, (_by, _x) => Ex.Condition(_x.GT0(), Min(_x, _by), Max(_x, Ex.Negate(_by))));
+
+    /// <summary>
+    /// If x's absolute value is less than by, then return 0 instead.
+    /// </summary>
+    public static tfloat HighPass(tfloat by, efloat x) => 
+        EEx.Resolve(x, _x => Ex.Condition(Abs(_x).LT(by), E0, _x));
+    /// <summary>
+    /// If x's absolute value is greater than by, then return 0 instead.
+    /// </summary>
+    public static tfloat HighCut(tfloat by, efloat x) => 
+        EEx.Resolve(x, _x => Ex.Condition(Abs(_x).GT(by), E0, _x));
     
     private static readonly ExFunction _Clamp = ExUtils.Wrap<Mathf, float>("Clamp", 3);
     
@@ -386,6 +396,21 @@ public static partial class ExM {
             Ex.Condition(a.LT(npi), 
                 a.Add(tau), 
                 a)));
+
+    /// <summary>
+    /// Move a value in the range [-2pi, 2pi] to the range [-2pi, 0] by subtracting tau.
+    /// </summary>
+    /// <param name="ang_rad"></param>
+    /// <returns></returns>
+    public static tfloat RadToNeg(efloat ang_rad) => EEx.Resolve(ang_rad, a =>
+        Ex.Condition(a.GT0(), a.Sub(tau), a));
+    /// <summary>
+    /// Move a value in the range [-2pi, 2pi] to the range [0,2pi] by adding tau.
+    /// </summary>
+    /// <param name="ang_rad"></param>
+    /// <returns></returns>
+    public static tfloat RadToPos(efloat ang_rad) => EEx.Resolve(ang_rad, a =>
+        Ex.Condition(a.LT0(), a.Add(tau), a));
     /// <summary>
     /// Move a value in the range [-540, 540] to the range [-180, 180] by adding or subtracting 360.
     /// </summary>
@@ -401,8 +426,7 @@ public static partial class ExM {
     /// <summary>
     /// Get the rotation required, in radians, to rotate SOURCE to TARGET, in the range [-pi,pi].
     /// </summary>
-    public static tfloat RadDiff(ev2 target, ev2 source) =>
-        EEx.Resolve(target, source, (t, s) => RadIntoRange(ATanR(t).Sub(ATanR(s))));
+    public static tfloat RadDiff(ev2 target, ev2 source) => RadIntoRange(ATanR(target).Sub(ATanR(source)));
 
     
     #region Sines

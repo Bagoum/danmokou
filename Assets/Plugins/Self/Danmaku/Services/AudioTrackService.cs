@@ -5,7 +5,7 @@ using System.Threading;
 using JetBrains.Annotations;
 using UnityEngine;
 
-public class AudioTrackService : CoroutineRegularUpdater {
+public class AudioTrackService : MonoBehaviour {
     private static AudioTrackService main;
     [CanBeNull] private static IAudioTrackInfo bgm = null;
     
@@ -17,7 +17,7 @@ public class AudioTrackService : CoroutineRegularUpdater {
     private static AudioSource currSrc;
     private static AudioSource nextSrc;
 
-    private void Awake() {
+    public void Setup() {
         main = this;
         currSrc = src1;
         nextSrc = src2;
@@ -126,15 +126,13 @@ public class AudioTrackService : CoroutineRegularUpdater {
     
     
     private DeletionMarker<Action<GameState>> gameStateListener;
-    protected override void OnEnable() {
+    protected void OnEnable() {
         gameStateListener = Core.Events.GameStateHasChanged.Listen(HandleGameStateChange);
-        base.OnEnable();
     }
 
-    protected override void OnDisable() {
+    protected void OnDisable() {
         gameStateListener.MarkForDeletion();
         ClearAllAudio(true);
-        base.OnDisable();
     }
     private void HandleGameStateChange(GameState state) {
         if (state.IsPaused() && (bgm?.StopOnPause ?? false)) {
@@ -145,9 +143,6 @@ public class AudioTrackService : CoroutineRegularUpdater {
             src2.UnPause();
         }
     }
-    
-    public override int UpdatePriority => UpdatePriorities.SYSTEM;
-
 
     private static bool _doPreserveBGM = false;
     private static bool DoPreserveBGM {

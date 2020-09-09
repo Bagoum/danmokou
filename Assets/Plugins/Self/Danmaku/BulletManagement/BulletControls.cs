@@ -257,7 +257,8 @@ public partial class BulletManager {
     }
 
     /// <summary>
-    /// Pool controls for use with the `bullet-control` SM command. These deal with simple bullets.
+    /// Bullet controls for use with the `bullet-control` SM command. These deal with simple bullets.
+    /// <br/>All controls have a `cond` argument, which is a filtering condition. The control only affects bullets for which the condition is satisfied.
     /// </summary>
     public static class SimpleBulletControls {
         /// <summary>
@@ -525,6 +526,8 @@ public partial class BulletManager {
 
         /// <summary>
         /// Save vector2 values in public data hoisting.
+        /// <br/>Note: This is automatically called by the GuideEmpty function.
+        /// You should not need to use this yourself.
         /// </summary>
         /// <param name="targets">Several target, index, value tuples to save</param>
         /// <param name="cond">Filter condition</param>
@@ -533,6 +536,8 @@ public partial class BulletManager {
         
         /// <summary>
         /// Save float values in public data hoisting.
+        /// <br/>Note: This is automatically called by the GuideEmpty function.
+        /// You should not need to use this yourself.
         /// </summary>
         /// <param name="targets">Several target, index, value tuples to save</param>
         /// <param name="cond">Filter condition</param>

@@ -12,7 +12,7 @@ public class Pather : Bullet {
     private Laser.PointContainer endpt;
 
     protected override void Awake() {
-        ctr = new CurvedTileRenderPather(config);
+        ctr = new CurvedTileRenderPather(config, gameObject);
         rotationMethod = RotationMethod.Manual;
         ctr.SetCameraCullable(InvokeCull);
         base.Awake();
@@ -27,7 +27,6 @@ public class Pather : Bullet {
         base.Initialize(options, null, velocity.WithNoMovement(), firingIndex, bpiid, _target, out int layer); // Call after Awake/Reset
         ctr.trailR.gameObject.layer = layer;
         ctr.Activate(); //This invokes UpdateMesh
-        collisionActive = true;
     }
 
     public override Vector2 GlobalPosition() => ctr.GlobalPosition;

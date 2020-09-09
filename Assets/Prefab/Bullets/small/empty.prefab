@@ -44,7 +44,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6661135a8683fa541ab9d8319d45d38a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  destructible: 1
+  destructible: 0
   grazeEveryFrames: 60
   screenCullRadius: 15
   renderPriority: 0
@@ -58,8 +58,13 @@ MonoBehaviour:
   colorizing:
     FlatLight: 0
     Light: 0
+    WideLight: 0
+    FlatColor: 0
     Color: 0
+    WideColor: 0
+    FlatDark: 0
     Dark: 0
+    WideDark: 0
     Full: 0
     Inverted: 0
     FullInvertedAsLightDark: 0
@@ -71,6 +76,7 @@ MonoBehaviour:
     displaceMagnitude: 0
     displaceSpeed: 0
     displaceMethod: 0
+    displaceXMul: 0
   frameAnimInfo:
     sprite0: {fileID: 0}
     numFrames: 0

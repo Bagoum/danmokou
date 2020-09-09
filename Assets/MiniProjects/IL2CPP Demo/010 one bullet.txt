@@ -1,0 +1,15 @@
+pattern({ })
+<!> type non `One Bullet (Press R to reload)`
+phase(0)
+	action(block, 0)
+		position(-2, 0)
+		sync(
+			fireball-red/, 
+			<>, 
+			s(rvelocity(px(2)))
+		)
+		sync(
+			fireball-purple/, 
+			<>, 
+			s(rvelocity(lerpt(0.5, 1.5, py(2), px(3))))
+		)

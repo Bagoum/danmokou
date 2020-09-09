@@ -1,7 +1,6 @@
 pattern { }
 phase 0
 	action block 0
-		clear bullet
 		position 0 0
 		async strip-red/w <1;:> gir {
 			t	2

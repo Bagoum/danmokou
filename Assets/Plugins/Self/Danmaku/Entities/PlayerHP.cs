@@ -47,7 +47,7 @@ public class PlayerHP : CoroutineRegularUpdater {
         var effectGO = effect.ProcNotNull(v, v, 0);
         effectGO.transform.SetParent(tr);
         var animator = effectGO.GetComponent<TimeBoundAnimator>();
-        if (animator != null) animator.AssignTime(time);
+        if (animator != null) animator.Initialize(Cancellable.Null, time);
         return effectGO;
     }
 

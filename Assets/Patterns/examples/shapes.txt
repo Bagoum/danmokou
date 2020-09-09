@@ -2,8 +2,6 @@ pattern { }
 phase 0
 	action block 0
         position 0 0
-        clear bullet
-		clear phase
 		shift-phase-to 2
 		
 !{ show(gsrrules360, gsrrules720)

@@ -194,6 +194,7 @@ public readonly struct GameRequest {
                 var beh = UnityEngine.Object.Instantiate(b.boss).GetComponent<BehaviorEntity>();
                 beh.behaviorScript = b.stateMachine;
                 beh.phaseController.Override(ab.phase.index, req.vFinishAndPostReplay);
+                beh.RunAttachedSM();
             }));
     }
 

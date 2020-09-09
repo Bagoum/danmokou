@@ -88,7 +88,6 @@ public abstract class Bullet : BehaviorEntity {
 
     public override void InvokeCull() {
         if (dying) return;
-        collisionActive = false;
         allBullets.Remove(this);
         base.InvokeCull();
     }

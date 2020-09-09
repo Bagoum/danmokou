@@ -3,8 +3,6 @@ phase 0 #{
 	action block 0
 		@ { nb }
 			cull
-		clear phase
-		clear bullet
 		summon inode <> nb <> null null
 	action block 0.1
 		##track playbgms { liq-brainwash liq-blacklist }

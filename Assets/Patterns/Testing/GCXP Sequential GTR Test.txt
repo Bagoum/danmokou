@@ -1,0 +1,22 @@
+pattern { }
+phase 0
+	saction 0
+		position 0 0
+		gtr2 2 2 <> {
+			sequential
+			wait-child
+		} {
+			async sakura-pink/w <> gcr2 1 2 <> {
+			} s tprot cx 2
+			async fireball-pink/w <> gcr2 1 2 <> {
+			} s tprot cx 3
+		}
+		gtr2 2 2 <> {
+			sequential
+		} {
+			async sakura-red/w <> gcr2 1 2 <> {
+			} s tprot cx 2
+			async fireball-red/w <> gcr2 1 2 <> {
+			} s tprot cx 3
+		}
+		position 2 0

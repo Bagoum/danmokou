@@ -23,19 +23,12 @@ using static DMath.ExMMod;
 
 namespace DMath {
 /// <summary>
-/// Functions that take in parametric information and return V2.
-/// <br/>Note: most functions in this repository should be rewritten or turned into simple expression functions.
+/// Functions that return Vector2.
 /// </summary>
 [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
 [SuppressMessage("ReSharper", "UnusedMember.Global")]
 public static partial class Parametrics {
     private static readonly Ex EPS = Ex.Constant(M.MAG_ERR);
-    /// <summary>
-    /// Assign local variables that can be repeatedly used without reexecution. Shortcut: ::v2
-    /// </summary>
-    /// <param name="aliases">List of each variable and its assigned vector value</param>
-    /// <param name="inner">Code to execute within the scope of the variables</param>
-    public static ExTP LetV2s((string, ExTP)[] aliases, ExTP inner) => bpi => ReflectEx.Let(aliases, () => inner(bpi), bpi);
     
     public static ExTP Zero() => CXY(0, 0);
     
@@ -359,6 +352,9 @@ public static partial class Parametrics {
     public static ExTP TrueRotateLerpRate(float rate, ExTP from, ExTP to) {
         return bpi => ExMHelpers.RotateLerp(to(bpi), from(bpi), bpi, true, true, rate);
     }
+
+    public static ExTP LaserRotateLerp(ExBPY rate, ExTP from, ExTP to) =>
+        bpi => ExMHelpers.LaserRotateLerp(to(bpi), from(bpi), bpi, rate(bpi));
 
     #endregion
     

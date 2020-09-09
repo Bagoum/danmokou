@@ -3,6 +3,9 @@ using System.Collections;
 using DMath;
 using UnityEngine;
 
+/// <summary>
+/// Graphical only. Not on RU loop.
+/// </summary>
 public class RadialTimeoutAnimator : TimeBoundAnimator {
     private float time;
     public float startScale = 0f;
@@ -22,10 +25,12 @@ public class RadialTimeoutAnimator : TimeBoundAnimator {
     private SpriteRenderer sr;
     private MaterialPropertyBlock pb;
 
-    public override void AssignTime(float total) {
+    public override void Initialize(ICancellee cT, float total) {
         time = total;
         time1 = time * time1Ratio;
         time2 = time * time2Ratio;
+        RunDroppableRIEnumerator(DoRadialize(cT));
+        RunDroppableRIEnumerator(DoScale(cT));
     }
 
     private void Awake() {
@@ -35,46 +40,41 @@ public class RadialTimeoutAnimator : TimeBoundAnimator {
         tr = transform;
     }
 
-    private void Start() {
-        StartCoroutine(DoRadialize());
-        StartCoroutine(DoScale());
-    }
-
 
     private void AssignScale(float x) {
         tr.localScale = new Vector3(x, x, 1f);
     }
-    private IEnumerator DoScale() {
+    private IEnumerator DoScale(ICancellee cT) {
         AssignScale(startScale);
         FXY e1 = EaseHelpers.GetFuncOrRemoteOrLinear(ease1);
         FXY e2 = EaseHelpers.GetFuncOrRemoteOrLinear(ease2);
-        for (float t = 0; t < time1; t += ETime.dT) {
+        for (float t = 0; t < time1; t += ETime.FRAME_TIME) {
             if (cT.Cancelled) break;
             yield return null;
             AssignScale(startScale + (midScale - startScale) * e1(t/time1));
         }
         AssignScale(midScale);
-        for (float t = 0; t < holdtime; t += ETime.dT) {
+        for (float t = 0; t < holdtime; t += ETime.FRAME_TIME) {
             if (cT.Cancelled) break;
             yield return null;
         }
-        for (float t = 0; t < time2; t += ETime.dT) {
+        for (float t = 0; t < time2; t += ETime.FRAME_TIME) {
             if (cT.Cancelled) break;
             yield return null;
             AssignScale(midScale + (endScale - midScale) * e2(t/time2));
         }
         AssignScale(endScale);
     }
-    private IEnumerator DoRadialize() {
+    private IEnumerator DoRadialize(ICancellee cT) {
         float t = 0;
         var lit = time * lerpInTimeRatio;
-        for (; t < time * lerpInTimeRatio; t += ETime.dT) {
+        for (; t < time * lerpInTimeRatio; t += ETime.FRAME_TIME) {
             pb.SetFloat(PropConsts.fillRatio, M.SinDeg(90 * t / lit));
             sr.SetPropertyBlock(pb);
             if (cT.Cancelled) break;
             yield return null;
         }
-        for (; t < time; t += ETime.dT) {
+        for (; t < time; t += ETime.FRAME_TIME) {
             pb.SetFloat(PropConsts.fillRatio, 1 - (t - lit) / (time * (1 - endEarlyRatio) - lit));
             sr.SetPropertyBlock(pb);
             if (cT.Cancelled) break;

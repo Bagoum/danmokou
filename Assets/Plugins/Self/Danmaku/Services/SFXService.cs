@@ -21,7 +21,7 @@ public class SFXService : MonoBehaviour {
     public SFXConfig[] SFX;
     private static readonly Dictionary<string, SFXConfig> dclips = new Dictionary<string, SFXConfig>();
     private static readonly Dictionary<string, SOProccable> dcont = new Dictionary<string, SOProccable>();
-    private void Awake() {
+    public void Setup() {
         main = this;
         src = GetComponent<AudioSource>();
         dclips.Clear();

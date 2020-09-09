@@ -17,19 +17,12 @@ using static DMath.ExM;
 
 namespace DMath {
 /// <summary>
-/// Functions that return V4.
+/// Functions that return Vector4.
 /// <br/>Note that these are also used for colors, in the format R G B A (0-1 floats).
 /// </summary>
 [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
 [SuppressMessage("ReSharper", "UnusedMember.Global")]
 public static partial class Parametrics4 {
-    /// <summary>
-    /// Assign local variables that can be repeatedly used without reexecution. Shortcut: ::v2
-    /// </summary>
-    /// <param name="aliases">List of each variable and its assigned vector value</param>
-    /// <param name="inner">Code to execute within the scope of the variables</param>
-    public static ExTP4 LetV2s((string, ExTP)[] aliases, ExTP4 inner) => bpi => ReflectEx.Let(aliases, () => inner(bpi), bpi);
-
     /// <summary>
     /// Derive a color from a vector3 containing R, G, B components. Alpha is set to 1.
     /// </summary>

@@ -2,9 +2,6 @@ pattern { }
 phase 0
 	action block 0
 		slowdownreset
-		clear phase
-		clear bullet
-	action block 0.1
 		shift-phase-to 2
 		
 ## powerup

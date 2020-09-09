@@ -50,6 +50,7 @@ public class ChallengeManager : CoroutineRegularUpdater {
         var cr = Tracking.Value;
         exec.behaviorScript = cr.Boss.stateMachine;
         exec.phaseController.Override(cr.phase.phase.index, () => { });
+        exec.RunAttachedSM();
     }
 
     public class Restrictions {
@@ -120,7 +121,6 @@ public class ChallengeManager : CoroutineRegularUpdater {
             StaticNullableStruct.LastGame = new GameRequest(gr.cb, gr.difficulty, challenge: next.Value, shot: gr.shot);
             TrackChallenge(gr, next.Value);
             LinkBEH(e);
-            e.RunAttachedSM();
         } else {
             UIManager.MessageChallengeEnd(true, out float t);
             WaitingUtils.WaitThenCB(main, Cancellable.Null, t, false, gr.vFinishAndPostReplay);

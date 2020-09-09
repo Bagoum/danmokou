@@ -30,6 +30,7 @@ public class CoroutineRegularUpdater : RegularUpdater {
     }
 
     public void RunRIEnumerator(IEnumerator ienum) => coroutines.Run(ienum);
+    public void RunTryPrependRIEnumerator(IEnumerator ienum) => coroutines.RunTryPrepend(ienum);
     public void RunPrependRIEnumerator(IEnumerator ienum) => coroutines.RunPrepend(ienum);
 
     public void RunDroppableRIEnumerator(IEnumerator ienum) => coroutines.RunDroppable(ienum);

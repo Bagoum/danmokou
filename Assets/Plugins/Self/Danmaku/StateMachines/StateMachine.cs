@@ -45,6 +45,7 @@ public struct SMHandoff : IDisposable {
     public void Dispose() => GCX.Dispose();
 
     public void RunRIEnumerator(IEnumerator cor) => Exec.RunRIEnumerator(cor);
+    public void RunTryPrependRIEnumerator(IEnumerator cor) => Exec.RunTryPrependRIEnumerator(cor);
 
     public SMHandoff CreateJointCancellee(ICancellee other, out ICancellee joint) {
         joint = new JointCancellee(cT, other);
@@ -71,19 +72,10 @@ public abstract class StateMachine {
         //{"bpat", typeof(BulletPatternLASM)},
         {"event", typeof(EventLASM)},
         {"anim", typeof(AnimatorControllerLASM)},
-        {"track", typeof(TrackControlLASM)},
-        {"clear", typeof(ClearLASM)},
         {"@", typeof(RetargetUSM)},
         {"~", typeof(NoBlockUSM)},
-        {"seq", typeof(SequentialMPSM)},
-        {"nbseq", typeof(NBSequentialMPSM)},
         {"break", typeof(BreakSM)},
-        {"sprite", typeof(SpriteControlLASM)},
-        {"setstate", typeof(SetStateLASM)},
         {"timer", typeof(TimerControllerLASM)},
-        //{"debug", typeof(DebugLASM)},
-        //{"!err", typeof(ErrorLASM)},
-        {"op", typeof(CoroutineLASM)},
         {"gtr", typeof(GTRepeat)},
         {"gtrepeat", typeof(GTRepeat)},
         {"gtr2", typeof(GTRepeat2)},
@@ -96,12 +88,11 @@ public abstract class StateMachine {
         {typeof(PatternSM), new[] { typeof(PhaseSM), typeof(UniversalSM)}}, {
             typeof(PhaseSM), new[] {
                 typeof(PhaseActionSM), typeof(PhaseSequentialActionSM), typeof(EndPSM), typeof(FinishPSM),
-                typeof(MetaPASM), typeof(UniversalSM)
+                typeof(UniversalSM)
             }
         },
         {typeof(PhaseActionSM), new[] {typeof(LineActionSM), typeof(UniversalSM)}},
         {typeof(PhaseSequentialActionSM), new[] {typeof(LineActionSM), typeof(UniversalSM)}},
-        {typeof(MetaPASM), new[] {typeof(PhaseActionSM), typeof(PhaseSequentialActionSM), typeof(UniversalSM)}},
         {typeof(EndPSM), new[] {typeof(LineActionSM), typeof(UniversalSM)}},
         {typeof(ScriptTSM), new[] {typeof(ScriptLineSM)}}
     };
@@ -537,26 +528,6 @@ public class IfUSM : UniversalSM {
     }
     public override Task Start(SMHandoff smh) {
         return pred(smh.GCX) ? states[0].Start(smh) : states[1].Start(smh);
-    }
-}
-
-/// <summary>
-/// `seq`: Run a list of `action` or `saction` blocks in sequence.
-/// <br/>Note: while I'd like to deprecate this, it's still quite useful for GTR children.
-/// </summary>
-public class SequentialMPSM : MetaPASM {
-    public SequentialMPSM(List<StateMachine> states) : base(states) { }
-}
-
-/// <summary>
-/// `nbseq`: Run a list of `action` or `saction` blocks in sequence, without blocking.
-/// </summary>
-public class NBSequentialMPSM : MetaPASM {
-    public NBSequentialMPSM(List<StateMachine> states) : base(states) { }
-
-    public override Task Start(SMHandoff smh) {
-        _ = base.Start(smh);
-        return Task.CompletedTask;
     }
 }
 

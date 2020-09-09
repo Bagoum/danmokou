@@ -30,7 +30,10 @@ public class RaikoCamera : CoroutineRegularUpdater {
         var x = new Cancellable();
         main.cancelTokens.Add(x);
         var joint = (cT == null) ? (ICancellee)x : new JointCancellee(x, cT);
-        main.RunDroppableRIEnumerator(main.IShake(time, magnitude, magMul, joint, done));
+        main.RunDroppableRIEnumerator(main.IShake(time, magnitude, magMul, joint, () => {
+            main.cancelTokens.Remove(x);
+            done();
+        }));
     }
     private readonly HashSet<Cancellable> cancelTokens = new HashSet<Cancellable>();
 

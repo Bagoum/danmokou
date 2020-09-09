@@ -3,8 +3,6 @@ phase 0
 	action block 0
 		@ { nl nr nu nd }
 			cull
-		clear phase
-		clear bullet
 		summon inode <> nl <> null null
 		summon inode <> nr <> null null
 		summon inode <> nu <> null null

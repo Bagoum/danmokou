@@ -69,8 +69,11 @@ public static class SMReflection {
             if (homesec > 0) SFXService.Request("x-crosshair");
             float fadein = Mathf.Max(0.15f, homesec / 5f);
             _ = Sync(style, _ => V2RV2.Zero, SyncPatterns.Loc0(Summon(path,
-                new SpriteControlLASM(SpriteControlLASM.Opacity(homesec + sticksec,
-                    bpi => CrosshairOpacity(fadein, homesec, sticksec, bpi))), new BehOptions())))(smh);
+                new ReflectableLASM(smh2 => {
+                    smh2.Exec.FadeSpriteOpacity(bpi => CrosshairOpacity(fadein, homesec, sticksec, bpi),
+                        homesec + sticksec, smh2.cT, WaitingUtils.GetAwaiter(out Task t));
+                    return t;
+                }), new BehOptions())))(smh);
             await saver(smh);
             smh.ThrowIfCancelled();
             SFXService.Request("x-lockon");
@@ -209,7 +212,7 @@ public static class SMReflection {
         AsyncHandoff abh = new AsyncHandoff(new DelegatedCreator(smh.Exec, 
                 BulletManager.StyleSelector.MergeStyles(smh.ch.bc.style, style)), rv2(smh.GCX) + smh.GCX.RV2, 
             WaitingUtils.GetAwaiter(out Task t), smh);
-        smh.RunRIEnumerator(ap(abh));
+        smh.RunTryPrependRIEnumerator(ap(abh));
         return t;
     };
     /// <summary>
@@ -358,7 +361,7 @@ public static class SMReflection {
             path.New(smh.GCX, ref randId), time(smh.GCX), 
                 Functions.Link(() => DataHoisting.Destroy(randId),
                 WaitingUtils.GetAwaiter(out Task t)), smh.cT, smh.GCX.index, condition), randId);
-        smh.RunRIEnumerator(cor);
+        smh.RunTryPrependRIEnumerator(cor);
         return t;
     };
 
@@ -430,6 +433,11 @@ public static class SMReflection {
     /// </summary>
     public static TaskPattern DivertHP(BEHPointer target) => smh => {
         smh.Exec.Enemy.DivertHP(target.beh.Enemy);
+        return Task.CompletedTask;
+    };
+
+    public static TaskPattern Vulnerable(GCXF<bool> isVulnerable) => smh => {
+        smh.Exec.Enemy.SetDamageable(isVulnerable(smh.GCX));
         return Task.CompletedTask;
     };
     

@@ -19,8 +19,8 @@ public class Tutorial : BehaviorEntity {
     private readonly Dictionary<TextMeshPro, Vector2> defaultLoc = new Dictionary<TextMeshPro, Vector2>();
     public GameObject tutorialBoss;
     public TextAsset bossSM;
-    protected override void Start() {
-        base.Start();
+    protected override void Awake() {
+        base.Awake();
     #if UNITY_EDITOR
         RunDroppableRIEnumerator(RunTutorial(SKIP));
     #else

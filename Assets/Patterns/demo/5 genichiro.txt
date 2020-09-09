@@ -3,8 +3,6 @@ phase 0 #{
 	action block 0
 		@ { nb }
 			cull
-		clear phase
-		clear bullet
 		summon inode <> nb <> null null
 	action block 0.1
 		##track playbgms { liq-brainwash liq-blacklist }
@@ -23,7 +21,7 @@ phase 27 #{
         move 2 tp-nrot eased out-sine 2 stopsampling 0 vhometime 2 cxy -2 2
 	action block 0
 		position -2 2
-		setstate vulnerable true
+		vulnerable true
 		gtr {
 			p	this
 			wait-child
@@ -155,7 +153,7 @@ phase 27 #{
 		pool-control $d6b allowcull false
 		bullet-control persist sun-red/w.2 cull > t 2
 		position 0 3 
-		setstate vulnerable true
+		vulnerable true
 		~@ d1 #{
 			async strip-red/ <> gcr {
 				delay	* 10 p

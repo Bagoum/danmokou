@@ -10,7 +10,6 @@ phase 0
 	
 phase 0
     action block 0
-		clear bullet
         position 0 0
 		@ nl
 			position 0 6

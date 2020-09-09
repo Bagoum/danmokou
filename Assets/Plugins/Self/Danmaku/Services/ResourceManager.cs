@@ -18,7 +18,6 @@ public class ResourceManager : MonoBehaviour {
         public SOBgTransition transition;
     }
 
-    private static ResourceManager main;
     public NamedEffectStrategy[] effects;
     public NamedBackgroundTransition[] bgTransitions;
     public SOPrefabs backgrounds;
@@ -27,8 +26,7 @@ public class ResourceManager : MonoBehaviour {
     private static readonly Dictionary<string, GameObject> Backgrounds = new Dictionary<string, GameObject>();
     private static readonly Dictionary<string, SOBgTransition> Transitions = new Dictionary<string, SOBgTransition>();
 
-    private void Awake() {
-        main = this;
+    public void Setup() {
         for (ushort ii = 0; ii < effects.Length; ++ii) {
             effectMap[effects[ii].name] = effects[ii].effect;
         }

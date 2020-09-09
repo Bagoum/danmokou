@@ -56,7 +56,7 @@ phase(0)
 
 You do not *need* to use Notepad++ to edit BDSM scripts, but I do not have language definitions for any other editor (though VSCode support may come in the future). As such, I recommend using Notepad++.
 
-- Copy `npp-nautical-theme.xml` into `AppData/Roaming/Notepad++/themes`, and then select it in `Settings > Style Configurator` via the dropdown.
+- Copy `npp-nautical-theme.xml` into `AppData/Roaming/Notepad++/themes`, and then select it in `Settings > Style Configurator` via the dropdown. Make sure `Global Styles > Global override > Enable global background color` is checked.
 - Copy `npp-bdsm-language.xml` into `AppData/Roaming/Notepad++/userDefineLangs`, and then select "BDSM" (Bagoum Danmaku Scripting Markup) it under the Language dropdown when editing a script file.
 
 ## Part Extra: F# Setup

@@ -3,7 +3,7 @@ pattern {
 }
 phase 0
 	action block 0
-		setstate vulnerable false
+		vulnerable false
 		position 2 10
 		shift-phase-to 1
 
@@ -17,7 +17,7 @@ phase 0
 phase 0
 	action block 0
 		position 0 1
-		setstate vulnerable true
+		vulnerable true
 		move _ nroffset px sine 4 0.5 t
 
 		
@@ -25,14 +25,14 @@ phase 0
 <!> hp 4000
 phase 0
 	action block 0
-		setstate vulnerable true
+		vulnerable true
 		move _ nroffset py sine 4 0.5 t
 		
 <!> type spell `This is a Spell`
 <!> hp 4000
 phase 0
 	action block 0
-		setstate vulnerable true
+		vulnerable true
 		move _ nroffset px sine 4 0.5 t
 		
 <!> type timeout `This is a Timeout Spell`
@@ -51,7 +51,7 @@ phase 0
 phase 0
 	action block 0
 		position 0 1
-		setstate vulnerable true
+		vulnerable true
 		async fireball-*/b <0.5;:12> gcr2 180 _ <8c> {
 		} gsr2 2 <> {
 			p this

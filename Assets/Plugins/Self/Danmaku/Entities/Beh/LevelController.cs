@@ -9,6 +9,7 @@ public class LevelController : BehaviorEntity {
     private string _DefaultSuicideStyle => (stage == null) ? null : stage.defaultSuicideStyle;
     private static LevelController main;
     public static string DefaultSuicideStyle => (main == null) ? null : main._DefaultSuicideStyle;
+    public override bool TriggersUITimeout => true;
 
     //[Header("On Level Completion")] public RString KVRKey;
     //public RInt KVRValue;

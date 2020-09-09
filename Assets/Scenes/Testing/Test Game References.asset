@@ -30,8 +30,8 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 94c9dbd65f23dec46894ae6f01f35d23, type: 2}
   dialogue: []
   bossMetadata:
-  - {fileID: 11400000, guid: dc2b4c390da211341a9b0d0c3356edf7, type: 2}
   - {fileID: 11400000, guid: fbf1044b75a1ecd468ff97b8acca7b7a, type: 2}
+  - {fileID: 11400000, guid: dc2b4c390da211341a9b0d0c3356edf7, type: 2}
   dialogueProfiles: []
   tracks: []
   summonables:

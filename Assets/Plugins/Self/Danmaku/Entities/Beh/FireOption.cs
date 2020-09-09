@@ -17,13 +17,13 @@ public class FireOption : BehaviorEntity {
     /// </summary>
     private float currLerpRatio;
     public int findex;
+    protected override int Findex => findex;
     public BehaviorEntity freeFirer;
     public BehaviorEntity focusFirer;
 
     private static readonly Dictionary<int, FireOption> optionsByIndex = new Dictionary<int, FireOption>();
     protected override void Awake() {
         base.Awake();
-        bpi = new ParametricInfo(bpi.loc, findex, bpi.id, bpi.t);
         original_angle = 0; //Shoot up by default
         freeOffset = offsetFree.Into<TP>();
         focusOffset = offsetFocus.Into<TP>();

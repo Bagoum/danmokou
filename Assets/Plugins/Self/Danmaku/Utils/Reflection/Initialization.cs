@@ -43,7 +43,6 @@ public static partial class Reflector {
         }
         ReflConfig.RecordPublic<Events.EventDeclaration<Events.Event0>>(typeof(Events.Event0));
         ReflConfig.ShortcutAll("letdecl", ":::");
-        ReflConfig.ShortcutAll("letv2s", "::v2");
         ReflConfig.ShortcutAll("divide", "/");
         ReflConfig.ShortcutAll("flipxgt", "flipx>");
         ReflConfig.ShortcutAll("flipxlt", "flipx<");

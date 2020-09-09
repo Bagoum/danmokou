@@ -3,7 +3,6 @@ phase 0
     action block 0
 		@ nl,nr
 			cull
-		clear bullet
         position 0 0
         summon enemy01 <3;:> nr <> tpnrot cx 0.2 here 
 			action block 0 

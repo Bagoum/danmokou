@@ -18,12 +18,12 @@ See [the website](https://dmk.bagoum.com/) for a friendly introduction to what D
 
 # Licensing
 
-The source code is licensed under MIT. See the COPYING file for details, as well as information on non-code assets.
+The source code is licensed under MIT. See the COPYING file for details, as well as information on non-code assets. Note that submodule projects may have different licenses.
 
 # Feature Wishlist
 
 - GFW-style gameplay
-- WebGL (see the Pitfalls section)
+- WebGL
 
 # FAQ
 
@@ -80,12 +80,3 @@ Most play-mode tests operate by running some state machine and checking the outp
 
 Scenes used for play-mode tests are in the folder `Assets/Scenes/Testing`.
 
-# Pitfalls
-
-This is a collection of miscellaneous small warnings you may need to heed when using this engine.
-
-- If you are making complex backgrounds, do not use functions in the class `RNG`, and do not inherit from `BehaviorEntity` or use `ParametricInfo.WithRandomID` in the objects under the background. The reason for this is that backgrounds can be turned off, so these random functions can cause replay desyncing. Alternatively, you can disable the ability to turn off backgrounds. 
-- IL2CPP (including WebGL) builds do not currently work for two reasons:
-  - IL2CPP cannot handle expressions compiled to byref functions. [Related Github issue](https://github.com/dotnet/runtime/issues/31075). The root cause seems to be a dotnet policy, but this is solvable with a few minor engine deoptimizations.
-  - IL2CPP cannot handle expressions compiled to functions using value types. [Related forum thread](https://forum.unity.com/threads/are-c-expression-trees-or-ilgenerator-allowed-on-ios.489498/). As far as I can tell this is not solvable except by boxing, which would be far too heavy on the GC, but Unity should eventually get around to fixing the root cause. When that happens, I will standardize IL2CPP support. 
-  - 

@@ -294,7 +294,7 @@ PrefabInstance:
         type: 3}
       propertyPath: behaviorScript
       value: 
-      objectReference: {fileID: 4900000, guid: b853ae2ee7187844d9bced300f308eed, type: 3}
+      objectReference: {fileID: 4900000, guid: 40e2d80a2f511dc4ca9ee7477af28ba4, type: 3}
     - target: {fileID: 4602661400090615120, guid: 2e4cfe2f6f8095747a49bcb45d5dea46,
         type: 3}
       propertyPath: linkToEditorReload

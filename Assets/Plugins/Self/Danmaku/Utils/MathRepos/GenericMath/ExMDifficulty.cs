@@ -7,12 +7,9 @@ using static GameManagement;
 
 namespace DMath {
 /// <summary>
-/// See <see cref="DMath.ExM"/>.
+/// See <see cref="DMath.ExM"/>. This class contains functions related to difficulty control.
 /// </summary>
 public static class ExMDifficulty {
-
-    #region Difficulty
-
     /// <summary>
     /// Get the difficulty multiplier. 1 is easy, ~2.3 is lunatic. POSITIVE values outside this range are possible.
     /// </summary>
@@ -63,9 +60,6 @@ public static class ExMDifficulty {
     /// </summary>
     /// <returns></returns>
     public static tfloat D3d1() => ResolveD3(EN1, E0, E1);
-
-    #endregion
-
 
 }
 }

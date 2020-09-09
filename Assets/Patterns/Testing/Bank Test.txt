@@ -1,7 +1,6 @@
 pattern { }
 phase 0
 	action block 0
-		clear bullet
 		position 0 0
 		sync strip-red/w <2;:> gsr {
 			t	2

@@ -63,7 +63,7 @@ public class CurvedTileRenderPather : CurvedTileRender {
 
     private SOCircle target;
 
-    public CurvedTileRenderPather(PatherRenderCfg cfg) : base(cfg) {
+    public CurvedTileRenderPather(PatherRenderCfg cfg, GameObject obj) : base(cfg, obj) {
         lineRadius = cfg.lineRadius;
         trail = cfg.trail;
         trailR = cfg.trailR;

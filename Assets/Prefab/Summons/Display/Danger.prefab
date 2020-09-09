@@ -97,8 +97,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   recordPositionEvery: 0.2
-  afterImage: {fileID: 2099033134796106231, guid: e6a113662f3191448a2d38649dbb91b5,
-    type: 3}
   AIVelocityRotationDeg: 180
   AIVelocitySpeedRatio: 0.2
   ghost:
@@ -123,13 +121,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorScript: {fileID: 0}
   ID: 
-  displayChangedPosition: 1
   rotationMethod: 0
-  rotateTransform: 0
   deathEffect: {fileID: 0}
-  triggersUITimeout: 0
+  cullableRadius:
+    cullable: 1
+    cullRadius: {fileID: 11400000, guid: fd7e3b4d29f6b494eb277b8d8a62bd0d, type: 2}
   cullable: 1
-  ScreenCullRadius: 4
+  CollisionActiveOnInit: 0
+  destructible: 0
+  grazeEveryFrames: 20
   animate:
     method: 0
     LRRelation: 0
@@ -142,6 +142,3 @@ MonoBehaviour:
       downAnim: []
       attackAnim: []
       deathAnim: []
-  movementModifiers:
-    flipX: 0
-    flipY: 0

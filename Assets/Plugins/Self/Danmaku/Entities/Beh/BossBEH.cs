@@ -4,6 +4,7 @@ namespace Danmaku {
 public class BossBEH : BehaviorEntity {
     public bool linkToEditorReload = false;
 
+    public override bool TriggersUITimeout => true;
 
 #if UNITY_EDITOR
     private void Update() {

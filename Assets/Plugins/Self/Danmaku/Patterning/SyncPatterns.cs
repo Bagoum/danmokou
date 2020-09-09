@@ -225,6 +225,19 @@ public static partial class SyncPatterns {
     
     #region SimplifiedSP
 
+    private static (string, ExSBV2)[] AutoSaveV2(string loc, string dir) => new[] {
+        (loc, SBV2Repo.Loc()),
+        (dir, SBV2Repo.Dir())
+    };
+
+    private static readonly (string, ExSBF)[] AutoSaveF = { };
+
+    /// <summary>
+    /// GuideEmpty with a random suffix and no saved floats.
+    /// </summary>
+    public static SyncPattern GuideEmpty2(ExBPY indexer, (string, ExSBV2)[] saveV2s, GCXU<VTP> emptyPath,
+        SyncPattern[] guided) => GuideEmpty(null, indexer, saveV2s, AutoSaveF, emptyPath, guided);
+
     /// <summary>
     /// Set up an empty-guided fire.
     /// </summary>

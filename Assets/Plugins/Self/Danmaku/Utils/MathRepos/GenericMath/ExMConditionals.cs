@@ -20,7 +20,7 @@ using static DMath.ExM;
 
 namespace DMath {
 /// <summary>
-/// See <see cref="DMath.ExM"/>.
+/// See <see cref="DMath.ExM"/>. This class contains functions related to conditionals.
 /// </summary>
 public static class ExMConditionals {
 

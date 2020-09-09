@@ -97,19 +97,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 86421e86325267340a25a8636076d100, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  deathItems:
-    value: 3
-    pointPP: 0
-    life: 0
   behaviorScript: {fileID: 0}
   ID: 
-  displayChangedPosition: 1
   rotationMethod: 1
-  rotateTransform: 0
   deathEffect: {fileID: 11400000, guid: 2da45783ab6c9fd4883d37b44a9997dd, type: 2}
-  triggersUITimeout: 0
+  cullableRadius:
+    cullable: 1
+    cullRadius: {fileID: 11400000, guid: fd7e3b4d29f6b494eb277b8d8a62bd0d, type: 2}
   cullable: 1
-  canFireOffscreen: 0
+  CollisionActiveOnInit: 0
+  destructible: 0
+  grazeEveryFrames: 20
   animate:
     method: 1
     LRRelation: 5
@@ -119,15 +117,19 @@ MonoBehaviour:
       - sprite: {fileID: -8828500147440310334, guid: d336619b2d1034247986d6b9c22256f0,
           type: 3}
         time: 0.18
+        skipLoop: 0
       - sprite: {fileID: -1475366674721026613, guid: d336619b2d1034247986d6b9c22256f0,
           type: 3}
         time: 0.1
+        skipLoop: 0
       - sprite: {fileID: -4846456955131107090, guid: d336619b2d1034247986d6b9c22256f0,
           type: 3}
         time: 0.18
+        skipLoop: 0
       - sprite: {fileID: -1475366674721026613, guid: d336619b2d1034247986d6b9c22256f0,
           type: 3}
         time: 0.12
+        skipLoop: 0
       rightAnim: []
       leftAnim: []
       upAnim: []
@@ -136,9 +138,7 @@ MonoBehaviour:
       deathAnim:
       - sprite: {fileID: 21300000, guid: 5be58a1997611384da6a91317f3802d5, type: 3}
         time: 0.1
-  movementModifiers:
-    flipX: 0
-    flipY: 0
+        skipLoop: 0
 --- !u!114 &3407124447063394662
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -151,13 +151,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4b9be94bcb555ba4aac4864f75005f45, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  takesBossDamage: 0
   HP: 250
   maxHP: 250
+  suicideFireType: 
   collisionRadius:
     useConstant: 0
     constVal: 0
     refVal: {fileID: 11400000, guid: f6091c3cd707c524e956aeb626291dd3, type: 2}
-  alertLowHP: 0
+  modifyDamageSound: 0
   healthbarSprite: {fileID: 0}
   cardCircle: {fileID: 0}
   spellCircle: {fileID: 0}

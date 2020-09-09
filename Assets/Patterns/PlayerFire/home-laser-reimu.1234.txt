@@ -28,7 +28,10 @@ gtr {
 		0, _, {
 			start(* 30 (- t &lastActiveTime))
 			varLength(15, * 30 t)
-			dynamic(tpnrot(rotate(OptionAngle, cy 1)))
+			dynamic(tpnrot(laserrotatelerp(lerpt(3, 8, 0.7, 0),
+				rotate(OptionAngle, cy 1),
+				(- LNearestEnemy loc)
+			)))
 			delete(> (- t &lastActiveTime) 1)
 			deactivate(> playerUnfiringTimeFocus 0)
 			player(12, 25, 15, oh1)

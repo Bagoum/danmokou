@@ -61,7 +61,8 @@ public static class Collision {
 
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool CircleOnSegments(Vector2 c_src, float c_rad, Vector2 src, Vector2[] points, int start, int skip, int end, float radius, float cos_rot, float sin_rot) {
+    public static bool CircleOnSegments(Vector2 c_src, float c_rad, Vector2 src, Vector2[] points, int start, int skip, int end, float radius, float cos_rot, float sin_rot, out int segment) {
+        segment = 0;
         if (start >= end) return false;
         // use src.x to store delta vector to target, derotated.
         src.x = c_src.x - src.x;
@@ -85,17 +86,24 @@ public static class Collision {
             if (projection_unscaled < 0) {
                 //We only check endpoint collision on the first point;
                 //due to segmenting we will end by checking on all points except the last, which is handled outside.
-                if (d2 < radius2) return true;
+                if (d2 < radius2) {
+                    segment = ii - skip;
+                    return true;
+                }
             } else {
                 float dmag2 = delta.x * delta.x + delta.y * delta.y;
                 if (projection_unscaled < dmag2) {
                     float norm2 = d2 - projection_unscaled * projection_unscaled / dmag2;
-                    if (norm2 < radius2) return true;
+                    if (norm2 < radius2) {
+                        segment = ii - skip;
+                        return true;
+                    }
                 }
             }
         }
         //Now perform the last point check
         ii -= skip;
+        segment = ii;
         delta.x = points[end].x - points[ii].x;
         delta.y = points[end].y - points[ii].y;
         g.x = src.x - points[ii].x;

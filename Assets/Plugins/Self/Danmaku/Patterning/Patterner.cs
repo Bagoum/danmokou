@@ -48,7 +48,8 @@ public struct CommonHandoff {
         this.gcx = gcx;
     }
     
-    public CommonHandoff CopyGCX() => new CommonHandoff(cT, bc, gcx.Copy());
+    public CommonHandoff CopyGCX([CanBeNull] GenCtx overrideGCX = null) => 
+        new CommonHandoff(cT, bc, (overrideGCX ?? gcx).Copy());
 }
 public struct SyncHandoff {
     public CommonHandoff ch;
@@ -549,7 +550,7 @@ public struct LoopControl<T> {
     }
 
     private const string ModNumberRequired =
-        "Mod number must be provided for Mod parametrization. Use the \"tm\" tag and provide the max count as the first number.";
+        "Mod number must be provided for Mod parametrization. Use the \"maxtimes\" property and provide the max count as the first number.";
     public static int GetFiringIndex(Parametrization p, int parentIndex, int thisIndex, int? thisRpt) {
         if (p == Parametrization.THIS) return thisIndex;
         if (p == Parametrization.DEFER) return parentIndex;

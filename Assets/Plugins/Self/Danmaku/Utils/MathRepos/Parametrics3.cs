@@ -19,18 +19,11 @@ using B = DMath.BPYRepo;
 
 namespace DMath {
 /// <summary>
-/// Functions that return V3.
+/// Functions that return Vector3.
 /// </summary>
 [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
 [SuppressMessage("ReSharper", "UnusedMember.Global")]
 public static partial class Parametrics3 {
-    /// <summary>
-    /// Assign local variables that can be repeatedly used without reexecution. Shortcut: ::v2
-    /// </summary>
-    /// <param name="aliases">List of each variable and its assigned vector value</param>
-    /// <param name="inner">Code to execute within the scope of the variables</param>
-    public static ExTP3 LetV2s((string, ExTP)[] aliases, ExTP3 inner) => bpi => ReflectEx.Let(aliases, () => inner(bpi), bpi);
-
     /// <summary>
     /// Derive a parametric3 equation from a parametric2 function (Z is set to zero)
     /// </summary>

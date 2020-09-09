@@ -5,33 +5,33 @@ pattern { }
 phase 200
 	action block 0
 		position 0 1.5
-		setstate vulnerable true
+		vulnerable true
 
 <!> type spell `2`
 <!> hp 2000
 <!> hpbar 1
 phase 0
 	action block 1
-		setstate vulnerable true
+		vulnerable true
 		
 <!> type non `3`
 <!> hp 3000
 <!> hpbar 0.3
 phase 0
 	action block 1
-		setstate vulnerable true
+		vulnerable true
 		
 <!> type non `4`
 <!> hp 3000
 <!> hpbar 0.5
 phase 0
 	action block 1
-		setstate vulnerable true
+		vulnerable true
 		
 <!> type spell `5`
 <!> hp 3000
 <!> hpbar 1
 phase 0
 	action block 1
-		setstate vulnerable true
+		vulnerable true
             

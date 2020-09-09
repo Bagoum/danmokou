@@ -18,7 +18,7 @@ using static DMath.ExMMod;
 
 namespace DMath {
 /// <summary>
-/// See <see cref="DMath.ExM"/>.
+/// See <see cref="DMath.ExM"/>. This class contains functions related to lerping and smoothing.
 /// </summary>
 public static class ExMLerps {
     /// <summary>

@@ -17,6 +17,9 @@ using static Danmaku.Enums;
 
 namespace SM {
 
+/// <summary>
+/// A modifier that affects an entire pattern script.
+/// </summary>
 public class PatternProperty {
     /// <summary>
     /// Get metadata from a boss configuration. Includes things like UI colors, spell circles, tracker, etc.
@@ -55,6 +58,9 @@ public class PatternProperty {
     #endregion
 }
 
+/// <summary>
+/// A set of <see cref="PatternProperty"/>.
+/// </summary>
 public class PatternProperties {
     [CanBeNull] public readonly BossConfig boss;
     [CanBeNull] public readonly BossConfig[] bosses;
@@ -113,7 +119,7 @@ public class PhaseProperty {
     public static PhaseProperty Type(PhaseType type, string name) => new PhaseTypeProp(type, name);
     /// <summary>
     /// Declare the amount of HP the boss has during this section.
-    /// The boss will be invincible when the phase starts. Use `setstate vulnerable true`.
+    /// The boss will be invincible when the phase starts. Use `vulnerable true`.
     /// </summary>
     public static PhaseProperty HPn(int hp) => new HPProp(hp, null);
     /// <summary>
@@ -139,17 +145,20 @@ public class PhaseProperty {
     public static PhaseProperty Event0(Events.EventDeclaration<Events.Event0> ev) => new EmptyProp();
     /// <summary>
     /// Declare the background transition used when shifting into this spellcard.
+    /// <br/>Note: This is automatically handled by the `boss` pattern property.
     /// </summary>
     /// <returns></returns>
     public static PhaseProperty BGTIn(string style) => new BGTransitionProp(true, style);
     /// <summary>
     /// Declare the background style of this spellcard.
+    /// <br/>Note: This is automatically handled by the `boss` pattern property.
     /// </summary>
     /// <param name="style"></param>
     /// <returns></returns>
     public static PhaseProperty BG(string style) => new BackgroundProp(style);
     /// <summary>
     /// Declare the background transition used when ending this spellcard.
+    /// <br/>Note: This is automatically handled by the `boss` pattern property.
     /// </summary>
     /// <returns></returns>
     public static PhaseProperty BGTOut(string style) => new BGTransitionProp(false, style);
@@ -204,7 +213,7 @@ public class PhaseProperty {
 
     /// <summary>
     /// Perform a spell cutin before starting this phase. This is done automatically with index 0 for all
-    /// spell-type cards. If the index is invalid, then no cutin will be summoned.
+    /// spell-type cards if the `boss` pattern property is set. If the index is invalid, then no cutin will be summoned.
     /// </summary>
     public static PhaseProperty SpellCutin(int index) => new SpellCutinProp(index);
 

@@ -3,8 +3,6 @@ phase 0 #{
     action block 0
         @  {nl nr nb nt }
             cull
-        clear bullet
-        clear bullet-control
         summon inode <> nb <> null null
         summon inode <> nt <> null null
         summon inode <> nl <> null null
@@ -25,7 +23,7 @@ phase 38 #{
         move 2 tp-nrot eased out-sine 2 stopsampling 0 vhometime 2 cxy 0 2
         ##wait-for 3
     action nb 0
-        setstate vulnerable true
+        vulnerable true
         position 0 2
         @ nt
             position 0 5
@@ -74,7 +72,7 @@ phase 38 #{
         summon cutin-mokou <> _ <> null file slide-rl
         wait-for 3
     action block 0
-        setstate vulnerable true
+        vulnerable true
         position 0 2
         repeat _ wait 
                 move 6 tpnrot switchH 4
@@ -116,7 +114,7 @@ phase 30 #{
     action block 0
         move 2 tp-nrot eased out-sine 2 stopsampling 0 vhometime 2 cxy 0 3
     action block 0
-        setstate vulnerable true
+        vulnerable true
         position 0 3
         bulletf-control-sm persist pather18-purple/w < 4 abs x
             action block 0
@@ -159,7 +157,7 @@ phase 36 #{
         wait-for 3
     action nb 0
         _ 2 
-            setstate vulnerable true
+            vulnerable true
         position 0 3
         bulletf-control-sm persist pather18-red/w & > x 6 > y -4.5
             bullet pointy-green/ <> conce pssfx x-fire-burst-1repeat 36 <;:10> s tp-rot lerpfromtoback 0.5 1 2 2.5 cx 1.5 cx 0.5
@@ -206,7 +204,7 @@ phase 32 #{
     action block 0
         move 2 tp-nrot eased out-sine 2 stopsampling 0 vhometime 2 cxy 0 3
     action nb 0
-        setstate vulnerable true
+        vulnerable true
         position 0 3
         poolf-control pather18-purple* allowcull false
         bullet pather18-purple/w <1;:180> cre 30 15 <;:24> pssfx x-fire-tech-8 epather pp1 1 1
@@ -239,7 +237,7 @@ phase 42 #{
         sync cutin-mokou <> summonup _ <> null file slide-rl
         wait-for 2.5
     action block 0
-        setstate vulnerable true
+        vulnerable true
         position -5.5 5
 !{
 shellf(color)
@@ -314,7 +312,7 @@ phase 34 #{
     action block 0
         move 2 tp-nrot eased out-sine 2 stopsampling 0 vhometime 2 cxy -3 2
     action block 0
-        setstate vulnerable true
+        vulnerable true
         position -3 2
     repeat-every 8 9999
         action block 0
@@ -362,7 +360,7 @@ phase 72 #{
                 offset zero switch 6 tptf 0 sine 24 6 t cy 6
         wait-for 6
     action nb 0
-        setstate vulnerable true
+        vulnerable true
         @ nt       
             bullet pather18-red/w <8.2;:30> crepeatfuncangle 180 _
                     mod 9 * 9p t
@@ -443,7 +441,7 @@ phase 28 #{
         ##summon cutin-mokou=cu slide-rl=START world:<> flip=
         ##wait-for 3
     action block 0
-        setstate vulnerable true
+        vulnerable true
         position 0 3
         bullet pointy-blue/w <-1;0:> cre 12 _ <> repeatp add 2 <2;:> repeatinnerp defer 3 <;:-60> <;:60> s tprot brotatef 
             bpf * pm1mod p2 * 0.4 + -10 fsoftmod 20 p1

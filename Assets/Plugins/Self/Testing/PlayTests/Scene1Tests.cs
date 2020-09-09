@@ -389,6 +389,26 @@ public static class Scene1 {
         while (TestHarness.Running) yield return null;
     }
 
+    /// <summary>
+    /// Tests GTR waiting.
+    /// </summary>
+    /// <returns></returns>
+    [UnityTest]
+    public static IEnumerator TestGTR3() {
+        TestHarness.OnSOF(() => {
+            TestHarness.RunBehaviorScript("GTR3", "mokou");
+            var m = BehaviorEntity.GetExecForID("mokou");
+            TestHarness.Check(0, () => VecEq(V2(0, 1), m.rBPI.loc));
+            TestHarness.Check(1, () => VecEq(V2(0, 1), m.rBPI.loc));
+            TestHarness.Check(2, () => VecEq(V2(1, 1), m.rBPI.loc));
+            TestHarness.Check(3, () => VecEq(V2(1, 1), m.rBPI.loc));
+            TestHarness.Check(4, () => VecEq(V2(2, 1), m.rBPI.loc));
+            TestHarness.Check(5, () => VecEq(V2(2, 1), m.rBPI.loc));
+            TestHarness.Check(6, () => VecEq(V2(2, 1), m.rBPI.loc));
+        });
+        while (TestHarness.Running) yield return null;
+    }
+
     [UnityTest]
     public static IEnumerator TestOnlyOnce() {
         TestHarness.OnSOF(() => {
@@ -558,6 +578,81 @@ public static class Scene1 {
         });
         while (TestHarness.Running) yield return null;
     }
+
+    private static void CheckGCXPSequential() {
+        var m = BehaviorEntity.GetExecForID("mokou");
+        var p11 = BM.TPool("sakura-pink/w");
+        var p12 = BM.TPool("fireball-pink/w");
+        var p21 = BM.TPool("sakura-red/w");
+        var p22 = BM.TPool("fireball-red/w");
+        TestHarness.Check(0, () => {
+            VecEq(Vector2.zero, m.rBPI.loc);
+            AreEqual(p11.Count, 1);
+            AreEqual(p12.Count, 0);
+        });
+        TestHarness.Check(1, () => {
+            AreEqual(p11.Count, 2);
+            AreEqual(p12.Count, 1);
+        });
+        TestHarness.Check(2, () => {
+            AreEqual(p11.Count, 2);
+            AreEqual(p12.Count, 2);
+        });
+        //Note: This didn't use to work for GTR, because the first GTR iteration went like this:
+        // - call child 1
+        // - start waiter
+        // > child 1 finishes, calls child 2
+        // so the waiter ended up running after the child. This was fixed with RunTryPrepend for Async and Move commands.
+        TestHarness.Check(4, () => {
+            AreEqual(p11.Count, 3);
+            AreEqual(p12.Count, 2);
+        });
+        TestHarness.Check(5, () => {
+            AreEqual(p11.Count, 4);
+            AreEqual(p12.Count, 3);
+            AreEqual(p21.Count, 0);
+        });
+        TestHarness.Check(6, () => {
+            AreEqual(p11.Count, 4);
+            AreEqual(p12.Count, 4);
+            AreEqual(p21.Count, 1);
+            AreEqual(p22.Count, 0);
+        });
+        TestHarness.Check(7, () => {
+            AreEqual(p21.Count, 2);
+            AreEqual(p22.Count, 1);
+        });
+        TestHarness.Check(8, () => {
+            AreEqual(p21.Count, 3);
+            AreEqual(p22.Count, 2);
+        });
+        TestHarness.Check(9, () => {
+            AreEqual(p21.Count, 4);
+            AreEqual(p22.Count, 3);
+        });
+        TestHarness.Check(10, () => {
+            AreEqual(p21.Count, 4);
+            AreEqual(p22.Count, 4);
+            VecEq(V2(2, 0), m.rBPI.loc);
+        });
+    }
+    [UnityTest]
+    public static IEnumerator TestGCXPSequential_GIR() {
+        TestHarness.OnSOF(() => {
+            TestHarness.RunBehaviorScript("GCXP Sequential GIR", "mokou");
+            CheckGCXPSequential();
+        });
+        while (TestHarness.Running) yield return null;
+    }
+    
+    [UnityTest]
+    public static IEnumerator TestGCXPSequential_GTR() {
+        TestHarness.OnSOF(() => {
+            TestHarness.RunBehaviorScript("GCXP Sequential GTR", "mokou");
+            CheckGCXPSequential();
+        });
+        while (TestHarness.Running) yield return null;
+    }
     
     [UnityTest]
     public static IEnumerator TestSummonTime() {
@@ -619,12 +714,14 @@ public static class Scene1 {
                 AreEqual(PrivateDataHoisting.Fd[red[1].bpi.id][0], 1);
             });
             TestHarness.Check(1, () => {
-                AreEqual(red.Count, 0); 
-                //clear bullet doesn't delete data, that happens next frame by clear phase
+                //shift-phase is called, but bullets are softculled on the next frame
+                // and phase data is cleared at the end of next frame
+                AreEqual(red.Count, 2); 
                 AreEqual(PrivateDataHoisting.IDs.Count, 2);
                 AreEqual(PrivateDataHoisting.Fd.Count, 2);
             });
             TestHarness.Check(2, () => {
+                AreEqual(red.Count, 0); 
                 AreEqual(PrivateDataHoisting.IDs.Count, 0);
                 AreEqual(PrivateDataHoisting.Fd.Count, 0);
             });

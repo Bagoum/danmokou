@@ -501,7 +501,7 @@ public partial class BulletManager {
             int graze = 0;
             int collisionDamage = 0;
             for (int ii = 0; ii < count; ++ii) {
-                // During velocity iteration, pool controls may destroy some items, so we need to do null checks.
+                // During velocity iteration, bullet controls may destroy some items, so we need to do null checks.
                 if (!rem[ii]) {
                     ref SimpleBullet sbn = ref arr[ii];
                     bool checkGraze = false;

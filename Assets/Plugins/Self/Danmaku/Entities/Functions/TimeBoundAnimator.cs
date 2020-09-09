@@ -1,15 +1,14 @@
 ﻿using Core;
 using UnityEngine;
 
-public abstract class TimeBoundAnimator : MonoBehaviour {
+/// <summary>
+/// Graphical only. Not on RU loop.
+/// </summary>
+public abstract class TimeBoundAnimator : CoroutineRegularUpdater {
     public bool destroyOnDone;
-    protected ICancellee cT = Cancellable.Null;
 
-    public void Initialize(ICancellee canceller, float time) {
-        cT = canceller;
-        AssignTime(time);
-    }
-    public abstract void AssignTime(float total);
+    public abstract void Initialize(ICancellee cT, float time);
+    
 
     /// <summary>
     /// Share allocated time among the fade-in time, the wait time, and the fade-out time.
