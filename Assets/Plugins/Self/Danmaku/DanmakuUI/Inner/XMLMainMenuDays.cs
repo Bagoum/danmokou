@@ -10,6 +10,7 @@ using UnityEngine;
 using UnityEngine.Scripting;
 using static GameManagement;
 using static SM.SMAnalysis;
+using static XMLUtils;
 using static Danmaku.Enums;
 
 /// <summary>
@@ -26,7 +27,7 @@ public class XMLMainMenuDays : XMLMenu {
     private UIScreen SceneSelectScreen;
     private UIScreen ReplayScreen;
 
-    protected override UIScreen[] Screens => new[] { SceneSelectScreen, ReplayScreen, MainScreen };
+    protected override IEnumerable<UIScreen> Screens => new[] { SceneSelectScreen, ReplayScreen, MainScreen };
 
     public VisualTreeAsset GenericUIScreen;
     public VisualTreeAsset GenericUINode;
@@ -63,76 +64,37 @@ public class XMLMainMenuDays : XMLMenu {
         }*/
 
         DifficultySet dfc = DifficultySet.Normal;
-        (DayPhase p, Challenge c)? current = null;
+        var defaultPlayer = References.dayCampaign.players[0];
+        var defaultShot = defaultPlayer.shots[0];
 
-        UINode detailParent = null;
-
-        UINode FixedDetailRow(UINode x) => x
-            .FixDepth(1)
-            .SetAlwaysVisible()
-            .SetDisplayParentOverride(() => detailParent)
-            .SetBackOverride(() => detailParent)
-            .SetConfirmOverride(() => {
-                if (!current.HasValue) return (false, x);
-                var (p, c) = current.Value;
-                ConfirmCache();
-                new GameRequest(GameRequest.ShowPracticeSuccessMenu, dfc, challenge: new ChallengeRequest(p, c)).Run();
-                return (true, null);
-            })
-        ;
+        SceneSelectScreen = new UIScreen(Days.days[0].bosses.SelectMany(
+            b => b.phases.Select(p => {
+                if (!p.Enabled) return new UINode(p.Title).With(medDescrClass).EnabledIf(false);
+                var c = p.challenges[0];
+                (bool, UINode) Confirm() {
+                    ConfirmCache();
+                    new GameRequest(GameRequest.ShowPracticeSuccessMenu, dfc, challenge: new ChallengeRequest(p, c),
+                        player: defaultPlayer, shot: defaultShot).Run();
+                    return (true, null);
+                }
+                return new CacheNavigateUINode(TentativeCache, () => p.Title, 
+                    new UINode(c.Description(p.boss.boss)).SetConfirmOverride(Confirm),
+                    new DelayOptionNodeLR2<int>("", VTALR2Option, i => c = p.challenges[i], 
+                        p.challenges.Length.Range().ToArray, (i, v, on) => {
+                            v.Query(null, "bracket").ForEach(x => x.style.display = on ? DisplayStyle.Flex : DisplayStyle.None);
+                            v.Q("Star").style.unityBackgroundImageTintColor = new StyleColor(p.Completed(i) ?
+                                p.boss.boss.colors.uiHPColor :
+                                new Color(1, 1, 1, 0.52f));
+                        }).With(VTALR2OptionNode).With("nokey").SetConfirmOverride(Confirm),
+                    new UINode(() => "Press Z to start level".Locale("Zキー押すとレベルスタート")).SetConfirmOverride(Confirm)
+                ).With(medDescrClass).With(
+                    p.CompletedAll ? completedAllClass :
+                    p.CompletedOne ? completed1Class :
+                    null
+                );
+            })).ToArray()).With(VTASceneSelect);
         
-        var descrNode = FixedDetailRow(new UINode(() =>
-            current == null ? "None Selected" : $"{current?.c.Description(current?.p.boss.boss)}"))
-            .SetLeftOverride(() => detailParent).With("node140");
-
-        DelayOptionNodeLR2<int> challengeSelNode = FixedDetailRow(new DelayOptionNodeLR2<int>("", VTALR2Option, c => {
-            if (current.HasValue) current = (current.Value.p, current.Value.p.challenges[c]);
-        }, () => {
-            if (current.HasValue) return current.Value.p.challenges.Length.Range().ToArray();
-            return new int[0];
-        }, (c, v, b) => {
-            v.Query(null, "bracket").ForEach(x => x.style.display = b ? DisplayStyle.Flex : DisplayStyle.None);
-            v.Q("Star").style.unityBackgroundImageTintColor = new StyleColor((current?.p?.Completed(c) ?? false) ?
-                current.Value.p.boss.boss.colors.uiHPColor :
-                new Color(1, 1, 1, 0.52f));
-        })).With(VTALR2OptionNode).With("nokey") as DelayOptionNodeLR2<int> ?? throw new Exception("Startup error");
-
-        UINode VisitDetailRow(UINode x) => x.SetRightOverride(() => {
-            detailParent = x;
-            return descrNode;
-        });
-
-        SceneSelectScreen = new LazyUIScreen(() => 
-            //new UINode[] {
-            Days.days[0].bosses.SelectMany(
-            //new NavigateOptionNodeLR("", Days.days.Select(d => 
-            //    (UINode)new Invisible1Node(d.day.dayTitle, d.bosses.SelectMany(
-                b => b.phases.Select(p => {
-                    var n = new CacheNavigateUINode(TentativeCache, () => p.Title).With(medDescrClass);
-                    return p.Enabled ? 
-                        VisitDetailRow(n.SetOnVisit(_ => {
-                            if (current?.p != p) {
-                                current = (p, p.challenges[0]);
-                                challengeSelNode.ResetIndex();
-                            }
-                        })).With(
-                            p.CompletedAll ? completedAllClass :
-                                p.CompletedOne ? completed1Class :
-                                null
-                            ) : 
-                        n.EnabledIf(false);
-                }).ToArray()
-            ).Concat(new [] {
-            
-            descrNode, 
-            challengeSelNode,
-            FixedDetailRow(new UINode(() => "Press Z to start level".Locale("Zキー押すとレベルスタート"))).SetLeftOverride(() => detailParent)
-            //FixedDetailRow(new OptionNodeLR<DifficultySet>("Difficulty", nd => dfc = nd, 
-            //    MainMenuDays.VisibleDifficulties.Select(vd => (vd.Describe(), vd)).ToArray(), dfc
-            //    ).With(LROptionNode)), 
-            }).ToArray()
-        ).With(VTASceneSelect);
-        ReplayScreen = XMLUtils.ReplayScreen(TentativeCache, ConfirmCache).With(ReplayScreenV);
+        ReplayScreen = XMLUtils.ReplayScreen(false, TentativeCache, ConfirmCache).With(ReplayScreenV);
 
         MainScreen = new UIScreen(
             new TransferNode(SceneSelectScreen, "Game Start"),

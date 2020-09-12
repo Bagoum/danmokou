@@ -217,7 +217,7 @@ public readonly struct RealizedLaserOptions {
 
     public RealizedBehOptions AsBEH => new RealizedBehOptions(this);
 
-    public RealizedLaserOptions(LaserOptions opts, GenCtx gcx, uint bpiid, Vector2 parentOffset, V2RV2 localOffset, MovementModifiers modifiers, ICancellee cT) {
+    public RealizedLaserOptions(LaserOptions opts, GenCtx gcx, uint bpiid, Vector2 parentOffset, V2RV2 localOffset, ICancellee cT) {
         maxLength = opts.length?.max.Invoke(gcx) ?? DEFAULT_LASER_LEN;
         varLength = opts.length?.var?.Add(gcx, bpiid);
         start = opts.start?.Add(gcx, bpiid);
@@ -230,10 +230,10 @@ public readonly struct RealizedLaserOptions {
         layer = opts.layer;
         staggerMultiplier = opts.staggerMultiplier;
         if (opts.curve != null) {
-            lpath = new LaserVelocity(opts.curve.Value.Add(gcx, bpiid), parentOffset, localOffset, modifiers);
+            lpath = new LaserVelocity(opts.curve.Value.Add(gcx, bpiid), parentOffset, localOffset);
             isStatic = !opts.dynamic;
         } else {
-            lpath = new LaserVelocity(localOffset.angle + (opts.rotateOffset?.Invoke(gcx) ?? 0f), opts.rotate?.Add?.Invoke(gcx, bpiid), modifiers);
+            lpath = new LaserVelocity(localOffset.angle + (opts.rotateOffset?.Invoke(gcx) ?? 0f), opts.rotate?.Add?.Invoke(gcx, bpiid));
             isStatic = true;
         }
         smr = SMRunner.Run(opts.sm, cT, gcx);

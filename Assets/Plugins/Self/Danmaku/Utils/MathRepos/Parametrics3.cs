@@ -29,7 +29,7 @@ public static partial class Parametrics3 {
     /// </summary>
     /// <param name="tp">Parametric function to assign to x,y components</param>
     /// <returns></returns>
-    [Fallthrough(50)]
+    [Fallthrough(50, true)]
     public static ExTP3 TP(ExTP tp) => bpi => ((Expression) tp(bpi)).As<Vector3>();
 
     [Fallthrough(40)]
@@ -47,7 +47,9 @@ public static partial class Parametrics3 {
     /// <returns></returns>
     /// TODO WARNING if you throw variables into code like this, you MUST use FormattableString.Invariant! The SM parser will not recognize decimal commas!
     public static ExTP3 Wings1(float wx, float wy, float per) => 
-	    FormattableString.Invariant(FormattableStringFactory.Create(@":: {{
+	    FormattableString.Invariant(FormattableStringFactory.Create(@"
+<#> strict(none)
+:: {{
 	pxr	  / &px {0}
 	pyr	  / &py {1} " +
 	//Farther away feathers have longer distance between bones
@@ -89,7 +91,9 @@ public static partial class Parametrics3 {
     /// <param name="per"></param>
     /// <returns></returns>
     /// TODO WARNING if you throw variables into code like this, you MUST use FormattableString.Invariant! The SM parser will not recognize decimal commas!
-    public static ExTP3 Wings2(float wx, float wy, float per) => FormattableString.Invariant($@":: {{
+    public static ExTP3 Wings2(float wx, float wy, float per) => FormattableString.Invariant($@"
+<#> strict(none)
+:: {{
 	pxr	/ &px {wx}
 	pyr	/ &py {wy}
 	swa	 * (linear 0.9 0.4 &pxr) * (linear 0.9 0.3 &pyr) swing2 0.35 {per} -80 35 50 (+ t * -0.2 &pxr)

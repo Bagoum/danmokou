@@ -9,9 +9,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4fa22e423a3842e1b90ce62d0372178a, type: 3}
-  m_Name: Home+Laser (Reimu)
+  m_Script: {fileID: 11500000, guid: 1fa61efa6fe65e0459ee271ffb7e08d1, type: 3}
+  m_Name: Player Deathbomb Window
   m_EditorClassIdentifier: 
-  title: Homing Amulet / Persuasion Laser
-  description: something something reimu narrow shot
-  prefab: {fileID: 6169168473649848314, guid: 50a90aefef8754f4d9966c3ad7ee51c7, type: 3}
+  defaultName: deathbomb-window
+  clip: {fileID: 8300000, guid: 72963f4e401bcaa4e89ae272766775d4, type: 3}
+  volume: 0.45
+  timeout: -1

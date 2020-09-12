@@ -14,10 +14,10 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/MiniProjects/MP.MainMenu.unity
     guid: 6ce87ca5eeaeca643beda1e510b20d3b
-  - enabled: 0
+  - enabled: 1
     path: Assets/Scenes/Tutorial.unity
     guid: 87ca619c61e1cae45a2a3be45c7b4706
-  - enabled: 0
+  - enabled: 1
     path: Assets/Scenes/MiniTutorial.unity
     guid: cb5ec701c023b754ca7dc2b3dee6454c
   - enabled: 1

@@ -48,4 +48,29 @@ public class GAliasAttribute : Attribute {
         this.alias = alias;
     }
 }
+
+[AttributeUsage(AttributeTargets.Method)]
+public class PASourceTypesAttribute : Attribute {
+    public readonly Type[] types;
+    public PASourceTypesAttribute(params Type[] types) {
+        this.types = types;
+    }
+}
+[AttributeUsage(AttributeTargets.Method)]
+public class PAPriorityAttribute : Attribute {
+    public readonly int priority;
+    public PAPriorityAttribute(int priority) {
+        this.priority = priority;
+    }
+}
+
+[AttributeUsage(AttributeTargets.Method)]
+public class WarnOnStrictAttribute : Attribute {
+    public readonly int strictness;
+    public WarnOnStrictAttribute(int strict = 1) {
+        strictness = strict;
+    }
+}
+
+
 }

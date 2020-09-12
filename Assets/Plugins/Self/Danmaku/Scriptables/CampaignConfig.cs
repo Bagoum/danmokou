@@ -7,7 +7,7 @@ using UnityEngine;
 public class CampaignConfig : ScriptableObject {
     public string key;
     public string shortTitle;
+    public PlayerConfig[] players;
     public StageConfig[] stages;
-
     public BossConfig[] practiceBosses;
 }

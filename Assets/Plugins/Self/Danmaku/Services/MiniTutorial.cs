@@ -59,7 +59,7 @@ public class MiniTutorial : BehaviorEntity {
         UIManager.SetSpellname("Reduced Tutorial (For Players Too Smart for the Normal Tutorial)");
         
         BulletManager.RequestSimple("lcircle-red/", _ => 4f, null, new Velocity(new Vector2(-3, -2.5f), 0), 0, 0, null);
-        var nrx = new RealizedLaserOptions(new LaserOptions(LaserOption.S(_ => 1/RealizedLaserOptions.DEFAULT_LASER_WIDTH)), GenCtx.New(this, V2RV2.Zero), 5, new Vector2(3, 5), V2RV2.Angle(-90), MovementModifiers.Default, Cancellable.Null);
+        var nrx = new RealizedLaserOptions(new LaserOptions(LaserOption.S(_ => 1/RealizedLaserOptions.DEFAULT_LASER_WIDTH)), GenCtx.New(this, V2RV2.Zero), 5, new Vector2(3, 5), V2RV2.Angle(-90), Cancellable.Null);
         "sync _ <> relrect greenrect level <-3;-2.5:1.4;1.4:0> witha 0.7 green".Into<StateMachine>()
             .Start(new SMHandoff(this, Cancellable.Null));
         Message(text10, $"You should see a large red circle on a green box in the bottom left corner. If the red circle is invisible or in the center of the screen, turn the legacy renderer option to YES in the pause menu. ({UIConfirm.Desc} to continue)");

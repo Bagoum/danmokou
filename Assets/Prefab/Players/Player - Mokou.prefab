@@ -183,16 +183,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorScript: {fileID: 0}
   ID: player
-  displayChangedPosition: 1
   rotationMethod: 0
-  rotateTransform: 0
   deathEffect: {fileID: 0}
-  triggersUITimeout: 0
-  cullable: 1
-  ScreenCullRadius: 4
-  damage: 1
-  destructible: 0
-  grazeEveryFrames: 20
+  cullableRadius:
+    cullable: 0
+    cullRadius: {fileID: 0}
+  collisionInfo:
+    CollisionActiveOnInit: 0
+    destructible: 0
+    grazeEveryFrames: 0
   animate:
     method: 1
     LRRelation: 4
@@ -229,9 +228,6 @@ MonoBehaviour:
       downAnim: []
       attackAnim: []
       deathAnim: []
-  movementModifiers:
-    flipX: 0
-    flipY: 0
   XBounds: {x: -4.9, y: 4.9}
   YBounds: {x: -3.9, y: 3.9}
   hitbox: {fileID: 11400000, guid: d20af02baec12db42baba53da24bff95, type: 2}
@@ -241,6 +237,7 @@ MonoBehaviour:
   focusSpeed: 2.5
   lnrizeSpeed: 6
   lnrizeRatio: 0.7
+  thisPlayer: {fileID: 11400000, guid: 794bb6976ccc5104a88d12a1c93fa9fd, type: 2}
   defaultShot: {fileID: 11400000, guid: 94c9dbd65f23dec46894ae6f01f35d23, type: 2}
 --- !u!114 &-5849642184187897924
 MonoBehaviour:
@@ -254,6 +251,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bc05134455b1e464f87bad5e0a52adc4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  OnPreHitEffect: {fileID: 11400000, guid: 48375cde1fb8e3b42a1f86f1d5d8543a, type: 2}
   OnHitEffect: {fileID: 11400000, guid: d2db9c4dbbeaef849ad718763815dc02, type: 2}
   GoldenAuraEffect: {fileID: 11400000, guid: a1c3240c402ae7845a6ce71818692082, type: 2}
   hitInvuln: 5.5

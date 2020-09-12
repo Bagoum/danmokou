@@ -37,7 +37,7 @@ public class XMLReplaySaveMenu : XMLMenu {
             var replayName = new TextInputNode("Name");
             var save = "Save";
             MainScreen = new UIScreen(
-                new UINode(() => r.metadata.AsDisplay),
+                new UINode(() => r.metadata.AsDisplay(true)),
                 replayName,
                 new FuncNode(() => {
                     r.metadata.AssignName(replayName.DataWIP);

@@ -1,46 +1,23 @@
-pattern { }
-phase 0
-	action block 0
-		shift-phase-to 1
-		
-
-<!> type non  `Summonables` #{
-<!> hp 400000
-<!> root 0 2
-phase 200
-	action block 0
-		sync *-red* <0.5;:> gsrepeat {
-			times(3)
-			color { pather gpather lightning }
-			circle
-		} gsrepeat {
-			times(6)
-			spread(<100>)
-			color { /b / /w }
-		} pather(2, + 1 sine(1.6, 0.4, t), 
-			roffset(pxy(* 1 t, sine(1, 0.2, t))), {
-				hueshift(120)
-		})
-	
-
-## This is phase #1. 
-<!> type(non, `Hello World`)
-<!> root(-2, 1)
+<#> warnprefix
+pattern({ })
 phase(0)
 	action(block, 0)
-		async amulet-red/w <> gcrepeat {
-			times _
-			wait 120
-			p this
-		} gsrepeat {
-			times(11)
-			bindArrow
-			preloop {
-				rv2.rx =f + [&brv2].rx * -0.2 &aixd
-				rv2.ry =f + [&brv2].ry * 0.1 &aiyd
-			}
-		} s rvelocity(lerp(1, 2, t, px(2), py(-2)))
-
+		shift-phase-to(1)
+		
+<!> type(spell, `Danmokou Chimera`)
+<!> hp(14000)
+<!> root(0, 0.5)
+phase(40)
+	action(block, 0)
+		sync gdlaser-pink/b <-2;:-140> laser null 1 4 {
+			s(0.5)
+			stagger(0.24)
+			dynamic(polar(
+				2 * t,
+				sine(1.4, 12, t + &lt)
+				)
+			)
+		}
 	
 ///
 <!> type non `hello world`

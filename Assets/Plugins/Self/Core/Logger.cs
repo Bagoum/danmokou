@@ -64,6 +64,11 @@ public static class Log {
     /// <param name="e"></param>
     /// <exception cref="Exception"></exception>
     public static Exception StackInnerException(Exception e) {
+        return new Exception(_Print(e));
+    }
+
+    public static void Print(Exception e) => Log.UnityError(_Print(e));
+    private static string _Print(Exception e) {
         StringBuilder msg = new StringBuilder();
         var lastStackTrace = e.StackTrace;
         while (e != null) {
@@ -74,6 +79,6 @@ public static class Log {
         }
         msg.Append("\n");
         msg.Append(lastStackTrace);
-        return new Exception(msg.ToString());
+        return msg.ToString();
     }
 }

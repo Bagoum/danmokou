@@ -59,7 +59,7 @@ public class PatternSM : SequentialSM {
             if (i > 0) {
                 target = UnityEngine.Object.Instantiate(b.boss).GetComponent<BehaviorEntity>();
                 if (target.TryAsEnemy(out e)) e.distorter = null; // i dont really like this but it overlaps weirdly
-                target.Initialize(new Velocity(new Vector2(-50f, 0f), 0f), MovementModifiers.Default, SMRunner.Null);
+                target.Initialize(new Velocity(new Vector2(-50f, 0f), 0f), SMRunner.Null);
             }
             if (target.TryAsEnemy(out e)) {
                 if (b.colors.cardColorR.a > 0 || b.colors.cardColorG.a > 0 || b.colors.cardColorB.a > 0) {

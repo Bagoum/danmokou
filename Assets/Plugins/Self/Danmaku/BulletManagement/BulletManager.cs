@@ -415,6 +415,8 @@ public partial class BulletManager {
 
         public virtual CollectionType MetaType => CollectionType.Normal;
 
+        public bool Deletable => bc.deletable;
+
         [UsedImplicitly]
         public virtual void AppendSoftcull(AbsSimpleBulletCollection sbc, int ii) {
             throw new NotImplementedException("Cannot softcull to non-cull style " + Style);

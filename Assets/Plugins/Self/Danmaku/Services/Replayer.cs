@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Danmaku;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
@@ -11,9 +12,16 @@ using GameLowRequestKey = DU<string, ((string, int), int), (((string, int), int)
 
 public class ReplayMetadata {
     public int Seed { get; set; }
-    public int ShotIndex { get; set; }
-    [JsonIgnore] [CanBeNull] 
-    public ShotConfig Shot => GameManagement.References.shots.Try(ShotIndex, null);
+    public string PlayerKey { get; set; }
+    public string ShotKey { get; set; }
+    public long Score { get; set; }
+
+    [JsonIgnore]
+    [CanBeNull]
+    public PlayerConfig Player => GameManagement.References.AllPlayers.FirstOrDefault(p => p.key == PlayerKey);
+    [JsonIgnore]
+    [CanBeNull]
+    public ShotConfig Shot => GameManagement.References.AllShots.FirstOrDefault(s => s.key == ShotKey);
     public DifficultySet Difficulty { get; set; }
     public CampaignMode Mode { get; set; }
     public DateTime Now { get; set; }
@@ -31,19 +39,16 @@ public class ReplayMetadata {
 
     [UsedImplicitly]
     public ReplayMetadata() {}
-    public ReplayMetadata(GameRequest req, string name="") {
+    public ReplayMetadata(GameRequest req, CampaignData end, string name="") {
         Seed = req.seed;
-        ShotIndex = GameManagement.References.shots.IndexOf(req.shot);
+        Score = end.Score;
+        PlayerKey = req.PlayerKey;
+        ShotKey = req.ShotKey;
         Difficulty = req.difficulty;
         Mode = req.mode;
         Now = DateTime.Now;
         ID = RNG.RandStringOffFrame();
-        Key = req.lowerRequest.Resolve(
-            c => new GameLowRequestKey(0, c.Key, default, default, default),
-            b => new GameLowRequestKey(1, default, b.Key, default, default),
-            c => new GameLowRequestKey(2, default, default, c.Key, default),
-            s => new GameLowRequestKey(3,default, default, default, s.Key)
-        ).Tuple;
+        Key = req.CampaignIdentifier.Tuple;
         EngineVersion = GameManagement.EngineVersion;
         GameVersion = GameManagement.References.gameVersion;
         GameIdentifier = GameManagement.References.gameIdentifier;
@@ -67,9 +72,19 @@ public class ReplayMetadata {
     [JsonIgnore]
     public string AsFilename => $"{Mode}_{Difficulty}_{ID}";
 
-    [JsonIgnore]
-    public string AsDisplay =>
-        $"{CustomName.PadRight(12)} {RequestDescription.PadRight(16)} {Difficulty.DescribePadR()} {Now.SimpleTime()}";
+    public string AsDisplay(bool showScore) {
+        var p = Player;
+        var playerDesc = (p == null) ? "???" : p.shortTitle;
+        var shotDesc = "?";
+        if (p != null && Shot != null) {
+            var shotInd = p.shots.IndexOf(Shot);
+            shotDesc = (shotInd > -1) ? $"{shotInd.ToABC()}" : "?";
+        }
+        var pstr = $"{playerDesc}-{shotDesc}".PadRight(10);
+        var score = showScore ? $"{Score} ".PadLeft(10, '0') : "";
+        return
+            $"{CustomName.PadRight(12)} {score} {pstr} {RequestDescription.PadRight(16)} {Difficulty.DescribePadR()} {Now.SimpleTime()}";
+    }
 
     [JsonIgnore]
     public GameLowRequest ReconstructedRequest {
@@ -88,7 +103,7 @@ public readonly struct Replay {
     public readonly Func<FrameInput[]> frames;
     public readonly ReplayMetadata metadata;
 
-    public Replay(FrameInput[] frames, GameRequest req) : this(() => frames, new ReplayMetadata(req)) { }
+    public Replay(FrameInput[] frames, GameRequest req, CampaignData end) : this(() => frames, new ReplayMetadata(req, end)) { }
 
     public Replay(Func<FrameInput[]> frames, ReplayMetadata metadata) {
         this.frames = frames;
@@ -129,7 +144,6 @@ public static class Replayer {
     }
 
     public static bool IsRecording => status == ReplayStatus.RECORDING;
-    public static bool IsReplaying => status == ReplayStatus.REPLAYING;
 
     public static Replay? PostedReplay = null;
 
@@ -165,7 +179,7 @@ public static class Replayer {
             Log.Unity($"Finished replaying {lastFrame - ReplayStartFrame + 1}/{Replaying?.Length ?? 0} frames.");
         }
         status = ReplayStatus.NONE;
-        PostedReplay = (recording != null) ? new Replay(recording.ToArray(), req) : (Replay?) null;
+        PostedReplay = (recording != null) ? new Replay(recording.ToArray(), req, GameManagement.campaign) : (Replay?) null;
         recording = null;
     }
 

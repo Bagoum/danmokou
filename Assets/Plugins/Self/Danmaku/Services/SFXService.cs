@@ -17,6 +17,9 @@ public class SFXService : MonoBehaviour {
     public SFXConfig phaseEndFail;
     public SFXConfig phaseEndSuccess;
     public SFXConfig stageSectionEnd;
+    public SFXConfig powerLost;
+    public SFXConfig powerGained;
+    public SFXConfig powerFull;
     public ProcAudioHandler[] procAudios;
     public SFXConfig[] SFX;
     private static readonly Dictionary<string, SFXConfig> dclips = new Dictionary<string, SFXConfig>();
@@ -75,4 +78,9 @@ public class SFXService : MonoBehaviour {
     public static void StageSectionEndSound() => Request(main.stageSectionEnd);
 
     public static void LifeExtend() => Request(main.lifeExtend);
+
+
+    public static void PowerLost() => Request(main.powerLost);
+    public static void PowerGained() => Request(main.powerGained);
+    public static void PowerFull() => Request(main.powerFull);
 }

@@ -11,20 +11,6 @@ using DMath;
 
 public static class FSInterop {
     public static T[] ToNullableArray<T>(IEnumerable<FSharpOption<T>> lt) where T : class => lt.Select(x => x.Nullable()).ToArray();
-    public static void AssertSMEq(string source, string desired) {
-        desired = desired.Replace("\r", "").Trim();
-        switch (FParser.SMParser.lSMParser2.Invoke(source)) {
-            case Common.Types.Errorable<string>.OK sm:
-                if (desired == sm.Item.Replace(" \n ", "\n").Trim()) {
-                    return;
-                }
-                throw new Exception($"SMs not equal:\n{desired}\n\n{sm.Item}");
-            case Common.Types.Errorable<string>.Failed errs:
-                throw new Exception(string.Join("\n;", errs.Item));
-            default:
-                throw new Exception("shrug");
-        }
-    }
 
     public static FSharpMap<T, V> NewMap<T, V>() => new FSharpMap<T, V>(new Tuple<T, V>[] {});
 

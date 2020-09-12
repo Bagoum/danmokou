@@ -9,7 +9,12 @@ open FParser.ParserCommon
 
 let COMMENT = '#'
 let PROP_MARKER = "<!>"
+let PROP2_MARKER = "<#>"
 let PROP_KW = "!$_PROPERTY_$!"
+let PROP2_KW = "!$_PARSER_PROPERTY_$!"
+let PAREN_OPEN_KW = "!$_PAREN_OPEN_$!"
+let PAREN_CLOSE_KW = "!$_PAREN_CLOSE_$!"
+let ARGSEP_KW = "!$_ARG_SEPARATOR_$!"
 let OPEN_PF = '['
 let CLOSE_PF = ']'
 let QUOTE = '`'
@@ -156,6 +161,14 @@ type internal LPUF =
 let private locate pu =
     getPosition |>> (fun x -> (pu, x))
 
+
+
+let private _explicitParen p = pchar OPEN_ARG >>% Atom PAREN_OPEN_KW
+                           .>>. (spaces >>. explicitSepBy p (spaces >>. (pchar ARG_SEP >>% Atom ARGSEP_KW) .>> spaces))
+                           .>>. (pchar CLOSE_ARG >>% Atom PAREN_CLOSE_KW) |>>
+                                (fun ((o, a), c) -> List.append (o::a) [c])
+
+
 let private simpleString take = isLetter |> take
 let private simpleString1 = simpleString many1Satisfy
 let private simpleString0 = simpleString manySatisfy
@@ -185,6 +198,7 @@ and private lwordsTopLevel = many1 (pipe2 (lword true) ilspaces <| fun x _ -> x)
 and private wordsInBlock = many1 (pipe2 (word true) ilspaces <| fun x _ -> x)
 and private wordsInline = many1 (pipe2 (word false) ilspaces <| fun x _ -> x)
 and private parenArgs = _paren (wordsInBlock |>> ParseUnit.Nest)
+and private explicitParenArgs = _explicitParen (wordsInBlock |>> ParseUnit.Nest)
 and private macroPrmDecl = choice [
         attempt <| (Macro.Prm .>> spaces1 .>>. (wordsInBlock |>> ParseUnit.Nest) |>> MacroArg.Default)
         Macro.Prm |>> MacroArg.Req
@@ -200,10 +214,11 @@ and private mainParser = choice [
                                          .>>. wordsTopLevel) .>> cnewln >>= (fun ((n, prms), words) ->
             let m = Macro.Create n prms <| Words words
             updateUserState (fun state -> { state with macros = state.macros.Add(n, m) }) >>% MacroDef n)
-        parenArgs |>> Words
+        explicitParenArgs |>> Words
         //pchar REF >>. simpleString0 |>> fun x -> Words [ Atom REF_STR; Atom x ]
         //Property syntax: <!> value value value
         pstring PROP_MARKER >>. ilspaces >>. wordsInline |>> (fun words -> (Atom PROP_KW::words) |> Words)
+        pstring PROP2_MARKER >>. ilspaces >>. wordsInline |>> (fun words -> (Atom PROP2_KW::words) |> Words)
         //Note: this requires priority so A%B%C gets parsed as one NoSpace block.
         //Because it has priority, it requires attempt so it doesn't break on a normal string like ABC.
         attempt <| sepByAll2 simpleString0 (betweenChars MACRO_VAR MACRO_VAR Macro.Prm) |>> compileMacro

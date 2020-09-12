@@ -163,29 +163,6 @@ public static partial class SyncPatterns {
                 GCXF(x => Sub(ExC(90f), RV2A(Reference<V2RV2>("rv2")(x)))))
         }));
 
-    public static SyncPattern DoubleMMX(SyncPattern sp) => sbh => {
-        var s2 = sbh.CopyGCX();
-        sp(s2);
-        s2.GCX.Dispose();
-        sbh.ch.bc.modifiers.flipX = !sbh.ch.bc.modifiers.flipX;
-        sp(s2);
-        return sbh;
-    };
-
-    public static SyncPattern FlipMMXIf(GCXF<bool> pred, SyncPattern sp) => sbh => {
-        if (pred(sbh.GCX)) sbh.ch.bc.modifiers.flipX = !sbh.ch.bc.modifiers.flipX;
-        return sp(sbh);
-    };
-    public static SyncPattern AlternateMMX(SyncPattern sp) => sbh => {
-        if (sbh.GCX.i % 2 == 0) sbh.ch.bc.modifiers.flipX = !sbh.ch.bc.modifiers.flipX;
-        return sp(sbh);
-    };
-    
-    public static SyncPattern WithP(GCXF<float> newP, SyncPattern sp) => sbh => {
-        sbh.ch.gcx.index = (int) newP(sbh.ch.gcx);
-        return sp(sbh);
-    };
-
     public static SyncPattern Onscreen(SyncPattern sp) =>
         sbh => LocationService.OnPlayableScreen(sbh.GCX.exec.rBPI.loc) ? sp(sbh) : sbh;
     

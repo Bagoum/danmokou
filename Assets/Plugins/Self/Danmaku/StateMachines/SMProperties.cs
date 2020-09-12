@@ -435,6 +435,11 @@ public class ParsingQueue: IDisposable {
         if (index >= words.Length) throw new Exception("The parser ran out of text to read.");
     }
 
+    private void _Scan(out int index) {
+        int max = words.Length;
+        for (index = Index; index < max && words[index] == LINE_DELIM; ++index) { }
+    }
+    
     /// <summary>
     /// Returns the next non-newline word in the stream.
     /// Does not advance the stream.
@@ -443,10 +448,15 @@ public class ParsingQueue: IDisposable {
     /// <returns></returns>
     /// <exception cref="Exception"></exception>
     public string Scan(out int index) {
-        int max = words.Length;
-        for (index = Index; index < max && words[index] == LINE_DELIM; ++index) { }
+        _Scan(out index);
         ThrowIfOOB(index);
         return words[index];
+    }
+
+    public string ScanDisplay(out int index) {
+        _Scan(out index);
+        ThrowIfOOB(index);
+        return DisplayAt(index);
     }
 
     /// <summary>
@@ -454,10 +464,9 @@ public class ParsingQueue: IDisposable {
     /// Does not advance the stream.
     /// </summary>
     [CanBeNull]
-    public string SoftScan(out int index) {
-        int max = words.Length;
-        for (index = Index; index < max && words[index] == LINE_DELIM; ++index) { }
-        return (index < max) ? words[index] : null;
+    public (string value, string display) SoftScan(out int index) {
+        _Scan(out index);
+        return (index < words.Length) ? (words[index], DisplayAt(index)) : (null, null);
     }
 
     public string Prev() => words[Math.Max(0, Index - 1)];
@@ -520,22 +529,35 @@ public class ParsingQueue: IDisposable {
         }
         return 0;
     }
-    public string PrintLine(int index, bool circleThis) {
+
+    private string DisplayAt(int index) => keywordDemap.TryGetValue(words[index], out var s) ? s : words[index];
+    
+    private static readonly Dictionary<string, string> keywordDemap = new Dictionary<string, string>() {
+        { SMParser.PROP_KW, "<!>" },
+        { SMParser.PROP2_KW, "<#>" },
+        { SMParser.ARGSEP_KW, "," },
+        { SMParser.PAREN_OPEN_KW, "(" },
+        { SMParser.PAREN_CLOSE_KW, ")" }
+    };
+    public string PrintLine(int index, bool circleThis, [CanBeNull] string overrideThis=null) {
         StringBuilder sb = new StringBuilder();
         int si = index - 1;
         for (; si > 0; --si) {
             if (words[si] == LINE_DELIM) break;
         }
         int ei = index;
-        for (; ei < words.Length; ++ei) {
-            if (words[ei] == LINE_DELIM) break;
+        if (words.Try(ei) == LINE_DELIM && overrideThis != null) ++ei;
+        else {
+            for (; ei < words.Length; ++ei) {
+                if (words[ei] == LINE_DELIM) break;
+            }
         }
         for (++si; si < ei;) {
             if (si == index && circleThis) {
                 sb.Append('[');
-                sb.Append(words[si]);
+                sb.Append(overrideThis ?? DisplayAt(si));
                 sb.Append(']');
-            } else sb.Append(words[si]);
+            } else sb.Append(si == index ? (overrideThis ?? DisplayAt(si)) : DisplayAt(si));
             if (++si != ei) sb.Append(' ');
         }
         return sb.ToString();

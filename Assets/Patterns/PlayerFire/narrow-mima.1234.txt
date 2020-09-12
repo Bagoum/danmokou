@@ -4,7 +4,7 @@ gtr {
 } fire
 	## free fire
 	async lstar-*/b <> gcr2 12 _ <> { 
-		delay * 3 p
+		delay(3 * p)
 		sfx pc-fire
 		colorf { blue teal } p
 	} simple tprot py 13 {
@@ -17,8 +17,8 @@ gtr {
 	## focus
 	async lstar-*/ <> gcr2 12 _ <> { 
 		sfx pc-fire 
-		colorf { blue teal } // p 2
-	} simple tprot py + 13 * 3.5 // p 2 {
+		colorf { blue teal } (p // 2)
+	} simple tprot py(13 + 3.5 * p // 2) {
 		scale 0.7
 		dir * pm1 // p 2 * 600 t
 		player 28 8 oh2

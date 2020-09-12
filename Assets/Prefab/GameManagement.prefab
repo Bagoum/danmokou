@@ -143,8 +143,8 @@ MonoBehaviour:
   checkEveryFrames: 10
   method: 0
   SOProccer: {fileID: 0}
-  VolumeScaler: min 5 + 1 * 0.7 sqrt (-m x 2)
-  SpeedScaler: max 1 * / 1.6 90 atan2 (-m x 2) 1
+  VolumeScaler: min(5, 1 + 0.7 * sqrt (-m x 2))
+  SpeedScaler: max(1, 1.6 / 90 * atan2((-m x 2), 1))
 --- !u!1 &678119546
 GameObject:
   m_ObjectHideFlags: 0
@@ -850,6 +850,9 @@ MonoBehaviour:
   phaseEndFail: {fileID: 11400000, guid: edcc1e3da6948c3498c8e6ef8160cec8, type: 2}
   phaseEndSuccess: {fileID: 11400000, guid: 9167f44be1f346f43b845990346233ec, type: 2}
   stageSectionEnd: {fileID: 11400000, guid: 47252dd9b593d8c4084bc5a8109037c4, type: 2}
+  powerLost: {fileID: 11400000, guid: c1122817d2009ae468ee3fe4ccd7df37, type: 2}
+  powerGained: {fileID: 11400000, guid: 1e3bff98715bd3e4b8b87fc4390f3cbc, type: 2}
+  powerFull: {fileID: 11400000, guid: 4cd62c06314623747a824510f6c74d42, type: 2}
   procAudios:
   - name: pc-fire
     proccer: {fileID: 11400000, guid: b3dad0af5284d6c40b24842c2121dd79, type: 2}
@@ -899,6 +902,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 019473fee49b95540b0a17fa569c7bea, type: 2}
   - {fileID: 11400000, guid: bcec7eb3f54fb7e4abb92b4c70300fef, type: 2}
   - {fileID: 11400000, guid: ec75cb7ac0342f9489ad6e5610810bfc, type: 2}
+  - {fileID: 11400000, guid: 399363592cf7cce46a6dd0fe45995ff6, type: 2}
 --- !u!1 &5563600862267143790
 GameObject:
   m_ObjectHideFlags: 0
@@ -1235,6 +1239,8 @@ MonoBehaviour:
   valueItem: {fileID: 359774600689030096, guid: dd21390ee5ef15d4e9cd7d412de540ac,
     type: 3}
   pointppItem: {fileID: 359774600689030096, guid: 89bc37c16393dd24fb0ea699aba30d64,
+    type: 3}
+  powerItem: {fileID: 359774600689030096, guid: 3ccbef6bcff3c804184f4debe805e01b,
     type: 3}
   arbitraryCapturer: {fileID: 3557489986302996358, guid: 328052995b995fa4c8266a313c6d38f4,
     type: 3}

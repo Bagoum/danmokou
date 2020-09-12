@@ -61,9 +61,9 @@ public static class MovementPatterns {
         }, withLet.Into<ExBPY>());
 
     public static ExBPY th1(float pivot, ExBPY target) => ModTime(target,
-        $"lsshat 2 {pivot} * 0.5 &t &t");
+        $"lsshat(2, {pivot}, 0.5 * &t, &t)");
     public static ExBPY t21(float pivot, ExBPY target) => ModTime(target,
-        $"lsshat -3 {pivot} * 2 &t &t");
+        $"lsshat(-3, {pivot}, 2 * &t, &t)");
 
     private static ExVTP SetupTime(ExBPY time, ExVTP inner) =>
         LetFloats(new[] {
@@ -79,15 +79,15 @@ public static class MovementPatterns {
     // time along path (as parametric input) is controllable as a separate parameter.
     //Note: use ^^ instead of ^ in order to avoid NaN errors when logsumshift pushes t negative (this can happen quite commonly).
     public static RootedVTP DipUpL(ExBPY time) => Setup(-6, 2, time,
-        "nroffset pxy &t - (^^ &t 1.25) (* 1.7 &t)");
+        "nroffset pxy(&t, (^^ &t 1.25) - 1.7 * &t)");
     public static RootedVTP DipUpR(ExBPY time) => Setup(6, 2, time,
-        "nroffset pxy neg &t - (^^ &t 1.25) (* 1.7 &t)");
+        "nroffset pxy(neg &t, (^^ &t 1.25) - 1.7 * &t)");
     public static RootedVTP DipUp2L(ExBPY time) => Setup(-6, 0.5f, time,
-        "nroffset pxy &t * (if > &t 5 0.2 0.02) (sqr - &t 5)");
+        "nroffset pxy(&t, (if > &t 5 0.2 0.02) * sqr(&t - 5))");
     public static RootedVTP DipUp2R(ExBPY time) => Setup(6, 0.5f, time,
-        "nroffset pxy neg &t * (if > &t 5 0.2 0.02) (sqr - &t 5)");
+        "nroffset pxy(neg &t, (if > &t 5 0.2 0.02) * sqr(&t - 5))");
 
-    private const string CrossUpSY = "* 0.11 ^^ &t 1.2";
+    private const string CrossUpSY = "(0.11 * ^^(&t, 1.2))";
     private const string Inv = "neg";
     public static RootedVTP CrossSL(float x, float y, string xn, string yn, ExBPY time) => 
         Setup(x, y, time, $"nroffset pxy {xn} &t {yn} {CrossUpSY}");
@@ -97,42 +97,42 @@ public static class MovementPatterns {
     public static RootedVTP CrossDownL(ExBPY time) => CrossSL(-6, 3, "", Inv, time);
     public static RootedVTP CrossDownR(ExBPY time) => CrossSL(6, 3, Inv, Inv, time);
     public static RootedVTP CrossUp2L(ExBPY time) => Setup(-7, -5, time,
-        $"nroffset pxy * 1.4 &t &t");
+        $"nroffset pxy(1.4 * &t, &t)");
     public static RootedVTP CrossUp2R(ExBPY time) => Setup(7, -5, time,
-        $"nroffset pxy * -1.4 &t &t");
+        $"nroffset pxy(-1.4 * &t, &t)");
     public static RootedVTP CrossDown2L(ExBPY time) => Setup(-7, 5, time,
-        $"nroffset pxy * 1.4 &t neg &t");
+        $"nroffset pxy(1.4 * &t, neg &t)");
     public static RootedVTP CrossDown2R(ExBPY time) => Setup(7, 5, time,
-        $"nroffset pxy * -1.4 &t neg &t");
+        $"nroffset pxy(-1.4 * &t, neg &t)");
     
     
     public static RootedVTP CircDownL(ExBPY time) => Setup(-0.2f, 3.8f, time,
-        "nroffset pxy (* -2.8 sin + 1.4 &t) (if > &t 5) * 2 t (* 2.4 cos + 1.2 &t)");
+        "nroffset pxy(-2.8 * sin(1.4 + &t), if(> &t 5, 2 * t, 2.4 * cos(1.2 + &t)))");
     public static RootedVTP CircDownR(ExBPY time) => Setup(0.2f, 3.8f, time,
-        "nroffset pxy (* 2.8 sin + 1.4 &t) (if > &t 5) * 2 t (* 2.4 cos + 1.2 &t)");
+        "nroffset pxy(2.8 * sin(1.4 + &t), if(> &t 5, 2 * t, 2.4 * cos(1.2 + &t)))");
     
     public static RootedVTP CircDown2L(ExBPY time) => Setup(-1f, 3f, time,
-        "nroffset pxy (* -5 sin + 1.7 damp pi 0.7 &t) (if > &t 5) * 2 t (* 3 cos + 1.2 * 0.96 &t)");
+        "nroffset pxy (-5 * sin(1.7 + damp(pi, 0.7, &t)), if(> &t 5, 2 * t, 3 * cos(1.2 + 0.96 * &t)))");
     public static RootedVTP CircDown2R(ExBPY time) => Setup(1f, 3f, time,
-        "nroffset pxy (* 5 sin + 1.7 damp pi 0.7 &t) (if > &t 5) * 2 t (* 3 cos + 1.2 * 0.96 &t)");
+        "nroffset pxy (5 * sin(1.7 + damp(pi, 0.7, &t)), if(> &t 5, 2 * t, 3 * cos(1.2 + 0.96 * &t)))");
 
     public static RootedVTP BendDownHL(ExBPY time) => Setup(-4.5f, 5, time,
-        $"nroffset pxy (logsumshift &t 5 2 (* 0.5 &t) &t) " +
-        $"(logsumshift &t 5 2 * -1.2 &t (* -0.13 ^^ &t 0.6))");
+        $"nroffset pxy(logsumshift(&t, 5, 2, 0.5 * &t, &t),  " +
+        $"logsumshift(&t, 5, 2, -1.2 * &t, -0.13 * ^^ &t 0.6))");
     public static RootedVTP BendDownHR(ExBPY time) => Setup(4.5f, 5, time,
-        $"nroffset pxy (neg logsumshift &t 5 2 (* 0.5 &t) &t) " +
-        $"(logsumshift &t 5 2 * -1.2 &t (* -0.13 ^^ &t 0.6))");
+        $"nroffset pxy(neg logsumshift(&t, 5, 2, 0.5 * &t, &t),  " +
+        $"logsumshift(&t, 5, 2, -1.2 * &t, -0.13 * ^^ &t 0.6))");
     public static RootedVTP BendUpL(ExBPY time) => Setup(-5.5f, 3f, time,
-        "nroffset pxy exp * 0.12 &t * -0.8 exp - 2.4 * 0.2 &t");
+        "nroffset pxy(exp(0.12 * &t), -0.8 * exp(2.4 - 0.2 * &t))");
     public static RootedVTP BendUpR(ExBPY time) => Setup(5.5f, 3f, time,
-        "nroffset pxy neg exp * 0.12 &t * -0.8 exp - 2.4 * 0.2 &t");
+        "nroffset pxy(neg exp(0.12 * &t), -0.8 * exp(2.4 - 0.2 * &t))");
 
     public static RootedVTP CornerL(ExBPY time) => Setup(-6f, 0, time,
-        $"nroffset pxy (lsshat -2 1 * 3 &t * 0.5 &t) " +
-        $"(lsshat 2 1 * 0.5 &t * 3 &t)");
+        $"nroffset pxy(lsshat(-2, 1, 3 * &t, 0.5 * &t), " +
+        $"lsshat(2, 1, 0.5 * &t, 3 * &t))");
     public static RootedVTP CornerR(ExBPY time) => Setup(6f, 0, time,
-        $"nroffset pxy neg (lsshat -2 1 * 3 &t * 0.5 &t) " +
-        $"(lsshat 2 1 * 0.5 &t * 3 &t)");
+        $"nroffset pxy(neg lsshat(-2, 1, 3 * &t, 0.5 * &t), " +
+        $"lsshat(2, 1, 0.5 * &t, 3 * &t))");
     
     
     public static RootedVTP Up(ExBPY time) => Setup(0, -5, time, "nroffset py &t");

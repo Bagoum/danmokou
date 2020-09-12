@@ -185,6 +185,11 @@ public static partial class ExM {
     /// <param name="to">Maximum</param>
     /// <returns></returns>
     public static tfloat Rand(tfloat from, tfloat to) => RNG.GetFloat(from, to);
+
+    /// <summary>
+    /// Randomly returns either -1 or 1.
+    /// </summary>
+    public static tfloat Randpm1() => Ex.Condition(Rand(EN1, E1).GT0(), E1, EN1);
     private static readonly ExFunction SeedRandInt = Wrap(typeof(RNG), "GetSeededFloat", new[] {typeof(float), typeof(float), typeof(int)});
     /// <summary>
     /// Returns a pseudorandom value based on the seed function.

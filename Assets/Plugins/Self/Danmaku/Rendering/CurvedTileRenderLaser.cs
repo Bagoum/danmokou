@@ -225,7 +225,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
                 if (fe[ii].Active && Collision.CircleOnSegments(fe[ii].pos, fe[ii].radius, loc, 
                         centers, 0, 1, centers.Length, scaledLineRadius, (float)Math.Cos(rot), (float)Math.Sin(rot), out int segment) &&
                     fe[ii].enemy.TryHitIndestructible(bpi.id, plb.cdFrames)) {
-                    fe[ii].enemy.QueueDamage(plb.bossDmg, plb.stageDmg, loc);
+                    fe[ii].enemy.QueueDamage(plb.bossDmg, plb.stageDmg, target.location);
                     fe[ii].enemy.ProcOnHit(plb.effect, loc + centers[segment]);
                 }
             }

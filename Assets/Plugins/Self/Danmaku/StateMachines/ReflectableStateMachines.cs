@@ -30,20 +30,20 @@ public class EventLASM : ReflectableLASM {
     /// <param name="frames">Invulnerability frames (120 frames per second)</param>
     /// <returns></returns>
     public static TaskPattern PlayerInvuln(int frames) => smh => {
-        Events.MakePlayerInvincible.Invoke(frames, true);
+        Events.MakePlayerInvincible.Invoke((frames, true));
+        SFXService.Request("x-invuln");
         return Task.CompletedTask;
     };
 
-    [CanBeNull] private static FXY _shakeMag = null;
-    private const float t = 1.8f;
-    private const float st = 2.5f;
-    private static FXY ShakeMag => _shakeMag = _shakeMag ?? Compilers.FXY(b => ExMLerps.EQuad0m10(t, st, FXYRepo.T()(b)));
+    public const float BossExplodeWait = 1.8f;
+    private const float BossExplodeShake = 2.5f;
+    private static readonly ReflWrap<FXY> ShakeMag =(Func<FXY>)(() => Compilers.FXY(b => ExMLerps.EQuad0m10(BossExplodeWait, BossExplodeShake, FXYRepo.T()(b))));
 
     public static TaskPattern BossExplode() => smh => {
-        UnityEngine.Object.Instantiate(ResourceManager.GetSummonable("bossexplode")).GetComponent<ExplodeEffect>().Initialize(t, smh.Exec.rBPI.loc);
-        RaikoCamera.Shake(st, ShakeMag, 2, smh.cT, WaitingUtils.GetAwaiter(out Task _));
+        UnityEngine.Object.Instantiate(ResourceManager.GetSummonable("bossexplode")).GetComponent<ExplodeEffect>().Initialize(BossExplodeWait, smh.Exec.rBPI.loc);
+        RaikoCamera.Shake(BossExplodeShake, ShakeMag, 2, smh.cT, WaitingUtils.GetAwaiter(out Task _));
         SFXService.Request("x-boss-explode");
-        return WaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, t, false);
+        return WaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, BossExplodeWait, false);
     };
 
 }

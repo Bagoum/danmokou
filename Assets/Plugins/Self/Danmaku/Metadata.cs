@@ -59,11 +59,11 @@ public readonly struct PhaseCompletion {
     /// </summary>
     public bool StandardCardFinish => (props.phaseType?.IsCard() ?? false) && clear != PhaseClearMethod.CANCELLED;
 
-    private ItemDrops DropCapture => new ItemDrops(42, 0, 42, true).Mul(props.cardValueMult);
+    private ItemDrops DropCapture => new ItemDrops(42, 0, 42, 0, true).Mul(props.cardValueMult);
     //Final spells give no items if not captured, this is because some final spells have infinite timers
     private ItemDrops DropClear => new ItemDrops(
-        props.phaseType == PhaseType.FINAL ? 0 : 29, 0, 13, true).Mul(props.cardValueMult);
-    private ItemDrops DropNoHit => new ItemDrops(0, 0, 37, true).Mul(props.cardValueMult);
+        props.phaseType == PhaseType.FINAL ? 0 : 29, 0, 13, 0, true).Mul(props.cardValueMult);
+    private ItemDrops DropNoHit => new ItemDrops(0, 0, 37, 0, true).Mul(props.cardValueMult);
 
     public ItemDrops? DropItems {
         get {

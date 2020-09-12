@@ -38,7 +38,8 @@ public class BehOption {
     /// </summary>
     public static BehOption HP(GCXF<float> hp) => new HPProp(hp);
 
-    public static BehOption Drops(int value, int ppp, int life) => new ItemsProp(new ItemDrops(value, ppp, life));
+    public static BehOption Drops3(int value, int ppp, int life) => Drops(value, ppp, life, 0);
+    public static BehOption Drops(int value, int ppp, int life, int power) => new ItemsProp(new ItemDrops(value, ppp, life, power));
     
     public static BehOption Low() => new LayerProp(Layer.LowProjectile);
     public static BehOption High() => new LayerProp(Layer.HighProjectile);
@@ -50,7 +51,10 @@ public class BehOption {
     /// </summary>
     public static BehOption Delete(GCXU<Pred> cond) => new DeleteProp(cond);
 
+    public static BehOption Player(int cdFrames, int bossDmg, int stageDmg, string effect) =>
+        new PlayerBulletProp(new PlayerBulletCfg(cdFrames, bossDmg, stageDmg, ResourceManager.GetEffect(effect)));
 
+    #region impl
     
     public class CompositeProp : ValueProp<BehOption[]>, IUnrollable<BehOption> {
         public IEnumerable<BehOption> Values => value;
@@ -88,6 +92,11 @@ public class BehOption {
         public DeleteProp(GCXU<Pred> f) : base(f) { }
     }
     
+    public class PlayerBulletProp : ValueProp<PlayerBulletCfg> {
+        public PlayerBulletProp(PlayerBulletCfg cfg) : base(cfg) { }
+    }
+    #endregion
+    
 }
 
 public readonly struct RealizedBehOptions {
@@ -110,7 +119,7 @@ public readonly struct RealizedBehOptions {
         drops = opts.drops;
         hueShift = opts.hueShift?.Invoke(gcx) ?? 0f;
         delete = opts.delete?.Add(gcx, bpiid);
-        playerBullet = null;
+        playerBullet = opts.playerBullet;
     }
 
     public RealizedBehOptions(RealizedLaserOptions rlo) {
@@ -132,10 +141,10 @@ public class BehOptions {
     [CanBeNull] public readonly GCXF<float> scale;
     [CanBeNull] public readonly GCXF<float> hp;
     public readonly GCXU<Pred>? delete;
-    public readonly MovementModifiers modifiers = MovementModifiers.Default;
     public readonly int? layer = null;
     public readonly ItemDrops? drops = null;
     [CanBeNull] public readonly GCXF<float> hueShift;
+    public readonly PlayerBulletCfg? playerBullet;
     public string ID => "_";
 
     public BehOptions(params BehOption[] props) : this(props as IEnumerable<BehOption>) { }
@@ -150,6 +159,7 @@ public class BehOptions {
             else if (p is ItemsProp ip) drops = ip.value;
             else if (p is HueShiftProp hsp) hueShift = hsp.value;
             else if (p is DeleteProp dp) delete = dp.value;
+            else if (p is PlayerBulletProp pbp) playerBullet = pbp.value;
             else throw new Exception($"Bullet property {p.GetType()} not handled.");
         }
     }

@@ -6,11 +6,10 @@ using DMath;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using static Danmaku.LocationService;
 
 namespace Danmaku {
 public class PlayerInput : BehaviorEntity {
-    public Vector2 XBounds;
-    public Vector2 YBounds;
     public SOCircle hitbox;
     public SpriteRenderer hitboxSprite;
 
@@ -22,7 +21,10 @@ public class PlayerInput : BehaviorEntity {
     private float timeSinceLastStandstill;
 
     private LayerMask collMask;
+    public PlayerConfig thisPlayer;
     public ShotConfig defaultShot;
+
+    private ShotConfig shot;
 
     protected override void Awake() {
         base.Awake();
@@ -30,16 +32,40 @@ public class PlayerInput : BehaviorEntity {
         collMask = LayerMask.GetMask("Wall");
         hitbox.location = tr.position;
         hitboxSprite.enabled = SaveData.s.UnfocusedHitbox;
-        
-        LoadShot();
-    }
 
+        if (LoadPlayer()) {
+            LoadShot();
+            FiringDisableRequests = 0;
+            BombDisableRequests = 0;
+            SMPlayerControlDisable = 0;
+        }
+    }
+    public static int FiringDisableRequests { get; set; } = 0;
+    public static int BombDisableRequests { get; set; } = 0;
+    public static int SMPlayerControlDisable { get; set; } = 0;
+    public static bool AllowPlayerInput => (SMPlayerControlDisable == 0) && !Dialoguer.DialogueActive;
+
+    /// <summary>
+    /// Returns true if this object survived, false if it was destroyed.
+    /// </summary>
+    private bool LoadPlayer() {
+        var p = GameManagement.campaign.Player;
+        if (p != null && p != thisPlayer) {
+            Log.Unity($"Reconstructing player object from {thisPlayer.key} to {p.key}", level: Log.Level.DEBUG2);
+            GameObject.Instantiate(p.prefab, tr.position, Quaternion.identity);
+            InvokeCull();
+            return false;
+        } else {
+            Log.Unity($"Player object {thisPlayer.key} loaded", level:Log.Level.DEBUG2);
+            return true;
+        }
+    }
     private void LoadShot() {
-        var sc = GameManagement.campaign.Shot;
-        var scd = sc == null ? "Default" : sc.description;
+        shot = GameManagement.campaign.Shot;
+        var scd = shot == null ? "Default" : shot.description;
         Log.Unity($"Loading player shot: {scd}", level: Log.Level.DEBUG2);
-        if (sc == null) sc = defaultShot;
-        if (sc != null) GameObject.Instantiate(sc.prefab, tr);
+        if (shot == null) shot = defaultShot;
+        if (shot != null) GameObject.Instantiate(shot.prefab, tr);
     }
 
     
@@ -53,7 +79,10 @@ public class PlayerInput : BehaviorEntity {
     private float partialFatigue = 0f;
 
     public static bool IsFocus => ChallengeManager.r.FocusAllowed && (ChallengeManager.r.FocusForced || InputManager.IsFocus);
-    public static bool FiringAndAllowed => InputManager.IsFiring && PlayerInput.AllowPlayerInput;
+    public static bool IsFiring =>
+        InputManager.IsFiring && PlayerInput.AllowPlayerInput && FiringDisableRequests == 0;
+    public static bool IsBombing =>
+        InputManager.IsBomb && PlayerInput.AllowPlayerInput && BombDisableRequests == 0;
 
     public static float FiringTimeFree { get; private set; }
     public static float FiringTimeFocus { get; private set; }
@@ -68,24 +97,22 @@ public class PlayerInput : BehaviorEntity {
     public static readonly Expression unfiringTimeFocus = Expression.Property(null, 
         typeof(PlayerInput).GetProperty("UnFiringTimeFocus"));
 
+    private Action deathbombAction;
+    public int OpenDeathbombWindow(Action onDeathbomb) {
+        deathbombAction = onDeathbomb;
+        return shot.bomb.DeathbombFrames();
+    }
+
+    public void CloseDeathbombWindow() => deathbombAction = null;
+    
     private void MovementUpdate(float dT, out float horiz_input, out float vert_input) {
-        if (FiringAndAllowed) {
-            if (IsFocus) {
-                FiringTimeFree = 0;
-                FiringTimeFocus += dT;
-                UnFiringTimeFree += dT;
-                UnFiringTimeFocus = 0;
-            } else {
-                FiringTimeFree += dT;
-                FiringTimeFocus = 0;
-                UnFiringTimeFree = 0;
-                UnFiringTimeFocus += dT;
+        if (IsBombing && shot.HasBomb && GameManagement.campaign.TryUseBomb()) {
+            if (deathbombAction == null) PlayerBombs.DoBomb(shot.bomb, this);
+            else {
+                deathbombAction();
+                CloseDeathbombWindow();
+                PlayerBombs.DoDeathbomb(shot.bomb, this);
             }
-        } else {
-            FiringTimeFree = 0;
-            FiringTimeFocus = 0;
-            UnFiringTimeFree += dT;
-            UnFiringTimeFocus += dT;
         }
         horiz_input = InputManager.HorizontalSpeed;
         vert_input = InputManager.VerticalSpeed;
@@ -110,18 +137,18 @@ public class PlayerInput : BehaviorEntity {
         velocity *= IsFocus ? focusSpeed : freeSpeed;
         //Check bounds
         Vector2 pos = tr.position;
-        if (pos.x <= XBounds.x) {
-            pos.x = XBounds.x;
+        if (pos.x <= LeftPlayerBound) {
+            pos.x = LeftPlayerBound;
             velocity.x = Mathf.Max(velocity.x, 0f);
-        } else if (pos.x >= XBounds.y) {
-            pos.x = XBounds.y;
+        } else if (pos.x >= RightPlayerBound) {
+            pos.x = RightPlayerBound;
             velocity.x = Mathf.Min(velocity.x, 0f);
         }
-        if (pos.y <= YBounds.x) {
-            pos.y = YBounds.x;
+        if (pos.y <= BotPlayerBound) {
+            pos.y = BotPlayerBound;
             velocity.y = Mathf.Max(velocity.y, 0f);
-        } else if (pos.y >= YBounds.y) {
-            pos.y = YBounds.y;
+        } else if (pos.y >= TopPlayerBound) {
+            pos.y = TopPlayerBound;
             velocity.y = Mathf.Min(velocity.y, 0f);
         }
         //CRITICAL
@@ -148,8 +175,33 @@ public class PlayerInput : BehaviorEntity {
         MovementUpdate(frame_time, out _, out _);
     }
 
-    public static int SMPlayerControlDisable { get; set; } = 0;
-    public static bool AllowPlayerInput => (SMPlayerControlDisable == 0) && !Dialoguer.DialogueActive;
+    public override void RegularUpdate() {
+        base.RegularUpdate();
+        //Hilarious issue. If running a bomb that disables and then re-enables firing,
+        //then IsFiring will return false in the movement update and true in the options code.
+        //As a result, UnfiringTime will be incorrect and lasers will break.
+        //So we have to do the time-set code after coroutines. 
+        
+        if (IsFiring) {
+            if (IsFocus) {
+                FiringTimeFree = 0;
+                FiringTimeFocus += ETime.FRAME_TIME;
+                UnFiringTimeFree += ETime.FRAME_TIME;
+                UnFiringTimeFocus = 0;
+            } else {
+                FiringTimeFree += ETime.FRAME_TIME;
+                FiringTimeFocus = 0;
+                UnFiringTimeFree = 0;
+                UnFiringTimeFocus += ETime.FRAME_TIME;
+            }
+        } else {
+            FiringTimeFree = 0;
+            FiringTimeFocus = 0;
+            UnFiringTimeFree += ETime.FRAME_TIME;
+            UnFiringTimeFocus += ETime.FRAME_TIME;
+        }
+    }
+
 
     private static Vector2 MoveAgainstWall(Vector2 source, float blueBoxRadius, Vector2 delta, LayerMask mask) {
         RaycastHit2D ray = Physics2D.CircleCast(source, blueBoxRadius, delta.normalized, delta.magnitude, mask);

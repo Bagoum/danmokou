@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -140,6 +141,39 @@ public sealed class NodeLinkedList<T> {
         return -1;
     }
     #endif
+}
+
+public class StackList<T> : IEnumerable<T> {
+    public int Count { get; private set; }
+    private T[] arr;
+
+    public StackList(int size = 2) {
+        arr = new T[size];
+        Count = 0;
+    }
+
+    public void Push(T obj) {
+        while (Count >= arr.Length) {
+            var narr = new T[arr.Length * 2];
+            arr.CopyTo(narr, 0);
+            arr = narr;
+        }
+        arr[Count++] = obj;
+    }
+
+    public T Pop() => arr[--Count];
+    public void Clear() {
+        Count = 0;
+        for (int ii = 0; ii < arr.Length; ++ii) arr[ii] = default;
+    }
+    public ref T this[int ind] => ref arr[ind];
+
+    public IEnumerator<T> GetEnumerator() {
+        for (int ii = 0; ii < Count; ++ii) yield return arr[ii];
+    }
+    IEnumerator IEnumerable.GetEnumerator() {
+        return GetEnumerator();
+    }
 }
 
 /// <summary>

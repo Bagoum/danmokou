@@ -568,11 +568,6 @@ public static partial class AsyncPatterns {
             return next(abh);
         };
     }
-
-    public static AsyncPattern WithP(GCXF<float> newP, AsyncPattern next) => abh => {
-        abh.ch.gcx.index = (int) newP(abh.ch.gcx);
-        return next(abh);
-    };
 }
 
 }

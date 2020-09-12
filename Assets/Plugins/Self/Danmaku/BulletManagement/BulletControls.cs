@@ -350,17 +350,18 @@ public partial class BulletManager {
                 SimpleBulletCollection.appendSoftcull.InstanceOf(getMaybeCopyPool.Of(Ex.Constant(target)), sbc, ii)), BulletControl.P_CULL);
         }
 
-#if NO_EXPR
-        public static SBCFc Softcull_noexpr(string target, Pred cond) {
+        /// <summary>
+        /// Softcull but without expressions. Used internally for runtime bullet controls.
+        /// </summary>
+        public static SBCFp Softcull_noexpr(string target, Pred cond) {
             SimpleBulletCollection toPool = GetMaybeCopyPool(target);
             if (toPool.MetaType != SimpleBulletCollection.CollectionType.Softcull) {
                 throw new InvalidOperationException("Cannot softcull to a non-softcull pool: " + target);
             }
-            return SBCFc.Manual((sbc, ii, bpi) => {
+            return new SBCFp(ct => (sbc, ii, bpi) => {
                 if (cond(bpi)) GetMaybeCopyPool(target).AppendSoftcull(sbc, ii);
             }, BulletControl.P_CULL);
         }
-#endif
         
         /// <summary>
         /// Destroy bullets.
@@ -647,7 +648,7 @@ public partial class BulletManager {
         /// <returns></returns>
         public static SPCF SoftCullAll(string targetFormat) {
             return pool => GetMaybeCopyPool(pool).AddPoolControl(new BulletControl(new SBCFc(SimpleBulletControls.
-                Softcull(PortColorFormat(pool, targetFormat, "red/"), _ => ExMPred.True())), Consts.NOTPERSISTENT));
+                Softcull_noexpr(PortColorFormat(pool, targetFormat, "red/"), _ => true)), Consts.NOTPERSISTENT));
         }
     }
     
@@ -664,18 +665,28 @@ public partial class BulletManager {
             if (pool.MetaType == SimpleBulletCollection.CollectionType.Softcull) return;
             if (pool.Count == 0) return;
             string targetPool = PortColorFormat(pool.Style, targetFormat, defaulter);
-            pool.AddPoolControl(new BulletControl(
-#if NO_EXPR
-                SimpleBulletControls.Softcull_noexpr(targetPool, _ => true)
-#else
-                new SBCFc(SimpleBulletControls.Softcull(targetPool, _ => ExMPred.True()))
-#endif
-                , Consts.NOTPERSISTENT));
+            pool.AddPoolControl(new BulletControl(new SBCFc(
+                    SimpleBulletControls.Softcull_noexpr(targetPool, _ => true)), Consts.NOTPERSISTENT));
             //Log.Unity($"Autoculled {pool.style} to {targetPool}");
         }
         //CEmpty is destroyed via DestroyedCopyPools
         for (int ii = 0; ii < activeNpc.Count; ++ii) CullPool(activeNpc[ii]);
         for (int ii = 0; ii < activeCNpc.Count; ++ii) CullPool(activeCNpc[ii]);
+    }
+
+    /// <summary>
+    /// For bombs
+    /// </summary>
+    public static void Autodelete(string targetFormat, string defaulter, Pred cond) {
+        void DeletePool(SimpleBulletCollection pool) {
+            if (!pool.Deletable || pool.Count == 0) return;
+            string targetPool = PortColorFormat(pool.Style, targetFormat, defaulter);
+            pool.AddPoolControl(new BulletControl(
+                new SBCFc(SimpleBulletControls.Softcull_noexpr(targetPool, cond))
+                , Consts.NOTPERSISTENT));
+        }
+        for (int ii = 0; ii < activeNpc.Count; ++ii) DeletePool(activeNpc[ii]);
+        for (int ii = 0; ii < activeCNpc.Count; ++ii) DeletePool(activeCNpc[ii]);
     }
 }
 }

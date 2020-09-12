@@ -143,15 +143,14 @@ public class GenCtxProperty {
     /// <returns></returns>
     public static GenCtxProperty Delay(GCXF<float> frames) => new DelayProp(frames);
     /// <summary>
-    /// Flag that forces the repeater to wait for the child invocation to finish
-    /// before continuing.
-    /// GIRepeat/GTRepeat only.
+    /// Wait for the child invocations to finish before continuing.
+    /// <br/>GIRepeat/GTRepeat only.
     /// </summary>
     /// <returns></returns>
     public static GenCtxProperty WaitChild() => new WaitChildFlag();
     /// <summary>
-    /// Flag that forces the repeater to run child invocations sequentially.
-    /// GIRepeat/GTRepeat only.
+    /// Run child invocations sequentially.
+    /// <br/>GIRepeat/GTRepeat only.
     /// </summary>
     /// <returns></returns>
     public static GenCtxProperty Sequential() => new SequentialFlag();

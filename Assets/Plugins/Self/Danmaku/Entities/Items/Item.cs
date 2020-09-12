@@ -10,7 +10,8 @@ namespace Danmaku {
 public enum ItemType {
     VALUE,
     PPP,
-    LIFE
+    LIFE,
+    POWER
 }
 public abstract class Item : Pooled<Item> {
     protected virtual bool Collidable => true;

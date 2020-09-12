@@ -154,20 +154,6 @@ public static class Events {
 
         public DeletionMarker<Action<T>> Listen(Action<T> cb) => callbacks.Add(cb);
     }
-    public class Event2<T,R> {
-        private readonly DMCompactingArray<Action<T,R>> callbacks = new DMCompactingArray<Action<T,R>>();
-
-        public void Invoke(T arg1, R arg2) {
-            int temp_last = callbacks.Count;
-            for (int ii = 0; ii < temp_last; ++ii) {
-                DeletionMarker<Action<T,R>> listener = callbacks.arr[ii];
-                if (!listener.markedForDeletion) listener.obj(arg1, arg2);
-            }
-            callbacks.Compact();
-        }
-
-        public DeletionMarker<Action<T,R>> Listen(Action<T,R> cb) => callbacks.Add(cb);
-    }
     
     
     //Events with "Noun Has Verbed" are messages that go out after the action has occured.
@@ -180,7 +166,7 @@ public static class Events {
     /// Argument 1: number of invulnerability frames.
     /// Argument 2: Whether or not to show effect.
     /// </summary>
-    public static readonly Event2<int, bool> MakePlayerInvincible = new Event2<int, bool>();
+    public static readonly Event1<(int frames, bool effect)> MakePlayerInvincible = new Event1<(int, bool)>();
     public static readonly Event1<GameState> GameStateHasChanged = new Event1<GameState>();
 }
 }

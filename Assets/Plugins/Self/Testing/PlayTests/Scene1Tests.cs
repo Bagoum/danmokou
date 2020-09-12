@@ -824,7 +824,7 @@ public static class Scene1 {
         SaveData.r.TutorialDone = true;
         AreEqual(SceneManager.GetActiveScene().name, baseScene);
         bool campaignComplete = false;
-        GameRequest.RunCampaign(MainCampaign, () => campaignComplete = true, DifficultySet.Abex, null);
+        GameRequest.RunCampaign(MainCampaign, () => campaignComplete = true, DifficultySet.Abex, null, null);
         AreEqual(GameManagement.Difficulty, DifficultySet.Abex);
         IsFalse(campaignComplete);
         yield return WaitForLoad();
@@ -854,7 +854,7 @@ public static class Scene1 {
     public static IEnumerator TestCampaignQuit() {
         SaveData.r.TutorialDone = true;
         AreEqual(SceneManager.GetActiveScene().name, baseScene);
-        GameRequest.RunCampaign(MainCampaign, null, DifficultySet.Abex, null);
+        GameRequest.RunCampaign(MainCampaign, null, DifficultySet.Abex, null, null);
         AreEqual(GameManagement.Difficulty, DifficultySet.Abex);
         yield return WaitForLoad();
         AreEqual(SceneManager.GetActiveScene().name, "TestStage1");

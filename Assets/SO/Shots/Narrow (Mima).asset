@@ -10,9 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4fa22e423a3842e1b90ce62d0372178a, type: 3}
-  m_Name: Narrow (Kasen)
+  m_Name: Narrow (Mima)
   m_EditorClassIdentifier: 
+  key: basic-mima-1
   title: Narrow
-  description: '"Loved by Beasts, Unknown to Divinity"\nA narrow shot with high damage
-    output and low range.'
-  prefab: {fileID: 6169168473649848314, guid: db8d63d2f902f024984d037b75130748, type: 3}
+  description: '"God of the Unending Cosmos"\nA narrow shot with high damage output
+    and low range.'
+  prefab: {fileID: 6169168473649848314, guid: 0e78d825ae6297c49a8ded719c95a869, type: 3}
+  bomb: 0
+  defaultPower: 1000

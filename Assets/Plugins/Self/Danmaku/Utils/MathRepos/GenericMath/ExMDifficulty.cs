@@ -10,6 +10,8 @@ namespace DMath {
 /// See <see cref="DMath.ExM"/>. This class contains functions related to difficulty control.
 /// </summary>
 public static class ExMDifficulty {
+    //Note: difficulty is parsed statically at script compile time,
+    //whereas rank (to be added) will be dynamic.
     /// <summary>
     /// Get the difficulty multiplier. 1 is easy, ~2.3 is lunatic. POSITIVE values outside this range are possible.
     /// </summary>

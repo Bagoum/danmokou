@@ -154,6 +154,11 @@ public static class M {
         if (x > high) return high;
         return (x < low ? low : x);
     }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static double Clamp(double low, double high, double x) {
+        if (x > high) return high;
+        return (x < low ? low : x);
+    }
     
     public static float AngleFromTo(Vector2 src, Vector2 target) {
         Vector2 diff = target - src;
@@ -568,18 +573,6 @@ public static class Parser {
             }
         }
         throw new FormatException("Bad V2RV2 formatting: " + s);
-    }
-
-    public static MovementModifiers ParseMovementModifiers(string s) {
-        //<x?y?>
-        int ii = 0;
-        bool x = false;
-        bool y = false;
-        while (++ii < s.Length - 1) {
-            if (s[ii] == 'x') x = true;
-            else if (s[ii] == 'y') y = true;
-        }
-        return new MovementModifiers(x, y);
     }
     
 }

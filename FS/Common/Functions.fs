@@ -15,6 +15,8 @@ let partialZip2 ls =
                                         ls ([], [])
     (is |> List.concat, js |> List.concat)
 
+let detuple ls =
+    List.map (fun (a, b) -> [ a; b ]) ls |> List.concat
 
 let maxConsecutive x =
     List.fold (fun (max, curr) y ->

@@ -64,14 +64,14 @@ bullet shell-teal/b <2;:> cre 20 _ <;:5> repeat 5 <;:72> s :: {
         TestSMExceptionRegex(@"sync danger <2;:> summons tprot cx 1 here sad", 
             "Nested StateMachine construction.*sad is not a StateMachine");
         TestSMExceptionRegex(@"async shell-teal/b <2;:> gcr2 60 5 <-0.2;:10> { } gsr2 5 <;:72> { } s tp-rot cx sad", 
-            "Cannot convert \"sad\" to float");
+            "\"sad\" to type Float");
         TestSMExceptionRegex(@"async shell-teal/b <2;:> gcr2 60 5 <-0.2;:10> { } gsr2 5 <;:72> { } s tp-rot cxy 2", 
             "TP.*ran out of text");
         TestSMExceptionRegex(@"async shell-teal/b", "ran out of text");
         TestSMExceptionRegex(@"
 async shell-teal/b <2;:> gcr2 60 5 <-0.2;:10> { } gsr2 5 <;:72> { } s tp-rot cxy 2
 async shell-teal/b <2;:> gcr2 60 5 <-0.2;:10> { } gsr2 5 <;:72> { } s tp-rot cxy 2 3",
-            "async.* to float");
+            "async\" to type Float");
     }
 
     [UnityTest]

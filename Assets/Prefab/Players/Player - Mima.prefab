@@ -94,6 +94,12 @@ PrefabInstance:
       value: 
       objectReference: {fileID: -2856173538836399905, guid: 948e44d84458076409c43353a5c041d4,
         type: 3}
+    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: thisPlayer
+      value: 
+      objectReference: {fileID: 11400000, guid: a748e7cdf6f25e643891d64f7767dbff,
+        type: 2}
     - target: {fileID: 5693660460388628149, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
       propertyPath: m_RootOrder
@@ -123,7 +129,7 @@ PrefabInstance:
     - target: {fileID: 5693660460388628151, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
       propertyPath: m_Name
-      value: Player
+      value: Player - Mima
       objectReference: {fileID: 0}
     - target: {fileID: 5693660460388628151, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}

@@ -65,7 +65,12 @@ PrefabInstance:
     - target: {fileID: 4339981538987090487, guid: db5a3a672b4eca44783c6b35cf3a86ac,
         type: 3}
       propertyPath: m_Name
-      value: gdlaser
+      value: p-gdlaser
+      objectReference: {fileID: 0}
+    - target: {fileID: 6155944797687210700, guid: db5a3a672b4eca44783c6b35cf3a86ac,
+        type: 3}
+      propertyPath: renderPriority
+      value: 50
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: db5a3a672b4eca44783c6b35cf3a86ac, type: 3}

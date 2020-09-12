@@ -70,6 +70,9 @@ public static class ArrayExtensions {
         return deflt;
     }
 
+    /// <summary>
+    /// Returns -1 if not found
+    /// </summary>
     public static int IndexOf<T>(this T[] arr, T obj) where T: class {
         for (int ii = 0; ii < arr.Length; ++ii) {
             if (arr[ii] == obj) return ii;
@@ -124,6 +127,8 @@ public static class IEnumExtensions {
             if (y.HasValue) yield return y.Value;
         }
     }
+
+    public static IEnumerable<T> NotNull<T>(this IEnumerable<T> arr) where T : class => arr.Where(x => x != null);
 }
 
 public static class ListExtensions {
@@ -321,4 +326,9 @@ public static class FormattingExtensions {
     public static string SimpleTime(this DateTime d) =>
         $"{d.Year}/{d.Month.PadLZero(2)}/{d.Day.PadLZero(2)} " +
         $"{d.Hour.PadLZero(2)}:{d.Minute.PadLZero(2)}:{d.Second.PadLZero(2)}";
+}
+
+public static class NumExtensions {
+    
+    public static char ToABC(this int x) => (char)((int)'A' + x);
 }

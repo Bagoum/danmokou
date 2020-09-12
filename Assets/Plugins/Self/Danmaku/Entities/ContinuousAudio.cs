@@ -8,15 +8,16 @@ public class ContinuousAudio : ProcReader {
     private float baseVolume;
 
     public string VolumeScaler;
-    [CanBeNull] private FXY _volScale;
-    private FXY VolScale => _volScale ?? (_volScale = VolumeScaler.Into<FXY>());
+    private ReflWrap<FXY> VolScale;
     public string SpeedScaler;
-    [CanBeNull] private FXY _speedScale;
-    protected virtual FXY SpeedScale => _speedScale ?? (_speedScale = SpeedScaler.Into<FXY>());
+    private ReflWrap<FXY> speedScale;
+    protected virtual FXY SpeedScale => speedScale;
 
     protected virtual void Awake() {
         src = GetComponent<AudioSource>();
         baseVolume = src.volume;
+        VolScale = (Func<FXY>) (VolumeScaler.Into<FXY>);
+        speedScale = (Func<FXY>) (SpeedScaler.Into<FXY>);
     }
 
     public override int UpdatePriority => UpdatePriorities.SLOW;
@@ -27,7 +28,7 @@ public class ContinuousAudio : ProcReader {
                 src.Play();
             }
             src.loop = true;
-            src.volume = baseVolume * VolScale(procs);
+            src.volume = baseVolume * VolScale.Value(procs);
             src.pitch = SpeedScale(procs);
         } else if (procs == 0 && src.isPlaying) {
             src.loop = false;

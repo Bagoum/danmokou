@@ -41,6 +41,7 @@ public static class SaveUtils {
         public KeyCode AimDown = KeyCode.S;
         public KeyCode ShootToggle = KeyCode.X;
         public KeyCode ShootHold = KeyCode.Z;
+        public KeyCode Bomb = KeyCode.C;
     }
     private const string INPUT = "input.txt";
     private const string INPUTREF = "input_reference.txt";

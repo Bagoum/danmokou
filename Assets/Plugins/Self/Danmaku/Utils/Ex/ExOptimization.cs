@@ -194,8 +194,7 @@ class FlattenVisitor : ExpressionVisitor {
     protected override Expression VisitMember(MemberExpression node) {
         var cont = Visit(node.Expression);
         if (cont.TryAsAnyConst(out var obj)) {
-            //WARNING: property reduction may be incorrect
-            if (node.Member is PropertyInfo pi) return ExC(pi.GetValue(obj));
+            //Do not reduce properties, only fields.
             if (node.Member is FieldInfo fi) return ExC(fi.GetValue(obj));
         }
         return (cont == node.Expression) ? node : Ex.MakeMemberAccess(cont, node.Member);

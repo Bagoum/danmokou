@@ -19,8 +19,8 @@ public class GTRepeat2 : GTRepeat {
     /// <param name="rpp">Amount to increment rv2 between invocations</param>
     /// <param name="props">Other properties</param>
     /// <param name="target">Child StateMachines to run</param>
-    public GTRepeat2(StateMachine[] target, GCXF<float> wait, GCXF<float> times, GCXF<V2RV2> rpp, GenCtxProperty[] props) :
-        base(target, new GenCtxProperties<StateMachine>(props.Append(GenCtxProperty.Async(wait, times, rpp)))) { }
+    public GTRepeat2(GCXF<float> wait, GCXF<float> times, GCXF<V2RV2> rpp, GenCtxProperty[] props, StateMachine[] target) :
+        base(new GenCtxProperties<StateMachine>(props.Append(GenCtxProperty.Async(wait, times, rpp))), target) { }
 
 }
 
@@ -184,7 +184,7 @@ public class GTRepeat : UniversalSM {
 
     private readonly GenCtxProperties<StateMachine> props;
     
-    public GTRepeat(StateMachine[] target, GenCtxProperties<StateMachine> props) : base(target.ToList()) {
+    public GTRepeat(GenCtxProperties<StateMachine> props, StateMachine[] target) : base(target.ToList()) {
         this.props = props;
     }
 

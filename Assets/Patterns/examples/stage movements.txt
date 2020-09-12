@@ -2,7 +2,7 @@ pattern { }
 phase 0 #{
     action block 0
 		position 4 -4
-        shift-phase-to 2
+        shift-phase-to 3
 #}
 
 !{ move(rpath)
@@ -22,12 +22,12 @@ async arrow-red/w <0.5;:> gcr2 60 3 <> {
 phase 0 #{
 	action block 0
 		position -4 4
-		move _ nroffset pxy :: {
+		move _ nroffset pxy(:: {
 			t	:: {
 				xxx t
 			} t21 2 &xxx
-		} (* -0.13 ^^ &t 0.6)
-			* -2 t
+		} (-0.13 * ^^(&t, 0.6)),
+			-2 * t)
 #}
 		
 phase 0
@@ -40,37 +40,30 @@ phase 0
 
 phase 0 
 	action block 0
-		$move(cornerl * 1 t)
-		$move(cornerr * 1 t)
+		$move(cornerl (1 * t))
+		$move(cornerr (1 * t))
 	action block 3
-		$move(bendupl * 5 t)
-		$move(bendupr * 5 t)
-		$move(benddownhl th1 2 * 2 t)
-		$move(benddownhr t21 2 * 2 t)
+		$move(bendupl(5 * t))
+		$move(bendupr (5 * t))
+		$move(benddownhl th1 2 (2 * t))
+		$move(benddownhr t21 2 (2 * t))
 	action block 3
-		$move(upl * 3 t)
-		$move(upr * 3 t)
-		$move(downl * 3 t)
-		$move(downr * 3 t)
-		$move(acrossl * 3 t)
-		$move(acrossr * 3 t)
+		$move(crossupl (3 * t))
+		$move(crossupr (3 * t))
+		$move(crossdownl (3 * t))
+		$move(crossdownr (3 * t))
+		$move(crossup2l (3 * t))
+		$move(crossup2r (3 * t))
+		$move(crossdown2l (3 * t))
+		$move(crossdown2r (3 * t))
 	action block 3
-		$move(crossupl * 3 t)
-		$move(crossupr * 3 t)
-		$move(crossdownl * 3 t)
-		$move(crossdownr * 3 t)
-		$move(crossup2l * 3 t)
-		$move(crossup2r * 3 t)
-		$move(crossdown2l * 3 t)
-		$move(crossdown2r * 3 t)
+		$move(dipupl (3 * t))
+		$move(dipupr (3 * t))
+		$move(dipup2l (3 * t))
+		$move(dipup2r (3 * t))
 	action block 3
-		$move(dipupl * 3 t)
-		$move(dipupr * 3 t)
-		$move(dipup2l * 3 t)
-		$move(dipup2r * 3 t)
-	action block 3
-		$move(circdown2l * 1 t)
-		$move(circdown2r * 1 t)
-		$move(circdownl * 1 t)
-		$move(circdownr * 1 t)
+		$move(circdown2l (1 * t))
+		$move(circdown2r (1 * t))
+		$move(circdownl (1 * t))
+		$move(circdownr (1 * t))
 	action block 3

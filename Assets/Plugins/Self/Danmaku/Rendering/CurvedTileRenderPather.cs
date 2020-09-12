@@ -62,6 +62,7 @@ public class CurvedTileRenderPather : CurvedTileRender {
     public readonly TrailRenderer trailR;
 
     private SOCircle target;
+    private PlayerBulletCfg? playerBullet;
 
     public CurvedTileRenderPather(PatherRenderCfg cfg, GameObject obj) : base(cfg, obj) {
         lineRadius = cfg.lineRadius;
@@ -107,6 +108,7 @@ public class CurvedTileRenderPather : CurvedTileRender {
         trailR.sortingOrder = mr.sortingOrder;
         skipNextCollisionCheck = false;
         target = collisionTarget;
+        playerBullet = options.playerBullet;
     }
 
     public Vector2 GlobalPosition => bpi.loc;
@@ -187,7 +189,7 @@ public class CurvedTileRenderPather : CurvedTileRender {
             velocity.rootPos.y + 0.5f * (min.y + max.y) - target.location.y,
             0.5f * (max.x - min.x) + lineRadius,
             0.5f * (max.y - min.y) + lineRadius,
-            target.largeRadius, target.lradius2); 
+            target.largeRadius, target.lradius2) && playerBullet == null; 
         
         centers[last].x = bpi.loc.x - velocity.rootPos.x;
         centers[last].y = bpi.loc.y - velocity.rootPos.y;
@@ -242,6 +244,19 @@ public class CurvedTileRenderPather : CurvedTileRender {
         
         int cut1 = (int) Math.Ceiling((cL - read_from + 1) * tailCutoffRatio);
         int cut2 = (int) Math.Ceiling((cL - read_from + 1) * headCutoffRatio);
+        if (playerBullet.Try(out var plb)) {
+            var fe = Enemy.FrozenEnemies;
+            var loc = exec.RawGlobalPosition();
+            for (int ii = 0; ii < fe.Count; ++ii) {
+                if (fe[ii].Active && DMath.Collision.CircleOnSegments(fe[ii].pos, fe[ii].radius, loc, 
+                        centers, 0, 1, centers.Length, scaledLineRadius, 1, 0, out int segment) &&
+                    fe[ii].enemy.TryHitIndestructible(bpi.id, plb.cdFrames)) {
+                    fe[ii].enemy.QueueDamage(plb.bossDmg, plb.stageDmg, target.location);
+                    fe[ii].enemy.ProcOnHit(plb.effect, loc + centers[segment]);
+                }
+            }
+            return CollisionResult.noColl;
+        }
         return DMath.Collision.GrazeCircleOnSegments(target, exec.RawGlobalPosition(), centers, read_from + cut1,
             FramePosCheck, cL - cut2, scaledLineRadius, 1, 0);
     }

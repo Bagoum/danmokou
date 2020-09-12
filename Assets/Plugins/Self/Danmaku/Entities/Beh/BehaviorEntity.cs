@@ -20,15 +20,17 @@ public struct ItemDrops {
     public int value;
     public int pointPP;
     public int life;
+    public int power;
     public bool autocollect;
-    public ItemDrops(int v, int p, int l, bool autoc=false) {
+    public ItemDrops(int v, int pp, int l, int pow, bool autoc=false) {
         value = v;
-        pointPP = p;
+        pointPP = pp;
         life = l;
+        power = pow;
         autocollect = autoc;
     }
 
-    public ItemDrops Mul(float by) => new ItemDrops((int)(value * by), (int)(pointPP * by), (int)(life * by), autocollect);
+    public ItemDrops Mul(float by) => new ItemDrops((int)(value * by), (int)(pointPP * by), (int)(life * by), (int)(power * by), autocollect);
 }
 
 /// <summary>
@@ -158,7 +160,6 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     /// </summary>
     /// <param name="p">Target local position</param>
     public void ExternalSetLocalPosition(Vector2 p) {
-        p = MovementModifiers.ApplyOver(p);
         tr.localPosition = p;
         bpi.loc = tr.position;
     }
@@ -358,7 +359,6 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     }
 
     public Animation animate;
-    public MovementModifiers MovementModifiers { get; set; }
     private bool isSummoned = false;
     protected virtual int Findex => 0;
     protected override void Awake() {
@@ -371,7 +371,12 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         animate.Initialize(this);
         RegisterID();
         UpdateStyleInformation();
-        RunAttachedSM();
+        try {
+            RunAttachedSM();
+        } catch (Exception e) {
+            Log.UnityError("Failed to load attached SM on startup!");
+            Log.Print(e);
+        }
     }
 
     public Task Initialize(SMRunner smr) {
@@ -381,9 +386,9 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         }
         return Task.CompletedTask;
     }
-    public void Initialize(Vector2 parentLoc, V2RV2 position, MovementModifiers m,
+    public void Initialize(Vector2 parentLoc, V2RV2 position,
         SMRunner sm, int firingIndex, uint? bpiid, string behName = "") =>
-        Initialize(new Velocity(parentLoc, position, m), m, sm, firingIndex, bpiid, null, behName);
+        Initialize(new Velocity(parentLoc, position), sm, firingIndex, bpiid, null, behName);
 
     /// <summary>
     /// If parented, we need firing offset to update Velocity's root position with parent.pos + offset every frame.
@@ -394,14 +399,13 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     /// Initialize a BEH. You are not required to call this, but all BEH that are generated in code should use this.
     /// </summary>
     /// <param name="_velocity">Velocity struct</param>
-    /// <param name="m">Movement modifiers applied to spawned entities and velocity</param>
     /// <param name="smr">SM to execute. Set null if no SM needs to be run.</param>
     /// <param name="firingIndex">Firing index of BPI that will be created.</param>
     /// <param name="bpiid">ID of BPI that will be created.</param>
     /// <param name="parent">Transform parent of this BEH. Use sparingly</param>
     /// <param name="behName"></param>
     /// <param name="options"></param>
-    public void Initialize(Velocity _velocity, MovementModifiers m, SMRunner smr, int firingIndex=0, 
+    public void Initialize(Velocity _velocity, SMRunner smr, int firingIndex=0, 
         uint? bpiid=null, [CanBeNull] BehaviorEntity parent=null, string behName="", RealizedBehOptions? options=null) {
         if (parent != null) TakeParent(parent);
         isSummoned = true;
@@ -415,7 +419,6 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
             tr.position = bpi.loc;
         }
         if (IsNontrivialID(behName)) ID = behName;
-        MovementModifiers = m;
         Initialize(smr);
         //This comes after so SMs run due to ~@ commands are not destroyed by BeginBehaviorSM
         RegisterID();
@@ -487,7 +490,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     /// <returns></returns>
     public IEnumerator ExecuteVelocity(LimitedTimeVelocity ltv, uint newId) {
         if (ltv.cT.Cancelled) { ltv.done(); yield break; }
-        Velocity vel = new Velocity(ltv.VTP2, GlobalPosition(), V2RV2.Angle(original_angle), MovementModifiers);
+        Velocity vel = new Velocity(ltv.VTP2, GlobalPosition(), V2RV2.Angle(original_angle));
         float doTime = (ltv.enabledFor < float.Epsilon) ? float.MaxValue : ltv.enabledFor;
         ParametricInfo tbpi = new ParametricInfo(bpi.loc, ltv.firingIndex, newId);
         //Sets initial position correctly for offset-based velocity

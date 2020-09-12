@@ -79,7 +79,7 @@ public abstract class Bullet : BehaviorEntity {
     }
 
     protected void Initialize(RealizedBehOptions options, [CanBeNull] BehaviorEntity parent, Velocity _velocity, int firingIndex, uint bpiid, SOCircle _target, out int layer) {
-        base.Initialize(_velocity, new MovementModifiers(), options.smr, firingIndex, bpiid, parent, options: options);
+        base.Initialize(_velocity, options.smr, firingIndex, bpiid, parent, options: options);
         gameObject.layer = layer = options.layer ?? defaultLayer;
         collisionTarget = _target;
         if ((playerBullet = options.playerBullet) != null) DataHoisting.PreserveID(bpiid);

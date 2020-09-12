@@ -42,7 +42,6 @@ public class LevelController : BehaviorEntity {
     }
 
     protected override void Awake() {
-        base.Awake();
         main = this;
         behaviorScript = null;
 #if UNITY_EDITOR
@@ -52,6 +51,7 @@ public class LevelController : BehaviorEntity {
             behaviorScript = (stage == null) ? null : stage.stateMachine;
         }
 #endif
+        base.Awake();
     }
 
 #if UNITY_EDITOR

@@ -29,10 +29,8 @@ public class ChallengeManager : CoroutineRegularUpdater {
     public static PhaseCompletion? Completion { get; private set; } = null;
     public static ChallengeRequest? Tracking { get; private set; } = null;
 
-    [CanBeNull] private static TP4 _stayInColor = null;
-    private static TP4 StayInColor => _stayInColor = _stayInColor ?? "witha lerpt 0 1 0 0.3 green".Into<TP4>();
-    [CanBeNull] private static TP4 _stayOutColor = null;
-    private static TP4 StayOutColor => _stayOutColor = _stayOutColor ?? "witha lerpt 0 1 0 0.3 red".Into<TP4>();
+    private static ReflWrap<TP4> StayInColor => (Func<TP4>)"witha lerpt 0 1 0 0.3 green".Into<TP4>;
+    private static ReflWrap<TP4> StayOutColor => (Func<TP4>)"witha lerpt 0 1 0 0.3 red".Into<TP4>;
 
     public static TaskPattern StayInRange(BehaviorEntity beh, float f) => SMReflection.Sync("_", GCXFRepo.RV2Zero,
         AtomicPatterns.RelCirc("_", new BEHPointer(beh), _ => ExMRV2.RXY(f, f), StayInColor));
@@ -108,10 +106,9 @@ public class ChallengeManager : CoroutineRegularUpdater {
 
     private static void ChallengeSuccess(GameRequest gr, ChallengeRequest cr) {
         Log.Unity($"PASSED challenge {cr.Description}");
-        if (!Replayer.IsReplaying) {
+        if (gr.Saveable) {
             Log.Unity("Committing challenge to save data");
             SaveData.r.CompleteChallenge(gr, cr);
-            SaveData.SaveRecord();
         }
         var next = cr.NextChallenge;
         if (next != null && Exec != null) {

@@ -136,14 +136,6 @@ public static partial class BPYRepo {
     /// <returns></returns>
     public static ExBPY BRandpm1() => bpi => Ex.Condition(bpi.id.GT(ExC(uint.MaxValue / (uint)2)), EN1, E1);
 
-    /// <summary>
-    /// Return 1 if the predicate is true and 0 if it is false.
-    /// </summary>
-    /// <param name="pred"></param>
-    /// <returns></returns>
-    [Fallthrough(150)]
-    public static ExBPY Pred10(ExPred pred) => bpi => Ex.Condition(pred(bpi), E1, E0);
-
     [Fallthrough(1)]
     public static ExBPY Const(float x) => bpi => Ex.Constant(x);
 
@@ -292,5 +284,9 @@ public static partial class BPYRepo {
     public static ExBPY pDL() => bpi => bpi.findex.Div(DL());
 
     public static ExBPY OptionAngle() => b => FireOption.optionAngle.Of(b.index);
+    public static ExBPY Power() => b => FireOption.power.Of();
+    public static ExBPY PowerF() => b => ExM.Floor(FireOption.power.Of());
+    public static ExBPY IfPowerGTP(ExBPY inner) => 
+        b => Ex.Condition(BPYRepo.PowerF()(b).GT(b.findex), inner(b), ExC(0f));
 }
 }

@@ -333,6 +333,12 @@ PrefabInstance:
       propertyPath: animate.frames.leftAnim.Array.data[7].time
       value: 0.14
       objectReference: {fileID: 0}
+    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: thisPlayer
+      value: 
+      objectReference: {fileID: 11400000, guid: 2837e4ddce10a134ebcede695c842b92,
+        type: 2}
     - target: {fileID: 5693660460388628149, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
       propertyPath: m_RootOrder

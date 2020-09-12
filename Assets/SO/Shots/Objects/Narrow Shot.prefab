@@ -132,16 +132,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorScript: {fileID: 4900000, guid: 2329205515a83f54e9338e7d50137410, type: 3}
   ID: 
-  displayChangedPosition: 1
   rotationMethod: 0
-  rotateTransform: 0
   deathEffect: {fileID: 0}
-  triggersUITimeout: 0
-  cullable: 0
-  ScreenCullRadius: 4
-  damage: 1
-  destructible: 0
-  grazeEveryFrames: 20
+  cullableRadius:
+    cullable: 0
+    cullRadius: {fileID: 0}
+  collisionInfo:
+    CollisionActiveOnInit: 0
+    destructible: 0
+    grazeEveryFrames: 0
   animate:
     method: 0
     LRRelation: 0
@@ -154,11 +153,10 @@ MonoBehaviour:
       downAnim: []
       attackAnim: []
       deathAnim: []
-  movementModifiers:
-    flipX: 0
-    flipY: 0
-  offsetFree: qrotate px * 15 t rx 0.9 + 225 softmod 2200 * 222.49 t
+  offsetFree: qrotate(px(15 * t), rx(0.9, 225 + softmod(2200, 222.49 * t)))
   offsetFocus: pxy -0.4 -0.5
+  opacityFree: 
+  opacityFocus: 
   offsetLerpTime: 0.2
   findex: 2
   freeFirer: {fileID: 0}
@@ -260,16 +258,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorScript: {fileID: 4900000, guid: 2329205515a83f54e9338e7d50137410, type: 3}
   ID: 
-  displayChangedPosition: 1
   rotationMethod: 0
-  rotateTransform: 0
   deathEffect: {fileID: 0}
-  triggersUITimeout: 0
-  cullable: 0
-  ScreenCullRadius: 4
-  damage: 1
-  destructible: 0
-  grazeEveryFrames: 20
+  cullableRadius:
+    cullable: 0
+    cullRadius: {fileID: 0}
+  collisionInfo:
+    CollisionActiveOnInit: 0
+    destructible: 0
+    grazeEveryFrames: 0
   animate:
     method: 0
     LRRelation: 0
@@ -282,11 +279,10 @@ MonoBehaviour:
       downAnim: []
       attackAnim: []
       deathAnim: []
-  movementModifiers:
-    flipX: 0
-    flipY: 0
-  offsetFree: qrotate px * 15 t rx 0.9 + 135 softmod 2200 * 222.49 t
+  offsetFree: qrotate(px(15 * t), rx(0.9, 135 + softmod(2200, 222.49 * t)))
   offsetFocus: pxy -0.2 0.5
+  opacityFree: 
+  opacityFocus: 
   offsetLerpTime: 0.2
   findex: 1
   freeFirer: {fileID: 0}
@@ -336,16 +332,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorScript: {fileID: 0}
   ID: 
-  displayChangedPosition: 1
   rotationMethod: 0
-  rotateTransform: 0
   deathEffect: {fileID: 0}
-  triggersUITimeout: 0
-  cullable: 0
-  ScreenCullRadius: 4
-  damage: 1
-  destructible: 0
-  grazeEveryFrames: 20
+  cullableRadius:
+    cullable: 0
+    cullRadius: {fileID: 0}
+  collisionInfo:
+    CollisionActiveOnInit: 0
+    destructible: 0
+    grazeEveryFrames: 0
   animate:
     method: 0
     LRRelation: 0
@@ -358,11 +353,10 @@ MonoBehaviour:
       downAnim: []
       attackAnim: []
       deathAnim: []
-  movementModifiers:
-    flipX: 0
-    flipY: 0
   offsetFree: zero
   offsetFocus: zero
+  opacityFree: 
+  opacityFocus: 
   offsetLerpTime: 1
   findex: 0
   freeFirer: {fileID: 0}
@@ -464,16 +458,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorScript: {fileID: 4900000, guid: 2329205515a83f54e9338e7d50137410, type: 3}
   ID: 
-  displayChangedPosition: 1
   rotationMethod: 0
-  rotateTransform: 0
   deathEffect: {fileID: 0}
-  triggersUITimeout: 0
-  cullable: 0
-  ScreenCullRadius: 4
-  damage: 1
-  destructible: 0
-  grazeEveryFrames: 20
+  cullableRadius:
+    cullable: 0
+    cullRadius: {fileID: 0}
+  collisionInfo:
+    CollisionActiveOnInit: 0
+    destructible: 0
+    grazeEveryFrames: 0
   animate:
     method: 0
     LRRelation: 0
@@ -486,11 +479,10 @@ MonoBehaviour:
       downAnim: []
       attackAnim: []
       deathAnim: []
-  movementModifiers:
-    flipX: 0
-    flipY: 0
-  offsetFree: qrotate px * 15 t  rx 0.9 + 315 softmod 2200 * 222.49 t
+  offsetFree: qrotate(px(15 * t), rx(0.9, 315 + softmod(2200, 222.49 * t)))
   offsetFocus: pxy 0.4 -0.5
+  opacityFree: 
+  opacityFocus: 
   offsetLerpTime: 0.2
   findex: 3
   freeFirer: {fileID: 0}
@@ -592,16 +584,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorScript: {fileID: 4900000, guid: 2329205515a83f54e9338e7d50137410, type: 3}
   ID: 
-  displayChangedPosition: 1
   rotationMethod: 0
-  rotateTransform: 0
   deathEffect: {fileID: 0}
-  triggersUITimeout: 0
-  cullable: 0
-  ScreenCullRadius: 4
-  damage: 1
-  destructible: 0
-  grazeEveryFrames: 20
+  cullableRadius:
+    cullable: 0
+    cullRadius: {fileID: 0}
+  collisionInfo:
+    CollisionActiveOnInit: 0
+    destructible: 0
+    grazeEveryFrames: 0
   animate:
     method: 0
     LRRelation: 0
@@ -614,11 +605,10 @@ MonoBehaviour:
       downAnim: []
       attackAnim: []
       deathAnim: []
-  movementModifiers:
-    flipX: 0
-    flipY: 0
-  offsetFree: qrotate px * 15 t rx 0.9 + 45 softmod 2200 * 222.49 t
+  offsetFree: qrotate(px(15 * t), rx(0.9, 45 + softmod(2200, 222.49 * t)))
   offsetFocus: pxy 0.2 0.5
+  opacityFree: 
+  opacityFocus: 
   offsetLerpTime: 0.2
   findex: 0
   freeFirer: {fileID: 0}

@@ -95,7 +95,7 @@ namespace Tests {
 
         [Test]
         public static void PredLinks() {
-            BPY p10 = "* t > t 5".Into<BPY>();
+            BPY p10 = "* t pred10(> t 5)".Into<BPY>();
             TestTPoints(p10, new []{ (4f, 0f), (6, 6) });
         }
         

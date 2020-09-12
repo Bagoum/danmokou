@@ -68,8 +68,9 @@ public static class ExMHelpers {
     public static Ex QRotate(Ex quat, Ex v3) => qRotate.Of(quat, v3);
     public static Expression ExC(object x) => Ex.Constant(x);
 
-    public static BlockExpression RotateLerp(Ex target, Ex source, TExPI bpi, bool isRate, bool isTrue, float rate) {
-        Ex exrate = ExC(rate * (isRate ? M.degRad : 1f) * (isTrue ? ETime.FRAME_TIME : 1f));
+    public static BlockExpression RotateLerp(Ex target, Ex source, TExPI bpi, bool isRate, bool isTrue, Ex rate) {
+        if (isRate) rate = rate.Mul(M.degRad);
+        if (isTrue) rate = rate.Mul(ETime.FRAME_TIME);
         TExV2 v = TExV2.Variable();
         TEx<float> ang = ExUtils.VFloat();
         Expression[] exprs = new Expression[3];
@@ -77,12 +78,12 @@ public static class ExMHelpers {
         if (isTrue) {
             Ex data = DataHoisting.GetClearableDictV2();
             exprs[0] = v.Is(ExUtils.DictIfExistsGetElseSet<uint, Vector2>(data, bpi.id, source));
-            exprs[2] = data.DictSet(bpi.id, RotateRad(isRate ? (Ex)Limit(exrate, ang) : ang.Mul(exrate), v));
+            exprs[2] = data.DictSet(bpi.id, RotateRad(isRate ? (Ex)Limit(rate, ang) : ang.Mul(rate), v));
         } else {
             exprs[0] = v.Is(source);
             exprs[2] = RotateRad(isRate ? 
-                    (Ex)Limit(bpi.t.Mul(exrate), ang) :
-                    ang.Mul(Min(bpi.t.Mul(exrate), E1)), v);
+                    (Ex)Limit(bpi.t.Mul(rate), ang) :
+                    ang.Mul(Min(bpi.t.Mul(rate), E1)), v);
         }
         return Ex.Block(new ParameterExpression[] {v, ang}, exprs);
     }

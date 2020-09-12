@@ -62,8 +62,8 @@ public class FireCutin : BehaviorEntity {
             FormattableString.Invariant($"lerpsmooth in-sine {timeToLerpStart} {timeToFirstHit} t {CXYZ(upperTextOffset)} zero").Into<TP3>();
         lowerTextLerp =
             FormattableString.Invariant($"lerpsmooth in-sine {timeToFirstHit} {timeToSecondHit} t {CXYZ(lowerTextOffset)} zero").Into<TP3>();
-        upperTextScaler = FormattableString.Invariant($"lerpsmooth out-sine {sx} {sy} (- t {timeToFirstHit}) {textScale.x} {textScale.y}").Into<BPY>();
-        lowerTextScaler = FormattableString.Invariant($"lerpsmooth out-sine {sx} {sy} (- t {timeToSecondHit}) {textScale.x} {textScale.y}").Into<BPY>();
+        upperTextScaler = FormattableString.Invariant($"lerpsmooth out-sine {sx} {sy} (t - {timeToFirstHit}) {textScale.x} {textScale.y}").Into<BPY>();
+        lowerTextScaler = FormattableString.Invariant($"lerpsmooth out-sine {sx} {sy} (t - {timeToSecondHit}) {textScale.x} {textScale.y}").Into<BPY>();
         if (fireSprite != null) {
             fireSprite.GetPropertyBlock(firePB = new MaterialPropertyBlock());
             firePB.SetFloat(PropConsts.xBlocks, xBlocks);

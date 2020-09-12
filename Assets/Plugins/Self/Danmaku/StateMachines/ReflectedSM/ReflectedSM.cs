@@ -22,28 +22,22 @@ namespace SM {
 /// All public functions in this repository can be used as LASM state machines.
 /// </summary>
 public static class SMReflection {
-
-    [CanBeNull] private static Func<float, float, float, ParametricInfo, float> _crosshairOpacity;
-    private static Func<float, float, float, ParametricInfo, float> CrosshairOpacity {
-        get {
-            if (_crosshairOpacity == null) {
-                var fadein = ExUtils.VFloat();
-                var homesec = ExUtils.VFloat();
-                var sticksec = ExUtils.VFloat();
-                var bpi = new TExPI();
-                var t = T()(bpi);
-                _crosshairOpacity = Expression.Lambda<Func<float, float, float, ParametricInfo, float>>(
-                    If(ExMPred.Gt(t, fadein),
-                        If(ExMPred.Gt(t, homesec),
-                            Complement(Smooth("in-sine", Div(Sub(t, homesec), sticksec))),
-                            ExMHelpers.E1
-                        ),
-                        Smooth("out-sine", Div(t, fadein))
-                    ), fadein, homesec, sticksec, bpi).Compile();
-            }
-            return _crosshairOpacity;
-        }
-    }
+    private static readonly ReflWrap<Func<float, float, float, ParametricInfo, float>> CrosshairOpacity =
+        (Func<Func<float, float, float, ParametricInfo, float>>) (() => {
+            var fadein = ExUtils.VFloat();
+            var homesec = ExUtils.VFloat();
+            var sticksec = ExUtils.VFloat();
+            var bpi = new TExPI();
+            var t = T()(bpi);
+            return Expression.Lambda<Func<float, float, float, ParametricInfo, float>>(
+                If(ExMPred.Gt(t, fadein),
+                    If(ExMPred.Gt(t, homesec),
+                        Complement(Smooth("in-sine", Div(Sub(t, homesec), sticksec))),
+                        ExMHelpers.E1
+                    ),
+                    Smooth("out-sine", Div(t, fadein))
+                ), fadein, homesec, sticksec, bpi).Compile();
+        });
 
     #region Effects
     /// <summary>
@@ -70,7 +64,7 @@ public static class SMReflection {
             float fadein = Mathf.Max(0.15f, homesec / 5f);
             _ = Sync(style, _ => V2RV2.Zero, SyncPatterns.Loc0(Summon(path,
                 new ReflectableLASM(smh2 => {
-                    smh2.Exec.FadeSpriteOpacity(bpi => CrosshairOpacity(fadein, homesec, sticksec, bpi),
+                    smh2.Exec.FadeSpriteOpacity(bpi => CrosshairOpacity.Value(fadein, homesec, sticksec, bpi),
                         homesec + sticksec, smh2.cT, WaitingUtils.GetAwaiter(out Task t));
                     return t;
                 }), new BehOptions())))(smh);
@@ -91,7 +85,7 @@ public static class SMReflection {
         anim.AssignRatios(t1r?.Invoke(smh.GCX), t2r?.Invoke(smh.GCX));
         anim.Initialize(smh.cT, t);
         ++PlayerInput.SMPlayerControlDisable;
-        Events.MakePlayerInvincible.Invoke((int)(t * 120), false);
+        Events.MakePlayerInvincible.Invoke(((int)(t * 120), false));
         return WaitingUtils.WaitFor(smh, t, false).ContinueWithSync(() => {
             --PlayerInput.SMPlayerControlDisable;
         });
@@ -100,7 +94,8 @@ public static class SMReflection {
     #endregion
     
     public static TaskPattern dBossExplode(TP4 powerupColor, TP4 powerdownColor) {
-        var sp = Sync("powerup1", _ => V2RV2.Zero, Powerup2Static("_", "_", powerupColor, powerdownColor, _ => 1.8f, _ => 4f, _ => 0f, _ => 2f));
+        var sp = Sync("powerup1", _ => V2RV2.Zero, Powerup2Static("_", "_", powerupColor, powerdownColor, 
+            _ => EventLASM.BossExplodeWait, _ => 4f, _ => 0f, _ => 2f));
         var ev = EventLASM.BossExplode();
         return smh => {
             sp(smh);
@@ -500,7 +495,7 @@ public static class SMReflection {
         async smh => {
             var o = smh.Exec as FireOption ??
                     throw new Exception("Cannot use fire command on a BehaviorEntity that is not an Option");
-            if (!PlayerInput.FiringAndAllowed) await WaitingUtils.WaitForUnchecked(o, smh.cT, () => PlayerInput.FiringAndAllowed);
+            if (!PlayerInput.IsFiring) await WaitingUtils.WaitForUnchecked(o, smh.cT, () => PlayerInput.IsFiring);
             smh.ThrowIfCancelled();
             var (firer, onCancel, inputReq) = PlayerInput.IsFocus ?  
                 (focusFire, focusCancel, (Func<bool>) (() => PlayerInput.IsFocus)) :
@@ -508,7 +503,7 @@ public static class SMReflection {
             var fireCTS = new Cancellable();
             var joint_smh = smh.CreateJointCancellee(fireCTS, out _);
             //order is important to ensure cancellation works on the correct frame
-            var waiter = WaitingUtils.WaitForUnchecked(o, smh.cT, () => !PlayerInput.FiringAndAllowed || !inputReq());
+            var waiter = WaitingUtils.WaitForUnchecked(o, smh.cT, () => !PlayerInput.IsFiring || !inputReq());
             _ = firer.Start(joint_smh);
             await waiter;
             fireCTS.Cancel();
@@ -519,12 +514,12 @@ public static class SMReflection {
         async smh => {
             var o = smh.Exec as FireOption ??
                     throw new Exception("Cannot use fire command on a BehaviorEntity that is not an Option");
-            if (!PlayerInput.FiringAndAllowed) await WaitingUtils.WaitForUnchecked(o, smh.cT, () => PlayerInput.FiringAndAllowed);
+            if (!PlayerInput.IsFiring) await WaitingUtils.WaitForUnchecked(o, smh.cT, () => PlayerInput.IsFiring);
             smh.ThrowIfCancelled();
             var fireCTS = new Cancellable();
             var joint_smh = smh.CreateJointCancellee(fireCTS, out _);
             //order is important to ensure cancellation works on the correct frame
-            var waiter = WaitingUtils.WaitForUnchecked(o, smh.cT, () => !PlayerInput.FiringAndAllowed);
+            var waiter = WaitingUtils.WaitForUnchecked(o, smh.cT, () => !PlayerInput.IsFiring);
             _ = fire.Start(joint_smh);
             await waiter;
             fireCTS.Cancel();
@@ -535,13 +530,13 @@ public static class SMReflection {
     public static TaskPattern FireContinued(StateMachine fireFree, StateMachine fireFocus) => async smh => {
         var o = smh.Exec as FireOption ??
                 throw new Exception("Cannot use fire command on a BehaviorEntity that is not an Option");
-        if (!PlayerInput.FiringAndAllowed) await WaitingUtils.WaitForUnchecked(o, smh.cT, () => PlayerInput.FiringAndAllowed);
+        if (!PlayerInput.IsFiring) await WaitingUtils.WaitForUnchecked(o, smh.cT, () => PlayerInput.IsFiring);
         smh.ThrowIfCancelled();
         var fireCTS = new Cancellable();
         var joint_smh = smh.CreateJointCancellee(fireCTS, out _);
         joint_smh.Exec = o.freeFirer;
         //order is important to ensure cancellation works on the correct frame
-        var waiter = WaitingUtils.WaitForUnchecked(o, smh.cT, () => !PlayerInput.FiringAndAllowed);
+        var waiter = WaitingUtils.WaitForUnchecked(o, smh.cT, () => !PlayerInput.IsFiring);
         _ = fireFree.Start(joint_smh);
         joint_smh.Exec = o.focusFirer;
         _ = fireFocus.Start(joint_smh);

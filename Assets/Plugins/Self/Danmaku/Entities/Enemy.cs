@@ -71,7 +71,9 @@ public class Enemy : RegularUpdater {
     public ItemDrops AutoDeathItems => new ItemDrops(
         Mathf.CeilToInt(maxHP/1500f), 
         maxHP >= 500 ? Mathf.CeilToInt(maxHP/2000f) : 0, 
-        maxHP >= 500 ? Mathf.CeilToInt(maxHP/1000f) : 0);
+        maxHP >= 500 ? Mathf.CeilToInt(maxHP/1000f) : 0,
+        maxHP >= 1000 ? Mathf.CeilToInt(maxHP / 1200f) : 0
+        );
 
 
     private static int enemyIndexCtr = 0;
@@ -322,8 +324,7 @@ public class Enemy : RegularUpdater {
 
     public void ProcOnHit(EffectStrategy effect, Vector2 hitLoc) => effect.Proc(hitLoc, beh.GlobalPosition(), collisionRadius);
 
-    [CanBeNull] private static VTP _suicideVTP = null;
-    private static VTP SuicideVTP => _suicideVTP = _suicideVTP ?? "tprot cx 1.6".Into<VTP>();
+    private static readonly ReflWrap<VTP> SuicideVTP = (Func<VTP>)"tprot cx 1.6".Into<VTP>;
     public void DoSuicideFire() {
         if (GameManagement.DifficultyCounter < DifficultySet.Hard.Counter()) return;
         var bt = LevelController.DefaultSuicideStyle;

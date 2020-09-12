@@ -33,7 +33,7 @@ public abstract class XMLMenu : MonoBehaviour {
     protected virtual string UITopID => "Pause";
     protected virtual string ScreenContainerID => "UIContainer";
 
-    protected virtual UIScreen[] Screens => new[] { MainScreen };
+    protected virtual IEnumerable<UIScreen> Screens => new[] { MainScreen };
     protected UIScreen MainScreen { get; set; }
     protected bool MenuActive = true;
     [CanBeNull] protected virtual string HeaderOverride => null;

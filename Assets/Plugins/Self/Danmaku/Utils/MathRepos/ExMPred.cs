@@ -44,7 +44,6 @@ public static partial class ExMPred {
     /// <summary>
     /// Return true iff the argument is false.
     /// </summary>
-    [Alias("!")]
     public static tbool Not(tbool pred) => Ex.Not(pred);
     /// <summary>
     /// Return true iff both arguments are true.
@@ -52,7 +51,7 @@ public static partial class ExMPred {
     /// <param name="pr1">First predicate</param>
     /// <param name="pr2">Second predicate</param>
     /// <returns></returns>
-    [Alias("&")]
+    [Alias("&")] [WarnOnStrict]
     public static tbool And(tbool pr1, tbool pr2) {
         return Ex.AndAlso(pr1, pr2);
     }
@@ -62,7 +61,7 @@ public static partial class ExMPred {
     /// <param name="pr1">First predicate</param>
     /// <param name="pr2">Second predicate</param>
     /// <returns></returns>
-    [Alias("|")]
+    [Alias("|")] [WarnOnStrict]
     public static tbool Or(tbool pr1, tbool pr2) {
         return Ex.OrElse(pr1, pr2);
     }
@@ -76,8 +75,8 @@ public static partial class ExMPred {
     /// <summary>
     /// Return true iff the first argument is not equal to the second.
     /// </summary>
-    [Alias("!=")]
-    public static tbool Neq<T>(tfloat b1, tfloat b2) => Ex.NotEqual(b1, b2);
+    [Alias("=/=")]
+    public static tbool Neq(tfloat b1, tfloat b2) => Ex.NotEqual(b1, b2);
 
 
     /// <summary>

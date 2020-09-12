@@ -63,6 +63,16 @@ PrefabInstance:
       propertyPath: offsetFocus
       value: pxy 0.3 -0.5
       objectReference: {fileID: 0}
+    - target: {fileID: 2152135036053510616, guid: 3b77a615e29f01d498594cbb10c00332,
+        type: 3}
+      propertyPath: opacityFree
+      value: ifpowergtp 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2152135036053510616, guid: 3b77a615e29f01d498594cbb10c00332,
+        type: 3}
+      propertyPath: opacityFocus
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 2845728198793315882, guid: 3b77a615e29f01d498594cbb10c00332,
         type: 3}
       propertyPath: behaviorScript
@@ -72,6 +82,16 @@ PrefabInstance:
         type: 3}
       propertyPath: offsetFocus
       value: pxy 0.9 -0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2845728198793315882, guid: 3b77a615e29f01d498594cbb10c00332,
+        type: 3}
+      propertyPath: opacityFree
+      value: ifpowergtp 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2845728198793315882, guid: 3b77a615e29f01d498594cbb10c00332,
+        type: 3}
+      propertyPath: opacityFocus
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3643135156715668705, guid: 3b77a615e29f01d498594cbb10c00332,
         type: 3}
@@ -194,6 +214,16 @@ PrefabInstance:
       propertyPath: offsetFocus
       value: pxy -0.9 -0.5
       objectReference: {fileID: 0}
+    - target: {fileID: 6634660946729627629, guid: 3b77a615e29f01d498594cbb10c00332,
+        type: 3}
+      propertyPath: opacityFree
+      value: ifpowergtp 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6634660946729627629, guid: 3b77a615e29f01d498594cbb10c00332,
+        type: 3}
+      propertyPath: opacityFocus
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 6789427584213718160, guid: 3b77a615e29f01d498594cbb10c00332,
         type: 3}
       propertyPath: behaviorScript
@@ -203,6 +233,16 @@ PrefabInstance:
         type: 3}
       propertyPath: offsetFocus
       value: pxy -0.3 -0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 6789427584213718160, guid: 3b77a615e29f01d498594cbb10c00332,
+        type: 3}
+      propertyPath: opacityFree
+      value: ifpowergtp 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6789427584213718160, guid: 3b77a615e29f01d498594cbb10c00332,
+        type: 3}
+      propertyPath: opacityFocus
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7280190049924880140, guid: 3b77a615e29f01d498594cbb10c00332,
         type: 3}

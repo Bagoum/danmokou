@@ -47,7 +47,7 @@ public static partial class ExM {
     /// <summary>
     /// Add two vectypes.
     /// </summary>
-    [Alias("+")]
+    [Alias("+")] [WarnOnStrict]
     public static TEx<T> Add<T>(TEx<T> x, TEx<T> y) => x.Add(y);
     /// <summary>
     /// Add to the nonrotational components of an RV2.
@@ -73,12 +73,12 @@ public static partial class ExM {
     /// <summary>
     /// Subtract two vectypes.
     /// </summary>
-    [Alias("-")]
+    [Alias("-")] [WarnOnStrict]
     public static TEx<T> Sub<T>(TEx<T> x, TEx<T> y) => x.Sub(y);
     /// <summary>
     /// Multiply a vectype by a number.
     /// </summary>
-    [Alias("*")]
+    [Alias("*")] [WarnOnStrict]
     public static TEx<T> Mul<T>(tfloat x, TEx<T> y) => x.Mul(y);
 
     /// <summary>
@@ -98,7 +98,7 @@ public static partial class ExM {
     /// Divide two numbers. Alias: / x y
     /// </summary>
     /// <returns></returns>
-    [Alias("/")]
+    [Alias("/")] [WarnOnStrict]
     public static tfloat Div(tfloat x, tfloat y) => x.Div(y);
     /// <summary>
     /// Divide two numbers in reverse order (the same as / y x). 
@@ -108,7 +108,7 @@ public static partial class ExM {
     /// <summary>
     /// Divide two numbers and returns the floor.
     /// </summary>
-    [Alias("//")]
+    [Alias("//")] [WarnOnStrict]
     public static tfloat FDiv(tfloat x, tfloat y) => Floor(x.Div(y));
     /// <summary>
     /// (1-x)

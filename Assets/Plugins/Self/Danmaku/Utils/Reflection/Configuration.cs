@@ -185,10 +185,14 @@ public static partial class Reflector {
             return mi.Invoke(func, new[] {over});
         }
 
-        public bool TryInvokeFunced<T, R>(string member, object[] _prms, out object result) {
+        public bool TryInvokeFunced<T, R>(ReflCtx ctx, string member, object[] _prms, out object result) {
             var rt = typeof(R);
             ResolveGeneric(rt, member);
-            if (methodsByReturnType.Has2(rt, member)) {
+            if (methodsByReturnType.TryGet2(rt, member, out var f)) {
+                if (ctx.props.warnPrefix && Attribute.GetCustomAttributes(f).Any(x =>
+                    x is WarnOnStrictAttribute wa && (int) ctx.props.strict >= wa.strictness)) {
+                    Log.Unity($"Line {ctx.q.GetLastLine()}: The method \"{member}\" is not permitted for use in a script with strictness {ctx.props.strict}. You might accidentally be using the prefix version of an infix function.", true, Log.Level.WARNING);
+                }
                 result = (Func<T,R>)(bpi => {
                     Type[] baseTypes = LazyGetTypes(rt, member);
                     Type[] funcTypes = FuncifyTypes<T, R>(member);
@@ -206,7 +210,7 @@ public static partial class Reflector {
                             prms[ii] = converter(prms[ii]);
                         }
                     }
-                    return (R)methodsByReturnType[rt][member].Invoke(null, prms);
+                    return (R)f.Invoke(null, prms);
                 });
                 
                 return true;
@@ -217,7 +221,7 @@ public static partial class Reflector {
 
         public object Invoke(Type rt, string member, object[] prms) => methodsByReturnType[rt][member].Invoke(null, prms);
 
-        public bool TryInvoke<T>(string member, object[] prms, out object result) =>
+        public bool TryInvoke<T>(ReflCtx ctx, string member, object[] prms, out object result) =>
             TryInvoke(typeof(T), member, prms, out result);
         public bool TryInvoke(Type rt, string member, object[] prms, out object result) {
             ResolveGeneric(rt, member);
@@ -270,7 +274,8 @@ public static partial class Reflector {
                     if (ReflConfig.RecordLazyTypes(mi).Length != 1) {
                         throw new StaticException($"Fallthrough methods must have one argument: {mi.Name}");
                     }
-                    FallThroughOptions.AddToList(mi.ReturnType, (fa, mi));
+                    if (fa.upwardsCast) UpwardsCastOptions.AddToList(mi.ReturnType, (fa, mi));
+                    else FallThroughOptions.AddToList(mi.ReturnType, (fa, mi));
                 }
             }
         }

@@ -27,7 +27,7 @@ MonoBehaviour:
   dayCampaign: {fileID: 0}
   defaultTransition: {fileID: 11400000, guid: 517222e0dbe56264a8bcd878fc9e4e27, type: 2}
   shots:
-  - {fileID: 11400000, guid: e89357d08e40831458970df574a4eb13, type: 2}
+  - {fileID: 11400000, guid: 7f0232bab1e00ac4cb3391917f1ffc6f, type: 2}
   dialogue:
   - {fileID: 11400000, guid: b7c1d3b51649f5e4eb3f41be569c3f4b, type: 2}
   bossMetadata:

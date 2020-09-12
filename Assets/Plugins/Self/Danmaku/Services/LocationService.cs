@@ -26,6 +26,10 @@ public static class LocationService {
     public const float Top = 4f;
     public const float Width = Right - Left;
     public const float Height = Top - Bot;
+    public static float LeftPlayerBound => Left + 0.1f;
+    public static float RightPlayerBound => Right - 0.1f;
+    public static float BotPlayerBound => Bot + 0.6f;
+    public static float TopPlayerBound => Top - 0.1f;
     public static readonly Ex left = Ex.Constant(Left);
     public static readonly Ex right = Ex.Constant(Right);
     public static readonly Ex bot = Ex.Constant(Bot);

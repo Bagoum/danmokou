@@ -107,13 +107,7 @@ public class LazyUIScreen : UIScreen {
 
 public class UINode {
     public readonly UINode[] children;
-    [CanBeNull] protected Func<UINode> _displayParent;
-
-    public UINode SetDisplayParentOverride(Func<UINode> overr) {
-        _displayParent = overr;
-        return this;
-    }
-    [CanBeNull] public UINode Parent { get; protected set; }
+    [CanBeNull] public UINode Parent { get; private set; }
     public UINode[] Siblings { get; set; } //including self
     [CanBeNull] private UINode[] _sameDepthSiblings;
     public UINode[] SameDepthSiblings =>
@@ -138,8 +132,7 @@ public class UINode {
 
     public IEnumerable<UINode> ListAll() => children.SelectMany(n => n.ListAll()).Prepend(this);
 
-    private int? _fixedDepth = null;
-    public int Depth => _fixedDepth ?? Parent?.ChildDepth ?? 0;
+    public int Depth => Parent?.ChildDepth ?? 0;
     protected virtual int ChildDepth => 1 + Depth;
 
     protected static void AssignParentingStates(UINode p) {
@@ -148,7 +141,7 @@ public class UINode {
             p.state = NodeState.Selected;
         }
     }
-    protected virtual void AssignParentStatesFromSelected() => AssignParentingStates(_displayParent?.Invoke() ?? Parent);
+    protected virtual void AssignParentStatesFromSelected() => AssignParentingStates(Parent);
     public virtual void AssignStatesFromSelected() {
         screen.ResetStates();
         foreach (var x in children) x.state = NodeState.Visible;
@@ -162,11 +155,6 @@ public class UINode {
 
     public UINode With([CanBeNull] string cls) {
         if (!string.IsNullOrWhiteSpace(cls)) overrideClasses.Add(cls);
-        return this;
-    }
-
-    public UINode FixDepth(int d) {
-        _fixedDepth = d;
         return this;
     }
 
@@ -574,8 +562,8 @@ public class DelayOptionNodeLR2<T> : UINode {
     private VisualElement childContainer;
     public override VisualElement Build(Dictionary<Type, VisualTreeAsset> map, ScrollView scroller) {
         CloneTree(map);
-        BindText();
         childContainer = bound.Q("LR2ChildContainer");
+        BindText();
         return BindScroll(scroller);
     }
     protected override void BindText() {

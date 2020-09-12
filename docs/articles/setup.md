@@ -25,6 +25,7 @@ These are verbose instructions on how to set up Danmokou on your first run.
 - Your text editor should now open the file. It should have the following contents:
 
 ```python
+<#> warnprefix
 ## Go to https://dmk.bagoum.com/docs/articles/t01.html for the tutorial. 
 pattern({ })
 phase(0)

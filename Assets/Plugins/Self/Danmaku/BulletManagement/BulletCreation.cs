@@ -21,7 +21,6 @@ public struct DelegatedCreator {
     private Vector2? forceRoot;
     private bool useParentMoveMod;
     public Enums.Facing facing;
-    public MovementModifiers modifiers;
 
     //Constructor may be called from any thread; .transform is unsafe. Variable reference is safe.
     public DelegatedCreator(BehaviorEntity parent, string style, Vector2? forceRoot=null) {
@@ -33,7 +32,6 @@ public struct DelegatedCreator {
         cachedLoc = Vector2.zero;
         useParentMoveMod = true;
         facing = Enums.Facing.ORIGINAL;
-        modifiers = MovementModifiers.Default;
     }
 
     private float ResolveFacing() {
@@ -59,31 +57,29 @@ public struct DelegatedCreator {
     public void SFX() => SFXService.Request(style);
 
     public void Simple(SyncHandoff sbh, [CanBeNull] BPY scale, [CanBeNull] SBV2 dir, VTP path, uint? id) {
-        BulletManager.RequestSimple(style, scale, dir, new Velocity(path, ParentOffset, FacedRV2(sbh.rv2), Modifiers), 
+        BulletManager.RequestSimple(style, scale, dir, new Velocity(path, ParentOffset, FacedRV2(sbh.rv2)), 
             sbh.index, sbh.timeOffset, id);
     }
 
     private const float DEFAULT_REMEMBER = 3f;
     public void Pather(SyncHandoff sbh, float? maxLength, BPY remember, VTP path, uint bpiid, BehOptions options) {
         V2RV2 lrv2 = FacedRV2(sbh.rv2);
-        var m = Modifiers.ApplyOver(options.modifiers);
         var opts = new RealizedBehOptions(options, sbh.GCX, bpiid, ParentOffset, lrv2, sbh.ch.cT);
-        BulletManager.RequestPather(style, new Velocity(path, ParentOffset, lrv2, m), sbh.index, bpiid, 
+        BulletManager.RequestPather(style, new Velocity(path, ParentOffset, lrv2), sbh.index, bpiid, 
             maxLength.GetValueOrDefault(DEFAULT_REMEMBER), remember, ref opts);
     }
 
     public void Laser(SyncHandoff sbh, VTP path, float cold, float hot, uint bpiid, LaserOptions options) {
         V2RV2 lrv2 = FacedRV2(sbh.rv2);
-        var opts = new RealizedLaserOptions(options, sbh.GCX, bpiid, ParentOffset, lrv2, Modifiers, sbh.ch.cT);
-        BulletManager.RequestLaser(transformParent, style, new Velocity(path, ParentOffset, lrv2, Modifiers), 
+        var opts = new RealizedLaserOptions(options, sbh.GCX, bpiid, ParentOffset, lrv2, sbh.ch.cT);
+        BulletManager.RequestLaser(transformParent, style, new Velocity(path, ParentOffset, lrv2), 
             sbh.index, bpiid, cold, hot, ref opts);
     }
 
     public void Summon(bool pooled, SyncHandoff sbh, BehOptions options, VTP path, SMRunner sm, uint bpiid) {
         V2RV2 lrv2 = FacedRV2(sbh.rv2);
-        var m = Modifiers.ApplyOver(options.modifiers);
-        Velocity vel = new Velocity(path, ParentOffset, lrv2, m);
-        BulletManager.RequestSummon(pooled, style, m, vel, sbh.index, bpiid, options.ID, transformParent, sm,
+        Velocity vel = new Velocity(path, ParentOffset, lrv2);
+        BulletManager.RequestSummon(pooled, style, vel, sbh.index, bpiid, options.ID, transformParent, sm,
             new RealizedBehOptions(options, sbh.GCX, bpiid, ParentOffset, lrv2, sbh.ch.cT));
     }
 
@@ -99,10 +95,6 @@ public struct DelegatedCreator {
     public void SummonPowerupStatic(SyncHandoff sbh, TP4 color, float time, float itrs, uint bpiid) {
         BulletManager.RequestPowerup(style, color, time, itrs, null, sbh.index, bpiid, FacedRV2(sbh.rv2).TrueLocation + ParentOffset);
     }
-
-    private MovementModifiers Modifiers =>
-        modifiers.ApplyOver(useParentMoveMod ?
-            parent.MovementModifiers : MovementModifiers.Default);
 
     //If there is a transform-parent, then the effective parent offset is zero.
     public Vector2 ParentOffset => 
@@ -123,8 +115,7 @@ public struct DelegatedCreator {
 }
 
 public partial class BulletManager {
-    public static void RequestSimple(string styleName, [CanBeNull] BPY scale, [CanBeNull] SBV2 dir, Velocity velocity, int firingIndex,
-        float timeOffset, uint? bpiid) {
+    public static void RequestSimple(string styleName, [CanBeNull] BPY scale, [CanBeNull] SBV2 dir, Velocity velocity, int firingIndex, float timeOffset, uint? bpiid) {
         SimpleBullet sb = new SimpleBullet(scale, dir, velocity, firingIndex, bpiid ?? RNG.GetUInt(), timeOffset);
         GetMaybeCopyPool(styleName).Add(ref sb, true);
     }
@@ -153,12 +144,12 @@ public partial class BulletManager {
         } else throw new Exception("Laser must be an faBulletStyle: " + style);
     }
     
-    public static BehaviorEntity RequestSummon(bool pooled, string prefabName, MovementModifiers m, Velocity path, 
+    public static BehaviorEntity RequestSummon(bool pooled, string prefabName, Velocity path, 
         int firingIndex, uint bpiid, string behName, [CanBeNull] BehaviorEntity parent, SMRunner sm, RealizedBehOptions? opts) {
         BehaviorEntity beh = pooled ?
             BEHPooler.RequestUninitialized(ResourceManager.GetSummonable(prefabName), out _) :
             GameObject.Instantiate(ResourceManager.GetSummonable(prefabName)).GetComponent<BehaviorEntity>();
-        beh.Initialize(path, m, sm, firingIndex, bpiid, parent, behName, opts);
+        beh.Initialize(path, sm, firingIndex, bpiid, parent, behName, opts);
         return beh;
     }
 
@@ -167,7 +158,7 @@ public partial class BulletManager {
     }
 
     public static Drawer RequestDrawer(string kind, int firingIndex, 
-        uint bpiid, string behName, [CanBeNull] BehaviorEntity parent, SMRunner sm) => RequestSummon(true, kind, MovementModifiers.Default, Velocity.None, firingIndex, bpiid, behName,
+        uint bpiid, string behName, [CanBeNull] BehaviorEntity parent, SMRunner sm) => RequestSummon(true, kind, Velocity.None, firingIndex, bpiid, behName,
             parent, sm, null).GetComponent<Drawer>();
 
     public static RectDrawer RequestRect(TP4 color, BPRV2 locScaleRot, int firingIndex,
@@ -186,7 +177,7 @@ public partial class BulletManager {
     public static PowerUp RequestPowerup(string style, TP4 color, float time, float itrs, [CanBeNull] BehaviorEntity parent, 
         int firingIndex, uint bpiid, Vector2? offset = null) {
         Velocity vel = offset.HasValue ? new Velocity(offset.Value, 0f) : Velocity.None;
-        var pw = RequestSummon(true, style, MovementModifiers.Default, vel, firingIndex, bpiid, "_", parent,
+        var pw = RequestSummon(true, style, vel, firingIndex, bpiid, "_", parent,
             new SMRunner(), null).GetComponent<PowerUp>();
         pw.Initialize(color, time, itrs);
         return pw;

@@ -93,6 +93,7 @@ public static class InputManager {
     public static readonly InputHandler AimDown = InputHandler.Trigger(Key(i.AimDown).Or(AxisL0(aCRightY)));
     public static readonly InputHandler ShootToggle = InputHandler.Toggle(Key(i.ShootToggle).Or(Key(cLeftShoulder)));
     public static readonly InputHandler ShootHold = InputHandler.Hold(Key(i.ShootHold).Or(AxisG0(aCLeftTrigger)));
+    public static readonly InputHandler Bomb = InputHandler.Trigger(Key(i.Bomb));
     
     public static readonly InputHandler UILeft = InputHandler.Trigger(AxisL0(aHoriz).Or(AxisL0(aCDPadX)));
     public static readonly InputHandler UIRight = InputHandler.Trigger(AxisG0(aHoriz).Or(AxisG0(aCDPadX)));
@@ -116,6 +117,7 @@ public static class InputManager {
         public ShootDirection shootDir;
         public bool fire;
         public bool focus;
+        public bool bomb;
         public bool dialogueConfirm;
         public bool dialogueToEnd;
         public bool dialogueSkip;
@@ -127,6 +129,7 @@ public static class InputManager {
         shootDir = FiringDir,
         fire = IsFiring,
         focus = IsFocus,
+        bomb = IsBomb,
         dialogueConfirm = DialogueConfirm,
         dialogueToEnd = DialogueToEnd,
         dialogueSkip = DialogueSkip,
@@ -141,7 +144,7 @@ public static class InputManager {
 
     private static readonly InputHandler[] Updaters = {
         //FocusToggle, 
-        FocusHold, AimLeft, AimRight, AimUp, AimDown, ShootToggle, ShootHold,
+        FocusHold, AimLeft, AimRight, AimUp, AimDown, ShootToggle, ShootHold, Bomb,
         UIDown, UIUp, UILeft, UIRight, UIConfirm, UIBack, UISkipDialogue, Pause
     };
 
@@ -167,6 +170,7 @@ public static class InputManager {
     }
 
     public static bool IsFocus => replay?.focus ?? FocusHold.Active;
+    public static bool IsBomb => replay?.bomb ?? Bomb.Active;
     public static ShootDirection FiringDir { get {
         if (replay.HasValue) return replay.Value.shootDir;
     #if VER_SIMP

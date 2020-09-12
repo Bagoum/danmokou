@@ -80,14 +80,6 @@
 .padLeft {
 }
 
-.column.w80 {
-    flex-grow: 4;
-}
-
-.column.w20 {
-    flex-grow: 1;
-}
-
 .w60 {
 }
 
@@ -96,4 +88,14 @@
 
 .column.wd08 {
     flex-grow: 0.8;
+}
+
+.w80 {
+}
+
+.w20 {
+}
+
+.column.wd5 {
+    flex-grow: 5;
 }

@@ -5,30 +5,6 @@ using UnityEngine;
 namespace Danmaku {
 //Inspector-exposed structs cannot be readonly
 [Serializable]
-public struct MovementModifiers {
-    public bool flipX;
-    public bool flipY;
-    public sbyte FlipX => flipX ? (sbyte)-1 : (sbyte)1;
-    public sbyte FlipY => flipY ? (sbyte)-1 : (sbyte)1;
-
-    public static MovementModifiers Default => new MovementModifiers(false, false);
-    public static MovementModifiers WithXFlip => new MovementModifiers(true, false);
-    public MovementModifiers(bool x, bool y) {
-        flipX = x;
-        flipY = y;
-    }
-    public MovementModifiers ApplyOver(MovementModifiers basem) {
-        return new MovementModifiers(flipX ^ basem.flipX, flipY ^ basem.flipY);
-    }
-
-    public Vector2 ApplyOver(Vector2 basev) {
-        basev.x *= FlipX;
-        basev.y *= FlipY;
-        return basev;
-    }
-}
-
-[Serializable]
 public struct Frame {
     public Sprite sprite;
     public float time;

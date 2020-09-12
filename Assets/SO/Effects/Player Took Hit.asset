@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: eef3d61c38c8da249ac2aabcd5c9d253, type: 3}
-  m_Name: Player Took Hit Negative Effect
+  m_Name: Player Took Hit
   m_EditorClassIdentifier: 
   proccer: {fileID: 0}
   sound: {fileID: 11400000, guid: f011464038927994bbb50af56bf0439c, type: 2}

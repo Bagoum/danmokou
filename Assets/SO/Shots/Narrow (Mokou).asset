@@ -10,9 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4fa22e423a3842e1b90ce62d0372178a, type: 3}
-  m_Name: Sun
+  m_Name: Narrow (Mokou)
   m_EditorClassIdentifier: 
-  title: Sun
-  description: '"The Autophagic Sun Smoldering in the Void"\nA special shot type
-    centered around firing large indestructible projectiles.'
-  prefab: {fileID: 3080997326687647958, guid: ee24bfc5601b8594b999017783d4f3c2, type: 3}
+  key: basic-mokou-1
+  title: Narrow
+  description: '"The Flaming Spear of Vengeful Deicide"\nA narrow shot with high
+    damage output and low range.'
+  prefab: {fileID: 1281575726812465804, guid: 3b77a615e29f01d498594cbb10c00332, type: 3}
+  bomb: 0
+  defaultPower: 1000

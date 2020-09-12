@@ -30,6 +30,8 @@ public class UIManager : MonoBehaviour {
     public TextMeshPro pivMult;
     public TextMeshPro lifePoints;
     public TextMeshPro graze;
+    public TextMeshPro debugBombs;
+    public TextMeshPro debugPower;
     public TextMeshPro message;
     public TextMeshPro centerMessage;
     private const string deathCounterFormat = "死{0:D2}";
@@ -289,6 +291,7 @@ public class UIManager : MonoBehaviour {
     private const string pivMultFormat = "x<mspace=1.7>{0:F2}</mspace>";
     private const string lifePointsFormat = "<mspace=1.5>{0}/{1}</mspace>";
     private const string grazeFormat = "<mspace=1.5>{0}</mspace>";
+    private const string powerFormat = "<mspace=1.0>{0:F2}</mspace>";
 
     private static string ToMonospaceThousands(long val, float mspace=1.7f) {
         string ms = $"<mspace={mspace}>";
@@ -309,10 +312,12 @@ public class UIManager : MonoBehaviour {
     }
     private void _UpdatePlayerUI() {
         score.text = ToMonospaceThousands(campaign.UIVisibleScore); 
-        maxScore.text = ToMonospaceThousands(campaign.maxScore);
+        maxScore.text = ToMonospaceThousands(campaign.MaxScore);
         pivMult.text = string.Format(pivMultFormat, campaign.PIV);
         lifePoints.text = string.Format(lifePointsFormat, campaign.LifeItems, campaign.NextLifeItems);
         graze.text = string.Format(grazeFormat, campaign.Graze);
+        debugBombs.text = string.Format(grazeFormat, campaign.Bombs);
+        debugPower.text = string.Format(powerFormat, campaign.Power);
         for (int ii = 0; ii < healthPoints.Length; ++ii) healthPoints[ii].sprite = healthEmpty;
         for (int hi = 0; hi < healthItrs.Length; ++hi) {
             for (int ii = 0; ii + hi * healthPoints.Length < campaign.Lives && ii < healthPoints.Length; ++ii) {

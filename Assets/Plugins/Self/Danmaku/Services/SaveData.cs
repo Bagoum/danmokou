@@ -25,11 +25,41 @@ public static class SaveData {
 
     public class Record {
         public bool TutorialDone = false;
+
+        public void CompleteTutorial() {
+            TutorialDone = true;
+            SaveData.SaveRecord();
+        }
         public HashSet<string> CompletedCampaigns = new HashSet<string>();
+
+        public void CompleteCampaign(string campaign) {
+            CompletedCampaigns.Add(campaign);
+            SaveRecord();
+        }
         [JsonIgnore]
         public bool MainCampaignCompleted => CompletedCampaigns.Contains(GameManagement.References.campaign.key);
         //day key, boss key, raw phase index, challenge index
         public Dictionary<string, Dictionary<string, Dictionary<int, Dictionary<int, Dictionary<DifficultySet, ChallengeCompletion>>>>> SceneRecord = new Dictionary<string, Dictionary<string, Dictionary<int, Dictionary<int, Dictionary<DifficultySet, ChallengeCompletion>>>>>();
+
+        public Dictionary<string, long> HighScores = new Dictionary<string, long>();
+
+        public bool TrySetHighScore(string gameIdentifier, long score) {
+            if (!HighScores.TryGetValue(gameIdentifier, out var currScore) || score > currScore) {
+                HighScores[gameIdentifier] = score;
+                SaveRecord();
+                return true;
+            } else return false;
+        }
+
+        public long? GetHighScore(string gameIdentifier) =>
+            HighScores.TryGetValue(gameIdentifier, out var score) ? (long?) score : null;
+
+        public void CompleteChallenge(GameRequest gr, ChallengeRequest cr) {
+            var dfcMap = SceneRecord.SetDefault(cr.Day.key).SetDefault(cr.Boss.key)
+                .SetDefault(cr.phase.phase.index).SetDefault(cr.ChallengeIdx);
+            dfcMap[gr.difficulty] = new ChallengeCompletion();
+            SaveData.SaveRecord();
+        }
 
         [CanBeNull]
         private Dictionary<int, Dictionary<int, Dictionary<DifficultySet, ChallengeCompletion>>>
@@ -53,12 +83,6 @@ public static class SaveData {
             }
             return true;
         }
-
-        public void CompleteChallenge(GameRequest gr, ChallengeRequest cr) {
-            var dfcMap = SceneRecord.SetDefault(cr.Day.key).SetDefault(cr.Boss.key)
-                .SetDefault(cr.phase.phase.index).SetDefault(cr.ChallengeIdx);
-            dfcMap[gr.difficulty] = new ChallengeCompletion();
-        }
     }
     public class Settings {
         public bool AllowInputLinearization = false;
@@ -68,7 +92,7 @@ public static class SaveData {
         public int RefreshRate = 60;
         public (int w, int h) Resolution = Consts.BestResolution;
     #if UNITY_EDITOR
-        public static bool TeleportAtPhaseStart => false;
+        public static bool TeleportAtPhaseStart => true;
     #else
         public static bool TeleportAtPhaseStart => false;
     #endif

@@ -257,7 +257,7 @@ public static class Enums {
         throw new Exception($"Couldn't resolve difficulty setting {d}");
     }
 
-    public static string DescribePadR(this DifficultySet d) => d.Describe().PadRight(9);
+    public static string DescribePadR(this DifficultySet d) => d.Describe().PadRight(8);
 
     public static bool IsOneCard(this CampaignMode mode) =>
         mode == CampaignMode.CARD_PRACTICE || mode == CampaignMode.SCENE_CHALLENGE;

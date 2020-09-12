@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1fa61efa6fe65e0459ee271ffb7e08d1, type: 3}
   m_Name: Player Golden Invuln
   m_EditorClassIdentifier: 
-  defaultName: invuln
+  defaultName: x-invuln
   clip: {fileID: 8300000, guid: dc6dfdd8dad39fa46afa423917c8a66c, type: 3}
   volume: 0.25
+  timeout: -1

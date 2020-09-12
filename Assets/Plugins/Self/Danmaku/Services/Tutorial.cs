@@ -94,7 +94,7 @@ public class Tutorial : BehaviorEntity {
         Prompt(text00, $"Unpause by pressing {Pause.Desc} or selecting the unpause option.");
         yield return waitlf(() => !GameStateManager.IsLoadingOrPaused);
         BulletManager.RequestSimple("lcircle-red/", _ => 4f, null, new Velocity(new Vector2(-3, -2.5f), 0), 0, 0, null);
-        var nrx = new RealizedLaserOptions(new LaserOptions(LaserOption.S(_ => 1/RealizedLaserOptions.DEFAULT_LASER_WIDTH)), GenCtx.New(this, V2RV2.Zero), 5, new Vector2(3, 5), V2RV2.Angle(-90), MovementModifiers.Default, Cancellable.Null);
+        var nrx = new RealizedLaserOptions(new LaserOptions(LaserOption.S(_ => 1/RealizedLaserOptions.DEFAULT_LASER_WIDTH)), GenCtx.New(this, V2RV2.Zero), 5, new Vector2(3, 5), V2RV2.Angle(-90), Cancellable.Null);
         BulletManager.RequestLaser(null, "mulaser-blue/b", new Velocity(new Vector2(3, 5), -90), 0, 5, 999, 0, ref nrx);
         BulletManager.RequestLaser(null, "zonelaser-green/b", new Velocity(new Vector2(4, 5), -90), 0, 5, 999, 0, ref nrx);
         "sync _ <> relrect greenrect level <-3;-2.5:1.4;1.4:0> witha 0.7 green".Into<StateMachine>()
@@ -193,7 +193,7 @@ Fulfill the requirement to get an extra life.", -2.1f);
         yield return confirm();
         yield return shift();
         Prompt(text10, "Get 35,000 points by collecting value items.");
-        yield return waitlf(() => campaign.score > 35000);
+        yield return waitlf(() => campaign.Score > 35000);
         yield return shift();
         Message(text10, @"This is the score multiplier. ------>
 It multiplies the points gained from value items. Increase it by collecting point++ items.", -0.4f);
@@ -214,7 +214,7 @@ It will empty over time, but graze and point++ items will restore it. When empty
         yield return confirm();
         yield return shift();
         Prompt(text10, "Get 1,000,000 points by collecting point++ items and value items.");
-        yield return waitlf(() => campaign.score > 1000000);
+        yield return waitlf(() => campaign.Score > 1000000);
         yield return shift();
         Message(text10, "In general, enemy bullets have much smaller hitboxes than their visual size.");
         yield return confirm();
@@ -228,8 +228,7 @@ It will empty over time, but graze and point++ items will restore it. When empty
         yield return shift();
         
         Prompt(text10, "That's all! To finish the tutorial, select \"Return to Menu\" from the pause menu.");
-        SaveData.r.TutorialDone = true;
-        SaveData.SaveRecord();
+        SaveData.r.CompleteTutorial();
     }
     
     private const int SKIP = 100;

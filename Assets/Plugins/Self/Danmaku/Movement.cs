@@ -305,7 +305,6 @@ public struct Velocity {
     public sbyte flipX;
     public sbyte flipY;
     public Vector2 Direction => new Vector2(cos_rot, sin_rot);
-    public MovementModifiers Modifiers => new MovementModifiers(flipX < 0, flipY < 0);
 
     /// <summary>
     /// Create a velocity configuration.
@@ -313,15 +312,14 @@ public struct Velocity {
     /// <param name="path">Movement descriptor</param>
     /// <param name="parentLoc">Global location of parent. Set to zero if using a transform parent</param>
     /// <param name="localLoc">Location of this relative to parent. Only distinguished from parent for applying modifiers.</param>
-    /// <param name="modifiers">Movement modifiers</param>
-    public Velocity(VTP path, Vector2 parentLoc, V2RV2 localLoc, MovementModifiers modifiers) {
+    public Velocity(VTP path, Vector2 parentLoc, V2RV2 localLoc) {
         angle = localLoc.angle;
         cos_rot = M.CosDeg(localLoc.angle);
         sin_rot = M.SinDeg(localLoc.angle);
         vtp = path;
-        flipX = modifiers.FlipX;
-        flipY = modifiers.FlipY;
-        this.rootPos = parentLoc + modifiers.ApplyOver(localLoc.TrueLocation);
+        flipX = 1;
+        flipY = 1;
+        this.rootPos = parentLoc + localLoc.TrueLocation;
     }
 
     public Velocity(VTP vtp, Vector2 rootPos, float ang) : this(vtp, rootPos, M.CosDeg(ang), M.SinDeg(ang), 1, 1) { }
@@ -336,18 +334,16 @@ public struct Velocity {
     }
     public Velocity WithNoMovement() => new Velocity(VTPRepo.NoVTP, rootPos, cos_rot, sin_rot, flipX, flipY);
 
-    public Velocity(VTP path): this(path, Vector2.zero, V2RV2.Zero, new MovementModifiers()) {}
+    public Velocity(VTP path): this(path, Vector2.zero, V2RV2.Zero) {}
 
     /// <summary>
     /// Create a shell velocity configuration with no movement.
     /// </summary>
     /// <param name="parentLoc">Global location of parent. Set to zero if using a transform parent</param>
     /// <param name="localPos">Location of this relative to parent</param>
-    /// <param name="modifiers">Movement modifiers</param>
-    public Velocity(Vector2 parentLoc, V2RV2 localPos, MovementModifiers modifiers) : this(VTPRepo.NoVTP, parentLoc, localPos,
-        modifiers) { }
+    public Velocity(Vector2 parentLoc, V2RV2 localPos) : this(VTPRepo.NoVTP, parentLoc, localPos) { }
     
-    public static Velocity None => new Velocity(Vector2.zero, V2RV2.Zero, MovementModifiers.Default);
+    public static Velocity None => new Velocity(Vector2.zero, V2RV2.Zero);
 
     public Velocity(Vector2 loc, Vector2 dir) {
         cos_rot = dir.x;
@@ -474,15 +470,15 @@ public struct LaserVelocity {
     private sbyte tflipY;
     public readonly bool isSimple;
     
-    public LaserVelocity(LVTP path, Vector2 parentLoc, V2RV2 localLoc, MovementModifiers modifiers) {
+    public LaserVelocity(LVTP path, Vector2 parentLoc, V2RV2 localLoc) {
         angle = localLoc.angle;
         cos_rot = M.CosDeg(localLoc.angle);
         sin_rot = M.SinDeg(localLoc.angle);
         lvtp = path;
-        flipX = modifiers.FlipX;
-        flipY = modifiers.FlipY;
+        flipX = 1;
+        flipY = 1;
         tflipX = tflipY = 1;
-        this.rootPos = parentLoc + modifiers.ApplyOver(localLoc.TrueLocation);
+        this.rootPos = parentLoc + localLoc.TrueLocation;
         rotation = null;
         isSimple = false;
         simpleDir = Vector2.zero;
@@ -493,13 +489,12 @@ public struct LaserVelocity {
     /// </summary>
     /// <param name="base_rot_deg"></param>
     /// <param name="frame_rot"></param>
-    /// <param name="modifiers"></param>
-    public LaserVelocity(float base_rot_deg, [CanBeNull] BPY frame_rot, MovementModifiers modifiers) {
+    public LaserVelocity(float base_rot_deg, [CanBeNull] BPY frame_rot) {
         angle = base_rot_deg;
         cos_rot = M.CosDeg(base_rot_deg);
         sin_rot = M.SinDeg(base_rot_deg);
-        flipX = modifiers.FlipX;
-        flipY = modifiers.FlipY;
+        flipX = 1;
+        flipY = 1;
         tflipX = tflipY = 1;
         simpleDir = new Vector2(cos_rot, sin_rot);
         rotation = frame_rot;

@@ -12,24 +12,48 @@ using static Danmaku.Enums;
 using static SM.SMAnalysis;
 
 public struct CampaignData {
-    private const int startLives = 7;
-    public static int? StartLives(CampaignMode mode) {
+    private static int StartLives(CampaignMode mode) {
         if (mode == CampaignMode.MAIN || mode == CampaignMode.TUTORIAL || mode == CampaignMode.STAGE_PRACTICE) return 7;
-        if (mode.OneLife()) return 1;
-        return null;
+        else if (mode.OneLife()) return 1;
+        else return 9;
     }
+
+    private static int StartBombs(CampaignMode mode) {
+        if (mode == CampaignMode.MAIN || mode == CampaignMode.TUTORIAL || mode == CampaignMode.STAGE_PRACTICE) return 2;
+        else if (mode.OneLife()) return 0;
+        else return 3;
+    }
+
+    private static double StartPower(CampaignMode mode, [CanBeNull] ShotConfig shot) {
+        if (mode.OneLife()) return powerMax;
+        else if (shot != null) return M.Clamp(powerMin, powerMax, shot.defaultPower);
+        else return M.Clamp(powerMin, powerMax, powerDefault);
+    }
+    
     private const int defltContinues = 42;
     public const long valueItemPoints = 3142;
-    public long maxScore { get; private set; }
-    public long score { get; private set; }
+    public long MaxScore { get; private set; }
+    public long Score { get; private set; }
     private long lastScore;
     public long UIVisibleScore { get; private set; }
     private double remVisibleScoreLerpTime;
     public const double visibleScoreLerpTime = 1f;
     public int Lives { get; private set; }
+    public int Bombs { get; private set; }
     public int LifeItems { get; private set; }
     public int NextLifeItems => pointLives.Try(nextItemLifeIndex, 9001);
     public long Graze { get; private set; }
+    public static bool PowerMechanicActive { get; } = false;
+    private const double powerMax = 4;
+    private const double powerMin = 1;
+#if UNITY_EDITOR
+    private const double powerDefault = 1000;
+#else
+    private const double powerDefault = 1;
+#endif
+    private const double powerDeathLoss = -1;
+    private const double powerItemValue = 0.05;
+    public double Power { get; private set; }
     public double PIV { get; private set; }
     private double EffectivePIV => PIV + 0.01 * (long)(Graze / 42);
     private const double pivPerPoint = 0.01;
@@ -61,7 +85,8 @@ public struct CampaignData {
     private int nextItemLifeIndex;
     public readonly CampaignMode mode;
     public bool Continued { get; private set; }
-    [CanBeNull] public ShotConfig Shot { get; private set; }
+    [CanBeNull] public PlayerConfig Player { get; }
+    [CanBeNull] public ShotConfig Shot { get; }
     
     //TODO: this can cause problems if multiple phases are declared lenient at the same time, but that's not a current use case
     public bool Lenience { get; set; }
@@ -123,11 +148,14 @@ public struct CampaignData {
         9001
     };
 
-    public CampaignData(CampaignMode mode, long maxScore, ShotConfig shot = null) {
+    public CampaignData(CampaignMode mode, long? maxScore = null, [CanBeNull] PlayerConfig player = null, 
+        [CanBeNull] ShotConfig shot = null) {
         this.mode = mode;
-        this.maxScore = maxScore;
-        this.Lives = StartLives(mode) ?? startLives;
-        this.score = 0;
+        this.MaxScore = maxScore ?? 9001;
+        Lives = StartLives(mode);
+        Bombs = StartBombs(mode);
+        Power = StartPower(mode, shot);
+        this.Score = 0;
         this.PIV = 1;
         nextScoreLifeIndex = 0;
         nextItemLifeIndex = 0;
@@ -142,6 +170,7 @@ public struct CampaignData {
         Continued = false;
         Reloaded = false;
         HitsTaken = 0;
+        Player = player;
         Shot = shot;
         pivDecayRateMultiplier = 1f;
         EnemiesDestroyed = 0;
@@ -154,18 +183,31 @@ public struct CampaignData {
             Continued = true;
             Replayer.Cancel();
             --Continues;
-            score = lastScore = UIVisibleScore = nextItemLifeIndex = nextScoreLifeIndex = LifeItems = 0;
+            Score = lastScore = UIVisibleScore = nextItemLifeIndex = nextScoreLifeIndex = LifeItems = 0;
             PIV = 1;
-            Lives = StartLives(mode) ?? startLives;
+            Lives = StartLives(mode);
+            Bombs = StartBombs(mode);
             remVisibleScoreLerpTime = PIVDecay = pivDecayLenience = 0;
             UIManager.UpdatePlayerUI();
             return true;
         } else return false;
     }
 
+    public bool TryUseBomb() {
+        if (Bombs > 0) {
+            --Bombs;
+            UIManager.UpdatePlayerUI();
+            return true;
+        }
+        return false;
+    }
     public void AddLives(int delta) {
         Log.Unity($"Adding player lives: {delta}");
-        if (delta < 0) ++HitsTaken;
+        if (delta < 0) {
+            ++HitsTaken;
+            Bombs = Math.Max(Bombs, StartBombs(mode));
+            AddPower(powerDeathLoss);
+        }
         if (delta < 0 && mode.OneLife()) Lives = 0;
         else Lives = Math.Max(0, Lives + delta);
         if (Lives == 0) GameStateManager.HandlePlayerDeath();
@@ -181,6 +223,32 @@ public struct CampaignData {
     private void AddPIVDecayLenience(double time) => pivDecayLenience = Math.Max(pivDecayLenience, time);
     public void ExternalLenience(double time) => AddPIVDecayLenience(time);
 
+    private void AddPower(double delta) {
+        if (!PowerMechanicActive) return;
+        var prevFloor = Math.Floor(Power);
+        var prevCeil = Math.Ceiling(Power);
+        var prevPower = Power;
+        Power = M.Clamp(powerMin, powerMax, Power + delta);
+        //1.95 is effectively 1, 2.00 is effectively 2
+        if (Power < prevFloor) SFXService.PowerLost();
+        if (prevPower < prevCeil && Power >= prevCeil) {
+            if (Power >= powerMax) SFXService.PowerFull();
+            else SFXService.PowerGained();
+        }
+        UIManager.UpdatePlayerUI();
+    }
+
+    private void FullPower() {
+        Power = powerMax;
+        SFXService.PowerFull();
+    }
+    public void AddPowerItems(int delta) {
+        AddPower(delta * powerItemValue);
+    }
+
+    public void AddFullPowerItems(int _) {
+        FullPower();
+    }
     public void AddValueItems(int delta) {
         AddPIVDecay(delta * pivDecayBoostValue);
         AddPIVDecayLenience(pivDecayLenienceValue);
@@ -216,9 +284,9 @@ public struct CampaignData {
     
     private void AddScore(long delta) {
         lastScore = UIVisibleScore;
-        score += delta;
-        maxScore = Math.Max(maxScore, score);
-        if (nextScoreLifeIndex < scoreLives.Length && score >= scoreLives[nextScoreLifeIndex]) {
+        Score += delta;
+        MaxScore = Math.Max(MaxScore, Score);
+        if (nextScoreLifeIndex < scoreLives.Length && Score >= scoreLives[nextScoreLifeIndex]) {
             ++nextScoreLifeIndex;
             LifeExtend();
             UIManager.LifeExtendScore();
@@ -245,8 +313,8 @@ public struct CampaignData {
     public void RegularUpdate() {
         if (remVisibleScoreLerpTime > 0) {
             remVisibleScoreLerpTime -= ETime.FRAME_TIME;
-            if (remVisibleScoreLerpTime <= 0) UIVisibleScore = score;
-            else UIVisibleScore = (long) M.Lerp(lastScore, score, 1 - remVisibleScoreLerpTime / visibleScoreLerpTime);
+            if (remVisibleScoreLerpTime <= 0) UIVisibleScore = Score;
+            else UIVisibleScore = (long) M.Lerp(lastScore, Score, 1 - remVisibleScoreLerpTime / visibleScoreLerpTime);
             UIManager.UpdatePlayerUI();
         }
         UIVisiblePIVDecayLenienceRatio = M.Lerp(UIVisiblePIVDecayLenienceRatio, pivDecayLenience / 3f, 6f * ETime.FRAME_TIME);
@@ -275,6 +343,10 @@ public struct CampaignData {
     public void AddDecayRateMultiplier_Tutorial(double m) {
         pivDecayRateMultiplier *= m;
     }
+
+    public void SaveCampaign(string gameIdentifier) {
+        SaveData.r.TrySetHighScore(gameIdentifier, Score);
+    }
 }
 
 /// <summary>
@@ -282,13 +354,13 @@ public struct CampaignData {
 /// This is the only scene-persistent object in the game.
 /// </summary>
 public class GameManagement : RegularUpdater {
-    public static readonly Version EngineVersion = new Version(2, 0, 0);
+    public static readonly Version EngineVersion = new Version(2, 1, 0);
     public static bool Initialized { get; private set; } = false;
     public static DifficultySet Difficulty { get; set; } = 
 #if UNITY_EDITOR
-        DifficultySet.Lunatic;
+        DifficultySet.Ultra;
 #else
-        DifficultySet.Easy;
+        DifficultySet.Normal;
 #endif
     /// <summary>
     /// A difficulty value is a multiplier. By default, Easy=1 and Lunatic~2.3.
@@ -302,10 +374,11 @@ public class GameManagement : RegularUpdater {
 
     public static float RelativeDifficulty(DifficultySet basis) => DifficultyValue / basis.Value();
 
-    public static CampaignData campaign = new CampaignData(CampaignMode.NULL, 9001);
+    public static CampaignData campaign = new CampaignData(CampaignMode.NULL);
     private static CampaignData lastinfo = campaign;
 
-    public static void NewCampaign(CampaignMode mode, ShotConfig shot) => lastinfo = campaign = new CampaignData(mode, 9002, shot);
+    public static void NewCampaign(CampaignMode mode, long? highScore, PlayerConfig player, ShotConfig shot) => 
+        lastinfo = campaign = new CampaignData(mode, highScore, player, shot);
     public static void CheckpointCampaignData() => lastinfo = campaign;
     public static void ReloadCampaignData() {
         Debug.Log("Reloading campaign from last stage.");
@@ -336,6 +409,7 @@ public class GameManagement : RegularUpdater {
     public GameObject lifeItem;
     public GameObject valueItem;
     public GameObject pointppItem;
+    public GameObject powerItem;
     public GameObject arbitraryCapturer;
     public static GameObject ArbitraryCapturer => gm.arbitraryCapturer;
     public SceneConfig defaultSceneConfig;
@@ -355,7 +429,7 @@ public class GameManagement : RegularUpdater {
         ParticlePooler.Prepare();
         GhostPooler.Prepare(ghostPrefab);
         BEHPooler.Prepare(inodePrefab);
-        ItemPooler.Prepare(lifeItem, valueItem, pointppItem);
+        ItemPooler.Prepare(lifeItem, valueItem, pointppItem, powerItem);
         ETime.RegisterPersistentSOFInvoke(Replayer.BeginFrame);
         ETime.RegisterPersistentSOFInvoke(Enemy.FreezeEnemies);
         ETime.RegisterPersistentEOFInvoke(BehaviorEntity.PruneControls);
@@ -386,7 +460,7 @@ public class GameManagement : RegularUpdater {
 
     /// <summary>
     /// Reloads the specific level that is being run.
-    /// This is for single-scene mini projects and is not generally exposed.
+    /// This is for single-scene mini projects and is not generally exposed. Deprecate in the future.
     /// </summary>
     /// <returns></returns>
     public static bool ReloadLevel() => SceneIntermediary._ReloadScene(ReloadCampaignData);
@@ -404,6 +478,8 @@ public class GameManagement : RegularUpdater {
         ETime.Timer.ResetAll();
         BulletManager.OrphanAll();
         DataHoisting.DestroyAll();
+        //SMs may have links to data hoisting, so we destroy both of them on phase end.
+        ReflWrap.ClearWrappers();
         StateMachineManager.ClearCachedSMs();
         BehaviorEntity.ClearPointers();
     }
@@ -415,12 +491,13 @@ public class GameManagement : RegularUpdater {
         ETime.Timer.ResetAll();
         BehaviorEntity.DestroyAllSummons();
         DataHoisting.DestroyAll();
+        ReflWrap.ClearWrappers();
         StateMachineManager.ClearCachedSMs();
         BulletManager.ClearPoolControls();
         BulletManager.ClearEmpty();
         BulletManager.ClearAllBullets();
         BulletManager.DestroyCopiedPools();
-        campaign = new CampaignData(CampaignMode.MAIN, 9001);
+        campaign = new CampaignData(CampaignMode.MAIN);
     }
 
     private static void ClearPhase() {
@@ -459,11 +536,10 @@ public class GameManagement : RegularUpdater {
 
     [CanBeNull] private static AnalyzedDays _days;
     public static AnalyzedDays Days => _days = _days ?? new AnalyzedDays(References.dayCampaign.days);
-    private static IEnumerable<CampaignConfig> AllCampaignsRaw => new[] {References.campaign, References.exCampaign}.Where(c => c != null);
 
     [CanBeNull] private static AnalyzedCampaign[] _campaigns;
     public static AnalyzedCampaign[] Campaigns => _campaigns =
-        _campaigns ?? AllCampaignsRaw.Select(c => new AnalyzedCampaign(c)).ToArray();
+        _campaigns ?? References.Campaigns.Select(c => new AnalyzedCampaign(c)).ToArray();
 
     public static IEnumerable<AnalyzedCampaign> FinishedCampaigns =>
         Campaigns.Where(c => SaveData.r.CompletedCampaigns.Contains(c.campaign.key));

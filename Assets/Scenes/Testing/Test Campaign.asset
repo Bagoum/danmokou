@@ -13,11 +13,12 @@ MonoBehaviour:
   m_Name: Test Campaign
   m_EditorClassIdentifier: 
   key: test_campaign
+  shortTitle: 
+  players:
+  - {fileID: 11400000, guid: 794bb6976ccc5104a88d12a1c93fa9fd, type: 2}
   stages:
   - {fileID: 11400000, guid: e260128b7ced79349bfb2aa73d8e3c5c, type: 2}
   - {fileID: 11400000, guid: e71e127be0995ab4f960e686128d5629, type: 2}
   practiceBosses:
   - {fileID: 11400000, guid: fbf1044b75a1ecd468ff97b8acca7b7a, type: 2}
   - {fileID: 11400000, guid: dc2b4c390da211341a9b0d0c3356edf7, type: 2}
-  practiceStages:
-  - {fileID: 11400000, guid: e260128b7ced79349bfb2aa73d8e3c5c, type: 2}

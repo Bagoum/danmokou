@@ -306,8 +306,8 @@ public static partial class Parametrics {
     /// <param name="from">Source parametric</param>
     /// <param name="to">Target parametric</param>
     /// <returns></returns>
-    public static ExTP RotateLerpPercent(float ratio, ExTP from, ExTP to) {
-        return bpi => ExMHelpers.RotateLerp(to(bpi), from(bpi), bpi, false, false, ratio);
+    public static ExTP RotateLerpPercent(ExBPY ratio, ExTP from, ExTP to) {
+        return bpi => ExMHelpers.RotateLerp(to(bpi), from(bpi), bpi, false, false, ratio(bpi));
     }
 
     /// <summary>
@@ -320,8 +320,8 @@ public static partial class Parametrics {
     /// <param name="from">Source parametric</param>
     /// <param name="to">Target parametric</param>
     /// <returns></returns>
-    public static ExTP RotateLerpRate(float rate, ExTP from, ExTP to) {
-        return bpi => ExMHelpers.RotateLerp(to(bpi), from(bpi), bpi, true, false, rate);
+    public static ExTP RotateLerpRate(ExBPY rate, ExTP from, ExTP to) {
+        return bpi => ExMHelpers.RotateLerp(to(bpi), from(bpi), bpi, true, false, rate(bpi));
     }
     
     /// <summary>
@@ -337,8 +337,8 @@ public static partial class Parametrics {
     /// <param name="from">Source parametric</param>
     /// <param name="to">Target parametric</param>
     /// <returns></returns>
-    public static ExTP TrueRotateLerpPercent(float ratio, ExTP from, ExTP to) {
-        return bpi => ExMHelpers.RotateLerp(to(bpi), from(bpi), bpi, false, true, ratio);
+    public static ExTP TrueRotateLerpPercent(ExBPY ratio, ExTP from, ExTP to) {
+        return bpi => ExMHelpers.RotateLerp(to(bpi), from(bpi), bpi, false, true, ratio(bpi));
     }
 
     /// <summary>
@@ -349,8 +349,8 @@ public static partial class Parametrics {
     /// <param name="from">Source parametric</param>
     /// <param name="to">Target parametric</param>
     /// <returns></returns>
-    public static ExTP TrueRotateLerpRate(float rate, ExTP from, ExTP to) {
-        return bpi => ExMHelpers.RotateLerp(to(bpi), from(bpi), bpi, true, true, rate);
+    public static ExTP TrueRotateLerpRate(ExBPY rate, ExTP from, ExTP to) {
+        return bpi => ExMHelpers.RotateLerp(to(bpi), from(bpi), bpi, true, true, rate(bpi));
     }
 
     public static ExTP LaserRotateLerp(ExBPY rate, ExTP from, ExTP to) =>
@@ -641,6 +641,9 @@ public static partial class Parametrics {
     
     
     public static ExTP OptionLocation() => b => FireOption.optionLocation.Of(b.index);
+
+    public static ExTP IfPowerGTP(ExTP inner) =>
+        b => Ex.Condition(BPYRepo.PowerF()(b).GT(b.findex), inner(b), Zero()(b));
 }
 
 

@@ -11,13 +11,6 @@ using Danmaku;
 namespace Tests {
 
     public static class DMath {
-        [Test]
-        public static void TestMM() {
-            var mm1 = new MovementModifiers(true, false);
-            var mm2 = new MovementModifiers(true, true);
-            Assert.AreEqual(mm1.ApplyOver(mm2), new MovementModifiers(false, true));
-        }
-
 
         [Test]
         public static void Utils() {
