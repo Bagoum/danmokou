@@ -57,3 +57,9 @@ let CountFilter() =
     Assert.AreEqual(countFilter lt0 [-2;-4;-3;-4], 4)
     Assert.AreEqual(countFilter lt0 [1;2;3;45], 0)
     Assert.AreEqual(countFilter lt0 [], 0)
+    
+[<Test>]
+let SeparateBy() =
+    Assert.AreEqual(separateBy 0 [1;2;3], [1;0;2;0;3])
+    Assert.AreEqual(separateBy 0 [1], [1])
+    Assert.AreEqual(separateBy 0 [], [])

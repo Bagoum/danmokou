@@ -46,7 +46,7 @@
 			#pragma multi_compile_local __ FT_PLAYER_OPACITY
 			#pragma multi_compile_instancing
 			#include "UnityCG.cginc"
-			#include "BagoumShaders.cginc"
+			#include "Assets/CG/BagoumShaders.cginc"
 			#pragma instancing_options procedural:setup
         #if defined(UNITY_INSTANCING_ENABLED) || defined(UNITY_PROCEDURAL_INSTANCING_ENABLED)
 			#define INSTANCE_TIME timeBuffer[unity_InstanceID]

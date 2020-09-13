@@ -1,5 +1,7 @@
-﻿using DMath;
+﻿using Danmaku;
+using DMath;
 using NUnit.Framework;
+using SM;
 using UnityEngine;
 using static Compilers;
 using static DMath.BPYRepo;
@@ -13,34 +15,42 @@ public static class ParserTests {
     private const float err = 0.00001f;
 
     [Test]
+    public static void TestArray() {
+        AreEqual("{ 8 + 2 4 }".Into<FXY[]>()[1](0), 6);
+    }
+    [Test]
     public static void CommasWork() {
+        //this one is difficult...
+        AreEqual("+ (x) 3".Into<FXY>()(2), 5);
+        AreEqual("+ x (3)".Into<FXY>()(2), 5);
+        AreEqual("(+ 8 *(5, x))".Into<FXY>()(2), 18);
+        AreEqual("+ x() 3".Into<FXY>()(2), 5);
+        AreEqual("+ 8 (if = p 0 0 6)".Into<BPY>()(new ParametricInfo(Vector2.down, 5, 0)), 14);
         AreEqual("+(x, 2)".Into<FXY>()(2), 4);
         AreEqual("(((((+(x, 2))))))".Into<FXY>()(2), 4);
-        //I guess you can call this currying?
-        AreEqual("+ 8 (if = p 0) 0 6".Into<BPY>()(new ParametricInfo(Vector2.down, 5, 0)), 14);
-        ThrowsMessage("no enclosing argument list", () => "(+ 8 * 5, x)".Into<FXY>());
-        AreEqual("(+ 8 *(5, x))".Into<FXY>()(2), 18);
-        AreEqual("*(+ 3 5)(x)".Into<FXY>()(2), 16);
         AreEqual("+(x, (2))".Into<FXY>()(2), 4);
         AreEqual("+(x, * x 2)".Into<FXY>()(2), 6);
-        AreEqual("+(x, (* x 2))".Into<FXY>()(2), 6);
-        ThrowsMessage("could not find a comma", () => "+(x, *(x 2))".Into<FXY>());
-        AreEqual(@"<#> strict(none)
-+(x, *(x 2))".Into<FXY>()(5), 15);
-        ThrowsMessage("could not find a comma", () => @"<#> strict(comma)
-+(x, *(x 2))".Into<FXY>());
         AreEqual("+(x, *(x, 2))".Into<FXY>()(2), 6);
         AreEqual("+(x, *((x), ((2))))".Into<FXY>()(2), 6);
-        AreEqual("+ x() 3".Into<FXY>()(2), 5);
-        AreEqual("+ x (3)".Into<FXY>()(2), 5);
         // (f x) y
+        AreEqual("*(+ 3 5)(x)".Into<FXY>()(2), 16);
     }
 
-    private const string expCloseParen = "closing parentheses was expected";
+    [Test]
+    public static void Errors() {
+        ThrowsMessage("do not enclose the entire function", () => "+ 8 (if = p 0) 0 6".Into<BPY>());
+        ThrowsMessage("must have exactly one argument", () => "(+ 8 * 5, x)".Into<FXY>());
+        ThrowsMessage("trying to create an object of type FXY", () => "+(x, *(x 2))".Into<FXY>());
+        
+    }
+
     [Test]
     public static void GroupingErrors() {
-        ThrowsMessage(expCloseParen, () => "+(x, (2)())".Into<FXY>());
-        ThrowsMessage(expCloseParen, () => "modwithpause 5 (6 7) 8".Into<BPY>());
+        ThrowsMessage("trying to create an object of type FXY", () => "+(x, (2)())".Into<FXY>());
+        ThrowsMessage("trying to create an object of type BPY", () => "modwithpause 5 (6 7) 8".Into<BPY>());
+        ThrowsMessage("Expected 4 arguments.*contains 3", () => "modwithpause(5, (6 7), 8)".Into<BPY>());
+        ThrowsMessage("could not parse the second", () => "mod(3 *, 5)".Into<FXY>());
+        ThrowsMessage("trying to create an object of type FXY", () => "+(2 * 5 x)".Into<FXY>());
     }
     
     private static Vector2 V2(float x, float y) => new Vector2(x, y);
@@ -63,15 +73,28 @@ public static class ParserTests {
     }
 
     [Test]
+    public static void PostAggregationErrors() {
+        
+    }
+
+    [Test]
+    public static void tmp() {
+        "(/ 5 * ^ dl 0.8 24)".Into<BPY>();
+        
+        AreEqual("(-1 + x + 2 * y + 3)".Into<BPY>()(new ParametricInfo() { loc = new Vector2(5, 10)}), 27);
+        AreEqual(@"
+!!{ jt 2
+!!{ movet 1.5
+($movet + $jt - 1.5)".Into<FXY>()(65), 2f);
+    }
+    [Test]
     public static void PostAggregation() {
-        ThrowsMessage("could not parse the second", () => "mod(3 *, 5)".Into<FXY>());
+        AreEqual("(3 * 2 + 2)".Into<FXY>()(0), 8);
         AreEqual("(3 + x)".Into<FXY>()(7), 10);
         AreEqual("(+ 2 * 5 x)".Into<FXY>()(4), 22);
         AreEqual("+(2 * 5, x)".Into<FXY>()(4), 14);
-        ThrowsMessage("could not find a comma", () => "+(2 * 5 x)".Into<FXY>());
-        //Parsing completes at 3
-        AreEqual("3 + x".Into<FXY>()(7), 3);
-        AreEqual("(3 * 2 + 2)".Into<FXY>()(0), 8);
+        //Works at top level!
+        AreEqual("3 + x".Into<FXY>()(7), 10);
         AreEqual("(5 * 3 / 2)".Into<FXY>()(0), 7.5f);
         AreEqual("(5 * 3 // 6)".Into<FXY>()(0), 2f);
         "(3 * 2 + 2)".Into<ExFXY>();
@@ -85,10 +108,6 @@ public static class ParserTests {
         AreEqual("(2 + (3 * 4))".Into<FXY>()(0), 14);
         "Mod(2 + Mod(x + 2, x + 4), 5 + +(2, 3))".Into<BPY>();
         "Mod(x + 2, x + 4)".Into<BPY>();
-    }
-
-    [Test]
-    public static void SoftIncorrectGrouping() {
         AreEqual("if(> t 5, 10 + 2, 3 + 4)".Into<BPY>()(new ParametricInfo(){t = 6}), 12);
         AreEqual("if(> t 5) (10 + 2) (3 + 4)".Into<BPY>()(new ParametricInfo(){t = 6}), 12);
     }

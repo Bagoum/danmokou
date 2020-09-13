@@ -452,8 +452,11 @@ public static partial class ExM {
 
     public static tfloat PlayerFiringTimeFree() => PlayerInput.firingTimeFree;
     public static tfloat PlayerFiringTimeFocus() => PlayerInput.firingTimeFocus;
+    public static tfloat PlayerFiringTime() => PlayerInput.firingTime;
     public static tfloat PlayerUnFiringTimeFree() => PlayerInput.unfiringTimeFree;
     public static tfloat PlayerUnFiringTimeFocus() => PlayerInput.unfiringTimeFocus;
+    public static tfloat PlayerUnFiringTime() => PlayerInput.unfiringTime;
+    public static tv2 PlayerMarisaAHistory(tfloat ago) => PlayerInput.marisaAPosition.Of(ago);
 
     #endregion
 }

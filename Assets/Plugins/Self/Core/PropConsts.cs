@@ -57,6 +57,9 @@ public static class PropConsts {
     public static readonly int OffsetX = Shader.PropertyToID("_OffX");
     public static readonly int OffsetY = Shader.PropertyToID("_OffY");
     public static readonly int Zoom = Shader.PropertyToID("_Zoom");
+    public static readonly int ScaleX = Shader.PropertyToID("_ScaleX");
+    public static readonly int ScaleY = Shader.PropertyToID("_ScaleY");
+    public static readonly int Angle = Shader.PropertyToID("_Angle");
 
     public static readonly int DisplaceTex = Shader.PropertyToID("_DisplaceTex");
     public static readonly int DisplaceMask = Shader.PropertyToID("_DisplaceMask");

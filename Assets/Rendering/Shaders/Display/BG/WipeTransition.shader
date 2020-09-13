@@ -48,7 +48,7 @@
             float _F;
 			sampler2D _FaderTex;
 			sampler2D _TrueTex;
-			static const float _Smooth = 0.001f;
+			static const float _Smooth = 0.0001f;
 
 			float4 frag(fragment f) : SV_Target { 
         #ifdef REQ_EMPTY

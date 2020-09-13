@@ -43,7 +43,7 @@ public struct CampaignData {
     public int LifeItems { get; private set; }
     public int NextLifeItems => pointLives.Try(nextItemLifeIndex, 9001);
     public long Graze { get; private set; }
-    public static bool PowerMechanicActive { get; } = false;
+    public static bool PowerMechanicActive { get; } = true;
     private const double powerMax = 4;
     private const double powerMin = 1;
 #if UNITY_EDITOR
@@ -90,6 +90,7 @@ public struct CampaignData {
     
     //TODO: this can cause problems if multiple phases are declared lenient at the same time, but that's not a current use case
     public bool Lenience { get; set; }
+    [CanBeNull] public BehaviorEntity ExecutingBoss { get; set; }
 
     private static readonly long[] scoreLives = {
          1000000,
@@ -176,6 +177,7 @@ public struct CampaignData {
         EnemiesDestroyed = 0;
         Lenience = false;
         Graze = 0;
+        ExecutingBoss = null;
     }
 
     public bool TryContinue() {
@@ -332,12 +334,17 @@ public struct CampaignData {
         }
     }
 
-    public void OpenBoss() {
+    public void OpenBoss(BehaviorEntity boss) {
+        if (ExecutingBoss != null) CloseBoss();
+        ExecutingBoss = boss;
         pivDecayRateMultiplier *= pivDecayRateMultiplierBoss;
     }
 
     public void CloseBoss() {
-        pivDecayRateMultiplier /= pivDecayRateMultiplierBoss;
+        if (ExecutingBoss != null) {
+            ExecutingBoss = null;
+            pivDecayRateMultiplier /= pivDecayRateMultiplierBoss;
+        } else Log.UnityError("You tried to close a boss section when no boss exists.");
     }
 
     public void AddDecayRateMultiplier_Tutorial(double m) {
@@ -472,6 +479,7 @@ public class GameManagement : RegularUpdater {
     
     public static void ClearForScene() {
         AudioTrackService.ClearAllAudio(false);
+        SFXService.ClearLoopers();
         BulletManager.ClearPoolControls();
         Events.Event0.DestroyAll();
         ETime.SlowdownReset();
@@ -482,10 +490,12 @@ public class GameManagement : RegularUpdater {
         ReflWrap.ClearWrappers();
         StateMachineManager.ClearCachedSMs();
         BehaviorEntity.ClearPointers();
+        AyaPhoto.ClearTextures();
     }
 
     public static void LocalReset() {
         //AudioTrackService.ClearAllAudio();
+        SFXService.ClearLoopers();
         Events.Event0.DestroyAll();
         ETime.SlowdownReset();
         ETime.Timer.ResetAll();
@@ -499,6 +509,40 @@ public class GameManagement : RegularUpdater {
         BulletManager.DestroyCopiedPools();
         campaign = new CampaignData(CampaignMode.MAIN);
     }
+    
+#if UNITY_EDITOR
+    private void Update() {
+        TryTriggerLocalReset();
+    }
+    
+    private static bool TryTriggerLocalReset() {
+        if (!SceneIntermediary.IsFirstScene) return false;
+        if (Input.GetKeyDown(KeyCode.R)) {
+        } else if (Input.GetKeyDown(KeyCode.Alpha5)) {
+            GameManagement.Difficulty = DifficultySet.Easier;
+        } else if (Input.GetKeyDown(KeyCode.T)) {
+            GameManagement.Difficulty = DifficultySet.Easy;
+        } else if (Input.GetKeyDown(KeyCode.Y)) {
+            GameManagement.Difficulty = DifficultySet.Normal;
+        } else if (Input.GetKeyDown(KeyCode.U)) {
+            GameManagement.Difficulty = DifficultySet.Hard;
+        } else if (Input.GetKeyDown(KeyCode.I)) {
+            GameManagement.Difficulty = DifficultySet.Lunatic;
+        } else if (Input.GetKeyDown(KeyCode.O)) {
+            GameManagement.Difficulty = DifficultySet.Ultra;
+        } else if (Input.GetKeyDown(KeyCode.P)) {
+            GameManagement.Difficulty = DifficultySet.Abex;
+        } else if (Input.GetKeyDown(KeyCode.LeftBracket)) {
+            GameManagement.Difficulty = DifficultySet.Assembly;
+        } else return false;
+        
+        Debug.Log($"Reloading level: {GameManagement.DifficultyString.ToUpper()} is the current difficulty");
+        UIManager.UpdateTags();
+        LocalReset();
+        Events.LocalReset.InvokeIfNotRefractory();
+        return true;
+    }
+#endif
 
     private static void ClearPhase() {
         BulletManager.ClearPoolControls();
@@ -534,8 +578,9 @@ public class GameManagement : RegularUpdater {
 
     
 
-    [CanBeNull] private static AnalyzedDays _days;
-    public static AnalyzedDays Days => _days = _days ?? new AnalyzedDays(References.dayCampaign.days);
+    [CanBeNull] private static AnalyzedDayCampaign _dayCampaign;
+    public static AnalyzedDayCampaign DayCampaign => 
+        _dayCampaign = _dayCampaign ?? new AnalyzedDayCampaign(References.dayCampaign);
 
     [CanBeNull] private static AnalyzedCampaign[] _campaigns;
     public static AnalyzedCampaign[] Campaigns => _campaigns =

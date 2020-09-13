@@ -18,7 +18,7 @@ public class Tests {
     private static void AssertSMEq(string source, string desired) {
         System.MathF.Floor(5f);
         desired = desired.Replace("\r", "").Trim();
-        switch (lSMParser2.Invoke(source)) {
+        switch (remakeSMParser(source)) {
             case Errorable<string>.OK sm:
                 Assert.AreEqual(desired, sm.Item.Replace(" \n ", "\n").Trim());
                 break;
@@ -32,7 +32,7 @@ public class Tests {
     }
 
     private static string FailString(string src) {
-        switch (lSMParser2.Invoke(src)) {
+        switch (remakeSMParser(src)) {
             case Errorable<string>.OK sm:
                 Assert.Fail($"Expected SM parse to fail, but got {sm.Item}");
                 break;
@@ -101,6 +101,20 @@ world #Comment
 ///
 w$or]ld(
 ", "hello");
+    }
+
+    [Test]
+    public void TestParen() {
+        AssertSMEq(@"mod(2, 3)
+", "mod ( 2 , 3 )");
+        AssertSMEq(@"
+!{ me(x)
+(hello a%x%b, c)
+!}
+$me(55)
+$me((a, b))
+", @"( hello a55b , c )
+( hello a( a , b )b , c )");
     }
     [Test]
     public void TestQuote() {

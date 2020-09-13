@@ -377,6 +377,14 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
             Log.UnityError("Failed to load attached SM on startup!");
             Log.Print(e);
         }
+#if UNITY_EDITOR
+        if (SceneIntermediary.IsFirstScene && this is FireOption || this is BossBEH || this is LevelController) {
+            Core.Events.LocalReset.Listen(() => {
+                HardCancel(false); //Prevents event DM caching bugs...
+                RunAttachedSM();
+            });
+        }
+#endif
     }
 
     public Task Initialize(SMRunner smr) {
@@ -939,7 +947,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     public static readonly ExFunction hpRatio =
         ExUtils.Wrap<BehaviorEntity, BEHPointer>("HPRatio");
     [UsedImplicitly]
-    public static float HPRatio(BEHPointer behp) => behp.beh.Enemy.EffectiveHPRatio;
+    public static float HPRatio(BEHPointer behp) => behp.beh.Enemy.EffectiveBarRatio;
 
     public static readonly ExFunction contains =
         ExUtils.Wrap<BehaviorEntity>("Contains", typeof(BEHPointer), typeof(Vector2));

@@ -25,7 +25,7 @@ namespace Danmaku {
 public readonly struct BossPracticeRequest {
     public readonly AnalyzedBoss boss;
     public readonly Phase phase;
-    public Enums.PhaseType PhaseType => phase.type;
+    public PhaseType PhaseType => phase.type;
 
     public BossPracticeRequest(AnalyzedBoss boss, Phase? phase = null) {
         this.boss = boss;

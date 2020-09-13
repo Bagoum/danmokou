@@ -19,7 +19,6 @@ public struct DelegatedCreator {
     /// Exists iff using world coordinates instead of parent-offset.
     /// </summary>
     private Vector2? forceRoot;
-    private bool useParentMoveMod;
     public Enums.Facing facing;
 
     //Constructor may be called from any thread; .transform is unsafe. Variable reference is safe.
@@ -30,7 +29,6 @@ public struct DelegatedCreator {
         transformParent = null;
         cacheLoc = false;
         cachedLoc = Vector2.zero;
-        useParentMoveMod = true;
         facing = Enums.Facing.ORIGINAL;
     }
 
@@ -51,8 +49,6 @@ public struct DelegatedCreator {
     public void Root(Vector2? root) {
         forceRoot = root;
     }
-
-    public void IgnoreParentMoveMod() => useParentMoveMod = false;
 
     public void SFX() => SFXService.Request(style);
 

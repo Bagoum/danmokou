@@ -7,13 +7,7 @@ phase 0
 phase 0
     action block 0
         async circle-green/w <0.5;0:0> gcr2 1 _ <0;0:11.386> {
-		} gsr2c 212 { } s tprot cx 2
-///
-##Basic stress tester with dir control
-phase 0
-    action block 0
-        async circle-green/w <0.5;0:0> gcr2 1 _ <0;0:11.386> {
-		} gsr2c 150 { } sdd 0 tprot cx 2
+		} gsr2c 105 { } simple tprot cx 2 { dir2 cxy 1 0 }
 ///
 ##Pather stress tester
 phase 0

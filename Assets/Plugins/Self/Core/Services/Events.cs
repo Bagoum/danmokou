@@ -168,5 +168,8 @@ public static class Events {
     /// </summary>
     public static readonly Event1<(int frames, bool effect)> MakePlayerInvincible = new Event1<(int, bool)>();
     public static readonly Event1<GameState> GameStateHasChanged = new Event1<GameState>();
+#if UNITY_EDITOR
+    public static readonly Event0 LocalReset = new Event0();
+#endif
 }
 }

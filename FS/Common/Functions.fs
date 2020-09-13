@@ -48,3 +48,10 @@ let replaceEntries allowFew dst source filter =
 let countFilter f l =
     List.fold (fun i x ->
         if f x then i + 1 else i) 0 l
+    
+let separateBy<'T> (sep:'T) arr =
+    if List.length arr = 0 then []
+    else (List.foldBack (fun x acc -> sep::x::acc) arr []
+    |> List.tail)
+    
+let MapFst f (x, y) = (f x, y)

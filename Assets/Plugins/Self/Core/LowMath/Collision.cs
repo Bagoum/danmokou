@@ -266,6 +266,20 @@ public static class Collision {
         }
         return px < rect.halfW && pt.y < rect.halfH;
     }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool CircleInRect(Vector2 pt, float radius, CRect rect) {
+        pt.x -= rect.x;
+        pt.y -= rect.y;
+        float px = rect.cos_rot * pt.x + rect.sin_rot * pt.y;
+        pt.y = rect.cos_rot * pt.y - rect.sin_rot * pt.x;
+        if (px < 0) {
+            px *= -1;
+        }
+        if (pt.y < 0) {
+            pt.y *= -1;
+        }
+        return px + radius < rect.halfW && pt.y + radius < rect.halfH;
+    }
     public static readonly ExFunction pointInRect = ExUtils.Wrap(t, "PointInRect", new[] {ExUtils.tv2, ExUtils.tcr});
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

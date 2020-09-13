@@ -4,3 +4,6 @@
 [submodule "Assets/BRuH"]
 	path = Assets/BRuH
 	url = https://github.com/Bagoum/danmokou-bruh.git
+[submodule "Assets/LuA"]
+	path = Assets/LuA
+	url = https://github.com/Bagoum/danmokou-lua.git

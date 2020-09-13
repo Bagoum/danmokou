@@ -44,7 +44,7 @@ in OnPostRender somewhere. (The target texture set is, for some reason, necessar
 
 Note that if you are screwing with `cam.targetTexture`, you should set it **every frame** in OnPreRender; I don't know why but Unity will give you strange issues if you don't, like the main camera rendering to the target texture as well...
 
-`RenderTextureFormat.ARGB32` is the non-HDR format and `ARGBHalf` is the HDR format. This is used in `MainCamera.DefaultTempRT`. I do not use HDR.
+`RenderTextureFormat.ARGB32` (R8G8B8A8_SNORM) is the non-HDR format and `ARGBHalf` is the HDR format. This is used in `MainCamera.DefaultTempRT`. I do not use HDR.
 
 # Frame/Render Frame
 

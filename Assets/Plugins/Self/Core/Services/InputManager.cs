@@ -108,10 +108,10 @@ public static class InputManager {
     
     [Serializable]
     public struct FrameInput {
-        //16 bytes (14 unpadded)
+        //16 bytes (15 unpadded)
         // float(4)x2 = 8
         // enum(1)    = 1
-        // bool(1)x5  = 5
+        // bool(1)x6  = 6
         public float horizontal;
         public float vertical;
         public ShootDirection shootDir;

@@ -45,11 +45,13 @@ Licenses for non-code assets
 
 Sound effects (Assets/Audio/SFX)
 - manual: by me, licensed under CC BY 4.
-- OSA: http://osabisi.sakura.ne.jp/m2/ (license in folder).
+- Many sound effects in "SFX/_SO/usedfiles" by OSA: http://osabisi.sakura.ne.jp/m2/ (license in Licenses/OSA).
 - taisei, taisei2: by Taisei Project. They have been converted into different formats for use with Unity. Their license is in the Licenses folder.
 - sourced:
 	- The "fire shaker" sound effects are licensed under CC0 from here: https://freesound.org/people/shpira/sounds/317102/
 	- The "crow caw" sound effect is licensed under CC0 from here: https://freesound.org/people/_nuel/sounds/54973/
+	- "camera-snap1" under CC-BY from here: https://freesound.org/people/thecheeseman/sounds/51360/
+	- "camera-focus" under CC-BY from here: https://freesound.org/people/Puniho/sounds/115126/
 
 All fonts (Assets/Fonts) are licensed permissively. Licenses are in the Licenses folder.
 
@@ -69,10 +71,11 @@ Images (Assets/Sprites)
 - entity/dot/dot_kasen, dot_junko: by Kirbio.
 - reimu: by DD (https://www.pixiv.net/en/users/4650367).
 - .py: Python scripts licensed under MIT.
-- bullets, UI, util, TransitionTextures, items: by me, licensed under CC BY 4.
+- UI/pins/crow*: stock by Roy3D on DeviantArt (https://www.deviantart.com/roy3d/art/Crows-2-PNG-Stock-412584565), modifications made.
+- other files in bullets, UI, util, TransitionTextures, items: by me, licensed under CC BY 4.
 
 MiniProjects
-- Cutins/junko: dairi
+- Cutins/junko, Dialogue/icons, Dialogue/Stands/dairi_junko2: dairi
 
 Some image resources were created with patterns from http://www.sda.nagoya-cu.ac.jp/sa08m13/image.html 
 Some image resources were created with patterns from http://www.ikiya.jp/anounce.html

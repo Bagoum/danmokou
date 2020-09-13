@@ -246,6 +246,10 @@ public static class M {
 
 
     public static double Lerp(double a, double b, double t) => a * (1 - t) + b * t;
+
+    public static float EInSine(float x) => 1f - (float) Math.Cos(HPI * x);
+    public static float EOutSine(float x) => (float) Math.Sin(HPI * x);
+    public static float DEOutSine(float x) => HPI * (float) Math.Cos(HPI * x);
 }
 
 
@@ -271,12 +275,15 @@ public readonly struct CRect {
     public readonly float halfH;
     public readonly float cos_rot;
     public readonly float sin_rot;
+    public readonly float angle;
+    public Vector2 Offset => new Vector2(x, y);
 
     public CRect(float x, float y, float halfW, float halfH, float ang_deg) {
         this.x = x;
         this.y = y;
         this.halfW = halfW;
         this.halfH = halfH;
+        this.angle = ang_deg;
         this.cos_rot = M.CosDeg(ang_deg);
         this.sin_rot = M.SinDeg(ang_deg);
     }

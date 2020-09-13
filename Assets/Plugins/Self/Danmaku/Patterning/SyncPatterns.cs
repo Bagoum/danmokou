@@ -66,19 +66,7 @@ public static partial class SyncPatterns {
     /// <returns></returns>
     public static SyncPattern Loc0c(string color, SyncPattern sp) => _AsGSR(sp, RootZero, 
         GCP.Face(Facing.DEROT), GCP.Color(new[] { color }), Loc0Start);
-    
-    /// <summary>
-    /// Ignore firer's movement modifiers when firing. Useful for homing bullets.
-    /// </summary>
-    /// <param name="sp"></param>
-    /// <returns></returns>
-    public static SyncPattern IgnoreMods(SyncPattern sp) {
-        return sbh => {
-            sbh.ch.bc.IgnoreParentMoveMod();
-            return sp(sbh);
-        };
-    }
-    
+
     /// <summary>
     /// Add time to summoned bullets. They will simulate the missing time and start from the specified time.
     /// </summary>
@@ -218,7 +206,7 @@ public static partial class SyncPatterns {
     /// <summary>
     /// Set up an empty-guided fire.
     /// </summary>
-    /// <param name="suffix">The suffix to use for underlying empty pool names. Do not overlap with any other guideempty functions.</param>
+    /// <param name="suffix">The suffix to use for underlying empty pool names. Do not overlap with any other guideempty functions. First character should be a period.</param>
     /// <param name="indexer">The indexing function applied to data hoisted on the empty bullet.</param>
     /// <param name="saveV2s">Vector2 values to save on the empty bullet.</param>
     /// <param name="saveFs">Float values to save on the empty bullet.</param>

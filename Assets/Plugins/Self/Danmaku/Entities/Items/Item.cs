@@ -14,12 +14,17 @@ public enum ItemType {
     POWER
 }
 public abstract class Item : Pooled<Item> {
-    protected virtual bool Collidable => true;
-    protected virtual Func<float, Vector2> Velocity => t => Mathf.Lerp(0.5f, -1.8f, t/ 4f) * PoC.Direction;
+    private bool Collidable => true;
+    private const float speed0 = 1f;
+    private const float speed1 = -1.8f;
+    private const float peakt = 0.8f;
+    private Vector2 Velocity(float t) => 
+        Mathf.Lerp(speed0, speed1, t * (speed0 / (speed0 - speed1))/peakt) * PoC.Direction;
 
     public SOCircle target;
 
     private Vector2 loc;
+    private Vector2 lerpInOffset;
 
     public SFXConfig onCollect;
 
@@ -38,13 +43,32 @@ public abstract class Item : Pooled<Item> {
     private const float peakedHomeRate = 1f;
     private float time;
 
+    private const float lerpIntoOffsetTime = 0.4f;
+    private const float lerpIntoRotationTime = 0.8f;
     private const float minTimeBeforeHome = 1f;
 
-    public void Initialize(Vector2 initialLoc) {
-        tr.position = loc = initialLoc;
+    private Vector2 summonTarget;
+
+    private const short RenderOffsetRange = 1 << 13;
+    private static short renderIndex = short.MinValue;
+    protected abstract short RenderOffsetIndex { get; }
+    protected abstract float RotationTurns { get; }
+
+    private SpriteRenderer sr;
+    protected override void Awake() {
+        base.Awake();
+        sr = GetComponent<SpriteRenderer>();
+    }
+    
+    public void Initialize(Vector2 root, Vector2 targetOffset) {
+        tr.localEulerAngles = Vector3.zero;
+        tr.position = loc = root;
+        summonTarget = targetOffset;
+        lerpInOffset = Vector2.zero;
         state = HomingState.NO;
         time = 0;
         timeHoming = 0f;
+        sr.sortingOrder = (short)(renderIndex++ + (short)(RenderOffsetIndex * RenderOffsetRange));
     }
 
     public void Autocollect(bool doAutocollect) {
@@ -74,14 +98,17 @@ public abstract class Item : Pooled<Item> {
                 loc = Vector2.Lerp(loc, target.location, Mathf.Lerp(homeRate * ETime.FRAME_TIME, peakedHomeRate, timeHoming/maxTimeHoming));
             }
         } else {
-            loc += Velocity(time) * ETime.FRAME_TIME;
+            loc += ETime.FRAME_TIME * (Velocity(time) + summonTarget * 
+                M.DEOutSine(Mathf.Clamp01(time / lerpIntoOffsetTime)) / lerpIntoOffsetTime);
             if (Collidable && Collision.CircleOnPoint(loc, target.itemAttractRadius, target.location)) SetHome();
             else if (!LocationService.OnScreenInDirection(loc, -screenRange * PoC.Direction)) {
                 PooledDone();
                 return;
             }
         }
-        tr.position = loc;
+        tr.localEulerAngles = new Vector3(0, 0, 360 * RotationTurns * 
+                                                M.EOutSine(Mathf.Clamp01(time /lerpIntoRotationTime)));
+        tr.position = loc + lerpInOffset;
         time += ETime.FRAME_TIME;
     }
 }

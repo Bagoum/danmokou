@@ -4,17 +4,31 @@ using System.Reflection;
 using DMath;
 using Core;
 using JetBrains.Annotations;
+using SM;
+using SM.Parsing;
 using UnityEngine;
 using ExBPY = System.Func<DMath.TExPI, TEx<float>>;
 using ExTP = System.Func<DMath.TExPI, TEx<UnityEngine.Vector2>>;
 using ExTP3 = System.Func<DMath.TExPI, TEx<UnityEngine.Vector3>>;
 using ExBPRV2 = System.Func<DMath.TExPI, TEx<DMath.V2RV2>>;
 
-
 public static partial class Reflector {
+    public readonly struct NamedParam {
+        public readonly Type type;
+        public readonly string name;
+
+        public NamedParam(Type t, string n) {
+            type = t;
+            name = n;
+        }
+
+        public override string ToString() => $"\"{name}\" (type {type.RName()})";
+
+        public static implicit operator NamedParam(ParameterInfo pi) => new NamedParam(pi.ParameterType, pi.Name);
+    }
     private delegate bool HasMember(string member);
-    private delegate Type[] TypeGet(string member);
-    private delegate bool TryInvoke(ReflCtx ctx, string member, object[] prms, out object result);
+    private delegate NamedParam[] TypeGet(string member);
+    private delegate bool TryInvoke(IParseQueue q, string member, object[] prms, out object result);
     private static readonly Dictionary<Type, (HasMember has, TypeGet get, TryInvoke inv)> MathAllowedFuncify = new Dictionary<Type, (HasMember, TypeGet, TryInvoke)>();
     private static readonly Dictionary<Type, (HasMember has, TypeGet get, TryInvoke inv)> MathAllowed = new Dictionary<Type, (HasMember, TypeGet, TryInvoke)>();
 
@@ -25,7 +39,7 @@ public static partial class Reflector {
     }
 
     [CanBeNull]
-    private static Type[] TryLookForMethod(Type rt, string member, bool allowUpcast=true) {
+    private static NamedParam[] TryLookForMethod(Type rt, string member, bool allowUpcast=true) {
         if (ReflConfig.HasMember(rt, member, out _)) return ReflConfig.LazyGetTypes(rt, member);
         if (MathAllowedFuncify.TryGetValue(rt, out var fs) && fs.has(member)) return fs.get(member);
         if (MathAllowed.TryGetValue(rt, out fs) && fs.has(member)) return fs.get(member);
@@ -41,19 +55,21 @@ public static partial class Reflector {
         };
 
     [CanBeNull]
-    private static object TryInvokeMethod(ReflCtx ctx, Type rt, string member, object[] prms, bool allowUpcast=true) {
+    private static object TryInvokeMethod(IParseQueue q, Type rt, string member, object[] prms, bool allowUpcast=true) {
         if (ReflConfig.HasMember(rt, member, out _)) return ReflConfig.Invoke(rt, member, prms);
-        if (MathAllowedFuncify.TryGetValue(rt, out var fs) && fs.inv(ctx, member, prms, out var res)) return res;
-        if (MathAllowed.TryGetValue(rt, out fs) && fs.inv(ctx, member, prms, out res)) return res;
+        if (MathAllowedFuncify.TryGetValue(rt, out var fs) && fs.inv(q, member, prms, out var res)) return res;
+        if (MathAllowed.TryGetValue(rt, out fs) && fs.inv(q, member, prms, out res)) return res;
         if (letFuncs.TryGetValue(rt, out var f) && member[0] == Parser.SM_REF_KEY_C) return f(member);
         return null;
     }
-    private static object InvokeMethod(ReflCtx ctx, Type rt, string member, object[] prms) => 
-        TryInvokeMethod(ctx, rt, member, prms) ?? throw new Exception(
+    private static object InvokeMethod(IParseQueue q, Type rt, string member, object[] prms) => 
+        TryInvokeMethod(q, rt, member, prms) ?? throw new Exception(
         $"Type handling passed but object creation failed for type {rt.RName()}, method {member}. " +
         "This is an internal error. Please report it.");
     
     
+    private static readonly Dictionary<Type, (Type source, MethodInfo mi)> CompileOptions = 
+        new Dictionary<Type, (Type, MethodInfo)>();
     private static readonly Dictionary<Type, List<(FallthroughAttribute, MethodInfo)>> FallThroughOptions = 
         new Dictionary<Type, List<(FallthroughAttribute, MethodInfo)>>();
     private static readonly Dictionary<Type, List<(FallthroughAttribute, MethodInfo)>> UpwardsCastOptions = 

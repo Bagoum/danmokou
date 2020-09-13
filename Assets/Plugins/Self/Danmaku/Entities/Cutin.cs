@@ -40,11 +40,4 @@ public class Cutin : RegularUpdater {
                     AIVelocityRotationDeg), ghost);
         }
     }
-
-
-    [ContextMenu("Editor display")]
-    public void EditorDisplay() {
-        Awake();
-        MainCamera.LoadInEditor();
-    }
 }

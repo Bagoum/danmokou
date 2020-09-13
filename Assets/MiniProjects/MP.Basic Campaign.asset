@@ -14,6 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   key: mp.basic
   shortTitle: MiniProject
+  players:
+  - {fileID: 11400000, guid: 2837e4ddce10a134ebcede695c842b92, type: 2}
   stages:
   - {fileID: 11400000, guid: ea29b3bc3d7231f4c88a4871433e7011, type: 2}
   practiceBosses:

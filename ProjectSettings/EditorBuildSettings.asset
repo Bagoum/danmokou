@@ -71,4 +71,10 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/MiniProjects/Scenes/MiniprojectLevel.unity
     guid: 2a1f4e4cd49e99341855fa916af2cc1f
+  - enabled: 1
+    path: Assets/LuA/LuA.MainMenu.unity
+    guid: f624112b2f76c62478ebd6d443131775
+  - enabled: 1
+    path: Assets/LuA/LuA.SceneLevel.unity
+    guid: e1480753093a7cd43afb2b458aef2f74
   m_configObjects: {}

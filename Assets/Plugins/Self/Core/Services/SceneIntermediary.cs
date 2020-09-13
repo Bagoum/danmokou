@@ -38,9 +38,6 @@ public static class SceneIntermediary {
         public override string ToString() => $"{scene.sceneName} ({reason})";
     }
 
-    private static SceneRequest? LastSceneRequest = null;
-    public static bool IsReloading => LOADING && LastSceneRequest?.reason == SceneRequest.Reason.RELOAD;
-    
     private static SceneConfig false_scfg;
     private static CameraTransitionConfig defaultTransition;
 
@@ -62,7 +59,6 @@ public static class SceneIntermediary {
             Log.Unity($"Successfully requested scene load for {req}.");
             req.onQueued?.Invoke();
             IsFirstScene = false;
-            LastSceneRequest = req;
             LOADING = true;
             GameStateManager.SetLoading(true);
             CoroutineRegularUpdater.GlobalDuringPause.RunRIEnumerator(WaitForSceneLoad(req, true));

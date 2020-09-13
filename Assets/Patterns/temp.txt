@@ -1,25 +1,32 @@
 <#> warnprefix
-pattern({ })
-phase(0)
-	action(block, 0)
-		shift-phase-to(1)
+pattern {
+	##boss jy.yukari
+}
+phase 0
+	action block 0
+		shift-phase-to 1
 		
-<!> type(spell, `Danmokou Chimera`)
-<!> hp(14000)
-<!> root(0, 0.5)
-phase(40)
-	action(block, 0)
-		sync gdlaser-pink/b <-2;:-140> laser null 1 4 {
-			s(0.5)
-			stagger(0.24)
-			dynamic(polar(
-				2 * t,
-				sine(1.4, 12, t + &lt)
-				)
-			)
-		}
-	
+
+<!> bosscutin
+<!> type non  `Difficulty` #{
+<!> root 0 2
+<!> hp 12000
+phase 0
+	action block 0
+		move _ nroffset px sine 9 3 t
+!!{ crpt (dl * 20)
+		async lcircle-*/w <> gcrepeat {
+			wait(80)
+			times(_)
+			sfx x-fire-burst-1
+			color { red pink purple blue teal green yellow orange black }
+		} gsrepeat {
+			times($crpt)
+			circle
+		} simple  tprot cx 1 { dir * 400 t }
 ///
+
+
 <!> type non `hello world`
 <!> hp 1000
 phase 0
@@ -73,7 +80,7 @@ phase 0
 		} gsrepeat {
 			times(21)
 			circle
-			colorf({ purple, blue, teal, green, yellow, orange, red }, // t 3)
+			colorf({ purple blue teal green yellow orange red }, // t 3)
 		} s(rvelocity(cx(1.5)))
 
 phase 0
@@ -88,7 +95,7 @@ phase 0
 			circle
 			color({ green orange red yellow blue pink })
 		} gsr {
-			colorf({ /w /b }, (< &pi 12))
+			colorf({ /w /b }, (pred10 < &pi 12))
 		} s(rvelocity(cx(2)))
 
 phase 0

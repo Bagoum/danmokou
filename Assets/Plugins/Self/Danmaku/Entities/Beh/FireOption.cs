@@ -11,7 +11,9 @@ public class FireOption : BehaviorEntity {
     public string offsetFocus;
     public string opacityFree;
     public string opacityFocus;
+    public bool freeOffsetRotational = true;
     private TP freeOffset;
+    public bool focusOffsetRotational = true;
     private TP focusOffset;
     private bool doOpacity;
     private BPY freeOpacity;
@@ -32,9 +34,11 @@ public class FireOption : BehaviorEntity {
         base.Awake();
         original_angle = 0; //Shoot up by default
         freeOffset = offsetFree.Into<TP>();
+        if (string.IsNullOrWhiteSpace(offsetFocus)) offsetFocus = offsetFree;
         focusOffset = offsetFocus.Into<TP>();
         if (true == (doOpacity = !string.IsNullOrWhiteSpace(opacityFree))) {
             freeOpacity = opacityFree.Into<BPY>();
+            if (string.IsNullOrWhiteSpace(opacityFocus)) opacityFocus = opacityFree;
             focusOpacity = opacityFocus.Into<BPY>();
             rootColor = sr.color;
         }
@@ -42,12 +46,15 @@ public class FireOption : BehaviorEntity {
         SetLocation();
     }
 
+    private float FreeOffsetRotation => freeOffsetRotational ? original_angle : 0f;
+    private float FocusOffsetRotation => focusOffsetRotational ? original_angle : 0f;
     private void SetLocation() {
         //Shot files are oriented upwards by default
         if (InputManager.FiringAngle.HasValue) original_angle = InputManager.FiringAngle.Value - 90;
         var lerpDir = PlayerInput.IsFocus ? 1 : -1;
         currLerpRatio = Mathf.Clamp01(currLerpRatio + lerpDir * ETime.FRAME_TIME / offsetLerpTime);
-        tr.localPosition = M.RotateVectorDeg(freeOffset(bpi) * (1 - currLerpRatio) + focusOffset(bpi) * currLerpRatio, original_angle);
+        tr.localPosition = M.RotateVectorDeg(freeOffset(bpi), FreeOffsetRotation) * (1 - currLerpRatio) + 
+                           M.RotateVectorDeg(focusOffset(bpi), FocusOffsetRotation) * currLerpRatio;
         if (doOpacity) {
             var color = rootColor;
             color.a *= freeOpacity(bpi) * (1 - currLerpRatio) + focusOpacity(bpi) * currLerpRatio;

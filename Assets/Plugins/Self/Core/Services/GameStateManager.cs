@@ -9,14 +9,19 @@ public enum GameState {
     PAUSE = 2,
     DEATH = 3,
     LOADING = 4,
-    //Same basic structure as DEATH, but without killing the player.
+    ///Same basic structure as DEATH, but without killing the player.
     SUCCESS = 5,
+    /// <summary>
+    /// For eg. the freeze time after taking a picture with AyaCamera.
+    /// </summary>
+    EFFECTPAUSE = 6,
 }
 
 public static class GSHelpers {
     public static bool IsPaused(this GameState gs) => gs == GameState.PAUSE || 
                                                       gs == GameState.DEATH || 
-                                                      gs == GameState.SUCCESS;
+                                                      gs == GameState.SUCCESS ||
+                                                      gs == GameState.EFFECTPAUSE;
 }
 public static class GameStateManager {
     private static GameState state = GameState.RUN;
@@ -63,6 +68,7 @@ public static class GameStateManager {
         __SetAndRaise(gs);
     }
 
+    private static void _EffectPause() => _PauseType(GameState.EFFECTPAUSE);
     private static void _Sucess() => _PauseType(GameState.SUCCESS);
     private static void _Death() => _PauseType(GameState.DEATH);
     private static void _Pause() => _PauseType(GameState.PAUSE);
@@ -83,4 +89,16 @@ public static class GameStateManager {
     }
 
     public static void SendSuccessEvent() => stateUpdate = _Sucess;
+
+    public static bool TemporaryEffectPause(out Action toNormal) {
+        if (stateUpdate == null && state == GameState.RUN) {
+            stateUpdate = _EffectPause;
+            toNormal = () => {
+                if (state == GameState.EFFECTPAUSE) stateUpdate = _Unpause;
+            };
+            return true;
+        }
+        toNormal = null;
+        return false;
+    }
 }

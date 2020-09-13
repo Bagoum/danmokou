@@ -10,6 +10,7 @@ using DMath;
 using Core;
 using JetBrains.Annotations;
 using SM;
+using SM.Parsing;
 using Ex = System.Linq.Expressions.Expression;
 using Vector2 = UnityEngine.Vector2;
 using Vector3 = UnityEngine.Vector3;
@@ -44,24 +45,25 @@ public static partial class Reflector {
     private static readonly Type tsm = typeof(StateMachine);
 
     [CanBeNull]
-    private static StateMachine ReflectSM(ReflCtx ctx) {
-        string method = ctx.q.Scan(out int index);
+    private static StateMachine ReflectSM(IParseQueue q) {
+        string method = q.Scan();
         if (method == "file") {
-            ctx.q.Next();
-            return StateMachineManager.FromName(ctx.q.Next());
+            q.Advance();
+            return StateMachineManager.FromName(q.Next());
         } else if (method == "null") {
-            ctx.q.Next();
+            q.Advance();
             return null;
         }
         else if (method == "wait" || method == "wait-phase") {
-            ctx.q.Next();
+            q.Advance();
             return WaitForPhaseSM;
         } else {
-            if (method == "here") ctx.q.Next();
+            if (method == "here") q.Advance();
+            var line = q.GetLastLine();
             try {
-                return StateMachine.Create(ctx);
+                return StateMachine.Create(q);
             } catch (Exception ex) {
-                throw new SMException($"Nested StateMachine construction starting on line {ctx.q.GetLastLine(index)} failed.", ex);
+                throw new SMException($"Nested StateMachine construction starting on line {line} failed.", ex);
             }
         }
     }
@@ -82,7 +84,7 @@ public static partial class Reflector {
 
 
     private static readonly Type tint = typeof(int);
-    private static readonly Dictionary<Type, Type[]> constructorSigs = new Dictionary<Type, Type[]>();
+    private static readonly Dictionary<Type, NamedParam[]> constructorSigs = new Dictionary<Type, NamedParam[]>();
 
     private static readonly Type type_stylesel = typeof(BulletManager.StyleSelector);
     private static readonly Type type_stringA = typeof(string[]);
@@ -93,8 +95,8 @@ public static partial class Reflector {
 
     private static bool MatchesGeneric(Type target, Type generic) =>
         target.IsConstructedGenericType && target.GetGenericTypeDefinition() == generic;
-    public static Type[] GetConstructorSignature(Type t) {
-        if (!constructorSigs.TryGetValue(t, out Type[] args)) {
+    public static NamedParam[] GetConstructorSignature(Type t) {
+        if (!constructorSigs.TryGetValue(t, out NamedParam[] args)) {
             var constrs = t.GetConstructors();
             if (constrs.Length == 0) throw new StaticException($"Type {NameType(t)} has no constructors.");
             var prms = constrs[0].GetParameters();
@@ -103,19 +105,15 @@ public static partial class Reflector {
                     if (constrs[ii].GetParameters().Length > 0) prms = constrs[ii].GetParameters();
                 }
             }
-            constructorSigs[t] = args = new Type[prms.Length];
-            for (int ii = 0; ii < args.Length; ++ii) args[ii] = prms[ii].ParameterType;
+            constructorSigs[t] = args = prms.Select(x => (NamedParam)x).ToArray();
         }
         return args;
     }
 
-    private static readonly Type tpsmp = typeof(PhaseProperties);
 
-
-    private static bool ResolveSpecialHandling(ReflCtx ctx, Type targetType, out object obj) {
-        var p = ctx.q;
+    private static bool ResolveSpecialHandling(IParseQueue p, Type targetType, out object obj) {
         if (targetType == type_stylesel) {
-            obj = new BulletManager.StyleSelector(ResolveAsArray(type_stringA, ctx) as string[][]);
+            obj = new BulletManager.StyleSelector(ResolveAsArray(type_stringA, p) as string[][]);
         } else if (targetType == type_gcrule) {
             ReferenceMember rfr = new ReferenceMember(p.Next());
             string OpAndMaybeType = p.Next();
@@ -123,21 +121,21 @@ public static partial class Reflector {
             var latter = OpAndMaybeType.Split('=').Try(1) ?? throw new ParsingException(
                 $"Line {p.GetLastLine()}: Trying to parse GCRule, but found an invalid operator {OpAndMaybeType}.\n" +
                 $"Make sure to put parentheses around the right-hand side of GCRule.");
-            var ext = (ExType) ForceFuncTypeResolve(latter.Length > 0 ? latter : ctx.q.Next(), typeof(ExType));
-            if (ext == ExType.Float) obj = new GCRule<float>(ext, rfr, op, ctx.Into<GCXF<float>>());
-            else if (ext == ExType.V2) obj = new GCRule<Vector2>(ext, rfr, op, ctx.Into<GCXF<Vector2>>());
-            else if (ext == ExType.V3) obj = new GCRule<Vector3>(ext, rfr, op, ctx.Into<GCXF<Vector3>>());
-            else if (ext == ExType.RV2) obj = new GCRule<V2RV2>(ext, rfr, op, ctx.Into<GCXF<V2RV2>>());
+            var ext = (ExType) ForceFuncTypeResolve(latter.Length > 0 ? latter : p.Next(), typeof(ExType));
+            if (ext == ExType.Float) obj = new GCRule<float>(ext, rfr, op, p.Into<GCXF<float>>());
+            else if (ext == ExType.V2) obj = new GCRule<Vector2>(ext, rfr, op, p.Into<GCXF<Vector2>>());
+            else if (ext == ExType.V3) obj = new GCRule<Vector3>(ext, rfr, op, p.Into<GCXF<Vector3>>());
+            else if (ext == ExType.RV2) obj = new GCRule<V2RV2>(ext, rfr, op, p.Into<GCXF<V2RV2>>());
             else throw new StaticException($"No GCRule handling for ExType {ext}");
         } else if (MatchesGeneric(targetType, gtype_alias)) {
-            ExType declTyp = (ExType) ForceFuncTypeResolve(ctx.q.Next(), typeof(ExType));
+            ExType declTyp = (ExType) ForceFuncTypeResolve(p.Next(), typeof(ExType));
             string alias = p.Next();
             var req_type = typeof(Func<,>).MakeGenericType(targetType.GenericTypeArguments[0], AsWeakTExType(declTyp));
-            obj = Activator.CreateInstance(targetType, alias, ReflectTargetType(ctx, req_type));
+            obj = Activator.CreateInstance(targetType, alias, ReflectTargetType(p, req_type));
         } else if (UseConstructor(targetType)) {
             //generic struct/tuple handling
             var args = GetConstructorSignature(targetType);
-            obj = Activator.CreateInstance(targetType, _FillInvokeArray(args, ctx, targetType, null));
+            obj = Activator.CreateInstance(targetType, _FillInvokeArray(args, p, targetType, null));
         } else {
             obj = default;
             return false;
@@ -175,24 +173,24 @@ public static partial class Reflector {
         } else throw new StaticException("ForceFuncTypeResolve was used for a type without a simple resolver");
     }
 
-    public static object ResolveAsArray(Func<ReflCtx, Type, object> resolve1, Type eleType, ReflCtx ctx) {
+    public static object ResolveAsArray(Type eleType, IParseQueue q) {
         if (eleType == null) throw new StaticException($"Requested an array of null elements");
-        if (ParsingQueue.ARR_EMPTY.Contains(ctx.q.Scan())) {
-            ctx.q.Next();
+        if (IParseQueue.ARR_EMPTY.Contains(q.MaybeScan())) {
+            q.Advance();
             var empty = Array.CreateInstance(eleType, 0);
             return empty;
         }
-        if (ctx.q.Scan() != ParsingQueue.ARR_OPEN) {
+        if (q.MaybeScan() != IParseQueue.ARR_OPEN) {
             var singleton = Array.CreateInstance(eleType, 1);
-            singleton.SetValue(resolve1(ctx, eleType), 0);
+            singleton.SetValue(_ReflectTargetType(q, eleType), 0);
             return singleton;
         }
-        ctx.q.Next(); // {
+        q.Advance(); // {
         var arr = new List<object>();
-        while (ctx.q.Scan() != ParsingQueue.ARR_CLOSE) {
-            arr.Add(resolve1(ctx, eleType));
+        while (q.MaybeScan() != IParseQueue.ARR_CLOSE) {
+            arr.Add(_ReflectTargetType(q.NextChild(), eleType));
         }
-        ctx.q.Next(); // }
+        q.Advance(); // }
         var arr_true = Array.CreateInstance(eleType, arr.Count);
         for (int ii = 0; ii < arr_true.Length; ++ii) {
             arr_true.SetValue(arr[ii], ii);
@@ -200,19 +198,6 @@ public static partial class Reflector {
         return arr_true;
     }
 
-    private static object ResolveAsArray(Type eleType, ReflCtx p) =>
-        ResolveAsArray(_ReflectTargetType, eleType, p);
-    private static object CastToType(string arg, Type targetType, int lineIndex) {
-        if (arg == "_") {
-            // Max value shortcut for eg. repeating until cancel
-            if (targetType == tint) return M.IntFloatMax;
-        }
-        try {
-            return Convert.ChangeType(arg, targetType);
-        } catch (Exception) {
-            throw new BadTypeException($"Line {lineIndex}: Couldn't auto-convert \"{arg}\" to type {NameType(targetType)}.");
-        }
-    }
     [UsedImplicitly]
     public static object[] TupleToArr2<T1, T2>((T1, T2) tup) => new object[] {tup.Item1, tup.Item2};
 }

@@ -6,6 +6,7 @@ using System.Linq.Expressions;
 using System.Text;
 using FParser;
 using Core;
+using DMath;
 using JetBrains.Annotations;
 
 /// <summary>
@@ -143,6 +144,34 @@ public sealed class NodeLinkedList<T> {
     #endif
 }
 
+public class CircularList<T> {
+    public int Count { get; set; }
+    public readonly T[] arr;
+    private int pointer;
+
+    public CircularList(int size) {
+        arr = new T[size];
+        pointer = 0;
+        Count = 0;
+    }
+
+    public void Add(T obj) {
+        arr[pointer] = obj;
+        pointer = (pointer + 1) % arr.Length;
+        Count = Math.Min(Count + 1, arr.Length);
+    }
+
+    public T SafeIndexFromBack(int ii) {
+        ii = M.Clamp(1, Count, ii);
+        return arr[M.Mod(arr.Length, pointer - ii)];
+    }
+
+    public void Clear() {
+        Count = 0;
+        pointer = 0;
+        for (int ii = 0; ii < arr.Length; ++ii) arr[ii] = default;
+    }
+}
 public class StackList<T> : IEnumerable<T> {
     public int Count { get; private set; }
     private T[] arr;
@@ -226,7 +255,7 @@ public class SafeResizableArray<T> {
 /// Indices are not guaranteed to be persistent, so deletion must occur during the iteration block of an index.
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public class CompactingArray<T> where T: struct {
+public class CompactingArray<T> {
     protected int count;
     public int Count => count;
     protected bool[] rem;
@@ -290,12 +319,22 @@ public class CompactingArray<T> where T: struct {
         arr[count++] = obj;
     }
 
-    protected void Empty(bool trueClear) {
+    public void Empty(bool trueClear) {
         if (trueClear) Array.Clear(arr, 0, arr.Length);
         count = 0;
     }
     
     public ref T this[int index] => ref arr[index];
+
+    public bool TryGet(int index, out T obj) {
+        if (rem[index]) {
+            obj = default;
+            return false;
+        } else {
+            obj = arr[index];
+            return true;
+        }
+    }
 }
 
 public class DeletionMarker<T> {

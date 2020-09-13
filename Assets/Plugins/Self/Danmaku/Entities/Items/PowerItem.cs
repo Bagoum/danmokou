@@ -4,6 +4,8 @@ using UnityEngine;
 
 namespace Danmaku {
 public class PowerItem : Item {
+    protected override short RenderOffsetIndex => 0;
+    protected override float RotationTurns => 1;
 
     protected override void CollectMe() {
         GameManagement.campaign.AddPowerItems(1);

@@ -182,15 +182,15 @@ public static partial class AtomicPatterns {
     #region Items
 
     public static SyncPattern LifeItem() => sbh => {
-        ItemPooler.RequestLife(sbh.bc.ToRawPosition(sbh.GCX.RV2));
+        ItemPooler.RequestLife(sbh.bc.ParentOffset, sbh.GCX.RV2.TrueLocation);
         return sbh;
     };
     public static SyncPattern ValueItem() => sbh => {
-        ItemPooler.RequestValue(sbh.bc.ToRawPosition(sbh.GCX.RV2));
+        ItemPooler.RequestValue(sbh.bc.ParentOffset, sbh.GCX.RV2.TrueLocation);
         return sbh;
     };
     public static SyncPattern PointPPItem() => sbh => {
-        ItemPooler.RequestPointPP(sbh.bc.ToRawPosition(sbh.GCX.RV2));
+        ItemPooler.RequestPointPP(sbh.bc.ParentOffset, sbh.GCX.RV2.TrueLocation);
         return sbh;
     };
     #endregion

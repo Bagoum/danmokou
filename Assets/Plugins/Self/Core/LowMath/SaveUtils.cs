@@ -8,6 +8,7 @@ using UnityEngine;
 
 public static class SaveUtils {
     public const string DIR = "Saves/";
+    public const string AYADIR = "Saves/Aya/";
 
     public static void CheckDirectory(string final) {
         var dir = Path.GetDirectoryName(final);
@@ -31,8 +32,17 @@ public static class SaveUtils {
             return null;
         }
     }
-    
-    
+
+    public static void WriteTex(string file, Texture2D tex) {
+        CheckDirectory(file);
+        File.WriteAllBytes(file, tex.EncodeToJPG(95));
+    }
+
+    public static void Destroy(string file) {
+        if (File.Exists(file)) File.Delete(file);
+    }
+
+
     public class InputConfig {
         public KeyCode FocusHold = KeyCode.LeftShift;
         public KeyCode AimLeft = KeyCode.A;

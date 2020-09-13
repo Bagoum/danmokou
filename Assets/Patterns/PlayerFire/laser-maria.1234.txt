@@ -1,0 +1,23 @@
+gtr {
+	wt 30 _
+	wait-child
+} firesame
+	## lazors
+	async p-gdlaser-*/b <> gcr {
+		while(> powerf p)
+		root zero
+		preloop { 
+			lastActiveTime =f _
+		}
+		colorf({ red black }, p // 2)
+	} laser(nroffset(OptionLocation),
+		0, _, {
+			start(30 * (t - &lastActiveTime))
+			varLength(15, 30 * t)
+			dynamic(tpnrot(rotate(OptionAngle, cy 1)))
+			delete(> (t - &lastActiveTime, 1))
+			deactivate((<= powerf p) | (> playerUnfiringTime 0))
+			player(12, 30, 15, oh1)
+	})
+	## cancellation
+	noop

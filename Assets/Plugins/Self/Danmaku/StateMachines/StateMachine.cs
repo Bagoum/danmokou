@@ -12,6 +12,7 @@ using Danmaku;
 using DMath;
 using FParser;
 using JetBrains.Annotations;
+using SM.Parsing;
 using UnityEngine;
 using static Danmaku.Enums;
 
@@ -138,14 +139,14 @@ public abstract class StateMachine {
             return SMConstruction.ILLEGAL;
         }
     }
-    private static List<StateMachine> CreateChildren(Type myType, Reflector.ReflCtx ctx, int childCt = -1) {
+    private static List<StateMachine> CreateChildren(Type myType, IParseQueue q, int childCt = -1) {
         var children = new List<StateMachine>();
         SMConstruction childType = SMConstruction.ILLEGAL;
-        while (childCt-- != 0 && !ctx.q.Empty() && 
-               (childType = CheckCreatableChild(myType, ctx.q.ScanNonProperty())) != SMConstruction.ILLEGAL) {
-            StateMachine newsm = Create(ctx, childType);
-            if (!ctx.q.IsNewlineOrEmpty()) throw new Exception(
-                $"Line {ctx.q.GetLastLine()}: Expected a newline, but found \"{ctx.q.PrintLine(ctx.q.Index, true)}\".");
+        while (childCt-- != 0 && !q.Empty && 
+               (childType = CheckCreatableChild(myType, q.ScanNonProperty())) != SMConstruction.ILLEGAL) {
+            StateMachine newsm = Create(q, childType);
+            if (!q.IsNewlineOrEmpty) throw new Exception(
+                $"Line {q.GetLastLine()}: Expected a newline, but found \"{q.Print()}\".");
             children.Add(newsm);
             if (newsm is BreakSM) {
                 break;
@@ -157,18 +158,18 @@ public abstract class StateMachine {
     private static readonly Type statesTyp = typeof(List<StateMachine>);
     private static readonly Type stateTyp = typeof(StateMachine);
     private static readonly Type reflectStartTyp = typeof(TaskPattern);
-    private static readonly ISet<Type> specialTypes = new HashSet<Type>() { reflectStartTyp };
+    private static readonly Type phasePropsTyp = typeof(PhaseProperties);
+    private static readonly ISet<Type> specialTypes = new HashSet<Type>() { reflectStartTyp, phasePropsTyp };
     private static readonly Dictionary<Type, Type[]> constructorSigs = new Dictionary<Type, Type[]>();
 
-    public static StateMachine Create(Reflector.ReflCtx ctx) => Create(ctx, SMConstruction.ANY);
-    private static StateMachine Create(Reflector.ReflCtx ctx, SMConstruction method) {
-        var p = ctx.q;
+    public static StateMachine Create(IParseQueue p) => Create(p, SMConstruction.ANY);
+    private static StateMachine Create(IParseQueue p, SMConstruction method) {
         if (method == SMConstruction.ILLEGAL)
             throw new Exception("Somehow received a Create(ILLEGAL) call in SM. This should not occur.");
-        MaybeQueueProperties(ctx);
+        MaybeQueueProperties(p);
         string first = p.Next();
         MethodInfo autoReflectMI = null;
-        Type[] prms = null;
+        Reflector.NamedParam[] prms = null;
         if (!smInitMap.TryGetValue(first, out var myType)) {
             if (method == SMConstruction.AS_TREFLECTABLE || method == SMConstruction.ANY)
                 prms = Reflector.LazyLoadAndGetSignature<TaskPattern>(typeof(TSMReflection), first, out autoReflectMI);
@@ -180,25 +181,28 @@ public abstract class StateMachine {
         } else prms = Reflector.GetConstructorSignature(myType);
         object[] reflect_args = new object[prms.Length];
         if (prms.Length > 0) {
-            bool requires_children = prms[0] == statesTyp;
+            bool requires_children = prms[0].type == statesTyp;
             int extra_child_i = (requires_children) ? 1 : 0;
             int final_child_i = extra_child_i;
-            for (; final_child_i < prms.Length && prms[final_child_i] == stateTyp; ++final_child_i) { }
+            for (; final_child_i < prms.Length && prms[final_child_i].type == stateTyp; ++final_child_i) { }
             int special_args_i = final_child_i;
-            for (; special_args_i < prms.Length && specialTypes.Contains(prms[special_args_i]); ++special_args_i) {
-                if (prms[special_args_i] == reflectStartTyp) {
-                    reflect_args[special_args_i] = Reflector.LazyLoadAndReflectExternalSourceType<TaskPattern>(myType, ctx);
+            for (; special_args_i < prms.Length && specialTypes.Contains(prms[special_args_i].type); ++special_args_i) {
+                if (prms[special_args_i].type == reflectStartTyp) {
+                    reflect_args[special_args_i] = Reflector.LazyLoadAndReflectExternalSourceType<TaskPattern>(myType, p);
+                } else if (prms[special_args_i].type == phasePropsTyp) {
+                    reflect_args[special_args_i] = new PhaseProperties(p.Ctx.QueuedProps);
+                    p.Ctx.QueuedProps.Clear();
                 } else {
-                    throw new Exception($"Line {p.GetLastLine()}: cannot resolve constructor type {prms[special_args_i].Name}");
+                    throw new Exception($"Line {p.GetLastLine()}: cannot resolve constructor type {prms[special_args_i].name}");
                 }
             }
-            Reflector.FillInvokeArray(reflect_args, special_args_i, prms, ctx, myType ?? typeof(ReflectableLASM), first);
-            if (p.queuedProps.Count > 0)
+            Reflector.FillInvokeArray(reflect_args, special_args_i, prms, p.NextChild(), myType ?? typeof(ReflectableLASM), first);
+            if (p.Ctx.QueuedProps.Count > 0)
                 throw new Exception($"Line {p.GetLastLine()}: StateMachine {first} is not allowed to have properties.");
             int childCt = -1;
-            if (!p.IsNewlineOrEmpty()) {
-                if (IsChildCountMarker(p.Scan(), out int ct)) {
-                    p.Next();
+            if (!p.IsNewlineOrEmpty) {
+                if (IsChildCountMarker(p.MaybeScan(), out int ct)) {
+                    p.Advance();
                     childCt = ct;
                 } 
                 //Disabling same-line checks since they don't work with parentheses
@@ -206,10 +210,10 @@ public abstract class StateMachine {
                     throw new Exception($"Line {p.GetLastLine()} is missing a newline after the inline arguments.");
                 }*/
             }
-            if (requires_children) reflect_args[0] = CreateChildren(myType, ctx, childCt);
+            if (requires_children) reflect_args[0] = CreateChildren(myType, p, childCt);
             for (int ii = extra_child_i; ii < final_child_i; ++ii) {
-                reflect_args[ii] = Create(ctx);
-                if (!p.IsNewlineOrEmpty()) throw new Exception($"Line {p.GetLastLine()} is missing a newline at the end of the StateMachine.");
+                reflect_args[ii] = Create(p);
+                if (!p.IsNewlineOrEmpty) throw new Exception($"Line {p.GetLastLine()} is missing a newline at the end of the StateMachine.");
             }
         }
         if (autoReflectMI != null) {
@@ -222,8 +226,8 @@ public abstract class StateMachine {
 
     //private static readonly HashSet<string> allowSameLine = new HashSet<string>() { "~", ">>", "_" };
 
-    private static bool IsChildCountMarker(string s, out int ct) {
-        if (s[0] == ':') {
+    private static bool IsChildCountMarker([CanBeNull] string s, out int ct) {
+        if (s != null && s[0] == ':') {
             if (Parser.TryFloat(s, 1, s.Length, out float f)) {
                 if (Math.Abs(f - Mathf.Floor(f)) < float.Epsilon) {
                     ct = Mathf.FloorToInt(f);
@@ -235,19 +239,19 @@ public abstract class StateMachine {
         return false;
     }
 
-    private static void MaybeQueueProperties(Reflector.ReflCtx ctx) {
-        var p = ctx.q;
+    private static void MaybeQueueProperties(IParseQueue p) {
         while (p.Scan() == SMParser.PROP_KW) {
-            p.Next();
-            p.queuedProps.Add(ctx.Into<PhaseProperty>());
-            if (!p.IsNewline()) throw new Exception($"Line {p.GetLastLine()} is missing a newline at the end of the the property declaration. Instead, it found \"{p.Scan()}\".");
+            p.Advance();
+            p.Ctx.QueuedProps.Add(p.NextChild().Into<PhaseProperty>());
+            if (!p.IsNewline) throw new Exception($"Line {p.GetLastLine()} is missing a newline at the end of the the property declaration. Instead, it found \"{p.Scan()}\".");
         }
     }
 
     public static StateMachine CreateFromDump(string dump) {
-        using (ParsingQueue p = ParsingQueue.Lex(dump)) {
-            return Create(new Reflector.ReflCtx(p));
-        }
+        var p = IParseQueue.Lex(dump);
+        var result = Create(p);
+        p.ThrowOnLeftovers(() => "Behavior script has extra text. Check the highlighted text for an illegal command.");
+        return result;
     }
 
     protected StateMachine(List<StateMachine> states) {

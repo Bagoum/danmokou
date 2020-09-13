@@ -169,20 +169,18 @@ public static class SMAnalysis {
                 
             }
         }
-        public string Title => (boss.Enabled) ? (_Title ?? phase.Title) : "??? Locked ???";
+        public string Title(DifficultySet d) => (boss.Enabled(d)) ? (_Title ?? phase.Title) : "??? Locked ???";
         public readonly AnalyzedDayBoss boss;
-        public bool Completed(int cIndex) => SaveData.r.ChallengeCompleted(this, cIndex);
-        public bool CompletedOne => SaveData.r.PhaseCompletedOne(this);
-        public bool CompletedAll => SaveData.r.PhaseCompletedAll(this);
-        public bool Enabled {
-            get {
-                if (!boss.Enabled) return false;
-                else if (type == DayPhaseType.DIALOGUE_INTRO) {
-                    return boss.bossIndex == 0 || boss.day.bosses[boss.bossIndex - 1].FirstPhaseCompletedOne;
-                } else if (type == DayPhaseType.CARD) return boss.phases[0].CompletedOne;
-                else if (type == DayPhaseType.DIALOGUE_END) return boss.phases.All(p => p == this || p.CompletedOne);
-                else return false;
-            }
+        public bool Completed(int cIndex, DifficultySet d) => SaveData.r.ChallengeCompleted(this, cIndex, d);
+        public bool CompletedOne(DifficultySet d) => SaveData.r.PhaseCompletedOne(this, d);
+        public bool CompletedAll(DifficultySet d) => SaveData.r.PhaseCompletedAll(this, d);
+        public bool Enabled(DifficultySet d) {
+            if (!boss.Enabled(d)) return false;
+            else if (type == DayPhaseType.DIALOGUE_INTRO) {
+                return boss.bossIndex == 0 || boss.day.bosses[boss.bossIndex - 1].FirstPhaseCompletedOne(d);
+            } else if (type == DayPhaseType.CARD) return boss.phases[0].CompletedOne(d);
+            else if (type == DayPhaseType.DIALOGUE_END) return boss.phases.All(p => p == this || p.CompletedOne(d));
+            else return false;
         }
         [CanBeNull] public DayPhase Next => boss.phases.Try(cardIndex + 1);
 
@@ -294,9 +292,9 @@ public static class SMAnalysis {
         public List<Phase> Phases => phases.Select(x => x.phase).ToList();
         public readonly AnalyzedDay day;
         public readonly int bossIndex;
-        public bool Enabled => day.Enabled;
-        public bool Concluded => phases.All(p => p.CompletedOne);
-        public bool FirstPhaseCompletedOne => phases[0].CompletedOne;
+        public bool Enabled(DifficultySet d) => day.Enabled(d);
+        public bool Concluded(DifficultySet d) => phases.All(p => p.CompletedOne(d));
+        public bool FirstPhaseCompletedOne(DifficultySet d) => phases[0].CompletedOne(d);
 
         public AnalyzedDayBoss(AnalyzedDay day, int index) {
             boss = (this.day = day).day.bosses[bossIndex = index];
@@ -312,26 +310,28 @@ public static class SMAnalysis {
         public readonly DayConfig day;
         public readonly AnalyzedDayBoss[] bosses;
         public IEnumerable<DayPhase> Phases => bosses.SelectMany(b => b.phases);
-        public bool Enabled => dayIndex == 0 || all.days[dayIndex - 1].OneBossesConcluded;
-        public bool OneBossesConcluded => bosses.Any(b => b.Concluded);
-        public bool AllBossesConcluded => bosses.All(b => b.Concluded);
+        public bool Enabled(DifficultySet d) => dayIndex == 0 || campaign.days[dayIndex - 1].OneBossesConcluded(d);
+        public bool OneBossesConcluded(DifficultySet d) => bosses.Any(b => b.Concluded(d));
+        public bool AllBossesConcluded(DifficultySet d) => bosses.All(b => b.Concluded(d));
         public readonly int dayIndex;
-        private readonly AnalyzedDays all;
+        public readonly AnalyzedDayCampaign campaign;
 
-        public AnalyzedDay(AnalyzedDays all, DayConfig[] days, int index) {
-            this.all = all;
+        public AnalyzedDay(AnalyzedDayCampaign campaign, DayConfig[] days, int index) {
+            this.campaign = campaign;
             this.day = days[dayIndex = index];
             bosses = day.bosses.Length.Range().Select(i => new AnalyzedDayBoss(this, i)).ToArray();
         }
         
         public string Key => day.key;
-        public static AnalyzedDay Reconstruct(string key) => GameManagement.Days.days.First(c => c.day.key == key);
+        public static AnalyzedDay Reconstruct(string key) => GameManagement.DayCampaign.days.First(c => c.day.key == key);
     }
 
-    public class AnalyzedDays {
+    public class AnalyzedDayCampaign {
         public readonly AnalyzedDay[] days;
-        public AnalyzedDays(DayConfig[] days) {
-            this.days = days.Length.Range().Select(i => new AnalyzedDay(this, days, i)).ToArray();
+        public readonly DayCampaignConfig campaign;
+        public AnalyzedDayCampaign(DayCampaignConfig campaign) {
+            this.campaign = campaign;
+            this.days = campaign.days.Length.Range().Select(i => new AnalyzedDay(this, campaign.days, i)).ToArray();
         }
     }
 }

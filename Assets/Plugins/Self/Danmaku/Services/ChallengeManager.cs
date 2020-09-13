@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Threading;
 using Danmaku;
 using DMath;
 using JetBrains.Annotations;
 using SM;
 using static Challenge;
+using static Danmaku.Enums;
 
 public class ChallengeManager : CoroutineRegularUpdater {
     private static ChallengeManager main;
@@ -91,7 +93,8 @@ public class ChallengeManager : CoroutineRegularUpdater {
         Tracking = c;
         r = new Restrictions(c.challenge);
         Exec = null;
-        UIManager.RequestChallengeDisplay(c);
+        challengePhotos.Clear();
+        UIManager.RequestChallengeDisplay(c, gr.difficulty);
         main.RunDroppableRIEnumerator(cor);
     }
 
@@ -108,9 +111,9 @@ public class ChallengeManager : CoroutineRegularUpdater {
         Log.Unity($"PASSED challenge {cr.Description}");
         if (gr.Saveable) {
             Log.Unity("Committing challenge to save data");
-            SaveData.r.CompleteChallenge(gr, cr);
+            SaveData.r.CompleteChallenge(gr, cr, challengePhotos);
         }
-        var next = cr.NextChallenge;
+        var next = cr.NextChallenge(gr.difficulty);
         if (next != null && Exec != null) {
             var e = Exec;
             Replayer.Cancel(); //can't replay both scenes together
@@ -172,4 +175,14 @@ public class ChallengeManager : CoroutineRegularUpdater {
     }
 
     public SOCircle player;
+    
+    private static readonly List<AyaPhoto> challengePhotos = new List<AyaPhoto>();
+
+    public static void SubmitPhoto(AyaPhoto p) {
+        //There are no restrictions on what type of challenge may receive a photo
+        if (Tracking != null) {
+            challengePhotos.Add(p);
+        }
+    }
+    
 }

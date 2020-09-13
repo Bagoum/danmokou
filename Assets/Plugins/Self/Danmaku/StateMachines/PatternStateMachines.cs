@@ -62,10 +62,7 @@ public class PatternSM : SequentialSM {
                 target.Initialize(new Velocity(new Vector2(-50f, 0f), 0f), SMRunner.Null);
             }
             if (target.TryAsEnemy(out e)) {
-                if (b.colors.cardColorR.a > 0 || b.colors.cardColorG.a > 0 || b.colors.cardColorB.a > 0) {
-                    e.RequestCardCircle(b.colors.cardColorR, b.colors.cardColorG, b.colors.cardColorB, b.Rotator);
-                }
-                e.SetSpellCircleColors(b.colors.spellColor1, b.colors.spellColor2, b.colors.spellColor3);
+                e.ConfigureBoss(b);
                 e.SetDamageable(false);
                 if (i > 0) subbosses.Add(e);
             }
@@ -78,7 +75,7 @@ public class PatternSM : SequentialSM {
     public override async Task Start(SMHandoff smh) {
         var bts = new List<BottomTracker>();
         if (props.boss != null) {
-            GameManagement.campaign.OpenBoss();
+            GameManagement.campaign.OpenBoss(smh.Exec);
             UIManager.SetBossHPLoader(smh.Exec.Enemy);
             SetUniqueBossUI(smh, props.bosses == null ? props.boss : props.bosses[props.bossUI.GetBounded(0, 0)]);
             bts = ConfigureAllBosses(smh, props.boss, props.bosses);
@@ -149,7 +146,7 @@ public class PhaseSM : SequentialSM {
     /// <param name="states">Substates, run sequentially</param>
     /// <param name="timeout">Timeout in seconds before the phase automatically ends. Set to zero for no timeout</param>
     /// <param name="props">Properties describing miscellaneous features of this phase</param>
-    public PhaseSM(List<StateMachine> states, float timeout, PhaseProperties props) : base(states) {
+    public PhaseSM(List<StateMachine> states, PhaseProperties props, float timeout) : base(states) {
         this._timeout = timeout;
         this.props = props;
         for (int ii = 0; ii < states.Count; ++ii) {
@@ -175,11 +172,18 @@ public class PhaseSM : SequentialSM {
         if (!props.hideTimeout && smh.Exec.TriggersUITimeout) UIManager.ShowStaticTimeout(Timeout);
         if (props.livesOverride.HasValue) UIManager.ShowBossLives(props.livesOverride.Value);
         if (smh.Exec.isEnemy) {
-            var hp = props.hp ?? props.phaseType?.DefaultHP();
-            if (hp.HasValue) smh.Exec.Enemy.SetHP(hp.Value, hp.Value);
-            var hpbar = props.hpbar ?? props.phaseType?.HPBarLength();
-            if (hpbar.HasValue) smh.Exec.Enemy.SetHPBar(hpbar.Value, props.phaseType ?? PhaseType.NONSPELL);
+            if (props.photoHP.Try(out var photoHP)) {
+                smh.Exec.Enemy.SetPhotoHP(photoHP, photoHP);
+            } else if ((props.hp ?? props.phaseType?.DefaultHP()).Try(out var hp)) {
+                smh.Exec.Enemy.SetHP(hp, hp);
+            }
+            if ((props.hpbar ?? props.phaseType?.HPBarLength()).Try(out var hpbar)) {
+                smh.Exec.Enemy.SetHPBar(hpbar, props.phaseType ?? PhaseType.NONSPELL);
+            }
             if (props.phaseType?.RequiresHPGuard() ?? false) smh.Exec.Enemy.SetDamageable(false);
+        }
+        if (props.BossPhotoHP.Try(out var pins)) {
+            AyaPhotoBoard.TrySetupPins(pins);
         }
         bool forcedBG = false;
         if (GameManagement.campaign.mode != CampaignMode.CARD_PRACTICE && !SaveData.Settings.TeleportAtPhaseStart) {
@@ -241,7 +245,6 @@ public class PhaseSM : SequentialSM {
         } catch (OperationCanceledException) {
             if (smh.Exec.PhaseShifter == pcTS) smh.Exec.PhaseShifter = null;
             if (props.Lenient) GameManagement.campaign.Lenience = false;
-            //TODO generalize targets in props
             if (props.phaseType != null) Log.Unity($"Cleared {props.phaseType.Value} phase: {props.cardTitle ?? ""}");
             if (props.Cleanup) GameManagement.ClearPhaseAutocull(props.autocullTarget, props.autocullDefault);
             if (smh.Exec.AllowFinishCalls) {
@@ -259,18 +262,23 @@ public class PhaseSM : SequentialSM {
 
     private void OnFinish(SMHandoff smh, ICancellee prepared, in CampaignData start_campaign) {
         if (props.BgTransitionOut != null) BackgroundOrchestrator.QueueTransition(props.BgTransitionOut);
+        if (props.BossPhotoHP.Try(out _)) {
+            AyaPhotoBoard.TearDown();
+        }
         //The shift-phase token is cancelled by timeout or by HP. 
         var completedBy = prepared.Cancelled ?
             (smh.Exec.isEnemy ?
-                (smh.Exec.Enemy.HP <= 0 && (props.hp ?? 0) > 0) ?
-                    (PhaseClearMethod?) PhaseClearMethod.HP :
-                    null :
+                (smh.Exec.Enemy.PhotoHP <= 0 && (props.photoHP ?? 0) > 0) ? 
+                    PhaseClearMethod.PHOTO :
+                    (smh.Exec.Enemy.HP <= 0 && (props.hp ?? 0) > 0) ?
+                        PhaseClearMethod.HP :
+                        (PhaseClearMethod?) null :
                 null) ??
             PhaseClearMethod.TIMEOUT :
             PhaseClearMethod.CANCELLED;
         var pc = new PhaseCompletion(props, completedBy, smh.Exec, in start_campaign);
         if (pc.StandardCardFinish) {
-            smh.Exec.DropItems(pc.DropItems, 1.4f, 0.6f, 0.9f);
+            smh.Exec.DropItems(pc.DropItems, 1.4f, 0.6f, 1f, 0.2f);
             RaikoCamera.Shake(defaultShakeTime, defaultShakeMult, defaultShakeMag, smh.cT, () => { });
         }
         GameManagement.campaign.PhaseEnd(pc);
@@ -278,24 +286,24 @@ public class PhaseSM : SequentialSM {
 }
 
 public class DialoguePhaseSM : PhaseSM {
-    public DialoguePhaseSM(string file, PhaseProperties props) : base(new List<StateMachine>() {
+    public DialoguePhaseSM(PhaseProperties props, string file) : base(new List<StateMachine>() {
         new PhaseSequentialActionSM(new List<StateMachine>() {
             new ReflectableLASM(SMReflection.Dialogue(file)),
             new ReflectableLASM(SMReflection.ShiftPhase())
         }, 0f)
-    }, 0, props) {
+    }, props, 0) {
         
     }
     
 }
 
 public class PhaseJSM : PhaseSM {
-    public PhaseJSM(List<StateMachine> states, float timeout, int from, PhaseProperties props)
+    public PhaseJSM(List<StateMachine> states, PhaseProperties props, float timeout, int from)
     #if UNITY_EDITOR
-        : base(states.Skip(from).ToList(), timeout, props) {
+        : base(states.Skip(from).ToList(), props, timeout) {
         if (this.states[0] is PhaseActionSM psm) psm.wait = 0f;
     #else
-        : base(states, timeout, props) {
+        : base(states, props, timeout) {
     #endif
     }
 }

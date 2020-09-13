@@ -1,3 +1,20 @@
+# Upgrading
+
+To get the newest version from git, run:
+
+`git fetch super` (replace `super` with whatever remote you assigned to the DMK repo)
+
+`git pull --rebase super master` (again, replace `super`)
+
+`git submodule update` (if you have made modifications to the submodules, you will need to `pull --rebase` them individually)
+
+# Version 2.2.0 (2020/09/15)
+
+- Photo game architecture. See the `LuA` (L'unique Appareil-photo) submodule for a basic demo of how it works, as well as the "Aya Camera" shot type, which can be used anywhere.
+- Made parsing better (hopefully)
+- Added support for MoF MarisaA-style tracking options. See the "MariA Lazors" shot type for an example.
+- Removed a lot of extraneous files from this repository.
+
 # Version 2.1.0 (2020/09/11)
 
 - Parsing rules are now more rigorous about parentheses and commas. When using parentheses in function invocations, commas are now also required. For example, `mod(5 2)` is no longer valid.

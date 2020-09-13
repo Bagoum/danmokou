@@ -25,12 +25,6 @@ public readonly struct SMRunner {
     }
 }
 
-public enum PhaseClearMethod {
-    HP,
-    TIMEOUT,
-    CANCELLED
-}
-
 public readonly struct PhaseCompletion {
     public readonly PhaseProperties props;
     public readonly PhaseClearMethod clear;
@@ -49,7 +43,7 @@ public readonly struct PhaseCompletion {
     /// <br/>A clear requires draining all the boss HP or waiting out a timeout.
     /// </summary>
     public bool? Cleared => StandardCardFinish ?
-        (bool?) ((clear == PhaseClearMethod.HP) ||
+        (bool?) ((clear.Destructive()) ||
                  //For timeouts, clearing requires no-hit
                  (props.phaseType == PhaseType.TIMEOUT && clear == PhaseClearMethod.TIMEOUT && noHits))
         : null;

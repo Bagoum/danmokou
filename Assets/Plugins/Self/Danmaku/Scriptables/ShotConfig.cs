@@ -19,4 +19,5 @@ public class ShotConfig : ScriptableObject {
     public PlayerBombType bomb;
     public bool HasBomb => bomb.IsValid();
     public double defaultPower = 1000;
+    public bool playerChild = true;
 }

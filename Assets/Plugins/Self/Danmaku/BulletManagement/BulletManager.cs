@@ -150,7 +150,7 @@ public partial class BulletManager {
                 sbc.UpdateVelocityAndControls();
             } else sbc.PruneControls();
         }
-        Profiler.BeginSample("Bullet NPC Vel");
+        Profiler.BeginSample("NPC-fired simple bullet velocity updates");
         for (int ii = 0; ii < activeNpc.Count; ++ii) {
             sbc = activeNpc[ii];
             if (sbc.temp_last > 0) {
@@ -170,9 +170,8 @@ public partial class BulletManager {
                 sbc.UpdateVelocityAndControls();
             } else sbc.PruneControls();
         }
-        //Collision check (npc bullets)
+        Profiler.BeginSample("NPC-fired simple bullet collision checking");
         int dmg = 0; int graze = 0;
-        Profiler.BeginSample("Bullet NPC coll");
         for (int ii = 0; ii < activeCEmpty.Count; ++ii) {
             sbc = activeCEmpty[ii];
             if (sbc.Count > 0) {

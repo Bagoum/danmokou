@@ -38,8 +38,8 @@ public static class SaveData {
         }
         [JsonIgnore]
         public bool MainCampaignCompleted => CompletedCampaigns.Contains(GameManagement.References.campaign.key);
-        //day key, boss key, raw phase index, challenge index
-        public Dictionary<string, Dictionary<string, Dictionary<int, Dictionary<int, Dictionary<DifficultySet, ChallengeCompletion>>>>> SceneRecord = new Dictionary<string, Dictionary<string, Dictionary<int, Dictionary<int, Dictionary<DifficultySet, ChallengeCompletion>>>>>();
+        //campaign key, day key, boss key, raw phase index, challenge index
+        public Dictionary<string, Dictionary<string, Dictionary<string, Dictionary<int, Dictionary<int, Dictionary<DifficultySet, ChallengeCompletion>>>>>> SceneRecord = new Dictionary<string, Dictionary<string, Dictionary<string, Dictionary<int, Dictionary<int, Dictionary<DifficultySet, ChallengeCompletion>>>>>>();
 
         public Dictionary<string, long> HighScores = new Dictionary<string, long>();
 
@@ -54,32 +54,33 @@ public static class SaveData {
         public long? GetHighScore(string gameIdentifier) =>
             HighScores.TryGetValue(gameIdentifier, out var score) ? (long?) score : null;
 
-        public void CompleteChallenge(GameRequest gr, ChallengeRequest cr) {
-            var dfcMap = SceneRecord.SetDefault(cr.Day.key).SetDefault(cr.Boss.key)
+        public void CompleteChallenge(GameRequest gr, ChallengeRequest cr, IEnumerable<AyaPhoto> photos) {
+            var dfcMap = SceneRecord.SetDefault(cr.Campaign.key).SetDefault(cr.Day.key).SetDefault(cr.Boss.key)
                 .SetDefault(cr.phase.phase.index).SetDefault(cr.ChallengeIdx);
-            dfcMap[gr.difficulty] = new ChallengeCompletion();
+            dfcMap[gr.difficulty] = new ChallengeCompletion(photos);
             SaveData.SaveRecord();
         }
 
         [CanBeNull]
         private Dictionary<int, Dictionary<int, Dictionary<DifficultySet, ChallengeCompletion>>>
-            BossRecord(DayPhase phase) => SceneRecord.GetOrDefault2(phase.boss.day.day.key, phase.boss.boss.key);
+            BossRecord(DayPhase phase) => SceneRecord.GetOrDefault3(
+                phase.boss.day.campaign.campaign.key, phase.boss.day.day.key, phase.boss.boss.key);
 
-        public bool ChallengeCompleted(DayPhase phase, int c) =>
-            (BossRecord(phase)?.GetOrDefault2(phase.phase.index, c)?.Count ?? 0) > 0;
+        [CanBeNull] public ChallengeCompletion ChallengeCompletion(DayPhase phase, int c, DifficultySet d) =>
+            BossRecord(phase)?.GetOrDefault3(phase.phase.index, c, d);
+        
+        public bool ChallengeCompleted(DayPhase phase, int c, DifficultySet d) =>
+            ChallengeCompletion(phase, c, d) != null;
 
-        public bool ChallengeCompleted(DayPhase phase, Challenge c) =>
-            ChallengeCompleted(phase, phase.challenges.IndexOf(c));
-
-        public bool PhaseCompletedOne(DayPhase phase) {
+        public bool PhaseCompletedOne(DayPhase phase, DifficultySet d) {
             for (int ii = 0; ii < phase.challenges.Length; ++ii) {
-                if (ChallengeCompleted(phase, ii)) return true;
+                if (ChallengeCompleted(phase, ii, d)) return true;
             }
             return false;
         }
-        public bool PhaseCompletedAll(DayPhase phase) {
+        public bool PhaseCompletedAll(DayPhase phase, DifficultySet d) {
             for (int ii = 0; ii < phase.challenges.Length; ++ii) {
-                if (!ChallengeCompleted(phase, ii)) return false;
+                if (!ChallengeCompleted(phase, ii, d)) return false;
             }
             return true;
         }

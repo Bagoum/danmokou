@@ -29,7 +29,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 2839687353931545787}
-  m_RootOrder: 0
+  m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &564064160
 SpriteRenderer:
@@ -111,7 +111,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 2839687353931545787}
-  m_RootOrder: 3
+  m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &3112859572604580512
 SpriteRenderer:
@@ -193,7 +193,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 2839687353931545787}
-  m_RootOrder: 1
+  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &6239955699839352181
 SpriteRenderer:
@@ -276,6 +276,7 @@ Transform:
   m_LocalPosition: {x: 0, y: 7, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
+  - {fileID: 1421376827010191162}
   - {fileID: 564064161}
   - {fileID: 745719404883219281}
   - {fileID: 1274380395684534285}
@@ -349,16 +350,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorScript: {fileID: 0}
   ID: mokou
-  displayChangedPosition: 1
   rotationMethod: 1
-  rotateTransform: 0
   deathEffect: {fileID: 0}
-  triggersUITimeout: 1
-  cullable: 0
-  ScreenCullRadius: 4
-  damage: 1
-  destructible: 0
-  grazeEveryFrames: 20
+  cullableRadius:
+    cullable: 0
+    cullRadius: {fileID: 0}
+  collisionInfo:
+    CollisionActiveOnInit: 0
+    destructible: 0
+    grazeEveryFrames: 0
   animate:
     method: 1
     LRRelation: 4
@@ -423,10 +423,6 @@ MonoBehaviour:
         time: 0.24
         skipLoop: 0
       deathAnim: []
-  movementModifiers:
-    flipX: 0
-    flipY: 0
-  linkToEditorReload: 0
 --- !u!114 &2839687353931545650
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -440,14 +436,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   takesBossDamage: 1
-  HP: 900
   maxHP: 1000
-  suicideFireType: 
   collisionRadius:
     useConstant: 0
     constVal: 0
     refVal: {fileID: 11400000, guid: 60ca16a1aefba664990f0efd02fe82f4, type: 2}
+  ayaCameraRadius:
+    useConstant: 0
+    constVal: 0
+    refVal: {fileID: 11400000, guid: 7226bbeee38c9aa48a72259f76893d58, type: 2}
   modifyDamageSound: 1
+  cameraCrosshair: {fileID: 6769713057169377191}
   healthbarSprite: {fileID: 564064160}
   cardCircle: {fileID: 6239955699839352181}
   spellCircle: {fileID: 3112859572604580512}
@@ -476,6 +475,88 @@ MonoBehaviour:
     useConstant: 0
     constVal: 0
     refVal: {fileID: 11400000, guid: 19b2f071062cf5549b0c1bf40d04b315, type: 2}
+--- !u!1 &3984965690398444892
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1421376827010191162}
+  - component: {fileID: 6769713057169377191}
+  m_Layer: 1
+  m_Name: Camera Capturable
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1421376827010191162
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3984965690398444892}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 2839687353931545787}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!212 &6769713057169377191
+SpriteRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3984965690398444892}
+  m_Enabled: 0
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 5458891e477bea5438b857b92a28ba0c, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 0
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: -1806312477
+  m_SortingLayer: 9
+  m_SortingOrder: 0
+  m_Sprite: {fileID: 21300000, guid: 60b9594e5e195f34ea68597fd57111e2, type: 3}
+  m_Color: {r: 0.5943396, g: 0, b: 0.2270516, a: 1}
+  m_FlipX: 0
+  m_FlipY: 0
+  m_DrawMode: 0
+  m_Size: {x: 14.4, y: 14.4}
+  m_AdaptiveModeThreshold: 0.5
+  m_SpriteTileMode: 0
+  m_WasSpriteAssigned: 1
+  m_MaskInteraction: 0
+  m_SpriteSortPoint: 0
 --- !u!1 &8521253458399287227
 GameObject:
   m_ObjectHideFlags: 0
@@ -505,7 +586,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 2839687353931545787}
-  m_RootOrder: 2
+  m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &3734113662114524633
 SpriteRenderer:

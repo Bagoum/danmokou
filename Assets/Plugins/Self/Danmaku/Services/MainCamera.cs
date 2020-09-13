@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Danmaku;
+using DMath;
+using JetBrains.Annotations;
 using UnityEngine;
 
 public class MainCamera : MonoBehaviour {
@@ -21,6 +23,9 @@ public class MainCamera : MonoBehaviour {
     public static float ScreenHeight => VertRadius * 2;
     private Vector2 position; // Cached to allow requests for screen coordinates from MovementLASM off main thread
     private Transform tr;
+
+    public Material ayaMaterial;
+    public Camera[] ayaRenderers;
 
     /*
     public Material postprocessor;
@@ -50,12 +55,6 @@ public class MainCamera : MonoBehaviour {
         Shader.SetGlobalFloat(ShaderPixelWidthID, Screen.width);
         if (SaveData.s.Shaders) Shader.EnableKeyword("FANCY");
         else Shader.DisableKeyword("FANCY");
-        
-    }
-
-    public static void LoadInEditor() {
-        var x = GameObject.FindGameObjectWithTag("MainCamera").GetComponent<MainCamera>();
-        x.Awake();
     }
 
     [ContextMenu("Debug sizes")]
@@ -118,6 +117,34 @@ public class MainCamera : MonoBehaviour {
     private const int UpsampleFinalize = 3;
     private const int UpsampleDebug = 4;
     private const int RemapOnly = 5;
+
+    /// <summary>
+    /// Note: the returned photo will not have its texture filled for another few frames.
+    /// </summary>
+    /// <param name="rect"></param>
+    /// <returns></returns>
+    public AyaPhoto RequestAyaPhoto(CRect rect) {
+        ayaMaterial.SetFloat(PropConsts.OffsetX, 0.5f + rect.x / ScreenWidth);
+        ayaMaterial.SetFloat(PropConsts.OffsetY, 0.5f + rect.y / ScreenHeight);
+        float xsr = rect.halfW * 2 / ScreenWidth;
+        float ysr = rect.halfH * 2 / ScreenHeight;
+        ayaMaterial.SetFloat(PropConsts.ScaleX, xsr);
+        ayaMaterial.SetFloat(PropConsts.ScaleY, ysr);
+        ayaMaterial.SetFloat(PropConsts.Angle, rect.angle * M.degRad);
+        var capture = DefaultTempRT();
+        foreach (var c in ayaRenderers) {
+            c.targetTexture = capture;
+            c.Render();
+            c.targetTexture = null;
+        }
+        var ss = DefaultTempRT(((int) (SaveData.s.Resolution.w * xsr), (int) (SaveData.s.Resolution.h * ysr)));
+        Graphics.Blit(capture, ss, ayaMaterial);
+        capture.Release();
+        var tex = ss.IntoTex();
+        ss.Release();
+        return new AyaPhoto(tex, rect);
+    }
+
     /*
     private void OnPostRender() {
         postprocessor.SetFloat("_BloomThreshold", bloomThreshold);
@@ -153,10 +180,9 @@ public class MainCamera : MonoBehaviour {
         RenderTexture.ReleaseTemporary(src);
     }*/
 
-    public bool debugBloom;
-
-    public static RenderTexture DefaultTempRT() => RenderTexture.GetTemporary(SaveData.s.Resolution.Item1, 
-        SaveData.s.Resolution.Item2, 0, RenderTextureFormat.ARGB32);
+    public static RenderTexture DefaultTempRT() => DefaultTempRT(SaveData.s.Resolution);
+    public static RenderTexture DefaultTempRT((int w, int h) res) => RenderTexture.GetTemporary(res.w, 
+        res.h, 0, RenderTextureFormat.ARGB32);
 
     public static ArbitraryCapturer CreateArbitraryCapturer(Transform tr) => 
         GameObject.Instantiate(GameManagement.ArbitraryCapturer, tr, false)

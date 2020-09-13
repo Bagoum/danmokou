@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9e371a047fd0478dab0e1a132d71003c, type: 3}
+  m_Name: PlayerReimu-Camera
+  m_EditorClassIdentifier: 
+  key: basic-reimu-camera
+  shortTitle: Shameireimu
+  title: Shameireimu Aya
+  prefab: {fileID: 2884352696324497640, guid: 1b04f67ada23b914fb70274c9361f3be, type: 3}
+  shots:
+  - {fileID: 11400000, guid: 3c69cff4d6513f14e880462e80103a4b, type: 2}

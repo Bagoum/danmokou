@@ -18,6 +18,7 @@
         <Compile Include="Utils.fs" />
         <Compile Include="CommonFuncs.fs" />
         <Compile Include="AAParser.fs" />
+        <Compile Include="SMParser.fs" />
         <Compile Include="Program.fs" />
     </ItemGroup>
 

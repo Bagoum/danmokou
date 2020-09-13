@@ -49,11 +49,11 @@ public static class TestParsing {
         SceneManager.LoadScene(baseScenePath);
         yield return null;
         TestSMExceptionRegex(@"
-async shell-teal/b <2;:> gcr2 60 5 <-0.2;:10> { } gsr2 5 <;:72> { } s tp-rot cxfff 2", "cxfff.*type TP");
+async shell-teal/b <2;:> gcr2 60 5 <-0.2;:10> { } gsr2 5 <;:72> { } s tp-rot cxfff 2", "to type TP.*≪cxfff≫");
         TestSMExceptionRegex(@"
 async shell-teal/b <2;:> gcr2 20 _ <;:5> { } gsr2 5 <;:72> { } s :: {
 			R	w
-		} tp-rot pxy 2 &R", "failed to cast.*\"w\".* to type BPY");
+		} tp-rot pxy 2 &R", "to type BPY.*≪w≫");
         /* No longer an error, as R will be looked up in private data hoisting instead.
         TestSMExceptionRegex(@"
 bullet shell-teal/b <2;:> cre 20 _ <;:5> repeat 5 <;:72> s :: {
@@ -64,14 +64,14 @@ bullet shell-teal/b <2;:> cre 20 _ <;:5> repeat 5 <;:72> s :: {
         TestSMExceptionRegex(@"sync danger <2;:> summons tprot cx 1 here sad", 
             "Nested StateMachine construction.*sad is not a StateMachine");
         TestSMExceptionRegex(@"async shell-teal/b <2;:> gcr2 60 5 <-0.2;:10> { } gsr2 5 <;:72> { } s tp-rot cx sad", 
-            "\"sad\" to type Float");
+            "to type Float.*≪sad≫");
         TestSMExceptionRegex(@"async shell-teal/b <2;:> gcr2 60 5 <-0.2;:10> { } gsr2 5 <;:72> { } s tp-rot cxy 2", 
             "TP.*ran out of text");
         TestSMExceptionRegex(@"async shell-teal/b", "ran out of text");
         TestSMExceptionRegex(@"
 async shell-teal/b <2;:> gcr2 60 5 <-0.2;:10> { } gsr2 5 <;:72> { } s tp-rot cxy 2
 async shell-teal/b <2;:> gcr2 60 5 <-0.2;:10> { } gsr2 5 <;:72> { } s tp-rot cxy 2 3",
-            "async\" to type Float");
+            "to type Float.*≪async≫");
     }
 
     [UnityTest]

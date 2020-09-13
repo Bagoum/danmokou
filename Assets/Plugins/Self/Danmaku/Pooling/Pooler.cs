@@ -131,26 +131,26 @@ public static class ItemPooler {
         Pooler<Item>.Prepare();
     }
 
-    private static Item Request(GameObject prefab, Vector2 initialLoc) {
+    private static Item Request(GameObject prefab, Vector2 root, Vector2 offset) {
         var i = Pooler<Item>.Request(prefab, out _);
-        i.Initialize(initialLoc);
+        i.Initialize(root, offset);
         return i;
     }
 
-    public static Item RequestLife(Vector2 initialLoc) => Request(lifeItemPrefab, initialLoc);
-    public static Item RequestValue(Vector2 initialLoc) => Request(valueItemPrefab, initialLoc);
-    public static Item RequestPointPP(Vector2 initialLoc) => Request(pointppItemPrefab, initialLoc);
+    public static Item RequestLife(Vector2 root, Vector2 offset) => Request(lifeItemPrefab, root, offset);
+    public static Item RequestValue(Vector2 root, Vector2 offset) => Request(valueItemPrefab, root, offset);
+    public static Item RequestPointPP(Vector2 root, Vector2 offset) => Request(pointppItemPrefab, root, offset);
     [CanBeNull]
-    public static Item RequestPower(Vector2 initialLoc) {
-        return CampaignData.PowerMechanicActive ?  Request(powerItemPrefab, initialLoc) : null;
+    public static Item RequestPower(Vector2 root, Vector2 offset) {
+        return CampaignData.PowerMechanicActive ?  Request(powerItemPrefab, root, offset) : null;
     }
 
     [CanBeNull]
-    public static Item RequestItem(Vector2 initialLoc, ItemType t) {
-        if (t == ItemType.VALUE) return RequestValue(initialLoc);
-        else if (t == ItemType.PPP) return RequestPointPP(initialLoc);
-        else if (t == ItemType.LIFE) return RequestLife(initialLoc);
-        else if (t == ItemType.POWER) return RequestPower(initialLoc);
+    public static Item RequestItem(Vector2 root, Vector2 offset, ItemType t) {
+        if (t == ItemType.VALUE) return RequestValue(root, offset);
+        else if (t == ItemType.PPP) return RequestPointPP(root, offset);
+        else if (t == ItemType.LIFE) return RequestLife(root, offset);
+        else if (t == ItemType.POWER) return RequestPower(root, offset);
         throw new Exception($"No drop handling for item type {t}");
     }
 }

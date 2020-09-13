@@ -675,7 +675,7 @@ public partial class BulletManager {
     }
 
     /// <summary>
-    /// For bombs
+    /// For bombs/camera effects. Special bullets like EMPTY will not be deleted.
     /// </summary>
     public static void Autodelete(string targetFormat, string defaulter, Pred cond) {
         void DeletePool(SimpleBulletCollection pool) {

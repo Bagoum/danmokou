@@ -4,6 +4,8 @@ using UnityEngine;
 
 namespace Danmaku {
 public class PointPPItem : Item {
+    protected override short RenderOffsetIndex => 2;
+    protected override float RotationTurns => -2;
 
     protected override void CollectMe() {
         GameManagement.campaign.AddPointPlusItems(1);

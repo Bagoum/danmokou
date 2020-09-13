@@ -37,6 +37,7 @@ public class XMLMainMenuDays : XMLMenu {
     public VisualTreeAsset VTASceneSelect;
     public VisualTreeAsset VTALR2OptionNode;
     public VisualTreeAsset VTALR2Option;
+    public float photoSize;
 
     protected override Dictionary<Type, VisualTreeAsset> TypeMap => new Dictionary<Type, VisualTreeAsset>() {
         {typeof(UIScreen), GenericUIScreen},
@@ -67,29 +68,38 @@ public class XMLMainMenuDays : XMLMenu {
         var defaultPlayer = References.dayCampaign.players[0];
         var defaultShot = defaultPlayer.shots[0];
 
-        SceneSelectScreen = new UIScreen(Days.days[0].bosses.SelectMany(
+        SceneSelectScreen = new UIScreen(DayCampaign.days[0].bosses.SelectMany(
             b => b.phases.Select(p => {
-                if (!p.Enabled) return new UINode(p.Title).With(medDescrClass).EnabledIf(false);
-                var c = p.challenges[0];
+                //TODO: this return is not safe if you change the difficulty.
+                if (!p.Enabled(dfc)) return new UINode(() => p.Title(dfc)).With(medDescrClass).EnabledIf(false);
+                Challenge c = p.challenges[0];
+                void SetChallenge(int idx) {
+                    c = p.challenges[idx];
+                    var completion = SaveData.r.ChallengeCompletion(p, idx, dfc);
+                    AyaPhotoBoard.ConstructPhotos(completion?.photos, photoSize);
+                }
                 (bool, UINode) Confirm() {
                     ConfirmCache();
                     new GameRequest(GameRequest.ShowPracticeSuccessMenu, dfc, challenge: new ChallengeRequest(p, c),
                         player: defaultPlayer, shot: defaultShot).Run();
                     return (true, null);
                 }
-                return new CacheNavigateUINode(TentativeCache, () => p.Title, 
-                    new UINode(c.Description(p.boss.boss)).SetConfirmOverride(Confirm),
-                    new DelayOptionNodeLR2<int>("", VTALR2Option, i => c = p.challenges[i], 
+                return new CacheNavigateUINode(TentativeCache, () => p.Title(dfc), 
+                    new UINode(() => c.Description(p.boss.boss)).SetConfirmOverride(Confirm),
+                    new DelayOptionNodeLR2<int>("", VTALR2Option, SetChallenge, 
                         p.challenges.Length.Range().ToArray, (i, v, on) => {
                             v.Query(null, "bracket").ForEach(x => x.style.display = on ? DisplayStyle.Flex : DisplayStyle.None);
-                            v.Q("Star").style.unityBackgroundImageTintColor = new StyleColor(p.Completed(i) ?
+                            v.Q("Star").style.unityBackgroundImageTintColor = new StyleColor(p.Completed(i, dfc) ?
                                 p.boss.boss.colors.uiHPColor :
                                 new Color(1, 1, 1, 0.52f));
-                        }).With(VTALR2OptionNode).With("nokey").SetConfirmOverride(Confirm),
+                        }).With(VTALR2OptionNode).With("nokey")
+                            .SetConfirmOverride(Confirm)
+                            .SetOnVisit(_ => SetChallenge(0))
+                            .SetOnLeave(_ => AyaPhotoBoard.TearDownAndHide()),
                     new UINode(() => "Press Z to start level".Locale("Zキー押すとレベルスタート")).SetConfirmOverride(Confirm)
                 ).With(medDescrClass).With(
-                    p.CompletedAll ? completedAllClass :
-                    p.CompletedOne ? completed1Class :
+                    p.CompletedAll(dfc) ? completedAllClass :
+                    p.CompletedOne(dfc) ? completed1Class :
                     null
                 );
             })).ToArray()).With(VTASceneSelect);

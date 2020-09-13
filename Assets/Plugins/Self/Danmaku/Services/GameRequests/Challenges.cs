@@ -7,23 +7,22 @@ using static SM.SMAnalysis;
 
 
 public readonly struct ChallengeRequest {
+    public DayCampaignConfig Campaign => phase.boss.day.campaign.campaign;
     public DayConfig Day => phase.boss.day.day;
     public BossConfig Boss => phase.boss.boss;
     public readonly DayPhase phase;
     public readonly Challenge challenge;
     public int ChallengeIdx => phase.challenges.IndexOf(challenge);
     public string Description => challenge.Description(Boss);
-    public ChallengeRequest? NextChallenge {
-        get {
-            if (challenge is Challenge.DialogueC dc && dc.point == Challenge.DialogueC.DialoguePoint.INTRO) {
-                if (phase.Next?.CompletedOne == false) return new ChallengeRequest(phase.Next);
-            } else if (phase.Next?.challenges?.Try(0) is Challenge.DialogueC dce &&
-                       dce.point == Challenge.DialogueC.DialoguePoint.CONCLUSION && phase.Next?.Enabled == true
-                       && phase.Next?.CompletedOne == false) {
-                return new ChallengeRequest(phase.Next);
-            }
-            return null;
+    public ChallengeRequest? NextChallenge(Enums.DifficultySet d) {
+        if (challenge is Challenge.DialogueC dc && dc.point == Challenge.DialogueC.DialoguePoint.INTRO) {
+            if (phase.Next?.CompletedOne(d) == false) return new ChallengeRequest(phase.Next);
+        } else if (phase.Next?.challenges?.Try(0) is Challenge.DialogueC dce &&
+                   dce.point == Challenge.DialogueC.DialoguePoint.CONCLUSION && phase.Next?.Enabled(d) == true
+                   && phase.Next?.CompletedOne(d) == false) {
+            return new ChallengeRequest(phase.Next);
         }
+        return null;
     }
 
     public ChallengeRequest(DayPhase p) {
@@ -131,6 +130,12 @@ public abstract class Challenge {
 }
 
 
-public struct ChallengeCompletion {
+public class ChallengeCompletion {
+    public AyaPhoto[] photos = new AyaPhoto[0];
+
+    public ChallengeCompletion() { } //JSON constructor
+    public ChallengeCompletion(IEnumerable<AyaPhoto> ps) {
+        photos = ps.ToArray();
+    }
 }
 

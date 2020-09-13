@@ -238,6 +238,11 @@ public static class DictExtensions {
         if (dict.TryGetValue(key, out var res) && res.TryGetValue(key2, out var res2)) return res2;
         return default;
     }
+    public static V GetOrDefault3<K1, K2, K3, V>(this Dictionary<K1, Dictionary<K2, Dictionary<K3, V>>> dict, K1 key, K2 key2, K3 key3) {
+        if (dict.TryGetValue(key, out var res) && res.TryGetValue(key2, out var res2) 
+                                               && res2.TryGetValue(key3, out var res3)) return res3;
+        return default;
+    }
 
     public static void CopyInto<K, V>(this Dictionary<K, V> src, Dictionary<K, V> target) {
         foreach (var kv in src) target[kv.Key] = kv.Value;
@@ -326,6 +331,9 @@ public static class FormattingExtensions {
     public static string SimpleTime(this DateTime d) =>
         $"{d.Year}/{d.Month.PadLZero(2)}/{d.Day.PadLZero(2)} " +
         $"{d.Hour.PadLZero(2)}:{d.Minute.PadLZero(2)}:{d.Second.PadLZero(2)}";
+    public static string FileableTime(this DateTime d) =>
+        $"{d.Year} {d.Month.PadLZero(2)} {d.Day.PadLZero(2)} " +
+        $"{d.Hour.PadLZero(2)} {d.Minute.PadLZero(2)} {d.Second.PadLZero(2)}";
 }
 
 public static class NumExtensions {

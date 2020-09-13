@@ -97,6 +97,29 @@ apiRules:
         type: Type
     - exclude:
         uidRegex: ^SM\.PatternProperties
+    - exclude:
+        uidRegex: ^SM\.ParsingProperty\.
+        type: Type
+    - exclude:
+        uidRegex: ^SM\.ParsingProperties
+    - exclude:
+        uidRegex: ^SM\.StateMachineManager
+    - exclude:
+        uidRegex: ^SM\.StateMachine$
+    - exclude:
+        uidRegex: ^SM\.Synchronizer
+    - exclude:
+        uidRegex: ^SM\.TaskPattern
+    - exclude:
+        uidRegex: ^SM\.UniversalSM
+    - exclude:
+        uidRegex: ^SM\.PhaseJSM
+    - exclude:
+        uidRegex: ^SM\.DebugFloat
+    - exclude:
+        uidRegex: ^SM\.SMHandoff
+    - exclude:
+        uidRegex: ^SM\.Parsing\.
     - include:
         uidRegex: ^SM\..*$
     - exclude:

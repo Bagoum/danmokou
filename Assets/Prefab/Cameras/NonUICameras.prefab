@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 1017966838409782185}
   - component: {fileID: 4760797504423991436}
   m_Layer: 0
-  m_Name: Reversible
+  m_Name: NonUICameras
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -215,7 +215,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: be3479e80fb87e647b89f60368b00f00, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  debugBloom: 0
+  ayaMaterial: {fileID: 2100000, guid: a47af6b93a391c94e9a5bd9da6c13466, type: 2}
+  ayaTexture: {fileID: 0}
+  ayaRenderers:
+  - {fileID: 3729360308144925402}
+  - {fileID: 2298390537673799172}
+  - {fileID: 7724431542230025561}
+  - {fileID: 6819801512908545155}
+  - {fileID: 6819801512337486474}
+  - {fileID: 6776385134450449817}
 --- !u!1 &3457754829418979295
 GameObject:
   m_ObjectHideFlags: 0

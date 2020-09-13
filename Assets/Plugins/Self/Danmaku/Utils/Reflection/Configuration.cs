@@ -6,23 +6,25 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using DMath;
 using JetBrains.Annotations;
+using SM;
+using SM.Parsing;
 using UnityEngine;
 
 public static partial class Reflector {
-    private static readonly Type[] fudge = new Type[0];
+    private static readonly NamedParam[] fudge = new NamedParam[0];
 
     private class GenericReflectionConfig {
         //Note that this will contain both generic and non-generic types
         private readonly Dictionary<Type, Dictionary<string, MethodInfo>> methodsByReturnType;
-        private readonly Dictionary<(string, Type), Type[]> lazyTypes;
-        private readonly Dictionary<(string, Type, Type), Type[]> funcedTypes;
+        private readonly Dictionary<(string, Type), NamedParam[]> lazyTypes;
+        private readonly Dictionary<(string, Type, Type), NamedParam[]> funcedTypes;
         private readonly Type sourceType;
 
         private GenericReflectionConfig(Type t, Dictionary<Type, Dictionary<string, MethodInfo>> typedmethods) {
             this.sourceType = t;
             this.methodsByReturnType = typedmethods;
-            this.lazyTypes = new Dictionary<(string, Type), Type[]>();
-            this.funcedTypes = new Dictionary<(string, Type, Type), Type[]>();
+            this.lazyTypes = new Dictionary<(string, Type), NamedParam[]>();
+            this.funcedTypes = new Dictionary<(string, Type, Type), NamedParam[]>();
         }
         public static GenericReflectionConfig Public(Type t) => Read(t, BindingFlags.Static | BindingFlags.Public);
         public static GenericReflectionConfig ManyPublic(params Type[] t) => ReadMany(t, BindingFlags.Static | BindingFlags.Public);
@@ -66,23 +68,18 @@ public static partial class Reflector {
                 methodsByReturnType.SetDefaultSet(rt, member, mi.MakeGenericMethod((gt ?? rt).GenericTypeArguments));
             }
         }
-        public Type[] LazyGetTypes(Type rt, string member, [CanBeNull] Type gt = null) {
+        public NamedParam[] LazyGetTypes(Type rt, string member, [CanBeNull] Type gt = null) {
             if (!lazyTypes.ContainsKey((member, rt))) {
                 ResolveGeneric(rt, member, gt);
                 if (methodsByReturnType.TryGetValue(rt, out var dct) && dct.TryGetValue(member, out var mi)) {
-                    ParameterInfo[] prms = mi.GetParameters();
-                    Type[] typs = new Type[prms.Length];
-                    for (int ii = 0; ii < prms.Length; ++ii) {
-                        typs[ii] = prms[ii].ParameterType;
-                    }
-                    lazyTypes[(member, rt)] = typs;
+                    lazyTypes[(member, rt)] = mi.GetParameters().Select(x => (NamedParam)x).ToArray();
                 } else
                     throw new NotImplementedException($"The method \"{sourceType.RName()}.{member}\" was not found.\n");
             }
             return lazyTypes[(member, rt)];
         }
 
-        public Type[] LazyGetTypes<RT, GT>(string member) => LazyGetTypes(typeof(RT), member, typeof(GT));
+        public NamedParam[] LazyGetTypes<RT, GT>(string member) => LazyGetTypes(typeof(RT), member, typeof(GT));
         
         //dst type, (source type, converter)
         private static readonly Dictionary<Type, (Type, object)> conversions = new Dictionary<Type, (Type, object)>() {
@@ -111,8 +108,8 @@ public static partial class Reflector {
             typeof(TEx<Vector4>),
             typeof(TEx<V2RV2>)
         };
-        public Type[] FuncifyTypes<T, R>(string member) => FuncifyTypes(typeof(T), typeof(R), member);
-        public Type[] FuncifyTypes(Type t, Type r, string member) {
+        public NamedParam[] FuncifyTypes<T, R>(string member) => FuncifyTypes(typeof(T), typeof(R), member);
+        public NamedParam[] FuncifyTypes(Type t, Type r, string member) {
             bool TryFuncify(Type bt, out Type res) {
                 if (funcMapped.ContainsKey((t,bt))) {
                     res = funcMapped[(t,bt)];
@@ -153,17 +150,19 @@ public static partial class Reflector {
                 return true;
             }
             if (!funcedTypes.ContainsKey((member, t, r))) {
-                Type[] baseTypes = LazyGetTypes(r, member).ToArray();
+                NamedParam[] baseTypes = LazyGetTypes(r, member);
+                NamedParam[] fTypes = new NamedParam[baseTypes.Length];
                 for (int ii = 0; ii < baseTypes.Length; ++ii) {
-                    var bt = baseTypes[ii];
+                    var bt = baseTypes[ii].type;
                     if (conversions.ContainsKey(bt)) {
-                        bt = baseTypes[ii] = conversions[bt].Item1;
+                        bt = conversions[bt].Item1;
                     }
                     if (TryFuncify(bt, out var result)) {
-                        baseTypes[ii] = result;
+                        bt = result;
                     }
+                    fTypes[ii] = new NamedParam(bt, baseTypes[ii].name);
                 }
-                funcedTypes[(member, t, r)] = baseTypes;
+                funcedTypes[(member, t, r)] = fTypes;
             }
             return funcedTypes[(member, t, r)];
         }
@@ -185,25 +184,25 @@ public static partial class Reflector {
             return mi.Invoke(func, new[] {over});
         }
 
-        public bool TryInvokeFunced<T, R>(ReflCtx ctx, string member, object[] _prms, out object result) {
+        public bool TryInvokeFunced<T, R>(IParseQueue q, string member, object[] _prms, out object result) {
             var rt = typeof(R);
             ResolveGeneric(rt, member);
             if (methodsByReturnType.TryGet2(rt, member, out var f)) {
-                if (ctx.props.warnPrefix && Attribute.GetCustomAttributes(f).Any(x =>
-                    x is WarnOnStrictAttribute wa && (int) ctx.props.strict >= wa.strictness)) {
-                    Log.Unity($"Line {ctx.q.GetLastLine()}: The method \"{member}\" is not permitted for use in a script with strictness {ctx.props.strict}. You might accidentally be using the prefix version of an infix function.", true, Log.Level.WARNING);
+                if (q.Ctx.props.warnPrefix && Attribute.GetCustomAttributes(f).Any(x =>
+                    x is WarnOnStrictAttribute wa && (int) q.Ctx.props.strict >= wa.strictness)) {
+                    Log.Unity($"Line {q.GetLastLine()}: The method \"{member}\" is not permitted for use in a script with strictness {q.Ctx.props.strict}. You might accidentally be using the prefix version of an infix function.", true, Log.Level.WARNING);
                 }
                 result = (Func<T,R>)(bpi => {
-                    Type[] baseTypes = LazyGetTypes(rt, member);
-                    Type[] funcTypes = FuncifyTypes<T, R>(member);
+                    var baseTypes = LazyGetTypes(rt, member);
+                    var funcTypes = FuncifyTypes<T, R>(member);
                     var prms = _prms.ToArray();
                     for (int ii = 0; ii < baseTypes.Length; ++ii) {
                         Func<object, object> converter = null;
-                        if (conversions.ContainsKey(baseTypes[ii])) {
-                            var (ntype, rawconv) = conversions[baseTypes[ii]];
-                            converter = FuncInvoker(rawconv, Func2Type(ntype, baseTypes[ii]));
+                        if (conversions.ContainsKey(baseTypes[ii].type)) {
+                            var (ntype, rawconv) = conversions[baseTypes[ii].type];
+                            converter = FuncInvoker(rawconv, Func2Type(ntype, baseTypes[ii].type));
                         }
-                        if (funcConversions.TryGetValue(funcTypes[ii], out var fconv)) {
+                        if (funcConversions.TryGetValue(funcTypes[ii].type, out var fconv)) {
                             prms[ii] = fconv(prms[ii], bpi);
                         }
                         if (converter != null) {
@@ -221,7 +220,7 @@ public static partial class Reflector {
 
         public object Invoke(Type rt, string member, object[] prms) => methodsByReturnType[rt][member].Invoke(null, prms);
 
-        public bool TryInvoke<T>(ReflCtx ctx, string member, object[] prms, out object result) =>
+        public bool TryInvoke<T>(IParseQueue q, string member, object[] prms, out object result) =>
             TryInvoke(typeof(T), member, prms, out result);
         public bool TryInvoke(Type rt, string member, object[] prms, out object result) {
             ResolveGeneric(rt, member);
@@ -251,7 +250,7 @@ public static partial class Reflector {
         /// <summary>
         /// Cached dictionary of method parameter types. Dict[ReturnType][MethodInfo] = Types
         /// </summary>
-        private static readonly Dictionary<MethodInfo, Type[]> allLazyTypes = new Dictionary<MethodInfo, Type[]>();
+        private static readonly Dictionary<MethodInfo, NamedParam[]> allLazyTypes = new Dictionary<MethodInfo, NamedParam[]>();
         
         //Allows supporting types via math-generalization even if no specific methods exist
         public static void AddType(Type t) {
@@ -261,10 +260,11 @@ public static partial class Reflector {
         private static void RecordMethod(MethodInfo mi) {
             var attrs = Attribute.GetCustomAttributes(mi);
             if (attrs.Any(x => x is DontReflectAttribute)) return;
+            bool isExCompiler = (attrs.Any(x => x is ExprCompilerAttribute));
         #if NO_EXPR
-            if (attrs.Any(x => x is ExprCompilerAttribute)) return;
+            if (isExCompiler) return;
         #endif
-            methods.SetDefaultSet(mi.ReturnType, mi.Name.ToLower(), mi);
+            bool markNormalMethod = true;
             foreach (var attr in attrs) {
                 if (attr is AliasAttribute aa) methods.SetDefaultSet(mi.ReturnType, aa.alias.ToLower(), mi);
                 else if (attr is GAliasAttribute ga) {
@@ -274,10 +274,15 @@ public static partial class Reflector {
                     if (ReflConfig.RecordLazyTypes(mi).Length != 1) {
                         throw new StaticException($"Fallthrough methods must have one argument: {mi.Name}");
                     }
-                    if (fa.upwardsCast) UpwardsCastOptions.AddToList(mi.ReturnType, (fa, mi));
+                    if (isExCompiler) {
+                        if (CompileOptions.ContainsKey(mi.ReturnType)) throw new StaticException(
+                            $"Cannot have multiple expression compilers for the same return type {mi.ReturnType}.");
+                        CompileOptions[mi.ReturnType] = (ReflConfig.RecordLazyTypes(mi)[0].type, mi);
+                    } else if (fa.upwardsCast) UpwardsCastOptions.AddToList(mi.ReturnType, (fa, mi));
                     else FallThroughOptions.AddToList(mi.ReturnType, (fa, mi));
                 }
             }
+            if (markNormalMethod) methods.SetDefaultSet(mi.ReturnType, mi.Name.ToLower(), mi);
         }
         private static void RecordMethodByClass(Type d, MethodInfo mi) {
             methodsByDecl.SetDefaultSet(mi.ReturnType, (mi.Name.ToLower(), d), mi);
@@ -290,14 +295,9 @@ public static partial class Reflector {
             }
             //No fallthrough/etc
         }
-        public static Type[] RecordLazyTypes(MethodInfo mi) {
+        public static NamedParam[] RecordLazyTypes(MethodInfo mi) {
             if (allLazyTypes.TryGetValue(mi, out var ts)) return ts;
-            ParameterInfo[] prms = mi.GetParameters();
-            Type[] typs = new Type[prms.Length];
-            for (int ii = 0; ii < prms.Length; ++ii) {
-                typs[ii] = prms[ii].ParameterType;
-            }
-            return allLazyTypes[mi] = typs;
+            return allLazyTypes[mi] = mi.GetParameters().Select(x => (NamedParam)x).ToArray();
         }
 
         public static void RecordPublic(Type repo) => Record(repo, BindingFlags.Static | BindingFlags.Public);
@@ -338,11 +338,11 @@ public static partial class Reflector {
         public static bool HasMember(Type declaringClass, Type retType, string member, out MethodInfo mi) =>
             methodsByDecl.TryGet2(retType, (member, declaringClass), out mi);
 
-        public static Type[] LazyGetTypes(Type r, string member) {
+        public static NamedParam[] LazyGetTypes(Type r, string member) {
             if (!HasMember(r, member, out var mi)) throw new NotImplementedException($"No method \"{member}\" was found with return type {r.RName()}");
             return RecordLazyTypes(mi);
         }
-        public static Type[] LazyGetTypes<R>(string member) => LazyGetTypes(typeof(R), member);
+        public static NamedParam[] LazyGetTypes<R>(string member) => LazyGetTypes(typeof(R), member);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static object Invoke(Type r, string member, object[] prms) {

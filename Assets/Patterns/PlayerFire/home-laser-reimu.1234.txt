@@ -43,7 +43,7 @@ gtr {
 					rotate(OptionAngle, cy 1),
 					LNearestEnemy - loc
 				)))
-				delete(> (t - &lastActiveTime) 1)
+				delete(> (t - &lastActiveTime, 1))
 				deactivate(> playerUnfiringTimeFocus 0)
 				player(12, 25, 15, oh1)
 		})

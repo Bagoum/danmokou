@@ -203,6 +203,7 @@ public class ETime : MonoBehaviour {
                 LastUpdateForScreen = noSlowDT <= FRAME_BOUNDARY;
                 GameStateManager.CheckForStateUpdates();
                 if (GameStateManager.PendingChange) continue;
+                FlushUpdaterAdds();
                 
                 for (int ii = 0; ii < updaters.Count; ++ii) {
                     DeletionMarker<IRegularUpdater> updater = updaters.arr[ii];
@@ -266,7 +267,7 @@ public class ETime : MonoBehaviour {
     
     private static readonly CountdownEvent countdown = new CountdownEvent(1);
     private const int NTHREADS = 8;
-    private const int PARALLELCUTOFF = 128;
+    private const int PARALLELCUTOFF = 256;
 
     private const float FRAME_BOUNDARY = FRAME_TIME - FRAME_YIELD;
 

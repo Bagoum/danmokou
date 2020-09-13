@@ -6,6 +6,7 @@ using System.Text;
 using Core;
 using Danmaku;
 using DMath;
+using FParsec;
 using FParser;
 using JetBrains.Annotations;
 using UnityEngine;
@@ -117,6 +118,12 @@ public class PhaseProperty {
     /// Declare the type and name of this card.
     /// </summary>
     public static PhaseProperty Type(PhaseType type, string name) => new PhaseTypeProp(type, name);
+    /// <summary>
+    /// Declare the amount of photos necessary to defeat the boss.
+    /// <br/>Note: this works similarly enough to HP that you could
+    /// make a 6-stage game with a photo shot.
+    /// </summary>
+    public static PhaseProperty Photo(int photos) => new PhotoHPProp(photos, 0);
     /// <summary>
     /// Declare the amount of HP the boss has during this section.
     /// The boss will be invincible when the phase starts. Use `vulnerable true`.
@@ -237,6 +244,14 @@ public class PhaseProperty {
         }
     }
 
+    public class PhotoHPProp : PhaseProperty {
+        public readonly int hp;
+        public readonly float? invulnT;
+        public PhotoHPProp(int hp, float? invT) {
+            this.hp = hp;
+            this.invulnT = invT;
+        }
+    }
     public class HPProp : PhaseProperty {
         public readonly int hp;
         public readonly float? invulnT;
@@ -318,6 +333,8 @@ public class PhaseProperties {
     public readonly bool hideTimeout;
     [CanBeNull] public readonly string cardTitle;
     public readonly int? hp = null;
+    public readonly int? photoHP = null;
+    public int? BossPhotoHP => (Boss == null) ? (int?) null : photoHP;
     public readonly float? invulnTime = null;
     public readonly float? hpbar = null;
     public readonly PhaseType? phaseType = null;
@@ -368,6 +385,9 @@ public class PhaseProperties {
             else if (prop is PhaseTypeProp s) {
                 phaseType = s.type;
                 cardTitle = s.name;
+            } else if (prop is PhotoHPProp php) {
+                photoHP = php.hp;
+                invulnTime = php.invulnT;
             } else if (prop is HPProp h) {
                 hp = h.hp;
                 invulnTime = h.invulnT;
@@ -399,201 +419,5 @@ public class PhaseProperties {
         }
     }
 }
-
-
-
-/// <summary>
-/// A object that holds a partial parsing state for tasks such as StateMachine parsing.
-/// </summary>
-public class ParsingQueue: IDisposable {
-    private const string LINE_DELIM = "\n";
-    /// <summary>
-    /// Backing array of all words that have been lexed.
-    /// </summary>
-    private readonly string[] words;
-    private readonly FParsec.Position[] positions;
-    /// <summary>
-    /// Index of next word to yield to parsing.
-    /// </summary>
-    public int Index { get; private set; }
-
-    public static readonly HashSet<string> ARR_EMPTY = new HashSet<string>() {
-        ".", "{}", "_"
-    }; 
-    public const string ARR_OPEN = "{";
-    public const string ARR_CLOSE = "}";
-    public readonly List<PhaseProperty> queuedProps = new List<PhaseProperty>();
-
-    public string this[int index] => words[index];
-
-    private ParsingQueue(string[] words, FParsec.Position[] positions) {
-        this.words = words;
-        this.positions = positions;
-    }
-
-    private void ThrowIfOOB(int index) {
-        if (index >= words.Length) throw new Exception("The parser ran out of text to read.");
-    }
-
-    private void _Scan(out int index) {
-        int max = words.Length;
-        for (index = Index; index < max && words[index] == LINE_DELIM; ++index) { }
-    }
-    
-    /// <summary>
-    /// Returns the next non-newline word in the stream.
-    /// Does not advance the stream.
-    /// </summary>
-    /// <param name="index">Index of the returned word</param>
-    /// <returns></returns>
-    /// <exception cref="Exception"></exception>
-    public string Scan(out int index) {
-        _Scan(out index);
-        ThrowIfOOB(index);
-        return words[index];
-    }
-
-    public string ScanDisplay(out int index) {
-        _Scan(out index);
-        ThrowIfOOB(index);
-        return DisplayAt(index);
-    }
-
-    /// <summary>
-    /// Returns the next non-newline word in the stream, or null if at the end.
-    /// Does not advance the stream.
-    /// </summary>
-    [CanBeNull]
-    public (string value, string display) SoftScan(out int index) {
-        _Scan(out index);
-        return (index < words.Length) ? (words[index], DisplayAt(index)) : (null, null);
-    }
-
-    public string Prev() => words[Math.Max(0, Index - 1)];
-
-    /// <summary>
-    /// Returns the next non-newline word in the stream, but skips the line if it is a property declaration.
-    /// </summary>
-    /// <returns></returns>
-    public string ScanNonProperty() {
-        int max = words.Length;
-        int index = Index;
-        for (; index < max && words[index] == LINE_DELIM; ++index) { }
-        ThrowIfOOB(index);
-        while (true) {
-            if (words[index] != SMParser.PROP_KW) return words[index];
-            for (; index < max && words[index] != LINE_DELIM; ++index) { }
-            ThrowIfOOB(index);
-            for (; index < max && words[index] == LINE_DELIM; ++index) { }
-            ThrowIfOOB(index);
-            
-        }
-    }
-    /// <summary>
-    /// Returns the next non-newline word in the stream.
-    /// Does not advance the stream.
-    /// </summary>
-    /// <returns></returns>
-    /// <exception cref="Exception"></exception>
-    public string Scan() => Scan(out var _);
-
-    public bool IsNewline() => Index < words.Length && words[Index] == LINE_DELIM;
-    public bool IsNewlineOrEmpty() => Index >= words.Length || words[Index] == LINE_DELIM;
-
-    /// <summary>
-    /// Returns the next non-newline word in the stream.
-    /// Advances the stream to the word after that.
-    /// </summary>
-    /// <param name="index">Index of the returned word</param>
-    /// <returns></returns>
-    /// <exception cref="Exception"></exception>
-    public string Next(out int index) {
-        string s = Scan(out index);
-        Index = index + 1;
-        return s;
-    }
-    /// <summary>
-    /// Returns the next non-newline word in the stream.
-    /// Advances the stream to the word after that.
-    /// </summary>
-    /// <returns></returns>
-    /// <exception cref="Exception"></exception>
-    public string Next() => Next(out var _);
-
-    public int GetLastLine() => GetLastLine(Index);
-    public int GetLastLine(int index) {
-        for (int ii = Math.Min(words.Length - 1, index); ii >= 0; --ii) {
-            if (positions[ii] != null && words[ii] != LINE_DELIM) {
-                return (int)positions[ii].Line;
-            }
-        }
-        return 0;
-    }
-
-    private string DisplayAt(int index) => keywordDemap.TryGetValue(words[index], out var s) ? s : words[index];
-    
-    private static readonly Dictionary<string, string> keywordDemap = new Dictionary<string, string>() {
-        { SMParser.PROP_KW, "<!>" },
-        { SMParser.PROP2_KW, "<#>" },
-        { SMParser.ARGSEP_KW, "," },
-        { SMParser.PAREN_OPEN_KW, "(" },
-        { SMParser.PAREN_CLOSE_KW, ")" }
-    };
-    public string PrintLine(int index, bool circleThis, [CanBeNull] string overrideThis=null) {
-        StringBuilder sb = new StringBuilder();
-        int si = index - 1;
-        for (; si > 0; --si) {
-            if (words[si] == LINE_DELIM) break;
-        }
-        int ei = index;
-        if (words.Try(ei) == LINE_DELIM && overrideThis != null) ++ei;
-        else {
-            for (; ei < words.Length; ++ei) {
-                if (words[ei] == LINE_DELIM) break;
-            }
-        }
-        for (++si; si < ei;) {
-            if (si == index && circleThis) {
-                sb.Append('[');
-                sb.Append(overrideThis ?? DisplayAt(si));
-                sb.Append(']');
-            } else sb.Append(si == index ? (overrideThis ?? DisplayAt(si)) : DisplayAt(si));
-            if (++si != ei) sb.Append(' ');
-        }
-        return sb.ToString();
-    }
-
-    private string ShowWords(int start, int end) {
-        StringBuilder sb = new StringBuilder();
-        while (start < end) {
-            sb.Append(words[start++]);
-            sb.Append(' ');
-        }
-        return sb.ToString();
-    }
-
-    public bool Empty() {
-        int max = words.Length;
-        int ii = Index;
-        for (; ii < max && words[ii] == LINE_DELIM; ++ii) { }
-        return ii == max; //Don't advance ind in this call, it should not change state
-    }
-    
-    public void Dispose() {
-        if (!Empty()) {
-            Log.Unity($"Parsing completed on line {GetLastLine(Index)} but there is more text:\n\t" +
-                                $"{ShowWords(Index, Math.Min(words.Length, Index + 10))}", true, Log.Level.WARNING);
-        }
-    }
-    public static ParsingQueue Lex(string s) {
-        Profiler.BeginSample("Lex");
-        var (words, poss) = SMParser.lSMParser(s).Try;
-        Profiler.EndSample();
-        return new ParsingQueue(words.ToArray(), FSInterop.ToNullableArray(poss));
-        //return new ParsingQueue(FParser.Parser.SMParser.Invoke(s).Try);
-    }
-}
-
-
 
 }

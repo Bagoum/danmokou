@@ -3,25 +3,25 @@ using DMath;
 
 namespace Danmaku {
 public partial class BehaviorEntity {
-    private static void DropEvenly(ItemType t, Vector2 baseLoc, int count, bool autocollect, float r, float a0 = -90f) {
+    private static void DropEvenly(ItemType t, Vector2 baseLoc, int count, bool autocollect, float r, float a0) {
         for (int ii = 0; ii < count; ++ii) {
-            ItemPooler.RequestItem(baseLoc + r * M.CosSinDeg(a0 + ii * 360f / count), t)?.Autocollect(autocollect);
+            ItemPooler.RequestItem(baseLoc, r * M.CosSinDeg(a0 + ii * 360f / count), t)?.Autocollect(autocollect);
         }
     }
 
-    private void DropEvenly(ItemType t, int count, bool autocollect, float r, float a0 = -90f) => 
+    private void DropEvenly(ItemType t, int count, bool autocollect, float r, float a0 = 90f) => 
         DropEvenly(t, bpi.loc, count, autocollect, r, a0);
     private static void _DropLifeItems(Vector2 baseLoc, int count, float lowR=0.1f, float highR=0.3f) {
-        for (int ii = 0; ii < count; ++ii) ItemPooler.RequestLife(baseLoc + RNG.GetPointInCircle(lowR, highR));
+        for (int ii = 0; ii < count; ++ii) ItemPooler.RequestLife(baseLoc, RNG.GetPointInCircle(lowR, highR));
     }
     private static void _DropValueItems(Vector2 baseLoc, int count, float lowR=0.3f, float highR=0.5f) {
-        for (int ii = 0; ii < count; ++ii) ItemPooler.RequestValue(baseLoc + RNG.GetPointInCircle(lowR, highR));
+        for (int ii = 0; ii < count; ++ii) ItemPooler.RequestValue(baseLoc, RNG.GetPointInCircle(lowR, highR));
     }
     private static void _DropPointPPItems(Vector2 baseLoc, int count, float lowR=0.5f, float highR=0.9f) {
-        for (int ii = 0; ii < count; ++ii) ItemPooler.RequestPointPP(baseLoc + RNG.GetPointInCircle(lowR, highR));
+        for (int ii = 0; ii < count; ++ii) ItemPooler.RequestPointPP(baseLoc, RNG.GetPointInCircle(lowR, highR));
     }
     private static void _DropPowerItems(Vector2 baseLoc, int count, float lowR=0.7f, float highR=1.1f) {
-        for (int ii = 0; ii < count; ++ii) ItemPooler.RequestPower(baseLoc + RNG.GetPointInCircle(lowR, highR));
+        for (int ii = 0; ii < count; ++ii) ItemPooler.RequestPower(baseLoc, RNG.GetPointInCircle(lowR, highR));
     }
 
     [ContextMenu("Drop some power")]
@@ -40,8 +40,8 @@ public partial class BehaviorEntity {
         DropEvenly(ItemType.LIFE, drops.life, drops.autocollect, rLife);
     }
 
-    public void DropItems(ItemDrops? drops, float rValue, float rPPP, float rLife) {
-        if (drops.HasValue) _DropItems(drops.Value, rValue, rPPP, rLife);
+    public void DropItems(ItemDrops? drops, float rValue, float rPPP, float rLife, float rPower) {
+        if (drops.HasValue) _DropItems(drops.Value, rValue, rPPP, rLife, rPower);
     }
     public void DropItems(ItemDrops? drops) {
         if (drops.HasValue) _DropItems(drops.Value);

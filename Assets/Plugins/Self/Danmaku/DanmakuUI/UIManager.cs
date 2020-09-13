@@ -105,7 +105,7 @@ public class UIManager : MonoBehaviour {
         bossHPPB.SetFloat(PropConsts.time, time);
         if (bossHP != null) {
             main.bossHPPB.SetColor(PropConsts.fillColor, bossHP.HPColor);
-            bossHPPB.SetFloat(PropConsts.fillRatio, bossHP.DisplayHPRatio);
+            bossHPPB.SetFloat(PropConsts.fillRatio, bossHP.DisplayBarRatio);
         }
         BossHPBar.SetPropertyBlock(bossHPPB);
     }
@@ -434,8 +434,8 @@ public class UIManager : MonoBehaviour {
     public TextMeshPro challengeHeader;
     public TextMeshPro challengeText;
 
-    public static void RequestChallengeDisplay(ChallengeRequest cr) {
-        main.challengeHeader.text = cr.phase.Title;
+    public static void RequestChallengeDisplay(ChallengeRequest cr, DifficultySet d) {
+        main.challengeHeader.text = cr.phase.Title(d);
         main.challengeText.text = cr.Description;
     }
 }

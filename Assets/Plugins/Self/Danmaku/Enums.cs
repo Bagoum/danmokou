@@ -193,6 +193,13 @@ public static class Enums {
         HighProjectile
     }
 
+    public enum PhaseClearMethod {
+        HP,
+        PHOTO,
+        TIMEOUT,
+        CANCELLED
+    }
+
     public static bool IsStageBoss(this PhaseType st) => st == PhaseType.STAGEENDBOSS || st == PhaseType.STAGEMIDBOSS;
     public static bool IsPattern(this PhaseType st) => st.IsCard() || st.IsStage();
     public static bool IsLenient(this PhaseType st) => st == PhaseType.DIALOGUE;
@@ -265,5 +272,7 @@ public static class Enums {
     public static bool DisallowItems(this CampaignMode mode) => mode.IsOneCard();
     public static bool PreserveReloadAudio(this CampaignMode mode) => mode.IsOneCard();
 
+    public static bool Destructive(this PhaseClearMethod cm) =>
+        cm == PhaseClearMethod.HP || cm == PhaseClearMethod.PHOTO;
 }
 }

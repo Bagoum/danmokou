@@ -7,92 +7,37 @@ using DMath;
 using FParser;
 using JetBrains.Annotations;
 using SM;
+using SM.Parsing;
 using UnityEngine;
 using ExFXY = System.Func<TEx<float>, TEx<float>>;
 
 public static partial class Reflector {
     public class ReflCtx {
-        public struct Layer {
-            public int paren;
-            public bool isAggregating;
-
-            public Layer(int p, bool agg) {
-                paren = p;
-                isAggregating = agg;
-            }
-            public static Layer Default => new Layer() { paren = 0, isAggregating = false };
-
-            public Layer SubParen() => new Layer(paren - 1, isAggregating);
-        }
-        private readonly Stack<Layer> parenLayers = new Stack<Layer>();
-        public Layer layer = Layer.Default;
-        public readonly ParsingQueue q;
         public enum Strictness {
             NONE = 0,
             COMMAS = 1
         }
         public readonly ParsingProperties props;
-        public bool AllowPostAggregate => !layer.isAggregating &&
-            (layer.paren > 0 || (parenLayers.Count > 0 && parenLayers.Peek().paren > 0 && !parenLayers.Peek().isAggregating)) 
-            && props.strict >= Strictness.COMMAS;
+        public bool AllowPostAggregate => props.strict >= Strictness.COMMAS;
+        //public bool UnparsedFaulted { get; set; }
+        
+        public List<PhaseProperty> QueuedProps { get; } = new List<PhaseProperty>();
 
-        public ReflCtx(ParsingQueue queue) {
-            q = queue;
+        public ReflCtx(IParseQueue q) {
             List<ParsingProperty> properties = new List<ParsingProperty>();
             props = new ParsingProperties(new ParsingProperty[0]);
-            while (q.Scan() == SMParser.PROP2_KW) {
-                q.Next();
-                properties.Add(this.Into<ParsingProperty>());
-                if (!q.IsNewline()) throw new Exception($"Line {q.GetLastLine()} is missing a newline at the end of the the property declaration. Instead, it found \"{q.Scan()}\".");
+            while (q.MaybeScan() == SMParser.PROP2_KW) {
+                q.Advance();
+                properties.Add(q.NextChild().Into<ParsingProperty>());
+                if (!q.IsNewline) throw new Exception($"Line {q.GetLastLine()} is missing a newline at the end of the the property declaration. Instead, it found \"{q.Scan()}\".");
             }
             props = new ParsingProperties(properties);
         }
 
-        public void OpenLayer() {
-            parenLayers.Push(layer);
-            layer = Layer.Default;
-        }
-
-        public void ReadOpenParens() {
-            while (ReadOneParen()) { }
-        }
-
-        public bool ReadOneParen() {
-            if (q.SoftScan(out _).value == SMParser.PAREN_OPEN_KW) {
-                ++layer.paren;
-                q.Next();
-                return true;
-            } else return false;
-        }
-
-        public void CloseLayer() {
-            CheckParens();
-            layer = parenLayers.Pop();
-        }
-        public bool TryCurryParentParen() {
-            if (parenLayers.Count > 0) {
-                var parentParen = parenLayers.Pop();
-                if (parentParen.paren > 0) {
-                    parenLayers.Push(parentParen.SubParen());
-                    return true;
-                } else {
-                    var success = TryCurryParentParen();
-                    parenLayers.Push(parentParen);
-                    return success;
-                }
-            } else return false;
-        }
-
-        private void CheckParens() {
-            if (layer.paren > 0) throw new ParsingException(
-                $"Line {q.GetLastLine(q.Index)}: The next character is \"{q.SoftScan(out _).display}\", " +
-                $"when a closing parentheses was expected.\n\t" +
-                $"{q.PrintLine(q.Index, true)}");
-        }
     }
-    public static R LazyLoadAndReflectExternalSourceType<R>(Type containing, ReflCtx ctx) {
+    public static R LazyLoadAndReflectExternalSourceType<R>(Type containing, IParseQueue q) {
         ReflConfig.RecordPublicByClass<R>(containing);
-        return ReflectExternalSourceType<R>(containing, ctx);
+        return ReflectExternalSourceType<R>(containing, q);
     }
     public static bool LazyLoadAndCheckIfCanReflectExternalSourceType<R>(Type containing, string method) {
         ReflConfig.RecordPublicByClass<R>(containing);
@@ -100,91 +45,86 @@ public static partial class Reflector {
     }
 
     [CanBeNull]
-    public static Type[] LazyLoadAndGetSignature<R>(Type declaringClass, string method, out MethodInfo mi) {
+    public static NamedParam[] LazyLoadAndGetSignature<R>(Type declaringClass, string method, out MethodInfo mi) {
         ReflConfig.RecordPublicByClass<R>(declaringClass);
         return _GetTypesForRestrainedMethod(declaringClass, typeof(R), method, out mi);
     }
-    public static R ReflectExternalSourceType<R>(Type containing, ReflCtx ctx) {
+    public static R ReflectExternalSourceType<R>(Type containing, IParseQueue q) {
         try {
-            var arg = ctx.q.Scan();
-            if (_TryReflectRestrainedMethod(containing, typeof(R), ctx, out var res)) return (R) res;
-            throw new StaticException($"No reflection handling exists for method {NameType(containing)}.{arg}.");
+            if (_TryReflectRestrainedMethod(containing, typeof(R), q, out var res)) return (R) res;
+            throw new StaticException(q.WrapThrow($"No reflection handling exists for this object in type {NameType(containing)}."));
         } catch (Exception e) {
             throw Log.StackInnerException(e);
         }
     } 
-    public static void FillInvokeArray(object[] invoke_args, int starti, Type[] prms, ReflCtx ctx, 
+    public static void FillInvokeArray(object[] invoke_args, int starti, NamedParam[] prms, IParseQueue q, 
         Type nameType, string methodName) {
         try {
-            _FillInvokeArray(invoke_args, starti, prms, ctx, nameType, methodName);
+            _FillInvokeArray(invoke_args, starti, prms, q, nameType, methodName);
         } catch (Exception e) {
             throw Log.StackInnerException(e);
         }
     }
-    private static object[] _FillInvokeArray(object[] invoke_args, int starti, Type[] prms, ReflCtx ctx, 
+    private static object[] _FillInvokeArray(object[] invoke_args, int starti, NamedParam[] prms, IParseQueue q, 
         Type nameType, [CanBeNull] string methodName) {
-        if (prms.Length == 0) return invoke_args;
-        int startQI = ctx.q.Index - 1;
-        ctx.q.SoftScan(out var tempInd);
-        ctx.OpenLayer();
-        ctx.ReadOneParen();
+        string MethodName() => string.IsNullOrWhiteSpace(methodName) ?
+            nameType.RName() :
+            $"{nameType.RName()}.{methodName}";
+        var nargs = prms.Length - starti;
+        if (nargs == 0) {
+            if (!(q is ParenParseQueue) && !q.Empty) {
+                switch (q._SoftScan(out _)?.Item1) {
+                    case SMParser.ParsedUnit.P p:
+                        //Zero-arg functions may absorb empty parentheses
+                        if (p.Item.Length == 0) q.NextChild();
+                        break;
+                }
+            }
+            return invoke_args;
+        }
+        if (!(q is ParenParseQueue)) {
+            var c = q.ScanChild();
+            // + (x) 3
+            if (c is ParenParseQueue p && p.paren.Length == 1 && nargs != 1) {}
+            else q = q.NextChild();
+        }
+
+        if (q is ParenParseQueue p2 && nargs != p2.paren.Length) {
+            throw new ParsingException(p2.WrapThrow($"Expected {nargs} arguments for {MethodName()}, " +
+                                                    $"but the parentheses contains {p2.paren.Length}."));
+        }
+
+        
+        void ThrowEmpty(IParseQueue lq, int ii) {
+            if (lq.Empty) {
+                throw new ParsingException(q.WrapThrowA(
+                    $"Tried to construct {MethodName()}, but the parser ran out of text when looking for argument " +
+                    $"#{ii+1}/{prms.Length} {prms[ii]}. " +
+                    "This probably means you have parentheses that do not enclose the entire function.", 
+                    $" | [Arg#{ii+1} Missing]"));
+            }
+        }
         for (int ii = starti; ii < prms.Length; ++ii) {
-            var (arg, darg) = ctx.q.SoftScan(out tempInd);
+            ThrowEmpty(q, ii);
+            var local = q.NextChild(out int ci);
+            ThrowEmpty(local, ii);
             try {
-                invoke_args[ii] = _ReflectTargetType(ctx, prms[ii]);
+                invoke_args[ii] = _ReflectTargetType(local, prms[ii].type);
             } catch (Exception ex) {
-                methodName = string.IsNullOrWhiteSpace(methodName) ? nameType.RName() : $"{nameType.RName()}.{methodName}";
-                if (arg == null) {
-                    throw new InvokeException(
-                        $"Line {ctx.q.GetLastLine(startQI)}: Tried to construct {methodName}, but ran out of text " +
-                        $"looking for argument #{ii+1}/{prms.Length} of type {NameType(prms[ii])}.\n\t" +
-                        $"{ctx.q.PrintLine(tempInd, true)}", ex);
-                }
                 throw new InvokeException(
-                    $"Line {ctx.q.GetLastLine(startQI)}: Tried to construct {methodName}, but failed to cast argument " +
-                    $"#{ii+1}/{prms.Length} \"{darg}\" (line {ctx.q.GetLastLine(tempInd)}) to type {NameType(prms[ii])}.\n\t" +
-                    $"{ctx.q.PrintLine(tempInd, true)}", ex);
+                    $"Line {q.GetLastLine(ci)}: Tried to construct {MethodName()}, " +
+                    $"but failed to create argument #{ii + 1}/{prms.Length} {prms[ii]}.", ex);
+                
             }
-            while (ctx.q.SoftScan(out _).value == SMParser.PAREN_CLOSE_KW) {
-                if (ctx.layer.paren == 0) {
-                    //Don't overparse parens on last arg
-                    if (ii == prms.Length - 1) break;
-                    else if (!ctx.TryCurryParentParen())
-                        throw new ParsingException(
-                            $"Line {ctx.q.GetLastLine(startQI)}: Tried to construct {methodName}," +
-                            $"but found too many closing parentheses after argument " +
-                            $"#{ii + 1}/{prms.Length} \"{darg}\" (line {ctx.q.GetLastLine(tempInd)}).\n\t" +
-                            $"{ctx.q.PrintLine(tempInd, true)}");
-                } else --ctx.layer.paren;
-                ctx.q.Next();
-            }
-            if (ii < prms.Length - 1) {
-                if (ctx.q.SoftScan(out _).value == SMParser.ARGSEP_KW) {
-                    if (ctx.layer.paren > 0) ctx.q.Next();
-                    else throw new ParsingException(
-                        $"Line {ctx.q.GetLastLine(startQI)}: Tried to construct {methodName}. After parsing argument " +
-                        $"#{ii+1}/{prms.Length} \"{darg}\" (line {ctx.q.GetLastLine(tempInd)}), found a comma, " +
-                        $"but there is no enclosing argument list.\n\t" +
-                        $"{ctx.q.PrintLine(ctx.q.Index, true)}");
-                } else if (ctx.layer.paren > 0 && ctx.props.strict >= ReflCtx.Strictness.COMMAS) {
-                    throw new ParsingException(
-                        $"Line {ctx.q.GetLastLine(startQI)}: Tried to construct {methodName}. After parsing argument " +
-                        $"#{ii+1}/{prms.Length} \"{darg}\" (line {ctx.q.GetLastLine(tempInd)}), could not find a comma (found {ctx.q.SoftScan(out _).display} instead).\n\t" +
-                        $"{ctx.q.PrintLine(ctx.q.Index, true, ",")}");
-                }
-            }
+            local.ThrowOnLeftovers(() => 
+                $"Argument #{ii + 1}/{prms.Length} {prms[ii]} has extra text.");
         }
-        //In case of zero-argument functions, this is not called in the loop. eg. + x() 3
-        while (ctx.layer.paren > 0 && ctx.q.SoftScan(out _).value == SMParser.PAREN_CLOSE_KW) {
-            --ctx.layer.paren;
-            ctx.q.Next();
-        }
-        ctx.CloseLayer();
+        q.ThrowOnLeftovers(() => $"{MethodName()} has extra text after all {prms.Length} arguments.");
         return invoke_args;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static object[] _FillInvokeArray(Type[] prms, ReflCtx q, Type nameType, [CanBeNull] string methodName) 
+    private static object[] _FillInvokeArray(NamedParam[] prms, IParseQueue q, Type nameType, [CanBeNull] string methodName) 
         => _FillInvokeArray(new object[prms.Length], 0, prms, q, nameType, methodName);
     
     
@@ -192,14 +132,15 @@ public static partial class Reflector {
     #region TargetTypeReflect
 
     public static T Into<T>(this string argstring) {
-        using (var p = ParsingQueue.Lex(argstring)) {
-            return new ReflCtx(p).Into<T>();
-        }
+        var p = IParseQueue.Lex(argstring);
+        var ret = p.Into<T>();
+        p.ThrowOnLeftovers();
+        return ret;
     }
 
-    public static T Into<T>(this ReflCtx ctx) => (T) ReflectTargetType(ctx, typeof(T));
+    public static T Into<T>(this IParseQueue ctx) => (T) ReflectTargetType(ctx, typeof(T));
 
-    private static object ReflectTargetType(ReflCtx ctx, Type t) {
+    private static object ReflectTargetType(IParseQueue ctx, Type t) {
         try {
             return _ReflectTargetType(ctx, t);
         } catch (Exception e) {
@@ -207,13 +148,13 @@ public static partial class Reflector {
         }
     }
 
-    private static bool _ReflectTargetType_Method(ReflCtx ctx, Type t, bool allowUpcast, out object obj) {
+    private static bool _ReflectTargetType_Method(string member, IParseQueue ctx, Type t, bool allowUpcast, out object obj) {
         obj = null;
         if (!ReflConfig.RequiresMethodRefl(t)) return false;
-        if (_TryReflectMethod(t, ctx, out obj)) return true;
+        if (_TryReflectMethod(member, t, ctx, out obj)) return true;
         if (FallThroughOptions.TryGetValue(t, out var mis)) {
             foreach (var (ft, mi) in mis) {
-                if (__RestrictReflectTargetType(ctx, ReflConfig.RecordLazyTypes(mi)[0], allowUpcast, out obj)) {
+                if (__RestrictReflectTargetType(ctx, ReflConfig.RecordLazyTypes(mi)[0].type, allowUpcast, out obj)) {
                     obj = mi.Invoke(null, new[] {obj});
                     return true;
                 }
@@ -254,7 +195,7 @@ public static partial class Reflector {
         }*/
         if (allowUpcast && UpwardsCastOptions.TryGetValue(t, out mis)) {
             foreach (var (ft, mi) in mis) {
-                if (__RestrictReflectTargetType(ctx, ReflConfig.RecordLazyTypes(mi)[0], false, out obj)) {
+                if (__RestrictReflectTargetType(ctx, ReflConfig.RecordLazyTypes(mi)[0].type, false, out obj)) {
                     obj = mi.Invoke(null, new[] {obj});
                     return true;
                 }
@@ -263,64 +204,123 @@ public static partial class Reflector {
         return false;
     }
 
+    private static void RecurseParens(ref IParseQueue q, Type t) {
+        while (q is ParenParseQueue p) {
+            if (p.paren.Length == 1) q = p.NextChild();
+            else throw new Exception(p.WrapThrow(
+                $"Tried to find an object of type {t.RName()}, but there is a parentheses with" +
+                $" {p.paren.Length} elements. Any parentheses should only have one element."));
+        }
+    }
+
+    /// <summary>
+    /// Returns true if the parse queue must be recursed.
+    /// </summary>
+    private static bool RecurseScan(IParseQueue q, out IParseQueue rec, out string val) {
+        var (pu, pos) = q._Scan(out var ii);
+        switch (pu) {
+            case SMParser.ParsedUnit.S s:
+                val = s.Item;
+                rec = null;
+                return false;
+            case SMParser.ParsedUnit.P p:
+                if (p.Item.Length != 1) throw new Exception(q.WrapThrow(ii, 
+                    "This parentheses must have exactly one argument."));
+                rec = new PUListParseQueue(p.Item[0], pos, q.Ctx);
+                val = null;
+                return true;
+            default:
+                throw new StaticException(q.WrapThrow(ii,
+                    $"Couldn't resolve parser object type {pu.GetType()}."));
+        }
+    }
+
     /// <summary>
     /// Top-level resolution function
     /// </summary>
-    private static object _ReflectTargetType(ReflCtx ctx, Type t) {
-        ctx.OpenLayer();
-        ctx.ReadOpenParens();
-        object obj;
-        if (t == tpsmp) {
-            obj = new PhaseProperties(ctx.q.queuedProps);
-            ctx.q.queuedProps.Clear();
-        } else if (ctx.q.Empty()) throw new ParsingException($"Ran out of text when trying to create an object of type {NameType(t)}.");
-        else if (t == tsm) obj = ReflectSM(ctx);
-        else if (_ReflectTargetType_Method(ctx, t, true, out obj)) {}
-        else if (FuncTypeResolve(ctx.q.Scan(), t, out obj)) { ctx.q.Next(); }
-        else if (ResolveSpecialHandling(ctx, t, out obj)) {}
-        else if (t.IsArray) obj = ResolveAsArray(t.GetElementType(), ctx);
-        else if (MatchesGeneric(t, gtype_ienum)) obj = ResolveAsArray(t.GenericTypeArguments[0], ctx);
-        else obj = CastToType(ctx.q.Next(out int index), t, ctx.q.GetLastLine(index));
-        
-        
-        obj = _PostAggregate(t, ctx, obj);
-        while (ctx.layer.paren > 0 && ctx.q.SoftScan(out _).value == SMParser.PAREN_CLOSE_KW) {
-            --ctx.layer.paren;
-            ctx.q.Next();
-            obj = _PostAggregate(t, ctx, obj);
+    private static object _ReflectTargetType(IParseQueue q, Type t) {
+        if (CompileOptions.TryGetValue(t, out var compiler)) {
+            return compiler.mi.Invoke(null, new[] {_ReflectTargetType(q, compiler.source)});
         }
-        ctx.CloseLayer();
+        RecurseParens(ref q, t);
+        object obj;
+        if (RecurseScan(q, out var rec, out var arg)) {
+            obj = _ReflectTargetType(rec, t); 
+            rec.ThrowOnLeftovers(t);
+            q.Advance();
+            obj = _PostAggregate(t, q, obj);
+            q.ThrowOnLeftovers(t);
+            return obj;
+        }
+        if (q.Empty) throw new ParsingException(q.WrapThrow($"Ran out of text when trying to create " +
+                                                            $"an object of type {NameType(t)}."));
+        else if (t == tsm) obj = ReflectSM(q);
+        else if (_ReflectTargetType_Method(arg, q, t, true, out obj)) {} //this advances inside
+        else if (q.AllowsScan && FuncTypeResolve(arg, t, out obj)) { q.Advance(); }
+        else if (ResolveSpecialHandling(q, t, out obj)) {}
+        else if (t.IsArray) obj = ResolveAsArray(t.GetElementType(), q);
+        else if (MatchesGeneric(t, gtype_ienum)) obj = ResolveAsArray(t.GenericTypeArguments[0], q);
+        else if (CastToType(arg, t, out obj)) { q.Advance(); }
+        else throw new Exception(q.WrapThrowC($"Couldn't convert the object in ≪≫ to type {t.RName()}."));
+        
+        obj = _PostAggregate(t, q, obj);
+        q.ThrowOnLeftovers(t);
         return obj;
     }
-    private static bool __RestrictReflectTargetType(ReflCtx ctx, Type t, bool allowUpcast, out object obj) {
-        if (ctx.q.Empty()) throw new ParsingException($"Ran out of text when trying to create an object of type {NameType(t)}.");
-        else if (_ReflectTargetType_Method(ctx, t, allowUpcast, out obj)) {}
-        else if (FuncTypeResolve(ctx.q.Scan(), t, out obj)) ctx.q.Next();
+    private static bool __RestrictReflectTargetType(IParseQueue q, Type t, bool allowUpcast, out object obj) {
+        if (CompileOptions.TryGetValue(t, out var compiler)) {
+            obj = compiler.mi.Invoke(null, new[] {_ReflectTargetType(q, compiler.source)});
+            return true;
+        }
+        RecurseParens(ref q, t);
+        if (RecurseScan(q, out var rec, out var arg)) {
+            obj = __RestrictReflectTargetType(rec, t, allowUpcast, out obj); 
+            rec.ThrowOnLeftovers(t);
+            q.Advance();
+            obj = _PostAggregate(t, q, obj);
+            q.ThrowOnLeftovers(t);
+            return true;
+        }
+        if (q.Empty) throw new ParsingException(q.WrapThrow($"Ran out of text when trying to create " +
+                                                              $"an object of type {NameType(t)}."));
+        else if (_ReflectTargetType_Method(arg, q, t, allowUpcast, out obj)) {} //this advances inside
+        else if (q.AllowsScan && FuncTypeResolve(arg, t, out obj)) { q.Advance();}
         else return false;
         
-        obj = _PostAggregate(t, ctx, obj);
-        while (ctx.layer.paren > 0 && ctx.q.SoftScan(out _).value == SMParser.PAREN_CLOSE_KW) {
-            --ctx.layer.paren;
-            ctx.q.Next();
-            obj = _PostAggregate(t, ctx, obj);
-        }
+        obj = _PostAggregate(t, q, obj);
         return true;
     }
 
-    private static object _PostAggregate(Type rt, ReflCtx ctx, object result) {
-        if (!ctx.AllowPostAggregate || result == null || ctx.q.Empty()) return result;
-        if (!postAggregators.TryGet2(rt, ctx.q.Scan(), out _)) return result;
-        ctx.layer.isAggregating = true;
+    private static bool CastToType(string arg, Type rt, out object result) {
+        if (arg == "_") {
+            // Max value shortcut for eg. repeating until cancel
+            if (rt == tint) {
+                result = M.IntFloatMax;
+                return true;
+            }
+        }
+        try {
+            result = Convert.ChangeType(arg, rt);
+            return true;
+        } catch (Exception) {
+            result = null;
+            return false;
+        }
+    }
+
+    private static object _PostAggregate(Type rt, IParseQueue q, object result) {
+        if (!q.AllowPostAggregate || result == null || q.Empty) return result;
+        if (!postAggregators.TryGet2(rt, q.MaybeScan() ?? "", out _)) return result;
         var varStack1 = new StackList<object>();
         var varStack2 = new StackList<object>();
         var opStack1 = new StackList<PostAggregate>();
         var opStack2 = new StackList<PostAggregate>();
         varStack1.Push(result);
-        while (!ctx.q.Empty() && postAggregators.TryGet2(rt, ctx.q.Scan(), out var pa)) {
+        while (!q.Empty && postAggregators.TryGet2(rt, q.MaybeScan() ?? "", out var pa)) {
             opStack1.Push(pa);
-            var op = ctx.q.Next();
+            var op = q.Next();
             try {
-                varStack1.Push(_ReflectTargetType(ctx, pa.searchType));
+                varStack1.Push(_ReflectTargetType(q.NextChild(), pa.searchType));
             } catch (Exception e) {
                 throw new InvokeException($"Tried to construct infix operator {op}, but could not parse the second argument.", e);
             }
@@ -342,41 +342,43 @@ public static partial class Reflector {
             (varStack1, varStack2) = (varStack2, varStack1);
             (opStack1, opStack2) = (opStack2, opStack1);
         }
-        ctx.layer.isAggregating = false;
         return varStack1.Pop();
     }
-    private static bool _TryReflectMethod(Type rt, ReflCtx ctx, out object result) {
-        var member = ctx.q.Scan();
+
+    private delegate bool Resolver(IParseQueue q, out object result);
+
+    private static bool _TryReflectMethod(string member, Type rt, IParseQueue q, out object result) {
         result = null;
         var typs = TryLookForMethod(rt, member) ?? TryLookForMethod(rt, member = Sanitize(member));
         if (typs == null) return false;
-        ctx.q.Next();
-        result = InvokeMethod(ctx, rt, member, _FillInvokeArray(typs, ctx, rt, member));
+        q.Advance();
+        result = InvokeMethod(q, rt, member, _FillInvokeArray(typs, q, rt, member));
         return true;
-    }
-
-
-    private static object ReflectMethod(Type rt, ReflCtx ctx) {
-        if (_TryReflectMethod(rt, ctx, out var res)) return res;
-        throw new Exception($"Couldn't reflect \"{ctx.q.ScanDisplay(out _)}\" as a method for type {rt.RName()}.");
     }
 
     private static bool _CanReflectRestrainedMethod(Type containing, Type rt, string member, out MethodInfo mi) {
         return ReflConfig.HasMember(containing, rt, member, out mi) ||
                 ReflConfig.HasMember(containing, rt, Sanitize(member), out mi);
     }
-    private static bool _TryReflectRestrainedMethod(Type containing, Type rt, ReflCtx ctx, out object result) {
+    private static bool _TryReflectRestrainedMethod(Type containing, Type rt, IParseQueue q, out object result) {
+        if (RecurseScan(q, out var rec, out var member)) {
+            if (_TryReflectRestrainedMethod(containing, rt, rec, out result)) {
+                rec.ThrowOnLeftovers(rt);
+                q.Advance();
+                return true;
+            } else return false;
+        }
         result = null;
-        var member = ctx.q.Scan();
         if (!_CanReflectRestrainedMethod(containing, rt, member, out var mi)) return false;
         var typs = ReflConfig.RecordLazyTypes(mi);
-        ctx.q.Next();
-        result = mi.Invoke(null, _FillInvokeArray(typs, ctx, rt, member));
+        q.Advance();
+        result = mi.Invoke(null, _FillInvokeArray(typs, q, rt, member));
         return true;
     }
 
     [CanBeNull]
-    private static Type[] _GetTypesForRestrainedMethod(Type declaringClass, Type returnType, string member, out MethodInfo mi) => 
+    private static NamedParam[] _GetTypesForRestrainedMethod(Type declaringClass, Type returnType, 
+        string member, out MethodInfo mi) => 
         _CanReflectRestrainedMethod(declaringClass, returnType, member, out mi) ?
             ReflConfig.RecordLazyTypes(mi) :
             null;

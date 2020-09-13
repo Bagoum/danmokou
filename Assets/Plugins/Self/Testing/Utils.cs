@@ -6,6 +6,7 @@ using Danmaku;
 using DMath;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace Tests {
 

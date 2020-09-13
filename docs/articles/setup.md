@@ -14,7 +14,7 @@ These are verbose instructions on how to set up Danmokou on your first run.
 - Within Unity Hub > Installs, add Unity version 2020.1.f4
 - Within Unity Hub > Projects, Click ADD and browse to the root Danmokou folder. 
 - Click on the project to load it. **The first time you load it, Unity may take several minutes to import resources.**
-- Once you are in the Unity Editor, browse to Assets/Scenes/BasicSceneOPENME.
+- Once you are in the Unity Editor, click on the Project tab (by default in the bottom window) and browse to Assets/Scenes/BasicSceneOPENME.
 - (Error handling) **If you see a lot of pink squares in the game view where text should be**, then go to Window > TextMesh Pro > Import TMP Essential Resources and click Import in the popup window. If you can see the text, then you don't need to do this.
 
 ## Part 2: What is DMK?
@@ -45,12 +45,10 @@ phase(0)
   - Indentation is not required, but you should do it.
   - Newlines are usually required.
   - Parentheses and argument separator commas are not required.
-
 - Run the scene by pressing the play button at the top of the screen. Objects should start animating and you should see the message "Hello World" at the top of the game UI. 
-- Make sure that the FPS counter (bottom right of the game UI) is stable. If it is excessively high, then press Esc to open the in-game pause menu and turn Vsync OFF. If your computer is old, you may need to turn shaders OFF as well.
-
-- Because behavior in DMK is written in BDSM and not in C#, you can **recompile scripts at runtime** without significant overhead. To do this, simply press R in the game view. If you are successful, you should see the "Hello World" message disappear and fade back in, and the boss health bar should empty out a bit. 
-
+  - Note: you may seen cyan squares on the screen when certain objects first appear. This should only happen once per object type. For example, the first time you open the pause menu, you might see a cyan square. This is due to shader compilation and is harmless. 
+- Make sure that the FPS counter (bottom right of the game UI) is stable. If it is excessively high, then press Esc to open the in-game pause menu and turn Vsync OFF. If your computer is old, you may need to turn shaders OFF as well. These settings will be saved as soon as you close the menu.
+- Because behavior in DMK is written in BDSM and not in C#, you can **recompile scripts at runtime** without significant overhead. To do this, simply press R in the game view while the game is running. If you are successful, you should see the "Hello World" message disappear and fade back in, and the boss health bar should empty out a bit. 
 - That's all for setup. Feel free to move on to [the first tutorial](t01.md) once you're done with extra setup.
 
 ## Part Extra: Notepad++ Setup
@@ -62,7 +60,7 @@ You do not *need* to use Notepad++ to edit BDSM scripts, but I do not have langu
 
 ## Part Extra: F# Setup
 
-Only do this if you are rebuilding the F# project. This is not necessary for the vast majority of users.
+Only do this if you are rebuilding the F# project. This is not necessary for the vast majority of users. If you have no idea what this means, then you don't need to do it.
 
 - Build the F# project in the `FS` folder targeted at 4.7.2. I have provided DLLs so you don't have to do this unless you make changes to the F# code.
-  - Copy the output DLLs (Common, FParsec, FParsecCS, FSharp.Core, Parser, System.ValueTuple) to `Assets/Plugins/Self/Core`.
+- Copy the output DLLs (Common, FParsec, FParsecCS, FSharp.Core, Parser, System.ValueTuple) to `Assets/Plugins/Self/Core`.

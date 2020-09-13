@@ -136,7 +136,10 @@ public abstract class XMLMenu : MonoBehaviour {
                 allowsfx = false;
             } while (Current?.Passthrough ?? false);
             if (tried_change) {
-                if (last != Current) Current?.OnVisit(last);
+                if (last != Current) {
+                    last.OnLeave(Current);
+                    Current?.OnVisit(last);
+                }
                 Redraw();
             }
         }

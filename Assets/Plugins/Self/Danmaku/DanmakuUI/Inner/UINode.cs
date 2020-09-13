@@ -216,12 +216,21 @@ public class UINode {
 
     [CanBeNull] private Action<UINode> _onVisit = null;
 
+    [CanBeNull] private Action<UINode> _onLeave = null;
+
     public UINode SetOnVisit(Action<UINode> onVisit) {
         _onVisit = onVisit;
         return this;
     }
     public void OnVisit(UINode prev) {
         _onVisit?.Invoke(prev);
+    }
+    public UINode SetOnLeave(Action<UINode> onLeave) {
+        _onLeave = onLeave;
+        return this;
+    }
+    public void OnLeave(UINode prev) {
+        _onLeave?.Invoke(prev);
     }
 
     protected virtual (bool success, UINode target) _Confirm() => _overrideConfirm?.Invoke() ?? (false, this);

@@ -8,6 +8,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Serialization;
 using static Danmaku.Enums;
+using Collision = DMath.Collision;
 
 namespace Danmaku {
 public class Enemy : RegularUpdater {
@@ -19,27 +20,36 @@ public class Enemy : RegularUpdater {
         public readonly Enemy enemy;
 
         public FrozenCollisionInfo(Enemy e) {
-            pos = e.beh.GlobalPosition();
+            pos = e.Beh.GlobalPosition();
             radius = e.collisionRadius;
             enemy = e;
             enemyIndex = e.enemyIndex;
         }
     }
 
-    private BehaviorEntity beh;
+    public BehaviorEntity Beh { get; private set; }
     public bool takesBossDamage;
     [CanBeNull] private (bool _, Enemy to)? divertHP = null;
     public int HP { get; private set; }
     public int maxHP = 1000;
+    public int PhotoHP { get; private set; } = 1;
+    private int maxPhotoHP = 1;
     public bool Vulnerable { get; private set; }= true;
     //private static int enemyIndexCtr = 0;
     //private int enemyIndex;
 
     public RFloat collisionRadius;
+    /// <summary>
+    /// The entirety of this circle must be within the viewfinder for a capture to succeed.
+    /// </summary>
+    [CanBeNull] public RFloat ayaCameraRadius;
+    
 
     private const float LOW_HP_THRESHOLD = .2f;
 
     public bool modifyDamageSound;
+
+    [CanBeNull] public SpriteRenderer cameraCrosshair;
 
     [Header("Healthbar Controller (Optional)")] [CanBeNull]
     public SpriteRenderer healthbarSprite;
@@ -83,7 +93,7 @@ public class Enemy : RegularUpdater {
     public static IReadOnlyList<FrozenCollisionInfo> FrozenEnemies => frozenEnemies;
 
     public void Initialize(BehaviorEntity _beh, [CanBeNull] SpriteRenderer sr) {
-        beh = _beh;
+        Beh = _beh;
         var sortOrder = renderCounter++;
         if (sr != null) sr.sortingOrder = sortOrder;
         if (spellCircle != null) spellCircle.sortingOrder = sortOrder;
@@ -96,6 +106,7 @@ public class Enemy : RegularUpdater {
         hpPB = new MaterialPropertyBlock();
         distortPB = new MaterialPropertyBlock();
         scPB = new MaterialPropertyBlock();
+        if (cameraCrosshair != null) cameraCrosshair.enabled = false;
         if (healthbarSprite != null) {
             healthbarSprite.enabled = true;
             healthbarSprite.GetPropertyBlock(hpPB);
@@ -105,8 +116,8 @@ public class Enemy : RegularUpdater {
             healthbarSize = 1f;
             SetHPBarColors(PhaseType.NONSPELL);
             hpPB.SetColor(PropConsts.unfillColor, unfilledColor);
-            _displayHPRatio = HPRatio;
-            hpPB.SetFloat(PropConsts.fillRatio, DisplayHPRatio);
+            _displayBarRatio = BarRatio;
+            hpPB.SetFloat(PropConsts.fillRatio, DisplayBarRatio);
             hpPB.SetColor(PropConsts.fillColor, currPhase.color1);
             healthbarSprite.SetPropertyBlock(hpPB);
         }
@@ -127,14 +138,15 @@ public class Enemy : RegularUpdater {
         }
         lastSpellCircleRadius = MinSCRadius;
     }
-
-    public void SetSpellCircleColors(Color c1, Color c2, Color c3) {
-        scPB.SetColor(PropConsts.color1, c1);
-        scPB.SetColor(PropConsts.color2, c2);
-        scPB.SetColor(PropConsts.color3, c3);
+    
+    public void ConfigureBoss(BossConfig b) {
+        if (b.colors.cardColorR.a > 0 || b.colors.cardColorG.a > 0 || b.colors.cardColorB.a > 0) {
+            RequestCardCircle(b.colors.cardColorR, b.colors.cardColorG, b.colors.cardColorB, b.Rotator);
+        }
+        SetSpellCircleColors(b.colors.spellColor1, b.colors.spellColor2, b.colors.spellColor3);
+        if (cameraCrosshair != null) cameraCrosshair.color = b.colors.uiHPColor;
     }
-
-    public void RequestCardCircle(Color colorR, Color colorG, Color colorB, BPY rotator) {
+    private void RequestCardCircle(Color colorR, Color colorG, Color colorB, BPY rotator) {
         if (cardCircle != null) {
             cardCircle.enabled = true;
             if (distorter != null) distorter.enabled = SaveData.s.Shaders;
@@ -146,6 +158,11 @@ public class Enemy : RegularUpdater {
             cardCircle.SetPropertyBlock(cpb);
             cardRotator = rotator;
         }
+    }
+    private void SetSpellCircleColors(Color c1, Color c2, Color c3) {
+        scPB.SetColor(PropConsts.color1, c1);
+        scPB.SetColor(PropConsts.color2, c2);
+        scPB.SetColor(PropConsts.color3, c3);
     }
 
     private void RecheckGraphicsSettings() {
@@ -166,7 +183,7 @@ public class Enemy : RegularUpdater {
         if (spellCircle == null) return;
         spellCircleCancel = cT;
         spellCircle.enabled = true;
-        float baseT = beh.rBPI.t;
+        float baseT = Beh.rBPI.t;
         float baseRad = Math.Max(MinSCRadius, lastSpellCircleRadius);
         spellCircleRadiusFunc = t => {
             if (t < baseT + SpellCircleLerpTime) {
@@ -182,45 +199,48 @@ public class Enemy : RegularUpdater {
 
     public void DivertHP(Enemy to) => divertHP = (false, to);
     private float HPRatio => (float) HP / maxHP;
-    private float _displayHPRatio;
-    public float EffectiveHPRatio => divertHP?.to.EffectiveHPRatio ?? HPRatio;
-    public float DisplayHPRatio => divertHP?.to.DisplayHPRatio ?? _displayHPRatio;
+    private float PhotoRatio => (float) PhotoHP / maxPhotoHP;
+    private float BarRatio => Math.Min(PhotoRatio, HPRatio);
+    private float _displayBarRatio;
+    public float EffectiveBarRatio => divertHP?.to.EffectiveBarRatio ?? BarRatio;
+    public float DisplayBarRatio => divertHP?.to.DisplayBarRatio ?? _displayBarRatio;
 
-    public Color HPColor => Color.Lerp(currPhase.color2, currPhase.color1, Mathf.Pow(_displayHPRatio, 1.5f));
+    public Color HPColor => Color.Lerp(currPhase.color2, currPhase.color1, Mathf.Pow(_displayBarRatio, 1.5f));
     public override void RegularUpdate() {
         PollDamage();
+        PollPhotoDamage();
         if (healthbarSprite != null) {
-            _displayHPRatio = Mathf.Lerp(_displayHPRatio, HPRatio, HPLerpRate * ETime.FRAME_TIME);
-            hpPB.SetFloat(PropConsts.fillRatio, DisplayHPRatio);
+            _displayBarRatio = Mathf.Lerp(_displayBarRatio, BarRatio, HPLerpRate * ETime.FRAME_TIME);
+            hpPB.SetFloat(PropConsts.fillRatio, DisplayBarRatio);
             //Approximation to make the max color appear earlier
             hpPB.SetColor(PropConsts.fillColor, HPColor);
-            hpPB.SetFloat(PropConsts.time, beh.rBPI.t);
+            hpPB.SetFloat(PropConsts.time, Beh.rBPI.t);
             healthbarSprite.SetPropertyBlock(hpPB);
         }
         if (distorter != null) {
-            distortPB.SetFloat(PropConsts.time, beh.rBPI.t);
-            MainCamera.SetPBScreenLoc(distortPB, beh.GlobalPosition());
+            distortPB.SetFloat(PropConsts.time, Beh.rBPI.t);
+            MainCamera.SetPBScreenLoc(distortPB, Beh.GlobalPosition());
             distorter.SetPropertyBlock(distortPB);
         }
         if (cardCircle != null) {
             Vector3 rt = cardtr.localEulerAngles;
-            rt.z += ETime.FRAME_TIME * cardRotator(beh.rBPI);
+            rt.z += ETime.FRAME_TIME * cardRotator(Beh.rBPI);
             cardtr.localEulerAngles = rt;
         }
         if (spellCircle != null) {
-            scPB.SetFloat(PropConsts.time, beh.rBPI.t);
+            scPB.SetFloat(PropConsts.time, Beh.rBPI.t);
             if (spellCircleCancel.Cancelled) {
-                float baseT = beh.rBPI.t;
+                float baseT = Beh.rBPI.t;
                 spellCircleRadiusFunc = t => Mathf.Lerp(lastSpellCircleRadius, MinSCRadius - 0.1f, (t - baseT) / SpellCircleLerpTime);
                 spellCircleCancel = Cancellable.Null;
             }
-            lastSpellCircleRadius = spellCircleRadiusFunc?.Invoke(beh.rBPI.t) ?? lastSpellCircleRadius;
+            lastSpellCircleRadius = spellCircleRadiusFunc?.Invoke(Beh.rBPI.t) ?? lastSpellCircleRadius;
             if (lastSpellCircleRadius < MinSCRadius) spellCircle.enabled = false;
             scPB.SetFloat(PropConsts.radius, lastSpellCircleRadius);
             spellCircle.SetPropertyBlock(scPB);
         }
         for (int ii = 0; ii < hitCooldowns.Count; ++ii) {
-            if (hitCooldowns[ii].Cooldown == 0) hitCooldowns.Delete(ii);
+            if (hitCooldowns[ii].Cooldown <= 1) hitCooldowns.Delete(ii);
             else hitCooldowns.arr[ii].obj.Cooldown = hitCooldowns[ii].Cooldown - 1;
         }
         hitCooldowns.Compact();
@@ -229,7 +249,7 @@ public class Enemy : RegularUpdater {
     public static void FreezeEnemies() {
         frozenEnemies.Clear();
         foreach (var enemy in allEnemies.Values) {
-            if (LocationService.OnPlayableScreenBy(0.5f, enemy.beh.GlobalPosition())) {
+            if (LocationService.OnPlayableScreenBy(0.5f, enemy.Beh.GlobalPosition())) {
                 frozenEnemies.Add(new FrozenCollisionInfo(enemy));
             }
         }
@@ -241,33 +261,36 @@ public class Enemy : RegularUpdater {
     private const float SHOTGUN_DIST_MIN_BOSS = 3f;
     private float SHOTGUN_MAX => takesBossDamage ? SHOTGUN_DIST_MAX_BOSS : SHOTGUN_DIST_MAX;
     private float SHOTGUN_MIN => takesBossDamage ? SHOTGUN_DIST_MIN_BOSS : SHOTGUN_DIST_MIN;
-    private const float SHOTGUN_MULTIPLIER = 1.2f;
+    private const float SHOTGUN_MULTIPLIER = 1.25f;
 
     private float queuedDamage = 0;
+    private int queuedPhotoDamage = 0;
 
     //The reason we queue damage is to avoid calling eg. SM clear effects while in the middle of other entities' update loops.
     public void QueueDamage(int bossDmg, int stageDmg, Vector2 firerLoc) => 
         QueueDamage(takesBossDamage ? bossDmg : stageDmg, firerLoc);
 
-    private void QueueDamage(int dmg, Vector2 firerLoc) {
+    private void QueueDamage(int dmg, Vector2? firerLoc) {
         if (divertHP != null) {
             divertHP.Value.to.QueueDamage(dmg, firerLoc);
             return;
         }
         if (!Vulnerable) return;
-        float dstToFirer = (firerLoc - beh.rBPI.loc).magnitude;
-        float shotgun = (SHOTGUN_MIN - dstToFirer) / (SHOTGUN_MIN - SHOTGUN_MAX);
-        float multiplier =
-            Mathf.Lerp(1f, 1.2f, shotgun);
-        queuedDamage += dmg * multiplier;
-        Counter.Shotgun(shotgun);
+        if (firerLoc.Try(out var floc)) {
+            float dstToFirer = (floc - Beh.rBPI.loc).magnitude;
+            float shotgun = (SHOTGUN_MIN - dstToFirer) / (SHOTGUN_MIN - SHOTGUN_MAX);
+            float multiplier =
+                Mathf.Lerp(1f, 1.2f, shotgun);
+            queuedDamage += dmg * multiplier;
+            Counter.Shotgun(shotgun);
+        } else queuedDamage += dmg;
     }
     private void PollDamage() {
         if (queuedDamage < 1) return;
         HP = M.Clamp(0, maxHP, HP - (int)queuedDamage);
         queuedDamage = 0;
         if (HP == 0) {
-            beh.OutOfHP();
+            Beh.OutOfHP();
             Vulnerable = false; //Wait for new hp value to be declared
         } else if (modifyDamageSound) {
             if ((float) HP / maxHP < LOW_HP_THRESHOLD) {
@@ -276,9 +299,23 @@ public class Enemy : RegularUpdater {
         }
     }
 
+    private void PollPhotoDamage() {
+        if (queuedPhotoDamage < 1) return;
+        PhotoHP = M.Clamp(0, maxPhotoHP, PhotoHP - queuedPhotoDamage);
+        queuedPhotoDamage = 0;
+        if (PhotoHP == 0) {
+            Beh.OutOfHP();
+            Vulnerable = false;
+        }
+    }
+
     public void SetHP(int newMaxHP, int newCurrHP) {
         maxHP = newMaxHP;
         HP = newCurrHP;
+    }
+    public void SetPhotoHP(int newMaxHP, int newCurrHP) {
+        maxPhotoHP = newMaxHP;
+        PhotoHP = newCurrHP;
     }
 
     public void SetDamageable(bool isDamageable) {
@@ -301,7 +338,7 @@ public class Enemy : RegularUpdater {
         if (healthbarStart < 0.1f || color.RequiresFullHPBar()) {
             healthbarStart = 1f;
         } else {
-            _displayHPRatio = 1f + _displayHPRatio * healthbarSize / (healthbarStart * portion);
+            _displayBarRatio = 1f + _displayBarRatio * healthbarSize / (healthbarStart * portion);
         }
         healthbarSize = healthbarStart * portion;
         healthbarStart -= healthbarSize;
@@ -322,25 +359,45 @@ public class Enemy : RegularUpdater {
         return true;
     }
 
-    public void ProcOnHit(EffectStrategy effect, Vector2 hitLoc) => effect.Proc(hitLoc, beh.GlobalPosition(), collisionRadius);
+    public void ProcOnHit(EffectStrategy effect, Vector2 hitLoc) => effect.Proc(hitLoc, Beh.GlobalPosition(), collisionRadius);
+
+    private bool ViewfinderHits(CRect viewfinder) => Collision.CircleInRect(Beh.rBPI.loc, ayaCameraRadius, viewfinder);
+    public void ShowCrosshairIfViewfinderHits(CRect viewfinder) {
+        if (cameraCrosshair != null) {
+            cameraCrosshair.enabled = ViewfinderHits(viewfinder);
+        }
+    }
+
+    public void HideViewfinderCrosshair() {
+        if (cameraCrosshair != null) cameraCrosshair.enabled = false;
+    }
+    public bool FireViewfinder(CRect viewfinder) {
+        HideViewfinderCrosshair();
+        if (ViewfinderHits(viewfinder) && Vulnerable) {
+            queuedPhotoDamage += 1;
+            return true;
+        } else return false;
+    }
 
     private static readonly ReflWrap<VTP> SuicideVTP = (Func<VTP>)"tprot cx 1.6".Into<VTP>;
     public void DoSuicideFire() {
         if (GameManagement.DifficultyCounter < DifficultySet.Hard.Counter()) return;
         var bt = LevelController.DefaultSuicideStyle;
         if (string.IsNullOrWhiteSpace(bt)) bt = "triangle-black/w";
-        var angleTo = M.AtanD(BulletManager.PlayerTarget.location - beh.rBPI.loc);
+        var angleTo = M.AtanD(BulletManager.PlayerTarget.location - Beh.rBPI.loc);
         int numBullets = (GameManagement.DifficultyCounter <= DifficultySet.Lunatic.Counter()) ? 1 : 3;
         for (int ii = 0; ii < numBullets; ++ii) {
-            BulletManager.RequestSimple(bt, null, null, new Velocity(SuicideVTP, beh.rBPI.loc, 
+            BulletManager.RequestSimple(bt, null, null, new Velocity(SuicideVTP, Beh.rBPI.loc, 
                 angleTo + (ii - numBullets / 2) * 120f / numBullets), 0, 0, null);
         }
     }
     
 #if UNITY_EDITOR
     private void OnDrawGizmos() {
-        Handles.color = Color.green;
         var position = transform.position;
+        Handles.color = Color.red;
+        if (ayaCameraRadius != null) Handles.DrawWireDisc(position, Vector3.forward, ayaCameraRadius);
+        Handles.color = Color.green;
         Handles.DrawWireDisc(position, Vector3.forward, collisionRadius);
     }
 #endif
@@ -352,7 +409,7 @@ public class Enemy : RegularUpdater {
 
     public static bool FindNearest(Vector2 source, int? preferredEnemy, out int enemy, out Vector2 position) {
         if (preferredEnemy.Try(out var eid) && allEnemies.TryGetValue(eid, out var pe)) {
-            position = pe.beh.GlobalPosition();
+            position = pe.Beh.GlobalPosition();
             enemy = eid;
             return true;
         }

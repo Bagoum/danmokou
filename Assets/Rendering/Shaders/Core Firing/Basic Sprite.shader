@@ -42,7 +42,7 @@
 			#pragma multi_compile_local __ FT_DISPLACE_BIVERT
 			#pragma multi_compile_local __ FT_HUESHIFT
 			#include "UnityCG.cginc"
-			#include "BagoumShaders.cginc"
+			#include "Assets/CG/BagoumShaders.cginc"
 
 			struct vertex {
 				float4 loc  : POSITION;

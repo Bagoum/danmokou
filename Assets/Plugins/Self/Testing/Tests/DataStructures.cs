@@ -17,6 +17,25 @@ public class DataStructures {
     }
 
     [Test]
+    public void CircleList() {
+        var cl = new CircularList<int>(4);
+        cl.Add(10);
+        cl.Add(11);
+        Assert.AreEqual(cl.SafeIndexFromBack(0), 11);
+        Assert.AreEqual(cl.SafeIndexFromBack(1), 11);
+        Assert.AreEqual(cl.SafeIndexFromBack(2), 10);
+        Assert.AreEqual(cl.SafeIndexFromBack(15), 10);
+        cl.Add(12);
+        cl.Add(13);
+        cl.Add(14);
+        cl.Add(15);
+        Assert.AreEqual(cl.SafeIndexFromBack(2), 14);
+        Assert.AreEqual(cl.SafeIndexFromBack(3), 13);
+        Assert.AreEqual(cl.SafeIndexFromBack(4), 12);
+        Assert.AreEqual(cl.SafeIndexFromBack(5), 12);
+    }
+
+    [Test]
     public void NLL() {
         var nll = new NodeLinkedList<int>();
         var n0 = nll.Add(0);
