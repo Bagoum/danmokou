@@ -1,6 +1,9 @@
 .vs
 .idea
-Library
+Library/*
+!Library/CurrentLayout.dwlt
+!Library/CurrentLayout-default.dwlt
+!Library/CurrentMaximizeLayout.dwlt
 Logs
 Temp
 obj
@@ -8,11 +11,10 @@ bin
 Builds
 Design
 ScriptDrafts
-Saves
+DMK_Saves
 DLogs
 Source
 .psd
-Aya
 
 *.csproj
 *.unityproj

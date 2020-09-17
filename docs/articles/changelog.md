@@ -2,20 +2,30 @@
 
 To get the newest version from git, run:
 
-`git fetch super` (replace `super` with whatever remote you assigned to the DMK repo)
+`git fetch super` (replace `super` with whatever remote you assigned to the [DMK repo](https://github.com/Bagoum/danmokou))
 
 `git pull --rebase super master` (again, replace `super`)
 
 `git submodule update` (if you have made modifications to the submodules, you will need to `pull --rebase` them individually)
 
-# Version 2.2.0 (2020/09/15)
+# [Unreleased] v3.1.0 (target: 2020/09/20)
 
-- Photo game architecture. See the `LuA` (L'unique Appareil-photo) submodule for a basic demo of how it works, as well as the "Aya Camera" shot type, which can be used anywhere.
+- [WebGL demo](https://dmk.bagoum.com/demo) (note: WebGL is not generally supported, see [the warnings page](warnings.md) for details)
+- Improved architecture for global slowdown effects
+- Improved architecture for Seija-style camera flipping
+
+# v3.0.0 (2020/09/16)
+
+- Restructured repository files by bringing engine code under Assets/Danmokou. This will eventually be separated as a submodule. 
+
+# v2.2.0 (2020/09/15)
+
+- Photo game architecture. See the `LuA` (L'unique Appareil-photo) [submodule](https://github.com/Bagoum/danmokou-lua) for a basic demo of how it works, as well as the "Aya Camera" shot type, which can be used anywhere.
 - Made parsing better (hopefully)
 - Added support for MoF MarisaA-style tracking options. See the "MariA Lazors" shot type for an example.
 - Removed a lot of extraneous files from this repository.
 
-# Version 2.1.0 (2020/09/11)
+# v2.1.0 (2020/09/11)
 
 - Parsing rules are now more rigorous about parentheses and commas. When using parentheses in function invocations, commas are now also required. For example, `mod(5 2)` is no longer valid.
 

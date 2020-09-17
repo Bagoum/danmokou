@@ -3,7 +3,7 @@
     {
       "src": [
         {
-          "src": "../Assets/Plugins/Self",
+          "src": "../Assets/Danmokou/Plugins/Self",
           "files": [
             "Danmaku/Entities/Beh/**.cs",
             "Danmaku/Utils/**.cs",

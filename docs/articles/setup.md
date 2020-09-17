@@ -14,13 +14,14 @@ These are verbose instructions on how to set up Danmokou on your first run.
 - Within Unity Hub > Installs, add Unity version 2020.1.f4
 - Within Unity Hub > Projects, Click ADD and browse to the root Danmokou folder. 
 - Click on the project to load it. **The first time you load it, Unity may take several minutes to import resources.**
-- Once you are in the Unity Editor, click on the Project tab (by default in the bottom window) and browse to Assets/Scenes/BasicSceneOPENME.
+  - If you get an error about the default layout, then close Unity, download the files in the `Library` folder from [the repo](https://github.com/Bagoum/danmokou), paste them in your Library folder, and open Unity.
+- Once you are in the Unity Editor, click on the Project tab (by default in the bottom window) and browse to Assets/Danmokou/Scenes/BasicSceneOPENME.
 - (Error handling) **If you see a lot of pink squares in the game view where text should be**, then go to Window > TextMesh Pro > Import TMP Essential Resources and click Import in the popup window. If you can see the text, then you don't need to do this.
 
 ## Part 2: What is DMK?
 
 - At the top of the game view, you should see three text boxes, saying something like: `Display 1 | Resolution | Scale ----`. Click on the second box, which shows the resolution of the game view. Either set it to the aspect ratio 16x9, or manually input a resolution at the bottom with 16x9 ratio.
-- You should still be in Assets/Scenes/BasicSceneOPENME. Go to the Hierarchy window (by default on the left side) and click on the "mokou-boss" object.
+- You should still be in Assets/Danmokou/Scenes/BasicSceneOPENME. Go to the Hierarchy window (by default on the left side) and click on the "mokou-boss" object.
 - The Inspector window (by default on the right side) will open up and list all the components on the object. The important component here is `Boss BEH`. Look under Boss BEH for the variable named "Behavior Script". To the right of it, you should see a text file titled "DMK Tutorial Setup 00". Double click this file.
 - Your text editor should now open the file. It should have the following contents:
 
@@ -63,4 +64,4 @@ You do not *need* to use Notepad++ to edit BDSM scripts, but I do not have langu
 Only do this if you are rebuilding the F# project. This is not necessary for the vast majority of users. If you have no idea what this means, then you don't need to do it.
 
 - Build the F# project in the `FS` folder targeted at 4.7.2. I have provided DLLs so you don't have to do this unless you make changes to the F# code.
-- Copy the output DLLs (Common, FParsec, FParsecCS, FSharp.Core, Parser, System.ValueTuple) to `Assets/Plugins/Self/Core`.
+- Copy the output DLLs (Common, FParsec, FParsecCS, FSharp.Core, Parser, System.ValueTuple) to `Assets/Danmokou/Plugins/Self/Core`.

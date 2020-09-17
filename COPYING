@@ -3,7 +3,7 @@ Copyright (c) 2020 <reneedebatz@gmail.com>
 Danmokou is a danmaku (bullet hell) engine built in C# for Unity. It is free (as in free speech) software. The source code is on Github: https://github.com/Bagoum/danmokou
 
 All source code in this project is distributed under the MIT license. Some non-code resources are distributed under CC BY 4. See the Licenses folder for copies. Note that submodules may have different licensing terms.
-Code is present primarily under the directories FS, Assets/Plugins/Self, Assets/Rendering/Shaders, Assets/CG, Assets/UXML (normal code), as well as Assets/Patterns (script files).
+Code is present primarily under the directories FS, Assets/Danmokou/Plugins/Self, Assets/Danmokou/Rendering/Shaders, Assets/Danmokou/CG, Assets/Danmokou/UXML (normal code), as well as Assets/Danmokou/Patterns (script files).
 
 The Licenses folder also contains licenses for the following packages used by this project:
 Easing Equations by C.J. Kimberlin and Robert Penner
@@ -11,7 +11,7 @@ Hash Without Sine by David Hoskins
 Newtonsoft.Json by Kalle Jillheden
 Some files from these projects exists in the source code. Those files have the original licenses at the top for convenience. 
 
-The directory Assets/Plugins/Self/Core/FS contains compiled binaries of the directory FS.
+The directory Assets/Danmokou/Plugins/Self/Core/FS contains compiled binaries of the directory FS.
 
 The directory Assets/TextMeshPro contains default imports from the TextMeshPro plugin for Unity. TextMeshPro is licensed under the Unity Companion License (https://docs.unity3d.com/Packages/com.unity.textmeshpro@3.0/license/LICENSE.html). 
 
@@ -43,7 +43,7 @@ SOFTWARE.
 
 Licenses for non-code assets
 
-Sound effects (Assets/Audio/SFX)
+Sound effects (Assets/Danmokou/Audio/SFX)
 - manual: by me, licensed under CC BY 4.
 - Many sound effects in "SFX/_SO/usedfiles" by OSA: http://osabisi.sakura.ne.jp/m2/ (license in Licenses/OSA).
 - taisei, taisei2: by Taisei Project. They have been converted into different formats for use with Unity. Their license is in the Licenses folder.
@@ -53,11 +53,11 @@ Sound effects (Assets/Audio/SFX)
 	- "camera-snap1" under CC-BY from here: https://freesound.org/people/thecheeseman/sounds/51360/
 	- "camera-focus" under CC-BY from here: https://freesound.org/people/Puniho/sounds/115126/
 
-All fonts (Assets/Fonts) are licensed permissively. Licenses are in the Licenses folder.
+All fonts (Assets/Danmokou/Fonts) are licensed permissively. Licenses are in the Licenses folder.
 
-All assets under Assets/Kenney were created by Kenny Vleugels (kenney.nl) and are licensed thereby under CC0.
+All assets under Assets/Danmokou/Kenney were created by Kenny Vleugels (kenney.nl) and are licensed thereby under CC0.
 
-Images (Assets/Sprites)
+Images (Assets/Danmokou/Sprites)
 - BGPatterns/buson-crows-crop: by Yosa Buson.
 - BGPatterns/nasa: by NASA, see below.
 - BGPatterns/unsplash: miscellaneous Unsplash users, credited as follows:
@@ -74,8 +74,8 @@ Images (Assets/Sprites)
 - UI/pins/crow*: stock by Roy3D on DeviantArt (https://www.deviantart.com/roy3d/art/Crows-2-PNG-Stock-412584565), modifications made.
 - other files in bullets, UI, util, TransitionTextures, items: by me, licensed under CC BY 4.
 
-MiniProjects
-- Cutins/junko, Dialogue/icons, Dialogue/Stands/dairi_junko2: dairi
+Assets/Danmokou/MiniProjects
+- Cutins/junko, Dialogue/icons, Dialogue/Stands/dairi_junko2: dairi (https://www.pixiv.net/en/users/4920496).
 
 Some image resources were created with patterns from http://www.sda.nagoya-cu.ac.jp/sa08m13/image.html 
 Some image resources were created with patterns from http://www.ikiya.jp/anounce.html

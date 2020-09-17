@@ -23,17 +23,19 @@ The entirety of DMK is written in C# with a little bit of F#, so you can change 
 Here is a (not entirely complete) feature list for DMK:
 
 - 100,000+ bullets at native 4k, 120 FPS
-- Curved lasers, curvy lasers, and wavy lasers (yes, they're all different)
-- Built-in support architectures for stage-based games, scene-based games, and challenges
+- Built-in architecture for stage-based games
+- Built-in architecture for photo games like Shoot the Bullet
+- Built-in architecture for challenge-based scene games
 - Efficient compiled scripting language with the same interfaces as C#
 - Instantaneous runtime script recompilation
 - Replay support
 - Dialogue engine with Ace Attorney-style text unrolling
 - Script analysis and practice architecture
+- Curved lasers, curvy lasers, and wavy lasers (yes, they're all different)
 - Arbitrary functions for bullet movement  (No other engine supports this!)
 - Optimized rendering pathway batching 1000+ bullets at a time 
 - Engine handling for complex cancellation pathways
-- Zero-allocation bullets
+- Zero-allocation bullets-- no lag and no garbage collector spikes!
 
 If you're interested in the design of DMK and how it compares to other engines, you can read the [design philosophy introduction](t06.md).
 
