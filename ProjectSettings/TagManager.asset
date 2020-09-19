@@ -48,6 +48,9 @@ TagManager:
   - name: Walls
     uniqueID: 945552623
     locked: 0
+  - name: PlayerProjectile
+    uniqueID: 149814447
+    locked: 0
   - name: LowFX
     uniqueID: 4047857803
     locked: 0

@@ -33,6 +33,8 @@
             #include "Assets/Danmokou/CG/Noise.cginc"
             #include "UnityCG.cginc"
 			#pragma multi_compile __ FANCY
+			#pragma multi_compile __ ALLOW_DISTORTION
+			#pragma multi_compile __ AYA_CAPTURE
 
             struct vertex {
                 float4 loc  : POSITION;
@@ -78,7 +80,8 @@
             float4 _BGTex_TexelSize;
 
             float4 frag(fragment f) : SV_Target {
-            #ifdef FANCY
+            //For now, I still can't get Aya rendering to work... seems like it forces it to render in a smaller space
+            #if defined(FANCY) && defined(ALLOW_DISTORTION) && !defined(AYA_CAPTURE)
                 f.uv -= float2(0.5,0.5);
                 float ang = atan2(f.uv.y, f.uv.x) / TAU; // -1/2 (@-180) to 1/2 (@180)
                 //Assume that this object is square, otherwise this is incorrect
@@ -94,11 +97,13 @@
                 
                 float y = _ScreenY + r * sin(effang*TAU)/_BGTex_TexelSize.w;
                 
-                #if UNITY_UV_STARTS_AT_TOP
+                //for some reason, when rendering via Aya, this needs to be removed
+                #if defined(UNITY_UV_STARTS_AT_TOP) && !defined(AYA_CAPTURE)
                 y = 1 - y;
                 #endif
                 
                 float4 bgc = tex2D(_BGTex, float2(_ScreenX + r * cos(effang*TAU)/_BGTex_TexelSize.z, y));
+                bgc.a = 1; //Don't know why it isn't already 1...
                 return bgc;
                 
                 float4 c = float4(0,0,0,0.5);

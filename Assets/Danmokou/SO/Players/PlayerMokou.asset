@@ -12,9 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9e371a047fd0478dab0e1a132d71003c, type: 3}
   m_Name: PlayerMokou
   m_EditorClassIdentifier: 
+  freeSpeed: 5
+  focusSlowdown: 0.44
   key: basic-mokou
   shortTitle: Mokou
   title: Fujiwara no Mokou
   prefab: {fileID: 5693660460388628151, guid: 4f67648ec56d30044b03a5959e19a4e0, type: 3}
   shots:
   - {fileID: 11400000, guid: 94c9dbd65f23dec46894ae6f01f35d23, type: 2}
+  - {fileID: 11400000, guid: e85d2935e978c464b91325d87036fd23, type: 2}
+  uiColor: {r: 0.50980395, g: 0, b: 0.1254902, a: 1}
+  shotDisplay: {fileID: 7713674854582391743, guid: 949a4532b5136a344af7110e1f0be716,
+    type: 3}

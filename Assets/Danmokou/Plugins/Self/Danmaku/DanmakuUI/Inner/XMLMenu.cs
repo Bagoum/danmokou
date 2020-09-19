@@ -108,6 +108,7 @@ public abstract class XMLMenu : MonoBehaviour {
             bool tried_change = true;
             bool allowsfx = true;
             var last = Current;
+            int sentry = 0;
             do {
                 var custom = Current.CustomEventHandling();
                 if (custom != null) {
@@ -134,6 +135,7 @@ public abstract class XMLMenu : MonoBehaviour {
                     Current = Current.Back();
                 } else tried_change = false;
                 allowsfx = false;
+                if (++sentry > 20) throw new Exception("There is a loop in the XML menu.");
             } while (Current?.Passthrough ?? false);
             if (tried_change) {
                 if (last != Current) {

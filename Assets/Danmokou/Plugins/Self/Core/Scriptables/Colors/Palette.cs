@@ -43,6 +43,10 @@ public class Palette : ScriptableObject, INamedGradient, ISerializationCallbackR
     public Color pure;
     public Color dark;
     public Color outline;
+    /// <summary>
+    /// Set to true for palettes that enable FT_RECOLOR in shaders.
+    /// </summary>
+    public bool recolorizable;
     private static readonly Color BLACK = Color.black;
     private static readonly Color WHITE = Color.white;
 

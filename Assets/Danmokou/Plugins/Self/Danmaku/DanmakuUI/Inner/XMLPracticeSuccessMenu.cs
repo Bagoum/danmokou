@@ -40,15 +40,15 @@ public class XMLPracticeSuccessMenu : XMLMenu {
                     HideMe();
                     return true;
                 } else return false;
-            }, "Restart", true).With(smallClass),
+            }, "Restart", true).With(small1Class),
             new FuncNode(() => {
                 HideMe();
                 GameManagement.GoToReplayScreen();
-            }, "Save Replay", true).With(smallClass).EnabledIf(() => Replayer.PostedReplay != null),
+            }, "Save Replay", true).With(small1Class).EnabledIf(() => Replayer.PostedReplay != null),
             new FuncNode(() => {
                 HideMe();
                 GameManagement.GoToMainMenu();
-            }, "Return to Menu", true).With(smallClass)
+            }, "Return to Menu", true).With(small1Class)
             );
         base.Awake();
     }

@@ -13,6 +13,7 @@
 		[PerRendererData] _DisplaceMagnitude("Displace Magnitude", float) = 1
 		[PerRendererData] _DisplaceSpeed("Displace Speed", float) = 1
 		[PerRendererData] _DisplaceXMul("Displace X Multiplier", float) = 1
+		[PerRendererData] _SharedOpacityMul("Opacity Multiplier", float) = 1
 		[PerRendererData] [Enum(SrcAlpha,5,OneMinusSrcColor,6)] _BlendFrom("Blend mode from", Float) = 5
 		[PerRendererData] [Enum(One,1,OneMinusSrcAlpha,10)] _BlendTo("Blend mode to", Float) = 10
 		[PerRendererData] [Enum(Add,0,RevSub,2)] _BlendOp("Blend mode op", Float) = 0
@@ -38,12 +39,13 @@
 			#pragma multi_compile_local __ FT_ROTATIONAL
 			#pragma multi_compile_local __ FT_FRAME_ANIM
 			#pragma multi_compile_local __ FT_SLIDE_IN
-			#pragma multi_compile_local __ FT_FADE_IN
+            //FadeIn is not used by any simple bullets. However, lasers use it (see Basic Sprite.shader)
+			//#pragma multi_compile_local __ FT_FADE_IN
 			#pragma multi_compile_local __ FT_SCALE_IN
 			#pragma multi_compile_local __ FT_DISPLACE
 			#pragma multi_compile_local __ FT_DISPLACE_POLAR
 			#pragma multi_compile_local __ FT_DISPLACE_BIVERT
-			#pragma multi_compile_local __ FT_PLAYER_OPACITY
+			#pragma multi_compile_local __ FT_RECOLORIZE
 			#pragma multi_compile_instancing
 			#include "UnityCG.cginc"
 			#include "Assets/Danmokou/CG/BagoumShaders.cginc"
@@ -67,8 +69,16 @@
 				UNITY_VERTEX_INPUT_INSTANCE_ID
 			};
 
-			float4 posDirBuffer[1023];
-			float timeBuffer[1023];
+        CBUFFER_START(NormalData)
+			float4 posDirBuffer[511];
+			float timeBuffer[511];
+        CBUFFER_END
+    #ifdef FT_RECOLORIZE
+        CBUFFER_START(RecolorData)
+			float4 recolorBBuffer[511];
+			float4 recolorWBuffer[511];
+        CBUFFER_END
+    #endif
 			
 	#ifdef UNITY_PROCEDURAL_INSTANCING_ENABLED
 			void setup() {
@@ -79,12 +89,7 @@
 		        //This makes nonrotational bullets more expensive! Don't use them for normal circles.
 				posdir.zw = float2(length(posdir.zw), 0.0);
 		#endif
-		//Player bullets scale in faster
-		#ifdef FT_PLAYER_OPACITY
-		        SCALEIN(posdir.zw, INSTANCE_TIME * 2);
-		#else
 		        SCALEIN(posdir.zw, INSTANCE_TIME);
-		#endif
 
 				unity_ObjectToWorld = float4x4(
 					posdir.z, -posdir.w, 0, posdir.x,
@@ -99,6 +104,7 @@
 			//FadeIn, frame-selection can be handled uniformly per sprite
 			float _InvFrameT;
 			float _Frames;
+			float _SharedOpacityMul;
 
 			fragment vert(vertex v) {
 				fragment f;
@@ -106,7 +112,7 @@
                 UNITY_TRANSFER_INSTANCE_ID(v, f);  
 				f.loc = UnityObjectToClipPos(v.loc);
 				f.uv = v.uv;
-				f.c = float4(1,1,1,1);
+				f.c = float4(1, 1, 1, _SharedOpacityMul);
 				//f.uv = TRANSFORM_TEX(v.uv, _MainTex);
 		#ifdef FT_FRAME_ANIM
 				f.uv.x = (f.uv.x + fmod(trunc(INSTANCE_TIME * _InvFrameT), _Frames)) / _Frames;
@@ -120,8 +126,8 @@
 		        SLIDEIN(f.uv, INSTANCE_TIME);
 	            DISPLACE(f.uv, INSTANCE_TIME);
 				float4 c = tex2D(_MainTex, f.uv) * f.c;
-    #ifdef FT_PLAYER_OPACITY
-                c.a *= 0.45;
+    #if (defined(UNITY_INSTANCING_ENABLED) || defined(UNITY_PROCEDURAL_INSTANCING_ENABLED)) && defined(FT_RECOLORIZE)
+                c.rgb = lerp(recolorBBuffer[unity_InstanceID], recolorWBuffer[unity_InstanceID], c.r).rgb;
     #endif
 				return c;
 			}

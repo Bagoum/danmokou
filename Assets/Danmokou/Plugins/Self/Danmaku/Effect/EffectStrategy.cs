@@ -4,9 +4,8 @@ using UnityEngine;
 
 [CreateAssetMenu(menuName = "Effects/EffectStrategy")]
 public class EffectStrategy : ScriptableObject {
-    [CanBeNull] public SOProccable proccer;
     [CanBeNull] public SFXConfig sound;
-    public LocatorStrategy.Strategy locator;
+    public LocatorStrategy locator;
     public GameObject particlePrefab;
     public enum SpawnableType {
         Particle,
@@ -15,29 +14,24 @@ public class EffectStrategy : ScriptableObject {
     }
 
     public SpawnableType spawnType;
+    public EffectStrategy[] subEffects;
 
     private void ProcMinors() {
-        if (proccer != null) proccer.Proc();
         if (sound != null) SFXService.Request(sound);
     }
-    public void Proc(Vector2 source, Vector2 target, float targetPerimeterRadius) {
-        ProcMinors();
-        if (spawnType == SpawnableType.Particle) {
-            ParticlePooler.Request(particlePrefab, LocatorStrategy.Locate(locator, source, target, targetPerimeterRadius));
-        } else if (spawnType == SpawnableType.RawInstantiate) {
-            GameObject w = GameObject.Instantiate(particlePrefab);
-            w.transform.localPosition = LocatorStrategy.Locate(locator, source, target, targetPerimeterRadius);
-        }
-    }
+
+    public void Proc(Vector2 source, Vector2 target, float targetPerimeterRadius) =>
+        ProcGO(source, target, targetPerimeterRadius);
     
     [CanBeNull]
     private GameObject ProcGO(Vector2 source, Vector2 target, float targetPerimeterRadius) {
         ProcMinors();
+        foreach (var sub in subEffects) sub.Proc(source, target, targetPerimeterRadius);
         if (spawnType == SpawnableType.Particle) {
-            return ParticlePooler.Request(particlePrefab, LocatorStrategy.Locate(locator, source, target, targetPerimeterRadius)).gameObject;
+            return ParticlePooler.Request(particlePrefab, locator.Locate(source, target, targetPerimeterRadius)).gameObject;
         } else if (spawnType == SpawnableType.RawInstantiate) {
             GameObject w = GameObject.Instantiate(particlePrefab);
-            w.transform.localPosition = LocatorStrategy.Locate(locator, source, target, targetPerimeterRadius);
+            w.transform.localPosition = locator.Locate(source, target, targetPerimeterRadius);
             return w;
         }
         return null;

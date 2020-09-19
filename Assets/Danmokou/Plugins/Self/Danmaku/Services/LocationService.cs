@@ -15,7 +15,10 @@ using ev2 = DMath.EEx<UnityEngine.Vector2>;
 
 namespace Danmaku {
 public static class LocationService {
-#if VER_BRUH
+#if WIDTH_TH
+    public const float Left = -3.6f;
+    public const float Right = 3.6f;
+#elif VER_BRUH || WIDTH_1
     public const float Left = -4f;
     public const float Right = 4f;
 #else
@@ -164,6 +167,15 @@ public static partial class BPYRepo {
 public static partial class Parametrics {
 
     public static ExTP LNearestEnemy() => b => {
+        var loc = new TExV2();
+        return Ex.Block(new ParameterExpression[] { loc },
+            Ex.IfThen(Ex.Not(Enemy.findNearest.Of(b.loc, loc)),
+                loc.Is(Ex.Constant(new Vector2(0f, 50f)))
+            ),
+            loc
+        );
+    };
+    public static ExTP LSaveNearestEnemy() => b => {
         Ex data = DataHoisting.GetClearableDictInt();
         var eid_in = ExUtils.V<int?>();
         var eid = ExUtils.V<int>();
@@ -173,7 +185,7 @@ public static partial class Parametrics {
                     data.DictGet(b.id).As<int?>(),
                     Ex.Constant(null).As<int?>())
             ),
-            Ex.IfThenElse(Enemy.findNearest.Of(b.loc, eid_in, eid, loc),
+            Ex.IfThenElse(Enemy.findNearestSave.Of(b.loc, eid_in, eid, loc),
                 data.DictSet(b.id, eid),
                 loc.Is(Ex.Constant(new Vector2(0f, 50f)))
             ),

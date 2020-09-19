@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Danmaku {
@@ -169,7 +170,7 @@ public static class Enums {
         STAGEENDBOSS
     }
     
-    public enum DifficultySet {
+    public enum FixedDifficulty {
         Easier = 10,
         Easy = 20,
         Normal = 30,
@@ -200,6 +201,28 @@ public static class Enums {
         CANCELLED
     }
 
+    public enum ItemType {
+        VALUE,
+        PPP,
+        LIFE,
+        POWER,
+        FULLPOWER,
+        ONEUP,
+        GEM, //for meter
+        POWERUP_SHIFT,
+        POWERUP_D,
+        POWERUP_M,
+        POWERUP_K
+    }
+    
+    public enum Subshot {
+        TYPE_D = 0,
+        TYPE_M = 1,
+        TYPE_K = 2
+    }
+
+    public static readonly IReadOnlyList<Subshot> Subshots = new[] {Subshot.TYPE_D, Subshot.TYPE_M, Subshot.TYPE_K};
+
     public static bool IsStageBoss(this PhaseType st) => st == PhaseType.STAGEENDBOSS || st == PhaseType.STAGEMIDBOSS;
     public static bool IsPattern(this PhaseType st) => st.IsCard() || st.IsStage();
     public static bool IsLenient(this PhaseType st) => st == PhaseType.DIALOGUE;
@@ -229,42 +252,40 @@ public static class Enums {
         else  return LayerMask.NameToLayer("HighProjectile");
     }
 
-    public static float Value(this DifficultySet d) {
-        if (d == DifficultySet.Easier) return 0.707f;       // 2^-0.5
-        else if (d == DifficultySet.Easy) return 1.00f;     // 2^0.0
-        else if (d == DifficultySet.Normal) return 1.414f;  // 2^0.5
-        else if (d == DifficultySet.Hard) return 2.00f;     // 2^1.0
-        else if (d == DifficultySet.Lunatic) return 2.828f; // 2^1.5
-        else if (d == DifficultySet.Ultra) return 3.732f;   // 2^1.9
-        else if (d == DifficultySet.Abex) return 4.925f;    // 2^2.3
-        else if (d == DifficultySet.Assembly) return 6.063f;// 2^2.6
+    public static float Value(this FixedDifficulty d) {
+        if (d == FixedDifficulty.Easier) return 0.707f;       // 2^-0.5
+        else if (d == FixedDifficulty.Easy) return 1.00f;     // 2^0.0
+        else if (d == FixedDifficulty.Normal) return 1.414f;  // 2^0.5
+        else if (d == FixedDifficulty.Hard) return 2.00f;     // 2^1.0
+        else if (d == FixedDifficulty.Lunatic) return 2.828f; // 2^1.5
+        else if (d == FixedDifficulty.Ultra) return 3.732f;   // 2^1.9
+        else if (d == FixedDifficulty.Abex) return 4.925f;    // 2^2.3
+        else if (d == FixedDifficulty.Assembly) return 6.063f;// 2^2.6
         throw new Exception($"Couldn't resolve difficulty setting {d}");
     }
-    public static float Counter(this DifficultySet d) {
-        if (d == DifficultySet.Easier) return 0;
-        else if (d == DifficultySet.Easy) return 1;
-        else if (d == DifficultySet.Normal) return 2;
-        else if (d == DifficultySet.Hard) return 3;
-        else if (d == DifficultySet.Lunatic) return 4;
-        else if (d == DifficultySet.Ultra) return 5;
-        else if (d == DifficultySet.Abex) return 6;
-        else if (d == DifficultySet.Assembly) return 7;
-        throw new Exception($"Couldn't resolve difficulty setting {d}");
-    }
-
-    public static string Describe(this DifficultySet d) {
-        if (d == DifficultySet.Easier) return "Easier";
-        else if (d == DifficultySet.Easy) return "Easy";
-        else if (d == DifficultySet.Normal) return "Normal";
-        else if (d == DifficultySet.Hard) return "Hard";
-        else if (d == DifficultySet.Lunatic) return "Lunatic";
-        else if (d == DifficultySet.Ultra) return "Ultra";
-        else if (d == DifficultySet.Abex) return "Abex";
-        else if (d == DifficultySet.Assembly) return "Assembly";
+    public static float Counter(this FixedDifficulty d) {
+        if (d == FixedDifficulty.Easier) return 0;
+        else if (d == FixedDifficulty.Easy) return 1;
+        else if (d == FixedDifficulty.Normal) return 2;
+        else if (d == FixedDifficulty.Hard) return 3;
+        else if (d == FixedDifficulty.Lunatic) return 4;
+        else if (d == FixedDifficulty.Ultra) return 5;
+        else if (d == FixedDifficulty.Abex) return 6;
+        else if (d == FixedDifficulty.Assembly) return 7;
         throw new Exception($"Couldn't resolve difficulty setting {d}");
     }
 
-    public static string DescribePadR(this DifficultySet d) => d.Describe().PadRight(8);
+    public static string Describe(this FixedDifficulty d) {
+        if (d == FixedDifficulty.Easier) return "Easier";
+        else if (d == FixedDifficulty.Easy) return "Easy";
+        else if (d == FixedDifficulty.Normal) return "Normal";
+        else if (d == FixedDifficulty.Hard) return "Hard";
+        else if (d == FixedDifficulty.Lunatic) return "Lunatic";
+        else if (d == FixedDifficulty.Ultra) return "Ultra";
+        else if (d == FixedDifficulty.Abex) return "Abex";
+        else if (d == FixedDifficulty.Assembly) return "Assembly";
+        throw new Exception($"Couldn't resolve difficulty setting {d}");
+    }
 
     public static bool IsOneCard(this CampaignMode mode) =>
         mode == CampaignMode.CARD_PRACTICE || mode == CampaignMode.SCENE_CHALLENGE;
@@ -274,5 +295,16 @@ public static class Enums {
 
     public static bool Destructive(this PhaseClearMethod cm) =>
         cm == PhaseClearMethod.HP || cm == PhaseClearMethod.PHOTO;
+
+    public static bool Autocollect(this ItemType t) => t == ItemType.GEM;
+
+    public static string Describe(this Subshot s) {
+        switch (s) {
+            case Subshot.TYPE_D: return "D";
+            case Subshot.TYPE_M: return "M";
+            case Subshot.TYPE_K: return "K";
+            default: return "?";
+        }
+    }
 }
 }

@@ -28,6 +28,11 @@ PrefabInstance:
       propertyPath: config.lineRadius
       value: 0.01
       objectReference: {fileID: 0}
+    - target: {fileID: 2951577401640358138, guid: 2740f5514453c754e8cf32fbc01a04d2,
+        type: 3}
+      propertyPath: renderPriority
+      value: 1500
+      objectReference: {fileID: 0}
     - target: {fileID: 2951577401640358139, guid: 2740f5514453c754e8cf32fbc01a04d2,
         type: 3}
       propertyPath: m_Name

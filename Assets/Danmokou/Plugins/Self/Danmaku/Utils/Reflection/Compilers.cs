@@ -17,6 +17,7 @@ using ExPred = System.Func<DMath.TExPI, TEx<bool>>;
 using ExVTP = System.Func<Danmaku.ITExVelocity, TEx<float>, DMath.TExPI, DMath.RTExV2, TEx<UnityEngine.Vector2>>;
 using ExLVTP = System.Func<Danmaku.ITExVelocity, RTEx<float>, RTEx<float>, DMath.TExPI, DMath.RTExV2, TEx<UnityEngine.Vector2>>;
 using ExGCXF = System.Func<DMath.TExGCX, TEx>;
+using ExSBF = System.Func<Danmaku.RTExSB, TEx<float>>;
 using ExSBV2 = System.Func<Danmaku.RTExSB, TEx<UnityEngine.Vector2>>;
 using ExSBCF = System.Func<Danmaku.TExSBC, TEx<int>, DMath.TExPI, TEx>;
 using ExSBPred = System.Func<Danmaku.TExSBC, TEx<int>, DMath.TExPI, TEx<bool>>;
@@ -107,6 +108,8 @@ public static class Compilers {
     public static FXY FXY(ExFXY ex) => CompileDelegateLambda<FXY, TEx<float>>(ex);
     [Fallthrough] [ExprCompiler]
     public static BPY BPY(ExBPY ex) => CompileDelegateLambda<BPY, TExPI>(ex);
+    [Fallthrough] [ExprCompiler]
+    public static SBF SBF(ExSBF ex) => CompileDelegateLambda<SBF, RTExSB>(ex);
 
     [Fallthrough] [ExprCompiler]
     public static LBPY LBPY(ExBPY ex) => CompileDelegateLambda<LBPY, TExPI, TEx<float>>((pi, lt) => {
@@ -161,6 +164,8 @@ public static class Compilers {
     [Fallthrough] [ExprCompiler]
     public static GCXU<BPY> GCXU(ExBPY f) => GCXU11(BPY, f);
     [Fallthrough] [ExprCompiler]
+    public static GCXU<FnLaserV4> GCXULaser(ExTP4 f) => GCXU11(FnLaserFloat, f);
+    [Fallthrough] [ExprCompiler]
     public static GCXU<Pred> GCXU(ExPred f) => GCXU11(Pred, f);
     [Fallthrough] [ExprCompiler]
     public static GCXU<TP> GCXU(ExTP f) => GCXU11(TP, f);
@@ -179,6 +184,15 @@ public static class Compilers {
     [Fallthrough] [ExprCompiler]
     public static GCXU<LVTP> LGCXU(ExVTP f) => Automatic(_LVTP, f, aliases => VTPRepo.LetDecl(aliases, f));
     
+    [Fallthrough] [ExprCompiler]
+    public static FnLaserV4 FnLaserFloat(ExTP4 ex) {
+        var texpi = new TExPI();
+        ReflectEx.aliased_laser = new TEx<CurvedTileRenderLaser>();
+        var result = Ex.Lambda<FnLaserV4>(ex(texpi).Flatten(), texpi, ReflectEx.aliased_laser).Compile();
+        ReflectEx.aliased_laser = null;
+        return result;
+    }
+
     private class GCXCompileResolver : ReflectEx.ICompileReferenceResolver {
         public readonly List<(Reflector.ExType, string)> bound = new List<(Reflector.ExType, string)>();
         public bool TryResolve<T>(string alias, out Ex ex) {

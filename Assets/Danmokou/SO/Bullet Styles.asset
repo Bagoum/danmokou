@@ -56,6 +56,12 @@ MonoBehaviour:
     - name: triangle
       prefab: {fileID: 2677688450528804024, guid: cf92e50b2ce36444f84d4ea597a62b87,
         type: 3}
+    - name: needle
+      prefab: {fileID: 4623879621751819397, guid: 4b5562e473507264eb116a0beae18f74,
+        type: 3}
+    - name: reimuamulet
+      prefab: {fileID: 4623879621751819397, guid: c4c0ea3703e986f4b85f4ddaa69724a7,
+        type: 3}
   - groupTitle: Large
     prefabs:
     - name: scircle
@@ -105,13 +111,8 @@ MonoBehaviour:
     - name: zonelaser
       prefab: {fileID: 3320499245639640377, guid: 5cafb0e64c3cb9d45a4c09c03180561d,
         type: 3}
-  - groupTitle: Player
-    prefabs:
-    - name: p-gdlaser
-      prefab: {fileID: 1995968066850847971, guid: c991083c29e215f4eb64f2281a91d3a4,
-        type: 3}
-    - name: p-gpather
-      prefab: {fileID: 478474144130695315, guid: f9ba25b1b03f1894f92345c24abf4ca8,
+    - name: arrowlaser
+      prefab: {fileID: 2981383910436147057, guid: 6fea53219b06bf2468edb27ae14664f8,
         type: 3}
   - groupTitle: Cull
     prefabs:

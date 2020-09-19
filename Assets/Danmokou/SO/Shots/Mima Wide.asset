@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4fa22e423a3842e1b90ce62d0372178a, type: 3}
+  m_Name: Mima Wide
+  m_EditorClassIdentifier: 
+  key: mima-wide
+  title: Falling Stars Escaping Death
+  description: A shot developed through long study of Tycho Brahe's planetary measurements.<br>A
+    wider fire shape allows covering more of the screen at once.<br>When focused,
+    the fire shape narrows somewhat.
+  type: Wide
+  prefab: {fileID: 4866589885780801546, guid: 7942b3579c8b58a4889a5d3faee370ac, type: 3}
+  bomb: 0
+  defaultPower: 1000
+  playerChild: 1

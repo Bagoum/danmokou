@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9a9b8d53cd57478a8b5a061ca9a9c2e6, type: 3}
+  m_Name: Item References
+  m_EditorClassIdentifier: 
+  lifeItem: {fileID: 359774600689030096, guid: 434a5ca1d0d99c6439e6da4390e24d0b, type: 3}
+  valueItem: {fileID: 359774600689030096, guid: dd21390ee5ef15d4e9cd7d412de540ac,
+    type: 3}
+  pointppItem: {fileID: 359774600689030096, guid: 89bc37c16393dd24fb0ea699aba30d64,
+    type: 3}
+  powerItem: {fileID: 359774600689030096, guid: 3ccbef6bcff3c804184f4debe805e01b,
+    type: 3}
+  fullPowerItem: {fileID: 359774600689030096, guid: 699d1a5d5d9934949adfd4e28a984b03,
+    type: 3}
+  oneUpItem: {fileID: 359774600689030096, guid: bfae8bbfd636ae8419b213bb45fdbfa3,
+    type: 3}
+  gemItem: {fileID: 359774600689030096, guid: 4bd6ff5d55cb59349bdd43d93da04150, type: 3}
+  powerupShift: {fileID: 359774600689030096, guid: 36c6996c6f5531c4fa22788b1e8713c9,
+    type: 3}
+  powerupD: {fileID: 359774600689030096, guid: 58b6ad58bfee6ec418cbc5d681827e64, type: 3}
+  powerupM: {fileID: 359774600689030096, guid: 6aa6c57ab9b2eac4c97711e492025613, type: 3}
+  powerupK: {fileID: 359774600689030096, guid: e444d26f0367a9f4db973f24121f3bb1, type: 3}

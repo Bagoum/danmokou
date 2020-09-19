@@ -19,6 +19,16 @@ public class GenCtx : IDisposable {
         if (key == "pi") return pi;
         return fs.GetOrThrow(key, "GCX float values");
     }
+    public bool TryGetFloat(string key, out float f) {
+        if (key == "i") {
+            f = i;
+            return true;
+        } else if (key == "pi") {
+            f = pi;
+            return true;
+        }
+        return fs.TryGetValue(key, out f);
+    }
 
     public IReadOnlyDictionary<string, Vector2> V2s => v2s;
     public readonly Dictionary<string, Vector3> v3s = new Dictionary<string, Vector3>();

@@ -17,6 +17,38 @@ public class DataStructures {
     }
 
     [Test]
+    public void N2Triangle() {
+        var arr = new[] {
+            new[] {0},
+            new[] {10, 11, 12},
+            new[] {20, 21, 22, 23, 24}
+        };
+        var n2 = new N2Triangle<int>(arr);
+        Assert.AreEqual(n2[0][0], 0);
+        Assert.Throws<IndexOutOfRangeException>(() => {
+            var x = n2[0][1];
+        });
+        Assert.AreEqual(n2[1][0], 11);
+        Assert.AreEqual(n2[1][-1], 10);
+        Assert.AreEqual(n2[1][1], 12);
+        Assert.Throws<IndexOutOfRangeException>(() => {
+            var x = n2[1][-2];
+        });
+        Assert.AreEqual(n2[2][0], 22);
+        Assert.AreEqual(n2[2][-2], 20);
+        Assert.AreEqual(n2[2][1], 23);
+        Assert.Throws<IndexOutOfRangeException>(() => {
+            var x = n2[2][3];
+        });
+        arr = new[] {
+            new[] {0},
+            new[] {10, 11, 12, 13},
+            new[] {20, 21, 22, 23, 24}
+        };
+        Assert.Throws<ArgumentException>(() => new N2Triangle<int>(arr));
+    }
+
+    [Test]
     public void CircleList() {
         var cl = new CircularList<int>(4);
         cl.Add(10);

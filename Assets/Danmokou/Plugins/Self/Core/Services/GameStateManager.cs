@@ -26,7 +26,6 @@ public static class GSHelpers {
 public static class GameStateManager {
     private static GameState state = GameState.RUN;
     [CanBeNull] private static Action stateUpdate;
-    private static float prePauseTimeScale = 1f;
 
 
     public static void CheckForStateUpdates() {
@@ -63,7 +62,6 @@ public static class GameStateManager {
     }
 
     private static void _PauseType(GameState gs) {
-        prePauseTimeScale = Time.timeScale;
         Time.timeScale = 0f;
         __SetAndRaise(gs);
     }
@@ -73,16 +71,20 @@ public static class GameStateManager {
     private static void _Death() => _PauseType(GameState.DEATH);
     private static void _Pause() => _PauseType(GameState.PAUSE);
     private static void _Unpause() {
-        Time.timeScale = prePauseTimeScale;
+        Time.timeScale = 1f;
         __SetAndRaise(GameState.RUN);
     }
     private static void _SetLoading(bool on) {
-        __SetAndRaise(on ? GameState.LOADING : GameState.RUN);
+        if (on) _PauseType(GameState.LOADING);
+        else _Unpause();
     }
 
     public static void ForceUnpause() => stateUpdate = _Unpause;
 
-    public static void SetLoading(bool on) => stateUpdate = () => _SetLoading(on);
+    public static void SetLoading(bool on, [CanBeNull] Action done) => stateUpdate = () => {
+        _SetLoading(on);
+        done?.Invoke();
+    };
 
     public static void HandlePlayerDeath() {
         stateUpdate = _Death;

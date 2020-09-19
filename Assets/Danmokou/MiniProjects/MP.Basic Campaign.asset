@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4f64d4a00c194018afbe5db3323da211, type: 3}
   m_Name: MP.Basic Campaign
   m_EditorClassIdentifier: 
+  startLives: 0
   key: mp.basic
   shortTitle: MiniProject
   players:

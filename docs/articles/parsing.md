@@ -57,20 +57,6 @@ public RetargetUSM(StateMachine state, string[] targets);
 	noop
 ```
 
-- If the first argument to a constructor is `StateMachine[]`, then this is provided by parsing an *array* after all the rest of the arguments. For example:
-
-```
-public GTRepeat(StateMachine[] target, GenCtxProperties<StateMachine> props);
-
-gtr {
-	wt	60 _
-	wait-child
-} {
-	noop
-	noop
-}
-```
-
 - If the first argument to a constructor is `List<StateMachine>`, then this is provided by parsing as many SMs as possible following parenting rules after all the rest of the arguments. For example:
 
 ```

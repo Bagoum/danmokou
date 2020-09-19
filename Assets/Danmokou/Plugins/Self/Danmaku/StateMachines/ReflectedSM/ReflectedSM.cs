@@ -126,23 +126,22 @@ public static class SMReflection {
     };
 
     /// <summary>
-    /// Flip the screen by rotating the camera around it.
+    /// Rotate the camera around the screen's X-axis.
+    /// Note: this returns immediately.
     /// </summary>
-    /// <param name="xy">X, Y, -X, or -Y</param>
-    /// <param name="easer">Easing function</param>
-    /// <param name="time">Time over which rotation occurs</param>
-    /// <returns></returns>
-    public static TaskPattern Seija(string xy, string easer, float time) {
-        char xyc = xy[0];
-        bool reverse = false;
-        if (xyc == '-') {
-            reverse = true;
-            xyc = xy[1];
-        }
-        var method = xyc == 'x' ? SeijaMethod.X : SeijaMethod.Y;
+    public static TaskPattern SeijaX(float degrees, float time) {
         return smh => {
-            if (method == SeijaMethod.X) SeijaCamera.FlipX(easer, time, reverse);
-            else if (method == SeijaMethod.Y) SeijaCamera.FlipY(easer, time, reverse);
+            SeijaCamera.AddXRotation(degrees, time);
+            return Task.CompletedTask;
+        };
+    }
+    /// <summary>
+    /// Rotate the camera around the screen's Y-axis.
+    /// Note: this returns immediately.
+    /// </summary>
+    public static TaskPattern SeijaY(float degrees, float time) {
+        return smh => {
+            SeijaCamera.AddYRotation(degrees, time);
             return Task.CompletedTask;
         };
     }
@@ -298,6 +297,12 @@ public static class SMReflection {
             return Task.CompletedTask;
         };
 
+    //generics aren't generated correctly in il2cpp
+    public static TaskPattern ControlBullet(Pred persist, BulletManager.StyleSelector style, SBCFc control) => smh => {
+        BulletManager.ControlPool(persist, style, control, smh.cT);
+        return Task.CompletedTask;
+    };
+
     /// <summary>
     /// Apply a controller function to a pool of entities.
     /// </summary>
@@ -444,23 +449,23 @@ public static class SMReflection {
     /// Create a global slowdown effect.
     /// </summary>
     public static TaskPattern Slowdown(GCXF<float> ratio) => smh => {
-        ETime.SlowdownBy(ratio(smh.GCX));
+        ETime.Slowdown.CreateMultiplier(ratio(smh.GCX));
         return Task.CompletedTask;
     };
     /// <summary>
     /// Create a global slowdown effect for a limited amount of time.
     /// </summary>
     public static TaskPattern SlowdownFor(GCXF<float> time, GCXF<float> ratio) => async smh => {
-        ETime.SlowdownBy(ratio(smh.GCX));
+        var t = ETime.Slowdown.CreateMultiplier(ratio(smh.GCX));
         await WaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, time(smh.GCX), false);
-        ETime.SlowdownReset();
+        t.TryRevoke();
     };
 
     /// <summary>
     /// Reset the global slowdown to 1.
     /// </summary>
     public static TaskPattern SlowdownReset() => smh => {
-        ETime.SlowdownReset();
+        ETime.Slowdown.RevokeAll(MultiMultiplier.Priority.CLEAR_PHASE);
         return Task.CompletedTask;
     };
     
@@ -495,55 +500,58 @@ public static class SMReflection {
         async smh => {
             var o = smh.Exec as FireOption ??
                     throw new Exception("Cannot use fire command on a BehaviorEntity that is not an Option");
-            if (!PlayerInput.IsFiring) await WaitingUtils.WaitForUnchecked(o, smh.cT, () => PlayerInput.IsFiring);
+            if (!o.Player.IsFiring) await WaitingUtils.WaitForUnchecked(o, smh.cT, () => o.Player.IsFiring);
             smh.ThrowIfCancelled();
-            var (firer, onCancel, inputReq) = PlayerInput.IsFocus ?  
-                (focusFire, focusCancel, (Func<bool>) (() => PlayerInput.IsFocus)) :
-                (freeFire, freeCancel, (Func<bool>) (() => !PlayerInput.IsFocus));
+            var (firer, onCancel, inputReq) = o.Player.IsFocus ?  
+                (focusFire, focusCancel, (Func<bool>) (() => o.Player.IsFocus)) :
+                (freeFire, freeCancel, (Func<bool>) (() => !o.Player.IsFocus));
             var fireCTS = new Cancellable();
             var joint_smh = smh.CreateJointCancellee(fireCTS, out _);
             //order is important to ensure cancellation works on the correct frame
-            var waiter = WaitingUtils.WaitForUnchecked(o, smh.cT, () => !PlayerInput.IsFiring || !inputReq());
+            var waiter = WaitingUtils.WaitForUnchecked(o, smh.cT, () => !o.Player.IsFiring || !inputReq());
             _ = firer.Start(joint_smh);
             await waiter;
             fireCTS.Cancel();
             smh.ThrowIfCancelled();
-            if (PlayerInput.AllowPlayerInput) _ = onCancel.Start(smh);
+            if (o.Player.AllowPlayerInput) _ = onCancel.Start(smh);
         };
     public static TaskPattern FireSame(StateMachine fire, StateMachine cancel) =>
         async smh => {
             var o = smh.Exec as FireOption ??
                     throw new Exception("Cannot use fire command on a BehaviorEntity that is not an Option");
-            if (!PlayerInput.IsFiring) await WaitingUtils.WaitForUnchecked(o, smh.cT, () => PlayerInput.IsFiring);
+            if (!o.Player.IsFiring) await WaitingUtils.WaitForUnchecked(o, smh.cT, () => o.Player.IsFiring);
             smh.ThrowIfCancelled();
             var fireCTS = new Cancellable();
             var joint_smh = smh.CreateJointCancellee(fireCTS, out _);
             //order is important to ensure cancellation works on the correct frame
-            var waiter = WaitingUtils.WaitForUnchecked(o, smh.cT, () => !PlayerInput.IsFiring);
+            var waiter = WaitingUtils.WaitForUnchecked(o, smh.cT, () => !o.Player.IsFiring);
             _ = fire.Start(joint_smh);
             await waiter;
             fireCTS.Cancel();
             smh.ThrowIfCancelled();
-            if (PlayerInput.AllowPlayerInput) _ = cancel.Start(smh);
+            if (o.Player.AllowPlayerInput) _ = cancel.Start(smh);
         };
 
-    public static TaskPattern FireContinued(StateMachine fireFree, StateMachine fireFocus) => async smh => {
-        var o = smh.Exec as FireOption ??
-                throw new Exception("Cannot use fire command on a BehaviorEntity that is not an Option");
-        if (!PlayerInput.IsFiring) await WaitingUtils.WaitForUnchecked(o, smh.cT, () => PlayerInput.IsFiring);
-        smh.ThrowIfCancelled();
-        var fireCTS = new Cancellable();
-        var joint_smh = smh.CreateJointCancellee(fireCTS, out _);
-        joint_smh.Exec = o.freeFirer;
-        //order is important to ensure cancellation works on the correct frame
-        var waiter = WaitingUtils.WaitForUnchecked(o, smh.cT, () => !PlayerInput.IsFiring);
-        _ = fireFree.Start(joint_smh);
-        joint_smh.Exec = o.focusFirer;
-        _ = fireFocus.Start(joint_smh);
-        await waiter;
-        fireCTS.Cancel();
-        smh.ThrowIfCancelled();
+    #endregion
+    
+    #region Utility
+
+    /// <summary>
+    /// Select one of several state machines depending on which player is currently in use.
+    /// Disambiguates based on the "key" property of the PlayerConfig.
+    /// </summary>
+    public static TaskPattern PlayerVariant((string key, StateMachine exec)[] options) => smh => {
+        if (GameManagement.campaign.Player == null)
+            throw new Exception("Cannot use PlayerVariant state machine when there is no player");
+        for (int ii = 0; ii < options.Length; ++ii) {
+            if (GameManagement.campaign.Player.key == options[ii].key) {
+                return options[ii].exec.Start(smh);
+            }
+        }
+        throw new Exception("Could not find a matching player variant option for player " +
+            $"{GameManagement.campaign.Player.key}");
     };
+
 
     #endregion
 }

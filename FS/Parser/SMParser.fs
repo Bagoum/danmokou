@@ -6,6 +6,24 @@ open FParsec
 open System
 open FParser.ParserCommon
 
+//This function is copied from FParser internals. By removing the optimized-closure check,
+//this avoids an error with il2cpp type depth.
+let (>>==) (p: Parser<'a,'u>) (f: 'a -> Parser<'b,'u>) =
+    fun stream ->
+        let reply1 = p stream
+        if reply1.Status = Ok then
+            let p2 = f reply1.Result
+            if isNull reply1.Error then
+                p2 stream
+            else
+                let stateTag1 = stream.StateTag
+                let mutable reply2 = p2 stream
+                if stateTag1 = stream.StateTag then
+                    reply2.Error <- mergeErrors reply2.Error reply1.Error
+                reply2
+        else
+            Reply(reply1.Status, reply1.Error)
+
 
 let COMMENT = '#'
 let PROP_MARKER = "<!>"
@@ -149,17 +167,6 @@ and internal State = {
    macros: Map<string, Macro>
 }
 
-type internal LPUF = 
-    static member Map f ((x,y): LParseUnit) = (f x, y)
-    static member IMap f ((x,_): LParseUnit) = f x
-    static member Remap f ls = List.map (LPUF.Map f) ls
-    static member RemapErr f ls = List.map (fun (x,y) -> match f x with
-                                                         | OK v -> OK (v, y)
-                                                         | Failed errs -> Failed errs) ls
-    static member RemapLErr (f: ParseUnit -> Errorable<'T list>) ls =
-        ls |> List.map (fun (x, y) -> (f x).fmap(fun x -> x |> List.map (fun z -> (z, y)))) |> Errorable<_>.AccConcat
-    
-
 let private locate pu =
     getPosition |>> (fun x -> (pu, x))
 
@@ -205,12 +212,12 @@ and private macroPrmDecl = choice [
 and private mainParser = choice [
         pstring "///" .>> skipMany1 anyChar >>% End >>= locate
         pstring LAMBDA_MACRO_PRM >>% LambdaMacroParam >>= locate
-        pstring MACRO_OL_OPEN >>. ilspaces >>. simpleString1 .>> ilspaces .>>. wordsInline .>> cnewln >>= locate >>= (fun ((n, words), loc) ->
+        pstring MACRO_OL_OPEN >>. ilspaces >>. simpleString1 .>> ilspaces .>>. wordsInline .>> cnewln >>== locate >>= (fun ((n, words), loc) ->
             let m = Macro.Create n [] <| (Words words, loc)
             updateUserState (fun (state: State) -> { state with macros = state.macros.Add(n, m) }) >>% (MacroDef n, loc)
         )
         betweenStr MACRO_OPEN MACRO_CLOSE (spaces >>. simpleString1 .>>. (_paren macroPrmDecl) .>> spaces
-                                         .>>. wordsTopLevel) .>> cnewln >>= locate >>= (fun (((n, prms), words), loc) ->
+                                         .>>. wordsTopLevel) .>> cnewln >>== locate >>= (fun (((n, prms), words), loc) ->
             let m = Macro.Create n prms <| (Words words, loc)
             updateUserState (fun state -> { state with macros = state.macros.Add(n, m) }) >>% (MacroDef n, loc))
         parenArgs |>> Paren >>= locate
@@ -295,12 +302,6 @@ let internal _SMParser s =
                             { macros = Map.empty } "StateMachineLexer" s) with
                  | Success (result, _, _) -> OK result
                  | Failure (errStr, _, _) -> Failed [errStr]
-        
-//Avoids a nesting error in il2cpp
-let typed_partialZip (ls: (string list * Position) list) =
-    let ls = List.map (fun (i, j) -> (i, firstSome j (List.length i))) ls
-    ls |> List.map fst |> List.concat, ls |> List.map snd |> List.concat
-
           
 let SMParser s = (_SMParser s).bind(sort >> flatten).fmap(Array.ofList)
 let remakeSMParser s = SMParser s |> Errorable<_>.Fmap (String.concat " ")

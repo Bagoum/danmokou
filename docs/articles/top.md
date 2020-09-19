@@ -1,6 +1,6 @@
 # What is Danmokou?
 
-Welcome to the website for **Danmokou** (DMK), a free and open source bullet hell engine built in Unity. 
+Welcome to the website for **Danmokou** (DMK), a free and open source bullet hell engine built in Unity. See the [interactive demo](https://dmk.bagoum.com/demo)!
 
 DMK allows you to efficiently create games that look something like this:
 

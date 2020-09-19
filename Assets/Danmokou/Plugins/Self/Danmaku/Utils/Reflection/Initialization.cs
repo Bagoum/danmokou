@@ -309,5 +309,14 @@ public static partial class Reflector {
             ("none", ReflCtx.Strictness.NONE),
             ("comma", ReflCtx.Strictness.COMMAS)
         });
+        CEnum<Palette.Shade>(new[] {
+            ('w', Palette.Shade.WHITE),
+            ('h', Palette.Shade.HIGHLIGHT),
+            ('l', Palette.Shade.LIGHT),
+            ('p', Palette.Shade.PURE),
+            ('d', Palette.Shade.DARK),
+            ('o', Palette.Shade.OUTLINE),
+            ('b', Palette.Shade.BLACK)
+        });
     }
 }

@@ -29,7 +29,7 @@ public static class AssertRegex {
 public static class Scene1 {
     //Note: this is run before every test
     private const string baseScene = "TestMainMenu";
-    private const string baseScenePath = "Scenes/Testing/TestMainMenu";
+    private const string baseScenePath = "Danmokou/Scenes/Testing/TestMainMenu";
     [SetUp]
     public static void Setup() {
         PatternSM.PHASE_BUFFER = false;
@@ -435,15 +435,15 @@ public static class Scene1 {
             TestHarness.RunBehaviorScript("Global Slow", "mokou");
             var red = BM.TPool("strip-red/w");
             TestHarness.Check(0, () => {
-                AreEqual(ETime.Slowdown, 0.25f);
+                AreEqual(ETime.Slowdown.Value, 0.25f);
                 AreEqual(1, red.Count);
             });
             TestHarness.Check(1, () => {
-                AreEqual(ETime.Slowdown, 0.25f);
+                AreEqual(ETime.Slowdown.Value, 0.25f);
                 AreEqual(2, red.Count);
             });
             TestHarness.Check(2, () => {
-                AreEqual(ETime.Slowdown, 1f);
+                AreEqual(ETime.Slowdown.Value, 1f);
                 AreEqual(3, red.Count);
             });
         });
@@ -788,8 +788,8 @@ public static class Scene1 {
     public static IEnumerator TestPracticeSelector1() {
         bool cb = false;
         //Running Static Analysis 1
-        new GameRequest(() => cb = true, 
-            boss: new BossPracticeRequest(PBosses[0], new SMAnalysis.Phase(null, Enums.PhaseType.NONSPELL, 3, "_"))).Run();
+        new GameRequest(() => cb = true, new DifficultySettings(FixedDifficulty.Abex),
+            boss: new BossPracticeRequest(AllPBosses[0], new SMAnalysis.Phase(null, Enums.PhaseType.NONSPELL, 3, "_"))).Run();
         IsFalse(cb);
         yield return WaitForLoad();
         for (int ii = 0; ii < 10; ++ii) yield return null;
@@ -805,15 +805,15 @@ public static class Scene1 {
     }
     [UnityTest]
     public static IEnumerator TestDifficultySelect() {
-        foreach (var dff in Enum.GetValues(typeof(DifficultySet)).Cast<DifficultySet>()) {
+        foreach (var dff in Enum.GetValues(typeof(FixedDifficulty)).Cast<FixedDifficulty>()) {
             //Running Difficulty Display Test
             DebugFloat.values.Clear();
-            new GameRequest(null, dff,
-                boss: new BossPracticeRequest(PBosses[1])).Run();
+            new GameRequest(null, new DifficultySettings(dff),
+                boss: new BossPracticeRequest(AllPBosses[1])).Run();
             yield return WaitForLoad();
             AreEqual(campaign.mode, CampaignMode.CARD_PRACTICE);
             AreEqual(GameManagement.Difficulty, dff);
-            AreEqual(GameManagement.RelativeDifficulty(DifficultySet.Hard), DebugFloat.values[0]);
+            AreEqual(GameManagement.Difficulty.Value / FixedDifficulty.Hard.Value(), DebugFloat.values[0]);
             SceneManager.LoadScene(baseScene);
             while (TestHarness.Running) yield return null;
         }
@@ -824,8 +824,9 @@ public static class Scene1 {
         SaveData.r.TutorialDone = true;
         AreEqual(SceneManager.GetActiveScene().name, baseScene);
         bool campaignComplete = false;
-        GameRequest.RunCampaign(MainCampaign, () => campaignComplete = true, DifficultySet.Abex, null, null);
-        AreEqual(GameManagement.Difficulty, DifficultySet.Abex);
+        GameRequest.RunCampaign(MainCampaign, () => campaignComplete = true, 
+            new DifficultySettings(FixedDifficulty.Abex), null, null, Subshot.TYPE_D);
+        AreEqual(GameManagement.Difficulty, FixedDifficulty.Abex);
         IsFalse(campaignComplete);
         yield return WaitForLoad();
         AreEqual(SceneManager.GetActiveScene().name, "TestStage1");
@@ -854,8 +855,8 @@ public static class Scene1 {
     public static IEnumerator TestCampaignQuit() {
         SaveData.r.TutorialDone = true;
         AreEqual(SceneManager.GetActiveScene().name, baseScene);
-        GameRequest.RunCampaign(MainCampaign, null, DifficultySet.Abex, null, null);
-        AreEqual(GameManagement.Difficulty, DifficultySet.Abex);
+        GameRequest.RunCampaign(MainCampaign, null, new DifficultySettings(FixedDifficulty.Abex), null, null, Subshot.TYPE_D);
+        AreEqual(GameManagement.Difficulty, FixedDifficulty.Abex);
         yield return WaitForLoad();
         AreEqual(SceneManager.GetActiveScene().name, "TestStage1");
         GameManagement.GoToMainMenu();

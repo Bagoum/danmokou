@@ -15,6 +15,9 @@ namespace Danmaku {
 /// and providing standardized interfaces for summoning all bullets.
 /// </summary>
 public partial class BulletManager : RegularUpdater {
+    private const float PLAYER_SB_OPACITY_MUL = 0.5f;
+    private const float PLAYER_SB_SCALEIN_MUL = 0.4f;
+    private const float PLAYER_FB_OPACITY_MUL = 0.45f;
     private readonly struct CollidableInfo {
         public readonly GenericColliderInfo.ColliderType colliderType;
         // For circle approximation
@@ -53,7 +56,7 @@ public partial class BulletManager : RegularUpdater {
         private readonly DeferredTextureConstruction deferredRI;
         private bool riLoaded;
         private MeshGenerator.RenderInfo ri;
-        public readonly SOCircle collisionTarget;
+        public readonly SOCircleHitbox collisionTarget;
         public readonly int damageAgainstPlayer;
         public readonly int againstEnemyCooldown;
         public readonly bool destructible;
@@ -62,6 +65,8 @@ public partial class BulletManager : RegularUpdater {
         public readonly ushort grazeEveryFrames;
         private readonly float DEFAULT_CULL_RAD;
         public float CULL_RAD;
+        public bool Recolorizable => deferredRI.recolorizable;
+        public (TP4 black, TP4 white)? recolor;
 
         public BulletInCode Copy(string newName) {
             GetOrLoadRI();
@@ -71,9 +76,9 @@ public partial class BulletManager : RegularUpdater {
             bic.ri = nri;
             return bic;
         }
-
         public void SetPlayer() {
-            ri.material.EnableKeyword("FT_PLAYER_OPACITY");
+            ri.material.SetFloat(PropConsts.scaleInT, PLAYER_SB_SCALEIN_MUL * ri.material.GetFloat(PropConsts.scaleInT));
+            ri.material.SetFloat(PropConsts.SharedOpacityMul, PLAYER_SB_OPACITY_MUL);
         }
 
         public MeshGenerator.RenderInfo GetOrLoadRI() {
@@ -98,12 +103,12 @@ public partial class BulletManager : RegularUpdater {
             //Minus 1 to allow for zero offset
             grazeEveryFrames = (ushort)(sbes.grazeEveryFrames - 1);
             DEFAULT_CULL_RAD = CULL_RAD = sbes.screenCullRadius;
+            recolor = null;
         }
 
-        public void ResetCullRad() => CULL_RAD = DEFAULT_CULL_RAD;
-
         public void ResetMetadata() {
-            ResetCullRad();
+            CULL_RAD = DEFAULT_CULL_RAD;
+            recolor = null;
         }
     }
     [Serializable]
@@ -112,28 +117,11 @@ public partial class BulletManager : RegularUpdater {
         public ColorMap gradient;
     }
     public Material simpleBulletMaterial;
-    public SOCircle bulletCollisionTarget;
-    public static SOCircle PlayerTarget => main.bulletCollisionTarget;
+    public SOCircleHitbox bulletCollisionTarget;
+    public static SOCircleHitbox PlayerTarget => main.bulletCollisionTarget;
     public SOPrefabs bulletStylesList;
     public Palette[] basicGradientPalettes;
-    private readonly struct ComplexBullet {
-        private readonly GameObject prefab;
-        public readonly Material material;
-
-        public ComplexBullet(GameObject prefab, Material mat) {
-            this.prefab = prefab;
-            material = mat;
-        }
-    }
-    /*
-    /// <summary>
-    /// Complex bullets that have no handling outside of generic Bullet.Instantiate.
-    /// </summary>
-    private static readonly Dictionary<string, ComplexBullet> bulletStyles = new Dictionary<string, ComplexBullet>(); 
-    private static void AddComplexStyle(string key, ComplexBullet cb) {
-        bulletStyles[key] = cb;
-        nonSimplePoolNames.Add(key);
-    }*/
+    
     /// <summary>
     /// Complex bullets (lasers, pathers).
     /// </summary>
@@ -144,10 +132,6 @@ public partial class BulletManager : RegularUpdater {
         nonSimplePoolNames.Add(key);
     }
 
-    public static bool CheckOrCopyFancy(string pool) {
-        return bulletStyles.ContainsKey(pool);
-        //return bulletStyles.ContainsKey(pool) || faBulletStyles.ContainsKey(pool);
-    }
     private static readonly HashSet<string> nonSimplePoolNames = new HashSet<string>();
     
     /// <summary>
@@ -166,12 +150,12 @@ public partial class BulletManager : RegularUpdater {
     }
     private static readonly HashSet<string> simplePoolNames = new HashSet<string>();
 
-    private static readonly List<SimpleBulletCollection> playerStyles = new List<SimpleBulletCollection>(50);
     /// <summary>
     /// Currently activated bullet styles. All styles are deactivated on scene change, and
     /// activated when they are used for the first time.
     /// </summary>
     private static readonly List<SimpleBulletCollection> activeNpc = new List<SimpleBulletCollection>(350);
+    private static readonly List<SimpleBulletCollection> activePlayer = new List<SimpleBulletCollection>(50);
     private static readonly List<SimpleBulletCollection> activeCEmpty = new List<SimpleBulletCollection>(8); //Require priority
     private static readonly List<SimpleBulletCollection> activeCNpc = new List<SimpleBulletCollection>(8); //Simple only: Create alt-name pools for varying controls
     private static BulletManager main;
@@ -190,13 +174,16 @@ public partial class BulletManager : RegularUpdater {
         private readonly SimpleBulletEmptyScript sbes;
         private readonly int renderPriorityOffset;
         private readonly Func<Sprite> SpriteInvoke;
+        public readonly bool recolorizable;
 
-        public DeferredTextureConstruction(SimpleBulletEmptyScript sbes, Material mat, int renderPriorityOffset, Func<Sprite> spriteCreator) {
+        public DeferredTextureConstruction(SimpleBulletEmptyScript sbes, Material mat, int renderPriorityOffset, 
+            Func<Sprite> spriteCreator, bool recolorizable) {
             this.mat = mat;
             this.sbes = sbes;
             this.isFrameAnim = sbes.frameAnimInfo.sprite0 != null && sbes.frameAnimInfo.numFrames > 0;
             this.renderPriorityOffset = renderPriorityOffset;
             this.SpriteInvoke = spriteCreator;
+            this.recolorizable = recolorizable;
         }
         public MeshGenerator.RenderInfo CreateDeferredTexture() {
             Sprite sprite = SpriteInvoke();
@@ -204,6 +191,7 @@ public partial class BulletManager : RegularUpdater {
                 isFrameAnim ? sbes.frameAnimInfo.sprite0 : sprite, 
                 sbes.renderPriority + renderPriorityOffset);
             sbes.displacement.SetOnMaterial(ri.material);
+            if (recolorizable) ri.material.EnableKeyword("FT_RECOLORIZE");
             if (isFrameAnim) {
                 ri.material.EnableKeyword("FT_FRAME_ANIM");
                 ri.material.SetFloat(PropConsts.frameT, sbes.frameAnimInfo.framesPerSecond);
@@ -259,95 +247,86 @@ public partial class BulletManager : RegularUpdater {
                 var sbes = x.prefab.GetComponent<SimpleBulletEmptyScript>();
                 if (sbes != null) {
                     var cc = x.prefab.GetComponent<GenericColliderInfo>();
-                    void Create(string cname, int renderPriorityAdd, Func<Sprite> sprite) {
-                        BulletInCode bc = new BulletInCode(cname, new DeferredTextureConstruction(sbes, simpleBulletMaterial, renderPriorityAdd, sprite), cc, sbes);
-                        var targetList = (isPlayerStyle ? playerStyles : activeNpc);
+                    void Create(BulletInCode bc) {
+                        var targetList = (isPlayerStyle ? activePlayer : activeNpc);
                         if (isPlayerStyle) {
-                            AddSimpleStyle(cname, new SimpleBulletCollection(targetList, bc));
+                            AddSimpleStyle(bc.name, new SimpleBulletCollection(targetList, bc));
                         } else if (sbes.TTL > 0) {
-                            AddSimpleStyle(cname, new DummySBC(targetList, bc, sbes.TTL, sbes.timeRandomization, sbes.rotateRandomization));
+                            AddSimpleStyle(bc.name, new DummySBC(targetList, bc, sbes.TTL, sbes.timeRandomization, sbes.rotateRandomization));
                         } else {
-                            AddSimpleStyle(cname, GetCollectionForColliderType(targetList, bc));
+                            AddSimpleStyle(bc.name, GetCollectionForColliderType(targetList, bc));
                         }
+                    }
+                    void CreateN(string cname, int renderPriorityAdd, Func<Sprite> sprite) {
+                        Create(new BulletInCode(cname, new DeferredTextureConstruction(sbes, 
+                            simpleBulletMaterial, renderPriorityAdd, sprite, false), cc, sbes));
                     }
                     var colors = sbes.colorizing;
                     colors.AssertValidity();
                     Func<Sprite> ColorizeSprite(INamedGradient p, GradientModifier gt) => () => throwaway_gm.Recolor(p.Gradient, gt, sbes.renderMode, sbes.spriteSheet);
                     for (int ii = 0; ii < nPalettes; ++ii) {
+                        void CreateP(string cname, int renderPriorityAdd, Func<Sprite> sprite) {
+                            Create(new BulletInCode(cname, new DeferredTextureConstruction(sbes, 
+                                simpleBulletMaterial, renderPriorityAdd, sprite, 
+                                basicGradientPalettes[ii].recolorizable), cc, sbes));
+                        }
                         foreach (var p in computedPalettes[ii]) {
-                            if (colors.DarkMod.HasValue) Create($"{x.name}-{p.Name}{SUFF_DARK}", ii + 0 * nPalettes, ColorizeSprite(p, colors.DarkMod.Value));
-                            if (colors.Inverted) Create($"{x.name}-{p.Name}{SUFF_INV(in colors)}", ii + 0 * nPalettes, 
+                            if (colors.DarkMod.HasValue) CreateP($"{x.name}-{p.Name}{SUFF_DARK}", ii + 0 * nPalettes, ColorizeSprite(p, colors.DarkMod.Value));
+                            if (colors.Inverted) CreateP($"{x.name}-{p.Name}{SUFF_INV(in colors)}", ii + 0 * nPalettes, 
                                 ColorizeSprite(p, GradientModifier.FULLINV));
-                            if (colors.ColorMod.HasValue) Create($"{x.name}-{p.Name}{SUFF_COLOR}", ii + 1 * nPalettes, ColorizeSprite(p, colors.ColorMod.Value));
-                            if (colors.LightMod.HasValue) Create($"{x.name}-{p.Name}{SUFF_LIGHT}", ii + 2 * nPalettes, ColorizeSprite(p, colors.LightMod.Value));
-                            if (colors.Full) Create($"{x.name}-{p.Name}{SUFF_FULL(in colors)}", ii + 2 * nPalettes, 
+                            if (colors.ColorMod.HasValue) CreateP($"{x.name}-{p.Name}{SUFF_COLOR}", ii + 1 * nPalettes, ColorizeSprite(p, colors.ColorMod.Value));
+                            if (colors.LightMod.HasValue) CreateP($"{x.name}-{p.Name}{SUFF_LIGHT}", ii + 2 * nPalettes, ColorizeSprite(p, colors.LightMod.Value));
+                            if (colors.Full) CreateP($"{x.name}-{p.Name}{SUFF_FULL(in colors)}", ii + 2 * nPalettes, 
                                 ColorizeSprite(p, GradientModifier.FULL));
                             if (!colors.TwoPaletteColorings) break;
                         }
                     }
+                    
                     //Manual color variants
                     int extras_offset = 3 * nPalettes;
                     foreach (var color in sbes.gradients) {
-                        Create($"{x.name}-{color.name}".ToLower(), extras_offset++, () => color.gradient.Recolor(sbes.spriteSheet));
+                        CreateN($"{x.name}-{color.name}".ToLower(), extras_offset++, () => color.gradient.Recolor(sbes.spriteSheet));
                     }
                     foreach (var color in sbes.spriteSpecificGradients) {
                         if (color.gradient != null) {
                             var g = color.gradient;
-                            Create($"{x.name}-{color.color}".ToLower(), extras_offset++, () => g.Recolor(color.sprite));
+                            CreateN($"{x.name}-{color.color}".ToLower(), extras_offset++, () => g.Recolor(color.sprite));
                         } else {
-                            Create($"{x.name}-{color.color}".ToLower(), extras_offset++, () => color.sprite);
+                            CreateN($"{x.name}-{color.color}".ToLower(), extras_offset++, () => color.sprite);
                         }
                     }
                     if (!sbes.colorizing.Any && sbes.gradients.Length == 0 && sbes.spriteSpecificGradients.Length == 0) {
-                        Debug.Log("No sprite recoloring for "+ x.name);
-                        Create(x.name, 0, () => sbes.spriteSheet);
+                        Log.Unity("No sprite recoloring for "+ x.name);
+                        CreateN(x.name, 0, () => sbes.spriteSheet);
                     }
                 } else {
                     var fa = x.prefab.GetComponent<Bullet>();
-                    /*
-                    if (fa == null) {
-                        var bl = x.prefab.GetComponent<Bullet>();
-                        var material = Instantiate(bl.material);
-                        material.renderQueue += bl.renderPriority;
-                        AddComplexStyle(x.name, new ComplexBullet(x.prefab, material));
-                        continue;
-                    }*/
                     var colors = fa.colorizing;
                     colors.AssertValidity();
-                    if (!colors.Any) {
+                    if (!colors.Any && fa.gradients.Length == 0) {
                         //No recoloring. Untested
-                        AddFaBStyle(x.name, new DeferredFramesRecoloring(x.prefab, fa, 0, "", x.name));
+                        AddFaBStyle(x.name, new DeferredFramesRecoloring(x.prefab, fa, 0, "", x.name, null, false));
                         continue; 
                     }
                     Func<Sprite, Sprite> ColorizeSprite(Palette p, GradientModifier gt) => s => throwaway_gm.Recolor(p.Gradient, gt, fa.renderMode, s);
                     for (int ii = 0; ii < nPalettes; ++ii) {
                         var p = basicGradientPalettes[ii];
-                        string variant;
-                        string style;
-                        if (colors.DarkMod.HasValue) {
-                            variant = $"{p.colorName}{SUFF_DARK}";
-                            style = $"{x.name}-{variant}";
-                            AddFaBStyle(style, new DeferredFramesRecoloring(x.prefab, fa, ii + 0 * nPalettes, variant, style, ColorizeSprite(p, colors.DarkMod.Value)));
+                        void CreateF(string suffix, int offset, GradientModifier mod) {
+                            var variant = $"{p.colorName}{suffix}";
+                            var style = $"{x.name}-{variant}";
+                            AddFaBStyle(style, new DeferredFramesRecoloring(x.prefab, fa, ii + offset * nPalettes, 
+                                variant, style, ColorizeSprite(p, mod), p.recolorizable));
                         }
-                        if (colors.Inverted) {
-                            variant = $"{p.colorName}{SUFF_INV(in colors)}";
-                            style = $"{x.name}-{variant}";
-                            AddFaBStyle(style, new DeferredFramesRecoloring(x.prefab, fa, ii + 0 * nPalettes, variant, style, ColorizeSprite(p, GradientModifier.FULLINV)));
-                        }
-                        if (colors.ColorMod.HasValue) {
-                            variant = $"{p.colorName}{SUFF_COLOR}";
-                            style = $"{x.name}-{variant}";
-                            AddFaBStyle(style, new DeferredFramesRecoloring(x.prefab, fa, ii + 1 * nPalettes, variant, style, ColorizeSprite(p, colors.ColorMod.Value)));
-                        }
-                        if (colors.LightMod.HasValue) {
-                            variant = $"{p.colorName}{SUFF_LIGHT}";
-                            style = $"{x.name}-{variant}";
-                            AddFaBStyle(style, new DeferredFramesRecoloring(x.prefab, fa, ii + 2 * nPalettes, variant, style, ColorizeSprite(p, colors.LightMod.Value)));
-                        }
+                        if (colors.DarkMod.HasValue) 
+                            CreateF(SUFF_DARK, 0, colors.DarkMod.Value);
+                        if (colors.Inverted) 
+                            CreateF(SUFF_INV(in colors), 0, GradientModifier.FULLINV);
+                        if (colors.ColorMod.HasValue)
+                            CreateF(SUFF_COLOR, 1, colors.ColorMod.Value);
+                        if (colors.LightMod.HasValue)
+                            CreateF(SUFF_LIGHT, 2, colors.LightMod.Value);
                         if (colors.Full) {
-                            variant = $"{p.colorName}{SUFF_FULL(in colors)}";
-                            style = $"{x.name}-{variant}";
-                            AddFaBStyle(style, new DeferredFramesRecoloring(x.prefab, fa, ii + 2 * nPalettes, variant, style, ColorizeSprite(p, GradientModifier.FULL)));
+                            CreateF(SUFF_FULL(in colors), 2, GradientModifier.FULL);
                         }
                     }
                     //Manual color variants
@@ -355,7 +334,7 @@ public partial class BulletManager : RegularUpdater {
                     foreach (var color in fa.gradients) {
                         string style = $"{x.name}-{color.name}";
                         AddFaBStyle(style, new DeferredFramesRecoloring(x.prefab, fa, extras_offset++, color.name, 
-                            style, color.gradient.Recolor));
+                            style, color.gradient.Recolor, false));
                     }
                     
                 }
@@ -363,6 +342,8 @@ public partial class BulletManager : RegularUpdater {
         }
         Log.Unity($"Created {simpleBulletPools.Count} bullet styles", level: Log.Level.DEBUG3);
     }
+
+    public const int FAB_PLAYER_RENDER_OFFSET = -1000;
     private class DeferredFramesRecoloring {
         private static readonly Dictionary<FrameRecolorConfig, Sprite> frameCache = new Dictionary<FrameRecolorConfig, Sprite>();
         private FrameAnimBullet.Recolor recolor;
@@ -372,18 +353,26 @@ public partial class BulletManager : RegularUpdater {
         private readonly string paletteVariant;
         private readonly int renderPriorityOffset;
         private readonly Bullet b;
+        private readonly bool recolorizable;
 
-        public DeferredFramesRecoloring(GameObject prefab, Bullet b, int renderPriorityOffset, string paletteVariant, string style, [CanBeNull] Func<Sprite, Sprite> creator=null) {
+        public DeferredFramesRecoloring MakePlayerCopy() => new DeferredFramesRecoloring(recolor.prefab, b, 
+            renderPriorityOffset + FAB_PLAYER_RENDER_OFFSET, paletteVariant, $"p-{recolor.style}", creator, recolorizable);
+        
+        public DeferredFramesRecoloring(GameObject prefab, Bullet b, int renderPriorityOffset, string paletteVariant, 
+            string style, [CanBeNull] Func<Sprite, Sprite> creator, bool recolorizable) {
             this.b = b;
-            if (creator == null) { //Don't recolor
-                recolor = new FrameAnimBullet.Recolor(null, prefab, NewMaterial(), style);
-                loaded = true;
-            } else {
-                recolor = new FrameAnimBullet.Recolor(null, prefab, b.material, style);
-            }
             this.renderPriorityOffset = renderPriorityOffset;
             this.paletteVariant = paletteVariant;
             this.creator = creator;
+            this.recolorizable = recolorizable;
+            if (creator == null) { //Don't recolor
+                //Pass style in as a parameter instead of trying to access recolor.style, which is not yet set
+                recolor = new FrameAnimBullet.Recolor(null, prefab, NewMaterial(style), style);
+                loaded = true;
+            } else {
+                //the material will still be reinstantiated in GetOrLoadRecolor
+                recolor = new FrameAnimBullet.Recolor(null, prefab, b.material, style);
+            }
         }
 
         public FrameAnimBullet.Recolor GetOrLoadRecolor() {
@@ -392,24 +381,28 @@ public partial class BulletManager : RegularUpdater {
                 var sprites = new FrameAnimBullet.BulletAnimSprite[frames.Length];
                 for (int si = 0; si < frames.Length; ++si) {
                     sprites[si] = frames[si];
+                    //Use variant and not style since multiple prefabs (styles) may share the same sprites,
+                    // and we want them to be shared in the cache
                     FrameRecolorConfig frc = new FrameRecolorConfig(frames[si].s.name, paletteVariant);
                     if (frameCache.ContainsKey(frc)) sprites[si].s = frameCache[frc];
                     else sprites[si].s = frameCache[frc] = creator(frames[si].s);
                 }
-                recolor = new FrameAnimBullet.Recolor(sprites, recolor.prefab, NewMaterial(), recolor.style);
+                recolor = new FrameAnimBullet.Recolor(sprites, recolor.prefab, NewMaterial(recolor.style), recolor.style);
                 loaded = true;
             }
             return recolor;
         }
 
-        private Material NewMaterial() {
+        private Material NewMaterial(string style) {
             var m = Instantiate(b.material);
             if (b.fadeInTime > 0f) {
                 m.EnableKeyword("FT_FADE_IN");
                 m.SetFloat(PropConsts.fadeInT, b.fadeInTime);
             }
+            if (recolorizable) m.EnableKeyword("FT_RECOLORIZE");
             m.EnableKeyword("FT_HUESHIFT");
             m.SetFloat(PropConsts.cycleSpeed, b.cycleSpeed);
+            if (style.StartsWith("p-")) m.SetFloat(PropConsts.SharedOpacityMul, PLAYER_FB_OPACITY_MUL);
             if (Mathf.Abs(b.cycleSpeed) > 0f) m.EnableKeyword(PropConsts.cycleKW);
             b.displacement.SetOnMaterial(m);
             MaterialUtils.SetBlendMode(m, b.renderMode);

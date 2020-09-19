@@ -1,24 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
 using DMath;
+using JetBrains.Annotations;
 using UnityEngine;
 
 public abstract class CurvedTileRender : TiledRender {
     protected Vector2[] centers;
     
-    public CurvedTileRender(TiledRenderCfg cfg, GameObject obj): base(cfg, obj) {}
+    public CurvedTileRender(GameObject obj): base(obj) {}
     
     // Start is called before the first frame update
-    public void Initialize(ITransformHandler locationer, Material mat, bool isNew, bool is_static, int newTexW, float hueShift=0f) {
-        base.Initialize(locationer, mat, is_static);
+    public void Initialize(ITransformHandler locationer, TiledRenderCfg cfg, Material mat, bool isNew, bool is_static, bool isPlayer, int newTexW) {
+        base.Initialize(locationer, cfg, mat, is_static, isPlayer);
         texRptHeight = 1;
         if (texRptWidth != newTexW || isNew) {
             texRptWidth = newTexW;
             PrepareNewMesh();
             centers = new Vector2[newTexW + 1];
         }
-        pb.SetFloat(PropConsts.HueShift, hueShift * M.degRad);
-        if (Math.Abs(hueShift) > 0.1) DontUpdateTimeAfter = M.IntFloatMax;
     }
 
     protected override unsafe void OnNewMesh() {

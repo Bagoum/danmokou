@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Danmaku {
 public class PointPPItem : Item {
-    protected override short RenderOffsetIndex => 2;
+    protected override short RenderOffsetIndex => 3;
     protected override float RotationTurns => -2;
 
     protected override void CollectMe() {

@@ -122,3 +122,7 @@ public abstract class DUDisplayDrawer<T> : PropertyDrawer {
 public class BGTransitionDrawer : DUDisplayDrawer<BackgroundTransition> {
     protected override string[] EnumValues { get; } = { "WipeTex", "Wipe1", "WipeFromCenter", "Shatter4", "WipeY" };
 }
+[CustomPropertyDrawer(typeof(LocatorStrategy))]
+public class LocatorStrategyDrawer : DUDisplayDrawer<LocatorStrategy> {
+    protected override string[] EnumValues { get; } = { "Source", "Target", "Perimeter" };
+}

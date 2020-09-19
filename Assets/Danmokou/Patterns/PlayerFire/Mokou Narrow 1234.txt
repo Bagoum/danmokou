@@ -1,0 +1,19 @@
+gtr {
+	wt 12 _
+	wait-child
+} fire
+	## free fire
+	async fireball-*/b <> gcr2 12 _ <> { 
+		delay(3 * p)
+		sfx x-pc-fire-1
+		colorf { red pink } p
+	} simple tprot py 13 { player  28 28 oh1 }
+	## free cancellation
+	noop
+	## focus
+	async fireball-*/ <> gcr2 12 _ <> { 
+		sfx x-pc-fire-1 
+		colorf { red pink } (p // 2)
+	} simple tprot py(13 + 3.5 * p // 2) { player  32 32 oh1 }
+	## focus cancellation
+	noop

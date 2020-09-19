@@ -42,7 +42,7 @@ public class EventLASM : ReflectableLASM {
     public static TaskPattern BossExplode() => smh => {
         UnityEngine.Object.Instantiate(ResourceManager.GetSummonable("bossexplode")).GetComponent<ExplodeEffect>().Initialize(BossExplodeWait, smh.Exec.rBPI.loc);
         RaikoCamera.Shake(BossExplodeShake, ShakeMag, 2, smh.cT, WaitingUtils.GetAwaiter(out Task _));
-        SFXService.Request("x-boss-explode");
+        SFXService.BossExplode();
         return WaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, BossExplodeWait, false);
     };
 

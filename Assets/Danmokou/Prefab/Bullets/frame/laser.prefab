@@ -53,12 +53,10 @@ MonoBehaviour:
     cullable: 0
     cullRadius: {fileID: 0}
   collisionInfo:
+    collisionRadius: 0
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 20
-  CollisionActiveOnInit: 0
-  destructible: 0
-  grazeEveryFrames: 20
   animate:
     method: 0
     LRRelation: 0
@@ -72,7 +70,7 @@ MonoBehaviour:
       attackAnim: []
       deathAnim: []
   material: {fileID: 2100000, guid: 5458891e477bea5438b857b92a28ba0c, type: 2}
-  renderPriority: 100
+  renderPriority: 1000
   sprite: {fileID: 0}
   fadeInTime: 0.2
   cycleSpeed: 0
@@ -150,10 +148,8 @@ MonoBehaviour:
   animateCold: 0
   countPostHotColdFrames: 0
   config:
-    mr: {fileID: -3480641359565364707}
-    mf: {fileID: 6913393782953646631}
-    tr: {fileID: 3764406661813136869}
     sortingLayer: Projectile
+    playerSortingLayer: PlayerProjectile
     dontUpdateTimeAfter: 999
     lineRadius: 0.18
     alignEnd: 0

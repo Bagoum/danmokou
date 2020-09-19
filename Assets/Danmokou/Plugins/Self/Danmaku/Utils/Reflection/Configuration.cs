@@ -264,7 +264,6 @@ public static partial class Reflector {
         #if NO_EXPR
             if (isExCompiler) return;
         #endif
-            bool markNormalMethod = true;
             foreach (var attr in attrs) {
                 if (attr is AliasAttribute aa) methods.SetDefaultSet(mi.ReturnType, aa.alias.ToLower(), mi);
                 else if (attr is GAliasAttribute ga) {
@@ -282,7 +281,7 @@ public static partial class Reflector {
                     else FallThroughOptions.AddToList(mi.ReturnType, (fa, mi));
                 }
             }
-            if (markNormalMethod) methods.SetDefaultSet(mi.ReturnType, mi.Name.ToLower(), mi);
+            methods.SetDefaultSet(mi.ReturnType, mi.Name.ToLower(), mi);
         }
         private static void RecordMethodByClass(Type d, MethodInfo mi) {
             methodsByDecl.SetDefaultSet(mi.ReturnType, (mi.Name.ToLower(), d), mi);

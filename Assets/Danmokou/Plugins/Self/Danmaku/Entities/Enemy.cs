@@ -34,6 +34,7 @@ public class Enemy : RegularUpdater {
     public int maxHP = 1000;
     public int PhotoHP { get; private set; } = 1;
     private int maxPhotoHP = 1;
+    public int PhotosTaken { get; private set; } = 0;
     public bool Vulnerable { get; private set; }= true;
     //private static int enemyIndexCtr = 0;
     //private int enemyIndex;
@@ -79,16 +80,19 @@ public class Enemy : RegularUpdater {
     private static short renderCounter = short.MinValue;
     
     public ItemDrops AutoDeathItems => new ItemDrops(
-        Mathf.CeilToInt(maxHP/1500f), 
-        maxHP >= 500 ? Mathf.CeilToInt(maxHP/2000f) : 0, 
-        maxHP >= 500 ? Mathf.CeilToInt(maxHP/1000f) : 0,
-        maxHP >= 1000 ? Mathf.CeilToInt(maxHP / 1200f) : 0
+        Mathf.CeilToInt(maxHP / 600f), 
+        maxHP >= 400 ? Mathf.CeilToInt(maxHP / 900f) : 0, 
+        maxHP >= 300 ? Mathf.CeilToInt(maxHP / 800f) : 0,
+        maxHP >= 400 ? Mathf.CeilToInt(maxHP / 700f) : 0,
+        Mathf.CeilToInt(maxHP / 300f)
         );
 
 
     private static int enemyIndexCtr = 0;
     private int enemyIndex;
     private static readonly Dictionary<int, Enemy> allEnemies = new Dictionary<int, Enemy>();
+    private static readonly DMCompactingArray<Enemy> orderedEnemies = new DMCompactingArray<Enemy>();
+    private DeletionMarker<Enemy> aliveToken;
     private static readonly List<FrozenCollisionInfo> frozenEnemies = new List<FrozenCollisionInfo>();
     public static IReadOnlyList<FrozenCollisionInfo> FrozenEnemies => frozenEnemies;
 
@@ -96,10 +100,11 @@ public class Enemy : RegularUpdater {
         Beh = _beh;
         var sortOrder = renderCounter++;
         if (sr != null) sr.sortingOrder = sortOrder;
-        if (spellCircle != null) spellCircle.sortingOrder = sortOrder;
-        if (cardCircle != null) cardCircle.sortingOrder = sortOrder;
-        if (healthbarSprite != null) healthbarSprite.sortingOrder = sortOrder;
+        if (spellCircle != null) spellCircle.sortingOrder = sortOrder * 3;
+        if (cardCircle != null) cardCircle.sortingOrder = sortOrder * 3 + 1;
+        if (healthbarSprite != null) healthbarSprite.sortingOrder = sortOrder * 3 + 2;
         allEnemies[enemyIndex = enemyIndexCtr++] = this;
+        aliveToken = orderedEnemies.Add(this);
         HP = maxHP;
         queuedDamage = 0;
         Vulnerable = true;
@@ -178,7 +183,7 @@ public class Enemy : RegularUpdater {
     private const float SpellCircleLerpTime = 0.6f;
     private const float SCBREATHMAG = 0.15f;
     private const float SCBREATHPER = 5f;
-    public void RequestSpellCircle(float timeout, ICancellee cT, float startRad=3f) {
+    public void RequestSpellCircle(float timeout, ICancellee cT, float startRad=2.3f) {
         if (timeout < 0.1) timeout = M.IntFloatMax;
         if (spellCircle == null) return;
         spellCircleCancel = cT;
@@ -209,8 +214,8 @@ public class Enemy : RegularUpdater {
     public override void RegularUpdate() {
         PollDamage();
         PollPhotoDamage();
+        _displayBarRatio = Mathf.Lerp(_displayBarRatio, BarRatio, HPLerpRate * ETime.FRAME_TIME);
         if (healthbarSprite != null) {
-            _displayBarRatio = Mathf.Lerp(_displayBarRatio, BarRatio, HPLerpRate * ETime.FRAME_TIME);
             hpPB.SetFloat(PropConsts.fillRatio, DisplayBarRatio);
             //Approximation to make the max color appear earlier
             hpPB.SetColor(PropConsts.fillColor, HPColor);
@@ -248,7 +253,9 @@ public class Enemy : RegularUpdater {
 
     public static void FreezeEnemies() {
         frozenEnemies.Clear();
-        foreach (var enemy in allEnemies.Values) {
+        orderedEnemies.Compact();
+        for (int ii = 0; ii < orderedEnemies.Count; ++ii) {
+            var enemy = orderedEnemies[ii];
             if (LocationService.OnPlayableScreenBy(0.5f, enemy.Beh.GlobalPosition())) {
                 frozenEnemies.Add(new FrozenCollisionInfo(enemy));
             }
@@ -282,7 +289,7 @@ public class Enemy : RegularUpdater {
             float multiplier =
                 Mathf.Lerp(1f, 1.2f, shotgun);
             queuedDamage += dmg * multiplier;
-            Counter.Shotgun(shotgun);
+            Counter.DoShotgun(shotgun);
         } else queuedDamage += dmg;
     }
     private void PollDamage() {
@@ -301,6 +308,7 @@ public class Enemy : RegularUpdater {
 
     private void PollPhotoDamage() {
         if (queuedPhotoDamage < 1) return;
+        PhotosTaken += queuedPhotoDamage;
         PhotoHP = M.Clamp(0, maxPhotoHP, PhotoHP - queuedPhotoDamage);
         queuedPhotoDamage = 0;
         if (PhotoHP == 0) {
@@ -316,6 +324,7 @@ public class Enemy : RegularUpdater {
     public void SetPhotoHP(int newMaxHP, int newCurrHP) {
         maxPhotoHP = newMaxHP;
         PhotoHP = newCurrHP;
+        PhotosTaken = 0;
     }
 
     public void SetDamageable(bool isDamageable) {
@@ -381,6 +390,7 @@ public class Enemy : RegularUpdater {
 
     private static readonly ReflWrap<VTP> SuicideVTP = (Func<VTP>)"tprot cx 1.6".Into<VTP>;
     public void DoSuicideFire() {
+        /*
         if (GameManagement.DifficultyCounter < DifficultySet.Hard.Counter()) return;
         var bt = LevelController.DefaultSuicideStyle;
         if (string.IsNullOrWhiteSpace(bt)) bt = "triangle-black/w";
@@ -389,7 +399,7 @@ public class Enemy : RegularUpdater {
         for (int ii = 0; ii < numBullets; ++ii) {
             BulletManager.RequestSimple(bt, null, null, new Velocity(SuicideVTP, Beh.rBPI.loc, 
                 angleTo + (ii - numBullets / 2) * 120f / numBullets), 0, 0, null);
-        }
+        }*/
     }
     
 #if UNITY_EDITOR
@@ -401,13 +411,34 @@ public class Enemy : RegularUpdater {
         Handles.DrawWireDisc(position, Vector3.forward, collisionRadius);
     }
 #endif
+    
+    //This is called through InvokeCull on BehaviorEntity.OnDisable
     public void IAmDead() {
         if (healthbarSprite != null) healthbarSprite.enabled = false;
         allEnemies.Remove(enemyIndex); 
+        aliveToken.MarkForDeletion();
     }
 
+    [UsedImplicitly]
+    public static bool FindNearest(Vector2 source, out Vector2 position) {
+        bool found = false;
+        position = default;
+        float lastDist = 0f;
+        foreach (var e in frozenEnemies) {
+            if (e.Active) {
+                var dst = (e.pos.x - source.x) * (e.pos.x - source.x) + (e.pos.y - source.y) * (e.pos.y - source.x);
+                if (!found || dst < lastDist) {
+                    lastDist = dst;
+                    found = true;
+                    position = e.pos;
+                }
+            }
+        }
+        return found;
+    }
 
-    public static bool FindNearest(Vector2 source, int? preferredEnemy, out int enemy, out Vector2 position) {
+    [UsedImplicitly]
+    public static bool FindNearestSave(Vector2 source, int? preferredEnemy, out int enemy, out Vector2 position) {
         if (preferredEnemy.Try(out var eid) && allEnemies.TryGetValue(eid, out var pe)) {
             position = pe.Beh.GlobalPosition();
             enemy = eid;
@@ -432,6 +463,9 @@ public class Enemy : RegularUpdater {
     }
 
     public static readonly ExFunction findNearest = ExUtils.Wrap<Enemy>("FindNearest", new[] {
+        typeof(Vector2), typeof(Vector2).MakeByRefType()
+    });
+    public static readonly ExFunction findNearestSave = ExUtils.Wrap<Enemy>("FindNearestSave", new[] {
         typeof(Vector2), typeof(int?), typeof(int).MakeByRefType(), typeof(Vector2).MakeByRefType()
     });
 }

@@ -101,6 +101,11 @@ public interface IUnrollable<T> {
 public static class IEnumExtensions {
     public static IEnumerable<(int idx, T val)> Enumerate<T>(this IEnumerable<T> arr) => arr.Select((x, i) => (i, x));
 
+    public static void ForEach<T>(this IEnumerable<T> arr, Action<T> act) {
+        foreach (var ele in arr) {
+            act(ele);
+        }
+    }
     public static void ForEachI<T>(this IEnumerable<T> arr, Action<int,T> act) {
         foreach (var (i,ele) in arr.Enumerate()) {
             act(i,ele);
@@ -121,6 +126,9 @@ public static class IEnumExtensions {
         for (int ii = 0; ii < max; ++ii) yield return ii;
     }
 
+    public static IEnumerable<int> Range(this (int min, int max) bound) {
+        for (int ii = bound.min; ii < bound.max; ++ii) yield return ii;
+    }
     public static IEnumerable<U> SelectNotNull<T, U>(this IEnumerable<T> arr, Func<T, U?> f) where U : struct {
         foreach (var x in arr) {
             var y = f(x);

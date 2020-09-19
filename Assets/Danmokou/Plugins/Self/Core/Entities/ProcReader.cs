@@ -4,10 +4,8 @@
 
     public enum ProcMethod {
         Graze,
-        SOProccer
     }
     public ProcMethod method;
-    public SOCtProccable SOProccer;
 
     public sealed override void RegularUpdate() {
         procCt += GetCurrentFrame();
@@ -21,7 +19,6 @@
 
     private int GetCurrentFrame() {
         if (method == ProcMethod.Graze) return Counter.GrazeFrame;
-        if (method == ProcMethod.SOProccer) return SOProccer.CountReset();
         return 0;
     }
 

@@ -92,9 +92,11 @@ public static class BEHPooler {
         Pooler<BehaviorEntity>.Prepare();
     }
 
-    public static BehaviorEntity RequestUninitialized(GameObject prefab, out bool isNew) => Pooler<BehaviorEntity>.Request(prefab, out isNew);
+    public static BehaviorEntity RequestUninitialized(GameObject prefab, out bool isNew) =>
+        Pooler<BehaviorEntity>.Request(prefab, out isNew);
 
-    public static BehaviorEntity INode(Vector2 parentLoc, DMath.V2RV2 localLoc, Vector2 rotation, int firingIndex, uint? bpiid, string behName) {
+    public static BehaviorEntity INode(Vector2 parentLoc, DMath.V2RV2 localLoc, Vector2 rotation, int firingIndex,
+        uint? bpiid, string behName) {
         var beh = RequestUninitialized(inodePrefab, out _);
         beh.Initialize(parentLoc, localLoc, SMRunner.Null, firingIndex, bpiid, behName);
         beh.FaceInDirection(rotation);
@@ -114,60 +116,72 @@ public static class GhostPooler {
         var cg = Pooler<CutinGhost>.Request(ghostPrefab, out _);
         cg.Initialize(loc, dir, cfg);
         return cg;
-    } 
+    }
 }
 
+public readonly struct ItemRequestContext {
+    public readonly Vector2 source;
+    public readonly Vector2 offset;
+
+    public ItemRequestContext(Vector2 src, Vector2 off) {
+        source = src;
+        offset = off;
+    }
+}
 public static class ItemPooler {
-    private static GameObject lifeItemPrefab;
-    private static GameObject valueItemPrefab;
-    private static GameObject pointppItemPrefab;
-    private static GameObject powerItemPrefab;
-    
-    public static void Prepare(GameObject life, GameObject value, GameObject pointpp, GameObject power) {
-        lifeItemPrefab = life;
-        valueItemPrefab = value;
-        pointppItemPrefab = pointpp;
-        powerItemPrefab = power;
+    private static ItemReferences items;
+
+    public static void Prepare(ItemReferences itemRefs) {
+        items = itemRefs;
         Pooler<Item>.Prepare();
     }
 
-    private static Item Request(GameObject prefab, Vector2 root, Vector2 offset) {
+    private static Item Request(GameObject prefab, ItemRequestContext ctx) {
         var i = Pooler<Item>.Request(prefab, out _);
-        i.Initialize(root, offset);
+        i.Initialize(ctx.source, ctx.offset);
         return i;
     }
 
-    public static Item RequestLife(Vector2 root, Vector2 offset) => Request(lifeItemPrefab, root, offset);
-    public static Item RequestValue(Vector2 root, Vector2 offset) => Request(valueItemPrefab, root, offset);
-    public static Item RequestPointPP(Vector2 root, Vector2 offset) => Request(pointppItemPrefab, root, offset);
+    public static Item RequestLife(ItemRequestContext ctx) => Request(items.lifeItem, ctx);
+    public static Item RequestValue(ItemRequestContext ctx) => Request(items.valueItem, ctx);
+    public static Item RequestPointPP(ItemRequestContext ctx) => Request(items.pointppItem, ctx);
+    public static Item RequestGem(ItemRequestContext ctx) => Request(items.gemItem, ctx);
+    public static Item RequestPowerupShift(ItemRequestContext ctx) => Request(items.powerupShift, ctx);
+    public static Item RequestPowerupD(ItemRequestContext ctx) => Request(items.powerupD, ctx);
+    public static Item RequestPowerupM(ItemRequestContext ctx) => Request(items.powerupM, ctx);
+    public static Item RequestPowerupK(ItemRequestContext ctx) => Request(items.powerupK, ctx);
+    
     [CanBeNull]
-    public static Item RequestPower(Vector2 root, Vector2 offset) {
-        return CampaignData.PowerMechanicActive ?  Request(powerItemPrefab, root, offset) : null;
+    public static Item RequestPower(ItemRequestContext ctx) {
+        return CampaignData.PowerMechanicEnabled ? Request(items.powerItem, ctx) : null;
     }
 
     [CanBeNull]
-    public static Item RequestItem(Vector2 root, Vector2 offset, ItemType t) {
-        if (t == ItemType.VALUE) return RequestValue(root, offset);
-        else if (t == ItemType.PPP) return RequestPointPP(root, offset);
-        else if (t == ItemType.LIFE) return RequestLife(root, offset);
-        else if (t == ItemType.POWER) return RequestPower(root, offset);
-        throw new Exception($"No drop handling for item type {t}");
+    public static Item RequestFullPower(ItemRequestContext ctx) {
+        return CampaignData.PowerMechanicEnabled ? Request(items.fullPowerItem, ctx) : null;
+    }
+    [CanBeNull]
+    public static Item Request1UP(ItemRequestContext ctx) {
+        return Request(items.oneUpItem, ctx);
+    }
+
+    [CanBeNull]
+    public static Item RequestItem(ItemRequestContext ctx, Enums.ItemType t) {
+        switch (t) {
+            case Enums.ItemType.VALUE: return RequestValue(ctx);
+            case Enums.ItemType.PPP: return RequestPointPP(ctx);
+            case Enums.ItemType.LIFE: return RequestLife(ctx);
+            case Enums.ItemType.POWER: return RequestPower(ctx);
+            case Enums.ItemType.FULLPOWER: return RequestFullPower(ctx);
+            case Enums.ItemType.ONEUP: return Request1UP(ctx);
+            case Enums.ItemType.GEM: return RequestGem(ctx);
+            case Enums.ItemType.POWERUP_SHIFT: return RequestPowerupShift(ctx);
+            case Enums.ItemType.POWERUP_D: return RequestPowerupD(ctx);
+            case Enums.ItemType.POWERUP_M: return RequestPowerupM(ctx);
+            case Enums.ItemType.POWERUP_K: return RequestPowerupK(ctx);
+            default: throw new Exception($"No drop handling for item type {t}");
+        }
     }
 }
-
-
 }
 
-
-/*
-public static class AudioPooler {
-    private static GameObject prefab;
-    public static void Prepare(GameObject prefab) {
-        AudioPooler.prefab = prefab;
-        Pooler<OneShotAudioPooled>.Prepare();
-    }
-    public static void Request(Vector2 location, AudioClipInfo aci) {
-        OneShotAudioPooled n = Pooler<OneShotAudioPooled>.Request(prefab, location);
-        n.Initialize(aci);
-    }
-}*/

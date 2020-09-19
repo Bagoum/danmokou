@@ -28,6 +28,7 @@ public static class PropConsts {
     public static readonly int fillRatio = Shader.PropertyToID("_F");
     public static readonly int innerFillRatio = Shader.PropertyToID("_FI");
     public static readonly int subradius = Shader.PropertyToID("_Subradius");
+    public static readonly int threshold = Shader.PropertyToID("_Threshold");
 
     public static readonly int tint = Shader.PropertyToID("_Tint");
 
@@ -66,6 +67,7 @@ public static class PropConsts {
     public static readonly int DisplaceMag = Shader.PropertyToID("_DisplaceMagnitude");
     public static readonly int DisplaceSpd = Shader.PropertyToID("_DisplaceSpeed");
     public static readonly int DisplaceXMul = Shader.PropertyToID("_DisplaceXMul");
+    public static readonly int SharedOpacityMul = Shader.PropertyToID("_SharedOpacityMul");
         
     public static readonly int multiplier = Shader.PropertyToID("_Mult");
 
@@ -73,6 +75,18 @@ public static class PropConsts {
     public static readonly int pmDirection = Shader.PropertyToID("_PMDir");
 
     public static readonly int HueShift = Shader.PropertyToID("_HueShift");
+    public static readonly int RecolorB = Shader.PropertyToID("_RecolorizeB");
+    public static readonly int RecolorW = Shader.PropertyToID("_RecolorizeW");
+    
+    
+    private static readonly int outlineColorProp = Shader.PropertyToID("_OutlineColor");
+    private static readonly int underlayColorProp = Shader.PropertyToID("_UnderlayColor");
+
+    public static void SetMaterialOutline(this Material m, Color c) {
+        m.SetColor(outlineColorProp, c);
+        m.SetColor(underlayColorProp, c);
+    }
+    
 }
 
 public static class PBHelpers {

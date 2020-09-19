@@ -90,11 +90,22 @@ public partial class BulletManager {
         if (!playerPoolCopyCache.TryGetValue(pool, out var playerPool)) {
             playerPool = playerPoolCopyCache[pool] = $"p-{pool}";
         }
-        if (!simpleBulletPools.ContainsKey(playerPool)) {
-            var p = simpleBulletPools[pool].CopySimplePool(playerStyles, playerPool);
+        if (!simpleBulletPools.TryGetValue(playerPool, out var p)) {
+            p = simpleBulletPools[pool].CopySimplePool(activePlayer, playerPool);
             AddSimpleStyle(playerPool, p);
             p.SetPlayer();
-            p.Activate();
+        }
+        if (!p.Active) p.Activate();
+        return playerPool;
+    }
+
+    public static string GetOrMakeFaBPlayerCopy(string pool) {
+        if (!playerPoolCopyCache.TryGetValue(pool, out var playerPool)) {
+            playerPool = playerPoolCopyCache[pool] = $"p-{pool}";
+        }
+        if (!bulletStyles.TryGetValue(playerPool, out var p)) {
+            p = bulletStyles[pool].MakePlayerCopy();
+            AddFaBStyle(playerPool, p);
         }
         return playerPool;
     }
@@ -139,8 +150,8 @@ public partial class BulletManager {
             sbc = activeCNpc[ii];
             sbc.temp_last = sbc.Count;
         }
-        for (int ii = 0; ii < playerStyles.Count; ++ii) {
-            sbc = playerStyles[ii];
+        for (int ii = 0; ii < activePlayer.Count; ++ii) {
+            sbc = activePlayer[ii];
             sbc.temp_last = sbc.Count;
         }
         //Velocity and control updates
@@ -164,49 +175,52 @@ public partial class BulletManager {
                 sbc.UpdateVelocityAndControls();
             } else sbc.PruneControls();
         }
-        for (int ii = 0; ii < playerStyles.Count; ++ii) {
-            sbc = playerStyles[ii];
+        for (int ii = 0; ii < activePlayer.Count; ++ii) {
+            sbc = activePlayer[ii];
             if (sbc.temp_last > 0) {
                 sbc.UpdateVelocityAndControls();
             } else sbc.PruneControls();
         }
-        Profiler.BeginSample("NPC-fired simple bullet collision checking");
-        int dmg = 0; int graze = 0;
-        for (int ii = 0; ii < activeCEmpty.Count; ++ii) {
-            sbc = activeCEmpty[ii];
-            if (sbc.Count > 0) {
-                CollisionCheckResults ccr = sbc.CheckCollision();
-                dmg = Math.Max(dmg, ccr.damage);
-                graze += ccr.graze;
+        if (bulletCollisionTarget.active) {
+            Profiler.BeginSample("NPC-fired simple bullet collision checking");
+            int dmg = 0; int graze = 0;
+            for (int ii = 0; ii < activeCEmpty.Count; ++ii) {
+                sbc = activeCEmpty[ii];
+                if (sbc.Count > 0) {
+                    CollisionCheckResults ccr = sbc.CheckCollision();
+                    dmg = Math.Max(dmg, ccr.damage);
+                    graze += ccr.graze;
+                }
+            }
+            for (int ii = 0; ii < activeNpc.Count; ++ii) {
+                sbc = activeNpc[ii];
+                if (sbc.Count > 0) {
+                    CollisionCheckResults ccr = sbc.CheckCollision();
+                    dmg = Math.Max(dmg, ccr.damage);
+                    graze += ccr.graze;
+                }
+            }
+            Profiler.EndSample();
+            for (int ii = 0; ii < activeCNpc.Count; ++ii) {
+                sbc = activeCNpc[ii];
+                if (sbc.Count > 0) {
+                    CollisionCheckResults ccr = sbc.CheckCollision();
+                    dmg = Math.Max(dmg, ccr.damage);
+                    graze += ccr.graze;
+                }
+            }
+            if (dmg > 0) {
+                Events.TryHitPlayer.Invoke((dmg, false));
+            }
+            if (graze > 0) {
+                GameManagement.campaign.AddGraze(graze);
             }
         }
-        for (int ii = 0; ii < activeNpc.Count; ++ii) {
-            sbc = activeNpc[ii];
-            if (sbc.Count > 0) {
-                CollisionCheckResults ccr = sbc.CheckCollision();
-                dmg = Math.Max(dmg, ccr.damage);
-                graze += ccr.graze;
-            }
-        }
-        Profiler.EndSample();
-        for (int ii = 0; ii < activeCNpc.Count; ++ii) {
-            sbc = activeCNpc[ii];
-            if (sbc.Count > 0) {
-                CollisionCheckResults ccr = sbc.CheckCollision();
-                dmg = Math.Max(dmg, ccr.damage);
-                graze += ccr.graze;
-            }
-        }
-        if (dmg > 0) {
-            Events.TryHitPlayer.Invoke((dmg, false));
-        }
-        if (graze > 0) {
-            GameManagement.campaign.AddGraze(graze);
-        }
+        
         //Collision check (player bullets)
         var fci = Enemy.FrozenEnemies;
-        for (int ii = 0; ii < playerStyles.Count; ++ii) {
-            sbc = playerStyles[ii];
+        for (int ii = 0; ii < activePlayer.Count; ++ii) {
+            sbc = activePlayer[ii];
             if (sbc.Count > 0) sbc.CheckCollision(fci);
         }
         
@@ -239,9 +253,10 @@ public partial class BulletManager {
         }
         DestroyCopiedPools();
         activeNpc.Clear();
-        playerStyles.Clear();
+        activePlayer.Clear();
         Bullet.OrphanAll();
         BehaviorEntity.DeInitializePools();
+        CurvedTileRenderLaser.DeInitializePools();
     }
 
     public static void DestroyCopiedPools() {
@@ -373,7 +388,7 @@ public partial class BulletManager {
         public void Activate() {
             if (!Active) {
                 targetList.Add(this);
-                Log.Unity($"Activating pool {Style}", level: Log.Level.DEBUG1);
+                //Log.Unity($"Activating pool {Style}", level: Log.Level.DEBUG1);
                 Active = true;
             }
         }
@@ -386,7 +401,16 @@ public partial class BulletManager {
         public override string Style => bc.name;
         protected BulletInCode bc;
 
+        public bool TryGetRecolor(out (TP4, TP4) recolor) => bc.recolor.Try(out recolor);
+
         public void SetCullRad(float r) => bc.CULL_RAD = r;
+
+        public void SetRecolor(TP4 black, TP4 white) {
+            if (!bc.Recolorizable) 
+                throw new Exception($"Cannot set recolor on non-recolorizable pool {Style}");
+            bc.recolor = (black, white);
+        }
+        
         //private readonly ResizableArray<BulletControl> pcs = new ResizableArray<BulletControl>(4);
         private readonly DMCompactingArray<BulletControl> pcs = new DMCompactingArray<BulletControl>(4);
 #if UNITY_EDITOR
@@ -662,8 +686,8 @@ public partial class BulletManager {
         }
         SimpleBulletCollection sbc;
         if ((c.cullingMask & ppLayerMask) != 0) {
-            for (int ii = 0; ii < playerStyles.Count; ++ii) {
-                sbc = playerStyles[ii];
+            for (int ii = 0; ii < activePlayer.Count; ++ii) {
+                sbc = activePlayer[ii];
                 if (sbc.Count > 0) SwitchRenderPool(c, sbc, ppRenderLayer);
             }
             playerRendered = true;
@@ -687,6 +711,10 @@ public partial class BulletManager {
         else RenderPool(c, pool, layer);
     }
     private void LegacyRenderPool(Camera c, SimpleBulletCollection pool, int layer) {
+        if (pool.TryGetRecolor(out var rc)) {
+            LegacyRenderPool_Recolorizable(c, pool, layer, rc);
+            return;
+        }
         int ii = 0;
         MeshGenerator.RenderInfo ri = pool.GetOrLoadRI();
         for (int ct = pool.Count; ct > 0; ct -= batchSize) {
@@ -706,7 +734,38 @@ public partial class BulletManager {
             CallLegacyRender(ri, c, layer, run);
         }
     }
+    
+    private void LegacyRenderPool_Recolorizable(Camera c, SimpleBulletCollection pool, int layer, 
+        (TP4 black, TP4 white) rc) {
+        int ii = 0;
+        MeshGenerator.RenderInfo ri = pool.GetOrLoadRI();
+        for (int ct = pool.Count; ct > 0; ct -= batchSize) {
+            int run = Math.Min(ct, batchSize);
+            for (int ib = 0; ib < run; ++ib, ++ii) {
+                ref SimpleBullet sb = ref pool.arr[ii];
+                ref var m = ref matArr[ib];
+                m.m00 = m.m11 = sb.direction.x * sb.scale;
+                m.m10 = sb.direction.y * sb.scale;
+                m.m01 = -m.m10;
+                m.m22 = m.m33 = 1;
+                m.m03 = sb.bpi.loc.x;
+                m.m13 = sb.bpi.loc.y;
+                recolorBArr[ib] = rc.black(sb.bpi);
+                recolorWArr[ib] = rc.white(sb.bpi);
+                timeArr[ib] = sb.bpi.t;
+            }
+            pb.SetVectorArray(recolorBPropertyId, recolorBArr);
+            pb.SetVectorArray(recolorWPropertyId, recolorWArr);
+            pb.SetFloatArray(timePropertyId, timeArr);
+            CallLegacyRender(ri, c, layer, run);
+        }
+    }
+
     private void RenderPool(Camera c, SimpleBulletCollection pool, int layer) {
+        if (pool.TryGetRecolor(out var rc)) {
+            RenderPool_Recolorizable(c, pool, layer, rc);
+            return;
+        }
         int ii = 0;
         MeshGenerator.RenderInfo ri = pool.GetOrLoadRI();
         for (int ct = pool.Count; ct > 0; ct -= batchSize) {
@@ -724,6 +783,29 @@ public partial class BulletManager {
                 //If you're using Seija, then camera flipping takes care of object flipping. 
                 timeArr[ib] = sb.bpi.t;
             }
+            pb.SetVectorArray(posDirPropertyId, posDirArr);
+            pb.SetFloatArray(timePropertyId, timeArr);
+            CallRender(ri, c, layer, run);
+        }
+    }
+
+    private void RenderPool_Recolorizable(Camera c, SimpleBulletCollection pool, int layer, (TP4 black, TP4 white) rc) {
+        int ii = 0;
+        MeshGenerator.RenderInfo ri = pool.GetOrLoadRI();
+        for (int ct = pool.Count; ct > 0; ct -= batchSize) {
+            int run = Math.Min(ct, batchSize);
+            for (int ib = 0; ib < run; ++ib, ++ii) {
+                ref SimpleBullet sb = ref pool.arr[ii];
+                posDirArr[ib].x = sb.bpi.loc.x;
+                posDirArr[ib].y = sb.bpi.loc.y;
+                posDirArr[ib].z = sb.direction.x * sb.scale;
+                posDirArr[ib].w = sb.direction.y * sb.scale;
+                recolorBArr[ib] = rc.black(sb.bpi);
+                recolorWArr[ib] = rc.white(sb.bpi);
+                timeArr[ib] = sb.bpi.t;
+            }
+            pb.SetVectorArray(recolorBPropertyId, recolorBArr);
+            pb.SetVectorArray(recolorWPropertyId, recolorWArr);
             pb.SetVectorArray(posDirPropertyId, posDirArr);
             pb.SetFloatArray(timePropertyId, timeArr);
             CallRender(ri, c, layer, run);
@@ -752,17 +834,22 @@ public partial class BulletManager {
     }
 
     private unsafe void PrepareRendering() {
-        Debug.Log($"BS size: {Marshal.SizeOf(typeof(SimpleBullet))}, VelStruct size: {Marshal.SizeOf(typeof(Velocity))}");
-        Debug.Log($"BPI size: {Marshal.SizeOf(typeof(ParametricInfo))}, CollInfo side: {Marshal.SizeOf(typeof(CollisionResult))}");
-        Debug.Log($"Float size: {sizeof(float)} (4), Long size: {sizeof(long)} (8), V2 size: {sizeof(Vector2)} (8)");
+        Debug.Log($"Sizes: BS {Marshal.SizeOf(typeof(SimpleBullet))}, VelStruct {Marshal.SizeOf(typeof(Velocity))}, " +
+                  $"BPI {Marshal.SizeOf(typeof(ParametricInfo))}, CollInfo {Marshal.SizeOf(typeof(CollisionResult))}, " +
+                  $"Float {sizeof(float)} (4), Long {sizeof(long)} (8), V2 {sizeof(Vector2)} (8)");
     }
 
-    private const int batchSize = 1023; //duplicated in BulletIndirect array lens
+    //Note: while 1023 is the maximum shader array length, 511 is the maximum batch size for RyannPC support.
+    private const int batchSize = 511; //duplicated in BulletIndirect array lens
     private MaterialPropertyBlock pb;
     private static readonly int posDirPropertyId = Shader.PropertyToID("posDirBuffer");
     private static readonly int timePropertyId = Shader.PropertyToID("timeBuffer");
+    private static readonly int recolorBPropertyId = Shader.PropertyToID("recolorBBuffer");
+    private static readonly int recolorWPropertyId = Shader.PropertyToID("recolorWBuffer");
     private static readonly Bounds drawBounds = new Bounds(Vector3.zero, Vector3.one * 1000f);
     private readonly Vector4[] posDirArr = new Vector4[batchSize];
+    private readonly Vector4[] recolorBArr = new Vector4[batchSize];
+    private readonly Vector4[] recolorWArr = new Vector4[batchSize];
     private readonly Matrix4x4[] matArr = new Matrix4x4[batchSize];
     private readonly float[] timeArr = new float[batchSize];
 

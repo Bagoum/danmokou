@@ -19,6 +19,10 @@ Material:
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
+    - _BGTex:
+        m_Texture: {fileID: 2800000, guid: ab20330faee98aa469444f9c48f78166, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _BumpMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -80,8 +84,8 @@ Material:
     - _P1: 1
     - _P2: 0.135
     - _Parallax: 0.02
-    - _R: 1.5
-    - _RI: 1
+    - _R: 1.2
+    - _RI: 0.8
     - _S: 1
     - _ScreenX: 0.5
     - _ScreenY: 0.5

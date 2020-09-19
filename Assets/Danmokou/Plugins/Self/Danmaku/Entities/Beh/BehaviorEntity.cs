@@ -11,7 +11,9 @@ using UnityEngine;
 using UnityEngine.Serialization;
 using Ex = System.Linq.Expressions.Expression;
 using System.Runtime.CompilerServices;
+using UnityEditor;
 using UnityEngine.Profiling;
+using Collision = DMath.Collision;
 
 namespace Danmaku {
 
@@ -21,16 +23,19 @@ public struct ItemDrops {
     public int pointPP;
     public int life;
     public int power;
+    public int gems;
     public bool autocollect;
-    public ItemDrops(int v, int pp, int l, int pow, bool autoc=false) {
+    public ItemDrops(int v, int pp, int l, int pow, int gem, bool autoc=false) {
         value = v;
         pointPP = pp;
         life = l;
         power = pow;
+        gems = gem;
         autocollect = autoc;
     }
 
-    public ItemDrops Mul(float by) => new ItemDrops((int)(value * by), (int)(pointPP * by), (int)(life * by), (int)(power * by), autocollect);
+    public ItemDrops Mul(float by) => new ItemDrops((int)(value * by), (int)(pointPP * by), (int)(life * by), 
+        (int)(power * by), (int)(gems * by), autocollect);
 }
 
 /// <summary>
@@ -135,6 +140,8 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
 
     [Serializable]
     public struct CollisionInfo {
+        [Tooltip("Only used for default BEH circle collision")]
+        public float collisionRadius;
         public bool CollisionActiveOnInit;
         public bool destructible;
         public ushort grazeEveryFrames;
@@ -368,7 +375,6 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         sr = GetComponent<SpriteRenderer>();
         enemy = GetComponent<Enemy>();
         ResetV();
-        animate.Initialize(this);
         RegisterID();
         UpdateStyleInformation();
         try {
@@ -377,7 +383,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
             Log.UnityError("Failed to load attached SM on startup!");
             Log.Print(e);
         }
-#if UNITY_EDITOR
+#if UNITY_EDITOR || ALLOW_RELOAD
         if (SceneIntermediary.IsFirstScene && this is FireOption || this is BossBEH || this is LevelController) {
             Core.Events.LocalReset.Listen(() => {
                 HardCancel(false); //Prevents event DM caching bugs...
@@ -450,6 +456,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         }
         tr.localEulerAngles = facingVec = new Vector3(0, 0, 0);
         if (enemy != null) enemy.Initialize(this, sr);
+        animate.Initialize(this);
         //Pooled objects should not be running SMs from the inspector, only via Initialize,
         //so there is no RunImmediateSM in ResetV.
     }
@@ -459,9 +466,11 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     /// </summary>
     public void RunAttachedSM() {
         if (behaviorScript != null) {
-            _ = BeginBehaviorSM(SMRunner.RunNoCancel(StateMachineManager.FromText(behaviorScript)), phaseController.WhatIsNextPhase(0));
+            RunPatternSM(StateMachineManager.FromText(behaviorScript));
         }
     }
+
+    public void RunPatternSM(StateMachine sm) => _ = BeginBehaviorSM(SMRunner.RunNoCancel(sm), phaseController.WhatIsNextPhase(0));
 
     private static bool IsNontrivialID([CanBeNull] string id) => !string.IsNullOrWhiteSpace(id) && id != "_";
 
@@ -713,7 +722,10 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         }
     }
     
-    protected virtual CollisionResult CollisionCheck() => CollisionResult.noColl;
+    protected virtual CollisionResult CollisionCheck() {
+        return new CollisionResult(Collision.CircleOnCircle(BulletManager.PlayerTarget, 
+            rBPI.loc, collisionInfo.collisionRadius), false);
+    }
 
     protected virtual bool Contains(Vector2 pt) => throw new Exception($"The BEH {ID} does not have a collision method.");
 
@@ -733,7 +745,6 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
             RegularUpdateRender();
         } else {
             if (nextUpdateAllowed) {
-                //Note: Don't profile during parallelization
                 RegularUpdateMove();
                 base.RegularUpdate();
             } else nextUpdateAllowed = true;
@@ -905,8 +916,6 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         }
         Debug.LogFormat("Found {0} BEH", total);
     }
-
-    public void _RunPatternSM(StateMachine sm) => _ = BeginBehaviorSM(SMRunner.RunNoCancel(sm), 0);
     
     
 #endif
@@ -949,6 +958,11 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     [UsedImplicitly]
     public static float HPRatio(BEHPointer behp) => behp.beh.Enemy.EffectiveBarRatio;
 
+    public static readonly ExFunction photosTaken =
+        ExUtils.Wrap<BehaviorEntity, BEHPointer>("PhotosTaken");
+    [UsedImplicitly]
+    public static float PhotosTaken(BEHPointer behp) => behp.beh.Enemy.PhotosTaken;
+
     public static readonly ExFunction contains =
         ExUtils.Wrap<BehaviorEntity>("Contains", typeof(BEHPointer), typeof(Vector2));
     [UsedImplicitly]
@@ -980,6 +994,14 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     public void DebugTransform() {
         Debug.Log($"${tr.gameObject.name} parented by ${tr.parent.gameObject.name}");
     }
+
+    private void OnDrawGizmos() {
+        var loc = transform.position;
+        Handles.color = Color.cyan;
+        if (collisionInfo.collisionRadius > 0) 
+            Handles.DrawWireDisc(loc, Vector3.forward, collisionInfo.collisionRadius);
+    }
+
 #endif
 }
 

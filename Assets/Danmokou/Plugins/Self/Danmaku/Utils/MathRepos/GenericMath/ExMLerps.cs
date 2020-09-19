@@ -113,14 +113,15 @@ public static class ExMLerps {
     /// <summary>
     /// Lerp between many functions.
     /// </summary>
-    public static TEx<T> LerpMany<T>((tfloat bd, TEx<T> val)[] points, tfloat controller) {
-        Ex ifLt = points[0].val;
-        for (int ii = 0; ii < points.Length - 1; ++ii) {
-            ifLt = Ex.Condition(controller.LT(points[ii].bd), ifLt,
-                LerpU(points[ii].bd, points[ii+1].bd, controller, points[ii].val, points[ii+1].val));
-        }
-        return Ex.Condition(controller.LT(points[points.Length-1].bd), ifLt, points[points.Length-1].val);
-    }
+    public static TEx<T> LerpMany<T>((tfloat bd, TEx<T> val)[] points, efloat controller) => EEx.Resolve(controller,
+        x => {
+            Ex ifLt = points[0].val;
+            for (int ii = 0; ii < points.Length - 1; ++ii) {
+                ifLt = Ex.Condition(x.LT(points[ii].bd), ifLt,
+                    LerpU(points[ii].bd, points[ii + 1].bd, x, points[ii].val, points[ii + 1].val));
+            }
+            return Ex.Condition(x.LT(points[points.Length - 1].bd), ifLt, points[points.Length - 1].val);
+        });
 
     /// <summary>
     /// Select one of an array of values. If OOB, selects the last element.

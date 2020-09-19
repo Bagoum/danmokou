@@ -168,7 +168,7 @@ MonoBehaviour:
   pinnedPhotoPrefab: {fileID: 4115710883979866797, guid: b312477fa161bf04c8316d1e2e3d7675,
     type: 3}
   cameraHalfBounds: {x: 0.75, y: 0.5}
-  cameraFireSize: 3
+  cameraFireSize: 3.2
   cameraLerpDownTime: 0.65
   cameraFireControlSpeed: 4
   freezeTime: 0.4

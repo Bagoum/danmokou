@@ -1,0 +1,18 @@
+gtr {
+	wt 30 _
+	wait-child
+} firesame
+	## fire
+!!{ history (0.14 + 0.12 * p)
+	async arrow-*/ <> gcrepeat {
+		times(_)
+		wait(8)
+		colorf({ red blue green yellow }, p)
+		preloop {
+			rv2.a =f atan(if(odd p, playerpastdirection($history), playermarisaadirection($history)))
+		}
+	} simple(rvelocity(cx(-8)), {
+		player(20, 20, oh1)
+	})
+	## cancellation
+	noop

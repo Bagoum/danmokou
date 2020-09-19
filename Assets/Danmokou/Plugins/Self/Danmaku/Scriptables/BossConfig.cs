@@ -45,21 +45,9 @@ public class BossConfig : ScriptableObject {
     public BossColorScheme colors;
 
     public string rotator;
-    public BPY Rotator => (string.IsNullOrWhiteSpace(rotator) ? defaultRotator : rotator).Into<BPY>();
-    private const string defaultRotator = "lerpback 10 14 20 24 (mod 24 t) 90 -200";
-
-    /*[ContextMenu("AssignColors")]
-    public void AssignColors() {
-        colors.uiColor = uiColor;
-        colors.uiHPColor = uiHPColor;
-        colors.cardColorR = cardColorR;
-        colors.cardColorG = cardColorG;
-        colors.cardColorB = cardColorB;
-        colors.spellColor1 = spellColor1;
-        colors.spellColor2 = spellColor2;
-        colors.spellColor3 = spellColor3;
-
-    }*/
+    public BPY Rotator => ReflWrap<BPY>.Wrap(string.IsNullOrWhiteSpace(rotator) ? defaultRotator : rotator);
+    private const string defaultRotator = "lerpback(10, 14, 20, 24, mod(24, t), 90, -200)";
+    
     [Serializable]
     public struct ProfileRender {
         public Texture2D image;

@@ -52,6 +52,7 @@ public class Tutorial : BehaviorEntity {
     public override bool UpdateDuringPause => true;
 
     private IEnumerator RunTutorial(int skips) {
+        while (SceneIntermediary.LOADING) yield return null;
         bool canSkip() => skips-- > 0;
         IEnumerator wait(Func<bool> cond) {
             if (!canSkip())
@@ -89,7 +90,7 @@ public class Tutorial : BehaviorEntity {
         yield return confirm();
         Message(text00,"Vsync option --------------->\nVsync will make the game run smoother, but it may cause input lag.", -0.3f);
         yield return confirm();
-        Message(text00,"Input smoothing option ---------->\nIf you are sensitive to input lag, turn this off.", -0.7f);
+        Message(text00,"If you are sensitive to input lag, turn input smoothing off from the main menu options.", -0.7f);
         yield return confirm();
         Prompt(text00, $"Unpause by pressing {Pause.Desc} or selecting the unpause option.");
         yield return waitlf(() => !GameStateManager.IsLoadingOrPaused);
@@ -111,8 +112,7 @@ public class Tutorial : BehaviorEntity {
         Prompt(text10, $"Hold {ShootHold.Desc} to fire.");
         yield return waitir(ShootHold);
         yield return waiti(ShootHold);
-        Prompt(text10, $"Press {ShootToggle.Desc} to toggle firing on/off.");
-        yield return waiti(ShootToggle);
+    #if FT_DIRSHOOT
         Prompt(text10, $"Press {AimLeft.Desc} while firing to aim left.");
         yield return waitlf(() => IsFiring && FiringDir == ShootDirection.LEFT);
         Prompt(text10, $"Press {AimRight.Desc} while firing to aim right.");
@@ -121,7 +121,7 @@ public class Tutorial : BehaviorEntity {
         yield return waitlf(() => IsFiring && FiringDir == ShootDirection.UP);
         Prompt(text10, $"Press {AimDown.Desc} while firing to aim down.");
         yield return waitlf(() => IsFiring && FiringDir == ShootDirection.DOWN);
-        
+    #endif
         Prompt(text10, $"Use the arrow keys, the left joystick, or the D-Pad to move around.");
         yield return waitlf(() => Math.Abs(HorizontalSpeed) > 0.1 || Math.Abs(VerticalSpeed) > 0.1);
         Prompt(text10, $"Hold {FocusHold.Desc} to move slow (focus mode).");
@@ -143,7 +143,9 @@ public class Tutorial : BehaviorEntity {
         }
         for (int ii = 0; ii < 8; ++ii) yield return null; //start delay
         
-        Message(text10, "This is a boss enemy. The circle around the boss is its healthbar. The boss healthbar is duplicated in the bottom right for convenience.");
+        Message(text10, "This is a boss enemy. The circle around the boss is its healthbar.");
+        yield return confirm();
+        Message(text10, "The white line at the bottom of the playable area reflects the boss healthbar when a boss is active.");
         yield return confirm();
         yield return shift();
         Prompt(text10, "The boss has started a nonspell card. Try shooting down the boss. You do up to 20% more damage when closer to the boss.");
@@ -162,13 +164,13 @@ public class Tutorial : BehaviorEntity {
 
         Message(text10, @"These are your lives. --------------->
 A red dot is worth 2 lives,
-a pink dot is worth 1 life.", -1.5f);
+a pink dot is worth 1 life.", -0.9f);
         yield return confirm();
-        campaign.SetLives(13);
-        Message(text10, "There are 13 dots. Right now, you have 13 lives.");
+        campaign.SetLives(10);
+        Message(text10, "There are 10 dots. Right now, you have 10 lives.");
         yield return confirm();
-        campaign.SetLives(20);
-        Message(text10, "Now you have 20 lives.");
+        campaign.SetLives(15);
+        Message(text10, "Now you have 15 lives.");
         yield return confirm();
         campaign.SetLives(1);
         Message(text10, "Now you have 1 life.");
@@ -182,7 +184,7 @@ a pink dot is worth 1 life.", -1.5f);
         yield return waitlf(() => !GameStateManager.IsDeath);
         yield return shift();
         Message(text10, @"These are your life items. -------->
-Fulfill the requirement to get an extra life.", -2.1f);
+Fulfill the requirement to get an extra life.", -1.65f);
         yield return confirm();
         yield return shift();
         Prompt(text10, "Collect life items (red) by running into them. If you go above the point of collection, all items will move to you.");
@@ -195,18 +197,20 @@ Fulfill the requirement to get an extra life.", -2.1f);
         Prompt(text10, "Get 35,000 points by collecting value items.");
         yield return waitlf(() => campaign.Score > 35000);
         yield return shift();
-        Message(text10, @"This is the score multiplier. ------>
-It multiplies the points gained from value items. Increase it by collecting point++ items.", -0.4f);
+        Message(text00, @"The score multiplier is the number below this text.
+It multiplies the points gained from value items. Increase it by collecting point++ (green) items.");
         yield return confirm();
-        Message(text10, $@"This is the decay meter. ---------->
-It will empty over time, but graze and point++ items will restore it. When empty, your multiplier will fall by {CampaignData.pivFallStep}.", -1.1f);
+        Message(text00, $@"The decay meter is the white bar below the multiplier.
+It will empty over time, but graze and point++ items will restore it. When empty, your multiplier will fall by {CampaignData.pivFallStep}.");
         yield return confirm();
-        Message(text10, $@"While the decay meter is bright blue, it will not decay. Completing stage or boss sections, or collecting graze or point++ items, will add some bright blue to the decay meter.", -1.1f);
+        Message(text00, $@"While the decay meter is blue, it will not decay. Completing stage or boss sections, or collecting graze or point++ items, will add blue to the decay meter.");
         yield return confirm();
         Message(text10, "Grazing also increases the points gained from value items. This bonus is hidden, but does not decay.");
         yield return confirm();
+        Message(text10, "There is a yellow bar below the decay meter. Ignore that for now.");
+        yield return confirm();
         yield return shift();
-        Prompt(text10, "Raise the score multiplier to 1.11 by collecting point++ items (green), then let it decay back to 1.");
+        Prompt(text10, "Raise the score multiplier to 1.11 by collecting point++ items, then let it decay back to 1.");
         yield return waitlf(() => campaign.PIV >= 1.11);
         yield return shift();
         yield return waitlf(() => campaign.PIV <= 1.0);
@@ -231,6 +235,6 @@ It will empty over time, but graze and point++ items will restore it. When empty
         SaveData.r.CompleteTutorial();
     }
     
-    private const int SKIP = 100;
+    private const int SKIP = 10;
 
 }

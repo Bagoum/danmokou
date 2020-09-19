@@ -25,6 +25,9 @@ public static partial class ExMV4 {
     public static tv4 Red() => ExC(ColorScheme.GetColor("red"));
     public static tv4 Pink() => ExC(ColorScheme.GetColor("pink"));
     public static tv4 Blue() => ExC(ColorScheme.GetColor("blue"));
+
+    public static tv4 Palette(string palette, Palette.Shade shade) => 
+        ExC(ColorScheme.GetColor(palette, shade));
     
     
     /// <summary>

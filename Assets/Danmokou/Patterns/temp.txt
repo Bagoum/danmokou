@@ -1,45 +1,45 @@
 <#> warnprefix
-pattern {
+pattern({
 	##boss jy.yukari
-}
-phase 0
-	action block 0
-		shift-phase-to 1
+})
+phase(0)
+	action(block, 0)
+		shift-phase-to(1)
 		
 
-<!> type non  `Difficulty` #{
-<!> root 0 0
-<!> hp 12000
+
+<!> hp 4000
 phase 0
 	action block 0
-		async(arrow-pink/w, <>, girepeat {
-			(noop)
-			wait(30)
-			times(20)
-			timereset
-			rv2incr(<16>)
-		} gcrepeat {
-			wait(5)
-			times(10)
-		} s(roffset(px(1 + 3 * &st))))
-		
-///
+		async arrow-red/w <> gcr2 12 _ <> {
+		} gsr {
+			target a Lplayer
+		} s tprot cx 4
+
 
 
 <!> type non `hello world`
 <!> hp 1000
+<!> photo 40
 phase 0
 	action block 0
-		position 0 2
-		move _ nroffset px sine 5 4 t
-		bullet-control persist arrow-red/w restyle arrow-blue/w > t 1
-		beh-control persist gpather-red/w restyle gpather-blue/w > t 1
-		async arrow-red/w <> gcr2 120 _ <> {
-		} gsr2c 20 {
-		} s tprot cx 2
-		_ 10000 async gpather-red/w <> gcr2 120 _ <> {
-		} gsr2c 20 {
-		} pather 2 2 tprot cx 2 { }
+		position -2 1
+		async amulet-red/ <> gcrepeat {
+			times _
+			wait 80
+			p this
+		} guideempty2 p { (eloc loc) (edir dir) }
+			rvelocity(lerp(0.5, 2, t, px(2), py(-2))) {
+				gsrepeat {
+					bindArrow
+					times(11)
+				} simple(dtpoffset(eloc, edir, p, pxy(
+							0.6 + -0.2 * &aixd,
+							0.1 * &aiyd)),
+					{ dir2 @(edir, p) })
+			}
+
+///
 
 <!> type non `hello world2`
 <!> hp 4000

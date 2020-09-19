@@ -108,7 +108,7 @@ public abstract class IParseQueue {
     public virtual bool AllowPostAggregate => false;
     
     public static IParseQueue Lex(string s) {
-        Profiler.BeginSample("Lex");
+        Profiler.BeginSample("F# Parser");
         var parsed = SMParser.SMParser2(s).Try.ToArray();
         Profiler.EndSample();
         return new PUListParseQueue(parsed, parsed[0].Item2, null); 

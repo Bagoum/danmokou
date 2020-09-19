@@ -9,6 +9,7 @@ using JetBrains.Annotations;
 using UnityEngine;
 using Ex = System.Linq.Expressions.Expression;
 using static DMath.ExM;
+using ExPred = System.Func<DMath.TExPI, TEx<bool>>;
 using ExTP = System.Func<DMath.TExPI, TEx<UnityEngine.Vector2>>;
 using ExTTP = System.Func<TEx<float>, DMath.TExPI, TEx<UnityEngine.Vector2>>;
 //ExCoordF does not necessarily return a TEx<V2>, but this is used for consistency; it is compiled to void anyways.
@@ -186,6 +187,15 @@ public static class VTPRepo {
         /// No movement.
         /// </summary>
         public static ExVTP Null() => ExNoVTP;
+
+        /// <summary>
+        /// Switch between path functions based on a condition.
+        /// <br/>You can use this to smoothly switch from offset to velocity equations,
+        /// but switchin from velocity to offset will give you strange results. 
+        /// </summary>
+        public static ExVTP If(ExPred cond, ExVTP ifTrue, ExVTP ifFalse) => (vel, dt, bpi, nrv) =>
+            Ex.Condition(cond(bpi), ifTrue(vel, dt, bpi, nrv), ifFalse(vel, dt, bpi, nrv));
+        
         /// <summary>
         /// Movement with Cartesian rotational velocity only.
         /// </summary>
@@ -457,9 +467,9 @@ public struct LaserVelocity {
     [CanBeNull] private readonly LVTP lvtp;
     [UsedImplicitly] private readonly float angle;
     [UsedImplicitly]
-    private readonly float cos_rot;
+    public readonly float cos_rot;
     [UsedImplicitly]
-    private readonly float sin_rot;
+    public readonly float sin_rot;
     [UsedImplicitly]
     public Vector2 rootPos;
     private readonly Vector2 simpleDir;

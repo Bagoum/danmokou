@@ -1,10 +1,20 @@
-pattern { }
+pattern { boss jy.yukari }
 <!> type spell `1`
 <!> hp 4000
 <!> hpbar 1
 phase 200
 	action block 0
-		position 0 1.5
+		position 0 2
+///
+		sync arrowlaser-blueteal <20> gsr2c 4 {
+		} laser null 0.2 5 {
+		}
+		sync arrowlaser-tealgreen <40> gsr2c 4 {
+		} laser null 0.2 5 {
+		}
+		sync arrowlaser-blueteal <60> gsr2c 4 {
+		} laser null 0.2 5 {
+		}
 		vulnerable true
 
 <!> type spell `2`

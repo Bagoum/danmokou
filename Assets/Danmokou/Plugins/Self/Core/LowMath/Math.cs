@@ -53,10 +53,10 @@ public static class M {
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static byte Float01ToByte(float f) {
-        f = (f < 0 ? 0 : (f > 1 ? 1 : f));
-        return (byte) Math.Round(f * 255f);
-    }
+    public static byte Float01ToByte(float f) => 
+        f < 0 ? (byte)0 :
+        f > 1 ? (byte)1 :
+            (byte) Math.Round(f * 255f);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static float Sin(float rad) => (float)Math.Sin(rad);
@@ -120,6 +120,13 @@ public static class M {
         float cos_rot = Mathf.Cos(ang);
         float sin_rot = Mathf.Sin(ang);
         return new Vector2(cos_rot * init.x - sin_rot * init.y, sin_rot * init.x + cos_rot * init.y);
+    }
+
+    public static Vector3 RotateXYDeg(Vector3 init, float ang_deg) {
+        var xy = RotateVectorDeg(new Vector2(init.x, init.y), ang_deg);
+        init.x = xy.x;
+        init.y = xy.y;
+        return init;
     }
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector2 RotateVectorDeg(float x, float y, float ang_deg) {

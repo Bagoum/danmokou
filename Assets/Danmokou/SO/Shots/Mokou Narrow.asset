@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4fa22e423a3842e1b90ce62d0372178a, type: 3}
+  m_Name: Mokou Narrow
+  m_EditorClassIdentifier: 
+  key: mokou-narrow
+  title: The Flaming Spear of Vengeful Deicide
+  description: A simple but deadly technique honed by the ninja clan of the Bamboo
+    Forest.<br> Enemies caught in the narrow path of this shot will take massive
+    amounts of damage.<br> When focused, the path narrows even further and deals
+    more damage.
+  type: Forward Focus
+  prefab: {fileID: 1281575726812465804, guid: 3b77a615e29f01d498594cbb10c00332, type: 3}
+  bomb: 0
+  defaultPower: 1000
+  playerChild: 1

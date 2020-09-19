@@ -50,6 +50,8 @@ public partial class BulletManager {
 
         public override int GetHashCode() => (action, persist, priority).GetHashCode();
 
+        public override bool Equals(object o) => o is BulletControl bc && this == bc;
+
         //Pre-velocity
         public const int P_SETTINGS = -20;
         public const int P_TIMECONTROL = -10;
@@ -535,6 +537,16 @@ public partial class BulletManager {
         public static SBCFp SaveV2((ReflectEx.Hoist<Vector2> target, ExBPY indexer, ExSBV2 valuer)[] targets, ExPred cond) => new SBCFp((sbc, ii, bpi) => 
             bpi.When(cond, Ex.Block(targets.Select(t => t.target.Save(((Ex)t.indexer(bpi)).As<int>(), t.valuer(sbc[ii]))))), BulletControl.P_SAVE);
         
+        public static SBCFp SaveV2_noexpr((ReflectEx.Hoist<Vector2> target, BPY indexer, SBV2 valuer)[] targets, Pred cond) {
+            return new SBCFp(ct => (sbc, ii, bpi) => {
+                if (cond(bpi)) {
+                    foreach (var t in targets) {
+                        t.target.Save((int) t.indexer(bpi), t.valuer(ref sbc[ii]));
+                    }
+                }
+            }, BulletControl.P_SAVE);
+        }
+        
         /// <summary>
         /// Save float values in public data hoisting.
         /// <br/>Note: This is automatically called by the GuideEmpty function.
@@ -545,6 +557,16 @@ public partial class BulletManager {
         public static SBCFp SaveF((ReflectEx.Hoist<float> target, ExBPY indexer, ExSBF valuer)[] targets, ExPred cond) => new SBCFp((sbc, ii, bpi) =>
             bpi.When(cond, Ex.Block(targets.Select(t => t.target.Save(((Ex)t.indexer(bpi)).As<int>(), t.valuer(sbc[ii]))))), BulletControl.P_SAVE);
         
+        public static SBCFp SaveF_noexpr((ReflectEx.Hoist<float> target, BPY indexer, SBF valuer)[] targets, Pred cond) {
+            return new SBCFp(ct => (sbc, ii, bpi) => {
+                if (cond(bpi)) {
+                    foreach (var t in targets) {
+                        t.target.Save((int) t.indexer(bpi), t.valuer(ref sbc[ii]));
+                    }
+                }
+            }, BulletControl.P_SAVE);
+        }
+
         /// <summary>
         /// Update existing V2 values in the private data hoisting for the bullet.
         /// </summary>
@@ -650,6 +672,15 @@ public partial class BulletManager {
             return pool => GetMaybeCopyPool(pool).AddPoolControl(new BulletControl(new SBCFc(SimpleBulletControls.
                 Softcull_noexpr(PortColorFormat(pool, targetFormat, "red/"), _ => true)), Consts.NOTPERSISTENT));
         }
+
+        /// <summary>
+        /// Manually construct a two-color gradient for all bullets in this pool.
+        /// <br/> Note: This is a pool control, instead of a bullet option (as it is with lasers/pathers), to avoid bloating.
+        /// <br/> Note: This will error if you do not use it with the `recolor` palette.
+        /// <br/> WARNING: This is a rendering function. Do not use `rand` (`brand` ok), or else replays will desync.
+        /// </summary>
+        public static SPCF Recolor(TP4 black, TP4 white) => pool => 
+            GetMaybeCopyPool(pool).SetRecolor(black, white);
     }
     
     public static void ControlPool(StyleSelector styles, SPCF control) {

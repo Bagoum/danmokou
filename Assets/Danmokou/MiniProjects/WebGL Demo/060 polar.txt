@@ -1,0 +1,20 @@
+pattern({ })
+<!> type non `Polar Movement`
+<!> roott(1, 0, 1.5)
+phase(0)
+	action(block, 0)
+		async sakura-** <> gcrepeat {
+				wait(30)
+				times(_)
+				colorf({ red pink purple blue teal green yellow orange }, // &loop 2)
+				bindLR
+				bindItr(loop)
+			} gsrepeat {
+				times(20)
+				circle
+				colorf({ / /b }, if(even(&loop), 0, 1))
+				expose { f lr }
+			} s(polar(
+				* 2 t,
+				* &lr * 30 t
+			))

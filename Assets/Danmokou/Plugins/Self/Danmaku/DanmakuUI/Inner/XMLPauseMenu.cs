@@ -33,6 +33,10 @@ public class XMLPauseMenu : XMLMenu {
                 ("640x360", (640, 360))
             }, SaveData.s.Resolution),
             new OptionNodeLR<int>("Refresh Rate", r => SaveData.s.RefreshRate = r, new[] {
+        #if UNITY_EDITOR
+                ("1Hz", 1),
+                ("6Hz", 6),
+        #endif
                 ("30Hz", 30),
                 ("40Hz", 40),
                 ("60Hz", 60),
@@ -99,27 +103,22 @@ public class XMLPauseMenu : XMLMenu {
 
     private UINode unpause;
     protected override void Awake() {
-        unpause = new FuncNode(GameStateManager.ForceUnpause, "Unpause", true).With(smallClass);
+        unpause = new FuncNode(GameStateManager.ForceUnpause, "Unpause", true).With(small1Class);
         MainScreen = new UIScreen(
-            GetOptions(false, x => x.With(OptionNode).With(smallClass)).Concat(
+            GetOptions(false, x => x.With(OptionNode).With(small1Class)).Concat(
                 new[] {
-                    GameManagement.MainMenuExists ?
-                        null :
-                        new OptionNodeLR<DifficultySet>("Difficulty (reload)", d => GameManagement.Difficulty = d,
-                            GameManagement.VisibleDifficulties.Select(x => (x.Describe(), x)).ToArray(),
-                            GameManagement.Difficulty).With(OptionNode).With(smallClass),
                     unpause,
                     new ConfirmFuncNode(() => {
                         if (GameManagement.Restart()) {
                             HideOptions(true);
                             return true;
                         } else return false;
-                    }, "Restart", true).With(smallClass),
+                    }, "Restart", true).With(small1Class),
                     GameManagement.MainMenuExists ? new ConfirmFuncNode(() => {
                         HideOptions(true);
                         GameManagement.GoToMainMenu();
-                    }, "Return to Menu", true).With(smallClass) : null,
-                    new ConfirmFuncNode(Application.Quit, "Quit to Desktop").With(smallClass)
+                    }, "Return to Menu", true).With(small1Class) : null,
+                    new ConfirmFuncNode(Application.Quit, "Quit to Desktop").With(small1Class)
                 }
             ).ToArray()
         );

@@ -61,6 +61,7 @@ public struct DelegatedCreator {
     public void Pather(SyncHandoff sbh, float? maxLength, BPY remember, VTP path, uint bpiid, BehOptions options) {
         V2RV2 lrv2 = FacedRV2(sbh.rv2);
         var opts = new RealizedBehOptions(options, sbh.GCX, bpiid, ParentOffset, lrv2, sbh.ch.cT);
+        if (opts.playerBullet != null) style = BulletManager.GetOrMakeFaBPlayerCopy(style);
         BulletManager.RequestPather(style, new Velocity(path, ParentOffset, lrv2), sbh.index, bpiid, 
             maxLength.GetValueOrDefault(DEFAULT_REMEMBER), remember, ref opts);
     }
@@ -68,6 +69,7 @@ public struct DelegatedCreator {
     public void Laser(SyncHandoff sbh, VTP path, float cold, float hot, uint bpiid, LaserOptions options) {
         V2RV2 lrv2 = FacedRV2(sbh.rv2);
         var opts = new RealizedLaserOptions(options, sbh.GCX, bpiid, ParentOffset, lrv2, sbh.ch.cT);
+        if (opts.playerBullet != null) style = BulletManager.GetOrMakeFaBPlayerCopy(style);
         BulletManager.RequestLaser(transformParent, style, new Velocity(path, ParentOffset, lrv2), 
             sbh.index, bpiid, cold, hot, ref opts);
     }

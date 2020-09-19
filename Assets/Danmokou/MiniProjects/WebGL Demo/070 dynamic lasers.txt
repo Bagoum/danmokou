@@ -1,0 +1,20 @@
+pattern({ })
+<!> type non `Dynamic Lasers`
+<!> roott(1, 0, 0)
+phase(0)
+	action(block, 0)
+		position(0, 0)
+		sync arrowlaser-blueteal <> gsrepeat {
+			times(6)
+			circle
+			bindItr(loop)
+			expose({ f loop })
+		} laser(null, 1.5, _, {
+			length(3.5)
+			dsfx
+			stagger(0.4)
+			hueshift(+ (* 60 &loop) (* 120 t))
+			dynamic(polar(
+				* 2 t,
+				+ (* -14 &lt) sine(2.1, 18, + t * 1.1 &lt)))
+		})

@@ -12,6 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9e371a047fd0478dab0e1a132d71003c, type: 3}
   m_Name: PlayerReimu-Camera
   m_EditorClassIdentifier: 
+  freeSpeed: 4.6
+  focusSlowdown: 0.44
   key: basic-reimu-camera
   shortTitle: Shameireimu
   title: Shameireimu Aya

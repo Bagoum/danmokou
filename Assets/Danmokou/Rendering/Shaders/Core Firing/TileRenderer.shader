@@ -1,5 +1,6 @@
-﻿Shader "_SMFriendly/TileRenderer" {
+﻿Shader "_SMFriendly/TileRenderer PROOF OF CONCEPT" {
 	Properties {
+	// THIS IS A PROOF OF CONCEPT AND MAY NOT BE UPDATED
 		_MainTex("Sprite Texture", 2D) = "white" {}
         _Tint("Tint", Color) = (1,1,1,1)
         _HueShift("Hue Shift", Float) = 0
@@ -61,27 +62,29 @@
 			float4 _Tint;
 			float _HueShift;
 			
-			float4 locUVBuffer[1023];
+			//float4 locUVBuffer[1023];
+	// THIS IS A PROOF OF CONCEPT AND MAY NOT BE UPDATED
 
 			fragment vert(vertex v, uint idx : SV_VertexID) {
 				fragment f;
 				f.loc = v.loc;
-				f.loc.xy = locUVBuffer[idx].xy;
-				f.loc = UnityObjectToClipPos(f.loc);
-				f.uv = locUVBuffer[idx].zw;
-				//f.loc = v.loc;
-				//f.uv = v.uv;
+				//f.loc.xy = locUVBuffer[idx].xy;
+				//f.loc = UnityObjectToClipPos(f.loc);
+				//f.uv = locUVBuffer[idx].zw;
+				f.loc = v.loc;
+				f.uv = v.uv;
                 CYCLE(f.uv, _T);
 				f.c = v.color * _Tint;
                 FADEIN(f.c, _T);
 				return f;
 			}
+	// THIS IS A PROOF OF CONCEPT AND MAY NOT BE UPDATED
 
 			float4 frag(fragment f) : SV_Target { 
 	            DISPLACE(f.uv, _T);
 				float4 c = tex2D(_MainTex, f.uv) * f.c;
             #ifdef FT_HUESHIFT
-				c.rgb = hueShift(c.rgb, _T * _HueShift);
+				c.rgb = hueShift(c.rgb, _HueShift);
             #endif
 				return c;
 			}

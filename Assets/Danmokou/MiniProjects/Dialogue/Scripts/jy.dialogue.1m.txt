@@ -1,0 +1,16 @@
+script
+place l1 mima
+place r1 yukari
+sle mima _
+sre yukari worry
+.z `Mima? Why are you here?`
+slce worry
+.z `Well, I heard a lot of noise, so I came out to investigate. But why are you here?`
+src
+.z `This won't do. This is a Reimu script. Reimu has to be the one to come investigate.`
+slce _
+.z `She's still sound asleep. If you want her to come out, we're going to have to make a lot more noise.`
+src
+.z `...`
+slce happy
+.z `...I guess it's settled then. Begin operation "Fight Loudly Enough for Reimu to Wake Up!"`

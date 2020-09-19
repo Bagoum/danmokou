@@ -4,7 +4,9 @@
 
 **Note: This is not a tutorial on how to write player shots. A tutorial does not currently exist, but you may reference the scripts in Patterns/PlayerFire or the shot objects in SO/Firing.**
 
-Players may use simple bullets or lasers as fire types. (Pather support to come soon.)
+Players may use simple bullets, lasers, or pathers as firables.
+
+**WARNING: this doc is based on DMK v4.0.0. Do not continue if you are on a lower version.**
 
 To use simple bullets as a fire type, use the normal name of the bullet style, and use the `simple` command with the `player` property. The arguments are, in order:
 
@@ -16,21 +18,21 @@ Here is the example fire code for homing amulets:
 
 ```python
 	async amulet-*/ <> gcr2 12 _ <> { 
-		delay(* 3 p)
+		delay(3 * p)
 		sfx(pc-fire)
-		colorf({ red black } p)
-	} simple tpnrot
-		truerotatelerprate 60
-			rotify(py 10)
-			(- LNearestEnemy loc)
-		{ 
+		colorf({ red black }, p)
+	} gsr {
+		clip <= powerf p
+	} simple(nrvelocity(
+		truerotatelerprate(60,
+			rotify(py 10),
+			LNearestEnemy - loc)), { 
+			scale(1.4)
 			player(21, 21, oh1)
-		}
+		})
 ```
 
-To use lasers as a fire type, you must first make a distinct laser style. You can copy the default laser styles in Prefab/Bullets/frame if you want. Add this to SO/Firing/Bullet Styles under any of the groups, and **make sure that the name of the shot starts with `p-`**. This prefix indicates to the engine that the lasers should not be automatically destroyed on phase cleanup. 
-
-Next, use the `laser` command with the `player` property. The arguments are, in order:
+To use lasers as a fire type, use the `laser` command with the `player` property. The arguments are, in order:
 
 - Countdown frames between successive hits
 - Damage dealt to boss enemies
@@ -39,24 +41,27 @@ Next, use the `laser` command with the `player` property. The arguments are, in 
 
 Lasers also have a few special complexities. They are only fired once, but they track the location and rotation of their firing options, and they are destroyed when the player stops holding down the corresponding fire key. We'll work through the example to explain how this is implemented.
 
-Here is the example fire code for lasers:
+Here is the example fire code for homing lasers:
 
 ```python
-	sync p-gdlaser-*/b <> gsr {
-		root zero
-		preloop { 
-			lastActiveTime =f _
-		}
-		colorf { red black } // p 2
-	} laser(nroffset(OptionLocation),
-		0, _, {
-			start(* 30 (- t &lastActiveTime))
-			varLength(15, * 30 t)
-			dynamic(tpnrot(rotate(OptionAngle, cy 1)))
-			delete(> (- t &lastActiveTime) 1)
-			deactivate(> playerUnfiringTimeFocus 0)
-			player(12, 25, 15, oh1)
-	})
+		async gdlaser-*/b <> gcr {
+			root zero
+			preloop { 
+				lastActiveTime =f _
+			}
+			colorf({ red black }, p // 2)
+		} laser(nroffset(OptionLocation),
+			0, _, {
+				start(30 * (t - &lastActiveTime))
+				varLength(15, 30 * t)
+				dynamic(nrvelocity(laserrotatelerp(lerpt(3, 8, 0.7, 0),
+					rotate(OptionAngle, cy 1),
+					LNearestEnemy - loc
+				)))
+				delete(> (t - &lastActiveTime, 1))
+				deactivate(> playerUnfiringTimeFocus 0)
+				player(12, 25, 15, oh1)
+		})
 ```
 
 `lastActiveTime` is the time at which the laser got deactivated due to the player having stopped firing. Initially, we set this to infinity (`_`).

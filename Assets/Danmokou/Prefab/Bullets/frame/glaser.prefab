@@ -168,5 +168,10 @@ PrefabInstance:
       propertyPath: colorizing.Dark
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 6730949535145078042, guid: 0a784eeed2c48cc4497011ac484eedd3,
+        type: 3}
+      propertyPath: renderPriority
+      value: 1300
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 0a784eeed2c48cc4497011ac484eedd3, type: 3}

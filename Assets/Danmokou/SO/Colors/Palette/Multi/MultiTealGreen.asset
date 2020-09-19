@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0ee3993c120461ebef501573bf7ea51, type: 3}
+  m_Name: MultiTealGreen
+  m_EditorClassIdentifier: 
+  red: {fileID: 11400000, guid: b10b2759bcc6585469f444991dd44ac6, type: 2}
+  redMod: 9
+  green: {fileID: 11400000, guid: b10b2759bcc6585469f444991dd44ac6, type: 2}
+  greenMod: 4
+  blue: {fileID: 11400000, guid: 2911853ef3e51f04380c4dc6af12898f, type: 2}
+  blueMod: 4

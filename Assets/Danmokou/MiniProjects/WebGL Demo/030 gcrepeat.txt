@@ -1,0 +1,17 @@
+pattern({ })
+<!> type(non, `Asynchronous Repeat`)
+<!> roott(1, 0, 0)
+phase(0)
+	action(block, 0)
+		async(lellipse-*, <>, 
+			gcrepeat({
+				wait(70)
+				times(_)
+				color({ green/b yellow/ })
+				rv2incr(<2>)
+			},  gsrepeat({
+					times(14)
+					circle
+				}, s(rvelocity(px(2))))
+			)
+		)

@@ -418,11 +418,16 @@ public class GenCtxProperty {
     /// </summary>
     /// <returns></returns>
     public static GenCtxProperty BindUD() => new BindUDTag();
-
+    /// <summary>
+    /// Bind the value angle to the RV2 angle in the GCX preloop section.
+    /// </summary>
+    public static GenCtxProperty BindAngle() => new BindAngleTag();
+    
     /// <summary>
     /// Bind a value corresponding to the loop number in the GCX preloop section.
     /// </summary>
     public static GenCtxProperty BindItr(string value) => new BindItrTag(value);
+
 
     public class CompositeProp : ValueProp<GenCtxProperty[]>, IUnrollable<GenCtxProperty> {
         public IEnumerable<GenCtxProperty> Values => value;
@@ -615,6 +620,7 @@ public class GenCtxProperty {
     public class BindArrowTag : GenCtxProperty { }
     public class BindLRTag : GenCtxProperty { }
     public class BindUDTag : GenCtxProperty { }
+    public class BindAngleTag : GenCtxProperty { }
 
     public class BindItrTag : ValueProp<string> {
         public BindItrTag(string value): base(value) { }
@@ -674,6 +680,7 @@ public class GenCtxProperties<T> {
     public readonly bool bindArrow;
     public readonly bool bindLR;
     public readonly bool bindUD;
+    public readonly bool bindAngle;
     [CanBeNull] public readonly string bindItr;
     [CanBeNull] public readonly GCXF<float> laserIndexer;
     private readonly RV2IncrType? rv2IncrType = null;
@@ -780,6 +787,7 @@ public class GenCtxProperties<T> {
             else if (prop is BindArrowTag) bindArrow = true;
             else if (prop is BindLRTag) bindLR = true;
             else if (prop is BindUDTag) bindUD = true;
+            else if (prop is BindAngleTag) bindAngle = true;
             else if (prop is BindItrTag bit) bindItr = bit.value;
             else throw new Exception($"{t.RName()} is not allowed to have properties of type {prop.GetType()}.");
         }

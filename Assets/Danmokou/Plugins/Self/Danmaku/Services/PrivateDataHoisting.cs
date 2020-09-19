@@ -6,7 +6,6 @@ using DMath;
 using UnityEngine;
 
 namespace Danmaku {
-
 public static class PrivateDataHoisting {
     public static void DestroyAll() {
         ClearNames();
@@ -39,10 +38,16 @@ public static class PrivateDataHoisting {
 
     private static TEx GetValue<K1, K2, V>(Dictionary<K1, Dictionary<K2, V>> dict, TExPI bpi, string name) =>
         Expression.Constant(dict).DictGet(bpi.id).DictGet(Expression.Constant(GetKey(name)));
-        //Expression.Constant(dict)
-        //    .DictSafeGet<K1, Dictionary<K2, V>>(bpi.id, "PrivateHoist data")
-        //    .DictSafeGet<K2, V>(Expression.Constant(GetKey(name)), 
-        //    $"<{typeof(K2).RName()},{typeof(V).RName()}>: {name}, {GetKey(name)}");
+    //Expression.Constant(dict)
+    //    .DictSafeGet<K1, Dictionary<K2, V>>(bpi.id, "PrivateHoist data")
+    //    .DictSafeGet<K2, V>(Expression.Constant(GetKey(name)), 
+    //    $"<{typeof(K2).RName()},{typeof(V).RName()}>: {name}, {GetKey(name)}");
+
+    private static T GetValue<T>(Dictionary<uint, Dictionary<uint, T>> data, uint id, uint key) {
+        return data[id][key];
+    }
+
+    public static float GetFloat(uint id, uint key) => GetValue(fData, id, key);
     
     private static TEx UpdateValue<K1, K2, V>(Dictionary<K1, Dictionary<K2, V>> dict, TExPI bpi, string name, Expression value) =>
         Expression.Constant(dict).DictGet(bpi.id).DictSet(Expression.Constant(GetKey(name)), value);

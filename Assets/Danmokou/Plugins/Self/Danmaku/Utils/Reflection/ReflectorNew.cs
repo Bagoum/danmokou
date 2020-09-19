@@ -51,7 +51,10 @@ public static partial class Reflector {
             {typeof(ExBPY), ReflectEx.ReferenceLetBPI<float>},
             {typeof(ExTP), ReflectEx.ReferenceLetBPI<Vector2>},
             {typeof(ExTP3), ReflectEx.ReferenceLetBPI<Vector3>},
-            {typeof(ExBPRV2), ReflectEx.ReferenceLetBPI<V2RV2>}
+            {typeof(ExBPRV2), ReflectEx.ReferenceLetBPI<V2RV2>},
+        #if NO_EXPR
+            {typeof(BPY), NoExprMath_2.ReferenceFloat}
+        #endif
         };
 
     [CanBeNull]

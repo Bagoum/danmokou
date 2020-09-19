@@ -54,12 +54,14 @@ GenCtx provides these automatic aliases in `GCXF<T>` functions:
 | &rv2          | running RV2 value                                            |
 | &brv2         | parent RV2 value                                             |
 | &st           | gcx.summonTime                                               |
+|               | **Automatic Bindings**                                       |
 | &lr/&ud       | 1 when iteration number is even and -1 when odd (bindLR/bindUD) |
 | &rl/&du       | -1 when iteration number is even and 1 when odd (bindLR/bindUD) |
 | &axd          | Arrow formation X index (bindArrow)                          |
 | &ayd          | Arrow formation Y index (bindArrow)                          |
 | &aixd         | Inverted arrow formation X index (bindArrow)                 |
 | &aiyd         | Inverted arrow formation Y index (bindArrow)                 |
+| &angle        | rv2.a (bindAngle)                                            |
 
 Variables inside the GenCtx can be accessed several ways:
 

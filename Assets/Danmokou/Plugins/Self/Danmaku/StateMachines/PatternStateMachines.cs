@@ -48,37 +48,43 @@ public class PatternSM : SequentialSM {
         UIManager.SetBossColor(b.colors.uiColor, b.colors.uiHPColor);
     }
 
-    private static List<BottomTracker> ConfigureAllBosses(SMHandoff smh, BossConfig main,
+    private static (List<BottomTracker>, List<BehaviorEntity>) ConfigureAllBosses(SMHandoff smh, BossConfig main,
         [CanBeNull] BossConfig[] all) {
         all = all ?? new[] {main};
         var bts = new List<BottomTracker>();
         var subbosses = new List<Enemy>();
+        //Anything, enemy or not (eg. Kaguya/Keine in SiMP stage 4)
+        var subsummons = new List<BehaviorEntity>();
         foreach (var (i,b) in all.Enumerate()) {
             var target = smh.Exec;
             Enemy e;
             if (i > 0) {
                 target = UnityEngine.Object.Instantiate(b.boss).GetComponent<BehaviorEntity>();
-                if (target.TryAsEnemy(out e)) e.distorter = null; // i dont really like this but it overlaps weirdly
                 target.Initialize(new Velocity(new Vector2(-50f, 0f), 0f), SMRunner.Null);
+                subsummons.Add(target);
             }
             if (target.TryAsEnemy(out e)) {
                 e.ConfigureBoss(b);
                 e.SetDamageable(false);
-                if (i > 0) subbosses.Add(e);
+                if (i > 0) {
+                    e.distorter = null; // i dont really like this but it overlaps weirdly
+                    subbosses.Add(e);
+                }
             }
             if (b.trackName.Length > 0) bts.Add(UIManager.TrackBEH(target, b.trackName, smh.cT));
         }
         smh.Exec.Enemy.Subbosses = subbosses;
-        return bts;
+        return (bts, subsummons);
     }
 
     public override async Task Start(SMHandoff smh) {
         var bts = new List<BottomTracker>();
+        var subsummons = new List<BehaviorEntity>();
         if (props.boss != null) {
             GameManagement.campaign.OpenBoss(smh.Exec);
             UIManager.SetBossHPLoader(smh.Exec.Enemy);
             SetUniqueBossUI(smh, props.bosses == null ? props.boss : props.bosses[props.bossUI.GetBounded(0, 0)]);
-            bts = ConfigureAllBosses(smh, props.boss, props.bosses);
+            (bts, subsummons) = ConfigureAllBosses(smh, props.boss, props.bosses);
         }
         for (var next = smh.Exec.phaseController.WhatIsNextPhase();
             next > -1 && next < phases.Length;
@@ -99,6 +105,9 @@ public class PatternSM : SequentialSM {
             UIManager.ShowBossLives(0);
             GameManagement.campaign.CloseBoss();
             UIManager.CloseBoss();
+            foreach (var subsummon in subsummons) {
+                subsummon.InvokeCull();
+            }
         }
     }
 }
@@ -138,7 +147,7 @@ public class PhaseSM : SequentialSM {
     /// </summary>
     [CanBeNull] private readonly FinishPSM finishPhase = null;
     private readonly float _timeout = 0;
-    private float Timeout => ChallengeManager.TimeoutOverride(props.Boss) ?? _timeout;
+    private float Timeout => ChallengeManager.BossTimeoutOverride(props.Boss) ?? _timeout;
     public readonly PhaseProperties props;
 
     /// <summary>
@@ -189,7 +198,7 @@ public class PhaseSM : SequentialSM {
         if (GameManagement.campaign.mode != CampaignMode.CARD_PRACTICE && !SaveData.Settings.TeleportAtPhaseStart) {
             if (props.bossCutin) {
                 GameManagement.campaign.ExternalLenience(props.Boss.bossCutinTime);
-                SFXService.Request("x-boss-cutin");
+                SFXService.BossCutin();
                 RaikoCamera.Shake(props.Boss.bossCutinTime / 2f, null, 1f, smh.cT, () => { });
                 UnityEngine.Object.Instantiate(props.Boss.bossCutin);
                 BackgroundOrchestrator.QueueTransition(props.Boss.bossCutinTrIn);
@@ -202,7 +211,7 @@ public class PhaseSM : SequentialSM {
                 });
                 forcedBG = true;
             } else if (props.GetSpellCutin(out var sc)) {
-                SFXService.Request("x-spell-cutin");
+                SFXService.BossSpellCutin();
                 RaikoCamera.Shake(1.5f, null, 1f, smh.cT, () => { });
                 UnityEngine.Object.Instantiate(sc);
             }
@@ -232,6 +241,7 @@ public class PhaseSM : SequentialSM {
         if (props.rootMove != null) await props.rootMove.Start(smh);
         await cutins;
         smh.ThrowIfCancelled();
+        if (props.phaseType?.IsPattern() == true) ETime.Timer.PhaseTimer.Restart();
         var pcTS = new Cancellable();
         var joint_smh = smh.CreateJointCancellee(pcTS, out var joint);
         PrepareCancellationTrigger(joint_smh, pcTS);
@@ -278,7 +288,7 @@ public class PhaseSM : SequentialSM {
             PhaseClearMethod.CANCELLED;
         var pc = new PhaseCompletion(props, completedBy, smh.Exec, in start_campaign);
         if (pc.StandardCardFinish) {
-            smh.Exec.DropItems(pc.DropItems, 1.4f, 0.6f, 1f, 0.2f);
+            smh.Exec.DropItems(pc.DropItems, 1.4f, 0.6f, 1f, 0.2f, 2f);
             RaikoCamera.Shake(defaultShakeTime, defaultShakeMult, defaultShakeMag, smh.cT, () => { });
         }
         GameManagement.campaign.PhaseEnd(pc);

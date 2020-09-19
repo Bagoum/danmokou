@@ -14,20 +14,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   boss: {fileID: 6003014192476353498, guid: 0623db11f1c15fc409072cf3af7a2a95, type: 3}
   CardPracticeName: 
+  replayNameOverride: 
   stateMachine: {fileID: 4900000, guid: 641d26273f4f7d64e964c82881c8fd15, type: 3}
   key: tutorial
+  casualName: 
+  casualNameJP: 
   displayName: Tutorial<br>Boss
   displayTitle: This is an<br>Excessively<br>Descriptive<br>Boss Title
   trackName: Boss
-  uiColor: {r: 0.5471698, g: 0, b: 0.116646215, a: 1}
-  uiHPColor: {r: 0.8113208, g: 0, b: 0, a: 1}
-  cardColorR: {r: 0.10208259, g: 0.5849056, b: 0.20500185, a: 1}
-  cardColorG: {r: 0.05339978, g: 0.65704066, b: 0.754717, a: 1}
-  cardColorB: {r: 0, g: 0.072839774, b: 0.6156863, a: 1}
-  spellColor1: {r: 0.8396226, g: 0, b: 0.11615339, a: 0.68235296}
-  spellColor2: {r: 0.9433962, g: 0.013349922, b: 0.7500941, a: 0.7372549}
-  spellColor3: {r: 0.6859027, g: 0.019357419, b: 0.8207547, a: 0.6862745}
-  colors: {fileID: 11400000, guid: 9e168f85284a8284fb2bd3e4a3628596, type: 2}
+  colors: {fileID: 11400000, guid: 055010713f72168448f30c817e8838fe, type: 2}
   rotator: 
   profile:
     image: {fileID: 0}

@@ -14,11 +14,17 @@ public class ChallengeManager : CoroutineRegularUpdater {
 
     private void Awake() {
         main = this;
+        CleanupState();
         r = new Restrictions();
     }
 
     private void OnDestroy() {
         main = null;
+        CleanupState();
+    }
+
+    private static void CleanupState() {
+        Exec = null;
         Completion = null;
         Tracking = null;
         r = new Restrictions();
@@ -29,29 +35,13 @@ public class ChallengeManager : CoroutineRegularUpdater {
     }
 
     public static PhaseCompletion? Completion { get; private set; } = null;
-    public static ChallengeRequest? Tracking { get; private set; } = null;
+    [CanBeNull] public static IChallengeRequest Tracking { get; private set; } = null;
 
-    private static ReflWrap<TP4> StayInColor => (Func<TP4>)"witha lerpt 0 1 0 0.3 green".Into<TP4>;
-    private static ReflWrap<TP4> StayOutColor => (Func<TP4>)"witha lerpt 0 1 0 0.3 red".Into<TP4>;
-
-    public static TaskPattern StayInRange(BehaviorEntity beh, float f) => SMReflection.Sync("_", GCXFRepo.RV2Zero,
-        AtomicPatterns.RelCirc("_", new BEHPointer(beh), _ => ExMRV2.RXY(f, f), StayInColor));
-    public static TaskPattern StayOutRange(BehaviorEntity beh, float f) => SMReflection.Sync("_", GCXFRepo.RV2Zero,
-        AtomicPatterns.RelCirc("_", new BEHPointer(beh), _ => ExMRV2.RXY(f, f), StayOutColor));
-
-    public static float? TimeoutOverride([CanBeNull] BossConfig bc) => 
-        (bc == Tracking?.Boss && Tracking?.challenge is DestroyTimedC dt) ? dt.time : (float?)null;
+    public static float? BossTimeoutOverride([CanBeNull] BossConfig bc) => 
+        (Tracking?.ControlsBoss(bc) == true) ? r.TimeoutOverride : null;
 
     [CanBeNull] private static BehaviorEntity Exec;
 
-    public static void LinkBEH(BehaviorEntity exec) {
-        if (Tracking == null) throw new Exception("Cannot link BEH when no challenge is tracked");
-        Exec = exec;
-        var cr = Tracking.Value;
-        exec.behaviorScript = cr.Boss.stateMachine;
-        exec.phaseController.Override(cr.phase.phase.index, () => { });
-        exec.RunAttachedSM();
-    }
 
     public class Restrictions {
         public readonly bool HorizAllowed = true;
@@ -60,123 +50,91 @@ public class ChallengeManager : CoroutineRegularUpdater {
         public readonly bool FocusAllowed = true;
         public readonly bool FocusForced = false;
 
+        public readonly float? TimeoutOverride = null;
+
         public Restrictions() {}
-        public Restrictions(Challenge c) {
-            if (c is NoHorizC) HorizAllowed = false;
-            else if (c is NoVertC) VertAllowed = false;
-            else if (c is NoFocusC) FocusAllowed = false;
-            else if (c is AlwaysFocusC) FocusForced = true;
+        public Restrictions(Challenge[] cs) {
+            foreach (var c in cs) {
+                if (c is NoHorizC) HorizAllowed = false;
+                else if (c is NoVertC) VertAllowed = false;
+                else if (c is NoFocusC) FocusAllowed = false;
+                else if (c is AlwaysFocusC) FocusForced = true;
+                else if (c is DestroyTimedC dtc) TimeoutOverride = dtc.time;
+            }
         }
     }
     public static Restrictions r { get; private set; } = new Restrictions();
     public static void SetupBEHPhase(SMHandoff smh) {
         if (smh.Exec != Exec || Tracking == null) return;
-        var cr = Tracking.Value;
-        if (cr.challenge is WithinC inside) StayInRange(Exec, inside.units)(smh);
-        else if (cr.challenge is WithoutC outside) StayOutRange(Exec, outside.units)(smh);
+        var cs = Tracking.Challenges;
+        for (int ii = 0; ii < cs.Length; ++ii) cs[ii].SetupPhase(smh);
     }
 
-    public static void TrackChallenge(GameRequest gr, ChallengeRequest c) {
-        IEnumerator cor;
-        if (c.challenge is TrivialConditionC) cor = TrackTrivial(gr, c);
-        else if (c.challenge is DestroyTimedC dt) cor = TrackDestroyTimed(gr, c, dt);
-        else if (c.challenge is DestroyC d) cor = TrackDestroy(gr, c, d);
-        else if (c.challenge is GrazeC g) cor = TrackGraze(gr, c, g);
-        else if (c.challenge is DialogueC dg) cor = TrackDialogue(gr, c, dg);
-        else if (c.challenge is WithinC within) cor = TrackWithin(gr, c, within);
-        else if (c.challenge is WithoutC without) cor = TrackWithout(gr, c, without);
-        else throw new Exception($"Couldn't resolve challenge type for {c.Description}");
-        Log.Unity($"Tracking challenge {c.Description}");
-        //Prevents load lag if this is executed on scene change while camera transition is up
-        StateMachineManager.FromText(c.Boss.stateMachine);
+    public static void LinkBEH(BehaviorEntity exec) {
+        if (Tracking == null) throw new Exception("Cannot link BEH when no challenge is tracked");
+        Tracking.Start(Exec = exec);
+    }
+    public static void TrackChallenge(IChallengeRequest cr) {
+        Log.Unity($"Tracking challenge {cr.Description}");
         Completion = null;
-        Tracking = c;
-        r = new Restrictions(c.challenge);
+        Tracking = cr;
+        r = new Restrictions(cr.Challenges);
         Exec = null;
         challengePhotos.Clear();
-        UIManager.RequestChallengeDisplay(c, gr.difficulty);
-        main.RunDroppableRIEnumerator(cor);
+        cr.Initialize();
+        main.RunDroppableRIEnumerator(main.TrackChallenges(cr));
     }
 
-    private static void ChallengeFailed(GameRequest gr, ChallengeRequest cr) {
-        Log.Unity($"FAILED challenge {cr.Description}");
-        UIManager.MessageChallengeEnd(false, out float t);
-        if (Exec != null) Exec.ShiftPhase();
-        WaitingUtils.WaitThenCB(main, Cancellable.Null, t, false, () => {
-            Core.Events.TryHitPlayer.Invoke((999, true));
-        });
+    private static void ChallengeFailed(IChallengeRequest cr, TrackingContext ctx) {
+        cr.OnFail(ctx);
+        CleanupState();
     }
 
-    private static void ChallengeSuccess(GameRequest gr, ChallengeRequest cr) {
-        Log.Unity($"PASSED challenge {cr.Description}");
-        if (gr.Saveable) {
-            Log.Unity("Committing challenge to save data");
-            SaveData.r.CompleteChallenge(gr, cr, challengePhotos);
-        }
-        var next = cr.NextChallenge(gr.difficulty);
-        if (next != null && Exec != null) {
-            var e = Exec;
-            Replayer.Cancel(); //can't replay both scenes together
-            Log.Unity($"Autoproceeding to next challenge: {next.Value.Description}");
-            StaticNullableStruct.LastGame = new GameRequest(gr.cb, gr.difficulty, challenge: next.Value, shot: gr.shot);
-            TrackChallenge(gr, next.Value);
-            LinkBEH(e);
-        } else {
-            UIManager.MessageChallengeEnd(true, out float t);
-            WaitingUtils.WaitThenCB(main, Cancellable.Null, t, false, gr.vFinishAndPostReplay);
-        }
+    private static void ChallengeSuccess(IChallengeRequest cr, TrackingContext ctx) {
+        cr.OnSuccess(ctx);
+        CleanupState();
     }
 
-    private static void ChallengeSuccessIf(GameRequest gr, ChallengeRequest cr, bool cond) {
-        if (cond) ChallengeSuccess(gr, cr);
-        else ChallengeFailed(gr, cr);
-    }
-
-    private static IEnumerator TrackDialogue(GameRequest gr, ChallengeRequest cr, DialogueC c) => TrackTrivial(gr, cr);
-    private static IEnumerator TrackTrivial(GameRequest gr, ChallengeRequest cr) {
-        while (Completion == null) yield return null;
-        ChallengeSuccess(gr, cr);
-    }
-    private static IEnumerator TrackDestroy(GameRequest gr, ChallengeRequest cr, DestroyC c) {
-        while (Completion == null) yield return null;
-        ChallengeSuccessIf(gr, cr, Completion.Value.Cleared == true);
-    }
-
-    /// <summary>
-    /// TimeoutOverride handles timeout shenanigans
-    /// </summary>
-    private static IEnumerator TrackDestroyTimed(GameRequest gr, ChallengeRequest cr, DestroyTimedC c) => TrackDestroy(gr, cr, c);
-    private static IEnumerator TrackGraze(GameRequest gr, ChallengeRequest cr, GrazeC c) {
-        while (Completion == null) yield return null;
-        ChallengeSuccessIf(gr, cr, GameManagement.campaign.Graze >= c.graze);
-    }
-
-    private static IEnumerator TrackWithin(GameRequest gr, ChallengeRequest cr, WithinC c) {
+    //This is not controlled by smh.cT because its scope is the entire segment over which the challenge executes,
+    //not just the boss phase. In the case of BPoHC stage events, this scope is the phase cT of the stage section.
+    private IEnumerator TrackChallenges(IChallengeRequest cr) {
         while (Exec == null) yield return null;
-        for (float t = 0; Completion == null; t += ETime.FRAME_TIME) {
-            if (t > c.yield && (Exec.rBPI.loc - main.player.location).magnitude > c.units) {
-                ChallengeFailed(gr, cr);
-                yield break;
+        var challenges = cr.Challenges;
+        var ctx = new TrackingContext(Exec, this);
+        
+        for (; Completion == null; ctx.t += ETime.FRAME_TIME) {
+            for (int ii = 0; ii < challenges.Length; ++ii) {
+                if (!challenges[ii].FrameCheck(ctx)) {
+                    ChallengeFailed(cr, ctx);
+                    yield break;
+                }
             }
             yield return null;
         }
-        ChallengeSuccess(gr, cr);
-    }
-    private static IEnumerator TrackWithout(GameRequest gr, ChallengeRequest cr, WithoutC c) {
-        while (Exec == null) yield return null;
-        for (float t = 0; Completion == null; t += ETime.FRAME_TIME) {
-            if (t > c.yield && (Exec.rBPI.loc - main.player.location).magnitude < c.units) {
-                ChallengeFailed(gr, cr);
+        for (int ii = 0; ii < challenges.Length; ++ii) {
+            if (!challenges[ii].EndCheck(ctx, Completion.Value)) {
+                ChallengeFailed(cr, ctx);
                 yield break;
             }
-            yield return null;
         }
-        ChallengeSuccess(gr, cr);
+        ChallengeSuccess(cr, ctx);
     }
 
-    public SOCircle player;
+    public struct TrackingContext {
+        public readonly BehaviorEntity exec;
+        public readonly ChallengeManager cm;
+        public float t;
+
+        public TrackingContext(BehaviorEntity exec, ChallengeManager cm) {
+            this.exec = exec;
+            this.cm = cm;
+            this.t = 0;
+        }
+    }
+
     
     private static readonly List<AyaPhoto> challengePhotos = new List<AyaPhoto>();
+    public static IEnumerable<AyaPhoto> ChallengePhotos => challengePhotos;
 
     public static void SubmitPhoto(AyaPhoto p) {
         //There are no restrictions on what type of challenge may receive a photo

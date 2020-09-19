@@ -11,6 +11,7 @@ public class MultiPaletteMap : ColorMap {
     public Palette blue;
     public GradientModifier blueMod;
     
+    private static readonly Color nc = new Color(0, 0, 0, 0);
     protected override unsafe void Map(Color32* pixels, int len) {
         var gr = red.Gradient.Modify(redMod);
         var gg = green.Gradient.Modify(greenMod);
@@ -18,7 +19,11 @@ public class MultiPaletteMap : ColorMap {
         for (int ii = 0; ii < len; ++ii) {
             Color32 pixel = pixels[ii];
             if (pixel.a > zero) {
-                Color32 newc = gr.Evaluate(pixel.r / 255f) + gg.Evaluate(pixel.g / 255f) + gb.Evaluate(pixel.b / 255f);
+                float total = pixel.r + pixel.g + pixel.b + 1;
+                Color32 newc = 
+                    gr.Evaluate(pixel.r / 255f) * ((pixel.r + 1) / total) + 
+                    gg.Evaluate(pixel.g / 255f) * (pixel.g / total) + 
+                    gb.Evaluate(pixel.b / 255f) * (pixel.b / total);
                 newc.a = pixel.a;
                 pixels[ii] = newc;
             }

@@ -16,7 +16,7 @@ public class DamageMeasurer : CoroutineRegularUpdater {
         RunDroppableRIEnumerator(MeasureDamage());
     }
 
-    private IEnumerator MeasureDamage(int group=60) {
+    private IEnumerator MeasureDamage(int group=120) {
         int total = 0;
         int totalFrames = 0;
         while (true) {
@@ -32,7 +32,9 @@ public class DamageMeasurer : CoroutineRegularUpdater {
                 total += dmg;
                 lastg += dmg;
             }
-            Debug.Log($"DPS: {total / (totalFrames / 120f)}; Last few frames: {lastg / (group / 120f)}");
+            Log.Unity($"DPS: {total / (totalFrames / ETime.ENGINEFPS)}; " +
+                      $"Last {group} frames: {lastg / (group / ETime.ENGINEFPS)}",
+                false, Log.Level.DEBUG1);
         }
     }
 }

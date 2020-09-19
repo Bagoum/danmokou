@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using DMath;
+using JetBrains.Annotations;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEditor;
 using UnityEngine;
@@ -32,6 +34,8 @@ public class CurvedTileRenderPather : CurvedTileRender {
     private readonly float headCutoffRatio;
     private readonly float tailCutoffRatio;
     private BPY remember;
+    [CanBeNull] private BPY hueShift;
+    private (TP4 black, TP4 white)? recolor;
     private Velocity velocity;
     /// <summary>
     /// The last return value of Velocity.Update. Used for backstepping.
@@ -61,10 +65,10 @@ public class CurvedTileRenderPather : CurvedTileRender {
     private readonly Transform trail;
     public readonly TrailRenderer trailR;
 
-    private SOCircle target;
+    private SOCircleHitbox target;
     private PlayerBulletCfg? playerBullet;
 
-    public CurvedTileRenderPather(PatherRenderCfg cfg, GameObject obj) : base(cfg, obj) {
+    public CurvedTileRenderPather(PatherRenderCfg cfg, GameObject obj) : base(obj) {
         lineRadius = cfg.lineRadius;
         trail = cfg.trail;
         trailR = cfg.trailR;
@@ -75,7 +79,9 @@ public class CurvedTileRenderPather : CurvedTileRender {
         PersistentYScale = scale;
         scaledLineRadius = lineRadius * scale;
     }
-    public void Initialize(Pather locationer, Material material, bool isNew, Velocity vel, uint bpiId, int firingIndex, BPY rememberTime, float maxRememberTime, SOCircle collisionTarget, ref RealizedBehOptions options) {
+    public void Initialize(Pather locationer,TiledRenderCfg cfg,  Material material, bool isNew, Velocity vel, 
+        uint bpiId, int firingIndex, BPY rememberTime, float maxRememberTime, SOCircleHitbox collisionTarget, 
+        ref RealizedBehOptions options) {
         exec = locationer;
         updateEveryFrame = true;//options.smooth;
                                 //Now that we are using TrailRender, we should always update centers for accuracy.
@@ -83,7 +89,7 @@ public class CurvedTileRenderPather : CurvedTileRender {
                                 //Note: this must be true for pathers to be correct w.r.t replays.
         updateRate = updateEveryFrame ? ETime.ENGINEFPS : ETime.SCREENFPS;
         int newTexW = (int) Math.Ceiling(maxRememberTime * updateRate) + 1; 
-        base.Initialize(locationer, material, isNew, false, newTexW, options.hueShift);
+        base.Initialize(locationer, cfg, material, isNew, false, options.playerBullet != null, newTexW);
         if (locationer.HasParent()) throw new NotImplementedException("Pather cannot be parented");
         velocity = vel;
         bpi = new ParametricInfo(vel.rootPos, firingIndex, bpiId);
@@ -109,6 +115,12 @@ public class CurvedTileRenderPather : CurvedTileRender {
         skipNextCollisionCheck = false;
         target = collisionTarget;
         playerBullet = options.playerBullet;
+        
+        hueShift = options.hueShift;
+        recolor = options.recolor;
+        //This needs to be reset to zero here to ensure that the value isn't dirty, since hue-shift is always active
+        pb.SetFloat(PropConsts.HueShift, hueShift?.Invoke(bpi) ?? 0f);
+        if (hueShift != null || recolor != null) DontUpdateTimeAfter = M.IntFloatMax;
     }
 
     public Vector2 GlobalPosition => bpi.loc;
@@ -136,11 +148,22 @@ public class CurvedTileRenderPather : CurvedTileRender {
         base.UpdateMovement(dT);
     }
 
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void UpdateGraphics() {
+        if (hueShift != null) {
+            pb.SetFloat(PropConsts.HueShift, M.degRad * hueShift(bpi));
+        }
+        if (recolor.Try(out var rc)) {
+            pb.SetVector(PropConsts.RecolorB, rc.black(bpi));
+            pb.SetVector(PropConsts.RecolorW, rc.white(bpi));
+        }
+    }
     public override void UpdateRender() {
         exec.FaceInDirectionRaw(M.AtanD(lastDelta));
-        base.UpdateRender();
-
         if (ETime.LastUpdateForScreen) {
+            UpdateGraphics();
+            
             trail.localPosition = centers[cL - 1];
             //trailR.AddPosition(bpi.loc);
             if (prevRemember != nextRemember) {
@@ -148,6 +171,7 @@ public class CurvedTileRenderPather : CurvedTileRender {
             }
             if (lifetime < DontUpdateTimeAfter) trailR.SetPropertyBlock(pb);
         }
+        base.UpdateRender();
     }
 
     private float prevRemember = 0f;
@@ -257,6 +281,7 @@ public class CurvedTileRenderPather : CurvedTileRender {
             }
             return CollisionResult.noColl;
         }
+        if (!target.active) return CollisionResult.noColl;
         return DMath.Collision.GrazeCircleOnSegments(target, exec.RawGlobalPosition(), centers, read_from + cut1,
             FramePosCheck, cL - cut2, scaledLineRadius, 1, 0);
     }
@@ -295,6 +320,7 @@ public class CurvedTileRenderPather : CurvedTileRender {
     }
 
     public override void Activate() {
+        UpdateGraphics();
         base.Activate();
         trail.localPosition = centers[cL - 1];
         trailR.SetPropertyBlock(pb);

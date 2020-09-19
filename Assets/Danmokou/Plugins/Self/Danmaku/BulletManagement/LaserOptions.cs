@@ -109,7 +109,23 @@ public class LaserOption {
 
     public static LaserOption Stagger(float mult) => new StaggerProp(mult);
     
-    public static LaserOption HueShift(GCXF<float> dps) => new HueShiftProp(dps);
+    /// <summary>
+    /// Provide a function that indicates how much to shift the color of the summon (in degrees) at any point in time.
+    /// <br/> WARNING: This is a rendering function. Do not use `rand` (`brand` ok), or else replays will desync.
+    /// </summary>
+    public static LaserOption HueShift(GCXU<BPY> shift) => new HueShiftProp(shift);
+
+    /// <summary>
+    /// Manually construct a two-color gradient for the object.
+    /// <br/> Note: This will only have effect if you use it with the `recolor` palette.
+    /// <br/> WARNING: This is a rendering function. Do not use `rand` (`brand` ok), or else replays will desync.
+    /// </summary>
+    public static LaserOption Recolor(GCXU<TP4> black, GCXU<TP4> white) => new RecolorProp(black, white);
+    /// <summary>
+    /// Tint the laser. This is a multiplicative effect on its normal color.
+    /// <br/> WARNING: This is a rendering function. Do not use `rand` (`brand` ok), or else replays will desync.
+    /// </summary>
+    public static LaserOption Tint(GCXU<FnLaserV4> tint) => new TintProp(tint);
 
     public static LaserOption Player(int cdFrames, int bossDmg, int stageDmg, string effect) =>
         new PlayerBulletProp(new PlayerBulletCfg(cdFrames, bossDmg, stageDmg, ResourceManager.GetEffect(effect)));
@@ -183,8 +199,20 @@ public class LaserOption {
     public class StaggerProp : ValueProp<float> {
         public StaggerProp(float v) : base(v) { }
     }
-    public class HueShiftProp : ValueProp<GCXF<float>> {
-        public HueShiftProp(GCXF<float> v) : base(v) { }
+    public class HueShiftProp : ValueProp<GCXU<BPY>> {
+        public HueShiftProp(GCXU<BPY> v) : base(v) { }
+    }
+    public class RecolorProp : LaserOption {
+        public readonly GCXU<TP4> black;
+        public readonly GCXU<TP4> white;
+
+        public RecolorProp(GCXU<TP4> b, GCXU<TP4> w) {
+            black = b;
+            white = w;
+        }
+    }
+    public class TintProp : ValueProp<GCXU<FnLaserV4>> {
+        public TintProp(GCXU<FnLaserV4> v) : base(v) { }
     }
 
     public class PlayerBulletProp : ValueProp<PlayerBulletCfg> {
@@ -212,7 +240,9 @@ public readonly struct RealizedLaserOptions {
     public readonly float yScale;
     public readonly int? layer;
     public readonly float staggerMultiplier;
-    public readonly float hueShift;
+    [CanBeNull] public readonly BPY hueShift;
+    public readonly (TP4 black, TP4 white)? recolor;
+    [CanBeNull] public readonly FnLaserV4 tint;
     public readonly PlayerBulletCfg? playerBullet;
 
     public RealizedBehOptions AsBEH => new RealizedBehOptions(this);
@@ -238,7 +268,11 @@ public readonly struct RealizedLaserOptions {
         }
         smr = SMRunner.Run(opts.sm, cT, gcx);
         yScale = (opts.yScale?.Invoke(gcx) ?? 1f) * DEFAULT_LASER_WIDTH;
-        hueShift = opts.hueShift?.Invoke(gcx) ?? 0f;
+        hueShift = opts.hueShift?.Add(gcx, bpiid);
+        if (opts.recolor.Try(out var rc)) {
+            recolor = (rc.black.Add(gcx, bpiid), rc.white.Add(gcx, bpiid));
+        } else recolor = null;
+        tint = opts.tint?.Add(gcx, bpiid);
         playerBullet = opts.playerBullet;
     }
 }
@@ -260,35 +294,39 @@ public class LaserOptions {
     [CanBeNull] public readonly GCXF<float> yScale;
     public readonly int? layer = null;
     public readonly float staggerMultiplier = 1f;
-    [CanBeNull] public readonly GCXF<float> hueShift;
+    public readonly GCXU<BPY>? hueShift;
+    public readonly (GCXU<TP4> black, GCXU<TP4> white)? recolor;
+    public readonly GCXU<FnLaserV4>? tint;
     public readonly PlayerBulletCfg? playerBullet;
 
     public LaserOptions(params LaserOption[] props) : this(props as IEnumerable<LaserOption>) { }
 
     public LaserOptions(IEnumerable<LaserOption> props) {
-        foreach (var prop in props.Unroll()) {
-            if (prop is LengthProp l) length = l.value;
-            else if (prop is StartProp stp) start = stp.value;
-            else if (prop is DeleteProp dp) delete = dp.value;
-            else if (prop is DeactivateProp dcp) deactivate = dcp.value;
-            else if (prop is RepeatProp r) repeat = r.value;
-            else if (prop is RotateOffsetProp roff) rotateOffset = roff.value;
-            else if (prop is RotateProp rotp) rotate = rotp.value;
-            else if (prop is CurveProp cur) {
+        foreach (var p in props.Unroll()) {
+            if (p is LengthProp l) length = l.value;
+            else if (p is StartProp stp) start = stp.value;
+            else if (p is DeleteProp dp) delete = dp.value;
+            else if (p is DeactivateProp dcp) deactivate = dcp.value;
+            else if (p is RepeatProp r) repeat = r.value;
+            else if (p is RotateOffsetProp roff) rotateOffset = roff.value;
+            else if (p is RotateProp rotp) rotate = rotp.value;
+            else if (p is CurveProp cur) {
                 dynamic = cur.dynamic;
                 curve = cur.curve;
-            } else if (prop is EndpointProp ep) endpoint = ep.value;
-            else if (prop is SfxProp hsp) {
+            } else if (p is EndpointProp ep) endpoint = ep.value;
+            else if (p is SfxProp hsp) {
                 firesfx = hsp.onFire;
                 hotsfx = hsp.onOn;
             }
-            else if (prop is SMProp smp) sm = smp.value;
-            else if (prop is YScaleProp yp) yScale = yp.value;
-            else if (prop is LayerProp lp) layer = lp.value.Int();
-            else if (prop is StaggerProp sp) staggerMultiplier = sp.value;
-            else if (prop is HueShiftProp hshp) hueShift = hshp.value;
-            else if (prop is PlayerBulletProp pbp) playerBullet = pbp.value;
-            else throw new Exception($"Laser property {prop.GetType()} not handled.");
+            else if (p is SMProp smp) sm = smp.value;
+            else if (p is YScaleProp yp) yScale = yp.value;
+            else if (p is LayerProp lp) layer = lp.value.Int();
+            else if (p is StaggerProp sp) staggerMultiplier = sp.value;
+            else if (p is HueShiftProp hshp) hueShift = hshp.value;
+            else if (p is RecolorProp rcp) recolor = (rcp.black, rcp.white);
+            else if (p is TintProp tp) tint = tp.value;
+            else if (p is PlayerBulletProp pbp) playerBullet = pbp.value;
+            else throw new Exception($"Laser property {p.GetType()} not handled.");
         }
         if (length?.var != null || start != null) {
             if (!dynamic) throw new Exception("Variable length or variable start lasers must be used with DYNAMIC.");

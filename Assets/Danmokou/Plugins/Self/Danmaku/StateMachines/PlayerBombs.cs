@@ -12,7 +12,13 @@ using static DMath.ExMV4;
 namespace Danmaku {
 public enum PlayerBombType {
     NONE,
-    TEST_BOMB_1
+    TEST_BOMB_1,
+    TEST_POWERBOMB_1
+}
+
+public enum PlayerBombContext {
+    NORMAL,
+    DEATHBOMB
 }
 public static class PlayerBombs {
     public static bool IsValid(this PlayerBombType bt) => bt != PlayerBombType.NONE;
@@ -21,25 +27,52 @@ public static class PlayerBombs {
         switch (bt) {
             case PlayerBombType.TEST_BOMB_1:
                 return 20;
+            case PlayerBombType.TEST_POWERBOMB_1:
+                return 20;
             default:
                 return 0;
         }
     }
+
+    private static double? PowerRequired(this PlayerBombType bt, PlayerBombContext ctx) {
+        switch (bt) {
+            case PlayerBombType.TEST_POWERBOMB_1:
+                return 1;
+            default:
+                return null;
+        }
+        
+    }
+
+    private static int? BombsRequired(this PlayerBombType bt, PlayerBombContext ctx) {
+        switch (bt) {
+            case PlayerBombType.TEST_BOMB_1:
+                return 1;
+            default:
+                return null;
+        }
+    }
     
-    public static void DoBomb(PlayerBombType bomb, PlayerInput bomber) {
+    public static bool TryBomb(PlayerBombType bomb, PlayerInput bomber, PlayerBombContext ctx) {
         IEnumerator ienum;
         switch (bomb) {
             case PlayerBombType.TEST_BOMB_1:
                 ienum = DoTestBomb1(bomber);
                 break;
+            case PlayerBombType.TEST_POWERBOMB_1:
+                ienum = DoTestBomb1(bomber);
+                break;
             default:
                 throw new Exception($"No bomb handling for {bomb}");
         }
+        if (bomb.PowerRequired(ctx).Try(out var rp) && !GameManagement.campaign.TryConsumePower(-rp)) 
+            return false;
+        if (bomb.BombsRequired(ctx).Try(out var rb) && !GameManagement.campaign.TryConsumeBombs(-rb)) 
+            return false;
         ++PlayerInput.BombDisableRequests;
         bomber.RunDroppableRIEnumerator(ienum);
+        return true;
     }
-
-    public static void DoDeathbomb(PlayerBombType bomb, PlayerInput bomber) => DoBomb(bomb, bomber);
     
     private static readonly ReflWrap<TaskPattern> TB1_1 = (Func<TaskPattern>)(() => SMReflection.dBossExplode(
         TP4(LerpT(_ => 0.5f, _ => 1.5f, _ => Red(),
@@ -47,7 +80,7 @@ public static class PlayerBombs {
         TP4(_ => Red())
     ));
     private static readonly ReflWrap<StateMachine> TB1_2 = (Func<StateMachine>)@"
-async p-gpather-red/w <-90> gcr3 20 1.6s <> {
+async gpather-red/w <-90> gcr3 20 1.6s <> {
     frv2 angle(randpm1 * rand 20 50)
 } pather(0.5, 0.5, tpnrot(
 	truerotatelerprate(lerpt(1.2, 1.7, 170, 0),

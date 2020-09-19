@@ -57,6 +57,10 @@ public delegate Vector4 TP4(ParametricInfo bpi);
 /// A function that converts ParametricInfo into a float.
 /// </summary>
 public delegate float BPY(ParametricInfo bpi);
+/// <summary>
+/// A function that converts a SimpleBullet into a float.
+/// </summary>
+public delegate float SBF(ref BulletManager.SimpleBullet sb);
 
 /// <summary>
 /// A function that converts ParametricInfo and a laser lifetime into a float.
@@ -81,6 +85,11 @@ public delegate bool Pred(ParametricInfo bpi);
 /// A function that converts ParametricInfo and a laser lifetime into a Vector2.
 /// </summary>
 public delegate bool LPred(ParametricInfo bpi, float lT);
+
+/// <summary>
+/// A function that converts a laser into a vector4.
+/// </summary>
+public delegate Vector4 FnLaserV4(ParametricInfo bpi, CurvedTileRenderLaser l);
 
 /// <summary>
 /// A wrapper type used for functions that operate over a GCX.

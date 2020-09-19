@@ -43,7 +43,7 @@ public static class TestParsing {
     private static void TestSMExceptionRegex(string sm, string pattern) =>
         ThrowsMessage(pattern, () => StateMachine.CreateFromDump(sm));
 
-    private const string baseScenePath = "Scenes/Testing/TestMainMenu";
+    private const string baseScenePath = "Danmokou/Scenes/Testing/TestMainMenu";
     [UnityTest]
     public static IEnumerator TestSMFailures() {
         SceneManager.LoadScene(baseScenePath);

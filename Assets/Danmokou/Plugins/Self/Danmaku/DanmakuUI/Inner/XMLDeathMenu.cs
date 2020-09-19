@@ -41,18 +41,18 @@ public class XMLDeathMenu : XMLMenu {
                     GameStateManager.ForceUnpause();
                     return true;
                 } else return false;
-            }, () => $"Continue ({GameManagement.campaign.Continues})", true).With(smallClass),
+            }, () => $"Continue ({GameManagement.campaign.Continues})", true).With(small1Class),
             new ConfirmFuncNode(() => {
                 if (GameManagement.Restart()) {
                     HideMe();
                     return true;
                 } else return false;
-            }, "Restart", true).With(smallClass),
+            }, "Restart", true).With(small1Class),
             GameManagement.MainMenuExists ?
                 new ConfirmFuncNode(() => {
                     HideMe();
                     GameManagement.GoToMainMenu();
-                }, "Return to Menu", true).With(smallClass) : null
+                }, "Return to Menu", true).With(small1Class) : null
             );
         base.Awake();
     }

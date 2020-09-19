@@ -19,10 +19,8 @@ public abstract class RegularUpdater : MonoBehaviour, IRegularUpdater {
     public virtual void RegularUpdateParallel() { }
     public virtual int UpdatePriority => UpdatePriorities.DEFAULT;
     
-    public virtual bool ReceivePartialUpdates => false;
     public virtual bool UpdateDuringPause => false;
 
-    public virtual void PartialUpdate(float dT) => throw new NotImplementedException();
 
     public virtual void PreSceneClose() { }
 
@@ -35,5 +33,10 @@ public abstract class RegularUpdater : MonoBehaviour, IRegularUpdater {
     }
 
     protected virtual void OnDisable() => DisableRegularUpdates();
+
+    protected void DisableDestroy() {
+        DisableRegularUpdates();
+        Destroy(gameObject);
+    }
 }
 

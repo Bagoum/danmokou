@@ -1,0 +1,32 @@
+gtr {
+	wt 12 _
+	wait-child
+} fire
+	## free fire
+	async reimuamulet-red <> gcrepeat { 
+		wait(8)
+		times(_)
+		sfx(x-pc-fire-1)
+	} gsrepeat {
+		times(2)
+		center
+		rv2incr(<0.4;:>)
+	} simple tprot py(17) {
+		player(15, 15, oh-reimu-amulet)
+	}
+	## free cancellation
+	noop
+	## focus
+	async reimuamulet-red <> gcrepeat { 
+		wait(8)
+		times(_)
+		sfx(x-pc-fire-1)
+	}  gsrepeat {
+		times(2)
+		center
+		rv2incr(<0.5;:>)
+	} simple tprot py(20) {
+		player(16, 16, oh-reimu-amulet)
+	}
+	## focus cancellation
+	noop

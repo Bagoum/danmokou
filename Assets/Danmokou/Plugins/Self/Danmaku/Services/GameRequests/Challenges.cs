@@ -2,11 +2,100 @@
 using System.Collections.Generic;
 using System.Linq;
 using Danmaku;
+using DMath;
 using JetBrains.Annotations;
+using SM;
 using static SM.SMAnalysis;
+using GameLowRequest = DU<Danmaku.CampaignRequest, Danmaku.BossPracticeRequest, 
+    PhaseChallengeRequest, Danmaku.StagePracticeRequest>;
 
 
-public readonly struct ChallengeRequest {
+public interface IChallengeRequest {
+    
+    string Description { get; }
+    Challenge[] Challenges { get; }
+
+    bool ControlsBoss([CanBeNull] BossConfig boss);
+    
+    /// <summary>
+    /// Called when the challenge request is constructed immediately after the scene loads
+    /// (when the loading screen is still fully up). Use to set UI elements, etc.
+    /// </summary>
+    void Initialize();
+
+    /// <summary>
+    /// Called when the boss has awoken and is ready to receive commands
+    /// (when the scene is fully visible).
+    /// </summary>
+    void Start(BehaviorEntity exec);
+
+    void OnSuccess(ChallengeManager.TrackingContext ctx);
+
+    void OnFail(ChallengeManager.TrackingContext ctx);
+}
+
+public readonly struct SceneChallengeReqest : IChallengeRequest {
+    public readonly PhaseChallengeRequest cr;
+    public readonly GameRequest gr;
+    public readonly Enums.FixedDifficulty difficulty;
+
+    public SceneChallengeReqest(GameRequest gr, PhaseChallengeRequest cr) {
+        this.gr = gr;
+        this.cr = cr;
+        difficulty = gr.difficulty.standard ?? throw new Exception("Scene challenges must used fixed difficulties");
+    }
+
+    public void Initialize() {
+        //Prevents load lag if this is executed on scene change while camera transition is up
+        StateMachineManager.FromText(cr.Boss.stateMachine);
+        UIManager.RequestChallengeDisplay(cr, difficulty);
+    }
+
+    public void Start(BehaviorEntity exec) {
+        exec.behaviorScript = cr.Boss.stateMachine;
+        exec.phaseController.Override(cr.phase.phase.index, () => { });
+        exec.RunAttachedSM();
+    }
+
+    public void OnSuccess(ChallengeManager.TrackingContext ctx) {
+        Log.Unity($"PASSED challenge {cr.Description}");
+        if (gr.Saveable) {
+            Log.Unity("Committing challenge to save data");
+            SaveData.r.CompleteChallenge(difficulty, cr, ChallengeManager.ChallengePhotos);
+        }
+        
+        if (gr.replay == null && cr.NextChallenge(difficulty).Try(out var next)) {
+            Replayer.Cancel(); //can't replay both scenes together
+            Log.Unity($"Autoproceeding to next challenge: {next.Description}");
+            StaticNullableStruct.LastGame = new GameRequest(gr.cb, gr.difficulty, new GameLowRequest(next), 
+                true, gr.player, gr.shot, gr.subshot, null);
+            ChallengeManager.TrackChallenge(new SceneChallengeReqest(
+                StaticNullableStruct.LastGame.Value, next));
+            ChallengeManager.LinkBEH(ctx.exec);
+        } else {
+            UIManager.MessageChallengeEnd(true, out float t);
+            WaitingUtils.WaitThenCB(ctx.cm, Cancellable.Null, t, false, gr.vFinishAndPostReplay);
+        }
+    }
+
+    public void OnFail(ChallengeManager.TrackingContext ctx) {
+        Log.Unity($"FAILED challenge {cr.Description}");
+        UIManager.MessageChallengeEnd(false, out float t);
+        if (ctx.exec != null) ctx.exec.ShiftPhase();
+        WaitingUtils.WaitThenCB(ctx.cm, Cancellable.Null, t, false, () => {
+            Core.Events.TryHitPlayer.Invoke((999, true));
+        });
+    }
+
+    public string Description => cr.Description;
+
+    public Challenge[] Challenges => new[] {cr.challenge};
+
+    public bool ControlsBoss([CanBeNull] BossConfig boss) => cr.Boss == boss;
+
+}
+
+public readonly struct PhaseChallengeRequest {
     public DayCampaignConfig Campaign => phase.boss.day.campaign.campaign;
     public DayConfig Day => phase.boss.day.day;
     public BossConfig Boss => phase.boss.boss;
@@ -14,35 +103,38 @@ public readonly struct ChallengeRequest {
     public readonly Challenge challenge;
     public int ChallengeIdx => phase.challenges.IndexOf(challenge);
     public string Description => challenge.Description(Boss);
-    public ChallengeRequest? NextChallenge(Enums.DifficultySet d) {
+    public PhaseChallengeRequest? NextChallenge(Enums.FixedDifficulty d) {
         if (challenge is Challenge.DialogueC dc && dc.point == Challenge.DialogueC.DialoguePoint.INTRO) {
-            if (phase.Next?.CompletedOne(d) == false) return new ChallengeRequest(phase.Next);
+            if (phase.Next?.CompletedOne(d) == false) return new PhaseChallengeRequest(phase.Next);
         } else if (phase.Next?.challenges?.Try(0) is Challenge.DialogueC dce &&
                    dce.point == Challenge.DialogueC.DialoguePoint.CONCLUSION && phase.Next?.Enabled(d) == true
                    && phase.Next?.CompletedOne(d) == false) {
-            return new ChallengeRequest(phase.Next);
+            return new PhaseChallengeRequest(phase.Next);
         }
         return null;
     }
 
-    public ChallengeRequest(DayPhase p) {
+    public PhaseChallengeRequest(DayPhase p) {
         phase = p;
         challenge = p.challenges[0];
     }
-    public ChallengeRequest(DayPhase p, Challenge c) {
+    public PhaseChallengeRequest(DayPhase p, Challenge c) {
         phase = p;
         challenge = c;
     }
 
     public (((string, int), int), int) Key => (phase.Key, ChallengeIdx);
 
-    public static ChallengeRequest Reconstruct((((string, int), int), int) key) {
+    public static PhaseChallengeRequest Reconstruct((((string, int), int), int) key) {
         var phase = DayPhase.Reconstruct(key.Item1);
-        return new ChallengeRequest(phase, phase.challenges[key.Item2]);
+        return new PhaseChallengeRequest(phase, phase.challenges[key.Item2]);
     }
 }
 public abstract class Challenge {
     public abstract string Description(BossConfig boss);
+    public virtual void SetupPhase(SMHandoff smh) {}
+    public virtual bool FrameCheck(ChallengeManager.TrackingContext ctx) => true;
+    public virtual bool EndCheck(ChallengeManager.TrackingContext ctx, PhaseCompletion pc) => true;
     
     public static Challenge Survive() => new SurviveC();
     public static Challenge Destroy() => new DestroyC();
@@ -57,24 +149,21 @@ public abstract class Challenge {
     public static Challenge NoFocus() => new NoFocusC();
     public static Challenge AlwaysFocus() => new AlwaysFocusC();
 
-    public abstract class TrivialConditionC : Challenge {
-    }
-
-    public class SurviveC : TrivialConditionC {
+    public class SurviveC : Challenge {
         public override string Description(BossConfig boss) => "Don't die".Locale("死なないで");
     }
 
-    public class NoHorizC : TrivialConditionC {
+    public class NoHorizC : Challenge {
         public override string Description(BossConfig boss) => "You cannot move left/right".Locale("左右の動きは出来ない");
     }
-    public class NoVertC : TrivialConditionC {
+    public class NoVertC : Challenge {
         public override string Description(BossConfig boss) => "You cannot move up/down".Locale("上下の動きは出来ない");
     }
 
-    public class NoFocusC : TrivialConditionC {
+    public class NoFocusC : Challenge {
         public override string Description(BossConfig boss) => "You cannot use slow movement".Locale("低速移動は出来ない");
     }
-    public class AlwaysFocusC : TrivialConditionC {
+    public class AlwaysFocusC : Challenge {
         public override string Description(BossConfig boss) => "You cannot use fast movement".Locale("高速移動は出来ない");
     }
     
@@ -97,6 +186,20 @@ public abstract class Challenge {
         public WithinC(float units) {
             this.units = units;
         }
+        private static ReflWrap<TP4> StayInColor => (Func<TP4>)"witha lerpt 0 1 0 0.3 green".Into<TP4>;
+
+        private static ReflWrap<TaskPattern> StayInRange(BehaviorEntity beh, float f) => 
+            (Func<TaskPattern>) (() => SMReflection.Sync("_", GCXFRepo.RV2Zero,
+            AtomicPatterns.RelCirc("_", new BEHPointer(beh), 
+                _ => ExMRV2.RXY(f, f), StayInColor)));
+
+        public override void SetupPhase(SMHandoff smh) {
+            StayInRange(smh.Exec, units).Value(smh);
+        }
+
+        public override bool FrameCheck(ChallengeManager.TrackingContext ctx) {
+            return ctx.t < yield || (ctx.exec.rBPI.loc - GameManagement.VisiblePlayerLocation).magnitude < units;
+        }
     }
     public class WithoutC : Challenge {
         public readonly float units;
@@ -105,15 +208,33 @@ public abstract class Challenge {
         public WithoutC(float units) {
             this.units = units;
         }
+        
+        private static ReflWrap<TP4> StayOutColor => (Func<TP4>)"witha lerpt 0 1 0 0.3 red".Into<TP4>;
+
+        private static ReflWrap<TaskPattern> StayOutRange(BehaviorEntity beh, float f) => 
+            (Func<TaskPattern>) (() => SMReflection.Sync("_", GCXFRepo.RV2Zero,
+                AtomicPatterns.RelCirc("_", new BEHPointer(beh), 
+                    _ => ExMRV2.RXY(f, f), StayOutColor)));
+
+        public override void SetupPhase(SMHandoff smh) {
+            StayOutRange(smh.Exec, units).Value(smh);
+        }
+        public override bool FrameCheck(ChallengeManager.TrackingContext ctx) {
+            return ctx.t < yield || (ctx.exec.rBPI.loc - GameManagement.VisiblePlayerLocation).magnitude > units;
+        }
     }
     public class DestroyC : Challenge {
         public override string Description(BossConfig boss) => $"Defeat {boss.CasualName}".Locale($"{boss.CasualName}を倒せ");
+
+        public override bool EndCheck(ChallengeManager.TrackingContext ctx, PhaseCompletion pc) => pc.Cleared == true;
     }
 
     public class GrazeC : Challenge {
         public readonly int graze;
         public override string Description(BossConfig boss) => $"Get {graze} graze".Locale($"グレイズを{graze}回しろ");
 
+        public override bool EndCheck(ChallengeManager.TrackingContext ctx, PhaseCompletion pc) =>
+            GameManagement.campaign.Graze >= graze;
         public GrazeC(int g) {
             graze = g;
         }

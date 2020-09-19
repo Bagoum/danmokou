@@ -6,6 +6,7 @@ using System;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
+using DMath;
 using JetBrains.Annotations;
 using UnityEngine.Profiling;
 
@@ -29,33 +30,11 @@ public interface IRegularUpdater {
     /// </summary>
     void RegularUpdate();
     /// <summary>
-    /// Will be called before the scene or application is closed (ie. before OnDisable).
-    /// </summary>
-    void PreSceneClose();
-    /// <summary>
     /// Updater priority. Lower priority = goes first. Note that order is not guaranteed during
     /// the parallel update section.
     /// </summary>
     int UpdatePriority { get; }
-    
-    /// <summary>
-    /// Whether or not this object should receive partial updates in cases where
-    /// a Unity frame is less time than an engine frame (ie. during slowdown).
-    /// </summary>
-    bool ReceivePartialUpdates { get; }
-    
-    /// <summary>
-    /// Only called if ReceivePartialUpdates is set. Perform a partial update with some time that is
-    /// less than FRAME_TIME.
-    /// WARNING: Consider the case where we are running at a 2x slowdown. Normal updaters will update like:
-    /// X FULL X FULL X FULL
-    /// whereas partial updaters will update like:
-    /// 1/2 FULL 1/2 FULL 1/2 FULL
-    /// You need to implement your own "fatiguing" system so that the full updates are discounted accordingly.
-    /// </summary>
-    /// <param name="dT"></param>
-    void PartialUpdate(float dT);
-    
+
     /// <summary>
     /// True iff the object should receive updates while the game is paused. Primarily for utilities.
     /// </summary>
@@ -95,11 +74,11 @@ public class ETime : MonoBehaviour {
     public const float ENGINEFPS = 120f;
     public const float FRAME_TIME = 1f / ENGINEFPS;
     public const float FRAME_YIELD = FRAME_TIME * 0.1f;
-    public static float Slowdown { get; private set; } = 1f;
+    public static MultiMultiplier Slowdown { get; private set; } = new MultiMultiplier(1f);
     /// <summary>
     /// Replacement for Time.dT. Generally fixed to 1/60.
     /// </summary>
-    public static float dT => noSlowDT * Slowdown;
+    public static float dT => noSlowDT * Slowdown.Value;
     private static float noSlowDT;
     public static int FrameNumber { get; private set; }
     public static void ResetFrameNumber() {
@@ -115,19 +94,10 @@ public class ETime : MonoBehaviour {
     private static readonly Queue<(int remFrames, Action whenZero)> delayedeofInvokes = new Queue<(int, Action)>();
     private static readonly List<Action> persistentEofInvokes = new List<Action>();
     private static readonly List<Action> persistentSofInvokes = new List<Action>();
-    
-    private void OnApplicationQuit() {
-        PrepareSceneClose();
-    }
 
-    private static void PrepareSceneClose() {
-        updaters.ForEachIfNotCancelled(x => x.PreSceneClose());
-    }
-    
     private void Awake() {
         SCREENFPS = 60;
         SceneIntermediary.Attach();
-        SceneIntermediary.RegisterPreSceneUnload(PrepareSceneClose);
         SceneIntermediary.RegisterSceneLoad(() => untilNextRegularFrame = 0f);
         //WARNING ON TIMESCALE: You must also modify FDT. See https://docs.unity3d.com/ScriptReference/Time-timeScale.html
         //This said, I don't think FixedUpdate is used anymore in this code.
@@ -135,21 +105,6 @@ public class ETime : MonoBehaviour {
         //Time.timeScale = 0.5f;
         //Time.fixedDeltaTime *= 0.5f;
         StartCoroutine(NoVsyncHandler());
-    }
-
-    public static Action<float> slowdownCallback = _ => { };
-
-    public static void SlowdownBy(float by) {
-        Slowdown *= by;
-        Time.timeScale = Slowdown;
-        slowdownCallback(by);
-    }
-
-    public static void SlowdownReset() {
-        Time.timeScale = 1f;
-        float by = 1f / Slowdown;
-        Slowdown = 1f;
-        slowdownCallback(by);
     }
 
     public static void SetForcedFPS(int fps) {
@@ -236,12 +191,6 @@ public class ETime : MonoBehaviour {
                     updaters.Compact();
                     EndOfFrameInvokes();
                     FrameNumber++;
-                }
-            } else {
-                for (int ii = 0; ii < updaters.Count; ++ii) {
-                    DeletionMarker<IRegularUpdater> updater = updaters.arr[ii];
-                    if (!updater.markedForDeletion && updater.obj.ReceivePartialUpdates) updater.obj.PartialUpdate(dT);
-                    updaters.Compact();
                 }
             }
             untilNextRegularFrame += dT;
@@ -336,9 +285,7 @@ public class ETime : MonoBehaviour {
         }
 
         public int UpdatePriority => UpdatePriorities.SYSTEM;
-        public bool ReceivePartialUpdates => false;
         public bool UpdateDuringPause => false;
-        public void PartialUpdate(float dT) => throw new NotImplementedException();
 
         public void RegularUpdateParallel() {}
 
@@ -358,31 +305,31 @@ public class ETime : MonoBehaviour {
             timer.Stop();
         }
 
-        private Timer(string name) {
-            this.name = name;
+        private Timer() {
             token = RegisterRegularUpdater(this);
         }
 
-        //TODO verify deregistration, also block SMs from crossing scenes if deregisterd
-        void IRegularUpdater.PreSceneClose() {
-            token.MarkForDeletion();
-            timerMap.Remove(name);
-        }
-
-        private readonly string name;
         private readonly DeletionMarker<IRegularUpdater> token;
         public static Timer GetTimer(string name) {
             if (!timerMap.TryGetValue(name, out Timer t)) {
-                t = timerMap[name] = new Timer(name);
+                t = timerMap[name] = new Timer();
             }
             return t;
         }
+
+        public static Timer PhaseTimer => GetTimer("phaset");
 
         public static void ResetAll() {
             foreach (var v in timerMap.Values.ToArray()) {
                 v.Restart();
                 v.Stop();
             }
+        }
+        public static void DestroyAll() {
+            foreach (var v in timerMap.Values.ToArray()) {
+                v.token.MarkForDeletion();
+            }
+            timerMap.Clear();
         }
 
         public Expression exFrames => Expression.PropertyOrField(Expression.Constant(this), "frames");

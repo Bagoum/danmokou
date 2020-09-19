@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using DMath;
 using JetBrains.Annotations;
@@ -29,13 +30,18 @@ public class CurvedTileRenderLaser : CurvedTileRender {
     [CanBeNull] private BPY variableLength;
     [CanBeNull] private BPY variableStart;
     [CanBeNull] private Pred deactivator;
+    [CanBeNull] private BPY hueShift;
+    private (TP4 black, TP4 white)? recolor;
+    [CanBeNull] private FnLaserV4 tinter;
     private readonly bool alignEnd = false;
     private Laser laser;
     private float scaledLineRadius;
     private Laser.PointContainer endpt = new Laser.PointContainer(null);
     private PlayerBulletCfg? playerBullet;
+    [UsedImplicitly]
+    public bool playerBulletIsColliding;
 
-    public CurvedTileRenderLaser(LaserRenderCfg cfg, GameObject obj) : base(cfg, obj) {
+    public CurvedTileRenderLaser(LaserRenderCfg cfg, GameObject obj) : base(obj) {
         alignEnd = cfg.alignEnd;
         lineRadius = cfg.lineRadius;
     }
@@ -46,7 +52,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
     }
 
     //TileRenders are always Initialize-initialized.
-    public void Initialize(Laser locationer, Material material, bool isNew, uint bpiId, int firingIndex, ref RealizedLaserOptions options) {
+    public void Initialize(Laser locationer, TiledRenderCfg cfg, Material material, bool isNew, uint bpiId, int firingIndex, ref RealizedLaserOptions options) {
         laser = locationer;
         updateStagger = options.staggerMultiplier * defaultUpdateStagger;
         variableLength = options.varLength;
@@ -54,9 +60,18 @@ public class CurvedTileRenderLaser : CurvedTileRender {
         deactivator = options.deactivate;
         playerBullet = options.playerBullet;
         int newTexW = Mathf.CeilToInt(options.maxLength / updateStagger);
-        base.Initialize(locationer, material, isNew, options.isStatic, newTexW, options.hueShift); //doesn't do any mesh generation, safe to call first
+        base.Initialize(locationer, cfg, material, isNew, options.isStatic, playerBullet != null, newTexW); //doesn't do any mesh generation, safe to call first
         path = options.lpath;
         bpi = new ParametricInfo(locater.GlobalPosition(), firingIndex, bpiId);
+        playerBulletIsColliding = false;
+        hueShift = options.hueShift;
+        recolor = options.recolor;
+        tinter = options.tint;
+        //This needs to be reset to zero here to ensure that the value isn't dirty, since hue-shift is always active
+        pb.SetFloat(PropConsts.HueShift, hueShift?.Invoke(bpi) ?? 0f);
+        //Likewise
+        pb.SetColor(PropConsts.tint, tinter?.Invoke(bpi, this) ?? Color.white);
+        if (hueShift != null || recolor != null || tinter != null) DontUpdateTimeAfter = M.IntFloatMax;
     }
     
     //(this, material, isNew, bpi.id, firingIndex, ref RealizedLaserOptions);
@@ -102,13 +117,30 @@ public class CurvedTileRenderLaser : CurvedTileRender {
         base.UpdateMovement(dT);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void UpdateGraphics() {
+        bpi.t = lifetime;
+        if (hueShift != null) {
+            pb.SetFloat(PropConsts.HueShift, M.degRad * hueShift(bpi));
+        }
+        if (recolor.Try(out var rc)) {
+            pb.SetVector(PropConsts.RecolorB, rc.black(bpi));
+            pb.SetVector(PropConsts.RecolorW, rc.white(bpi));
+        }
+        if (tinter != null) {
+            pb.SetVector(PropConsts.tint, tinter(bpi, this));
+        }
+    }
     public override void UpdateRender() {
         ReassignTransform();
         SetEndpoint(centers[texRptWidth], nextTrueDelta);
+        if (ETime.LastUpdateForScreen) {
+            UpdateGraphics();
+        }
         base.UpdateRender();
     }
     
-    public void SetupEndpoint(Danmaku.Laser.PointContainer ep) {
+    public void SetupEndpoint(Laser.PointContainer ep) {
         endpt = ep;
         if (endpt.exists) endpt.beh.TakeParent(laser);
     }
@@ -216,7 +248,8 @@ public class CurvedTileRenderLaser : CurvedTileRender {
 
     private const float BACKSTEP = 2f;
 
-    public CollisionResult CheckCollision(SOCircle target) {
+    public CollisionResult CheckCollision(SOCircleHitbox target) {
+        playerBulletIsColliding = false;
         float rot = M.degRad * (parented ? tr.eulerAngles.z : simpleEulerRotation.z);
         if (playerBullet.Try(out var plb)) {
             var fe = Enemy.FrozenEnemies;
@@ -227,14 +260,18 @@ public class CurvedTileRenderLaser : CurvedTileRender {
                     fe[ii].enemy.TryHitIndestructible(bpi.id, plb.cdFrames)) {
                     fe[ii].enemy.QueueDamage(plb.bossDmg, plb.stageDmg, target.location);
                     fe[ii].enemy.ProcOnHit(plb.effect, loc + centers[segment]);
+                    playerBulletIsColliding = true;
                 }
             }
             return CollisionResult.noColl;
         }
         
+        if (!target.active) return CollisionResult.noColl;
+
         // 10000 is a number that is big enough to usually ensure only one collision iteration for simple lasers.
         // If it's not big enough, then you'll have two collision iteration, which is fine.
-        return DMath.Collision.GrazeCircleOnSegments(target, locater.GlobalPosition(), centers, 0, path.isSimple ? 10000 : 1, centers.Length, scaledLineRadius, (float)Math.Cos(rot), (float)Math.Sin(rot));
+        return Collision.GrazeCircleOnSegments(target, locater.GlobalPosition(), centers, 0, 
+            path.isSimple ? 10000 : 1, centers.Length, scaledLineRadius, (float)Math.Cos(rot), (float)Math.Sin(rot));
     }
 
     private bool requiresTrRotUpdate = false;
@@ -254,6 +291,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
     }
 
     public override void Activate() {
+        UpdateGraphics();
         base.Activate();
         UpdateRotation();
         requiresTrRotUpdate = true;
@@ -328,6 +366,11 @@ public class CurvedTileRenderLaser : CurvedTileRender {
     private static readonly List<DMCompactingArray<LaserControl>> initializedPools = new List<DMCompactingArray<LaserControl>>(16);
     private DMCompactingArray<LaserControl> thisStyleControls;
     
+    public static void DeInitializePools() {
+        controls.Clear();
+        foreach (var x in initializedPools) x.Empty();
+        initializedPools.Clear();
+    }
     private static DMCompactingArray<LaserControl> LazyGetControls(string style) {
         if (!controls.ContainsKey(style)) {
             controls[style] = new DMCompactingArray<LaserControl>();

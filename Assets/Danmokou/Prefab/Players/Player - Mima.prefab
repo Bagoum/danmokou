@@ -11,7 +11,7 @@ PrefabInstance:
         type: 3}
       propertyPath: defaultShot
       value: 
-      objectReference: {fileID: 11400000, guid: 9d87ccfc21c12b040b4518d5a552aa13,
+      objectReference: {fileID: 11400000, guid: d6a3d1c69b185284b8880ab96db6d135,
         type: 2}
     - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}

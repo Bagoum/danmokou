@@ -99,3 +99,34 @@
 .column.wd5 {
     flex-grow: 5;
 }
+
+.column.wd2 {
+    flex-grow: 2;
+}
+
+.columnWide {
+}
+
+.w40 {
+}
+
+.w60 {
+}
+
+.column.wd4 {
+}
+
+.wd5 {
+}
+
+.wd2 {
+}
+
+.wd08 {
+}
+
+.wd2 {
+}
+
+.wd2 {
+}

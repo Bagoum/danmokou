@@ -91,9 +91,9 @@ public static class InputManager {
     public static readonly InputHandler AimRight = InputHandler.Trigger(Key(i.AimRight).Or(AxisG0(aCRightX)));
     public static readonly InputHandler AimUp = InputHandler.Trigger(Key(i.AimUp).Or(AxisG0(aCRightY)));
     public static readonly InputHandler AimDown = InputHandler.Trigger(Key(i.AimDown).Or(AxisL0(aCRightY)));
-    public static readonly InputHandler ShootToggle = InputHandler.Toggle(Key(i.ShootToggle).Or(Key(cLeftShoulder)));
     public static readonly InputHandler ShootHold = InputHandler.Hold(Key(i.ShootHold).Or(AxisG0(aCLeftTrigger)));
     public static readonly InputHandler Bomb = InputHandler.Trigger(Key(i.Bomb));
+    public static readonly InputHandler Meter = InputHandler.Hold(Key(i.Bomb));
     
     public static readonly InputHandler UILeft = InputHandler.Trigger(AxisL0(aHoriz).Or(AxisL0(aCDPadX)));
     public static readonly InputHandler UIRight = InputHandler.Trigger(AxisG0(aHoriz).Or(AxisG0(aCDPadX)));
@@ -105,19 +105,26 @@ public static class InputManager {
     private static readonly InputHandler UISkipDialogue = InputHandler.Trigger(Key(KC.LeftControl));
     
     public static readonly InputHandler Pause = InputHandler.Trigger(Key(KC.Escape).Or(Key(cStart)));
-    
+
+    static InputManager() {
+        unsafe {
+            Log.Unity($"Replay frame size (should be 16): {sizeof(FrameInput)}.");
+        }
+    }
     [Serializable]
     public struct FrameInput {
         //16 bytes (15 unpadded)
         // float(4)x2 = 8
-        // enum(1)    = 1
-        // bool(1)x6  = 6
+        // bool(1)x7  = 7
         public float horizontal;
         public float vertical;
+    #if FT_DIRSHOOT
         public ShootDirection shootDir;
+    #endif
         public bool fire;
         public bool focus;
         public bool bomb;
+        public bool meter;
         public bool dialogueConfirm;
         public bool dialogueToEnd;
         public bool dialogueSkip;
@@ -126,10 +133,13 @@ public static class InputManager {
     public static FrameInput RecordFrame => new FrameInput() {
         horizontal = HorizontalSpeed,
         vertical = VerticalSpeed,
+    #if FT_DIRSHOOT
         shootDir = FiringDir,
+    #endif    
         fire = IsFiring,
         focus = IsFocus,
         bomb = IsBomb,
+        meter = IsMeter,
         dialogueConfirm = DialogueConfirm,
         dialogueToEnd = DialogueToEnd,
         dialogueSkip = DialogueSkip,
@@ -143,13 +153,12 @@ public static class InputManager {
     public static void ReplayFrame(FrameInput? fi) => replay = fi;
 
     private static readonly InputHandler[] Updaters = {
-        //FocusToggle, 
-        FocusHold, AimLeft, AimRight, AimUp, AimDown, ShootToggle, ShootHold, Bomb,
-        UIDown, UIUp, UILeft, UIRight, UIConfirm, UIBack, UISkipDialogue, Pause
+        FocusHold, AimLeft, AimRight, AimUp, AimDown, ShootHold, Bomb,
+        UIDown, UIUp, UILeft, UIRight, UIConfirm, UIBack, UISkipDialogue, Pause,
+        Meter,
+        
     };
 
-
-    private static KeyCode editorReloadHook = KeyCode.R;
     public static float HorizontalSpeed => replay?.horizontal ?? 
                                            (Input.GetAxisRaw(aHoriz) + Input.GetAxisRaw(aCDPadX));
 
@@ -160,20 +169,14 @@ public static class InputManager {
     //Called by GameManagement
     public static void OncePerFrameToggleControls() {
         foreach (var u in Updaters) u.Update();
-        //Debug.Log(UIDown.Active);
-/*
-        foreach (var v in Enum.GetValues(typeof(KeyCode)).Cast<KeyCode>()) {
-            if (Input.GetKey(v)) Debug.Log($"Keypress {v}");
-        }*/
-        //foreach (var axis in new[] {"ControllerRTrigger", "ControllerLTrigger"}) Debug.Log($"Axis {axis}: {Input.GetAxis(axis)}");
-
     }
 
     public static bool IsFocus => replay?.focus ?? FocusHold.Active;
     public static bool IsBomb => replay?.bomb ?? Bomb.Active;
+    public static bool IsMeter => replay?.meter ?? Meter.Active;
     public static ShootDirection FiringDir { get {
+    #if FT_DIRSHOOT
         if (replay.HasValue) return replay.Value.shootDir;
-    #if VER_SIMP
         if (AimUp.Active) return ShootDirection.UP;
         if (AimRight.Active) return ShootDirection.RIGHT;
         if (AimLeft.Active) return ShootDirection.LEFT;
@@ -183,14 +186,7 @@ public static class InputManager {
     }}
     public static float? FiringAngle => FiringDir.ToAngle();
 
-#if VER_SIMP
-    public static bool IsFiring => replay?.fire ?? (ShootHold.Active || ShootToggle.Active);
-#else
-    public static bool IsFiring => ShootHold.Active;
-#endif
+    public static bool IsFiring => replay?.fire ?? ShootHold.Active;
 
-    public static bool EditorReloadActivated() {
-        return Input.GetKeyDown(editorReloadHook);
-    }
 
 }

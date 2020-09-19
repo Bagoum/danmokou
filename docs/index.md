@@ -1,7 +1,7 @@
 # Danmokou Documentation
 This is documentation for **Danmokou**, a Unity-based bullet hell engine.
 
-If you're not sure what's going on, head on over to the [What Is Danmokou?](articles/top.md) page.
+If you're not sure what's going on, head on over to the [What Is Danmokou?](articles/top.md) page, or check out the [interactive demo](https://dmk.bagoum.com/demo).
 
 The setup guide is [here](articles/setup.md) and the first tutorial is [here](articles/t01.md).
 

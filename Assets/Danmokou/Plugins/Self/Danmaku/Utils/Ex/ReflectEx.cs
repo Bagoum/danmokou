@@ -16,8 +16,10 @@ public static class ReflectEx {
     private static readonly Dictionary<string, Stack<Expression>> alias_stack = 
         new Dictionary<string, Stack<Expression>>();
     [CanBeNull] private static TExGCX aliased_gcx = null;
+    [CanBeNull] public static TEx aliased_laser { get; set; }
     public static void SetGCX(TExGCX gcx) => aliased_gcx = gcx;
     public static void RemoveGCX() => aliased_gcx = null;
+    
 
     public class LetDirect : IDisposable {
         private readonly string alias;
@@ -100,7 +102,7 @@ public static class ReflectEx {
         if (alias[0] == Parser.SM_REF_KEY_C) alias = alias.Substring(1); //Important for reflector handling of &x
         bool isExplicit = alias.StartsWith(".");
         if (isExplicit) alias = alias.Substring(1);
-        //Standard method, used by ::{} and GCXPath.expose
+        //Standard method, used by Let and GCXPath.expose (which internally compiles to Let) 
         if (alias_stack.TryGetValue(alias, out var f)) return f.Peek();
         //Used by GCXF<T>, ie. when a fixed GCX exists. This is for slower pattern expressions
         if (aliased_gcx != null) return aliased_gcx.FindReference<T>(alias);

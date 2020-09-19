@@ -15,4 +15,4 @@ MonoBehaviour:
   defaultName: death
   clip: {fileID: 8300000, guid: 414320dc8e552684d814b90f5c2b4349, type: 3}
   volume: 0.17
-  timeout: 0.03
+  timeout: 0.07

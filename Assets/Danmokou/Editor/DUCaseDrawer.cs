@@ -54,3 +54,10 @@ public class MM2Drawer : DUCaseDrawer<BackgroundTransition.WipeTexConfig> { }
 public class MM3Drawer : DUCaseDrawer<BackgroundTransition.WipeFromCenterConfig> { }
 [CustomPropertyDrawer(typeof(BackgroundTransition.WipeYConfig))]
 public class MM4Drawer : DUCaseDrawer<BackgroundTransition.WipeYConfig> { }
+
+[CustomPropertyDrawer(typeof(LocatorStrategy.SourceConfig))]
+public class LS0Drawer : DUCaseDrawer<LocatorStrategy.SourceConfig> { }
+[CustomPropertyDrawer(typeof(LocatorStrategy.TargetConfig))]
+public class LS1Drawer : DUCaseDrawer<LocatorStrategy.TargetConfig> { }
+[CustomPropertyDrawer(typeof(LocatorStrategy.PerimeterConfig))]
+public class LS2Drawer : DUCaseDrawer<LocatorStrategy.PerimeterConfig> { }

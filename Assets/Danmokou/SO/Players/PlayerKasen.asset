@@ -12,6 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9e371a047fd0478dab0e1a132d71003c, type: 3}
   m_Name: PlayerKasen
   m_EditorClassIdentifier: 
+  freeSpeed: 4.2
+  focusSlowdown: 0.44
   key: basic-kasen
   shortTitle: Kasen
   title: Kasen

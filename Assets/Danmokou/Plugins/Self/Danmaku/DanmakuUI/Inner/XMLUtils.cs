@@ -9,10 +9,12 @@ using static GameManagement;
 public static class XMLUtils {
     public const string monospaceClass = "monospace";
     public const string largeClass = "large";
-    public const string smallClass = "small";
+    public const string smallClass = "node100";
+    public const string small1Class = "small";
     public const string small3Class = "small3";
     public const string shotDescrClass = "descriptor";
     public const string visibleAdjacentClass = "visibleadjacent";
+    public const string optionNoKeyClass = "nokey";
     
     public static UIScreen ReplayScreen(bool showScore, Action<List<int>> cacheTentative, Action cacheConfirm) => 
         new UIScreen(SaveData.p.ReplayData.Count.Range().Select(i => 

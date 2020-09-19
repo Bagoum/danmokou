@@ -11,6 +11,7 @@
 		_DisplaceMagnitude("Displace Magnitude", float) = 1
 		_DisplaceSpeed("Displace Speed", float) = 1
 		_DisplaceXMul("Displace X Multiplier", float) = 1
+		_SharedOpacityMul("Opacity Multiplier", float) = 1
 		[Enum(SrcAlpha,5,OneMinusSrcColor,6)] _BlendFrom("Blend mode from", Float) = 5
 		[Enum(One,1,OneMinusSrcAlpha,10)] _BlendTo("Blend mode to", Float) = 10
 		[Enum(Add,0,RevSub,2)] _BlendOp("Blend mode op", Float) = 0
@@ -18,6 +19,8 @@
 		[Toggle(FT_CYCLE)] _ToggleCycle("Do Cycle?", Float) = 0
 		[Toggle(FT_FADE_IN)] _ToggleFadeIn("Do FadeIn?", Float) = 0
 		[Toggle(FT_HUESHIFT)] _ToggleHueShift("Do Hue Shift?", Float) = 0
+		_RecolorizeB("Recolorize Black", Color) = (1, 0, 0, 1)
+		_RecolorizeW("Recolorize White", Color) = (0, 0, 1, 1)
 	}
 	SubShader {
 		Tags {
@@ -41,6 +44,7 @@
 			#pragma multi_compile_local __ FT_DISPLACE_POLAR
 			#pragma multi_compile_local __ FT_DISPLACE_BIVERT
 			#pragma multi_compile_local __ FT_HUESHIFT
+			#pragma multi_compile_local __ FT_RECOLORIZE
 			#include "UnityCG.cginc"
 			#include "Assets/Danmokou/CG/BagoumShaders.cginc"
 
@@ -59,6 +63,7 @@
 			float _T;
 			float4 _Tint;
 			float _HueShift;
+			float _SharedOpacityMul;
 
 			fragment vert(vertex v) {
 				fragment f;
@@ -66,15 +71,24 @@
 				f.uv = v.uv;
                 CYCLE(f.uv, _T);
 				f.c = v.color * _Tint;
+				f.c.a *= _SharedOpacityMul;
                 FADEIN(f.c, _T);
 				return f;
 			}
+			
+        #ifdef FT_RECOLORIZE
+			float4 _RecolorizeB;
+			float4 _RecolorizeW;
+        #endif
 
 			float4 frag(fragment f) : SV_Target { 
 	            DISPLACE(f.uv, _T);
 				float4 c = tex2D(_MainTex, f.uv) * f.c;
             #ifdef FT_HUESHIFT
-				c.rgb = hueShift(c.rgb, _T * _HueShift);
+				c.rgb = hueShift(c.rgb, _HueShift);
+            #endif
+            #ifdef FT_RECOLORIZE
+                c.rgb = lerp(_RecolorizeB, _RecolorizeW, c.r).rgb;
             #endif
 				return c;
 			}

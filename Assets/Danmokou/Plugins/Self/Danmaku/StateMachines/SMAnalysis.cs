@@ -169,12 +169,12 @@ public static class SMAnalysis {
                 
             }
         }
-        public string Title(DifficultySet d) => (boss.Enabled(d)) ? (_Title ?? phase.Title) : "??? Locked ???";
+        public string Title(FixedDifficulty d) => (boss.Enabled(d)) ? (_Title ?? phase.Title) : "??? Locked ???";
         public readonly AnalyzedDayBoss boss;
-        public bool Completed(int cIndex, DifficultySet d) => SaveData.r.ChallengeCompleted(this, cIndex, d);
-        public bool CompletedOne(DifficultySet d) => SaveData.r.PhaseCompletedOne(this, d);
-        public bool CompletedAll(DifficultySet d) => SaveData.r.PhaseCompletedAll(this, d);
-        public bool Enabled(DifficultySet d) {
+        public bool Completed(int cIndex, FixedDifficulty d) => SaveData.r.ChallengeCompleted(this, cIndex, d);
+        public bool CompletedOne(FixedDifficulty d) => SaveData.r.PhaseCompletedOne(this, d);
+        public bool CompletedAll(FixedDifficulty d) => SaveData.r.PhaseCompletedAll(this, d);
+        public bool Enabled(FixedDifficulty d) {
             if (!boss.Enabled(d)) return false;
             else if (type == DayPhaseType.DIALOGUE_INTRO) {
                 return boss.bossIndex == 0 || boss.day.bosses[boss.bossIndex - 1].FirstPhaseCompletedOne(d);
@@ -292,9 +292,9 @@ public static class SMAnalysis {
         public List<Phase> Phases => phases.Select(x => x.phase).ToList();
         public readonly AnalyzedDay day;
         public readonly int bossIndex;
-        public bool Enabled(DifficultySet d) => day.Enabled(d);
-        public bool Concluded(DifficultySet d) => phases.All(p => p.CompletedOne(d));
-        public bool FirstPhaseCompletedOne(DifficultySet d) => phases[0].CompletedOne(d);
+        public bool Enabled(FixedDifficulty d) => day.Enabled(d);
+        public bool Concluded(FixedDifficulty d) => phases.All(p => p.CompletedOne(d));
+        public bool FirstPhaseCompletedOne(FixedDifficulty d) => phases[0].CompletedOne(d);
 
         public AnalyzedDayBoss(AnalyzedDay day, int index) {
             boss = (this.day = day).day.bosses[bossIndex = index];
@@ -310,9 +310,9 @@ public static class SMAnalysis {
         public readonly DayConfig day;
         public readonly AnalyzedDayBoss[] bosses;
         public IEnumerable<DayPhase> Phases => bosses.SelectMany(b => b.phases);
-        public bool Enabled(DifficultySet d) => dayIndex == 0 || campaign.days[dayIndex - 1].OneBossesConcluded(d);
-        public bool OneBossesConcluded(DifficultySet d) => bosses.Any(b => b.Concluded(d));
-        public bool AllBossesConcluded(DifficultySet d) => bosses.All(b => b.Concluded(d));
+        public bool Enabled(FixedDifficulty d) => dayIndex == 0 || campaign.days[dayIndex - 1].OneBossesConcluded(d);
+        public bool OneBossesConcluded(FixedDifficulty d) => bosses.Any(b => b.Concluded(d));
+        public bool AllBossesConcluded(FixedDifficulty d) => bosses.All(b => b.Concluded(d));
         public readonly int dayIndex;
         public readonly AnalyzedDayCampaign campaign;
 

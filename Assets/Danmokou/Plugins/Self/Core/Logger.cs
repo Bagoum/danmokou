@@ -16,12 +16,12 @@ public static class Log {
         ERROR = 7
     }
 
-    private const int MIN_LEVEL = (int) Level.DEBUG2;
+    private const int MIN_LEVEL = (int) Level.DEBUG1;
     private const int BUILD_MIN = (int) Level.DEBUG2;
     
     
     private static StreamWriter file;
-    private const string LOGDIR = "DLogs/";
+    private const string LOGDIR = "DMK_Logs/";
     
     static Log() {
         var d = DateTime.Now;

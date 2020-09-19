@@ -7,13 +7,14 @@ using Newtonsoft.Json;
 using static Danmaku.Enums;
 using static InputManager;
 using GameLowRequest = DU<Danmaku.CampaignRequest, Danmaku.BossPracticeRequest, 
-    ChallengeRequest, Danmaku.StagePracticeRequest>;
+    PhaseChallengeRequest, Danmaku.StagePracticeRequest>;
 using GameLowRequestKey = DU<string, ((string, int), int), (((string, int), int), int), ((string, int), int)>;
 
 public class ReplayMetadata {
     public int Seed { get; set; }
     public string PlayerKey { get; set; }
     public string ShotKey { get; set; }
+    public Subshot Subshot { get; set; }
     public long Score { get; set; }
 
     [JsonIgnore]
@@ -22,7 +23,7 @@ public class ReplayMetadata {
     [JsonIgnore]
     [CanBeNull]
     public ShotConfig Shot => GameManagement.References.AllShots.FirstOrDefault(s => s.key == ShotKey);
-    public DifficultySet Difficulty { get; set; }
+    public DifficultySettings Difficulty { get; set; }
     public CampaignMode Mode { get; set; }
     public DateTime Now { get; set; }
     public string ID { get; set; }
@@ -44,6 +45,7 @@ public class ReplayMetadata {
         Score = end.Score;
         PlayerKey = req.PlayerKey;
         ShotKey = req.ShotKey;
+        Subshot = req.subshot;
         Difficulty = req.difficulty;
         Mode = req.mode;
         Now = DateTime.Now;
@@ -70,7 +72,7 @@ public class ReplayMetadata {
         s => $"{s.stage.campaign.campaign.shortTitle.PadRight(10)} s{s.stage.stageIndex}"
     );
     [JsonIgnore]
-    public string AsFilename => $"{Mode}_{Difficulty}_{ID}";
+    public string AsFilename => $"{Mode}_{Difficulty.DescribeSafe}_{ID}";
 
     public string AsDisplay(bool showScore) {
         var p = Player;
@@ -82,8 +84,8 @@ public class ReplayMetadata {
         }
         var pstr = $"{playerDesc}-{shotDesc}".PadRight(10);
         var score = showScore ? $"{Score} ".PadLeft(10, '0') : "";
-        return
-            $"{CustomName.PadRight(12)} {score} {pstr} {RequestDescription.PadRight(16)} {Difficulty.DescribePadR()} {Now.SimpleTime()}";
+        return $"{CustomName.PadRight(12)} {score} {pstr} {RequestDescription.PadRight(16)} " +
+               $"{Difficulty.DescribePadR} {Now.SimpleTime()}";
     }
 
     [JsonIgnore]
@@ -93,7 +95,7 @@ public class ReplayMetadata {
             return keydu.Resolve(
                 c => new GameLowRequest(CampaignRequest.Reconstruct(c)),
                 b => new GameLowRequest(BossPracticeRequest.Reconstruct(b)),
-                c => new GameLowRequest(ChallengeRequest.Reconstruct(c)),
+                c => new GameLowRequest(PhaseChallengeRequest.Reconstruct(c)),
                 s => new GameLowRequest(StagePracticeRequest.Reconstruct(s))
             );
         }

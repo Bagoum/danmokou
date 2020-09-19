@@ -1,0 +1,22 @@
+pattern({ })
+<!> type non `Spread`
+<!> roott(1, 0, 0.5)
+phase(0)
+	action(block, 0)
+		async(arrow-*/w, <90>, 
+			girepeat({
+				wait(70)
+				times(_)
+				color({ red green blue })
+				rv2incr(<120>)
+			},  gcrepeat({
+					times(8)
+					wait(10)
+					spread(<40>)
+					bindItr(loop)
+					expose({ f loop })
+				## Note: DMK allows "2 + 0.3 * &loop". This form is due to WebGL limitations.
+				}, s(rvelocity(px(+ 2 * 0.3 &loop)))
+				)
+			)
+		)

@@ -450,13 +450,39 @@ public static partial class ExM {
     /// </summary>
     public static tfloat HPRatio(BEHPointer beh) => BehaviorEntity.hpRatio.Of(ExC(beh));
 
+    /// <summary>
+    /// Get the number of photos taken of the given boss.
+    /// <br/>This number resets every card.
+    /// </summary>
+    public static tfloat PhotosTaken(BEHPointer beh) => BehaviorEntity.photosTaken.Of(ExC(beh));
+
     public static tfloat PlayerFiringTimeFree() => PlayerInput.firingTimeFree;
     public static tfloat PlayerFiringTimeFocus() => PlayerInput.firingTimeFocus;
     public static tfloat PlayerFiringTime() => PlayerInput.firingTime;
     public static tfloat PlayerUnFiringTimeFree() => PlayerInput.unfiringTimeFree;
     public static tfloat PlayerUnFiringTimeFocus() => PlayerInput.unfiringTimeFocus;
     public static tfloat PlayerUnFiringTime() => PlayerInput.unfiringTime;
-    public static tv2 PlayerMarisaAHistory(tfloat ago) => PlayerInput.marisaAPosition.Of(ago);
+    public static tfloat PlayerSubshot() => PlayerInput.subshotValue;
+
+    public static tfloat LerpFreeToFocus(efloat over) => EEx.Resolve(over, x =>
+        Clamp01(Ex.Condition(
+            PlayerFiringTimeFocus().GT0(), 
+            PlayerFiringTimeFocus().Div(x),
+            Ex.Condition(PlayerFiringTime().GT(PlayerFiringTimeFree()),
+                E1.Sub(PlayerFiringTimeFree().Div(x)), E0)
+        ))
+    );
+    public static tv2 PlayerPastPosition(tfloat ago) => PlayerInput.pastPosition.Of(ago);
+    public static tv2 PlayerMarisaAPosition(tfloat ago) => PlayerInput.marisaAPosition.Of(ago);
+    public static tv2 PlayerPastDirection(tfloat ago) => PlayerInput.pastDirection.Of(ago);
+    public static tv2 PlayerMarisaADirection(tfloat ago) => PlayerInput.marisaADirection.Of(ago);
+
+    public static tbool Is1CC() => Ex.Not(Ex.Property(null, typeof(GameManagement), "Continued"));
+
+    public static tbool LaserIsColliding() => Ex.Field(
+        ReflectEx.aliased_laser ?? 
+        throw new Exception("LaserIsColliding function must be called through a laser delegate"), 
+        "playerBulletIsColliding");
 
     #endregion
 }

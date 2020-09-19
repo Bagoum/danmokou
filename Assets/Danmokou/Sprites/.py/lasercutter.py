@@ -6,13 +6,16 @@ from transparencypruner import prune
 out = "../bullets/export-png/laser/"
 suff = ".png"
 dirs = [
-    ("../bullets/.base-png/laser/", 160)
+    ("../bullets/.base-png/laser/", 160),
+    ("../bullets/.base-png/laserUncut/", 0)
 ]
 
 def convert(dir, rem, f):
     print("converting ", f)
     a = np.asarray((Image.open(dir + f)))
-    a, b = prune(a[:, rem: -rem], None)
+    if rem > 0:
+        a = a[:, rem: -rem]
+    a, b = prune(a, None)
     img = Image.fromarray(a)
     img.save(out + f)
 

@@ -12,8 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4f64d4a00c194018afbe5db3323da211, type: 3}
   m_Name: Test Campaign
   m_EditorClassIdentifier: 
+  startLives: 0
   key: test_campaign
   shortTitle: 
+  endings: []
   players:
   - {fileID: 11400000, guid: 794bb6976ccc5104a88d12a1c93fa9fd, type: 2}
   stages:

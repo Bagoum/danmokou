@@ -46,6 +46,7 @@ public static class RNG {
         return r.Next(low, high);
     }
 
+    public static int GetInt(int low, int high) => GetInt(low, high, rand);
     public static int GetIntOffFrame(int low, int high) => GetInt(low, high, offFrame);
     private static float GetFloat(float low, float high, Random r) {
         return low + (high - low) * r.Next() / int.MaxValue;

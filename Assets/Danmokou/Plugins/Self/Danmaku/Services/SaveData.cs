@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -30,16 +31,16 @@ public static class SaveData {
             TutorialDone = true;
             SaveData.SaveRecord();
         }
-        public HashSet<string> CompletedCampaigns = new HashSet<string>();
+        public Dictionary<string, HashSet<string>> EndingsAchieved = new Dictionary<string, HashSet<string>>();
 
-        public void CompleteCampaign(string campaign) {
-            CompletedCampaigns.Add(campaign);
+        public void CompleteCampaign(string campaign, string ending) {
+            EndingsAchieved.SetDefault(campaign).Add(ending);
             SaveRecord();
         }
         [JsonIgnore]
-        public bool MainCampaignCompleted => CompletedCampaigns.Contains(GameManagement.References.campaign.key);
+        public bool MainCampaignCompleted => EndingsAchieved.ContainsKey(GameManagement.References.campaign.key);
         //campaign key, day key, boss key, raw phase index, challenge index
-        public Dictionary<string, Dictionary<string, Dictionary<string, Dictionary<int, Dictionary<int, Dictionary<DifficultySet, ChallengeCompletion>>>>>> SceneRecord = new Dictionary<string, Dictionary<string, Dictionary<string, Dictionary<int, Dictionary<int, Dictionary<DifficultySet, ChallengeCompletion>>>>>>();
+        public Dictionary<string, Dictionary<string, Dictionary<string, Dictionary<int, Dictionary<int, Dictionary<FixedDifficulty, ChallengeCompletion>>>>>> SceneRecord = new Dictionary<string, Dictionary<string, Dictionary<string, Dictionary<int, Dictionary<int, Dictionary<FixedDifficulty, ChallengeCompletion>>>>>>();
 
         public Dictionary<string, long> HighScores = new Dictionary<string, long>();
 
@@ -54,31 +55,31 @@ public static class SaveData {
         public long? GetHighScore(string gameIdentifier) =>
             HighScores.TryGetValue(gameIdentifier, out var score) ? (long?) score : null;
 
-        public void CompleteChallenge(GameRequest gr, ChallengeRequest cr, IEnumerable<AyaPhoto> photos) {
+        public void CompleteChallenge(FixedDifficulty difficulty, PhaseChallengeRequest cr, IEnumerable<AyaPhoto> photos) {
             var dfcMap = SceneRecord.SetDefault(cr.Campaign.key).SetDefault(cr.Day.key).SetDefault(cr.Boss.key)
                 .SetDefault(cr.phase.phase.index).SetDefault(cr.ChallengeIdx);
-            dfcMap[gr.difficulty] = new ChallengeCompletion(photos);
+            dfcMap[difficulty] = new ChallengeCompletion(photos);
             SaveData.SaveRecord();
         }
 
         [CanBeNull]
-        private Dictionary<int, Dictionary<int, Dictionary<DifficultySet, ChallengeCompletion>>>
+        private Dictionary<int, Dictionary<int, Dictionary<FixedDifficulty, ChallengeCompletion>>>
             BossRecord(DayPhase phase) => SceneRecord.GetOrDefault3(
                 phase.boss.day.campaign.campaign.key, phase.boss.day.day.key, phase.boss.boss.key);
 
-        [CanBeNull] public ChallengeCompletion ChallengeCompletion(DayPhase phase, int c, DifficultySet d) =>
+        [CanBeNull] public ChallengeCompletion ChallengeCompletion(DayPhase phase, int c, FixedDifficulty d) =>
             BossRecord(phase)?.GetOrDefault3(phase.phase.index, c, d);
         
-        public bool ChallengeCompleted(DayPhase phase, int c, DifficultySet d) =>
+        public bool ChallengeCompleted(DayPhase phase, int c, FixedDifficulty d) =>
             ChallengeCompletion(phase, c, d) != null;
 
-        public bool PhaseCompletedOne(DayPhase phase, DifficultySet d) {
+        public bool PhaseCompletedOne(DayPhase phase, FixedDifficulty d) {
             for (int ii = 0; ii < phase.challenges.Length; ++ii) {
                 if (ChallengeCompleted(phase, ii, d)) return true;
             }
             return false;
         }
-        public bool PhaseCompletedAll(DayPhase phase, DifficultySet d) {
+        public bool PhaseCompletedAll(DayPhase phase, FixedDifficulty d) {
             for (int ii = 0; ii < phase.challenges.Length; ++ii) {
                 if (!ChallengeCompleted(phase, ii, d)) return false;
             }
@@ -93,7 +94,7 @@ public static class SaveData {
         public int RefreshRate = 60;
         public (int w, int h) Resolution = Consts.BestResolution;
     #if UNITY_EDITOR
-        public static bool TeleportAtPhaseStart => true;
+        public static bool TeleportAtPhaseStart => false;
     #else
         public static bool TeleportAtPhaseStart => false;
     #endif
@@ -117,14 +118,29 @@ public static class SaveData {
         }
         public static Settings Default {
             get {
-                int w = Screen.width;
+                int w = Screen.currentResolution.width;
                 (int, int) Resolution;
                 if (w > 3000) Resolution = (3840, 2160);
                 else if (w > 1700) Resolution = (1920, 1080);
                 else if (w > 1000) Resolution = (1280, 720);
                 else if (w > 700) Resolution = (800, 450);
                 else Resolution = (640, 360);
-                return new Settings() { RefreshRate = DefaultRefresh, Resolution = Resolution };
+                
+                return new Settings() {
+                #if WEBGL
+                    AllowInputLinearization = false,
+                    Backgrounds = false,
+                    Fullscreen = FullScreenMode.Windowed,
+                    LegacyRenderer = true,
+                    UnfocusedHitbox = false,
+                    Vsync = 0,
+                    RefreshRate = 60,
+                    Resolution = (1600, 900),
+                #else
+                    RefreshRate = DefaultRefresh, 
+                    Resolution = Resolution,
+                #endif
+                };
             }
         }
     }
@@ -202,15 +218,14 @@ public static class SaveData {
         ETime.SetForcedFPS(s.RefreshRate);
         UpdateResolution(s.Resolution);
         UpdateFullscreen(s.Fullscreen);
-        _ = DelayInitialVSyncWrite();
+        ETime.SetVSync(s.Vsync);
+        Log.Unity($"Initial settings: resolution {s.Resolution}, fullscreen {s.Fullscreen}, vsync {s.Vsync}");
+    #if WEBGL
+        //Custom waiter is blocked by this
+        Application.targetFrameRate = s.RefreshRate;
+    #endif
         r = Read<Record>(RECORD) ?? new Record();
         p = new Replays(Read<string[]>(REPLAYS_LIST) ?? new string[0]);
-    }
-
-    private static async Task DelayInitialVSyncWrite() {
-        await Task.Delay(1000);
-        ETime.SetVSync(s.Vsync);
-        Debug.Log($"Assigned delayed VSync to {s.Vsync}");
     }
 
     public static void SaveRecord() => Write(RECORD, r);
@@ -221,6 +236,7 @@ public static class SaveData {
         if (wh.HasValue) {
             s.Resolution = wh.Value;
             Screen.SetResolution(s.Resolution.w, s.Resolution.h, s.Fullscreen);
+            Log.Unity($"Set resolution to {wh.Value}");
         }
         BackgroundOrchestrator.RecreateTextures();
         BackgroundCombiner.Reconstruct();

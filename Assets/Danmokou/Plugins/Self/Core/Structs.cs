@@ -108,6 +108,7 @@ public struct Version {
     public static bool operator !=(Version b1, Version b2) => b1.Tuple != b2.Tuple;
 
     public override int GetHashCode() => Tuple.GetHashCode();
+    public override bool Equals(object o) => o is Version v && this == v;
 }
 
 
@@ -149,4 +150,24 @@ public class JointCancellee : ICancellee {
         this.c2 = c2;
     }
     public bool Cancelled => c1.Cancelled || c2.Cancelled;
+}
+public interface ICancellee<T> {
+    bool Cancelled(out T value);
+}
+public class GCancellable<T> : ICancellee<T> {
+    public static readonly ICancellee<T> Null = new GCancellable<T>();
+    private CancelLevel level = CancelLevel.None;
+    private T obj;
+    public void Cancel(T value) => Cancel(CancelLevel.Operation, value);
+    public bool Cancelled(out T value) {
+        value = obj;
+        return level > CancelLevel.None;
+    }
+
+    public void Cancel(CancelLevel toLevel, T value) {
+        if (toLevel > level) {
+            level = toLevel;
+            obj = value;
+        }
+    }
 }

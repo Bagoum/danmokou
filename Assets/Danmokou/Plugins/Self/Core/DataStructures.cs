@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
@@ -374,7 +375,6 @@ public class DMCompactingArray<T> {
     private int count;
     public int Count => count;
     public DeletionMarker<T>[] arr;
-    private bool requiresCompact;
 
     public DMCompactingArray(int size = 8) {
         arr = new DeletionMarker<T>[size];
@@ -476,6 +476,43 @@ public class DMCompactingArray<T> {
         }
         Compact();
     }
+}
+
+public class N2Triangle<T> {
+    private readonly T[] arr;
+    public readonly int rows;
+
+    public N2Triangle(T[][] data) {
+        rows = data.Length;
+        arr = new T[rows * rows];
+        int ii = 0;
+        for (int ri = 0; ri < rows; ++ri) {
+            if (data[ri].Length != 2 * ri + 1) 
+                throw new ArgumentException($"Row {ri} of an N2Triangle should have {2 * ri + 1} elements");
+            for (int rj = 0; rj < data[ri].Length; ++rj) {
+                arr[ii++] = data[ri][rj];
+            }
+        }
+    }
+    
+    public readonly struct Row {
+        private readonly N2Triangle<T> parent;
+        public readonly int index;
+
+        public Row(N2Triangle<T> n2, int ind) {
+            parent = n2;
+            index = ind;
+        }
+
+        public T this[int j] => Math.Abs(j) <= index ?
+            parent.GetRawIndex(index * index + index + j) :
+            throw new IndexOutOfRangeException($"Cannot index row {index} of an N2Triangle with column {j}");
+    }
+
+    private T GetRawIndex(int i) => arr[i];
+
+    public Row this[int i] => new Row(this, i);
+
 }
 
 public static class DictCache<K, V> {

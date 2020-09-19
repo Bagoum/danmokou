@@ -49,10 +49,10 @@ public class XMLMainMenuDays : XMLMenu {
     private const string shotDescrClass = "descriptor";
     private const string completed1Class = "lblue";
     private const string completedAllClass = "lgreen";
-    private static UINode[] DifficultyNodes(Func<DifficultySet, UINode> map) =>
+    private static UINode[] DifficultyNodes(Func<FixedDifficulty, UINode> map) =>
         GameManagement.VisibleDifficulties.Select(map).ToArray();
 
-    private static UINode[] DifficultyFuncNodes(Func<DifficultySet, Action> map) =>
+    private static UINode[] DifficultyFuncNodes(Func<FixedDifficulty, Action> map) =>
         DifficultyNodes(d => new FuncNode(map(d), d.Describe()));
     protected override void Awake() {
         if (!Application.isPlaying) return;
@@ -64,7 +64,7 @@ public class XMLMainMenuDays : XMLMenu {
             throw new Exception("Days-Campaign WIP: one shot only");
         }*/
 
-        DifficultySet dfc = DifficultySet.Normal;
+        FixedDifficulty dfc = FixedDifficulty.Normal;
         var defaultPlayer = References.dayCampaign.players[0];
         var defaultShot = defaultPlayer.shots[0];
 
@@ -80,19 +80,20 @@ public class XMLMainMenuDays : XMLMenu {
                 }
                 (bool, UINode) Confirm() {
                     ConfirmCache();
-                    new GameRequest(GameRequest.ShowPracticeSuccessMenu, dfc, challenge: new ChallengeRequest(p, c),
+                    new GameRequest(GameRequest.ShowPracticeSuccessMenu, new DifficultySettings(dfc), 
+                        challenge: new PhaseChallengeRequest(p, c),
                         player: defaultPlayer, shot: defaultShot).Run();
                     return (true, null);
                 }
                 return new CacheNavigateUINode(TentativeCache, () => p.Title(dfc), 
                     new UINode(() => c.Description(p.boss.boss)).SetConfirmOverride(Confirm),
-                    new DelayOptionNodeLR2<int>("", VTALR2Option, SetChallenge, 
+                    new DynamicOptionNodeLR2<int>("", VTALR2Option, SetChallenge, 
                         p.challenges.Length.Range().ToArray, (i, v, on) => {
                             v.Query(null, "bracket").ForEach(x => x.style.display = on ? DisplayStyle.Flex : DisplayStyle.None);
                             v.Q("Star").style.unityBackgroundImageTintColor = new StyleColor(p.Completed(i, dfc) ?
                                 p.boss.boss.colors.uiHPColor :
                                 new Color(1, 1, 1, 0.52f));
-                        }).With(VTALR2OptionNode).With("nokey")
+                        }).With(VTALR2OptionNode).With(optionNoKeyClass)
                             .SetConfirmOverride(Confirm)
                             .SetOnVisit(_ => SetChallenge(0))
                             .SetOnLeave(_ => AyaPhotoBoard.TearDownAndHide()),

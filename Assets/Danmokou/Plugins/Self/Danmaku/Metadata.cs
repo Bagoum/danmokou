@@ -1,11 +1,77 @@
-﻿using System.Threading;
+﻿using System;
+using System.Linq;
+using System.Threading;
 using Core;
 using JetBrains.Annotations;
 using SM;
+using UnityEngine;
 using static Danmaku.Enums;
 
 namespace Danmaku {
+//This struct is effectively readonly but these are json requirements.
+public struct DifficultySettings {
+    /// <summary>
+    /// Inclusive
+    /// </summary>
+    public const int MIN_SLIDER = 0;
+    /// <summary>
+    /// Inclusive
+    /// </summary>
+    public const int MAX_SLIDER = 42;
+    public const int DEFAULT_SLIDER = 18;
+    public FixedDifficulty? standard;
+    public float CustomValue => DifficultyForSlider(customValueSlider);
+    public float customCounter;
+    public int customValueSlider;
+    public DifficultySettings(FixedDifficulty standard) {
+        this.standard = standard;
+        customValueSlider = 0;
+        customCounter = 1;
+    }
 
+    public DifficultySettings(FixedDifficulty? standard, int slider) {
+        this.standard = standard;
+        customValueSlider = slider;
+        customCounter = Nearest(slider).Counter();
+    }
+
+    public static FixedDifficulty Nearest(int slider) {
+        float d = DifficultyForSlider(slider);
+        return GameManagement.VisibleDifficulties.OrderBy(fd => Mathf.Abs(fd.Value() - d)).First();
+    }
+
+    public static float DifficultyForSlider(int slider) => Mathf.Pow(2, (slider - 12f) / 12f);
+
+    public static string FancifySlider(int slider) {
+        float d = DifficultyForSlider(slider);
+        //requires ordering on VisibleDifficulties
+        var fds = GameManagement.VisibleDifficulties.OrderBy(fd => fd.Value()).ToArray();
+        for (int ii = 0; ii < fds.Length; ++ii) {
+            var fd = fds[ii];
+            if (Mathf.Abs(d / fd.Value() - 1) < 0.01) {
+                return $"Exactly {fd.Describe()}";
+            } else if (d < fd.Value()) {
+                if (ii == 0) return $"Less than {fd.Describe()}";
+                var ratio1 = Mathf.Log(fd.Value() / d);
+                var ratio2 = Mathf.Log(d / fds[ii - 1].Value());
+                var ratio = ratio2 / (ratio1 + ratio2);
+                var percent = (int) (ratio * 100);
+                return $"{100 - percent}% {fds[ii - 1].Describe()}, {percent}% {fd.Describe()}";
+            } 
+        }
+        return $"More than {fds[fds.Length - 1].Describe()}";
+    }
+
+    public float Value => standard?.Value() ?? CustomValue;
+    public float Counter => standard?.Counter() ?? customCounter;
+
+    public string Describe => standard?.Describe() ?? $"CUST:{customValueSlider:00}";
+    /// <summary>
+    /// For filenames
+    /// </summary>
+    public string DescribeSafe => standard?.Describe() ?? $"CUST{customValueSlider:00}";
+    public string DescribePadR => Describe.PadRight(8);
+}
 public readonly struct SMRunner {
     [CanBeNull] public readonly StateMachine sm;
     public readonly ICancellee cT;
@@ -53,11 +119,11 @@ public readonly struct PhaseCompletion {
     /// </summary>
     public bool StandardCardFinish => (props.phaseType?.IsCard() ?? false) && clear != PhaseClearMethod.CANCELLED;
 
-    private ItemDrops DropCapture => new ItemDrops(42, 0, 42, 0, true).Mul(props.cardValueMult);
+    private ItemDrops DropCapture => new ItemDrops(42, 0, 42, 0, 24, true).Mul(props.cardValueMult);
     //Final spells give no items if not captured, this is because some final spells have infinite timers
     private ItemDrops DropClear => new ItemDrops(
-        props.phaseType == PhaseType.FINAL ? 0 : 29, 0, 13, 0, true).Mul(props.cardValueMult);
-    private ItemDrops DropNoHit => new ItemDrops(0, 0, 37, 0, true).Mul(props.cardValueMult);
+        props.phaseType == PhaseType.FINAL ? 0 : 29, 0, 13, 0, 20, true).Mul(props.cardValueMult);
+    private ItemDrops DropNoHit => new ItemDrops(0, 0, 37, 0, 13, true).Mul(props.cardValueMult);
 
     public ItemDrops? DropItems {
         get {

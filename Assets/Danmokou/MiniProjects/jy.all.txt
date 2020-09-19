@@ -26,7 +26,7 @@ phase 0
 			position -15 0
 		@ { $other }
 			diverthp $me
-		shift-phase-to 5
+		shift-phase-to 4
 
 
 !{ power1()
@@ -67,7 +67,13 @@ sync powerup1 <> powerup x-powerup-1
 ##1
 <!> dialogue #{
 <!> root 0 1
-phased jy.1
+phase 0
+	saction 0
+		playervariant {
+			(basic-reimu dialogue(jy.1))
+			basic-mima dialogue(jy.1m)
+		}
+		shift-phase
 #}
 
 ##2
@@ -674,44 +680,5 @@ phase 0
 		shift-phase
 
 ///
-
-## ???TODO: rolling circles: fire bowap, periodically group several layers into cirlces that roll down or from side. small part of the bowap ocntinues normally. note that it should lerp into the circle mostly before it lerps to the new source in order to show the visual coherency [Border of Wave, Particle, Roll, and Slide]
-
-///
-
-##2 (concept incomplete, superseded by divebomb crows)
-<!> type timeout `Border of Wave, Particle, Line, and Curve` #{
-phase 0
-	action block 0
-		position 0 2
-		@ $other
-			position 0 1
-!!{ jt 2
-		beh-control persist gdlaser-yellow/b restyle gdlaser-red/b > t $jt
-		beh-control persist gdlaser-pink/b restyle gdlaser-blue/b > t $jt
-		beh-control persist gdlaser-yellow/ restyle gdlaser-red/ > t $jt
-		beh-control persist gdlaser-pink/ restyle gdlaser-blue/ > t $jt
-		@ $other
-			_ - $jt 1.5 $jpower1
-		sync gdlaser-* <;-10:>  gsr2 4 <180> {
-			color { yellow/b pink/b yellow/ pink/ }
-			p this
-		} gsr2 2 rx - 4 * 0.6 &pi {
-			center
-			bindLR
-			root Lplayer
-		} laser null 1 6 {
-			dsfx
-			length 50
-			s	0.6
-			dynamic tprot :: {
-				elt	-m &lt $jt
-!!{ per 4
-			} rotate
-				limit (lerpsmooth out-sine 0 4 &elt 120 300) * &rl  * (lerpsmooth out-sine 0 4 &elt 0 + 12 * 6 p) lerpsmooth out-sine 0 4 &elt (-m t 12) (-m t 9)
-				py 1
-		}
-		
-#}
 
 

@@ -48,8 +48,12 @@ public class UIManager : MonoBehaviour {
 
     private float time = 0f;
     public SpriteRenderer PIVDecayBar;
+    public SpriteRenderer MeterBar;
+    private Color defaultMeterColor;
+    private Color defaultMeterColor2;
     public SpriteRenderer BossHPBar;
     private MaterialPropertyBlock pivDecayPB;
+    private MaterialPropertyBlock meterPB;
     private MaterialPropertyBlock bossHPPB;
     private MaterialPropertyBlock profilePB;
 
@@ -63,6 +67,10 @@ public class UIManager : MonoBehaviour {
         spellColorTransparent = spellColor;
         spellColorTransparent.a = 0;
         PIVDecayBar.GetPropertyBlock(pivDecayPB = new MaterialPropertyBlock());
+        MeterBar.GetPropertyBlock(meterPB = new MaterialPropertyBlock());
+        meterPB.SetFloat(PropConsts.threshold, (float)CampaignData.meterUseThreshold);
+        defaultMeterColor = MeterBar.sharedMaterial.GetColor(PropConsts.fillColor);
+        defaultMeterColor2 = MeterBar.sharedMaterial.GetColor(PropConsts.fillColor2);
         BossHPBar.GetPropertyBlock(bossHPPB = new MaterialPropertyBlock());
         profileSr.GetPropertyBlock(profilePB = new MaterialPropertyBlock());
         timeout.text = "";
@@ -84,7 +92,7 @@ public class UIManager : MonoBehaviour {
     }
 
     public static void UpdateTags() {
-        main.difficulty.text = GameManagement.DifficultyString;
+        main.difficulty.text = GameManagement.Difficulty.Describe;
     }
 
     [CanBeNull] private static Enemy bossHP;
@@ -97,12 +105,24 @@ public class UIManager : MonoBehaviour {
             main.bossHPPB.SetColor(PropConsts.unfillColor, bossHP.unfilledColor);
         }
     }
+
+    public static void SetMeterActivated(Color c) {
+        c.a = 1;
+        main.meterPB.SetColor(PropConsts.fillColor, c);
+        main.meterPB.SetColor(PropConsts.fillColor2, c);
+    }
+    public static void UnSetMeterActivated() {
+        main.meterPB.SetColor(PropConsts.fillColor, main.defaultMeterColor);
+        main.meterPB.SetColor(PropConsts.fillColor2, main.defaultMeterColor2);
+    }
     private void UpdatePB() {
-        pivDecayPB.SetFloat(PropConsts.time, time);
+        //pivDecayPB.SetFloat(PropConsts.time, time);
         pivDecayPB.SetFloat(PropConsts.fillRatio, (float)campaign.PIVDecay);
         pivDecayPB.SetFloat(PropConsts.innerFillRatio, Mathf.Clamp01((float)campaign.UIVisiblePIVDecayLenienceRatio));
         PIVDecayBar.SetPropertyBlock(pivDecayPB);
-        bossHPPB.SetFloat(PropConsts.time, time);
+        meterPB.SetFloat(PropConsts.fillRatio, (float) campaign.Meter);
+        MeterBar.SetPropertyBlock(meterPB);
+        //bossHPPB.SetFloat(PropConsts.time, time);
         if (bossHP != null) {
             main.bossHPPB.SetColor(PropConsts.fillColor, bossHP.HPColor);
             bossHPPB.SetFloat(PropConsts.fillRatio, bossHP.DisplayBarRatio);
@@ -200,8 +220,6 @@ public class UIManager : MonoBehaviour {
     public TextMeshPro bossName;
     public TextMeshPro bossTitle;
     public Material bossColorizer;
-    private static readonly int outlineColorProp = Shader.PropertyToID("_OutlineColor");
-    private static readonly int underlayColorProp = Shader.PropertyToID("_UnderlayColor");
     public static void SetNameTitle(string name, string title) {
         main.bossName.text = name;
         main.bossTitle.text = title;
@@ -227,8 +245,7 @@ public class UIManager : MonoBehaviour {
     /// </summary>
     public PrioritySprite[] bossHealthSprites;
     public static void SetBossColor(Color textColor, Color bossHPColor) {
-        main.bossColorizer.SetColor(outlineColorProp, textColor);
-        main.bossColorizer.SetColor(underlayColorProp, textColor);
+        main.bossColorizer.SetMaterialOutline(textColor);
         foreach (var p in main.bossHealthSprites) {
             p.sprite.color = bossHPColor;
         }
@@ -288,7 +305,7 @@ public class UIManager : MonoBehaviour {
     public SpriteRenderer[] healthPoints;
     public Sprite healthEmpty;
     public Sprite[] healthItrs;
-    private const string pivMultFormat = "x<mspace=1.7>{0:F2}</mspace>";
+    private const string pivMultFormat = "x<mspace=1.7>{0:00.00}</mspace>";
     private const string lifePointsFormat = "<mspace=1.5>{0}/{1}</mspace>";
     private const string grazeFormat = "<mspace=1.5>{0}</mspace>";
     private const string powerFormat = "<mspace=1.0>{0:F2}</mspace>";
@@ -434,7 +451,7 @@ public class UIManager : MonoBehaviour {
     public TextMeshPro challengeHeader;
     public TextMeshPro challengeText;
 
-    public static void RequestChallengeDisplay(ChallengeRequest cr, DifficultySet d) {
+    public static void RequestChallengeDisplay(PhaseChallengeRequest cr, FixedDifficulty d) {
         main.challengeHeader.text = cr.phase.Title(d);
         main.challengeText.text = cr.Description;
     }

@@ -8,11 +8,29 @@ To get the newest version from git, run:
 
 `git submodule update` (if you have made modifications to the submodules, you will need to `pull --rebase` them individually)
 
-# [Unreleased] v3.1.0 (target: 2020/09/20)
+# v4.0.0 (2020/10/04)
 
-- [WebGL demo](https://dmk.bagoum.com/demo) (note: WebGL is not generally supported, see [the warnings page](warnings.md) for details)
-- Improved architecture for global slowdown effects
-- Improved architecture for Seija-style camera flipping
+- [WebGL demo](https://dmk.bagoum.com/demo) (note: WebGL is not generally supported, see [the warnings page](warnings.md) for details).
+- Ending architecture.
+- Generalized challenge architecture to enable BPoHC-style random events (yet unimplemented).
+- Arbitrary bullet recoloring via `recolor` BEHOption/ LaserOption/ SimpleBullet pool control.
+  - Note: a simple bullet pool control is used instead of an SBOption in order to minimize the struct size of SimpleBullet. This feature only works with the `recolor` palette, so adding 16 bytes to the struct for a small fraction of bullet counts would be inefficient. This does make the usage with simple bullets slightly more contorted and less flexible when there are multiple recolor patterns executing simultaneously.
+- Unified difficulty/player selection screen (and it's fancy!).
+- Ability to run different script code based on the selected player via `PlayerVariant`.
+- Powerbomb support. See `PlayerBombs.cs:PowerRequired`.
+- Multishot support (that is: a group of shots that can be switched between during the game by grabbing a special powerup object).
+- Support for "respawning" the player on death. Set PlayerHP.RespawnOnHit to true.
+- Espgaluda meter mechanic.
+- New items types: gems (meter refill), full power, 1up, multishot switches.
+- Support for difficulty sliders in stage-based games.
+- UI improvements.
+- Improved handling for global slowdown effects.
+- Improved handling for Seija-style camera flipping/rotation.
+  - Camera flipping has the following limitations:
+    - Boss distortion effects are disabled when a flip is active. This is because the existing distortion effects end up flipping twice, which makes the effect appear incorrect.
+    - Photos are not taken correctly when the screen is flipped, since the code uses the true position of the viewfinder to determine what to capture. The resulting photo object that appears on screen will also appear at the true position of the viewfinder, since the photo objects display on the UI camera, which does not flip.
+- Improved handling for player-fired lasers/pathers.
+- Improved handling for looping audio effects.
 
 # v3.0.0 (2020/09/16)
 
@@ -21,7 +39,7 @@ To get the newest version from git, run:
 # v2.2.0 (2020/09/15)
 
 - Photo game architecture. See the `LuA` (L'unique Appareil-photo) [submodule](https://github.com/Bagoum/danmokou-lua) for a basic demo of how it works, as well as the "Aya Camera" shot type, which can be used anywhere.
-- Made parsing better (hopefully)
+- Made parsing better (hopefully).
 - Added support for MoF MarisaA-style tracking options. See the "MariA Lazors" shot type for an example.
 - Removed a lot of extraneous files from this repository.
 
@@ -32,7 +50,7 @@ To get the newest version from git, run:
 - Added support for infix operators (`+`,`-`,`*`,`/`,`//`,`&`,`|`). They are resolved in standard PEMDAS priority (though exponentiation is not supported as an infix).
 
   - Valid contexts:
-    - When within a parenthesized argument list to a function, eg. `mod(5 + 2, 3)`
+    - When within a parenthesized argument list to a function, eg. `mod(5 + 2, 3)`.
     - When within parentheses, eg. `(5 + 4)`. 
 
   - One limitation of infix operators is that the first argument must be of the target type. You can write `pxy(0, 0) * 3` if a vector2 is required, but you cannot write `3 * pxy(0, 0)`. 

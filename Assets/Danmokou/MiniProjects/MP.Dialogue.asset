@@ -33,3 +33,7 @@ MonoBehaviour:
     files:
     - locale: 0
       file: {fileID: 4900000, guid: 5b9bd5a5fd86b0e49b096ddb37293a5e, type: 3}
+  - name: jy.1m
+    files:
+    - locale: 0
+      file: {fileID: 4900000, guid: d2556ab81a674cc43a6660b88aa5d856, type: 3}

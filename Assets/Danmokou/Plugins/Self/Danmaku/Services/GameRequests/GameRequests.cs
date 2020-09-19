@@ -8,7 +8,7 @@ using SM;
 using UnityEngine;
 using static SM.SMAnalysis;
 using GameLowRequest = DU<Danmaku.CampaignRequest, Danmaku.BossPracticeRequest, 
-    ChallengeRequest, Danmaku.StagePracticeRequest>;
+    PhaseChallengeRequest, Danmaku.StagePracticeRequest>;
 using static GameManagement;
 using static SceneIntermediary;
 using static StaticNullableStruct;
@@ -74,9 +74,10 @@ public readonly struct GameRequest {
     public readonly bool newCampaign;
     [CanBeNull] public readonly PlayerConfig player;
     [CanBeNull] public readonly ShotConfig shot;
+    public readonly Subshot subshot;
     [CanBeNull] public string PlayerKey => player == null ? null : player.key;
     [CanBeNull] public string ShotKey => shot == null ? null : shot.key;
-    public readonly DifficultySet difficulty;
+    public readonly DifficultySettings difficulty;
     public readonly CampaignMode mode;
     public readonly Replay? replay;
     public bool Saveable => replay == null;
@@ -85,18 +86,18 @@ public readonly struct GameRequest {
 
     public GameRequest(Func<bool> cb, GameLowRequest lowerRequest, 
         Replay replay) : this(cb, replay.metadata.Difficulty, lowerRequest, true, 
-        replay.metadata.Player, replay.metadata.Shot, replay) {}
+        replay.metadata.Player, replay.metadata.Shot, replay.metadata.Subshot, replay) {}
 
-    public GameRequest(Func<bool> cb, 
-        DifficultySet difficulty = DifficultySet.Abex, CampaignRequest? campaign = null,
-        BossPracticeRequest? boss = null, ChallengeRequest? challenge = null, StagePracticeRequest? stage = null,
-        bool newCampaign = true, [CanBeNull] PlayerConfig player = null, [CanBeNull] ShotConfig shot = null, Replay? replay = null) : 
+    public GameRequest(Func<bool> cb, DifficultySettings difficulty, CampaignRequest? campaign = null,
+        BossPracticeRequest? boss = null, PhaseChallengeRequest? challenge = null, StagePracticeRequest? stage = null,
+        bool newCampaign = true, [CanBeNull] PlayerConfig player = null, [CanBeNull] ShotConfig shot = null, 
+        Subshot subshot = Subshot.TYPE_D, Replay? replay = null) : 
         this(cb, difficulty,  GameLowRequest.FromNullable(
             campaign, boss, challenge, stage) ?? throw new Exception("No valid request type made of GameReq"), 
-            newCampaign, player, shot, replay) { }
+            newCampaign, player, shot, subshot, replay) { }
 
-    private GameRequest(Func<bool> cb, DifficultySet difficulty, GameLowRequest lowerRequest,
-        bool newCampaign, PlayerConfig player, ShotConfig shot, Replay? replay) {
+    public GameRequest(Func<bool> cb, DifficultySettings difficulty, GameLowRequest lowerRequest,
+        bool newCampaign, PlayerConfig player, ShotConfig shot, Subshot subshot, Replay? replay) {
         this.mode = lowerRequest.Resolve(
             _ => CampaignMode.MAIN, 
             _ => CampaignMode.CARD_PRACTICE, 
@@ -106,6 +107,7 @@ public readonly struct GameRequest {
         this.newCampaign = newCampaign;
         this.player = player;
         this.shot = shot;
+        this.subshot = subshot;
         this.difficulty = difficulty;
         this.replay = replay;
         this.lowerRequest = lowerRequest;
@@ -115,9 +117,9 @@ public readonly struct GameRequest {
     public void SetupOrCheckpoint() {
         if (newCampaign) {
             Log.Unity(
-                $"Starting game with mode {mode} on difficulty {difficulty.Describe()}.");
+                $"Starting game with mode {mode} on difficulty {difficulty.Describe}.");
             GameManagement.Difficulty = difficulty;
-            GameManagement.NewCampaign(mode, SaveData.r.GetHighScore(GameIdentifier), player, shot);
+            GameManagement.NewCampaign(mode, SaveData.r.GetHighScore(GameIdentifier), this);
             if (replay == null) Replayer.BeginRecording();
             else Replayer.BeginReplaying(replay.Value.frames);
         } else Checkpoint();
@@ -134,7 +136,7 @@ public readonly struct GameRequest {
             return true;
         } else return false;
     }
-    private string GameIdentifier => $"{Difficulty.Describe()}-{PlayerKey}-{ShotKey}-{CampaignIdentifier.Tuple}";
+    private string GameIdentifier => $"{difficulty.Describe}-{PlayerKey}-{ShotKey}-{CampaignIdentifier.Tuple}";
     public GameLowRequestKey CampaignIdentifier => lowerRequest.Resolve(
         c => new GameLowRequestKey(0, c.Key, default, default, default),
         b => new GameLowRequestKey(1, default, b.Key, default, default),
@@ -166,20 +168,35 @@ public readonly struct GameRequest {
     public void vRun() => Run();
 
     private static bool SelectCampaign(CampaignRequest c, GameRequest req) {
+        bool Finalize() {
+            if (req.FinishAndPostReplay()) {
+                Log.Unity($"Campaign complete for {c.campaign.campaign.key}. Returning to replay save screen.");
+                return true;
+            } else return false;
+        }
+        bool ExecuteEndcard() {
+            Log.Unity($"Game stages for {c.campaign.campaign.key} are finished. Moving to endcard, if it exists.");
+            if (c.campaign.campaign.TryGetEnding(out var ed)) {
+                return SceneIntermediary.LoadScene(new SceneRequest(References.endcard, SceneRequest.Reason.ENDCARD,
+                    () => SaveData.r.CompleteCampaign(c.campaign.campaign.key, ed.key),
+                    null,
+                    () => {
+                        LevelController.Request(new LevelController.LevelRunRequest(1, () => Finalize(),
+                            LevelController.LevelRunMethod.CONTINUE, new EndcardStageConfig(ed.dialogueKey)));
+                    }));
+            } else return Finalize();
+        }
         bool ExecuteStage(int index) {
             if (index < c.campaign.stages.Length) {
                 var s = c.campaign.stages[index];
                 return SceneIntermediary.LoadScene(new SceneRequest(s.stage.sceneConfig,
                     SceneRequest.Reason.RUN_SEQUENCE,
-                    (index == 0) ? req.SetupOrCheckpoint : (Action)req.Checkpoint,
+                    (index == 0) ? req.SetupOrCheckpoint : (Action) req.Checkpoint,
                     //Note: this load during onHalfway is for the express purpose of preventing load lag
                     () => StateMachineManager.FromText(s.stage.stateMachine),
-                    () => LevelController.Request(new LevelController.LevelRunRequest(1, () => ExecuteStage(index + 1), 
+                    () => LevelController.Request(new LevelController.LevelRunRequest(1, () => ExecuteStage(index + 1),
                         LevelController.LevelRunMethod.CONTINUE, s.stage))));
-            } else if (req.FinishAndPostReplay()) {
-                Log.Unity("Stage sequence finished.");
-                return true;
-            } else return false;
+            } else return ExecuteEndcard();
         }
         return ExecuteStage(0);
     }
@@ -210,12 +227,12 @@ public readonly struct GameRequest {
             }));
     }
 
-    private static bool SelectChallenge(ChallengeRequest cr, GameRequest req) {
+    private static bool SelectChallenge(PhaseChallengeRequest cr, GameRequest req) {
         BackgroundOrchestrator.NextSceneStartupBGC = cr.Boss.Background(cr.phase.phase.type);
         return SceneIntermediary.LoadScene(new SceneRequest(References.unitScene,
             SceneRequest.Reason.START_ONE,
             req.SetupOrCheckpoint,
-            () => ChallengeManager.TrackChallenge(req, cr),
+            () => ChallengeManager.TrackChallenge(new SceneChallengeReqest(req, cr)),
             () => {
                 var beh = UnityEngine.Object.Instantiate(cr.Boss.boss).GetComponent<BehaviorEntity>();
                 ChallengeManager.LinkBEH(beh);
@@ -256,18 +273,16 @@ public readonly struct GameRequest {
     public static bool ViewReplay(Replay? r) => r != null && ViewReplay(r.Value);
     
 
-    public static void RunCampaign([CanBeNull] AnalyzedCampaign campaign, [CanBeNull] Func<bool> cb, DifficultySet difficulty, 
-        [CanBeNull] PlayerConfig player, [CanBeNull] ShotConfig shot) {
-        if (campaign == null) return;
+    public static bool RunCampaign([CanBeNull] AnalyzedCampaign campaign, [CanBeNull] Func<bool> cb, DifficultySettings difficulty, 
+        [CanBeNull] PlayerConfig player, [CanBeNull] ShotConfig shot, Subshot subshot) {
+        if (campaign == null) return false;
         var req = new GameRequest(cb.Then(() => LoadScene(new SceneRequest(MaybeSaveReplayScene, 
-            SceneRequest.Reason.FINISH_RETURN, () => {
-                GameManagement.CheckpointCampaignData();
-                SaveData.r.CompleteCampaign(campaign.campaign.key);
-            }))), difficulty, campaign: new CampaignRequest(campaign), player: player, shot: shot);
+            SceneRequest.Reason.FINISH_RETURN, GameManagement.CheckpointCampaignData))), 
+            difficulty, campaign: new CampaignRequest(campaign), player: player, shot: shot, subshot: subshot);
 
 
-        if (SaveData.r.TutorialDone || References.miniTutorial == null) req.Run();
-        else LoadScene(new SceneRequest(References.miniTutorial,
+        if (SaveData.r.TutorialDone || References.miniTutorial == null) return req.Run();
+        else return LoadScene(new SceneRequest(References.miniTutorial,
             SceneRequest.Reason.START_ONE,
             //Prevents hangover information from previous campaign, will be overriden anyways
             req.SetupOrCheckpoint,
@@ -277,7 +292,7 @@ public readonly struct GameRequest {
 
     public static bool RunTutorial() => 
         SceneIntermediary.LoadScene(new SceneRequest(References.tutorial, SceneRequest.Reason.START_ONE, 
-            () => GameManagement.NewCampaign(CampaignMode.TUTORIAL, null, null, null)));
+            () => GameManagement.NewCampaign(CampaignMode.TUTORIAL, null)));
 
 
 }

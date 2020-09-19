@@ -1,38 +1,53 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
-public static class LocatorStrategy {
+[Serializable]
+public struct LocatorStrategy {
+    [Serializable]
+    public abstract class LocatorConfig {
+        public Vector2 offset;
+
+        public Vector2 Locate(Vector2 source, Vector2 target, float targetRadius) =>
+            offset + _Locate(source, target, targetRadius);
+        public abstract Vector2 _Locate(Vector2 source, Vector2 target, float targetRadius);
+    }
     public enum Strategy {
         Source,
         Target,
-        Perimeter,
-        HalfPerimeter
+        Perimeter
     }
 
-    public static bool IsPerimeter(this Strategy s) => s == Strategy.Perimeter || s == Strategy.HalfPerimeter;
+    public Strategy type;
+    public SourceConfig Source;
+    public TargetConfig Target;
+    public PerimeterConfig Perimeter;
 
-    public static float RadiusMult(this Strategy s) {
-        if (s == Strategy.HalfPerimeter) return 0.5f;
-        return 1f;
-    }
-    private static Vector2 Source(Vector2 source, Vector2 target, float targetRadius) {
-        return source;
-    }
-    private static Vector2 Target(Vector2 source, Vector2 target, float targetRadius) {
-        return target;
-    }
-    private static Vector2 OnPerimeter(Vector2 source, Vector2 target, float targetRadius) {
-        return target + (source - target).normalized * targetRadius;
-    }
-
-    public static Vector2 Locate(Strategy s, Vector2 source, Vector2 target, float targetRadius) {
-        if (s == Strategy.Source) {
-            return Source(source, target, targetRadius);
-        } else if (s == Strategy.Target) {
-            return Target(source, target, targetRadius);
-        } else if (s.IsPerimeter()) {
-            return OnPerimeter(source, target, targetRadius * s.RadiusMult());
+    public Vector2 Locate(Vector2 source, Vector2 target, float targetRadius) {
+        switch (type) {
+            case Strategy.Source: return Source.Locate(source, target, targetRadius);
+            case Strategy.Target: return Target.Locate(source, target, targetRadius);
+            case Strategy.Perimeter: return Perimeter.Locate(source, target, targetRadius);
         }
-        return source;
+        return Vector2.zero;
     }
 
+    [Serializable]
+    public class SourceConfig : LocatorConfig {
+        public override Vector2 _Locate(Vector2 source, Vector2 target, float targetRadius) {
+            return source;
+        }
+    }
+    [Serializable]
+    public class TargetConfig : LocatorConfig {
+        public override Vector2 _Locate(Vector2 source, Vector2 target, float targetRadius) {
+            return target;
+        }
+    }
+    [Serializable]
+    public class PerimeterConfig : LocatorConfig {
+        public float multiplier = 1f;
+        public override Vector2 _Locate(Vector2 source, Vector2 target, float targetRadius) {
+            return target + (source - target).normalized * targetRadius * multiplier;
+        }
+    }
 }

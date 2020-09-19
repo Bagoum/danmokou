@@ -14,6 +14,7 @@ using InternalSetVertexData = System.Action<UnityEngine.Mesh,
 [Serializable]
 public class TiledRenderCfg {
     public string sortingLayer;
+    public string playerSortingLayer;
     public float dontUpdateTimeAfter;
 }
 public abstract class TiledRender {
@@ -62,23 +63,23 @@ public abstract class TiledRender {
     protected unsafe VertexData* vertsPtr = (VertexData*) 0x0;
     private IntPtr roVertsPtr = (IntPtr) 0x0;
 
-    protected TiledRender(TiledRenderCfg cfg, GameObject obj) {
+    protected TiledRender(GameObject obj) {
         pb = new MaterialPropertyBlock();
         mr = obj.GetComponent<MeshRenderer>();
         mf = obj.GetComponent<MeshFilter>();
         tr = obj.transform;
-        DontUpdateTimeAfter = cfg.dontUpdateTimeAfter;
-        mr.sortingLayerID = SortingLayer.NameToID(cfg.sortingLayer);
     }
 
     //TileRenders are always Initialize-initialized.
-    protected void Initialize(ITransformHandler locationer, Material material, bool is_static) {
+    protected void Initialize(ITransformHandler locationer, TiledRenderCfg cfg, Material material, bool is_static, bool isPlayer) {
         locater = locationer;
         parented = locater.HasParent();
         isStatic = is_static;
         material.enableInstancing = false; //Instancing doesn't work with this, and it has overhead, so disable it.
         mr.sharedMaterial = material;
         mr.sortingOrder = renderCounter++;
+        mr.sortingLayerID = SortingLayer.NameToID(isPlayer ? cfg.playerSortingLayer : cfg.sortingLayer);
+        DontUpdateTimeAfter = cfg.dontUpdateTimeAfter;
         //mr.GetPropertyBlock(pb);
     }
     

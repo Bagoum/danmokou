@@ -12,9 +12,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9e371a047fd0478dab0e1a132d71003c, type: 3}
   m_Name: PlayerMima
   m_EditorClassIdentifier: 
+  freeSpeed: 5.4
+  focusSlowdown: 0.44
   key: basic-mima
   shortTitle: Mima
   title: Mima
   prefab: {fileID: 2884352696324497640, guid: fad6b986396808145b55bde2bfa4d1c0, type: 3}
   shots:
-  - {fileID: 11400000, guid: 9d87ccfc21c12b040b4518d5a552aa13, type: 2}
+  - {fileID: 11400000, guid: 115c3a78d504fef4eb7a03e8a0dcfe35, type: 2}
+  - {fileID: 11400000, guid: d6a3d1c69b185284b8880ab96db6d135, type: 2}
+  - {fileID: 11400000, guid: 64ce47cbd158a924f89fe49e13e764e1, type: 2}
+  - {fileID: 11400000, guid: 78487260bb2833846a11a012c40191cf, type: 2}
+  uiColor: {r: 0, g: 0.3889113, b: 0.47058824, a: 1}
+  shotDisplay: {fileID: 8782343778102116289, guid: 6e88a4f8d7640724aa8035984379fa2a,
+    type: 3}

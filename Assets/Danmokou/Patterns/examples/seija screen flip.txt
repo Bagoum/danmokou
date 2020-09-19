@@ -1,0 +1,30 @@
+pattern {
+	boss jy.yukari
+}
+phase 0
+	action block 0
+		shift-phase-to 1
+		
+<!> type non `Border of Wave, Particle, Vector, and Curve`
+<!> hpi 15000 0
+<!> root 1 2
+phase 60
+	action block 1
+		async fireball-red/w <> gcr2 60 _ <> {
+		} gsr2 9 <10> {
+			center
+		} s tprot cx 4
+		seijay -180 2
+		
+		
+<!> type non `Border of Wave, Particle, Vector, and Curve`
+<!> hpi 15000 6
+<!> root 0 2
+phase 6
+	action block 0
+		async fireball-red/w <> gcr2 60 _ <> {
+		} gsr2 9 <10> {
+			center
+		} s tprot cx 4
+		
+

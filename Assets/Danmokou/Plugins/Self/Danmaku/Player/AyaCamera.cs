@@ -35,9 +35,9 @@ public class AyaCamera : BehaviorEntity {
     public static Orientation CameraOrientation { get; private set; } = Orientation.HORIZONTAL;
     private float CameraOrientationAngleOffset => (CameraOrientation == Orientation.HORIZONTAL) ? 0f : 90f;
 
-    public static float CameraSpeedMultiplier =>
+    public float CameraSpeedMultiplier =>
         CameraState == State.FIRING ? 0f :
-        (CameraState == State.CHARGE && PlayerInput.IsFocus) ? 
+        (CameraState == State.CHARGE && player.IsFocus) ? 
             0.5f :
             1f;
     
@@ -69,7 +69,7 @@ public class AyaCamera : BehaviorEntity {
         GameManagement.campaign.ExecutingBoss.rBPI.loc;
     private float BoundedViewfinderRadius => Mathf.Min(viewfinderRadius, (AimAt - player.hitbox.location).magnitude);
     private float AngleToTarget =>
-        (player.IsMoving && !PlayerInput.IsFocus) 
+        (player.IsMoving && !player.IsFocus) 
             ? M.AtanD(player.LastDelta)
             : M.AtanD(AimAt - player.hitbox.location);
     private float BaseViewfinderAngle => AngleToTarget - 90;
@@ -117,7 +117,7 @@ public class AyaCamera : BehaviorEntity {
 
     protected override void RegularUpdateMove() {
         orientationSwitchWaiting -= ETime.FRAME_TIME;
-        if (PlayerInput.IsBombing && orientationSwitchWaiting < 0f) {
+        if (player.IsTryingBomb && orientationSwitchWaiting < 0f) {
             orientationSwitchWaiting = orientationSwitchCooldown;
             CameraOrientation = Reverse(CameraOrientation);
             SFXService.Request(onOrientationSwitch);
@@ -131,7 +131,7 @@ public class AyaCamera : BehaviorEntity {
     }
     public override void RegularUpdate() {
         base.RegularUpdate();
-        if (PlayerInput.AllowPlayerInput) {
+        if (player.AllowPlayerInput) {
             bool full = ChargeFull;
             charge = M.Clamp(chargeMin, chargeMax, charge + GetChargeRate(CameraState) * ETime.FRAME_TIME);
             if (!full && ChargeFull) {
@@ -155,14 +155,14 @@ public class AyaCamera : BehaviorEntity {
     //0-100
     private double charge = 50;
     public bool ChargeFull => charge >= chargeMax;
-    public bool InputCharging => PlayerInput.IsFocus && PlayerInput.IsFiring;
+    public bool InputCharging => player.IsFocus && player.IsFiring;
     private IEnumerator UpdateNormal() {
         viewfinder.gameObject.layer = lowCameraLayer;
         CameraState = State.NORMAL;
-        bool alreadyCharging = PlayerInput.IsFiring;
+        bool alreadyCharging = player.IsFiring;
         while (true) {
-            alreadyCharging &= PlayerInput.IsFiring;
-            if (ChargeFull && !PlayerInput.IsFocus && PlayerInput.IsFiring && !alreadyCharging) {
+            alreadyCharging &= player.IsFiring;
+            if (ChargeFull && !player.IsFocus && player.IsFiring && !alreadyCharging) {
                 RunDroppableRIEnumerator(UpdateFire());
                 yield break;
             } else if (InputCharging) {
@@ -177,7 +177,7 @@ public class AyaCamera : BehaviorEntity {
         new CRect(location.x, location.y, CameraHalfBounds.x * scale, CameraHalfBounds.y * scale, angle);
     private IEnumerator UpdateFire() {
         CameraState = State.FIRING;
-        ETime.SlowdownBy(0.5f); // TODO fix slowdown architecture to be token-based
+        var slowdownToken = ETime.Slowdown.CreateMultiplier(0.5f);
         viewfinder.gameObject.layer = highCameraLayer;
         var sfx = SFXService.RequestSource(whileFire);
         void Cancel() {
@@ -185,7 +185,7 @@ public class AyaCamera : BehaviorEntity {
                 sfx.Stop();
                 Destroy(sfx);
             }
-            ETime.SlowdownReset();
+            slowdownToken.TryRevoke();
         }
         for (float t = 0f; t < cameraLerpDownTime; t += ETime.FRAME_TIME) {
             float scale = Mathf.Lerp(cameraFireSize, 1f, M.EInSine(t / cameraLerpDownTime));
@@ -194,7 +194,7 @@ public class AyaCamera : BehaviorEntity {
             tr.position = location += cameraFireControlSpeed * ETime.FRAME_TIME * player.LastDelta;
             var vf = ViewfinderRect(scale);
             //take shot by letting go of fire key
-            if (!PlayerInput.IsFiring) {
+            if (!player.IsFiring) {
                 Cancel();
                 RunDroppableRIEnumerator(TakePictureAndRefractor(scale));
                 yield break;

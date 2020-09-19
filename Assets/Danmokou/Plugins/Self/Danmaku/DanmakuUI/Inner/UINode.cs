@@ -26,6 +26,7 @@ public class UIScreen {
     public UINode GoToNested(UINode caller, UINode target) {
         lastCaller = caller;
         target.screen.calledBy = this;
+        target.screen.onEnter?.Invoke();
         return target;
     }
 
@@ -52,6 +53,7 @@ public class UIScreen {
     }
 
     public IEnumerable<UINode> ListAll() => top.SelectMany(x => x.ListAll());
+    public bool HasNode(UINode x) => ListAll().Contains(x);
 
     public void ResetStates() {
         foreach (var n in ListAll()) n.state = NodeState.Invisible;
@@ -94,6 +96,12 @@ public class UIScreen {
         onExit = cb;
         return this;
     }
+
+    [CanBeNull] private Action onEnter;
+    public UIScreen OnEnter(Action cb) {
+        onEnter = cb;
+        return this;
+    }
 }
 
 public class LazyUIScreen : UIScreen {
@@ -132,7 +140,12 @@ public class UINode {
 
     public IEnumerable<UINode> ListAll() => children.SelectMany(n => n.ListAll()).Prepend(this);
 
-    public int Depth => Parent?.ChildDepth ?? 0;
+    private int? _fixedDepth = null;
+    public UINode FixDepth(int d) {
+        _fixedDepth = d;
+        return this;
+    }
+    public int Depth => _fixedDepth ?? Parent?.ChildDepth ?? 0;
     protected virtual int ChildDepth => 1 + Depth;
 
     protected static void AssignParentingStates(UINode p) {
@@ -153,8 +166,10 @@ public class UINode {
 
     private readonly List<string> overrideClasses = new List<string>();
 
-    public UINode With([CanBeNull] string cls) {
-        if (!string.IsNullOrWhiteSpace(cls)) overrideClasses.Add(cls);
+    public UINode With(params string[] clss) {
+        foreach (var cls in clss) {
+            if (!string.IsNullOrWhiteSpace(cls)) overrideClasses.Add(cls);
+        }
         return this;
     }
 
@@ -212,7 +227,13 @@ public class UINode {
 
     public virtual UINode Back() => _overrideBack?.Invoke() ?? screen.TryGoBack() ?? this;
 
-    public virtual bool Passthrough => false;
+    [CanBeNull] private Func<bool> _passthrough;
+    public bool Passthrough => _passthrough?.Invoke() ?? false;
+
+    public UINode PassthroughIf(Func<bool> passthrough) {
+        _passthrough = passthrough;
+        return this;
+    }
 
     [CanBeNull] private Action<UINode> _onVisit = null;
 
@@ -241,23 +262,31 @@ public class UINode {
         return this;
     }
 
-    public (bool success, UINode target) Confirm() =>
-        confirmEnabled ? _Confirm() : (false, this);
+    public (bool success, UINode target) Confirm() {
+        if (confirmEnabled) {
+            var (success, target) = _Confirm();
+            if (!success || target == null || screen.HasNode(target)) return (success, target);
+            else return (true, screen.GoToNested(this, target));
+        } else return (false, this);
+    }
 
     protected const string NodeClass = "node";
 
-    private bool _alwaysVisible;
+    [CanBeNull] private Func<bool?> _visible;
 
-    public UINode SetAlwaysVisible() {
-        _alwaysVisible = true;
+    public UINode VisibleIf(Func<bool?> visible) {
+        _visible = visible;
+        _passthrough = _passthrough ?? (() => _visible?.Invoke() == false);
         return this;
     }
     private string ToClass(NodeState s) {
+        var visOverride = _visible?.Invoke();
+        if (visOverride == false) return "invisible";
         if (s == NodeState.Focused) return "focus";
         else if (s == NodeState.Selected) return "selected";
-        else if (s == NodeState.GroupFocused) return "group";
-        else if (s == NodeState.Invisible && !_alwaysVisible) return "invisible";
-        else if (s == NodeState.Visible || _alwaysVisible) return "visible";
+        else if (s == NodeState.GroupFocused || visOverride == true) return "group";
+        else if (s == NodeState.Invisible) return "invisible";
+        else if (s == NodeState.Visible) return "visible";
         throw new Exception($"Couldn't resolve nodeState {s}");
     }
 
@@ -295,11 +324,6 @@ public class UINode {
         overrideBuilder = builder;
         return this;
     }
-
-    protected UINode ResolveNext(UINode next) {
-        if (next == null || next == this) return next;
-        return screen.GoToNested(this, next);
-    }
     
     protected List<int> CacheCurrent() {
         List<int> revInds = new List<int>();
@@ -320,7 +344,7 @@ public class NavigateUINode : UINode {
     protected override (bool success, UINode target) _Confirm() {
         //default going right
         var n = Right();
-        return n != this ? (true, n) : (false, this);
+        return n != this ? (true, n) : base._Confirm();
     }
 }
 
@@ -393,7 +417,7 @@ public class FuncNode : UINode {
         this.next = next;
     }
 
-    protected override (bool success, UINode target) _Confirm() => (target(), ResolveNext(next));
+    protected override (bool success, UINode target) _Confirm() => (target(), next);
 }
 
 public class OpenUrlNode : FuncNode {
@@ -448,15 +472,13 @@ public class ConfirmFuncNode : FuncNode {
     }
 }
 
-public class Invisible1Node : UINode {
-    public Invisible1Node(string description, UINode[] children) : base(description, children) {
-        With("invisible");
+public class PassthroughNode : UINode {
+    public PassthroughNode(string description) : base(description) {
+        PassthroughIf(() => true);
     }
-
-    public override bool Passthrough => true;
-
-    public override UINode Up() => Left();
-    public override UINode Down() => Right();
+    public PassthroughNode(Func<string> description) : base(description) { 
+        PassthroughIf(() => true);
+    }
 }
 public class NavigateOptionNodeLR : OptionNodeLR<UINode> {
     private UINode currentVisible;
@@ -515,11 +537,10 @@ public class DelayOptionNodeLR<T> : UINode {
     protected override void BindText() {
         bound.Q<Label>("Key").text = Description;
         AssignValueText(values());
-        
     }
 }
 
-public class DelayOptionNodeLR2<T> : UINode {
+public class DynamicOptionNodeLR2<T> : UINode {
     private readonly Action<T> onChange;
     private readonly Func<T[]> values;
     private readonly Action<T, VisualElement, bool> binder;
@@ -527,7 +548,7 @@ public class DelayOptionNodeLR2<T> : UINode {
     private int index;
     private VisualElement[] boundChildren = new VisualElement[0];
     
-    public DelayOptionNodeLR2(string description, VisualTreeAsset objectTree, Action<T> onChange, Func<T[]> values, Action<T, VisualElement, bool> binder) : base(description) {
+    public DynamicOptionNodeLR2(string description, VisualTreeAsset objectTree, Action<T> onChange, Func<T[]> values, Action<T, VisualElement, bool> binder) : base(description) {
         this.onChange = onChange;
         this.values = values;
         this.binder = binder;
@@ -582,6 +603,47 @@ public class DelayOptionNodeLR2<T> : UINode {
     }
 }
 
+public class DynamicOptionNodeLR<T> : UINode {
+    private readonly Action<T> onChange;
+    private readonly Func<(string key, T val)[]> values;
+    public int Index { get; private set; }
+    public T Value => values()[Index].val;
+    
+    public DynamicOptionNodeLR(string description, Action<T> onChange, Func<(string, T)[]> values, T defaulter, params UINode[] children) : base(description, children) {
+        this.onChange = onChange;
+        this.values = values;
+        Index = this.values().Enumerate().FirstOrDefault(x => x.Item2.val.Equals(defaulter)).Item1;
+    }
+
+    public override UINode Left() {
+        var v = values();
+        if (v.Length > 0) {
+            Index = M.Mod(v.Length, Index - 1);
+            onChange(v[Index].val);
+            AssignValueText();
+        }
+        return this;
+    }
+    public override UINode Right() {
+        var v = values();
+        if (v.Length > 0) {
+            Index = M.Mod(v.Length, Index + 1);
+            onChange(v[Index].val);
+            AssignValueText();
+        }
+        return this;
+    }
+
+    private void AssignValueText() {
+        bound.Q<Label>("Value").text = values()[Index].key;
+    }
+    public override VisualElement Build(Dictionary<Type, VisualTreeAsset> map, ScrollView scroller) {
+        CloneTree(map);
+        bound.Q<Label>("Key").text = Description;
+        AssignValueText();
+        return BindScroll(scroller);
+    }
+}
 public class OptionNodeLR<T> : UINode {
     private readonly Action<T> onChange;
     protected virtual Action<T> OnChange => onChange;

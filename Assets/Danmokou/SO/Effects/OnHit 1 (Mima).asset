@@ -12,9 +12,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eef3d61c38c8da249ac2aabcd5c9d253, type: 3}
   m_Name: OnHit 1 (Mima)
   m_EditorClassIdentifier: 
-  proccer: {fileID: 11400000, guid: cf4bbeb561a17ec49a49d2063c79cabf, type: 2}
-  sound: {fileID: 0}
-  locator: 3
+  sound: {fileID: 11400000, guid: a6cc7142ab32c3145ba5b70adbae4016, type: 2}
+  locator:
+    type: 2
+    Source:
+      offset: {x: 0, y: 0}
+    Target:
+      offset: {x: 0, y: 0}
+    Perimeter:
+      offset: {x: 0, y: 0}
+      multiplier: 0.5
   particlePrefab: {fileID: 5365425350247912439, guid: 2b76e0938fef9bf448b0c4766a9e2638,
     type: 3}
   spawnType: 0

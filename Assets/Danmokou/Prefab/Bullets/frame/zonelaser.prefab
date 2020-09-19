@@ -94,6 +94,11 @@ PrefabInstance:
       propertyPath: colorizing.WideLight
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 2580537657087916120, guid: da7d451c790a2af43be4bea2cdbef84e,
+        type: 3}
+      propertyPath: renderPriority
+      value: 1100
+      objectReference: {fileID: 0}
     - target: {fileID: 5375908486119241891, guid: da7d451c790a2af43be4bea2cdbef84e,
         type: 3}
       propertyPath: m_Name

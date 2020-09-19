@@ -44,6 +44,10 @@ public static class ExUtils {
         return quatEuler3.Of(xyz);
     }
 
+    public static Expression Property<T>(string property) => Property(typeof(T), property);
+    public static Expression Property(Type t, string property) =>
+        Expression.Property(null, t.GetProperty(property) ?? throw new Exception(
+            $"STATIC EXCEPTION: Couldn't find property {property} on type {t}"));
     public static ExFunction Wrap(Type t, string methodName, params Type[] types) {
         foreach (var mi in t.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static)) {
             if (mi.Name.Equals(methodName)) {
@@ -59,7 +63,9 @@ public static class ExUtils {
             }
         }
 #if NO_EXPR
-        Log.Unity($"STATIC ERROR: Method {t.Name}.{methodName} not found. This is probably due to code stripping. Will assume that this code is not called and return null.");
+        Log.Unity($"STATIC ERROR: Method {t.Name}.{methodName} not found. " +
+                  "This is probably due to code stripping. " +
+                  "Will assume that this code is not called and return null.");
         return null;
 #else
         throw new NotImplementedException(
@@ -106,15 +112,6 @@ public static class ExUtils {
         return func;
     }
 
-    public static T CastTo<T>(object obj) {
-        return (T) obj;
-    }
-
-    private static readonly Dictionary<Type, MethodInfo> convert = new Dictionary<Type, MethodInfo>();
-    public static dynamic Convert(Ex obj, Type targetType) {
-        return Ex.Lambda<Func<dynamic>>(Ex.Convert(obj, targetType)).Compile()();
-    }
-    
     private static readonly Dictionary<(Type, Type), ExFunction> containsKeyMIMap = new Dictionary<(Type, Type), ExFunction>();
     public static Ex DictContains<K, V>(Ex dict, Ex key) {
         var typePair = (typeof(K), typeof(V));

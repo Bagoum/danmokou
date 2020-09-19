@@ -4,6 +4,7 @@ using Danmaku;
 using UnityEngine;
 
 public class PlayerHP : CoroutineRegularUpdater {
+    public static bool RespawnOnHit { get; } = false;
     public EffectStrategy OnPreHitEffect;
     public EffectStrategy OnHitEffect;
     public EffectStrategy GoldenAuraEffect;
@@ -41,17 +42,9 @@ public class PlayerHP : CoroutineRegularUpdater {
     }
 
     private void GoldenAuraInvuln((int frames, bool showEffect) req) {
-        if (req.showEffect) InvokeEffectWithTime(GoldenAuraEffect, req.frames * ETime.FRAME_TIME).transform.SetParent(tr);
+        if (req.showEffect) input.InvokeParentedTimedEffect(GoldenAuraEffect, 
+            req.frames * ETime.FRAME_TIME).transform.SetParent(tr);
         Invuln(req.frames);
-    }
-
-    private GameObject InvokeEffectWithTime(EffectStrategy effect, float time) {
-        var v = tr.position;
-        var effectGO = effect.ProcNotNull(v, v, 0);
-        effectGO.transform.SetParent(tr);
-        var animator = effectGO.GetComponent<TimeBoundAnimator>();
-        if (animator != null) animator.Initialize(Cancellable.Null, time);
-        return effectGO;
     }
 
     [ContextMenu("Take 1 Damage")]
@@ -71,8 +64,9 @@ public class PlayerHP : CoroutineRegularUpdater {
     private void _DoHit(int dmg) {
         GameManagement.campaign.AddLives(-dmg);
         RaikoCamera.ShakeExtra(2, 1f);
-        InvokeEffectWithTime(OnHitEffect, hitInvuln);
         Invuln(hitInvulnFrames);
+        if (RespawnOnHit) input.RequestNextState(PlayerInput.PlayerState.RESPAWN);
+        else input.InvokeParentedTimedEffect(OnHitEffect, hitInvuln);
     }
 
     private IEnumerator WaitDeathbomb(int dmg) {
@@ -80,7 +74,7 @@ public class PlayerHP : CoroutineRegularUpdater {
         int frames = input.OpenDeathbombWindow(() => didDeathbomb = true);
         Log.Unity($"The player has {frames} frames to deathbomb", level: Log.Level.DEBUG2);
         if (frames > 0) OnPreHitEffect.Proc(tr.position, tr.position, 1f);
-        while (--frames > 0) yield return null;
+        while (frames-- > 0) yield return null;
         input.CloseDeathbombWindow();
         if (!didDeathbomb) _DoHit(dmg);
         else Log.Unity($"The player successfully deathbombed", level: Log.Level.DEBUG2);

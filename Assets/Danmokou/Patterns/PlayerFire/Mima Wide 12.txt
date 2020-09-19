@@ -1,0 +1,13 @@
+gtr {
+	wt 12 _
+	wait-child
+} firesame
+	## free fire
+	async glcircle-blue/b <> gcr2 12 _ <> { 
+		sfx x-pc-fire-1
+	} simple tprot cy 7 { 
+		player 37 37 oh2
+		scale 0.4
+	}
+	## free cancellation
+	noop

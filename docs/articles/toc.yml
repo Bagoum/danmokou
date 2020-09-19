@@ -10,6 +10,8 @@
       href: bullets.md
     - name: Parsing Rules
       href: parsing.md
+    - name: Abstractions
+      href: abstractions.md
     - name: Player Firing Conventions
       href: playerFire1.md
     - name: Pitfalls and Warnings
@@ -42,4 +44,6 @@
       href: t08.md
     - name: 09 - Repeater Modifiers
       href: t09.md
+    - name: 10 - Boss Configuration
+      href: tbosses.md
       

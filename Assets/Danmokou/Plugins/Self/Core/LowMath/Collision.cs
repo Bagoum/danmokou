@@ -35,7 +35,7 @@ public static class Collision {
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool CircleOnCircle(SOCircle c1, Vector2 c2t, float c2r) {
+    public static bool CircleOnCircle(SOCircleHitbox c1, Vector2 c2t, float c2r) {
         c2t.x -= c1.location.x;
         c2t.y -= c1.location.y;
         c2r += c1.radius;
@@ -50,7 +50,7 @@ public static class Collision {
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static CollisionResult GrazeCircleOnCircle(SOCircle c1, Vector2 c2t, float c2r) {
+    public static CollisionResult GrazeCircleOnCircle(SOCircleHitbox c1, Vector2 c2t, float c2r) {
         c2t.x -= c1.location.x;
         c2t.y -= c1.location.y;
         float lr = c2r + c1.largeRadius;
@@ -128,7 +128,7 @@ public static class Collision {
 
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static CollisionResult GrazeCircleOnSegments(SOCircle c1, Vector2 src, Vector2[] points, int start, int skip, int end, float radius, float cos_rot, float sin_rot) {
+    public static CollisionResult GrazeCircleOnSegments(SOCircleHitbox c1, Vector2 src, Vector2[] points, int start, int skip, int end, float radius, float cos_rot, float sin_rot) {
         if (start >= end) return CollisionResult.noColl;
         bool grazed = false;
         // use src.x to store delta vector to target, derotated.
@@ -206,7 +206,7 @@ public static class Collision {
     //delta can be precomputed.
     //NOTE: it's also more efficient to compute scale stuff in here.
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static CollisionResult GrazeCircleOnRotatedSegment(SOCircle circ, Vector2 src, float radius, Vector2 node1, Vector2 delta, float scale, float delta_mag2, float max_dist2, float cos_rot, float sin_rot) {
+    public static CollisionResult GrazeCircleOnRotatedSegment(SOCircleHitbox circ, Vector2 src, float radius, Vector2 node1, Vector2 delta, float scale, float delta_mag2, float max_dist2, float cos_rot, float sin_rot) {
         max_dist2 *= scale * scale;
         //First, we get target - src, then DErotate it. This means we only need one rotation operation
         src.x = circ.location.x - src.x;
@@ -302,7 +302,7 @@ public static class Collision {
         }
     }
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static CollisionResult GrazeCircleOnRect(SOCircle circ, Vector2 rect, float rectHalfX, float rectHalfY, float diag2, float scale, float cos_rot, float sin_rot) {
+    public static CollisionResult GrazeCircleOnRect(SOCircleHitbox circ, Vector2 rect, float rectHalfX, float rectHalfY, float diag2, float scale, float cos_rot, float sin_rot) {
         diag2 *= scale * scale;
         rect.x = circ.location.x - rect.x;
         rect.y = circ.location.y - rect.y;

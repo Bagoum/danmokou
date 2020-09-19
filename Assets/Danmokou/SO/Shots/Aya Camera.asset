@@ -15,6 +15,7 @@ MonoBehaviour:
   key: camera
   title: Camera
   description: L'appareil-photo de Shameimaru Aya
+  type: Camera
   prefab: {fileID: 8581214160010154699, guid: 2e4874e3a03b4a14791a14a1515a95cc, type: 3}
   bomb: 0
   defaultPower: 1000

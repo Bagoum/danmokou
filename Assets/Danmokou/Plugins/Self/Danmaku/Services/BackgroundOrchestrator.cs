@@ -15,6 +15,7 @@ public class BackgroundOrchestrator : MonoBehaviour {
     [CanBeNull] public static BackgroundController ToBG { get; private set; }
     private static BackgroundTransition? nextRequestedTransition;
 
+    public GameObject backgroundCombiner;
     public Material baseMixerMaterial;
     public GameObject defaultBGCPrefab;
     
@@ -49,6 +50,7 @@ public class BackgroundOrchestrator : MonoBehaviour {
         NextSceneStartupBGC = null;
         MaybeCreateFirst();
         Time = 0f;
+        Instantiate(backgroundCombiner, Vector3.zero, Quaternion.identity);
     }
 
     private void Update() {

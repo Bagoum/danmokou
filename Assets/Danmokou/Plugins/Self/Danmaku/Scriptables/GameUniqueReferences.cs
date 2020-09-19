@@ -15,6 +15,7 @@ public class GameUniqueReferences : ScriptableObject {
     public SceneConfig unitScene;
     public SceneConfig tutorial;
     public SceneConfig miniTutorial;
+    public SceneConfig endcard;
     public CampaignConfig campaign;
     public CampaignConfig exCampaign;
     public IEnumerable<CampaignConfig> Campaigns => new[] {campaign, exCampaign}.Where(c => c != null);
@@ -25,6 +26,7 @@ public class GameUniqueReferences : ScriptableObject {
     public BossConfig[] bossMetadata;
     public DialogueProfile[] dialogueProfiles;
     public AudioTrack[] tracks;
+    public ItemReferences items;
     public SOPrefabs[] summonables;
     public SOTextAssets[] fileStateMachines;
 

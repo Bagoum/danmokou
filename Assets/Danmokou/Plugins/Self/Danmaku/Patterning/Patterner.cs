@@ -6,6 +6,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
+using Core;
 using DMath;
 using JetBrains.Annotations;
 using SM;
@@ -182,15 +183,20 @@ public static partial class AtomicPatterns {
     #region Items
 
     public static SyncPattern LifeItem() => sbh => {
-        ItemPooler.RequestLife(sbh.bc.ParentOffset, sbh.GCX.RV2.TrueLocation);
+        ItemPooler.RequestLife(new ItemRequestContext(sbh.bc.ParentOffset, sbh.GCX.RV2.TrueLocation));
         return sbh;
     };
     public static SyncPattern ValueItem() => sbh => {
-        ItemPooler.RequestValue(sbh.bc.ParentOffset, sbh.GCX.RV2.TrueLocation);
+        ItemPooler.RequestValue(new ItemRequestContext(sbh.bc.ParentOffset, sbh.GCX.RV2.TrueLocation));
         return sbh;
     };
     public static SyncPattern PointPPItem() => sbh => {
-        ItemPooler.RequestPointPP(sbh.bc.ParentOffset, sbh.GCX.RV2.TrueLocation);
+        ItemPooler.RequestPointPP(new ItemRequestContext(sbh.bc.ParentOffset, sbh.GCX.RV2.TrueLocation));
+        return sbh;
+    };
+    [Alias("1UpItem")]
+    public static SyncPattern OneUpItem() => sbh => {
+        ItemPooler.Request1UP(new ItemRequestContext(sbh.bc.ParentOffset, sbh.GCX.RV2.TrueLocation));
         return sbh;
     };
     #endregion
@@ -586,6 +592,7 @@ public struct LoopControl<T> {
         }
         if (props.bindLR) ch.gcx.fs["rl"] = -1 * (ch.gcx.fs["lr"] = M.PM1Mod(GCX.i));
         if (props.bindUD) ch.gcx.fs["du"] = -1 * (ch.gcx.fs["ud"] = M.PM1Mod(GCX.i));
+        if (props.bindAngle) ch.gcx.fs["angle"] = GCX.RV2.angle;
         if (props.bindItr != null) ch.gcx.fs[props.bindItr] = GCX.i;
         //
         ch.gcx.UpdateRules(props.preloop);

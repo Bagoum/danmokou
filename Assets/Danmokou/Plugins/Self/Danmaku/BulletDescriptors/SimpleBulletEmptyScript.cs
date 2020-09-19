@@ -106,7 +106,8 @@ public class SimpleBulletEmptyScript : MonoBehaviour {
     public float screenCullRadius = 3f;
     [Header("Rendering Info")] public int renderPriority;
     public RenderMode renderMode = RenderMode.NORMAL;
-    public float fadeInTime = 0.2f;
+    [Tooltip("FadeInTime is disabled on simple bullets. Before using it, re-enable it in the Bullet Indirect shader.")]
+    public float fadeInTime = 0f;
     public float slideInTime = 0f;
     public float2 scaleInTimeMin;
     public bool rotational;

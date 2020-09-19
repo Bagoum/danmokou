@@ -1,23 +1,20 @@
 pattern { }
 phase 0
 	action block 0
-		@ nl,nr
-			cull
-		summon inode <> nl <> null null
-		summon inode <> nr <> null null
-		clear phase
 		shift-phase-to 1
+	
+!!{ me yukari
 	
 phase 0
     action block 0
         position 0 0
-		@ nl
-			position 0 6
-		bullet ellipse-blue/w <> cre 20 _ <;:6h> repeat 60 <;:6> s tprot cx 1
-        bullet-control PERSIST ellipse-blue/w FORCE relrect mokou <1;:3;2:0>
-		##With tpnrot, mokou fires heart-shaped (!) blocks that hit a wall and then leak backwards or go forwards slowly.
-		##With tprot, mokou fires bullets very quickly in a circle, and they slow down in such a way that you can see a rectangle, slightly offset to the right, around mokou which is the speed zone.
-        tpnrot pxy
-            * 4 - 2 diff y [Lbeh mokou].y
-            0
+        bullet-control PERSIST ellipse-blue/w FORCE relrect $me <1;:3;2:0>
+		##With nrvelocity, $me fires heart-shaped (!) blocks that hit a wall and then leak backwards or go forwards slowly.
+		##With rvelocity, $me fires bullets very quickly in a circle, and they slow down in such a way that you can see a rectangle, slightly offset to the right, around $me which is the speed zone.
+			rvelocity pxy
+				* 4 - 2 diff y [Lbeh $me].y
+				0
+		async ellipse-blue/w <> gcr2 20 _ <;:6h> {
+		} gsr2c 60 {
+		} s rvelocity cx 1
             

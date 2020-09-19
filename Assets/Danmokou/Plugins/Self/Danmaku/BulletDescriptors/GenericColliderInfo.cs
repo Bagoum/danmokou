@@ -33,7 +33,7 @@ public class GenericColliderInfo : MonoBehaviour {
     public int end;
     public Vector2[] points;
     [Tooltip("Only fill for debugging in scene use")] [CanBeNull]
-    public SOCircle target;
+    public SOCircleHitbox target;
 
     // Update is called once per frame
     void Update() {

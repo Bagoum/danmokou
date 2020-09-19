@@ -10,6 +10,8 @@
 		_T("Time", Range(0, 10)) = 1
 		_TM("Time Multiplier", Range(0, 10)) = 1
 		_NM("Noise Multiplier", Float) = 0.4
+		_RecolorizeB("Recolorize Black", Color) = (1, 0, 0, 1)
+		_RecolorizeW("Recolorize White", Color) = (0, 0, 1, 1)
 	}
 	
 	CGINCLUDE
@@ -18,6 +20,7 @@
     #include "UnityCG.cginc"
     #include "Assets/Danmokou/CG/Supernoise.cginc"
     #pragma multi_compile __ FANCY
+    #pragma multi_compile_local __ FT_RECOLORIZE
     
     struct vertex {
         float4 loc  : POSITION;
@@ -87,9 +90,18 @@
 		Pass {
 		    Blend SrcAlpha [_BlendTo]
 			CGPROGRAM
+			
+        #ifdef FT_RECOLORIZE
+			float4 _RecolorizeB;
+			float4 _RecolorizeW;
+        #endif
+
 			float4 frag(fragment f) : SV_Target { 
 			    float4 c = tex2D(_MainTex, f.uv) * f.c;
-                c.rgb = hueShift(c.rgb, _T * _HueShift);
+                c.rgb = hueShift(c.rgb, _HueShift);
+            #ifdef FT_RECOLORIZE
+                c.rgb = lerp(_RecolorizeB, _RecolorizeW, c.r).rgb;
+            #endif
                 return c;
 			}
 			ENDCG

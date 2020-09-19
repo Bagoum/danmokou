@@ -283,16 +283,6 @@ PrefabInstance:
       propertyPath: m_sharedMaterial
       value: 
       objectReference: {fileID: 2100000, guid: 310fdab4051ca1a4dacafc2081b672ea, type: 2}
-    - target: {fileID: 2070799082424227182, guid: 2a75209a30e145949a5bc2f614255ea8,
-        type: 3}
-      propertyPath: m_AnchoredPosition.x
-      value: 6.92
-      objectReference: {fileID: 0}
-    - target: {fileID: 2070799082424227182, guid: 2a75209a30e145949a5bc2f614255ea8,
-        type: 3}
-      propertyPath: m_AnchoredPosition.y
-      value: -1.35
-      objectReference: {fileID: 0}
     - target: {fileID: 2082514052638555600, guid: 2a75209a30e145949a5bc2f614255ea8,
         type: 3}
       propertyPath: m_AnchoredPosition.x
@@ -529,6 +519,11 @@ PrefabInstance:
       propertyPath: m_textInfo.pageCount
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 4315262648830901192, guid: 2a75209a30e145949a5bc2f614255ea8,
+        type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -2.9
+      objectReference: {fileID: 0}
     - target: {fileID: 4316332983065778808, guid: 2a75209a30e145949a5bc2f614255ea8,
         type: 3}
       propertyPath: m_firstOverflowCharacterIndex
@@ -608,6 +603,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_text
       value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 5163254805724245234, guid: 2a75209a30e145949a5bc2f614255ea8,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5314803505264282079, guid: 2a75209a30e145949a5bc2f614255ea8,
         type: 3}
@@ -858,6 +858,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_textInfo.pageCount
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9031387269549590791, guid: 2a75209a30e145949a5bc2f614255ea8,
+        type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0.5
       objectReference: {fileID: 0}
     - target: {fileID: 9081291408681116276, guid: 2a75209a30e145949a5bc2f614255ea8,
         type: 3}

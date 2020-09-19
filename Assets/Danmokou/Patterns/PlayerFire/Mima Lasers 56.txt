@@ -1,0 +1,18 @@
+gtr {
+	wt 120 _
+	wait-child
+} firesame
+	## lazors
+	async pather-*/b <> gcrepeat {
+			wait(120)
+			times(_)
+			color { blue green }
+		}  pather(0.5, 0.4, tpnrot(
+			truerotatelerprate(lerpt(1, 1.4, 124, 0),
+				rotify(cy(1)),
+				(LNearestEnemy - loc)) * lerp3(0.0, 0.3, 1.1, 1.3, t, 9, 2, 10)), { 
+			player(20, 42, 22, oh1)
+			s(2)
+		})
+	## cancellation
+	noop

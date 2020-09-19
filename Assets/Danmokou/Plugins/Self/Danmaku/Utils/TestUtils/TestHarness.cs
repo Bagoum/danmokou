@@ -47,7 +47,7 @@ public class TestHarness : RegularUpdater {
     #if UNITY_EDITOR
     public static void RunBehaviorScript(string sname, string behid) {
         var sm = LoadBehaviorScript(sname);
-        BehaviorEntity.GetExecForID(behid)._RunPatternSM(sm);
+        BehaviorEntity.GetExecForID(behid).RunPatternSM(sm);
     }
     
     

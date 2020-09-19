@@ -132,11 +132,13 @@ public class MainCamera : MonoBehaviour {
         ayaMaterial.SetFloat(PropConsts.ScaleY, ysr);
         ayaMaterial.SetFloat(PropConsts.Angle, rect.angle * M.degRad);
         var capture = DefaultTempRT();
+        Shader.EnableKeyword("AYA_CAPTURE");
         foreach (var c in ayaRenderers) {
             c.targetTexture = capture;
             c.Render();
             c.targetTexture = null;
         }
+        Shader.DisableKeyword("AYA_CAPTURE");
         var ss = DefaultTempRT(((int) (SaveData.s.Resolution.w * xsr), (int) (SaveData.s.Resolution.h * ysr)));
         Graphics.Blit(capture, ss, ayaMaterial);
         capture.Release();

@@ -286,6 +286,7 @@ public static partial class BPYRepo {
     public static ExBPY OptionAngle() => b => FireOption.optionAngle.Of(b.index);
     public static ExBPY Power() => b => FireOption.power.Of();
     public static ExBPY PowerF() => b => ExM.Floor(FireOption.power.Of());
+    public static ExBPY PowerIndex() => b => ExM.Floor(FireOption.powerIndex.Of());
     public static ExBPY IfPowerGTP(ExBPY inner) => 
         b => Ex.Condition(BPYRepo.PowerF()(b).GT(b.findex), inner(b), ExC(0f));
 }

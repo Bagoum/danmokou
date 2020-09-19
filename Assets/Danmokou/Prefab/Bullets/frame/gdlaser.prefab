@@ -77,5 +77,10 @@ PrefabInstance:
       propertyPath: displacement.displaceMask
       value: 
       objectReference: {fileID: 2800000, guid: 001024098b6c2264ea398d43a2067f4c, type: 3}
+    - target: {fileID: 6140576478511871678, guid: 33512ebca480f4f44bac2105265c3626,
+        type: 3}
+      propertyPath: renderPriority
+      value: 1400
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 33512ebca480f4f44bac2105265c3626, type: 3}

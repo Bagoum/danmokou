@@ -1,0 +1,29 @@
+pattern({ })
+<!> type non `Gallery: Stone Cradle`
+<!> roott(1, 0, 0)
+phase(0)
+	action(block, 0)
+		sync sakura-green/w <> gsrepeat {
+			tmmod(4)
+			bindItr(layer)
+			rv2incr(<15>)
+		} gsrepeat {
+			tmmod(6)
+			circle
+			expose({ f layer })
+		} guideempty_noexpr(.1, p, { (pl loc) (pd dir) }, { },
+			rvelocity(px(* lerp(1.4, 3, t, 1, 0)
+				+ 0.3 * 0.8 &layer)), {
+!!{ rotation lerpsmooth(out-sine, 0, 4, t, 0, 480)
+				gsrepeat { 
+					times(7)
+					circle
+					bindAngle
+					expose({ f angle })
+				} simple(offset(
+						rotatev(@(pd, p), rx(
+							lerpsmooth(in-sine, 3.2, 11, t, 0.35, 12),
+							$rotation)), 
+						@(pl, p)),
+					{ dir2(rotatev(@(pd, p), cossindeg(+ &angle $rotation))) })
+			})

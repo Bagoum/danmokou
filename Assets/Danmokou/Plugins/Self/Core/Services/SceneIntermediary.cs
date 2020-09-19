@@ -23,6 +23,7 @@ public static class SceneIntermediary {
             RELOAD,
             START_ONE,
             RUN_SEQUENCE,
+            ENDCARD,
             ABORT_RETURN,
             FINISH_RETURN
         }
@@ -60,7 +61,7 @@ public static class SceneIntermediary {
             req.onQueued?.Invoke();
             IsFirstScene = false;
             LOADING = true;
-            GameStateManager.SetLoading(true);
+            GameStateManager.SetLoading(true, null);
             CoroutineRegularUpdater.GlobalDuringPause.RunRIEnumerator(WaitForSceneLoad(req, true));
             return true;
         } else Log.Unity($"REJECTED scene load for {req}.");
@@ -89,8 +90,7 @@ public static class SceneIntermediary {
         req.onLoaded?.Invoke();
         for (; waitOut > ETime.FRAME_YIELD; waitOut -= ETime.FRAME_TIME) yield return null;
         req.onFinished?.Invoke();
-        LOADING = false;
-        GameStateManager.SetLoading(false);
+        GameStateManager.SetLoading(false, () => LOADING = false);
     }
 
     private static readonly List<Action> sceneLoadDelegates = new List<Action>();

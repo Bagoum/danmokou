@@ -96,8 +96,11 @@ Material:
     - _Subradius: 0.1
     - _T: 23.4
     - _Thickness: 0.5
+    - _ToggleFire: 0
     - _UVSec: 0
     - _Value: 0.33333334
+    - _YX: 0.1
+    - _YY: 0.1
     - _ZWrite: 1
     m_Colors:
     - _CC1: {r: 0.5, g: 0.5, b: 0, a: 1}
@@ -109,6 +112,7 @@ Material:
     - _CF2: {r: 0.32122096, g: 0, b: 0.4528302, a: 1}
     - _CFI: {r: 0, g: 0.8937979, b: 1, a: 1}
     - _CN: {r: 0.6226415, g: 0, b: 0.0547294, a: 1}
+    - _CS: {r: 0, g: 0, b: 0, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _DimC: {r: 0.754717, g: 0, b: 0, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}

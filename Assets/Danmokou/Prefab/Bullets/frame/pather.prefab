@@ -54,12 +54,10 @@ MonoBehaviour:
     cullable: 0
     cullRadius: {fileID: 0}
   collisionInfo:
+    collisionRadius: 0
     CollisionActiveOnInit: 1
     destructible: 0
     grazeEveryFrames: 20
-  CollisionActiveOnInit: 1
-  destructible: 0
-  grazeEveryFrames: 20
   animate:
     method: 0
     LRRelation: 0
@@ -73,7 +71,7 @@ MonoBehaviour:
       attackAnim: []
       deathAnim: []
   material: {fileID: 2100000, guid: 5458891e477bea5438b857b92a28ba0c, type: 2}
-  renderPriority: 200
+  renderPriority: 1200
   sprite: {fileID: 21300000, guid: 71d21815ace21f4409927db4cf5ec658, type: 3}
   fadeInTime: 0
   cycleSpeed: 0
@@ -101,10 +99,8 @@ MonoBehaviour:
     TwoPaletteColorings: 0
   gradients: []
   config:
-    mr: {fileID: 5047600213034912827}
-    mf: {fileID: 9076737979549973094}
-    tr: {fileID: 2951577401640358143}
     sortingLayer: Projectile
+    playerSortingLayer: PlayerProjectile
     dontUpdateTimeAfter: 0
     lineRadius: 0.012
     headCutoffRatio: 0.05
@@ -230,7 +226,7 @@ TrailRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 711697775
-  m_SortingLayer: 6
+  m_SortingLayer: 7
   m_SortingOrder: 0
   m_Time: 1
   m_Parameters:

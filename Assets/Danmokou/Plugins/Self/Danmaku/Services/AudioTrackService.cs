@@ -94,7 +94,7 @@ public class AudioTrackService : MonoBehaviour {
     private static void Assign(AudioSource source, IAudioTrackInfo track) {
         source.clip = track.Clip;
         source.volume = track.Volume * SaveData.s.BGMVolume;
-        source.pitch = track.Pitch;
+        source.pitch = track.Pitch * pitchMult;
         source.time = track.StartTime;
     }
 
@@ -104,6 +104,22 @@ public class AudioTrackService : MonoBehaviour {
             main.src2.volume = bgm.Volume * SaveData.s.BGMVolume;
         }
     }
+
+    private static void ReassignPitch() {
+        if (bgm != null) {
+            main.src1.pitch = bgm.Pitch * pitchMult;
+            main.src2.pitch = bgm.Pitch * pitchMult;
+        }
+    }
+
+    private static float pitchMult = 1f;
+
+    public static void SetPitchMultiplier(float f) {
+        pitchMult = f;
+        ReassignPitch();
+    }
+
+    public static void ResetPitchMultiplier() => SetPitchMultiplier(1f);
 
     public static void InvokeBGM([CanBeNull] string trackName) {
         if (!string.IsNullOrWhiteSpace(trackName) && trackName != "_") 
@@ -154,6 +170,7 @@ public class AudioTrackService : MonoBehaviour {
         }
     }
     public static void ClearAllAudio(bool force) {
+        ResetPitchMultiplier();
         if (force || !DoPreserveBGM) {
             main.src1.Stop();
             main.src2.Stop();

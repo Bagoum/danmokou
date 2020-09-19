@@ -1,0 +1,26 @@
+gtr {
+	wt 0 _
+	wait-child
+} fire
+	## free fire
+	async lstar-teal/ <20> gcr2 18 _ <> { 
+		delay 12
+		start rv2.a *=f pm1 p
+		sfx x-pc-fire-1
+	} gsr {
+	} simple tprot cy 6 { 
+		player 18 18 oh2
+		dir(400 * pm1(p) * t)
+	}
+	## free cancellation
+	noop
+	## focus
+	async lstar-teal/w <> gcr2 12 _ <> { 
+		delay 12
+		sfx x-pc-fire-1
+	} simple tprot cy 9 { 
+		player 6 6 oh2
+		dir(400 * pm1(p) * t)
+	}
+	## focus cancellation
+	noop
