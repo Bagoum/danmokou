@@ -14,7 +14,6 @@ public class PlayerHP : CoroutineRegularUpdater {
     private int invulnerabilityCounter = 0;
     private PlayerInput input;
 
-    private DeletionMarker<Action<(int, bool)>> damageListener;
     private DeletionMarker<Action<(int, bool)>> invulnListener;
 
 
@@ -23,10 +22,10 @@ public class PlayerHP : CoroutineRegularUpdater {
         tr = transform;
         hitInvulnFrames = Mathf.CeilToInt(hitInvuln * ETime.ENGINEFPS);
         input = GetComponent<PlayerInput>();
+        input.hitbox.Player = this;
     }
 
     protected override void OnEnable() {
-        damageListener = Core.Events.TryHitPlayer.Listen(Hit);
         invulnListener = Core.Events.MakePlayerInvincible.Listen(GoldenAuraInvuln);
         base.OnEnable();
     }
@@ -48,17 +47,22 @@ public class PlayerHP : CoroutineRegularUpdater {
     }
 
     [ContextMenu("Take 1 Damage")]
-    public void _takedmg() => Hit((1, false));
+    public void _takedmg() => Hit(1);
 
     private bool waitingDeathbomb = false;
-    public void Hit((int dmg, bool force) req) {
-        if (req.dmg <= 0) return;
-        if (req.force) _DoHit(req.dmg);
+    public void Hit(int dmg, bool force = false) {
+        if (dmg <= 0) return;
+        if (force) _DoHit(dmg);
         else {
             if (invulnerabilityCounter > 0 || waitingDeathbomb) return;
             waitingDeathbomb = true;
-            RunRIEnumerator(WaitDeathbomb(req.dmg));
+            RunRIEnumerator(WaitDeathbomb(dmg));
         }
+    }
+
+    public void Graze(int graze) {
+        if (graze <= 0) return;
+        GameManagement.campaign.AddGraze(graze);
     }
 
     private void _DoHit(int dmg) {
@@ -82,7 +86,6 @@ public class PlayerHP : CoroutineRegularUpdater {
     }
 
     protected override void OnDisable() {
-        damageListener.MarkForDeletion();
         invulnListener.MarkForDeletion();
         base.OnDisable();
     }

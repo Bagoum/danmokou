@@ -15,19 +15,15 @@ public class GenCtx : IDisposable {
     public readonly Dictionary<string, Vector2> v2s = new Dictionary<string, Vector2>();
 
     public float GetFloatOrThrow(string key) {
-        if (key == "i") return i;
-        if (key == "pi") return pi;
-        return fs.GetOrThrow(key, "GCX float values");
+        if (TryGetFloat(key, out var f)) return f;
+        else throw new Exception($"The GCX does not contain a float value {key}.");
     }
     public bool TryGetFloat(string key, out float f) {
-        if (key == "i") {
-            f = i;
-            return true;
-        } else if (key == "pi") {
-            f = pi;
-            return true;
-        }
-        return fs.TryGetValue(key, out f);
+        if (key == "i") f = i;
+        else if (key == "pi") f = pi;
+        else if (key == "st") f = SummonTime * GameManagement.Difficulty.bulletSpeedMod;
+        else return fs.TryGetValue(key, out f);
+        return true;
     }
 
     public IReadOnlyDictionary<string, Vector2> V2s => v2s;
@@ -65,8 +61,8 @@ public class GenCtx : IDisposable {
         set => rv2s["brv2"] = value;
     }
     public float SummonTime {
-        get => fs["st"];
-        set => fs["st"] = value;
+        get => fs["st0"];
+        set => fs["st0"] = value;
     }
     public Vector2 Loc => exec.GlobalPosition();
     [UsedImplicitly]
@@ -157,6 +153,8 @@ public class GenCtx : IDisposable {
             if (variableType == Reflector.ExType.V2) v2s[rule.refr.var] = rule.refr.ResolveMembers(v2s, value, rule.op);
             else if (variableType == Reflector.ExType.V3)
                 v3s[rule.refr.var] = rule.refr.ResolveMembers(v3s, value, rule.op);
+            else if (variableType == Reflector.ExType.RV2)
+                rv2s[rule.refr.var] = rule.refr.ResolveMembers(rv2s, value, rule.op);
             else throw new Exception($"Can't assign V2 to {variableType}");
         } else if (rule is GCRule<Vector3> r3) {
             Vector3 value = r3.Evaluate(this);

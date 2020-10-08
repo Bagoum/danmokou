@@ -15,7 +15,7 @@ using static GameManagement;
 /// Abstract class for all in-game UI based on UIBuilder.
 /// </summary>
 [Preserve]
-public abstract class XMLMenu : MonoBehaviour {
+public abstract class XMLMenu : RegularUpdater {
     [CanBeNull] protected virtual List<int> ReturnTo { get; set; }
     [CanBeNull] private List<int> tentativeReturnTo;
 
@@ -102,8 +102,10 @@ public abstract class XMLMenu : MonoBehaviour {
         }
     }
 
-    public void Update() {
-        if (!Application.isPlaying) return;
+    public override bool UpdateDuringPause => true;
+
+    public override void RegularUpdate() {
+        if (!Application.isPlaying || !ETime.FirstUpdateForScreen) return;
         if (Current != null && MenuActive) {
             bool tried_change = true;
             bool allowsfx = true;

@@ -17,6 +17,13 @@ public class DataStructures {
     }
 
     [Test]
+    public void BitField() {
+        var b = BitCompression.FromBools(true, false, false, false, true, false, false, true);
+        Assert.IsTrue(b.NthBool(0) && b.NthBool(4) && b.NthBool(7));
+        Assert.IsFalse(b.NthBool(1) || b.NthBool(2) || b.NthBool(3) || b.NthBool(5) || b.NthBool(6));
+    }
+
+    [Test]
     public void N2Triangle() {
         var arr = new[] {
             new[] {0},

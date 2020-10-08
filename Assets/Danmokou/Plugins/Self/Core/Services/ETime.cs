@@ -87,6 +87,7 @@ public class ETime : MonoBehaviour {
     }
 
     public static float SCREENFPS { get; private set; }
+    public static bool FirstUpdateForScreen { get; private set; }
     public static bool LastUpdateForScreen { get; private set; }
     public static float ENGINEPERSCREENFPS => ENGINEFPS / SCREENFPS;
     private static readonly DMCompactingArray<IRegularUpdater> updaters = new DMCompactingArray<IRegularUpdater>();
@@ -149,6 +150,7 @@ public class ETime : MonoBehaviour {
 
     private void Update() {
         InputManager.OncePerFrameToggleControls();
+        FirstUpdateForScreen = true;
         //Updates still go out on loading. Player movement is disabled but other things need to run
         noSlowDT = ASSUME_SCREEN_FRAME_TIME;
         if (GameStateManager.IsLoadingOrPaused) {
@@ -165,33 +167,33 @@ public class ETime : MonoBehaviour {
                     if (!updater.markedForDeletion && updater.obj.UpdateDuringPause) updater.obj.RegularUpdate();
                 }
                 updaters.Compact();
+                FirstUpdateForScreen = false;
             }
             noSlowDT = 0;
         } else {
-            if (untilNextRegularFrame + dT > FRAME_BOUNDARY) {
-                for (; untilNextRegularFrame + dT > FRAME_BOUNDARY; ) {
-                    untilNextRegularFrame -= FRAME_TIME;
-                    LastUpdateForScreen = untilNextRegularFrame + dT <= FRAME_BOUNDARY;
-                    GameStateManager.CheckForStateUpdates();
-                    if (GameStateManager.PendingChange) continue;
-                    StartOfFrameInvokes();
-                    //Note: The updaters array is only modified by this command. 
-                    FlushUpdaterAdds();
-                    //Parallelize updates if there are many. Note that this allocates ~2kb
-                    if (updaters.Count < PARALLELCUTOFF) {
-                        for (int ii = 0; ii < updaters.Count; ++ii) {
-                            DeletionMarker<IRegularUpdater> updater = updaters.arr[ii];
-                            if (!updater.markedForDeletion) updater.obj.RegularUpdateParallel();
-                        }
-                    } else ParallelUpdateStep();
+            for (; untilNextRegularFrame + dT > FRAME_BOUNDARY; ) {
+                untilNextRegularFrame -= FRAME_TIME;
+                LastUpdateForScreen = untilNextRegularFrame + dT <= FRAME_BOUNDARY;
+                GameStateManager.CheckForStateUpdates();
+                if (GameStateManager.PendingChange) continue;
+                StartOfFrameInvokes();
+                //Note: The updaters array is only modified by this command. 
+                FlushUpdaterAdds();
+                //Parallelize updates if there are many. Note that this allocates ~2kb
+                if (updaters.Count < PARALLELCUTOFF) {
                     for (int ii = 0; ii < updaters.Count; ++ii) {
                         DeletionMarker<IRegularUpdater> updater = updaters.arr[ii];
-                        if (!updater.markedForDeletion) updater.obj.RegularUpdate();
+                        if (!updater.markedForDeletion) updater.obj.RegularUpdateParallel();
                     }
-                    updaters.Compact();
-                    EndOfFrameInvokes();
-                    FrameNumber++;
+                } else ParallelUpdateStep();
+                for (int ii = 0; ii < updaters.Count; ++ii) {
+                    DeletionMarker<IRegularUpdater> updater = updaters.arr[ii];
+                    if (!updater.markedForDeletion) updater.obj.RegularUpdate();
                 }
+                updaters.Compact();
+                EndOfFrameInvokes();
+                FrameNumber++;
+                FirstUpdateForScreen = false;
             }
             untilNextRegularFrame += dT;
             if (Mathf.Abs(untilNextRegularFrame) < FRAME_YIELD) untilNextRegularFrame = 0f;

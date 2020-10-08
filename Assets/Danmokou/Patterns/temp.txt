@@ -6,16 +6,71 @@ phase(0)
 	action(block, 0)
 		shift-phase-to(1)
 		
-
+phase 0
+	action block 0
+		position(0, 1)
+		sync(fireball-green/w, <0;0:2;0:0>, simp(rvelocity(cxy(0, -2))))
 
 <!> hp 4000
 phase 0
 	action block 0
-		async arrow-red/w <> gcr2 12 _ <> {
-		} gsr {
-			target a Lplayer
-		} s tprot cx 4
+		position 0 1.5
+## 1.618 = cos 18 / sin 36
+!!{ rtod 1.618
+!!{ group 20
+!!{ rad 1
+		async sakura-red/w <90> gcrepeat {
+			wait(1)
+			times(5 * $group)
+			preloop {
+				rv2.rxy =v2 lerp(0, $group, mod($group, t), 
+					rx($rad, 144 * (t // $group)),
+					rx($rad, 144 * ++ (t // $group)))
+			}
+			bindItr(ind)
+		} gsrepeat {
+			times(5)
+			preloop {
+				anchor =f (360 * t / &times)
+			}
+		} s(if(<(t + &st, 2.1), 
+			roffset(lerpsmooth(out-sine, 1, 2, t + &st, zero, rx($rad * $rtod, &anchor))), 
+			rvelocity(rx(
+			lerp(2.3, 4, t + &st, 0, 1.2), 
+			140 + 144 * &ind / $group))))
+			
+		async circle-blue/ <-90> gcrepeat {
+!!{ group 20
+!!{ rad 1.3
+			wait(1)
+			times(5 * $group)
+			preloop {
+				rv2.rxy =v2 lerp(0, $group, mod($group, t), 
+					rx($rad, 144 * (t // $group)),
+					rx($rad, 144 * ++ (t // $group))
+				)
+			}
+			bindItr(ind)
+		} gsrepeat {
+			times(5)
+			preloop {
+				anchor =f (360 * t / &times)
+			}
+		} s(if(<(t + &st, 2.1), 
+			roffset(lerpsmooth(out-sine, 1, 2, t + &st, zero, rx($rad * $rtod, &anchor))), 
+			rvelocity(rx(
+			lerp(2.3, 4, t + &st, 0, 1), 
+			140 + 144 * &ind / $group))))
+///
 
+lerpmany({ 
+				0 1
+				4 1.1
+				25 0.7
+				60 0.6
+				100 0.6
+				140 1
+			}, &rang) 
 
 
 <!> type non `hello world`

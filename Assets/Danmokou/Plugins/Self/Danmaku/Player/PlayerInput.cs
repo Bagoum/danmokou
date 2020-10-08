@@ -12,7 +12,7 @@ using static Danmaku.LocationService;
 
 namespace Danmaku {
 public class PlayerInput : BehaviorEntity {
-    public SOCircleHitbox hitbox;
+    public SOPlayerHitbox hitbox;
     public SpriteRenderer hitboxSprite;
     public SpriteRenderer meter;
     private MaterialPropertyBlock meterPB;
@@ -88,7 +88,7 @@ public class PlayerInput : BehaviorEntity {
     }
     private void LoadShot(bool firstLoad) {
         if (!firstLoad && (subshot == GameManagement.campaign.Subshot || !shot.isMultiShot)) return;
-        shot = GameManagement.campaign.shot;
+        shot = GameManagement.campaign.Shot;
         if (shot == null) shot = defaultShot;
         if (firstLoad) {
             //Load all the reflection functions now to avoid lag on subshot switch.
@@ -175,8 +175,8 @@ public class PlayerInput : BehaviorEntity {
                 CloseDeathbombWindow();
             }
         }
-        horiz_input = InputManager.HorizontalSpeed;
-        vert_input = InputManager.VerticalSpeed;
+        horiz_input = InputManager.HorizontalSpeed01;
+        vert_input = InputManager.VerticalSpeed01;
         hitboxSprite.enabled = IsFocus || SaveData.s.UnfocusedHitbox;
         Vector2 velocity = Vector2.zero;
         if (AllowPlayerInput) {
@@ -312,7 +312,7 @@ public class PlayerInput : BehaviorEntity {
     //Assumption for state enumerators is that the token is not initially cancelled.
     private IEnumerator StateNormal(ICancellee<PlayerState> cT) {
         GameManagement.campaign.MeterInUse = false;
-        hitbox.active = true;
+        hitbox.Active = true;
         state = PlayerState.NORMAL;
         while (true) {
             if (MaybeCancelState(cT)) yield break;
@@ -328,7 +328,7 @@ public class PlayerInput : BehaviorEntity {
         state = PlayerState.RESPAWN;
         RespawnOnHitEffect.Proc(hitbox.location, hitbox.location, 0f);
         //The hitbox position doesn't update during respawn, so don't allow collision.
-        hitbox.active = false;
+        hitbox.Active = false;
         for (float t = 0; t < RespawnFreezeTime; t += ETime.FRAME_TIME) yield return null;
         //Don't update the hitbox location
         tr.position = new Vector2(0f, 100f);
@@ -340,7 +340,7 @@ public class PlayerInput : BehaviorEntity {
             yield return null;
         }
         SetLocation(RespawnEndLoc);
-        hitbox.active = true;
+        hitbox.Active = true;
         
         if (!MaybeCancelState(cT)) RunDroppableRIEnumerator(StateNormal(cT));
     }

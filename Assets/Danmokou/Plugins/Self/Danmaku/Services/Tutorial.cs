@@ -123,7 +123,7 @@ public class Tutorial : BehaviorEntity {
         yield return waitlf(() => IsFiring && FiringDir == ShootDirection.DOWN);
     #endif
         Prompt(text10, $"Use the arrow keys, the left joystick, or the D-Pad to move around.");
-        yield return waitlf(() => Math.Abs(HorizontalSpeed) > 0.1 || Math.Abs(VerticalSpeed) > 0.1);
+        yield return waitlf(() => Math.Abs(HorizontalSpeed01) > 0.1 || Math.Abs(VerticalSpeed01) > 0.1);
         Prompt(text10, $"Hold {FocusHold.Desc} to move slow (focus mode).");
         yield return waiti(FocusHold);
         

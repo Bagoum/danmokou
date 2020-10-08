@@ -156,7 +156,9 @@ public static class SMAnalysis {
         public readonly Phase phase;
         public readonly Challenge[] challenges;
         public readonly DayPhaseType type;
-        private readonly int cardIndex;
+        //Raw index
+        public readonly int cardIndex;
+        //Index among analyzed only
         private readonly int combatCardIndex;
         private string Introduction => "Introduction".Locale("紹介");
         private string Conclusion => "Conclusion".Locale("結末");
@@ -198,6 +200,14 @@ public static class SMAnalysis {
 
         public static DayPhase Reconstruct(((string, int), int) key) =>
             AnalyzedDayBoss.Reconstruct(key.Item1).phases.First(p => p.cardIndex == key.Item2);
+        
+        
+        public ChallengeSetting AsSetting => new ChallengeSetting() {
+            CampaignKey = boss.day.campaign.campaign.key,
+            DayKey = boss.day.day.key,
+            BossKey = boss.boss.key,
+            PhaseIndex = cardIndex
+        };
     }
 
     public static List<Phase> Analyze(AnalyzedPhaseConstruct parent, [CanBeNull] PatternSM pat, bool ignoreZero = true) {

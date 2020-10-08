@@ -12,6 +12,7 @@ using Velocity = Danmaku.Velocity;
 namespace DMath {
 /// <summary>
 /// A repo containing a few key math functions for use in IL2CPP demos while expressions are unusable.
+/// NOTE: DO __NOT__ USE THESE FOR STANDARD HANDLING.
 /// </summary>
 public static class NoExprMath_1 {
     /// <summary>
@@ -40,10 +41,10 @@ public static class NoExprMath_1 {
         var bound = new (Reflector.ExType, string)[0];
         return new GCXU<T>((GenCtx gcx, ref uint id) => {
             PrivateDataHoisting.UploadNew(bound, gcx, ref id);
+            PrivateDataHoisting.UploadAllFloats(gcx, id);
             return f;
         }, (gcx, id) => {
-            PrivateDataHoisting.
-            UploadAdd(bound, gcx, id);
+            PrivateDataHoisting.UploadAllFloats(gcx, id);
             return f;
         });
     }

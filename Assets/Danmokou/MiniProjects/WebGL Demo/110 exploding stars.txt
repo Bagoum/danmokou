@@ -10,10 +10,10 @@ phase(0)
 			expose({ f nStar })
 		} simple(
 			rvelocity(px(lerp(0.2, 1, t, 3, 0))), { 
-			dir2(cossindeg(* 200 t))
+			dir2(cossindeg(200 * t))
 		})
 		control-bullet(persist, lstar-blue/w, 
-			sm(>(t, + 0.8 * 0.3 &.nStar), 
+			sm(>(t, 0.8 + 0.3 * &.nStar), 
 				sync star-*/w <> gsrepeat {
 					circle
 					times(22)
@@ -22,8 +22,8 @@ phase(0)
 						green yellow orange }, &nStar)
 				} simple(
 					rvelocity(px(lerp(0.2, 1, t, 0, 4))), {
-					dir2(cossindeg(* 300 t))
+					dir2(cossindeg(300 * t))
 				}))
 		)
 		control-bullet(persist, lstar-blue/w,
-			softcull_noexpr(cwheel-blue/, (>(t, + 0.8 * 0.3 &.nStar))))
+			softcull_noexpr(cwheel-blue/, (>(t, 0.8 + 0.3 * &.nStar))))

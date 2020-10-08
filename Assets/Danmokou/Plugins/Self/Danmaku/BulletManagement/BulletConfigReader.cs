@@ -56,7 +56,7 @@ public partial class BulletManager : RegularUpdater {
         private readonly DeferredTextureConstruction deferredRI;
         private bool riLoaded;
         private MeshGenerator.RenderInfo ri;
-        public readonly SOCircleHitbox collisionTarget;
+        public readonly SOPlayerHitbox collisionTarget;
         public readonly int damageAgainstPlayer;
         public readonly int againstEnemyCooldown;
         public readonly bool destructible;
@@ -117,8 +117,8 @@ public partial class BulletManager : RegularUpdater {
         public ColorMap gradient;
     }
     public Material simpleBulletMaterial;
-    public SOCircleHitbox bulletCollisionTarget;
-    public static SOCircleHitbox PlayerTarget => main.bulletCollisionTarget;
+    public SOPlayerHitbox bulletCollisionTarget;
+    public static SOPlayerHitbox PlayerTarget => main.bulletCollisionTarget;
     public SOPrefabs bulletStylesList;
     public Palette[] basicGradientPalettes;
     

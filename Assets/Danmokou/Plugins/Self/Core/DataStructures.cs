@@ -10,6 +10,24 @@ using Core;
 using DMath;
 using JetBrains.Annotations;
 
+
+public static class BitCompression {
+    public static byte FromBools(bool b0, bool b1 = false, bool b2 = false, bool b3 = false, bool b4 = false,
+        bool b5 = false, bool b6 = false, bool b7 = false) {
+        byte data = 0;
+        if (b0) data |= 1;
+        if (b1) data |= 1 << 1;
+        if (b2) data |= 1 << 2;
+        if (b3) data |= 1 << 3;
+        if (b4) data |= 1 << 4;
+        if (b5) data |= 1 << 5;
+        if (b6) data |= 1 << 6;
+        if (b7) data |= 1 << 7;
+        return data;
+    }
+    public static bool NthBool(this byte b, int n) => (b & (1 << n)) > 0;
+}
+
 /// <summary>
 /// Node holds inert data for a NodeLinkedList.
 /// </summary>

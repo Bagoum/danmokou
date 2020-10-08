@@ -7,7 +7,7 @@ public class FadeWhenPlayerNearby : CoroutineRegularUpdater {
     public SpriteRenderer[] sprites;
     public TextMeshPro[] texts;
 
-    public SOCircleHitbox player;
+    public SOPlayerHitbox player;
     public Vector2 radius;
     public Vector2 fade;
 

@@ -40,7 +40,7 @@ public class ChallengeManager : CoroutineRegularUpdater {
     public static float? BossTimeoutOverride([CanBeNull] BossConfig bc) => 
         (Tracking?.ControlsBoss(bc) == true) ? r.TimeoutOverride : null;
 
-    [CanBeNull] private static BehaviorEntity Exec;
+    [CanBeNull] private static BehaviorEntity Exec { get; set; }
 
 
     public class Restrictions {
@@ -72,14 +72,14 @@ public class ChallengeManager : CoroutineRegularUpdater {
 
     public static void LinkBEH(BehaviorEntity exec) {
         if (Tracking == null) throw new Exception("Cannot link BEH when no challenge is tracked");
+        Log.Unity($"Linked boss {exec.ID} to challenge {Tracking.Description}");
         Tracking.Start(Exec = exec);
     }
     public static void TrackChallenge(IChallengeRequest cr) {
         Log.Unity($"Tracking challenge {cr.Description}");
-        Completion = null;
+        CleanupState();
         Tracking = cr;
         r = new Restrictions(cr.Challenges);
-        Exec = null;
         challengePhotos.Clear();
         cr.Initialize();
         main.RunDroppableRIEnumerator(main.TrackChallenges(cr));
@@ -91,8 +91,7 @@ public class ChallengeManager : CoroutineRegularUpdater {
     }
 
     private static void ChallengeSuccess(IChallengeRequest cr, TrackingContext ctx) {
-        cr.OnSuccess(ctx);
-        CleanupState();
+        if (cr.OnSuccess(ctx)) CleanupState();
     }
 
     //This is not controlled by smh.cT because its scope is the entire segment over which the challenge executes,

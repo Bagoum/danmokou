@@ -8,15 +8,14 @@ phase(0)
 				rv2incr(<24>)
 				center
 				bindItr(itr)
-				expose({ f itr })
 			}, laser(null, 2, _, {
-					stagger(0.2)
+					stagger(0.5)
 					s(2)
-					varlength(10, + 8 sine(5, 3, t))
-					start(+ 2 sine(5h, 2, t))
+					varlength(10, 8 + sine(5, 3, t))
+					start(2 + sine(5h, 2, t))
 					dynamic(roffset(pxy(
-						* 0.5 t,  
-						sine(5, 0.2, + t + (* 2.5 &itr) (* 8 &lt))
+						0.5 * t,  
+						sine(5, 0.2, t + 2.5 * &itr +  8 * &lt)
 					)))
 				})
 			)

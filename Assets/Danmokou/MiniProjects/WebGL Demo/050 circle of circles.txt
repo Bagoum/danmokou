@@ -17,10 +17,6 @@ phase(0)
 				bank <0.3;:>
 				times(12)
 				circle
-				expose({
-					f loop
-					f angle
-				})
 			} s(nrvelocity(rx(
-				lerp(0.5, 1, t, 0, + 1.1 * 0.17 &loop),
+				lerp(0.5, 1, t, 0, 1 + 0.17 * &loop),
 				&angle)))

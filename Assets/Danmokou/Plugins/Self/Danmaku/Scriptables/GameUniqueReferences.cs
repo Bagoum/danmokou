@@ -38,4 +38,7 @@ public class GameUniqueReferences : ScriptableObject {
     public IEnumerable<PlayerConfig> AllPlayers =>
         CampaignShots(campaign).Concat(CampaignShots(exCampaign)).Concat(CampaignShots(dayCampaign));
     public IEnumerable<ShotConfig> AllShots => AllPlayers.SelectMany(x => x.shots);
+
+    public PlayerConfig FindPlayer(string key) => AllPlayers.First(p => p.key == key);
+    public ShotConfig FindShot(string key) => AllShots.First(s => s.key == key);
 }

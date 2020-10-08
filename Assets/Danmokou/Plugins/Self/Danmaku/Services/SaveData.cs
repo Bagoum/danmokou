@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Danmaku;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
+using ProtoBuf;
 using UnityEngine;
 using UnityEngine.Profiling;
 using KC = UnityEngine.KeyCode;
@@ -39,8 +40,7 @@ public static class SaveData {
         }
         [JsonIgnore]
         public bool MainCampaignCompleted => EndingsAchieved.ContainsKey(GameManagement.References.campaign.key);
-        //campaign key, day key, boss key, raw phase index, challenge index
-        public Dictionary<string, Dictionary<string, Dictionary<string, Dictionary<int, Dictionary<int, Dictionary<FixedDifficulty, ChallengeCompletion>>>>>> SceneRecord = new Dictionary<string, Dictionary<string, Dictionary<string, Dictionary<int, Dictionary<int, Dictionary<FixedDifficulty, ChallengeCompletion>>>>>>();
+        public Dictionary<string, ChallengeCompletion> SceneRecord = new Dictionary<string, ChallengeCompletion>();
 
         public Dictionary<string, long> HighScores = new Dictionary<string, long>();
 
@@ -56,20 +56,20 @@ public static class SaveData {
             HighScores.TryGetValue(gameIdentifier, out var score) ? (long?) score : null;
 
         public void CompleteChallenge(FixedDifficulty difficulty, PhaseChallengeRequest cr, IEnumerable<AyaPhoto> photos) {
-            var dfcMap = SceneRecord.SetDefault(cr.Campaign.key).SetDefault(cr.Day.key).SetDefault(cr.Boss.key)
-                .SetDefault(cr.phase.phase.index).SetDefault(cr.ChallengeIdx);
-            dfcMap[difficulty] = new ChallengeCompletion(photos);
+            var cs = cr.AsSetting;
+            cs.Difficulty = difficulty;
+            SceneRecord[cs.Key] = new ChallengeCompletion(photos);
             SaveData.SaveRecord();
         }
 
-        [CanBeNull]
-        private Dictionary<int, Dictionary<int, Dictionary<FixedDifficulty, ChallengeCompletion>>>
-            BossRecord(DayPhase phase) => SceneRecord.GetOrDefault3(
-                phase.boss.day.campaign.campaign.key, phase.boss.day.day.key, phase.boss.boss.key);
 
-        [CanBeNull] public ChallengeCompletion ChallengeCompletion(DayPhase phase, int c, FixedDifficulty d) =>
-            BossRecord(phase)?.GetOrDefault3(phase.phase.index, c, d);
-        
+        [CanBeNull] public ChallengeCompletion ChallengeCompletion(DayPhase phase, int c, FixedDifficulty d) {
+            var p = phase.AsSetting;
+            p.ChallengeIndex = c;
+            p.Difficulty = d;
+            return SceneRecord.TryGetValue(p.Key, out var cc) ? cc : null;
+        }
+
         public bool ChallengeCompleted(DayPhase phase, int c, FixedDifficulty d) =>
             ChallengeCompletion(phase, c, d) != null;
 
@@ -94,7 +94,7 @@ public static class SaveData {
         public int RefreshRate = 60;
         public (int w, int h) Resolution = Consts.BestResolution;
     #if UNITY_EDITOR
-        public static bool TeleportAtPhaseStart => false;
+        public static bool TeleportAtPhaseStart => true;
     #else
         public static bool TeleportAtPhaseStart => false;
     #endif
@@ -186,9 +186,10 @@ public static class SaveData {
         private static string ReplayFilename(Replay r) => REPLAYS_DIR + r.metadata.AsFilename;
 
         private static Func<InputManager.FrameInput[]> LoadReplayFrames(string file) => () => {
-            var w = new BinaryFormatter();
             using (var fr = File.OpenRead(SaveUtils.DIR + file + RFRAMEEXT)) {
-                return (InputManager.FrameInput[]) w.Deserialize(fr);
+                return Serializer.Deserialize<InputManager.FrameInput[]>(fr);
+                //var w = new BinaryFormatter();
+                //return (InputManager.FrameInput[]) w.Deserialize(fr);
             }
         };
         public bool SaveNewReplay(Replay r) {
@@ -197,10 +198,13 @@ public static class SaveData {
             var f = r.frames();
             Log.Unity($"Saving replay {filename} with {f.Length} frames.");
             Write(filename + RMETAEXT, r.metadata);
-            var w = new BinaryFormatter();
-            using (var fw = File.OpenWrite(SaveUtils.DIR + filename + RFRAMEEXT)) {
-                w.Serialize(fw, f);
+            using (var fw = File.Create(SaveUtils.DIR + filename + RFRAMEEXT)) {
+                Serializer.Serialize(fw, f);
             }
+            //using (var fw = File.OpenWrite(SaveUtils.DIR + filename + RFRAMEEXT)) {
+            //    var w = new BinaryFormatter();
+            //    w.Serialize(fw, f);
+            //}
             ReplayFiles.Add(filename);
             ReplayData.Insert(0, new Replay(LoadReplayFrames(filename), r.metadata));
             Write(REPLAYS_LIST, ReplayFiles);
@@ -220,10 +224,6 @@ public static class SaveData {
         UpdateFullscreen(s.Fullscreen);
         ETime.SetVSync(s.Vsync);
         Log.Unity($"Initial settings: resolution {s.Resolution}, fullscreen {s.Fullscreen}, vsync {s.Vsync}");
-    #if WEBGL
-        //Custom waiter is blocked by this
-        Application.targetFrameRate = s.RefreshRate;
-    #endif
         r = Read<Record>(RECORD) ?? new Record();
         p = new Replays(Read<string[]>(REPLAYS_LIST) ?? new string[0]);
     }

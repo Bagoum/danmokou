@@ -32,6 +32,8 @@ public class PatternProperty {
     public static PatternProperty Bosses(string[] keys, (int phase, int index)[] uiUsage) => new BossesProp(keys, uiUsage);
 
     public static PatternProperty BGM((int, string)[] phasesAndTracks) => new BGMProp(phasesAndTracks);
+    
+    public static PatternProperty SetUIFrom(int firstPhase) => new SetUIFromProp(firstPhase);
 
     #region Impls
     
@@ -55,6 +57,10 @@ public class PatternProperty {
     public class BGMProp : ValueProp<(int, string)[]> {
         public BGMProp((int, string)[] tracks) : base(tracks) { }
     }
+
+    public class SetUIFromProp : ValueProp<int> {
+        public SetUIFromProp(int from) : base(from) { }
+    }
     
     #endregion
 }
@@ -66,6 +72,7 @@ public class PatternProperties {
     [CanBeNull] public readonly BossConfig boss;
     [CanBeNull] public readonly BossConfig[] bosses;
     [CanBeNull] public readonly (int phase, int index)[] bossUI;
+    public readonly int setUIFrom = 0;
     [CanBeNull] public readonly (int phase, string)[] bgms;
     public PatternProperties(PatternProperty[] props) {
         foreach (var prop in props) {
@@ -74,6 +81,7 @@ public class PatternProperties {
                 (bosses, bossUI) = bsp.value;
                 boss = bosses[0];
             } else if (prop is BGMProp bgm) bgms = bgm.value;
+            else if (prop is SetUIFromProp sui) setUIFrom = sui.value;
             else if (prop is PatternProperty.EmptyProp) { }
             else throw new Exception($"Pattern is not allowed to have properties of type {prop.GetType()}");
         }

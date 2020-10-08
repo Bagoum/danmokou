@@ -31,7 +31,7 @@ PrefabInstance:
         type: 3}
       propertyPath: spriteSheet
       value: 
-      objectReference: {fileID: 21300000, guid: cddb9f087428ae14296a31ce4dc5fdf1,
+      objectReference: {fileID: 21300000, guid: 67407e66144bc244f82ab06f17e31abe,
         type: 3}
     - target: {fileID: 2677688450528803925, guid: b047f16d41292634c8d9327611784d4d,
         type: 3}
@@ -82,7 +82,7 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: cddb9f087428ae14296a31ce4dc5fdf1,
+      objectReference: {fileID: 21300000, guid: 67407e66144bc244f82ab06f17e31abe,
         type: 3}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: b047f16d41292634c8d9327611784d4d, type: 3}

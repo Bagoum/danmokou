@@ -24,7 +24,7 @@ public class Laser : FrameAnimBullet {
         rotationMethod = RotationMethod.Manual;
         base.Awake();
     }
-    private void Initialize(bool isNew, BehaviorEntity parent, Velocity velocity, SOCircleHitbox _target, int firingIndex, uint bpiid, float cold,
+    private void Initialize(bool isNew, BehaviorEntity parent, Velocity velocity, SOPlayerHitbox _target, int firingIndex, uint bpiid, float cold,
         float hot, Recolor recolor, ref RealizedLaserOptions options) {
         ctr.SetYScale(options.yScale); //Needs to be done before Colorize sets first frame
         Colorize(recolor);
@@ -75,7 +75,7 @@ public class Laser : FrameAnimBullet {
     }
 
     public static void Request(Recolor prefab, BehaviorEntity parent, Velocity vel, int firingIndex, uint bpiid, 
-        float cold, float hot, SOCircleHitbox collisionTarget, ref RealizedLaserOptions options) {
+        float cold, float hot, SOPlayerHitbox collisionTarget, ref RealizedLaserOptions options) {
         Laser created = (Laser) BEHPooler.RequestUninitialized(prefab.prefab, out bool isNew);
         created.Initialize(isNew, parent, vel, collisionTarget, firingIndex, bpiid, cold, hot, prefab, ref options);
     }

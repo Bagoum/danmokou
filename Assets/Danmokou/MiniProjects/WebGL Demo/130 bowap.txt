@@ -3,7 +3,6 @@ pattern({ })
 <!> roott(1, 0, 2)
 phase(0)
 	action(block, 0)
-		timer(restart(myTimer))
 		async gem-*/w <> gcrepeat {
 			wait(8)
 			times(_)

@@ -248,7 +248,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
 
     private const float BACKSTEP = 2f;
 
-    public CollisionResult CheckCollision(SOCircleHitbox target) {
+    public CollisionResult CheckCollision(SOPlayerHitbox target) {
         playerBulletIsColliding = false;
         float rot = M.degRad * (parented ? tr.eulerAngles.z : simpleEulerRotation.z);
         if (playerBullet.Try(out var plb)) {
@@ -266,11 +266,11 @@ public class CurvedTileRenderLaser : CurvedTileRender {
             return CollisionResult.noColl;
         }
         
-        if (!target.active) return CollisionResult.noColl;
+        if (!target.Active) return CollisionResult.noColl;
 
         // 10000 is a number that is big enough to usually ensure only one collision iteration for simple lasers.
         // If it's not big enough, then you'll have two collision iteration, which is fine.
-        return Collision.GrazeCircleOnSegments(target, locater.GlobalPosition(), centers, 0, 
+        return Collision.GrazeCircleOnSegments(target.Hitbox, locater.GlobalPosition(), centers, 0, 
             path.isSimple ? 10000 : 1, centers.Length, scaledLineRadius, (float)Math.Cos(rot), (float)Math.Sin(rot));
     }
 

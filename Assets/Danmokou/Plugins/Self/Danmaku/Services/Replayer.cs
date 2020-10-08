@@ -12,17 +12,11 @@ using GameLowRequestKey = DU<string, ((string, int), int), (((string, int), int)
 
 public class ReplayMetadata {
     public int Seed { get; set; }
-    public string PlayerKey { get; set; }
-    public string ShotKey { get; set; }
-    public Subshot Subshot { get; set; }
     public long Score { get; set; }
 
+    public PlayerTeam.Saveable SavedPlayer { get; set; }
     [JsonIgnore]
-    [CanBeNull]
-    public PlayerConfig Player => GameManagement.References.AllPlayers.FirstOrDefault(p => p.key == PlayerKey);
-    [JsonIgnore]
-    [CanBeNull]
-    public ShotConfig Shot => GameManagement.References.AllShots.FirstOrDefault(s => s.key == ShotKey);
+    public PlayerTeam Player => new PlayerTeam(SavedPlayer);
     public DifficultySettings Difficulty { get; set; }
     public CampaignMode Mode { get; set; }
     public DateTime Now { get; set; }
@@ -34,6 +28,8 @@ public class ReplayMetadata {
     
     public float DialogueSpeed { get; set; }
     public bool SmoothInput { get; set; }
+    // Not important b
+    public int Length { get; set; }
 
     public string CustomName { get; set; } = "";
     public void AssignName(string newName) => CustomName = newName.Substring(0, Math.Min(newName.Length, 10));
@@ -43,9 +39,7 @@ public class ReplayMetadata {
     public ReplayMetadata(GameRequest req, CampaignData end, string name="") {
         Seed = req.seed;
         Score = end.Score;
-        PlayerKey = req.PlayerKey;
-        ShotKey = req.ShotKey;
-        Subshot = req.subshot;
+        SavedPlayer = new PlayerTeam.Saveable(req.team);
         Difficulty = req.difficulty;
         Mode = req.mode;
         Now = DateTime.Now;
@@ -75,11 +69,12 @@ public class ReplayMetadata {
     public string AsFilename => $"{Mode}_{Difficulty.DescribeSafe}_{ID}";
 
     public string AsDisplay(bool showScore) {
-        var p = Player;
+        var p = Player.players.TryN(0)?.player;
+        var s = Player.players.TryN(0)?.shot;
         var playerDesc = (p == null) ? "???" : p.shortTitle;
         var shotDesc = "?";
-        if (p != null && Shot != null) {
-            var shotInd = p.shots.IndexOf(Shot);
+        if (p != null && s != null) {
+            var shotInd = p.shots.IndexOf(s);
             shotDesc = (shotInd > -1) ? $"{shotInd.ToABC()}" : "?";
         }
         var pstr = $"{playerDesc}-{shotDesc}".PadRight(10);
@@ -105,7 +100,10 @@ public readonly struct Replay {
     public readonly Func<FrameInput[]> frames;
     public readonly ReplayMetadata metadata;
 
-    public Replay(FrameInput[] frames, GameRequest req, CampaignData end) : this(() => frames, new ReplayMetadata(req, end)) { }
+    public Replay(FrameInput[] frames, GameRequest req, CampaignData end) :
+        this(() => frames, new ReplayMetadata(req, end)) {
+        metadata.Length = frames.Length;
+    }
 
     public Replay(Func<FrameInput[]> frames, ReplayMetadata metadata) {
         this.frames = frames;

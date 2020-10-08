@@ -8,6 +8,17 @@ To get the newest version from git, run:
 
 `git submodule update` (if you have made modifications to the submodules, you will need to `pull --rebase` them individually)
 
+# v4.1.0 (2020/10/16)
+
+- Fixed critical bug in coroutine code for gcrepeat with wait 0
+- Fixed bug in continuation challenges
+- Bullet style updates
+- Replay optimizations
+- Architecture upgrades for collision
+- Minor updates to WebGL demo
+- Basic implementation of player teams and player switching (to complete in 4.2.0)
+- Basic implementation of extra difficulty modifiers, eg. bullet speed multiplier (to complete in 4.2.0)
+
 # v4.0.0 (2020/10/04)
 
 - [WebGL demo](https://dmk.bagoum.com/demo) (note: WebGL is not generally supported, see [the warnings page](warnings.md) for details).

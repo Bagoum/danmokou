@@ -16,7 +16,7 @@ public abstract class Item : Pooled<Item> {
     protected virtual Vector2 Velocity(float t) => 
         Mathf.Lerp(speed0, speed1, t * (speed0 / (speed0 - speed1))/peakt) * PoC.Direction;
 
-    public SOCircleHitbox target;
+    public SOPlayerHitbox target;
 
     protected Vector2 loc;
 

@@ -66,7 +66,7 @@ public class XMLMainMenuCampaign : XMLMenu {
             shotDisplays[p].Show(true);
         }
         
-        Func<DifficultySettings, PlayerConfig, ShotConfig, Subshot, bool> shotCont2 = null;
+        Func<DifficultySettings, PlayerTeam, bool> shotCont2 = null;
         UIScreen CreateShotScreen2(CampaignConfig c) {
             FixedDifficulty? dfc = FixedDifficulty.Normal;
             int dfcSlider = DifficultySettings.DEFAULT_SLIDER;
@@ -119,7 +119,7 @@ public class XMLMainMenuCampaign : XMLMenu {
                     .VisibleIf(() => shotSelect.Value.isMultiShot), 
                 new PassthroughNode("").With(smallClass),
                 new FuncNode(() => shotCont2(new DifficultySettings(dfc, dfcSlider), 
-                    playerSelect.Value, shotSelect.Value, subshotSelect.Value), "Play!", false)
+                    new PlayerTeam(0, subshotSelect.Value, (playerSelect.Value, shotSelect.Value))), "Play!", false)
                 //new UINode(() => shotSelect.Value.title).SetAlwaysVisible().FixDepth(1),
                 //new UINode(() => shotSelect.Value.description)
                 //    .With(shotDescrClass).With(smallClass)
@@ -135,7 +135,7 @@ public class XMLMainMenuCampaign : XMLMenu {
         var shotTopMap = new Dictionary<CampaignConfig, UINode>() {{ References.campaign, CampaignSelectScreen.top[1] }};
         if (References.exCampaign != null) shotTopMap[References.exCampaign] = ExtraSelectScreen.top[1];
         
-        Func<(bool, UINode)> GoToShotScreen(CampaignConfig c, Func<DifficultySettings, PlayerConfig, ShotConfig, Subshot, bool> cont) {
+        Func<(bool, UINode)> GoToShotScreen(CampaignConfig c, Func<DifficultySettings, PlayerTeam, bool> cont) {
             return () => {
                 shotCont2 = cont;
                 return (true, shotTopMap[c]);
@@ -146,10 +146,11 @@ public class XMLMainMenuCampaign : XMLMenu {
             (UINode)new NavigateUINode($"Stage {stage.stage.stageNumber}", 
                 stage.phases.Select(phase =>
                     new CacheNavigateUINode(TentativeCache, phase.Title).SetConfirmOverride(
-                        GoToShotScreen(stage.campaign.campaign, (d, p, s, ss) => {
+                        GoToShotScreen(stage.campaign.campaign, (d, p) => {
                             ConfirmCache();
                             return new GameRequest(GameRequest.WaitDefaultReturn, d, 
-                                stage: new StagePracticeRequest(stage, phase.index), player: p, shot: s, subshot: ss).Run();
+                                stage: new StagePracticeRequest(stage, phase.index),
+                                player: p).Run();
                         })
                     )
                 ).ToArray()
@@ -158,10 +159,11 @@ public class XMLMainMenuCampaign : XMLMenu {
         BossPracticeScreen = new LazyUIScreen(() => PBosses.Select(boss => 
                 (UINode)new NavigateUINode(boss.boss.CardPracticeName, boss.phases.Select(phase =>
                     new CacheNavigateUINode(TentativeCache, phase.Title).SetConfirmOverride(
-                        GoToShotScreen(boss.campaign.campaign, (d, p, s, ss) => {
+                        GoToShotScreen(boss.campaign.campaign, (d, p) => {
                             ConfirmCache();
                             return new GameRequest(GameRequest.WaitShowPracticeSuccessMenu, d, 
-                                boss: new BossPracticeRequest(boss, phase), player: p, shot: s, subshot: ss).Run();
+                                boss: new BossPracticeRequest(boss, phase),
+                                player: p).Run();
                         })
                     ).With(smallClass)
                 ).ToArray()
@@ -172,10 +174,10 @@ public class XMLMainMenuCampaign : XMLMenu {
         ReplayScreen = XMLUtils.ReplayScreen(true, TentativeCache, ConfirmCache).With(ReplayScreenV);
         MainScreen = new UIScreen(
             new UINode("Main Scenario").SetConfirmOverride(GoToShotScreen(References.campaign, 
-                (d, p, s, ss) => GameRequest.RunCampaign(MainCampaign, null, d, p, s, ss))),
+                (d, p) => GameRequest.RunCampaign(MainCampaign, null, d, p))),
             References.exCampaign == null ? null :
                 new UINode("Extra Stage").SetConfirmOverride(GoToShotScreen(References.exCampaign, 
-                    (d, p, s, ss) => GameRequest.RunCampaign(ExtraCampaign, null, d, p, s, ss)))
+                    (d, p) => GameRequest.RunCampaign(ExtraCampaign, null, d, p)))
                     .EnabledIf(SaveData.r.MainCampaignCompleted),
             new TransferNode(StagePracticeScreen, "Stage Practice").EnabledIf(PStages.Length > 0),
             new TransferNode(BossPracticeScreen, "Boss Practice").EnabledIf(PBosses.Length > 0),

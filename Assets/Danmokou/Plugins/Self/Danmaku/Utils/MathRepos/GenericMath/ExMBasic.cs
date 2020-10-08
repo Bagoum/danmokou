@@ -291,6 +291,11 @@ public static partial class ExM {
     /// Returns the floor of a float value.
     /// </summary>
     public static tfloat Floor(tfloat ex) => OfDFD(_Floor, ex);
+    /// <summary>
+    /// = Floor(ex / block) * block
+    /// </summary>
+    public static tfloat BlockFloor(efloat block, tfloat ex) => EEx.Resolve(block,
+        b => Floor(ex.Div(b)).Mul(b));
     public static Ex dFloor(Ex ex) => _Floor.Of(ex);
     /// <summary>
     /// Returns the ceil of a float value.

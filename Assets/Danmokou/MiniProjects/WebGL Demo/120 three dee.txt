@@ -7,9 +7,8 @@ phase(0)
 			times(22)
 			bindItr(n)
 			colorf({ red blue }, // &n 11)
-			expose({ f n })
 		} simple(nroffset(qrotate(
-			px(+ 90 cosine(1.7, 40, - (/ &n 22) (* t 0.3))), 
-			circle(1.1, 2.4, - (/ &n 22) (* t 0.3)))), {
-			scale(- 1 * 0.023 &n)
+			px(90 + cosine(1.7, 40, &n / 22 - t * 0.3)), 
+			circle(1.1, 2.4, &n / 22 - t * 0.3))), {
+			scale(1 - 0.023 * &n)
 		})

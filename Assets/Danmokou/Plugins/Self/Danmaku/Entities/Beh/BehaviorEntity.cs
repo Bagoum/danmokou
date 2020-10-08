@@ -136,6 +136,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     private int beh_cullCtr = 0;
     
     protected bool collisionActive = false;
+    protected SOPlayerHitbox collisionTarget;
     protected int Damage => 1;
 
     [Serializable]
@@ -447,6 +448,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
 
     public override void ResetV() {
         base.ResetV();
+        collisionTarget = BulletManager.PlayerTarget;
         collisionActive = collisionInfo.CollisionActiveOnInit;
         phaseController = SMPhaseController.Normal(0);
         dying = false;
@@ -555,6 +557,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
             c.a = fader01(tbpi);
             sr.color = c;
         }
+        tbpi.t = time;
         c.a = fader01(tbpi);
         sr.color = c;
         done();
@@ -706,11 +709,11 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
                 grazeFrameCounter = 0;
                 if (cr.graze) {
                     grazeFrameCounter = collisionInfo.grazeEveryFrames - 1;
-                    BulletManager.ExternalBulletProc(0, 1);
+                    collisionTarget.Player.Graze(1);
                 }
             }
             if (cr.collide) {
-                BulletManager.ExternalBulletProc(Damage, 0);
+                collisionTarget.Player.Hit(Damage);
                 if (collisionInfo.destructible) InvokeCull();
             }
         }
@@ -723,7 +726,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     }
     
     protected virtual CollisionResult CollisionCheck() {
-        return new CollisionResult(Collision.CircleOnCircle(BulletManager.PlayerTarget, 
+        return new CollisionResult(Collision.CircleOnCircle(collisionTarget.Hitbox, 
             rBPI.loc, collisionInfo.collisionRadius), false);
     }
 

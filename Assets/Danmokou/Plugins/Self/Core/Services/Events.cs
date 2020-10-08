@@ -159,10 +159,6 @@ public static class Events {
     //Events with "Noun Has Verbed" are messages that go out after the action has occured.
     //Events with "Verb Noun" are messages that are sent to request invoking an action.
     /// <summary>
-    /// If the player is in an invulnerable state, then nothing will occur unless FORCED is set.
-    /// </summary>
-    public static readonly Event1<(int dmg, bool forced)> TryHitPlayer = new Event1<(int, bool)>();
-    /// <summary>
     /// Argument 1: number of invulnerability frames.
     /// Argument 2: Whether or not to show effect.
     /// </summary>

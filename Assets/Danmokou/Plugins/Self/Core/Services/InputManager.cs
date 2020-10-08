@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
+using DMath;
 using UnityEngine;
 using KC = UnityEngine.KeyCode;
 using static SaveUtils;
+using ProtoBuf;
 
 public enum InputTriggerMethod {
     ONCE,
@@ -28,7 +29,12 @@ public class InputHandler {
     private bool refractory;
     private readonly InputTriggerMethod trigger;
     private bool toggledValue;
-    public bool Active { get; private set; }
+    public bool Active => _active &&
+                          //Prevents events like Bomb from being triggered twice in two RU frames per one unity frame
+                          (trigger == InputTriggerMethod.ONCE ?
+                            ETime.FirstUpdateForScreen :
+                            true);
+    private bool _active;
     public InputChecker checker;
     public string Desc => checker.keyDescr;
 
@@ -43,14 +49,14 @@ public class InputHandler {
     public static InputHandler Trigger(InputChecker check) => new InputHandler(InputTriggerMethod.ONCE, check);
 
     public void Update() {
-        var isActive = checker.checker();
-        if (!refractory && isActive) {
+        var keyDown = checker.checker();
+        if (!refractory && keyDown) {
             refractory = trigger == InputTriggerMethod.ONCE || trigger == InputTriggerMethod.ONCE_TOGGLE;
-            if (trigger == InputTriggerMethod.ONCE_TOGGLE) Active = toggledValue = !toggledValue;
-            else Active = true;
+            if (trigger == InputTriggerMethod.ONCE_TOGGLE) _active = toggledValue = !toggledValue;
+            else _active = true;
         } else {
-            if (refractory && !isActive) refractory = false;
-            Active = (trigger == InputTriggerMethod.ONCE_TOGGLE) ? toggledValue : false;
+            if (refractory && !keyDown) refractory = false;
+            _active = (trigger == InputTriggerMethod.ONCE_TOGGLE) ? toggledValue : false;
         }
     }
 }
@@ -85,7 +91,6 @@ public static class InputManager {
     private static InputChecker AxisG0(string axis) => new InputChecker(() => Input.GetAxisRaw(axis) > 0.1f, axis);
     
     
-    //public static readonly InputHandler FocusToggle = InputHandler.Toggle(Key(KC.Space).Or(Key(cRightShoulder)));
     public static readonly InputHandler FocusHold = InputHandler.Hold(Key(i.FocusHold).Or(AxisG0(aCRightTrigger)));
     public static readonly InputHandler AimLeft = InputHandler.Trigger(Key(i.AimLeft).Or(AxisL0(aCRightX)));
     public static readonly InputHandler AimRight = InputHandler.Trigger(Key(i.AimRight).Or(AxisG0(aCRightX)));
@@ -108,41 +113,46 @@ public static class InputManager {
 
     static InputManager() {
         unsafe {
-            Log.Unity($"Replay frame size (should be 16): {sizeof(FrameInput)}.");
+            Log.Unity($"Replay frame size (should be 6): {sizeof(FrameInput)}.");
         }
     }
     [Serializable]
+    [ProtoContract]
     public struct FrameInput {
-        //16 bytes (15 unpadded)
-        // float(4)x2 = 8
-        // bool(1)x7  = 7
-        public float horizontal;
-        public float vertical;
-    #if FT_DIRSHOOT
+        // 6-8 bytes (5 unpadded)
+        // short(2)x2 = 4
+        // byte(1)x1 = 1
+        [ProtoMember(1)]
+        public short horizontal;
+        [ProtoMember(2)]
+        public short vertical;
+        [ProtoMember(3)]
+        public byte data1;
+        public bool fire => data1.NthBool(0);
+        public bool focus => data1.NthBool(1);
+        public bool bomb => data1.NthBool(2);
+        public bool meter => data1.NthBool(3);
+        public bool dialogueConfirm => data1.NthBool(4);
+        public bool dialogueToEnd => data1.NthBool(5);
+        public bool dialogueSkip => data1.NthBool(6);
+
+        public FrameInput(short horiz, short vert, bool fire, bool focus, bool bomb, bool meter,
+            bool dialogueConfirm, bool dialogueToEnd, bool dialogueSkip) {
+            horizontal = horiz;
+            vertical = vert;
+            data1 = BitCompression.FromBools(fire, focus, bomb, meter, dialogueConfirm, dialogueToEnd, dialogueSkip);
+        }
+        
+#if FT_DIRSHOOT
         public ShootDirection shootDir;
-    #endif
-        public bool fire;
-        public bool focus;
-        public bool bomb;
-        public bool meter;
-        public bool dialogueConfirm;
-        public bool dialogueToEnd;
-        public bool dialogueSkip;
+#endif
     }
     
-    public static FrameInput RecordFrame => new FrameInput() {
-        horizontal = HorizontalSpeed,
-        vertical = VerticalSpeed,
-    #if FT_DIRSHOOT
-        shootDir = FiringDir,
-    #endif    
-        fire = IsFiring,
-        focus = IsFocus,
-        bomb = IsBomb,
-        meter = IsMeter,
-        dialogueConfirm = DialogueConfirm,
-        dialogueToEnd = DialogueToEnd,
-        dialogueSkip = DialogueSkip,
+    public static FrameInput RecordFrame => new FrameInput(HorizontalSpeed, VerticalSpeed,
+            IsFiring, IsFocus, IsBomb, IsMeter, DialogueConfirm, DialogueToEnd, DialogueSkip) {
+#if FT_DIRSHOOT
+            shootDir = FiringDir
+#endif
     };
 
     public static bool DialogueConfirm => replay?.dialogueConfirm ?? UIConfirm.Active;
@@ -159,11 +169,16 @@ public static class InputManager {
         
     };
 
-    public static float HorizontalSpeed => replay?.horizontal ?? 
-                                           (Input.GetAxisRaw(aHoriz) + Input.GetAxisRaw(aCDPadX));
-
-    public static float VerticalSpeed => replay?.vertical ??
-                                         (Input.GetAxisRaw(aVert) + Input.GetAxisRaw(aCDPadY));
+    private const float shortRef = short.MaxValue;
+    private static float _horizSpeed01 => (Input.GetAxisRaw(aHoriz) + Input.GetAxisRaw(aCDPadX));
+    private static short _horizSpeedShort => (short) M.Clamp(-shortRef, shortRef, _horizSpeed01 * shortRef);
+    private static short HorizontalSpeed => replay?.horizontal ?? _horizSpeedShort;
+    public static float HorizontalSpeed01 => HorizontalSpeed / (float)shortRef;
+    
+    private static float _vertSpeed01 => Input.GetAxisRaw(aVert) + Input.GetAxisRaw(aCDPadY);
+    private static short _vertSpeedShort => (short) M.Clamp(-shortRef, shortRef, _vertSpeed01 * shortRef);
+    private static short VerticalSpeed => replay?.vertical ?? _vertSpeedShort;
+    public static float VerticalSpeed01 => VerticalSpeed / (float)shortRef;
 
 
     //Called by GameManagement

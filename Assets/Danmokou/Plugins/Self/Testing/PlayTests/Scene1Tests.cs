@@ -812,7 +812,7 @@ public static class Scene1 {
                 boss: new BossPracticeRequest(AllPBosses[1])).Run();
             yield return WaitForLoad();
             AreEqual(campaign.mode, CampaignMode.CARD_PRACTICE);
-            AreEqual(GameManagement.Difficulty, dff);
+            AreEqual(GameManagement.Difficulty.standard.Value, dff);
             AreEqual(GameManagement.Difficulty.Value / FixedDifficulty.Hard.Value(), DebugFloat.values[0]);
             SceneManager.LoadScene(baseScene);
             while (TestHarness.Running) yield return null;
@@ -825,8 +825,8 @@ public static class Scene1 {
         AreEqual(SceneManager.GetActiveScene().name, baseScene);
         bool campaignComplete = false;
         GameRequest.RunCampaign(MainCampaign, () => campaignComplete = true, 
-            new DifficultySettings(FixedDifficulty.Abex), null, null, Subshot.TYPE_D);
-        AreEqual(GameManagement.Difficulty, FixedDifficulty.Abex);
+            new DifficultySettings(FixedDifficulty.Abex), PlayerTeam.Empty);
+        AreEqual(GameManagement.Difficulty.standard.Value, FixedDifficulty.Abex);
         IsFalse(campaignComplete);
         yield return WaitForLoad();
         AreEqual(SceneManager.GetActiveScene().name, "TestStage1");
@@ -855,8 +855,8 @@ public static class Scene1 {
     public static IEnumerator TestCampaignQuit() {
         SaveData.r.TutorialDone = true;
         AreEqual(SceneManager.GetActiveScene().name, baseScene);
-        GameRequest.RunCampaign(MainCampaign, null, new DifficultySettings(FixedDifficulty.Abex), null, null, Subshot.TYPE_D);
-        AreEqual(GameManagement.Difficulty, FixedDifficulty.Abex);
+        GameRequest.RunCampaign(MainCampaign, null, new DifficultySettings(FixedDifficulty.Abex), PlayerTeam.Empty);
+        AreEqual(GameManagement.Difficulty.standard.Value, FixedDifficulty.Abex);
         yield return WaitForLoad();
         AreEqual(SceneManager.GetActiveScene().name, "TestStage1");
         GameManagement.GoToMainMenu();

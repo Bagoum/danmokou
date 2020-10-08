@@ -8,13 +8,12 @@ phase(0)
 			times(6)
 			circle
 			bindItr(loop)
-			expose({ f loop })
 		} laser(null, 1.5, _, {
 			length(3.5)
 			dsfx
 			stagger(0.4)
-			hueshift(+ (* 60 &loop) (* 120 t))
+			hueshift(60 * &loop + 120 * t)
 			dynamic(polar(
-				* 2 t,
-				+ (* -14 &lt) sine(2.1, 18, + t * 1.1 &lt)))
+				2 * t,
+				-14 * &lt + sine(2.1, 18, t + 1.1 * &lt)))
 		})

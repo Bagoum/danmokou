@@ -29,7 +29,11 @@ public interface IChallengeRequest {
     /// </summary>
     void Start(BehaviorEntity exec);
 
-    void OnSuccess(ChallengeManager.TrackingContext ctx);
+    /// <summary>
+    /// Returns true if the challenge operations are finished and cleanup may begin.
+    /// Sequential challenges will return false.
+    /// </summary>
+    bool OnSuccess(ChallengeManager.TrackingContext ctx);
 
     void OnFail(ChallengeManager.TrackingContext ctx);
 }
@@ -57,7 +61,7 @@ public readonly struct SceneChallengeReqest : IChallengeRequest {
         exec.RunAttachedSM();
     }
 
-    public void OnSuccess(ChallengeManager.TrackingContext ctx) {
+    public bool OnSuccess(ChallengeManager.TrackingContext ctx) {
         Log.Unity($"PASSED challenge {cr.Description}");
         if (gr.Saveable) {
             Log.Unity("Committing challenge to save data");
@@ -68,13 +72,15 @@ public readonly struct SceneChallengeReqest : IChallengeRequest {
             Replayer.Cancel(); //can't replay both scenes together
             Log.Unity($"Autoproceeding to next challenge: {next.Description}");
             StaticNullableStruct.LastGame = new GameRequest(gr.cb, gr.difficulty, new GameLowRequest(next), 
-                true, gr.player, gr.shot, gr.subshot, null);
+                true, gr.team, null);
             ChallengeManager.TrackChallenge(new SceneChallengeReqest(
                 StaticNullableStruct.LastGame.Value, next));
             ChallengeManager.LinkBEH(ctx.exec);
+            return false;
         } else {
             UIManager.MessageChallengeEnd(true, out float t);
             WaitingUtils.WaitThenCB(ctx.cm, Cancellable.Null, t, false, gr.vFinishAndPostReplay);
+            return true;
         }
     }
 
@@ -83,7 +89,7 @@ public readonly struct SceneChallengeReqest : IChallengeRequest {
         UIManager.MessageChallengeEnd(false, out float t);
         if (ctx.exec != null) ctx.exec.ShiftPhase();
         WaitingUtils.WaitThenCB(ctx.cm, Cancellable.Null, t, false, () => {
-            Core.Events.TryHitPlayer.Invoke((999, true));
+            BulletManager.PlayerTarget.Player.Hit(999, true);
         });
     }
 
@@ -128,6 +134,15 @@ public readonly struct PhaseChallengeRequest {
     public static PhaseChallengeRequest Reconstruct((((string, int), int), int) key) {
         var phase = DayPhase.Reconstruct(key.Item1);
         return new PhaseChallengeRequest(phase, phase.challenges[key.Item2]);
+    }
+
+    public ChallengeSetting AsSetting {
+        get {
+            var p = phase.AsSetting;
+            p.ChallengeIndex = ChallengeIdx;
+            return p;
+
+        }
     }
 }
 public abstract class Challenge {
@@ -250,6 +265,28 @@ public abstract class Challenge {
     }
 }
 
+/// <summary>
+/// A struct that uniquely identifies a challenge game request.
+/// <br/>While GameRequest has a Key that does the same thing,
+/// this struct can trivially be created on-the-fly to check hypothetical challenge completion.
+/// </summary>
+public struct ChallengeSetting {
+    public string CampaignKey { get; set; }
+    public string DayKey { get; set; }
+    public string BossKey { get; set; }
+    public int PhaseIndex { get; set; }
+    public int ChallengeIndex { get; set; }
+    public Enums.FixedDifficulty Difficulty { get; set; }
+
+    public (string, string, string, int, int, Enums.FixedDifficulty) Tuple =>
+        (CampaignKey, DayKey, BossKey, PhaseIndex, ChallengeIndex, Difficulty);
+
+    public string Key => $"{CampaignKey}-{DayKey}-{BossKey}-{PhaseIndex}-{ChallengeIndex}-{Difficulty.Describe()}";
+
+    public override bool Equals(object other) => other is ChallengeSetting cs && Tuple == cs.Tuple;
+
+    public override int GetHashCode() => Tuple.GetHashCode();
+}
 
 public class ChallengeCompletion {
     public AyaPhoto[] photos = new AyaPhoto[0];

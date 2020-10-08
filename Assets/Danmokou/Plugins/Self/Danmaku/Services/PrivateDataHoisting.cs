@@ -102,6 +102,12 @@ public static class PrivateDataHoisting {
         else throw new Exception($"Cannot hoist GCX data {varName}<{ext}>.");
     }
 
+    //Webgl demo hackery
+    public static void UploadAllFloats(GenCtx gcx, uint id) {
+        idsInUse.Add(id);
+        foreach (var v in gcx.fs.Keys) UploadAddOne(Reflector.ExType.Float, v, gcx, id);
+    }
+
     /// <summary>
     /// Uploads the provided variables on the GCX into private data hoisting.
     /// If the id already exists and newUpload is set, assigns a new id. 

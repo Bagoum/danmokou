@@ -262,6 +262,20 @@ public readonly struct ReferenceMember {
         else throw new Exception($"Can't get RV2.f member {members[0]}");
         return rv2;
     }
+    
+    public V2RV2 ResolveMembers(IReadOnlyDictionary<string, V2RV2> data, Vector2 assigned, GCOperator op) {
+        Precheck(data, op);
+        if (members.Count == 0) throw new Exception($"Can't assign V2 to V2RV2 {this}");
+        MutV2RV2 rv2 = data[var];
+        if (members[0] == "rxy") {
+            ResolveFloat(ref rv2.rx, assigned.x, op);
+            ResolveFloat(ref rv2.ry, assigned.y, op);
+        } else if (members[0] == "nxy") {
+            ResolveFloat(ref rv2.nx, assigned.x, op);
+            ResolveFloat(ref rv2.ny, assigned.y, op);
+        } else throw new Exception($"Can't get RV2.V2 member {members[0]}");
+        return rv2;
+    }
 
     public static implicit operator ReferenceMember(string s) => new ReferenceMember(s);
 }

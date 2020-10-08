@@ -8,7 +8,7 @@ using Collision = DMath.Collision;
 namespace Danmaku {
 public class PoC : RegularUpdater {
     public LRUD direction;
-    public SOCircleHitbox target;
+    public SOPlayerHitbox target;
     private Transform tr;
 
     private static PoC main;

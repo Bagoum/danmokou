@@ -208,6 +208,7 @@ public static partial class AtomicPatterns {
     /// </summary>
     /// <param name="path">Movement descriptor</param>
     /// <returns></returns>
+    [Alias("simp")]
     public static SyncPattern S(GCXU<VTP> path) {
         return sbh => {
             uint id = sbh.GCX.NextID();

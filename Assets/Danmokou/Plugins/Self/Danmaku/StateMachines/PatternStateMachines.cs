@@ -83,7 +83,6 @@ public class PatternSM : SequentialSM {
         if (props.boss != null) {
             GameManagement.campaign.OpenBoss(smh.Exec);
             UIManager.SetBossHPLoader(smh.Exec.Enemy);
-            SetUniqueBossUI(smh, props.bosses == null ? props.boss : props.bosses[props.bossUI.GetBounded(0, 0)]);
             (bts, subsummons) = ConfigureAllBosses(smh, props.boss, props.bosses);
         }
         for (var next = smh.Exec.phaseController.WhatIsNextPhase();
@@ -93,8 +92,8 @@ public class PatternSM : SequentialSM {
             if (PHASE_BUFFER) await WaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, ETime.FRAME_TIME * 2f, false);
             smh.ThrowIfCancelled();
             if (props.bgms != null) AudioTrackService.InvokeBGM(props.bgms.GetBounded(next, null));
-            if (props.bossUI != null && props.bosses != null) {
-                SetUniqueBossUI(smh, props.bosses[props.bossUI.GetBounded(next, 0)]); 
+            if (props.boss != null && next >= props.setUIFrom) {
+                SetUniqueBossUI(smh, props.bosses == null ? props.boss : props.bosses[props.bossUI.GetBounded(next, 0)]); 
             }
             //don't show lives on setup phase
             if (next > 0 && props.boss != null) UIManager.ShowBossLives(RemainingLives(next));

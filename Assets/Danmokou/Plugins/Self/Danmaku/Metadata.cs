@@ -7,6 +7,32 @@ using SM;
 using UnityEngine;
 using static Danmaku.Enums;
 
+[Serializable]
+public struct LocalizedString {
+    public string en;
+    public string jp;
+
+    public LocalizedString(string en) {
+        this.en = en;
+        jp = null;
+    }
+
+    [CanBeNull]
+    public string Value {
+        get {
+            switch (SaveData.s.Locale) {
+                case Locale.EN: return en;
+                case Locale.JP: return jp;
+                default: return null;
+            }
+        }
+    }
+
+    public string ValueOrEn => Value ?? en;
+
+    public static implicit operator string(LocalizedString ls) => ls.ValueOrEn;
+}
+
 namespace Danmaku {
 //This struct is effectively readonly but these are json requirements.
 public struct DifficultySettings {
@@ -23,16 +49,26 @@ public struct DifficultySettings {
     public float CustomValue => DifficultyForSlider(customValueSlider);
     public float customCounter;
     public int customValueSlider;
-    public DifficultySettings(FixedDifficulty standard) {
-        this.standard = standard;
-        customValueSlider = 0;
-        customCounter = 1;
-    }
+    public int numSuicideBullets;
+    public float playerDamageMod;
+    /// <summary>
+    /// This only affects simple bullets, since lasers/pathers are often critical in pattern synchronization.
+    /// </summary>
+    public float bulletSpeedMod;
+    public float bossHPMod;
+    public readonly float FRAME_TIME_BULLET;
+    public DifficultySettings(FixedDifficulty standard) : this((FixedDifficulty?)standard) { }
 
-    public DifficultySettings(FixedDifficulty? standard, int slider) {
+    public DifficultySettings(FixedDifficulty? standard, int slider=DEFAULT_SLIDER, int numSuicideBullets = 0,
+        float playerDamageMod=1f, float bulletSpeedMod=1f, float bossHPMod=1f) {
         this.standard = standard;
         customValueSlider = slider;
         customCounter = Nearest(slider).Counter();
+        this.numSuicideBullets = numSuicideBullets;
+        this.playerDamageMod = playerDamageMod;
+        this.bulletSpeedMod = bulletSpeedMod;
+        this.FRAME_TIME_BULLET = ETime.FRAME_TIME * bulletSpeedMod;
+        this.bossHPMod = bossHPMod;
     }
 
     public static FixedDifficulty Nearest(int slider) {

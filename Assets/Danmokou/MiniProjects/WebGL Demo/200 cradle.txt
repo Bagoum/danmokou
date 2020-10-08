@@ -10,16 +10,14 @@ phase(0)
 		} gsrepeat {
 			tmmod(6)
 			circle
-			expose({ f layer })
 		} guideempty_noexpr(.1, p, { (pl loc) (pd dir) }, { },
-			rvelocity(px(* lerp(1.4, 3, t, 1, 0)
-				+ 0.3 * 0.8 &layer)), {
+			rvelocity(px(lerp(1.4, 3, t, 1, 0) *
+				(0.3 + 0.8 * &layer))), {
 !!{ rotation lerpsmooth(out-sine, 0, 4, t, 0, 480)
 				gsrepeat { 
 					times(7)
 					circle
 					bindAngle
-					expose({ f angle })
 				} simple(offset(
 						rotatev(@(pd, p), rx(
 							lerpsmooth(in-sine, 3.2, 11, t, 0.35, 12),

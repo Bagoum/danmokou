@@ -1,9 +1,9 @@
 pattern { }
 phase 0
 	action block 0
-		shift-phase-to 5
+		shift-phase-to 3
 		
-!!{ colors { recolor black blue purple pink red orange yellow green teal black  }
+!!{ colors { black blue purple pink red orange yellow green teal black  }
 !!{ csuff { /w /b /  }
 !!{ csuff1 { /w /b / }
 
@@ -12,9 +12,24 @@ phase 0
 <!> type non `紫`
 phase 0
 	action block 0
-		position 0 2
-		sync * <-4.2;-3.4:> gsr2 6 <1.5;:> color { arrow-* circle-* gcircle-* ellipse-* gem-* shell-* } gsr2 3 <0.4;:> color { */b */ */w } gsr2 9 <;-0.3:> color $colors s tprot zero
-		sync * <-4.2;-0.4:> gsr2 6 <1.5;:> color { star-* sakura-* fireball-* strip-* triangle-* amulet-* } gsr2 3 <0.4;:> color { */b */ */w } gsr2 9 <;-0.3:> color $colors s tprot zero
+		position 0 3
+		sync * <;-3.95:> gsr2 8 <1.1;:> {
+			center
+			color { arrow-* circle-* gcircle-* ellipse-* star-* dot-* shell-* strip-* }
+		} gsr2 3 <0.25;:> {
+			center
+			color { */b */ */w } 
+		} gsr2 9 <;-0.3:> color $colors
+		gsr {
+			bank <90>
+		} s tprot zero
+		sync * <;-1:> gsr2 5 <2;:> {
+			center
+			color { gem-* sakura-* fireball-* triangle-* amulet-* }
+		} gsr2 3 <0.6;:> {
+			center
+			color { */b */ */w }
+		} gsr2 9 <;-0.3:> color $colors s tprot zero
 		
 ## 2 new glow bullets
 phase 0
@@ -37,7 +52,9 @@ phase 0
 phase 0
 	action block 0 
 		position 0 0
-		sync gdlaser-** <1;:3> gsr2 9 <40> { color $colors } gsr2  3 <14> { color $csuff1  }  laser null 2 20 { s 1 }
+		sync gdlaser-** <;:3> gsr2 9 <40> { color $colors } gsr2  3 <14> { color $csuff1  }  laser (nrvelocity(px(0.4))) 2 20 { 
+			dynamic(roffset(rx(1 + t, 10 * &lt)))
+		}
 		##sync mulaser-*/b <1;:3> gsr2 9 <40> { color $colors }  safelaser 4 { }
 		sync gpather-** <1;:183> gsr2 9 <40> { color $colors } gsr2 3 <13> { color $csuff }  pather 3 3 tprot cx 2 { }
 
@@ -55,20 +72,13 @@ phase 0
 	action block 0
 		position 0 1
 
-!{ recolor()
-recolor(
-	lerp3c(0, 5, 10, p + 2 * t - 4, 
-		palette(red, d), palette(black, d), palette(blue, d)), 
-	lerp3c(0, 5, 10, p + 2 * t - 4, 
-		palette(blue, l), palette(green, l), palette(yellow, l)))
-!}
 !{ lcA(a, b, c)
 lerpmany({
 	0	%a
 	1	%b
 	2	%c
 	3	%a
-}, mod(3, &.loop / 20 + &.loop2 / 16 - 2 * t))
+}, mod(3, &.loop / -10 + &.loop2 / 15 - 3 * t))
 !}
 !{ rccA(c1, c2, c3)
 recolor(
@@ -76,15 +86,24 @@ recolor(
 	$lcA(palette(%c1, l), palette(%c2, l), palette(%c3, h))
 )
 !}
-		pool-control arrow-recolor* $rccA(pink, blue, black)
-		async arrow-recolor/w <0.5;:3> gcr2 6 _ <> {
-			frv2 angle(sine(60, 10, t))
+		pool-control circle-recolor* $rccA(pink, blue, black)
+		async circle-recolor/w <0.5;:90> gcr2 12 _ <> {
+			frv2 angle(sine(60, 8, t))
 			bindItr(loop)
-		} gsr2c 48 {
+		} gsr2 135 <> {
+			center
+			spread(<330>)
 			bindItr(loop2)
 			expose { f loop f loop2 }
-		} s(rvelocity(px(lerpt(0.2, 0.5, 0.4, 4))))
+		} s(rvelocity(px(lerpt(0.2, 0.4, 0.2, 2))))
 ///
+!{ recolor()
+recolor(
+	lerp3c(0, 5, 10, p + 2 * t - 4, 
+		palette(red, d), palette(black, d), palette(blue, d)), 
+	lerp3c(0, 5, 10, p + 2 * t - 4, 
+		palette(blue, l), palette(green, l), palette(yellow, l)))
+!}
 		sync pather-recolor* <0.5;:9> gsr2 9 <12> {
 			p this
 		} gsr2 3 <120> { color $csuff1  }  pather 2 2 tprot cx 1.3 { 

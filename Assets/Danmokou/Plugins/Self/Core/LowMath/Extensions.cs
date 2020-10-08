@@ -19,7 +19,11 @@ public static class Extensions {
 
     private static Action<Task> WrapRethrow(Action cb) => t => {
         cb();
-        if (t.IsFaulted && t.Exception != null) throw t.Exception;
+        if (t.IsFaulted && t.Exception != null) {
+            Log.UnityError("Task exceptions:\n\t" +
+                           $"{string.Join("\n\t", t.Exception.InnerExceptions.Select(e => e.Message))}");
+            throw t.Exception;
+        }
     };
     public static Task ContinueWithSync(this Task t, Action done) =>
         t.ContinueWith(WrapRethrow(done), TaskContinuationOptions.ExecuteSynchronously);

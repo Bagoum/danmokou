@@ -218,6 +218,13 @@ public static class SMReflection {
         return Task.CompletedTask;
     };
 
+    public static TaskPattern CreateShot1(V2RV2 rv2, float speed, float angle, string style) =>
+        Sync(style, _ => rv2, AtomicPatterns.S(Compilers.GCXU(VTPRepo.RVelocity(Parametrics.CR(speed, angle)))));
+
+    public static TaskPattern CreateShot2(float x, float y, float speed, float angle, string style) =>
+        CreateShot1(new V2RV2(0, 0, x, y, 0), speed, angle, style);
+    
+
     public static TaskPattern Dialogue(string file) {
         StateMachine sm = null;
         return async smh => {
@@ -439,6 +446,11 @@ public static class SMReflection {
     public static TaskPattern Vulnerable(GCXF<bool> isVulnerable) => smh => {
         smh.Exec.Enemy.SetDamageable(isVulnerable(smh.GCX));
         return Task.CompletedTask;
+    };
+    
+    public static TaskPattern FadeSprite(BPY fader, GCXF<float> time) => smh => {
+        smh.Exec.FadeSpriteOpacity(fader, time(smh.GCX), smh.cT, WaitingUtils.GetAwaiter(out Task t));
+        return t;
     };
     
     #endregion

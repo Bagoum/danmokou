@@ -13,8 +13,7 @@ phase(0)
 				times(20)
 				circle
 				colorf({ / /b }, if(even(&loop), 0, 1))
-				expose { f lr }
 			} s(polar(
-				* 2 t,
-				* &lr * 30 t
+				2 * t,
+				&lr * 30 * t
 			))

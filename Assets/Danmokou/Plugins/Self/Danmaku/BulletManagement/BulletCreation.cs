@@ -113,12 +113,26 @@ public struct DelegatedCreator {
 }
 
 public partial class BulletManager {
+    private static int sentryMax = 10000;
+    private static int sentry = 0;
+
+    private static void ResetSentry() {
+        sentry = 0;
+    }
+    private static void CheckSentry() {
+        if (++sentry > sentryMax) 
+            throw new Exception($"You have summoned more than {sentryMax} bullets in one frame! " +
+                                $"You probably made an error somewhere. " +
+                                $"If you didn't, remove this exception in the code.");
+    }
     public static void RequestSimple(string styleName, [CanBeNull] BPY scale, [CanBeNull] SBV2 dir, Velocity velocity, int firingIndex, float timeOffset, uint? bpiid) {
+        CheckSentry();
         SimpleBullet sb = new SimpleBullet(scale, dir, velocity, firingIndex, bpiid ?? RNG.GetUInt(), timeOffset);
         GetMaybeCopyPool(styleName).Add(ref sb, true);
     }
 
     private static void CopySimple(string newStyle, AbsSimpleBulletCollection sbc, int ii) {
+        CheckSentry();
         ref var sb = ref sbc[ii];
         SimpleBullet nsb = new SimpleBullet(sb.scaleFunc, sb.dirFunc, sb.velocity, sb.bpi.index, 
             PrivateDataHoisting.Copy(sb.bpi.id, RNG.GetUInt()), 0f);
@@ -131,12 +145,14 @@ public partial class BulletManager {
         RequestSimple(styleName, null, null, new Velocity(loc, dir), 0, 0, null);
 
     public static void RequestPather(string styleName, Velocity velocity, int firingIndex, uint bpiid, float maxRemember, BPY remember, ref RealizedBehOptions opts) {
+        CheckSentry();
         if (bulletStyles.ContainsKey(styleName)) {
             Pather.Request(bulletStyles[styleName].GetOrLoadRecolor(), velocity, firingIndex, bpiid, maxRemember, remember, main.bulletCollisionTarget, ref opts);
         } else throw new Exception("Pather must be an faBulletStyle: " + styleName);
     }
     public static void RequestLaser(BehaviorEntity parent, string style, Velocity vel, int firingIndex,
         uint bpiid, float cold, float hot, ref RealizedLaserOptions options) {
+        CheckSentry();
         if (bulletStyles.ContainsKey(style)) {
             Laser.Request(bulletStyles[style].GetOrLoadRecolor(), parent, vel, firingIndex, bpiid, cold, hot, main.bulletCollisionTarget, ref options);
         } else throw new Exception("Laser must be an faBulletStyle: " + style);
@@ -144,6 +160,7 @@ public partial class BulletManager {
     
     public static BehaviorEntity RequestSummon(bool pooled, string prefabName, Velocity path, 
         int firingIndex, uint bpiid, string behName, [CanBeNull] BehaviorEntity parent, SMRunner sm, RealizedBehOptions? opts) {
+        CheckSentry();
         BehaviorEntity beh = pooled ?
             BEHPooler.RequestUninitialized(ResourceManager.GetSummonable(prefabName), out _) :
             GameObject.Instantiate(ResourceManager.GetSummonable(prefabName)).GetComponent<BehaviorEntity>();
@@ -151,9 +168,8 @@ public partial class BulletManager {
         return beh;
     }
 
-    public static BehaviorEntity RequestRawSummon(string prefabName) {
-        return GameObject.Instantiate(ResourceManager.GetSummonable(prefabName)).GetComponent<BehaviorEntity>();
-    }
+    public static BehaviorEntity RequestRawSummon(string prefabName) =>
+        GameObject.Instantiate(ResourceManager.GetSummonable(prefabName)).GetComponent<BehaviorEntity>();
 
     public static Drawer RequestDrawer(string kind, int firingIndex, 
         uint bpiid, string behName, [CanBeNull] BehaviorEntity parent, SMRunner sm) => RequestSummon(true, kind, Velocity.None, firingIndex, bpiid, behName,

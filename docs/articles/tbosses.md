@@ -60,7 +60,7 @@ Both phases are running the basic code for Border of Wave and Particle. However,
 
 Now, we want to add the following:
 
-- The boss title name, and picture should appear in the lower left.
+- The boss title, name, and picture should appear in the lower left.
 - The boss' remaining spells should appear as stars in each of the four corners. 
 - The boss should have a rotating hexagram inside its health bar.
 - When using a spell, the boss should have another special effect.
@@ -123,7 +123,7 @@ No boss configuration exists for key mynewboss.
 
 Basically, we haven't told the engine about our boss configuration yet! If you get errors like this, it probably means that you created some metadata but forgot to link it in the appropriate place. 
 
-Boss configurations are generally unique to a specific game, so they are stored in the `GameUniqueReferences` metadata aggregator. iscuss the usage of GameUniqueReferences in a later tutorial, but the basic concept is that any data that is specific to a game is linked here. This prevents cross-pollution between multiple games in a single Unity project, and also allows us to avoid packing unnecessary resources into our executables when we export our projects. 
+Boss configurations are generally unique to a specific game, so they are stored in the `GameUniqueReferences` metadata aggregator. We will discuss the usage of GameUniqueReferences in a later tutorial, but the basic concept is that any data that is specific to a game is linked here. This prevents cross-pollution between multiple games in a single Unity project, and also allows us to avoid packing unnecessary resources into our executables when we export our projects. 
 
  If you click on the GameManagement object in the scene, the first variable under the component `Game Management` should be `References`, and it should point to the object `Default Game References`. Go ahead and click on this to show it in the Project window, then click it in the Project window to show all its variables. If you look at the Boss Metadata variable, you should see a list with one element, `Tutorial Boss`. Add a new element and set it to the boss configuration you created.
 

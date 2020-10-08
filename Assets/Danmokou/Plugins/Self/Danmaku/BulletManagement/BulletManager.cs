@@ -136,6 +136,7 @@ public partial class BulletManager {
 
     public override int UpdatePriority => UpdatePriorities.BM;
     public override void RegularUpdate() {
+        ResetSentry();
         SimpleBulletCollection sbc;
         //Temp-last set for control updates
         for (int ii = 0; ii< activeCEmpty.Count; ++ii) {
@@ -181,13 +182,14 @@ public partial class BulletManager {
                 sbc.UpdateVelocityAndControls();
             } else sbc.PruneControls();
         }
-        if (bulletCollisionTarget.active) {
+        if (bulletCollisionTarget.Active) {
+            var hitbox = bulletCollisionTarget.Hitbox;
             Profiler.BeginSample("NPC-fired simple bullet collision checking");
             int dmg = 0; int graze = 0;
             for (int ii = 0; ii < activeCEmpty.Count; ++ii) {
                 sbc = activeCEmpty[ii];
                 if (sbc.Count > 0) {
-                    CollisionCheckResults ccr = sbc.CheckCollision();
+                    CollisionCheckResults ccr = sbc.CheckCollision(in hitbox);
                     dmg = Math.Max(dmg, ccr.damage);
                     graze += ccr.graze;
                 }
@@ -195,7 +197,7 @@ public partial class BulletManager {
             for (int ii = 0; ii < activeNpc.Count; ++ii) {
                 sbc = activeNpc[ii];
                 if (sbc.Count > 0) {
-                    CollisionCheckResults ccr = sbc.CheckCollision();
+                    CollisionCheckResults ccr = sbc.CheckCollision(in hitbox);
                     dmg = Math.Max(dmg, ccr.damage);
                     graze += ccr.graze;
                 }
@@ -204,17 +206,13 @@ public partial class BulletManager {
             for (int ii = 0; ii < activeCNpc.Count; ++ii) {
                 sbc = activeCNpc[ii];
                 if (sbc.Count > 0) {
-                    CollisionCheckResults ccr = sbc.CheckCollision();
+                    CollisionCheckResults ccr = sbc.CheckCollision(in hitbox);
                     dmg = Math.Max(dmg, ccr.damage);
                     graze += ccr.graze;
                 }
             }
-            if (dmg > 0) {
-                Events.TryHitPlayer.Invoke((dmg, false));
-            }
-            if (graze > 0) {
-                GameManagement.campaign.AddGraze(graze);
-            }
+            bulletCollisionTarget.Player.Hit(dmg);
+            bulletCollisionTarget.Player.Graze(graze);
         }
         
         //Collision check (player bullets)
@@ -224,15 +222,6 @@ public partial class BulletManager {
             if (sbc.Count > 0) sbc.CheckCollision(fci);
         }
         
-    }
-
-    public static void ExternalBulletProc(int dmg, int graze) {
-        if (dmg > 0) {
-            Events.TryHitPlayer.Invoke((dmg, false));
-        }
-        if (graze > 0) {
-            GameManagement.campaign.AddGraze(graze);
-        }
     }
 
     private void StartScene() {
@@ -445,7 +434,8 @@ public partial class BulletManager {
             throw new NotImplementedException("Cannot softcull to non-cull style " + Style);
         }
         public static readonly ExFunction appendSoftcull = ExUtils.Wrap<SimpleBulletCollection>("AppendSoftcull", new[] {typeof(AbsSimpleBulletCollection), typeof(int)});
-        protected virtual CollisionResult CheckGrazeCollision(ref SimpleBullet sb) => throw new NotImplementedException();
+        protected virtual CollisionResult CheckGrazeCollision(in Hitbox hitbox, ref SimpleBullet sb) 
+            => throw new NotImplementedException();
 
         public override void ClearPoolControl() => pcs.Empty();
         public void ResetPoolMetadata() {
@@ -498,10 +488,11 @@ public partial class BulletManager {
             int postVelPcs = pcs.FirstPriorityGT(BulletControl.POST_VEL_PRIORITY);
             int postDirPcs = pcs.FirstPriorityGT(BulletControl.POST_DIR_PRIORITY);
             int numPcs = pcs.Count;
+            float dT = GameManagement.FRAME_TIME_BULLET;
             //Note on optimization: keeping accDelta in SB is faster(!) than either a local variable or a SBInProgress struct.
             for (int ii = 0; ii < temp_last; ++ii) {
                 ref SimpleBullet sb = ref arr[ii];
-                nextDT = ETime.FRAME_TIME;
+                nextDT = dT;
                 for (int pi = 0; pi < postVelPcs; ++pi) pcs[pi].action(this, ii, sb.bpi);
                 sb.velocity.UpdateDeltaAssignAcc(ref sb.bpi, out sb.accDelta, in nextDT);
                 sb.scale = sb.scaleFunc?.Invoke(sb.bpi) ?? 1f;
@@ -522,7 +513,7 @@ public partial class BulletManager {
             PruneControls();
         }
 
-        public virtual CollisionCheckResults CheckCollision() {
+        public virtual CollisionCheckResults CheckCollision(in Hitbox hitbox) {
             int graze = 0;
             int collisionDamage = 0;
             for (int ii = 0; ii < count; ++ii) {
@@ -534,7 +525,7 @@ public partial class BulletManager {
                         sbn.grazeFrameCounter = 0;
                         checkGraze = true;
                     }
-                    CollisionResult cr = CheckGrazeCollision(ref sbn);
+                    CollisionResult cr = CheckGrazeCollision(in hitbox, ref sbn);
                     if (cr.collide) {
                         collisionDamage = bc.damageAgainstPlayer;
                         if (bc.destructible) Delete(ii, true);
@@ -639,16 +630,17 @@ public partial class BulletManager {
             sbc.Delete(ii, true);
         }
         public override void UpdateVelocityAndControls() {
+            float dT = GameManagement.FRAME_TIME_BULLET;
             for (int ii = 0; ii < temp_last; ++ii) {
                 ref SimpleBullet sbn = ref arr[ii];
-                sbn.bpi.t += ETime.FRAME_TIME;
+                sbn.bpi.t += dT;
                 if (sbn.bpi.t > ttl) {
                     Delete(ii, false);
                 }
             }
         }
 
-        public override CollisionCheckResults CheckCollision() {
+        public override CollisionCheckResults CheckCollision(in Hitbox hitbox) {
             Compact();
             return new CollisionCheckResults(0, 0);
         }
@@ -656,24 +648,25 @@ public partial class BulletManager {
     private class CircleSBC : SimpleBulletCollection {
         public CircleSBC(List<SimpleBulletCollection> target, BulletInCode bc) : base(target, bc) {}
 
-        protected override CollisionResult CheckGrazeCollision(ref SimpleBullet sb) => 
-            Collision.GrazeCircleOnCircle(bc.collisionTarget, sb.bpi.loc, bc.cc.radius * sb.scale);
+        protected override CollisionResult CheckGrazeCollision(in Hitbox hitbox, ref SimpleBullet sb) => 
+            Collision.GrazeCircleOnCircle(in hitbox, sb.bpi.loc, bc.cc.radius * sb.scale);
     }
     private class RectSBC : SimpleBulletCollection {
         public RectSBC(List<SimpleBulletCollection> target, BulletInCode bc) : base(target, bc) {}
-        protected override CollisionResult CheckGrazeCollision(ref SimpleBullet sb) => 
-            Collision.GrazeCircleOnRect(bc.collisionTarget, sb.bpi.loc, bc.cc.halfRect.x, 
+        protected override CollisionResult CheckGrazeCollision(in Hitbox hitbox, ref SimpleBullet sb) => 
+            Collision.GrazeCircleOnRect(in hitbox, sb.bpi.loc, bc.cc.halfRect.x, 
                 bc.cc.halfRect.y, bc.cc.maxDist2, sb.scale, sb.direction.x, sb.direction.y);
     }
     private class LineSBC : SimpleBulletCollection {
         public LineSBC(List<SimpleBulletCollection> target, BulletInCode bc) : base(target, bc) {}
-        protected override CollisionResult CheckGrazeCollision(ref SimpleBullet sb) => 
-            Collision.GrazeCircleOnRotatedSegment(bc.collisionTarget, sb.bpi.loc, bc.cc.radius, bc.cc.linePt1, 
+        protected override CollisionResult CheckGrazeCollision(in Hitbox hitbox, ref SimpleBullet sb) => 
+            Collision.GrazeCircleOnRotatedSegment(in hitbox, sb.bpi.loc, bc.cc.radius, bc.cc.linePt1, 
                 bc.cc.delta, sb.scale, bc.cc.deltaMag2, bc.cc.maxDist2, sb.direction.x, sb.direction.y);
     }
     private class NoCollSBC : SimpleBulletCollection {
         public NoCollSBC(List<SimpleBulletCollection> target, BulletInCode bc) : base(target, bc) {}
-        protected override CollisionResult CheckGrazeCollision(ref SimpleBullet sb) => CollisionResult.noColl;
+        protected override CollisionResult CheckGrazeCollision(in Hitbox hitbox, ref SimpleBullet sb) 
+            => CollisionResult.noColl;
     }
 
     private bool playerRendered;

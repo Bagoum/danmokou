@@ -82,7 +82,7 @@ public class XMLMainMenuDays : XMLMenu {
                     ConfirmCache();
                     new GameRequest(GameRequest.ShowPracticeSuccessMenu, new DifficultySettings(dfc), 
                         challenge: new PhaseChallengeRequest(p, c),
-                        player: defaultPlayer, shot: defaultShot).Run();
+                        player: new PlayerTeam(0, Subshot.TYPE_D, (defaultPlayer, defaultShot))).Run();
                     return (true, null);
                 }
                 return new CacheNavigateUINode(TentativeCache, () => p.Title(dfc), 

@@ -79,23 +79,28 @@ public static partial class Reflector {
                      throw new Exception($"Couldn't find post-aggregator \"{method}\"");
             var attrs = Attribute.GetCustomAttributes(mi);
             var priority = 999;
-            var types = new Type[0];
+            Type[] types = null;
             foreach (var attr in attrs) {
                 if (attr is PAPriorityAttribute pp) priority = pp.priority;
                 else if (attr is PASourceTypesAttribute ps) types = ps.types;
             }
-            //teTypes = [ TExPI, RTexSB ... ]
-            //types = [ (float), (v2) ... ]
-            foreach (var st in texTypes) {
-                foreach (var rt in types) {
-                    var gmi = mi.MakeGenericMethod(st, rt);
-                    var prms = gmi.GetParameters();
-                    if (prms.Length != 2) throw new Exception($"Post-aggregator \"{method}\" doesn't have 2 arguments");
-                    var sourceType = prms[0].ParameterType;
-                    var searchType = prms[1].ParameterType;
-                    if (gmi.ReturnType != sourceType) throw new Exception($"Post-aggregator \"{method}\" has a different return and first argument type");
-                    postAggregators.SetDefaultSet(sourceType, shortcut, 
-                        new PostAggregate(priority, sourceType, searchType, gmi));
+            void CreateAggregateMethod(MethodInfo gmi) {
+                var prms = gmi.GetParameters();
+                if (prms.Length != 2) throw new Exception($"Post-aggregator \"{method}\" doesn't have 2 arguments");
+                var sourceType = prms[0].ParameterType;
+                var searchType = prms[1].ParameterType;
+                if (gmi.ReturnType != sourceType) throw new Exception($"Post-aggregator \"{method}\" has a different return and first argument type");
+                postAggregators.SetDefaultSet(sourceType, shortcut, 
+                    new PostAggregate(priority, sourceType, searchType, gmi));
+            }
+            if (types == null) CreateAggregateMethod(mi);
+            else {
+                //teTypes = [ TExPI, RTexSB ... ]
+                //types = [ (float), (v2) ... ]
+                foreach (var st in texTypes) {
+                    foreach (var rt in types) {
+                        CreateAggregateMethod(mi.MakeGenericMethod(st, rt));
+                    }
                 }
             }
         }
@@ -106,6 +111,12 @@ public static partial class Reflector {
         CreatePostAggregates("PA_FDiv", "//");
         CreatePostAggregates("PA_And", "&");
         CreatePostAggregates("PA_Or", "|");
+    #if NO_EXPR
+        CreatePostAggregates("PA_Add_noexpr", "+");
+        CreatePostAggregates("PA_Mul_noexpr", "*");
+        CreatePostAggregates("PA_Sub_noexpr", "-");
+        CreatePostAggregates("PA_Div_noexpr", "/");
+    #endif
         void CreatePreAggregates(string method, string shortcut, Type[] texTypes = null) {
             texTypes = texTypes ?? mathSourceTexTypes;
             var mi = typeof(ExPreAggregators).GetMethod(method) ?? 

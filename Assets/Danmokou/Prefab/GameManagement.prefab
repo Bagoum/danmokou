@@ -44,7 +44,7 @@ AudioSource:
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 8300000, guid: e33f7321c083e984c9bee0073c1f4058, type: 3}
   m_PlayOnAwake: 0
-  m_Volume: 0.06
+  m_Volume: 0.09
   m_Pitch: 1
   Loop: 0
   Mute: 0
@@ -796,16 +796,6 @@ MonoBehaviour:
     type: 3}
   inodePrefab: {fileID: 4607728708591253777, guid: d0dd09c7056e88d4ea59254738f4e621,
     type: 3}
-  lifeItem: {fileID: 359774600689030096, guid: 434a5ca1d0d99c6439e6da4390e24d0b, type: 3}
-  valueItem: {fileID: 359774600689030096, guid: dd21390ee5ef15d4e9cd7d412de540ac,
-    type: 3}
-  pointppItem: {fileID: 359774600689030096, guid: 89bc37c16393dd24fb0ea699aba30d64,
-    type: 3}
-  powerItem: {fileID: 359774600689030096, guid: 3ccbef6bcff3c804184f4debe805e01b,
-    type: 3}
-  fullPowerItem: {fileID: 359774600689030096, guid: 699d1a5d5d9934949adfd4e28a984b03,
-    type: 3}
-  gemItem: {fileID: 359774600689030096, guid: 4bd6ff5d55cb59349bdd43d93da04150, type: 3}
   arbitraryCapturer: {fileID: 3557489986302996358, guid: 328052995b995fa4c8266a313c6d38f4,
     type: 3}
   defaultSceneConfig: {fileID: 11400000, guid: 77878c984265b1b40b9f529bb9192688, type: 2}

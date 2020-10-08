@@ -464,6 +464,11 @@ PrefabInstance:
       propertyPath: m_textInfo.pageCount
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 3445146341560754980, guid: 2a75209a30e145949a5bc2f614255ea8,
+        type: 3}
+      propertyPath: m_LocalScale.x
+      value: 8
+      objectReference: {fileID: 0}
     - target: {fileID: 3804283804176791356, guid: 2a75209a30e145949a5bc2f614255ea8,
         type: 3}
       propertyPath: m_textInfo.characterCount

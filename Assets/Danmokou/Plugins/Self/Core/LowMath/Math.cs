@@ -259,6 +259,23 @@ public static class M {
     public static float DEOutSine(float x) => HPI * (float) Math.Cos(HPI * x);
 }
 
+public readonly struct Hitbox {
+    public readonly float x;
+    public readonly float y;
+    public readonly float radius;
+    public readonly float radius2;
+    public readonly float largeRadius;
+    public readonly float largeRadius2;
+
+    public Hitbox(Vector2 loc, float rad, float lrad) {
+        x = loc.x;
+        y = loc.y;
+        radius = rad;
+        radius2 = rad * rad;
+        largeRadius = lrad;
+        largeRadius2 = lrad * lrad;
+    }
+}
 
 public readonly struct CCircle {
     public readonly float x;

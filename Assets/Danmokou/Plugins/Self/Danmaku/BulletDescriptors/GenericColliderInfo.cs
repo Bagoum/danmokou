@@ -33,21 +33,22 @@ public class GenericColliderInfo : MonoBehaviour {
     public int end;
     public Vector2[] points;
     [Tooltip("Only fill for debugging in scene use")] [CanBeNull]
-    public SOCircleHitbox target;
+    public SOPlayerHitbox target;
 
     // Update is called once per frame
     void Update() {
         Vector3 trp = transform.position;
         CollisionResult cr = new CollisionResult();
+        var hitbox = target.Hitbox;
         if (colliderType == ColliderType.Circle) {
-            cr = Collision.GrazeCircleOnCircle(target, trp, radius * scale);
+            cr = Collision.GrazeCircleOnCircle(hitbox, trp, radius * scale);
         } else if (colliderType == ColliderType.Line) {
             float maxdist = Mathf.Max(point2.magnitude, point1.magnitude) + radius;
-            cr = Collision.GrazeCircleOnRotatedSegment(target, trp, radius,
+            cr = Collision.GrazeCircleOnRotatedSegment(hitbox, trp, radius,
                 point1, point2 - point1, scale, (point2 - point1).sqrMagnitude, maxdist * maxdist,
                 Mathf.Cos(rotationDeg * Mathf.PI / 180f), Mathf.Sin(rotationDeg * Mathf.PI / 180f));
         } else if (colliderType == ColliderType.Rectangle) {
-            cr = Collision.GrazeCircleOnRect(target, trp, rectHalfX, rectHalfY, rectHalfX * rectHalfX + rectHalfY * rectHalfY, scale,
+            cr = Collision.GrazeCircleOnRect(hitbox, trp, rectHalfX, rectHalfY, rectHalfX * rectHalfX + rectHalfY * rectHalfY, scale,
                 Mathf.Cos(rotationDeg * Mathf.PI / 180f), Mathf.Sin(rotationDeg * Mathf.PI / 180f));
         } else if (colliderType == ColliderType.RectPtColl) {
             cr = new CollisionResult(Collision.PointInRect(target.location, new CRect(
@@ -55,7 +56,7 @@ public class GenericColliderInfo : MonoBehaviour {
                 rectHalfX, rectHalfY, rotationDeg
             )), false);
         } else if (colliderType == ColliderType.Segments) {
-            cr = Collision.GrazeCircleOnSegments(target, transform.position, points, start, skip, end, radius,
+            cr = Collision.GrazeCircleOnSegments(hitbox, transform.position, points, start, skip, end, radius,
                 Mathf.Cos(rotationDeg * Mathf.PI / 180f), Mathf.Sin(rotationDeg * Mathf.PI / 180f));
         }
         if (cr.graze) {

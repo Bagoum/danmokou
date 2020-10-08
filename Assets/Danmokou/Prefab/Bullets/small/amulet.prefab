@@ -109,8 +109,8 @@ MonoBehaviour:
   point1: {x: 0.085, y: 0}
   point2: {x: -0.07, y: 0}
   rotationDeg: 0
-  rectHalfX: 0.075
-  rectHalfY: 0.042
+  rectHalfX: 0.1
+  rectHalfY: 0.05
   start: 0
   skip: 0
   end: 0

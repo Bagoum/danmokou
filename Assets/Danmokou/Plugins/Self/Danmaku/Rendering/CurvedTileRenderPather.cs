@@ -65,7 +65,7 @@ public class CurvedTileRenderPather : CurvedTileRender {
     private readonly Transform trail;
     public readonly TrailRenderer trailR;
 
-    private SOCircleHitbox target;
+    private SOPlayerHitbox target;
     private PlayerBulletCfg? playerBullet;
 
     public CurvedTileRenderPather(PatherRenderCfg cfg, GameObject obj) : base(obj) {
@@ -80,7 +80,7 @@ public class CurvedTileRenderPather : CurvedTileRender {
         scaledLineRadius = lineRadius * scale;
     }
     public void Initialize(Pather locationer,TiledRenderCfg cfg,  Material material, bool isNew, Velocity vel, 
-        uint bpiId, int firingIndex, BPY rememberTime, float maxRememberTime, SOCircleHitbox collisionTarget, 
+        uint bpiId, int firingIndex, BPY rememberTime, float maxRememberTime, SOPlayerHitbox collisionTarget, 
         ref RealizedBehOptions options) {
         exec = locationer;
         updateEveryFrame = true;//options.smooth;
@@ -213,7 +213,7 @@ public class CurvedTileRenderPather : CurvedTileRender {
             velocity.rootPos.y + 0.5f * (min.y + max.y) - target.location.y,
             0.5f * (max.x - min.x) + lineRadius,
             0.5f * (max.y - min.y) + lineRadius,
-            target.largeRadius, target.lradius2) && playerBullet == null; 
+            target.largeRadius) && playerBullet == null; 
         
         centers[last].x = bpi.loc.x - velocity.rootPos.x;
         centers[last].y = bpi.loc.y - velocity.rootPos.y;
@@ -281,8 +281,8 @@ public class CurvedTileRenderPather : CurvedTileRender {
             }
             return CollisionResult.noColl;
         }
-        if (!target.active) return CollisionResult.noColl;
-        return DMath.Collision.GrazeCircleOnSegments(target, exec.RawGlobalPosition(), centers, read_from + cut1,
+        if (!target.Active) return CollisionResult.noColl;
+        return DMath.Collision.GrazeCircleOnSegments(target.Hitbox, exec.RawGlobalPosition(), centers, read_from + cut1,
             FramePosCheck, cL - cut2, scaledLineRadius, 1, 0);
     }
     public Vector2 GetGlobalDirection() {

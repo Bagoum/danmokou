@@ -62,6 +62,9 @@ MonoBehaviour:
     - name: reimuamulet
       prefab: {fileID: 4623879621751819397, guid: c4c0ea3703e986f4b85f4ddaa69724a7,
         type: 3}
+    - name: dot
+      prefab: {fileID: 7413059715923608065, guid: 84849d43642bb6344952d1b9f402e9b1,
+        type: 3}
   - groupTitle: Large
     prefabs:
     - name: scircle

@@ -35,8 +35,6 @@ public abstract class Bullet : BehaviorEntity {
     private static short rendererIndex = short.MinValue;
     private static readonly HashSet<Bullet> allBullets = new HashSet<Bullet>();
 
-    protected SOCircleHitbox collisionTarget;
-
     private int defaultLayer;
 
     [CanBeNull] public Sprite sprite;
@@ -78,7 +76,7 @@ public abstract class Bullet : BehaviorEntity {
         allBullets.Add(this);
     }
 
-    protected void Initialize(RealizedBehOptions options, [CanBeNull] BehaviorEntity parent, Velocity _velocity, int firingIndex, uint bpiid, SOCircleHitbox _target, out int layer) {
+    protected void Initialize(RealizedBehOptions options, [CanBeNull] BehaviorEntity parent, Velocity _velocity, int firingIndex, uint bpiid, SOPlayerHitbox _target, out int layer) {
         base.Initialize(_velocity, options.smr, firingIndex, bpiid, parent, options: options);
         gameObject.layer = layer = options.layer ?? defaultLayer;
         collisionTarget = _target;

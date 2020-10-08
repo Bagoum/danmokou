@@ -72,11 +72,7 @@ public readonly struct CampaignRequest {
 public readonly struct GameRequest {
     [CanBeNull] public readonly Func<bool> cb;
     public readonly bool newCampaign;
-    [CanBeNull] public readonly PlayerConfig player;
-    [CanBeNull] public readonly ShotConfig shot;
-    public readonly Subshot subshot;
-    [CanBeNull] public string PlayerKey => player == null ? null : player.key;
-    [CanBeNull] public string ShotKey => shot == null ? null : shot.key;
+    public readonly PlayerTeam team;
     public readonly DifficultySettings difficulty;
     public readonly CampaignMode mode;
     public readonly Replay? replay;
@@ -86,18 +82,17 @@ public readonly struct GameRequest {
 
     public GameRequest(Func<bool> cb, GameLowRequest lowerRequest, 
         Replay replay) : this(cb, replay.metadata.Difficulty, lowerRequest, true, 
-        replay.metadata.Player, replay.metadata.Shot, replay.metadata.Subshot, replay) {}
+        replay.metadata.Player, replay) {}
 
     public GameRequest(Func<bool> cb, DifficultySettings difficulty, CampaignRequest? campaign = null,
         BossPracticeRequest? boss = null, PhaseChallengeRequest? challenge = null, StagePracticeRequest? stage = null,
-        bool newCampaign = true, [CanBeNull] PlayerConfig player = null, [CanBeNull] ShotConfig shot = null, 
-        Subshot subshot = Subshot.TYPE_D, Replay? replay = null) : 
+        bool newCampaign = true, PlayerTeam? player = null, Replay? replay = null) : 
         this(cb, difficulty,  GameLowRequest.FromNullable(
             campaign, boss, challenge, stage) ?? throw new Exception("No valid request type made of GameReq"), 
-            newCampaign, player, shot, subshot, replay) { }
+            newCampaign, player ?? PlayerTeam.Empty, replay) { }
 
     public GameRequest(Func<bool> cb, DifficultySettings difficulty, GameLowRequest lowerRequest,
-        bool newCampaign, PlayerConfig player, ShotConfig shot, Subshot subshot, Replay? replay) {
+        bool newCampaign, PlayerTeam team, Replay? replay) {
         this.mode = lowerRequest.Resolve(
             _ => CampaignMode.MAIN, 
             _ => CampaignMode.CARD_PRACTICE, 
@@ -105,9 +100,7 @@ public readonly struct GameRequest {
             _ => CampaignMode.STAGE_PRACTICE);
         this.cb = cb;
         this.newCampaign = newCampaign;
-        this.player = player;
-        this.shot = shot;
-        this.subshot = subshot;
+        this.team = team;
         this.difficulty = difficulty;
         this.replay = replay;
         this.lowerRequest = lowerRequest;
@@ -136,7 +129,7 @@ public readonly struct GameRequest {
             return true;
         } else return false;
     }
-    private string GameIdentifier => $"{difficulty.Describe}-{PlayerKey}-{ShotKey}-{CampaignIdentifier.Tuple}";
+    private string GameIdentifier => $"{difficulty.Describe}-{team.Describe}-{CampaignIdentifier.Tuple}";
     public GameLowRequestKey CampaignIdentifier => lowerRequest.Resolve(
         c => new GameLowRequestKey(0, c.Key, default, default, default),
         b => new GameLowRequestKey(1, default, b.Key, default, default),
@@ -271,14 +264,14 @@ public readonly struct GameRequest {
     }
 
     public static bool ViewReplay(Replay? r) => r != null && ViewReplay(r.Value);
-    
 
-    public static bool RunCampaign([CanBeNull] AnalyzedCampaign campaign, [CanBeNull] Func<bool> cb, DifficultySettings difficulty, 
-        [CanBeNull] PlayerConfig player, [CanBeNull] ShotConfig shot, Subshot subshot) {
+
+    public static bool RunCampaign([CanBeNull] AnalyzedCampaign campaign, [CanBeNull] Func<bool> cb, 
+        DifficultySettings difficulty, PlayerTeam player) {
         if (campaign == null) return false;
         var req = new GameRequest(cb.Then(() => LoadScene(new SceneRequest(MaybeSaveReplayScene, 
             SceneRequest.Reason.FINISH_RETURN, GameManagement.CheckpointCampaignData))), 
-            difficulty, campaign: new CampaignRequest(campaign), player: player, shot: shot, subshot: subshot);
+            difficulty, campaign: new CampaignRequest(campaign), player: player);
 
 
         if (SaveData.r.TutorialDone || References.miniTutorial == null) return req.Run();

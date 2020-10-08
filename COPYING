@@ -11,6 +11,10 @@ Hash Without Sine by David Hoskins
 Newtonsoft.Json by Kalle Jillheden
 Some files from these projects exists in the source code. Those files have the original licenses at the top for convenience. 
 
+The directory Assets/Danmokou/Plugins/External contains many external DLLs. They are licensed as follows:
+protobuf-net: Apache 2.0 (https://www.nuget.org/packages/protobuf-net)
+System.*: MIT (https://www.nuget.org/packages/System.Memory/ and others)
+
 The directory Assets/Danmokou/Plugins/Self/Core/FS contains compiled binaries of the directory FS.
 
 The directory Assets/TextMeshPro contains default imports from the TextMeshPro plugin for Unity. TextMeshPro is licensed under the Unity Companion License (https://docs.unity3d.com/Packages/com.unity.textmeshpro@3.0/license/LICENSE.html). 

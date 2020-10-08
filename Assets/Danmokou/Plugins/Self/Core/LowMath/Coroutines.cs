@@ -62,6 +62,8 @@ public class Coroutines {
                 coroutines.Remove(itrNode, true);
             }
         }
+        //Important to do this in the break case.
+        itrNode = null;
     }
 
     public int Count => coroutines.count;

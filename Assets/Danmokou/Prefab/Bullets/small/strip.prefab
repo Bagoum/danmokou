@@ -49,7 +49,7 @@ MonoBehaviour:
   deletable: 1
   grazeEveryFrames: 60
   screenCullRadius: 3
-  renderPriority: 1300
+  renderPriority: 1400
   renderMode: 0
   fadeInTime: 0
   slideInTime: 0

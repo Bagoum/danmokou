@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using DMath;
 using Core;
+using Danmaku;
 using JetBrains.Annotations;
 using Microsoft.FSharp.Collections;
 using Microsoft.FSharp.Core;
@@ -134,6 +135,13 @@ public static class TSMReflection {
 
     public static TaskPattern If1CC(StateMachine iftrue, StateMachine iffalse) => smh =>
         GameManagement.campaign.Continued ? iffalse.Start(smh) : iftrue.Start(smh);
+
+
+    [Alias("namecard")]
+    public static TaskPattern RawSummon(string prefabName) => smh => {
+        BulletManager.RequestRawSummon(prefabName);
+        return Task.CompletedTask;
+    };
 }
 
 }

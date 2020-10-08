@@ -29,5 +29,15 @@ public static class ExPostAggregators {
     [PAPriority(20)] [PASourceTypes(typeof(bool))]
     public static Func<Te, TEx<R>> PA_Or<Te, R>(Func<Te, TEx<R>> a, Func<Te, TEx<bool>> b) where Te : TEx
         => t => Ex.OrElse(a(t), b(t));
+
+
+    [PAPriority(20)]
+    public static BPY PA_Add_noexpr(BPY a, BPY b) => t => a(t) + b(t);
+    [PAPriority(20)]
+    public static BPY PA_Sub_noexpr(BPY a, BPY b) => t => a(t) - b(t);
+    [PAPriority(10)]
+    public static BPY PA_Mul_noexpr(BPY a, BPY b) => t => a(t) * b(t);
+    [PAPriority(10)]
+    public static BPY PA_Div_noexpr(BPY a, BPY b) => t => a(t) / b(t);
 }
 }

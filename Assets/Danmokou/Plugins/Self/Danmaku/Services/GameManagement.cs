@@ -104,15 +104,13 @@ public struct CampaignData {
     private int nextItemLifeIndex;
     public readonly CampaignMode mode;
     public bool Continued { get; private set; }
-    [CanBeNull] public PlayerConfig Player { get; }
-    [CanBeNull] public readonly ShotConfig shot;
-    /// <summary>
-    /// Note: this may change during the game due to powerup items.
-    /// </summary>
-    public Subshot Subshot { get; private set; }
+    private PlayerTeam team;
+    [CanBeNull] public PlayerConfig Player => team.Player;
+    [CanBeNull] public ShotConfig Shot => team.Shot;
+    public Subshot Subshot => team.Subshot;
 
     public void SetSubshot(Subshot newSubshot) {
-        Subshot = newSubshot;
+        team.Subshot = newSubshot;
     }
     
     //TODO: this can cause problems if multiple phases are declared lenient at the same time, but that's not a current use case
@@ -159,13 +157,14 @@ public struct CampaignData {
         this.mode = mode;
         this.MaxScore = maxScore ?? 9001;
         campaign = req?.lowerRequest.Resolve(cr => cr.campaign.campaign, _ => null, _ => null, _ => null);
+        team = req?.team ?? PlayerTeam.Empty;
         if (campaign != null) {
             Lives = campaign.startLives > 0 ? campaign.startLives : StartLives(mode);
         } else {
             Lives = StartLives(mode);
         }
         Bombs = StartBombs(mode);
-        Power = StartPower(mode, req?.shot);
+        Power = StartPower(mode, team.Shot);
         this.Score = 0;
         this.PIV = 1;
         Meter = 1;
@@ -182,9 +181,6 @@ public struct CampaignData {
         Continued = false;
         Reloaded = false;
         HitsTaken = 0;
-        Player = req?.player;
-        shot = req?.shot;
-        Subshot = req?.subshot ?? Subshot.TYPE_D;
         pivDecayRateMultiplier = 1f;
         EnemiesDestroyed = 0;
         Lenience = false;
@@ -440,7 +436,7 @@ public struct CampaignData {
 /// This is the only scene-persistent object in the game.
 /// </summary>
 public class GameManagement : RegularUpdater {
-    public static readonly Version EngineVersion = new Version(4, 0, 0);
+    public static readonly Version EngineVersion = new Version(4, 1, 0);
     public static bool Initialized { get; private set; } = false;
     public static DifficultySettings Difficulty { get; set; } = 
 #if UNITY_EDITOR
@@ -448,6 +444,8 @@ public class GameManagement : RegularUpdater {
 #else
         new DifficultySettings(FixedDifficulty.Normal);
 #endif
+    public static float FRAME_TIME_BULLET => Difficulty.FRAME_TIME_BULLET;
+    
 
     public static CampaignData campaign = new CampaignData(CampaignMode.NULL);
     private static CampaignData lastinfo = campaign;
@@ -487,6 +485,10 @@ public class GameManagement : RegularUpdater {
     public void SetSubshotM() => campaign.SetSubshot(Subshot.TYPE_M);
     [ContextMenu("Set Subshot K")]
     public void SetSubshotK() => campaign.SetSubshot(Subshot.TYPE_K);
+
+    [ContextMenu("Set bullet speed to 2")]
+    public void SetBulletSpeed2() => Difficulty = 
+        new DifficultySettings(FixedDifficulty.Ultra, bulletSpeedMod: 2f);
 #endif
     public static IEnumerable<FixedDifficulty> VisibleDifficulties => new[] {
         FixedDifficulty.Easier, FixedDifficulty.Easy, FixedDifficulty.Normal, FixedDifficulty.Hard,
@@ -508,8 +510,8 @@ public class GameManagement : RegularUpdater {
     public GameObject arbitraryCapturer;
     public static GameObject ArbitraryCapturer => gm.arbitraryCapturer;
     public SceneConfig defaultSceneConfig;
-    public SOCircleHitbox playerHitbox;
-    public SOCircleHitbox visiblePlayer;
+    public SOPlayerHitbox playerHitbox;
+    public SOPlayerHitbox visiblePlayer;
     public static Vector2 VisiblePlayerLocation => gm.visiblePlayer.location;
 
     private void Awake() {
