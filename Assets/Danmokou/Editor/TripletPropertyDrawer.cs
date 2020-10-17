@@ -8,13 +8,16 @@ public abstract class TripletPropertyDrawer : PropertyDrawer {
     protected virtual string arg2 => "y";
     protected virtual string arg3 => "angle";
 
-    protected virtual float sw => 0.2f;
+    protected virtual float sw1 => 0.2f;
+    private float sw => showName ? sw1 : 0;
     protected virtual float w1 => 0.4f;
     protected virtual float w2 => 0.3f;
     protected virtual float w3 => 0.2f;
+
+    protected virtual bool showName => true;
     public override void OnGUI(Rect position, SerializedProperty property, GUIContent label) {
         label = EditorGUI.BeginProperty(position, label, property);
-        position = EditorGUI.PrefixLabel(position, label);
+        if(showName) position = EditorGUI.PrefixLabel(position, label);
 
         EditorGUI.BeginChangeCheck();
 
@@ -28,7 +31,7 @@ public abstract class TripletPropertyDrawer : PropertyDrawer {
         int indent = EditorGUI.indentLevel;
         EditorGUI.indentLevel = 0;
 
-        float rw = position.width * this.sw;
+        float rw = position.width * this.sw1;
         float pw = position.width - rw;
         Rect rect1 = new Rect(position.x + rw, position.y, w1 * pw, position.height);
         Rect rect2 = new Rect(position.x + rw + w1 * pw, position.y, w2 * pw, position.height);
@@ -70,7 +73,7 @@ public class BEHAnimFrameDrawer : TripletPropertyDrawer {
     protected override string arg1 => "sprite";
     protected override string arg2 => "time";
     protected override string arg3 => "skipLoop";
-    protected override float sw => 0f;
+    protected override float sw1 => 0f;
 }
 
 [CustomPropertyDrawer(typeof(Version))]
@@ -81,5 +84,5 @@ public class VersionDrawer : TripletPropertyDrawer {
     protected override float w1 => 0.35f;
     protected override float w2 => 0.35f;
     protected override float w3 => 0.3f;
-    protected override float sw => 0f;
+    protected override float sw1 => 0f;
 }

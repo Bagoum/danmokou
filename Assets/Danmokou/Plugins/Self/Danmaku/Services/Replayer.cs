@@ -8,7 +8,7 @@ using static Danmaku.Enums;
 using static InputManager;
 using GameLowRequest = DU<Danmaku.CampaignRequest, Danmaku.BossPracticeRequest, 
     PhaseChallengeRequest, Danmaku.StagePracticeRequest>;
-using GameLowRequestKey = DU<string, ((string, int), int), (((string, int), int), int), ((string, int), int)>;
+using GameLowRequestKey = DU<string, ((string, int), int), ((((string, string), int), int), int), ((string, int), int)>;
 
 public class ReplayMetadata {
     public int Seed { get; set; }
@@ -21,7 +21,11 @@ public class ReplayMetadata {
     public CampaignMode Mode { get; set; }
     public DateTime Now { get; set; }
     public string ID { get; set; }
-    public (string campaign, ((string campaign, int boss), int phase) boss, (((string campaign, int boss), int phase), int challenge) challenge, ((string campaign, int boss), int stage) stage, short type) Key { get; set; }
+    public (string campaign, 
+        ((string campaign, int boss), int phase) boss, 
+        ((((string campaign, string day), int boss), int phase), int challenge) challenge, 
+        ((string campaign, int boss), int stage) stage, short type) 
+        Key { get; set; }
     public Version EngineVersion { get; set; }
     public Version GameVersion { get; set; }
     public string GameIdentifier { get; set; }
@@ -39,12 +43,12 @@ public class ReplayMetadata {
     public ReplayMetadata(GameRequest req, CampaignData end, string name="") {
         Seed = req.seed;
         Score = end.Score;
-        SavedPlayer = new PlayerTeam.Saveable(req.team);
-        Difficulty = req.difficulty;
-        Mode = req.mode;
+        SavedPlayer = new PlayerTeam.Saveable(req.metadata.team);
+        Difficulty = req.metadata.difficulty;
+        Mode = req.metadata.mode;
         Now = DateTime.Now;
         ID = RNG.RandStringOffFrame();
-        Key = req.CampaignIdentifier.Tuple;
+        Key = GameRequest.CampaignIdentifier(req.lowerRequest).Tuple;
         EngineVersion = GameManagement.EngineVersion;
         GameVersion = GameManagement.References.gameVersion;
         GameIdentifier = GameManagement.References.gameIdentifier;

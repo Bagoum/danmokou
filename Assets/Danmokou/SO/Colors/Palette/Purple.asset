@@ -15,6 +15,7 @@ MonoBehaviour:
   colorName: purple
   highlight: {r: 0.8931459, g: 0.8254717, b: 1, a: 1}
   light: {r: 0.7272432, g: 0.5235849, b: 1, a: 1}
-  pure: {r: 0.5248871, g: 0, b: 1, a: 1}
+  pure: {r: 0.57105577, g: 0.033018887, b: 1, a: 1}
   dark: {r: 0.38544482, g: 0, b: 0.6132076, a: 1}
-  outline: {r: 0.24805023, g: 0, b: 0.3207547, a: 1}
+  outline: {r: 0.18142238, g: 0, b: 0.23584908, a: 1}
+  recolorizable: 0

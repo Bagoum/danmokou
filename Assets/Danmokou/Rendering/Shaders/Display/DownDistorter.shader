@@ -67,6 +67,7 @@
             float _ScreenHeight;//global
             float _PixelWidth;
             float _PixelHeight;//global
+            float _GlobalXOffset;//global
             
             float _T;
             float _BX;
@@ -102,7 +103,7 @@
                 y = 1 - y;
                 #endif
                 
-                float4 bgc = tex2D(_BGTex, float2(_ScreenX + r * cos(effang*TAU)/_BGTex_TexelSize.z, y));
+                float4 bgc = tex2D(_BGTex, float2(_ScreenX + _GlobalXOffset / _ScreenWidth + r * cos(effang*TAU)/_BGTex_TexelSize.z, y));
                 bgc.a = 1; //Don't know why it isn't already 1...
                 return bgc;
                 

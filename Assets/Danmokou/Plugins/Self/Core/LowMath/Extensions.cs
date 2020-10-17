@@ -284,22 +284,6 @@ public static class DictExtensions {
 public static class FuncExtensions {
     public static Func<bool> Or(this Func<bool> x, Func<bool> y) => () => x() || y();
 
-    public static Action Then([CanBeNull] this Action x, [CanBeNull] Action y) => () => {
-        x?.Invoke();
-        y?.Invoke();
-    };
-    public static Func<T> Then<T>([CanBeNull] this Action x, Func<T> y) => () => {
-        x?.Invoke();
-        return y();
-    };
-
-    public static Func<bool> Then([CanBeNull] this Func<bool> x, [CanBeNull] Action y) => () => {
-        if (x?.Invoke() ?? true) {
-            y?.Invoke();
-            return true;
-        } else return false;
-    };
-
     public static Action Void<T>([CanBeNull] this Func<T> x) => () => x?.Invoke();
 
 }

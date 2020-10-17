@@ -30,7 +30,7 @@ public class Enemy : RegularUpdater {
     public BehaviorEntity Beh { get; private set; }
     public bool takesBossDamage;
     [CanBeNull] private (bool _, Enemy to)? divertHP = null;
-    public int HP { get; private set; }
+    public double HP { get; private set; }
     public int maxHP = 1000;
     public int PhotoHP { get; private set; } = 1;
     private int maxPhotoHP = 1;
@@ -203,7 +203,7 @@ public class Enemy : RegularUpdater {
     }
 
     public void DivertHP(Enemy to) => divertHP = (false, to);
-    private float HPRatio => (float) HP / maxHP;
+    private float HPRatio => (float)(HP / maxHP);
     private float PhotoRatio => (float) PhotoHP / maxPhotoHP;
     private float BarRatio => Math.Min(PhotoRatio, HPRatio);
     private float _displayBarRatio;
@@ -270,7 +270,7 @@ public class Enemy : RegularUpdater {
     private float SHOTGUN_MIN => takesBossDamage ? SHOTGUN_DIST_MIN_BOSS : SHOTGUN_DIST_MIN;
     private const float SHOTGUN_MULTIPLIER = 1.25f;
 
-    private float queuedDamage = 0;
+    private double queuedDamage = 0;
     private int queuedPhotoDamage = 0;
 
     //The reason we queue damage is to avoid calling eg. SM clear effects while in the middle of other entities' update loops.
@@ -287,16 +287,16 @@ public class Enemy : RegularUpdater {
             float dstToFirer = (floc - Beh.rBPI.loc).magnitude;
             float shotgun = (SHOTGUN_MIN - dstToFirer) / (SHOTGUN_MIN - SHOTGUN_MAX);
             float multiplier =
-                Mathf.Lerp(1f, 1.2f, shotgun);
-            queuedDamage += dmg * multiplier;
+                Mathf.Lerp(1f, SHOTGUN_MULTIPLIER, shotgun);
+            queuedDamage += dmg * multiplier * GameManagement.Difficulty.playerDamageMod;
             Counter.DoShotgun(shotgun);
         } else queuedDamage += dmg;
     }
     private void PollDamage() {
         if (queuedDamage < 1) return;
-        HP = M.Clamp(0, maxHP, HP - (int)queuedDamage);
+        HP = M.Clamp(0f, maxHP, HP - queuedDamage);
         queuedDamage = 0;
-        if (HP == 0) {
+        if (HP <= 0) {
             Beh.OutOfHP();
             Vulnerable = false; //Wait for new hp value to be declared
         } else if (modifyDamageSound) {
@@ -390,16 +390,14 @@ public class Enemy : RegularUpdater {
 
     private static readonly ReflWrap<VTP> SuicideVTP = (Func<VTP>)"tprot cx 1.6".Into<VTP>;
     public void DoSuicideFire() {
-        /*
-        if (GameManagement.DifficultyCounter < DifficultySet.Hard.Counter()) return;
         var bt = LevelController.DefaultSuicideStyle;
         if (string.IsNullOrWhiteSpace(bt)) bt = "triangle-black/w";
         var angleTo = M.AtanD(BulletManager.PlayerTarget.location - Beh.rBPI.loc);
-        int numBullets = (GameManagement.DifficultyCounter <= DifficultySet.Lunatic.Counter()) ? 1 : 3;
+        int numBullets = GameManagement.Difficulty.numSuicideBullets;
         for (int ii = 0; ii < numBullets; ++ii) {
             BulletManager.RequestSimple(bt, null, null, new Velocity(SuicideVTP, Beh.rBPI.loc, 
                 angleTo + (ii - numBullets / 2) * 120f / numBullets), 0, 0, null);
-        }*/
+        }
     }
     
 #if UNITY_EDITOR

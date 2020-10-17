@@ -119,6 +119,7 @@ PlayerSettings:
   stadiaTargetFramerate: 0
   vulkanNumSwapchainBuffers: 3
   vulkanEnableSetSRGBWrite: 0
+  vulkanEnableLateAcquireNextImage: 0
   m_SupportedAspectRatios:
     4:3: 0
     5:4: 0
@@ -578,7 +579,7 @@ PlayerSettings:
   webGLThreadsSupport: 0
   webGLDecompressionFallback: 0
   scriptingDefineSymbols:
-    1: VER_BRUH
+    1: 
     7: VER_SIMP
     13: NO_EXPR;ALLOW_RELOAD;WIDTH_TH;WEBGL
     19: UNITY_POST_PROCESSING_STACK_V2

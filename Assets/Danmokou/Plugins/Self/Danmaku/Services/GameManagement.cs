@@ -16,10 +16,11 @@ using GameLowRequest = DU<Danmaku.CampaignRequest, Danmaku.BossPracticeRequest,
 
 public struct CampaignData {
     public static bool PowerMechanicEnabled { get; } = false;
-    public static bool MeterMechanicEnabled { get; } = false;
+    public static bool MeterMechanicEnabled { get; } = true;
     private static int StartLives(CampaignMode mode) {
         if (mode == CampaignMode.MAIN || mode == CampaignMode.TUTORIAL || mode == CampaignMode.STAGE_PRACTICE) return 7;
         else if (mode.OneLife()) return 1;
+        else if (mode == CampaignMode.NULL) return 7;
         else return 1;
     }
 
@@ -48,7 +49,7 @@ public struct CampaignData {
     public int LifeItems { get; private set; }
     public int NextLifeItems => pointLives.Try(nextItemLifeIndex, 9001);
     public long Graze { get; private set; }
-    private const double powerMax = 4;
+    public const double powerMax = 4;
     public const double powerMin = 1;
 #if UNITY_EDITOR
     private const double powerDefault = 1000;
@@ -83,12 +84,12 @@ public struct CampaignData {
     private const double pivDecayLeniencePhase = 4;
     
     public double Meter { get; private set; } 
-    private const double meterBoostGraze = 0.01;
-    private const double meterBoostGem = 0.01;
-    private const double meterRefillRate = 0.02;
-    private const double meterUseRate = 0.24;
+    private const double meterBoostGraze = 0.008;
+    private const double meterBoostGem = 0.02;
+    private const double meterRefillRate = 0.015;
+    private const double meterUseRate = 0.25;
     public const double meterUseThreshold = 0.4;
-    private const double meterUseInstantCost = 0.05;
+    private const double meterUseInstantCost = 0.03;
     
     public bool MeterInUse { get; set; }
     private double MeterPivPerPPPMultiplier => MeterInUse ? 2 : 1;
@@ -157,7 +158,7 @@ public struct CampaignData {
         this.mode = mode;
         this.MaxScore = maxScore ?? 9001;
         campaign = req?.lowerRequest.Resolve(cr => cr.campaign.campaign, _ => null, _ => null, _ => null);
-        team = req?.team ?? PlayerTeam.Empty;
+        team = req?.metadata.team ?? PlayerTeam.Empty;
         if (campaign != null) {
             Lives = campaign.startLives > 0 ? campaign.startLives : StartLives(mode);
         } else {
@@ -222,7 +223,7 @@ public struct CampaignData {
         return false;
     }
     public void AddLives(int delta) {
-        if (mode == CampaignMode.NULL) return;
+        //if (mode == CampaignMode.NULL) return;
         Log.Unity($"Adding player lives: {delta}");
         if (delta < 0) {
             ++HitsTaken;
@@ -436,7 +437,7 @@ public struct CampaignData {
 /// This is the only scene-persistent object in the game.
 /// </summary>
 public class GameManagement : RegularUpdater {
-    public static readonly Version EngineVersion = new Version(4, 1, 0);
+    public static readonly Version EngineVersion = new Version(4, 2, 0);
     public static bool Initialized { get; private set; } = false;
     public static DifficultySettings Difficulty { get; set; } = 
 #if UNITY_EDITOR

@@ -34,7 +34,7 @@ public static class SaveData {
         }
         public Dictionary<string, HashSet<string>> EndingsAchieved = new Dictionary<string, HashSet<string>>();
 
-        public void CompleteCampaign(string campaign, string ending) {
+        public void CompleteCampaign(string campaign, [CanBeNull] string ending) {
             EndingsAchieved.SetDefault(campaign).Add(ending);
             SaveRecord();
         }
@@ -55,33 +55,31 @@ public static class SaveData {
         public long? GetHighScore(string gameIdentifier) =>
             HighScores.TryGetValue(gameIdentifier, out var score) ? (long?) score : null;
 
-        public void CompleteChallenge(FixedDifficulty difficulty, PhaseChallengeRequest cr, IEnumerable<AyaPhoto> photos) {
-            var cs = cr.AsSetting;
-            cs.Difficulty = difficulty;
-            SceneRecord[cs.Key] = new ChallengeCompletion(photos);
+        public void CompleteChallenge(GameRequest req, IEnumerable<AyaPhoto> photos) {
+            SceneRecord[req.Identifier] = new ChallengeCompletion(photos);
             SaveData.SaveRecord();
         }
 
 
-        [CanBeNull] public ChallengeCompletion ChallengeCompletion(DayPhase phase, int c, FixedDifficulty d) {
-            var p = phase.AsSetting;
-            p.ChallengeIndex = c;
-            p.Difficulty = d;
-            return SceneRecord.TryGetValue(p.Key, out var cc) ? cc : null;
+        [CanBeNull] public ChallengeCompletion ChallengeCompletion(DayPhase phase, int c, GameMetadata meta) {
+            var key = GameRequest.GameIdentifer(meta,
+                new DU<CampaignRequest, BossPracticeRequest, PhaseChallengeRequest, StagePracticeRequest>(
+                    new PhaseChallengeRequest(phase, c)));
+            return SceneRecord.TryGetValue(key, out var cc) ? cc : null;
         }
 
-        public bool ChallengeCompleted(DayPhase phase, int c, FixedDifficulty d) =>
-            ChallengeCompletion(phase, c, d) != null;
+        public bool ChallengeCompleted(DayPhase phase, int c, GameMetadata meta) =>
+            ChallengeCompletion(phase, c, meta) != null;
 
-        public bool PhaseCompletedOne(DayPhase phase, FixedDifficulty d) {
+        public bool PhaseCompletedOne(DayPhase phase, GameMetadata meta) {
             for (int ii = 0; ii < phase.challenges.Length; ++ii) {
-                if (ChallengeCompleted(phase, ii, d)) return true;
+                if (ChallengeCompleted(phase, ii, meta)) return true;
             }
             return false;
         }
-        public bool PhaseCompletedAll(DayPhase phase, FixedDifficulty d) {
+        public bool PhaseCompletedAll(DayPhase phase, GameMetadata meta) {
             for (int ii = 0; ii < phase.challenges.Length; ++ii) {
-                if (!ChallengeCompleted(phase, ii, d)) return false;
+                if (!ChallengeCompleted(phase, ii, meta)) return false;
             }
             return true;
         }
@@ -94,7 +92,7 @@ public static class SaveData {
         public int RefreshRate = 60;
         public (int w, int h) Resolution = Consts.BestResolution;
     #if UNITY_EDITOR
-        public static bool TeleportAtPhaseStart => true;
+        public static bool TeleportAtPhaseStart => false;
     #else
         public static bool TeleportAtPhaseStart => false;
     #endif

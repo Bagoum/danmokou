@@ -4,7 +4,7 @@ using Danmaku;
 using UnityEngine;
 
 public class PlayerHP : CoroutineRegularUpdater {
-    public static bool RespawnOnHit { get; } = false;
+    public static bool RespawnOnHit => GameManagement.Difficulty.respawnOnDeath;
     public EffectStrategy OnPreHitEffect;
     public EffectStrategy OnHitEffect;
     public EffectStrategy GoldenAuraEffect;

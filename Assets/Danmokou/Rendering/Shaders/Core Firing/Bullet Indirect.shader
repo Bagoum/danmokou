@@ -39,12 +39,12 @@
 			#pragma multi_compile_local __ FT_ROTATIONAL
 			#pragma multi_compile_local __ FT_FRAME_ANIM
 			#pragma multi_compile_local __ FT_SLIDE_IN
-            //FadeIn is not used by any simple bullets. However, lasers use it (see Basic Sprite.shader)
-			//#pragma multi_compile_local __ FT_FADE_IN
+			#pragma multi_compile_local __ FT_FADE_IN
 			#pragma multi_compile_local __ FT_SCALE_IN
 			#pragma multi_compile_local __ FT_DISPLACE
 			#pragma multi_compile_local __ FT_DISPLACE_POLAR
-			#pragma multi_compile_local __ FT_DISPLACE_BIVERT
+			//Used by lasers but not by bullets
+			//#pragma multi_compile_local __ FT_DISPLACE_BIVERT
 			#pragma multi_compile_local __ FT_RECOLORIZE
 			#pragma multi_compile_instancing
 			#include "UnityCG.cginc"

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using DMath;
@@ -30,6 +31,84 @@ public class Dialoguer : CoroutineRegularUpdater {
     public SpriteRenderer right2;
     public SpriteRenderer center;
     public SpriteRenderer nextPrompt;
+
+    private readonly Dictionary<StandLocation, PiecewiseRender> renders = new Dictionary<StandLocation, PiecewiseRender>();
+
+    private PiecewiseRender NewPiecewise(StandLocation rootSR, DialogueSprite sprite) {
+        if (renders.TryGetValue(rootSR, out var pr)) pr.DestroySpawned();
+        else renders[rootSR] = pr = new PiecewiseRender();
+        pr.Restructure(Target(rootSR), sprite);
+        return pr;
+    }
+
+    private static IEnumerator Dim(PiecewiseRender pr, Color color, float bop, float overT=0.2f) {
+        if (pr.cT?.Cancelled == true) yield break;
+        Color baseColor = pr.lastColor;
+        float baseBop = pr.lastBop;
+        for (float t = 0; t < overT; t += ETime.FRAME_TIME) {
+            pr.lastColor = Color.Lerp(baseColor, color, t / overT);
+            float nextBop = baseBop + M.EOutSine(t / overT) * (bop - baseBop);
+            foreach (var sr in pr.spriteRenders) {
+                sr.color = pr.lastColor;
+                var p = sr.transform.localPosition;
+                p.y += (nextBop - pr.lastBop);
+                sr.transform.localPosition = p;
+            }
+            pr.lastBop = nextBop;
+            if (pr.cT?.Cancelled == true) yield break;
+            yield return null;
+        }
+        pr.lastColor = color;
+    }
+
+    private const float BOPHEIGHT = 0.2f;
+    private void DimAll(StandLocation? except, Color dimColor, Color normalColor) {
+        foreach (var sr in renders.Keys.ToArray()) {
+            renders[sr].cT?.Cancel();
+            renders[sr].cT = new Cancellable();
+            var isExcept = sr == except;
+            RunDroppableRIEnumerator(Dim(renders[sr], 
+                isExcept ? normalColor : dimColor,
+                isExcept ? BOPHEIGHT : 0f));
+        }
+    }
+
+    private static Color Gray(float s) => new Color(s, s, s, 1);
+    private static readonly Color DimColor = Gray(0.7f);
+    private void DimAll(StandLocation? except) => DimAll(except, DimColor, Gray(1f));
+    
+    private class PiecewiseRender {
+        public SpriteRenderer[] spriteRenders;
+        [CanBeNull] public Cancellable cT;
+        public Color lastColor = DimColor;
+        public float lastBop;
+
+        public void Restructure(SpriteRenderer rootSR, DialogueSprite sprite) {
+            var tr = rootSR.transform;
+            var rootOrder = rootSR.sortingOrder;
+            var layer = rootSR.gameObject.layer;
+            spriteRenders = sprite.sprites.Where(x => x.sprite != null).Select(s => {
+                var go = new GameObject {layer = layer};
+                go.transform.SetParent(tr, false);
+                go.transform.localPosition = s.offset * (1 / s.sprite.pixelsPerUnit) + new Vector2(0f, lastBop);
+                var sr = go.AddComponent<SpriteRenderer>();
+                sr.sprite = s.sprite;
+                sr.sortingOrder = ++rootOrder;
+                sr.maskInteraction = rootSR.maskInteraction;
+                sr.sortingLayerID = rootSR.sortingLayerID;
+                return sr;
+            }).ToArray();
+        }
+
+        public void DestroySpawned() {
+            cT?.Cancel();
+            cT = null;
+            foreach (var sr in spriteRenders) {
+                if (sr != null) UnityEngine.Object.Destroy(sr.gameObject);
+            }
+            spriteRenders = new SpriteRenderer[0];
+        }
+    }
 
     private void Awake() {
         main = this;
@@ -142,8 +221,8 @@ public class Dialoguer : CoroutineRegularUpdater {
         main.leftSpeaker.text = currLeft.DisplayName;
         if (stands.ContainsKey(currLeft)) {
             var e = emote ?? GetStandEmote(currLeft) ?? throw new Exception("Could not resolve emote");
-            UpdateStandEmote(currLeft, e);
-        }
+            main.DimAll(UpdateStandEmote(currLeft, e));
+        } else main.DimAll(null);
         main.leftIcon.sprite = currLeft.FindIcon(emote ?? GetStandEmote(currLeft) ?? Emote.NORMAL);
         SetLeftSpeakerActive();
     }
@@ -153,8 +232,8 @@ public class Dialoguer : CoroutineRegularUpdater {
         main.rightSpeaker.text = currRight.DisplayName;
         if (stands.ContainsKey(currRight)) {
             var e = emote ?? GetStandEmote(currRight) ?? throw new Exception("Could not resolve emote");
-            UpdateStandEmote(currRight, e);
-        }
+            main.DimAll(UpdateStandEmote(currRight, e));
+        } else main.DimAll(null);
         main.rightIcon.sprite = currRight.FindIcon(emote ?? GetStandEmote(currRight) ?? Emote.NORMAL);
         SetRightSpeakerActive();
     }
@@ -176,35 +255,39 @@ public class Dialoguer : CoroutineRegularUpdater {
 
     private static Emote? GetStandEmote(IDialogueProfile profile) =>
         stands.TryGetValue(profile, out var x) ? x.e : (Emote?)null;
-    public static void UpdateStandEmote(IDialogueProfile profile, Emote emote) {
-        if (!stands.ContainsKey(profile)) return;
+    public static StandLocation? UpdateStandEmote(IDialogueProfile profile, Emote emote) {
+        if (!stands.ContainsKey(profile)) return null;
         var location = stands[profile].loc;
         stands[profile] = (location, emote);
-        var (flip, sprite) = IsLeft(location) ? profile.FindLeftStand(emote) : profile.FindRightStand(emote);
+        var (flip, sprites) = IsLeft(location) ? profile.FindLeftStand(emote) : profile.FindRightStand(emote);
         var target = main.Target(location);
-        target.sprite = sprite;
+        main.NewPiecewise(location, sprites);
         var tr = target.transform;
         var ls = tr.localScale;
         ls.x = Mathf.Abs(ls.x) * (flip ? -1 : 1);
         tr.localScale = ls;
+        return location;
     }
 
-    private static IEnumerator _FadeStand(SpriteRenderer sr, float time, bool fadeIn, ICancellee cT, Action done) {
+    private static IEnumerator _FadeStand(PiecewiseRender pr, float time, bool fadeIn, ICancellee cT, Action done) {
         var (t0, d) = fadeIn ? (0, ETime.FRAME_TIME) : (time - ETime.FRAME_TIME, -ETime.FRAME_TIME);
-        Color c = sr.color;
         for (; 0 <= t0 && t0 < time; t0 += d) {
+            var c = pr.lastColor;
             c.a = t0 / time;
-            sr.color = c;
+            foreach (var sr in pr.spriteRenders) sr.color = c;
+            if (cT.Cancelled) yield break;
             yield return null;
-            if (cT.Cancelled) break;
         }
-        c.a = fadeIn ? 1 : 0;
-        sr.color = c;
+        var c_ = pr.lastColor;
+        c_.a = fadeIn ? 1 : 0;
+        foreach (var sr in pr.spriteRenders) sr.color = c_;
         done();
     }
 
     public static void FadeStand(IDialogueProfile profile, float time, bool fadeIn, ICancellee cT, Action done) {
-        main.RunRIEnumerator(_FadeStand(main.Target(stands[profile].loc), time, fadeIn, cT, done));
+        if (!main.renders.TryGetValue(stands[profile].loc, out var pr))
+            throw new Exception($"Cannot fade stand that is not being rendered: {profile.DisplayName}");
+        main.RunRIEnumerator(_FadeStand(pr, time, fadeIn, new JointCancellee(cT, pr.cT), done));
     }
 
     public static void SetOpacity(IDialogueProfile profile, float opacity) {
@@ -223,7 +306,7 @@ public class Dialoguer : CoroutineRegularUpdater {
             le.e :
             throw new Exception($"No existing emote for profile {profile.DisplayName}"));
         stands[profile] = (location, emt);
-        UpdateStandEmote(profile, emt);
+        if (currSpeaker == profile) main.DimAll(UpdateStandEmote(profile, emt));
     }
 
     private static readonly Color activeSpeaker = Color.white;
@@ -234,8 +317,9 @@ public class Dialoguer : CoroutineRegularUpdater {
 
     public static void HideDialogue() {
         WaitingOnConfirm = false;
-        main.left1.sprite = main.left2.sprite = main.right1.sprite = main.right2.sprite = main.center.sprite = null;
-        main.total.enabled = false;
+        foreach (var pw in main.renders.Values.ToArray()) pw.DestroySpawned();
+        main.renders.Clear();
+        if (main.gameObject.activeInHierarchy) main.total.enabled = false;
         DialogueActive = false;
     }
     public static void ShowAndResetDialogue() {
@@ -245,7 +329,6 @@ public class Dialoguer : CoroutineRegularUpdater {
         currLeft = currRight = null;
         main.leftSpeaker.text = "";
         main.rightSpeaker.text = "";
-        main.left1.sprite = main.left2.sprite = main.right1.sprite = main.right2.sprite = main.center.sprite = null;
         main.left1.color = main.left2.color = main.right1.color = main.right2.color = main.center.color = Color.white;
         stands.Clear();
         main.total.enabled = true;

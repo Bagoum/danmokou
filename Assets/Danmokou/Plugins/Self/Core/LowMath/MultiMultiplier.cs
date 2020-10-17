@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace DMath {
@@ -9,9 +10,15 @@ public class MultiMultiplier {
     }
     public float Value { get; private set; }
     private readonly HashSet<Token> tokens = new HashSet<Token>();
+    private readonly Action<float> onChange;
 
-    public MultiMultiplier(float value) {
+    public MultiMultiplier(float value, Action<float> onChange) {
         Value = value;
+        this.onChange = onChange;
+    }
+
+    private void Changed() {
+        this.onChange?.Invoke(Value);
     }
 
     public void RevokeAll(Priority minPriority) {
@@ -23,12 +30,14 @@ public class MultiMultiplier {
         if (tokens.Contains(t)) {
             tokens.Remove(t);
             Value /= t.multiplier;
+            Changed();
             return true;
         } else return false;
     }
 
     public Token CreateMultiplier(float m, Priority p = Priority.CLEAR_PHASE) {
         Value *= m;
+        Changed();
         var t = new Token(this, p, m);
         tokens.Add(t);
         return t;

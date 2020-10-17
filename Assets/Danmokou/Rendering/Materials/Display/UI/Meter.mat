@@ -72,7 +72,7 @@ Material:
     - _DetailNormalMapScale: 1
     - _DimLT: 0.6666667
     - _DstBlend: 0
-    - _F: 0.638
+    - _F: 1
     - _FI: 0
     - _FireMagnitude: 0
     - _GlossMapScale: 1
@@ -100,7 +100,7 @@ Material:
     - _ToggleFire: 0
     - _UVSec: 0
     - _Value: 0.33333334
-    - _YX: 0.0137
+    - _YX: 0.01818
     - _YY: 0.2
     - _ZWrite: 1
     m_Colors:

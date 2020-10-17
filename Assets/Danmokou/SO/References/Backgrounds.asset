@@ -21,3 +21,11 @@ MonoBehaviour:
     - name: white
       prefab: {fileID: 5180723301924424041, guid: 8c99e3f476d4bfa46b61d3a9d8b35c5b,
         type: 3}
+  - groupTitle: Example
+    prefabs:
+    - name: example3d_1
+      prefab: {fileID: 4292011629249164648, guid: fca1d3fb2f2d4b94f8f015aae85b42b9,
+        type: 3}
+    - name: example3d_2
+      prefab: {fileID: 4292011629249164648, guid: 0bb1aa336ceec084198bdd9b5761f74b,
+        type: 3}

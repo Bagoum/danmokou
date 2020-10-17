@@ -68,14 +68,17 @@ public class XMLMainMenuDays : XMLMenu {
         var defaultPlayer = References.dayCampaign.players[0];
         var defaultShot = defaultPlayer.shots[0];
 
+        PlayerTeam Team() => new PlayerTeam(0, Subshot.TYPE_D, (defaultPlayer, defaultShot));
+        GameMetadata Meta() => new GameMetadata(Team(), new DifficultySettings(dfc), CampaignMode.SCENE_CHALLENGE);
+
         SceneSelectScreen = new UIScreen(DayCampaign.days[0].bosses.SelectMany(
             b => b.phases.Select(p => {
                 //TODO: this return is not safe if you change the difficulty.
-                if (!p.Enabled(dfc)) return new UINode(() => p.Title(dfc)).With(medDescrClass).EnabledIf(false);
+                if (!p.Enabled(Meta())) return new UINode(() => p.Title(Meta())).With(medDescrClass).EnabledIf(false);
                 Challenge c = p.challenges[0];
                 void SetChallenge(int idx) {
                     c = p.challenges[idx];
-                    var completion = SaveData.r.ChallengeCompletion(p, idx, dfc);
+                    var completion = SaveData.r.ChallengeCompletion(p, idx, Meta());
                     AyaPhotoBoard.ConstructPhotos(completion?.photos, photoSize);
                 }
                 (bool, UINode) Confirm() {
@@ -85,12 +88,12 @@ public class XMLMainMenuDays : XMLMenu {
                         player: new PlayerTeam(0, Subshot.TYPE_D, (defaultPlayer, defaultShot))).Run();
                     return (true, null);
                 }
-                return new CacheNavigateUINode(TentativeCache, () => p.Title(dfc), 
+                return new CacheNavigateUINode(TentativeCache, () => p.Title(Meta()), 
                     new UINode(() => c.Description(p.boss.boss)).SetConfirmOverride(Confirm),
                     new DynamicOptionNodeLR2<int>("", VTALR2Option, SetChallenge, 
                         p.challenges.Length.Range().ToArray, (i, v, on) => {
                             v.Query(null, "bracket").ForEach(x => x.style.display = on ? DisplayStyle.Flex : DisplayStyle.None);
-                            v.Q("Star").style.unityBackgroundImageTintColor = new StyleColor(p.Completed(i, dfc) ?
+                            v.Q("Star").style.unityBackgroundImageTintColor = new StyleColor(p.Completed(i, Meta()) ?
                                 p.boss.boss.colors.uiHPColor :
                                 new Color(1, 1, 1, 0.52f));
                         }).With(VTALR2OptionNode).With(optionNoKeyClass)
@@ -99,8 +102,8 @@ public class XMLMainMenuDays : XMLMenu {
                             .SetOnLeave(_ => AyaPhotoBoard.TearDownAndHide()),
                     new UINode(() => "Press Z to start level".Locale("Zキー押すとレベルスタート")).SetConfirmOverride(Confirm)
                 ).With(medDescrClass).With(
-                    p.CompletedAll(dfc) ? completedAllClass :
-                    p.CompletedOne(dfc) ? completed1Class :
+                    p.CompletedAll(Meta()) ? completedAllClass :
+                    p.CompletedOne(Meta()) ? completed1Class :
                     null
                 );
             })).ToArray()).With(VTASceneSelect);

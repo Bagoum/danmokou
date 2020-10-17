@@ -53,8 +53,8 @@ GenCtx provides these automatic aliases in `GCXF<T>` functions:
 | &times        | number of times the repeater is running for                  |
 | &rv2          | running RV2 value                                            |
 | &brv2         | parent RV2 value                                             |
-| &st0          | gcx.summonTime                                               |
-| &st           | gcx.summonTime * GameManagement.Difficulty.bulletSpeedMod    |
+| &st           | gcx.summonTime                                               |
+| &stm          | gcx.summonTime * GameManagement.Difficulty.bulletSpeedMod    |
 |               | **Automatic Bindings**                                       |
 | &lr/&ud       | 1 when iteration number is even and -1 when odd (bindLR/bindUD) |
 | &rl/&du       | -1 when iteration number is even and 1 when odd (bindLR/bindUD) |

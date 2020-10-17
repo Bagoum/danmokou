@@ -145,9 +145,9 @@ public class Cancellable : ICancellee {
 public class JointCancellee : ICancellee {
     private readonly ICancellee c1;
     private readonly ICancellee c2;
-    public JointCancellee(ICancellee c1, ICancellee c2) {
-        this.c1 = c1;
-        this.c2 = c2;
+    public JointCancellee([CanBeNull] ICancellee c1, [CanBeNull] ICancellee c2) {
+        this.c1 = c1 ?? Cancellable.Null;
+        this.c2 = c2 ?? Cancellable.Null;
     }
     public bool Cancelled => c1.Cancelled || c2.Cancelled;
 }

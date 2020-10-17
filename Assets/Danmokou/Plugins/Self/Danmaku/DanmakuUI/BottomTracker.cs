@@ -46,13 +46,14 @@ public class BottomTracker : RegularUpdater {
             }
             if (containerActive) {
                 var p = tr.localPosition;
-                p.x = source.GlobalPosition().x;
-                if (Mathf.Abs(p.x) > maxF) p.x = Mathf.Sign(p.x) * maxF;
+                p.x = Mathf.Clamp(source.GlobalPosition().x, 
+                    GameManagement.References.bounds.left + yield,
+                    GameManagement.References.bounds.right - yield);
                 tr.localPosition = p;
                 text.color = new Color(1, 1, 1, Mathf.Clamp01(Mathf.Lerp(0.1f, 1.5f, enemy == null ? 1 : enemy.DisplayBarRatio)));
             }
         }
     }
 
-    private const float maxF = 4.6f;
+    private const float yield = 0.4f;
 }

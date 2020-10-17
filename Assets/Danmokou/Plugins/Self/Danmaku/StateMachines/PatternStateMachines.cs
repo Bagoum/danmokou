@@ -57,19 +57,18 @@ public class PatternSM : SequentialSM {
         var subsummons = new List<BehaviorEntity>();
         foreach (var (i,b) in all.Enumerate()) {
             var target = smh.Exec;
-            Enemy e;
             if (i > 0) {
                 target = UnityEngine.Object.Instantiate(b.boss).GetComponent<BehaviorEntity>();
                 target.Initialize(new Velocity(new Vector2(-50f, 0f), 0f), SMRunner.Null);
                 subsummons.Add(target);
             }
-            if (target.TryAsEnemy(out e)) {
-                e.ConfigureBoss(b);
-                e.SetDamageable(false);
+            if (target.TryAsEnemy(out var e)) {
                 if (i > 0) {
                     e.distorter = null; // i dont really like this but it overlaps weirdly
                     subbosses.Add(e);
                 }
+                e.ConfigureBoss(b);
+                e.SetDamageable(false);
             }
             if (b.trackName.Length > 0) bts.Add(UIManager.TrackBEH(target, b.trackName, smh.cT));
         }
@@ -183,6 +182,7 @@ public class PhaseSM : SequentialSM {
             if (props.photoHP.Try(out var photoHP)) {
                 smh.Exec.Enemy.SetPhotoHP(photoHP, photoHP);
             } else if ((props.hp ?? props.phaseType?.DefaultHP()).Try(out var hp)) {
+                if (props.Boss != null) hp = (int) (hp * GameManagement.Difficulty.bossHPMod);
                 smh.Exec.Enemy.SetHP(hp, hp);
             }
             if ((props.hpbar ?? props.phaseType?.HPBarLength()).Try(out var hpbar)) {

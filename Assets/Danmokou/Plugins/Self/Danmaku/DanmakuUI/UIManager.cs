@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Linq;
 using System.Text;
 using UnityEngine;
 using TMPro;
@@ -17,7 +18,8 @@ public struct PrioritySprite {
 }
 public class UIManager : MonoBehaviour {
     private static UIManager main;
-    private Camera cam;
+    public bool autoShiftCamera;
+    public Camera camera;
     public XMLPauseMenu PauseManager;
     public static XMLPauseMenu PauseMenu => main.PauseManager;
     public XMLDeathMenu DeathManager;
@@ -30,8 +32,7 @@ public class UIManager : MonoBehaviour {
     public TextMeshPro pivMult;
     public TextMeshPro lifePoints;
     public TextMeshPro graze;
-    public TextMeshPro debugBombs;
-    public TextMeshPro debugPower;
+    public TextMeshPro power;
     public TextMeshPro message;
     public TextMeshPro centerMessage;
     private const string deathCounterFormat = "死{0:D2}";
@@ -61,7 +62,6 @@ public class UIManager : MonoBehaviour {
 
     private void Awake() {
         main = this;
-        cam = GetComponent<Camera>();
         spellColor = spellnameText.color;
         spellColor.a = 1;
         spellColorTransparent = spellColor;
@@ -83,7 +83,11 @@ public class UIManager : MonoBehaviour {
         ShowBossLives(0);
         CloseProfile();
         SetBossHPLoader(null);
+        if (autoShiftCamera) camera.transform.localPosition = -References.bounds.center;
     }
+    
+    public static float MenuRightOffset =>
+        MainCamera.ResourcePPU * (MainCamera.HorizRadius - References.bounds.right - References.bounds.center.x);
 
     private void Start() {
         UpdatePB();
@@ -138,7 +142,7 @@ public class UIManager : MonoBehaviour {
     private static bool campaignRequiresUpdate = false;
     private void Update() {
         time += ETime.dT;
-        accdT += Time.deltaTime;
+        accdT += Time.unscaledDeltaTime;
         if (--fpsUpdateCounter == 0) {
             fps.text = string.Format(fpsFormat, fpsSmooth / accdT);
             fpsUpdateCounter = fpsSmooth;
@@ -303,12 +307,14 @@ public class UIManager : MonoBehaviour {
     }
 
     public SpriteRenderer[] healthPoints;
+    public SpriteRenderer[] bombPoints;
     public Sprite healthEmpty;
     public Sprite[] healthItrs;
-    private const string pivMultFormat = "x<mspace=1.7>{0:00.00}</mspace>";
+    public Sprite[] bombItrs;
+    private const string pivMultFormat = "x<mspace=1.53>{0:00.00}</mspace>";
     private const string lifePointsFormat = "<mspace=1.5>{0}/{1}</mspace>";
     private const string grazeFormat = "<mspace=1.5>{0}</mspace>";
-    private const string powerFormat = "<mspace=1.0>{0:F2}</mspace>";
+    private const string powerFormat = "<mspace=1.5>{0:F2}/{1:F2}</mspace>";
 
     private static string ToMonospaceThousands(long val, float mspace=1.7f) {
         string ms = $"<mspace={mspace}>";
@@ -333,16 +339,19 @@ public class UIManager : MonoBehaviour {
         pivMult.text = string.Format(pivMultFormat, campaign.PIV);
         lifePoints.text = string.Format(lifePointsFormat, campaign.LifeItems, campaign.NextLifeItems);
         graze.text = string.Format(grazeFormat, campaign.Graze);
-        debugBombs.text = string.Format(grazeFormat, campaign.Bombs);
-        debugPower.text = string.Format(powerFormat, campaign.Power);
+        power.text = string.Format(powerFormat, campaign.Power, CampaignData.powerMax);
         for (int ii = 0; ii < healthPoints.Length; ++ii) healthPoints[ii].sprite = healthEmpty;
         for (int hi = 0; hi < healthItrs.Length; ++hi) {
             for (int ii = 0; ii + hi * healthPoints.Length < campaign.Lives && ii < healthPoints.Length; ++ii) {
                 healthPoints[ii].sprite = healthItrs[hi];
             }
         }
-        //int extra = campaign.Lives - healthPoints.Length;
-        //extraHP.text = extra > 0 ? string.Format(extraHPFormat, extra) : "";
+        for (int ii = 0; ii < bombPoints.Length; ++ii) bombPoints[ii].sprite = healthEmpty;
+        for (int bi = 0; bi < bombItrs.Length; ++bi) {
+            for (int ii = 0; ii + bi * bombPoints.Length < campaign.Bombs && ii < bombPoints.Length; ++ii) {
+                bombPoints[ii].sprite = bombItrs[bi];
+            }
+        }
     }
 
     public static void UpdatePlayerUI() => campaignRequiresUpdate = true;
@@ -451,8 +460,8 @@ public class UIManager : MonoBehaviour {
     public TextMeshPro challengeHeader;
     public TextMeshPro challengeText;
 
-    public static void RequestChallengeDisplay(PhaseChallengeRequest cr, FixedDifficulty d) {
-        main.challengeHeader.text = cr.phase.Title(d);
+    public static void RequestChallengeDisplay(PhaseChallengeRequest cr, GameMetadata meta) {
+        main.challengeHeader.text = cr.phase.Title(meta);
         main.challengeText.text = cr.Description;
     }
 }

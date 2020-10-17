@@ -8,6 +8,10 @@ public class SFXConfig : ScriptableObject {
     public float volume;
     public float timeout = -1f;
     public float Timeout => timeout < 0 ? 0.08f : timeout;
+    /// <summary>
+    /// Looped SFX are always pausable
+    /// </summary>
+    public bool pausable;
     [Header("Loop Features")]
     public bool loop;
     public float loopTimeCheck;

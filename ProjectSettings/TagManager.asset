@@ -33,7 +33,7 @@ TagManager:
   - 
   - 
   - 
-  - 
+  - ARBITRARY_CAPTURE_NULL
   - ARBITRARY_CAPTURE_1
   - ARBITRARY_CAPTURE_2
   - SpecialMainCamera

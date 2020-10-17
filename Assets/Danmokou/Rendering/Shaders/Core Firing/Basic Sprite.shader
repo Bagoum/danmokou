@@ -19,6 +19,7 @@
 		[Toggle(FT_CYCLE)] _ToggleCycle("Do Cycle?", Float) = 0
 		[Toggle(FT_FADE_IN)] _ToggleFadeIn("Do FadeIn?", Float) = 0
 		[Toggle(FT_HUESHIFT)] _ToggleHueShift("Do Hue Shift?", Float) = 0
+		[Toggle(FT_CIRCLECUT)] _ToggleCircleCut("Do Circle Cut?", Float) = 0
 		_RecolorizeB("Recolorize Black", Color) = (1, 0, 0, 1)
 		_RecolorizeW("Recolorize White", Color) = (0, 0, 1, 1)
 	}
@@ -45,6 +46,7 @@
 			#pragma multi_compile_local __ FT_DISPLACE_BIVERT
 			#pragma multi_compile_local __ FT_HUESHIFT
 			#pragma multi_compile_local __ FT_RECOLORIZE
+			#pragma multi_compile_local __ FT_CIRCLECUT
 			#include "UnityCG.cginc"
 			#include "Assets/Danmokou/CG/BagoumShaders.cginc"
 
@@ -80,6 +82,8 @@
 			float4 _RecolorizeB;
 			float4 _RecolorizeW;
         #endif
+        
+            static float circleCutSmooth = 0.002;
 
 			float4 frag(fragment f) : SV_Target { 
 	            DISPLACE(f.uv, _T);
@@ -89,6 +93,10 @@
             #endif
             #ifdef FT_RECOLORIZE
                 c.rgb = lerp(_RecolorizeB, _RecolorizeW, c.r).rgb;
+            #endif
+            #ifdef FT_CIRCLECUT
+                float r = length(f.uv - float2(0.5, 0.5));
+                c = lerp(c, float4(0,0,0,0), smoothstep(-circleCutSmooth, circleCutSmooth, r - 0.5));
             #endif
 				return c;
 			}

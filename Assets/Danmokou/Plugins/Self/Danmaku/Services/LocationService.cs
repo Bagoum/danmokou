@@ -12,26 +12,29 @@ using static DMath.ExM;
 using tfloat = TEx<float>;
 using tv2 = TEx<UnityEngine.Vector2>;
 using ev2 = DMath.EEx<UnityEngine.Vector2>;
+using static GameManagement;
 
+[Serializable]
+public struct FieldBounds {
+    // Default LR is +-5, scene game is +-4, and Touhou equivalent is +-3.62
+    public float left;
+    public float right;
+    public float top;
+    public float bot;
+    //Eg. set this to (-1, 0) for a traditional Touhou "left-leaning" play area.
+    public Vector2 center;
+}
 namespace Danmaku {
 public static class LocationService {
-#if WIDTH_TH
-    public const float Left = -3.6f;
-    public const float Right = 3.6f;
-#elif VER_BRUH || WIDTH_1
-    public const float Left = -4f;
-    public const float Right = 4f;
-#else
-    public const float Left = -5f;
-    public const float Right = 5f;
-#endif
-    public const float Bot = -4.5f;
-    public const float Top = 4f;
-    public const float Width = Right - Left;
-    public const float Height = Top - Bot;
+    public static float Left => References.bounds.left;
+    public static float Right => References.bounds.right;
+    public static float Bot => References.bounds.bot;
+    public static float Top => References.bounds.top;
+    public static float Width => Right - Left;
+    public static float Height => Top - Bot;
     public static float LeftPlayerBound => Left + 0.1f;
     public static float RightPlayerBound => Right - 0.1f;
-    public static float BotPlayerBound => Bot + 0.6f;
+    public static float BotPlayerBound => Bot + 0.42f;
     public static float TopPlayerBound => Top - 0.1f;
     public static readonly Ex left = Ex.Constant(Left);
     public static readonly Ex right = Ex.Constant(Right);

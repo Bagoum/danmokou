@@ -1561,8 +1561,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 682625203}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -1, y: 4.25, z: 0}
-  m_LocalScale: {x: 7.2, y: 0.5, z: 1}
+  m_LocalPosition: {x: -1, y: 4.3, z: 0}
+  m_LocalScale: {x: 7.2, y: 0.4, z: 1}
   m_Children: []
   m_Father: {fileID: 1293270131}
   m_RootOrder: 0
@@ -1701,7 +1701,7 @@ PrefabInstance:
         type: 3}
       propertyPath: references
       value: 
-      objectReference: {fileID: 11400000, guid: 2934f33f4c06e2c4ab658b65c87c3b4f,
+      objectReference: {fileID: 11400000, guid: 06753fbaf41eaf0488ce53eed008f35b,
         type: 2}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: cca0d5f4466f12c48b79ed20b74f5cef, type: 3}
@@ -4190,11 +4190,6 @@ PrefabInstance:
       propertyPath: m_textInfo.pageCount
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 3731892095659257998, guid: 2a75209a30e145949a5bc2f614255ea8,
-        type: 3}
-      propertyPath: m_LocalPosition.x
-      value: -1
-      objectReference: {fileID: 0}
     - target: {fileID: 3804283804176791356, guid: 2a75209a30e145949a5bc2f614255ea8,
         type: 3}
       propertyPath: m_textInfo.characterCount
@@ -4539,10 +4534,15 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 915077931262652777, guid: fef64f83245e2b448a27bd388149c8f6,
+        type: 3}
+      propertyPath: defaultBGCPrefab
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 1017966838409782185, guid: fef64f83245e2b448a27bd388149c8f6,
         type: 3}
       propertyPath: m_LocalPosition.x
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1017966838409782185, guid: fef64f83245e2b448a27bd388149c8f6,
         type: 3}

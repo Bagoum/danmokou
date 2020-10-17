@@ -12,6 +12,7 @@ public class BackgroundController : CoroutineRegularUpdater {
     public Color tint;
     private MaterialPropertyBlock fragmentPB;
     public ArbitraryCapturer capturer;
+    public bool runWhileHidden;
 
     private BackgroundTransition.ShatterConfig currentShatter;
     private Action shatterCB;
@@ -24,6 +25,7 @@ public class BackgroundController : CoroutineRegularUpdater {
     private int arb1Mask;
     private int arb2Layer;
     private int arb2Mask;
+    private int arbNullLayer;
     protected int DrawToLayer { get; private set; }
     [CanBeNull] public GameObject source { get; private set; }
     protected virtual void Awake() {
@@ -34,16 +36,21 @@ public class BackgroundController : CoroutineRegularUpdater {
         arb1Mask = LayerMask.GetMask("ARBITRARY_CAPTURE_1");
         arb2Layer = LayerMask.NameToLayer("ARBITRARY_CAPTURE_2");
         arb2Mask = LayerMask.GetMask("ARBITRARY_CAPTURE_2");
+        arbNullLayer = LayerMask.NameToLayer("ARBITRARY_CAPTURE_NULL");
         fragmentPB = new MaterialPropertyBlock();
         if (capturer == null) capturer = MainCamera.CreateArbitraryCapturer(tr);
     }
 
-    private void Start() => AssignLayers();
+    private void Start() => AssignLayersNext();
 
     private static int nextLayer = 0;
-    private void AssignLayers() {
+    private void AssignLayersNext() {
         nextLayer = (nextLayer + 1) % 2;
         var (layer, mask) = nextLayer == 0 ? (arb1Layer, arb1Mask) : (arb2Layer, arb2Mask);
+        _AssignLayers(layer, mask);
+    }
+
+    private void _AssignLayers(int layer, int mask) {
         capturer.Camera.cullingMask = mask;
         SetLayerRecursively(gameObject, DrawToLayer = layer);
     }
@@ -148,6 +155,21 @@ public class BackgroundController : CoroutineRegularUpdater {
     protected override void OnDisable() {
         Camera.onPreCull -= Render;
         base.OnDisable();
+    }
+
+    public void Hide() {
+        if (runWhileHidden) {
+            _AssignLayers(arbNullLayer, 0);
+            capturer.Camera.gameObject.SetActive(false);
+        } else {
+            gameObject.SetActive(false);
+        }
+    }
+
+    public void Show() {
+        capturer.Camera.gameObject.SetActive(true);
+        gameObject.SetActive(true);
+        AssignLayersNext();
     }
 
     public void Kill() {

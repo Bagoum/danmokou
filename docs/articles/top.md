@@ -33,7 +33,7 @@ Here is a (not entirely complete) feature list for DMK:
 - Script analysis and practice architecture
 - Curved lasers, curvy lasers, and wavy lasers (yes, they're all different)
 - Arbitrary functions for bullet movement  (No other engine supports this!)
-- Optimized rendering pathway batching 1000+ bullets at a time 
+- Optimized rendering pathway batching 500+ bullets at a time 
 - Engine handling for complex cancellation pathways
 - Zero-allocation bullets-- no lag and no garbage collector spikes!
 

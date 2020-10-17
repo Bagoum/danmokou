@@ -129,6 +129,7 @@ public class XMLPauseMenu : XMLMenu {
         base.Start();
         HideOptions(false);
         MenuActive = false;
+        UI.style.right = UIManager.MenuRightOffset;
     }
     public void HideOptions(bool withSave) {
         if (UITop != null) {

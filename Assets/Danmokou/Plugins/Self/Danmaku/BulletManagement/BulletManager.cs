@@ -630,10 +630,9 @@ public partial class BulletManager {
             sbc.Delete(ii, true);
         }
         public override void UpdateVelocityAndControls() {
-            float dT = GameManagement.FRAME_TIME_BULLET;
             for (int ii = 0; ii < temp_last; ++ii) {
                 ref SimpleBullet sbn = ref arr[ii];
-                sbn.bpi.t += dT;
+                sbn.bpi.t += ETime.FRAME_TIME;
                 if (sbn.bpi.t > ttl) {
                     Delete(ii, false);
                 }

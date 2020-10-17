@@ -609,6 +609,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: UICamera
       objectReference: {fileID: 0}
+    - target: {fileID: 1122796421477933682, guid: 2a75209a30e145949a5bc2f614255ea8,
+        type: 3}
+      propertyPath: autoShiftCamera
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1361022153067748540, guid: 2a75209a30e145949a5bc2f614255ea8,
         type: 3}
       propertyPath: m_textInfo.characterCount
@@ -707,6 +712,16 @@ PrefabInstance:
     - target: {fileID: 2492790627810579983, guid: 2a75209a30e145949a5bc2f614255ea8,
         type: 3}
       propertyPath: m_textInfo.pageCount
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2803262225153982279, guid: 2a75209a30e145949a5bc2f614255ea8,
+        type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 2803262225153982279, guid: 2a75209a30e145949a5bc2f614255ea8,
+        type: 3}
+      propertyPath: m_WasSpriteAssigned
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2949524807233276489, guid: 2a75209a30e145949a5bc2f614255ea8,
@@ -1138,6 +1153,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: NonUICameras
+      objectReference: {fileID: 0}
+    - target: {fileID: 6446556431983923315, guid: fef64f83245e2b448a27bd388149c8f6,
+        type: 3}
+      propertyPath: autoShiftCamera
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: fef64f83245e2b448a27bd388149c8f6, type: 3}

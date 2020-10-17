@@ -15,6 +15,7 @@ public class AyaPhotoBoard : MonoBehaviour {
         public Vector2 pinLocation(int pin, int inStrip) {
             if (pin < 0 || pin >= maxPins) throw new Exception($"Pin index out of range: {{pin}}/{maxPins}");
             if (maxPins == 1) return start;
+            if (inStrip == 1) return (start + end) * 0.5f;
             return Vector2.Lerp(start, end, pin / (Math.Min(inStrip, maxPins) - 1f));
         }
     }

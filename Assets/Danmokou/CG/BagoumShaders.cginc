@@ -28,8 +28,8 @@ float _SlideInT;
 float _ScaleInMin;
 float _ScaleInT;
 #ifdef FT_SCALE_IN
-    //#define SCALEIN(dir, t) dir *= _ScaleInMin + (1 - _ScaleInMin) * smoothstep(0.0, _ScaleInT, t);
-    #define SCALEIN(dir, t) dir *= smoothstep(0.0, _ScaleInT, t);
+    #define SCALEIN(dir, t) dir *= _ScaleInMin + (1 - _ScaleInMin) * smoothstep(0.0, _ScaleInT, t);
+    //#define SCALEIN(dir, t) dir *= smoothstep(0.0, _ScaleInT, t);
 #else
     #define SCALEIN(dir, t) { } 
 #endif

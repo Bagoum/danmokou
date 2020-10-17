@@ -16,3 +16,9 @@ MonoBehaviour:
   clip: {fileID: 8300000, guid: 4690f1ce87502b741913d0154e3a05eb, type: 3}
   volume: 0.2
   timeout: -1
+  pausable: 1
+  loop: 0
+  loopTimeCheck: 0
+  pitch: 1
+  priority: -1
+  feature: 0

@@ -46,15 +46,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   destructible: 0
+  deletable: 0
   grazeEveryFrames: 30
   screenCullRadius: 3
   renderPriority: 1900
   renderMode: 1
-  fadeInTime: 0
-  slideInTime: 0.5
-  scaleInTimeMin:
-    var1: 0.8
-    var2: 0
+  fadeIn: {fileID: 11400000, guid: 2410175c27da8da448663eebddf7b461, type: 2}
   rotational: 1
   colorizing:
     FlatLight: 0

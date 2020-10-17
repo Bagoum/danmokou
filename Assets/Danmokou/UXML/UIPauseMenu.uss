@@ -1,9 +1,9 @@
 #Pause {
     position: absolute;
-    top: 120px;
-    right: 720px;
+    top: 96px;
+    right: 0;
     width: 1200px;
-    height: 1920px;
+    height: 1984px;
     background-image: url('/Assets/Danmokou/Sprites/BGPatterns/nasa/PIA07841~medium-red.jpg');
     -unity-background-scale-mode: scale-and-crop;
     -unity-background-image-tint-color: rgba(91, 91, 91, 0.76);
@@ -82,4 +82,3 @@
     right: 960px;
     position: absolute;
 }
-

@@ -19,9 +19,10 @@ public class GenCtx : IDisposable {
         else throw new Exception($"The GCX does not contain a float value {key}.");
     }
     public bool TryGetFloat(string key, out float f) {
+        //Note: duplicate all entries here in TExGCX
         if (key == "i") f = i;
         else if (key == "pi") f = pi;
-        else if (key == "st") f = SummonTime * GameManagement.Difficulty.bulletSpeedMod;
+        else if (key == "stm") f = SummonTime * GameManagement.Difficulty.bulletSpeedMod;
         else return fs.TryGetValue(key, out f);
         return true;
     }
@@ -61,8 +62,8 @@ public class GenCtx : IDisposable {
         set => rv2s["brv2"] = value;
     }
     public float SummonTime {
-        get => fs["st0"];
-        set => fs["st0"] = value;
+        get => fs["st"];
+        set => fs["st"] = value;
     }
     public Vector2 Loc => exec.GlobalPosition();
     [UsedImplicitly]

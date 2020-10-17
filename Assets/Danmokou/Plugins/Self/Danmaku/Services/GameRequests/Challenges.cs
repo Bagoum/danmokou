@@ -46,13 +46,14 @@ public readonly struct SceneChallengeReqest : IChallengeRequest {
     public SceneChallengeReqest(GameRequest gr, PhaseChallengeRequest cr) {
         this.gr = gr;
         this.cr = cr;
-        difficulty = gr.difficulty.standard ?? throw new Exception("Scene challenges must used fixed difficulties");
+        difficulty = gr.metadata.difficulty.standard ?? 
+                     throw new Exception("Scene challenges must used fixed difficulties");
     }
 
     public void Initialize() {
         //Prevents load lag if this is executed on scene change while camera transition is up
         StateMachineManager.FromText(cr.Boss.stateMachine);
-        UIManager.RequestChallengeDisplay(cr, difficulty);
+        UIManager.RequestChallengeDisplay(cr, gr.metadata);
     }
 
     public void Start(BehaviorEntity exec) {
@@ -65,14 +66,14 @@ public readonly struct SceneChallengeReqest : IChallengeRequest {
         Log.Unity($"PASSED challenge {cr.Description}");
         if (gr.Saveable) {
             Log.Unity("Committing challenge to save data");
-            SaveData.r.CompleteChallenge(difficulty, cr, ChallengeManager.ChallengePhotos);
+            SaveData.r.CompleteChallenge(gr, ChallengeManager.ChallengePhotos);
         }
         
-        if (gr.replay == null && cr.NextChallenge(difficulty).Try(out var next)) {
+        if (gr.replay == null && cr.NextChallenge(gr.metadata).Try(out var next)) {
             Replayer.Cancel(); //can't replay both scenes together
             Log.Unity($"Autoproceeding to next challenge: {next.Description}");
-            StaticNullableStruct.LastGame = new GameRequest(gr.cb, gr.difficulty, new GameLowRequest(next), 
-                true, gr.team, null);
+            StaticNullableStruct.LastGame = new GameRequest(gr.cb, gr.metadata.difficulty, new GameLowRequest(next), 
+                true, gr.metadata.team, null);
             ChallengeManager.TrackChallenge(new SceneChallengeReqest(
                 StaticNullableStruct.LastGame.Value, next));
             ChallengeManager.LinkBEH(ctx.exec);
@@ -109,7 +110,7 @@ public readonly struct PhaseChallengeRequest {
     public readonly Challenge challenge;
     public int ChallengeIdx => phase.challenges.IndexOf(challenge);
     public string Description => challenge.Description(Boss);
-    public PhaseChallengeRequest? NextChallenge(Enums.FixedDifficulty d) {
+    public PhaseChallengeRequest? NextChallenge(GameMetadata d) {
         if (challenge is Challenge.DialogueC dc && dc.point == Challenge.DialogueC.DialoguePoint.INTRO) {
             if (phase.Next?.CompletedOne(d) == false) return new PhaseChallengeRequest(phase.Next);
         } else if (phase.Next?.challenges?.Try(0) is Challenge.DialogueC dce &&
@@ -120,29 +121,20 @@ public readonly struct PhaseChallengeRequest {
         return null;
     }
 
-    public PhaseChallengeRequest(DayPhase p) {
+    public PhaseChallengeRequest(DayPhase p, int index = 0) {
         phase = p;
-        challenge = p.challenges[0];
+        challenge = p.challenges[index];
     }
     public PhaseChallengeRequest(DayPhase p, Challenge c) {
         phase = p;
         challenge = c;
     }
 
-    public (((string, int), int), int) Key => (phase.Key, ChallengeIdx);
+    public ((((string, string), int), int), int) Key => (phase.Key, ChallengeIdx);
 
-    public static PhaseChallengeRequest Reconstruct((((string, int), int), int) key) {
+    public static PhaseChallengeRequest Reconstruct(((((string, string), int), int), int) key) {
         var phase = DayPhase.Reconstruct(key.Item1);
         return new PhaseChallengeRequest(phase, phase.challenges[key.Item2]);
-    }
-
-    public ChallengeSetting AsSetting {
-        get {
-            var p = phase.AsSetting;
-            p.ChallengeIndex = ChallengeIdx;
-            return p;
-
-        }
     }
 }
 public abstract class Challenge {
@@ -263,29 +255,6 @@ public abstract class Challenge {
             time = t;
         }
     }
-}
-
-/// <summary>
-/// A struct that uniquely identifies a challenge game request.
-/// <br/>While GameRequest has a Key that does the same thing,
-/// this struct can trivially be created on-the-fly to check hypothetical challenge completion.
-/// </summary>
-public struct ChallengeSetting {
-    public string CampaignKey { get; set; }
-    public string DayKey { get; set; }
-    public string BossKey { get; set; }
-    public int PhaseIndex { get; set; }
-    public int ChallengeIndex { get; set; }
-    public Enums.FixedDifficulty Difficulty { get; set; }
-
-    public (string, string, string, int, int, Enums.FixedDifficulty) Tuple =>
-        (CampaignKey, DayKey, BossKey, PhaseIndex, ChallengeIndex, Difficulty);
-
-    public string Key => $"{CampaignKey}-{DayKey}-{BossKey}-{PhaseIndex}-{ChallengeIndex}-{Difficulty.Describe()}";
-
-    public override bool Equals(object other) => other is ChallengeSetting cs && Tuple == cs.Tuple;
-
-    public override int GetHashCode() => Tuple.GetHashCode();
 }
 
 public class ChallengeCompletion {

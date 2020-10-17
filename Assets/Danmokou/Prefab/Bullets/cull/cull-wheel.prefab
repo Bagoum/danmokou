@@ -51,11 +51,7 @@ MonoBehaviour:
   screenCullRadius: 3
   renderPriority: 200
   renderMode: 0
-  fadeInTime: 0
-  slideInTime: 0
-  scaleInTimeMin:
-    var1: 0
-    var2: 0
+  fadeIn: {fileID: 11400000, guid: 3ac08ee0b5cc1894a97ec35c140268ae, type: 2}
   rotational: 1
   colorizing:
     FlatLight: 1

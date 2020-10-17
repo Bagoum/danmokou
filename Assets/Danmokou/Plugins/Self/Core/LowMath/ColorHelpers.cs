@@ -87,7 +87,7 @@ public static class ColorHelpers {
 
     public static IGradient Modify(this IGradient ig, GradientModifier gt) {
         if (gt == GradientModifier.LIGHTFLAT) {
-            return ig.RemapTime(0.25f, 0.93f).RemapTime(0f, 1.7f);
+            return ig.RemapTime(0.25f, 0.93f).RemapTime(0f, 1.4f);
         } else if (gt == GradientModifier.LIGHT) {
             return ig.RemapTime(0.4f, 0.95f);
         } else if (gt == GradientModifier.LIGHTWIDE){
@@ -99,9 +99,9 @@ public static class ColorHelpers {
         } else if (gt == GradientModifier.COLORWIDE){
             return ig.RemapTime(0.07f, 0.73f);
         }  else if (gt == GradientModifier.DARKINVFLAT) {
-            return ig.RemapTime(0.12f, 0.6f).Reverse().RemapTime(-0.12f, 1.6f);
+            return ig.RemapTime(0.1f, 0.5f).Reverse().RemapTime(-0.6f, 1.4f);
         } else if (gt == GradientModifier.DARKINV) {
-            return ig.RemapTime(0.12f, 0.6f).Reverse().RemapTime(0f, 1.2f);
+            return ig.RemapTime(0.1f, 0.5f).Reverse().RemapTime(-0.2f, 1.0f);
         } else if (gt == GradientModifier.DARKINVSOFT) {
             return ig.RemapTime(0.2f, 0.65f).Reverse().RemapTime(0f, 1.1f);
         } else if (gt == GradientModifier.DARKINVWIDE) {

@@ -21,6 +21,9 @@ public class GameUniqueReferences : ScriptableObject {
     public IEnumerable<CampaignConfig> Campaigns => new[] {campaign, exCampaign}.Where(c => c != null);
     public DayCampaignConfig dayCampaign;
     public CameraTransitionConfig defaultTransition;
+
+    public FieldBounds bounds;
+    
     public SODialogue[] dialogue;
     [Header("Script Keyable")]
     public BossConfig[] bossMetadata;

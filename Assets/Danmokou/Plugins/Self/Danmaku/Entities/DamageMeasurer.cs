@@ -17,10 +17,10 @@ public class DamageMeasurer : CoroutineRegularUpdater {
     }
 
     private IEnumerator MeasureDamage(int group=120) {
-        int total = 0;
-        int totalFrames = 0;
+        double total = 0;
+        double totalFrames = 0;
         while (true) {
-            var lastg = 0;
+            double lastg = 0;
             for (int ii = 0; ii < group; ++ii, ++totalFrames) {
                 var prevHp = enemy.HP;
                 yield return null;

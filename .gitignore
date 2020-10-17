@@ -15,6 +15,7 @@ DMK_Saves
 DMK_Logs
 Source
 .psd
+Assets/Danmokou/Sprites/.py/SpriteUtils/img
 
 *.csproj
 *.unityproj

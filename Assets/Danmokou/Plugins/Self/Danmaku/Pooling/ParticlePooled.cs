@@ -133,7 +133,7 @@ public abstract class Pooled : CoroutineRegularUpdater {
         ForceClosingFrame();
         DisableRegularUpdates();
         if (parented) {
-            if (parent.gameObject.activeSelf) tr.SetParent(Container, false);
+            if (parent.gameObject.activeInHierarchy) tr.SetParent(Container, false);
             else {
                 //This case occurs when disabling due to scene end, which can occur naturally via eg. scene reload
                 //In which case we just don't do the parenting step

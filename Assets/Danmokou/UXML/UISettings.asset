@@ -20,8 +20,16 @@ MonoBehaviour:
   m_FallbackDpi: 96
   m_ReferenceResolution: {x: 3840, y: 2160}
   m_ScreenMatchMode: 0
-  m_Match: 0
+  m_Match: 1
   m_SortingOrder: 0
+  m_ClearDepthStencil: 1
+  m_ClearColor: 0
+  m_ColorClearValue: {r: 0, g: 0, b: 0, a: 0}
+  m_DynamicAtlasSettings:
+    m_MinAtlasSize: 64
+    m_MaxAtlasSize: 4096
+    m_MaxSubTextureSize: 64
+    m_ActiveFilters: 31
   m_AtlasBlitShader: {fileID: 4800000, guid: 662b00f569c02f84bbc426d4c41ceb5e, type: 3}
   m_RuntimeShader: {fileID: 4800000, guid: 1e5f18a346ed454418f93aa7eaf55791, type: 3}
   m_RuntimeWorldShader: {fileID: 4800000, guid: 7082954141e3ccc43bc3b217cf12e2e0,

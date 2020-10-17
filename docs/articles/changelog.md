@@ -8,6 +8,14 @@ To get the newest version from git, run:
 
 `git submodule update` (if you have made modifications to the submodules, you will need to `pull --rebase` them individually)
 
+# v4.2.0 (2020/10/18)
+
+- Piecewise dialogue sprites
+- Touhou-like viewport structure (see `Miniprojects/Scenes/Working Scene (TH)`), see 
+- Persistent backgrounds
+- Traditional Touhou delay effects
+- Miscellaneous bugfixes for replays and photo games
+
 # v4.1.0 (2020/10/16)
 
 - Fixed critical bug in coroutine code for gcrepeat with wait 0

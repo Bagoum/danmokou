@@ -338,6 +338,8 @@ public class CompactingArray<T> {
         arr[count++] = obj;
     }
 
+    public void AddV(T obj) => Add(ref obj);
+
     public void Empty(bool trueClear) {
         if (trueClear) Array.Clear(arr, 0, arr.Length);
         count = 0;

@@ -14,6 +14,7 @@ public class MainCamera : MonoBehaviour {
     private static readonly int PixelsPerUnitID = Shader.PropertyToID("_PPU");
     private static readonly int ResourcePixelsPerUnitID = Shader.PropertyToID("_RPPU");
     private static readonly int RenderRatioID = Shader.PropertyToID("_RenderR");
+    private static readonly int GlobalXOffsetID = Shader.PropertyToID("_GlobalXOffset");
     public static MainCamera main;
 
     private static Camera cam;
@@ -43,16 +44,21 @@ public class MainCamera : MonoBehaviour {
         ReassignGlobalShaderVariables();
     }
 
+    /// <summary>
+    /// PPU of default game resources, such as utility images and UI objects. This does not change with resolution.
+    /// </summary>
+    public static float ResourcePPU => Consts.BestResolution.h / ScreenHeight;
 
     public void ReassignGlobalShaderVariables() {
         //Log.Unity($"Camera width: {cam.pixelWidth} Screen width: {Screen.width}");
         Shader.SetGlobalFloat(ShaderScrnHeightID, 2 * VertRadius);
         Shader.SetGlobalFloat(ShaderScrnWidthID, 2 * HorizRadius);
         Shader.SetGlobalFloat(PixelsPerUnitID, Screen.height / ScreenHeight);
-        Shader.SetGlobalFloat(ResourcePixelsPerUnitID, Consts.BestResolution.h / ScreenHeight);
+        Shader.SetGlobalFloat(ResourcePixelsPerUnitID, ResourcePPU);
         Shader.SetGlobalFloat(RenderRatioID, Screen.height / (float)Consts.BestResolution.h);
         Shader.SetGlobalFloat(ShaderPixelHeightID, Screen.height);
         Shader.SetGlobalFloat(ShaderPixelWidthID, Screen.width);
+        Shader.SetGlobalFloat(GlobalXOffsetID, GameManagement.References.bounds.center.x);
         if (SaveData.s.Shaders) Shader.EnableKeyword("FANCY");
         else Shader.DisableKeyword("FANCY");
     }

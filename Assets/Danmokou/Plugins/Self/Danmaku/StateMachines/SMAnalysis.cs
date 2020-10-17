@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Danmaku;
 using JetBrains.Annotations;
 using static Danmaku.Enums;
 
@@ -171,17 +172,17 @@ public static class SMAnalysis {
                 
             }
         }
-        public string Title(FixedDifficulty d) => (boss.Enabled(d)) ? (_Title ?? phase.Title) : "??? Locked ???";
+        public string Title(GameMetadata meta) => (boss.Enabled(meta)) ? (_Title ?? phase.Title) : "??? Locked ???";
         public readonly AnalyzedDayBoss boss;
-        public bool Completed(int cIndex, FixedDifficulty d) => SaveData.r.ChallengeCompleted(this, cIndex, d);
-        public bool CompletedOne(FixedDifficulty d) => SaveData.r.PhaseCompletedOne(this, d);
-        public bool CompletedAll(FixedDifficulty d) => SaveData.r.PhaseCompletedAll(this, d);
-        public bool Enabled(FixedDifficulty d) {
-            if (!boss.Enabled(d)) return false;
+        public bool Completed(int cIndex, GameMetadata meta) => SaveData.r.ChallengeCompleted(this, cIndex, meta);
+        public bool CompletedOne(GameMetadata meta) => SaveData.r.PhaseCompletedOne(this, meta);
+        public bool CompletedAll(GameMetadata meta) => SaveData.r.PhaseCompletedAll(this, meta);
+        public bool Enabled(GameMetadata meta) {
+            if (!boss.Enabled(meta)) return false;
             else if (type == DayPhaseType.DIALOGUE_INTRO) {
-                return boss.bossIndex == 0 || boss.day.bosses[boss.bossIndex - 1].FirstPhaseCompletedOne(d);
-            } else if (type == DayPhaseType.CARD) return boss.phases[0].CompletedOne(d);
-            else if (type == DayPhaseType.DIALOGUE_END) return boss.phases.All(p => p == this || p.CompletedOne(d));
+                return boss.bossIndex == 0 || boss.day.bosses[boss.bossIndex - 1].FirstPhaseCompletedOne(meta);
+            } else if (type == DayPhaseType.CARD) return boss.phases[0].CompletedOne(meta);
+            else if (type == DayPhaseType.DIALOGUE_END) return boss.phases.All(p => p == this || p.CompletedOne(meta));
             else return false;
         }
         [CanBeNull] public DayPhase Next => boss.phases.Try(cardIndex + 1);
@@ -196,18 +197,11 @@ public static class SMAnalysis {
             boss = b;
         }
         
-        public ((string, int), int) Key => (boss.Key, cardIndex);
+        public (((string, string), int), int) Key => (boss.Key, cardIndex);
 
-        public static DayPhase Reconstruct(((string, int), int) key) =>
+        public static DayPhase Reconstruct((((string, string), int), int) key) =>
             AnalyzedDayBoss.Reconstruct(key.Item1).phases.First(p => p.cardIndex == key.Item2);
         
-        
-        public ChallengeSetting AsSetting => new ChallengeSetting() {
-            CampaignKey = boss.day.campaign.campaign.key,
-            DayKey = boss.day.day.key,
-            BossKey = boss.boss.key,
-            PhaseIndex = cardIndex
-        };
     }
 
     public static List<Phase> Analyze(AnalyzedPhaseConstruct parent, [CanBeNull] PatternSM pat, bool ignoreZero = true) {
@@ -302,17 +296,17 @@ public static class SMAnalysis {
         public List<Phase> Phases => phases.Select(x => x.phase).ToList();
         public readonly AnalyzedDay day;
         public readonly int bossIndex;
-        public bool Enabled(FixedDifficulty d) => day.Enabled(d);
-        public bool Concluded(FixedDifficulty d) => phases.All(p => p.CompletedOne(d));
-        public bool FirstPhaseCompletedOne(FixedDifficulty d) => phases[0].CompletedOne(d);
+        public bool Enabled(GameMetadata meta) => day.Enabled(meta);
+        public bool Concluded(GameMetadata meta) => phases.All(p => p.CompletedOne(meta));
+        public bool FirstPhaseCompletedOne(GameMetadata meta) => phases[0].CompletedOne(meta);
 
         public AnalyzedDayBoss(AnalyzedDay day, int index) {
             boss = (this.day = day).day.bosses[bossIndex = index];
             phases = SMAnalysis.AnalyzeDay(this, StateMachineManager.FromText(boss.stateMachine) as PatternSM);
         }
         
-        public (string, int) Key => (day.Key, bossIndex);
-        public static AnalyzedDayBoss Reconstruct((string, int) key) => 
+        public ((string, string), int) Key => (day.Key, bossIndex);
+        public static AnalyzedDayBoss Reconstruct(((string, string), int) key) => 
             AnalyzedDay.Reconstruct(key.Item1).bosses[key.Item2];
     }
 
@@ -320,9 +314,9 @@ public static class SMAnalysis {
         public readonly DayConfig day;
         public readonly AnalyzedDayBoss[] bosses;
         public IEnumerable<DayPhase> Phases => bosses.SelectMany(b => b.phases);
-        public bool Enabled(FixedDifficulty d) => dayIndex == 0 || campaign.days[dayIndex - 1].OneBossesConcluded(d);
-        public bool OneBossesConcluded(FixedDifficulty d) => bosses.Any(b => b.Concluded(d));
-        public bool AllBossesConcluded(FixedDifficulty d) => bosses.All(b => b.Concluded(d));
+        public bool Enabled(GameMetadata meta) => dayIndex == 0 || campaign.days[dayIndex - 1].OneBossesConcluded(meta);
+        public bool OneBossesConcluded(GameMetadata meta) => bosses.Any(b => b.Concluded(meta));
+        public bool AllBossesConcluded(GameMetadata meta) => bosses.All(b => b.Concluded(meta));
         public readonly int dayIndex;
         public readonly AnalyzedDayCampaign campaign;
 
@@ -332,8 +326,9 @@ public static class SMAnalysis {
             bosses = day.bosses.Length.Range().Select(i => new AnalyzedDayBoss(this, i)).ToArray();
         }
         
-        public string Key => day.key;
-        public static AnalyzedDay Reconstruct(string key) => GameManagement.DayCampaign.days.First(c => c.day.key == key);
+        public (string, string) Key => (campaign.campaign.key, day.key);
+        public static AnalyzedDay Reconstruct((string, string) key) => 
+            GameManagement.DayCampaign.days.First(c => c.day.key == key.Item2);
     }
 
     public class AnalyzedDayCampaign {

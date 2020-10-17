@@ -17,4 +17,5 @@ MonoBehaviour:
   light: {r: 0.383277, g: 0.7474348, b: 0.9339623, a: 1}
   pure: {r: 0.1273585, g: 0.4420817, b: 1, a: 1}
   dark: {r: 0, g: 0.1265886, b: 0.7921569, a: 1}
-  outline: {r: 0.06428573, g: 0, b: 0.27, a: 1}
+  outline: {r: 0.06956521, g: 0, b: 0.3, a: 1}
+  recolorizable: 0

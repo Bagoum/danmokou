@@ -119,6 +119,17 @@ public class PSpriteDrawer : PairedPropertyDrawer {
 
     protected override string arg2 => "sprite";
 }
+[CustomPropertyDrawer(typeof(DialogueSprite.SpritePiece))]
+public class SpritePieceDrawer : TripletPropertyDrawer {
+    protected override string arg1 => "useDefaultOffset";
+    protected override string arg2 => "offset";
+
+    protected override string arg3 => "sprite";
+    protected override float w1 => 0.1f;
+    protected override float w2 => 0.6f;
+    protected override float w3 => 0.3f;
+    protected override bool showName => false;
+}
 
 [CustomPropertyDrawer(typeof(BehaviorEntity.CullableRadius))]
 public class CullRadDrawer : PairedPropertyDrawer {

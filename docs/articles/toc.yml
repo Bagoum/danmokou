@@ -8,6 +8,8 @@
   items:
     - name: Bullet Styles
       href: bullets.md
+    - name: How to Add Stuff
+      href: Adding Stuff.md
     - name: Parsing Rules
       href: parsing.md
     - name: Abstractions

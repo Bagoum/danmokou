@@ -34,7 +34,7 @@ public struct LocalizedString {
 }
 
 namespace Danmaku {
-//This struct is effectively readonly but these are json requirements.
+//This struct is effectively readonly but due to JSONify requirements, any field must not be readonly. 
 public struct DifficultySettings {
     /// <summary>
     /// Inclusive
@@ -46,7 +46,7 @@ public struct DifficultySettings {
     public const int MAX_SLIDER = 42;
     public const int DEFAULT_SLIDER = 18;
     public FixedDifficulty? standard;
-    public float CustomValue => DifficultyForSlider(customValueSlider);
+    private float CustomValue => DifficultyForSlider(customValueSlider);
     public float customCounter;
     public int customValueSlider;
     public int numSuicideBullets;
@@ -56,11 +56,12 @@ public struct DifficultySettings {
     /// </summary>
     public float bulletSpeedMod;
     public float bossHPMod;
-    public readonly float FRAME_TIME_BULLET;
+    public float FRAME_TIME_BULLET;
+    public bool respawnOnDeath;
     public DifficultySettings(FixedDifficulty standard) : this((FixedDifficulty?)standard) { }
 
-    public DifficultySettings(FixedDifficulty? standard, int slider=DEFAULT_SLIDER, int numSuicideBullets = 0,
-        float playerDamageMod=1f, float bulletSpeedMod=1f, float bossHPMod=1f) {
+    public DifficultySettings(FixedDifficulty? standard, int slider=DEFAULT_SLIDER, int numSuicideBullets = 3,
+        float playerDamageMod=1f, float bulletSpeedMod=1f, float bossHPMod=1f, bool respawnOnDeath = false) {
         this.standard = standard;
         customValueSlider = slider;
         customCounter = Nearest(slider).Counter();
@@ -69,6 +70,7 @@ public struct DifficultySettings {
         this.bulletSpeedMod = bulletSpeedMod;
         this.FRAME_TIME_BULLET = ETime.FRAME_TIME * bulletSpeedMod;
         this.bossHPMod = bossHPMod;
+        this.respawnOnDeath = respawnOnDeath;
     }
 
     public static FixedDifficulty Nearest(int slider) {
@@ -155,10 +157,10 @@ public readonly struct PhaseCompletion {
     /// </summary>
     public bool StandardCardFinish => (props.phaseType?.IsCard() ?? false) && clear != PhaseClearMethod.CANCELLED;
 
-    private ItemDrops DropCapture => new ItemDrops(42, 0, 42, 0, 24, true).Mul(props.cardValueMult);
+    private ItemDrops DropCapture => new ItemDrops(42, 0, 42, 0, 19, true).Mul(props.cardValueMult);
     //Final spells give no items if not captured, this is because some final spells have infinite timers
     private ItemDrops DropClear => new ItemDrops(
-        props.phaseType == PhaseType.FINAL ? 0 : 29, 0, 13, 0, 20, true).Mul(props.cardValueMult);
+        props.phaseType == PhaseType.FINAL ? 0 : 29, 0, 13, 0, 13, true).Mul(props.cardValueMult);
     private ItemDrops DropNoHit => new ItemDrops(0, 0, 37, 0, 13, true).Mul(props.cardValueMult);
 
     public ItemDrops? DropItems {

@@ -46,16 +46,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorScript: {fileID: 0}
   ID: 
-  displayChangedPosition: 1
   rotationMethod: 0
-  rotateTransform: 0
   deathEffect: {fileID: 0}
-  triggersUITimeout: 0
-  cullable: 0
-  ScreenCullRadius: 4
-  damage: 1
-  destructible: 0
-  grazeEveryFrames: 20
+  cullableRadius:
+    cullable: 0
+    cullRadius: {fileID: 0}
+  collisionInfo:
+    collisionRadius: 0
+    CollisionActiveOnInit: 0
+    destructible: 0
+    grazeEveryFrames: 0
   animate:
     method: 0
     LRRelation: 0
@@ -68,9 +68,6 @@ MonoBehaviour:
       downAnim: []
       attackAnim: []
       deathAnim: []
-  movementModifiers:
-    flipX: 0
-    flipY: 0
 --- !u!212 &8071127415623182348
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -90,7 +87,7 @@ SpriteRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c0248c258e89512489777298e60620da, type: 2}
+  - {fileID: 2100000, guid: 5188cf7f5706b8c45ab590c8bb17d3a3, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -111,7 +108,7 @@ SpriteRenderer:
   m_SortingLayerID: -438763787
   m_SortingLayer: 1
   m_SortingOrder: 1
-  m_Sprite: {fileID: 21300000, guid: 02631099b04b6f14199326d6df7d21a8, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 001024098b6c2264ea398d43a2067f4c, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0

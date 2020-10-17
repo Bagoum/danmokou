@@ -47,6 +47,14 @@ public struct DefaultColorizing {
             throw new Exception("Cannot colorize with dark and inverted assigned to dark.");
     }
 }
+
+[Serializable]
+public struct SimpleBulletEntry {
+    public float slideInTime;
+    public float fadeInTime;
+    public float scaleInTime;
+    public float scaleInStart;
+}
 //Add this script to a bullet prefab, rather than Bullet, to indicate that it is a "simple bullet". 
 //Simple bullets will be instantiated as code abstractions rather than game objects. 
 //Simple bullets do not support: animation, custom behavior. Also, the sprite must be rotated to face to the right
@@ -106,10 +114,7 @@ public class SimpleBulletEmptyScript : MonoBehaviour {
     public float screenCullRadius = 3f;
     [Header("Rendering Info")] public int renderPriority;
     public RenderMode renderMode = RenderMode.NORMAL;
-    [Tooltip("FadeInTime is disabled on simple bullets. Before using it, re-enable it in the Bullet Indirect shader.")]
-    public float fadeInTime = 0f;
-    public float slideInTime = 0f;
-    public float2 scaleInTimeMin;
+    public SOSBEntry fadeIn;
     public bool rotational;
     [Header("Automatic Colors")] public DefaultColorizing colorizing;
     [Tooltip("Base texture for gradient generation")]

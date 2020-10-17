@@ -14,5 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   defaultName: x-meter-activated
   clip: {fileID: 8300000, guid: 9c3bd0a1f61129f40b8a067f00b199dc, type: 3}
-  volume: 0.7
-  timeout: 1
+  volume: 0.4
+  timeout: 0.4
+  pausable: 0
+  loop: 0
+  loopTimeCheck: 0
+  pitch: 1
+  priority: -1
+  feature: 0

@@ -102,7 +102,7 @@ Material:
     - _Value: 0.33333334
     - _XSpeed: 1
     - _Y: 0.1
-    - _YX: 0.02
+    - _YX: 0.0267
     - _YY: 0.2
     - _ZWrite: 1
     m_Colors:

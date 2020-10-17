@@ -16,7 +16,8 @@ namespace Danmaku {
 /// </summary>
 public partial class BulletManager : RegularUpdater {
     private const float PLAYER_SB_OPACITY_MUL = 0.5f;
-    private const float PLAYER_SB_SCALEIN_MUL = 0.4f;
+    private const float PLAYER_SB_FADEIN_MUL = 0.4f;
+    private const float PLAYER_SB_SCALEIN_MUL = 0.1f;
     private const float PLAYER_FB_OPACITY_MUL = 0.45f;
     private readonly struct CollidableInfo {
         public readonly GenericColliderInfo.ColliderType colliderType;
@@ -78,6 +79,7 @@ public partial class BulletManager : RegularUpdater {
         }
         public void SetPlayer() {
             ri.material.SetFloat(PropConsts.scaleInT, PLAYER_SB_SCALEIN_MUL * ri.material.GetFloat(PropConsts.scaleInT));
+            ri.material.SetFloat(PropConsts.fadeInT, PLAYER_SB_FADEIN_MUL * ri.material.GetFloat(PropConsts.fadeInT));
             ri.material.SetFloat(PropConsts.SharedOpacityMul, PLAYER_SB_OPACITY_MUL);
         }
 
@@ -201,18 +203,19 @@ public partial class BulletManager : RegularUpdater {
             if (sbes.rotational) {
                 ri.material.EnableKeyword("FT_ROTATIONAL");
             }
-            if (sbes.slideInTime > 0) {
+            var fade = sbes.fadeIn.value;
+            if (fade.slideInTime > 0) {
                 ri.material.EnableKeyword("FT_SLIDE_IN");
-                ri.material.SetFloat(PropConsts.slideInT, sbes.slideInTime);
+                ri.material.SetFloat(PropConsts.slideInT, fade.slideInTime);
             }
-            if (sbes.scaleInTimeMin.var1 > 0) {
+            if (fade.scaleInTime > 0) {
                 ri.material.EnableKeyword("FT_SCALE_IN");
-                ri.material.SetFloat(PropConsts.scaleInT, sbes.scaleInTimeMin.var1);
-                ri.material.SetFloat(PropConsts.scaleInMin, sbes.scaleInTimeMin.var2);
+                ri.material.SetFloat(PropConsts.scaleInT, fade.scaleInTime);
+                ri.material.SetFloat(PropConsts.scaleInMin, fade.scaleInStart);
             }
-            if (sbes.fadeInTime > 0f) {
+            if (fade.fadeInTime > 0f) {
                 ri.material.EnableKeyword("FT_FADE_IN");
-                ri.material.SetFloat(PropConsts.fadeInT, sbes.fadeInTime);
+                ri.material.SetFloat(PropConsts.fadeInT, fade.fadeInTime);
             }
             MaterialUtils.SetBlendMode(ri.material, sbes.renderMode);
             return ri;

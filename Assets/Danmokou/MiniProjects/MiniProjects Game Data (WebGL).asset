@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8d7768018aff40589017a165e079b3c1, type: 3}
+  m_Name: MiniProjects Game Data (WebGL)
+  m_EditorClassIdentifier: 
+  gameIdentifier: Miniprojects
+  gameVersion:
+    major: 1
+    minor: 1
+    patch: 1
+  mainMenu: {fileID: 11400000, guid: 68a81d395f9df184fb8d689319bd1113, type: 2}
+  replaySaveMenu: {fileID: 11400000, guid: 4eb8b66bd76d4d94fa90176835284503, type: 2}
+  unitScene: {fileID: 11400000, guid: 060a74326d15dc94db23e8e4878641e5, type: 2}
+  tutorial: {fileID: 0}
+  miniTutorial: {fileID: 0}
+  endcard: {fileID: 0}
+  campaign: {fileID: 11400000, guid: 0377709a7335cd748b456f8f2ce8b94d, type: 2}
+  exCampaign: {fileID: 0}
+  dayCampaign: {fileID: 0}
+  defaultTransition: {fileID: 11400000, guid: 517222e0dbe56264a8bcd878fc9e4e27, type: 2}
+  bounds:
+    left: -3.6
+    right: 3.6
+    top: 4.1
+    bot: -4.5
+    center: {x: -1, y: 0}
+  dialogue: []
+  bossMetadata: []
+  dialogueProfiles: []
+  tracks: []
+  items: {fileID: 11400000, guid: 18e6de6e951f4114e8823af9e617bff7, type: 2}
+  summonables:
+  - {fileID: 11400000, guid: 38afc312ddb0ac242b8cfb301b1b4237, type: 2}
+  fileStateMachines: []

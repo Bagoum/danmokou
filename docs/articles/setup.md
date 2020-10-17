@@ -11,7 +11,7 @@ These are verbose instructions on how to set up Danmokou on your first run.
 ## Part 1: Unity Setup
 
 - Download/Install Unity Hub (https://store.unity.com/download-nuo)
-- Within Unity Hub > Installs, add Unity version 2020.1.f4
+- Within Unity Hub > Installs, add Unity version 2020.1.9f1
 - Within Unity Hub > Projects, Click ADD and browse to the root Danmokou folder. 
 - Click on the project to load it. **The first time you load it, Unity may take several minutes to import resources.**
   - If you get an error about the default layout, then close Unity, download the files in the `Library` folder from [the repo](https://github.com/Bagoum/danmokou), paste them in your Library folder, and open Unity.
@@ -47,7 +47,7 @@ phase(0)
   - Newlines are usually required.
   - Parentheses and argument separator commas are not required.
 - Run the scene by pressing the play button at the top of the screen. Objects should start animating and you should see the message "Hello World" at the top of the game UI. 
-  - Note: you may seen cyan squares on the screen when certain objects first appear. This should only happen once per object type. For example, the first time you open the pause menu, you might see a cyan square. This is due to shader compilation and is harmless. 
+  - Note: you may seen cyan squares on the screen when certain objects first appear. This should only happen once per object type. For example, the first time you open the pause menu, you might see a cyan square. This is due to shader recompilation and is harmless. It does not occur in builds.
 - Make sure that the FPS counter (bottom right of the game UI) is stable. If it is excessively high, then press Esc to open the in-game pause menu and turn Vsync OFF. If your computer is old, you may need to turn shaders OFF as well. These settings will be saved as soon as you close the menu.
 - Because behavior in DMK is written in BDSM and not in C#, you can **recompile scripts at runtime** without significant overhead. To do this, simply press R in the game view while the game is running. If you are successful, you should see the "Hello World" message disappear and fade back in, and the boss health bar should empty out a bit. 
 - That's all for setup. Feel free to move on to [the first tutorial](t01.md) once you're done with extra setup.

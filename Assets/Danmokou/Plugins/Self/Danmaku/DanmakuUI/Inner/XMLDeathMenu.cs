@@ -61,6 +61,7 @@ public class XMLDeathMenu : XMLMenu {
         base.Start();
         HideMe();
         MenuActive = false;
+        UI.style.right = UIManager.MenuRightOffset;
     }
     public void HideMe(bool sfx=false) {
         if (UITop != null) {

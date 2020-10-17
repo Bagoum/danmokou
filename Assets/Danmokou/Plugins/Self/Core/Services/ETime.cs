@@ -74,7 +74,7 @@ public class ETime : MonoBehaviour {
     public const float ENGINEFPS = 120f;
     public const float FRAME_TIME = 1f / ENGINEFPS;
     public const float FRAME_YIELD = FRAME_TIME * 0.1f;
-    public static MultiMultiplier Slowdown { get; private set; } = new MultiMultiplier(1f);
+    public static MultiMultiplier Slowdown { get; private set; } = new MultiMultiplier(1f, v => Time.timeScale = v);
     /// <summary>
     /// Replacement for Time.dT. Generally fixed to 1/60.
     /// </summary>

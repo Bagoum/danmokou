@@ -13,7 +13,7 @@ using static GameManagement;
 using static SceneIntermediary;
 using static StaticNullableStruct;
 using static Danmaku.Enums;
-using GameLowRequestKey = DU<string, ((string, int), int), (((string, int), int), int), ((string, int), int)>;
+using GameLowRequestKey = DU<string, ((string, int), int), ((((string, string), int), int), int), ((string, int), int)>;
 
 //https://issuetracker.unity3d.com/issues/build-that-contains-a-script-with-a-struct-which-has-a-static-nullable-reference-to-itself-fails-on-il2cpp
 public static class StaticNullableStruct {
@@ -69,12 +69,23 @@ public readonly struct CampaignRequest {
     
 }
 
-public readonly struct GameRequest {
-    [CanBeNull] public readonly Func<bool> cb;
-    public readonly bool newCampaign;
+public readonly struct GameMetadata {
     public readonly PlayerTeam team;
     public readonly DifficultySettings difficulty;
     public readonly CampaignMode mode;
+    
+    public GameMetadata(PlayerTeam team, DifficultySettings difficulty, CampaignMode mode) {
+        this.team = team;
+        this.difficulty = difficulty;
+        this.mode = mode;
+    }
+
+    public (string, string, CampaignMode) Key => (team.Describe, difficulty.DescribeSafe, mode);
+}
+public readonly struct GameRequest {
+    [CanBeNull] public readonly Func<bool> cb;
+    public readonly bool newCampaign;
+    public readonly GameMetadata metadata;
     public readonly Replay? replay;
     public bool Saveable => replay == null;
     public readonly GameLowRequest lowerRequest;
@@ -93,15 +104,13 @@ public readonly struct GameRequest {
 
     public GameRequest(Func<bool> cb, DifficultySettings difficulty, GameLowRequest lowerRequest,
         bool newCampaign, PlayerTeam team, Replay? replay) {
-        this.mode = lowerRequest.Resolve(
+        this.metadata = new GameMetadata(team, difficulty, lowerRequest.Resolve(
             _ => CampaignMode.MAIN, 
             _ => CampaignMode.CARD_PRACTICE, 
             _ => CampaignMode.SCENE_CHALLENGE, 
-            _ => CampaignMode.STAGE_PRACTICE);
+            _ => CampaignMode.STAGE_PRACTICE));
         this.cb = cb;
         this.newCampaign = newCampaign;
-        this.team = team;
-        this.difficulty = difficulty;
         this.replay = replay;
         this.lowerRequest = lowerRequest;
         this.seed = replay?.metadata.Seed ?? new System.Random().Next();
@@ -110,9 +119,9 @@ public readonly struct GameRequest {
     public void SetupOrCheckpoint() {
         if (newCampaign) {
             Log.Unity(
-                $"Starting game with mode {mode} on difficulty {difficulty.Describe}.");
-            GameManagement.Difficulty = difficulty;
-            GameManagement.NewCampaign(mode, SaveData.r.GetHighScore(GameIdentifier), this);
+                $"Starting game with mode {metadata.mode} on difficulty {metadata.difficulty.Describe}.");
+            GameManagement.Difficulty = metadata.difficulty;
+            GameManagement.NewCampaign(metadata.mode, SaveData.r.GetHighScore(Identifier), this);
             if (replay == null) Replayer.BeginRecording();
             else Replayer.BeginReplaying(replay.Value.frames);
         } else Checkpoint();
@@ -124,13 +133,17 @@ public readonly struct GameRequest {
 
     public bool FinishAndPostReplay() {
         if (cb?.Invoke() ?? true) {
-            if (Saveable) GameManagement.campaign.SaveCampaign(GameIdentifier);
+            if (Saveable) GameManagement.campaign.SaveCampaign(Identifier);
             Replayer.End(this);
             return true;
         } else return false;
     }
-    private string GameIdentifier => $"{difficulty.Describe}-{team.Describe}-{CampaignIdentifier.Tuple}";
-    public GameLowRequestKey CampaignIdentifier => lowerRequest.Resolve(
+
+    public string Identifier => GameIdentifer(metadata, lowerRequest);
+
+    public static string GameIdentifer(GameMetadata metadata, GameLowRequest lowerRequest) =>
+        $"{metadata.Key}-{CampaignIdentifier(lowerRequest).Tuple}";
+    public static GameLowRequestKey CampaignIdentifier(GameLowRequest lowerRequest) => lowerRequest.Resolve(
         c => new GameLowRequestKey(0, c.Key, default, default, default),
         b => new GameLowRequestKey(1, default, b.Key, default, default),
         c => new GameLowRequestKey(2, default, default, c.Key, default),
@@ -153,7 +166,7 @@ public readonly struct GameRequest {
     public static bool? Rerun() {
         if (LastGame == null) return null;
         else if (LastGame.Value.Run()) {
-            if (LastGame.Value.mode.PreserveReloadAudio()) AudioTrackService.PreserveBGM();
+            if (LastGame.Value.metadata.mode.PreserveReloadAudio()) AudioTrackService.PreserveBGM();
             return true;
         } else return false;
     }
@@ -168,7 +181,9 @@ public readonly struct GameRequest {
             } else return false;
         }
         bool ExecuteEndcard() {
-            Log.Unity($"Game stages for {c.campaign.campaign.key} are finished. Moving to endcard, if it exists.");
+            Log.Unity($"Game stages for {c.campaign.campaign.key} are tentatively finished." +
+                      " Moving to endcard, if it exists." +
+                      "\nIf you see a REJECTED message below this, then a reload or the like prevented completion.");
             if (c.campaign.campaign.TryGetEnding(out var ed)) {
                 return SceneIntermediary.LoadScene(new SceneRequest(References.endcard, SceneRequest.Reason.ENDCARD,
                     () => SaveData.r.CompleteCampaign(c.campaign.campaign.key, ed.key),
@@ -177,7 +192,10 @@ public readonly struct GameRequest {
                         LevelController.Request(new LevelController.LevelRunRequest(1, () => Finalize(),
                             LevelController.LevelRunMethod.CONTINUE, new EndcardStageConfig(ed.dialogueKey)));
                     }));
-            } else return Finalize();
+            } else if (Finalize()) {
+                SaveData.r.CompleteCampaign(c.campaign.campaign.key, null);
+                return true;
+            } else return false;
         }
         bool ExecuteStage(int index) {
             if (index < c.campaign.stages.Length) {
@@ -266,11 +284,14 @@ public readonly struct GameRequest {
     public static bool ViewReplay(Replay? r) => r != null && ViewReplay(r.Value);
 
 
-    public static bool RunCampaign([CanBeNull] AnalyzedCampaign campaign, [CanBeNull] Func<bool> cb, 
+    public static bool RunCampaign([CanBeNull] AnalyzedCampaign campaign, [CanBeNull] Action cb, 
         DifficultySettings difficulty, PlayerTeam player) {
         if (campaign == null) return false;
-        var req = new GameRequest(cb.Then(() => LoadScene(new SceneRequest(MaybeSaveReplayScene, 
-            SceneRequest.Reason.FINISH_RETURN, GameManagement.CheckpointCampaignData))), 
+        var req = new GameRequest(() => LoadScene(new SceneRequest(MaybeSaveReplayScene, 
+            SceneRequest.Reason.FINISH_RETURN, () => {
+                cb?.Invoke();
+                GameManagement.CheckpointCampaignData();
+            })), 
             difficulty, campaign: new CampaignRequest(campaign), player: player);
 
 

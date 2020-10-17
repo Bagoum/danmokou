@@ -183,7 +183,6 @@ public class AyaCamera : BehaviorEntity {
         void Cancel() {
             if (sfx != null) {
                 sfx.Stop();
-                Destroy(sfx);
             }
             slowdownToken.TryRevoke();
         }
@@ -251,7 +250,7 @@ public class AyaCamera : BehaviorEntity {
             var photo = MainCamera.main.RequestAyaPhoto(ViewfinderRect(scale));
             var pphoto = GameObject.Instantiate(pinnedPhotoPrefab).GetComponent<AyaPinnedPhoto>();
             if (success) {
-                if (Replayer.IsRecording) photo.KeepAlive = true;
+                if (StaticNullableStruct.LastGame?.replay == null) photo.KeepAlive = true;
                 targetLoc = AyaPhotoBoard.NextPinLoc(pphoto) ?? new Vector2(-6, 0);
                 ChallengeManager.SubmitPhoto(photo);
             }

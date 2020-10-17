@@ -23,8 +23,16 @@ public class SFXService : MonoBehaviour {
     public SFXConfig meterActivated;
     public SFXConfig[] SFX;
     private static readonly Dictionary<string, SFXConfig> dclips = new Dictionary<string, SFXConfig>();
-    private static readonly CompactingArray<AudioSource> loopSources = new CompactingArray<AudioSource>();
-    private static readonly List<AudioSource> constructed = new List<AudioSource>();
+
+    public readonly struct ConstructedAudio {
+        public readonly AudioSource src;
+        public readonly bool pausable;
+        public ConstructedAudio(AudioSource src, bool pausable) {
+            this.src = src;
+            this.pausable = pausable;
+        }
+    }
+    private static readonly CompactingArray<ConstructedAudio> constructed = new CompactingArray<ConstructedAudio>();
     public void Setup() {
         main = this;
         src = GetComponent<AudioSource>();
@@ -42,13 +50,13 @@ public class SFXService : MonoBehaviour {
             if (v > 0f) _timeouts[kv.Key] = v;
         }
         (timeouts, _timeouts) = (_timeouts, timeouts);
-        for (int ii = 0; ii < loopSources.Count; ++ii) {
-            if (!loopSources[ii].isPlaying) {
-                Destroy(loopSources[ii]);
-                loopSources.Delete(ii);
+        for (int ii = 0; ii < constructed.Count; ++ii) {
+            if (!constructed[ii].src.isPlaying) {
+                Destroy(constructed[ii].src);
+                constructed.Delete(ii);
             }
         }
-        loopSources.Compact();
+        constructed.Compact();
 
         for (int ii = 0; ii < loopTimeoutsArr.Count; ++ii) {
             loopTimeoutsArr[ii].Update(ETime.dT);
@@ -105,7 +113,7 @@ public class SFXService : MonoBehaviour {
     }
     private static Dictionary<string, float> timeouts = new Dictionary<string,float>();
     private static Dictionary<string, float> _timeouts = new Dictionary<string,float>();
-    private static Dictionary<string, LoopingSourceInfo> loopTimeouts = new Dictionary<string, LoopingSourceInfo>();
+    private static readonly Dictionary<string, LoopingSourceInfo> loopTimeouts = new Dictionary<string, LoopingSourceInfo>();
     private static readonly List<LoopingSourceInfo> loopTimeoutsArr = new List<LoopingSourceInfo>();
 
     public static void Request(string style) {
@@ -128,39 +136,50 @@ public class SFXService : MonoBehaviour {
         }
         if (timeouts.ContainsKey(aci.defaultName)) return;
         if (aci.Timeout > 0f) timeouts[aci.defaultName] = aci.Timeout;
-        src.PlayOneShot(aci.clip, aci.volume);
+        
+        if (aci.pausable) RequestSource(aci, true);
+        else src.PlayOneShot(aci.clip, aci.volume);
     }
 
     private static void RequestLoop(SFXConfig aci) {
         if (!loopTimeouts.TryGetValue(aci.defaultName, out var looper)) {
-            looper = new LoopingSourceInfo(RequestSource(aci), aci);
+            looper = new LoopingSourceInfo(_RequestSource(aci), aci);
+            looper.source.Play();
             loopTimeoutsArr.Add(looper);
             loopTimeouts[aci.defaultName] = looper;
         }
         looper.Request();
     }
 
+    /// <summary>
+    /// Returns an inactive source that is not playing and not tracked by SFXService.
+    /// </summary>
     [CanBeNull]
-    public static AudioSource RequestSource([CanBeNull] SFXConfig aci) {
+    private static AudioSource _RequestSource([CanBeNull] SFXConfig aci) {
         if (aci == null) return null;
         var cmp = main.gameObject.AddComponent<AudioSource>();
-        constructed.Add(cmp);
         cmp.volume = aci.volume;
         cmp.pitch = aci.pitch;
         cmp.priority = aci.Priority;
         cmp.clip = aci.clip;
-        cmp.Play();
+        return cmp;
+    }
+    
+    [CanBeNull]
+    public static AudioSource RequestSource([CanBeNull] SFXConfig aci, bool pausable = true) {
+        if (aci == null) return null;
+        var cmp = _RequestSource(aci);
+        if (cmp != null) {
+            constructed.AddV(new ConstructedAudio(cmp, pausable));
+            cmp.Play();
+        }
         return cmp;
     }
 
-    /// <summary>
-    /// External-facing, though may soon be deprecated
-    /// </summary>
     public static AudioSource RequestLoopingSource([CanBeNull] SFXConfig aci) {
         var s = RequestSource(aci);
         if (s != null) {
             s.loop = true;
-            loopSources.Add(ref s);
         }
         return s;
     }
@@ -189,10 +208,12 @@ public class SFXService : MonoBehaviour {
     
     public static void ClearConstructed() {
         for (int ii = 0; ii < constructed.Count; ++ii) {
-            if (constructed[ii] != null) Destroy(constructed[ii]);
+            if (constructed[ii].src != null) Destroy(constructed[ii].src);
         }
-        constructed.Clear();
-        loopSources.Empty(true);
+        for (int ii = 0; ii < loopTimeoutsArr.Count; ++ii) {
+            Destroy(loopTimeoutsArr[ii].source);
+        }
+        constructed.Empty(true);
         loopTimeouts.Clear();
         loopTimeoutsArr.Clear();
     }
@@ -207,15 +228,15 @@ public class SFXService : MonoBehaviour {
 
     private void HandleGameStateChange(GameState state) {
         if (state.IsPaused()) {
-            for (int ii = 0; ii < loopSources.Count; ++ii) {
-                loopSources[ii].Pause();
+            for (int ii = 0; ii < constructed.Count; ++ii) {
+                if (constructed[ii].pausable) constructed[ii].src.Pause();
             }
             for (int ii = 0; ii < loopTimeoutsArr.Count; ++ii) {
                 loopTimeoutsArr[ii].source.Pause();
             }
         } else if (state == GameState.RUN) {
-            for (int ii = 0; ii < loopSources.Count; ++ii) {
-                loopSources[ii].UnPause();
+            for (int ii = 0; ii < constructed.Count; ++ii) {
+                if (constructed[ii].pausable) constructed[ii].src.UnPause();
             }
             for (int ii = 0; ii < loopTimeoutsArr.Count; ++ii) {
                 loopTimeoutsArr[ii].source.UnPause();

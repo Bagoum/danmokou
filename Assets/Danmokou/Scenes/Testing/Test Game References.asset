@@ -22,18 +22,24 @@ MonoBehaviour:
   unitScene: {fileID: 11400000, guid: 29bbe3a711aa9374dbc9b14293a24f80, type: 2}
   tutorial: {fileID: 0}
   miniTutorial: {fileID: 0}
+  endcard: {fileID: 0}
   campaign: {fileID: 11400000, guid: 285817fcbc1f31b4aa400d7917e73636, type: 2}
   exCampaign: {fileID: 0}
   dayCampaign: {fileID: 0}
   defaultTransition: {fileID: 11400000, guid: 3c14665e4a4fb3946bb268167ef5cb40, type: 2}
-  shots:
-  - {fileID: 11400000, guid: 94c9dbd65f23dec46894ae6f01f35d23, type: 2}
+  bounds:
+    left: -5
+    right: 5
+    top: 4.1
+    bot: -4.5
+    center: {x: 0, y: 0}
   dialogue: []
   bossMetadata:
   - {fileID: 11400000, guid: fbf1044b75a1ecd468ff97b8acca7b7a, type: 2}
   - {fileID: 11400000, guid: dc2b4c390da211341a9b0d0c3356edf7, type: 2}
   dialogueProfiles: []
   tracks: []
+  items: {fileID: 0}
   summonables:
   - {fileID: 11400000, guid: 38afc312ddb0ac242b8cfb301b1b4237, type: 2}
   fileStateMachines: []

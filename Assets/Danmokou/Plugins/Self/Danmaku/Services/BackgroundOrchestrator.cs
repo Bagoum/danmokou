@@ -13,6 +13,8 @@ public class BackgroundOrchestrator : MonoBehaviour {
     private Transform tr;
     [CanBeNull] public static BackgroundController FromBG { get; private set; }
     [CanBeNull] public static BackgroundController ToBG { get; private set; }
+    
+    private readonly Dictionary<GameObject, BackgroundController> instantiated = new Dictionary<GameObject, BackgroundController>();
     private static BackgroundTransition? nextRequestedTransition;
 
     public GameObject backgroundCombiner;
@@ -27,9 +29,20 @@ public class BackgroundOrchestrator : MonoBehaviour {
         else {
             if (SaveData.s.Backgrounds) FromBG.capturer.RecreateTexture();
             else {
-                FromBG.Kill();
-                if (ToBG != null) ToBG.Kill();
+                FromBG.Hide();
+                if (ToBG != null) ToBG.Hide();
             }
+        }
+    }
+
+    private BackgroundController CreateBGC(GameObject prefab) {
+        if (instantiated.TryGetValue(prefab, out var bgc)) {
+            bgc.Show();
+            return bgc;
+        } else {
+            return instantiated[prefab] = Instantiate(prefab, tr, false)
+                .GetComponent<BackgroundController>()
+                .Initialize(prefab);
         }
     }
 
@@ -37,8 +50,7 @@ public class BackgroundOrchestrator : MonoBehaviour {
     private void MaybeCreateFirst() {
         if (SaveData.s.Backgrounds) {
             var bgc = (lastRequestedBGC == null) ? defaultBGCPrefab : lastRequestedBGC;
-            FromBG = Instantiate(bgc, tr, false)
-                .GetComponent<BackgroundController>().Initialize(bgc);
+            FromBG = CreateBGC(bgc);
         }
     }
 
@@ -62,7 +74,7 @@ public class BackgroundOrchestrator : MonoBehaviour {
 
     private static void FinishTransition() {
         if (ToBG != null && FromBG != null) {
-            FromBG.Kill();
+            FromBG.Hide();
             FromBG = ToBG;
             ToBG = null;
         }
@@ -73,8 +85,7 @@ public class BackgroundOrchestrator : MonoBehaviour {
         if (destroyIfExists || 
             (ToBG == null && FromBG.source != bgp) ||
             (ToBG != null && ToBG.source != bgp)) {
-            SetTarget(Instantiate(bgp, main.tr, false).GetComponent<BackgroundController>()
-                .Initialize(bgp), withTransition);
+            SetTarget(main.CreateBGC(bgp), withTransition);
         }
     }
 
