@@ -7,7 +7,9 @@ using UnityEngine;
 public class Counter : RegularUpdater {
     private static Counter main;
     public static int GrazeFrame { get; private set; }
-    private static int LowEnemyHPRequests;
+    //private static int LowEnemyHPRequests;
+    private static int LowEnemyHPLastFrame = -100;
+    private const int lowEnemyHPDuration = 30;
     private static float ShotgunMultiplier = 0f;
     private const int multipliersFrameCheck = 15;
     public static int FrameNumber { get; private set; }
@@ -19,11 +21,13 @@ public class Counter : RegularUpdater {
 
     public override void RegularUpdate() {
         GrazeFrame = 0;
-        if (++FrameNumber % multipliersFrameCheck == 0) {
+        ++FrameNumber;
+        LowHPRequested = (FrameNumber - LowEnemyHPLastFrame) <= lowEnemyHPDuration;
+        if (FrameNumber % multipliersFrameCheck == 0) {
             Shotgun = ShotgunMultiplier;
-            LowHPRequested = LowEnemyHPRequests > 0;
             ShotgunMultiplier = 0;
-            LowEnemyHPRequests = 0;
+        } else {
+            Shotgun = Mathf.Max(Shotgun, ShotgunMultiplier);
         }
     }
 
@@ -31,22 +35,11 @@ public class Counter : RegularUpdater {
         GrazeFrame += ct;
     }
 
-    public static void AlertLowEnemyHP() => ++LowEnemyHPRequests;
+    public static void AlertLowEnemyHP() => LowEnemyHPLastFrame = FrameNumber;
     public static void DoShotgun(float f) => ShotgunMultiplier = Mathf.Max(ShotgunMultiplier, f);
+    
 
-    public static int ReadResetLowHPBoss() {
-        var x = LowEnemyHPRequests;
-        LowEnemyHPRequests = 0;
-        return x;
-    }
-
-    public static float ReadResetShotgun() {
-        var x = ShotgunMultiplier;
-        ShotgunMultiplier = 0;
-        return x;
-    }
-
-    public override int UpdatePriority => UpdatePriorities.SYSTEM;
+    public override int UpdatePriority => UpdatePriorities.EOF;
 
     
 }

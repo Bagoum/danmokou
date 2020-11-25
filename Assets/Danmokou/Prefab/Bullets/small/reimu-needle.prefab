@@ -49,7 +49,7 @@ MonoBehaviour:
   deletable: 1
   grazeEveryFrames: 60
   screenCullRadius: 3
-  renderPriority: 500
+  renderPriority: 510
   renderMode: 0
   fadeIn: {fileID: 11400000, guid: 7509dddf785098f48aadafff0a2ac5b4, type: 2}
   rotational: 1

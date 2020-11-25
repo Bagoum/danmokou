@@ -1,0 +1,11 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="UINode.uss" />
+    <ui:VisualElement class="node small1">
+        <ui:VisualElement name="Selector" class="pointer prefix" />
+        <ui:Label text="one two three日本語: Long-toothed Wings Wrapped Round the Firmament" focusable="true" class="text coretext" style="height: 100%; padding-left: 0; padding-right: 0; white-space: nowrap; -unity-text-align: middle-left; font-size: 80px; overflow: hidden;" />
+        <ui:VisualElement style="flex-shrink: 0; margin-left: 30px; margin-right: 20px; margin-bottom: 16px; -unity-text-align: upper-center; align-items: flex-end;">
+            <ui:Label text="0/10 " name="CampaignHistory" class="text" style="-unity-font: url(&apos;/Assets/Danmokou/Fonts/Monoid/Monoid-Regular.ttf&apos;); font-size: 40px; padding-left: 0; padding-right: 0;" />
+            <ui:Label text="4/6 " name="PracticeHistory" class="text" style="-unity-font: url(&apos;/Assets/Danmokou/Fonts/Monoid/Monoid-Regular.ttf&apos;); font-size: 40px; padding-left: 0; padding-right: 0;" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

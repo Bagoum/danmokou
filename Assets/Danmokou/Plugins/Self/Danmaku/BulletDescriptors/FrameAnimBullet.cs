@@ -109,21 +109,21 @@ public abstract class FrameAnimBullet : Bullet {
     /// </summary>
     /// <param name="r"></param>
     protected override void Colorize(Recolor r) {
-        style = r.style;
-        if (r.sprites == null) return;
         material = r.material;
-        for (int ii = 0; ii < r.sprites.Length; ++ii) {
-            realizedFrames[ii] = r.sprites[ii];
+        if (r.sprites != null) {
+            for (int ii = 0; ii < r.sprites.Length; ++ii) {
+                realizedFrames[ii] = r.sprites[ii];
+            }
         }
         SetFrame(currFrame);
     }
 
     public override void ColorizeOverwrite(Recolor r) {
-        style = r.style;
-        if (r.sprites == null) return;
         material = r.material;
-        for (int ii = 0; ii < r.sprites.Length; ++ii) {
-            realizedFrames[ii].s = r.sprites[ii].s;
+        if (r.sprites != null) {
+            for (int ii = 0; ii < r.sprites.Length; ++ii) {
+                realizedFrames[ii].s = r.sprites[ii].s;
+            }
         }
         SetFrame(currFrame);
     }

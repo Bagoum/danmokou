@@ -4,6 +4,7 @@ using UnityEngine;
 
 namespace Danmaku {
 public class GemItem : Item {
+    protected override float MinTimeBeforeHome => 1.1f;
     protected override short RenderOffsetIndex => 0;
     public int numGems = 1;
     

@@ -12,24 +12,28 @@ public enum InputTriggerMethod {
     PERSISTENT
 }
 
-public readonly struct InputChecker {
-    public readonly Func<bool> checker;
+public class InputChecker {
+    private readonly Func<bool> checker;
     public readonly string keyDescr;
+    private readonly bool isController;
 
-    public InputChecker(Func<bool> f, string k) {
+    public bool Active => (!isController || InputManager.AllowControllerInput) && checker();
+
+    public InputChecker(Func<bool> f, string k, bool isController=false) {
         checker = f;
         keyDescr = k;
+        this.isController = isController;
     }
     
     public InputChecker Or(InputChecker other) => 
-        new InputChecker(checker.Or(other.checker), $"{keyDescr} or {other.keyDescr}");
+        new InputChecker(() => Active || other.Active, $"{keyDescr} or {other.keyDescr}");
 }
 
 public class InputHandler {
     private bool refractory;
     private readonly InputTriggerMethod trigger;
     private bool toggledValue;
-    public bool Active => _active &&
+    public bool Active => _active && GameStateManager.InputAllowed &&
                           //Prevents events like Bomb from being triggered twice in two RU frames per one unity frame
                           (trigger == InputTriggerMethod.ONCE ?
                             ETime.FirstUpdateForScreen :
@@ -49,7 +53,7 @@ public class InputHandler {
     public static InputHandler Trigger(InputChecker check) => new InputHandler(InputTriggerMethod.ONCE, check);
 
     public void Update() {
-        var keyDown = checker.checker();
+        var keyDown = checker.Active;
         if (!refractory && keyDown) {
             refractory = trigger == InputTriggerMethod.ONCE || trigger == InputTriggerMethod.ONCE_TOGGLE;
             if (trigger == InputTriggerMethod.ONCE_TOGGLE) _active = toggledValue = !toggledValue;
@@ -61,6 +65,7 @@ public class InputHandler {
     }
 }
 public static class InputManager {
+    public static bool AllowControllerInput { get; set; }
     public static readonly IReadOnlyList<KC> Alphanumeric = new[] {
         KC.A, KC.B, KC.C, KC.D, KC.E, KC.F, KC.G, KC.H, KC.I, KC.L, KC.M, KC.N,
         KC.O, KC.P, KC.Q, KC.R, KC.T, KC.U, KC.V, KC.W, KC.X, KC.Y, KC.Z,
@@ -68,8 +73,8 @@ public static class InputManager {
         KC.Alpha5, KC.Alpha6, KC.Alpha7, KC.Alpha8, KC.Alpha9
     };
     
-    private const string aHoriz = "Horizontal";
-    private const string aVert = "Vertical";
+    private const string aCHoriz = "Horizontal";
+    private const string aCVert = "Vertical";
     private const string aCRightX = "ControllerRightX";
     private const string aCRightY = "ControllerRightY";
     private const string aCDPadX = "DPadX";
@@ -85,31 +90,37 @@ public static class InputManager {
     private const KC cY = KC.JoystickButton3;
     private const KC cSelect = KC.JoystickButton6;
     private const KC cStart = KC.JoystickButton7;
-    private static InputChecker Key(KC key) => Key(() => key);
-    private static InputChecker Key(Func<KC> key) => new InputChecker(() => Input.GetKey(key()), key().ToString());
-    private static InputChecker AxisL0(string axis) => new InputChecker(() => Input.GetAxisRaw(axis) < -0.1f, axis);
-    private static InputChecker AxisG0(string axis) => new InputChecker(() => Input.GetAxisRaw(axis) > 0.1f, axis);
+    private static InputChecker Key(KC key, bool controller=false) => Key(() => key, controller);
+    private static InputChecker Key(Func<KC> key, bool controller) => 
+        new InputChecker(() => Input.GetKey(key()), key().ToString(), controller);
+    private static InputChecker AxisL0(string axis, bool controller=false) => 
+        new InputChecker(() => Input.GetAxisRaw(axis) < -0.1f, axis, controller);
+    private static InputChecker AxisG0(string axis, bool controller=false) => 
+        new InputChecker(() => Input.GetAxisRaw(axis) > 0.1f, axis, controller);
+
+    private static readonly InputChecker ArrowRight = Key(KeyCode.RightArrow);
+    private static readonly InputChecker ArrowLeft = Key(KeyCode.LeftArrow);
+    private static readonly InputChecker ArrowUp = Key(KeyCode.UpArrow);
+    private static readonly InputChecker ArrowDown = Key(KeyCode.DownArrow);
+    public static readonly InputHandler FocusHold = InputHandler.Hold(Key(i.FocusHold).Or(AxisG0(aCRightTrigger, true)));
+    public static readonly InputHandler AimLeft = InputHandler.Trigger(Key(i.AimLeft).Or(AxisL0(aCRightX, true)));
+    public static readonly InputHandler AimRight = InputHandler.Trigger(Key(i.AimRight).Or(AxisG0(aCRightX, true)));
+    public static readonly InputHandler AimUp = InputHandler.Trigger(Key(i.AimUp).Or(AxisG0(aCRightY, true)));
+    public static readonly InputHandler AimDown = InputHandler.Trigger(Key(i.AimDown).Or(AxisL0(aCRightY, true)));
+    public static readonly InputHandler ShootHold = InputHandler.Hold(Key(i.ShootHold).Or(AxisG0(aCLeftTrigger, true)));
+    public static readonly InputHandler Bomb = InputHandler.Trigger(Key(i.Bomb).Or(Key(cX, true)));
+    public static readonly InputHandler Meter = InputHandler.Hold(Key(i.Bomb).Or(Key(cX, true)));
     
+    public static readonly InputHandler UILeft = InputHandler.Trigger(ArrowLeft.Or(AxisL0(aCDPadX, true)));
+    public static readonly InputHandler UIRight = InputHandler.Trigger(ArrowRight.Or(AxisG0(aCDPadX, true)));
+    public static readonly InputHandler UIUp = InputHandler.Trigger(ArrowUp.Or(AxisG0(aCDPadY, true)));
+    public static readonly InputHandler UIDown = InputHandler.Trigger(ArrowDown.Or(AxisL0(aCDPadY, true)));
     
-    public static readonly InputHandler FocusHold = InputHandler.Hold(Key(i.FocusHold).Or(AxisG0(aCRightTrigger)));
-    public static readonly InputHandler AimLeft = InputHandler.Trigger(Key(i.AimLeft).Or(AxisL0(aCRightX)));
-    public static readonly InputHandler AimRight = InputHandler.Trigger(Key(i.AimRight).Or(AxisG0(aCRightX)));
-    public static readonly InputHandler AimUp = InputHandler.Trigger(Key(i.AimUp).Or(AxisG0(aCRightY)));
-    public static readonly InputHandler AimDown = InputHandler.Trigger(Key(i.AimDown).Or(AxisL0(aCRightY)));
-    public static readonly InputHandler ShootHold = InputHandler.Hold(Key(i.ShootHold).Or(AxisG0(aCLeftTrigger)));
-    public static readonly InputHandler Bomb = InputHandler.Trigger(Key(i.Bomb));
-    public static readonly InputHandler Meter = InputHandler.Hold(Key(i.Bomb));
-    
-    public static readonly InputHandler UILeft = InputHandler.Trigger(AxisL0(aHoriz).Or(AxisL0(aCDPadX)));
-    public static readonly InputHandler UIRight = InputHandler.Trigger(AxisG0(aHoriz).Or(AxisG0(aCDPadX)));
-    public static readonly InputHandler UIUp = InputHandler.Trigger(AxisG0(aVert).Or(AxisG0(aCDPadY)));
-    public static readonly InputHandler UIDown = InputHandler.Trigger(AxisL0(aVert).Or(AxisL0(aCDPadY)));
-    
-    public static readonly InputHandler UIConfirm = InputHandler.Trigger(Key(KC.Z).Or(Key(cA)));
-    public static readonly InputHandler UIBack = InputHandler.Trigger(Key(KC.X).Or(Key(cB)));
+    public static readonly InputHandler UIConfirm = InputHandler.Trigger(Key(KC.Z).Or(Key(cA, true)));
+    public static readonly InputHandler UIBack = InputHandler.Trigger(Key(KC.X).Or(Key(cB, true)));
     private static readonly InputHandler UISkipDialogue = InputHandler.Trigger(Key(KC.LeftControl));
     
-    public static readonly InputHandler Pause = InputHandler.Trigger(Key(KC.Escape).Or(Key(cStart)));
+    public static readonly InputHandler Pause = InputHandler.Trigger(Key(KC.Escape).Or(Key(cStart, true)));
 
     static InputManager() {
         unsafe {
@@ -142,18 +153,10 @@ public static class InputManager {
             vertical = vert;
             data1 = BitCompression.FromBools(fire, focus, bomb, meter, dialogueConfirm, dialogueToEnd, dialogueSkip);
         }
-        
-#if FT_DIRSHOOT
-        public ShootDirection shootDir;
-#endif
     }
     
     public static FrameInput RecordFrame => new FrameInput(HorizontalSpeed, VerticalSpeed,
-            IsFiring, IsFocus, IsBomb, IsMeter, DialogueConfirm, DialogueToEnd, DialogueSkip) {
-#if FT_DIRSHOOT
-            shootDir = FiringDir
-#endif
-    };
+            IsFiring, IsFocus, IsBomb, IsMeter, DialogueConfirm, DialogueToEnd, DialogueSkip);
 
     public static bool DialogueConfirm => replay?.dialogueConfirm ?? UIConfirm.Active;
     public static bool DialogueToEnd => replay?.dialogueToEnd ?? UIBack.Active;
@@ -170,12 +173,18 @@ public static class InputManager {
     };
 
     private const float shortRef = short.MaxValue;
-    private static float _horizSpeed01 => (Input.GetAxisRaw(aHoriz) + Input.GetAxisRaw(aCDPadX));
+    private static float GetAxisRawC(string key) => AllowControllerInput ? Input.GetAxisRaw(key) : 0;
+    private static float FRight => ArrowRight.Active ? 1 : 0;
+    private static float _horizSpeed01 => 
+        (ArrowRight.Active ? 1 : 0) + (ArrowLeft.Active ? -1 : 0) + 
+        GetAxisRawC(aCHoriz) + GetAxisRawC(aCDPadX);
     private static short _horizSpeedShort => (short) M.Clamp(-shortRef, shortRef, _horizSpeed01 * shortRef);
     private static short HorizontalSpeed => replay?.horizontal ?? _horizSpeedShort;
     public static float HorizontalSpeed01 => HorizontalSpeed / (float)shortRef;
     
-    private static float _vertSpeed01 => Input.GetAxisRaw(aVert) + Input.GetAxisRaw(aCDPadY);
+    private static float _vertSpeed01 => 
+        (ArrowUp.Active ? 1 : 0) + (ArrowDown.Active ? -1 : 0) +
+        GetAxisRawC(aCVert) + GetAxisRawC(aCDPadY);
     private static short _vertSpeedShort => (short) M.Clamp(-shortRef, shortRef, _vertSpeed01 * shortRef);
     private static short VerticalSpeed => replay?.vertical ?? _vertSpeedShort;
     public static float VerticalSpeed01 => VerticalSpeed / (float)shortRef;
@@ -189,17 +198,6 @@ public static class InputManager {
     public static bool IsFocus => replay?.focus ?? FocusHold.Active;
     public static bool IsBomb => replay?.bomb ?? Bomb.Active;
     public static bool IsMeter => replay?.meter ?? Meter.Active;
-    public static ShootDirection FiringDir { get {
-    #if FT_DIRSHOOT
-        if (replay.HasValue) return replay.Value.shootDir;
-        if (AimUp.Active) return ShootDirection.UP;
-        if (AimRight.Active) return ShootDirection.RIGHT;
-        if (AimLeft.Active) return ShootDirection.LEFT;
-        if (AimDown.Active) return ShootDirection.DOWN;
-    #endif
-        return ShootDirection.INHERIT;
-    }}
-    public static float? FiringAngle => FiringDir.ToAngle();
 
     public static bool IsFiring => replay?.fire ?? ShootHold.Active;
 

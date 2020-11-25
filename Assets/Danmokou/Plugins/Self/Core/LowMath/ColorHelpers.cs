@@ -6,6 +6,15 @@ using static DMath.ColorHelpers;
 
 namespace DMath {
 public static class ColorHelpers {
+
+    public static Color WithA(this Color c, float a) {
+        c.a = a;
+        return c;
+    }
+    public static Color MulA(this Color c, float a) {
+        c.a *= a;
+        return c;
+    }
     public static Color V4C(Vector4 v4) => new Color(v4.x, v4.y, v4.z, v4.w);
     public static Vector4 CV4(Color c) => new Vector4(c.r, c.g, c.b, c.a);
     
@@ -80,7 +89,7 @@ public static class ColorHelpers {
                 ig = ig.RemapTime(0, 0.9f);
                 gt = GradientModifier.DARKINVSOFT;
             }
-            else ig = ig.RemapTime(0, 0.8f);
+            else ig = ig.RemapTime(0, 0.9f);
         }
         return ig.Modify(gt);
     }
@@ -99,7 +108,7 @@ public static class ColorHelpers {
         } else if (gt == GradientModifier.COLORWIDE){
             return ig.RemapTime(0.07f, 0.73f);
         }  else if (gt == GradientModifier.DARKINVFLAT) {
-            return ig.RemapTime(0.1f, 0.5f).Reverse().RemapTime(-0.6f, 1.4f);
+            return ig.RemapTime(0.1f, 0.5f).Reverse().RemapTime(-0.7f, 1.1f);
         } else if (gt == GradientModifier.DARKINV) {
             return ig.RemapTime(0.1f, 0.5f).Reverse().RemapTime(-0.2f, 1.0f);
         } else if (gt == GradientModifier.DARKINVSOFT) {

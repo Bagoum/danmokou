@@ -54,7 +54,11 @@ class DerivativeVisitor : ExpressionVisitor {
     private readonly Dictionary<ParameterExpression, Ex> derivMap = new Dictionary<ParameterExpression, Expression>();
 
     protected override Expression VisitParameter(ParameterExpression node) {
-        return derivMap.TryGetValue(node, out var d) ? d : base.VisitParameter(node);
+        return derivMap.TryGetValue(node, out var d) ? d : E0;
+    }
+    
+    protected override Expression VisitMember(MemberExpression node) {
+        return E0;
     }
 
     protected override Expression VisitBinary(BinaryExpression node) {

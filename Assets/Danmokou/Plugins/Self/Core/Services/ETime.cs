@@ -88,6 +88,10 @@ public class ETime : MonoBehaviour {
 
     public static float SCREENFPS { get; private set; }
     public static bool FirstUpdateForScreen { get; private set; }
+    /// <summary>
+    /// Note: when applying slowdown effects, this may be set to true multiple times within a unity frame.
+    /// As such, limit usage to cosmetics.
+    /// </summary>
     public static bool LastUpdateForScreen { get; private set; }
     public static float ENGINEPERSCREENFPS => ENGINEFPS / SCREENFPS;
     private static readonly DMCompactingArray<IRegularUpdater> updaters = new DMCompactingArray<IRegularUpdater>();
@@ -139,21 +143,23 @@ public class ETime : MonoBehaviour {
             }, offi);
         }
         countdown.Wait();*/
-        
+
+        RNG.RNG_ALLOWED = false;
         Profiler.BeginSample("Parallel update");
         Parallel.For(0, updaters.Count, ii => {
             DeletionMarker<IRegularUpdater> updater = updaters.arr[ii];
             if (!updater.markedForDeletion) updater.obj.RegularUpdateParallel();
         });
         Profiler.EndSample();
+        RNG.RNG_ALLOWED = true;
     }
 
     private void Update() {
-        InputManager.OncePerFrameToggleControls();
         FirstUpdateForScreen = true;
         //Updates still go out on loading. Player movement is disabled but other things need to run
         noSlowDT = ASSUME_SCREEN_FRAME_TIME;
         if (GameStateManager.IsLoadingOrPaused) {
+            InputManager.OncePerFrameToggleControls();
             //Send out limited updates ignoring slowdown
             for (; noSlowDT > FRAME_BOUNDARY; ) {
                 noSlowDT -= FRAME_TIME;
@@ -172,6 +178,11 @@ public class ETime : MonoBehaviour {
             noSlowDT = 0;
         } else {
             for (; untilNextRegularFrame + dT > FRAME_BOUNDARY; ) {
+                //If the unity frame is skipped, then don't destroy trigger-based controls.
+                //If this toggle is moved out of the loop, then it is possible for trigger-based controls
+                // to be ignored if the unity framerate is faster than the game update rate
+                // (eg. 240hz, or 60hz + slowdown 0.25).
+                if (FirstUpdateForScreen) InputManager.OncePerFrameToggleControls();
                 untilNextRegularFrame -= FRAME_TIME;
                 LastUpdateForScreen = untilNextRegularFrame + dT <= FRAME_BOUNDARY;
                 GameStateManager.CheckForStateUpdates();

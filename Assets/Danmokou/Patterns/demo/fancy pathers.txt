@@ -1,0 +1,26 @@
+pattern { }
+phase 0
+	action block 0
+        position 0 0
+		shift-phase-to 1
+
+phase 0
+	action block 0
+		position 0 3
+		async gcircle-blue/ <> gcr2 6 _ <> {
+			root cxy 0 -5
+			frv2(rx(rand(-4, 4)))
+		} s tpnrot py lerp3(0.5, 1.5, 2.5, 3.5, mod(4, t + brand(0, 4)), 0.4, 0.7, 0.4)
+
+phase 0
+    action block 0
+		position 0 3
+		async lightning-*/w <;1:> gir2 0 2 <> {
+			bindLR
+			frv2(rx(0.4 * &lr))
+		} gir2 300 _ <> {
+		} gcr2 60 4 rx(0.8 * &lr) {
+			color { blue red yellow green }
+			p this
+		} pather 2 (1.6 + sine(3, 0.4, t)) nroffset(py(-1.2 * t) + multiplyx(&lr, circle(1 - 0.15 * p, 0.4, t))) 
+			{ }

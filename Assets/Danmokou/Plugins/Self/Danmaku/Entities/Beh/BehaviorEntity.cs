@@ -43,12 +43,6 @@ public struct ItemDrops {
 /// </summary>
 public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler {
     //BEH is only pooled when summoned via the firing API.
-    public enum RotationMethod {
-        Manual,
-        InVelocityDirection,
-        VelocityDirectionPlus90,
-        VelocityDirectionMinus90
-    }
 
     [Tooltip("This must be null for pooled BEH.")]
     public TextAsset behaviorScript;
@@ -61,24 +55,24 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     [CanBeNull] public Cancellable PhaseShifter { get; set; }
     private readonly HashSet<Cancellable> behaviorToken = new HashSet<Cancellable>();
     public int NumRunningSMs => behaviorToken.Count;
-    protected Vector2 lastDelta;
-    public Vector2 LastDelta => lastDelta;
-    private Vector3 facingVec = Vector3.zero;
+    public Vector2 LastDelta { get; private set; }
+
+    public void SetDirection(Vector2 delta) {
+        LastDelta = delta;
+        var mag = delta.x * delta.x + delta.y * delta.y;
+        if (mag > M.MAG_ERR) {
+            Direction = new Vector2(delta.x / mag, delta.y / mag);
+        }
+    }
+    //Normalized lastDelta that does not update when the delta is zero.
+    public Vector2 Direction { get; private set; }
+    public float DirectionDeg => M.AtanD(Direction);
     /// <summary>
     /// Only the original firing angle matters for rotational movement velocity
     /// </summary>
     public float original_angle { get; protected set; }
-    public RotationMethod rotationMethod;
-    /// <summary>
-    /// Whether or not rotationMethod affects the transform. In the case of iparent,
-    /// entities parented to this will be modified by transform rotation.
-    /// </summary>
-    private bool RotateTransform => false;
 
     protected bool dying { get; private set; } = false;
-    [CanBeNull] private Animator anim;
-    [CanBeNull] protected SpriteRenderer sr;
-    [CanBeNull] protected MaterialPropertyBlock pb;
     [CanBeNull] private Enemy enemy;
     [CanBeNull] public EffectStrategy deathEffect;
 
@@ -181,203 +175,16 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         None
     }
 
-    [Serializable]
-    public struct Animation {
-        [Serializable]
-        public struct FrameConfig {
-            public Frame[] idleAnim;
-            public Frame[] rightAnim;
-            public Frame[] leftAnim;
-            public Frame[] upAnim;
-            public Frame[] downAnim;
-            public Frame[] attackAnim;
-            public Frame[] deathAnim;
-            public FrameRunner runner;
-
-            private Frame[] GetFramesForAnimType(AnimationType typ) {
-                if (typ == AnimationType.Attack) return attackAnim;
-                if (typ == AnimationType.Right) return rightAnim;
-                if (typ == AnimationType.Left) return leftAnim;
-                if (typ == AnimationType.Up) return upAnim;
-                if (typ == AnimationType.Down) return downAnim;
-                if (typ == AnimationType.Death) return deathAnim;
-                return idleAnim;
-            }
-            
-            [CanBeNull]
-            public Sprite SetAnimationTypeIfPriority(AnimationType typ, bool loop, [CanBeNull] Action onLoopOrFinish) => 
-                runner.SetAnimationTypeIfPriority(typ, GetFramesForAnimType(typ), loop, onLoopOrFinish);
-
-            public Sprite ResetToIdle() => 
-                runner.SetAnimationType(AnimationType.None, GetFramesForAnimType(AnimationType.None), true, noop);
-
-            [CanBeNull]
-            public Sprite Update(float dT) {
-                var (resetMe, updSprite) = runner.Update(dT);
-                return resetMe ? ResetToIdle() : updSprite;
-            }
-        }
-
-        public enum AnimationMethod {
-            None,
-            Frames,
-            Animator,
-        }
-        public AnimationMethod method;
-        public DirectionRelation LRRelation;
-        public DirectionRelation UDRelation;
-        public FrameConfig frames;
-
-        private BehaviorEntity beh;
-        public void Initialize(BehaviorEntity setBEH) {
-            beh = setBEH;
-            if (method == AnimationMethod.Frames) beh.SetSprite(frames.ResetToIdle());
-        }
-        
-        private enum Direction : byte {
-            None,
-            Left,
-            Right,
-            Up,
-            Down
-        }
-
-        private int DirectionToAnimInt(Direction d) {
-            if (d == Direction.Right) return 1;
-            if (d == Direction.Up) return 2;
-            if (d == Direction.Left) return 3;
-            if (d == Direction.Down) return 4;
-            return 0;
-        }
-
-        private bool XFlipped;
-        private bool YFlipped;
-        //TODO call on end
-        private void Flip(bool flipX, bool flipY) {
-            if (flipX != XFlipped || flipY != YFlipped) {
-                Vector3 trs = beh.tr.localScale;
-                if (flipX != XFlipped) trs.x *= -1;
-                if (flipY != YFlipped) trs.y *= -1;
-                XFlipped = flipX;
-                YFlipped = flipY;
-                beh.tr.localScale = trs;
-            }
-        }
-        private void SetDirection(Direction d, bool flipX, bool flipY) {
-            Flip(flipX, flipY);
-            if (method == AnimationMethod.Animator) {
-                beh.anim.SetInteger(AnimIDRepo.direction, DirectionToAnimInt(d));
-            } else if (method == AnimationMethod.Frames) {
-                beh.SetSprite(frames.SetAnimationTypeIfPriority(AsAnimType(d), true, noop));
-            }
-        }
-
-        private Direction Opposite(Direction d) {
-            if (d == Direction.Right) return Direction.Left;
-            if (d == Direction.Left) return Direction.Right;
-            if (d == Direction.Up) return Direction.Down;
-            if (d == Direction.Down) return Direction.Up;
-            return Direction.None;
-        }
-
-        private AnimationType AsAnimType(Direction d) {
-            if (d == Direction.Right) return AnimationType.Right;
-            if (d == Direction.Left) return AnimationType.Left;
-            if (d == Direction.Up) return AnimationType.Up;
-            if (d == Direction.Down) return AnimationType.Down;
-            return AnimationType.None;
-        }
-
-        private (Direction d, bool flipX, bool flipY) ReduceDirection(Direction primary, Direction secondary) {
-            var dfx = ReduceDirection(primary);
-            if (dfx.d == Direction.None) dfx = ReduceDirection(secondary);
-            return dfx;
-        }
-        private (Direction d, bool flipX, bool flipY) ReduceDirection(Direction d) {
-            bool flipX = false;
-            bool flipY = false;
-            if (d == Direction.Left) {
-                if (LRRelation == DirectionRelation.None) d = Direction.None;
-                if (LRRelation == DirectionRelation.LDCopiesRU) d = Direction.Right;
-                if (LRRelation == DirectionRelation.LDFlipsRU) {
-                    d = Direction.Right;
-                    flipX = true;
-                }
-            } else if (d == Direction.Right) {
-                if (LRRelation == DirectionRelation.None) d = Direction.None;
-                if (LRRelation == DirectionRelation.RUCopiesLD) d = Direction.Left;
-                if (LRRelation == DirectionRelation.RUFlipsLD) {
-                    d = Direction.Left;
-                    flipX = true;
-                }
-            } else if (d == Direction.Up) {
-                if (UDRelation == DirectionRelation.None) d = Direction.None;
-                if (UDRelation == DirectionRelation.RUCopiesLD) d = Direction.Down;
-                if (UDRelation == DirectionRelation.RUFlipsLD) {
-                    d = Direction.Down;
-                    flipY = true;
-                }
-            } else if (d == Direction.Down) {
-                if (UDRelation == DirectionRelation.None) d = Direction.None;
-                if (UDRelation == DirectionRelation.LDCopiesRU) d = Direction.Up;
-                if (UDRelation == DirectionRelation.LDFlipsRU) {
-                    d = Direction.Up;
-                    flipY = true;
-                }
-            }
-            return (d, flipX, flipY);
-        }
-
-        private const float movCutoff = 0.0000001f;
-        /// <summary>
-        /// Select the animation according to the direction.
-        /// </summary>
-        /// <param name="dir">Unnormalized direction vector.</param>
-        public void FaceInDirection(Vector2 dir) {
-            if (method == AnimationMethod.None) return;
-            Direction d1 = Direction.None;
-            Direction d2 = Direction.None;
-            dir = dir.normalized;
-            var x = dir.x * dir.x;
-            var y = dir.y * dir.y;
-            var lr = (x < movCutoff) ? Direction.None : (dir.x > 0) ? Direction.Right : Direction.Left;
-            var ud = (y < movCutoff) ? Direction.None : (dir.y > 0) ? Direction.Up : Direction.Down;
-            if (x > y) {
-                d1 = lr;
-                d2 = ud;
-            } else {
-                d1 = ud;
-                d2 = lr;
-            }
-            var (direction, flipX, flipY) = ReduceDirection(d1, d2);
-            SetDirection(direction, flipX, flipY);
-        }
-
-        public void Update(float dT) {
-            if (method == AnimationMethod.Frames) {
-                beh.SetSprite(frames.Update(dT));
-            }
-        }
-
-        public void Animate(AnimationType typ, bool loop, [CanBeNull] Action done) {
-            if (method == AnimationMethod.Frames) {
-                beh.SetSprite(frames.SetAnimationTypeIfPriority(typ, loop, done));
-            }
-        }
-    }
-
-    public Animation animate;
+    public DisplayController displayer;
     private bool isSummoned = false;
     protected virtual int Findex => 0;
     protected override void Awake() {
         base.Awake();
         bpi = ParametricInfo.WithRandomId(tr.position, Findex);
-        anim = GetComponent<Animator>();
-        sr = GetComponent<SpriteRenderer>();
         enemy = GetComponent<Enemy>();
         ResetV();
         RegisterID();
-        UpdateStyleInformation();
+        UpdateStyle(defaultMeta);
         try {
             RunAttachedSM();
         } catch (Exception e) {
@@ -387,8 +194,9 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
 #if UNITY_EDITOR || ALLOW_RELOAD
         if (SceneIntermediary.IsFirstScene && this is FireOption || this is BossBEH || this is LevelController) {
             Core.Events.LocalReset.Listen(() => {
-                HardCancel(false); //Prevents event DM caching bugs...
-                RunAttachedSM();
+                HardCancel(false);
+                //Allows all cancellations processes to go through before rerunning
+                ETime.QueueEOFInvoke(RunAttachedSM);
             });
         }
 #endif
@@ -403,7 +211,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     }
     public void Initialize(Vector2 parentLoc, V2RV2 position,
         SMRunner sm, int firingIndex, uint? bpiid, string behName = "") =>
-        Initialize(new Velocity(parentLoc, position), sm, firingIndex, bpiid, null, behName);
+        Initialize(null, new Velocity(parentLoc, position), sm, firingIndex, bpiid, null, behName);
 
     /// <summary>
     /// If parented, we need firing offset to update Velocity's root position with parent.pos + offset every frame.
@@ -413,6 +221,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     /// <summary>
     /// Initialize a BEH. You are not required to call this, but all BEH that are generated in code should use this.
     /// </summary>
+    /// <param name="style"></param>
     /// <param name="_velocity">Velocity struct</param>
     /// <param name="smr">SM to execute. Set null if no SM needs to be run.</param>
     /// <param name="firingIndex">Firing index of BPI that will be created.</param>
@@ -420,7 +229,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     /// <param name="parent">Transform parent of this BEH. Use sparingly</param>
     /// <param name="behName"></param>
     /// <param name="options"></param>
-    public void Initialize(Velocity _velocity, SMRunner smr, int firingIndex=0, 
+    public void Initialize([CanBeNull] BEHStyleMetadata style, Velocity _velocity, SMRunner smr, int firingIndex=0, 
         uint? bpiid=null, [CanBeNull] BehaviorEntity parent=null, string behName="", RealizedBehOptions? options=null) {
         if (parent != null) TakeParent(parent);
         isSummoned = true;
@@ -430,14 +239,14 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         bpi = new ParametricInfo(_velocity.rootPos, firingIndex, bpiid ?? RNG.GetUInt());
         AssignVelocity(_velocity);
         if (doVelocity) {
-            FaceInDirection(velocity.UpdateZero(ref bpi, 0f));
+            SetDirection(velocity.UpdateZero(ref bpi, 0f));
             tr.position = bpi.loc;
         }
         if (IsNontrivialID(behName)) ID = behName;
         Initialize(smr);
         //This comes after so SMs run due to ~@ commands are not destroyed by BeginBehaviorSM
         RegisterID();
-        UpdateStyleInformation();
+        UpdateStyle(style ?? defaultMeta);
         deathDrops = options?.drops;
         delete = options?.delete;
         if (options.HasValue) {
@@ -452,13 +261,8 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         collisionActive = collisionInfo.CollisionActiveOnInit;
         phaseController = SMPhaseController.Normal(0);
         dying = false;
-        if (sr != null) {
-            sr.enabled = true;
-            sr.GetPropertyBlock(pb = new MaterialPropertyBlock());
-        }
-        tr.localEulerAngles = facingVec = new Vector3(0, 0, 0);
-        if (enemy != null) enemy.Initialize(this, sr);
-        animate.Initialize(this);
+        if (enemy != null) enemy.Initialize(this);
+        if (displayer != null) displayer.ResetV(this);
         //Pooled objects should not be running SMs from the inspector, only via Initialize,
         //so there is no RunImmediateSM in ResetV.
     }
@@ -472,7 +276,8 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         }
     }
 
-    public void RunPatternSM(StateMachine sm) => _ = BeginBehaviorSM(SMRunner.RunNoCancel(sm), phaseController.WhatIsNextPhase(0));
+    public void RunPatternSM(StateMachine sm) => _ = 
+        BeginBehaviorSM(SMRunner.RunNoCancelRoot(sm), phaseController.WhatIsNextPhase(0));
 
     private static bool IsNontrivialID([CanBeNull] string id) => !string.IsNullOrWhiteSpace(id) && id != "_";
 
@@ -518,57 +323,28 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         if (ltv.ThisCannotContinue(tbpi)) { ltv.done(); yield break; }
         for (; tbpi.t < doTime - ETime.FRAME_TIME;) {
             tbpi.loc = bpi.loc;
-            vel.UpdateDeltaAssignAcc(ref tbpi, out lastDelta, ETime.FRAME_TIME);
+            vel.UpdateDeltaAssignAcc(ref tbpi, out Vector2 delta, ETime.FRAME_TIME);
             //Checking the canceller before committing position allows using eg. successive onscreen checks.
             //This is a core use case for move-while. So we split up velocitystep to allow it
             if (ltv.ThisCannotContinue(tbpi)) {
-                lastDelta = Vector2.zero;
+                SetDirection(Vector2.zero);
                 ltv.done(); yield break;
             }
+            SetDirection(delta);
             SetTransformGlobalPosition(bpi.loc = tbpi.loc);
             yield return null;
             if (ltv.cT.Cancelled) {
-                lastDelta = Vector2.zero;
+                SetDirection(Vector2.zero);
                 ltv.done(); yield break;
             }
         }
         tbpi.loc = bpi.loc;
         VelocityStepAndLook(ref vel, ref tbpi, doTime - tbpi.t);
         bpi.loc = tbpi.loc;
-        lastDelta = Vector2.zero;
+        SetDirection(Vector2.zero);
         ltv.done();
     }
 
-    public void FadeSpriteOpacity(BPY fader01, float time, ICancellee cT, Action done) {
-        Color c = sr.color;
-        var tbpi = ParametricInfo.WithRandomId(bpi.loc, bpi.index);
-        c.a = fader01(tbpi);
-        sr.color = c;
-        RunRIEnumerator(_FadeSpriteOpacity(fader01, tbpi, time, cT, done));
-    }
-    private IEnumerator _FadeSpriteOpacity(BPY fader01, ParametricInfo tbpi, float time, ICancellee cT, Action done) {
-        if (cT.Cancelled) { done(); yield break; }
-        if (sr == null) throw new Exception($"Tried to fade sprite on BEH without sprite {ID}");
-        Color c = sr.color;
-        for (tbpi.t = 0f; tbpi.t < time - ETime.FRAME_YIELD; tbpi.t += ETime.FRAME_TIME) {
-            yield return null;
-            if (cT.Cancelled) { break; } //Set to target and then leave
-            tbpi.loc = bpi.loc;
-            c.a = fader01(tbpi);
-            sr.color = c;
-        }
-        tbpi.t = time;
-        c.a = fader01(tbpi);
-        sr.color = c;
-        done();
-    }
-
-    private void SetSprite([CanBeNull] Sprite sprite) {
-        if (sprite != null) {
-            sr.sprite = sprite;
-            pb.SetTexture(PropConsts.mainTex, sprite.texture);
-        }
-    }
 
     #region Death
 
@@ -598,7 +374,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     }
 
     private void DestroyFinal() {
-        if (sr != null) sr.enabled = false;
+        if (displayer != null) displayer.Hide();
         //Flip(false, false);
         if (isPooled) {
             PooledDone();
@@ -616,12 +392,14 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     /// </summary>
     public void Poof(bool? drops=null) {
         if (SceneIntermediary.LOADING) InvokeCull();
-        if (dying) return;
-        DestroyInitial(true, drops ?? AmIOutOfHP);
-        if (enemy != null) enemy.DoSuicideFire();
-        GameManagement.campaign.DestroyNormalEnemy();
-        TryDeathEffect();
-        animate.Animate(AnimationType.Death, false, DestroyFinal);
+        else if (!dying) {
+            DestroyInitial(true, drops ?? AmIOutOfHP);
+            if (enemy != null) enemy.DoSuicideFire();
+            GameManagement.campaign.DestroyNormalEnemy();
+            TryDeathEffect();
+            if (displayer == null) DestroyFinal();
+            else displayer.Animate(AnimationType.Death, false, DestroyFinal);
+        }
     }
     
     [ContextMenu("Destroy Direct")]
@@ -644,42 +422,14 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     }
     
     protected virtual void SpawnSimple(string styleName) {
-        BulletManager.RequestSimple(styleName, null, null, new Velocity(bpi.loc, lastDelta.normalized), 0, 0, null);
-    }
-    
-    /// <summary>
-    /// Updates the transform and internal rotation measure (for TargetDir) in accordance with a direction.
-    /// </summary>
-    /// <param name="dir">(Unnormalized) direction vector. If zero, noops.</param>
-    public void FaceInDirection(Vector2 dir) {
-        if (rotationMethod != RotationMethod.Manual && dir.x * dir.x + dir.y * dir.y > 0f) {
-            if (rotationMethod == RotationMethod.InVelocityDirection) {
-                FaceInDirectionRaw(Mathf.Atan2(dir.y, dir.x) * M.radDeg);
-            } else if (rotationMethod == RotationMethod.VelocityDirectionPlus90) {
-                FaceInDirectionRaw(Mathf.Atan2(dir.x, -dir.y) * M.radDeg);
-            } else if (rotationMethod == RotationMethod.VelocityDirectionMinus90) {
-                FaceInDirectionRaw(Mathf.Atan2(-dir.x, dir.y) * M.radDeg);
-            }
-        }
-    }
-
-    public void FaceInDirectionRaw(float deg) {
-        facingVec.z = deg;
-        if (RotateTransform) {
-            tr.eulerAngles = facingVec;
-        }
+        BulletManager.RequestSimple(styleName, null, null, new Velocity(bpi.loc, Direction), 0, 0, null);
     }
 
     private void VelocityStepAndLook(ref Velocity vel, ref ParametricInfo pi, float dT=ETime.FRAME_TIME) {
-        vel.UpdateDeltaAssignAcc(ref pi, out lastDelta, dT);
+        vel.UpdateDeltaAssignAcc(ref pi, out Vector2 delta, dT);
+        SetDirection(delta);
         SetTransformGlobalPosition(pi.loc);
     }
-
-    /// <summary>
-    /// Normalized
-    /// </summary>
-    /// <returns></returns>
-    protected virtual Vector2 GetGlobalDirection() => M.PolarToXY(facingVec.z);
 
     protected virtual void RegularUpdateMove() {
         if (doVelocity) {
@@ -695,11 +445,8 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     }
     
     private void RegularUpdateControl()  {
-        var curr_pcs = thisStyleControls; //thisStyleControls may change during iteration. Don't respect changes
-        int ct = curr_pcs.Count;
-        for (int ii = 0; ii < ct && !dying; ++ii) {
-            curr_pcs[ii].action(this);
-        }
+        //thisStyleControls may change during iteration. Don't respect changes
+        myStyle.IterateControls(this);
     }
 
     private void RegularUpdateCollide() {
@@ -719,7 +466,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         }
         beh_cullCtr = (beh_cullCtr + 1) % checkCullEvery;
         if (delete?.Invoke(rBPI) == true) InvokeCull();
-        else if (beh_cullCtr == 0 && cullableRadius.cullable && styleIsCameraCullable 
+        else if (beh_cullCtr == 0 && cullableRadius.cullable && myStyle.CameraCullable 
             && bpi.t > FIRST_CULLCHECK_TIME && LocationService.OffPlayableScreenBy(ScreenCullRadius, bpi.loc)) {
             InvokeCull();
         }
@@ -730,15 +477,10 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
             rBPI.loc, collisionInfo.collisionRadius), false);
     }
 
-    protected virtual bool Contains(Vector2 pt) => throw new Exception($"The BEH {ID} does not have a collision method.");
-
     protected virtual void RegularUpdateRender() {
-        FaceInDirection(lastDelta);
-        animate.FaceInDirection(lastDelta);
-        animate.Update(ETime.FRAME_TIME);
-        if (pb != null) {
-            pb.SetFloat(PropConsts.time, bpi.t);
-            sr.SetPropertyBlock(pb);
+        if (displayer != null) {
+            displayer.FaceInDirection(LastDelta);
+            displayer.UpdateRender();
         }
     }
 
@@ -803,17 +545,21 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         HardCancel(false);
         phaseController.SetDesiredNext(startAtPatternId);
         var cT = new Cancellable();
-        var joint = new JointCancellee(cT, sm.cT);
+        var joint = sm.MakeNested(cT);
         using (var smh = new SMHandoff(this, sm, joint)) {
             behaviorToken.Add(cT);
             try {
                 await sm.sm.Start(smh);
-                behaviorToken.Remove(cT);
             } catch (Exception e) {
-                behaviorToken.Remove(cT);
                 if (!(e is OperationCanceledException)) {
-                    Log.UnityError(Log.StackInnerException(e).Message); //This is only here for the vaguest of debugging purposes.
+                    Log.UnityError(Log.StackInnerException(e)
+                        .Message); //This is only here for the vaguest of debugging purposes.
                 }
+            } finally {
+                //It is possible for tasks to still be running at this point (most critically if
+                // using ~), so we cancel to make sure they get destroyed
+                cT.Cancel();
+                behaviorToken.Remove(cT);
             }
             phaseController.RunEndingCallback();
             if (IsNontrivialID(ID)) {
@@ -843,14 +589,12 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     public async Task RunExternalSM(SMRunner sm) {
         if (sm.sm == null || sm.cT.Cancelled) return;
         var cT = new Cancellable();
-        var joint = new JointCancellee(cT, sm.cT);
+        var joint = sm.MakeNested(cT);
         using (var smh = new SMHandoff(this, sm, joint)) {
             behaviorToken.Add(cT);
             try {
                 await sm.sm.Start(smh);
-                behaviorToken.Remove(cT);
             } catch (Exception e) {
-                behaviorToken.Remove(cT);
                 if (!(e is OperationCanceledException)) {
                     Log.UnityError(Log.StackInnerException(e)
                         .Message); //This is only here for the vaguest of debugging purposes.
@@ -861,6 +605,9 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
                 if (sm.cT.Cancelled) throw;
                 //When running external SM, "local cancel" (due to death) is a valid output, and we should not throw.
                 //Same as how Phase does not throw if OpCanceled is raised via shiftphasetoken.
+            } finally {
+                cT.Cancel();
+                behaviorToken.Remove(cT);
             }
             if (sm.cullOnFinish) InvokeCull();
         }
@@ -907,7 +654,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     }
     
     public BehaviorEntity GetINode(string behName, uint? bpiid) => BEHPooler.INode(rBPI.loc, 
-        V2RV2.Angle(original_angle), GetGlobalDirection(), rBPI.index, bpiid, behName);
+        V2RV2.Angle(original_angle), Direction, rBPI.index, bpiid, behName);
 
 
 #if UNITY_EDITOR
@@ -922,12 +669,12 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     
     
 #endif
-    
-    public float RotationDeg => facingVec.z;
 
     private static readonly Action noop = () => { };
     [ContextMenu("Animate Attack")]
-    public void AnimateAttack() => animate.Animate(AnimationType.Attack, false, noop);
+    public void AnimateAttack() {
+        if (displayer != null) displayer.Animate(AnimationType.Attack, false, null);
+    }
 
     #region GetExecForID
 
@@ -965,11 +712,6 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         ExUtils.Wrap<BehaviorEntity, BEHPointer>("PhotosTaken");
     [UsedImplicitly]
     public static float PhotosTaken(BEHPointer behp) => behp.beh.Enemy.PhotosTaken;
-
-    public static readonly ExFunction contains =
-        ExUtils.Wrap<BehaviorEntity>("Contains", typeof(BEHPointer), typeof(Vector2));
-    [UsedImplicitly]
-    public static bool Contains(BEHPointer behp, Vector2 pt) => behp.beh.Contains(pt);
 
     public static BehaviorEntity[] GetExecsForIDs(string[] ids) {
         int totalct = 0;

@@ -15,27 +15,42 @@ public enum GameState {
     /// For eg. the freeze time after taking a picture with AyaCamera.
     /// </summary>
     EFFECTPAUSE = 6,
+    /// <summary>
+    /// During certain UI effects, such as windows sliding in/out, input is disabled to prevent weird artifacting.
+    /// </summary>
+    NOINPUTPAUSE = 7
 }
 
 public static class GSHelpers {
     public static bool IsPaused(this GameState gs) => gs == GameState.PAUSE || 
                                                       gs == GameState.DEATH || 
                                                       gs == GameState.SUCCESS ||
-                                                      gs == GameState.EFFECTPAUSE;
+                                                      gs == GameState.EFFECTPAUSE ||
+                                                      gs == GameState.NOINPUTPAUSE;
+
+    public static bool InputAllowed(this GameState gs) => gs != GameState.NOINPUTPAUSE && gs != GameState.LOADING;
 }
 public static class GameStateManager {
+    public static bool InputAllowed => state.InputAllowed();
     private static GameState state = GameState.RUN;
     [CanBeNull] private static Action stateUpdate;
 
+    [CanBeNull] public static Action<Action> UnpauseAnimator { get; set; }
 
     public static void CheckForStateUpdates() {
-        if (PauseAllowed && InputManager.Pause.Active) {
+        if (PauseAllowed && InputManager.Pause.Active && stateUpdate == null) {
             if (state == GameState.RUN) {
                 stateUpdate = _Pause;
             } else if (state == GameState.PAUSE) {
-                stateUpdate = _Unpause;
+                UIUnpause();
             }
         }
+    }
+
+    public static void UIUnpause() {
+        stateUpdate = _NoInputPause;
+        if (UnpauseAnimator == null) stateUpdate = _Unpause;
+        else UnpauseAnimator(() => stateUpdate = _Unpause);
     }
 
     /// <summary>
@@ -70,6 +85,7 @@ public static class GameStateManager {
     private static void _Sucess() => _PauseType(GameState.SUCCESS);
     private static void _Death() => _PauseType(GameState.DEATH);
     private static void _Pause() => _PauseType(GameState.PAUSE);
+    private static void _NoInputPause() => _PauseType(GameState.NOINPUTPAUSE);
     private static void _Unpause() {
         Time.timeScale = 1f;
         __SetAndRaise(GameState.RUN);
@@ -78,8 +94,6 @@ public static class GameStateManager {
         if (on) _PauseType(GameState.LOADING);
         else _Unpause();
     }
-
-    public static void ForceUnpause() => stateUpdate = _Unpause;
 
     public static void SetLoading(bool on, [CanBeNull] Action done) => stateUpdate = () => {
         _SetLoading(on);

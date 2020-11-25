@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Danmaku;
+using DMath;
 using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.Profiling;
@@ -11,8 +12,7 @@ using Object = UnityEngine.Object;
 
 public static class Pooler<T> where T : Pooled<T>  {
     //Note: these dicts are specific to each typing T. They are not shared between Pooler<ParticlePooled> and Pooler<BEH>.
-    private static readonly Dictionary<GameObject, HashSet<T>> active = 
-        new Dictionary<GameObject, HashSet<T>>();
+    private static readonly Dictionary<GameObject, HashSet<T>> active = new Dictionary<GameObject, HashSet<T>>();
     private static readonly Dictionary<GameObject, Queue<T>> free = new Dictionary<GameObject, Queue<T>>();
     private static Transform particleContainer;
     private static string typName;
@@ -99,7 +99,7 @@ public static class BEHPooler {
         uint? bpiid, string behName) {
         var beh = RequestUninitialized(inodePrefab, out _);
         beh.Initialize(parentLoc, localLoc, SMRunner.Null, firingIndex, bpiid, behName);
-        beh.FaceInDirection(rotation);
+        beh.SetDirection(rotation);
         return beh;
     }
 }
@@ -128,12 +128,34 @@ public readonly struct ItemRequestContext {
         offset = off;
     }
 }
+
+public readonly struct LabelRequestContext {
+    public readonly Vector2 root;
+    public readonly float radius;
+    public readonly float speed;
+    public readonly float angle;
+    public readonly float timeToLive;
+    public readonly IGradient color;
+    public readonly string text;
+
+    public LabelRequestContext(Vector2 root, float radius, float speed, float angle, float timeToLive, IGradient color, string text) {
+        this.root = root;
+        this.radius = radius;
+        this.speed = speed;
+        this.angle = angle;
+        this.timeToLive = timeToLive;
+        this.color = color;
+        this.text = text;
+    }
+}
+
 public static class ItemPooler {
     private static ItemReferences items;
 
     public static void Prepare(ItemReferences itemRefs) {
         items = itemRefs;
         Pooler<Item>.Prepare();
+        Pooler<DropLabel>.Prepare();
     }
 
     private static Item Request(GameObject prefab, ItemRequestContext ctx) {
@@ -142,6 +164,11 @@ public static class ItemPooler {
         return i;
     }
 
+    public static DropLabel RequestLabel(LabelRequestContext ctx) {
+        var l = Pooler<DropLabel>.Request(items.dropLabel, out _);
+        l.Initialize(ctx);
+        return l;
+    }
     public static Item RequestLife(ItemRequestContext ctx) => Request(items.lifeItem, ctx);
     public static Item RequestValue(ItemRequestContext ctx) => Request(items.valueItem, ctx);
     public static Item RequestPointPP(ItemRequestContext ctx) => Request(items.pointppItem, ctx);

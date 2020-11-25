@@ -7,7 +7,7 @@ using UnityEngine;
 /// <summary>
 /// Class for basic powerup effects constructed from a circular aura going in or out.
 /// </summary>
-public class PowerUp : BehaviorEntity {
+public class PowerUp : SpriteDisplayController {
     private TP4 color;
     private float maxTime;
 
@@ -20,16 +20,18 @@ public class PowerUp : BehaviorEntity {
     /// <param name="itrs">Number of iterations</param>
     public void Initialize(TP4 colorizer, float time, float itrs) {
         color = colorizer;
-        sr.color = new Color(0, 0, 0, 0);
+        sprite.color = new Color(0, 0, 0, 0);
         maxTime = time;
         pb.SetFloat(PropConsts.speed, itrs / time);
     }
 
-    protected override void RegularUpdateRender() {
-        sr.color = ColorHelpers.V4C(color(bpi));
-        base.RegularUpdateRender();
-        if (bpi.t > maxTime) {
-            InvokeCull();
+    public override void UpdateRender() {
+        sprite.color = ColorHelpers.V4C(color(beh.rBPI));
+        base.UpdateRender();
+        if (beh.rBPI.t > maxTime) {
+            beh.InvokeCull();
         }
     }
+
+    public void InvokeCull() => beh.InvokeCull();
 }

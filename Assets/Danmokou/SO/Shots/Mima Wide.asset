@@ -14,11 +14,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   key: mima-wide
   title: Falling Stars Escaping Death
-  description: A shot developed through long study of Tycho Brahe's planetary measurements.<br>A
-    wider fire shape allows covering more of the screen at once.<br>When focused,
-    the fire shape narrows somewhat.
+  description: 'A shot developed through long study of Tycho Brahe''s planetary measurements.
+
+    A
+    wider fire shape allows covering more of the screen at once.
+
+    When focused,
+    the fire shape narrows somewhat.'
   type: Wide
   prefab: {fileID: 4866589885780801546, guid: 7942b3579c8b58a4889a5d3faee370ac, type: 3}
   bomb: 0
   defaultPower: 1000
   playerChild: 1
+  isMultiShot: 0
+  multiD: {fileID: 0}
+  multiM: {fileID: 0}
+  multiK: {fileID: 0}
+  onSwap: {fileID: 0}

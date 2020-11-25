@@ -3,6 +3,8 @@ using UnityEngine;
 
 [CreateAssetMenu(menuName = "Data/Item References")]
 public class ItemReferences : ScriptableObject {
+    public GameObject dropLabel;
+    
     public GameObject lifeItem;
     public GameObject valueItem;
     public GameObject pointppItem;

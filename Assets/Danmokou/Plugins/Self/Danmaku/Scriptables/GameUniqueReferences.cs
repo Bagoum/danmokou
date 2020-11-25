@@ -12,6 +12,7 @@ public class GameUniqueReferences : ScriptableObject {
     public Version gameVersion;
     public SceneConfig mainMenu;
     public SceneConfig replaySaveMenu;
+    public GameObject defaultMenuBackground;
     public SceneConfig unitScene;
     public SceneConfig tutorial;
     public SceneConfig miniTutorial;

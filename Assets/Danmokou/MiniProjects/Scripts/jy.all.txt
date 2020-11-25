@@ -14,6 +14,7 @@ pattern {
 	bgm {
 		2 jy.bgm
 	}
+	setuifrom 2
 }
 
 !!{ me yukari
@@ -26,7 +27,7 @@ phase 0
 			position -15 0
 		@ { $other }
 			diverthp $me
-		shift-phase-to 3
+		shift-phase-to 8
 
 
 !{ power1()
@@ -232,7 +233,7 @@ phase 36
 		pool-control triangle-purple/w cullrad 15
 		pool-control circle-blue/b allowcull false
 		gtr2 7.5s _ <> {
-			delay 1s
+			delay 2s
 		} saction 0 :3
 			@ $other
 				$jpower2
@@ -243,7 +244,7 @@ phase 36
 				restyleeffect circle-blue/b cwheel-blue/ _
 				sfx x-transform-2 _
 			}
-		bullet-control _ circle-blue/b batch > t (100.7 + &.tret * 3 / 1.3) {
+		bullet-control _ circle-blue/b batch > t (100.7 + &.tret * 3.9 / 1.7) {
 			updatef red 1 _
 			restyleeffect lcircle-red/w cwheel-red/ _
 		}
@@ -264,12 +265,12 @@ phase 36
 			if (= &red 1, 400 * t, &a)
 			tp
 			if < t 100 
-				px lerpt 0 0.3 0 3.4
-				px lerpt 100 101.2 1.3 -1.3
-			switchH(100 + &tret * 0.9 * 3 / 1.3)
-				zero
+				px lerpt 0 0.3 0 3.9
+				px lerpt 100 101.2 1.7 -1.7
+			switchH(t, 100 + &tret * 0.9 * 3.9 / 1.7,
+				zero,
 !!{ tback 1.5
-				eased(io-sine, $tback, pxy(&ox, &oy + 1.5)* -1 / $tback)
+				eased(io-sine, $tback, pxy(&ox, &oy + 1.5)* -1 / $tback))
 #}
 
 ##6
@@ -357,7 +358,7 @@ phase 36
 phase 36
 	action block 0
 		timer restart pt
-		pool-control arrow-purple/w cullrad 15
+		pool-control arrow-purple/w cullrad 20
 		pool-control circle-blue/ allowcull false
 		pool-control circle-red/ allowcull false
 		bullet-control persist circle-* time 100 < t 100
@@ -365,13 +366,13 @@ phase 36
 			action block 0 :2
 				move _ nroffset px sine 4p 1.8 t
 				gtr2 2s _ <> {
-					delay 2s
+					delay 1s
 					wait-child
 					bindLR
 				} saction 0 :3
 					$jpower1
 					wait 1.5
-!!{ range (lerp 0 20 timersec(pt) 7 9)
+!!{ range (lerp 0 20 timersec(pt) 12 14)
 !{ makeCtrl(from, to, spd, eff) 
 bullet-control once %from batch (> y -2.5 & onscreenby $range loc) {
 	updatef {
@@ -392,8 +393,11 @@ bullet-control once %from batch (> y -2.5 & onscreenby $range loc) {
 						$makeCtrl(arrow-purple/w, circle-red/, 1.3, cwheel-purple/)
 						$makeCtrl(arrow-purple/w, circle-blue/, 1.6, cwheel-purple/)
 		
-		async arrow-purple/w <> gcr2 /i dl 9 _ <> {
-			frv2	a sine 8p 700 timersec(pt)
+		async arrow-purple/w <> gcr {
+			wait(11 / dl)
+			times(_)
+			##frv2	a sine 8p 700 timersec(pt)
+			rv2incr(angle(7 + 0.5 * tdl))
 			start {
 				nloc =v2 zero
 				nang =f 0
@@ -402,8 +406,8 @@ bullet-control once %from batch (> y -2.5 & onscreenby $range loc) {
 			}
 		} gsr2c 8 {
 !!{ tsw 100.5
-		} s tpnrot switchH $tsw
-			rotify px lerpt 99 $tsw 3.7 0
+		} s tpnrot switchH t $tsw
+			rotify px lerpt 99 $tsw 4.3 0
 !!{ tin 3
 !!{ layerOffset (-0.5 * (&.nlayer - 1) - $tin)
 			if < t $tin
@@ -466,7 +470,7 @@ phase 42
 				break
 	
 !!{ mov tprot px lerpt 0 0.6 1 1.9
-!!{ erpt (dl * 50)
+!!{ erpt ((^ dl 0.9) * 50)
 		bullet-control _ empty cull ($cx | $cy)
 		async empty <> gcr2 180 _ aphi $erpt {
 		} gsr2c $erpt {
@@ -494,26 +498,37 @@ phase 42
 !!{ wait2 if(divby 8 ++ t, 160, 30)
 !!{ bowap sine 9p 1200 timersec(pt)
 !!{ maxt 1.3
-!!{ fdelay  (0.2 + 1.3 * ($maxt - &.tret))
-		bullet-control _ circle-blue/w time 100 < t 100
+!!{ fdelay  (0.5 + 1.3 * ($maxt - &.tret))
+		bullet-control _ circle-*/w time 100 < t 100
 		bullet-control-sm _ circle-blue/w > t (100 + $fdelay)
-			sync gpather-red/w <> pssfx x-fire-tech-6 pather 1 0.7 tprot cx 3 {  }
-		bullet-control _ circle-blue/w softcull cwheel-red/ > t (100 + $fdelay)
-		gtr2 3s _ <> {
+			sync gpather-blue/w <> pssfx x-fire-tech-6 pather 1 0.7 tprot cr(3, 50) {  }
+		bullet-control-sm _ circle-red/w > t (100 + $fdelay)
+			sync gpather-red/w <> pssfx x-fire-tech-6 pather 1 0.7 tprot cr(3, -50) {  }
+		bullet-control _ circle-blue/w softcull cwheel-blue/ > t (100 + $fdelay)
+		bullet-control _ circle-red/w softcull cwheel-red/ > t (100 + $fdelay)
+		gtr2 4s _ <> {
+			bindLR
 		} saction 0
 			@ $other
 				$jpower2
 			wait 1.5
+			savef lr 0 &lr
 			bullet-control once gem-purple/w batch < t $maxt {
-				 updatef tret t _
-				copy circle-blue/w _
-				copynull cwheel-blue/ _
+				updatef tret t _
+				updatef lr @0 lr _
+				copy circle-blue/w (= @0 lr 1)
+				copynull cwheel-blue/ (= @0 lr 1)
+				copy circle-red/w (= @0 lr -1)
+				copynull cwheel-red/ (= @0 lr -1)
 			}
 			break
-		async gem-purple/w <> gcr2 /i dl 5 _ <> {
+		async gem-purple/w <> gcr2 /i dl 6 _ <> {
 			frv2	a $bowap
-			start tret =f 0
-			expose { f tret }
+			start {
+				tret =f 0
+				lr =f 0
+			}
+			expose { f tret f lr }
 		} gsr2c $crep {
 		} s tprot px lerpt3(0.2, 0.8, 1, 1.3, 1, 4,
 			lerpt 100 100.3 0.7 0)

@@ -22,7 +22,7 @@ MonoBehaviour:
     Perimeter:
       offset: {x: 0, y: 0}
       multiplier: 1
-  particlePrefab: {fileID: 1388846981691479454, guid: 79a4fa494c22a224b83bb6437574f3e7,
+  particlePrefab: {fileID: 5484803193899376953, guid: 3e8c08e2eb9652b419fbe995ff2f8e50,
     type: 3}
   spawnType: 0
   subEffects: []

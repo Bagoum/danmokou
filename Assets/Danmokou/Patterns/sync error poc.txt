@@ -1,0 +1,18 @@
+<#> warnprefix
+pattern({
+	##boss jy.yukari
+})
+phase(0)
+	action(block, 0)
+		shift-phase-to(1)
+		
+
+<!> type(non, `Case 1`)
+phase(3)
+    action block 0
+		position 0 0
+		sync tfairy2 <;:-100> summons tprot cx 5
+			wait
+
+
+

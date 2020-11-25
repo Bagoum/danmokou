@@ -11,7 +11,7 @@ public abstract class Item : Pooled<Item> {
     protected virtual bool Attractible => true;
     protected virtual float CollectRadiusBonus => 0;
     protected virtual float speed0 => 1f;
-    protected virtual float speed1 => -1.8f;
+    protected virtual float speed1 => -1.4f;
     protected virtual float peakt => 0.8f;
     protected virtual Vector2 Velocity(float t) => 
         Mathf.Lerp(speed0, speed1, t * (speed0 / (speed0 - speed1))/peakt) * PoC.Direction;
@@ -41,7 +41,7 @@ public abstract class Item : Pooled<Item> {
     protected virtual float CullRadius => 10f;
 
     private const float lerpIntoOffsetTime = 0.4f;
-    private const float minTimeBeforeHome = 1f;
+    protected virtual float MinTimeBeforeHome => 0.9f;
 
     private Vector2 summonTarget;
 
@@ -52,6 +52,8 @@ public abstract class Item : Pooled<Item> {
     protected virtual float RotationTime => 0.8f;
 
     protected SpriteRenderer sr;
+    protected bool autocollected;
+    
     protected override void Awake() {
         base.Awake();
         sr = GetComponent<SpriteRenderer>();
@@ -65,10 +67,14 @@ public abstract class Item : Pooled<Item> {
         time = 0;
         timeHoming = 0f;
         sr.sortingOrder = (short)(renderIndex++ + (short)(RenderOffsetIndex * RenderOffsetRange));
+        autocollected = false;
     }
 
     public void Autocollect(bool doAutocollect) {
-        if (doAutocollect && Autocollectible) SetHome();
+        if (doAutocollect && Autocollectible) {
+            autocollected = true;
+            SetHome();
+        }
     }
 
     private void SetHome() {
@@ -82,7 +88,7 @@ public abstract class Item : Pooled<Item> {
 
     public override void RegularUpdate() {
         if (PoC.Autocollect) Autocollect(true);
-        if (State == HomingState.WAITING && time > minTimeBeforeHome) {
+        if (State == HomingState.WAITING && time > MinTimeBeforeHome) {
             State = HomingState.HOMING;
         }
         if (Collision.CircleOnPoint(loc, target.itemCollectRadius + CollectRadiusBonus, target.location)) {

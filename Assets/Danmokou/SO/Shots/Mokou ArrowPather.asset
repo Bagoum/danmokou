@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4fa22e423a3842e1b90ce62d0372178a, type: 3}
+  m_Name: Mokou ArrowPather
+  m_EditorClassIdentifier: 
+  key: mokou-arrowpather
+  title: Flame-Headed Gae Bolg
+  description: 'A fighting style mimicking a legendary weapon now long passed out
+    of even fantasy.
+
+    Slow pathers aim at the nearest enemy, while supplementary
+    fire spreads wide.
+
+    When focused, the pathers speed up and the supplementary
+    fire points inwards.'
+  type: Aimed
+  prefab: {fileID: 1281575726812465804, guid: 26ed099ff2b407f4f8bdc2437c625ed3, type: 3}
+  bomb: 0
+  defaultPower: 1000
+  playerChild: 1
+  isMultiShot: 0
+  multiD: {fileID: 0}
+  multiM: {fileID: 0}
+  multiK: {fileID: 0}
+  onSwap: {fileID: 0}

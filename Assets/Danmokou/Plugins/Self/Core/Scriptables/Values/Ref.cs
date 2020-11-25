@@ -9,7 +9,7 @@ public abstract class Ref<T> {
         return t.Get();
     }
 
-    private T Get() {
+    public T Get() {
         return useConstant ? constVal : GetRef();
     }
     public bool Set(T t) {

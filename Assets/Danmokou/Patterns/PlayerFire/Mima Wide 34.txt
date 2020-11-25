@@ -2,13 +2,11 @@ gtr {
 	wt 0 _
 	wait-child
 } firesame
-	async star-green/ <5> gcr2 15 _ <> { 
+	async star-green/ <> gcr2 15 _ <> { 
 		delay 15
 		sfx x-pc-fire-1
-	} gsr {
-		start rv2.a *=f pm1 p
-	}  simple tprot cy 7 { 
-		player 18 16 oh2 
+	} simple tprot cy 7 { 
+		player 18 16 oh1-green
 		dir(400 * pm1(p) * t)
 	}
 	## free cancellation

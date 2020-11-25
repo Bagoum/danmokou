@@ -45,6 +45,12 @@ MonoBehaviour:
     - name: icrow
       prefab: {fileID: 7245980951421395705, guid: c3897796be307ff47bae8d4746df6bf4,
         type: 3}
+    - name: tfairy
+      prefab: {fileID: 1062581215778985924, guid: 470e096548621214483af0a19c08cc34,
+        type: 3}
+    - name: tlfairy
+      prefab: {fileID: 4699768678087623885, guid: cfa085d780f4c6d4caaf87948c360429,
+        type: 3}
   - groupTitle: Nodes
     prefabs:
     - name: inode

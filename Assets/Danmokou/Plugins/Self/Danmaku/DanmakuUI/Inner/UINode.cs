@@ -27,16 +27,22 @@ public class UIScreen {
         lastCaller = caller;
         target.screen.calledBy = this;
         target.screen.onEnter?.Invoke();
+        onExit?.Invoke();
         return target;
     }
 
     public UINode StartingNode => lastCaller ?? top[0];
 
     [CanBeNull]
-    public UINode TryGoBack() {
-        if (calledBy?.StartingNode != null) onExit?.Invoke();
+    public UINode GoBack() {
+        if (calledBy?.StartingNode != null) {
+            onExit?.Invoke();
+            calledBy.onEnter?.Invoke();
+        }
         return calledBy?.StartingNode;
     }
+
+    public void RunPreExit() => onPreExit?.Invoke();
 
     public UIScreen(params UINode[] nodes) {
         top = nodes.Where(x => x != null).ToArray();
@@ -90,8 +96,19 @@ public class UIScreen {
         overrideBuilder = builder;
         return this;
     }
-
+    
+    [CanBeNull] private Action onPreExit;
+    /// <summary>
+    /// This is run on exit transition start
+    /// </summary>
+    public UIScreen OnPreExit(Action cb) {
+        onPreExit = cb;
+        return this;
+    }
     [CanBeNull] private Action onExit;
+    /// <summary>
+    /// This is run at exit transition midpoint
+    /// </summary>
     public UIScreen OnExit(Action cb) {
         onExit = cb;
         return this;
@@ -140,12 +157,7 @@ public class UINode {
 
     public IEnumerable<UINode> ListAll() => children.SelectMany(n => n.ListAll()).Prepend(this);
 
-    private int? _fixedDepth = null;
-    public UINode FixDepth(int d) {
-        _fixedDepth = d;
-        return this;
-    }
-    public int Depth => _fixedDepth ?? Parent?.ChildDepth ?? 0;
+    public int Depth => Parent?.ChildDepth ?? 0;
     protected virtual int ChildDepth => 1 + Depth;
 
     protected static void AssignParentingStates(UINode p) {
@@ -165,10 +177,18 @@ public class UINode {
     }
 
     private readonly List<string> overrideClasses = new List<string>();
+    private readonly List<Action<VisualElement>> overrideInline = new List<Action<VisualElement>>();
 
     public UINode With(params string[] clss) {
         foreach (var cls in clss) {
             if (!string.IsNullOrWhiteSpace(cls)) overrideClasses.Add(cls);
+        }
+        return this;
+    }
+
+    public UINode With(params Action<VisualElement>[] inline) {
+        foreach (var func in inline) {
+            if (func != null) overrideInline.Add(func);
         }
         return this;
     }
@@ -191,6 +211,9 @@ public class UINode {
         boundNode.AddToClassList(ToClass(state));
         foreach (var cls in overrideClasses) {
             boundNode.AddToClassList(cls);
+        }
+        foreach (var inline in overrideInline) {
+            inline(boundNode);
         }
         confirmEnabled = (enableCheck?.Invoke() ?? true);
         if (!confirmEnabled) boundNode.AddToClassList(disabledClass);
@@ -216,8 +239,22 @@ public class UINode {
 
     [CanBeNull] public virtual UINode CustomEventHandling() => null;
     public virtual UINode Left() => _overrideLeft?.Invoke() ?? Parent ?? this;
-    public virtual UINode Up() => SameDepthSiblings.ModIndex(SameDepthSiblings.IndexOf(this) - 1);
-    public virtual UINode Down() => SameDepthSiblings.ModIndex(SameDepthSiblings.IndexOf(this) + 1);
+    
+    [CanBeNull] private Func<UINode> _overrideUp;
+    public UINode SetUpOverride(Func<UINode> overr) {
+        _overrideUp = overr;
+        return this;
+    }
+    public virtual UINode Up() => _overrideUp?.Invoke() ??
+                                  SameDepthSiblings.ModIndex(SameDepthSiblings.IndexOf(this) - 1);
+    
+    [CanBeNull] private Func<UINode> _overrideDown;
+    public UINode SetDownOverride(Func<UINode> overr) {
+        _overrideDown = overr;
+        return this;
+    }
+    public virtual UINode Down() => _overrideDown?.Invoke() ?? 
+                                    SameDepthSiblings.ModIndex(SameDepthSiblings.IndexOf(this) + 1);
 
     [CanBeNull] private Func<UINode> _overrideBack;
     public UINode SetBackOverride(Func<UINode> overr) {
@@ -225,7 +262,7 @@ public class UINode {
         return this;
     }
 
-    public virtual UINode Back() => _overrideBack?.Invoke() ?? screen.TryGoBack() ?? this;
+    public virtual UINode Back() => _overrideBack?.Invoke() ?? screen.calledBy?.StartingNode ?? this;
 
     [CanBeNull] private Func<bool> _passthrough;
     public bool Passthrough => _passthrough?.Invoke() ?? false;
@@ -270,6 +307,9 @@ public class UINode {
         } else return (false, this);
     }
 
+    public (bool success, UINode target) Confirm_DontNest() =>
+        confirmEnabled ? _Confirm() : (false, this);
+
     protected const string NodeClass = "node";
 
     [CanBeNull] private Func<bool?> _visible;
@@ -306,7 +346,7 @@ public class UINode {
         return bound;
     }
 
-    public virtual VisualElement Build(Dictionary<Type, VisualTreeAsset> map, ScrollView scroller) {
+    public VisualElement Build(Dictionary<Type, VisualTreeAsset> map, ScrollView scroller) {
         CloneTree(map);
         BindText();
         return BindScroll(scroller);
@@ -369,25 +409,16 @@ public class CacheNavigateUINode : NavigateUINode {
     }
 }
 
-public class InheritNode : UINode {
-    public InheritNode(string descr) : base(descr) { }
-    protected override (bool success, UINode target) _Confirm() => Parent.Confirm();
-}
 public class TransferNode : UINode {
 
-    [CanBeNull] private readonly UINode target;
-    [CanBeNull] private readonly UIScreen screen_target;
+    private readonly UIScreen screen_target;
 
-    public TransferNode(UINode target, string description, params UINode[] children) : base(description, children) {
-        this.target = target;
-    }
     public TransferNode(UIScreen target, string description, params UINode[] children) : base(description, children) {
         this.screen_target = target;
     }
 
     protected override (bool success, UINode target) _Confirm() {
-        if (target != null) return (true, screen.GoToNested(this, target));
-        return (true, screen.GoToNested(this, screen_target.First));
+        return (true, screen_target.First);
     }
 }
 
@@ -529,11 +560,6 @@ public class DelayOptionNodeLR<T> : UINode {
     private void AssignValueText((string key, T val)[] vals) {
         bound.Q<Label>("Value").text = vals.Try(index, ("None", default)).key;
     }
-    public override VisualElement Build(Dictionary<Type, VisualTreeAsset> map, ScrollView scroller) {
-        CloneTree(map);
-        BindText();
-        return BindScroll(scroller);
-    }
     protected override void BindText() {
         bound.Q<Label>("Key").text = Description;
         AssignValueText(values());
@@ -590,36 +616,31 @@ public class DynamicOptionNodeLR2<T> : UINode {
     }
 
     private VisualElement childContainer;
-    public override VisualElement Build(Dictionary<Type, VisualTreeAsset> map, ScrollView scroller) {
-        CloneTree(map);
-        childContainer = bound.Q("LR2ChildContainer");
-        BindText();
-        return BindScroll(scroller);
-    }
     protected override void BindText() {
+        childContainer = bound.Q("LR2ChildContainer");
         bound.Q<Label>("Key").text = Description;
         AssignValueText();
-        
     }
 }
 
 public class DynamicOptionNodeLR<T> : UINode {
     private readonly Action<T> onChange;
     private readonly Func<(string key, T val)[]> values;
-    public int Index { get; private set; }
+    private int index;
+    public int Index => index = M.Clamp(0, values().Length - 1, index);
     public T Value => values()[Index].val;
-    
+
     public DynamicOptionNodeLR(string description, Action<T> onChange, Func<(string, T)[]> values, T defaulter, params UINode[] children) : base(description, children) {
         this.onChange = onChange;
         this.values = values;
-        Index = this.values().Enumerate().FirstOrDefault(x => x.Item2.val.Equals(defaulter)).Item1;
+        index = this.values().Enumerate().FirstOrDefault(x => x.Item2.val.Equals(defaulter)).Item1;
     }
 
     public override UINode Left() {
         var v = values();
         if (v.Length > 0) {
-            Index = M.Mod(v.Length, Index - 1);
-            onChange(v[Index].val);
+            index = M.Mod(v.Length, index - 1);
+            onChange(v[index].val);
             AssignValueText();
         }
         return this;
@@ -627,21 +648,19 @@ public class DynamicOptionNodeLR<T> : UINode {
     public override UINode Right() {
         var v = values();
         if (v.Length > 0) {
-            Index = M.Mod(v.Length, Index + 1);
-            onChange(v[Index].val);
+            index = M.Mod(v.Length, index + 1);
+            onChange(v[index].val);
             AssignValueText();
         }
         return this;
     }
 
-    private void AssignValueText() {
-        bound.Q<Label>("Value").text = values()[Index].key;
-    }
-    public override VisualElement Build(Dictionary<Type, VisualTreeAsset> map, ScrollView scroller) {
-        CloneTree(map);
+    protected override void BindText() {
         bound.Q<Label>("Key").text = Description;
         AssignValueText();
-        return BindScroll(scroller);
+    }
+    private void AssignValueText() {
+        bound.Q<Label>("Value").text = values()[Index].key;
     }
 }
 public class OptionNodeLR<T> : UINode {
@@ -654,6 +673,11 @@ public class OptionNodeLR<T> : UINode {
     public OptionNodeLR(string description, Action<T> onChange, (string, T)[] values, T defaulter, params UINode[] children) : base(description, children) {
         this.onChange = onChange;
         this.values = values;
+        index = this.values.Enumerate().First(x => x.Item2.val.Equals(defaulter)).Item1;
+    }
+    public OptionNodeLR(string description, Action<T> onChange, T[] values, T defaulter, params UINode[] children) : base(description, children) {
+        this.onChange = onChange;
+        this.values = values.Select(x => (x.ToString(), x)).ToArray();
         index = this.values.Enumerate().First(x => x.Item2.val.Equals(defaulter)).Item1;
     }
 
@@ -670,14 +694,12 @@ public class OptionNodeLR<T> : UINode {
         return this;
     }
 
-    private void AssignValueText() {
-        bound.Q<Label>("Value").text = values[index].key;
-    }
-    public override VisualElement Build(Dictionary<Type, VisualTreeAsset> map, ScrollView scroller) {
-        CloneTree(map);
+    protected override void BindText() {
         bound.Q<Label>("Key").text = Description;
         AssignValueText();
-        return BindScroll(scroller);
+    }
+    private void AssignValueText() {
+        bound.Q<Label>("Value").text = values[index].key;
     }
 }
 

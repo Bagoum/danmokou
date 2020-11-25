@@ -2,7 +2,7 @@
 
 Now that we've covered how to write patterns on a basic level, we'll discuss how to add flair to your boss scripts.
 
-![Unity_OUBCnBtSTO](../images/Unity_OUBCnBtSTO.jpg)
+![Unity_OUBCnBtSTO](../images/Unity_voPATAKULN.jpg)
 
 ## Part 1: BossConfig
 
@@ -60,7 +60,7 @@ Both phases are running the basic code for Border of Wave and Particle. However,
 
 Now, we want to add the following:
 
-- The boss title, name, and picture should appear in the lower left.
+- Boss-specific art should appear in the sidebars.
 - The boss' remaining spells should appear as stars in each of the four corners. 
 - The boss should have a rotating hexagram inside its health bar.
 - When using a spell, the boss should have another special effect.
@@ -93,19 +93,13 @@ Now click on the boss configuration, In the inspector window, you should see a l
 - State Machine is the script that will be analyzed and instantiated for the practice selector, or when a stage script calls this boss. Set this to `DMK Tutorial Example Boss Script`.
 - Key is the string by which a stage script will call this boss and boss scripts will access their own metadata. It must be unique among all bosses in the same game. Set it to `mynewboss`. 
 - Casual Name / Casual Name JP are the forms of address for the boss used in challenge descriptions for challenge-based games. For example, if the challenge is to destroy the boss, then this will be described as `Destroy {casualName}` or `{casualNameJP}を倒せ` based on locale.
-- Display Name is the name of the boss displayed in the bottom left corner of the UI when the player is fighting them. Note that you should manually insert `<br>` where you want linebreaks in the display. Set this to `Fujiwara<br>no Mokou`.
-- Display Title is the title of the boss displayed in the bottom left corner of the UI when the player is fighting them. Note that you should manually insert `<br>` where you want linebreaks in the display. Set this to `Figure of<br>the Person<br>of Hourai`. 
 - Track Name is the name of the boss as appears on the glow in the bottom gutter that shows where the boss is on the screen. I usually use Japanese text here for brevity. If you want to use English text, you should change the font asset in Assets/Danmokou/Prefab/UI/Tracker>Container>TrackedName. Set this to `妹紅` (Mokou).
 - Colors is the color scheme we set up just before this. Set this to the color scheme object you created.
 - Rotator is a function that defines the velocity of rotation, in degrees, of the hexagram on the boss. You usually don't need to fill this out, as there's a default in place (open up BossConfig.cs and look for `defaultRotator`). 
-- Profile is the image displayed in the bottom left corner of the UI when the player is fighting the boss. By modifying the `Offset X`, `Offset Y`, and `Zoom` variables, you can focus down on a small section of a much larger sprite. It is difficult to set these values except by experimenting, so here are some values you can use for now:
-  - Image: Click the circle on the right and search for the full-body image with name `junko`.
-  - Offset X: 0.497
-  - Offset Y: 0.635
-  - Zoom: 6.99
+- Profile contains the left and right sidebar images that are displayed while the boss is active. For licensing reasons the images that are actually used in my published games are not included in the repository, so instead, click the little circle on the right of the input entry field and select any image you like. 
 - Default Non BG and Default Spell BG are the backgrounds that the boss will automatically use when in a nonspell-type card or a spell-type card. If you have the SiMP repository downloaded, you can set these to backgrounds from there, such as `stage ex scroll` and `space.sun`. Otherwise, you can set them to `black` and `white`. 
 - Default Into Spell Transition and Default Into Non Transition are the background transitions that the boss will automatically use when moving into a spell-type card or a nonspell-type card. I recommend `WipeTex1` and `Shatter4.Normal`. 
-- Boss Cutin is a special type of cutin that you should use once at the start of a boss script. It is 5.6 seconds long and is usually used to announce the boss name and some kind of character title. If you have the SiMP repository downloaded, set this to `mokou3d`. Otherwise, set it to `Cutin Junko`.
+- Boss Cutin is a special type of cutin that you should use once at the start of a boss script. It is 4.8 seconds long (configurable) and is usually used to announce the boss name and some kind of character title. If you have the SiMP repository downloaded, set this to `v2mokou`. Otherwise, set it to `Cutin Junko` (note that this will produce some artifacting due to how the background is handled in the real boss cutins).
 - Spell Cutins is an array of cutins to be used before each spell. By default, the zeroeth element in this array will be spawned before each spell. However, if you want to vary your spell cutins, you can add multiple objects to the array and then use the `<!> spellcutin(INDEX)` phase property to manually select the one you want to spawn before each card. Add one object and set it to `Cutin Junko`. 
 
 You may notice that the color of the healthbar is oddly absent from this discussion. This is because the color of the healthbar is stored on the `Enemy` component, not in the boss configuration, since any Enemy can have a healthbar. The variables in question are `Nonspell Color`, `Spell Color`, and `Unfilled Color`. When fighting a boss, the white line at the bottom of the playable area will become a healthbar, and it will automatically copy the current color of the boss healthbar.

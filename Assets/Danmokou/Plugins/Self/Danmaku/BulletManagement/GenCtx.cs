@@ -22,7 +22,6 @@ public class GenCtx : IDisposable {
         //Note: duplicate all entries here in TExGCX
         if (key == "i") f = i;
         else if (key == "pi") f = pi;
-        else if (key == "stm") f = SummonTime * GameManagement.Difficulty.bulletSpeedMod;
         else return fs.TryGetValue(key, out f);
         return true;
     }
@@ -49,10 +48,6 @@ public class GenCtx : IDisposable {
     /// Firing BEH (copied from DelegatedCreator)
     /// </summary>
     public BehaviorEntity exec;
-    /// <summary>
-    /// BPI id. Don't use this in code (use rand instead).
-    /// </summary>
-    public uint id = 0;
     public V2RV2 RV2 {
         get => rv2s["rv2"];
         set => rv2s["rv2"] = value;
@@ -66,8 +61,9 @@ public class GenCtx : IDisposable {
         set => fs["st"] = value;
     }
     public Vector2 Loc => exec.GlobalPosition();
+    public uint? idOverride = null;
     [UsedImplicitly]
-    public ParametricInfo AsBPI => new ParametricInfo(Loc, index, id, i);
+    public ParametricInfo AsBPI => new ParametricInfo(Loc, index, idOverride ?? exec.rBPI.id, i);
     private static readonly Stack<GenCtx> cache = new Stack<GenCtx>();
     private GenCtx() { }
 
@@ -97,6 +93,7 @@ public class GenCtx : IDisposable {
         i = 0;
         pi = 0;
         exec = null;
+        idOverride = null;
         cache.Push(this);
     }
 
@@ -110,6 +107,7 @@ public class GenCtx : IDisposable {
         cp.BaseRV2 = RV2; //this gets overwritten by copyinto...
         cp.i = cp.pi = this.i;
         cp.index = this.index;
+        cp.idOverride = this.idOverride;
         return cp;
     }
 

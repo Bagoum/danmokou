@@ -50,20 +50,17 @@ MonoBehaviour:
     - name: sakura
       prefab: {fileID: 4623879621751819397, guid: 1f9ac88ff2d9de441bc37a5b95d37bde,
         type: 3}
-    - name: amulet
+    - name: amulet2
       prefab: {fileID: 4623879621751819397, guid: e0f00fc172e1a4f4c9b8faa3d64c2a71,
         type: 3}
     - name: triangle
       prefab: {fileID: 2677688450528804024, guid: cf92e50b2ce36444f84d4ea597a62b87,
         type: 3}
-    - name: needle
-      prefab: {fileID: 4623879621751819397, guid: 4b5562e473507264eb116a0beae18f74,
-        type: 3}
-    - name: reimuamulet
-      prefab: {fileID: 4623879621751819397, guid: c4c0ea3703e986f4b85f4ddaa69724a7,
-        type: 3}
     - name: dot
       prefab: {fileID: 7413059715923608065, guid: 84849d43642bb6344952d1b9f402e9b1,
+        type: 3}
+    - name: amulet
+      prefab: {fileID: 8449788449753899015, guid: ece3a9a63742e4a4b8ec1d53b4f0a84e,
         type: 3}
   - groupTitle: Large
     prefabs:
@@ -117,8 +114,28 @@ MonoBehaviour:
     - name: arrowlaser
       prefab: {fileID: 2981383910436147057, guid: 6fea53219b06bf2468edb27ae14664f8,
         type: 3}
+    - name: arrowpather
+      prefab: {fileID: 3943073076567684459, guid: eb958156b5b3c1847a528dc998dcc43a,
+        type: 3}
+    - name: sunnylaser
+      prefab: {fileID: 2981383910436147057, guid: b1fa1e2ec67a1784fa258c0f5c733631,
+        type: 3}
   - groupTitle: Cull
     prefabs:
     - name: cwheel
       prefab: {fileID: 2677688450528804024, guid: 98b63d55d8fc83341a6b624147a27d8d,
+        type: 3}
+  - groupTitle: Shot Styles
+    prefabs:
+    - name: needle
+      prefab: {fileID: 4623879621751819397, guid: 4b5562e473507264eb116a0beae18f74,
+        type: 3}
+    - name: needle2
+      prefab: {fileID: 4623879621751819397, guid: 069256f3df298de48b0ce4de796d8b6c,
+        type: 3}
+    - name: blast
+      prefab: {fileID: 4623879621751819397, guid: 0a7affc08d3ee0046af559089799838c,
+        type: 3}
+    - name: amuletdd
+      prefab: {fileID: 4623879621751819397, guid: c4c0ea3703e986f4b85f4ddaa69724a7,
         type: 3}

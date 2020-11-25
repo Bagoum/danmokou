@@ -81,6 +81,7 @@ MonoBehaviour:
     framesPerSecond: 0
   gradients: []
   spriteSpecificGradients: []
+  identicalForms: []
   TTL: 0
   timeRandomization: 0
   rotateRandomization: 0

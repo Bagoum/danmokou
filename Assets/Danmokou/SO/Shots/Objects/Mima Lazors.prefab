@@ -70,7 +70,7 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: -1806312477
-  m_SortingLayer: 9
+  m_SortingLayer: 10
   m_SortingOrder: -1
   m_Sprite: {fileID: 3818182386508469091, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
     type: 3}
@@ -98,7 +98,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorScript: {fileID: 4900000, guid: 7b5d31045b2a2f045b65905274fa3e13, type: 3}
   ID: 
-  rotationMethod: 0
   deathEffect: {fileID: 0}
   cullableRadius:
     cullable: 0
@@ -108,18 +107,7 @@ MonoBehaviour:
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
-  animate:
-    method: 0
-    LRRelation: 0
-    UDRelation: 0
-    frames:
-      idleAnim: []
-      rightAnim: []
-      leftAnim: []
-      upAnim: []
-      downAnim: []
-      attackAnim: []
-      deathAnim: []
+  displayer: {fileID: 0}
   offsetFree: zero
   offsetFocus: zero
   powerOffsetFree:
@@ -139,8 +127,6 @@ MonoBehaviour:
 '
   opacityFocus: 
   spriteRotation: 420 * t * pm1(p)
-  freeOffsetRotational: 1
-  focusOffsetRotational: 1
   freeAngleOffset: 
   focusAngleOffset: 
   freeFocusLerpTime: 0.15
@@ -216,7 +202,7 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: -1806312477
-  m_SortingLayer: 9
+  m_SortingLayer: 10
   m_SortingOrder: -1
   m_Sprite: {fileID: 21300000, guid: edf48d7bd324ac440bb0908d9835691f, type: 3}
   m_Color: {r: 0.12549019, g: 0.72866505, b: 0.7647059, a: 0.80784315}
@@ -243,7 +229,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorScript: {fileID: 4900000, guid: ed47e336c2b5dda4591fbbcce355d924, type: 3}
   ID: 
-  rotationMethod: 0
   deathEffect: {fileID: 0}
   cullableRadius:
     cullable: 0
@@ -253,18 +238,7 @@ MonoBehaviour:
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
-  animate:
-    method: 0
-    LRRelation: 0
-    UDRelation: 0
-    frames:
-      idleAnim: []
-      rightAnim: []
-      leftAnim: []
-      upAnim: []
-      downAnim: []
-      attackAnim: []
-      deathAnim: []
+  displayer: {fileID: 0}
   offsetFree: cr(1.2,-20)
   offsetFocus: 
   powerOffsetFree: []
@@ -273,11 +247,9 @@ MonoBehaviour:
   focusOffsetMul: 0.6
   opacityFree: 
   opacityFocus: 
-  spriteRotation: superposec(lerpfreetofocus(0.2), -110, -120)
-  freeOffsetRotational: 1
-  focusOffsetRotational: 1
+  spriteRotation: 0
   freeAngleOffset: -120
-  focusAngleOffset: -110
+  focusAngleOffset: -100
   freeFocusLerpTime: 0.15
   powerLerpTime: 0.2
   findex: 11
@@ -326,7 +298,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorScript: {fileID: 0}
   ID: 
-  rotationMethod: 0
   deathEffect: {fileID: 0}
   cullableRadius:
     cullable: 0
@@ -336,18 +307,7 @@ MonoBehaviour:
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
-  animate:
-    method: 0
-    LRRelation: 0
-    UDRelation: 0
-    frames:
-      idleAnim: []
-      rightAnim: []
-      leftAnim: []
-      upAnim: []
-      downAnim: []
-      attackAnim: []
-      deathAnim: []
+  displayer: {fileID: 0}
   offsetFree: zero
   offsetFocus: zero
   powerOffsetFree: []
@@ -357,8 +317,6 @@ MonoBehaviour:
   opacityFree: 
   opacityFocus: 
   spriteRotation: 
-  freeOffsetRotational: 1
-  focusOffsetRotational: 1
   freeAngleOffset: 
   focusAngleOffset: 
   freeFocusLerpTime: 1
@@ -434,7 +392,7 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: -1806312477
-  m_SortingLayer: 9
+  m_SortingLayer: 10
   m_SortingOrder: -1
   m_Sprite: {fileID: -3370256387710733728, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
     type: 3}
@@ -462,7 +420,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorScript: {fileID: 4900000, guid: 7b5d31045b2a2f045b65905274fa3e13, type: 3}
   ID: 
-  rotationMethod: 0
   deathEffect: {fileID: 0}
   cullableRadius:
     cullable: 0
@@ -472,18 +429,7 @@ MonoBehaviour:
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
-  animate:
-    method: 0
-    LRRelation: 0
-    UDRelation: 0
-    frames:
-      idleAnim: []
-      rightAnim: []
-      leftAnim: []
-      upAnim: []
-      downAnim: []
-      attackAnim: []
-      deathAnim: []
+  displayer: {fileID: 0}
   offsetFree: zero
   offsetFocus: zero
   powerOffsetFree:
@@ -503,8 +449,6 @@ MonoBehaviour:
 '
   opacityFocus: 
   spriteRotation: 420 * t * pm1(p)
-  freeOffsetRotational: 1
-  focusOffsetRotational: 1
   freeAngleOffset: -6
   focusAngleOffset: 
   freeFocusLerpTime: 0.15
@@ -580,7 +524,7 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: -1806312477
-  m_SortingLayer: 9
+  m_SortingLayer: 10
   m_SortingOrder: -1
   m_Sprite: {fileID: -3370256387710733728, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
     type: 3}
@@ -608,7 +552,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorScript: {fileID: 4900000, guid: 7b5d31045b2a2f045b65905274fa3e13, type: 3}
   ID: 
-  rotationMethod: 0
   deathEffect: {fileID: 0}
   cullableRadius:
     cullable: 0
@@ -618,18 +561,7 @@ MonoBehaviour:
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
-  animate:
-    method: 0
-    LRRelation: 0
-    UDRelation: 0
-    frames:
-      idleAnim: []
-      rightAnim: []
-      leftAnim: []
-      upAnim: []
-      downAnim: []
-      attackAnim: []
-      deathAnim: []
+  displayer: {fileID: 0}
   offsetFree: zero
   offsetFocus: zero
   powerOffsetFree:
@@ -649,8 +581,6 @@ MonoBehaviour:
 '
   opacityFocus: 
   spriteRotation: 420 * t * pm1(p)
-  freeOffsetRotational: 1
-  focusOffsetRotational: 1
   freeAngleOffset: if(> powerf 1, 6, 0)
   focusAngleOffset: 
   freeFocusLerpTime: 0.15
@@ -726,7 +656,7 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: -1806312477
-  m_SortingLayer: 9
+  m_SortingLayer: 10
   m_SortingOrder: -1
   m_Sprite: {fileID: 3818182386508469091, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
     type: 3}
@@ -754,7 +684,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorScript: {fileID: 4900000, guid: 7b5d31045b2a2f045b65905274fa3e13, type: 3}
   ID: 
-  rotationMethod: 0
   deathEffect: {fileID: 0}
   cullableRadius:
     cullable: 0
@@ -764,18 +693,7 @@ MonoBehaviour:
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
-  animate:
-    method: 0
-    LRRelation: 0
-    UDRelation: 0
-    frames:
-      idleAnim: []
-      rightAnim: []
-      leftAnim: []
-      upAnim: []
-      downAnim: []
-      attackAnim: []
-      deathAnim: []
+  displayer: {fileID: 0}
   offsetFree: zero
   offsetFocus: zero
   powerOffsetFree:
@@ -795,8 +713,6 @@ MonoBehaviour:
 '
   opacityFocus: 
   spriteRotation: 420 * t * pm1(p)
-  freeOffsetRotational: 1
-  focusOffsetRotational: 1
   freeAngleOffset: 
   focusAngleOffset: 
   freeFocusLerpTime: 0.15
@@ -812,7 +728,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8564540549256565143}
   m_Layer: 0
-  m_Name: Marisa Lazors
+  m_Name: Mima Lazors
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -909,7 +825,7 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: -1806312477
-  m_SortingLayer: 9
+  m_SortingLayer: 10
   m_SortingOrder: -1
   m_Sprite: {fileID: 21300000, guid: edf48d7bd324ac440bb0908d9835691f, type: 3}
   m_Color: {r: 0.12549019, g: 0.72866505, b: 0.7647059, a: 0.80784315}
@@ -936,7 +852,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorScript: {fileID: 4900000, guid: ed47e336c2b5dda4591fbbcce355d924, type: 3}
   ID: 
-  rotationMethod: 0
   deathEffect: {fileID: 0}
   cullableRadius:
     cullable: 0
@@ -946,18 +861,7 @@ MonoBehaviour:
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
-  animate:
-    method: 0
-    LRRelation: 0
-    UDRelation: 0
-    frames:
-      idleAnim: []
-      rightAnim: []
-      leftAnim: []
-      upAnim: []
-      downAnim: []
-      attackAnim: []
-      deathAnim: []
+  displayer: {fileID: 0}
   offsetFree: cr(1.2,200)
   offsetFocus: 
   powerOffsetFree: []
@@ -966,11 +870,9 @@ MonoBehaviour:
   focusOffsetMul: 0.6
   opacityFree: 
   opacityFocus: 
-  spriteRotation: superposec(lerpfreetofocus(0.2), 110, 120)
-  freeOffsetRotational: 1
-  focusOffsetRotational: 1
+  spriteRotation: 0
   freeAngleOffset: 120
-  focusAngleOffset: 110
+  focusAngleOffset: 100
   freeFocusLerpTime: 0.15
   powerLerpTime: 0.2
   findex: 10

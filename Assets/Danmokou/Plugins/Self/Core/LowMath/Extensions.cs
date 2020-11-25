@@ -133,6 +133,11 @@ public static class IEnumExtensions {
     public static IEnumerable<int> Range(this (int min, int max) bound) {
         for (int ii = bound.min; ii < bound.max; ++ii) yield return ii;
     }
+
+    public static IEnumerable<double> Step(this (double min, double max) bound, double step) {
+        for (double x = bound.min; x < bound.max; x += step) yield return x;
+    }
+    
     public static IEnumerable<U> SelectNotNull<T, U>(this IEnumerable<T> arr, Func<T, U?> f) where U : struct {
         foreach (var x in arr) {
             var y = f(x);
@@ -141,6 +146,24 @@ public static class IEnumExtensions {
     }
 
     public static IEnumerable<T> NotNull<T>(this IEnumerable<T> arr) where T : class => arr.Where(x => x != null);
+
+    public static int IndexOf<T>(this IEnumerable<T> arr, Func<T, bool> pred) {
+        foreach (var (i, x) in arr.Enumerate()) {
+            if (pred(x)) return i;
+        }
+        return -1;
+    }
+
+    public static T? FirstOrNull<T>(this IEnumerable<T> arr) where T : struct {
+        foreach (var x in arr) return x;
+        return null;
+    }
+
+    public static IEnumerable<T> FilterNone<T>(this IEnumerable<T?> arr) where T : struct {
+        foreach (var x in arr) {
+            if (x.Try(out var y)) yield return y;
+        }
+    }
 }
 
 public static class ListExtensions {
@@ -200,6 +223,12 @@ public static class DictExtensions {
     public static V SetDefault<K, V>(this Dictionary<K, V> dict, K key) where V: new() {
         if (!dict.TryGetValue(key, out var data)) {
             data = dict[key] = new V();
+        }
+        return data;
+    }
+    public static V SetDefault<K, V>(this Dictionary<K, V> dict, K key, V deflt) {
+        if (!dict.TryGetValue(key, out var data)) {
+            data = dict[key] = deflt;
         }
         return data;
     }
@@ -306,18 +335,10 @@ public static class NullableExtensions {
             return false;
         }
     }
-    
-}
 
-public static class LowEnumExtensions {
-    
-    public static float? ToAngle(this ShootDirection sd) {
-        if (sd == ShootDirection.RIGHT) return 0;
-        else if (sd == ShootDirection.UP) return 90;
-        else if (sd == ShootDirection.LEFT) return 180;
-        else if (sd == ShootDirection.DOWN) return 270;
-        else return null;
-    }
+    public static T Elvis<T>(this T x, T y) where T : UnityEngine.Object
+        => (x == null) ? y : x;
+
 }
 
 public static class FormattingExtensions {

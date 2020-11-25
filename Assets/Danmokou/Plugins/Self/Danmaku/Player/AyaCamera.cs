@@ -70,7 +70,7 @@ public class AyaCamera : BehaviorEntity {
     private float BoundedViewfinderRadius => Mathf.Min(viewfinderRadius, (AimAt - player.hitbox.location).magnitude);
     private float AngleToTarget =>
         (player.IsMoving && !player.IsFocus) 
-            ? M.AtanD(player.LastDelta)
+            ? player.DirectionDeg
             : M.AtanD(AimAt - player.hitbox.location);
     private float BaseViewfinderAngle => AngleToTarget - 90;
     private Vector2 TargetPosition => player.hitbox.location + BoundedViewfinderRadius * M.CosSinDeg(AngleToTarget);
@@ -190,7 +190,7 @@ public class AyaCamera : BehaviorEntity {
             float scale = Mathf.Lerp(cameraFireSize, 1f, M.EInSine(t / cameraLerpDownTime));
             charge = 100 * (1 - M.EInSine(t / cameraLerpDownTime));
             viewfinder.localScale = new Vector3(scale, scale, scale);
-            tr.position = location += cameraFireControlSpeed * ETime.FRAME_TIME * player.LastDelta;
+            tr.position = location += cameraFireControlSpeed * ETime.FRAME_TIME * player.DesiredMovement01;
             var vf = ViewfinderRect(scale);
             //take shot by letting go of fire key
             if (!player.IsFiring) {

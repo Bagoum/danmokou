@@ -1,6 +1,7 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
-    <ui:VisualElement name="Container">
-        <Style src="UIScreen.uss" />
+    <Style src="UIScreen.uss" />
+    <ui:Label text="Replays" display-tooltip-when-elided="True" class="header" />
+    <ui:VisualElement name="Container" style="padding-left: 240px; padding-right: 240px;">
         <ui:VisualElement class="column wd5">
             <ui:ListView focusable="True" show-border="false" show-bound-collection-size="true" class="columnList" />
         </ui:VisualElement>

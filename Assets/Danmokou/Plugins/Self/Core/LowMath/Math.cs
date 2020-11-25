@@ -166,7 +166,7 @@ public static class M {
         if (x > high) return high;
         return (x < low ? low : x);
     }
-    
+
     public static float AngleFromTo(Vector2 src, Vector2 target) {
         Vector2 diff = target - src;
         return Mathf.Atan2(diff.y, diff.x);
@@ -252,11 +252,31 @@ public static class M {
     }
 
 
-    public static double Lerp(double a, double b, double t) => a * (1 - t) + b * t;
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static double LerpU(double a, double b, double t) => a * (1 - t) + b * t;
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static double Lerp(double a, double b, double t) => LerpU(a, b, Clamp(0, 1, t));
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static double Lerp(double low, double high, double controller, double a, double b) =>
+        Lerp(a, b, (controller - low) / (high - low));
+
+    /// <summary>
+    /// Returns (x - a) / (b - a); ie. t such that LerpUnclamped(a, b, t) = x.
+    /// </summary>
+    public static double Ratio(double a, double b, double x) => (x - a) / (b - a);
 
     public static float EInSine(float x) => 1f - (float) Math.Cos(HPI * x);
     public static float EOutSine(float x) => (float) Math.Sin(HPI * x);
     public static float DEOutSine(float x) => HPI * (float) Math.Cos(HPI * x);
+
+    public static float EOutQuad(float x) => 1f - Mathf.Pow(1f - x, 4f);
+
+
+    /// <summary>
+    /// If the magnitude of a vector is greater than 1, normalize it, else noop.
+    /// </summary>
+    public static Vector2 LimitTo1(this Vector2 xy) => xy.sqrMagnitude > 1 ? xy.normalized : xy;
 }
 
 public readonly struct Hitbox {

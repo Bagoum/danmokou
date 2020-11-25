@@ -13,6 +13,12 @@ MonoBehaviour:
   m_Name: Player Took Hit
   m_EditorClassIdentifier: 
   defaultName: took-hit
-  clip: {fileID: 8300000, guid: e6ff15f1f7d63cc499d4e75dab487efa, type: 3}
-  volume: 0.55
+  clip: {fileID: 8300000, guid: 72963f4e401bcaa4e89ae272766775d4, type: 3}
+  volume: 0.35
   timeout: -1
+  pausable: 0
+  loop: 0
+  loopTimeCheck: 0
+  pitch: 1
+  priority: -1
+  feature: 0

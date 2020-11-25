@@ -63,6 +63,7 @@ public static class PrivateDataHoisting {
     }
 
     public static void UpdateValue(uint id, uint key, float value) => UpdateValue(fData, id, key, value);
+    public static void UpdateValue(uint id, uint key, Vector2 value) => UpdateValue(v2Data, id, key, value);
 
     public static void ClearValues(HashSet<uint> preserve) {
         foreach (var id in idsInUse.ToArray()) {

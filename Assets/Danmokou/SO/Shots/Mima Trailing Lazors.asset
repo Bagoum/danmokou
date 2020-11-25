@@ -14,9 +14,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   key: mima-trailing-lazors
   title: Phantasmic Lasers
-  description: An old technique passed on from teacher to student.<br>Trailing options
-    fire powerful lasers directly forwards.<br>When focused, the options freeze relative
-    to the player.
+  description: 'An old technique passed on from teacher to student.
+
+    Trailing
+    options fire powerful lasers directly forwards.
+
+    When focused, the options
+    freeze relative to the player.'
   type: Trailing
   prefab: {fileID: 3540766413179639895, guid: 169b0ce8a550d8742a5c64b31704d23c, type: 3}
   bomb: 0

@@ -44,7 +44,7 @@ public static partial class AtomicPatterns {
         }));
 
     public static SyncPattern dPather() => Pather(0.5f, _ => 0.3f,
-        "tprot px lerpt3 0 0.2 0.5 1 4 2 6".Into<GCXU<VTP>>(), new BehOptions());
+        "tprot px lerpt3 0 0.2 0.5 1 6 2 9".Into<GCXU<VTP>>(), new BehOptions());
 }
 public static partial class SyncPatterns {
     public static SyncPattern Aim1(ExBPY speed) => Target(GCXF(_ => LPlayer()), new[] {S(GCXU(VTPRepo.RVelocity(TPr.PX(speed))))});

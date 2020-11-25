@@ -96,4 +96,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   target: {fileID: 11400000, guid: d20af02baec12db42baba53da24bff95, type: 2}
-  onCollect: {fileID: 0}
+  onCollect: {fileID: 11400000, guid: 8984574908d65564d96719246895830e, type: 2}

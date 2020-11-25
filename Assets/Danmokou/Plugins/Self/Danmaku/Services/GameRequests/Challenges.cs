@@ -72,8 +72,8 @@ public readonly struct SceneChallengeReqest : IChallengeRequest {
         if (gr.replay == null && cr.NextChallenge(gr.metadata).Try(out var next)) {
             Replayer.Cancel(); //can't replay both scenes together
             Log.Unity($"Autoproceeding to next challenge: {next.Description}");
-            StaticNullableStruct.LastGame = new GameRequest(gr.cb, gr.metadata.difficulty, new GameLowRequest(next), 
-                true, gr.metadata.team, null);
+            StaticNullableStruct.LastGame = new GameRequest(gr.cb, gr.metadata, new GameLowRequest(next), 
+                true, null);
             ChallengeManager.TrackChallenge(new SceneChallengeReqest(
                 StaticNullableStruct.LastGame.Value, next));
             ChallengeManager.LinkBEH(ctx.exec);
@@ -130,9 +130,9 @@ public readonly struct PhaseChallengeRequest {
         challenge = c;
     }
 
-    public ((((string, string), int), int), int) Key => (phase.Key, ChallengeIdx);
+    public ((((string, int), int), int), int) Key => (phase.Key, ChallengeIdx);
 
-    public static PhaseChallengeRequest Reconstruct(((((string, string), int), int), int) key) {
+    public static PhaseChallengeRequest Reconstruct(((((string, int), int), int), int) key) {
         var phase = DayPhase.Reconstruct(key.Item1);
         return new PhaseChallengeRequest(phase, phase.challenges[key.Item2]);
     }

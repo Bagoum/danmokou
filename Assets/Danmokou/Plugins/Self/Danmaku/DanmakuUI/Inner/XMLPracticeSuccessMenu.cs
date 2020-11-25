@@ -35,20 +35,10 @@ public class XMLPracticeSuccessMenu : XMLMenu {
 
     protected override void Awake() {
         MainScreen = new UIScreen(
-            new FuncNode(() => {
-                if (GameManagement.Restart()) {
-                    HideMe();
-                    return true;
-                } else return false;
-            }, "Restart", true).With(small1Class),
-            new FuncNode(() => {
-                HideMe();
-                GameManagement.GoToReplayScreen();
-            }, "Save Replay", true).With(small1Class).EnabledIf(() => Replayer.PostedReplay != null),
-            new FuncNode(() => {
-                HideMe();
-                GameManagement.GoToMainMenu();
-            }, "Return to Menu", true).With(small1Class)
+            new FuncNode(GameManagement.Restart, "Restart", true),
+            new FuncNode(GameManagement.GoToReplayScreen, "Save Replay", true)
+                .EnabledIf(() => Replayer.PostedReplay != null),
+            new FuncNode(GameManagement.GoToMainMenu, "Return to Menu", true)
             );
         base.Awake();
     }

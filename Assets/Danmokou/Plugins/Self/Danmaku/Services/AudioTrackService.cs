@@ -76,14 +76,14 @@ public class AudioTrackService : MonoBehaviour {
         if (fading.Contains(src)) yield break;
         fading.Add(src);
         float t = -delay;
-        src.volume = over.Volume;
+        src.volume = over.Volume * SaveData.s.BGMVolume;
         for (; t < 0; t += Time.unscaledDeltaTime) {
             if (over != bgm) break;
             yield return null;
         }
         for (; t < fadeTime; t += Time.unscaledDeltaTime) {
             if (over != bgm) break;
-            src.volume = over.Volume * (1f - t / fadeTime);
+            src.volume = over.Volume * SaveData.s.BGMVolume * (1f - t / fadeTime);
             yield return null;
         }
         src.volume = 0f;

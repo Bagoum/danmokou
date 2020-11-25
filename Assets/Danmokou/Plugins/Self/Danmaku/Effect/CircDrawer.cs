@@ -13,6 +13,6 @@ public class CircDrawer : Drawer {
         locate = locater;
     }
 
-    protected override V2RV2 GetLocScaleRot() => locate(bpi);
+    protected override V2RV2 GetLocScaleRot() => locate(beh.rBPI);
 
 }

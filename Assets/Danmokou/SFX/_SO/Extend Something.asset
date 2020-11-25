@@ -14,5 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   defaultName: extend-any
   clip: {fileID: 8300000, guid: 9fec614660c5b024691b315693ead9a0, type: 3}
-  volume: 0.3
+  volume: 0.25
   timeout: -1
+  pausable: 0
+  loop: 0
+  loopTimeCheck: 0
+  pitch: 1
+  priority: -1
+  feature: 0

@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Reflection;
+using Core;
 using DMath;
 using JetBrains.Annotations;
 using UnityEditor;
@@ -12,9 +13,12 @@ using static Danmaku.LocationService;
 
 namespace Danmaku {
 public class PlayerInput : BehaviorEntity {
+    public SpriteRenderer ghostSource;
     public SOPlayerHitbox hitbox;
     public SpriteRenderer hitboxSprite;
     public SpriteRenderer meter;
+    public Color meterDisplayShadow;
+    public Color meterDisplayInner;
     private MaterialPropertyBlock meterPB;
 
     [Header("Movement")] public float blueBoxRadius = .1f;
@@ -42,6 +46,13 @@ public class PlayerInput : BehaviorEntity {
     public EffectStrategy RespawnOnHitEffect;
     public EffectStrategy RespawnAfterEffect;
     private PlayerHP health;
+
+    public float baseFocusOverlayOpacity = 0.7f;
+    public SpriteRenderer[] focusOverlay;
+    private const float FreeFocusLerpTime = 0.3f;
+    private float freeFocusLerp01 = 0f;
+    
+    private DeletionMarker<Action<(long, bool)>> scoreListener;
     
     protected override void Awake() {
         base.Awake();
@@ -52,6 +63,12 @@ public class PlayerInput : BehaviorEntity {
         hitboxSprite.enabled = SaveData.s.UnfocusedHitbox;
         meter.enabled = false;
         meter.GetPropertyBlock(meterPB = new MaterialPropertyBlock());
+        meterPB.SetFloat(PropConsts.innerFillRatio, (float)CampaignData.meterUseThreshold);
+        meterPB.SetColor(PropConsts.unfillColor, meterDisplayShadow);
+        meterPB.SetColor(PropConsts.fillInnerColor, meterDisplayInner);
+        meter.SetPropertyBlock(meterPB);
+        
+        scoreListener = Events.ScoreItemHasReceived.Listen(BufferScoreLabel);
 
         if (LoadPlayer()) {
             PastPositions.Clear();
@@ -83,6 +100,9 @@ public class PlayerInput : BehaviorEntity {
             return false;
         } else {
             Log.Unity($"Player object {thisPlayer.key} loaded", level:Log.Level.DEBUG2);
+            p = thisPlayer;
+            hitbox.radius = p.hitboxRadius * (float) GameManagement.Difficulty.playerHitboxMultiplier;
+            hitbox.largeRadius = p.grazeboxRadius * (float) GameManagement.Difficulty.playerGrazeboxMultiplier;
             return true;
         }
     }
@@ -121,10 +141,11 @@ public class PlayerInput : BehaviorEntity {
         InputManager.IsFiring && AllowPlayerInput && FiringDisableRequests == 0;
     public bool IsTryingBomb =>
         InputManager.IsBomb && AllowPlayerInput && BombDisableRequests == 0;
-    public bool IsTryingWitchTime =>
-        CampaignData.MeterMechanicEnabled && InputManager.IsMeter && AllowPlayerInput;
+    public bool IsTryingWitchTime => InputManager.IsMeter && AllowPlayerInput;
 
     #region FiringHelpers
+    public static float TimeFree { get; private set; }
+    public static float TimeFocus { get; private set; }
     public static float FiringTimeFree { get; private set; }
     public static float FiringTimeFocus { get; private set; }
     public static float FiringTime { get; private set; }
@@ -166,38 +187,49 @@ public class PlayerInput : BehaviorEntity {
     }
 
     public void CloseDeathbombWindow() => deathbombAction = null;
-    
-    private void MovementUpdate(float dT, out float horiz_input, out float vert_input) {
-        if (IsTryingBomb && shot.HasBomb) {
+
+    public Vector2 DesiredMovement01 {
+        get {
+            if (!AllowPlayerInput) return Vector2.zero;
+            var vel0 = new Vector2(
+                ChallengeManager.r.HorizAllowed ? InputManager.HorizontalSpeed01 : 0,
+                ChallengeManager.r.VertAllowed ? InputManager.VerticalSpeed01 : 0
+            );
+            var mag = vel0.magnitude;
+            if (mag > 1f) {
+                return vel0 / mag;
+            } else if (mag < 0.03f) {
+                return Vector2.zero;
+            } else return vel0;
+        }
+    }
+
+    private void MovementUpdate(float dT) {
+        bpi.t += dT;
+        if (IsTryingBomb && shot.HasBomb && GameManagement.Difficulty.bombsEnabled) {
             if (deathbombAction == null) PlayerBombs.TryBomb(shot.bomb, this, PlayerBombContext.NORMAL);
             else if (PlayerBombs.TryBomb(shot.bomb, this, PlayerBombContext.DEATHBOMB)) {
                 deathbombAction();
                 CloseDeathbombWindow();
             }
         }
-        horiz_input = InputManager.HorizontalSpeed01;
-        vert_input = InputManager.VerticalSpeed01;
         hitboxSprite.enabled = IsFocus || SaveData.s.UnfocusedHitbox;
-        Vector2 velocity = Vector2.zero;
-        if (AllowPlayerInput) {
-            if (ChallengeManager.r.HorizAllowed) velocity.x = horiz_input;
-            if (ChallengeManager.r.VertAllowed) velocity.y = vert_input;
-            lastDelta = velocity;
-        }
-        var velMag = velocity.magnitude;
-        if (velMag > float.Epsilon) {
-            velocity /= velMag;
+        Vector2 velocity = DesiredMovement01;
+        if (velocity.sqrMagnitude > 0) {
             timeSinceLastStandstill += dT;
             if (timeSinceLastStandstill * 120f < lnrizeSpeed && SaveData.s.AllowInputLinearization) {
                 velocity *= 1 - lnrizeRatio +
                             lnrizeRatio * Mathf.Floor(1f + timeSinceLastStandstill * 120f) / lnrizeSpeed;
             }
         } else {
+            velocity = Vector2.zero;
             timeSinceLastStandstill = 0f;
         }
         velocity *= IsFocus ? thisPlayer.FocusSpeed : thisPlayer.freeSpeed;
         if (spawnedCamera != null) velocity *= spawnedCamera.CameraSpeedMultiplier;
         velocity *= StateSpeedMultiplier(state);
+        velocity *= (float) GameManagement.Difficulty.playerSpeedMultiplier;
+        SetDirection(velocity);
         //Check bounds
         Vector2 pos = tr.position;
         if (StateAllowsLocationUpdate(state)) {
@@ -349,23 +381,24 @@ public class PlayerInput : BehaviorEntity {
         state = PlayerState.WITCHTIME;
         speedLines.Play();
         var t = ETime.Slowdown.CreateMultiplier(WitchTimeSlowdown, MultiMultiplier.Priority.CLEAR_SCENE);
-        AudioTrackService.SetPitchMultiplier(WitchTimeAudioMultiplier);
-        UIManager.SetMeterActivated(meter.color);
+        //AudioTrackService.SetPitchMultiplier(WitchTimeAudioMultiplier);
         meter.enabled = true;
         SFXService.MeterActivated();
         for (int f = 0; !MaybeCancelState(cT) &&
             IsTryingWitchTime && GameManagement.campaign.TryUseMeterFrame(); ++f) {
             if (f % ghostFrequency == 0) {
-                Instantiate(ghost).GetComponent<Ghost>().Initialize(sr.sprite, tr.position, ghostFadeTime);
+                Instantiate(ghost).GetComponent<Ghost>().Initialize(ghostSource.sprite, tr.position, ghostFadeTime);
             }
+            UIManager.SetMeterActivated(GameManagement.campaign.EnoughMeterToUse ? meter.color : meterDisplayInner);
             float meterDisplayRatio = M.EOutSine(Mathf.Clamp01(f / 30f));
             meterPB.SetFloat(PropConsts.fillRatio, (float)GameManagement.campaign.Meter * meterDisplayRatio);
             meter.SetPropertyBlock(meterPB);
             yield return null;
         }
         meter.enabled = false;
+        SFXService.MeterDeActivated();
         UIManager.UnSetMeterActivated();
-        AudioTrackService.ResetPitchMultiplier();
+        //AudioTrackService.ResetPitchMultiplier();
         t.TryRevoke();
         speedLines.Stop();
         GameManagement.campaign.MeterInUse = false;
@@ -374,7 +407,7 @@ public class PlayerInput : BehaviorEntity {
     
 
     protected override void RegularUpdateMove() {
-        MovementUpdate(ETime.FRAME_TIME, out _, out _);
+        MovementUpdate(ETime.FRAME_TIME);
     }
 
     public override void RegularUpdate() {
@@ -385,6 +418,14 @@ public class PlayerInput : BehaviorEntity {
         //then IsFiring will return false in the movement update and true in the options code.
         //As a result, UnfiringTime will be incorrect and lasers will break.
         //So we have to do the time-set code after coroutines. 
+
+        if (IsFocus) {
+            TimeFocus += ETime.FRAME_TIME;
+            TimeFree = 0;
+        } else {
+            TimeFocus = 0;
+            TimeFree += ETime.FRAME_TIME;
+        }
         
         if (IsFiring) {
             if (IsFocus) {
@@ -408,8 +449,44 @@ public class PlayerInput : BehaviorEntity {
             UnFiringTimeFocus += ETime.FRAME_TIME;
             UnFiringTime += ETime.FRAME_TIME;
         }
+        
+        if (--scoreLabelBuffer == 0 && labelAccScore > 0) {
+            DropDropLabel(scoreLabelBonus ? scoreGrad_bonus : scoreGrad, $"{labelAccScore:n0}");
+            labelAccScore = 0;
+            scoreLabelBonus = false;
+        }
+
+        freeFocusLerp01 = Mathf.Clamp01(freeFocusLerp01 + (IsFocus ? 1 : -1) * 
+            ETime.FRAME_TIME / FreeFocusLerpTime);
+
+        for (int ii = 0; ii < focusOverlay.Length; ++ii) {
+            focusOverlay[ii].SetAlpha(freeFocusLerp01 * baseFocusOverlayOpacity);
+        }
+
     }
 
+    public void BufferScoreLabel((long deltaScore, bool bonus) s) {
+        labelAccScore += s.deltaScore;
+        scoreLabelBuffer = ITEM_LABEL_BUFFER;
+        scoreLabelBonus |= s.bonus;
+    }
+
+    private long labelAccScore = 0;
+    private int scoreLabelBuffer = -1;
+    private bool scoreLabelBonus = false;
+    private const int ITEM_LABEL_BUFFER = 4;
+
+    private static readonly IGradient scoreGrad = DropLabel.MakeGradient(
+        new Color32(100, 150, 255, 255), new Color32(80, 110, 255, 255));
+    private static readonly IGradient scoreGrad_bonus = DropLabel.MakeGradient(
+        new Color32(20, 220, 255, 255), new Color32(10, 170, 255, 255));
+    private static readonly IGradient pivGrad = DropLabel.MakeGradient(
+        new Color32(0, 235, 162, 255), new Color32(0, 172, 70, 255));
+
+    protected override void OnDisable() {
+        scoreListener.MarkForDeletion();
+        base.OnDisable();
+    }
 
     private static Vector2 MoveAgainstWall(Vector2 source, float blueBoxRadius, Vector2 delta, LayerMask mask) {
         RaycastHit2D ray = Physics2D.CircleCast(source, blueBoxRadius, delta.normalized, delta.magnitude, mask);
@@ -441,6 +518,8 @@ public class PlayerInput : BehaviorEntity {
         }
     }
 
+    public static readonly Expression timeFree = ExUtils.Property<PlayerInput>("TimeFree");
+    public static readonly Expression timeFocus = ExUtils.Property<PlayerInput>("TimeFocus");
     public static readonly Expression firingTimeFree = ExUtils.Property<PlayerInput>("FiringTimeFree");
     public static readonly Expression firingTimeFocus = ExUtils.Property<PlayerInput>("FiringTimeFocus");
     public static readonly Expression firingTime = ExUtils.Property<PlayerInput>("FiringTime");

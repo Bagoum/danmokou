@@ -37,10 +37,13 @@ public class XMLReplaySaveMenu : XMLMenu {
             var replayName = new TextInputNode("Name");
             var save = "Save";
             MainScreen = new UIScreen(
-                new UINode(() => r.metadata.AsDisplay(true)),
+                new UINode(() => r.metadata.Record.AsDisplay(true, true, true)).With(small1Class),
+                new PassthroughNode(""),
                 replayName,
                 new FuncNode(() => {
-                    r.metadata.AssignName(replayName.DataWIP);
+                    r.metadata.Record.AssignName(replayName.DataWIP);
+                    //The name edit changes the name under the record 
+                    SaveData.SaveRecord();
                     SaveData.p.SaveNewReplay(r);
                     save = "Saved!";
                     return true;
@@ -49,6 +52,6 @@ public class XMLReplaySaveMenu : XMLMenu {
             ).With(UIScreenV);
         }
         base.Awake();
-        if (MainScreen.top.Length > 1) Current = MainScreen.top[1];
+        if (MainScreen.top.Length > 2) Current = MainScreen.top[2];
     }
 }

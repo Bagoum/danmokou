@@ -1,0 +1,16 @@
+gtr {
+	wt 12 _
+	wait-child
+} fire
+	## free fire
+	async blast-red <> gcr2 12 _ <> { 
+		sfx x-pc-fire-1
+	} simple tprot py 13 { player 20 20 oh1-red }
+	## free cancellation
+	noop
+	## focus
+	async blast-purple <> gcr2 12 _ <> { 
+		sfx x-pc-fire-1 
+	} simple tprot py(14) { player  17 17 oh1-purple }
+	## focus cancellation
+	noop

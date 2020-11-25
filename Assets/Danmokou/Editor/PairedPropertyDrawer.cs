@@ -140,3 +140,10 @@ public class CullRadDrawer : PairedPropertyDrawer {
     protected override float w2 => 0.8f;
     protected override bool showName => true;
 }
+
+[CustomPropertyDrawer(typeof(DifficultyDisplay))]
+public class DfcDisplayDrawer : PairedPropertyDrawer {
+    protected override string arg1 => "dfc";
+
+    protected override string arg2 => "display";
+}

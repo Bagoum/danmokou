@@ -6,6 +6,7 @@ static float HPI = PI / 2;
 static float SQR2 = 1.41421356237;
 static float ISQR2 = 0.70710678119;
 static float _2ISQR3 = 1.154700538379251529018297561;
+static float PHI = 1.6180339887498948482045868343656381177203091798057628621354486227;
 static float2 center = float2(0.5, 0.5);
 
 static float REHASH = 43758.5453123;

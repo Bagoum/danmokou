@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using DMath;
 using Core;
@@ -58,7 +59,7 @@ public static partial class Reflector {
         };
 
     [CanBeNull]
-    private static object TryInvokeMethod(IParseQueue q, Type rt, string member, object[] prms, bool allowUpcast=true) {
+    private static object TryInvokeMethod([CanBeNull] IParseQueue q, Type rt, string member, object[] prms, bool allowUpcast=true) {
         if (ReflConfig.HasMember(rt, member, out _)) return ReflConfig.Invoke(rt, member, prms);
         if (MathAllowedFuncify.TryGetValue(rt, out var fs) && fs.inv(q, member, prms, out var res)) return res;
         if (MathAllowed.TryGetValue(rt, out fs) && fs.inv(q, member, prms, out res)) return res;
@@ -69,6 +70,11 @@ public static partial class Reflector {
         TryInvokeMethod(q, rt, member, prms) ?? throw new Exception(
         $"Type handling passed but object creation failed for type {rt.RName()}, method {member}. " +
         "This is an internal error. Please report it.");
+
+    public static T ExtInvokeMethod<T>(string member, IEnumerable<object> prms) =>
+        (T) (TryInvokeMethod(null, typeof(T), member.ToLower(), prms.ToArray()) ?? throw new Exception(
+            $"External method invocation failed for type {typeof(T).RName()}, method {member}. " +
+            $"This is probably an error in static code."));
     
     
     private static readonly Dictionary<Type, (Type source, MethodInfo mi)> CompileOptions = 

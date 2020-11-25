@@ -10,7 +10,7 @@ PrefabInstance:
     - target: {fileID: 3407124447063394658, guid: f28167148c8e8b247be3b31472dceb43,
         type: 3}
       propertyPath: m_Name
-      value: fairy2
+      value: fairy2 (dont use, sprite is mixed up with fairy5)
       objectReference: {fileID: 0}
     - target: {fileID: 3407124447063394660, guid: f28167148c8e8b247be3b31472dceb43,
         type: 3}
@@ -122,5 +122,35 @@ PrefabInstance:
       propertyPath: deathItems.pointPP
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 4709715865785981422, guid: f28167148c8e8b247be3b31472dceb43,
+        type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: -7892470398248151206, guid: 472d5ba0fecb0ca49b1c10da6ec9cc3f,
+        type: 3}
+    - target: {fileID: 6353401824704334620, guid: f28167148c8e8b247be3b31472dceb43,
+        type: 3}
+      propertyPath: animate.frames.idleAnim.Array.data[0].sprite
+      value: 
+      objectReference: {fileID: -7892470398248151206, guid: 472d5ba0fecb0ca49b1c10da6ec9cc3f,
+        type: 3}
+    - target: {fileID: 6353401824704334620, guid: f28167148c8e8b247be3b31472dceb43,
+        type: 3}
+      propertyPath: animate.frames.idleAnim.Array.data[1].sprite
+      value: 
+      objectReference: {fileID: 7967900026781805395, guid: 472d5ba0fecb0ca49b1c10da6ec9cc3f,
+        type: 3}
+    - target: {fileID: 6353401824704334620, guid: f28167148c8e8b247be3b31472dceb43,
+        type: 3}
+      propertyPath: animate.frames.idleAnim.Array.data[2].sprite
+      value: 
+      objectReference: {fileID: 142786026593639849, guid: 472d5ba0fecb0ca49b1c10da6ec9cc3f,
+        type: 3}
+    - target: {fileID: 6353401824704334620, guid: f28167148c8e8b247be3b31472dceb43,
+        type: 3}
+      propertyPath: animate.frames.idleAnim.Array.data[3].sprite
+      value: 
+      objectReference: {fileID: 7967900026781805395, guid: 472d5ba0fecb0ca49b1c10da6ec9cc3f,
+        type: 3}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: f28167148c8e8b247be3b31472dceb43, type: 3}

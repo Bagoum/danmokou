@@ -338,7 +338,8 @@ public class PhaseProperty {
 }
 
 public class PhaseProperties {
-    public readonly bool hideTimeout;
+    private readonly bool hideTimeout;
+    public bool HideTimeout => hideTimeout || (!SaveData.Settings.TeleportAtPhaseStart && phaseType?.HideTimeout() == true);
     [CanBeNull] public readonly string cardTitle;
     public readonly int? hp = null;
     public readonly int? photoHP = null;
@@ -364,6 +365,7 @@ public class PhaseProperties {
     private readonly int? spellCutinIndex = null;
 
     public readonly List<Challenge> challenges = new List<Challenge>();
+    public int Index { get; private set; }
 
     public bool GetSpellCutin(out GameObject go) {
         go = null;
@@ -374,7 +376,8 @@ public class PhaseProperties {
         return false;
     }
 
-    public void LoadDefaults(PatternProperties pat) {
+    public void LoadDefaults(PatternProperties pat, int index) {
+        Index = index;
         if (pat.boss != null) {
             Boss = pat.boss;
             if (phaseType.HasValue) {

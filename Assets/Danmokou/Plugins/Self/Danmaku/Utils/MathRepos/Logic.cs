@@ -89,16 +89,6 @@ public static partial class PredicateLogic {
         );
     }
 
-    /// <summary>
-    /// Return true if the object is inside the given BehaviorEntity.
-    /// <br/>Note: by default, BehaviorEntity does not support collision methods.
-    /// Only specific subtypes, like RectDrawer, work with this.
-    /// </summary>
-    /// <param name="beh"></param>
-    /// <returns></returns>
-    public static ExPred Collide(BEHPointer beh) => bpi => BehaviorEntity.contains.Of(ExC(beh), bpi.loc);
-
-
 }
 
 }

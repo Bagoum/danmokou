@@ -12,6 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9a9b8d53cd57478a8b5a061ca9a9c2e6, type: 3}
   m_Name: Item References
   m_EditorClassIdentifier: 
+  dropLabel: {fileID: 3296355151542608720, guid: 6eccaec7e1bde7644b24789440e569e2,
+    type: 3}
   lifeItem: {fileID: 359774600689030096, guid: 434a5ca1d0d99c6439e6da4390e24d0b, type: 3}
   valueItem: {fileID: 359774600689030096, guid: dd21390ee5ef15d4e9cd7d412de540ac,
     type: 3}

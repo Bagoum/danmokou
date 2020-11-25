@@ -60,13 +60,9 @@ public class DialogueProfile : ScriptableObject, IDialogueProfile {
             }
             return ds;
         }
-        public (bool, DialogueSprite)? Find0(Emote e) {
+        public (bool, DialogueSprite)? FindF(Emote e, bool flip = false) {
             var s = Find(e);
-            return ((s.sprites?.Length ?? 0) == 0) ? ((bool, DialogueSprite)?)null : (false, FillDefault(s));
-        }
-        public (bool, DialogueSprite)? Find1(Emote e) {
-            var s = Find(e);
-            return ((s.sprites?.Length ?? 0) == 0) ? ((bool, DialogueSprite)?)null : (true, FillDefault(s));
+            return ((s.sprites?.Length ?? 0) == 0) ? ((bool, DialogueSprite)?)null : (flip, FillDefault(s));
         }
     }
     [Serializable]
@@ -122,6 +118,7 @@ public class DialogueProfile : ScriptableObject, IDialogueProfile {
     }*/
     public EmotedSprites2 leftStands2;
     public EmotedSprites2 rightStands2;
+    public bool flipOnReduce = true;
     public EmotedSprites icons;
     public string displayName;
     public string key;
@@ -141,11 +138,11 @@ public class DialogueProfile : ScriptableObject, IDialogueProfile {
     }
 
     public (bool flip, DialogueSprite sprite) FindLeftStand(Emote e) {
-        return leftStands2.Find0(e) ?? rightStands2.Find1(e) ?? leftStands2.Find0(Emote.NORMAL) ??
-            rightStands2.Find1(Emote.NORMAL) ?? throw new Exception($"Could not resolve left stand for emote {e}");
+        return leftStands2.FindF(e) ?? rightStands2.FindF(e, flipOnReduce) ?? leftStands2.FindF(Emote.NORMAL) ??
+            rightStands2.FindF(Emote.NORMAL, flipOnReduce) ?? throw new Exception($"Could not resolve left stand for emote {e}");
     }
     public (bool flip, DialogueSprite sprite) FindRightStand(Emote e) {
-        return rightStands2.Find0(e) ?? leftStands2.Find1(e) ?? rightStands2.Find0(Emote.NORMAL) ??
-            leftStands2.Find1(Emote.NORMAL) ?? throw new Exception($"Could not resolve right stand for emote {e}");
+        return rightStands2.FindF(e) ?? leftStands2.FindF(e, flipOnReduce) ?? rightStands2.FindF(Emote.NORMAL) ??
+            leftStands2.FindF(Emote.NORMAL, flipOnReduce) ?? throw new Exception($"Could not resolve right stand for emote {e}");
     }
 }

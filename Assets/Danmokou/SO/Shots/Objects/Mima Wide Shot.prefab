@@ -27,7 +27,7 @@ Transform:
   m_GameObject: {fileID: 1473378800915121423}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -0.6, y: 0.1, z: 0}
-  m_LocalScale: {x: 0.3, y: 0.3, z: 1}
+  m_LocalScale: {x: 1.2, y: 1.2, z: 1}
   m_Children: []
   m_Father: {fileID: 6975952667442214503}
   m_RootOrder: 2
@@ -70,10 +70,11 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: -533568639
-  m_SortingLayer: 4
+  m_SortingLayer: 5
   m_SortingOrder: -1
-  m_Sprite: {fileID: 21300000, guid: 458d7899515bad84c964b9a5a99992f6, type: 3}
-  m_Color: {r: 0.105882354, g: 0.41960785, b: 0.7647059, a: 0.5019608}
+  m_Sprite: {fileID: 3818182386508469091, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
+    type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -97,37 +98,32 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorScript: {fileID: 4900000, guid: be37b76623a328749b15c8e6f7c4e54d, type: 3}
   ID: 
-  rotationMethod: 0
   deathEffect: {fileID: 0}
   cullableRadius:
     cullable: 0
     cullRadius: {fileID: 0}
   collisionInfo:
+    collisionRadius: 0
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
-  animate:
-    method: 0
-    LRRelation: 0
-    UDRelation: 0
-    frames:
-      idleAnim: []
-      rightAnim: []
-      leftAnim: []
-      upAnim: []
-      downAnim: []
-      attackAnim: []
-      deathAnim: []
+  displayer: {fileID: 0}
   offsetFree: pxy -0.6 0.1
   offsetFocus: pxy -0.5 -0.3
+  powerOffsetFree: []
+  powerOffsetFocus: []
+  freeOffsetMul: 1
+  focusOffsetMul: 1
   opacityFree: 
   opacityFocus: 
+  spriteRotation: 420 * t * pm1(p)
   freeOffsetRotational: 1
   focusOffsetRotational: 1
-  offsetLerpTime: 0.2
+  freeAngleOffset: 5
+  focusAngleOffset: 2
+  freeFocusLerpTime: 0.2
+  powerLerpTime: 0
   findex: 0
-  freeFirer: {fileID: 0}
-  focusFirer: {fileID: 0}
 --- !u!1 &3345497165794792313
 GameObject:
   m_ObjectHideFlags: 0
@@ -155,7 +151,7 @@ Transform:
   m_GameObject: {fileID: 3345497165794792313}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -0.3, y: 0.5, z: 0}
-  m_LocalScale: {x: 0.3, y: 0.3, z: 1}
+  m_LocalScale: {x: 1.2, y: 1.2, z: 1}
   m_Children: []
   m_Father: {fileID: 6975952667442214503}
   m_RootOrder: 0
@@ -198,10 +194,11 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: -533568639
-  m_SortingLayer: 4
+  m_SortingLayer: 5
   m_SortingOrder: -1
-  m_Sprite: {fileID: 21300000, guid: 458d7899515bad84c964b9a5a99992f6, type: 3}
-  m_Color: {r: 0.105882354, g: 0.41960785, b: 0.7647059, a: 0.5019608}
+  m_Sprite: {fileID: -3370256387710733728, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
+    type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -225,37 +222,32 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorScript: {fileID: 4900000, guid: 96ad325420dd73b44896c682ed376826, type: 3}
   ID: 
-  rotationMethod: 0
   deathEffect: {fileID: 0}
   cullableRadius:
     cullable: 0
     cullRadius: {fileID: 0}
   collisionInfo:
+    collisionRadius: 0
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
-  animate:
-    method: 0
-    LRRelation: 0
-    UDRelation: 0
-    frames:
-      idleAnim: []
-      rightAnim: []
-      leftAnim: []
-      upAnim: []
-      downAnim: []
-      attackAnim: []
-      deathAnim: []
+  displayer: {fileID: 0}
   offsetFree: pxy -0.3 0.4
   offsetFocus: pxy -0.4 0.2
+  powerOffsetFree: []
+  powerOffsetFocus: []
+  freeOffsetMul: 1
+  focusOffsetMul: 1
   opacityFree: 
   opacityFocus: 
+  spriteRotation: 420 * t * pm1(p)
   freeOffsetRotational: 1
   focusOffsetRotational: 1
-  offsetLerpTime: 0.2
+  freeAngleOffset: 
+  focusAngleOffset: 
+  freeFocusLerpTime: 0.2
+  powerLerpTime: 0
   findex: 0
-  freeFirer: {fileID: 0}
-  focusFirer: {fileID: 0}
 --- !u!1 &3770068878522526620
 GameObject:
   m_ObjectHideFlags: 0
@@ -283,7 +275,7 @@ Transform:
   m_GameObject: {fileID: 3770068878522526620}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0.7, y: -0.4, z: 0}
-  m_LocalScale: {x: 0.3, y: 0.3, z: 1}
+  m_LocalScale: {x: 1.2, y: 1.2, z: 1}
   m_Children: []
   m_Father: {fileID: 6975952667442214503}
   m_RootOrder: 5
@@ -326,10 +318,11 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: -533568639
-  m_SortingLayer: 4
+  m_SortingLayer: 5
   m_SortingOrder: -1
-  m_Sprite: {fileID: 21300000, guid: 458d7899515bad84c964b9a5a99992f6, type: 3}
-  m_Color: {r: 0.105882354, g: 0.41960785, b: 0.7647059, a: 0.5019608}
+  m_Sprite: {fileID: -2571616503975631570, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
+    type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -353,37 +346,32 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorScript: {fileID: 4900000, guid: b66fe4f78d642714385e284ccb7f2abb, type: 3}
   ID: 
-  rotationMethod: 0
   deathEffect: {fileID: 0}
   cullableRadius:
     cullable: 0
     cullRadius: {fileID: 0}
   collisionInfo:
+    collisionRadius: 0
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
-  animate:
-    method: 0
-    LRRelation: 0
-    UDRelation: 0
-    frames:
-      idleAnim: []
-      rightAnim: []
-      leftAnim: []
-      upAnim: []
-      downAnim: []
-      attackAnim: []
-      deathAnim: []
-  offsetFree: pxy 0.5 -0.4
-  offsetFocus: py 0.4
+  displayer: {fileID: 0}
+  offsetFree: pxy 0.55 -0.4
+  offsetFocus: py 0.7
+  powerOffsetFree: []
+  powerOffsetFocus: []
+  freeOffsetMul: 1
+  focusOffsetMul: 1
   opacityFree: 
   opacityFocus: 
+  spriteRotation: 420 * t * pm1(p)
   freeOffsetRotational: 1
   focusOffsetRotational: 1
-  offsetLerpTime: 0.2
+  freeAngleOffset: -15
+  focusAngleOffset: 0
+  freeFocusLerpTime: 0.2
+  powerLerpTime: 0
   findex: 1
-  freeFirer: {fileID: 0}
-  focusFirer: {fileID: 0}
 --- !u!1 &3770068879319452305
 GameObject:
   m_ObjectHideFlags: 0
@@ -411,7 +399,7 @@ Transform:
   m_GameObject: {fileID: 3770068879319452305}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -0.7, y: -0.4, z: 0}
-  m_LocalScale: {x: 0.3, y: 0.3, z: 1}
+  m_LocalScale: {x: 1.2, y: 1.2, z: 1}
   m_Children: []
   m_Father: {fileID: 6975952667442214503}
   m_RootOrder: 4
@@ -454,10 +442,11 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: -533568639
-  m_SortingLayer: 4
+  m_SortingLayer: 5
   m_SortingOrder: -1
-  m_Sprite: {fileID: 21300000, guid: 458d7899515bad84c964b9a5a99992f6, type: 3}
-  m_Color: {r: 0.105882354, g: 0.41960785, b: 0.7647059, a: 0.5019608}
+  m_Sprite: {fileID: -2571616503975631570, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
+    type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -481,37 +470,32 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorScript: {fileID: 4900000, guid: b66fe4f78d642714385e284ccb7f2abb, type: 3}
   ID: 
-  rotationMethod: 0
   deathEffect: {fileID: 0}
   cullableRadius:
     cullable: 0
     cullRadius: {fileID: 0}
   collisionInfo:
+    collisionRadius: 0
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
-  animate:
-    method: 0
-    LRRelation: 0
-    UDRelation: 0
-    frames:
-      idleAnim: []
-      rightAnim: []
-      leftAnim: []
-      upAnim: []
-      downAnim: []
-      attackAnim: []
-      deathAnim: []
-  offsetFree: pxy -0.5 -0.4
-  offsetFocus: py 0.4
+  displayer: {fileID: 0}
+  offsetFree: pxy -0.55 -0.4
+  offsetFocus: py 0.7
+  powerOffsetFree: []
+  powerOffsetFocus: []
+  freeOffsetMul: 1
+  focusOffsetMul: 1
   opacityFree: 
   opacityFocus: 
+  spriteRotation: 420 * t * pm1(p)
   freeOffsetRotational: 1
   focusOffsetRotational: 1
-  offsetLerpTime: 0.2
+  freeAngleOffset: 15
+  focusAngleOffset: 0
+  freeFocusLerpTime: 0.2
+  powerLerpTime: 0
   findex: 0
-  freeFirer: {fileID: 0}
-  focusFirer: {fileID: 0}
 --- !u!1 &3770068879970420074
 GameObject:
   m_ObjectHideFlags: 0
@@ -539,7 +523,7 @@ Transform:
   m_GameObject: {fileID: 3770068879970420074}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0.6, y: 0.1, z: 0}
-  m_LocalScale: {x: 0.3, y: 0.3, z: 1}
+  m_LocalScale: {x: 1.2, y: 1.2, z: 1}
   m_Children: []
   m_Father: {fileID: 6975952667442214503}
   m_RootOrder: 3
@@ -582,10 +566,11 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: -533568639
-  m_SortingLayer: 4
+  m_SortingLayer: 5
   m_SortingOrder: -1
-  m_Sprite: {fileID: 21300000, guid: 458d7899515bad84c964b9a5a99992f6, type: 3}
-  m_Color: {r: 0.105882354, g: 0.41960785, b: 0.7647059, a: 0.5019608}
+  m_Sprite: {fileID: 3818182386508469091, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
+    type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -609,37 +594,32 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorScript: {fileID: 4900000, guid: be37b76623a328749b15c8e6f7c4e54d, type: 3}
   ID: 
-  rotationMethod: 0
   deathEffect: {fileID: 0}
   cullableRadius:
     cullable: 0
     cullRadius: {fileID: 0}
   collisionInfo:
+    collisionRadius: 0
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
-  animate:
-    method: 0
-    LRRelation: 0
-    UDRelation: 0
-    frames:
-      idleAnim: []
-      rightAnim: []
-      leftAnim: []
-      upAnim: []
-      downAnim: []
-      attackAnim: []
-      deathAnim: []
+  displayer: {fileID: 0}
   offsetFree: pxy 0.6 0.1
   offsetFocus: pxy 0.5 -0.3
+  powerOffsetFree: []
+  powerOffsetFocus: []
+  freeOffsetMul: 1
+  focusOffsetMul: 1
   opacityFree: 
   opacityFocus: 
+  spriteRotation: 420 * t * pm1(p)
   freeOffsetRotational: 1
   focusOffsetRotational: 1
-  offsetLerpTime: 0.2
+  freeAngleOffset: -5
+  focusAngleOffset: -2
+  freeFocusLerpTime: 0.2
+  powerLerpTime: 0
   findex: 1
-  freeFirer: {fileID: 0}
-  focusFirer: {fileID: 0}
 --- !u!1 &3770068880018252091
 GameObject:
   m_ObjectHideFlags: 0
@@ -667,7 +647,7 @@ Transform:
   m_GameObject: {fileID: 3770068880018252091}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0.3, y: 0.5, z: 0}
-  m_LocalScale: {x: 0.3, y: 0.3, z: 1}
+  m_LocalScale: {x: 1.2, y: 1.2, z: 1}
   m_Children: []
   m_Father: {fileID: 6975952667442214503}
   m_RootOrder: 1
@@ -710,10 +690,11 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: -533568639
-  m_SortingLayer: 4
+  m_SortingLayer: 5
   m_SortingOrder: -1
-  m_Sprite: {fileID: 21300000, guid: 458d7899515bad84c964b9a5a99992f6, type: 3}
-  m_Color: {r: 0.105882354, g: 0.41960785, b: 0.7647059, a: 0.5019608}
+  m_Sprite: {fileID: -3370256387710733728, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
+    type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -737,37 +718,32 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorScript: {fileID: 4900000, guid: 96ad325420dd73b44896c682ed376826, type: 3}
   ID: 
-  rotationMethod: 0
   deathEffect: {fileID: 0}
   cullableRadius:
     cullable: 0
     cullRadius: {fileID: 0}
   collisionInfo:
+    collisionRadius: 0
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
-  animate:
-    method: 0
-    LRRelation: 0
-    UDRelation: 0
-    frames:
-      idleAnim: []
-      rightAnim: []
-      leftAnim: []
-      upAnim: []
-      downAnim: []
-      attackAnim: []
-      deathAnim: []
+  displayer: {fileID: 0}
   offsetFree: pxy 0.3 0.4
   offsetFocus: pxy 0.4 0.2
+  powerOffsetFree: []
+  powerOffsetFocus: []
+  freeOffsetMul: 1
+  focusOffsetMul: 1
   opacityFree: 
   opacityFocus: 
+  spriteRotation: 420 * t * pm1(p)
   freeOffsetRotational: 1
   focusOffsetRotational: 1
-  offsetLerpTime: 0.2
+  freeAngleOffset: 
+  focusAngleOffset: 
+  freeFocusLerpTime: 0.2
+  powerLerpTime: 0
   findex: 1
-  freeFirer: {fileID: 0}
-  focusFirer: {fileID: 0}
 --- !u!1 &4866589885780801546
 GameObject:
   m_ObjectHideFlags: 0
@@ -778,7 +754,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6975952667442214503}
   m_Layer: 0
-  m_Name: Wide Shot
+  m_Name: Mima Wide Shot
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

@@ -80,7 +80,7 @@ public partial class BulletManager {
 
     public static void CopyPool(string newPool, string from) {
         var p = simpleBulletPools[from].CopyPool((from == "empty") ? activeCEmpty : activeCNpc, newPool);
-        AddSimpleStyle(newPool, p);
+        AddSimpleStyle(p);
         p.Activate();
     }
 
@@ -88,32 +88,46 @@ public partial class BulletManager {
     public static string GetOrMakePlayerCopy(string pool) {
         //lmao i hate garbage
         if (!playerPoolCopyCache.TryGetValue(pool, out var playerPool)) {
-            playerPool = playerPoolCopyCache[pool] = $"p-{pool}";
+            playerPool = playerPoolCopyCache[pool] = $"{PLAYERPREFIX}{pool}";
         }
         if (!simpleBulletPools.TryGetValue(playerPool, out var p)) {
-            p = simpleBulletPools[pool].CopySimplePool(activePlayer, playerPool);
-            AddSimpleStyle(playerPool, p);
+            if (!simpleBulletPools.TryGetValue(pool, out var po)) 
+                throw new Exception($"{pool} does not exist, cannot make a player variant of it");
+            p = po.CopySimplePool(activePlayer, playerPool);
+            AddSimpleStyle(p);
             p.SetPlayer();
         }
         if (!p.Active) p.Activate();
         return playerPool;
     }
 
-    public static string GetOrMakeFaBPlayerCopy(string pool) {
+    private const string PLAYERPREFIX = "p-";
+    public static string GetOrMakeComplexPlayerCopy(string pool) {
         if (!playerPoolCopyCache.TryGetValue(pool, out var playerPool)) {
-            playerPool = playerPoolCopyCache[pool] = $"p-{pool}";
+            playerPool = playerPoolCopyCache[pool] = $"{PLAYERPREFIX}{pool}";
         }
-        if (!bulletStyles.TryGetValue(playerPool, out var p)) {
-            p = bulletStyles[pool].MakePlayerCopy();
-            AddFaBStyle(playerPool, p);
+        if (!behPools.TryGetValue(playerPool, out var p)) {
+            if (!behPools.TryGetValue(pool, out var po)) 
+                throw new Exception($"{pool} does not exist, cannot make a player variant of it");
+            p = po.MakePlayerCopy(playerPool);
+            AddComplexStyle(p);
         }
         return playerPool;
     }
 
+    private static bool IsPlayerPoolString(string pool) {
+        if (pool.Length < PLAYERPREFIX.Length) return false;
+        for (int ii = 0; ii < PLAYERPREFIX.Length; ++ii) {
+            if (pool[ii] != PLAYERPREFIX[ii]) return false;
+        }
+        return true;
+    }
     private static bool CheckOrCopyPool(string pool, out SimpleBulletCollection sbc) {
         if (simpleBulletPools.TryGetValue(pool, out sbc)) {
             if (!sbc.Active) sbc.Activate();
             return true;
+        } else if (IsPlayerPoolString(pool)) {
+            return CheckOrCopyPool(GetOrMakePlayerCopy(pool.Substring(PLAYERPREFIX.Length)), out sbc);
         }
         int splitAt = pool.IndexOf('.');
         if (splitAt == -1) return false;
@@ -122,6 +136,16 @@ public partial class BulletManager {
         CopyPool(pool, basePool);
         sbc = simpleBulletPools[pool];
         return true;
+    }
+
+    //No copy functionality
+    public static bool CheckComplexPool(string pool, out BehaviorEntity.BEHStyleMetadata bsm) {
+        if (behPools.TryGetValue(pool, out bsm)) {
+            if (!bsm.Active) bsm.Activate();
+            return true;
+        } else if (IsPlayerPoolString(pool)) {
+            return CheckComplexPool(GetOrMakeComplexPlayerCopy(pool.Substring(PLAYERPREFIX.Length)), out bsm);
+        } else return false;
     }
 
     public static bool PoolExists(string pool) => simpleBulletPools.ContainsKey(pool);
@@ -271,13 +295,16 @@ public partial class BulletManager {
     public static void ClearNonSimpleBullets() {
         Bullet.ClearAll();
     }
-    public static void ClearPoolControls() {
-        foreach (var pool in simpleBulletPools.Values) {
-            pool.ClearPoolControl();
+    /// <summary>
+    /// While most controls are bounded by ICancellee, some aren't, so they need to be destroyed.
+    /// </summary>
+    public static void ClearPoolControls(bool clearPlayer=true) {
+        foreach (var pool in simpleBulletPools.Values.Where(p => clearPlayer || !p.IsPlayer)) {
+            pool.ClearControls();
             pool.ResetPoolMetadata();
         }
-        BehaviorEntity.ClearControls();
-        CurvedTileRenderLaser.ClearControls();
+        BehaviorEntity.ClearPoolControls(clearPlayer);
+        CurvedTileRenderLaser.ClearPoolControls(clearPlayer);
     }
 }
 
@@ -339,7 +366,7 @@ public partial class BulletManager {
     public abstract class AbsSimpleBulletCollection : CompactingArray<SimpleBullet> {
         public bool allowCameraCull = true;
         public abstract BehaviorEntity GetINodeAt(int sbcind, string behName, uint? bpiid, out uint sbid);
-        public abstract void ClearPoolControl();
+        public abstract void ClearControls();
         public abstract string Style { get; }
 
         /// <summary>
@@ -437,13 +464,23 @@ public partial class BulletManager {
         protected virtual CollisionResult CheckGrazeCollision(in Hitbox hitbox, ref SimpleBullet sb) 
             => throw new NotImplementedException();
 
-        public override void ClearPoolControl() => pcs.Empty();
         public void ResetPoolMetadata() {
             bc.ResetMetadata();
             allowCameraCull = true;
         }
 
         public void AddPoolControl(BulletControl pc) => pcs.AddPriority(pc, pc.priority);
+        
+        public void PruneControls() {
+            for (int ii = 0; ii < pcs.Count; ++ii) {
+                if (pcs[ii].cT.Cancelled || !pcs[ii].persist(GlobalBEH.Main.rBPI)) {
+                    pcs.Delete(ii);
+                }
+            }
+            pcs.Compact();
+        }
+        public override void ClearControls() => pcs.Empty();
+
         public override void Delete(int ind, bool destroy) {
             if (destroy) DataHoisting.Destroy(arr[ind].bpi.id);
             base.Delete(ind);
@@ -471,15 +508,6 @@ public partial class BulletManager {
         
         public new void Add(ref SimpleBullet sb) => throw new Exception("Do not use SBC.Add");
 
-        public void PruneControls() {
-            for (int ii = 0; ii < pcs.Count; ++ii) {
-                if (!pcs[ii].persist(GlobalBEH.Main.rBPI)) {
-                    pcs.Delete(ii);
-                }
-            }
-            pcs.Compact();
-        }
-
         public override float NextDT => nextDT;
         private float nextDT;
         public override void Speedup(float ratio) => nextDT *= ratio;
@@ -488,11 +516,10 @@ public partial class BulletManager {
             int postVelPcs = pcs.FirstPriorityGT(BulletControl.POST_VEL_PRIORITY);
             int postDirPcs = pcs.FirstPriorityGT(BulletControl.POST_DIR_PRIORITY);
             int numPcs = pcs.Count;
-            float dT = GameManagement.FRAME_TIME_BULLET;
             //Note on optimization: keeping accDelta in SB is faster(!) than either a local variable or a SBInProgress struct.
             for (int ii = 0; ii < temp_last; ++ii) {
                 ref SimpleBullet sb = ref arr[ii];
-                nextDT = dT;
+                nextDT = ETime.FRAME_TIME;
                 for (int pi = 0; pi < postVelPcs; ++pi) pcs[pi].action(this, ii, sb.bpi);
                 sb.velocity.UpdateDeltaAssignAcc(ref sb.bpi, out sb.accDelta, in nextDT);
                 sb.scale = sb.scaleFunc?.Invoke(sb.bpi) ?? 1f;
@@ -558,8 +585,6 @@ public partial class BulletManager {
                         for (int ff = 0; ff < fciL; ++ff) {
                             if (fci[ff].Active && 
                                 Collision.CircleOnCircle(fci[ff].pos, fci[ff].radius, sbn.bpi.loc, bc.cc.effRadius)) {
-                                //Stage enemies don't absorb bullets if they're invulnerable
-                                if (!fci[ff].enemy.takesBossDamage && !fci[ff].enemy.Vulnerable) continue;
                                 if (bc.destructible || fci[ff].enemy.TryHitIndestructible(sbn.bpi.id, bc.againstEnemyCooldown)) {
                                     if (PlayerFireDataHoisting.Retrieve(sbn.bpi.id).Try(out var de)) {
                                         fci[ff].enemy.QueueDamage(de.bossDmg, de.stageDmg, PlayerTarget.location);
@@ -676,6 +701,7 @@ public partial class BulletManager {
         if (playerRendered && enemyRendered) {
             playerRendered = enemyRendered = false;
         }
+        RNG.RNG_ALLOWED = false;
         SimpleBulletCollection sbc;
         if ((c.cullingMask & ppLayerMask) != 0) {
             for (int ii = 0; ii < activePlayer.Count; ++ii) {
@@ -696,6 +722,7 @@ public partial class BulletManager {
             }
             enemyRendered = true;
         }
+        RNG.RNG_ALLOWED = true;
     }
 
     private void SwitchRenderPool(Camera c, SimpleBulletCollection pool, int layer) {
@@ -849,15 +876,14 @@ public partial class BulletManager {
         ScriptableObject.Destroy(throwaway_gm);
     }
 
-    public static FrameAnimBullet.Recolor GetRecolor(string fabName) => bulletStyles[fabName].GetOrLoadRecolor();
-    
-    #if UNITY_EDITOR
+#if UNITY_EDITOR
     [ContextMenu("Debug bullet numbers")]
     public void DebugBulletNums() {
         int total = 0;
         foreach (var pool in simpleBulletPools.Values) {
             total += pool.Count;
             if (pool.Count > 0) Log.Unity($"{pool.Style}: {pool.Count}", level: Log.Level.INFO);
+            if (pool.NumPcs > 0) Log.Unity($"{pool.Style} has {pool.NumPcs} controls", level: Log.Level.INFO);
         }
         total += Bullet.NumBullets;
         Log.Unity($"Custom pools: {string.Join(", ", activeCNpc.Select(x => x.Style))}");

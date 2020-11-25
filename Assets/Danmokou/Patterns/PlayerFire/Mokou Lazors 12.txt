@@ -1,0 +1,29 @@
+gtr {
+	wt 30 _
+	wait-child
+} firesame
+	## free fire
+	action block 0 :2
+		async x-pc-fire-1 <> gcr2 3 _ <> {
+		} sfx
+		async sunnylaser <> gcr {
+			wait(240)
+			root zero
+			times(_)
+			preloop {
+				target =v2 LNearestEnemy
+				lastActiveTime =f _
+				subshot =f playerSubshot
+			}
+		} laser(nroffset(OptionLocation),
+			1, 0.5, {
+				start(30 * (t - &lastActiveTime))
+				varLength(15, 30 * t)
+				dynamic(tpnrot(rotate(atan(&target - OptionLocation), cx 1)))
+				delete(> (t - &lastActiveTime, 1) | (neq &subshot playerSubshot))
+				deactivate(> playerUnfiringTime 0)
+				player(13, 60, 40, oh1-red)
+		})
+
+	## free cancellation
+	noop

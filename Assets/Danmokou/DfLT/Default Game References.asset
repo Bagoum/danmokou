@@ -27,6 +27,12 @@ MonoBehaviour:
   exCampaign: {fileID: 0}
   dayCampaign: {fileID: 0}
   defaultTransition: {fileID: 11400000, guid: 517222e0dbe56264a8bcd878fc9e4e27, type: 2}
+  bounds:
+    left: -3.6
+    right: 3.6
+    top: 4.1
+    bot: -4.5
+    center: {x: -1.9, y: 0}
   dialogue: []
   bossMetadata:
   - {fileID: 11400000, guid: 061f122427d8e1e418fbe6a8e4252d31, type: 2}

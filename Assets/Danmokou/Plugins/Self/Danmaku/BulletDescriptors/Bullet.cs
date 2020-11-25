@@ -55,9 +55,7 @@ public abstract class Bullet : BehaviorEntity {
         base.Awake();
         defaultLayer = gameObject.layer;
         int sortOrder = rendererIndex++; //By default, this wraps around, which may cause momentary strange behavior if Bullet.ResetIndex is not called every several levels or so.
-        if (sr != null) {
-            sr.sortingOrder = sortOrder;
-        }
+        if (displayer != null) displayer.SetSortingOrder(sortOrder);
         var mr = GetComponent<MeshRenderer>();
         if (mr != null) {
             mr.sortingOrder = sortOrder;
@@ -76,8 +74,8 @@ public abstract class Bullet : BehaviorEntity {
         allBullets.Add(this);
     }
 
-    protected void Initialize(RealizedBehOptions options, [CanBeNull] BehaviorEntity parent, Velocity _velocity, int firingIndex, uint bpiid, SOPlayerHitbox _target, out int layer) {
-        base.Initialize(_velocity, options.smr, firingIndex, bpiid, parent, options: options);
+    protected void Initialize([CanBeNull] BEHStyleMetadata style, RealizedBehOptions options, [CanBeNull] BehaviorEntity parent, Velocity _velocity, int firingIndex, uint bpiid, SOPlayerHitbox _target, out int layer) {
+        base.Initialize(style, _velocity, options.smr, firingIndex, bpiid, parent, options: options);
         gameObject.layer = layer = options.layer ?? defaultLayer;
         collisionTarget = _target;
         if ((playerBullet = options.playerBullet) != null) DataHoisting.PreserveID(bpiid);
@@ -102,7 +100,6 @@ public abstract class Bullet : BehaviorEntity {
     }
     
     protected virtual void Colorize(FrameAnimBullet.Recolor r) {
-        style = r.style;
         if (r.sprites == null) return;
         material = r.material;
         SetSprite(r.sprites[0].s);

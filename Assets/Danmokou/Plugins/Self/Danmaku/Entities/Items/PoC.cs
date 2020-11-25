@@ -17,8 +17,11 @@ public class PoC : RegularUpdater {
 
     private void Awake() {
         tr = transform;
+        tr.localPosition += (Vector3) direction.Direction() * (float)GameManagement.Difficulty.pocOffset;
         main = this;
     }
+
+    public static Vector2 Bound => main.tr.position;
 
     private bool IsColliding() {
         var v2 = tr.position; 

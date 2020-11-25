@@ -13,7 +13,5 @@ public class RectDrawer : Drawer {
         locate = locater;
     }
 
-    protected override V2RV2 GetLocScaleRot() => locate(bpi);
-
-    protected override bool Contains(Vector2 pt) => Collision.PointInRect(pt, lastRV2);
+    protected override V2RV2 GetLocScaleRot() => locate(beh.rBPI);
 }

@@ -37,13 +37,6 @@ public enum Locale {
     EN,
     JP
 }
-public enum ShootDirection: byte {
-    INHERIT,
-    LEFT,
-    RIGHT,
-    UP,
-    DOWN
-}
 public enum AnimationType {
     None,
     Left,

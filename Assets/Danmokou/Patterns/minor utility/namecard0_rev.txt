@@ -1,0 +1,7 @@
+saction(0)
+	position(1, -0.725)
+	~ move(_, nrvelocity(px(lerpt3(0.5, 0.9, 5.5, 6, -2.6, -0.2, -1.8))))
+	fadesprite(eoutsine(t / 2), 2)
+	wait(3)
+	fadesprite(1 - einsine(t / 1.5), 1.5)
+	cull

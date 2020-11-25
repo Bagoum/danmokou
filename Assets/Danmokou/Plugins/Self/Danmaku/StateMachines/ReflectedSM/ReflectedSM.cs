@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -64,7 +65,7 @@ public static class SMReflection {
             float fadein = Mathf.Max(0.15f, homesec / 5f);
             _ = Sync(style, _ => V2RV2.Zero, SyncPatterns.Loc0(Summon(path,
                 new ReflectableLASM(smh2 => {
-                    smh2.Exec.FadeSpriteOpacity(bpi => CrosshairOpacity.Value(fadein, homesec, sticksec, bpi),
+                    smh2.Exec.displayer.FadeSpriteOpacity(bpi => CrosshairOpacity.Value(fadein, homesec, sticksec, bpi),
                         homesec + sticksec, smh2.cT, WaitingUtils.GetAwaiter(out Task t));
                     return t;
                 }), new BehOptions())))(smh);
@@ -170,7 +171,7 @@ public static class SMReflection {
         return smh => {
             var beh = Object.Instantiate(bossCfg.boss).GetComponent<BehaviorEntity>();
             beh.phaseController.SetGoTo(1, null);
-            return beh.Initialize(SMRunner.Cull(StateMachineManager.FromText(bossCfg.stateMachine), smh.cT));
+            return beh.Initialize(SMRunner.CullRoot(StateMachineManager.FromText(bossCfg.stateMachine), smh.cT));
         };
     }
 
@@ -190,11 +191,24 @@ public static class SMReflection {
         await state.Start(smh);
     };
 
+    /// <summary>
+    /// Run the child and then wait for a synchronization event.
+    /// </summary>
     [Alias(">>")]
     public static TaskPattern ThenDelay(StateMachine state, Synchronizer synchr) => async smh => {
         await state.Start(smh);
         smh.ThrowIfCancelled();
         await synchr(smh);
+    };
+    
+    /// <summary>
+    /// Run the child nonblockingly and then wait for a synchronization event.
+    /// Same as >> SYNCHR ~ STATE.
+    /// </summary>
+    [Alias(">>~")]
+    public static TaskPattern RunDelay(StateMachine state, Synchronizer synchr) => smh => {
+        _ = state.Start(smh);
+        return synchr(smh);
     };
     
     #region Executors
@@ -217,6 +231,19 @@ public static class SMReflection {
         newGcx.Dispose();
         return Task.CompletedTask;
     };
+
+    /// <summary>
+    /// = async(_, RV2, AP)
+    /// </summary>
+    [Alias("sts")]
+    public static TaskPattern AsyncStageFire(GCXF<V2RV2> rv2, AsyncPattern ap) => Async("_", rv2, ap);
+    
+    /// <summary>
+    /// = async(_, RV2, isetp(P, AP))
+    /// </summary>
+    [Alias("stsp")]
+    public static TaskPattern AsyncStageFireP(GCXF<float> p, GCXF<V2RV2> rv2, AsyncPattern ap) => 
+        AsyncStageFire(rv2, AsyncPatterns.ISetP(p, ap));
 
     public static TaskPattern CreateShot1(V2RV2 rv2, float speed, float angle, string style) =>
         Sync(style, _ => rv2, AtomicPatterns.S(Compilers.GCXU(VTPRepo.RVelocity(Parametrics.CR(speed, angle)))));
@@ -298,7 +325,7 @@ public static class SMReflection {
     public static TaskPattern ParticleControl<CF>(Pred persist, BulletManager.StyleSelector style, CF control) =>
         smh => {
             if (control is BehCFc bc) BehaviorEntity.ControlPool(persist, style, bc, smh.cT);
-            else if (control is LCF lc) CurvedTileRenderLaser.ControlPool(persist, style, lc);
+            else if (control is LCF lc) CurvedTileRenderLaser.ControlPool(persist, style, lc, smh.cT);
             else if (control is SBCFc pc) BulletManager.ControlPool(persist, style, pc, smh.cT);
             else throw new Exception("Couldn't realize bullet-control type");
             return Task.CompletedTask;
@@ -364,8 +391,14 @@ public static class SMReflection {
     /// </summary>
     public static TaskPattern MoveWhile(GCXF<float> time, [CanBeNull] Pred condition, GCXU<VTP> path) => smh => {
         uint randId = RNG.GetUInt();
-        var cor = smh.Exec.ExecuteVelocity(new LimitedTimeVelocity(
-            path.New(smh.GCX, ref randId), time(smh.GCX), 
+        var epath = path.New(smh.GCX, ref randId);
+        var old_override = smh.GCX.idOverride;
+        //Note that this use case is limited to when the BEH is provided a temporary new ID (ie. only in MoveWhile).
+        //I may deprecate this by having the move function not use a new ID.
+        smh.GCX.idOverride = randId;
+        var etime = time(smh.GCX);
+        smh.GCX.idOverride = old_override;
+        var cor = smh.Exec.ExecuteVelocity(new LimitedTimeVelocity(epath, etime, 
                 Functions.Link(() => DataHoisting.Destroy(randId),
                 WaitingUtils.GetAwaiter(out Task t)), smh.cT, smh.GCX.index, condition), randId);
         smh.RunTryPrependRIEnumerator(cor);
@@ -403,6 +436,32 @@ public static class SMReflection {
             await w2(smh);
         };
     }
+
+    /// <summary>
+    /// Move to a target position, run a state machine nonblockingly, wait for a synchronization event,
+    /// and then move to another target position.
+    /// </summary>
+    [Alias("MoveWrap~")]
+    public static TaskPattern MoveWrapFixedDelay(StateMachine wrapped, Synchronizer s, ExBPY t1, ExTP target1, 
+        ExBPY t2, ExTP target2) => MoveWrap(new ReflectableLASM(RunDelay(wrapped, s)), t1, target1, t2, target2);
+    
+    /// <summary>
+    /// Run a state machine nonblockingly, move to a target position, wait for a synchronization event,
+    /// and then move to another target position.
+    /// </summary>
+    [Alias("MoveWrap~~")]
+    public static TaskPattern MoveWrapFixedDelayNB(StateMachine wrapped, Synchronizer s, ExBPY t1, ExTP target1, 
+        ExBPY t2, ExTP target2) {
+        var mover = MoveWrapFixedDelay(noop, s, t1, target1, t2, target2);
+        return smh => {
+            _ = wrapped.Start(smh);
+            return mover(smh);
+        };
+    }
+    
+    private static readonly StateMachine noop = new ReflectableLASM(NoOp());
+
+
     /// <summary>
     /// Move-wrap, but the enemy is set invincible until the wrapped SM starts.
     /// </summary>
@@ -410,10 +469,10 @@ public static class SMReflection {
         var w1 = MoveTarget(t1, "out-sine", target1);
         var w2 = MoveTarget(t2, "in-sine", target2);
         return async smh => {
-            if (smh.Exec.isEnemy) smh.Exec.Enemy.SetDamageable(false);
+            if (smh.Exec.isEnemy) smh.Exec.Enemy.SetVulnerable(Enums.Vulnerability.NO_DAMAGE);
             await w1(smh);
             smh.ThrowIfCancelled();
-            if (smh.Exec.isEnemy) smh.Exec.Enemy.SetDamageable(true);
+            if (smh.Exec.isEnemy) smh.Exec.Enemy.SetVulnerable(Enums.Vulnerability.VULNERABLE);
             await wrapped.Start(smh);
             smh.ThrowIfCancelled();
             await w2(smh);
@@ -444,12 +503,12 @@ public static class SMReflection {
     };
 
     public static TaskPattern Vulnerable(GCXF<bool> isVulnerable) => smh => {
-        smh.Exec.Enemy.SetDamageable(isVulnerable(smh.GCX));
+        smh.Exec.Enemy.SetVulnerable(isVulnerable(smh.GCX) ? Enums.Vulnerability.VULNERABLE : Enums.Vulnerability.NO_DAMAGE);
         return Task.CompletedTask;
     };
     
     public static TaskPattern FadeSprite(BPY fader, GCXF<float> time) => smh => {
-        smh.Exec.FadeSpriteOpacity(fader, time(smh.GCX), smh.cT, WaitingUtils.GetAwaiter(out Task t));
+        smh.Exec.displayer.FadeSpriteOpacity(fader, time(smh.GCX), smh.cT, WaitingUtils.GetAwaiter(out Task t));
         return t;
     };
     
@@ -485,22 +544,22 @@ public static class SMReflection {
     
     #region Shortcuts
 
-    public static TaskPattern DangerBot() => Sync("danger", _ => V2RV2.Rot(-3.2f, -6), 
-        "gsr2 3 <3.2;:> { root zero } summonsup tpnrot py lerp3 1 1.5 2 2.5 t 2.2 0 -2 wait".Into<SyncPattern>());
+    public static TaskPattern DangerBot() => Sync("danger", _ => V2RV2.Rot(-1.7f, -6), 
+        "gsr2 2 <3.4;:> { root zero } summonsup tpnrot py lerp3 1 1.5 2 2.5 t 2.2 0 -2 wait".Into<SyncPattern>());
     
-    public static TaskPattern DangerTop() => Sync("danger", _ => V2RV2.Rot(-3.2f, 6), 
-        "gsr2 3 <3.2;:> { root zero } summonsup tpnrot py lerp3 1 1.5 2 2.5 t -2.2 0 2 wait".Into<SyncPattern>());
+    public static TaskPattern DangerTop() => Sync("danger", _ => V2RV2.Rot(-1.7f, 6), 
+        "gsr2 2 <3.4;:> { root zero } summonsup tpnrot py lerp3 1 1.5 2 2.5 t -2.2 0 2 wait".Into<SyncPattern>());
 
-    public static TaskPattern DangerLeft() => Async("danger", _ => V2RV2.Rot(-7f, -3f),
+    public static TaskPattern DangerLeft() => Async("danger", _ => V2RV2.Rot(-5.5f, -3f),
         "gcr2 24 4 <;2:> { root zero } summonsup tpnrot px lerp3 1 1.5 2 2.5 t 2.2 0 -2 wait".Into<AsyncPattern>());
     
-    public static TaskPattern DangerRight() => Async("danger", _ => V2RV2.Rot(7f, -3f),
+    public static TaskPattern DangerRight() => Async("danger", _ => V2RV2.Rot(5.5f, -3f),
         "gcr2 24 4 <;2:> { root zero } summonsup tpnrot px lerp3 1 1.5 2 2.5 t -2.2 0 2 wait".Into<AsyncPattern>());
 
-    public static TaskPattern DangerLeft2() => Async("danger", _ => V2RV2.Rot(-7f, -1f),
+    public static TaskPattern DangerLeft2() => Async("danger", _ => V2RV2.Rot(-5.5f, -1f),
         "gcr2 24 2 <;2:> { root zero } summonsup tpnrot px lerp3 1 1.5 2 2.5 t 2.2 0 -2 wait".Into<AsyncPattern>());
     
-    public static TaskPattern DangerRight2() => Async("danger", _ => V2RV2.Rot(7f, -1f),
+    public static TaskPattern DangerRight2() => Async("danger", _ => V2RV2.Rot(5.5f, -1f),
         "gcr2 24 2 <;2:> { root zero } summonsup tpnrot px lerp3 1 1.5 2 2.5 t -2.2 0 2 wait".Into<AsyncPattern>());
     
     #endregion
@@ -544,10 +603,29 @@ public static class SMReflection {
             if (o.Player.AllowPlayerInput) _ = cancel.Start(smh);
         };
 
+
+    public static TaskPattern AssertSimple(string p_pool) => smh => {
+        BulletManager.GetOrMakePlayerCopy(p_pool);
+        return Task.CompletedTask;
+    };
+    public static TaskPattern AssertComplex(string p_pool) => smh => {
+        BulletManager.GetOrMakeComplexPlayerCopy(p_pool);
+        return Task.CompletedTask;
+    };
+
     #endregion
     
     #region Utility
 
+    /// <summary>
+    /// Print a message to the console.
+    /// </summary>
+    public static TaskPattern Debug(string debug) => smh => {
+        Log.Unity(debug, false, Log.Level.INFO);
+        return Task.CompletedTask;
+    };
+    
+    
     /// <summary>
     /// Select one of several state machines depending on which player is currently in use.
     /// Disambiguates based on the "key" property of the PlayerConfig.
@@ -563,6 +641,26 @@ public static class SMReflection {
         throw new Exception("Could not find a matching player variant option for player " +
             $"{GameManagement.campaign.Player.key}");
     };
+
+    /// <summary>
+    /// Convert excess health to score at the given rate.
+    /// This is done with SFX over time and will not return immediately.
+    /// </summary>
+    public static TaskPattern LifeToScore(int value) => smh => {
+        smh.RunRIEnumerator(_LifeToScore(value, smh.cT, WaitingUtils.GetAwaiter(out Task t)));
+        return t;
+    };
+
+    private static IEnumerator _LifeToScore(int value, ICancellee cT, Action done) {
+        while (GameManagement.campaign.Lives > 1 && !cT.Cancelled) {
+            GameManagement.campaign.SwapLifeScore(value);
+            for (int ii = 0; ii < 60; ++ii) {
+                yield return null;
+                if (cT.Cancelled) break;
+            }
+        }
+        done();
+    }
 
 
     #endregion

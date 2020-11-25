@@ -11,6 +11,8 @@ using UnityEngine;
 public class PlayerConfig : ScriptableObject {
     public float freeSpeed = 5f;
     public float focusSlowdown = 0.44f;
+    public float hitboxRadius = 0.034f;
+    public float grazeboxRadius = 0.3f;
     public float FocusSpeed => freeSpeed * focusSlowdown;
     public string key;
     /// <summary>

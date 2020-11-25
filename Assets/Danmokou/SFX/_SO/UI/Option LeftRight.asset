@@ -14,5 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   defaultName: opt-lr
   clip: {fileID: 8300000, guid: 5987bb80de53ff94e97b2d7d3346c4aa, type: 3}
-  volume: 0.2
+  volume: 0.24
   timeout: 0
+  pausable: 0
+  loop: 0
+  loopTimeCheck: 0
+  pitch: 1
+  priority: -1
+  feature: 0

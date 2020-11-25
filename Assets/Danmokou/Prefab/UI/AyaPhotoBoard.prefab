@@ -44,11 +44,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   strips:
-  - start: {x: -6, y: 3.5}
-    end: {x: -6, y: -3.5}
+  - start: {x: -4.8, y: 3.5}
+    end: {x: -4.8, y: -3.5}
     maxPins: 5
-  - start: {x: 6, y: 3}
-    end: {x: 6, y: 3}
+  - start: {x: 4.8, y: 3}
+    end: {x: 4.8, y: 3}
     maxPins: 1
   pinPrefab: {fileID: 2272665244010052540, guid: 3b2796615d5c0bf49a4b582843bba0b8,
     type: 3}

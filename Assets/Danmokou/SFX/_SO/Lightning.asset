@@ -15,3 +15,10 @@ MonoBehaviour:
   defaultName: x-lightning
   clip: {fileID: 8300000, guid: bcfdbbbcf0f59a948a578ee9acf3a25d, type: 3}
   volume: 0.4
+  timeout: -1
+  pausable: 0
+  loop: 0
+  loopTimeCheck: 0
+  pitch: 1
+  priority: -1
+  feature: 0

@@ -6,55 +6,32 @@ using JetBrains.Annotations;
 using Newtonsoft.Json;
 using static Danmaku.Enums;
 using static InputManager;
-using GameLowRequest = DU<Danmaku.CampaignRequest, Danmaku.BossPracticeRequest, 
-    PhaseChallengeRequest, Danmaku.StagePracticeRequest>;
-using GameLowRequestKey = DU<string, ((string, int), int), ((((string, string), int), int), int), ((string, int), int)>;
 
+
+/// <summary>
+/// Records information about a completed game run-through with an attached replay.
+/// </summary>
 public class ReplayMetadata {
-    public int Seed { get; set; }
-    public long Score { get; set; }
-
-    public PlayerTeam.Saveable SavedPlayer { get; set; }
-    [JsonIgnore]
-    public PlayerTeam Player => new PlayerTeam(SavedPlayer);
-    public DifficultySettings Difficulty { get; set; }
-    public CampaignMode Mode { get; set; }
-    public DateTime Now { get; set; }
-    public string ID { get; set; }
-    public (string campaign, 
-        ((string campaign, int boss), int phase) boss, 
-        ((((string campaign, string day), int boss), int phase), int challenge) challenge, 
-        ((string campaign, int boss), int stage) stage, short type) 
-        Key { get; set; }
-    public Version EngineVersion { get; set; }
-    public Version GameVersion { get; set; }
-    public string GameIdentifier { get; set; }
+    [JsonIgnore] public GameRecord Record => 
+        SaveData.r.FinishedGames.TryGetValue(RecordUuid, out var gr) ? gr : SerializedRecord;
     
+    /// <summary>
+    /// Serializing the record in the replay file allows transferring replays.
+    /// </summary>
+    public GameRecord SerializedRecord { get; set; }
+    public string RecordUuid { get; set; }
     public float DialogueSpeed { get; set; }
     public bool SmoothInput { get; set; }
-    // Not important b
+    // Not important but it's convenient
     public int Length { get; set; }
-
-    public string CustomName { get; set; } = "";
-    public void AssignName(string newName) => CustomName = newName.Substring(0, Math.Min(newName.Length, 10));
 
     [UsedImplicitly]
     public ReplayMetadata() {}
-    public ReplayMetadata(GameRequest req, CampaignData end, string name="") {
-        Seed = req.seed;
-        Score = end.Score;
-        SavedPlayer = new PlayerTeam.Saveable(req.metadata.team);
-        Difficulty = req.metadata.difficulty;
-        Mode = req.metadata.mode;
-        Now = DateTime.Now;
-        ID = RNG.RandStringOffFrame();
-        Key = GameRequest.CampaignIdentifier(req.lowerRequest).Tuple;
-        EngineVersion = GameManagement.EngineVersion;
-        GameVersion = GameManagement.References.gameVersion;
-        GameIdentifier = GameManagement.References.gameIdentifier;
+    public ReplayMetadata(GameRecord rec) {
+        SerializedRecord = rec;
+        RecordUuid = rec.Uuid;
         DialogueSpeed = SaveData.s.DialogueWaitMultiplier;
         SmoothInput = SaveData.s.AllowInputLinearization;
-        CustomName = name;
     }
 
     public void ApplySettings() {
@@ -63,49 +40,15 @@ public class ReplayMetadata {
     }
 
     [JsonIgnore]
-    private string RequestDescription => ReconstructedRequest.Resolve(
-        c => $"{c.campaign.campaign.shortTitle.PadRight(10)} All",
-        b => $"{b.boss.boss.ReplayName.PadRight(10)} p{b.phase.IndexInParentPhases}",
-        c => $"{c.Boss.ReplayName.PadRight(10)} p{c.phase.phase.IndexInParentPhases}-{c.ChallengeIdx}",
-        s => $"{s.stage.campaign.campaign.shortTitle.PadRight(10)} s{s.stage.stageIndex}"
-    );
-    [JsonIgnore]
-    public string AsFilename => $"{Mode}_{Difficulty.DescribeSafe}_{ID}";
+    public string AsFilename => $"{Record.Mode}_{Record.SavedMetadata.difficulty.DescribeSafe()}_{Record.Uuid}";
 
-    public string AsDisplay(bool showScore) {
-        var p = Player.players.TryN(0)?.player;
-        var s = Player.players.TryN(0)?.shot;
-        var playerDesc = (p == null) ? "???" : p.shortTitle;
-        var shotDesc = "?";
-        if (p != null && s != null) {
-            var shotInd = p.shots.IndexOf(s);
-            shotDesc = (shotInd > -1) ? $"{shotInd.ToABC()}" : "?";
-        }
-        var pstr = $"{playerDesc}-{shotDesc}".PadRight(10);
-        var score = showScore ? $"{Score} ".PadLeft(10, '0') : "";
-        return $"{CustomName.PadRight(12)} {score} {pstr} {RequestDescription.PadRight(16)} " +
-               $"{Difficulty.DescribePadR} {Now.SimpleTime()}";
-    }
-
-    [JsonIgnore]
-    public GameLowRequest ReconstructedRequest {
-        get {
-            var keydu = new GameLowRequestKey(Key.Item5, Key.Item1, Key.Item2, Key.Item3, Key.Item4);
-            return keydu.Resolve(
-                c => new GameLowRequest(CampaignRequest.Reconstruct(c)),
-                b => new GameLowRequest(BossPracticeRequest.Reconstruct(b)),
-                c => new GameLowRequest(PhaseChallengeRequest.Reconstruct(c)),
-                s => new GameLowRequest(StagePracticeRequest.Reconstruct(s))
-            );
-        }
-    }
 }
 public readonly struct Replay {
     public readonly Func<FrameInput[]> frames;
     public readonly ReplayMetadata metadata;
 
-    public Replay(FrameInput[] frames, GameRequest req, CampaignData end) :
-        this(() => frames, new ReplayMetadata(req, end)) {
+    public Replay(FrameInput[] frames, GameRecord rec) :
+        this(() => frames, new ReplayMetadata(rec)) {
         metadata.Length = frames.Length;
     }
 
@@ -176,14 +119,14 @@ public static class Replayer {
         status = ReplayStatus.REPLAYING;
     }
 
-    public static void End(GameRequest req) {
+    public static void End(GameRecord rec) {
         if (status == ReplayStatus.RECORDING) {
             Log.Unity($"Finished recording {recording?.Count ?? -1} frames.");
         } else if (status == ReplayStatus.REPLAYING) {
             Log.Unity($"Finished replaying {lastFrame - ReplayStartFrame + 1}/{Replaying?.Length ?? 0} frames.");
         }
         status = ReplayStatus.NONE;
-        PostedReplay = (recording != null) ? new Replay(recording.ToArray(), req, GameManagement.campaign) : (Replay?) null;
+        PostedReplay = (recording != null) ? new Replay(recording.ToArray(), rec) : (Replay?) null;
         recording = null;
     }
 

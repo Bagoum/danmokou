@@ -3,6 +3,8 @@
     width: 100%;
     flex-grow: 1;
     height: 2160px;
+    padding-left: 480px;
+    padding-right: 480px;
 }
 
 .column {
@@ -48,12 +50,6 @@
 #Wrapper {
     width: 100%;
     height: 2160px;
-}
-
-.mainColumn {
-    max-width: 40%;
-    margin-left: 8%;
-    padding-top: 350px;
 }
 
 .column.w40 {
@@ -129,4 +125,14 @@
 }
 
 .wd2 {
+}
+
+.header {
+    -unity-font: url('/Assets/Danmokou/Fonts/Odibee-YoZ Joint.ttf');
+    font-size: 140px;
+    color: rgb(255, 255, 255);
+    -unity-text-align: upper-center;
+    padding-left: 0;
+    padding-right: 0;
+    margin-top: 40px;
 }

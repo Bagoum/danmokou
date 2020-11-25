@@ -111,7 +111,7 @@ public class BackgroundController : CoroutineRegularUpdater {
         shatterCB = cb;
     } 
 
-    protected virtual void Render(Camera c) {
+    private void Render(Camera c) {
         if (!Application.isPlaying) return;
         //Effects render to LowEffects
         if ((c.cullingMask & fragRenderMask) != 0) {

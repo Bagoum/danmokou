@@ -62,7 +62,7 @@ Transform:
   m_GameObject: {fileID: 6586653606394370740}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 1, y: -0.5, z: 0}
-  m_LocalScale: {x: 0.35, y: 0.35, z: 1}
+  m_LocalScale: {x: 1.2, y: 1.2, z: 1}
   m_Children: []
   m_Father: {fileID: 1325538238124332602}
   m_RootOrder: 4
@@ -107,8 +107,9 @@ SpriteRenderer:
   m_SortingLayerID: -533568639
   m_SortingLayer: 5
   m_SortingOrder: -1
-  m_Sprite: {fileID: 21300000, guid: 74986bb1254d2c74d92ef710dc748158, type: 3}
-  m_Color: {r: 0.21333212, g: 0.53001875, b: 0.8867924, a: 0.9098039}
+  m_Sprite: {fileID: -2571616503975631570, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
+    type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -132,7 +133,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorScript: {fileID: 4900000, guid: e9ffd91e7e0bc0d43b3d44b2715e4aa1, type: 3}
   ID: 
-  rotationMethod: 0
   deathEffect: {fileID: 0}
   cullableRadius:
     cullable: 0
@@ -142,18 +142,7 @@ MonoBehaviour:
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
-  animate:
-    method: 0
-    LRRelation: 0
-    UDRelation: 0
-    frames:
-      idleAnim: []
-      rightAnim: []
-      leftAnim: []
-      upAnim: []
-      downAnim: []
-      attackAnim: []
-      deathAnim: []
+  displayer: {fileID: 0}
   offsetFree: PlayerMarisaAPosition(0.14 + 0.12 * p)
   offsetFocus: 
   powerOffsetFree: []
@@ -162,7 +151,7 @@ MonoBehaviour:
   focusOffsetMul: 1
   opacityFree: ifpowergtp 1
   opacityFocus: 
-  spriteRotation: 
+  spriteRotation: 420 * t
   freeOffsetRotational: 0
   focusOffsetRotational: 0
   freeAngleOffset: 
@@ -197,7 +186,7 @@ Transform:
   m_GameObject: {fileID: 6685411192175571748}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0.3, y: -0.5, z: 0}
-  m_LocalScale: {x: 0.35, y: 0.35, z: 1}
+  m_LocalScale: {x: 1.2, y: 1.2, z: 1}
   m_Children: []
   m_Father: {fileID: 1325538238124332602}
   m_RootOrder: 1
@@ -242,8 +231,9 @@ SpriteRenderer:
   m_SortingLayerID: -533568639
   m_SortingLayer: 5
   m_SortingOrder: -1
-  m_Sprite: {fileID: 21300000, guid: 74986bb1254d2c74d92ef710dc748158, type: 3}
-  m_Color: {r: 0.21333212, g: 0.53001875, b: 0.8867924, a: 0.9098039}
+  m_Sprite: {fileID: 3451516188334087793, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
+    type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -267,7 +257,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorScript: {fileID: 4900000, guid: e9ffd91e7e0bc0d43b3d44b2715e4aa1, type: 3}
   ID: 
-  rotationMethod: 0
   deathEffect: {fileID: 0}
   cullableRadius:
     cullable: 0
@@ -277,18 +266,7 @@ MonoBehaviour:
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
-  animate:
-    method: 0
-    LRRelation: 0
-    UDRelation: 0
-    frames:
-      idleAnim: []
-      rightAnim: []
-      leftAnim: []
-      upAnim: []
-      downAnim: []
-      attackAnim: []
-      deathAnim: []
+  displayer: {fileID: 0}
   offsetFree: PlayerMarisaAPosition(0.14 + 0.12 * p)
   offsetFocus: 
   powerOffsetFree: []
@@ -297,7 +275,7 @@ MonoBehaviour:
   focusOffsetMul: 1
   opacityFree: ifpowergtp 1
   opacityFocus: 
-  spriteRotation: 
+  spriteRotation: 420 * t
   freeOffsetRotational: 0
   focusOffsetRotational: 0
   freeAngleOffset: 
@@ -332,7 +310,7 @@ Transform:
   m_GameObject: {fileID: 7410870867328951634}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -1, y: -0.5, z: 0}
-  m_LocalScale: {x: 0.35, y: 0.35, z: 1}
+  m_LocalScale: {x: 1.2, y: 1.2, z: 1}
   m_Children: []
   m_Father: {fileID: 1325538238124332602}
   m_RootOrder: 3
@@ -377,8 +355,9 @@ SpriteRenderer:
   m_SortingLayerID: -533568639
   m_SortingLayer: 5
   m_SortingOrder: -1
-  m_Sprite: {fileID: 21300000, guid: 74986bb1254d2c74d92ef710dc748158, type: 3}
-  m_Color: {r: 0.21333212, g: 0.53001875, b: 0.8867924, a: 0.9098039}
+  m_Sprite: {fileID: 3818182386508469091, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
+    type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -402,7 +381,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorScript: {fileID: 4900000, guid: e9ffd91e7e0bc0d43b3d44b2715e4aa1, type: 3}
   ID: 
-  rotationMethod: 0
   deathEffect: {fileID: 0}
   cullableRadius:
     cullable: 0
@@ -412,18 +390,7 @@ MonoBehaviour:
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
-  animate:
-    method: 0
-    LRRelation: 0
-    UDRelation: 0
-    frames:
-      idleAnim: []
-      rightAnim: []
-      leftAnim: []
-      upAnim: []
-      downAnim: []
-      attackAnim: []
-      deathAnim: []
+  displayer: {fileID: 0}
   offsetFree: PlayerMarisaAPosition(0.14 + 0.12 * p)
   offsetFocus: 
   powerOffsetFree: []
@@ -432,7 +399,7 @@ MonoBehaviour:
   focusOffsetMul: 1
   opacityFree: ifpowergtp 1
   opacityFocus: 
-  spriteRotation: 
+  spriteRotation: 420 * t
   freeOffsetRotational: 0
   focusOffsetRotational: 0
   freeAngleOffset: 
@@ -467,7 +434,7 @@ Transform:
   m_GameObject: {fileID: 8933894564172623125}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -0.3, y: -0.5, z: 0}
-  m_LocalScale: {x: 0.35, y: 0.35, z: 1}
+  m_LocalScale: {x: 1.2, y: 1.2, z: 1}
   m_Children: []
   m_Father: {fileID: 1325538238124332602}
   m_RootOrder: 2
@@ -512,8 +479,9 @@ SpriteRenderer:
   m_SortingLayerID: -533568639
   m_SortingLayer: 5
   m_SortingOrder: -1
-  m_Sprite: {fileID: 21300000, guid: 74986bb1254d2c74d92ef710dc748158, type: 3}
-  m_Color: {r: 0.21333212, g: 0.53001875, b: 0.8867924, a: 0.9098039}
+  m_Sprite: {fileID: -3370256387710733728, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
+    type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -537,7 +505,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorScript: {fileID: 4900000, guid: e9ffd91e7e0bc0d43b3d44b2715e4aa1, type: 3}
   ID: 
-  rotationMethod: 0
   deathEffect: {fileID: 0}
   cullableRadius:
     cullable: 0
@@ -547,18 +514,7 @@ MonoBehaviour:
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
-  animate:
-    method: 0
-    LRRelation: 0
-    UDRelation: 0
-    frames:
-      idleAnim: []
-      rightAnim: []
-      leftAnim: []
-      upAnim: []
-      downAnim: []
-      attackAnim: []
-      deathAnim: []
+  displayer: {fileID: 0}
   offsetFree: PlayerMarisaAPosition(0.14 + 0.12 * p)
   offsetFocus: 
   powerOffsetFree: []
@@ -567,7 +523,7 @@ MonoBehaviour:
   focusOffsetMul: 1
   opacityFree: ifpowergtp 1
   opacityFocus: 
-  spriteRotation: 
+  spriteRotation: 420 * t
   freeOffsetRotational: 0
   focusOffsetRotational: 0
   freeAngleOffset: 
@@ -620,7 +576,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorScript: {fileID: 0}
   ID: 
-  rotationMethod: 0
   deathEffect: {fileID: 0}
   cullableRadius:
     cullable: 0
@@ -630,18 +585,7 @@ MonoBehaviour:
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
-  animate:
-    method: 0
-    LRRelation: 0
-    UDRelation: 0
-    frames:
-      idleAnim: []
-      rightAnim: []
-      leftAnim: []
-      upAnim: []
-      downAnim: []
-      attackAnim: []
-      deathAnim: []
+  displayer: {fileID: 0}
   offsetFree: zero
   offsetFocus: zero
   powerOffsetFree: []

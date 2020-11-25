@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UnityEngine;
@@ -7,6 +8,7 @@ using TMPro;
 using System.Threading;
 using Danmaku;
 using JetBrains.Annotations;
+using UnityEngine.Serialization;
 using UnityEngine.UIElements;
 using static GameManagement;
 using static Danmaku.Enums;
@@ -17,9 +19,13 @@ public struct PrioritySprite {
     public SpriteRenderer sprite;
 }
 public class UIManager : MonoBehaviour {
+    static UIManager() {
+        GameStateManager.UnpauseAnimator = SlideUnpause;
+    }
+
     private static UIManager main;
     public bool autoShiftCamera;
-    public Camera camera;
+    [FormerlySerializedAs("camera")] public Camera uiCamera;
     public XMLPauseMenu PauseManager;
     public static XMLPauseMenu PauseMenu => main.PauseManager;
     public XMLDeathMenu DeathManager;
@@ -29,15 +35,18 @@ public class UIManager : MonoBehaviour {
     public TextMeshPro difficulty;
     public TextMeshPro score;
     public TextMeshPro maxScore;
+    public GameObject scoreExtend_parent;
+    public TextMeshPro scoreExtend;
     public TextMeshPro pivMult;
     public TextMeshPro lifePoints;
     public TextMeshPro graze;
     public TextMeshPro power;
     public TextMeshPro message;
+    public TextMeshPro multishotIndicator;
     public TextMeshPro centerMessage;
     private const string deathCounterFormat = "死{0:D2}";
     private const string timeoutTextFormat = "<mspace=4.3>{0:F1}</mspace>";
-    private const string fpsFormat = "FPS: <mspace=1.6>{0:F0}</mspace>";
+    private const string fpsFormat = "FPS: <mspace=1.5>{0:F0}</mspace>";
     [CanBeNull] private static Coroutine timeoutCor;
     private static readonly int ValueID = Shader.PropertyToID("_Value");
     [CanBeNull] private Coroutine spellnameController;
@@ -48,6 +57,7 @@ public class UIManager : MonoBehaviour {
     public float spellnameFadeOut = 0.5f;
 
     private float time = 0f;
+    private float profileTime = 0f;
     public SpriteRenderer PIVDecayBar;
     public SpriteRenderer MeterBar;
     private Color defaultMeterColor;
@@ -56,7 +66,8 @@ public class UIManager : MonoBehaviour {
     private MaterialPropertyBlock pivDecayPB;
     private MaterialPropertyBlock meterPB;
     private MaterialPropertyBlock bossHPPB;
-    private MaterialPropertyBlock profilePB;
+    private MaterialPropertyBlock leftSidebarPB;
+    private MaterialPropertyBlock rightSidebarPB;
 
     public GameObject trackerPrefab;
 
@@ -72,18 +83,19 @@ public class UIManager : MonoBehaviour {
         defaultMeterColor = MeterBar.sharedMaterial.GetColor(PropConsts.fillColor);
         defaultMeterColor2 = MeterBar.sharedMaterial.GetColor(PropConsts.fillColor2);
         BossHPBar.GetPropertyBlock(bossHPPB = new MaterialPropertyBlock());
-        profileSr.GetPropertyBlock(profilePB = new MaterialPropertyBlock());
+        leftSidebar.GetPropertyBlock(leftSidebarPB = new MaterialPropertyBlock());
+        rightSidebar.GetPropertyBlock(rightSidebarPB = new MaterialPropertyBlock());
         timeout.text = "";
-        bossName.text = "";
-        bossTitle.text = "";
         spellnameText.text = "";
         message.text = centerMessage.text = "";
+        multishotIndicator.text = campaign.MultishotString;
         challengeHeader.text = challengeText.text = "";
         UpdateTags();
         ShowBossLives(0);
-        CloseProfile();
+        stackedProfiles.Push(defaultProfile);
+        SetProfile(defaultProfile);
         SetBossHPLoader(null);
-        if (autoShiftCamera) camera.transform.localPosition = -References.bounds.center;
+        if (autoShiftCamera) uiCamera.transform.localPosition = -References.bounds.center;
     }
     
     public static float MenuRightOffset =>
@@ -96,7 +108,7 @@ public class UIManager : MonoBehaviour {
     }
 
     public static void UpdateTags() {
-        main.difficulty.text = GameManagement.Difficulty.Describe;
+        main.difficulty.text = GameManagement.Difficulty.Describe();
     }
 
     [CanBeNull] private static Enemy bossHP;
@@ -121,17 +133,21 @@ public class UIManager : MonoBehaviour {
     }
     private void UpdatePB() {
         //pivDecayPB.SetFloat(PropConsts.time, time);
-        pivDecayPB.SetFloat(PropConsts.fillRatio, (float)campaign.PIVDecay);
-        pivDecayPB.SetFloat(PropConsts.innerFillRatio, Mathf.Clamp01((float)campaign.UIVisiblePIVDecayLenienceRatio));
+        pivDecayPB.SetFloat(PropConsts.fillRatio, (float)campaign.Faith);
+        pivDecayPB.SetFloat(PropConsts.innerFillRatio, Mathf.Clamp01((float)campaign.UIVisibleFaithDecayLenienceRatio));
         PIVDecayBar.SetPropertyBlock(pivDecayPB);
         meterPB.SetFloat(PropConsts.fillRatio, (float) campaign.Meter);
         MeterBar.SetPropertyBlock(meterPB);
         //bossHPPB.SetFloat(PropConsts.time, time);
         if (bossHP != null) {
-            main.bossHPPB.SetColor(PropConsts.fillColor, bossHP.HPColor);
-            bossHPPB.SetFloat(PropConsts.fillRatio, bossHP.DisplayBarRatio);
+            main.bossHPPB.SetColor(PropConsts.fillColor, bossHP.UIHPColor);
+            bossHPPB.SetFloat(PropConsts.fillRatio, Dialoguer.DialogueActive ? 0 : bossHP.DisplayBarRatio);
         }
         BossHPBar.SetPropertyBlock(bossHPPB);
+        leftSidebarPB.SetFloat(PropConsts.time, profileTime);
+        rightSidebarPB.SetFloat(PropConsts.time, profileTime);
+        leftSidebar.SetPropertyBlock(leftSidebarPB);
+        rightSidebar.SetPropertyBlock(rightSidebarPB);
     }
 
     public TextMeshPro fps;
@@ -142,6 +158,7 @@ public class UIManager : MonoBehaviour {
     private static bool campaignRequiresUpdate = false;
     private void Update() {
         time += ETime.dT;
+        profileTime += ETime.dT;
         accdT += Time.unscaledDeltaTime;
         if (--fpsUpdateCounter == 0) {
             fps.text = string.Format(fpsFormat, fpsSmooth / accdT);
@@ -221,27 +238,36 @@ public class UIManager : MonoBehaviour {
         main._SetSpellname(title ?? "");
     }
 
-    public TextMeshPro bossName;
-    public TextMeshPro bossTitle;
     public Material bossColorizer;
-    public static void SetNameTitle(string name, string title) {
-        main.bossName.text = name;
-        main.bossTitle.text = title;
+
+    public SpriteRenderer leftSidebar;
+    public SpriteRenderer rightSidebar;
+    public BossConfig.ProfileRender defaultProfile;
+    private readonly Stack<BossConfig.ProfileRender> stackedProfiles = new Stack<BossConfig.ProfileRender>();
+
+    public static void CloseProfile() {
+        var src = main.stackedProfiles.Pop();
+        main.SetProfile(main.stackedProfiles.Peek(), src);
     }
 
-    public SpriteRenderer profileSr;
-    public BossConfig.ProfileRender defaultProfile;
+    public static void AddProfile(BossConfig.ProfileRender render) {
+        main.SetProfile(render, main.stackedProfiles.Peek());
+        main.stackedProfiles.Push(render);
+    }
 
-    public static void CloseProfile() => SetProfile(main.defaultProfile);
-    public static void SetProfile(BossConfig.ProfileRender render) {
-        if (render.image == null) CloseProfile();
-        else {
-            main.profilePB.SetTexture(PropConsts.trueTex, render.image);
-            main.profilePB.SetFloat(PropConsts.OffsetX, render.offsetX);
-            main.profilePB.SetFloat(PropConsts.OffsetY, render.offsetY);
-            main.profilePB.SetFloat(PropConsts.Zoom, render.zoom);
-            main.profileSr.SetPropertyBlock(main.profilePB);
-        }
+    public static void SwitchProfile(BossConfig.ProfileRender render) {
+        if (render == main.stackedProfiles.Peek()) return;
+        main.SetProfile(render, main.stackedProfiles.Pop());
+        main.stackedProfiles.Push(render);
+    }
+
+    private void SetProfile(BossConfig.ProfileRender target, BossConfig.ProfileRender source = null) {
+        var src = source ?? defaultProfile;
+        main.profileTime = 0;
+        leftSidebarPB.SetTexture(PropConsts.fromTex, src.leftSidebar.Elvis(defaultProfile.leftSidebar));
+        rightSidebarPB.SetTexture(PropConsts.fromTex, src.rightSidebar.Elvis(defaultProfile.rightSidebar));
+        leftSidebarPB.SetTexture(PropConsts.toTex, target.leftSidebar.Elvis(defaultProfile.leftSidebar));
+        rightSidebarPB.SetTexture(PropConsts.toTex, target.rightSidebar.Elvis(defaultProfile.rightSidebar));
     }
 
     /// <summary>
@@ -261,9 +287,7 @@ public class UIManager : MonoBehaviour {
         }
     }
     public static void CloseBoss() {
-        SetNameTitle("", "");
         SetSpellname(null);
-        CloseProfile();
         ShowBossLives(0);
         SetBossHPLoader(null);
     }
@@ -275,7 +299,7 @@ public class UIManager : MonoBehaviour {
             var p = phase.Value;
             if (p == PhaseType.NONSPELL) Set("NON");
             else if (p == PhaseType.SPELL) Set("SPELL");
-            else if (p == PhaseType.TIMEOUT) Set("TIMEOUT");
+            else if (p == PhaseType.TIMEOUT) Set("SURVIVAL");
             else if (p == PhaseType.FINAL) Set("FINAL");
             else if (p == PhaseType.STAGE) Set("STAGE");
             else if (p.IsStageBoss()) Set("CHALLENGER\nAPPROACHING");
@@ -284,15 +308,33 @@ public class UIManager : MonoBehaviour {
         }
     }
 
+    private static readonly Vector2 slideFrom = new Vector2(5, 0);
+    private static void SlideInUI() {
+        UIBuilderRenderer.MoveToNormal();
+        UIBuilderRenderer.Slide(slideFrom, Vector2.zero, 0.3f, DMath.M.EOutSine, success => {
+            if (success) UIBuilderRenderer.MoveToFront();
+        });
+    }
+
+    public static void SlideUnpause(Action onDone) {
+        UIBuilderRenderer.MoveToNormal();
+        UIBuilderRenderer.Slide(null, slideFrom, 0.3f, x => x, _ => onDone());
+    }
+    
     private void HandleGameStateChange(GameState state) {
         if (state == GameState.RUN) {
-            HidePauseMenu(true);
+            PauseManager.HideOptions(true);
+            DeathManager.HideMe();
+            PracticeSuccessMenu.HideMe();
         } else if (state == GameState.PAUSE) {
-            ShowPauseMenu();
+            PauseManager.ShowOptions();
+            SlideInUI();
         } else if (state == GameState.DEATH) {
             DeathManager.ShowMe();
+            SlideInUI();
         } else if (state == GameState.SUCCESS) {
             PracticeSuccessMenu.ShowMe();
+            SlideInUI();
         }
     }
 
@@ -303,7 +345,7 @@ public class UIManager : MonoBehaviour {
 
     private void OnDisable() {
         gameStateListener.MarkForDeletion();
-        HidePauseMenu(false);
+        PauseManager.HideOptions(false);
     }
 
     public SpriteRenderer[] healthPoints;
@@ -315,6 +357,7 @@ public class UIManager : MonoBehaviour {
     private const string lifePointsFormat = "<mspace=1.5>{0}/{1}</mspace>";
     private const string grazeFormat = "<mspace=1.5>{0}</mspace>";
     private const string powerFormat = "<mspace=1.5>{0:F2}/{1:F2}</mspace>";
+    private const string scoreFormat = "<mspace=1.7>{0}</mspace>";
 
     private static string ToMonospaceThousands(long val, float mspace=1.7f) {
         string ms = $"<mspace={mspace}>";
@@ -334,8 +377,15 @@ public class UIManager : MonoBehaviour {
         return sb.ToString();
     }
     private void _UpdatePlayerUI() {
-        score.text = ToMonospaceThousands(campaign.UIVisibleScore); 
-        maxScore.text = ToMonospaceThousands(campaign.MaxScore);
+        multishotIndicator.text = campaign.MultishotString;
+        if (campaign.NextScoreLife.Try(out var scoreExt)) {
+            scoreExtend_parent.SetActive(true);
+            scoreExtend.text = string.Format(scoreFormat, scoreExt);
+        } else {
+            scoreExtend_parent.SetActive(false);
+        }
+        score.text = string.Format(scoreFormat, campaign.UIVisibleScore);
+        maxScore.text = string.Format(scoreFormat, campaign.MaxScore);
         pivMult.text = string.Format(pivMultFormat, campaign.PIV);
         lifePoints.text = string.Format(lifePointsFormat, campaign.LifeItems, campaign.NextLifeItems);
         graze.text = string.Format(grazeFormat, campaign.Graze);
@@ -422,16 +472,6 @@ public class UIManager : MonoBehaviour {
                 );
         }
     }
-
-
-    [ContextMenu("Pause")]
-    private void ShowPauseMenu() => PauseManager.ShowOptions();
-
-
-    [ContextMenu("Unpause")]
-    private void _hidepause() => HidePauseMenu(false);
-
-    private void HidePauseMenu(bool doSave) => PauseManager.HideOptions(doSave);
 
 
     public static BottomTracker TrackBEH(BehaviorEntity beh, string title, ICancellee cT) => 

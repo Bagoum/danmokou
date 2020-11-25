@@ -67,6 +67,18 @@ public readonly struct DU<T0, T1, T2> {
     }
 }
 
+public static class DUHelpers {
+    public static bool Tuple4Eq<T0, T1, T2, T3>((T0, T1, T2, T3, short which) tup1, (T0, T1, T2, T3, short which) tup2) {
+        if (tup1.which == tup2.which) {
+            switch (tup1.which) {
+                case 0: return tup1.Item1.Equals(tup2.Item1);
+                case 1: return tup1.Item2.Equals(tup2.Item2);
+                case 2: return tup1.Item3.Equals(tup2.Item3);
+                default: return tup1.Item4.Equals(tup2.Item4);
+            }
+        } else return false;
+    }
+}
 public readonly struct DU<T0, T1, T2, T3> {
     private readonly T0 obj0;
     private readonly T1 obj1;

@@ -66,6 +66,8 @@ public class BehOption {
     public static BehOption Player(int cdFrames, int bossDmg, int stageDmg, string effect) =>
         new PlayerBulletProp(new PlayerBulletCfg(cdFrames, bossDmg, stageDmg, ResourceManager.GetEffect(effect)));
 
+    public static BehOption Name(string name) => new NameProp(name);
+    
     #region impl
     
     public class CompositeProp : ValueProp<BehOption[]>, IUnrollable<BehOption> {
@@ -116,6 +118,11 @@ public class BehOption {
     public class PlayerBulletProp : ValueProp<PlayerBulletCfg> {
         public PlayerBulletProp(PlayerBulletCfg cfg) : base(cfg) { }
     }
+
+    public class NameProp : ValueProp<string> {
+        public NameProp(string name) : base(name) { }
+    }
+    
     #endregion
     
 }
@@ -172,7 +179,8 @@ public class BehOptions {
     public readonly GCXU<BPY>? hueShift;
     public readonly (GCXU<TP4> black, GCXU<TP4> white)? recolor;
     public readonly PlayerBulletCfg? playerBullet;
-    public string ID => "_";
+    [CanBeNull] private readonly string id = null;
+    public string ID => id ?? "_";
 
     public BehOptions(params BehOption[] props) : this(props as IEnumerable<BehOption>) { }
 
@@ -188,6 +196,7 @@ public class BehOptions {
             else if (p is RecolorProp rcp) recolor = (rcp.black, rcp.white);
             else if (p is DeleteProp dp) delete = dp.value;
             else if (p is PlayerBulletProp pbp) playerBullet = pbp.value;
+            else if (p is NameProp np) id = np.value;
             else throw new Exception($"Bullet property {p.GetType()} not handled.");
         }
     }

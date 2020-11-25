@@ -567,6 +567,8 @@ MonoBehaviour:
   bossExplode: {fileID: 11400000, guid: bcec7eb3f54fb7e4abb92b4c70300fef, type: 2}
   meterUsable: {fileID: 11400000, guid: 231215c84b23c4b4583e96504e246217, type: 2}
   meterActivated: {fileID: 11400000, guid: 9ad1892b93a0ea34f986b224656664a9, type: 2}
+  meterDeActivated: {fileID: 11400000, guid: a142a99862f499746b6e7ef08f56f910, type: 2}
+  swapHPScore: {fileID: 11400000, guid: ec75cb7ac0342f9489ad6e5610810bfc, type: 2}
   SFX:
   - {fileID: 11400000, guid: bf55c065f345c52478d13f50f9df8716, type: 2}
   - {fileID: 11400000, guid: 16749a71cf9ae8a45936c2df62a4df8d, type: 2}
@@ -606,12 +608,14 @@ MonoBehaviour:
   - {fileID: 11400000, guid: cba6565bfe7629f43bad53749676591d, type: 2}
   - {fileID: 11400000, guid: 50852d85c20a927418384902d698ee04, type: 2}
   - {fileID: 11400000, guid: 9644b230a63010748a8d84a712782f00, type: 2}
-  - {fileID: 11400000, guid: 9ac0181c9d3955243a65d96ad79b477e, type: 2}
   - {fileID: 11400000, guid: ec75cb7ac0342f9489ad6e5610810bfc, type: 2}
   - {fileID: 11400000, guid: 399363592cf7cce46a6dd0fe45995ff6, type: 2}
   - {fileID: 11400000, guid: a6cc7142ab32c3145ba5b70adbae4016, type: 2}
   - {fileID: 11400000, guid: 83f47ab1d1c2c314faa756b526fd24d8, type: 2}
   - {fileID: 11400000, guid: 0b673efaaa6db1342abaf975d59585c9, type: 2}
+  - {fileID: 11400000, guid: aa733b58c80a13c4f96c464017041c96, type: 2}
+  - {fileID: 11400000, guid: 10446a22e749f924c8c056984873ee1d, type: 2}
+  - {fileID: 11400000, guid: 148e51222c4a7f94291eccf98e219446, type: 2}
 --- !u!1 &5563600862267143790
 GameObject:
   m_ObjectHideFlags: 0
@@ -854,16 +858,26 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   effects:
-  - name: oh1
-    effect: {fileID: 11400000, guid: 75cc0777895fcab479af0fb195a7eae1, type: 2}
-  - name: oh2
-    effect: {fileID: 11400000, guid: bebe33c111a31ad44a3e541c4e14122a, type: 2}
-  - name: oh3
-    effect: {fileID: 11400000, guid: 64fbb7d0f33980a448bfe0f5cca8c765, type: 2}
-  - name: oh-reimu-amulet
-    effect: {fileID: 11400000, guid: 42c30717f16115344a2bb621ffcf5b7a, type: 2}
   - name: null
     effect: {fileID: 11400000, guid: 0218a4c2631e6a943853e1cdfceb3724, type: 2}
+  - name: oh1-red
+    effect: {fileID: 11400000, guid: 75cc0777895fcab479af0fb195a7eae1, type: 2}
+  - name: oh1-purple
+    effect: {fileID: 11400000, guid: f1b8d97a619382741bb86ead1fdc207c, type: 2}
+  - name: oh1-blue
+    effect: {fileID: 11400000, guid: 86af351507066684b84de61becdc01ee, type: 2}
+  - name: oh1-teal
+    effect: {fileID: 11400000, guid: 527b1d29bc43e55468319937fee4d9e2, type: 2}
+  - name: oh1-green
+    effect: {fileID: 11400000, guid: 45d0a36617c57954a820aaeb972bb116, type: 2}
+  - name: oh-reimu-amulet
+    effect: {fileID: 11400000, guid: 42c30717f16115344a2bb621ffcf5b7a, type: 2}
+  - name: oh-yukari-blast-orange
+    effect: {fileID: 11400000, guid: 7a00a2e368ce1c7459ec9f238f617afc, type: 2}
+  - name: oh-yukari-blast-red
+    effect: {fileID: 11400000, guid: dea0dbfa26774344f9e399c6c6041b64, type: 2}
+  - name: oh-yukari-blast-purple
+    effect: {fileID: 11400000, guid: de937292f54850d4d84dc26cc3ca7889, type: 2}
   bgTransitions:
   - name: shatter4
     transition: {fileID: 11400000, guid: ee89dae89d15f34418474c82d6d3a3ba, type: 2}
@@ -871,6 +885,8 @@ MonoBehaviour:
     transition: {fileID: 11400000, guid: e1bb44032ed73714d82a52d080ff3017, type: 2}
   - name: wipetex1
     transition: {fileID: 11400000, guid: 9b0abf82e07299741a4d64ecd57ff7e6, type: 2}
+  - name: instant
+    transition: {fileID: 11400000, guid: b92dd6bbfeb4d804db98b81f35a773d1, type: 2}
   backgrounds: {fileID: 11400000, guid: 8675ebbd3b5ac6d43baf451998b4fabb, type: 2}
 --- !u!114 &2062655874892461090
 MonoBehaviour:
@@ -898,7 +914,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorScript: {fileID: 0}
   ID: global
-  rotationMethod: 0
   deathEffect: {fileID: 0}
   cullableRadius:
     cullable: 0
@@ -908,18 +923,7 @@ MonoBehaviour:
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
-  animate:
-    method: 0
-    LRRelation: 0
-    UDRelation: 0
-    frames:
-      idleAnim: []
-      rightAnim: []
-      leftAnim: []
-      upAnim: []
-      downAnim: []
-      attackAnim: []
-      deathAnim: []
+  displayer: {fileID: 0}
 --- !u!114 &2149118795591872921
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -934,7 +938,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorScript: {fileID: 0}
   ID: 
-  rotationMethod: 0
   deathEffect: {fileID: 0}
   cullableRadius:
     cullable: 0
@@ -944,15 +947,4 @@ MonoBehaviour:
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
-  animate:
-    method: 0
-    LRRelation: 0
-    UDRelation: 0
-    frames:
-      idleAnim: []
-      rightAnim: []
-      leftAnim: []
-      upAnim: []
-      downAnim: []
-      attackAnim: []
-      deathAnim: []
+  displayer: {fileID: 0}

@@ -25,6 +25,7 @@ public struct FrameRunner {
         currTime = 0f;
         doLoop = loop;
         done = onLoopOrFinish;
+        if (frames.Length == 0) return null; //TODO
         return frames[0].sprite;
     }
     
@@ -132,22 +133,40 @@ public static class CancelHelpers {
 }
 public interface ICancellee {
     bool Cancelled { get; }
+    ICancellee Joinable { get; }
 }
 public class Cancellable : ICancellee {
     public static readonly ICancellee Null = new Cancellable();
     private CancelLevel level = CancelLevel.None;
     public void Cancel() => Cancel(CancelLevel.Operation);
     public bool Cancelled => level > CancelLevel.None;
+    public ICancellee Joinable => this;
     public void Cancel(CancelLevel toLevel) {
         if (toLevel > level) level = toLevel;
     }
 }
+
+/// <summary>
+/// Is locally cancellable, but when joined in nesting, the local information will be discarded.
+/// </summary>
+public class PassthroughCancellee : ICancellee {
+    private readonly ICancellee root;
+    private readonly ICancellee local;
+    public ICancellee Joinable => root;
+
+    public PassthroughCancellee([CanBeNull] ICancellee root, [CanBeNull] ICancellee local) {
+        this.root = root?.Joinable ?? Cancellable.Null;
+        this.local = local ?? Cancellable.Null;
+    }
+    public bool Cancelled => root.Cancelled || local.Cancelled;
+}
 public class JointCancellee : ICancellee {
     private readonly ICancellee c1;
     private readonly ICancellee c2;
+    public ICancellee Joinable => this;
     public JointCancellee([CanBeNull] ICancellee c1, [CanBeNull] ICancellee c2) {
-        this.c1 = c1 ?? Cancellable.Null;
-        this.c2 = c2 ?? Cancellable.Null;
+        this.c1 = c1?.Joinable ?? Cancellable.Null;
+        this.c2 = c2?.Joinable ?? Cancellable.Null;
     }
     public bool Cancelled => c1.Cancelled || c2.Cancelled;
 }

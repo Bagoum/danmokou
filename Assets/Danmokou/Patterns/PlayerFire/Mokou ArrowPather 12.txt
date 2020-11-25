@@ -1,0 +1,22 @@
+gtr {
+	wt 1 _
+	wait-child
+} fire
+	## free fire
+	async arrowpather-purple/w <> gcr2 120 _ <> { 
+		delay(60)
+		sfx x-pc-fire-1
+	} gsr {
+		target a LNearestEnemy
+	} pather 0.5 0.3 tprot px(11) { player 120 200 100 oh1-purple }
+	## free cancellation
+	noop
+	## focus
+	async arrowpather-red/w <> gcr2 120 _ <> { 
+		delay(60)
+		sfx x-pc-fire-1 
+	} gsr {
+		target a LNearestEnemy
+	} pather 0.5 0.3 tprot px(13) { player 120 230 110 oh1-red }
+	## focus cancellation
+	noop

@@ -161,8 +161,8 @@ public static class SMAnalysis {
         public readonly int cardIndex;
         //Index among analyzed only
         private readonly int combatCardIndex;
-        private string Introduction => "Introduction".Locale("紹介");
-        private string Conclusion => "Conclusion".Locale("結末");
+        private string Introduction => "Intro".Locale("紹介");
+        private string Conclusion => "End".Locale("結末");
         [CanBeNull]
         private string _Title {
             get {
@@ -197,9 +197,9 @@ public static class SMAnalysis {
             boss = b;
         }
         
-        public (((string, string), int), int) Key => (boss.Key, cardIndex);
+        public (((string, int), int), int) Key => (boss.Key, cardIndex);
 
-        public static DayPhase Reconstruct((((string, string), int), int) key) =>
+        public static DayPhase Reconstruct((((string, int), int), int) key) =>
             AnalyzedDayBoss.Reconstruct(key.Item1).phases.First(p => p.cardIndex == key.Item2);
         
     }
@@ -305,8 +305,8 @@ public static class SMAnalysis {
             phases = SMAnalysis.AnalyzeDay(this, StateMachineManager.FromText(boss.stateMachine) as PatternSM);
         }
         
-        public ((string, string), int) Key => (day.Key, bossIndex);
-        public static AnalyzedDayBoss Reconstruct(((string, string), int) key) => 
+        public ((string, int), int) Key => (day.Key, bossIndex);
+        public static AnalyzedDayBoss Reconstruct(((string, int), int) key) => 
             AnalyzedDay.Reconstruct(key.Item1).bosses[key.Item2];
     }
 
@@ -326,9 +326,9 @@ public static class SMAnalysis {
             bosses = day.bosses.Length.Range().Select(i => new AnalyzedDayBoss(this, i)).ToArray();
         }
         
-        public (string, string) Key => (campaign.campaign.key, day.key);
-        public static AnalyzedDay Reconstruct((string, string) key) => 
-            GameManagement.DayCampaign.days.First(c => c.day.key == key.Item2);
+        public (string, int) Key => (campaign.campaign.key, dayIndex);
+        public static AnalyzedDay Reconstruct((string, int) key) => 
+            GameManagement.DayCampaign.days[key.Item2];
     }
 
     public class AnalyzedDayCampaign {

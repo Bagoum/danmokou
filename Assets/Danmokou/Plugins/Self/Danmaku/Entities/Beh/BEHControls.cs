@@ -14,66 +14,118 @@ public delegate void BehCF(BehaviorEntity beh);
 public delegate void BehPF(string pool);
 public partial class BehaviorEntity {
     /// <summary>
+    /// Structure similar to SimpleBulletCollection, but does not contain its component objects.
+    /// </summary>
+    public class BEHStyleMetadata {
+        public readonly string style;
+        public readonly BulletManager.DeferredFramesRecoloring recolor;
+        public bool IsPlayer { get; private set; } = false;
+        public bool Active { get; private set; } = false;
+
+        public bool CameraCullable { get; set; } = true;
+
+        public BEHStyleMetadata(string style, BulletManager.DeferredFramesRecoloring dfc) {
+            this.style = style;
+            this.recolor = dfc;
+        }
+        
+        private void SetPlayer() {
+            IsPlayer = true;
+        }
+
+        public BEHStyleMetadata MakePlayerCopy(string newPool) {
+            var bsm = new BEHStyleMetadata(newPool, recolor.MakePlayerCopy());
+            bsm.SetPlayer();
+            return bsm;
+        }
+        
+        public void ResetPoolMetadata() {
+            CameraCullable = true;
+        }
+
+        public void Reset() => ResetPoolMetadata();
+        
+        public void Activate() {
+            if (!Active) {
+                activePools.Add(this);
+                Log.Unity($"Activating beh pool {style}", level: Log.Level.DEBUG1);
+                Active = true;
+            }
+        }
+
+        public void Deactivate() {
+            Active = false;
+        }
+
+        public void AddPoolControlEOF(BEHControl pc) => 
+            ETime.QueueEOFInvoke(() => controls.AddPriority(pc, pc.priority));
+        
+        public void PruneControls() {
+            for (int ii = 0; ii < controls.Count; ++ii) {
+                if (controls[ii].cT.Cancelled || !controls[ii].persist(GlobalBEH.Main.rBPI)) {
+                    controls.Delete(ii);
+                }
+            }
+            controls.Compact();
+        }
+        public void ClearControls() => controls.Empty();
+        
+        private readonly DMCompactingArray<BEHControl> controls = new DMCompactingArray<BEHControl>(4);
+
+        public void IterateControls(BehaviorEntity beh) {
+            int ct = controls.Count;
+            for (int ii = 0; ii < ct && !beh.dying; ++ii) {
+                controls[ii].action(beh);
+            }
+        }
+    }
+    
+    private static readonly BEHStyleMetadata defaultMeta = new BEHStyleMetadata(null, null);
+    
+    /// <summary>
     /// Complex bullet pool control descriptor.
     /// </summary>
-    private readonly struct BEHControl {
+    public readonly struct BEHControl {
         public readonly BehCF action;
         public readonly Pred persist;
         public readonly int priority;
+        public readonly ICancellee cT;
 
         public BEHControl(BehCFc act, Pred persistent, [CanBeNull] ICancellee cT = null) {
-            action = act.Func(cT ?? Cancellable.Null);
+            action = act.Func(this.cT = cT ?? Cancellable.Null);
             persist = persistent;
             priority = act.priority;
         }
-        public BEHControl(BehCF act, Pred persistent, int priorty) {
+        public BEHControl(BehCF act, Pred persistent, int priorty, ICancellee cT) {
             action = act;
             persist = persistent;
             priority = priorty;
+            this.cT = cT;
         }
     }
     /// <summary>
-    /// WARNING: Do NOT add controls directly to this array. Use AddControlAtEOF instead.
-    /// Pool controls for complex bullets. Keys are added the first time a command is created or a bullet is spawned.
-    /// Non-persistent pruning is handled by PruneControls, which is invoked by GameManagement at end of frame.
+    /// Pool definitions for bullet styles that are active. Pools are deactivated on each scene and activated when used.
     /// </summary>
-    private static readonly Dictionary<string, DMCompactingArray<BEHControl>> controls = new Dictionary<string, DMCompactingArray<BEHControl>>();
-    /// <summary>
-    /// Same as controls with list iteration.
-    /// </summary>
-    private static readonly List<DMCompactingArray<BEHControl>> initializedPools = new List<DMCompactingArray<BEHControl>>(16);
+    private static readonly List<BEHStyleMetadata> activePools = new List<BEHStyleMetadata>(16);
 
+    public static BEHStyleMetadata GetPool(string key) {
+        if (BulletManager.CheckComplexPool(key, out var pool)) return pool;
+        throw new Exception($"No BEH style by name {key}");
+    }
     public static void DeInitializePools() {
-        controls.Clear();
-        foreach (var x in initializedPools) x.Empty();
-        initializedPools.Clear();
+        foreach (var x in activePools) {
+            x.Reset();
+            x.Deactivate();
+        }
+        activePools.Clear();
     }
     private static readonly HashSet<string> ignoreCullStyles = new HashSet<string>();
 
-    protected string style = "defaultNoStyle";
-    protected bool styleIsCameraCullable = true;
     //set by initialize > updatestyleinfo
-    private DMCompactingArray<BEHControl> thisStyleControls;
-    protected virtual void UpdateStyleCullable() {
-        styleIsCameraCullable = !ignoreCullStyles.Contains(style);
-    }
+    public BEHStyleMetadata myStyle { get; private set; }
 
-    protected virtual void UpdateStyleControls() {
-        thisStyleControls = LazyGetControls(style);
-    }
-
-    private void UpdateStyleInformation() {
-        UpdateStyleCullable();
-        UpdateStyleControls();
-        //TODO virtualize, allow pather/laser to set PB again
-    }
-
-    private static DMCompactingArray<BEHControl> LazyGetControls(string style) {
-        if (!controls.ContainsKey(style)) {
-            controls[style] = new DMCompactingArray<BEHControl>();
-            initializedPools.Add(controls[style]);
-        }
-        return controls[style];
+    protected virtual void UpdateStyle(BEHStyleMetadata newStyle) {
+        myStyle = newStyle;
     }
 
     /// <summary>
@@ -86,15 +138,10 @@ public partial class BehaviorEntity {
                     _ = b.GetINode("f-pool-triggered", null).RunExternalSM(SMRunner.Cull(sm, cT, gcx));
                 }
             }
-        }, persist, BulletManager.BulletControl.P_RUN);
+        }, persist, BulletManager.BulletControl.P_RUN, cT);
         for (int ii = 0; ii < styles.Complex.Length; ++ii) {
-            AddControlAtEOF(styles.Complex[ii], pc);
+            GetPool(styles.Complex[ii]).AddPoolControlEOF(pc);
         }
-    }
-
-    //This is done at end-of-frame to ensure that temporary controls are seen by every bullet before being pruned
-    private static void AddControlAtEOF(string style, BEHControl pc) {
-        ETime.QueueEOFInvoke(() => LazyGetControls(style).AddPriority(pc, pc.priority));
     }
 
     /// <summary>
@@ -122,11 +169,12 @@ public partial class BehaviorEntity {
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
         public static BehCFc Restyle(string target, Pred cond) {
-            FrameAnimBullet.Recolor r = BulletManager.GetRecolor(target);
+            var style = GetPool(target);
+            FrameAnimBullet.Recolor r = style.recolor.GetOrLoadRecolor();
             return new BehCFc(b => {
                 if (cond(b.rBPI)) {
                     ((Bullet)b).ColorizeOverwrite(r);
-                    b.UpdateStyleInformation();
+                    b.UpdateStyle(style);
                 }
             }, BM.BulletControl.P_CULL);
         }
@@ -320,6 +368,17 @@ public partial class BehaviorEntity {
                 }
             }, BM.BulletControl.P_SAVE);
         }
+        public static BehCFc UpdateV2((string target, TP valuer)[] targets, Pred cond) {
+            var ftargets = targets.Select(t => (PrivateDataHoisting.GetKey(t.target), t.valuer)).ToArray();
+            return new BehCFc(b => {
+                if (cond(b.rBPI)) {
+                    var bpi = b.rBPI;
+                    for (int ii = 0; ii < ftargets.Length; ++ii) {
+                        PrivateDataHoisting.UpdateValue(bpi.id, ftargets[ii].Item1, ftargets[ii].valuer(bpi));
+                    }
+                }
+            }, BM.BulletControl.P_SAVE);
+        }
 
         /// <summary>
         /// Batch several commands together under one predicate.
@@ -351,7 +410,7 @@ public partial class BehaviorEntity {
     public static void ControlPool(Pred persist, BM.StyleSelector styles, BehCFc control, ICancellee cT) {
         BEHControl pc = new BEHControl(control, persist, cT);
         for (int ii = 0; ii < styles.Complex.Length; ++ii) {
-            AddControlAtEOF(styles.Complex[ii], pc);
+            GetPool(styles.Complex[ii]).AddPoolControlEOF(pc);
         }
     }
 
@@ -367,7 +426,7 @@ public partial class BehaviorEntity {
         /// </summary>
         /// <returns></returns>
         public static BehPF Reset() {
-            return pool => LazyGetControls(pool).Empty();
+            return pool => GetPool(pool).ClearControls();
         }
 
         /// <summary>
@@ -376,13 +435,7 @@ public partial class BehaviorEntity {
         /// <param name="cullActive">True iff camera culling is allowed.</param>
         /// <returns></returns>
         public static BehPF AllowCull(bool cullActive) {
-            var _pc = new BEHControl(b => b.UpdateStyleCullable(), BulletManager.Consts.NOTPERSISTENT, 
-                BM.BulletControl.P_SETTINGS);
-            return pool => {
-                if (cullActive) ignoreCullStyles.Remove(pool);
-                else ignoreCullStyles.Add(pool);
-                AddControlAtEOF(pool, _pc);
-            };
+            return pool => GetPool(pool).CameraCullable = cullActive;
         }
 
         /// <summary>
@@ -391,7 +444,7 @@ public partial class BehaviorEntity {
         /// <param name="targetFormat">Base cull style, eg. cwheel</param>
         /// <returns></returns>
         public static BehPF SoftCullAll(string targetFormat) {
-            return pool => AddControlAtEOF(pool, new BEHControl(
+            return pool => GetPool(pool).AddPoolControlEOF(new BEHControl(
                 BulletControls.Softcull(BulletManager.PortColorFormat(pool, targetFormat, "red/w"), 
                 _ => true), BulletManager.Consts.NOTPERSISTENT));
         }
@@ -405,33 +458,26 @@ public partial class BehaviorEntity {
 
     /// <param name="targetFormat">Base cull style, eg. 'cwheel'</param>
     /// <param name="defaulter">Default color if no match is found, eg. 'red/'</param>
-    /// <param name="pools">List of pools to cull</param>
-    public static void Autocull(string targetFormat, string defaulter, [CanBeNull] string[] pools = null) {
-        void CullPool(string pool) {
-            if (!controls.ContainsKey(pool)) return;
-            if (pool.StartsWith("p-")) return; //Player bullets
-            if (!BulletManager.PortColorFormat(pool, targetFormat, defaulter, out string target)) return;
-            AddControlAtEOF(pool, new BEHControl(
+    /// <param name="cullPools">List of pools to cull</param>
+    public static void Autocull(string targetFormat, string defaulter, [CanBeNull] string[] cullPools = null) {
+        void CullPool(string poolStr) {
+            if (!BulletManager.CheckComplexPool(poolStr, out var pool) || pool.IsPlayer) return;
+            if (!BulletManager.PortColorFormat(poolStr, targetFormat, defaulter, out string target)) return;
+            pool.AddPoolControlEOF(new BEHControl(
                 BulletControls.Softcull(target, _ => true), BulletManager.Consts.NOTPERSISTENT));
         }
-        foreach (var pool in (pools ?? controls.Keys.ToArray())) CullPool(pool);
+        foreach (var pool in (cullPools ?? activePools.Select(x => x.style))) CullPool(pool);
     }
 
-    public static void PruneControls() {
-        for (int ii = 0; ii < initializedPools.Count; ++ii) {
-            var pcs = initializedPools[ii];
-            for (int jj = 0; jj < pcs.Count; ++jj) {
-                if (!pcs[jj].persist(GlobalBEH.Main.rBPI)) {
-                    pcs.Delete(jj);
-                } 
-            }
-            pcs.Compact();
+    public static void PrunePoolControls() {
+        for (int ii = 0; ii < activePools.Count; ++ii) {
+            activePools[ii].PruneControls();
         }
     }
 
-    public static void ClearControls() {
-        for (int ii = 0; ii < initializedPools.Count; ++ii) {
-            initializedPools[ii].Empty();
+    public static void ClearPoolControls(bool clearPlayer) {
+        for (int ii = 0; ii < activePools.Count; ++ii) {
+            if (clearPlayer || !activePools[ii].IsPlayer) activePools[ii].ClearControls();
         }
     }
 }

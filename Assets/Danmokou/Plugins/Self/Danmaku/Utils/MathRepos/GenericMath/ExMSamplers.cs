@@ -32,7 +32,7 @@ public static class ExMSamplers {
     /// <returns></returns>
     [Alias("ss")]
     public static Func<TExPI, TEx<T>> StopSampling<T>(ExBPY time, Func<TExPI, TEx<T>> p) {
-        Ex data = DataHoisting.GetClearableDictV2();
+        Ex data = DataHoisting.GetClearableDict<T>();
         return bpi => ExUtils.DictIfCondSetElseGet(data, Ex.OrElse(Ex.LessThan(bpi.t, time(bpi)),
             Ex.Not(ExUtils.DictContains<uint, T>(data, bpi.id))), bpi.id, p(bpi));
     }
@@ -42,7 +42,7 @@ public static class ExMSamplers {
     /// <para>You can call this with zero sampling time, and it will sample the invokee once. However, in this case SS0 is preferred.</para>
     /// </summary>
     public static Func<TExPI, TEx<T>> SampleIf<T>(ExPred cond, Func<TExPI, TEx<T>> p) {
-        Ex data = DataHoisting.GetClearableDictV2();
+        Ex data = DataHoisting.GetClearableDict<T>();
         return bpi => ExUtils.DictIfCondSetElseGet(data, Ex.OrElse(cond(bpi),
             Ex.Not(ExUtils.DictContains<uint, T>(data, bpi.id))), bpi.id, p(bpi));
     }
@@ -54,7 +54,7 @@ public static class ExMSamplers {
     /// <param name="p">Target function</param>
     /// <returns></returns>
     public static Func<TExPI, TEx<T>> SS0<T>(Func<TExPI, TEx<T>> p) {
-        Ex data = DataHoisting.GetClearableDictV2();
+        Ex data = DataHoisting.GetClearableDict<T>();
         return bpi => ExUtils.DictIfCondSetElseGet(data, Ex.Not(ExUtils.DictContains<uint, T>(data, bpi.id)), bpi.id, p(bpi));
     }
 

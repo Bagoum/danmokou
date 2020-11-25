@@ -47,16 +47,8 @@ public class CurvedTileRenderPather : CurvedTileRender {
     
     //set in pathtracker.awake
     private Action onCameraCulled = null;
-    private bool checkCameraCull = false;
     private int cullCtr;
     private const int checkCullEvery = 120;
-    /// <summary>
-    /// For pathers with a lot of bending effects, use "smooth" to force it to update every engine frame
-    /// instead of only on camera-render frames. This gives it twice as much resolution for collision and mesh.
-    /// </summary>
-    //Note: this must be true for pathers to be correct w.r.t replays.
-    private bool updateEveryFrame = true;
-    private float updateRate;
 
     private Pather exec;
 
@@ -79,16 +71,11 @@ public class CurvedTileRenderPather : CurvedTileRender {
         PersistentYScale = scale;
         scaledLineRadius = lineRadius * scale;
     }
-    public void Initialize(Pather locationer,TiledRenderCfg cfg,  Material material, bool isNew, Velocity vel, 
+    public void Initialize(Pather locationer, TiledRenderCfg cfg,  Material material, bool isNew, Velocity vel, 
         uint bpiId, int firingIndex, BPY rememberTime, float maxRememberTime, SOPlayerHitbox collisionTarget, 
         ref RealizedBehOptions options) {
         exec = locationer;
-        updateEveryFrame = true;//options.smooth;
-                                //Now that we are using TrailRender, we should always update centers for accuracy.
-                                //Consider removing code related to smooth later.
-                                //Note: this must be true for pathers to be correct w.r.t replays.
-        updateRate = updateEveryFrame ? ETime.ENGINEFPS : ETime.SCREENFPS;
-        int newTexW = (int) Math.Ceiling(maxRememberTime * updateRate) + 1; 
+        int newTexW = (int) Math.Ceiling(maxRememberTime * ETime.ENGINEFPS) + 1;
         base.Initialize(locationer, cfg, material, isNew, false, options.playerBullet != null, newTexW);
         if (locationer.HasParent()) throw new NotImplementedException("Pather cannot be parented");
         velocity = vel;
@@ -129,9 +116,6 @@ public class CurvedTileRenderPather : CurvedTileRender {
         onCameraCulled = onCull;
     }
 
-    public void SetCameraCullable(bool onoff) {
-        checkCameraCull = onoff;
-    }
     private const float CULL_RAD = 4;
     private const float FIRST_CULLCHECK_TIME = 4;
     //This is run during Update
@@ -160,7 +144,7 @@ public class CurvedTileRenderPather : CurvedTileRender {
         }
     }
     public override void UpdateRender() {
-        exec.FaceInDirectionRaw(M.AtanD(lastDelta));
+        exec.SetDirection(lastDelta);
         if (ETime.LastUpdateForScreen) {
             UpdateGraphics();
             
@@ -186,13 +170,6 @@ public class CurvedTileRenderPather : CurvedTileRender {
     private int lastDataIndex;
     protected override unsafe void UpdateVerts(bool renderRequired) {
         var last = cL - 1;
-        //repeat for range RegUpdFrames
-        if (!updateEveryFrame && !renderRequired) {
-            if (intersectStatus == SelfIntersectionStatus.CHECK_THIS_AND_NEXT) {
-                intersectStatus = SelfIntersectionStatus.CHECK_THIS;
-            }
-            return;
-        }
         Vector2 min = new Vector2(999,999);
         Vector2 max = new Vector2(-999,-999);
         float wx, wy;
@@ -208,12 +185,12 @@ public class CurvedTileRenderPather : CurvedTileRender {
             if (wy < min.y) min.y = wy;
             if (wy > max.y) max.y = wy;
         }
-        skipNextCollisionCheck = !DMath.Collision.CircleOnAABB(
+        skipNextCollisionCheck = playerBullet == null && !DMath.Collision.CircleOnAABB(
             velocity.rootPos.x + 0.5f * (min.x + max.x) - target.location.x,
             velocity.rootPos.y + 0.5f * (min.y + max.y) - target.location.y,
             0.5f * (max.x - min.x) + lineRadius,
             0.5f * (max.y - min.y) + lineRadius,
-            target.largeRadius) && playerBullet == null; 
+            target.largeRadius); 
         
         centers[last].x = bpi.loc.x - velocity.rootPos.x;
         centers[last].y = bpi.loc.y - velocity.rootPos.y;
@@ -232,7 +209,7 @@ public class CurvedTileRenderPather : CurvedTileRender {
         lastDataIndex = (lastDataIndex > 0) ? lastDataIndex - 1 : 0;
         if (lastDataIndex == cL - 1) return; //Need at least two frames to draw
 
-        int remembered = (int) Math.Ceiling((nextRemember = remember(bpi)) * updateRate);
+        int remembered = (int) Math.Ceiling((nextRemember = remember(bpi)) * ETime.ENGINEFPS);
         if (remembered < 2) remembered = 2;
         if (remembered > cL - lastDataIndex) remembered = cL - lastDataIndex;
         
@@ -264,7 +241,8 @@ public class CurvedTileRenderPather : CurvedTileRender {
 
     public CollisionResult CheckCollision() {
         cullCtr = (cullCtr + 1) % checkCullEvery; 
-        if ((cullCtr == 0 && checkCameraCull && CullCheck()) || skipNextCollisionCheck) return CollisionResult.noColl;
+        if ((cullCtr == 0 && exec.myStyle.CameraCullable && CullCheck()) || skipNextCollisionCheck) 
+            return CollisionResult.noColl;
         
         int cut1 = (int) Math.Ceiling((cL - read_from + 1) * tailCutoffRatio);
         int cut2 = (int) Math.Ceiling((cL - read_from + 1) * headCutoffRatio);
@@ -273,7 +251,7 @@ public class CurvedTileRenderPather : CurvedTileRender {
             var loc = exec.RawGlobalPosition();
             for (int ii = 0; ii < fe.Count; ++ii) {
                 if (fe[ii].Active && DMath.Collision.CircleOnSegments(fe[ii].pos, fe[ii].radius, loc, 
-                        centers, 0, 1, centers.Length, scaledLineRadius, 1, 0, out int segment) &&
+                        centers, read_from + cut1, 1, cL - cut2, scaledLineRadius, 1, 0, out int segment) &&
                     fe[ii].enemy.TryHitIndestructible(bpi.id, plb.cdFrames)) {
                     fe[ii].enemy.QueueDamage(plb.bossDmg, plb.stageDmg, target.location);
                     fe[ii].enemy.ProcOnHit(plb.effect, loc + centers[segment]);
@@ -284,9 +262,6 @@ public class CurvedTileRenderPather : CurvedTileRender {
         if (!target.Active) return CollisionResult.noColl;
         return DMath.Collision.GrazeCircleOnSegments(target.Hitbox, exec.RawGlobalPosition(), centers, read_from + cut1,
             FramePosCheck, cL - cut2, scaledLineRadius, 1, 0);
-    }
-    public Vector2 GetGlobalDirection() {
-        return lastDelta.normalized;
     }
     public void FlipVelX() {
         velocity.FlipX();

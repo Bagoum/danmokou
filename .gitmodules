@@ -7,3 +7,6 @@
 [submodule "Assets/LuA"]
 	path = Assets/LuA
 	url = https://github.com/Bagoum/danmokou-lua.git
+[submodule "Assets/PCG"]
+	path = Assets/PCG
+	url = https://github.com/Bagoum/danmokou-pcg

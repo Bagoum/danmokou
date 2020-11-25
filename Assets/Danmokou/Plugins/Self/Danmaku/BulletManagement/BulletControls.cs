@@ -31,16 +31,18 @@ public partial class BulletManager {
         public readonly SBCF action;
         public readonly Pred persist;
         public readonly int priority;
+        public readonly ICancellee cT;
 
-        public BulletControl(SBCFc act, [CanBeNull] Pred persistent = null, [CanBeNull] ICancellee cT = null) {
-            action = act.Func(cT ?? Cancellable.Null);
-            persist = persistent ?? Consts.PERSISTENT;
+        public BulletControl(SBCFc act, Pred persistent, [CanBeNull] ICancellee cT) {
+            action = act.Func(this.cT = cT ?? Cancellable.Null);
+            persist = persistent;
             this.priority = act.priority;
         }
-        public BulletControl(SBCF act, Pred persistent, int priority) {
+        public BulletControl(SBCF act, Pred persistent, int priority, ICancellee cT) {
             action = act;
             persist = persistent;
             this.priority = priority;
+            this.cT = cT;
         }
 
         public static bool operator ==(BulletControl b1, BulletControl b2) =>
@@ -75,25 +77,11 @@ public partial class BulletManager {
         [CanBeNull] private string[] simple;
         [CanBeNull] private string[] complex;
         [CanBeNull] private string[] all;
-        public string[] Simple {
-            //RIP null coalesce assignment.
-            get {
-                if (simple == null) simple = Styles(simplePoolNames, "simple bullet").ToArray();
-                return simple;
-            }
-        }
-        public string[] Complex {
-            get {
-                if (complex == null) complex = Styles(nonSimplePoolNames, "complex bullet").ToArray();
-                return complex;
-            }
-        }
-        public string[] All {
-            get {
-                if (all == null) all = Styles(simplePoolNames, "", false).Concat(Styles(nonSimplePoolNames, "", false)).ToArray();
-                return all;
-            }
-        }
+        public string[] Simple => simple ?? (simple = Styles(simpleBulletPools.Keys, "simple bullet").ToArray());
+        public string[] Complex => complex ?? (complex = Styles(behPools.Keys, "complex bullet").ToArray());
+        public string[] All =>
+            all ?? (all = Styles(simpleBulletPools.Keys, "", false)
+                .Concat(Styles(behPools.Keys, "", false)).ToArray());
 
         public StyleSelector(string[][] selections) {
             this.selections = new List<string[]>(selections);
@@ -222,7 +210,7 @@ public partial class BulletManager {
                     _ = inode.RunExternalSM(SMRunner.Cull(sm, cT, gcx));
                 }
             }
-        }, persist, BulletControl.P_RUN);
+        }, persist, BulletControl.P_RUN, cT);
         for (int ii = 0; ii < styles.Simple.Length; ++ii) {
             GetMaybeCopyPool(styles.Simple[ii]).AddPoolControl(pc);
         }
@@ -617,6 +605,7 @@ public partial class BulletManager {
         public static SBCFp SM(Pred cond, StateMachine target) => new SBCFp(cT => (sbc, ii, bpi) => {
             if (cond(bpi)) {
                 var inode = sbc.GetINodeAt(ii, "pool-triggered", null, out uint sbid);
+                //Note: this pattern is safe because GCX is copied immediately by SMRunner
                 using (var gcx = PrivateDataHoisting.GetGCX(sbid)) {
                     _ = inode.RunExternalSM(SMRunner.Cull(target, cT, gcx));
                 }
@@ -643,7 +632,7 @@ public partial class BulletManager {
         /// </summary>
         /// <returns></returns>
         public static SPCF Reset() {
-            return pool => GetMaybeCopyPool(pool).ClearPoolControl();
+            return pool => GetMaybeCopyPool(pool).ClearControls();
         }
         /// <summary>
         /// Set the cull radius on a pool.
@@ -670,7 +659,7 @@ public partial class BulletManager {
         /// <returns></returns>
         public static SPCF SoftCullAll(string targetFormat) {
             return pool => GetMaybeCopyPool(pool).AddPoolControl(new BulletControl(new SBCFc(SimpleBulletControls.
-                Softcull_noexpr(PortColorFormat(pool, targetFormat, "red/"), _ => true)), Consts.NOTPERSISTENT));
+                Softcull_noexpr(PortColorFormat(pool, targetFormat, "red/"), _ => true)), Consts.NOTPERSISTENT, null));
         }
 
         /// <summary>
@@ -697,7 +686,7 @@ public partial class BulletManager {
             if (pool.Count == 0) return;
             string targetPool = PortColorFormat(pool.Style, targetFormat, defaulter);
             pool.AddPoolControl(new BulletControl(new SBCFc(
-                    SimpleBulletControls.Softcull_noexpr(targetPool, _ => true)), Consts.NOTPERSISTENT));
+                    SimpleBulletControls.Softcull_noexpr(targetPool, _ => true)), Consts.NOTPERSISTENT, null));
             //Log.Unity($"Autoculled {pool.style} to {targetPool}");
         }
         //CEmpty is destroyed via DestroyedCopyPools
@@ -714,7 +703,7 @@ public partial class BulletManager {
             string targetPool = PortColorFormat(pool.Style, targetFormat, defaulter);
             pool.AddPoolControl(new BulletControl(
                 new SBCFc(SimpleBulletControls.Softcull_noexpr(targetPool, cond))
-                , Consts.NOTPERSISTENT));
+                , Consts.NOTPERSISTENT, null));
         }
         for (int ii = 0; ii < activeNpc.Count; ++ii) DeletePool(activeNpc[ii]);
         for (int ii = 0; ii < activeCNpc.Count; ++ii) DeletePool(activeCNpc[ii]);

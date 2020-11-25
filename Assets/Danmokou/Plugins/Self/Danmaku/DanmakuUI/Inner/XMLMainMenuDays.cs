@@ -44,9 +44,6 @@ public class XMLMainMenuDays : XMLMenu {
         {typeof(UINode), GenericUINode},
     };
 
-    private const string smallDescrClass = "small";
-    private const string medDescrClass = "node100";
-    private const string shotDescrClass = "descriptor";
     private const string completed1Class = "lblue";
     private const string completedAllClass = "lgreen";
     private static UINode[] DifficultyNodes(Func<FixedDifficulty, UINode> map) =>
@@ -69,12 +66,12 @@ public class XMLMainMenuDays : XMLMenu {
         var defaultShot = defaultPlayer.shots[0];
 
         PlayerTeam Team() => new PlayerTeam(0, Subshot.TYPE_D, (defaultPlayer, defaultShot));
-        GameMetadata Meta() => new GameMetadata(Team(), new DifficultySettings(dfc), CampaignMode.SCENE_CHALLENGE);
+        GameMetadata Meta() => new GameMetadata(Team(), new DifficultySettings(dfc));
 
         SceneSelectScreen = new UIScreen(DayCampaign.days[0].bosses.SelectMany(
             b => b.phases.Select(p => {
                 //TODO: this return is not safe if you change the difficulty.
-                if (!p.Enabled(Meta())) return new UINode(() => p.Title(Meta())).With(medDescrClass).EnabledIf(false);
+                if (!p.Enabled(Meta())) return new UINode(() => p.Title(Meta())).EnabledIf(false);
                 Challenge c = p.challenges[0];
                 void SetChallenge(int idx) {
                     c = p.challenges[idx];
@@ -83,13 +80,13 @@ public class XMLMainMenuDays : XMLMenu {
                 }
                 (bool, UINode) Confirm() {
                     ConfirmCache();
-                    new GameRequest(GameRequest.ShowPracticeSuccessMenu, new DifficultySettings(dfc), 
-                        challenge: new PhaseChallengeRequest(p, c),
-                        player: new PlayerTeam(0, Subshot.TYPE_D, (defaultPlayer, defaultShot))).Run();
+                    new GameRequest(GameRequest.ShowPracticeSuccessMenu, Meta(), 
+                        challenge: new PhaseChallengeRequest(p, c)).Run();
                     return (true, null);
                 }
                 return new CacheNavigateUINode(TentativeCache, () => p.Title(Meta()), 
-                    new UINode(() => c.Description(p.boss.boss)).SetConfirmOverride(Confirm),
+                    new UINode(() => c.Description(p.boss.boss))
+                        .With(large1Class).With(centerTextClass).SetConfirmOverride(Confirm),
                     new DynamicOptionNodeLR2<int>("", VTALR2Option, SetChallenge, 
                         p.challenges.Length.Range().ToArray, (i, v, on) => {
                             v.Query(null, "bracket").ForEach(x => x.style.display = on ? DisplayStyle.Flex : DisplayStyle.None);
@@ -100,8 +97,9 @@ public class XMLMainMenuDays : XMLMenu {
                             .SetConfirmOverride(Confirm)
                             .SetOnVisit(_ => SetChallenge(0))
                             .SetOnLeave(_ => AyaPhotoBoard.TearDownAndHide()),
-                    new UINode(() => "Press Z to start level".Locale("Zキー押すとレベルスタート")).SetConfirmOverride(Confirm)
-                ).With(medDescrClass).With(
+                    new UINode(() => "Press Z to start level".Locale("Zキー押すとレベルスタート"))
+                        .SetConfirmOverride(Confirm).With(large1Class).With(centerTextClass)
+                ).With(large1Class).With(
                     p.CompletedAll(Meta()) ? completedAllClass :
                     p.CompletedOne(Meta()) ? completed1Class :
                     null
@@ -111,15 +109,20 @@ public class XMLMainMenuDays : XMLMenu {
         ReplayScreen = XMLUtils.ReplayScreen(false, TentativeCache, ConfirmCache).With(ReplayScreenV);
 
         MainScreen = new UIScreen(
-            new TransferNode(SceneSelectScreen, "Game Start"),
+            new TransferNode(SceneSelectScreen, "Game Start")
+                .With(large1Class),
             new OptionNodeLR<Locale>("Language", l => SaveData.s.Locale = l, new[] {
                 ("English", Locale.EN),
                 ("日本語", Locale.JP)
-            }, SaveData.s.Locale).With(LROptionNode),
-            new TransferNode(ReplayScreen, "Replays").EnabledIf(SaveData.p.ReplayData.Count > 0),
+            }, SaveData.s.Locale).With(LROptionNode)
+                .With(large1Class),
+            new TransferNode(ReplayScreen, "Replays").EnabledIf(SaveData.p.ReplayData.Count > 0)
+                .With(large1Class),
             //new FuncNode(RunTutorial, "Tutorial"),
-            new FuncNode(Application.Quit, "Quit"),
+            new FuncNode(Application.Quit, "Quit")
+                .With(large1Class),
             new OpenUrlNode("https://twitter.com/rdbatz", "Twitter (Browser)")
+                .With(large1Class)
             ).With(MainScreenV);
         base.Awake();
     }

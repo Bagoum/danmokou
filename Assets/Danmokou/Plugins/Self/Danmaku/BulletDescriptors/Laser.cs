@@ -5,6 +5,7 @@ using UnityEngine;
 
 namespace Danmaku {
 public class Laser : FrameAnimBullet {
+    public float defaultWidthMultiplier;
     public LaserRenderCfg config;
     public CurvedTileRenderLaser ctr;
     public readonly struct PointContainer {
@@ -21,21 +22,18 @@ public class Laser : FrameAnimBullet {
 
     protected override void Awake() {
         ctr = new CurvedTileRenderLaser(config, gameObject);
-        rotationMethod = RotationMethod.Manual;
         base.Awake();
     }
-    private void Initialize(bool isNew, BehaviorEntity parent, Velocity velocity, SOPlayerHitbox _target, int firingIndex, uint bpiid, float cold,
-        float hot, Recolor recolor, ref RealizedLaserOptions options) {
-        ctr.SetYScale(options.yScale); //Needs to be done before Colorize sets first frame
-        Colorize(recolor);
-        base.Initialize(options.AsBEH, parent, velocity, firingIndex, bpiid, _target, out _); // Call after Awake/Reset
+    private void Initialize(bool isNew, BehaviorEntity parent, Velocity velocity, SOPlayerHitbox _target, int firingIndex, uint bpiid, float cold, float hot, BEHStyleMetadata style, ref RealizedLaserOptions options) {
+        ctr.SetYScale(options.yScale * defaultWidthMultiplier); //Needs to be done before Colorize sets first frame
+        Colorize(style.recolor.GetOrLoadRecolor());
+        base.Initialize(style, options.AsBEH, parent, velocity, firingIndex, bpiid, _target, out _); // Call after Awake/Reset
         if (options.endpoint != null) {
             var beh = BEHPooler.INode(Vector2.zero, V2RV2.Zero, Vector2.right, firingIndex, null, options.endpoint);
             endpt = new PointContainer(beh);
             ctr.SetupEndpoint(endpt);
         } else ctr.SetupEndpoint(new PointContainer(null));
         ctr.Initialize(this, config, material, isNew, bpi.id, firingIndex, ref options);
-        ctr.UpdateLaserStyle(recolor.style);
         SFXService.Request(options.firesfx);
         SetColdHot(cold, hot, options.hotsfx, options.repeat);
         ctr.Activate(); //This invokes UpdateMesh
@@ -74,15 +72,15 @@ public class Laser : FrameAnimBullet {
         base.InvokeCull();
     }
 
-    public static void Request(Recolor prefab, BehaviorEntity parent, Velocity vel, int firingIndex, uint bpiid, 
+    public static void Request(BEHStyleMetadata style, BehaviorEntity parent, Velocity vel, int firingIndex, uint bpiid, 
         float cold, float hot, SOPlayerHitbox collisionTarget, ref RealizedLaserOptions options) {
-        Laser created = (Laser) BEHPooler.RequestUninitialized(prefab.prefab, out bool isNew);
-        created.Initialize(isNew, parent, vel, collisionTarget, firingIndex, bpiid, cold, hot, prefab, ref options);
+        Laser created = (Laser) BEHPooler.RequestUninitialized(style.recolor.GetOrLoadRecolor().prefab, out bool isNew);
+        created.Initialize(isNew, parent, vel, collisionTarget, firingIndex, bpiid, cold, hot, style, ref options);
     }
     
-    protected override void UpdateStyleControls() {
-        base.UpdateStyleControls();
-        ctr.UpdateLaserStyle(style);
+    protected override void UpdateStyle(BEHStyleMetadata newStyle) {
+        base.UpdateStyle(newStyle);
+        ctr.UpdateLaserStyle(newStyle.style);
     }
 
     protected override void SpawnSimple(string styleName) {

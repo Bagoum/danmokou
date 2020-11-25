@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 7829823132156703731}
   - component: {fileID: 7829823132156703740}
   - component: {fileID: 7829823132156703730}
+  - component: {fileID: -2146052501324336886}
   m_Layer: 17
   m_Name: Powerup1
   m_TagString: Untagged
@@ -70,7 +71,7 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: -247109493
-  m_SortingLayer: 3
+  m_SortingLayer: 4
   m_SortingOrder: -10
   m_Sprite: {fileID: 21300000, guid: 62e82f6f89909d646816b5273180124b, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -95,22 +96,32 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cd08ecb15c82cd34a9a64aba8f121373, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  deathItems:
-    value: 0
-    pointPP: 0
-    life: 0
+  sprite: {fileID: 7829823132156703740}
+--- !u!114 &-2146052501324336886
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7829823132156703741}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86421e86325267340a25a8636076d100, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
   behaviorScript: {fileID: 0}
   ID: 
-  displayChangedPosition: 1
-  rotationMethod: 0
-  rotateTransform: 0
   deathEffect: {fileID: 0}
-  triggersUITimeout: 0
-  cullable: 1
-  ScreenCullRadius: 4
-  canFireOffscreen: 1
+  cullableRadius:
+    cullable: 0
+    cullRadius: {fileID: 0}
+  collisionInfo:
+    collisionRadius: 0
+    CollisionActiveOnInit: 0
+    destructible: 0
+    grazeEveryFrames: 0
+  displayer: {fileID: 7829823132156703730}
   animate:
-    method: 0
     LRRelation: 0
     UDRelation: 0
     frames:
@@ -121,6 +132,3 @@ MonoBehaviour:
       downAnim: []
       attackAnim: []
       deathAnim: []
-  movementModifiers:
-    flipX: 0
-    flipY: 0

@@ -138,32 +138,8 @@ public static partial class BPYRepo {
 
     [Fallthrough(1)]
     public static ExBPY Const(float x) => bpi => Ex.Constant(x);
-
-    /// <summary>
-    /// Return one of two functions depending on the input,
-    /// adjusting the switch variable by the reference switch amount if returning the latter function.
-    /// </summary>
-    /// <param name="switchVar">The variable upon which pivoting is performed. Should be either "p" (firing index) or "t" (time).</param>
-    /// <param name="at">Reference</param>
-    /// <param name="f1">Function when <c>t \leq at</c></param>
-    /// <param name="f2">Function when <c>t \gt at</c></param>
-    /// <returns></returns>
-    public static ExBPY SwitchH(ExBPY switchVar, ExBPY at, ExBPY f1, ExBPY f2) => bpi => {
-        var pivot = VFloat();
-        var cold = new TExPI();
-        return Ex.Block(new[] { pivot }, 
-            pivot.Is(at(bpi)),
-            Ex.Condition(Ex.GreaterThan(switchVar(bpi), pivot), 
-                Ex.Block(new ParameterExpression[] { cold },
-                    Ex.Assign(cold, bpi),
-                    SubAssign(switchVar(cold), pivot),
-                    f2(cold)
-                ), f1(bpi))
-        );
-    };
-
-    public static ExBPY SwitchHT(ExBPY at, ExBPY f1, ExBPY f2) => SwitchH(T(), at, f1, f2);
     
+
     /// <summary>
     /// See <see cref="DMath.Parametrics.Pivot"/>.
     /// </summary>

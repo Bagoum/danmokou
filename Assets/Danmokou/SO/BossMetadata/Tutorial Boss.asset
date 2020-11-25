@@ -19,19 +19,21 @@ MonoBehaviour:
   key: tutorial
   casualName: 
   casualNameJP: 
-  displayName: Tutorial<br>Boss
-  displayTitle: This is an<br>Excessively<br>Descriptive<br>Boss Title
   trackName: Boss
   colors: {fileID: 11400000, guid: 055010713f72168448f30c817e8838fe, type: 2}
   rotator: 
+  spellRotator: 
   profile:
-    image: {fileID: 0}
-    offsetX: 0
-    offsetY: 0
-    zoom: 0
-  defaultNonBG: {fileID: 0}
-  defaultSpellBG: {fileID: 0}
-  defaultIntoSpellTransition: {fileID: 0}
-  defaultIntoNonTransition: {fileID: 0}
+    leftSidebar: {fileID: 0}
+    rightSidebar: {fileID: 0}
+  defaultNonBG: {fileID: 5180723301924424041, guid: 9634a3dafc6f67b4d91b51bf5e9dfda8,
+    type: 3}
+  defaultSpellBG: {fileID: 5180723301924424041, guid: 3e16cbcc8fc2d794e93fa2b94b95b549,
+    type: 3}
+  defaultIntoSpellTransition: {fileID: 11400000, guid: 9b0abf82e07299741a4d64ecd57ff7e6,
+    type: 2}
+  defaultIntoNonTransition: {fileID: 11400000, guid: ed50de2e7fb821b45ab0bc816293a9bb,
+    type: 2}
   bossCutin: {fileID: 0}
-  spellCutins: []
+  spellCutins:
+  - {fileID: 160725723660692450, guid: d7fe74c6c8b744d47a05ae188235337a, type: 3}

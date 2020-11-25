@@ -21,8 +21,8 @@ public static class Consts {
 }
 public static class SaveData {
     private const string SETTINGS = "settings.txt";
-    private const string RECORD = "record.txt";
-    private const string REPLAYS_LIST = "replays.txt";
+    private static string RECORD => $"record-{GameManagement.References.gameIdentifier}.txt";
+    //private static string REPLAYS_LIST => $"replays-{GameManagement.References.gameIdentifier}.txt";
     private const string REPLAYS_DIR = "Replays/";
 
     public class Record {
@@ -41,19 +41,40 @@ public static class SaveData {
         [JsonIgnore]
         public bool MainCampaignCompleted => EndingsAchieved.ContainsKey(GameManagement.References.campaign.key);
         public Dictionary<string, ChallengeCompletion> SceneRecord = new Dictionary<string, ChallengeCompletion>();
+        public Dictionary<string, GameRecord> FinishedGames = new Dictionary<string, GameRecord>();
 
-        public Dictionary<string, long> HighScores = new Dictionary<string, long>();
-
-        public bool TrySetHighScore(string gameIdentifier, long score) {
-            if (!HighScores.TryGetValue(gameIdentifier, out var currScore) || score > currScore) {
-                HighScores[gameIdentifier] = score;
-                SaveRecord();
-                return true;
-            } else return false;
+        public void RecordGame(GameRecord rec) {
+            FinishedGames[rec.Uuid] = rec;
+            SaveData.SaveRecord();
         }
 
-        public long? GetHighScore(string gameIdentifier) =>
-            HighScores.TryGetValue(gameIdentifier, out var score) ? (long?) score : null;
+        private Dictionary<(string, string, int), (int success, int total)> AccSpellHistory(IEnumerable<GameRecord> over) {
+            var res = new Dictionary<(string, string, int), (int, int)>();
+            foreach (var g in over) {
+                foreach (var cpt in g.CardCaptures) {
+                    var (success, total) = res.SetDefault(cpt.Key, (0, 0));
+                    ++total;
+                    if (cpt.captured) ++success;
+                    res[cpt.Key] = (success, total);
+                }
+            }
+            return res;
+        }
+
+        public Dictionary<(string, string, int), (int success, int total)> GetCampaignSpellHistory() =>
+            AccSpellHistory(FinishedGames.Values.Where(gr => gr.GameKey.type == 0));
+        
+        public Dictionary<(string, string, int), (int success, int total)> GetPracticeSpellHistory() =>
+            AccSpellHistory(FinishedGames.Values.Where(gr => gr.GameKey.type == 1));
+
+        
+        public long? GetHighScore(GameRequest req) {
+            var campaign = GameRequest.CampaignIdentifier(req.lowerRequest).Tuple;
+            return FinishedGames.Values.Where(g => 
+                g.GameKey == campaign &&
+                g.SavedMetadata.difficulty.standard == req.metadata.difficulty.standard
+            ).Select(x => x.Score).OrderByDescending(x => x).FirstOrNull();
+        }
 
         public void CompleteChallenge(GameRequest req, IEnumerable<AyaPhoto> photos) {
             SceneRecord[req.Identifier] = new ChallengeCompletion(photos);
@@ -92,8 +113,9 @@ public static class SaveData {
         public int RefreshRate = 60;
         public (int w, int h) Resolution = Consts.BestResolution;
     #if UNITY_EDITOR
-        public static bool TeleportAtPhaseStart => false;
+        public static bool TeleportAtPhaseStart => true;
     #else
+        //Don't change this!
         public static bool TeleportAtPhaseStart => false;
     #endif
         public float Screenshake = 1f;
@@ -102,7 +124,9 @@ public static class SaveData {
         public bool UnfocusedHitbox = true;
         public float DialogueWaitMultiplier = 1f;
         public float BGMVolume = 1f;
+        public float SEVolume = 1f;
         public bool Backgrounds = true;
+        public bool AllowControllerInput = true;
 
         public static int DefaultRefresh {
             get {
@@ -120,6 +144,7 @@ public static class SaveData {
                 (int, int) Resolution;
                 if (w > 3000) Resolution = (3840, 2160);
                 else if (w > 1700) Resolution = (1920, 1080);
+                else if (w > 1400) Resolution = (1600, 900);
                 else if (w > 1000) Resolution = (1280, 720);
                 else if (w > 700) Resolution = (800, 450);
                 else Resolution = (640, 360);
@@ -144,36 +169,34 @@ public static class SaveData {
     }
 
     public class Replays {
-        public List<string> ReplayFiles { get; }
-        [JsonIgnore]
         public List<Replay> ReplayData { get; }
-        public Replays(string[] files) {
-            ReplayFiles = new List<string>();
-            ReplayData = files.SelectNotNull<string, Replay>(f => {
-                try {
-                    var metadata = Read<ReplayMetadata>(f + RMETAEXT);
-                    if (metadata == null || ReplayFiles.Contains(f)) return null;
-                    ReplayFiles.Add(f);
-                    if (metadata.GameIdentifier != GameManagement.References.gameIdentifier) return null;
-                    return new Replay(LoadReplayFrames(f), metadata);
-                } catch (Exception e) {
-                    Log.Unity($"Failed to read replay data: {e.Message}", true, Log.Level.WARNING);
-                    return null;
-                }
-            }).OrderByDescending(r => r.metadata.Now).ToList();
+        public Replays() {
+            ReplayData = SaveUtils.EnumerateDirectory(REPLAYS_DIR)
+                .Where(f => f.EndsWith(RMETAEXT))
+                .Select(f => f.Substring(0, f.Length - RMETAEXT.Length))
+                .SelectNotNull<string, Replay>(f => {
+                    try {
+                        var metadata = Read<ReplayMetadata>(f + RMETAEXT);
+                        if (metadata == null || metadata.Record.TitleIdentifier != 
+                            GameManagement.References.gameIdentifier) return null;
+                        return new Replay(LoadReplayFrames(f), metadata);
+                    } catch (Exception e) {
+                        Log.Unity($"Failed to read replay data: {e.Message}", true, Log.Level.WARNING);
+                        return null;
+                    }
+                })
+                .OrderByDescending(r => r.metadata.Record.Date).ToList();
         }
 
         public bool TryDeleteReplay(int i) {
             if (i < ReplayData.Count) {
                 var filename = ReplayFilename(ReplayData[i]);
-                ReplayFiles.Remove(filename);
                 try {
                     File.Delete(SaveUtils.DIR + filename + RMETAEXT);
                     File.Delete(SaveUtils.DIR + filename + RFRAMEEXT);
                 } catch (Exception e) {
                     Log.Unity(e.Message, true, Log.Level.WARNING);
                 }
-                Write(REPLAYS_LIST, ReplayFiles);
                 ReplayData.RemoveAt(i);
                 return true;
             } else return false;
@@ -190,9 +213,8 @@ public static class SaveData {
                 //return (InputManager.FrameInput[]) w.Deserialize(fr);
             }
         };
-        public bool SaveNewReplay(Replay r) {
+        public void SaveNewReplay(Replay r) {
             var filename = ReplayFilename(r);
-            if (ReplayFiles.Contains(filename)) return false;
             var f = r.frames();
             Log.Unity($"Saving replay {filename} with {f.Length} frames.");
             Write(filename + RMETAEXT, r.metadata);
@@ -203,10 +225,7 @@ public static class SaveData {
             //    var w = new BinaryFormatter();
             //    w.Serialize(fw, f);
             //}
-            ReplayFiles.Add(filename);
             ReplayData.Insert(0, new Replay(LoadReplayFrames(filename), r.metadata));
-            Write(REPLAYS_LIST, ReplayFiles);
-            return true;
         }
     }
     public static Settings s { get; }
@@ -220,10 +239,11 @@ public static class SaveData {
         ETime.SetForcedFPS(s.RefreshRate);
         UpdateResolution(s.Resolution);
         UpdateFullscreen(s.Fullscreen);
+        UpdateAllowController(s.AllowControllerInput);
         ETime.SetVSync(s.Vsync);
         Log.Unity($"Initial settings: resolution {s.Resolution}, fullscreen {s.Fullscreen}, vsync {s.Vsync}");
         r = Read<Record>(RECORD) ?? new Record();
-        p = new Replays(Read<string[]>(REPLAYS_LIST) ?? new string[0]);
+        p = new Replays();
     }
 
     public static void SaveRecord() => Write(RECORD, r);
@@ -238,10 +258,16 @@ public static class SaveData {
         }
         BackgroundOrchestrator.RecreateTextures();
         BackgroundCombiner.Reconstruct();
+        UIBuilderRenderer.Reconstruct();
     }
 
     public static void UpdateFullscreen(FullScreenMode mode) {
         Screen.fullScreenMode = s.Fullscreen = mode;
+    }
+
+    public static void UpdateAllowController(bool allowed) {
+        s.AllowControllerInput = allowed;
+        InputManager.AllowControllerInput = allowed;
     }
 
     public static void AssignSettingsChanges() {

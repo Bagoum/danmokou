@@ -159,5 +159,70 @@ PrefabInstance:
       propertyPath: animate.LRRelation
       value: 2
       objectReference: {fileID: 0}
+    - target: {fileID: 4709715865785981422, guid: f28167148c8e8b247be3b31472dceb43,
+        type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: cb57aad8023263346870c06ddd0975c1,
+        type: 3}
+    - target: {fileID: 6353401824704334620, guid: f28167148c8e8b247be3b31472dceb43,
+        type: 3}
+      propertyPath: animate.frames.idleAnim.Array.size
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 6353401824704334620, guid: f28167148c8e8b247be3b31472dceb43,
+        type: 3}
+      propertyPath: animate.frames.leftAnim.Array.size
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 6353401824704334620, guid: f28167148c8e8b247be3b31472dceb43,
+        type: 3}
+      propertyPath: animate.LRRelation
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6353401824704334620, guid: f28167148c8e8b247be3b31472dceb43,
+        type: 3}
+      propertyPath: animate.frames.idleAnim.Array.data[0].sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: d3439a2ebccce1144a3300d039339492,
+        type: 3}
+    - target: {fileID: 6353401824704334620, guid: f28167148c8e8b247be3b31472dceb43,
+        type: 3}
+      propertyPath: animate.frames.idleAnim.Array.data[0].time
+      value: 0.2
+      objectReference: {fileID: 0}
+    - target: {fileID: 6353401824704334620, guid: f28167148c8e8b247be3b31472dceb43,
+        type: 3}
+      propertyPath: animate.frames.idleAnim.Array.data[1].sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: cb57aad8023263346870c06ddd0975c1,
+        type: 3}
+    - target: {fileID: 6353401824704334620, guid: f28167148c8e8b247be3b31472dceb43,
+        type: 3}
+      propertyPath: animate.frames.idleAnim.Array.data[1].time
+      value: 0.2
+      objectReference: {fileID: 0}
+    - target: {fileID: 6353401824704334620, guid: f28167148c8e8b247be3b31472dceb43,
+        type: 3}
+      propertyPath: animate.frames.leftAnim.Array.data[0].sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: d3439a2ebccce1144a3300d039339492,
+        type: 3}
+    - target: {fileID: 6353401824704334620, guid: f28167148c8e8b247be3b31472dceb43,
+        type: 3}
+      propertyPath: animate.frames.leftAnim.Array.data[0].time
+      value: 0.2
+      objectReference: {fileID: 0}
+    - target: {fileID: 6353401824704334620, guid: f28167148c8e8b247be3b31472dceb43,
+        type: 3}
+      propertyPath: animate.frames.leftAnim.Array.data[1].sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: cb57aad8023263346870c06ddd0975c1,
+        type: 3}
+    - target: {fileID: 6353401824704334620, guid: f28167148c8e8b247be3b31472dceb43,
+        type: 3}
+      propertyPath: animate.frames.leftAnim.Array.data[1].time
+      value: 0.2
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: f28167148c8e8b247be3b31472dceb43, type: 3}

@@ -10,6 +10,7 @@ using UnityEngine;
 using UnityEngine.Serialization;
 
 public class FireOption : BehaviorEntity {
+    private SpriteRenderer sr; //Using this instead of DisplayController for now
     [TextArea(3, 8)]
     public string offsetFree;
     [TextArea(3, 8)]
@@ -22,11 +23,18 @@ public class FireOption : BehaviorEntity {
     public string opacityFree;
     [TextArea(3, 8)]
     public string opacityFocus;
+    /// <summary>
+    /// Visible rotation. Does not affect firing angle.
+    /// </summary>
     public string spriteRotation;
-    public bool freeOffsetRotational = true;
     private TP3 freeOffset;
-    public bool focusOffsetRotational = true;
+    /// <summary>
+    /// Visible rotation. Affects firing angle.
+    /// </summary>
     public string freeAngleOffset;
+    /// <summary>
+    /// Visible rotation. Affects firing angle.
+    /// </summary>
     public string focusAngleOffset;
     private TP3 focusOffset;
     private TP3[] freeOffsetPower;
@@ -51,7 +59,6 @@ public class FireOption : BehaviorEntity {
     protected override int Findex => findex;
 
     private static readonly Dictionary<int, FireOption> optionsByIndex = new Dictionary<int, FireOption>();
-    private float shootAngle = 0; //up by default
     public PlayerInput Player { get; private set; }
     protected override void Awake() { }
 
@@ -59,7 +66,8 @@ public class FireOption : BehaviorEntity {
         Player = playr;
         //I feel kind of bad about this, but it ensures that PlayerInput is linked before the SM runs.
         base.Awake();
-        original_angle = shootAngle = 0; //Shoot up by default
+        sr = GetComponent<SpriteRenderer>();
+        original_angle = 0; //Shoot up by default
         freeOffset = ReflWrap<TP3>.Wrap(offsetFree);
         if (string.IsNullOrWhiteSpace(offsetFocus)) offsetFocus = offsetFree;
         focusOffset = ReflWrap<TP3>.Wrap(offsetFocus);
@@ -92,9 +100,6 @@ public class FireOption : BehaviorEntity {
         StateMachineManager.FromText(behaviorScript);
     }
 
-    private float FreeOffsetRotation => freeOffsetRotational ? shootAngle : 0f;
-    private float FocusOffsetRotation => focusOffsetRotational ? shootAngle : 0f;
-
     private Vector3 SelectByPower(TP3[] powers, TP3 otherwise) {
         if (powers.Length == 0) return otherwise(bpi);
         int index = Math.Min(powers.Length - 1, GameManagement.campaign.PowerIndex);
@@ -113,17 +118,14 @@ public class FireOption : BehaviorEntity {
         powerLerp = Mathf.Clamp01(powerLerp + ETime.FRAME_TIME / powerLerpTime);
         var lerpDir = Player.IsFocus ? 1 : -1;
         freeFocusLerp = Mathf.Clamp01(freeFocusLerp + lerpDir * ETime.FRAME_TIME / freeFocusLerpTime);
-        //Shot files are oriented upwards by default
-        if (InputManager.FiringAngle.HasValue) shootAngle = InputManager.FiringAngle.Value - 90;
-        original_angle = shootAngle + Mathf.Lerp(freeAngle(bpi), focusAngle(bpi), freeFocusLerp);
-        tr.localPosition = M.RotateXYDeg(FreeOffset, FreeOffsetRotation) * (1 - freeFocusLerp) + 
-                           M.RotateXYDeg(FocusOffset, FocusOffsetRotation) * freeFocusLerp;
+        original_angle = Mathf.Lerp(freeAngle(bpi), focusAngle(bpi), freeFocusLerp);
+        tr.localPosition = Vector2.Lerp(FreeOffset, FocusOffset, freeFocusLerp);
         if (doOpacity) {
             var color = rootColor;
             color.a *= freeOpacity(bpi) * (1 - freeFocusLerp) + focusOpacity(bpi) * freeFocusLerp;
             sr.color = color;
         }
-        if (rotator != null) tr.localEulerAngles = new Vector3(0, 0, rotator(bpi));
+        tr.localEulerAngles = new Vector3(0, 0, original_angle + rotator?.Invoke(bpi) ?? 0f);
     }
     protected override void RegularUpdateMove() {
         base.RegularUpdateMove();

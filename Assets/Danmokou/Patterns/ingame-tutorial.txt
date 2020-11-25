@@ -124,14 +124,46 @@ phase 0
 		
 phase 0
 	action block 0
+		position 0 2
+		move _ nroffset px sine 4 2 t
+		async _ <0.5;:> gcr2 120 _ <> {
+		} gsr2c 20 {
+		} gemitem
+		async amulet-red/ <> gcr2 120 _ <> {
+		} gsr2c 8 {
+		} s tprot cx 2.2
+		
+
+phase 0
+	action block 0
+		position 0 2
+		move _ nroffset px sine 4 2 t
+		async _ <0.5;:> gcr2 120 _ <> {
+		} gsr2c 20 {
+		} gemitem
+		async amulet-purple/ <> gcr2 120 _ <> {
+		} {
+			gsr2c 5 {
+				offset <1;:>
+			} valueitem
+			gsr2c 8 {
+			} s tprot cx 2.2
+		}
+		
+phase 0
+	action block 0
+		noop
+		
+phase 0
+	action block 0
+		move-target 1 io-sine cy 1
+	action block 0
 		async sun-red* <90> gcr2 240 _ <120> {
 		} gsr2c 3 {
 			color { / /w /b }
 		} ss 0.6 tprot cx 2
 
 phase 0
-	action block 0
-		move-target 1 io-sine cy 1
 	action block 0
 		async _ <-6;:> gsr2 3 <;1:> {
 			color { gdlaser-blue* laser-red* glaser-pink* }

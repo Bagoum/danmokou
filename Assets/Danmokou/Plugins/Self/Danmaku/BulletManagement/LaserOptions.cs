@@ -224,7 +224,6 @@ public class LaserOption {
 
 public readonly struct RealizedLaserOptions {
     private const float DEFAULT_LASER_LEN = 15;
-    public const float DEFAULT_LASER_WIDTH = 0.5f;
     public readonly float maxLength;
     [CanBeNull] public readonly BPY varLength;
     [CanBeNull] public readonly BPY start;
@@ -267,7 +266,7 @@ public readonly struct RealizedLaserOptions {
             isStatic = true;
         }
         smr = SMRunner.Run(opts.sm, cT, gcx);
-        yScale = (opts.yScale?.Invoke(gcx) ?? 1f) * DEFAULT_LASER_WIDTH;
+        yScale = opts.yScale?.Invoke(gcx) ?? 1f;
         hueShift = opts.hueShift?.Add(gcx, bpiid);
         if (opts.recolor.Try(out var rc)) {
             recolor = (rc.black.Add(gcx, bpiid), rc.white.Add(gcx, bpiid));

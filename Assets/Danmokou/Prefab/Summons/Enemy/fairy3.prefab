@@ -122,5 +122,35 @@ PrefabInstance:
       propertyPath: m_Name
       value: fairy3
       objectReference: {fileID: 0}
+    - target: {fileID: 4958872392221617082, guid: fa88a8aab85c8b34d9552d8aadd06337,
+        type: 3}
+      propertyPath: animate.frames.idleAnim.Array.data[0].sprite
+      value: 
+      objectReference: {fileID: -9056206827125558968, guid: dbbf0b3e5dcd4034bbb530db139d86f5,
+        type: 3}
+    - target: {fileID: 4958872392221617082, guid: fa88a8aab85c8b34d9552d8aadd06337,
+        type: 3}
+      propertyPath: animate.frames.idleAnim.Array.data[1].sprite
+      value: 
+      objectReference: {fileID: 1538570887880848055, guid: dbbf0b3e5dcd4034bbb530db139d86f5,
+        type: 3}
+    - target: {fileID: 4958872392221617082, guid: fa88a8aab85c8b34d9552d8aadd06337,
+        type: 3}
+      propertyPath: animate.frames.idleAnim.Array.data[2].sprite
+      value: 
+      objectReference: {fileID: 2173353609865747080, guid: dbbf0b3e5dcd4034bbb530db139d86f5,
+        type: 3}
+    - target: {fileID: 4958872392221617082, guid: fa88a8aab85c8b34d9552d8aadd06337,
+        type: 3}
+      propertyPath: animate.frames.idleAnim.Array.data[3].sprite
+      value: 
+      objectReference: {fileID: 1538570887880848055, guid: dbbf0b3e5dcd4034bbb530db139d86f5,
+        type: 3}
+    - target: {fileID: 6748328235508939080, guid: fa88a8aab85c8b34d9552d8aadd06337,
+        type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: -9056206827125558968, guid: dbbf0b3e5dcd4034bbb530db139d86f5,
+        type: 3}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: fa88a8aab85c8b34d9552d8aadd06337, type: 3}

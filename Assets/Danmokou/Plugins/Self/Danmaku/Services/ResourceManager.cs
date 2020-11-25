@@ -57,9 +57,12 @@ public class ResourceManager : MonoBehaviour {
         throw new Exception($"No summonable by name {style}");
     }
 
+    public static string[] AllSummonableNames => Summonables.Keys.ToArray();
+
     public static GameObject GetBackground(string style) => Backgrounds.GetOrThrow(style);
     public static SOBgTransition GetBackgroundTransition(string style) => Transitions.GetOrThrow(style);
     public static SOBgTransition WipeTex1 => GetBackgroundTransition("wipetex1");
+    public static SOBgTransition Instantaneous => GetBackgroundTransition("instant");
     public static GameObject BlackBG => GetBackground("black");
 
     public static EffectStrategy GetEffect(string effect) => effectMap.GetOrThrow(effect, "Player fire effects");

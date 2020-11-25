@@ -29,31 +29,30 @@ public class BossConfig : ScriptableObject {
     public string casualNameJP;
     public string CasualName => SaveData.s.Locale == Locale.JP ? casualNameJP : casualName;
     /// <summary>
-    /// For display in the boss profile in the bottom left,
-    /// eg. "Kurokoma&lt;br&gt;Saki"
-    /// </summary>
-    public string displayName;
-    /// <summary>
-    /// For display in the boss profile in the bottom left,
-    /// eg. "Purple Haze&lt;br&gt;Lurking Beyond&lt;br&gt;The Pale"
-    /// </summary>
-    public string displayTitle;
-    /// <summary>
     /// For display in the tracker in the bottom gutter, eg. "黒駒"
     /// </summary>
     public string trackName;
     public BossColorScheme colors;
 
+    /// <summary>
+    /// This is a delta applied to the card circle Z rotation every frame
+    /// </summary>
     public string rotator;
     public BPY Rotator => ReflWrap<BPY>.Wrap(string.IsNullOrWhiteSpace(rotator) ? defaultRotator : rotator);
     private const string defaultRotator = "lerpback(10, 14, 20, 24, mod(24, t), 90, -200)";
+
+    /// <summary>
+    /// This is a Vector3 to which the spell circle eulerAngles is set to every frame
+    /// </summary>
+    public string spellRotator;
+    public TP3 SpellRotator =>
+        ReflWrap<TP3>.Wrap(string.IsNullOrWhiteSpace(spellRotator) ? defaultSpellRotator : spellRotator);
+    private const string defaultSpellRotator = "pxyz(0,0,0)";//"pxyz(sine(9, 30, t), sine(9p, 30, t), 20 * t)";
     
     [Serializable]
-    public struct ProfileRender {
-        public Texture2D image;
-        public float offsetX;
-        public float offsetY;
-        public float zoom;
+    public class ProfileRender {
+        public Texture2D leftSidebar;
+        public Texture2D rightSidebar;
     }
     public ProfileRender profile;
     [CanBeNull] public GameObject defaultNonBG;
@@ -63,9 +62,10 @@ public class BossConfig : ScriptableObject {
     [CanBeNull] public GameObject bossCutin;
     public GameObject[] spellCutins;
     public SOBgTransition bossCutinTrIn => ResourceManager.WipeTex1;
-    public SOBgTransition bossCutinTrOut => ResourceManager.WipeTex1;
+    public float bossCutinBgTime => 2.0f;
+    public SOBgTransition bossCutinTrOut => ResourceManager.Instantaneous;
     public GameObject bossCutinBg => ResourceManager.BlackBG;
-    public float bossCutinTime => 5.6f;
+    public float bossCutinTime => 4.8f;
 
     [CanBeNull]
     public GameObject Background(PhaseType pt) => pt.IsSpell() ? defaultSpellBG : defaultNonBG;

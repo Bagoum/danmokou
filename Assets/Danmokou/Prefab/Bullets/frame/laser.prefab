@@ -47,7 +47,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorScript: {fileID: 0}
   ID: 
-  rotationMethod: 0
   deathEffect: {fileID: 0}
   cullableRadius:
     cullable: 0
@@ -56,19 +55,8 @@ MonoBehaviour:
     collisionRadius: 0
     CollisionActiveOnInit: 0
     destructible: 0
-    grazeEveryFrames: 20
-  animate:
-    method: 0
-    LRRelation: 0
-    UDRelation: 0
-    frames:
-      idleAnim: []
-      rightAnim: []
-      leftAnim: []
-      upAnim: []
-      downAnim: []
-      attackAnim: []
-      deathAnim: []
+    grazeEveryFrames: 30
+  displayer: {fileID: 0}
   material: {fileID: 2100000, guid: 5458891e477bea5438b857b92a28ba0c, type: 2}
   renderPriority: 1000
   sprite: {fileID: 0}
@@ -101,15 +89,11 @@ MonoBehaviour:
   - s: {fileID: 21300000, guid: 1c4eb1a6220852d4b8a74b67609a977d, type: 3}
     time: 0
     collisionActive: 0
-    yscale: 0.2
+    yscale: 0.3
   - s: {fileID: 21300000, guid: 1c4eb1a6220852d4b8a74b67609a977d, type: 3}
     time: 0.03
     collisionActive: 0
-    yscale: 0.28
-  - s: {fileID: 21300000, guid: 1c4eb1a6220852d4b8a74b67609a977d, type: 3}
-    time: 0.03
-    collisionActive: 0
-    yscale: 0.4
+    yscale: 0.45
   - s: {fileID: 21300000, guid: 1c4eb1a6220852d4b8a74b67609a977d, type: 3}
     time: 0.03
     collisionActive: 0
@@ -117,7 +101,11 @@ MonoBehaviour:
   - s: {fileID: 21300000, guid: 1c4eb1a6220852d4b8a74b67609a977d, type: 3}
     time: 0.03
     collisionActive: 0
-    yscale: 0.8
+    yscale: 0.73
+  - s: {fileID: 21300000, guid: 1c4eb1a6220852d4b8a74b67609a977d, type: 3}
+    time: 0.03
+    collisionActive: 0
+    yscale: 0.87
   - s: {fileID: 21300000, guid: 1c4eb1a6220852d4b8a74b67609a977d, type: 3}
     time: 0
     collisionActive: 1
@@ -147,6 +135,7 @@ MonoBehaviour:
   repeat: 0
   animateCold: 0
   countPostHotColdFrames: 0
+  defaultWidthMultiplier: 0.5
   config:
     sortingLayer: Projectile
     playerSortingLayer: PlayerProjectile

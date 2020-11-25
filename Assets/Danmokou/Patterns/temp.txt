@@ -1,15 +1,23 @@
 <#> warnprefix
 pattern({
-	boss jy.yukari
+	##boss jy.yukari
 })
 phase(0)
 	action(block, 0)
-		shift-phase-to(1)
+		shift-phase-to(3)
 		
-		
+<!> type(non, `Danmokou Chimera`)
+<!> hp(1000)
+<!> root 0 1.4
+phase(14)
+    action block 0
+		##lifetoscore 2000000
+
+			
+
 <!> type(spell, `Miracle Mima`)
 <!> hp(14000)
-<!> root(0, 2)
+<!> root(0, 1)
 phase(40)
 	action(block, 0)
 		async lellipse-*/w <> gcrepeat {

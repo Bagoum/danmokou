@@ -13,7 +13,7 @@ gtr {
 		truerotatelerprate(60,
 			rotify(py 10),
 			LNearestEnemy - loc)), { 
-			scale(1.4)
+			scale(1.2)
 			player(21, 21, oh1)
 		})
 	## free cancellation

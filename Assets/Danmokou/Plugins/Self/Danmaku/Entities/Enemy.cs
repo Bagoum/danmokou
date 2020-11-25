@@ -35,7 +35,9 @@ public class Enemy : RegularUpdater {
     public int PhotoHP { get; private set; } = 1;
     private int maxPhotoHP = 1;
     public int PhotosTaken { get; private set; } = 0;
-    public bool Vulnerable { get; private set; }= true;
+    //public bool Vulnerable { get; private set; }= true;
+
+    public Vulnerability Vulnerable { get; private set; }
     //private static int enemyIndexCtr = 0;
     //private int enemyIndex;
 
@@ -58,6 +60,7 @@ public class Enemy : RegularUpdater {
     public SpriteRenderer cardCircle;
     public SpriteRenderer spellCircle;
     private Transform cardtr;
+    private Transform spellTr;
     [CanBeNull] public SpriteRenderer distorter;
     private MaterialPropertyBlock distortPB;
     private MaterialPropertyBlock scPB;
@@ -76,6 +79,7 @@ public class Enemy : RegularUpdater {
     private const float HPLerpRate = 14f;
 
     private BPY cardRotator = _ => 60;
+    private TP3 spellRotator = _ => Vector3.zero;
 
     private static short renderCounter = short.MinValue;
     
@@ -84,7 +88,7 @@ public class Enemy : RegularUpdater {
         maxHP >= 400 ? Mathf.CeilToInt(maxHP / 900f) : 0, 
         maxHP >= 300 ? Mathf.CeilToInt(maxHP / 800f) : 0,
         maxHP >= 400 ? Mathf.CeilToInt(maxHP / 700f) : 0,
-        Mathf.CeilToInt(maxHP / 300f)
+        Mathf.CeilToInt(maxHP / 600f)
         );
 
 
@@ -96,10 +100,10 @@ public class Enemy : RegularUpdater {
     private static readonly List<FrozenCollisionInfo> frozenEnemies = new List<FrozenCollisionInfo>();
     public static IReadOnlyList<FrozenCollisionInfo> FrozenEnemies => frozenEnemies;
 
-    public void Initialize(BehaviorEntity _beh, [CanBeNull] SpriteRenderer sr) {
+    public void Initialize(BehaviorEntity _beh) {
         Beh = _beh;
         var sortOrder = renderCounter++;
-        if (sr != null) sr.sortingOrder = sortOrder;
+        _beh.displayer.SetSortingOrder(sortOrder);
         if (spellCircle != null) spellCircle.sortingOrder = sortOrder * 3;
         if (cardCircle != null) cardCircle.sortingOrder = sortOrder * 3 + 1;
         if (healthbarSprite != null) healthbarSprite.sortingOrder = sortOrder * 3 + 2;
@@ -107,7 +111,7 @@ public class Enemy : RegularUpdater {
         aliveToken = orderedEnemies.Add(this);
         HP = maxHP;
         queuedDamage = 0;
-        Vulnerable = true;
+        Vulnerable = Vulnerability.VULNERABLE;
         hpPB = new MaterialPropertyBlock();
         distortPB = new MaterialPropertyBlock();
         scPB = new MaterialPropertyBlock();
@@ -135,6 +139,7 @@ public class Enemy : RegularUpdater {
             distorter.enabled = false;
         }
         if (spellCircle != null) {
+            spellTr = spellCircle.transform;
             spellCircle.GetPropertyBlock(scPB);
             scPB.SetFloat(PropConsts.time, 0f);
             scPB.SetFloat(PropConsts.radius, lastSpellCircleRadius);
@@ -148,6 +153,7 @@ public class Enemy : RegularUpdater {
         if (b.colors.cardColorR.a > 0 || b.colors.cardColorG.a > 0 || b.colors.cardColorB.a > 0) {
             RequestCardCircle(b.colors.cardColorR, b.colors.cardColorG, b.colors.cardColorB, b.Rotator);
         }
+        spellRotator = b.SpellRotator;
         SetSpellCircleColors(b.colors.spellColor1, b.colors.spellColor2, b.colors.spellColor3);
         if (cameraCrosshair != null) cameraCrosshair.color = b.colors.uiHPColor;
     }
@@ -210,14 +216,21 @@ public class Enemy : RegularUpdater {
     public float EffectiveBarRatio => divertHP?.to.EffectiveBarRatio ?? BarRatio;
     public float DisplayBarRatio => divertHP?.to.DisplayBarRatio ?? _displayBarRatio;
 
-    public Color HPColor => Color.Lerp(currPhase.color2, currPhase.color1, Mathf.Pow(_displayBarRatio, 1.5f));
+    //Approximation to make the max color appear earlier
+    private Color HPColor => currPhaseType == PhaseType.TIMEOUT ?
+            unfilledColor :
+            Color.Lerp(currPhase.color2, currPhase.color1, Mathf.Pow(_displayBarRatio, 1.5f));
+    public Color UIHPColor => currPhaseType == PhaseType.TIMEOUT ? Color.clear : HPColor;
     public override void RegularUpdate() {
         PollDamage();
         PollPhotoDamage();
+        if (--dmgLabelBuffer == 0 && labelAccDmg > 0) {
+            Beh.DropDropLabel(dmgGrad, $"{labelAccDmg:n0}");
+            labelAccDmg = 0;
+        }
         _displayBarRatio = Mathf.Lerp(_displayBarRatio, BarRatio, HPLerpRate * ETime.FRAME_TIME);
         if (healthbarSprite != null) {
             hpPB.SetFloat(PropConsts.fillRatio, DisplayBarRatio);
-            //Approximation to make the max color appear earlier
             hpPB.SetColor(PropConsts.fillColor, HPColor);
             hpPB.SetFloat(PropConsts.time, Beh.rBPI.t);
             healthbarSprite.SetPropertyBlock(hpPB);
@@ -233,6 +246,7 @@ public class Enemy : RegularUpdater {
             cardtr.localEulerAngles = rt;
         }
         if (spellCircle != null) {
+            spellTr.localEulerAngles = spellRotator(Beh.rBPI);
             scPB.SetFloat(PropConsts.time, Beh.rBPI.t);
             if (spellCircleCancel.Cancelled) {
                 float baseT = Beh.rBPI.t;
@@ -256,7 +270,7 @@ public class Enemy : RegularUpdater {
         orderedEnemies.Compact();
         for (int ii = 0; ii < orderedEnemies.Count; ++ii) {
             var enemy = orderedEnemies[ii];
-            if (LocationService.OnPlayableScreenBy(0.5f, enemy.Beh.GlobalPosition())) {
+            if (LocationService.OnPlayableScreen(enemy.Beh.GlobalPosition()) && enemy.Vulnerable.HitsLand()) {
                 frozenEnemies.Add(new FrozenCollisionInfo(enemy));
             }
         }
@@ -282,7 +296,7 @@ public class Enemy : RegularUpdater {
             divertHP.Value.to.QueueDamage(dmg, firerLoc);
             return;
         }
-        if (!Vulnerable) return;
+        if (!Vulnerable.TakesDamage()) return;
         if (firerLoc.Try(out var floc)) {
             float dstToFirer = (floc - Beh.rBPI.loc).magnitude;
             float shotgun = (SHOTGUN_MIN - dstToFirer) / (SHOTGUN_MIN - SHOTGUN_MAX);
@@ -295,16 +309,28 @@ public class Enemy : RegularUpdater {
     private void PollDamage() {
         if (queuedDamage < 1) return;
         HP = M.Clamp(0f, maxHP, HP - queuedDamage);
+        labelAccDmg += (long)queuedDamage;
+        if (dmgLabelBuffer <= 0) dmgLabelBuffer = DMG_LABEL_BUFFER;
         queuedDamage = 0;
         if (HP <= 0) {
             Beh.OutOfHP();
-            Vulnerable = false; //Wait for new hp value to be declared
+            Vulnerable = Vulnerability.NO_DAMAGE; //Wait for new hp value to be declared
         } else if (modifyDamageSound) {
             if ((float) HP / maxHP < LOW_HP_THRESHOLD) {
                 Counter.AlertLowEnemyHP();
             }
         }
     }
+    
+    
+    private long labelAccDmg = 0;
+    private int dmgLabelBuffer = -1;
+    private const int DMG_LABEL_BUFFER = 30;
+    
+    private static readonly IGradient dmgGrad = ColorHelpers.FromKeys(new[] {
+        new GradientColorKey(new Color32(255, 10, 138, 255), 0.1f), 
+        new GradientColorKey(new Color32(240, 0, 52, 255), 0.8f), 
+    }, DropLabel.defaultAlpha);
 
     private void PollPhotoDamage() {
         if (queuedPhotoDamage < 1) return;
@@ -313,7 +339,7 @@ public class Enemy : RegularUpdater {
         queuedPhotoDamage = 0;
         if (PhotoHP == 0) {
             Beh.OutOfHP();
-            Vulnerable = false;
+            Vulnerable = Vulnerability.NO_DAMAGE;
         }
     }
 
@@ -327,15 +353,15 @@ public class Enemy : RegularUpdater {
         PhotosTaken = 0;
     }
 
-    public void SetDamageable(bool isDamageable) {
-        Vulnerable = isDamageable;
-    }
+    public void SetVulnerable(Vulnerability v) => Vulnerable = v;
 
     private Color2 currPhase;
+    private PhaseType? currPhaseType = null;
     private Color2 CardToColor(PhaseType st) {
         return st.IsSpell() ? spellColor : nonspellColor;
     }
     private void SetHPBarColors(PhaseType st) {
+        currPhaseType = st;
         currPhase = CardToColor(st);
         hpPB.SetColor(PropConsts.R2NColor, CardToColor(st.Invert()).color1);
         hpPB.SetFloat(PropConsts.R2CPhaseStart, healthbarStart + healthbarSize);
@@ -370,7 +396,8 @@ public class Enemy : RegularUpdater {
 
     public void ProcOnHit(EffectStrategy effect, Vector2 hitLoc) => effect.Proc(hitLoc, Beh.GlobalPosition(), collisionRadius);
 
-    private bool ViewfinderHits(CRect viewfinder) => Collision.CircleInRect(Beh.rBPI.loc, ayaCameraRadius, viewfinder);
+    private bool ViewfinderHits(CRect viewfinder) => 
+        Collision.CircleInRect(Beh.rBPI.loc, ayaCameraRadius, viewfinder) && Vulnerable.TakesDamage();
     public void ShowCrosshairIfViewfinderHits(CRect viewfinder) {
         if (cameraCrosshair != null) {
             cameraCrosshair.enabled = ViewfinderHits(viewfinder);
@@ -382,7 +409,7 @@ public class Enemy : RegularUpdater {
     }
     public bool FireViewfinder(CRect viewfinder) {
         HideViewfinderCrosshair();
-        if (ViewfinderHits(viewfinder) && Vulnerable) {
+        if (ViewfinderHits(viewfinder)) {
             queuedPhotoDamage += 1;
             return true;
         } else return false;
@@ -423,7 +450,7 @@ public class Enemy : RegularUpdater {
         position = default;
         float lastDist = 0f;
         foreach (var e in frozenEnemies) {
-            if (e.Active) {
+            if (e.Active && LocationService.OnPlayableScreen(e.pos)) {
                 var dst = (e.pos.x - source.x) * (e.pos.x - source.x) + (e.pos.y - source.y) * (e.pos.y - source.x);
                 if (!found || dst < lastDist) {
                     lastDist = dst;
@@ -447,7 +474,7 @@ public class Enemy : RegularUpdater {
         enemy = default;
         float lastDist = 0f;
         foreach (var e in frozenEnemies) {
-            if (e.Active) {
+            if (e.Active && LocationService.OnPlayableScreen(e.pos)) {
                 var dst = (e.pos.x - source.x) * (e.pos.x - source.x) + (e.pos.y - source.y) * (e.pos.y - source.x);
                 if (!found || dst < lastDist) {
                     lastDist = dst;

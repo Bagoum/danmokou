@@ -5,7 +5,7 @@ If you're not sure what's going on, head on over to the [What Is Danmokou?](arti
 
 The setup guide is [here](articles/setup.md) and the first tutorial is [here](articles/t01.md).
 
-![Danmokou_4tf92tmfkn](images/Danmokou_4tf92tmfkn.jpg)
+![Danmokou_4tf92tmfkn](images/Unity_voPATAKULN.jpg)
 
 (Screenshot from [Spirits in Memetic Paradise](https://www.bulletforge.org/u/bagoum/p/dong-fang-yin-yang-zang-spirits-in-memetic-paradise))
 

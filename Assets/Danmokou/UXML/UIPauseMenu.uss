@@ -4,9 +4,9 @@
     right: 0;
     width: 1200px;
     height: 1984px;
-    background-image: url('/Assets/Danmokou/Sprites/BGPatterns/nasa/PIA07841~medium-red.jpg');
+    background-image: url('/Assets/Danmokou/Sprites/util/1u-square.jpg');
     -unity-background-scale-mode: scale-and-crop;
-    -unity-background-image-tint-color: rgba(91, 91, 91, 0.76);
+    -unity-background-image-tint-color: rgba(0, 0, 0, 0.75);
     border-left-color: rgb(255, 255, 255);
     border-left-width: 8px;
     background-color: rgba(0, 0, 0, 0);
@@ -73,8 +73,8 @@
 }
 
 #UIContainer {
-    margin-left: 100px;
-    margin-right: 100px;
+    margin-left: 50px;
+    margin-right: 80px;
     flex-grow: 1;
 }
 

@@ -19,7 +19,11 @@ public static class RNG {
         rand = new Random(seed);
     }
 
+    public static bool RNG_ALLOWED = true;
     private static void RNGGuard() {
+        if (!RNG_ALLOWED) {
+            throw new Exception("You are invoking random functions either outside of the regular update loop, or in parallelized pather movement code. This will desync replays and/or cause the random generation to fail.");
+        }
         if (GameStateManager.IsLoadingOrPaused && !SceneIntermediary.LOADING) {
             Log.Unity("You are invoking random functions while replay data is not being saved. " +
                       "This will desync replays.", true, Log.Level.WARNING);
@@ -49,7 +53,7 @@ public static class RNG {
     public static int GetInt(int low, int high) => GetInt(low, high, rand);
     public static int GetIntOffFrame(int low, int high) => GetInt(low, high, offFrame);
     private static float GetFloat(float low, float high, Random r) {
-        return low + (high - low) * r.Next() / int.MaxValue;
+        return low + (high - low) * (float)r.NextDouble();
     }
 
     public static float GetFloat(float low, float high) {
@@ -63,6 +67,11 @@ public static class RNG {
     private static readonly ExFunction getFloat = ExUtils.Wrap(typeof(RNG), "GetFloat", new[] {typeof(float), typeof(float)});
     public static Expression GetFloat(Expression low, Expression high) => getFloat.Of(low, high);
     public static float GetFloatOffFrame(float low, float high) => GetFloat(low, high, offFrame);
+    public static Vector3 GetV3OffFrame(Vector3 low, Vector3 high) => new Vector3(
+            GetFloatOffFrame(low.x, high.x),
+            GetFloatOffFrame(low.y, high.y),
+            GetFloatOffFrame(low.z, high.z)
+        );
     [UsedImplicitly]
     public static float GetSeededFloat(float low, float high, uint seedv) {
         return low + (high - low) * Rehash(seedv) / uint.MaxValue;
@@ -87,4 +96,6 @@ public static class RNG {
     }
 
     public static string RandStringOffFrame(int len = 16) => _RandString(offFrame, len);
+
+    public static T RandSelectOffFrame<T>(T[] arr) => arr[GetIntOffFrame(0, arr.Length)];
 }

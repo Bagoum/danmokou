@@ -1,19 +1,29 @@
 .node {
-    font-size: 120px;
+    font-size: 85px;
     background-color: rgba(0, 0, 0, 0);
     -unity-font: url('/Assets/Danmokou/Fonts/Odibee-YoZ Joint.ttf');
     color: rgb(255, 255, 255);
-    background-image: url('/Assets/Danmokou/Sprites/util/underline.png');
+    background-image: none;
     width: 100%;
-    -unity-text-align: upper-center;
+    -unity-text-align: upper-left;
     padding-right: 0;
     padding-left: 0;
     white-space: normal;
     margin-top: 4px;
     margin-bottom: 4px;
+    flex-direction: row;
+    align-items: center;
 }
 
-.node.monospace, .node.monospace .text {
+.hide {
+    display: none;
+}
+
+.node.monospace {
+    -unity-font: url('/Assets/Danmokou/Fonts/Monoid/Monoid-Regular.ttf');
+}
+
+.node.monospace .text {
     -unity-font: url('/Assets/Danmokou/Fonts/Monoid/Monoid-Regular.ttf');
 }
 
@@ -25,22 +35,8 @@
 .node .text {
     color: rgb(255, 255, 255);
     white-space: normal;
-}
-
-.node.node100 {
-    font-size: 100px;
-}
-
-.node.node100 .text {
-    font-size: 100px;
-}
-
-.node.large {
-    font-size: 140px;
-}
-
-.node.larger .text {
-    font-size: 140px;
+    flex-grow: 0;
+    flex-shrink: 1;
 }
 
 .node.invisible {
@@ -52,7 +48,7 @@
 }
 
 .node.visible {
-    color: rgb(125, 125, 125);
+    color: rgb(150, 150, 150);
 }
 
 .node.disabled.group {
@@ -68,7 +64,7 @@
 }
 
 .node.visible .text {
-    color: rgb(125, 125, 125);
+    color: rgb(150, 150, 150);
 }
 
 .node.disabled.group .text {
@@ -119,16 +115,20 @@
     -unity-background-image-tint-color: rgb(100, 100, 100);
 }
 
-.node.small {
-    font-size: 80px;
-}
-.node.small3 {
-    font-size: 50px;
+.node.large1 {
+    font-size: 100px;
 }
 
-.node.descriptor {
-    -unity-background-image-tint-color: rgba(26, 26, 26, 0);
-    min-height: 800px;
+.node.small1 {
+    font-size: 70px;
+}
+
+.node.small2 {
+    font-size: 55px;
+}
+
+.node.small3 {
+    font-size: 42px;
 }
 
 .node.empty {
@@ -200,4 +200,64 @@
 }
 
 .node {
+}
+
+.prefix {
+    width: 100px;
+    margin-right: 20px;
+    height: 100%;
+    -unity-background-scale-mode: scale-to-fit;
+    opacity: 0;
+    flex-shrink: 0;
+}
+
+.pointer {
+    background-image: url('/Assets/Danmokou/Sprites/UI/ui arrow.png');
+}
+
+.node.focus .pointer {
+    opacity: 1;
+}
+
+.node.unchecked .checkmark {
+    display: flex;
+}
+
+.node.checked .checkmark {
+    opacity: 1;
+    display: flex;
+}
+
+.node.small1 .prefix {
+    width: 80px;
+}
+
+.node.small2 .prefix {
+    width: 65px;
+}
+
+.centertext {
+    -unity-text-align: upper-center;
+}
+
+.node .coretext {
+    flex-grow: 1;
+}
+
+.node.descriptor {
+    min-height: 1500px;
+    -unity-text-align: upper-left;
+}
+
+.node.descriptor.visible {
+    color: rgb(240, 240, 240);
+}
+
+.node.descriptor.visible .text {
+    color: rgb(240, 240, 240);
+}
+
+.checkmark {
+    background-image: url('/Assets/Danmokou/Sprites/UI/bomb-full-2.png');
+    display: none;
 }

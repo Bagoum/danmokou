@@ -1,5 +1,4 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
-    <ui:VisualElement name="UIContainer">
-        <Style src="UIFullScreenMenu.uss" />
-    </ui:VisualElement>
+    <Style src="UIFullScreenMenu.uss" />
+    <ui:VisualElement name="UIContainer" />
 </ui:UXML>

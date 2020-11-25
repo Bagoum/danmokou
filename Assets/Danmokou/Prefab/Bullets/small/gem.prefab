@@ -60,9 +60,9 @@ MonoBehaviour:
     FlatColor: 0
     Color: 1
     WideColor: 0
-    FlatDark: 1
+    FlatDark: 0
     Dark: 0
-    WideDark: 0
+    WideDark: 1
     Full: 0
     Inverted: 0
     FullInvertedAsLightDark: 0
@@ -81,6 +81,7 @@ MonoBehaviour:
     framesPerSecond: 0
   gradients: []
   spriteSpecificGradients: []
+  identicalForms: []
   TTL: 0
   timeRandomization: 0
   rotateRandomization: 0

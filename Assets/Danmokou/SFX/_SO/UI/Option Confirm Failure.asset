@@ -14,5 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   defaultName: opt-failure
   clip: {fileID: 8300000, guid: 081599cc8d912ac4db3143426bf53132, type: 3}
-  volume: 0.1
+  volume: 0.14
   timeout: 0
+  pausable: 0
+  loop: 0
+  loopTimeCheck: 0
+  pitch: 1
+  priority: -1
+  feature: 0

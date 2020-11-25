@@ -35,6 +35,7 @@ public static partial class Reflector {
         {typeof(ExBPY), "BPY"},
         {typeof(ExTP), "TP"},
         {typeof(ExTP3), "TP3"},
+        {typeof(ExVTP), "VTP"},
         {typeof(ExBPRV2), "BPRV2"},
         {typeof(ExPred), "Predicate"},
         {typeof(ExSBPred), "SB Predicate"},

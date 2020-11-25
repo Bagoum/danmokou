@@ -456,6 +456,8 @@ public static partial class ExM {
     /// </summary>
     public static tfloat PhotosTaken(BEHPointer beh) => BehaviorEntity.photosTaken.Of(ExC(beh));
 
+    public static tfloat PlayerTimeFree() => PlayerInput.timeFree;
+    public static tfloat PlayerTimeFocus() => PlayerInput.timeFocus;
     public static tfloat PlayerFiringTimeFree() => PlayerInput.firingTimeFree;
     public static tfloat PlayerFiringTimeFocus() => PlayerInput.firingTimeFocus;
     public static tfloat PlayerFiringTime() => PlayerInput.firingTime;
@@ -464,14 +466,7 @@ public static partial class ExM {
     public static tfloat PlayerUnFiringTime() => PlayerInput.unfiringTime;
     public static tfloat PlayerSubshot() => PlayerInput.subshotValue;
 
-    public static tfloat LerpFreeToFocus(efloat over) => EEx.Resolve(over, x =>
-        Clamp01(Ex.Condition(
-            PlayerFiringTimeFocus().GT0(), 
-            PlayerFiringTimeFocus().Div(x),
-            Ex.Condition(PlayerFiringTime().GT(PlayerFiringTimeFree()),
-                E1.Sub(PlayerFiringTimeFree().Div(x)), E0)
-        ))
-    );
+    public static tfloat LerpFreeToFocus(tfloat over) => Clamp01(PlayerTimeFocus().Div(over));
     public static tv2 PlayerPastPosition(tfloat ago) => PlayerInput.pastPosition.Of(ago);
     public static tv2 PlayerMarisaAPosition(tfloat ago) => PlayerInput.marisaAPosition.Of(ago);
     public static tv2 PlayerPastDirection(tfloat ago) => PlayerInput.pastDirection.Of(ago);

@@ -4,17 +4,19 @@ Welcome to the website for **Danmokou** (DMK), a free and open source bullet hel
 
 DMK allows you to efficiently create games that look something like this:
 
-![image1](../images/Danmokou_Gbn8TIOqvs.jpg)
+![image1](../images/Unity_voPATAKULN.jpg)
 
 (Screenshot from [Spirits in Memetic Paradise](https://www.bulletforge.org/u/bagoum/p/dong-fang-yin-yang-zang-spirits-in-memetic-paradise))
+
+![Unity_dTItUZvSOf](../images/Unity_dTItUZvSOf.jpg)
+
+(Screenshot from [Fantastic Poetry Festival](https://bagoum.itch.io/fantastic-poetry-festival) with the secret photo-capable build)
 
 ![Unity_cPqgj6VYwv](../images/Unity_cPqgj6VYwv.jpg)
 
 (Screenshot from [Oops! All BoWaP](https://www.bulletforge.org/u/bagoum/p/oops-all-bowap))
 
-![Danmokou_VJafl6MVNA](../images/Danmokou_VJafl6MVNA.jpg)
 
-(Screenshot from [Fantastic Poetry Festival](https://bagoum.itch.io/fantastic-poetry-festival))
 
 Of the bullet hell engines you might find, Danmokou is one of the fastest, supporting over **100,000 projectiles at 4k 120 FPS**. Other engines will give you somewhere between 5,000 and 30,000 bullets at a lower resolution and framerate. It is also one of the most efficient for development with features such as instantaneous script recompilation. 
 
@@ -28,7 +30,7 @@ Here is a (not entirely complete) feature list for DMK:
 - Built-in architecture for challenge-based scene games
 - Efficient compiled scripting language with the same interfaces as C#
 - Instantaneous runtime script recompilation
-- Replay support
+- Replay, spell history, high score support
 - Dialogue engine with Ace Attorney-style text unrolling
 - Script analysis and practice architecture
 - Curved lasers, curvy lasers, and wavy lasers (yes, they're all different)

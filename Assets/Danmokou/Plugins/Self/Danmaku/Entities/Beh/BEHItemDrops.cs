@@ -3,6 +3,14 @@ using DMath;
 
 namespace Danmaku {
 public partial class BehaviorEntity {
+    
+
+    private const float LABEL_RAD = 0.67f;
+    public void DropDropLabel(IGradient color, string text, float speed=0.4f, float ttl=0.7f) {
+        var req = new LabelRequestContext(bpi.loc, LABEL_RAD, speed, RNG.GetFloatOffFrame(40, 140), ttl, color, text);
+        ItemPooler.RequestLabel(req);
+    }
+    
     private static void DropEvenly(Enums.ItemType t, Vector2 baseLoc, int count, bool autocollect, float r, float a0) {
         for (int ii = 0; ii < count; ++ii) {
             ItemPooler.RequestItem(new ItemRequestContext(baseLoc, r * M.CosSinDeg(a0 + ii * 360f / count)), t)

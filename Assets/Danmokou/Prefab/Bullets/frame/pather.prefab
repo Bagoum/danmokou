@@ -48,7 +48,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorScript: {fileID: 0}
   ID: 
-  rotationMethod: 0
   deathEffect: {fileID: 0}
   cullableRadius:
     cullable: 0
@@ -57,22 +56,11 @@ MonoBehaviour:
     collisionRadius: 0
     CollisionActiveOnInit: 1
     destructible: 0
-    grazeEveryFrames: 20
-  animate:
-    method: 0
-    LRRelation: 0
-    UDRelation: 0
-    frames:
-      idleAnim: []
-      rightAnim: []
-      leftAnim: []
-      upAnim: []
-      downAnim: []
-      attackAnim: []
-      deathAnim: []
+    grazeEveryFrames: 30
+  displayer: {fileID: 0}
   material: {fileID: 2100000, guid: 5458891e477bea5438b857b92a28ba0c, type: 2}
   renderPriority: 1200
-  sprite: {fileID: 21300000, guid: 71d21815ace21f4409927db4cf5ec658, type: 3}
+  sprite: {fileID: 0}
   fadeInTime: 0
   cycleSpeed: 0
   renderMode: 0
@@ -98,6 +86,16 @@ MonoBehaviour:
     FullInvertedAsLightDark: 0
     TwoPaletteColorings: 0
   gradients: []
+  frames:
+  - s: {fileID: 21300000, guid: 71d21815ace21f4409927db4cf5ec658, type: 3}
+    time: 1
+    collisionActive: 1
+    yscale: 1
+  coldFrame: 0
+  hotFrame: 0
+  repeat: 1
+  animateCold: 0
+  countPostHotColdFrames: 0
   config:
     sortingLayer: Projectile
     playerSortingLayer: PlayerProjectile

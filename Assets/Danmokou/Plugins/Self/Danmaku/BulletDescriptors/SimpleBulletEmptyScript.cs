@@ -68,6 +68,13 @@ public class SimpleBulletEmptyScript : MonoBehaviour {
         public Sprite sprite;
     }
 
+    [Serializable]
+    public struct IdenticalForm {
+        public string name;
+        public Sprite sprite;
+        public int renderOffset;
+    }
+
     public enum DisplacementMethod {
         NORMAL = 0,
         POLAR = 1,
@@ -125,6 +132,7 @@ public class SimpleBulletEmptyScript : MonoBehaviour {
     public BulletManager.GradientVariant[] gradients;
     [Tooltip("Specific gradients for unique sprites; eg. spellcard")]
     public SpriteSpecificGradient[] spriteSpecificGradients;
+    public IdenticalForm[] identicalForms;
     [Header("Cull Bullets Only")] [Tooltip("Set zero if not dummy")]
     public float TTL;
     [Tooltip("[0,x]")] public float timeRandomization;

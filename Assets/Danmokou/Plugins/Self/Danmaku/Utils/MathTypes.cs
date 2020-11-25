@@ -1,5 +1,7 @@
 ﻿using Danmaku;
 using UnityEngine;
+using ExBPY = System.Func<DMath.TExPI, TEx<float>>;
+using ExTP = System.Func<DMath.TExPI, TEx<UnityEngine.Vector2>>;
 using ExVTP = System.Func<Danmaku.ITExVelocity, TEx<float>, DMath.TExPI, DMath.RTExV2, TEx<UnityEngine.Vector2>>;
 
 namespace DMath {
@@ -31,6 +33,9 @@ public readonly struct RootedVTP {
     }
 
     public RootedVTP(GCXF<Vector2> root, ExVTP path) : this(root, Compilers.GCXU(path)) { }
+
+    public RootedVTP(ExBPY x, ExBPY y, ExVTP path) : this(Parametrics.PXY(x, y), path) { }
+    public RootedVTP(ExTP root, ExVTP path) : this(Compilers.GCXF(root), Compilers.GCXU(path)) { }
     public RootedVTP(float x, float y, ExVTP path) : this(_ => new Vector2(x, y), path) { }
 }
 

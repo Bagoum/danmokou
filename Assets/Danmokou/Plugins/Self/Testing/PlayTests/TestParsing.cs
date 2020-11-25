@@ -97,7 +97,7 @@ noop") as PhaseSM).TField<PhaseProperties>("props");
         AreEqual(ResourceManager.GetBackgroundTransition("wipetex1"), props.BgTransitionIn);
         AreEqual(ResourceManager.GetBackgroundTransition("shatter4"), props.BgTransitionOut);
         AreEqual(ResourceManager.GetBackground("black"), props.Background);
-        AreEqual(false, props.hideTimeout);
+        AreEqual(false, props.HideTimeout);
         var r = Events.Event0.Find("evRight");
         var l = Events.Event0.Find("evLeft");
         AreEqual(l.TField<DMCompactingArray<Action>>("callbacks").arr[0], r.TField<DeletionMarker<Action>>("refractor"));

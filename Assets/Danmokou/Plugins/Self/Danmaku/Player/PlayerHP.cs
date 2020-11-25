@@ -61,13 +61,13 @@ public class PlayerHP : CoroutineRegularUpdater {
     }
 
     public void Graze(int graze) {
-        if (graze <= 0) return;
+        if (graze <= 0 || invulnerabilityCounter > 0) return;
         GameManagement.campaign.AddGraze(graze);
     }
 
     private void _DoHit(int dmg) {
         GameManagement.campaign.AddLives(-dmg);
-        RaikoCamera.ShakeExtra(2, 1f);
+        RaikoCamera.ShakeExtra(1.5f, 0.8f);
         Invuln(hitInvulnFrames);
         if (RespawnOnHit) input.RequestNextState(PlayerInput.PlayerState.RESPAWN);
         else input.InvokeParentedTimedEffect(OnHitEffect, hitInvuln);
@@ -76,8 +76,10 @@ public class PlayerHP : CoroutineRegularUpdater {
     private IEnumerator WaitDeathbomb(int dmg) {
         bool didDeathbomb = false;
         int frames = input.OpenDeathbombWindow(() => didDeathbomb = true);
-        Log.Unity($"The player has {frames} frames to deathbomb", level: Log.Level.DEBUG2);
-        if (frames > 0) OnPreHitEffect.Proc(tr.position, tr.position, 1f);
+        if (frames > 0) {
+            Log.Unity($"The player has {frames} frames to deathbomb", level: Log.Level.DEBUG2);
+            OnPreHitEffect.Proc(tr.position, tr.position, 1f);
+        }
         while (frames-- > 0) yield return null;
         input.CloseDeathbombWindow();
         if (!didDeathbomb) _DoHit(dmg);

@@ -1,9 +1,6 @@
 .vs
 .idea
 Library/*
-!Library/CurrentLayout.dwlt
-!Library/CurrentLayout-default.dwlt
-!Library/CurrentMaximizeLayout.dwlt
 Logs
 Temp
 obj
@@ -35,3 +32,5 @@ docs/images
 
 # these are compiled from the FS project
 # Assets/Plugins/Self/Core/FS/*.dll
+
+Assets/PCG

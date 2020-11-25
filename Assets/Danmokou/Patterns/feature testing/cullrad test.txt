@@ -2,20 +2,33 @@ pattern { }
 phase 0
 	action block 0
 		shift-phase-to 1
+<!> type non `hello`
 phase 0
-	end
-		clear phase
     action block 0
         position 0 0
 		pool-control gem-red/w allowcull false
+		behpool-control pather-red/w allowcull false
 		pool-control gem-purple/w cullrad 20
 		##This stays normally
 		sync gem-red/w <3;:5> gsr2 36 <10> . s null
-		##These get culled normally
+		sync pather-red/w <> gsr2c 2 { 
+		} pather 2 2 polar(2.7, 40 * t) { }
+		##This gets culled normally
 		sync gem-purple/w <40;:> gsr2 36 <10> . s null
-		##These two remain until "clear phase" is triggered, then get culled
+		sync pather-purple/w <> gsr2c 2 {
+		} pather 2 2 polar(36, 30 * t) { }
+		##This stays
 		sync gem-purple/w <20;:> gsr2 36 <10> . s null
+		##This gets culled after seven seconds
 		sync gem-red/w <20;:5> gsr2 36 <10> . s null
+		sync pather-red/w <> gsr2c 2 {
+		} pather 2 2 polar(21, 35 * t) { }
+		
+		_ 7
+			pool-control gem-red/w allowcull true ##or reset
+		_ 7
+			behpool-control pather-red/w allowcull true ##or reset
+		
 phase 0
 	action block 0
         position 0 1

@@ -8,13 +8,36 @@ To get the newest version from git, run:
 
 `git submodule update` (if you have made modifications to the submodules, you will need to `pull --rebase` them individually)
 
+# [Unreleased] v5.1.0 (target: 2020/12/25)
+
+- Player team switching
+
+# v5.0.0 (2020/11/24)
+
+- Spirits in Memetic Paradise v3 released!
+- All submodules rewritten with TH viewport; wide viewport deprecated
+- Variant sidebars for Touhou-size viewport
+- Granular custom difficulty modifiers with menu support
+- UI nodes now use pointers for selection instead of underlining
+- Fancy difficulty select menu
+- Improvements to player select menu
+- UI screens now slide when enabled/disabled/switched
+- High score display window
+- Spell history
+- Separated BehaviorEntity display handling into DisplayController class; added y-transform breathing modification
+- Player bullet controls (experimental)
+- Cancellation-bounded bullet controls
+- Partial game scores and continued replays
+- Bugfixes for nested summons and controls over summons
+
 # v4.2.0 (2020/10/18)
 
 - Piecewise dialogue sprites
-- Touhou-like viewport structure (see `Miniprojects/Scenes/Working Scene (TH)`), see 
+- Touhou-like viewport structure (see `Miniprojects/Scenes/Working Scene (TH)`)
 - Persistent backgrounds
 - Traditional Touhou delay effects
 - Miscellaneous bugfixes for replays and photo games
+- Improved architecture for recording scene-game completion
 
 # v4.1.0 (2020/10/16)
 
@@ -24,8 +47,8 @@ To get the newest version from git, run:
 - Replay optimizations
 - Architecture upgrades for collision
 - Minor updates to WebGL demo
-- Basic implementation of player teams and player switching (to complete in 4.2.0)
-- Basic implementation of extra difficulty modifiers, eg. bullet speed multiplier (to complete in 4.2.0)
+- Basic implementation of player teams and player switching (to complete in 4.4.0)
+- Basic implementation of extra difficulty modifiers, eg. bullet speed multiplier (to complete in 4.3.0)
 
 # v4.0.0 (2020/10/04)
 

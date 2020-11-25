@@ -40,6 +40,7 @@ public class GTRepeat : UniversalSM {
         public SMExecutionTracker(GenCtxProperties<StateMachine> props, SMHandoff smh, out bool isClipped) {
             looper = new LoopControl<StateMachine>(props, smh.ch, out isClipped);
             this.smh = smh;
+            this.smh.CanPrepend = true;
             waitChild = props.waitChild;
             sequential = props.sequential;
             checkIsChildDone = null;

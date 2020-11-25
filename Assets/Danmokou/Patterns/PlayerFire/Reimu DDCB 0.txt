@@ -3,7 +3,7 @@ gtr {
 	wait-child
 } fire
 	## free fire
-	async reimuamulet-red <> gcrepeat { 
+	async amuletdd-red <> gcrepeat { 
 		wait(8)
 		times(_)
 		sfx(x-pc-fire-1)
@@ -17,7 +17,7 @@ gtr {
 	## free cancellation
 	noop
 	## focus
-	async reimuamulet-red <> gcrepeat { 
+	async amuletdd-red <> gcrepeat { 
 		wait(8)
 		times(_)
 		sfx(x-pc-fire-1)

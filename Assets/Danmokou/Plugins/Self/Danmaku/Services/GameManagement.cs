@@ -14,13 +14,12 @@ using static SM.SMAnalysis;
 using GameLowRequest = DU<Danmaku.CampaignRequest, Danmaku.BossPracticeRequest, 
     PhaseChallengeRequest, Danmaku.StagePracticeRequest>;
 
-public struct CampaignData {
+public class CampaignData {
     public static bool PowerMechanicEnabled { get; } = false;
-    public static bool MeterMechanicEnabled { get; } = true;
     private static int StartLives(CampaignMode mode) {
         if (mode == CampaignMode.MAIN || mode == CampaignMode.TUTORIAL || mode == CampaignMode.STAGE_PRACTICE) return 7;
         else if (mode.OneLife()) return 1;
-        else if (mode == CampaignMode.NULL) return 7;
+        else if (mode == CampaignMode.NULL) return 14;
         else return 1;
     }
 
@@ -35,6 +34,13 @@ public struct CampaignData {
         else if (shot != null) return M.Clamp(powerMin, powerMax, shot.defaultPower);
         else return M.Clamp(powerMin, powerMax, powerDefault);
     }
+
+    private static double StartMeter(CampaignMode mode) {
+        if (mode.IsOneCard()) return 0;
+        return 0.7;
+    }
+
+    public DifficultySettings Difficulty { get; }
     
     private const int defltContinues = 42;
     public const long valueItemPoints = 3142;
@@ -66,34 +72,35 @@ public struct CampaignData {
     private double EffectivePIV => PIV + 0.01 * (long)(Graze / 42);
     private const double pivPerPPP = 0.01;
     public const double pivFallStep = 0.1;
-    public double PIVDecay { get; private set; }
-    private double pivDecayLenience;
-    public double UIVisiblePIVDecayLenienceRatio { get; private set; }
-    private const double pivDecayRate = 0.13;
-    private double pivDecayRateMultiplier;
-    private const double pivDecayRateMultiplierBoss = 0.666;
-    private const double pivDecayLenienceFall = 5;
-    private const double pivDecayLenienceValue = 0.5;
-    private const double pivDecayLeniencePointPP = 0.7;
-    private const double pivDecayLenienceGraze = 0.4;
-    private const double pivDecayLenienceEnemyDestroy = 0.2;
-    private const double pivDecayBoostValue = 0.014;
-    private const double pivDecayBoostPointPP = 0.36;
-    private const double pivDecayBoostGraze = 0.03;
+    public double Faith { get; private set; }
+    private double faithLenience;
+    public double UIVisibleFaithDecayLenienceRatio { get; private set; }
+    private const double faithDecayRate = 0.14;
+    private double faithDecayRateMultiplier;
+    private const double faithDecayRateMultiplierBoss = 0.666;
+    private const double faithLenienceFall = 5;
+    private const double faithLenienceValue = 0.2;
+    private const double faithLeniencePointPP = 0.3;
+    private double FaithLenienceGraze => M.Lerp(0, 3, Difficulty.Counter, 0.4, 0.3);
+    private const double faithLenienceEnemyDestroy = 0.1;
+    private const double faithBoostValue = 0.02;
+    private const double faithBoostPointPP = 0.09;
+    private double FaithBoostGraze => M.Lerp(0, 3, Difficulty.Counter, 0.03, 0.02);
     
-    private const double pivDecayLeniencePhase = 4;
+    private const double faithLeniencePhase = 4;
     
-    public double Meter { get; private set; } 
-    private const double meterBoostGraze = 0.008;
+    public double Meter { get; private set; }
+    public bool EnoughMeterToUse => Meter >= meterUseThreshold;
+    private double MeterBoostGraze => M.Lerp(0, 3, Difficulty.Counter, 0.006, 0.004);
     private const double meterBoostGem = 0.02;
-    private const double meterRefillRate = 0.015;
-    private const double meterUseRate = 0.25;
-    public const double meterUseThreshold = 0.4;
-    private const double meterUseInstantCost = 0.03;
+    private const double meterRefillRate = 0.002;
+    private const double meterUseRate = 0.314;
+    public const double meterUseThreshold = 0.42;
+    private const double meterUseInstantCost = 0.042;
     
     public bool MeterInUse { get; set; }
     private double MeterPivPerPPPMultiplier => MeterInUse ? 2 : 1;
-    private double MeterScorePerValueMultiplier => MeterInUse ? 1.69 : 1;
+    private double MeterScorePerValueMultiplier => MeterInUse ? 2 : 1;
     
     public bool Reloaded { get; set; }
     
@@ -102,6 +109,7 @@ public struct CampaignData {
     public int EnemiesDestroyed { get; private set; }
 
     private int nextScoreLifeIndex;
+    public long? NextScoreLife => mode.OneLife() ? null : scoreLives.TryN(nextScoreLifeIndex);
     private int nextItemLifeIndex;
     public readonly CampaignMode mode;
     public bool Continued { get; private set; }
@@ -109,20 +117,21 @@ public struct CampaignData {
     [CanBeNull] public PlayerConfig Player => team.Player;
     [CanBeNull] public ShotConfig Shot => team.Shot;
     public Subshot Subshot => team.Subshot;
-
+    public string MultishotString => (Shot != null && Shot.isMultiShot) ? Subshot.Describe() : "";
     public void SetSubshot(Subshot newSubshot) {
         team.Subshot = newSubshot;
+        UIManager.UpdatePlayerUI();
     }
-    
+    //This uses boss key instead of boss index since phaseSM doesn't have trivial access to boss index
+    public List<CardHistory> CardCaptures { get; }
+
     //TODO: this can cause problems if multiple phases are declared lenient at the same time, but that's not a current use case
     public bool Lenience { get; set; }
-    [CanBeNull] public BehaviorEntity ExecutingBoss { get; set; }
+    [CanBeNull] public BehaviorEntity ExecutingBoss { get; private set; }
 
     private static readonly long[] scoreLives = {
-         1000000,
          2000000,
          5000000,
-         7500000,
         10000000,
         15000000,
         20000000,
@@ -130,59 +139,74 @@ public struct CampaignData {
         30000000,
         40000000,
         50000000,
+        60000000,
         70000000,
-        100000000,
-        long.MaxValue
+        80000000,
+        100000000
     };
     private static readonly int[] pointLives = {
         69,
         141,
+        224,
         314,
         420,
-        666,
-        999,
+        618,
+        840,
+        1084,
         1337,
-        1667,
+        1618,
         2048,
         2718,
         3142,
-        4200,
-        6666,
         9001,
         int.MaxValue
     };
 
-    private readonly CampaignConfig campaign;
+    /// <summary>
+    /// Only present for campaign-type games
+    /// </summary>
+    [CanBeNull] private readonly CampaignConfig campaign;
+    /// <summary>
+    /// Present for all games, including "null_campaign" default for unscoped games
+    /// </summary>
+    private readonly string campaignKey;
+    private readonly GameRequest? request;
 
     public CampaignData(CampaignMode mode, GameRequest? req = null, long? maxScore = null) {
+        this.request = req;
         this.mode = mode;
+        this.Difficulty = req?.metadata.difficulty ?? GameManagement.defaultDifficulty;
         this.MaxScore = maxScore ?? 9001;
         campaign = req?.lowerRequest.Resolve(cr => cr.campaign.campaign, _ => null, _ => null, _ => null);
+        campaignKey = req?.lowerRequest.Resolve(cr => cr.Key, b => b.boss.campaign.Key, s => s.Campaign.key,
+            s => s.stage.campaign.Key) ?? "null_campaign";
         team = req?.metadata.team ?? PlayerTeam.Empty;
         if (campaign != null) {
             Lives = campaign.startLives > 0 ? campaign.startLives : StartLives(mode);
         } else {
             Lives = StartLives(mode);
         }
+        Lives = Difficulty.startingLives ?? Lives;
         Bombs = StartBombs(mode);
         Power = StartPower(mode, team.Shot);
+        CardCaptures = new List<CardHistory>();
         this.Score = 0;
         this.PIV = 1;
-        Meter = 1;
+        Meter = StartMeter(mode);
         nextScoreLifeIndex = 0;
         nextItemLifeIndex = 0;
         remVisibleScoreLerpTime = 0;
         lastScore = 0;
         UIVisibleScore = 0;
         LifeItems = 0;
-        PIVDecay = 1f;
-        pivDecayLenience = 0f;
-        UIVisiblePIVDecayLenienceRatio = 0f;
+        Faith = 1f;
+        faithLenience = 0f;
+        UIVisibleFaithDecayLenienceRatio = 0f;
         Continues = mode.OneLife() ? 0 : defltContinues;
         Continued = false;
         Reloaded = false;
         HitsTaken = 0;
-        pivDecayRateMultiplier = 1f;
+        faithDecayRateMultiplier = 1f;
         EnemiesDestroyed = 0;
         Lenience = false;
         Graze = 0;
@@ -193,18 +217,20 @@ public struct CampaignData {
     public bool TryContinue() {
         if (Continues > 0) {
             Continued = true;
-            Replayer.Cancel();
+            //We can allow continues in replays! But in the current impl, the watcher will have to press continue.
+            //Replayer.Cancel();
             --Continues;
             Score = lastScore = UIVisibleScore = nextItemLifeIndex = nextScoreLifeIndex = LifeItems = 0;
+            CardCaptures.Clear(); //Partial game is saved when lives=0. Don't double on captures.
             PIV = 1;
-            Meter = 1;
+            Meter = StartMeter(mode);
             if (campaign != null) {
                 Lives = campaign.startLives > 0 ? campaign.startLives : StartLives(mode);
             } else {
                 Lives = StartLives(mode);
             }
             Bombs = StartBombs(mode);
-            remVisibleScoreLerpTime = PIVDecay = pivDecayLenience = 0;
+            remVisibleScoreLerpTime = Faith = faithLenience = 0;
             UIManager.UpdatePlayerUI();
             return true;
         } else return false;
@@ -222,10 +248,17 @@ public struct CampaignData {
         }
         return false;
     }
-    public void AddLives(int delta) {
+
+    public void SwapLifeScore(int score) {
+        AddLives(-1, false);
+        AddScore(score);
+        SFXService.SwapLifeForScore();
+        UIManager.UpdatePlayerUI();
+    }
+    public void AddLives(int delta, bool asHit = true) {
         //if (mode == CampaignMode.NULL) return;
         Log.Unity($"Adding player lives: {delta}");
-        if (delta < 0) {
+        if (delta < 0 && asHit) {
             ++HitsTaken;
             Bombs = Math.Max(Bombs, StartBombs(mode));
             AddPower(powerDeathLoss);
@@ -233,22 +266,38 @@ public struct CampaignData {
         }
         if (delta < 0 && mode.OneLife()) Lives = 0;
         else Lives = Math.Max(0, Lives + delta);
-        if (Lives == 0) GameStateManager.HandlePlayerDeath();
+        if (Lives == 0) {
+            //Record failure
+            if (request.Try(out var req) && req.Saveable) {
+                //Special-case boss practice handling
+                if (req.lowerRequest.Resolve(_ => null, b => (BossPracticeRequest?) b, _ => null, _ => null)
+                    .Try(out var bpr)) {
+                    CardCaptures.Add(new CardHistory() {
+                        campaign = bpr.boss.campaign.Key,
+                        boss = bpr.boss.boss.key,
+                        phase = bpr.phase.index,
+                        captured = false
+                    });
+                }
+                SaveData.r.RecordGame(new GameRecord(req, this, false));
+            }
+            GameStateManager.HandlePlayerDeath();
+        }
         UIManager.UpdatePlayerUI();
     }
 
     /// <summary>
     /// Don't use this in the main campaign-- it will interfere with stats
     /// </summary>
-    public void SetLives(int to) => AddLives(to - Lives);
+    public void SetLives(int to) => AddLives(to - Lives, false);
 
-    private void AddPIVDecay(double delta) => PIVDecay = M.Clamp(0, 1, PIVDecay + delta);
-    private void AddPIVDecayLenience(double time) => pivDecayLenience = Math.Max(pivDecayLenience, time);
-    public void ExternalLenience(double time) => AddPIVDecayLenience(time);
+    private void AddFaith(double delta) => Faith = M.Clamp(0, 1, Faith + delta * Difficulty.faithAcquireMultiplier);
+    private void AddFaithLenience(double time) => faithLenience = Math.Max(faithLenience, time);
+    public void ExternalLenience(double time) => AddFaithLenience(time);
     private void AddMeter(double delta) {
-        var belowThreshold = Meter < meterUseThreshold;
-        Meter = M.Clamp(0, 1, Meter + delta);
-        if (belowThreshold && Meter >= meterUseThreshold) {
+        var belowThreshold = !EnoughMeterToUse;
+        Meter = M.Clamp(0, 1, Meter + delta * Difficulty.meterAcquireMultiplier);
+        if (belowThreshold && EnoughMeterToUse && !MeterInUse) {
             SFXService.MeterUsable();
         }
     }
@@ -261,14 +310,14 @@ public struct CampaignData {
     }
 
     public bool TryStartMeter() {
-        if (Meter >= meterUseThreshold) {
+        if (Difficulty.meterEnabled && EnoughMeterToUse) {
             Meter -= meterUseInstantCost;
             return true;
         } else return false;
     }
 
     public bool TryUseMeterFrame() {
-        var consume = meterUseRate * ETime.FRAME_TIME;
+        var consume = meterUseRate * Difficulty.meterUsageMultiplier * ETime.FRAME_TIME;
         if (Meter >= consume) {
             Meter -= consume;
             return true;
@@ -310,31 +359,34 @@ public struct CampaignData {
     }
     public void AddPowerItems(int delta) {
         if (!PowerMechanicEnabled || Power >= powerMax) {
-            AddValueItems((int)(delta * powerToValueConversion));
+            AddValueItems((int)(delta * powerToValueConversion), 1);
         } else AddPower(delta * powerItemValue);
     }
 
     public void AddFullPowerItems(int _) {
         FullPower();
     }
-    public void AddValueItems(int delta) {
-        AddPIVDecay(delta * pivDecayBoostValue);
-        AddPIVDecayLenience(pivDecayLenienceValue);
-        AddScore((long)Math.Round(delta * valueItemPoints * MeterScorePerValueMultiplier * EffectivePIV));
+    public void AddValueItems(int delta, double multiplier) {
+        AddFaith(delta * faithBoostValue);
+        AddFaithLenience(faithLenienceValue);
+        double bonus = MeterScorePerValueMultiplier;
+        long scoreDelta = (long) Math.Round(delta * valueItemPoints * bonus * EffectivePIV * multiplier);
+        AddScore(scoreDelta);
+        Events.ScoreItemHasReceived.Invoke((scoreDelta, bonus > 1));
     }
     public void AddGraze(int delta) {
         Graze += delta;
-        AddPIVDecay(delta * pivDecayBoostGraze);
-        AddPIVDecayLenience(pivDecayLenienceGraze);
-        AddMeter(delta * meterBoostGraze);
+        AddFaith(delta * FaithBoostGraze);
+        AddFaithLenience(FaithLenienceGraze);
+        AddMeter(delta * MeterBoostGraze);
         Counter.GrazeProc(delta);
         UIManager.UpdatePlayerUI();
     }
 
     public void AddPointPlusItems(int delta) {
         PIV += pivPerPPP * MeterPivPerPPPMultiplier * delta;
-        AddPIVDecay(delta * pivDecayBoostPointPP);
-        AddPIVDecayLenience(pivDecayLeniencePointPP);
+        AddFaith(delta * faithBoostPointPP);
+        AddFaithLenience(faithLeniencePointPP);
         UIManager.UpdatePlayerUI();
     }
 
@@ -349,9 +401,17 @@ public struct CampaignData {
     }
 
     public void PhaseEnd(PhaseCompletion pc) {
-        if (pc.props.phaseType?.IsPattern() ?? false) AddPIVDecayLenience(pivDecayLeniencePhase);
+        if (pc.props.phaseType?.IsCard() == true && pc.props.Boss != null && pc.Captured.Try(out var captured)) {
+            CardCaptures.Add(new CardHistory() {
+                campaign = campaignKey,
+                boss = pc.props.Boss.key,
+                phase = pc.props.Index,
+                captured = captured
+            });
+        }
+        if (pc.props.phaseType?.IsPattern() ?? false) AddFaithLenience(faithLeniencePhase);
         SFXService.PhaseEndSound(pc.Captured);
-        if (pc.props.phaseType == PhaseType.STAGE) SFXService.StageSectionEndSound();
+        if (pc.props.phaseType == PhaseType.STAGE && pc.props.Cleanup) SFXService.StageSectionEndSound();
         UIManager.CardCapture(pc);
         ChallengeManager.ReceivePhaseCompletion(pc);
     }
@@ -360,10 +420,11 @@ public struct CampaignData {
         lastScore = UIVisibleScore;
         Score += delta;
         MaxScore = Math.Max(MaxScore, Score);
-        if (nextScoreLifeIndex < scoreLives.Length && Score >= scoreLives[nextScoreLifeIndex]) {
+        if (NextScoreLife.Try(out var next) && Score >= next) {
             ++nextScoreLifeIndex;
             LifeExtend();
             UIManager.LifeExtendScore();
+            UIManager.UpdatePlayerUI();
         }
         remVisibleScoreLerpTime = visibleScoreLerpTime;
         //updated in RegUpd
@@ -380,27 +441,27 @@ public struct CampaignData {
 
     public void DestroyNormalEnemy() {
         ++EnemiesDestroyed;
-        AddPIVDecayLenience(pivDecayLenienceEnemyDestroy);
+        AddFaithLenience(faithLenienceEnemyDestroy);
     }
 
     public void RegularUpdate() {
         if (remVisibleScoreLerpTime > 0) {
             remVisibleScoreLerpTime -= ETime.FRAME_TIME;
             if (remVisibleScoreLerpTime <= 0) UIVisibleScore = Score;
-            else UIVisibleScore = (long) M.Lerp(lastScore, Score, 1 - remVisibleScoreLerpTime / visibleScoreLerpTime);
+            else UIVisibleScore = (long) M.LerpU(lastScore, Score, 1 - remVisibleScoreLerpTime / visibleScoreLerpTime);
             UIManager.UpdatePlayerUI();
         }
-        UIVisiblePIVDecayLenienceRatio = M.Lerp(UIVisiblePIVDecayLenienceRatio, 
-            Math.Min(1f, pivDecayLenience / 3f), 6f * ETime.FRAME_TIME);
+        UIVisibleFaithDecayLenienceRatio = M.LerpU(UIVisibleFaithDecayLenienceRatio, 
+            Math.Min(1f, faithLenience / 3f), 6f * ETime.FRAME_TIME);
         if (PlayerInput.PlayerActive && !Lenience && GameStateManager.IsRunning) {
-            if (pivDecayLenience > 0) {
-                pivDecayLenience = Math.Max(0, pivDecayLenience - ETime.FRAME_TIME);
-            } else if (PIVDecay > 0) {
-                PIVDecay = Math.Max(0, PIVDecay - ETime.FRAME_TIME * pivDecayRate * pivDecayRateMultiplier);
+            if (faithLenience > 0) {
+                faithLenience = Math.Max(0, faithLenience - ETime.FRAME_TIME);
+            } else if (Faith > 0) {
+                Faith = Math.Max(0, Faith - ETime.FRAME_TIME * faithDecayRate * faithDecayRateMultiplier * Difficulty.faithDecayMultiplier);
             } else if (PIV > 1) {
                 PIV = Math.Max(1, PIV - pivFallStep);
-                PIVDecay = 0.5f;
-                pivDecayLenience = pivDecayLenienceFall;
+                Faith = 0.5f;
+                faithLenience = faithLenienceFall;
                 UIManager.UpdatePlayerUI();
             }
         }
@@ -409,25 +470,21 @@ public struct CampaignData {
     public void OpenBoss(BehaviorEntity boss) {
         if (ExecutingBoss != null) CloseBoss();
         ExecutingBoss = boss;
-        pivDecayRateMultiplier *= pivDecayRateMultiplierBoss;
+        faithDecayRateMultiplier *= faithDecayRateMultiplierBoss;
     }
 
     public void CloseBoss() {
         if (ExecutingBoss != null) {
             ExecutingBoss = null;
-            pivDecayRateMultiplier /= pivDecayRateMultiplierBoss;
+            faithDecayRateMultiplier /= faithDecayRateMultiplierBoss;
         } else Log.UnityError("You tried to close a boss section when no boss exists.");
     }
 
     public void AddDecayRateMultiplier_Tutorial(double m) {
-        pivDecayRateMultiplier *= m;
+        faithDecayRateMultiplier *= m;
     }
 
-    public void SaveCampaign(string gameIdentifier) {
-        SaveData.r.TrySetHighScore(gameIdentifier, Score);
-    }
-    
-    #if UNITY_EDITOR
+#if UNITY_EDITOR
     public void SetPower(double x) => Power = x;
     #endif
 }
@@ -437,36 +494,27 @@ public struct CampaignData {
 /// This is the only scene-persistent object in the game.
 /// </summary>
 public class GameManagement : RegularUpdater {
-    public static readonly Version EngineVersion = new Version(4, 2, 0);
+    public static readonly Version EngineVersion = new Version(5, 0, 0);
     public static bool Initialized { get; private set; } = false;
-    public static DifficultySettings Difficulty { get; set; } = 
+    public static DifficultySettings Difficulty => campaign.Difficulty;
+    
+    public static DifficultySettings defaultDifficulty { get; private set; } = 
 #if UNITY_EDITOR
-        new DifficultySettings(FixedDifficulty.Ultra);
+        new DifficultySettings(FixedDifficulty.Lunatic);
 #else
         new DifficultySettings(FixedDifficulty.Normal);
 #endif
-    public static float FRAME_TIME_BULLET => Difficulty.FRAME_TIME_BULLET;
-    
 
     public static CampaignData campaign = new CampaignData(CampaignMode.NULL);
-    private static CampaignData lastinfo = campaign;
     [UsedImplicitly]
     public static bool Continued => campaign.Continued;
 
     public static void NewCampaign(CampaignMode mode, long? highScore, GameRequest? req = null) => 
-        lastinfo = campaign = new CampaignData(mode, req, highScore);
-    public static void CheckpointCampaignData() => lastinfo = campaign;
-    public static void ReloadCampaignData() {
-        Debug.Log("Reloading campaign from last stage.");
-        lastinfo.Reloaded = true;
-        Replayer.Cancel();
-        campaign = lastinfo;
-        UIManager.UpdatePlayerUI();
-    }
+        campaign = new CampaignData(mode, req, highScore);
 
 #if UNITY_EDITOR
     [ContextMenu("Add 1000 value")]
-    public void YeetScore() => campaign.AddValueItems(1000);
+    public void YeetScore() => campaign.AddValueItems(1000, 1);
     [ContextMenu("Add 10 PIV+")]
     public void YeetPIV() => campaign.AddPointPlusItems(10);
     [ContextMenu("Add 40 life")]
@@ -487,15 +535,13 @@ public class GameManagement : RegularUpdater {
     [ContextMenu("Set Subshot K")]
     public void SetSubshotK() => campaign.SetSubshot(Subshot.TYPE_K);
 
-    [ContextMenu("Set bullet speed to 2")]
-    public void SetBulletSpeed2() => Difficulty = 
-        new DifficultySettings(FixedDifficulty.Ultra, bulletSpeedMod: 2f);
 #endif
     public static IEnumerable<FixedDifficulty> VisibleDifficulties => new[] {
-        FixedDifficulty.Easier, FixedDifficulty.Easy, FixedDifficulty.Normal, FixedDifficulty.Hard,
-        FixedDifficulty.Lunatic, FixedDifficulty.Ultra, 
-        //DifficultySet.Abex, DifficultySet.Assembly
+        FixedDifficulty.Easy, FixedDifficulty.Normal, FixedDifficulty.Hard,
+        FixedDifficulty.Lunatic
     };
+    public static IEnumerable<FixedDifficulty?> CustomAndVisibleDifficulties =>
+        VisibleDifficulties.Select(fd => (FixedDifficulty?) fd).Prepend(null);
     public static IEnumerable<FixedDifficulty?> VisibleDifficultiesAndCustom =>
         VisibleDifficulties.Select(fd => (FixedDifficulty?) fd).Append(null);
     public static IEnumerable<(string, FixedDifficulty)> VisibleDifficultiesDescribed =>
@@ -530,8 +576,8 @@ public class GameManagement : RegularUpdater {
         ItemPooler.Prepare(References.items);
         ETime.RegisterPersistentSOFInvoke(Replayer.BeginFrame);
         ETime.RegisterPersistentSOFInvoke(Enemy.FreezeEnemies);
-        ETime.RegisterPersistentEOFInvoke(BehaviorEntity.PruneControls);
-        ETime.RegisterPersistentEOFInvoke(CurvedTileRenderLaser.PruneControls);
+        ETime.RegisterPersistentEOFInvoke(BehaviorEntity.PrunePoolControls);
+        ETime.RegisterPersistentEOFInvoke(CurvedTileRenderLaser.PrunePoolControls);
         SceneIntermediary.RegisterSceneUnload(ClearForScene);
         SceneIntermediary.RegisterSceneLoad(Replayer.LoadLazy);
     #if UNITY_EDITOR
@@ -542,8 +588,8 @@ public class GameManagement : RegularUpdater {
 
         //The reason we do this instead of Awake is that we want all resources to be
         //loaded before any State Machines are constructed, which may occur in other entities' Awake calls.
-        GetComponent<BulletManager>().Setup();
         GetComponent<ResourceManager>().Setup();
+        GetComponent<BulletManager>().Setup();
         GetComponentInChildren<SFXService>().Setup();
         GetComponentInChildren<AudioTrackService>().Setup();
     }
@@ -554,19 +600,14 @@ public class GameManagement : RegularUpdater {
                 SceneIntermediary.SceneRequest.Reason.ABORT_RETURN, Replayer.Cancel));
     public static bool GoToReplayScreen() => SceneIntermediary.LoadScene(
         new SceneIntermediary.SceneRequest(References.replaySaveMenu, 
-            SceneIntermediary.SceneRequest.Reason.FINISH_RETURN));
+            SceneIntermediary.SceneRequest.Reason.FINISH_RETURN, 
+            () => BackgroundOrchestrator.NextSceneStartupBGC = References.defaultMenuBackground));
 
-    /// <summary>
-    /// Reloads the specific level that is being run.
-    /// This is for single-scene mini projects and is not generally exposed. Deprecate in the future.
-    /// </summary>
-    /// <returns></returns>
-    public static bool ReloadLevel() => SceneIntermediary._ReloadScene(ReloadCampaignData);
     /// <summary>
     /// Restarts the existing game if it exists, or reloads the specific level.
     /// </summary>
     /// <returns></returns>
-    public static bool Restart() => GameRequest.Rerun() ?? ReloadLevel();
+    public static bool Restart() => GameRequest.Rerun() ?? throw new Exception("Couldn't find a game to reload");
     
     public static void ClearForScene() {
         AudioTrackService.ClearAllAudio(false);
@@ -585,8 +626,6 @@ public class GameManagement : RegularUpdater {
     }
 
     public static void LocalReset() {
-        Debug.Log($"Reloading level: {Difficulty.Describe} is the current difficulty");
-        UIManager.UpdateTags();
         //AudioTrackService.ClearAllAudio();
         SFXService.ClearConstructed();
         Events.Event0.DestroyAll();
@@ -600,12 +639,15 @@ public class GameManagement : RegularUpdater {
         BulletManager.ClearEmpty();
         BulletManager.ClearAllBullets();
         BulletManager.DestroyCopiedPools();
-        campaign = new CampaignData(CampaignMode.NULL);
         UIManager.UpdatePlayerUI();
         SeijaCamera.ResetTargetFlip(0.2f);
 #if UNITY_EDITOR || ALLOW_RELOAD
         Events.LocalReset.InvokeIfNotRefractory();
 #endif
+        //Ordered last so cancellations from HardCancel will occur under old data
+        campaign = new CampaignData(CampaignMode.NULL);
+        Debug.Log($"Reloading level: {Difficulty.Describe()} is the current difficulty");
+        UIManager.UpdateTags();
     }
     
 #if UNITY_EDITOR || ALLOW_RELOAD
@@ -616,22 +658,14 @@ public class GameManagement : RegularUpdater {
     private static bool TryTriggerLocalReset() {
         if (!SceneIntermediary.IsFirstScene) return false;
         if (Input.GetKeyDown(KeyCode.R)) {
-        } else if (Input.GetKeyDown(KeyCode.Alpha5)) {
-            GameManagement.Difficulty = new DifficultySettings(FixedDifficulty.Easier);
         } else if (Input.GetKeyDown(KeyCode.T)) {
-            GameManagement.Difficulty = new DifficultySettings(FixedDifficulty.Easy);
+            defaultDifficulty = new DifficultySettings(FixedDifficulty.Easy);
         } else if (Input.GetKeyDown(KeyCode.Y)) {
-            GameManagement.Difficulty = new DifficultySettings(FixedDifficulty.Normal);
+            defaultDifficulty = new DifficultySettings(FixedDifficulty.Normal);
         } else if (Input.GetKeyDown(KeyCode.U)) {
-            GameManagement.Difficulty = new DifficultySettings(FixedDifficulty.Hard);
+            defaultDifficulty = new DifficultySettings(FixedDifficulty.Hard);
         } else if (Input.GetKeyDown(KeyCode.I)) {
-            GameManagement.Difficulty = new DifficultySettings(FixedDifficulty.Lunatic);
-        } else if (Input.GetKeyDown(KeyCode.O)) {
-            GameManagement.Difficulty = new DifficultySettings(FixedDifficulty.Ultra);
-        } else if (Input.GetKeyDown(KeyCode.P)) {
-            GameManagement.Difficulty = new DifficultySettings(FixedDifficulty.Abex);
-        } else if (Input.GetKeyDown(KeyCode.LeftBracket)) {
-            GameManagement.Difficulty = new DifficultySettings(FixedDifficulty.Assembly);
+            defaultDifficulty = new DifficultySettings(FixedDifficulty.Lunatic);
         } else return false;
         LocalReset();
         return true;
@@ -639,7 +673,7 @@ public class GameManagement : RegularUpdater {
 #endif
 
     private static void ClearPhase() {
-        BulletManager.ClearPoolControls();
+        BulletManager.ClearPoolControls(false);
         BulletManager.ClearEmpty();
         Events.Event0.Reset();
         ETime.Slowdown.RevokeAll(MultiMultiplier.Priority.CLEAR_PHASE);

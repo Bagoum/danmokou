@@ -37,22 +37,14 @@ public class XMLDeathMenu : XMLMenu {
         MainScreen = new UIScreen(
             new FuncNode(() => {
                 if (GameManagement.campaign.TryContinue()) {
-                    HideMe();
-                    GameStateManager.ForceUnpause();
+                    GameStateManager.UIUnpause();
                     return true;
                 } else return false;
-            }, () => $"Continue ({GameManagement.campaign.Continues})", true).With(small1Class),
-            new ConfirmFuncNode(() => {
-                if (GameManagement.Restart()) {
-                    HideMe();
-                    return true;
-                } else return false;
-            }, "Restart", true).With(small1Class),
+            }, () => $"Continue ({GameManagement.campaign.Continues})", true),
+            new ConfirmFuncNode(GameManagement.Restart, "Restart", true),
             GameManagement.MainMenuExists ?
-                new ConfirmFuncNode(() => {
-                    HideMe();
-                    GameManagement.GoToMainMenu();
-                }, "Return to Menu", true).With(small1Class) : null
+                new ConfirmFuncNode(GameManagement.GoToMainMenu, "Return to Menu", true)
+                : null
             );
         base.Awake();
     }

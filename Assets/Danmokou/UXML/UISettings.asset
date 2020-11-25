@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: UISettings
   m_EditorClassIdentifier: 
   themeUss: {fileID: 11400000, guid: f567955c754d54a108d615cb51ccbf2f, type: 2}
-  m_TargetTexture: {fileID: 0}
+  m_TargetTexture: {fileID: 8400000, guid: f4243e7ec56238a4997977449a562ef8, type: 2}
   m_ScaleMode: 2
   m_Scale: 1
   m_ReferenceDpi: 96
@@ -23,7 +23,7 @@ MonoBehaviour:
   m_Match: 1
   m_SortingOrder: 0
   m_ClearDepthStencil: 1
-  m_ClearColor: 0
+  m_ClearColor: 1
   m_ColorClearValue: {r: 0, g: 0, b: 0, a: 0}
   m_DynamicAtlasSettings:
     m_MinAtlasSize: 64

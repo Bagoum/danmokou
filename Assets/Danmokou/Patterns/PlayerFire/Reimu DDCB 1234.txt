@@ -3,7 +3,7 @@ gtr {
 	wait-child
 } fire
 	## free fire
-	async reimuamulet-blue <> gcrepeat { 
+	async amuletdd-blue <> gcrepeat { 
 		wait(12)
 		times(_)
 		sfx(x-pc-fire-1)
@@ -19,7 +19,7 @@ gtr {
 		truerotatelerprate(lerpt(0.4, 1, 94, 0),
 			rotify(py 8),
 			LNearestEnemy - loc) * lerpt(0, 0.2, 0.8, 1)), { 
-			player(14, 14, oh1)
+			player(14, 14, oh-reimu-amulet)
 		})
 	## free cancellation
 	noop
@@ -32,7 +32,7 @@ gtr {
 		clip(<= powerf p)
 		times(1)
 	} simple tprot py(17) {
-		player(13, 13, oh1)
+		player(13, 13, oh1-red)
 	}
 	## focus cancellation
 	noop

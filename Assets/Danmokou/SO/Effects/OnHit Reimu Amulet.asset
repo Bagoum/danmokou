@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   sound: {fileID: 11400000, guid: a6cc7142ab32c3145ba5b70adbae4016, type: 2}
   locator:
-    type: 2
+    type: 0
     Source:
-      offset: {x: 0, y: 0}
+      offset: {x: 0, y: 0.1}
     Target:
       offset: {x: 0, y: 0}
     Perimeter:
@@ -25,3 +25,4 @@ MonoBehaviour:
   particlePrefab: {fileID: 1612221337289516, guid: 5237168f2fbb518458afde09ec1a1869,
     type: 3}
   spawnType: 1
+  subEffects: []

@@ -1,14 +1,8 @@
-﻿#if INTERACTIVE
-#I "C:\Users\Bagoum\.nuget\packages\\fparsec\1.1.1\lib\\net45"
-#r "FParsecCS.dll"
-#r "FParsec.dll"
-#else
-module FParser.AAParser
+﻿module FParser.AAParser
 open Common.Types
 open Common.Functions
 open Common.Extensions
 open FParser.ParserCommon
-#endif
 open FParsec
 open System
 

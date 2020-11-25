@@ -85,14 +85,18 @@ public class BackgroundOrchestrator : MonoBehaviour {
         if (destroyIfExists || 
             (ToBG == null && FromBG.source != bgp) ||
             (ToBG != null && ToBG.source != bgp)) {
+            ClearTransition();
             SetTarget(main.CreateBGC(bgp), withTransition);
         }
     }
 
-    private static void SetTarget(BackgroundController bgc, bool withTransition) {
+    private static void ClearTransition() {
         foreach (var cts in transitionCTS) cts.Cancel();
         transitionCTS.Clear();
         FinishTransition();
+    }
+
+    private static void SetTarget(BackgroundController bgc, bool withTransition) {
         if (withTransition && nextRequestedTransition.HasValue) {
             ToBG = bgc;
             DoTransition(nextRequestedTransition.Value);

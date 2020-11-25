@@ -22,6 +22,9 @@ public static class ExPostAggregators {
     [PAPriority(10)] [PASourceTypes(typeof(float))]
     public static Func<Te, TEx<R>> PA_FDiv<Te, R>(Func<Te, TEx<R>> a, Func<Te, TEx<float>> b) where Te : TEx
         => t => ExM.FDiv(a(t) as TEx<float>, b(t)) as TEx<R>;
+    [PAPriority(0)] [PASourceTypes(typeof(float))]
+    public static Func<Te, TEx<R>> PA_Pow<Te, R>(Func<Te, TEx<R>> a, Func<Te, TEx<float>> b) where Te : TEx
+        => t => ExM.Pow(a(t) as TEx<float>, b(t)) as TEx<R>;
     
     [PAPriority(10)] [PASourceTypes(typeof(bool))]
     public static Func<Te, TEx<R>> PA_And<Te, R>(Func<Te, TEx<R>> a, Func<Te, TEx<bool>> b) where Te : TEx

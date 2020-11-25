@@ -77,7 +77,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
     //(this, material, isNew, bpi.id, firingIndex, ref RealizedLaserOptions);
 
     public void UpdateLaserStyle(string style) {
-        thisStyleControls = LazyGetControls(style);
+        myStyle = string.IsNullOrEmpty(style) ? defaultMeta : LazyGetControls(style);
     }
 
     private const float ToNearestIndexCutoff = 0.07f;
@@ -152,7 +152,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
     protected void SetEndpoint(Vector2 localPos, Vector2 dir) {
         if (endpt.exists) {
             endpt.beh.ExternalSetLocalPosition(localPos);
-            endpt.beh.FaceInDirection(dir);
+            endpt.beh.SetDirection(dir);
         }
     }
 
@@ -160,8 +160,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
         int vw = texRptWidth + 1;
         path.Update(in lifetime, ref bpi, out nextDirectionalDelta, out nextTrueDelta, in updateStagger);
         for (int iw = 1; iw < endP; ++iw) {
-            int styleCt = thisStyleControls.Count;
-            for (int ii = 0; ii < styleCt; ++ii) thisStyleControls[ii].action(this);
+            myStyle.IterateControls(this);
             centers[iw].x = centers[iw - 1].x + nextTrueDelta.x;
             centers[iw].y = centers[iw - 1].y + nextTrueDelta.y;
             path.Update(in lifetime, ref bpi, out nextDirectionalDelta, out nextTrueDelta, in updateStagger);
@@ -206,8 +205,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
             vertsPtr[vw].loc.y = accP.y + denormedDirF * nextTrueDelta.x;
             //You still need to update starting from zero, not startP, so that the displayed points will be in the correct position for eg. velocity equations.
             for (int iw = 1; iw < endP; ++iw) {
-                int styleCt = thisStyleControls.Count;
-                for (int ii = 0; ii < styleCt; ++ii) thisStyleControls[ii].action(this);
+                myStyle.IterateControls(this);
                 accP.x += nextTrueDelta.x;
                 accP.y += nextTrueDelta.y;
                 centers[iw].x = accP.x;
@@ -297,9 +295,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
         requiresTrRotUpdate = true;
         ReassignTransform();
     }
-
-
-    //TODO (iparent) does this work on parented stuff? check the phoenix spell
+    
     public void SpawnSimple(string style) {
         int skip = Mathf.CeilToInt(0.5f / updateStagger);
         Vector2 basePos = locater.GlobalPosition();
@@ -349,34 +345,71 @@ public class CurvedTileRenderLaser : CurvedTileRender {
     public readonly struct LaserControl {
         public readonly LCF action;
         public readonly Pred persist;
+        public readonly ICancellee cT;
 
-        public LaserControl(LCF act, Pred persistent) {
+        public LaserControl(LCF act, Pred persistent, ICancellee cT) {
             action = act;
             persist = persistent;
+            this.cT = cT;
         }
     }
+
+    private class LaserMetadata {
+        public readonly BehaviorEntity.BEHStyleMetadata metadata;
+
+        public LaserMetadata(BehaviorEntity.BEHStyleMetadata bsm) {
+            this.metadata = bsm;
+        }
+        public void ResetPoolMetadata() { }
+
+        public void Reset() => ResetPoolMetadata();
+        
+        public void AddPoolControl(LaserControl pc) => controls.Add(pc);
+        
+        public void PruneControls() {
+            for (int ii = 0; ii < controls.Count; ++ii) {
+                if (controls[ii].cT.Cancelled || !controls[ii].persist(GlobalBEH.Main.rBPI)) {
+                    controls.Delete(ii);
+                }
+            }
+            controls.Compact();
+        }
+        public void ClearControls() => controls.Empty();
+        
+        private readonly DMCompactingArray<LaserControl> controls = new DMCompactingArray<LaserControl>(4);
+        
+        public void IterateControls(CurvedTileRenderLaser laser) {
+            int ct = controls.Count;
+            for (int ii = 0; ii < ct; ++ii) {
+                controls[ii].action(laser);
+            }
+        }
+    }
+    private static readonly LaserMetadata defaultMeta = new LaserMetadata(null);
     
     /// <summary>
     /// Pool controls for laser paths.
-    /// Keys are added the first time a command is created or a bullet is spawned.
-    /// All controls are persistent.
+    /// Keys are added the first time a command is created or a bullet is spawned and reset on scene.
+    /// They are not constructed on init because they store no metadata.
     /// </summary>
-    private static readonly Dictionary<string, DMCompactingArray<LaserControl>> controls = new Dictionary<string, DMCompactingArray<LaserControl>>();
+    private static readonly Dictionary<string, LaserMetadata> activePools = new Dictionary<string, LaserMetadata>();
     //For quick iteration
-    private static readonly List<DMCompactingArray<LaserControl>> initializedPools = new List<DMCompactingArray<LaserControl>>(16);
-    private DMCompactingArray<LaserControl> thisStyleControls;
+    private static readonly List<LaserMetadata> activePoolsList = new List<LaserMetadata>(16);
+    private LaserMetadata myStyle;
     
     public static void DeInitializePools() {
-        controls.Clear();
-        foreach (var x in initializedPools) x.Empty();
-        initializedPools.Clear();
-    }
-    private static DMCompactingArray<LaserControl> LazyGetControls(string style) {
-        if (!controls.ContainsKey(style)) {
-            controls[style] = new DMCompactingArray<LaserControl>();
-            initializedPools.Add(controls[style]);
+        foreach (var x in activePoolsList) {
+            x.Reset();
         }
-        return controls[style];
+        activePools.Clear();
+        activePoolsList.Clear();
+    }
+    private static LaserMetadata LazyGetControls(string style) {
+        if (!activePools.ContainsKey(style)) {
+            activePools[style] = new LaserMetadata(BehaviorEntity.GetPool(style));
+            activePoolsList.Add(activePools[style]);
+        }
+        return activePools[style];
     }
     
     
@@ -384,13 +417,12 @@ public class CurvedTileRenderLaser : CurvedTileRender {
     public static void ControlPoolSM(Pred persist, BulletManager.StyleSelector styles, SM.StateMachine sm, ICancellee cT, LPred condFunc) {
         LaserControl lc = new LaserControl(b => {
             if (condFunc(b.bpi, b.lifetime)) {
-                //TODO (iparent) rotate lastDelta by global euler angle
                 _ = BEHPooler.INode(b.bpi.loc, V2RV2.Angle(b.laser.original_angle), b.nextTrueDelta, b.bpi.index, 
-                    null, "f-pool-triggered").RunExternalSM(SMRunner.Cull(sm, cT));
+                    null, "l-pool-triggered").RunExternalSM(SMRunner.Cull(sm, cT));
             }
-        }, persist);
+        }, persist, cT);
         for (int ii = 0; ii < styles.Complex.Length; ++ii) {
-            LazyGetControls(styles.Complex[ii]).Add(lc);
+            LazyGetControls(styles.Complex[ii]).AddPoolControl(lc);
         }
     }
     
@@ -459,11 +491,10 @@ public class CurvedTileRenderLaser : CurvedTileRender {
             };
         }
     }
-    //Laser controls are always persistent
-    public static void ControlPool(Pred persist, BulletManager.StyleSelector styles, LCF control) {
-        LaserControl lc = new LaserControl(control, persist);
+    public static void ControlPool(Pred persist, BulletManager.StyleSelector styles, LCF control, ICancellee cT) {
+        LaserControl lc = new LaserControl(control, persist, cT);
         for (int ii = 0; ii < styles.Complex.Length; ++ii) {
-            LazyGetControls(styles.Complex[ii]).Add(lc);
+            LazyGetControls(styles.Complex[ii]).AddPoolControl(lc);
         }
     }
     
@@ -474,7 +505,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
         /// </summary>
         /// <returns></returns>
         public static LPCF Reset() {
-            return pool => LazyGetControls(pool).Empty();
+            return pool => LazyGetControls(pool).ClearControls();
         }
     }
     
@@ -483,21 +514,15 @@ public class CurvedTileRenderLaser : CurvedTileRender {
             control(styles.Complex[ii]);
         }
     }
-    public static void PruneControls() {
-        for (int ii = 0; ii < initializedPools.Count; ++ii) {
-            var pcs = initializedPools[ii];
-            for (int jj = 0; jj < pcs.Count; ++jj) {
-                if (!pcs[jj].persist(GlobalBEH.Main.rBPI)) {
-                    pcs.Delete(jj);
-                } 
-            }
-            pcs.Compact();
+    public static void PrunePoolControls() {
+        for (int ii = 0; ii < activePools.Count; ++ii) {
+            activePoolsList[ii].PruneControls();
         }
     }
 
-    public static void ClearControls() {
-        for (int ii = 0; ii < initializedPools.Count; ++ii) {
-            initializedPools[ii].Empty();
+    public static void ClearPoolControls(bool clearPlayer) {
+        for (int ii = 0; ii < activePools.Count; ++ii) {
+            if (clearPlayer || !activePoolsList[ii].metadata.IsPlayer) activePoolsList[ii].ClearControls();
         }
     }
 }

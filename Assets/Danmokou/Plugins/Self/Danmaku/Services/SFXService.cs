@@ -21,6 +21,8 @@ public class SFXService : MonoBehaviour {
     public SFXConfig bossExplode;
     public SFXConfig meterUsable;
     public SFXConfig meterActivated;
+    public SFXConfig meterDeActivated;
+    public SFXConfig swapHPScore;
     public SFXConfig[] SFX;
     private static readonly Dictionary<string, SFXConfig> dclips = new Dictionary<string, SFXConfig>();
 
@@ -87,10 +89,17 @@ public class SFXService : MonoBehaviour {
                 return lowHP * shotgun;
             } else return 1f;
         }
+
+        private void SetProps() {
+            source.pitch = sfx.pitch * FeaturePitchMult();
+        }
         public void Request() {
             if (!active) {
                 source.loop = true;
-                if (!source.isPlaying) source.Play();
+                if (!source.isPlaying) {
+                    SetProps();
+                    source.Play();
+                }
                 active = true;
                 timeUntilCheck = loopTimeCheck;
                 requested = false;
@@ -98,7 +107,7 @@ public class SFXService : MonoBehaviour {
         }
         public void Update(float dT) {
             if (active) {
-                source.pitch = sfx.pitch * FeaturePitchMult();
+                SetProps();
                 if ((timeUntilCheck -= dT) <= 0) {
                     if (requested) {
                         timeUntilCheck = loopTimeCheck;
@@ -138,7 +147,7 @@ public class SFXService : MonoBehaviour {
         if (aci.Timeout > 0f) timeouts[aci.defaultName] = aci.Timeout;
         
         if (aci.pausable) RequestSource(aci, true);
-        else src.PlayOneShot(aci.clip, aci.volume);
+        else src.PlayOneShot(aci.clip, aci.volume * SaveData.s.SEVolume);
     }
 
     private static void RequestLoop(SFXConfig aci) {
@@ -158,7 +167,7 @@ public class SFXService : MonoBehaviour {
     private static AudioSource _RequestSource([CanBeNull] SFXConfig aci) {
         if (aci == null) return null;
         var cmp = main.gameObject.AddComponent<AudioSource>();
-        cmp.volume = aci.volume;
+        cmp.volume = aci.volume * SaveData.s.SEVolume;
         cmp.pitch = aci.pitch;
         cmp.priority = aci.Priority;
         cmp.clip = aci.clip;
@@ -203,6 +212,8 @@ public class SFXService : MonoBehaviour {
     public static void BossExplode() => Request(main.bossExplode);
     public static void MeterUsable() => Request(main.meterUsable);
     public static void MeterActivated() => Request(main.meterActivated);
+    public static void MeterDeActivated() => Request(main.meterDeActivated);
+    public static void SwapLifeForScore() => Request(main.swapHPScore);
     
     
     

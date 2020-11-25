@@ -159,6 +159,8 @@ public static partial class SyncPatterns {
         return sbh => LocationService.OnPlayableScreen(sbh.GCX.exec.rBPI.loc) ? sp(sbh) : sbh;
     }
 
+    public static SyncPattern SetP(GCXF<float> p, SyncPattern sp) => _AsGSR(sp, GCP.SetP(p));
+
     #region TargetSync
 
     /// <summary>
@@ -233,7 +235,8 @@ public static partial class SyncPatterns {
             }
             controlsL.Add(BulletManager.SimpleBulletControls.SaveF(data, _ => ExMPred.True()));
         }
-        var controls = controlsL.Select(x => new BulletManager.BulletControl(new SBCFc(x))).ToArray();
+        var controls = controlsL.Select(x => new BulletManager.BulletControl(new SBCFc(x), 
+            BulletManager.Consts.PERSISTENT, Cancellable.Null)).ToArray();
         guided = guided.Select(Loc0).ToArray();
         return sbh => {
             BulletManager.AssertControls(estyle, controls);
@@ -270,7 +273,8 @@ public static partial class SyncPatterns {
             }
             controlsL.Add(BulletManager.SimpleBulletControls.SaveF_noexpr(data, _ => true));
         }
-        var controls = controlsL.Select(x => new BulletManager.BulletControl(new SBCFc(x))).ToArray();
+        var controls = controlsL.Select(x => new BulletManager.BulletControl(new SBCFc(x),
+            BulletManager.Consts.PERSISTENT, Cancellable.Null)).ToArray();
         guided = guided.Select(Loc0).ToArray();
         return sbh => {
             BulletManager.AssertControls(estyle, controls);

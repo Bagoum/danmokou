@@ -1,7 +1,8 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="UINodeLRSwitch.uss" />
+    <Style src="UINode.uss" />
     <ui:VisualElement class="attribute node">
-        <Style src="UINodeLRSwitch.uss" />
-        <Style src="UINode.uss" />
+        <ui:VisualElement name="Selector" class="pointer prefix" />
         <ui:Label name="Key" class="text" />
         <ui:VisualElement class="optionsCont">
             <ui:Label text="&lt;" class="text" />

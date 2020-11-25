@@ -184,6 +184,8 @@ public static class MoreExExtensions {
     public static Ex Is<T>(this TEx<T> tex, Ex other) => ((Ex) tex).Is(other);
     public static Ex Add<T>(this TEx<T> tex, Ex other) => ((Ex) tex).Add(other);
     public static Ex Mul<T>(this TEx<T> tex, Ex other) => ((Ex) tex).Mul(other);
+    public static Ex Add<T>(this TEx<T> tex, float other) => ((Ex) tex).Add(other);
+    public static Ex Mul<T>(this TEx<T> tex, float other) => ((Ex) tex).Mul(other);
     public static Ex Sub<T>(this TEx<T> tex, Ex other) => ((Ex) tex).Sub(other);
     public static Ex Div<T>(this TEx<T> tex, Ex other) => ((Ex) tex).Div(other);
     public static Ex LT<T>(this TEx<T> tex, Ex than) => ((Ex) tex).LT(than);

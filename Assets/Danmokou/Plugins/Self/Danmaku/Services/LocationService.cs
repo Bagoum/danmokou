@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
+using Core;
 using UnityEngine;
 using Ex = System.Linq.Expressions.Expression;
 using ExBPY = System.Func<DMath.TExPI, TEx<float>>;
@@ -27,9 +28,13 @@ public struct FieldBounds {
 namespace Danmaku {
 public static class LocationService {
     public static float Left => References.bounds.left;
+    public static float LeftMinus1 => Left - 1;
     public static float Right => References.bounds.right;
+    public static float RightPlus1 => Right + 1;
     public static float Bot => References.bounds.bot;
+    public static float BotMinus1 => Bot - 1;
     public static float Top => References.bounds.top;
+    public static float TopPlus1 => Top + 1;
     public static float Width => Right - Left;
     public static float Height => Top - Bot;
     public static float LeftPlayerBound => Left + 0.1f;
@@ -124,6 +129,14 @@ public static partial class ExM {
     public static TEx<float> YMax() => LocationService.top;
     public static TEx<float> XMin() => LocationService.left;
     public static TEx<float> XMax() => LocationService.right;
+    [Alias("ymin-")]
+    public static TEx<float> YMinMinus1() => LocationService.bot.Sub(1);
+    [Alias("ymax+")]
+    public static TEx<float> YMaxPlus1() => LocationService.top.Add(1);
+    [Alias("xmin-")]
+    public static TEx<float> XMinMinus1() => LocationService.left.Sub(1);
+    [Alias("xmax+")]
+    public static TEx<float> XMaxPlus1() => LocationService.right.Add(1);
     public static TEx<float> XWidth() => LocationService.width;
     public static TEx<float> YHeight() => LocationService.height;
     
@@ -140,8 +153,11 @@ public static partial class ExM {
     
     private static readonly ExFunction distToWall =
         ExUtils.Wrap(typeof(LocationService), "DistToWall", typeof(Vector2), typeof(Vector2));
+    private static readonly ExFunction toWall =
+        ExUtils.Wrap(typeof(LocationService), "ToWall", typeof(Vector2), typeof(Vector2));
 
     public static tfloat DistToWall(tv2 from, tv2 dir) => distToWall.Of(from, dir);
+    public static tv2 ToWall(tv2 from, tv2 dir) => toWall.Of(from, dir);
 }
 
 public static partial class BPYRepo {

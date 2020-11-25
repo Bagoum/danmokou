@@ -1,5 +1,6 @@
 ﻿
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using JetBrains.Annotations;
@@ -9,6 +10,13 @@ using UnityEngine;
 public static class SaveUtils {
     public const string DIR = "DMK_Saves/";
     public const string AYADIR = "DMK_Saves/Aya/";
+
+
+    public static IEnumerable<string> EnumerateDirectory(string dir) {
+        dir = DIR + dir;
+        CheckDirectory(dir);
+        return Directory.EnumerateFiles(dir).Select(f => f.Substring(DIR.Length));
+    }
 
     public static void CheckDirectory(string final) {
         var dir = Path.GetDirectoryName(final);
@@ -27,7 +35,7 @@ public static class SaveUtils {
             using (StreamReader sr = new StreamReader($"{DIR}{file}")) {
                 return JsonConvert.DeserializeObject<T>(sr.ReadToEnd());
             }
-        } catch (Exception) {
+        } catch (Exception e) {
             Log.Unity($"Couldn't read {typeof(T)} from file {DIR}{file}.", false, Log.Level.WARNING);
             return null;
         }

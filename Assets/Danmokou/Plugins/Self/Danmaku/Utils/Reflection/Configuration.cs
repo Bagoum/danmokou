@@ -13,6 +13,14 @@ using UnityEngine;
 public static partial class Reflector {
     private static readonly NamedParam[] fudge = new NamedParam[0];
 
+    public static object MaybeConvert(ParameterInfo dst, object src) {
+        if (GenericReflectionConfig.conversions.TryGetValue(dst.ParameterType, out var conv) &&
+            src.GetType() == conv.Item1) {
+            return GenericReflectionConfig.FuncInvoker(conv.Item2,
+                GenericReflectionConfig.Func2Type(conv.Item1, dst.ParameterType))(src);
+        } else return src;
+    }
+    
     private class GenericReflectionConfig {
         //Note that this will contain both generic and non-generic types
         private readonly Dictionary<Type, Dictionary<string, MethodInfo>> methodsByReturnType;
@@ -82,7 +90,7 @@ public static partial class Reflector {
         public NamedParam[] LazyGetTypes<RT, GT>(string member) => LazyGetTypes(typeof(RT), member, typeof(GT));
         
         //dst type, (source type, converter)
-        private static readonly Dictionary<Type, (Type, object)> conversions = new Dictionary<Type, (Type, object)>() {
+        public static readonly Dictionary<Type, (Type, object)> conversions = new Dictionary<Type, (Type, object)>() {
             { typeof(EEx<bool>), (typeof(TEx<bool>), (Func<TEx<bool>, EEx<bool>>) (x => x)) },
             { typeof(EEx<float>), (typeof(TEx<float>), (Func<TEx<float>, EEx<float>>) (x => x)) },
             { typeof(EEx<Vector2>), (typeof(TEx<Vector2>), (Func<TEx<Vector2>, EEx<Vector2>>) (x => x)) },
@@ -168,7 +176,7 @@ public static partial class Reflector {
         }
 
         private static readonly Dictionary<(Type, Type), Type> func2Types = new Dictionary<(Type, Type), Type>();
-        private Type Func2Type(Type t1, Type t2) {
+        public static Type Func2Type(Type t1, Type t2) {
             if (!func2Types.TryGetValue((t1, t2), out var tf)) {
                 tf = func2Types[(t1, t2)] = typeof(Func<,>).MakeGenericType(t1, t2);
             }
@@ -176,19 +184,19 @@ public static partial class Reflector {
         }
 
         private static readonly Dictionary<Type, MethodInfo> funcInvoke = new Dictionary<Type, MethodInfo>();
-        private Func<object, object> FuncInvoker(object func, Type funcType) => x => FuncInvoke(func, funcType, x);
-        private object FuncInvoke(object func, Type funcType, object over) {
+        public static Func<object, object> FuncInvoker(object func, Type funcType) => x => FuncInvoke(func, funcType, x);
+        private static object FuncInvoke(object func, Type funcType, object over) {
             if (!funcInvoke.TryGetValue(funcType, out var mi)) {
                 mi = funcInvoke[funcType] = funcType.GetMethod("Invoke") ?? throw new Exception($"No invoke method found for {funcType.RName()}");
             }
             return mi.Invoke(func, new[] {over});
         }
 
-        public bool TryInvokeFunced<T, R>(IParseQueue q, string member, object[] _prms, out object result) {
+        public bool TryInvokeFunced<T, R>([CanBeNull] IParseQueue q, string member, object[] _prms, out object result) {
             var rt = typeof(R);
             ResolveGeneric(rt, member);
             if (methodsByReturnType.TryGet2(rt, member, out var f)) {
-                if (q.Ctx.props.warnPrefix && Attribute.GetCustomAttributes(f).Any(x =>
+                if (q?.Ctx.props.warnPrefix == true && Attribute.GetCustomAttributes(f).Any(x =>
                     x is WarnOnStrictAttribute wa && (int) q.Ctx.props.strict >= wa.strictness)) {
                     Log.Unity($"Line {q.GetLastLine()}: The method \"{member}\" is not permitted for use in a script with strictness {q.Ctx.props.strict}. You might accidentally be using the prefix version of an infix function.", true, Log.Level.WARNING);
                 }
@@ -220,7 +228,7 @@ public static partial class Reflector {
 
         public object Invoke(Type rt, string member, object[] prms) => methodsByReturnType[rt][member].Invoke(null, prms);
 
-        public bool TryInvoke<T>(IParseQueue q, string member, object[] prms, out object result) =>
+        public bool TryInvoke<T>([CanBeNull] IParseQueue _, string member, object[] prms, out object result) =>
             TryInvoke(typeof(T), member, prms, out result);
         public bool TryInvoke(Type rt, string member, object[] prms, out object result) {
             ResolveGeneric(rt, member);
@@ -232,6 +240,9 @@ public static partial class Reflector {
             return false;
         }
     }
+
+    public static bool TryFindMember<R>(string methodName, out MethodInfo mi) => 
+        ReflConfig.HasMember(typeof(R), methodName, out mi);
     
     /// <summary>
     /// A struct that lazily collects method and type information for reflected classes.

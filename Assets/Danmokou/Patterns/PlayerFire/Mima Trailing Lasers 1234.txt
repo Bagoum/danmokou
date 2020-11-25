@@ -27,7 +27,7 @@ deactivate((<= powerf p) | (> playerUnfiringTime 0))
 				0, _, {
 					$laseropts
 					tint(rgba(1,1,1,0))
-					player(12, 35, 27, oh2)
+					player(12, 35, 28, oh1-teal)
 			})
 			gsr {
 				color(blueteal)

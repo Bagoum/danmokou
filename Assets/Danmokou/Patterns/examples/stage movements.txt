@@ -1,12 +1,11 @@
 pattern { }
 phase 0 #{
     action block 0
-		position 4 -4
-        shift-phase-to 3
+        shift-phase-to 2
 #}
 
 !{ move(rpath)
-sync fairy1 <> summonr
+async tfairy <> summonr
 	%rpath
 	wait
 	{ }
@@ -21,24 +20,17 @@ async arrow-red/w <0.5;:> gcr2 60 3 <> {
 
 phase 0 #{
 	action block 0
-		position -4 4
-		move _ nroffset pxy(:: {
-			t	:: {
-				xxx t
-			} t21 2 &xxx
-		} (-0.13 * ^^(&t, 0.6)),
-			-2 * t)
+		position -4.6 1
+		move _ :: {
+			t	t
+		} nroffset(pxy(
+			logsumshift(&t, -1, 1.7, 3 * &t, 0),
+			logsumshift(&t, 2, 1.6, 0, 2.7 * &t)
+		))
 #}
 		
-phase 0
-	action block 0
-		sync fairy1 <2;4:> gsr { 
-		} summonrz
-			movewrap 1 pxy -2 2 2 goside 0
-				$exfire
-			{ hp 100 }
 
-phase 0 
+phasej 0 3
 	action block 0
 		$move(cornerl (1 * t))
 		$move(cornerr (1 * t))
@@ -48,22 +40,24 @@ phase 0
 		$move(benddownhl th1 2 (2 * t))
 		$move(benddownhr t21 2 (2 * t))
 	action block 3
-		$move(crossupl (3 * t))
-		$move(crossupr (3 * t))
-		$move(crossdownl (3 * t))
-		$move(crossdownr (3 * t))
-		$move(crossup2l (3 * t))
-		$move(crossup2r (3 * t))
-		$move(crossdown2l (3 * t))
-		$move(crossdown2r (3 * t))
+		$move(crossup (1, 3 * t))
+		$move(crossup(-1, 4 * t))
+		$move(crossdown(1, 3 * t))
+		$move(crossdown (-1, 4 * t))
+		$move(crossup2(1, 3 * t))
+		$move(crossup2(-1, 4 * t))
+		$move(crossdown2(1, 3 * t))
+		$move(crossdown2(-1, 4 * t))
 	action block 3
-		$move(dipupl (3 * t))
-		$move(dipupr (3 * t))
-		$move(dipup2l (3 * t))
-		$move(dipup2r (3 * t))
+		$move(dipup1(1, 3 * t))
+		$move(dipup1(-1, 4 * t))
+		$move(dipup2(1, 3 * t))
+		$move(dipup2(-1, 4 * t))
+		$move(dipup3(1, 1 * t))
+		$move(dipup3(-1, 1.2 * t))
 	action block 3
 		$move(circdown2l (1 * t))
 		$move(circdown2r (1 * t))
-		$move(circdownl (1 * t))
-		$move(circdownr (1 * t))
+		$move(circdown (1, 1 * t))
+		$move(circdown(-1, 2 * t))
 	action block 3

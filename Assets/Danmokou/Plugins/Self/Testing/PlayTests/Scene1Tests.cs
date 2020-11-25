@@ -788,7 +788,7 @@ public static class Scene1 {
     public static IEnumerator TestPracticeSelector1() {
         bool cb = false;
         //Running Static Analysis 1
-        new GameRequest(() => cb = true, new DifficultySettings(FixedDifficulty.Abex),
+        new GameRequest(() => cb = true, FixedDfc(FixedDifficulty.Lunatic),
             boss: new BossPracticeRequest(AllPBosses[0], new SMAnalysis.Phase(null, Enums.PhaseType.NONSPELL, 3, "_"))).Run();
         IsFalse(cb);
         yield return WaitForLoad();
@@ -803,13 +803,14 @@ public static class Scene1 {
         IsTrue(cb);
         AreEqual("TestPractice", SceneManager.GetActiveScene().name);
     }
+    private static GameMetadata FixedDfc(FixedDifficulty fd) => 
+        new GameMetadata(PlayerTeam.Empty, new DifficultySettings(fd));
     [UnityTest]
     public static IEnumerator TestDifficultySelect() {
         foreach (var dff in Enum.GetValues(typeof(FixedDifficulty)).Cast<FixedDifficulty>()) {
             //Running Difficulty Display Test
             DebugFloat.values.Clear();
-            new GameRequest(null, new DifficultySettings(dff),
-                boss: new BossPracticeRequest(AllPBosses[1])).Run();
+            new GameRequest(null, FixedDfc(dff), boss: new BossPracticeRequest(AllPBosses[1])).Run();
             yield return WaitForLoad();
             AreEqual(campaign.mode, CampaignMode.CARD_PRACTICE);
             AreEqual(GameManagement.Difficulty.standard.Value, dff);
@@ -825,8 +826,8 @@ public static class Scene1 {
         AreEqual(SceneManager.GetActiveScene().name, baseScene);
         bool campaignComplete = false;
         GameRequest.RunCampaign(MainCampaign, () => campaignComplete = true, 
-            new DifficultySettings(FixedDifficulty.Abex), PlayerTeam.Empty);
-        AreEqual(GameManagement.Difficulty.standard.Value, FixedDifficulty.Abex);
+            FixedDfc(FixedDifficulty.Lunatic));
+        AreEqual(GameManagement.Difficulty.standard.Value, FixedDifficulty.Lunatic);
         IsFalse(campaignComplete);
         yield return WaitForLoad();
         AreEqual(SceneManager.GetActiveScene().name, "TestStage1");
@@ -846,17 +847,12 @@ public static class Scene1 {
         while (GameStateManager.IsLoading) yield return null;
     }
 
-    private static IEnumerator Reload() {
-        GameManagement.ReloadLevel();
-        return WaitForLoad();
-    }
-
     [UnityTest]
     public static IEnumerator TestCampaignQuit() {
         SaveData.r.TutorialDone = true;
         AreEqual(SceneManager.GetActiveScene().name, baseScene);
-        GameRequest.RunCampaign(MainCampaign, null, new DifficultySettings(FixedDifficulty.Abex), PlayerTeam.Empty);
-        AreEqual(GameManagement.Difficulty.standard.Value, FixedDifficulty.Abex);
+        GameRequest.RunCampaign(MainCampaign, null, FixedDfc(FixedDifficulty.Lunatic));
+        AreEqual(GameManagement.Difficulty.standard.Value, FixedDifficulty.Lunatic);
         yield return WaitForLoad();
         AreEqual(SceneManager.GetActiveScene().name, "TestStage1");
         GameManagement.GoToMainMenu();

@@ -14,7 +14,7 @@ These are verbose instructions on how to set up Danmokou on your first run.
 - Within Unity Hub > Installs, add Unity version 2020.1.9f1
 - Within Unity Hub > Projects, Click ADD and browse to the root Danmokou folder. 
 - Click on the project to load it. **The first time you load it, Unity may take several minutes to import resources.**
-  - If you get an error about the default layout, then close Unity, download the files in the `Library` folder from [the repo](https://github.com/Bagoum/danmokou), paste them in your Library folder, and open Unity.
+  - If you get an error about the default layout, then close Unity, move the three `.dwlt` files in the `DMK_DEFAULTS` folder to the `Library` folder, and open Unity.
 - Once you are in the Unity Editor, click on the Project tab (by default in the bottom window) and browse to Assets/Danmokou/Scenes/BasicSceneOPENME.
 - (Error handling) **If you see a lot of pink squares in the game view where text should be**, then go to Window > TextMesh Pro > Import TMP Essential Resources and click Import in the popup window. If you can see the text, then you don't need to do this.
 

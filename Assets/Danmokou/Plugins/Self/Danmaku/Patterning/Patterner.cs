@@ -194,9 +194,17 @@ public static partial class AtomicPatterns {
         ItemPooler.RequestPointPP(new ItemRequestContext(sbh.bc.ParentOffset, sbh.GCX.RV2.TrueLocation));
         return sbh;
     };
+    public static SyncPattern GemItem() => sbh => {
+        ItemPooler.RequestGem(new ItemRequestContext(sbh.bc.ParentOffset, sbh.GCX.RV2.TrueLocation));
+        return sbh;
+    };
     [Alias("1UpItem")]
     public static SyncPattern OneUpItem() => sbh => {
         ItemPooler.Request1UP(new ItemRequestContext(sbh.bc.ParentOffset, sbh.GCX.RV2.TrueLocation));
+        return sbh;
+    };
+    public static SyncPattern PowerupShiftItem() => sbh => {
+        ItemPooler.RequestPowerupShift(new ItemRequestContext(sbh.bc.ParentOffset, sbh.GCX.RV2.TrueLocation));
         return sbh;
     };
     #endregion
@@ -308,13 +316,11 @@ public static partial class AtomicPatterns {
             return sbh;
         };
 
-    public static SyncPattern SafeLaser(GCXF<float> cold, LaserOption[] options) =>
-        Laser("null".Into<GCXU<VTP>>(), cold, _ => 0f, new LaserOptions(options.Prepend(
-            LaserOption.S(_ => 1/RealizedLaserOptions.DEFAULT_LASER_WIDTH)))); 
+    public static SyncPattern SafeLaser(GCXF<float> cold, LaserOptions options) =>
+        Laser("null".Into<GCXU<VTP>>(), cold, _ => 0f, options); 
     
-    public static SyncPattern SafeLaserM(GCXU<VTP> path, GCXF<float> cold, LaserOption[] options) =>
-        Laser(path, cold, _ => 0f, new LaserOptions(options.Prepend(
-            LaserOption.S(_ => 1/RealizedLaserOptions.DEFAULT_LASER_WIDTH)))); 
+    public static SyncPattern SafeLaserM(GCXU<VTP> path, GCXF<float> cold, LaserOptions options) =>
+        Laser(path, cold, _ => 0f, options); 
 
     public static SyncPattern SummonS(GCXU<VTP> path, [CanBeNull] StateMachine sm) =>
         Summon(path, sm, new BehOptions());
@@ -490,6 +496,7 @@ public struct LoopControl<T> {
         p = props.p;
         ch = _ch;
         parent_index = (props.p_mutater == null) ? ch.gcx.index : (int)props.p_mutater(ch.gcx);
+        if (props.resetColor) ch.bc.style = "_";
         if (props.bank != null) {
             var (toZero, banker) = props.bank.Value;
             ch.gcx.RV2 = ch.gcx.RV2.Bank(toZero ? (float?)0f : null) + banker(ch.gcx);

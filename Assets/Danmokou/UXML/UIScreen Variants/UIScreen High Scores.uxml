@@ -1,0 +1,10 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="UIScreen.uss" />
+    <ui:Label text="High Scores" display-tooltip-when-elided="True" class="header" />
+    <ui:VisualElement name="Container" style="padding-left: 600px; padding-right: 600px;">
+        <ui:VisualElement class="column wd5">
+            <ui:ListView focusable="True" show-border="false" show-bound-collection-size="true" class="columnList" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+    <ui:Label text="If a score has a blue dot on the left, you can press Shot to go to the replay." display-tooltip-when-elided="True" class="header" style="-unity-font: url(&apos;/Assets/Danmokou/Fonts/Odibee-YoZ Joint.ttf&apos;); font-size: 80px;" />
+</ui:UXML>

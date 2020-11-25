@@ -1,7 +1,7 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
-    <ui:VisualElement name="Container">
-        <Style src="UIScreen.uss" />
-        <ui:VisualElement class="column mainColumn">
+    <Style src="UIScreen.uss" />
+    <ui:VisualElement name="Container" style="padding-left: 720px;">
+        <ui:VisualElement class="column" style="max-width: 40%; padding-top: 500px;">
             <ui:ListView focusable="True" show-border="false" show-bound-collection-size="true" class="columnList" />
         </ui:VisualElement>
     </ui:VisualElement>

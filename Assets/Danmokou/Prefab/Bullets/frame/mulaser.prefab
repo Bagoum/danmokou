@@ -254,5 +254,10 @@ PrefabInstance:
       propertyPath: config.playerSortingLayer
       value: LowFX
       objectReference: {fileID: 0}
+    - target: {fileID: 6140576478511871678, guid: 33512ebca480f4f44bac2105265c3626,
+        type: 3}
+      propertyPath: defaultWidthMultiplier
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 33512ebca480f4f44bac2105265c3626, type: 3}

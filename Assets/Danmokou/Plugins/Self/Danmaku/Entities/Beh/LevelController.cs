@@ -6,6 +6,7 @@ using static Danmaku.Enums;
 namespace Danmaku {
 public class LevelController : BehaviorEntity {
     public IStageConfig stage;
+    public StageConfig wip_stage;
     private string _DefaultSuicideStyle => stage?.DefaultSuicideStyle;
     private static LevelController main;
     public static string DefaultSuicideStyle => (main == null) ? null : main._DefaultSuicideStyle;
@@ -37,22 +38,17 @@ public class LevelController : BehaviorEntity {
         if (req.method == LevelRunMethod.SINGLE) main.phaseController.Override(req.toPhase, req.cb);
         else if (req.method == LevelRunMethod.CONTINUE) main.phaseController.SetGoTo(req.toPhase, req.cb);
         main.stage = req.stage;
-        var rawSM = req.stage.StateMachineOverride;
-        if (rawSM != null) main.RunPatternSM(rawSM);
-        else {
-            main.behaviorScript = req.stage.StateMachine;
-            main.RunAttachedSM();
-        }
+        main.RunPatternSM(req.stage.StateMachine);
     }
 
     protected override void Awake() {
         main = this;
         behaviorScript = null;
 #if UNITY_EDITOR
-        if (SceneIntermediary.IsFirstScene) {
+        if (SceneIntermediary.IsFirstScene && wip_stage != null) {
             Log.Unity("Running default level controller script under editor first-scene conditions");
             //Only run the default stage under editor testing conditions
-            behaviorScript = stage?.StateMachine;
+            behaviorScript = wip_stage.stateMachine;
         }
 #endif
         base.Awake();

@@ -8,18 +8,21 @@ out = "img/stand-output/"
 root = "normal.png"
 
 root_left = 0
-root_left2 = 1128
-root_top = 80
-root_top2 = 1180
+root_left2 = 612
+root_top = 0
+root_top2 = 1300
 
-left = 480
-left2 = 620
-top = 200
-top2 = 360
+left = 272
+left2 = 448
+top = 120
+top2 = 260
 
 def root_convert(fromfile, tofile):
     img = Image.open(fromfile)
-    data = np.asarray(img)
+    data = np.array(img)
+    for y in range(top+1, top2-1):
+        for x in range(left+1, left2-1):
+            data[y][x] = np.zeros(data.shape[2], dtype=data.dtype)
     new_data = data[root_top:root_top2, root_left:root_left2]
     outimg = Image.fromarray(new_data)
     outimg.save(tofile)

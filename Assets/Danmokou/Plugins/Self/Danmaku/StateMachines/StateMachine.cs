@@ -27,6 +27,10 @@ public struct SMHandoff : IDisposable {
     public readonly ICancellee parentCT;
     public GenCtx GCX => ch.gcx;
     public bool Cancelled => ch.cT.Cancelled;
+    /// <summary>
+    /// RunTryPrepend should delegate to Append unless within a GTR scope.
+    /// </summary>
+    public bool CanPrepend { get; set; }
 
     public void ThrowIfCancelled() => ch.cT.ThrowIfCancelled();
 
@@ -34,6 +38,7 @@ public struct SMHandoff : IDisposable {
         this.ch = new CommonHandoff(cT ?? Cancellable.Null, GenCtx.New(exec, V2RV2.Zero));
         ch.gcx.index = index.GetValueOrDefault(exec.rBPI.index);
         parentCT = Cancellable.Null;
+        CanPrepend = false;
     }
 
     public SMHandoff(BehaviorEntity exec, SMRunner smr, [CanBeNull] ICancellee cT = null) {
@@ -41,12 +46,16 @@ public struct SMHandoff : IDisposable {
         gcx.OverrideScope(exec, V2RV2.Zero, exec.rBPI.index);
         this.ch = new CommonHandoff(cT ?? smr.cT, gcx);
         this.parentCT = smr.cT;
+        CanPrepend = false;
     }
 
     public void Dispose() => GCX.Dispose();
 
     public void RunRIEnumerator(IEnumerator cor) => Exec.RunRIEnumerator(cor);
-    public void RunTryPrependRIEnumerator(IEnumerator cor) => Exec.RunTryPrependRIEnumerator(cor);
+    public void RunTryPrependRIEnumerator(IEnumerator cor) {
+        if (CanPrepend) Exec.RunTryPrependRIEnumerator(cor);
+        else RunRIEnumerator(cor);
+    }
 
     public SMHandoff CreateJointCancellee(ICancellee other, out ICancellee joint) {
         joint = new JointCancellee(cT, other);

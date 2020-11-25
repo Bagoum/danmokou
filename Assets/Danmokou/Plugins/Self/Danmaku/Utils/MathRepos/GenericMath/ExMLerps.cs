@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Linq.Expressions;
+using Danmaku;
 using Ex = System.Linq.Expressions.Expression;
 using static ExUtils;
 using static DMath.ExMHelpers;
@@ -14,6 +16,7 @@ using erv2 = DMath.EEx<DMath.V2RV2>;
 using ExBPY = System.Func<DMath.TExPI, TEx<float>>;
 using static DMath.ExM;
 using static DMath.ExMConditionals;
+using static DMath.ExMConversions;
 using static DMath.ExMMod;
 
 namespace DMath {
@@ -39,6 +42,12 @@ public static class ExMLerps {
                 rc.Mul(f2).Add(rc.Complement().Mul(f1))
             );
         });
+
+    /// <summary>
+    /// Lerp between a value for easy difficulty and lunatic difficulty.
+    /// </summary>
+    public static TEx<T> LerpD<T>(TEx<T> f1, TEx<T> f2) => Lerp(Enums.FixedDifficulty.Easy.Counter(),
+        Enums.FixedDifficulty.Lunatic.Counter(), ExMDifficulty.Dc(), f1, f2);
 
     /// <summary>
     /// Lerp between two functions with 0-1 as the bounds for the controller.
@@ -160,6 +169,29 @@ public static class ExMLerps {
     
     
     /// <summary>
+    /// Return one of two functions depending on the input,
+    /// adjusting the switch variable by the reference switch amount if returning the latter function.
+    /// </summary>
+    /// <param name="switchVar">The variable upon which pivoting is performed. Should be either "p" (firing index) or "t" (time).</param>
+    /// <param name="at">Reference</param>
+    /// <param name="f1">Function when <c>t \leq at</c></param>
+    /// <param name="f2">Function when <c>t \gt at</c></param>
+    /// <returns></returns>
+    public static Func<TExPI, TEx<T>> SwitchH<T>(ExBPY switchVar, ExBPY at, Func<TExPI, TEx<T>> f1, Func<TExPI, TEx<T>> f2) => bpi => {
+        var pivot = VFloat();
+        var cold = new TExPI();
+        return Ex.Block(new[] { pivot }, 
+            pivot.Is(at(bpi)),
+            Ex.Condition(Ex.GreaterThan(switchVar(bpi), pivot), 
+                Ex.Block(new ParameterExpression[] { cold },
+                    Ex.Assign(cold, bpi),
+                    SubAssign(switchVar(cold), pivot),
+                    f2(cold)
+                ), f1(bpi))
+        );
+    };
+    
+    /// <summary>
     /// DEPRECATED.
     /// Apply a ease function on top of a target derivative function that uses time as a controller.
     /// Primarily used for velocity parametrics.
@@ -181,7 +213,23 @@ public static class ExMLerps {
     /// <returns></returns>
     public static Func<TExPI, TEx<T>> Ease<T>(string name, float maxTime, Func<TExPI, TEx<T>> f) => 
         ExMHelpers.Ease<TExPI,T>(name, maxTime, f, bpi => bpi.t, (bpi, t) => bpi.CopyWithT(t));
-    
+
+
+    public static tv2 RotateLerp(efloat zeroBound, efloat oneBound, efloat controller, ev2 source, ev2 target) =>
+        EEx.Resolve(zeroBound, oneBound, controller, source, target, (z, o, c, f1, f2) => RotateRad(
+            Clamp(z, o, c).Sub(z).Div(o.Sub(z)).Mul(RadDiff(f2, f1)),
+            f1
+        ));
+    public static tv2 RotateLerpCCW(efloat zeroBound, efloat oneBound, efloat controller, ev2 source, ev2 target) =>
+        EEx.Resolve(zeroBound, oneBound, controller, source, target, (z, o, c, f1, f2) => RotateRad(
+            Clamp(z, o, c).Sub(z).Div(o.Sub(z)).Mul(RadDiffCCW(f2, f1)),
+            f1
+        ));
+    public static tv2 RotateLerpCW(efloat zeroBound, efloat oneBound, efloat controller, ev2 source, ev2 target) =>
+        EEx.Resolve(zeroBound, oneBound, controller, source, target, (z, o, c, f1, f2) => RotateRad(
+            Clamp(z, o, c).Sub(z).Div(o.Sub(z)).Mul(RadDiffCW(f2, f1)),
+            f1
+        ));
     
     #region Easing
 

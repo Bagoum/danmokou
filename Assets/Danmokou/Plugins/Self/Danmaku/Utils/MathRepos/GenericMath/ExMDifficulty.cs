@@ -33,10 +33,6 @@ public static class ExMDifficulty {
     /// Get the difficulty multiplier centered on lunatic.
     /// </summary>
     public static tfloat DL() => Ex.Constant(Difficulty.Value / FixedDifficulty.Lunatic.Value());
-    /// <summary>
-    /// Get the difficulty multiplier centered on ultra.
-    /// </summary>
-    public static tfloat DU() => Ex.Constant(Difficulty.Value / FixedDifficulty.Ultra.Value());
 
     /// <summary>
     /// 1 / DL
@@ -44,20 +40,20 @@ public static class ExMDifficulty {
     public static tfloat iDL() => Ex.Constant(FixedDifficulty.Lunatic.Value() / Difficulty.Value);
 
     private static tfloat ResolveD3(tfloat n, tfloat h, tfloat u) =>
-        Difficulty.Value < FixedDifficulty.Hard.Value() ? n :
-        Difficulty.Value < FixedDifficulty.Ultra.Value() ? h :
+        Difficulty.Value < FixedDifficulty.Normal.Value() ? n :
+        Difficulty.Value < FixedDifficulty.Lunatic.Value() ? h :
         u;
 
     /// <summary>
-    /// Return -2 if the difficulty is less than Hard,
-    /// else 0 if less than Ultra,
+    /// Return -2 if the difficulty is less than Normal,
+    /// else 0 if less than Lunatic,
     /// else 2.
     /// </summary>
     /// <returns></returns>
     public static tfloat D3d2() => ResolveD3(EN2, E0, E2);
     /// <summary>
-    /// Return -1 if the difficulty is less than Hard,
-    /// else 0 if less than Ultra,
+    /// Return -1 if the difficulty is less than Normal,
+    /// else 0 if less than Lunatic,
     /// else 1.
     /// </summary>
     /// <returns></returns>

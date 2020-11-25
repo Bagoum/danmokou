@@ -12,9 +12,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eef3d61c38c8da249ac2aabcd5c9d253, type: 3}
   m_Name: Player Took Hit
   m_EditorClassIdentifier: 
-  proccer: {fileID: 0}
   sound: {fileID: 11400000, guid: f011464038927994bbb50af56bf0439c, type: 2}
-  locator: 1
+  locator:
+    type: 0
+    Source:
+      offset: {x: 0, y: 0}
+    Target:
+      offset: {x: 0, y: 0}
+    Perimeter:
+      offset: {x: 0, y: 0}
+      multiplier: 1
   particlePrefab: {fileID: 2001368550244813539, guid: 5b5fda316d46f9945a07b0024059686c,
     type: 3}
   spawnType: 1
+  subEffects:
+  - {fileID: 11400000, guid: a64ccafa3e1c0bc4babaca73936f6fed, type: 2}

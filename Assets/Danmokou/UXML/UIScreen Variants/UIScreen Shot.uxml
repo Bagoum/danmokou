@@ -1,14 +1,9 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
-    <ui:VisualElement name="Wrapper" class="Wrapper">
-        <Style src="UIScreen.uss" />
-        <ui:Label text="Player Selection" class="shotHeader" style="display: none;" />
-        <ui:VisualElement name="Container">
-            <ui:VisualElement class="column wd08 padLeft">
-                <ui:ListView focusable="True" show-border="false" show-bound-collection-size="true" class="columnList" />
-            </ui:VisualElement>
-            <ui:VisualElement class="column wd2">
-                <ui:ListView focusable="True" show-border="false" show-bound-collection-size="true" class="columnList" />
-            </ui:VisualElement>
+    <Style src="UIScreen.uss" />
+    <ui:Label text=" " class="header" />
+    <ui:VisualElement name="Container" style="padding-left: 600px;">
+        <ui:VisualElement class="column" style="max-width: 30%; padding-top: 600px;">
+            <ui:ListView focusable="True" show-border="false" show-bound-collection-size="true" class="columnList" />
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

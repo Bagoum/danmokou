@@ -26,7 +26,7 @@ public class ExDerivTests {
     private static ParameterExpression VF(string name) => Ex.Variable(typeof(float), name);
     private static ParameterExpression V<T>(string name) => Ex.Variable(typeof(T), name);
 
-    private static string DerivDebug(ParameterExpression x, Ex ex) => ex.Derivate(x, E1).Flatten(false).Debug();
+    private static string DerivDebug(Expression x, Ex ex) => ex.Derivate(x, E1).Flatten(false).Debug();
 
     [Test]
     public void TestCosSin() {
@@ -47,6 +47,16 @@ public class ExDerivTests {
         var x = VF("x");
         var y = VF("y");
         AreEqual("(y=((2*x)+2));(y+(x*2));", DerivDebug(x, Ex.Block(new[] { y }, Ex.Assign(y, E2.Mul(x).Add(E2)), x.Mul(y))));
+    }
+
+    [Test]
+    public void TestPartial() {
+        var bpi = new TExPI();
+        AreEqual("(0.5+(0.1*.index:>Single))", 
+            DerivDebug(bpi.t, bpi.t.Mul(ExC(0.5f).Add(ExC(0.1f).Mul(BPYRepo.P()(bpi))))));
+        var x = VF("x");
+        var y = VF("y");
+        AreEqual("(y*2)", DerivDebug(x, y.Mul(2).Mul(x)));
     }
     
 }

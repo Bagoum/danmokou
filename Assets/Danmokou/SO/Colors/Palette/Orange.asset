@@ -13,8 +13,9 @@ MonoBehaviour:
   m_Name: Orange
   m_EditorClassIdentifier: 
   colorName: orange
-  highlight: {r: 1, g: 0.89324456, b: 0.7607843, a: 1}
+  highlight: {r: 1, g: 0.8716394, b: 0.71000004, a: 1}
   light: {r: 1, g: 0.62270504, b: 0.32549024, a: 1}
   pure: {r: 0.972549, g: 0.21729767, b: 0, a: 1}
   dark: {r: 0.6431373, g: 0.06762177, b: 0, a: 1}
   outline: {r: 0.1882353, g: 0.008847575, b: 0, a: 1}
+  recolorizable: 0

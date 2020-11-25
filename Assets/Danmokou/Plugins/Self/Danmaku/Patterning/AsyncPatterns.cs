@@ -333,20 +333,7 @@ public static partial class AsyncPatterns {
     [Alias("GCR2dr")]
     public static AsyncPattern GCRepeat2dr(ExBPY difficulty, ExBPY wait, ExBPY times, ExBPRV2 rpp, GenCtxProperty[] props, SyncPattern[] target) =>
         GCRepeat(new GenCtxProperties<AsyncPattern>(props.Append(GenCtxProperty.AsyncDR(difficulty, wait, times, rpp))), target);
-    
-    /// <summary>
-    /// Like GCRepeat, but has specific handling for the WAIT and TIMES properties with CIRCLE.
-    /// </summary>
-    /// <param name="wait">Frames to wait between invocations</param>
-    /// <param name="times">Number of invocations</param>
-    /// <param name="props">Other properties</param>
-    /// <param name="target">Child SyncPatterns to run</param>
-    /// <returns></returns>
-    [Alias("GCR2c")]
-    public static AsyncPattern GCRepeat2c(GCXF<float> wait, GCXF<float> times, GenCtxProperty[] props, SyncPattern[] target) =>
-        GCRepeat(new GenCtxProperties<AsyncPattern>(props.Append(GenCtxProperty.Wait(wait))
-            .Append(GenCtxProperty.TimesCircle(times))), target);
-    
+
     [Alias("GCRf")]
     public static AsyncPattern GCRepeatFRV2(GCXF<float> wait, GCXF<float> times, GCXF<V2RV2> frv2, GenCtxProperty[] props, SyncPattern[] target) =>
         GCRepeat(new GenCtxProperties<AsyncPattern>(props.Append(GenCtxProperty.WT(wait, times)).Append(GenCtxProperty.FRV2(frv2))), target);
@@ -493,6 +480,8 @@ public static partial class AsyncPatterns {
     public static AsyncPattern IDelay(GCXF<float> delay, AsyncPattern next) => _AsGIR(next, GenCtxProperty.Delay(delay));
     
     public static AsyncPattern IColor(string color, AsyncPattern ap) => _AsGIR(ap, GCP.Color(new[] {color}));
+    
+    public static AsyncPattern ISetP(GCXF<float> p, AsyncPattern ap) => _AsGIR(ap, GCP.SetP(p));
 
     // The following functions have NOT been ported to _AsGIR. Most of them should be OK as is.
 

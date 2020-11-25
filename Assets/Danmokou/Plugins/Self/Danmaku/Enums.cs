@@ -171,14 +171,10 @@ public static class Enums {
     }
     
     public enum FixedDifficulty {
-        Easier = 10,
         Easy = 20,
         Normal = 30,
         Hard = 40,
-        Lunatic = 50,
-        Ultra = 60,
-        Abex = 70,
-        Assembly = 80,
+        Lunatic = 50
     }
     public enum CampaignMode {
         NULL,
@@ -199,6 +195,13 @@ public static class Enums {
         PHOTO,
         TIMEOUT,
         CANCELLED
+    }
+    
+    
+    public enum Vulnerability {
+        VULNERABLE,
+        NO_DAMAGE,
+        PASS_THROUGH
     }
 
     public enum ItemType {
@@ -228,10 +231,16 @@ public static class Enums {
     public static bool IsLenient(this PhaseType st) => st == PhaseType.DIALOGUE;
     public static bool IsStage(this PhaseType st) => st == PhaseType.STAGE;
     public static bool RequiresHPGuard(this PhaseType st) => st == PhaseType.DIALOGUE || st.IsCard();
+
+    public static Vulnerability? DefaultVulnerability(this PhaseType st) =>
+        st == PhaseType.TIMEOUT ? Vulnerability.PASS_THROUGH :
+        st.RequiresHPGuard() ? Vulnerability.NO_DAMAGE : (Vulnerability?)null;
     public static bool RequiresFullHPBar(this PhaseType st) => st == PhaseType.FINAL || st == PhaseType.TIMEOUT;
     public static bool IsCard(this PhaseType st) => st == PhaseType.NONSPELL || st.IsSpell();
     public static bool IsSpell(this PhaseType st) =>
         st == PhaseType.SPELL || st == PhaseType.TIMEOUT || st == PhaseType.FINAL;
+
+    public static bool HideTimeout(this PhaseType st) => st == PhaseType.STAGE || st == PhaseType.DIALOGUE;
     public static PhaseType Invert(this PhaseType st) {
         if (st.IsSpell()) return PhaseType.NONSPELL;
         if (st == PhaseType.NONSPELL) return PhaseType.SPELL;
@@ -253,37 +262,25 @@ public static class Enums {
     }
 
     public static float Value(this FixedDifficulty d) {
-        if (d == FixedDifficulty.Easier) return 0.707f;       // 2^-0.5
-        else if (d == FixedDifficulty.Easy) return 1.00f;     // 2^0.0
+        if (d == FixedDifficulty.Easy) return 1.00f;     // 2^0.0
         else if (d == FixedDifficulty.Normal) return 1.414f;  // 2^0.5
         else if (d == FixedDifficulty.Hard) return 2.00f;     // 2^1.0
         else if (d == FixedDifficulty.Lunatic) return 2.828f; // 2^1.5
-        else if (d == FixedDifficulty.Ultra) return 3.732f;   // 2^1.9
-        else if (d == FixedDifficulty.Abex) return 4.925f;    // 2^2.3
-        else if (d == FixedDifficulty.Assembly) return 6.063f;// 2^2.6
         throw new Exception($"Couldn't resolve difficulty setting {d}");
     }
     public static float Counter(this FixedDifficulty d) {
-        if (d == FixedDifficulty.Easier) return 0;
-        else if (d == FixedDifficulty.Easy) return 1;
-        else if (d == FixedDifficulty.Normal) return 2;
-        else if (d == FixedDifficulty.Hard) return 3;
-        else if (d == FixedDifficulty.Lunatic) return 4;
-        else if (d == FixedDifficulty.Ultra) return 5;
-        else if (d == FixedDifficulty.Abex) return 6;
-        else if (d == FixedDifficulty.Assembly) return 7;
+        if (d == FixedDifficulty.Easy) return 0;
+        else if (d == FixedDifficulty.Normal) return 1;
+        else if (d == FixedDifficulty.Hard) return 2;
+        else if (d == FixedDifficulty.Lunatic) return 3;
         throw new Exception($"Couldn't resolve difficulty setting {d}");
     }
 
     public static string Describe(this FixedDifficulty d) {
-        if (d == FixedDifficulty.Easier) return "Easier";
-        else if (d == FixedDifficulty.Easy) return "Easy";
+        if (d == FixedDifficulty.Easy) return "Easy";
         else if (d == FixedDifficulty.Normal) return "Normal";
         else if (d == FixedDifficulty.Hard) return "Hard";
         else if (d == FixedDifficulty.Lunatic) return "Lunatic";
-        else if (d == FixedDifficulty.Ultra) return "Ultra";
-        else if (d == FixedDifficulty.Abex) return "Abex";
-        else if (d == FixedDifficulty.Assembly) return "Assembly";
         throw new Exception($"Couldn't resolve difficulty setting {d}");
     }
 
@@ -306,5 +303,8 @@ public static class Enums {
             default: return "?";
         }
     }
+
+    public static bool TakesDamage(this Vulnerability v) => v == Vulnerability.VULNERABLE;
+    public static bool HitsLand(this Vulnerability v) => v == Vulnerability.VULNERABLE || v == Vulnerability.NO_DAMAGE;
 }
 }

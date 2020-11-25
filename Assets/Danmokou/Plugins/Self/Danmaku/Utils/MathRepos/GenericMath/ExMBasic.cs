@@ -242,7 +242,7 @@ public static partial class ExM {
     /// <summary>
     /// Returns (bas)^(exp).
     /// </summary>
-    [Alias("^")]
+    [Alias("^")] [WarnOnStrict]
     public static tfloat Pow(tfloat bas, tfloat exp) => OfDFD(_Pow, bas, exp);
     /// <summary>
     /// Returns one function raised to the power of the other, subtracted by the first function. (Alias: ^- bas exp)
@@ -360,7 +360,8 @@ public static partial class ExM {
     /// <param name="by">Positive number for absolute value comparison</param>
     /// <param name="x">Number to be limited</param>
     /// <returns></returns>
-    public static tfloat Limit(efloat by, efloat x) => EEx.Resolve(by, x, (_by, _x) => Ex.Condition(_x.GT0(), Min(_x, _by), Max(_x, Ex.Negate(_by))));
+    public static tfloat Limit(efloat by, efloat x) => EEx.Resolve(by, x, (_by, _x) => 
+        Ex.Condition(_x.GT0(), Min(_x, _by), Max(_x, Ex.Negate(_by))));
 
     /// <summary>
     /// If x's absolute value is less than by, then return 0 instead.
@@ -432,7 +433,15 @@ public static partial class ExM {
     /// Get the rotation required, in radians, to rotate SOURCE to TARGET, in the range [-pi,pi].
     /// </summary>
     public static tfloat RadDiff(ev2 target, ev2 source) => RadIntoRange(ATanR(target).Sub(ATanR(source)));
+    /// <summary>
+    /// Get the rotation required, in radians, to rotate SOURCE to TARGET, in the range [0,2pi].
+    /// </summary>
+    public static tfloat RadDiffCCW(ev2 target, ev2 source) => RadToPos(ATanR(target).Sub(ATanR(source)));
 
+    /// <summary>
+    /// Get the rotation required, in radians, to rotate SOURCE to TARGET, in the range [-2pi,0].
+    /// </summary>
+    public static tfloat RadDiffCW(ev2 target, ev2 source) => RadToNeg(ATanR(target).Sub(ATanR(source)));
     
     #region Sines
     
@@ -525,14 +534,14 @@ public static partial class ExM {
     /// <summary>
     /// Get the arccosine in radians of a number.
     /// </summary>
-    public static Ex ACosR(Ex x) => OfDFD(_ACos, x);
+    public static tfloat ACosR(tfloat x) => OfDFD(_ACos, x);
 
-    public static Ex ACos(Ex x) => ACosR(x).Mul(radDeg);
+    public static tfloat ACos(tfloat x) => ACosR(x).Mul(radDeg);
     private static readonly ExFunction _Tan = ExUtils.Wrap<double>(typeof(Math), "Tan");
     /// <summary>
     /// The raw tangent function.
     /// </summary>
-    public static Ex Tan(Ex x) => OfDFD(_Tan, x);
+    public static tfloat Tan(tfloat x) => OfDFD(_Tan, x);
     
     private static readonly ExFunction _AtanYX = ExUtils.Wrap<Mathf, float>("Atan2", 2);
     

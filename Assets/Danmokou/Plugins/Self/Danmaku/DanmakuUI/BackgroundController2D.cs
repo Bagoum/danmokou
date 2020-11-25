@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Rendering;
 using Danmaku;
 using DMath;
 using JetBrains.Annotations;
+using LocationService = Danmaku.LocationService;
 
 
 public struct Kakera {
@@ -138,9 +140,11 @@ public struct BackgroundTransition {
 
         public void Tile4(List<Kakera> fragments) {
             float s = fragmentRadius * Mathf.Sqrt(2f);
-            for (float w = 0f; w < MainCamera.ScreenWidth + s; w += s) {
-                for (float h = 0f; h < MainCamera.ScreenHeight + s; h += s) {
-                    fragments.Add(new Kakera(new Vector2(w - MainCamera.HorizRadius, h - MainCamera.VertRadius), 
+            float width = LocationService.Width + 2f;
+            float height = MainCamera.ScreenHeight;
+            for (float w = 0f; w < width + s; w += s) {
+                for (float h = 0f; h < height + s; h += s) {
+                    fragments.Add(new Kakera(new Vector2(w - width/2f, h - height/2f), 
                         Mathf.PI/4, fragMaxInitSpeed, fragGravity, fragRotAccelMag));
                 }
             }
@@ -157,34 +161,24 @@ public struct BackgroundTransition {
 /// </summary>
 public sealed class BackgroundController2D : BackgroundController {
     public Sprite bgSprite;
-    private Mesh mesh;
     public Material bgMaterial;
-    private MaterialPropertyBlock backgroundPB;
+    private (SpriteRenderer sr, MaterialPropertyBlock pb)[] sr;
     protected override void Awake() {
-        backgroundPB = new MaterialPropertyBlock();
-        backgroundPB.SetTexture(PropConsts.mainTex, bgSprite.texture);
-        backgroundPB.SetFloat(PropConsts.time, BackgroundOrchestrator.Time);
-        ReassignVariables();
-        mesh = MeshGenerator.RenderInfo.FromSprite(bgSprite);
+        sr = GetComponentsInChildren<SpriteRenderer>().Select(s => {
+            var m = new MaterialPropertyBlock();
+            s.GetPropertyBlock(m);
+            m.SetFloat(PropConsts.time, BackgroundOrchestrator.Time);
+            s.color *= tint;
+            return (s, m);
+        }).ToArray();
         base.Awake();
     }
 
-    [ContextMenu("Reassign")]
-    private void ReassignVariables() {
-        backgroundPB.SetColor(PropConsts.tint, tint);
-    }
-
     private void Update() {
-        backgroundPB.SetFloat(PropConsts.time, BackgroundOrchestrator.Time);
+        for (int ii = 0; ii < sr.Length; ++ii) {
+            sr[ii].pb.SetFloat(PropConsts.time, BackgroundOrchestrator.Time);
+            sr[ii].sr.SetPropertyBlock(sr[ii].pb);
+        }
     }
 
-    protected override void Render(Camera c) {
-        if (!Application.isPlaying) return;
-        //Sprite renders to given camera
-        if (c == capturer.Camera) {
-            capturer.Draw(tr, mesh, bgMaterial, backgroundPB, DrawToLayer);
-            return;
-        }
-        base.Render(c);
-    }
 }

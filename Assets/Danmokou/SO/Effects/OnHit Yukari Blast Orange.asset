@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eef3d61c38c8da249ac2aabcd5c9d253, type: 3}
+  m_Name: OnHit Yukari Blast Orange
+  m_EditorClassIdentifier: 
+  sound: {fileID: 11400000, guid: a6cc7142ab32c3145ba5b70adbae4016, type: 2}
+  locator:
+    type: 0
+    Source:
+      offset: {x: 0, y: 0.2}
+    Target:
+      offset: {x: 0, y: 0}
+    Perimeter:
+      offset: {x: 0, y: 0.3}
+      multiplier: 1
+  particlePrefab: {fileID: 1612221337289516, guid: cf73e1e830aa6fc45a38c1ac679d5e5d,
+    type: 3}
+  spawnType: 1
+  subEffects: []

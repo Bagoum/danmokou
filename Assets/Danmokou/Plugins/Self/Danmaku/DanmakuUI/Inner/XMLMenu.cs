@@ -33,6 +33,13 @@ public abstract class XMLMenu : RegularUpdater {
     protected virtual string UITopID => "Pause";
     protected virtual string ScreenContainerID => "UIContainer";
 
+    protected enum ScreenTransition {
+        SWIPE,
+        NONE
+    }
+
+    protected virtual ScreenTransition transitionMethod => ScreenTransition.SWIPE;
+
     protected virtual IEnumerable<UIScreen> Screens => new[] { MainScreen };
     protected UIScreen MainScreen { get; set; }
     protected bool MenuActive = true;
@@ -84,7 +91,7 @@ public abstract class XMLMenu : RegularUpdater {
         return null;
     }
 
-    protected void Redraw() {
+    protected virtual void Redraw() {
         foreach (var screen in Screens) {
             if (Current?.screen == screen) {
                 screen.Bound.style.display = DisplayStyle.Flex;
@@ -104,9 +111,10 @@ public abstract class XMLMenu : RegularUpdater {
 
     public override bool UpdateDuringPause => true;
 
+    private bool isTransitioning = false;
     public override void RegularUpdate() {
         if (!Application.isPlaying || !ETime.FirstUpdateForScreen) return;
-        if (Current != null && MenuActive) {
+        if (Current != null && MenuActive && !isTransitioning) {
             bool tried_change = true;
             bool allowsfx = true;
             var last = Current;
@@ -129,25 +137,68 @@ public abstract class XMLMenu : RegularUpdater {
                     if (allowsfx) SFXService.Request(upDownSound);
                     Current = Current.Down();
                 } else if (InputManager.UIConfirm.Active) {
-                    var (succ, nxt) = Current.Confirm();
-                    if (succ) Current = nxt;
+                    var (succ, nxt) = Current.Confirm_DontNest();
+                    if (succ) HandleTransition(Current, nxt, false);
                     if (allowsfx) SFXService.Request(succ ? confirmSound : failureSound);
                 } else if (InputManager.UIBack.Active) {
                     if (allowsfx) SFXService.Request(backSound);
-                    Current = Current.Back();
+                    HandleTransition(Current, Current.Back(), true);
                 } else tried_change = false;
                 allowsfx = false;
                 if (++sentry > 20) throw new Exception("There is a loop in the XML menu.");
             } while (Current?.Passthrough ?? false);
             if (tried_change) {
-                if (last != Current) {
-                    last.OnLeave(Current);
-                    Current?.OnVisit(last);
-                }
+                OnChangeEffects(last);
                 Redraw();
             }
         }
+    }
 
+    private void OnChangeEffects(UINode last) {
+        if (last != Current) {
+            last.OnLeave(Current);
+            Current?.OnVisit(last);
+        }
+        Redraw();
+    }
+
+    private float swipeTime = 0.3f;
+    private void HandleTransition(UINode prev, [CanBeNull] UINode next, bool backwards) {
+        if (prev.screen == next?.screen || next == null) {
+            Current = next;
+            OnChangeEffects(prev);
+        } else {
+            prev.screen?.RunPreExit();
+            isTransitioning = true;
+            void GoToNested() {
+                if (backwards) {
+                    Current = prev.screen.GoBack();
+                } else {
+                    Current = prev.screen.GoToNested(prev, next);
+                }
+                OnChangeEffects(prev);
+            }
+            if (transitionMethod == ScreenTransition.SWIPE) {
+                UIBuilderRenderer.Slide(null, GetRandomSlideEndpoint(), swipeTime, DMath.M.EInSine, s => {
+                    if (s) {
+                        GoToNested();
+                        UIBuilderRenderer.Slide(GetRandomSlideEndpoint(), Vector2.zero, swipeTime, DMath.M.EOutSine, s2 => {
+                            if (s2) isTransitioning = false;
+                        });
+                    }
+                });
+            } else GoToNested();
+        }
+    }
+
+    private Vector2[] slideEndpoints => new[] {
+        new Vector2(-MainCamera.ScreenWidth, 0),
+        new Vector2(MainCamera.ScreenWidth, 0),
+        new Vector2(0, -MainCamera.ScreenHeight),
+        new Vector2(0, MainCamera.ScreenHeight)
+    };
+    private Vector2 GetRandomSlideEndpoint() {
+        return RNG.RandSelectOffFrame(slideEndpoints);
     }
 
 }

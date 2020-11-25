@@ -14,5 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   defaultName: camera-timeout
   clip: {fileID: 8300000, guid: 009ad619f8f9d1c418cbbe2412abf684, type: 3}
-  volume: 0.3
+  volume: 0.45
   timeout: 0.2
+  pausable: 0
+  loop: 0
+  loopTimeCheck: 0
+  pitch: 1
+  priority: -1
+  feature: 0

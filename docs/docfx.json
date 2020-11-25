@@ -64,17 +64,20 @@
       }
     ],
     "dest": "_site",
+	"globalMetadata": {
+		"_enableSearch": "true"
+	},
     "globalMetadataFiles": [],
     "fileMetadataFiles": [],
     "template": [
       "default",
 	  "templates/dmk"
     ],
-    "postProcessors": [],
+    "postProcessors": [ "ExtractSearchIndex" ],
     "markdownEngineName": "markdig",
     "noLangKeyword": false,
     "keepFileLink": false,
     "cleanupCacheHistory": false,
-    "disableGitFeatures": true
+    "disableGitFeatures": false
   }
 }

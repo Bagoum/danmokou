@@ -109,6 +109,7 @@ public static partial class Reflector {
         CreatePostAggregates("PA_Sub", "-");
         CreatePostAggregates("PA_Div", "/");
         CreatePostAggregates("PA_FDiv", "//");
+        CreatePostAggregates("PA_Pow", "^");
         CreatePostAggregates("PA_And", "&");
         CreatePostAggregates("PA_Or", "|");
     #if NO_EXPR

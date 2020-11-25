@@ -1,6 +1,6 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="UIPauseMenu.uss" />
     <ui:VisualElement name="Pause">
-        <Style src="UIPauseMenu.uss" />
         <ui:Label text="Pause" name="Header" />
         <ui:VisualElement name="UIContainer" />
     </ui:VisualElement>

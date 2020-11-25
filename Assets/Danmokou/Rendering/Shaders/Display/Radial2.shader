@@ -99,11 +99,9 @@
                 
                 //float is_empty = step(f.effF + 0.0001, noise_ang); //+0.0001 solves rounding errors for full health
                 float is_empty = smoothstep(f.effF, f.effF + smth*2, noise_ang); //Smooth for noise. One-way to avoid bugs at end
-                float is_next;
+                float is_next = 0;
                 if (_P2 > 0) {
                     is_next = 1 - smoothstep(max(0, _P2 - nsmth), _P2 + nsmth, ang);
-                } else {
-                    is_next = step(ang + 0.0001, _P2);
                 }
                 float is_curr = (1-is_empty) * (1-is_next);
                 float4 c = float4(1,1,1,1) * (is_curr * _CF + is_empty * _CE + is_next * _CN);

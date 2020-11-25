@@ -5,6 +5,7 @@ public static class PropConsts {
     public const string cycleKW = "FT_CYCLE";
     
     public static readonly int mainTex = Shader.PropertyToID("_MainTex");
+    public static readonly int renderTex = Shader.PropertyToID("_RenderTex");
     public static readonly int trueTex = Shader.PropertyToID("_TrueTex");
     public static readonly int faderTex = Shader.PropertyToID("_FaderTex");
     public static readonly int fromTex = Shader.PropertyToID("_FromTex");
@@ -32,7 +33,6 @@ public static class PropConsts {
 
     public static readonly int tint = Shader.PropertyToID("_Tint");
 
-    public static readonly int fillColor1 = Shader.PropertyToID("_CF1");
     public static readonly int fillColor2 = Shader.PropertyToID("_CF2");
     public static readonly int fillColor = Shader.PropertyToID("_CF");
     public static readonly int fillInnerColor = Shader.PropertyToID("_CFI");

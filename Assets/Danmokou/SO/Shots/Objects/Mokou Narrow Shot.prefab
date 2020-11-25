@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3643135156715668705}
   m_Layer: 0
-  m_Name: Narrow Shot
+  m_Name: Mokou Narrow Shot
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -62,7 +62,7 @@ Transform:
   m_GameObject: {fileID: 5058375623650686857}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -0.6, y: -0.5, z: 0}
-  m_LocalScale: {x: 0.5, y: 0.5, z: 1}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 3643135156715668705}
   m_RootOrder: 3
@@ -105,10 +105,11 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: -533568639
-  m_SortingLayer: 4
+  m_SortingLayer: 5
   m_SortingOrder: -1
-  m_Sprite: {fileID: 21300000, guid: 0d24d98c623b92347aa4ac15b8809ed3, type: 3}
-  m_Color: {r: 0.5849056, g: 0.08552865, b: 0.08552865, a: 0.45490196}
+  m_Sprite: {fileID: -8181574709904321863, guid: 0c3b034d853920c45ab59082e3c74463,
+    type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -132,35 +133,30 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorScript: {fileID: 4900000, guid: 2329205515a83f54e9338e7d50137410, type: 3}
   ID: 
-  rotationMethod: 0
   deathEffect: {fileID: 0}
   cullableRadius:
     cullable: 0
     cullRadius: {fileID: 0}
   collisionInfo:
+    collisionRadius: 0
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
-  animate:
-    method: 0
-    LRRelation: 0
-    UDRelation: 0
-    frames:
-      idleAnim: []
-      rightAnim: []
-      leftAnim: []
-      upAnim: []
-      downAnim: []
-      attackAnim: []
-      deathAnim: []
-  offsetFree: qrotate(px(15 * t), rx(0.9, 225 + softmod(2200, 222.49 * t)))
+  displayer: {fileID: 0}
+  offsetFree: qrotate(px(15 * t), rx(0.7, 45 + 90 * p + mod(360, 222.49 * t)))
   offsetFocus: pxy -0.4 -0.5
+  powerOffsetFree: []
+  powerOffsetFocus: []
+  freeOffsetMul: 1
+  focusOffsetMul: 1
   opacityFree: 
   opacityFocus: 
-  offsetLerpTime: 0.2
+  spriteRotation: 
+  freeAngleOffset: 
+  focusAngleOffset: 
+  freeFocusLerpTime: 0.2
+  powerLerpTime: 0
   findex: 2
-  freeFirer: {fileID: 0}
-  focusFirer: {fileID: 0}
 --- !u!1 &6562263471563620302
 GameObject:
   m_ObjectHideFlags: 0
@@ -188,7 +184,7 @@ Transform:
   m_GameObject: {fileID: 6562263471563620302}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -0.3, y: 0.5, z: 0}
-  m_LocalScale: {x: 0.5, y: 0.5, z: 1}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 3643135156715668705}
   m_RootOrder: 2
@@ -231,10 +227,11 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: -533568639
-  m_SortingLayer: 4
+  m_SortingLayer: 5
   m_SortingOrder: -1
-  m_Sprite: {fileID: 21300000, guid: 0d24d98c623b92347aa4ac15b8809ed3, type: 3}
-  m_Color: {r: 0.5849056, g: 0.08552865, b: 0.08552865, a: 0.45490196}
+  m_Sprite: {fileID: -8181574709904321863, guid: 0c3b034d853920c45ab59082e3c74463,
+    type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -258,35 +255,30 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorScript: {fileID: 4900000, guid: 2329205515a83f54e9338e7d50137410, type: 3}
   ID: 
-  rotationMethod: 0
   deathEffect: {fileID: 0}
   cullableRadius:
     cullable: 0
     cullRadius: {fileID: 0}
   collisionInfo:
+    collisionRadius: 0
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
-  animate:
-    method: 0
-    LRRelation: 0
-    UDRelation: 0
-    frames:
-      idleAnim: []
-      rightAnim: []
-      leftAnim: []
-      upAnim: []
-      downAnim: []
-      attackAnim: []
-      deathAnim: []
-  offsetFree: qrotate(px(15 * t), rx(0.9, 135 + softmod(2200, 222.49 * t)))
+  displayer: {fileID: 0}
+  offsetFree: qrotate(px(15 * t), rx(0.7, 45 + 90 * p + mod(360, 222.49 * t)))
   offsetFocus: pxy -0.2 0.5
+  powerOffsetFree: []
+  powerOffsetFocus: []
+  freeOffsetMul: 1
+  focusOffsetMul: 1
   opacityFree: 
   opacityFocus: 
-  offsetLerpTime: 0.2
+  spriteRotation: 
+  freeAngleOffset: 
+  focusAngleOffset: 
+  freeFocusLerpTime: 0.2
+  powerLerpTime: 0
   findex: 1
-  freeFirer: {fileID: 0}
-  focusFirer: {fileID: 0}
 --- !u!1 &6709644725308408875
 GameObject:
   m_ObjectHideFlags: 0
@@ -332,35 +324,30 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorScript: {fileID: 0}
   ID: 
-  rotationMethod: 0
   deathEffect: {fileID: 0}
   cullableRadius:
     cullable: 0
     cullRadius: {fileID: 0}
   collisionInfo:
+    collisionRadius: 0
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
-  animate:
-    method: 0
-    LRRelation: 0
-    UDRelation: 0
-    frames:
-      idleAnim: []
-      rightAnim: []
-      leftAnim: []
-      upAnim: []
-      downAnim: []
-      attackAnim: []
-      deathAnim: []
+  displayer: {fileID: 0}
   offsetFree: zero
   offsetFocus: zero
+  powerOffsetFree: []
+  powerOffsetFocus: []
+  freeOffsetMul: 1
+  focusOffsetMul: 1
   opacityFree: 
   opacityFocus: 
-  offsetLerpTime: 1
-  findex: 0
-  freeFirer: {fileID: 0}
-  focusFirer: {fileID: 0}
+  spriteRotation: 
+  freeAngleOffset: 
+  focusAngleOffset: 
+  freeFocusLerpTime: 1
+  powerLerpTime: 0
+  findex: -1
 --- !u!1 &8899738008739235951
 GameObject:
   m_ObjectHideFlags: 0
@@ -388,7 +375,7 @@ Transform:
   m_GameObject: {fileID: 8899738008739235951}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0.6, y: -0.5, z: 0}
-  m_LocalScale: {x: 0.5, y: 0.5, z: 1}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 3643135156715668705}
   m_RootOrder: 4
@@ -431,10 +418,11 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: -533568639
-  m_SortingLayer: 4
+  m_SortingLayer: 5
   m_SortingOrder: -1
-  m_Sprite: {fileID: 21300000, guid: 0d24d98c623b92347aa4ac15b8809ed3, type: 3}
-  m_Color: {r: 0.5849056, g: 0.08552865, b: 0.08552865, a: 0.45490196}
+  m_Sprite: {fileID: -8181574709904321863, guid: 0c3b034d853920c45ab59082e3c74463,
+    type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -458,35 +446,30 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorScript: {fileID: 4900000, guid: 2329205515a83f54e9338e7d50137410, type: 3}
   ID: 
-  rotationMethod: 0
   deathEffect: {fileID: 0}
   cullableRadius:
     cullable: 0
     cullRadius: {fileID: 0}
   collisionInfo:
+    collisionRadius: 0
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
-  animate:
-    method: 0
-    LRRelation: 0
-    UDRelation: 0
-    frames:
-      idleAnim: []
-      rightAnim: []
-      leftAnim: []
-      upAnim: []
-      downAnim: []
-      attackAnim: []
-      deathAnim: []
-  offsetFree: qrotate(px(15 * t), rx(0.9, 315 + softmod(2200, 222.49 * t)))
+  displayer: {fileID: 0}
+  offsetFree: qrotate(px(15 * t), rx(0.7, 45 + 90 * p + mod(360, 222.49 * t)))
   offsetFocus: pxy 0.4 -0.5
+  powerOffsetFree: []
+  powerOffsetFocus: []
+  freeOffsetMul: 1
+  focusOffsetMul: 1
   opacityFree: 
   opacityFocus: 
-  offsetLerpTime: 0.2
+  spriteRotation: 
+  freeAngleOffset: 
+  focusAngleOffset: 
+  freeFocusLerpTime: 0.2
+  powerLerpTime: 0
   findex: 3
-  freeFirer: {fileID: 0}
-  focusFirer: {fileID: 0}
 --- !u!1 &8947838892524233215
 GameObject:
   m_ObjectHideFlags: 0
@@ -514,7 +497,7 @@ Transform:
   m_GameObject: {fileID: 8947838892524233215}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0.3, y: 0.5, z: 0}
-  m_LocalScale: {x: 0.5, y: 0.5, z: 1}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 3643135156715668705}
   m_RootOrder: 1
@@ -557,10 +540,11 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: -533568639
-  m_SortingLayer: 4
+  m_SortingLayer: 5
   m_SortingOrder: -1
-  m_Sprite: {fileID: 21300000, guid: 0d24d98c623b92347aa4ac15b8809ed3, type: 3}
-  m_Color: {r: 0.5849056, g: 0.08552865, b: 0.08552865, a: 0.45490196}
+  m_Sprite: {fileID: -8181574709904321863, guid: 0c3b034d853920c45ab59082e3c74463,
+    type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -584,32 +568,27 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorScript: {fileID: 4900000, guid: 2329205515a83f54e9338e7d50137410, type: 3}
   ID: 
-  rotationMethod: 0
   deathEffect: {fileID: 0}
   cullableRadius:
     cullable: 0
     cullRadius: {fileID: 0}
   collisionInfo:
+    collisionRadius: 0
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
-  animate:
-    method: 0
-    LRRelation: 0
-    UDRelation: 0
-    frames:
-      idleAnim: []
-      rightAnim: []
-      leftAnim: []
-      upAnim: []
-      downAnim: []
-      attackAnim: []
-      deathAnim: []
-  offsetFree: qrotate(px(15 * t), rx(0.9, 45 + softmod(2200, 222.49 * t)))
+  displayer: {fileID: 0}
+  offsetFree: qrotate(px(15 * t), rx(0.7, 45 + 90 * p + mod(360, 222.49 * t)))
   offsetFocus: pxy 0.2 0.5
+  powerOffsetFree: []
+  powerOffsetFocus: []
+  freeOffsetMul: 1
+  focusOffsetMul: 1
   opacityFree: 
   opacityFocus: 
-  offsetLerpTime: 0.2
+  spriteRotation: 
+  freeAngleOffset: 
+  focusAngleOffset: 
+  freeFocusLerpTime: 0.2
+  powerLerpTime: 0
   findex: 0
-  freeFirer: {fileID: 0}
-  focusFirer: {fileID: 0}

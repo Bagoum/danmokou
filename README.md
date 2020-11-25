@@ -23,7 +23,6 @@ The source code is licensed under MIT. See the COPYING file for details, as well
 # Feature Wishlist
 
 - GFW-style gameplay
-- WebGL
 
 # FAQ
 

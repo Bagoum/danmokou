@@ -34,8 +34,8 @@ public struct DelegatedCreator {
 
     private float ResolveFacing() {
         if (facing == Enums.Facing.DEROT) return 0f;
-        if (facing == Enums.Facing.VELOCITY) return parent.RotationDeg;
-        if (facing == Enums.Facing.ROTVELOCITY) return parent.RotationDeg + parent.original_angle;
+        if (facing == Enums.Facing.VELOCITY) return parent.DirectionDeg;
+        if (facing == Enums.Facing.ROTVELOCITY) return parent.DirectionDeg + parent.original_angle;
         return parent.original_angle;
     }
 
@@ -61,7 +61,7 @@ public struct DelegatedCreator {
     public void Pather(SyncHandoff sbh, float? maxLength, BPY remember, VTP path, uint bpiid, BehOptions options) {
         V2RV2 lrv2 = FacedRV2(sbh.rv2);
         var opts = new RealizedBehOptions(options, sbh.GCX, bpiid, ParentOffset, lrv2, sbh.ch.cT);
-        if (opts.playerBullet != null) style = BulletManager.GetOrMakeFaBPlayerCopy(style);
+        if (opts.playerBullet != null) style = BulletManager.GetOrMakeComplexPlayerCopy(style);
         BulletManager.RequestPather(style, new Velocity(path, ParentOffset, lrv2), sbh.index, bpiid, 
             maxLength.GetValueOrDefault(DEFAULT_REMEMBER), remember, ref opts);
     }
@@ -69,7 +69,7 @@ public struct DelegatedCreator {
     public void Laser(SyncHandoff sbh, VTP path, float cold, float hot, uint bpiid, LaserOptions options) {
         V2RV2 lrv2 = FacedRV2(sbh.rv2);
         var opts = new RealizedLaserOptions(options, sbh.GCX, bpiid, ParentOffset, lrv2, sbh.ch.cT);
-        if (opts.playerBullet != null) style = BulletManager.GetOrMakeFaBPlayerCopy(style);
+        if (opts.playerBullet != null) style = BulletManager.GetOrMakeComplexPlayerCopy(style);
         BulletManager.RequestLaser(transformParent, style, new Velocity(path, ParentOffset, lrv2), 
             sbh.index, bpiid, cold, hot, ref opts);
     }
@@ -144,28 +144,30 @@ public partial class BulletManager {
     public static void RequestNullSimple(string styleName, Vector2 loc, Vector2 dir) =>
         RequestSimple(styleName, null, null, new Velocity(loc, dir), 0, 0, null);
 
-    public static void RequestPather(string styleName, Velocity velocity, int firingIndex, uint bpiid, float maxRemember, BPY remember, ref RealizedBehOptions opts) {
+    public static void RequestPather(string style, Velocity velocity, int firingIndex, uint bpiid, float maxRemember, BPY remember, ref RealizedBehOptions opts) {
         CheckSentry();
-        if (bulletStyles.ContainsKey(styleName)) {
-            Pather.Request(bulletStyles[styleName].GetOrLoadRecolor(), velocity, firingIndex, bpiid, maxRemember, remember, main.bulletCollisionTarget, ref opts);
-        } else throw new Exception("Pather must be an faBulletStyle: " + styleName);
+        if (CheckComplexPool(style, out var bsm)) {
+            Pather.Request(bsm, velocity, firingIndex, bpiid, maxRemember, remember, main.bulletCollisionTarget, ref opts);
+        } else throw new Exception("Pather must be an faBulletStyle: " + style);
     }
     public static void RequestLaser(BehaviorEntity parent, string style, Velocity vel, int firingIndex,
         uint bpiid, float cold, float hot, ref RealizedLaserOptions options) {
         CheckSentry();
-        if (bulletStyles.ContainsKey(style)) {
-            Laser.Request(bulletStyles[style].GetOrLoadRecolor(), parent, vel, firingIndex, bpiid, cold, hot, main.bulletCollisionTarget, ref options);
+        if (CheckComplexPool(style, out var bsm)) {
+            Laser.Request(bsm, parent, vel, firingIndex, bpiid, cold, hot, main.bulletCollisionTarget, ref options);
         } else throw new Exception("Laser must be an faBulletStyle: " + style);
     }
     
     public static BehaviorEntity RequestSummon(bool pooled, string prefabName, Velocity path, 
         int firingIndex, uint bpiid, string behName, [CanBeNull] BehaviorEntity parent, SMRunner sm, RealizedBehOptions? opts) {
         CheckSentry();
-        BehaviorEntity beh = pooled ?
-            BEHPooler.RequestUninitialized(ResourceManager.GetSummonable(prefabName), out _) :
-            GameObject.Instantiate(ResourceManager.GetSummonable(prefabName)).GetComponent<BehaviorEntity>();
-        beh.Initialize(path, sm, firingIndex, bpiid, parent, behName, opts);
-        return beh;
+        if (CheckComplexPool(prefabName, out var bsm)) {
+            BehaviorEntity beh = pooled ?
+                BEHPooler.RequestUninitialized(ResourceManager.GetSummonable(prefabName), out _) :
+                GameObject.Instantiate(ResourceManager.GetSummonable(prefabName)).GetComponent<BehaviorEntity>();
+            beh.Initialize(bsm, path, sm, firingIndex, bpiid, parent, behName, opts);
+            return beh;
+        } else throw new Exception("No valid summonable by name: " + prefabName);
     }
 
     public static BehaviorEntity RequestRawSummon(string prefabName) =>

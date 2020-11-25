@@ -189,6 +189,14 @@ public class GenCtxProperty {
     /// <param name="newOffset"></param>
     /// <returns></returns>
     public static GenCtxProperty Bank0(GCXF<V2RV2> newOffset) => new BankProp(true, newOffset);
+
+    /// <summary>
+    /// = start({ rv2 +=rv2 OFFSET })
+    /// </summary>
+    public static GenCtxProperty Offset(GCXF<V2RV2> offset) => Start(new GCRule[] {
+        new GCRule<V2RV2>(Reflector.ExType.RV2, new ReferenceMember("rv2"), GCOperator.AddAssign, offset),
+    });
+    
     /// <summary>
     /// Rules that are run before any invocations.
     /// </summary>
@@ -285,6 +293,13 @@ public class GenCtxProperty {
     /// <returns></returns>
     [Alias("pm")]
     public static GenCtxProperty MutateParametrization(Parametrization p, GCXF<float> mutater) => new ParametrizationProp(p, mutater);
+
+    public static GenCtxProperty SetP(GCXF<float> p) => MutateParametrization(Enums.Parametrization.DEFER, p);
+
+    /// <summary>
+    /// Reset the color to `_` on entry. Ignores wildcards.
+    /// </summary>
+    public static GenCtxProperty ResetColor() => new ResetColorTag();
     /// <summary>
     /// Cycle between color on every invocation.
     /// </summary>
@@ -625,6 +640,8 @@ public class GenCtxProperty {
     public class BindItrTag : ValueProp<string> {
         public BindItrTag(string value): base(value) { }
     }
+    
+    public class ResetColorTag : GenCtxProperty { }
 
     #endregion
 
@@ -655,6 +672,7 @@ public class GenCtxProperties<T> {
     [CanBeNull] public readonly List<GCRule> end;
     public readonly Parametrization p = Enums.Parametrization.DEFER;
     [CanBeNull] public readonly GCXF<float> p_mutater;
+    public readonly bool resetColor = false;
     [CanBeNull] public readonly string[] colors;
     [CanBeNull] public readonly GCXF<float> colorsIndexer;
     public readonly bool colorsReverse;
@@ -699,7 +717,8 @@ public class GenCtxProperties<T> {
     public V2RV2 PostloopRV2Incr(GenCtx gcx, int t) {
         if (rv2IncrType == RV2IncrType.FUNC) return rv2pp?.Invoke(gcx) ?? V2RV2.Zero;
         if (rv2IncrType == RV2IncrType.CIRCLE) return V2RV2.Angle(360f / t);
-        else if (rv2IncrType == RV2IncrType.SPREAD) return 1f / (t-1) * (rv2Spread?.Invoke(gcx) ?? V2RV2.Zero);
+        else if (rv2IncrType == RV2IncrType.SPREAD) return  t == 1 ? V2RV2.Zero : 
+            1f / (t-1) * (rv2Spread?.Invoke(gcx) ?? V2RV2.Zero);
         else return V2RV2.Zero;
     }
     
@@ -789,6 +808,7 @@ public class GenCtxProperties<T> {
             else if (prop is BindUDTag) bindUD = true;
             else if (prop is BindAngleTag) bindAngle = true;
             else if (prop is BindItrTag bit) bindItr = bit.value;
+            else if (prop is ResetColorTag) resetColor = true;
             else throw new Exception($"{t.RName()} is not allowed to have properties of type {prop.GetType()}.");
         }
         if (sah != null) {

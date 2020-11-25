@@ -13,7 +13,7 @@ public class RefreshRateWarning : MonoBehaviour {
         var baseStr =
             $"Your monitor refresh rate is {Screen.currentResolution.refreshRate} Hz. The game will run at {SaveData.s.RefreshRate} Hz.";
         if (Math.Abs(Screen.currentResolution.refreshRate - SaveData.s.RefreshRate) > 2) {
-            int ratio = Mathf.RoundToInt((Screen.currentResolution.refreshRate /SaveData.s.RefreshRate  - 1) * 100);
+            int ratio = Mathf.RoundToInt((Screen.currentResolution.refreshRate/(float)SaveData.s.RefreshRate - 1) * 100);
             string error = ratio < 0 ? "slower" : "faster";
             return (true, $"{baseStr} ({Math.Abs(ratio)}% {error})" +
                           $"\nPlease change your monitor refresh rate to one of 30, 40, 60, 120.");

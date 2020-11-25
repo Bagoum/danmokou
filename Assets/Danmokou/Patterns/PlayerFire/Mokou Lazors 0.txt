@@ -1,0 +1,4 @@
+action block 0 :3
+	assertcomplex sunnylaser
+	beh-control persist p-sunnylaser updatev2(target LNearestEnemy, < t 1)
+	wait-for _

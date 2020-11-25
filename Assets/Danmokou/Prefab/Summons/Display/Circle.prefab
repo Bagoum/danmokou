@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 8071127415623182350}
   - component: {fileID: 9057595466264598302}
   - component: {fileID: 8071127415623182348}
+  - component: {fileID: 4175197912146610393}
   m_Layer: 17
   m_Name: Circle
   m_TagString: Untagged
@@ -44,30 +45,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25c23f494582b0446b8c02a62fdf0918, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  behaviorScript: {fileID: 0}
-  ID: 
-  rotationMethod: 0
-  deathEffect: {fileID: 0}
-  cullableRadius:
-    cullable: 0
-    cullRadius: {fileID: 0}
-  collisionInfo:
-    collisionRadius: 0
-    CollisionActiveOnInit: 0
-    destructible: 0
-    grazeEveryFrames: 0
-  animate:
-    method: 0
-    LRRelation: 0
-    UDRelation: 0
-    frames:
-      idleAnim: []
-      rightAnim: []
-      leftAnim: []
-      upAnim: []
-      downAnim: []
-      attackAnim: []
-      deathAnim: []
+  sprite: {fileID: 8071127415623182348}
 --- !u!212 &8071127415623182348
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -119,3 +97,38 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!114 &4175197912146610393
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8071127415623182345}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86421e86325267340a25a8636076d100, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  behaviorScript: {fileID: 0}
+  ID: 
+  deathEffect: {fileID: 0}
+  cullableRadius:
+    cullable: 0
+    cullRadius: {fileID: 0}
+  collisionInfo:
+    collisionRadius: 0
+    CollisionActiveOnInit: 0
+    destructible: 0
+    grazeEveryFrames: 0
+  displayer: {fileID: 9057595466264598302}
+  animate:
+    LRRelation: 0
+    UDRelation: 0
+    frames:
+      idleAnim: []
+      rightAnim: []
+      leftAnim: []
+      upAnim: []
+      downAnim: []
+      attackAnim: []
+      deathAnim: []

@@ -1,0 +1,83 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &6446380844416267043
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 1612221337289516, guid: cf73e1e830aa6fc45a38c1ac679d5e5d, type: 3}
+      propertyPath: m_Name
+      value: OnHit Yukari Blast Purple
+      objectReference: {fileID: 0}
+    - target: {fileID: 4637813376089536, guid: cf73e1e830aa6fc45a38c1ac679d5e5d, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4637813376089536, guid: cf73e1e830aa6fc45a38c1ac679d5e5d, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4637813376089536, guid: cf73e1e830aa6fc45a38c1ac679d5e5d, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4637813376089536, guid: cf73e1e830aa6fc45a38c1ac679d5e5d, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4637813376089536, guid: cf73e1e830aa6fc45a38c1ac679d5e5d, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4637813376089536, guid: cf73e1e830aa6fc45a38c1ac679d5e5d, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: 4637813376089536, guid: cf73e1e830aa6fc45a38c1ac679d5e5d, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: 4637813376089536, guid: cf73e1e830aa6fc45a38c1ac679d5e5d, type: 3}
+      propertyPath: m_RootOrder
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4637813376089536, guid: cf73e1e830aa6fc45a38c1ac679d5e5d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4637813376089536, guid: cf73e1e830aa6fc45a38c1ac679d5e5d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4637813376089536, guid: cf73e1e830aa6fc45a38c1ac679d5e5d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 90
+      objectReference: {fileID: 0}
+    - target: {fileID: 5262926992442486116, guid: cf73e1e830aa6fc45a38c1ac679d5e5d,
+        type: 3}
+      propertyPath: sprites.Array.data[0]
+      value: 
+      objectReference: {fileID: -4281433220610310427, guid: ff62c9543d6a9374ca91794e2e480d21,
+        type: 3}
+    - target: {fileID: 5262926992442486116, guid: cf73e1e830aa6fc45a38c1ac679d5e5d,
+        type: 3}
+      propertyPath: sprites.Array.data[1]
+      value: 
+      objectReference: {fileID: 7142137018320130930, guid: ff62c9543d6a9374ca91794e2e480d21,
+        type: 3}
+    - target: {fileID: 5262926992442486116, guid: cf73e1e830aa6fc45a38c1ac679d5e5d,
+        type: 3}
+      propertyPath: sprites.Array.data[2]
+      value: 
+      objectReference: {fileID: -8729089316335779894, guid: ff62c9543d6a9374ca91794e2e480d21,
+        type: 3}
+    - target: {fileID: 5262926992442486116, guid: cf73e1e830aa6fc45a38c1ac679d5e5d,
+        type: 3}
+      propertyPath: sprites.Array.data[3]
+      value: 
+      objectReference: {fileID: 4241293518516975008, guid: ff62c9543d6a9374ca91794e2e480d21,
+        type: 3}
+    m_RemovedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: cf73e1e830aa6fc45a38c1ac679d5e5d, type: 3}

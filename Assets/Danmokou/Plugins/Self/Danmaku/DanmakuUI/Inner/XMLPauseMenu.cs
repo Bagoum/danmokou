@@ -28,6 +28,7 @@ public class XMLPauseMenu : XMLMenu {
             new OptionNodeLR<(int, int)>("Resolution", b => SaveData.UpdateResolution(b), new[] {
                 ("3840x2160", (3840, 2160)),
                 ("1920x1080", (1920, 1080)),
+                ("1600x900", (1600, 900)),
                 ("1280x720", (1280, 720)),
                 ("800x450", (800, 450)),
                 ("640x360", (640, 360))
@@ -66,6 +67,7 @@ public class XMLPauseMenu : XMLMenu {
                     ("x2", 2f)
                 },
                 SaveData.s.Screenshake),
+            new OptionNodeLR<bool>("Allow Controller", SaveData.UpdateAllowController, YNOption, SaveData.s.AllowControllerInput),
             staticOptions
                 ? new OptionNodeLR<float>("Dialogue Speed", b => SaveData.s.DialogueWaitMultiplier = b, new[] {
                     ("2x", 0.5f),
@@ -78,6 +80,10 @@ public class XMLPauseMenu : XMLMenu {
             new OptionNodeLR<float>("BGM Volume", v => {
                 SaveData.s.BGMVolume = v;
                 AudioTrackService.ReassignExistingBGMVolumeIfNotFading();
+            }, 21.Range().Select(x => 
+                ($"{x*10}", x/10f)).ToArray(), SaveData.s.BGMVolume),
+            new OptionNodeLR<float>("SFX Volume", v => {
+                SaveData.s.SEVolume = v;
             }, 21.Range().Select(x => 
                 ($"{x*10}", x/10f)).ToArray(), SaveData.s.BGMVolume),
             new OptionNodeLR<bool>("Unfocused Hitbox", b => SaveData.s.UnfocusedHitbox = b, YNOption,
@@ -103,21 +109,16 @@ public class XMLPauseMenu : XMLMenu {
 
     private UINode unpause;
     protected override void Awake() {
-        unpause = new FuncNode(GameStateManager.ForceUnpause, "Unpause", true).With(small1Class);
+        unpause = new FuncNode(GameStateManager.UIUnpause, "Unpause", true).With(small1Class);
         MainScreen = new UIScreen(
             GetOptions(false, x => x.With(OptionNode).With(small1Class)).Concat(
                 new[] {
+                    new PassthroughNode(""), 
                     unpause,
-                    new ConfirmFuncNode(() => {
-                        if (GameManagement.Restart()) {
-                            HideOptions(true);
-                            return true;
-                        } else return false;
-                    }, "Restart", true).With(small1Class),
-                    GameManagement.MainMenuExists ? new ConfirmFuncNode(() => {
-                        HideOptions(true);
-                        GameManagement.GoToMainMenu();
-                    }, "Return to Menu", true).With(small1Class) : null,
+                    new ConfirmFuncNode(GameManagement.Restart, "Restart", true).With(small1Class),
+                    GameManagement.MainMenuExists ? 
+                        new ConfirmFuncNode(GameManagement.GoToMainMenu, "Return to Menu", true).With(small1Class) 
+                        : null,
                     new ConfirmFuncNode(Application.Quit, "Quit to Desktop").With(small1Class)
                 }
             ).ToArray()

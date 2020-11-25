@@ -137,6 +137,15 @@ public static partial class Reflector {
         p.ThrowOnLeftovers();
         return ret;
     }
+    
+    [CanBeNull]
+    public static T IntoIfNotNull<T>(this string argstring) where T: class {
+        if (string.IsNullOrWhiteSpace(argstring)) return null;
+        var p = IParseQueue.Lex(argstring);
+        var ret = p.Into<T>();
+        p.ThrowOnLeftovers();
+        return ret;
+    }
 
     public static T Into<T>(this IParseQueue ctx) => (T) ReflectTargetType(ctx, typeof(T));
 

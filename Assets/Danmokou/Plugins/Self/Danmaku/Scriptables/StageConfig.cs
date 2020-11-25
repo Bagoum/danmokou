@@ -4,17 +4,14 @@ using JetBrains.Annotations;
 using SM;
 using UnityEngine;
 
-
 public interface IStageConfig {
-    TextAsset StateMachine { get; }
-    [CanBeNull] SM.StateMachine StateMachineOverride { get; }
+    StateMachine StateMachine { get; }
     string DefaultSuicideStyle { get; }
 }
 
 public class EndcardStageConfig : IStageConfig {
     private readonly string dialogueKey;
-    public TextAsset StateMachine => null;
-    public StateMachine StateMachineOverride => new ReflectableLASM(SMReflection.Dialogue(dialogueKey));
+    public StateMachine StateMachine => new ReflectableLASM(SMReflection.Dialogue(dialogueKey));
     public string DefaultSuicideStyle => "";
 
     public EndcardStageConfig(string dialogueKey) {
@@ -34,7 +31,6 @@ public class StageConfig : ScriptableObject, IStageConfig {
     public string defaultSuicideStyle;
     public bool practiceable = true;
 
-    public TextAsset StateMachine => stateMachine;
-    public StateMachine StateMachineOverride => null;
+    public StateMachine StateMachine => StateMachineManager.FromText(stateMachine);
     public string DefaultSuicideStyle => defaultSuicideStyle;
 }

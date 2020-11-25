@@ -290,7 +290,6 @@ public class TExGCX : TEx<GenCtx> {
         if (t == tfloat) {
             if (name == "i") return i_float;
             else if (name == "pi") return pi_float;
-            else if (name == "stm") return FindReference<T>("st").Mul(GameManagement.Difficulty.bulletSpeedMod);
             else return fs.DictSafeGet<string, float>(ExC(name), $"No float exists by name {name}.");
         }
         if (t == tv2) return v2s.DictSafeGet<string, Vector2>(ExC(name), $"No v2 exists by name {name}.");
