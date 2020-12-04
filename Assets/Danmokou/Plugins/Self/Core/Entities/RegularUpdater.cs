@@ -1,19 +1,33 @@
 ﻿using System;
+using System.Collections.Generic;
+using Core;
 using JetBrains.Annotations;
 using UnityEngine;
 
 public abstract class RegularUpdater : MonoBehaviour, IRegularUpdater {
-    [CanBeNull] private DeletionMarker<IRegularUpdater> token;
+    private readonly List<IDeletionMarker> tokens = new List<IDeletionMarker>();
 
     /// <summary>
     /// Safe to call twice.
     /// </summary>
-    protected void EnableRegularUpdates() {
-        if (token == null) token = ETime.RegisterRegularUpdater(this);
+    protected void EnableUpdates() {
+        if (tokens.Count == 0) {
+            tokens.Add(ETime.RegisterRegularUpdater(this));
+            BindListeners();
+        }
     }
-    
+    protected virtual void BindListeners() { }
 
-    protected virtual void OnEnable() => EnableRegularUpdates();
+    protected void Listen<T>(Events.IEvent<T> ev, Action<T> sub) {
+        tokens.Add(ev.Subscribe(sub));
+    }
+    protected void Listen(Events.Event0 ev, Action sub) {
+        tokens.Add(ev.Subscribe(sub));
+    }
+
+    protected void RegisterDI<T>(T me) where T : class => tokens.Add(DependencyInjection.Register(me));
+
+    protected virtual void OnEnable() => EnableUpdates();
 
     public abstract void RegularUpdate();
     public virtual void RegularUpdateParallel() { }
@@ -27,15 +41,17 @@ public abstract class RegularUpdater : MonoBehaviour, IRegularUpdater {
     /// <summary>
     /// Safe to call twice.
     /// </summary>
-    protected void DisableRegularUpdates() {
-        token?.MarkForDeletion();
-        token = null;
+    protected void DisableUpdates() {
+        for (int ii = 0; ii < tokens.Count; ++ii) {
+            tokens[ii].MarkForDeletion();
+        }
+        tokens.Clear();
     }
 
-    protected virtual void OnDisable() => DisableRegularUpdates();
+    protected virtual void OnDisable() => DisableUpdates();
 
     protected void DisableDestroy() {
-        DisableRegularUpdates();
+        DisableUpdates();
         Destroy(gameObject);
     }
 }

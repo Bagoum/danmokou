@@ -5,10 +5,10 @@ using SM;
 
 namespace Danmaku {
 /// <summary>
-/// A globally available CRU, scoped per-scene, located on the UIManager.
+/// A globally available CRU, scoped per-scene. Instantiation handled by GameManagement.
 /// </summary>
-public class GlobalSceneCRU : CoroutineRegularUpdater {
-    public static GlobalSceneCRU Main { get; private set; }
+public class SceneLocalCRU : CoroutineRegularUpdater {
+    public static SceneLocalCRU Main { get; private set; }
     protected void Awake() {
         Main = this;
     }

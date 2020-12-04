@@ -176,7 +176,7 @@ public static partial class AtomicPatterns {
     /// <param name="events"></param>
     /// <returns></returns>
     public static SyncPattern Event(Maybe<Event0>[] events) => sbh => {
-        events[sbh.index % events.Length].ValueOrNull?.InvokeIfNotRefractory();
+        events[sbh.index % events.Length].ValueOrNull?.Proc();
         return sbh;
     };
 

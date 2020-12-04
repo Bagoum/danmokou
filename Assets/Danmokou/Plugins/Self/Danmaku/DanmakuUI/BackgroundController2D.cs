@@ -163,20 +163,22 @@ public sealed class BackgroundController2D : BackgroundController {
     public Sprite bgSprite;
     public Material bgMaterial;
     private (SpriteRenderer sr, MaterialPropertyBlock pb)[] sr;
-    protected override void Awake() {
+
+    public override BackgroundController Initialize(GameObject prefab, BackgroundOrchestrator orchestrator) {
+        base.Initialize(prefab, orchestrator);
         sr = GetComponentsInChildren<SpriteRenderer>().Select(s => {
             var m = new MaterialPropertyBlock();
             s.GetPropertyBlock(m);
-            m.SetFloat(PropConsts.time, BackgroundOrchestrator.Time);
+            m.SetFloat(PropConsts.time, Orchestrator.Time);
             s.color *= tint;
             return (s, m);
         }).ToArray();
-        base.Awake();
+        return this;
     }
 
     private void Update() {
         for (int ii = 0; ii < sr.Length; ++ii) {
-            sr[ii].pb.SetFloat(PropConsts.time, BackgroundOrchestrator.Time);
+            sr[ii].pb.SetFloat(PropConsts.time, Orchestrator.Time);
             sr[ii].sr.SetPropertyBlock(sr[ii].pb);
         }
     }

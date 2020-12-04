@@ -72,6 +72,10 @@ public class DifficultySettings {
     public DifficultySettings() : this(FixedDifficulty.Normal) { } //JSON constructor
     public DifficultySettings(FixedDifficulty standard) : this((FixedDifficulty?)standard) { }
 
+    public void SetCustomDifficulty(int value) {
+        customValueSlider = value;
+        customCounter = Nearest(value).Counter();
+    }
     public DifficultySettings(FixedDifficulty? standard, int slider=DEFAULT_SLIDER, int numSuicideBullets = 0,
         double playerDamageMod=1f, float bulletSpeedMod=1f, double bossHPMod=1f, bool respawnOnDeath = false, 
         double faithDecayMult=1, double faithAcquireMult=1, double meterUsageMult=1, double meterAcquireMult=1, 
@@ -80,8 +84,7 @@ public class DifficultySettings {
         float pocOffset=0, int? startingLives=null
         ) {
         this.standard = standard;
-        customValueSlider = slider;
-        customCounter = Nearest(slider).Counter();
+        SetCustomDifficulty(slider);
         this.numSuicideBullets = numSuicideBullets;
         this.playerDamageMod = playerDamageMod;
         this.bossHPMod = bossHPMod;

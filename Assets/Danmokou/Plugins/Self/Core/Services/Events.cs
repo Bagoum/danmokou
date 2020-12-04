@@ -40,7 +40,7 @@ public static class Events {
 
         private void ListenForReactivation(string reactivator) {
             if (storedEvents.TryGetValue(reactivator, out Event0 refEvent)) {
-                refractor = refEvent.Listen(() => inRefractoryPeriod = false);
+                refractor = refEvent.Subscribe(() => inRefractoryPeriod = false);
             } else {
                 if (!waitingToResolve.TryGetValue(reactivator, out List<Event0> waiters)) {
                     waitingToResolve[reactivator] = waiters = new List<Event0>();
@@ -96,7 +96,7 @@ public static class Events {
             return ev;
         }
 
-        private void Invoke() {
+        private void Publish() {
             int temp_last = callbacks.Count;
             for (int ii = 0; ii < temp_last; ++ii) {
                 DeletionMarker<Action> listener = callbacks.arr[ii];
@@ -105,13 +105,13 @@ public static class Events {
             callbacks.Compact();
         }
 
-        public void InvokeIfNotRefractory() {
-            if (!inRefractoryPeriod) Invoke();
+        public void Proc() {
+            if (!inRefractoryPeriod) Publish();
             if (useRefractoryPeriod) inRefractoryPeriod = true;
         }
 
-        private static readonly ExFunction invokeIfNotRefractory = ExUtils.Wrap<Event0>("InvokeIfNotRefractory");
-        public Expression ExInvokeIfNotRefractory() => invokeIfNotRefractory.InstanceOf(Expression.Constant(this));
+        private static readonly ExFunction proc = ExUtils.Wrap<Event0>("Proc");
+        public Expression exProc() => proc.InstanceOf(Expression.Constant(this));
 
         public static void Reset() {
             foreach (var ev in storedEvents.Values) {
@@ -137,36 +137,36 @@ public static class Events {
             refractor?.MarkForDeletion();
         }
 
-        public DeletionMarker<Action> Listen(Action cb) => callbacks.Add(cb);
+        public DeletionMarker<Action> Subscribe(Action cb) => callbacks.Add(cb);
     }
 
-    public class Event1<T> {
+    public interface IEvent<T> {
+        void Publish(T obj);
+        DeletionMarker<Action<T>> Subscribe(Action<T> cb);
+    }
+
+    public class Event<T> : IEvent<T> {
         private readonly DMCompactingArray<Action<T>> callbacks = new DMCompactingArray<Action<T>>();
 
-        public void Invoke(T arg1) {
+        public void Publish(T obj) {
             int temp_last = callbacks.Count;
             for (int ii = 0; ii < temp_last; ++ii) {
                 DeletionMarker<Action<T>> listener = callbacks.arr[ii];
-                if (!listener.markedForDeletion) listener.obj(arg1);
+                if (!listener.markedForDeletion) listener.obj(obj);
             }
             callbacks.Compact();
         }
 
-        public DeletionMarker<Action<T>> Listen(Action<T> cb) => callbacks.Add(cb);
+        public DeletionMarker<Action<T>> Subscribe(Action<T> cb) => callbacks.Add(cb);
     }
     
     
-    //Events with "Noun Has Verbed" are messages that go out after the action has occured.
-    //Events with "Verb Noun" are messages that are sent to request invoking an action.
-    /// <summary>
-    /// Argument 1: number of invulnerability frames.
-    /// Argument 2: Whether or not to show effect.
-    /// </summary>
-    public static readonly Event1<(int frames, bool effect)> MakePlayerInvincible = new Event1<(int, bool)>();
-    public static readonly Event1<GameState> GameStateHasChanged = new Event1<GameState>();
-    public static readonly Event1<(long score, bool bonus)> ScoreItemHasReceived = new Event1<(long, bool)>();
+    public static readonly IEvent<GameState> GameStateHasChanged = new Event<GameState>();
+    public static readonly IEvent<(long score, bool bonus)> ScoreItemHasReceived = new Event<(long, bool)>();
+    public static readonly Event0 CampaignDataHasChanged = new Event0();
 #if UNITY_EDITOR || ALLOW_RELOAD
     public static readonly Event0 LocalReset = new Event0();
+    public static readonly Event0 ClearPhase = new Event0();
 #endif
 }
 }

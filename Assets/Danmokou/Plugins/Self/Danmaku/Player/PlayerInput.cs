@@ -52,8 +52,6 @@ public class PlayerInput : BehaviorEntity {
     private const float FreeFocusLerpTime = 0.3f;
     private float freeFocusLerp01 = 0f;
     
-    private DeletionMarker<Action<(long, bool)>> scoreListener;
-    
     protected override void Awake() {
         base.Awake();
         health = GetComponent<PlayerHP>();
@@ -67,8 +65,6 @@ public class PlayerInput : BehaviorEntity {
         meterPB.SetColor(PropConsts.unfillColor, meterDisplayShadow);
         meterPB.SetColor(PropConsts.fillInnerColor, meterDisplayInner);
         meter.SetPropertyBlock(meterPB);
-        
-        scoreListener = Events.ScoreItemHasReceived.Listen(BufferScoreLabel);
 
         if (LoadPlayer()) {
             PastPositions.Clear();
@@ -82,6 +78,21 @@ public class PlayerInput : BehaviorEntity {
             RunNextState(PlayerState.NORMAL);
         }
     }
+
+    protected override void BindListeners() {
+        base.BindListeners();
+        Listen(Events.ScoreItemHasReceived, BufferScoreLabel);
+    }
+
+    [CanBeNull] private IChallengeManager challenge;
+    private ChallengeManager.Restrictions Restrictions => 
+        challenge?.Restriction ?? ChallengeManager.Restrictions.Default;
+
+    //This might technically be unsafe w.r.t replays, but camera fade time should cover this.
+    private void Start() {
+        challenge = DependencyInjection.MaybeFind<IChallengeManager>();
+    }
+
     public static int FiringDisableRequests { get; set; } = 0;
     public static int BombDisableRequests { get; set; } = 0;
     public static int SMPlayerControlDisable { get; set; } = 0;
@@ -136,7 +147,7 @@ public class PlayerInput : BehaviorEntity {
     
     public override int UpdatePriority => UpdatePriorities.PLAYER;
 
-    public bool IsFocus => ChallengeManager.r.FocusAllowed && (ChallengeManager.r.FocusForced || InputManager.IsFocus);
+    public bool IsFocus => Restrictions.FocusAllowed && (Restrictions.FocusForced || InputManager.IsFocus);
     public bool IsFiring =>
         InputManager.IsFiring && AllowPlayerInput && FiringDisableRequests == 0;
     public bool IsTryingBomb =>
@@ -192,8 +203,8 @@ public class PlayerInput : BehaviorEntity {
         get {
             if (!AllowPlayerInput) return Vector2.zero;
             var vel0 = new Vector2(
-                ChallengeManager.r.HorizAllowed ? InputManager.HorizontalSpeed01 : 0,
-                ChallengeManager.r.VertAllowed ? InputManager.VerticalSpeed01 : 0
+                Restrictions.HorizAllowed ? InputManager.HorizontalSpeed01 : 0,
+                Restrictions.VertAllowed ? InputManager.VerticalSpeed01 : 0
             );
             var mag = vel0.magnitude;
             if (mag > 1f) {
@@ -381,30 +392,33 @@ public class PlayerInput : BehaviorEntity {
         state = PlayerState.WITCHTIME;
         speedLines.Play();
         var t = ETime.Slowdown.CreateMultiplier(WitchTimeSlowdown, MultiMultiplier.Priority.CLEAR_SCENE);
-        //AudioTrackService.SetPitchMultiplier(WitchTimeAudioMultiplier);
         meter.enabled = true;
-        SFXService.MeterActivated();
+        PlayerActivatedMeter.Proc();
         for (int f = 0; !MaybeCancelState(cT) &&
             IsTryingWitchTime && GameManagement.campaign.TryUseMeterFrame(); ++f) {
             if (f % ghostFrequency == 0) {
                 Instantiate(ghost).GetComponent<Ghost>().Initialize(ghostSource.sprite, tr.position, ghostFadeTime);
             }
-            UIManager.SetMeterActivated(GameManagement.campaign.EnoughMeterToUse ? meter.color : meterDisplayInner);
+            MeterIsActive.Publish(GameManagement.campaign.EnoughMeterToUse ? meter.color : meterDisplayInner);
             float meterDisplayRatio = M.EOutSine(Mathf.Clamp01(f / 30f));
             meterPB.SetFloat(PropConsts.fillRatio, (float)GameManagement.campaign.Meter * meterDisplayRatio);
             meter.SetPropertyBlock(meterPB);
             yield return null;
         }
         meter.enabled = false;
-        SFXService.MeterDeActivated();
-        UIManager.UnSetMeterActivated();
-        //AudioTrackService.ResetPitchMultiplier();
+        PlayerDeactivatedMeter.Proc();
         t.TryRevoke();
         speedLines.Stop();
         GameManagement.campaign.MeterInUse = false;
         if (!cT.Cancelled(out _)) RunDroppableRIEnumerator(StateNormal(cT));
     }
-    
+
+    public static readonly Events.Event0 PlayerActivatedMeter = new Events.Event0();
+    public static readonly Events.Event0 PlayerDeactivatedMeter = new Events.Event0();
+    /// <summary>
+    /// Called every frame during meter activation.
+    /// </summary>
+    public static readonly Events.IEvent<Color> MeterIsActive = new Events.Event<Color>();
 
     protected override void RegularUpdateMove() {
         MovementUpdate(ETime.FRAME_TIME);
@@ -483,10 +497,6 @@ public class PlayerInput : BehaviorEntity {
     private static readonly IGradient pivGrad = DropLabel.MakeGradient(
         new Color32(0, 235, 162, 255), new Color32(0, 172, 70, 255));
 
-    protected override void OnDisable() {
-        scoreListener.MarkForDeletion();
-        base.OnDisable();
-    }
 
     private static Vector2 MoveAgainstWall(Vector2 source, float blueBoxRadius, Vector2 delta, LayerMask mask) {
         RaycastHit2D ray = Physics2D.CircleCast(source, blueBoxRadius, delta.normalized, delta.magnitude, mask);

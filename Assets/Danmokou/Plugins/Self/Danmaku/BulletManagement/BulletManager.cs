@@ -473,7 +473,7 @@ public partial class BulletManager {
         
         public void PruneControls() {
             for (int ii = 0; ii < pcs.Count; ++ii) {
-                if (pcs[ii].cT.Cancelled || !pcs[ii].persist(GlobalBEH.Main.rBPI)) {
+                if (pcs[ii].cT.Cancelled || !pcs[ii].persist(ParametricInfo.Zero)) {
                     pcs.Delete(ii);
                 }
             }

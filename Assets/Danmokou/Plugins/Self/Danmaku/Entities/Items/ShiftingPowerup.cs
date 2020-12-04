@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using DMath;
+using JetBrains.Annotations;
 using UnityEngine;
 
 namespace Danmaku {
@@ -32,8 +33,8 @@ public class ShiftingPowerup : BouncyItem {
         base.Awake();
     }
     
-    public override void Initialize(Vector2 root, Vector2 targetOffset) {
-        base.Initialize(root, targetOffset);
+    public override void Initialize(Vector2 root, Vector2 targetOffset, [CanBeNull] PoC collectionPoint = null) {
+        base.Initialize(root, targetOffset, collectionPoint);
         currVariant = RNG.GetInt(0, variants.Length);
         timeUntilSwitch = timePerVariant;
         UpdateVariant();

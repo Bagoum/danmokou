@@ -122,7 +122,7 @@ public abstract class Pooled : CoroutineRegularUpdater {
     /// </summary>
     public virtual void ResetV() {
         if (isPooled) parented = false;
-        EnableRegularUpdates();
+        EnableUpdates();
     }
     
     protected virtual void PooledDone() {
@@ -131,7 +131,7 @@ public abstract class Pooled : CoroutineRegularUpdater {
         //coroutines that have 'yield return null' as their last line. For hygeine,
         //we want to clear these out.
         ForceClosingFrame();
-        DisableRegularUpdates();
+        DisableUpdates();
         if (parented) {
             if (parent.gameObject.activeInHierarchy) tr.SetParent(Container, false);
             else {
@@ -165,6 +165,8 @@ public abstract class Pooled<P> : Pooled {
     private Queue<P> free_ref;
     private P self_ref;
 
+    public virtual bool ShowUnderContainer => true;
+
     public static void Prepare(Func<Transform> container) {
         container_ref = container;
     }
@@ -174,7 +176,7 @@ public abstract class Pooled<P> : Pooled {
         free_ref = free;
         isPooled = true;
         self_ref = self;
-        tr.SetParent(container_ref(), false);
+        tr.SetParent(ShowUnderContainer ? container_ref() : null);
     }
 
     protected override void PooledDone() {

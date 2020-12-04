@@ -8,7 +8,7 @@ gtr {
 		sfx x-pc-fire-1
 	} gsr {
 		target a LNearestEnemy
-	} pather 0.5 0.3 tprot px(11) { player 120 200 100 oh1-purple }
+	} pather 0.5 0.3 tprot px(11) { player 240 150 70 oh1-purple }
 	## free cancellation
 	noop
 	## focus
@@ -17,6 +17,6 @@ gtr {
 		sfx x-pc-fire-1 
 	} gsr {
 		target a LNearestEnemy
-	} pather 0.5 0.3 tprot px(13) { player 120 230 110 oh1-red }
+	} pather 0.5 0.3 tprot px(13) { player 240 150 70 oh1-red }
 	## focus cancellation
 	noop

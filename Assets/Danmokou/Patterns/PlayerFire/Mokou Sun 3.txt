@@ -10,13 +10,13 @@ gtr {
 			##This pattern enables continuous fire between focus on/off
 			while > playerfiringtimefree 0
 		} gsr2 2 <0.4;:> {
-		} simple tprot cy 7 { player 27 27 oh1 }
+		} simple tprot cy 7 { player 27 27 oh1-red }
 		## focus
 		async sun-pink/b <;0.5:> gcr2 140 _ <> { 
 			delay 140 ##We still need this delay so flashing Z doesn't repeatedly fire this
 			while > playerfiringtimefocus 0
 		} simple tprot cy 2.7 { 
 			scale(- 0.75 sine 5 0.15 + 2 t)
-			player 460 170 oh1
+			player 460 170 oh1-red
 		}
 	noop

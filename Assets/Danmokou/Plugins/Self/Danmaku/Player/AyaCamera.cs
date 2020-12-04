@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.IO;
+using Core;
 using DMath;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
@@ -44,6 +45,7 @@ public class AyaCamera : BehaviorEntity {
     private PlayerInput player;
     public Transform viewfinder;
     private SpriteRenderer viewfinderSR;
+    private AyaCameraFreezeHelper freezeHelper;
     public SpriteRenderer flash;
     public TextMeshPro text;
     public Color textUnfilledColor;
@@ -105,6 +107,7 @@ public class AyaCamera : BehaviorEntity {
         lowCameraLayer = LayerMask.NameToLayer("LowEffects");
         highCameraLayer = LayerMask.NameToLayer("TransparentFX");
         viewfinderSR = viewfinder.GetComponent<SpriteRenderer>();
+        freezeHelper = GetComponent<AyaCameraFreezeHelper>();
         flash.enabled = false;
     }
 
@@ -223,7 +226,7 @@ public class AyaCamera : BehaviorEntity {
 
     private bool TakePicture_Freeze(float scale) {
         if (!GameStateManager.TemporaryEffectPause(out Action cb)) return false;
-        WaitingUtils.WaitThenCB(GlobalDuringPause, Cancellable.Null, freezeTime, false, cb);
+        WaitingUtils.WaitThenCB(freezeHelper, Cancellable.Null, freezeTime, false, cb);
         return true;
     }
     private bool TakePicture_Enemies(float scale) {
@@ -240,6 +243,9 @@ public class AyaCamera : BehaviorEntity {
         var rect = ViewfinderRect(scale);
         BulletManager.Autodelete("cwheel", "red/b", b => Collision.PointInRect(b.loc, rect));
     }
+
+    public static readonly Events.IEvent<(AyaPhoto photo, bool success)> PhotoTaken 
+        = new Events.Event<(AyaPhoto, bool)>();
     private IEnumerator TakePictureAndRefractor(float scale) {
         bool success = false;
         if (TakePicture_Freeze(scale)) {
@@ -249,15 +255,15 @@ public class AyaCamera : BehaviorEntity {
             text.enabled = false;
             var photo = MainCamera.main.RequestAyaPhoto(ViewfinderRect(scale));
             var pphoto = GameObject.Instantiate(pinnedPhotoPrefab).GetComponent<AyaPinnedPhoto>();
+            PhotoTaken.Publish((photo, success));
             if (success) {
-                if (StaticNullableStruct.LastGame?.replay == null) photo.KeepAlive = true;
-                targetLoc = AyaPhotoBoard.NextPinLoc(pphoto) ?? new Vector2(-6, 0);
-                ChallengeManager.SubmitPhoto(photo);
+                if (GameManagement.campaign.Request?.replay == null) photo.KeepAlive = true;
+                targetLoc = DependencyInjection.MaybeFind<IAyaPhotoBoard>()?.NextPinLoc(pphoto) ?? new Vector2(-4, 0);
             }
             pphoto.Initialize(photo, location, targetLoc);
             viewfinderSR.enabled = true;
             text.enabled = true;
-            GlobalDuringPause.RunDroppableRIEnumerator(DoFlash(flashTime, success));
+            freezeHelper.RunDroppableRIEnumerator(DoFlash(flashTime, success));
             //Wait until after the freeze to delete bullets
             yield return null;
             TakePicture_Delete(scale);

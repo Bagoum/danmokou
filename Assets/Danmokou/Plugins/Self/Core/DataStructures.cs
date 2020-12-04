@@ -358,7 +358,10 @@ public class CompactingArray<T> {
     }
 }
 
-public class DeletionMarker<T> {
+public interface IDeletionMarker {
+    void MarkForDeletion();
+}
+public class DeletionMarker<T> : IDeletionMarker {
     public T obj;
     public int priority;
     public bool markedForDeletion { get; private set; }
@@ -394,6 +397,12 @@ public class DeletionMarker<T> {
 public class DMCompactingArray<T> {
     private int count;
     public int Count => count;
+    public int TrueCount {
+        get {
+            Compact();
+            return Count;
+        }
+    }
     public DeletionMarker<T>[] arr;
 
     public DMCompactingArray(int size = 8) {

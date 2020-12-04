@@ -11,5 +11,5 @@ public class EndingConfig : ScriptableObject {
     public string dialogueKey;
     public string predicate;
 
-    public bool Matches => predicate.Into<Pred>()(GlobalBEH.Main.rBPI);
+    public bool Matches => predicate.Into<Pred>()(ParametricInfo.Zero);
 }

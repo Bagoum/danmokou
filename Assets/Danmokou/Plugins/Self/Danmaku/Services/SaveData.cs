@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading.Tasks;
+using Core;
 using Danmaku;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
@@ -256,10 +257,10 @@ public static class SaveData {
             Screen.SetResolution(s.Resolution.w, s.Resolution.h, s.Fullscreen);
             Log.Unity($"Set resolution to {wh.Value}");
         }
-        BackgroundOrchestrator.RecreateTextures();
-        BackgroundCombiner.Reconstruct();
-        UIBuilderRenderer.Reconstruct();
+        ResolutionHasChanged.Proc();
     }
+
+    public static readonly Events.Event0 ResolutionHasChanged = new Events.Event0();
 
     public static void UpdateFullscreen(FullScreenMode mode) {
         Screen.fullScreenMode = s.Fullscreen = mode;

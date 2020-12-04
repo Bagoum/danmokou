@@ -15,7 +15,13 @@ public class GenericColliderInfo : MonoBehaviour {
         RectPtColl,
         Line,
         Segments,
-        None
+        None,
+    }
+
+    public enum DebugColliderType {
+        None,
+        AABB,
+        WeakAABB
     }
 
     public ColliderType colliderType;
@@ -34,13 +40,23 @@ public class GenericColliderInfo : MonoBehaviour {
     public Vector2[] points;
     [Tooltip("Only fill for debugging in scene use")] [CanBeNull]
     public SOPlayerHitbox target;
+    public DebugColliderType debug;
 
     // Update is called once per frame
     void Update() {
         Vector3 trp = transform.position;
         CollisionResult cr = new CollisionResult();
         var hitbox = target.Hitbox;
-        if (colliderType == ColliderType.Circle) {
+        if (debug == DebugColliderType.AABB) {
+            cr = new CollisionResult(false,
+                Collision.CircleOnAABB(
+                    new AABB(trp, new Vector2(rectHalfX, rectHalfY))
+                    , target.location, target.largeRadius));
+        } else if (debug == DebugColliderType.WeakAABB) {
+            cr = new CollisionResult(false,
+                Collision.WeakCircleOnAABB(-rectHalfX, -rectHalfY, rectHalfX, rectHalfY,
+                    target.location.x - trp.x, target.location.y - trp.y, target.largeRadius));
+        } else if (colliderType == ColliderType.Circle) {
             cr = Collision.GrazeCircleOnCircle(hitbox, trp, radius * scale);
         } else if (colliderType == ColliderType.Line) {
             float maxdist = Mathf.Max(point2.magnitude, point1.magnitude) + radius;

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Danmaku;
 using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -28,6 +29,7 @@ public class BackgroundController : CoroutineRegularUpdater {
     private int arbNullLayer;
     protected int DrawToLayer { get; private set; }
     [CanBeNull] public GameObject source { get; private set; }
+    protected BackgroundOrchestrator Orchestrator { get; private set; }
     protected virtual void Awake() {
         tr = transform;
         fragRenderLayer = LayerMask.NameToLayer("LowDirectRender");
@@ -63,8 +65,9 @@ public class BackgroundController : CoroutineRegularUpdater {
         }
     }
 
-    public BackgroundController Initialize(GameObject prefab) {
+    public virtual BackgroundController Initialize(GameObject prefab, BackgroundOrchestrator orchestrator) {
         source = prefab;
+        Orchestrator = orchestrator;
         return this;
     }
 

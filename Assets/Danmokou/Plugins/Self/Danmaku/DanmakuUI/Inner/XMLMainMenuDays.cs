@@ -63,10 +63,12 @@ public class XMLMainMenuDays : XMLMenu {
 
         FixedDifficulty dfc = FixedDifficulty.Normal;
         var defaultPlayer = References.dayCampaign.players[0];
-        var defaultShot = defaultPlayer.shots[0];
+        var defaultShot = defaultPlayer.shots2[0];
 
-        PlayerTeam Team() => new PlayerTeam(0, Subshot.TYPE_D, (defaultPlayer, defaultShot));
+        PlayerTeam Team() => new PlayerTeam(0, Subshot.TYPE_D, (defaultPlayer, defaultShot.shot));
         GameMetadata Meta() => new GameMetadata(Team(), new DifficultySettings(dfc));
+
+        var photoBoard = DependencyInjection.MaybeFind<IAyaPhotoBoard>();
 
         SceneSelectScreen = new UIScreen(DayCampaign.days[0].bosses.SelectMany(
             b => b.phases.Select(p => {
@@ -76,7 +78,7 @@ public class XMLMainMenuDays : XMLMenu {
                 void SetChallenge(int idx) {
                     c = p.challenges[idx];
                     var completion = SaveData.r.ChallengeCompletion(p, idx, Meta());
-                    AyaPhotoBoard.ConstructPhotos(completion?.photos, photoSize);
+                    photoBoard?.ConstructPhotos(completion?.photos, photoSize);
                 }
                 (bool, UINode) Confirm() {
                     ConfirmCache();
@@ -84,19 +86,21 @@ public class XMLMainMenuDays : XMLMenu {
                         challenge: new PhaseChallengeRequest(p, c)).Run();
                     return (true, null);
                 }
+                var challengeSwitch = new DynamicOptionNodeLR2<int>("", VTALR2Option, SetChallenge,
+                    p.challenges.Length.Range().ToArray, (i, v, on) => {
+                        v.Query(null, "bracket")
+                            .ForEach(x => x.style.display = on ? DisplayStyle.Flex : DisplayStyle.None);
+                        v.Q("Star").style.unityBackgroundImageTintColor = new StyleColor(p.Completed(i, Meta()) ?
+                            p.boss.boss.colors.uiHPColor :
+                            new Color(1, 1, 1, 0.52f));
+                    });
                 return new CacheNavigateUINode(TentativeCache, () => p.Title(Meta()), 
                     new UINode(() => c.Description(p.boss.boss))
                         .With(large1Class).With(centerTextClass).SetConfirmOverride(Confirm),
-                    new DynamicOptionNodeLR2<int>("", VTALR2Option, SetChallenge, 
-                        p.challenges.Length.Range().ToArray, (i, v, on) => {
-                            v.Query(null, "bracket").ForEach(x => x.style.display = on ? DisplayStyle.Flex : DisplayStyle.None);
-                            v.Q("Star").style.unityBackgroundImageTintColor = new StyleColor(p.Completed(i, Meta()) ?
-                                p.boss.boss.colors.uiHPColor :
-                                new Color(1, 1, 1, 0.52f));
-                        }).With(VTALR2OptionNode).With(optionNoKeyClass)
+                    challengeSwitch.With(VTALR2OptionNode).With(optionNoKeyClass)
                             .SetConfirmOverride(Confirm)
-                            .SetOnVisit(_ => SetChallenge(0))
-                            .SetOnLeave(_ => AyaPhotoBoard.TearDownAndHide()),
+                            .SetOnVisit(_ => SetChallenge(challengeSwitch.Index))
+                            .SetOnLeave(_ => photoBoard?.TearDown()),
                     new UINode(() => "Press Z to start level".Locale("Zキー押すとレベルスタート"))
                         .SetConfirmOverride(Confirm).With(large1Class).With(centerTextClass)
                 ).With(large1Class).With(

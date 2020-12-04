@@ -5,13 +5,13 @@ gtr {
 	## free fire
 	async sun-red/b <;-0.2:> gcr2 120 _ <> { 
 		delay + 60 * 60 p
-	} simple tprot cy 3.6 { scale 0.4 player 250 110 oh1 }
+	} simple tprot cy 3.6 { scale 0.4 player 250 110 oh1-red }
 	## free cancellation
 	noop
 	## focus
 	async fireball-red/b <> gcr2 10 _ <> { 
 		delay 10
 		sfx x-pc-fire-1 
-	} simple tprot cy 8 { player 34 34 oh1 }
+	} simple tprot cy 8 { player 34 34 oh1-red }
 	## focus cancellation
 	noop

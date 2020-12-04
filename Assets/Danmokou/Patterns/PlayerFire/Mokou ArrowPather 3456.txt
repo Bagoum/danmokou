@@ -11,6 +11,6 @@ gtr {
 	## focus
 	async blast-purple <> gcr2 12 _ <> { 
 		sfx x-pc-fire-1 
-	} simple tprot py(14) { player  17 17 oh1-purple }
+	} simple tprot py(14) { player  20 20 oh1-purple }
 	## focus cancellation
 	noop

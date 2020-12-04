@@ -62,7 +62,7 @@ public partial class BehaviorEntity {
         
         public void PruneControls() {
             for (int ii = 0; ii < controls.Count; ++ii) {
-                if (controls[ii].cT.Cancelled || !controls[ii].persist(GlobalBEH.Main.rBPI)) {
+                if (controls[ii].cT.Cancelled || !controls[ii].persist(ParametricInfo.Zero)) {
                     controls.Delete(ii);
                 }
             }

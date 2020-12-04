@@ -6,6 +6,7 @@ using System.Text;
 using UnityEngine;
 using TMPro;
 using System.Threading;
+using Core;
 using Danmaku;
 using JetBrains.Annotations;
 using UnityEngine.Serialization;
@@ -18,7 +19,22 @@ public struct PrioritySprite {
     public int priority;
     public SpriteRenderer sprite;
 }
-public class UIManager : MonoBehaviour {
+
+public interface IUIManager {
+    void SetBossHPLoader([CanBeNull] Enemy boss);
+    void CloseBoss();
+    void CloseProfile();
+    void AddProfile(BossConfig.ProfileRender render);
+    void SwitchProfile(BossConfig.ProfileRender render);
+    void SetBossColor(Color textColor, Color bossHPColor);
+    BottomTracker TrackBEH(BehaviorEntity beh, string title, ICancellee cT);
+    void ShowBossLives(int bossLives);
+    void ShowStaticTimeout(float maxTime);
+    void DoTimeout(bool withSound, float maxTime, ICancellee cT, float? stayOnZero = null);
+    void ShowPhaseType(PhaseType? phase);
+    void SetSpellname([CanBeNull] string title);
+}
+public class UIManager : RegularUpdater, IUIManager {
     static UIManager() {
         GameStateManager.UnpauseAnimator = SlideUnpause;
     }
@@ -30,6 +46,7 @@ public class UIManager : MonoBehaviour {
     public static XMLPauseMenu PauseMenu => main.PauseManager;
     public XMLDeathMenu DeathManager;
     public XMLPracticeSuccessMenu PracticeSuccessMenu;
+    public UIBuilderRenderer uiRenderer;
     public TextMeshPro spellnameText;
     public TextMeshPro timeout;
     public TextMeshPro difficulty;
@@ -47,16 +64,14 @@ public class UIManager : MonoBehaviour {
     private const string deathCounterFormat = "死{0:D2}";
     private const string timeoutTextFormat = "<mspace=4.3>{0:F1}</mspace>";
     private const string fpsFormat = "FPS: <mspace=1.5>{0:F0}</mspace>";
-    [CanBeNull] private static Coroutine timeoutCor;
+    [CanBeNull] private Coroutine timeoutCor;
     private static readonly int ValueID = Shader.PropertyToID("_Value");
     [CanBeNull] private Coroutine spellnameController;
 
     private Color spellColor;
     private Color spellColorTransparent;
     public float spellnameFadeIn = 1f;
-    public float spellnameFadeOut = 0.5f;
 
-    private float time = 0f;
     private float profileTime = 0f;
     public SpriteRenderer PIVDecayBar;
     public SpriteRenderer MeterBar;
@@ -98,6 +113,18 @@ public class UIManager : MonoBehaviour {
         if (autoShiftCamera) uiCamera.transform.localPosition = -References.bounds.center;
     }
     
+    protected override void BindListeners() {
+        base.BindListeners();
+        Listen(Events.GameStateHasChanged, HandleGameStateChange);
+        Listen(Events.CampaignDataHasChanged, () => updateAllUI = true);
+        Listen(CampaignData.ItemExtendAcquired, LifeExtendItems);
+        Listen(CampaignData.ScoreExtendAcquired, LifeExtendScore);
+        Listen(CampaignData.PhaseCompleted, PhaseCompleted);
+        Listen(PlayerInput.MeterIsActive, SetMeterActivated);
+        Listen(PlayerInput.PlayerDeactivatedMeter, UnSetMeterActivated);
+        RegisterDI<IUIManager>(this);
+    }
+    
     public static float MenuRightOffset =>
         MainCamera.ResourcePPU * (MainCamera.HorizRadius - References.bounds.right - References.bounds.center.x);
 
@@ -111,25 +138,25 @@ public class UIManager : MonoBehaviour {
         main.difficulty.text = GameManagement.Difficulty.Describe();
     }
 
-    [CanBeNull] private static Enemy bossHP;
+    [CanBeNull] private Enemy bossHP;
 
-    public static void SetBossHPLoader([CanBeNull] Enemy boss) {
+    public void SetBossHPLoader([CanBeNull] Enemy boss) {
         bossHP = boss;
-        main.BossHPBar.enabled = boss != null;
+        BossHPBar.enabled = boss != null;
         if (boss != null) {
-            main.bossHPPB.SetColor(PropConsts.fillColor2, bossHP.unfilledColor);
-            main.bossHPPB.SetColor(PropConsts.unfillColor, bossHP.unfilledColor);
+            bossHPPB.SetColor(PropConsts.fillColor2, bossHP.unfilledColor);
+            bossHPPB.SetColor(PropConsts.unfillColor, bossHP.unfilledColor);
         }
     }
 
-    public static void SetMeterActivated(Color c) {
+    private void SetMeterActivated(Color c) {
         c.a = 1;
-        main.meterPB.SetColor(PropConsts.fillColor, c);
-        main.meterPB.SetColor(PropConsts.fillColor2, c);
+        meterPB.SetColor(PropConsts.fillColor, c);
+        meterPB.SetColor(PropConsts.fillColor2, c);
     }
-    public static void UnSetMeterActivated() {
-        main.meterPB.SetColor(PropConsts.fillColor, main.defaultMeterColor);
-        main.meterPB.SetColor(PropConsts.fillColor2, main.defaultMeterColor2);
+    private void UnSetMeterActivated() {
+        meterPB.SetColor(PropConsts.fillColor, defaultMeterColor);
+        meterPB.SetColor(PropConsts.fillColor2, defaultMeterColor2);
     }
     private void UpdatePB() {
         //pivDecayPB.SetFloat(PropConsts.time, time);
@@ -155,9 +182,8 @@ public class UIManager : MonoBehaviour {
     private int fpsUpdateCounter = fpsSmooth;
     private float accdT = 0f;
 
-    private static bool campaignRequiresUpdate = false;
+    private bool updateAllUI = false;
     private void Update() {
-        time += ETime.dT;
         profileTime += ETime.dT;
         accdT += Time.unscaledDeltaTime;
         if (--fpsUpdateCounter == 0) {
@@ -166,29 +192,30 @@ public class UIManager : MonoBehaviour {
             accdT = 0;
         }
         UpdatePB();
-        if (campaignRequiresUpdate) _UpdatePlayerUI();
-        campaignRequiresUpdate = false;
+        if (updateAllUI) _UpdatePlayerUI();
+        updateAllUI = false;
     }
 
-    public static void ShowStaticTimeout(float maxTime) {
+    public override void RegularUpdate() { }
+
+    public void ShowStaticTimeout(float maxTime) {
         EndTimeout();
-        main.timeout.text = (maxTime < float.Epsilon) ? "" : string.Format(timeoutTextFormat, maxTime);
+        timeout.text = (maxTime < float.Epsilon) ? "" : string.Format(timeoutTextFormat, maxTime);
     }
-    public static void DoTimeout(bool withSound, float maxTime, 
-        ICancellee cT, float stayOnZero=3f) {
+    public void DoTimeout(bool withSound, float maxTime, ICancellee cT, float? stayOnZero = null) {
         EndTimeout();
         if (maxTime < float.Epsilon) {
-            main.timeout.text = "";
+            timeout.text = "";
         } else {
-            timeoutCor = main.StartCoroutine(main.Timeout(maxTime, withSound, stayOnZero, cT));
+            timeoutCor = StartCoroutine(Timeout(maxTime, withSound, stayOnZero ?? 2f, cT));
         }
     }
-    public static void EndTimeout() {
+    public void EndTimeout() {
         if (timeoutCor != null) {
-            main.StopCoroutine(timeoutCor);
+            StopCoroutine(timeoutCor);
             timeoutCor = null;
         }
-        main.timeout.text = "";
+        timeout.text = "";
     }
 
     public SFXConfig[] countdownSounds;
@@ -220,22 +247,19 @@ public class UIManager : MonoBehaviour {
         timeout.text = "";
     }
 
-    private static IEnumerator FadeSpellname(float fit, Color from, Color to) {
-        main.spellnameText.color = from;
+    private IEnumerator FadeSpellname(float fit, Color from, Color to) {
+        spellnameText.color = from;
         for (float t = 0; t < fit; t += ETime.dT) {
             yield return null;
-            main.spellnameText.color = Color.LerpUnclamped(from, to, t / fit);
+            spellnameText.color = Color.LerpUnclamped(from, to, t / fit);
         }
-        main.spellnameText.color  = to;
+        spellnameText.color  = to;
     }
 
-    private void _SetSpellname(string title) {
-        spellnameText.text = title;
+    public void SetSpellname([CanBeNull] string title) {
+        spellnameText.text = title ?? "";
         if (spellnameController != null) StopCoroutine(spellnameController);
         spellnameController = StartCoroutine(FadeSpellname(spellnameFadeIn, spellColorTransparent, spellColor));
-    }
-    public static void SetSpellname([CanBeNull] string title) {
-        main._SetSpellname(title ?? "");
     }
 
     public Material bossColorizer;
@@ -245,25 +269,25 @@ public class UIManager : MonoBehaviour {
     public BossConfig.ProfileRender defaultProfile;
     private readonly Stack<BossConfig.ProfileRender> stackedProfiles = new Stack<BossConfig.ProfileRender>();
 
-    public static void CloseProfile() {
-        var src = main.stackedProfiles.Pop();
-        main.SetProfile(main.stackedProfiles.Peek(), src);
+    public void CloseProfile() {
+        var src = stackedProfiles.Pop();
+        SetProfile(stackedProfiles.Peek(), src);
     }
 
-    public static void AddProfile(BossConfig.ProfileRender render) {
-        main.SetProfile(render, main.stackedProfiles.Peek());
-        main.stackedProfiles.Push(render);
+    public void AddProfile(BossConfig.ProfileRender render) {
+        SetProfile(render, stackedProfiles.Peek());
+        stackedProfiles.Push(render);
     }
 
-    public static void SwitchProfile(BossConfig.ProfileRender render) {
-        if (render == main.stackedProfiles.Peek()) return;
-        main.SetProfile(render, main.stackedProfiles.Pop());
-        main.stackedProfiles.Push(render);
+    public void SwitchProfile(BossConfig.ProfileRender render) {
+        if (render == stackedProfiles.Peek()) return;
+        SetProfile(render, stackedProfiles.Pop());
+        stackedProfiles.Push(render);
     }
 
     private void SetProfile(BossConfig.ProfileRender target, BossConfig.ProfileRender source = null) {
         var src = source ?? defaultProfile;
-        main.profileTime = 0;
+        profileTime = 0;
         leftSidebarPB.SetTexture(PropConsts.fromTex, src.leftSidebar.Elvis(defaultProfile.leftSidebar));
         rightSidebarPB.SetTexture(PropConsts.fromTex, src.rightSidebar.Elvis(defaultProfile.rightSidebar));
         leftSidebarPB.SetTexture(PropConsts.toTex, target.leftSidebar.Elvis(defaultProfile.leftSidebar));
@@ -274,29 +298,28 @@ public class UIManager : MonoBehaviour {
     /// (int, Sprite) where int is the number of "boss lives" required to show the sprite
     /// </summary>
     public PrioritySprite[] bossHealthSprites;
-    public static void SetBossColor(Color textColor, Color bossHPColor) {
-        main.bossColorizer.SetMaterialOutline(textColor);
-        foreach (var p in main.bossHealthSprites) {
+    public void SetBossColor(Color textColor, Color bossHPColor) {
+        bossColorizer.SetMaterialOutline(textColor);
+        foreach (var p in bossHealthSprites) {
             p.sprite.color = bossHPColor;
         }
     }
 
-    public static void ShowBossLives(int bossLives) {
-        foreach (var p in main.bossHealthSprites) {
+    public void ShowBossLives(int bossLives) {
+        foreach (var p in bossHealthSprites) {
             p.sprite.enabled = p.priority <= bossLives;
         }
     }
-    public static void CloseBoss() {
+    public void CloseBoss() {
         SetSpellname(null);
         ShowBossLives(0);
         SetBossHPLoader(null);
     }
 
     public TextMeshPro phaseDescription;
-    public static void ShowPhaseType(PhaseType? phase) {
-        void Set(string s) => main.phaseDescription.text = s;
-        if (phase.HasValue) {
-            var p = phase.Value;
+    public void ShowPhaseType(PhaseType? phase) {
+        void Set(string s) => phaseDescription.text = s;
+        if (phase.Try(out var p)) {
             if (p == PhaseType.NONSPELL) Set("NON");
             else if (p == PhaseType.SPELL) Set("SPELL");
             else if (p == PhaseType.TIMEOUT) Set("SURVIVAL");
@@ -309,16 +332,16 @@ public class UIManager : MonoBehaviour {
     }
 
     private static readonly Vector2 slideFrom = new Vector2(5, 0);
-    private static void SlideInUI() {
-        UIBuilderRenderer.MoveToNormal();
-        UIBuilderRenderer.Slide(slideFrom, Vector2.zero, 0.3f, DMath.M.EOutSine, success => {
-            if (success) UIBuilderRenderer.MoveToFront();
+    private void SlideInUI() {
+        uiRenderer.MoveToNormal();
+        uiRenderer.Slide(slideFrom, Vector2.zero, 0.3f, DMath.M.EOutSine, success => {
+            if (success) uiRenderer.MoveToFront();
         });
     }
 
     public static void SlideUnpause(Action onDone) {
-        UIBuilderRenderer.MoveToNormal();
-        UIBuilderRenderer.Slide(null, slideFrom, 0.3f, x => x, _ => onDone());
+        main.uiRenderer.MoveToNormal();
+        main.uiRenderer.Slide(null, slideFrom, 0.3f, x => x, _ => onDone());
     }
     
     private void HandleGameStateChange(GameState state) {
@@ -336,16 +359,6 @@ public class UIManager : MonoBehaviour {
             PracticeSuccessMenu.ShowMe();
             SlideInUI();
         }
-    }
-
-    private DeletionMarker<Action<GameState>> gameStateListener;
-    private void OnEnable() {
-        gameStateListener = Core.Events.GameStateHasChanged.Listen(HandleGameStateChange);
-    }
-
-    private void OnDisable() {
-        gameStateListener.MarkForDeletion();
-        PauseManager.HideOptions(false);
     }
 
     public SpriteRenderer[] healthPoints;
@@ -404,8 +417,6 @@ public class UIManager : MonoBehaviour {
         }
     }
 
-    public static void UpdatePlayerUI() => campaignRequiresUpdate = true;
-
     private IEnumerator FadeMessage(string msg, ICancellee cT, float timeIn = 1f, float timeStay = 4f,
         float timeOut = 1f) {
         message.text = msg;
@@ -461,10 +472,10 @@ public class UIManager : MonoBehaviour {
             "Challenge Fail..."
         , out totalTime);
 
-    private static void Message(string msg) => main._Message(msg);
-    public static void LifeExtendScore() => Message("Score Extend Acquired!");
-    public static void LifeExtendItems() => Message("Life Item Extend Acquired!");
-    public static void CardCapture(PhaseCompletion pc) {
+    private void Message(string msg) => _Message(msg);
+    private void LifeExtendScore() => Message("Score Extend Acquired!");
+    private void LifeExtendItems() => Message("Life Item Extend Acquired!");
+    private void PhaseCompleted(PhaseCompletion pc) {
         if (pc.Captured.HasValue) {
             Message(pc.Captured.Value
                 ? "Card Captured!"
@@ -474,8 +485,8 @@ public class UIManager : MonoBehaviour {
     }
 
 
-    public static BottomTracker TrackBEH(BehaviorEntity beh, string title, ICancellee cT) => 
-        Instantiate(main.trackerPrefab).GetComponent<BottomTracker>().Initialize(beh, title, cT);
+    public BottomTracker TrackBEH(BehaviorEntity beh, string title, ICancellee cT) => 
+        Instantiate(trackerPrefab).GetComponent<BottomTracker>().Initialize(beh, title, cT);
 
     public SpriteRenderer stageAnnouncer;
     public TextMeshPro stageDeannouncer;

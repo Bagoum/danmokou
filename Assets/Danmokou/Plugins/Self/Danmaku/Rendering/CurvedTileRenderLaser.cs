@@ -300,10 +300,8 @@ public class CurvedTileRenderLaser : CurvedTileRender {
         int skip = Mathf.CeilToInt(0.5f / updateStagger);
         Vector2 basePos = locater.GlobalPosition();
         for (int ii = centers.Length - 1; ii > 0; ii -= skip) {
-            BulletManager.RequestSimple(style, null, null,
-                new Velocity(M.RotateVectorDeg(centers[ii], simpleEulerRotation.z) + basePos, 
-                    M.RotateVectorDeg((centers[ii] - centers[ii-1]).normalized, simpleEulerRotation.z))
-                , 0, 0, null);
+            BulletManager.RequestNullSimple(style, M.RotateVectorDeg(centers[ii], simpleEulerRotation.z) + basePos, 
+                    M.RotateVectorDeg((centers[ii] - centers[ii-1]).normalized, simpleEulerRotation.z));
         }
     }
 
@@ -368,7 +366,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
         
         public void PruneControls() {
             for (int ii = 0; ii < controls.Count; ++ii) {
-                if (controls[ii].cT.Cancelled || !controls[ii].persist(GlobalBEH.Main.rBPI)) {
+                if (controls[ii].cT.Cancelled || !controls[ii].persist(ParametricInfo.Zero)) {
                     controls.Delete(ii);
                 }
             }

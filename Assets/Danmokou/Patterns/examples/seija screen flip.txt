@@ -6,7 +6,7 @@ phase 0
 		shift-phase-to 1
 		
 <!> type non `Border of Wave, Particle, Vector, and Curve`
-<!> hpi 15000 0
+<!> hpi 2000 0
 <!> root 1 2
 phase 60
 	action block 1
@@ -15,6 +15,7 @@ phase 60
 			center
 		} s tprot cx 4
 		seijay -180 2
+		sync _ <> valueitem
 		
 		
 <!> type non `Border of Wave, Particle, Vector, and Curve`

@@ -2,11 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using Danmaku;
 using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.Serialization;
 
-public class SFXService : MonoBehaviour {
+public class SFXService : RegularUpdater {
     private static AudioSource src;
     private static SFXService main;
     public SFXConfig lifeExtend;
@@ -44,6 +45,27 @@ public class SFXService : MonoBehaviour {
         }
     }
 
+    protected override void BindListeners() {
+        base.BindListeners();
+        Listen(Core.Events.GameStateHasChanged, HandleGameStateChange);
+        Listen(CampaignData.MeterNowUsable, () => Request(meterUsable));
+        Listen(CampaignData.AnyExtendAcquired, () => Request(lifeExtend));
+        Listen(CampaignData.PhaseCompleted, pc => {
+            if (pc.Captured.Try(out var captured)) {
+                Request(captured ? main.phaseEndSuccess : main.phaseEndFail);
+            } else if (pc.props.phaseType == Enums.PhaseType.STAGE && pc.props.Cleanup) {
+                Request(main.stageSectionEnd);
+            }
+        });
+        Listen(CampaignData.PowerFull, () => Request(main.powerFull));
+        Listen(CampaignData.PowerGained, () => Request(main.powerGained));
+        Listen(CampaignData.PowerLost, () => Request(main.powerLost));
+        Listen(CampaignData.LifeSwappedForScore, () => Request(main.swapHPScore));
+
+        Listen(PlayerInput.PlayerActivatedMeter, () => Request(meterActivated));
+        Listen(PlayerInput.PlayerDeactivatedMeter, () => Request(meterDeActivated));
+    }
+
     public void Update() {
         if (GameStateManager.IsLoadingOrPaused) return;
         _timeouts.Clear();
@@ -64,6 +86,8 @@ public class SFXService : MonoBehaviour {
             loopTimeoutsArr[ii].Update(ETime.dT);
         }
     }
+
+    public override void RegularUpdate() { }
 
     private class LoopingSourceInfo {
         public readonly AudioSource source;
@@ -192,28 +216,10 @@ public class SFXService : MonoBehaviour {
         }
         return s;
     }
-
-    public static void PhaseEndSound(bool? success) {
-        if (success.HasValue) PhaseEndSound(success.Value);
-    }
-
-    public static void PhaseEndSound(bool success) => Request(success ? main.phaseEndSuccess : main.phaseEndFail);
-
-    public static void StageSectionEndSound() => Request(main.stageSectionEnd);
-
-    public static void LifeExtend() => Request(main.lifeExtend);
-
-
-    public static void PowerLost() => Request(main.powerLost);
-    public static void PowerGained() => Request(main.powerGained);
-    public static void PowerFull() => Request(main.powerFull);
+    
     public static void BossSpellCutin() => Request(main.bossSpellCutin);
     public static void BossCutin() => Request(main.bossCutin);
     public static void BossExplode() => Request(main.bossExplode);
-    public static void MeterUsable() => Request(main.meterUsable);
-    public static void MeterActivated() => Request(main.meterActivated);
-    public static void MeterDeActivated() => Request(main.meterDeActivated);
-    public static void SwapLifeForScore() => Request(main.swapHPScore);
     
     
     
@@ -227,14 +233,6 @@ public class SFXService : MonoBehaviour {
         constructed.Empty(true);
         loopTimeouts.Clear();
         loopTimeoutsArr.Clear();
-    }
-    
-    private DeletionMarker<Action<GameState>> gameStateListener;
-    protected void OnEnable() {
-        gameStateListener = Core.Events.GameStateHasChanged.Listen(HandleGameStateChange);
-    }
-    protected void OnDisable() {
-        gameStateListener.MarkForDeletion();
     }
 
     private void HandleGameStateChange(GameState state) {

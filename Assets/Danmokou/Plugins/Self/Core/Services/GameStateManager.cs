@@ -73,7 +73,7 @@ public static class GameStateManager {
     private static void __SetAndRaise(GameState s) {
         Log.Unity($"Setting game state to {s}");
         state = s;
-        Core.Events.GameStateHasChanged.Invoke(s);
+        Core.Events.GameStateHasChanged.Publish(s);
     }
 
     private static void _PauseType(GameState gs) {

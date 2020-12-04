@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using Core;
 using Danmaku;
 using UnityEngine;
 
@@ -14,8 +15,6 @@ public class PlayerHP : CoroutineRegularUpdater {
     private int invulnerabilityCounter = 0;
     private PlayerInput input;
 
-    private DeletionMarker<Action<(int, bool)>> invulnListener;
-
 
     public override int UpdatePriority => UpdatePriorities.PLAYER;
     private void Awake() {
@@ -25,10 +24,12 @@ public class PlayerHP : CoroutineRegularUpdater {
         input.hitbox.Player = this;
     }
 
-    protected override void OnEnable() {
-        invulnListener = Core.Events.MakePlayerInvincible.Listen(GoldenAuraInvuln);
-        base.OnEnable();
+    protected override void BindListeners() {
+        base.BindListeners();
+        Listen(RequestPlayerInvulnerable, GoldenAuraInvuln);
     }
+    public static readonly Events.IEvent<(int frames, bool effect)> RequestPlayerInvulnerable = 
+        new Events.Event<(int, bool)>();
 
     private IEnumerator WaitOutInvuln(int frames) {
         for (int ii = frames; ii > 0; --ii) yield return null;
@@ -67,7 +68,7 @@ public class PlayerHP : CoroutineRegularUpdater {
 
     private void _DoHit(int dmg) {
         GameManagement.campaign.AddLives(-dmg);
-        RaikoCamera.ShakeExtra(1.5f, 0.8f);
+        DependencyInjection.MaybeFind<IRaiko>()?.ShakeExtra(1.5f, 0.8f);
         Invuln(hitInvulnFrames);
         if (RespawnOnHit) input.RequestNextState(PlayerInput.PlayerState.RESPAWN);
         else input.InvokeParentedTimedEffect(OnHitEffect, hitInvuln);
@@ -85,10 +86,5 @@ public class PlayerHP : CoroutineRegularUpdater {
         if (!didDeathbomb) _DoHit(dmg);
         else Log.Unity($"The player successfully deathbombed", level: Log.Level.DEBUG2);
         waitingDeathbomb = false;
-    }
-
-    protected override void OnDisable() {
-        invulnListener.MarkForDeletion();
-        base.OnDisable();
     }
 }

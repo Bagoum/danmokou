@@ -630,6 +630,7 @@ public static partial class Parametrics {
 /// A struct containing the input required for a parametric equation.
 /// </summary>
 public struct ParametricInfo {
+    public static ParametricInfo Zero = new ParametricInfo(Vector2.zero, 0, 0, 0);
     /// <summary>Random ID</summary>
     public readonly uint id;
     /// <summary>Firing index</summary>

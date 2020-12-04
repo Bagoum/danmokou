@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using Danmaku;
 using JetBrains.Annotations;
@@ -24,8 +25,15 @@ public class PlayerConfig : ScriptableObject {
     /// </summary>
     public string title;
     public GameObject prefab;
-    public ShotConfig[] shots;
+    //public ShotConfig[] shots;
+    public OrdinalShot[] shots2;
 
     public Color uiColor;
     public GameObject shotDisplay;
+}
+
+[Serializable]
+public struct OrdinalShot {
+    public string ordinal;
+    public ShotConfig shot;
 }

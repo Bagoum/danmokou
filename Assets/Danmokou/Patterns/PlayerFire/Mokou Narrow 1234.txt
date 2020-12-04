@@ -6,7 +6,7 @@ gtr {
 	async needle-orange <> gcr2 9 _ <> { 
 		delay(3 * p)
 		sfx x-pc-fire-1
-	} simple tprot py 13 { player  22 22 oh1-red }
+	} simple tprot py 13 { player  23 23 oh1-red }
 	## free cancellation
 	noop
 	## focus

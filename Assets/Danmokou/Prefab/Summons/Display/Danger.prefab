@@ -71,7 +71,7 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: -1806312477
-  m_SortingLayer: 9
+  m_SortingLayer: 10
   m_SortingOrder: 100
   m_Sprite: {fileID: 21300000, guid: 318aeff4431f63f418e53671fea5f8ab, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -96,15 +96,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 13d3e27cbf6db2942922c570af04b9f9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  recordPositionEvery: 0.2
+  recordPositionEvery: 0.15
   AIVelocityRotationDeg: 180
   AIVelocitySpeedRatio: 0.2
   ghost:
     sprite: {fileID: 21300000, guid: 318aeff4431f63f418e53671fea5f8ab, type: 3}
-    ttl: 1.5
+    ttl: 0.65
     startColor: {r: 0.8980392, g: 0.70331705, b: 0, a: 0.6666667}
     endColor: {r: 0.6226415, g: 0.36426947, b: 0.044054817, a: 0.5176471}
-    scale: {x: 1, y: 1.5}
+    scale: {x: 1, y: 1.2}
     blurRad: {x: 0.02, y: 0.2}
     blurMaxAt: 0.5
 --- !u!114 &4685143078324242755
@@ -121,24 +121,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorScript: {fileID: 0}
   ID: 
-  rotationMethod: 0
   deathEffect: {fileID: 0}
   cullableRadius:
     cullable: 1
     cullRadius: {fileID: 11400000, guid: fd7e3b4d29f6b494eb277b8d8a62bd0d, type: 2}
-  cullable: 1
-  CollisionActiveOnInit: 0
-  destructible: 0
-  grazeEveryFrames: 20
-  animate:
-    method: 0
-    LRRelation: 0
-    UDRelation: 0
-    frames:
-      idleAnim: []
-      rightAnim: []
-      leftAnim: []
-      upAnim: []
-      downAnim: []
-      attackAnim: []
-      deathAnim: []
+  collisionInfo:
+    collisionRadius: 0
+    CollisionActiveOnInit: 0
+    destructible: 0
+    grazeEveryFrames: 0
+  displayer: {fileID: 0}

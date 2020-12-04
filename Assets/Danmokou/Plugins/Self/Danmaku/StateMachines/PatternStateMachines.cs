@@ -42,17 +42,17 @@ public class PatternSM : SequentialSM {
         return ct;
     }
 
-    private static void SetUniqueBossUI(bool first, SMHandoff smh, BossConfig b) {
+    private static void SetUniqueBossUI([CanBeNull] IUIManager ui, bool first, SMHandoff smh, BossConfig b) {
         if (first) {
-            UIManager.AddProfile(b.profile);
+            ui?.AddProfile(b.profile);
         } else {
-            UIManager.SwitchProfile(b.profile);
+            ui?.SwitchProfile(b.profile);
         }
-        UIManager.SetBossColor(b.colors.uiColor, b.colors.uiHPColor);
+        ui?.SetBossColor(b.colors.uiColor, b.colors.uiHPColor);
     }
 
-    private static (List<BottomTracker>, List<BehaviorEntity>) ConfigureAllBosses(SMHandoff smh, BossConfig main,
-        [CanBeNull] BossConfig[] all) {
+    private static (List<BottomTracker>, List<BehaviorEntity>) ConfigureAllBosses([CanBeNull] IUIManager ui,
+        SMHandoff smh, BossConfig main, [CanBeNull] BossConfig[] all) {
         all = all ?? new[] {main};
         var bts = new List<BottomTracker>();
         var subbosses = new List<Enemy>();
@@ -73,7 +73,7 @@ public class PatternSM : SequentialSM {
                 e.ConfigureBoss(b);
                 e.SetVulnerable(Vulnerability.NO_DAMAGE);
             }
-            if (b.trackName.Length > 0) bts.Add(UIManager.TrackBEH(target, b.trackName, smh.cT));
+            if (b.trackName.Length > 0) bts.Add(ui?.TrackBEH(target, b.trackName, smh.cT));
         }
         smh.Exec.Enemy.Subbosses = subbosses;
         return (bts, subsummons);
@@ -82,10 +82,11 @@ public class PatternSM : SequentialSM {
     public override async Task Start(SMHandoff smh) {
         var bts = new List<BottomTracker>();
         var subsummons = new List<BehaviorEntity>();
+        var ui = DependencyInjection.MaybeFind<IUIManager>();
         if (props.boss != null) {
             GameManagement.campaign.OpenBoss(smh.Exec);
-            UIManager.SetBossHPLoader(smh.Exec.Enemy);
-            (bts, subsummons) = ConfigureAllBosses(smh, props.boss, props.bosses);
+            ui?.SetBossHPLoader(smh.Exec.Enemy);
+            (bts, subsummons) = ConfigureAllBosses(ui, smh, props.boss, props.bosses);
         }
         bool firstBoss = true;
         for (var next = smh.Exec.phaseController.WhatIsNextPhase();
@@ -96,14 +97,14 @@ public class PatternSM : SequentialSM {
             smh.ThrowIfCancelled();
             if (props.bgms != null) AudioTrackService.InvokeBGM(props.bgms.GetBounded(next, null));
             if (props.boss != null && next >= props.setUIFrom) {
-                SetUniqueBossUI(firstBoss, smh, 
+                SetUniqueBossUI(ui, firstBoss, smh, 
                     props.bosses == null ? props.boss : props.bosses[props.bossUI.GetBounded(next, 0)]);
                 firstBoss = false;
             }
             //don't show lives on setup phase
-            if (next > 0 && props.boss != null) UIManager.ShowBossLives(RemainingLives(next));
+            if (next > 0 && props.boss != null) ui?.ShowBossLives(RemainingLives(next));
             try {
-                await phases[next].Start(smh);
+                await phases[next].Start(smh, ui);
             } catch (OperationCanceledException) {
                 //Runs the cleanup code if we were cancelled
                 break;
@@ -113,10 +114,10 @@ public class PatternSM : SequentialSM {
             if (bt != null) bt.Finish();
         }
         if (props.boss != null && !SceneIntermediary.LOADING) {
-            UIManager.ShowBossLives(0);
+            ui?.ShowBossLives(0);
             GameManagement.campaign.CloseBoss();
-            UIManager.CloseBoss();
-            if (!firstBoss) UIManager.CloseProfile();
+            ui?.CloseBoss();
+            if (!firstBoss) ui?.CloseProfile();
             foreach (var subsummon in subsummons) {
                 subsummon.InvokeCull();
             }
@@ -159,7 +160,9 @@ public class PhaseSM : SequentialSM {
     /// </summary>
     [CanBeNull] private readonly FinishPSM finishPhase = null;
     private readonly float _timeout = 0;
-    private float Timeout => ChallengeManager.BossTimeoutOverride(props.Boss) ?? _timeout;
+    private float Timeout => 
+        DependencyInjection.MaybeFind<IChallengeManager>()?.BossTimeoutOverride(props.Boss) 
+        ?? _timeout;
     public readonly PhaseProperties props;
 
     /// <summary>
@@ -186,12 +189,13 @@ public class PhaseSM : SequentialSM {
         }
     }
 
-    private void PrepareGraphics(SMHandoff smh, out Task cutins) {
+    private void PrepareGraphics([CanBeNull] IUIManager ui, SMHandoff smh, out Task cutins, 
+        [CanBeNull] IBackgroundOrchestrator bgo, [CanBeNull] IAyaPhotoBoard photoBoard) {
         cutins = Task.CompletedTask;
-        if (props.cardTitle != null || props.phaseType != null) UIManager.SetSpellname(props.cardTitle);
-        UIManager.ShowPhaseType(props.phaseType);
-        if (!props.HideTimeout && smh.Exec.TriggersUITimeout) UIManager.ShowStaticTimeout(Timeout);
-        if (props.livesOverride.HasValue) UIManager.ShowBossLives(props.livesOverride.Value);
+        if (props.cardTitle != null || props.phaseType != null) ui?.SetSpellname(props.cardTitle);
+        ui?.ShowPhaseType(props.phaseType);
+        if (!props.HideTimeout && smh.Exec.TriggersUITimeout) ui?.ShowStaticTimeout(Timeout);
+        if (props.livesOverride.HasValue) ui?.ShowBossLives(props.livesOverride.Value);
         if (smh.Exec.isEnemy) {
             if (props.photoHP.Try(out var photoHP)) {
                 smh.Exec.Enemy.SetPhotoHP(photoHP, photoHP);
@@ -206,38 +210,39 @@ public class PhaseSM : SequentialSM {
             if (vuln.Try(out var v)) smh.Exec.Enemy.SetVulnerable(v);
         }
         if (props.BossPhotoHP.Try(out var pins)) {
-            AyaPhotoBoard.TrySetupPins(pins);
+            photoBoard?.SetupPins(pins);
         }
         bool forcedBG = false;
         if (GameManagement.campaign.mode != CampaignMode.CARD_PRACTICE && !SaveData.Settings.TeleportAtPhaseStart) {
             if (props.bossCutin) {
                 GameManagement.campaign.ExternalLenience(props.Boss.bossCutinTime);
                 SFXService.BossCutin();
-                RaikoCamera.Shake(props.Boss.bossCutinTime / 2f, null, 1f, smh.cT, () => { });
+                //Service not required since no callback
+                DependencyInjection.MaybeFind<IRaiko>()?.Shake(props.Boss.bossCutinTime / 2f, null, 1f, smh.cT, null);
                 UnityEngine.Object.Instantiate(props.Boss.bossCutin);
-                BackgroundOrchestrator.QueueTransition(props.Boss.bossCutinTrIn);
-                BackgroundOrchestrator.ConstructTarget(props.Boss.bossCutinBg, true);
+                bgo?.QueueTransition(props.Boss.bossCutinTrIn);
+                bgo?.ConstructTarget(props.Boss.bossCutinBg, true);
                 WaitingUtils.WaitFor(smh, props.Boss.bossCutinBgTime, false).ContinueWithSync(() => {
                     if (!smh.Cancelled) {
-                        BackgroundOrchestrator.QueueTransition(props.Boss.bossCutinTrOut);
-                        BackgroundOrchestrator.ConstructTarget(props.Background, true);
+                        bgo?.QueueTransition(props.Boss.bossCutinTrOut);
+                        bgo?.ConstructTarget(props.Background, true);
                     }
                 });
                 cutins = WaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, props.Boss.bossCutinTime, false);
                 forcedBG = true;
             } else if (props.GetSpellCutin(out var sc)) {
                 SFXService.BossSpellCutin();
-                RaikoCamera.Shake(1.5f, null, 1f, smh.cT, () => { });
+                DependencyInjection.MaybeFind<IRaiko>()?.Shake(1.5f, null, 1f, smh.cT, null);
                 UnityEngine.Object.Instantiate(sc);
             }
         }
         if (!forcedBG && props.Background != null) {
-            if (props.BgTransitionIn != null) BackgroundOrchestrator.QueueTransition(props.BgTransitionIn);
-            BackgroundOrchestrator.ConstructTarget(props.Background, true);
+            if (props.BgTransitionIn != null) bgo?.QueueTransition(props.BgTransitionIn);
+            bgo?.ConstructTarget(props.Background, true);
         }
     }
 
-    private void PrepareCancellationTrigger(SMHandoff smh, Cancellable toCancel) {
+    private void PrepareCancellationTrigger([CanBeNull] IUIManager ui, SMHandoff smh, Cancellable toCancel) {
         smh.Exec.PhaseShifter = toCancel;
         var timeout = Timeout;
         //Note that the <!> HP(hp) sets invulnTime=0.
@@ -248,11 +253,14 @@ public class PhaseSM : SequentialSM {
         if (props.phaseType?.IsSpell() ?? false) smh.Exec.Enemy.RequestSpellCircle(timeout, smh.cT);
         //else smh.exec.Enemy.DestroySpellCircle();
         if (!props.HideTimeout && smh.Exec.TriggersUITimeout)
-            UIManager.DoTimeout(props.phaseType?.IsCard() ?? false, timeout, smh.cT);
+            ui?.DoTimeout(props.phaseType?.IsCard() ?? false, timeout, smh.cT);
     }
 
-    public override async Task Start(SMHandoff smh) {
-        PrepareGraphics(smh, out Task cutins);
+    public override Task Start(SMHandoff smh) => Start(smh, null);
+    public async Task Start(SMHandoff smh, [CanBeNull] IUIManager ui) {
+        var bgo = DependencyInjection.MaybeFind<IBackgroundOrchestrator>();
+        var photoBoard = DependencyInjection.MaybeFind<IAyaPhotoBoard>();
+        PrepareGraphics(ui, smh, out Task cutins, bgo, photoBoard);
         if (props.Lenient) GameManagement.campaign.Lenience = true;
         if (props.rootMove != null) await props.rootMove.Start(smh);
         await cutins;
@@ -260,11 +268,11 @@ public class PhaseSM : SequentialSM {
         if (props.phaseType?.IsPattern() == true) ETime.Timer.PhaseTimer.Restart();
         var pcTS = new Cancellable();
         var joint_smh = smh.CreateJointCancellee(pcTS, out var joint);
-        PrepareCancellationTrigger(joint_smh, pcTS);
+        PrepareCancellationTrigger(ui, joint_smh, pcTS);
         var start_frame = ETime.FrameNumber;
         
         var start_campaign = new CampaignSnapshot(GameManagement.campaign);
-        if (props.phaseType != null) ChallengeManager.SetupBEHPhase(joint_smh);
+        if (props.phaseType != null) DependencyInjection.MaybeFind<IChallengeManager>()?.SetupBossPhase(joint_smh);
         try {
             await base.Start(joint_smh);
             await WaitingUtils.WaitForUnchecked(smh.Exec, joint, 0f,
@@ -276,7 +284,7 @@ public class PhaseSM : SequentialSM {
             if (props.Cleanup) GameManagement.ClearPhaseAutocull(props.autocullTarget, props.autocullDefault);
             if (smh.Exec.AllowFinishCalls) {
                 finishPhase?.Trigger(smh.Exec, smh.GCX, smh.parentCT);
-                OnFinish(smh, pcTS, start_campaign, start_frame);
+                OnFinish(smh, pcTS, start_campaign, start_frame, bgo, photoBoard);
             }
             if (smh.Cancelled) throw;
             if (props.phaseType != null) Log.Unity($"Cleared {props.phaseType.Value} phase: {props.cardTitle ?? ""}");
@@ -288,10 +296,13 @@ public class PhaseSM : SequentialSM {
     private const float defaultShakeTime = 0.6f;
     private static readonly FXY defaultShakeMult = x => M.Sin(M.PI * (x + 0.4f));
 
-    private void OnFinish(SMHandoff smh, ICancellee prepared, CampaignSnapshot start_campaign, int start_frame) {
-        if (props.BgTransitionOut != null) BackgroundOrchestrator.QueueTransition(props.BgTransitionOut);
+    private void OnFinish(SMHandoff smh, ICancellee prepared, CampaignSnapshot start_campaign, int start_frame,
+        [CanBeNull] IBackgroundOrchestrator bgo, [CanBeNull] IAyaPhotoBoard photoBoard) {
+        if (props.BgTransitionOut != null) {
+            bgo?.QueueTransition(props.BgTransitionOut);
+        }
         if (props.BossPhotoHP.Try(out _)) {
-            AyaPhotoBoard.TearDown();
+            photoBoard?.TearDown();
         }
         float elapsed_ratio = Timeout > 0 ?
             Mathf.Clamp01((ETime.FrameNumber - start_frame) * ETime.FRAME_TIME / Timeout) :
@@ -310,7 +321,8 @@ public class PhaseSM : SequentialSM {
         var pc = new PhaseCompletion(props, completedBy, smh.Exec, start_campaign, elapsed_ratio);
         if (pc.StandardCardFinish) {
             smh.Exec.DropItems(pc.DropItems, 1.4f, 0.6f, 1f, 0.2f, 2f);
-            RaikoCamera.Shake(defaultShakeTime, defaultShakeMult, defaultShakeMag, smh.cT, () => { });
+            DependencyInjection.MaybeFind<IRaiko>()
+                ?.Shake(defaultShakeTime, defaultShakeMult, defaultShakeMag, smh.cT, null);
         }
         GameManagement.campaign.PhaseEnd(pc);
     }

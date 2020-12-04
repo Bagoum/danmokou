@@ -16,6 +16,7 @@ using static GameManagement;
 /// </summary>
 [Preserve]
 public abstract class XMLMenu : RegularUpdater {
+    public UIBuilderRenderer uiRenderer;
     [CanBeNull] protected virtual List<int> ReturnTo { get; set; }
     [CanBeNull] private List<int> tentativeReturnTo;
 
@@ -179,10 +180,10 @@ public abstract class XMLMenu : RegularUpdater {
                 OnChangeEffects(prev);
             }
             if (transitionMethod == ScreenTransition.SWIPE) {
-                UIBuilderRenderer.Slide(null, GetRandomSlideEndpoint(), swipeTime, DMath.M.EInSine, s => {
+                uiRenderer.Slide(null, GetRandomSlideEndpoint(), swipeTime, DMath.M.EInSine, s => {
                     if (s) {
                         GoToNested();
-                        UIBuilderRenderer.Slide(GetRandomSlideEndpoint(), Vector2.zero, swipeTime, DMath.M.EOutSine, s2 => {
+                        uiRenderer.Slide(GetRandomSlideEndpoint(), Vector2.zero, swipeTime, DMath.M.EOutSine, s2 => {
                             if (s2) isTransitioning = false;
                         });
                     }

@@ -143,7 +143,7 @@ MonoBehaviour:
     destructible: 0
     grazeEveryFrames: 0
   displayer: {fileID: 0}
-  offsetFree: qrotate(px(15 * t), rx(0.7, 45 + 90 * p + mod(360, 222.49 * t)))
+  offsetFree: qrotate(px(15 * t), rx(0.8, 45 + 90 * p + mod(360, 222.49 * t)))
   offsetFocus: pxy -0.4 -0.5
   powerOffsetFree: []
   powerOffsetFocus: []
@@ -265,7 +265,7 @@ MonoBehaviour:
     destructible: 0
     grazeEveryFrames: 0
   displayer: {fileID: 0}
-  offsetFree: qrotate(px(15 * t), rx(0.7, 45 + 90 * p + mod(360, 222.49 * t)))
+  offsetFree: qrotate(px(15 * t), rx(0.8, 45 + 90 * p + mod(360, 222.49 * t)))
   offsetFocus: pxy -0.2 0.5
   powerOffsetFree: []
   powerOffsetFocus: []
@@ -456,7 +456,7 @@ MonoBehaviour:
     destructible: 0
     grazeEveryFrames: 0
   displayer: {fileID: 0}
-  offsetFree: qrotate(px(15 * t), rx(0.7, 45 + 90 * p + mod(360, 222.49 * t)))
+  offsetFree: qrotate(px(15 * t), rx(0.8, 45 + 90 * p + mod(360, 222.49 * t)))
   offsetFocus: pxy 0.4 -0.5
   powerOffsetFree: []
   powerOffsetFocus: []
@@ -578,7 +578,7 @@ MonoBehaviour:
     destructible: 0
     grazeEveryFrames: 0
   displayer: {fileID: 0}
-  offsetFree: qrotate(px(15 * t), rx(0.7, 45 + 90 * p + mod(360, 222.49 * t)))
+  offsetFree: qrotate(px(15 * t), rx(0.8, 45 + 90 * p + mod(360, 222.49 * t)))
   offsetFocus: pxy 0.2 0.5
   powerOffsetFree: []
   powerOffsetFocus: []

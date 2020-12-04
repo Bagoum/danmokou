@@ -5,7 +5,6 @@ using JetBrains.Annotations;
 using UnityEngine;
 
 public class Counter : RegularUpdater {
-    private static Counter main;
     public static int GrazeFrame { get; private set; }
     //private static int LowEnemyHPRequests;
     private static int LowEnemyHPLastFrame = -100;
@@ -15,9 +14,6 @@ public class Counter : RegularUpdater {
     public static int FrameNumber { get; private set; }
     public static float Shotgun { get; set; } = 0f;
     public static bool LowHPRequested { get; set; } = false;
-    private void Awake() {
-        main = this;
-    }
 
     public override void RegularUpdate() {
         GrazeFrame = 0;

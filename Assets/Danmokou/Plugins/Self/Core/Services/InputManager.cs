@@ -103,10 +103,6 @@ public static class InputManager {
     private static readonly InputChecker ArrowUp = Key(KeyCode.UpArrow);
     private static readonly InputChecker ArrowDown = Key(KeyCode.DownArrow);
     public static readonly InputHandler FocusHold = InputHandler.Hold(Key(i.FocusHold).Or(AxisG0(aCRightTrigger, true)));
-    public static readonly InputHandler AimLeft = InputHandler.Trigger(Key(i.AimLeft).Or(AxisL0(aCRightX, true)));
-    public static readonly InputHandler AimRight = InputHandler.Trigger(Key(i.AimRight).Or(AxisG0(aCRightX, true)));
-    public static readonly InputHandler AimUp = InputHandler.Trigger(Key(i.AimUp).Or(AxisG0(aCRightY, true)));
-    public static readonly InputHandler AimDown = InputHandler.Trigger(Key(i.AimDown).Or(AxisL0(aCRightY, true)));
     public static readonly InputHandler ShootHold = InputHandler.Hold(Key(i.ShootHold).Or(AxisG0(aCLeftTrigger, true)));
     public static readonly InputHandler Bomb = InputHandler.Trigger(Key(i.Bomb).Or(Key(cX, true)));
     public static readonly InputHandler Meter = InputHandler.Hold(Key(i.Bomb).Or(Key(cX, true)));
@@ -166,7 +162,7 @@ public static class InputManager {
     public static void ReplayFrame(FrameInput? fi) => replay = fi;
 
     private static readonly InputHandler[] Updaters = {
-        FocusHold, AimLeft, AimRight, AimUp, AimDown, ShootHold, Bomb,
+        FocusHold, ShootHold, Bomb,
         UIDown, UIUp, UILeft, UIRight, UIConfirm, UIBack, UISkipDialogue, Pause,
         Meter,
         

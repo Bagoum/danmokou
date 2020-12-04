@@ -5,7 +5,7 @@ using System.Threading;
 using JetBrains.Annotations;
 using UnityEngine;
 
-public class AudioTrackService : MonoBehaviour {
+public class AudioTrackService : RegularUpdater {
     private static AudioTrackService main;
     [CanBeNull] private static IAudioTrackInfo bgm = null;
     
@@ -27,7 +27,12 @@ public class AudioTrackService : MonoBehaviour {
             if (t != null) trackInfo[t.key] = t;
         }
     }
-
+    
+    protected override void BindListeners() {
+        base.BindListeners();
+        Listen(Core.Events.GameStateHasChanged, HandleGameStateChange);
+    }
+    
     public void Update() {
         if (bgm != null && bgm.Loop) {
             //Debug.Log(
@@ -43,6 +48,8 @@ public class AudioTrackService : MonoBehaviour {
                 StartCoroutine(sourceFadeOutStop(nextSrc, bgm, 0f));
         }
     }
+
+    public override void RegularUpdate() { }
 
     private const float fadeDeOverlap = 0.2f;
     private const float fadeTime = 0.3f;
@@ -139,16 +146,10 @@ public class AudioTrackService : MonoBehaviour {
         Assign(src2, track);
         currSrc.Play();
     }
-    
-    
-    private DeletionMarker<Action<GameState>> gameStateListener;
-    protected void OnEnable() {
-        gameStateListener = Core.Events.GameStateHasChanged.Listen(HandleGameStateChange);
-    }
 
-    protected void OnDisable() {
-        gameStateListener.MarkForDeletion();
+    protected override void OnDisable() {
         ClearAllAudio(true);
+        base.OnDisable();
     }
     private void HandleGameStateChange(GameState state) {
         if (state.IsPaused() && (bgm?.StopOnPause ?? false)) {

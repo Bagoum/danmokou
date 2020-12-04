@@ -1,4 +1,5 @@
 ﻿using DMath;
+using JetBrains.Annotations;
 using UnityEngine;
 
 namespace Danmaku {
@@ -19,10 +20,10 @@ public abstract class BouncyItem : Item {
 
     private Vector2 velocity;
 
-    protected override Vector2 Velocity(float time) => velocity;
+    protected override Vector2 Velocity(float t) => velocity;
 
-    public override void Initialize(Vector2 root, Vector2 targetOffset) {
-        base.Initialize(root, targetOffset);
+    public override void Initialize(Vector2 root, Vector2 targetOffset, [CanBeNull] PoC collectionPoint = null) {
+        base.Initialize(root, targetOffset, collectionPoint);
         float startAngle = 45f + RNG.GetInt(0, 4) * 90f;
         velocity = Speed * M.CosSinDeg(startAngle);
     }

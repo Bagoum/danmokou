@@ -16,6 +16,7 @@ public class BackgroundCombiner : RegularUpdater {
     private Material mat;
 
     private float time = 0f;
+    private BackgroundOrchestrator orchestrator;
     private void Awake() {
         main = this;
         renderMask = LayerMask.GetMask(LayerMask.LayerToName(gameObject.layer));
@@ -25,6 +26,15 @@ public class BackgroundCombiner : RegularUpdater {
         mat = sr.material;
         mat.EnableKeyword("MIX_FROM_ONLY");
         sr.SetPropertyBlock(pb);
+    }
+
+    public void Initialize(BackgroundOrchestrator _orchestrator) {
+        orchestrator = _orchestrator;
+    }
+
+    protected override void BindListeners() {
+        base.BindListeners();
+        Listen(SaveData.ResolutionHasChanged, Reconstruct);
     }
 
     private void Start() => UpdateTextures();
@@ -38,17 +48,16 @@ public class BackgroundCombiner : RegularUpdater {
         time = 0f;
     }
 
-    public static void Reconstruct() {
-        if (main == null) return;
-        main.sr.enabled = SaveData.s.Backgrounds;
-        main.UpdateTextures();
+    private void Reconstruct() {
+        sr.enabled = SaveData.s.Backgrounds;
+        UpdateTextures();
     }
 
     private void UpdateTextures() {
-        if (!SaveData.s.Backgrounds || BackgroundOrchestrator.FromBG == null) return;
+        if (!SaveData.s.Backgrounds || orchestrator.FromBG == null) return;
         //Update PB
-        var fromTex = BackgroundOrchestrator.FromBG.capturer.Captured;
-        var toTex = (BackgroundOrchestrator.ToBG == null) ? null : BackgroundOrchestrator.ToBG.capturer.Captured;
+        var fromTex = orchestrator.FromBG.capturer.Captured;
+        var toTex = (orchestrator.ToBG == null) ? null : orchestrator.ToBG.capturer.Captured;
         if (toTex == null) {
             mat.EnableKeyword("MIX_FROM_ONLY");
             pb.SetTexture(PropConsts.fromTex, fromTex);

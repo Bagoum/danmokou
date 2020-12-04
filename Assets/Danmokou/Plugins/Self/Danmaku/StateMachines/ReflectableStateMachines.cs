@@ -30,7 +30,7 @@ public class EventLASM : ReflectableLASM {
     /// <param name="frames">Invulnerability frames (120 frames per second)</param>
     /// <returns></returns>
     public static TaskPattern PlayerInvuln(int frames) => smh => {
-        Events.MakePlayerInvincible.Invoke((frames, true));
+        PlayerHP.RequestPlayerInvulnerable.Publish((frames, true));
         SFXService.Request("x-invuln");
         return Task.CompletedTask;
     };
@@ -41,7 +41,7 @@ public class EventLASM : ReflectableLASM {
 
     public static TaskPattern BossExplode() => smh => {
         UnityEngine.Object.Instantiate(ResourceManager.GetSummonable("bossexplode")).GetComponent<ExplodeEffect>().Initialize(BossExplodeWait, smh.Exec.rBPI.loc);
-        RaikoCamera.Shake(BossExplodeShake, ShakeMag, 2, smh.cT, WaitingUtils.GetAwaiter(out Task _));
+        DependencyInjection.MaybeFind<IRaiko>()?.Shake(BossExplodeShake, ShakeMag, 2, smh.cT, null);
         SFXService.BossExplode();
         return WaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, BossExplodeWait, false);
     };

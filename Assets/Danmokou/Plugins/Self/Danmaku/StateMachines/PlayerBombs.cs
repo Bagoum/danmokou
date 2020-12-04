@@ -87,7 +87,7 @@ async gpather-red/w <-90> gcr3 20 1.6s <> {
 		rotify(cx 1),
 		(LNearestEnemy - loc)) 
             * lerp3(0.0, 0.3, 1.1, 1.3, t, 14, 2, 17)), { 
-	player(120, 800, 100, oh1)
+	player(120, 800, 100, oh1-red)
 	s(2)
 })
 ".Into<StateMachine>;
@@ -97,7 +97,7 @@ async gpather-red/w <-90> gcr3 20 1.6s <> {
         var smh = new SMHandoff(bomber);
         _ = TB1_1.Value(smh);
         _ = TB1_2.Value.Start(smh);
-        Core.Events.MakePlayerInvincible.Invoke(((int)(120f * (EventLASM.BossExplodeWait + 3f)), true));
+        PlayerHP.RequestPlayerInvulnerable.Publish(((int)(120f * (EventLASM.BossExplodeWait + 3f)), true));
         for (float t = 0; t < EventLASM.BossExplodeWait; t += ETime.FRAME_TIME) yield return null;
         var circ = new CCircle(bomber.hitbox.location.x, bomber.hitbox.location.y, 8f);
         BulletManager.Autodelete("cwheel", "black/b", bpi => DMath.Collision.PointInCircle(bpi.loc, circ));

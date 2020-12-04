@@ -120,7 +120,7 @@ public class CampaignData {
     public string MultishotString => (Shot != null && Shot.isMultiShot) ? Subshot.Describe() : "";
     public void SetSubshot(Subshot newSubshot) {
         team.Subshot = newSubshot;
-        UIManager.UpdatePlayerUI();
+        Events.CampaignDataHasChanged.Proc();
     }
     //This uses boss key instead of boss index since phaseSM doesn't have trivial access to boss index
     public List<CardHistory> CardCaptures { get; }
@@ -170,10 +170,10 @@ public class CampaignData {
     /// Present for all games, including "null_campaign" default for unscoped games
     /// </summary>
     private readonly string campaignKey;
-    private readonly GameRequest? request;
+    public GameRequest? Request { get; }
 
     public CampaignData(CampaignMode mode, GameRequest? req = null, long? maxScore = null) {
-        this.request = req;
+        this.Request = req;
         this.mode = mode;
         this.Difficulty = req?.metadata.difficulty ?? GameManagement.defaultDifficulty;
         this.MaxScore = maxScore ?? 9001;
@@ -231,7 +231,7 @@ public class CampaignData {
             }
             Bombs = StartBombs(mode);
             remVisibleScoreLerpTime = Faith = faithLenience = 0;
-            UIManager.UpdatePlayerUI();
+            Events.CampaignDataHasChanged.Proc();
             return true;
         } else return false;
     }
@@ -243,7 +243,7 @@ public class CampaignData {
     public bool TryConsumeBombs(int delta) {
         if (Bombs + delta >= 0) {
             Bombs += delta;
-            UIManager.UpdatePlayerUI();
+            Events.CampaignDataHasChanged.Proc();
             return true;
         }
         return false;
@@ -252,8 +252,8 @@ public class CampaignData {
     public void SwapLifeScore(int score) {
         AddLives(-1, false);
         AddScore(score);
-        SFXService.SwapLifeForScore();
-        UIManager.UpdatePlayerUI();
+        LifeSwappedForScore.Proc();
+        Events.CampaignDataHasChanged.Proc();
     }
     public void AddLives(int delta, bool asHit = true) {
         //if (mode == CampaignMode.NULL) return;
@@ -268,7 +268,7 @@ public class CampaignData {
         else Lives = Math.Max(0, Lives + delta);
         if (Lives == 0) {
             //Record failure
-            if (request.Try(out var req) && req.Saveable) {
+            if (Request.Try(out var req) && req.Saveable) {
                 //Special-case boss practice handling
                 if (req.lowerRequest.Resolve(_ => null, b => (BossPracticeRequest?) b, _ => null, _ => null)
                     .Try(out var bpr)) {
@@ -283,7 +283,7 @@ public class CampaignData {
             }
             GameStateManager.HandlePlayerDeath();
         }
-        UIManager.UpdatePlayerUI();
+        Events.CampaignDataHasChanged.Proc();
     }
 
     /// <summary>
@@ -298,7 +298,7 @@ public class CampaignData {
         var belowThreshold = !EnoughMeterToUse;
         Meter = M.Clamp(0, 1, Meter + delta * Difficulty.meterAcquireMultiplier);
         if (belowThreshold && EnoughMeterToUse && !MeterInUse) {
-            SFXService.MeterUsable();
+            MeterNowUsable.Proc();
         }
     }
 
@@ -334,12 +334,12 @@ public class CampaignData {
         var prevPower = Power;
         Power = M.Clamp(powerMin, powerMax, Power + delta);
         //1.95 is effectively 1, 2.00 is effectively 2
-        if (Power < prevFloor) SFXService.PowerLost();
+        if (Power < prevFloor) PowerLost.Proc();
         if (prevPower < prevCeil && Power >= prevCeil) {
-            if (Power >= powerMax) SFXService.PowerFull();
-            else SFXService.PowerGained();
+            if (Power >= powerMax) PowerFull.Proc();
+            else PowerGained.Proc();
         }
-        UIManager.UpdatePlayerUI();
+        Events.CampaignDataHasChanged.Proc();
     }
 
     /// <summary>
@@ -355,7 +355,7 @@ public class CampaignData {
 
     private void FullPower() {
         Power = powerMax;
-        SFXService.PowerFull();
+        PowerFull.Proc();
     }
     public void AddPowerItems(int delta) {
         if (!PowerMechanicEnabled || Power >= powerMax) {
@@ -372,7 +372,7 @@ public class CampaignData {
         double bonus = MeterScorePerValueMultiplier;
         long scoreDelta = (long) Math.Round(delta * valueItemPoints * bonus * EffectivePIV * multiplier);
         AddScore(scoreDelta);
-        Events.ScoreItemHasReceived.Invoke((scoreDelta, bonus > 1));
+        Events.ScoreItemHasReceived.Publish((scoreDelta, bonus > 1));
     }
     public void AddGraze(int delta) {
         Graze += delta;
@@ -380,14 +380,14 @@ public class CampaignData {
         AddFaithLenience(FaithLenienceGraze);
         AddMeter(delta * MeterBoostGraze);
         Counter.GrazeProc(delta);
-        UIManager.UpdatePlayerUI();
+        Events.CampaignDataHasChanged.Proc();
     }
 
     public void AddPointPlusItems(int delta) {
         PIV += pivPerPPP * MeterPivPerPPPMultiplier * delta;
         AddFaith(delta * faithBoostPointPP);
         AddFaithLenience(faithLeniencePointPP);
-        UIManager.UpdatePlayerUI();
+        Events.CampaignDataHasChanged.Proc();
     }
 
     public void AddGems(int delta) {
@@ -396,8 +396,8 @@ public class CampaignData {
 
     public void LifeExtend() {
         ++Lives;
-        SFXService.LifeExtend();
-        UIManager.UpdatePlayerUI();
+        AnyExtendAcquired.Proc();
+        Events.CampaignDataHasChanged.Proc();
     }
 
     public void PhaseEnd(PhaseCompletion pc) {
@@ -410,10 +410,8 @@ public class CampaignData {
             });
         }
         if (pc.props.phaseType?.IsPattern() ?? false) AddFaithLenience(faithLeniencePhase);
-        SFXService.PhaseEndSound(pc.Captured);
-        if (pc.props.phaseType == PhaseType.STAGE && pc.props.Cleanup) SFXService.StageSectionEndSound();
-        UIManager.CardCapture(pc);
-        ChallengeManager.ReceivePhaseCompletion(pc);
+
+        PhaseCompleted.Publish(pc);
     }
     
     private void AddScore(long delta) {
@@ -423,8 +421,8 @@ public class CampaignData {
         if (NextScoreLife.Try(out var next) && Score >= next) {
             ++nextScoreLifeIndex;
             LifeExtend();
-            UIManager.LifeExtendScore();
-            UIManager.UpdatePlayerUI();
+            ScoreExtendAcquired.Proc();
+            Events.CampaignDataHasChanged.Proc();
         }
         remVisibleScoreLerpTime = visibleScoreLerpTime;
         //updated in RegUpd
@@ -434,9 +432,9 @@ public class CampaignData {
         if (nextItemLifeIndex < pointLives.Length && LifeItems >= pointLives[nextItemLifeIndex]) {
             ++nextItemLifeIndex;
             LifeExtend();
-            UIManager.LifeExtendItems();
+            ItemExtendAcquired.Proc();
         }
-        UIManager.UpdatePlayerUI();
+        Events.CampaignDataHasChanged.Proc();
     }
 
     public void DestroyNormalEnemy() {
@@ -449,7 +447,7 @@ public class CampaignData {
             remVisibleScoreLerpTime -= ETime.FRAME_TIME;
             if (remVisibleScoreLerpTime <= 0) UIVisibleScore = Score;
             else UIVisibleScore = (long) M.LerpU(lastScore, Score, 1 - remVisibleScoreLerpTime / visibleScoreLerpTime);
-            UIManager.UpdatePlayerUI();
+            Events.CampaignDataHasChanged.Proc();
         }
         UIVisibleFaithDecayLenienceRatio = M.LerpU(UIVisibleFaithDecayLenienceRatio, 
             Math.Min(1f, faithLenience / 3f), 6f * ETime.FRAME_TIME);
@@ -462,7 +460,7 @@ public class CampaignData {
                 PIV = Math.Max(1, PIV - pivFallStep);
                 Faith = 0.5f;
                 faithLenience = faithLenienceFall;
-                UIManager.UpdatePlayerUI();
+                Events.CampaignDataHasChanged.Proc();
             }
         }
     }
@@ -483,6 +481,16 @@ public class CampaignData {
     public void AddDecayRateMultiplier_Tutorial(double m) {
         faithDecayRateMultiplier *= m;
     }
+    
+    public static readonly Events.Event0 MeterNowUsable = new Events.Event0();
+    public static readonly Events.Event0 PowerLost = new Events.Event0();
+    public static readonly Events.Event0 PowerGained = new Events.Event0();
+    public static readonly Events.Event0 PowerFull = new Events.Event0();
+    public static readonly Events.Event0 AnyExtendAcquired = new Events.Event0();
+    public static readonly Events.Event0 ItemExtendAcquired = new Events.Event0();
+    public static readonly Events.Event0 ScoreExtendAcquired = new Events.Event0();
+    public static readonly Events.IEvent<PhaseCompletion> PhaseCompleted = new Events.Event<PhaseCompletion>();
+    public static readonly Events.Event0 LifeSwappedForScore = new Events.Event0();
 
 #if UNITY_EDITOR
     public void SetPower(double x) => Power = x;
@@ -494,7 +502,7 @@ public class CampaignData {
 /// This is the only scene-persistent object in the game.
 /// </summary>
 public class GameManagement : RegularUpdater {
-    public static readonly Version EngineVersion = new Version(5, 0, 0);
+    public static readonly Version EngineVersion = new Version(5, 0, 1);
     public static bool Initialized { get; private set; } = false;
     public static DifficultySettings Difficulty => campaign.Difficulty;
     
@@ -579,8 +587,8 @@ public class GameManagement : RegularUpdater {
         ETime.RegisterPersistentEOFInvoke(BehaviorEntity.PrunePoolControls);
         ETime.RegisterPersistentEOFInvoke(CurvedTileRenderLaser.PrunePoolControls);
         SceneIntermediary.RegisterSceneUnload(ClearForScene);
-        SceneIntermediary.RegisterSceneLoad(Replayer.LoadLazy);
-    #if UNITY_EDITOR
+        SceneIntermediary.RegisterSceneLoad(OnSceneLoad);
+#if UNITY_EDITOR
         Log.Unity($"Graphics Jobs: {PlayerSettings.graphicsJobs} {PlayerSettings.graphicsJobMode}; MTR {PlayerSettings.MTRendering}");
     #endif
         Log.Unity($"Graphics Render mode {SystemInfo.renderingThreadingMode}");
@@ -592,6 +600,11 @@ public class GameManagement : RegularUpdater {
         GetComponent<BulletManager>().Setup();
         GetComponentInChildren<SFXService>().Setup();
         GetComponentInChildren<AudioTrackService>().Setup();
+    }
+
+    private void OnSceneLoad() {
+        Replayer.LoadLazy();
+        (new GameObject("Scene-Local CRU")).AddComponent<SceneLocalCRU>();
     }
 
     public static bool MainMenuExists => References.mainMenu != null;
@@ -639,10 +652,9 @@ public class GameManagement : RegularUpdater {
         BulletManager.ClearEmpty();
         BulletManager.ClearAllBullets();
         BulletManager.DestroyCopiedPools();
-        UIManager.UpdatePlayerUI();
-        SeijaCamera.ResetTargetFlip(0.2f);
+        Events.CampaignDataHasChanged.Proc();
 #if UNITY_EDITOR || ALLOW_RELOAD
-        Events.LocalReset.InvokeIfNotRefractory();
+        Events.LocalReset.Proc();
 #endif
         //Ordered last so cancellations from HardCancel will occur under old data
         campaign = new CampaignData(CampaignMode.NULL);
@@ -677,8 +689,8 @@ public class GameManagement : RegularUpdater {
         BulletManager.ClearEmpty();
         Events.Event0.Reset();
         ETime.Slowdown.RevokeAll(MultiMultiplier.Priority.CLEAR_PHASE);
-        SeijaCamera.ResetTargetFlip(1f);
         ETime.Timer.ResetAll();
+        Events.ClearPhase.Proc();
         //Delay this so copy pools can be softculled correctly
         ETime.QueueDelayedEOFInvoke(1, BulletManager.DestroyCopiedPools);
         //Delay this so that bullets referencing hosting data don't break down before

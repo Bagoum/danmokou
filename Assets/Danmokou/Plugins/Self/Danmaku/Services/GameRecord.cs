@@ -100,8 +100,12 @@ public class GameRecord {
         var playerDesc = (p == null) ? "???" : p.shortTitle;
         var shotDesc = "?";
         if (p != null && s != null) {
-            var shotInd = p.shots.IndexOf(s);
-            shotDesc = (shotInd > -1) ? $"{shotInd.ToABC()}" : "?";
+            var os = p.shots2.FirstOrDefault(_os => _os.shot == s);
+            if (os.shot == s) {
+                if (string.IsNullOrWhiteSpace(os.ordinal)) {
+                    if (os.shot.isMultiShot) shotDesc = "X";
+                } else shotDesc = os.ordinal;
+            }
         }
         var pstr = $"{playerDesc}-{shotDesc}".PadRight(10);
         var score = showScore ? $"{Score} ".PadLeft(10, '0') : "";

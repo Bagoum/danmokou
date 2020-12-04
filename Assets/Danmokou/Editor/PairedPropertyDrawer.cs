@@ -147,3 +147,9 @@ public class DfcDisplayDrawer : PairedPropertyDrawer {
 
     protected override string arg2 => "display";
 }
+[CustomPropertyDrawer(typeof(OrdinalShot))]
+public class OrdinalShotDrawer : PairedPropertyDrawer {
+    protected override string arg1 => "ordinal";
+
+    protected override string arg2 => "shot";
+}

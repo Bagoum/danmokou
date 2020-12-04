@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using DMath;
+using JetBrains.Annotations;
 using UnityEngine;
 using Collision = DMath.Collision;
 
@@ -13,8 +14,9 @@ public abstract class Item : Pooled<Item> {
     protected virtual float speed0 => 1f;
     protected virtual float speed1 => -1.4f;
     protected virtual float peakt => 0.8f;
+    protected Vector2 Direction => ((collection != null) ? collection.direction : LRUD.UP).Direction();
     protected virtual Vector2 Velocity(float t) => 
-        Mathf.Lerp(speed0, speed1, t * (speed0 / (speed0 - speed1))/peakt) * PoC.Direction;
+        Mathf.Lerp(speed0, speed1, t * (speed0 / (speed0 - speed1))/peakt) * Direction;
 
     public SOPlayerHitbox target;
 
@@ -53,13 +55,15 @@ public abstract class Item : Pooled<Item> {
 
     protected SpriteRenderer sr;
     protected bool autocollected;
+
+    [CanBeNull] protected PoC collection { get; private set; }
     
     protected override void Awake() {
         base.Awake();
         sr = GetComponent<SpriteRenderer>();
     }
     
-    public virtual void Initialize(Vector2 root, Vector2 targetOffset) {
+    public virtual void Initialize(Vector2 root, Vector2 targetOffset, [CanBeNull] PoC collectionPoint = null) {
         tr.localEulerAngles = Vector3.zero;
         tr.position = loc = root;
         summonTarget = targetOffset;
@@ -68,6 +72,7 @@ public abstract class Item : Pooled<Item> {
         timeHoming = 0f;
         sr.sortingOrder = (short)(renderIndex++ + (short)(RenderOffsetIndex * RenderOffsetRange));
         autocollected = false;
+        this.collection = (collectionPoint != null) ? collectionPoint : DependencyInjection.MaybeFind<PoC>();
     }
 
     public void Autocollect(bool doAutocollect) {
@@ -87,7 +92,7 @@ public abstract class Item : Pooled<Item> {
     }
 
     public override void RegularUpdate() {
-        if (PoC.Autocollect) Autocollect(true);
+        if (collection != null && collection.Autocollect) Autocollect(true);
         if (State == HomingState.WAITING && time > MinTimeBeforeHome) {
             State = HomingState.HOMING;
         }
@@ -102,7 +107,7 @@ public abstract class Item : Pooled<Item> {
             loc += ETime.FRAME_TIME * (Velocity(time) + summonTarget * 
                 M.DEOutSine(Mathf.Clamp01(time / lerpIntoOffsetTime)) / lerpIntoOffsetTime);
             if (Attractible && Collision.CircleOnPoint(loc, target.itemAttractRadius, target.location)) SetHome();
-            else if (!LocationService.OnScreenInDirection(loc, -screenRange * PoC.Direction) || 
+            else if (!LocationService.OnScreenInDirection(loc, -screenRange * Direction) || 
                      (time > MinCullTime && !LocationService.OnPlayableScreenBy(CullRadius, loc))) {
                 PooledDone();
                 return;

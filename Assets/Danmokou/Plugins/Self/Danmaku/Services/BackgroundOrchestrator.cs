@@ -8,24 +8,26 @@ using SM;
 using UnityEngine;
 
 namespace Danmaku {
-public class BackgroundOrchestrator : MonoBehaviour {
-    private static BackgroundOrchestrator main;
+public interface IBackgroundOrchestrator {
+    void QueueTransition(BackgroundTransition bgt);
+    void ConstructTarget(GameObject bgp, bool withTransition, bool destroyIfExists = false);
+}
+public class BackgroundOrchestrator : CoroutineRegularUpdater, IBackgroundOrchestrator {
     private Transform tr;
-    [CanBeNull] public static BackgroundController FromBG { get; private set; }
-    [CanBeNull] public static BackgroundController ToBG { get; private set; }
+    [CanBeNull] public BackgroundController FromBG { get; private set; }
+    [CanBeNull] public BackgroundController ToBG { get; private set; }
     
     private readonly Dictionary<GameObject, BackgroundController> instantiated = new Dictionary<GameObject, BackgroundController>();
-    private static BackgroundTransition? nextRequestedTransition;
+    private BackgroundTransition? nextRequestedTransition;
 
     public GameObject backgroundCombiner;
     public Material baseMixerMaterial;
     public GameObject defaultBGCPrefab;
     
-    public static float Time { get; private set; }
+    public float Time { get; private set; }
 
-    public static void RecreateTextures() {
-        if (main == null) return; //Kinda awk but this can be called before Awake
-        if (FromBG == null) main.MaybeCreateFirst();
+    private void RecreateTextures() {
+        if (FromBG == null) MaybeCreateFirst();
         else {
             if (SaveData.s.Backgrounds) FromBG.capturer.RecreateTexture();
             else {
@@ -42,7 +44,7 @@ public class BackgroundOrchestrator : MonoBehaviour {
         } else {
             return instantiated[prefab] = Instantiate(prefab, tr, false)
                 .GetComponent<BackgroundController>()
-                .Initialize(prefab);
+                .Initialize(prefab, this);
         }
     }
 
@@ -57,46 +59,54 @@ public class BackgroundOrchestrator : MonoBehaviour {
     [CanBeNull] public static GameObject NextSceneStartupBGC { get; set; }
     private void Awake() {
         tr = transform;
-        main = this;
         lastRequestedBGC = NextSceneStartupBGC;
         NextSceneStartupBGC = null;
         MaybeCreateFirst();
         Time = 0f;
-        Instantiate(backgroundCombiner, Vector3.zero, Quaternion.identity);
+        Instantiate(backgroundCombiner, Vector3.zero, Quaternion.identity)
+            .GetComponent<BackgroundCombiner>()
+            .Initialize(this);
     }
 
-    private void Update() {
-        Time += ETime.dT;
+    protected override void BindListeners() {
+        base.BindListeners();
+        Listen(SaveData.ResolutionHasChanged, RecreateTextures);
+        RegisterDI<IBackgroundOrchestrator>(this);
+    }
+
+    public override void RegularUpdate() {
+        base.RegularUpdate();
+        Time += ETime.FRAME_TIME;
     }
 
 
-    public static void QueueTransition(BackgroundTransition bgt) => nextRequestedTransition = bgt;
+    public void QueueTransition(BackgroundTransition bgt) => nextRequestedTransition = bgt;
 
-    private static void FinishTransition() {
+    private void FinishTransition() {
         if (ToBG != null && FromBG != null) {
             FromBG.Hide();
             FromBG = ToBG;
             ToBG = null;
         }
     }
-    public static void ConstructTarget(GameObject bgp, bool withTransition, bool destroyIfExists=false) {
+    public void ConstructTarget(GameObject bgp, bool withTransition, bool destroyIfExists=false) {
         lastRequestedBGC = bgp;
         if (FromBG == null) return;
         if (destroyIfExists || 
             (ToBG == null && FromBG.source != bgp) ||
             (ToBG != null && ToBG.source != bgp)) {
             ClearTransition();
-            SetTarget(main.CreateBGC(bgp), withTransition);
+            SetTarget(CreateBGC(bgp), withTransition);
         }
     }
 
-    private static void ClearTransition() {
+    private void ClearTransition() {
         foreach (var cts in transitionCTS) cts.Cancel();
         transitionCTS.Clear();
         FinishTransition();
     }
 
-    private static void SetTarget(BackgroundController bgc, bool withTransition) {
+    private void SetTarget(BackgroundController bgc, bool withTransition) {
         if (withTransition && nextRequestedTransition.HasValue) {
             ToBG = bgc;
             DoTransition(nextRequestedTransition.Value);
@@ -107,11 +117,11 @@ public class BackgroundOrchestrator : MonoBehaviour {
     }
 
     private static readonly HashSet<Cancellable> transitionCTS = new HashSet<Cancellable>();
-    private static void DoTransition(BackgroundTransition bgt) {
+    private void DoTransition(BackgroundTransition bgt) {
         if (FromBG == null) return;
         if (ToBG == null) throw new Exception("Cannot do transition when target BG is null");
         var pb = new MaterialPropertyBlock();
-        var mat = Instantiate(main.baseMixerMaterial);
+        var mat = Instantiate(baseMixerMaterial);
         float timeout = bgt.TimeToFinish();
         var cts = new Cancellable();
         transitionCTS.Add(cts);
@@ -139,17 +149,18 @@ public class BackgroundOrchestrator : MonoBehaviour {
             transitionCTS.Remove(cts);
         }
         if (condition == null) {
-            if (timeout > 0) WaitingUtils.WaitThenCBEvenIfCancelled(GlobalBEH.Main, cts, timeout, false, Finish);
+            if (timeout > 0) WaitingUtils.WaitThenCBEvenIfCancelled(this, cts, timeout, false, Finish);
             else throw new Exception("Cannot wait for transition without a timeout or condition");
         } else {
-            WaitingUtils.WaitThenCBEvenIfCancelled(GlobalBEH.Main, cts, timeout, condition, Finish);
+            WaitingUtils.WaitThenCBEvenIfCancelled(this, cts, timeout, condition, Finish);
         }
     }
 
-    private void OnDisable() {
+    protected override void OnDisable() {
         foreach (var cts in transitionCTS) cts.Cancel();
         transitionCTS.Clear();
         FromBG = ToBG = null;
+        base.OnDisable();
     }
 
     private static class CombinerKeywords {

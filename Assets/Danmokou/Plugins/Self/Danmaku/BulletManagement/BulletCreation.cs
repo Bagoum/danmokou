@@ -125,8 +125,8 @@ public partial class BulletManager {
                                 $"You probably made an error somewhere. " +
                                 $"If you didn't, remove this exception in the code.");
     }
-    public static void RequestSimple(string styleName, [CanBeNull] BPY scale, [CanBeNull] SBV2 dir, Velocity velocity, int firingIndex, float timeOffset, uint? bpiid) {
-        CheckSentry();
+    public static void RequestSimple(string styleName, [CanBeNull] BPY scale, [CanBeNull] SBV2 dir, Velocity velocity, int firingIndex, float timeOffset, uint? bpiid, bool checkSentry=true) {
+        if (checkSentry) CheckSentry();
         SimpleBullet sb = new SimpleBullet(scale, dir, velocity, firingIndex, bpiid ?? RNG.GetUInt(), timeOffset);
         GetMaybeCopyPool(styleName).Add(ref sb, true);
     }
@@ -142,7 +142,7 @@ public partial class BulletManager {
     }
 
     public static void RequestNullSimple(string styleName, Vector2 loc, Vector2 dir) =>
-        RequestSimple(styleName, null, null, new Velocity(loc, dir), 0, 0, null);
+        RequestSimple(styleName, null, null, new Velocity(loc, dir), 0, 0, null, false);
 
     public static void RequestPather(string style, Velocity velocity, int firingIndex, uint bpiid, float maxRemember, BPY remember, ref RealizedBehOptions opts) {
         CheckSentry();

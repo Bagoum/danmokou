@@ -110,6 +110,6 @@ MonoBehaviour:
   switchTell: {fileID: 7829823132156703741, guid: 6fb5b4d07adb97d4f81e6e3daaf437c8,
     type: 3}
   switchTellScale: 0.7
-  switchTellIterations: 0.65
+  switchTellIterations: 0.73
   onSwitch: {fileID: 11400000, guid: fe9776dcd89f6d84c8414eca12002202, type: 2}
-  timePerVariant: 3
+  timePerVariant: 5

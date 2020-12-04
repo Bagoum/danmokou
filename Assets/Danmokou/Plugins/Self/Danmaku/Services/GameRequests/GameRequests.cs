@@ -194,10 +194,10 @@ public readonly struct GameRequest {
                 return SceneIntermediary.LoadScene(new SceneRequest(References.endcard, SceneRequest.Reason.ENDCARD,
                     () => SaveData.r.CompleteCampaign(c.campaign.campaign.key, ed.key),
                     null,
-                    () => {
-                        LevelController.Request(new LevelController.LevelRunRequest(1, () => Finalize(),
-                            LevelController.LevelRunMethod.CONTINUE, new EndcardStageConfig(ed.dialogueKey)));
-                    }));
+                    () => DependencyInjection.Find<LevelController>()
+                        .Request(new LevelController.LevelRunRequest(1, () => Finalize(),
+                            LevelController.LevelRunMethod.CONTINUE, new EndcardStageConfig(ed.dialogueKey)))
+                    ));
             } else if (Finalize()) {
                 SaveData.r.CompleteCampaign(c.campaign.campaign.key, null);
                 return true;
@@ -211,7 +211,8 @@ public readonly struct GameRequest {
                     (index == 0) ? req.SetupIfNew : (Action) null,
                     //Note: this load during onHalfway is for the express purpose of preventing load lag
                     () => StateMachineManager.FromText(s.stage.stateMachine),
-                    () => LevelController.Request(new LevelController.LevelRunRequest(1, () => ExecuteStage(index + 1),
+                    () => DependencyInjection.Find<LevelController>()
+                        .Request(new LevelController.LevelRunRequest(1, () => ExecuteStage(index + 1),
                         LevelController.LevelRunMethod.CONTINUE, s.stage))));
             } else return ExecuteEndcard();
         }
@@ -224,7 +225,7 @@ public readonly struct GameRequest {
             req.SetupIfNew,
             //Note: this load during onHalfway is for the express purpose of preventing load lag
             () => StateMachineManager.FromText(s.stage.stage.stateMachine),
-            () => LevelController.Request(
+            () => DependencyInjection.Find<LevelController>().Request(
                 new LevelController.LevelRunRequest(s.phase, req.vFinishAndPostReplay, s.method, s.stage.stage))));
     
 
@@ -249,10 +250,10 @@ public readonly struct GameRequest {
         return SceneIntermediary.LoadScene(new SceneRequest(References.unitScene,
             SceneRequest.Reason.START_ONE,
             req.SetupIfNew,
-            () => ChallengeManager.TrackChallenge(new SceneChallengeReqest(req, cr)),
+            () => DependencyInjection.Find<IChallengeManager>().TrackChallenge(new SceneChallengeReqest(req, cr)),
             () => {
                 var beh = UnityEngine.Object.Instantiate(cr.Boss.boss).GetComponent<BehaviorEntity>();
-                ChallengeManager.LinkBEH(beh);
+                DependencyInjection.Find<IChallengeManager>().LinkBoss(beh);
             }));
     }
     
@@ -264,7 +265,7 @@ public readonly struct GameRequest {
 
     public static bool WaitDefaultReturn() {
         if (SceneIntermediary.LOADING) return false;
-        GlobalSceneCRU.Main.RunDroppableRIEnumerator(WaitingUtils.WaitFor(1f, Cancellable.Null, () =>
+        SceneLocalCRU.Main.RunDroppableRIEnumerator(WaitingUtils.WaitFor(1f, Cancellable.Null, () =>
             LoadScene(new SceneRequest(MaybeSaveReplayScene,
                 SceneRequest.Reason.FINISH_RETURN, 
                 () => BackgroundOrchestrator.NextSceneStartupBGC = References.defaultMenuBackground))));
@@ -277,7 +278,7 @@ public readonly struct GameRequest {
     }
     public static bool WaitShowPracticeSuccessMenu() {
         if (SceneIntermediary.LOADING) return false;
-        GlobalSceneCRU.Main.RunDroppableRIEnumerator(WaitingUtils.WaitFor(1f, Cancellable.Null, GameStateManager.SendSuccessEvent));
+        SceneLocalCRU.Main.RunDroppableRIEnumerator(WaitingUtils.WaitFor(1f, Cancellable.Null, GameStateManager.SendSuccessEvent));
         return true;
     }
     public static bool ViewReplay(Replay r) {

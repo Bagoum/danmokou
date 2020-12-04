@@ -20,6 +20,11 @@ public class ContinuousAudio : ProcReader {
         speedScale = (Func<FXY>) (SpeedScaler.Into<FXY>);
     }
 
+    protected override void BindListeners() {
+        base.BindListeners();
+        Listen(Core.Events.GameStateHasChanged, HandleGameStateChange);
+    }
+
     public override int UpdatePriority => UpdatePriorities.SLOW;
 
     protected override void Check(int procs) {
@@ -34,17 +39,6 @@ public class ContinuousAudio : ProcReader {
             src.loop = false;
             //src.volume *= .5f;
         }
-    }
-
-    private DeletionMarker<Action<GameState>> gameStateListener;
-    protected override void OnEnable() {
-        gameStateListener = Core.Events.GameStateHasChanged.Listen(HandleGameStateChange);
-        base.OnEnable();
-    }
-
-    protected override void OnDisable() {
-        gameStateListener.MarkForDeletion();
-        base.OnDisable();
     }
 
     private void HandleGameStateChange(GameState state) {

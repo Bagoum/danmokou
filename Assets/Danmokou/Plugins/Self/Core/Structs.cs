@@ -77,6 +77,27 @@ public readonly struct Maybe<T> where T : class {
     public static implicit operator Maybe<T>([CanBeNull] T obj) => new Maybe<T>(obj);
 }
 
+public struct AABB {
+    public float x;
+    public float y;
+    public float rx;
+    public float ry;
+
+    public AABB(float minX, float maxX, float minY, float maxY, Vector2? offset = null) {
+        var off = offset ?? Vector2.zero;
+        x = off.x + (minX + maxX) / 2f;
+        y = off.y + (minY + maxY) / 2f;
+        rx = (maxX - minX) / 2f;
+        ry = (maxY - minY) / 2f;
+    }
+
+    public AABB(Vector2 center, Vector2 radius) {
+        x = center.x;
+        y = center.y;
+        rx = radius.x;
+        ry = radius.y;
+    }
+}
 [Serializable]
 public struct float2 {
     public float var1;

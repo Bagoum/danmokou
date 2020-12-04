@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using DMath;
@@ -326,6 +327,7 @@ public static class NullableExtensions {
     public static U? Bind<T, U>(this T? x, Func<T, U?> f) where T : struct where U : struct 
         => x.HasValue ? f(x.Value) : null;
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool Try<T>(this T? x, out T y) where T : struct {
         if (x.HasValue) {
             y = x.Value;

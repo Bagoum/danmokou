@@ -68,7 +68,7 @@ public class Tutorial : BehaviorEntity {
             yield return waitlf(() => !ih.Active);
         }
         IEnumerator confirm() => waiti(UIConfirm);
-        UIManager.SetSpellname("Tutorial");
+        DependencyInjection.Find<IUIManager>().SetSpellname("Tutorial");
         Message(text10, $"Welcome to the tutorial! When you see a message in white, press {UIConfirm.Desc} to continue.");
         yield return confirm();
         Prompt(text10, $"When you see a message in blue, follow the instructions.\nPress {Pause.Desc} to open the pause menu.");

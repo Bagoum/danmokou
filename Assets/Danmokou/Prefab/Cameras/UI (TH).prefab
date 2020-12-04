@@ -362,7 +362,6 @@ GameObject:
   - component: {fileID: 268707954954881323}
   - component: {fileID: 268707954954881333}
   - component: {fileID: 4946405400243834487}
-  - component: {fileID: 6933585618914904008}
   m_Layer: 0
   m_Name: UI (TH)
   m_TagString: Untagged
@@ -409,6 +408,7 @@ MonoBehaviour:
   PauseManager: {fileID: 2751001841577565892}
   DeathManager: {fileID: 3645146637385385824}
   PracticeSuccessMenu: {fileID: 5586214206757030397}
+  uiRenderer: {fileID: 3120967464440145734}
   spellnameText: {fileID: 450338262309360461}
   timeout: {fileID: 3829093683635091054}
   difficulty: {fileID: 2648270773667127566}
@@ -424,7 +424,6 @@ MonoBehaviour:
   multishotIndicator: {fileID: 8777799697630047450}
   centerMessage: {fileID: 7047020525042966788}
   spellnameFadeIn: 1
-  spellnameFadeOut: 0.5
   PIVDecayBar: {fileID: 1329515054353579532}
   MeterBar: {fileID: 1940402593045784125}
   BossHPBar: {fileID: 5192417978434023223}
@@ -552,18 +551,6 @@ MonoBehaviour:
   m_CancelButton: Cancel
   m_InputActionsPerSecond: 10
   m_RepeatDelay: 0.5
---- !u!114 &6933585618914904008
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 268707954954881334}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ed3cb397ab8ecca4685e56f552cab2c8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &312841314509062540
 GameObject:
   m_ObjectHideFlags: 0
@@ -5919,6 +5906,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 76d5cdaac6992744c8820b4535eeaff4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  uiRenderer: {fileID: 3120967464440145734}
   MainScreenOnlyObjects: {fileID: 0}
   upDownSound: {fileID: 11400000, guid: 0333a90f360fc1f429670fdbcd980092, type: 2}
   leftRightSound: {fileID: 11400000, guid: 1b9f20d147bf4da4dbd1e986d09942b4, type: 2}
@@ -9187,6 +9175,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b30dd2735323489d8623d48d6205078e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  uiRenderer: {fileID: 3120967464440145734}
   MainScreenOnlyObjects: {fileID: 0}
   upDownSound: {fileID: 11400000, guid: 0333a90f360fc1f429670fdbcd980092, type: 2}
   leftRightSound: {fileID: 11400000, guid: 1b9f20d147bf4da4dbd1e986d09942b4, type: 2}
@@ -10516,6 +10505,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6723b3b763e64306b325a3a65d65ddf9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  uiRenderer: {fileID: 3120967464440145734}
   MainScreenOnlyObjects: {fileID: 0}
   upDownSound: {fileID: 11400000, guid: 0333a90f360fc1f429670fdbcd980092, type: 2}
   leftRightSound: {fileID: 11400000, guid: 1b9f20d147bf4da4dbd1e986d09942b4, type: 2}

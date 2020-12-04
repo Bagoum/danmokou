@@ -66,7 +66,7 @@ public readonly struct SceneChallengeReqest : IChallengeRequest {
         Log.Unity($"PASSED challenge {cr.Description}");
         if (gr.Saveable) {
             Log.Unity("Committing challenge to save data");
-            SaveData.r.CompleteChallenge(gr, ChallengeManager.ChallengePhotos);
+            SaveData.r.CompleteChallenge(gr, ctx.cm.ChallengePhotos);
         }
         
         if (gr.replay == null && cr.NextChallenge(gr.metadata).Try(out var next)) {
@@ -74,9 +74,9 @@ public readonly struct SceneChallengeReqest : IChallengeRequest {
             Log.Unity($"Autoproceeding to next challenge: {next.Description}");
             StaticNullableStruct.LastGame = new GameRequest(gr.cb, gr.metadata, new GameLowRequest(next), 
                 true, null);
-            ChallengeManager.TrackChallenge(new SceneChallengeReqest(
+            ctx.cm.TrackChallenge(new SceneChallengeReqest(
                 StaticNullableStruct.LastGame.Value, next));
-            ChallengeManager.LinkBEH(ctx.exec);
+            ctx.cm.LinkBoss(ctx.exec);
             return false;
         } else {
             UIManager.MessageChallengeEnd(true, out float t);

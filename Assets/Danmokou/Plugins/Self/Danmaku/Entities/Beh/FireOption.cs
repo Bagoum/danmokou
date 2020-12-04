@@ -139,9 +139,9 @@ public class FireOption : BehaviorEntity {
     }
 
     public static float Power() => (float)GameManagement.campaign.Power;
-    public static float PowerIndex() => (float)GameManagement.campaign.PowerIndex;
+    public static float PowerIndex() => GameManagement.campaign.PowerIndex;
     public static Vector2 OptionLocation(int index) =>
-        optionsByIndex.TryGetValue(index, out var v) ? (Vector2)v.tr.position : Vector2.zero;
+        optionsByIndex.TryGetValue(index, out var v) ? v.bpi.loc : Vector2.zero;
     
     public static float OptionAngle(int index) =>
         optionsByIndex.TryGetValue(index, out var v) ? v.original_angle : 0f;

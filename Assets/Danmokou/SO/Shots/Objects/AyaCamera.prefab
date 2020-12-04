@@ -69,7 +69,7 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: -247109493
-  m_SortingLayer: 3
+  m_SortingLayer: 4
   m_SortingOrder: -1
   m_Sprite: {fileID: 21300000, guid: 001024098b6c2264ea398d43a2067f4c, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -92,6 +92,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8581214160010154702}
   - component: {fileID: 8581214160010154700}
+  - component: {fileID: 467905851354746557}
   m_Layer: 17
   m_Name: AyaCamera
   m_TagString: Untagged
@@ -129,27 +130,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorScript: {fileID: 0}
   ID: 
-  rotationMethod: 0
   deathEffect: {fileID: 0}
   cullableRadius:
     cullable: 0
     cullRadius: {fileID: 0}
   collisionInfo:
+    collisionRadius: 0
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
-  animate:
-    method: 0
-    LRRelation: 0
-    UDRelation: 0
-    frames:
-      idleAnim: []
-      rightAnim: []
-      leftAnim: []
-      upAnim: []
-      downAnim: []
-      attackAnim: []
-      deathAnim: []
+  displayer: {fileID: 0}
   viewfinder: {fileID: 8581214160018099304}
   flash: {fileID: 5777825400509757418}
   text: {fileID: 8581214161124765729}
@@ -173,6 +163,18 @@ MonoBehaviour:
   cameraFireControlSpeed: 4
   freezeTime: 0.4
   flashTime: 0.5
+--- !u!114 &467905851354746557
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8581214160010154699}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 64f8432fc153402a846a64641fb22739, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &8581214160018099303
 GameObject:
   m_ObjectHideFlags: 0
@@ -243,7 +245,7 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: -247109493
-  m_SortingLayer: 3
+  m_SortingLayer: 4
   m_SortingOrder: 0
   m_Sprite: {fileID: 21300000, guid: fe3fc77ab451b9841923344d58e08286, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -331,7 +333,7 @@ MeshRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: -247109493
-  m_SortingLayer: 3
+  m_SortingLayer: 4
   m_SortingOrder: 1
   m_AdditionalVertexStreams: {fileID: 0}
 --- !u!114 &8581214161124765729

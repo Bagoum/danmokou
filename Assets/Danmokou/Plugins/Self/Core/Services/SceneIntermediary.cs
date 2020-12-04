@@ -62,7 +62,7 @@ public static class SceneIntermediary {
             IsFirstScene = false;
             LOADING = true;
             GameStateManager.SetLoading(true, null);
-            CoroutineRegularUpdater.GlobalDuringPause.RunRIEnumerator(WaitForSceneLoad(req, true));
+            SceneLoader.Main.RunRIEnumerator(WaitForSceneLoad(req, true));
             return true;
         } else Log.Unity($"REJECTED scene load for {req}.");
         return false;

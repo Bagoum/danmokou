@@ -65,7 +65,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Floats:
     - PixelSnap: 0
-    - _Angle: 0.3309631
+    - _Angle: -0.17247666
     - _BlendFrom: 5
     - _BlendOp: 0
     - _BlendTo: 10
@@ -87,11 +87,11 @@ Material:
     - _Metallic: 0
     - _Mode: 0
     - _OcclusionStrength: 1
-    - _OffX: 0.65018916
-    - _OffY: 0.4779898
+    - _OffX: 0.48230046
+    - _OffY: 0.49732414
     - _Parallax: 0.02
-    - _ScaleX: 0.25610656
-    - _ScaleY: 0.3035337
+    - _ScaleX: 0.29662162
+    - _ScaleY: 0.35155153
     - _SearIntensity: 0
     - _SearRadius: 0
     - _SinRot: 6

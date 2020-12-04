@@ -1,20 +1,13 @@
 ﻿using System;
 using JetBrains.Annotations;
-using UnityEngine;
-using static Danmaku.Enums;
 
 namespace Danmaku {
 public class LevelController : BehaviorEntity {
     public IStageConfig stage;
     public StageConfig wip_stage;
     private string _DefaultSuicideStyle => stage?.DefaultSuicideStyle;
-    private static LevelController main;
-    public static string DefaultSuicideStyle => (main == null) ? null : main._DefaultSuicideStyle;
+    public static string DefaultSuicideStyle { get; private set; }
     public override bool TriggersUITimeout => true;
-
-    //[Header("On Level Completion")] public RString KVRKey;
-    //public RInt KVRValue;
-    //public bool overrideKVR = true;
 
     public enum LevelRunMethod {
         SINGLE,
@@ -34,15 +27,15 @@ public class LevelController : BehaviorEntity {
         }
     }
 
-    public static void Request(LevelRunRequest req) {
-        if (req.method == LevelRunMethod.SINGLE) main.phaseController.Override(req.toPhase, req.cb);
-        else if (req.method == LevelRunMethod.CONTINUE) main.phaseController.SetGoTo(req.toPhase, req.cb);
-        main.stage = req.stage;
-        main.RunPatternSM(req.stage.StateMachine);
+    public void Request(LevelRunRequest req) {
+        if (req.method == LevelRunMethod.SINGLE) phaseController.Override(req.toPhase, req.cb);
+        else if (req.method == LevelRunMethod.CONTINUE) phaseController.SetGoTo(req.toPhase, req.cb);
+        stage = req.stage;
+        RunPatternSM(req.stage.StateMachine);
     }
 
     protected override void Awake() {
-        main = this;
+        DefaultSuicideStyle = stage?.DefaultSuicideStyle;
         behaviorScript = null;
 #if UNITY_EDITOR
         if (SceneIntermediary.IsFirstScene && wip_stage != null) {
@@ -54,8 +47,14 @@ public class LevelController : BehaviorEntity {
         base.Awake();
     }
 
-#if UNITY_EDITOR
-    public static LevelController Main => main;
-#endif
+    protected override void BindListeners() {
+        base.BindListeners();
+        RegisterDI(this);
+    }
+
+    protected override void OnDisable() {
+        DefaultSuicideStyle = null;
+        base.OnDisable();
+    }
 }
 }

@@ -281,26 +281,28 @@ public static class Collision {
         return px + radius < rect.halfW && pt.y + radius < rect.halfH;
     }
     public static readonly ExFunction pointInRect = ExUtils.Wrap(t, "PointInRect", new[] {ExUtils.tv2, ExUtils.tcr});
-    
+   
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool CircleOnAABB(float dx, float dy, float rhx, float rhy, float r) {
+    public static bool CircleOnAABB(AABB rect, Vector2 pt, float rad) {
+        float dx = pt.x - rect.x;
+        float dy = pt.y - rect.y;
         //Inlined absolutes are much faster
         if (dx < 0) dx *= -1;
         if (dy < 0) dy *= -1;
-        //Then we are in one of three locations:
-        if (dy < rhy) {
-            //In "front" of the rectangle.
-            return dx - rhx < r;
-        } else if (dx < rhx) {
-            // On "top" of the rectangle. 
-            return dy - rhy < r;
-        } else {
-            //In front and on top.
-            dx -= rhx;
-            dy -= rhy;
-            return (dx * dx + dy * dy) < r * r;
-        }
+        dx -= rect.rx;
+        dy -= rect.ry;
+        return dx < rad && 
+               dy < rad && 
+               (dx < 0 || dy < 0 || dx * dx + dy * dy < rad * rad);
     }
+
+    /// <summary>
+    /// May report collisions when none exist, but is a good approximation.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool WeakCircleOnAABB(float minX, float minY, float maxX, float maxY, float dx, float dy, float r) =>
+        dx > minX - r && dx < maxX + r && dy > minY - r && dy < maxY + r;
+    
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static CollisionResult GrazeCircleOnRect(in Hitbox circ, Vector2 rect, float rectHalfX, float rectHalfY, float diag2, float scale, float cos_rot, float sin_rot) {
         diag2 *= scale * scale;

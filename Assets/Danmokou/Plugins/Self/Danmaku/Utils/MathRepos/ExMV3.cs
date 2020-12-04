@@ -26,53 +26,56 @@ namespace DMath {
 /// Functions that return V3.
 /// </summary>
 public static partial class ExMV3 {
-    
     /// <summary>
-    /// Derive a parametric3 equation from three parametric-float functions.
+    /// Derive a Vector3 from an XY (Vector2) and a Z-component.
     /// </summary>
-    /// <param name="x">Parametric-float function assigned to X-component</param>
-    /// <param name="y">Parametric-float function assigned to Y-component</param>
-    /// <param name="z">Parametric-float function assigned to Z-component</param>
+    public static tv3 WithZ(ev2 xy, tfloat z) => EEx.ResolveV2(xy, v => ExUtils.V3(v.x, v.y, z));
+    /// <summary>
+    /// Derive a Vector3 from three floats.
+    /// </summary>
+    /// <param name="x">Float assigned to X-component</param>
+    /// <param name="y">Float assigned to Y-component</param>
+    /// <param name="z">Float assigned to Z-component</param>
     /// <returns></returns>
     public static tv3 PXYZ(tfloat x, tfloat y, tfloat z) => ExUtils.V3(x, y, z);
     /// <summary>
-    /// Derive a parametric3 equation from two parametric-float functions.
+    /// Derive a Vector3 from two floats.
     /// </summary>
-    /// <param name="x">Parametric-float function assigned to X-component</param>
-    /// <param name="y">Parametric-float function assigned to Y-component</param>
+    /// <param name="x">Float assigned to X-component</param>
+    /// <param name="y">Float assigned to Y-component</param>
     /// <returns></returns>
     public static tv3 PXY(tfloat x, tfloat y) => ExUtils.V3(x, y, E0);
     /// <summary>
-    /// Derive a parametric3 equation from one parametric-float functions.
+    /// Derive a Vector3 from one floats.
     /// </summary>
-    /// <param name="x">Parametric-float function assigned to X-component</param>
+    /// <param name="x">Float assigned to X-component</param>
     /// <returns></returns>
     public static tv3 PX(tfloat x) => ExUtils.V3(x, E0, E0);
     /// <summary>
-    /// Derive a parametric3 equation from one parametric-float functions.
+    /// Derive a Vector3 from one float.
     /// </summary>
-    /// <param name="y">Parametric-float function assigned to Y-component</param>
+    /// <param name="y">Float assigned to Y-component</param>
     /// <returns></returns>
     public static tv3 PY(tfloat y) => ExUtils.V3(E0, y, E0);
     /// <summary>
-    /// Derive a parametric3 equation from one parametric-float functions.
+    /// Derive a Vector3 from one float.
     /// </summary>
-    /// <param name="z">Parametric-float function assigned to Z-component</param>
+    /// <param name="z">Float assigned to Z-component</param>
     /// <returns></returns>
     public static tv3 PZ(tfloat z) => ExUtils.V3(E0, E0, z);
     /// <summary>
-    /// Derive a parametric3 equation from a parametric2 function (Z is set to zero)
+    /// Derive a Vector3 from a Vector2 (Z is set to zero)
     /// </summary>
     /// <param name="tp">Parametric function to assign to x,y components</param>
     /// <returns></returns>
     public static tv3 TP(tv2 tp) => ((Ex) tp).As<Vector3>();
 
     /// <summary>
-    /// Rotate a parametric3 equation by a quaternion. In Unity the rotation order is ZXY.
+    /// Rotate a Vector3 by a quaternion. In Unity the rotation order is ZXY.
     /// The z-axis is mapped to IN.
     /// </summary>
     /// <param name="rotateBy">Quaternion rotation, in degrees, xyz</param>
-    /// <param name="target">Target parametric3 equation</param>
+    /// <param name="target">Target Vector3</param>
     /// <returns></returns>
     public static tv3 QRotate(tv3 rotateBy, tv3 target) => ExMHelpers.QRotate(QuaternionEuler(rotateBy), target);
 

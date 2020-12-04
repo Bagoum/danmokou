@@ -4,15 +4,6 @@ using UnityEngine;
 using UnityEngine.Profiling;
 
 public class CoroutineRegularUpdater : RegularUpdater {
-    /// <summary>
-    /// A global BehaviorEntity that will not be destroyed as long as the game is running.
-    /// </summary>
-    public static CoroutineRegularUpdater Global;
-    /// <summary>
-    /// A global BehaviorEntity that will not be destroyed as long as the game is running,
-    /// and also updates during pause.
-    /// </summary>
-    public static CoroutineRegularUpdater GlobalDuringPause;
     private readonly Coroutines coroutines = new Coroutines();
     public override void RegularUpdate() {
         if (coroutines.Count > 0) coroutines.Step();

@@ -571,7 +571,7 @@ public class DynamicOptionNodeLR2<T> : UINode {
     private readonly Func<T[]> values;
     private readonly Action<T, VisualElement, bool> binder;
     private readonly VisualTreeAsset objectTree;
-    private int index;
+    public int Index { get; private set; }
     private VisualElement[] boundChildren = new VisualElement[0];
     
     public DynamicOptionNodeLR2(string description, VisualTreeAsset objectTree, Action<T> onChange, Func<T[]> values, Action<T, VisualElement, bool> binder) : base(description) {
@@ -579,16 +579,16 @@ public class DynamicOptionNodeLR2<T> : UINode {
         this.values = values;
         this.binder = binder;
         this.objectTree = objectTree;
-        index = 0;
+        Index = 0;
     }
 
-    public void ResetIndex() => index = 0;
+    public void ResetIndex() => Index = 0;
 
     public override UINode Left() {
         var v = values();
         if (v.Length > 0) {
-            index = M.Mod(v.Length, index - 1);
-            onChange(v[index]);
+            Index = M.Mod(v.Length, Index - 1);
+            onChange(v[Index]);
         }
         AssignValueText();
         return this;
@@ -596,8 +596,8 @@ public class DynamicOptionNodeLR2<T> : UINode {
     public override UINode Right() {
         var v = values();
         if (v.Length > 0) {
-            index = M.Mod(v.Length, index + 1);
-            onChange(v[index]);
+            Index = M.Mod(v.Length, Index + 1);
+            onChange(v[Index]);
         }
         AssignValueText();
         return this;
@@ -605,12 +605,12 @@ public class DynamicOptionNodeLR2<T> : UINode {
 
     private void AssignValueText() {
         var v = values();
-        if (v.Length != boundChildren.Length) index = 0;
+        if (v.Length != boundChildren.Length) Index = 0;
         foreach (var bc in boundChildren) childContainer.Remove(bc);
         boundChildren = v.Select((x, i) => {
             VisualElement t = objectTree.CloneTree();
             childContainer.Add(t);
-            binder(x, t, i == index);
+            binder(x, t, i == Index);
             return t;
         }).ToArray();
     }

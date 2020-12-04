@@ -3,6 +3,20 @@ phase 0
 	action block 0
         position 0 0
 		shift-phase-to 1
+##Basic stress tester
+<!> type non hello
+<!> hp 50000
+phase 0
+    action block 0
+        async circle-green/w <0.5;0:0> gcr2 1 _ <0;0:11.386> {
+		} gsr2c 105 { } simple tprot cx 2 { }
+##Pather stress tester
+<!> type non hello
+<!> hp 500
+phase 0
+	action block 0
+        async pather-blue/w <0.5;0:0> gcr2 2 _ <0;0:20p> {
+		} gsr2 14 <0;0:4.3> { p this } pather 1 1 tprot cx 3 { }
 ##Laser stress tester (mlaser mesh updating)
 phase 0
     action block 0.2
@@ -12,18 +26,6 @@ phase 0
 					pxy 1
 						sine 6 1 *(+ * 0.2 &lt t, + 1 * 0.01 p)
 		}
-///
-##Basic stress tester
-phase 0
-    action block 0
-        async circle-green/w <0.5;0:0> gcr2 1 _ <0;0:11.386> {
-		} gsr2c 105 { } simple tprot cx 2 { }
-///
-##Pather stress tester
-phase 0
-    action block 0
-        async pather-blue/w <0.5;0:0> gcr2 2 _ <0;0:20p> {
-		} gsr2 10 <0;0:4.3> { p this } pather 1 1 tprot cx 3 { s 1 }
 ///
 ##Laser stress tester (pooling -- set repeat to off)
 phase 0

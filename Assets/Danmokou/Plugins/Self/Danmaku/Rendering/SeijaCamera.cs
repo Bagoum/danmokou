@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Collections;
+using Core;
 using DMath;
 using UnityEngine;
 
 public class SeijaCamera : RegularUpdater {
-    // This can and will be reset every level by a new camera controller
-    private static SeijaCamera main;
     private Transform tr;
     private float radius;
 
@@ -33,12 +32,24 @@ public class SeijaCamera : RegularUpdater {
         }
     }
     private void Awake() {
-        main = this;
         tr = transform;
         radius = tr.localPosition.z;
         distortionAllowed = false;
         AllowDistortion();
     }
+
+    protected override void BindListeners() {
+        base.BindListeners();
+        Listen(RequestXRotation, AddXRotation);
+        Listen(RequestYRotation, AddYRotation);
+        Listen(Events.ClearPhase, () => ResetTargetFlip(1f));
+#if UNITY_EDITOR || ALLOW_RELOAD
+        Listen(Events.LocalReset, () => ResetTargetFlip(0.2f));
+#endif
+    }
+
+    public static readonly Events.IEvent<(float dx, float t)> RequestXRotation = new Events.Event<(float, float)>();
+    public static readonly Events.IEvent<(float dy, float t)> RequestYRotation = new Events.Event<(float, float)>();
 
     public override void RegularUpdate() {
         if (timeElapsedToTarget >= timeToTarget) {
@@ -56,25 +67,25 @@ public class SeijaCamera : RegularUpdater {
     }
 
     private void SendLastToSource(float time) {
-        main.timeToTarget = time;
-        main.timeElapsedToTarget = 0f;
+        timeToTarget = time;
+        timeElapsedToTarget = 0f;
         sourceXRot = lastXRot;
         sourceYRot = lastYRot;
     }
-    public static void AddXRotation(float dx, float time) {
-        main.SendLastToSource(time);
-        main.targetXRot += dx;
+    public void AddXRotation((float dx, float time) req) {
+        SendLastToSource(req.time);
+        targetXRot += req.dx;
     }
-    public static void AddYRotation(float dy, float time) {
-        main.SendLastToSource(time);
-        main.targetYRot += dy;
+    public void AddYRotation((float dy, float time) req) {
+        SendLastToSource(req.time);
+        targetYRot += req.dy;
     }
 
-    public static void ResetTargetFlip(float time) {
-        if (main.targetXRot * main.targetXRot + main.targetYRot * main.targetYRot > 0) {
-            main.SendLastToSource(time);
-            main.targetXRot = 360 * Mathf.Round(main.targetXRot / 360);
-            main.targetYRot = 360 * Mathf.Round(main.targetYRot / 360);
+    public void ResetTargetFlip(float time) {
+        if (targetXRot * targetXRot + targetYRot * targetYRot > 0) {
+            SendLastToSource(time);
+            targetXRot = 360 * Mathf.Round(targetXRot / 360);
+            targetYRot = 360 * Mathf.Round(targetYRot / 360);
         }
     }
 

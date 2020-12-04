@@ -1,49 +1,60 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Threading;
 using Danmaku;
-using DMath;
 using JetBrains.Annotations;
 using SM;
 using static Challenge;
 using static Danmaku.Enums;
 
-public class ChallengeManager : CoroutineRegularUpdater {
-    private static ChallengeManager main;
+public interface IChallengeManager {
+    float? BossTimeoutOverride([CanBeNull] BossConfig bc);
+    void TrackChallenge(IChallengeRequest cr);
+    void SetupBossPhase(SMHandoff smh);
+    void LinkBoss(BehaviorEntity exec);
+    IEnumerable<AyaPhoto> ChallengePhotos { get; }
+    
+    ChallengeManager.Restrictions Restriction { get; }
+}
 
-    private void Awake() {
-        main = this;
-        CleanupState();
-        r = new Restrictions();
+public class ChallengeManager : CoroutineRegularUpdater, IChallengeManager {
+    protected override void BindListeners() {
+        base.BindListeners();
+        Listen(CampaignData.PhaseCompleted, pc => {
+            if (pc.clear != PhaseClearMethod.CANCELLED && pc.props.phaseType != null && pc.exec == Exec)
+                completion = pc;
+        });
+        Listen(AyaCamera.PhotoTaken, photo => {
+            //There are no restrictions on what type of challenge may receive a photo
+            if (tracking != null && photo.success) {
+                challengePhotos.Add(photo.photo);
+            }
+        });
+        RegisterDI<IChallengeManager>(this);
     }
 
     private void OnDestroy() {
-        main = null;
         CleanupState();
     }
 
-    private static void CleanupState() {
+    private void CleanupState() {
+        completion = null;
         Exec = null;
-        Completion = null;
-        Tracking = null;
-        r = new Restrictions();
+        tracking = null;
+        Restriction = new Restrictions();
     }
 
-    public static void ReceivePhaseCompletion(PhaseCompletion pc) {
-        if (pc.clear != PhaseClearMethod.CANCELLED && pc.props.phaseType != null && pc.exec == Exec) Completion = pc;
-    }
+    private PhaseCompletion? completion = null;
+    [CanBeNull] private IChallengeRequest tracking = null;
 
-    public static PhaseCompletion? Completion { get; private set; } = null;
-    [CanBeNull] public static IChallengeRequest Tracking { get; private set; } = null;
+    public float? BossTimeoutOverride([CanBeNull] BossConfig bc) => 
+        (tracking?.ControlsBoss(bc) == true) ? Restriction.TimeoutOverride : null;
 
-    public static float? BossTimeoutOverride([CanBeNull] BossConfig bc) => 
-        (Tracking?.ControlsBoss(bc) == true) ? r.TimeoutOverride : null;
-
-    [CanBeNull] private static BehaviorEntity Exec { get; set; }
+    [CanBeNull] private BehaviorEntity Exec { get; set; }
 
 
     public class Restrictions {
+        public static readonly Restrictions Default = new Restrictions();
         public readonly bool HorizAllowed = true;
         public readonly bool VertAllowed = true;
 
@@ -63,34 +74,34 @@ public class ChallengeManager : CoroutineRegularUpdater {
             }
         }
     }
-    public static Restrictions r { get; private set; } = new Restrictions();
-    public static void SetupBEHPhase(SMHandoff smh) {
-        if (smh.Exec != Exec || Tracking == null) return;
-        var cs = Tracking.Challenges;
+    public Restrictions Restriction { get; private set; } = new Restrictions();
+    public void SetupBossPhase(SMHandoff smh) {
+        if (smh.Exec != Exec || tracking == null) return;
+        var cs = tracking.Challenges;
         for (int ii = 0; ii < cs.Length; ++ii) cs[ii].SetupPhase(smh);
     }
 
-    public static void LinkBEH(BehaviorEntity exec) {
-        if (Tracking == null) throw new Exception("Cannot link BEH when no challenge is tracked");
-        Log.Unity($"Linked boss {exec.ID} to challenge {Tracking.Description}");
-        Tracking.Start(Exec = exec);
+    public void LinkBoss(BehaviorEntity exec) {
+        if (tracking == null) throw new Exception("Cannot link BEH when no challenge is tracked");
+        Log.Unity($"Linked boss {exec.ID} to challenge {tracking.Description}");
+        tracking.Start(Exec = exec);
     }
-    public static void TrackChallenge(IChallengeRequest cr) {
+    public void TrackChallenge(IChallengeRequest cr) {
         Log.Unity($"Tracking challenge {cr.Description}");
         CleanupState();
-        Tracking = cr;
-        r = new Restrictions(cr.Challenges);
+        tracking = cr;
+        Restriction = new Restrictions(cr.Challenges);
         challengePhotos.Clear();
         cr.Initialize();
-        main.RunDroppableRIEnumerator(main.TrackChallenges(cr));
+        RunDroppableRIEnumerator(TrackChallenges(cr));
     }
 
-    private static void ChallengeFailed(IChallengeRequest cr, TrackingContext ctx) {
+    private void ChallengeFailed(IChallengeRequest cr, TrackingContext ctx) {
         cr.OnFail(ctx);
         CleanupState();
     }
 
-    private static void ChallengeSuccess(IChallengeRequest cr, TrackingContext ctx) {
+    private void ChallengeSuccess(IChallengeRequest cr, TrackingContext ctx) {
         if (cr.OnSuccess(ctx)) CleanupState();
     }
 
@@ -101,7 +112,7 @@ public class ChallengeManager : CoroutineRegularUpdater {
         var challenges = cr.Challenges;
         var ctx = new TrackingContext(Exec, this);
         
-        for (; Completion == null; ctx.t += ETime.FRAME_TIME) {
+        for (; completion == null; ctx.t += ETime.FRAME_TIME) {
             for (int ii = 0; ii < challenges.Length; ++ii) {
                 if (!challenges[ii].FrameCheck(ctx)) {
                     ChallengeFailed(cr, ctx);
@@ -111,7 +122,7 @@ public class ChallengeManager : CoroutineRegularUpdater {
             yield return null;
         }
         for (int ii = 0; ii < challenges.Length; ++ii) {
-            if (!challenges[ii].EndCheck(ctx, Completion.Value)) {
+            if (!challenges[ii].EndCheck(ctx, completion.Value)) {
                 ChallengeFailed(cr, ctx);
                 yield break;
             }
@@ -132,12 +143,12 @@ public class ChallengeManager : CoroutineRegularUpdater {
     }
 
     
-    private static readonly List<AyaPhoto> challengePhotos = new List<AyaPhoto>();
-    public static IEnumerable<AyaPhoto> ChallengePhotos => challengePhotos;
+    private readonly List<AyaPhoto> challengePhotos = new List<AyaPhoto>();
+    public IEnumerable<AyaPhoto> ChallengePhotos => challengePhotos;
 
-    public static void SubmitPhoto(AyaPhoto p) {
+    public void SubmitPhoto(AyaPhoto p) {
         //There are no restrictions on what type of challenge may receive a photo
-        if (Tracking != null) {
+        if (tracking != null) {
             challengePhotos.Add(p);
         }
     }

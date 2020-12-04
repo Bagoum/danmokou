@@ -7,8 +7,6 @@ using UnityEngine;
 using UnityEngine.UIElements;
 
 public class UIBuilderRenderer : CoroutineRegularUpdater {
-    private static UIBuilderRenderer main;
-    
     public PanelSettings settings;
     public Material uiMaterial;
 
@@ -26,7 +24,7 @@ public class UIBuilderRenderer : CoroutineRegularUpdater {
         SLIDE,
         FADE
     }
-    
+
     private readonly Dictionary<RAction, (ICancellee joint, Cancellable root)> cancellers = 
         new Dictionary<RAction, (ICancellee, Cancellable)>();
 
@@ -52,19 +50,19 @@ public class UIBuilderRenderer : CoroutineRegularUpdater {
         };
     }
     
-    public static void Slide(Vector2? start, Vector2 end, float time, FXY smooth, [CanBeNull] Action<bool> done) {
-        if (start.Try(out var loc)) main.tr.localPosition = loc;
-        main.RunRIEnumerator(main._Slide(start, end, time, smooth, 
-            main.WrapDone(RAction.SLIDE, done, out var cT), cT));
+    public void Slide(Vector2? start, Vector2 end, float time, FXY smooth, [CanBeNull] Action<bool> done) {
+        if (start.Try(out var loc)) tr.localPosition = loc;
+        RunRIEnumerator(_Slide(start, end, time, smooth, 
+            WrapDone(RAction.SLIDE, done, out var cT), cT));
     }
     private IEnumerator _Slide(Vector2? start, Vector2 end, float time, FXY smooth, Action<bool> done, ICancellee cT)
         => Ease(x => tr.localPosition = x, start ?? tr.localPosition, end, time, smooth, done, cT);
     
 
-    public static void Fade(float? start, float end, float time, FXY smooth, [CanBeNull] Action<bool> done) {
-        if (start.Try(out var loc)) main.sr.SetAlpha(loc);
-        main.RunRIEnumerator(main._Fade(start, end, time, smooth, 
-            main.WrapDone(RAction.FADE, done, out var cT), cT));
+    public void Fade(float? start, float end, float time, FXY smooth, [CanBeNull] Action<bool> done) {
+        if (start.Try(out var loc)) sr.SetAlpha(loc);
+        RunRIEnumerator(_Fade(start, end, time, smooth, 
+            WrapDone(RAction.FADE, done, out var cT), cT));
     }
     private IEnumerator _Fade(float? start, float end, float time, FXY smooth, Action<bool> done, ICancellee cT)
         => Ease(sr.SetAlpha, start ?? sr.color.a, end, time, smooth, done, cT);
@@ -93,24 +91,24 @@ public class UIBuilderRenderer : CoroutineRegularUpdater {
     }
     
     private void Awake() {
-        main = this;
         tr = transform;
         sr = GetComponent<SpriteRenderer>();
         normalOrder = sr.sortingOrder;
         allCancel = new Cancellable();
         RemakeTexture();
     }
-
-    public static void MoveToNormal() {
-        main.sr.sortingOrder = main.normalOrder;
+    
+    protected override void BindListeners() {
+        base.BindListeners();
+        Listen(SaveData.ResolutionHasChanged, RemakeTexture);
     }
 
-    public static void MoveToFront() {
-        main.sr.sortingOrder = frontOrder;
+    public void MoveToNormal() {
+        sr.sortingOrder = normalOrder;
     }
 
-    public static void Reconstruct() {
-        if (main != null) main.RemakeTexture();
+    public void MoveToFront() {
+        sr.sortingOrder = frontOrder;
     }
 
     private void RemakeTexture() {

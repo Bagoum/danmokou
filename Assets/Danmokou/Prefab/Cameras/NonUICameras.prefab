@@ -90,6 +90,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   autoShiftCamera: 1
+  shiftCameras:
+  - {fileID: 5830756026923324410}
+  - {fileID: 8552777410462130030}
 --- !u!1 &2757818208485767169
 GameObject:
   m_ObjectHideFlags: 0

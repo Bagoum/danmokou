@@ -193,7 +193,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         }
 #if UNITY_EDITOR || ALLOW_RELOAD
         if (SceneIntermediary.IsFirstScene && this is FireOption || this is BossBEH || this is LevelController) {
-            Core.Events.LocalReset.Listen(() => {
+            Core.Events.LocalReset.Subscribe(() => {
                 HardCancel(false);
                 //Allows all cancellations processes to go through before rerunning
                 ETime.QueueEOFInvoke(RunAttachedSM);
@@ -422,7 +422,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     }
     
     protected virtual void SpawnSimple(string styleName) {
-        BulletManager.RequestSimple(styleName, null, null, new Velocity(bpi.loc, Direction), 0, 0, null);
+        BulletManager.RequestNullSimple(styleName, bpi.loc, Direction);
     }
 
     private void VelocityStepAndLook(ref Velocity vel, ref ParametricInfo pi, float dT=ETime.FRAME_TIME) {
@@ -516,11 +516,6 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     /// </summary>
     /// <returns></returns>
     public virtual Vector2 GlobalPosition() => bpi.loc;
-
-    /// <summary>
-    /// For inner consumption by pathers and other objects that use extra location systems
-    /// </summary>
-    public Vector2 RawGlobalPosition() => bpi.loc;
 
     public bool HasParent() {
         return parented;

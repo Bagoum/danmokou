@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   defaultName: x-fire-small-3
   clip: {fileID: 8300000, guid: b537369a2b0cb1144bcbfb5c0064bb45, type: 3}
-  volume: 0.33
+  volume: 0.4
   timeout: 0.05
   pausable: 0
   loop: 0

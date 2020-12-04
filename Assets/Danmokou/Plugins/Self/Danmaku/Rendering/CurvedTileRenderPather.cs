@@ -19,13 +19,15 @@ public class PatherRenderCfg : TiledRenderCfg {
     public float lineRadius;
     public float headCutoffRatio = 0.05f;
     public float tailCutoffRatio = 0.05f;
-    public Transform trail;
-    public TrailRenderer trailR;
 }
 /// <summary>
-/// A pather remembers the positions it has been in and draws a line through them. WARNING: This currently does not support parenting.
+/// A pather remembers the positions it has been in and draws a line through them.
 /// </summary>
 public class CurvedTileRenderPather : CurvedTileRender {
+    //Important implementation note: The centers array is a list of *global* positions (as of v5.1.0).
+    //This is for efficiency and simplicity re: the TrailRenderer implementation.
+    //Lasers require centers to be a list of local positions so it can be pased as a mesh.
+    
     /// = 0.033s
     private const int FramePosCheck = 4;
     private int cL;
@@ -53,8 +55,7 @@ public class CurvedTileRenderPather : CurvedTileRender {
     private Pather exec;
 
     //Note: trailRenderer requires reversing the sprite.
-    protected override bool UseMR => false;
-    private readonly Transform trail;
+    protected override bool HandleAsMesh => false;
     public readonly TrailRenderer trailR;
 
     private SOPlayerHitbox target;
@@ -62,8 +63,7 @@ public class CurvedTileRenderPather : CurvedTileRender {
 
     public CurvedTileRenderPather(PatherRenderCfg cfg, GameObject obj) : base(obj) {
         lineRadius = cfg.lineRadius;
-        trail = cfg.trail;
-        trailR = cfg.trailR;
+        trailR = obj.GetComponent<TrailRenderer>();
         tailCutoffRatio = cfg.tailCutoffRatio;
         headCutoffRatio = cfg.headCutoffRatio;
     }
@@ -86,22 +86,13 @@ public class CurvedTileRenderPather : CurvedTileRender {
         intersectStatus = SelfIntersectionStatus.RAS;
         read_from = cL;
         //isnonzero = false;
-        unsafe {
-            for (int ii = 0; ii < cL; ++ii) {
-                int iivw = ii + cL;
-                //vertsPtr[ii].loc.x = vertsPtr[ii].loc.y = vertsPtr[iivw].loc.x = 
-                //    vertsPtr[iivw].loc.y = vertsPtr[ii].uv.x = vertsPtr[iivw].uv.x = 0;
-                centers[ii].x = centers[ii].y = 0;
-            }
-            centers[cL - 1] = bpi.loc - velocity.rootPos;
+        for (int ii = 0; ii < cL; ++ii) {
+            centers[ii] = bpi.loc;
         }
         prevRemember = trailR.time = 0f;
-        trailR.sharedMaterial = material;
-        trailR.sortingLayerID = mr.sortingLayerID;
-        trailR.sortingOrder = mr.sortingOrder;
-        skipNextCollisionCheck = false;
         target = collisionTarget;
         playerBullet = options.playerBullet;
+        bounds = new AABB(velocity.rootPos, Vector2.zero);
         
         hueShift = options.hueShift;
         recolor = options.recolor;
@@ -120,7 +111,7 @@ public class CurvedTileRenderPather : CurvedTileRender {
     private const float FIRST_CULLCHECK_TIME = 4;
     //This is run during Update
     private bool CullCheck() {
-        if (bpi.t > FIRST_CULLCHECK_TIME && LocationService.OffPlayableScreenBy(CULL_RAD, exec.RawGlobalPosition() + centers[read_from])) {
+        if (bpi.t > FIRST_CULLCHECK_TIME && LocationService.OffPlayableScreenBy(CULL_RAD, centers[read_from])) {
             onCameraCulled();
             return true;
         }
@@ -148,12 +139,11 @@ public class CurvedTileRenderPather : CurvedTileRender {
         if (ETime.LastUpdateForScreen) {
             UpdateGraphics();
             
-            trail.localPosition = centers[cL - 1];
+            tr.localPosition = bpi.loc;
             //trailR.AddPosition(bpi.loc);
             if (prevRemember != nextRemember) {
                 trailR.time = prevRemember = nextRemember;
             }
-            if (lifetime < DontUpdateTimeAfter) trailR.SetPropertyBlock(pb);
         }
         base.UpdateRender();
     }
@@ -161,17 +151,30 @@ public class CurvedTileRenderPather : CurvedTileRender {
     private float prevRemember = 0f;
     private float nextRemember = 0f;
 
-    private bool skipNextCollisionCheck;
+    private AABB bounds;
 
     //private bool isnonzero;
     /// <summary>
     /// The oldest index containing direction information.
     /// </summary>
     private int lastDataIndex;
+
     protected override unsafe void UpdateVerts(bool renderRequired) {
         var last = cL - 1;
-        Vector2 min = new Vector2(999,999);
-        Vector2 max = new Vector2(-999,-999);
+        
+        lastDataIndex = (lastDataIndex > 0) ? lastDataIndex - 1 : 0;
+        if (lastDataIndex == last) return; //Need at least two frames to draw
+
+        int remembered = (int) Math.Ceiling((nextRemember = remember(bpi)) * ETime.ENGINEFPS);
+        if (remembered < 2) remembered = 2;
+        if (remembered > cL - lastDataIndex) remembered = cL - lastDataIndex;
+        
+        read_from = cL - remembered;
+        
+        float minX = 999f;
+        float minY = 999f;
+        float maxX = -999f;
+        float maxY = -999f;
         float wx, wy;
         for (int ii = 0; ii < texRptWidth; ++ii) {
             /*vertsPtr[ii].loc.x = vertsPtr[ii + 1].loc.x;
@@ -180,88 +183,43 @@ public class CurvedTileRenderPather : CurvedTileRender {
             vertsPtr[ii + cL].loc.y = vertsPtr[ii + cL + 1].loc.y;*/
             centers[ii].x = wx = centers[ii + 1].x;
             centers[ii].y = wy = centers[ii + 1].y;
-            if (wx < min.x) min.x = wx;
-            if (wx > max.x) max.x = wx;
-            if (wy < min.y) min.y = wy;
-            if (wy > max.y) max.y = wy;
+            if (ii >= read_from) {
+                if (wx < minX) minX = wx;
+                if (wx > maxX) maxX = wx;
+                if (wy < minY) minY = wy;
+                if (wy > maxY) maxY = wy;
+            }
         }
-        skipNextCollisionCheck = playerBullet == null && !DMath.Collision.CircleOnAABB(
-            velocity.rootPos.x + 0.5f * (min.x + max.x) - target.location.x,
-            velocity.rootPos.y + 0.5f * (min.y + max.y) - target.location.y,
-            0.5f * (max.x - min.x) + lineRadius,
-            0.5f * (max.y - min.y) + lineRadius,
-            target.largeRadius); 
-        
-        centers[last].x = bpi.loc.x - velocity.rootPos.x;
-        centers[last].y = bpi.loc.y - velocity.rootPos.y;
-        /*Vector2 accDelta = new Vector2(centers[last].x - centers[last-1].x, centers[last].y - centers[last-1].y);
-        float mag = (float) Math.Sqrt(accDelta.x * accDelta.x + accDelta.y * accDelta.y);
-        if (mag > M.MAG_ERR) {
-            isnonzero = true;
-            float ddf = spriteBounds.y * 0.5f / mag;
-            vertsPtr[last].loc.x = centers[last].x + ddf * accDelta.y;
-            vertsPtr[last].loc.y = centers[last].y + ddf * -accDelta.x;
-            vertsPtr[last + cL].loc.x = centers[last].x + ddf * -accDelta.y;
-            vertsPtr[last + cL].loc.y = centers[last].y + ddf * accDelta.x;
-        } else if (!isnonzero) return; //If no nodes have been set, then we may get artifacting if we proceed.
+        bounds = new AABB(minX, maxX, minY, maxY);
 
-        if (isnonzero) */
-        lastDataIndex = (lastDataIndex > 0) ? lastDataIndex - 1 : 0;
-        if (lastDataIndex == cL - 1) return; //Need at least two frames to draw
-
-        int remembered = (int) Math.Ceiling((nextRemember = remember(bpi)) * ETime.ENGINEFPS);
-        if (remembered < 2) remembered = 2;
-        if (remembered > cL - lastDataIndex) remembered = cL - lastDataIndex;
-        
-        var new_read_from = cL - remembered;
-        /*
-        for (int uvi = read_from; uvi < new_read_from; ++uvi) {
-            vertsPtr[uvi].uv.x = vertsPtr[uvi + cL].uv.x = 0;
-        }*/
-        read_from = new_read_from;
-        /*
-        float ratio = 1f / (remembered - 1);
-        for (int uvi = read_from; uvi < cL; ++uvi) {
-            vertsPtr[uvi].uv.x = vertsPtr[uvi + cL].uv.x = (uvi - read_from) * ratio;
-        }*/
-
-        /*
-        if (intersectStatus != SelfIntersectionStatus.RAS) {
-            RecallSelfIntersection(lastDelta, BACKSTEP, Math.Max(texRptWidth - 20 * updateRateMul, read_from), texRptWidth, spriteBounds.y / 2f);
-        }*/
-        /* else if (updateEveryFrame) {
-            intersectStatus = SelfIntersectionStatus.CHECK_THIS;
-            RecallSelfIntersection(lastDelta, BACKSTEP, Math.Max(texRptWidth - 5 * updateRateMul, read_from), texRptWidth, spriteBounds.y / 2f);
-        }*/
-        //Vector3 bd_mid = new Vector3(centers[vw-1].x / 2, centers[vw-1].y / 2, 0f);
-        //bds = new Bounds(bd_mid, centers[vw-1]);
+        centers[last] = bpi.loc;
     }
 
     private const float BACKSTEP = 2f;
 
     public CollisionResult CheckCollision() {
         cullCtr = (cullCtr + 1) % checkCullEvery; 
-        if ((cullCtr == 0 && exec.myStyle.CameraCullable && CullCheck()) || skipNextCollisionCheck) 
+        if (cullCtr == 0 && exec.myStyle.CameraCullable && CullCheck())
             return CollisionResult.noColl;
         
         int cut1 = (int) Math.Ceiling((cL - read_from + 1) * tailCutoffRatio);
         int cut2 = (int) Math.Ceiling((cL - read_from + 1) * headCutoffRatio);
         if (playerBullet.Try(out var plb)) {
             var fe = Enemy.FrozenEnemies;
-            var loc = exec.RawGlobalPosition();
             for (int ii = 0; ii < fe.Count; ++ii) {
-                if (fe[ii].Active && DMath.Collision.CircleOnSegments(fe[ii].pos, fe[ii].radius, loc, 
+                if (fe[ii].Active && DMath.Collision.CircleOnSegments(fe[ii].pos, fe[ii].radius, Vector2.zero, 
                         centers, read_from + cut1, 1, cL - cut2, scaledLineRadius, 1, 0, out int segment) &&
                     fe[ii].enemy.TryHitIndestructible(bpi.id, plb.cdFrames)) {
                     fe[ii].enemy.QueueDamage(plb.bossDmg, plb.stageDmg, target.location);
-                    fe[ii].enemy.ProcOnHit(plb.effect, loc + centers[segment]);
+                    fe[ii].enemy.ProcOnHit(plb.effect, centers[segment]);
                 }
             }
             return CollisionResult.noColl;
         }
-        if (!target.Active) return CollisionResult.noColl;
-        return DMath.Collision.GrazeCircleOnSegments(target.Hitbox, exec.RawGlobalPosition(), centers, read_from + cut1,
-            FramePosCheck, cL - cut2, scaledLineRadius, 1, 0);
+        if (target.Active && DMath.Collision.CircleOnAABB(
+            bounds, target.location, target.largeRadius)) {
+            return DMath.Collision.GrazeCircleOnSegments(target.Hitbox, Vector2.zero, centers, read_from + cut1, 1, cL - cut2, scaledLineRadius, 1, 0);
+        } else return CollisionResult.noColl;
     }
     public void FlipVelX() {
         velocity.FlipX();
@@ -273,11 +231,8 @@ public class CurvedTileRenderPather : CurvedTileRender {
     }
 
     public void SpawnSimple(string style) {
-        Vector2 basePos = exec.RawGlobalPosition();
         for (int ii = texRptWidth; ii > read_from; ii -= FramePosCheck * 2) {
-            BulletManager.RequestSimple(style, null, null,
-                new Velocity(centers[ii] + basePos, (centers[ii] - centers[ii-1]).normalized)
-                , 0, 0, null);
+            BulletManager.RequestNullSimple(style, centers[ii], (centers[ii] - centers[ii-1]).normalized);
         }
     }
     
@@ -285,7 +240,6 @@ public class CurvedTileRenderPather : CurvedTileRender {
     public override void SetSprite(Sprite s, float yscale) {
         base.SetSprite(s, yscale);
         trailR.widthMultiplier = spriteBounds.y;
-        trailR.SetPropertyBlock(pb);
     }
 
     public override void Deactivate() {
@@ -297,7 +251,7 @@ public class CurvedTileRenderPather : CurvedTileRender {
     public override void Activate() {
         UpdateGraphics();
         base.Activate();
-        trail.localPosition = centers[cL - 1];
+        tr.localPosition = bpi.loc;
         trailR.SetPropertyBlock(pb);
         trailR.Clear();
         trailR.emitting = true;
@@ -309,7 +263,7 @@ public class CurvedTileRenderPather : CurvedTileRender {
         Handles.color = Color.cyan;
         int cut1 = (int) Math.Ceiling((cL - read_from + 1) * tailCutoffRatio);
         int cut2 = Mathf.CeilToInt((cL - read_from + 1) * headCutoffRatio);
-        GenericColliderInfo.DrawGizmosForSegments(centers, (read_from + cut1), 1, cL - cut2, exec.RawGlobalPosition(), scaledLineRadius, 0);
+        GenericColliderInfo.DrawGizmosForSegments(centers, (read_from + cut1), 1, cL - cut2, Vector2.zero, scaledLineRadius, 0);
         /*
         Handles.color = Color.magenta;
         for (int ii = 0; ii < cL; ++ii) {
@@ -324,7 +278,7 @@ public class CurvedTileRenderPather : CurvedTileRender {
     [ContextMenu("Debug info")]
     public void DebugPath() {
         //read_from = start + 1
-        Log.Unity($"Start {read_from} Skip {FramePosCheck} End {centers.Length}", level: Log.Level.INFO);
+        Log.Unity($"Start {read_from} Skip 1 End {centers.Length}", level: Log.Level.INFO);
     }
 #endif
 }

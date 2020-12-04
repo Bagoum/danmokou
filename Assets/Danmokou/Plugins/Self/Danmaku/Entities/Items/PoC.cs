@@ -1,27 +1,23 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using DMath;
-using UnityEngine;
-using Collision = DMath.Collision;
+﻿using UnityEngine;
 
 namespace Danmaku {
 public class PoC : RegularUpdater {
     public LRUD direction;
     public SOPlayerHitbox target;
     private Transform tr;
-
-    private static PoC main;
-    public static Vector2 Direction => main.direction.Direction();
-    public static bool Autocollect { get; private set; }
+    public bool Autocollect { get; private set; }
 
     private void Awake() {
         tr = transform;
         tr.localPosition += (Vector3) direction.Direction() * (float)GameManagement.Difficulty.pocOffset;
-        main = this;
     }
 
-    public static Vector2 Bound => main.tr.position;
+    protected override void BindListeners() {
+        base.BindListeners();
+        RegisterDI(this);
+    }
+
+    public Vector2 Bound => tr.position;
 
     private bool IsColliding() {
         var v2 = tr.position; 

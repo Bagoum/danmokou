@@ -560,12 +560,6 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 915077931262652777, guid: fef64f83245e2b448a27bd388149c8f6,
-        type: 3}
-      propertyPath: defaultBGCPrefab
-      value: 
-      objectReference: {fileID: 5180723301924424041, guid: 9634a3dafc6f67b4d91b51bf5e9dfda8,
-        type: 3}
     - target: {fileID: 1017966838409782185, guid: fef64f83245e2b448a27bd388149c8f6,
         type: 3}
       propertyPath: m_LocalPosition.x

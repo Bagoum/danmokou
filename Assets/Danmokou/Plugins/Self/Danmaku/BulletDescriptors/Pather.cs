@@ -9,7 +9,6 @@ namespace Danmaku {
 public class Pather : FrameAnimBullet {
     public PatherRenderCfg config;
     private CurvedTileRenderPather ctr;
-    private Laser.PointContainer endpt;
 
     protected override void Awake() {
         ctr = new CurvedTileRenderPather(config, gameObject);
@@ -24,7 +23,6 @@ public class Pather : FrameAnimBullet {
         //Order is critical so rBPI override points to initialized data on SM start
         ctr.Initialize(this, config, material, isNew, velocity, bpiid, firingIndex, remember, maxRemember, _target, ref options);
         base.Initialize(style, options, null, velocity.WithNoMovement(), firingIndex, bpiid, _target, out int layer); // Call after Awake/Reset
-        ctr.trailR.gameObject.layer = layer;
         ctr.Activate(); //This invokes UpdateMesh
     }
 
@@ -73,7 +71,7 @@ public class Pather : FrameAnimBullet {
 
 #if UNITY_EDITOR
     private void OnDrawGizmosSelected() {
-        ctr.Draw();
+        ctr?.Draw();
     }
 
     [ContextMenu("Debug mesh bounds")]

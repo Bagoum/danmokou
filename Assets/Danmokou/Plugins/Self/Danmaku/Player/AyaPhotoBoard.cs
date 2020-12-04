@@ -5,7 +5,13 @@ using Danmaku;
 using JetBrains.Annotations;
 using UnityEngine;
 
-public class AyaPhotoBoard : MonoBehaviour {
+public interface IAyaPhotoBoard {
+    void SetupPins(int nPins, bool createObjects = true);
+    void TearDown();
+    Vector2? NextPinLoc(AyaPinnedPhoto attach);
+    void ConstructPhotos([CanBeNull] AyaPhoto[] photos, float sizeOverride);
+}
+public class AyaPhotoBoard : CoroutineRegularUpdater, IAyaPhotoBoard {
     [Serializable]
     public struct PinStrip {
         public Vector2 start;
@@ -20,7 +26,6 @@ public class AyaPhotoBoard : MonoBehaviour {
         }
     }
 
-    [CanBeNull] private static AyaPhotoBoard main;
     public PinStrip[] strips;
     [CanBeNull] private Vector2[] pinLocations;
     private int nextPin;
@@ -28,67 +33,55 @@ public class AyaPhotoBoard : MonoBehaviour {
     public GameObject pinPrefab;
     public GameObject defaultPhotoPrefab;
     public Sprite[] pinOptions;
-    private static readonly List<AyaPinnedPhoto> bound = new List<AyaPinnedPhoto>();
+    private readonly List<AyaPinnedPhoto> bound = new List<AyaPinnedPhoto>();
     public Vector2 pinOffset = new Vector2(0, 0.3f);
-    
-    private void Awake() {
-        main = this;
-        bound.Clear();
+
+    protected override void BindListeners() {
+        base.BindListeners();
+        RegisterDI<IAyaPhotoBoard>(this);
     }
 
-    public static bool TrySetupPins(int nPins, bool createObjects = true) {
-        TearDownAndHide();
-        if (main == null) return false;
 
-        main.pinLocations = new Vector2[nPins];
-        main.nextPin = 0;
+    public void SetupPins(int nPins, bool createObjects = true) {
+        TearDown();
+        pinLocations = new Vector2[nPins];
+        nextPin = 0;
         int si = 0;
         int inStrip = nPins;
         for (int ii = 0, eii = 0; ii < nPins; ++ii, ++eii) {
-            while (eii >= main.strips[si].maxPins) {
-                eii -= main.strips[si++].maxPins;
+            while (eii >= strips[si].maxPins) {
+                eii -= strips[si++].maxPins;
                 inStrip = nPins - ii;
             }
-            main.pinLocations[ii] = main.strips[si].pinLocation(eii, inStrip);
+            pinLocations[ii] = strips[si].pinLocation(eii, inStrip);
             if (createObjects) {
-                var pin = Instantiate(main.pinPrefab);
-                main.pins.Add(pin);
-                pin.transform.position = main.pinLocations[ii] + main.pinOffset;
-                pin.GetComponent<SpriteRenderer>().sprite = main.pinOptions[RNG.GetIntOffFrame(0, main.pinOptions.Length)];
+                var pin = Instantiate(pinPrefab);
+                pins.Add(pin);
+                pin.transform.position = pinLocations[ii] + pinOffset;
+                pin.GetComponent<SpriteRenderer>().sprite = pinOptions[RNG.GetIntOffFrame(0, pinOptions.Length)];
             }
         }
-        return true;
     }
 
-    public static void TearDown() {
-        if (main != null) {
-            main.pinLocations = null;
-            main.nextPin = 0;
-        }
-    }
-
-    public static void TearDownAndHide() {
+    public void TearDown() {
+        pinLocations = null;
+        nextPin = 0;
         foreach (var b in bound) Destroy(b.gameObject);
         bound.Clear();
-        if (main != null) {
-            TearDown();
-            foreach (var p in main.pins) Destroy(p);
-            main.pins.Clear();
-        }
+        foreach (var p in pins) Destroy(p);
+        pins.Clear();
     }
 
-    public static Vector2? NextPinLoc(AyaPinnedPhoto attach) {
+    public Vector2? NextPinLoc(AyaPinnedPhoto attach) {
         bound.Add(attach);
-        if (main == null) return null;
-        return main.pinLocations?.TryN(main.nextPin++);
+        return pinLocations?.TryN(nextPin++);
     }
 
-    public static void ConstructPhotos([CanBeNull] AyaPhoto[] photos, float sizeOverride) {
-        if (main == null) return;
+    public void ConstructPhotos([CanBeNull] AyaPhoto[] photos, float sizeOverride) {
         photos = photos ?? new AyaPhoto[0];
-        TrySetupPins(photos.Length, false);
+        SetupPins(photos.Length, false);
         foreach (var p in photos) {
-            var pinned = GameObject.Instantiate(main.defaultPhotoPrefab).GetComponent<AyaPinnedPhoto>();
+            var pinned = GameObject.Instantiate(defaultPhotoPrefab).GetComponent<AyaPinnedPhoto>();
             if (pinned.InitializeAt(p, NextPinLoc(pinned) ??
                                        throw new Exception($"Couldn't find a location to place photo {p.Filename}"))) {
                 if (sizeOverride > 0) pinned.SetSize(p, sizeOverride);

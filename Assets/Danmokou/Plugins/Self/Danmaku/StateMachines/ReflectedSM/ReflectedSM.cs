@@ -86,7 +86,7 @@ public static class SMReflection {
         anim.AssignRatios(t1r?.Invoke(smh.GCX), t2r?.Invoke(smh.GCX));
         anim.Initialize(smh.cT, t);
         ++PlayerInput.SMPlayerControlDisable;
-        Events.MakePlayerInvincible.Invoke(((int)(t * 120), false));
+        PlayerHP.RequestPlayerInvulnerable.Publish(((int)(t * 120), false));
         return WaitingUtils.WaitFor(smh, t, false).ContinueWithSync(() => {
             --PlayerInput.SMPlayerControlDisable;
         });
@@ -114,14 +114,14 @@ public static class SMReflection {
     /// <param name="by_time">Magnitude multiplier over time</param>
     [Alias("shake")]
     public static TaskPattern Raiko(GCXF<float> magnitude, GCXF<float> time, FXY by_time) => smh => {
-        RaikoCamera.Shake(time(smh.GCX), by_time, magnitude(smh.GCX), smh.cT,
+        DependencyInjection.Find<IRaiko>().Shake(time(smh.GCX), by_time, magnitude(smh.GCX), smh.cT,
             WaitingUtils.GetAwaiter(out Task t));
         return t;
     };
 
     public static TaskPattern dRaiko(GCXF<float> magnitude, GCXF<float> time) => smh => {
         var t = time(smh.GCX);
-        RaikoCamera.Shake(t, null, magnitude(smh.GCX), smh.cT,
+        DependencyInjection.Find<IRaiko>().Shake(t, null, magnitude(smh.GCX), smh.cT,
             WaitingUtils.GetAwaiter(out Task tsk));
         return tsk;
     };
@@ -132,7 +132,7 @@ public static class SMReflection {
     /// </summary>
     public static TaskPattern SeijaX(float degrees, float time) {
         return smh => {
-            SeijaCamera.AddXRotation(degrees, time);
+            SeijaCamera.RequestXRotation.Publish((degrees, time));
             return Task.CompletedTask;
         };
     }
@@ -142,7 +142,7 @@ public static class SMReflection {
     /// </summary>
     public static TaskPattern SeijaY(float degrees, float time) {
         return smh => {
-            SeijaCamera.AddYRotation(degrees, time);
+            SeijaCamera.RequestYRotation.Publish((degrees, time));
             return Task.CompletedTask;
         };
     }
@@ -272,7 +272,7 @@ public static class SMReflection {
     /// Whenever an event is triggered, run the child.
     /// </summary>
     public static TaskPattern EventListen(StateMachine exec, Events.Event0 ev) => async smh => {
-        var dm = ev.Listen(() => exec.Start(smh));
+        var dm = ev.Subscribe(() => exec.Start(smh));
         await WaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, 0f, true);
         dm.MarkForDeletion();
         smh.ThrowIfCancelled();

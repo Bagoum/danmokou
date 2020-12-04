@@ -53,10 +53,6 @@ public static class SaveUtils {
 
     public class InputConfig {
         public KeyCode FocusHold = KeyCode.LeftShift;
-        public KeyCode AimLeft = KeyCode.A;
-        public KeyCode AimRight = KeyCode.D;
-        public KeyCode AimUp = KeyCode.W;
-        public KeyCode AimDown = KeyCode.S;
         public KeyCode ShootHold = KeyCode.Z;
         public KeyCode Bomb = KeyCode.X;
     }

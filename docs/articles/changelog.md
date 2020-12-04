@@ -8,9 +8,13 @@ To get the newest version from git, run:
 
 `git submodule update` (if you have made modifications to the submodules, you will need to `pull --rebase` them individually)
 
-# [Unreleased] v5.1.0 (target: 2020/12/25)
+# [Unreleased] v5.2.0 (target: 2020/12/25)
 
 - Player team switching
+
+# v5.1.0 (2020/12/03)
+
+- Improvements to code coupling via DI and events
 
 # v5.0.0 (2020/11/24)
 

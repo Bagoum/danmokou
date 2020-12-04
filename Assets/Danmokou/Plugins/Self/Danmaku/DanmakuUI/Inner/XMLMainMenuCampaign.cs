@@ -72,8 +72,8 @@ public class XMLMainMenuCampaign : XMLMenu {
 
     protected override void Start() {
         if (ReturnTo == null) {
-            UIBuilderRenderer.Slide(new Vector2(3, 0), Vector2.zero, 1f, DMath.M.EOutSine, null);
-            UIBuilderRenderer.Fade(0, 1, 1f, x => x, null);
+            uiRenderer.Slide(new Vector2(3, 0), Vector2.zero, 1f, DMath.M.EOutSine, null);
+            uiRenderer.Fade(0, 1, 1f, x => x, null);
         }
         base.Start();
     }
@@ -154,7 +154,7 @@ public class XMLMainMenuCampaign : XMLMenu {
                 $"   Effective difficulty: {DifficultySettings.FancifySlider(dfc.customValueSlider)}");
             return new UIScreen(
                     MakeOption("Scaling", (DifficultySettings.MIN_SLIDER, DifficultySettings.MAX_SLIDER + 1).Range()
-                        .Select(x => ($"{x}", x)), dfc.customValueSlider, x => dfc.customValueSlider = x, 
+                        .Select(x => ($"{x}", x)), dfc.customValueSlider, dfc.SetCustomDifficulty, 
                             "Set the base difficulty scaling variable." +
                             "\nThis primarily affects the number and firing rate of bullets " +
                             "at an exponential rate."),
@@ -232,11 +232,15 @@ public class XMLMainMenuCampaign : XMLMenu {
             }
             playerSelect = new OptionNodeLR<PlayerConfig>("", _ => _ShowShot(), 
                 c.players.Select(p => (p.shortTitle, p)).ToArray(), c.players[0]);
+            string OrdJoin(string type, OrdinalShot s) {
+                if (string.IsNullOrWhiteSpace(s.ordinal)) return type;
+                return $"{type} {s.ordinal}";
+            }
             //Place a fixed node in the second column for shot description
             shotSelect = new DynamicOptionNodeLR<ShotConfig>("", _ => _ShowShot(), () =>
-                    playerSelect.Value.shots.Select((s, i) => 
-                        (s.isMultiShot ? $"Multishot {i.ToABC()}" : $"Type {i.ToABC()}", s)).ToArray(),
-                    playerSelect.Value.shots[0]);
+                    playerSelect.Value.shots2.Select(s => 
+                        (s.shot.isMultiShot ? OrdJoin("Multishot", s) : OrdJoin("Type", s), s.shot)).ToArray(),
+                    playerSelect.Value.shots2[0].shot);
             subshotSelect = new OptionNodeLR<Subshot>("", _ => _ShowShot(), 
                 Subshots.Select(x => ($"Variant {x.Describe()}", x)).ToArray(), Subshot.TYPE_D);
             return new UIScreen(

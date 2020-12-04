@@ -19,7 +19,7 @@ public class TiledRenderCfg {
 }
 public abstract class TiledRender {
     protected readonly MaterialPropertyBlock pb;
-    protected readonly MeshRenderer mr;
+    protected readonly Renderer render;
     private readonly MeshFilter mf;
     private Mesh mesh;
     protected readonly Transform tr;
@@ -29,7 +29,7 @@ public abstract class TiledRender {
     protected int texRptHeight;
     protected int texRptWidth;
     private int numVerts;
-    protected virtual bool UseMR => true;
+    protected virtual bool HandleAsMesh => true;
 
     protected Vector2 spriteBounds;
 
@@ -65,7 +65,7 @@ public abstract class TiledRender {
 
     protected TiledRender(GameObject obj) {
         pb = new MaterialPropertyBlock();
-        mr = obj.GetComponent<MeshRenderer>();
+        render = obj.GetComponent<Renderer>();
         mf = obj.GetComponent<MeshFilter>();
         tr = obj.transform;
     }
@@ -76,9 +76,9 @@ public abstract class TiledRender {
         parented = locater.HasParent();
         isStatic = is_static;
         material.enableInstancing = false; //Instancing doesn't work with this, and it has overhead, so disable it.
-        mr.sharedMaterial = material;
-        mr.sortingOrder = renderCounter++;
-        mr.sortingLayerID = SortingLayer.NameToID(isPlayer ? cfg.playerSortingLayer : cfg.sortingLayer);
+        render.sharedMaterial = material;
+        render.sortingOrder = renderCounter++;
+        render.sortingLayerID = SortingLayer.NameToID(isPlayer ? cfg.playerSortingLayer : cfg.sortingLayer);
         DontUpdateTimeAfter = cfg.dontUpdateTimeAfter;
         //mr.GetPropertyBlock(pb);
     }
@@ -86,7 +86,7 @@ public abstract class TiledRender {
     #if UNITY_EDITOR
     [ContextMenu("Get Sorting ID")]
     public void sortId() {
-        Log.Unity(mr.sortingOrder.ToString(), level: Log.Level.INFO);
+        Log.Unity(render.sortingOrder.ToString(), level: Log.Level.INFO);
     }
     #endif
     
@@ -94,7 +94,7 @@ public abstract class TiledRender {
     //Queried every frame (in subclasses); therefore we store an array and update it.
     protected abstract void UpdateVerts(bool renderRequired);
     protected void PrepareNewMesh() {
-        if (!UseMR) return;
+        if (!HandleAsMesh) return;
         numVerts = (texRptHeight + 1) * (texRptWidth + 1);
         int[] tris = CustomMeshUtils.WHTris(texRptHeight, texRptWidth);
         mf.mesh = mesh = new Mesh();
@@ -128,7 +128,7 @@ public abstract class TiledRender {
     }
 
     private void ReassignMeshVerts() {
-        if (UseMR) SetVertexBufferData(mesh, 0, roVertsPtr, 0, 0, numVerts, VertexDataSize, noValidation);
+        if (HandleAsMesh) SetVertexBufferData(mesh, 0, roVertsPtr, 0, 0, numVerts, VertexDataSize, noValidation);
         //mesh.SetVertexBufferData(verts, 0, 0, numVerts, 0, noValidation);
         
         //Don't recalculate mesh bounds-- just set them to max from the start. Based on testing,
@@ -149,13 +149,13 @@ public abstract class TiledRender {
 
     public virtual void UpdateRender() {
         if (ETime.LastUpdateForScreen) {
-            if (!isStatic && UseMR) {
+            if (!isStatic && HandleAsMesh) {
                 //Inlined from ReassignMeshVerts
                 SetVertexBufferData(mesh, 0, roVertsPtr, 0, 0, numVerts, VertexDataSize, noValidation);
             }
             if (lifetime < DontUpdateTimeAfter) {
                 pb.SetFloat(PropConsts.time, lifetime);
-                mr.SetPropertyBlock(pb);
+                render.SetPropertyBlock(pb);
             }
         }
     }
@@ -176,20 +176,20 @@ public abstract class TiledRender {
         pb.SetTexture(PropConsts.mainTex, s.texture);
         //but make sure that the PB is updated regardless, since
         //that might not occur next frame
-        mr.SetPropertyBlock(pb);
+        render.SetPropertyBlock(pb);
     }
 
     public virtual void Deactivate() {
-        mr.enabled = false;
+        if (HandleAsMesh) render.enabled = false;
         active = false;
         isStatic = true;
     }
     public virtual void Activate() {
         lifetime = 0f;
-        if (UseMR) mr.enabled = true;
+        if (HandleAsMesh) render.enabled = true;
         UpdateVertsAndMesh();
         pb.SetFloat(PropConsts.time, 0f);
-        mr.SetPropertyBlock(pb);
+        render.SetPropertyBlock(pb);
         active = true;
     }
 

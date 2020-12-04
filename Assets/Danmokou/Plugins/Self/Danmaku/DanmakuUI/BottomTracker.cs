@@ -32,7 +32,7 @@ public class BottomTracker : RegularUpdater {
     public override int UpdatePriority => UpdatePriorities.SLOW;
 
     public void Finish() {
-        DisableRegularUpdates();
+        DisableUpdates();
         Destroy(gameObject);
     }
 

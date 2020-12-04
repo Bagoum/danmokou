@@ -55,7 +55,8 @@ public class MiniTutorial : BehaviorEntity {
             yield return null;
             yield return wait(() => UIConfirm.Active && !GameStateManager.IsPaused);
         }
-        UIManager.SetSpellname("Reduced Tutorial (For Players Too Smart for the Normal Tutorial)");
+        DependencyInjection.Find<IUIManager>()
+            .SetSpellname("Reduced Tutorial (For Players Too Smart for the Normal Tutorial)");
         
         BulletManager.RequestSimple("lcircle-red/", _ => 4f, null, new Velocity(new Vector2(-2, -2.5f), 0), 0, 0, null);
         var nrx = new RealizedLaserOptions(new LaserOptions(), GenCtx.New(this, V2RV2.Zero), 5, new Vector2(3, 5), V2RV2.Angle(-90), Cancellable.Null);

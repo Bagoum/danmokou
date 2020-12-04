@@ -423,7 +423,7 @@ public class Enemy : RegularUpdater {
         int numBullets = GameManagement.Difficulty.numSuicideBullets;
         for (int ii = 0; ii < numBullets; ++ii) {
             BulletManager.RequestSimple(bt, null, null, new Velocity(SuicideVTP, Beh.rBPI.loc, 
-                angleTo + (ii - numBullets / 2) * 120f / numBullets), 0, 0, null);
+                angleTo + (ii - numBullets / 2) * 120f / numBullets), 0, 0, null, false);
         }
     }
     

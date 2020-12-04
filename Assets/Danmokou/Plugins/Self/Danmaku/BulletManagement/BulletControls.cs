@@ -570,7 +570,7 @@ public partial class BulletManager {
         /// <summary>
         /// Execute an event if the condition is satisfied.
         /// </summary>
-        public static SBCFp Event(Events.Event0 ev, ExPred cond) => new SBCFp((sbc, ii, bpi) => bpi.When(cond, ev.ExInvokeIfNotRefractory()), BulletControl.P_RUN);
+        public static SBCFp Event(Events.Event0 ev, ExPred cond) => new SBCFp((sbc, ii, bpi) => bpi.When(cond, ev.exProc()), BulletControl.P_RUN);
 
         /// <summary>
         /// Batch several controls together under a single condition.
@@ -607,6 +607,7 @@ public partial class BulletManager {
                 var inode = sbc.GetINodeAt(ii, "pool-triggered", null, out uint sbid);
                 //Note: this pattern is safe because GCX is copied immediately by SMRunner
                 using (var gcx = PrivateDataHoisting.GetGCX(sbid)) {
+                    gcx.fs["bulletTime"] = sbc[ii].bpi.t;
                     _ = inode.RunExternalSM(SMRunner.Cull(target, cT, gcx));
                 }
             }

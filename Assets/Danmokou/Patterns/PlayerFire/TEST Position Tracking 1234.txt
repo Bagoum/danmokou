@@ -12,7 +12,7 @@ gtr {
 			rv2.a =f atan(if(odd p, playerpastdirection($history), playermarisaadirection($history)))
 		}
 	} simple(rvelocity(cx(-8)), {
-		player(20, 20, oh1)
+		player(20, 20, oh1-red)
 	})
 	## cancellation
 	noop

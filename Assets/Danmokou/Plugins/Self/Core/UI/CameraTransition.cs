@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using JetBrains.Annotations;
 using UnityEngine;
 
@@ -8,7 +9,6 @@ public class CameraTransition : MonoBehaviour {
     private static CameraTransitionConfig inherited;
 
     public CameraTransitionConfig defaultConfig;
-    private float time;
     private MaterialPropertyBlock pb;
     public Material mat;
     private SpriteRenderer sr;
