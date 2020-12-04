@@ -34,11 +34,8 @@ public interface IUIManager {
     void ShowPhaseType(PhaseType? phase);
     void SetSpellname([CanBeNull] string title);
 }
-public class UIManager : RegularUpdater, IUIManager {
-    static UIManager() {
-        GameStateManager.UnpauseAnimator = SlideUnpause;
-    }
-
+public class UIManager : RegularUpdater, IUIManager, IUnpauseAnimateProvider {
+    
     private static UIManager main;
     public bool autoShiftCamera;
     [FormerlySerializedAs("camera")] public Camera uiCamera;
@@ -123,6 +120,7 @@ public class UIManager : RegularUpdater, IUIManager {
         Listen(PlayerInput.MeterIsActive, SetMeterActivated);
         Listen(PlayerInput.PlayerDeactivatedMeter, UnSetMeterActivated);
         RegisterDI<IUIManager>(this);
+        RegisterDI<IUnpauseAnimateProvider>(this);
     }
     
     public static float MenuRightOffset =>
@@ -339,9 +337,9 @@ public class UIManager : RegularUpdater, IUIManager {
         });
     }
 
-    public static void SlideUnpause(Action onDone) {
-        main.uiRenderer.MoveToNormal();
-        main.uiRenderer.Slide(null, slideFrom, 0.3f, x => x, _ => onDone());
+    public void UnpauseAnimator(Action onDone) {
+        uiRenderer.MoveToNormal();
+        uiRenderer.Slide(null, slideFrom, 0.3f, x => x, _ => onDone());
     }
     
     private void HandleGameStateChange(GameState state) {
@@ -453,13 +451,13 @@ public class UIManager : RegularUpdater, IUIManager {
         apply(c);
     }
 
-    [CanBeNull] private static Cancellable messageFadeToken;
+    [CanBeNull] private Cancellable messageFadeToken;
 
     private void _Message(string msg) {
         messageFadeToken?.Cancel();
         StartCoroutine(FadeMessage(msg, messageFadeToken = new Cancellable()));
     }
-    [CanBeNull] private static Cancellable cmessageFadeToken;
+    [CanBeNull] private Cancellable cmessageFadeToken;
 
     private void _CMessage(string msg, out float totalTime) {
         cmessageFadeToken?.Cancel();

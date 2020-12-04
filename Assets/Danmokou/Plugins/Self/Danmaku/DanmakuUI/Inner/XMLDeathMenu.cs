@@ -37,7 +37,7 @@ public class XMLDeathMenu : XMLMenu {
         MainScreen = new UIScreen(
             new FuncNode(() => {
                 if (GameManagement.campaign.TryContinue()) {
-                    GameStateManager.UIUnpause();
+                    GameStateManager.AnimatedUnpause();
                     return true;
                 } else return false;
             }, () => $"Continue ({GameManagement.campaign.Continues})", true),

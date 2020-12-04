@@ -109,7 +109,7 @@ public class XMLPauseMenu : XMLMenu {
 
     private UINode unpause;
     protected override void Awake() {
-        unpause = new FuncNode(GameStateManager.UIUnpause, "Unpause", true).With(small1Class);
+        unpause = new FuncNode(GameStateManager.AnimatedUnpause, "Unpause", true).With(small1Class);
         MainScreen = new UIScreen(
             GetOptions(false, x => x.With(OptionNode).With(small1Class)).Concat(
                 new[] {

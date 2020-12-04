@@ -30,27 +30,30 @@ public static class GSHelpers {
 
     public static bool InputAllowed(this GameState gs) => gs != GameState.NOINPUTPAUSE && gs != GameState.LOADING;
 }
+
+public interface IUnpauseAnimateProvider {
+    void UnpauseAnimator(Action done);
+}
 public static class GameStateManager {
     public static bool InputAllowed => state.InputAllowed();
     private static GameState state = GameState.RUN;
     [CanBeNull] private static Action stateUpdate;
-
-    [CanBeNull] public static Action<Action> UnpauseAnimator { get; set; }
 
     public static void CheckForStateUpdates() {
         if (PauseAllowed && InputManager.Pause.Active && stateUpdate == null) {
             if (state == GameState.RUN) {
                 stateUpdate = _Pause;
             } else if (state == GameState.PAUSE) {
-                UIUnpause();
+                AnimatedUnpause();
             }
         }
     }
 
-    public static void UIUnpause() {
+    public static void AnimatedUnpause() {
         stateUpdate = _NoInputPause;
-        if (UnpauseAnimator == null) stateUpdate = _Unpause;
-        else UnpauseAnimator(() => stateUpdate = _Unpause);
+        var animator = DependencyInjection.MaybeFind<IUnpauseAnimateProvider>();
+        if (animator == null) stateUpdate = _Unpause;
+        else animator.UnpauseAnimator(() => stateUpdate = _Unpause);
     }
 
     /// <summary>
