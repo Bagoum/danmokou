@@ -37,7 +37,6 @@
             #include "Assets/Danmokou/CG/Noise.cginc"
             #include "UnityCG.cginc"
 			#pragma multi_compile __ FANCY
-			#pragma multi_compile __ ALLOW_DISTORTION
 			#pragma multi_compile __ AYA_CAPTURE
 
             struct vertex {
@@ -98,8 +97,7 @@
             shadow *= 1 - smoothstep(_SRI, _SR, rp / _PPU);
             
             //For now, I still can't get Aya rendering to work... seems like it forces it to render in a smaller space
-            #if defined(FANCY) && defined(ALLOW_DISTORTION) && !defined(AYA_CAPTURE)
-               
+            #if defined(FANCY) && !defined(AYA_CAPTURE)
                 float3 srt = float3(r / ISQR2 * _BX, ang * _BY, _T * _Speed);
                 float noise = perlin3Dm(srt, float3(_BX, _BY, 10));
                 float noise2 = perlin3Dm(srt, float3(_BX, _BY, 10 / PHI));
@@ -113,9 +111,9 @@
                 float y = _ScreenY + effrp * sin(effang*TAU)/_BGTex_TexelSize.w;
                 
                 //for some reason, when rendering via Aya, this needs to be removed
-                #if defined(UNITY_UV_STARTS_AT_TOP) && !defined(AYA_CAPTURE)
-                y = 1 - y;
-                #endif
+                //#if defined(UNITY_UV_STARTS_AT_TOP) && !defined(AYA_CAPTURE)
+                //y = 1 - y;
+                //#endif
                 
                 float4 bgc = tex2D(_BGTex, float2(_ScreenX + _GlobalXOffset / _ScreenWidth + effrp * cos(effang*TAU)/_BGTex_TexelSize.z, y));
                 bgc.a = 1; //Don't know why it isn't already 1...

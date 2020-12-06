@@ -26,14 +26,13 @@ public class Laser : FrameAnimBullet {
     }
     private void Initialize(bool isNew, BehaviorEntity parent, Velocity velocity, SOPlayerHitbox _target, int firingIndex, uint bpiid, float cold, float hot, BEHStyleMetadata style, ref RealizedLaserOptions options) {
         ctr.SetYScale(options.yScale * defaultWidthMultiplier); //Needs to be done before Colorize sets first frame
-        Colorize(style.recolor.GetOrLoadRecolor());
         base.Initialize(style, options.AsBEH, parent, velocity, firingIndex, bpiid, _target, out _); // Call after Awake/Reset
         if (options.endpoint != null) {
             var beh = BEHPooler.INode(Vector2.zero, V2RV2.Zero, Vector2.right, firingIndex, null, options.endpoint);
             endpt = new PointContainer(beh);
             ctr.SetupEndpoint(endpt);
         } else ctr.SetupEndpoint(new PointContainer(null));
-        ctr.Initialize(this, config, material, isNew, bpi.id, firingIndex, ref options);
+        ctr.Initialize(this, config, style.recolor.GetOrLoadRecolor().material, isNew, bpi.id, firingIndex, ref options);
         SFXService.Request(options.firesfx);
         SetColdHot(cold, hot, options.hotsfx, options.repeat);
         ctr.Activate(); //This invokes UpdateMesh
@@ -50,7 +49,7 @@ public class Laser : FrameAnimBullet {
 
     protected override DMath.CollisionResult CollisionCheck() => ctr.CheckCollision(collisionTarget);
 
-    protected override void SetSprite(Sprite s, float yscale = 1f) {
+    protected override void SetSprite(Sprite s, float yscale) {
         ctr.SetSprite(s, yscale);
     }
 

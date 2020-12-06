@@ -164,9 +164,9 @@ public static class Events {
     public static readonly IEvent<GameState> GameStateHasChanged = new Event<GameState>();
     public static readonly IEvent<(long score, bool bonus)> ScoreItemHasReceived = new Event<(long, bool)>();
     public static readonly Event0 CampaignDataHasChanged = new Event0();
+    public static readonly Event0 ClearPhase = new Event0();
 #if UNITY_EDITOR || ALLOW_RELOAD
     public static readonly Event0 LocalReset = new Event0();
-    public static readonly Event0 ClearPhase = new Event0();
 #endif
 }
 }

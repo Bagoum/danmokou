@@ -56,10 +56,10 @@ MonoBehaviour:
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 30
+    allowGraze: 1
   displayer: {fileID: 0}
   material: {fileID: 2100000, guid: 5458891e477bea5438b857b92a28ba0c, type: 2}
   renderPriority: 1000
-  sprite: {fileID: 0}
   fadeInTime: 0.2
   cycleSpeed: 0
   renderMode: 0

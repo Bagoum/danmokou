@@ -615,5 +615,10 @@ PrefabInstance:
       propertyPath: autoShiftCamera
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6579660716583503161, guid: fef64f83245e2b448a27bd388149c8f6,
+        type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: fef64f83245e2b448a27bd388149c8f6, type: 3}

@@ -288,6 +288,20 @@ public static partial class AtomicPatterns {
 
     #endregion
 
+
+    /// <summary>
+    /// Fires a complex bullet (ie. controlled by a GameObject).
+    /// Do not use for pathers/lasers (use the Pather or Laser functions).
+    /// </summary>
+    /// <param name="path">Movement descriptor</param>
+    /// <param name="options">Bullet constructor options</param>
+    /// <returns></returns>
+    public static SyncPattern Complex(GCXU<VTP> path, BehOptions options) => sbh => {
+        uint id = sbh.GCX.NextID();
+        sbh.bc.Complex(sbh, path.New(sbh.GCX, ref id), id, options);
+        return sbh;
+    };
+    
     /// <summary>
     /// Fires a Pather/Tracker projectile, which "remembers" the points it has gone through and draws a path through them.
     /// </summary>

@@ -61,6 +61,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         LastDelta = delta;
         var mag = delta.x * delta.x + delta.y * delta.y;
         if (mag > M.MAG_ERR) {
+            mag = (float)Math.Sqrt(mag);
             Direction = new Vector2(delta.x / mag, delta.y / mag);
         }
     }
@@ -140,6 +141,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         public bool CollisionActiveOnInit;
         public bool destructible;
         public ushort grazeEveryFrames;
+        public bool allowGraze;
     }
 
     public CollisionInfo collisionInfo;
@@ -244,14 +246,16 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         }
         if (IsNontrivialID(behName)) ID = behName;
         Initialize(smr);
+        if (displayer != null) {
+            displayer.RotatorF = options?.rotator;
+        }
         //This comes after so SMs run due to ~@ commands are not destroyed by BeginBehaviorSM
         RegisterID();
         UpdateStyle(style ?? defaultMeta);
         deathDrops = options?.drops;
         delete = options?.delete;
-        if (options.HasValue) {
-            var o = options.Value;
-            if (o.hp.HasValue) Enemy.SetHP(o.hp.Value, o.hp.Value);
+        if (options.Try(out var o)) {
+            if (o.hp.Try(out var hp)) Enemy.SetHP(hp, hp);
         }
     }
 
@@ -261,19 +265,25 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         collisionActive = collisionInfo.CollisionActiveOnInit;
         phaseController = SMPhaseController.Normal(0);
         dying = false;
+        Direction = Vector2.right;
         if (enemy != null) enemy.Initialize(this);
         if (displayer != null) displayer.ResetV(this);
+        
         //Pooled objects should not be running SMs from the inspector, only via Initialize,
         //so there is no RunImmediateSM in ResetV.
+    }
+    
+    public override void FirstFrame() {
+        if (displayer != null) displayer.UpdateRender();
     }
     
     /// <summary>
     /// Run the attached behaviorScript.
     /// </summary>
-    public void RunAttachedSM() {
-        if (behaviorScript != null) {
-            RunPatternSM(StateMachineManager.FromText(behaviorScript));
-        }
+    public void RunAttachedSM() => RunSMFromScript(behaviorScript);
+
+    public void RunSMFromScript(TextAsset script) {
+        if (script != null) RunPatternSM(StateMachineManager.FromText(script));
     }
 
     public void RunPatternSM(StateMachine sm) => _ = 
@@ -367,7 +377,6 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         dying = true;
         collisionActive = false;
         if (allowDrops) DropItemsOnDeath();
-        if (isSummoned) DataHoisting.Destroy(bpi.id);
         UnregisterID();
         if (enemy != null) enemy.IAmDead();
         HardCancel(allowFinalize);
@@ -375,6 +384,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
 
     private void DestroyFinal() {
         if (displayer != null) displayer.Hide();
+        if (isSummoned) DataHoisting.Destroy(bpi.id);
         //Flip(false, false);
         if (isPooled) {
             PooledDone();
@@ -454,7 +464,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
             var cr = CollisionCheck();
             if (grazeFrameCounter-- == 0) {
                 grazeFrameCounter = 0;
-                if (cr.graze) {
+                if (cr.graze && collisionInfo.allowGraze) {
                     grazeFrameCounter = collisionInfo.grazeEveryFrames - 1;
                     collisionTarget.Player.Graze(1);
                 }
@@ -473,8 +483,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     }
     
     protected virtual CollisionResult CollisionCheck() {
-        return new CollisionResult(Collision.CircleOnCircle(collisionTarget.Hitbox, 
-            rBPI.loc, collisionInfo.collisionRadius), false);
+        return Collision.GrazeCircleOnCircle(collisionTarget.Hitbox, rBPI.loc, collisionInfo.collisionRadius);
     }
 
     protected virtual void RegularUpdateRender() {
@@ -494,9 +503,9 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
                 base.RegularUpdate();
             } else nextUpdateAllowed = true;
             RegularUpdateControl();
-            if (dying) return; //controls may cause destruction
-            RegularUpdateCollide();
-            RegularUpdateRender();
+            if (!dying) RegularUpdateCollide();
+            //controls may cause destruction
+            if (Enabled) RegularUpdateRender();
         }
     }
 

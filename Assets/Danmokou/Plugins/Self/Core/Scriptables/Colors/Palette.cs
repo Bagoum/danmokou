@@ -78,12 +78,7 @@ public class Palette : ScriptableObject, INamedGradient, ISerializationCallbackR
 
     public void OnBeforeSerialize() {}
 
-    public IGradient Gradient {
-        get {
-            if (cachedGrad == null) cachedGrad = CalculateGradient();
-            return cachedGrad;
-        }
-    }
+    public IGradient Gradient => cachedGrad ?? (cachedGrad = CalculateGradient());
 
     public Color GetColor(Shade shade) {
         if (shade == Shade.WHITE) {

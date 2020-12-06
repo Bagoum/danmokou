@@ -57,21 +57,28 @@ public struct DelegatedCreator {
             sbh.index, sbh.timeOffset, id);
     }
 
-    private const float DEFAULT_REMEMBER = 3f;
-    public void Pather(SyncHandoff sbh, float? maxLength, BPY remember, VTP path, uint bpiid, BehOptions options) {
+    public void Complex(SyncHandoff sbh, VTP path, uint id, BehOptions options) {
         V2RV2 lrv2 = FacedRV2(sbh.rv2);
-        var opts = new RealizedBehOptions(options, sbh.GCX, bpiid, ParentOffset, lrv2, sbh.ch.cT);
+        var opts = new RealizedBehOptions(options, sbh.GCX, id, ParentOffset, lrv2, sbh.ch.cT);
         if (opts.playerBullet != null) style = BulletManager.GetOrMakeComplexPlayerCopy(style);
-        BulletManager.RequestPather(style, new Velocity(path, ParentOffset, lrv2), sbh.index, bpiid, 
+        BulletManager.RequestComplex(style, new Velocity(path, ParentOffset, lrv2), sbh.index, id, ref opts);
+    }
+
+    private const float DEFAULT_REMEMBER = 3f;
+    public void Pather(SyncHandoff sbh, float? maxLength, BPY remember, VTP path, uint id, BehOptions options) {
+        V2RV2 lrv2 = FacedRV2(sbh.rv2);
+        var opts = new RealizedBehOptions(options, sbh.GCX, id, ParentOffset, lrv2, sbh.ch.cT);
+        if (opts.playerBullet != null) style = BulletManager.GetOrMakeComplexPlayerCopy(style);
+        BulletManager.RequestPather(style, new Velocity(path, ParentOffset, lrv2), sbh.index, id, 
             maxLength.GetValueOrDefault(DEFAULT_REMEMBER), remember, ref opts);
     }
 
-    public void Laser(SyncHandoff sbh, VTP path, float cold, float hot, uint bpiid, LaserOptions options) {
+    public void Laser(SyncHandoff sbh, VTP path, float cold, float hot, uint id, LaserOptions options) {
         V2RV2 lrv2 = FacedRV2(sbh.rv2);
-        var opts = new RealizedLaserOptions(options, sbh.GCX, bpiid, ParentOffset, lrv2, sbh.ch.cT);
+        var opts = new RealizedLaserOptions(options, sbh.GCX, id, ParentOffset, lrv2, sbh.ch.cT);
         if (opts.playerBullet != null) style = BulletManager.GetOrMakeComplexPlayerCopy(style);
         BulletManager.RequestLaser(transformParent, style, new Velocity(path, ParentOffset, lrv2), 
-            sbh.index, bpiid, cold, hot, ref opts);
+            sbh.index, id, cold, hot, ref opts);
     }
 
     public void Summon(bool pooled, SyncHandoff sbh, BehOptions options, VTP path, SMRunner sm, uint bpiid) {
@@ -144,6 +151,13 @@ public partial class BulletManager {
     public static void RequestNullSimple(string styleName, Vector2 loc, Vector2 dir) =>
         RequestSimple(styleName, null, null, new Velocity(loc, dir), 0, 0, null, false);
 
+    public static void RequestComplex(string style, Velocity velocity, int firingIndex, uint bpiid, ref RealizedBehOptions opts) {
+        CheckSentry();
+        if (CheckComplexPool(style, out var bsm)) {
+            var bullet = (Bullet) BEHPooler.RequestUninitialized(bsm.recolor.GetOrLoadRecolor().prefab, out _);
+            bullet.Initialize(bsm, opts, null, velocity, firingIndex, bpiid, main.bulletCollisionTarget, out _);
+        } else throw new Exception("Could not find complex bullet style: " + style);
+    }
     public static void RequestPather(string style, Velocity velocity, int firingIndex, uint bpiid, float maxRemember, BPY remember, ref RealizedBehOptions opts) {
         CheckSentry();
         if (CheckComplexPool(style, out var bsm)) {

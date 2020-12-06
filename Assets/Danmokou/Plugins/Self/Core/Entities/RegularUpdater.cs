@@ -6,12 +6,13 @@ using UnityEngine;
 
 public abstract class RegularUpdater : MonoBehaviour, IRegularUpdater {
     private readonly List<IDeletionMarker> tokens = new List<IDeletionMarker>();
+    protected bool Enabled => tokens.Count > 0;
 
     /// <summary>
     /// Safe to call twice.
     /// </summary>
     protected void EnableUpdates() {
-        if (tokens.Count == 0) {
+        if (!Enabled) {
             tokens.Add(ETime.RegisterRegularUpdater(this));
             BindListeners();
         }
@@ -31,6 +32,7 @@ public abstract class RegularUpdater : MonoBehaviour, IRegularUpdater {
 
     public abstract void RegularUpdate();
     public virtual void RegularUpdateParallel() { }
+    public virtual void FirstFrame() { }
     public virtual int UpdatePriority => UpdatePriorities.DEFAULT;
     
     public virtual bool UpdateDuringPause => false;

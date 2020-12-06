@@ -88,8 +88,7 @@ public class PlayerInput : BehaviorEntity {
     private ChallengeManager.Restrictions Restrictions => 
         challenge?.Restriction ?? ChallengeManager.Restrictions.Default;
 
-    //This might technically be unsafe w.r.t replays, but camera fade time should cover this.
-    private void Start() {
+    public override void FirstFrame() {
         challenge = DependencyInjection.MaybeFind<IChallengeManager>();
     }
 

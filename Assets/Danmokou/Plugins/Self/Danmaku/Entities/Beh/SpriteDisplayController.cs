@@ -13,6 +13,11 @@ public class SpriteDisplayController: DisplayController {
         return m;
     }
 
+    public override void SetMaterial(Material mat) {
+        sprite.material = mat;
+        sprite.GetPropertyBlock(pb);
+    }
+
     public override void UpdateRender() {
         base.UpdateRender();
         sprite.SetPropertyBlock(pb);
@@ -22,7 +27,7 @@ public class SpriteDisplayController: DisplayController {
         sprite.sortingOrder = x;
     }
 
-    protected void SetSprite([CanBeNull] Sprite s) {
+    public override void SetSprite([CanBeNull] Sprite s) {
         if (s != null) {
             sprite.sprite = s;
             pb.SetTexture(PropConsts.mainTex, s.texture);

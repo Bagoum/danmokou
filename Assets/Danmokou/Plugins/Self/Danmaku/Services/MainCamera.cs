@@ -25,7 +25,8 @@ public class MainCamera : MonoBehaviour {
     private Vector2 position; // Cached to allow requests for screen coordinates from MovementLASM off main thread
     private Transform tr;
 
-    public Material ayaMaterial;
+    public Shader ayaShader;
+    private Material ayaMaterial;
     public Camera[] ayaRenderers;
 
     /*
@@ -41,6 +42,7 @@ public class MainCamera : MonoBehaviour {
         HorizRadius = VertRadius * cam.pixelWidth / cam.pixelHeight;
         tr = transform;
         position = tr.position;
+        ayaMaterial = new Material(ayaShader);
         ReassignGlobalShaderVariables();
     }
 
@@ -130,6 +132,7 @@ public class MainCamera : MonoBehaviour {
     /// <param name="rect"></param>
     /// <returns></returns>
     public AyaPhoto RequestAyaPhoto(CRect rect) {
+        var rt = RenderTexture.active;
         ayaMaterial.SetFloat(PropConsts.OffsetX, 0.5f + rect.x / ScreenWidth);
         ayaMaterial.SetFloat(PropConsts.OffsetY, 0.5f + rect.y / ScreenHeight);
         float xsr = rect.halfW * 2 / ScreenWidth;
@@ -150,6 +153,7 @@ public class MainCamera : MonoBehaviour {
         capture.Release();
         var tex = ss.IntoTex();
         ss.Release();
+        RenderTexture.active = rt;
         return new AyaPhoto(tex, rect);
     }
 

@@ -126,6 +126,7 @@ public partial class BehaviorEntity {
 
     protected virtual void UpdateStyle(BEHStyleMetadata newStyle) {
         myStyle = newStyle;
+        if (displayer != null) displayer.UpdateStyle(myStyle);
     }
 
     /// <summary>
@@ -173,7 +174,7 @@ public partial class BehaviorEntity {
             FrameAnimBullet.Recolor r = style.recolor.GetOrLoadRecolor();
             return new BehCFc(b => {
                 if (cond(b.rBPI)) {
-                    ((Bullet)b).ColorizeOverwrite(r);
+                    ((ColorizableBullet)b).ColorizeOverwrite(r);
                     b.UpdateStyle(style);
                 }
             }, BM.BulletControl.P_CULL);

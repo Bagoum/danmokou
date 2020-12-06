@@ -19,9 +19,9 @@ public class Pather : FrameAnimBullet {
     private void Initialize(bool isNew, Velocity velocity, SOPlayerHitbox _target, int firingIndex, uint bpiid, float maxRemember,
         BPY remember, BEHStyleMetadata style, ref RealizedBehOptions options) {
         ctr.SetYScale(options.scale); //Needs to be done before Colorize sets first frame
-        Colorize(style.recolor.GetOrLoadRecolor());
         //Order is critical so rBPI override points to initialized data on SM start
-        ctr.Initialize(this, config, material, isNew, velocity, bpiid, firingIndex, remember, maxRemember, _target, ref options);
+        ctr.Initialize(this, config, style.recolor.GetOrLoadRecolor().material, isNew, velocity, bpiid, 
+            firingIndex, remember, maxRemember, _target, ref options);
         base.Initialize(style, options, null, velocity.WithNoMovement(), firingIndex, bpiid, _target, out int layer); // Call after Awake/Reset
         ctr.Activate(); //This invokes UpdateMesh
     }
@@ -41,7 +41,7 @@ public class Pather : FrameAnimBullet {
 
     protected override DMath.CollisionResult CollisionCheck() => ctr.CheckCollision();
 
-    protected override void SetSprite(Sprite s, float yscale = 1f) {
+    protected override void SetSprite(Sprite s, float yscale) {
         ctr.SetSprite(s, yscale);
     }
 
@@ -56,7 +56,7 @@ public class Pather : FrameAnimBullet {
         created.Initialize(isNew, velocity, collisionTarget, firingIndex, bpiid, maxRemember, remember, style, ref opts);
     }
 
-    public override ref DMath.ParametricInfo rBPI => ref ctr.BPI;
+    public override ref ParametricInfo rBPI => ref ctr.BPI;
 
     protected override void FlipVelX() => ctr.FlipVelX();
 

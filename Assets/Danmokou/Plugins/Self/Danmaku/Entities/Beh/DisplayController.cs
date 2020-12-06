@@ -30,10 +30,10 @@ public abstract class DisplayController : MonoBehaviour {
     public RFloat yScaleBopAmplitude;
 
     public RString rotator;
-    [CanBeNull] private BPY rotatorF;
+    [CanBeNull] public BPY RotatorF { get; set; }
 
-    private void Awake() {
-        rotatorF = rotator.Get().IntoIfNotNull<BPY>();
+    protected virtual void Awake() {
+        RotatorF = rotator.Get().IntoIfNotNull<BPY>();
     }
 
     public virtual void ResetV(BehaviorEntity parent) {
@@ -41,14 +41,23 @@ public abstract class DisplayController : MonoBehaviour {
         beh = parent;
         pb = CreatePB();
         flipX = flipY = false;
+        RotatorF = rotator.Get().IntoIfNotNull<BPY>();
         SetTransform();
-        //Show();
+        Show();
     }
 
+    public abstract void SetMaterial(Material mat);
+
+    public virtual void Show() { }
     public virtual void Hide() { }
+    
+    public virtual void UpdateStyle(BehaviorEntity.BEHStyleMetadata style) { }
 
     public virtual void SetSortingOrder(int x) { }
 
+    public virtual void SetSprite([CanBeNull] Sprite s) {
+        throw new Exception("DisplayController has no default handling for sprite set");
+    }
     public virtual void FadeSpriteOpacity(BPY fader01, float over, ICancellee cT, Action done) {
         throw new Exception("DisplayController has no default handling for fading sprite opacity");
     }
@@ -77,8 +86,8 @@ public abstract class DisplayController : MonoBehaviour {
         if (yScaleBopPeriod > 0) {
             scale.y *= 1 + yScaleBopAmplitude * M.Sin(M.TAU * time / yScaleBopPeriod);
         }
-        if (rotatorF != null) {
-            tr.localEulerAngles = new Vector3(0, 0, rotatorF(beh.rBPI));
+        if (RotatorF != null) {
+            tr.localEulerAngles = new Vector3(0, 0, RotatorF(beh.rBPI));
         }
         tr.localScale = scale;
     }

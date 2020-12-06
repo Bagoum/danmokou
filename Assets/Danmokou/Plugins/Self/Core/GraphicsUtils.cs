@@ -9,11 +9,6 @@ public static class GraphicsUtils {
         Graphics.Blit(src, rt);
         return rt;
     }
-    public static RenderTexture CopyInto(this RenderTexture src, [CanBeNull] ref RenderTexture into) {
-        if (into == null) into = RenderTexture.GetTemporary(src.descriptor);
-        Graphics.Blit(src, into);
-        return into;
-    }
     public static Texture2D IntoTex(this RenderTexture rt) {
         Texture2D tex = new Texture2D(rt.width, rt.height, rt.graphicsFormat, 
             TextureCreationFlags.None);

@@ -6,16 +6,17 @@ The engine uses indirect mesh rendering for simple bullets. This disables some U
 
 Here are the cameras, their culling layers, and the primary sorting layers (ordered) they use. Note that sorting layers are not enforced, you can arbitrarily change sorting layer on SpriteRenderer.
 
-| Camera             | Culling Mask                         | Sorting Layers                   | Notes                                                        |
-| ------------------ | ------------------------------------ | -------------------------------- | ------------------------------------------------------------ |
-| Main Camera        | None                                 |                                  | This is here to allow other cameras to screw around without stepping on Unity rules about Camera.main. |
-| Wall Camera        | Wall                                 | Background, Walls, FX, UI        | Ground layer + Depth clear                                   |
-| Low Direct-Render  | LowDirectRender                      |                                  | Player simple bullets                                        |
-| Middle Camera      | Player, LowProjectile, LowEffects    | Player, PlayerHitbox, Projectile |                                                              |
-| High Direct-Render | HighDirectRender                     |                                  | Enemy simple bullets                                         |
-| Top Camera         | TransparentFX, HighProjectile, Enemy | Enemy, Foreground, FX            |                                                              |
-| 3D Camera          | 3DEffects                            | Any                              | 3D effects like boss cutins                                  |
-| UI Camera          | UI                                   | UI                               | UI                                                           |
+| Camera               | Culling Mask                         | Sorting Layers                   | Notes                                                        |
+| -------------------- | ------------------------------------ | -------------------------------- | ------------------------------------------------------------ |
+| Main Camera          |                                      |                                  | This is here to allow other cameras to screw around without stepping on Unity rules about Camera.main. |
+| Wall Camera          | Wall                                 | Background, Walls, FX, UI        | Ground layer + Depth clear                                   |
+| Low Direct-Render    | LowDirectRender                      |                                  | Player simple bullets                                        |
+| Middle Camera        | Player, LowProjectile, LowEffects    | Player, PlayerHitbox, Projectile |                                                              |
+| High Direct-Render   | HighDirectRender                     |                                  | Enemy simple bullets                                         |
+| Top Camera           | TransparentFX, HighProjectile, Enemy | Enemy, Foreground, FX            |                                                              |
+| 3D Camera            | 3DEffects                            | Any                              | 3D effects like boss cutins                                  |
+| Shader Effect Camera |                                      |                                  | Renders postprocessing effects like Seija's screen flip.     |
+| UI Camera            | UI                                   | UI                               | UI                                                           |
 
 Don't try to order Mesh/Sprites and direct-render stuff on the same camera-- it doesn't seem to work. Direct-render doesn't offer control over the sorting layer. 
 

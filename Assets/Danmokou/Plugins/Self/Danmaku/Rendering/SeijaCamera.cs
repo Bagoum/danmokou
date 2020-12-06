@@ -5,8 +5,11 @@ using DMath;
 using UnityEngine;
 
 public class SeijaCamera : RegularUpdater {
-    private Transform tr;
-    private float radius;
+    private static readonly int rotX = Shader.PropertyToID("_RotateX");
+    private static readonly int rotY = Shader.PropertyToID("_RotateY");
+    private static readonly int rotZ = Shader.PropertyToID("_RotateZ");
+    private static readonly int xBound = Shader.PropertyToID("_XBound");
+    
 
     private float targetXRot = 0f;
     private float targetYRot = 0f;
@@ -18,24 +21,14 @@ public class SeijaCamera : RegularUpdater {
     private float lastXRot = 0f;
     private float lastYRot = 0f;
 
-    private static bool distortionAllowed;
-    private static void AllowDistortion() {
-        if (!distortionAllowed) {
-            distortionAllowed = true;
-            Shader.EnableKeyword("ALLOW_DISTORTION");
-        }
-    }
-    private static void DisableDistortion() {
-        if (distortionAllowed) {
-            distortionAllowed = false;
-            Shader.DisableKeyword("ALLOW_DISTORTION");
-        }
-    }
+
+    public Shader seijaShader;
+    private Material seijaMaterial;
+
     private void Awake() {
-        tr = transform;
-        radius = tr.localPosition.z;
-        distortionAllowed = false;
-        AllowDistortion();
+        seijaMaterial = new Material(seijaShader);
+        seijaMaterial.SetFloat(xBound, GameManagement.References.bounds.right + 1);
+        SetLocation(0, 0);
     }
 
     protected override void BindListeners() {
@@ -56,12 +49,10 @@ public class SeijaCamera : RegularUpdater {
             targetXRot = lastXRot = M.Mod(360, targetXRot);
             targetYRot = lastYRot = M.Mod(360, targetYRot);
             SetLocation(targetXRot, targetYRot);
-            if (Math.Max(Math.Abs(targetYRot), Math.Abs(targetXRot)) < 0.00001) AllowDistortion();
         } else {
             lastXRot = Mathf.Lerp(sourceXRot, targetXRot, timeElapsedToTarget / timeToTarget);
             lastYRot = Mathf.Lerp(sourceYRot, targetYRot, timeElapsedToTarget / timeToTarget);
             SetLocation(lastXRot, lastYRot);
-            DisableDistortion();
         }
         timeElapsedToTarget += ETime.FRAME_TIME;
     }
@@ -90,10 +81,11 @@ public class SeijaCamera : RegularUpdater {
     }
 
     private void SetLocation(float xrd, float yrd) {
-        tr.localEulerAngles = new Vector3(xrd, yrd, 0f);
-        var xc = M.CosDeg(xrd);
-        tr.localPosition = radius * new Vector3(xc * M.SinDeg(yrd), -M.SinDeg(xrd), xc * M.CosDeg(yrd));
+        seijaMaterial.SetFloat(rotX, xrd * M.degRad);
+        seijaMaterial.SetFloat(rotY, yrd * M.degRad);
     }
 
-
+    private void OnRenderImage(RenderTexture src, RenderTexture dest) {
+        Graphics.Blit(src, dest, seijaMaterial);
+    }
 }

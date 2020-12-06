@@ -5,7 +5,7 @@ using UnityEngine.Serialization;
 
 
 namespace Danmaku {
-public abstract class FrameAnimBullet : Bullet {
+public class FrameAnimBullet : ColorizableBullet {
 //Inspector-exposed structs cannot be readonly
     [System.Serializable]
     public struct BulletAnimSprite {
@@ -29,7 +29,7 @@ public abstract class FrameAnimBullet : Bullet {
         }
     }
     public BulletAnimSprite[] frames;
-    public override BulletAnimSprite[] Frames => frames;
+    public BulletAnimSprite[] Frames => frames;
     private BulletAnimSprite[] realizedFrames;
     private int currFrame = 0;
     private float frameTime = 0f;
@@ -109,7 +109,7 @@ public abstract class FrameAnimBullet : Bullet {
     /// </summary>
     /// <param name="r"></param>
     protected override void Colorize(Recolor r) {
-        material = r.material;
+        SetMaterial(r.material);
         if (r.sprites != null) {
             for (int ii = 0; ii < r.sprites.Length; ++ii) {
                 realizedFrames[ii] = r.sprites[ii];
@@ -119,7 +119,7 @@ public abstract class FrameAnimBullet : Bullet {
     }
 
     public override void ColorizeOverwrite(Recolor r) {
-        material = r.material;
+        SetMaterial(r.material);
         if (r.sprites != null) {
             for (int ii = 0; ii < r.sprites.Length; ++ii) {
                 realizedFrames[ii].s = r.sprites[ii].s;
@@ -127,6 +127,9 @@ public abstract class FrameAnimBullet : Bullet {
         }
         SetFrame(currFrame);
     }
+
+    protected override void SetSprite(Sprite s) => SetSprite(s, 1f);
+    protected virtual void SetSprite(Sprite s, float yscale) => base.SetSprite(s);
 
 }
 }

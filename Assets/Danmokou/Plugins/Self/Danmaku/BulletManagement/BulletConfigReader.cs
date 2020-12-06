@@ -323,7 +323,7 @@ public partial class BulletManager : RegularUpdater {
                             var variant = $"{p.colorName}{suffix}";
                             var style = $"{x.name}-{variant}";
                             AddComplexStyle(new DeferredFramesRecoloring(x.prefab, fa, ii + offset * nPalettes, 
-                                variant, style, ColorizeSprite(p, mod), p.recolorizable));
+                                variant, style, ColorizeSprite(p, mod), p.recolorizable, p));
                         }
                         if (colors.DarkMod.HasValue) 
                             CreateF(SUFF_DARK, 0, colors.DarkMod.Value);
@@ -364,17 +364,20 @@ public partial class BulletManager : RegularUpdater {
         private readonly Bullet b;
         private readonly bool recolorizable;
         private readonly bool player;
+        [CanBeNull] public readonly Palette palette;
 
         public DeferredFramesRecoloring MakePlayerCopy() => new DeferredFramesRecoloring(recolor.prefab, b, 
-            renderPriorityOffset + FAB_PLAYER_RENDER_OFFSET, paletteVariant, $"{PLAYERPREFIX}{recolor.style}", creator, recolorizable, true);
+            renderPriorityOffset + FAB_PLAYER_RENDER_OFFSET, paletteVariant, $"{PLAYERPREFIX}{recolor.style}", creator, recolorizable,  palette, true);
         
         public DeferredFramesRecoloring(GameObject prefab, Bullet b, int renderPriorityOffset, string paletteVariant, 
-            string style, [CanBeNull] Func<Sprite, Sprite> creator, bool recolorizable, bool player=false) {
+            string style, [CanBeNull] Func<Sprite, Sprite> creator, bool recolorizable, 
+            [CanBeNull] Palette palette = null, bool player=false) {
             this.b = b;
             this.renderPriorityOffset = renderPriorityOffset;
             this.paletteVariant = paletteVariant;
             this.creator = creator;
             this.recolorizable = recolorizable;
+            this.palette = palette;
             this.player = player;
             if (creator == null) { //Don't recolor
                 //Pass style in as a parameter instead of trying to access recolor.style, which is not yet set
@@ -388,7 +391,8 @@ public partial class BulletManager : RegularUpdater {
 
         public FrameAnimBullet.Recolor GetOrLoadRecolor() {
             if (!loaded) {
-                var frames = b.Frames;
+                var fb = b as FrameAnimBullet;
+                var frames = fb != null ? fb.Frames : new FrameAnimBullet.BulletAnimSprite[0];
                 var sprites = new FrameAnimBullet.BulletAnimSprite[frames.Length];
                 for (int si = 0; si < frames.Length; ++si) {
                     sprites[si] = frames[si];

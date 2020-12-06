@@ -17,6 +17,14 @@ public class GroupDisplayController : DisplayController {
         return new MaterialPropertyBlock();
     }
 
+    public override void SetMaterial(Material mat) {
+        recvSprite.SetMaterial(mat);
+    }
+
+    public override void UpdateStyle(BehaviorEntity.BEHStyleMetadata style) {
+        for (int ii = 0; ii < all.Length; ++ii) all[ii].UpdateStyle(style);
+    }
+
     public override void Hide() {
         for (int ii = 0; ii < all.Length; ++ii) all[ii].Hide();
     }
@@ -28,6 +36,14 @@ public class GroupDisplayController : DisplayController {
     public override void UpdateRender() {
         base.UpdateRender();
         for (int ii = 0; ii < all.Length; ++ii) all[ii].UpdateRender();
+    }
+
+    public override void FaceInDirection(Vector2 dir) {
+        for (int ii = 0; ii < all.Length; ++ii) all[ii].FaceInDirection(dir);
+    }
+
+    public override void SetSprite(Sprite s) {
+        recvSprite.SetSprite(s);
     }
 
     public override void FadeSpriteOpacity(BPY fader01, float over, ICancellee cT, Action done) =>

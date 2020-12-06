@@ -7,14 +7,16 @@ phase 0
 		
 <!> type non `Border of Wave, Particle, Vector, and Curve`
 <!> hpi 2000 0
+<!> photo 4
 <!> root 1 2
 phase 60
 	action block 1
-		async fireball-red/w <> gcr2 60 _ <> {
+		async fireball-red/w <> gcr2 20 _ <> {
 		} gsr2 9 <10> {
 			center
 		} s tprot cx 4
-		seijay -180 2
+		_ 20 seijay -180 5
+		draiko 1 10
 		sync _ <> valueitem
 		
 		

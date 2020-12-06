@@ -285,7 +285,7 @@ SpriteRenderer:
   m_Size: {x: 17.333334, y: 9.6}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 1
+  m_WasSpriteAssigned: 0
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!4 &648575227
@@ -529,6 +529,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e4f76c921a5f398448953167079b8d1f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  uiRenderer: {fileID: 0}
   MainScreenOnlyObjects: {fileID: 0}
   upDownSound: {fileID: 11400000, guid: 0333a90f360fc1f429670fdbcd980092, type: 2}
   leftRightSound: {fileID: 11400000, guid: 1b9f20d147bf4da4dbd1e986d09942b4, type: 2}
@@ -623,6 +624,11 @@ PrefabInstance:
     - target: {fileID: 6446556431983923315, guid: fef64f83245e2b448a27bd388149c8f6,
         type: 3}
       propertyPath: autoShiftCamera
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6579660716583503161, guid: fef64f83245e2b448a27bd388149c8f6,
+        type: 3}
+      propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []

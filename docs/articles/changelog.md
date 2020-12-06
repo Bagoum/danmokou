@@ -8,9 +8,14 @@ To get the newest version from git, run:
 
 `git submodule update` (if you have made modifications to the submodules, you will need to `pull --rebase` them individually)
 
-# [Unreleased] v5.2.0 (target: 2020/12/25)
+# [Unreleased] v5.3.0 (target: 2020/12/25)
 
 - Player team switching
+
+# v5.2.0 (2020/12/06)
+
+- Improvements to Seija-style screen flipping/rotation
+- Support for arbitrary "complex" bullets (gameobjects subclassing Bullet). See the Moon bullet type, which features a particle trail
 
 # v5.1.0 (2020/12/03)
 

@@ -37,14 +37,14 @@ public class LevelController : BehaviorEntity {
     protected override void Awake() {
         DefaultSuicideStyle = stage?.DefaultSuicideStyle;
         behaviorScript = null;
+        base.Awake();
 #if UNITY_EDITOR
         if (SceneIntermediary.IsFirstScene && wip_stage != null) {
             Log.Unity("Running default level controller script under editor first-scene conditions");
             //Only run the default stage under editor testing conditions
-            behaviorScript = wip_stage.stateMachine;
+            RunSMFromScript(wip_stage.stateMachine);
         }
 #endif
-        base.Awake();
     }
 
     protected override void BindListeners() {

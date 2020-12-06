@@ -55,10 +55,10 @@ MonoBehaviour:
     CollisionActiveOnInit: 1
     destructible: 0
     grazeEveryFrames: 30
+    allowGraze: 1
   displayer: {fileID: 0}
   material: {fileID: 2100000, guid: 5458891e477bea5438b857b92a28ba0c, type: 2}
   renderPriority: 1200
-  sprite: {fileID: 0}
   fadeInTime: 0
   cycleSpeed: 0
   renderMode: 0
@@ -101,8 +101,6 @@ MonoBehaviour:
     lineRadius: 0.012
     headCutoffRatio: 0.05
     tailCutoffRatio: 0.05
-    trail: {fileID: 2951577401640358143}
-    trailR: {fileID: 6988617780988102822}
 --- !u!96 &6988617780988102822
 TrailRenderer:
   serializedVersion: 2

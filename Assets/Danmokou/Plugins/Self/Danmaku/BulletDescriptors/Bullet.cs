@@ -26,23 +26,22 @@ public readonly struct PlayerBulletCfg {
     }
 }
 //This is for complex bullets with custom behavior
-public abstract class Bullet : BehaviorEntity {
+public class Bullet : BehaviorEntity {
     [Header("Bullet Config")] 
     private PlayerBulletCfg? playerBullet = null;
     [Tooltip("This will be instantiated once per recoloring, and used for SM material editing.")]
     public Material material;
+
+    protected void SetMaterial(Material newMat) {
+        material = newMat;
+        if (displayer != null) displayer.SetMaterial(material);
+    }
     public int renderPriority;
     private static short rendererIndex = short.MinValue;
     private static readonly HashSet<Bullet> allBullets = new HashSet<Bullet>();
 
     private int defaultLayer;
 
-    [CanBeNull] public Sprite sprite;
-    public virtual FrameAnimBullet.BulletAnimSprite[] Frames =>
-        (sprite == null) ? throw new Exception("Cannot generate frames for null sprite in Bullet") :
-        new[] {new FrameAnimBullet.BulletAnimSprite {s = sprite}};
-    
-    
     public float fadeInTime;
     public float cycleSpeed;
     public RenderMode renderMode;
@@ -74,7 +73,7 @@ public abstract class Bullet : BehaviorEntity {
         allBullets.Add(this);
     }
 
-    protected void Initialize([CanBeNull] BEHStyleMetadata style, RealizedBehOptions options, [CanBeNull] BehaviorEntity parent, Velocity _velocity, int firingIndex, uint bpiid, SOPlayerHitbox _target, out int layer) {
+    public virtual void Initialize([CanBeNull] BEHStyleMetadata style, RealizedBehOptions options, [CanBeNull] BehaviorEntity parent, Velocity _velocity, int firingIndex, uint bpiid, SOPlayerHitbox _target, out int layer) {
         base.Initialize(style, _velocity, options.smr, firingIndex, bpiid, parent, options: options);
         gameObject.layer = layer = options.layer ?? defaultLayer;
         collisionTarget = _target;
@@ -98,16 +97,6 @@ public abstract class Bullet : BehaviorEntity {
             throw new Exception("Some bullets remain after clear: " + allBullets.Count);
         }
     }
-    
-    protected virtual void Colorize(FrameAnimBullet.Recolor r) {
-        if (r.sprites == null) return;
-        material = r.material;
-        SetSprite(r.sprites[0].s);
-    }
-
-    public virtual void ColorizeOverwrite(FrameAnimBullet.Recolor r) => Colorize(r);
-
-    protected abstract void SetSprite(Sprite s, float yscale = 1f);
     
 
 #if UNITY_EDITOR

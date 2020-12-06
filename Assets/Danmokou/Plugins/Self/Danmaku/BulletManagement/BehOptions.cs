@@ -56,6 +56,13 @@ public class BehOption {
     /// <br/> WARNING: This is a rendering function. Do not use `rand` (`brand` ok), or else replays will desync.
     /// </summary>
     public static BehOption Recolor(GCXU<TP4> black, GCXU<TP4> white) => new RecolorProp(black, white);
+
+    /// <summary>
+    /// Rotate the BEH sprite.
+    /// Not supported on pathers/lasers.
+    /// Does not affect collision.
+    /// </summary>
+    public static BehOption Rotate(GCXU<BPY> rotator) => new RotateProp(rotator);
     
     /// <summary>
     /// Every frame, the entity will check the condition and destroy itself if it is true.
@@ -102,6 +109,9 @@ public class BehOption {
     public class HueShiftProp : ValueProp<GCXU<BPY>> {
         public HueShiftProp(GCXU<BPY> f) : base(f) { }
     }
+    public class RotateProp : ValueProp<GCXU<BPY>> {
+        public RotateProp(GCXU<BPY> f) : base(f) { }
+    }
     public class RecolorProp : BehOption {
         public readonly GCXU<TP4> black;
         public readonly GCXU<TP4> white;
@@ -135,6 +145,7 @@ public readonly struct RealizedBehOptions {
     public readonly int? layer;
     public readonly ItemDrops? drops;
     [CanBeNull] public readonly BPY hueShift;
+    [CanBeNull] public readonly BPY rotator;
     public readonly (TP4 black, TP4 white)? recolor;
     [CanBeNull] public readonly Pred delete;
     public readonly PlayerBulletCfg? playerBullet;
@@ -147,6 +158,7 @@ public readonly struct RealizedBehOptions {
         layer = opts.layer;
         drops = opts.drops;
         hueShift = opts.hueShift?.Add(gcx, bpiid);
+        rotator = opts.rotator?.Add(gcx, bpiid);
         if (opts.recolor.Try(out var rc)) {
             recolor = (rc.black.Add(gcx, bpiid), rc.white.Add(gcx, bpiid));
         } else recolor = null;
@@ -163,6 +175,7 @@ public readonly struct RealizedBehOptions {
         drops = null;
         hueShift = null; //handled by laser renderer
         recolor = null; //likewise
+        rotator = null; //not enabled on lasers
         this.delete = rlo.delete;
         playerBullet = rlo.playerBullet;
     }
@@ -177,6 +190,7 @@ public class BehOptions {
     public readonly int? layer = null;
     public readonly ItemDrops? drops = null;
     public readonly GCXU<BPY>? hueShift;
+    public readonly GCXU<BPY>? rotator;
     public readonly (GCXU<TP4> black, GCXU<TP4> white)? recolor;
     public readonly PlayerBulletCfg? playerBullet;
     [CanBeNull] private readonly string id = null;
@@ -193,6 +207,7 @@ public class BehOptions {
             else if (p is LayerProp lp) layer = lp.value.Int();
             else if (p is ItemsProp ip) drops = ip.value;
             else if (p is HueShiftProp hsp) hueShift = hsp.value;
+            else if (p is RotateProp rotp) rotator = rotp.value;
             else if (p is RecolorProp rcp) recolor = (rcp.black, rcp.white);
             else if (p is DeleteProp dp) delete = dp.value;
             else if (p is PlayerBulletProp pbp) playerBullet = pbp.value;

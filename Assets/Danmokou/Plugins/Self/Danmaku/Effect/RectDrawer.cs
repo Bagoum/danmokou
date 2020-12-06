@@ -9,8 +9,8 @@ public class RectDrawer : Drawer {
     private BPRV2 locate;
 
     public void Initialize(TP4 colorizer, BPRV2 locater) {
-        base.Initialize(colorizer);
         locate = locater;
+        base.Initialize(colorizer);
     }
 
     protected override V2RV2 GetLocScaleRot() => locate(beh.rBPI);

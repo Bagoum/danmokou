@@ -11,7 +11,7 @@
         Cull Off
         Lighting Off
         ZWrite Off
-        Blend OneMinusDstColor OneMinusSrcAlpha
+        Blend OneMinusDstColor OneMinusSrcAlpha, SrcAlpha OneMinusSrcAlpha
 
         Pass {
             CGPROGRAM

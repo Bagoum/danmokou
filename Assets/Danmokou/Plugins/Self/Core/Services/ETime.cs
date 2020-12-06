@@ -29,6 +29,14 @@ public interface IRegularUpdater {
     /// and has access to the Unity thread context.
     /// </summary>
     void RegularUpdate();
+
+    /// <summary>
+    /// This function is called at the *end* of the engine frame that an object was registered
+    /// or re-registered for regular updates.
+    /// In the standard case, this means that it is called on the same frame as Awake, but after all Awake calls.
+    /// Works with pooled objects (will be called after ResetV). Similar to Unity's Start.
+    /// </summary>
+    void FirstFrame();
     /// <summary>
     /// Updater priority. Lower priority = goes first. Note that order is not guaranteed during
     /// the parallel update section.
@@ -166,13 +174,13 @@ public class ETime : MonoBehaviour {
                 LastUpdateForScreen = noSlowDT <= FRAME_BOUNDARY;
                 GameStateManager.CheckForStateUpdates();
                 if (GameStateManager.PendingChange) continue;
-                FlushUpdaterAdds();
                 
                 for (int ii = 0; ii < updaters.Count; ++ii) {
                     DeletionMarker<IRegularUpdater> updater = updaters.arr[ii];
                     if (!updater.markedForDeletion && updater.obj.UpdateDuringPause) updater.obj.RegularUpdate();
                 }
                 updaters.Compact();
+                FlushUpdaterAdds();
                 FirstUpdateForScreen = false;
             }
             noSlowDT = 0;
@@ -188,8 +196,6 @@ public class ETime : MonoBehaviour {
                 GameStateManager.CheckForStateUpdates();
                 if (GameStateManager.PendingChange) continue;
                 StartOfFrameInvokes();
-                //Note: The updaters array is only modified by this command. 
-                FlushUpdaterAdds();
                 //Parallelize updates if there are many. Note that this allocates ~2kb
                 if (updaters.Count < PARALLELCUTOFF) {
                     for (int ii = 0; ii < updaters.Count; ++ii) {
@@ -202,6 +208,8 @@ public class ETime : MonoBehaviour {
                     if (!updater.markedForDeletion) updater.obj.RegularUpdate();
                 }
                 updaters.Compact();
+                //Note: The updaters array is only modified by this command. 
+                FlushUpdaterAdds();
                 EndOfFrameInvokes();
                 FrameNumber++;
                 FirstUpdateForScreen = false;
@@ -256,7 +264,9 @@ public class ETime : MonoBehaviour {
 
     private static void FlushUpdaterAdds() {
         while (updaterAddQueue.Count > 0) {
-            updaters.AddPriority(updaterAddQueue.Dequeue());
+            var dm = updaterAddQueue.Dequeue();
+            dm.obj.FirstFrame();
+            updaters.AddPriority(dm);
         }
     }
     public static DeletionMarker<IRegularUpdater> RegisterRegularUpdater(IRegularUpdater iru) {
@@ -305,6 +315,8 @@ public class ETime : MonoBehaviour {
         public void RegularUpdate() {
             if (enabled) frames += multiplier;
         }
+        
+        public void FirstFrame() { }
 
         private static readonly Dictionary<string, Timer> timerMap = new Dictionary<string, Timer>();
         //SM-viewable functions
