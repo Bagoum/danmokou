@@ -1,16 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using Core;
-using DMath;
+using DMK.Core;
 using NUnit.Framework;
-using SM;
+using DMK.SM;
 using static NUnit.Framework.Assert;
-using static DMath.Parser;
-using static Tests.TAssert;
-using static Core.Events;
-using static Danmaku.Enums;
 
-namespace Tests {
+namespace DMK.Testing {
 
 public static class TestSMAnalysis {
     [Test]

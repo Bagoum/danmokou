@@ -17,7 +17,7 @@ The standard method is via the `ease` and `eased` functions. These lerp **into**
 
 **Note that these two functions asymptote towards the target function**. They do **not** return a 0-1 value.
 
-There is also the generic easer `smooth` which you should use. Like `ease`, it allows using the RemoteEasing library. However, it only takes a controller in the range 0-1 and returns `E(c(t))`, ie. **it is a distorted identity function**. You can probably write `ease TYPE PER FUNC` as `FUNC(* PER (smooth TYPE / t PER))`.
+There is also the generic easer `smooth` which you should use. However, it only takes a controller in the range 0-1 and returns `E(c(t))`, ie. **it is a distorted identity function**. You can write `ease TYPE PER FUNC` as `FUNC(* PER (smooth TYPE / t PER))`, but `ease` also applies clamping. The formula for `eased` is complicated and involves derivatives.
 
 There is a variant E0m10 that allows designating a midpoint as the first argument. Since the extra argument cannot be handled generically, these are not incorporated into the Easing library, but the functionality is fundamentally similar to `smooth`. 
 

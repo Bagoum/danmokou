@@ -1,6 +1,6 @@
 pattern { }
 phase 0
-	action block 0
+	paction 0
 		position 1 0
 		bullet-control persist empty savev2 { myloc p loc } _
 		bullet-control persist empty savef { mydir p dir } _

@@ -1,16 +1,16 @@
 # What is Danmokou?
 
-Welcome to the website for **Danmokou** (DMK), a free and open source bullet hell engine built in Unity. See the [interactive demo](https://dmk.bagoum.com/demo)!
+Welcome to the website for **Danmokou** (DMK), a free and open source 2D bullet hell engine built in Unity. See the [interactive demo](https://dmk.bagoum.com/demo)!
 
 DMK allows you to efficiently create games that look something like this:
 
-![image1](../images/Unity_voPATAKULN.jpg)
+![image1](../images/Unity_MvNemqYyDO.jpg)
 
 (Screenshot from [Spirits in Memetic Paradise](https://www.bulletforge.org/u/bagoum/p/dong-fang-yin-yang-zang-spirits-in-memetic-paradise))
 
 ![Unity_dTItUZvSOf](../images/Unity_dTItUZvSOf.jpg)
 
-(Screenshot from [Fantastic Poetry Festival](https://bagoum.itch.io/fantastic-poetry-festival) with the secret photo-capable build)
+(Screenshot from [Fantastic Poetry Festival](https://bagoum.itch.io/fantastic-poetry-festival))
 
 ![Unity_cPqgj6VYwv](../images/Unity_cPqgj6VYwv.jpg)
 

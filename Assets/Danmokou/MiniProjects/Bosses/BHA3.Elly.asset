@@ -1,0 +1,51 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9a92301f86b4dd690557658c7243e8b, type: 3}
+  m_Name: BHA3.Elly
+  m_EditorClassIdentifier: 
+  boss: {fileID: 6003014192476353498, guid: 43d5da5eb5b153e4087eb90e97832a00, type: 3}
+  BossPracticeName:
+    en: Elly
+    jp: "\u30A8\u30EA\u30FC"
+    _showEnOnly: 0
+  challengeNameOverride:
+    en: 
+    jp: 
+    _showEnOnly: 0
+  replayNameOverride:
+    en: 
+    jp: 
+    _showEnOnly: 0
+  bottomTrackerNameOverride:
+    en: 
+    jp: 
+    _showEnOnly: 0
+  stateMachine: {fileID: 4900000, guid: 8a8b7bebc2d2e424eb9fd24d37195c29, type: 3}
+  key: bha3.elly
+  colors: {fileID: 11400000, guid: 4ef043de4d4ef5747aa9eb445e27538a, type: 2}
+  cardRotator: 
+  spellRotator: 
+  profile:
+    leftSidebar: {fileID: 2800000, guid: f06053060160e89408a7e2dbd901150e, type: 3}
+    rightSidebar: {fileID: 2800000, guid: 9da19099bed82614abae81e826db53d4, type: 3}
+  defaultNonBG: {fileID: 5180723301924424041, guid: ddaded76ccac01d46b1e0de9b3cd2b53,
+    type: 3}
+  defaultSpellBG: {fileID: 5180723301924424041, guid: 7111b51df44de5b4fbde84d042b2f9a4,
+    type: 3}
+  defaultIntoSpellTransition: {fileID: 11400000, guid: 9b0abf82e07299741a4d64ecd57ff7e6,
+    type: 2}
+  defaultIntoNonTransition: {fileID: 11400000, guid: 23d9a9fbcd555004c9905acab3bc372a,
+    type: 2}
+  bossCutin: {fileID: 0}
+  spellCutins:
+  - {fileID: 160725723660692450, guid: 04d25d6137e1da540a5f7e54e179e226, type: 3}
+  - {fileID: 753286342040255458, guid: c07b3766ad0a6c446bf969a77ea905e6, type: 3}

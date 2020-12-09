@@ -1,6 +1,6 @@
 pattern { }
 phase 0
-	action block 0
+	paction 0
         position 0 0
 		shift-phase-to 2
 		
@@ -45,7 +45,7 @@ phase 0
 		$show(noop, noop)
 ##with more concentration at ends
 phase 0
-    action block 0
+    paction 0
 		$show(mutateang	smoothloopr io-sine (/ 360 &sides) [&rv2].a,
 					mutateang	smoothloopr io-sine (/ 720 &sides) [&rv2].a)
         

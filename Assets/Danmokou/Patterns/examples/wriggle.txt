@@ -1,6 +1,6 @@
 pattern { }
 phase 0
-	action block 0
+	paction 0
 		position 0 0
 		sync gdlaser-*/ <> gsr2c 6 {
 			color { red black }

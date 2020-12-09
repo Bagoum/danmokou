@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.Serialization;
 
+namespace DMK.Scriptables {
 [CreateAssetMenu(menuName = "SFXConfig")]
 public class SFXConfig : ScriptableObject {
     public string defaultName;
@@ -27,4 +28,5 @@ public class SFXConfig : ScriptableObject {
         /// </summary>
         PLAYER_FIRE_HIT = 1
     }
+}
 }

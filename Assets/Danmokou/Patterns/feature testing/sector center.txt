@@ -1,10 +1,10 @@
 pattern { }
 phase 0
-	action block 0
+	paction 0
 		shift-phase-to 1
 
 phase 0
-    action block 0
+    paction 0
         position 0 1
         bullet arrow-teal/b <1;:> gcr2 24 5 <50> {
 		} gsrf 5 (rot
@@ -21,7 +21,7 @@ phase 0
             
 			
 phase 0
-    action block 0
+    paction 0
         position 0 1
         bullet arrow-teal/b <1;:> gcr2 24 5 <50> {
 		} gsr2 5 <30> {

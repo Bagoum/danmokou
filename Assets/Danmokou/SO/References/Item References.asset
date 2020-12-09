@@ -17,6 +17,8 @@ MonoBehaviour:
   lifeItem: {fileID: 359774600689030096, guid: 434a5ca1d0d99c6439e6da4390e24d0b, type: 3}
   valueItem: {fileID: 359774600689030096, guid: dd21390ee5ef15d4e9cd7d412de540ac,
     type: 3}
+  smallValueItem: {fileID: 7144836272956996225, guid: d4d2e1bac8faf7d4b88b827f6ba176b9,
+    type: 3}
   pointppItem: {fileID: 359774600689030096, guid: 89bc37c16393dd24fb0ea699aba30d64,
     type: 3}
   powerItem: {fileID: 359774600689030096, guid: 3ccbef6bcff3c804184f4debe805e01b,

@@ -1,16 +1,16 @@
 pattern { }
 phase 0
-	action block 0
+	paction 0
 		@ { nl nr nu nd }
 			cull
 		summon inode <> nl <> null null
 		summon inode <> nr <> null null
 		summon inode <> nu <> null null
 		summon inode <> nd <> null null
-	action block 0.05
+	paction 0.05
 		shift-phase-to 1
 phase 0
-	action block 0
+	paction 0
 		position 0 0.5
 		timer restart phaser
 		pool-control gem-red/ allowcull false
@@ -39,7 +39,7 @@ phase 0
 				cx -1.5
 				cy -1.5
 		bullet-control once gem-red/ cull | > abs x 16 > abs y 12
-	action block 0.1
+	paction 0.1
 		bullet-control persist gem-red/ dx -32 > x 16
 		bullet-control persist gem-red/ dx 32 < x -16
 		bullet-control persist gem-red/ dy -24 > y 12

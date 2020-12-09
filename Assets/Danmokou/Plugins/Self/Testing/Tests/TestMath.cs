@@ -1,17 +1,12 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using UnityEngine;
+﻿using UnityEngine;
 using NUnit.Framework;
-using UnityEngine.TestTools;
-using DMath;
-using static DMath.ColorHelpers;
-using static Tests.TAssert;
+using DMK.DMath;
+using static DMK.DMath.ColorHelpers;
+using static DMK.Testing.TAssert;
 
-namespace Tests {
+namespace DMK.Testing {
 
-    public static class TestMath {
+public static class TestMath {
         [Test]
         public static void TestAngles() {
             float or21 = 1f / 2f;

@@ -1,20 +1,23 @@
 ﻿using System;
-using DMath;
+using DMK.Core;
+using DMK.DMath;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 using UnityEngine.Profiling;
-using static DMath.ColorHelpers;
 
+
+namespace DMK.Scriptables {
 public abstract class ColorMap : ScriptableObject {
     protected virtual void PrepareColors() { }
     protected const byte zero = 0; //lol
+
     public Sprite Recolor(Sprite baseSprite) {
         PrepareColors();
         Texture2D tex = Instantiate(baseSprite.texture);
         NativeArray<Color32> pixels_n = tex.GetRawTextureData<Color32>();
         unsafe {
-            Color32* pixels = (Color32*)pixels_n.GetUnsafePtr();
+            Color32* pixels = (Color32*) pixels_n.GetUnsafePtr();
             Map(pixels, pixels_n.Length);
         }
         tex.Apply();
@@ -31,12 +34,12 @@ public abstract class ColorMap : ScriptableObject {
 [CreateAssetMenu(menuName = "Colors/GradientMap")]
 public class GradientMap : ColorMap {
     public Gradient gradient;
-    [NonSerialized]
-    private IGradient setGradient;
+    [NonSerialized] private IGradient setGradient;
 
-    private void SetFromPalette(IGradient p, GradientModifier gt, RenderMode render) => setGradient = p.Modify(gt, render);
+    private void SetFromPalette(IGradient p, GradientModifier gt, DRenderMode render) =>
+        setGradient = p.Modify(gt, render);
 
-    public Sprite Recolor(IGradient p, GradientModifier gt, RenderMode render, Sprite s) {
+    public Sprite Recolor(IGradient p, GradientModifier gt, DRenderMode render, Sprite s) {
         SetFromPalette(p, gt, render);
         return Recolor(s);
     }
@@ -53,5 +56,6 @@ public class GradientMap : ColorMap {
             }
         }
     }
+}
 }
 

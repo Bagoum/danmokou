@@ -1,23 +1,23 @@
 ﻿using System;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
-using DMath;
-using Core;
-using Danmaku;
+using DMK.Core;
+using DMK.Danmaku;
+using DMK.Dialogue;
+using DMK.DMath;
 using JetBrains.Annotations;
 using Microsoft.FSharp.Collections;
 using Microsoft.FSharp.Core;
 using static Common.Types;
 using static FParser.AAParser;
-using TU = FParser.AAParser.TextUnit<float, Dialoguer.EventType, string>;
-using TC = FParser.AAParser.TextCommand<float, Dialoguer.EventType, string>;
-using C = FParser.AAParser.Config<float, Dialoguer.EventType, string>;
-using AR = FParser.AAParser.ArgRef<float, Dialoguer.EventType, string>;
-using QAR = Microsoft.FSharp.Core.FSharpOption<FParser.AAParser.ArgRef<float, Dialoguer.EventType, string>>;
-using static FSInterop;
+using TU = FParser.AAParser.TextUnit<float, DMK.Dialogue.Dialoguer.EventType, string>;
+using TC = FParser.AAParser.TextCommand<float, DMK.Dialogue.Dialoguer.EventType, string>;
+using C = FParser.AAParser.Config<float, DMK.Dialogue.Dialoguer.EventType, string>;
+using AR = FParser.AAParser.ArgRef<float, DMK.Dialogue.Dialoguer.EventType, string>;
+using QAR = Microsoft.FSharp.Core.FSharpOption<FParser.AAParser.ArgRef<float, DMK.Dialogue.Dialoguer.EventType, string>>;
+using static DMK.Core.FSInterop;
 
-namespace SM {
+namespace DMK.SM {
 public static class TSMReflection {
     public static TaskPattern Re(StateMachine sm) => sm.Start;
     public static TaskPattern Wait(Synchronizer synchr) => SMReflection.Wait(synchr);

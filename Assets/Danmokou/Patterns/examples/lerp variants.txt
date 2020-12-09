@@ -1,6 +1,6 @@
 pattern { }
 phase 10
-    action block 0
+    paction 0
         position 0 2
             bullet ellipse-purple/w <1;:180> cre 20 _ <;:5> s tp-rot rotatelerprate 45 cx 2 cy 1
             bullet ellipse-red/w <1.01;:180> cre 20 _ <;:5> s tp-rot rotatelerppercent 0.5 cx 2 cy 1

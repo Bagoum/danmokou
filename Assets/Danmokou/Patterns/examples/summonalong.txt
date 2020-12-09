@@ -1,31 +1,31 @@
 pattern { }
 phase 0
-	action block 0
+	paction 0
         position 0 0
 		shift-phase-to 4
 phase 0
-    action block 0
+    paction 0
 		##Original: the entire thing is rotated 30 deg
 		async gem-red/w <2;:> gir2 0 4 <90> { } gcr {
 			wt	0.5 100
 			saoffset	o 30 pxy(-0.01 * t, sqrt(t / 20) * sine(60, 1, t))
 		} s(rvelocity(lerpt(1, 2, zero, cx(2))))
 phase 0
-    action block 0
+    paction 0
 		##Bank-original: the spawn is not rotated, but the movement is rotated 30 deg
 		async gem-blue/w <2;:> gir2 0 4 <90> { } gcr {
 			wt	0.5 100
 			saoffset	bo 30 pxy(-0.01 * t, sqrt(t / 20) * sine(60, 1, t))
 		} s(rvelocity(lerpt(1, 2, zero, cx(2))))
 phase 0
-    action block 0
+    paction 0
 		##Bank-relative: the spawn is not rotated, but the movement is relative to the origin and rotated 30 deg
 		async gem-yellow/w <2;:> gir2 0 4 <90> { } gcr {
 			wt	0.5 100
 			saoffset	br 30 pxy(-0.01 * t, sqrt(t / 20) * sine(60, 1, t))
 		} s(rvelocity(lerpt(1, 2, zero, cx(2))))
 phase 0
-    action block 0
+    paction 0
 		##Bank-tangent: the spawn is not rotated, but the movement is the tangent rotated by 30 deg.
 		##Note how the pieces move in segments due to the weak x component.
 		async gem-pink/w <3;:> gir2 0 4 <90> { } gcr {

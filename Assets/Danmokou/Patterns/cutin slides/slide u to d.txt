@@ -1,0 +1,8 @@
+saction 0
+	position 0 10
+	move _ :: {
+		t	lssht3 -6 0.5 6 1.5 * 6 t * 0.5 t * 5 t
+	} nroffset pxy
+		0
+		* -3 &t
+	

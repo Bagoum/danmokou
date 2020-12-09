@@ -3,6 +3,6 @@
     <ui:VisualElement class="node">
         <ui:VisualElement name="Selector" class="pointer prefix" />
         <ui:VisualElement name="Checkmark" class="checkmark prefix" />
-        <ui:Label text="one two three日本語" focusable="true" class="text coretext" style="height: 100%; padding-left: 0; padding-right: 0;" />
+        <ui:Label text="one two three日本語" focusable="true" class="text coretext" style="height: 100%; padding-left: 0; padding-right: 0; white-space: nowrap;" />
     </ui:VisualElement>
 </ui:UXML>

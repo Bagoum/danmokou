@@ -1,21 +1,13 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Threading;
 using UnityEngine;
 using NUnit.Framework;
 using Ex = System.Linq.Expressions.Expression;
-using UnityEngine.TestTools;
-using DMath;
-using Danmaku;
-using static ExUtils;
-using static DMath.ExHelpers;
-using static DMath.ExMHelpers;
+using DMK.Expressions;
+using static DMK.Expressions.ExMHelpers;
 using static NUnit.Framework.Assert;
 
-namespace Tests {
+namespace DMK.Testing {
 
 public class ExOptTests {
     

@@ -3,23 +3,33 @@ pattern({
 	##boss jy.yukari
 })
 phase(0)
-	action(block, 0)
-		shift-phase-to(3)
+	paction(0)
+		shift-phase-to(1)
 		
 <!> type(non, `Danmokou Chimera`)
 <!> hp(1000)
-<!> root 0 1.4
 phase(14)
-    action block 0
-		##lifetoscore 2000000
+	paction 0
+		async star-** <> gcrepeat {
+			wait(60)
+			times(_)
+			rv2incr(<5h>)
+            color { purple orange }
+        } gsrepeat {
+			times(72)
+			circle
+            color { /w /b }
+        } simple(rvelocity(cx(2)), {
+			dir(starrotb2())
+		})
 
-			
+///	
 
 <!> type(spell, `Miracle Mima`)
 <!> hp(14000)
 <!> root(0, 1)
 phase(40)
-	action(block, 0)
+	paction(0)
 		async lellipse-*/w <> gcrepeat {
 			wait(3s)
 			times(_)
@@ -46,13 +56,13 @@ phase(40)
 		}))
 		
 phase 0
-	action block 0
+	paction 0
 		position(0, 1)
 		sync(fireball-green/w, <0;0:2;0:0>, simp(rvelocity(cxy(0, -2))))
 
 <!> hp 4000
 phase 0
-	action block 0
+	paction 0
 		position 0 1.5
 ## 1.618 = cos 18 / sin 36
 !!{ rtod 1.618
@@ -116,7 +126,7 @@ lerpmany({
 <!> hp 1000
 <!> photo 40
 phase 0
-	action block 0
+	paction 0
 		position -2 1
 		async amulet-red/ <> gcrepeat {
 			times _
@@ -138,7 +148,7 @@ phase 0
 <!> type non `hello world2`
 <!> hp 4000
 phase 0
-	action block 0
+	paction 0
 		position 0 2
 		move _ nroffset px sine 5 4 t
 		async arrow-red/w <> gcr2 120 _ <> {
@@ -149,7 +159,7 @@ phase 0
 		} pather 2 2 tprot cx 2 { }
 		
 phase 0 
-	action block 0
+	paction 0
 		position 0 1
 		async circle-blue/w <> gcrepeat {
 			wait(30)
@@ -164,7 +174,7 @@ phase 0
 		
 
 phase 0
-	action block 0
+	paction 0
 		position 0 0
 		async arrow-*/w <> gcrepeat {
 			wait(16)
@@ -177,7 +187,7 @@ phase 0
 		} s(rvelocity(cx(1.5)))
 
 phase 0
-	action block 0
+	paction 0
 		position 0 2
 		async _ <> gcr {
 			wait(30)
@@ -192,7 +202,7 @@ phase 0
 		} s(rvelocity(cx(2)))
 
 phase 0
-	action block 0
+	paction 0
 		position 0 2
 		async circle-* <> gcr2 30 _ <> {
 			color { */w */b }

@@ -5,19 +5,18 @@
         {
           "src": "../Assets/Danmokou/Plugins/Self",
           "files": [
-            "Danmaku/Entities/Beh/**.cs",
-            "Danmaku/Utils/**.cs",
-            "Core/DataStructures.cs",
+            "Core/Core/DataStructures.cs",
+            "Core/Core/Enums.cs",
+            "Core/Core/Attributes.cs",
+            "Core/Core/Events.cs",
+            "Danmaku/Behavior/BEHControls.cs",
+            "Danmaku/Core/Enums.cs",
+			"Danmaku/Danmaku/Controls/**.cs",
+			"Danmaku/Danmaku/Options/**.cs",
+			"Danmaku/Danmaku/Patterns/**.cs",
+			"Danmaku/Math/**.cs",
             "Danmaku/StateMachines/**.cs",
-            "Danmaku/BulletDescriptors/**.cs",
-            "Danmaku/BulletManagement/**.cs",
-			"Danmaku/Patterning/**.cs",
-            "Danmaku/Movement.cs",
-			"Danmaku/Enums.cs",
-            "Danmaku/Rendering/CurvedTileRenderLaser.cs",
-			"Core/Services/Events.cs",
-			"Core/Enums.cs",
-			"Core/Attributes.cs"
+            "Danmaku/Graphics/CurvedTileRenderLaser.cs"
           ]
         }
       ],

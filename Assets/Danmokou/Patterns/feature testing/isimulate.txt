@@ -1,6 +1,6 @@
 pattern { }
 phase 0
-    action block 0
+    paction 0
         position 0 0
         bullet ellipse-green/ <1;:> isimulate 240 cre 60 6 <;:4> s tprot
 			switch 1.5 eased out-sine 1
@@ -15,7 +15,7 @@ phase 0
 						0
 				cx 3
 			zero
-	action block 0
+	paction 0
 		bullet sun-red/w <> conce s tprot cx 0
 ///
         bullet ellipse-purple/ <1;:> isimulate 0 cre 2s 2 <;:90> s offset cm 1 0 zero

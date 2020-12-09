@@ -1,6 +1,6 @@
 pattern { }
 phase 0
-	action block 0
+	paction 0
         position 0 0
 		async scircle-purple/w <1;:> gcr { } gsr { t 5 rpp <25> } s tprot cx 1
 		bullet-control-sm persist scircle-purple/w onlyonce > mag loc 1

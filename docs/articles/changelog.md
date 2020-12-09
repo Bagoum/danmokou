@@ -8,9 +8,32 @@ To get the newest version from git, run:
 
 `git submodule update` (if you have made modifications to the submodules, you will need to `pull --rebase` them individually)
 
-# [Unreleased] v5.3.0 (target: 2020/12/25)
+**DMK is only supported in version 2020.1.17**. There is currently a bug in 2020.2 and 2021.1b that cause any build containing both TextMeshPro and FSharp.dll to crash in all builds. 
+
+# Future
 
 - Player team switching
+
+# v6.0.0 (2021/01/23)
+
+- **Breaking changes:**
+  - The `action` SM has been removed. Instead, use `paction`, which is always blocking and takes only one argument, which is the delay. `action block X` = `paction X`. 
+  - The special SM `wait`, which would be used under summons when they had no code to run but still needed to be auto-cleaned at the end of the phase, has been replaced by `stall`. This is due to the naming contradiction with the SM command `wait(time)`. 
+- **Pending issues:**
+  - There is a bug in the current version of UIToolkit that makes Chinese/Japanese/Korean text break when used on a label with text-wrap. To avoid this, the text wrapping on the UINode UXML file has been disabled for now. When this bug is fixed, this will be reverted.
+- [Fantastic Poetry Festival v2](https://bagoum.itch.io/fantastic-poetry-festival) and [Spirits in Memetic Paradise v3.2.0](https://bagoum.itch.io/spirits-in-memetic-paradise) released!
+- Replay size compression
+- Minor bugfixes around BehaviorEntity event subscription
+- Lorelei-style visual impairment effect (see SyncPattern `Darkness`)
+- Bullet tinting functionality for lasers/pathers (via `tint` option) and simple bullets (via `tint` pool control)
+- Fixed bugs in various edge cases around GXRepeat usage and non-blocking SMs
+- Rearchitectured ease functions to no longer be stringly typed via `[LookupMethod]` attribute support in reflection libraries
+- Significant improvements to namespacing and script file organization
+- Fixed argument ordering oddities for StateMachine reflection (no changes to script code required)
+- Consistent naming scheme for "Engine" (the underlying libraries of DMK), "Game" (a full product such as SiMP or FPF), and "Instance" (the act of playing or replaying the game in any of its modes)
+- New default card/spell circles
+- Improved localization support
+  - Localization is doable but engine support is not feature-complete. Let me know about your feature requirements if you're planning to localize your game.
 
 # v5.2.0 (2020/12/06)
 

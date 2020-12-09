@@ -2,11 +2,13 @@
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
+using DMK.Behavior;
+using DMK.Core;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
 
-namespace Tests {
+namespace DMK.Testing {
 public class Coroutines {
     private static IEnumerator NestLoC(ICancellee cT) {
         if (cT.Cancelled) yield break;

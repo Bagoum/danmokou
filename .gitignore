@@ -1,16 +1,14 @@
 .vs
 .idea
 Library/*
+UserSettings/*
 Logs
 Temp
 obj
 bin
 Builds
-Design
-ScriptDrafts
 DMK_Saves
 DMK_Logs
-Source
 .psd
 Assets/Danmokou/Sprites/.py/SpriteUtils/img
 
@@ -24,7 +22,6 @@ Assets/Danmokou/Sprites/.py/SpriteUtils/img
 
 CodeCoverage
 MemoryCaptures
-Assets/ReferenceOnly
 
 docs/_site
 docs/api

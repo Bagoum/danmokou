@@ -1,12 +1,11 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections;
 using System.Linq;
-using DMath;
-using JetBrains.Annotations;
+using DMK.Core;
+using DMK.DMath;
 using UnityEngine;
-using static Danmaku.CutinHelpers;
+using static DMK.Behavior.Display.CutinHelpers;
 
+namespace DMK.Behavior.Display {
 public class MirrorBreak : CoroutineRegularUpdater {
     private Transform[] children;
     public Transform controller;
@@ -42,7 +41,8 @@ public class MirrorBreak : CoroutineRegularUpdater {
         for (; t < shatterDelay; t += ETime.FRAME_TIME) yield return null;
         foreach (var c in children) {
             RunDroppableRIEnumerator(Rotate(c, RNG.GetV3OffFrame(rotateMin, rotateMax), scaleRotateFor, M.EOutQuad));
-            RunDroppableRIEnumerator(Scale(c, RNG.GetFloatOffFrame(scaleRange.x, scaleRange.y), scaleRotateFor, M.EOutQuad));
+            RunDroppableRIEnumerator(Scale(c, RNG.GetFloatOffFrame(scaleRange.x, scaleRange.y), scaleRotateFor,
+                M.EOutQuad));
             RunDroppableRIEnumerator(Fall(c, RNG.GetFloatOffFrame(fallDelay.x, fallDelay.y), fallAccel));
         }
     }
@@ -56,4 +56,5 @@ public class MirrorBreak : CoroutineRegularUpdater {
             yield return null;
         }
     }
+}
 }

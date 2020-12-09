@@ -1,6 +1,6 @@
 pattern { }
 phase 0
-	action block 0
+	paction 0
 		shift-phase-to 1
 		
 phase 0
@@ -8,7 +8,7 @@ phase 0
 		position 0 0
 		move 2 nroffset px sine 2 1 t
 		move 2 nroffset py sine 2 1 t
-		##anim attack
+		anim attack
 		
         
             

@@ -2,14 +2,17 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+namespace DMK.Scriptables {
 [CreateAssetMenu(menuName = "Data/Boss Color Scheme")]
 public class BossColorScheme : ScriptableObject {
     public Color uiColor;
     public Color uiHPColor;
     public Color cardColorR;
     public Color cardColorG;
-    public Color cardColorB;
+    //Some of these colors are not used by the standard card/spell circles and are therefore hidden.
+    [HideInInspector] public Color cardColorB;
     public Color spellColor1;
-    public Color spellColor2;
-    public Color spellColor3;
+    [HideInInspector] public Color spellColor2;
+    [HideInInspector] public Color spellColor3;
+}
 }

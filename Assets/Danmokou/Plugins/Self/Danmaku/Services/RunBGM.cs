@@ -1,8 +1,9 @@
-﻿using JetBrains.Annotations;
+﻿using DMK.Scriptables;
+using DMK.Services;
+using JetBrains.Annotations;
 using UnityEngine;
 
-namespace Danmaku {
-
+namespace DMK.Services {
 public class RunBGM : MonoBehaviour {
     [CanBeNull] public AudioTrack bgm;
 

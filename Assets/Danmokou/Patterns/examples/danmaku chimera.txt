@@ -1,11 +1,11 @@
 pattern { }
 phase 0
-	action block 0
+	paction 0
 		shift-phase-to 1
 
 phase 40
 !!{ circt 3
-	action block 0
+	paction 0
 		position 0 0.5
 		move _ offset zero pxy sine 8.2 0.5 t 0
 		async keine-purple/w <1;:> gcr {

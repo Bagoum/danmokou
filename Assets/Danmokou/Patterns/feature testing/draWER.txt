@@ -1,11 +1,11 @@
 pattern { }
 phase 0
-	action block 0
+	paction 0
 		shift-phase-to 2
 		
 ## powerup
 phase 0
-    action block 0
+    paction 0
 		position 0 0
 		move _ roffset pxy
 			sine 6 1.5 t
@@ -18,7 +18,7 @@ phase 0
 	
 ## rectangle		
 phase 0
-    action block 0
+    paction 0
 		position 2 0
 		move _ tprot pxy
 			dsine 14 1.5 t

@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using DMK.Core;
+using DMK.DMath;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
 
-namespace Tests {
+namespace DMK.Testing {
 public class DataStructures {
     private readonly struct I {
         public readonly int x;
@@ -14,6 +16,39 @@ public class DataStructures {
             x = _x;
             
         }
+    }
+
+    [Test]
+    public void MultiOppers() {
+        var ml = new List<float>();
+        var m = new MultiMultiplier(100, x => ml.Add(x));
+        var t1 = m.CreateModifier(2);
+        var t2 = m.CreateModifier(3);
+        Assert.AreEqual(m.Value, 600);
+        TAssert.ListEq(ml, new[] { 200f, 600f });
+        t2.TryRevoke();
+        Assert.AreEqual(m.Value, 200);
+        TAssert.ListEq(ml, new[] { 200f, 600f, 200f });
+        var t3 = m.CreateModifier(5);
+        Assert.AreEqual(m.Value, 1000);
+        TAssert.ListEq(ml, new[] { 200f, 600f, 200f, 1000f });
+        m.RevokeAll(MultiMultiplier.Priority.ALL);
+        Assert.AreEqual(m.Value, 100);
+        
+        var al = new List<float>();
+        var a = new MultiAdder(100, x => al.Add(x));
+        var t4 = a.CreateModifier(2);
+        var t5 = a.CreateModifier(3);
+        Assert.AreEqual(a.Value, 105);
+        TAssert.ListEq(al, new[] { 102f, 105f });
+        t4.TryRevoke();
+        Assert.AreEqual(a.Value, 103);
+        TAssert.ListEq(al, new[] { 102f, 105f, 103f });
+        var t6 = a.CreateModifier(5);
+        Assert.AreEqual(a.Value, 108);
+        TAssert.ListEq(al, new[] { 102f, 105f, 103f, 108f });
+        a.RevokeAll(MultiAdder.Priority.ALL);
+        Assert.AreEqual(a.Value, 100);
     }
 
     [Test]

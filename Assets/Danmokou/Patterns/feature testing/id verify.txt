@@ -1,9 +1,9 @@
 pattern { }
 phase 0
-	action block 0
+	paction 0
 		shift-phase-to 1
 phase 0
-    action block 0
+    paction 0
         position 0 0
 		async fireball-green/b <;:> gcr2 4 _ <> { 
 		} sdd starrotb2 tprot rx

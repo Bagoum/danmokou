@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using JetBrains.Annotations;
 using UnityEngine;
 
+namespace DMK.Scriptables {
 /// <summary>
-/// Provides centralized scene information to teleporter objects.
+/// Provides metadata about scenes.
 /// </summary>
 [CreateAssetMenu(menuName = "Data/Scene Configuration")]
 public class SceneConfig : ScriptableObject {
     public string sceneName;
     [CanBeNull] public CameraTransitionConfig transitionIn;
+}
 }

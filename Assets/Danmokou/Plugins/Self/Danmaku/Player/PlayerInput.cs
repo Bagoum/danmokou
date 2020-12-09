@@ -1,17 +1,23 @@
 ﻿using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Linq.Expressions;
-using System.Reflection;
-using Core;
-using DMath;
+using DMK.Behavior;
+using DMK.Behavior.Display;
+using DMK.Behavior.Functions;
+using DMK.Core;
+using DMK.Dialogue;
+using DMK.DMath;
+using DMK.Expressions;
+using DMK.GameInstance;
+using DMK.Graphics;
+using DMK.Scriptables;
+using DMK.Services;
 using JetBrains.Annotations;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.SceneManagement;
-using static Danmaku.LocationService;
+using static DMK.DMath.LocationHelpers;
 
-namespace Danmaku {
+namespace DMK.Player {
 public class PlayerInput : BehaviorEntity {
     public SpriteRenderer ghostSource;
     public SOPlayerHitbox hitbox;
@@ -32,7 +38,7 @@ public class PlayerInput : BehaviorEntity {
     public ShotConfig defaultShot;
 
     private ShotConfig shot;
-    private static Enums.Subshot subshot;
+    private static Subshot subshot;
     [UsedImplicitly]
     //This doesn't change if the player is not using a multishot, as opposed to Campaign.subshot
     public static float SubshotValue => (int) subshot;
@@ -51,7 +57,16 @@ public class PlayerInput : BehaviorEntity {
     public SpriteRenderer[] focusOverlay;
     private const float FreeFocusLerpTime = 0.3f;
     private float freeFocusLerp01 = 0f;
-    
+
+    static PlayerInput() {
+        ResetDisablers();
+    }
+
+    private static void ResetDisablers() {
+        FiringDisabler = new MultiAdder(0, null);
+        BombDisabler = new MultiAdder(0, null);
+        AllControlDisabler = new MultiAdder(0, null);
+    }
     protected override void Awake() {
         base.Awake();
         health = GetComponent<PlayerHP>();
@@ -61,7 +76,7 @@ public class PlayerInput : BehaviorEntity {
         hitboxSprite.enabled = SaveData.s.UnfocusedHitbox;
         meter.enabled = false;
         meter.GetPropertyBlock(meterPB = new MaterialPropertyBlock());
-        meterPB.SetFloat(PropConsts.innerFillRatio, (float)CampaignData.meterUseThreshold);
+        meterPB.SetFloat(PropConsts.innerFillRatio, (float)InstanceData.meterUseThreshold);
         meterPB.SetColor(PropConsts.unfillColor, meterDisplayShadow);
         meterPB.SetColor(PropConsts.fillInnerColor, meterDisplayInner);
         meter.SetPropertyBlock(meterPB);
@@ -72,9 +87,7 @@ public class PlayerInput : BehaviorEntity {
             MarisaAPositions.Clear();
             MarisaAPositions.Add(hitbox.location);
             LoadShot(true);
-            FiringDisableRequests = 0;
-            BombDisableRequests = 0;
-            SMPlayerControlDisable = 0;
+            ResetDisablers();
             RunNextState(PlayerState.NORMAL);
         }
     }
@@ -92,17 +105,17 @@ public class PlayerInput : BehaviorEntity {
         challenge = DependencyInjection.MaybeFind<IChallengeManager>();
     }
 
-    public static int FiringDisableRequests { get; set; } = 0;
-    public static int BombDisableRequests { get; set; } = 0;
-    public static int SMPlayerControlDisable { get; set; } = 0;
-    public static bool PlayerActive => (SMPlayerControlDisable == 0) && !Dialoguer.DialogueActive;
+    public static MultiAdder FiringDisabler { get; private set; }
+    public static MultiAdder BombDisabler { get; private set; }
+    public static MultiAdder AllControlDisabler { get; private set; }
+    public static bool PlayerActive => (AllControlDisabler.Value == 0) && !Dialoguer.DialogueActive;
     public bool AllowPlayerInput => PlayerActive && StateAllowsInput(state);
 
     /// <summary>
     /// Returns true if this object survived, false if it was destroyed.
     /// </summary>
     private bool LoadPlayer() {
-        var p = GameManagement.campaign.Player;
+        var p = GameManagement.instance.Player;
         if (p != null && p != thisPlayer) {
             Log.Unity($"Reconstructing player object from {thisPlayer.key} to {p.key}", level: Log.Level.DEBUG2);
             GameObject.Instantiate(p.prefab, tr.position, Quaternion.identity);
@@ -117,15 +130,15 @@ public class PlayerInput : BehaviorEntity {
         }
     }
     private void LoadShot(bool firstLoad) {
-        if (!firstLoad && (subshot == GameManagement.campaign.Subshot || !shot.isMultiShot)) return;
-        shot = GameManagement.campaign.Shot;
+        if (!firstLoad && (subshot == GameManagement.instance.Subshot || !shot.isMultiShot)) return;
+        shot = GameManagement.instance.Shot;
         if (shot == null) shot = defaultShot;
         if (firstLoad) {
             //Load all the reflection functions now to avoid lag on subshot switch.
             shot.Subshots?.ForEach(s => s.prefab.GetComponentsInChildren<FireOption>().ForEach(fo => fo.Preload()));
         }
         //Note: playerinput.subshot should not change if the shot is not a multishot
-        subshot = GameManagement.campaign.Subshot;
+        subshot = GameManagement.instance.Subshot;
         Log.Unity($"Loading player shot: {shot.key} : sub {subshot.Describe()}", level: Log.Level.DEBUG2);
         if (spawnedShot != null) {
             //This is kind of stupid but it's necessary to ensure that
@@ -146,11 +159,12 @@ public class PlayerInput : BehaviorEntity {
     
     public override int UpdatePriority => UpdatePriorities.PLAYER;
 
-    public bool IsFocus => Restrictions.FocusAllowed && (Restrictions.FocusForced || InputManager.IsFocus);
+    public bool IsFocus =>
+        Restrictions.FocusAllowed && (Restrictions.FocusForced || (InputManager.IsFocus && AllowPlayerInput));
     public bool IsFiring =>
-        InputManager.IsFiring && AllowPlayerInput && FiringDisableRequests == 0;
+        InputManager.IsFiring && AllowPlayerInput && FiringDisabler.Value == 0;
     public bool IsTryingBomb =>
-        InputManager.IsBomb && AllowPlayerInput && BombDisableRequests == 0;
+        InputManager.IsBomb && AllowPlayerInput && BombDisabler.Value == 0;
     public bool IsTryingWitchTime => InputManager.IsMeter && AllowPlayerInput;
 
     #region FiringHelpers
@@ -217,7 +231,8 @@ public class PlayerInput : BehaviorEntity {
     private void MovementUpdate(float dT) {
         bpi.t += dT;
         if (IsTryingBomb && shot.HasBomb && GameManagement.Difficulty.bombsEnabled) {
-            if (deathbombAction == null) PlayerBombs.TryBomb(shot.bomb, this, PlayerBombContext.NORMAL);
+            if (deathbombAction == null) 
+                PlayerBombs.TryBomb(shot.bomb, this, PlayerBombContext.NORMAL);
             else if (PlayerBombs.TryBomb(shot.bomb, this, PlayerBombContext.DEATHBOMB)) {
                 deathbombAction();
                 CloseDeathbombWindow();
@@ -299,22 +314,28 @@ public class PlayerInput : BehaviorEntity {
 
     private static bool StateAllowsInput(PlayerState s) {
         switch (s) {
-            case PlayerState.RESPAWN: return false;
-            default: return true;
+            case PlayerState.RESPAWN:
+                return false;
+            default:
+                return true;
         }
     }
 
     private static bool StateAllowsLocationUpdate(PlayerState s) {
         switch (s) {
-            case PlayerState.RESPAWN: return false;
-            default: return true;
+            case PlayerState.RESPAWN:
+                return false;
+            default:
+                return true;
         }
     }
 
     private static float StateSpeedMultiplier(PlayerState s) {
         switch (s) {
-            case PlayerState.WITCHTIME: return WitchTimeSpeedMultiplier;
-            default: return 1f;
+            case PlayerState.WITCHTIME:
+                return WitchTimeSpeedMultiplier;
+            default:
+                return 1f;
         }
     }
 
@@ -322,8 +343,8 @@ public class PlayerInput : BehaviorEntity {
     private const float RespawnFreezeTime = 0.1f;
     private const float RespawnDisappearTime = 0.5f;
     private const float RespawnMoveTime = 1.5f;
-    private static Vector2 RespawnStartLoc => new Vector2(0, LocationService.Bot - 1f);
-    private static Vector2 RespawnEndLoc => new Vector2(0, LocationService.BotPlayerBound + 1f);
+    private static Vector2 RespawnStartLoc => new Vector2(0, Bot - 1f);
+    private static Vector2 RespawnEndLoc => new Vector2(0, BotPlayerBound + 1f);
     private const float WitchTimeSpeedMultiplier = 1.4f;//2f;
     private const float WitchTimeSlowdown = 0.5f;//0.25f;
     private const float WitchTimeAudioMultiplier = 0.8f;
@@ -333,10 +354,14 @@ public class PlayerInput : BehaviorEntity {
     
     private IEnumerator ResolveState(PlayerState next, ICancellee<PlayerState> canceller) {
         switch (next) {
-            case PlayerState.NORMAL: return StateNormal(canceller);
-            case PlayerState.WITCHTIME: return StateWitchTime(canceller);
-            case PlayerState.RESPAWN: return StateRespawn(canceller);
-            default: throw new Exception($"Unhandled player state: {next}");
+            case PlayerState.NORMAL:
+                return StateNormal(canceller);
+            case PlayerState.WITCHTIME:
+                return StateWitchTime(canceller);
+            case PlayerState.RESPAWN:
+                return StateRespawn(canceller);
+            default:
+                throw new Exception($"Unhandled player state: {next}");
         }
     }
 
@@ -353,12 +378,12 @@ public class PlayerInput : BehaviorEntity {
     }
     //Assumption for state enumerators is that the token is not initially cancelled.
     private IEnumerator StateNormal(ICancellee<PlayerState> cT) {
-        GameManagement.campaign.MeterInUse = false;
+        GameManagement.instance.MeterInUse = false;
         hitbox.Active = true;
         state = PlayerState.NORMAL;
         while (true) {
             if (MaybeCancelState(cT)) yield break;
-            if (IsTryingWitchTime && GameManagement.campaign.TryStartMeter()) {
+            if (IsTryingWitchTime && GameManagement.instance.TryStartMeter()) {
                 RunDroppableRIEnumerator(StateWitchTime(cT));
                 yield break;
             }
@@ -366,7 +391,7 @@ public class PlayerInput : BehaviorEntity {
         }
     }
     private IEnumerator StateRespawn(ICancellee<PlayerState> cT) {
-        GameManagement.campaign.MeterInUse = false;
+        GameManagement.instance.MeterInUse = false;
         state = PlayerState.RESPAWN;
         RespawnOnHitEffect.Proc(hitbox.location, hitbox.location, 0f);
         //The hitbox position doesn't update during respawn, so don't allow collision.
@@ -387,20 +412,20 @@ public class PlayerInput : BehaviorEntity {
         if (!MaybeCancelState(cT)) RunDroppableRIEnumerator(StateNormal(cT));
     }
     private IEnumerator StateWitchTime(ICancellee<PlayerState> cT) {
-        GameManagement.campaign.MeterInUse = true;
+        GameManagement.instance.MeterInUse = true;
         state = PlayerState.WITCHTIME;
         speedLines.Play();
-        var t = ETime.Slowdown.CreateMultiplier(WitchTimeSlowdown, MultiMultiplier.Priority.CLEAR_SCENE);
+        var t = ETime.Slowdown.CreateModifier(WitchTimeSlowdown, MultiMultiplier.Priority.CLEAR_SCENE);
         meter.enabled = true;
         PlayerActivatedMeter.Proc();
         for (int f = 0; !MaybeCancelState(cT) &&
-            IsTryingWitchTime && GameManagement.campaign.TryUseMeterFrame(); ++f) {
+            IsTryingWitchTime && GameManagement.instance.TryUseMeterFrame(); ++f) {
             if (f % ghostFrequency == 0) {
                 Instantiate(ghost).GetComponent<Ghost>().Initialize(ghostSource.sprite, tr.position, ghostFadeTime);
             }
-            MeterIsActive.Publish(GameManagement.campaign.EnoughMeterToUse ? meter.color : meterDisplayInner);
+            MeterIsActive.Publish(GameManagement.instance.EnoughMeterToUse ? meter.color : meterDisplayInner);
             float meterDisplayRatio = M.EOutSine(Mathf.Clamp01(f / 30f));
-            meterPB.SetFloat(PropConsts.fillRatio, (float)GameManagement.campaign.Meter * meterDisplayRatio);
+            meterPB.SetFloat(PropConsts.fillRatio, (float)GameManagement.instance.Meter * meterDisplayRatio);
             meter.SetPropertyBlock(meterPB);
             yield return null;
         }
@@ -408,7 +433,7 @@ public class PlayerInput : BehaviorEntity {
         PlayerDeactivatedMeter.Proc();
         t.TryRevoke();
         speedLines.Stop();
-        GameManagement.campaign.MeterInUse = false;
+        GameManagement.instance.MeterInUse = false;
         if (!cT.Cancelled(out _)) RunDroppableRIEnumerator(StateNormal(cT));
     }
 
@@ -426,7 +451,7 @@ public class PlayerInput : BehaviorEntity {
     public override void RegularUpdate() {
         LoadShot(false);
         base.RegularUpdate();
-        if (AllowPlayerInput) GameManagement.campaign.RefillMeterFrame(state);
+        if (AllowPlayerInput) GameManagement.instance.RefillMeterFrame(state);
         //Hilarious issue. If running a bomb that disables and then re-enables firing,
         //then IsFiring will return false in the movement update and true in the options code.
         //As a result, UnfiringTime will be incorrect and lasers will break.

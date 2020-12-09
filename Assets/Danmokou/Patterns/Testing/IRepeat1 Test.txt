@@ -1,6 +1,6 @@
 pattern { }
 phase 0
-	action block 0
+	paction 0
 		position 0 0
 		async strip-red/w <1;:> gir {
 			t	2
@@ -21,5 +21,5 @@ phase 0
 			w	1
 			rpp	<180>
 		} s tprot cx 1
-	action block 0
+	paction 0
 		shift-phase-to 1

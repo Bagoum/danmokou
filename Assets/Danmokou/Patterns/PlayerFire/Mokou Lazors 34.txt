@@ -15,7 +15,7 @@ gtr {
 	## free cancellation
 	noop
 	## focus
-	action block 0 :2
+	paction 0 :2
 		async amuletdd-blue <> gcr {
 			wait(18)
 			times(_)

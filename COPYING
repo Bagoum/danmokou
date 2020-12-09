@@ -2,7 +2,7 @@ Copyright (c) 2020 Bagoum <reneedebatz@gmail.com>
 
 Danmokou is a danmaku (bullet hell) engine built in C# for Unity. It is free (as in free speech) software. The source code is on Github: https://github.com/Bagoum/danmokou
 
-All source code in this project is distributed under the MIT license. Some non-code resources are distributed under CC BY 4. See the Licenses folder for copies. Note that submodules may have different licensing terms.
+All source code in this project is distributed under the MIT license. Non-code resources are distributed under various licenses (see below). See the Licenses folder for license text. Note that submodules may have different licensing terms.
 Code is present primarily under the directories FS, Assets/Danmokou/Plugins/Self, Assets/Danmokou/Rendering/Shaders, Assets/Danmokou/CG, Assets/Danmokou/UXML (normal code), as well as Assets/Danmokou/Patterns (script files).
 
 The Licenses folder also contains licenses for the following packages used by this project:
@@ -10,6 +10,8 @@ Easing Equations by C.J. Kimberlin and Robert Penner
 Hash Without Sine by David Hoskins
 Newtonsoft.Json by Kalle Jillheden
 Some files from these projects exists in the source code. Those files have the original licenses at the top for convenience. 
+
+Files under Assets/Danmokou/Plugins/CurvedTMP are from CurvedTextMeshPro (https://github.com/TonyViT/CurvedTextMeshPro), licensed under MIT.
 
 The directory Assets/Danmokou/Plugins/External contains many external DLLs. They are licensed as follows:
 protobuf-net*: Apache 2.0 (https://www.nuget.org/packages/protobuf-net)
@@ -20,11 +22,11 @@ The directory Assets/Danmokou/Plugins/Self/Core/FS contains compiled binaries of
 
 The directory Assets/TextMeshPro contains default imports from the TextMeshPro plugin for Unity. TextMeshPro is licensed under the Unity Companion License (https://docs.unity3d.com/Packages/com.unity.textmeshpro@3.0/license/LICENSE.html). 
 
-See below for licenses for non-code assets.
-
 The copyright of Touhou Project is owned by Team Shanghai Alice.
 
----
+--- MIT license for this project's source code
+
+Copyright (c) 2020 Bagoum <reneedebatz@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -46,22 +48,22 @@ SOFTWARE.
 
 ---
 
-Licenses for non-code assets below. Note that many assets with unlisted licenses, such as those by DD and dairi, are not permitted for commercial use. 
+Licenses for non-code assets follow. Note that many assets with unlisted licenses, such as those by DD and dairi, are not permitted for commercial use. 
 
 The default menu background is by 紅月カイ on Pixiv (https://www.pixiv.net/en/artworks/78519209).
 
 Sound effects (Assets/Danmokou/Audio/SFX)
 - manual: by Bagoum, licensed under CC BY 4.
-- Many sound effects in "SFX/_SO/usedfiles" by OSA: http://osabisi.sakura.ne.jp/m2/ (license in Licenses/OSA).
-- taisei: by Taisei Project. They have been converted into different formats for use with Unity. Their license is in the Licenses folder.
+- Many sound effects in "SFX/_SO/usedfiles" by OSA: http://osabisi.sakura.ne.jp/m2/ (Licenses/OSA/).
+- taisei: by Taisei Project (with modification), licensed under MIT (Licenses/Taisei.txt).
 - sourced:
-	- The "fire shaker" sound effects are licensed under CC0 from here: https://freesound.org/people/shpira/sounds/317102/
-	- The "crow caw" sound effect is licensed under CC0 from here: https://freesound.org/people/_nuel/sounds/54973/
-	- "camera-snap1" under CC-BY from here: https://freesound.org/people/thecheeseman/sounds/51360/
+	- "fire shaker*" under CC0 from here: https://freesound.org/people/shpira/sounds/317102/
+	- "crow caw" under CC0 from here: https://freesound.org/people/_nuel/sounds/54973/
+	- "camera-snap1*" under CC-BY from here: https://freesound.org/people/thecheeseman/sounds/51360/
 	- "camera-focus" under CC-BY from here: https://freesound.org/people/Puniho/sounds/115126/
 	- "meter-activated" under CC-BY from here: https://freesound.org/people/hykenfreak/sounds/248182/
 
-All fonts (Assets/Danmokou/Fonts) are licensed permissively. Licenses are in the Licenses folder.
+All fonts (Assets/Danmokou/Fonts) are licensed permissively. Licenses are in the Licenses/Fonts folder.
 
 All assets under Assets/Danmokou/Kenney were created by Kenny Vleugels (kenney.nl) and are licensed thereby under CC0.
 
@@ -69,33 +71,34 @@ All assets under Assets/Danmokou/Kenney were created by Kenny Vleugels (kenney.n
 - Models/objects under MirrorShatter by André Cardoso, licensed under MIT.
 
 Images (Assets/Danmokou/Sprites)
+- BGPatterns/kuroma/*: by Kuroma on Pixiv (https://www.pixiv.net/en/users/4702770).
 - BGPatterns/kai_kasen_reimu: by 紅月カイ on Pixiv (https://www.pixiv.net/en/artworks/78519209). Noncommercial use only.
 - BGPatterns/buson-crows-crop: by Yosa Buson (now public domain).
 - BGPatterns/nasa: by NASA, see below.
 - BGPatterns/unsplash: miscellaneous Unsplash users, credited as follows:
 	- bamboo: https://unsplash.com/photos/AEmqD6qu434
-	- torii: https://unsplash.com/photos/gvc0PL77hxU
 	- shrine: https://unsplash.com/photos/mHtQ7rWEC4U
 	- mountain: https://unsplash.com/photos/JgOeRuGD_Y4
 	- space: https://unsplash.com/photos/4dpAqfTbvKA
 - entity/dot/kmap:  by danmaq (license in folder).
 - entity/dot/dot_seija: by Len.
 - entity/dot/dot_kasen, dot_junko: by Kirbio.
-- entity/taisei_*: by Taisei Project (converted from svg to png).
+- entity/taisei_*: by Taisei Project (with modification).
 - DD/*: by DD: https://www.pixiv.net/en/users/4650367 . Noncommercial use only. 
-- .py: Python scripts licensed under MIT.
+- .py: Python scripts licensed by Bagoum under MIT.
 - UI/pins/crow*: stock by Roy3D on DeviantArt (https://www.deviantart.com/roy3d/art/Crows-2-PNG-Stock-412584565), modifications made.
 - items/gems*: under CC-BY from Code Inferno Games (codeinferno.com):  https://opengameart.org/content/animated-spinning-gems
-- player/focus: by Taisei Project (converted from svg to png and edited).
+- player/focus: by Taisei Project (with modification).
+- bullets/straight-png/taisei_scythe: by Taisei Project (with modification).
 - other files in bullets, UI, util, TransitionTextures, items, player: by Bagoum, licensed under CC BY 4.
 
 Assets/Danmokou/MiniProjects
-- Cutins/junko, Dialogue/icons, Dialogue/Stands/dairi_junko2: dairi (https://www.pixiv.net/en/users/4920496). Noncommercial use only. 
+- Dialogue/icons, Dialogue/Stands/dairi_*: dairi (https://www.pixiv.net/en/users/4920496). Noncommercial use only. 
 
 Some image resources were created with patterns from http://www.sda.nagoya-cu.ac.jp/sa08m13/image.html 
 Some image resources were created with patterns from http://www.ikiya.jp/anounce.html
-Some image resources were created from the following specific resources:
-	https://unsplash.com/photos/PpYRtDK8l0g (smaller-width game UI)
+Some image resources were created with images from Unsplash. Here are all usages:
+https://unsplash.com/photos/wXuzS9xR49M (used in Bad Apple UI frame)
 
 Some images are from NASA. (NASA does not endorse this project.) Here are all usages:
 https://images.nasa.gov/details-GSFC_20171208_Archive_e001982  (moon bullet sprite)

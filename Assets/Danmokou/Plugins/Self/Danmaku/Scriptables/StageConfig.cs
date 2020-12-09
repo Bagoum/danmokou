@@ -1,24 +1,9 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using DMK.Core;
 using JetBrains.Annotations;
-using SM;
+using DMK.SM;
 using UnityEngine;
 
-public interface IStageConfig {
-    StateMachine StateMachine { get; }
-    string DefaultSuicideStyle { get; }
-}
-
-public class EndcardStageConfig : IStageConfig {
-    private readonly string dialogueKey;
-    public StateMachine StateMachine => new ReflectableLASM(SMReflection.Dialogue(dialogueKey));
-    public string DefaultSuicideStyle => "";
-
-    public EndcardStageConfig(string dialogueKey) {
-        this.dialogueKey = dialogueKey;
-    }
-}
-
+namespace DMK.Scriptables {
 /// <summary>
 /// Provides stage metadata.
 /// </summary>
@@ -33,4 +18,5 @@ public class StageConfig : ScriptableObject, IStageConfig {
 
     public StateMachine StateMachine => StateMachineManager.FromText(stateMachine);
     public string DefaultSuicideStyle => defaultSuicideStyle;
+}
 }

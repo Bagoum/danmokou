@@ -1,8 +1,8 @@
 pattern { }
 phase 0
-	action block 0.1
+	paction 0.1
 		position 0 1
 		dbossexplode (lerp 0 1 t red purple) red
-	action block 0
+	paction 0
 		position 0 20
 		

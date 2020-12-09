@@ -1,14 +1,8 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
-using Danmaku;
-using DMath;
-using JetBrains.Annotations;
+using DMK.DMath;
 
-namespace SM {
+namespace DMK.SM {
 
 public class DebugFloat : LineActionSM {
     private readonly GCXF<float> f;

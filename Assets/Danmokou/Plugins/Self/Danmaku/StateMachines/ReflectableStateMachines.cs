@@ -1,12 +1,14 @@
 ﻿using System.Threading.Tasks;
 using System;
-using Danmaku;
-using DMath;
-using Core;
-using JetBrains.Annotations;
-using UnityEngine;
+using DMK.Behavior.Functions;
+using DMK.Core;
+using DMK.DMath;
+using DMK.DMath.Functions;
+using DMK.Player;
+using DMK.Reflection;
+using DMK.Services;
 
-namespace SM {
+namespace DMK.SM {
 
 public delegate Task TaskPattern(SMHandoff smh);
 public delegate Task Synchronizer(SMHandoff smh);

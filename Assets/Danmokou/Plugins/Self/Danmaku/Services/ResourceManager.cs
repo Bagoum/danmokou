@@ -2,9 +2,13 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using DMK.Core;
+using DMK.Scriptables;
 using JetBrains.Annotations;
 using UnityEngine;
 
+
+namespace DMK.Services {
 public class ResourceManager : MonoBehaviour {
     [Serializable]
     public struct NamedEffectStrategy {
@@ -47,7 +51,7 @@ public class ResourceManager : MonoBehaviour {
 
     public static BossConfig GetBoss(string key) {
         foreach (var b in GameManagement.References.bossMetadata) {
-            if (b  != null && b.key == key) return b;
+            if (b != null && b.key == key) return b;
         }
         throw new Exception($"No boss configuration exists for key {key}.");
     }
@@ -66,5 +70,5 @@ public class ResourceManager : MonoBehaviour {
     public static GameObject BlackBG => GetBackground("black");
 
     public static EffectStrategy GetEffect(string effect) => effectMap.GetOrThrow(effect, "Player fire effects");
-    
+}
 }

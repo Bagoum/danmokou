@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Danmaku;
+using DMK.Core;
 using JetBrains.Annotations;
 using UnityEngine;
 
-namespace SM {
+namespace DMK.SM {
 
 
 //This class serves as a loader and repository for state machines.

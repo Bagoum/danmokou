@@ -1,10 +1,10 @@
-﻿using Danmaku;
-using DMath;
+﻿using DMK.DMath;
+using DMK.Reflection;
 using JetBrains.Annotations;
 using UnityEngine;
-using static Danmaku.Enums;
 
 
+namespace DMK.Scriptables {
 [CreateAssetMenu(menuName = "Data/Ending Config")]
 public class EndingConfig : ScriptableObject {
     public string key;
@@ -12,4 +12,5 @@ public class EndingConfig : ScriptableObject {
     public string predicate;
 
     public bool Matches => predicate.Into<Pred>()(ParametricInfo.Zero);
+}
 }

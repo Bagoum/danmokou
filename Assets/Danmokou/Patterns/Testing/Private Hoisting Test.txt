@@ -1,7 +1,7 @@
 pattern { }
 <!> type non `hello`
 phase 0
-	action block 0
+	paction 0
 		position 0 0
 		sync strip-red/w <0;:> gsr2 3 <> {
 			preloop {

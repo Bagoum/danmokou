@@ -1,6 +1,6 @@
 pattern { }
 phase 0 #{
-    action block 0
+    paction 0
         shift-phase-to 1
 #}
 
@@ -8,7 +8,7 @@ phase 0 #{
 phase 0 #{
 	end
 		clear phase
-	action block 0
+	paction 0
 		position 0 3
 		async empty <> gcr2 360 _ <;:60h> {
 			p this
@@ -26,7 +26,7 @@ phase 0 #{
 			alternate p1 
 		} { 
 				summons offset zero @ el p
-					action block 0
+					paction 0
 						sync scircle-red/w <> world s offset zero @ el p
 						async amulet-red/ <0.1;:> gcr2 60 _ <> {
 							delay	60
@@ -37,7 +37,7 @@ phase 0 #{
 						} s tprot lerpin 0 1.5 ss 0 vhome 1 Lplayer ##cx 0.8
 						break
 				summons offset zero @ el p
-					action block 0
+					paction 0
 						sync scircle-red/b <> world  s offset zero @ el p
 						async amulet-purple/ <0.1;:> gcr2 90 _ <20h> {
 							delay	90

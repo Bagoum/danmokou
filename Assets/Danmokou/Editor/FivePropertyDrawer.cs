@@ -54,7 +54,7 @@ public abstract class FivePropertyDrawer : PropertyDrawer {
     }
 }
 
-[CustomPropertyDrawer(typeof(DMath.MutV2RV2))]
+[CustomPropertyDrawer(typeof(DMK.DMath.MutV2RV2))]
 public class V2RV2Drawer : FivePropertyDrawer { }
 
 

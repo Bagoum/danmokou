@@ -1,6 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
+namespace DMK.Scriptables {
 public abstract class Ref<T> {
     public bool useConstant = true;
     public T constVal;
@@ -12,6 +13,7 @@ public abstract class Ref<T> {
     public T Get() {
         return useConstant ? constVal : GetRef();
     }
+
     public bool Set(T t) {
         if (useConstant) {
             return false;
@@ -26,19 +28,28 @@ public abstract class Ref<T> {
 [Serializable]
 public class RFloat : Ref<float> {
     public SOFloat refVal;
-    public override SO<float> GetRef() { return refVal; }
+
+    public override SO<float> GetRef() {
+        return refVal;
+    }
 }
 
 [Serializable]
 public class RInt : Ref<int> {
     public SOInt refVal;
-    public override SO<int> GetRef() { return refVal; }
+
+    public override SO<int> GetRef() {
+        return refVal;
+    }
 }
 
 [Serializable]
 public class RBool : Ref<bool> {
     public SOBool refVal;
-    public override SO<bool> GetRef() { return refVal; }
+
+    public override SO<bool> GetRef() {
+        return refVal;
+    }
 }
 
 [Serializable]
@@ -52,8 +63,10 @@ public class RColor : Ref<Color> {
     public SOColor refVal;
     public override SO<Color> GetRef() => refVal;
 }
+
 [Serializable]
 public class RColor2 : Ref<Color2> {
     public SOColor2 refVal;
     public override SO<Color2> GetRef() => refVal;
+}
 }

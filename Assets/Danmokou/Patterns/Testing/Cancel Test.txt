@@ -1,6 +1,6 @@
 pattern { }
 phase 0
-    action block 0
+    paction 0
         position 0 0
 		## Only two are fired
 		gtr {
@@ -20,7 +20,7 @@ phase 0
 		sync gem-orange/w <1;:90> gsr2 6 <6> {
 			cancel > t 3
 		} s tprot cx 2
-	action block 0
+	paction 0
 		shift-phase-to 1
 		
 

@@ -1,0 +1,16 @@
+pattern { }
+phase 0
+	paction 0
+		shift-phase-to 1
+		
+
+<!> endboss
+phase 0
+	saction 0
+		boss bha3.elly
+		shift-phase
+
+
+
+
+

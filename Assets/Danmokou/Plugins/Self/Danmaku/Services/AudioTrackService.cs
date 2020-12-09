@@ -2,13 +2,16 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
+using DMK.Behavior;
+using DMK.Core;
 using JetBrains.Annotations;
 using UnityEngine;
 
+namespace DMK.Services {
 public class AudioTrackService : RegularUpdater {
     private static AudioTrackService main;
     [CanBeNull] private static IAudioTrackInfo bgm = null;
-    
+
     private static readonly Dictionary<string, IAudioTrackInfo> trackInfo = new Dictionary<string, IAudioTrackInfo>();
 
     public AudioSource src1;
@@ -27,12 +30,12 @@ public class AudioTrackService : RegularUpdater {
             if (t != null) trackInfo[t.key] = t;
         }
     }
-    
+
     protected override void BindListeners() {
         base.BindListeners();
         Listen(Core.Events.GameStateHasChanged, HandleGameStateChange);
     }
-    
+
     public void Update() {
         if (bgm != null && bgm.Loop) {
             //Debug.Log(
@@ -44,7 +47,7 @@ public class AudioTrackService : RegularUpdater {
                 FadeInPlay(nextSrc, bgm, bgm.LoopSeconds.y - currSrc.time - fadeTime);
                 (currSrc, nextSrc) = (nextSrc, currSrc);
             }
-            if (nextSrc.time + fadeDeOverlap > bgm.LoopSeconds.y && !fading.Contains(nextSrc)) 
+            if (nextSrc.time + fadeDeOverlap > bgm.LoopSeconds.y && !fading.Contains(nextSrc))
                 StartCoroutine(sourceFadeOutStop(nextSrc, bgm, 0f));
         }
     }
@@ -60,7 +63,7 @@ public class AudioTrackService : RegularUpdater {
         src.PlayDelayed(delay);
         StartCoroutine(_sourceFadeInPlay(src, over, delay));
     }
-    
+
     private static IEnumerator _sourceFadeInPlay(AudioSource src, IAudioTrackInfo over, float delay) {
         if (fading.Contains(src)) yield break;
         fading.Add(src);
@@ -76,9 +79,10 @@ public class AudioTrackService : RegularUpdater {
             yield return null;
         }
         src.volume = over.Volume * SaveData.s.BGMVolume;
-        
+
         fading.Remove(src);
     }
+
     private static IEnumerator sourceFadeOutStop(AudioSource src, IAudioTrackInfo over, float delay) {
         if (fading.Contains(src)) yield break;
         fading.Add(src);
@@ -129,12 +133,12 @@ public class AudioTrackService : RegularUpdater {
     public static void ResetPitchMultiplier() => SetPitchMultiplier(1f);
 
     public static void InvokeBGM([CanBeNull] string trackName) {
-        if (!string.IsNullOrWhiteSpace(trackName) && trackName != "_") 
+        if (!string.IsNullOrWhiteSpace(trackName) && trackName != "_")
             InvokeBGM(trackInfo.GetOrThrow(trackName, "BGM tracks"));
     }
 
     public static void InvokeBGM([CanBeNull] IAudioTrackInfo track) => main._InvokeBGM(track);
-    
+
     private void _InvokeBGM([CanBeNull] IAudioTrackInfo track) {
         //Only non-BGM sounds are cancellable.
         if (track == null || bgm == track) return;
@@ -151,11 +155,12 @@ public class AudioTrackService : RegularUpdater {
         ClearAllAudio(true);
         base.OnDisable();
     }
-    private void HandleGameStateChange(GameState state) {
+
+    private void HandleGameStateChange(EngineState state) {
         if (state.IsPaused() && (bgm?.StopOnPause ?? false)) {
             src1.Pause();
             src2.Pause();
-        } else if (state == GameState.RUN && (bgm?.StopOnPause ?? true)) {
+        } else if (state == EngineState.RUN && (bgm?.StopOnPause ?? true)) {
             src1.UnPause();
             src2.UnPause();
         }
@@ -170,6 +175,7 @@ public class AudioTrackService : RegularUpdater {
             } else return false;
         }
     }
+
     public static void ClearAllAudio(bool force) {
         ResetPitchMultiplier();
         if (force || !DoPreserveBGM) {
@@ -182,6 +188,5 @@ public class AudioTrackService : RegularUpdater {
     public static void PreserveBGM() {
         _doPreserveBGM = true;
     }
-    
-
+}
 }

@@ -1,5 +1,6 @@
 {
     "name": "Self.Core",
+    "rootNamespace": "",
     "references": [],
     "includePlatforms": [],
     "excludePlatforms": [],

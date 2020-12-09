@@ -1,6 +1,6 @@
 pattern { }
 phase 0
-	action block 0
+	paction 0
 		position 1 0
 		sync gem-red/w <1;:80> gsr {
 			t	2

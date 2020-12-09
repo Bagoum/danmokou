@@ -1,6 +1,6 @@
 pattern { }
 phase 0
-    action block 0
+    paction 0
 		position 4 0
 		##Slows to stop halfway
 		move 4 tpnrot eased out-sine 2 cx -2

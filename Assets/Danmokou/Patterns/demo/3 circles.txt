@@ -1,6 +1,6 @@
 pattern { }
 phase 0 #{
-    action block 0
+    paction 0
         @  {nl nr nb nt }
             cull
         summon inode <> nb <> null null
@@ -19,7 +19,7 @@ phase 38 #{
         pool-control ellipse-blue/w reset
         bullet-control once ellipse-blue/w softcull cwheel-blue/w _
         bulletf-control once pather18-purple/b softcull cwheel-purple/b _
-    action block 0
+    paction 0
         move 2 tp-nrot eased out-sine 2 stopsampling 0 vhometime 2 cxy 0 2
         ##wait-for 3
     action nb 0
@@ -34,10 +34,10 @@ phase 38 #{
     repeat-every 18 9
 !{
 blockf(s)
-action block 0
+paction 0
     pool-control ellipse-blue/w reset
     move 3 tpnrot eased io-sine 3 stopsampling 0 vhometime 3 tpbtp cx %s%-5 superpose 0.3 loc 0.7 Lplayer
-action block 0
+paction 0
     bullet pather18-purple/b <%s%-1.2;:> cre 40 18 <> randomy -4 4 pather 4 btf + 0.8 sine 4 0.3 t
         tpnrot lerpin 0 0.5 pxy %s%6
             sine(1, 0.3, + t * 1.618 p) 
@@ -67,11 +67,11 @@ phase 38 #{
         bullet-control ONCE arrow-green/w SOFTCULL cwheel-green/w _
         bulletf-control ONCE pather18-red/w SOFTCULL cwheel-pink/w _
         bulletf-control ONCE laser* CULL _
-    action block 0
+    paction 0
         move 2 tp-nrot eased out-sine 2 stopsampling 0 vhometime 2 cxy 0 2
         summon cutin-mokou <> _ <> null file slide-rl
         wait-for 3
-    action block 0
+    paction 0
         vulnerable true
         position 0 2
         repeat _ wait 
@@ -111,13 +111,13 @@ phase 30 #{
         clear bullet-control
         bullet-control ONCE strip-purple/w SOFTCULL cwheel-teal/w _
         bulletf-control ONCE pather* SOFTCULL cwheel-purple/w _
-    action block 0
+    paction 0
         move 2 tp-nrot eased out-sine 2 stopsampling 0 vhometime 2 cxy 0 3
-    action block 0
+    paction 0
         vulnerable true
         position 0 3
         bulletf-control-sm persist pather18-purple/w < 4 abs x
-            action block 0
+            paction 0
                 bullet strip-purple/w <> cre 60 3 <;:12h> pssfx x-fire-tech-6 repeatp defer 30 <;:12> s tprot
                     switchH 1 cx 3
                         switchH 4.2 period 1 switchH 0.5
@@ -131,12 +131,12 @@ phase 30 #{
                 break
         bulletf-control persist pather18-purple/w restyle pather18-purple/b < 4 abs x
     repeat-every 7 9999
-        action block 0
+        paction 0
             bullet pather18-purple/w <> conce pssfx x-fire-tech-8 repeat 4 <> pather 1 1
                 tpnrot eased in-sine 3 stopsampling 0 vhome 5 pxy
                     * 4 pm1mod p
                     * 3 pm1mod // p 2
-        action block 0
+        paction 0
             move 2 tpnrot eased io-sine 2 stopsampling 0 vhometime 2 randomxy -3 3 -1 3
 #}
 
@@ -151,7 +151,7 @@ phase 36 #{
         bulletf-control once laser16r-blue/w softcull cwheel-blue/w _
         bullet-control once pointy-green/ softcull cwheel-green/ _
         bullet-control once pointy-yellow/ softcull cwheel-yellow/ _
-    action block 0
+    paction 0
         move 2 tp-nrot eased out-sine 2 stopsampling 0 vhometime 2 cxy 0 3
         sync cutin-mokou <> summonup _ <> null file slide-rl
         wait-for 3
@@ -180,7 +180,7 @@ phase 36 #{
                         dsine 2 1 +(t, + *(2h, p) sine(4, 0.7, &lt))
                 + 1.5 sine 3p 0.3 p
                 2
-    action block 0
+    paction 0
         bullet pather18-red/w <1;:> cre 
             clamp 120 240 linear 240 -8 x
             _ <> pssfx x-fire-tech-8 modifybs
@@ -201,7 +201,7 @@ phase 32 #{
         bullet-control once ellipse-purple* softcull cwheel-blue/w _
         del@ pp1
         del@ pp2
-    action block 0
+    paction 0
         move 2 tp-nrot eased out-sine 2 stopsampling 0 vhometime 2 cxy 0 3
     action nb 0
         vulnerable true
@@ -232,11 +232,11 @@ phase 42 #{
         bullet-control once circle-blue/w softcull cwheel-blue/w _
         bullet-control once shell-purple/b softcull cwheel-purple/b _
         bullet-control once shell-teal/b softcull cwheel-teal/b _
-    action block 0
+    paction 0
         move 1.5 tp-nrot eased out-sine 1.5 stopsampling 0 vhometime 1.5 cxy -5.5 4
         sync cutin-mokou <> summonup _ <> null file slide-rl
         wait-for 2.5
-    action block 0
+    paction 0
         vulnerable true
         position -5.5 5
 !{
@@ -245,7 +245,7 @@ bullet %color% <> cre 180 3 <;:20h> repeat 18 <;:20> repeat 18 <;:0.6> s tprot l
 !}
 !{
 btshellf()
-action block 0
+paction 0
     @ nb
         $shellf(shell-purple/b)
     @ nt
@@ -272,29 +272,29 @@ saction 0
     move 0.25 tp-nrot eased out-sine 0.25 ss 0 vhometime 0.25 cxy -5.5 4
 !}
     $anime()
-    action block 0
+    paction 0
         @ nb
             position -2 -5
         @ nt
             position 2 5
     $btshellf()
-    action block 9
+    paction 9
     $anime()
-    action block 0
+    paction 0
         @ nb
             position 4 -5
         @ nt
             position -4 5
     $btshellf()
-    action block 9
+    paction 9
     $anime()
-    action block 0
+    paction 0
         @ nb
             position 6 -2
         @ nt
             position -6 2
     $btshellf()
-    action block 9
+    paction 9
     $anime()
     
 #}
@@ -309,13 +309,13 @@ phase 34 #{
         bullet-control once circle-purple/w softcull cwheel-blue/w _
         bullet-control once ellipse-purple/b softcull cwheel-blue/w _
         bullet-control once circle-teal/ softcull cwheel-teal/ _
-    action block 0
+    paction 0
         move 2 tp-nrot eased out-sine 2 stopsampling 0 vhometime 2 cxy -3 2
-    action block 0
+    paction 0
         vulnerable true
         position -3 2
     repeat-every 8 9999
-        action block 0
+        paction 0
             bullet x-fire-burst-1<> cre 32 17 <> sfx
             _ 6.5
                 bullet x-incoming-2 <> conce sfx
@@ -347,7 +347,7 @@ phase 72 #{
         bullet-control once circle-black/ softcull cwheel-black/ _
         bullet-control once circle-purple/w softcull cwheel-purple/ _
         bullet-control once sun-red/w softcull cwheel-red/ _
-    action block 0
+    paction 0
         move 2 tp-nrot eased out-sine 2 stopsampling 0 vhometime 2 cxy 0 6
         sync cutin-mokou <> summonup _ <> null file slide-rl
         pool-control sun-red/w allowcull false
@@ -381,10 +381,10 @@ phase 72 #{
                     clamp 120 140 linear 140 -2 x
                 _ <;:8h> repeat 45 <;:8> s tp-rot lerpin 0 0.5 cx 0.6
     repeat-every 6 5
-        action block 0
+        paction 0
             position -8 0
             move 1 tpnrot eased out-sine 1 ss 0 vhometime 1 cxy -5 0
-        action block 0
+        paction 0
 !{
 keinef(color)
 bullet x-keine <> cre 12 5 <> sfx
@@ -394,21 +394,21 @@ bullet %color% <;5:> cre 3 20 <;-.5:> s tprot
         ss 0 vhome 5 Lplayer
 !}
             $keinef(keine-yellow/w)
-        action block 0
+        paction 0
             move 1 tpnrot eased in-sine 1 ss 0 vhometime 1 cxy -8 0
-        action block 0
+        paction 0
             position 8 0
             move 1 tpnrot eased out-sine 1 ss 0 vhometime 1 cxy 5 0
-        action block 0
+        paction 0
             $keinef(keine-orange/w)
-        action block 0
+        paction 0
             move 1 tpnrot eased in-sine 1 ss 0 vhometime 1 cxy 8 0
             break
         break
-    action block 0
+    paction 0
         position 0 6
         move 1 tpnrot eased out-sine 1 ss 0 vhometime 1 cxy 0 3.5
-    action block 0
+    paction 0
         bullet x-laser-fire <> irepeat 4s 8 <> cre 8 9 <> sfx
         bullet x-laser-on <> idelay 220 irepeat 4s 8 <> cre 8 9 <> sfx
         bullet laser16-blue/w <> irepeat 4s 8 <> itarget Lplayer cre 8 9 <;:12> slaser 0 0 null 2 1
@@ -436,11 +436,11 @@ bullet %color% <;5:> cre 3 20 <;-.5:> s tprot
 phase 28 #{
     end
         sfx phase-shift
-    action block 0
+    paction 0
         ##move 2 tp-nrot eased out-sine 2 stopsampling 0 vhometime 2 cxy 0 2
         ##summon cutin-mokou=cu slide-rl=START world:<> flip=
         ##wait-for 3
-    action block 0
+    paction 0
         vulnerable true
         position 0 3
         bullet pointy-blue/w <-1;0:> cre 12 _ <> repeatp add 2 <2;:> repeatinnerp defer 3 <;:-60> <;:60> s tprot brotatef 
@@ -461,7 +461,7 @@ phase 28 #{
 
 ///
     repeat-every 8 9999 
-    action block 5
+    paction 5
         move 3 tpnrot eased io-sine 3 ss 0 vhometime 3 randomxy -5 5 0 4
         bullet pather18-green/w <1;:> idelay 60 cre 120 3 <> pssfx x-fire-tech-8 pather 1 1
             tpnrot eased in-sine 4 ss 0 vhome 5 Lplayer

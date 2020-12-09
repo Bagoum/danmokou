@@ -1,36 +1,56 @@
 pattern { }
 phase 0
-	action block 0
+	paction 0
 		shift-phase-to 1
 		
 <!> hp 600
 phase 0
 	saction 0
-		position 0 2
-		gtr {
-			rpp <15>
-			wait-child
-			wt	120 _
-			color { sc- }
+		position 0 1.6
+		gtr2 6s _ <15> {
 		} saction 0 :3
 ## r = 1, c = 1
-			async amulet-red/ <1;:> gir2 0 5 <72> . gcr2 1 72 <4> { 
-				bank <1;:-144>
+			async amulet-red/ <1;:> gir  { 
+				wait(0)
+				times(5)
+				circle
+			} gcr { 
+				wait(1)
+				times(72)
+				rv2incr(<4>)
+				center
+				bank <1;:>
 				p this 
-			} s tprot  rotate + 160 * -1.5 (mod 4 p)
-				px lerp 2 3 (+ t * 1f p) 0 + 2.5 * -0.01 mod 4 p
+			} s rvelocity rotate(160 +  -1.5 * mod(4, p),
+				px(lerp(2, 3, t + 1f * p, 0, 2.5 + -0.01 * mod(4, p))))
 ## r' = (r+c)cos 36, c' = (r+c)sin 36,  where 36 = 180 / 5
-			async amulet-orange/ <1.618;:180> gir2 0 5 <72> . gcr2 2 44 <4> { 
-				bank <1.17557;:-90>
+			async amulet-orange/ <1.618;:180> gir { 
+				wait(0)
+				times(5)
+				circle
+			}  gcr { 
+				wait(2)
+				times(44)
+				rv2incr(<4>)
+				center
+				bank <1.17557;:>
 				p this 
-			} s tprot  rotate + 160 * -2 (mod 4 p)
-				px lerp 2 3.2 (+ t * 2f p) 0 + 2.7 * -0.01 mod 4 p
+			} s rvelocity rotate(160 + -2 * mod(4, p),
+				px(lerp(2, 3.2, t + 2f * p, 0, 2.7 + -0.01 * mod(4, p))))
 ## r'' = (r'+c')cos 36, c'' = (r'+c')sin 36
-			async amulet-black/ <2.2604;:> gir2 0 5 <72> . gcr2 1 60 <3> { 
-				bank <1.6423;:-90>
+			async amulet-black/ <2.2604;:> gir { 
+				wait(0)
+				times(5)
+				circle
+			} gcr { 
+				wait(1)
+				times(60)
+				rv2incr(<3>)
+				center
+				bank <1.6423;:>
 				p this 
-			} s tprot  rotate + 160 * -1.5 (mod 4 p)
-				px lerp 2 3.5 (+ t * 1f p) 0 + 3 * -0.012 mod 4 p
+			} s rvelocity rotate(160 + -1.5 * mod(4, p), 
+				px(lerp(2, 3.5, t + 1f * p, 0, 3 + -0.012 * mod(4, p))))
 		
         
             

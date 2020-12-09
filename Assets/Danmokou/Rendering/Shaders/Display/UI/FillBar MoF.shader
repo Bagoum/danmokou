@@ -65,6 +65,7 @@
             
 
             float4 frag(fragment f) : SV_Target {
+            	f.c *= tex2D(_MainTex, f.uv);
                 if (f.uv.x < _F - _YX && f.uv.y > _YY) {
                     return lerp(_CI, lerp(_CF, _CF2, step(_Threshold, _F)), 
                         smoothstep(-0.002, 0, f.uv.x / (1 - _YX) - _FI)) * f.c;

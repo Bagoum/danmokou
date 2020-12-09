@@ -1,5 +1,4 @@
-﻿using Danmaku.Scriptables.Colors;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEditor;
 
 public abstract class QuadrupletPropertyDrawer : PropertyDrawer {
@@ -51,7 +50,7 @@ public abstract class QuadrupletPropertyDrawer : PropertyDrawer {
 }
 
 
-[CustomPropertyDrawer(typeof(Danmaku.FrameAnimBullet.BulletAnimSprite))]
+[CustomPropertyDrawer(typeof(DMK.Danmaku.Descriptors.FrameAnimBullet.BulletAnimSprite))]
 public class FrameAnimBulletDrawer : QuadrupletPropertyDrawer {
     protected override string arg1 => "s";
     protected override string arg2 => "time";

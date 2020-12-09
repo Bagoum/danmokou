@@ -3,13 +3,15 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using DMK.Core;
+using DMK.Reflection;
 using FParsec;
 using FParser;
 using JetBrains.Annotations;
 using UnityEngine.Profiling;
 using LPU = System.ValueTuple<FParser.SMParser.ParsedUnit, FParsec.Position>;
 
-namespace SM.Parsing {
+namespace DMK.SM.Parsing {
 public static class IParseQueueHelpers {
 
     public static string Enforce(this LPU lpu, int index, IParseQueue q) {
@@ -17,8 +19,7 @@ public static class IParseQueueHelpers {
             case SMParser.ParsedUnit.S s:
                 return s.Item;
             default:
-                throw new Exception(q.WrapThrow(index,
-                    "Expected a string unit, but found parentheses instead."));
+                throw new Exception(q.WrapThrow(index, "Expected a string unit, but found parentheses instead."));
         }
     }
 

@@ -43,6 +43,7 @@
 			#pragma multi_compile_local __ FT_SCALE_IN
 			#pragma multi_compile_local __ FT_DISPLACE
 			#pragma multi_compile_local __ FT_DISPLACE_POLAR
+			#pragma multi_compile_local __ FT_TINT
 			//Used by lasers but not by bullets
 			//#pragma multi_compile_local __ FT_DISPLACE_BIVERT
 			#pragma multi_compile_local __ FT_RECOLORIZE
@@ -71,6 +72,7 @@
 
         CBUFFER_START(NormalData)
 			float4 posDirBuffer[511];
+			float4 tintBuffer[511];
 			float timeBuffer[511];
         CBUFFER_END
     #ifdef FT_RECOLORIZE
@@ -113,6 +115,9 @@
 				f.loc = UnityObjectToClipPos(v.loc);
 				f.uv = v.uv;
 				f.c = float4(1, 1, 1, _SharedOpacityMul);
+		#if defined(FT_TINT) && (defined(UNITY_INSTANCING_ENABLED) || defined(UNITY_PROCEDURAL_INSTANCING_ENABLED))
+				f.c *= tintBuffer[unity_InstanceID];
+		#endif
 				//f.uv = TRANSFORM_TEX(v.uv, _MainTex);
 		#ifdef FT_FRAME_ANIM
 				f.uv.x = (f.uv.x + fmod(trunc(INSTANCE_TIME * _InvFrameT), _Frames)) / _Frames;
@@ -125,11 +130,11 @@
                 UNITY_SETUP_INSTANCE_ID(f);
 		        SLIDEIN(f.uv, INSTANCE_TIME);
 	            DISPLACE(f.uv, INSTANCE_TIME);
-				float4 c = tex2D(_MainTex, f.uv) * f.c;
+				float4 c = tex2D(_MainTex, f.uv);
     #if (defined(UNITY_INSTANCING_ENABLED) || defined(UNITY_PROCEDURAL_INSTANCING_ENABLED)) && defined(FT_RECOLORIZE)
                 c.rgb = lerp(recolorBBuffer[unity_InstanceID], recolorWBuffer[unity_InstanceID], c.r).rgb;
-    #endif
-				return c;
+    #endif	
+				return c * f.c;
 			}
 			ENDCG
 		}

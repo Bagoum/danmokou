@@ -1,10 +1,10 @@
 pattern { }
 phase 0 #{
-	action block 0
+	paction 0
 		@ { nb }
 			cull
 		summon inode <> nb <> null null
-	action block 0.1
+	paction 0.1
 		##track playbgms { liq-brainwash liq-blacklist }
 		shift-phase-to 1
 #}
@@ -17,9 +17,9 @@ phase 27 #{
 	end
 		clear phase
 		pool-control { { circle-* sun-* } } softcullall cwheel
-    action block 0
+    paction 0
         move 2 tp-nrot eased out-sine 2 stopsampling 0 vhometime 2 cxy -2 2
-	action block 0
+	paction 0
 		position -2 2
 		vulnerable true
 		gtr {
@@ -145,11 +145,11 @@ phase 27 #{
 		bullet-control once sc-guanyin softcull cwheel-red/ _
 !!{ d6b ellipse-teal/
 		pool-control $d6b allowcull true
-    action block 0
+    paction 0
         move 2 tp-nrot eased out-sine 2 stopsampling 0 vhometime 2 cxy 0 3
         summon cu-mokou-come-on-boy <> _ <> null file fall
         wait-for 3
-	action block 0
+	paction 0
 		pool-control $d6b allowcull false
 		bullet-control persist sun-red/w.2 cull > t 2
 		position 0 3 
@@ -202,33 +202,33 @@ phase 27 #{
 			wt	0 _
 		} seq
 		##RDLU LDRU jump LURU RDLU land LDRU RULD swipe RDLD
-			action block 1
+			paction 1
 				$fdsfiremove(red/bs, <-3;:45>, d1, 0.08, 1)
-			action block 0.5
+			paction 0.5
 				$fdsfiremove(pink/bs, <-3;:135>, d2, 0.08, 1)
-			action block 0.5
+			paction 0.5
 				sfx x-incoming-2
 				savev2 pdiff 0 (- Lplayer loc)
 				savev2 tocenter 0 (- zero loc)
 				$moveio(2, + cy 3 * 1 normalize @0 pdiff)
-			action block 0.5
+			paction 0.5
 				$fdsfiremove(red/bs, <0;1:-3;:180>, d3, 0.06, 1)
-			action block 0.2
+			paction 0.2
 				$fdsfiremove(pink/bs, <-3;:45>, d4, 0.06, 1)
-			action block 0.2
+			paction 0.2
 				$fdsfiremove(red/ws, <-3;:135>, d5, 0.04, 1)
-			action block 0.2
+			paction 0.2
 				$fdsfiremove(pink/ws, <-3;:-135>, d6, 0.04, 1)
-			action block 0.2 
+			paction 0.2 
 				async _ <> gcr { wt 1 120 } savev2 ploc 0 Lplayer
 				savev2 tocenter 0 - (pxy (* 4 pm1mod p) 3) loc
 				$crosshair(3, 12, @0 ploc)
 				$moveio(1, @0 tocenter)
-			action block 0.5
+			paction 0.5
 				sfx x-incoming-2
-			action block 1.5
+			paction 1.5
 				$fdsboommove(@0 ploc)
-			action block 0.1
+			paction 0.1
 				async x-metal <> gcr { wt 10 6 } sfx
 				async pather18-black/bs <-8;1:> gcr {
 					root	loc
@@ -240,7 +240,7 @@ phase 27 #{
 					px + 0.4 * 0.25 / (^ p 1.5) 10
 				savev2 pdiff 0 (- Lplayer loc)
 				$moveio(0.16, * 1 normalize @0 pdiff)
-			action block 1
+			paction 1
 				savev2 tocenter 0 - cy 3 loc
 				$moveio(1, @0 tocenter)
 				break

@@ -1,10 +1,10 @@
 pattern { }
 phase 0
-	action block 0
+	paction 0
 		shift-phase-to 1
 <!> type non `hello`
 phase 0
-    action block 0
+    paction 0
         position 0 0
 		pool-control gem-red/w allowcull false
 		behpool-control pather-red/w allowcull false
@@ -30,6 +30,6 @@ phase 0
 			behpool-control pather-red/w allowcull true ##or reset
 		
 phase 0
-	action block 0
+	paction 0
         position 0 1
             

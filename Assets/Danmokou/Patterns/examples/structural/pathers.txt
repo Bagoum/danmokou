@@ -1,12 +1,12 @@
 pattern { }
 phase 0
-	action block 0
+	paction 0
 		shift-phase-to 1
 	
 !!{ allc { black purple teal green orange yellow red pink blue }	
 ##1. Spiral-to-straight
 phase 0 #{
-	action block 0
+	paction 0
 		position 0 1
 		async lightning-orange/w <1;:> gcr2 600 _ <> {
 			p this

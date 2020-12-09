@@ -2,11 +2,18 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using Danmaku;
+using DMK.Behavior;
+using DMK.Core;
+using DMK.Expressions;
+using DMK.GameInstance;
+using DMK.Player;
+using DMK.Scriptables;
+using DMK.Services;
 using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.Serialization;
 
+namespace DMK.Services {
 public class SFXService : RegularUpdater {
     private static AudioSource src;
     private static SFXService main;
@@ -30,12 +37,15 @@ public class SFXService : RegularUpdater {
     public readonly struct ConstructedAudio {
         public readonly AudioSource src;
         public readonly bool pausable;
+
         public ConstructedAudio(AudioSource src, bool pausable) {
             this.src = src;
             this.pausable = pausable;
         }
     }
+
     private static readonly CompactingArray<ConstructedAudio> constructed = new CompactingArray<ConstructedAudio>();
+
     public void Setup() {
         main = this;
         src = GetComponent<AudioSource>();
@@ -47,27 +57,27 @@ public class SFXService : RegularUpdater {
 
     protected override void BindListeners() {
         base.BindListeners();
-        Listen(Core.Events.GameStateHasChanged, HandleGameStateChange);
-        Listen(CampaignData.MeterNowUsable, () => Request(meterUsable));
-        Listen(CampaignData.AnyExtendAcquired, () => Request(lifeExtend));
-        Listen(CampaignData.PhaseCompleted, pc => {
+        Listen(Events.GameStateHasChanged, HandleGameStateChange);
+        Listen(InstanceData.MeterNowUsable, () => Request(meterUsable));
+        Listen(InstanceData.AnyExtendAcquired, () => Request(lifeExtend));
+        Listen(InstanceData.PhaseCompleted, pc => {
             if (pc.Captured.Try(out var captured)) {
                 Request(captured ? main.phaseEndSuccess : main.phaseEndFail);
-            } else if (pc.props.phaseType == Enums.PhaseType.STAGE && pc.props.Cleanup) {
+            } else if (pc.props.phaseType == PhaseType.STAGE && pc.props.Cleanup) {
                 Request(main.stageSectionEnd);
             }
         });
-        Listen(CampaignData.PowerFull, () => Request(main.powerFull));
-        Listen(CampaignData.PowerGained, () => Request(main.powerGained));
-        Listen(CampaignData.PowerLost, () => Request(main.powerLost));
-        Listen(CampaignData.LifeSwappedForScore, () => Request(main.swapHPScore));
+        Listen(InstanceData.PowerFull, () => Request(main.powerFull));
+        Listen(InstanceData.PowerGained, () => Request(main.powerGained));
+        Listen(InstanceData.PowerLost, () => Request(main.powerLost));
+        Listen(InstanceData.LifeSwappedForScore, () => Request(main.swapHPScore));
 
         Listen(PlayerInput.PlayerActivatedMeter, () => Request(meterActivated));
         Listen(PlayerInput.PlayerDeactivatedMeter, () => Request(meterDeActivated));
     }
 
     public void Update() {
-        if (GameStateManager.IsLoadingOrPaused) return;
+        if (EngineStateManager.IsLoadingOrPaused) return;
         _timeouts.Clear();
         foreach (var kv in timeouts) {
             float v = kv.Value - ETime.dT;
@@ -117,6 +127,7 @@ public class SFXService : RegularUpdater {
         private void SetProps() {
             source.pitch = sfx.pitch * FeaturePitchMult();
         }
+
         public void Request() {
             if (!active) {
                 source.loop = true;
@@ -129,6 +140,7 @@ public class SFXService : RegularUpdater {
                 requested = false;
             } else requested = true;
         }
+
         public void Update(float dT) {
             if (active) {
                 SetProps();
@@ -144,9 +156,11 @@ public class SFXService : RegularUpdater {
             }
         }
     }
-    private static Dictionary<string, float> timeouts = new Dictionary<string,float>();
-    private static Dictionary<string, float> _timeouts = new Dictionary<string,float>();
-    private static readonly Dictionary<string, LoopingSourceInfo> loopTimeouts = new Dictionary<string, LoopingSourceInfo>();
+
+    private static Dictionary<string, float> timeouts = new Dictionary<string, float>();
+    private static Dictionary<string, float> _timeouts = new Dictionary<string, float>();
+    private static readonly Dictionary<string, LoopingSourceInfo> loopTimeouts =
+        new Dictionary<string, LoopingSourceInfo>();
     private static readonly List<LoopingSourceInfo> loopTimeoutsArr = new List<LoopingSourceInfo>();
 
     public static void Request(string style) {
@@ -169,7 +183,7 @@ public class SFXService : RegularUpdater {
         }
         if (timeouts.ContainsKey(aci.defaultName)) return;
         if (aci.Timeout > 0f) timeouts[aci.defaultName] = aci.Timeout;
-        
+
         if (aci.pausable) RequestSource(aci, true);
         else src.PlayOneShot(aci.clip, aci.volume * SaveData.s.SEVolume);
     }
@@ -197,7 +211,7 @@ public class SFXService : RegularUpdater {
         cmp.clip = aci.clip;
         return cmp;
     }
-    
+
     [CanBeNull]
     public static AudioSource RequestSource([CanBeNull] SFXConfig aci, bool pausable = true) {
         if (aci == null) return null;
@@ -216,13 +230,13 @@ public class SFXService : RegularUpdater {
         }
         return s;
     }
-    
+
     public static void BossSpellCutin() => Request(main.bossSpellCutin);
     public static void BossCutin() => Request(main.bossCutin);
     public static void BossExplode() => Request(main.bossExplode);
-    
-    
-    
+
+
+
     public static void ClearConstructed() {
         for (int ii = 0; ii < constructed.Count; ++ii) {
             if (constructed[ii].src != null) Destroy(constructed[ii].src);
@@ -235,7 +249,7 @@ public class SFXService : RegularUpdater {
         loopTimeoutsArr.Clear();
     }
 
-    private void HandleGameStateChange(GameState state) {
+    private void HandleGameStateChange(EngineState state) {
         if (state.IsPaused()) {
             for (int ii = 0; ii < constructed.Count; ++ii) {
                 if (constructed[ii].pausable) constructed[ii].src.Pause();
@@ -243,7 +257,7 @@ public class SFXService : RegularUpdater {
             for (int ii = 0; ii < loopTimeoutsArr.Count; ++ii) {
                 loopTimeoutsArr[ii].source.Pause();
             }
-        } else if (state == GameState.RUN) {
+        } else if (state == EngineState.RUN) {
             for (int ii = 0; ii < constructed.Count; ++ii) {
                 if (constructed[ii].pausable) constructed[ii].src.UnPause();
             }
@@ -252,5 +266,5 @@ public class SFXService : RegularUpdater {
             }
         }
     }
-    
+}
 }

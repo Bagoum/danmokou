@@ -1,18 +1,18 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using Core;
-using DMath;
+using DMK.Core;
+using DMK.DMath;
+using DMK.Services;
 using NUnit.Framework;
-using SM;
+using DMK.SM;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using static NUnit.Framework.Assert;
-using static DMath.Parser;
-using static Tests.TAssert;
-using static Danmaku.Enums;
+using static DMK.DMath.Parser;
+using static DMK.Testing.TAssert;
 
-namespace Tests {
+namespace DMK.Testing {
 
 public static class TestParsing {
     [Test]
@@ -61,7 +61,7 @@ bullet shell-teal/b <2;:> cre 20 _ <;:5> repeat 5 <;:72> s :: {
 		} tp-rot pxy 2 &R2", "The reference R2 is used, but does not have a value.");*/
         TestSMExceptionRegex(@"sync danger <2;:> summons tprot cx 1 file YEET", "file by name YEET");
         TestSMExceptionRegex(@"sync danger <2;:> summons tprot cx 1 blarg", "blarg is not a StateMachine");
-        TestSMExceptionRegex(@"sync danger <2;:> summons tprot cx 1 here sad", 
+        TestSMExceptionRegex(@"sync danger <2;:> summons tprot cx 1 sad", 
             "Nested StateMachine construction.*sad is not a StateMachine");
         TestSMExceptionRegex(@"async shell-teal/b <2;:> gcr2 60 5 <-0.2;:10> { } gsr2 5 <;:72> { } s tp-rot cx sad", 
             "to type Float.*≪sad≫");
@@ -88,7 +88,7 @@ async shell-teal/b <2;:> gcr2 60 5 <-0.2;:10> { } gsr2 5 <;:72> { } s tp-rot cxy
 <!> bg black
 <!> bgt-out shatter4
 phase 0
-action block 0
+paction 0
 noop") as PhaseSM).TField<PhaseProperties>("props");
         AreEqual(PhaseType.SPELL, props.phaseType);
         AreEqual("en4", props.cardTitle);
@@ -110,31 +110,31 @@ noop") as PhaseSM).TField<PhaseProperties>("props");
     [Test]
     public static void TestCountEnforcer() {
         var sm = StateMachine.CreateFromDump(@"
-action block 0
+paction 0
     noop
     @ n1
-        action block 0 :1
+        paction 0 :1
             noop
     noop
-    noop") as PhaseActionSM;
+    noop") as PhaseParallelActionSM;
         AreEqual(4, sm.TField<List<StateMachine>>("states").Count);
         sm = StateMachine.CreateFromDump(@"
-action block 0
+paction 0
     noop
     @ n1
-        action block 0 :2
+        paction 0 :2
             noop
             noop
-    noop") as PhaseActionSM;
+    noop") as PhaseParallelActionSM;
         AreEqual(3, sm.TField<List<StateMachine>>("states").Count);
         sm = StateMachine.CreateFromDump(@"
-action block 0
+paction 0
     noop
     @ n1
-        action block 0
+        paction 0
             noop
             noop
-            noop") as PhaseActionSM;
+            noop") as PhaseParallelActionSM;
         AreEqual(2, sm.TField<List<StateMachine>>("states").Count);
 
     }

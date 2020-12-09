@@ -1,16 +1,16 @@
 pattern {}
 phase 0
-	action block 0
+	paction 0
 		shift-phase-to 1
 		
 		
 phase 0
-	action block 0
+	paction 0
 		position 0 2
 			async glaser-red/w <-2> gsr2 2 <4> { target a Lplayer } laser null 2 100 { } 
 
 phase 0
-    action block 0
+    paction 0
         position 0 2
 			async gem-green/ <0.5;:> gcr2 24 _ <12h> {
 				sfx x-fire-burst-1

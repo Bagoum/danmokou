@@ -1,12 +1,12 @@
 pattern { }
 phase 0
-	action block 0
+	paction 0
 		clear phase
 		shift-phase-to 1
 	
 <!> type non "hello"
 phase 0
-    action block 0
+    paction 0
 		beh-control persist pather-blue/w flipx< -4.8 _
 		async pather-blue/w <.5;:120> gsr2 20 <5.87> {
 		} pather 2 2 tprot cx 1 { }

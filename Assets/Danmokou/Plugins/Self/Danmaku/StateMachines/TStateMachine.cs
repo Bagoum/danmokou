@@ -1,8 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
-using Danmaku;
+using DMK.Core;
+using DMK.Dialogue;
+using DMK.Services;
 
-namespace SM {
+namespace DMK.SM {
 /// <summary>
 /// `script`: Top-level controller for dialogue files.
 /// </summary>

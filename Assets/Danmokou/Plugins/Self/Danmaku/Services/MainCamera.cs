@@ -1,10 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using Danmaku;
-using DMath;
-using JetBrains.Annotations;
+﻿using System.Collections.Generic;
+using DMK.Core;
+using DMK.DMath;
+using DMK.Graphics;
+using DMK.Player;
 using UnityEngine;
+
+namespace DMK.Services {
 
 public class MainCamera : MonoBehaviour {
     private static readonly int ShaderScrnWidthID = Shader.PropertyToID("_ScreenWidth");
@@ -17,7 +18,7 @@ public class MainCamera : MonoBehaviour {
     private static readonly int GlobalXOffsetID = Shader.PropertyToID("_GlobalXOffset");
     public static MainCamera main;
 
-    private static Camera cam;
+    public static Camera mainCam;
     public static float VertRadius { get; private set; }
     public static float HorizRadius { get; private set; }
     public static float ScreenWidth => HorizRadius * 2;
@@ -34,12 +35,12 @@ public class MainCamera : MonoBehaviour {
     [Range(1, 16)] public int bloomIterations = 2;
     public float bloomThreshold = 1;
 */
-    
+
     private void Awake() {
         MainCamera.main = this;
-        cam = GetComponent<Camera>();
-        VertRadius = cam.orthographicSize;
-        HorizRadius = VertRadius * cam.pixelWidth / cam.pixelHeight;
+        mainCam = GetComponent<Camera>();
+        VertRadius = mainCam.orthographicSize;
+        HorizRadius = VertRadius * mainCam.pixelWidth / mainCam.pixelHeight;
         tr = transform;
         position = tr.position;
         ayaMaterial = new Material(ayaShader);
@@ -49,7 +50,7 @@ public class MainCamera : MonoBehaviour {
     /// <summary>
     /// PPU of default game resources, such as utility images and UI objects. This does not change with resolution.
     /// </summary>
-    public static float ResourcePPU => Consts.BestResolution.h / ScreenHeight;
+    public static float ResourcePPU => GraphicsUtils.BestResolution.h / ScreenHeight;
 
     public void ReassignGlobalShaderVariables() {
         //Log.Unity($"Camera width: {cam.pixelWidth} Screen width: {Screen.width}");
@@ -57,7 +58,7 @@ public class MainCamera : MonoBehaviour {
         Shader.SetGlobalFloat(ShaderScrnWidthID, 2 * HorizRadius);
         Shader.SetGlobalFloat(PixelsPerUnitID, Screen.height / ScreenHeight);
         Shader.SetGlobalFloat(ResourcePixelsPerUnitID, ResourcePPU);
-        Shader.SetGlobalFloat(RenderRatioID, Screen.height / (float)Consts.BestResolution.h);
+        Shader.SetGlobalFloat(RenderRatioID, Screen.height / (float) GraphicsUtils.BestResolution.h);
         Shader.SetGlobalFloat(ShaderPixelHeightID, Screen.height);
         Shader.SetGlobalFloat(ShaderPixelWidthID, Screen.width);
         Shader.SetGlobalFloat(GlobalXOffsetID, GameManagement.References.bounds.center.x);
@@ -67,8 +68,8 @@ public class MainCamera : MonoBehaviour {
 
     [ContextMenu("Debug sizes")]
     public void DebugSizes() {
-        cam = GetComponent<Camera>();
-        Debug.Log($"Vertical {cam.orthographicSize} pixels {cam.pixelWidth} {cam.pixelHeight}");
+        mainCam = GetComponent<Camera>();
+        Debug.Log($"Vertical {mainCam.orthographicSize} pixels {mainCam.pixelWidth} {mainCam.pixelHeight}");
     }
 
     /*
@@ -97,6 +98,7 @@ public class MainCamera : MonoBehaviour {
     public static Vector2 Descale(float width, float height) {
         return new Vector2(width / ScreenWidth, height / ScreenHeight);
     }
+
     /// <summary>
     /// Convert camera-relative coordinates into UV coordinates
     /// </summary>
@@ -105,7 +107,7 @@ public class MainCamera : MonoBehaviour {
     public static Vector2 RelativeToScreenUV(Vector2 xy) {
         return new Vector2(0.5f + xy.x / ScreenWidth, 0.5f + xy.y / ScreenHeight);
     }
-    
+
 
     public static void SetPBScreenLoc(MaterialPropertyBlock pb, Vector2 loc) {
         Vector2 normLoc = RelativeToScreenUV(loc);
@@ -149,7 +151,7 @@ public class MainCamera : MonoBehaviour {
         }
         Shader.DisableKeyword("AYA_CAPTURE");
         var ss = DefaultTempRT(((int) (SaveData.s.Resolution.w * xsr), (int) (SaveData.s.Resolution.h * ysr)));
-        Graphics.Blit(capture, ss, ayaMaterial);
+        UnityEngine.Graphics.Blit(capture, ss, ayaMaterial);
         capture.Release();
         var tex = ss.IntoTex();
         ss.Release();
@@ -193,10 +195,12 @@ public class MainCamera : MonoBehaviour {
     }*/
 
     public static RenderTexture DefaultTempRT() => DefaultTempRT(SaveData.s.Resolution);
-    public static RenderTexture DefaultTempRT((int w, int h) res) => RenderTexture.GetTemporary(res.w, 
+
+    public static RenderTexture DefaultTempRT((int w, int h) res) => RenderTexture.GetTemporary(res.w,
         res.h, 0, RenderTextureFormat.ARGB32);
 
-    public static ArbitraryCapturer CreateArbitraryCapturer(Transform tr) => 
+    public static ArbitraryCapturer CreateArbitraryCapturer(Transform tr) =>
         GameObject.Instantiate(GameManagement.ArbitraryCapturer, tr, false)
-                    .GetComponent<ArbitraryCapturer>();
+            .GetComponent<ArbitraryCapturer>();
+}
 }

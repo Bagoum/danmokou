@@ -1,31 +1,24 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Threading;
 using UnityEngine;
 using NUnit.Framework;
 using Ex = System.Linq.Expressions.Expression;
-using UnityEngine.TestTools;
-using DMath;
-using Danmaku;
-using static ExUtils;
-using static DMath.ExHelpers;
-using static DMath.ExMHelpers;
+using DMK.DMath;
+using DMK.Expressions;
+using static DMK.Expressions.ExUtils;
+using static DMK.Expressions.ExMHelpers;
 using static NUnit.Framework.Assert;
-using static DMath.ExM;
-using static Tests.TAssert;
-using static DMath.ExMV3;
-using static Compilers;
-using ExTP = System.Func<DMath.TExPI, TEx<UnityEngine.Vector2>>;
-using static DMath.ExMLerps;
-using static DMath.ExMConversions;
-using static DMath.ExMMod;
+using static DMK.DMath.Functions.ExM;
+using static DMK.Testing.TAssert;
+using static DMK.DMath.Functions.ExMV3;
+using static DMK.Reflection.Compilers;
+using ExTP = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<UnityEngine.Vector2>>;
+using static DMK.DMath.Functions.ExMLerps;
+using static DMK.DMath.Functions.ExMConversions;
+using static DMK.DMath.Functions.ExMMod;
 
-namespace Tests {
+namespace DMK.Testing {
 
-    public static class EMath {
+public static class EMath {
         private const float err = 0.00001f;
 
         [Test]

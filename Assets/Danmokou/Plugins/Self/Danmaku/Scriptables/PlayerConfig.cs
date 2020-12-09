@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using Danmaku;
 using JetBrains.Annotations;
 using UnityEngine;
 
+namespace DMK.Scriptables {
 /// <summary>
 /// Provides stage metadata.
 /// </summary>
@@ -36,4 +36,5 @@ public class PlayerConfig : ScriptableObject {
 public struct OrdinalShot {
     public string ordinal;
     public ShotConfig shot;
+}
 }

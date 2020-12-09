@@ -1,6 +1,6 @@
 pattern { }
 phase 0 #{
-	action block 0
+	paction 0
 		shift-phase-to 3
 #}
 
@@ -11,11 +11,11 @@ phase 0 #{
 <!> hp 20000
 <!> hpbar 1
 phase 26 #{
-    action block 0
+    paction 0
         ##move 2 tp-nrot eased out-sine 2 stopsampling 0 vhometime 2 cxy 0 3
         ##summon cu-$me-come-on-boy <> _ <> null file fall
         ##wait-for 4
-	action block 0
+	paction 0
 		position 0 2
 		vulnerable true
 		async gcircle-*/b <0.4;:> gir2 0 2 <> { 
@@ -41,16 +41,16 @@ phase 26 #{
 <!> hp 20000
 <!> hpbar 1
 phase 46 #{
-    action block 0
+    paction 0
         ##move 2 tp-nrot eased out-sine 2 stopsampling 0 vhometime 2 cxy 0 3
         ##summon cu-$me-come-on-boy <> _ <> null file fall
         ##wait-for 4
-	action block 0
+	paction 0
 		position 0 2.5
 		pool-control {{ gcircle-* }}  allowcull false
 		bullet-control persist {{ gcircle-* }} cull < y -6
 		beh-control-sm persist lightning-orange/b onlyonce offscreen loc
-			action block 0 :2
+			paction 0 :2
 				async glcircle-green/ <> gcr2 72 2 <12h> { sfx x-fire-burst-1 } gsr2 30 <12> . s tp
 					cx 1
 					py * -2 (-m t 0.2)
@@ -108,9 +108,9 @@ phase 46 #{
 <!> hpbar 1
 <!> root 0 10
 phase 46 #{
-	action block 0
+	paction 0
 		pool-control {{ gcircle-* sakura-* fireball-* }} allowcull false
-	action block 0
+	paction 0
 		position 10 6
 		async lightning-yellow/ <> gcr2 120 _ <> {
 			p this
@@ -125,7 +125,7 @@ phase 46 #{
 			p	this
 			preloop lr =f pm1 p
 		} seq
-			action block 0
+			paction 0
 		!!{ wl 15
 		!!{ ww 10
 				sync gcircle-* <> loc0 gsr {
@@ -158,13 +158,13 @@ phase 46 #{
 					} s polar
 						+ 0.5 * (- 2.1 * 0.24 p1) t
 						* pm1mod p2 logsumshiftt -1 (- 1.6 * 0.5 p1) * 25 t * 12 t
-			action block 5
+			paction 5
 				async gpather-red/w <> gcr2 24 5 <15> { sfx x-fire-tech-6 } doubleflipy target Lplayer 
 					pather 3 3 tprot lerpfromtoback 0.3 0.4 0.7 1.2 cx 5 cx 0.3 { }
 				move 4 tpnrot eased out-sine 4 ssvhomet 4 pxy * &lr 9.5 6
 				_ 3
 					bullet-control once {{ gcircle-* }} cull _
-			action block 0
+			paction 0
 				pos pxy * &lr -9.5 6
 				
 			

@@ -1,26 +1,26 @@
 pattern { }
 
-<!> bgt-in shatter4
+<!> Fbgt-in shatter4
 <!> bg example3d_1
 <!> bgt-out shatter4
 phase 5
-	action block 0
+	paction 0
 		position 0 0
 
 <!> bg example3d_2
 <!> bgt-out shatter4
 phase 5
-	action block 0
+	paction 0
 		position 0 0
 		
 <!> bg white
 <!> bgt-out shatter4
 phase 5
-	action block 0
+	paction 0
 		position 0 0
 
 <!> bg example3d_1
 phase 5
-	action block 0
+	paction 0
 		noop
             

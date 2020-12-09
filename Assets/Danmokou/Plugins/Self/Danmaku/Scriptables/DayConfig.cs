@@ -1,11 +1,9 @@
-﻿using DMath;
-using JetBrains.Annotations;
-using UnityEngine;
-using static Danmaku.Enums;
+﻿using UnityEngine;
 
-
+namespace DMK.Scriptables {
 [CreateAssetMenu(menuName = "Data/Day Configuration")]
 public class DayConfig : ScriptableObject {
     public BossConfig[] bosses;
     public string dayTitle;
+}
 }

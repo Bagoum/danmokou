@@ -1,22 +1,11 @@
 ﻿using System;
+using DMK.Dialogue;
 using UnityEngine;
 
 
-
-//Inspector-exposed structs cannot be readonly
-[Serializable]
-public struct Translateable {
-    public string name;
-    public Translated[] files;
-}
-
-[Serializable]
-public struct Translated {
-    public Locale locale;
-    public TextAsset file;
-}
-
+namespace DMK.Scriptables {
 [CreateAssetMenu(menuName = "Data/Dialogue")]
 public class SODialogue : ScriptableObject {
-    public Translateable[] assetGroups;
+    public TranslateableDialogue[] assetGroups;
+}
 }

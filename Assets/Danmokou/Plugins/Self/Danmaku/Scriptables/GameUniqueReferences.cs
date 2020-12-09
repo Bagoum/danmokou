@@ -1,11 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using DMath;
-using JetBrains.Annotations;
+using DMK.Core;
 using UnityEngine;
-using static Danmaku.Enums;
 
 
+namespace DMK.Scriptables {
 [CreateAssetMenu(menuName = "Data/Game Data")]
 public class GameUniqueReferences : ScriptableObject {
     public string gameIdentifier;
@@ -13,6 +12,7 @@ public class GameUniqueReferences : ScriptableObject {
     public SceneConfig mainMenu;
     public SceneConfig replaySaveMenu;
     public GameObject defaultMenuBackground;
+    public Sprite defaultUIFrame;
     public SceneConfig unitScene;
     public SceneConfig tutorial;
     public SceneConfig miniTutorial;
@@ -24,10 +24,9 @@ public class GameUniqueReferences : ScriptableObject {
     public CameraTransitionConfig defaultTransition;
 
     public FieldBounds bounds;
-    
+
     public SODialogue[] dialogue;
-    [Header("Script Keyable")]
-    public BossConfig[] bossMetadata;
+    [Header("Script Keyable")] public BossConfig[] bossMetadata;
     public DialogueProfile[] dialogueProfiles;
     public AudioTrack[] tracks;
     public ItemReferences items;
@@ -35,7 +34,8 @@ public class GameUniqueReferences : ScriptableObject {
     public SOTextAssets[] fileStateMachines;
 
     private static IEnumerable<PlayerConfig> CampaignShots(CampaignConfig c) =>
-        c == null ? new PlayerConfig[0] : c.players; 
+        c == null ? new PlayerConfig[0] : c.players;
+
     private static IEnumerable<PlayerConfig> CampaignShots(DayCampaignConfig c) =>
         c == null ? new PlayerConfig[0] : c.players;
 
@@ -45,4 +45,5 @@ public class GameUniqueReferences : ScriptableObject {
 
     public PlayerConfig FindPlayer(string key) => AllPlayers.First(p => p.key == key);
     public ShotConfig FindShot(string key) => AllShots.First(s => s.key == key);
+}
 }

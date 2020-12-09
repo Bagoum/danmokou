@@ -1,22 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
-using System.Text;
-using Core;
-using Danmaku;
-using DMath;
+using DMK.Core;
+using DMK.DMath.Functions;
+using DMK.GameInstance;
+using DMK.Scriptables;
+using DMK.Services;
 using FParsec;
 using FParser;
 using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.Profiling;
-using static SM.PatternProperty;
-using static SM.PhaseProperty;
-using static Danmaku.Enums;
+using static DMK.SM.PatternProperty;
+using static DMK.SM.PhaseProperty;
 
 
-namespace SM {
+namespace DMK.SM {
 
 /// <summary>
 /// A modifier that affects an entire pattern script.
@@ -76,12 +75,15 @@ public class PatternProperties {
     [CanBeNull] public readonly (int phase, string)[] bgms;
     public PatternProperties(PatternProperty[] props) {
         foreach (var prop in props) {
-            if (prop is BossProp bp) boss = bp.value;
-            else if (prop is BossesProp bsp) {
+            if        (prop is BossProp bp) {
+                boss = bp.value;
+            } else if (prop is BossesProp bsp) {
                 (bosses, bossUI) = bsp.value;
                 boss = bosses[0];
-            } else if (prop is BGMProp bgm) bgms = bgm.value;
-            else if (prop is SetUIFromProp sui) setUIFrom = sui.value;
+            } else if (prop is BGMProp bgm) {
+                bgms = bgm.value;
+            } else if (prop is SetUIFromProp sui) 
+                setUIFrom = sui.value;
             else if (prop is PatternProperty.EmptyProp) { }
             else throw new Exception($"Pattern is not allowed to have properties of type {prop.GetType()}");
         }
@@ -98,7 +100,7 @@ public class PhaseProperty {
     /// <returns></returns>
     public static PhaseProperty HideTimeout() => new HideTimeoutFlag();
     /// <summary>
-    /// Declares that this card is a stage section.
+    /// Declares that this phase is a stage section.
     /// </summary>
     public static PhaseProperty Stage() => Type(PhaseType.STAGE, null);
     /// <summary>
@@ -108,22 +110,22 @@ public class PhaseProperty {
     public static PhaseProperty Skip() => new SkipFlag();
 
     /// <summary>
-    /// Declare that this card is a dialogue card. (Same as CARD DIALOGUE ``).
+    /// Declare that this phase is a dialogue phase. (Same as CARD DIALOGUE ``).
     /// </summary>
     /// <returns></returns>
     public static PhaseProperty Dialogue() => Type(PhaseType.DIALOGUE, null);
     /// <summary>
-    /// Declare that this card is a stage midboss card.
+    /// Declare that this phase is a stage midboss phase.
     /// </summary>
     /// <returns></returns>
     public static PhaseProperty Midboss() => Type(PhaseType.STAGEMIDBOSS, null);
     /// <summary>
-    /// Declare that this card is a stage endboss card.
+    /// Declare that this phase is a stage endboss phase.
     /// </summary>
     /// <returns></returns>
     public static PhaseProperty Endboss() => Type(PhaseType.STAGEENDBOSS, null);
     /// <summary>
-    /// Declare the type and name of this card.
+    /// Declare the type and name of this phase.
     /// </summary>
     public static PhaseProperty Type(PhaseType type, string name) => new PhaseTypeProp(type, name);
     /// <summary>
@@ -389,10 +391,14 @@ public class PhaseProperties {
     public PhaseProperties(IReadOnlyList<PhaseProperty> props) {
         List<StateMachine> rootMoves = new List<StateMachine>();
         foreach (var prop in props) {
-            if (prop is HideTimeoutFlag) hideTimeout = true;
-            else if (prop is SkipFlag) skip = true;
-            else if (prop is LenientFlag) lenient = true;
-            else if (prop is BossCutinFlag) bossCutin = true;
+            if      (prop is HideTimeoutFlag) 
+                hideTimeout = true;
+            else if (prop is SkipFlag) 
+                skip = true;
+            else if (prop is LenientFlag) 
+                lenient = true;
+            else if (prop is BossCutinFlag) 
+                bossCutin = true;
             else if (prop is PhaseTypeProp s) {
                 phaseType = s.type;
                 cardTitle = s.name;
@@ -402,8 +408,10 @@ public class PhaseProperties {
             } else if (prop is HPProp h) {
                 hp = h.hp;
                 invulnTime = h.invulnT;
-            } else if (prop is HPBarProp hb) hpbar = hb.portion;
-            else if (prop is BackgroundProp bp) Background = ResourceManager.GetBackground(bp.style);
+            } else if (prop is HPBarProp hb) 
+                hpbar = hb.portion;
+            else if (prop is BackgroundProp bp) 
+                Background = ResourceManager.GetBackground(bp.style);
             else if (prop is BGTransitionProp btp) {
                 if (btp.isInwardsTransition) BgTransitionIn = ResourceManager.GetBackgroundTransition(btp.style);
                 else BgTransitionOut = ResourceManager.GetBackgroundTransition(btp.style);
@@ -411,22 +419,25 @@ public class PhaseProperties {
                 cleanup = cp.clear;
                 autocullTarget = cp.target ?? autocullTarget;
                 autocullDefault = cp.defaulter ?? autocullDefault;
-            } else if (prop is LivesOverrideProp lop) livesOverride = lop.lives;
-            else if (prop is SpellCutinProp scp) spellCutinIndex = scp.index;
+            } else if (prop is LivesOverrideProp lop) 
+                livesOverride = lop.lives;
+            else if (prop is SpellCutinProp scp) 
+                spellCutinIndex = scp.index;
             else if (prop is RootProp rp) {
                 StateMachine rm = new ReflectableLASM(SaveData.Settings.TeleportAtPhaseStart ?
                     SMReflection.Position(_ => rp.x, _ => rp.y) :
 #if NO_EXPR
                     SMReflection.MoveTarget_noexpr(_ => rp.t, "io-sine", NoExprMath_1.CXY(rp.x, rp.y)));
 #else
-                    SMReflection.MoveTarget(BPYRepo.Const(rp.t), "io-sine", Parametrics.CXY(rp.x, rp.y)));
+                    SMReflection.MoveTarget(BPYRepo.Const(rp.t), ExMLerps.EIOSine, Parametrics.CXY(rp.x, rp.y)));
 #endif
                 rootMoves.Add(rp.who == null ? rm : RetargetUSM.Retarget(rm, rp.who));
-            } else if (prop is ChallengeProp clp) challenges.Add(clp.c);
+            } else if (prop is ChallengeProp clp) 
+                challenges.Add(clp.c);
             else if (prop is PhaseProperty.EmptyProp) { }
             else throw new Exception($"Phase is not allowed to have properties of type {prop.GetType()}");
             
-            if (rootMoves.Count > 0) rootMove = new ParallelSM(rootMoves, Enums.Blocking.BLOCKING);
+            if (rootMoves.Count > 0) rootMove = new ParallelSM(rootMoves);
         }
     }
 }

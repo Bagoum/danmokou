@@ -1,9 +1,9 @@
 pattern { }
 phase 0
-	action block 0
+	paction 0
 		shift-phase-to 2
 phase 0
-    action block 0
+    paction 0
         position -5 -4
 		move 2 roffset pxy * 5 t sine 4 7 t
 		async circle-* <;:180> gcr { wt 3 80 } target Lplayer circlep defer 200 gsr {
@@ -15,7 +15,7 @@ phase 0
 			* 2 t
 			#0##* pm1mod p * 0.7 t
 phase 0
-    action block 0
+    paction 0
         position -4 2
 		move 2 tpnrot cx 4
 		async circle-* <;:180> gcr { wt 3 80 } target Lplayer circlep defer 140 gsr {
@@ -26,7 +26,7 @@ phase 0
 			* 2 t
 			* pm1mod p * 0.5 t
 phase 0
-    action block 0
+    paction 0
         position -4 2
 		move 4 tpnrot cx 2
 		async circle-blue/ <0.5;:> gcr { wt 24 20 p this } circlep defer 15 s polar

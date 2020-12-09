@@ -1,42 +1,48 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Danmaku;
+using DMK.Core;
+using DMK.GameInstance;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
-using static Danmaku.Enums;
-using static InputManager;
+using UnityEngine.SocialPlatforms;
+using static DMK.Core.InputManager;
 
 
+namespace DMK.Services {
 /// <summary>
 /// Records information about a completed game run-through with an attached replay.
 /// </summary>
 public class ReplayMetadata {
-    [JsonIgnore] public GameRecord Record => 
+    [JsonIgnore] public InstanceRecord Record => 
         SaveData.r.FinishedGames.TryGetValue(RecordUuid, out var gr) ? gr : SerializedRecord;
     
     /// <summary>
     /// Serializing the record in the replay file allows transferring replays.
     /// </summary>
-    public GameRecord SerializedRecord { get; set; }
+    public InstanceRecord SerializedRecord { get; set; }
     public string RecordUuid { get; set; }
+    //Frozen options
     public float DialogueSpeed { get; set; }
     public bool SmoothInput { get; set; }
+    public Locale Locale { get; set; } = Locale.EN;
     // Not important but it's convenient
     public int Length { get; set; }
 
     [UsedImplicitly]
     public ReplayMetadata() {}
-    public ReplayMetadata(GameRecord rec) {
+    public ReplayMetadata(InstanceRecord rec) {
         SerializedRecord = rec;
         RecordUuid = rec.Uuid;
         DialogueSpeed = SaveData.s.DialogueWaitMultiplier;
         SmoothInput = SaveData.s.AllowInputLinearization;
+        Locale = SaveData.s.Locale;
     }
 
     public void ApplySettings() {
         SaveData.s.DialogueWaitMultiplier = DialogueSpeed;
         SaveData.s.AllowInputLinearization = SmoothInput;
+        SaveData.UpdateLocale(Locale);
     }
 
     [JsonIgnore]
@@ -47,7 +53,7 @@ public readonly struct Replay {
     public readonly Func<FrameInput[]> frames;
     public readonly ReplayMetadata metadata;
 
-    public Replay(FrameInput[] frames, GameRecord rec) :
+    public Replay(FrameInput[] frames, InstanceRecord rec) :
         this(() => frames, new ReplayMetadata(rec)) {
         metadata.Length = frames.Length;
     }
@@ -57,6 +63,7 @@ public readonly struct Replay {
         this.metadata = metadata;
     }
 }
+
 public static class Replayer {
     public enum ReplayStatus {
         RECORDING,
@@ -97,6 +104,7 @@ public static class Replayer {
     public static void LoadLazy() {
         var _ = Replaying;
     }
+
     public static void BeginRecording() {
         Log.Unity("Replay recording started");
         lastFrame = -1;
@@ -119,7 +127,7 @@ public static class Replayer {
         status = ReplayStatus.REPLAYING;
     }
 
-    public static void End(GameRecord rec) {
+    public static void End(InstanceRecord rec) {
         if (status == ReplayStatus.RECORDING) {
             Log.Unity($"Finished recording {recording?.Count ?? -1} frames.");
         } else if (status == ReplayStatus.REPLAYING) {
@@ -149,10 +157,10 @@ public static class Replayer {
         } else if (status == ReplayStatus.REPLAYING && Replaying != null) {
             if (replayIndex >= Replaying?.Length) {
                 Log.UnityError($"Ran out of replay data. On frame {lastFrame}, requested index {replayIndex}, " +
-                                    $"but there are only {Replaying.Length}.");
+                               $"but there are only {Replaying.Length}.");
             }
             ReplayFrame(Replaying[replayIndex]);
         }
     }
-    
+}
 }

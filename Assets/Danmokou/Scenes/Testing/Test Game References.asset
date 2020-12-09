@@ -19,6 +19,7 @@ MonoBehaviour:
     patch: 0
   mainMenu: {fileID: 11400000, guid: 607369d75fc81704c97d214f709b210e, type: 2}
   replaySaveMenu: {fileID: 0}
+  defaultMenuBackground: {fileID: 0}
   unitScene: {fileID: 11400000, guid: 29bbe3a711aa9374dbc9b14293a24f80, type: 2}
   tutorial: {fileID: 0}
   miniTutorial: {fileID: 0}
@@ -39,7 +40,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: dc2b4c390da211341a9b0d0c3356edf7, type: 2}
   dialogueProfiles: []
   tracks: []
-  items: {fileID: 0}
+  items: {fileID: 11400000, guid: 18e6de6e951f4114e8823af9e617bff7, type: 2}
   summonables:
   - {fileID: 11400000, guid: 38afc312ddb0ac242b8cfb301b1b4237, type: 2}
   fileStateMachines: []

@@ -1,50 +1,42 @@
 pattern { 
-	##boss jy.yukari 
+	boss jy.yukari 
 }
-<!> type spell `1`
-<!> hp 100000
-<!> hpbar 1
-phase 200
-	action block 0
+phase 0
+	paction 0
+		shift-phase-to 2
+
+<!> type non `1`
+<!> hp 10000
+phase 20
+	paction 0
 		position 0 2
 		##move _ nroffset px rangesoftmod 3 * 2 t
-///
-		sync arrowlaser-blueteal <20> gsr2c 4 {
-		} laser null 0.2 5 {
-		}
-		sync arrowlaser-tealgreen <40> gsr2c 4 {
-		} laser null 0.2 5 {
-		}
-		sync arrowlaser-blueteal <60> gsr2c 4 {
-		} laser null 0.2 5 {
-		}
-		vulnerable true
 
 <!> type spell `2`
 <!> hp 2000
 <!> hpbar 1
-phase 0
-	action block 1
+phase 10
+	paction 1
 		vulnerable true
 		
 <!> type non `3`
 <!> hp 3000
 <!> hpbar 0.3
 phase 0
-	action block 1
+	paction 1
 		vulnerable true
 		
 <!> type non `4`
 <!> hp 3000
 <!> hpbar 0.5
 phase 0
-	action block 1
+	paction 1
 		vulnerable true
 		
 <!> type spell `5`
 <!> hp 3000
 <!> hpbar 1
 phase 0
-	action block 1
+	paction 1
 		vulnerable true
             

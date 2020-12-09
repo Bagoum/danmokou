@@ -2,18 +2,19 @@
 using System.Linq;
 using System.Linq.Expressions;
 using NUnit.Framework;
-using UnityEngine.TestTools;
-using DMath;
+using DMK.DMath;
+using DMK.DMath.Functions;
+using DMK.Reflection;
 using UnityEngine;
-using static Compilers;
-using static DMath.FXYRepo;
+using static DMK.Reflection.Compilers;
 using static NUnit.Framework.Assert;
-using ExFXY = System.Func<TEx<float>, TEx<float>>;
-using static DMath.ExM;
-using static DMath.ExMMod;
-using static DMath.ExMLerps;
+using ExFXY = System.Func<DMK.Expressions.TEx<float>, DMK.Expressions.TEx<float>>;
+using static DMK.DMath.Functions.ExM;
+using static DMK.DMath.Functions.ExMMod;
+using static DMK.DMath.Functions.ExMLerps;
+using static DMK.DMath.Functions.FXYRepo;
 
-namespace Tests {
+namespace DMK.Testing {
 
     public static class ReflectFXY {
         private const float err = 0.0001f;
@@ -68,14 +69,15 @@ namespace Tests {
                 TestTPoints(e010, otherPts);
                 TestTPoints(e010, new[] { (0f, 0f), (ratio, 1f), (1f, 0f)});
             }
-            FXY sineES = FXY(x => Smooth("sine-010", x));
-            FXY smES = FXY(x => Smooth("smod-010", x));
+            FXY sineES = FXY(x => Smooth(ExMLerps.ESine010, x));
+            FXY smES = FXY(x => Smooth(ExMLerps.ESoftmod010, x));
             FXY quadES = FXY(x => EQuad0m10(ExC(0.3f), ExC(1f), x));
             Test010(sineES, new[] { (0.1f, 0.30901699f )});
             Test010(smES, new[] { (0.1f, 0.2f ), (0.7f, 0.6f)});
             Test010(quadES, new (float, float)[] {}, 0.3f);
-            FXY smthin = FXY(x => Smooth("in-sine", x));
-            FXY sc = FXY(x => SmoothIO("in-sine", "out-sine", ExC(6.0f), ExC(2.0f), ExC(3.0f), x));
+            FXY smthin = FXY(x => Smooth(ExMLerps.EInSine, x));
+            FXY sc = FXY(x => SmoothIO(ExMLerps.EInSine, ExMLerps.EOutSine, 
+                ExC(6.0f), ExC(2.0f), ExC(3.0f), x));
             TestTPoints(sc, new[] {
                 (-1f, 0f),
                 (0.2f, smthin(0.1f)),
@@ -85,7 +87,7 @@ namespace Tests {
                 (3.3f, smthin(0.9f)),
                 (6.5f, 0f)
             });
-            FXY sc2 = FXY(x => SmoothIOe("in-sine", ExC(6.0f), ExC(2.0f), x));
+            FXY sc2 = FXY(x => SmoothIOe(ExMLerps.EInSine, ExC(6.0f), ExC(2.0f), x));
             TestTPoints(sc2, new[] {
                 (-1f, 0f),
                 (0.2f, smthin(0.1f)),
@@ -94,7 +96,7 @@ namespace Tests {
                 (4.3f, 1-smthin(0.15f)),
                 (6.5f, 0f)
             });
-            FXY smthio = FXY(x => Smooth("io-sine", x));
+            FXY smthio = FXY(x => Smooth(ExMLerps.EIOSine, x));
             sc = "smoothioe io-sine 4 0.5 x".Into<FXY>();
             TestTPoints(sc, 
                 (-1f, 0f), 
@@ -154,7 +156,7 @@ namespace Tests {
             Assert.AreEqual(cd(9.75f), cdc(9.75f), err);
             Assert.AreEqual(cd(13.75f), cd(17.75f), 0.0001f);
             Func<float, float> sc = x => 2f * Mathf.Sin(M.PI / 4 * x);
-            FXY s = FXY(Ease("out-sine", 2, X()));
+            FXY s = FXY(Ease(ExMLerps.EOutSine, 2, X()));
             AreEqual(s(0.2f), sc(0.2f), err);
             AreEqual(s(0.6f), sc(0.6f), err);
         }
@@ -169,7 +171,7 @@ namespace Tests {
 
         [Test]
         public static void TSmooth() {
-            FXY ios = FXY(Ease("io-sine", 100, X()));
+            FXY ios = FXY(Ease(ExMLerps.EIOSine, 100, X()));
             Assert.AreEqual(ios(10), 4.89434837f/2f, err);
             Assert.AreEqual(ios(50), 50, err);
         }
@@ -212,15 +214,6 @@ namespace Tests {
 
         private static double DerivativeAt(FXY func, float x, double delta = ddelta) =>
             ((double)func(x + (float)delta / 2f) - func(x - (float)delta / 2f)) / delta;
-        [Test]
-        public static void TestDerivatives() {
-            foreach (var name in EaseHelpers.Functions) {
-                var (f, fd) = (FXY(EaseHelpers.GetFunc(name)), FXY(EaseHelpers.GetDeriv(name)));
-                for (float x = -1.01f; x < 2f; x += 0.1f) {
-                    AreEqual(fd(x), DerivativeAt(f, x), 0.01f, $"{name} at {x}");
-                }
-            }
-        }
 
         [Test]
         public static void TestSWings() {

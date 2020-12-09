@@ -1,43 +1,19 @@
 ﻿using System;
 using System.Linq;
-using System.Threading;
-using Core;
+using DMK.Behavior;
+using DMK.Core;
+using DMK.GameInstance;
 using JetBrains.Annotations;
-using SM;
+using Newtonsoft.Json;
+using ProtoBuf;
+using DMK.SM;
 using UnityEngine;
-using static Danmaku.Enums;
-
-[Serializable]
-public struct LocalizedString {
-    public string en;
-    public string jp;
-
-    public LocalizedString(string en) {
-        this.en = en;
-        jp = null;
-    }
-
-    [CanBeNull]
-    public string Value {
-        get {
-            switch (SaveData.s.Locale) {
-                case Locale.EN: return en;
-                case Locale.JP: return jp;
-                default: return null;
-            }
-        }
-    }
-
-    public string ValueOrEn => Value ?? en;
-
-    public static implicit operator string(LocalizedString ls) => ls.ValueOrEn;
-}
-
-namespace Danmaku {
 
 
-
+namespace DMK.Danmaku {
 //This class is effectively readonly but due to JSONify requirements, any field must not be readonly. 
+[Serializable]
+[ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
 public class DifficultySettings {
     /// <summary>
     /// Inclusive
@@ -49,7 +25,6 @@ public class DifficultySettings {
     public const int MAX_SLIDER = 42;
     public const int DEFAULT_SLIDER = 18;
     public FixedDifficulty? standard;
-    private float CustomValue => DifficultyForSlider(customValueSlider);
     public float customCounter;
     public int customValueSlider;
     public int numSuicideBullets;
@@ -68,6 +43,12 @@ public class DifficultySettings {
     public double playerGrazeboxMultiplier;
     public double pocOffset;
     public int? startingLives;
+    [JsonIgnore] [ProtoIgnore]
+    private float CustomValue => DifficultyForSlider(customValueSlider);
+    [JsonIgnore] [ProtoIgnore]
+    public float Value => standard?.Value() ?? CustomValue;
+    [JsonIgnore] [ProtoIgnore]
+    public float Counter => standard?.Counter() ?? customCounter;
     
     public DifficultySettings() : this(FixedDifficulty.Normal) { } //JSON constructor
     public DifficultySettings(FixedDifficulty standard) : this((FixedDifficulty?)standard) { }
@@ -129,9 +110,6 @@ public class DifficultySettings {
         return $"More than {fds[fds.Length - 1].Describe()}";
     }
 
-    public float Value => standard?.Value() ?? CustomValue;
-    public float Counter => standard?.Counter() ?? customCounter;
-
     public string Describe() => standard?.Describe() ?? $"CUST:{customValueSlider:00}";
     /// <summary>
     /// For filenames
@@ -170,11 +148,11 @@ public readonly struct SMRunner {
 
 
 /// <summary>
-/// Captures some game information for comparison in PhaseCompletion.
+/// Captures some game information at the beginning of a phase for comparison in PhaseCompletion.
 /// </summary>
 public readonly struct CampaignSnapshot {
     public readonly int hitsTaken;
-    public CampaignSnapshot(CampaignData data) {
+    public CampaignSnapshot(InstanceData data) {
         hitsTaken = data.HitsTaken;
     }
 }
@@ -220,7 +198,7 @@ public readonly struct PhaseCompletion {
 
     public ItemDrops? DropItems {
         get {
-            if (GameManagement.campaign.mode.DisallowItems()) return null;
+            if (GameManagement.instance.mode.DisallowCardItems()) return null;
             if (Captured == true) return DropCapture;
             else if (Cleared == true) return DropClear;
             else if (noHits) return DropNoHit;
@@ -233,7 +211,7 @@ public readonly struct PhaseCompletion {
         this.clear = clear;
         this.exec = exec;
         this.elapsed = elapsed_ratio;
-        this.noHits = GameManagement.campaign.HitsTaken == snap.hitsTaken;
+        this.noHits = GameManagement.instance.HitsTaken == snap.hitsTaken;
 
     }
 }

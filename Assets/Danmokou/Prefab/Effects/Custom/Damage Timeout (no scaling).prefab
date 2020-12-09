@@ -101,7 +101,7 @@ MonoBehaviour:
   endScale: 2
   time1Ratio: 0.14
   time2Ratio: 0.4
-  ease1: out-sine
-  ease2: io-sine
+  ease1: out-sine t
+  ease2: io-sine t
   lerpInTimeRatio: 0.01
   endEarlyRatio: 0.04

@@ -22,6 +22,6 @@ MonoBehaviour:
   prefab: {fileID: 2884352696324497640, guid: 1200414847a32bb4680560876f031369, type: 3}
   shots2:
   - ordinal: D
-    shot: {fileID: 11400000, guid: 94c9dbd65f23dec46894ae6f01f35d23, type: 2}
+    shot: {fileID: 11400000, guid: bee71e7902819374298c855449ab1f6d, type: 2}
   uiColor: {r: 0, g: 0, b: 0, a: 0}
   shotDisplay: {fileID: 0}

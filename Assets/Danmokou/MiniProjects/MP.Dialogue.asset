@@ -37,3 +37,11 @@ MonoBehaviour:
     files:
     - locale: 0
       file: {fileID: 4900000, guid: d2556ab81a674cc43a6660b88aa5d856, type: 3}
+  - name: bha3.1
+    files:
+    - locale: 0
+      file: {fileID: 4900000, guid: 337972db37416824281107833a1dccdd, type: 3}
+  - name: bha3.2
+    files:
+    - locale: 0
+      file: {fileID: 4900000, guid: 94447efe4f0ed2140a46ea2ed5e9de49, type: 3}

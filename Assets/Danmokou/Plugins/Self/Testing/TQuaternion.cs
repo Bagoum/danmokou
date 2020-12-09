@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Profiling;
 
-namespace Tests {
+namespace DMK.Testing {
 public static class TQuaternion {
     public static void TestQuaternion() {
         Profiler.BeginSample("Quaternion TEST");

@@ -1,4 +1,4 @@
-action block 0
+paction 0
 	##Temporarily necessary to register player variants
 	assertsimple amulet-red/
 	assertcomplex gpather-black/b

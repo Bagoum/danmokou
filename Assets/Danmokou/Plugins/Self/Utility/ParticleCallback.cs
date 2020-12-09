@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using Danmaku;
 using UnityEngine;
 
 public class ParticleCallback : MonoBehaviour {

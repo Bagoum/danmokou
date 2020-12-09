@@ -1,4 +1,12 @@
-﻿using Danmaku;
+﻿using DMK.Behavior;
+using DMK.Core;
+using DMK.Danmaku;
+using DMK.Dialogue;
+using DMK.Pooling;
+using DMK.Scriptables;
+using DMK.Services;
+using DMK.UI;
+using DMK.UI.XML;
 using UnityEngine;
 using UnityEditor;
 
@@ -86,23 +94,8 @@ public class ColorPairDrawer : PairedPropertyDrawer {
     protected override string arg2 => "color2";
     protected override bool showName => true;
 }
-[CustomPropertyDrawer(typeof(float2))]
-public class Float2Drawer : PairedPropertyDrawer {
-    protected override string arg1 => "var1";
-    protected override string arg2 => "var2";
 
-    protected override bool showName => true;
-}
-
-[CustomPropertyDrawer(typeof(Palette.PaletteAndShade))]
-public class PaletteShadeDrawer : PairedPropertyDrawer {
-    protected override string arg1 => "palette";
-
-    protected override string arg2 => "shade";
-    protected override bool showName => true;
-}
-
-[CustomPropertyDrawer(typeof(Translated))]
+[CustomPropertyDrawer(typeof(TranslatedDialogue))]
 public class TranslatedDrawer : PairedPropertyDrawer {
     protected override string arg1 => "locale";
 

@@ -21,6 +21,7 @@
 			CGPROGRAM
 			#pragma vertex vert
 			#pragma fragment frag
+			#pragma multi_compile __ AYA_CAPTURE
 			#include "UnityCG.cginc"
 
 			struct vertex {
@@ -55,6 +56,13 @@
 			fragment vert(vertex v) {
 				fragment f;
 				f.loc = UnityObjectToClipPos(v.loc);
+				//Do not perform screen flipping during player camera capture.
+				// This makes the resulting photo unflipped, but located in the correct position.
+				// Note that this is not a unique semantic solution to player camera capture during screen flipping,
+				// but it is the easiest to deal with.
+			#if AYA_CAPTURE
+				f.uv = v.uv;
+			#else
 				float2 p = float2((v.uv.x - 0.5) * _ScreenWidth - _GlobalXOffset,
 					(v.uv.y - 0.5) * _ScreenHeight);
 				//Rotation process is slightly strange, since we are trying to effectively rotate
@@ -67,6 +75,7 @@
 				p.x *= 1 / cos(_RotateY);
 				f.rloc = p;
 				f.uv = float2((p.x + _GlobalXOffset) / _ScreenWidth + 0.5, p.y / _ScreenHeight + 0.5);
+			#endif
 				f.color = v.color;
 				return f;
 			}
@@ -76,7 +85,7 @@
 			float4 frag(fragment f) : SV_Target {
 				if (abs(f.uv.x - 0.5) > 0.5 || abs(f.uv.y - 0.5) > 0.5 ||
 					abs(f.rloc.x) > _XBound) return float4(0,0,0,1);
-				float4 c = tex2D(_MainTex, f.uv) * f.color;
+				float4 c = tex2D(_MainTex, f.uv);
 				return c;
 			}
 			ENDCG

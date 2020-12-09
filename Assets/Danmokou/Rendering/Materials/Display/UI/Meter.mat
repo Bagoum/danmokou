@@ -100,7 +100,7 @@ Material:
     - _ToggleFire: 0
     - _UVSec: 0
     - _Value: 0.33333334
-    - _YX: 0.01818
+    - _YX: 0.02182
     - _YY: 0.2
     - _ZWrite: 1
     m_Colors:

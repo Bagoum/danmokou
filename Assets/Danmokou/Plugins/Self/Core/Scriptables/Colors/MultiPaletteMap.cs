@@ -1,7 +1,7 @@
-﻿using DMath;
+﻿using DMK.DMath;
 using UnityEngine;
 
-namespace Danmaku.Scriptables.Colors {
+namespace DMK.Scriptables {
 [CreateAssetMenu(menuName = "Colors/MultiPaletteMap")]
 public class MultiPaletteMap : ColorMap {
     public Palette red;

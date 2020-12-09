@@ -1,6 +1,6 @@
 pattern { }
 phase 0
-	action block 0
+	paction 0
 		position 0 0
 		##Note that updater adds are queued, so this is not set to 1 until the frame AFTER beh starts.
 		timer restart ff 

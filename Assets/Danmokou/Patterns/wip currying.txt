@@ -1,0 +1,16 @@
+<#> warnprefix
+pattern({
+	##boss jy.yukari
+})
+phase(0)
+	paction(0)
+		shift-phase-to(1)
+		
+<!> type(non, `Danmokou Chimera`)
+<!> hp(1000)
+<!> root(-1, 1)
+phase(140)
+    paction 0
+		position -1 1
+		async arrow-pink/ <;-1.4:> s nroffset px(3 * smooth2 eiosine (t / 3))
+		async arrow-red/ <;-1:> s nroffset px(3 * smooth io-sine (t / 3))

@@ -106,6 +106,7 @@ MonoBehaviour:
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
+    allowGraze: 0
   displayer: {fileID: 0}
   rotator: pz(-50 * t)
 --- !u!1 &4156892766488800469
@@ -405,6 +406,7 @@ MonoBehaviour:
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
+    allowGraze: 0
   displayer: {fileID: 8113129794422794037}
   ghostSource: {fileID: 7710510051309238203}
   hitbox: {fileID: 11400000, guid: d20af02baec12db42baba53da24bff95, type: 2}
@@ -423,7 +425,7 @@ MonoBehaviour:
   speedLines: {fileID: 3430530686333864449}
   RespawnOnHitEffect: {fileID: 11400000, guid: a12e26267e85eae41b57cf31fad0ac74, type: 2}
   RespawnAfterEffect: {fileID: 11400000, guid: 870b63eea4cb8444d82e9baaa35118c4, type: 2}
-  baseFocusOverlayOpacity: 0.6
+  baseFocusOverlayOpacity: 0.5
   focusOverlay:
   - {fileID: 9058147699553384219}
   - {fileID: 623575441964782881}
@@ -549,6 +551,7 @@ MonoBehaviour:
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
+    allowGraze: 0
   displayer: {fileID: 0}
   rotator: pz(50 * t)
 --- !u!1 &8076779024876327004

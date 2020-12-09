@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Linq;
-using DMath;
+using DMK.DMath;
 using UnityEngine;
 
-namespace Danmaku.Scriptables.Colors {
+namespace DMK.Scriptables {
 
 [Serializable]
 public struct PalettePoint {
@@ -20,5 +20,4 @@ public class DerivedGradientMap : GradientMap {
             ColorHelpers.fullAlphaKeys);
     }
 }
-
 }

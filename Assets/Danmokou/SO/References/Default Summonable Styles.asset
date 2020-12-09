@@ -73,6 +73,9 @@ MonoBehaviour:
     - name: circ
       prefab: {fileID: 8071127415623182345, guid: a1f3ceb0f9a566842bab98c501f32cd8,
         type: 3}
+    - name: darkness
+      prefab: {fileID: 8071127415623182345, guid: 8751d969a733b3a44860dc0083534ab5,
+        type: 3}
   - groupTitle: Powerup
     prefabs:
     - name: powerup1

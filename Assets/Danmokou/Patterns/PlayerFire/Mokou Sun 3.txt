@@ -2,7 +2,7 @@ gtr {
 	wt 0 _
 	wait-child
 } firesame
-	action block 0 :2
+	paction 0 :2
 		## free fire
 		async fireball-pink/b <-0.2;:> gcr2 12 _ <> { 
 			delay 12

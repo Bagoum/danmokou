@@ -1,12 +1,12 @@
 pattern { }
 phase 0
-	action block 0
+	paction 0
 		clear phase
 		clear bullet
-	action block 0.1
+	paction 0.1
 		shift-phase-to 1
 phase 0
-    action block 0
+    paction 0
         position 0 0
 		bullet ellipse-purple/w <> gcr2 6 _ <> {
 			root	cxy 0 6

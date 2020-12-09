@@ -1,11 +1,11 @@
 pattern { }
 phase 0
-	action block 0
+	paction 0
         position 0 0
 		shift-phase-to 1
 
 phase 0
-	action block 0
+	paction 0
 		position 0 3
 		async gcircle-blue/ <> gcr2 6 _ <> {
 			root cxy 0 -5
@@ -13,7 +13,7 @@ phase 0
 		} s tpnrot py lerp3(0.5, 1.5, 2.5, 3.5, mod(4, t + brand(0, 4)), 0.4, 0.7, 0.4)
 
 phase 0
-    action block 0
+    paction 0
 		position 0 3
 		async lightning-*/w <;1:> gir2 0 2 <> {
 			bindLR

@@ -1,26 +1,38 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using Danmaku;
+using DMK.Behavior;
+using DMK.Core;
+using DMK.Danmaku;
+using DMK.GameInstance;
+using DMK.Player;
+using DMK.Scriptables;
 using JetBrains.Annotations;
-using SM;
-using static Challenge;
-using static Danmaku.Enums;
+using DMK.SM;
+using static DMK.GameInstance.Challenge;
 
+namespace DMK.Services {
 public interface IChallengeManager {
     float? BossTimeoutOverride([CanBeNull] BossConfig bc);
-    void TrackChallenge(IChallengeRequest cr);
+    void TrackChallenge(IChallengeRequest cr, Action<InstanceRecord> onSucess);
     void SetupBossPhase(SMHandoff smh);
     void LinkBoss(BehaviorEntity exec);
     IEnumerable<AyaPhoto> ChallengePhotos { get; }
-    
+
     ChallengeManager.Restrictions Restriction { get; }
 }
 
 public class ChallengeManager : CoroutineRegularUpdater, IChallengeManager {
+    private readonly List<AyaPhoto> challengePhotos = new List<AyaPhoto>();
+    public IEnumerable<AyaPhoto> ChallengePhotos => challengePhotos;
+
+    private PhaseCompletion? completion = null;
+    [CanBeNull] private IChallengeRequest tracking = null;
+    [CanBeNull] private BehaviorEntity Exec { get; set; }
+
     protected override void BindListeners() {
         base.BindListeners();
-        Listen(CampaignData.PhaseCompleted, pc => {
+        Listen(InstanceData.PhaseCompleted, pc => {
             if (pc.clear != PhaseClearMethod.CANCELLED && pc.props.phaseType != null && pc.exec == Exec)
                 completion = pc;
         });
@@ -44,13 +56,9 @@ public class ChallengeManager : CoroutineRegularUpdater, IChallengeManager {
         Restriction = new Restrictions();
     }
 
-    private PhaseCompletion? completion = null;
-    [CanBeNull] private IChallengeRequest tracking = null;
-
-    public float? BossTimeoutOverride([CanBeNull] BossConfig bc) => 
+    public float? BossTimeoutOverride([CanBeNull] BossConfig bc) =>
         (tracking?.ControlsBoss(bc) == true) ? Restriction.TimeoutOverride : null;
 
-    [CanBeNull] private BehaviorEntity Exec { get; set; }
 
 
     public class Restrictions {
@@ -63,18 +71,26 @@ public class ChallengeManager : CoroutineRegularUpdater, IChallengeManager {
 
         public readonly float? TimeoutOverride = null;
 
-        public Restrictions() {}
+        public Restrictions() { }
+
         public Restrictions(Challenge[] cs) {
             foreach (var c in cs) {
-                if (c is NoHorizC) HorizAllowed = false;
-                else if (c is NoVertC) VertAllowed = false;
-                else if (c is NoFocusC) FocusAllowed = false;
-                else if (c is AlwaysFocusC) FocusForced = true;
-                else if (c is DestroyTimedC dtc) TimeoutOverride = dtc.time;
+                if (c is NoHorizC)
+                    HorizAllowed = false;
+                else if (c is NoVertC)
+                    VertAllowed = false;
+                else if (c is NoFocusC)
+                    FocusAllowed = false;
+                else if (c is AlwaysFocusC)
+                    FocusForced = true;
+                else if (c is DestroyTimedC dtc)
+                    TimeoutOverride = dtc.time;
             }
         }
     }
+
     public Restrictions Restriction { get; private set; } = new Restrictions();
+
     public void SetupBossPhase(SMHandoff smh) {
         if (smh.Exec != Exec || tracking == null) return;
         var cs = tracking.Challenges;
@@ -86,14 +102,15 @@ public class ChallengeManager : CoroutineRegularUpdater, IChallengeManager {
         Log.Unity($"Linked boss {exec.ID} to challenge {tracking.Description}");
         tracking.Start(Exec = exec);
     }
-    public void TrackChallenge(IChallengeRequest cr) {
+
+    public void TrackChallenge(IChallengeRequest cr, Action<InstanceRecord> onSuccess) {
         Log.Unity($"Tracking challenge {cr.Description}");
         CleanupState();
         tracking = cr;
         Restriction = new Restrictions(cr.Challenges);
         challengePhotos.Clear();
         cr.Initialize();
-        RunDroppableRIEnumerator(TrackChallenges(cr));
+        RunDroppableRIEnumerator(TrackChallenges(cr, onSuccess));
     }
 
     private void ChallengeFailed(IChallengeRequest cr, TrackingContext ctx) {
@@ -107,11 +124,11 @@ public class ChallengeManager : CoroutineRegularUpdater, IChallengeManager {
 
     //This is not controlled by smh.cT because its scope is the entire segment over which the challenge executes,
     //not just the boss phase. In the case of BPoHC stage events, this scope is the phase cT of the stage section.
-    private IEnumerator TrackChallenges(IChallengeRequest cr) {
+    private IEnumerator TrackChallenges(IChallengeRequest cr, Action<InstanceRecord> onSuccess) {
         while (Exec == null) yield return null;
         var challenges = cr.Challenges;
-        var ctx = new TrackingContext(Exec, this);
-        
+        var ctx = new TrackingContext(Exec, this, onSuccess);
+
         for (; completion == null; ctx.t += ETime.FRAME_TIME) {
             for (int ii = 0; ii < challenges.Length; ++ii) {
                 if (!challenges[ii].FrameCheck(ctx)) {
@@ -133,24 +150,15 @@ public class ChallengeManager : CoroutineRegularUpdater, IChallengeManager {
     public struct TrackingContext {
         public readonly BehaviorEntity exec;
         public readonly ChallengeManager cm;
+        public readonly Action<InstanceRecord> onSuccess;
         public float t;
 
-        public TrackingContext(BehaviorEntity exec, ChallengeManager cm) {
+        public TrackingContext(BehaviorEntity exec, ChallengeManager cm, Action<InstanceRecord> onSuccess) {
             this.exec = exec;
             this.cm = cm;
+            this.onSuccess = onSuccess;
             this.t = 0;
         }
     }
-
-    
-    private readonly List<AyaPhoto> challengePhotos = new List<AyaPhoto>();
-    public IEnumerable<AyaPhoto> ChallengePhotos => challengePhotos;
-
-    public void SubmitPhoto(AyaPhoto p) {
-        //There are no restrictions on what type of challenge may receive a photo
-        if (tracking != null) {
-            challengePhotos.Add(p);
-        }
-    }
-    
+}
 }

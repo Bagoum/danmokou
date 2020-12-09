@@ -3,6 +3,7 @@
 		[PerRendererData] _MainTex("Sprite Texture", 2D) = "white" {}
 		_LNTex("Lightning Texture", 2D) = "white" {}
 		_DisplaceTex("(Low-Res) Displacement Texture", 2D) = "white" {}
+        _Tint("Tint", Color) = (1,1,1,1)
         _HueShift("Hue Shift", Float) = 0
 		[Enum(One,1,OneMinusSrcAlpha,10)] _BlendTo("Blend mode", Float) = 10
 		_BX("BlocksX", Float) = 6
@@ -33,12 +34,14 @@
         float2 uv	: TEXCOORD0;
         float4 c    : COLOR;
     };
+	
+	float4 _Tint;
 
     fragment vert(vertex v) {
         fragment f;
         f.loc = UnityObjectToClipPos(v.loc);
         f.uv = v.uv;
-        f.c = v.color;
+        f.c = v.color * _Tint;
         return f;
     }
     

@@ -1,9 +1,7 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
-using SM;
+﻿using DMK.Behavior;
+using DMK.Core;
 
-namespace Danmaku {
+namespace DMK.Services {
 /// <summary>
 /// A globally available CRU, scoped per-scene. Instantiation handled by GameManagement.
 /// </summary>

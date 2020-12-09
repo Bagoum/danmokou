@@ -2,13 +2,12 @@
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text.RegularExpressions;
-using Danmaku;
-using DMath;
+using DMK.Danmaku;
+using DMK.DMath;
 using NUnit.Framework;
 using UnityEngine;
-using UnityEngine.TestTools;
 
-namespace Tests {
+namespace DMK.Testing {
 
 public static class THelpers {
     public static T TField<T>(this object sut, string name) {

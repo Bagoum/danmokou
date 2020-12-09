@@ -1,15 +1,12 @@
-﻿using Danmaku;
-using DMath;
+﻿using DMK.DMath;
+using DMK.Reflection;
 using NUnit.Framework;
-using SM;
 using UnityEngine;
-using static Compilers;
-using static DMath.BPYRepo;
 using static NUnit.Framework.Assert;
-using static Tests.TAssert;
-using ExFXY = System.Func<TEx<float>, TEx<float>>;
+using static DMK.Testing.TAssert;
+using ExFXY = System.Func<DMK.Expressions.TEx<float>, DMK.Expressions.TEx<float>>;
 
-namespace Tests {
+namespace DMK.Testing {
 
 public static class ParserTests {
     private const float err = 0.00001f;

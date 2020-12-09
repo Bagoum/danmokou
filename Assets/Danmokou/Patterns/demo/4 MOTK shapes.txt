@@ -1,6 +1,6 @@
 pattern { }
 phase 0 #{
-	action block 0
+	paction 0
 		@ { nl nz nr nb nt nlb nrt nlt nrb }
 			cull
 		summon inode <> nb <> null null
@@ -23,9 +23,9 @@ phase 33 #{
 		clear bullet-control
 		pool-control gcircle-* allowcull true
 		pool-control { { gcircle-* } { blue/b pink/b green/w orange/w } } softcullall cwheel
-    action block 0
+    paction 0
         move 2 tp-nrot eased out-sine 2 stopsampling 0 vhometime 2 cxy 0 3
-	action block 0
+	paction 0
 		vulnerable true
 		position 0 3
 		pool-control gcircle-* allowcull false
@@ -108,7 +108,7 @@ phase 36 #{
 		pool-control arrow-* softcullall cwheel
 	action nb 0
 		@ nt
-			action block 0
+			paction 0
 			position 0 6
 			bullet gpather18-* <-6;:> gcr2 360 _ <> {
 				p this 
@@ -129,16 +129,16 @@ phase 36 #{
 						t
 				{ smooth }
 			break
-    action block 0
+    paction 0
         move 2 tp-nrot eased out-sine 2 stopsampling 0 vhometime 2 cxy 0 2
         wait-for 4
-	action block 0
+	paction 0
 		vulnerable true
 		position 0 2
 		bullet arrow-purple/w <> cre 30 10 <;:10h> pssfx x-fire-burst-2 repeat 36 <;:10> s polar
 			* (+ 1 * 2 t) regpolyr 1 3 degrad * 10 p
 			0
-	action block 1.5
+	paction 1.5
 		bullet arrow-red/w <> cre 30 10 <;:10h> pssfx x-fire-burst-1repeat 36 <;:10> s polar
 			* (+ 1 * 2 t) regpolyr 1 4 degrad * 10 p
 			0
@@ -146,17 +146,17 @@ phase 36 #{
 		bullet arrow-green/w <> cre 30 10 <;:10h> pssfx x-fire-burst-2 repeat 36 <;:10> s polar
 			* (+ 1 * 2 t) regpolyr 1 5 degrad * 10 p
 			0
-	action block 0
+	paction 0
 		pool-control { { arrow-* } { blue/w pink/w teal/w } } allowcull false
 		bullet-control persist { { arrow-* } { blue/w pink/w teal/w } } cull relcirc mokou <0;0;0.1>
 		bullet arrow-blue/w <> cre 60 10 <;:10h> repeat 36 <;:10> s polar
 			* (- 20 * 1.5 t) regpolyr 1 3 degrad * 10 p
 			0
-	action block 0
+	paction 0
 		bullet arrow-pink/w <> cre 60 10 <;:10h> repeat 36 <;:10> s polar
 			* (- 20 * 1.5 t) regpolyr 1 4 degrad * 10 p
 			0
-	action block 0
+	paction 0
 		bullet arrow-teal/w <> cre 60 10 <;:10h> repeat 36 <;:10> s polar
 			* (- 20 * 1.5 t) regpolyr 1 5 degrad * 10 p
 			0
@@ -169,9 +169,9 @@ phase 36 #{
 phase 38 #{
 	end
 		pool-control { { arrow-*  } { yellow/w blue/w } } softcullall cwheel
-    action block 0
+    paction 0
         move 2 tp-nrot eased out-sine 2 stopsampling 0 vhometime 2 cxy 0 2
-	action block 0
+	paction 0
 		vulnerable true
 		position 0 2
 		bullet arrow-yellow/w <> cre 120 _ <;:19.9> pssfx x-fire-burst-1repeatp add 60 <;:6> s polar
@@ -208,22 +208,22 @@ $innerfire2(reg2starr, %n%, %ct%, %angd%, %angoff%, %rot%)
 
 	end
 		pool-control { { arrow-* keine-* ellipse-* strip-* } } softcullall cwheel
-    action block 0
+    paction 0
         move 2 tp-nrot eased out-sine 2 stopsampling 0 vhometime 2 cxy 4 2
         summon cu-mokou-baller <> _ <> null file bounce-0
         wait-for 3
-	action block 0
+	paction 0
 		vulnerable true
 	gtr { wt 0 _ wait-child } seq
-		action block 0
+		paction 0
 			position 4 2
 			move 0.25 tpnrot eased io-sine 0.25 cx -32
 			bullet x-move-anime <> conce sfx
 			bullet arrow-* <;:> gir2 15 3 <;:25> { p this  color { pink/w blue/w orange/w } } icacheloc idelay 30 isfx x-fire-burst-1crepeatp defer 60 3 <;:30> $polyfire2((+ 3 p1), 60, 6, 90, 6)
 			bullet arrow-* <;:> gir2 15 3 <;:25> { p this  color { red/w purple/w yellow/w } } icacheloc idelay 75 isfx x-fire-burst-1crepeatp defer 60 3 <;:60> $polyfire2((+ 3 p1), 60, 6, + 90 / 180 (+ 3 p1), 6)
-		action block 3
+		paction 3
 			move 1 tpnrot eased io-sine 1 ss 0 vhometime 1 cxy -5 -3.5
-		action block 0
+		paction 0
 			position -5 -3.5
 			bullet strip-* <;:> gir2 60 3 <> { p this  color { pink/w blue/w orange/w } } icacheloc itarget Lplayer idelay 30 isfx x-fire-burst-2 crepeatp defer 60 3 <;:6p> $polyfire2(3, 60, 6, 0, 0)
 			bullet ellipse-* <;:> gir2 60 3 <> { p this  color { red/w purple/w yellow/w } } icacheloc itarget Lplayer idelay 45 isfx x-fire-burst-2 crepeatp defer 60 3 <;:5p> $polyfire2(4, 72, 5, 0, 0)
@@ -231,36 +231,36 @@ $innerfire2(reg2starr, %n%, %ct%, %angd%, %angoff%, %rot%)
 			move 1 tpnrot eased io-sine 1 multiplyy
 				if (> t 0.5) -1 1 
 				ss 0 vhometime 0.5 cxy 0 2
-		action block 0
+		paction 0
 			move 1 tpnrot eased io-sine 1 ss 0 vhometime 1 cxy 4.5 -6
-		action block 5
+		paction 5
 			position 4.5 -6
 			move 1 tpnrot eased out-sine 1 cy 16
 			bullet keine-yellow/w <> cre 10 6 <> target Lplayer pssfx x-keine repeat 60 <;:6> s polar 
 				* * 1.7 t regpolyr 1 3 degrad * 6 p
 				0
-		action block 1
+		paction 1
 			position -4.5 6
 			move 1 tpnrot eased out-sine 1 cy -16
 			bullet keine-orange/w <> cre 10 6 <> target Lplayer pssfx x-fire-burst-2 repeat 60 <;:6> s polar 
 				* * 1.7 t regpolyr 1 4 degrad * 6 p
 				0
-		action block 2
+		paction 2
 			position 4.5 -6
 			move 1 tpnrot eased out-sine 1 cy 16
 			bullet keine-blue/w <> cre 10 6 <> target Lplayer pssfx x-keine repeat 60 <;:6> s polar 
 				* * 1.7 t regpolyr 1 6 degrad * 6 p
 				0
-		action block 1
+		paction 1
 			position -4.5 6
 			move 1 tpnrot eased out-sine 1 cy -16
 			bullet keine-teal/w <> cre 10 6 <> target Lplayer pssfx x-fire-burst-2 repeat 60 <;:6> s polar 
 				* * 1.7 t regpolyr 1 5 degrad * 6 p
 				0
-		action block 0
+		paction 0
 			position 0 8
 			move 2 tpnrot eased out-sine 2 cy -3
-		action block 0
+		paction 0
 			move 1 tpnrot eased out-sine 1 cx 4
 			break
 		break
@@ -274,7 +274,7 @@ phase 37 #{
 	end
 		pool-control { { circle-* } { pink/ purple/ red/ } } softcullall cwheel
 		poolf-control {{ laser16-teal/ws laser16-yellow/ws }} softcullall cwheel
-    action block 0
+    paction 0
         move 2 tp-nrot eased out-sine 2 ss 0 vhometime 2 cxy 0 2
         ##summon cu-mokou-square <> _ <> null file slide-rl
         ##wait-for 3
@@ -283,7 +283,7 @@ phase 37 #{
 		position 0 2
 		event playerinvuln 240
 		@ nz
-			action block 0
+			paction 0
 				position 0 0
 				bullet laser16-yellow/ws <-4.5;8:> conce repeat 5 <> slaser 0 -90
 					offset zero pxy 
@@ -340,7 +340,7 @@ phase 42 #{
 		clear phase
 		pool-control { { shell-red/ ellipse-orange/ circle-yellow/ strip-teal/w arrow-* strip-pink/w } } softcullall cwheel
 		poolf-control {{ laser16-teal/bs gpather18* }} softcullall cwheel
-    action block 0
+    paction 0
         move 2 tp-nrot eased out-sine 2 stopsampling 0 vhometime 2 cxy 0 2
         summon cu-mokou-come-on-boy <> _ <> null file fall
         wait-for 3
@@ -369,7 +369,7 @@ phase 42 #{
 				t	300
 				fang soscillateto -150 -40 1 2 1.8 * &i 2f
 			} s tprot cx 7
-	action block 4
+	paction 4
 		bullet-control persist empty savev2 { pl p loc       pd p dir } _
 		bullet-control persist empty flipx> 4 _
 		bullet-control persist empty flipx< -4 _
@@ -378,7 +378,7 @@ phase 42 #{
 		bullet-control persist empty event evRight > x 3
 		bullet-control persist empty event evLeft < x -3
 		event-listen evRight #{
-			action block 0
+			paction 0
 				move 1 tpnrot eased io-sine 1 ss 0 vhometime 1 pxy -4 [Lplayer].y
 				bullet gpather18-* <;:-15> idelay 60 cre 60 3 <;:15> target Lplayer pssfx x-fire-tech-6 repeatcolorp this { red/w purple/w green/w yellow/w } 4 <> spather 1 1
 					:: {
@@ -395,7 +395,7 @@ phase 42 #{
 						zero
 				break
 		event-listen evLeft
-			action block 0
+			paction 0
 				move 1 tpnrot eased io-sine 1 ss 0 vhometime 1 pxy 4 [Lplayer].y
 				bulletf-control persist gpather18-red/b flipy> 4.5 _
 				bulletf-control persist gpather18-red/b flipy< -4.5 _
@@ -406,12 +406,12 @@ phase 42 #{
 				break
 #}
 		@ nt
-			action block 0
+			paction 0
 				position 0 -2
 				bullet empty <0;:-43> conce s tprot growbyadd 0.01 0 cx 1.05
 				break
 		@ nlt
-			action block 0.1
+			paction 0.1
 				position 0 0
 				move 100 offset zero @ pl 0
 				bullet strip-teal/w <> cre 24 _ <;:5.0267> repeat 40 <> s :: {
@@ -423,7 +423,7 @@ phase 42 #{
 					+ 90 &thd
 				break
 		@ nz
-			action block 0
+			paction 0
 				position 0 0
 				bullet laser16-teal/bs <> conce pssfx x-laser-on repeat 3 <> emlaser 5.1 ept
 					offset zero @ pl 0
@@ -491,14 +491,14 @@ pc(pc)
 		pool-control arrow-* softcullall cwheel
 		bullet-control once sun-red/w softcull cwheel-red/w _
 		poolf-control gpather18-* softcullall cwheel
-    action block 0
+    paction 0
         move 2 tp-nrot eased out-sine 2 stopsampling 0 vhometime 2 cxy 0 2
-	action block 0
+	paction 0
 		position 0 2
         vulnerable true
 		event playerinvuln 240
 		@ nt
-			action block 0
+			paction 0
 				position 0 0
 				bullet gpather18-* <> conce repeatcolorp this $patherc1() 20 <> pather 1 0.4 polar
 					+ 0.1 * 0.072 p
@@ -523,10 +523,10 @@ phase 37 #{
 		pool-control circle-* softcullall cwheel
 		bullet-control once sun-* softcull cwheel-red/w _
 		poolf-control gpather18-* softcullall cwheel
-    action block 0
+    paction 0
         move 2 tp-nrot eased out-sine 2 ss 0 vhometime 2 cxy 0 3
         summon cu-mokou-sleep <> _ <> null file slide-fall-0
-	action block 0
+	paction 0
 		vulnerable true
 		position 0 3
 		@ nt
@@ -560,7 +560,7 @@ firef()
 		clamp 55 72 linear 72 -0.2 t
 !}
 		@ nt
-			action block 0
+			paction 0
 				bullet empty <2;:-20> gcr {
 					p	this
 					t	_
@@ -586,7 +586,7 @@ firef()
 		bullet-control persist empty savef et p time < y $yb
 		bullet-control persist empty.2 savev2 { pl p loc       pd p dir } _
 		bullet-control-sm persist empty < y $yb
-			action block 0
+			paction 0
 				bullet empty.2 <> conce s tpnrot
 						growbyratioc -0.27 2 superpose 1 cy 4 0.0 ss 0 vhome 4 Lbeh mokou
 				bullet gpather18-* <> conce world pssfx x-boom repeatcolorp add {
@@ -613,14 +613,14 @@ phase 35 #{
 		pool-control arrow-* softcullall cwheel
 		bullet-control once sun-red/w softcull cwheel-red/w _
 		poolf-control gpather18-* softcullall cwheel
-    action block 0
+    paction 0
         move 2 tp-nrot eased out-sine 2 stopsampling 0 vhometime 2 cxy 0 2
-	action block 0
+	paction 0
 		position 0 2
         vulnerable true
 		event playerinvuln 240
 		@ nt
-			action block 0
+			paction 0
 				position 0 0
 				bullet gpather18-* <> conce repeatcolorp this $patherc2() 20 <> pather 1 0.4 polar
 					+ 0.1 * 0.072 p
@@ -646,7 +646,7 @@ phase 33 #{
 		clear bullet-control
 		pool-control {{ shell* ellipse* strip-orange/b sun-red/w }} softcullall cwheel
 		poolf-control { { lightning-* } { red* purple* green* black* } } softcullall cwheel
-    action block 0
+    paction 0
         move 2 tp-nrot eased out-sine 2 stopsampling 0 vhometime 2 cxy 0 3
         summon cu-mokou-sun <> _ <> null file slide-lr
         wait-for 3
@@ -688,20 +688,20 @@ starfire(color, n, ct, angd, angoff)
 $innerfire(reg2starr, %color%, %n%, %ct%, %angd%, %angoff%)
 !}
 		event-listen evPoly1 #{
-			action block 0
+			paction 0
 				sfx x-boom
 				$polyfire(shell-pink/w, 4, 60, 6, 0)
 				$polyfire(shell-pink/b, 4, 60, 6, 45)
 				$polyfire(ellipse-pink/, 8, 60, 6, 0)
 				break
 		event-listen evPoly2
-			action block 0
+			paction 0
 				sfx x-boom
 				$polyfire(ellipse-orange/, 5, 60, 6, -90)
 				$starfire(strip-orange/b, 5, 120, 6, -90)
 				break
 		event-listen evPoly3
-			action block 0
+			paction 0
 				sfx x-boom
 				$polyfire(ellipse-teal/w, 3, 60, 6, 0)
 				$polyfire(ellipse-teal/b, 3, 60, 6, 60)
@@ -712,7 +712,7 @@ $innerfire(reg2starr, %color%, %n%, %ct%, %angd%, %angoff%)
 
 <!> type non `Thanks for playing` `(I didn't program anything for boss death yet)`
 phase 0
-	action block 0
+	paction 0
 		noop
 
 ///
@@ -720,9 +720,9 @@ phase 0
 
 ## 2 bouncing spinner (nothing really worthwhile here)
 phase 32 #{
-	action block 0
+	paction 0
 		bulletf-control-sm persist laser16r-white | > x 5.2 | < x -5.2 | < y -3.7 > y 3.7
-			action block 0
+			paction 0
 				bpat motk4spinnertriangle
 				bullet pointy-purple/w <0;:> conce target Lplayer repeat 9 <;:40> modifybs
 					:: {	
@@ -745,7 +745,7 @@ phase 32 #{
 		bulletf-control persist laser16r-white flipx< -5.2 _
 		bulletf-control persist laser16r-white flipy< -3.7 _
 		bulletf-control persist laser16r-white flipy> 3.7 _
-	action block 0
+	paction 0
 		bullet laser16r-white <> cre 12s 2 <;:160> mlaser 5
 			tp-rot growbyadd .07 .1 cr 4 50
 			polar
@@ -819,12 +819,12 @@ regpolyeq(R, n, trate)
 !!{ colors1 {{ *red/ *pink/ } { ellipse- pointy- shell- strip- }}
 !{
 verymean(s)
-action block 0
+paction 0
 	move 2 tpnrot eased io-sine 2 ss 0 vhometime 2 randxy -4 4 -3 3
 	bullet laser24-red/ws <> iparent mokou conce repeat 3 <> mlaser 0 null 
 		tpnrot ss 1 vhome 1 pxy -%s%5.5 * %s%1 linear 0.9 0.9 p
 		14 0
-action block 0
+paction 0
 	op sbulletfadecull $colors1 3
 	bullet strip-green/w <> idelay 2s csummonalongpolarf rel 0 1 180 4
 		+ 2 * 0.8 ^^(cos(* 2.5 degrad t), 0.2)

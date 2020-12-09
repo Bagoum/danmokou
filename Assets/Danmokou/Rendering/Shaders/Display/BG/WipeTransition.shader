@@ -1,9 +1,9 @@
 ﻿Shader "_Transition/WipeTransition" {
 	Properties {
 		[PerRendererData] _MainTex("[Unused]", 2D) = "white" {}
-		[PerRendererData] _TrueTex("Sprite Texture", 2D) = "white" {}
+		_TrueTex("Sprite Texture", 2D) = "white" {}
 		[PerRendererData] _FaderTex("Fade Controller", 2D) = "white" {}
-		[PerRendererData] _F("Fill Ratio", Range(0, 1)) = 0.7
+		_F("Fill Ratio", Range(0, 1)) = 0.7
 	}
 	SubShader {
 		Tags {
@@ -50,27 +50,27 @@
 			sampler2D _TrueTex;
 			static const float _Smooth = 0.0001f;
 
-			float4 frag(fragment f) : SV_Target { 
+			float4 frag(fragment f) : SV_Target {
         #ifdef REQ_EMPTY
-            return float4(0,0,0,0);
+				return float4(0,0,0,0);
         #endif
-			float4 c = tex2D(_TrueTex, f.uv);
+				float4 c = tex2D(_TrueTex, f.uv);
         #ifdef REQ_CIRCLE
-            float req = mod1(atan2(f.uv.y - 0.5, f.uv.x - 0.5) / TAU, 1);
+				float req = mod1(atan2(f.uv.y - 0.5, f.uv.x - 0.5) / TAU, 1);
         #else
         #ifdef REQ_Y
-            float req = 1 - f.uv.y;
+				float req = 1 - f.uv.y;
         #else
-            float req = tex2D(_FaderTex, f.uv).r;
+				float req = tex2D(_FaderTex, f.uv).r;
         #endif
         #endif
-			#ifdef FT_REVERSE
+		#ifdef FT_REVERSE
 			    //c.a *= step(1-req, _F);
 				c.a *= smoothstep(1-req-_Smooth, 1-req+_Smooth, _F);
-            #else
+        #else
 			    //c.a *= step(req, _F);
 				c.a *= smoothstep(req-_Smooth, req+_Smooth, _F);
-            #endif
+        #endif
 				return c;
 			}
 			ENDCG

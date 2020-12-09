@@ -1,20 +1,20 @@
-﻿using System.Linq;
-using NUnit.Framework;
-using UnityEngine.TestTools;
-using DMath;
+﻿using NUnit.Framework;
+using DMK.DMath;
+using DMK.DMath.Functions;
+using DMK.Expressions;
 using UnityEngine;
-using static Compilers;
-using static DMath.Parametrics;
-using static DMath.FXYRepo;
-using static DMath.BPYRepo;
-using static DMath.BPRV2Repo;
-using static Tests.TAssert;
-using static DMath.ExM;
-using static DMath.ExMV2;
-using static DMath.ExMRV2;
-using static DMath.ExMConversions;
+using static DMK.Reflection.Compilers;
+using static DMK.DMath.Functions.Parametrics;
+using static DMK.DMath.Functions.FXYRepo;
+using static DMK.DMath.Functions.BPYRepo;
+using static DMK.DMath.Functions.BPRV2Repo;
+using static DMK.Testing.TAssert;
+using static DMK.DMath.Functions.ExM;
+using static DMK.DMath.Functions.ExMV2;
+using static DMK.DMath.Functions.ExMRV2;
+using static DMK.DMath.Functions.ExMConversions;
 
-namespace Tests {
+namespace DMK.Testing {
 
     public static class ReflectTP {
         

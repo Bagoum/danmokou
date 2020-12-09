@@ -1,12 +1,12 @@
 pattern { }
 phase 0
-	action block 0
+	paction 0
 		shift-phase-to 1
 phase 25
 	end
 		clear phase
 		clear bullet
-	action block 0
+	paction 0
 		pool-control circle-pink/b allowcull false
 		position 0 0
 		move _ nroffset px sine 6p 2 t

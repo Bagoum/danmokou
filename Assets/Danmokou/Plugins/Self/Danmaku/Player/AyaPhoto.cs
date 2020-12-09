@@ -2,27 +2,34 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using DMath;
+using DMK.Core;
+using DMK.DMath;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
+using ProtoBuf;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using Object = UnityEngine.Object;
 
-namespace Danmaku {
+namespace DMK.Player {
 
+[Serializable]
+[ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
 public class AyaPhoto {
     public string Filename { get; set; }
-    [JsonIgnore] private string FullFilename => $"{SaveUtils.AYADIR}{Filename}.jpg";
     public float Angle { get; set; }
     public int PixelWidth { get; set; }
     public int PixelHeight { get; set; }
     public float ScreenWidth { get; set; }
     public float ScreenHeight { get; set; }
-    public float PPU => PixelWidth / ScreenWidth;
     public GraphicsFormat Format { get; set; }
     public bool KeepAlive { get; set; }
     [CanBeNull] private Texture2D tex = null;
+    
+    [JsonIgnore] [ProtoIgnore]
+    private string FullFilename => $"{SaveUtils.AYADIR}{Filename}.jpg";
+    [JsonIgnore] [ProtoIgnore]
+    public float PPU => PixelWidth / ScreenWidth;
     
     private static List<AyaPhoto> allPhotos = new List<AyaPhoto>();
 

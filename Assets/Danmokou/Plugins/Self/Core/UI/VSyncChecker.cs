@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+namespace DMK.UI {
 public class VSyncChecker : MonoBehaviour {
     public Color[] colors;
     private SpriteRenderer sr;
@@ -15,4 +16,5 @@ public class VSyncChecker : MonoBehaviour {
         colorIs = (colorIs + 1) % colors.Length;
         sr.color = colors[colorIs];
     }
+}
 }

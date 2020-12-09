@@ -8,15 +8,18 @@ using System.Threading;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using Danmaku;
-using DMath;
+using DMK.Behavior;
+using DMK.Core;
+using DMK.Danmaku;
+using DMK.Danmaku.Patterns;
+using DMK.DMath;
+using DMK.Reflection;
+using DMK.SM.Parsing;
 using FParser;
 using JetBrains.Annotations;
-using SM.Parsing;
 using UnityEngine;
-using static Danmaku.Enums;
 
-namespace SM {
+namespace DMK.SM {
 public struct SMHandoff : IDisposable {
     public BehaviorEntity Exec {
         get => GCX.exec;
@@ -75,7 +78,6 @@ public abstract class StateMachine {
         {"phased", typeof(DialoguePhaseSM)},
         {"phasej", typeof(PhaseJSM)},
         {"finish", typeof(FinishPSM)},
-        {"action", typeof(PhaseActionSM)}, //DEPRECATE
         {"paction", typeof(PhaseParallelActionSM)},
         {"saction", typeof(PhaseSequentialActionSM)},
         {"end", typeof(EndPSM)},
@@ -97,11 +99,11 @@ public abstract class StateMachine {
     private static readonly Dictionary<Type, Type[]> smChildMap = new Dictionary<Type, Type[]>() {
         {typeof(PatternSM), new[] { typeof(PhaseSM), typeof(UniversalSM)}}, {
             typeof(PhaseSM), new[] {
-                typeof(PhaseActionSM), typeof(PhaseSequentialActionSM), typeof(EndPSM), typeof(FinishPSM),
+                typeof(PhaseParallelActionSM), typeof(PhaseSequentialActionSM), typeof(EndPSM), typeof(FinishPSM),
                 typeof(UniversalSM)
             }
         },
-        {typeof(PhaseActionSM), new[] {typeof(LineActionSM), typeof(UniversalSM)}},
+        {typeof(PhaseParallelActionSM), new[] {typeof(LineActionSM), typeof(UniversalSM)}},
         {typeof(PhaseSequentialActionSM), new[] {typeof(LineActionSM), typeof(UniversalSM)}},
         {typeof(EndPSM), new[] {typeof(LineActionSM), typeof(UniversalSM)}},
         {typeof(ScriptTSM), new[] {typeof(ScriptLineSM)}}
@@ -153,7 +155,7 @@ public abstract class StateMachine {
         SMConstruction childType = SMConstruction.ILLEGAL;
         while (childCt-- != 0 && !q.Empty && 
                (childType = CheckCreatableChild(myType, q.ScanNonProperty())) != SMConstruction.ILLEGAL) {
-            StateMachine newsm = Create(q, childType);
+            StateMachine newsm = Create(q.NextChild(), childType);
             if (!q.IsNewlineOrEmpty) throw new Exception(
                 $"Line {q.GetLastLine()}: Expected a newline, but found \"{q.Print()}\".");
             children.Add(newsm);
@@ -172,29 +174,52 @@ public abstract class StateMachine {
     private static readonly Dictionary<Type, Type[]> constructorSigs = new Dictionary<Type, Type[]>();
 
     public static StateMachine Create(IParseQueue p) => Create(p, SMConstruction.ANY);
+
+    public static StateMachine Create(string type, object[] args) {
+        var method = SMConstruction.ANY;
+        GetParams(type, ref method, out var autoReflectMI, out Type myType);
+        return Create(autoReflectMI, method, myType, args);
+    }
+
+    private static Reflector.NamedParam[] GetParams(string type, ref SMConstruction method, 
+                [CanBeNull] out MethodInfo autoReflectMI, out Type myType) {
+        Reflector.NamedParam[] prms = null;
+        autoReflectMI = null;
+        if (!smInitMap.TryGetValue(type, out myType)) {
+            if (method == SMConstruction.AS_TREFLECTABLE || method == SMConstruction.ANY)
+                prms = Reflector.LazyLoadAndGetSignature<TaskPattern>(typeof(TSMReflection), type, out autoReflectMI);
+            if (prms != null) 
+                method = SMConstruction.AS_TREFLECTABLE;
+            else if (method == SMConstruction.AS_REFLECTABLE || method == SMConstruction.ANY)
+                prms = Reflector.LazyLoadAndGetSignature<TaskPattern>(typeof(SMReflection), type, out autoReflectMI);
+            if (prms != null) 
+                method = SMConstruction.AS_REFLECTABLE;
+        } else 
+            prms = Reflector.GetConstructorSignature(myType);
+        return prms;
+    }
+
+    private static StateMachine Create([CanBeNull] MethodInfo autoReflectMI, SMConstruction method, Type myType, object[] args) {
+        if (autoReflectMI != null) {
+            var rs = (TaskPattern)autoReflectMI.Invoke(null, args);
+            if (method == SMConstruction.AS_REFLECTABLE) return new ReflectableLASM(rs);
+            return new ReflectableSLSM(rs);
+        }
+        return (StateMachine) Activator.CreateInstance(myType, args);
+    }
+    
     private static StateMachine Create(IParseQueue p, SMConstruction method) {
         if (method == SMConstruction.ILLEGAL)
             throw new Exception("Somehow received a Create(ILLEGAL) call in SM. This should not occur.");
         MaybeQueueProperties(p);
         string first = p.Next();
-        MethodInfo autoReflectMI = null;
-        Reflector.NamedParam[] prms = null;
-        if (!smInitMap.TryGetValue(first, out var myType)) {
-            if (method == SMConstruction.AS_TREFLECTABLE || method == SMConstruction.ANY)
-                prms = Reflector.LazyLoadAndGetSignature<TaskPattern>(typeof(TSMReflection), first, out autoReflectMI);
-            if (prms != null) method = SMConstruction.AS_TREFLECTABLE;
-            else if (method == SMConstruction.AS_REFLECTABLE || method == SMConstruction.ANY)
-                prms = Reflector.LazyLoadAndGetSignature<TaskPattern>(typeof(SMReflection), first, out autoReflectMI);
-            if (prms != null) method = SMConstruction.AS_REFLECTABLE;
-            prms = prms ?? throw new Exception($"Line {p.GetLastLine()}: {first} is not a StateMachine or applicable auto-reflectable.");
-        } else prms = Reflector.GetConstructorSignature(myType);
+        var prms = GetParams(first, ref method, out var autoReflectMI, out var myType) ?? 
+                   throw new Exception($"Line {p.GetLastLine()}: {first} is not a " +
+                                       $"StateMachine or applicable auto-reflectable.");
         object[] reflect_args = new object[prms.Length];
         if (prms.Length > 0) {
-            bool requires_children = prms[0].type == statesTyp;
-            int extra_child_i = (requires_children) ? 1 : 0;
-            int final_child_i = extra_child_i;
-            for (; final_child_i < prms.Length && prms[final_child_i].type == stateTyp; ++final_child_i) { }
-            int special_args_i = final_child_i;
+            bool requires_children = prms[0].type == statesTyp && !p.Ctx.props.trueArgumentOrder;
+            int special_args_i = (requires_children) ? 1 : 0;
             for (; special_args_i < prms.Length && specialTypes.Contains(prms[special_args_i].type); ++special_args_i) {
                 if (prms[special_args_i].type == reflectStartTyp) {
                     reflect_args[special_args_i] = Reflector.LazyLoadAndReflectExternalSourceType<TaskPattern>(myType, p);
@@ -205,7 +230,7 @@ public abstract class StateMachine {
                     throw new Exception($"Line {p.GetLastLine()}: cannot resolve constructor type {prms[special_args_i].name}");
                 }
             }
-            Reflector.FillInvokeArray(reflect_args, special_args_i, prms, p.NextChild(), myType ?? typeof(ReflectableLASM), first);
+            Reflector.FillInvokeArray(reflect_args, special_args_i, prms, p, myType ?? typeof(ReflectableLASM), first);
             if (p.Ctx.QueuedProps.Count > 0)
                 throw new Exception($"Line {p.GetLastLine()}: StateMachine {first} is not allowed to have properties.");
             int childCt = -1;
@@ -214,26 +239,16 @@ public abstract class StateMachine {
                     p.Advance();
                     childCt = ct;
                 } 
-                //Disabling same-line checks since they don't work with parentheses
-                /*else if (p.Prev() != "}" && !allowSameLine.Contains(first)) { 
-                    throw new Exception($"Line {p.GetLastLine()} is missing a newline after the inline arguments.");
-                }*/
             }
             if (requires_children) reflect_args[0] = CreateChildren(myType, p, childCt);
-            for (int ii = extra_child_i; ii < final_child_i; ++ii) {
+            /*for (int ii = extra_child_i; ii < final_child_i; ++ii) {
                 reflect_args[ii] = Create(p);
                 if (!p.IsNewlineOrEmpty) throw new Exception($"Line {p.GetLastLine()} is missing a newline at the end of the StateMachine.");
-            }
+            }*/
         }
-        if (autoReflectMI != null) {
-            var rs = (TaskPattern)autoReflectMI.Invoke(null, reflect_args);
-            if (method == SMConstruction.AS_REFLECTABLE) return new ReflectableLASM(rs);
-            return new ReflectableSLSM(rs);
-        }
-        return (StateMachine) Activator.CreateInstance(myType, reflect_args);
+        return Create(autoReflectMI, method, myType, reflect_args);
     }
 
-    //private static readonly HashSet<string> allowSameLine = new HashSet<string>() { "~", ">>", "_" };
 
     private static bool IsChildCountMarker([CanBeNull] string s, out int ct) {
         if (s != null && s[0] == ':') {
@@ -477,23 +492,14 @@ public abstract class SequentialSM : StateMachine {
 }
 
 public class ParallelSM : StateMachine {
-    private readonly Blocking blocking;
+    public ParallelSM(List<StateMachine> states) : base(states) { }
 
-    public ParallelSM(List<StateMachine> states, Blocking blocking) : base(states) {
-        this.blocking = blocking;
-    }
-
-    public override Task Start(SMHandoff smh) {
-        if (blocking == Blocking.BLOCKING) {
+    public override Task Start(SMHandoff smh) =>
+        //Minor garbage optimization
+        states.Count == 1 ? 
+            states[0].Start(smh) :
             //WARNING: Due to how WhenAll works, any child exceptions will only be thrown at the end of execution.
-            return Task.WhenAll(states.Select(s => s.Start(smh)));
-        } else {
-            for (int ii = 0; ii < states.Count; ++ii) {
-                _ = states[ii].Start(smh);
-            }
-            return Task.CompletedTask;
-        }
-    }
+            Task.WhenAll(states.Select(s => s.Start(smh)));
 }
 
 public abstract class UniversalSM : StateMachine {
@@ -508,11 +514,11 @@ public abstract class UniversalSM : StateMachine {
 public class RetargetUSM : UniversalSM {
     private readonly string[] targets;
 
-    public RetargetUSM(StateMachine state, string[] targets) : base(state) {
+    public RetargetUSM(string[] targets, StateMachine state) : base(state) {
         this.targets = targets;
     }
 
-    public static RetargetUSM Retarget(StateMachine state, params string[] targets) => new RetargetUSM(state, targets);
+    public static RetargetUSM Retarget(StateMachine state, params string[] targets) => new RetargetUSM(targets, state);
     public static RetargetUSM Retarget(TaskPattern state, params string[] targets) => Retarget(new ReflectableLASM(state), targets);
 
     public override Task Start(SMHandoff smh) {
@@ -521,9 +527,9 @@ public class RetargetUSM : UniversalSM {
             Log.Unity($"Retarget operation with targets {string.Join(", ", targets)} found no BEH", level: Log.Level.WARNING);
             return Task.CompletedTask;
         } else if (behs.Length == 1) {
-            return behs[0].RunExternalSM(SMRunner.Run(states[0], smh.cT, smh.GCX));
+            return behs[0].RunExternalSM(SMRunner.Run(states[0], smh.cT, smh.GCX), false);
         } else {
-            return Task.WhenAll(behs.Select(x => x.RunExternalSM(SMRunner.Run(states[0], smh.cT, smh.GCX))));
+            return Task.WhenAll(behs.Select(x => x.RunExternalSM(SMRunner.Run(states[0], smh.cT, smh.GCX), false)));
         }
     }
 }
@@ -533,7 +539,7 @@ public class RetargetUSM : UniversalSM {
 /// </summary>
 public class IfUSM : UniversalSM {
     private readonly GCXF<bool> pred;
-    public IfUSM(StateMachine iftrue, StateMachine iffalse, GCXF<bool> pred) : base(new List<StateMachine>() {iftrue, iffalse}) {
+    public IfUSM(GCXF<bool> pred, StateMachine iftrue, StateMachine iffalse) : base(new List<StateMachine>() {iftrue, iffalse}) {
         this.pred = pred;
     }
     public override Task Start(SMHandoff smh) {
@@ -548,7 +554,10 @@ public class NoBlockUSM : UniversalSM {
     public NoBlockUSM(StateMachine state) : base(state) { }
 
     public override Task Start(SMHandoff smh) {
-        states[0].Start(smh);
+        //The GCX may be disposed by the parent before the child has run (due to early return), so we copy it
+        smh.ch = smh.ch.CopyGCX();
+        //ContinueWithSync prints errors
+        states[0].Start(smh).ContinueWithSync(smh.GCX.Dispose);
         return Task.CompletedTask;
     }
 }

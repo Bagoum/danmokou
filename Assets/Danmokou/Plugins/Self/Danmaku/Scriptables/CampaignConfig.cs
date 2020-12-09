@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using JetBrains.Annotations;
 using UnityEngine;
 
+namespace DMK.Scriptables {
 [CreateAssetMenu(menuName = "Data/Campaign Configuration")]
 public class CampaignConfig : ScriptableObject {
     public int startLives;
@@ -23,4 +24,5 @@ public class CampaignConfig : ScriptableObject {
         }
         return false;
     }
+}
 }

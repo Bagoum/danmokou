@@ -1,11 +1,11 @@
 pattern { }
 phase 0
-	action block 0
+	paction 0
         position 1 0
 		shift-phase-to 2
 		
 phase 0
-	action block 0.1
+	paction 0.1
 		bullet-control persist empty savev2 {
 			 myloc p loc
 			 mydir p dir
@@ -22,7 +22,7 @@ phase 0
 			}
 			
 phase 0
-	action block 0.1
+	paction 0.1
 		##Simplified syntax: one command for all guideing
         bullet strip-teal/w.2 <1;:> cre 24 _ <;:15> guideempty .1 p { pl loc pd dir } { }
 			tp-rot rotatelerppercent 0.3 cx 1 cy 1 ##empty guide movement 

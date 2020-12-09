@@ -1,6 +1,6 @@
 pattern { }
 phase 0
-    action block 0
+    paction 0
 		position 0 0
 		async shell-green/w <1;:> gir2 2 2 <10> { 
 			wait-child 

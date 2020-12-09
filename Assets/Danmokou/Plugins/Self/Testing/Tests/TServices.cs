@@ -1,20 +1,16 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using UnityEngine;
+﻿using UnityEngine;
 using NUnit.Framework;
-using UnityEngine.TestTools;
-using DMath;
-using Danmaku;
+using DMK.DataHoist;
+using DMK.DMath;
+using DMK.Reflection;
 using static NUnit.Framework.Assert;
 
-namespace Tests {
+namespace DMK.Testing {
 
 public static class TServices {
     [Test]
     public static void TestHoistClear() {
-        var v = new Velocity("nroffset ss0 px rand -200 200".Into<VTP>());
+        var v = new Movement("nroffset ss0 px rand -200 200".Into<VTP>());
         var bpi = new ParametricInfo(Vector2.zero, 0, 24);
         v.UpdateDeltaAssignAcc(ref bpi, out var d11, 0.1f);
         bpi = new ParametricInfo(Vector2.zero, 0, 2443455);

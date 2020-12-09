@@ -14,23 +14,27 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   boss: {fileID: 6274564262994426332, guid: 2e4cfe2f6f8095747a49bcb45d5dea46, type: 3}
   CardPracticeName: Yukari
-  replayNameOverride: 
+  BossPracticeName:
+    _showEnOnly: 0
+    en: Yukari
+    jp: "\u7D2B"
+  challengeNameOverride:
+    _showEnOnly: 0
+    en: 
+    jp: 
+  replayNameOverride:
+    _showEnOnly: 0
+    en: 
+    jp: 
   stateMachine: {fileID: 4900000, guid: 55eb144e102f2a849b905b076fcb5506, type: 3}
   key: jy.yukari
-  casualName: 
-  casualNameJP: 
-  displayName: Yakumo<br>Yukari
-  displayTitle: Purple Haze<br>Lurking Beyond<br>The Pale
   trackName: "\u7D2B"
   colors: {fileID: 11400000, guid: 149feb9b514a85740b57d74694671283, type: 2}
-  rotator: 
+  cardRotator: 
+  spellRotator: 
   profile:
     leftSidebar: {fileID: 2800000, guid: 9f9e9d6453a18cd42a54610b9f52950a, type: 3}
     rightSidebar: {fileID: 2800000, guid: d2845ba4abb5c6d4ba9f8f6d145ec2e6, type: 3}
-    image: {fileID: 2800000, guid: 588dac9d75d4260489e6425d3ddf45a0, type: 3}
-    offsetX: 0.42
-    offsetY: 0.72
-    zoom: 5.7
   defaultNonBG: {fileID: 5180723301924424041, guid: ddaded76ccac01d46b1e0de9b3cd2b53,
     type: 3}
   defaultSpellBG: {fileID: 5180723301924424041, guid: 560f5baeda61def45ad4e941fc6813ca,

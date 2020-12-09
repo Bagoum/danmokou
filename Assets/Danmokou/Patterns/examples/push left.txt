@@ -1,10 +1,10 @@
 pattern { }
 phase 0
-	action block 0
+	paction 0
         position 0 2
 		shift-phase-to 1
 phase 0
-    action block 0
+    paction 0
 		position 4 -3
 		async gem-*/bs <> gir2 50 _ <> {
 			root pxy 8 5

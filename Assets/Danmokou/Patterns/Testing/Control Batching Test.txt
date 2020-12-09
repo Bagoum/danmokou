@@ -1,6 +1,6 @@
 pattern { }
 phase 0
-    action block 0
+    paction 0
         position 0 0
 		sync gem-red/w <2;:> s null
 		sync gem-red/b <2;1:> s null

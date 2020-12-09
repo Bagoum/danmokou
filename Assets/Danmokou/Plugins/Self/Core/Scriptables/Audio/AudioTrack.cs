@@ -3,19 +3,10 @@ using System.Collections;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using DMK.Core;
 using JetBrains.Annotations;
 
-public interface IAudioTrackInfo {
-    string Title { get; }
-    AudioClip Clip { get; }
-    float Volume { get; }
-    float Pitch { get; }
-    bool StopOnPause { get; }
-    bool Loop { get; }
-    Vector2 LoopSeconds { get; }
-    float StartTime { get; }
-}
-
+namespace DMK.Scriptables {
 [CreateAssetMenu(menuName = "AudioTrack")]
 public class AudioTrack : ScriptableObject, IAudioTrackInfo {
     public AudioClip clip;
@@ -38,4 +29,5 @@ public class AudioTrack : ScriptableObject, IAudioTrackInfo {
     public Vector2 LoopSeconds => loopSeconds;
     public float StartTime => startWithTime;
     public string Title => title;
+}
 }

@@ -10,9 +10,9 @@ These are verbose instructions on how to set up Danmokou on your first run.
 
 ## Part 1: Unity Setup
 
-- Download/Install Unity Hub (https://store.unity.com/download-nuo)
-- Within Unity Hub > Installs, add Unity version 2020.1.9f1
-- Within Unity Hub > Projects, Click ADD and browse to the root Danmokou folder. 
+- Download/Install Unity Hub (https://store.unity.com/download-nuo), then run it
+- Within Unity Hub > Installs, add Unity version **2020.1.17f1** (Do **not** use 2020.2 or 2021.*. They have a bug with FSharp.Core.dll which will cause all exported builds to crash on startup.)
+- Within Unity Hub > Projects, click ADD and browse to the root Danmokou folder. 
 - Click on the project to load it. **The first time you load it, Unity may take several minutes to import resources.**
   - If you get an error about the default layout, then close Unity, move the three `.dwlt` files in the `DMK_DEFAULTS` folder to the `Library` folder, and open Unity.
 - Once you are in the Unity Editor, click on the Project tab (by default in the bottom window) and browse to Assets/Danmokou/Scenes/BasicSceneOPENME.
@@ -30,22 +30,22 @@ These are verbose instructions on how to set up Danmokou on your first run.
 ## Go to https://dmk.bagoum.com/docs/articles/t01.html for the tutorial. 
 pattern({ })
 phase(0)
-	action(block, 0)
+	paction(0)
 		shift-phase-to(1)
 		
 ## This is phase #1. 
 <!> type(non, `Hello World`)
 <!> hp(4000)
 phase(0)
-	action(block, 0)	
-	position(0, 1)
+	paction(0)
+		position(0, 1)
 ```
 
 - This is a **behavior script**. Almost all interesting behavior in DMK is defined through behavior scripts, written in Bagoum Danmaku Scripting Markup (BDSM). Here are a few things to keep in mind about BDSM:
   - Comments can be placed on their own lines or at the end of lines. One hashtag makes a comment (like Python).
   - Indentation is not required, but you should do it.
   - Newlines are usually required.
-  - Parentheses and argument separator commas are not required.
+  - Parentheses and argument separator commas are not required, unless you want infix mathematical operators (eg. `(1 + 2)` instead of `+ 1 2`).
 - Run the scene by pressing the play button at the top of the screen. Objects should start animating and you should see the message "Hello World" at the top of the game UI. 
   - Note: you may seen cyan squares on the screen when certain objects first appear. This should only happen once per object type. For example, the first time you open the pause menu, you might see a cyan square. This is due to shader recompilation and is harmless. It does not occur in builds.
 - Make sure that the FPS counter (bottom right of the game UI) is stable. If it is excessively high, then press Esc to open the in-game pause menu and turn Vsync OFF. If your computer is old, you may need to turn shaders OFF as well. These settings will be saved as soon as you close the menu.
@@ -58,6 +58,12 @@ You do not *need* to use Notepad++ to edit BDSM scripts, but I do not have langu
 
 - Copy `npp-nautical-theme.xml` into `AppData/Roaming/Notepad++/themes`, and then select it in `Settings > Style Configurator` via the dropdown. Make sure `Global Styles > Global override > Enable global background color` is checked.
 - Copy `npp-bdsm-language.xml` into `AppData/Roaming/Notepad++/userDefineLangs`, and then select "BDSM" (Bagoum Danmaku Scripting Markup) it under the Language dropdown when editing a script file.
+
+## Part Extra: IDE Setup
+
+When you get around to eventually extending the engine with your own functions and mechanics, you'll probably use some IDE for editing C#. The three most common are Rider, Visual Studio, and VS Code. 
+
+If using VS Code, you may come across an issue where many references in the codebase do not compile. In this case, reinstall your C# extension to version 1.23.2. 
 
 ## Part Extra: F# Setup
 

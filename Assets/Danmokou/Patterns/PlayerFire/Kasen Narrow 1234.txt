@@ -3,17 +3,17 @@ gtr {
 	wait-child
 } fire
 	## free fire
-	async sakura-*/ <> gcr2 12 _ <> { 
+	async sakura-*/ <> gcr2 9 _ <> { 
 		delay(3 * p)
 		sfx x-pc-fire-1
 		colorf { red green } p
-	} simple tprot py 13 { player  25 25 oh3 }
+	} simple tprot py 13 { player  23 23 oh1-red }
 	## free cancellation
 	noop
 	## focus
 	async sakura-*/ <> gcr2 12 _ <> { 
 		sfx x-pc-fire-1 
 		colorf { red green } (p // 2)
-	} simple tprot py(13 + 3.5 * p // 2) { player  28 28 oh3 }
+	} simple tprot py(13 + 3.5 * p // 2) { player  34 34 oh1-green }
 	## focus cancellation
 	noop

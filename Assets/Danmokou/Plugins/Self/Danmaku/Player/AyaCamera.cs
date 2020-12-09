@@ -1,18 +1,17 @@
 ﻿using System;
 using System.Collections;
-using System.IO;
-using Core;
-using DMath;
-using JetBrains.Annotations;
-using Newtonsoft.Json;
-using SM;
+using DMK.Behavior;
+using DMK.Core;
+using DMK.Danmaku;
+using DMK.DMath;
+using DMK.Scriptables;
+using DMK.Services;
+using DMK.SM;
+using DMK.UI;
 using TMPro;
 using UnityEngine;
-using UnityEngine.Experimental.Rendering;
-using Collision = DMath.Collision;
-using Object = UnityEngine.Object;
 
-namespace Danmaku {
+namespace DMK.Player {
 public class AyaCamera : BehaviorEntity {
 
     public enum State {
@@ -66,9 +65,9 @@ public class AyaCamera : BehaviorEntity {
     
     private float angle;
     private Vector2 location;
-    private static Vector2 AimAt => (GameManagement.campaign.ExecutingBoss == null) ?
+    private static Vector2 AimAt => (GameManagement.instance.ExecutingBoss == null) ?
         new Vector2(0f, 5f) :
-        GameManagement.campaign.ExecutingBoss.rBPI.loc;
+        GameManagement.instance.ExecutingBoss.rBPI.loc;
     private float BoundedViewfinderRadius => Mathf.Min(viewfinderRadius, (AimAt - player.hitbox.location).magnitude);
     private float AngleToTarget =>
         (player.IsMoving && !player.IsFocus) 
@@ -148,9 +147,14 @@ public class AyaCamera : BehaviorEntity {
     public override int UpdatePriority => UpdatePriorities.PLAYER2;
 
     private static double GetChargeRate(State s) {
-        if (s == State.NORMAL) return 12;
-        else if (s == State.CHARGE) return 43;
-        else return 0;
+        switch (s) {
+            case State.NORMAL:
+                return 12;
+            case State.CHARGE:
+                return 42;
+            default:
+                return 0;
+        }
     }
 
     private const double chargeMin = 0;
@@ -180,7 +184,7 @@ public class AyaCamera : BehaviorEntity {
         new CRect(location.x, location.y, CameraHalfBounds.x * scale, CameraHalfBounds.y * scale, angle);
     private IEnumerator UpdateFire() {
         CameraState = State.FIRING;
-        var slowdownToken = ETime.Slowdown.CreateMultiplier(0.5f);
+        var slowdownToken = ETime.Slowdown.CreateModifier(0.5f);
         viewfinder.gameObject.layer = highCameraLayer;
         var sfx = SFXService.RequestSource(whileFire);
         void Cancel() {
@@ -225,7 +229,7 @@ public class AyaCamera : BehaviorEntity {
     }
 
     private bool TakePicture_Freeze(float scale) {
-        if (!GameStateManager.TemporaryEffectPause(out Action cb)) return false;
+        if (!EngineStateManager.TemporaryEffectPause(out Action cb)) return false;
         WaitingUtils.WaitThenCB(freezeHelper, Cancellable.Null, freezeTime, false, cb);
         return true;
     }
@@ -241,7 +245,7 @@ public class AyaCamera : BehaviorEntity {
     }
     private void TakePicture_Delete(float scale) {
         var rect = ViewfinderRect(scale);
-        BulletManager.Autodelete("cwheel", "red/b", b => Collision.PointInRect(b.loc, rect));
+        BulletManager.Autodelete("cwheel", "red/b", b => CollisionMath.PointInRect(b.loc, rect));
     }
 
     public static readonly Events.IEvent<(AyaPhoto photo, bool success)> PhotoTaken 
@@ -257,7 +261,7 @@ public class AyaCamera : BehaviorEntity {
             var pphoto = GameObject.Instantiate(pinnedPhotoPrefab).GetComponent<AyaPinnedPhoto>();
             PhotoTaken.Publish((photo, success));
             if (success) {
-                if (GameManagement.campaign.Request?.replay == null) photo.KeepAlive = true;
+                if (GameManagement.instance.Request?.replay == null) photo.KeepAlive = true;
                 targetLoc = DependencyInjection.MaybeFind<IAyaPhotoBoard>()?.NextPinLoc(pphoto) ?? new Vector2(-4, 0);
             }
             pphoto.Initialize(photo, location, targetLoc);

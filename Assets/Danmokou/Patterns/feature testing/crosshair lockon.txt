@@ -1,9 +1,9 @@
 pattern { }
 phase 0
-	action block 0
+	paction 0
 		shift-phase-to 1
 phase 0
-    action block 0
+    paction 0
         position -3 0
 		crosshair crosshair Lplayer 4 2 ploc 0
 		async laser-red/w <> gcr {

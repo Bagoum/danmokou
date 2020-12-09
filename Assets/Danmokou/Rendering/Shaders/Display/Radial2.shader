@@ -3,6 +3,8 @@
 		[PerRendererData] _MainTex("Texture", 2D) = "white" {}
 		_R("Radius", Float) = 0.5
 		_Subradius("Subradius", Float) = 0.1
+		_DarkenRatio("Darken Ratio", Float) = 0.9
+		_DarkenAmount("Darken Amount", Float) = 0.5
 		[Enum(One,1,OneMinusSrcAlpha,10)] _BlendTo("Blend mode", Float) = 10
 		
 		[PerRendererData] _P1("Curr Phase Begins", Range(0, 1)) = 0.8
@@ -41,11 +43,13 @@
             struct vertex {
                 float4 loc  : POSITION;
                 float2 uv	: TEXCOORD0;
+				float4 color: COLOR;
             };
 
             struct fragment {
                 float4 loc   : SV_POSITION;
                 float2 uv	 : TEXCOORD0;
+				float4 color: COLOR;
                 float effF : EXTRADATA;
             };
 
@@ -58,6 +62,7 @@
                 f.loc = UnityObjectToClipPos(v.loc);
                 f.uv = float2(v.uv.x - 0.5, v.uv.y - 0.5);
                 f.effF = _P2 + (_P1 - _P2) * _F;
+            	f.color = v.color;
                 return f;
             }
 
@@ -65,12 +70,15 @@
             float4 _MainTex_TexelSize;
             float _R;
             float _Subradius;
+            float _DarkenRatio;
+            float _DarkenAmount;
             float4 _CF;
             float4 _CN;
             float4 _CE;
             static const float smth = 0.002f;
             static const float nsmth = 0.003f;
             static const float rsmth = 0.004f;
+            static const float dsmth = 0.012f;
             
             float _RPPU;
             
@@ -105,8 +113,12 @@
                 }
                 float is_curr = (1-is_empty) * (1-is_next);
                 float4 c = float4(1,1,1,1) * (is_curr * _CF + is_empty * _CE + is_next * _CN);
-                c.a *=  1-smoothstep(_Subradius-rsmth, _Subradius+rsmth, abs(r - _R));
-                return c;
+            	float darken = 1-_DarkenAmount *
+            		smoothstep(-dsmth, +dsmth, abs(r - _R) - _Subradius*_DarkenRatio);
+            	c.rgb *= float3(darken, darken, darken);
+                c.a *= 1-smoothstep(-rsmth, rsmth, abs(r - _R) - _Subradius);
+            	//c.a *= smoothstep(0.000, 0.006, abs(abs(r-_R) - _Subradius*_DarkenRatio));
+                return c * f.color;
             }
             ENDCG
         }

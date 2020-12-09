@@ -1,12 +1,12 @@
 pattern { }
 phase 0
-	action block 0
+	paction 0
 		shift-phase-to 2
 	
 !!{ colors { blue purple pink red orange yellow green teal black  }
 
 phase 0
-    action block 0
+    paction 0
 		position 0 0
 		sync gdlaser-*/b <0.5;:> gsr2c 9 {
 			color $colors
@@ -15,7 +15,7 @@ phase 0
 		}
 		
 phase 0
-    action block 0
+    paction 0
 		position 0 0
 		sync mulaser-*/b <0.5;:> gsr2c 9 {
 			color $colors
@@ -24,7 +24,7 @@ phase 0
 		}
 
 phase 9
-    action block 0
+    paction 0
 		position 0 0
 		sync gpather-*/b <0.5;:> gsr2c 9 {
 			color $colors

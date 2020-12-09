@@ -1,9 +1,11 @@
-﻿using System;
-using System.Collections;
-using Core;
-using Danmaku;
+﻿using System.Collections;
+using DMK.Behavior;
+using DMK.Core;
+using DMK.Scriptables;
+using DMK.Services;
 using UnityEngine;
 
+namespace DMK.Player {
 public class PlayerHP : CoroutineRegularUpdater {
     public static bool RespawnOnHit => GameManagement.Difficulty.respawnOnDeath;
     public EffectStrategy OnPreHitEffect;
@@ -17,6 +19,7 @@ public class PlayerHP : CoroutineRegularUpdater {
 
 
     public override int UpdatePriority => UpdatePriorities.PLAYER;
+
     private void Awake() {
         tr = transform;
         hitInvulnFrames = Mathf.CeilToInt(hitInvuln * ETime.ENGINEFPS);
@@ -28,7 +31,8 @@ public class PlayerHP : CoroutineRegularUpdater {
         base.BindListeners();
         Listen(RequestPlayerInvulnerable, GoldenAuraInvuln);
     }
-    public static readonly Events.IEvent<(int frames, bool effect)> RequestPlayerInvulnerable = 
+
+    public static readonly Events.IEvent<(int frames, bool effect)> RequestPlayerInvulnerable =
         new Events.Event<(int, bool)>();
 
     private IEnumerator WaitOutInvuln(int frames) {
@@ -42,8 +46,9 @@ public class PlayerHP : CoroutineRegularUpdater {
     }
 
     private void GoldenAuraInvuln((int frames, bool showEffect) req) {
-        if (req.showEffect) input.InvokeParentedTimedEffect(GoldenAuraEffect, 
-            req.frames * ETime.FRAME_TIME).transform.SetParent(tr);
+        if (req.showEffect)
+            input.InvokeParentedTimedEffect(GoldenAuraEffect,
+                req.frames * ETime.FRAME_TIME).transform.SetParent(tr);
         Invuln(req.frames);
     }
 
@@ -51,6 +56,7 @@ public class PlayerHP : CoroutineRegularUpdater {
     public void _takedmg() => Hit(1);
 
     private bool waitingDeathbomb = false;
+
     public void Hit(int dmg, bool force = false) {
         if (dmg <= 0) return;
         if (force) _DoHit(dmg);
@@ -63,11 +69,11 @@ public class PlayerHP : CoroutineRegularUpdater {
 
     public void Graze(int graze) {
         if (graze <= 0 || invulnerabilityCounter > 0) return;
-        GameManagement.campaign.AddGraze(graze);
+        GameManagement.instance.AddGraze(graze);
     }
 
     private void _DoHit(int dmg) {
-        GameManagement.campaign.AddLives(-dmg);
+        GameManagement.instance.AddLives(-dmg);
         DependencyInjection.MaybeFind<IRaiko>()?.ShakeExtra(1.5f, 0.8f);
         Invuln(hitInvulnFrames);
         if (RespawnOnHit) input.RequestNextState(PlayerInput.PlayerState.RESPAWN);
@@ -87,4 +93,5 @@ public class PlayerHP : CoroutineRegularUpdater {
         else Log.Unity($"The player successfully deathbombed", level: Log.Level.DEBUG2);
         waitingDeathbomb = false;
     }
+}
 }

@@ -1,17 +1,21 @@
 ﻿using System.Collections.Generic;
 using System;
-using System.Threading;
 using System.Threading.Tasks;
-using System.IO;
 using System.Linq;
-using Danmaku;
-using Core;
-using DMath;
+using DMK.Behavior;
+using DMK.Core;
+using DMK.Danmaku;
+using DMK.DMath;
+using DMK.GameInstance;
+using DMK.Graphics.Backgrounds;
+using DMK.Scenes;
+using DMK.Scriptables;
+using DMK.Services;
+using DMK.UI;
 using JetBrains.Annotations;
 using UnityEngine;
-using static Danmaku.Enums;
 
-namespace SM {
+namespace DMK.SM {
 /// <summary>
 /// `pattern`: Top-level controller for SMs involving danmaku or level control.
 /// Does not encompass text control (<see cref="ScriptTSM"/>).
@@ -62,7 +66,7 @@ public class PatternSM : SequentialSM {
             var target = smh.Exec;
             if (i > 0) {
                 target = UnityEngine.Object.Instantiate(b.boss).GetComponent<BehaviorEntity>();
-                target.Initialize(null, new Velocity(new Vector2(-50f, 0f), 0f), SMRunner.Null);
+                target.Initialize(null, new Movement(new Vector2(-50f, 0f), 0f), SMRunner.Null);
                 subsummons.Add(target);
             }
             if (target.TryAsEnemy(out var e)) {
@@ -73,7 +77,8 @@ public class PatternSM : SequentialSM {
                 e.ConfigureBoss(b);
                 e.SetVulnerable(Vulnerability.NO_DAMAGE);
             }
-            if (b.trackName.Length > 0) bts.Add(ui?.TrackBEH(target, b.trackName, smh.cT));
+            string trackerName = b.BottomTrackerName;
+            if (trackerName.Length > 0) bts.Add(ui?.TrackBEH(target, trackerName, smh.cT));
         }
         smh.Exec.Enemy.Subbosses = subbosses;
         return (bts, subsummons);
@@ -84,10 +89,11 @@ public class PatternSM : SequentialSM {
         var subsummons = new List<BehaviorEntity>();
         var ui = DependencyInjection.MaybeFind<IUIManager>();
         if (props.boss != null) {
-            GameManagement.campaign.OpenBoss(smh.Exec);
+            GameManagement.instance.OpenBoss(smh.Exec);
             ui?.SetBossHPLoader(smh.Exec.Enemy);
             (bts, subsummons) = ConfigureAllBosses(ui, smh, props.boss, props.bosses);
         }
+        var subbosses = subsummons.Where(x => x.TryAsEnemy(out _)).Select(x => x.Enemy).ToArray();
         bool firstBoss = true;
         for (var next = smh.Exec.phaseController.WhatIsNextPhase();
             next > -1 && next < phases.Length;
@@ -104,7 +110,7 @@ public class PatternSM : SequentialSM {
             //don't show lives on setup phase
             if (next > 0 && props.boss != null) ui?.ShowBossLives(RemainingLives(next));
             try {
-                await phases[next].Start(smh, ui);
+                await phases[next].Start(smh, ui, subbosses);
             } catch (OperationCanceledException) {
                 //Runs the cleanup code if we were cancelled
                 break;
@@ -115,7 +121,7 @@ public class PatternSM : SequentialSM {
         }
         if (props.boss != null && !SceneIntermediary.LOADING) {
             ui?.ShowBossLives(0);
-            GameManagement.campaign.CloseBoss();
+            GameManagement.instance.CloseBoss();
             ui?.CloseBoss();
             if (!firstBoss) ui?.CloseProfile();
             foreach (var subsummon in subsummons) {
@@ -189,13 +195,16 @@ public class PhaseSM : SequentialSM {
         }
     }
 
-    private void PrepareGraphics([CanBeNull] IUIManager ui, SMHandoff smh, out Task cutins, 
+    private void PreparePhase([CanBeNull] IUIManager ui, SMHandoff smh, out Task cutins, 
         [CanBeNull] IBackgroundOrchestrator bgo, [CanBeNull] IAyaPhotoBoard photoBoard) {
         cutins = Task.CompletedTask;
-        if (props.cardTitle != null || props.phaseType != null) ui?.SetSpellname(props.cardTitle);
         ui?.ShowPhaseType(props.phaseType);
-        if (!props.HideTimeout && smh.Exec.TriggersUITimeout) ui?.ShowStaticTimeout(Timeout);
-        if (props.livesOverride.HasValue) ui?.ShowBossLives(props.livesOverride.Value);
+        if (props.cardTitle != null || props.phaseType != null) 
+            ui?.SetSpellname(props.cardTitle);
+        if (!props.HideTimeout && smh.Exec.TriggersUITimeout) 
+            ui?.ShowStaticTimeout(Timeout);
+        if (props.livesOverride.HasValue) 
+            ui?.ShowBossLives(props.livesOverride.Value);
         if (smh.Exec.isEnemy) {
             if (props.photoHP.Try(out var photoHP)) {
                 smh.Exec.Enemy.SetPhotoHP(photoHP, photoHP);
@@ -206,16 +215,16 @@ public class PhaseSM : SequentialSM {
             if ((props.hpbar ?? props.phaseType?.HPBarLength()).Try(out var hpbar)) {
                 smh.Exec.Enemy.SetHPBar(hpbar, props.phaseType ?? PhaseType.NONSPELL);
             }
-            var vuln = props.phaseType?.DefaultVulnerability();
-            if (vuln.Try(out var v)) smh.Exec.Enemy.SetVulnerable(v);
+            if ((props.phaseType?.DefaultVulnerability()).Try(out var v)) 
+                smh.Exec.Enemy.SetVulnerable(v);
         }
         if (props.BossPhotoHP.Try(out var pins)) {
             photoBoard?.SetupPins(pins);
         }
         bool forcedBG = false;
-        if (GameManagement.campaign.mode != CampaignMode.CARD_PRACTICE && !SaveData.Settings.TeleportAtPhaseStart) {
+        if (GameManagement.instance.mode != InstanceMode.CARD_PRACTICE && !SaveData.Settings.TeleportAtPhaseStart) {
             if (props.bossCutin) {
-                GameManagement.campaign.ExternalLenience(props.Boss.bossCutinTime);
+                GameManagement.instance.ExternalLenience(props.Boss.bossCutinTime);
                 SFXService.BossCutin();
                 //Service not required since no callback
                 DependencyInjection.MaybeFind<IRaiko>()?.Shake(props.Boss.bossCutinTime / 2f, null, 1f, smh.cT, null);
@@ -242,7 +251,7 @@ public class PhaseSM : SequentialSM {
         }
     }
 
-    private void PrepareCancellationTrigger([CanBeNull] IUIManager ui, SMHandoff smh, Cancellable toCancel) {
+    private void PrepareTimeout([CanBeNull] IUIManager ui, Enemy[] subbosses, SMHandoff smh, Cancellable toCancel) {
         smh.Exec.PhaseShifter = toCancel;
         var timeout = Timeout;
         //Note that the <!> HP(hp) sets invulnTime=0.
@@ -250,28 +259,32 @@ public class PhaseSM : SequentialSM {
             WaitingUtils.WaitThenCB(smh.Exec, smh.cT, props.invulnTime.Value, false,
                 () => smh.Exec.Enemy.SetVulnerable(Vulnerability.VULNERABLE));
         WaitingUtils.WaitThenCancel(smh.Exec, smh.cT, timeout, true, toCancel);
-        if (props.phaseType?.IsSpell() ?? false) smh.Exec.Enemy.RequestSpellCircle(timeout, smh.cT);
+        if (props.phaseType?.IsSpell() ?? false) {
+            smh.Exec.Enemy.RequestSpellCircle(timeout, smh.cT);
+            foreach (var subboss in subbosses)
+                subboss.RequestSpellCircle(timeout, smh.cT);
+        }
         //else smh.exec.Enemy.DestroySpellCircle();
         if (!props.HideTimeout && smh.Exec.TriggersUITimeout)
             ui?.DoTimeout(props.phaseType?.IsCard() ?? false, timeout, smh.cT);
     }
 
-    public override Task Start(SMHandoff smh) => Start(smh, null);
-    public async Task Start(SMHandoff smh, [CanBeNull] IUIManager ui) {
+    public override Task Start(SMHandoff smh) => Start(smh, null, new Enemy[0]);
+    public async Task Start(SMHandoff smh, [CanBeNull] IUIManager ui, Enemy[] subbosses) {
         var bgo = DependencyInjection.MaybeFind<IBackgroundOrchestrator>();
         var photoBoard = DependencyInjection.MaybeFind<IAyaPhotoBoard>();
-        PrepareGraphics(ui, smh, out Task cutins, bgo, photoBoard);
-        if (props.Lenient) GameManagement.campaign.Lenience = true;
+        PreparePhase(ui, smh, out Task cutins, bgo, photoBoard);
+        if (props.Lenient) GameManagement.instance.Lenience = true;
         if (props.rootMove != null) await props.rootMove.Start(smh);
         await cutins;
         smh.ThrowIfCancelled();
         if (props.phaseType?.IsPattern() == true) ETime.Timer.PhaseTimer.Restart();
         var pcTS = new Cancellable();
         var joint_smh = smh.CreateJointCancellee(pcTS, out var joint);
-        PrepareCancellationTrigger(ui, joint_smh, pcTS);
+        PrepareTimeout(ui, subbosses, joint_smh, pcTS);
         var start_frame = ETime.FrameNumber;
         
-        var start_campaign = new CampaignSnapshot(GameManagement.campaign);
+        var start_campaign = new CampaignSnapshot(GameManagement.instance);
         if (props.phaseType != null) DependencyInjection.MaybeFind<IChallengeManager>()?.SetupBossPhase(joint_smh);
         try {
             await base.Start(joint_smh);
@@ -280,7 +293,7 @@ public class PhaseSM : SequentialSM {
             joint_smh.ThrowIfCancelled();
         } catch (OperationCanceledException) {
             if (smh.Exec.PhaseShifter == pcTS) smh.Exec.PhaseShifter = null;
-            if (props.Lenient) GameManagement.campaign.Lenience = false;
+            if (props.Lenient) GameManagement.instance.Lenience = false;
             if (props.Cleanup) GameManagement.ClearPhaseAutocull(props.autocullTarget, props.autocullDefault);
             if (smh.Exec.AllowFinishCalls) {
                 finishPhase?.Trigger(smh.Exec, smh.GCX, smh.parentCT);
@@ -324,7 +337,7 @@ public class PhaseSM : SequentialSM {
             DependencyInjection.MaybeFind<IRaiko>()
                 ?.Shake(defaultShakeTime, defaultShakeMult, defaultShakeMag, smh.cT, null);
         }
-        GameManagement.campaign.PhaseEnd(pc);
+        GameManagement.instance.PhaseEnd(pc);
     }
 }
 
@@ -344,7 +357,7 @@ public class PhaseJSM : PhaseSM {
     public PhaseJSM(List<StateMachine> states, PhaseProperties props, float timeout, int from)
     #if UNITY_EDITOR
         : base(from == 0 ? states : states.Skip(from).Prepend(states[0]).ToList(), props, timeout) {
-        if (this.states.Try(from == 0 ? 0 : 1) is PhaseActionSM psm) psm.wait = 0f;
+        if (this.states.Try(from == 0 ? 0 : 1) is PhaseParallelActionSM psm) psm.wait = 0f;
     #else
         : base(states, props, timeout) {
     #endif
@@ -352,36 +365,24 @@ public class PhaseJSM : PhaseSM {
 }
 
 /// <summary>
-/// `action`: A list of actions that are run in parallel. Place this under a PhaseSM.
+/// `paction`: A list of actions that are run in parallel. Place this under a PhaseSM.
 /// </summary>
-public class PhaseActionSM : ParallelSM {
-    #if UNITY_EDITOR
+public class PhaseParallelActionSM : ParallelSM {
+#if UNITY_EDITOR
     public float wait;
-    #else
+#else
     private readonly float wait;
-    #endif
-
-    /// <summary>
-    /// </summary>
-    /// <param name="states">Actions to run in parallel</param>
-    /// <param name="blocking">Whether or not this SM forces the next SM to wait for it</param>
-    /// <param name="wait">Artificial delay before this SM starts executing</param>
-    public PhaseActionSM(List<StateMachine> states, Blocking blocking, float wait) : base(states, blocking) {
+#endif
+    
+    public PhaseParallelActionSM(List<StateMachine> states, float wait) : base(states) {
         this.wait = wait;
     }
-
+    
     public override async Task Start(SMHandoff smh) {
         await WaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, wait, false);
         smh.ThrowIfCancelled();
         await base.Start(smh);
     }
-}
-
-/// <summary>
-/// `paction`: same as `action`, but always blocking.
-/// </summary>
-public class PhaseParallelActionSM : PhaseActionSM {
-    public PhaseParallelActionSM(List<StateMachine> states, float wait) : base(states, Blocking.BLOCKING, wait) { }
 }
 /// <summary>
 /// `saction`: A list of actions that are run in sequence. Place this under a PhaseSM.
@@ -411,7 +412,7 @@ public class PhaseSequentialActionSM : SequentialSM {
 /// </summary>
 public class EndPSM : ParallelSM {
     //does not inherit from PASM to avoid being eaten by MetaPASM
-    public EndPSM(List<StateMachine> states) : base(states, Blocking.BLOCKING) { }
+    public EndPSM(List<StateMachine> states) : base(states) { }
 }
 
 /// <summary>

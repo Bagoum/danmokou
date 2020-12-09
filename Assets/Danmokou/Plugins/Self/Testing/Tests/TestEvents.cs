@@ -1,21 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using Core;
-using DMath;
+﻿using System;using System.Collections.Generic;
+using DMK.Core;
 using NUnit.Framework;
-using SM;
-using static NUnit.Framework.Assert;
-using static DMath.Parser;
-using static Tests.TAssert;
-using static Core.Events;
+using static DMK.Testing.TAssert;
 
-namespace Tests {
+namespace DMK.Testing {
 
 public static class TestEvents {
     [Test]
     public static void TestEventsCB() {
         var msgs = new List<string>();
-        var c = Event0.Continuous("c").ev;
+        var c = Events.Event0.Continuous("c").ev;
         var cdm1 = c.Subscribe(() => msgs.Add("cont1"));
         var cdm2 = c.Subscribe(() => msgs.Add("cont2"));
         c.Proc();
@@ -26,17 +20,17 @@ public static class TestEvents {
         var cdm3 = c.Subscribe(() => msgs.Add("cont3"));
         c.Proc();
         ListEq(msgs, new List<string> { "cont1", "cont2", "cont2", "cont2", "cont3" });
-        Event0.DestroyAll();
+        Events.Event0.DestroyAll();
     }
 
     [Test]
     public static void TestEventsRefractor() {
         var msgs = new List<string>();
-        var c = Event0.Continuous("c").ev;
+        var c = Events.Event0.Continuous("c").ev;
         var cdm = c.Subscribe(() => msgs.Add("c"));
-        var o = Event0.Once("o").ev;
+        var o = Events.Event0.Once("o").ev;
         var odm = o.Subscribe(() => msgs.Add("o"));
-        var r = Event0.Refract("r", "c").ev;
+        var r = Events.Event0.Refract("r", "c").ev;
         var rdm = r.Subscribe(() => msgs.Add("r"));
         r.Proc();
         r.Proc();
@@ -52,7 +46,7 @@ public static class TestEvents {
         c.Proc();
         r.Proc();
         ListEqClear(msgs, new List<string> { "c", "r" });
-        Event0.DestroyAll();
+        Events.Event0.DestroyAll();
     }
     
 

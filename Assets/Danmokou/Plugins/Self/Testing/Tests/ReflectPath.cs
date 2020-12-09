@@ -1,16 +1,10 @@
-﻿using System.Linq;
-using Danmaku;
-using NUnit.Framework;
-using UnityEngine.TestTools;
-using DMath;
+﻿using NUnit.Framework;
+using DMK.DMath;
 using UnityEngine;
-using static Reflector;
-using static DMath.Parametrics;
-using static DMath.FXYRepo;
-using static DMath.BPYRepo;
-using static Tests.TAssert;
+using static DMK.Reflection.Reflector;
+using static DMK.Testing.TAssert;
 
-namespace Tests {
+namespace DMK.Testing {
 
     public static class ReflectPath {
 
@@ -23,14 +17,14 @@ namespace Tests {
             var pivoter2 = "polar2 pxy * 2 t * 60 t".Into<VTP>();
             var bpi = new ParametricInfo(Vector2.zero, 1, 0, 0f);
             var bpi2 = new ParametricInfo(Vector2.zero, 1, 0, 0f);
-            Velocity v = new Velocity(pivoter, Vector2.right, V2RV2.Angle(25));
-            Velocity v2 = new Velocity(pivoter2, Vector2.right, V2RV2.Angle(25));
+            Movement v = new Movement(pivoter, Vector2.right, V2RV2.Angle(25));
+            Movement v2 = new Movement(pivoter2, Vector2.right, V2RV2.Angle(25));
             v.UpdateDeltaAssignAcc(ref bpi, out var _, 1f);
             v2.UpdateDeltaAssignAcc(ref bpi2, out var _, 1f);
             VecEq(bpi.loc, V2(1, 0) + M.RotateVectorDeg(M.PolarToXY(2, 60), 25), "", err1);
             VecEq(bpi.loc,  bpi2.loc);
-            v = new Velocity(pivoter, Vector2.left, V2RV2.NRotAngled(1, 1, 25));
-            v2 = new Velocity(pivoter2, Vector2.left, V2RV2.NRotAngled(1, 1, 25));
+            v = new Movement(pivoter, Vector2.left, V2RV2.NRotAngled(1, 1, 25));
+            v2 = new Movement(pivoter2, Vector2.left, V2RV2.NRotAngled(1, 1, 25));
             v.UpdateDeltaAssignAcc(ref bpi, out var _, 1f);
             v2.UpdateDeltaAssignAcc(ref bpi2, out var _, 1f);
             VecEq(bpi.loc, V2(0, 1) + M.RotateVectorDeg(M.PolarToXY(4, 120), 25), "", err1);
@@ -40,19 +34,19 @@ namespace Tests {
         public static void TCartesian() {
             var pivoter = "offset px * 2 p py * 2 t".Into<VTP>();
             var bpi = new ParametricInfo(Vector2.down, 3, 0, 0f);
-            Velocity v = new Velocity(pivoter, Vector2.zero, V2RV2.Angle(25));
+            Movement v = new Movement(pivoter, Vector2.zero, V2RV2.Angle(25));
             v.UpdateDeltaAssignAcc(ref bpi, out var _, 1f);
             VecEq(bpi.loc, new V2RV2(0, 2, 6, 0, 25).TrueLocation, "", err1);
             
             pivoter = "tp px * 2 p py * 2 t".Into<VTP>();
             bpi = new ParametricInfo(Vector2.down, 3, 0, 0f);
-            v = new Velocity(pivoter, Vector2.zero, V2RV2.Angle(25));
+            v = new Movement(pivoter, Vector2.zero, V2RV2.Angle(25));
             v.UpdateDeltaAssignAcc(ref bpi, out var _, 2f);
             VecEq(bpi.loc, Vector2.down + new V2RV2(0, 4, 6, 0, 25).TrueLocation * 2f, "", err1);
             
             pivoter = "tp px * 2 p px * 2 t".Into<VTP>();
             bpi = new ParametricInfo(Vector2.down, 3, 0, 0f);
-            v = new Velocity(pivoter, Vector2.zero, V2RV2.Angle(25));
+            v = new Movement(pivoter, Vector2.zero, V2RV2.Angle(25));
             v.FlipX();
             v.UpdateDeltaAssignAcc(ref bpi, out var _, 2f);
             VecEq(bpi.loc, Vector2.down + new V2RV2(-4, 0, 6, 0, 180-25).TrueLocation * 2f, "", err1);
@@ -62,14 +56,14 @@ namespace Tests {
         public static void TCartesianRotNRot() {
             var p = "roffset px * 2 t".Into<VTP>();
             var bpi = new ParametricInfo(Vector2.down, 3, 0, 0f);
-            Velocity v = new Velocity(p, Vector2.zero, V2RV2.Angle(25));
+            Movement v = new Movement(p, Vector2.zero, V2RV2.Angle(25));
             v.UpdateDeltaAssignAcc(ref bpi, out var _, 1f);
             VecEq(bpi.loc, V2RV2.Rot(2, 0, 25).TrueLocation, "", err1);
             
             
             p = "nroffset px * 2 t".Into<VTP>();
             bpi = new ParametricInfo(Vector2.down, 3, 0, 0f);
-            v = new Velocity(p, Vector2.zero, V2RV2.Angle(25));
+            v = new Movement(p, Vector2.zero, V2RV2.Angle(25));
             v.UpdateDeltaAssignAcc(ref bpi, out var _, 1f);
             VecEq(bpi.loc, V2RV2.NRot(2, 0).TrueLocation, "", err1);
         }

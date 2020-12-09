@@ -2,11 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using DMK.Behavior;
+using DMK.Core;
 using UnityEngine;
 using NUnit.Framework;
 using UnityEngine.TestTools;
 
-namespace Tests {
+namespace DMK.Testing {
 
     public static class RegularIEnums {
         private static IEnumerator Add(List<string> msgs, string msg) {

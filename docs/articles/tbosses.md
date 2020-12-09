@@ -15,14 +15,14 @@ pattern({
 	##boss(mynewboss)
 })
 phase(0)
-	action(block, 0)
+	paction(0)
 		shift-phase-to(1)
 		
 <!> type(non, `This is a nonspell`)
 <!> hp(4000)
 <!> root(0, 1)
 phase(0)
-	action(block, 0)
+	paction(0)
 		async sakura-pink/w <> gcrepeat {
 			wait(14)
 			times(_)
@@ -34,7 +34,7 @@ phase(0)
 <!> hp(4000)
 <!> root(0, 2)
 phase(0)
-	action(block, 0)
+	paction(0)
 		async fireball-red/w <> gcrepeat {
 			wait(10)
 			times(_)
@@ -47,7 +47,7 @@ phase(0)
 <!> hp(4000)
 <!> root(0, 1)
 phase(0)
-	action(block, 0)
+	paction(0)
 		async sakura-pink/w <> gcrepeat {
 			wait(14)
 			times(_)
@@ -148,7 +148,7 @@ pattern {
 	}
 }
 phase 0
-	action block 0
+	paction(0)
 		@ { kaguya keine } ## BehaviorEntity IDs of the spawned support bosses
 			position -15 0
 ```
@@ -173,7 +173,7 @@ pattern {
 }
 
 phase 0
-	action block 0
+	paction(0)
 		@ junko
 			position -15 0
 		@ junko

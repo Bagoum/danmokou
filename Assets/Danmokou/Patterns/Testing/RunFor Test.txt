@@ -1,6 +1,6 @@
 pattern { }
 phase 0
-	action block 0
+	paction 0
 		position 0 0
 		async strip-red/w <2;:> gir {
 			wt		1 _

@@ -13,24 +13,28 @@ MonoBehaviour:
   m_Name: JY.Junko
   m_EditorClassIdentifier: 
   boss: {fileID: 6003014192476353498, guid: cb2d4430c7bd48848833db5439ec92c6, type: 3}
-  CardPracticeName: 
-  replayNameOverride: 
+  CardPracticeName: Junko
+  BossPracticeName:
+    _showEnOnly: 0
+    en: Junko
+    jp: "\u7D14\u5F27"
+  challengeNameOverride:
+    _showEnOnly: 0
+    en: 
+    jp: 
+  replayNameOverride:
+    _showEnOnly: 0
+    en: 
+    jp: 
   stateMachine: {fileID: 0}
   key: jy.junko
-  casualName: 
-  casualNameJP: 
-  displayName: Junko
-  displayTitle: Nine-Tailed<br>Demon of<br>Hatred
   trackName: "\u7D14\u5F27"
   colors: {fileID: 11400000, guid: 82c24e8b13f850f4497e2c3002e3fcaa, type: 2}
-  rotator: lerpback 10 14 20 24 (mod 24 * 1h t) -90 200
+  cardRotator: 
+  spellRotator: 
   profile:
     leftSidebar: {fileID: 2800000, guid: 619cde921269ed14b820142d40aa7432, type: 3}
     rightSidebar: {fileID: 2800000, guid: 9488ae0d91ba7db4ebf341413e859345, type: 3}
-    image: {fileID: 2800000, guid: 3572dc5b1c7361a49bcc1242b282703b, type: 3}
-    offsetX: 0.497
-    offsetY: 0.635
-    zoom: 6.99
   defaultNonBG: {fileID: 0}
   defaultSpellBG: {fileID: 0}
   defaultIntoSpellTransition: {fileID: 0}

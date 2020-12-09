@@ -17,7 +17,9 @@
 		Cull Off
 		Lighting Off
 		ZWrite Off
-		Blend SrcAlpha OneMinusSrcAlpha
+		//Not entirely sure why One is required here, but if you don't use it, then areas
+		// where there are partially transparent objects will lerp to black (the clear color).
+		Blend One One
 
 		Pass {
 			CGPROGRAM
@@ -40,7 +42,6 @@
 
 			float _T;
 			float4 _Tint;
-			float _HueShift;
 			
 			float _ScreenWidth;
 			float _ScreenHeight;

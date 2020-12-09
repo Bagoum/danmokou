@@ -1,10 +1,10 @@
 pattern { }
 phase 0
-	action block 0
+	paction 0
 		shift-phase-to 1 
 		
 phase 0 
-	action block 0
+	paction 0
 		position 0 0
 			bullet pather18-red/w <> cre 120 _ <> repeat 8 <> pather 1 0.5 offset zero
 				qrotate px 90
@@ -18,7 +18,7 @@ phase 0
 						0
 
 phase 0
-	action block 0
+	paction 0
 		position 0 2
 		sync gcircle-*/b <> gsr {
 !!{ wl 16

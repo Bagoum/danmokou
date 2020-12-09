@@ -2,17 +2,18 @@
 using System.Linq;
 using System.Linq.Expressions;
 using NUnit.Framework;
-using UnityEngine.TestTools;
-using DMath;
+using DMK.DMath;
+using DMK.DMath.Functions;
+using DMK.Expressions;
+using DMK.Reflection;
 using UnityEngine;
-using static Compilers;
-using static DMath.BPYRepo;
+using static DMK.Reflection.Compilers;
+using static DMK.DMath.Functions.BPYRepo;
 using static NUnit.Framework.Assert;
-using ExBPY = System.Func<DMath.TExPI, TEx<float>>;
-using F = DMath.FXYRepo;
-using static DMath.ExMLerps;
+using ExBPY = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<float>>;
+using static DMK.DMath.Functions.ExMLerps;
 
-namespace Tests {
+namespace DMK.Testing {
 
     public static class ReflectBPY {
         private const float err = 0.00001f;
@@ -44,9 +45,9 @@ namespace Tests {
                 TestTPoints(e01, otherPts);
                 TestTPoints(e01, new[] { (0f, 0f), (0.5f, 0.5f), (1f, 1f)});
             }
-            BPY s = BPY(x => Smooth("io-sine", x.t));
+            BPY s = BPY(x => Smooth(ExMLerps.EIOSine, x.t));
             TestE01(s, new []{ (0.1f, 0.02447f) });
-            s = BPY(x => SmoothLoop("io-sine", x.t));
+            s = BPY(x => SmoothLoop(ExMLerps.EIOSine, x.t));
             TestE01(s, new []{ (1.1f, 1.02447f) });
             TestE01(s, new []{ (3.1f, 3.02447f) });
         }

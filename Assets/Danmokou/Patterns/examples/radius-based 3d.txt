@@ -1,7 +1,7 @@
 pattern { }
 ## Draws a cube using a radius/theta model. Note that this doesn't `look like a cube` because lines aren't drawn along the sides, rather along the spherical intersection. This is generalizable to any prism shape (use rx for the cross-section).
 phase 0
-    action block 0
+    paction 0
         position 0 0
         async circle-purple/ <> gsr2 900 <> {
 			p this

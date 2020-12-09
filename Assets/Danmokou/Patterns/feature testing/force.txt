@@ -1,12 +1,12 @@
 pattern { }
 phase 0
-	action block 0
+	paction 0
 		shift-phase-to 1
 	
 !!{ me yukari
 	
 phase 0
-    action block 0
+    paction 0
         position 0 0
         bullet-control PERSIST ellipse-blue/w FORCE relrect $me <1;:3;2:0>
 		##With nrvelocity, $me fires heart-shaped (!) blocks that hit a wall and then leak backwards or go forwards slowly.

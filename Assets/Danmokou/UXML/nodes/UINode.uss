@@ -20,11 +20,11 @@
 }
 
 .node.monospace {
-    -unity-font: url('/Assets/Danmokou/Fonts/Monoid/Monoid-Regular.ttf');
+    -unity-font: url('/Assets/Danmokou/Fonts/Monospace/FiraCode-Medium.ttf');
 }
 
 .node.monospace .text {
-    -unity-font: url('/Assets/Danmokou/Fonts/Monoid/Monoid-Regular.ttf');
+    -unity-font: url('/Assets/Danmokou/Fonts/Monospace/FiraCode-Medium.ttf');
 }
 
 .node {
@@ -124,7 +124,7 @@
 }
 
 .node.small2 {
-    font-size: 55px;
+    font-size: 53px;
 }
 
 .node.small3 {

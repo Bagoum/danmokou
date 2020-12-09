@@ -1,18 +1,11 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq.Expressions;
-using System.Threading;
 using UnityEngine;
-using Ex = System.Linq.Expressions.Expression;
-using ExBPY = System.Func<DMath.TExPI, TEx<float>>;
-using ExTP = System.Func<DMath.TExPI, TEx<UnityEngine.Vector2>>;
-using ExPred = System.Func<DMath.TExPI, TEx<bool>>;
-using Danmaku;
-using LocationService = Danmaku.LocationService;
-using static DMath.ExM;
+using DMK.Behavior;
+using DMK.Core;
 
-namespace Danmaku {
+namespace DMK.Services {
 [Serializable]
 public struct Endcard {
     public string name;

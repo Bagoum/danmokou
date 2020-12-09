@@ -30,6 +30,28 @@ else:
 	Parse type T (only once)
 ```
 
+For example, the array [1,2,3] would be written as follows (newlines optional):
+
+```
+{
+	1
+	2
+	3
+}
+```
+
+And singleton arrays don't require braces:
+
+```
+{
+	1
+}
+
+OR
+
+1
+```
+
 ### State Machines
 
 State machines have some unique parsing rules:
@@ -37,24 +59,15 @@ State machines have some unique parsing rules:
 - `SMPhaseProperties` arguments are provided by collecting all lines starting with `<!>` since the previous phase. For each of these lines, the `<!>` is stripped and it is parsed as type `SMProperty`. For example:
 
 ```
-<!> card non `This is a nonspell`
+<!> type non `This is a nonspell`
 phase 40
-	action block 0
+	paction(0)
 		noop
 
-<!> card spell `This is a spell`
+<!> type spell `This is a spell`
 phase 40
-	action block 0
+	paction(0)
 		noop
-```
-
-- If the first argument to a constructor is `StateMachine`, then this is provided by parsing the SM on the *next* line, after all the rest of the arguments. For example:
-
-```
-public RetargetUSM(StateMachine state, string[] targets);
-
-@ { keine mokou }
-	noop
 ```
 
 - If the first argument to a constructor is `List<StateMachine>`, then this is provided by parsing as many SMs as possible following parenting rules after all the rest of the arguments. For example:
@@ -62,11 +75,23 @@ public RetargetUSM(StateMachine state, string[] targets);
 ```
 public PhaseActionSM(List<StateMachine> states, Blocking blocking, float wait);
 
-action block 0
-	noop	# PhaseActionSM can parent NoOpLASM : LASM
+paction(0)
+	noop	# PhaseParallelActionSM can parent NoOpLASM : LASM
 	noop
 	noop
-action block 0	# PhaseActionSM cannot parent PhaseActionSM
+paction(0)	# PhaseParallelActionSM cannot parent PhaseActionSM
+```
+
+- However, if it is `StateMachine[]`, then this is provided *normally*, that is to say, with array delimiters.
+
+```
+gtrepeat {
+	wait(40)
+	times(10)
+} {
+	noop
+	noop
+}
 ```
 
 ### GCRule
@@ -75,7 +100,7 @@ GCRules are used to update GenCtx values in GCXProps like `Start, Preloop, End`.
 
 Each GCRule has a variable or variable member on the left side, an assignment operator and type in the middle, and a value on the right side. For example:
 
-`r.nx +=f * 3 t`
+`r.nx +=f (3 * t)`
 
 In this case, the left side is the variable member `r.nx` (the nonrotational X component of the RV2 named `r`), the operator is `+=`, the type is `float`, and the value is `3 * t`. 
 

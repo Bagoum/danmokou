@@ -65,10 +65,12 @@ Material:
     - _BlendTo: 10
     - _BumpScale: 1
     - _Cutoff: 0.5
+    - _DarkenAmount: 0
+    - _DarkenRatio: 0.75
     - _DetailNormalMapScale: 1
     - _DimLT: 0.6666667
     - _DstBlend: 0
-    - _F: 0.4
+    - _F: 0.602
     - _FireMagnitude: 0.06
     - _GlossMapScale: 1
     - _Glossiness: 0.5
@@ -77,16 +79,16 @@ Material:
     - _Mode: 0
     - _OcclusionStrength: 1
     - _P1: 1
-    - _P2: 0.305
+    - _P2: 0.353
     - _Parallax: 0.02
-    - _R: 1.21
+    - _R: 1
     - _S: 1
     - _Smooth: 0.03
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _Speed: 2
     - _SrcBlend: 1
-    - _Subradius: 0.05
+    - _Subradius: 0.045
     - _T: 7.4
     - _Thickness: 0.5
     - _UVSec: 0
@@ -96,7 +98,7 @@ Material:
     - _CC1: {r: 0.5, g: 0.5, b: 0, a: 1}
     - _CC2: {r: 0, g: 0.5, b: 0.5, a: 1}
     - _CD: {r: 0.3301887, g: 0, b: 0.033226352, a: 0.40784314}
-    - _CE: {r: 0, g: 0.5, b: 0, a: 1}
+    - _CE: {r: 0.18867922, g: 0, b: 0, a: 0.29803923}
     - _CF: {r: 0.8207547, g: 0.48393556, b: 0.7595149, a: 1}
     - _CF1: {r: 1, g: 0.38679248, b: 0.58498216, a: 1}
     - _CF2: {r: 0.4593892, g: 0, b: 1, a: 1}

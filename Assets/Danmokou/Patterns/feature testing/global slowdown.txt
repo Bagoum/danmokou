@@ -1,18 +1,18 @@
 pattern { }
 phase 0
-	action block 0
+	paction 0
 		shift-phase-to 1
 		
 <!> hp 600
 phase 0.6
-    action block 0
+    paction 0
         position -3 0
 		slowdownfor 1 0.2
         
             
 <!> hp 600
 phase 20
-    action block 0
+    paction 0
         position -3 0
 		slowdownfor 2 0.5
             

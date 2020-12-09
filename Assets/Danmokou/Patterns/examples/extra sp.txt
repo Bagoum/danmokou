@@ -1,13 +1,13 @@
 pattern { }
 phase 0
-	action block 0
+	paction 0
 		shift-phase-to 1
 		
 !!{ me yukari
 !!{ allc { black purple teal green orange yellow red pink blue }	
 ##funny trees
 phase 0
-    action block 0
+    paction 0
 		position -2 0
 		async _ <1;:> gcr2 600 _ <360h> {
 			p this
@@ -20,7 +20,7 @@ phase 0
 
 ##Arrow structure with head on top
 phase 0
-    action block 0
+    paction 0
 		position 0 0
 		async lcircle-blue/w <2;1:180> gir2 160 _ <360h> . oarrowi 9 0.4 0.2 {} s tprot cx 2
 		async lcircle-red/w <2;1:> gir2 160 _ <360h> . gsrf 8 rxy * -0.4 &aixd * 0.3 &aiyd {
@@ -30,7 +30,7 @@ phase 0
 
 ##2d wings
 phase 0
-	action block 0
+	paction 0
 		position 0 0
 !!{ w 30
 !!{ n 5

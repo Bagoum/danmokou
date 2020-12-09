@@ -2,11 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using DMK.Scriptables;
 using UnityEngine;
 using NUnit.Framework;
 using UnityEngine.TestTools;
 
-namespace Tests {
+namespace DMK.Testing {
 
 public static class Scriptables {
 

@@ -3,7 +3,7 @@ gtr {
 	wait-child
 } firesame
 	## free fire
-	action block 0 :2
+	paction 0 :2
 		async x-pc-fire-1 <> gcr2 3 _ <> {
 		} sfx
 		async sunnylaser <> gcr {

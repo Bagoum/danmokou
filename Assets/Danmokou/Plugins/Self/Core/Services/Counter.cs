@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using DMK.Behavior;
+using DMK.Core;
 using JetBrains.Annotations;
 using UnityEngine;
 
+namespace DMK.Services {
 public class Counter : RegularUpdater {
     public static int GrazeFrame { get; private set; }
     //private static int LowEnemyHPRequests;
@@ -36,6 +39,5 @@ public class Counter : RegularUpdater {
     
 
     public override int UpdatePriority => UpdatePriorities.EOF;
-
-    
+}
 }

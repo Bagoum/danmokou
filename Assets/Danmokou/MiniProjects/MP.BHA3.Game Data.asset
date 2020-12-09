@@ -1,0 +1,54 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8d7768018aff40589017a165e079b3c1, type: 3}
+  m_Name: MP.BHA3.Game Data
+  m_EditorClassIdentifier: 
+  gameIdentifier: Miniprojects
+  gameVersion:
+    major: 1
+    minor: 0
+    patch: 0
+  mainMenu: {fileID: 11400000, guid: 68a81d395f9df184fb8d689319bd1113, type: 2}
+  replaySaveMenu: {fileID: 11400000, guid: 4eb8b66bd76d4d94fa90176835284503, type: 2}
+  defaultMenuBackground: {fileID: 6614173089345499342, guid: 56da452ec6a98284295330ef47ecf1c1,
+    type: 3}
+  defaultUIFrame: {fileID: 21300000, guid: 3e5d077306cb22d4db13e4d07aa2ab4c, type: 3}
+  unitScene: {fileID: 11400000, guid: f6d073d9562719741ac86ec620f65354, type: 2}
+  tutorial: {fileID: 0}
+  miniTutorial: {fileID: 0}
+  endcard: {fileID: 0}
+  campaign: {fileID: 11400000, guid: fe95ec3f2c7559641bd592ccb150fcb9, type: 2}
+  exCampaign: {fileID: 0}
+  dayCampaign: {fileID: 0}
+  defaultTransition: {fileID: 11400000, guid: 517222e0dbe56264a8bcd878fc9e4e27, type: 2}
+  bounds:
+    left: -3.6
+    right: 3.6
+    top: 4.1
+    bot: -4.5
+    center: {x: -1.9, y: 0}
+  dialogue:
+  - {fileID: 11400000, guid: b7c1d3b51649f5e4eb3f41be569c3f4b, type: 2}
+  bossMetadata:
+  - {fileID: 11400000, guid: 4134b00b698a2884db67381ff1d4bf6a, type: 2}
+  dialogueProfiles:
+  - {fileID: 11400000, guid: 8bd7a77c825f5e14eab7f82b97165a59, type: 2}
+  - {fileID: 11400000, guid: 098100d97b7df8a469e99a89a050a61b, type: 2}
+  - {fileID: 11400000, guid: 43918bc09f345dc4fa3933df8b74f5f1, type: 2}
+  - {fileID: 11400000, guid: 5102ed3e4a64ac1469c5ecc80d4dfa21, type: 2}
+  tracks:
+  - {fileID: 11400000, guid: dbaac47ba2c21b74ba693dfde4e949d8, type: 2}
+  items: {fileID: 11400000, guid: 18e6de6e951f4114e8823af9e617bff7, type: 2}
+  summonables:
+  - {fileID: 11400000, guid: 38afc312ddb0ac242b8cfb301b1b4237, type: 2}
+  - {fileID: 11400000, guid: cdee2c8a4694b2148b6bff090233f211, type: 2}
+  fileStateMachines: []
