@@ -9,10 +9,10 @@ using JetBrains.Annotations;
 namespace DMK.Scriptables {
 [CreateAssetMenu(menuName = "AudioTrack")]
 public class AudioTrack : ScriptableObject, IAudioTrackInfo {
-    public AudioClip clip;
+    public AudioClip clip = null!;
 
-    public string key;
-    public string title;
+    public string key = "";
+    public string title = "";
     public float volume = .2f;
     public float pitch = 1f;
     public bool stopOnPause;

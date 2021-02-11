@@ -47,7 +47,7 @@ phase 0
 			py	pma $n { $w 2 }
 			plr	pm1 pma 2 { 1 } 
 		}  + lbeh $me
-		wings2 $w $n 1.8
+		tp wings2 $w $n 1.8
 ///
 		:: {
 			pxr	/ &px $w

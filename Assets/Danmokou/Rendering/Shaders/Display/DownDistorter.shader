@@ -114,7 +114,8 @@
                 //#endif
                 
                 float4 bgc = tex2D(_BGTex, float2(_ScreenX + _GlobalXOffset / _ScreenWidth + effrp * cos(effang*TAU)/_BGTex_TexelSize.z, y));
-                bgc.a = 1; //Don't know why it isn't already 1...
+                //bgc.a = 1; //This may not be 1 (if the background isn't full opacity),
+            	// but if you lighten it, it won't match!
                 return shadow + bgc * (1 - shadow.a);
             #else
                 return shadow;

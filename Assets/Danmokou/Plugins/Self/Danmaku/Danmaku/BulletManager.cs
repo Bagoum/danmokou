@@ -10,14 +10,14 @@ using DMK.Expressions;
 using DMK.Graphics;
 using DMK.Reflection;
 using UnityEngine.Profiling;
-using ExSBCF = System.Func<DMK.Expressions.TExSBC, DMK.Expressions.TEx<int>, DMK.Expressions.TExPI, DMK.Expressions.TEx>;
+using ExSBCF = System.Func<DMK.Expressions.TExSBC, DMK.Expressions.TEx<int>, DMK.Expressions.TExArgCtx, DMK.Expressions.TEx>;
 
 namespace DMK.Danmaku {
 
 public readonly struct SBCFp {
-    public readonly ExSBCF func;
+    public readonly ExSBCF? func;
     public readonly int priority;
-    public readonly Func<ICancellee, SBCF> lazyFunc;
+    public readonly Func<ICancellee, SBCF>? lazyFunc;
     public SBCFp(ExSBCF f, int p) {
         func = f;
         priority = p;
@@ -31,8 +31,8 @@ public readonly struct SBCFp {
     }
 }
 public readonly struct SBCFc {
-    private readonly SBCF func;
-    private readonly Func<ICancellee, SBCF> lazyFunc;
+    private readonly SBCF? func;
+    private readonly Func<ICancellee, SBCF>? lazyFunc;
     public readonly int priority;
     public SBCFc(SBCFp p) {
         func = p.func == null ? null : Compilers.SBCF(p.func);
@@ -40,7 +40,7 @@ public readonly struct SBCFc {
         lazyFunc = p.lazyFunc;
     }
 
-    public SBCF Func(ICancellee cT) => func ?? lazyFunc(cT);
+    public SBCF Func(ICancellee cT) => func ?? lazyFunc?.Invoke(cT) ?? throw new Exception("No resolution for SBCFc");
 
     private SBCFc(SBCF f, int p) {
         func = f;
@@ -52,8 +52,8 @@ public readonly struct SBCFc {
 }
 //Not compiled but using this for priority and lazy alternates
 public readonly struct BehCFc {
-    private readonly BehCF func;
-    private readonly Func<ICancellee, BehCF> lazyFunc;
+    private readonly BehCF? func;
+    private readonly Func<ICancellee, BehCF>? lazyFunc;
     public readonly int priority;
 
     public BehCFc(BehCF f, int p) {
@@ -67,7 +67,7 @@ public readonly struct BehCFc {
         lazyFunc = f;
     }
     
-    public BehCF Func(ICancellee cT) => func ?? lazyFunc(cT);
+    public BehCF Func(ICancellee cT) => func ?? lazyFunc?.Invoke(cT) ?? throw new Exception("No resolution for BehCFc");
     
 }
 
@@ -148,7 +148,7 @@ public partial class BulletManager {
 
     public static void AssertControls(string pool, IReadOnlyList<BulletControl> controls) => GetMaybeCopyPool(pool).AssertControls(controls);
 
-    private static SimpleBulletCollection GetMaybeCopyPool(string pool) {
+    public static AbsSimpleBulletCollection GetMaybeCopyPool(string pool) {
         if (CheckOrCopyPool(pool, out var sbc)) return sbc;
         throw new Exception($"Could not find simple bullet style by name \"{pool}\".");
     }

@@ -14,6 +14,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3764406661813136869, guid: 0a784eeed2c48cc4497011ac484eedd3,
         type: 3}
+      propertyPath: m_RootOrder
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3764406661813136869, guid: 0a784eeed2c48cc4497011ac484eedd3,
+        type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
       objectReference: {fileID: 0}
@@ -26,6 +31,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_LocalPosition.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3764406661813136869, guid: 0a784eeed2c48cc4497011ac484eedd3,
+        type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3764406661813136869, guid: 0a784eeed2c48cc4497011ac484eedd3,
         type: 3}
@@ -44,16 +54,6 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3764406661813136869, guid: 0a784eeed2c48cc4497011ac484eedd3,
         type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 3764406661813136869, guid: 0a784eeed2c48cc4497011ac484eedd3,
-        type: 3}
-      propertyPath: m_RootOrder
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3764406661813136869, guid: 0a784eeed2c48cc4497011ac484eedd3,
-        type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
       value: 0
       objectReference: {fileID: 0}
@@ -65,6 +65,31 @@ PrefabInstance:
     - target: {fileID: 3764406661813136869, guid: 0a784eeed2c48cc4497011ac484eedd3,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6730949535145078042, guid: 0a784eeed2c48cc4497011ac484eedd3,
+        type: 3}
+      propertyPath: cycleSpeed
+      value: -5
+      objectReference: {fileID: 0}
+    - target: {fileID: 6730949535145078042, guid: 0a784eeed2c48cc4497011ac484eedd3,
+        type: 3}
+      propertyPath: renderPriority
+      value: 1100
+      objectReference: {fileID: 0}
+    - target: {fileID: 6730949535145078042, guid: 0a784eeed2c48cc4497011ac484eedd3,
+        type: 3}
+      propertyPath: colorizing.FlatDark
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6730949535145078042, guid: 0a784eeed2c48cc4497011ac484eedd3,
+        type: 3}
+      propertyPath: colorizing.FlatColor
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6730949535145078042, guid: 0a784eeed2c48cc4497011ac484eedd3,
+        type: 3}
+      propertyPath: colorizing.FlatLight
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6730949535145078042, guid: 0a784eeed2c48cc4497011ac484eedd3,
@@ -140,14 +165,10 @@ PrefabInstance:
         type: 3}
     - target: {fileID: 6730949535145078042, guid: 0a784eeed2c48cc4497011ac484eedd3,
         type: 3}
-      propertyPath: renderPriority
-      value: 1100
-      objectReference: {fileID: 0}
-    - target: {fileID: 6730949535145078042, guid: 0a784eeed2c48cc4497011ac484eedd3,
+      propertyPath: frames.Array.data[11].s
+      value: 
+      objectReference: {fileID: 21300000, guid: 361d5ae590fef6c48a6e594da37d6eb4,
         type: 3}
-      propertyPath: cycleSpeed
-      value: -5
-      objectReference: {fileID: 0}
     - target: {fileID: 6730949535145078042, guid: 0a784eeed2c48cc4497011ac484eedd3,
         type: 3}
       propertyPath: gradients.Array.data[0].name
@@ -157,21 +178,6 @@ PrefabInstance:
         type: 3}
       propertyPath: gradients.Array.data[1].name
       value: tealgreen
-      objectReference: {fileID: 0}
-    - target: {fileID: 6730949535145078042, guid: 0a784eeed2c48cc4497011ac484eedd3,
-        type: 3}
-      propertyPath: colorizing.FlatLight
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6730949535145078042, guid: 0a784eeed2c48cc4497011ac484eedd3,
-        type: 3}
-      propertyPath: colorizing.FlatColor
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6730949535145078042, guid: 0a784eeed2c48cc4497011ac484eedd3,
-        type: 3}
-      propertyPath: colorizing.FlatDark
-      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6730949535145078042, guid: 0a784eeed2c48cc4497011ac484eedd3,
         type: 3}

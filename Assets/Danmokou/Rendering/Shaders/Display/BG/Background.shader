@@ -155,6 +155,7 @@
 		}
 		
 		//Superposed
+		Blend SrcAlpha OneMinusSrcAlpha
 		Pass {
 			CGPROGRAM
             #pragma multi_compile_local __ FT_SUPERPOSE

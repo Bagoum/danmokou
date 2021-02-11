@@ -17,6 +17,7 @@ namespace DMK.DMath.Functions {
 /// Functions that return V4.
 /// <br/>Note that these are also used for colors, in the format R G B A (0-1 floats).
 /// </summary>
+[Reflect]
 public static partial class ExMV4 {
     public static tv4 Black() => ExC(ColorScheme.GetColor("black"));
     public static tv4 Purple() => ExC(ColorScheme.GetColor("purple"));

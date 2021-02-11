@@ -70,8 +70,8 @@ public class SimpleBulletEmptyScript : MonoBehaviour {
     [Serializable]
     public struct SpriteSpecificGradient {
         public string color;
-        [Tooltip("If null, won't recolor")] [CanBeNull]
-        public ColorMap gradient;
+        [Tooltip("If null, won't recolor")] 
+        public ColorMap? gradient;
         public Sprite sprite;
     }
 
@@ -128,28 +128,28 @@ public class SimpleBulletEmptyScript : MonoBehaviour {
     public float screenCullRadius = 3f;
     [Header("Rendering Info")] public int renderPriority;
     public DRenderMode renderMode = DRenderMode.NORMAL;
-    public SOSBEntry fadeIn;
+    public SOSBEntry fadeIn = null!;
     public bool rotational;
     [Header("Automatic Colors")] public DefaultColorizing colorizing;
     [Tooltip("Base texture for gradient generation")]
-    public Sprite spriteSheet;
+    public Sprite spriteSheet = null!;
     public DisplacementInfo displacement;
     public FrameAnimMetadata frameAnimInfo;
     [Header("Manual Colors")] [Tooltip("Special gradients")]
-    public BulletManager.GradientVariant[] gradients;
+    public BulletManager.GradientVariant[] gradients = null!;
     [Tooltip("Specific gradients for unique sprites; eg. spellcard")]
-    public SpriteSpecificGradient[] spriteSpecificGradients;
-    public IdenticalForm[] identicalForms;
+    public SpriteSpecificGradient[] spriteSpecificGradients = null!;
+    public IdenticalForm[] identicalForms = null!;
     [Header("Cull Bullets Only")] [Tooltip("Set zero if not dummy")]
     public float TTL;
     [Tooltip("[0,x]")] public float timeRandomization;
     [Tooltip("[-x/2,x/2]")] public float rotateRandomization;
     [Header("Enemy Bullet Functionality")]
     public int damage;
-    [Header("Player Bullet Functionality")]
     /// <summary>
     /// Non-destructible bullets only.
     /// </summary>
+    [Header("Player Bullet Functionality")]
     public int framesPerHit;
 }
 }

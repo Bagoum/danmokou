@@ -28,6 +28,7 @@ public class EEx {
         for (int ii = 0; ii < requiresCopy.Length; ++ii) {
             var (ex, reqCopy) = requiresCopy[ii];
             if (reqCopy) {
+                //Don't name this, as nested EEx should not overlap
                 var copy = V(ex.Type);
                 usevars[ii] = copy;
                 newvars.Add(copy);

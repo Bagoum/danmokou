@@ -18,11 +18,11 @@ public abstract class Item : Pooled<Item> {
     protected virtual Vector2 Velocity(float t) => 
         Mathf.Lerp(speed0, speed1, t * (speed0 / (speed0 - speed1))/peakt) * Direction;
 
-    public SOPlayerHitbox target;
+    public SOPlayerHitbox target = null!;
 
     protected Vector2 loc;
 
-    public SFXConfig onCollect;
+    public SFXConfig? onCollect;
 
     public enum HomingState {
         NO,
@@ -53,17 +53,17 @@ public abstract class Item : Pooled<Item> {
     protected virtual float RotationTurns => 0;
     protected virtual float RotationTime => 0.8f;
 
-    protected SpriteRenderer sr;
+    protected SpriteRenderer sr = null!;
     protected bool autocollected;
 
-    [CanBeNull] protected PoC collection { get; private set; }
+    protected PoC? collection { get; private set; }
     
     protected override void Awake() {
         base.Awake();
         sr = GetComponent<SpriteRenderer>();
     }
     
-    public virtual void Initialize(Vector2 root, Vector2 targetOffset, [CanBeNull] PoC collectionPoint = null) {
+    public virtual void Initialize(Vector2 root, Vector2 targetOffset, PoC? collectionPoint = null) {
         tr.localEulerAngles = Vector3.zero;
         tr.position = loc = root;
         summonTarget = targetOffset;
@@ -96,7 +96,7 @@ public abstract class Item : Pooled<Item> {
         if (State == HomingState.WAITING && time > MinTimeBeforeHome) {
             State = HomingState.HOMING;
         }
-        if (DMath.CollisionMath.CircleOnPoint(loc, target.itemCollectRadius + CollectRadiusBonus, target.location)) {
+        if (CollisionMath.CircleOnPoint(loc, target.itemCollectRadius + CollectRadiusBonus, target.location)) {
             CollectMe();
             return;
         } 
@@ -106,7 +106,7 @@ public abstract class Item : Pooled<Item> {
         } else {
             loc += ETime.FRAME_TIME * (Velocity(time) + summonTarget * 
                 M.DEOutSine(Mathf.Clamp01(time / lerpIntoOffsetTime)) / lerpIntoOffsetTime);
-            if (Attractible && DMath.CollisionMath.CircleOnPoint(loc, target.itemAttractRadius, target.location)) SetHome();
+            if (Attractible && CollisionMath.CircleOnPoint(loc, target.itemAttractRadius, target.location)) SetHome();
             else if (!LocationHelpers.OnScreenInDirection(loc, -screenRange * Direction) || 
                      (time > MinCullTime && !LocationHelpers.OnPlayableScreenBy(CullRadius, loc))) {
                 PooledDone();

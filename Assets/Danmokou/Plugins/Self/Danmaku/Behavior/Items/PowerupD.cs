@@ -4,7 +4,7 @@ namespace DMK.Behavior.Items {
 public abstract class PowerupItem : BouncyItem {
     protected abstract Subshot Type { get; }
     protected override void CollectMe() {
-        GameManagement.instance.SetSubshot(Type);
+        GameManagement.Instance.SetSubshot(Type);
         base.CollectMe();
     }
 }

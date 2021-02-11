@@ -12,14 +12,13 @@ using efloat = DMK.Expressions.EEx<float>;
 using ev2 = DMK.Expressions.EEx<UnityEngine.Vector2>;
 using ev3 = DMK.Expressions.EEx<UnityEngine.Vector3>;
 using erv2 = DMK.Expressions.EEx<DMK.DMath.V2RV2>;
-using ExBPY = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<float>>;
-using ExPred = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<bool>>;
 using static DMK.DMath.Functions.ExM;
 
 namespace DMK.DMath.Functions {
 /// <summary>
 /// See <see cref="ExM"/>. This class contains functions related to mod (remainder) operations.
 /// </summary>
+[Reflect]
 public static class ExMMod {
     /// <summary>
     /// Get the modulo (nonnegative) of one number by another. 
@@ -231,7 +230,7 @@ public static class ExMMod {
     
     /// <summary>
     /// Use Fermat's Little Theorem to reindex integers around a prime number mod, localized to the region
-    /// [mod*floor(index/mod), mod+mod*floor(index/mod)].
+    /// [mod\*floor(index/mod), mod+mod\*floor(index/mod)].
     /// </summary>
     public static tfloat RemapIndexLoop(efloat mod, efloat index) => EEx.Resolve(mod, index, (m, i) => {
         var rem = VFloat();

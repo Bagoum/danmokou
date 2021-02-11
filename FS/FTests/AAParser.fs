@@ -1,6 +1,6 @@
 module FTests.AAParser
 open FParser.AAParser
-open Common.Types
+open FCommon.Types
 open FTests.Utils
 
 open FTests

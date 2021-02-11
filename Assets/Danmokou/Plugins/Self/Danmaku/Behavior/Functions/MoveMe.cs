@@ -6,9 +6,10 @@ using UnityEngine;
 
 namespace DMK.Behavior.Functions {
 public class MoveMe : RegularUpdater {
-    public string location;
-    private TP3 locF;
-    private Transform tr;
+    [ReflectInto(typeof(TP3))]
+    public string location = "";
+    private TP3 locF = null!;
+    private Transform tr = null!;
     private float t;
 
     private void Awake() {

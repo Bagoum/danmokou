@@ -25,13 +25,14 @@ public static class Events {
     /// <summary>
     /// Events that take zero parameters.
     /// </summary>
+    [Reflect(typeof(EventDeclaration<Event0>))]
     public class Event0 {
         private static readonly Dictionary<string, List<Event0>> waitingToResolve =
             new Dictionary<string, List<Event0>>();
         private static readonly Dictionary<string, Event0> storedEvents = new Dictionary<string, Event0>();
 
         private readonly DMCompactingArray<Action> callbacks = new DMCompactingArray<Action>();
-        [CanBeNull] private DeletionMarker<Action> refractor = null;
+        private DeletionMarker<Action>? refractor = null;
         private readonly bool useRefractoryPeriod = false;
         private bool inRefractoryPeriod = false;
         public Event0() : this(false) { }
@@ -93,8 +94,7 @@ public static class Events {
             return ev;
         }
 
-        [CanBeNull]
-        public static Event0 FindOrNull(string name) {
+        public static Event0? FindOrNull(string name) {
             if (!storedEvents.TryGetValue(name, out var ev)) return null;
             return ev;
         }

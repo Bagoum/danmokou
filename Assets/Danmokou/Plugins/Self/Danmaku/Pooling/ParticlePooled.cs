@@ -53,9 +53,10 @@ public class ParticlePooled : Pooled<ParticlePooled> {
             }
         }
     }
-    public ParticleSystem System { get; private set; }
+
+    public ParticleSystem System { get; private set; } = null!;
     [Header("Colorize")] 
-    public ParticleSystemColorConfig[] colorizable;
+    public ParticleSystemColorConfig[]? colorizable;
     
     public void OnParticleSystemStopped() {
         PooledDone();

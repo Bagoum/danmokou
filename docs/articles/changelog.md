@@ -14,6 +14,47 @@ To get the newest version from git, run:
 
 - Player team switching
 
+# v7.0.0 (2021/03/14)
+
+- **Breaking changes:**
+  - Please upgrade your Unity to **2020.2**. 2021 should also work. 2019 is no longer supported.
+  - `SS`, `SSD`, `SDD`, `SSDD` and related simple-bullet firing functions have been removed. Use `simple` instead with `scale`/`dir`/`dir2` options (<xref:DMK.Danmaku.Options.SBOption>)
+  - Previous versions of DMK allowed implicit casts from TP to TP3 and from TP3 to TP in script code. This kind of circular cast is architecturally problematic, and support has been removed in v7.0.0. Now, TP may be implicitly casted to TP3, but the downcast is not allowed. Instead, use the `TP` function, as follows: `nroffset(tp(qrotate(...)))`. The reason that the TP->TP3 cast is prioritized is to protect the rule that *implicit casts should not result in information loss*.
+  - The signatures of functions operating over firing options, lasers, and player data have changed (see the note below about FiringCtx). The names have also been standardized. See `Assets/Danmokou/Plugins/Self/Danmaku/Math/MathRepos/GenericMath/ExM.cs`.
+- **Pending issues:**
+  - There is a bug in the current version of UIToolkit that makes Chinese/Japanese/Korean text break when used on a label with text-wrap. To avoid this, the text wrapping on the UINode and UINodeLRSwitch UXML files has been disabled for now. When this bug is fixed, this will be reverted.
+- Parser code ported to C#
+- Implementation of localization utilities in FS/StaticParser, and basic end-to-end localization of the engine complete for Japanese
+  - Dialogue localization is not yet handled in a fully satisfactory way, but it works.
+- Shot demo on shot selection screen
+- Statistics display screen
+- Nonpiercing lasers (see the Reimu Lazors shot)
+- Expression functions for lasers, options, and player fire now operate via an extra field in the BPI struct called "FiringCtx". The object is bound to the FiringCtx and is used by the expression function. For example, a laser fired by an option can use `OptionLocation(mine)` to get its location. An option can use `PlayerMarisaAPos(mine, 0.5)` to get the recorded position of the player 0.5 seconds ago (computed according to MoF MarisaA rules). A player laser can use `LaserIsColliding(mine)` to get a bool for whether or not it is currently colliding with an enemy. This fixes a lot of the very strange static and case-specific handling for these usages.
+  - Private data hoisting now also operates via FiringCtx.
+  - Method data hoisting (within eg. StopSampling) now also operates via FiringCtx.
+  - (There are no plans to change the functionality of public data hoisting (eg. guideEmpty).)
+- Support for generalized function reflection. This is primarily for use within C# code and for architectural cleanliness. For example, below is the code that creates the opacity function for the inner crosshair circle. This functionality allows using string reflection in many more cases than previously possible.
+
+```c#
+CompileDelegate<Func<float, float, float, ParametricInfo, float>, float>(@"
+if (> t &fadein,
+    if(> t &homesec,
+        c(einsine((t - &homesec) / &sticksec)),
+        1),
+    eoutsine(t / &fadein))",
+    new DelegateArg<float>("fadein"),
+    new DelegateArg<float>("homesec"),
+    new DelegateArg<float>("sticksec"),
+    new DelegateArg<ParametricInfo>("bpi", priority: true)
+)
+```
+
+- Support for precompiling expressions (IL2CPP/AoT platforms are now functional, including WebGL and (untested) Switch)
+- `[CanBeNull]` annotations replaced with C#8 nullable reference annotations
+- Gradient remapping code now uses custom `DGradient` class instead of Unity gradients, making texture coloring time take about 75% less time.
+- Fixed a float rounding error that would cause frame-animated bullets to disappear for one frame when looping around on some computers.
+- Support for a play-mode menu and a "commentator" on menus (see SiMP v4)
+
 # v6.0.0 (2021/01/23)
 
 - **Breaking changes:**
@@ -143,5 +184,5 @@ To get the newest version from git, run:
 - Added player-fireable pathers and lasers. The edges on this architecture are still rough.
   - Note: the `Home + Laser Shot (Reimu)` shows how all three above features can be used.
 - Replaced shot selection with player/shot selection. Player/shot now shows up on replay descriptions. Players have a list of usable shots, but the architecture permits matching arbitrary shots. 
-- Added the <xref:Danmaku.GenCtxProperty> "Sequential", which executes children sequentially (GIR/GTR only). This replaces the `seq` StateMachine, which has been removed. 
+- Added the <xref:DMK.Danmaku.Options.GenCtxProperty> "Sequential", which executes children sequentially (GIR/GTR only). This replaces the `seq` StateMachine, which has been removed. 
 - Fixed a potentially crippling bug dealing with cancellation of dependent tasks between two bosses.

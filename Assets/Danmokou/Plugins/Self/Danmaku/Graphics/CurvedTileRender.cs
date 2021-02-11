@@ -5,7 +5,7 @@ using DMK.Core;
 
 namespace DMK.Graphics {
 public abstract class CurvedTileRender : TiledRender {
-    protected Vector2[] centers;
+    protected Vector2[] centers = null!;
 
     public CurvedTileRender(GameObject obj) : base(obj) { }
 

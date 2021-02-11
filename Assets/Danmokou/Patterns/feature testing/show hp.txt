@@ -1,15 +1,15 @@
 pattern { 
-	boss jy.yukari 
+	##boss jy.yukari 
 }
 phase 0
 	paction 0
-		shift-phase-to 2
+		shift-phase-to 1
 
 <!> type non `1`
-<!> hp 10000
-phase 20
+<!> hp 100000
+phase 200
 	paction 0
-		position 0 2
+		position -1 1
 		##move _ nroffset px rangesoftmod 3 * 2 t
 
 <!> type spell `2`

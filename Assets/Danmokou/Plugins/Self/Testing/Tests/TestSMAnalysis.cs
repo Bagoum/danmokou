@@ -54,6 +54,11 @@ public static class TestSMAnalysis {
         IsTrue(ch);
     }
 
+    private static void AssertListEq<A>(List<A> a, List<A> b, Func<A, A, bool> eq) {
+        if (a.Count != b.Count) Assert.AreEqual(a, b);
+        for (int ii = 0; ii < a.Count; ++ii) Assert.IsTrue(eq(a[ii], b[ii]));
+    }
+
     [Test]
     public static void TestAnalyzer() {
         var sm = StateMachine.CreateFromDump(@"
@@ -67,12 +72,14 @@ phase 0
 <!> type spell `My First Spell`
 phase 0
 ") as PatternSM;
-        AreEqual(new List<SMAnalysis.Phase>() {
+        AssertListEq(new List<SMAnalysis.Phase>() {
                 //phase 0,3 are ignored since they don't have type
-                new SMAnalysis.Phase(null, PhaseType.DIALOGUE, 1, null),
-                new SMAnalysis.Phase(null, PhaseType.NONSPELL, 2, "My First Non"),
-                new SMAnalysis.Phase(null, PhaseType.SPELL, 4, "My First Spell"),
-            }, SMAnalysis.Analyze(null, sm));
+                new SMAnalysis.Phase(null!, PhaseType.DIALOGUE, 1, null),
+                new SMAnalysis.Phase(null!, PhaseType.NONSPELL, 2, new LocalizedString("My First Non")),
+                new SMAnalysis.Phase(null!, PhaseType.SPELL, 4, new LocalizedString("My First Spell")),
+            }, SMAnalysis.Analyze(null!, sm), (p1, p2) => 
+            p1.index == p2.index && p1.type == p2.type && p1.Title.ValueOrEn == p2.Title.ValueOrEn
+        );
     }
     
 

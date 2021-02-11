@@ -1,6 +1,7 @@
 ﻿using DMK.Behavior;
 using DMK.Core;
 using DMK.DMath;
+using DMK.Graphics;
 using UnityEngine;
 
 namespace DMK.Services {
@@ -10,6 +11,8 @@ public class SeijaCamera : RegularUpdater {
     private static readonly int rotZ = Shader.PropertyToID("_RotateZ");
     private static readonly int xBound = Shader.PropertyToID("_XBound");
 
+
+    private Camera cam = null!;
 
     private float targetXRot = 0f;
     private float targetYRot = 0f;
@@ -22,10 +25,11 @@ public class SeijaCamera : RegularUpdater {
     private float lastYRot = 0f;
 
 
-    public Shader seijaShader;
-    private Material seijaMaterial;
+    public Shader seijaShader = null!;
+    private Material seijaMaterial = null!;
 
     private void Awake() {
+        cam = GetComponent<Camera>();
         seijaMaterial = new Material(seijaShader);
         seijaMaterial.SetFloat(xBound, GameManagement.References.bounds.right + 1);
         SetLocation(0, 0);
@@ -87,8 +91,14 @@ public class SeijaCamera : RegularUpdater {
         seijaMaterial.SetFloat(rotY, yrd * M.degRad);
     }
 
+    private void OnPreRender() {
+        cam.targetTexture = MainCamera.RenderTo;
+    }
     private void OnRenderImage(RenderTexture src, RenderTexture dest) {
+        //Dest is dirty, rendering to it directly can cause issues if there are alpha pixels.
+        dest.GLClear();
         UnityEngine.Graphics.Blit(src, dest, seijaMaterial);
     }
+
 }
 }

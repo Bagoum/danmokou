@@ -5,9 +5,9 @@ using UnityEngine;
 
 namespace DMK.UI {
 public class DemoScriptButton : MonoBehaviour {
-    private TextAsset script;
-    private DemoScriptManager manager;
-    public TextMeshProUGUI text;
+    private TextAsset script = null!;
+    private DemoScriptManager manager = null!;
+    public TextMeshProUGUI text = null!;
 
     public void Initialize(TextAsset file, DemoScriptManager parent, string label) {
         script = file;

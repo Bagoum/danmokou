@@ -17,9 +17,9 @@ public static class SceneIntermediary {
 
     public readonly struct SceneRequest {
         public readonly SceneConfig scene;
-        [CanBeNull] public readonly Action onQueued;
-        [CanBeNull] public readonly Action onLoaded;
-        [CanBeNull] public readonly Action onFinished;
+        public readonly Action? onQueued;
+        public readonly Action? onLoaded;
+        public readonly Action? onFinished;
         public readonly Reason reason;
 
         public enum Reason {
@@ -31,9 +31,8 @@ public static class SceneIntermediary {
             FINISH_RETURN
         }
 
-        public SceneRequest(SceneConfig sc, Reason reason, [CanBeNull] Action onQueue = null,
-            [CanBeNull] Action onLoad = null,
-            [CanBeNull] Action onFinish = null) {
+        public SceneRequest(SceneConfig sc, Reason reason, Action? onQueue = null, Action? onLoad = null, 
+            Action? onFinish = null) {
             scene = sc;
             onQueued = onQueue;
             onLoaded = onLoad;
@@ -44,8 +43,8 @@ public static class SceneIntermediary {
         public override string ToString() => $"{scene.sceneName} ({reason})";
     }
 
-    private static SceneConfig false_scfg;
-    private static CameraTransitionConfig defaultTransition;
+    private static SceneConfig false_scfg = null!;
+    private static CameraTransitionConfig defaultTransition = null!;
 
     public static void Setup(SceneConfig sc, CameraTransitionConfig dfltTransition) {
         false_scfg = sc;

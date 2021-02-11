@@ -103,6 +103,12 @@ MonoBehaviour:
     cry: {fileID: 0}
     surprise: {fileID: 0}
     special: {fileID: 0}
-  displayName: Kazami Yuuka
+  displayName:
+    useReference: 1
+    reference: dialogue.yuuka
+    hardcoded:
+      en: 
+      jp: 
+      _showEnOnly: 0
   key: yuuka
   speakSFX: x-bubble-2

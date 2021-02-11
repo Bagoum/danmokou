@@ -1,0 +1,59 @@
+script
+place l2 reimu
+place l1 elly
+place r1 yuuka
+sle elly cry
+sle reimu angry
+sre yuuka _
+.z `Unlawful entry, assault and battery, destruction of property. This shrine maiden seems to be far less law-abiding than all the previous.`
+slce surprise
+. `Raiko?!...
+`
+slce worry
+.c `No, that's not it. Uh... who are you, again?`
+z
+src
+namecard namecard-yuuka
+.z `I am Kazami Yuuka, the Flower God Drinking Afternoon Tea in a Field of Sunflowers. I'm really a youkai, though.`
+srce angry
+.z `And you, Hakurei Reimu, how are you going to compensate me for the crimes you have committed against my flowers?`
+slce angry
+.z `Hmph! I don't have to compensate youkai for anything. Youkai are meant to be exterminated!`
+srce worry
+.z `How disappointing. Yukari assured us she would keep in check the Hakurei shrine maidens, but if this is what has become of her little pet, then we might have to have you replaced.`
+slce worry
+.z `Replaced...?!`
+srce happy
+.z `I shall leave you with this warning.`
+srce special
+.z `If you harm even one more of my flowers, I shall spear this umbrella through your ribcage, impale and extract your beating heart on its pointed tip, and then crush it into a powder fine enough to serve as fertilizer for my wronged children.`
+srce happy
+.z `With that, have a pleasant evening.
+And Elly, don't forget to finish your work.`
+fadestandout yuuka 0.4
+fadestandout elly 0.4
+place r1 elly
+setemote elly cry
+fadestandin elly 0.4
+sr elly
+slce worry
+.z `Urgh... She said all that, but you still need to come to the village!`
+srce cry
+.z `I told you, I'm not a shinigami...`
+slce angry
+. `Of course you--
+`
+wait 0.5
+slce surprise
+.c `wait, that's weird, isn't your hair supposed to be red?`
+z
+srce angry
+.z `No! Because I'm not a shinigami!`
+sr unknown
+.z `Hey, Reimu! Komachi is waiting for you! Get back to the village, ze!`
+slce angry
+.z `Agh! Fine, I'll let you go this time, shinigami! But I'll be back soon!`
+fadestandout reimu 0.6
+sr elly
+srce worry
+.z `Guess I'll get back to work...`

@@ -49,7 +49,7 @@ public class PassthroughCancellee : ICancellee {
     private readonly ICancellee local;
     public ICancellee Joinable => root;
 
-    public PassthroughCancellee([CanBeNull] ICancellee root, [CanBeNull] ICancellee local) {
+    public PassthroughCancellee(ICancellee? root, ICancellee? local) {
         this.root = root?.Joinable ?? Cancellable.Null;
         this.local = local ?? Cancellable.Null;
     }
@@ -62,7 +62,7 @@ public class JointCancellee : ICancellee {
     private readonly ICancellee c2;
     public ICancellee Joinable => this;
 
-    public JointCancellee([CanBeNull] ICancellee c1, [CanBeNull] ICancellee c2) {
+    public JointCancellee(ICancellee? c1, ICancellee? c2) {
         this.c1 = c1?.Joinable ?? Cancellable.Null;
         this.c2 = c2?.Joinable ?? Cancellable.Null;
     }
@@ -77,7 +77,7 @@ public interface ICancellee<T> {
 public class GCancellable<T> : ICancellee<T> {
     public static readonly ICancellee<T> Null = new GCancellable<T>();
     private CancelLevel level = CancelLevel.None;
-    private T obj;
+    private T obj = default!;
     public void Cancel(T value) => Cancel(CancelLevel.Operation, value);
 
     public bool Cancelled(out T value) {

@@ -14,33 +14,33 @@ using UnityEngine;
 using UnityEngine.Serialization;
 
 namespace DMK.Services {
-public class SFXService : RegularUpdater {
-    private static AudioSource src;
-    private static SFXService main;
-    public SFXConfig lifeExtend;
-    public SFXConfig phaseEndFail;
-    public SFXConfig phaseEndSuccess;
-    public SFXConfig stageSectionEnd;
-    public SFXConfig powerLost;
-    public SFXConfig powerGained;
-    public SFXConfig powerFull;
-    public SFXConfig bossSpellCutin;
-    public SFXConfig bossCutin;
-    public SFXConfig bossExplode;
-    public SFXConfig meterUsable;
-    public SFXConfig meterActivated;
-    public SFXConfig meterDeActivated;
-    public SFXConfig swapHPScore;
-    public SFXConfig[] SFX;
+public class SFXService : RegularUpdater, ISFXService {
+    private static AudioSource src = null!;
+    private static SFXService main = null!;
+    public SFXConfig lifeExtend = null!;
+    public SFXConfig phaseEndFail = null!;
+    public SFXConfig phaseEndSuccess = null!;
+    public SFXConfig stageSectionEnd = null!;
+    public SFXConfig powerLost = null!;
+    public SFXConfig powerGained = null!;
+    public SFXConfig powerFull = null!;
+    public SFXConfig bossSpellCutin = null!;
+    public SFXConfig bossCutin = null!;
+    public SFXConfig bossExplode = null!;
+    public SFXConfig meterUsable = null!;
+    public SFXConfig meterActivated = null!;
+    public SFXConfig meterDeActivated = null!;
+    public SFXConfig swapHPScore = null!;
+    public SFXConfig[] SFX = null!;
     private static readonly Dictionary<string, SFXConfig> dclips = new Dictionary<string, SFXConfig>();
 
     public readonly struct ConstructedAudio {
-        public readonly AudioSource src;
-        public readonly bool pausable;
+        public readonly AudioSource csrc;
+        public readonly SFXConfig sfx;
 
-        public ConstructedAudio(AudioSource src, bool pausable) {
-            this.src = src;
-            this.pausable = pausable;
+        public ConstructedAudio(AudioSource csrc, SFXConfig sfx) {
+            this.csrc = csrc;
+            this.sfx = sfx;
         }
     }
 
@@ -57,6 +57,8 @@ public class SFXService : RegularUpdater {
 
     protected override void BindListeners() {
         base.BindListeners();
+        RegisterDI<ISFXService>(this);
+        
         Listen(Events.GameStateHasChanged, HandleGameStateChange);
         Listen(InstanceData.MeterNowUsable, () => Request(meterUsable));
         Listen(InstanceData.AnyExtendAcquired, () => Request(lifeExtend));
@@ -85,9 +87,14 @@ public class SFXService : RegularUpdater {
         }
         (timeouts, _timeouts) = (_timeouts, timeouts);
         for (int ii = 0; ii < constructed.Count; ++ii) {
-            if (!constructed[ii].src.isPlaying) {
-                Destroy(constructed[ii].src);
+            var c = constructed[ii];
+            if (!c.csrc.isPlaying) {
+                Destroy(c.csrc);
                 constructed.Delete(ii);
+            } else {
+                if (c.sfx.slowable) {
+                    c.csrc.pitch = c.sfx.Pitch;
+                }
             }
         }
         constructed.Compact();
@@ -125,7 +132,8 @@ public class SFXService : RegularUpdater {
         }
 
         private void SetProps() {
-            source.pitch = sfx.pitch * FeaturePitchMult();
+            source.volume = sfx.volume * SaveData.s.SEVolume;
+            source.pitch = sfx.Pitch * FeaturePitchMult();
         }
 
         public void Request() {
@@ -163,11 +171,12 @@ public class SFXService : RegularUpdater {
         new Dictionary<string, LoopingSourceInfo>();
     private static readonly List<LoopingSourceInfo> loopTimeoutsArr = new List<LoopingSourceInfo>();
 
-    public static void Request(string style) {
-        if (string.IsNullOrWhiteSpace(style) || style == "_") return;
+    public static void Request(string? style) => main.RequestSFX(style);
+    public void RequestSFX(string? style) {
+        if (string.IsNullOrWhiteSpace(style) || style == "_" || style == null) return;
         if (timeouts.ContainsKey(style)) return;
         if (dclips.ContainsKey(style)) {
-            Request(dclips[style]);
+            RequestSFX(dclips[style]);
         } else throw new Exception($"No SFX exists by name {style}");
     }
 
@@ -175,7 +184,8 @@ public class SFXService : RegularUpdater {
 
     private static readonly ExFunction request = ExUtils.Wrap<SFXService>("Request", new[] {typeof(string)});
 
-    public static void Request([CanBeNull] SFXConfig aci) {
+    public static void Request(SFXConfig? aci) => main.RequestSFX(aci);
+    public void RequestSFX(SFXConfig? aci) {
         if (aci == null) return;
         if (aci.loop) {
             RequestLoop(aci);
@@ -184,13 +194,19 @@ public class SFXService : RegularUpdater {
         if (timeouts.ContainsKey(aci.defaultName)) return;
         if (aci.Timeout > 0f) timeouts[aci.defaultName] = aci.Timeout;
 
-        if (aci.pausable) RequestSource(aci, true);
+        if (aci.RequiresHandling) RequestSource(aci);
         else src.PlayOneShot(aci.clip, aci.volume * SaveData.s.SEVolume);
     }
 
+    /// <summary>
+    /// Creates a looping audio effect that needs to repeatedly be requested in order to continue playing.
+    /// </summary>
+    /// <param name="aci"></param>
     private static void RequestLoop(SFXConfig aci) {
         if (!loopTimeouts.TryGetValue(aci.defaultName, out var looper)) {
-            looper = new LoopingSourceInfo(_RequestSource(aci), aci);
+            var _src = _RequestSource(aci);
+            if (_src == null) return;
+            looper = new LoopingSourceInfo(_src, aci);
             looper.source.Play();
             loopTimeoutsArr.Add(looper);
             loopTimeouts[aci.defaultName] = looper;
@@ -201,34 +217,26 @@ public class SFXService : RegularUpdater {
     /// <summary>
     /// Returns an inactive source that is not playing and not tracked by SFXService.
     /// </summary>
-    [CanBeNull]
-    private static AudioSource _RequestSource([CanBeNull] SFXConfig aci) {
+    private static AudioSource? _RequestSource(SFXConfig? aci) {
         if (aci == null) return null;
         var cmp = main.gameObject.AddComponent<AudioSource>();
         cmp.volume = aci.volume * SaveData.s.SEVolume;
-        cmp.pitch = aci.pitch;
+        cmp.pitch = aci.Pitch;
         cmp.priority = aci.Priority;
         cmp.clip = aci.clip;
         return cmp;
     }
 
-    [CanBeNull]
-    public static AudioSource RequestSource([CanBeNull] SFXConfig aci, bool pausable = true) {
+    public static AudioSource? RequestSource(SFXConfig? aci) {
         if (aci == null) return null;
         var cmp = _RequestSource(aci);
         if (cmp != null) {
-            constructed.AddV(new ConstructedAudio(cmp, pausable));
+            constructed.AddV(new ConstructedAudio(cmp, aci));
+            if (aci.loop)
+                cmp.loop = true;
             cmp.Play();
         }
         return cmp;
-    }
-
-    public static AudioSource RequestLoopingSource([CanBeNull] SFXConfig aci) {
-        var s = RequestSource(aci);
-        if (s != null) {
-            s.loop = true;
-        }
-        return s;
     }
 
     public static void BossSpellCutin() => Request(main.bossSpellCutin);
@@ -239,7 +247,7 @@ public class SFXService : RegularUpdater {
 
     public static void ClearConstructed() {
         for (int ii = 0; ii < constructed.Count; ++ii) {
-            if (constructed[ii].src != null) Destroy(constructed[ii].src);
+            if (constructed[ii].csrc != null) Destroy(constructed[ii].csrc);
         }
         for (int ii = 0; ii < loopTimeoutsArr.Count; ++ii) {
             Destroy(loopTimeoutsArr[ii].source);
@@ -252,14 +260,14 @@ public class SFXService : RegularUpdater {
     private void HandleGameStateChange(EngineState state) {
         if (state.IsPaused()) {
             for (int ii = 0; ii < constructed.Count; ++ii) {
-                if (constructed[ii].pausable) constructed[ii].src.Pause();
+                if (constructed[ii].sfx.Pausable) constructed[ii].csrc.Pause();
             }
             for (int ii = 0; ii < loopTimeoutsArr.Count; ++ii) {
                 loopTimeoutsArr[ii].source.Pause();
             }
         } else if (state == EngineState.RUN) {
             for (int ii = 0; ii < constructed.Count; ++ii) {
-                if (constructed[ii].pausable) constructed[ii].src.UnPause();
+                if (constructed[ii].sfx.Pausable) constructed[ii].csrc.UnPause();
             }
             for (int ii = 0; ii < loopTimeoutsArr.Count; ++ii) {
                 loopTimeoutsArr[ii].source.UnPause();

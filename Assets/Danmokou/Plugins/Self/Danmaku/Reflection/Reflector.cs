@@ -15,40 +15,31 @@ using JetBrains.Annotations;
 using Ex = System.Linq.Expressions.Expression;
 using Vector2 = UnityEngine.Vector2;
 using Vector3 = UnityEngine.Vector3;
-using ExTP = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<UnityEngine.Vector2>>;
-using ExTP3 = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<UnityEngine.Vector3>>;
-using ExFXY = System.Func<DMK.Expressions.TEx<float>, DMK.Expressions.TEx<float>>;
-using ExBPY = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<float>>;
-using ExBPRV2 = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<DMK.DMath.V2RV2>>;
-using ExPred = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<bool>>;
-using ExVTP = System.Func<DMK.Expressions.ITExVelocity, DMK.Expressions.TEx<float>, DMK.Expressions.TExPI, DMK.Expressions.RTExV2, DMK.Expressions.TEx<UnityEngine.Vector2>>;
-using ExLVTP = System.Func<DMK.Expressions.ITExVelocity, DMK.Expressions.RTEx<float>, DMK.Expressions.RTEx<float>, DMK.Expressions.TExPI, DMK.Expressions.RTExV2, DMK.Expressions.TEx<UnityEngine.Vector2>>;
-using ExGCXF = System.Func<DMK.Expressions.TExGCX, DMK.Expressions.TEx>;
-using ExSBF = System.Func<DMK.Expressions.RTExSB, DMK.Expressions.TEx<float>>;
-using ExSBV2 = System.Func<DMK.Expressions.RTExSB, DMK.Expressions.TEx<UnityEngine.Vector2>>;
-using ExSBCF = System.Func<DMK.Expressions.TExSBC, DMK.Expressions.TEx<int>, DMK.Expressions.TExPI, DMK.Expressions.TEx>;
-using ExSBPred = System.Func<DMK.Expressions.TExSBC, DMK.Expressions.TEx<int>, DMK.Expressions.TExPI, DMK.Expressions.TEx<bool>>;
+using ExBPY = System.Func<DMK.Expressions.TExArgCtx, DMK.Expressions.TEx<float>>;
+using ExPred = System.Func<DMK.Expressions.TExArgCtx, DMK.Expressions.TEx<bool>>;
+using ExTP = System.Func<DMK.Expressions.TExArgCtx, DMK.Expressions.TEx<UnityEngine.Vector2>>;
+using ExTP3 = System.Func<DMK.Expressions.TExArgCtx, DMK.Expressions.TEx<UnityEngine.Vector3>>;
+using ExTP4 = System.Func<DMK.Expressions.TExArgCtx, DMK.Expressions.TEx<UnityEngine.Vector4>>;
+using ExBPRV2 = System.Func<DMK.Expressions.TExArgCtx, DMK.Expressions.TEx<DMK.DMath.V2RV2>>;
+using ExVTP = System.Func<DMK.Expressions.ITexMovement, DMK.Expressions.TEx<float>, DMK.Expressions.TExArgCtx, DMK.Expressions.TExV2, DMK.Expressions.TEx>;
+using ExSBCF = System.Func<DMK.Expressions.TExSBC, DMK.Expressions.TEx<int>, DMK.Expressions.TExArgCtx, DMK.Expressions.TEx>;
 
 namespace DMK.Reflection {
 public static partial class Reflector {
     private static readonly Dictionary<Type, string> TypeNameMap = new Dictionary<Type, string>() {
         {typeof(float), "Float"},
-        {typeof(ExFXY), "FXY"},
         {typeof(ExBPY), "BPY"},
         {typeof(ExTP), "TP"},
         {typeof(ExTP3), "TP3"},
+        {typeof(ExTP4), "TP4"},
         {typeof(ExVTP), "VTP"},
         {typeof(ExBPRV2), "BPRV2"},
         {typeof(ExPred), "Predicate"},
-        {typeof(ExSBPred), "SB Predicate"},
         {typeof(ExSBCF), "SB Control"},
-        {typeof(ExSBV2), "SB>V2 Func"},
-        {typeof(ExSBF), "SB>F Func"},
     };
     private static readonly Type tsm = typeof(StateMachine);
 
-    [CanBeNull]
-    private static StateMachine ReflectSM(IParseQueue q) {
+    private static StateMachine? ReflectSM(IParseQueue q) {
         string method = q.Scan();
         if (method == "file") {
             q.Advance();
@@ -72,8 +63,8 @@ public static partial class Reflector {
     public static readonly StateMachine WaitForPhaseSM =
         new ReflectableLASM(SMReflection.Wait(Synchronization.Time(_ => M.IntFloatMax)));
 
-    private static readonly Dictionary<Type, Func<string, object>> SimpleFunctionResolver =
-        new Dictionary<Type, Func<string, object>>() {
+    private static readonly Dictionary<Type, Func<string, object?>> SimpleFunctionResolver =
+        new Dictionary<Type, Func<string, object?>>() {
             {typeof(Events.Event0), Events.Event0.FindOrNull},
             {typeof(float), arg => Parser.Float(arg)},
             {typeof(V2RV2), arg => Parser.ParseV2RV2(arg)},
@@ -90,9 +81,10 @@ public static partial class Reflector {
 
     private static readonly Type type_stylesel = typeof(BulletManager.StyleSelector);
     private static readonly Type type_stringA = typeof(string[]);
-    private static readonly Type gtype_alias = typeof(ReflectEx.Alias<>);
+    private static readonly Type type_alias = typeof(ReflectEx.Alias);
     private static readonly Type type_gcrule = typeof(GCRule);
     private static readonly Type gtype_ienum = typeof(IEnumerable<>);
+    private static readonly Type type_locstring = typeof(LocalizedString);
 
 
     private static bool MatchesGeneric(Type target, Type generic) =>
@@ -116,32 +108,38 @@ public static partial class Reflector {
 
 
     private static bool ResolveSpecialHandling(IParseQueue p, Type targetType, out object obj) {
-        if (targetType == type_stylesel) {
-            obj = new BulletManager.StyleSelector(ResolveAsArray(type_stringA, p) as string[][]);
+        if (targetType == type_locstring) {
+            var str = p.Next();
+            obj = LocalizedStrings.IsLocalizedStringReference(str) ? 
+                LocalizedStrings.TryFindReference(str) ?? 
+                    throw new Exception($"Line {p.GetLastLine()}: Couldn't resolve LocalizedString {str}")
+                : new LocalizedString(str);
+        } else if (targetType == type_stylesel) {
+            obj = new BulletManager.StyleSelector((ResolveAsArray(type_stringA, p) as string[][])!);
         } else if (targetType == type_gcrule) {
             ReferenceMember rfr = new ReferenceMember(p.Next());
             string OpAndMaybeType = p.Next();
-            var op = (GCOperator) ForceFuncTypeResolve(OpAndMaybeType, typeof(GCOperator));
+            var op = (GCOperator) ForceFuncTypeResolve(OpAndMaybeType, typeof(GCOperator))!;
             var latter = OpAndMaybeType.Split('=').Try(1) ?? throw new ParsingException(
                 $"Line {p.GetLastLine()}: Trying to parse GCRule, but found an invalid operator {OpAndMaybeType}.\n" +
                 $"Make sure to put parentheses around the right-hand side of GCRule.");
-            var ext = (ExType) ForceFuncTypeResolve(latter.Length > 0 ? latter : p.Next(), typeof(ExType));
+            var ext = (ExType) ForceFuncTypeResolve(latter.Length > 0 ? latter : p.Next(), typeof(ExType))!;
             if (ext == ExType.Float) obj = new GCRule<float>(ext, rfr, op, p.Into<GCXF<float>>());
             else if (ext == ExType.V2) obj = new GCRule<Vector2>(ext, rfr, op, p.Into<GCXF<Vector2>>());
             else if (ext == ExType.V3) obj = new GCRule<Vector3>(ext, rfr, op, p.Into<GCXF<Vector3>>());
             else if (ext == ExType.RV2) obj = new GCRule<V2RV2>(ext, rfr, op, p.Into<GCXF<V2RV2>>());
             else throw new StaticException($"No GCRule handling for ExType {ext}");
-        } else if (MatchesGeneric(targetType, gtype_alias)) {
-            ExType declTyp = (ExType) ForceFuncTypeResolve(p.Next(), typeof(ExType));
+        } else if (targetType == type_alias) {
+            ExType declTyp = (ExType) ForceFuncTypeResolve(p.Next(), typeof(ExType))!;
             string alias = p.Next();
-            var req_type = typeof(Func<,>).MakeGenericType(targetType.GenericTypeArguments[0], AsWeakTExType(declTyp));
+            var req_type = typeof(Func<,>).MakeGenericType(typeof(TExArgCtx), AsWeakTExType(declTyp));
             obj = Activator.CreateInstance(targetType, alias, ReflectTargetType(p, req_type));
         } else if (UseConstructor(targetType)) {
             //generic struct/tuple handling
             var args = GetConstructorSignature(targetType);
             obj = Activator.CreateInstance(targetType, _FillInvokeArray(args, p, targetType, null));
         } else {
-            obj = default;
+            obj = default!;
             return false;
         }
         return true;
@@ -157,11 +155,12 @@ public static partial class Reflector {
         typeof(SBOptions),
         typeof(LaserOptions),
         typeof(BehOptions),
+        typeof(PowerAuraOptions),
         typeof(PatternProperties)
     };
 
-    private static bool FuncTypeResolve(string s, Type targetType, out object result) {
-        if (SimpleFunctionResolver.TryGetValue(targetType, out Func<string, object> resolver)) {
+    private static bool FuncTypeResolve(string s, Type targetType, out object? result) {
+        if (SimpleFunctionResolver.TryGetValue(targetType, out Func<string, object?> resolver)) {
             try {
                 result = resolver(s);
                 return true;
@@ -169,19 +168,19 @@ public static partial class Reflector {
                 // ignored
             }
         }
-        result = default;
+        result = default!;
         return false;
     }
 
-    private static object ForceFuncTypeResolve(string s, Type targetType) {
-        if (SimpleFunctionResolver.TryGetValue(targetType, out Func<string, object> resolver)) {
+    private static object? ForceFuncTypeResolve(string s, Type targetType) {
+        if (SimpleFunctionResolver.TryGetValue(targetType, out Func<string, object?> resolver)) {
             return resolver(s);
         } else throw new StaticException("ForceFuncTypeResolve was used for a type without a simple resolver");
     }
 
     public static object ResolveAsArray(Type eleType, IParseQueue q) {
         if (eleType == null) throw new StaticException($"Requested an array of null elements");
-        if (IParseQueue.ARR_EMPTY.Contains(q.MaybeScan())) {
+        if (IParseQueue.ARR_EMPTY.Contains(q.MaybeScan() ?? "")) {
             q.Advance();
             var empty = Array.CreateInstance(eleType, 0);
             return empty;
@@ -192,7 +191,7 @@ public static partial class Reflector {
             return singleton;
         }
         q.Advance(); // {
-        var arr = new List<object>();
+        var arr = new List<object?>();
         while (q.MaybeScan() != IParseQueue.ARR_CLOSE) {
             arr.Add(_ReflectTargetType(q.NextChild(), eleType));
         }
@@ -205,7 +204,7 @@ public static partial class Reflector {
     }
 
     [UsedImplicitly]
-    public static object[] TupleToArr2<T1, T2>((T1, T2) tup) => new object[] {tup.Item1, tup.Item2};
+    public static object[] TupleToArr2<T1, T2>((T1, T2) tup) => new object[] {tup.Item1!, tup.Item2!};
 }
 }
 

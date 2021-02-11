@@ -11,85 +11,61 @@ using DMK.Reflection;
 using JetBrains.Annotations;
 using Ex = System.Linq.Expressions.Expression;
 using static DMK.Expressions.ExUtils;
-using ExGCXF = System.Func<DMK.Expressions.TExGCX, DMK.Expressions.TEx>;
 
 
 namespace DMK.Expressions {
 public static class ReflectEx {
 
-    private static readonly Dictionary<string, Stack<Expression>> alias_stack =
-        new Dictionary<string, Stack<Expression>>();
-    [CanBeNull] private static TExGCX aliased_gcx = null;
-    [CanBeNull] public static TEx aliased_laser { get; set; }
-    public static void SetGCX(TExGCX gcx) => aliased_gcx = gcx;
-    public static void RemoveGCX() => aliased_gcx = null;
 
-
-    public class LetDirect : IDisposable {
-        private readonly string alias;
-
-        public LetDirect(string alias, Ex val) {
-            this.alias = alias;
-            alias_stack.Push(alias, val);
-        }
-
-        public void Dispose() {
-            alias_stack.Pop(alias);
-        }
-    }
-
-    public static TEx<T> Let<WF, T, L>(string alias, Func<WF, TEx<L>> content, Func<TEx<T>> inner, WF applier) {
+    public static TEx<T> Let<T, L>(string alias, Func<TExArgCtx, TEx<L>> content, Func<TEx<T>> inner, TExArgCtx applier) {
         var variabl = V<L>();
-        alias_stack.Push(alias, variabl);
-        var bl = Ex.Block(new[] {variabl},
+        using var let = applier.Let(alias, variabl);
+        return Ex.Block(new[] {variabl},
             Ex.Assign(variabl, content(applier)),
             inner()
         );
-        alias_stack.Pop(alias);
-        return bl;
     }
 
-    public readonly struct Alias<WF> {
+    public readonly struct Alias {
         public readonly string alias;
-        public readonly Func<WF, TEx> func;
+        public readonly Func<TExArgCtx, TEx> func;
 
-        public Alias(string alias, Func<WF, TEx> func) {
+        public Alias(string alias, Func<TExArgCtx, TEx> func) {
             this.alias = alias;
             this.func = func;
         }
     }
 
-    public static Ex Let2<WF>(Alias<WF>[] aliases, Func<Ex> inner, WF applier) {
+    public static Ex Let2(Alias[] aliases, Func<Ex> inner, TExArgCtx applier) {
         var stmts = new Ex[aliases.Length + 1];
         var vars = new ParameterExpression[aliases.Length];
+        var lets = new List<IDisposable>();
         for (int ii = 0; ii < aliases.Length; ++ii) {
             Ex alias_value = aliases[ii].func(applier);
-            alias_stack.Push(aliases[ii].alias, vars[ii] = V(alias_value.Type));
+            lets.Add(applier.Let(aliases[ii].alias, vars[ii] =
+                V(alias_value.Type, applier.Ctx.NameWithSuffix(aliases[ii].alias))));
             stmts[ii] = Ex.Assign(vars[ii], alias_value);
         }
         stmts[aliases.Length] = inner();
-        var bl = Ex.Block(vars, stmts);
-        for (int ii = 0; ii < aliases.Length; ++ii) {
-            alias_stack.Pop(aliases[ii].alias);
-        }
-        return bl;
+        for (int ii = 0; ii < lets.Count; ++ii)
+            lets[ii].Dispose();
+        return Ex.Block(vars, stmts);
     }
 
-    public static TEx<T> Let<WF, T, L>((string alias, Func<WF, TEx<L>> content)[] aliases, Func<TEx<T>> inner,
-        WF applier) {
+    public static Ex Let<L>((string alias, Func<TExArgCtx, TEx<L>> content)[] aliases, Func<Ex> inner, TExArgCtx applier) {
         var stmts = new Ex[aliases.Length + 1];
         var vars = new ParameterExpression[aliases.Length];
+        var lets = new List<IDisposable>();
         for (int ii = 0; ii < aliases.Length; ++ii) {
             Ex alias_value = aliases[ii].content(applier);
-            alias_stack.Push(aliases[ii].alias, vars[ii] = V(alias_value.Type));
+            lets.Add(applier.Let(aliases[ii].alias, vars[ii] = 
+                V(alias_value.Type, applier.Ctx.NameWithSuffix(aliases[ii].alias))));
             stmts[ii] = Ex.Assign(vars[ii], alias_value);
         }
         stmts[aliases.Length] = inner();
-        var bl = Ex.Block(vars, stmts);
-        for (int ii = 0; ii < aliases.Length; ++ii) {
-            alias_stack.Pop(aliases[ii].alias);
-        }
-        return bl;
+        for (int ii = 0; ii < lets.Count; ++ii)
+            lets[ii].Dispose();
+        return Ex.Block(vars, stmts);
     }
 /*
     private static TEx<T> LetLambda<WF, T, L>((string alias, string[] args, Func<WF, TEx<L>> content)[] lambdas,
@@ -101,51 +77,77 @@ public static class ReflectEx {
         bool TryResolve<T>(string alias, out Ex ex);
     }
 
-    [CanBeNull] private static ICompileReferenceResolver icrr = null;
-    public static void SetICRR(ICompileReferenceResolver icr) => icrr = icr;
-    public static void RemoveICRR() => icrr = null;
-
-    public static Ex ReferenceExpr<T>(string alias, [CanBeNull] TExPI bpi) {
+    //T is on the level of typeof(float)
+    public static Ex ReferenceExpr<T>(string alias, TExArgCtx tac) {
         if (alias[0] == Parser.SM_REF_KEY_C) alias = alias.Substring(1); //Important for reflector handling of &x
         bool isExplicit = alias.StartsWith(".");
-        if (isExplicit) alias = alias.Substring(1);
+        if (isExplicit)
+            alias = alias.Substring(1);
         //Standard method, used by Let and GCXPath.expose (which internally compiles to Let) 
-        if (alias_stack.TryGetValue(alias, out var f)) return f.Peek();
+        if (tac.Ctx.AliasStack.TryGetValue(alias, out var f))
+            return f.Peek();
         //Used by GCXF<T>, ie. when a fixed GCX exists. This is for slower pattern expressions
-        if (aliased_gcx != null) return aliased_gcx.FindReference<T>(alias);
+        if (tac.MaybeGetByExprType<TExGCX>(out _).Try(out var gcx))
+            return gcx.FindReference<T>(alias);
+        if (tac.MaybeGetByName<T>(alias).Try(out var prm))
+            return prm;
         //Automatic GCXPath.expose resolution
-        if (icrr != null && icrr.TryResolve<T>(alias, out Ex ex)) return ex;
+        if (tac.Ctx.ICRR != null && tac.Ctx.ICRR.TryResolve<T>(alias, out Ex ex))
+            return ex;
         //In functions not scoped by the GCX (eg. bullet controls)
         //The reason for using the special marker is that we cannot give good errors if an incorrect value is entered
         //(good error handling would make lookup slower, and this is hotpath),
         //so we need to make opting into this completely explicit. 
-        if (isExplicit && bpi != null) {
-            return PrivateDataHoisting.GetValue(bpi, Reflector.AsExType<T>(), alias);
+        if (isExplicit && tac.MaybeBPI.Try(out var bpi)) {
+            try {
+                return FiringCtx.GetValue<T>(tac, alias);
+            } catch (Exception) {
+                //pass
+            }
         }
         var maybe_outofscope = isExplicit ?
             "" :
             "\n\tIf you are defining a bullet control or some other unscoped function, " +
             "then you may need to make the reference explicit by prefixing it with \"&.\" instead of \"&\".";
-        throw new Exception($"The reference {alias} is used, but does not have a value.{maybe_outofscope}");
+        throw new Reflector.CompileException(
+            $"The reference {alias} is used, but does not have a value.{maybe_outofscope}");
     }
 
-    public static Func<TExPI, TEx<T>> ReferenceLetBPI<T>(string alias) => bpi => ReferenceExpr<T>(alias, bpi);
-    public static Func<WF, TEx<T>> ReferenceLet<WF, T>(string alias) => t => ReferenceExpr<T>(alias, null);
-    public static Func<TEx<T>> ReferenceLet<T>(string alias) => () => ReferenceExpr<T>(alias, null);
+    public static Func<TExArgCtx, TEx<T>> ReferenceLet<T>(string alias) => bpi => ReferenceExpr<T>(alias, bpi);
 
     //TODO consider replacing SafeResizeable here with a dictionary
     public readonly struct Hoist<T> {
         private readonly SafeResizableArray<T> data;
+        private readonly string name;
 
         public Hoist(string name) {
-            data = PublicDataHoisting.Register<T>(name);
+            data = PublicDataHoisting.Register<T>(this.name = name);
         }
 
         public void Save(int index, T value) => data.SafeAssign(index, value);
         public T Retrieve(int index) => data.SafeGet(index);
 
-        public Ex Save(Ex index, Ex val) => data.SafeAssign(Ex.Convert(index, tint), val);
-        public Ex Retrieve(Ex index) => data.SafeGet(Ex.Convert(index, tint));
+        private void Bake(TExArgCtx tac) {
+#if EXBAKE_SAVE
+            var key_name = tac.Ctx.NameWithSuffix("pubHoist");
+
+            var key_assign = FormattableString.Invariant(
+                $"var {key_name} = PublicDataHoisting.Register<{typeof(T)}>(\"{name}\");");
+
+            tac.Ctx.HoistedVariables.Add(key_assign);
+            tac.Ctx.HoistedReplacements[Ex.Constant(data)] = Ex.Variable(typeof(SafeResizableArray<T>), key_name);
+#endif
+        }
+        
+        public Ex Save(Ex index, Ex val, TExArgCtx tac) {
+            Bake(tac);
+            return data.exSafeAssign(Ex.Convert(index, tint), val);
+        }
+
+        public Ex Retrieve(Ex index, TExArgCtx tac) {
+            Bake(tac);
+            return data.exSafeGet(Ex.Convert(index, tint));
+        }
     }
 }
 

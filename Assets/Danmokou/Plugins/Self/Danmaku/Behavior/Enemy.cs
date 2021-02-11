@@ -4,6 +4,7 @@ using DMK.Behavior.Display;
 using DMK.Core;
 using DMK.Danmaku;
 using DMK.DMath;
+using DMK.DMath.Functions;
 using DMK.Expressions;
 using DMK.Graphics;
 using DMK.Reflection;
@@ -31,9 +32,9 @@ public class Enemy : RegularUpdater {
         }
     }
 
-    public BehaviorEntity Beh { get; private set; }
+    public BehaviorEntity Beh { get; private set; } = null!;
     public bool takesBossDamage;
-    [CanBeNull] private (bool _, Enemy to)? divertHP = null;
+    private (bool _, Enemy to)? divertHP = null;
     public double HP { get; private set; }
     public int maxHP = 1000;
     public int PhotoHP { get; private set; } = 1;
@@ -45,40 +46,40 @@ public class Enemy : RegularUpdater {
     //private static int enemyIndexCtr = 0;
     //private int enemyIndex;
 
-    public RFloat collisionRadius;
+    public RFloat collisionRadius = null!;
     /// <summary>
     /// The entirety of this circle must be within the viewfinder for a capture to succeed.
     /// </summary>
-    [CanBeNull] public RFloat ayaCameraRadius;
+    public RFloat? ayaCameraRadius;
     
 
     private const float LOW_HP_THRESHOLD = .2f;
 
     public bool modifyDamageSound;
 
-    [CanBeNull] public SpriteRenderer cameraCrosshair;
+    public SpriteRenderer? cameraCrosshair;
 
-    [Header("Healthbar Controller (Optional)")] [CanBeNull]
-    public SpriteRenderer healthbarSprite;
-    private MaterialPropertyBlock hpPB;
-    public SpriteRenderer cardCircle;
-    public SpriteRenderer spellCircle;
-    public ntw.CurvedTextMeshPro.TextProOnACircle spellCircleText;
-    private Transform cardtr;
-    private Transform spellTr;
-    [CanBeNull] public SpriteRenderer distorter;
-    private MaterialPropertyBlock distortPB;
-    private MaterialPropertyBlock scPB;
+    [Header("Healthbar Controller (Optional)")]
+    public SpriteRenderer? healthbarSprite;
+    private MaterialPropertyBlock hpPB = null!;
+    public SpriteRenderer? cardCircle;
+    public SpriteRenderer? spellCircle;
+    public ntw.CurvedTextMeshPro.TextProOnACircle? spellCircleText;
+    private Transform? cardtr;
+    private Transform? spellTr;
+    public SpriteRenderer? distorter;
+    private MaterialPropertyBlock distortPB = null!;
+    private MaterialPropertyBlock scPB = null!;
     private float healthbarStart; // 0-1
     private float healthbarSize; //As fraction of total bar, 0-1
 
-    public RColor2 nonspellColor;
-    public RColor2 spellColor;
+    public RColor2 nonspellColor = null!;
+    public RColor2 spellColor = null!;
 
-    public RColor unfilledColor;
+    public RColor unfilledColor = null!;
 
-    public RFloat hpRadius;
-    public RFloat hpThickness;
+    public RFloat hpRadius = null!;
+    public RFloat hpThickness = null!;
 
     //Previously 6f, increasing for fire shader
     private const float HPLerpRate = 14f;
@@ -111,14 +112,14 @@ public class Enemy : RegularUpdater {
     private int enemyIndex;
     private static readonly Dictionary<int, Enemy> allEnemies = new Dictionary<int, Enemy>();
     private static readonly DMCompactingArray<Enemy> orderedEnemies = new DMCompactingArray<Enemy>();
-    private DeletionMarker<Enemy> aliveToken;
+    private DeletionMarker<Enemy> aliveToken = null!;
     private static readonly List<FrozenCollisionInfo> frozenEnemies = new List<FrozenCollisionInfo>();
     public static IReadOnlyList<FrozenCollisionInfo> FrozenEnemies => frozenEnemies;
 
     public void Initialize(BehaviorEntity _beh) {
         Beh = _beh;
         var sortOrder = NextRenderCounter();
-        _beh.displayer.SetSortingOrder(sortOrder);
+        _beh.displayer!.SetSortingOrder(sortOrder);
         if (spellCircle != null) {
             spellCircle.sortingOrder = sortOrder;
             if (spellCircleText != null)
@@ -203,7 +204,7 @@ public class Enemy : RegularUpdater {
     }
 
     private ICancellee spellCircleCancel = Cancellable.Null;
-    [CanBeNull] private FXY spellCircleRad;
+    private FXY? spellCircleRad;
     private const float MinSCScale = 1f;
     private const float LerpFromSCScale = 0.1f;
     private float lastSpellCircleRad;
@@ -260,14 +261,14 @@ public class Enemy : RegularUpdater {
             distorter.SetPropertyBlock(distortPB);
         }
         if (cardCircle != null) {
-            var rt = cardtr.localEulerAngles;
+            var rt = cardtr!.localEulerAngles;
             rt += ETime.FRAME_TIME * cardRotator(Beh.rBPI);
             cardtr.localEulerAngles = rt;
             var scale = cardBreather(Beh.rBPI.t);
             cardtr.localScale = new Vector3(scale, scale, scale);
         }
         if (spellCircle != null) {
-            var rt = spellTr.localEulerAngles;
+            var rt = spellTr!.localEulerAngles;
             rt += ETime.FRAME_TIME * spellRotator(Beh.rBPI);
             spellTr.localEulerAngles = rt;
             scPB.SetFloat(PropConsts.time, Beh.rBPI.t);
@@ -316,20 +317,20 @@ public class Enemy : RegularUpdater {
     private int queuedPhotoDamage = 0;
 
     //The reason we queue damage is to avoid calling eg. SM clear effects while in the middle of other entities' update loops.
-    public void QueueDamage(int bossDmg, int stageDmg, Vector2 firerLoc) => 
-        QueueDamage(takesBossDamage ? bossDmg : stageDmg, firerLoc);
+    public void QueuePlayerDamage(int bossDmg, int stageDmg, Vector2 firerLoc) => 
+        QueuePlayerDamage(takesBossDamage ? bossDmg : stageDmg, firerLoc);
 
-    private void QueueDamage(int dmg, Vector2? firerLoc) {
+    private void QueuePlayerDamage(int dmg, Vector2? firerLoc) {
         if (divertHP != null) {
-            divertHP.Value.to.QueueDamage(dmg, firerLoc);
+            divertHP.Value.to.QueuePlayerDamage(dmg, firerLoc);
             return;
         }
         if (!Vulnerable.TakesDamage()) return;
         if (firerLoc.Try(out var floc)) {
             float dstToFirer = (floc - Beh.rBPI.loc).magnitude;
             float shotgun = (SHOTGUN_MIN - dstToFirer) / (SHOTGUN_MIN - SHOTGUN_MAX);
-            float multiplier =
-                Mathf.Lerp(1f, SHOTGUN_MULTIPLIER, shotgun);
+            double multiplier = GameManagement.Instance.PlayerDamageMultiplier *
+                                M.Lerp(0, 1, shotgun, 1, SHOTGUN_MULTIPLIER);
             queuedDamage += dmg * multiplier * GameManagement.Difficulty.playerDamageMod;
             Counter.DoShotgun(shotgun);
         } else queuedDamage += dmg;
@@ -396,7 +397,7 @@ public class Enemy : RegularUpdater {
         hpPB.SetFloat(PropConsts.R2NPhaseStart, healthbarStart);
     }
 
-    [CanBeNull] public IReadOnlyList<Enemy> Subbosses { get; set; } = null;
+    public IReadOnlyList<Enemy>? Subbosses { get; set; } = null;
     public void SetHPBar(float portion, PhaseType color) {
         if (healthbarStart < 0.1f || color.RequiresFullHPBar()) {
             healthbarStart = 1f;
@@ -425,7 +426,8 @@ public class Enemy : RegularUpdater {
     public void ProcOnHit(EffectStrategy effect, Vector2 hitLoc) => effect.Proc(hitLoc, Beh.GlobalPosition(), collisionRadius);
 
     private bool ViewfinderHits(CRect viewfinder) => 
-        CollisionMath.CircleInRect(Beh.rBPI.loc, ayaCameraRadius, viewfinder) && Vulnerable.TakesDamage();
+        Vulnerable.TakesDamage() && ayaCameraRadius != null && 
+        CollisionMath.CircleInRect(Beh.rBPI.loc, ayaCameraRadius, viewfinder);
     public void ShowCrosshairIfViewfinderHits(CRect viewfinder) {
         if (cameraCrosshair != null) {
             cameraCrosshair.enabled = ViewfinderHits(viewfinder);
@@ -443,15 +445,17 @@ public class Enemy : RegularUpdater {
         } else return false;
     }
 
-    private static readonly ReflWrap<VTP> SuicideVTP = (Func<VTP>)"tprot cx 1.6".Into<VTP>;
+    private static readonly VTP SuicideVTP = VTPRepo.RVelocity(_ => new Vector2(1.6f, 0));
     public void DoSuicideFire() {
         var bt = LevelController.DefaultSuicideStyle;
-        if (string.IsNullOrWhiteSpace(bt)) bt = "triangle-black/w";
+        if (string.IsNullOrWhiteSpace(bt)) 
+            bt = "triangle-black/w";
         var angleTo = M.AtanD(BulletManager.PlayerTarget.location - Beh.rBPI.loc);
         int numBullets = GameManagement.Difficulty.numSuicideBullets;
         for (int ii = 0; ii < numBullets; ++ii) {
-            BulletManager.RequestSimple(bt, null, null, new Movement(SuicideVTP, Beh.rBPI.loc, 
-                angleTo + (ii - numBullets / 2) * 120f / numBullets), 0, 0, null, false);
+            var mov = new Movement(SuicideVTP, Beh.rBPI.loc,
+                angleTo + (ii - numBullets / 2) * 120f / numBullets);
+            BulletManager.RequestSimple(bt!, null, null, mov, new ParametricInfo(in mov), false);
         }
     }
     
@@ -521,16 +525,5 @@ public class Enemy : RegularUpdater {
     public static readonly ExFunction findNearestSave = ExUtils.Wrap<Enemy>("FindNearestSave", new[] {
         typeof(Vector2), typeof(int?), typeof(int).MakeByRefType(), typeof(Vector2).MakeByRefType()
     });
-    
-    
-    public static readonly ExFunction hpRatio =
-        ExUtils.Wrap<Enemy, BEHPointer>("BEH_HPRatio");
-    [UsedImplicitly]
-    public static float BEH_HPRatio(BEHPointer behp) => behp.beh.Enemy.EffectiveBarRatio;
-
-    public static readonly ExFunction photosTaken =
-        ExUtils.Wrap<Enemy, BEHPointer>("BEH_PhotosTaken");
-    [UsedImplicitly]
-    public static float BEH_PhotosTaken(BEHPointer behp) => behp.beh.Enemy.PhotosTaken;
 }
 }

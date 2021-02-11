@@ -1,0 +1,11 @@
+Key,EN,Notes,JP
+generic_off,Off,,OFF
+generic_on,On,,ON
+generic_no,No,,いいえ
+generic_yes,Yes,,はい
+donotshow,__do_not_show__,,
+generic_default,Default,,デフォルト
+generic_deleted,---Deleted---,,ーー削除ーー
+generic_na,-,,-
+render_hoursminssecs,{0}h {1}m {2}s,,{0}時{1}分{2}秒
+render_minssecs,{0}m {1}s,,{0}分{1}秒

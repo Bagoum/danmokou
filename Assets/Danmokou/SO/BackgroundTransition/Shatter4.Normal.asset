@@ -29,6 +29,7 @@ MonoBehaviour:
       fragmentMaterial: {fileID: 2100000, guid: 0a844a29330f1354aba60407e0634c4e,
         type: 2}
       fragmentRadius: 0.707
+      fragmentSides: 4
       fragMaxInitSpeed: 2.5
       fragGravity: 2.5
       fragRotAccelMag: {x: 30, y: 60}

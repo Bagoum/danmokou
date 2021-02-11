@@ -50,17 +50,12 @@ public enum AnimationType {
 }
 
 public static partial class EnumHelpers {
-    public static Vector2 Direction(this LRUD d) {
-        switch (d) {
-            case LRUD.UP:
-                return Vector2.up;
-            case LRUD.DOWN:
-                return Vector2.down;
-            case LRUD.LEFT:
-                return Vector2.left;
-            default:
-                return Vector2.right;
-        }
-    }
+    public static Vector2 Direction(this LRUD d) =>
+        d switch {
+            LRUD.UP => Vector2.up,
+            LRUD.DOWN => Vector2.down,
+            LRUD.LEFT => Vector2.left,
+            _ => Vector2.right
+        };
 }
 }

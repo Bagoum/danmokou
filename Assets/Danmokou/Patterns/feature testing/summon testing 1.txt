@@ -9,11 +9,11 @@ phase 40 #{
         position 0 0
         async enemy01 <2;:45> gcr2 240 4 <;:80> { } summon
             tpnrot cy 0.2
-            here paction 0
+            paction 0
 				async gem-orange/b <0.5;:> gcr2 70 3 <> { delay 40 } gsr2 10 <36> . s tprot cx 1
                 async enemy01 <1;:> gcr2 60 8 <;:45> { } summon
                     tprot cxy 1 0.4
-                    here paction 0
+                    paction 0
                 ## purple streams in direciton of movement, red slightly lower (red is equiv. to <1;0>, where movement is <1;0.4>)
                         async gem-red/w <0.5;:> gcr2 20 _ <> { } s tprot cx 1.5
                         async gem-purple/w <0.5;:> gcr2 20 _ <> { face v } s tprot cx 2
@@ -29,9 +29,10 @@ phase 40 #{
 phase 40 #{
     paction 0
         position 0 0
-        bullet enemy01 <2;-2:> cre 60 5 <;1:> summon eff <>
+        async enemy01 <2;-2:> gcr2 60 5 <;1:> { } summon
             tpnrot cx 0.2
-            here bullet gem-red/w <0.5;:> conce s tp-rot rotate 20 cx 1
+            async gem-red/w <0.5;:> conce s rvelocity rotate 20 cx 1
+			{ }
 
 #}
    

@@ -283,11 +283,12 @@ public class ETime : MonoBehaviour {
     /// Script and FF-viewable stopwatches that move with game time.
     /// </summary>
     public class Timer : IRegularUpdater {
+        public string name;
         /// <summary>
         /// Frame counter, with multiplier built-in.
         /// </summary>
-        private float frames = 0f;
-        private float seconds => frames * FRAME_TIME;
+        public float Frames = 0f;
+        public float Seconds => Frames * FRAME_TIME;
         /// <summary>
         /// Speed multiplier.
         /// </summary>
@@ -303,7 +304,7 @@ public class ETime : MonoBehaviour {
         }
 
         public void Restart(float mult = 1f) {
-            frames = 0;
+            Frames = 0;
             multiplier = mult;
             enabled = true;
         }
@@ -318,7 +319,7 @@ public class ETime : MonoBehaviour {
         public void RegularUpdateParallel() { }
 
         public void RegularUpdate() {
-            if (enabled) frames += multiplier;
+            if (enabled) Frames += multiplier;
         }
 
         public void FirstFrame() { }
@@ -338,7 +339,8 @@ public class ETime : MonoBehaviour {
             timer.Stop();
         }
 
-        private Timer() {
+        private Timer(string name) {
+            this.name = name;
             token = RegisterRegularUpdater(this);
         }
 
@@ -346,7 +348,7 @@ public class ETime : MonoBehaviour {
 
         public static Timer GetTimer(string name) {
             if (!timerMap.TryGetValue(name, out Timer t)) {
-                t = timerMap[name] = new Timer();
+                t = timerMap[name] = new Timer(name);
             }
             return t;
         }
@@ -367,8 +369,8 @@ public class ETime : MonoBehaviour {
             timerMap.Clear();
         }
 
-        public Expression exFrames => Expression.PropertyOrField(Expression.Constant(this), "frames");
-        public Expression exSeconds => Expression.PropertyOrField(Expression.Constant(this), "seconds");
+        public Expression exFrames => Expression.PropertyOrField(Expression.Constant(this), "Frames");
+        public Expression exSeconds => Expression.PropertyOrField(Expression.Constant(this), "Seconds");
     }
 
     public void OnDestroy() {

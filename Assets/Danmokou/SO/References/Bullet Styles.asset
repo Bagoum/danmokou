@@ -137,6 +137,9 @@ MonoBehaviour:
     - name: cwheel
       prefab: {fileID: 2677688450528804024, guid: 98b63d55d8fc83341a6b624147a27d8d,
         type: 3}
+    - name: cwheelio
+      prefab: {fileID: 2677688450528804024, guid: 6da4e58fb270d5242a3ab438fa1de436,
+        type: 3}
   - groupTitle: Shot Styles
     prefabs:
     - name: needle

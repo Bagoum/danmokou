@@ -1,0 +1,56 @@
+Key,EN,Notes,JP
+mtcirc1,"You should see a large red circle on a green box in the upper left corner. If the red circle is invisible or in the center of the screen, turn the renderer option to LEGACY in the pause menu. ({0} to continue)",,左上に大きな赤い丸と緑色の四角が見えるはず。赤い丸が見えなければ、それとも赤い丸はプレイエリアの真ん中に位置していれば、ポーズメニューで「レンダラー」の設定を「旧型」に変えてください。（{0}押すと続く）
+mtsafe2,Lasers with letters or patterns are SAFE LASERS. They will not damage you. ({0} to continue),,左側のレーザは「セーフレーザ」です。文字やパターンのあるレーザはプレーヤにダメージを与えません。（{0}押すと続く）
+,,,
+welcome1,"Welcome to the tutorial! When you see a message in white, press {0} to continue.",,チュートリアルへようこそ！白いメッセージを見ると、{0}を押せば次のメッセージが現れる。
+blue2,"When you see a message in blue, follow the instructions.\nPress {0} to open the pause menu.",,青いメッセージを見ると、指図に従ってください。\n{0}を押してポーズメニューを開いてください。
+pause3,The pause menu has important settings as well as control flow options.,,パーズメニューには、設定と制御流れの機構があります。
+shaders4,"If the game is running slow, you can try lowering visual quality or lowering the resolution.",,フレームレートが低ければ画質や解像度を下げて見てください。
+shaders5,Visual Quality option ------->\nTry changing the visual quality. It takes effect on unpause.,,画質設定ーーーー＞\n画質を変えてください。ポースを解除するたびに効果が出ます。
+res6,Resolution option ---------->\nTry changing the resolution. It takes effect immediately.,,解像度設定ーーーー＞\n解像度を変えてください。即時に効果が出ます。
+refresh7,"Refresh rate option ---------->\nThis is the game speed. The engine will determine this automatically, but you can adjust it if the game is too fast or too slow.",,リフレッシュ速度ー＞\nゲームは自動的に最適の選択肢を選ぶので、フレームレートが普通であればこの設定を変える必要はありません。
+fullscreen8,Fullscreen option ---------->\nSome computers have trouble playing games in fullscreen. Try turning this off if you have lag.,,フルスクリーン設定ー＞\nインプットラグとかが発生するとこれを変えて見てください。
+vsync9,"Vsync option --------------->\nVsync will make the game run smoother, but it may cause input lag.",,垂直同期設定ー＞\n垂直同期はフレームレートを円滑にするが、インプットラグを生じる可能性があります。
+inputsmooth10,"If you are sensitive to input lag, turn input smoothing off from the main menu options.",,インプットラグに敏感のお方は、メインメニューから「インプットスムージング」をOFFにしてください。
+unpause11,Unpause by pressing {0} or selecting the unpause option.,,{0}を押して、または「再開」のボタンを押して、ポーズを解除してください。
+redcircle12,"You should now see a large red circle on a green box in the upper left corner, and two lasers on the right side of the screen.",,左上に大きな赤い丸と緑色の四角、右側に二つのレーザが見えるはず。
+legacy13,"If you cannot see the red circle, or the red circle appears to be in the center of the screen, turn the renderer option to LEGACY in the pause menu.",,赤い丸が見えなければ、それとも赤い丸はプレイエリアの真ん中に位置していれば、ポーズメニューで「レンダラー」の設定を「旧型」に変えてください。
+safelaser14,The lasers on the right are SAFE LASERs. Lasers with letters or patterns do no damage.,,右側のレーザは「セーフレーザ」です。文字やパターンのあるレーザはプレーヤにダメージを与えません。
+fire15,Hold {0} to fire.,,{0}を押し続けてショットを撃ってください。
+move16,"Use the arrow keys, the left joystick, or the D-Pad to move around.",,矢印キー・左ジョイスティック・十字キーを押して移動してください。
+focus17,Hold {0} to move slow (focus mode).,,{0}を押し続けて低速モードを発動してください。
+boss18,This is a boss enemy. The red circle around the boss is its healthbar.,,これはボスです。ボスを回る桃色の線はボスのHPバーです。
+hpbar19,The white line at the bottom of the playable area changes into a colored boss healthbar when a boss is active.,,プレイエリアの下にある白い線は、ボスが現れると色付きのボスHPバーになります。
+ns20,The boss has started a nonspell card. Try shooting down the boss. You do up to 25% more damage when closer to the boss.,,ボスが「ノンスペル(NON)」をはじめました。ボスを撃ってください。ボスを近くから撃つとダメージが25%まで上昇します。
+nss21,"This time, you can see two parts to the healthbar. The bottom half is the current nonspell card. The top half is the following spell card. Try shooting down the boss.",,今はボスHPバーが二つに分けています。下の半分は現在のノンスペルです。上の半分は次の「スペル(SPELL)」です。ボスを撃ってください。
+spell22,"The boss has started a spell card, using only the top half of the healthbar. Try shooting down the boss.",,ボスはスペルに移行しました。ボスを撃ってください。
+survival23,The boss has started a survival card. You cannot shoot down the boss. Wait for the timeout to the right of this text to hit zero.,,ボスは「サバイバル(SURVIVAL)」をはじめました。サバイバルの時はボスを撃てません。このテキストの右にあるタイマーがゼロになるまで死なないように頑張ってください。
+items24,<size=2.17>The amount of items dropped by the boss decreases gradually after 50% of the timeout has elapsed. Defeat the boss within the first 50% of the timeout for maximum rewards. (Does not apply to survival cards.)</size>,,ボスが落とすアイテムの数は、タイマーが50%経たあと徐々に下がります。最大限のアイテムを得るために、ボスをなるべく早く倒してください。＊サバイバルはこの限りでない 
+bullets25,Make sure to dodge the boss' bullets while shooting them down!,,ボスの弾幕を避けながらボスを撃つのが最善策。
+shoot26,"Shoot down the boss, and try not to get hit.",,弾に当てられずにボスを倒してください。
+lives27,"These are your lives. ------->\nA red dot is worth 2 lives,\na pink dot is worth 1 life.",,残機ーーーーーー＞\n赤色のドットは２ライフに等しく、桃色のドットは１ライフに等しい。
+dots28,"There are 9 dots. Right now, you have 10 lives.",,今はドットは9つあって、残機は10です。
+dots29,Now you have 15 lives.,,今は残機は15です。
+dots30,Now you have 1 life.,,今は残機は1です。
+nobombs31,"If you are hit by bullets, you will lose a life. There are no bombs.",,被弾したら残機は1減ります。ボムはありません。
+pleasedie32,Try getting hit by the bullets.,,被弾してください。
+deathscreen33,"When you run out of lives, this screen will appear. Depending on the game mode, you may be able to continue. Select the continue option-- there's still more tutorial left!",,残機が０になるとこのメニューが現れます。ゲームモード次第続けられます。「続ける」ボタンを押してください。チュートリアルはまだ終わってません！
+lifeitems34,These are your life items. ->\nFulfill the requirement to get an extra life.,,ライフアイテムー＞\nライフアイテムを集めればエクステンドします。
+lifeitems35,"Collect life items (red) by running into them. If you go above the point of collection, all items will move to you.",,ライフアイテム（赤）に直接触れれば取れます。プレイエリアの上部にある自動回収線を超えればすべてのアイテムを回収します。
+valueitems36,"Value items (blue) increase your score by {0}, with a bonus if you collect them higher on the screen.",,得点アイテム（青）のベース点数は{0}です。プレイエリアの上の方で取るほどボーナスが出ます。
+points37,"Get 75,000 points by collecting value items.",,"得点アイテムを集めて得点を75,000得てください。"
+scoremult38,The score multiplier is the number below this text.\nIt multiplies the points gained from value items. Increase it by collecting point++ (green) items.,,このテキストの真下にある数字はスコアマルチプライヤーです。得点アイテムの点数はこの数に掛けます。点数増加アイテム（緑）を集めればスコアマルチプライヤーは増加します。
+faith39,"The faith meter is the white bar below the multiplier. It will empty over time, but graze and defeating enemies will restore it. When empty, your multiplier will fall by {0}.",,スコアマルチプライヤーの真下にある白いゲージは信仰メートルです。時間が経て減少します。グレイズすれば・敵を倒せば復します。メートルをすべて失ったらスコアマルチプライヤーは{0}減少します。
+faithblue40,"While the faith meter is blue, it will not decay. Completing stage or boss sections, or collecting items, will add blue to the faith meter.",,信仰メートルは青い時は減少しません。ステージ部やボススペルカードを倒せば・アイテムを回収すれば信仰メートルは短時間青くなります。
+graze41,"The total graze count also increases the points gained from value items. This bonus is hidden, but does not decay.",,グレイズの合計数によって得点アイテムの点数にボーナスが出ます。このボーナスは見えないが、減少とかはしません。
+scoremult42,"Raise the score multiplier to 1.11 by collecting point++ items, then let it decay back to 1.",,点数増加アイテムを集めてスコアマルチプライヤーを1.11まで増加してください。その後1まで減少させてください。
+scoreext43,"If you get enough score, you will get extra lives. The first score extend is 2,000,000.",,"得点によってエクステンドします。最初のスコアエクステンドは2,000,000点です。"
+scoreext44,"Get 2,000,000 points by collecting point++ items and value items.",,"得点アイテムと点数増加アイテムを集めて得点を2,000,000得てください。"
+ability45,"There is a yellow bar below the faith meter, which allows you to use a special ability.",,信仰メートルの真下にある黄色のゲージは特殊能力メートルです。
+ability46,"Hold {0} to activate bullet time, which slows the game speed to 50%.",,{0}を押し続けてバレットタイムを発動してください。バレットタイムは時間の経過を50%緩めます。
+ability47,"While in bullet time, value items and point++ items are worth twice as much, and the player moves comparatively faster. Try collecting some items with or without bullet time.",,バレットタイムが作動している間は、得点アイテム・点数増加アイテムの価値は2倍になって、自機の比較的速度は早くなります。バレットタイムが作動している・していない間にアイテムを集めて見てください。
+meter48,You can refill the special meter by collecting yellow gem items.,,ジェムアイテム（黄）を集めれば特殊能力メートルは復します。
+hitbox49,"In general, enemy bullets have much smaller hitboxes than their visual size.",,一通りの弾はスプライトのサイズより当たり判定のサイズが遥かに小さい。
+hitbox50,The exception is sun bullets. These have very large hitboxes. (similar to Subterranean Animism's sun bullets),,例外は太陽弾です。太陽弾の当たり判定は大きいです。（東方地霊殿の核弾に同様）
+safelaser51,"Also, safe lasers do not have hitboxes. Everything above the boss is a normal laser, and everything below is a safe laser.",,セーフレーザに当たり判定は一切ありません。ボスの上にあるレーザは普通であり、ボスの下にあるレーザはセーフレーザです。
+end52,"That's all! To finish the tutorial, select \""Return to Menu\"" from the pause menu.",,チュートリアルおしまい！ポーズメニューの「タイトルに戻る」ボタンを押してください。

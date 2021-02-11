@@ -15,13 +15,17 @@ MonoBehaviour:
   freeSpeed: 4.6
   focusSlowdown: 0.44
   hitboxRadius: 0.034
-  grazeboxRadius: 0.42
+  grazeboxRadius: 0.47
   key: basic-reimu-camera
-  shortTitle: Shameireimu
+  shortTitle:
+    useReference: 1
+    reference: players.reimu
+    hardcoded:
+      en: 
+      jp: 
+      _showEnOnly: 0
   title: Shameireimu Aya
   prefab: {fileID: 2884352696324497640, guid: 1b04f67ada23b914fb70274c9361f3be, type: 3}
-  shots:
-  - {fileID: 11400000, guid: 3c69cff4d6513f14e880462e80103a4b, type: 2}
   shots2:
   - ordinal: C
     shot: {fileID: 11400000, guid: 3c69cff4d6513f14e880462e80103a4b, type: 2}

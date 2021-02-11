@@ -9,7 +9,7 @@ gtr {
 		wait(8)
 		colorf({ red blue green yellow }, p)
 		preloop {
-			rv2.a =f atan(if(odd p, playerpastdirection($history), playermarisaadirection($history)))
+			rv2.a =f atan(if(odd p, playerpastdir(mine, $history), playermarisaadir(mine, $history)))
 		}
 	} simple(rvelocity(cx(-8)), {
 		player(20, 20, oh1-red)

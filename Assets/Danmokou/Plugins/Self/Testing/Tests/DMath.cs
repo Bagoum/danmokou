@@ -10,10 +10,10 @@ public static class DMath {
         Assert.AreEqual(new[] {1,2,3,4}, new[]{1,2}.Extend(new[]{3,4}));
         var lis = new List<int>() { 2 };
         var ol = new List<int>() { 1 };
-        ol.AssignOrExtend(ref lis);
+        ol.AssignOrExtend(ref lis!);
         Assert.AreEqual(new List<int>() { 2, 1 }, lis);
-        lis = null;
-        ol.AssignOrExtend(ref lis);
+        lis = null!;
+        ol.AssignOrExtend(ref lis!);
         Assert.AreEqual(ol, lis);
     }
 

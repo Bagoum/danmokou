@@ -1,10 +1,10 @@
 module FTests.Common
 
-open Common
+open FCommon
 open System
-open Common.Types
-open Common.Functions
-open Common.Extensions
+open FCommon.Types
+open FCommon.Functions
+open FCommon.Extensions
 open NUnit.Framework
 open Utils
         
@@ -63,3 +63,8 @@ let SeparateBy() =
     Assert.AreEqual(separateBy 0 [1;2;3], [1;0;2;0;3])
     Assert.AreEqual(separateBy 0 [1], [1])
     Assert.AreEqual(separateBy 0 [], [])
+
+[<Test>]
+let MixBack() =
+    Assert.AreEqual(mixBack [None; Some 1; Some 2; None; None; Some 5] [0; 3; 4],
+                    [0; 1; 2; 3; 4; 5])

@@ -5,6 +5,7 @@ using DMK.Core;
 using DMK.DMath;
 using DMK.GameInstance;
 using DMK.Player;
+using DMK.Scriptables;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
 using ProtoBuf;
@@ -21,10 +22,11 @@ namespace DMK.GameInstance {
 public struct CardHistory {
     public string campaign;
     public string boss;
+    public int bossIndex;
     public int phase;
     public bool captured;
     [JsonIgnore] [ProtoIgnore]
-    public (string campaign, string boss, int phase) Key => (campaign, boss, phase);
+    public ((string campaign, int boss), int phase) Key => ((campaign, bossIndex), phase);
 }
 /// <summary>
 /// Records information about a game run-through that may or may not have been completed.
@@ -33,8 +35,12 @@ public struct CardHistory {
 [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
 public class InstanceRecord {
     public SharedInstanceMetadata.Saveable SavedMetadata { get; set; }
+
+    [JsonIgnore] [ProtoIgnore] 
+    private SharedInstanceMetadata? _lazySharedInstanceMeta = null;
     [JsonIgnore] [ProtoIgnore]
-    public SharedInstanceMetadata SharedInstanceMetadata => new SharedInstanceMetadata(SavedMetadata);
+    public SharedInstanceMetadata SharedInstanceMetadata => 
+        _lazySharedInstanceMeta ??= new SharedInstanceMetadata(SavedMetadata);
     
     public InstanceMode Mode { get; set; }
     public (string campaign, 
@@ -65,9 +71,16 @@ public class InstanceRecord {
     
     public AyaPhoto[] Photos { get; set; } = new AyaPhoto[0];
 
-    [CanBeNull] public string Ending { get; set; } = null;
+    public string? Ending { get; set; } = null;
+    
+    //Miscellaneous stats
+    public int HitsTaken { get; set; }
+    public int TotalFrames { get; set; }
+    public int MeterFrames { get; set; }
 
+#pragma warning disable 8618
     public InstanceRecord() { } //JSON constructor
+#pragma warning restore 8618
     public InstanceRecord(InstanceRequest req, InstanceData end, bool completed) {
         SavedMetadata = new SharedInstanceMetadata.Saveable(req.metadata);
         RequestKey = InstanceRequest.CampaignIdentifier(req.lowerRequest).Tuple;
@@ -92,6 +105,9 @@ public class InstanceRecord {
         Score = end.Score;
         CardCaptures = end.CardCaptures.ToList();
         OneCreditClear = !end.Continued;
+        HitsTaken = end.HitsTaken;
+        TotalFrames = end.TotalFrames;
+        MeterFrames = end.MeterFrames;
     }
 
     [JsonIgnore] [ProtoIgnore]
@@ -111,31 +127,26 @@ public class InstanceRecord {
     public const int BossPracticeNameLength = 11;
     [JsonIgnore] [ProtoIgnore]
     private string RequestDescription => ReconstructedRequest.Resolve(
-        c => $"{c.campaign.campaign.shortTitle.PadRight(10)} All",
-        b => $"{b.boss.boss.ReplayName.ValueOrEn.PadRight(BossPracticeNameLength)} p{b.phase.IndexInParentPhases}",
-        c => $"{c.Boss.ReplayName.ValueOrEn.PadRight(10)} p{c.phase.phase.IndexInParentPhases}-{c.ChallengeIdx}",
-        s => $"{s.stage.campaign.campaign.shortTitle.PadRight(10)} s{s.stage.stageIndex}"
-    );
+        //4+8
+        c => $"All:{c.campaign.campaign.shortTitle.PadRight(8)}",
+        //3+9
+        b => $"p{b.phase.IndexInParentPhases}:{b.boss.boss.ReplayName.ValueOrEn.PadRight(9)}",
+        //5+9 -- note that challenges records do not show next to standard records, so misalignment is OK
+        c => $"p{c.phase.phase.IndexInParentPhases}-{c.ChallengeIdx}:{c.Boss.ReplayName.ValueOrEn.PadRight(9)}",
+        //8+3
+        s => $"s{s.stage.stageIndex}:{s.stage.campaign.campaign.shortTitle.PadRight(8)}"
+    ).PadRight(12);
     
-    public string AsDisplay(bool showScore, bool showRequest, bool defaultName=false) {
+    public LocalizedString AsDisplay(bool showScore, bool showRequest, bool defaultName=false, bool showTime=true) {
         var team = SharedInstanceMetadata.team;
         var p = team.players.TryN(0)?.player;
         var s = team.players.TryN(0)?.shot;
-        var playerDesc = (p == null) ? "???" : p.shortTitle;
-        var shotDesc = "?";
-        if (p != null && s != null) {
-            var os = p.shots2.FirstOrDefault(_os => _os.shot == s);
-            if (os.shot == s) {
-                if (string.IsNullOrWhiteSpace(os.ordinal)) {
-                    if (os.shot.isMultiShot) shotDesc = "X";
-                } else shotDesc = os.ordinal;
-            }
-        }
-        var pstr = $"{playerDesc}-{shotDesc}".PadRight(10);
+        var pstr = ShotConfig.PlayerShotDescription(p, s).PadRight(10);
         var score = showScore ? $"{Score} ".PadLeft(10, '0') : "";
         var name = (string.IsNullOrEmpty(CustomNameOrPartial) && defaultName) ? "[NAME]" : CustomNameOrPartial;
-        var req = showRequest ? $"{RequestDescription.PadRight(16)} " : "";
-        return $"{name.PadRight(12)} {score} {pstr} {req}{SavedMetadata.difficulty.DescribePadR()} {Date.SimpleTime()}";
+        var req = showRequest ? $"{RequestDescription} " : "";
+        var date = showTime ? Date.SimpleTime() : Date.SimpleDate();
+        return new LocalizedString($"{name.PadRight(12)} {score} {pstr} {req}{SavedMetadata.difficulty.DescribePadR()} {date}");
     }
 }
 

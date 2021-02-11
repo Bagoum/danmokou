@@ -14,8 +14,8 @@ public class CutinGhost : Pooled<CutinGhost> {
     private float time;
     private Cutin.GhostConfig cfg;
     private Vector3 velocity;
-    private MaterialPropertyBlock pb;
-    private SpriteRenderer sr;
+    private MaterialPropertyBlock pb = default!;
+    private SpriteRenderer sr = default!;
 
     protected override void Awake() {
         pb = new MaterialPropertyBlock();

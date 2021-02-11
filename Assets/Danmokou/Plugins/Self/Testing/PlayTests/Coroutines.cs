@@ -9,7 +9,7 @@ using UnityEngine;
 using UnityEngine.TestTools;
 
 namespace DMK.Testing {
-public class Coroutines {
+public class TestCoroutines {
     private static IEnumerator NestLoC(ICancellee cT) {
         if (cT.Cancelled) yield break;
         yield return LeaveOnCancel(cT);
@@ -48,6 +48,7 @@ public class Coroutines {
     private static IEnumerator SelfDestroy2(CoroutineRegularUpdater cru) {
         yield return null;
         cru.gameObject.SetActive(false);
+        // ReSharper disable once RedundantJumpStatement
         yield break;
     }
 

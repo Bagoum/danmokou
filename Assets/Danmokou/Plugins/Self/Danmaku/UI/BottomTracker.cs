@@ -7,12 +7,12 @@ using UnityEngine;
 
 namespace DMK.UI {
 public class BottomTracker : RegularUpdater {
-    private BehaviorEntity source;
-    [CanBeNull] private Enemy enemy;
-    private Transform tr;
-    public TextMeshPro text;
-    private ICancellee cT;
-    public GameObject container;
+    private BehaviorEntity source = null!;
+    private Enemy? enemy;
+    private Transform tr = null!;
+    public TextMeshPro text = null!;
+    private ICancellee cT = null!;
+    public GameObject container = null!;
     private bool containerActive = true;
 
     private void Awake() {

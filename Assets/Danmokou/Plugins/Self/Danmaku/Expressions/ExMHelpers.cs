@@ -25,7 +25,8 @@ public static class ExMHelpers {
     private const double dTAU = Math.PI * 2;
     private const double radRatio = LookupCt / dTAU;
     private const double degRatio = LookupCt / 360.0;
-    private static readonly Vector2[] LookupTable = new Vector2[LookupCt];
+    public static readonly Vector2[] LookupTable = new Vector2[LookupCt];
+    public static readonly Expression exLookupTable = Expression.Field(null, typeof(ExMHelpers), "LookupTable");
     static ExMHelpers() {
         const double piIncr = dTAU / LookupCt;
         for (int ii = 0; ii < LookupCt; ++ii) {
@@ -66,13 +67,10 @@ public static class ExMHelpers {
     public static readonly Ex EN2 = Ex.Constant(-2f);
     public static readonly Ex EN05 = Ex.Constant(-0.5f);
     public static readonly Ex v20 = Ex.Constant(Vector2.zero);
-
-    private static readonly ExFunction qRotate = ExUtils.Wrap<Quaternion>("op_Multiply", 
-        new[] { typeof(Quaternion), typeof(Vector3)});
-    public static Ex QRotate(Ex quat, Ex v3) => qRotate.Of(quat, v3);
+    public static Ex QRotate(Ex quat, Ex v3) => Ex.Multiply(quat, v3);
     public static Expression ExC(object x) => Ex.Constant(x);
 
-    public static BlockExpression RotateLerp(Ex target, Ex source, TExPI bpi, bool isRate, bool isTrue, Ex rate) {
+    public static BlockExpression RotateLerp(Ex target, Ex source, TExArgCtx bpi, bool isRate, bool isTrue, Ex rate) {
         if (isRate) rate = rate.Mul(M.degRad);
         if (isTrue) rate = rate.Mul(ETime.FRAME_TIME);
         TExV2 v = TExV2.Variable();
@@ -80,9 +78,14 @@ public static class ExMHelpers {
         Expression[] exprs = new Expression[3];
         exprs[1] = ang.Is(RadDiff(target, v));
         if (isTrue) {
-            Ex data = DataHoisting.GetClearableDictV2();
-            exprs[0] = v.Is(ExUtils.DictIfExistsGetElseSet<uint, Vector2>(data, bpi.id, source));
-            exprs[2] = data.DictSet(bpi.id, RotateRad(isRate ? (Ex)Limit(rate, ang) : ang.Mul(rate), v));
+            var key = bpi.Ctx.NameWithSuffix("_RotateLerpKey");
+            exprs[0] = v.Is(
+                Ex.Condition(FiringCtx.Contains<Vector2>(bpi, key),
+                    FiringCtx.GetValue<Vector2>(bpi, key),
+                    FiringCtx.SetValue<Vector2>(bpi, key, source)
+                ));
+            exprs[2] = 
+                FiringCtx.SetValue<Vector2>(bpi, key, RotateRad(isRate ? (Ex)Limit(rate, ang) : ang.Mul(rate), v));
         } else {
             exprs[0] = v.Is(source);
             exprs[2] = RotateRad(isRate ? 
@@ -91,28 +94,29 @@ public static class ExMHelpers {
         }
         return Ex.Block(new ParameterExpression[] {v, ang}, exprs);
     }
-    public static BlockExpression LaserRotateLerp(Ex target, Ex source, TExPI bpi, Ex rate) {
+    public static BlockExpression LaserRotateLerp(Ex target, Ex source, TExArgCtx bpi, Ex rate) {
         var r1 = rate.Mul(ExC(ETime.FRAME_TIME));
         TExV2 v = TExV2.Variable();
         TEx<float> ang = ExUtils.VFloat();
-        Ex dirD = DataHoisting.GetClearableDictV2();
-        Ex sideD = DataHoisting.GetClearableDictF();
+        var dirKey = bpi.Ctx.NameWithSuffix("_LaserRotateLerpDirKey");
+        var sideKey = bpi.Ctx.NameWithSuffix("_LaserRotateLerpSideKey");
         var inter_ang = HighPass(ExC(0.01f), RadDiff(target, v));
         return Ex.Block(new ParameterExpression[] {v, ang},
-            Ex.Condition(DictContains<uint, Vector2>(dirD, bpi.id).And(bpi.t.GT0()),
+            Ex.Condition(
+                bpi.FCtxHas<Vector2>(dirKey).And(bpi.t.GT0()),
                 Ex.Block(
-                    v.Is(dirD.DictGet(bpi.id)),
-                    ang.Is(Ex.Condition(sideD.DictGet(bpi.id).LT0(),
+                    v.Is(bpi.FCtxGet<Vector2>(dirKey)),
+                    ang.Is(Ex.Condition(bpi.FCtxGet<float>(sideKey).LT0(),
                         RadToNeg(inter_ang),
                         RadToPos(inter_ang)
                     )),
-                    dirD.DictSet(bpi.id, RotateRad(Limit(r1, ang), v))
+                    bpi.FCtxSet<Vector2>(dirKey, RotateRad(Limit(r1, ang), v))
                 ),
                 Ex.Block(
                     v.Is(source),
                     ang.Is(RadDiff(target, v)),
-                    sideD.DictSet(bpi.id, Sign(ang)),
-                    dirD.DictSet(bpi.id, RotateRad(Limit(r1, ang), v))
+                    bpi.FCtxSet<float>(sideKey, Sign(ang)),
+                    bpi.FCtxSet<Vector2>(dirKey, RotateRad(Limit(r1, ang), v))
                 )
             )
         );
@@ -140,43 +144,46 @@ public static class ExMHelpers {
             );
     }
 
-    public static Func<S, TEx<float>> SoftmaxShift<S>(Func<S,TEx<float>> sharpness, Func<S,TEx<float>> pivot, Func<S,TEx<float>> f1, Func<S,TEx<float>> f2, string pivotVar) where S: TEx, new()  =>
-        PivotShift(ExM.Softmax, sharpness, pivot, f1, f2, pivotVar);
+    public static Func<TExArgCtx, TEx<float>> SoftmaxShift<S>(Func<TExArgCtx,TEx<float>> sharpness, Func<TExArgCtx,TEx<float>> pivot, Func<TExArgCtx,TEx<float>> f1, Func<TExArgCtx,TEx<float>> f2, string pivotVar) where S: TEx, new()  =>
+        PivotShift<S>(ExM.Softmax, sharpness, pivot, f1, f2, pivotVar);
     
-    public static Func<S, TEx<float>> PivotShift<S>(Func<EEx<float>, TEx<float>[], TEx<float>> shifter, 
-        Func<S,TEx<float>> sharpness, Func<S,TEx<float>> pivot, 
-        Func<S,TEx<float>> f1, Func<S,TEx<float>> f2, string pivotVar) where S: TEx, new() {
+    public static Func<TExArgCtx, TEx<float>> PivotShift<S>(Func<EEx<float>, TEx<float>[], TEx<float>> shifter, 
+        Func<TExArgCtx,TEx<float>> sharpness, Func<TExArgCtx,TEx<float>> pivot, 
+        Func<TExArgCtx,TEx<float>> f1, Func<TExArgCtx,TEx<float>> f2, string pivotVar) where S: TEx, new() {
         if (pivotVar == "t" || pivotVar == "p" || pivotVar == "x") {
-            var tpv = new S();
-            return t => Ex.Block(new ParameterExpression[] {tpv},
-                Ex.Assign(tpv, t),
-                Ex.Assign(pivotVar.Into<Func<S, TEx<float>>>()(tpv), pivot(t)),
-                shifter(sharpness(t), new TEx<float>[] { f1(t), f1(tpv).Add(f2(t).Sub(f2(tpv))) })
-            );
+            return t => {
+                var pivotT = t.MakeCopyForType<S>(out var currEx, out var pivotEx);
+                return Ex.Block(new ParameterExpression[] {pivotEx},
+                    Ex.Assign(pivotEx, currEx),
+                    Ex.Assign(pivotVar.Into<Func<TExArgCtx, TEx<float>>>()(pivotT), pivot(t)),
+                    shifter(sharpness(t), new TEx<float>[] {f1(t), f1(pivotT).Add(f2(t).Sub(f2(pivotT)))})
+                );
+            };
         } else if (pivotVar[0] == Parser.SM_REF_KEY_C) {
             var let = pivotVar.Substring(1);
             return t => shifter(sharpness(t), new TEx<float>[] {
                 f1(t), f2(t).Add(
-                    ReflectEx.Let<S, float, float>(let, pivot, () => f1(t).Sub(f2(t)), t)
+                    ReflectEx.Let<float, float>(let, pivot, () => f1(t).Sub(f2(t)), t)
                 )
             });
         } else throw new Exception($"{pivotVar} is not a valid pivoting target.");
     }
-    public static Func<S, TEx<float>> LogSumShift<S>(Func<S, TEx<float>> sharpness, Func<S, TEx<float>> pivot,
-        Func<S, TEx<float>> f1, Func<S, TEx<float>> f2, string pivotVar) where S : TEx, new() =>
-        PivotShift(ExM.Logsum, sharpness, pivot, f1, f2, pivotVar);
+    public static Func<TExArgCtx, TEx<float>> LogSumShift<S>(Func<TExArgCtx, TEx<float>> sharpness, 
+        Func<TExArgCtx, TEx<float>> pivot, Func<TExArgCtx, TEx<float>> f1, Func<TExArgCtx, TEx<float>> f2, 
+        string pivotVar) where S : TEx, new() =>
+        PivotShift<S>(ExM.Logsum, sharpness, pivot, f1, f2, pivotVar);
     
-    public static Func<S,TEx<T>> Pivot<S,T>(Func<S,TEx<float>> pivot, Func<S,TEx<T>> f1, Func<S,TEx<T>> f2, Func<S, TEx> pivotVar) 
+    public static Func<TExArgCtx,TEx<T>> Pivot<S, T>(Func<TExArgCtx,TEx<float>> pivot, Func<TExArgCtx,TEx<T>> f1, Func<TExArgCtx,TEx<T>> f2, Func<TExArgCtx, TEx> pivotVar) 
         where S: TEx, new() => t => {
         var pv = VFloat();
-        var cold = new S();
+        var pivotT = t.MakeCopyForType<S>(out var currEx, out var pivotEx);
         return Ex.Block(new[] {pv},
             pv.Is(pivot(t)),
             Ex.Condition(pv.LT(pivotVar(t)), 
-                Ex.Block(new ParameterExpression[] {cold},
-                    Ex.Assign(cold, t),
-                    Ex.Assign(pivotVar(cold), pv),
-                    Ex.Add(f1(cold), Ex.Subtract(f2(t), f2(cold)))
+                Ex.Block(new ParameterExpression[] {pivotEx},
+                    Ex.Assign(pivotEx, currEx),
+                    Ex.Assign(pivotVar(pivotT), pv),
+                    Ex.Add(f1(pivotT), Ex.Subtract(f2(t), f2(pivotT)))
                 ),
                 f1(t)
             )
@@ -197,12 +204,14 @@ public static class MoreExExtensions {
     public static Ex LT0<T>(this TEx<T> tex) => ((Ex) tex).LT0();
     public static Ex GT<T>(this TEx<T> tex, Ex than) => ((Ex) tex).GT(than);
     public static Ex GT0<T>(this TEx<T> tex) => ((Ex) tex).GT0();
+    public static Ex Field<T>(this TEx<T> tex, string field) => Ex.PropertyOrField(tex, field);
     
     public static Ex Flatten(this Ex ex, bool reduceMethod=true) => FlattenVisitor.Flatten(ex, reduceMethod);
     public static Ex Flatten(this TEx ex) => FlattenVisitor.Flatten(ex);
     public static Ex Derivate(this Ex ex, Ex x, Ex dx) => DerivativeVisitor.Derivate(x, dx, ex);
     public static string Debug(this Ex ex) => new DebugVisitor().Export(ex);
     public static string FlatDebug(this Ex ex) => ex.Flatten().Debug();
+    public static Ex Linearize(this Ex ex) => new LinearizeVisitor().Visit(ex);
 }
 
 }

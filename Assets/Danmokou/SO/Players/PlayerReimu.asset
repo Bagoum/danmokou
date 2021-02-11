@@ -15,16 +15,24 @@ MonoBehaviour:
   freeSpeed: 4.6
   focusSlowdown: 0.44
   hitboxRadius: 0.034
-  grazeboxRadius: 0.42
+  grazeboxRadius: 0.47
   key: basic-reimu
-  shortTitle: Reimu
+  shortTitle:
+    useReference: 1
+    reference: players.reimu
+    hardcoded:
+      en: 
+      jp: 
+      _showEnOnly: 0
   title: Hakurei Reimu
   prefab: {fileID: 2884352696324497640, guid: fde376048de61e241998f004239cd358, type: 3}
-  shots:
-  - {fileID: 11400000, guid: e89357d08e40831458970df574a4eb13, type: 2}
   shots2:
-  - ordinal: D
+  - ordinal: A
     shot: {fileID: 11400000, guid: e89357d08e40831458970df574a4eb13, type: 2}
+  - ordinal: B
+    shot: {fileID: 11400000, guid: 7aea117ce3a952f42911167011a10d91, type: 2}
+  - ordinal: C
+    shot: {fileID: 11400000, guid: 35ba3e93f4382a84ebdea9e89ab73c60, type: 2}
   uiColor: {r: 0.6509434, g: 0, b: 0.046450462, a: 1}
   shotDisplay: {fileID: 8782343778102116289, guid: 37d24709e73ba524a90e1680f96f3f3f,
     type: 3}

@@ -25,18 +25,13 @@ public struct LocatorStrategy {
     public TargetConfig Target;
     public PerimeterConfig Perimeter;
 
-    public Vector2 Locate(Vector2 source, Vector2 target, float targetRadius) {
-        switch (type) {
-            case Strategy.Source:
-                return Source.Locate(source, target, targetRadius);
-            case Strategy.Target:
-                return Target.Locate(source, target, targetRadius);
-            case Strategy.Perimeter:
-                return Perimeter.Locate(source, target, targetRadius);
-            default:
-                return Vector2.zero;
-        }
-    }
+    public Vector2 Locate(Vector2 source, Vector2 target, float targetRadius) =>
+        type switch {
+            Strategy.Source => Source.Locate(source, target, targetRadius),
+            Strategy.Target => Target.Locate(source, target, targetRadius),
+            Strategy.Perimeter => Perimeter.Locate(source, target, targetRadius),
+            _ => Vector2.zero
+        };
 
     [Serializable]
     public class SourceConfig : LocatorConfig {

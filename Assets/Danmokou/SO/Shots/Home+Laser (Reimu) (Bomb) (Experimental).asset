@@ -13,7 +13,13 @@ MonoBehaviour:
   m_Name: Home+Laser (Reimu) (Bomb) (Experimental)
   m_EditorClassIdentifier: 
   key: reimu-homing-laser
-  title: Homing Amulet / Persuasion Laser
+  title:
+    useReference: 1
+    reference: players.shot_home_laser_exp
+    hardcoded:
+      en: 
+      jp: 
+      _showEnOnly: 0
   description: 'A hybrid shot Reimu developed with Marisa while her needles were
     out for repair.
 
@@ -26,6 +32,8 @@ MonoBehaviour:
   bomb: 1
   defaultPower: 1
   playerChild: 1
+  demoReplay: {fileID: 4900000, guid: f58a179b4f5afb7489944bbfdd2484f5, type: 3}
+  demoSetupSM: {fileID: 4900000, guid: 83d895926f063264f9adc5887261db81, type: 3}
   isMultiShot: 0
   multiD: {fileID: 0}
   multiM: {fileID: 0}

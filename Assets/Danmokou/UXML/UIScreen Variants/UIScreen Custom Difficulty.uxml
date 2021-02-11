@@ -2,7 +2,7 @@
     <Style src="UIScreen.uss" />
     <ui:Label text="Custom Difficulty Settings" display-tooltip-when-elided="True" class="header" />
     <ui:VisualElement name="Container">
-        <ui:VisualElement class="column" style="flex-grow: 2.4; padding-right: 120px;">
+        <ui:VisualElement class="column" style="flex-grow: 2; padding-right: 120px;">
             <ui:ListView focusable="True" show-border="false" show-bound-collection-size="true" class="columnList" />
         </ui:VisualElement>
         <ui:VisualElement class="column" style="flex-grow: 2;">

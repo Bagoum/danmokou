@@ -83,7 +83,7 @@ Material:
     - _Speed: 0.5
     - _Spokes: 4
     - _SrcBlend: 1
-    - _T: 0
+    - _T: 2.8
     - _UVSec: 0
     - _ZWrite: 1
     m_Colors:

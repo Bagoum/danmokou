@@ -10,11 +10,10 @@ using DMK.DMath;
 using DMK.Services;
 using JetBrains.Annotations;
 using DMK.SM;
-using ExFXY = System.Func<DMK.Expressions.TEx<float>, DMK.Expressions.TEx<float>>;
-using ExBPY = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<float>>;
-using ExTP = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<UnityEngine.Vector2>>;
-using ExBPRV2 = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<DMK.DMath.V2RV2>>;
 using GCP = DMK.Danmaku.Options.GenCtxProperty;
+using ExBPY = System.Func<DMK.Expressions.TExArgCtx, DMK.Expressions.TEx<float>>;
+using ExTP = System.Func<DMK.Expressions.TExArgCtx, DMK.Expressions.TEx<UnityEngine.Vector2>>;
+using ExBPRV2 = System.Func<DMK.Expressions.TExArgCtx, DMK.Expressions.TEx<DMK.DMath.V2RV2>>;
 
 namespace DMK.Danmaku.Patterns {
 /// <summary>
@@ -22,6 +21,7 @@ namespace DMK.Danmaku.Patterns {
 /// The full type is Func{AsyncHandoff, IEnumerator}.
 /// </summary>
 [SuppressMessage("ReSharper", "UnusedMember.Global")]
+[Reflect]
 public static partial class AsyncPatterns {
     private struct APExecutionTracker {
         private LoopControl<AsyncPattern> looper;
@@ -29,12 +29,12 @@ public static partial class AsyncPatterns {
         /// Basic AsyncHandoff to pass around. DIRTY.
         /// </summary>
         private AsyncHandoff abh;
-        [CanBeNull] private readonly Action parent_done;
+        private readonly Action? parent_done;
         public APExecutionTracker(GenCtxProperties<AsyncPattern> props, AsyncHandoff abh, out bool isClipped) {
             looper = new LoopControl<AsyncPattern>(props, abh.ch, out isClipped);
             this.abh = abh;
             parent_done = abh.done;
-            abh.done = null;
+            abh.done = () => { };
             elapsedFrames = 0f;
             wasPaused = false;
         }
@@ -92,14 +92,14 @@ public static partial class AsyncPatterns {
         /// Basic AsyncHandoff to pass around. DIRTY.
         /// </summary>
         private AsyncHandoff abh;
-        [CanBeNull] private readonly Action parent_done;
+        private readonly Action? parent_done;
         private readonly bool waitChild;
         private readonly bool sequential;
         public IPExecutionTracker(GenCtxProperties<AsyncPattern> props, AsyncHandoff abh, out bool isClipped) {
             looper = new LoopControl<AsyncPattern>(props, abh.ch, out isClipped);
             this.abh = abh;
             parent_done = abh.done;
-            abh.done = null;
+            abh.done = () => { };
             elapsedFrames = 0f;
             waitChild = props.waitChild;
             sequential = props.sequential;
@@ -120,7 +120,7 @@ public static partial class AsyncPatterns {
         public bool PrepareLastIteration() => looper.PrepareLastIteration();
         public void FinishIteration() => looper.FinishIteration();
 
-        [CanBeNull] private Func<bool> checkIsChildDone;
+        private Func<bool>? checkIsChildDone;
 
         public void DoAIteration(AsyncPattern[] target) {
             //To prevent secondary sequential children from trying to copy this object's GCX

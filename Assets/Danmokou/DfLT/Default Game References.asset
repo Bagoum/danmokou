@@ -19,7 +19,9 @@ MonoBehaviour:
     patch: 0
   mainMenu: {fileID: 0}
   replaySaveMenu: {fileID: 11400000, guid: 4eb8b66bd76d4d94fa90176835284503, type: 2}
-  unitScene: {fileID: 11400000, guid: 060a74326d15dc94db23e8e4878641e5, type: 2}
+  defaultMenuBackground: {fileID: 0}
+  defaultUIFrame: {fileID: 21300000, guid: fd60a7ae3ce4be640b9b311d9d70969e, type: 3}
+  unitScene: {fileID: 0}
   tutorial: {fileID: 0}
   miniTutorial: {fileID: 0}
   endcard: {fileID: 11400000, guid: 8d6f4f35b7d2da942a254e43329ca03c, type: 2}

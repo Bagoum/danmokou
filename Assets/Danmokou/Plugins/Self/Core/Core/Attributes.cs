@@ -1,4 +1,5 @@
 ﻿using System;
+using JetBrains.Annotations;
 
 namespace DMK.Core {
 
@@ -8,11 +9,9 @@ namespace DMK.Core {
 [AttributeUsage((AttributeTargets.Method))]
 public class FallthroughAttribute : Attribute {
     public readonly int priority;
-    public readonly bool upwardsCast;
 
-    public FallthroughAttribute(int priority=0, bool upcast=false) {
+    public FallthroughAttribute(int priority=0) {
         this.priority = priority;
-        this.upwardsCast = upcast;
     }
 }
 
@@ -75,6 +74,38 @@ public class WarnOnStrictAttribute : Attribute {
 [AttributeUsage(AttributeTargets.Parameter)]
 public class LookupMethodAttribute : Attribute {
 }
+[AttributeUsage(AttributeTargets.Parameter)]
+public class NonExplicitParameterAttribute : Attribute {
+}
+
+/// <summary>
+/// On an assembly, Reflect marks that classes in the assembly should be examined for possible reflection.
+/// <br/>If the assembly is marked, then on a class, Reflect marks that the methods in the class should be reflected.
+/// </summary>
+[AttributeUsage(AttributeTargets.Assembly | AttributeTargets.Class)]
+public class ReflectAttribute : Attribute {
+    public readonly Type? returnType;
+
+    public ReflectAttribute(Type? returnType = null) {
+        this.returnType = returnType;
+    }
+}
+
+/// <summary>
+/// On a GameObject or ScriptableObject field or property, Reflect marks that the field may be subject to an
+///  .Into reflection call. If a type is provided, then the expression baker will treat the field as a string and
+///  run .Into with the given type. Otherwise, it will simply load the field (eg. for properties that return
+///  ReflWrap).
+/// <br/>This attribute is not required, but expression baking may not work without it.
+/// </summary>
+[AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
+public class ReflectIntoAttribute : Attribute {
+    public readonly Type? resultType;
+    public ReflectIntoAttribute(Type? resultType = null) {
+        this.resultType = resultType;
+    }
+}
+
 
 
 }

@@ -7,8 +7,8 @@ using static DMK.Behavior.Display.CutinHelpers;
 
 namespace DMK.Behavior.Display {
 public class MirrorBreak : CoroutineRegularUpdater {
-    private Transform[] children;
-    public Transform controller;
+    private Transform[] children = null!;
+    public Transform controller = null!;
     public float appearDelay = 1.5f;
     public float shatterDelay;
     public Vector3 rotateMin;
@@ -40,8 +40,10 @@ public class MirrorBreak : CoroutineRegularUpdater {
         controller.gameObject.SetActive(true);
         for (; t < shatterDelay; t += ETime.FRAME_TIME) yield return null;
         foreach (var c in children) {
-            RunDroppableRIEnumerator(Rotate(c, RNG.GetV3OffFrame(rotateMin, rotateMax), scaleRotateFor, M.EOutQuad));
-            RunDroppableRIEnumerator(Scale(c, RNG.GetFloatOffFrame(scaleRange.x, scaleRange.y), scaleRotateFor,
+            RunDroppableRIEnumerator(
+                c.RotateTo(RNG.GetV3OffFrame(rotateMin, rotateMax), scaleRotateFor, M.EOutQuad));
+            RunDroppableRIEnumerator(
+                c.ScaleBy(RNG.GetFloatOffFrame(scaleRange.x, scaleRange.y), scaleRotateFor,
                 M.EOutQuad));
             RunDroppableRIEnumerator(Fall(c, RNG.GetFloatOffFrame(fallDelay.x, fallDelay.y), fallAccel));
         }
@@ -55,6 +57,7 @@ public class MirrorBreak : CoroutineRegularUpdater {
             tr.localPosition += vel * ETime.FRAME_TIME;
             yield return null;
         }
+        // ReSharper disable once IteratorNeverReturns
     }
 }
 }

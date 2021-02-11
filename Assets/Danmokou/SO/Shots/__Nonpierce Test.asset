@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4fa22e423a3842e1b90ce62d0372178a, type: 3}
+  m_Name: __Nonpierce Test
+  m_EditorClassIdentifier: 
+  key: nonpierce_test
+  title: A View Upon All Creation
+  description: "A mystical fighting style recreated from legends of Tsukuyomi.\nFeatures
+    a wide laser spread as well as homing pathers. \r\nWhen focused, the lasers narrow
+    and the pathers find targets more accurately.\n"
+  type: Lasers
+  prefab: {fileID: 6169168473649848314, guid: 384b151b5792c36409dd2c346e663375, type: 3}
+  bomb: 0
+  defaultPower: 1000
+  playerChild: 1
+  demoReplay: {fileID: 4900000, guid: f58a179b4f5afb7489944bbfdd2484f5, type: 3}
+  demoSetupSM: {fileID: 4900000, guid: 83d895926f063264f9adc5887261db81, type: 3}
+  isMultiShot: 0
+  multiD: {fileID: 0}
+  multiM: {fileID: 0}
+  multiK: {fileID: 0}
+  onSwap: {fileID: 0}

@@ -28,15 +28,13 @@ public class FrameAnimDisplayController : SpriteDisplayController {
                 return idleAnim;
             }
             
-            [CanBeNull]
-            public Sprite SetAnimationTypeIfPriority(AnimationType typ, bool loop, [CanBeNull] Action onLoopOrFinish) => 
+            public Sprite? SetAnimationTypeIfPriority(AnimationType typ, bool loop, Action? onLoopOrFinish) => 
                 runner.SetAnimationTypeIfPriority(typ, GetFramesForAnimType(typ), loop, onLoopOrFinish);
 
-            public Sprite ResetToIdle() => 
+            public Sprite? ResetToIdle() => 
                 runner.SetAnimationType(AnimationType.None, GetFramesForAnimType(AnimationType.None), true, noop);
 
-            [CanBeNull]
-            public Sprite Update(float dT) {
+            public Sprite? Update(float dT) {
                 var (resetMe, updSprite) = runner.Update(dT);
                 return resetMe ? ResetToIdle() : updSprite;
             }
@@ -46,9 +44,9 @@ public class FrameAnimDisplayController : SpriteDisplayController {
         public BehaviorEntity.DirectionRelation UDRelation;
         public FrameConfig frames;
 
-        private Action<Sprite> setSprite;
+        private Action<Sprite?> setSprite;
         private Action<bool, bool> setScale;
-        public void Initialize(Action<Sprite> spriteSet, Action<bool, bool> scaleSet) {
+        public void Initialize(Action<Sprite?> spriteSet, Action<bool, bool> scaleSet) {
             this.setSprite = spriteSet;
             this.setScale = scaleSet;
             setSprite(frames.ResetToIdle());
@@ -151,7 +149,7 @@ public class FrameAnimDisplayController : SpriteDisplayController {
             setSprite(frames.Update(dT));
         }
 
-        public void Animate(AnimationType typ, bool loop, [CanBeNull] Action done) {
+        public void Animate(AnimationType typ, bool loop, Action? done) {
             setSprite(frames.SetAnimationTypeIfPriority(typ, loop, done));
         }
     }
@@ -172,7 +170,7 @@ public class FrameAnimDisplayController : SpriteDisplayController {
         animate.FaceInDirection(dir);
     }
 
-    public override void Animate(AnimationType typ, bool loop, Action done) {
+    public override void Animate(AnimationType typ, bool loop, Action? done) {
         animate.Animate(typ, loop, done);
     }
 }

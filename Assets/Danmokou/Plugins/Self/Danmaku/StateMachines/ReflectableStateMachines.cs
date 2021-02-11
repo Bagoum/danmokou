@@ -10,7 +10,14 @@ using DMK.Services;
 
 namespace DMK.SM {
 
+/// <summary>
+/// SM-like invocation for non-text SMs.
+/// </summary>
 public delegate Task TaskPattern(SMHandoff smh);
+/// <summary>
+/// SM-like invocation for text SMs.
+/// </summary>
+public delegate Task TTaskPattern(SMHandoff smh);
 public delegate Task Synchronizer(SMHandoff smh);
 
 public class ReflectableLASM : LineActionSM {
@@ -24,14 +31,17 @@ public class ReflectableLASM : LineActionSM {
 /// <summary>
 /// `event`: Trigger events.
 /// </summary>
+[Reflect]
 public class EventLASM : ReflectableLASM {
-    public EventLASM(TaskPattern rs) : base(rs) { }
+    public delegate Task Event(SMHandoff smh);
+    
+    public EventLASM(Event rs) : base(new TaskPattern(rs)) { }
     /// <summary>
     /// Make the player invulnerable for some number of frames.
     /// </summary>
     /// <param name="frames">Invulnerability frames (120 frames per second)</param>
     /// <returns></returns>
-    public static TaskPattern PlayerInvuln(int frames) => smh => {
+    public static Event PlayerInvuln(int frames) => smh => {
         PlayerHP.RequestPlayerInvulnerable.Publish((frames, true));
         SFXService.Request("x-invuln");
         return Task.CompletedTask;
@@ -39,9 +49,10 @@ public class EventLASM : ReflectableLASM {
 
     public const float BossExplodeWait = 1.8f;
     private const float BossExplodeShake = 2.5f;
-    private static readonly ReflWrap<FXY> ShakeMag =(Func<FXY>)(() => Compilers.FXY(b => ExMLerps.EQuad0m10(BossExplodeWait, BossExplodeShake, FXYRepo.T()(b))));
+    private static readonly ReflWrap<FXY> ShakeMag = ReflWrap.FromFunc("BossExplode.ShakeMag",
+        () => Compilers.FXY(b => ExMLerps.EQuad0m10(BossExplodeWait, BossExplodeShake, BPYRepo.T()(b))));
 
-    public static TaskPattern BossExplode() => smh => {
+    public static Event BossExplode() => smh => {
         UnityEngine.Object.Instantiate(ResourceManager.GetSummonable("bossexplode")).GetComponent<ExplodeEffect>().Initialize(BossExplodeWait, smh.Exec.rBPI.loc);
         DependencyInjection.MaybeFind<IRaiko>()?.Shake(BossExplodeShake, ShakeMag, 2, smh.cT, null);
         SFXService.BossExplode();
@@ -53,14 +64,17 @@ public class EventLASM : ReflectableLASM {
 /// <summary>
 /// `anim`: Run animations on the executing BEH.
 /// </summary>
+[Reflect]
 public class AnimatorControllerLASM : ReflectableLASM {
-    public AnimatorControllerLASM(TaskPattern rs) : base(rs) {}
+    public delegate Task Animate(SMHandoff smh);
+    
+    public AnimatorControllerLASM(Animate rs) : base(new TaskPattern(rs)) {}
 
     /// <summary>
     /// Play the attack animation.
     /// </summary>
     /// <returns></returns>
-    public static TaskPattern Attack() => smh => {
+    public static Animate Attack() => smh => {
         smh.Exec.AnimateAttack();
         return Task.CompletedTask;
     };
@@ -69,15 +83,18 @@ public class AnimatorControllerLASM : ReflectableLASM {
 /// <summary>
 /// `timer`: Control shared timer objects.
 /// </summary>
+[Reflect]
 public class TimerControllerLASM : ReflectableLASM {
-    public TimerControllerLASM(TaskPattern rs) : base(rs) {}
+    public delegate Task TimerControl(SMHandoff smh);
+    
+    public TimerControllerLASM(TimerControl rs) : base(new TaskPattern(rs)) {}
 
     /// <summary>
     /// Start a timer.
     /// </summary>
     /// <param name="timer"></param>
     /// <returns></returns>
-    public static TaskPattern Start(ETime.Timer timer) => smh => {
+    public static TimerControl Start(ETime.Timer timer) => smh => {
         ETime.Timer.Start(timer);
         return Task.CompletedTask;
     };
@@ -87,7 +104,7 @@ public class TimerControllerLASM : ReflectableLASM {
     /// </summary>
     /// <param name="timer"></param>
     /// <returns></returns>
-    public static TaskPattern Restart(ETime.Timer timer) => smh => {
+    public static TimerControl Restart(ETime.Timer timer) => smh => {
         ETime.Timer.Restart(timer);
         return Task.CompletedTask;
     };
@@ -97,7 +114,7 @@ public class TimerControllerLASM : ReflectableLASM {
     /// <param name="timer"></param>
     /// <param name="m"></param>
     /// <returns></returns>
-    public static TaskPattern StartM(ETime.Timer timer, float m) => smh => {
+    public static TimerControl StartM(ETime.Timer timer, float m) => smh => {
         ETime.Timer.Start(timer, m);
         return Task.CompletedTask;
     };
@@ -106,7 +123,7 @@ public class TimerControllerLASM : ReflectableLASM {
     /// </summary>
     /// <param name="timer"></param>
     /// <returns></returns>
-    public static TaskPattern Stop(ETime.Timer timer) => smh => {
+    public static TimerControl Stop(ETime.Timer timer) => smh => {
         ETime.Timer.Stop(timer);
         return Task.CompletedTask;
     };

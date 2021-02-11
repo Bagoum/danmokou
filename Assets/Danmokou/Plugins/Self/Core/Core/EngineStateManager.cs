@@ -38,7 +38,7 @@ public interface IUnpauseAnimateProvider {
 public static class EngineStateManager {
     public static bool InputAllowed => state.InputAllowed();
     private static EngineState state = EngineState.RUN;
-    [CanBeNull] private static Action stateUpdate;
+    private static Action? stateUpdate;
 
     public static void CheckForStateUpdates() {
         if (PauseAllowed && InputManager.Pause.Active && stateUpdate == null) {
@@ -101,7 +101,7 @@ public static class EngineStateManager {
         else _Unpause();
     }
 
-    public static void SetLoading(bool on, [CanBeNull] Action done) => stateUpdate = () => {
+    public static void SetLoading(bool on, Action? done) => stateUpdate = () => {
         _SetLoading(on);
         done?.Invoke();
     };
@@ -112,7 +112,7 @@ public static class EngineStateManager {
 
     public static void SendSuccessEvent() => stateUpdate = _Sucess;
 
-    public static bool TemporaryEffectPause(out Action toNormal) {
+    public static bool TemporaryEffectPause(out Action? toNormal) {
         if (stateUpdate == null && state == EngineState.RUN) {
             stateUpdate = _EffectPause;
             toNormal = () => {

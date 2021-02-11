@@ -56,13 +56,6 @@
 			fragment vert(vertex v) {
 				fragment f;
 				f.loc = UnityObjectToClipPos(v.loc);
-				//Do not perform screen flipping during player camera capture.
-				// This makes the resulting photo unflipped, but located in the correct position.
-				// Note that this is not a unique semantic solution to player camera capture during screen flipping,
-				// but it is the easiest to deal with.
-			#if AYA_CAPTURE
-				f.uv = v.uv;
-			#else
 				float2 p = float2((v.uv.x - 0.5) * _ScreenWidth - _GlobalXOffset,
 					(v.uv.y - 0.5) * _ScreenHeight);
 				//Rotation process is slightly strange, since we are trying to effectively rotate
@@ -74,6 +67,13 @@
 				p.y *= 1 / cos(_RotateX);
 				p.x *= 1 / cos(_RotateY);
 				f.rloc = p;
+			#if AYA_CAPTURE
+				//Do not perform screen flipping during player camera capture.
+				// This makes the resulting photo unflipped, but located in the correct position.
+				// Note that this is not a unique semantic solution to player camera capture during screen flipping,
+				// but it is the easiest to deal with.
+				f.uv = v.uv;
+			#else
 				f.uv = float2((p.x + _GlobalXOffset) / _ScreenWidth + 0.5, p.y / _ScreenHeight + 0.5);
 			#endif
 				f.color = v.color;

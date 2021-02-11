@@ -74,9 +74,8 @@ public partial class BulletManager : RegularUpdater {
         public float CULL_RAD;
         public bool Recolorizable => deferredRI.recolorizable;
         public (TP4 black, TP4 white)? recolor;
-        [CanBeNull] private TP4 tint;
-        [CanBeNull]
-        public TP4 Tint {
+        private TP4? tint;
+        public TP4? Tint {
             get => tint;
             set {
                 tint = value;
@@ -135,11 +134,11 @@ public partial class BulletManager : RegularUpdater {
         public string name;
         public ColorMap gradient;
     }
-    public Material simpleBulletMaterial;
-    public SOPlayerHitbox bulletCollisionTarget;
+    public Material simpleBulletMaterial = null!;
+    public SOPlayerHitbox bulletCollisionTarget = null!;
     public static SOPlayerHitbox PlayerTarget => main.bulletCollisionTarget;
-    public SOPrefabs bulletStylesList;
-    public Palette[] basicGradientPalettes;
+    public SOPrefabs bulletStylesList = null!;
+    public Palette[] basicGradientPalettes = null!;
     
     /// <summary>
     /// Complex bullets (lasers, pathers). Active pools are stored on BehaviorEntity.activePools.
@@ -148,7 +147,7 @@ public partial class BulletManager : RegularUpdater {
         = new Dictionary<string, BehaviorEntity.BEHStyleMetadata>();
 
     private static void AddComplexStyle(BehaviorEntity.BEHStyleMetadata bsm) {
-        behPools[bsm.style] = bsm;
+        behPools[bsm.style ?? throw new Exception("Complex BEHMetadata must have non-null style values")] = bsm;
     }
     private static void AddComplexStyle(DeferredFramesRecoloring dfr) {
         AddComplexStyle(new BehaviorEntity.BEHStyleMetadata(dfr.Style, dfr));
@@ -175,15 +174,15 @@ public partial class BulletManager : RegularUpdater {
     private static readonly List<SimpleBulletCollection> activePlayer = new List<SimpleBulletCollection>(50);
     private static readonly List<SimpleBulletCollection> activeCEmpty = new List<SimpleBulletCollection>(8); //Require priority
     private static readonly List<SimpleBulletCollection> activeCNpc = new List<SimpleBulletCollection>(8); //Simple only: Create alt-name pools for varying controls
-    private static BulletManager main;
-    private Transform spamContainer;
+    private static BulletManager main = null!;
+    private Transform spamContainer = null!;
     private const string epLayerName = "HighDirectRender";
     private const string ppLayerName = "LowDirectRender";
     private int epLayerMask;
     private int epRenderLayer;
     private int ppLayerMask;
     private int ppRenderLayer;
-    private static GradientMap throwaway_gm;
+    private static GradientMap throwaway_gm = null!;
 
     private readonly struct DeferredTextureConstruction {
         private readonly Material mat;
@@ -383,20 +382,20 @@ public partial class BulletManager : RegularUpdater {
         public string Style => recolor.style;
         private bool loaded;
 
-        private readonly Func<Sprite, Sprite> creator;
+        private readonly Func<Sprite, Sprite>? creator;
         private readonly string paletteVariant;
         private readonly int renderPriorityOffset;
         private readonly Bullet b;
         private readonly bool recolorizable;
         private readonly bool player;
-        [CanBeNull] public readonly Palette palette;
+        public readonly Palette? palette;
 
         public DeferredFramesRecoloring MakePlayerCopy() => new DeferredFramesRecoloring(recolor.prefab, b, 
             renderPriorityOffset + FAB_PLAYER_RENDER_OFFSET, paletteVariant, $"{PLAYERPREFIX}{recolor.style}", creator, recolorizable,  palette, true);
         
         public DeferredFramesRecoloring(GameObject prefab, Bullet b, int renderPriorityOffset, string paletteVariant, 
-            string style, [CanBeNull] Func<Sprite, Sprite> creator, bool recolorizable, 
-            [CanBeNull] Palette palette = null, bool player=false) {
+            string style, Func<Sprite, Sprite>? creator, bool recolorizable, 
+            Palette? palette = null, bool player=false) {
             this.b = b;
             this.renderPriorityOffset = renderPriorityOffset;
             this.paletteVariant = paletteVariant;
@@ -425,7 +424,7 @@ public partial class BulletManager : RegularUpdater {
                     // and we want them to be shared in the cache
                     FrameRecolorConfig frc = new FrameRecolorConfig(frames[si].s.name, paletteVariant);
                     if (frameCache.ContainsKey(frc)) sprites[si].s = frameCache[frc];
-                    else sprites[si].s = frameCache[frc] = creator(frames[si].s);
+                    else sprites[si].s = frameCache[frc] = creator!(frames[si].s);
                 }
                 recolor = new FrameAnimBullet.Recolor(sprites, recolor.prefab, NewMaterial(recolor.style), recolor.style);
                 loaded = true;
@@ -493,19 +492,13 @@ public partial class BulletManager : RegularUpdater {
     /// <summary>
     /// NPC simple bullets only.
     /// </summary>
-    private static SimpleBulletCollection GetCollectionForColliderType(List<SimpleBulletCollection> target, BulletInCode bc) {
-        switch (bc.cc.colliderType) {
-            case GenericColliderInfo.ColliderType.Circle:
-                return new CircleSBC(target, bc);
-            case GenericColliderInfo.ColliderType.Rectangle:
-                return new RectSBC(target, bc);
-            case GenericColliderInfo.ColliderType.Line:
-                return new LineSBC(target, bc);
-            case GenericColliderInfo.ColliderType.None:
-                return new NoCollSBC(target, bc);
-            default:
-                throw new NotImplementedException();
-        }
-    }
+    private static SimpleBulletCollection GetCollectionForColliderType(List<SimpleBulletCollection> target, BulletInCode bc) =>
+        bc.cc.colliderType switch {
+            GenericColliderInfo.ColliderType.Circle => new CircleSBC(target, bc),
+            GenericColliderInfo.ColliderType.Rectangle => new RectSBC(target, bc),
+            GenericColliderInfo.ColliderType.Line => new LineSBC(target, bc),
+            GenericColliderInfo.ColliderType.None => new NoCollSBC(target, bc),
+            _ => throw new NotImplementedException()
+        };
 }
 }

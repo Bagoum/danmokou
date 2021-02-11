@@ -10,8 +10,8 @@ public struct PlayerTeam {
     public readonly (PlayerConfig player, ShotConfig shot)[] players;
     public int SelectedIndex { get; set; }
     public Subshot Subshot { get; set; }
-    [CanBeNull] public PlayerConfig Player => players.TryN(SelectedIndex)?.player;
-    [CanBeNull] public ShotConfig Shot => players.TryN(SelectedIndex)?.shot;
+    public PlayerConfig? Player => players.TryN(SelectedIndex)?.player;
+    public ShotConfig? Shot => players.TryN(SelectedIndex)?.shot;
 
     public string Describe => string.Join("-", players.Select(p => $"{p.player.key}_{p.shot.key}"));
 

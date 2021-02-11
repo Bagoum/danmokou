@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
+using static DMK.Core.LocalizedStrings.UI;
 
 namespace DMK.Core {
 /// <summary>
@@ -204,7 +205,9 @@ public enum InstanceMode {
 
 public enum Layer {
     LowProjectile,
-    HighProjectile
+    HighProjectile,
+    LowFX,
+    HighFX
 }
 
 public enum PhaseClearMethod {
@@ -312,8 +315,12 @@ public static class EnumHelpers2 {
         return null;
     }
     public static int Int(this Layer l) {
-        if (l == Layer.LowProjectile) return LayerMask.NameToLayer("LowProjectile");
-        else  return LayerMask.NameToLayer("HighProjectile");
+        return LayerMask.NameToLayer(l switch {
+            Layer.LowFX => "LowEffects",
+            Layer.HighFX => "TransparentFX",
+            Layer.LowProjectile => "LowProjectile",
+            _ => "HighProjectile"
+        });
     }
 
     public static float Value(this FixedDifficulty d) {
@@ -331,11 +338,11 @@ public static class EnumHelpers2 {
         throw new Exception($"Couldn't resolve difficulty setting {d}");
     }
 
-    public static string Describe(this FixedDifficulty d) {
-        if (d == FixedDifficulty.Easy) return "Easy";
-        else if (d == FixedDifficulty.Normal) return "Normal";
-        else if (d == FixedDifficulty.Hard) return "Hard";
-        else if (d == FixedDifficulty.Lunatic) return "Lunatic";
+    public static LocalizedString Describe(this FixedDifficulty d) {
+        if (d == FixedDifficulty.Easy) return difficulty_easy;
+        else if (d == FixedDifficulty.Normal) return difficulty_normal;
+        else if (d == FixedDifficulty.Hard) return difficulty_hard;
+        else if (d == FixedDifficulty.Lunatic) return difficulty_lunatic;
         throw new Exception($"Couldn't resolve difficulty setting {d}");
     }
 
@@ -350,18 +357,13 @@ public static class EnumHelpers2 {
 
     public static bool Autocollect(this ItemType t) => t == ItemType.GEM;
 
-    public static string Describe(this Subshot s) {
-        switch (s) {
-            case Subshot.TYPE_D:
-                return "D";
-            case Subshot.TYPE_M:
-                return "M";
-            case Subshot.TYPE_K:
-                return "K";
-            default:
-                return "?";
-        }
-    }
+    public static string Describe(this Subshot s) =>
+        s switch {
+            Subshot.TYPE_D => "D",
+            Subshot.TYPE_M => "M",
+            Subshot.TYPE_K => "K",
+            _ => "?"
+        };
 
     public static bool TakesDamage(this Vulnerability v) => v == Vulnerability.VULNERABLE;
     public static bool HitsLand(this Vulnerability v) => v == Vulnerability.VULNERABLE || v == Vulnerability.NO_DAMAGE;

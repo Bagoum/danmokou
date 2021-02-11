@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace DMK.UI {
 public class RefreshRateWarning : MonoBehaviour {
-    private TextMeshPro text;
+    private TextMeshPro text = null!;
     public Color normalColor;
     public Color warningColor;
 

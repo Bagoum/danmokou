@@ -1,0 +1,114 @@
+Key,EN,Notes,JP
+shaders,Visual Quality,,画質
+shaders_low,Low,,低画質
+shaders_high,High,,高画質
+resolution,Resolution,,解像度
+refresh,Refresh Rate,,リフレッシュ速度
+fullscreen,Fullscreen,,表示モード
+fullscreen_window,Windowed,,ウインドウ
+fullscreen_borderless,Borderless,,ボーダレス
+fullscreen_exclusive,Exclusive,,フルスクリーン
+vsync,VSync,,垂直同期
+,,,
+,,,
+vsync_double,Double,,DOUBLE
+renderer,Renderer,,レンダラー
+renderer_legacy,Legacy,,旧型
+renderer_normal,Normal,,新型
+smoothing,Input Smoothing,,インプットスムージング
+controller,Controller,,コントローラー
+controller_off,Ignore,,使わない
+controller_on,Enabled,,使う
+dialogue_speed,Dialogue Speed,,テキスト速度
+bgm_volume,BGM Volume,,ミュージック音量
+sfx_volume,SFX Volume,,効果音音量
+hitbox,Hitbox Display,,当たり判定表示
+hitbox_focus,When Focused,,低速移動時
+hitbox_always,Always Show,,常に
+backgrounds,Backgrounds,,背景
+screenshake,Screenshake,,画像振動
+unpause,Unpause,,再開
+to_menu,Return to Menu,,タイトルに戻る
+restart,Restart,,やり直す
+save_replay,Save Replay,,リプレイを保存する
+are_you_sure,Are you sure?,,本当に？
+to_desktop,Quit to Desktop,,終了
+pause_header,Pause,,一時停止
+replay_view,View,,再演
+delete,Delete,,削除
+,,,
+practice_stage,Stage {0},,{0}面
+practice_fullstage,Full Stage,,全面
+practice_stage_section,Stage Section {0},,第{0}幕
+practice_midboss,Midboss,,中ボス
+practice_endboss,Endboss,,ラスボス
+practice_dialogue,Dialogue,,会話
+challenge_day_intro,{0} Intro,,{0}紹介
+challenge_day_end,{0} End,,{0}結末
+challenge_day_card,{0} {1},,{0}-{1}
+practice_m_boss,Boss Practice,,
+practice_m_stage,Stage Practice,,
+practice_m_campaign,Campaign,,
+practice_m_scene,Scene Challenge,,
+practice_m_whichstage,Stage,,面
+practice_m_whichphase,Phase,,フェーズ
+practice_m_whichboss,Boss Practice,,ボス
+practice_type,Game Mode,,モード
+practice_campaign,Campaign,,シナリオ
+,,,
+shotsel_player,PLAYER,,機体
+shotsel_shot,SHOT,,装備
+shotsel_type,Type {0},,タイプ{0}
+shotsel_variant,Variant {0},,バリアント{0}
+shotsel_multi,Multishot {0},,可変ショット{0}
+,,,
+death_continue,Continue [{0}],,続ける（後{0}回）
+death_header,YOU DIED,,落命
+,,,
+difficulty_easy,Easy,,
+difficulty_normal,Normal,,
+difficulty_hard,Hard,,
+difficulty_lunatic,Lunatic,,
+difficulty_custom,Custom,,
+,,,
+play_game,Start!,,
+main_gamestart,Play!,,
+main_main,Main Scenario,,
+main_extra,Extra Stage,,
+main_lang,Language,,
+main_stageprac,Stage Practice,,
+main_bossprac,Boss Practice,,
+main_scores,Scores,,
+main_stats,Stats,,
+main_replays,Replays,,
+main_tutorial,Tutorial,,
+main_options,Options,,
+main_quit,Quit,,
+main_twitter,Twitter (Browser),,
+,,,
+replay_name,Name,,リプレイ名
+replay_save,Save,,セーブ
+replay_saved,Saved!,,セーブ完了！
+,,,
+scores_nocampaign,Finish a campaign to view scores.,,
+,,,
+stats_allcampaigns,All Campaigns,,すべて
+stats_seldifficulty,Difficulty,,難易度
+stats_alldifficulty,All Difficulties,,すべて
+stats_selplayer,Player,,機体
+stats_allplayers,All Players,,すべて
+stats_selshot,Shot,,装備
+stats_allshots,All Shots,,すべて
+stats_allruns,Runs Total,,プレイ回
+stats_complete,Runs Completed,,クリア回
+stats_1cc,Runs 1CCed,,1CCクリア回
+stats_deaths,Total Deaths,,被弾数
+stats_favday,Favorite Day,,愛用の曜日
+stats_favplayer,Favorite Player,,愛用の機体
+stats_favshot,Favorite Shot,,愛用の装備
+stats_highestscore,Highest Score,,ハイスコア
+stats_capturerate,Card Capture Rate,,スペルカードキャプチャ率
+stats_bestcard,Easiest Card Capture,,上手なスペルカード
+stats_worstcard,Hardest Card Capture,,下手なスペルカード
+stats_avgtime,Average Game Length,,平均ゲーム時間
+stats_totaltime,Total Play Time,,総計プレイ時間

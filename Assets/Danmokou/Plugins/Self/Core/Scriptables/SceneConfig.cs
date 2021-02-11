@@ -9,7 +9,7 @@ namespace DMK.Scriptables {
 /// </summary>
 [CreateAssetMenu(menuName = "Data/Scene Configuration")]
 public class SceneConfig : ScriptableObject {
-    public string sceneName;
-    [CanBeNull] public CameraTransitionConfig transitionIn;
+    public string sceneName = "";
+    public CameraTransitionConfig? transitionIn;
 }
 }

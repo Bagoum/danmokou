@@ -11,7 +11,6 @@ using static DMK.DMath.Functions.ExM;
 using static DMK.Testing.TAssert;
 using static DMK.DMath.Functions.ExMV3;
 using static DMK.Reflection.Compilers;
-using ExTP = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<UnityEngine.Vector2>>;
 using static DMK.DMath.Functions.ExMLerps;
 using static DMK.DMath.Functions.ExMConversions;
 using static DMK.DMath.Functions.ExMMod;

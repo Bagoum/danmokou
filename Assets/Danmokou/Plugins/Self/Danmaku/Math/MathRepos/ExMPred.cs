@@ -17,6 +17,7 @@ namespace DMK.DMath.Functions {
 /// <summary>
 /// Functions that return boolean values.
 /// </summary>
+[Reflect]
 public static partial class ExMPred {
 
     /// <summary>

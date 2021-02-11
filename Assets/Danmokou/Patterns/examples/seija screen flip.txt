@@ -1,5 +1,4 @@
 pattern {
-	boss jy.yukari
 }
 phase 0
 	paction 0

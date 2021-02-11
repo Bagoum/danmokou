@@ -41,33 +41,33 @@ public class AyaCamera : BehaviorEntity {
             0.5f :
             1f;
     
-    private PlayerInput player;
-    public Transform viewfinder;
-    private SpriteRenderer viewfinderSR;
-    private AyaCameraFreezeHelper freezeHelper;
-    public SpriteRenderer flash;
-    public TextMeshPro text;
+    private PlayerInput player = null!;
+    public Transform viewfinder = null!;
+    private SpriteRenderer viewfinderSR = null!;
+    private AyaCameraFreezeHelper freezeHelper = null!;
+    public SpriteRenderer flash = null!;
+    public TextMeshPro text = null!;
     public Color textUnfilledColor;
     public Color textFilledColor;
     private Color TextColor => (ChargeFull || CameraState == State.FIRING) ? textFilledColor : textUnfilledColor;
     public float viewfinderRadius;
-    public SFXConfig onOrientationSwitch;
-    public SFXConfig whileCharge;
-    public SFXConfig onFullCharge;
-    public SFXConfig whileFire;
-    public SFXConfig onFlash;
-    public SFXConfig onPictureSuccess;
-    public SFXConfig onPictureMiss;
-    public SFXConfig onTimeout;
-    public GameObject pinnedPhotoPrefab;
+    public SFXConfig? onOrientationSwitch;
+    public SFXConfig? whileCharge;
+    public SFXConfig? onFullCharge;
+    public SFXConfig? whileFire;
+    public SFXConfig? onFlash;
+    public SFXConfig? onPictureSuccess;
+    public SFXConfig? onPictureMiss;
+    public SFXConfig? onTimeout;
+    public GameObject pinnedPhotoPrefab = null!;
 
     private const string textFormat = "<mspace=2.4>{0:F0}%</mspace>";
     
     private float angle;
     private Vector2 location;
-    private static Vector2 AimAt => (GameManagement.instance.ExecutingBoss == null) ?
+    private static Vector2 AimAt => (GameManagement.Instance.CurrentBoss == null) ?
         new Vector2(0f, 5f) :
-        GameManagement.instance.ExecutingBoss.rBPI.loc;
+        GameManagement.Instance.CurrentBoss.rBPI.loc;
     private float BoundedViewfinderRadius => Mathf.Min(viewfinderRadius, (AimAt - player.hitbox.location).magnitude);
     private float AngleToTarget =>
         (player.IsMoving && !player.IsFocus) 
@@ -146,16 +146,12 @@ public class AyaCamera : BehaviorEntity {
     }
     public override int UpdatePriority => UpdatePriorities.PLAYER2;
 
-    private static double GetChargeRate(State s) {
-        switch (s) {
-            case State.NORMAL:
-                return 12;
-            case State.CHARGE:
-                return 42;
-            default:
-                return 0;
-        }
-    }
+    private static double GetChargeRate(State s) =>
+        s switch {
+            State.NORMAL => 12,
+            State.CHARGE => 42,
+            _ => 0
+        };
 
     private const double chargeMin = 0;
     private const double chargeMax = 100;
@@ -184,7 +180,7 @@ public class AyaCamera : BehaviorEntity {
         new CRect(location.x, location.y, CameraHalfBounds.x * scale, CameraHalfBounds.y * scale, angle);
     private IEnumerator UpdateFire() {
         CameraState = State.FIRING;
-        var slowdownToken = ETime.Slowdown.CreateModifier(0.5f);
+        var slowdownToken = ETime.Slowdown.CreateModifier(0.5f, MultiOp.Priority.CLEAR_SCENE);
         viewfinder.gameObject.layer = highCameraLayer;
         var sfx = SFXService.RequestSource(whileFire);
         void Cancel() {
@@ -222,14 +218,14 @@ public class AyaCamera : BehaviorEntity {
     }
     private IEnumerator UpdateCharge() {
         CameraState = State.CHARGE;
-        var sfx = SFXService.RequestLoopingSource(whileCharge);
+        var sfx = SFXService.RequestSource(whileCharge);
         while (InputCharging) yield return null;
         if (sfx != null) sfx.Stop();
         RunDroppableRIEnumerator(UpdateNormal());
     }
 
     private bool TakePicture_Freeze(float scale) {
-        if (!EngineStateManager.TemporaryEffectPause(out Action cb)) return false;
+        if (!EngineStateManager.TemporaryEffectPause(out Action? cb)) return false;
         WaitingUtils.WaitThenCB(freezeHelper, Cancellable.Null, freezeTime, false, cb);
         return true;
     }
@@ -245,7 +241,8 @@ public class AyaCamera : BehaviorEntity {
     }
     private void TakePicture_Delete(float scale) {
         var rect = ViewfinderRect(scale);
-        BulletManager.Autodelete("cwheel", "red/b", b => CollisionMath.PointInRect(b.loc, rect));
+        BulletManager.Autodelete(new SoftcullProperties(null, null), 
+            b => CollisionMath.PointInRect(b.loc, rect));
     }
 
     public static readonly Events.IEvent<(AyaPhoto photo, bool success)> PhotoTaken 
@@ -261,7 +258,7 @@ public class AyaCamera : BehaviorEntity {
             var pphoto = GameObject.Instantiate(pinnedPhotoPrefab).GetComponent<AyaPinnedPhoto>();
             PhotoTaken.Publish((photo, success));
             if (success) {
-                if (GameManagement.instance.Request?.replay == null) photo.KeepAlive = true;
+                if (GameManagement.Instance.Request?.replay == null) photo.KeepAlive = true;
                 targetLoc = DependencyInjection.MaybeFind<IAyaPhotoBoard>()?.NextPinLoc(pphoto) ?? new Vector2(-4, 0);
             }
             pphoto.Initialize(photo, location, targetLoc);

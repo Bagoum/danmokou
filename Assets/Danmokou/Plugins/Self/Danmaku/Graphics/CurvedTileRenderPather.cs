@@ -41,10 +41,10 @@ public class CurvedTileRenderPather : CurvedTileRender {
     private float scaledLineRadius;
     private readonly float headCutoffRatio;
     private readonly float tailCutoffRatio;
-    private BPY remember;
-    [CanBeNull] private BPY hueShift;
+    private BPY remember = null!;
+    private BPY? hueShift;
     private (TP4 black, TP4 white)? recolor;
-    [CanBeNull] private TP4 tinter;
+    private TP4? tinter;
     private Movement movement;
     /// <summary>
     /// The last return value of Velocity.Update. Used for backstepping.
@@ -55,17 +55,17 @@ public class CurvedTileRenderPather : CurvedTileRender {
     public ref ParametricInfo BPI => ref bpi;
     
     //set in pathtracker.awake
-    private Action onCameraCulled = null;
+    private Action onCameraCulled = null!;
     private int cullCtr;
     private const int checkCullEvery = 120;
 
-    private Pather exec;
+    private Pather exec = null!;
 
     //Note: trailRenderer requires reversing the sprite.
     protected override bool HandleAsMesh => false;
     public readonly TrailRenderer trailR;
 
-    private SOPlayerHitbox target;
+    private SOPlayerHitbox target = null!;
     private PlayerBulletCfg? playerBullet;
 
     public CurvedTileRenderPather(PatherRenderCfg cfg, GameObject obj) : base(obj) {
@@ -78,16 +78,16 @@ public class CurvedTileRenderPather : CurvedTileRender {
         PersistentYScale = scale;
         scaledLineRadius = lineRadius * scale;
     }
-    public void Initialize(Pather locationer, TiledRenderCfg cfg,  Material material, bool isNew, Movement vel, 
-        uint bpiId, int firingIndex, BPY rememberTime, float maxRememberTime, SOPlayerHitbox collisionTarget, 
+    public void Initialize(Pather locationer, TiledRenderCfg cfg,  Material material, bool isNew, Movement mov, 
+        ParametricInfo pi, BPY rememberTime, float maxRememberTime, SOPlayerHitbox collisionTarget, 
         ref RealizedBehOptions options) {
         exec = locationer;
         int newTexW = (int) Math.Ceiling(maxRememberTime * ETime.ENGINEFPS) + 1;
         base.Initialize(locationer, cfg, material, isNew, false, options.playerBullet != null, newTexW);
         if (locationer.HasParent()) throw new NotImplementedException("Pather cannot be parented");
-        movement = vel;
-        bpi = new ParametricInfo(vel.rootPos, firingIndex, bpiId);
-        _ = movement.UpdateZero(ref bpi, 0f);
+        movement = mov;
+        bpi = pi;
+        _ = movement.UpdateZero(ref bpi);
         lastDataIndex = cL = centers.Length;
         remember = rememberTime;
         intersectStatus = SelfIntersectionStatus.RAS;
@@ -153,6 +153,7 @@ public class CurvedTileRenderPather : CurvedTileRender {
             
             tr.localPosition = bpi.loc;
             //trailR.AddPosition(bpi.loc);
+            // ReSharper disable once CompareOfFloatsByEqualityOperator
             if (prevRemember != nextRemember) {
                 trailR.time = prevRemember = nextRemember;
             }
@@ -171,7 +172,7 @@ public class CurvedTileRenderPather : CurvedTileRender {
     /// </summary>
     private int lastDataIndex;
 
-    protected override unsafe void UpdateVerts(bool renderRequired) {
+    protected override void UpdateVerts(bool renderRequired) {
         var last = cL - 1;
         
         lastDataIndex = (lastDataIndex > 0) ? lastDataIndex - 1 : 0;
@@ -219,18 +220,18 @@ public class CurvedTileRenderPather : CurvedTileRender {
         if (playerBullet.Try(out var plb)) {
             var fe = Enemy.FrozenEnemies;
             for (int ii = 0; ii < fe.Count; ++ii) {
-                if (fe[ii].Active && DMath.CollisionMath.CircleOnSegments(fe[ii].pos, fe[ii].radius, Vector2.zero, 
+                if (fe[ii].Active && CollisionMath.CircleOnSegments(fe[ii].pos, fe[ii].radius, Vector2.zero, 
                         centers, read_from + cut1, 1, cL - cut2, scaledLineRadius, 1, 0, out int segment) &&
                     fe[ii].enemy.TryHitIndestructible(bpi.id, plb.cdFrames)) {
-                    fe[ii].enemy.QueueDamage(plb.bossDmg, plb.stageDmg, target.location);
+                    fe[ii].enemy.QueuePlayerDamage(plb.bossDmg, plb.stageDmg, target.location);
                     fe[ii].enemy.ProcOnHit(plb.effect, centers[segment]);
                 }
             }
             return CollisionResult.noColl;
         }
-        if (target.Active && DMath.CollisionMath.CircleOnAABB(
+        if (target.Active && CollisionMath.CircleOnAABB(
             bounds, target.location, target.largeRadius)) {
-            return DMath.CollisionMath.GrazeCircleOnSegments(target.Hitbox, Vector2.zero, centers, read_from + cut1, 1, cL - cut2, scaledLineRadius, 1, 0);
+            return CollisionMath.GrazeCircleOnSegments(target.Hitbox, Vector2.zero, centers, read_from + cut1, 1, cL - cut2, scaledLineRadius, 1, 0);
         } else return CollisionResult.noColl;
     }
     public void FlipVelX() {
@@ -271,7 +272,7 @@ public class CurvedTileRenderPather : CurvedTileRender {
 
 
 #if UNITY_EDITOR
-    public unsafe void Draw() {
+    public void Draw() {
         Handles.color = Color.cyan;
         int cut1 = (int) Math.Ceiling((cL - read_from + 1) * tailCutoffRatio);
         int cut2 = Mathf.CeilToInt((cL - read_from + 1) * headCutoffRatio);

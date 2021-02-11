@@ -9,14 +9,14 @@ namespace DMK.Scriptables {
 /// </summary>
 [CreateAssetMenu(menuName = "Data/Stage Configuration")]
 public class StageConfig : ScriptableObject, IStageConfig {
-    public SceneConfig sceneConfig;
-    [CanBeNull] public TextAsset stateMachine;
-    public string description;
-    public string stageNumber;
-    public string defaultSuicideStyle;
+    public SceneConfig sceneConfig = null!;
+    public TextAsset? stateMachine;
+    public string description = "";
+    public string stageNumber = "";
+    public string defaultSuicideStyle = "";
     public bool practiceable = true;
 
-    public StateMachine StateMachine => StateMachineManager.FromText(stateMachine);
+    public StateMachine? StateMachine => StateMachineManager.FromText(stateMachine);
     public string DefaultSuicideStyle => defaultSuicideStyle;
 }
 }

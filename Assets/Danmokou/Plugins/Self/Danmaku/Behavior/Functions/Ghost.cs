@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace DMK.Behavior.Functions {
 public class Ghost : CoroutineRegularUpdater {
-    private SpriteRenderer sr;
+    private SpriteRenderer sr = null!;
 
     private void Awake() {
         sr = GetComponent<SpriteRenderer>();

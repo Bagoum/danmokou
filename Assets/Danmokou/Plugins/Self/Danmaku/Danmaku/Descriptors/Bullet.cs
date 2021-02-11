@@ -30,7 +30,7 @@ public class Bullet : BehaviorEntity {
     [Header("Bullet Config")] 
     private PlayerBulletCfg? playerBullet = null;
     [Tooltip("This will be instantiated once per recoloring, and used for SM material editing.")]
-    public Material material;
+    public Material material = null!;
 
     protected void SetMaterial(Material newMat) {
         material = newMat;
@@ -40,7 +40,6 @@ public class Bullet : BehaviorEntity {
     private static short rendererIndex = short.MinValue;
     private static readonly HashSet<Bullet> allBullets = new HashSet<Bullet>();
 
-    private int defaultLayer;
 
     public float fadeInTime;
     public float cycleSpeed;
@@ -48,11 +47,10 @@ public class Bullet : BehaviorEntity {
     public SimpleBulletEmptyScript.DisplacementInfo displacement;
 
     public DefaultColorizing colorizing;
-    [Tooltip("Special gradients")] public BulletManager.GradientVariant[] gradients;
+    [Tooltip("Special gradients")] public BulletManager.GradientVariant[] gradients = null!;
 
     protected override void Awake() {
         base.Awake();
-        defaultLayer = gameObject.layer;
         int sortOrder = rendererIndex++; //By default, this wraps around, which may cause momentary strange behavior if Bullet.ResetIndex is not called every several levels or so.
         if (displayer != null) displayer.SetSortingOrder(sortOrder);
         var mr = GetComponent<MeshRenderer>();
@@ -72,11 +70,10 @@ public class Bullet : BehaviorEntity {
         allBullets.Add(this);
     }
 
-    public virtual void Initialize([CanBeNull] BEHStyleMetadata style, RealizedBehOptions options, [CanBeNull] BehaviorEntity parent, Movement _velocity, int firingIndex, uint bpiid, SOPlayerHitbox _target, out int layer) {
-        base.Initialize(style, _velocity, options.smr, firingIndex, bpiid, parent, options: options);
-        gameObject.layer = layer = options.layer ?? defaultLayer;
+    public virtual void Initialize(BEHStyleMetadata? style, RealizedBehOptions options, BehaviorEntity? parent, Movement mov, ParametricInfo pi, SOPlayerHitbox _target, out int layer) {
+        base.Initialize(style, mov, pi, options.smr, parent, options: options);
+        gameObject.layer = layer = options.layer ?? DefaultLayer;
         collisionTarget = _target;
-        if ((playerBullet = options.playerBullet) != null) DataHoisting.PreserveID(bpiid);
     }
 
 

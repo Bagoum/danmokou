@@ -1,9 +1,6 @@
 ﻿using System.Linq.Expressions;
 using UnityEngine;
 using Ex = System.Linq.Expressions.Expression;
-using ExBPY = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<float>>;
-using ExTP = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<UnityEngine.Vector2>>;
-using ExPred = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<bool>>;
 using DMK.Behavior;
 using DMK.Core;
 using DMK.DataHoist;
@@ -12,41 +9,90 @@ using static DMK.DMath.Functions.ExM;
 using tfloat = DMK.Expressions.TEx<float>;
 using tv2 = DMK.Expressions.TEx<UnityEngine.Vector2>;
 using ev2 = DMK.Expressions.EEx<UnityEngine.Vector2>;
+using ExBPY = System.Func<DMK.Expressions.TExArgCtx, DMK.Expressions.TEx<float>>;
+using ExTP = System.Func<DMK.Expressions.TExArgCtx, DMK.Expressions.TEx<UnityEngine.Vector2>>;
 
 
 namespace DMK.DMath.Functions {
 public static partial class ExMPred {
-//return (loc.x >= left && loc.x <= right && loc.y >= bot && loc.y <= top);
+    /// <summary>
+    /// Return true iff the location is within the playing field.
+    /// </summary>
+    /// <param name="loc"></param>
+    /// <returns></returns>
     public static TEx<bool> OnScreen(EEx<Vector2> loc) => EEx.ResolveV2(loc, l =>
             l.x.GT(LocationHelpers.left)
             .And(l.x.LT(LocationHelpers.right))
             .And(l.y.GT(LocationHelpers.bot))
             .And(l.y.LT(LocationHelpers.top)));
+    /// <summary>
+    /// Return true if the location is within BY units (square expansion) of the edge of the playing field.
+    /// </summary>
     public static TEx<bool> OnScreenBy(EEx<float> by, EEx<Vector2> loc) => EEx.ResolveV2(loc, by, (l, f) =>
             l.x.GT(LocationHelpers.left.Sub(f))
             .And(l.x.LT(LocationHelpers.right.Add(f)))
             .And(l.y.GT(LocationHelpers.bot.Sub(f)))
             .And(l.y.LT(LocationHelpers.top.Add(f))));
 
+    /// <summary>
+    /// Return true if the location not within the playing field.
+    /// </summary>
     public static TEx<bool> OffScreen(TEx<Vector2> loc) => Not(OnScreen(loc));
     
+    /// <summary>
+    /// Return true if the location is more than BY units (square expansion) outside of the playing field.
+    /// </summary>
     public static TEx<bool> OffScreenBy(TEx<float> f, TEx<Vector2> loc) => Not(OnScreenBy(f, loc));
 
 }
 public static partial class ExM {
+    /// <summary>
+    /// Y-coordinate of the lowest section of the playing field. (Default value: -4.5)
+    /// </summary>
+    /// <returns></returns>
     public static TEx<float> YMin() => LocationHelpers.bot;
+    /// <summary>
+    /// Y-coordinate of the highest section of the playing field. (Default value: 4.1)
+    /// </summary>
     public static TEx<float> YMax() => LocationHelpers.top;
+    /// <summary>
+    /// X-coordinate of the leftmost section of the playing field. (Default value: -3.6)
+    /// </summary>
+    /// <returns></returns>
     public static TEx<float> XMin() => LocationHelpers.left;
+    /// <summary>
+    /// X-coordinate of the rightmost section of the playing field. (Default value: 3.6)
+    /// </summary>
     public static TEx<float> XMax() => LocationHelpers.right;
+    /// <summary>
+    /// YMin - 1
+    /// </summary>
+    /// <returns></returns>
     [Alias("ymin-")]
     public static TEx<float> YMinMinus1() => LocationHelpers.bot.Sub(1);
+    /// <summary>
+    /// YMax + 1
+    /// </summary>
     [Alias("ymax+")]
     public static TEx<float> YMaxPlus1() => LocationHelpers.top.Add(1);
+    /// <summary>
+    /// XMin - 1
+    /// </summary>
     [Alias("xmin-")]
     public static TEx<float> XMinMinus1() => LocationHelpers.left.Sub(1);
+    /// <summary>
+    /// XMax + 1
+    /// </summary>
+    /// <returns></returns>
     [Alias("xmax+")]
     public static TEx<float> XMaxPlus1() => LocationHelpers.right.Add(1);
+    /// <summary>
+    /// Width of the playing field (XMax - XMin)
+    /// </summary>
     public static TEx<float> XWidth() => LocationHelpers.width;
+    /// <summary>
+    /// Height of the playing field (YMax - YMin)
+    /// </summary>
     public static TEx<float> YHeight() => LocationHelpers.height;
     
     private static readonly ExFunction GetEnemyVisiblePlayer =
@@ -58,7 +104,7 @@ public static partial class ExM {
     /// <returns></returns>
     public static TEx<Vector2> LPlayer() => GetEnemyVisiblePlayer.Of();
 
-    public static TEx<Vector2> LBEH(BEHPointer beh) => Ex.Constant(beh).Field("beh").Field("bpi").Field("loc");
+    public static TEx<Vector2> LBEH(BEHPointer beh) => Ex.Constant(beh).Field("beh").Field("BPI").Field("loc");
     
     private static readonly ExFunction distToWall =
         ExUtils.Wrap(typeof(LocationHelpers), "DistToWall", typeof(Vector2), typeof(Vector2));
@@ -104,17 +150,17 @@ public static partial class Parametrics {
         );
     };
     public static ExTP LSaveNearestEnemy() => b => {
-        Ex data = DataHoisting.GetClearableDictInt();
+        var key = b.Ctx.NameWithSuffix("_LSaveNearestEnemyKey");
         var eid_in = ExUtils.V<int?>();
         var eid = ExUtils.V<int>();
         var loc = new TExV2();
         return Ex.Block(new[] { eid_in, eid, loc },
-            eid_in.Is(Ex.Condition(ExUtils.DictContains<uint, int>(data, b.id),
-                    data.DictGet(b.id).As<int?>(),
+            eid_in.Is(Ex.Condition(FiringCtx.Contains<int>(b, key),
+                    FiringCtx.GetValue<int>(b, key).As<int?>(),
                     Ex.Constant(null).As<int?>())
             ),
             Ex.IfThenElse(Enemy.findNearestSave.Of(b.loc, eid_in, eid, loc),
-                data.DictSet(b.id, eid),
+                FiringCtx.SetValue<int>(b, key, eid),
                 loc.Is(Ex.Constant(new Vector2(0f, 50f)))
             ),
             loc

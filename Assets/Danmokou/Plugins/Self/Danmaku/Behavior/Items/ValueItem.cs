@@ -8,7 +8,7 @@ public class ValueItem : Item {
 
     private const double MAX_BONUS = 2;
 
-    protected virtual void AddMe(double bonus) => GameManagement.instance.AddValueItems(1, bonus);
+    protected virtual void AddMe(double bonus) => GameManagement.Instance.AddValueItems(1, bonus);
     
     protected override void CollectMe() {
         var bonus = (autocollected || collection == null) ?

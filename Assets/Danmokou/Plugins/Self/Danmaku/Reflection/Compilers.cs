@@ -1,221 +1,240 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Linq.Expressions;
 using DMK.Core;
 using DMK.Danmaku;
 using DMK.DataHoist;
 using DMK.DMath;
 using DMK.DMath.Functions;
 using DMK.Expressions;
-using DMK.Graphics;
+using JetBrains.Annotations;
 using UnityEngine;
 using Ex = System.Linq.Expressions.Expression;
-using Vector2 = UnityEngine.Vector2;
-using Vector3 = UnityEngine.Vector3;
-using ExTP = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<UnityEngine.Vector2>>;
-using ExTP3 = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<UnityEngine.Vector3>>;
-using ExTP4 = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<UnityEngine.Vector4>>;
-using ExFXY = System.Func<DMK.Expressions.TEx<float>, DMK.Expressions.TEx<float>>;
-using ExBPY = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<float>>;
-using ExBPRV2 = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<DMK.DMath.V2RV2>>;
-using ExPred = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<bool>>;
-using ExVTP = System.Func<DMK.Expressions.ITExVelocity, DMK.Expressions.TEx<float>, DMK.Expressions.TExPI, DMK.Expressions.RTExV2, DMK.Expressions.TEx<UnityEngine.Vector2>>;
-using ExLVTP = System.Func<DMK.Expressions.ITExVelocity, DMK.Expressions.RTEx<float>, DMK.Expressions.RTEx<float>, DMK.Expressions.TExPI, DMK.Expressions.RTExV2, DMK.Expressions.TEx<UnityEngine.Vector2>>;
-using ExGCXF = System.Func<DMK.Expressions.TExGCX, DMK.Expressions.TEx>;
-using ExSBF = System.Func<DMK.Expressions.RTExSB, DMK.Expressions.TEx<float>>;
-using ExSBV2 = System.Func<DMK.Expressions.RTExSB, DMK.Expressions.TEx<UnityEngine.Vector2>>;
-using ExSBCF = System.Func<DMK.Expressions.TExSBC, DMK.Expressions.TEx<int>, DMK.Expressions.TExPI, DMK.Expressions.TEx>;
-using ExSBPred = System.Func<DMK.Expressions.TExSBC, DMK.Expressions.TEx<int>, DMK.Expressions.TExPI, DMK.Expressions.TEx<bool>>;
+using PEx = System.Linq.Expressions.ParameterExpression;
+using static DMK.Reflection.Aliases;
+using static DMK.Reflection.CompilerHelpers;
+
+using ExBPY = System.Func<DMK.Expressions.TExArgCtx, DMK.Expressions.TEx<float>>;
+using ExPred = System.Func<DMK.Expressions.TExArgCtx, DMK.Expressions.TEx<bool>>;
+using ExTP = System.Func<DMK.Expressions.TExArgCtx, DMK.Expressions.TEx<UnityEngine.Vector2>>;
+using ExTP3 = System.Func<DMK.Expressions.TExArgCtx, DMK.Expressions.TEx<UnityEngine.Vector3>>;
+using ExTP4 = System.Func<DMK.Expressions.TExArgCtx, DMK.Expressions.TEx<UnityEngine.Vector4>>;
+using ExBPRV2 = System.Func<DMK.Expressions.TExArgCtx, DMK.Expressions.TEx<DMK.DMath.V2RV2>>;
+using ExVTP = System.Func<DMK.Expressions.ITexMovement, DMK.Expressions.TEx<float>, DMK.Expressions.TExArgCtx, DMK.Expressions.TExV2, DMK.Expressions.TEx>;
+using ExLVTP = System.Func<DMK.Expressions.ITexMovement, DMK.Expressions.TEx<float>, DMK.Expressions.TEx<float>, DMK.Expressions.TExArgCtx, DMK.Expressions.TExV2, DMK.Expressions.TEx>;
+using ExSBCF = System.Func<DMK.Expressions.TExSBC, DMK.Expressions.TEx<int>, DMK.Expressions.TExArgCtx, DMK.Expressions.TEx>;
 
 namespace DMK.Reflection {
-public static class Compilers {
+
+public interface IDelegateArg {
+    public TExArgCtx.Arg MakeTExArg(int index);
+}
+public readonly struct DelegateArg<T> : IDelegateArg {
+    private readonly string? name;
+    private readonly bool isRef;
+    private readonly bool priority;
+    public DelegateArg(string? name, bool isRef=false, bool priority=false) {
+        this.name = name;
+        this.isRef = isRef;
+        this.priority = priority;
+    }
+    public TExArgCtx.Arg MakeTExArg(int index) => TExArgCtx.Arg.Make<T>(name ?? $"arg{index+1}", priority, isRef);
+    public static IDelegateArg New => new DelegateArg<T>(null);
+}
+
+public static class CompilerHelpers {
+    
     #region RawCompilers
 
-    private static D CompileDelegateLambda<D, ExT1>(Func<ExT1, TEx> exConstructor) where ExT1 : TEx, new() {
-        ExT1 t1 = new ExT1();
-        return Ex.Lambda<D>(exConstructor(t1).Flatten(), t1).Compile();
+    public static D CompileDelegateLambda<D>(Func<TExArgCtx, TEx> exConstructor, params TExArgCtx.Arg[] args) where D : Delegate {
+        var tac = new TExArgCtx(args);
+        return exConstructor(tac).BakeAndCompile<D>(tac,
+                args.Select(a => ((Expression) a.expr) is ParameterExpression p ? p : null).NotNull().ToArray());
+    }
+    public static D CompileDelegateLambdaBPI<D>(Func<TExArgCtx, TEx> exConstructor, params TExArgCtx.Arg[] args) where D : Delegate {
+        return CompileDelegateLambda<D>(exConstructor, args.Prepend(TExArgCtx.Arg.MakeBPI).ToArray());
     }
 
-    private static D CompileDelegateLambda<D, ExT1, ExT2>(Func<ExT1, ExT2, TEx> exConstructor)
-        where ExT1 : TEx, new()
-        where ExT2 : TEx, new() {
-        ExT1 t1 = new ExT1();
-        ExT2 t2 = new ExT2();
-        return Ex.Lambda<D>(exConstructor(t1, t2).Flatten(), t1, t2).Compile();
+    public static D CompileDelegateLambdaRSB<D>(Func<TExArgCtx, TEx> exConstructor, params TExArgCtx.Arg[] args) where D : Delegate {
+        var arg_sb = TExArgCtx.Arg.Make<BulletManager.SimpleBullet>("sb", true, isRef: true);
+        var arg_bpi = TExArgCtx.Arg.Make("sb_bpi", ((TExSB)arg_sb.expr).bpi, true);
+        return CompileDelegateLambda<D>(exConstructor, args.Prepend(arg_bpi).Prepend(arg_sb).ToArray());
     }
 
-    private static D CompileDelegateLambda<D, ExT1, ExT2, ExT3>(Func<ExT1, ExT2, ExT3, TEx> exConstructor)
-        where ExT1 : TEx, new()
-        where ExT2 : TEx, new()
-        where ExT3 : TEx, new() {
-        ExT1 t1 = new ExT1();
-        ExT2 t2 = new ExT2();
-        ExT3 t3 = new ExT3();
-        return Ex.Lambda<D>(exConstructor(t1, t2, t3).Flatten(), t1, t2, t3).Compile();
-    }
+    public static D CompileDelegate<D>(Func<TExArgCtx, TEx> func, params IDelegateArg[] args) where D : Delegate =>
+        CompileDelegateLambda<D>(func, args.Select((a, i) => a.MakeTExArg(i)).ToArray());
+    public static D CompileDelegate<D, DR>(string func, params IDelegateArg[] args) where D : Delegate =>
+        CompileDelegate<D>(func.Into<Func<TExArgCtx, TEx<DR>>>(), args);
+    
+    public static GCXU<T2> GCXU11<T1, T2>(Func<Func<TExArgCtx, TEx<T1>>, T2> compiler, Func<TExArgCtx, TEx<T1>> f) =>
+        Automatic(compiler, f, aliases => bpi => ReflectEx.Let2(aliases, () => f(bpi), bpi), 
+            (ex, mod) => tac => ex(mod(tac)));
+    
 
-    private static D CompileDelegateLambda<D, ExT1, ExT2, ExT3, ExT4>(Func<ExT1, ExT2, ExT3, ExT4, TEx> exConstructor)
-        where ExT1 : TEx, new()
-        where ExT2 : TEx, new()
-        where ExT3 : TEx, new()
-        where ExT4 : TEx, new() {
-        ExT1 t1 = new ExT1();
-        ExT2 t2 = new ExT2();
-        ExT3 t3 = new ExT3();
-        ExT4 t4 = new ExT4();
-        return Ex.Lambda<D>(exConstructor(t1, t2, t3, t4).Flatten(), t1, t2, t3, t4).Compile();
-    }
-
-    private static D CompileDelegateLambda<D, ExT1, ExT2, ExT3, ExT4, ExT5>(
-        Func<ExT1, ExT2, ExT3, ExT4, ExT5, TEx> exConstructor)
-        where ExT1 : TEx, new()
-        where ExT2 : TEx, new()
-        where ExT3 : TEx, new()
-        where ExT4 : TEx, new()
-        where ExT5 : TEx, new() {
-        ExT1 t1 = new ExT1();
-        ExT2 t2 = new ExT2();
-        ExT3 t3 = new ExT3();
-        ExT4 t4 = new ExT4();
-        ExT5 t5 = new ExT5();
-        return Ex.Lambda<D>(exConstructor(t1, t2, t3, t4, t5).Flatten(), t1, t2, t3, t4, t5).Compile();
-    }
-
+    public static GCXU<D> CompileGCXU<D>(Func<TExArgCtx, TEx> func, params IDelegateArg[] args) where D : Delegate =>
+        Automatic(ex => CompileDelegate<D>(ex, args), func,
+            alias => tac => ReflectEx.Let2(alias, () => func(tac), tac),
+            (ex, mod) => tac => ex(mod(tac)));
+    
+    public static GCXU<D> CompileGCXU<D, DR>(string func, params IDelegateArg[] args) where D : Delegate =>
+        CompileGCXU<D>(func.Into<Func<TExArgCtx, TEx<DR>>>(), args);
+    
     #endregion
+    
+    
+    private class GCXCompileResolver : ReflectEx.ICompileReferenceResolver {
+        public readonly List<(Reflector.ExType, string)> bound = new List<(Reflector.ExType, string)>();
+
+        public bool TryResolve<T>(string alias, out Ex ex) {
+            var ext = Reflector.AsExType<T>();
+            if (!bound.Contains((ext, alias))) {
+                bound.Add((ext, alias));
+            }
+            ex = Ex.Default(typeof(T));
+            return true;
+        }
+    }
+
+    public static GCXU<T> Automatic<S, T>(Func<S, T> compiler, S exp, Func<ReflectEx.Alias[], S> relet, Func<S, Func<TExArgCtx, TExArgCtx>, S> setIcrr) {
+        var resolver = new GCXCompileResolver();
+        var p = compiler(setIcrr(exp, tac => {
+            tac.Ctx.ICRR = resolver;
+            return tac;
+        }));
+        if (resolver.bound.Count > 0) {
+            //Automatic resolver found something, recompile
+            return Expose(resolver.bound.ToArray(), compiler, exp, relet);
+        } else {
+            var bound = new (Reflector.ExType, string)[0];
+            return (gcx, fctx) => {
+                fctx.UploadAdd(bound, gcx);
+                return p;
+            };
+        }
+    }
+
+    public static GCXU<T> Expose<S, T>((Reflector.ExType, string)[] exportVars, Func<S, T> compiler, S exp,
+        Func<ReflectEx.Alias[], S> relet) {
+        var aliases = new ReflectEx.Alias[exportVars.Length];
+        for (int ii = 0; ii < exportVars.Length; ++ii) {
+            var (ext, boundVar) = exportVars[ii];
+            //The "better" way to do this would be to copy the GCX values into the let statements
+            //and recompile the expression for every caller.
+            //However, this is ridiculously expensive, so instead we HOIST.
+            aliases[ii] = new ReflectEx.Alias(boundVar, tac => FiringCtx.GetValue(tac, ext.AsFCtxType(), boundVar));
+        }
+        var p = compiler((aliases.Length > 0) ? relet(aliases) : exp);
+        return (gcx, fctx) => {
+            fctx.UploadAdd(exportVars, gcx);
+            return p;
+        };
+    }
+}
+[Reflect]
+public static class Compilers {
+
+    #region FallthroughCompilers
+    
+    [Fallthrough]
+    [ExprCompiler]
+    public static TP TP(ExTP ex) => CompileDelegateLambdaBPI<TP>(ex);
 
     [Fallthrough]
     [ExprCompiler]
-    public static TP TP(ExTP ex) => CompileDelegateLambda<TP, TExPI>(ex);
+    public static SBV2 SBV2(ExTP ex) => CompileDelegateLambdaRSB<SBV2>(ex);
 
     [Fallthrough]
     [ExprCompiler]
-    public static SBV2 SBV2(ExSBV2 ex) => CompileDelegateLambda<SBV2, RTExSB>(ex);
+    public static TP3 TP3(ExTP3 ex) => CompileDelegateLambdaBPI<TP3>(ex);
 
     [Fallthrough]
     [ExprCompiler]
-    public static TP3 TP3(ExTP3 ex) => CompileDelegateLambda<TP3, TExPI>(ex);
-
-    [Fallthrough]
-    [ExprCompiler]
-    public static TP4 TP4(ExTP4 ex) => CompileDelegateLambda<TP4, TExPI>(ex);
-
-    public static VTP VTP_Force(ExVTP ex) => CompileDelegateLambda<VTP, RTExVel, RTEx<float>, TExPI, RTExV2>(ex);
+    public static TP4 TP4(ExTP4 ex) => CompileDelegateLambdaBPI<TP4>(ex);
 
     [Fallthrough]
     [ExprCompiler]
     public static VTP VTP(ExVTP ex) {
         if (ex == VTPRepo.ExNoVTP) return VTPRepo.NoVTP;
-        return VTP_Force(ex);
-    }
-
-
-    public const string LASER_TIME_ALIAS = "lt";
-
-    [Fallthrough]
-    [ExprCompiler]
-    public static ExLVTP ExLVTP(ExVTP vtp) => (vel, dt, lt, bpi, nrv) => {
-        using (new ReflectEx.LetDirect(LASER_TIME_ALIAS, lt)) {
-            return vtp(vel, dt, bpi, nrv);
-        }
-    };
-
-    [Fallthrough]
-    [ExprCompiler]
-    public static LVTP LVTP(ExLVTP ex) =>
-        CompileDelegateLambda<LVTP, RTExLVel, RTEx<float>, RTEx<float>, TExPI, RTExV2>(ex);
-
-    private static LVTP _LVTP(ExVTP ex) =>
-        CompileDelegateLambda<LVTP, RTExLVel, RTEx<float>, RTEx<float>, TExPI, RTExV2>(ExLVTP(ex));
-
-    [Fallthrough]
-    [ExprCompiler]
-    public static FXY FXY(ExFXY ex) => CompileDelegateLambda<FXY, TEx<float>>(ex);
-
-    [Fallthrough]
-    [ExprCompiler]
-    public static BPY BPY(ExBPY ex) => CompileDelegateLambda<BPY, TExPI>(ex);
-
-    [Fallthrough]
-    [ExprCompiler]
-    public static SBF SBF(ExSBF ex) => CompileDelegateLambda<SBF, RTExSB>(ex);
-
-    [Fallthrough]
-    [ExprCompiler]
-    public static LBPY LBPY(ExBPY ex) => CompileDelegateLambda<LBPY, TExPI, TEx<float>>((pi, lt) => {
-        using (new ReflectEx.LetDirect(LASER_TIME_ALIAS, lt)) {
-            return ex(pi);
-        }
-    });
-
-    [Fallthrough]
-    [ExprCompiler]
-    public static BPRV2 BPRV2(ExBPRV2 ex) => CompileDelegateLambda<BPRV2, TExPI>(ex);
-
-    [Fallthrough]
-    [ExprCompiler]
-    public static Pred Pred(ExPred ex) => CompileDelegateLambda<Pred, TExPI>(ex);
-
-    [Fallthrough]
-    [ExprCompiler]
-    public static LPred LPred(ExPred ex) => CompileDelegateLambda<LPred, TExPI, TEx<float>>((pi, lt) => {
-        using (new ReflectEx.LetDirect(LASER_TIME_ALIAS, lt)) {
-            return ex(pi);
-        }
-    });
-
-    [Fallthrough]
-    [ExprCompiler]
-    public static SBCF SBCF(ExSBCF ex) => CompileDelegateLambda<SBCF, TExSBC, TEx<int>, TExPI>(ex);
-
-    //requires manual handling for wrapper
-    private static GCXF<T> GCXF<T>(ExGCXF ex) {
-        TExGCX t1 = new TExGCX();
-        ReflectEx.SetGCX(t1);
-        var gcxf = Ex.Lambda<GCXF<T>>(ex(t1).Flatten(), t1).Compile();
-        ReflectEx.RemoveGCX();
-        return gcxf;
+        return CompileDelegate<VTP>(tac => ex(
+                tac.GetByExprType<TExMov>(),
+                tac.GetByExprType<TEx<float>>(),
+                tac,
+                tac.GetByExprType<TExV2>()),
+            new DelegateArg<Movement>("vtp_mov", true, true),
+            new DelegateArg<float>("vtp_dt", false, true),
+            new DelegateArg<ParametricInfo>("vtp_bpi", false, true),
+            new DelegateArg<Vector2>("vtp_delta", true, true)
+        );
     }
 
     [Fallthrough]
     [ExprCompiler]
-    public static GCXF<bool> GCXF(ExPred f) => GCXF<bool>(GCXFRepo.GCX_Pred(f));
+    public static LVTP LVTP(ExVTP ex) =>
+        CompileDelegate<LVTP>(tac => ex(
+                tac.GetByExprType<TExLMov>(),
+                tac.GetByName<float>("lvtp_dt"),
+                tac,
+                tac.GetByExprType<TExV2>()),
+            new DelegateArg<LaserMovement>("lvtp_mov", true, true),
+            new DelegateArg<float>("lvtp_dt"),
+            new DelegateArg<float>(LASER_TIME_ALIAS),
+            new DelegateArg<ParametricInfo>("lvtp_bpi", false, true),
+            new DelegateArg<Vector2>("lvtp_delta", true, true)
+        );
 
     [Fallthrough]
     [ExprCompiler]
-    public static GCXF<float> GCXF(ExBPY f) => GCXF<float>(GCXFRepo.GCX_BPY(f));
-
-    public static GCXF<float> GCXFf(ExBPY f) => GCXF(f);
-
-    [Fallthrough]
-    [ExprCompiler]
-    public static GCXF<Vector2> GCXF(ExTP f) => GCXF<Vector2>(GCXFRepo.GCX_TP(f));
+    public static FXY FXY(ExBPY ex) => CompileDelegateLambda<FXY>(ex, 
+        TExArgCtx.Arg.Make<float>("x", true));
 
     [Fallthrough]
     [ExprCompiler]
-    public static GCXF<Vector3> GCXF(ExTP3 f) => GCXF<Vector3>(GCXFRepo.GCX_TP3(f));
+    public static BPY BPY(ExBPY ex) => CompileDelegateLambdaBPI<BPY>(ex);
 
     [Fallthrough]
     [ExprCompiler]
-    public static GCXF<Vector4> GCXF(ExTP4 f) => GCXF<Vector4>(GCXFRepo.GCX_TP4(f));
+    public static SBF SBF(ExBPY ex) => CompileDelegateLambda<SBF>(ex);
+    
 
     [Fallthrough]
     [ExprCompiler]
-    public static GCXF<V2RV2> GCXF(ExBPRV2 f) => GCXF<V2RV2>(GCXFRepo.GCX_BPRV2(f));
-
-    public static GCXF<V2RV2> GCXFrv2(ExBPRV2 f) => GCXF(f);
-
-    private static GCXU<T2> GCXU11<T1, T2>(Func<Func<TExPI, TEx<T1>>, T2> compiler, Func<TExPI, TEx<T1>> f) =>
-        Automatic(compiler, f, aliases => bpi => ReflectEx.Let2(aliases, () => f(bpi), bpi));
-
-    private static GCXU<T2> GCXUsb11<T1, T2>(Func<Func<RTExSB, TEx<T1>>, T2> compiler, Func<RTExSB, TEx<T1>> f) =>
-        Automatic(compiler, f, aliases => sb => ReflectEx.Let2(aliases, () => f(sb), sb.bpi));
+    public static BPRV2 BPRV2(ExBPRV2 ex) => CompileDelegateLambdaBPI<BPRV2>(ex);
 
     [Fallthrough]
     [ExprCompiler]
-    public static GCXU<BPY> GCXU(ExBPY f) => GCXU11(BPY, f);
+    public static Pred Pred(ExPred ex) => CompileDelegateLambdaBPI<Pred>(ex);
 
     [Fallthrough]
     [ExprCompiler]
-    public static GCXU<FnLaserV4> GCXULaser(ExTP4 f) => GCXU11(FnLaserFloat, f);
+    public static LPred LPred(ExPred ex) => CompileDelegate<LPred>(ex,
+        new DelegateArg<ParametricInfo>("lpred_bpi", priority: true),
+        new DelegateArg<float>(LASER_TIME_ALIAS)
+    );
+
+    [Fallthrough]
+    [ExprCompiler]
+    public static SBCF SBCF(ExSBCF ex) =>
+        CompileDelegate<SBCF>(tac => ex(
+                tac.GetByExprType<TExSBC>(),
+                tac.GetByExprType<TEx<int>>(),
+                tac),
+            new DelegateArg<BulletManager.AbsSimpleBulletCollection>("sbcf_sbc"),
+            new DelegateArg<int>("sbcf_ii"),
+            new DelegateArg<ParametricInfo>("sbcf_bpi")
+        );
+
+    [Fallthrough]
+    [ExprCompiler]
+    public static GCXF<T> GCXF<T>(Func<TExArgCtx, TEx<T>> ex) {
+        //We don't make a BPI variable, instead it is assigned in the _Fake method.
+        // This is because gcx.BPI is a property that creates a random ID every time it is called, which we don't want.
+        return CompileDelegate<GCXF<T>>(tac => GCXFRepo._Fake(ex)(tac), new DelegateArg<GenCtx>("gcx"));
+    }
+
+    [Fallthrough]
+    [ExprCompiler]
+    public static GCXU<BPY> GCXU(Func<TExArgCtx, TEx<float>> f) => GCXU11(BPY, f);
 
     [Fallthrough]
     [ExprCompiler]
@@ -239,82 +258,37 @@ public static class Compilers {
 
     [Fallthrough]
     [ExprCompiler]
-    public static GCXU<SBF> GCXU(ExSBF f) => GCXUsb11(SBF, f);
+    public static GCXU<SBF> GCXUSB(ExBPY f) => GCXU11(SBF, f);
     [Fallthrough]
     [ExprCompiler]
-    public static GCXU<SBV2> GCXU(ExSBV2 f) => GCXUsb11(SBV2, f);
-
-    [Fallthrough]
-    [ExprCompiler]
-    public static GCXU<VTP> GCXU(ExVTP f) => Automatic(VTP, f, aliases => VTPRepo.LetDecl(aliases, f));
+    public static GCXU<SBV2> GCXUSB(ExTP f) => GCXU11(SBV2, f);
 
     [Fallthrough]
     [ExprCompiler]
-    public static GCXU<LVTP> LGCXU(ExVTP f) => Automatic(_LVTP, f, aliases => VTPRepo.LetDecl(aliases, f));
+    public static GCXU<VTP> GCXU(ExVTP f) => Automatic(VTP, f, aliases => VTPRepo.LetDecl(aliases, f), 
+        (ex, mod) => (a, b, tac, d) => ex(a, b, mod(tac), d));
 
     [Fallthrough]
     [ExprCompiler]
-    public static FnLaserV4 FnLaserFloat(ExTP4 ex) {
-        var texpi = new TExPI();
-        ReflectEx.aliased_laser = new TEx<CurvedTileRenderLaser>();
-        var result = Ex.Lambda<FnLaserV4>(ex(texpi).Flatten(), texpi, ReflectEx.aliased_laser).Compile();
-        ReflectEx.aliased_laser = null;
-        return result;
-    }
+    public static GCXU<LVTP> LGCXU(ExVTP f) => Automatic(LVTP, f, aliases => VTPRepo.LetDecl(aliases, f),
+        (ex, mod) => (a, b, tac, d) => ex(a, b, mod(tac), d));
 
-    private class GCXCompileResolver : ReflectEx.ICompileReferenceResolver {
-        public readonly List<(Reflector.ExType, string)> bound = new List<(Reflector.ExType, string)>();
+    #endregion
 
-        public bool TryResolve<T>(string alias, out Ex ex) {
-            var ext = Reflector.AsExType<T>();
-            if (!bound.Contains((ext, alias))) {
-                bound.Add((ext, alias));
-            }
-            ex = Ex.Default(typeof(T));
-            return true;
-        }
-    }
+    #region GenericCompilers
 
-    private static GCXU<T> Automatic<S, T>(Func<S, T> compiler, S exp, Func<ReflectEx.Alias<TExPI>[], S> relet) {
-        var resolver = new GCXCompileResolver();
-        ReflectEx.SetICRR(resolver);
-        var p = compiler(exp);
-        ReflectEx.RemoveICRR();
-        if (resolver.bound.Count > 0) {
-            //Automatic resolver found something, recompile
-            return Expose(resolver.bound.ToArray(), compiler, exp, relet);
-        }
-        var bound = new (Reflector.ExType, string)[0];
-        return new GCXU<T>(
-            (GenCtx gcx, ref uint id) => {
-                PrivateDataHoisting.UploadNew(bound, gcx, ref id);
-                return p;
-            }, (gcx, id) => {
-                PrivateDataHoisting.UploadAdd(bound, gcx, id);
-                return p;
-            });
-    }
+    [Fallthrough]
+    [ExprCompiler]
+    public static Func<T1, T2, R> Compile<T1, T2, R>(Func<TExArgCtx, TEx<R>> ex) =>
+        CompileDelegate<Func<T1, T2, R>>(ex, DelegateArg<T1>.New, DelegateArg<T2>.New);
 
-    private static GCXU<T> Expose<S, T>((Reflector.ExType, string)[] exportVars, Func<S, T> compiler, S exp,
-        Func<ReflectEx.Alias<TExPI>[], S> relet) {
-        var aliases = new ReflectEx.Alias<TExPI>[exportVars.Length];
-        for (int ii = 0; ii < exportVars.Length; ++ii) {
-            var (ext, boundVar) = exportVars[ii];
-            //The "better" way to do this would be to copy the GCX values into the let statements
-            //and recompile the expression for every caller.
-            //However, this is ridiculously expensive, so instead we HOIST.
-            aliases[ii] = new ReflectEx.Alias<TExPI>(boundVar, PrivateDataHoisting.GetValue(ext, boundVar));
-        }
-        var p = compiler((aliases.Length > 0) ? relet(aliases) : exp);
-        return new GCXU<T>(
-            (GenCtx gcx, ref uint id) => {
-                PrivateDataHoisting.UploadNew(exportVars, gcx, ref id);
-                return p;
-            }, (gcx, id) => {
-                PrivateDataHoisting.UploadAdd(exportVars, gcx, id);
-                return p;
-            });
-    }
+    [Fallthrough]
+    [ExprCompiler]
+    public static GCXU<Func<T1, T2, R>> CompileGCXU<T1, T2, R>(Func<TExArgCtx, TEx<R>> ex) =>
+        CompileGCXU<Func<T1, T2, R>>(ex, DelegateArg<T1>.New, DelegateArg<T2>.New);
+    
+    #endregion
+
 
 }
 }

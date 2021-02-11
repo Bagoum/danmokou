@@ -22,7 +22,7 @@ public struct DelegatedCreator {
     /// <summary>
     /// Bullets (currently only LASERS and maybe summons (untested)) can be parented by other entities.
     /// </summary>
-    [CanBeNull] public BehaviorEntity transformParent;
+    public BehaviorEntity? transformParent;
     public string style;
     /// <summary>
     /// Exists iff using world coordinates instead of parent-offset.
@@ -61,56 +61,70 @@ public struct DelegatedCreator {
 
     public void SFX() => SFXService.Request(style);
 
-    public void Simple(SyncHandoff sbh, [CanBeNull] BPY scale, [CanBeNull] SBV2 dir, VTP path, uint? id) {
-        BulletManager.RequestSimple(style, scale, dir, new Movement(path, ParentOffset, FacedRV2(sbh.rv2)), 
-            sbh.index, sbh.timeOffset, id);
+    private (Movement, ParametricInfo) PathHandlers(SyncHandoff sbh, GCXU<VTP> path, uint? id = null) {
+        var fctx = FiringCtx.New(sbh.GCX);
+        var mov = new Movement(path(sbh.GCX, fctx), ParentOffset, FacedRV2(sbh.rv2));
+        var pi = new ParametricInfo(in mov, sbh.index, id, sbh.timeOffset, fctx);
+        return (mov, pi);
+    }
+    public void Simple(SyncHandoff sbh, SBOptions options, GCXU<VTP> path, uint? id) {
+        var (mov, pi) = PathHandlers(sbh, path, id);
+        pi.ctx.playerFireCfg = options.player;
+        BulletManager.RequestSimple(style, 
+            options.scale?.Invoke(sbh.GCX, pi.ctx), 
+            options.direction?.Invoke(sbh.GCX, pi.ctx), mov, pi);
     }
 
-    public void Complex(SyncHandoff sbh, VTP path, uint id, BehOptions options) {
+    public void Complex(SyncHandoff sbh, GCXU<VTP> path, uint id, BehOptions options) {
+        var (mov, pi) = PathHandlers(sbh, path, id);
         V2RV2 lrv2 = FacedRV2(sbh.rv2);
-        var opts = new RealizedBehOptions(options, sbh.GCX, id, ParentOffset, lrv2, sbh.ch.cT);
+        var opts = new RealizedBehOptions(options, sbh.GCX, pi.ctx, ParentOffset, lrv2, sbh.ch.cT);
         if (opts.playerBullet != null) style = BulletManager.GetOrMakeComplexPlayerCopy(style);
-        BulletManager.RequestComplex(style, new Movement(path, ParentOffset, lrv2), sbh.index, id, ref opts);
+        BulletManager.RequestComplex(style, mov, pi, ref opts);
     }
 
     private const float DEFAULT_REMEMBER = 3f;
-    public void Pather(SyncHandoff sbh, float? maxLength, BPY remember, VTP path, uint id, BehOptions options) {
-        V2RV2 lrv2 = FacedRV2(sbh.rv2);
-        var opts = new RealizedBehOptions(options, sbh.GCX, id, ParentOffset, lrv2, sbh.ch.cT);
+    public void Pather(SyncHandoff sbh, float? maxLength, BPY remember, GCXU<VTP> path, uint id, BehOptions options) {
+        var (mov, pi) = PathHandlers(sbh, path, id);
+        var opts = new RealizedBehOptions(options, sbh.GCX, pi.ctx, ParentOffset, FacedRV2(sbh.rv2), sbh.ch.cT);
         if (opts.playerBullet != null) style = BulletManager.GetOrMakeComplexPlayerCopy(style);
-        BulletManager.RequestPather(style, new Movement(path, ParentOffset, lrv2), sbh.index, id, 
+        BulletManager.RequestPather(style, mov, pi, 
             maxLength.GetValueOrDefault(DEFAULT_REMEMBER), remember, ref opts);
     }
 
-    public void Laser(SyncHandoff sbh, VTP path, float cold, float hot, uint id, LaserOptions options) {
-        V2RV2 lrv2 = FacedRV2(sbh.rv2);
-        var opts = new RealizedLaserOptions(options, sbh.GCX, id, ParentOffset, lrv2, sbh.ch.cT);
+    public void Laser(SyncHandoff sbh, GCXU<VTP> path, float cold, float hot, uint id, LaserOptions options) {
+        var (mov, pi) = PathHandlers(sbh, path, id);
+        var opts = new RealizedLaserOptions(options, sbh.GCX, pi.ctx, ParentOffset, FacedRV2(sbh.rv2), sbh.ch.cT);
         if (opts.playerBullet != null) style = BulletManager.GetOrMakeComplexPlayerCopy(style);
-        BulletManager.RequestLaser(transformParent, style, new Movement(path, ParentOffset, lrv2), 
-            sbh.index, id, cold, hot, ref opts);
+        BulletManager.RequestLaser(transformParent, style, mov, pi, cold, hot, ref opts);
     }
 
-    public void Summon(bool pooled, SyncHandoff sbh, BehOptions options, VTP path, SMRunner sm, uint bpiid) {
-        V2RV2 lrv2 = FacedRV2(sbh.rv2);
-        Movement vel = new Movement(path, ParentOffset, lrv2);
-        BulletManager.RequestSummon(pooled, style, vel, sbh.index, bpiid, options.ID, transformParent, sm,
-            new RealizedBehOptions(options, sbh.GCX, bpiid, ParentOffset, lrv2, sbh.ch.cT));
+    public void Summon(bool pooled, SyncHandoff sbh, BehOptions options, GCXU<VTP> path, SMRunner sm, uint id) {
+        var (mov, pi) = PathHandlers(sbh, path, id);
+        BulletManager.RequestSummon(pooled, style, mov, pi, options.ID, transformParent, sm,
+            new RealizedBehOptions(options, sbh.GCX, pi.ctx, ParentOffset, FacedRV2(sbh.rv2), sbh.ch.cT));
     }
 
     public void SummonRect(SyncHandoff sbh, string behid, TP4 color, BPRV2 loc, SMRunner sm, uint bpiid) {
-        BulletManager.RequestRect(color, loc, sbh.index, bpiid, behid,transformParent, sm);
+        BulletManager.RequestRect(color, loc, 
+            new ParametricInfo(Vector2.zero, sbh.index, bpiid), behid, transformParent, sm);
     }
     public void SummonCirc(SyncHandoff sbh, string behid, TP4 color, BPRV2 loc, SMRunner sm, uint bpiid) {
-        BulletManager.RequestCirc(color, loc, sbh.index, bpiid, behid,transformParent, sm);
+        BulletManager.RequestCirc(color, loc, 
+            new ParametricInfo(Vector2.zero, sbh.index, bpiid), behid, transformParent, sm);
     }
-    public void SummonPowerup(SyncHandoff sbh, TP4 color, float time, float itrs, uint bpiid) {
-        BulletManager.RequestPowerup(style, color, time, itrs, sbh.GCX.exec, sbh.index, bpiid);
-    }
-    public void SummonPowerupStatic(SyncHandoff sbh, TP4 color, float time, float itrs, uint bpiid) {
-        BulletManager.RequestPowerup(style, color, time, itrs, null, sbh.index, bpiid, FacedRV2(sbh.rv2).TrueLocation + ParentOffset);
+    public void SummonPowerAura(SyncHandoff sbh, PowerAuraOptions options, uint bpiid) {
+        var _style = style;
+        var index = sbh.index;
+        Action SummonWithRealized(RealizedPowerAuraOptions rap) => () =>
+            BulletManager.RequestPowerAura(_style!, index, bpiid, rap);
+        
+        BulletManager.RequestPowerAura(style, sbh.index, bpiid, 
+            new RealizedPowerAuraOptions(options, sbh.GCX, ParentOffset, sbh.ch.cT, SummonWithRealized));
     }
     public void SummonDarkness(SyncHandoff sbh, string behid, TP loc, BPY radius, TP4 color, SMRunner sm, uint bpiid) {
-        BulletManager.RequestDarkness(loc, radius, color, sbh.index, bpiid, behid, transformParent, sm);
+        BulletManager.RequestDarkness(loc, radius, color, 
+            new ParametricInfo(Vector2.zero, sbh.index, bpiid), behid, transformParent, sm);
     }
 
     //If there is a transform-parent, then the effective parent offset is zero.
@@ -144,54 +158,42 @@ public partial class BulletManager {
                                 $"You probably made an error somewhere. " +
                                 $"If you didn't, remove this exception in the code.");
     }
-    public static void RequestSimple(string styleName, [CanBeNull] BPY scale, [CanBeNull] SBV2 dir, Movement movement, int firingIndex, float timeOffset, uint? bpiid, bool checkSentry=true) {
+    public static void RequestSimple(string styleName, BPY? scale, SBV2? dir, Movement mov, ParametricInfo pi, bool checkSentry=true) {
         if (checkSentry) CheckSentry();
-        SimpleBullet sb = new SimpleBullet(scale, dir, movement, firingIndex, bpiid ?? RNG.GetUInt(), timeOffset);
+        SimpleBullet sb = new SimpleBullet(scale, dir, mov, pi);
         GetMaybeCopyPool(styleName).Add(ref sb, true);
     }
 
-    private static void CopySimple(string newStyle, AbsSimpleBulletCollection sbc, int ii) {
-        CheckSentry();
-        ref var sb = ref sbc[ii];
-        SimpleBullet nsb = new SimpleBullet(sb.scaleFunc, sb.dirFunc, sb.movement, sb.bpi.index, 
-            PrivateDataHoisting.Copy(sb.bpi.id, RNG.GetUInt()), 0f);
-        nsb.bpi.loc = sb.bpi.loc;
-        nsb.bpi.t = sb.bpi.t;
-        GetMaybeCopyPool(newStyle).Add(ref nsb, true);
-    }
+    public static void RequestNullSimple(string styleName, Vector2 loc, Vector2 dir, float time=0) =>
+        RequestSimple(styleName, null, null, new Movement(loc, dir), new ParametricInfo(loc, 0, t:time), false);
 
-    public static void RequestNullSimple(string styleName, Vector2 loc, Vector2 dir) =>
-        RequestSimple(styleName, null, null, new Movement(loc, dir), 0, 0, null, false);
-
-    public static void RequestComplex(string style, Movement movement, int firingIndex, uint bpiid, ref RealizedBehOptions opts) {
+    public static void RequestComplex(string style, Movement mov, ParametricInfo pi, ref RealizedBehOptions opts) {
         CheckSentry();
         if (CheckComplexPool(style, out var bsm)) {
-            var bullet = (Bullet) BEHPooler.RequestUninitialized(bsm.recolor.GetOrLoadRecolor().prefab, out _);
-            bullet.Initialize(bsm, opts, null, movement, firingIndex, bpiid, main.bulletCollisionTarget, out _);
+            var bullet = (Bullet) BEHPooler.RequestUninitialized(bsm.RecolorOrThrow.prefab, out _);
+            bullet.Initialize(bsm, opts, null, mov, pi, main.bulletCollisionTarget, out _);
         } else throw new Exception("Could not find complex bullet style: " + style);
     }
-    public static void RequestPather(string style, Movement movement, int firingIndex, uint bpiid, float maxRemember, BPY remember, ref RealizedBehOptions opts) {
+    public static void RequestPather(string style, Movement mov, ParametricInfo pi, float maxRemember, BPY remember, ref RealizedBehOptions opts) {
         CheckSentry();
         if (CheckComplexPool(style, out var bsm)) {
-            Pather.Request(bsm, movement, firingIndex, bpiid, maxRemember, remember, main.bulletCollisionTarget, ref opts);
+            Pather.Request(bsm, mov, pi, maxRemember, remember, main.bulletCollisionTarget, ref opts);
         } else throw new Exception("Pather must be an faBulletStyle: " + style);
     }
-    public static void RequestLaser(BehaviorEntity parent, string style, Movement vel, int firingIndex,
-        uint bpiid, float cold, float hot, ref RealizedLaserOptions options) {
+    public static void RequestLaser(BehaviorEntity? parent, string style, Movement mov, ParametricInfo pi, float cold, float hot, ref RealizedLaserOptions options) {
         CheckSentry();
         if (CheckComplexPool(style, out var bsm)) {
-            Laser.Request(bsm, parent, vel, firingIndex, bpiid, cold, hot, main.bulletCollisionTarget, ref options);
+            Laser.Request(bsm, parent, mov, pi, cold, hot, main.bulletCollisionTarget, ref options);
         } else throw new Exception("Laser must be an faBulletStyle: " + style);
     }
     
-    public static BehaviorEntity RequestSummon(bool pooled, string prefabName, Movement path, 
-        int firingIndex, uint bpiid, string behName, [CanBeNull] BehaviorEntity parent, SMRunner sm, RealizedBehOptions? opts) {
+    public static BehaviorEntity RequestSummon(bool pooled, string prefabName, Movement mov, ParametricInfo pi, string behName, BehaviorEntity? parent, SMRunner sm, RealizedBehOptions? opts) {
         CheckSentry();
         if (CheckComplexPool(prefabName, out var bsm)) {
             BehaviorEntity beh = pooled ?
                 BEHPooler.RequestUninitialized(ResourceManager.GetSummonable(prefabName), out _) :
                 GameObject.Instantiate(ResourceManager.GetSummonable(prefabName)).GetComponent<BehaviorEntity>();
-            beh.Initialize(bsm, path, sm, firingIndex, bpiid, parent, behName, opts);
+            beh.Initialize(bsm, mov, pi, sm, parent, behName, opts);
             return beh;
         } else throw new Exception("No valid summonable by name: " + prefabName);
     }
@@ -199,37 +201,30 @@ public partial class BulletManager {
     public static BehaviorEntity RequestRawSummon(string prefabName) =>
         GameObject.Instantiate(ResourceManager.GetSummonable(prefabName)).GetComponent<BehaviorEntity>();
 
-    public static ShapeDrawer RequestDrawer(string kind, int firingIndex, 
-        uint bpiid, string behName, [CanBeNull] BehaviorEntity parent, SMRunner sm) => RequestSummon(true, kind, Movement.None, firingIndex, bpiid, behName,
-            parent, sm, null).GetComponent<ShapeDrawer>();
+    public static ShapeDrawer RequestDrawer(string kind, ParametricInfo pi, string behName, BehaviorEntity? parent, SMRunner sm) => RequestSummon(true, kind, Movement.None, pi, behName, parent, sm, null).GetComponent<ShapeDrawer>();
 
-    public static RectDrawer RequestRect(TP4 color, BPRV2 locScaleRot, int firingIndex,
-        uint bpiid, string behName, [CanBeNull] BehaviorEntity parent, SMRunner sm) {
-        var rect = RequestDrawer("rect", firingIndex, bpiid, behName, parent, sm) as RectDrawer;
-        rect.Initialize(color, locScaleRot);
+    public static RectDrawer RequestRect(TP4 color, BPRV2 locScaleRot, ParametricInfo pi, string behName, BehaviorEntity? parent, SMRunner sm) {
+        var rect = RequestDrawer("rect", pi, behName, parent, sm) as RectDrawer;
+        rect!.Initialize(color, locScaleRot);
         return rect;
     }
-    public static CircDrawer RequestCirc(TP4 color, BPRV2 locScaleRot, int firingIndex,
-        uint bpiid, string behName, [CanBeNull] BehaviorEntity parent, SMRunner sm) {
-        var circ = RequestDrawer("circ", firingIndex, bpiid, behName, parent, sm) as CircDrawer;
-        circ.Initialize(color, locScaleRot);
+    public static CircDrawer RequestCirc(TP4 color, BPRV2 locScaleRot, ParametricInfo pi, string behName, BehaviorEntity? parent, SMRunner sm) {
+        var circ = RequestDrawer("circ", pi, behName, parent, sm) as CircDrawer;
+        circ!.Initialize(color, locScaleRot);
         return circ;
     }
 
-    public static DarknessDrawer RequestDarkness(TP loc, BPY radius, TP4 color, int firingIndex, 
-        uint bpiid, string behName, [CanBeNull] BehaviorEntity parent, SMRunner sm) {
-        var dark = RequestSummon(false, "darkness", Movement.None, firingIndex, 
-                bpiid, behName, parent, sm, null).GetComponent<DarknessDrawer>();
+    public static DarknessDrawer RequestDarkness(TP loc, BPY radius, TP4 color, ParametricInfo pi, string behName, BehaviorEntity? parent, SMRunner sm) {
+        var dark = RequestSummon(false, "darkness", Movement.None, pi, behName, parent, sm, null).GetComponent<DarknessDrawer>();
         dark.Initialize(loc, radius, color);
         return dark;
     }
 
-    public static PowerUp RequestPowerup(string style, TP4 color, float time, float itrs, [CanBeNull] BehaviorEntity parent, 
-        int firingIndex, uint bpiid, Vector2? offset = null) {
-        Movement vel = offset.HasValue ? new Movement(offset.Value, 0f) : Movement.None;
-        var pw = RequestSummon(true, style, vel, firingIndex, bpiid, "_", parent,
-            new SMRunner(), null).GetComponent<PowerUp>();
-        pw.Initialize(color, time, itrs);
+    public static PowerAura RequestPowerAura(string style, int firingIndex, uint bpiid, in RealizedPowerAuraOptions opts) {
+        Movement mov = new Movement(opts.offset, 0f);
+        var pw = RequestSummon(true, style, mov, new ParametricInfo(in mov, firingIndex, bpiid), "_", opts.parent,
+            new SMRunner(), null).GetComponent<PowerAura>();
+        pw.Initialize(in opts);
         return pw;
     }
 }

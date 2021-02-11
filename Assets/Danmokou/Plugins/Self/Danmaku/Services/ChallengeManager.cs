@@ -13,7 +13,7 @@ using static DMK.GameInstance.Challenge;
 
 namespace DMK.Services {
 public interface IChallengeManager {
-    float? BossTimeoutOverride([CanBeNull] BossConfig bc);
+    float? BossTimeoutOverride(BossConfig? bc);
     void TrackChallenge(IChallengeRequest cr, Action<InstanceRecord> onSucess);
     void SetupBossPhase(SMHandoff smh);
     void LinkBoss(BehaviorEntity exec);
@@ -27,8 +27,8 @@ public class ChallengeManager : CoroutineRegularUpdater, IChallengeManager {
     public IEnumerable<AyaPhoto> ChallengePhotos => challengePhotos;
 
     private PhaseCompletion? completion = null;
-    [CanBeNull] private IChallengeRequest tracking = null;
-    [CanBeNull] private BehaviorEntity Exec { get; set; }
+    private IChallengeRequest? tracking = null;
+    private BehaviorEntity? Exec { get; set; }
 
     protected override void BindListeners() {
         base.BindListeners();
@@ -56,7 +56,7 @@ public class ChallengeManager : CoroutineRegularUpdater, IChallengeManager {
         Restriction = new Restrictions();
     }
 
-    public float? BossTimeoutOverride([CanBeNull] BossConfig bc) =>
+    public float? BossTimeoutOverride(BossConfig? bc) =>
         (tracking?.ControlsBoss(bc) == true) ? Restriction.TimeoutOverride : null;
 
 

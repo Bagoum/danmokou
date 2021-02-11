@@ -4,25 +4,19 @@ using DMK.DataHoist;
 using DMK.DMath;
 using DMK.Expressions;
 using Ex = System.Linq.Expressions.Expression;
-using ExPred = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<bool>>;
-using ExFXY = System.Func<DMK.Expressions.TEx<float>, DMK.Expressions.TEx<float>>;
-using ExBPY = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<float>>;
-using ExTP3 = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<UnityEngine.Vector3>>;
-using ExSBPred = System.Func<DMK.Expressions.TExSBC, DMK.Expressions.TEx<int>, DMK.Expressions.TExPI, DMK.Expressions.TEx<bool>>;
 using static DMK.Expressions.ExUtils;
 using static DMK.DMath.Functions.ExM;
 using static DMK.Expressions.ExMHelpers;
+using ExPred = System.Func<DMK.Expressions.TExArgCtx, DMK.Expressions.TEx<bool>>;
+using ExTP3 = System.Func<DMK.Expressions.TExArgCtx, DMK.Expressions.TEx<UnityEngine.Vector3>>;
 
 namespace DMK.DMath.Functions {
 
-public static partial class SBPredicates {
-    [Fallthrough(50)]
-    public static ExSBPred BPI(ExPred pred) => (sbc, ii, bpi) => pred(bpi);
-}
 
 /// <summary>
 /// Functions that take in parametric information and return true or false.
 /// </summary>
+[Reflect]
 public static partial class PredicateLogic {
 
     /// <summary>
@@ -30,17 +24,18 @@ public static partial class PredicateLogic {
     /// </summary>
     /// <param name="pred"></param>
     /// <returns></returns>
-    public static ExPred OnlyOnce(ExPred pred) {
-        var returned = DataHoisting.GetClearableSet();
-        var b = V<bool>();
-        return bpi => Ex.Condition(SetHas<uint>(returned, bpi.id),
-            ExC(false),
-            Ex.Block(new[] {b},
-                Ex.IfThen(b.Is(pred(bpi)), SetAdd<uint>(returned, bpi.id)),
-                b
-            )
-        );
-    }
+    public static ExPred OnlyOnce(ExPred pred) =>
+        bpi => {
+            var b = V<bool>();
+            var key = bpi.Ctx.NameWithSuffix("_OnlyOnce_Set");
+            return Ex.Condition(FiringCtx.Contains<int>(bpi, key),
+                ExC(false),
+                Ex.Block(new[] {b},
+                    Ex.IfThen(b.Is(pred(bpi)), FiringCtx.SetValue<int>(bpi, key, ExC(1))),
+                    b
+                )
+            );
+        };
 
     /// <summary>
     /// Return true if the object is in the given circle relative to a BehaviorEntity.

@@ -9,7 +9,7 @@ public class LifeItem : Item {
     protected override float RotationTurns => 2;
 
     protected override void CollectMe() {
-        GameManagement.instance.AddLifeItems(1);
+        GameManagement.Instance.AddLifeItems(1);
         base.CollectMe();
     }
 }

@@ -18,8 +18,8 @@ public class ScriptTSM : SequentialSM {
 }
 public abstract class ScriptLineSM : StateMachine {}
 public class ReflectableSLSM : ScriptLineSM {
-    private readonly TaskPattern func;
-    public ReflectableSLSM(TaskPattern func) {
+    private readonly TTaskPattern func;
+    public ReflectableSLSM(TTaskPattern func) {
         this.func = func;
     }
     public override Task Start(SMHandoff smh) => func(smh);
@@ -29,13 +29,16 @@ public class ReflectableSLSM : ScriptLineSM {
 /// <summary>
 /// `endcard`: Controls for endcard display in dialogue scripts. 
 /// </summary>
+[Reflect]
 public class EndcardControllerTSM : ReflectableSLSM {
-    public EndcardControllerTSM(TaskPattern rs) : base(rs) {}
+    public delegate Task Endcard(SMHandoff smh);
+    
+    public EndcardControllerTSM(Endcard rs) : base(new TTaskPattern(rs)) {}
 
     /// <summary>
     /// Turn the endcard controller on. It will appear black.
     /// </summary>
-    public static TaskPattern Activate() => smh => {
+    public static Endcard Activate() => smh => {
         Endcards.Activate();
         return Task.CompletedTask;
     };
@@ -43,14 +46,14 @@ public class EndcardControllerTSM : ReflectableSLSM {
     /// <summary>
     /// Fade in an endcard image.
     /// </summary>
-    public static TaskPattern FadeIn(float t, string key) => smh => {
+    public static Endcard FadeIn(float t, string key) => smh => {
         Endcards.FadeIn(t, key, smh.cT, WaitingUtils.GetAwaiter(out Task task));
         return task;
     };
     /// <summary>
     /// Fade out an endcard image (to black).
     /// </summary>
-    public static TaskPattern FadeOut(float t) => smh => {
+    public static Endcard FadeOut(float t) => smh => {
         Endcards.FadeOut(t, smh.cT, WaitingUtils.GetAwaiter(out Task task));
         return task;
     };

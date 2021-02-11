@@ -15,6 +15,7 @@ namespace DMK.Danmaku {
 public class GenCtx : IDisposable {
     public readonly Dictionary<string, float> fs = new Dictionary<string, float>();
     public readonly Dictionary<string, Vector2> v2s = new Dictionary<string, Vector2>();
+    public static readonly GenCtx Empty = new GenCtx();
 
     public float GetFloatOrThrow(string key) {
         if (TryGetFloat(key, out var f)) return f;
@@ -49,7 +50,7 @@ public class GenCtx : IDisposable {
     /// <summary>
     /// Firing BEH (copied from DelegatedCreator)
     /// </summary>
-    public BehaviorEntity exec;
+    public BehaviorEntity exec = null!;
     public V2RV2 RV2 {
         get => rv2s["rv2"];
         set => rv2s["rv2"] = value;
@@ -65,7 +66,7 @@ public class GenCtx : IDisposable {
     public Vector2 Loc => exec.GlobalPosition();
     public uint? idOverride = null;
     [UsedImplicitly]
-    public ParametricInfo AsBPI => new ParametricInfo(Loc, index, idOverride ?? exec.rBPI.id, i);
+    public ParametricInfo AsBPI => new ParametricInfo(Loc, index, idOverride ?? exec.rBPI.id, i, FiringCtx.Empty);
     private static readonly Stack<GenCtx> cache = new Stack<GenCtx>();
     private GenCtx() { }
 
@@ -87,6 +88,7 @@ public class GenCtx : IDisposable {
     }
 
     public void Dispose() {
+        if (this == Empty) return;
         fs.Clear();
         v2s.Clear();
         v3s.Clear();
@@ -94,7 +96,7 @@ public class GenCtx : IDisposable {
         exposed.Clear();
         i = 0;
         pi = 0;
-        exec = null;
+        exec = null!;
         idOverride = null;
         cache.Push(this);
     }
@@ -119,7 +121,7 @@ public class GenCtx : IDisposable {
         return cp;
     }
 
-    public void FinishIteration(List<GCRule> postloop, V2RV2 rv2Increment) {
+    public void FinishIteration(List<GCRule>? postloop, V2RV2 rv2Increment) {
         UpdateRules(postloop);
         RV2 += rv2Increment;
         ++i;
@@ -174,7 +176,7 @@ public class GenCtx : IDisposable {
         }
     }
 
-    public void UpdateRules([CanBeNull] List<GCRule> rules) {
+    public void UpdateRules(List<GCRule>? rules) {
         if (rules == null) return;
         for (int ii = 0; ii < rules.Count; ++ii) UpdateRule(rules[ii]);
     }

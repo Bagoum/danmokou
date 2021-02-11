@@ -13,22 +13,37 @@ MonoBehaviour:
   m_Name: JY.Junko
   m_EditorClassIdentifier: 
   boss: {fileID: 6003014192476353498, guid: cb2d4430c7bd48848833db5439ec92c6, type: 3}
-  CardPracticeName: Junko
-  BossPracticeName:
-    _showEnOnly: 0
-    en: Junko
-    jp: "\u7D14\u5F27"
+  localizationBaseKey: boss.junko
+  m_bossPracticeName:
+    useReference: 1
+    reference: 
+    hardcoded:
+      en: 
+      jp: 
+      _showEnOnly: 0
   challengeNameOverride:
-    _showEnOnly: 0
-    en: 
-    jp: 
+    useReference: 1
+    reference: 
+    hardcoded:
+      en: 
+      jp: 
+      _showEnOnly: 0
   replayNameOverride:
-    _showEnOnly: 0
-    en: 
-    jp: 
+    useReference: 1
+    reference: 
+    hardcoded:
+      en: 
+      jp: 
+      _showEnOnly: 0
+  bottomTrackerNameOverride:
+    useReference: 1
+    reference: 
+    hardcoded:
+      en: 
+      jp: 
+      _showEnOnly: 0
   stateMachine: {fileID: 0}
   key: jy.junko
-  trackName: "\u7D14\u5F27"
   colors: {fileID: 11400000, guid: 82c24e8b13f850f4497e2c3002e3fcaa, type: 2}
   cardRotator: 
   spellRotator: 

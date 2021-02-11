@@ -13,7 +13,13 @@ MonoBehaviour:
   m_Name: Reimu DDC B
   m_EditorClassIdentifier: 
   key: reimu-ddc-b
-  title: Homing Amulets / Persuasion Needles
+  title:
+    useReference: 1
+    reference: players.shot_reimu_ddcb
+    hardcoded:
+      en: 
+      jp: 
+      _showEnOnly: 0
   description: 'In another universe, this technique is called "Ultimate Reimu".
 
     Options
@@ -23,3 +29,10 @@ MonoBehaviour:
   bomb: 0
   defaultPower: 1000
   playerChild: 1
+  demoReplay: {fileID: 4900000, guid: f58a179b4f5afb7489944bbfdd2484f5, type: 3}
+  demoSetupSM: {fileID: 4900000, guid: 83d895926f063264f9adc5887261db81, type: 3}
+  isMultiShot: 0
+  multiD: {fileID: 0}
+  multiM: {fileID: 0}
+  multiK: {fileID: 0}
+  onSwap: {fileID: 0}

@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace DMK.Testing {
 public class TestHarness : RegularUpdater {
-    public TextAsset[] behaviorScripts;
+    public TextAsset[] behaviorScripts = null!;
     private static readonly Dictionary<string, TextAsset> scriptsByName = new Dictionary<string, TextAsset>();
 
     private void Awake() {
@@ -32,7 +32,7 @@ public class TestHarness : RegularUpdater {
     public static void OnSOF(Action doThing) => Check(0, doThing);
 
     public static bool Running => checks.Count > 0;
-    public static StateMachine LoadBehaviorScript(string sname) {
+    public static StateMachine? LoadBehaviorScript(string sname) {
         if (!scriptsByName.TryGetValue(sname, out var script)) {
             foreach (var key in scriptsByName.Keys) {
                 if (key.ToLower().StartsWith(sname.ToLower())) {

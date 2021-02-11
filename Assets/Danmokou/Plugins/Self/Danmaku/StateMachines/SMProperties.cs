@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using DMK.Behavior;
 using DMK.Core;
 using DMK.DMath.Functions;
 using DMK.GameInstance;
 using DMK.Scriptables;
 using DMK.Services;
-using FParsec;
-using FParser;
 using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.Profiling;
@@ -20,6 +19,7 @@ namespace DMK.SM {
 /// <summary>
 /// A modifier that affects an entire pattern script.
 /// </summary>
+[Reflect]
 public class PatternProperty {
     /// <summary>
     /// Get metadata from a boss configuration. Includes things like UI colors, spell circles, tracker, etc.
@@ -30,7 +30,7 @@ public class PatternProperty {
 
     public static PatternProperty Bosses(string[] keys, (int phase, int index)[] uiUsage) => new BossesProp(keys, uiUsage);
 
-    public static PatternProperty BGM((int, string)[] phasesAndTracks) => new BGMProp(phasesAndTracks);
+    public static PatternProperty BGM((int, string?)[] phasesAndTracks) => new BGMProp(phasesAndTracks);
     
     public static PatternProperty SetUIFrom(int firstPhase) => new SetUIFromProp(firstPhase);
 
@@ -53,8 +53,8 @@ public class PatternProperty {
             base((keys.Select(ResourceManager.GetBoss).ToArray(), uiUsage)) { }
     }
 
-    public class BGMProp : ValueProp<(int, string)[]> {
-        public BGMProp((int, string)[] tracks) : base(tracks) { }
+    public class BGMProp : ValueProp<(int, string?)[]> {
+        public BGMProp((int, string?)[] tracks) : base(tracks) { }
     }
 
     public class SetUIFromProp : ValueProp<int> {
@@ -68,11 +68,11 @@ public class PatternProperty {
 /// A set of <see cref="PatternProperty"/>.
 /// </summary>
 public class PatternProperties {
-    [CanBeNull] public readonly BossConfig boss;
-    [CanBeNull] public readonly BossConfig[] bosses;
-    [CanBeNull] public readonly (int phase, int index)[] bossUI;
+    public readonly BossConfig? boss;
+    public readonly BossConfig[]? bosses;
+    public readonly (int phase, int index)[]? bossUI;
     public readonly int setUIFrom = 0;
-    [CanBeNull] public readonly (int phase, string)[] bgms;
+    public readonly (int phase, string?)[]? bgms;
     public PatternProperties(PatternProperty[] props) {
         foreach (var prop in props) {
             if        (prop is BossProp bp) {
@@ -93,6 +93,7 @@ public class PatternProperties {
 /// <summary>
 /// Markers that modify the behavior of PhaseSM.
 /// </summary>
+[Reflect]
 public class PhaseProperty {
     /// <summary>
     /// Hide the timeout display on the UI.
@@ -102,7 +103,7 @@ public class PhaseProperty {
     /// <summary>
     /// Declares that this phase is a stage section.
     /// </summary>
-    public static PhaseProperty Stage() => Type(PhaseType.STAGE, null);
+    public static PhaseProperty Stage() => new PhaseTypeProp(PhaseType.STAGE);
     /// <summary>
     /// Skip this phase.
     /// </summary>
@@ -113,21 +114,21 @@ public class PhaseProperty {
     /// Declare that this phase is a dialogue phase. (Same as CARD DIALOGUE ``).
     /// </summary>
     /// <returns></returns>
-    public static PhaseProperty Dialogue() => Type(PhaseType.DIALOGUE, null);
+    public static PhaseProperty Dialogue() => new PhaseTypeProp(PhaseType.DIALOGUE);
     /// <summary>
     /// Declare that this phase is a stage midboss phase.
     /// </summary>
     /// <returns></returns>
-    public static PhaseProperty Midboss() => Type(PhaseType.STAGEMIDBOSS, null);
+    public static PhaseProperty Midboss() => new PhaseTypeProp(PhaseType.STAGEMIDBOSS);
     /// <summary>
     /// Declare that this phase is a stage endboss phase.
     /// </summary>
     /// <returns></returns>
-    public static PhaseProperty Endboss() => Type(PhaseType.STAGEENDBOSS, null);
+    public static PhaseProperty Endboss() => new PhaseTypeProp(PhaseType.STAGEENDBOSS);
     /// <summary>
     /// Declare the type and name of this phase.
     /// </summary>
-    public static PhaseProperty Type(PhaseType type, string name) => new PhaseTypeProp(type, name);
+    public static PhaseProperty Type(PhaseType type, LocalizedString name) => new PhaseTypeProp(type, name);
     /// <summary>
     /// Declare the amount of photos necessary to defeat the boss.
     /// <br/>Note: this works similarly enough to HP that you could
@@ -247,11 +248,12 @@ public class PhaseProperty {
     public class BossCutinFlag : PhaseProperty { }
     public class PhaseTypeProp : PhaseProperty {
         public readonly PhaseType type;
-        [CanBeNull] public readonly string name;
-        public PhaseTypeProp(PhaseType type, string name) {
+        public readonly LocalizedString? name;
+        public PhaseTypeProp(PhaseType type, LocalizedString? name) {
             this.type = type;
             this.name = name;
         }
+        public PhaseTypeProp(PhaseType type) : this(type, null) { }
     }
 
     public class PhotoHPProp : PhaseProperty {
@@ -293,9 +295,9 @@ public class PhaseProperty {
 
     public class ClearProp : PhaseProperty {
         public readonly bool clear;
-        public readonly string target;
-        public readonly string defaulter;
-        public ClearProp(bool doClear, [CanBeNull] string targetPool, [CanBeNull] string defaulter) {
+        public readonly string? target;
+        public readonly string? defaulter;
+        public ClearProp(bool doClear, string? targetPool, string? defaulter) {
             clear = doClear;
             target = targetPool;
             this.defaulter = defaulter;
@@ -321,9 +323,9 @@ public class PhaseProperty {
         public readonly float t;
         public readonly float x;
         public readonly float y;
-        [CanBeNull] public readonly string who;
+        public readonly string? who;
 
-        public RootProp(float t, [CanBeNull] string who, float x, float y) {
+        public RootProp(float t, string? who, float x, float y) {
             this.t = t;
             this.x = x;
             this.y = y;
@@ -339,27 +341,60 @@ public class PhaseProperty {
     #endregion
 }
 
+public readonly struct SoftcullProperties {
+    private readonly Vector2 center;
+    private readonly float advance;
+    private readonly float minDist;
+    private readonly float maxDist;
+    public readonly string autocullTarget;
+    private readonly string autocullDefault;
+    public string DefaultPool => $"{autocullTarget}-{autocullDefault}";
+    public readonly bool sendToC;
+
+    public SoftcullProperties(Vector2 center, float advance, float minDist, float maxDist, string? target=null, string? dflt=null) {
+        this.center = center;
+        this.advance = advance;
+        this.minDist = minDist;
+        this.maxDist = maxDist;
+        this.autocullTarget = target ?? "cwheelio";
+        this.autocullDefault = dflt ?? "red/";
+        this.sendToC = true;
+    }
+
+    public SoftcullProperties(string? target, string? dflt) : this(Vector2.zero, 0, 0, 0, target, dflt) {
+        sendToC = false;
+    }
+
+    public readonly float AdvanceTime(Vector2 location) {
+        var dist = (location - center).magnitude;
+        return advance * (1 - Mathf.Clamp01((dist - minDist) / (maxDist - minDist)));
+    }
+}
 public class PhaseProperties {
     private readonly bool hideTimeout;
     public bool HideTimeout => hideTimeout || (!SaveData.Settings.TeleportAtPhaseStart && phaseType?.HideTimeout() == true);
-    [CanBeNull] public readonly string cardTitle;
+    public readonly LocalizedString? cardTitle;
     public readonly int? hp = null;
     public readonly int? photoHP = null;
-    public int? BossPhotoHP => (Boss == null) ? (int?) null : photoHP;
+    public int? BossPhotoHP => (Boss == null) ? null : photoHP;
     public readonly float? invulnTime = null;
     public readonly float? hpbar = null;
     public readonly PhaseType? phaseType = null;
-    [CanBeNull] public SOBgTransition BgTransitionIn { get; private set; }
-    [CanBeNull] public SOBgTransition BgTransitionOut { get; private set; }
-    [CanBeNull] public GameObject Background { get; private set; }
-    [CanBeNull] public BossConfig Boss { get; private set; }
+    public SOBgTransition? BgTransitionIn { get; private set; }
+    public SOBgTransition? BgTransitionOut { get; private set; }
+    public GameObject? Background { get; private set; }
+    public BossConfig? Boss { get; private set; }
     public readonly float cardValueMult = 1f;
     private readonly bool? cleanup = null;
     public bool Cleanup => cleanup ?? phaseType?.IsPattern() ?? false;
-    public readonly string autocullTarget = "cwheel";
-    public readonly string autocullDefault = "red/b";
+    private readonly string? autocullTarget;
+    private readonly string? autocullDefault;
+
+    public SoftcullProperties SoftcullProps(BehaviorEntity exec) =>
+        new SoftcullProperties(exec.GlobalPosition(), 0.4f, 0.5f, 4f, autocullTarget, autocullDefault);
+    
     public readonly int? livesOverride = null;
-    [CanBeNull] public readonly StateMachine rootMove = null;
+    public readonly StateMachine? rootMove = null;
     public readonly bool skip = false;
     private readonly bool? lenient = null;
     public bool Lenient => lenient ?? phaseType?.IsLenient() ?? false;
@@ -370,7 +405,7 @@ public class PhaseProperties {
     public int Index { get; private set; }
 
     public bool GetSpellCutin(out GameObject go) {
-        go = null;
+        go = null!;
         if (Boss != null) {
             var index = spellCutinIndex ?? ((phaseType?.IsSpell() ?? false) ? (int?)0 : null);
             if (index.HasValue) return Boss.spellCutins.Try(index.Value, out go);
@@ -426,11 +461,7 @@ public class PhaseProperties {
             else if (prop is RootProp rp) {
                 StateMachine rm = new ReflectableLASM(SaveData.Settings.TeleportAtPhaseStart ?
                     SMReflection.Position(_ => rp.x, _ => rp.y) :
-#if NO_EXPR
-                    SMReflection.MoveTarget_noexpr(_ => rp.t, "io-sine", NoExprMath_1.CXY(rp.x, rp.y)));
-#else
-                    SMReflection.MoveTarget(BPYRepo.Const(rp.t), ExMLerps.EIOSine, Parametrics.CXY(rp.x, rp.y)));
-#endif
+                    SMReflection.MoveTarget(BPYRepo.Const(rp.t), ExMEasers.EIOSine, Parametrics.CXY(rp.x, rp.y)));
                 rootMoves.Add(rp.who == null ? rm : RetargetUSM.Retarget(rm, rp.who));
             } else if (prop is ChallengeProp clp) 
                 challenges.Add(clp.c);

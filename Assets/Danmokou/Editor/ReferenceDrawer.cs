@@ -17,7 +17,7 @@ public class ReferenceDrawer : PropertyDrawer {
         { "Constant", "Reference" };
 
     /// <summary> Cached style to use to draw the popup button. </summary>
-    private GUIStyle popupStyle;
+    private GUIStyle? popupStyle;
 
     public override void OnGUI(Rect position, SerializedProperty property, GUIContent label) {
         if (popupStyle == null) {

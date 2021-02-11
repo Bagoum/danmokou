@@ -20,14 +20,16 @@ public class RadialTimeoutAnimator : TimeBoundAnimator {
     private float time1;
     private float time2;
     private float holdtime = 0f;
-    public string ease1;
-    public string ease2;
+    [ReflectInto(typeof(FXY))]
+    public string ease1 = "out-sine t";
+    [ReflectInto(typeof(FXY))]
+    public string ease2 = "io-sine t";
 
     public float lerpInTimeRatio;
     public float endEarlyRatio;
-    private Transform tr;
-    private SpriteRenderer sr;
-    private MaterialPropertyBlock pb;
+    private Transform tr = null!;
+    private SpriteRenderer sr = null!;
+    private MaterialPropertyBlock pb = null!;
 
     public override void Initialize(ICancellee cT, float total) {
         time = total;

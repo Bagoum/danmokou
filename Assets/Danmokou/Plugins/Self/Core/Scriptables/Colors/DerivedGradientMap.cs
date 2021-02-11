@@ -14,10 +14,9 @@ public struct PalettePoint {
 
 [CreateAssetMenu(menuName = "Colors/DerivedGradientMap")]
 public class DerivedGradientMap : GradientMap {
-    public PalettePoint[] points;
+    public PalettePoint[] points = null!;
     protected override void PrepareColors() {
-        gradient = ColorHelpers.FromKeys(points.Select(x => new GradientColorKey(x.palette.GetColor(x.shade), x.time)),
-            ColorHelpers.fullAlphaKeys);
+        gradient = ColorHelpers.FromKeys(points.Select(x => new GradientColorKey(x.palette.GetColor(x.shade), x.time))).ToUnityGradient();
     }
 }
 }

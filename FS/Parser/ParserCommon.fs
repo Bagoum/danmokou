@@ -1,7 +1,7 @@
 ﻿module FParser.ParserCommon
 open FParsec
 open System
-open Common.Functions
+open FCommon.Functions
 
 let OPEN_ARG = '('
 let CLOSE_ARG = ')'
@@ -14,7 +14,6 @@ let whiteInline c =
     c <> '\n' && Char.IsWhiteSpace c
 let _paren p = betweenChars OPEN_ARG CLOSE_ARG (spaces >>. sepBy p (spaces .>> pchar ARG_SEP .>> spaces))
 let _paren1 p = betweenChars OPEN_ARG CLOSE_ARG p
-let explicitSepBy a sep = pipe2 a (many (sep .>>. a)) (fun hd tl -> hd::(detuple tl)) <|>% []
 let ilspaces<'t> :Parser<unit, 't> = skipManySatisfy whiteInline
 let ilspaces1<'t> :Parser<unit, 't> = skipMany1Satisfy whiteInline
 let printPosition (p:Position) =

@@ -13,10 +13,12 @@ MonoBehaviour:
   m_Name: Player Fire 1
   m_EditorClassIdentifier: 
   defaultName: x-pc-fire-1
-  clip: {fileID: 8300000, guid: a3c35ce9d66543747bceade71a0c4d98, type: 3}
+  clip: {fileID: 8300000, guid: 6112060c72101b445bafc553fcc9d349, type: 3}
   volume: 0.25
   timeout: -1
+  pausable: 0
   loop: 1
   loopTimeCheck: 0.09
   pitch: 1
   priority: 240
+  feature: 0

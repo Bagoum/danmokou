@@ -8,6 +8,7 @@ using Newtonsoft.Json;
 using ProtoBuf;
 using DMK.SM;
 using UnityEngine;
+using static DMK.Core.LocalizedStrings.CDifficulty;
 
 
 namespace DMK.Danmaku {
@@ -90,24 +91,24 @@ public class DifficultySettings {
 
     public static float DifficultyForSlider(int slider) => Mathf.Pow(2, (slider - 12f) / 12f);
 
-    public static string FancifySlider(int slider) {
+    public static LocalizedString FancifySlider(int slider) {
         float d = DifficultyForSlider(slider);
         //requires ordering on VisibleDifficulties
         var fds = GameManagement.VisibleDifficulties.OrderBy(fd => fd.Value()).ToArray();
         for (int ii = 0; ii < fds.Length; ++ii) {
             var fd = fds[ii];
             if (Mathf.Abs(d / fd.Value() - 1) < 0.01) {
-                return $"Exactly {fd.Describe()}";
+                return desc_effective_exact_ls(fd.Describe());
             } else if (d < fd.Value()) {
-                if (ii == 0) return $"Less than {fd.Describe()}";
+                if (ii == 0) return desc_effective_less_ls(fd.Describe());
                 var ratio1 = Mathf.Log(fd.Value() / d);
                 var ratio2 = Mathf.Log(d / fds[ii - 1].Value());
                 var ratio = ratio2 / (ratio1 + ratio2);
                 var percent = (int) (ratio * 100);
-                return $"{100 - percent}% {fds[ii - 1].Describe()}, {percent}% {fd.Describe()}";
+                return desc_effective_ratio_ls(100 - percent, fds[ii - 1].Describe(), percent, fd.Describe());
             } 
         }
-        return $"More than {fds[fds.Length - 1].Describe()}";
+        return desc_effective_more_ls(fds[fds.Length - 1].Describe());
     }
 
     public string Describe() => standard?.Describe() ?? $"CUST:{customValueSlider:00}";
@@ -115,10 +116,10 @@ public class DifficultySettings {
     /// For filenames
     /// </summary>
     public string DescribeSafe() => standard?.Describe() ?? $"CUST{customValueSlider:00}";
-    public string DescribePadR() => Describe().PadRight(8);
+    public string DescribePadR() => Describe().PadRight(7);
 }
 public readonly struct SMRunner {
-    [CanBeNull] public readonly StateMachine sm;
+    public readonly StateMachine? sm;
     public readonly ICancellee cT;
     public readonly bool cullOnFinish;
     private readonly bool root;
@@ -126,18 +127,18 @@ public readonly struct SMRunner {
     public ICancellee MakeNested(ICancellee local) => root ?
         new JointCancellee(cT, local) :
         (ICancellee)new PassthroughCancellee(cT, local);
-    [CanBeNull] private readonly GenCtx gcx;
-    [CanBeNull] public GenCtx NewGCX => gcx?.Copy();
+    private readonly GenCtx? gcx;
+    public GenCtx? NewGCX => gcx?.Copy();
 
     public static SMRunner Null => new SMRunner(null, Cancellable.Null, false, false, null);
-    public static SMRunner Cull(StateMachine sm, ICancellee cT, [CanBeNull] GenCtx gcx=null) => new SMRunner(sm, cT, true, false, gcx);
+    public static SMRunner Cull(StateMachine? sm, ICancellee cT, GenCtx? gcx=null) => new SMRunner(sm, cT, true, false, gcx);
     /// <summary>
     /// Use over CULL when any nested summons should be bounded by this object's cancellation (ie. bosses).
     /// </summary>
-    public static SMRunner CullRoot(StateMachine sm, ICancellee cT, [CanBeNull] GenCtx gcx=null) => new SMRunner(sm, cT, true, true, gcx);
-    public static SMRunner Run(StateMachine sm, ICancellee cT, [CanBeNull] GenCtx gcx=null) => new SMRunner(sm, cT, false, false, gcx);
-    public static SMRunner RunNoCancelRoot(StateMachine sm) => new SMRunner(sm, Cancellable.Null, false, true, null);
-    public SMRunner(StateMachine sm, ICancellee cT, bool cullOnFinish, bool root, [CanBeNull] GenCtx gcx) {
+    public static SMRunner CullRoot(StateMachine? sm, ICancellee cT, GenCtx? gcx=null) => new SMRunner(sm, cT, true, true, gcx);
+    public static SMRunner Run(StateMachine? sm, ICancellee cT, GenCtx? gcx=null) => new SMRunner(sm, cT, false, false, gcx);
+    public static SMRunner RunNoCancelRoot(StateMachine? sm) => new SMRunner(sm, Cancellable.Null, false, true, null);
+    public SMRunner(StateMachine? sm, ICancellee cT, bool cullOnFinish, bool root, GenCtx? gcx) {
         this.sm = sm;
         this.cT = cT.Joinable; //child-visible section
         this.cullOnFinish = cullOnFinish;
@@ -152,8 +153,12 @@ public readonly struct SMRunner {
 /// </summary>
 public readonly struct CampaignSnapshot {
     public readonly int hitsTaken;
+    public readonly int meterFrames;
+    public readonly int frame;
     public CampaignSnapshot(InstanceData data) {
         hitsTaken = data.HitsTaken;
+        meterFrames = data.MeterFrames;
+        frame = ETime.FrameNumber;
     }
 }
 
@@ -162,11 +167,49 @@ public readonly struct PhaseCompletion {
     public readonly PhaseClearMethod clear;
     public readonly BehaviorEntity exec;
     public readonly bool noHits;
-    private readonly float elapsed;
-    private float Elapsed => props.phaseType == PhaseType.TIMEOUT ? 0 : elapsed;
+    public readonly bool noMeter;
+    private readonly int elapsedFrames;
+    public float ElapsedTime => elapsedFrames / ETime.ENGINEFPS;
+    //The props timeout may be overriden
+    private readonly float timeout;
+    private float elapsedRatio => timeout > 0 ? ElapsedTime / timeout : 0;
+    private float Elapsed => props.phaseType == PhaseType.TIMEOUT ? 0 : elapsedRatio;
     private const float ELAPSED_YIELD = 0.58f;
     private float ElapsedItemMultiplier => Mathf.Lerp(1, 0.27183f, (Elapsed - ELAPSED_YIELD) / (1 - ELAPSED_YIELD));
     private float ItemMultiplier => props.cardValueMult * ElapsedItemMultiplier;
+
+    public string Performance {
+        get {
+            if (PerfectCaptured == true)
+                return "Perfect Capture!!";
+            if (Captured == true)
+                return "Card Capture!";
+            if (Cleared == true)
+                return "Card Clear";
+            return "Card Failed...";
+        }
+    }
+
+    public int? CaptureStars {
+        get {
+            if (!StandardCardFinish) 
+                return null;
+            if (PerfectCaptured == true) 
+                return 3;
+            if (Captured == true) 
+                return 2;
+            if (Cleared == true) 
+                return 1;
+            return 0;
+        }
+    }
+    /// <summary>
+    /// True if the card was perfectly captured. False if it was not perfectly captured.
+    /// Null if there was no card at all (eg. minor enemies or cancellation).
+    /// <br/>A perfect capture requires capturing the card without using any meter.
+    /// </summary>
+    public bool? PerfectCaptured => Captured.And(noMeter);
+    
     /// <summary>
     /// True if the card was captured. False if it was not captured.
     /// Null if there was no card at all (eg. minor enemies or cancellation).
@@ -177,7 +220,7 @@ public readonly struct PhaseCompletion {
     /// <summary>
     /// True if the card was cleared. False if it was not cleared.
     /// Null if there was no card at all (eg. minor enemies or cancellation).
-    /// <br/>A clear requires draining all the boss HP or waiting out a timeout.
+    /// <br/>A clear requires draining all the boss HP or waiting out a timeout (timeouts require no hits).
     /// </summary>
     public bool? Cleared => StandardCardFinish ?
         (bool?) ((clear.Destructive()) ||
@@ -198,7 +241,7 @@ public readonly struct PhaseCompletion {
 
     public ItemDrops? DropItems {
         get {
-            if (GameManagement.instance.mode.DisallowCardItems()) return null;
+            if (GameManagement.Instance.mode.DisallowCardItems()) return null;
             if (Captured == true) return DropCapture;
             else if (Cleared == true) return DropClear;
             else if (noHits) return DropNoHit;
@@ -206,13 +249,14 @@ public readonly struct PhaseCompletion {
         }
     }
 
-    public PhaseCompletion(PhaseProperties props, PhaseClearMethod clear, BehaviorEntity exec, CampaignSnapshot snap, float elapsed_ratio) {
+    public PhaseCompletion(PhaseProperties props, PhaseClearMethod clear, BehaviorEntity exec, CampaignSnapshot snap, float timeout) {
         this.props = props;
         this.clear = clear;
         this.exec = exec;
-        this.elapsed = elapsed_ratio;
-        this.noHits = GameManagement.instance.HitsTaken == snap.hitsTaken;
-
+        this.timeout = timeout;
+        this.noHits = GameManagement.Instance.HitsTaken == snap.hitsTaken;
+        this.noMeter = GameManagement.Instance.MeterFrames == snap.meterFrames;
+        this.elapsedFrames = ETime.FrameNumber - snap.frame;
     }
 }
 }

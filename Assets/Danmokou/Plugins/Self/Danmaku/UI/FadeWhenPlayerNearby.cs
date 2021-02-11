@@ -7,14 +7,14 @@ using UnityEngine;
 
 namespace DMK.UI {
 public class FadeWhenPlayerNearby : CoroutineRegularUpdater {
-    public SpriteRenderer[] sprites;
-    public TextMeshPro[] texts;
+    public SpriteRenderer[] sprites = null!;
+    public TextMeshPro[] texts = null!;
 
-    public SOPlayerHitbox player;
+    public SOPlayerHitbox player = null!;
     public Vector2 radius;
     public Vector2 fade;
 
-    private Transform tr;
+    private Transform tr = null!;
 
     private void Awake() {
         tr = transform;
@@ -40,6 +40,7 @@ public class FadeWhenPlayerNearby : CoroutineRegularUpdater {
 
             yield return null;
         }
+        // ReSharper disable once IteratorNeverReturns
     }
 }
 }

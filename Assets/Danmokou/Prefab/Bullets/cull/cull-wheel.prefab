@@ -50,7 +50,7 @@ MonoBehaviour:
   grazeEveryFrames: 30
   screenCullRadius: 3
   renderPriority: 200
-  renderMode: 0
+  renderMode: 1
   fadeIn: {fileID: 11400000, guid: 3ac08ee0b5cc1894a97ec35c140268ae, type: 2}
   rotational: 1
   colorizing:
@@ -81,6 +81,7 @@ MonoBehaviour:
     framesPerSecond: 15
   gradients: []
   spriteSpecificGradients: []
+  identicalForms: []
   TTL: 0.4
   timeRandomization: 0.08
   rotateRandomization: 360
@@ -112,6 +113,7 @@ MonoBehaviour:
   end: 0
   points: []
   target: {fileID: 0}
+  debug: 0
 --- !u!212 &7046721748885383069
 SpriteRenderer:
   m_ObjectHideFlags: 0

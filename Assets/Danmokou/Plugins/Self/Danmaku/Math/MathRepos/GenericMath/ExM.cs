@@ -1,11 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using UnityEngine;
 using System.Linq.Expressions;
 using DMK.Behavior;
 using DMK.Core;
 using DMK.Expressions;
+using DMK.Graphics;
 using DMK.Player;
+using DMK.Reflection;
 using Ex = System.Linq.Expressions.Expression;
 using static DMK.Expressions.ExUtils;
 using static DMK.Expressions.ExMHelpers;
@@ -18,15 +21,19 @@ using efloat = DMK.Expressions.EEx<float>;
 using ev2 = DMK.Expressions.EEx<UnityEngine.Vector2>;
 using ev3 = DMK.Expressions.EEx<UnityEngine.Vector3>;
 using erv2 = DMK.Expressions.EEx<DMK.DMath.V2RV2>;
-using ExBPY = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<float>>;
-using ExTP = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<UnityEngine.Vector2>>;
 using static DMK.DMath.Functions.ExMMod;
+
+using ExBPY = System.Func<DMK.Expressions.TExArgCtx, DMK.Expressions.TEx<float>>;
+using ExPred = System.Func<DMK.Expressions.TExArgCtx, DMK.Expressions.TEx<bool>>;
+using ExTP = System.Func<DMK.Expressions.TExArgCtx, DMK.Expressions.TEx<UnityEngine.Vector2>>;
 
 namespace DMK.DMath.Functions {
 /// <summary>
 /// A repository for generic expression mathematics.
 /// <br/>Most of the math library is implemented in the DMath classes beginning with ExM.
 /// </summary>
+[Reflect]
+[SuppressMessage("ReSharper", "UnusedMethodReturnValue.Global")]
 public static partial class ExM {
     #region Aliasing
     //I have type-generalized the code for Reference/Lets but it's not possible to turn them into math expressions.
@@ -40,12 +47,14 @@ public static partial class ExM {
     /// </summary>
     /// <returns></returns>
     [Alias(Parser.SM_REF_KEY)]
-    public static Func<TExPI, TEx<T>> Reference<T>(string alias) => ReflectEx.ReferenceLetBPI<T>(alias);
+    public static Func<TExArgCtx, TEx<T>> Reference<T>(string alias) => ReflectEx.ReferenceLet<T>(alias);
     [Alias("@")]
-    public static TEx<T> RetrieveHoisted<T>(ReflectEx.Hoist<T> hoist, tfloat indexer) => hoist.Retrieve(indexer);
+    public static Func<TExArgCtx, TEx<T>> RetrieveHoisted<T>(ReflectEx.Hoist<T> hoist, Func<TExArgCtx, TEx<float>> indexer) => 
+        tac => hoist.Retrieve(indexer(tac), tac);
     [Alias("@0")]
-    public static TEx<T> RetrieveHoisted0<T>(ReflectEx.Hoist<T> hoist) => hoist.Retrieve(E0);
-    
+    public static Func<TExArgCtx, TEx<T>> RetrieveHoisted0<T>(ReflectEx.Hoist<T> hoist) => 
+        tac => hoist.Retrieve(E0, tac);
+
     /// <summary>
     /// Assign local variables that can be repeatedly used without reexecution via the Reference (&amp;) function.
     /// Shortcut: ::
@@ -53,7 +62,7 @@ public static partial class ExM {
     /// <param name="aliases">List of each variable and its assigned vector value</param>
     /// <param name="inner">Code to execute within the scope of the variables</param>
     [Alias("::")]
-    public static Func<TExPI, TEx<T>> LetFloats<T>((string, ExBPY)[] aliases, Func<TExPI, TEx<T>> inner) => bpi => 
+    public static Func<TExArgCtx, TEx<T>> LetFloats<T>((string, ExBPY)[] aliases, Func<TExArgCtx, TEx<T>> inner) => bpi => 
         ReflectEx.Let(aliases, () => inner(bpi), bpi);
     
     /// <summary>
@@ -63,7 +72,7 @@ public static partial class ExM {
     /// <param name="aliases">List of each variable and its assigned vector value</param>
     /// <param name="inner">Code to execute within the scope of the variables</param>
     [Alias("::v2")]
-    public static Func<TExPI, TEx<T>> LetV2s<T>((string, ExTP)[] aliases, Func<TExPI, TEx<T>> inner) => bpi => 
+    public static Func<TExArgCtx, TEx<T>> LetV2s<T>((string, ExTP)[] aliases, Func<TExArgCtx, TEx<T>> inner) => bpi => 
         ReflectEx.Let(aliases, () => inner(bpi), bpi);
     
     #endregion
@@ -120,12 +129,12 @@ public static partial class ExM {
     private static readonly Expression ExSHIFT = Ex.Constant(SHIFT);
 
     /// <summary>
-    /// When two firing indices have been combined via additive parametrization (see <see cref="Parametrization"/>), this retrieves the parent firing index.
+    /// When two firing indices have been combined via additive parametrization (see <see cref="Core.Parametrization"/>), this retrieves the parent firing index.
     /// </summary>
     /// <returns></returns>
     public static Ex P1(Ex t) => P1M(SHIFT, t);
     /// <summary>
-    /// When two firing indices have been combined via modular parametrization (see <see cref="Parametrization"/>), this retrieves the parent firing index.
+    /// When two firing indices have been combined via modular parametrization (see <see cref="Core.Parametrization"/>), this retrieves the parent firing index.
     /// </summary>
     /// <returns></returns>
     public static Ex P1M(int mod, Ex t) {
@@ -136,12 +145,12 @@ public static partial class ExM {
     }
 
     /// <summary>
-    /// When two firing indices have been combined via additive parametrization (see <see cref="Parametrization"/>), this retrieves the child firing index.
+    /// When two firing indices have been combined via additive parametrization (see <see cref="Core.Parametrization"/>), this retrieves the child firing index.
     /// </summary>
     /// <returns></returns>
     public static Ex P2(Ex t) => P2M(SHIFT, t);
     /// <summary>
-    /// When two firing indices have been combined via modular parametrization (see <see cref="Parametrization"/>), this retrieves the child firing index.
+    /// When two firing indices have been combined via modular parametrization (see <see cref="Core.Parametrization"/>), this retrieves the child firing index.
     /// </summary>
     /// <returns></returns>
     public static Ex P2M(int mod, Ex t) {
@@ -151,7 +160,7 @@ public static partial class ExM {
         return isFloat ? modded_t : Ex.Convert(modded_t, typeof(float));
     }
     /// <summary>
-    /// When two firing indices have been combined via modular or additive parametrization (see <see cref="Parametrization"/>), this retrieves the firing index of any point in the chain.
+    /// When two firing indices have been combined via modular or additive parametrization (see <see cref="Core.Parametrization"/>), this retrieves the firing index of any point in the chain.
     /// Roughly equivalent to mod SELF p1m CHILDREN.
     /// </summary>
     /// <param name="self">Mod size of the target point. Set to 0 to get the effect of additive parametrization.</param>
@@ -447,37 +456,163 @@ public static partial class ExM {
     /// Get the HP ratio (0-1) of the BehaviorEntity.
     /// <br/>The BEH must be an enemy, or this will cause errors.
     /// </summary>
-    public static tfloat HPRatio(BEHPointer beh) => Enemy.hpRatio.Of(ExC(beh));
+    public static tfloat HPRatio(BEHPointer beh) =>
+        ExC(beh).Field("beh").Field("Enemy").Field("EffectiveBarRatio");
 
     /// <summary>
     /// Get the number of photos taken of the given boss.
     /// <br/>The BEH must be an enemy, or this will cause errors.
     /// <br/>This number resets every card.
     /// </summary>
-    public static tfloat PhotosTaken(BEHPointer beh) => Enemy.photosTaken.Of(ExC(beh));
+    public static tfloat PhotosTaken(BEHPointer beh) => 
+        ExC(beh).Field("beh").Field("Enemy").Field("PhotosTaken");
 
-    public static tfloat PlayerTimeFree() => PlayerInput.timeFree;
-    public static tfloat PlayerTimeFocus() => PlayerInput.timeFocus;
-    public static tfloat PlayerFiringTimeFree() => PlayerInput.firingTimeFree;
-    public static tfloat PlayerFiringTimeFocus() => PlayerInput.firingTimeFocus;
-    public static tfloat PlayerFiringTime() => PlayerInput.firingTime;
-    public static tfloat PlayerUnFiringTimeFree() => PlayerInput.unfiringTimeFree;
-    public static tfloat PlayerUnFiringTimeFocus() => PlayerInput.unfiringTimeFocus;
-    public static tfloat PlayerUnFiringTime() => PlayerInput.unfiringTime;
-    public static tfloat PlayerSubshot() => PlayerInput.subshotValue;
-
-    public static tfloat LerpFreeToFocus(tfloat over) => Clamp01(PlayerTimeFocus().Div(over));
-    public static tv2 PlayerPastPosition(tfloat ago) => PlayerInput.pastPosition.Of(ago);
-    public static tv2 PlayerMarisaAPosition(tfloat ago) => PlayerInput.marisaAPosition.Of(ago);
-    public static tv2 PlayerPastDirection(tfloat ago) => PlayerInput.pastDirection.Of(ago);
-    public static tv2 PlayerMarisaADirection(tfloat ago) => PlayerInput.marisaADirection.Of(ago);
-
+    /// <summary>
+    /// Returns true if the instance has not continued.
+    /// </summary>
     public static tbool Is1CC() => Ex.Not(Ex.Property(null, typeof(GameManagement), "Continued"));
 
-    public static tbool LaserIsColliding() => Ex.Field(
-        ReflectEx.aliased_laser ?? 
-        throw new Exception("LaserIsColliding function must be called through a laser delegate"), 
-        "playerBulletIsColliding");
+    private static Ex Instance => Ex.Property(null, typeof(GameManagement), "Instance");
+
+
+    /// <summary>
+    /// Returns the amount of time for which the player has *not* been focusing.
+    /// Resets to zero while the player is focusing.
+    /// </summary>
+    public static ExBPY PlayerFreeT(Func<TExArgCtx, TEx<PlayerInput>> p) => tac => p(tac).Field("TimeFree");
+    /// <summary>
+    /// Returns the amount of time for which the player has been focusing.
+    /// Resets to zero while the player is not focusing.
+    /// </summary>
+    public static ExBPY PlayerFocusT(Func<TExArgCtx, TEx<PlayerInput>> p) => tac => p(tac).Field("TimeFocus");
+    /// <summary>
+    /// Returns the amount of time for which the player has been firing.
+    /// Resets to zero while the player is not firing.
+    /// </summary>
+    public static ExBPY PlayerFiringT(Func<TExArgCtx, TEx<PlayerInput>> p) => tac => p(tac).Field("FiringTime");
+    /// <summary>
+    /// Returns the amount of time for which the player has been firing while *not* focusing.
+    /// Resets to zero while the player is not firing or is focusing.
+    /// </summary>
+    public static ExBPY PlayerFiringFreeT(Func<TExArgCtx, TEx<PlayerInput>> p) => tac => p(tac).Field("FiringTimeFree");
+    /// <summary>
+    /// Returns the amount of time for which the player has been firing while focusing.
+    /// Resets to zero while the player is not firing or is not focusing.
+    /// </summary>
+    public static ExBPY PlayerFiringFocusT(Func<TExArgCtx, TEx<PlayerInput>> p) => tac => p(tac).Field("FiringTimeFocus");
+    /// <summary>
+    /// Returns the amount of time for which the player has *not* been firing.
+    /// Resets to zero while the player is firing.
+    /// </summary>
+    public static ExBPY PlayerUnFiringT(Func<TExArgCtx, TEx<PlayerInput>> p) => tac => p(tac).Field("UnFiringTime");
+    /// <summary>
+    /// Returns the amount of time for which the player has *not* been firing or been focusing.
+    /// Resets to zero while the player is firing AND *not* focusing.
+    /// </summary>
+    public static ExBPY PlayerUnFiringFreeT(Func<TExArgCtx, TEx<PlayerInput>> p) => tac => p(tac).Field("UnFiringTimeFree");
+    /// <summary>
+    /// Returns the amount of time for which the player has *not* been firing or *not* been focusing.
+    /// Resets to zero while the player is firing AND focusing.
+    /// </summary>
+    public static ExBPY PlayerUnFiringFocusT(Func<TExArgCtx, TEx<PlayerInput>> p) => tac => p(tac).Field("UnFiringTimeFocus");
+    
+    public static tfloat PlayerID() => PlayerInput.playerID;
+
+    public static ExBPY PlayerLerpFreeToFocus(Func<TExArgCtx, TEx<PlayerInput>> p, ExBPY over) => 
+        tac => Clamp01(PlayerFocusT(p)(tac).Div(over(tac)));
+    public static ExTP PlayerPastPos(Func<TExArgCtx, TEx<PlayerInput>> p, ExBPY ago) => 
+        tac => PlayerInput.pastPosition.InstanceOf(p(tac), ago(tac));
+    public static ExTP PlayerMarisaAPos(Func<TExArgCtx, TEx<PlayerInput>> p, ExBPY ago) => 
+        tac => PlayerInput.marisaAPosition.InstanceOf(p(tac), ago(tac));
+    public static ExTP PlayerPastDir(Func<TExArgCtx, TEx<PlayerInput>> p, ExBPY ago) => 
+        tac => PlayerInput.pastDirection.Of(p(tac), ago(tac));
+    public static ExTP PlayerMarisaADir(Func<TExArgCtx, TEx<PlayerInput>> p, ExBPY ago) => 
+        tac => PlayerInput.marisaADirection.Of(p(tac), ago(tac));
+
+    //These types are not funcified, so they need to be explicit
+    
+    /// <summary>
+    /// Returns true if the laser is colliding with an enemy (only applicable to player lasers).
+    /// </summary>
+    public static ExPred LaserColliding(Func<TExArgCtx, TEx<CurvedTileRenderLaser>> ctr) => tac => 
+        ctr(tac).Field("playerBulletIsColliding");
+    
+    /// <summary>
+    /// Returns the last active time of the laser. This is the first time at which the "deactivate" option
+    /// on the laser returns true. If the deactivate option does not exist or has not yet returned true,
+    /// this returns "effectively infinity".
+    /// </summary>
+    public static ExBPY LaserLastActiveT(Func<TExArgCtx, TEx<CurvedTileRenderLaser>> ctr) => tac => 
+        ctr(tac).Field("LastActiveTime");
+    
+    
+    /// <summary>
+    /// Returns the location of the FireOption. Primarily used for player lasers.
+    /// </summary>
+    public static ExTP OptionLocation(Func<TExArgCtx, TEx<FireOption>> ctr) => tac => 
+        ctr(tac).Field("Loc");
+    
+    /// <summary>
+    /// Returns the direction of the FireOption. Primarily used for player lasers.
+    /// </summary>
+    public static ExBPY OptionAngle(Func<TExArgCtx, TEx<FireOption>> ctr) => tac => 
+        ctr(tac).Field("original_angle");
+
+    /// <summary>
+    /// Return the player's power value.
+    /// </summary>
+    public static tfloat Power() => Instance.Field("Power");
+    
+    /// <summary>
+    /// Return the player's power value, floored.
+    /// </summary>
+    public static tfloat PowerF() => Floor(Instance.Field("Power"));
+    
+    /// <summary>
+    /// Return the player's power index.
+    /// </summary>
+    public static tfloat PowerIndex() => Floor(Instance.Field("PowerIndex"));
+
+    /// <summary>
+    /// If the player's power (floored) is strictly than the firing index,
+    /// return the child, otherwise return zero.
+    /// </summary>
+    public static Func<TExArgCtx, TEx<T>> IfPowerGTP<T>(Func<TExArgCtx, TEx<T>> inner) =>
+        b => Ex.Condition(PowerF().GT(b.findex), inner(b), ExC(default(T)!));
+    
+
+    /// <summary>
+    /// Returns the object of type T associated with the object calling this function.
+    /// <br/>eg. If this is used by a laser fired by a player option, and T = FireOption,
+    /// then this function returns the FireOption that created this laser.
+    /// </summary>
+    /// <typeparam name="T">One of CurvedTileRenderLaser, PlayerInput, FireOption</typeparam>
+    /// <returns></returns>
+    public static Func<TExArgCtx, TEx<T>> Mine<T>() => tac => {
+        var t = typeof(T);
+        var fctx = tac.FCTX;
+        if (t == typeof(CurvedTileRenderLaser)) {
+            return fctx.Field("LaserController");
+        } else if (t == typeof(PlayerInput)) {
+            return fctx.Field("PlayerController");
+        } else if (t == typeof(FireOption)) {
+            return fctx.Field("OptionFirer");
+        }
+        throw new Exception($"FCTX has no handling for `Mine` constructor of type {t.RName()}");
+    };
+    
+    /*
+    [Alias("mine?")]
+    public static Func<TExArgCtx, TEx<T>> MineOrNull<T>() => tac => {
+        var t = typeof(T);
+        var fctx = tac.FCTX;
+        if (t == typeof(CurvedTileRenderLaser)) {
+            return fctx.Field("laserController");
+        } else if (t == typeof(PlayerInput)) {
+            return fctx.Field("playerController");
+        }
+        throw new Exception($"FCTX has no handling for `Mine?` constructor of type {t.RName()}");
+    };*/
 
     #endregion
 }

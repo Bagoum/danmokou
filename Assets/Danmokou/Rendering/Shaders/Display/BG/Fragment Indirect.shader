@@ -1,6 +1,7 @@
 ﻿Shader "_Misc/Fragment" {
     Properties {
         _MainTex("Texture", 2D) = "white" {}
+		[Toggle(FT_MOD)] _ToggleMod("Modularize UV?", Float) = 0
     }
     SubShader {
         Tags {
@@ -17,6 +18,7 @@
             #pragma vertex vert
             #pragma fragment frag
             #pragma multi_compile_instancing
+			#pragma multi_compile_local __ FT_MOD
             #include "UnityCG.cginc"
             #include "Assets/Danmokou/CG/Math.cginc"
             
@@ -56,11 +58,12 @@
             }*/
             
             sampler2D _MainTex;
-            float _ScreenWidth;
-            float _ScreenHeight;
-            float _SqrWidth;
+            float _TexWidth;
+            float _TexHeight;
+            float _FragDiameter;
+            float _FragSides;
             
-            float4 uvRBuffer[1023];
+            float4 uvRBuffer[511];
             
         #ifdef UNITY_INSTANCING_ENABLED
 			#define UVR uvRBuffer[unity_InstanceID]
@@ -76,9 +79,11 @@
                 f.buv = (v.uv - float2(0.5,0.5));
                 
                 f.uv = UVR.xy + f.buv * 
-                    float2(_SqrWidth/_ScreenWidth, _SqrWidth/_ScreenHeight);
+                    float2(_FragDiameter/_TexWidth, _FragDiameter/_TexHeight);
+        #ifdef FT_MOD
                 //This mitigates a few issues with shattering backgrounds that are not particularly wide
                 f.uv = mod2(f.uv, float2(1,1));
+        #endif
                 //f.uv = TRANSFORM_TEX(v.uv, _MainTex);
                 return f;
             }
@@ -93,7 +98,9 @@
             float4 frag(fragment f) : SV_Target{
                 UNITY_SETUP_INSTANCE_ID(f);
                 float r = length(f.buv) * 2;
-                clip(polyRad(atan02pi(f.buv) + UVR.z, PI/4) - r);
+                clip(polyRad(atan02pi(f.buv) + UVR.z, PI/_FragSides) - r);
+                clip(0.5 - abs(f.uv.x - 0.5));
+                clip(0.5 - abs(f.uv.y - 0.5));
                 float4 c = tex2D(_MainTex, f.uv);
                 return c;
             }

@@ -6,7 +6,7 @@ phase 0
     paction 0
         position -5 -4
 		move 2 roffset pxy * 5 t sine 4 7 t
-		async circle-* <;:180> gcr { wt 3 80 } target Lplayer circlep defer 200 gsr {
+		async circle-* <;:180> gcr { wt 3 80 } target Lplayer gsr2c 200 { } gsr {
 			t 2
 			color { red/ws pink/ws }
 			p this
@@ -18,7 +18,7 @@ phase 0
     paction 0
         position -4 2
 		move 2 tpnrot cx 4
-		async circle-* <;:180> gcr { wt 3 80 } target Lplayer circlep defer 140 gsr {
+		async circle-* <;:180> gcr { wt 3 80 } target Lplayer gsr2c 140 { } gsr {
 			t 2
 			color { red/ws pink/ws }
 			p this
@@ -29,7 +29,7 @@ phase 0
     paction 0
         position -4 2
 		move 4 tpnrot cx 2
-		async circle-blue/ <0.5;:> gcr { wt 24 20 p this } circlep defer 15 s polar
+		async circle-blue/ <0.5;:> gcr { wt 24 20 p this } gsr2c 15 { } s polar
 			* 2 t
 			* pm1mod p * 20 t
         

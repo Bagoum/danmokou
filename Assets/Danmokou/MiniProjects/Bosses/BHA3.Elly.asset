@@ -13,22 +13,35 @@ MonoBehaviour:
   m_Name: BHA3.Elly
   m_EditorClassIdentifier: 
   boss: {fileID: 6003014192476353498, guid: 43d5da5eb5b153e4087eb90e97832a00, type: 3}
-  BossPracticeName:
-    en: Elly
-    jp: "\u30A8\u30EA\u30FC"
-    _showEnOnly: 0
+  localizationBaseKey: boss.elly
+  m_bossPracticeName:
+    useReference: 1
+    reference: 
+    hardcoded:
+      en: 
+      jp: 
+      _showEnOnly: 0
   challengeNameOverride:
-    en: 
-    jp: 
-    _showEnOnly: 0
+    useReference: 1
+    reference: 
+    hardcoded:
+      en: 
+      jp: 
+      _showEnOnly: 0
   replayNameOverride:
-    en: 
-    jp: 
-    _showEnOnly: 0
+    useReference: 1
+    reference: 
+    hardcoded:
+      en: 
+      jp: 
+      _showEnOnly: 0
   bottomTrackerNameOverride:
-    en: 
-    jp: 
-    _showEnOnly: 0
+    useReference: 1
+    reference: 
+    hardcoded:
+      en: 
+      jp: 
+      _showEnOnly: 0
   stateMachine: {fileID: 4900000, guid: 8a8b7bebc2d2e424eb9fd24d37195c29, type: 3}
   key: bha3.elly
   colors: {fileID: 11400000, guid: 4ef043de4d4ef5747aa9eb445e27538a, type: 2}

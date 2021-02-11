@@ -1,14 +1,15 @@
 module FTests.SMParser
-open System
 open FParser.SMParser
-open Common.Types
 open FTests.Utils
 open FTests.Extensions
+open ParserCS
 
 open FTests
 
 open FParsec
 open NUnit.Framework
+
+let USE_CS = true;
 
 [<SetUp>]
 let Setup () =
@@ -24,8 +25,19 @@ let rec toHPU struct(pu, _) =
     | ParsedUnit.S s -> S s
     | ParsedUnit.P arrs -> Array.map (Array.map toHPU) arrs |> P
 
+let rec toHPU_CS struct(pu: SMParser.ParsedUnit, _) =
+    match pu with
+    | :? SMParser.ParsedUnit.S as s -> S s.Item
+    | :? SMParser.ParsedUnit.P as p -> Array.map (Array.map toHPU_CS) p.Item |> P
+
+
 let objs str =
-    (SMParser2 str).Try |> List.map toHPU
+    if USE_CS
+    then (SMParser.SMParser2Exec(str)).GetOrThrow
+         |> List.ofArray
+         |> List.map toHPU_CS
+    else
+        (SMParser2 str).Try |> List.map toHPU
     
 let Eq(str, units) = Assert.ListEq(objs str, units)
     

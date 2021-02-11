@@ -21,10 +21,10 @@ using InstanceLowRequest = DMK.Core.DU<DMK.GameInstance.CampaignRequest, DMK.Gam
 namespace DMK.GameInstance {
 public interface IChallengeRequest {
 
-    string Description { get; }
+    LocalizedString Description { get; }
     Challenge[] Challenges { get; }
 
-    bool ControlsBoss([CanBeNull] BossConfig boss);
+    bool ControlsBoss(BossConfig? boss);
 
     /// <summary>
     /// Called when the challenge request is constructed immediately after the scene loads
@@ -79,14 +79,14 @@ public readonly struct SceneChallengeReqest : IChallengeRequest {
         if (gr.replay == null && cr.NextChallenge(gr.metadata).Try(out var nextC)) {
             Log.Unity($"Autoproceeding to next challenge: {nextC.Description}");
             var nextGr = new InstanceRequest(gr.cb, gr.metadata, new InstanceLowRequest(nextC), null);
-            nextGr.SetupCampaign();
+            nextGr.SetupInstance();
             Replayer.Cancel(); //can't replay both scenes together,
             //or even just the second scene due to time-dependency of world objects such as shots
             ctx.cm.TrackChallenge(new SceneChallengeReqest(nextGr, nextC), ctx.onSuccess);
             ctx.cm.LinkBoss(ctx.exec);
             return false;
         } else {
-            UIManager.MessageChallengeEnd(true, out float t);
+            UIManager.MessageChallengeEnd(true, out _);
             //The callback should have a wait procedure in it
             ctx.onSuccess(record);
             //WaitingUtils.WaitThenCB(ctx.cm, Cancellable.Null, t, false, () => ctx.onSuccess(record));
@@ -102,11 +102,11 @@ public readonly struct SceneChallengeReqest : IChallengeRequest {
             () => { BulletManager.PlayerTarget.Player.Hit(999, true); });
     }
 
-    public string Description => cr.Description;
+    public LocalizedString Description => cr.Description;
 
     public Challenge[] Challenges => new[] {cr.challenge};
 
-    public bool ControlsBoss([CanBeNull] BossConfig boss) => cr.Boss == boss;
+    public bool ControlsBoss(BossConfig? boss) => cr.Boss == boss;
 
 }
 
@@ -117,12 +117,12 @@ public readonly struct PhaseChallengeRequest {
     public readonly SMAnalysis.DayPhase phase;
     public readonly Challenge challenge;
     public int ChallengeIdx => phase.challenges.IndexOf(challenge);
-    public string Description => challenge.Description(Boss);
+    public LocalizedString Description => challenge.Description(Boss);
 
     public PhaseChallengeRequest? NextChallenge(SharedInstanceMetadata d) {
         if (challenge is Challenge.DialogueC dc && dc.point == Challenge.DialogueC.DialoguePoint.INTRO) {
             if (phase.Next?.CompletedOne(d) == false) return new PhaseChallengeRequest(phase.Next);
-        } else if (phase.Next?.challenges?.Try(0) is Challenge.DialogueC dce &&
+        } else if (phase.Next?.challenges.Try(0) is Challenge.DialogueC dce &&
                    dce.point == Challenge.DialogueC.DialoguePoint.CONCLUSION && phase.Next?.Enabled(d) == true
                    && phase.Next?.CompletedOne(d) == false) {
             return new PhaseChallengeRequest(phase.Next);
@@ -148,8 +148,9 @@ public readonly struct PhaseChallengeRequest {
     }
 }
 
+[Reflect]
 public abstract class Challenge {
-    public abstract string Description(BossConfig boss);
+    public abstract LocalizedString Description(BossConfig boss);
     public virtual void SetupPhase(SMHandoff smh) { }
     public virtual bool FrameCheck(ChallengeManager.TrackingContext ctx) => true;
     public virtual bool EndCheck(ChallengeManager.TrackingContext ctx, PhaseCompletion pc) => true;
@@ -168,23 +169,23 @@ public abstract class Challenge {
     public static Challenge AlwaysFocus() => new AlwaysFocusC();
 
     public class SurviveC : Challenge {
-        public override string Description(BossConfig boss) => "Don't die".Locale("死なないで");
+        public override LocalizedString Description(BossConfig boss) => "Don't die".Locale("死なないで");
     }
 
     public class NoHorizC : Challenge {
-        public override string Description(BossConfig boss) => "You cannot move left/right".Locale("左右の動きは出来ない");
+        public override LocalizedString Description(BossConfig boss) => "You cannot move left/right".Locale("左右の動きは出来ない");
     }
 
     public class NoVertC : Challenge {
-        public override string Description(BossConfig boss) => "You cannot move up/down".Locale("上下の動きは出来ない");
+        public override LocalizedString Description(BossConfig boss) => "You cannot move up/down".Locale("上下の動きは出来ない");
     }
 
     public class NoFocusC : Challenge {
-        public override string Description(BossConfig boss) => "You cannot use slow movement".Locale("低速移動は出来ない");
+        public override LocalizedString Description(BossConfig boss) => "You cannot use slow movement".Locale("低速移動は出来ない");
     }
 
     public class AlwaysFocusC : Challenge {
-        public override string Description(BossConfig boss) => "You cannot use fast movement".Locale("高速移動は出来ない");
+        public override LocalizedString Description(BossConfig boss) => "You cannot use fast movement".Locale("高速移動は出来ない");
     }
 
     public class DialogueC : Challenge {
@@ -193,8 +194,8 @@ public abstract class Challenge {
             CONCLUSION
         }
 
-        public override string Description(BossConfig boss) =>
-            $"Have a chat with {boss.ChallengeName}".Locale($"{boss.ChallengeName}との会話");
+        public override LocalizedString Description(BossConfig boss) =>
+            $"Have a chat with {boss.CasualName}".Locale($"{boss.CasualName}との会話");
 
         public readonly DialoguePoint point;
 
@@ -207,19 +208,20 @@ public abstract class Challenge {
         public readonly float units;
         public readonly float yield = 4;
 
-        public override string Description(BossConfig boss) =>
-            $"Stay close to {boss.ChallengeName}".Locale($"{boss.ChallengeName}から離れないで");
+        public override LocalizedString Description(BossConfig boss) =>
+            $"Stay close to {boss.CasualName}".Locale($"{boss.CasualName}から離れないで");
 
         public WithinC(float units) {
             this.units = units;
         }
 
-        private static ReflWrap<TP4> StayInColor => (Func<TP4>) "witha lerpt 0 1 0 0.3 green".Into<TP4>;
+        private static readonly ReflWrap<TP4> StayInColor = new ReflWrap<TP4>("witha lerpt 0 1 0 0.3 green");
 
         private static ReflWrap<TaskPattern> StayInRange(BehaviorEntity beh, float f) =>
-            (Func<TaskPattern>) (() => SMReflection.Sync("_", GCXFRepo.RV2Zero,
-                AtomicPatterns.RelCirc("_", new BEHPointer(beh),
-                    _ => ExMRV2.RXY(f, f), StayInColor)));
+            ReflWrap.FromFunc($"Challenge.StayInRange.{f}", () => SMReflection.Sync("_", GCXFRepo.RV2Zero,
+                AtomicPatterns.RelCirc("_", new BEHPointer("_", beh), _ => V2RV2.Rot(f, f), StayInColor)));
+        
+        
 
         public override void SetupPhase(SMHandoff smh) {
             StayInRange(smh.Exec, units).Value(smh);
@@ -234,19 +236,18 @@ public abstract class Challenge {
         public readonly float units;
         public readonly float yield = 4;
 
-        public override string Description(BossConfig boss) =>
-            $"Social distance from {boss.ChallengeName}".Locale($"{boss.ChallengeName}に近寄らないで");
+        public override LocalizedString Description(BossConfig boss) =>
+            $"Social distance from {boss.CasualName}".Locale($"{boss.CasualName}に近寄らないで");
 
         public WithoutC(float units) {
             this.units = units;
         }
 
-        private static ReflWrap<TP4> StayOutColor => (Func<TP4>) "witha lerpt 0 1 0 0.3 red".Into<TP4>;
+        private static readonly ReflWrap<TP4> StayOutColor = new ReflWrap<TP4>("witha lerpt 0 1 0 0.3 red");
 
         private static ReflWrap<TaskPattern> StayOutRange(BehaviorEntity beh, float f) =>
-            (Func<TaskPattern>) (() => SMReflection.Sync("_", GCXFRepo.RV2Zero,
-                AtomicPatterns.RelCirc("_", new BEHPointer(beh),
-                    _ => ExMRV2.RXY(f, f), StayOutColor)));
+            ReflWrap.FromFunc($"Challenge.StayOutRange.{f}", () => SMReflection.Sync("_", GCXFRepo.RV2Zero,
+                AtomicPatterns.RelCirc("_", new BEHPointer("_", beh), _ => V2RV2.Rot(f, f), StayOutColor)));
 
         public override void SetupPhase(SMHandoff smh) {
             StayOutRange(smh.Exec, units).Value(smh);
@@ -258,18 +259,18 @@ public abstract class Challenge {
     }
 
     public class DestroyC : Challenge {
-        public override string Description(BossConfig boss) =>
-            $"Defeat {boss.ChallengeName}".Locale($"{boss.ChallengeName}を倒せ");
+        public override LocalizedString Description(BossConfig boss) =>
+            $"Defeat {boss.CasualName}".Locale($"{boss.CasualName}を倒せ");
 
         public override bool EndCheck(ChallengeManager.TrackingContext ctx, PhaseCompletion pc) => pc.Cleared == true;
     }
 
     public class GrazeC : Challenge {
         public readonly int graze;
-        public override string Description(BossConfig boss) => $"Get {graze} graze".Locale($"グレイズを{graze}回しろ");
+        public override LocalizedString Description(BossConfig boss) => $"Get {graze} graze".Locale($"グレイズを{graze}回しろ");
 
         public override bool EndCheck(ChallengeManager.TrackingContext ctx, PhaseCompletion pc) =>
-            GameManagement.instance.Graze >= graze;
+            GameManagement.Instance.Graze >= graze;
 
         public GrazeC(int g) {
             graze = g;
@@ -279,8 +280,8 @@ public abstract class Challenge {
     public class DestroyTimedC : DestroyC {
         public readonly float time;
 
-        public override string Description(BossConfig boss) =>
-            $"Defeat {boss.ChallengeName} within {time}s".Locale($"{boss.ChallengeName}を{time}秒以内で倒せ");
+        public override LocalizedString Description(BossConfig boss) =>
+            $"Defeat {boss.CasualName} within {time}s".Locale($"{boss.CasualName}を{time}秒以内で倒せ");
 
         public DestroyTimedC(float t) {
             time = t;

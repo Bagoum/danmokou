@@ -8,6 +8,9 @@ using UnityEngine;
 using UnityEngine.Scripting;
 using UnityEngine.UIElements;
 using static DMK.UI.XML.XMLUtils;
+using static DMK.Core.LocalizedStrings;
+using static DMK.Core.LocalizedStrings.UI;
+using static DMK.Core.LocalizedStrings.Generic;
 
 namespace DMK.UI.XML {
 /// <summary>
@@ -16,17 +19,18 @@ namespace DMK.UI.XML {
 [Preserve]
 public class XMLPauseMenu : XMLMenu {
 
-    public VisualTreeAsset UIScreen;
-    public VisualTreeAsset UINode;
-    public VisualTreeAsset OptionNode;
+    public VisualTreeAsset UIScreen = null!;
 
-    public SFXConfig openPauseSound;
-    public SFXConfig closePauseSound;
+    public SFXConfig? openPauseSound;
+    public SFXConfig? closePauseSound;
 
-    public static IEnumerable<UINode> GetOptions(bool staticOptions, Func<UINode, UINode> with) {
+    public static IEnumerable<UINode> GetOptions(bool staticOptions) {
         return new UINode[] {
-            new OptionNodeLR<bool>("Shaders", yn => SaveData.s.Shaders = yn, YNOption, SaveData.s.Shaders),
-            new OptionNodeLR<(int, int)>("Resolution", b => SaveData.UpdateResolution(b), new[] {
+            new OptionNodeLR<bool>(shaders, yn => SaveData.s.Shaders = yn, new[] {
+                (shaders_low, false),
+                (shaders_high, true)
+            }, SaveData.s.Shaders),
+            new OptionNodeLR<(int, int)>(resolution, b => SaveData.UpdateResolution(b), new[] {
                 ("3840x2160", (3840, 2160)),
                 ("2560x1440", (2560, 1440)),
                 ("1920x1080", (1920, 1080)),
@@ -35,7 +39,7 @@ public class XMLPauseMenu : XMLMenu {
                 ("800x450", (800, 450)),
                 ("640x360", (640, 360))
             }, SaveData.s.Resolution),
-            new OptionNodeLR<int>("Refresh Rate", r => SaveData.s.RefreshRate = r, new[] {
+            new OptionNodeLR<int>(refresh, r => SaveData.s.RefreshRate = r, new[] {
 #if UNITY_EDITOR
                 ("1Hz", 1),
                 ("6Hz", 6),
@@ -45,23 +49,25 @@ public class XMLPauseMenu : XMLMenu {
                 ("60Hz", 60),
                 ("120Hz", 120)
             }, SaveData.s.RefreshRate),
-            new OptionNodeLR<FullScreenMode>("Fullscreen", SaveData.UpdateFullscreen, new[] {
-                ("Exclusive", FullScreenMode.ExclusiveFullScreen),
-                ("Borderless", FullScreenMode.FullScreenWindow),
-                ("Windowed", FullScreenMode.Windowed),
+            new OptionNodeLR<FullScreenMode>(fullscreen, SaveData.UpdateFullscreen, new[] {
+                (fullscreen_exclusive, FullScreenMode.ExclusiveFullScreen),
+                (fullscreen_borderless, FullScreenMode.FullScreenWindow),
+                (fullscreen_window, FullScreenMode.Windowed),
             }, SaveData.s.Fullscreen),
-            new OptionNodeLR<int>("VSync", v => SaveData.s.Vsync = v, new[] {
-                ("Off", 0),
-                ("On", 1),
-                ("Double", 2)
+            new OptionNodeLR<int>(vsync, v => SaveData.s.Vsync = v, new[] {
+                (generic_off, 0),
+                (generic_on, 1),
+                (vsync_double, 2)
             }, SaveData.s.Vsync),
-            new OptionNodeLR<bool>("Legacy Renderer", b => SaveData.s.LegacyRenderer = b, YNOption,
-                SaveData.s.LegacyRenderer),
+            new OptionNodeLR<bool>(LocalizedStrings.UI.renderer, b => SaveData.s.LegacyRenderer = b, new[] {
+                (renderer_legacy, true),
+                (renderer_normal, false)
+            }, SaveData.s.LegacyRenderer),
             staticOptions ?
-                new OptionNodeLR<bool>("Smooth Input", b => SaveData.s.AllowInputLinearization = b, YNOption,
+                new OptionNodeLR<bool>(smoothing, b => SaveData.s.AllowInputLinearization = b, OnOffOption,
                     SaveData.s.AllowInputLinearization) :
-                null,
-            new OptionNodeLR<float>("Screenshake", b => SaveData.s.Screenshake = b, new[] {
+                null!,
+            new OptionNodeLR<float>(screenshake, b => SaveData.s.Screenshake = b, new[] {
                     ("Off", 0),
                     ("x0.5", 0.5f),
                     ("x1", 1f),
@@ -69,64 +75,60 @@ public class XMLPauseMenu : XMLMenu {
                     ("x2", 2f)
                 },
                 SaveData.s.Screenshake),
-            new OptionNodeLR<bool>("Allow Controller", SaveData.UpdateAllowController, YNOption,
+            new OptionNodeLR<bool>(controller, SaveData.UpdateAllowController, OnOffOption,
                 SaveData.s.AllowControllerInput),
             staticOptions ?
-                new OptionNodeLR<float>("Dialogue Speed", b => SaveData.s.DialogueWaitMultiplier = b, new[] {
-                    ("2x", 0.5f),
-                    ("1.5x", .67f),
-                    ("1x", 1f),
-                    ("0.7x", 1.4f),
-                    ("0.5x", 2f),
+                new OptionNodeLR<float>(dialogue_speed, b => SaveData.s.DialogueWaitMultiplier = b, new[] {
+                    ("x2", 0.5f),
+                    ("x1.5", .67f),
+                    ("x1", 1f),
+                    ("x0.7", 1.4f),
+                    ("x0.5", 2f),
                 }, SaveData.s.DialogueWaitMultiplier) :
-                null,
-            new OptionNodeLR<float>("BGM Volume", v => {
+                null!,
+            new OptionNodeLR<float>(bgm_volume, v => {
                 SaveData.s.BGMVolume = v;
                 AudioTrackService.ReassignExistingBGMVolumeIfNotFading();
             }, 21.Range().Select(x =>
-                ($"{x * 10}", x / 10f)).ToArray(), SaveData.s.BGMVolume),
-            new OptionNodeLR<float>("SFX Volume", v => { SaveData.s.SEVolume = v; }, 21.Range().Select(x =>
-                ($"{x * 10}", x / 10f)).ToArray(), SaveData.s.BGMVolume),
-            new OptionNodeLR<bool>("Unfocused Hitbox", b => SaveData.s.UnfocusedHitbox = b, YNOption,
-                SaveData.s.UnfocusedHitbox),
-            new OptionNodeLR<bool>("Backgrounds", b => {
+                (new LocalizedString($"{x * 10}"), x / 10f)).ToArray(), SaveData.s.BGMVolume),
+            new OptionNodeLR<float>(sfx_volume, v => { SaveData.s.SEVolume = v; }, 21.Range().Select(x =>
+                (new LocalizedString($"{x * 10}"), x / 10f)).ToArray(), SaveData.s.BGMVolume),
+            new OptionNodeLR<bool>(hitbox, b => SaveData.s.UnfocusedHitbox = b, new[] {
+                    (hitbox_always, true),
+                    (hitbox_focus, false)
+                }, SaveData.s.UnfocusedHitbox),
+            new OptionNodeLR<bool>(backgrounds, b => {
                     SaveData.s.Backgrounds = b;
                     SaveData.UpdateResolution();
-                }, YNOption,
+                }, OnOffOption,
                 SaveData.s.Backgrounds),
-        }.Select(x => x == null ? null : with(x));
+        }.FilterNone();
     }
 
-    protected override Dictionary<Type, VisualTreeAsset> TypeMap => new Dictionary<Type, VisualTreeAsset>() {
-        {typeof(UIScreen), UIScreen},
-        {typeof(UINode), UINode},
+    private static (LocalizedString, bool)[] OnOffOption => new[] {
+        (generic_on, true),
+        (generic_off, false)
     };
+    protected override string HeaderOverride => pause_header;
 
-    private static (string, bool)[] YNOption => new[] {
-        ("Yes", true),
-        ("No", false)
-    };
-    protected override string HeaderOverride => "Time.timeScale = 0;";
-
-    private UINode unpause;
+    private UINode unpause = null!;
 
     protected override void Awake() {
-        unpause = new FuncNode(EngineStateManager.AnimatedUnpause, "Unpause", true).With(small1Class);
+        unpause = new FuncNode(EngineStateManager.AnimatedUnpause, LocalizedStrings.UI.unpause, true).With(small1Class);
         MainScreen = new UIScreen(
-            GetOptions(false, x => x.With(OptionNode).With(small1Class)).Concat(
+            GetOptions(false).Select(x => x.With(small1Class)).Concat(
                 new[] {
-                    new PassthroughNode(""),
+                    new PassthroughNode(LocalizedString.Empty),
                     unpause,
-                    new ConfirmFuncNode(GameManagement.Restart, "Restart", true)
+                    new ConfirmFuncNode(GameManagement.Restart, restart, true)
                         .EnabledIf(() => GameManagement.CanRestart)
                         .With(small1Class),
-                    GameManagement.MainMenuExists ?
-                        new ConfirmFuncNode(GameManagement.GoToMainMenu, "Return to Menu", true).With(small1Class) :
-                        null,
-                    new ConfirmFuncNode(Application.Quit, "Quit to Desktop").With(small1Class)
+                    new ConfirmFuncNode(GameManagement.GoToMainMenu, to_menu, true).With(small1Class),
+                    new ConfirmFuncNode(Application.Quit, to_desktop).With(small1Class)
                 }
             ).ToArray()
-        );
+        ).With(UIScreen);
+        MainScreen.ExitNode = MainScreen.top[MainScreen.top.Length - 4];
         base.Awake();
     }
 
@@ -140,7 +142,7 @@ public class XMLPauseMenu : XMLMenu {
     public void HideOptions(bool withSave) {
         if (UITop != null) {
             if (MenuActive && withSave) {
-                MainScreen.ResetNodes();
+                MainScreen.ResetNodeProgress();
                 SaveData.AssignSettingsChanges();
                 SFXService.Request(closePauseSound);
             }

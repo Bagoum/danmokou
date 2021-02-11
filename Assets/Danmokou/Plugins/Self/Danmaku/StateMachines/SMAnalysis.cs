@@ -5,6 +5,7 @@ using DMK.Core;
 using DMK.GameInstance;
 using DMK.Scriptables;
 using JetBrains.Annotations;
+using static DMK.Core.LocalizedStrings.UI;
 
 namespace DMK.SM {
 
@@ -37,7 +38,7 @@ public struct SMPhaseController {
     private ControllerType typ;
     private int externalOverride;
     private int normalNextPhase;
-    [CanBeNull] private Action callback;
+    private Action? callback;
 
     private SMPhaseController(int normalNext) {
         typ = ControllerType.DEFAULT;
@@ -55,7 +56,7 @@ public struct SMPhaseController {
     /// <param name="gotoPhase">Target phase</param>
     /// <param name="cb">Callback</param>
     /// <param name="forceZeroOverride">True iff the zero phase should also be skipped</param>
-    public void Override(int gotoPhase, [CanBeNull] Action cb = null, bool forceZeroOverride = false) {
+    public void Override(int gotoPhase, Action? cb = null, bool forceZeroOverride = false) {
         externalOverride = gotoPhase;
         callback = cb;
         typ = forceZeroOverride ? ControllerType.EXTERNAL_OVERRIDE_SKIP : ControllerType.EXTERNAL_OVERRIDE;
@@ -64,7 +65,7 @@ public struct SMPhaseController {
     /// <summary>
     /// Run a single phase, then continue the script, and hit a callback when the script is done normally.
     /// </summary>
-    public void SetGoTo(int gotoPhase, [CanBeNull] Action cb) {
+    public void SetGoTo(int gotoPhase, Action? cb) {
         externalOverride = gotoPhase;
         callback = cb;
         typ = ControllerType.EXTERNAL_OVERRIDE_CONTINUE;
@@ -72,7 +73,7 @@ public struct SMPhaseController {
     /// <summary>
     /// Set a callback that can be run on script end, or on phase end if using override.
     /// </summary>
-    public void SetCallback([CanBeNull] Action cb) => callback = cb;
+    public void SetCallback(Action? cb) => callback = cb;
 
     /// <summary>
     /// OK to call twice
@@ -121,7 +122,7 @@ public static class SMAnalysis {
     /// </summary>
     public readonly struct Phase {
         public readonly PhaseType type;
-        [CanBeNull] private readonly string title;
+        private readonly LocalizedString? title;
         /// <summary>
         /// Index of this phase in the original state machine.
         /// </summary>
@@ -131,17 +132,16 @@ public static class SMAnalysis {
         /// 1-indexed index of this phase in the parent's list of nontrivial phases.
         /// </summary>
         public int IndexInParentPhases => parent.Phases.IndexOf(this) + 1;
-        public string Title {
-            get {
-                if (type == PhaseType.STAGE) return $"Stage Section {IndexInParentPhases}";
-                if (type == PhaseType.STAGEMIDBOSS) return "Midboss";
-                if (type == PhaseType.STAGEENDBOSS) return "Endboss";
-                if (type == PhaseType.DIALOGUE) return title ?? "Dialogue";
-                return title ?? "!!!UNTITLED PHASE (REPORT ME)!!!";
-            }
-        }
+        public LocalizedString Title =>
+            type switch {
+                PhaseType.STAGE => practice_stage_section_ls(IndexInParentPhases),
+                PhaseType.STAGEMIDBOSS => practice_midboss,
+                PhaseType.STAGEENDBOSS => practice_endboss,
+                PhaseType.DIALOGUE => title ?? practice_dialogue,
+                _ => title ?? new LocalizedString("!!!UNTITLED PHASE (REPORT ME)!!!")
+            };
 
-        public Phase(AnalyzedPhaseConstruct parent, PhaseType c, int phaseNum, [CanBeNull] string name) {
+        public Phase(AnalyzedPhaseConstruct parent, PhaseType c, int phaseNum, LocalizedString? name) {
             type = c;
             title = name;
             index = phaseNum;
@@ -167,22 +167,13 @@ public static class SMAnalysis {
         //Index among analyzed only
         private readonly int combatCardIndex;
         
-        [CanBeNull]
-        private string _Title {
-            get {
-                switch (type) {
-                    case DayPhaseType.DIALOGUE_INTRO:
-                        return new LocalizedString($"{boss.ChallengeName} Intro") {jp = $"{boss.ChallengeName}紹介"};
-                    case DayPhaseType.DIALOGUE_END:
-                        return new LocalizedString($"{boss.ChallengeName} End") {jp = $"{boss.ChallengeName}結末"};
-                    default:
-                        return new LocalizedString($"{boss.ChallengeName} {combatCardIndex}") {
-                            jp = $"{boss.ChallengeName}-{combatCardIndex}"
-                        };
-                }
-            }
-        }
-        public string Title(SharedInstanceMetadata meta) => (boss.Enabled(meta)) ? (_Title ?? phase.Title) : "??? Locked ???";
+        private LocalizedString _Title =>
+            type switch {
+                DayPhaseType.DIALOGUE_INTRO => challenge_day_intro_ls(boss.ChallengeName),
+                DayPhaseType.DIALOGUE_END => challenge_day_end_ls(boss.ChallengeName),
+                _ => challenge_day_card_ls(boss.ChallengeName, combatCardIndex)
+            };
+        public LocalizedString Title(SharedInstanceMetadata meta) => (boss.Enabled(meta)) ? _Title : new LocalizedString("??? Locked ???");
         public readonly AnalyzedDayBoss boss;
         public bool Completed(int cIndex, SharedInstanceMetadata meta) => SaveData.r.ChallengeCompleted(this, cIndex, meta);
         public bool CompletedOne(SharedInstanceMetadata meta) => SaveData.r.PhaseCompletedOne(this, meta);
@@ -190,18 +181,17 @@ public static class SMAnalysis {
         public bool Enabled(SharedInstanceMetadata meta) {
             if (!boss.Enabled(meta)) return false;
             else
-                switch (type) {
-                    case DayPhaseType.DIALOGUE_INTRO:
-                        return boss.bossIndex == 0 || boss.day.bosses[boss.bossIndex - 1].FirstPhaseCompletedOne(meta);
-                    case DayPhaseType.CARD:
-                        return boss.phases[0].CompletedOne(meta);
-                    case DayPhaseType.DIALOGUE_END:
-                        return boss.phases.All(p => p == this || p.CompletedOne(meta));
-                    default:
-                        return false;
-                }
+                return type switch {
+                    DayPhaseType.DIALOGUE_INTRO => 
+                        boss.bossIndex == 0 || boss.day.bosses[boss.bossIndex - 1].FirstPhaseCompletedOne(meta),
+                    DayPhaseType.CARD => 
+                        boss.phases[0].CompletedOne(meta),
+                    DayPhaseType.DIALOGUE_END => 
+                        boss.phases.All(p => p == this || p.CompletedOne(meta)),
+                    _ => false
+                };
         }
-        [CanBeNull] public DayPhase Next => boss.phases.Try(cardIndex + 1);
+        public DayPhase? Next => boss.phases.Try(cardIndex + 1);
 
         public DayPhase(AnalyzedDayBoss b, Phase p, 
             IEnumerable<Challenge> challenges, DayPhaseType type, int cardIndex, int combatCardIndex) {
@@ -223,7 +213,7 @@ public static class SMAnalysis {
     /// <summary>
     /// Returns nontrivial phases only (ie. skips 0th phase and untyped phases)
     /// </summary>
-    public static List<Phase> Analyze(AnalyzedPhaseConstruct parent, [CanBeNull] PatternSM pat, bool ignoreZero = true) {
+    public static List<Phase> Analyze(AnalyzedPhaseConstruct parent, PatternSM? pat, bool ignoreZero = true) {
         var ret = new List<Phase>();
         if (pat == null) return ret;
         foreach (var (i, p) in pat.phases.Enumerate()) {
@@ -315,14 +305,14 @@ public static class SMAnalysis {
         public List<Phase> Phases => phases.Select(x => x.phase).ToList();
         public readonly AnalyzedDay day;
         public readonly int bossIndex;
-        public LocalizedString ChallengeName => boss.ChallengeName;
+        public LocalizedString ChallengeName => boss.CasualName;
         public bool Enabled(SharedInstanceMetadata meta) => day.Enabled(meta);
         public bool Concluded(SharedInstanceMetadata meta) => phases.All(p => p.CompletedOne(meta));
         public bool FirstPhaseCompletedOne(SharedInstanceMetadata meta) => phases[0].CompletedOne(meta);
 
         public AnalyzedDayBoss(AnalyzedDay day, int index) {
             boss = (this.day = day).day.bosses[bossIndex = index];
-            phases = SMAnalysis.AnalyzeDay(this, StateMachineManager.FromText(boss.stateMachine) as PatternSM);
+            phases = SMAnalysis.AnalyzeDay(this, (StateMachineManager.FromText(boss.stateMachine) as PatternSM)!);
         }
         
         public ((string, int), int) Key => (day.Key, bossIndex);

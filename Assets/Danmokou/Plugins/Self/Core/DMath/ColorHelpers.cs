@@ -40,14 +40,15 @@ public static class ColorHelpers {
         new GradientAlphaKey(1, 1)
     };
 
-    public static DGradient FromKeys(GradientColorKey[] colors, GradientAlphaKey[] alpha) {
-        var g = new DGradient();
-        g.SetKeys(colors, alpha);
-        return g;
+    public static DGradient FromKeys(GradientColorKey[] colors, GradientAlphaKey[]? alpha = null) {
+        return new DGradient(colors, alpha);
     }
 
-    public static DGradient FromKeys(IEnumerable<GradientColorKey> colors, IEnumerable<GradientAlphaKey> alpha) =>
-        FromKeys(colors.ToArray(), alpha.ToArray());
+    public static DGradient FromKeys(IEnumerable<GradientColorKey> colors, IEnumerable<GradientAlphaKey>? alpha = null) =>
+        FromKeys(colors.ToArray(), alpha?.ToArray());
+
+    public static DGradient FromKeys(IEnumerable<(float, Color)> colors, IEnumerable<(float, float)>? alpha) =>
+        new DGradient(colors.ToArray(), alpha?.ToArray());
 
     public static DGradient EvenlySpaced(params Color[] colors) {
         float dist = 1f / (colors.Length - 1);
@@ -55,7 +56,7 @@ public static class ColorHelpers {
         for (int ii = 0; ii < colors.Length; ++ii) {
             keys[ii] = new GradientColorKey(colors[ii], ii * dist);
         }
-        return FromKeys(keys, fullAlphaKeys);
+        return FromKeys(keys, null);
     }
 
     private static GradientAlphaKey FTime(this GradientAlphaKey key, Func<float, float> f) {
@@ -66,37 +67,46 @@ public static class ColorHelpers {
         key.time = f(key.time);
         return key;
     }
+    public static (float t, T c) FTime<T>(this (float t, T c) key, Func<float, float> f) {
+        key.t = f(key.t);
+        return key;
+    }
 
     private static IEnumerable<GradientAlphaKey> SelectFTime(IEnumerable<GradientAlphaKey> keys, Func<float, float> f) =>
         keys.Select(x => x.FTime(f));
     private static IEnumerable<GradientColorKey> SelectFTime(IEnumerable<GradientColorKey> keys, Func<float, float> f) =>
         keys.Select(x => x.FTime(f));
+    private static IEnumerable<(float, T)> SelectFTime<T>(IEnumerable<(float t, T c)> keys, Func<float, float> f) =>
+        keys.Select(x => x.FTime(f));
 
-    private static DGradient WithTimeModify(this Gradient g, Func<float, float> f) => FromKeys(
-        SelectFTime(g.colorKeys, f),
-        SelectFTime(g.alphaKeys, f));
+    private static DGradient WithTimeModify(this DGradient g, Func<float, float> f) => FromKeys(
+        SelectFTime(g.colors, f),
+        g.alphas == null ? null : SelectFTime(g.alphas, f));
 
-    public static DGradient Reverse(this Gradient g) => g.WithTimeModify(t => 1 - t);
+    public static DGradient Reverse(this DGradient g) => g.WithTimeModify(t => 1 - t);
 
-    public static DGradient RemapTime(this Gradient g, float start, float end) {
+    public static DGradient RemapTime(this DGradient g, float start, float end) {
         var scol = g.Evaluate(start);
         var ecol = g.Evaluate(end);
-        var sa = new GradientAlphaKey(scol.a, 0f);
-        var ea = new GradientAlphaKey(ecol.a, 1f);
-        var sc = new GradientColorKey(scol, 0f);
-        var ec = new GradientColorKey(ecol, 1f);
-        var colors = SelectFTime(g.colorKeys.Where(x => x.time > start && x.time < end), t => (t - start) / (end - start));
-        var alphas = SelectFTime(g.alphaKeys.Where(x => x.time > start && x.time < end), t => (t - start) / (end - start));
-        return FromKeys(colors.Append(sc).Append(ec), alphas.Append(sa).Append(ea));
+        var colors = SelectFTime(
+            g.colors.Where(x => x.t > start && x.t < end), 
+            t => (t - start) / (end - start));
+        var alphas = g.alphas == null ? null : 
+            SelectFTime(
+                g.alphas.Where(x => x.t > start && x.t < end), 
+                t => (t - start) / (end - start));
+        return FromKeys(
+            colors.Append((0, scol)).Append((1, ecol)), 
+            alphas?.Append((0, scol.a)).Append((1, ecol.a)));
     }
 
     public static IGradient Reverse(this IGradient ig) {
-        if (ig is Gradient g) return g.Reverse();
+        if (ig is DGradient g) return g.Reverse();
         return new ReverseGradient(ig);
     }
 
     public static IGradient RemapTime(this IGradient ig, float start, float end) {
-        if (ig is Gradient g) return g.RemapTime(start, end);
+        if (ig is DGradient g) return g.RemapTime(start, end);
         return new RemapGradient(ig, start, end);
     }
 
@@ -111,41 +121,38 @@ public static class ColorHelpers {
         return ig.Modify(gt);
     }
 
-    public static IGradient Modify(this IGradient ig, GradientModifier gt) {
-        switch (gt) {
-            case GradientModifier.LIGHTFLAT:
-                return ig.RemapTime(0.25f, 0.93f).RemapTime(0f, 1.4f);
-            case GradientModifier.LIGHT:
-                return ig.RemapTime(0.4f, 0.95f);
-            case GradientModifier.LIGHTWIDE:
-                return ig.RemapTime(0.25f, 0.95f);
-            case GradientModifier.COLORFLAT:
-                return ig.RemapTime(0.2f, 0.65f).RemapTime(-0.1f, 1.3f);
-            case GradientModifier.COLOR:
-                return ig.RemapTime(0.2f, 0.7f);
-            case GradientModifier.COLORWIDE:
-                return ig.RemapTime(0.07f, 0.73f);
-            case GradientModifier.DARKINVFLAT:
-                return ig.RemapTime(0.1f, 0.5f).Reverse().RemapTime(-0.7f, 1.1f);
-            case GradientModifier.DARKINV:
-                return ig.RemapTime(0.1f, 0.5f).Reverse().RemapTime(-0.2f, 1.0f);
-            case GradientModifier.DARKINVSOFT:
-                return ig.RemapTime(0.2f, 0.65f).Reverse().RemapTime(0f, 1.1f);
-            case GradientModifier.DARKINVWIDE:
-                return ig.RemapTime(0f, 0.6f).Reverse();
-            case GradientModifier.FULLINV:
-                return ig.Reverse();
-            default:
-                return ig;
-        }
-    }
-
-    public static DGradient Downcast(this Gradient g) => FromKeys(g.colorKeys, g.alphaKeys);
+    public static IGradient Modify(this IGradient ig, GradientModifier gt) =>
+        gt switch {
+            GradientModifier.LIGHTFLAT => 
+                ig.RemapTime(0.25f, 0.93f).RemapTime(0f, 1.4f),
+            GradientModifier.LIGHT => 
+                ig.RemapTime(0.4f, 0.95f),
+            GradientModifier.LIGHTWIDE => 
+                ig.RemapTime(0.25f, 0.95f),
+            GradientModifier.COLORFLAT => 
+                ig.RemapTime(0.2f, 0.65f).RemapTime(-0.1f, 1.3f),
+            GradientModifier.COLOR => 
+                ig.RemapTime(0.2f, 0.7f),
+            GradientModifier.COLORWIDE => 
+                ig.RemapTime(0.07f, 0.73f),
+            GradientModifier.DARKINVFLAT => 
+                ig.RemapTime(0.1f, 0.5f).Reverse().RemapTime(-0.7f, 1.1f),
+            GradientModifier.DARKINV => 
+                ig.RemapTime(0.1f, 0.5f).Reverse().RemapTime(-0.2f, 1.0f),
+            GradientModifier.DARKINVSOFT => 
+                ig.RemapTime(0.2f, 0.65f).Reverse().RemapTime(0f, 1.1f),
+            GradientModifier.DARKINVWIDE => 
+                ig.RemapTime(0f, 0.6f).Reverse(),
+            GradientModifier.FULLINV => 
+                ig.Reverse(),
+            _ => ig
+        };
 }
 
 public class ReverseGradient : IGradient {
     private readonly IGradient inner;
     public ReverseGradient(IGradient g) => inner = g;
+    public Color32 Evaluate32(float time) => inner.Evaluate32(1 - time);
     public Color Evaluate(float time) => inner.Evaluate(1 - time);
 }
 
@@ -160,10 +167,12 @@ public class RemapGradient : IGradient {
         eminuss = (end - start);
     }
 
+    public Color32 Evaluate32(float time) => inner.Evaluate32(Mathf.Clamp01(start + eminuss * time));
     public Color Evaluate(float time) => inner.Evaluate(Mathf.Clamp01(start + eminuss * time));
 }
 
 public interface IGradient {
+    Color32 Evaluate32(float time);
     Color Evaluate(float time);
 }
 public interface INamedGradient {
@@ -171,15 +180,118 @@ public interface INamedGradient {
     string Name { get; }
 }
 
-public class DGradient : Gradient, IGradient { }
+/// <summary>
+/// Reimplementation of gradient class using Color32 with inlining efficiency.
+/// </summary>
+public class DGradient : IGradient {
+    public readonly (float t, Color c)[] colors;
+    public readonly (float t, float a)[]? alphas;
+    public readonly Color32 colorStart;
+    public readonly Color32 colorEnd;
+
+    public DGradient(GradientColorKey[] colors, GradientAlphaKey[]? alphas) : this(
+        colors.Select(k => (k.time, k.color)).ToArray(),
+        alphas?.Select(k => (k.time, k.alpha)).ToArray()) { }
+
+    public DGradient((float t , Color c)[] colors, (float t, float a)[]? alphas) {
+        this.colors = colors.OrderBy(x => x.t).ToArray();
+        this.alphas = alphas?.OrderBy(x => x.t).ToArray();
+        colorStart = this.colors[0].c;
+        colorEnd = this.colors[colors.Length - 1].c;
+    }
+
+    public Gradient ToUnityGradient() {
+        var g = new Gradient();
+        g.SetKeys(colors.Select(c => new GradientColorKey(c.c, c.t)).ToArray(), 
+            alphas?.Select(a => new GradientAlphaKey(a.a, a.t)).ToArray() ?? ColorHelpers.fullAlphaKeys);
+        return g;
+    }
+
+    public static DGradient FromUnityGradient(Gradient g) => new DGradient(g.colorKeys, g.alphaKeys);
+    
+    public Color32 Evaluate32(float time) {
+        Color32 c = new Color32(byte.MaxValue, byte.MaxValue, byte.MaxValue, byte.MaxValue);
+        if (time <= colors[0].t)
+            c = colorStart;
+        else if (time >= colors[colors.Length - 1].t)
+            c = colorEnd;
+        else {
+            for (int ic = 1; ic < colors.Length; ++ic) {
+                if (time < colors[ic].t) {
+                    ref var pc = ref colors[ic - 1];
+                    ref var nc = ref colors[ic];
+                    float m = (time - pc.t) / (nc.t - pc.t);
+                    c.r = M.Float01ToByte(pc.c.r + (nc.c.r - pc.c.r) * m);
+                    c.g = M.Float01ToByte(pc.c.g + (nc.c.g - pc.c.g) * m);
+                    c.b = M.Float01ToByte(pc.c.b + (nc.c.b - pc.c.b) * m);
+                    break;
+                }
+            }
+        }
+        if (alphas == null)
+            return c;
+        if (time <= alphas[0].t)
+            c.a = M.Float01ToByte(alphas[0].a);
+        else if (time >= alphas[alphas.Length - 1].t)
+            c.a = M.Float01ToByte(alphas[alphas.Length - 1].a);
+        else {
+            for (int ic = 1; ic < alphas.Length; ++ic) {
+                if (time < alphas[ic].t) {
+                    c.a = M.Float01ToByte(M.Lerp(alphas[ic - 1].t, alphas[ic].t, time, alphas[ic - 1].a, alphas[ic].a));
+                    break;
+                }
+            }
+        }
+        return c;
+    }
+    
+    
+    public Color Evaluate(float time) {
+        Color c = Color.white;
+        if (time <= colors[0].t)
+            c = colors[0].c;
+        else if (time >= colors[colors.Length - 1].t)
+            c = colors[colors.Length - 1].c;
+        else {
+            for (int ic = 1; ic < colors.Length; ++ic) {
+                if (time < colors[ic].t) {
+                    ref var pc = ref colors[ic - 1];
+                    ref var nc = ref colors[ic];
+                    float m = (time - pc.t) / (nc.t - pc.t);
+                    c.r = pc.c.r + (nc.c.r - pc.c.r) * m;
+                    c.g = pc.c.g + (nc.c.g - pc.c.g) * m;
+                    c.b = pc.c.b + (nc.c.b - pc.c.b) * m;
+                    break;
+                }
+            }
+        }
+        if (alphas == null)
+            return c;
+        if (time <= alphas[0].t)
+            c.a = alphas[0].a;
+        else if (time >= alphas[alphas.Length - 1].t)
+            c.a = alphas[alphas.Length - 1].a;
+        else {
+            for (int ic = 1; ic < alphas.Length; ++ic) {
+                if (time < alphas[ic].t) {
+                    c.a = M.Lerp(alphas[ic - 1].t, alphas[ic].t, time, alphas[ic - 1].a, alphas[ic].a);
+                    break;
+                }
+            }
+        }
+        return c;
+
+    }
+}
 
 /// <summary>
-/// This class is for easy testing of the separate general IGradient modifier pipeline
+/// For slow-path testing
 /// </summary>
 public class WrapGradient : IGradient {
-    private readonly Gradient g;
-    public WrapGradient(Gradient grad) => g = grad;
+    private readonly DGradient g;
+    public WrapGradient(DGradient grad) => g = grad;
     public Color Evaluate(float time) => g.Evaluate(time);
+    public Color32 Evaluate32(float time) => g.Evaluate32(time);
 }
 
 public class MixedGradient : IGradient {
@@ -192,6 +304,8 @@ public class MixedGradient : IGradient {
         this.g2 = g2;
         this.lerpOff = lerpOffset;
     }
+    public Color32 Evaluate32(float time) => Color.Lerp(g1.Evaluate32(time), g2.Evaluate32(time), 
+        Mathf.Clamp01((time - 0.5f) * (0.5f / (0.5f - lerpOff)) + 0.5f));
     public Color Evaluate(float time) => Color.Lerp(g1.Evaluate(time), g2.Evaluate(time), 
         Mathf.Clamp01((time - 0.5f) * (0.5f / (0.5f - lerpOff)) + 0.5f));
 }

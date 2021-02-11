@@ -1,0 +1,10 @@
+##doesn't work for now
+noop
+///
+paction 0 :3
+	assertcomplex gdlaser-red/w
+	assertcomplex gdlaser-purple/w
+	beh-control persist { { p-gdlaser-* } { red/w purple/w } } updatev2(
+			target LNearestEnemy
+		, _)
+	wait-for _

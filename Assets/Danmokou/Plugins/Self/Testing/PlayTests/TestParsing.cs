@@ -53,7 +53,7 @@ async shell-teal/b <2;:> gcr2 60 5 <-0.2;:10> { } gsr2 5 <;:72> { } s tp-rot cxf
         TestSMExceptionRegex(@"
 async shell-teal/b <2;:> gcr2 20 _ <;:5> { } gsr2 5 <;:72> { } s :: {
 			R	w
-		} tp-rot pxy 2 &R", "to type BPY.*≪w≫");
+		} tp-rot pxy 2 &R", "Instead of constructing type BPY.*of type Float.*to type Float");
         /* No longer an error, as R will be looked up in private data hoisting instead.
         TestSMExceptionRegex(@"
 bullet shell-teal/b <2;:> cre 20 _ <;:5> repeat 5 <;:72> s :: {
@@ -91,7 +91,7 @@ phase 0
 paction 0
 noop") as PhaseSM).TField<PhaseProperties>("props");
         AreEqual(PhaseType.SPELL, props.phaseType);
-        AreEqual("en4", props.cardTitle);
+        AreEqual("en4", props.cardTitle?.ToString());
         AreEqual(21000, props.hp);
         AreEqual(1, props.hpbar);
         AreEqual(ResourceManager.GetBackgroundTransition("wipetex1"), props.BgTransitionIn);

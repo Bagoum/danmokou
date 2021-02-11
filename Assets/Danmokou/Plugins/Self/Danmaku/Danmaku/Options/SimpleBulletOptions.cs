@@ -2,20 +2,18 @@
 using System.Collections.Generic;
 using DMK.Core;
 using DMK.DMath;
+using DMK.Expressions;
 using DMK.Reflection;
 using DMK.Scriptables;
 using DMK.Services;
 using static DMK.DMath.Functions.ExM;
-using ExBPY = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<float>>;
-using ExTP = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<UnityEngine.Vector2>>;
-using ExSBF = System.Func<DMK.Expressions.RTExSB, DMK.Expressions.TEx<float>>;
-using ExSBV2 = System.Func<DMK.Expressions.RTExSB, DMK.Expressions.TEx<UnityEngine.Vector2>>;
 using static DMK.Danmaku.Options.SBOption;
 
 namespace DMK.Danmaku.Options {
 /// <summary>
 /// Properties that modify the behavior of simple bullets.
 /// </summary>
+[Reflect]
 public class SBOption {
     /// <summary>
     /// Give the bullet a custom scale.
@@ -24,7 +22,7 @@ public class SBOption {
     /// <summary>
     /// Give the bullet a custom rotation function, in degrees.
     /// </summary>
-    public static SBOption Dir(ExSBF dir) => new DirProp(Compilers.GCXU(x => CosSinDeg(dir(x))));
+    public static SBOption Dir(Func<TExArgCtx, TEx<float>> dir) => new DirProp(Compilers.GCXUSB(x => CosSinDeg(dir(x))));
     /// <summary>
     /// Give the bullet a custom rotation function, in cos/sin coordinates.
     /// </summary>

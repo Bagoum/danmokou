@@ -1,6 +1,6 @@
 ﻿module FTests.Utils
 
-open Common.Types
+open FCommon.Types
 open NUnit.Framework
 
 

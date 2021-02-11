@@ -13,19 +13,19 @@ phase 0
 		bullet-control persist empty savef 
 			 mydir p dir
 		 _
-		sync enemy01 <1;:45> gsr2 4 <;:90> { p this } summon _ <> tprot cx 1 here
+		sync enemy01 <1;:45> gsr2 4 <;:90> { p this } summon tprot cx 1
 			async empty <1;:> gcr2 120 4 <200> { p add } {
 				s tprot rotatelerprate 90 cx 1 cr 1 90
 				loc0c gem-red/bs gsr2 10 <30> . s offset 
 					rotate @ mydir p px 0.5
 					@ myloc p
-			}
+			} { }
 			
 phase 0
 	paction 0.1
 		##Simplified syntax: one command for all guideing
-        bullet strip-teal/w.2 <1;:> cre 24 _ <;:15> guideempty .1 p { pl loc pd dir } { }
-			tp-rot rotatelerppercent 0.3 cx 1 cy 1 ##empty guide movement 
+        async strip-teal/w.2 <1;:> gcr2 24 _ <;:15> { p this } guideempty .1 p { pl loc pd dir } { }
+			rvelocity rotatelerppercent 0.3 cx 1 cy 1 ##empty guide movement 
 			{
 				gsr2c 20 { } s doffset pl pd p
 					regpoly 0.4 5 &a
@@ -42,13 +42,13 @@ phase 0
 			 mydir p dir ## Note how we can share the name between two different save types.
 								## Also, like all array reflection, you may provide one element without enclosure.
 		 _
-        bullet empty <1;:180> cre 24 _ <;:15> s tp-rot rotatelerppercent 0.3 cx 1 cy 1
-		bullet ellipse-red/w <> cre 24 _ <> world s offset zero
+        async empty <1;:180> gcr2 24 _ <;:15> { p this } s rvelocity rotatelerppercent 0.3 cx 1 cy 1
+		async ellipse-red/w <> gcr2 24 _ <> { p this } world s offset zero
 			@ myloc p
-		bullet ellipse-purple/w <> cre 24 _ <> world s offset zero
+		async ellipse-purple/w <> gcr2 24 _ <> { p this } world s offset zero
 			+ @ myloc p
 			rotatev @ mydir p cxy -0.5 -0.5
-		bullet strip-green/w <> cre 24 _ <> repeatp add 20 <;:> world s offset zero
+		async strip-green/w <> gcr2 24 _ <> { p this } gsr2c 20 { p add } world s offset zero
 			+ @ myloc p1
 			polartoxy
 				regpolyr 0.4 5 degrad * 18 p2

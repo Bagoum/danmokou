@@ -4,8 +4,8 @@ using UnityEngine;
 namespace DMK.Scriptables {
 public class SO<T> : ScriptableObject, ISerializationCallbackReceiver {
 
-    public T value;
-    [NonSerialized] protected T runtimeValue; //Note that persistence occurs only in the editor. 
+    public T value = default!;
+    [NonSerialized] protected T runtimeValue = default!; //Note that persistence occurs only in the editor. 
 
     public static implicit operator T(SO<T> t) {
         return t.runtimeValue;

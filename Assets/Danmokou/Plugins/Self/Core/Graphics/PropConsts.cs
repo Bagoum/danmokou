@@ -32,6 +32,8 @@ public static class PropConsts {
     public static readonly int innerFillRatio = Shader.PropertyToID("_FI");
     public static readonly int subradius = Shader.PropertyToID("_Subradius");
     public static readonly int threshold = Shader.PropertyToID("_Threshold");
+    public static readonly int texWidth = Shader.PropertyToID("_TexWidth");
+    public static readonly int texHeight = Shader.PropertyToID("_TexHeight");
 
     public static readonly int tint = Shader.PropertyToID("_Tint");
 
@@ -52,7 +54,8 @@ public static class PropConsts {
     public static readonly int R2NPhaseStart = Shader.PropertyToID("_P2");
     public static readonly int R2NColor = Shader.PropertyToID("_CN");
 
-    public static readonly int SquareMeshWidth = Shader.PropertyToID("_SqrWidth");
+    public static readonly int FragmentDiameter = Shader.PropertyToID("_FragDiameter");
+    public static readonly int FragmentSides = Shader.PropertyToID("_FragSides");
     public static readonly int UVX = Shader.PropertyToID("_UVX");
     public static readonly int UVY = Shader.PropertyToID("_UVY");
     public static readonly int ScreenX = Shader.PropertyToID("_ScreenX");

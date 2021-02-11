@@ -12,7 +12,7 @@ phase(3)
     paction 0
 		position 0 0
 		sync tfairy2 <;:-100> summons tprot cx 5
-			wait
+			stall
 
 
 

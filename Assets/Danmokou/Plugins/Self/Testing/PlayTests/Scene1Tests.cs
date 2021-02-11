@@ -160,33 +160,33 @@ public static class Scene1 {
         TestHarness.OnSOF(() => {
             TestHarness.RunBehaviorScript("Control Ephemerality", "mokou");
             var red = BM.TPool("strip-red/w");
-            AreEqual(6, red.NumPcs);
-            var eternal = red.PcsAt(0);
-            var sndLastPre = red.PcsAt(2);
-            var firstPost = red.PcsAt(4);
-            var sndPost = red.PcsAt(5);
+            AreEqual(6, red.NumControls);
+            var eternal = red.ControlAt(0);
+            var sndLastPre = red.ControlAt(2);
+            var firstPost = red.ControlAt(4);
+            var sndPost = red.ControlAt(5);
             TestHarness.Check(1, () => {
-                AreEqual(5, red.NumPcs);
-                AreEqual(sndLastPre, red.PcsAt(2));
-                AreEqual(firstPost, red.PcsAt(3));
+                AreEqual(5, red.NumControls);
+                AreEqual(sndLastPre, red.ControlAt(2));
+                AreEqual(firstPost, red.ControlAt(3));
             });
             TestHarness.Check(2, () => {
-                AreEqual(4, red.NumPcs);
-                AreEqual(eternal, red.PcsAt(0));
-                AreEqual(sndPost, red.PcsAt(3));
+                AreEqual(4, red.NumControls);
+                AreEqual(eternal, red.ControlAt(0));
+                AreEqual(sndPost, red.ControlAt(3));
             });
             TestHarness.Check(3, () => {
-                AreEqual(3, red.NumPcs);
-                AreEqual(sndPost, red.PcsAt(2));
+                AreEqual(3, red.NumControls);
+                AreEqual(sndPost, red.ControlAt(2));
             });
             TestHarness.Check(4, () => {
-                AreEqual(2, red.NumPcs);
-                AreEqual(eternal, red.PcsAt(0));
-                AreEqual(sndLastPre, red.PcsAt(1));
+                AreEqual(2, red.NumControls);
+                AreEqual(eternal, red.ControlAt(0));
+                AreEqual(sndLastPre, red.ControlAt(1));
             });
             TestHarness.Check(6, () => {
-                AreEqual(1, red.NumPcs);
-                AreEqual(eternal, red.PcsAt(0));
+                AreEqual(1, red.NumControls);
+                AreEqual(eternal, red.ControlAt(0));
             });
         });
         while (TestHarness.Running) yield return null;
@@ -691,42 +691,6 @@ public static class Scene1 {
     }
     
     
-    
-    [UnityTest]
-    public static IEnumerator TestPrivateHoist() {
-        TestHarness.OnSOF(() => {
-            TestHarness.RunBehaviorScript("Private Hoist", "mokou");
-            var red = BM.TPool("strip-red/w");
-            AreEqual(red.Count, 3); //not deleted yet since sync summons before bullet-control!
-            AreEqual(PrivateDataHoisting.IDs.Count, 3);
-            SBPos(ref red[2], V2(2, 0));
-            AreEqual(PrivateDataHoisting.Fd[red[2].bpi.id][0], 2);
-            TestHarness.Check(0, () => {
-                AreEqual(red.Count, 2);
-                SBPos(ref red[0], V2(0, 0));
-                SBPos(ref red[1], V2(1, 0));
-                //When object is deleted normally, hoisted data is also deleted
-                AreEqual(PrivateDataHoisting.IDs.Count, 2);
-                AreEqual(PrivateDataHoisting.Fd.Count, 2);
-                AreEqual(PrivateDataHoisting.Fd[red[0].bpi.id][0], 0);
-                AreEqual(PrivateDataHoisting.Fd[red[1].bpi.id][0], 1);
-            });
-            TestHarness.Check(1, () => {
-                //shift-phase is called, but bullets are softculled on the next frame
-                // and phase data is cleared at the end of next frame
-                AreEqual(red.Count, 2); 
-                AreEqual(PrivateDataHoisting.IDs.Count, 2);
-                AreEqual(PrivateDataHoisting.Fd.Count, 2);
-            });
-            TestHarness.Check(2, () => {
-                AreEqual(red.Count, 0); 
-                AreEqual(PrivateDataHoisting.IDs.Count, 0);
-                AreEqual(PrivateDataHoisting.Fd.Count, 0);
-            });
-        });
-        while (TestHarness.Running) yield return null;
-    }
-    
     [UnityTest]
     public static IEnumerator TestStaticAnalysis1_1() {
         TestHarness.OnSOF(() => {
@@ -787,7 +751,8 @@ public static class Scene1 {
         bool cb = false;
         //Running Static Analysis 1
         new InstanceRequest(() => cb = true, FixedDfc(FixedDifficulty.Lunatic),
-            boss: new BossPracticeRequest(AllPBosses[0], new SMAnalysis.Phase(null, PhaseType.NONSPELL, 3, "_"))).Run();
+            boss: new BossPracticeRequest(AllPBosses[0], 
+                new SMAnalysis.Phase(null!, PhaseType.NONSPELL, 3, new LocalizedString("_")))).Run();
         IsFalse(cb);
         yield return WaitForLoad();
         for (int ii = 0; ii < 10; ++ii) yield return null;
@@ -811,10 +776,11 @@ public static class Scene1 {
         foreach (var dff in Enum.GetValues(typeof(FixedDifficulty)).Cast<FixedDifficulty>()) {
             //Running Difficulty Display Test
             DebugFloat.values.Clear();
+            yield return null;
             new InstanceRequest(null, FixedDfc(dff), boss: new BossPracticeRequest(AllPBosses[1])).Run();
             yield return WaitForLoad();
-            AreEqual(instance.mode, InstanceMode.CARD_PRACTICE);
-            AreEqual(GameManagement.Difficulty.standard.Value, dff);
+            AreEqual(Instance.mode, InstanceMode.CARD_PRACTICE);
+            AreEqual(GameManagement.Difficulty.standard!.Value, dff);
             AreEqual(GameManagement.Difficulty.Value / FixedDifficulty.Hard.Value(), DebugFloat.values[0]);
             SceneManager.LoadScene(baseScene);
             while (TestHarness.Running) yield return null;
@@ -828,7 +794,7 @@ public static class Scene1 {
         bool campaignComplete = false;
         InstanceRequest.RunCampaign(MainCampaign, () => campaignComplete = true, 
             FixedDfc(FixedDifficulty.Lunatic));
-        AreEqual(GameManagement.Difficulty.standard.Value, FixedDifficulty.Lunatic);
+        AreEqual(GameManagement.Difficulty.standard!.Value, FixedDifficulty.Lunatic);
         IsFalse(campaignComplete);
         yield return WaitForLoad();
         AreEqual(SceneManager.GetActiveScene().name, "TestStage1");
@@ -853,7 +819,7 @@ public static class Scene1 {
         SaveData.r.TutorialDone = true;
         AreEqual(SceneManager.GetActiveScene().name, baseScene);
         InstanceRequest.RunCampaign(MainCampaign, null, FixedDfc(FixedDifficulty.Lunatic));
-        AreEqual(GameManagement.Difficulty.standard.Value, FixedDifficulty.Lunatic);
+        AreEqual(GameManagement.Difficulty.standard!.Value, FixedDifficulty.Lunatic);
         yield return WaitForLoad();
         AreEqual(SceneManager.GetActiveScene().name, "TestStage1");
         GameManagement.GoToMainMenu();

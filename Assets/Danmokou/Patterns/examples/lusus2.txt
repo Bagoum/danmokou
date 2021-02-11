@@ -5,7 +5,7 @@ phase 0
 phase 0
 	paction 0
 		position 0 3
-		async gcircle-* <-10;8:> gcr2 (if (= 0 rem 4 + 2 &i) 60 30) _ <;:7> {
+		async gcircle-* <-10;8:> gcr2 (if (= 0 mod 4 + 2 &i) 60 30) _ <;:7> {
 			root zero
 			colorf { red/w pink/w } // ++ &i 4
 			} gsr2 30 <1;:> . s tprot cy -2.5

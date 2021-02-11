@@ -54,8 +54,8 @@ public static class PublicDataHoisting {
 
     public static SafeResizableArray<T> Register<T>(string name) {
         var t = typeof(T);
-        if (t == ExUtils.tv2) return RegisterV2(name) as SafeResizableArray<T>;
-        if (t == ExUtils.tfloat) return RegisterF(name) as SafeResizableArray<T>;
+        if (t == ExUtils.tv2) return (RegisterV2(name) as SafeResizableArray<T>)!;
+        if (t == ExUtils.tfloat) return (RegisterF(name) as SafeResizableArray<T>)!;
         throw new Exception($"No generic PublicDataHoisting registration for type {t.Name}");
     }
 

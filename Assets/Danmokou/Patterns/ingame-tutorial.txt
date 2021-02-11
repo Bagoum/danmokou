@@ -156,12 +156,12 @@ phase 0
 		
 phase 0
 	paction 0
-		move-target 1 io-sine cy 1
+		move-target 1 io-sine cy 0
 	paction 0
 		async sun-red* <90> gcr2 240 _ <120> {
 		} gsr2c 3 {
 			color { / /w /b }
-		} ss 0.6 tprot cx 2
+		} simple tprot cx 2 { scale 0.6 }
 
 phase 0
 	paction 0

@@ -23,18 +23,19 @@ public abstract class DisplayController : MonoBehaviour {
     protected bool flipY;
 
     protected float time => beh.rBPI.t;
-    protected Transform tr { get; private set; }
-    protected MaterialPropertyBlock pb { get; private set; }
-    protected BehaviorEntity beh { get; private set; }
+    protected Transform tr { get; private set; } = null!;
+    protected MaterialPropertyBlock pb { get; private set; } = null!;
+    protected BehaviorEntity beh { get; private set; } = null!;
     protected ParametricInfo BPI => beh.rBPI;
 
-    public RFloat yPosBopPeriod;
-    public RFloat yPosBopAmplitude;
-    public RFloat yScaleBopPeriod;
-    public RFloat yScaleBopAmplitude;
+    public RFloat yPosBopPeriod = null!;
+    public RFloat yPosBopAmplitude = null!;
+    public RFloat yScaleBopPeriod = null!;
+    public RFloat yScaleBopAmplitude = null!;
 
-    public RString rotator;
-    [CanBeNull] public BPY RotatorF { get; set; }
+    [ReflectInto(typeof(BPY))]
+    public RString rotator = null!;
+    public BPY? RotatorF { get; set; }
 
     protected virtual void Awake() {
         RotatorF = rotator.Get().IntoIfNotNull<BPY>();
@@ -59,7 +60,7 @@ public abstract class DisplayController : MonoBehaviour {
 
     public virtual void SetSortingOrder(int x) { }
 
-    public virtual void SetSprite([CanBeNull] Sprite s) {
+    public virtual void SetSprite(Sprite? s) {
         throw new Exception("DisplayController has no default handling for sprite set");
     }
 
@@ -67,7 +68,7 @@ public abstract class DisplayController : MonoBehaviour {
         throw new Exception("DisplayController has no default handling for fading sprite opacity");
     }
 
-    public virtual void Animate(AnimationType typ, bool loop, [CanBeNull] Action done) {
+    public virtual void Animate(AnimationType typ, bool loop, Action? done) {
         throw new Exception("DisplayController has no default animation handling");
     }
 

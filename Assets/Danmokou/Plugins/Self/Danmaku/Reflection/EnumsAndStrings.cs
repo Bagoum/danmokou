@@ -13,6 +13,12 @@ public static partial class Reflector {
         RV2
     }
 
+    public static FiringCtx.DataType AsFCtxType(this ExType t) => t switch {
+        ExType.RV2 => FiringCtx.DataType.RV2,
+        ExType.V3 => FiringCtx.DataType.V3,
+        ExType.V2 => FiringCtx.DataType.V2,
+        _ => FiringCtx.DataType.Float
+    };
     public static ExType AsExType<T>() => AsExType(typeof(T));
 
     public static ExType AsExType(Type t) {
@@ -52,7 +58,6 @@ public static partial class Reflector {
         BPY,
         FXY,
         Pred,
-        SBPred,
         Path,
         LaserPath,
         SBCF,
@@ -90,8 +95,6 @@ public static partial class Reflector {
             return "BPY";
         } else if (rc == Reflected.Pred) {
             return "Predicate";
-        } else if (rc == Reflected.SBPred) {
-            return "SimpleBullet Predicate";
         } else if (rc == Reflected.SBCF) {
             return "BulletControl";
         } else if (rc == Reflected.BehCF) {
@@ -130,13 +133,14 @@ public static partial class Reflector {
         return c;
     }
 
-    private static char[] temp = new char[64];
+    private static char[] temp = new char[256];
 
     private static string Sanitize(string raw_name) {
         //return $"{raw_name[0].ToString().ToLower()}{raw_name.Substring(1).ToLower().Replace("-", "")}";
         int len = raw_name.Length;
         if (len == 0) return raw_name;
-        if (len > temp.Length) temp = new char[temp.Length * 2];
+        while (len > temp.Length) 
+            temp = new char[temp.Length * 2];
         int ti = 0;
         temp[ti++] = Lower(raw_name[0]);
         for (int ii = 1; ii < len; ++ii) {
@@ -150,7 +154,7 @@ public static partial class Reflector {
     public static string NameType(Type t) {
         if (TypeNameMap.TryGetValue(t, out var name)) return name;
         if (t.IsArray) {
-            return $"[{NameType(t.GetElementType())}]";
+            return $"[{NameType(t.GetElementType()!)}]";
         }
         if (t.IsConstructedGenericType) {
             return

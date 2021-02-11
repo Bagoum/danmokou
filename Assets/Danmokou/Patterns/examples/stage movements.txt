@@ -7,7 +7,7 @@ phase 0 #{
 !{ move(rpath)
 async tfairy <> summonr
 	%rpath
-	wait
+	stall
 	{ }
 !}
 !{ exfire()

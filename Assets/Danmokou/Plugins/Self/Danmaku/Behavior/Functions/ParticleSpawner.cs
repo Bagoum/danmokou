@@ -1,16 +1,18 @@
-﻿using DMK.DMath;
+﻿using DMK.Core;
+using DMK.DMath;
 using DMK.Pooling;
 using DMK.Reflection;
 using UnityEngine;
 
 namespace DMK.Behavior.Functions {
 public class ParticleSpawner : ProcReader {
-    private Transform tr;
-    public GameObject particlePrefab;
+    private Transform tr = null!;
+    public GameObject particlePrefab = null!;
     private ParticleSystem.Burst baseBurst;
 
-    public string burstScaler;
-    private FXY burstScale;
+    [ReflectInto(typeof(FXY))]
+    public string burstScaler = "";
+    private FXY burstScale  = null!;
 
     private void Awake() {
         tr = transform;

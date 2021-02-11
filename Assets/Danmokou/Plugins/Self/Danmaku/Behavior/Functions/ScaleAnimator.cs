@@ -19,10 +19,12 @@ public class ScaleAnimator : TimeBoundAnimator {
     private float time1;
     private float time2;
     private float holdtime = 0f;
-    public string ease1;
-    public string ease2;
+    [ReflectInto(typeof(FXY))]
+    public string ease1 = "out-sine t";
+    [ReflectInto(typeof(FXY))]
+    public string ease2 = "in-sine t";
 
-    private Transform tr;
+    private Transform tr = null!;
 
     private void Awake() {
         tr = transform;

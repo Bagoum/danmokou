@@ -9,16 +9,16 @@ using UnityEngine;
 
 namespace DMK.Services {
 public class AudioTrackService : RegularUpdater {
-    private static AudioTrackService main;
-    [CanBeNull] private static IAudioTrackInfo bgm = null;
+    private static AudioTrackService main = null!;
+    private static IAudioTrackInfo? bgm = null;
 
     private static readonly Dictionary<string, IAudioTrackInfo> trackInfo = new Dictionary<string, IAudioTrackInfo>();
 
-    public AudioSource src1;
-    public AudioSource src2;
+    public AudioSource src1 = null!;
+    public AudioSource src2 = null!;
 
-    private static AudioSource currSrc;
-    private static AudioSource nextSrc;
+    private static AudioSource currSrc = null!;
+    private static AudioSource nextSrc = null!;
 
     public void Setup() {
         main = this;
@@ -33,7 +33,7 @@ public class AudioTrackService : RegularUpdater {
 
     protected override void BindListeners() {
         base.BindListeners();
-        Listen(Core.Events.GameStateHasChanged, HandleGameStateChange);
+        Listen(Events.GameStateHasChanged, HandleGameStateChange);
     }
 
     public void Update() {
@@ -132,14 +132,14 @@ public class AudioTrackService : RegularUpdater {
 
     public static void ResetPitchMultiplier() => SetPitchMultiplier(1f);
 
-    public static void InvokeBGM([CanBeNull] string trackName) {
+    public static void InvokeBGM(string? trackName) {
         if (!string.IsNullOrWhiteSpace(trackName) && trackName != "_")
-            InvokeBGM(trackInfo.GetOrThrow(trackName, "BGM tracks"));
+            InvokeBGM(trackInfo.GetOrThrow(trackName!, "BGM tracks"));
     }
 
-    public static void InvokeBGM([CanBeNull] IAudioTrackInfo track) => main._InvokeBGM(track);
+    public static void InvokeBGM(IAudioTrackInfo? track) => main._InvokeBGM(track);
 
-    private void _InvokeBGM([CanBeNull] IAudioTrackInfo track) {
+    private void _InvokeBGM(IAudioTrackInfo? track) {
         //Only non-BGM sounds are cancellable.
         if (track == null || bgm == track) return;
         Log.Unity($"Switching background music to: {track.Title}");

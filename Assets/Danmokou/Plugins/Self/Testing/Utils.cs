@@ -10,10 +10,10 @@ using UnityEngine;
 namespace DMK.Testing {
 
 public static class THelpers {
-    public static T TField<T>(this object sut, string name) {
-        var field = sut.GetType()
+    public static T TField<T>(this object? sut, string name) {
+        var field = sut?.GetType()
             .GetField(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-        return (T)field?.GetValue(sut);
+        return (T)field?.GetValue(sut)!;
     }
 }
 public static class TAssert {

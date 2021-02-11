@@ -1,6 +1,6 @@
 pattern { }
 
-<!> Fbgt-in shatter4
+<!> bgt-in shatter4
 <!> bg example3d_1
 <!> bgt-out shatter4
 phase 5

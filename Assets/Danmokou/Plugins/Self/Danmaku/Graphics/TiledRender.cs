@@ -13,8 +13,8 @@ using InternalSetVertexData = System.Action<UnityEngine.Mesh,
 namespace DMK.Graphics {
 [Serializable]
 public class TiledRenderCfg {
-    public string sortingLayer;
-    public string playerSortingLayer;
+    public string sortingLayer = "";
+    public string playerSortingLayer = "";
     public float dontUpdateTimeAfter;
 }
 
@@ -22,9 +22,9 @@ public abstract class TiledRender {
     protected readonly MaterialPropertyBlock pb;
     protected readonly Renderer render;
     private readonly MeshFilter mf;
-    private Mesh mesh;
+    private Mesh mesh = null!;
     protected readonly Transform tr;
-    protected ITransformHandler locater;
+    protected ITransformHandler locater = null!;
     protected bool parented;
 
     protected int texRptHeight;
@@ -124,7 +124,7 @@ public abstract class TiledRender {
     private static readonly InternalSetVertexData SetVertexBufferData = (InternalSetVertexData)
         Delegate.CreateDelegate(typeof(InternalSetVertexData),
             typeof(Mesh).GetMethod("InternalSetVertexBufferData",
-                BindingFlags.NonPublic | BindingFlags.Instance));
+                BindingFlags.NonPublic | BindingFlags.Instance)!);
 
     //Do not use this to change rh/rw, it will break
     //Use this only to change vertex size/position

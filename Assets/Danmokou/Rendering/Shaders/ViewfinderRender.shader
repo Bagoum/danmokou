@@ -61,6 +61,7 @@
 				f.uv *= float2(_ScaleX, _ScaleY);
 				f.uv = rot2(_Angle, f.uv);
 				f.uv /= float2(_ScreenWidth, _ScreenHeight);
+				f.uv += float2(0.5, 0.5);
 				f.uv += float2(_OffX, _OffY);
 				return f;
 			}

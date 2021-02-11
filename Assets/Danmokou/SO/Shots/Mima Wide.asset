@@ -13,7 +13,13 @@ MonoBehaviour:
   m_Name: Mima Wide
   m_EditorClassIdentifier: 
   key: mima-wide
-  title: Falling Stars Escaping Death
+  title:
+    useReference: 1
+    reference: players.shot_mima_wide
+    hardcoded:
+      en: 
+      jp: 
+      _showEnOnly: 0
   description: 'A shot developed through long study of Tycho Brahe''s planetary measurements.
 
     A
@@ -26,6 +32,8 @@ MonoBehaviour:
   bomb: 0
   defaultPower: 1000
   playerChild: 1
+  demoReplay: {fileID: 4900000, guid: f58a179b4f5afb7489944bbfdd2484f5, type: 3}
+  demoSetupSM: {fileID: 4900000, guid: 83d895926f063264f9adc5887261db81, type: 3}
   isMultiShot: 0
   multiD: {fileID: 0}
   multiM: {fileID: 0}

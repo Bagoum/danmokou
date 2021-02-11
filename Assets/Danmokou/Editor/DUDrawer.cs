@@ -15,7 +15,7 @@ public static class DisplayHelpers {
     }
 }
 public abstract class DUDisplayDrawer<T> : PropertyDrawer {
-    protected virtual string[] EnumValues { get; }
+    protected virtual string[] EnumValues { get; } = null!;
     protected virtual string[] EnumDisplayValues => EnumValues;
     protected virtual string propName(int enumIndex) => EnumValues[enumIndex]; //property names same as enum names by default
     protected virtual string enumProperty => "type";

@@ -11,25 +11,40 @@ using JetBrains.Annotations;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using TC = FParser.AAParser.TextCommand<float, DMK.Dialogue.Dialoguer.EventType, string>;
-using AR = FParser.AAParser.ArgRef<float, DMK.Dialogue.Dialoguer.EventType, string>;
+using static ParserCS.AAParser;
+using DUContents = DMK.Core.DU<float, string, DMK.Dialogue.Dialoguer.EventType>;
 
 namespace DMK.Dialogue {
-public class Dialoguer : CoroutineRegularUpdater {
-    private static Dialoguer main { get; set; }
-    public TextMeshProUGUI mainText;
-    public TextMeshProUGUI leftSpeaker;
-    public TextMeshProUGUI rightSpeaker;
-    public Image leftIcon;
-    public Image rightIcon;
-    public GameObject total;
 
-    public SpriteRenderer left1;
-    public SpriteRenderer left2;
-    public SpriteRenderer right1;
-    public SpriteRenderer right2;
-    public SpriteRenderer center;
-    public SpriteRenderer nextPrompt;
+public readonly struct DialogueObject {
+    //Cases: 
+    // wait<float>
+    // sfx<string>
+    // event<Dialoguer.EventType>
+    public readonly DUContents contents;
+    public DialogueObject(DUContents contents) {
+        this.contents = contents;
+    }
+
+    public static DialogueObject Wait(float f) => new DialogueObject(new DUContents(f));
+    public static DialogueObject SFX(string s) => new DialogueObject(new DUContents(s));
+    public static DialogueObject Event(Dialoguer.EventType e) => new DialogueObject(new DUContents(e));
+}
+public class Dialoguer : CoroutineRegularUpdater {
+    private static Dialoguer main { get; set; } = null!;
+    public TextMeshProUGUI mainText = null!;
+    public TextMeshProUGUI leftSpeaker = null!;
+    public TextMeshProUGUI rightSpeaker = null!;
+    public Image leftIcon = null!;
+    public Image rightIcon = null!;
+    public GameObject total = null!;
+
+    public SpriteRenderer left1 = null!;
+    public SpriteRenderer left2 = null!;
+    public SpriteRenderer right1 = null!;
+    public SpriteRenderer right2 = null!;
+    public SpriteRenderer center = null!;
+    public SpriteRenderer nextPrompt = null!;
 
     private readonly Dictionary<StandLocation, PiecewiseRender> renders =
         new Dictionary<StandLocation, PiecewiseRender>();
@@ -79,8 +94,8 @@ public class Dialoguer : CoroutineRegularUpdater {
     private void DimAll(StandLocation? except) => DimAll(except, DimColor, Gray(1f));
 
     private class PiecewiseRender {
-        public SpriteRenderer[] spriteRenders;
-        [CanBeNull] public Cancellable cT;
+        public SpriteRenderer[] spriteRenders = new SpriteRenderer[0];
+        public Cancellable? cT;
         public Color lastColor = DimColor;
         public float lastBop;
 
@@ -145,10 +160,10 @@ public class Dialoguer : CoroutineRegularUpdater {
     }
 
     private void RequestEvent(EventType ev) {
-        if (ev == EventType.SPEAKER_SFX) SFXService.Request(currSpeaker.SpeakSFX);
+        if (ev == EventType.SPEAKER_SFX) SFXService.Request(currSpeaker?.SpeakSFX);
     }
 
-    private IEnumerator _RunDialogue(TC[] words, ICancellee cT, Action done, bool continued) {
+    private IEnumerator _RunDialogue(TextCommand<DialogueObject>[] words, ICancellee cT, Action done, bool continued) {
         float wait_time = 0f;
         List<string> sb = new List<string>();
         int lookaheadStartsAt = 0;
@@ -167,8 +182,8 @@ public class Dialoguer : CoroutineRegularUpdater {
             sb.Add(s2);
             for (int wi = ii + 1; wi < words.Length; ++wi) {
                 var w = words[wi];
-                if (w is TC.TSpace sp || w.Equals(TC.TNewline)) break;
-                if (w is TC.TTextWait t) sb.Add(t.Item.Item1);
+                if (w.type == TextCommand.Type.Space || w.type == TextCommand.Type.Newline) break;
+                if (w.type == TextCommand.Type.TextWait) sb.Add(w.stringVal);
             }
             sb.Add("</color>");
         }
@@ -182,9 +197,9 @@ public class Dialoguer : CoroutineRegularUpdater {
             }
 
             var w = words[ii];
-            if (w is TC.TTextWait tw) {
-                var s = tw.Item.Item1;
-                float wait_per = (float) tw.Item.Item2 / s.Length;
+            if (w.type == TextCommand.Type.TextWait) {
+                var s = w.stringVal;
+                float wait_per = (float) w.wait / s.Length;
                 AddWithLookahead(s.Substring(0, 1), s.Substring(1), out int i1, out int i2);
                 mainText.text = string.Concat(sb);
                 for (int ci = 1; ci < s.Length; ++ci) {
@@ -202,11 +217,12 @@ public class Dialoguer : CoroutineRegularUpdater {
             } else {
                 // ReSharper disable once AccessToModifiedClosure
                 //Note: this first null is TC.TTextWait
-                w.Resolve(null, s => AddClearLookahead(" "), () => {
+                w.Resolve(null!, s => AddClearLookahead(" "), () => {
                         AddClearLookahead("\n");
                         AddWait(0.5f);
-                    }, null, null,
-                    f => AddWait((float) f), AddWait, RequestEvent, SFXService.Request);
+                    }, null!, null!,
+                    AddWait, 
+                    dobj => dobj.contents.Resolve(AddWait, SFXService.Request, RequestEvent));
             }
             mainText.text = string.Concat(sb);
         }
@@ -217,12 +233,12 @@ public class Dialoguer : CoroutineRegularUpdater {
         GameManagement.References.dialogueProfiles.FirstOrDefault(p => p.key == key) ??
         throw new Exception($"No dialogue profile exists by key {key}");
 
-    [CanBeNull] private static IDialogueProfile currLeft;
-    [CanBeNull] private static IDialogueProfile currRight;
+    private static IDialogueProfile? currLeft;
+    private static IDialogueProfile? currRight;
     private static LR activeSpeakerSide;
-    public static IDialogueProfile currSpeaker => (activeSpeakerSide == LR.LEFT) ? currLeft : currRight;
+    public static IDialogueProfile? currSpeaker => (activeSpeakerSide == LR.LEFT) ? currLeft : currRight;
 
-    public static void SetLeftSpeaker([CanBeNull] IDialogueProfile speaker, Emote? emote) {
+    public static void SetLeftSpeaker(IDialogueProfile? speaker, Emote? emote) {
         currLeft = speaker ?? currLeft ?? throw new Exception("No left speaker is set");
         main.leftSpeaker.text = currLeft.DisplayName;
         if (stands.ContainsKey(currLeft)) {
@@ -233,7 +249,7 @@ public class Dialoguer : CoroutineRegularUpdater {
         SetLeftSpeakerActive();
     }
 
-    public static void SetRightSpeaker([CanBeNull] IDialogueProfile speaker, Emote? emote) {
+    public static void SetRightSpeaker(IDialogueProfile? speaker, Emote? emote) {
         currRight = speaker ?? currRight ?? throw new Exception("No right speaker is set");
         main.rightSpeaker.text = currRight.DisplayName;
         if (stands.ContainsKey(currRight)) {
@@ -320,7 +336,7 @@ public class Dialoguer : CoroutineRegularUpdater {
     private static readonly Color activeSpeaker = Color.white;
     private static readonly Color inactiveSpeaker = new Color(0.4f, 0.4f, 0.4f, 1f);
 
-    public static void RunDialogue(TC[] words, ICancellee cT, Action done, bool continued = false) {
+    public static void RunDialogue(TextCommand<DialogueObject>[] words, ICancellee cT, Action done, bool continued = false) {
         main.RunRIEnumerator(main._RunDialogue(words, cT, done, continued));
     }
 

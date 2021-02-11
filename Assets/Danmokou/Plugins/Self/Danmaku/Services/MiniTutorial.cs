@@ -12,16 +12,17 @@ using DMK.UI;
 using TMPro;
 using UnityEngine;
 using static DMK.Core.InputManager;
+using static DMK.Core.LocalizedStrings.Tutorial;
 
 namespace DMK.Services {
 public class MiniTutorial : BehaviorEntity {
     // Start is called before the first frame update
-    public TextMeshPro text00;
-    public TextMeshPro text10;
+    public TextMeshPro text00 = null!;
+    public TextMeshPro text10 = null!;
     public Color prompt;
     public Color message;
     private readonly Dictionary<TextMeshPro, Vector2> defaultLoc = new Dictionary<TextMeshPro, Vector2>();
-    private static MiniTutorial main;
+    private static MiniTutorial main = null!;
 
     protected override void Awake() {
         main = this;
@@ -64,22 +65,23 @@ public class MiniTutorial : BehaviorEntity {
         DependencyInjection.Find<IUIManager>()
             .SetSpellname("Reduced Tutorial (For Players Too Smart for the Normal Tutorial)");
 
-        BulletManager.RequestSimple("lcircle-red/", _ => 4f, null, new Movement(new Vector2(-2, -2.5f), 0), 0, 0, null);
-        var nrx = new RealizedLaserOptions(new LaserOptions(), GenCtx.New(this, V2RV2.Zero), 5, new Vector2(3, 5),
+        var mov = new Movement(new Vector2(-2, 2.5f), 0);
+        BulletManager.RequestSimple("lcircle-red/", _ => 4f, null, mov, new ParametricInfo(in mov));
+        var nrx = new RealizedLaserOptions(new LaserOptions(), GenCtx.New(this, V2RV2.Zero), FiringCtx.New(), new Vector2(3, 5),
             V2RV2.Angle(-90), Cancellable.Null);
-        "sync _ <> relrect greenrect level <-2;-2.5:1.4;1.4:0> witha 0.7 green".Into<StateMachine>()
+        "sync _ <> relrect greenrect level <-2;2.5:1.4;1.4:0> witha 0.7 green".Into<StateMachine>()
             .Start(new SMHandoff(this, Cancellable.Null));
-        Message(text10,
-            $"You should see a large red circle on a green box in the bottom left corner. If the red circle is invisible or in the center of the screen, turn the legacy renderer option to YES in the pause menu. ({UIConfirm.Desc} to continue)");
+        Message(text10, mtcirc1(UIConfirm.Desc));
         yield return confirm();
         BulletManager.ClearAllBullets();
         BehaviorEntity.GetExecForID("greenrect").InvokeCull();
-        BulletManager.RequestLaser(null, "mulaser-blue/b", new Movement(new Vector2(-3, 5), -90), 0, 5, 999, 0,
+        mov = new Movement(new Vector2(-3, 5), -90);
+        BulletManager.RequestLaser(null, "mulaser-blue/b", mov, new ParametricInfo(in mov), 999, 0,
             ref nrx);
-        BulletManager.RequestLaser(null, "zonelaser-green/b", new Movement(new Vector2(-2, 5), -90), 0, 5, 999, 0,
+        mov = new Movement(new Vector2(-2, 5), -90);
+        BulletManager.RequestLaser(null, "zonelaser-green/b", mov, new ParametricInfo(in mov), 999, 0,
             ref nrx);
-        Message(text10,
-            $"Lasers with letters or patterns are SAFE LASERS. They will not damage you. ({UIConfirm.Desc} to continue)");
+        Message(text10, mtsafe2(UIConfirm.Desc));
         yield return confirm();
         cb();
     }

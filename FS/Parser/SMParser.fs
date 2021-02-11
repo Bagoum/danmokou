@@ -1,7 +1,7 @@
 ﻿module FParser.SMParser
-open Common.Functions
-open Common.Types
-open Common.Extensions
+open FCommon.Functions
+open FCommon.Types
+open FCommon.Extensions
 open FParsec
 open System
 open FParser.ParserCommon

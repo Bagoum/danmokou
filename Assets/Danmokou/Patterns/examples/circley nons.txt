@@ -6,8 +6,6 @@ phase 0 #{
 
 <!> type non `Wintry Night: Sun and Moon`
 phase 0 #{
-	end
-		clear phase
 	paction 0
 		position 0 3
 		async empty <> gcr2 360 _ <;:60h> {

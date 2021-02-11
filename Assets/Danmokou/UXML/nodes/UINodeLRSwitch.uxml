@@ -3,7 +3,7 @@
     <Style src="UINode.uss" />
     <ui:VisualElement class="node">
         <ui:VisualElement name="Selector" class="pointer prefix" />
-        <ui:Label text="Keyname" name="Key" class="text" />
+        <ui:Label text="Keyname" name="Key" class="text" style="white-space: nowrap;" />
         <ui:VisualElement name="ValueContainer" class="optionsCont">
             <ui:Label text="&lt;" class="text" />
             <ui:Label text="one two three four five six se" name="Value" class="text centertext" style="overflow: hidden; white-space: nowrap;" />

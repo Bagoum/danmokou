@@ -7,12 +7,6 @@ using DMK.Behavior;
 using DMK.Core;
 using DMK.Expressions;
 using Ex = System.Linq.Expressions.Expression;
-using ExTP = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<UnityEngine.Vector2>>;
-using ExTP3 = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<UnityEngine.Vector3>>;
-using ExBPRV2 = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<DMK.DMath.V2RV2>>;
-using ExFXY = System.Func<DMK.Expressions.TEx<float>, DMK.Expressions.TEx<float>>;
-using ExBPY = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<float>>;
-using ExPred = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<bool>>;
 using tfloat = DMK.Expressions.TEx<float>;
 using static DMK.Expressions.ExMHelpers;
 using static DMK.Expressions.ExUtils;
@@ -20,6 +14,9 @@ using static DMK.DMath.Functions.ExM;
 using static DMK.DMath.Functions.ExMLerps;
 using static DMK.DMath.Functions.ExMConversions;
 using static DMK.DMath.Functions.ExMMod;
+using ExBPY = System.Func<DMK.Expressions.TExArgCtx, DMK.Expressions.TEx<float>>;
+using ExTP = System.Func<DMK.Expressions.TExArgCtx, DMK.Expressions.TEx<UnityEngine.Vector2>>;
+using ExTP3 = System.Func<DMK.Expressions.TExArgCtx, DMK.Expressions.TEx<UnityEngine.Vector3>>;
 
 namespace DMK.DMath.Functions {
 /// <summary>
@@ -27,15 +24,11 @@ namespace DMK.DMath.Functions {
 /// </summary>
 [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
 [SuppressMessage("ReSharper", "UnusedMember.Global")]
+[Reflect]
 public static partial class Parametrics {
     private static readonly Ex EPS = Ex.Constant(M.MAG_ERR);
     
     public static ExTP Zero() => CXY(0, 0);
-    
-    /// <summary>
-    /// Returns the root location of the entity's velocity struct.
-    /// </summary>
-    public static ExTP Root() => Reference<Vector2>("root");
 
     #region ConstantVectors
 
@@ -85,6 +78,7 @@ public static partial class Parametrics {
     /// <param name="by">Float equation multiplier</param>
     /// <param name="tp">Base vector equation</param>
     /// <returns></returns>
+    [Alias("/")]
     public static ExTP Divide(ExBPY by, ExTP tp) {
         return bpi => Ex.Divide(tp(bpi), by(bpi));
     }
@@ -198,10 +192,8 @@ public static partial class Parametrics {
 
     /// <summary>
     /// Derive a Vector2 from a Vector3 by dropping the Z-component.
-    /// This is applied automatically if no other methods are found.
     /// </summary>
-    [Fallthrough(100, true)]
-    public static ExTP TP3XY(ExTP3 xyz) {
+    public static ExTP TP(ExTP3 xyz) {
         var v3 = TExV3.Variable();
         return bpi => Ex.Block(new ParameterExpression[] {v3},
             Ex.Assign(v3, xyz(bpi)),
@@ -273,7 +265,9 @@ public static partial class Parametrics {
     /// <param name="p">Target parametric</param>
     /// <returns></returns>
     public static ExTP Rotify(ExTP p) =>
-        bpi => RotateCS(BPYRepo.AC()(bpi), BPYRepo.AS()(bpi), p(bpi));
+        bpi => RotateCS(
+            Reference<float>(Reflection.Aliases.MOV_COS_ALIAS)(bpi), 
+            Reference<float>(Reflection.Aliases.MOV_SIN_ALIAS)(bpi), p(bpi));
 
 
     #endregion
@@ -373,18 +367,7 @@ public static partial class Parametrics {
         return bpi => Ex.Condition(Ex.GreaterThan(bpi.t, ExC(at_time)), to(bpi), from(bpi));
     }
 
-    /// <summary>
-    /// Switch between two parametrics based on firing index.
-    /// </summary>
-    /// <param name="at_index">Switch reference</param>
-    /// <param name="from">Parametric to return before switch</param>
-    /// <param name="to">Parametric to return after switch</param>
-    /// <returns></returns>
-    public static ExTP PSwitch(float at_index, ExTP from, ExTP to) {
-        return bpi => Ex.Condition(Ex.GreaterThan(bpi.findex, ExC(at_index)), to(bpi), from(bpi));
-    }
-    
-    
+
     /// <summary>
     /// Switch between two functions such that the second function continues where the first left off.
     /// Eg. Switching from the polar equation (r=1, th=90t) to the xy equation (x=t,y=0) yields:
@@ -397,73 +380,11 @@ public static partial class Parametrics {
     /// <param name="f1">Starting equation</param>
     /// <param name="f2">Equation after pivot</param>
     /// <returns></returns>
-    public static ExTP Pivot(ExBPY pivotVar, ExBPY pivot, ExTP f1, ExTP f2) => ExMHelpers.Pivot(pivot, f1, f2, pivotVar);
+    public static ExTP Pivot(ExBPY pivotVar, ExBPY pivot, ExTP f1, ExTP f2) => ExMHelpers.Pivot<TExPI, Vector2>(
+        pivot, f1, f2, pivotVar);
 
     #endregion
     
-    /// <summary>
-    /// Clamp the magnitude of a parametric equation. Do not allow the child to have zero magnitude.
-    /// Not properly tested.
-    /// </summary>
-    /// <param name="min">Minimum</param>
-    /// <param name="max">Maximum</param>
-    /// <param name="tp">Target parametric</param>
-    /// <returns></returns>
-    public static ExTP ClampMag(float min, float max, ExTP tp) {
-        var f = ExUtils.VFloat();
-        var v = TExV2.Variable();
-        var exmin = ExC(min);
-        var exmax = ExC(max);
-        return bpi => Ex.Block(new[] {v, f},
-            Ex.Assign(v, tp(bpi)),
-            Ex.Assign(f, Mag(v)),
-            Ex.Condition(Ex.LessThan(f, exmin),
-                Ex.Multiply(v, Ex.Divide(exmin, f)),
-                Ex.Condition(Ex.GreaterThan(f, exmax),
-                    Ex.Multiply(v, Ex.Divide(exmax, f)),
-                    v))
-        );
-    }
-
-    /// <summary>
-    /// Clamp the X-component of a parametric equation.
-    /// </summary>
-    /// <param name="min">Minimum</param>
-    /// <param name="max">Maximum</param>
-    /// <param name="tp">Target parametric</param>
-    /// <returns></returns>
-    public static ExTP ClampX(float min, float max, ExTP tp) {
-        var v = TExV2.Variable();
-        var exmin = ExC(min);
-        var exmax = ExC(max);
-        return bpi => Ex.Block(new ParameterExpression[] {v},
-            Ex.Assign(v, tp(bpi)),
-            Ex.IfThenElse(Ex.LessThan(v.x, exmin), 
-                Ex.Assign(v.x, exmin),
-                Ex.IfThen(Ex.GreaterThan(v.x, exmax), Ex.Assign(v.x, exmax))),
-            v
-        );
-    }
-
-    /// <summary>
-    /// Clamp the Y-component of a parametric equation.
-    /// </summary>
-    /// <param name="min">Minimum</param>
-    /// <param name="max">Maximum</param>
-    /// <param name="tp">Target parametric</param>
-    /// <returns></returns>
-    public static ExTP ClampY(float min, float max, ExTP tp) {
-        var v = TExV2.Variable();
-        var exmin = ExC(min);
-        var exmax = ExC(max);
-        return bpi => Ex.Block(new ParameterExpression[] {v},
-            Ex.Assign(v, tp(bpi)),
-            Ex.IfThenElse(Ex.LessThan(v.y, exmin), 
-                Ex.Assign(v.y, exmin),
-                Ex.IfThen(Ex.GreaterThan(v.y, exmax), Ex.Assign(v.y, exmax))),
-            v
-        );
-    }
 
     #region TimeLerp
 
@@ -502,128 +423,7 @@ public static partial class Parametrics {
     }
 
     #endregion
-
-    /// <summary>
-    /// Select the parametric equation with the smaller magnitude.
-    /// </summary>
-    /// <param name="p1">One parametric equation</param>
-    /// <param name="p2">Other parametric eqution</param>
-    /// <returns></returns>
-    public static ExTP Min(ExTP p1, ExTP p2) {
-        var v1 = TExV2.Variable();
-        var v2 = TExV2.Variable();
-        return bpi => Ex.Block(new ParameterExpression[] {v1, v2},
-            Ex.Assign(v1, p1(bpi)),
-            Ex.Assign(v2, p2(bpi)),
-            Ex.Condition(Ex.LessThan(SqrMag(v1), SqrMag(v2)), v1, v2)
-        );
-    }
-
-    /// <summary>
-    /// Select the parametric equation with the larger magnitude.
-    /// </summary>
-    /// <param name="p1">One parametric equation</param>
-    /// <param name="p2">Other parametric eqution</param>
-    /// <returns></returns>
-    public static ExTP Max(ExTP p1, ExTP p2) {
-        var v1 = TExV2.Variable();
-        var v2 = TExV2.Variable();
-        return bpi => Ex.Block(new ParameterExpression[] {v1, v2},
-            Ex.Assign(v1, p1(bpi)),
-            Ex.Assign(v2, p2(bpi)),
-            Ex.Condition(Ex.LessThan(SqrMag(v1), SqrMag(v2)), v2, v1)
-        );
-    }
-
-    #region Mathy
-
-    private static readonly ExFunction qRotate = ExUtils.Wrap<Quaternion>("op_Multiply", 
-        new[] { typeof(Quaternion), typeof(Vector3)});
-    /// <summary>
-    /// Project a three-dimensional function onto the screen. The z-axis is mapped to IN.
-    /// The rotations (degrees) are applied as a quaternion. In Unity the rotation order is ZXY.
-    /// </summary>
-    /// <param name="xr">Rotation of view around X-axis</param>
-    /// <param name="yr">Rotation of view around Y-axis</param>
-    /// <param name="zr">Rotation of view around Z-axis</param>
-    /// <param name="bpx">X-component</param>
-    /// <param name="bpy">Y-component</param>
-    /// <param name="bpz">Z-component</param>
-    /// <returns></returns>
-    public static ExTP ProjectView(ExBPY xr, ExBPY yr, ExBPY zr, ExBPY bpx, ExBPY bpy, ExBPY bpz) {
-        var by = TExV3.Variable();
-        return bpi => Ex.Block(new ParameterExpression[] {by},
-            Ex.Assign(by.x, bpx(bpi)),
-            Ex.Assign(by.y, bpy(bpi)),
-            Ex.Assign(by.z, bpz(bpi)),
-            Ex.Assign(by, qRotate.Of(ExUtils.QuaternionEuler(xr(bpi), yr(bpi), zr(bpi)), by)),
-            ExUtils.V2(by.x, by.y)
-        );
-    }
     
-    
-    /// <summary>
-    /// Draw a tree-based fire. Binds the following aliases:
-    /// <br/>lr: 0 if drawing on right, 1 if drawing on left
-    /// <br/>tk: Time within the kazari function, in the range 0-1
-    /// <br/>J: iteration number
-    /// </summary>
-    /// <param name="Ts">Time for straight section</param>
-    /// <param name="Tl">Time for kazari section</param>
-    /// <param name="Rx">Radius of x-component of straight section</param>
-    /// <param name="Ry">Radius of y-component of straight section</param>
-    /// <param name="kazari">The function to draw the decoration. Must have p(tk=0)={0,0}</param>
-    /// <param name="time"></param>
-    /// <returns></returns>
-    public static ExTP TreeFire(float Ts, float Tl, float Rx, float Ry, ExTP kazari, ExBPY time) => bpi => EEx.Resolve<float>(time(bpi),
-        t => {
-            var eTs = ExC(Ts);
-            var eTp = ExC(Ts + Tl);
-            var J = ExUtils.VFloat(); //period number
-            var j = ExUtils.VFloat(); //time in period
-            var ts = ExUtils.VFloat(); //simulated time for straight line
-            var tp = ExUtils.VFloat(); //simulated time for kazari
-            var tk = ExUtils.VFloat(); //normalized simulated time for kazari
-            var xs = ExUtils.VFloat();
-            var ys = ExUtils.VFloat();
-            var bp = ExUtils.VFloat(); // 0 if draw kazari on right, 1 if on left
-            var b = ExUtils.VFloat(); // 0 if in straight phase, 1 if in kazari
-            var v2 = TExV2.Variable();
-            return Ex.Block(new[] {J, j, ts, tk, xs, ys, bp, b, tp, v2},
-                Ex.Assign(j, Mod(eTp, t)),
-                Ex.Assign(J, Floor(Ex.Divide(t, eTp))),
-                Ex.Assign(ts, eTs.Mul(J).Add(ExM.Min(eTs, j))),
-                Ex.Assign(xs, ExC(Rx).Div(eTs).Mul(
-                    //2 | ts - (t+ts % 2ts) | - ts
-                    E2.Mul(Abs(eTs.Sub(
-                        Mod(E2.Mul(eTs), ts.Add(eTs)
-                        )))).Sub(eTs)
-                )),
-                Ex.Assign(ys, ExC(Ry).Div(eTs).Mul(E2).Mul(ts)),
-                Ex.Assign(bp, Mod(E2, J)),
-                Ex.Assign(tp, Ex.Condition(Ex.GreaterThan(j, eTs),
-                    Ex.Condition(Ex.Equal(bp, E1),
-                        j.Sub(eTs),
-                        eTp.Sub(j)),
-                    E0)),
-                tk.Is(tp.Div(Tl)),
-                Ex.Assign(v2, ReflectEx.Let(new (string, Func<TExPI, TEx<float>>)[] {("tk", _ => tk), ("lr", _ => bp), 
-                    ("J", _ => J)}, () => kazari(bpi), bpi)),
-                ExUtils.AddAssign(v2.x, xs),
-                ExUtils.AddAssign(v2.y, ys),
-                v2
-            );
-            
-            
-        });
-
-    #endregion
-    
-    
-    public static ExTP OptionLocation() => b => FireOption.optionLocation.Of(b.index);
-
-    public static ExTP IfPowerGTP(ExTP inner) =>
-        b => Ex.Condition(BPYRepo.PowerF()(b).GT(b.findex), inner(b), Zero()(b));
 }
 
 

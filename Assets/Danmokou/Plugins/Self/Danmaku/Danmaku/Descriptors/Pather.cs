@@ -10,8 +10,8 @@ using UnityEngine.Profiling;
 
 namespace DMK.Danmaku.Descriptors {
 public class Pather : FrameAnimBullet {
-    public PatherRenderCfg config;
-    private CurvedTileRenderPather ctr;
+    public PatherRenderCfg config = null!;
+    private CurvedTileRenderPather ctr = null!;
 
     protected override void Awake() {
         ctr = new CurvedTileRenderPather(config, gameObject);
@@ -19,13 +19,12 @@ public class Pather : FrameAnimBullet {
         base.Awake();
     }
 
-    private void Initialize(bool isNew, Movement movement, SOPlayerHitbox _target, int firingIndex, uint bpiid, float maxRemember,
+    private void Initialize(bool isNew, Movement movement, ParametricInfo pi, SOPlayerHitbox _target, float maxRemember,
         BPY remember, BEHStyleMetadata style, ref RealizedBehOptions options) {
         ctr.SetYScale(options.scale); //Needs to be done before Colorize sets first frame
         //Order is critical so rBPI override points to initialized data on SM start
-        ctr.Initialize(this, config, style.recolor.GetOrLoadRecolor().material, isNew, movement, bpiid, 
-            firingIndex, remember, maxRemember, _target, ref options);
-        base.Initialize(style, options, null, movement.WithNoMovement(), firingIndex, bpiid, _target, out int layer); // Call after Awake/Reset
+        ctr.Initialize(this, config, style.RecolorOrThrow.material, isNew, movement, pi, remember, maxRemember, _target, ref options);
+        base.Initialize(style, options, null, movement.WithNoMovement(), pi, _target, out int layer); // Call after Awake/Reset
         ctr.Activate(); //This invokes UpdateMesh
     }
 
@@ -54,9 +53,9 @@ public class Pather : FrameAnimBullet {
         base.InvokeCull();
     }
 
-    public static void Request(BEHStyleMetadata style, Movement movement, int firingIndex, uint bpiid, float maxRemember, BPY remember, SOPlayerHitbox collisionTarget, ref RealizedBehOptions opts) {
-        Pather created = (Pather) BEHPooler.RequestUninitialized(style.recolor.GetOrLoadRecolor().prefab, out bool isNew);
-        created.Initialize(isNew, movement, collisionTarget, firingIndex, bpiid, maxRemember, remember, style, ref opts);
+    public static void Request(BEHStyleMetadata style, Movement movement, ParametricInfo pi, float maxRemember, BPY remember, SOPlayerHitbox collisionTarget, ref RealizedBehOptions opts) {
+        Pather created = (Pather) BEHPooler.RequestUninitialized(style.RecolorOrThrow.prefab, out bool isNew);
+        created.Initialize(isNew, movement, pi, collisionTarget, maxRemember, remember, style, ref opts);
     }
 
     public override ref ParametricInfo rBPI => ref ctr.BPI;
@@ -74,7 +73,7 @@ public class Pather : FrameAnimBullet {
 
 #if UNITY_EDITOR
     private void OnDrawGizmosSelected() {
-        ctr?.Draw();
+        ctr.Draw();
     }
 
     [ContextMenu("Debug mesh bounds")]

@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace DMK.Scriptables {
 [CreateAssetMenu(menuName = "Colors/Palette")]
-public class Palette : ScriptableObject, INamedGradient, ISerializationCallbackReceiver {
+public class Palette : ScriptableObject, INamedGradient {
     public enum Shade {
         WHITE,
         HIGHLIGHT,
@@ -17,7 +17,7 @@ public class Palette : ScriptableObject, INamedGradient, ISerializationCallbackR
         BLACK
     }
 
-    public string colorName;
+    public string colorName = null!;
     public string Name => colorName;
     public Color highlight;
     public Color light;
@@ -31,13 +31,9 @@ public class Palette : ScriptableObject, INamedGradient, ISerializationCallbackR
     private static readonly Color BLACK = Color.black;
     private static readonly Color WHITE = Color.white;
 
-    [NonSerialized] [CanBeNull] private DGradient cachedGrad;
+    [NonSerialized] private IGradient? cachedGrad;
 
-    public void OnAfterDeserialize() {
-        cachedGrad = CalculateGradient();
-    }
-
-    private DGradient CalculateGradient() =>
+    private IGradient CalculateGradient() =>
         ColorHelpers.FromKeys(new[] {
             new GradientColorKey(Color.black, 0f),
             new GradientColorKey(outline, 0.1f),
@@ -46,9 +42,9 @@ public class Palette : ScriptableObject, INamedGradient, ISerializationCallbackR
             new GradientColorKey(light, 0.7f),
             new GradientColorKey(highlight, 0.9f),
             new GradientColorKey(Color.white, 1f),
-        }, ColorHelpers.fullAlphaKeys);
+        });
 
-    public DGradient Mix(Palette target) =>
+    public IGradient Mix(Palette target) =>
         ColorHelpers.FromKeys(new[] {
             new GradientColorKey(Color.black, 0f),
             new GradientColorKey(outline, 0.1f),
@@ -57,11 +53,9 @@ public class Palette : ScriptableObject, INamedGradient, ISerializationCallbackR
             new GradientColorKey(Color.Lerp(pure, target.pure, 0.6f), .65f),
             new GradientColorKey(target.light, 0.8f),
             new GradientColorKey(target.highlight, 1f),
-        }, ColorHelpers.fullAlphaKeys);
+        });
 
-    public void OnBeforeSerialize() { }
-
-    public IGradient Gradient => cachedGrad ?? (cachedGrad = CalculateGradient());
+    public IGradient Gradient => cachedGrad ??= CalculateGradient();
 
     public Color GetColor(Shade shade) {
         if (shade == Shade.WHITE) {

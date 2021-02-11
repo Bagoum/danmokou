@@ -1,22 +1,19 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System;
-using System.Diagnostics.CodeAnalysis;
-using System.IO;
 using System.Threading.Tasks;
-using System.Threading;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 using DMK.Behavior;
 using DMK.Core;
 using DMK.Danmaku;
 using DMK.Danmaku.Patterns;
 using DMK.DMath;
+using DMK.Expressions;
 using DMK.Reflection;
 using DMK.SM.Parsing;
-using FParser;
 using JetBrains.Annotations;
+using ParserCS;
 using UnityEngine;
 
 namespace DMK.SM {
@@ -37,14 +34,14 @@ public struct SMHandoff : IDisposable {
 
     public void ThrowIfCancelled() => ch.cT.ThrowIfCancelled();
 
-    public SMHandoff(BehaviorEntity exec, [CanBeNull] ICancellee cT = null, int? index = null) {
+    public SMHandoff(BehaviorEntity exec, ICancellee? cT = null, int? index = null) {
         this.ch = new CommonHandoff(cT ?? Cancellable.Null, GenCtx.New(exec, V2RV2.Zero));
         ch.gcx.index = index.GetValueOrDefault(exec.rBPI.index);
         parentCT = Cancellable.Null;
         CanPrepend = false;
     }
 
-    public SMHandoff(BehaviorEntity exec, SMRunner smr, [CanBeNull] ICancellee cT = null) {
+    public SMHandoff(BehaviorEntity exec, SMRunner smr, ICancellee? cT = null) {
         var gcx = smr.NewGCX ?? GenCtx.New(exec, V2RV2.Zero);
         gcx.OverrideScope(exec, V2RV2.Zero, exec.rBPI.index);
         this.ch = new CommonHandoff(cT ?? smr.cT, gcx);
@@ -60,11 +57,16 @@ public struct SMHandoff : IDisposable {
         else RunRIEnumerator(cor);
     }
 
-    public SMHandoff CreateJointCancellee(ICancellee other, out ICancellee joint) {
-        joint = new JointCancellee(cT, other);
+    public SMHandoff CreateJointCancellee(ICancellee other, out ICancellee ct) {
+        ct = new JointCancellee(cT, other);
         var nsmh = this;
-        nsmh.ch.cT = joint;
+        nsmh.ch.cT = ct;
         return nsmh;
+    }
+    
+    public SMHandoff CreateJointCancellee(out Cancellable cts) {
+        cts = new Cancellable();
+        return CreateJointCancellee(cts, out _);
     }
 }
 // WARNING: StateMachines must NOT store any state. As in, you must be able to call the same SM twice concurrently,
@@ -97,7 +99,7 @@ public abstract class StateMachine {
         {"debugf", typeof(DebugFloat)}
     };
     private static readonly Dictionary<Type, Type[]> smChildMap = new Dictionary<Type, Type[]>() {
-        {typeof(PatternSM), new[] { typeof(PhaseSM), typeof(UniversalSM)}}, {
+        {typeof(PatternSM), new[] { typeof(PhaseSM)}}, {
             typeof(PhaseSM), new[] {
                 typeof(PhaseParallelActionSM), typeof(PhaseSequentialActionSM), typeof(EndPSM), typeof(FinishPSM),
                 typeof(UniversalSM)
@@ -110,11 +112,12 @@ public abstract class StateMachine {
     };
 
     #endregion
-    private static bool CheckCreatableChild(Type myType, Type childType) {
-        while (!smChildMap.ContainsKey(myType)) {
+    private static bool CheckCreatableChild(Type? myType, Type childType) {
+        while (myType != null && !smChildMap.ContainsKey(myType)) {
             myType = myType.BaseType;
-            if (myType == null) throw new Exception($"Could not verify SM type for {childType.RName()}");
         }
+        if (myType == null) 
+            throw new Exception($"Could not verify SM type for {childType.RName()}");
         Type[] allowedTypes = smChildMap[myType];
         for (int ii = 0; ii < allowedTypes.Length; ++ii) {
             if (childType == allowedTypes[ii] || childType.IsSubclassOf(allowedTypes[ii])) return true;
@@ -129,20 +132,21 @@ public abstract class StateMachine {
         AS_REFLECTABLE,
         AS_TREFLECTABLE
     }
-    private static SMConstruction CheckCreatableChild(Type myType, string cname) {
+    private static SMConstruction CheckCreatableChild(Type? myType, string cname) {
         if (!smInitMap.TryGetValue(cname, out var childType)) {
             if (CheckCreatableChild(myType, typeof(ReflectableSLSM)) &&
-                Reflector.LazyLoadAndCheckIfCanReflectExternalSourceType<TaskPattern>(typeof(TSMReflection), cname))
+                Reflector.TryGetSignature<TTaskPattern>(ref cname) != null)
                 return SMConstruction.AS_TREFLECTABLE;
             if (CheckCreatableChild(myType, typeof(ReflectableLASM)) &&
-                Reflector.LazyLoadAndCheckIfCanReflectExternalSourceType<TaskPattern>(typeof(SMReflection), cname))
+                Reflector.TryGetSignature<TaskPattern>(ref cname) != null)
                 return SMConstruction.AS_REFLECTABLE;
             return SMConstruction.ILLEGAL;
         } else {
-            while (!smChildMap.ContainsKey(myType)) {
+            while (myType != null && !smChildMap.ContainsKey(myType)) {
                 myType = myType.BaseType;
-                if (myType == null) throw new Exception($"Could not verify SM type for {cname}");
             }
+            if (myType == null)
+                throw new Exception($"Could not verify SM type for {cname}");
             Type[] allowedTypes = smChildMap[myType];
             for (int ii = 0; ii < allowedTypes.Length; ++ii) {
                 if (childType == allowedTypes[ii] || childType.IsSubclassOf(allowedTypes[ii])) return SMConstruction.CONSTRUCTOR;
@@ -150,9 +154,9 @@ public abstract class StateMachine {
             return SMConstruction.ILLEGAL;
         }
     }
-    private static List<StateMachine> CreateChildren(Type myType, IParseQueue q, int childCt = -1) {
+    private static List<StateMachine> CreateChildren(Type? myType, IParseQueue q, int childCt = -1) {
         var children = new List<StateMachine>();
-        SMConstruction childType = SMConstruction.ILLEGAL;
+        SMConstruction childType;
         while (childCt-- != 0 && !q.Empty && 
                (childType = CheckCreatableChild(myType, q.ScanNonProperty())) != SMConstruction.ILLEGAL) {
             StateMachine newsm = Create(q.NextChild(), childType);
@@ -168,71 +172,60 @@ public abstract class StateMachine {
 
     private static readonly Type statesTyp = typeof(List<StateMachine>);
     private static readonly Type stateTyp = typeof(StateMachine);
-    private static readonly Type reflectStartTyp = typeof(TaskPattern);
-    private static readonly Type phasePropsTyp = typeof(PhaseProperties);
-    private static readonly ISet<Type> specialTypes = new HashSet<Type>() { reflectStartTyp, phasePropsTyp };
     private static readonly Dictionary<Type, Type[]> constructorSigs = new Dictionary<Type, Type[]>();
 
     public static StateMachine Create(IParseQueue p) => Create(p, SMConstruction.ANY);
 
-    public static StateMachine Create(string type, object[] args) {
+    public static StateMachine Create(string name, object[] args) {
         var method = SMConstruction.ANY;
-        GetParams(type, ref method, out var autoReflectMI, out Type myType);
-        return Create(autoReflectMI, method, myType, args);
+        GetParams(ref name, ref method, out Type? myType);
+        return Create(name, method, myType, args);
     }
 
-    private static Reflector.NamedParam[] GetParams(string type, ref SMConstruction method, 
-                [CanBeNull] out MethodInfo autoReflectMI, out Type myType) {
-        Reflector.NamedParam[] prms = null;
-        autoReflectMI = null;
-        if (!smInitMap.TryGetValue(type, out myType)) {
-            if (method == SMConstruction.AS_TREFLECTABLE || method == SMConstruction.ANY)
-                prms = Reflector.LazyLoadAndGetSignature<TaskPattern>(typeof(TSMReflection), type, out autoReflectMI);
-            if (prms != null) 
-                method = SMConstruction.AS_TREFLECTABLE;
-            else if (method == SMConstruction.AS_REFLECTABLE || method == SMConstruction.ANY)
-                prms = Reflector.LazyLoadAndGetSignature<TaskPattern>(typeof(SMReflection), type, out autoReflectMI);
-            if (prms != null) 
-                method = SMConstruction.AS_REFLECTABLE;
+    private static Reflector.NamedParam[] GetParams(ref string name, ref SMConstruction method, out Type? myType) {
+        if (!smInitMap.TryGetValue(name, out myType)) {
+            Reflector.NamedParam[]? prms;
+            if (method == SMConstruction.AS_TREFLECTABLE || method == SMConstruction.ANY) {
+                if ((prms = Reflector.TryGetSignature<TTaskPattern>(ref name)) != null) {
+                    method = SMConstruction.AS_TREFLECTABLE;
+                    return prms;
+                }
+            }
+            if (method == SMConstruction.AS_REFLECTABLE || method == SMConstruction.ANY) {
+                if ((prms = Reflector.TryGetSignature<TaskPattern>(ref name)) != null) {
+                    method = SMConstruction.AS_REFLECTABLE;
+                    return prms;
+                }
+            }
         } else 
-            prms = Reflector.GetConstructorSignature(myType);
-        return prms;
+             return Reflector.GetConstructorSignature(myType);
+        throw new Exception($"{name} is not a StateMachine or applicable auto-reflectable.");
     }
 
-    private static StateMachine Create([CanBeNull] MethodInfo autoReflectMI, SMConstruction method, Type myType, object[] args) {
-        if (autoReflectMI != null) {
-            var rs = (TaskPattern)autoReflectMI.Invoke(null, args);
-            if (method == SMConstruction.AS_REFLECTABLE) return new ReflectableLASM(rs);
-            return new ReflectableSLSM(rs);
-        }
-        return (StateMachine) Activator.CreateInstance(myType, args);
-    }
+    private static StateMachine Create(string name, SMConstruction method, Type? myType, object[] args) =>
+        method switch {
+            SMConstruction.AS_REFLECTABLE => 
+                new ReflectableLASM(Reflector.InvokeMethod<TaskPattern>(null, name, args)),
+            SMConstruction.AS_TREFLECTABLE => 
+            new ReflectableSLSM(Reflector.InvokeMethod<TTaskPattern>(null, name, args)),
+            _ => 
+                (StateMachine) Activator.CreateInstance(myType!, args)
+        };
     
     private static StateMachine Create(IParseQueue p, SMConstruction method) {
         if (method == SMConstruction.ILLEGAL)
             throw new Exception("Somehow received a Create(ILLEGAL) call in SM. This should not occur.");
         MaybeQueueProperties(p);
-        string first = p.Next();
-        var prms = GetParams(first, ref method, out var autoReflectMI, out var myType) ?? 
-                   throw new Exception($"Line {p.GetLastLine()}: {first} is not a " +
-                                       $"StateMachine or applicable auto-reflectable.");
+        string name = p.Next();
+        var prms = GetParams(ref name, ref method, out var myType);
+                   
         object[] reflect_args = new object[prms.Length];
         if (prms.Length > 0) {
             bool requires_children = prms[0].type == statesTyp && !p.Ctx.props.trueArgumentOrder;
             int special_args_i = (requires_children) ? 1 : 0;
-            for (; special_args_i < prms.Length && specialTypes.Contains(prms[special_args_i].type); ++special_args_i) {
-                if (prms[special_args_i].type == reflectStartTyp) {
-                    reflect_args[special_args_i] = Reflector.LazyLoadAndReflectExternalSourceType<TaskPattern>(myType, p);
-                } else if (prms[special_args_i].type == phasePropsTyp) {
-                    reflect_args[special_args_i] = new PhaseProperties(p.Ctx.QueuedProps);
-                    p.Ctx.QueuedProps.Clear();
-                } else {
-                    throw new Exception($"Line {p.GetLastLine()}: cannot resolve constructor type {prms[special_args_i].name}");
-                }
-            }
-            Reflector.FillInvokeArray(reflect_args, special_args_i, prms, p, myType ?? typeof(ReflectableLASM), first);
+            Reflector.FillInvokeArray(reflect_args, special_args_i, prms, p, myType ?? typeof(ReflectableLASM), name);
             if (p.Ctx.QueuedProps.Count > 0)
-                throw new Exception($"Line {p.GetLastLine()}: StateMachine {first} is not allowed to have properties.");
+                throw new Exception($"Line {p.GetLastLine()}: StateMachine {name} is not allowed to have phase properties.");
             int childCt = -1;
             if (!p.IsNewlineOrEmpty) {
                 if (IsChildCountMarker(p.MaybeScan(), out int ct)) {
@@ -241,16 +234,12 @@ public abstract class StateMachine {
                 } 
             }
             if (requires_children) reflect_args[0] = CreateChildren(myType, p, childCt);
-            /*for (int ii = extra_child_i; ii < final_child_i; ++ii) {
-                reflect_args[ii] = Create(p);
-                if (!p.IsNewlineOrEmpty) throw new Exception($"Line {p.GetLastLine()} is missing a newline at the end of the StateMachine.");
-            }*/
         }
-        return Create(autoReflectMI, method, myType, reflect_args);
+        return Create(name, method, myType, reflect_args);
     }
 
 
-    private static bool IsChildCountMarker([CanBeNull] string s, out int ct) {
+    private static bool IsChildCountMarker(string? s, out int ct) {
         if (s != null && s[0] == ':') {
             if (Parser.TryFloat(s, 1, s.Length, out float f)) {
                 if (Math.Abs(f - Mathf.Floor(f)) < float.Epsilon) {
@@ -272,9 +261,11 @@ public abstract class StateMachine {
     }
 
     public static StateMachine CreateFromDump(string dump) {
+        var bakeCtx = BakeCodeGenerator.OpenContext(BakeCodeGenerator.CookingContext.KeyType.SM, dump);
         var p = IParseQueue.Lex(dump);
         var result = Create(p);
         p.ThrowOnLeftovers(() => "Behavior script has extra text. Check the highlighted text for an illegal command.");
+        bakeCtx?.Dispose();
         return result;
     }
 
@@ -334,11 +325,11 @@ public static class WaitingUtils {
     /// Outer waiter-- Will not cb if cancelled
     /// </summary>
     public static void WaitThenCB(CoroutineRegularUpdater Exec, ICancellee cT, float time, bool zeroToInfinity,
-        Action cb) {
+        Action? cb) {
         cT.ThrowIfCancelled();
         if (zeroToInfinity && time < float.Epsilon) time = float.MaxValue;
         Exec.RunRIEnumerator(WaitFor(time, cT, () => {
-            if (!cT.Cancelled) cb();
+            if (!cT.Cancelled) cb?.Invoke();
         }));
     }
     /// <summary>

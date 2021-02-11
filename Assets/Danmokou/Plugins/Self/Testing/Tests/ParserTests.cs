@@ -1,10 +1,11 @@
-﻿using DMK.DMath;
+﻿using System;
+using DMK.DMath;
+using DMK.Expressions;
 using DMK.Reflection;
 using NUnit.Framework;
 using UnityEngine;
 using static NUnit.Framework.Assert;
 using static DMK.Testing.TAssert;
-using ExFXY = System.Func<DMK.Expressions.TEx<float>, DMK.Expressions.TEx<float>>;
 
 namespace DMK.Testing {
 
@@ -21,9 +22,11 @@ public static class ParserTests {
         AreEqual("+ (x) 3".Into<FXY>()(2), 5);
         AreEqual("+ x (3)".Into<FXY>()(2), 5);
         AreEqual("(+ 8 *(5, x))".Into<FXY>()(2), 18);
+        AreEqual("(+ 8 *(5, x))".Into<FXY>()(2), 18);
         AreEqual("+ x() 3".Into<FXY>()(2), 5);
         AreEqual("+ 8 (if = p 0 0 6)".Into<BPY>()(new ParametricInfo(Vector2.down, 5, 0)), 14);
         AreEqual("+(x, 2)".Into<FXY>()(2), 4);
+        AreEqual("+((c x), 2)".Into<FXY>()(2), 1);
         AreEqual("(((((+(x, 2))))))".Into<FXY>()(2), 4);
         AreEqual("+(x, (2))".Into<FXY>()(2), 4);
         AreEqual("+(x, * x 2)".Into<FXY>()(2), 6);
@@ -37,17 +40,17 @@ public static class ParserTests {
     public static void Errors() {
         ThrowsMessage("do not enclose the entire function", () => "+ 8 (if = p 0) 0 6".Into<BPY>());
         ThrowsMessage("must have exactly one argument", () => "(+ 8 * 5, x)".Into<FXY>());
-        ThrowsMessage("trying to create an object of type FXY", () => "+(x, *(x 2))".Into<FXY>());
+        ThrowsMessage("trying to create an object of type BPY", () => "+(x, *(x 2))".Into<FXY>());
         
     }
 
     [Test]
     public static void GroupingErrors() {
-        ThrowsMessage("trying to create an object of type FXY", () => "+(x, (2)())".Into<FXY>());
+        ThrowsMessage("trying to create an object of type BPY", () => "+(x, (2)())".Into<FXY>());
         ThrowsMessage("trying to create an object of type BPY", () => "modwithpause 5 (6 7) 8".Into<BPY>());
-        ThrowsMessage("Expected 4 arguments.*contains 3", () => "modwithpause(5, (6 7), 8)".Into<BPY>());
+        ThrowsMessage("Expected 4 explicit arguments.*contains 3", () => "modwithpause(5, (6 7), 8)".Into<BPY>());
         ThrowsMessage("could not parse the second", () => "mod(3 *, 5)".Into<FXY>());
-        ThrowsMessage("trying to create an object of type FXY", () => "+(2 * 5 x)".Into<FXY>());
+        ThrowsMessage("trying to create an object of type BPY", () => "+(2 * 5 x)".Into<FXY>());
     }
     
     private static Vector2 V2(float x, float y) => new Vector2(x, y);
@@ -76,9 +79,9 @@ public static class ParserTests {
 
     [Test]
     public static void tmp() {
-        "(/ 5 * ^ dl 0.8 24)".Into<BPY>();
         
         AreEqual("(-1 + x + 2 * y + 3)".Into<BPY>()(new ParametricInfo() { loc = new Vector2(5, 10)}), 27);
+        "(/ 5 * ^ dl 0.8 24)".Into<BPY>();
         AreEqual(@"
 !!{ jt 2
 !!{ movet 1.5
@@ -86,18 +89,18 @@ public static class ParserTests {
     }
     [Test]
     public static void PostAggregation() {
+        AreEqual("((2) + 3)".Into<FXY>()(0), 5);
+        AreEqual("(((2) + 3) * 2)".Into<FXY>()(0), 10);
+        AreEqual("+(2 * 5, x)".Into<FXY>()(4), 14);
         AreEqual("(3 * 2 + 2)".Into<FXY>()(0), 8);
         AreEqual("(3 + x)".Into<FXY>()(7), 10);
         AreEqual("(+ 2 * 5 x)".Into<FXY>()(4), 22);
-        AreEqual("+(2 * 5, x)".Into<FXY>()(4), 14);
         //Works at top level!
         AreEqual("3 + x".Into<FXY>()(7), 10);
         AreEqual("(5 * 3 / 2)".Into<FXY>()(0), 7.5f);
         AreEqual("(5 * 3 // 6)".Into<FXY>()(0), 2f);
-        "(3 * 2 + 2)".Into<ExFXY>();
+        "(3 * 2 + 2)".Into<Func<TExArgCtx, TEx<float>>>();
         AreEqual("((3 * 2 + 2))".Into<FXY>()(0), 8);
-        AreEqual("((2) + 3)".Into<FXY>()(0), 5);
-        AreEqual("(((2) + 3) * 2)".Into<FXY>()(0), 10);
         AreEqual("((2 + 3) * 4)".Into<FXY>()(0), 20);
         AreEqual("(3 * (2 + 2))".Into<FXY>()(0), 12);
         AreEqual("(3 * 2 + 2)".Into<FXY>()(0), 8);

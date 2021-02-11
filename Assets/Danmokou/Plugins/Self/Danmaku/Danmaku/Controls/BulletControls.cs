@@ -2,6 +2,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using DMK.Behavior;
 using DMK.Core;
 using DMK.DataHoist;
 using DMK.DMath;
@@ -13,11 +14,10 @@ using JetBrains.Annotations;
 using DMK.SM;
 using UnityEngine;
 using Ex = System.Linq.Expressions.Expression;
-using ExBPY = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<float>>;
-using ExPred = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<bool>>;
-using ExSBF = System.Func<DMK.Expressions.RTExSB, DMK.Expressions.TEx<float>>;
-using ExSBV2 = System.Func<DMK.Expressions.RTExSB, DMK.Expressions.TEx<UnityEngine.Vector2>>;
 using static DMK.Expressions.ExUtils;
+using ExBPY = System.Func<DMK.Expressions.TExArgCtx, DMK.Expressions.TEx<float>>;
+using ExPred = System.Func<DMK.Expressions.TExArgCtx, DMK.Expressions.TEx<bool>>;
+using ExTP = System.Func<DMK.Expressions.TExArgCtx, DMK.Expressions.TEx<UnityEngine.Vector2>>;
 
 namespace DMK.Danmaku {
 
@@ -35,7 +35,7 @@ public partial class BulletManager {
         public readonly int priority;
         public readonly ICancellee cT;
 
-        public BulletControl(SBCFc act, Pred persistent, [CanBeNull] ICancellee cT) {
+        public BulletControl(SBCFc act, Pred persistent, ICancellee? cT) {
             action = act.Func(this.cT = cT ?? Cancellable.Null);
             persist = persistent;
             this.priority = act.priority;
@@ -76,13 +76,13 @@ public partial class BulletManager {
         private const char wildcard = '*';
         private readonly List<string[]> selections;
         private readonly List<string> enumerated;
-        [CanBeNull] private string[] simple;
-        [CanBeNull] private string[] complex;
-        [CanBeNull] private string[] all;
-        public string[] Simple => simple = simple ?? Styles(simpleBulletPools.Keys, "simple bullet").ToArray();
-        public string[] Complex => complex = complex ?? Styles(behPools.Keys, "complex bullet").ToArray();
+        private string[]? simple;
+        private string[]? complex;
+        private string[]? all;
+        public string[] Simple => simple ??= Styles(simpleBulletPools.Keys, "simple bullet").ToArray();
+        public string[] Complex => complex ??= Styles(behPools.Keys, "complex bullet").ToArray();
         public string[] All =>
-            all = all ?? Styles(simpleBulletPools.Keys, "", false)
+            all ??= Styles(simpleBulletPools.Keys, "", false)
                 .Concat(Styles(behPools.Keys, "", false)).ToArray();
 
         public StyleSelector(string[][] selections) {
@@ -203,16 +203,13 @@ public partial class BulletManager {
         }
     }
 
-    /// <summary>
-    /// DEPRECATED
-    /// </summary>
+    [Obsolete("Use the normal bullet control function with the SM command.")]
     public static void ControlPoolSM(Pred persist, StyleSelector styles, StateMachine sm, ICancellee cT, Pred condFunc) {
         BulletControl pc = new BulletControl((sbc, ii, bpi) => {
             if (condFunc(bpi)) {
-                var inode = sbc.GetINodeAt(ii, "pool-triggered", null, out uint sbid);
-                using (var gcx = PrivateDataHoisting.GetGCX(sbid)) {
-                    _ = inode.RunExternalSM(SMRunner.Cull(sm, cT, gcx));
-                }
+                var inode = sbc.GetINodeAt(ii, "pool-triggered");
+                using var gcx = bpi.ctx.RevertToGCX(inode);
+                _ = inode.RunExternalSM(SMRunner.Cull(sm, cT, gcx));
             }
         }, persist, BulletControl.P_RUN, cT);
         for (int ii = 0; ii < styles.Simple.Length; ++ii) {
@@ -228,77 +225,78 @@ public partial class BulletManager {
     /// Returns true iff the style is gradient-styled; ie. has a '-' in it.
     /// </summary>
     /// <param name="fromStyle">Full name of a style, eg. circle-red/w</param>
-    /// <param name="toStyleBase">Base name of target style, eg. cwheel</param>
-    /// <param name="defaulter">Default color target if match is not found, eg. red/</param>
+    /// <param name="props">Container with information about color porting</param>
     /// <param name="target">New target style</param>
     /// <returns></returns>
-    public static bool PortColorFormat(string fromStyle, string toStyleBase, string defaulter, out string target) {
+    public static bool PortColorFormat(string fromStyle, in SoftcullProperties props, out string target) {
         target = fromStyle;
         if (fromStyle.IndexOf('.') > -1) fromStyle = fromStyle.Substring(0, fromStyle.IndexOf('.'));
         for (int ii = fromStyle.Length - 1; ii >= 0; --ii) {
             if (fromStyle[ii] == '-') {
-                var x = $"{toStyleBase}{fromStyle.Substring(ii)}";
-                target = CheckOrCopyPool(x, out _) ? x : $"{toStyleBase}-{defaulter}";
+                var substrLen = props.sendToC ? (fromStyle.IndexOf('/') + 1 - ii) : (fromStyle.Length - ii);
+                var x = $"{props.autocullTarget}{fromStyle.Substring(ii, substrLen)}";
+                target = CheckOrCopyPool(x, out _) ? x : props.DefaultPool;
                 return true;
             }
         }
         return false;
     }
-    public static string PortColorFormat(string fromStyle, string toStyleBase, string defaulter) => 
-        PortColorFormat(fromStyle, toStyleBase, defaulter, out var target) ? target : $"{toStyleBase}-{defaulter}";
+    public static string PortColorFormat(string fromStyle, in SoftcullProperties props) => 
+        PortColorFormat(fromStyle, in props, out var target) ? target : props.DefaultPool;
 
     /// <summary>
     /// Bullet controls for use with the `bullet-control` SM command. These deal with simple bullets.
     /// <br/>All controls have a `cond` argument, which is a filtering condition. The control only affects bullets for which the condition is satisfied.
     /// </summary>
+    [Reflect]
     public static class SimpleBulletControls {
+        private const string sbName = "sbc_ele";
         /// <summary>
         /// Set the x-position of bullets.
         /// </summary>
         /// <param name="x">C value</param>
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
-        public static SBCFp X(ExSBF x, ExPred cond) => new SBCFp((sbc, ii, bpi) => 
-            bpi.When(cond, sbc[ii].bpi.locx.Is(x(sbc[ii]))), BulletControl.P_MOVE_1);
+        public static SBCFp X(ExBPY x, ExPred cond) => new SBCFp((sbc, ii, bpi) => 
+            bpi.When(cond, sbc[ii].bpi.locx.Is(x(bpi.AppendSB(sbName, sbc[ii])))), BulletControl.P_MOVE_1);
         /// <summary>
         /// Set the y-position of bullets.
         /// </summary>
         /// <param name="y">Y value</param>
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
-        public static SBCFp Y(ExSBF y, ExPred cond) => new SBCFp((sbc, ii, bpi) => 
-            bpi.When(cond, sbc[ii].bpi.locy.Is(y(sbc[ii]))), BulletControl.P_MOVE_1);
+        public static SBCFp Y(ExBPY y, ExPred cond) => new SBCFp((sbc, ii, bpi) => 
+            bpi.When(cond, sbc[ii].bpi.locy.Is(y(bpi.AppendSB(sbName, sbc[ii])))), BulletControl.P_MOVE_1);
         /// <summary>
         /// Set the time of bullets.
         /// </summary>
         /// <param name="time">Time to set</param>
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
-        public static SBCFp Time(ExSBF time, ExPred cond) => new SBCFp((sbc, ii, bpi) => 
-            bpi.When(cond, sbc[ii].bpi.t.Is(time(sbc[ii]))), BulletControl.P_MOVE_1);
+        public static SBCFp Time(ExBPY time, ExPred cond) => new SBCFp((sbc, ii, bpi) => 
+            bpi.When(cond, sbc[ii].bpi.t.Is(time(bpi.AppendSB(sbName, sbc[ii])))), BulletControl.P_MOVE_1);
         
         /// <summary>
-        /// Change the style of bullets. Similar to copy, but the original is destroyed.
+        /// Change the style of bullets, ie. transfer the bullet to another pool.
         /// </summary>
         /// <param name="target">New style</param>
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
         public static SBCFp Restyle(string target, ExPred cond) {
-            return new SBCFp((sbc, ii, bpi) => bpi.When(cond, Ex.Block(
-                SimpleBulletCollection.addFrom.InstanceOf(getMaybeCopyPool.Of(Ex.Constant(target)), sbc, ii),
-                sbc.Delete(ii)
-            )), BulletControl.P_CULL);
+            return new SBCFp((sbc, ii, bpi) => bpi.When(cond, 
+                AbsSimpleBulletCollection.transferFrom.InstanceOf(getMaybeCopyPool.Of(Ex.Constant(target)), sbc, ii)
+            ), BulletControl.P_CULL);
         }
 
         /// <summary>
-        /// Copy a bullet into another pool.
+        /// Copy a bullet into another pool. A new ID will be given to the new bullet.
         /// </summary>
         /// <param name="style">Copied style</param>
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
         public static SBCFp Copy(string style, ExPred cond) {
             return new SBCFp((sbc, ii, bpi) => bpi.When(cond,
-                SimpleBulletCollection.copyFrom.InstanceOf(getMaybeCopyPool.Of(Ex.Constant(style)), sbc, ii)
+                AbsSimpleBulletCollection.copyFrom.InstanceOf(getMaybeCopyPool.Of(Ex.Constant(style)), sbc, ii)
             ), BulletControl.P_RUN);
         }
         /// <summary>
@@ -321,7 +319,7 @@ public partial class BulletManager {
         /// <returns></returns>
         public static SBCFp CopyNull(string style, ExPred cond) {
             return new SBCFp((sbc, ii, bpi) => bpi.When(cond, Ex.Block(
-                SimpleBulletCollection.copyNullFrom.InstanceOf(getMaybeCopyPool.Of(Ex.Constant(style)), sbc, ii)
+                AbsSimpleBulletCollection.copyNullFrom.InstanceOf(getMaybeCopyPool.Of(Ex.Constant(style)), sbc, ii)
             )), BulletControl.P_RUN);
         }
 
@@ -332,25 +330,32 @@ public partial class BulletManager {
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
         public static SBCFp Softcull(string target, ExPred cond) {
-            SimpleBulletCollection toPool = GetMaybeCopyPool(target);
-            if (toPool.MetaType != SimpleBulletCollection.CollectionType.Softcull) {
+            var toPool = GetMaybeCopyPool(target);
+            if (toPool.MetaType != AbsSimpleBulletCollection.CollectionType.Softcull) {
                 throw new InvalidOperationException("Cannot softcull to a non-softcull pool: " + target);
             }
-            return new SBCFp((sbc, ii, bpi) => bpi.When(cond, 
+            return new SBCFp((sbc, ii, bpi) => bpi.When(cond,
                 //Note that we have to still use the getMaybeCopyPool since the pool may have been destroyed when the code is run
-                SimpleBulletCollection.appendSoftcull.InstanceOf(getMaybeCopyPool.Of(Ex.Constant(target)), sbc, ii)), BulletControl.P_CULL);
+                Ex.Block(
+                    AbsSimpleBulletCollection.copyNullFrom.InstanceOf(getMaybeCopyPool.Of(Ex.Constant(target)), sbc, ii),
+                    sbc.DeleteSB(ii))
+                ), BulletControl.P_CULL);
         }
 
         /// <summary>
         /// Softcull but without expressions. Used internally for runtime bullet controls.
         /// </summary>
-        public static SBCFp Softcull_noexpr(string target, Pred cond) {
-            SimpleBulletCollection toPool = GetMaybeCopyPool(target);
-            if (toPool.MetaType != SimpleBulletCollection.CollectionType.Softcull) {
+        [DontReflect]
+        public static SBCFp Softcull_noexpr(SoftcullProperties props, string target, Pred cond) {
+            var toPool = GetMaybeCopyPool(target);
+            if (toPool.MetaType != AbsSimpleBulletCollection.CollectionType.Softcull) {
                 throw new InvalidOperationException("Cannot softcull to a non-softcull pool: " + target);
             }
             return new SBCFp(ct => (sbc, ii, bpi) => {
-                if (cond(bpi)) GetMaybeCopyPool(target).AppendSoftcull(sbc, ii);
+                if (cond(bpi)) {
+                    GetMaybeCopyPool(target).CopyNullWithSoftcullDelay(in props, sbc, ii);
+                    sbc.DeleteSB(ii);
+                }
             }, BulletControl.P_CULL);
         }
         
@@ -360,7 +365,7 @@ public partial class BulletManager {
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
         public static SBCFp Cull(ExPred cond) {
-            return new SBCFp((sbc, ii, bpi) => bpi.When(cond, sbc.DeleteDestroy(ii)), BulletControl.P_CULL);
+            return new SBCFp((sbc, ii, bpi) => bpi.When(cond, sbc.DeleteSB(ii)), BulletControl.P_CULL);
         }
         
         /// <summary>
@@ -387,10 +392,11 @@ public partial class BulletManager {
         /// <param name="wall">X-position of wall</param>
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
-        public static SBCFp FlipXGT(ExSBF wall, ExPred cond) => new SBCFp((sbc, ii, bpi) => {
+        [Alias("flipx>")]
+        public static SBCFp FlipXGT(ExBPY wall, ExPred cond) => new SBCFp((sbc, ii, bpi) => {
             var w = VFloat();
             return Ex.Block(new[] {w},
-                w.Is(wall(sbc[ii])),
+                w.Is(wall(bpi.AppendSB(sbName, sbc[ii]))),
                 //This ordering is important: it allows using `flipx> xmax onlyonce _`
                 Ex.IfThen(Ex.AndAlso(bpi.locx.GT(w), cond(bpi)), Ex.Block(
                     sbc[ii].bpi.FlipSimpleX(w),
@@ -405,10 +411,11 @@ public partial class BulletManager {
         /// <param name="wall">X-position of wall</param>
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
-        public static SBCFp FlipXLT(ExSBF wall, ExPred cond) => new SBCFp((sbc, ii, bpi) => {
+        [Alias("flipx<")]
+        public static SBCFp FlipXLT(ExBPY wall, ExPred cond) => new SBCFp((sbc, ii, bpi) => {
             var w = VFloat();
             return Ex.Block(new[] {w},
-                w.Is(wall(sbc[ii])),
+                w.Is(wall(bpi.AppendSB(sbName, sbc[ii]))),
                 Ex.IfThen(Ex.AndAlso(bpi.locx.LT(w), cond(bpi)), Ex.Block(
                     sbc[ii].bpi.FlipSimpleX(w),
                     sbc[ii].velocity.FlipX()
@@ -422,10 +429,11 @@ public partial class BulletManager {
         /// <param name="wall">Y-position of wall</param>
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
-        public static SBCFp FlipYGT(ExSBF wall, ExPred cond) => new SBCFp((sbc, ii, bpi) => {
+        [Alias("flipy>")]
+        public static SBCFp FlipYGT(ExBPY wall, ExPred cond) => new SBCFp((sbc, ii, bpi) => {
             var w = VFloat();
             return Ex.Block(new[] {w},
-                w.Is(wall(sbc[ii])),
+                w.Is(wall(bpi.AppendSB(sbName, sbc[ii]))),
                 Ex.IfThen(Ex.AndAlso(bpi.locy.GT(w), cond(bpi)), Ex.Block(
                     sbc[ii].bpi.FlipSimpleY(w),
                     sbc[ii].velocity.FlipY()
@@ -439,10 +447,11 @@ public partial class BulletManager {
         /// <param name="wall">Y-position of wall</param>
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
-        public static SBCFp FlipYLT(ExSBF wall, ExPred cond) => new SBCFp((sbc, ii, bpi) => {
+        [Alias("flipy<")]
+        public static SBCFp FlipYLT(ExBPY wall, ExPred cond) => new SBCFp((sbc, ii, bpi) => {
             var w = VFloat();
             return Ex.Block(new[] {w},
-                w.Is(wall(sbc[ii])),
+                w.Is(wall(bpi.AppendSB(sbName, sbc[ii]))),
                 Ex.IfThen(Ex.AndAlso(bpi.locy.LT(w), cond(bpi)), Ex.Block(
                     sbc[ii].bpi.FlipSimpleY(w),
                     sbc[ii].velocity.FlipY()
@@ -456,8 +465,8 @@ public partial class BulletManager {
         /// <param name="by">Delta position</param>
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
-        public static SBCFp DX(ExSBF by, ExPred cond) => new SBCFp((sbc, ii, bpi) =>
-            bpi.When(cond, ExUtils.AddAssign(sbc[ii].bpi.locx, by(sbc[ii]))), BulletControl.P_MOVE_2);
+        public static SBCFp DX(ExBPY by, ExPred cond) => new SBCFp((sbc, ii, bpi) =>
+            bpi.When(cond, ExUtils.AddAssign(sbc[ii].bpi.locx, by(bpi.AppendSB(sbName, sbc[ii])))), BulletControl.P_MOVE_2);
         
         /// <summary>
         /// Add to the y-position of bullets. Useful for teleporting around the sides.
@@ -465,8 +474,8 @@ public partial class BulletManager {
         /// <param name="by">Delta position</param>
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
-        public static SBCFp DY(ExSBF by, ExPred cond) => new SBCFp((sbc, ii, bpi) =>
-            bpi.When(cond, ExUtils.AddAssign(sbc[ii].bpi.locy, by(sbc[ii]))), BulletControl.P_MOVE_2);
+        public static SBCFp DY(ExBPY by, ExPred cond) => new SBCFp((sbc, ii, bpi) =>
+            bpi.When(cond, ExUtils.AddAssign(sbc[ii].bpi.locy, by(bpi.AppendSB(sbName, sbc[ii])))), BulletControl.P_MOVE_2);
         
         /// <summary>
         /// Add to the time of bullets.
@@ -474,8 +483,8 @@ public partial class BulletManager {
         /// <param name="by">Delta time</param>
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
-        public static SBCFp DT(ExSBF by, ExPred cond) => new SBCFp((sbc, ii, bpi) =>
-            bpi.When(cond, ExUtils.AddAssign(sbc[ii].bpi.t, by(sbc[ii]))), BulletControl.P_MOVE_1);
+        public static SBCFp DT(ExBPY by, ExPred cond) => new SBCFp((sbc, ii, bpi) =>
+            bpi.When(cond, ExUtils.AddAssign(sbc[ii].bpi.t, by(bpi.AppendSB(sbName, sbc[ii])))), BulletControl.P_MOVE_1);
 
         /// <summary>
         /// Change the throttling of bullets.
@@ -483,8 +492,8 @@ public partial class BulletManager {
         /// <param name="by">Speedup ratio (1 = no effect, 2 = twice as fast, 0 = frozen, -1 = backwards)</param>
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
-        public static SBCFp Slowdown(ExSBF by, ExPred cond) => new SBCFp((sbc, ii, bpi) =>
-            bpi.When(cond, sbc.Speedup(by(sbc[ii]))), BulletControl.P_TIMECONTROL);
+        public static SBCFp Slowdown(ExBPY by, ExPred cond) => new SBCFp((sbc, ii, bpi) =>
+            bpi.When(cond, sbc.Speedup(by(bpi.AppendSB(sbName, sbc[ii])))), BulletControl.P_TIMECONTROL);
 
         /// <summary>
         /// Freeze an object. It will still collide but it will not move.
@@ -512,8 +521,15 @@ public partial class BulletManager {
         /// <returns></returns>
         public static SBCFp Force(ExPred cond, VTP path) {
             Movement vel = new Movement(path);
-            return new SBCFp((sbc, ii, bpi) =>
-                bpi.When(cond, vel.UpdateDeltaNoTime(sbc, ii)), BulletControl.P_MOVE_2);
+            return new SBCFp((sbc, ii, bpi) => {
+#if EXBAKE_SAVE
+                var key_name = bpi.Ctx.NameWithSuffix("forceMov");
+                bpi.Ctx.HoistedVariables.Add(FormattableString.Invariant(
+                    $"var {key_name} = new Movement({BakeCodeGenerator.Baker.ObjectToFunctionHoister[path]});"));
+                    bpi.Ctx.HoistedReplacements[Ex.Constant(vel)] = Ex.Variable(typeof(Movement), key_name);
+#endif
+                return bpi.When(cond, vel.UpdateDeltaNoTime(sbc, ii));
+            }, BulletControl.P_MOVE_2);
         }
 
         /// <summary>
@@ -523,8 +539,12 @@ public partial class BulletManager {
         /// </summary>
         /// <param name="targets">Several target, index, value tuples to save</param>
         /// <param name="cond">Filter condition</param>
-        public static SBCFp SaveV2((ReflectEx.Hoist<Vector2> target, ExBPY indexer, ExSBV2 valuer)[] targets, ExPred cond) => new SBCFp((sbc, ii, bpi) => 
-            bpi.When(cond, Ex.Block(targets.Select(t => t.target.Save(((Ex)t.indexer(bpi)).As<int>(), t.valuer(sbc[ii]))))), BulletControl.P_SAVE);
+        public static SBCFp SaveV2((ReflectEx.Hoist<Vector2> target, ExBPY indexer, ExTP valuer)[] targets, ExPred cond) => new SBCFp((sbc, ii, bpi) => {
+            var extbpi = bpi.AppendSB(sbName, sbc[ii]);
+            return bpi.When(cond,
+                Ex.Block(targets.Select(t =>
+                    t.target.Save(((Ex) t.indexer(extbpi)).As<int>(), t.valuer(extbpi), bpi))));
+        }, BulletControl.P_SAVE);
         
         public static SBCFp SaveV2_noexpr((ReflectEx.Hoist<Vector2> target, BPY indexer, SBV2 valuer)[] targets, Pred cond) {
             return new SBCFp(ct => (sbc, ii, bpi) => {
@@ -543,8 +563,12 @@ public partial class BulletManager {
         /// </summary>
         /// <param name="targets">Several target, index, value tuples to save</param>
         /// <param name="cond">Filter condition</param>
-        public static SBCFp SaveF((ReflectEx.Hoist<float> target, ExBPY indexer, ExSBF valuer)[] targets, ExPred cond) => new SBCFp((sbc, ii, bpi) =>
-            bpi.When(cond, Ex.Block(targets.Select(t => t.target.Save(((Ex)t.indexer(bpi)).As<int>(), t.valuer(sbc[ii]))))), BulletControl.P_SAVE);
+        public static SBCFp SaveF((ReflectEx.Hoist<float> target, ExBPY indexer, ExBPY valuer)[] targets, ExPred cond) => new SBCFp((sbc, ii, bpi) => {
+            var extbpi = bpi.AppendSB(sbName, sbc[ii]);
+            return bpi.When(cond,
+                Ex.Block(targets.Select(t =>
+                    t.target.Save(((Ex) t.indexer(extbpi)).As<int>(), t.valuer(extbpi), bpi))));
+        }, BulletControl.P_SAVE);
         
         public static SBCFp SaveF_noexpr((ReflectEx.Hoist<float> target, BPY indexer, SBF valuer)[] targets, Pred cond) {
             return new SBCFp(ct => (sbc, ii, bpi) => {
@@ -559,14 +583,14 @@ public partial class BulletManager {
         /// <summary>
         /// Update existing V2 values in the private data hoisting for the bullet.
         /// </summary>
-        public static SBCFp UpdateV2((string target, ExSBV2 valuer)[] targets, ExPred cond) => new SBCFp((sbc, ii, bpi) =>
-            bpi.When(cond, Ex.Block(targets.Select(t => PrivateDataHoisting.UpdateValue(bpi, Reflector.ExType.V2, t.target, t.valuer(sbc[ii]))))), BulletControl.P_SAVE);
+        public static SBCFp UpdateV2((string target, ExTP valuer)[] targets, ExPred cond) => new SBCFp((sbc, ii, bpi) =>
+            bpi.When(cond, Ex.Block(targets.Select(t => FiringCtx.SetValue(bpi, FiringCtx.DataType.V2, t.target, t.valuer(bpi.AppendSB(sbName, sbc[ii])))))), BulletControl.P_SAVE);
         
         /// <summary>
         /// Update existing float values in the private data hoisting for the bullet.
         /// </summary>
-        public static SBCFp UpdateF((string target, ExSBF valuer)[] targets, ExPred cond) => new SBCFp((sbc, ii, bpi) =>
-            bpi.When(cond, Ex.Block(targets.Select(t => PrivateDataHoisting.UpdateValue(bpi, Reflector.ExType.Float, t.target, t.valuer(sbc[ii]))))), BulletControl.P_SAVE);
+        public static SBCFp UpdateF((string target, ExBPY valuer)[] targets, ExPred cond) => new SBCFp((sbc, ii, bpi) =>
+            bpi.When(cond, Ex.Block(targets.Select(t => FiringCtx.SetValue(bpi, FiringCtx.DataType.Float, t.target, t.valuer(bpi.AppendSB(sbName, sbc[ii])))))), BulletControl.P_SAVE);
 
         /// <summary>
         /// Execute an event if the condition is satisfied.
@@ -581,7 +605,7 @@ public partial class BulletManager {
             if (over.Any(o => o.func == null)) return BatchSM(Compilers.Pred(cond), over.Select(o => new SBCFc(o)).ToArray());
             var priority = over.Max(o => o.priority);
             return new SBCFp((sbc, ii, bpi) =>
-                    bpi.When(cond, Ex.Block(over.Select(x => (Ex)x.func(sbc, ii, bpi)))), 
+                    bpi.When(cond, Ex.Block(over.Select(x => (Ex)x.func!(sbc, ii, bpi)))), 
                 priority);
         }
         /// <summary>
@@ -605,12 +629,11 @@ public partial class BulletManager {
         /// </summary>
         public static SBCFp SM(Pred cond, StateMachine target) => new SBCFp(cT => (sbc, ii, bpi) => {
             if (cond(bpi)) {
-                var inode = sbc.GetINodeAt(ii, "pool-triggered", null, out uint sbid);
+                var inode = sbc.GetINodeAt(ii, "pool-triggered");
                 //Note: this pattern is safe because GCX is copied immediately by SMRunner
-                using (var gcx = PrivateDataHoisting.GetGCX(sbid)) {
-                    gcx.fs["bulletTime"] = sbc[ii].bpi.t;
-                    _ = inode.RunExternalSM(SMRunner.Cull(target, cT, gcx));
-                }
+                using var gcx = bpi.ctx.RevertToGCX(inode);
+                gcx.fs["bulletTime"] = bpi.t;
+                _ = inode.RunExternalSM(SMRunner.Cull(target, cT, gcx));
             }
         }, BulletControl.P_RUN);
 
@@ -628,6 +651,7 @@ public partial class BulletManager {
     /// Pool controls for use with the `pool-control` SM command. These deal with simple bullets. As opposed to
     /// `bullet-control`, these commands affect the bullet pool instead of individual objects.
     /// </summary>
+    [Reflect]
     public static class SimplePoolControls {
         /// <summary>
         /// Clear the bullet controls on a pool.
@@ -661,7 +685,9 @@ public partial class BulletManager {
         /// <returns></returns>
         public static SPCF SoftCullAll(string targetFormat) {
             return pool => GetMaybeCopyPool(pool).AddPoolControl(new BulletControl(new SBCFc(SimpleBulletControls.
-                Softcull_noexpr(PortColorFormat(pool, targetFormat, "red/"), _ => true)), Consts.NOTPERSISTENT, null));
+                Softcull_noexpr(new SoftcullProperties(null, null), 
+                    PortColorFormat(pool, new SoftcullProperties(targetFormat, null)), 
+                    _ => true)), Consts.NOTPERSISTENT, null));
         }
 
         /// <summary>
@@ -689,15 +715,13 @@ public partial class BulletManager {
         }
     }
 
-    /// <param name="targetFormat">Base cull style, eg. 'cwheel'</param>
-    /// <param name="defaulter">Default color if no match is found, eg. 'red/'</param>
-    public static void Autocull(string targetFormat, string defaulter) {
+    public static void Autocull(SoftcullProperties props) {
         void CullPool(SimpleBulletCollection pool) {
-            if (pool.MetaType == SimpleBulletCollection.CollectionType.Softcull) return;
+            if (pool.MetaType == AbsSimpleBulletCollection.CollectionType.Softcull) return;
             if (pool.Count == 0) return;
-            string targetPool = PortColorFormat(pool.Style, targetFormat, defaulter);
+            string targetPool = PortColorFormat(pool.Style, props);
             pool.AddPoolControl(new BulletControl(new SBCFc(
-                    SimpleBulletControls.Softcull_noexpr(targetPool, _ => true)), Consts.NOTPERSISTENT, null));
+                    SimpleBulletControls.Softcull_noexpr(props, targetPool, _ => true)), Consts.NOTPERSISTENT, null));
             //Log.Unity($"Autoculled {pool.style} to {targetPool}");
         }
         //CEmpty is destroyed via DestroyedCopyPools
@@ -706,14 +730,15 @@ public partial class BulletManager {
     }
 
     /// <summary>
-    /// For bombs/camera effects. Special bullets like EMPTY will not be deleted.
+    /// For bombs/camera effects. Special bullets like EMPTY, as well as undeletable bullets like SUN,
+    /// will not be deleted.
     /// </summary>
-    public static void Autodelete(string targetFormat, string defaulter, Pred cond) {
+    public static void Autodelete(SoftcullProperties props, Pred cond) {
         void DeletePool(SimpleBulletCollection pool) {
             if (!pool.Deletable || pool.Count == 0) return;
-            string targetPool = PortColorFormat(pool.Style, targetFormat, defaulter);
+            string targetPool = PortColorFormat(pool.Style, props);
             pool.AddPoolControl(new BulletControl(
-                new SBCFc(SimpleBulletControls.Softcull_noexpr(targetPool, cond))
+                new SBCFc(SimpleBulletControls.Softcull_noexpr(props, targetPool, cond))
                 , Consts.NOTPERSISTENT, null));
         }
         for (int ii = 0; ii < activeNpc.Count; ++ii) DeletePool(activeNpc[ii]);

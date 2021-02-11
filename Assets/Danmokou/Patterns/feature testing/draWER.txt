@@ -23,9 +23,9 @@ phase 0
 		move _ tprot pxy
 			dsine 14 1.5 t
 			dcosine 14h 1 t
-		sync _ <1;:170> relrect mima
-			witha 0.7 purple
+		sync _ <1;:170> relrect _ mima
 			<1;0:3;1:40>
+			witha 0.7 purple
         
             
             

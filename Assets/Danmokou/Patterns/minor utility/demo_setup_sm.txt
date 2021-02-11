@@ -1,0 +1,3 @@
+sync tlfairy <> summonr null(cy(2))
+	stall
+	{ hp 2000000000 }

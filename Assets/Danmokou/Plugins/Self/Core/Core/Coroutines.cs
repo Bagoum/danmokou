@@ -10,10 +10,10 @@ namespace DMK.Core {
 public class Coroutines {
     private readonly struct RCoroutine {
         public readonly IEnumerator ienum;
-        [CanBeNull] public readonly Node<RCoroutine> parent;
+        public readonly Node<RCoroutine>? parent;
         public readonly bool droppable;
 
-        public RCoroutine(IEnumerator ienum, [CanBeNull] Node<RCoroutine> parent = null, bool droppable = false) {
+        public RCoroutine(IEnumerator ienum, Node<RCoroutine>? parent = null, bool droppable = false) {
             this.ienum = ienum;
             this.parent = parent;
             this.droppable = droppable;
@@ -30,7 +30,7 @@ public class Coroutines {
         }
     }
 
-    [CanBeNull] private Node<RCoroutine> itrNode = null;
+    private Node<RCoroutine>? itrNode = null;
 
     public void Step() {
         //There are three situations where nodes get added during execution:
@@ -42,7 +42,7 @@ public class Coroutines {
         // - Destroy all (via InvokeCull)
         //It is not safe for actions like "destroy arbitrary" (which do not have any interfaces anyways). 
         //That would require DMCompactingArray.
-        Node<RCoroutine> nextNode;
+        Node<RCoroutine>? nextNode;
         for (itrNode = coroutines.first; itrNode != null; itrNode = nextNode) {
             if (itrNode.obj.ienum.MoveNext()) {
                 //MoveNext() can trigger abh.done, which can bubble up
@@ -74,8 +74,8 @@ public class Coroutines {
     public void Close() {
         if (coroutines.count > 0) {
             Step();
-            Node<RCoroutine> nextNode;
-            for (Node<RCoroutine> n = coroutines.first; n != null; n = nextNode) {
+            Node<RCoroutine>? nextNode;
+            for (Node<RCoroutine>? n = coroutines.first; n != null; n = nextNode) {
                 nextNode = n.next;
                 if (n.obj.droppable) {
                     if (n.obj.parent != null) {

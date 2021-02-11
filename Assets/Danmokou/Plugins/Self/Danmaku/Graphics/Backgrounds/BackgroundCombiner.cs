@@ -11,14 +11,14 @@ namespace DMK.Graphics.Backgrounds {
 /// set by the BackgroundOrchestrator.
 /// </summary>
 public class BackgroundCombiner : RegularUpdater {
-    private static BackgroundCombiner main;
+    private static BackgroundCombiner main = null!;
     private int renderMask;
-    private MaterialPropertyBlock pb;
-    private SpriteRenderer sr;
-    private Material mat;
+    private MaterialPropertyBlock pb = null!;
+    private SpriteRenderer sr = null!;
+    private Material mat = null!;
 
     private float time = 0f;
-    private BackgroundOrchestrator orchestrator;
+    private BackgroundOrchestrator orchestrator = null!;
     private void Awake() {
         main = this;
         renderMask = LayerMask.GetMask(LayerMask.LayerToName(gameObject.layer));

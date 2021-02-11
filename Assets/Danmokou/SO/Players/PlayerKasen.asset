@@ -15,9 +15,15 @@ MonoBehaviour:
   freeSpeed: 4.2
   focusSlowdown: 0.44
   hitboxRadius: 0.034
-  grazeboxRadius: 0.42
+  grazeboxRadius: 0.47
   key: basic-kasen
-  shortTitle: Kasen
+  shortTitle:
+    useReference: 1
+    reference: players.kasen
+    hardcoded:
+      en: 
+      jp: 
+      _showEnOnly: 0
   title: Kasen
   prefab: {fileID: 2884352696324497640, guid: 1200414847a32bb4680560876f031369, type: 3}
   shots2:

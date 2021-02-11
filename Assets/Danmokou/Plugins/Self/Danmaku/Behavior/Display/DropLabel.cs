@@ -24,8 +24,8 @@ public class DropLabel : Pooled<DropLabel> {
     private float ttl;
     private Vector2 velocity0;
     private Vector2 Velocity => velocity0 - new Vector2(0, time * 0.8f);
-    private TextMeshPro text;
-    private IGradient gradient;
+    private TextMeshPro text = null!;
+    private IGradient gradient = null!;
 
     private static ushort rendererPriority = 0;
 
@@ -58,7 +58,7 @@ public class DropLabel : Pooled<DropLabel> {
     }
 
     private void SetColor() {
-        text.color = gradient.Evaluate(time / ttl);
+        text.color = gradient.Evaluate32(time / ttl);
 
     }
 }

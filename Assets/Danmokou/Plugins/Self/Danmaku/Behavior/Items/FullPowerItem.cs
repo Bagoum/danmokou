@@ -9,7 +9,7 @@ public class FullPowerItem : Item {
     protected override float RotationTurns => 0;
 
     protected override void CollectMe() {
-        GameManagement.instance.AddFullPowerItems(1);
+        GameManagement.Instance.AddFullPowerItems(1);
         base.CollectMe();
     }
 }

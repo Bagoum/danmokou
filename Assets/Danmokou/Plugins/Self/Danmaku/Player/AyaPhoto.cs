@@ -16,7 +16,7 @@ namespace DMK.Player {
 [Serializable]
 [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
 public class AyaPhoto {
-    public string Filename { get; set; }
+    public string Filename { get; set; } = null!;
     public float Angle { get; set; }
     public int PixelWidth { get; set; }
     public int PixelHeight { get; set; }
@@ -24,10 +24,10 @@ public class AyaPhoto {
     public float ScreenHeight { get; set; }
     public GraphicsFormat Format { get; set; }
     public bool KeepAlive { get; set; }
-    [CanBeNull] private Texture2D tex = null;
+    private Texture2D? tex = null;
     
     [JsonIgnore] [ProtoIgnore]
-    private string FullFilename => $"{SaveUtils.AYADIR}{Filename}.jpg";
+    private string FullFilename => $"{FileUtils.AYADIR}{Filename}.jpg";
     [JsonIgnore] [ProtoIgnore]
     public float PPU => PixelWidth / ScreenWidth;
     
@@ -38,7 +38,7 @@ public class AyaPhoto {
             //Remove texture from memory
             if (p.tex != null) Object.Destroy(p.tex);
             //Destroy unsuccessful screenshots
-            if (!p.KeepAlive) SaveUtils.Destroy(p.FullFilename);
+            if (!p.KeepAlive) FileUtils.Destroy(p.FullFilename);
             return p.KeepAlive;
         }).ToList();
     }
@@ -52,23 +52,23 @@ public class AyaPhoto {
         Angle = rect.angle;
         Format = photo.graphicsFormat;
         KeepAlive = false;
-        SaveUtils.WriteTex(FullFilename, photo);
+        FileUtils.WriteTex(FullFilename, photo);
         //Photo data may initially have incorrect alphas.
         //We destroy and reload it to prevent this issue.
         Object.Destroy(photo);
         allPhotos.Add(this);
     }
 
-    public bool TryLoad(out Sprite sprite) {
+    public bool TryLoad(out Sprite? sprite) {
         sprite = null;
-        if (TryLoad(out Texture2D t)) {
+        if (TryLoad(out Texture2D? t)) {
             sprite = Sprite.Create(t, new Rect(0, 0, PixelWidth, PixelHeight), 
                 new Vector2(0.5f, 0.5f), PPU, 0, SpriteMeshType.FullRect);
             return true;
         } else return false;
     }
 
-    private bool TryLoad(out Texture2D texture) {
+    private bool TryLoad(out Texture2D? texture) {
         if (tex != null) {
             texture = tex;
             return true;

@@ -8,21 +8,19 @@ using DMK.Core;
 using DMK.DMath;
 using DMK.Expressions;
 using Ex = System.Linq.Expressions.Expression;
-using ExFXY = System.Func<DMK.Expressions.TEx<float>, DMK.Expressions.TEx<float>>;
-using ExBPY = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<float>>;
-using ExPred = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<bool>>;
-using ExTP = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<UnityEngine.Vector2>>;
-using ExBPRV2 = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<DMK.DMath.V2RV2>>;
 using static DMK.Expressions.ExMHelpers;
 using static DMK.Expressions.ExUtils;
 using static DMK.DMath.Functions.ExM;
 using static DMK.DMath.Functions.ExMDifficulty;
+using ExBPY = System.Func<DMK.Expressions.TExArgCtx, DMK.Expressions.TEx<float>>;
+using ExTP = System.Func<DMK.Expressions.TExArgCtx, DMK.Expressions.TEx<UnityEngine.Vector2>>;
 
 namespace DMK.DMath.Functions {
 /// <summary>
 /// Functions that take in parametric information and return a number.
 /// </summary>
 [SuppressMessage("ReSharper", "UnusedMember.Global")]
+[Reflect]
 public static partial class BPYRepo {
 
     /// <summary>
@@ -36,10 +34,10 @@ public static partial class BPYRepo {
         return bpi => b(bpi.Rehash());
     }
     /// <summary>
-    /// Return the parametric time.
+    /// Return the parametric time, or if this is a float function, the input value.
     /// </summary>
     /// <returns></returns>
-    public static ExBPY T() => bpi => bpi.t;
+    public static ExBPY T() => bpi => bpi.MaybeBPI?.t ?? bpi.FloatVal;
     /// <summary>
     /// Return the parametric firing index.
     /// </summary>
@@ -82,30 +80,17 @@ public static partial class BPYRepo {
     public static ExBPY PMaf(FXY self, FXY[] children) => PM((int) self(0), children.Aggregate(1, (x, y) => x * (int) y(0)));
     
     /// <summary>
-    /// Return the parametric x-position.
+    /// Return the parametric x-position, or, if this is a float function, the input value.
     /// </summary>
     /// <returns></returns>
-    public static ExBPY X() => bpi => bpi.locx;
+    public static ExBPY X() => bpi => bpi.MaybeBPI?.locx ?? bpi.FloatVal;
     /// <summary>
     /// Return the parametric y-position.
     /// </summary>
     /// <returns></returns>
     public static ExBPY Y() => bpi => bpi.locy;
 
-    /// <summary>
-    /// Returns the cosine of rotation of the entity's velocity struct.
-    /// </summary>
-    public static ExBPY AC() => Reference<float>("ac");
-    /// <summary>
-    /// Returns the sine of rotation of the entity's velocity struct.
-    /// </summary>
-    public static ExBPY AS() => Reference<float>("as");
-    /// <summary>
-    /// Returns the angle (degrees) of rotation of the entity's velocity struct.
-    /// </summary>
-    public static ExBPY A() => Reference<float>("a");
-    
-    
+
     private static readonly ExFunction SeedRandUint = Wrap(typeof(RNG), "GetSeededFloat", new[] {typeof(float), typeof(float), typeof(uint)});
 
     /// <summary>
@@ -143,7 +128,8 @@ public static partial class BPYRepo {
     /// <summary>
     /// See <see cref="Parametrics.Pivot"/>.
     /// </summary>
-    public static ExBPY Pivot(ExBPY pivotVar, ExBPY pivot, ExBPY f1, ExBPY f2) => ExMHelpers.Pivot(pivot, f1, f2, pivotVar);
+    public static ExBPY Pivot(ExBPY pivotVar, ExBPY pivot, ExBPY f1, ExBPY f2) => 
+        ExMHelpers.Pivot<TExPI, float>(pivot, f1, f2, pivotVar);
     
     /*
     public static ExBPY Softmax(ExBPY sharpness, ExBPY[] against) => bpi => GenericMath.Softmax(sharpness(bpi), against.Select(x => x(bpi)).ToArray());
@@ -164,7 +150,7 @@ public static partial class BPYRepo {
     /// <param name="f2">Equation after pivot</param>
     /// <returns></returns>
     public static ExBPY SoftmaxShift(string pivotVar, ExBPY sharpness, ExBPY pivot, ExBPY f1, ExBPY f2) =>
-        ExMHelpers.SoftmaxShift(sharpness, pivot, f1, f2, pivotVar);
+        ExMHelpers.SoftmaxShift<TExPI>(sharpness, pivot, f1, f2, pivotVar);
     [Alias("smsht")]
     public static ExBPY SoftmaxShiftT(ExBPY sharpness, ExBPY pivot, ExBPY f1, ExBPY f2) => SoftmaxShift("t", sharpness, pivot, f1, f2);
     [Alias("smsht3")]
@@ -176,7 +162,7 @@ public static partial class BPYRepo {
     /// See <see cref="BPYRepo.SoftmaxShift"/>.
     /// </summary>
     public static ExBPY LogsumShift(string pivotVar, ExBPY sharpness, ExBPY pivot, ExBPY f1, ExBPY f2) =>
-        ExMHelpers.LogSumShift(sharpness, pivot, f1, f2, pivotVar);
+        ExMHelpers.LogSumShift<TExPI>(sharpness, pivot, f1, f2, pivotVar);
     
     /// <summary>
     /// Logsumshift using t as a pivot variable
@@ -258,12 +244,5 @@ public static partial class BPYRepo {
     /// Returns P / DL.
     /// </summary>
     public static ExBPY pDL() => bpi => bpi.findex.Div(DL());
-
-    public static ExBPY OptionAngle() => b => FireOption.optionAngle.Of(b.index);
-    public static ExBPY Power() => b => FireOption.power.Of();
-    public static ExBPY PowerF() => b => ExM.Floor(FireOption.power.Of());
-    public static ExBPY PowerIndex() => b => ExM.Floor(FireOption.powerIndex.Of());
-    public static ExBPY IfPowerGTP(ExBPY inner) => 
-        b => Ex.Condition(BPYRepo.PowerF()(b).GT(b.findex), inner(b), ExC(0f));
 }
 }

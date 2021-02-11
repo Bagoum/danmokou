@@ -11,10 +11,10 @@ public class GemItem : Item {
     private int currSprite;
 
     public float timePerSprite;
-    public Sprite[] sprites;
+    public Sprite[] sprites = null!;
 
     protected override void CollectMe() {
-        GameManagement.instance.AddGems(numGems);
+        GameManagement.Instance.AddGems(numGems);
         base.CollectMe();
     }
 

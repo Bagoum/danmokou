@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using DMK.Behavior;
 using DMK.Core;
 using DMK.DMath;
@@ -19,22 +20,48 @@ namespace DMK.UI.XML {
 /// </summary>
 [Preserve]
 public abstract class XMLMenu : RegularUpdater {
-    public UIBuilderRenderer uiRenderer;
-    [CanBeNull] protected virtual List<int> ReturnTo { get; set; }
-    [CanBeNull] private List<int> tentativeReturnTo;
+    public readonly struct CacheInstruction {
+        public enum InstrType {
+            GOTO_CHILD,
+            GOTO_SIBLING,
+            GOTO_OPTION,
+            CONFIRM
+        }
 
-    protected void TentativeCache(List<int> indices) {
+        public readonly InstrType type;
+        public readonly int instrVal;
+
+        private CacheInstruction(InstrType type, int instrVal) {
+            this.type = type;
+            this.instrVal = instrVal;
+        }
+
+        public override string ToString() => $"{type}:{instrVal}";
+
+        public static CacheInstruction ToChild(int idx) => new CacheInstruction(InstrType.GOTO_CHILD, idx);
+        public static CacheInstruction ToSibling(int idx) => new CacheInstruction(InstrType.GOTO_SIBLING, idx);
+        public static CacheInstruction ToOption(int idx) => new CacheInstruction(InstrType.GOTO_OPTION, idx);
+        public static CacheInstruction Confirm => new CacheInstruction(InstrType.CONFIRM, 0);
+    }
+    public UIBuilderRenderer uiRenderer = null!;
+    //The reason for this virtual structure is because implementers (eg. XMLMainMenuCampaign)
+    // need to store the list *statically*, since the specific menu object will be deleted on scene change.
+    protected virtual List<CacheInstruction>? ReturnTo { get; set; }
+    private List<CacheInstruction>? tentativeReturnTo;
+
+    protected void TentativeCache(List<CacheInstruction> indices) {
         tentativeReturnTo = indices;
     }
 
     protected void ConfirmCache() {
         if (tentativeReturnTo != null)
-            Log.Unity($"Caching menu position with indices {string.Join(", ", tentativeReturnTo)}");
+            Log.Unity($"Caching menu position with indices " +
+                      $"{string.Join(", ", tentativeReturnTo.Select(x => x.ToString()))}");
         ReturnTo = tentativeReturnTo;
     }
 
-    public VisualElement UI { get; private set; }
-    [CanBeNull] protected VisualElement UITop;
+    public VisualElement UI { get; private set; } = null!;
+    protected VisualElement? UITop;
 
     protected virtual string UITopID => "Pause";
     protected virtual string ScreenContainerID => "UIContainer";
@@ -47,29 +74,29 @@ public abstract class XMLMenu : RegularUpdater {
     protected virtual ScreenTransition transitionMethod => ScreenTransition.SWIPE;
 
     protected virtual IEnumerable<UIScreen> Screens => new[] {MainScreen};
-    protected UIScreen MainScreen { get; set; }
+    protected UIScreen MainScreen { get; set; } = null!;
     protected bool MenuActive = true;
-    [CanBeNull] protected virtual string HeaderOverride => null;
+    protected virtual string? HeaderOverride => null;
 
-    protected abstract Dictionary<Type, VisualTreeAsset> TypeMap { get; }
+    protected virtual Dictionary<Type, VisualTreeAsset> TypeMap => References.uxmlDefaults.TypeMap;
 
-    [CanBeNull] protected UINode Current;
+    protected UINode? Current = null;
 
-    [CanBeNull] public GameObject MainScreenOnlyObjects;
+    public GameObject? MainScreenOnlyObjects;
 
     protected virtual void ResetCurrentNode() {
         Current = MainScreen.StartingNode;
     }
 
-    public SFXConfig upDownSound;
-    public SFXConfig leftRightSound;
-    public SFXConfig confirmSound;
-    public SFXConfig failureSound;
-    public SFXConfig backSound;
+    public SFXConfig? upDownSound;
+    public SFXConfig? leftRightSound;
+    public SFXConfig? confirmSound;
+    public SFXConfig? failureSound;
+    public SFXConfig? backSound;
 
     protected virtual void Awake() {
         if (!Application.isPlaying) return;
-        Current = MainScreen?.StartingNode;
+        Current = MainScreen.StartingNode!;
     }
 
     protected virtual void Start() {
@@ -77,25 +104,46 @@ public abstract class XMLMenu : RegularUpdater {
         Rebind();
     }
 
-    protected virtual IEnumerable<Object> Rebind() {
+    protected virtual void Rebind() {
         UITop = UI.Q(UITopID);
         var container = UI.Q(ScreenContainerID);
-        foreach (var s in Screens) container.Add(s.Build(TypeMap));
+        foreach (var s in Screens) {
+            if (s != null)
+                container.Add(s.Build(TypeMap));
+        }
         if (HeaderOverride != null) UI.Q<Label>("Header").text = HeaderOverride;
 
         if (ReturnTo != null) {
+            if (Current == null)
+                throw new Exception("ReturnTo exists, but Current is null");
             for (int ii = 0; ii < ReturnTo.Count; ++ii) {
                 var prev = Current;
-                if (ii > 0) {
-                    if (Current.children.Length > 0) Current = Current.children[ReturnTo[ii]];
-                    else Current = Current.Confirm().Item2.Siblings[ReturnTo[ii]];
-                } else Current = Current.Siblings[ReturnTo[ii]];
-                Current.OnVisit(prev);
+                var inst = ReturnTo[ii];
+                if (inst.type == CacheInstruction.InstrType.CONFIRM) {
+                    Current = Current.Confirm().target!;
+                    if (Current.screen != prev.screen) {
+                        //The exit/enter events are handled by Confirm internals
+                        prev.screen.RunPreExit();
+                        Current.screen.RunPreEnter();
+                        Current.screen.RunPostEnter();
+                    }
+                } else if (inst.type == CacheInstruction.InstrType.GOTO_OPTION) {
+                    if (Current is IOptionNodeLR opt) {
+                        opt.Index = inst.instrVal;
+                    } else
+                        throw new Exception("Couldn't rebuild menu position: node is not an option");
+                } else if (inst.type == CacheInstruction.InstrType.GOTO_SIBLING) {
+                    Current = Current.Siblings[inst.instrVal];
+                    Current.OnVisit(prev);
+                } else if (inst.type == CacheInstruction.InstrType.GOTO_CHILD) {
+                    Current = Current.children[inst.instrVal];
+                    Current.OnVisit(prev);
+                } else
+                    throw new Exception($"Couldn't resolve instruction {inst.type}");
             }
         }
         Redraw();
         ReturnTo = null;
-        return null;
     }
 
     protected virtual void Redraw() {
@@ -104,7 +152,7 @@ public abstract class XMLMenu : RegularUpdater {
                 screen.Bound.style.display = DisplayStyle.Flex;
             } else {
                 screen.Bound.style.display = DisplayStyle.None;
-                screen.ResetNodes();
+                screen.ResetNodeProgress();
             }
         }
         if (MainScreenOnlyObjects != null) {
@@ -148,12 +196,13 @@ public abstract class XMLMenu : RegularUpdater {
                     var (succ, nxt) = Current.Confirm_DontNest();
                     if (succ) HandleTransition(Current, nxt, false);
                     if (allowsfx) SFXService.Request(succ ? confirmSound : failureSound);
+                    if (Current?.Passthrough == true) Current = Current.Parent;
                 } else if (InputManager.UIBack.Active) {
                     if (allowsfx) SFXService.Request(backSound);
                     HandleTransition(Current, Current.Back(), true);
                 } else tried_change = false;
                 allowsfx = false;
-                if (++sentry > 20) throw new Exception("There is a loop in the XML menu.");
+                if (++sentry > 100) throw new Exception("There is a loop in the XML menu.");
             } while (Current?.Passthrough ?? false);
             if (tried_change) {
                 OnChangeEffects(last);
@@ -172,13 +221,14 @@ public abstract class XMLMenu : RegularUpdater {
 
     private float swipeTime = 0.3f;
 
-    private void HandleTransition(UINode prev, [CanBeNull] UINode next, bool backwards) {
+    private void HandleTransition(UINode prev, UINode? next, bool backwards) {
         if (prev.screen == next?.screen || next == null) {
             Current = next;
             OnChangeEffects(prev);
         } else {
-            prev.screen?.RunPreExit();
+            prev.screen.RunPreExit();
             isTransitioning = true;
+            next.screen.RunPreEnter();
             void GoToNested() {
                 if (backwards) {
                     Current = prev.screen.GoBack();
@@ -188,11 +238,14 @@ public abstract class XMLMenu : RegularUpdater {
                 OnChangeEffects(prev);
             }
             if (transitionMethod == ScreenTransition.SWIPE) {
-                uiRenderer.Slide(null, GetRandomSlideEndpoint(), swipeTime, DMath.M.EInSine, s => {
+                uiRenderer.Slide(null, GetRandomSlideEndpoint(), swipeTime, M.EInSine, s => {
                     if (s) {
                         GoToNested();
-                        uiRenderer.Slide(GetRandomSlideEndpoint(), Vector2.zero, swipeTime, DMath.M.EOutSine, s2 => {
-                            if (s2) isTransitioning = false;
+                        uiRenderer.Slide(GetRandomSlideEndpoint(), Vector2.zero, swipeTime, M.EOutSine, s2 => {
+                            if (s2) {
+                                next.screen.RunPostEnter();
+                                isTransitioning = false;
+                            }
                         });
                     }
                 });

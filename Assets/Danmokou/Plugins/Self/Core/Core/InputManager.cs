@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using DMK.DMath;
 using UnityEngine;
 using KC = UnityEngine.KeyCode;
-using static SaveUtils;
+using static FileUtils;
 using ProtoBuf;
 
 
@@ -16,19 +16,20 @@ public enum InputTriggerMethod {
 
 public class InputChecker {
     private readonly Func<bool> checker;
-    public readonly string keyDescr;
+    public readonly LocalizedString keyDescr;
     private readonly bool isController;
 
     public bool Active => (!isController || InputManager.AllowControllerInput) && checker();
 
-    public InputChecker(Func<bool> f, string k, bool isController=false) {
+    public InputChecker(Func<bool> f, LocalizedString k, bool isController=false) {
         checker = f;
         keyDescr = k;
         this.isController = isController;
     }
     
     public InputChecker Or(InputChecker other) => 
-        new InputChecker(() => Active || other.Active, $"{keyDescr} or {other.keyDescr}");
+        new InputChecker(() => Active || other.Active, 
+            LocalizedString.Format(new LocalizedString("{0} or {1}", "{0}や{1}"), keyDescr, other.keyDescr));
 }
 
 public class InputHandler {
@@ -67,6 +68,9 @@ public class InputHandler {
     }
 }
 
+public abstract class InputProvider {
+    
+}
 public static class InputManager {
     public static bool AllowControllerInput { get; set; }
     public static readonly IReadOnlyList<KC> Alphanumeric = new[] {
@@ -96,13 +100,13 @@ public static class InputManager {
     private static InputChecker Key(KC key, bool controller = false) => Key(() => key, controller);
 
     private static InputChecker Key(Func<KC> key, bool controller) =>
-        new InputChecker(() => Input.GetKey(key()), key().ToString(), controller);
+        new InputChecker(() => Input.GetKey(key()), new LocalizedString(key().ToString()), controller);
 
     private static InputChecker AxisL0(string axis, bool controller = false) =>
-        new InputChecker(() => Input.GetAxisRaw(axis) < -0.1f, axis, controller);
+        new InputChecker(() => Input.GetAxisRaw(axis) < -0.1f, new LocalizedString(axis), controller);
 
     private static InputChecker AxisG0(string axis, bool controller = false) =>
-        new InputChecker(() => Input.GetAxisRaw(axis) > 0.1f, axis, controller);
+        new InputChecker(() => Input.GetAxisRaw(axis) > 0.1f, new LocalizedString(axis), controller);
 
     private static readonly InputChecker ArrowRight = Key(KeyCode.RightArrow);
     private static readonly InputChecker ArrowLeft = Key(KeyCode.LeftArrow);
@@ -123,7 +127,13 @@ public static class InputManager {
     public static readonly InputHandler UIBack = InputHandler.Trigger(Key(KC.X).Or(Key(cB, true)));
     private static readonly InputHandler UISkipDialogue = InputHandler.Trigger(Key(KC.LeftControl));
 
-    public static readonly InputHandler Pause = InputHandler.Trigger(Key(KC.Escape).Or(Key(cStart, true)));
+    public static readonly InputHandler Pause = InputHandler.Trigger(
+#if WEBGL
+        Key(KC.BackQuote).Or(Key(cStart, true))
+#else
+        Key(KC.BackQuote).Or(Key(KC.Escape)).Or(Key(cStart, true))
+#endif
+        );
 
     static InputManager() {
         unsafe {
@@ -173,20 +183,20 @@ public static class InputManager {
 
     };
 
-    private const float shortRef = short.MaxValue;
+    private const short shortRef = short.MaxValue;
     private static float GetAxisRawC(string key) => AllowControllerInput ? Input.GetAxisRaw(key) : 0;
     private static float FRight => ArrowRight.Active ? 1 : 0;
     private static float _horizSpeed01 =>
         (ArrowRight.Active ? 1 : 0) + (ArrowLeft.Active ? -1 : 0) +
         GetAxisRawC(aCHoriz) + GetAxisRawC(aCDPadX);
-    private static short _horizSpeedShort => (short) M.Clamp(-shortRef, shortRef, _horizSpeed01 * shortRef);
+    private static short _horizSpeedShort => M.ClampS(-shortRef, shortRef, (short)(_horizSpeed01 * shortRef));
     private static short HorizontalSpeed => replay?.horizontal ?? _horizSpeedShort;
     public static float HorizontalSpeed01 => HorizontalSpeed / (float) shortRef;
 
     private static float _vertSpeed01 =>
         (ArrowUp.Active ? 1 : 0) + (ArrowDown.Active ? -1 : 0) +
         GetAxisRawC(aCVert) + GetAxisRawC(aCDPadY);
-    private static short _vertSpeedShort => (short) M.Clamp(-shortRef, shortRef, _vertSpeed01 * shortRef);
+    private static short _vertSpeedShort => M.ClampS(-shortRef, shortRef, (short)(_vertSpeed01 * shortRef));
     private static short VerticalSpeed => replay?.vertical ?? _vertSpeedShort;
     public static float VerticalSpeed01 => VerticalSpeed / (float) shortRef;
 

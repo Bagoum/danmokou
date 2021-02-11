@@ -2,9 +2,9 @@ pattern { }
 phase 0
 	paction 0
 		position -3 0
-		sync sun-red/b <3;:> ss
-			ebounce2 min 1 / t 2
-			null
+		sync sun-red/b <3;:> simple null { 
+			scale ebounce2 min 1 / t 2
+		}
 
 
             

@@ -44,10 +44,10 @@ public static class M {
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static byte Float01ToByte(float f) => 
-        f < 0 ? (byte)0 :
-        f > 1 ? (byte)1 :
-            (byte) Math.Round(f * 255f);
+    public static byte Float01ToByte(float f) =>
+        f <= 0 ? byte.MinValue :
+        f >= 1 ? byte.MaxValue :
+        (byte) (f * 256f);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static float Sin(float rad) => (float)Math.Sin(rad);
@@ -163,15 +163,27 @@ public static class M {
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int Clamp(int low, int high, int x) {
-        if (x > high) return high;
-        return (x < low ? low : x);
-    }
+    public static short ClampS(short low, short high, short x) => 
+        x < low ? low 
+        : x > high ? high 
+        : x;
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static double Clamp(double low, double high, double x) {
-        if (x > high) return high;
-        return (x < low ? low : x);
-    }
+    public static int Clamp(int low, int high, int x) => 
+        x < low ? low 
+        : x > high ? high 
+        : x;
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static double Clamp(double low, double high, double x) => 
+        x < low ? low 
+        : x > high ? high 
+        : x;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static float Clamp(float low, float high, float x) => 
+        x < low ? low 
+        : x > high ? high 
+        : x;
 
     public static float AngleFromTo(Vector2 src, Vector2 target) {
         Vector2 diff = target - src;
@@ -266,11 +278,34 @@ public static class M {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static double Lerp(double low, double high, double controller, double a, double b) =>
         Lerp(a, b, (controller - low) / (high - low));
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static float LerpU(float a, float b, float t) => a * (1 - t) + b * t;
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static float Lerp(float a, float b, float t) => LerpU(a, b, Clamp(0, 1, t));
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static float Lerp(float low, float high, float controller, float a, float b) =>
+        Lerp(a, b, (controller - low) / (high - low));
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Vector3 Lerp(float low, float high, float controller, Vector3 a, Vector3 b) =>
+        Vector3.Lerp(a, b, (controller - low) / (high - low));
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static float Lerp3(float lowest, float low, float high, float highest, float controller, float a, float b,
+        float c) =>
+        controller < high ? Lerp(lowest, low, controller, a, b) : Lerp(high, highest, controller, b, c);
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Vector3 Lerp3(float lowest, float low, float high, float highest, float controller, Vector3 a, Vector3 b,
+        Vector3 c) =>
+        controller < high ? Lerp(lowest, low, controller, a, b) : Lerp(high, highest, controller, b, c);
+            
 
     /// <summary>
     /// Returns (x - a) / (b - a); ie. t such that LerpUnclamped(a, b, t) = x.
     /// </summary>
     public static double Ratio(double a, double b, double x) => (x - a) / (b - a);
+    public static float Ratio(float a, float b, float x) => (x - a) / (b - a);
 
     public static float EInSine(float x) => 1f - (float) Math.Cos(HPI * x);
     public static float EOutSine(float x) => (float) Math.Sin(HPI * x);
@@ -278,11 +313,18 @@ public static class M {
 
     public static float EOutQuad(float x) => 1f - Mathf.Pow(1f - x, 4f);
 
+    public static float Identity(float x) => x;
+
 
     /// <summary>
     /// If the magnitude of a vector is greater than 1, normalize it, else noop.
     /// </summary>
     public static Vector2 LimitTo1(this Vector2 xy) => xy.sqrMagnitude > 1 ? xy.normalized : xy;
+
+    public static Vector3 MulBy(this Vector3 x, Vector3 m) => new Vector3(x.x * m.x, x.y * m.y, x.z * m.z);
+    public static Bounds MulBy(this Bounds b, Vector3 m) {
+        return new Bounds(b.center.MulBy(m), b.size.MulBy(m));
+    }
 }
 
 public readonly struct Hitbox {
@@ -337,6 +379,18 @@ public readonly struct CRect {
         this.cos_rot = M.CosDeg(ang_deg);
         this.sin_rot = M.SinDeg(ang_deg);
     }
+
+    public CRect(Transform tr, Bounds bounds) {
+        var trloc = tr.position;
+        var scale = tr.lossyScale;
+        x = trloc.x + scale.x * bounds.center.x;
+        y = trloc.y + scale.y * bounds.center.y;
+        halfW = scale.x * bounds.extents.x;
+        halfH = scale.y * bounds.extents.y;
+        angle = tr.eulerAngles.z;
+        this.cos_rot = M.CosDeg(angle);
+        this.sin_rot = M.SinDeg(angle);
+    }
     
     public static implicit operator CRect(V2RV2 rect) => new CRect(rect.nx, rect.ny, rect.rx, rect.ry, rect.angle);
 }
@@ -370,7 +424,6 @@ public readonly struct V2RV2 {
     public Vector2 RV => new Vector2(rx, ry);
     
     public Vector2 TrueLocation => new Vector2(nx, ny) + M.RotateVectorDeg(rx, ry, angle);
-    public Vector3 TrueLocA => TrueLocation.WithZ(angle);
     public static V2RV2 Zero => V2RV2.NRot(0, 0);
 
     public V2RV2(float nx, float ny, float rx, float ry, float angle_deg) {
@@ -378,6 +431,13 @@ public readonly struct V2RV2 {
         this.ny = ny;
         this.rx = rx;
         this.ry = ry;
+        this.angle = angle_deg;
+    }
+    public V2RV2(Vector2 nxy, Vector2 rxy, float angle_deg) {
+        this.nx = nxy.x;
+        this.ny = nxy.y;
+        this.rx = rxy.x;
+        this.ry = rxy.y;
         this.angle = angle_deg;
     }
 

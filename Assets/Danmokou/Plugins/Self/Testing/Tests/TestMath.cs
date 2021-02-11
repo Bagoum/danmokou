@@ -74,11 +74,11 @@ public static class TestMath {
             ColorEq(gsr.Evaluate(0), Color.Lerp(Color.blue, Color.red, 0.2f));
             ColorEq(gsr.Evaluate(1), Color.Lerp(Color.blue, Color.red, 0.7f));
             ColorEq(gsr.Evaluate(0.5f), Color.Lerp(Color.blue, Color.red, 0.45f));
-            Assert.IsTrue(gsr is Gradient);
-            var red0 = new Color(1f, 0f, 0f, 0f);
+            Assert.IsTrue(gsr is DGradient);
+            var red0 = new Color(1f, 0, 0, 0);
             g = EvenlySpaced(red0, Color.blue);
-            //Alpha in color doesn't matter
-            ColorEq(g.Evaluate(0f), Color.red);
+            //Alpha in color DOES matter as fallback
+            ColorEq(g.Evaluate(0f), Color.red.WithA(0f));
             ColorEq(g.Evaluate(1f), Color.blue);
             g = FromKeys(new[] {new GradientColorKey(Color.red, 0f), new GradientColorKey(Color.blue, 1f)},
                 new[] {new GradientAlphaKey(0f, 0f), new GradientAlphaKey(1f, 1f)});
@@ -92,7 +92,7 @@ public static class TestMath {
             ColorEq(g.Evaluate(0), Color.Lerp(red0, Color.blue, 0.2f));
             ColorEq(g.Evaluate(1), Color.Lerp(red0, Color.blue, 0.7f));
             ColorEq(g.Evaluate(0.5f), Color.Lerp(red0, Color.blue, 0.7f));
-            Assert.IsTrue(g is Gradient);
+            Assert.IsTrue(g is DGradient);
         }
         /// <summary>
         /// Slow-path tests for generic IGradient
@@ -109,14 +109,14 @@ public static class TestMath {
             ColorEq(gsr.Evaluate(0), Color.Lerp(Color.blue, Color.red, 0.2f));
             ColorEq(gsr.Evaluate(1), Color.Lerp(Color.blue, Color.red, 0.7f));
             ColorEq(gsr.Evaluate(0.5f), Color.Lerp(Color.blue, Color.red, 0.45f));
-            Assert.IsFalse(gsr is Gradient);
-            var red0 = new Color(1f, 0f, 0f, 0f);
+            Assert.IsFalse(gsr is DGradient);
+            var red0 = new Color(1f, 0, 0, 0);
             g = new WrapGradient(EvenlySpaced(red0, Color.blue));
-            //Alpha in color doesn't matter
-            ColorEq(g.Evaluate(0f), Color.red);
+            //Alpha in color DOES matter as fallback
+            ColorEq(g.Evaluate(0f), Color.red.WithA(0f));
             ColorEq(g.Evaluate(1f), Color.blue);
-            g = new WrapGradient(FromKeys(new[] {new GradientColorKey(Color.red, 0f), new GradientColorKey(Color.blue, 1f)},
-                new[] {new GradientAlphaKey(0f, 0f), new GradientAlphaKey(1f, 1f)}));
+            g = FromKeys(new[] {new GradientColorKey(Color.red, 0f), new GradientColorKey(Color.blue, 1f)},
+                new[] {new GradientAlphaKey(0f, 0f), new GradientAlphaKey(1f, 1f)});
             ColorEq(g.Evaluate(0f), red0);
             ColorEq(g.Evaluate(1f), Color.blue);
             g = g.RemapTime(0.2f, 0.7f);

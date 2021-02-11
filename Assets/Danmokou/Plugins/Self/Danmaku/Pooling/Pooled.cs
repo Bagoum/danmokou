@@ -13,10 +13,10 @@ public abstract class Pooled : CoroutineRegularUpdater {
     /// True iff the object has a parent other than the default pool container/null.
     /// </summary>
     protected bool parented;
-    protected Transform tr;
+    protected Transform tr = null!;
     protected abstract Transform Container { get; }
     private readonly List<Pooled> dependents = new List<Pooled>();
-    [CanBeNull] private Pooled parent;
+    private Pooled? parent;
 
     protected virtual void Awake() {
         tr = transform;
@@ -60,7 +60,7 @@ public abstract class Pooled : CoroutineRegularUpdater {
         ForceClosingFrame();
         DisableUpdates();
         if (parented) {
-            if (parent.gameObject.activeInHierarchy) tr.SetParent(Container, false);
+            if (parent!.gameObject.activeInHierarchy) tr.SetParent(Container, false);
             else {
                 //This case occurs when disabling due to scene end, which can occur naturally via eg. scene reload
                 //In which case we just don't do the parenting step
@@ -86,12 +86,13 @@ public abstract class Pooled : CoroutineRegularUpdater {
 /// Objects will not receive regular update calls while in the pooled cache.
 /// </summary>
 /// <typeparam name="P"></typeparam>
-public abstract class Pooled<P> : Pooled {
-    private static Func<Transform> container_ref;
+public abstract class Pooled<P> : Pooled where P : class {
+    // ReSharper disable once StaticMemberInGenericType
+    private static Func<Transform> container_ref = null!;
     protected override Transform Container => container_ref();
-    private HashSet<P> active_ref;
-    private Queue<P> free_ref;
-    private P self_ref;
+    private HashSet<P> active_ref = null!;
+    private Queue<P> free_ref = null!;
+    private P self_ref = null!;
 
     public virtual bool ShowUnderContainer => true;
 

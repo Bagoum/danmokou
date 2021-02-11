@@ -7,36 +7,40 @@ using UnityEngine;
 namespace DMK.Scriptables {
 [CreateAssetMenu(menuName = "Data/Game Data")]
 public class GameUniqueReferences : ScriptableObject {
-    public string gameIdentifier;
+    [Tooltip("Preferably a short acronym")]
+    public string gameIdentifier = "";
     public Version gameVersion;
-    public SceneConfig mainMenu;
-    public SceneConfig replaySaveMenu;
-    public GameObject defaultMenuBackground;
-    public Sprite defaultUIFrame;
-    public SceneConfig unitScene;
-    public SceneConfig tutorial;
-    public SceneConfig miniTutorial;
-    public SceneConfig endcard;
-    public CampaignConfig campaign;
-    public CampaignConfig exCampaign;
-    public IEnumerable<CampaignConfig> Campaigns => new[] {campaign, exCampaign}.Where(c => c != null);
-    public DayCampaignConfig dayCampaign;
-    public CameraTransitionConfig defaultTransition;
+    public SceneConfig mainMenu = null!;
+    public SceneConfig replaySaveMenu = null!;
+    public GameObject defaultMenuBackground = null!;
+    public Sprite defaultUIFrame = null!;
+    public SceneConfig unitScene = null!;
+    public SceneConfig? tutorial;
+    public SceneConfig? miniTutorial;
+    public SceneConfig endcard = null!;
+    public CampaignConfig campaign = null!;
+    public CampaignConfig? exCampaign;
+    public IEnumerable<CampaignConfig> Campaigns => new[] {campaign, exCampaign}.FilterNone();
+    public DayCampaignConfig? dayCampaign;
+    public CameraTransitionConfig defaultTransition = null!;
 
     public FieldBounds bounds;
 
-    public SODialogue[] dialogue;
-    [Header("Script Keyable")] public BossConfig[] bossMetadata;
-    public DialogueProfile[] dialogueProfiles;
-    public AudioTrack[] tracks;
-    public ItemReferences items;
-    public SOPrefabs[] summonables;
-    public SOTextAssets[] fileStateMachines;
+    public SODialogue[] dialogue = null!;
+    [Header("Script Keyable")] public BossConfig[] bossMetadata = null!;
+    public DialogueProfile[] dialogueProfiles = null!;
+    public AudioTrack[] tracks = null!;
+    public ItemReferences items = null!;
+    public PrefabReferences prefabReferences = null!;
+    public UXMLReferences uxmlDefaults = null!;
+    public SOPrefabs[] summonables = null!;
+    public SOTextAssets[] fileStateMachines = null!;
+    public string[] scriptFolders = null!;
 
-    private static IEnumerable<PlayerConfig> CampaignShots(CampaignConfig c) =>
+    private static IEnumerable<PlayerConfig> CampaignShots(CampaignConfig? c) =>
         c == null ? new PlayerConfig[0] : c.players;
 
-    private static IEnumerable<PlayerConfig> CampaignShots(DayCampaignConfig c) =>
+    private static IEnumerable<PlayerConfig> CampaignShots(DayCampaignConfig? c) =>
         c == null ? new PlayerConfig[0] : c.players;
 
     public IEnumerable<PlayerConfig> AllPlayers =>

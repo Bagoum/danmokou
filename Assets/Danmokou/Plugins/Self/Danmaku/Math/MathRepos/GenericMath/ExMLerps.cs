@@ -14,16 +14,17 @@ using efloat = DMK.Expressions.EEx<float>;
 using ev2 = DMK.Expressions.EEx<UnityEngine.Vector2>;
 using ev3 = DMK.Expressions.EEx<UnityEngine.Vector3>;
 using erv2 = DMK.Expressions.EEx<DMK.DMath.V2RV2>;
-using ExBPY = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<float>>;
 using static DMK.DMath.Functions.ExM;
 using static DMK.DMath.Functions.ExMConditionals;
 using static DMK.DMath.Functions.ExMConversions;
 using static DMK.DMath.Functions.ExMMod;
+using ExBPY = System.Func<DMK.Expressions.TExArgCtx, DMK.Expressions.TEx<float>>;
 
 namespace DMK.DMath.Functions {
 /// <summary>
 /// See <see cref="DMK.DMath.Functions.ExM"/>. This class contains functions related to lerping and smoothing.
 /// </summary>
+[Reflect]
 public static class ExMLerps {
     /// <summary>
     /// Lerp between two functions.
@@ -62,7 +63,7 @@ public static class ExMLerps {
         => EEx.Resolve(zeroBound, oneBound, controller, (z, o, c) => {
             var rc = VFloat();
             return Ex.Block(new[] {rc},
-                rc.Is(Smooth(smoother, Clamp(z, o, c).Sub(z).Div(o.Sub(z)))),
+                rc.Is(smoother(Clamp(z, o, c).Sub(z).Div(o.Sub(z)))),
                 rc.Mul(f2).Add(rc.Complement().Mul(f1))
             );
         });
@@ -160,13 +161,13 @@ public static class ExMLerps {
     public static tfloat Damp(efloat ceiling, tfloat ratio, efloat value) => EEx.Resolve(ceiling, value, (c, x) =>
         If(x.GT(c), c.Add(ratio.Mul(x.Sub(c))), x));
     
-    public static Func<TExPI, TEx<T>> LerpT<T>(ExBPY zeroBound, ExBPY oneBound, 
-        Func<TExPI, TEx<T>> f1, Func<TExPI, TEx<T>> f2) => b => 
+    public static Func<TExArgCtx, TEx<T>> LerpT<T>(ExBPY zeroBound, ExBPY oneBound, 
+        Func<TExArgCtx, TEx<T>> f1, Func<TExArgCtx, TEx<T>> f2) => b => 
         Lerp(zeroBound(b), oneBound(b), BPYRepo.T()(b), f1(b), f2(b));
     
     
-    public static Func<TExPI, TEx<T>> LerpT3<T>(ExBPY zeroBound, ExBPY oneBound, ExBPY twoBound, ExBPY threeBound, 
-        Func<TExPI, TEx<T>> f1, Func<TExPI, TEx<T>> f2, Func<TExPI, TEx<T>> f3) => b => 
+    public static Func<TExArgCtx, TEx<T>> LerpT3<T>(ExBPY zeroBound, ExBPY oneBound, ExBPY twoBound, ExBPY threeBound, 
+        Func<TExArgCtx, TEx<T>> f1, Func<TExArgCtx, TEx<T>> f2, Func<TExArgCtx, TEx<T>> f3) => b => 
         Lerp3(zeroBound(b), oneBound(b), twoBound(b), threeBound(b), BPYRepo.T()(b), f1(b), f2(b), f3(b));
     
     
@@ -179,16 +180,16 @@ public static class ExMLerps {
     /// <param name="f1">Function when <c>t \leq at</c></param>
     /// <param name="f2">Function when <c>t \gt at</c></param>
     /// <returns></returns>
-    public static Func<TExPI, TEx<T>> SwitchH<T>(ExBPY switchVar, ExBPY at, Func<TExPI, TEx<T>> f1, Func<TExPI, TEx<T>> f2) => bpi => {
+    public static Func<TExArgCtx, TEx<T>> SwitchH<T>(ExBPY switchVar, ExBPY at, Func<TExArgCtx, TEx<T>> f1, Func<TExArgCtx, TEx<T>> f2) => bpi => {
         var pivot = VFloat();
-        var cold = new TExPI();
+        var pivotT = bpi.MakeCopyForType<TExPI>(out var currEx, out var pivotEx);
         return Ex.Block(new[] { pivot }, 
             pivot.Is(at(bpi)),
             Ex.Condition(Ex.GreaterThan(switchVar(bpi), pivot), 
-                Ex.Block(new ParameterExpression[] { cold },
-                    Ex.Assign(cold, bpi),
-                    SubAssign(switchVar(cold), pivot),
-                    f2(cold)
+                Ex.Block(new ParameterExpression[] { pivotEx },
+                    Ex.Assign(pivotEx, currEx),
+                    SubAssign(switchVar(pivotT), pivot),
+                    f2(pivotT)
                 ), f1(bpi))
         );
     };
@@ -197,23 +198,23 @@ public static class ExMLerps {
     /// Apply a ease function on top of a target derivative function that uses time as a controller.
     /// Primarily used for velocity parametrics.
     /// </summary>
-    /// <param name="smoother">Smoothing function</param>
+    /// <param name="smoother">Smoothing function (<see cref="ExMEasers"/>)</param>
     /// <param name="maxTime">Time over which to perform easing</param>
     /// <param name="f">Target parametric (describing velocity)</param>
     /// <returns></returns>
-    public static Func<TExPI, TEx<T>> EaseD<T>([LookupMethod] Func<tfloat, tfloat> smoother, float maxTime, 
-        Func<TExPI, TEx<T>> f) 
+    public static Func<TExArgCtx, TEx<T>> EaseD<T>([LookupMethod] Func<tfloat, tfloat> smoother, float maxTime, 
+        Func<TExArgCtx, TEx<T>> f) 
         => ExMHelpers.EaseD(smoother, maxTime, f, bpi => bpi.t, (bpi, t) => bpi.CopyWithT(t));
 
     /// <summary>
     /// Apply a ease function on top of a target function that uses time as a controller.
     /// </summary>
-    /// <param name="smoother">Smoothing function</param>
+    /// <param name="smoother">Smoothing function (<see cref="ExMEasers"/>)</param>
     /// <param name="maxTime">Time over which to perform easing</param>
     /// <param name="f">Target parametric (describing offset)</param>
     /// <returns></returns>
-    public static Func<TExPI, TEx<T>> Ease<T>([LookupMethod] Func<tfloat, tfloat> smoother, float maxTime, 
-        Func<TExPI, TEx<T>> f) 
+    public static Func<TExArgCtx, TEx<T>> Ease<T>([LookupMethod] Func<tfloat, tfloat> smoother, float maxTime, 
+        Func<TExArgCtx, TEx<T>> f) 
         => ExMHelpers.Ease(smoother, maxTime, f, bpi => bpi.t, (bpi, t) => bpi.CopyWithT(t));
 
 
@@ -236,20 +237,20 @@ public static class ExMLerps {
     #region Easing
 
     /// <summary>
-    /// *DEPRECATED*. INSTEAD OF RUNNING Smooth(EIOSine, t) YOU MAY RUN EIOSine(t) DIRECTLY.
     /// Apply a contortion to a 0-1 range.
     /// This returns an approximately linear function.
     /// </summary>
-    /// <param name="smoother">Smoothing function</param>
+    /// <param name="smoother">Smoothing function (<see cref="ExMEasers"/>)</param>
     /// <param name="controller">0-1 value</param>
     /// <returns></returns>
+    [Obsolete("Instead of running 'smooth(eiosine, t)', you may simply run 'eiosine(t)'.")]
     public static tfloat Smooth([LookupMethod] Func<tfloat, tfloat> smoother, tfloat controller) => smoother(controller);
 
     /// <summary>
     /// Apply a contortion to a clamped 0-1 range.
     /// This returns an approximately linear function.
     /// </summary>
-    /// <param name="smoother">Smoothing function</param>
+    /// <param name="smoother">Smoothing function (<see cref="ExMEasers"/>)</param>
     /// <param name="controller">0-1 value (clamped if outside)</param>
     /// <returns></returns>
     public static tfloat SmoothC([LookupMethod] Func<tfloat, tfloat> smoother, tfloat controller) 
@@ -261,8 +262,8 @@ public static class ExMLerps {
     /// <br/> 1 in the range [s1,x-s2]
     /// <br/> 1-0 in the range [x-s2,x]
     /// </summary>
-    /// <param name="smoother1">First smoothing function</param>
-    /// <param name="smoother2">Second smoothing function</param>
+    /// <param name="smoother1">First Smoothing function (<see cref="ExMEasers"/>)</param>
+    /// <param name="smoother2">Second Smoothing function (<see cref="ExMEasers"/>)</param>
     /// <param name="total">Total time</param>
     /// <param name="smth1">Smooth-in time</param>
     /// <param name="smth2">Smooth-out time</param>
@@ -289,7 +290,7 @@ public static class ExMLerps {
     /// Get the value of an easer at a given point between 0 and 1.
     /// The return value is periodized, so if the input is 5.4, then the output is 5 + ease(0.4).
     /// </summary>
-    /// <param name="smoother">Smoothing function</param>
+    /// <param name="smoother">Smoothing function (<see cref="ExMEasers"/>)</param>
     /// <param name="controller"></param>
     /// <returns></returns>
     public static tfloat SmoothLoop([LookupMethod] Func<tfloat, tfloat> smoother, efloat controller) 
@@ -305,12 +306,12 @@ public static class ExMLerps {
     /// Apply a contortion to a 0-R range, returning R * Smooth(name, controller/R).
     /// This returns an approximately linear function.
     /// </summary>
-    /// <param name="smoother">Smoothing function</param>
+    /// <param name="smoother">Smoothing function (<see cref="ExMEasers"/>)</param>
     /// <param name="range">Range</param>
     /// <param name="controller">0-R value</param>
     /// <returns></returns>
     public static tfloat SmoothR([LookupMethod] Func<tfloat, tfloat> smoother, efloat range, tfloat controller) =>
-        EEx.Resolve(range, r => r.Mul(Smooth(smoother, controller.Div(r))));
+        EEx.Resolve(range, r => r.Mul(smoother(controller.Div(r))));
     
     /// <summary>
     /// Returns R * SmoothLoop(name, controller/R).
@@ -318,50 +319,6 @@ public static class ExMLerps {
     public static tfloat SmoothLoopR([LookupMethod] Func<tfloat, tfloat> smoother, efloat range, tfloat controller) =>
         EEx.Resolve(range, r => r.Mul(SmoothLoop(smoother, controller.Div(r))));
     
-    /// <summary>
-    /// In-Sine easing function.
-    /// </summary>
-    [Alias("in-sine")]
-    public static tfloat EInSine(tfloat x) => E1.Sub(Cos(hpi.Mul(x)));
-    /// <summary>
-    /// Out-Sine easing function.
-    /// </summary>
-    [Alias("out-sine")]
-    public static tfloat EOutSine(tfloat x) => Sin(hpi.Mul(x));
-    /// <summary>
-    /// In-Out-Sine easing function.
-    /// </summary>
-    [Alias("io-sine")]
-    public static tfloat EIOSine(tfloat x) => E05.Sub(E05.Mul(Cos(pi.Mul(x))));
-    /// <summary>
-    /// Linear easing function (ie. y = x).
-    /// </summary>
-    public static tfloat ELinear(tfloat x) => x;
-    /// <summary>
-    /// In-Quad easing function.
-    /// </summary>
-    public static tfloat EInQuad(tfloat x) => Sqr(x);
-    /// <summary>
-    /// Sine easing function with 010 pattern.
-    /// </summary>
-    public static tfloat ESine010(tfloat x) => Sin(pi.Mul(x));
-    /// <summary>
-    /// Softmod easing function with 010 pattern.
-    /// </summary>
-    [Alias("smod-010")]
-    public static tfloat ESoftmod010(tfloat x) => Mul(E2, SoftMod(E05, x));
-
-    public static tfloat EBounce2(tfloat x) => EEx.Resolve<float>((Ex)x, c => {
-        var c1 = VFloat();
-        var c2 = VFloat();
-        return Ex.Block(new[] {c1, c2},
-            c1.Is(Min(E05, c.Mul(ExC(0.95f)))),
-            c2.Is(Max(E0, c.Sub(E05))),
-            c1.Add(c2).Add(ExC(0.4f).Mul(
-                    Sin(tau.Mul(c1)).Add(Sin(tau.Mul(c2)))
-                ))
-        );
-    }); //https://www.desmos.com/calculator/ix37mllnyp
     
     /// <summary>
     /// Quadratic function that joins an ease-out and an ease-in, ie. two joined parabolas.
@@ -379,8 +336,38 @@ public static class ExMLerps {
     });
     
     #endregion
-    
 
+    /// <summary>
+    /// Perform a quadratic bezier interpolation.
+    /// </summary>
+    /// <param name="start">Starting point</param>
+    /// <param name="ctrl">Control point</param>
+    /// <param name="end">Ending point</param>
+    /// <param name="time">0-1 lerp controller</param>
+    public static TEx<T> Bezier<T>(TEx<T> start, TEx<T> ctrl, TEx<T> end, efloat time) => 
+        EEx.Resolve(time, t => {
+            var c = E1.Sub(t);
+            return c.Mul(c).Mul(start)
+                .Add(E2.Mul(c).Mul(t).Mul(ctrl))
+                .Add(t.Mul(t).Mul(end));
+    });
+
+    /// <summary>
+    /// Perform a cubic bezier interpolation.
+    /// </summary>
+    /// <param name="start">Starting point</param>
+    /// <param name="ctrl1">First control point</param>
+    /// <param name="ctrl2">Second control point</param>
+    /// <param name="end">Ending point</param>
+    /// <param name="time">0-1 lerp controller</param>
+    public static TEx<T> Bezier3<T>(TEx<T> start, TEx<T> ctrl1, TEx<T> ctrl2, TEx<T> end, efloat time)
+        => EEx.Resolve(time, t => {
+            var c = E1.Sub(t);
+            return c.Mul(c).Mul(c).Mul(start)
+                .Add(ExC(3f).Mul(c).Mul(c).Mul(t).Mul(ctrl1))
+                .Add(ExC(3f).Mul(c).Mul(t).Mul(t).Mul(ctrl2))
+                .Add(t.Mul(t).Mul(t).Mul(end));
+        });
 
 }
 }

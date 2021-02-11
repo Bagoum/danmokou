@@ -1,6 +1,7 @@
 ﻿
 using System;
 using System.Collections.Generic;
+using DMK.Expressions;
 using JetBrains.Annotations;
 
 namespace DMK.Reflection {
@@ -15,25 +16,49 @@ public abstract class ReflWrap {
         foreach (var x in wrappers) x.Reset();
     }
 
+    public static void InvokeAllWrappers() {
+        foreach (var x in wrappers) x.Invoke();
+    }
+
     public abstract void Reset();
+    public abstract void Invoke();
+
+    public static ReflWrap<T> FromFunc<T>(string uniqueKey, Func<T> constructor) where T : class =>
+        ReflWrap<T>.FromFunc(uniqueKey, constructor);
+    
+    public static ReflWrap<T> FromString<T>(string text, Func<string, T> constructor) where T : class =>
+        ReflWrap<T>.FromFunc(text + typeof(T).RName(), () => constructor(text));
+
 }
 
 public class ReflWrap<T> : ReflWrap where T : class {
     private readonly Func<T> constructor;
-    [CanBeNull] private T value;
-    public T Value => value = value ?? constructor();
+    private T? value;
+    public T Value => value ??= constructor();
 
-    public ReflWrap(Func<T> constructor) {
+    private ReflWrap(Func<T> constructor) : base() {
         this.constructor = constructor;
-
     }
+
+    public ReflWrap(string intosrc) : this(intosrc.Into<T>) { }
+    
+    public static ReflWrap<T> FromFunc(string uniqueKey, Func<T> constructor) => 
+        new ReflWrap<T>(() => {
+            var bakeCtx = BakeCodeGenerator.OpenContext(BakeCodeGenerator.CookingContext.KeyType.MANUAL, uniqueKey);
+            var result = constructor();
+            bakeCtx?.Dispose();
+            return result;
+        });
 
     public override void Reset() {
         value = null;
     }
 
+    public override void Invoke() {
+        constructor();
+    }
+
     public static implicit operator T(ReflWrap<T> wrap) => wrap.Value;
-    public static implicit operator ReflWrap<T>(Func<T> constructor) => new ReflWrap<T>(constructor);
 
     private static readonly Dictionary<string, ReflWrap<T>> autoWrapped = new Dictionary<string, ReflWrap<T>>();
 
@@ -43,14 +68,15 @@ public class ReflWrap<T> : ReflWrap where T : class {
     /// </summary>
     public static T Wrap(string s) {
         if (!autoWrapped.TryGetValue(s, out var rw)) {
-            autoWrapped[s] = rw = new ReflWrap<T>(s.Into<T>);
+            autoWrapped[s] = rw = new ReflWrap<T>(s);
         }
         return rw.Value;
     }
 
-    public static void Load([CanBeNull] string s) {
-        if (string.IsNullOrWhiteSpace(s)) return;
-        Wrap(s);
+    public static T? MaybeWrap(string? s) => string.IsNullOrWhiteSpace(s) ? null : Wrap(s!);
+
+    public static void Load(string? s) {
+        MaybeWrap(s);
     }
 }
 }

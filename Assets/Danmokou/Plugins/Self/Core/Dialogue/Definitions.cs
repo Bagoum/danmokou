@@ -17,8 +17,8 @@ public interface IDialogueProfile {
     Sprite FindIcon(Emote e);
     (bool flip, DialogueSprite sprite) FindLeftStand(Emote e);
     (bool flip, DialogueSprite sprite) FindRightStand(Emote e);
-    string DisplayName { get; }
-    string SpeakSFX { get; }
+    LocalizedString DisplayName { get; }
+    string? SpeakSFX { get; }
 }
 
 

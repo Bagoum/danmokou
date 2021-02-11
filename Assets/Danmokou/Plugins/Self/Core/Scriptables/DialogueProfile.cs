@@ -48,30 +48,30 @@ public class DialogueProfile : ScriptableObject, IDialogueProfile {
 
         public (bool, DialogueSprite)? FindF(Emote e, bool flip = false) {
             var s = Find(e);
-            return ((s.sprites?.Length ?? 0) == 0) ? ((bool, DialogueSprite)?) null : (flip, FillDefault(s));
+            return (s.sprites.Length == 0) ? ((bool, DialogueSprite)?) null : (flip, FillDefault(s));
         }
     }
 
     [Serializable]
     public struct EmotedSprites {
-        [CanBeNull] public Sprite normal;
-        [CanBeNull] public Sprite angry;
-        [CanBeNull] public Sprite happy;
-        [CanBeNull] public Sprite worry;
-        [CanBeNull] public Sprite cry;
-        [CanBeNull] public Sprite surprise;
-        [CanBeNull] public Sprite special;
+        public Sprite? normal;
+        public Sprite? angry;
+        public Sprite? happy;
+        public Sprite? worry;
+        public Sprite? cry;
+        public Sprite? surprise;
+        public Sprite? special;
 
-        [CanBeNull]
-        public Sprite Find(Emote e) {
-            if (e == Emote.ANGRY) return angry;
-            if (e == Emote.HAPPY) return happy;
-            if (e == Emote.WORRY) return worry;
-            if (e == Emote.CRY) return cry;
-            if (e == Emote.SURPRISE) return surprise;
-            if (e == Emote.SPECIAL) return special;
-            return normal;
-        }
+        public Sprite? Find(Emote e) =>
+            e switch {
+                Emote.ANGRY => angry,
+                Emote.HAPPY => happy,
+                Emote.WORRY => worry,
+                Emote.CRY => cry,
+                Emote.SURPRISE => surprise,
+                Emote.SPECIAL => special,
+                _ => normal
+            };
 
         public (bool, Sprite)? Find0(Emote e) {
             var s = Find(e);
@@ -106,18 +106,18 @@ public class DialogueProfile : ScriptableObject, IDialogueProfile {
             es2.special = From1(es1.special);
         }
     }*/
-    public EmotedSprites2 leftStands2;
-    public EmotedSprites2 rightStands2;
+    public EmotedSprites2 leftStands2 = null!;
+    public EmotedSprites2 rightStands2 = null!;
     public bool flipOnReduce = true;
     public EmotedSprites icons;
-    public string displayName;
-    public string key;
-    public string speakSFX;
+    public LocalizedStringReference displayName = null!;
+    public string key = null!;
+    public string? speakSFX;
 
-    public string DisplayName => displayName;
-    public string SpeakSFX => speakSFX;
+    public LocalizedString DisplayName => displayName.Value;
+    public string? SpeakSFX => speakSFX;
 
-    private static Sprite Cascade(string err, params Sprite[] options) {
+    private static Sprite Cascade(string err, params Sprite?[] options) {
         foreach (var s in options) {
             if (s != null) return s;
         }

@@ -16,12 +16,12 @@ namespace DMK.Testing {
             yield return null;
         }
 
-        private static IEnumerator AddYieldAdd(List<string> msgs, string msg, IEnumerator toYield) {
+        private static IEnumerator AddYieldAdd(List<string> msgs, string msg, IEnumerator? toYield) {
             msgs.Add(msg);
             yield return toYield;
             msgs.Add(msg);
         }
-        private static IEnumerator AddYieldAddNull(List<string> msgs, string msg, IEnumerator toYield) {
+        private static IEnumerator AddYieldAddNull(List<string> msgs, string msg, IEnumerator? toYield) {
             msgs.Add(msg);
             yield return toYield;
             msgs.Add(msg);

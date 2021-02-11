@@ -12,15 +12,15 @@ using UnityEngine.UIElements;
 
 namespace DMK.UI {
 public class UIBuilderRenderer : CoroutineRegularUpdater {
-    public PanelSettings settings;
-    public Material uiMaterial;
+    public PanelSettings settings = null!;
+    public Material uiMaterial = null!;
 
-    public RenderTexture unsetRT;
+    public RenderTexture unsetRT = null!;
 
-    private RenderTexture rt;
-    private Cancellable allCancel;
-    private Transform tr;
-    private SpriteRenderer sr;
+    private RenderTexture rt = null!;
+    private Cancellable allCancel = null!;
+    private Transform tr = null!;
+    private SpriteRenderer sr = null!;
 
     private const int frontOrder = 32000;
     private int normalOrder;
@@ -47,7 +47,7 @@ public class UIBuilderRenderer : CoroutineRegularUpdater {
         return joint;
     }
 
-    private Action<bool> WrapDone(RAction action, [CanBeNull] Action<bool> a, out ICancellee c) {
+    private Action<bool> WrapDone(RAction action, Action<bool>? a, out ICancellee c) {
         var cancellee = c = CreateNewCanceller(action);
         return b => {
             RemoveCanceller(action, cancellee);
@@ -55,7 +55,7 @@ public class UIBuilderRenderer : CoroutineRegularUpdater {
         };
     }
 
-    public void Slide(Vector2? start, Vector2 end, float time, FXY smooth, [CanBeNull] Action<bool> done) {
+    public void Slide(Vector2? start, Vector2 end, float time, FXY smooth, Action<bool>? done) {
         if (start.Try(out var loc)) tr.localPosition = loc;
         RunRIEnumerator(_Slide(start, end, time, smooth,
             WrapDone(RAction.SLIDE, done, out var cT), cT));
@@ -65,7 +65,7 @@ public class UIBuilderRenderer : CoroutineRegularUpdater {
         => Ease(x => tr.localPosition = x, start ?? tr.localPosition, end, time, smooth, done, cT);
 
 
-    public void Fade(float? start, float end, float time, FXY smooth, [CanBeNull] Action<bool> done) {
+    public void Fade(float? start, float end, float time, FXY smooth, Action<bool>? done) {
         if (start.Try(out var loc)) sr.SetAlpha(loc);
         RunRIEnumerator(_Fade(start, end, time, smooth,
             WrapDone(RAction.FADE, done, out var cT), cT));
@@ -141,7 +141,7 @@ public class UIBuilderRenderer : CoroutineRegularUpdater {
     protected override void OnDisable() {
         settings.targetTexture = unsetRT;
         uiMaterial.SetTexture(PropConsts.renderTex, unsetRT);
-        allCancel?.Cancel();
+        allCancel.Cancel();
         base.OnDisable();
     }
 

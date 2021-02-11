@@ -9,7 +9,7 @@ public class PointPPItem : Item {
     protected override float RotationTurns => -2;
 
     protected override void CollectMe() {
-        GameManagement.instance.AddPointPlusItems(1);
+        GameManagement.Instance.AddPointPlusItems(1);
         base.CollectMe();
     }
 }

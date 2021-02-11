@@ -20,10 +20,11 @@ phase 0
 					/ &h cos &phe
 					/ &rx sin &phe
 		} offset zero
-			projectview
-				* 10 t * 10 t 0
-				* * &r cos(&th) sin(&ph)
-				* * &r sin(&th) sin(&ph)
-				* &r cos(&ph)
+			tp qrotate
+				pxyz * 10 t * 10 t 0
+				pxyz
+                    * * &r cos(&th) sin(&ph)
+                    * * &r sin(&th) sin(&ph)
+                    * &r cos(&ph)
         
         

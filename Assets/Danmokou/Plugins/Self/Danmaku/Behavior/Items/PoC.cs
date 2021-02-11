@@ -5,8 +5,8 @@ using UnityEngine;
 namespace DMK.Behavior.Items {
 public class PoC : RegularUpdater {
     public LRUD direction;
-    public SOPlayerHitbox target;
-    private Transform tr;
+    public SOPlayerHitbox target = null!;
+    private Transform tr = null!;
     public bool Autocollect { get; private set; }
 
     private void Awake() {

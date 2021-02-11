@@ -13,9 +13,10 @@ MonoBehaviour:
   m_Name: Player Fire Hit 1
   m_EditorClassIdentifier: 
   defaultName: x-pc-hit-1
-  clip: {fileID: 8300000, guid: 59a320bc1b8bcd84fbaf792832575ce0, type: 3}
+  clip: {fileID: 8300000, guid: 941862e2617cc264d9c5f43248f1869d, type: 3}
   volume: 0.2
   timeout: -1
+  pausable: 0
   loop: 1
   loopTimeCheck: 0.1
   pitch: 1.1

@@ -5,6 +5,7 @@ using System.Text;
 using UnityEngine;
 using TMPro;
 using DMK.Behavior;
+using DMK.Behavior.Display;
 using DMK.Core;
 using DMK.Danmaku;
 using DMK.Dialogue;
@@ -13,6 +14,7 @@ using DMK.Graphics;
 using DMK.Player;
 using DMK.Scriptables;
 using DMK.Services;
+using DMK.SM;
 using DMK.UI.XML;
 using JetBrains.Annotations;
 using UnityEngine.Serialization;
@@ -26,69 +28,70 @@ public struct PrioritySprite {
 }
 
 public interface IUIManager {
-    void SetBossHPLoader([CanBeNull] Enemy boss);
+    void SetBossHPLoader(Enemy? boss);
     void CloseBoss();
     void CloseProfile();
     void AddProfile(BossConfig.ProfileRender render);
     void SwitchProfile(BossConfig.ProfileRender render);
     void SetBossColor(Color textColor, Color bossHPColor);
-    BottomTracker TrackBEH(BehaviorEntity beh, string title, ICancellee cT);
+    void TrackBEH(BehaviorEntity beh, string title, ICancellee cT);
     void ShowBossLives(int bossLives);
     void ShowStaticTimeout(float maxTime);
     void DoTimeout(bool withSound, float maxTime, ICancellee cT, float? stayOnZero = null);
     void ShowPhaseType(PhaseType? phase);
-    void SetSpellname([CanBeNull] string title);
+    void SetSpellname(string? title);
 }
 
 public class UIManager : RegularUpdater, IUIManager, IUnpauseAnimateProvider {
 
-    private static UIManager main;
+    private static UIManager main = null!;
     public bool autoShiftCamera;
-    [FormerlySerializedAs("camera")] public Camera uiCamera;
-    public XMLPauseMenu PauseManager;
+    [FormerlySerializedAs("camera")] public Camera uiCamera = null!;
+    public static Camera Camera => main.uiCamera;
+    public XMLPauseMenu PauseManager = null!;
     public static XMLPauseMenu PauseMenu => main.PauseManager;
-    public XMLDeathMenu DeathManager;
-    public XMLPracticeSuccessMenu PracticeSuccessMenu;
-    public UIBuilderRenderer uiRenderer;
-    public SpriteRenderer frame;
-    public TextMeshPro spellnameText;
-    public TextMeshPro timeout;
-    public TextMeshPro difficulty;
-    public TextMeshPro score;
-    public TextMeshPro maxScore;
-    public GameObject scoreExtend_parent;
-    public TextMeshPro scoreExtend;
-    public TextMeshPro pivMult;
-    public TextMeshPro lifePoints;
-    public TextMeshPro graze;
-    public TextMeshPro power;
-    public TextMeshPro message;
-    public TextMeshPro multishotIndicator;
-    public TextMeshPro centerMessage;
+    public XMLDeathMenu DeathManager = null!;
+    public XMLPracticeSuccessMenu PracticeSuccessMenu = null!;
+    public UIBuilderRenderer uiRenderer = null!;
+    public SpriteRenderer frame = null!;
+    public TextMeshPro spellnameText = null!;
+    public TextMeshPro timeout = null!;
+    public TextMeshPro difficulty = null!;
+    public TextMeshPro score = null!;
+    public TextMeshPro maxScore = null!;
+    public GameObject scoreExtend_parent = null!;
+    public TextMeshPro scoreExtend = null!;
+    public TextMeshPro pivMult = null!;
+    public TextMeshPro lifePoints = null!;
+    public TextMeshPro graze = null!;
+    public TextMeshPro power = null!;
+    public TextMeshPro message = null!;
+    public TextMeshPro multishotIndicator = null!;
+    public TextMeshPro centerMessage = null!;
     private const string deathCounterFormat = "死{0:D2}";
     private const string timeoutTextFormat = "<mspace=4.3>{0:F1}</mspace>";
     private const string fpsFormat = "FPS: <mspace=1.5>{0:F0}</mspace>";
-    [CanBeNull] private Coroutine timeoutCor;
+    private Coroutine? timeoutCor;
     private static readonly int ValueID = Shader.PropertyToID("_Value");
-    [CanBeNull] private Coroutine spellnameController;
+    private Coroutine? spellnameController;
 
     private Color spellColor;
     private Color spellColorTransparent;
     public float spellnameFadeIn = 1f;
 
     private float profileTime = 0f;
-    public SpriteRenderer PIVDecayBar;
-    public SpriteRenderer MeterBar;
+    public SpriteRenderer PIVDecayBar = null!;
+    public SpriteRenderer MeterBar = null!;
     private Color defaultMeterColor;
     private Color defaultMeterColor2;
-    public SpriteRenderer BossHPBar;
-    private MaterialPropertyBlock pivDecayPB;
-    private MaterialPropertyBlock meterPB;
-    private MaterialPropertyBlock bossHPPB;
-    private MaterialPropertyBlock leftSidebarPB;
-    private MaterialPropertyBlock rightSidebarPB;
+    public SpriteRenderer BossHPBar = null!;
+    private MaterialPropertyBlock pivDecayPB = null!;
+    private MaterialPropertyBlock meterPB = null!;
+    private MaterialPropertyBlock bossHPPB = null!;
+    private MaterialPropertyBlock leftSidebarPB = null!;
+    private MaterialPropertyBlock rightSidebarPB = null!;
 
-    public GameObject trackerPrefab;
+    public GameObject? trackerPrefab;
 
     private void Awake() {
         main = this;
@@ -108,7 +111,7 @@ public class UIManager : RegularUpdater, IUIManager, IUnpauseAnimateProvider {
         timeout.text = "";
         spellnameText.text = "";
         message.text = centerMessage.text = "";
-        multishotIndicator.text = instance.MultishotString;
+        multishotIndicator.text = Instance.MultishotString;
         challengeHeader.text = challengeText.text = "";
         UpdateTags();
         ShowBossLives(0);
@@ -124,7 +127,6 @@ public class UIManager : RegularUpdater, IUIManager, IUnpauseAnimateProvider {
         Listen(Events.CampaignDataHasChanged, () => updateAllUI = true);
         Listen(InstanceData.ItemExtendAcquired, LifeExtendItems);
         Listen(InstanceData.ScoreExtendAcquired, LifeExtendScore);
-        Listen(InstanceData.PhaseCompleted, PhaseCompleted);
         Listen(PlayerInput.MeterIsActive, SetMeterActivated);
         Listen(PlayerInput.PlayerDeactivatedMeter, UnSetMeterActivated);
         RegisterDI<IUIManager>(this);
@@ -137,20 +139,20 @@ public class UIManager : RegularUpdater, IUIManager, IUnpauseAnimateProvider {
     private void Start() {
         UpdatePB();
         _UpdatePlayerUI();
-        EngineStateManager.PauseAllowed = PauseManager.UI != null;
+        EngineStateManager.PauseAllowed = PauseManager.gameObject.activeSelf;
     }
 
     public static void UpdateTags() {
         main.difficulty.text = GameManagement.Difficulty.Describe();
     }
 
-    [CanBeNull] private Enemy bossHP;
+    private Enemy? bossHP;
 
-    public void SetBossHPLoader([CanBeNull] Enemy boss) {
+    public void SetBossHPLoader(Enemy? boss) {
         bossHP = boss;
         BossHPBar.enabled = boss != null;
         if (boss != null) {
-            bossHPPB.SetColor(PropConsts.fillColor2, bossHP.unfilledColor);
+            bossHPPB.SetColor(PropConsts.fillColor2, bossHP!.unfilledColor);
             bossHPPB.SetColor(PropConsts.unfillColor, bossHP.unfilledColor);
         }
     }
@@ -168,11 +170,11 @@ public class UIManager : RegularUpdater, IUIManager, IUnpauseAnimateProvider {
 
     private void UpdatePB() {
         //pivDecayPB.SetFloat(PropConsts.time, time);
-        pivDecayPB.SetFloat(PropConsts.fillRatio, (float) instance.Faith);
+        pivDecayPB.SetFloat(PropConsts.fillRatio, (float) Instance.Faith);
         pivDecayPB.SetFloat(PropConsts.innerFillRatio,
-            Mathf.Clamp01((float) instance.UIVisibleFaithDecayLenienceRatio));
+            Mathf.Clamp01((float) Instance.UIVisibleFaithDecayLenienceRatio));
         PIVDecayBar.SetPropertyBlock(pivDecayPB);
-        meterPB.SetFloat(PropConsts.fillRatio, (float) instance.Meter);
+        meterPB.SetFloat(PropConsts.fillRatio, (float) Instance.Meter);
         MeterBar.SetPropertyBlock(meterPB);
         //bossHPPB.SetFloat(PropConsts.time, time);
         if (bossHP != null) {
@@ -186,7 +188,7 @@ public class UIManager : RegularUpdater, IUIManager, IUnpauseAnimateProvider {
         rightSidebar.SetPropertyBlock(rightSidebarPB);
     }
 
-    public TextMeshPro fps;
+    public TextMeshPro fps = null!;
     private const int fpsSmooth = 10;
     private int fpsUpdateCounter = fpsSmooth;
     private float accdT = 0f;
@@ -218,7 +220,7 @@ public class UIManager : RegularUpdater, IUIManager, IUnpauseAnimateProvider {
         if (maxTime < float.Epsilon) {
             timeout.text = "";
         } else {
-            timeoutCor = StartCoroutine(Timeout(maxTime, withSound, stayOnZero ?? 2f, cT));
+            timeoutCor = StartCoroutine(Timeout(maxTime, withSound, stayOnZero ?? 3f, cT));
         }
     }
 
@@ -230,7 +232,7 @@ public class UIManager : RegularUpdater, IUIManager, IUnpauseAnimateProvider {
         timeout.text = "";
     }
 
-    public SFXConfig[] countdownSounds;
+    public SFXConfig[] countdownSounds = null!;
 
     private IEnumerator Timeout(float maxTime, bool withSound, float stayOnZero, ICancellee cT) {
         float currTime = maxTime;
@@ -271,17 +273,17 @@ public class UIManager : RegularUpdater, IUIManager, IUnpauseAnimateProvider {
         spellnameText.color = to;
     }
 
-    public void SetSpellname([CanBeNull] string title) {
+    public void SetSpellname(string? title) {
         spellnameText.text = title ?? "";
         if (spellnameController != null) StopCoroutine(spellnameController);
         spellnameController = StartCoroutine(FadeSpellname(spellnameFadeIn, spellColorTransparent, spellColor));
     }
 
-    public Material bossColorizer;
+    public Material bossColorizer = null!;
 
-    public SpriteRenderer leftSidebar;
-    public SpriteRenderer rightSidebar;
-    public BossConfig.ProfileRender defaultProfile;
+    public SpriteRenderer leftSidebar = null!;
+    public SpriteRenderer rightSidebar = null!;
+    public BossConfig.ProfileRender defaultProfile = null!;
     private readonly Stack<BossConfig.ProfileRender> stackedProfiles = new Stack<BossConfig.ProfileRender>();
 
     public void CloseProfile() {
@@ -300,7 +302,7 @@ public class UIManager : RegularUpdater, IUIManager, IUnpauseAnimateProvider {
         stackedProfiles.Push(render);
     }
 
-    private void SetProfile(BossConfig.ProfileRender target, [CanBeNull] BossConfig.ProfileRender source) {
+    private void SetProfile(BossConfig.ProfileRender target, BossConfig.ProfileRender? source) {
         profileTime = 0;
         if (source != null) {
             leftSidebarPB.SetTexture(PropConsts.fromTex, source.leftSidebar.Elvis(defaultProfile.leftSidebar));
@@ -313,7 +315,7 @@ public class UIManager : RegularUpdater, IUIManager, IUnpauseAnimateProvider {
     /// <summary>
     /// (int, Sprite) where int is the number of "boss lives" required to show the sprite
     /// </summary>
-    public PrioritySprite[] bossHealthSprites;
+    public PrioritySprite[] bossHealthSprites = null!;
 
     public void SetBossColor(Color textColor, Color bossHPColor) {
         bossColorizer.SetMaterialOutline(textColor);
@@ -334,31 +336,12 @@ public class UIManager : RegularUpdater, IUIManager, IUnpauseAnimateProvider {
         SetBossHPLoader(null);
     }
 
-    public TextMeshPro phaseDescription;
+    public TextMeshPro phaseDescription = null!;
 
     public void ShowPhaseType(PhaseType? phase) {
-        void Set(string s) {
+        void Set(string? s) {
             if (s != null) phaseDescription.text = s;
         }
-        if (phase.Try(out var p)) {
-            if      (p == PhaseType.NONSPELL)
-                Set("NON");
-            else if (p == PhaseType.SPELL)
-                Set("SPELL");
-            else if (p == PhaseType.TIMEOUT)
-                Set("SURVIVAL");
-            else if (p == PhaseType.FINAL)
-                Set("FINAL");
-            else if (p == PhaseType.STAGE)
-                Set("STAGE");
-            else if (p.IsStageBoss())
-                Set("CHALLENGER\nAPPROACHING");
-            else if (p == PhaseType.DIALOGUE)
-                Set(null);
-            else
-                Set("");
-        }
-        /*
         Set(phase switch {
             PhaseType.NONSPELL => "NON",
             PhaseType.SPELL => "SPELL",
@@ -369,7 +352,7 @@ public class UIManager : RegularUpdater, IUIManager, IUnpauseAnimateProvider {
             PhaseType.DIALOGUE => null,
             null => null,
             _ => ""
-        });*/
+        });
     }
 
     private static readonly Vector2 slideFrom = new Vector2(5, 0);
@@ -403,11 +386,11 @@ public class UIManager : RegularUpdater, IUIManager, IUnpauseAnimateProvider {
         }
     }
 
-    public SpriteRenderer[] healthPoints;
-    public SpriteRenderer[] bombPoints;
-    public Sprite healthEmpty;
-    public Sprite[] healthItrs;
-    public Sprite[] bombItrs;
+    public SpriteRenderer[] healthPoints = null!;
+    public SpriteRenderer[] bombPoints = null!;
+    public Sprite healthEmpty = null!;
+    public Sprite[] healthItrs = null!;
+    public Sprite[] bombItrs = null!;
     private const string pivMultFormat = "x<mspace=1.2>{0:00.00}</mspace>";
     private const string lifePointsFormat = "<mspace=1.5>{0}/{1}</mspace>";
     private const string grazeFormat = "<mspace=1.5>{0}</mspace>";
@@ -433,30 +416,30 @@ public class UIManager : RegularUpdater, IUIManager, IUnpauseAnimateProvider {
     }
 
     private void _UpdatePlayerUI() {
-        multishotIndicator.text = instance.MultishotString;
+        multishotIndicator.text = Instance.MultishotString;
         if (scoreExtend_parent != null) {
-            if (instance.NextScoreLife.Try(out var scoreExt)) {
+            if (Instance.NextScoreLife.Try(out var scoreExt)) {
                 scoreExtend_parent.SetActive(true);
                 scoreExtend.text = string.Format(scoreFormat, scoreExt);
             } else {
                 scoreExtend_parent.SetActive(false);
             }
         }
-        score.text = string.Format(scoreFormat, instance.UIVisibleScore);
-        maxScore.text = string.Format(scoreFormat, instance.MaxScore);
-        pivMult.text = string.Format(pivMultFormat, instance.PIV);
-        lifePoints.text = string.Format(lifePointsFormat, instance.LifeItems, instance.NextLifeItems);
-        graze.text = string.Format(grazeFormat, instance.Graze);
-        power.text = string.Format(powerFormat, instance.Power, InstanceData.powerMax);
+        score.text = string.Format(scoreFormat, Instance.UIVisibleScore);
+        maxScore.text = string.Format(scoreFormat, Instance.MaxScore);
+        pivMult.text = string.Format(pivMultFormat, Instance.PIV);
+        lifePoints.text = string.Format(lifePointsFormat, Instance.LifeItems, Instance.NextLifeItems);
+        graze.text = string.Format(grazeFormat, Instance.Graze);
+        power.text = string.Format(powerFormat, Instance.Power, InstanceData.powerMax);
         for (int ii = 0; ii < healthPoints.Length; ++ii) healthPoints[ii].sprite = healthEmpty;
         for (int hi = 0; hi < healthItrs.Length; ++hi) {
-            for (int ii = 0; ii + hi * healthPoints.Length < instance.Lives && ii < healthPoints.Length; ++ii) {
+            for (int ii = 0; ii + hi * healthPoints.Length < Instance.Lives && ii < healthPoints.Length; ++ii) {
                 healthPoints[ii].sprite = healthItrs[hi];
             }
         }
         for (int ii = 0; ii < bombPoints.Length; ++ii) bombPoints[ii].sprite = healthEmpty;
         for (int bi = 0; bi < bombItrs.Length; ++bi) {
-            for (int ii = 0; ii + bi * bombPoints.Length < instance.Bombs && ii < bombPoints.Length; ++ii) {
+            for (int ii = 0; ii + bi * bombPoints.Length < Instance.Bombs && ii < bombPoints.Length; ++ii) {
                 bombPoints[ii].sprite = bombItrs[bi];
             }
         }
@@ -499,14 +482,14 @@ public class UIManager : RegularUpdater, IUIManager, IUnpauseAnimateProvider {
         apply(c);
     }
 
-    [CanBeNull] private Cancellable messageFadeToken;
+    private Cancellable? messageFadeToken;
 
     private void _Message(string msg) {
         messageFadeToken?.Cancel();
         StartCoroutine(FadeMessage(msg, messageFadeToken = new Cancellable()));
     }
 
-    [CanBeNull] private Cancellable cmessageFadeToken;
+    private Cancellable? cmessageFadeToken;
 
     private void _CMessage(string msg, out float totalTime) {
         cmessageFadeToken?.Cancel();
@@ -523,29 +506,23 @@ public class UIManager : RegularUpdater, IUIManager, IUnpauseAnimateProvider {
     private void LifeExtendScore() => Message("Score Extend Acquired!");
     private void LifeExtendItems() => Message("Life Item Extend Acquired!");
 
-    private void PhaseCompleted(PhaseCompletion pc) {
-        if (pc.Captured.HasValue) {
-            Message(pc.Captured.Value ? "Card Captured!" : "Card Capture Failed..."
-            );
-        }
+
+
+    public void TrackBEH(BehaviorEntity beh, string title, ICancellee cT) {
+        if (trackerPrefab != null)
+            Instantiate(trackerPrefab).GetComponent<BottomTracker>().Initialize(beh, title, cT);
     }
 
+    public PiecewiseAppear stageAnnouncer = null!;
+    public TextMeshPro stageDeannouncer = null!;
 
-    public BottomTracker TrackBEH(BehaviorEntity beh, string title, ICancellee cT) =>
-        Instantiate(trackerPrefab).GetComponent<BottomTracker>().Initialize(beh, title, cT);
+    private const float stageAnnounceStay = 2f;
 
-    public SpriteRenderer stageAnnouncer;
-    public TextMeshPro stageDeannouncer;
-
-    private const float stageAnnounceIn = 1f;
-    private const float stageAnnounceStay = 3f;
-    private const float stageAnnounceOut = 1f;
-
-    public static void AnnounceStage(ICancellee cT, out float time) {
-        time = stageAnnounceIn + stageAnnounceOut + stageAnnounceStay;
-        main.StartCoroutine(FadeSprite(Color.white, c => main.stageAnnouncer.color = c, stageAnnounceIn,
-            stageAnnounceStay,
-            stageAnnounceOut, cT));
+    public static void AnnounceStage(CoroutineRegularUpdater Exec, ICancellee cT, out float time) {
+        time = 2 * (main.stageAnnouncer.moveTime + main.stageAnnouncer.spreadTime) + stageAnnounceStay;
+        main.stageAnnouncer.Queue(new PiecewiseAppear.AppearRequest(PiecewiseAppear.AppearAction.APPEAR, 1f, () => 
+            WaitingUtils.WaitThenCB(Exec, cT, stageAnnounceStay, false, () => 
+                main.stageAnnouncer.Queue(new PiecewiseAppear.AppearRequest(PiecewiseAppear.AppearAction.DISAPPEAR, 0f, null)))));
     }
 
     private const float stageDAnnounceIn = 0.5f;
@@ -559,8 +536,8 @@ public class UIManager : RegularUpdater, IUIManager, IUnpauseAnimateProvider {
             stageDAnnounceOut, cT));
     }
 
-    public TextMeshPro challengeHeader;
-    public TextMeshPro challengeText;
+    public TextMeshPro challengeHeader = null!;
+    public TextMeshPro challengeText = null!;
 
     public static void RequestChallengeDisplay(PhaseChallengeRequest cr, SharedInstanceMetadata meta) {
         main.challengeHeader.text = cr.phase.Title(meta);

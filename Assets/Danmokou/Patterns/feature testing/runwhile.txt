@@ -12,7 +12,7 @@ phase 0
 			w	2
 			rpp	<8>
 			while	< [lbeh mima].x 2
-			unpause	here sync scircle-orange/w <> target Lplayer s tprot cx 2
+			unpause	sync scircle-orange/w <> target Lplayer s tprot cx 2
 		} s tprot cx 2
  
             

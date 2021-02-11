@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9e371a047fd0478dab0e1a132d71003c, type: 3}
+  m_Name: TestPlayer
+  m_EditorClassIdentifier: 
+  freeSpeed: 5
+  focusSlowdown: 0.44
+  hitboxRadius: 0.034
+  grazeboxRadius: 0.47
+  key: basic-mokou
+  shortTitle:
+    useReference: 1
+    reference: players.reimu
+    hardcoded:
+      en: 
+      jp: 
+      _showEnOnly: 0
+  title: Fujiwara no Mokou
+  prefab: {fileID: 5693660460388628151, guid: 4f67648ec56d30044b03a5959e19a4e0, type: 3}
+  shots2:
+  - ordinal: D
+    shot: {fileID: 11400000, guid: 94c9dbd65f23dec46894ae6f01f35d23, type: 2}
+  uiColor: {r: 0.50980395, g: 0, b: 0.1254902, a: 1}
+  shotDisplay: {fileID: 7713674854582391743, guid: 949a4532b5136a344af7110e1f0be716,
+    type: 3}

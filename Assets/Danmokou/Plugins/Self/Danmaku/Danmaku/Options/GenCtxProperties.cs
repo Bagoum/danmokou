@@ -10,19 +10,19 @@ using DMK.Reflection;
 using DMK.SM;
 using JetBrains.Annotations;
 using UnityEngine;
-using ExBPY = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<float>>;
-using ExBPRV2 = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<DMK.DMath.V2RV2>>;
-using ExTP = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<UnityEngine.Vector2>>;
-using ExPred = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<bool>>;
 using static DMK.Danmaku.Options.GenCtxProperty;
 using static DMK.Reflection.Compilers;
 using static DMK.Danmaku.Options.GenCtxUtils;
+using ExBPY = System.Func<DMK.Expressions.TExArgCtx, DMK.Expressions.TEx<float>>;
+using ExTP = System.Func<DMK.Expressions.TExArgCtx, DMK.Expressions.TEx<UnityEngine.Vector2>>;
+using ExBPRV2 = System.Func<DMK.Expressions.TExArgCtx, DMK.Expressions.TEx<DMK.DMath.V2RV2>>;
 
 namespace DMK.Danmaku.Options {
 
 /// <summary>
 /// Properties that modify the behavior of generic repeater commands (gtrepeat, girepeat, gcrepeat, gsrepeat).
 /// </summary>
+[Reflect]
 public class GenCtxProperty {
     /// <summary>
     /// Dummy property that does nothing.
@@ -93,8 +93,8 @@ public class GenCtxProperty {
     /// </summary>
     /// <returns></returns>
     public static GenCtxProperty WTd(ExBPY difficulty, ExBPY frames, ExBPY  times) => new CompositeProp(
-        Wait(GCXFf(b => frames(b).Div(difficulty(b)))), 
-        Times(GCXFf(b => times(b).Mul(difficulty(b)))));
+        Wait(GCXF<float>(b => frames(b).Div(difficulty(b)))), 
+        Times(GCXF<float>(b => times(b).Mul(difficulty(b)))));
     
     /// <summary>
     /// Wait and TM properties combined.
@@ -118,7 +118,7 @@ public class GenCtxProperty {
     /// </summary>
     /// <returns></returns>
     public static GenCtxProperty AsyncDR(ExBPY difficulty, ExBPY frames, ExBPY  times, ExBPRV2 incr) => 
-        new CompositeProp(WTd(difficulty, frames, times), RV2Incr(GCXFrv2(b => incr(b).Div(difficulty(b)))));
+        new CompositeProp(WTd(difficulty, frames, times), RV2Incr(GCXF<V2RV2>(b => incr(b).Div(difficulty(b)))));
     
     /// <summary>
     /// Wait, FOR, rpp properties combined. Times is set to infinity.
@@ -134,8 +134,8 @@ public class GenCtxProperty {
     /// Times, rpp properties combined, where Times is multiplied by and rpp is divided by difficulty.
     /// </summary>
     public static GenCtxProperty SyncDR(ExBPY difficulty, ExBPY times, ExBPRV2 incr) => new CompositeProp(
-        Times(GCXFf(b => times(b).Mul(difficulty(b)))), 
-        RV2Incr(GCXFrv2(b => incr(b).Div(difficulty(b)))));
+        Times(GCXF<float>(b => times(b).Mul(difficulty(b)))), 
+        RV2Incr(GCXF<V2RV2>(b => incr(b).Div(difficulty(b)))));
     
     
     /// <summary>
@@ -304,11 +304,11 @@ public class GenCtxProperty {
     /// </summary>
     public static GenCtxProperty ResetColor() => new ResetColorTag();
     /// <summary>
-    /// Cycle between color on every invocation.
+    /// Cycle between colors on every invocation.
     /// </summary>
     public static GenCtxProperty Color(string[] colors) => new ColorProp(colors, null, false);
     /// <summary>
-    /// Cycle between color on every invocation. Merge colors in the reverse direction.
+    /// Cycle between colors on every invocation. Merge colors in the reverse direction.
     /// </summary>
     public static GenCtxProperty ColorR(string[] colors) => new ColorProp(colors, null, true);
 
@@ -464,9 +464,9 @@ public class GenCtxProperty {
         public TPProp(GCXF<Vector2> f) : base(f) { }
     }
 
-    public class TimesProp : BPYProp {
+    public class TimesProp : ValueProp<GCXF<float>?> {
         public readonly int? max;
-        public TimesProp(int? max, GCXF<float> f) : base(f) => this.max = max;
+        public TimesProp(int? max, GCXF<float>? f) : base(f) => this.max = max;
     }
     public class WaitProp : BPYProp {
         public WaitProp(GCXF<float> f) : base(f) { }
@@ -508,10 +508,10 @@ public class GenCtxProperty {
     }
 
     public class SFXProp : ValueProp<string[]> {
-        [CanBeNull] public readonly GCXF<float> indexer;
-        [CanBeNull] public readonly GCXF<bool> pred;
+        public readonly GCXF<float>? indexer;
+        public readonly GCXF<bool>? pred;
 
-        public SFXProp(string[] sfx, GCXF<float> indexer, GCXF<bool> pred) : base(sfx) {
+        public SFXProp(string[] sfx, GCXF<float>? indexer, GCXF<bool>? pred) : base(sfx) {
             this.indexer = indexer;
             this.pred = pred;
         }
@@ -546,18 +546,18 @@ public class GenCtxProperty {
         public ValueProp(T value) => this.value = value;
     }
     public class ParametrizationProp : ValueProp<Parametrization> {
-        [CanBeNull] public readonly GCXF<float> mutater;
+        public readonly GCXF<float>? mutater;
 
-        public ParametrizationProp(Parametrization p, [CanBeNull] GCXF<float> mutater) : base(p) {
+        public ParametrizationProp(Parametrization p, GCXF<float>? mutater) : base(p) {
             this.mutater = mutater;
         }
     }
 
     public class ColorProp : ValueProp<string[]> {
-        [CanBeNull] public readonly GCXF<float> indexer;
+        public readonly GCXF<float>? indexer;
         public readonly bool reverse;
 
-        public ColorProp(string[] colors, [CanBeNull] GCXF<float> indexer, bool reverse) : base(colors) {
+        public ColorProp(string[] colors, GCXF<float>? indexer, bool reverse) : base(colors) {
             this.indexer = indexer;
             this.reverse = reverse;
         }
@@ -662,50 +662,50 @@ public class GenCtxProperties<T> {
     public readonly GCXF<float> times = defltTimes;
     public readonly int? maxTimes;
     public readonly GCXF<float> wait = zeroWait;
-    [CanBeNull] public readonly GCXF<float> fortime;
+    public readonly GCXF<float>? fortime;
     public readonly GCXF<float> delay = zeroWait;
     public readonly bool waitChild;
     public readonly bool sequential;
-    [CanBeNull] public readonly GCXF<Vector2> forceRoot;
+    public readonly GCXF<Vector2>? forceRoot;
     public readonly bool forceRootAdjust;
     public readonly (bool, GCXF<V2RV2>)? bank;
-    [CanBeNull] public readonly List<GCRule> preloop;
-    public readonly List<GCRule> postloop = new List<GCRule>();
-    [CanBeNull] public readonly List<GCRule> start;
-    [CanBeNull] public readonly List<GCRule> end;
+    public readonly List<GCRule>? preloop;
+    public readonly List<GCRule>? postloop = new List<GCRule>();
+    public readonly List<GCRule>? start;
+    public readonly List<GCRule>? end;
     public readonly Parametrization p = Parametrization.DEFER;
-    [CanBeNull] public readonly GCXF<float> p_mutater;
+    public readonly GCXF<float>? p_mutater;
     public readonly bool resetColor = false;
-    [CanBeNull] public readonly string[] colors;
-    [CanBeNull] public readonly GCXF<float> colorsIndexer;
+    public readonly string[]? colors;
+    public readonly GCXF<float>? colorsIndexer;
     public readonly bool colorsReverse;
-    [CanBeNull] public readonly SummonAlongHandler sah;
-    [CanBeNull] public readonly GCXF<V2RV2> frv2;
+    public readonly SummonAlongHandler? sah;
+    public readonly GCXF<V2RV2>? frv2;
     public readonly Facing? facing;
-    [CanBeNull] public readonly string[] sfx;
-    [CanBeNull] public readonly GCXF<float> sfxIndexer;
-    [CanBeNull] public readonly GCXF<bool> sfxIf;
+    public readonly string[]? sfx;
+    public readonly GCXF<float>? sfxIndexer;
+    public readonly GCXF<bool>? sfxIf;
     public readonly (RV2ControlMethod, GCXF<Vector2>)? target;
     public readonly bool targetFromSummon;
-    [CanBeNull] public readonly GCXF<bool> runWhile;
-    [CanBeNull] public readonly StateMachine unpause;
-    [CanBeNull] public readonly IReadOnlyList<(ReflectEx.Hoist<float>, GCXF<float>, GCXF<float>)> saveF;
-    [CanBeNull] public readonly IReadOnlyList<(ReflectEx.Hoist<Vector2>, GCXF<float>, GCXF<Vector2>)> saveV2;
-    [CanBeNull] public readonly GCXF<float> childSelect;
-    [CanBeNull] public readonly GCXF<bool> clipIf;
-    [CanBeNull] public readonly GCXF<bool> cancelIf;
-    [CanBeNull] public readonly (Reflector.ExType, string)[] expose;
-    [CanBeNull] public readonly ETime.Timer timer;
+    public readonly GCXF<bool>? runWhile;
+    public readonly StateMachine? unpause;
+    public readonly IReadOnlyList<(ReflectEx.Hoist<float>, GCXF<float>, GCXF<float>)>? saveF;
+    public readonly IReadOnlyList<(ReflectEx.Hoist<Vector2>, GCXF<float>, GCXF<Vector2>)>? saveV2;
+    public readonly GCXF<float>? childSelect;
+    public readonly GCXF<bool>? clipIf;
+    public readonly GCXF<bool>? cancelIf;
+    public readonly (Reflector.ExType, string)[]? expose;
+    public readonly ETime.Timer? timer;
     public readonly bool resetTime;
     public readonly bool centered;
     public readonly bool bindArrow;
     public readonly bool bindLR;
     public readonly bool bindUD;
     public readonly bool bindAngle;
-    [CanBeNull] public readonly string bindItr;
-    [CanBeNull] public readonly GCXF<float> laserIndexer;
+    public readonly string? bindItr;
+    public readonly GCXF<float>? laserIndexer;
     private readonly RV2IncrType? rv2IncrType = null;
-    [CanBeNull] private readonly GCXF<V2RV2> rv2Spread = null;
+    private readonly GCXF<V2RV2>? rv2Spread = null;
     private enum RV2IncrType {
         FUNC = 1,
         CIRCLE = 2,
@@ -717,20 +717,24 @@ public class GenCtxProperties<T> {
         return rv2IncrType.Value;
     }
 
-    public V2RV2 PostloopRV2Incr(GenCtx gcx, int t) {
-        if (rv2IncrType == RV2IncrType.FUNC) return rv2pp?.Invoke(gcx) ?? V2RV2.Zero;
-        if (rv2IncrType == RV2IncrType.CIRCLE) return V2RV2.Angle(360f / t);
-        else if (rv2IncrType == RV2IncrType.SPREAD) return  t == 1 ? V2RV2.Zero : 
-            1f / (t-1) * (rv2Spread?.Invoke(gcx) ?? V2RV2.Zero);
-        else return V2RV2.Zero;
-    }
-    
-    
-    [CanBeNull] public readonly GCXF<float> rv2aMutater;
+    public V2RV2 PostloopRV2Incr(GenCtx gcx, int t) =>
+        rv2IncrType switch {
+            RV2IncrType.FUNC => 
+                rv2pp?.Invoke(gcx) ?? V2RV2.Zero,
+            RV2IncrType.CIRCLE => 
+                V2RV2.Angle(360f / t),
+            RV2IncrType.SPREAD => 
+                t == 1 ? V2RV2.Zero : 1f / (t - 1) * (rv2Spread?.Invoke(gcx) ?? V2RV2.Zero),
+            _ => 
+                V2RV2.Zero
+        };
+
+
+    public readonly GCXF<float>? rv2aMutater;
     /// <summary>
     /// This is present to allow integration with other props, it is handled automatically via postloop.
     /// </summary>
-    [CanBeNull] private readonly GCXF<V2RV2> rv2pp;
+    private readonly GCXF<V2RV2>? rv2pp;
 
     /*public V2RV2 AnyRV2Increment(GenCtx gcx, int t) {
         if (specialIncrType != null) return SpecialRV2Incr(gcx, t);

@@ -8,22 +8,27 @@ using UnityEngine;
 namespace DMK.Player {
 public class PlayerHP : CoroutineRegularUpdater {
     public static bool RespawnOnHit => GameManagement.Difficulty.respawnOnDeath;
-    public EffectStrategy OnPreHitEffect;
-    public EffectStrategy OnHitEffect;
-    public EffectStrategy GoldenAuraEffect;
+    public EffectStrategy OnPreHitEffect = null!;
+    public EffectStrategy OnHitEffect = null!;
+    public EffectStrategy GoldenAuraEffect = null!;
     public float hitInvuln = 0.7f;
     private int hitInvulnFrames;
-    private Transform tr;
+    private Transform tr = null!;
     private int invulnerabilityCounter = 0;
-    private PlayerInput input;
+    private PlayerInput input = null!;
 
-
+    private bool waitingDeathbomb = false;
     public override int UpdatePriority => UpdatePriorities.PLAYER;
+    
+    public static readonly Events.IEvent<(int frames, bool effect)> RequestPlayerInvulnerable =
+        new Events.Event<(int, bool)>();
 
-    private void Awake() {
+    //Calling from PlayerInput instead of Awake prevents binding order errors when
+    // the player is replaced at the start of the stage
+    public void Setup(PlayerInput inp) {
         tr = transform;
         hitInvulnFrames = Mathf.CeilToInt(hitInvuln * ETime.ENGINEFPS);
-        input = GetComponent<PlayerInput>();
+        input = inp;
         input.hitbox.Player = this;
     }
 
@@ -32,8 +37,6 @@ public class PlayerHP : CoroutineRegularUpdater {
         Listen(RequestPlayerInvulnerable, GoldenAuraInvuln);
     }
 
-    public static readonly Events.IEvent<(int frames, bool effect)> RequestPlayerInvulnerable =
-        new Events.Event<(int, bool)>();
 
     private IEnumerator WaitOutInvuln(int frames) {
         for (int ii = frames; ii > 0; --ii) yield return null;
@@ -55,10 +58,9 @@ public class PlayerHP : CoroutineRegularUpdater {
     [ContextMenu("Take 1 Damage")]
     public void _takedmg() => Hit(1);
 
-    private bool waitingDeathbomb = false;
-
     public void Hit(int dmg, bool force = false) {
         if (dmg <= 0) return;
+        //Log.Unity($"The player has taken a hit for {dmg} hp. Force: {force} Invuln: {invulnerabilityCounter} Deathbomb: {waitingDeathbomb}");
         if (force) _DoHit(dmg);
         else {
             if (invulnerabilityCounter > 0 || waitingDeathbomb) return;
@@ -69,11 +71,11 @@ public class PlayerHP : CoroutineRegularUpdater {
 
     public void Graze(int graze) {
         if (graze <= 0 || invulnerabilityCounter > 0) return;
-        GameManagement.instance.AddGraze(graze);
+        GameManagement.Instance.AddGraze(graze);
     }
 
     private void _DoHit(int dmg) {
-        GameManagement.instance.AddLives(-dmg);
+        GameManagement.Instance.AddLives(-dmg);
         DependencyInjection.MaybeFind<IRaiko>()?.ShakeExtra(1.5f, 0.8f);
         Invuln(hitInvulnFrames);
         if (RespawnOnHit) input.RequestNextState(PlayerInput.PlayerState.RESPAWN);

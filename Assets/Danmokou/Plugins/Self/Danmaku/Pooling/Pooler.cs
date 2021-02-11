@@ -20,8 +20,8 @@ public static class Pooler<T> where T : Pooled<T> {
     //Note: these dicts are specific to each typing T. They are not shared between Pooler<ParticlePooled> and Pooler<BEH>.
     private static readonly Dictionary<GameObject, HashSet<T>> active = new Dictionary<GameObject, HashSet<T>>();
     private static readonly Dictionary<GameObject, Queue<T>> free = new Dictionary<GameObject, Queue<T>>();
-    private static Transform particleContainer;
-    private static string typName;
+    private static Transform particleContainer = null!;
+    private static string typName = "";
 
     //I don't use a static constructor since I need the delegates to be loaded immediately,
     //but static constructors don't guarantee when they're run. 
@@ -92,7 +92,7 @@ public static class ParticlePooler {
     }
 }
 public static class BEHPooler {
-    private static GameObject inodePrefab;
+    private static GameObject inodePrefab = null!;
 
     public static void Prepare(GameObject inodePref) {
         inodePrefab = inodePref;
@@ -102,17 +102,16 @@ public static class BEHPooler {
     public static BehaviorEntity RequestUninitialized(GameObject prefab, out bool isNew) =>
         Pooler<BehaviorEntity>.Request(prefab, out isNew);
 
-    public static BehaviorEntity INode(Vector2 parentLoc, V2RV2 localLoc, Vector2 rotation, int firingIndex,
-        uint? bpiid, string behName) {
+    public static BehaviorEntity INode(Movement mov, ParametricInfo pi, Vector2 rotation, string behName) {
         var beh = RequestUninitialized(inodePrefab, out _);
-        beh.Initialize(parentLoc, localLoc, SMRunner.Null, firingIndex, bpiid, behName);
+        beh.Initialize(mov, pi, SMRunner.Null, behName);
         beh.SetDirection(rotation);
         return beh;
     }
 }
 
 public static class GhostPooler {
-    private static GameObject ghostPrefab;
+    private static GameObject ghostPrefab = null!;
 
     public static void Prepare(GameObject ghost) {
         ghostPrefab = ghost;
@@ -158,7 +157,7 @@ public readonly struct LabelRequestContext {
 }
 
 public static class ItemPooler {
-    private static ItemReferences items;
+    private static ItemReferences items = null!;
 
     public static void Prepare(ItemReferences itemRefs) {
         items = itemRefs;
@@ -183,61 +182,42 @@ public static class ItemPooler {
     public static Item RequestSmallValue(ItemRequestContext ctx) => Request(items.smallValueItem, ctx);
     public static Item RequestPointPP(ItemRequestContext ctx) => Request(items.pointppItem, ctx);
 
-    [CanBeNull]
-    public static Item RequestGem(ItemRequestContext ctx) =>
-        GameManagement.instance.Difficulty.meterEnabled ? Request(items.gemItem, ctx) : null;
+    public static Item? RequestGem(ItemRequestContext ctx) =>
+        GameManagement.Instance.Difficulty.meterEnabled ? Request(items.gemItem, ctx) : null;
 
     public static Item RequestPowerupShift(ItemRequestContext ctx) => Request(items.powerupShift, ctx);
     public static Item RequestPowerupD(ItemRequestContext ctx) => Request(items.powerupD, ctx);
     public static Item RequestPowerupM(ItemRequestContext ctx) => Request(items.powerupM, ctx);
     public static Item RequestPowerupK(ItemRequestContext ctx) => Request(items.powerupK, ctx);
 
-    [CanBeNull]
-    public static Item RequestPower(ItemRequestContext ctx) {
+    public static Item? RequestPower(ItemRequestContext ctx) {
         return InstanceData.PowerMechanicEnabled ? Request(items.powerItem, ctx) : null;
     }
 
-    [CanBeNull]
-    public static Item RequestFullPower(ItemRequestContext ctx) {
+    public static Item? RequestFullPower(ItemRequestContext ctx) {
         return InstanceData.PowerMechanicEnabled ? Request(items.fullPowerItem, ctx) : null;
     }
 
-    [CanBeNull]
     public static Item Request1UP(ItemRequestContext ctx) {
         return Request(items.oneUpItem, ctx);
     }
 
-    [CanBeNull]
-    public static Item RequestItem(ItemRequestContext ctx, ItemType t) {
-        switch (t) {
-            case ItemType.VALUE:
-                return RequestValue(ctx);
-            case ItemType.SMALL_VALUE:
-                return RequestSmallValue(ctx);
-            case ItemType.PPP:
-                return RequestPointPP(ctx);
-            case ItemType.LIFE:
-                return RequestLife(ctx);
-            case ItemType.POWER:
-                return RequestPower(ctx);
-            case ItemType.FULLPOWER:
-                return RequestFullPower(ctx);
-            case ItemType.ONEUP:
-                return Request1UP(ctx);
-            case ItemType.GEM:
-                return RequestGem(ctx);
-            case ItemType.POWERUP_SHIFT:
-                return RequestPowerupShift(ctx);
-            case ItemType.POWERUP_D:
-                return RequestPowerupD(ctx);
-            case ItemType.POWERUP_M:
-                return RequestPowerupM(ctx);
-            case ItemType.POWERUP_K:
-                return RequestPowerupK(ctx);
-            default:
-                throw new Exception($"No drop handling for item type {t}");
-        }
-    }
+    public static Item? RequestItem(ItemRequestContext ctx, ItemType t) =>
+        t switch {
+            ItemType.VALUE => RequestValue(ctx),
+            ItemType.SMALL_VALUE => RequestSmallValue(ctx),
+            ItemType.PPP => RequestPointPP(ctx),
+            ItemType.LIFE => RequestLife(ctx),
+            ItemType.POWER => RequestPower(ctx),
+            ItemType.FULLPOWER => RequestFullPower(ctx),
+            ItemType.ONEUP => Request1UP(ctx),
+            ItemType.GEM => RequestGem(ctx),
+            ItemType.POWERUP_SHIFT => RequestPowerupShift(ctx),
+            ItemType.POWERUP_D => RequestPowerupD(ctx),
+            ItemType.POWERUP_M => RequestPowerupM(ctx),
+            ItemType.POWERUP_K => RequestPowerupK(ctx),
+            _ => throw new Exception($"No drop handling for item type {t}")
+        };
 }
 }
 

@@ -13,9 +13,24 @@ MonoBehaviour:
   m_Name: Narrow (Kasen)
   m_EditorClassIdentifier: 
   key: basic-kasen-1
-  title: Narrow
+  title:
+    useReference: 1
+    reference: players.shot_kasen_narrow
+    hardcoded:
+      en: 
+      jp: 
+      _showEnOnly: 0
   description: '"Loved by Beasts, Unknown to Divinity"\nA narrow shot with high damage
     output and low range.'
+  type: 
   prefab: {fileID: 6169168473649848314, guid: db8d63d2f902f024984d037b75130748, type: 3}
   bomb: 0
   defaultPower: 1000
+  playerChild: 1
+  demoReplay: {fileID: 4900000, guid: f58a179b4f5afb7489944bbfdd2484f5, type: 3}
+  demoSetupSM: {fileID: 4900000, guid: 83d895926f063264f9adc5887261db81, type: 3}
+  isMultiShot: 0
+  multiD: {fileID: 0}
+  multiM: {fileID: 0}
+  multiK: {fileID: 0}
+  onSwap: {fileID: 0}

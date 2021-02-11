@@ -2,13 +2,13 @@ pattern { }
 phase 0
     paction 0
         position 0 0
-        bullet ellipse-green/ <1;:> isimulate 240 cre 60 6 <;:4> s tprot
+        async ellipse-green/ <1;:> isimulate 240 gcr2 60 6 <;:4> { } s tprot
 			switch 1.5 eased out-sine 1
 					pxy
 						2
 						0
 				zero
-        bullet ellipse-red/ <1;:2> isimulate 240 cre 60 6 <;:4> s offset
+        async ellipse-red/ <1;:2> isimulate 240 gcr2 60 6 <;:4> { } s offset
 			switch 1.5 ease out-sine 1
 					pxy
 						* 2 t
@@ -16,8 +16,8 @@ phase 0
 				cx 3
 			zero
 	paction 0
-		bullet sun-red/w <> conce s tprot cx 0
+		async sun-red/w <> conce s tprot cx 0
 ///
-        bullet ellipse-purple/ <1;:> isimulate 0 cre 2s 2 <;:90> s offset cm 1 0 zero
+        async ellipse-purple/ <1;:> isimulate 0 gcr2 2s 2 <;:90> { } s offset cm 1 0 zero
             
             

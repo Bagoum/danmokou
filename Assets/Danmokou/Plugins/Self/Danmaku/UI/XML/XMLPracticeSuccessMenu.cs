@@ -5,6 +5,7 @@ using DMK.Scriptables;
 using DMK.Services;
 using UnityEngine.UIElements;
 using UnityEngine.Scripting;
+using static DMK.Core.LocalizedStrings.UI;
 
 
 namespace DMK.UI.XML {
@@ -13,17 +14,11 @@ namespace DMK.UI.XML {
 /// </summary>
 [Preserve]
 public class XMLPracticeSuccessMenu : XMLMenu {
+    public VisualTreeAsset UIScreen = null!;
+    
+    public SFXConfig? openPauseSound;
+    public SFXConfig? closePauseSound;
 
-    public VisualTreeAsset UIScreen;
-    public VisualTreeAsset UINode;
-
-    public SFXConfig openPauseSound;
-    public SFXConfig closePauseSound;
-
-    protected override Dictionary<Type, VisualTreeAsset> TypeMap => new Dictionary<Type, VisualTreeAsset>() {
-        {typeof(UIScreen), UIScreen},
-        {typeof(UINode), UINode},
-    };
     protected override string HeaderOverride => "YOU HUNTED";
 
     protected override void ResetCurrentNode() {
@@ -32,12 +27,13 @@ public class XMLPracticeSuccessMenu : XMLMenu {
 
     protected override void Awake() {
         MainScreen = new UIScreen(
-            new FuncNode(GameManagement.Restart, "Restart", true)
+            new FuncNode(GameManagement.Restart, restart, true)
                 .EnabledIf(() => GameManagement.CanRestart),
-            new FuncNode(GameManagement.GoToReplayScreen, "Save Replay", true)
+            new FuncNode(GameManagement.GoToReplayScreen, save_replay, true)
                 .EnabledIf(() => Replayer.PostedReplay != null),
-            new FuncNode(GameManagement.GoToMainMenu, "Return to Menu", true)
-        );
+            new FuncNode(GameManagement.GoToMainMenu, to_menu, true)
+        ).With(UIScreen);
+        MainScreen.ExitNode = MainScreen.top[2];
         base.Awake();
     }
 

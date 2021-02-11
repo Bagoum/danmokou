@@ -9,7 +9,7 @@ phase 0
 		async laser-red/w <> gcr {
 			wt	1480	_
 		} laser null 2 12 {
-			rotate 0 switchHt 1
+			rotate 0 switchH t 1
 				50
 				ease io-sine 2 lerpt 0 2 50 (angleto @ ploc 0)
 		}

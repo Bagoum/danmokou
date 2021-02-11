@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using System.Linq.Expressions;
+using DMK.Core;
 using DMK.Expressions;
 using JetBrains.Annotations;
 using Ex = System.Linq.Expressions.Expression;
@@ -24,6 +25,7 @@ namespace DMK.DMath.Functions {
 /// <summary>
 /// Functions that return V2.
 /// </summary>
+[Reflect]
 public static partial class ExMV2 {
     
     public static tv2 Circle(tfloat period, tfloat radius, tfloat time) =>

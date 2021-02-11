@@ -4,11 +4,11 @@ using System.Linq.Expressions;
 using DMK.Danmaku;
 using DMK.DMath;
 using DMK.Reflection;
+using JetBrains.Annotations;
 using Ex = System.Linq.Expressions.Expression;
 using UnityEngine;
 using static DMK.Expressions.ExUtils;
 using static DMK.Expressions.ExMHelpers;
-using ExPred = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<bool>>;
 using static DMK.DMath.Functions.ExM;
 
 
@@ -28,26 +28,26 @@ public class TExPI : TEx<ParametricInfo> {
     /// A float-cast of the index which can be used for parametric float operations like protate.
     /// </summary>
     public readonly UnaryExpression findex;
+    public Ex FiringCtx => ex.Field("ctx");
     private static readonly ExFunction rehash = ExUtils.Wrap<ParametricInfo, int>("Rehash", 0);
     private static readonly ExFunction copyWithP = ExUtils.Wrap<ParametricInfo, int>("CopyWithP", 1);
     private static readonly ExFunction copyWithT = ExUtils.Wrap<ParametricInfo, float>("CopyWithT", 1);
     private static readonly ExFunction flipSimple =
         ExUtils.Wrap<ParametricInfo>("FlipSimple", new[] {typeof(bool), tfloat});
 
-    public TExPI() : this(ExMode.Parameter, true) { }
+    public TExPI() : this((string?)null) { }
+    public TExPI(string? name) : this(ExMode.Parameter, name) { }
 
-    protected TExPI(ExMode m, bool computeFields) : base(m) {
-        if (computeFields) {
-            id = Ex.Field(ex, "id");
-            t = Ex.Field(ex, "t");
-            loc = Ex.Field(ex, "loc");
-            locx = Ex.Field(loc, "x");
-            locy = Ex.Field(loc, "y");
-            index = Ex.Field(ex, "index");
-            findex = Ex.Convert(index, ExUtils.tfloat);
-        }
+    protected TExPI(ExMode m, string? name) : base(m, name) {
+        id = Ex.Field(ex, "id");
+        t = Ex.Field(ex, "t");
+        loc = Ex.Field(ex, "loc");
+        locx = Ex.Field(loc, "x");
+        locy = Ex.Field(loc, "y");
+        index = Ex.Field(ex, "index");
+        findex = Ex.Convert(index, ExUtils.tfloat);
     }
-    private TExPI(Expression ex) : base(ex) {
+    public TExPI(Expression ex) : base(ex) {
         id = Ex.Field(ex, "id");
         t = Ex.Field(ex, "t");
         loc = Ex.Field(ex, "loc");
@@ -63,24 +63,18 @@ public class TExPI : TEx<ParametricInfo> {
 
     public new static TExPI Box(Ex ex) => new TExPI(ex);
 
-    public Ex When(ExPred pred, Ex then) => Ex.IfThen(pred(this), then);
-
     public Ex FlipSimpleY(Ex wall) => flipSimple.InstanceOf(this, Ex.Constant(true), wall);
 
     public Ex FlipSimpleX(Ex wall) => flipSimple.InstanceOf(this, Ex.Constant(false), wall);
-}
-
-public class RTExPI : TExPI {
-    public RTExPI() : base(ExMode.RefParameter, true) { }
 }
 
 public class TExV2 : TEx<Vector2> {
     public readonly MemberExpression x;
     public readonly MemberExpression y;
 
-    public TExV2() : this(ExMode.Parameter) { }
+    public TExV2() : this(ExMode.Parameter, null) { }
 
-    protected TExV2(ExMode m) : base(m) {
+    public TExV2(ExMode m, string? name) : base(m, name) {
         x = Ex.Field(ex, "x");
         y = Ex.Field(ex, "y");
     }
@@ -90,12 +84,8 @@ public class TExV2 : TEx<Vector2> {
     }
 
     public static TExV2 Variable() {
-        return new TExV2(ExMode.Parameter);
+        return new TExV2();
     }
-}
-
-public class RTExV2 : TExV2 {
-    public RTExV2() : base(ExMode.RefParameter) { }
 }
 
 public class TExV3 : TEx<Vector3> {
@@ -103,9 +93,9 @@ public class TExV3 : TEx<Vector3> {
     public readonly MemberExpression y;
     public readonly MemberExpression z;
 
-    public TExV3() : this(ExMode.Parameter) { }
+    public TExV3() : this(ExMode.Parameter, null) { }
 
-    public TExV3(ExMode m) : base(m) {
+    public TExV3(ExMode m, string? name) : base(m, name) {
         x = Ex.Field(ex, "x");
         y = Ex.Field(ex, "y");
         z = Ex.Field(ex, "z");
@@ -117,7 +107,7 @@ public class TExV3 : TEx<Vector3> {
     }
 
     public static TExV3 Variable() {
-        return new TExV3(ExMode.Parameter);
+        return new TExV3();
     }
 }
 
@@ -128,9 +118,9 @@ public class TExRV2 : TEx<V2RV2> {
     public readonly MemberExpression ry;
     public readonly MemberExpression angle;
 
-    public TExRV2() : this(ExMode.Parameter) { }
+    public TExRV2() : this(ExMode.Parameter, null) { }
 
-    public TExRV2(ExMode m) : base(m) {
+    public TExRV2(ExMode m, string? name) : base(m, name) {
         nx = Ex.Field(ex, "nx");
         ny = Ex.Field(ex, "ny");
         rx = Ex.Field(ex, "rx");
@@ -155,7 +145,7 @@ public class TExGCX : TEx<GenCtx> {
     public readonly Expression pi_float;
     public readonly MemberExpression beh_loc;
     public readonly MemberExpression bpi;
-    public TExGCX() : base() {
+    public TExGCX(Expression ex_) : base(ex_) {
         fs = Ex.Field(ex, "fs");
         v2s = Ex.Field(ex, "v2s");
         v3s = Ex.Field(ex, "v3s");
@@ -171,11 +161,11 @@ public class TExGCX : TEx<GenCtx> {
         if (t == tfloat) {
             if (name == "i") return i_float;
             else if (name == "pi") return pi_float;
-            else return fs.DictSafeGet<string, float>(ExC(name), $"No float exists by name {name}.");
+            else return fs.DictSafeGet(ExC(name), $"No float exists by name {name}.");
         }
-        if (t == tv2) return v2s.DictSafeGet<string, Vector2>(ExC(name), $"No v2 exists by name {name}.");
-        if (t == tv3) return v3s.DictSafeGet<string, Vector3>(ExC(name), $"No v3 exists by name {name}.");
-        if (t == tvrv2) return rv2s.DictSafeGet<string, V2RV2>(ExC(name), $"No V2RV2 exists by name {name}.");
+        if (t == tv2) return v2s.DictSafeGet(ExC(name), $"No v2 exists by name {name}.");
+        if (t == tv3) return v3s.DictSafeGet(ExC(name), $"No v3 exists by name {name}.");
+        if (t == tvrv2) return rv2s.DictSafeGet(ExC(name), $"No V2RV2 exists by name {name}.");
         throw new Exception($"No handling in GenCtx for type {Reflector.NameType(t)}");
     }
 }

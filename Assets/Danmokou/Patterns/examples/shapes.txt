@@ -14,7 +14,7 @@ phase 0
 	} gsr2 120 <6> {
 		%gsrrules720
 	} s polar
-		reg2star (* 2 t) (& sides) a
+		reg2star (* 2 t) (& sides) &a
 		* 5 t
 	wait 1
 	async gcircle-*/ <> gcr2 120 3 <> {
@@ -25,7 +25,7 @@ phase 0
 	} gsr2c 120 {
 		%gsrrules360
 	} s polar
-		regsoftstar (* 2 t) (& sides) a
+		regsoftstar (* 2 t) (& sides) &a
 		* 5 t
 	wait 1
 	async ellipse-*/w <> gcr2 120 4 <> {
@@ -36,7 +36,7 @@ phase 0
 	} gsr2c 30 {
 		%gsrrules360
 	} s polar
-		regpoly (* 2 t) (&sides) a
+		regpoly (* 2 t) (&sides) &a
 		* 5 t
 !}
 

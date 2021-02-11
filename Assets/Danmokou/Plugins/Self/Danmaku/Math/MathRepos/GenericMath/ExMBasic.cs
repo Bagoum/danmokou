@@ -15,8 +15,6 @@ using efloat = DMK.Expressions.EEx<float>;
 using ev2 = DMK.Expressions.EEx<UnityEngine.Vector2>;
 using ev3 = DMK.Expressions.EEx<UnityEngine.Vector3>;
 using erv2 = DMK.Expressions.EEx<DMK.DMath.V2RV2>;
-using ExBPY = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<float>>;
-using ExPred = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<bool>>;
 
 namespace DMK.DMath.Functions {
 public static partial class ExM {
@@ -158,7 +156,7 @@ public static partial class ExM {
     /// </summary>
     public static tfloat Exp(tfloat x) => OfDFD(_ExpDb, x);
     private static readonly ExFunction _LnDb = ExUtils.Wrap<double>(typeof(Math), "Log");
-    public static TEx<double> LnDb(tfloat x) => _LnDb.Of(Ex.Convert(x, typeof(double)));
+    private static TEx<double> LnDb(tfloat x) => _LnDb.Of(Ex.Convert(x, typeof(double)));
     /// <summary>
     /// Returns ln(x).
     /// </summary>
@@ -214,7 +212,7 @@ public static partial class ExM {
     /// <summary>
     /// Normalize a vector.
     /// </summary>
-    public static tv3 Norm(ev3 v3) => EEx.ResolveV3(v3, xyz => {
+    public static tv3 Norm3(ev3 v3) => EEx.ResolveV3(v3, xyz => {
         var mag = VFloat();
         return Ex.Block(new[] {mag},
             mag.Is(v3Mag(xyz)),
@@ -269,9 +267,9 @@ public static partial class ExM {
             Ex.Negate(Pow(Ex.Negate(x), y)),
             Pow(x, y)));
 
-    public static readonly ExFunction _Round = ExUtils.Wrap<double>(typeof(Math), "Round");
-    public static readonly ExFunction _Floor = ExUtils.Wrap<double>(typeof(Math), "Floor");
-    public static readonly ExFunction _Ceil = ExUtils.Wrap<double>(typeof(Math), "Ceiling");
+    private static readonly ExFunction _Round = ExUtils.Wrap<double>(typeof(Math), "Round");
+    private static readonly ExFunction _Floor = ExUtils.Wrap<double>(typeof(Math), "Floor");
+    private static readonly ExFunction _Ceil = ExUtils.Wrap<double>(typeof(Math), "Ceiling");
     
     /// <summary>
     /// Round a number to the nearest intereger.
@@ -427,7 +425,7 @@ public static partial class ExM {
                 a)));
 
     /// <summary>
-    /// Get the rotation required, in degrees, to rotate SOURCE to TARGET, in the range [-pi,pi].
+    /// Get the rotation required, in degrees, to rotate SOURCE to TARGET, in the range [-180,180].
     /// </summary>
     public static tfloat DegDiff(ev2 target, ev2 source) => DegIntoRange(ATan(target).Sub(ATan(source)));
     /// <summary>

@@ -87,6 +87,10 @@ MonoBehaviour:
   gradients: []
   frames:
   - s: {fileID: 21300000, guid: 1c4eb1a6220852d4b8a74b67609a977d, type: 3}
+    time: 0.03
+    collisionActive: 0
+    yscale: 0.15
+  - s: {fileID: 21300000, guid: 1c4eb1a6220852d4b8a74b67609a977d, type: 3}
     time: 0
     collisionActive: 0
     yscale: 0.3
@@ -130,11 +134,9 @@ MonoBehaviour:
     time: 0.02
     collisionActive: 0
     yscale: 0.11
-  coldFrame: 0
-  hotFrame: 5
+  coldFrame: 1
+  hotFrame: 6
   repeat: 0
-  animateCold: 0
-  countPostHotColdFrames: 0
   defaultWidthMultiplier: 0.5
   config:
     sortingLayer: Projectile
@@ -142,6 +144,7 @@ MonoBehaviour:
     dontUpdateTimeAfter: 999
     lineRadius: 0.18
     alignEnd: 0
+    stretch: 0
 --- !u!23 &-3480641359565364707
 MeshRenderer:
   m_ObjectHideFlags: 0

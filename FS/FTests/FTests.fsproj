@@ -1,10 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>netcoreapp3.1</TargetFramework>
 
         <IsPackable>false</IsPackable>
         <GenerateProgramFile>false</GenerateProgramFile>
+        <TargetFramework>net5.0</TargetFramework>
     </PropertyGroup>
 
     <ItemGroup>
@@ -19,12 +19,22 @@
         <Compile Include="CommonFuncs.fs" />
         <Compile Include="AAParser.fs" />
         <Compile Include="SMParser.fs" />
+        <Compile Include="LocalizationParser.fs" />
+        <Compile Include="LocalizationCodeGen.fs" />
         <Compile Include="Program.fs" />
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Common\Common.fsproj" />
+      <ProjectReference Include="..\FCommon\FCommon.fsproj" />
+      <ProjectReference Include="..\ParserCS\ParserCS.csproj" />
       <ProjectReference Include="..\Parser\Parser.fsproj" />
+      <ProjectReference Include="..\StaticParser\StaticParser.fsproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Reference Include="LanguageExt.Parsec, Version=3.0.0.0, Culture=neutral, PublicKeyToken=null">
+        <HintPath>..\..\..\..\ref\language-ext\LanguageExt.Parsec\bin\Release\net472\LanguageExt.Parsec.dll</HintPath>
+      </Reference>
     </ItemGroup>
 
 </Project>

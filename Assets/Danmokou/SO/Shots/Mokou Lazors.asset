@@ -13,7 +13,13 @@ MonoBehaviour:
   m_Name: Mokou Lazors
   m_EditorClassIdentifier: 
   key: mokou-lazors
-  title: Electroplasmic Railgun
+  title:
+    useReference: 1
+    reference: players.shot_mokou_laser
+    hardcoded:
+      en: 
+      jp: 
+      _showEnOnly: 0
   description: 'A technology that denizens of the Outside World once dreamed of,
     but which they have now given up on.
 
@@ -25,6 +31,8 @@ MonoBehaviour:
   bomb: 0
   defaultPower: 1000
   playerChild: 1
+  demoReplay: {fileID: 4900000, guid: f58a179b4f5afb7489944bbfdd2484f5, type: 3}
+  demoSetupSM: {fileID: 4900000, guid: 83d895926f063264f9adc5887261db81, type: 3}
   isMultiShot: 0
   multiD: {fileID: 0}
   multiM: {fileID: 0}

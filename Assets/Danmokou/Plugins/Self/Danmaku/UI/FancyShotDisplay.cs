@@ -8,15 +8,15 @@ using UnityEngine;
 
 namespace DMK.UI {
 public class FancyShotDisplay : FancyDisplay {
-    public TextMeshPro shotTitle;
-    public TextMeshPro shotDescription;
+    public TextMeshPro shotTitle = null!;
+    public TextMeshPro shotDescription = null!;
 
     public void SetShot(PlayerConfig p, int index, ShotConfig s, Subshot sub) {
         shotTitle.fontSharedMaterial.SetMaterialOutline(p.uiColor);
         shotDescription.fontSharedMaterial.SetMaterialOutline(p.uiColor);
-        var type = s.isMultiShot ? $"Multishot Variant {sub.Describe()}" : $"Type {index.ToABC()}";
+        var type = s.isMultiShot ? $"Variant {sub.Describe()}" : $"Type {index.ToABC()}";
         var ss = s.GetSubshot(sub);
-        shotTitle.text = s.isMultiShot ? $"Multishot:\n{ss.title}" : ss.title;
+        shotTitle.text = s.isMultiShot ? $"Multishot:\n{ss.Title}" : ss.Title.ValueOrEn;
         shotDescription.text = $"{type} / {ss.type}\n{ss.description}";
     }
 
@@ -33,8 +33,8 @@ public class FancyShotDisplay : FancyDisplay {
             tr.localPosition = myLoc;
             tr.localScale = new Vector3(scale, scale, scale);
         } else {
-            RunDroppableRIEnumerator(GoTo(myLoc, time, M.EOutSine, canceller));
-            RunDroppableRIEnumerator(ScaleTo(scale, time, M.EOutSine, canceller));
+            RunDroppableRIEnumerator(tr.GoTo(myLoc, time, M.EOutSine, canceller));
+            RunDroppableRIEnumerator(tr.ScaleTo(scale, time, M.EOutSine, canceller));
         }
     }
 }

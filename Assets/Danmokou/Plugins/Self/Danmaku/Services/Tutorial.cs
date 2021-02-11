@@ -15,17 +15,18 @@ using TMPro;
 using UnityEngine;
 using static DMK.Core.InputManager;
 using static DMK.Core.GameManagement;
+using static DMK.Core.LocalizedStrings.Tutorial;
 
 namespace DMK.Services {
 public class Tutorial : BehaviorEntity {
     // Start is called before the first frame update
-    public TextMeshPro text00;
-    public TextMeshPro text10;
+    public TextMeshPro text00 = null!;
+    public TextMeshPro text10 = null!;
     public Color prompt;
     public Color message;
     private readonly Dictionary<TextMeshPro, Vector2> defaultLoc = new Dictionary<TextMeshPro, Vector2>();
-    public GameObject tutorialBoss;
-    public TextAsset bossSM;
+    public GameObject tutorialBoss = null!;
+    public TextAsset bossSM = null!;
 
     protected override void Awake() {
         base.Awake();
@@ -36,7 +37,7 @@ public class Tutorial : BehaviorEntity {
 #endif
         defaultLoc[text00] = text00.transform.localPosition;
         defaultLoc[text10] = text10.transform.localPosition;
-        GameManagement.instance.AddDecayRateMultiplier_Tutorial(6);
+        GameManagement.Instance.externalFaithDecayMultiplier.CreateModifier(6, MultiOp.Priority.CLEAR_SCENE); 
     }
 
     private void ClearText() {
@@ -44,18 +45,20 @@ public class Tutorial : BehaviorEntity {
         text10.text = "";
     }
 
-    private void Message(TextMeshPro target, string msg, float? y = null) {
+    private void Message(TextMeshPro target, string msg, float? y = null, float? x = null) {
         ClearText();
         target.text = msg;
         target.color = message;
-        target.transform.localPosition = y.HasValue ? new Vector2(defaultLoc[target].x, y.Value) : defaultLoc[target];
+        target.transform.localPosition =
+            new Vector2(x ?? defaultLoc[target].x, y ?? defaultLoc[target].y);
     }
 
-    private void Prompt(TextMeshPro target, string msg, float? y = null) {
+    private void Prompt(TextMeshPro target, string msg, float? y = null, float? x = null) {
         ClearText();
         target.text = msg;
         target.color = prompt;
-        target.transform.localPosition = y.HasValue ? new Vector2(defaultLoc[target].x, y.Value) : defaultLoc[target];
+        target.transform.localPosition =
+            new Vector2(x ?? defaultLoc[target].x, y ?? defaultLoc[target].y);
     }
 
     public override bool UpdateDuringPause => true;
@@ -79,66 +82,58 @@ public class Tutorial : BehaviorEntity {
         }
         IEnumerator confirm() => waiti(UIConfirm);
         DependencyInjection.Find<IUIManager>().SetSpellname("Tutorial");
-        Message(text10,
-            $"Welcome to the tutorial! When you see a message in white, press {UIConfirm.Desc} to continue.");
+        Message(text10, welcome1(UIConfirm.Desc));
         yield return confirm();
-        Prompt(text10,
-            $"When you see a message in blue, follow the instructions.\nPress {Pause.Desc} to open the pause menu.");
+        Prompt(text10, blue2(Pause.Desc));
         yield return waitlf(() => EngineStateManager.IsPaused);
-        UIManager.PauseMenu.GoToOption(0);
-        Message(text00, $"The pause menu has important settings as well as control flow options.");
+        UIManager.PauseMenu!.GoToOption(0);
+        const float menuLeft = -4.8f;
+        Message(text00, pause3, x:menuLeft);
         yield return confirm();
-        Message(text00, "If the game is running slow, you can try turning shaders off or lowering the resolution.");
+        Message(text00, shaders4, x:menuLeft);
         yield return confirm();
-        Prompt(text00,
-            "Shaders option ------------------>\nTry turning shaders on and off. It takes effect on unpause.", 2f);
+        Prompt(text00, shaders5, 1.2f, x:menuLeft);
         var sd = SaveData.s.Shaders;
         yield return waitlf(() => SaveData.s.Shaders != sd);
-        Prompt(text00, "Resolution option ------------>\nTry changing the resolution. It takes effect immediately.",
-            1.6f);
+        Prompt(text00, res6, 0.85f, x:menuLeft);
         var r = SaveData.s.Resolution;
         yield return waitlf(() => SaveData.s.Resolution != r);
-        Message(text00,
-            "Refresh rate option --------------->\nThis is the game speed. The engine will determine this automatically, but you can adjust it if the game is too fast or too slow.",
-            0.4f);
+        Message(text00, refresh7, 0.5f, x:menuLeft);
         yield return confirm();
-        Message(text00,
-            "Fullscreen option --------------->\nSome computers have trouble playing games in fullscreen. Try turning this off if you have lag.",
-            0.6f);
+        Message(text00, fullscreen8, 0.15f, x:menuLeft);
         yield return confirm();
-        Message(text00,
-            "Vsync option --------------->\nVsync will make the game run smoother, but it may cause input lag.", 0.2f);
+        Message(text00, vsync9, -0.25f, x:menuLeft);
         yield return confirm();
-        Message(text00, "If you are sensitive to input lag, turn input smoothing off from the main menu options.",
-            -0.7f);
+        Message(text00, inputsmooth10, -0.7f, x:menuLeft);
         yield return confirm();
-        Prompt(text00, $"Unpause by pressing {Pause.Desc} or selecting the unpause option.");
+        Prompt(text00, unpause11(Pause.Desc), x:menuLeft);
         yield return waitlf(() => !EngineStateManager.IsLoadingOrPaused);
-        BulletManager.RequestSimple("lcircle-red/", _ => 4f, null, new Movement(new Vector2(-2, -2.5f), 0), 0, 0, null);
-        var nrx = new RealizedLaserOptions(new LaserOptions(), GenCtx.New(this, V2RV2.Zero), 5, new Vector2(3, 5),
+        var mov = new Movement(new Vector2(-2, 2.5f), 0);
+        BulletManager.RequestSimple("lcircle-red/", _ => 4f, null, mov, new ParametricInfo(in mov));
+        var nrx = new RealizedLaserOptions(new LaserOptions(), GenCtx.New(this, V2RV2.Zero), FiringCtx.New(), new Vector2(3, 5),
             V2RV2.Angle(-90), Cancellable.Null);
-        BulletManager.RequestLaser(null, "mulaser-blue/b", new Movement(new Vector2(2, 5), -90), 0, 5, 999, 0, ref nrx);
-        BulletManager.RequestLaser(null, "zonelaser-green/b", new Movement(new Vector2(3, 5), -90), 0, 5, 999, 0,
+        mov = new Movement(new Vector2(2, 5), -90);
+        BulletManager.RequestLaser(null, "mulaser-blue/b", mov, new ParametricInfo(in mov), 999, 0, ref nrx);
+        mov = new Movement(new Vector2(3, 5), -90);
+        BulletManager.RequestLaser(null, "zonelaser-green/b", mov, new ParametricInfo(in mov), 999, 0,
             ref nrx);
-        "sync _ <> relrect greenrect level <-2;-2.5:1.4;1.4:0> witha 0.7 green".Into<StateMachine>()
+        "sync _ <> relrect greenrect level <-2;2.5:1.4;1.4:0> witha 0.7 green".Into<StateMachine>()
             .Start(new SMHandoff(this));
-        Message(text10,
-            "You should now see a large red circle on a green box in the bottom left corner, and two lasers on the right side of the screen.");
+        Message(text10, redcircle12);
         yield return confirm();
-        Message(text10,
-            "If you cannot see the red circle, or the red circle appears to be in the center of the screen, turn the legacy renderer option to YES in the pause menu.");
+        Message(text10, legacy13);
         yield return confirm();
-        Message(text10, "The lasers on the right are SAFE LASERs. Lasers with letters or patterns do no damage.");
+        Message(text10, safelaser14);
         yield return confirm();
         BulletManager.ClearAllBullets();
         BehaviorEntity.GetExecForID("greenrect").InvokeCull();
 
-        Prompt(text10, $"Hold {ShootHold.Desc} to fire.");
+        Prompt(text10, fire15(ShootHold.Desc));
         yield return waitir(ShootHold);
         yield return waiti(ShootHold);
-        Prompt(text10, $"Use the arrow keys, the left joystick, or the D-Pad to move around.");
+        Prompt(text10, move16);
         yield return waitlf(() => Math.Abs(HorizontalSpeed01) > 0.1 || Math.Abs(VerticalSpeed01) > 0.1);
-        Prompt(text10, $"Hold {FocusHold.Desc} to move slow (focus mode).");
+        Prompt(text10, focus17(FocusHold.Desc));
         yield return waiti(FocusHold);
 
         var bcs = new Cancellable();
@@ -146,7 +141,7 @@ public class Tutorial : BehaviorEntity {
         boss.Initialize(SMRunner.CullRoot(StateMachine.CreateFromDump(bossSM.text), bcs));
         IEnumerator phase() {
             for (int ii = 0; ii < 4; ++ii) yield return null; //phase delay
-            var pct = boss.PhaseShifter;
+            var pct = boss.PhaseShifter ?? throw new Exception("Couldn't hook into boss PhaseShifter");
             if (canSkip()) boss.ShiftPhase();
             else yield return wait(() => pct.Cancelled);
             for (int ii = 0; ii < 4; ++ii) yield return null; //phase delay
@@ -157,122 +152,104 @@ public class Tutorial : BehaviorEntity {
         }
         for (int ii = 0; ii < 8; ++ii) yield return null; //start delay
 
-        Message(text10, "This is a boss enemy. The circle around the boss is its healthbar.");
+        Message(text10, boss18);
         yield return confirm();
-        Message(text10,
-            "The white line at the bottom of the playable area changes into a colored boss healthbar when a boss is active.");
-        yield return confirm();
-        yield return shift();
-        Prompt(text10,
-            "The boss has started a nonspell card. Try shooting down the boss. You do up to 25% more damage when closer to the boss.");
-        yield return phase();
-        Prompt(text10,
-            "This time, you can see two parts to the healthbar. The bottom half is the current nonspell card. The top half is the following spell card. Try shooting down the boss.");
-        yield return phase();
-        Prompt(text10,
-            "The boss has started a spell card, using only the top half of the healthbar. Try shooting down the boss.");
-        yield return phase();
-        Prompt(text10,
-            @"The boss has started a survival card. You cannot shoot down the boss. Wait for the timeout to the right of this text to hit zero.");
-        yield return phase();
-        Message(text10,
-            "The amount of items dropped by the boss decreases gradually after 50% of the timeout has elapsed. Defeat the boss within the first 50% of the timeout for maximum rewards. (Does not apply to survival cards.)");
-        yield return confirm();
-        Message(text10, "Usually, bosses will fire bullets at you while you try to shoot them down.");
+        Message(text10, hpbar19);
         yield return confirm();
         yield return shift();
-        Prompt(text10, "Shoot down the boss, and try not to get hit.");
+        Prompt(text10, ns20);
+        yield return phase();
+        Prompt(text10, nss21);
+        yield return phase();
+        Prompt(text10, spell22);
+        yield return phase();
+        Prompt(text10, survival23);
+        yield return phase();
+        Message(text10, items24);
+        yield return confirm();
+        Message(text10, bullets25);
+        yield return confirm();
+        yield return shift();
+        Prompt(text10, shoot26);
         yield return phase();
 
-        Message(text10, @"These are your lives. ------->
-A red dot is worth 2 lives,
-a pink dot is worth 1 life.", 1.1f);
+        Message(text10, lives27, 0.3f);
         yield return confirm();
-        instance.SetLives(10);
-        Message(text10, "There are 9 dots. Right now, you have 10 lives.");
+        Instance.SetLives(10);
+        Message(text10, dots28);
         yield return confirm();
-        instance.SetLives(15);
-        Message(text10, "Now you have 15 lives.");
+        Instance.SetLives(15);
+        Message(text10, dots29);
         yield return confirm();
-        instance.SetLives(1);
-        Message(text10, "Now you have 1 life.");
+        Instance.SetLives(1);
+        Message(text10, dots30);
         yield return confirm();
-        Message(text10, "If you are hit by bullets, you will lose a life. There are no bombs.");
+        Message(text10, nobombs31);
         yield return confirm();
         yield return shift();
-        Prompt(text10, "Try getting hit by the bullets.");
+        Prompt(text10, pleasedie32);
         yield return waitlf(() => EngineStateManager.IsDeath);
-        Prompt(text00,
-            "When you run out of lives, this screen will appear. Depending on the game mode, you may be able to continue. Select the continue option-- there's still more tutorial left!");
+        Prompt(text00, deathscreen33, x:menuLeft);
         yield return waitlf(() => !EngineStateManager.IsDeath);
         yield return shift();
-        Message(text10, @"These are your life items. ---->
-Fulfill the requirement to get an extra life.", 0.5f);
+        Message(text10, lifeitems34, -0.3f);
         yield return confirm();
         yield return shift();
-        Prompt(text10,
-            "Collect life items (red) by running into them. If you go above the point of collection, all items will move to you.");
-        int currLives = instance.Lives;
-        yield return waitlf(() => instance.Lives > currLives);
+        Prompt(text10, lifeitems35);
+        int currLives = Instance.Lives;
+        yield return waitlf(() => Instance.Lives > currLives);
         yield return shift();
-        Message(text10,
-            $"Value items (blue) increase your score by {InstanceData.valueItemPoints}, with a bonus if you collect them higher on the screen or while using your special ability.");
+        Message(text10, valueitems36(InstanceData.valueItemPoints));
         yield return confirm();
         yield return shift();
-        Prompt(text10, "Get 75,000 points by collecting value items.");
-        yield return waitlf(() => instance.Score > 75000);
+        Prompt(text10, points37);
+        yield return waitlf(() => Instance.Score > 75000);
         yield return shift();
-        Message(text00, @"The score multiplier is the number below this text.
-It multiplies the points gained from value items. Increase it by collecting point++ (green) items.");
+        Message(text00, scoremult38);
         yield return confirm();
-        Message(text00, $@"The faith meter is the white bar below the multiplier.
-It will empty over time, but graze and point++ items will restore it. When empty, your multiplier will fall by {InstanceData.pivFallStep}.");
+        Message(text00, faith39(InstanceData.pivFallStep));
         yield return confirm();
-        Message(text00,
-            $@"While the faith meter is blue, it will not decay. Completing stage or boss sections, or collecting graze or point++ items, will add blue to the faith meter.");
+        Message(text00, faithblue40);
         yield return confirm();
-        Message(text10,
-            "Grazing also increases the points gained from value items. This bonus is hidden, but does not decay.");
+        Message(text10, graze41);
         yield return confirm();
         yield return shift();
-        Prompt(text10, "Raise the score multiplier to 1.11 by collecting point++ items, then let it decay back to 1.");
-        yield return waitlf(() => instance.PIV >= 1.11);
+        Prompt(text10, scoremult42);
+        yield return waitlf(() => Instance.PIV >= 1.11);
         yield return shift();
-        yield return waitlf(() => instance.PIV <= 1.0);
-        Message(text10, "If you get enough score, you will get extra lives. The first score extend is 2,000,000.");
+        yield return waitlf(() => Instance.PIV <= 1.0);
+        Message(text10, scoreext43);
         yield return confirm();
         yield return shift();
-        Prompt(text10, "Get 2,000,000 points by collecting point++ items and value items.");
-        yield return waitlf(() => instance.Score > 2000000);
+        Prompt(text10, scoreext44);
+        yield return waitlf(() => Instance.Score > 2000000);
         yield return shift();
-        Message(text10, "There is a yellow bar below the decay meter, which allows you to use a special ability.");
+        Message(text10, ability45);
         yield return confirm();
         yield return shift();
-        Prompt(text10, "Hold X to activate bullet time, which slows the game speed to 50%.");
-        GameManagement.instance.AddGems(100);
+        Prompt(text10, ability46(Meter.Desc));
+        GameManagement.Instance.AddGems(100);
         yield return waitlf(() => InputManager.IsMeter);
         yield return shift();
-        Message(text10,
-            "While in bullet time, value items and point++ items are worth twice as much, and the player moves faster. Try collecting some items with or without bullet time.");
+        Message(text10, ability47);
         yield return confirm();
-        Message(text10, "You can refill the meter by collecting yellow gem items from defeated enemies.");
-        yield return confirm();
-        yield return shift();
-        Message(text10, "In general, enemy bullets have much smaller hitboxes than their visual size.");
+        Message(text10, meter48);
         yield return confirm();
         yield return shift();
-        Message(text10, "The exception is sun bullets. These have very large hitboxes.");
+        Message(text10, hitbox49);
         yield return confirm();
         yield return shift();
-        Message(text10,
-            "Also, safe lasers do not have hitboxes. Everything above the boss is a normal laser, and everything below is a safe laser.");
+        Message(text10, hitbox50);
+        yield return confirm();
+        yield return shift();
+        Message(text10, safelaser51);
         yield return confirm();
         yield return shift();
 
-        Prompt(text10, "That's all! To finish the tutorial, select \"Return to Menu\" from the pause menu.");
+        Prompt(text10, end52);
         SaveData.r.CompleteTutorial();
     }
 
-    private const int SKIP = 10;
+    private const int SKIP = 0;
 }
 }

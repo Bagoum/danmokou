@@ -22,9 +22,9 @@ public class ResourceManager : MonoBehaviour {
         public SOBgTransition transition;
     }
 
-    public NamedEffectStrategy[] effects;
-    public NamedBackgroundTransition[] bgTransitions;
-    public SOPrefabs backgrounds;
+    public NamedEffectStrategy[] effects = null!;
+    public NamedBackgroundTransition[] bgTransitions = null!;
+    public SOPrefabs backgrounds = null!;
     private static readonly Dictionary<string, EffectStrategy> effectMap = new Dictionary<string, EffectStrategy>();
     private static readonly Dictionary<string, GameObject> Summonables = new Dictionary<string, GameObject>();
     private static readonly Dictionary<string, GameObject> Backgrounds = new Dictionary<string, GameObject>();

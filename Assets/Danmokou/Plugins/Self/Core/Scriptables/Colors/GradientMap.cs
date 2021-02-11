@@ -10,7 +10,6 @@ using UnityEngine.Profiling;
 namespace DMK.Scriptables {
 public abstract class ColorMap : ScriptableObject {
     protected virtual void PrepareColors() { }
-    protected const byte zero = 0; //lol
 
     public Sprite Recolor(Sprite baseSprite) {
         PrepareColors();
@@ -33,8 +32,8 @@ public abstract class ColorMap : ScriptableObject {
 
 [CreateAssetMenu(menuName = "Colors/GradientMap")]
 public class GradientMap : ColorMap {
-    public Gradient gradient;
-    [NonSerialized] private IGradient setGradient;
+    public Gradient gradient = null!;
+    [NonSerialized] private IGradient? setGradient;
 
     private void SetFromPalette(IGradient p, GradientModifier gt, DRenderMode render) =>
         setGradient = p.Modify(gt, render);
@@ -45,14 +44,13 @@ public class GradientMap : ColorMap {
     }
 
     protected override unsafe void Map(Color32* pixels, int len) {
-        setGradient = setGradient ?? gradient.Downcast();
+        setGradient ??= DGradient.FromUnityGradient(gradient);
         for (int ii = 0; ii < len; ++ii) {
-            Color32 pixel = pixels[ii];
-            if (pixel.a > zero) {
-                var nc = setGradient.Evaluate(pixel.r / 255f);
-                pixels[ii].r = M.Float01ToByte(nc.r);
-                pixels[ii].g = M.Float01ToByte(nc.g);
-                pixels[ii].b = M.Float01ToByte(nc.b);
+            ref Color32 pixel = ref pixels[ii];
+            var a = pixel.a;
+            if (a > byte.MinValue) {
+                pixel = setGradient.Evaluate32(pixel.r / 255f);
+                pixel.a = a;
             }
         }
     }

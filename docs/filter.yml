@@ -9,7 +9,7 @@ apiRules:
         uidRegex: ^DMK\.Behavior
         type: Type
     - include:
-        uidRegex: ^DMK\.Danmaku\.Patterning
+        uidRegex: ^DMK\.Danmaku\.Patterns
     - exclude:
         uidRegex: ^DMK\.Danmaku\.Options\.GenCtxProperty\.
         type: Type
@@ -44,6 +44,10 @@ apiRules:
     - exclude:
         uidRegex: ^DMK\.Graphics
         type: Type
+    - exclude:
+        uidRegex: ^DMK\.DMath\.Functions\.VTPConstructors
+    - exclude:
+        uidRegex: ^DMK\.DMath\.Functions\.VTPControllers
     - include:
         uidRegex: ^DMK\.DMath
     - exclude:

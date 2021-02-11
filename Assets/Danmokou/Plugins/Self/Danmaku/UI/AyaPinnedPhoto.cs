@@ -13,9 +13,9 @@ namespace DMK.UI {
 public class AyaPinnedPhoto : CoroutineRegularUpdater {
     public override bool UpdateDuringPause => true;
 
-    private Transform tr;
-    private SpriteRenderer sr;
-    private MaterialPropertyBlock pb;
+    private Transform tr = null!;
+    private SpriteRenderer sr = null!;
+    private MaterialPropertyBlock pb = null!;
     public float timeToPosition;
     public float successRotationLoops = 3;
     public float timeToFallOff;
@@ -46,7 +46,7 @@ public class AyaPinnedPhoto : CoroutineRegularUpdater {
         SetSize(photo, desiredSize);
         tr.position = loc = point;
         tr.eulerAngles = new Vector3(0, 0, photo.Angle);
-        if (photo.TryLoad(out Sprite s)) {
+        if (photo.TryLoad(out Sprite? s)) {
             sr.sprite = s;
             sr.GetPropertyBlock(pb);
             pb.SetFloat("_PhotoPPU", photo.PPU);

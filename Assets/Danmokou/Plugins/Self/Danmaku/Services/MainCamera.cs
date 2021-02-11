@@ -1,13 +1,52 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using DMK.Behavior;
 using DMK.Core;
 using DMK.DMath;
 using DMK.Graphics;
 using DMK.Player;
+using DMK.UI;
 using UnityEngine;
 
 namespace DMK.Services {
 
-public class MainCamera : MonoBehaviour {
+public class MainCamera : RegularUpdater {
+    public enum CameraType {
+        /// <summary>
+        /// Background rendering.
+        /// </summary>
+        Background,
+        /// <summary>
+        /// Player bullet rendering.
+        /// </summary>
+        LowDirectRender,
+        /// <summary>
+        /// Low effects, low BEH bullets (some lasers and pathers), and player rendering.
+        /// </summary>
+        Middle,
+        /// <summary>
+        /// Enemy bullet rendering.
+        /// </summary>
+        HighDirectRender,
+        /// <summary>
+        /// High effects, high BEH bullets (some lasers and pathers), and enemy rendering.
+        /// </summary>
+        Top,
+        /// <summary>
+        /// 3D camera for some effects.
+        /// </summary>
+        Effects3D,
+        /// <summary>
+        /// Camera that applies global shader effects (such as Seija flipping).
+        /// </summary>
+        Shader,
+        /// <summary>
+        /// Camera that doesn't actually render anything, but is marked as MainCamera for Unity purposes.
+        /// </summary>
+        Main,
+        UI
+    }
     private static readonly int ShaderScrnWidthID = Shader.PropertyToID("_ScreenWidth");
     private static readonly int ShaderScrnHeightID = Shader.PropertyToID("_ScreenHeight");
     private static readonly int ShaderPixelWidthID = Shader.PropertyToID("_PixelWidth");
@@ -16,19 +55,44 @@ public class MainCamera : MonoBehaviour {
     private static readonly int ResourcePixelsPerUnitID = Shader.PropertyToID("_RPPU");
     private static readonly int RenderRatioID = Shader.PropertyToID("_RenderR");
     private static readonly int GlobalXOffsetID = Shader.PropertyToID("_GlobalXOffset");
-    public static MainCamera main;
+    public static MainCamera main = null!;
 
-    public static Camera mainCam;
+    public static Camera mainCam = null!;
     public static float VertRadius { get; private set; }
     public static float HorizRadius { get; private set; }
     public static float ScreenWidth => HorizRadius * 2;
     public static float ScreenHeight => VertRadius * 2;
     private Vector2 position; // Cached to allow requests for screen coordinates from MovementLASM off main thread
-    private Transform tr;
+    private Transform tr = null!;
 
-    public Shader ayaShader;
-    private Material ayaMaterial;
-    public Camera[] ayaRenderers;
+    public Shader ayaShader = null!;
+    private Material ayaMaterial = null!;
+
+    public Camera BackgroundCamera = null!;
+    public Camera LowDirectCamera = null!;
+    public Camera MiddleCamera = null!;
+    public Camera HighDirectCamera = null!;
+    public Camera TopCamera = null!;
+    public Camera Effects3DCamera = null!;
+    public Camera ShaderEffectCamera = null!;
+    public static RenderTexture RenderTo { get; private set; } = null!;
+
+    private static readonly CameraType[] AyaCameras = {
+        CameraType.Background, CameraType.LowDirectRender, CameraType.Middle,
+        CameraType.HighDirectRender, CameraType.Top, CameraType.Effects3D, CameraType.Shader
+    };
+
+    public Camera FindCamera(CameraType type) => type switch {
+        CameraType.Background => BackgroundCamera,
+        CameraType.LowDirectRender => LowDirectCamera,
+        CameraType.Middle => MiddleCamera,
+        CameraType.HighDirectRender => HighDirectCamera,
+        CameraType.Top => TopCamera,
+        CameraType.Effects3D => Effects3DCamera,
+        CameraType.Shader => ShaderEffectCamera,
+        CameraType.UI => UIManager.Camera,
+        _ => mainCam
+    };
 
     /*
     public Material postprocessor;
@@ -45,6 +109,17 @@ public class MainCamera : MonoBehaviour {
         position = tr.position;
         ayaMaterial = new Material(ayaShader);
         ReassignGlobalShaderVariables();
+        if (RenderTo == null) RecreateRT();
+    }
+
+    private void RecreateRT() {
+        if (RenderTo != null) RenderTo.Release();
+        RenderTo = DefaultTempRT();
+    }
+
+    protected override void BindListeners() {
+        Listen(SaveData.ResolutionHasChanged, RecreateRT);
+        base.BindListeners();
     }
 
     /// <summary>
@@ -54,8 +129,8 @@ public class MainCamera : MonoBehaviour {
 
     public void ReassignGlobalShaderVariables() {
         //Log.Unity($"Camera width: {cam.pixelWidth} Screen width: {Screen.width}");
-        Shader.SetGlobalFloat(ShaderScrnHeightID, 2 * VertRadius);
-        Shader.SetGlobalFloat(ShaderScrnWidthID, 2 * HorizRadius);
+        Shader.SetGlobalFloat(ShaderScrnHeightID, ScreenHeight);
+        Shader.SetGlobalFloat(ShaderScrnWidthID, ScreenWidth);
         Shader.SetGlobalFloat(PixelsPerUnitID, Screen.height / ScreenHeight);
         Shader.SetGlobalFloat(ResourcePixelsPerUnitID, ResourcePPU);
         Shader.SetGlobalFloat(RenderRatioID, Screen.height / (float) GraphicsUtils.BestResolution.h);
@@ -115,92 +190,85 @@ public class MainCamera : MonoBehaviour {
         pb.SetFloat(PropConsts.ScreenY, normLoc.y);
     }
 
-
-    public void OnDestroy() {
-        main = null;
+    private void OnPreRender() {
+        mainCam.targetTexture = RenderTo;
     }
 
-    private readonly List<RenderTexture> samples = new List<RenderTexture>();
-    private const int PrefilterDownsample = 0;
-    private const int Downsample = 1;
-    private const int Upsample = 2;
-    private const int UpsampleFinalize = 3;
-    private const int UpsampleDebug = 4;
-    private const int RemapOnly = 5;
+    private void OnPostRender() {
+        mainCam.targetTexture = null;
+        if (saveNext) {
+            saveNext = false;
+            FileUtils.WriteTex("DMK_Saves/Aya/mainCamPostRender.jpg", RenderTo.IntoTex());
+        }
+        UnityEngine.Graphics.Blit(RenderTo, null as RenderTexture);
+    }
+    
+    private bool saveNext = false;
+    [ContextMenu("Save next PostRender")]
+    public void SaveNextPostRender() {
+        saveNext = true;
+    }
+
+    public AyaPhoto RequestAyaPhoto(CRect rect, CameraType[]? cameras=null) {
+        return new AyaPhoto(RequestPhotoTex(rect, cameras), rect);
+    }
 
     /// <summary>
-    /// Note: the returned photo will not have its texture filled for another few frames.
+    /// Caller must dispose the return value via Object.Destroy.
     /// </summary>
-    /// <param name="rect"></param>
-    /// <returns></returns>
-    public AyaPhoto RequestAyaPhoto(CRect rect) {
+    public Texture2D RequestPhotoTex(CRect rect, CameraType[]? cameras=null) {
         var rt = RenderTexture.active;
-        ayaMaterial.SetFloat(PropConsts.OffsetX, 0.5f + rect.x / ScreenWidth);
-        ayaMaterial.SetFloat(PropConsts.OffsetY, 0.5f + rect.y / ScreenHeight);
+        var offset = transform.position;
+        ayaMaterial.SetFloat(PropConsts.OffsetX, (rect.x - offset.x) / ScreenWidth);
+        ayaMaterial.SetFloat(PropConsts.OffsetY, (rect.y - offset.y) / ScreenHeight);
         float xsr = rect.halfW * 2 / ScreenWidth;
         float ysr = rect.halfH * 2 / ScreenHeight;
         ayaMaterial.SetFloat(PropConsts.ScaleX, xsr);
         ayaMaterial.SetFloat(PropConsts.ScaleY, ysr);
         ayaMaterial.SetFloat(PropConsts.Angle, rect.angle * M.degRad);
-        var capture = DefaultTempRT();
+        var _renderTo = RenderTo;
+        RenderTo = DefaultTempRT();
+        //Clear is required since the camera list may not contain BackgroundCamera,
+        // which is the only one that clears
+        RenderTo.GLClear();
         Shader.EnableKeyword("AYA_CAPTURE");
-        foreach (var c in ayaRenderers) {
-            c.targetTexture = capture;
+        foreach (var c in (cameras ?? AyaCameras).Select(FindCamera)) {
+            c.targetTexture = RenderTo;
             c.Render();
-            c.targetTexture = null;
+            //Why do we have to set it back? I don't know, but if you don't do this,
+            // you'll get flashing behavior when this is called from AyaCamera
+            c.targetTexture = _renderTo;
         }
         Shader.DisableKeyword("AYA_CAPTURE");
         var ss = DefaultTempRT(((int) (SaveData.s.Resolution.w * xsr), (int) (SaveData.s.Resolution.h * ysr)));
-        UnityEngine.Graphics.Blit(capture, ss, ayaMaterial);
-        capture.Release();
+        UnityEngine.Graphics.Blit(RenderTo, ss, ayaMaterial);
+        RenderTo.Release();
+        RenderTo = _renderTo;
         var tex = ss.IntoTex();
         ss.Release();
+        FileUtils.WriteTex("DMK_Saves/Aya/temp.jpg", tex);
+        //For some reason, I've had strange issues with things turning upside down if I return the RT
+        // instead of converting it immediately to a tex. IDK but be warned
         RenderTexture.active = rt;
-        return new AyaPhoto(tex, rect);
+        return tex;
     }
-
-    /*
-    private void OnPostRender() {
-        postprocessor.SetFloat("_BloomThreshold", bloomThreshold);
-        var rt = renderTarget;
-        int w = rt.width / 2;
-        int h = rt.height / 2;
-        samples.Clear();
-        var dst = RenderTexture.GetTemporary(w, h, 0, rt.format);
-        samples.Add(dst);
-        Graphics.Blit(rt, dst, postprocessor, PrefilterDownsample);
-        var src = dst;
-        int ii = 1;
-        for (; ii < bloomIterations; ++ii) {
-            w /= 2;
-            h /= 2;
-            if (h < 4 || w < 4) break;
-            dst = RenderTexture.GetTemporary(w, h, 0, rt.format);
-            samples.Add(dst);
-            Graphics.Blit(src, dst, postprocessor, Downsample);
-            src = dst;
-        }
-        for (ii -= 2; ii >= 0; --ii) {
-            dst = samples[ii];
-            Graphics.Blit(src, dst, postprocessor, Upsample);
-            RenderTexture.ReleaseTemporary(src);
-            src = dst;
-        }
-        if (debugBloom) {
-            Graphics.Blit(src, null as RenderTexture, postprocessor, UpsampleDebug);
-        } else {
-            Graphics.Blit(src, null as RenderTexture, postprocessor, UpsampleFinalize);
-        }
-        RenderTexture.ReleaseTemporary(src);
-    }*/
 
     public static RenderTexture DefaultTempRT() => DefaultTempRT(SaveData.s.Resolution);
 
     public static RenderTexture DefaultTempRT((int w, int h) res) => RenderTexture.GetTemporary(res.w,
-        res.h, 0, RenderTextureFormat.ARGB32);
+        //24 bit depth is required for sprite masks to work (used in dialogue handling)
+        res.h, 24, RenderTextureFormat.ARGB32);
 
     public static ArbitraryCapturer CreateArbitraryCapturer(Transform tr) =>
-        GameObject.Instantiate(GameManagement.ArbitraryCapturer, tr, false)
+        GameObject.Instantiate(GameManagement.Prefabs.arbitraryCapturer, tr, false)
             .GetComponent<ArbitraryCapturer>();
+
+    public override void RegularUpdate() { }
+
+    protected override void OnDisable() {
+        RenderTo.Release();
+        RenderTo = null!;
+        base.OnDisable();
+    }
 }
 }

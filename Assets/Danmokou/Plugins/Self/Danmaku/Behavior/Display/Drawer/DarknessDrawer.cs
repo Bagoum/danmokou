@@ -5,11 +5,11 @@ using UnityEngine;
 
 namespace DMK.Behavior.Display {
 public class DarknessDrawer : SpriteDisplayController {
-    private TP4 color;
-    private TP locate;
-    private BPY scale;
+    private TP4 color = null!;
+    private TP locate = null!;
+    private BPY scale = null!;
 
-    public void Initialize(TP locator, BPY scaler, [CanBeNull] TP4 colorizer) {
+    public void Initialize(TP locator, BPY scaler, TP4? colorizer) {
         locate = locator;
         scale = scaler;
         color = colorizer ?? (_ => Color.black);

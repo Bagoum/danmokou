@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using DMK.Core;
 using JetBrains.Annotations;
 using UnityEngine;
 
@@ -15,21 +16,22 @@ public class PlayerConfig : ScriptableObject {
     public float hitboxRadius = 0.034f;
     public float grazeboxRadius = 0.3f;
     public float FocusSpeed => freeSpeed * focusSlowdown;
-    public string key;
+    public string key = "";
     /// <summary>
     /// Eg. Mokou (padded to 8)
     /// </summary>
-    public string shortTitle;
+    public LocalizedStringReference shortTitle = null!;
+    public LocalizedString ShortTitle => shortTitle.Value;
     /// <summary>
     /// Eg. Fujiwara no Mokou
     /// </summary>
-    public string title;
-    public GameObject prefab;
+    public string title = "";
+    public GameObject prefab = null!;
     //public ShotConfig[] shots;
-    public OrdinalShot[] shots2;
+    public OrdinalShot[] shots2 = null!;
 
     public Color uiColor;
-    public GameObject shotDisplay;
+    public GameObject shotDisplay = null!;
 }
 
 [Serializable]

@@ -4,11 +4,11 @@ using UnityEngine;
 namespace DMK.Scriptables {
 [CreateAssetMenu(menuName = "Colors/MultiPaletteMap")]
 public class MultiPaletteMap : ColorMap {
-    public Palette red;
+    public Palette red = null!;
     public GradientModifier redMod;
-    public Palette green;
+    public Palette green = null!;
     public GradientModifier greenMod;
-    public Palette blue;
+    public Palette blue = null!;
     public GradientModifier blueMod;
     
     private static readonly Color nc = new Color(0, 0, 0, 0);
@@ -18,7 +18,7 @@ public class MultiPaletteMap : ColorMap {
         var gb = blue.Gradient.Modify(blueMod);
         for (int ii = 0; ii < len; ++ii) {
             Color32 pixel = pixels[ii];
-            if (pixel.a > zero) {
+            if (pixel.a > byte.MinValue) {
                 float total = pixel.r + pixel.g + pixel.b + 1;
                 Color32 newc = 
                     gr.Evaluate(pixel.r / 255f) * ((pixel.r + 1) / total) + 

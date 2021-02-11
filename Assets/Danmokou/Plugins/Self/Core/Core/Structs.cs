@@ -30,15 +30,18 @@ public struct FrameRunner {
     private float currTime;
     private Frame[] currFrames;
     private bool doLoop;
-    [CanBeNull] private Action done;
+    private Action? done;
     
-    private Sprite SetNewAnimation(Frame[] frames, bool loop, [CanBeNull] Action onLoopOrFinish) {
+    private Sprite? SetNewAnimation(Frame[] frames, bool loop, Action? onLoopOrFinish) {
+        if (frames.Length == 0) {
+            done?.Invoke();
+            return null;
+        }
         currFrames = frames;
         currFrameIndex = 0;
         currTime = 0f;
         doLoop = loop;
         done = onLoopOrFinish;
-        if (frames.Length == 0) return null; //TODO
         return frames[0].sprite;
     }
     
@@ -53,17 +56,15 @@ public struct FrameRunner {
         return false;
     }
             
-    [CanBeNull]
-    public Sprite SetAnimationTypeIfPriority(AnimationType typ, Frame[] frames, bool loop, [CanBeNull] Action onLoopOrFinish) {
+    public Sprite? SetAnimationTypeIfPriority(AnimationType typ, Frame[] frames, bool loop, Action? onLoopOrFinish) {
         return HasPriority(currType, typ) ? null : SetAnimationType(typ, frames, loop, onLoopOrFinish);
     }
-    public Sprite SetAnimationType(AnimationType typ, Frame[] frames, bool loop, [CanBeNull] Action onLoopOrFinish) {
+    public Sprite? SetAnimationType(AnimationType typ, Frame[] frames, bool loop, Action? onLoopOrFinish) {
         currType = typ;
         return SetNewAnimation(frames, loop, onLoopOrFinish);
     }
     
-    //[CanBeNull]: the sprite may be null
-    public (bool resetMe, Sprite updateSprite) Update(float dT) {
+    public (bool resetMe, Sprite? updateSprite) Update(float dT) {
         currTime += dT;
         bool didUpdate = false;
         if (currFrameIndex >= currFrames.Length) {

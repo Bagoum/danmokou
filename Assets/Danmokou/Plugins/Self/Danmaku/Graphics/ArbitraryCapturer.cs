@@ -9,8 +9,8 @@ using UnityEngine.Rendering;
 
 namespace DMK.Graphics {
 public class ArbitraryCapturer : MonoBehaviour {
-    public Camera Camera { get; private set; }
-    public RenderTexture Captured { get; private set; }
+    public Camera Camera { get; private set; } = null!;
+    public RenderTexture Captured { get; private set; } = null!;
 
     private readonly DMCompactingArray<Action<RenderTexture>>
         listeners = new DMCompactingArray<Action<RenderTexture>>();

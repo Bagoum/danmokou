@@ -62,7 +62,7 @@ public class GTRepeat : UniversalSM {
         public bool PrepareLastIteration() => looper.PrepareLastIteration();
         public void FinishIteration() => looper.FinishIteration();
 
-        [CanBeNull] private Func<bool> checkIsChildDone;
+        private Func<bool>? checkIsChildDone;
 
         public void DoAIteration(ref float elapsedFrames, IReadOnlyList<StateMachine> target) {
             //See IPExecution tracker for comments on this code
@@ -136,7 +136,7 @@ public class GTRepeat : UniversalSM {
             looper.IAmDone(normalEnd ?? !looper.Handoff.cT.Cancelled);
         }
         
-        public static IEnumerator Wait(float elapsedFrames, float waitFrames, LoopControl<StateMachine> looper, [CanBeNull] Func<bool> childAwaiter, Action<(float, LoopControl<StateMachine>)> cb, ICancellee cT) {
+        public static IEnumerator Wait(float elapsedFrames, float waitFrames, LoopControl<StateMachine> looper, Func<bool>? childAwaiter, Action<(float, LoopControl<StateMachine>)> cb, ICancellee cT) {
             elapsedFrames -= waitFrames;
             if (cT.Cancelled) { cb((elapsedFrames, looper)); yield break; }
             bool wasPaused = false;

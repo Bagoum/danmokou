@@ -49,14 +49,14 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     //BEH is only pooled when summoned via the firing API.
 
     [Tooltip("This must be null for pooled BEH.")]
-    public TextAsset behaviorScript;
+    public TextAsset? behaviorScript;
     /// <summary>
     /// ID to refer to this entity in behavior scripts.
     /// </summary>
-    public string ID;
+    public string ID = "";
     private static readonly Dictionary<string, HashSet<BehaviorEntity>> idLookup = new Dictionary<string, HashSet<BehaviorEntity>>();
     //This is automatically disposed by the state machine that generates it
-    [CanBeNull] public Cancellable PhaseShifter { get; set; }
+    public Cancellable? PhaseShifter { get; set; }
     private readonly HashSet<Cancellable> behaviorToken = new HashSet<Cancellable>();
     public int NumRunningSMs => behaviorToken.Count;
     public Vector2 LastDelta { get; private set; }
@@ -78,8 +78,8 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     public float original_angle { get; protected set; }
 
     protected bool dying { get; private set; } = false;
-    [CanBeNull] private Enemy enemy;
-    [CanBeNull] public EffectStrategy deathEffect;
+    private Enemy? enemy;
+    public EffectStrategy? deathEffect;
 
     private string NameMe => string.IsNullOrWhiteSpace(ID) ? gameObject.name : ID;
     public Enemy Enemy => 
@@ -90,7 +90,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     public bool isEnemy => enemy != null;
 
     public bool TryAsEnemy(out Enemy e) {
-        e = enemy;
+        e = enemy!;
         return isEnemy;
     }
 
@@ -104,6 +104,8 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     /// Note: Do not modify rBPI.t directly, instead use SetTime. This is because entities like Laser have double handling for rBPI.t.
     /// </summary>
     public virtual ref ParametricInfo rBPI => ref bpi;
+    public ParametricInfo BPI => rBPI;
+    public Vector2 Loc => rBPI.loc;
 
     public virtual void SetTime(float t) {
         rBPI.t = t;
@@ -112,10 +114,6 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     private Movement movement;
     private bool doVelocity = false;
 
-    protected void AssignVelocity(Movement newVel) {
-        movement = newVel;
-        doVelocity = !movement.IsEmpty();
-    }
     
     private const float FIRST_CULLCHECK_TIME = 2;
 
@@ -132,7 +130,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     private int beh_cullCtr = 0;
     
     protected bool collisionActive = false;
-    protected SOPlayerHitbox collisionTarget;
+    protected SOPlayerHitbox collisionTarget = null!;
     protected int Damage => 1;
 
     [Serializable]
@@ -147,7 +145,8 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
 
     public CollisionInfo collisionInfo;
     private int grazeFrameCounter = 0;
-    [CanBeNull] private Pred delete;
+    private Pred? delete;
+    public int DefaultLayer { get; private set; }
 
     /// <summary>
     /// Sets the transform position iff `doMovement` is enabled.
@@ -178,12 +177,15 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         None
     }
 
-    public DisplayController displayer;
+    public DisplayController? displayer;
+    public DisplayController Displayer => (displayer != null) ? displayer : throw new Exception($"BEH {ID} does not have a displayer");
     private bool isSummoned = false;
     protected virtual int Findex => 0;
+    protected virtual FiringCtx? DefaultFCTX => null;
     protected override void Awake() {
         base.Awake();
-        bpi = ParametricInfo.WithRandomId(tr.position, Findex);
+        DefaultLayer = gameObject.layer;
+        bpi = new ParametricInfo(tr.position, Findex, RNG.GetUInt(), 0, DefaultFCTX);
         enemy = GetComponent<Enemy>();
         RegisterID();
         UpdateStyle(defaultMeta);
@@ -209,9 +211,8 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         }
         return Task.CompletedTask;
     }
-    public void Initialize(Vector2 parentLoc, V2RV2 position,
-        SMRunner sm, int firingIndex, uint? bpiid, string behName = "") =>
-        Initialize(null, new Movement(parentLoc, position), sm, firingIndex, bpiid, null, behName);
+    public void Initialize(Movement mov, ParametricInfo pi, SMRunner sm, string behName = "") =>
+        Initialize(null, mov, pi, sm, null, behName);
 
     /// <summary>
     /// If parented, we need firing offset to update Velocity's root position with parent.pos + offset every frame.
@@ -222,24 +223,24 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     /// Initialize a BEH. You are not required to call this, but all BEH that are generated in code should use this.
     /// </summary>
     /// <param name="style"></param>
-    /// <param name="_velocity">Velocity struct</param>
+    /// <param name="mov">Velocity struct</param>
     /// <param name="smr">SM to execute. Set null if no SM needs to be run.</param>
-    /// <param name="firingIndex">Firing index of BPI that will be created.</param>
-    /// <param name="bpiid">ID of BPI that will be created.</param>
+    /// <param name="pi">ParametricInfo to bind to this object.</param>
     /// <param name="parent">Transform parent of this BEH. Use sparingly</param>
     /// <param name="behName"></param>
     /// <param name="options"></param>
-    public void Initialize([CanBeNull] BEHStyleMetadata style, Movement _velocity, SMRunner smr, int firingIndex=0, 
-        uint? bpiid=null, [CanBeNull] BehaviorEntity parent=null, string behName="", RealizedBehOptions? options=null) {
+    public void Initialize(BEHStyleMetadata? style, Movement mov, ParametricInfo pi, SMRunner smr,
+        BehaviorEntity? parent=null, string behName="", RealizedBehOptions? options=null) {
         if (parent != null) TakeParent(parent);
         isSummoned = true;
-        tr.localPosition = firedOffset = _velocity.rootPos;
-        _velocity.rootPos = bpi.loc = tr.position;
-        original_angle = _velocity.angle;
-        bpi = new ParametricInfo(_velocity.rootPos, firingIndex, bpiid ?? RNG.GetUInt());
-        AssignVelocity(_velocity);
+        bpi = pi;
+        tr.localPosition = firedOffset = mov.rootPos;
+        mov.rootPos = bpi.loc = tr.position;
+        original_angle = mov.angle;
+        movement = mov;
+        doVelocity = !movement.IsEmpty();
         if (doVelocity) {
-            SetDirection(movement.UpdateZero(ref bpi, 0f));
+            SetDirection(movement.UpdateZero(ref bpi));
             tr.position = bpi.loc;
         }
         if (IsNontrivialID(behName)) ID = behName;
@@ -281,14 +282,16 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         }
     }
 
-    public void RunSMFromScript(TextAsset script) {
+    public void RunSMFromScript(TextAsset? script) {
         if (script != null) RunPatternSM(StateMachineManager.FromText(script));
     }
 
-    public void RunPatternSM(StateMachine sm) => _ = 
-        BeginBehaviorSM(SMRunner.RunNoCancelRoot(sm), phaseController.WhatIsNextPhase(0));
+    public void RunPatternSM(StateMachine? sm) {
+        if (sm != null)
+            _ = BeginBehaviorSM(SMRunner.RunNoCancelRoot(sm), phaseController.WhatIsNextPhase(0));
+    }
 
-    private static bool IsNontrivialID([CanBeNull] string id) => !string.IsNullOrWhiteSpace(id) && id != "_";
+    private static bool IsNontrivialID(string? id) => !string.IsNullOrWhiteSpace(id) && id != "_";
 
     /// <summary>
     /// Safe to call twice.
@@ -321,13 +324,14 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     /// but the results are not well-defined.
     /// </summary>
     /// <returns></returns>
-    public IEnumerator ExecuteVelocity(LimitedTimeMovement ltv, uint newId) {
+    public IEnumerator ExecuteVelocity(LimitedTimeMovement ltv) {
         if (ltv.cT.Cancelled) { ltv.done(); yield break; }
         Movement vel = new Movement(ltv.VTP2, GlobalPosition(), V2RV2.Angle(original_angle));
         float doTime = (ltv.enabledFor < float.Epsilon) ? float.MaxValue : ltv.enabledFor;
-        ParametricInfo tbpi = new ParametricInfo(bpi.loc, ltv.firingIndex, newId);
+        ParametricInfo tbpi = ltv.pi;
+        tbpi.loc = bpi.loc;
         //Sets initial position correctly for offset-based velocity
-        _ = vel.UpdateZero(ref tbpi, 0f);
+        _ = vel.UpdateZero(ref tbpi);
         SetTransformGlobalPosition(tbpi.loc);
         if (ltv.ThisCannotContinue(tbpi)) { ltv.done(); yield break; }
         for (; tbpi.t < doTime - ETime.FRAME_TIME;) {
@@ -383,8 +387,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
 
     private void DestroyFinal() {
         if (displayer != null) displayer.Hide();
-        if (isSummoned) DataHoisting.Destroy(bpi.id);
-        //Flip(false, false);
+        bpi.ctx.Dispose();
         if (isPooled) {
             PooledDone();
         } else {
@@ -404,7 +407,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         else if (!dying) {
             DestroyInitial(true, drops ?? AmIOutOfHP);
             if (enemy != null) enemy.DoSuicideFire();
-            GameManagement.instance.DestroyNormalEnemy();
+            GameManagement.Instance.DestroyNormalEnemy();
             TryDeathEffect();
             if (displayer == null) DestroyFinal();
             else displayer.Animate(AnimationType.Death, false, DestroyFinal);
@@ -568,7 +571,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
             if (IsNontrivialID(ID)) {
                 Log.Unity(
                     $"BehaviorEntity {ID} finished running its SM{(sm.cullOnFinish ? " and will destroy itself." : ".")}",
-                    level: Log.Level.DEBUG2);
+                    level: Log.Level.DEBUG1);
             }
             if (sm.cullOnFinish) {
                 if (PoofOnPhaseEnd) Poof();
@@ -654,8 +657,10 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         oldSPT?.Cancel(); 
     }
     
-    public BehaviorEntity GetINode(string behName, uint? bpiid) => BEHPooler.INode(rBPI.loc, 
-        V2RV2.Angle(original_angle), Direction, rBPI.index, bpiid, behName);
+    public BehaviorEntity GetINode(string behName, uint? bpiid) {
+        var mov = new Movement(rBPI.loc, V2RV2.Angle(original_angle));
+        return BEHPooler.INode(mov, new ParametricInfo(in mov, rBPI.index, bpiid), Direction, behName);
+    }
 
 
 #if UNITY_EDITOR
@@ -697,10 +702,10 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         if (attachedPointers.ContainsKey(id)) return attachedPointers[id];
         if (idLookup.ContainsKey(id)) {
             foreach (BehaviorEntity beh in idLookup[id]) {
-                return new BEHPointer(beh);
+                return new BEHPointer(id, beh);
             }
         }
-        if (!pointersToResolve.ContainsKey(id)) pointersToResolve[id] = new BEHPointer();
+        if (!pointersToResolve.ContainsKey(id)) pointersToResolve[id] = new BEHPointer(id);
         return pointersToResolve[id];
     }
 
@@ -742,10 +747,14 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
 }
 
 public class BEHPointer {
-    public BehaviorEntity beh;
+    public readonly string id;
+    public BehaviorEntity? beh;
+    public BehaviorEntity Beh => (beh != null) ? beh : throw new Exception($"BEHPointer {id} has not been bound");
     private bool found;
+    public Vector2 Loc => Beh.Loc;
 
-    public BEHPointer(BehaviorEntity beh = null) {
+    public BEHPointer(string id, BehaviorEntity? beh = null) {
+        this.id = id;
         this.beh = beh;
         found = beh != null;
     }

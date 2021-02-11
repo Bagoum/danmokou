@@ -15,24 +15,28 @@ public interface IBackgroundOrchestrator {
     void ConstructTarget(GameObject bgp, bool withTransition, bool destroyIfExists = false);
 }
 public class BackgroundOrchestrator : CoroutineRegularUpdater, IBackgroundOrchestrator {
-    private Transform tr;
-    [CanBeNull] public BackgroundController FromBG { get; private set; }
-    [CanBeNull] public BackgroundController ToBG { get; private set; }
+    private Transform tr = null!;
+    public BackgroundController? FromBG { get; private set; }
+    public BackgroundController? ToBG { get; private set; }
     
     private readonly Dictionary<GameObject, BackgroundController> instantiated = new Dictionary<GameObject, BackgroundController>();
     private BackgroundTransition? nextRequestedTransition;
 
-    public GameObject backgroundCombiner;
-    public Material baseMixerMaterial;
-    public GameObject defaultBGCPrefab;
+    public GameObject backgroundCombiner = null!;
+    public Material baseMixerMaterial = null!;
+    public GameObject defaultBGCPrefab = null!;
     
     public float Time { get; private set; }
 
     private void RecreateTextures() {
         if (FromBG == null) MaybeCreateFirst();
         else {
-            if (SaveData.s.Backgrounds) FromBG.capturer.RecreateTexture();
-            else {
+            if (SaveData.s.Backgrounds) {
+                FromBG.Show();
+                if (ToBG != null) ToBG.Show();
+                FromBG.capturer.RecreateTexture();
+                if (ToBG != null) ToBG.capturer.RecreateTexture();
+            } else {
                 FromBG.Hide();
                 if (ToBG != null) ToBG.Hide();
             }
@@ -50,7 +54,7 @@ public class BackgroundOrchestrator : CoroutineRegularUpdater, IBackgroundOrches
         }
     }
 
-    [CanBeNull] private static GameObject lastRequestedBGC;
+    private static GameObject? lastRequestedBGC;
     private void MaybeCreateFirst() {
         if (SaveData.s.Backgrounds) {
             var bgc = (lastRequestedBGC == null) ? defaultBGCPrefab : lastRequestedBGC;
@@ -58,7 +62,7 @@ public class BackgroundOrchestrator : CoroutineRegularUpdater, IBackgroundOrches
         }
     }
 
-    [CanBeNull] public static GameObject NextSceneStartupBGC { get; set; }
+    public static GameObject? NextSceneStartupBGC { get; set; }
     private void Awake() {
         tr = transform;
         lastRequestedBGC = NextSceneStartupBGC;
@@ -127,7 +131,7 @@ public class BackgroundOrchestrator : CoroutineRegularUpdater, IBackgroundOrches
         float timeout = bgt.TimeToFinish();
         var cts = new Cancellable();
         transitionCTS.Add(cts);
-        Func<bool> condition = null;
+        Func<bool>? condition = null;
         if        (bgt.type == BackgroundTransition.EffectType.WipeTex) {
             bgt.WipeTex.Apply(mat);
             CombinerKeywords.Apply(mat, CombinerKeywords.WIPE_TEX);

@@ -6,10 +6,10 @@ using JetBrains.Annotations;
 
 namespace DMK.Behavior {
 public class LevelController : BehaviorEntity {
-    public IStageConfig stage;
-    public StageConfig wip_stage;
-    private string _DefaultSuicideStyle => stage?.DefaultSuicideStyle;
-    public static string DefaultSuicideStyle { get; private set; }
+    public IStageConfig? stage;
+    public StageConfig? wip_stage;
+    private string? _DefaultSuicideStyle => stage?.DefaultSuicideStyle;
+    public static string? DefaultSuicideStyle { get; private set; }
     public override bool TriggersUITimeout => true;
 
     public enum LevelRunMethod {
@@ -18,11 +18,11 @@ public class LevelController : BehaviorEntity {
     }
     public readonly struct LevelRunRequest {
         public readonly int toPhase;
-        [CanBeNull] public readonly Action cb;
+        public readonly Action? cb;
         public readonly LevelRunMethod method;
         public readonly IStageConfig stage;
 
-        public LevelRunRequest(int phase, [CanBeNull] Action callback, LevelRunMethod runMethod, IStageConfig stageConf) {
+        public LevelRunRequest(int phase, Action? callback, LevelRunMethod runMethod, IStageConfig stageConf) {
             toPhase = phase;
             cb = callback;
             method = runMethod;

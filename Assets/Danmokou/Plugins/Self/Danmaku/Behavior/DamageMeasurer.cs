@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace DMK.Behavior {
 public class DamageMeasurer : CoroutineRegularUpdater {
-    private Enemy enemy;
+    private Enemy enemy = null!;
     private void Awake() {
         enemy = GetComponent<Enemy>();
         RunDroppableRIEnumerator(MeasureDamage());

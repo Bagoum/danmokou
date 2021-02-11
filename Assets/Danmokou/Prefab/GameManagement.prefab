@@ -877,6 +877,10 @@ MonoBehaviour:
     effect: {fileID: 11400000, guid: dea0dbfa26774344f9e399c6c6041b64, type: 2}
   - name: oh-yukari-blast-purple
     effect: {fileID: 11400000, guid: de937292f54850d4d84dc26cc3ca7889, type: 2}
+  - name: oh1-red-pt
+    effect: {fileID: 11400000, guid: 6981be9118b41d345b1df81e62edd2fd, type: 2}
+  - name: oh1-green-pt
+    effect: {fileID: 11400000, guid: 950fca6ac2929ff4abbc39660fbe38fc, type: 2}
   bgTransitions:
   - name: shatter4
     transition: {fileID: 11400000, guid: ee89dae89d15f34418474c82d6d3a3ba, type: 2}
@@ -911,15 +915,3 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 603b2b2aeaf5d39459ee4ea99d4cb3d3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  behaviorScript: {fileID: 0}
-  ID: 
-  deathEffect: {fileID: 0}
-  cullableRadius:
-    cullable: 0
-    cullRadius: {fileID: 0}
-  collisionInfo:
-    collisionRadius: 0
-    CollisionActiveOnInit: 0
-    destructible: 0
-    grazeEveryFrames: 0
-  displayer: {fileID: 0}

@@ -13,15 +13,35 @@ MonoBehaviour:
   m_Name: Tutorial Boss
   m_EditorClassIdentifier: 
   boss: {fileID: 6003014192476353498, guid: 0623db11f1c15fc409072cf3af7a2a95, type: 3}
-  CardPracticeName: 
-  replayNameOverride: 
+  localizationBaseKey: boss.tutorial
+  m_bossPracticeName:
+    useReference: 1
+    reference: 
+    hardcoded:
+      en: 
+      jp: 
+  challengeNameOverride:
+    useReference: 1
+    reference: 
+    hardcoded:
+      en: 
+      jp: 
+  replayNameOverride:
+    useReference: 1
+    reference: 
+    hardcoded:
+      en: 
+      jp: 
+  bottomTrackerNameOverride:
+    useReference: 1
+    reference: 
+    hardcoded:
+      en: 
+      jp: 
   stateMachine: {fileID: 4900000, guid: 641d26273f4f7d64e964c82881c8fd15, type: 3}
   key: tutorial
-  casualName: 
-  casualNameJP: 
-  trackName: Boss
   colors: {fileID: 11400000, guid: 055010713f72168448f30c817e8838fe, type: 2}
-  rotator: 
+  cardRotator: 
   spellRotator: 
   profile:
     leftSidebar: {fileID: 0}

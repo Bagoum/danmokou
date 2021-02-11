@@ -1,0 +1,9 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="UINode.uss" />
+    <ui:VisualElement class="node">
+        <ui:VisualElement name="Selector" class="pointer prefix" />
+        <ui:VisualElement name="Checkmark" class="checkmark prefix" />
+        <ui:Label text="one two three日本語" focusable="true" name="Label" class="text coretext" style="height: 100%; padding-left: 0; padding-right: 0; white-space: nowrap;" />
+        <ui:Label text="red blue green yellow orange" focusable="true" name="Label2" class="text coretext" style="height: 100%; padding-left: 0; padding-right: 0; white-space: nowrap; -unity-text-align: upper-right;" />
+    </ui:VisualElement>
+</ui:UXML>

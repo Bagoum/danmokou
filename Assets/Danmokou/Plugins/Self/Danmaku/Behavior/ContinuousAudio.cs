@@ -6,25 +6,27 @@ using UnityEngine;
 
 namespace DMK.Behavior {
 public class ContinuousAudio : ProcReader {
-    private AudioSource src;
+    private AudioSource src = null!;
     private float baseVolume;
 
-    public string VolumeScaler;
-    private ReflWrap<FXY> VolScale;
-    public string SpeedScaler;
-    private ReflWrap<FXY> speedScale;
+    [ReflectInto(typeof(FXY))]
+    public string VolumeScaler = "";
+    private ReflWrap<FXY> VolScale = null!;
+    [ReflectInto(typeof(FXY))]
+    public string SpeedScaler = "";
+    private ReflWrap<FXY> speedScale = null!;
     protected virtual FXY SpeedScale => speedScale;
 
     protected virtual void Awake() {
         src = GetComponent<AudioSource>();
         baseVolume = src.volume;
-        VolScale = (Func<FXY>) (VolumeScaler.Into<FXY>);
-        speedScale = (Func<FXY>) (SpeedScaler.Into<FXY>);
+        VolScale = new ReflWrap<FXY>(VolumeScaler);
+        speedScale = new ReflWrap<FXY>(SpeedScaler);
     }
 
     protected override void BindListeners() {
         base.BindListeners();
-        Listen(Core.Events.GameStateHasChanged, HandleGameStateChange);
+        Listen(Events.GameStateHasChanged, HandleGameStateChange);
     }
 
     public override int UpdatePriority => UpdatePriorities.SLOW;
@@ -35,7 +37,7 @@ public class ContinuousAudio : ProcReader {
                 src.Play();
             }
             src.loop = true;
-            src.volume = baseVolume * VolScale.Value(procs);
+            src.volume = baseVolume * VolScale.Value(procs) * SaveData.s.SEVolume;
             src.pitch = SpeedScale(procs);
         } else if (procs == 0 && src.isPlaying) {
             src.loop = false;

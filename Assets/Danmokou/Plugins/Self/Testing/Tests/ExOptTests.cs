@@ -46,12 +46,6 @@ public class ExOptTests {
         ex = Ex.Add(ExC(5), Ex.Convert(Ex.Add(x, Ex.Add(ExC(1.2f), ExC(2.1f))), typeof(int)));
         AreEqual("(5+(x+(1.2+2.1)):>Int32)", ex.Debug());
         AreEqual("(5+(x+3.3):>Int32)", ex.FlatDebug());
-        var y = VF("y");
-        ex = y.As<uint>().As<int>();
-        AreEqual("y:>UInt32:>Int32", ex.Debug());
-        AreEqual("y:>Int32", ex.FlatDebug());
-        ex = y.As<uint>().As<float>();
-        AreEqual("y", ex.FlatDebug());
     }
 
     [Test]
@@ -61,12 +55,12 @@ public class ExOptTests {
             Ex.Assign(y, ExC(3f)),
             Ex.Add(y, ExC(1f))
         ), Ex.Add(y, ExC(2f)));
-        AreEqual("(y=4);if(y>3){(y=3)}else{(y+1)};(y+2);", ex.Debug());
+        AreEqual("((y=4);\nif(y>3){(y=3)}else{(y+1)};\n(y+2);)", ex.Debug());
         ex = Ex.Block(new[] {y}, Ex.Assign(y, ExC(4f)), Ex.Condition(Ex.GreaterThan(y, ExC(3f)),
             Ex.Add(y, ExC(1f)),
             Ex.Assign(y, ExC(3f))
         ), Ex.Add(y, ExC(2f)));
-        AreEqual("(y=4);5;6;", ex.FlatDebug());
+        AreEqual("((y=4);\n5;\n6;)", ex.FlatDebug());
     }
 
     [Test]
@@ -77,15 +71,15 @@ public class ExOptTests {
         AreEqual("(5+Mathf.Sin(Null,(x+3)))", ex.FlatDebug());
         var y = VF("y");
         ex = Ex.Block(new[] {y}, Ex.Assign(y, ExC(3f)), Ex.Add(y, E2));
-        AreEqual("(y=3);(y+2);", ex.Debug());
-        AreEqual("(y=3);5;", ex.FlatDebug());
+        AreEqual("((y=3);\n(y+2);)", ex.Debug());
+        AreEqual("((y=3);\n5;)", ex.FlatDebug());
         ex = Ex.Block(new[] {y}, Ex.Assign(y, E1), Ex.Add(ExC(5f), Ex.Call(null, typeof(Mathf).GetMethod("Sin"), Ex.Add(y, Ex.Multiply(ExC(2f), ExC(1.5f))))));
-        AreEqual("(y=1);(5+Mathf.Sin(Null,(y+(2*1.5))));", ex.Debug());
-        AreEqual("(y=1);4.243197;", ex.FlatDebug());
+        AreEqual("((y=1);\n(5+Mathf.Sin(Null,(y+(2*1.5))));)", ex.Debug());
+        AreEqual("((y=1);\n4.243197;)", ex.FlatDebug());
         AreEqual(4.2431974, Compile(ex.Flatten()), err);
         ex = Ex.Block(new[] {y}, Ex.Assign(y, x), Ex.Add(ExC(5f), Expression.Call(null, typeof(Mathf).GetMethod("Sin"), Ex.Add(y, Ex.Multiply(E2, ExC(1.5f))))));
-        AreEqual("(y=x);(5+Mathf.Sin(Null,(y+(2*1.5))));", ex.Debug());
-        AreEqual("(y=x);(5+Mathf.Sin(Null,(x+3)));", ex.FlatDebug());
+        AreEqual("((y=x);\n(5+Mathf.Sin(Null,(y+(2*1.5))));)", ex.Debug());
+        AreEqual("((y=x);\n(5+Mathf.Sin(Null,(x+3)));)", ex.FlatDebug());
     }
 
     [Test]
@@ -93,21 +87,21 @@ public class ExOptTests {
         var x = V<Vector2>("x");
         var y = VF("y");
         var ex = Ex.Block(new[] {x}, Ex.Assign(x, ExC(new Vector2(2f, 3f))), Ex.Field(x, "x").Add(ExC(6f)));
-        AreEqual("(x=(2.0, 3.0));(x.x+6);", ex.Debug());
-        AreEqual("(x=(2.0, 3.0));8;", ex.FlatDebug());
+        AreEqual("((x=(2.0, 3.0));\n(x.x+6);)", ex.Debug());
+        AreEqual("((x=(2.0, 3.0));\n8;)", ex.FlatDebug());
         AreEqual(Compile(ex.Flatten()), 8f);
         ex = Ex.Block(new[] {x}, Ex.Assign(x, ExC(new Vector2(2f, 3f))), Ex.IfThen(y.GT(E1), x.Is(ExC(Vector2.right))), Ex.Add(Ex.Field(x, "x"), ExC(6f)));
-        AreEqual("(x=(2.0, 3.0));if(y>1){(x=(1.0, 0.0))}else{};(x.x+6);", ex.FlatDebug());
+        AreEqual("((x=(2.0, 3.0));\nif(y>1){(x=(1.0, 0.0))}else{};\n(x.x+6);)", ex.FlatDebug());
         ex = Ex.Block(new[] {x}, x.Is(ExC(new Vector2(2f, 3f))), Ex.IfThen(y.GT(E1), Ex.Field(x, "x").Is(ExC(6f))), Ex.Add(Ex.Field(x, "x"), ExC(6f)));
-        AreEqual("(x=(2.0, 3.0));if(y>1){(x.x=6)}else{};(x.x+6);", ex.FlatDebug());
+        AreEqual("((x=(2.0, 3.0));\nif(y>1){(x.x=6)}else{};\n(x.x+6);)", ex.FlatDebug());
     }
 
     [Test]
     public void ZeroOneRemoval() {
         var x = VF("x");
         var ex = Ex.Block(Ex.Add(x, E1), Ex.Add(x, E0), E1.Mul(x), x.Mul(E0), x.Sub(E0), E0.Sub(x));
-        AreEqual("(x+1);(x+0);(1*x);(x*0);(x-0);(0-x);" ,ex.Debug());
-        AreEqual("(x+1);x;x;0;x;(0-x);" ,ex.FlatDebug());
+        AreEqual("((x+1);\n(x+0);\n(1*x);\n(x*0);\n(x-0);\n(0-x);)" ,ex.Debug());
+        AreEqual("((x+1);\nx;\nx;\n0;\nx;\n(0-x);)" ,ex.FlatDebug());
     }
     
 }

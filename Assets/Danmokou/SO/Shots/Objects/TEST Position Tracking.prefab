@@ -132,7 +132,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorScript: {fileID: 4900000, guid: ce002924d954be745b95b8b6be8fb168, type: 3}
   ID: 
-  rotationMethod: 0
   deathEffect: {fileID: 0}
   cullableRadius:
     cullable: 0
@@ -142,19 +141,9 @@ MonoBehaviour:
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
-  animate:
-    method: 0
-    LRRelation: 0
-    UDRelation: 0
-    frames:
-      idleAnim: []
-      rightAnim: []
-      leftAnim: []
-      upAnim: []
-      downAnim: []
-      attackAnim: []
-      deathAnim: []
-  offsetFree: PlayerPastPosition(0.14 + 0.12 * p) - LPlayer
+    allowGraze: 0
+  displayer: {fileID: 0}
+  offsetFree: PlayerPastPos(mine, 0.14 + 0.12 * p) - LPlayer
   offsetFocus: 
   powerOffsetFree: []
   powerOffsetFocus: []
@@ -163,8 +152,6 @@ MonoBehaviour:
   opacityFree: ifpowergtp 1
   opacityFocus: 
   spriteRotation: 
-  freeOffsetRotational: 0
-  focusOffsetRotational: 0
   freeAngleOffset: 
   focusAngleOffset: 
   freeFocusLerpTime: 0.2
@@ -267,7 +254,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorScript: {fileID: 4900000, guid: ce002924d954be745b95b8b6be8fb168, type: 3}
   ID: 
-  rotationMethod: 0
   deathEffect: {fileID: 0}
   cullableRadius:
     cullable: 0
@@ -277,19 +263,9 @@ MonoBehaviour:
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
-  animate:
-    method: 0
-    LRRelation: 0
-    UDRelation: 0
-    frames:
-      idleAnim: []
-      rightAnim: []
-      leftAnim: []
-      upAnim: []
-      downAnim: []
-      attackAnim: []
-      deathAnim: []
-  offsetFree: PlayerMarisaAPosition(0.14 + 0.12 * p) - LPlayer
+    allowGraze: 0
+  displayer: {fileID: 0}
+  offsetFree: PlayerMarisaAPos(mine, 0.14 + 0.12 * p) - LPlayer
   offsetFocus: 
   powerOffsetFree: []
   powerOffsetFocus: []
@@ -298,8 +274,6 @@ MonoBehaviour:
   opacityFree: ifpowergtp 1
   opacityFocus: 
   spriteRotation: 
-  freeOffsetRotational: 0
-  focusOffsetRotational: 0
   freeAngleOffset: 
   focusAngleOffset: 
   freeFocusLerpTime: 0.2
@@ -402,7 +376,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorScript: {fileID: 4900000, guid: ce002924d954be745b95b8b6be8fb168, type: 3}
   ID: 
-  rotationMethod: 0
   deathEffect: {fileID: 0}
   cullableRadius:
     cullable: 0
@@ -412,19 +385,9 @@ MonoBehaviour:
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
-  animate:
-    method: 0
-    LRRelation: 0
-    UDRelation: 0
-    frames:
-      idleAnim: []
-      rightAnim: []
-      leftAnim: []
-      upAnim: []
-      downAnim: []
-      attackAnim: []
-      deathAnim: []
-  offsetFree: PlayerPastPosition(0.14 + 0.12 * p) - LPlayer
+    allowGraze: 0
+  displayer: {fileID: 0}
+  offsetFree: PlayerPastPos(mine, 0.14 + 0.12 * p) - LPlayer
   offsetFocus: 
   powerOffsetFree: []
   powerOffsetFocus: []
@@ -433,8 +396,6 @@ MonoBehaviour:
   opacityFree: ifpowergtp 1
   opacityFocus: 
   spriteRotation: 
-  freeOffsetRotational: 0
-  focusOffsetRotational: 0
   freeAngleOffset: 
   focusAngleOffset: 
   freeFocusLerpTime: 0.2
@@ -537,7 +498,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorScript: {fileID: 4900000, guid: ce002924d954be745b95b8b6be8fb168, type: 3}
   ID: 
-  rotationMethod: 0
   deathEffect: {fileID: 0}
   cullableRadius:
     cullable: 0
@@ -547,19 +507,9 @@ MonoBehaviour:
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
-  animate:
-    method: 0
-    LRRelation: 0
-    UDRelation: 0
-    frames:
-      idleAnim: []
-      rightAnim: []
-      leftAnim: []
-      upAnim: []
-      downAnim: []
-      attackAnim: []
-      deathAnim: []
-  offsetFree: PlayerMarisaAPosition(0.14 + 0.12 * p) - LPlayer
+    allowGraze: 0
+  displayer: {fileID: 0}
+  offsetFree: PlayerMarisaAPos(mine, 0.14 + 0.12 * p) - LPlayer
   offsetFocus: 
   powerOffsetFree: []
   powerOffsetFocus: []
@@ -568,8 +518,6 @@ MonoBehaviour:
   opacityFree: ifpowergtp 1
   opacityFocus: 
   spriteRotation: 
-  freeOffsetRotational: 0
-  focusOffsetRotational: 0
   freeAngleOffset: 
   focusAngleOffset: 
   freeFocusLerpTime: 0.2
@@ -620,7 +568,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorScript: {fileID: 0}
   ID: 
-  rotationMethod: 0
   deathEffect: {fileID: 0}
   cullableRadius:
     cullable: 0
@@ -630,18 +577,8 @@ MonoBehaviour:
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
-  animate:
-    method: 0
-    LRRelation: 0
-    UDRelation: 0
-    frames:
-      idleAnim: []
-      rightAnim: []
-      leftAnim: []
-      upAnim: []
-      downAnim: []
-      attackAnim: []
-      deathAnim: []
+    allowGraze: 0
+  displayer: {fileID: 0}
   offsetFree: zero
   offsetFocus: zero
   powerOffsetFree: []
@@ -651,8 +588,6 @@ MonoBehaviour:
   opacityFree: 
   opacityFocus: 
   spriteRotation: 
-  freeOffsetRotational: 1
-  focusOffsetRotational: 1
   freeAngleOffset: 
   focusAngleOffset: 
   freeFocusLerpTime: 1

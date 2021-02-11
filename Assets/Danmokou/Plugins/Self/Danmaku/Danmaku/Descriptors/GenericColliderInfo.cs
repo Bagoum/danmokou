@@ -37,16 +37,16 @@ public class GenericColliderInfo : MonoBehaviour {
     [Header("Segments")] public int start;
     public int skip;
     public int end;
-    public Vector2[] points;
-    [Tooltip("Only fill for debugging in scene use")] [CanBeNull]
-    public SOPlayerHitbox target;
+    public Vector2[] points = null!;
+    [Tooltip("Only fill for debugging in scene use")]
+    public SOPlayerHitbox? target;
     public DebugColliderType debug;
 
     // Update is called once per frame
     void Update() {
         Vector3 trp = transform.position;
         CollisionResult cr = new CollisionResult();
-        var hitbox = target.Hitbox;
+        var hitbox = target!.Hitbox;
         if (debug == DebugColliderType.AABB) {
             cr = new CollisionResult(false,
                 CollisionMath.CircleOnAABB(

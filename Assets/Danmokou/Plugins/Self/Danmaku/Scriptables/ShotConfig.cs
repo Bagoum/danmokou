@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using DMK.Core;
 using DMK.Player;
 using JetBrains.Annotations;
@@ -11,44 +12,59 @@ namespace DMK.Scriptables {
 /// </summary>
 [CreateAssetMenu(menuName = "Data/Shot Configuration")]
 public class ShotConfig : ScriptableObject {
-    public string key;
+    public string key = "";
     /// <summary>
     /// eg. "Homing Needles - Persuasion Laser"
     /// </summary>
-    public string title;
-    [TextArea(5, 10)] public string description;
+    public LocalizedStringReference title = null!;
+    public LocalizedString Title => title.Value;
+    [TextArea(5, 10)] public string description = "";
     /// <summary>
     /// eg. "Forward Focus"
     /// </summary>
-    public string type;
-    [Header("Unitary Shot Configuration")] public GameObject prefab;
+    public string type = "";
+    [Header("Unitary Shot Configuration")] public GameObject prefab = null!;
     public PlayerBombType bomb;
     public bool HasBomb => bomb.IsValid();
     public double defaultPower = 1000;
     public bool playerChild = true;
+    public TextAsset? demoReplay;
+    public TextAsset? demoSetupSM;
     [Header("Multi-Shot Configuration")] public bool isMultiShot;
-    public ShotConfig multiD;
-    public ShotConfig multiM;
-    public ShotConfig multiK;
-    public SFXConfig onSwap;
-    [CanBeNull]
-    public IEnumerable<ShotConfig> Subshots => isMultiShot ?
-        new[] {multiD, multiM, multiK} :
+    public ShotConfig? multiD;
+    public ShotConfig? multiM;
+    public ShotConfig? multiK;
+    public SFXConfig? onSwap;
+    public IEnumerable<ShotConfig>? Subshots => isMultiShot ?
+        new[] {multiD!, multiM!, multiK!} :
         null;
+
+    /// <summary>
+    /// In the format Mokou-A
+    /// </summary>
+    public static string PlayerShotDescription(PlayerConfig? p, ShotConfig? s) {
+        var playerDesc = (p == null) ? "???" : (string)p.ShortTitle;
+        var shotDesc = "?";
+        if (p != null && s != null) {
+            var os = p.shots2.FirstOrDefault(_os => _os.shot == s);
+            if (os.shot == s) {
+                if (string.IsNullOrWhiteSpace(os.ordinal)) {
+                    if (os.shot.isMultiShot) shotDesc = "X";
+                } else shotDesc = os.ordinal;
+            }
+        }
+        return $"{playerDesc}-{shotDesc}";
+    }
 
     public ShotConfig GetSubshot(Subshot sub) {
         if (!isMultiShot) return this;
         else
-            switch (sub) {
-                case Subshot.TYPE_D:
-                    return multiD;
-                case Subshot.TYPE_M:
-                    return multiM;
-                case Subshot.TYPE_K:
-                    return multiK;
-                default:
-                    return this;
-            }
+            return sub switch {
+                Subshot.TYPE_D => multiD!,
+                Subshot.TYPE_M => multiM!,
+                Subshot.TYPE_K => multiK!,
+                _ => this
+            };
     }
 }
 }

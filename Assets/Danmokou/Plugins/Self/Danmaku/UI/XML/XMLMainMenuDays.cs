@@ -11,43 +11,36 @@ using UnityEngine;
 using UnityEngine.Scripting;
 using static DMK.Core.GameManagement;
 using static DMK.UI.XML.XMLUtils;
+using static DMK.Core.LocalizedStrings.UI;
 
 namespace DMK.UI.XML {
 /// <summary>
 /// Class to manage the main menu UI for scene challenge-type games.
 /// </summary>
 [Preserve]
-public class XMLMainMenuDays : XMLMenu {
-    [CanBeNull] private static List<int> _returnTo;
-    protected override List<int> ReturnTo {
-        [CanBeNull] get => _returnTo;
+public class XMLMainMenuDays : XMLMainMenu {
+    private static List<CacheInstruction>? _returnTo;
+    protected override List<CacheInstruction>? ReturnTo {
+        get => _returnTo;
         set => _returnTo = value;
     }
 
-    private UIScreen SceneSelectScreen;
-    private UIScreen OptionsScreen;
-    private UIScreen ReplayScreen;
+    private UIScreen SceneSelectScreen = null!;
+    private UIScreen OptionsScreen = null!;
+    private UIScreen ReplayScreen = null!;
 
     protected override IEnumerable<UIScreen> Screens => new[] {
         SceneSelectScreen, OptionsScreen, ReplayScreen,
         MainScreen
     };
 
-    public VisualTreeAsset GenericUIScreen;
-    public VisualTreeAsset GenericUINode;
-    public VisualTreeAsset MainScreenV;
-    public VisualTreeAsset OptionsScreenV;
-    public VisualTreeAsset ReplayScreenV;
-    public VisualTreeAsset VTASceneSelect;
-    public VisualTreeAsset VTALR2OptionNode;
-    public VisualTreeAsset VTALR2Option;
-    public VisualTreeAsset GenericOptionNodeV;
+    public VisualTreeAsset MainScreenV = null!;
+    public VisualTreeAsset OptionsScreenV = null!;
+    public VisualTreeAsset ReplayScreenV = null!;
+    public VisualTreeAsset VTASceneSelect = null!;
+    public VisualTreeAsset VTALR2Option = null!;
     public float photoSize;
 
-    protected override Dictionary<Type, VisualTreeAsset> TypeMap => new Dictionary<Type, VisualTreeAsset>() {
-        {typeof(UIScreen), GenericUIScreen},
-        {typeof(UINode), GenericUINode},
-    };
 
     private const string completed1Class = "lblue";
     private const string completedAllClass = "lgreen";
@@ -63,9 +56,14 @@ public class XMLMainMenuDays : XMLMenu {
             uiRenderer.Slide(new Vector2(3, 0), Vector2.zero, 1f, DMath.M.EOutSine, null);
             uiRenderer.Fade(0, 1, 1f, x => x, null);
         }
-
+        base.Start();
+    }
+    
+    protected override void Awake() {
+        if (!Application.isPlaying) return;
+        
         FixedDifficulty dfc = FixedDifficulty.Normal;
-        var defaultPlayer = References.dayCampaign.players[0];
+        var defaultPlayer = References.dayCampaign!.players[0];
         var defaultShot = defaultPlayer.shots2[0];
 
         PlayerTeam Team() => new PlayerTeam(0, Subshot.TYPE_D, (defaultPlayer, defaultShot.shot));
@@ -85,15 +83,15 @@ public class XMLMainMenuDays : XMLMenu {
                     var completion = SaveData.r.ChallengeCompletion(p, idx, Meta());
                     photoBoard?.ConstructPhotos(completion?.Photos, photoSize);
                 }
-                (bool, UINode) Confirm() {
+                Func<(bool, UINode?)> Confirm = () => {
                     ConfirmCache();
                     new InstanceRequest(InstanceRequest.ShowPracticeSuccessMenu, Meta(),
                         challenge: new PhaseChallengeRequest(p, c)).Run();
                     return (true, null);
-                }
-                var challengeSwitch = new DynamicOptionNodeLR2<int>("", VTALR2Option, SetChallenge,
+                };
+                var challengeSwitch = new DynamicComplexOptionNodeLR<int>(LocalizedString.Empty, VTALR2Option, SetChallenge,
                     p.challenges.Length.Range().ToArray, (i, v, on) => {
-                        v.Query(null, "bracket")
+                        v.Query(null!, "bracket")
                             .ForEach(x => x.style.display = on ? DisplayStyle.Flex : DisplayStyle.None);
                         v.Q("Star").style.unityBackgroundImageTintColor = new StyleColor(p.Completed(i, Meta()) ?
                             p.boss.boss.colors.uiHPColor :
@@ -102,7 +100,7 @@ public class XMLMainMenuDays : XMLMenu {
                 return new CacheNavigateUINode(TentativeCache, () => p.Title(Meta()),
                     new UINode(() => c.Description(p.boss.boss))
                         .With(large1Class).With(centerTextClass).SetConfirmOverride(Confirm),
-                    challengeSwitch.With(VTALR2OptionNode).With(optionNoKeyClass)
+                    challengeSwitch.With(optionNoKeyClass)
                         .SetConfirmOverride(Confirm)
                         .SetOnVisit(_ => SetChallenge(challengeSwitch.Index))
                         .SetOnLeave(_ => photoBoard?.TearDown()),
@@ -115,34 +113,34 @@ public class XMLMainMenuDays : XMLMenu {
                 );
             })).ToArray()).With(VTASceneSelect);
 
-        OptionsScreen = new UIScreen(XMLPauseMenu.GetOptions(true, x => x.With(GenericOptionNodeV)).ToArray())
+        OptionsScreen = new UIScreen(XMLPauseMenu.GetOptions(true).ToArray())
             .With(OptionsScreenV).OnExit(SaveData.AssignSettingsChanges);
         ReplayScreen = XMLUtils.ReplayScreen(TentativeCache, ConfirmCache).With(ReplayScreenV);
 
         MainScreen = new UIScreen(
-            new TransferNode(SceneSelectScreen, "Game Start")
+            new TransferNode(SceneSelectScreen, main_gamestart)
                 .With(large1Class),
-            new OptionNodeLR<Locale>("Language", l => {
+            new OptionNodeLR<Locale>(main_lang, l => {
                     SaveData.UpdateLocale(l);
                     SaveData.AssignSettingsChanges();
                 }, new[] {
-                    ("English", Locale.EN),
-                    ("日本語", Locale.JP)
-                }, SaveData.s.Locale).With(GenericOptionNodeV)
+                    (new LocalizedString("English"), Locale.EN),
+                    (new LocalizedString("日本語"), Locale.JP)
+                }, SaveData.s.Locale)
                 .With(large1Class),
-            new TransferNode(ReplayScreen, "Replays").EnabledIf(SaveData.p.ReplayData.Count > 0)
+            new TransferNode(ReplayScreen, main_replays).EnabledIf(SaveData.p.ReplayData.Count > 0)
                 .With(large1Class),
             //new FuncNode(RunTutorial, "Tutorial"),
-            new TransferNode(OptionsScreen, "Options")
+            new TransferNode(OptionsScreen, main_options)
                 .With(large1Class),
-            new FuncNode(Application.Quit, "Quit")
+            new FuncNode(Application.Quit, main_quit)
                 .With(large1Class),
-            new OpenUrlNode("https://twitter.com/rdbatz", "Twitter (Browser)")
+            new OpenUrlNode("https://twitter.com/rdbatz", main_twitter)
                 .With(large1Class)
         ).With(MainScreenV);
         ResetCurrentNode();
 
-        base.Start();
+        base.Awake();
     }
 }
 }

@@ -6,9 +6,9 @@ using DMK.Graphics;
 using UnityEngine;
 
 public class SetT : MonoBehaviour {
-    private SpriteRenderer sr;
+    private SpriteRenderer sr = null!;
     private float t;
-    private MaterialPropertyBlock pb;
+    private MaterialPropertyBlock pb = null!;
 
     private void Awake() {
         sr = GetComponent<SpriteRenderer>();

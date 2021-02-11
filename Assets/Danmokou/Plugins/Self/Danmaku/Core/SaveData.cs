@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
+using DMK.Danmaku;
 using DMK.GameInstance;
 using DMK.Graphics;
 using DMK.Services;
@@ -11,32 +12,35 @@ using JetBrains.Annotations;
 using Newtonsoft.Json;
 using ProtoBuf;
 using UnityEngine;
+using UnityEngine.Profiling;
 using KC = UnityEngine.KeyCode;
-using static SaveUtils;
+using static FileUtils;
 
 namespace DMK.Core {
 public static class SaveData {
-    private const string SETTINGS = "settings.txt";
-    private static string RECORD => $"record-{GameManagement.References.gameIdentifier}.txt";
-    //private static string REPLAYS_LIST => $"replays-{GameManagement.References.gameIdentifier}.txt";
-    private const string REPLAYS_DIR = "Replays/";
+    private const string SETTINGS = FileUtils.SAVEDIR + "settings.txt";
+    private static string RECORD => FileUtils.SAVEDIR + $"record-{GameManagement.References.gameIdentifier}.txt";
+    private const string REPLAYS_DIR = FileUtils.SAVEDIR + "Replays/";
 
-    [ProtoContract]
     [Serializable]
+    [ProtoContract]
     public class Record {
         [ProtoMember(1)] public bool TutorialDone = false;
         [ProtoMember(2)] public Dictionary<string, InstanceRecord> FinishedGames = new Dictionary<string, InstanceRecord>();
+
+        public IEnumerable<InstanceRecord> FinishedCampaignGames => 
+            FinishedGames.Values.Where(gr => gr.RequestKey.type == 0);
 
         [JsonIgnore]
         public ICollection<string> CompletedCampaigns => FinishedGames.Values
             .Where(g => g.Completed)
             .Select(g => g.ReconstructedRequestKey.Resolve(
                 c => c,
-                _ => null,
-                _ => null,
-                _ => null
+                _ => null!,
+                _ => null!,
+                _ => null!
             ))
-            .Where(c => c != null)
+            .FilterNone()
             .ToImmutableHashSet();
 
 
@@ -58,25 +62,11 @@ public static class SaveData {
             SaveData.SaveRecord();
         }
 
-        private Dictionary<(string, string, int), (int success, int total)> AccSpellHistory(
-            IEnumerable<InstanceRecord> over) {
-            var res = new Dictionary<(string, string, int), (int, int)>();
-            foreach (var g in over) {
-                foreach (var cpt in g.CardCaptures) {
-                    var (success, total) = res.SetDefault(cpt.Key, (0, 0));
-                    ++total;
-                    if (cpt.captured) ++success;
-                    res[cpt.Key] = (success, total);
-                }
-            }
-            return res;
-        }
+        public Dictionary<((string, int), int), (int success, int total)> GetCampaignSpellHistory() =>
+            Statistics.AccSpellHistory(FinishedCampaignGames);
 
-        public Dictionary<(string, string, int), (int success, int total)> GetCampaignSpellHistory() =>
-            AccSpellHistory(FinishedGames.Values.Where(gr => gr.RequestKey.type == 0));
-
-        public Dictionary<(string, string, int), (int success, int total)> GetPracticeSpellHistory() =>
-            AccSpellHistory(FinishedGames.Values.Where(gr => gr.RequestKey.type == 1));
+        public Dictionary<((string, int), int), (int success, int total)> GetPracticeSpellHistory() =>
+            Statistics.AccSpellHistory(FinishedGames.Values.Where(gr => gr.RequestKey.type == 1));
 
 
         public long? GetHighScore(InstanceRequest req) {
@@ -87,8 +77,7 @@ public static class SaveData {
             ).Select(x => x.Score).OrderByDescending(x => x).FirstOrNull();
         }
 
-        [CanBeNull]
-        public InstanceRecord ChallengeCompletion(SMAnalysis.DayPhase phase, int c, SharedInstanceMetadata meta) {
+        public InstanceRecord? ChallengeCompletion(SMAnalysis.DayPhase phase, int c, SharedInstanceMetadata meta) {
             var key = InstanceRequest.CampaignIdentifier(
                 new DU<CampaignRequest, BossPracticeRequest, PhaseChallengeRequest, StagePracticeRequest>(
                     new PhaseChallengeRequest(phase, c)));
@@ -129,7 +118,7 @@ public static class SaveData {
         public (int w, int h) Resolution = GraphicsUtils.BestResolution;
 #if UNITY_EDITOR
         public bool SaveAsBinary = false;
-        public static bool TeleportAtPhaseStart => true;
+        public static bool TeleportAtPhaseStart => false;
 #else
         public bool SaveAsBinary = false;
         //Don't change this!
@@ -144,6 +133,20 @@ public static class SaveData {
         public float SEVolume = 1f;
         public bool Backgrounds = true;
         public bool AllowControllerInput = true;
+
+        public bool ProfilingEnabled = false;
+        
+        public List<(string name, DifficultySettings settings)> DifficultySettings =
+            new List<(string name, DifficultySettings settings)>();
+
+        public void AddDifficultySettings(string name, DifficultySettings settings) {
+            DifficultySettings.Add((name, FileUtils.CopyJson(settings)));
+            AssignSettingsChanges();
+        }
+        public void TryRemoveDifficultySettingsAt(int i) {
+            if (i < DifficultySettings.Count) DifficultySettings.RemoveAt(i);
+            AssignSettingsChanges();
+        }
 
         public static int DefaultRefresh {
             get {
@@ -174,8 +177,9 @@ public static class SaveData {
 
                 return new Settings() {
 #if WEBGL
+                    Shaders = false,
                     AllowInputLinearization = false,
-                    Backgrounds = false,
+                    SaveAsBinary = false,
                     Fullscreen = FullScreenMode.Windowed,
                     LegacyRenderer = true,
                     UnfocusedHitbox = false,
@@ -195,7 +199,7 @@ public static class SaveData {
         public List<Replay> ReplayData { get; }
 
         public Replays() {
-            ReplayData = SaveUtils.EnumerateDirectory(REPLAYS_DIR)
+            ReplayData = FileUtils.EnumerateDirectory(REPLAYS_DIR)
                 .Where(f => f.EndsWith(RMETAEXT))
                 .Select(f => f.Substring(0, f.Length - RMETAEXT.Length))
                 .SelectNotNull<string, Replay>(f => {
@@ -216,8 +220,8 @@ public static class SaveData {
             if (i < ReplayData.Count) {
                 var filename = ReplayFilename(ReplayData[i]);
                 try {
-                    File.Delete(SaveUtils.DIR + filename + RMETAEXT);
-                    File.Delete(SaveUtils.DIR + filename + RFRAMEEXT);
+                    File.Delete(FileUtils.SAVEDIR + filename + RMETAEXT);
+                    File.Delete(FileUtils.SAVEDIR + filename + RFRAMEEXT);
                 } catch (Exception e) {
                     Log.Unity(e.Message, true, Log.Level.WARNING);
                 }
@@ -231,14 +235,20 @@ public static class SaveData {
         private static string ReplayFilename(Replay r) => REPLAYS_DIR + r.metadata.AsFilename;
 
         private static Func<InputManager.FrameInput[]> LoadReplayFrames(string file) => () =>
-            ReadProtoCompressed<InputManager.FrameInput[]>(file + RFRAMEEXT);
+            ReadProtoCompressed<InputManager.FrameInput[]>(file + RFRAMEEXT) ?? throw new Exception($"Couldn't load replay from file {file}");
+        
+        public static Func<InputManager.FrameInput[]> LoadReplayFrames(TextAsset file) => () =>
+            ReadProtoCompressed<InputManager.FrameInput[]>(file) ?? throw new Exception($"Couldn't load replay from textAsset {file.name}");
+        
+        public static void SaveReplayFrames(string file, InputManager.FrameInput[] frames) =>
+            WriteProtoCompressed(file + RFRAMEEXT, frames);
 
         public void SaveNewReplay(Replay r) {
             var filename = ReplayFilename(r);
             var f = r.frames();
             Log.Unity($"Saving replay {filename} with {f.Length} frames.");
             WriteJson(filename + RMETAEXT, r.metadata);
-            WriteProtoCompressed(filename + RFRAMEEXT, f);
+            SaveReplayFrames(filename, f);
             ReplayData.Insert(0, new Replay(LoadReplayFrames(filename), r.metadata));
         }
     }
@@ -260,10 +270,10 @@ public static class SaveData {
         Log.Unity($"Initial settings: resolution {s.Resolution}, fullscreen {s.Fullscreen}, vsync {s.Vsync}");
         r = ReadRecord() ?? new Record();
         p = new Replays();
+        StartProfiling();
     }
 
-    [CanBeNull]
-    private static Record ReadRecord() => s.SaveAsBinary ? ReadProto<Record>(RECORD) : ReadJson<Record>(RECORD);
+    private static Record? ReadRecord() => s.SaveAsBinary ? ReadProto<Record>(RECORD) : ReadJson<Record>(RECORD);
 
     public static void SaveRecord() {
         if (s.SaveAsBinary) {
@@ -305,6 +315,14 @@ public static class SaveData {
         ETime.SetForcedFPS(s.RefreshRate);
         ETime.SetVSync(s.Vsync);
         MainCamera.main.ReassignGlobalShaderVariables();
+    }
+
+    private static void StartProfiling() {
+        if (s.ProfilingEnabled) {
+            Profiler.logFile = "profilerLog";
+            Profiler.enableBinaryLog = true;
+            Profiler.enabled = true;
+        }
     }
 }
 }

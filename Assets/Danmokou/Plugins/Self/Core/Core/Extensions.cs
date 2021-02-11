@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -24,27 +25,39 @@ public static class Extensions {
     }
 
     private static Action<Task> WrapRethrow(Action cb) => t => {
-        cb();
-        if (t.IsFaulted && t.Exception != null) {
-            Log.UnityError("Task exceptions:\n\t" +
-                           $"{string.Join("\n\t", t.Exception.InnerExceptions.Select(e => e.Message))}");
-            throw t.Exception;
+        Exception? exc = t.Exception;
+        try {
+            cb();
+        } catch (Exception e) {
+            exc = new Exception(e.Message, exc);
+        }
+        if (exc != null) {
+            Log.UnityError("Task exceptions:\n" + Log.StackInnerException(exc).Message);
+            throw exc;
         }
     };
 
     public static Task ContinueWithSync(this Task t, Action done) =>
         t.ContinueWith(WrapRethrow(done), TaskContinuationOptions.ExecuteSynchronously);
 
-    private static T Private<T>(this object obj, string privateField) => (T) obj?.GetType()
-        .GetField(privateField, BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(obj);
+    private static T Private<T>(this object obj, string privateField) => (T) obj.GetType()
+        .GetField(privateField, BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(obj)!;
 
 
     public static void Show(this VisualElement ve) => ve.style.display = DisplayStyle.Flex;
     public static void Hide(this VisualElement ve) => ve.style.display = DisplayStyle.None;
 
-    [CanBeNull]
-    public static string Or([CanBeNull] this string x, [CanBeNull] string y) =>
+    public static string? Or(this string? x, string? y) =>
         string.IsNullOrWhiteSpace(x) ? y : x;
+    
+    public static Stream ToStream(this string str) {
+        MemoryStream stream = new MemoryStream();
+        StreamWriter writer = new StreamWriter(stream);
+        writer.Write(str);
+        writer.Flush();
+        stream.Position = 0;
+        return stream;
+    }
 }
 
 public static class ArrayExtensions {
@@ -64,8 +77,7 @@ public static class ArrayExtensions {
 
     public static T ModIndex<T>(this T[] arr, int index) => arr[M.Mod(arr.Length, index)];
 
-    [CanBeNull]
-    public static T Try<T>(this IList<T> arr, int index) where T : class {
+    public static T? Try<T>(this IList<T> arr, int index) where T : class {
         if (index >= 0 && index < arr.Count) return arr[index];
         return null;
     }
@@ -80,7 +92,7 @@ public static class ArrayExtensions {
             res = arr[index];
             return true;
         }
-        res = null;
+        res = null!;
         return false;
     }
 
@@ -153,7 +165,12 @@ public static class IEnumExtensions {
     public static IEnumerable<double> Step(this (double min, double max) bound, double step) {
         for (double x = bound.min; x < bound.max; x += step) yield return x;
     }
-
+    public static IEnumerable<U> SelectNotNull<T, U>(this IEnumerable<T> arr, Func<T, U> f) where U : class {
+        foreach (var x in arr) {
+            var y = f(x);
+            if (y != null) yield return y;
+        }
+    }
     public static IEnumerable<U> SelectNotNull<T, U>(this IEnumerable<T> arr, Func<T, U?> f) where U : struct {
         foreach (var x in arr) {
             var y = f(x);
@@ -161,7 +178,7 @@ public static class IEnumExtensions {
         }
     }
 
-    public static IEnumerable<T> NotNull<T>(this IEnumerable<T> arr) where T : class => arr.Where(x => x != null);
+    public static IEnumerable<T> NotNull<T>(this IEnumerable<T?> arr) where T : class => arr.Where(x => x != null)!;
 
     public static int IndexOf<T>(this IEnumerable<T> arr, Func<T, bool> pred) {
         foreach (var (i, x) in arr.Enumerate()) {
@@ -180,10 +197,62 @@ public static class IEnumExtensions {
             if (x.Try(out var y)) yield return y;
         }
     }
+    public static IEnumerable<T> FilterNone<T>(this IEnumerable<T?> arr) where T : class {
+        foreach (var x in arr) {
+            if (x != null) yield return x;
+        }
+    }
+
+    public static IEnumerable<(K key, V value)> Items<K, V>(this Dictionary<K, V> dict) => dict.Keys.Select(k => (k, dict[k]));
+
+    public static IEnumerable<(K key, V[] values)> GroupToArray<K, V>(this IEnumerable<IGrouping<K, V>> grp) =>
+        grp.Select(g => (g.Key, g.ToArray()));
+
+    public static (K key, V[] values) MaxByGroupSize<K, V>(this IEnumerable<IGrouping<K, V>> grp) =>
+        grp.GroupToArray().MaxBy(g => g.values.Length);
+
+    public static T MaxBy<T, U>(this IEnumerable<T> arr, Func<T, U> selector) where U : IComparable<U> {
+        bool first = true;
+        T obj = default!;
+        U val = default!;
+        foreach (var item in arr) {
+            if (first) {
+                first = false;
+                obj = item;
+                val = selector(item);
+            } else {
+                var nextVal = selector(item);
+                if (nextVal.CompareTo(val) > 0) {
+                    obj = item;
+                    val = nextVal;
+                }
+            }
+        }
+        return obj;
+    }
+    public static (T obj, U val) MaxByWith<T, U>(this IEnumerable<T> arr, Func<T, U> selector) where U : IComparable<U> {
+        bool first = true;
+        T obj = default!;
+        U val = default!;
+        foreach (var item in arr) {
+            if (first) {
+                first = false;
+                obj = item;
+                val = selector(item);
+            } else {
+                var nextVal = selector(item);
+                if (nextVal.CompareTo(val) > 0) {
+                    obj = item;
+                    val = nextVal;
+                }
+            }
+        }
+        return (obj, val);
+    }
 }
 
 public static class ListExtensions {
-    public static void AssignOrExtend<T>(this List<T> from, [CanBeNull] ref List<T> into) {
+    public static void AssignOrExtend<T>(this List<T> from, ref List<T>? into) {
         if (into == null) into = from;
         else into.AddRange(from);
     }
@@ -198,19 +267,6 @@ public static class ListExtensions {
 
     public static void DecrLoop(this int mod, ref int idx) {
         if (--idx < 0) idx = mod - 1;
-    }
-
-    public static void ResizeClear<T>(this List<T> arr, int reqSize) {
-        arr.ResetElements();
-        while (arr.Count < reqSize) {
-            arr.Add(default);
-        }
-    }
-
-    public static void ResetElements<T>(this List<T> arr) {
-        for (int ii = 0; ii < arr.Count; ++ii) {
-            arr[ii] = default;
-        }
     }
 }
 
@@ -236,7 +292,7 @@ public static class DictExtensions {
         dict.TryGetValue(key, out var dct2) && dct2.ContainsKey(key2);
 
     public static bool TryGet2<K, K2, V>(this Dictionary<K, Dictionary<K2, V>> dict, K key, K2 key2, out V val) {
-        val = default;
+        val = default!;
         return dict.TryGetValue(key, out var dct2) && dct2.TryGetValue(key2, out val);
     }
 
@@ -300,32 +356,45 @@ public static class DictExtensions {
 
     public static V GetOrDefault<K, V>(this Dictionary<K, V> dict, K key) {
         if (dict.TryGetValue(key, out var res)) return res;
-        return default;
+        return default!;
+    }
+    public static V GetOrDefault<K, V>(this Dictionary<K, V> dict, K key, V deflt) {
+        if (dict.TryGetValue(key, out var res)) return res;
+        return deflt;
     }
 
     public static V GetOrDefault2<K1, K2, V>(this Dictionary<K1, Dictionary<K2, V>> dict, K1 key, K2 key2) {
         if (dict.TryGetValue(key, out var res) && res.TryGetValue(key2, out var res2)) return res2;
-        return default;
+        return default!;
     }
 
     public static V GetOrDefault3<K1, K2, K3, V>(this Dictionary<K1, Dictionary<K2, Dictionary<K3, V>>> dict, K1 key,
         K2 key2, K3 key3) {
         if (dict.TryGetValue(key, out var res) && res.TryGetValue(key2, out var res2)
                                                && res2.TryGetValue(key3, out var res3)) return res3;
-        return default;
+        return default!;
     }
 
     public static void CopyInto<K, V>(this Dictionary<K, V> src, Dictionary<K, V> target) {
         foreach (var kv in src) target[kv.Key] = kv.Value;
     }
 
-    public static V SearchByType<V>(this Dictionary<Type, V> src, object obj) {
+    public static V SearchByType<V>(this Dictionary<Type, V> src, object obj, bool searchInterfaces) {
         var t = obj.GetType();
-        V v;
-        while (!src.TryGetValue(t, out v)) {
-            t = t.BaseType ?? throw new Exception($"Couldn't find type {obj.GetType()} in dictionary");
+        if (src.TryGetValue(t, out var v) && v != null)
+            return v;
+        //Search interfaces first so UINodeLR<T> matches interface before matching UINode
+        if (searchInterfaces) {
+            foreach (var it in obj.GetType().GetInterfaces()) {
+                if (src.TryGetValue(it, out v) && v != null)
+                    return v;
+            }
         }
-        return v;
+        while ((t = t.BaseType) != null) {
+            if (src.TryGetValue(t, out v) && v != null)
+                return v;
+        }
+        throw new Exception($"Couldn't find type {obj.GetType()} in dictionary");
     }
 
     public static void Push<K, V>(this Dictionary<K, Stack<V>> dict, K key, V value) {
@@ -343,7 +412,7 @@ public static class DictExtensions {
 public static class FuncExtensions {
     public static Func<bool> Or(this Func<bool> x, Func<bool> y) => () => x() || y();
 
-    public static Action Void<T>([CanBeNull] this Func<T> x) => () => x?.Invoke();
+    public static Action Void<T>(this Func<T>? x) => () => x?.Invoke();
 
     public static Action Link(this Action a, Action b) => () => {
         a();
@@ -372,8 +441,13 @@ public static class NullableExtensions {
             return false;
         }
     }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool Try<T>(this T? x, out T y) where T : class {
+        y = x!;
+        return x != null;
+    }
 
-    public static T Elvis<T>(this T x, T y) where T : UnityEngine.Object
+    public static T Elvis<T>(this T? x, T y) where T : UnityEngine.Object
         => (x == null) ? y : x;
 
 }
@@ -382,8 +456,10 @@ public static class FormattingExtensions {
     public static string PadRight(this int x, int by) => x.ToString().PadRight(by);
     public static string PadLZero(this int x, int by) => x.ToString().PadLeft(by, '0');
 
+    public static string SimpleDate(this DateTime d) =>
+        $"{d.Year}/{d.Month.PadLZero(2)}/{d.Day.PadLZero(2)}";
     public static string SimpleTime(this DateTime d) =>
-        $"{d.Year}/{d.Month.PadLZero(2)}/{d.Day.PadLZero(2)} " +
+        $"{d.SimpleDate()} " +
         $"{d.Hour.PadLZero(2)}:{d.Minute.PadLZero(2)}:{d.Second.PadLZero(2)}";
 
     public static string FileableTime(this DateTime d) =>
@@ -393,7 +469,19 @@ public static class FormattingExtensions {
 
 public static class NumExtensions {
 
-    public static char ToABC(this int x) => (char) ((int) 'A' + x);
+    public static char ToABC(this int x) => (char) ('A' + x);
+
+    public static LocalizedString FramesToTime(this int f) {
+        int s = (int) (f / ETime.ENGINEFPS);
+        int hours = s / 3600;
+        s %= 3600;
+        int minutes = s / 60;
+        s %= 60;
+        int seconds = s;
+        return hours > 0 ? 
+            LocalizedStrings.Generic.render_hoursminssecs_ls(hours, minutes, seconds) : 
+            LocalizedStrings.Generic.render_minssecs_ls(minutes, seconds);
+    }
 }
 
 public static class UnityExtensions {
@@ -404,4 +492,10 @@ public static class UnityExtensions {
         sr.color = c;
     }
 }
+
+public static class DataStructExtensions {
+    public static T? TryPeek<T>(this Stack<T> stack) where T : class =>
+        stack.Count > 0 ? stack.Peek() : null;
+}
+
 }

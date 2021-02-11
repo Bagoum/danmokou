@@ -13,7 +13,13 @@ MonoBehaviour:
   m_Name: Mokou Sun
   m_EditorClassIdentifier: 
   key: mokou-sun
-  title: The Autophagic Sun Smoldering in the Void
+  title:
+    useReference: 1
+    reference: players.shot_mokou_sun
+    hardcoded:
+      en: 
+      jp: 
+      _showEnOnly: 0
   description: A dangerous technique only usable by Mokou.<br> Fire indestructible
     suns to raze down your enemies.<br> When focused, the shots become slower, but
     larger and more powerful.
@@ -22,3 +28,10 @@ MonoBehaviour:
   bomb: 0
   defaultPower: 1000
   playerChild: 1
+  demoReplay: {fileID: 4900000, guid: f58a179b4f5afb7489944bbfdd2484f5, type: 3}
+  demoSetupSM: {fileID: 4900000, guid: 83d895926f063264f9adc5887261db81, type: 3}
+  isMultiShot: 0
+  multiD: {fileID: 0}
+  multiM: {fileID: 0}
+  multiK: {fileID: 0}
+  onSwap: {fileID: 0}

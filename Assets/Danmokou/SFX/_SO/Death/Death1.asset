@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   defaultName: death
   clip: {fileID: 8300000, guid: 414320dc8e552684d814b90f5c2b4349, type: 3}
-  volume: 0.14
+  volume: 0.12
   timeout: 0.07
   pausable: 0
   loop: 0

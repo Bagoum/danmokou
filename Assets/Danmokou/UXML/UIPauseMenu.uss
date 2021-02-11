@@ -14,7 +14,7 @@
 }
 
 #Header {
-    -unity-font: url('/Assets/Danmokou/Fonts/Odibee/OdibeeSans-Regular.ttf');
+    -unity-font: url('/Assets/Danmokou/Fonts/Odibee-CorpSt-Joint.ttf');
     font-size: 160px;
     color: rgb(255, 255, 255);
     -unity-text-align: upper-center;
@@ -30,7 +30,6 @@
     height: 100%;
     margin-left: 100px;
     margin-right: 100px;
-    -unity-font: url('/Assets/Danmokou/Fonts/Odibee/OdibeeSans-Regular.ttf');
     font-size: 80px;
     color: rgb(255, 255, 255);
 }

@@ -6,12 +6,12 @@ using UnityEngine;
 namespace DMK.Behavior.Functions {
 public class UniformFrameAnimator : RegularUpdater {
 
-    private SpriteRenderer sr;
+    private SpriteRenderer sr = null!;
     private float t;
     private int currSprite;
 
     public float timePerSprite;
-    public Sprite[] sprites;
+    public Sprite[] sprites = null!;
     public bool destroyOnFinish;
 
     private void Awake() {

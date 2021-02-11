@@ -22,7 +22,7 @@ public abstract class BouncyItem : Item {
 
     protected override Vector2 Velocity(float t) => velocity;
 
-    public override void Initialize(Vector2 root, Vector2 targetOffset, [CanBeNull] PoC collectionPoint = null) {
+    public override void Initialize(Vector2 root, Vector2 targetOffset, PoC? collectionPoint = null) {
         base.Initialize(root, targetOffset, collectionPoint);
         float startAngle = 45f + RNG.GetInt(0, 4) * 90f;
         velocity = Speed * M.CosSinDeg(startAngle);

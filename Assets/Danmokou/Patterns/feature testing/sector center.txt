@@ -6,7 +6,7 @@ phase 0
 phase 0
     paction 0
         position 0 1
-        bullet arrow-teal/b <1;:> gcr2 24 5 <50> {
+        async arrow-teal/b <1;:> gcr2 24 5 <50> {
 		} gsrf 5 (rot
 				* -0.15 &aixd
 				* 0.1 &aiyd
@@ -23,7 +23,7 @@ phase 0
 phase 0
     paction 0
         position 0 1
-        bullet arrow-teal/b <1;:> gcr2 24 5 <50> {
+        async arrow-teal/b <1;:> gcr2 24 5 <50> {
 		} gsr2 5 <30> {
 			center
 			bank <0.2;:>

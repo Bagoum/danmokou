@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c19cceb7b4a445f9b456c3fa08f273b8, type: 3}
+  m_Name: UXML References
+  m_EditorClassIdentifier: 
+  UIScreen: {fileID: 9197481963319205126, guid: 58cc57315529ed24e8ba9a35d694475e,
+    type: 3}
+  UINode: {fileID: 9197481963319205126, guid: a814838ea7fd5364e96b285b2bfd246b, type: 3}
+  TwoTextUINode: {fileID: 9197481963319205126, guid: 058456922323ca342a74da3c8aaec2cc,
+    type: 3}
+  OptionLRNode: {fileID: 9197481963319205126, guid: a129df1a3ee772343969c49a05d98d02,
+    type: 3}
+  ComplexOptionLRNode: {fileID: 9197481963319205126, guid: f5f7ec9b595141e41b1202f30d9de1e0,
+    type: 3}

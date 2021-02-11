@@ -3,7 +3,6 @@ using System.Collections;
 using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
-using Common;
 using DMK.Behavior;
 using DMK.Behavior.Functions;
 using DMK.Core;
@@ -23,36 +22,35 @@ using JetBrains.Annotations;
 using UnityEngine;
 using static DMK.DMath.Functions.BPYRepo;
 using static DMK.DMath.Functions.ExM;
+using static DMK.Reflection.CompilerHelpers;
 using static DMK.Reflection.Compilers;
 using static DMK.Danmaku.Patterns.AtomicPatterns;
-using ExBPY = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<float>>;
 using Object = UnityEngine.Object;
-using ExTP = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<UnityEngine.Vector2>>;
 using tfloat = DMK.Expressions.TEx<float>;
 using static DMK.DMath.Functions.ExMConditionals;
-using static DMK.DMath.Functions.ExMLerps;
+using ExBPY = System.Func<DMK.Expressions.TExArgCtx, DMK.Expressions.TEx<float>>;
+using ExPred = System.Func<DMK.Expressions.TExArgCtx, DMK.Expressions.TEx<bool>>;
+using ExTP = System.Func<DMK.Expressions.TExArgCtx, DMK.Expressions.TEx<UnityEngine.Vector2>>;
 
 namespace DMK.SM {
 /// <summary>
 /// All public functions in this repository can be used as LASM state machines.
 /// </summary>
+[Reflect]
 public static class SMReflection {
     private static readonly ReflWrap<Func<float, float, float, ParametricInfo, float>> CrosshairOpacity =
-        (Func<Func<float, float, float, ParametricInfo, float>>) (() => {
-            var fadein = ExUtils.VFloat();
-            var homesec = ExUtils.VFloat();
-            var sticksec = ExUtils.VFloat();
-            var bpi = new TExPI();
-            var t = T()(bpi);
-            return Expression.Lambda<Func<float, float, float, ParametricInfo, float>>(
-                If(ExMPred.Gt(t, fadein),
-                    If(ExMPred.Gt(t, homesec),
-                        Complement(ExMLerps.EInSine(Div(Sub(t, homesec), sticksec))),
-                        ExMHelpers.E1
-                    ),
-                    ExMLerps.EOutSine(Div(t, fadein))
-                ), fadein, homesec, sticksec, bpi).Compile();
-        });
+        ReflWrap.FromFunc("SMReflection.CrosshairOpacity", () =>
+            CompileDelegate<Func<float, float, float, ParametricInfo, float>, float>(@"
+if (> t &fadein,
+    if(> t &homesec,
+        c(einsine((t - &homesec) / &sticksec)),
+        1),
+    eoutsine(t / &fadein))",
+                new DelegateArg<float>("fadein"),
+                new DelegateArg<float>("homesec"),
+                new DelegateArg<float>("sticksec"),
+                new DelegateArg<ParametricInfo>("bpi", priority: true)
+            ));
 
     #region Effects
     /// <summary>
@@ -68,9 +66,7 @@ public static class SMReflection {
             GCXFRepo.RV2Zero,
             new[] { GenCtxProperty.SaveV2((locSave, cindexer, locator)) }, new[] {AtomicPatterns.Noop()}
         ));
-        var path = Compilers.GCXU(VTPRepo.NROffset(
-            bpi => RetrieveHoisted(locSave, indexer(bpi))
-        ));
+        var path = Compilers.GCXU(VTPRepo.NROffset(RetrieveHoisted(locSave, indexer)));
         return async smh => {
             float homesec = homeSec(smh.GCX);
             float sticksec = stickSec(smh.GCX);
@@ -79,7 +75,7 @@ public static class SMReflection {
             float fadein = Mathf.Max(0.15f, homesec / 5f);
             _ = Sync(style, _ => V2RV2.Zero, SyncPatterns.Loc0(Summon(path,
                 new ReflectableLASM(smh2 => {
-                    smh2.Exec.displayer.FadeSpriteOpacity(bpi => CrosshairOpacity.Value(fadein, homesec, sticksec, bpi),
+                    smh2.Exec.Displayer.FadeSpriteOpacity(bpi => CrosshairOpacity.Value(fadein, homesec, sticksec, bpi),
                         homesec + sticksec, smh2.cT, WaitingUtils.GetAwaiter(out Task t));
                     return t;
                 }), new BehOptions())))(smh);
@@ -91,7 +87,7 @@ public static class SMReflection {
     }
 
     public static TaskPattern dZaWarudo(GCXF<float> time) => ZaWarudo(time, _ => Vector2.zero, null, null, _ => 20);
-    public static TaskPattern ZaWarudo(GCXF<float> time, GCXF<Vector2> loc, [CanBeNull] GCXF<float> t1r, [CanBeNull] GCXF<float> t2r, GCXF<float> scale) => smh => {
+    public static TaskPattern ZaWarudo(GCXF<float> time, GCXF<Vector2> loc, GCXF<float>? t1r, GCXF<float>? t2r, GCXF<float> scale) => smh => {
         float t = time(smh.GCX);
         SFXService.Request("x-zawarudo");
         var anim = Object.Instantiate(ResourceManager.GetSummonable("negative")).GetComponent<ScaleAnimator>();
@@ -99,7 +95,7 @@ public static class SMReflection {
         anim.AssignScales(0, scale(smh.GCX), 0);
         anim.AssignRatios(t1r?.Invoke(smh.GCX), t2r?.Invoke(smh.GCX));
         anim.Initialize(smh.cT, t);
-        var controlToken = PlayerInput.AllControlDisabler.CreateToken1();
+        var controlToken = PlayerInput.AllControlDisabler.CreateToken1(MultiOp.Priority.CLEAR_PHASE);
         PlayerHP.RequestPlayerInvulnerable.Publish(((int)(t * 120), false));
         return WaitingUtils.WaitFor(smh, t, false).ContinueWithSync(() => controlToken.TryRevoke());
     };
@@ -107,8 +103,21 @@ public static class SMReflection {
     #endregion
     
     public static TaskPattern dBossExplode(TP4 powerupColor, TP4 powerdownColor) {
-        var sp = Sync("powerup1", _ => V2RV2.Zero, Powerup2Static("_", "_", powerupColor, powerdownColor, 
-            _ => EventLASM.BossExplodeWait, _ => 4f, _ => 0f, _ => 2f));
+        var paOpts = new PowerAuraOptions(new[] {
+            PowerAuraOption.Color(powerupColor),
+            PowerAuraOption.Time(_ => EventLASM.BossExplodeWait),
+            PowerAuraOption.Iterations(_ => 4f),
+            PowerAuraOption.Static(), 
+            PowerAuraOption.Scale(_ => 2f), 
+            PowerAuraOption.Next(new[] {
+                PowerAuraOption.Color(powerdownColor),
+                PowerAuraOption.Time(_ => 2f),
+                PowerAuraOption.Iterations(_ => -1f),
+                PowerAuraOption.Static(), 
+                PowerAuraOption.Scale(_ => 2f), 
+            }),
+        });
+        var sp = Sync("powerup1", _ => V2RV2.Zero, PowerAura(paOpts));
         var ev = EventLASM.BossExplode();
         return smh => {
             sp(smh);
@@ -160,13 +169,13 @@ public static class SMReflection {
     }
 
     public static TaskPattern StageAnnounce() => smh => {
-        UIManager.AnnounceStage(smh.cT, out float t);
-        GameManagement.instance.ExternalLenience(t);
+        UIManager.AnnounceStage(smh.Exec, smh.cT, out float t);
+        GameManagement.Instance.ExternalLenience(t);
         return WaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, t, false);
     };
     public static TaskPattern StageDeannounce() => smh => {
         UIManager.DeannounceStage(smh.cT, out float t);
-        GameManagement.instance.ExternalLenience(t);
+        GameManagement.Instance.ExternalLenience(t);
         return WaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, t, false);
     };
     
@@ -266,15 +275,14 @@ public static class SMReflection {
     
 
     public static TaskPattern Dialogue(string file) {
-        StateMachine sm = null;
+        StateMachine? sm = null;
         return async smh => {
             Log.Unity($"Opening dialogue section {file}");
-            if (sm == null) sm = StateMachineManager.LoadDialogue(file);
+            sm ??= StateMachineManager.LoadDialogue(file);
             bool done = false;
-            var cts = new Cancellable();
-            smh.RunRIEnumerator(WaitingUtils.WaitWhileWithCancellable(() => done, cts,
+            var jsmh = smh.CreateJointCancellee(out var dialogueCT);
+            smh.RunRIEnumerator(WaitingUtils.WaitWhileWithCancellable(() => done, dialogueCT,
                 () => InputManager.DialogueSkip, smh.cT, () => { }));
-            var jsmh = smh.CreateJointCancellee(cts, out _);
             await sm.Start(jsmh).ContinueWithSync(() => {
                 done = true;
             });
@@ -312,8 +320,8 @@ public static class SMReflection {
 
     /// <summary>
     /// Add a control to bullets that makes them summon an inode to run a state machine when the predicate is satisfied.
-    /// DEPRECATED. USE THE NORMAL CONTROL FUNCTIONS WITH THE "SM" CONTROL.
     /// </summary>
+    [Obsolete("Use the normal control function with the SM command.")]
     [GAlias(typeof(BulletManager.SimpleBullet), "BulletControlSM")]
     [GAlias(typeof(BehaviorEntity), "BEHControlSM")]
     public static TaskPattern ParticleSMControl<T>(Pred persist, BulletManager.StyleSelector style,
@@ -405,9 +413,10 @@ public static class SMReflection {
     /// <summary>
     /// Move the executing entity, but cancel movement if the predicate is false.
     /// </summary>
-    public static TaskPattern MoveWhile(GCXF<float> time, [CanBeNull] Pred condition, GCXU<VTP> path) => smh => {
+    public static TaskPattern MoveWhile(GCXF<float> time, Pred? condition, GCXU<VTP> path) => smh => {
         uint randId = RNG.GetUInt();
-        var epath = path.New(smh.GCX, ref randId);
+        var fctx = FiringCtx.New();
+        var epath = path(smh.GCX, fctx);
         var old_override = smh.GCX.idOverride;
         //Note that this use case is limited to when the BEH is provided a temporary new ID (ie. only in MoveWhile).
         //I may deprecate this by having the move function not use a new ID.
@@ -415,8 +424,9 @@ public static class SMReflection {
         var etime = time(smh.GCX);
         smh.GCX.idOverride = old_override;
         var cor = smh.Exec.ExecuteVelocity(new LimitedTimeMovement(epath, etime, 
-                FuncExtensions.Link(() => DataHoisting.Destroy(randId),
-                WaitingUtils.GetAwaiter(out Task t)), smh.cT, smh.GCX.index, condition), randId);
+                FuncExtensions.Link(() => fctx.Dispose(),
+                WaitingUtils.GetAwaiter(out Task t)), smh.cT, 
+                new ParametricInfo(Vector2.zero, smh.GCX.index, randId, ctx: fctx), condition));
         smh.RunTryPrependRIEnumerator(cor);
         return t;
     };
@@ -432,20 +442,13 @@ public static class SMReflection {
     public static TaskPattern MoveTarget(ExBPY time, [LookupMethod] Func<tfloat, tfloat> ease, ExTP target) 
         => Move(GCXF(time), Compilers.GCXU(
             VTPRepo.NROffset(Parametrics.EaseToTarget(ease, time, target))));
-    
-    /// <summary>
-    /// Move the executing entity to a target position over time. This has zero error.
-    /// </summary>
-    public static TaskPattern MoveTarget_noexpr(BPY time, string ease, TP target) 
-        => Move(g => time(g.AsBPI), NoExprMath_1.GCXU(
-            NoExprMath_1.NROffset(NoExprMath_1.EaseToTarget(ease, time, target))));
 
     /// <summary>
     /// Move to a target position, run a state machine, and then move to another target position.
     /// </summary>
     public static TaskPattern MoveWrap(ExBPY t1, ExTP target1, ExBPY t2, ExTP target2, StateMachine wrapped) {
-        var w1 = MoveTarget(t1, ExMLerps.EOutSine, target1);
-        var w2 = MoveTarget(t2, ExMLerps.EInSine, target2);
+        var w1 = MoveTarget(t1, ExMEasers.EOutSine, target1);
+        var w2 = MoveTarget(t2, ExMEasers.EInSine, target2);
         return async smh => {
             await w1(smh);
             smh.ThrowIfCancelled();
@@ -485,8 +488,8 @@ public static class SMReflection {
     /// Move-wrap, but the enemy is set invincible until the wrapped SM starts.
     /// </summary>
     public static TaskPattern IMoveWrap(ExBPY t1, ExTP target1, ExBPY t2, ExTP target2, StateMachine wrapped) {
-        var w1 = MoveTarget(t1, ExMLerps.EOutSine, target1);
-        var w2 = MoveTarget(t2, ExMLerps.EInSine, target2);
+        var w1 = MoveTarget(t1, ExMEasers.EOutSine, target1);
+        var w2 = MoveTarget(t2, ExMEasers.EInSine, target2);
         return async smh => {
             if (smh.Exec.isEnemy) smh.Exec.Enemy.SetVulnerable(Vulnerability.NO_DAMAGE);
             await w1(smh);
@@ -517,7 +520,7 @@ public static class SMReflection {
     /// Link this entity's HP pool to another enemy. The other enemy will serve as the source and this will simply redirect damage.
     /// </summary>
     public static TaskPattern DivertHP(BEHPointer target) => smh => {
-        smh.Exec.Enemy.DivertHP(target.beh.Enemy);
+        smh.Exec.Enemy.DivertHP(target.Beh.Enemy);
         return Task.CompletedTask;
     };
 
@@ -527,7 +530,7 @@ public static class SMReflection {
     };
     
     public static TaskPattern FadeSprite(BPY fader, GCXF<float> time) => smh => {
-        smh.Exec.displayer.FadeSpriteOpacity(fader, time(smh.GCX), smh.cT, WaitingUtils.GetAwaiter(out Task t));
+        smh.Exec.Displayer.FadeSpriteOpacity(fader, time(smh.GCX), smh.cT, WaitingUtils.GetAwaiter(out Task t));
         return t;
     };
     
@@ -539,14 +542,14 @@ public static class SMReflection {
     /// Create a global slowdown effect.
     /// </summary>
     public static TaskPattern Slowdown(GCXF<float> ratio) => smh => {
-        ETime.Slowdown.CreateModifier(ratio(smh.GCX));
+        ETime.Slowdown.CreateModifier(ratio(smh.GCX), MultiOp.Priority.CLEAR_PHASE);
         return Task.CompletedTask;
     };
     /// <summary>
     /// Create a global slowdown effect for a limited amount of time.
     /// </summary>
     public static TaskPattern SlowdownFor(GCXF<float> time, GCXF<float> ratio) => async smh => {
-        var t = ETime.Slowdown.CreateModifier(ratio(smh.GCX));
+        var t = ETime.Slowdown.CreateModifier(ratio(smh.GCX), MultiOp.Priority.CLEAR_PHASE);
         await WaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, time(smh.GCX), false);
         t.TryRevoke();
     };
@@ -555,7 +558,7 @@ public static class SMReflection {
     /// Reset the global slowdown to 1.
     /// </summary>
     public static TaskPattern SlowdownReset() => smh => {
-        ETime.Slowdown.RevokeAll(MultiMultiplier.Priority.CLEAR_PHASE);
+        ETime.Slowdown.RevokeAll(MultiOp.Priority.CLEAR_PHASE);
         return Task.CompletedTask;
     };
     
@@ -595,8 +598,7 @@ public static class SMReflection {
             var (firer, onCancel, inputReq) = o.Player.IsFocus ?  
                 (focusFire, focusCancel, (Func<bool>) (() => o.Player.IsFocus)) :
                 (freeFire, freeCancel, (Func<bool>) (() => !o.Player.IsFocus));
-            var fireCTS = new Cancellable();
-            var joint_smh = smh.CreateJointCancellee(fireCTS, out _);
+            var joint_smh = smh.CreateJointCancellee(out var fireCTS);
             //order is important to ensure cancellation works on the correct frame
             var waiter = WaitingUtils.WaitForUnchecked(o, smh.cT, () => !o.Player.IsFiring || !inputReq());
             _ = firer.Start(joint_smh);
@@ -611,8 +613,7 @@ public static class SMReflection {
                     throw new Exception("Cannot use fire command on a BehaviorEntity that is not an Option");
             if (!o.Player.IsFiring) await WaitingUtils.WaitForUnchecked(o, smh.cT, () => o.Player.IsFiring);
             smh.ThrowIfCancelled();
-            var fireCTS = new Cancellable();
-            var joint_smh = smh.CreateJointCancellee(fireCTS, out _);
+            var joint_smh = smh.CreateJointCancellee(out var fireCTS);
             //order is important to ensure cancellation works on the correct frame
             var waiter = WaitingUtils.WaitForUnchecked(o, smh.cT, () => !o.Player.IsFiring);
             _ = fire.Start(joint_smh);
@@ -650,15 +651,15 @@ public static class SMReflection {
     /// Disambiguates based on the "key" property of the PlayerConfig.
     /// </summary>
     public static TaskPattern PlayerVariant((string key, StateMachine exec)[] options) => smh => {
-        if (GameManagement.instance.Player == null)
+        if (GameManagement.Instance.Player == null)
             throw new Exception("Cannot use PlayerVariant state machine when there is no player");
         for (int ii = 0; ii < options.Length; ++ii) {
-            if (GameManagement.instance.Player.key == options[ii].key) {
+            if (GameManagement.Instance.Player.key == options[ii].key) {
                 return options[ii].exec.Start(smh);
             }
         }
         throw new Exception("Could not find a matching player variant option for player " +
-            $"{GameManagement.instance.Player.key}");
+            $"{GameManagement.Instance.Player.key}");
     };
 
     /// <summary>
@@ -671,8 +672,8 @@ public static class SMReflection {
     };
 
     private static IEnumerator _LifeToScore(int value, ICancellee cT, Action done) {
-        while (GameManagement.instance.Lives > 1 && !cT.Cancelled) {
-            GameManagement.instance.SwapLifeScore(value);
+        while (GameManagement.Instance.Lives > 1 && !cT.Cancelled) {
+            GameManagement.Instance.SwapLifeScore(value);
             for (int ii = 0; ii < 60; ++ii) {
                 yield return null;
                 if (cT.Cancelled) break;

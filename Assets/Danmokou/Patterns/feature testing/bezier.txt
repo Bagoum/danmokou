@@ -1,0 +1,19 @@
+pattern { 
+}
+phase 0
+	paction 0
+		shift-phase-to 1
+
+<!> type non `1`
+phase 5
+	paction 0
+		position -2 2
+		move 3 nroffset ease(out-sine, 3, bezier3(
+			zero,
+			pxy(1, -6),
+			pxy(3, 2),
+			px(4),
+			t / 3))
+
+
+            

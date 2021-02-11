@@ -8,22 +8,20 @@ using DMK.DMath.Functions;
 using DMK.Expressions;
 using JetBrains.Annotations;
 using UnityEngine;
-using ExFXY = System.Func<DMK.Expressions.TEx<float>, DMK.Expressions.TEx<float>>;
-using ExBPY = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<float>>;
-using ExTP = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<UnityEngine.Vector2>>;
-using ExBPRV2 = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<DMK.DMath.V2RV2>>;
 using static DMK.DMath.Functions.ExM;
 using GCP = DMK.Danmaku.Options.GenCtxProperty;
-using ExSBF = System.Func<DMK.Expressions.RTExSB, DMK.Expressions.TEx<float>>;
-using ExSBV2 = System.Func<DMK.Expressions.RTExSB, DMK.Expressions.TEx<UnityEngine.Vector2>>;
 using static DMK.Expressions.ExMHelpers;
 using static DMK.Reflection.Reflector;
 using static DMK.Reflection.Compilers;
+using ExBPY = System.Func<DMK.Expressions.TExArgCtx, DMK.Expressions.TEx<float>>;
+using ExTP = System.Func<DMK.Expressions.TExArgCtx, DMK.Expressions.TEx<UnityEngine.Vector2>>;
+using ExBPRV2 = System.Func<DMK.Expressions.TExArgCtx, DMK.Expressions.TEx<DMK.DMath.V2RV2>>;
 
 namespace DMK.Danmaku.Patterns {
 /// <summary>
 /// Functions that describe patterns performed instantaneously.
 /// </summary>
+[Reflect]
 public static partial class SyncPatterns {
     public static SyncPattern Reexec(AsyncPattern ap) => sbh => 
         sbh.GCX.exec.RunRIEnumerator(ap(new AsyncHandoff(sbh)));
@@ -183,17 +181,17 @@ public static partial class SyncPatterns {
     
     #region SimplifiedSP
 
-    private static (string, ExSBV2)[] AutoSaveV2(string loc, string dir) => new[] {
+    private static (string, ExTP)[] AutoSaveV2(string loc, string dir) => new[] {
         (loc, SBV2Repo.Loc()),
         (dir, SBV2Repo.Dir())
     };
 
-    private static readonly (string, ExSBF)[] AutoSaveF = { };
+    private static readonly (string, ExBPY)[] AutoSaveF = { };
 
     /// <summary>
     /// GuideEmpty with a random suffix and no saved floats.
     /// </summary>
-    public static SyncPattern GuideEmpty2(ExBPY indexer, (string, ExSBV2)[] saveV2s, GCXU<VTP> emptyPath,
+    public static SyncPattern GuideEmpty2(ExBPY indexer, (string, ExTP)[] saveV2s, GCXU<VTP> emptyPath,
         SyncPattern[] guided) => GuideEmpty(null, indexer, saveV2s, AutoSaveF, emptyPath, guided);
 
     /// <summary>
@@ -206,21 +204,21 @@ public static partial class SyncPatterns {
     /// <param name="emptyPath">The movement path of the empty bullet.</param>
     /// <param name="guided">The child fires that follow the empty bullet. They have Loc0 applied to them.</param>
     /// <returns></returns>
-    public static SyncPattern GuideEmpty([CanBeNull] string suffix, ExBPY indexer, (string, ExSBV2)[] saveV2s,
-                                        (string, ExSBF)[] saveFs, GCXU<VTP> emptyPath, SyncPattern[] guided) {
+    public static SyncPattern GuideEmpty(string? suffix, ExBPY indexer, (string, ExTP)[] saveV2s,
+                                        (string, ExBPY)[] saveFs, GCXU<VTP> emptyPath, SyncPattern[] guided) {
         var emptySP = AtomicPatterns.S(emptyPath);
-        suffix = suffix ?? $".{RNG.RandString(8)}";
+        suffix ??= $".{RNG.RandString(8)}";
         string estyle = $"{BulletManager.EMPTY}{suffix}";
         List<SBCFp> controlsL = new List<SBCFp>();
         if (saveV2s.Length > 0) {
-            var data = new (ReflectEx.Hoist<Vector2> target, ExBPY indexer, ExSBV2 valuer)[saveV2s.Length];
+            var data = new (ReflectEx.Hoist<Vector2> target, ExBPY indexer, ExTP valuer)[saveV2s.Length];
             for (int ii = 0; ii < saveV2s.Length; ++ii) {
                 data[ii] = (new ReflectEx.Hoist<Vector2>(saveV2s[ii].Item1), indexer, saveV2s[ii].Item2);
             }
             controlsL.Add(BulletManager.SimpleBulletControls.SaveV2(data, _ => ExMPred.True()));
         }
         if (saveFs.Length > 0) {
-            var data = new (ReflectEx.Hoist<float> target, ExBPY indexer, ExSBF valuer)[saveFs.Length];
+            var data = new (ReflectEx.Hoist<float> target, ExBPY indexer, ExBPY valuer)[saveFs.Length];
             for (int ii = 0; ii < saveFs.Length; ++ii) {
                 data[ii] = (new ReflectEx.Hoist<float>(saveFs[ii].Item1), indexer, saveFs[ii].Item2);
             }
@@ -242,10 +240,10 @@ public static partial class SyncPatterns {
         };
     }
     
-    public static SyncPattern GuideEmpty_noexpr([CanBeNull] string suffix, BPY indexer, (string, SBV2)[] saveV2s,
+    public static SyncPattern GuideEmpty_noexpr(string? suffix, BPY indexer, (string, SBV2)[] saveV2s,
         (string, SBF)[] saveFs, GCXU<VTP> emptyPath, SyncPattern[] guided) {
         var emptySP = AtomicPatterns.S(emptyPath);
-        suffix = suffix ?? $".{RNG.RandString(8)}";
+        suffix ??= $".{RNG.RandString(8)}";
         string estyle = $"{BulletManager.EMPTY}{suffix}";
         List<SBCFp> controlsL = new List<SBCFp>();
         if (saveV2s.Length > 0) {

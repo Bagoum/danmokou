@@ -1,7 +1,7 @@
 ﻿module FParser.AAParser
-open Common.Types
-open Common.Functions
-open Common.Extensions
+open FCommon.Types
+open FCommon.Functions
+open FCommon.Extensions
 open FParser.ParserCommon
 open FParsec
 open System
@@ -111,7 +111,6 @@ type Config<'t,'u,'v> = {
         punctEvent = fun _ -> None
     }
     
-let FANCY_TAG = "$/"
 let WIKI_INVOKE = "$$"
 let ARGWIKI_INVOKE = '$'
 let TAG_OPEN = '<'

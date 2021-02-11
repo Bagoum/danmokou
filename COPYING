@@ -6,7 +6,6 @@ All source code in this project is distributed under the MIT license. Non-code r
 Code is present primarily under the directories FS, Assets/Danmokou/Plugins/Self, Assets/Danmokou/Rendering/Shaders, Assets/Danmokou/CG, Assets/Danmokou/UXML (normal code), as well as Assets/Danmokou/Patterns (script files).
 
 The Licenses folder also contains licenses for the following packages used by this project:
-Easing Equations by C.J. Kimberlin and Robert Penner
 Hash Without Sine by David Hoskins
 Newtonsoft.Json by Kalle Jillheden
 Some files from these projects exists in the source code. Those files have the original licenses at the top for convenience. 
@@ -17,6 +16,10 @@ The directory Assets/Danmokou/Plugins/External contains many external DLLs. They
 protobuf-net*: Apache 2.0 (https://www.nuget.org/packages/protobuf-net)
 MathNet*: MIT (https://www.nuget.org/packages/MathNet.Numerics)
 System.*: MIT (https://www.nuget.org/packages/System.Memory/ and others)
+LanguageExt.*: MIT (https://github.com/louthy/language-ext)
+	Modifications have been made to LanguageExt.Parsec.
+FastExpressionCompiler: MIT (https://github.com/dadhi/FastExpressionCompiler)
+	Modifications have been made to FastExpressionCompiler.
 
 The directory Assets/Danmokou/Plugins/Self/Core/FS contains compiled binaries of the directory FS.
 
@@ -54,6 +57,7 @@ The default menu background is by 紅月カイ on Pixiv (https://www.pixiv.net/e
 
 Sound effects (Assets/Danmokou/Audio/SFX)
 - manual: by Bagoum, licensed under CC BY 4.
+- Many sound effects in "SFX/_SO/usedfiles" were created by Kenny Vleugels (kenney.nl) and are licensed thereby under CC0.
 - Many sound effects in "SFX/_SO/usedfiles" by OSA: http://osabisi.sakura.ne.jp/m2/ (Licenses/OSA/).
 - taisei: by Taisei Project (with modification), licensed under MIT (Licenses/Taisei.txt).
 - sourced:
@@ -87,13 +91,14 @@ Images (Assets/Danmokou/Sprites)
 - DD/*: by DD: https://www.pixiv.net/en/users/4650367 . Noncommercial use only. 
 - .py: Python scripts licensed by Bagoum under MIT.
 - UI/pins/crow*: stock by Roy3D on DeviantArt (https://www.deviantart.com/roy3d/art/Crows-2-PNG-Stock-412584565), modifications made.
+- UI/commense: Yukari sprites by dairi (https://www.pixiv.net/en/users/4920496). Noncommercial use only. 
 - items/gems*: under CC-BY from Code Inferno Games (codeinferno.com):  https://opengameart.org/content/animated-spinning-gems
 - player/focus: by Taisei Project (with modification).
 - bullets/straight-png/taisei_scythe: by Taisei Project (with modification).
 - other files in bullets, UI, util, TransitionTextures, items, player: by Bagoum, licensed under CC BY 4.
 
 Assets/Danmokou/MiniProjects
-- Dialogue/icons, Dialogue/Stands/dairi_*: dairi (https://www.pixiv.net/en/users/4920496). Noncommercial use only. 
+- Dialogue/icons, Dialogue/Stands/dairi_*: dairi (same license as before).
 
 Some image resources were created with patterns from http://www.sda.nagoya-cu.ac.jp/sa08m13/image.html 
 Some image resources were created with patterns from http://www.ikiya.jp/anounce.html

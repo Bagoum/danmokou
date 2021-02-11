@@ -14,14 +14,13 @@ using efloat = DMK.Expressions.EEx<float>;
 using ev2 = DMK.Expressions.EEx<UnityEngine.Vector2>;
 using ev3 = DMK.Expressions.EEx<UnityEngine.Vector3>;
 using erv2 = DMK.Expressions.EEx<DMK.DMath.V2RV2>;
-using ExBPY = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<float>>;
-using ExPred = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<bool>>;
 using static DMK.DMath.Functions.ExM;
 
 namespace DMK.DMath.Functions {
 /// <summary>
 /// See <see cref="ExM"/>. This class contains functions related to coordinate conversion.
 /// </summary>
+[Reflect]
 public static class ExMConversions {
 
     public static tv2 Polar2ToXY(ev2 rt) => EEx.ResolveV2(rt, v2 => PolarToXY(v2.x, v2.y));

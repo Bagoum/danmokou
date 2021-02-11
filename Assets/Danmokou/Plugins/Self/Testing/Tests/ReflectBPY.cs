@@ -10,7 +10,6 @@ using UnityEngine;
 using static DMK.Reflection.Compilers;
 using static DMK.DMath.Functions.BPYRepo;
 using static NUnit.Framework.Assert;
-using ExBPY = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<float>>;
 using static DMK.DMath.Functions.ExMLerps;
 
 namespace DMK.Testing {
@@ -45,16 +44,16 @@ namespace DMK.Testing {
                 TestTPoints(e01, otherPts);
                 TestTPoints(e01, new[] { (0f, 0f), (0.5f, 0.5f), (1f, 1f)});
             }
-            BPY s = BPY(x => Smooth(ExMLerps.EIOSine, x.t));
+            BPY s = BPY(x => Smooth(ExMEasers.EIOSine, x.t));
             TestE01(s, new []{ (0.1f, 0.02447f) });
-            s = BPY(x => SmoothLoop(ExMLerps.EIOSine, x.t));
+            s = BPY(x => SmoothLoop(ExMEasers.EIOSine, x.t));
             TestE01(s, new []{ (1.1f, 1.02447f) });
             TestE01(s, new []{ (3.1f, 3.02447f) });
         }
 
         [Test]
         public static void TSwitchH() {
-            BPY sh = BPY(SwitchH(T(), _ => 2f, T(), bpi => bpi.t.Mul(2f)));
+            BPY sh = BPY(SwitchH<float>(T(), _ => 2f, bpi => bpi.t, bpi => bpi.t.Mul(2f)));
             var pi = new ParametricInfo();
             AreEqual(sh(pi.CopyWithT(1.9f)), 1.9f, err);
             AreEqual(sh(pi.CopyWithT(2.01f)), 0.02f, err);

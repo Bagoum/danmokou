@@ -10,39 +10,30 @@ gtr {
 			while(> powerf p)
 			root zero
 			preloop { 
-				lastActiveTime =f _
-				subshot =f playerSubshot
+				pid = f playerid
 			}
 		} { 
 !{ laseropts()
-start(30 * (t - &lastActiveTime))
+start(30 * max(0, (t - LaserLastActiveT(mine))))
 varLength(15, 30 * t)
-dynamic(tpnrot(rotate(OptionAngle, cy 1)))
-delete(> (t - &lastActiveTime, 1) | (neq &subshot playerSubshot))
-deactivate((<= powerf p) | (> playerUnfiringTime 0))
+dynamic(tpnrot(rotate(OptionAngle(mine), cy 1)))
+delete(> (t - LaserLastActiveT(mine), 1) | (neq &pid playerid))
+deactivate((<= powerf p) | (> playerUnfiringT(mine) 0))
 !}
 			gsr {
 				color(blueteal)
-			} laser(nroffset(OptionLocation),
+			} laser(nroffset(OptionLocation(mine)),
 				0, _, {
 					$laseropts
-					tint(rgba(1,1,1,0))
+					tint(rgba(1,1,1, if(lasercolliding mine, lerpt(0.2, 0.6, 1, 0), 1)))
 					player(12, 22, 19, oh1-green)
 			})
 			gsr {
-				color(blueteal)
-			} laser(nroffset(OptionLocation),
-				0, _, {
-					$laseropts
-					tint(rgba(1,1,1, if(laseriscolliding, lerpt(0.2, 0.6, 1, 0), 1)))
-					player(1, 0, 0, null)
-			})
-			gsr {
 				color(tealgreen)
-			} laser(nroffset(OptionLocation),
+			} laser(nroffset(OptionLocation(mine)),
 				0, _, {
 					$laseropts
-					tint(rgba(1,1,1, if(laseriscolliding, lerpt(0.2, 0.6, 0, 1), 0)))
+					tint(rgba(1,1,1, if(lasercolliding mine, lerpt(0.2, 0.6, 0, 1), 0)))
 					player(1, 0, 0, null)
 			})
 		}

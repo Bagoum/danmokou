@@ -42,6 +42,9 @@ public static class RNG {
         return u;*/
         return (((uint) rand.Next(1 << 30)) << 2) | (uint) rand.Next(1 << 2);
     }
+    public static uint GetUIntOffFrame() {
+        return (((uint) offFrame.Next(1 << 30)) << 2) | (uint) offFrame.Next(1 << 2);
+    }
 
     public const uint HalfMax = uint.MaxValue / 2;
 

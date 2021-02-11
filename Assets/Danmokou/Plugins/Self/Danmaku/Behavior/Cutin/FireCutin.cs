@@ -10,18 +10,18 @@ using UnityEngine;
 
 namespace DMK.Behavior.Display {
 public class FireCutin : BehaviorEntity {
-    public SpriteRenderer fireSprite;
-    private MaterialPropertyBlock firePB;
+    public SpriteRenderer fireSprite = null!;
+    private MaterialPropertyBlock firePB = null!;
     public int xBlocks;
     public int yBlocks;
     public Color color1;
     public Color color2;
     public Color color3;
     public Vector2 fireMultiplier;
-    private BPY fireScaler;
+    private BPY fireScaler = null!;
     public Vector2 startLoc;
-    public string movement;
-    private TP velMov;
+    public string movement = "";
+    private TP velMov = null!;
     public float timeToMidSeq;
     public float timeFromMidToFirstHit;
     public float timeFromFirstToSecondHit;
@@ -32,28 +32,28 @@ public class FireCutin : BehaviorEntity {
 
     //public TextMeshPro upperText;
     //public TextMeshPro lowerText;
-    public Transform upperTr;
-    public Transform lowerTr;
+    public Transform upperTr = null!;
+    public Transform lowerTr = null!;
     //private Transform upperTr;
     //private Transform lowerTr;
     private Vector3 upperTextBaseLoc;
     private Vector3 lowerTextBaseLoc;
     public Vector3 upperTextOffset;
     public Vector3 lowerTextOffset;
-    private TP3 upperTextLerp;
-    private TP3 lowerTextLerp;
+    private TP3 upperTextLerp = null!;
+    private TP3 lowerTextLerp = null!;
     public Vector2 textScale;
-    private BPY upperTextScaler;
-    private BPY lowerTextScaler;
-    public SpriteRenderer textBacker;
+    private BPY upperTextScaler = null!;
+    private BPY lowerTextScaler = null!;
+    public SpriteRenderer textBacker = null!;
     public Vector2 textBackFillTime;
-    private MaterialPropertyBlock textBackPB;
-    private BPY textBackFiller;
+    private MaterialPropertyBlock textBackPB = null!;
+    private BPY textBackFiller = null!;
 
 
     private const float sx = -0.1f;
     private const float sy = 0.2f;
-    public Texture2D textBackSprite;
+    public Texture2D textBackSprite = null!;
 
     protected override void Awake() {
         string CXYZ(Vector3 loc) => $"pxyz {loc.x} {loc.y} {loc.z}";
@@ -61,6 +61,7 @@ public class FireCutin : BehaviorEntity {
         velMov = movement.Into<TP>();
         tr.localPosition = startLoc;
         fireScaler =
+            //WARNING incompatible with baking
             FormattableString
                 .Invariant(
                     $"lerpsmooth ebounce2 {timeToFirstHit} {timeToSecondHitPost} t {fireMultiplier.x} {fireMultiplier.y}")

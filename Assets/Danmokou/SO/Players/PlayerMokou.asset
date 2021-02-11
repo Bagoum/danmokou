@@ -15,24 +15,25 @@ MonoBehaviour:
   freeSpeed: 5
   focusSlowdown: 0.44
   hitboxRadius: 0.034
-  grazeboxRadius: 0.42
+  grazeboxRadius: 0.47
   key: basic-mokou
-  shortTitle: Mokou
+  shortTitle:
+    useReference: 1
+    reference: players.mokou
+    hardcoded:
+      en: 
+      jp: 
+      _showEnOnly: 0
   title: Fujiwara no Mokou
   prefab: {fileID: 5693660460388628151, guid: 4f67648ec56d30044b03a5959e19a4e0, type: 3}
-  shots:
-  - {fileID: 11400000, guid: 0ad5898c3351494468a4cd358d676fd4, type: 2}
-  - {fileID: 11400000, guid: 94c9dbd65f23dec46894ae6f01f35d23, type: 2}
-  - {fileID: 11400000, guid: 054062588373598469a2911098fdc10d, type: 2}
-  - {fileID: 11400000, guid: 35ba3e93f4382a84ebdea9e89ab73c60, type: 2}
   shots2:
-  - ordinal: 
+  - ordinal: X
     shot: {fileID: 11400000, guid: 0ad5898c3351494468a4cd358d676fd4, type: 2}
-  - ordinal: D
+  - ordinal: A
     shot: {fileID: 11400000, guid: 94c9dbd65f23dec46894ae6f01f35d23, type: 2}
-  - ordinal: M
+  - ordinal: B
     shot: {fileID: 11400000, guid: 054062588373598469a2911098fdc10d, type: 2}
-  - ordinal: K
+  - ordinal: C
     shot: {fileID: 11400000, guid: 35ba3e93f4382a84ebdea9e89ab73c60, type: 2}
   uiColor: {r: 0.50980395, g: 0, b: 0.1254902, a: 1}
   shotDisplay: {fileID: 7713674854582391743, guid: 949a4532b5136a344af7110e1f0be716,

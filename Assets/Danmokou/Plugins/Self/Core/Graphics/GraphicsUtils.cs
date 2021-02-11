@@ -22,6 +22,21 @@ public static class GraphicsUtils {
         RenderTexture.active = (rta == rt) ? null : rta;
         return tex;
     }
+
+    public static void GLClear(this RenderTexture rt) {
+        var rta = RenderTexture.active;
+        RenderTexture.active = rt;
+        GL.Clear(true, true, new Color(0, 0, 0, 0));
+        RenderTexture.active = rta;
+
+    }
+
+    public static void DestroyTexOrRT(this Texture tex) {
+        if (tex is RenderTexture rt)
+            rt.Release();
+        else
+            Object.Destroy(tex);
+    }
     
     public static void SetOrUnsetKeyword(this Material mat, bool enable, string keyword) {
         if (enable)

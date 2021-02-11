@@ -19,88 +19,44 @@ using DMK.Scriptables;
 using DMK.SM;
 using UnityEngine;
 using Vector3 = UnityEngine.Vector3;
-using ExTP = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<UnityEngine.Vector2>>;
-using ExTP3 = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<UnityEngine.Vector3>>;
-using ExFXY = System.Func<DMK.Expressions.TEx<float>, DMK.Expressions.TEx<float>>;
-using ExBPY = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<float>>;
-using ExBPRV2 = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<DMK.DMath.V2RV2>>;
-using ExPred = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<bool>>;
-using ExVTP = System.Func<DMK.Expressions.ITExVelocity, DMK.Expressions.TEx<float>, DMK.Expressions.TExPI, DMK.Expressions.RTExV2, DMK.Expressions.TEx<UnityEngine.Vector2>>;
-using ExLVTP = System.Func<DMK.Expressions.ITExVelocity, DMK.Expressions.RTEx<float>, DMK.Expressions.RTEx<float>, DMK.Expressions.TExPI, DMK.Expressions.RTExV2, DMK.Expressions.TEx<UnityEngine.Vector2>>;
-using ExGCXF = System.Func<DMK.Expressions.TExGCX, DMK.Expressions.TEx>;
-using ExSBCF = System.Func<DMK.Expressions.TExSBC, DMK.Expressions.TEx<int>, DMK.Expressions.TExPI, DMK.Expressions.TEx>;
-using ExSBPred = System.Func<DMK.Expressions.TExSBC, DMK.Expressions.TEx<int>, DMK.Expressions.TExPI, DMK.Expressions.TEx<bool>>;
 
 namespace DMK.Reflection {
 public static partial class Reflector {
 
+    private static readonly Assembly[] ReflectableAssemblies = {
+        typeof(CoreAssemblyMarker).Assembly,
+        typeof(DanmakuAssemblyMarker).Assembly
+    };
     static Reflector() {
-        MathConfig = GenericReflectionConfig.ManyPublic(typeof(ExM), typeof(ExMLerps), typeof(ExMSamplers),
-            typeof(ExMConditionals), typeof(ExMDifficulty), typeof(ExMConversions), typeof(ExMMod),
-            typeof(ExMV2), typeof(ExMRV2), typeof(ExMV3),
-            typeof(ExMV4), typeof(ExMPred));
-        foreach (var t in new[] {
-#if NO_EXPR
-            typeof(NoExprMath_1), typeof(NoExprMath_2),
-#endif
-            typeof(VTPRepo), typeof(SyncPatterns), typeof(AtomicPatterns),
-            typeof(AsyncPatterns), typeof(Parametrics), typeof(Parametrics3), typeof(Parametrics4),
-            typeof(MovementPatterns),
-            typeof(BPYRepo), typeof(FXYRepo), typeof(ExtraMovementFuncs),
-            typeof(PredicateLogic), typeof(BulletManager.SimpleBulletControls),
-            typeof(CurvedTileRenderLaser.LaserControls),
-            typeof(BehaviorEntity.BulletControls), typeof(BulletManager.SimplePoolControls),
-            typeof(BehaviorEntity.PoolControls),
-            typeof(CurvedTileRenderLaser.PoolControls), typeof(SBFRepo), typeof(SBV2Repo),
-            typeof(BPRV2Repo), typeof(GenCtxProperty), typeof(LaserOption), typeof(BehOption), typeof(SBOption),
-            typeof(SBPredicates), typeof(Compilers),
-            typeof(Synchronization), typeof(PhaseProperty), typeof(PatternProperty), typeof(ParsingProperty),
-            typeof(Challenge)
-        }) {
-            ReflConfig.RecordPublic(t);
+        foreach (var type in 
+            //This is more correct but way slower
+            //AppDomain.CurrentDomain.GetAssemblies()
+            //.Where(a => !a.IsDynamic)
+            //.Where(a => a.GetCustomAttributes(false).Any(c => c is ReflectAttribute))
+            ReflectableAssemblies
+            .SelectMany(a => a.GetTypes())) {
+            foreach (var ca in type.GetCustomAttributes()) {
+                if (ca is ReflectAttribute ra) {
+                    ReflectionData.RecordPublic(type, ra.returnType);
+                    break;
+                }
+            }
         }
-        ReflConfig.RecordPublic<Events.EventDeclaration<Events.Event0>>(typeof(Events.Event0));
-        ReflConfig.ShortcutAll("letdecl", ":::");
-        ReflConfig.ShortcutAll("divide", "/");
-        ReflConfig.ShortcutAll("flipxgt", "flipx>");
-        ReflConfig.ShortcutAll("flipxlt", "flipx<");
-        ReflConfig.ShortcutAll("flipygt", "flipy>");
-        ReflConfig.ShortcutAll("flipylt", "flipy<");
+
         InitializeEnumResolvers();
         AllowMath<TEx<float>>();
-        AllowMath<TEx<bool>>(); //This will allow stuff like (if + true false), which will erorr
+        AllowMath<TEx<bool>>(); //This will also allow stuff like (if + true false), which will error if you actually use it
         AllowMath<TEx<Vector2>>();
         AllowMath<TEx<Vector3>>();
         AllowMath<TEx<Vector4>>();
         AllowMath<TEx<V2RV2>>();
-        AllowFuncMath<TEx<float>, TEx<float>>();
-        AllowFuncMath<TExPI, TEx<float>>();
-        AllowFuncMath<TExPI, TEx<bool>>(); //This will allow stuff like (if + true false), which will erorr
-        AllowFuncMath<TExPI, TEx<Vector2>>();
-        AllowFuncMath<TExPI, TEx<Vector3>>();
-        AllowFuncMath<TExPI, TEx<Vector4>>();
-        AllowFuncMath<TExPI, TEx<V2RV2>>();
-        AllowFuncMath<RTExSB, TEx<float>>();
-        AllowFuncMath<RTExSB, TEx<bool>>();
-        AllowFuncMath<RTExSB, TEx<Vector2>>();
-        AllowFuncMath<RTExSB, TEx<Vector3>>();
-        AllowFuncMath<RTExSB, TEx<Vector4>>();
-        AllowFuncMath<RTExSB, TEx<V2RV2>>();
-        foreach (var t in FallThroughOptions) {
-            t.Value.Sort((x, y) => x.Item1.priority.CompareTo(y.Item1.priority));
-        }
-        foreach (var t in UpwardsCastOptions) {
-            t.Value.Sort((x, y) => x.Item1.priority.CompareTo(y.Item1.priority));
-        }
 
-        Type[] mathSourceTexTypes = {typeof(TEx<float>), typeof(TExPI), typeof(RTExSB)};
-        void CreatePostAggregates(string method, string shortcut, Type[] texTypes = null) {
-            texTypes = texTypes ?? mathSourceTexTypes;
+        void CreatePostAggregates(string method, string shortcut) {
             var mi = typeof(ExPostAggregators).GetMethod(method) ??
                      throw new Exception($"Couldn't find post-aggregator \"{method}\"");
             var attrs = Attribute.GetCustomAttributes(mi);
             var priority = 999;
-            Type[] types = null;
+            Type[]? types = null;
             foreach (var attr in attrs) {
                 if (attr is PAPriorityAttribute pp) priority = pp.priority;
                 else if (attr is PASourceTypesAttribute ps) types = ps.types;
@@ -117,12 +73,9 @@ public static partial class Reflector {
             }
             if (types == null) CreateAggregateMethod(mi);
             else {
-                //teTypes = [ TExPI, RTexSB ... ]
                 //types = [ (float), (v2) ... ]
-                foreach (var st in texTypes) {
-                    foreach (var rt in types) {
-                        CreateAggregateMethod(mi.MakeGenericMethod(st, rt));
-                    }
+                foreach (var rt in types) {
+                    CreateAggregateMethod(mi.MakeGenericMethod(rt));
                 }
             }
         }
@@ -134,14 +87,7 @@ public static partial class Reflector {
         CreatePostAggregates("PA_Pow", "^");
         CreatePostAggregates("PA_And", "&");
         CreatePostAggregates("PA_Or", "|");
-#if NO_EXPR
-        CreatePostAggregates("PA_Add_noexpr", "+");
-        CreatePostAggregates("PA_Mul_noexpr", "*");
-        CreatePostAggregates("PA_Sub_noexpr", "-");
-        CreatePostAggregates("PA_Div_noexpr", "/");
-#endif
-        void CreatePreAggregates(string method, string shortcut, Type[] texTypes = null) {
-            texTypes = texTypes ?? mathSourceTexTypes;
+        void CreatePreAggregates(string method, string shortcut) {
             var mi = typeof(ExPreAggregators).GetMethod(method) ??
                      throw new Exception($"Couldn't find post-aggregator \"{method}\"");
             var attrs = Attribute.GetCustomAttributes(mi);
@@ -151,28 +97,25 @@ public static partial class Reflector {
                 if (attr is PAPriorityAttribute pp) priority = pp.priority;
                 else if (attr is PASourceTypesAttribute ps) types = ps.types;
             }
-            //teTypes = [ TExPI, RTexSB ... ]
             //types = [ (float), (v2) ... ]
-            foreach (var st in texTypes) {
-                foreach (var rt in types) {
-                    var gmi = mi.MakeGenericMethod(st, rt);
-                    var prms = gmi.GetParameters();
-                    if (prms.Length != 2) throw new Exception($"Pre-aggregator \"{method}\" doesn't have 2 arguments");
-                    var resultType = gmi.ReturnType;
-                    var searchType1 = prms[0].ParameterType;
-                    var searchType2 = prms[1].ParameterType;
-                    if (preAggregators.TryGetValue(resultType, out var res)) {
-                        if (res.firstType != searchType1)
-                            throw new Exception(
-                                $"Pre-aggregators currently support only one reducer type, " +
-                                $"but return type {resultType.RName()} is associated with " +
-                                $"{res.firstType.RName()} and {searchType1.RName()}.");
-                    } else {
-                        res = new PreAggregate(searchType1);
-                    }
-                    res.AddResolver(new PreAggregateResolver(shortcut, searchType2, gmi, priority));
-                    preAggregators[resultType] = res;
+            foreach (var rt in types) {
+                var gmi = mi.MakeGenericMethod(rt);
+                var prms = gmi.GetParameters();
+                if (prms.Length != 2) throw new Exception($"Pre-aggregator \"{method}\" doesn't have 2 arguments");
+                var resultType = gmi.ReturnType;
+                var searchType1 = prms[0].ParameterType;
+                var searchType2 = prms[1].ParameterType;
+                if (preAggregators.TryGetValue(resultType, out var res)) {
+                    if (res.firstType != searchType1)
+                        throw new Exception(
+                            $"Pre-aggregators currently support only one reducer type, " +
+                            $"but return type {resultType.RName()} is associated with " +
+                            $"{res.firstType.RName()} and {searchType1.RName()}.");
+                } else {
+                    res = new PreAggregate(searchType1);
                 }
+                res.AddResolver(new PreAggregateResolver(shortcut, searchType2, gmi, priority));
+                preAggregators[resultType] = res;
             }
         }
 
@@ -193,8 +136,8 @@ public static partial class Reflector {
     private readonly struct PostAggregate {
         //public readonly Type sourceType;
         public readonly Type searchType;
-        private readonly MethodInfo invoker;
-        public object Invoke(object a, object b) => invoker.Invoke(null, new[] {a, b});
+        public readonly MethodInfo invoker;
+        public object Invoke(object? a, object? b) => invoker.Invoke(null, new[] {a, b});
         public readonly int priority;
 
         public PostAggregate(int priority, Type source, Type search, MethodInfo mi) {
@@ -244,7 +187,7 @@ public static partial class Reflector {
             SimpleFunctionResolver[e] = s => {
                 char c = char.ToLower(s[0]);
                 for (int ii = 0; ii < values.Length; ++ii) {
-                    if (values[ii].first == c) return values[ii].value;
+                    if (values[ii].first == c) return values[ii].value!;
                 }
                 StringBuilder sb = new StringBuilder();
                 for (int ii = 0;;) {
@@ -259,7 +202,7 @@ public static partial class Reflector {
             Type e = typeof(E);
             SimpleFunctionResolver[e] = s => {
                 for (int ii = 0; ii < values.Length; ++ii) {
-                    if (s.StartsWith(values[ii].first)) return values[ii].value;
+                    if (s.StartsWith(values[ii].first)) return values[ii].value!;
                 }
                 StringBuilder sb = new StringBuilder();
                 for (int ii = 0;;) {

@@ -12,7 +12,7 @@ namespace DMK.SM {
 //Recall that state machines are stateless; each kind is instantiated only once for all BEH that use it.
 public static class StateMachineManager  {
     private static readonly Dictionary<int, StateMachine> SMMapByFile = new Dictionary<int, StateMachine>();
-    private static readonly Dictionary<string, TextAsset> SMFileByName = new Dictionary<string, TextAsset>() {
+    private static readonly Dictionary<string, TextAsset?> SMFileByName = new Dictionary<string, TextAsset?>() {
         { "", null }
     };
     private static readonly Dictionary<string, Dictionary<Locale, TextAsset>> Dialogue = new Dictionary<string, Dictionary<Locale, TextAsset>>();
@@ -41,8 +41,8 @@ public static class StateMachineManager  {
         return StateMachine.CreateFromDump(tx.text);
     }
     
-    public static StateMachine FromName(string name) {
-        if (SMFileByName.TryGetValue(name, out TextAsset txt)) return FromText(txt);
+    public static StateMachine? FromName(string name) {
+        if (SMFileByName.TryGetValue(name, out TextAsset? txt)) return FromText(txt);
         throw new Exception($"No StateMachine file by name {name} exists.");
     }
 
@@ -50,9 +50,7 @@ public static class StateMachineManager  {
         SMMapByFile.Clear();
     }
 
-    //SMs can be lazy-loaded over the course of a game, but most are loaded on the InitOnLoad method.
-    [CanBeNull]
-    public static StateMachine FromText([CanBeNull] TextAsset t) {
+    public static StateMachine? FromText(TextAsset? t) {
         if (t == null) return null;
         int id = t.GetInstanceID();
         if (!SMMapByFile.ContainsKey(id)) {

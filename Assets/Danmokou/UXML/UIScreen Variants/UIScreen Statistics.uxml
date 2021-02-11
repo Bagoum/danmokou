@@ -1,0 +1,9 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="UIScreen.uss" />
+    <ui:Label text="Statistics&#10;" display-tooltip-when-elided="True" class="header" />
+    <ui:VisualElement name="Container" style="padding-left: 720px;">
+        <ui:VisualElement class="column" style="max-width: 70%;">
+            <ui:ListView focusable="True" show-border="false" show-bound-collection-size="true" class="columnList" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

@@ -3,10 +3,13 @@ using System.IO;
 using System.Linq;
 using NUnit.Framework;
 using static FParser.SMParser;
-using static Common.Types;
+using ParserCS;
+using static FCommon.Types;
 
 namespace ParserTests {
 public class Tests {
+    public const bool USE_CS = true;
+    
     private static string Clean(string s) {
         return s.ToArray().Where(x => !Char.IsWhiteSpace(x)).ToString();
     }
@@ -16,34 +19,53 @@ public class Tests {
     [SetUp]
     public void Setup() { }
     private static void AssertSMEq(string source, string desired) {
-        System.MathF.Floor(5f);
         desired = desired.Replace("\r", "").Trim();
-        switch (remakeSMParser(source)) {
-            case Errorable<string>.OK sm:
-                Assert.AreEqual(desired, sm.Item.Replace(" \n ", "\n").Trim());
-                break;
-            case Errorable<string>.Failed errs:
-                Assert.Fail(string.Join("\n", errs.Item));
-                break;
-            default:
-                Assert.Fail();
-                break;
+        if (USE_CS) {
+            var result = ParserCS.SMParser.RemakeSMParserExec(source);
+            if (result.isValid) {
+                Assert.AreEqual(desired, result.value.Replace(" \n ", "\n").Trim());
+            } else {
+                Assert.Fail(string.Join("\n", result.errors));
+            }
+        } else {
+            switch (remakeSMParser(source)) {
+                case Errorable<string>.OK sm:
+                    Assert.AreEqual(desired, sm.Item.Replace(" \n ", "\n").Trim());
+                    break;
+                case Errorable<string>.Failed errs:
+                    Assert.Fail(string.Join("\n", errs.Item));
+                    break;
+                default:
+                    Assert.Fail();
+                    break;
+            }
         }
     }
 
     private static string FailString(string src) {
-        switch (remakeSMParser(src)) {
-            case Errorable<string>.OK sm:
-                Assert.Fail($"Expected SM parse to fail, but got {sm.Item}");
-                break;
-            case Errorable<string>.Failed errs:
-                Console.WriteLine($"---\n{string.Join("\n", errs.Item)}");
-                return string.Join("\n", errs.Item);
-            default:
-                Assert.Fail();
-                break;
+        if (USE_CS) {
+            var result = ParserCS.SMParser.RemakeSMParserExec(src);
+            if (result.isValid) {
+                Assert.Fail($"Expected SM parse to fail, but got {result.value}");
+            } else {
+                Console.WriteLine($"---\n{string.Join("\n", result.errors)}");
+                return string.Join("\n", result.errors);
+            }
+            return null;
+        } else {
+            switch (remakeSMParser(src)) {
+                case Errorable<string>.OK sm:
+                    Assert.Fail($"Expected SM parse to fail, but got {sm.Item}");
+                    break;
+                case Errorable<string>.Failed errs:
+                    Console.WriteLine($"---\n{string.Join("\n", errs.Item)}");
+                    return string.Join("\n", errs.Item);
+                default:
+                    Assert.Fail();
+                    break;
+            }
+            return null;
         }
-        return null;
     }
     [Test]
     public void TestNoArgInvoke() {
@@ -66,12 +88,22 @@ block()
 $block()
 ", ".z x y");
     }
+
+    [Test]
+    public void TestPostfix2() {
+        AssertSMEq(@"
+    !!{ pys if > [Lplayer].y 0
+$pys
+$pys
+", @"if > .y Lplayer 0
+if > .y Lplayer 0");
+    }
     [Test]
     public void TestNoSpace() {
         AssertSMEq(@"
 !{ m(n)
-    *%n;%n>
-    %n;%n
+    *%n%;%n%>
+    %n%;%n%
 !}
 $m(5)
 ", @"*5;5>
@@ -175,6 +207,25 @@ $x
 $x
 ", @"a
 5");
+    }
+
+    [Test]
+    public void TestInterpolateMacro() {
+        AssertSMEq(@"
+!{ f(a, b, c)
+<%a%%b%c> %c
+!}
+$f(1, 2, 3)", "<12c> 3");
+        AssertSMEq(@"
+!{ f(a, b, c)
+<%a%;%b%;c> %c
+!}
+$f(1, 2, 3)", "<1;2;c> 3");
+        AssertSMEq(@"
+!{ f(a, b, c)
+<%a;%b;c> %c
+!}
+$f(1, 2, 3)", "< 1 ; 2 ;c> 3");
     }
 
     [Test]

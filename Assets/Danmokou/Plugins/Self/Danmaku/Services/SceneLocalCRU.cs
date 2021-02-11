@@ -6,7 +6,7 @@ namespace DMK.Services {
 /// A globally available CRU, scoped per-scene. Instantiation handled by GameManagement.
 /// </summary>
 public class SceneLocalCRU : CoroutineRegularUpdater {
-    public static SceneLocalCRU Main { get; private set; }
+    public static SceneLocalCRU Main { get; private set; } = null!;
     protected void Awake() {
         Main = this;
     }

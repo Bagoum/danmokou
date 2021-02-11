@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace DMK.Behavior.Display {
 public class SpriteDisplayController: DisplayController {
-    public SpriteRenderer sprite;
+    public SpriteRenderer sprite = null!;
     public override MaterialPropertyBlock CreatePB() {
         var m = new MaterialPropertyBlock();
         sprite.GetPropertyBlock(m);
@@ -29,7 +29,7 @@ public class SpriteDisplayController: DisplayController {
         sprite.sortingOrder = x;
     }
 
-    public override void SetSprite([CanBeNull] Sprite s) {
+    public override void SetSprite(Sprite? s) {
         if (s != null) {
             sprite.sprite = s;
             pb.SetTexture(PropConsts.mainTex, s.texture);

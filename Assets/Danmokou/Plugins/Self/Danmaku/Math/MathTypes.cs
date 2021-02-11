@@ -1,14 +1,224 @@
-﻿using DMK.Danmaku;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq.Expressions;
+using DMK.Behavior;
+using DMK.Core;
+using DMK.Danmaku;
+using DMK.DataHoist;
 using DMK.Expressions;
 using UnityEngine;
 using DMK.DMath.Functions;
 using DMK.Graphics;
+using DMK.Player;
 using DMK.Reflection;
-using ExBPY = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<float>>;
-using ExTP = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<UnityEngine.Vector2>>;
-using ExVTP = System.Func<DMK.Expressions.ITExVelocity, DMK.Expressions.TEx<float>, DMK.Expressions.TExPI, DMK.Expressions.RTExV2, DMK.Expressions.TEx<UnityEngine.Vector2>>;
+using DMK.Scriptables;
+using JetBrains.Annotations;
+using ExVTP = System.Func<DMK.Expressions.ITexMovement, DMK.Expressions.TEx<float>, DMK.Expressions.TExArgCtx, DMK.Expressions.TExV2, DMK.Expressions.TEx>;
+using ExBPY = System.Func<DMK.Expressions.TExArgCtx, DMK.Expressions.TEx<float>>;
+using ExTP = System.Func<DMK.Expressions.TExArgCtx, DMK.Expressions.TEx<UnityEngine.Vector2>>;
 
 namespace DMK.DMath {
+public class FiringCtx {
+    public enum DataType {
+        Int,
+        Float,
+        V2,
+        V3,
+        RV2
+    }
+    public readonly Dictionary<int, int> boundInts = new Dictionary<int, int>();
+    public readonly Dictionary<int, float> boundFloats = new Dictionary<int, float>();
+    public readonly Dictionary<int, Vector2> boundV2s = new Dictionary<int, Vector2>();
+    public readonly Dictionary<int, Vector3> boundV3s = new Dictionary<int, Vector3>();
+    public readonly Dictionary<int, V2RV2> boundRV2s = new Dictionary<int, V2RV2>();
+    public BehaviorEntity? firer; //Note this may be repooled or otherwise destroyed during execution
+    
+    public PlayerInput? playerController; //For player bullets
+    [UsedImplicitly]
+    public PlayerInput PlayerController =>
+        playerController != null ?
+            playerController :
+            throw new Exception("FiringCtx does not have a player controller");
+
+    [UsedImplicitly]
+    public FireOption OptionFirer {
+        get {
+            if (firer is FireOption fo)
+                return fo;
+            throw new Exception("FiringCtx does not have an option firer");
+        }
+    }
+
+    public CurvedTileRenderLaser? laserController;
+    [UsedImplicitly]
+    public CurvedTileRenderLaser LaserController => 
+        laserController ?? throw new Exception("FiringCtx does not have a laser controller");
+    public (int bossDmg, int stageDmg, EffectStrategy eff)? playerFireCfg;
+    
+    private static readonly Stack<FiringCtx> cache = new Stack<FiringCtx>();
+    public static int Allocated { get; private set; }
+    public static int Popped { get; private set; }
+    public static int Recached { get; private set; }
+    public static int Copied { get; private set; }
+
+    public static readonly FiringCtx Empty = new FiringCtx();
+
+    private FiringCtx() { }
+    public static FiringCtx New(GenCtx? gcx = null) {
+        FiringCtx nCtx;
+        if (cache.Count > 0) {
+            nCtx = cache.Pop();
+            ++Popped;
+        } else {
+            nCtx = new FiringCtx();
+            ++Allocated;
+        }
+        nCtx.firer = gcx?.exec;
+        nCtx.playerController = nCtx.firer switch {
+            PlayerInput pi => pi,
+            FireOption fo => fo.Player,
+            _ => nCtx.playerController
+        };
+        return nCtx;
+    }
+    
+    private void UploadAddOne(Reflector.ExType ext, string varName, GenCtx gcx) {
+        var varId = GetKey(varName);
+        if      (ext == Reflector.ExType.Float) 
+            boundFloats[varId] = gcx.GetFloatOrThrow(varName);
+        else if (ext == Reflector.ExType.V2) 
+            boundV2s[varId] = gcx.V2s.GetOrThrow(varName, "GCX V2 values");
+        else if (ext == Reflector.ExType.V3) 
+            boundV3s[varId] = gcx.V3s.GetOrThrow(varName, "GCX V3 values");
+        else if (ext == Reflector.ExType.RV2) 
+            boundRV2s[varId] = gcx.RV2s.GetOrThrow(varName, "GCX RV2 values");
+        else throw new Exception($"Cannot hoist GCX data {varName}<{ext}>.");
+    }
+    public void UploadAdd((Reflector.ExType, string)[] boundVars, GenCtx gcx) {
+        for (int ii = 0; ii < boundVars.Length; ++ii) {
+            var (ext, varNameS) = boundVars[ii];
+            UploadAddOne(ext, varNameS, gcx);
+        }
+        for (int ii = 0; ii < gcx.exposed.Count; ++ii) {
+            var (ext, varNameS) = gcx.exposed[ii];
+            UploadAddOne(ext, varNameS, gcx);
+        }
+    }
+
+    public GenCtx RevertToGCX(BehaviorEntity exec) {
+        var gcx = GenCtx.New(exec, V2RV2.Zero);
+        foreach (var sk in keyNames) {
+            if (boundFloats.ContainsKey(sk.Value))
+                gcx.fs[sk.Key] = boundFloats[sk.Value];
+            if (boundV2s.ContainsKey(sk.Value))
+                gcx.v2s[sk.Key] = boundV2s[sk.Value];
+            if (boundV3s.ContainsKey(sk.Value))
+                gcx.v3s[sk.Key] = boundV3s[sk.Value];
+            if (boundRV2s.ContainsKey(sk.Value))
+                gcx.rv2s[sk.Key] = boundRV2s[sk.Value];
+        }
+        return gcx;
+    }
+
+    public FiringCtx Copy() {
+        ++Copied;
+        var nCtx = New();
+        boundInts.CopyInto(nCtx.boundInts);
+        boundFloats.CopyInto(nCtx.boundFloats);
+        boundV2s.CopyInto(nCtx.boundV2s);
+        boundV3s.CopyInto(nCtx.boundV3s);
+        boundRV2s.CopyInto(nCtx.boundRV2s);
+        nCtx.firer = firer;
+        nCtx.playerController = playerController;
+        nCtx.laserController = laserController;
+        nCtx.playerFireCfg = playerFireCfg;
+        return nCtx;
+    }
+
+    public void Dispose() {
+        if (this == Empty) return;
+        boundInts.Clear();
+        boundFloats.Clear();
+        boundV2s.Clear();
+        boundV3s.Clear();
+        boundRV2s.Clear();
+        firer = null;
+        playerController = null;
+        laserController = null;
+        playerFireCfg = null;
+        ++Recached;
+        cache.Push(this);
+    }
+
+    //Expression methods
+
+    public static DataType FromType<T>() {
+        var t = typeof(T);
+        if (t == typeof(Vector2))
+            return DataType.V2;
+        if (t == typeof(Vector3))
+            return DataType.V3;
+        if (t == typeof(V2RV2))
+            return DataType.RV2;
+        if (t == typeof(int))
+            return DataType.Int;
+        else
+            return DataType.Float;
+    }
+
+    private static TEx Hoisted(TExArgCtx tac, DataType typ, string name, Func<Expression, Expression> constructor) {
+        var ex = constructor(exGetKey(name));
+
+        var key_name = tac.Ctx.NameWithSuffix(name);
+        var key_assign = FormattableString.Invariant(
+            $"var {key_name} = FiringCtx.GetKey(\"{name}\");");
+        var replaced = constructor(Expression.Variable(typeof(int), key_name));
+        tac.Ctx.HoistedVariables.Add(key_assign);
+        tac.Ctx.HoistedReplacements[ex] = replaced;
+
+        return ex;
+    }
+    
+    public static TEx Contains(TExArgCtx tac, DataType typ, string name) =>
+        Hoisted(tac, typ, name, key => ExUtils.DictContains(GetDict(tac.BPI.FiringCtx, typ), key));
+    public static Expression Contains<T>(TExArgCtx tac, string name) =>
+        Hoisted(tac, FromType<T>(), name, key => ExUtils.DictContains(GetDict(tac.BPI.FiringCtx, FromType<T>()), key));
+    
+    public static TEx GetValue(TExArgCtx tac, DataType typ, string name) =>
+        Hoisted(tac, typ, name, key => GetDict(tac.BPI.FiringCtx, typ).DictGet(key));
+    public static Expression GetValue<T>(TExArgCtx tac, string name) =>
+        Hoisted(tac, FromType<T>(), name, key => GetDict(tac.BPI.FiringCtx, FromType<T>()).DictGet(key));
+
+    public static Expression SetValue(TExArgCtx tac, DataType typ, string name, Expression val) =>
+        Hoisted(tac, typ, name, key => GetDict(tac.BPI.FiringCtx, typ).DictSet(key, val));
+    public static Expression SetValue<T>(TExArgCtx tac, string name, Expression val) =>
+        Hoisted(tac, FromType<T>(), name, key => GetDict(tac.BPI.FiringCtx, FromType<T>()).DictSet(key, val));
+    
+    public static Expression GetDict(Expression fctx, DataType typ) => typ switch {
+        DataType.RV2 => fctx.Field("boundRV2s"),
+        DataType.V3 => fctx.Field("boundV3s"),
+        DataType.V2 => fctx.Field("boundV2s"),
+        DataType.Int => fctx.Field("boundInts"),
+        _ => fctx.Field("boundFloats")
+    };
+    
+    
+    public static void ClearNames() {
+        keyNames.Clear();
+        lastKey = 0;
+    }
+
+    private static Expression exGetKey(string name) => Expression.Constant(GetKey(name));
+    public static int GetKey(string name) {
+        if (keyNames.TryGetValue(name, out var res)) return res;
+        keyNames[name] = lastKey;
+        return lastKey++;
+    }
+
+    private static readonly Dictionary<string, int> keyNames = new Dictionary<string, int>();
+    private static int lastKey = 0;
+    
+}
 /// <summary>
 /// A struct containing the input required for a parametric equation.
 /// </summary>
@@ -22,22 +232,30 @@ public struct ParametricInfo {
     public Vector2 loc;
     /// <summary>Life-time (with minor adjustment)</summary>
     public float t;
+    /// <summary>Context containing additional bound variables</summary>
+    public readonly FiringCtx ctx;
 
     public static ParametricInfo WithRandomId(Vector2 position, int findex, float t) => new ParametricInfo(position, findex, RNG.GetUInt(), t);
     public static ParametricInfo WithRandomId(Vector2 position, int findex) => WithRandomId(position, findex, 0f);
-    public ParametricInfo(Vector2 position, int findex, uint id, float t = 0) {
+
+    public ParametricInfo(in Movement mov, int findex = 0, uint? id = null, float t = 0, FiringCtx? ctx = null) : 
+        this(mov.rootPos, findex, id, t, ctx) { }
+    public ParametricInfo(Vector2 position, int findex = 0, uint? id = null, float t = 0, FiringCtx? ctx = null) {
         loc = position;
         index = findex;
-        this.id = id;
+        this.id = id ?? RNG.GetUInt();
         this.t = t;
+        this.ctx = ctx ?? FiringCtx.New();
     }
     public static readonly ExFunction withRandomId = ExUtils.Wrap<ParametricInfo>("WithRandomId", new[] {typeof(Vector2), typeof(int), typeof(float)});
 
-    public ParametricInfo Rehash() => new ParametricInfo(loc, index, RNG.Rehash(id), t);
+    public ParametricInfo Rehash() => new ParametricInfo(loc, index, RNG.Rehash(id), t, ctx);
     
-    public ParametricInfo CopyWithP(int newP) => new ParametricInfo(loc, newP, id, t);
-    public ParametricInfo CopyWithT(float newT) => new ParametricInfo(loc, index, id, newT);
+    public ParametricInfo CopyWithP(int newP) => new ParametricInfo(loc, newP, id, t, ctx);
+    public ParametricInfo CopyWithT(float newT) => new ParametricInfo(loc, index, id, newT, ctx);
 
+    public ParametricInfo CopyCtx(uint newId) => new ParametricInfo(loc, index, newId, t, ctx.Copy());
+    
     /// <summary>
     /// Flips the position around an X or Y axis.
     /// </summary>
@@ -56,18 +274,18 @@ public struct ParametricInfo {
 /// <summary>
 /// A function that converts ParametricInfo into a possibly-rotated Cartesian coordinate.
 /// </summary>
-public delegate void CoordF(float cos, float sin, ParametricInfo bpi, out Vector2 nrv);
+public delegate void CoordF(float cos, float sin, ParametricInfo bpi, out Vector2 vec);
 /// <summary>
 /// A function that converts ParametricInfo into a possibly-rotated Cartesian coordinate
 /// representing the next position that the Velocity struct should take with a timestep of dT.
 /// </summary>
-public delegate void VTP(in Movement vel, in float dT, ParametricInfo bpi, out Vector2 nrv);
+public delegate void VTP(in Movement vel, float dT, ParametricInfo bpi, out Vector2 delta);
 /// <summary>
 /// A function that converts ParametricInfo into a possibly-rotated Cartesian coordinate
 /// representing the next position that the LaserVelocity struct should take with a timestep of dT
 /// and a laser lifetime of lT.
 /// </summary>
-public delegate void LVTP(in LaserMovement vel, in float dT, in float lT, ParametricInfo bpi, out Vector2 nrv);
+public delegate void LVTP(in LaserMovement vel, float dT, float lT, ParametricInfo bpi, out Vector2 delta);
 
 
 public readonly struct RootedVTP {
@@ -115,11 +333,6 @@ public delegate float BPY(ParametricInfo bpi);
 public delegate float SBF(ref BulletManager.SimpleBullet sb);
 
 /// <summary>
-/// A function that converts ParametricInfo and a laser lifetime into a float.
-/// </summary>
-public delegate float LBPY(ParametricInfo bpi, float lT);
-
-/// <summary>
 /// A function that converts ParametricInfo into a V2RV2.
 /// </summary>
 public delegate V2RV2 BPRV2(ParametricInfo bpi);
@@ -139,11 +352,6 @@ public delegate bool Pred(ParametricInfo bpi);
 public delegate bool LPred(ParametricInfo bpi, float lT);
 
 /// <summary>
-/// A function that converts a laser into a vector4.
-/// </summary>
-public delegate Vector4 FnLaserV4(ParametricInfo bpi, CurvedTileRenderLaser l);
-
-/// <summary>
 /// A wrapper type used for functions that operate over a GCX.
 /// </summary>
 /// <typeparam name="T">Return object type (eg. float, v2, rv2)</typeparam>
@@ -152,19 +360,8 @@ public delegate T GCXF<T>(GenCtx gcx);
 /// <summary>
 /// A wrapper type used to upload values from a GCX to private data hoisting before providing a delegate to a new object.
 /// </summary>
-/// <typeparam name="T">Delegate type (eg. TP, BPY, Pred)</typeparam>
-public readonly struct GCXU<T> {
-    public delegate T GCXUNew(GenCtx gcx, ref uint id);
-    public delegate T GCXUAdd(GenCtx gcx, uint id);
-    public readonly GCXUNew New;
-    public readonly GCXUAdd Add;
-
-    public GCXU(GCXUNew uNew, GCXUAdd uAdd) {
-        New = uNew;
-        Add = uAdd;
-    }
-
-}
+/// <typeparam name="Fn">Delegate type (eg. TP, BPY, Pred)</typeparam>
+public delegate Fn GCXU<Fn>(GenCtx gcx, FiringCtx fctx);
 
 //Note: we don't use ref SB because some operations, like deletion and time modification,
 //require access to sbc, ii.

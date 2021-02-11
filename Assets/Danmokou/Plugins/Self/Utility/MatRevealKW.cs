@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 
 public class MatRevealKW : MonoBehaviour {
-    public Material material;
+    public Material material = null!;
 
 
     [ContextMenu("Log keywords")]

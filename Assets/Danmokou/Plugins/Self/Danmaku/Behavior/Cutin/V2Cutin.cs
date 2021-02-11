@@ -9,9 +9,9 @@ using static DMK.Behavior.Display.CutinHelpers;
 
 namespace DMK.Behavior.Display {
 public class V2Cutin : CoroutineRegularUpdater {
-    public Transform core;
-    public Transform upperText;
-    public Transform lowerText;
+    public Transform core = default!;
+    public Transform upperText = default!;
+    public Transform lowerText = default!;
 
     private void Awake() {
         upperText.localPosition += new Vector3(-20, 0);
@@ -21,12 +21,13 @@ public class V2Cutin : CoroutineRegularUpdater {
     }
 
     private static TP3 MakeUpperVel =>
-        FormattableString.Invariant($"px(lerpt3(1, 1.1, 3.4, 3.5, 18.6, 0.3, 12))").Into<TP3>();
+        bpi => new Vector3(M.Lerp3(1, 1.1f, 3.4f, 3.5f, bpi.t, 18.6f, 0.3f, 12f), 0);
     private static TP3 MakeLowerVel =>
-        FormattableString.Invariant($"px(lerpt3(1, 1.1, 3.4, 3.5, -18.6, -0.3, -12))").Into<TP3>();
+        bpi => -1f * MakeUpperVel(bpi);
 
-    private static TP3 MakeCoreVel =>
-        FormattableString.Invariant($"if(< t 1.35, zero, py(lerpt3(1.95, 2.05, 3.7, 4, 30, 0.3, 14)))").Into<TP3>();
+    private static TP3 MakeCoreVel => bpi => (bpi.t < 1.35f) ?
+        Vector3.zero :
+        new Vector3(0, M.Lerp3(1.95f, 2.05f, 3.7f, 4f, bpi.t, 30f, 0.3f, 14f));
 
     private IEnumerator LetsGo() {
         RunDroppableRIEnumerator(Velocity(upperText, MakeUpperVel));
@@ -34,9 +35,11 @@ public class V2Cutin : CoroutineRegularUpdater {
         RunDroppableRIEnumerator(Velocity(core, MakeCoreVel));
         float t = 0;
         for (; t < 1.96f; t += ETime.FRAME_TIME) yield return null;
-        RunDroppableRIEnumerator(Scale(core, 2f, 0.34f, M.EOutSine));
+        RunDroppableRIEnumerator(
+            core.ScaleBy(2f, 0.34f, M.EOutSine));
         for (; t < 1.98f; t += ETime.FRAME_TIME) yield return null;
-        RunDroppableRIEnumerator(Rotate(core, new Vector3(0f, 0f, -10f), 3f, M.EOutSine));
+        RunDroppableRIEnumerator(
+            core.RotateTo(new Vector3(0f, 0f, -10f), 3f, M.EOutSine));
         SFXService.Request("x-metal");
     }
 }

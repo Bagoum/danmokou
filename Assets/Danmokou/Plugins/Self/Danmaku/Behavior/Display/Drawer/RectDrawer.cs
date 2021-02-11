@@ -2,7 +2,7 @@
 
 namespace DMK.Behavior.Display {
 public class RectDrawer : ShapeDrawer {
-    private BPRV2 locate;
+    private BPRV2 locate = null!;
 
     public void Initialize(TP4 colorizer, BPRV2 locater) {
         locate = locater;

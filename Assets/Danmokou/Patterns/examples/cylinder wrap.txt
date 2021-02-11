@@ -6,8 +6,8 @@ phase 0
 phase 0 
 	paction 0
 		position 0 0
-			bullet pather18-red/w <> cre 120 _ <> repeat 8 <> pather 1 0.5 offset zero
-				qrotate px 90
+			async pather-red/w <> gcr2 120 _ <> { } gsr2c 8 { } pather 1 0.5 offset zero
+				tp qrotate px 90
 				cylinderwrap
 					2
 					hpi ##works correctly
@@ -16,6 +16,7 @@ phase 0
 					pxy
 						* 2 t 
 						0
+				{ }
 
 phase 0
 	paction 0
@@ -37,7 +38,7 @@ phase 0
 				py	pm $wl 2
 				plr	pm1mod pm 2 1
 			}
-				qrotate py  + 30 sine 4p 8 t ## rotates perspective 
+				tp qrotate py  + 30 sine 4p 8 t ## rotates perspective 
 					wings1 $ww $wl 2
 ///
 

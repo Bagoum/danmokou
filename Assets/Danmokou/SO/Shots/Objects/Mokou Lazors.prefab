@@ -142,6 +142,7 @@ MonoBehaviour:
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
+    allowGraze: 0
   displayer: {fileID: 0}
   offsetFree: pxy -0.4 -0.4
   offsetFocus: pxy -0.3 0.5
@@ -151,9 +152,7 @@ MonoBehaviour:
   focusOffsetMul: 1
   opacityFree: 
   opacityFocus: 
-  spriteRotation: superposec(lerpfreetofocus(0.2), 40 * mp1(p), 0)
-  freeOffsetRotational: 1
-  focusOffsetRotational: 1
+  spriteRotation: superposec(playerlerpfreetofocus(mine, 0.2), 40 * mp1(p), 0)
   freeAngleOffset: 180
   focusAngleOffset: 0
   freeFocusLerpTime: 0.2
@@ -213,6 +212,7 @@ MonoBehaviour:
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
+    allowGraze: 0
   displayer: {fileID: 0}
   offsetFree: zero
   offsetFocus: zero
@@ -223,8 +223,6 @@ MonoBehaviour:
   opacityFree: 
   opacityFocus: 
   spriteRotation: 
-  freeOffsetRotational: 1
-  focusOffsetRotational: 1
   freeAngleOffset: 
   focusAngleOffset: 
   freeFocusLerpTime: 1
@@ -337,6 +335,7 @@ MonoBehaviour:
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
+    allowGraze: 0
   displayer: {fileID: 0}
   offsetFree: pxy 0.4 -0.4
   offsetFocus: pxy 0.3 0.5
@@ -346,9 +345,7 @@ MonoBehaviour:
   focusOffsetMul: 1
   opacityFree: 
   opacityFocus: 
-  spriteRotation: superposec(lerpfreetofocus(0.2), 40 * mp1(p), 0)
-  freeOffsetRotational: 1
-  focusOffsetRotational: 1
+  spriteRotation: superposec(playerlerpfreetofocus(mine, 0.2), 40 * mp1(p), 0)
   freeAngleOffset: -180
   focusAngleOffset: 0
   freeFocusLerpTime: 0.2
@@ -461,6 +458,7 @@ MonoBehaviour:
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
+    allowGraze: 0
   displayer: {fileID: 0}
   offsetFree: pxy -1 0.3
   offsetFocus: pxy -0.9 -0.1
@@ -471,8 +469,6 @@ MonoBehaviour:
   opacityFree: 
   opacityFocus: 
   spriteRotation: angleto(LNearestEnemy) - 90
-  freeOffsetRotational: 1
-  focusOffsetRotational: 1
   freeAngleOffset: 
   focusAngleOffset: 
   freeFocusLerpTime: 0.2
@@ -585,6 +581,7 @@ MonoBehaviour:
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
+    allowGraze: 0
   displayer: {fileID: 0}
   offsetFree: pxy 1 0.3
   offsetFocus: pxy 0.9 -0.1
@@ -595,8 +592,6 @@ MonoBehaviour:
   opacityFree: 
   opacityFocus: 
   spriteRotation: angleto(LNearestEnemy) - 90
-  freeOffsetRotational: 1
-  focusOffsetRotational: 1
   freeAngleOffset: 
   focusAngleOffset: 
   freeFocusLerpTime: 0.2

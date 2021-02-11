@@ -6,6 +6,7 @@ using UnityEngine.UIElements;
 using UnityEngine;
 using UnityEngine.Scripting;
 using static DMK.UI.XML.XMLUtils;
+using static DMK.Core.LocalizedStrings.UI;
 
 namespace DMK.UI.XML {
 /// <summary>
@@ -13,40 +14,35 @@ namespace DMK.UI.XML {
 /// </summary>
 [Preserve]
 public class XMLReplaySaveMenu : XMLMenu {
-    public VisualTreeAsset UIScreenV;
-    public VisualTreeAsset GenericUINodeV;
-
-    protected override Dictionary<Type, VisualTreeAsset> TypeMap => new Dictionary<Type, VisualTreeAsset>() {
-        {typeof(UIScreen), UIScreenV},
-        {typeof(UINode), GenericUINodeV},
-    };
+    public VisualTreeAsset UIScreenV = null!;
 
     protected override void Awake() {
         if (!Application.isPlaying) return;
         if (Replayer.PostedReplay == null) {
             //This shouldn't happen, but here's trivial handling to avoid catastrophic problems
             MainScreen = new UIScreen(
-                new FuncNode(GameManagement.GoToMainMenu, "Return to Menu")
+                new FuncNode(GameManagement.GoToMainMenu, to_menu)
             ).With(UIScreenV);
         } else {
             var r = Replayer.PostedReplay.Value;
-            var replayName = new TextInputNode("Name");
-            var save = "Save";
+            var replayName = new TextInputNode(replay_name);
+            var save = replay_save;
             MainScreen = new UIScreen(
                 new UINode(() => r.metadata.Record.AsDisplay(true, true, true)).With(small1Class),
-                new PassthroughNode(""),
+                new PassthroughNode(LocalizedString.Empty),
                 replayName,
                 new FuncNode(() => {
                     r.metadata.Record.AssignName(replayName.DataWIP);
                     //The name edit changes the name under the record 
                     SaveData.SaveRecord();
                     SaveData.p.SaveNewReplay(r);
-                    save = "Saved!";
+                    save = replay_saved;
                     return true;
                 }, () => save, true),
-                new FuncNode(GameManagement.GoToMainMenu, "Return to Menu")
+                new FuncNode(GameManagement.GoToMainMenu, to_menu)
             ).With(UIScreenV);
         }
+        MainScreen.ExitNode = MainScreen.top[MainScreen.top.Length - 1];
         base.Awake();
         if (MainScreen.top.Length > 2) Current = MainScreen.top[2];
     }

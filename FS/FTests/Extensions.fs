@@ -1,6 +1,6 @@
 ﻿module FTests.Extensions
 
-open Common.Extensions
+open FCommon.Extensions
 
 open NUnit.Framework
 

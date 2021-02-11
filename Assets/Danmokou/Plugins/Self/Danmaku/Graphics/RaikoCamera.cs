@@ -10,11 +10,11 @@ using UnityEngine;
 namespace DMK.Services {
 public interface IRaiko {
     void ShakeExtra(float time, float magMul);
-    void Shake(float time, [CanBeNull] FXY magnitude, float magMul, [CanBeNull] ICancellee cT, [CanBeNull] Action done);
+    void Shake(float time, FXY? magnitude, float magMul, ICancellee? cT, Action? done);
 }
 
 public class RaikoCamera : CoroutineRegularUpdater, IRaiko {
-    private Transform tr;
+    private Transform tr = null!;
 
     private void Awake() {
         tr = transform;
@@ -34,13 +34,13 @@ public class RaikoCamera : CoroutineRegularUpdater, IRaiko {
     /// <summary>
     /// Note that this may call DONE earlier than TIME if it is cancelled by another SHAKE call.
     /// </summary>
-    public void Shake(float time, [CanBeNull] FXY magnitude, float magMul, [CanBeNull] ICancellee cT,
-        [CanBeNull] Action done) {
+    public void Shake(float time, FXY? magnitude, float magMul, ICancellee? cT,
+        Action? done) {
         foreach (var cts in cancelTokens) {
             cts.Cancel();
         }
         cancelTokens.Clear();
-        magnitude = magnitude ?? (t => M.Sin(M.PI * (0.4f + 0.6f * t / time)));
+        magnitude ??= (t => M.Sin(M.PI * (0.4f + 0.6f * t / time)));
         var x = new Cancellable();
         cancelTokens.Add(x);
         var joint = new JointCancellee(x, cT);
@@ -52,7 +52,7 @@ public class RaikoCamera : CoroutineRegularUpdater, IRaiko {
 
     private readonly HashSet<Cancellable> cancelTokens = new HashSet<Cancellable>();
 
-    private IEnumerator IShake(float time, FXY magnitude, float magMul, ICancellee cT, [CanBeNull] Action done) {
+    private IEnumerator IShake(float time, FXY magnitude, float magMul, ICancellee cT, Action? done) {
         Vector3 pp = tr.localPosition; // Should be (0, 0, ?)
         for (float elapsed = 0; elapsed < time;) {
             float m = magnitude(elapsed) * magMul * ScreenshakeMultiplier * SaveData.s.Screenshake;

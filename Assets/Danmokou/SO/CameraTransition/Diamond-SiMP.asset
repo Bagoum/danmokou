@@ -14,16 +14,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   fadeToTex: {fileID: 2800000, guid: 2dbe17d5dcb5b964c9cba6d428dc9970, type: 3}
   fadeIn:
+    sfx: {fileID: 11400000, guid: a8d588e4ecf99294db25e7e2e7e7ae7b, type: 2}
     material: {fileID: 2100000, guid: 4d9c949e2368b4f409f6e1718a49cabe, type: 2}
     transitionTexture: {fileID: 2800000, guid: 826ec254b75d43a4ea2d79ec60c7e808, type: 3}
-    time: 0.6
+    time: 0.62
     reverseFillRatio: 0
     reverseKeyword: 0
     fixedType: 0
   fadeOut:
+    sfx: {fileID: 11400000, guid: 38961db18e14521448a0b074b6df2509, type: 2}
     material: {fileID: 2100000, guid: 4d9c949e2368b4f409f6e1718a49cabe, type: 2}
     transitionTexture: {fileID: 2800000, guid: 826ec254b75d43a4ea2d79ec60c7e808, type: 3}
-    time: 0.6
+    time: 0.62
     reverseFillRatio: 1
     reverseKeyword: 0
     fixedType: 0

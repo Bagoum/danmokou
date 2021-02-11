@@ -575,7 +575,7 @@ PlayerSettings:
   scriptingDefineSymbols:
     1: 
     7: VER_SIMP
-    13: NO_EXPR;ALLOW_RELOAD;WIDTH_TH;WEBGL
+    13: WEBGL;EXBAKE_LOAD
     19: UNITY_POST_PROCESSING_STACK_V2
     21: UNITY_POST_PROCESSING_STACK_V2
     25: UNITY_POST_PROCESSING_STACK_V2
@@ -588,7 +588,7 @@ PlayerSettings:
   scriptingBackend:
     Standalone: 0
   il2cppCompilerConfiguration:
-    Standalone: 0
+    Standalone: 1
   managedStrippingLevel: {}
   incrementalIl2cppBuild: {}
   suppressCommonWarnings: 1
@@ -599,6 +599,7 @@ PlayerSettings:
   additionalIl2CppArgs: --maximum-recursive-generic-depth=12
   scriptingRuntimeVersion: 1
   gcIncremental: 0
+  assemblyVersionValidation: 1
   gcWBarrierValidation: 0
   apiCompatibilityLevelPerPlatform:
     Standalone: 3
@@ -650,6 +651,7 @@ PlayerSettings:
   XboxOneCapability: []
   XboxOneGameRating: {}
   XboxOneIsContentPackage: 0
+  XboxOneEnhancedXboxCompatibilityMode: 0
   XboxOneEnableGPUVariability: 1
   XboxOneSockets: {}
   XboxOneSplashScreen: {fileID: 0}

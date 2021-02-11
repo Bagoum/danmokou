@@ -4,8 +4,8 @@ using UnityEngine;
 
 namespace DMK.UI {
 public class VSyncChecker : MonoBehaviour {
-    public Color[] colors;
-    private SpriteRenderer sr;
+    public Color[] colors = null!;
+    private SpriteRenderer sr = null!;
     private int colorIs = 0;
 
     private void Awake() {

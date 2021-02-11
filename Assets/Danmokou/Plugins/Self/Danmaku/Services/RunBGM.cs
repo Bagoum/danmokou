@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace DMK.Services {
 public class RunBGM : MonoBehaviour {
-    [CanBeNull] public AudioTrack bgm;
+    public AudioTrack? bgm;
 
     private void Awake() {
         AudioTrackService.InvokeBGM(bgm);

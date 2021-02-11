@@ -13,13 +13,20 @@ MonoBehaviour:
   m_Name: _Multishot Mima
   m_EditorClassIdentifier: 
   key: mima-multishot-1
-  title: DO_NOT_DISPLAY
+  title:
+    useReference: 0
+    reference: 
+    hardcoded:
+      en: DO_NOT_DISPLAY
+      jp: 
   description: THIS SHOULD NOT APPEAR
   type: DO_NOT_DISPLAY
   prefab: {fileID: 0}
   bomb: 0
   defaultPower: 1000
   playerChild: 1
+  demoReplay: {fileID: 0}
+  demoSetupSM: {fileID: 0}
   isMultiShot: 1
   multiD: {fileID: 11400000, guid: 115c3a78d504fef4eb7a03e8a0dcfe35, type: 2}
   multiM: {fileID: 11400000, guid: 64ce47cbd158a924f89fe49e13e764e1, type: 2}

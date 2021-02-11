@@ -1,49 +1,41 @@
-﻿
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using DMK.Core;
 using DMK.Reflection;
-using FParsec;
-using FParser;
+//using FParsec;
+//using FParser;
+using ParserCS;
 using JetBrains.Annotations;
 using UnityEngine.Profiling;
-using LPU = System.ValueTuple<FParser.SMParser.ParsedUnit, FParsec.Position>;
+//using LPU = System.ValueTuple<FParser.SMParser.ParsedUnit, FParsec.Position>;
+using LPU = System.ValueTuple<ParserCS.SMParser.ParsedUnit, LanguageExt.Parsec.Pos>;
+using Position = LanguageExt.Parsec.Pos;
 
 namespace DMK.SM.Parsing {
 public static class IParseQueueHelpers {
 
-    public static string Enforce(this LPU lpu, int index, IParseQueue q) {
-        switch (lpu.Item1) {
-            case SMParser.ParsedUnit.S s:
-                return s.Item;
-            default:
-                throw new Exception(q.WrapThrow(index, "Expected a string unit, but found parentheses instead."));
-        }
-    }
+    public static string Enforce(this LPU lpu, int index, IParseQueue q) =>
+        lpu.Item1 switch {
+            SMParser.ParsedUnit.S s => s.Item,
+            _ => throw new Exception(q.WrapThrow(index, "Expected a string unit, but found parentheses instead."))
+        };
 
-    public static string TryAsString(this LPU lpu) {
-        switch (lpu.Item1) {
-            case SMParser.ParsedUnit.S s:
-                return s.Item;
-            default:
-                return null;
-        }
-    }
+    public static string? TryAsString(this LPU lpu) =>
+        lpu.Item1 switch {
+            SMParser.ParsedUnit.S s => s.Item,
+            _ => null
+        };
 
     public static string Print(this LPU[][] lpus) => $"({string.Join(", ", lpus.Select(Print))})";
     public static string Print(this LPU[] lpus) => string.Join(" ", lpus.Select(Print));
-    public static string Print(this LPU lpu) {
-        switch (lpu.Item1) {
-            case SMParser.ParsedUnit.S s:
-                return s.Item;
-            case SMParser.ParsedUnit.P p:
-                return Print(p.Item);
-            default:
-                return "";
-        }
-    }
+    public static string Print(this LPU lpu) =>
+        lpu.Item1 switch {
+            SMParser.ParsedUnit.S s => s.Item,
+            SMParser.ParsedUnit.P p => Print(p.Item),
+            _ => ""
+        };
 }
 
 public abstract class IParseQueue {
@@ -72,16 +64,16 @@ public abstract class IParseQueue {
     public void ThrowOnLeftovers(Type t) => ThrowOnLeftovers(() => 
         $"Found extra text when trying to create an object of type {t.RName()}. " +
         $"Make sure your parentheses are grouped correctly and your commas are in place.");
-    public virtual void ThrowOnLeftovers([CanBeNull] Func<string> descr = null) { }
+    public virtual void ThrowOnLeftovers(Func<string>? descr = null) { }
 
     public abstract Position GetLastPosition();
     public abstract Position GetLastPosition(int index);
-    public int GetLastLine() => (int) GetLastPosition().Line;
-    public int GetLastLine(int index) => (int) GetLastPosition(index).Line;
+    public int GetLastLine() => GetLastPosition().Line;
+    public int GetLastLine(int index) => GetLastPosition(index).Line;
     public string Scan(out int index) => _Scan(out index).Enforce(index, this);
     public string Scan() => Scan(out _);
-    [CanBeNull] public string MaybeScan(out int index) => _Scan(out index).TryAsString();
-    [CanBeNull] public string MaybeScan() => MaybeScan(out _);
+    public string? MaybeScan(out int index) => _Scan(out index).TryAsString();
+    public string? MaybeScan() => MaybeScan(out _);
     public string Next(out int index) {
         var r = Scan(out index);
         Advance();
@@ -110,7 +102,8 @@ public abstract class IParseQueue {
     
     public static IParseQueue Lex(string s) {
         Profiler.BeginSample("F# Parser");
-        var parsed = SMParser.SMParser2(s).Try.ToArray();
+        //var parsed = SMParser.SMParser2(s).Try.ToArray();
+        var parsed = SMParser.SMParser2Exec(s).GetOrThrow;
         Profiler.EndSample();
         return new PUListParseQueue(parsed, parsed[0].Item2, null); 
     }
@@ -154,30 +147,26 @@ public class PUListParseQueue : IParseQueue {
     public override Reflector.ReflCtx Ctx { get; }
     public int Index { get; set; }
     
-    public PUListParseQueue((SMParser.ParsedUnit, Position)[] atoms, Position pos, 
-        [CanBeNull] Reflector.ReflCtx ctx) : base(pos) {
+    public PUListParseQueue((SMParser.ParsedUnit, Position)[] atoms, Position pos, Reflector.ReflCtx? ctx) : base(pos) {
         this.atoms = atoms;
         Ctx = ctx ?? new Reflector.ReflCtx(this);
     }
 
     public override IParseQueue ScanChild() {
         if (Index >= atoms.Length) throw new Exception(WrapThrow("This section of text is too short."));
-        switch (atoms[Index].Item1) {
-            case SMParser.ParsedUnit.P p:
-                return new ParenParseQueue(p.Item, atoms[Index].Item2, Ctx);
-            default:
-                return new NonLocalPUListParseQueue(this);
-        }
+        else
+            return atoms[Index].Item1 switch {
+                SMParser.ParsedUnit.P p => new ParenParseQueue(p.Item, atoms[Index].Item2, Ctx),
+                _ => new NonLocalPUListParseQueue(this)
+            };
     }
     public override IParseQueue NextChild(out int i) {
         if (Index >= atoms.Length) throw new Exception(WrapThrow("This section of text is too short."));
         i = Index;
-        switch (atoms[Index].Item1) {
-            case SMParser.ParsedUnit.P p:
-                return new ParenParseQueue(p.Item, atoms[Index++].Item2, Ctx);
-            default:
-                return new NonLocalPUListParseQueue(this);
-        }
+        return atoms[Index].Item1 switch {
+            SMParser.ParsedUnit.P p => new ParenParseQueue(p.Item, atoms[Index++].Item2, Ctx),
+            _ => new NonLocalPUListParseQueue(this)
+        };
     }
 
     public override bool IsNewline => Index < atoms.Length && atoms[Index].TryAsString() == LINE_DELIM;
@@ -207,7 +196,7 @@ public class PUListParseQueue : IParseQueue {
     /// Returns true if there are leftovers and an error should be thrown.
     /// </summary>
     /// <returns></returns>
-    public override void ThrowOnLeftovers([CanBeNull] Func<string> descr = null) {
+    public override void ThrowOnLeftovers(Func<string>? descr = null) {
         //this can get called during the initialization code, which creates a new ReflCtx, so Ctx can be null
         __Scan(out var after_newlines);
         if (after_newlines != atoms.Length) {
@@ -259,8 +248,13 @@ public class NonLocalPUListParseQueue : IParseQueue {
     private readonly PUListParseQueue root;
     public override Reflector.ReflCtx Ctx => root.Ctx;
 
-    public NonLocalPUListParseQueue(PUListParseQueue root) : base(root.Position) {
+    private readonly bool allowPostAggregate;
+    public override bool AllowPostAggregate => allowPostAggregate && root.AllowPostAggregate;
+    
+
+    public NonLocalPUListParseQueue(PUListParseQueue root, bool allowPostAggregate=false) : base(root.Position) {
         this.root = root;
+        this.allowPostAggregate = allowPostAggregate;
     }
 
     public override bool IsNewline => root.IsNewline;

@@ -14,7 +14,7 @@ phase(0)
 		async tfairy <;:-100> summons tprot cx 5
 			>> _ delay 1 async icrow <-180> summons
 				tprot cx 3
-				wait
+				stall
 				
 <!> type(non, `Case 1`)
 phase(0)
@@ -24,6 +24,6 @@ phase(0)
 		bullet-control persist circle-blue/w sm onlyonce < y -4
 			async icrow <-180> summons
 				tprot cx 3
-				wait
+				stall
 
 

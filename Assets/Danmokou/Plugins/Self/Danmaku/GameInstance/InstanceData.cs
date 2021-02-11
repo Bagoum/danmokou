@@ -12,6 +12,7 @@ using JetBrains.Annotations;
 namespace DMK.GameInstance {
 public class InstanceData {
     public static bool PowerMechanicEnabled { get; } = false;
+    public static bool MeterMechanicEnabled { get; } = true;
     private static int StartLives(InstanceMode mode) {
         if (mode == InstanceMode.CAMPAIGN || mode == InstanceMode.TUTORIAL || mode == InstanceMode.STAGE_PRACTICE) 
             return 7;
@@ -32,7 +33,7 @@ public class InstanceData {
             return 3;
     }
 
-    private static double StartPower(InstanceMode mode, [CanBeNull] ShotConfig shot) {
+    private static double StartPower(InstanceMode mode, ShotConfig? shot) {
         if (mode.OneLife() || !PowerMechanicEnabled) 
             return powerMax;
         else if (shot != null) 
@@ -65,6 +66,7 @@ public class InstanceData {
     public int LifeItems { get; private set; }
     public int NextLifeItems => pointLives.Try(nextItemLifeIndex, 9001);
     public long Graze { get; private set; }
+    public double PlayerDamageMultiplier => M.Lerp(0, 3, Difficulty.Counter, 1.25, 1);
     public const double powerMax = 4;
     public const double powerMin = 1;
 #if UNITY_EDITOR
@@ -85,9 +87,9 @@ public class InstanceData {
     public double Faith { get; private set; }
     private double faithLenience;
     public double UIVisibleFaithDecayLenienceRatio { get; private set; }
-    private const double faithDecayRate = 0.14;
-    private double faithDecayRateMultiplier;
-    private const double faithDecayRateMultiplierBoss = 0.666;
+    private const double faithDecayRate = 0.12;
+    public readonly MultiMultiplierD externalFaithDecayMultiplier = new MultiMultiplierD(1, null);
+    private double FaithDecayRateMultiplier => (CurrentBoss != null ? 0.666f : 1f) * externalFaithDecayMultiplier.Value;
     private const double faithLenienceFall = 5;
     private const double faithLenienceValue = 0.2;
     private const double faithLeniencePointPP = 0.3;
@@ -100,9 +102,10 @@ public class InstanceData {
     private const double faithLeniencePhase = 4;
     
     public double Meter { get; private set; }
-    public bool EnoughMeterToUse => Difficulty.meterEnabled && Meter >= meterUseThreshold;
-    private double MeterBoostGraze => M.Lerp(0, 3, Difficulty.Counter, 0.006, 0.004);
-    private const double meterBoostGem = 0.02;
+    public bool MeterEnabled => MeterMechanicEnabled && Difficulty.meterEnabled;
+    public bool EnoughMeterToUse => MeterEnabled && Meter >= meterUseThreshold;
+    private double MeterBoostGraze => M.Lerp(0, 3, Difficulty.Counter, 0.0075, 0.005);
+    private const double meterBoostGem = 0.021;
     private const double meterRefillRate = 0.002;
     private const double meterUseRate = 0.314;
     public const double meterUseThreshold = 0.42;
@@ -116,7 +119,6 @@ public class InstanceData {
     
     public int Continues { get; private set; }
     public int HitsTaken { get; private set; }
-    public int EnemiesDestroyed { get; private set; }
 
     private int nextScoreLifeIndex;
     public long? NextScoreLife => mode.OneLife() ? null : scoreLives.TryN(nextScoreLifeIndex);
@@ -124,20 +126,45 @@ public class InstanceData {
     public readonly InstanceMode mode;
     public bool Continued { get; private set; }
     private PlayerTeam team;
-    [CanBeNull] public PlayerConfig Player => team.Player;
-    [CanBeNull] public ShotConfig Shot => team.Shot;
+    public PlayerConfig? Player => team.Player;
+    public ShotConfig? Shot => team.Shot;
     public Subshot Subshot => team.Subshot;
     public string MultishotString => (Shot != null && Shot.isMultiShot) ? Subshot.Describe() : "";
+    
+    public int EnemiesDestroyed { get; private set; }
+    public int TotalFrames { get; private set; }
+    public int MeterFrames { get; private set; }
     public void SetSubshot(Subshot newSubshot) {
         team.Subshot = newSubshot;
+        PlayerInput.RequestShotUpdate.Publish((Shot, Subshot));
         Events.CampaignDataHasChanged.Proc();
     }
+
+    /// <summary>
+    /// Has no effect if the provided player/shot must exist in the team config.
+    /// Returns true iff it exists in the team config.
+    /// </summary>
+    public bool SetPlayer(PlayerConfig player, ShotConfig shot, Subshot? subshot = null) {
+        var ind = team.players.IndexOf(x => x == (player, shot));
+        if (ind > -1) {
+            team.Subshot = subshot ?? team.Subshot;
+            team.SelectedIndex = ind;
+            PlayerInput.RequestPlayerUpdate.Publish(player);
+            PlayerInput.RequestShotUpdate.Publish((shot, team.Subshot));
+            Events.CampaignDataHasChanged.Proc();
+            return true;
+        } else {
+            return false;
+        }
+    }
+    
     //This uses boss key instead of boss index since phaseSM doesn't have trivial access to boss index
     public List<CardHistory> CardCaptures { get; }
 
-    //TODO: this can cause problems if multiple phases are declared lenient at the same time, but that's not a current use case
-    public bool Lenience { get; set; }
-    [CanBeNull] public BehaviorEntity ExecutingBoss { get; private set; }
+    public readonly MultiAdder Lenience = new MultiAdder(0, null);
+    public bool Lenient => Lenience.Value > 0;
+    public BehaviorEntity? CurrentBoss { get; private set; }
+    private ICancellee? CurrentBossCT { get; set; }
 
     private static readonly long[] scoreLives = {
          2000000,
@@ -175,19 +202,19 @@ public class InstanceData {
     /// <summary>
     /// Only present for campaign-type games
     /// </summary>
-    [CanBeNull] private readonly CampaignConfig campaign;
+    private readonly CampaignConfig? campaign;
     /// <summary>
     /// Present for all games, including "null_campaign" default for unscoped games
     /// </summary>
     private readonly string campaignKey;
-    [CanBeNull] public InstanceRequest Request { get; }
+    public InstanceRequest? Request { get; }
 
-    public InstanceData(InstanceMode mode, [CanBeNull] InstanceRequest req = null, long? maxScore = null) {
+    public InstanceData(InstanceMode mode, InstanceRequest? req = null, long? maxScore = null) {
         this.Request = req;
         this.mode = mode;
         this.Difficulty = req?.metadata.difficulty ?? GameManagement.defaultDifficulty;
         this.MaxScore = maxScore ?? 9001;
-        campaign = req?.lowerRequest.Resolve(cr => cr.campaign.campaign, _ => null, _ => null, _ => null);
+        campaign = req?.lowerRequest.Resolve(cr => cr.campaign.campaign, _ => null!, _ => null!, _ => null!);
         campaignKey = req?.lowerRequest.Resolve(cr => cr.Key, b => b.boss.campaign.Key, s => s.Campaign.key,
             s => s.stage.campaign.Key) ?? "null_campaign";
         team = req?.metadata.team ?? PlayerTeam.Empty;
@@ -216,11 +243,9 @@ public class InstanceData {
         Continued = false;
         Reloaded = false;
         HitsTaken = 0;
-        faithDecayRateMultiplier = 1f;
         EnemiesDestroyed = 0;
-        Lenience = false;
         Graze = 0;
-        ExecutingBoss = null;
+        CurrentBoss = null;
         MeterInUse = false;
     }
 
@@ -285,6 +310,7 @@ public class InstanceData {
                     CardCaptures.Add(new CardHistory() {
                         campaign = bpr.boss.campaign.Key,
                         boss = bpr.boss.boss.key,
+                        bossIndex = bpr.boss.bossIndex,
                         phase = bpr.phase.index,
                         captured = false
                     });
@@ -460,7 +486,13 @@ public class InstanceData {
         AddFaithLenience(faithLenienceEnemyDestroy);
     }
 
-    public void RegularUpdate() {
+    public void _RegularUpdate() {
+        ++TotalFrames;
+        if (MeterInUse)
+            ++MeterFrames;
+        if (CurrentBossCT?.Cancelled == true) {
+            CloseBoss();
+        }
         if (remVisibleScoreLerpTime > 0) {
             remVisibleScoreLerpTime -= ETime.FRAME_TIME;
             if (remVisibleScoreLerpTime <= 0) UIVisibleScore = Score;
@@ -469,11 +501,12 @@ public class InstanceData {
         }
         UIVisibleFaithDecayLenienceRatio = M.LerpU(UIVisibleFaithDecayLenienceRatio, 
             Math.Min(1f, faithLenience / 3f), 6f * ETime.FRAME_TIME);
-        if (PlayerInput.PlayerActive && !Lenience && EngineStateManager.IsRunning) {
+        if (PlayerInput.PlayerActive && !Lenient && EngineStateManager.IsRunning) {
             if (faithLenience > 0) {
                 faithLenience = Math.Max(0, faithLenience - ETime.FRAME_TIME);
             } else if (Faith > 0) {
-                Faith = Math.Max(0, Faith - ETime.FRAME_TIME * faithDecayRate * faithDecayRateMultiplier * Difficulty.faithDecayMultiplier);
+                Faith = Math.Max(0, Faith - ETime.FRAME_TIME * 
+                    faithDecayRate * FaithDecayRateMultiplier * Difficulty.faithDecayMultiplier);
             } else if (PIV > 1) {
                 PIV = Math.Max(1, PIV - pivFallStep);
                 Faith = 0.5f;
@@ -483,23 +516,20 @@ public class InstanceData {
         }
     }
 
-    public void OpenBoss(BehaviorEntity boss) {
-        if (ExecutingBoss != null) CloseBoss();
-        ExecutingBoss = boss;
-        faithDecayRateMultiplier *= faithDecayRateMultiplierBoss;
+
+    public void SetCurrentBoss(BehaviorEntity boss, ICancellee bossCT) {
+        if (CurrentBossCT != null) CloseBoss();
+        CurrentBoss = boss;
+        CurrentBossCT = bossCT;
     }
 
-    public void CloseBoss() {
-        if (ExecutingBoss != null) {
-            ExecutingBoss = null;
-            faithDecayRateMultiplier /= faithDecayRateMultiplierBoss;
+    private void CloseBoss() {
+        if (CurrentBossCT != null) {
+            CurrentBoss = null;
+            CurrentBossCT = null;
         } else Log.UnityError("You tried to close a boss section when no boss exists.");
     }
 
-    public void AddDecayRateMultiplier_Tutorial(double m) {
-        faithDecayRateMultiplier *= m;
-    }
-    
     public static readonly Events.Event0 MeterNowUsable = new Events.Event0();
     public static readonly Events.Event0 PowerLost = new Events.Event0();
     public static readonly Events.Event0 PowerGained = new Events.Event0();

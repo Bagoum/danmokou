@@ -38,7 +38,7 @@ namespace ntw.CurvedTextMeshPro
         /// <summary>
         /// The text component of interest
         /// </summary>
-        private TMP_Text m_TextComponent;
+        private TMP_Text m_TextComponent = null!;
 
         /// <summary>
         /// True if the text must be updated at this frame 
@@ -149,7 +149,7 @@ namespace ntw.CurvedTextMeshPro
         /// Computes the transformation matrix that maps the offsets of the vertices of each single character from
         /// the character's center to the final destinations of the vertices so that the text follows a curve
         /// </summary>
-        /// <param name="charMidBaselinePosfloat">Position of the central point of the character</param>
+        /// <param name="charMidBaselinePos">Position of the central point of the character</param>
         /// <param name="zeroToOnePos">Horizontal position of the character relative to the bounds of the box, in a range [0, 1]</param>
         /// <param name="textInfo">Information on the text that we are showing</param>
         /// <param name="charIdx">Index of the character we have to compute the transformation for</param>

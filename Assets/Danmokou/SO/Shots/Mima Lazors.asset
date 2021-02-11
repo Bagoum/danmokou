@@ -13,7 +13,13 @@ MonoBehaviour:
   m_Name: Mima Lazors
   m_EditorClassIdentifier: 
   key: mima-lazors
-  title: A View Upon All Creation
+  title:
+    useReference: 1
+    reference: players.shot_mima_laser
+    hardcoded:
+      en: 
+      jp: 
+      _showEnOnly: 0
   description: "A mystical fighting style recreated from legends of Tsukuyomi.\nFeatures
     a wide laser spread as well as homing pathers. \r\nWhen focused, the lasers narrow
     and the pathers find targets more accurately.\n"
@@ -22,6 +28,8 @@ MonoBehaviour:
   bomb: 0
   defaultPower: 1000
   playerChild: 1
+  demoReplay: {fileID: 4900000, guid: f58a179b4f5afb7489944bbfdd2484f5, type: 3}
+  demoSetupSM: {fileID: 4900000, guid: 83d895926f063264f9adc5887261db81, type: 3}
   isMultiShot: 0
   multiD: {fileID: 0}
   multiM: {fileID: 0}

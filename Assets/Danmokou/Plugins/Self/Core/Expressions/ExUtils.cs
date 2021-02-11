@@ -5,6 +5,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using DMK.DMath;
+using JetBrains.Annotations;
 using UnityEngine;
 using Ex = System.Linq.Expressions.Expression;
 using Object = System.Object;
@@ -20,11 +21,11 @@ public static class ExUtils {
     private static readonly Type tqt = typeof(Quaternion);
     public static readonly Type tcc = typeof(CCircle);
     public static readonly Type tcr = typeof(CRect);
-    private static readonly ConstructorInfo constrV2 = tv2.GetConstructor(new[] {tfloat, tfloat});
-    private static readonly ConstructorInfo constrV3 = tv3.GetConstructor(new[] {tfloat, tfloat, tfloat});
-    private static readonly ConstructorInfo constrV4 = tv4.GetConstructor(new[] {tfloat, tfloat, tfloat, tfloat});
+    private static readonly ConstructorInfo constrV2 = tv2.GetConstructor(new[] {tfloat, tfloat})!;
+    private static readonly ConstructorInfo constrV3 = tv3.GetConstructor(new[] {tfloat, tfloat, tfloat})!;
+    private static readonly ConstructorInfo constrV4 = tv4.GetConstructor(new[] {tfloat, tfloat, tfloat, tfloat})!;
     private static readonly ConstructorInfo constrRV2 =
-        tvrv2.GetConstructor(new[] {tfloat, tfloat, tfloat, tfloat, tfloat});
+        tvrv2.GetConstructor(new[] {tfloat, tfloat, tfloat, tfloat, tfloat})!;
     private static readonly ExFunction quatEuler = Wrap<Quaternion, float>("Euler", 3);
     private static readonly ExFunction quatEuler3 = Wrap<Quaternion, Vector3>("Euler", 1);
     private static readonly Type[] noTypes = new Type[0];
@@ -55,8 +56,8 @@ public static class ExUtils {
         Expression.Property(null, t.GetProperty(property) ?? throw new Exception(
             $"STATIC EXCEPTION: Couldn't find property {property} on type {t}"));
 
-    public static ExFunction Wrap(Type t, string methodName, params Type[] types) {
-        foreach (var mi in t.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance |
+    public static ExFunction Wrap(Type cls, string methodName, params Type[] types) {
+        foreach (var mi in cls.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance |
                                         BindingFlags.Static)) {
             if (mi.Name.Equals(methodName)) {
                 var mtypes = mi.GetParameters().Select(x => x.ParameterType).ToArray();
@@ -69,15 +70,8 @@ public static class ExUtils {
                 Next: ;
             }
         }
-#if NO_EXPR
-        Log.Unity($"STATIC ERROR: Method {t.Name}.{methodName} not found. " +
-                  "This is probably due to code stripping. " +
-                  "Will assume that this code is not called and return null.");
-        return null;
-#else
         throw new NotImplementedException(
-            $"STATIC ERROR: Method {t.Name}.{methodName} not found.");
-#endif
+            $"STATIC ERROR: Method {cls.Name}.{methodName} not found.");
     }
 
     public static ExFunction Wrap<C>(string methodName, params Type[] types) {
@@ -92,61 +86,38 @@ public static class ExUtils {
         return Wrap<T>(typeof(C), methodName, typeCt);
     }
 
-    public static ExFunction Wrap<T>(Type t, string methodName, int typeCt = 1) {
+    public static ExFunction Wrap<T>(Type cls, string methodName, int typeCt = 1) {
         Type[] types = new Type[typeCt];
         Type ts = typeof(T);
         for (int ii = 0; ii < typeCt; ++ii) {
             types[ii] = ts;
         }
-        return Wrap(t, methodName, types);
+        return Wrap(cls, methodName, types);
     }
 
     public static ParameterExpression VFloat() => Ex.Variable(tfloat);
-    public static ParameterExpression V<T>() => V(typeof(T));
-    public static ParameterExpression V(Type t) => Ex.Variable(t);
+    public static ParameterExpression V<T>(string? name = null) => V(typeof(T), name);
+    public static ParameterExpression V(Type t, string? name = null) => 
+        name == null ? Ex.Variable(t) : Ex.Variable(t, name);
 
     //See notes for why these exist
     public static Ex AddAssign(Ex into, Ex from) => Ex.Assign(into, Ex.Add(into, from));
     public static Ex SubAssign(Ex into, Ex from) => Ex.Assign(into, Ex.Subtract(into, from));
 
     public static Ex MulAssign(Ex into, Ex from) => Ex.Assign(into, Ex.Multiply(into, from));
+    
+    private static readonly Dictionary<Type, ExFunction> containsKeyMIMap =
+        new Dictionary<Type, ExFunction>();
 
-    public static Ex DictIfCondSetElseGet(Ex dict, Ex cond, Ex key, Ex value) =>
-        Ex.Condition(cond, dict.DictSet(key, value), dict.DictGet(key));
-
-    private static readonly Dictionary<string, Dictionary<Type, ExFunction>> cached1 =
-        new Dictionary<string, Dictionary<Type, ExFunction>>();
-
-    private static ExFunction CacheGeneric1Method<T>(string methodName, params Type[] types) {
-        if (!cached1.TryGetValue(methodName, out var dict))
-            cached1[methodName] = dict = new Dictionary<Type, ExFunction>();
-        if (!dict.TryGetValue(typeof(T), out var func))
-            dict[typeof(T)] = func = ExUtils.Wrap<T>(methodName, types);
-        return func;
-    }
-
-    private static readonly Dictionary<(Type, Type), ExFunction> containsKeyMIMap =
-        new Dictionary<(Type, Type), ExFunction>();
-
-    public static Ex DictContains<K, V>(Ex dict, Ex key) {
-        var typePair = (typeof(K), typeof(V));
-        if (!containsKeyMIMap.TryGetValue(typePair, out ExFunction method)) {
-            containsKeyMIMap[typePair] = method = ExUtils.Wrap<Dictionary<K, V>, K>("ContainsKey");
+    
+    public static Ex DictContains(Ex dict, Ex key) {
+        if (!containsKeyMIMap.TryGetValue(dict.Type, out ExFunction method)) {
+            containsKeyMIMap[dict.Type] = method = 
+                ExUtils.Wrap(dict.Type, "ContainsKey", key.Type);
         }
         return method.InstanceOf(dict, key);
     }
 
-    public static Ex SetHas<K>(Ex dict, Ex key) =>
-        CacheGeneric1Method<HashSet<K>>("Contains", typeof(K)).InstanceOf(dict, key);
-
-    public static Ex SetAdd<K>(Ex dict, Ex key) =>
-        CacheGeneric1Method<HashSet<K>>("Add", typeof(K)).InstanceOf(dict, key);
-
-    public static Ex DictIfExistsGetElseSet<K, V>(Ex dict, Ex key, Ex value) =>
-        DictIfPredGetElseSet(dict, DictContains<K, V>(dict, key), key, value);
-
-    public static Ex DictIfPredGetElseSet(Ex dict, Ex pred, Ex key, Ex value) =>
-        Ex.Condition(pred, dict.DictGet(key), dict.DictSet(key, value));
 }
 
 public class ExFunction {
@@ -269,15 +240,21 @@ public static class ExExtensions {
     public static Ex And(this Ex me, Ex other) => Ex.AndAlso(me, other);
     public static Ex Or(this Ex me, Ex other) => Ex.OrElse(me, other);
 
-    public static Ex Field(this Ex me, string field) => Ex.Field(me, field);
+    public static Ex Field(this Ex me, string field) => Ex.PropertyOrField(me, field);
 
     public static Ex As<T>(this Ex me) => Ex.Convert(me, typeof(T));
 
-    public static Ex DictSafeGet<K, V>(this Ex dict, Ex key, string err) =>
-        Ex.Condition(ExUtils.DictContains<K, V>(dict, key), dict.DictGet(key), Ex.Block(
+    public static Ex DictSafeGet(this Ex dict, Ex key, string err) {
+        return Ex.Block(
+            Ex.IfThen(Ex.Not(ExUtils.DictContains(dict, key)), Ex.Throw(Ex.Constant(new Exception(err)))),
+            dict.DictGet(key)
+        );
+        /*
+        return Ex.Condition(ExUtils.DictContains<K, V>(dict, key), dict.DictGet(key), Ex.Block(
             Ex.Throw(Ex.Constant(new Exception(err))),
             dict.DictGet(key)
-        ));
+        ));*/
+    }
 
     public static Ex DictGet(this Ex dict, Ex key) => Ex.Property(dict, "Item", key);
     public static Ex DictSet(this Ex dict, Ex key, Ex value) => Ex.Assign(Ex.Property(dict, "Item", key), value);
@@ -290,16 +267,16 @@ public static class ExExtensions {
             val = (T) cx.Value;
             return true;
         }
-        val = default;
+        val = default!;
         return false;
     }
 
-    public static bool TryAsAnyConst(this Ex ex, out object val) {
+    public static bool TryAsAnyConst(this Ex ex, out object? val) {
         if (ex is ConstantExpression cx && ex.Type.IsValueType) {
             val = cx.Value;
             return true;
         }
-        val = default;
+        val = default!;
         return false;
     }
 }

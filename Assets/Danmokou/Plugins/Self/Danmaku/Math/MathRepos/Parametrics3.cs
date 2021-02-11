@@ -8,12 +8,9 @@ using DMK.Core;
 using DMK.Expressions;
 using DMK.Reflection;
 using Ex = System.Linq.Expressions.Expression;
-using ExTP = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<UnityEngine.Vector2>>;
-using ExTP3 = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<UnityEngine.Vector3>>;
-using ExFXY = System.Func<DMK.Expressions.TEx<float>, DMK.Expressions.TEx<float>>;
-using ExBPY = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<float>>;
-using ExPred = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<bool>>;
 using static DMK.Expressions.ExMHelpers;
+using ExTP = System.Func<DMK.Expressions.TExArgCtx, DMK.Expressions.TEx<UnityEngine.Vector2>>;
+using ExTP3 = System.Func<DMK.Expressions.TExArgCtx, DMK.Expressions.TEx<UnityEngine.Vector3>>;
 
 namespace DMK.DMath.Functions {
 /// <summary>
@@ -21,16 +18,16 @@ namespace DMK.DMath.Functions {
 /// </summary>
 [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
 [SuppressMessage("ReSharper", "UnusedMember.Global")]
+[Reflect]
 public static partial class Parametrics3 {
     /// <summary>
     /// Derive a parametric3 equation from a parametric2 function (Z is set to zero)
     /// </summary>
     /// <param name="tp">Parametric function to assign to x,y components</param>
     /// <returns></returns>
-    [Fallthrough(50, true)]
+    [Fallthrough(50)]
     public static ExTP3 TP(ExTP tp) => bpi => ((Expression) tp(bpi)).As<Vector3>();
 
-    [Fallthrough(40)]
     public static ExTP3 Circ(CCircle c) => bpi => ExC((Vector3) c);
     
     /// <summary>

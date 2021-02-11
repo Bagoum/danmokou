@@ -9,7 +9,7 @@ public class PowerItem : Item {
     protected override float RotationTurns => 1;
 
     protected override void CollectMe() {
-        GameManagement.instance.AddPowerItems(1);
+        GameManagement.Instance.AddPowerItems(1);
         base.CollectMe();
     }
 }

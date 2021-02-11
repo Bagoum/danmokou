@@ -1,16 +1,11 @@
 ﻿using System.Linq;
-using ExFXY = System.Func<DMK.Expressions.TEx<float>, DMK.Expressions.TEx<float>>;
-using ExBPY = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<float>>;
-using ExTP = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<UnityEngine.Vector2>>;
-using ExBPRV2 = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<DMK.DMath.V2RV2>>;
 using GCP = DMK.Danmaku.Options.GenCtxProperty;
-using ExSBF = System.Func<DMK.Expressions.RTExSB, DMK.Expressions.TEx<float>>;
-using ExSBV2 = System.Func<DMK.Expressions.RTExSB, DMK.Expressions.TEx<UnityEngine.Vector2>>;
 using DMK.Danmaku.Options;
 using DMK.DataHoist;
 using DMK.DMath;
 using DMK.DMath.Functions;
 using DMK.Expressions;
+using DMK.Reflection;
 using JetBrains.Annotations;
 using UnityEngine;
 using SP = DMK.Danmaku.Patterns.SyncPatterns;
@@ -26,6 +21,9 @@ using static DMK.Danmaku.Patterns.PatternUtils;
 using static DMK.Danmaku.Options.GenCtxProperty;
 using static DMK.DMath.Functions.BPYRepo;
 using static DMK.Danmaku.Patterns.AtomicPatterns;
+using ExBPY = System.Func<DMK.Expressions.TExArgCtx, DMK.Expressions.TEx<float>>;
+using ExTP = System.Func<DMK.Expressions.TExArgCtx, DMK.Expressions.TEx<UnityEngine.Vector2>>;
+using ExBPRV2 = System.Func<DMK.Expressions.TExArgCtx, DMK.Expressions.TEx<DMK.DMath.V2RV2>>;
 
 namespace DMK.Danmaku.Patterns {
 public static class PatternUtils {
@@ -43,7 +41,7 @@ public static partial class AtomicPatterns {
     public static SyncPattern DS(ReflectEx.Hoist<Vector2> hoistLoc, ReflectEx.Hoist<Vector2> hoistDir, ExBPY indexer,
         ExTP offset) =>
         Simple(GCXU(VTPRepo.DTPOffset(hoistLoc, hoistDir, indexer, offset)), new SBOptions(new[] {
-            SBOption.Dir2(GCXU(x => RetrieveHoisted(hoistDir, indexer(x.bpi))))
+            SBOption.Dir2(GCXUSB(RetrieveHoisted(hoistDir, indexer)))
         }));
 
     public static SyncPattern dPather() => Pather(0.5f, _ => 0.3f,
@@ -57,10 +55,10 @@ public static partial class SyncPatterns {
         SyncPattern[] inner) =>
         GSRepeat2(GCXF(times), RV2Zero, props.Prepend(
             PreLoop(new GCRule[] {
-                new GCRule<float>(ExType.Float, "rv2.rx", GCOperator.Assign, GCXFf(x =>
+                new GCRule<float>(ExType.Float, "rv2.rx", GCOperator.Assign, GCXF<float>(x =>
                     RV2RX(BRV2(x)).Add(Neg(xstep(x).Mul(HMod(times(x), DecrementSubtract(times(x), x.t)))))
                 )),
-                new GCRule<float>(ExType.Float, "rv2.ry", GCOperator.Assign, GCXFf(x =>
+                new GCRule<float>(ExType.Float, "rv2.ry", GCOperator.Assign, GCXF<float>(x =>
                     RV2RY(BRV2(x)).Add(ystep(x).Mul(HNMod(times(x), DecrementSubtract(times(x), x.t))))
                 )),
             })
@@ -73,10 +71,10 @@ public static partial class SyncPatterns {
     private static readonly ExBPY rxi = Reference<float>(xi);
     private static readonly ExBPY ryi = Reference<float>(yi);
     private static SyncPattern _FArrow(ExBPY indexer, ExBPY n, ExBPY xstep, ExBPY ystep, GenCtxProperty[] props,
-        GCXU<VTP> path, [CanBeNull] string poolSuffix, [CanBeNull] string locSave, [CanBeNull] string dirSave, params SyncPattern[] extraSp) {
-        return GuideEmpty(poolSuffix, indexer, AutoSaveV2(locSave = locSave ?? V2Key, dirSave = dirSave ?? V2Key), 
+        GCXU<VTP> path, string? poolSuffix, string? locSave, string? dirSave, params SyncPattern[] extraSp) {
+        return GuideEmpty(poolSuffix, indexer, AutoSaveV2(locSave ??= V2Key, dirSave ??= V2Key), 
             AutoSaveF, path, extraSp.Append(
-            GSRepeat2(GCXFf(x => n(x).Mul(n(x).Add(E1)).Div(E2)), RV2Zero, new[] {
+            GSRepeat2(GCXF<float>(x => n(x).Mul(n(x).Add(E1)).Div(E2)), RV2Zero, new[] {
                 PreLoop(new GCRule[] {
                     new GCRule<float>(ExType.Float, xi, GCOperator.Assign, GCXF(x => Floor(EN05.Add(
                             Sqrt(E025.Add(E2.Mul(x.t)))

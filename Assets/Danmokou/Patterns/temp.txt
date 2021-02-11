@@ -1,32 +1,66 @@
 <#> warnprefix
 pattern({
-	##boss jy.yukari
+	boss bha3.elly
 })
 phase(0)
 	paction(0)
 		shift-phase-to(1)
 		
+!{ power1()
+sync powerup1 <> powerup2
+	x-powerup-1 x-powerdown-1
+	witha 0.9 red
+	rgba 0.9 0.9 0.9 0.9
+	1.5 2 0 0.5
+!}
+!{ power2()
+sync powerup1 <> poweraura {
+	boss1  witha 0.9 green rgba 0.9 0.9 0.9 0.9
+}
+!}
+!{ power3()
+sync powerup1 <> poweraura {
+	color witha 0.9 green
+	time 1.5
+	iterations 1
+	scale 3
+	sfx x-powerup-1
+	next {
+		color rgba 0.9 0.9 0.9 0.9
+		time 0.7
+		iterations -1
+		scale 3
+		sfx x-powerdown-1
+	}
+}
+!}
+!{ power4()
+sync powerup1 <> poweraura {
+	color witha 1 red
+	time 0.7
+	iterations -1
+	scale 3.5
+}
+
+!}
+
 <!> type(non, `Danmokou Chimera`)
 <!> hp(1000)
-phase(14)
+phase(4)
 	paction 0
-		async star-** <> gcrepeat {
-			wait(60)
-			times(_)
-			rv2incr(<5h>)
-            color { purple orange }
-        } gsrepeat {
-			times(72)
-			circle
-            color { /w /b }
-        } simple(rvelocity(cx(2)), {
-			dir(starrotb2())
-		})
+		async fireball-red/w <90> gcr2 60 _ <> {
+		} gsr2c 1 {
+		} s tprot cx 2
+		async fireball-red/ <-90> gcr2 60 _ <> {
+		} gsr2c 1 {
+		} s tprot cx 2
+		async fireball-red/b <> gcr2 60 _ <> {
+		} gsr2c 1 {
+		} s tprot cx 2
 
-///	
 
 <!> type(spell, `Miracle Mima`)
-<!> hp(14000)
+<!> hp(1000)
 <!> root(0, 1)
 phase(40)
 	paction(0)

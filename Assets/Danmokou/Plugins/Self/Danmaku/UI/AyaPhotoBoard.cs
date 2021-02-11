@@ -13,7 +13,7 @@ public interface IAyaPhotoBoard {
     void SetupPins(int nPins, bool createObjects = true);
     void TearDown();
     Vector2? NextPinLoc(AyaPinnedPhoto attach);
-    void ConstructPhotos([CanBeNull] AyaPhoto[] photos, float sizeOverride);
+    void ConstructPhotos(AyaPhoto[]? photos, float sizeOverride);
 }
 
 public class AyaPhotoBoard : CoroutineRegularUpdater, IAyaPhotoBoard {
@@ -31,13 +31,13 @@ public class AyaPhotoBoard : CoroutineRegularUpdater, IAyaPhotoBoard {
         }
     }
 
-    public PinStrip[] strips;
-    [CanBeNull] private Vector2[] pinLocations;
+    public PinStrip[] strips = null!;
+    private Vector2[]? pinLocations;
     private int nextPin;
     private readonly List<GameObject> pins = new List<GameObject>();
-    public GameObject pinPrefab;
-    public GameObject defaultPhotoPrefab;
-    public Sprite[] pinOptions;
+    public GameObject pinPrefab = null!;
+    public GameObject defaultPhotoPrefab = null!;
+    public Sprite[] pinOptions = null!;
     private readonly List<AyaPinnedPhoto> bound = new List<AyaPinnedPhoto>();
     public Vector2 pinOffset = new Vector2(0, 0.3f);
 
@@ -82,8 +82,8 @@ public class AyaPhotoBoard : CoroutineRegularUpdater, IAyaPhotoBoard {
         return pinLocations?.TryN(nextPin++);
     }
 
-    public void ConstructPhotos([CanBeNull] AyaPhoto[] photos, float sizeOverride) {
-        photos = photos ?? new AyaPhoto[0];
+    public void ConstructPhotos(AyaPhoto[]? photos, float sizeOverride) {
+        photos ??= new AyaPhoto[0];
         SetupPins(photos.Length, false);
         foreach (var p in photos) {
             var pinned = GameObject.Instantiate(defaultPhotoPrefab).GetComponent<AyaPinnedPhoto>();

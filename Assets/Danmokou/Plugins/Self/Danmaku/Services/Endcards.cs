@@ -12,10 +12,10 @@ public struct Endcard {
     public Sprite image;
 }
 public class Endcards : CoroutineRegularUpdater {
-    private static Endcards main;
-    private SpriteRenderer sr;
+    private static Endcards main = null!;
+    private SpriteRenderer sr = null!;
 
-    public Endcard[] cards;
+    public Endcard[] cards = null!;
     private static readonly Dictionary<string, Sprite> images = new Dictionary<string, Sprite>();
     private void Awake() {
         main = this;

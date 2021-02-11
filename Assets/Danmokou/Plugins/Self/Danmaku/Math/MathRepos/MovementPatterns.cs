@@ -1,16 +1,10 @@
 ﻿using System;
 using System.Linq;
 using System.Linq.Expressions;
+using DMK.Core;
 using Ex = System.Linq.Expressions.Expression;
-using ExFXY = System.Func<DMK.Expressions.TEx<float>, DMK.Expressions.TEx<float>>;
-using ExBPY = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<float>>;
-using ExTP = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<UnityEngine.Vector2>>;
-using ExBPRV2 = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<DMK.DMath.V2RV2>>;
 using static DMK.DMath.Functions.BPYRepo;
 using GCP = DMK.Danmaku.Options.GenCtxProperty;
-using ExSBF = System.Func<DMK.Expressions.RTExSB, DMK.Expressions.TEx<float>>;
-using ExSBV2 = System.Func<DMK.Expressions.RTExSB, DMK.Expressions.TEx<UnityEngine.Vector2>>;
-using ExVTP = System.Func<DMK.Expressions.ITExVelocity, DMK.Expressions.TEx<float>, DMK.Expressions.TExPI, DMK.Expressions.RTExV2, DMK.Expressions.TEx<UnityEngine.Vector2>>;
 using UnityEngine;
 using RV2r = DMK.DMath.Functions.BPRV2Repo;
 using R = DMK.Reflection.Reflector;
@@ -26,6 +20,11 @@ using static DMK.DMath.Functions.ExMConversions;
 using static DMK.Reflection.Compilers;
 using DMK.Expressions;
 using DMK.Reflection;
+using ExVTP = System.Func<DMK.Expressions.ITexMovement, DMK.Expressions.TEx<float>, DMK.Expressions.TExArgCtx, DMK.Expressions.TExV2, DMK.Expressions.TEx>;
+using ExBPY = System.Func<DMK.Expressions.TExArgCtx, DMK.Expressions.TEx<float>>;
+using ExPred = System.Func<DMK.Expressions.TExArgCtx, DMK.Expressions.TEx<bool>>;
+using ExTP = System.Func<DMK.Expressions.TExArgCtx, DMK.Expressions.TEx<UnityEngine.Vector2>>;
+using ExTP3 = System.Func<DMK.Expressions.TExArgCtx, DMK.Expressions.TEx<UnityEngine.Vector3>>;
 
 namespace DMK.DMath.Functions {
 
@@ -40,6 +39,7 @@ public static partial class Parametrics {
     public static ExTP goOtherSide(ExBPY y) => PXY(b => Mul(ExC(-5f), Sign(X()(b))), y);
 
 }
+[Reflect]
 public static class MovementPatterns {
     private static ExBPY f(float f) => _ => ExC(f);
     public static RootedVTP Null(GCXF<Vector2> root) => new RootedVTP(root, VTPRepo.Null());
@@ -91,7 +91,7 @@ public static class MovementPatterns {
     public static RootedVTP DipUp3(ExBPY xmul, ExBPY time) => new RootedVTP(b => xmul(b).Mul(LeftMinus1), b => 0.5f, 
         SetupTime(time, NROffset(PXY(
             b_ => xmul(b_).Mul(LogSumShift<TExPI>(_ => -1, _ => 2f, b => t(b).Mul(3f), b => t(b).Mul(0.2f), "&t")(b_)),
-            LogSumShift<TExPI>(_ => 2, _ => 1.9f, _ => 0, b => t(b).Mul(2.7f), "&t")
+            b_ => LogSumShift<TExPI>(_ => 2, _ => 1.9f, _ => 0, b => t(b).Mul(2.7f), "&t")(b_)
         ))));
 
     public static RootedVTP Cross1(GCXF<float> x, GCXF<float> y, ExBPY xmul, ExBPY ymul, ExBPY time) =>
@@ -104,13 +104,13 @@ public static class MovementPatterns {
     private static readonly ExBPY bn1 = _ => Ex.Constant(-1f);
 
     public static RootedVTP CrossUp(ExBPY xmul, ExBPY time) => 
-        Cross1(GCXFf(b => xmul(b).Mul(LeftMinus1)), _ => 1f, xmul, _ => ExC(0.12f), time);
+        Cross1(GCXF<float>(b => xmul(b).Mul(LeftMinus1)), _ => 1f, xmul, _ => ExC(0.12f), time);
     public static RootedVTP CrossDown(ExBPY xmul, ExBPY time) => 
-        Cross1(GCXFf(b => xmul(b).Mul(LeftMinus1)), _ => 3f, xmul, _ => ExC(-0.12f), time);
+        Cross1(GCXF<float>(b => xmul(b).Mul(LeftMinus1)), _ => 3f, xmul, _ => ExC(-0.12f), time);
     public static RootedVTP CrossUp2(ExBPY xmul, ExBPY time) =>
-        Cross1(GCXFf(b => xmul(b).Mul(LeftMinus1)), _ => -4.5f, xmul, b1, time);
+        Cross1(GCXF<float>(b => xmul(b).Mul(LeftMinus1)), _ => -4.5f, xmul, b1, time);
     public static RootedVTP CrossDown2(ExBPY xmul, ExBPY time) =>
-        Cross1(GCXFf(b => xmul(b).Mul(LeftMinus1)), _ => 5f, xmul, bn1, time);
+        Cross1(GCXF<float>(b => xmul(b).Mul(LeftMinus1)), _ => 5f, xmul, bn1, time);
 
     //WARNING/TODO: velocity-based RootedVTP needs to multiply by the derivative of the time function.
     // This means you are restricted to only using fairly rudimentary time functions.

@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4fa22e423a3842e1b90ce62d0372178a, type: 3}
+  m_Name: Reimu Lazors
+  m_EditorClassIdentifier: 
+  key: reimu-lazors
+  title:
+    useReference: 1
+    reference: players.shot_reimu_laser
+    hardcoded:
+      en: 
+      jp: 
+      _showEnOnly: 0
+  description: 'A laser-based fighting style borrowed from Marisa.
+
+    If only Reimu
+    weren''t so lazy, she might have learned how to make piercing lasers.'
+  type: Lasers
+  prefab: {fileID: 6169168473649848314, guid: 70fe2ad54c4c68946bdaa2cad558abc0, type: 3}
+  bomb: 0
+  defaultPower: 1000
+  playerChild: 1
+  demoReplay: {fileID: 4900000, guid: f58a179b4f5afb7489944bbfdd2484f5, type: 3}
+  demoSetupSM: {fileID: 4900000, guid: 83d895926f063264f9adc5887261db81, type: 3}
+  isMultiShot: 0
+  multiD: {fileID: 0}
+  multiM: {fileID: 0}
+  multiK: {fileID: 0}
+  onSwap: {fileID: 0}

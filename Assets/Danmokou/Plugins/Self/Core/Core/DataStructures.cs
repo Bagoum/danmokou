@@ -8,7 +8,6 @@ using System.Text;
 using DMK.Core;
 using DMK.DMath;
 using DMK.Expressions;
-using FParser;
 using JetBrains.Annotations;
 
 
@@ -31,24 +30,50 @@ public static class BitCompression {
     public static bool NthBool(this byte b, int n) => (b & (1 << n)) > 0;
 }
 
+public class Maybe<T> {
+
+    public readonly bool valid;
+    public readonly T value;
+    public Maybe(bool valid, T val) {
+        this.valid = valid;
+        this.value = val;
+    }
+
+    public static Maybe<T> Of(T val) => new Maybe<T>(true, val);
+    public static readonly Maybe<T> None = new Maybe<T>(false, default!);
+
+    public Maybe<U> FMap<U>(Func<T, U> f) => valid ? Maybe<U>.Of(f(value)) : Maybe<U>.None;
+    public T Or(T dflt) => valid ? value : dflt;
+
+}
+public class LispLinkedList<T> {
+    public readonly T val;
+    public LispLinkedList<T>? next;
+
+    public LispLinkedList(T val, LispLinkedList<T>? next = null) {
+        this.val = val;
+        this.next = next;
+    }
+}
+
 /// <summary>
 /// Node holds inert data for a NodeLinkedList.
 /// </summary>
 /// <typeparam name="V"></typeparam>
 public class Node<V> {
-    [CanBeNull] public Node<V> prev;
-    [CanBeNull] public Node<V> next;
+    public Node<V>? prev;
+    public Node<V>? next;
     public V obj;
 
     public Node(V t) {
         obj = t;
     }
 
-    private void SetNext(Node<V> n) {
+    private void SetNext(Node<V>? n) {
         next = n;
     }
 
-    private void SetPrev(Node<V> n) {
+    private void SetPrev(Node<V>? n) {
         prev = n;
     }
 
@@ -59,9 +84,9 @@ public class Node<V> {
 }
 
 public sealed class NodeLinkedList<T> {
-    [CanBeNull] public Node<T> first { get; private set; }
-    [CanBeNull] public Node<T> last { get; private set; }
-    [CanBeNull] private static Node<T> cacheFirst = null; //Can be shared between LLs.
+    public Node<T>? first { get; private set; }
+    public Node<T>? last { get; private set; }
+    private static Node<T>? cacheFirst = null; //Can be shared between LLs.
     public int count { get; private set; } = 0;
 
 
@@ -152,7 +177,7 @@ public sealed class NodeLinkedList<T> {
 
     public void Reset() {
         if (count > 0) {
-            AddToCache(first, last);
+            AddToCache(first!, last!);
             first = null;
             last = null;
             count = 0;
@@ -161,8 +186,8 @@ public sealed class NodeLinkedList<T> {
 
 #if UNITY_EDITOR
 
-    public Node<T> At(int ii) {
-        for (Node<T> nr = first; nr != null; nr = nr.next, --ii) {
+    public Node<T>? At(int ii) {
+        for (Node<T>? nr = first; nr != null; nr = nr.next, --ii) {
             if (ii == 0) return nr;
         }
         return null;
@@ -170,7 +195,7 @@ public sealed class NodeLinkedList<T> {
 
     public int IndexOf(Node<T> n) {
         int ii = 0;
-        for (Node<T> nr = first; nr != null; nr = nr.next, ++ii) {
+        for (Node<T>? nr = first; nr != null; nr = nr.next, ++ii) {
             if (nr == n) return ii;
         }
         return -1;
@@ -203,7 +228,7 @@ public class CircularList<T> {
     public void Clear() {
         Count = 0;
         pointer = 0;
-        for (int ii = 0; ii < arr.Length; ++ii) arr[ii] = default;
+        for (int ii = 0; ii < arr.Length; ++ii) arr[ii] = default!;
     }
 }
 
@@ -229,7 +254,7 @@ public class StackList<T> : IEnumerable<T> {
 
     public void Clear() {
         Count = 0;
-        for (int ii = 0; ii < arr.Length; ++ii) arr[ii] = default;
+        for (int ii = 0; ii < arr.Length; ++ii) arr[ii] = default!;
     }
 
     public ref T this[int ind] => ref arr[ind];
@@ -278,10 +303,10 @@ public class SafeResizableArray<T> {
         ExUtils.Wrap<SafeResizableArray<T>>("SafeAssign", new[] {typeof(int), typeof(T)});
     private static readonly ExFunction safeGet = ExUtils.Wrap<SafeResizableArray<T>, int>("SafeGet");
 
-    public Expression SafeAssign(Expression index, Expression value) =>
+    public Expression exSafeAssign(Expression index, Expression value) =>
         safeAssign.InstanceOf(Expression.Constant(this), index, value);
 
-    public Expression SafeGet(Expression index) =>
+    public Expression exSafeGet(Expression index) =>
         safeGet.InstanceOf(Expression.Constant(this), index);
 
     public void Empty(bool trueClear) {
@@ -302,12 +327,14 @@ public class CompactingArray<T> {
     protected bool[] rem;
     public T[] arr;
     private bool requiresCompact;
+    private readonly int firstResize;
 
-    public CompactingArray(int size = 1) {
+    public CompactingArray(int size = 8, int firstResize=16) {
         arr = new T[size];
         rem = new bool[size];
         count = 0;
         requiresCompact = false;
+        this.firstResize = firstResize;
     }
 
     public void DeleteLast() {
@@ -353,10 +380,11 @@ public class CompactingArray<T> {
 
     public void Add(ref T obj) {
         if (count >= arr.Length) {
-            var narr = new T[arr.Length * 2];
+            var nLen = Math.Max(arr.Length * 2, firstResize);
+            var narr = new T[nLen];
             arr.CopyTo(narr, 0);
             arr = narr;
-            var nrem = new bool[arr.Length * 2];
+            var nrem = new bool[nLen];
             rem.CopyTo(nrem, 0);
             rem = nrem;
         }
@@ -374,7 +402,7 @@ public class CompactingArray<T> {
 
     public bool TryGet(int index, out T obj) {
         if (rem[index]) {
-            obj = default;
+            obj = default!;
             return false;
         } else {
             obj = arr[index];
@@ -388,7 +416,7 @@ public interface IDeletionMarker {
 }
 
 public class DeletionMarker<T> : IDeletionMarker {
-    public T obj;
+    public T obj = default!;
     public int priority;
     public bool markedForDeletion { get; private set; }
     private static readonly Stack<DeletionMarker<T>> cache = new Stack<DeletionMarker<T>>();
@@ -409,7 +437,7 @@ public class DeletionMarker<T> : IDeletionMarker {
     public void MarkForDeletion() => markedForDeletion = true;
 
     public void Destroy() {
-        obj = default;
+        obj = default!;
         cache.Push(this);
     }
 }
@@ -518,7 +546,7 @@ public class DMCompactingArray<T> {
     public void Empty() {
         for (int ii = 0; ii < count; ++ii) {
             arr[ii].Destroy();
-            arr[ii] = null;
+            arr[ii] = null!;
         }
         count = 0;
     }

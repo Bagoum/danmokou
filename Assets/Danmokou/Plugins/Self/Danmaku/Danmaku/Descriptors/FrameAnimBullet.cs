@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using DMK.Core;
 using DMK.Services;
 using JetBrains.Annotations;
@@ -9,7 +10,7 @@ using UnityEngine.Serialization;
 namespace DMK.Danmaku.Descriptors {
 public class FrameAnimBullet : ColorizableBullet {
 //Inspector-exposed structs cannot be readonly
-    [System.Serializable]
+    [Serializable]
     public struct BulletAnimSprite {
         public Sprite s;
         public float time;
@@ -18,21 +19,21 @@ public class FrameAnimBullet : ColorizableBullet {
     }
 
     public readonly struct Recolor {
-        [CanBeNull] public readonly BulletAnimSprite[] sprites;
+        public readonly BulletAnimSprite[]? sprites;
         public readonly GameObject prefab;
         public readonly Material material;
         public readonly string style;
 
-        public Recolor([CanBeNull] BulletAnimSprite[] sprites, GameObject prefab, Material mat, string style) {
+        public Recolor(BulletAnimSprite[]? sprites, GameObject prefab, Material mat, string style) {
             this.sprites = sprites;
             this.prefab = prefab;
             this.material = mat;
             this.style = style;
         }
     }
-    public BulletAnimSprite[] frames;
+    public BulletAnimSprite[] frames = null!;
     public BulletAnimSprite[] Frames => frames;
-    private BulletAnimSprite[] realizedFrames;
+    private BulletAnimSprite[] realizedFrames = null!;
     private int currFrame = 0;
     private float frameTime = 0f;
     public int coldFrame;
@@ -63,31 +64,34 @@ public class FrameAnimBullet : ColorizableBullet {
         return claimable;
     }
 
-    [CanBeNull] private string hotSfx;
-    public bool animateCold;
-    protected void SetColdHot(float cold, float hot, [CanBeNull] string sfxOnHot=null, bool rpt=false) {
+    private string? hotSfx;
+    protected void SetColdHot(float cold, float hot, string? sfxOnHot=null, bool rpt=false) {
         repeat = rpt;
         hotSfx = sfxOnHot;
-        //For cold=0, use the transition cold frames.
-        //For hot=0, use only the single main cold frame, unless ANIMATE_COLD is set.
-        if (hot < float.Epsilon && !animateCold) {
-            for (int ii = 0; ii < realizedFrames.Length; ++ii) realizedFrames[ii].time = 0f;
-            realizedFrames[coldFrame].time = cold;
-        } else {
+        //For cold=0, use the transition cold frames, but set them to hot.
+        //For hot=0, switch the hot and cold frames, scale down all the sizes, set all frames off, and animate normally.
+        var (c, h) = (coldFrame, hotFrame);
+        if (hot < float.Epsilon) {
+            var sizeMul = realizedFrames[coldFrame].yscale;
             for (int ii = 0; ii < realizedFrames.Length; ++ii) {
-                if (ii == coldFrame || ii == hotFrame) {
-                } else if (realizedFrames[ii].collisionActive) {
-                    realizedFrames[ii].time = Share(realizedFrames[ii].time, ref hot);
-                } else if (countPostHotColdFrames || ii < hotFrame) {
-                    cold -= realizedFrames[ii].time;
-                }
+                realizedFrames[ii].yscale *= sizeMul;
+                realizedFrames[ii].collisionActive = false;
             }
-            realizedFrames[coldFrame].time = Mathf.Max(0f, cold);
-            realizedFrames[hotFrame].time = hot;
+            (c, h) = (hotFrame, coldFrame);
         }
+        var m = Math.Max(c, h);
+        for (int ii = 0; ii < realizedFrames.Length; ++ii) {
+            if (ii == c || ii == h) {
+            } else if (realizedFrames[ii].collisionActive) {
+                realizedFrames[ii].time = Share(realizedFrames[ii].time, ref hot);
+            } else if (ii < m) {
+                cold -= realizedFrames[ii].time;
+                if (cold < 0) realizedFrames[ii].collisionActive = true;
+            }
+        }
+        realizedFrames[c].time = Mathf.Max(0f, cold);
+        realizedFrames[h].time = hot;
     }
-
-    public bool countPostHotColdFrames;
 
     private bool SetFrame(int f) {
         if (f < realizedFrames.Length) {

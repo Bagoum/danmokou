@@ -6,9 +6,9 @@ using UnityEngine;
 
 namespace DMK.Behavior.Functions {
 public class ExplodeEffect : CoroutineRegularUpdater {
-    public ParticleSystem[] particles;
-    public ScaleAnimator neg1;
-    public ScaleAnimator neg2;
+    public ParticleSystem[] particles = null!;
+    public ScaleAnimator neg1 = null!;
+    public ScaleAnimator neg2 = null!;
 
     private void Awake() {
         neg1.gameObject.SetActive(false);

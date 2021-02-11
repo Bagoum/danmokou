@@ -14,6 +14,11 @@ PrefabInstance:
 
         Mima'
       objectReference: {fileID: 0}
+    - target: {fileID: 5776548630928752885, guid: 949a4532b5136a344af7110e1f0be716,
+        type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0.6
+      objectReference: {fileID: 0}
     - target: {fileID: 6335293826760841708, guid: 949a4532b5136a344af7110e1f0be716,
         type: 3}
       propertyPath: m_Sprite

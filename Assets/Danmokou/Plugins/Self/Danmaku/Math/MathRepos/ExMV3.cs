@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using System.Linq.Expressions;
+using DMK.Core;
 using DMK.Expressions;
 using JetBrains.Annotations;
 using Ex = System.Linq.Expressions.Expression;
@@ -25,6 +26,7 @@ namespace DMK.DMath.Functions {
 /// <summary>
 /// Functions that return V3.
 /// </summary>
+[Reflect]
 public static partial class ExMV3 {
     /// <summary>
     /// Derive a Vector3 from an XY (Vector2) and a Z-component.
@@ -68,7 +70,11 @@ public static partial class ExMV3 {
     /// </summary>
     /// <param name="tp">Parametric function to assign to x,y components</param>
     /// <returns></returns>
-    public static tv3 TP(tv2 tp) => ((Ex) tp).As<Vector3>();
+    public static tv3 TP3(tv2 tp) => ((Ex) tp).As<Vector3>();
+    /// <summary>
+    /// The zero vector.
+    /// </summary>
+    public static tv3 Zero() => PXYZ(E0, E0, E0);
 
     /// <summary>
     /// Rotate a Vector3 by a quaternion. In Unity the rotation order is ZXY.
@@ -190,7 +196,7 @@ public static partial class ExMV3 {
                 a0_cs.Is(CosSin(a0)),
                 a_cs.Is(CosSin(a.Add(a0))),
                 xyd.x.Is(r.Mul(a_cs.y.Sub(a0_cs.y).Add(aRem.Mul(a_cs.x)))),
-                v3.Is(TP(DeconvertBasis(xyd, cs))),
+                v3.Is(TP3(DeconvertBasis(xyd, cs))),
                 v3 .z.Is(r.Mul(a_cs.x.Sub(a0_cs.x).Sub(aRem.Mul(a_cs.y)))),
                 v3
             );

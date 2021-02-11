@@ -8,7 +8,6 @@ using DMK.Reflection;
 using UnityEngine;
 using static DMK.Reflection.Compilers;
 using static NUnit.Framework.Assert;
-using ExFXY = System.Func<DMK.Expressions.TEx<float>, DMK.Expressions.TEx<float>>;
 using static DMK.DMath.Functions.ExM;
 using static DMK.DMath.Functions.ExMMod;
 using static DMK.DMath.Functions.ExMLerps;
@@ -21,12 +20,12 @@ namespace DMK.Testing {
         [Test]
         public static void Basic() {
             Assert.AreEqual(FXY(x => 3f)(5f), 3f);
-            Assert.AreEqual(FXY(x => Linear(ExC(6f), ExC(2f), x))(5f), 16f);
-            var f = FXY(Cos);
+            Assert.AreEqual(FXY(x => Linear(ExC(6f), ExC(2f), x.FloatVal))(5f), 16f);
+            var f = FXY(x => Cos(x.FloatVal));
             Debug.Log(f(Mathf.PI));
             Debug.Log(f(0));
             Debug.Log(f(Mathf.PI * 2f));
-            f = FXY(t => SubMax0(t, Expression.Constant(4f)));
+            f = FXY(t => SubMax0(t.FloatVal, Expression.Constant(4f)));
             AreEqual(f(3), 0);
             AreEqual(f(-3), 0);
             AreEqual(f(5), 1);
@@ -52,7 +51,7 @@ namespace DMK.Testing {
         public static void ShiftSoftmax() {
             FXY eq1 = x => 5 * x;
             FXY eq2 = x => 2 * x;
-            FXY shifter = FXY(SoftmaxShift(x => -1f, x => 10f, x => Mul<float>(x, 5f), x => Mul<float>(x, 2f)));
+            FXY shifter = FXY(SoftmaxShift(x => -1f, x => 10f, x => Mul<float>(x.FloatVal, 5f), x => Mul<float>(x.FloatVal, 2f)));
             Assert.AreEqual(shiftsoftmax(-1f, 10f, eq1, eq2, 110f), 250f, 1f);
             Assert.AreEqual(shiftsoftmax(-1f, 10f, eq1, eq2, 10.2f), shifter(10.2f), err);
             Assert.AreEqual(shiftsoftmax(-1f, 10f, eq1, eq2, 9.3f), shifter(9.3f), err);
@@ -69,15 +68,15 @@ namespace DMK.Testing {
                 TestTPoints(e010, otherPts);
                 TestTPoints(e010, new[] { (0f, 0f), (ratio, 1f), (1f, 0f)});
             }
-            FXY sineES = FXY(x => Smooth(ExMLerps.ESine010, x));
-            FXY smES = FXY(x => Smooth(ExMLerps.ESoftmod010, x));
-            FXY quadES = FXY(x => EQuad0m10(ExC(0.3f), ExC(1f), x));
+            FXY sineES = FXY(x => Smooth(ExMEasers.ESine010, x.FloatVal));
+            FXY smES = FXY(x => Smooth(ExMEasers.ESoftmod010, x.FloatVal));
+            FXY quadES = FXY(x => EQuad0m10(ExC(0.3f), ExC(1f), x.FloatVal));
             Test010(sineES, new[] { (0.1f, 0.30901699f )});
             Test010(smES, new[] { (0.1f, 0.2f ), (0.7f, 0.6f)});
             Test010(quadES, new (float, float)[] {}, 0.3f);
-            FXY smthin = FXY(x => Smooth(ExMLerps.EInSine, x));
-            FXY sc = FXY(x => SmoothIO(ExMLerps.EInSine, ExMLerps.EOutSine, 
-                ExC(6.0f), ExC(2.0f), ExC(3.0f), x));
+            FXY smthin = FXY(x => Smooth(ExMEasers.EInSine, x.FloatVal));
+            FXY sc = FXY(x => SmoothIO(ExMEasers.EInSine, ExMEasers.EOutSine, 
+                ExC(6.0f), ExC(2.0f), ExC(3.0f), x.FloatVal));
             TestTPoints(sc, new[] {
                 (-1f, 0f),
                 (0.2f, smthin(0.1f)),
@@ -87,7 +86,7 @@ namespace DMK.Testing {
                 (3.3f, smthin(0.9f)),
                 (6.5f, 0f)
             });
-            FXY sc2 = FXY(x => SmoothIOe(ExMLerps.EInSine, ExC(6.0f), ExC(2.0f), x));
+            FXY sc2 = FXY(x => SmoothIOe(ExMEasers.EInSine, ExC(6.0f), ExC(2.0f), x.FloatVal));
             TestTPoints(sc2, new[] {
                 (-1f, 0f),
                 (0.2f, smthin(0.1f)),
@@ -96,7 +95,7 @@ namespace DMK.Testing {
                 (4.3f, 1-smthin(0.15f)),
                 (6.5f, 0f)
             });
-            FXY smthio = FXY(x => Smooth(ExMLerps.EIOSine, x));
+            FXY smthio = FXY(x => Smooth(ExMEasers.EIOSine, x.FloatVal));
             sc = "smoothioe io-sine 4 0.5 x".Into<FXY>();
             TestTPoints(sc, 
                 (-1f, 0f), 
@@ -110,7 +109,7 @@ namespace DMK.Testing {
 
         [Test]
         public static void FancyMod() {
-            FXY f = FXY(t => ModWithPause(ExC(50f), ExC(20f), ExC(5f), t));
+            FXY f = FXY(t => ModWithPause(ExC(50f), ExC(20f), ExC(5f), t.FloatVal));
             Assert.AreEqual(f(5), 5, err);
             Assert.AreEqual(f(22), 20, err);
             Assert.AreEqual(f(26), 21, err);
@@ -127,14 +126,14 @@ namespace DMK.Testing {
 
         [Test]
         public static void FMod() {
-            FXY f = FXY(t=>RangeSoftMod(ExC(4f), t));
+            FXY f = FXY(t=>RangeSoftMod(ExC(4f), t.FloatVal));
             Assert.AreEqual(f(3), 3, err);
             Assert.AreEqual(f(4.1f), 3.9, err);
             Assert.AreEqual(f(11), -3f, err);
             Assert.AreEqual(f(-3f), -3f, err);
             Assert.AreEqual(f(-5f), -3f, err);
             Assert.AreEqual(f(12.04f), -3.96f, err);
-            f = FXY(t=>RangeMod(ExC(4f), t));
+            f = FXY(t=>RangeMod(ExC(4f), t.FloatVal));
             Assert.AreEqual(f(3), 3, err);
             Assert.AreEqual(f(4.1f), -3.9f, err);
             Assert.AreEqual(f(11), 3f, err);
@@ -150,13 +149,13 @@ namespace DMK.Testing {
             Assert.AreEqual(sd(2.3f), sdc(2.3f), err);
             Assert.AreEqual(sd(9.75f), sdc(9.75f), err);
             Assert.AreEqual(sd(13.75f), sd(17.75f), 0.0001f);
-            FXY cd = "dcosine 2 4 t".Into<FXY>();; // = d/dx 4 cos(2pi x/2) = -4pi sin (pi x)
+            FXY cd = "dcosine 2 4 t".Into<FXY>(); // = d/dx 4 cos(2pi x/2) = -4pi sin (pi x)
             Func<float, float> cdc = x => -4 * M.PI * Mathf.Sin(M.PI * x);
             Assert.AreEqual(cd(2.3f), cdc(2.3f), err);
             Assert.AreEqual(cd(9.75f), cdc(9.75f), err);
             Assert.AreEqual(cd(13.75f), cd(17.75f), 0.0001f);
             Func<float, float> sc = x => 2f * Mathf.Sin(M.PI / 4 * x);
-            FXY s = FXY(Ease(ExMLerps.EOutSine, 2, X()));
+            FXY s = FXY(EaseF(ExMEasers.EOutSine, 2, BPYRepo.X()));
             AreEqual(s(0.2f), sc(0.2f), err);
             AreEqual(s(0.6f), sc(0.6f), err);
         }
@@ -171,14 +170,14 @@ namespace DMK.Testing {
 
         [Test]
         public static void TSmooth() {
-            FXY ios = FXY(Ease(ExMLerps.EIOSine, 100, X()));
+            FXY ios = FXY(EaseF(ExMEasers.EIOSine, 100, BPYRepo.X()));
             Assert.AreEqual(ios(10), 4.89434837f/2f, err);
             Assert.AreEqual(ios(50), 50, err);
         }
 
         [Test]
         public static void THeight() {
-            FXY h = FXY(x => Height(10f, 10, -10, x));
+            FXY h = FXY(x => Height(10f, 10, -10, x.FloatVal));
             Assert.AreEqual(h(0), 10f, err);
             Assert.AreEqual(h(1), 15f, err);
             Assert.AreEqual(h(2), 10f, err);
@@ -217,7 +216,7 @@ namespace DMK.Testing {
 
         [Test]
         public static void TestSWings() {
-            var f = FXY(x => SWing2(ExC(1.33f / 4.53f), ExC(4.53f), ExC(-1.66f), ExC(2.42f), ExC(2.9f), x));
+            var f = FXY(x => SWing2(ExC(1.33f / 4.53f), ExC(4.53f), ExC(-1.66f), ExC(2.42f), ExC(2.9f), x.FloatVal));
             TestTPoints(f, new[] {
                 (0, 2.42f),
                 (1.33f, -1.66f),

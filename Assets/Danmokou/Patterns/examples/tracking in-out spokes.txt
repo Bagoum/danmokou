@@ -3,9 +3,6 @@ phase 0
 	paction 0
 		shift-phase-to 1
 phase 25
-	end
-		clear phase
-		clear bullet
 	paction 0
 		pool-control circle-pink/b allowcull false
 		position 0 0
@@ -14,7 +11,9 @@ phase 25
 			wt	(clamp 25 50 linear 40 -1 t) _
 			wait-child
 			savev2	ploc 0 Lplayer
-		} cre 3 20 <> target (@0 ploc) circlep this 12 s roffset
+		} gcr2 3 20 <> {
+		} target (@0 ploc) gsr2c 12 {
+		} s roffset
 			px (* 6 equad0m10 3 7 t)
 		bullet-control persist circle-pink/b restyle circle-red/b > t 3
 		bullet-control persist circle-red/b cull > t 7

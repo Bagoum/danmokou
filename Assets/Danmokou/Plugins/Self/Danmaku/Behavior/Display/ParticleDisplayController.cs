@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace DMK.Behavior.Display {
 public class ParticleDisplayController : DisplayController {
-    public ParticleSystem particles;
+    public ParticleSystem particles = null!;
 
     private ParticleSystem.MinMaxGradient defaultGrad;
 

@@ -4,13 +4,11 @@ using DMK.Danmaku;
 using DMK.DMath;
 using JetBrains.Annotations;
 using Ex = System.Linq.Expressions.Expression;
-using ExSBF = System.Func<DMK.Expressions.RTExSB, DMK.Expressions.TEx<float>>;
-using ExSBV2 = System.Func<DMK.Expressions.RTExSB, DMK.Expressions.TEx<UnityEngine.Vector2>>;
-using ExBPY = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<float>>;
-using ExTP = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<UnityEngine.Vector2>>;
+using ExBPY = System.Func<DMK.Expressions.TExArgCtx, DMK.Expressions.TEx<float>>;
+using ExTP = System.Func<DMK.Expressions.TExArgCtx, DMK.Expressions.TEx<UnityEngine.Vector2>>;
 
 namespace DMK.Expressions {
-public interface ITExVelocity {
+public interface ITexMovement {
     MemberExpression angle { get; }
     MemberExpression cos { get; }
     MemberExpression sin { get; }
@@ -21,7 +19,7 @@ public interface ITExVelocity {
     Expression flipY { get; }
 }
 
-public class TExVel : TEx<Movement>, ITExVelocity {
+public class TExMov : TEx<Movement>, ITexMovement {
     public MemberExpression angle => Ex.Field(ex, "angle");
     public MemberExpression cos => Ex.Field(ex, "cos_rot");
     public MemberExpression sin => Ex.Field(ex, "sin_rot");
@@ -30,19 +28,15 @@ public class TExVel : TEx<Movement>, ITExVelocity {
     public MemberExpression rootY => Ex.Field(Ex.Field(ex, "rootPos"), "y");
     public Expression flipX => Ex.Field(ex, "flipX").As<float>();
     public Expression flipY => Ex.Field(ex, "flipY").As<float>();
-    public TExVel(ExMode m) : base(m) { }
-    public TExVel(Expression ex) : base(ex) { }
+    public TExMov(ExMode m, string? name) : base(m, name) { }
+    public TExMov(Expression ex) : base(ex) { }
     public Ex FlipX() => _flipX.InstanceOf(this);
     private static readonly ExFunction _flipX = ExUtils.Wrap<Movement>("FlipX");
     public Ex FlipY() => _flipY.InstanceOf(this);
     private static readonly ExFunction _flipY = ExUtils.Wrap<Movement>("FlipY");
 }
 
-public class RTExVel : TExVel {
-    public RTExVel() : base(ExMode.RefParameter) { }
-}
-
-public class TExLVel : TEx<LaserMovement>, ITExVelocity {
+public class TExLMov : TEx<LaserMovement>, ITexMovement {
     public MemberExpression angle => Ex.Field(ex, "angle");
     public MemberExpression cos => Ex.Field(ex, "cos_rot");
     public MemberExpression sin => Ex.Field(ex, "sin_rot");
@@ -51,7 +45,8 @@ public class TExLVel : TEx<LaserMovement>, ITExVelocity {
     public MemberExpression rootY => Ex.Field(Ex.Field(ex, "rootPos"), "y");
     public Expression flipX => Ex.Field(ex, "flipX").As<float>();
     public Expression flipY => Ex.Field(ex, "flipY").As<float>();
-    public TExLVel(ExMode m) : base(m) { }
+    public TExLMov(ExMode m, string? name) : base(m, name) { }
+    public TExLMov(Expression ex) : base(ex) { }
 
     public Ex FlipX() => _flipX.InstanceOf(this);
     private static readonly ExFunction _flipX = ExUtils.Wrap<LaserMovement>("FlipX");
@@ -59,53 +54,39 @@ public class TExLVel : TEx<LaserMovement>, ITExVelocity {
     private static readonly ExFunction _flipY = ExUtils.Wrap<LaserMovement>("FlipY");
 }
 
-public class RTExLVel : TExLVel {
-    public RTExLVel() : base(ExMode.RefParameter) { }
-}
-
 public class TExSB : TEx<BulletManager.SimpleBullet> {
     public readonly TExPI bpi;
     public readonly TEx<float> scale;
     public readonly TExV2 direction;
-    public readonly TExVel velocity;
+    public readonly TExMov velocity;
     public TExV2 accDelta => new TExV2(Ex.Field(ex, "accDelta"));
 
     public TExSB(Expression ex) : base(ex) {
         bpi = TExPI.Box(Ex.Field(ex, "bpi"));
         scale = Ex.Field(ex, "scale");
         direction = new TExV2(Ex.Field(ex, "direction"));
-        velocity = new TExVel(Ex.Field(ex, "movement"));
+        velocity = new TExMov(Ex.Field(ex, "movement"));
     }
 
-    protected TExSB(ExMode m) : base(m) {
+    protected TExSB(ExMode m, string? name) : base(m, name) {
         bpi = TExPI.Box(Ex.Field(ex, "bpi"));
         scale = Ex.Field(ex, "scale");
         direction = new TExV2(Ex.Field(ex, "direction"));
-        velocity = new TExVel(Ex.Field(ex, "movement"));
+        velocity = new TExMov(Ex.Field(ex, "movement"));
     }
-}
-
-public class RTExSB : TExSB {
-    public RTExSB() : base(ExMode.RefParameter) { }
-    public RTExSB(Expression ex) : base(ex) { }
 }
 
 public class TExSBC : TEx<BulletManager.AbsSimpleBulletCollection> {
-    private readonly MemberExpression arr;
     public MemberExpression style => Ex.Property(ex, "Style");
+    public MemberExpression arr => Ex.Field(ex, "arr");
 
-    [UsedImplicitly]
-    public TExSBC() : this(ExMode.Parameter) { }
+    public TExSBC(string name) : base(ExMode.Parameter, name) { }
+    public TExSBC(Ex _ex) : base(_ex) {}
 
-    public TExSBC(ExMode m) : base(m) {
-        arr = Ex.Field(ex, "arr");
-    }
-
-    public RTExSB this[Ex index] => new RTExSB(arr.Index(index));
-    private static readonly ExFunction delete = ExUtils.Wrap<BulletManager.AbsSimpleBulletCollection>("Delete",
-        new[] {typeof(int), typeof(bool)});
-    public Ex Delete(Ex index) => delete.InstanceOf(this, index, Ex.Constant(false));
-    public Ex DeleteDestroy(Ex index) => delete.InstanceOf(this, index, Ex.Constant(true));
+    public TExSB this[Ex index] => new TExSB(arr.Index(index));
+    private static readonly ExFunction delete = ExUtils.Wrap<BulletManager.AbsSimpleBulletCollection>("DeleteSB",
+        new[] {typeof(int)});
+    public Ex DeleteSB(Ex index) => delete.InstanceOf(this, index);
 
     private static readonly ExFunction speedup =
         ExUtils.Wrap<BulletManager.AbsSimpleBulletCollection>("Speedup", new[] {typeof(float)});
@@ -116,56 +97,37 @@ namespace DMK.DMath.Functions {
 /// <summary>
 /// Functions that get a float value from a simple bullet.
 /// </summary>
+[Reflect]
 public static class SBFRepo {
     /// <summary>
-    /// Return the time of the bullet.
+    /// Return the scale of the bullet.
     /// </summary>
     /// <returns></returns>
-    public static ExSBF Time() => sb => sb.bpi.t;
-
-    /// <summary>
-    /// Return the time of the bullet.
-    /// </summary>
-    /// <returns></returns>
-    public static ExSBF Scale() => sb => sb.scale;
+    public static ExBPY Scale() => sb => sb.SB.scale;
     /// <summary>
     /// Return the direction, in degrees, of the bullet.
     /// </summary>
     /// <returns></returns>
-    public static ExSBF Dir() => sb => ExM.ATan(sb.direction);
-    /// <summary>
-    /// Return the value of a function executed on the bullet's parametric information.
-    /// This function is automatically applied if no other is applicable.
-    /// </summary>
-    /// <param name="f"></param>
-    /// <returns></returns>
-    [Fallthrough(50)]
-    public static ExSBF BPY(ExBPY f) => sb => f(sb.bpi);
+    public static ExBPY Dir() => sb => ExM.ATan(sb.SB.direction);
 }
 
 /// <summary>
 /// Functions that get a vector2 value from a simple bullet.
 /// </summary>
+[Reflect]
 public static class SBV2Repo {
     /// <summary>
     /// Return the global location of the bullet.
     /// </summary>
-    /// <returns></returns>
-    public static ExSBV2 Loc() => sb => sb.bpi.loc;
+    public static ExTP Loc() => sb => sb.loc;
     /// <summary>
-    /// Return the direction of the bullet.
+    /// Return the direction of the bullet as a (cos, sin) vector.
     /// </summary>
-    /// <returns></returns>
-    public static ExSBV2 Dir() => sb => sb.direction;
+    public static ExTP Dir() => sb => sb.SB.direction;
 
-    public static ExSBV2 AccDelta() => sb => sb.accDelta;
     /// <summary>
-    /// Return the value of a function executed on the bullet's parametric information.
-    /// This function is automatically applied if no other is applicable.
+    /// Return the delta movement of the bullet this frame.
     /// </summary>
-    /// <param name="f"></param>
-    /// <returns></returns>
-    [Fallthrough(50)]
-    public static ExSBV2 TP(ExTP f) => sb => f(sb.bpi);
+    public static ExTP AccDelta() => sb => sb.SB.accDelta;
 }
 }

@@ -8,7 +8,7 @@ using JetBrains.Annotations;
 
 namespace DMK.Behavior.Display {
 public class Cutin : RegularUpdater {
-    private BehaviorEntity beh;
+    private BehaviorEntity beh = null!;
     public float recordPositionEvery = 1f;
     private float recordCtr;
     [Header("Ghosts")]

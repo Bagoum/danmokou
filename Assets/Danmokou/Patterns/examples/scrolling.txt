@@ -1,12 +1,6 @@
 pattern { }
 phase 0
 	paction 0
-		@ { nl nr nu nd }
-			cull
-		summon inode <> nl <> null null
-		summon inode <> nr <> null null
-		summon inode <> nu <> null null
-		summon inode <> nd <> null null
 	paction 0.05
 		shift-phase-to 1
 phase 0

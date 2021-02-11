@@ -6,13 +6,14 @@ public static partial class Reflector {
         public StaticException(string message) : base($"STATIC ERROR: {message}") { }
     }
 
-    private class BadTypeException : Exception {
+    public class BadTypeException : Exception {
         public BadTypeException(string message) : base(message) { }
         public BadTypeException(string message, Exception inner) : base(message, inner) { }
     }
 
-    private class CompilationException : Exception {
-        public CompilationException(string message, Exception inner) : base(message, inner) { }
+    public class CompileException : Exception {
+        public CompileException(string message) : base(message) { }
+        public CompileException(string message, Exception inner) : base(message, inner) { }
     }
 
     private class ParsingException : Exception {

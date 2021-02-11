@@ -4,7 +4,7 @@ using UnityEngine;
 namespace DMK.Core {
 
 public interface IStageConfig {
-    StateMachine StateMachine { get; }
+    StateMachine? StateMachine { get; }
     string DefaultSuicideStyle { get; }
 }
 

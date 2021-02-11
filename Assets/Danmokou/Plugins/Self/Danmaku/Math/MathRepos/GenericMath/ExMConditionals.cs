@@ -1,4 +1,5 @@
-﻿using DMK.Expressions;
+﻿using DMK.Core;
+using DMK.Expressions;
 using Ex = System.Linq.Expressions.Expression;
 using static DMK.Expressions.ExMHelpers;
 using tfloat = DMK.Expressions.TEx<float>;
@@ -10,13 +11,12 @@ using efloat = DMK.Expressions.EEx<float>;
 using ev2 = DMK.Expressions.EEx<UnityEngine.Vector2>;
 using ev3 = DMK.Expressions.EEx<UnityEngine.Vector3>;
 using erv2 = DMK.Expressions.EEx<DMK.DMath.V2RV2>;
-using ExBPY = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<float>>;
-using ExPred = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<bool>>;
 
 namespace DMK.DMath.Functions {
 /// <summary>
 /// See <see cref="Functions.ExM"/>. This class contains functions related to conditionals.
 /// </summary>
+[Reflect]
 public static class ExMConditionals {
 
     /// <summary>

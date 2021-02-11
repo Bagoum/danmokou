@@ -17,6 +17,7 @@ namespace DMK.DMath.Functions {
 /// <summary>
 /// Functions that return V2RV2.
 /// </summary>
+[Reflect]
 public static partial class ExMRV2 {
     /// <summary>
     /// Derive a V2RV2 from a nonrotational vector and a rotational vector3.

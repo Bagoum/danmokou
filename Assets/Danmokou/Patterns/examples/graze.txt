@@ -17,7 +17,7 @@ phase 0
 			} gsr2c 12 {
 			} s tprot cx 3
 			
-            bullet ellipse-blue* <-1> gcr2 0.4 _ <> {} gsr2 2 <2> {
+            async ellipse-blue* <-1> gcr2 0.4 _ <> {} gsr2 2 <2> {
 				color { /w /b }
 				target a Lplayer
 			} s tprot cx 6

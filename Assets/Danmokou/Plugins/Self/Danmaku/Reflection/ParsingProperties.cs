@@ -1,10 +1,12 @@
 ﻿
 using System;
 using System.Collections.Generic;
+using DMK.Core;
 using static DMK.Reflection.Reflector;
 using static DMK.SM.ParsingProperty;
 
 namespace DMK.SM {
+[Reflect]
 public class ParsingProperty {
     public static ParsingProperty Strict(ReflCtx.Strictness strict) => new StrictProp(strict);
     public static ParsingProperty WarnPrefix() => new WarnPrefixFlag();

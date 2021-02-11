@@ -17,15 +17,15 @@ using DMK.Services;
 using DMK.SM;
 using JetBrains.Annotations;
 using UnityEngine;
-using ExFXY = System.Func<DMK.Expressions.TEx<float>, DMK.Expressions.TEx<float>>;
-using ExBPY = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<float>>;
-using ExTP = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<UnityEngine.Vector2>>;
-using ExBPRV2 = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<DMK.DMath.V2RV2>>;
 using GCP = DMK.Danmaku.Options.GenCtxProperty;
 using static DMK.Reflection.Compilers;
 using static DMK.Expressions.ExMHelpers;
 using static DMK.DMath.Functions.ExM;
 using static DMK.DMath.Functions.ExMRV2;
+using Ex = System.Linq.Expressions.Expression;
+using ExBPY = System.Func<DMK.Expressions.TExArgCtx, DMK.Expressions.TEx<float>>;
+using ExTP = System.Func<DMK.Expressions.TExArgCtx, DMK.Expressions.TEx<UnityEngine.Vector2>>;
+using ExBPRV2 = System.Func<DMK.Expressions.TExArgCtx, DMK.Expressions.TEx<DMK.DMath.V2RV2>>;
 
 namespace DMK.Danmaku.Patterns {
 public delegate void SyncPattern(SyncHandoff sbh);
@@ -158,6 +158,7 @@ public struct AsyncHandoff {
 /// </summary>
 [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
 [SuppressMessage("ReSharper", "UnusedMember.Global")]
+[Reflect]
 public static partial class AtomicPatterns {
     /// <summary>
     /// Do nothing.
@@ -175,7 +176,7 @@ public static partial class AtomicPatterns {
     /// </summary>
     /// <param name="events"></param>
     /// <returns></returns>
-    public static SyncPattern Event(Events.Event0[] events) => sbh => events[sbh.index % events.Length]?.Proc();
+    public static SyncPattern Event(Events.Event0?[] events) => sbh => events[sbh.index % events.Length]?.Proc();
 
     #region Items
 
@@ -211,12 +212,7 @@ public static partial class AtomicPatterns {
     /// <param name="path">Movement descriptor</param>
     /// <returns></returns>
     [Alias("simp")]
-    public static SyncPattern S(GCXU<VTP> path) {
-        return sbh => {
-            uint id = sbh.GCX.NextID();
-            sbh.bc.Simple(sbh, null, null, path.New(sbh.GCX, ref id), id);
-        };
-    }
+    public static SyncPattern S(GCXU<VTP> path) => Simple(path, new SBOptions(new SBOption[0]));
 
     /// <summary>
     /// Fires a simple bullet. Takes an array of simple bullet options as modifiers.
@@ -227,53 +223,11 @@ public static partial class AtomicPatterns {
     /// <returns></returns>
     public static SyncPattern Simple(GCXU<VTP> path, SBOptions options) => sbh => {
         uint id = sbh.GCX.NextID();
-        var p = path.New(sbh.GCX, ref id);
-        if (options.player.Try(out var player)) {
+        if (options.player.HasValue) {
             sbh.ch.bc.style = BulletManager.GetOrMakePlayerCopy(sbh.bc.style);
-            PlayerFireDataHoisting.Record(id, player);
-            DataHoisting.PreserveID(id);
         }
-        sbh.bc.Simple(sbh, options.scale?.Add(sbh.GCX, id), options.direction?.Add(sbh.GCX, id), p, id);
+        sbh.bc.Simple(sbh, options, path, id);
     };
-
-
-    /// <summary>
-    /// Fires a simple bullet with custom direction.
-    /// </summary>
-    /// <param name="dir">Direction (degrees)</param>
-    /// <param name="path">Movement descriptor</param>
-    /// <returns></returns>
-    public static SyncPattern SDD(ExBPY dir, GCXU<VTP> path) {
-        var dir2 = GCXU(x => CosSinDeg(dir(x.bpi)));
-        return sbh => {
-            uint id = sbh.GCX.NextID();
-            sbh.bc.Simple(sbh, null, dir2.New(sbh.GCX, ref id), path.Add(sbh.GCX, id), id);
-        };
-    }
-
-    /// <summary>
-    /// Fires a scalable simple bullet.
-    /// </summary>
-    /// <param name="scale">Scaling function</param>
-    /// <param name="path">Movement descriptor</param>
-    /// <returns></returns>
-    public static SyncPattern SS(GCXU<BPY> scale, GCXU<VTP> path) => sbh => {
-        uint id = sbh.GCX.NextID();
-        sbh.bc.Simple(sbh, scale.New(sbh.GCX, ref id), null, path.Add(sbh.GCX, id), id);
-    };
-
-    /// <summary>
-    /// Fires a scalable simple bullet with custom direction.
-    /// </summary>
-    public static SyncPattern SSDD(GCXU<BPY> scale, ExBPY dir, GCXU<VTP> path) {
-        var dir2 = GCXU(x => CosSinDeg(dir(x.bpi)));
-        return sbh => {
-            uint id = sbh.GCX.NextID();
-            sbh.bc.Simple(sbh, scale.New(sbh.GCX, ref id), dir2.Add(sbh.GCX, id), path.Add(sbh.GCX, id), id);
-        };
-    }
-
-    
 
     #endregion
 
@@ -287,7 +241,7 @@ public static partial class AtomicPatterns {
     /// <returns></returns>
     public static SyncPattern Complex(GCXU<VTP> path, BehOptions options) => sbh => {
         uint id = sbh.GCX.NextID();
-        sbh.bc.Complex(sbh, path.New(sbh.GCX, ref id), id, options);
+        sbh.bc.Complex(sbh, path, id, options);
     };
     
     /// <summary>
@@ -300,7 +254,7 @@ public static partial class AtomicPatterns {
     /// <returns></returns>
     public static SyncPattern Pather(float maxTime, BPY remember, GCXU<VTP> path, BehOptions options) => sbh => {
         uint id = sbh.GCX.NextID();
-        sbh.bc.Pather(sbh, maxTime > 0 ? maxTime : (float?) null, remember, path.New(sbh.GCX, ref id), id, options);
+        sbh.bc.Pather(sbh, maxTime > 0 ? maxTime : (float?) null, remember, path, id, options);
     };
 
     /// <summary>
@@ -313,7 +267,7 @@ public static partial class AtomicPatterns {
     /// <returns></returns>
     public static SyncPattern Laser(GCXU<VTP> path, GCXF<float> cold, GCXF<float> hot, LaserOptions options) => sbh => {
             uint id = sbh.GCX.NextID();
-            sbh.bc.Laser(sbh, path.New(sbh.GCX, ref id), cold(sbh.GCX), hot(sbh.GCX), id, options);
+            sbh.bc.Laser(sbh, path, cold(sbh.GCX), hot(sbh.GCX), id, options);
         };
 
     public static SyncPattern SafeLaser(GCXF<float> cold, LaserOptions options) =>
@@ -322,11 +276,11 @@ public static partial class AtomicPatterns {
     public static SyncPattern SafeLaserM(GCXU<VTP> path, GCXF<float> cold, LaserOptions options) =>
         Laser(path, cold, _ => 0f, options); 
 
-    public static SyncPattern SummonS(GCXU<VTP> path, [CanBeNull] StateMachine sm) =>
+    public static SyncPattern SummonS(GCXU<VTP> path, StateMachine? sm) =>
         Summon(path, sm, new BehOptions());
-    public static SyncPattern SummonSUP(GCXU<VTP> path, [CanBeNull] StateMachine sm) =>
+    public static SyncPattern SummonSUP(GCXU<VTP> path, StateMachine? sm) =>
         SummonUP(path, sm, new BehOptions());
-    public static SyncPattern Inode(GCXU<VTP> path, [CanBeNull] StateMachine sm) {
+    public static SyncPattern Inode(GCXU<VTP> path, StateMachine? sm) {
         var f = SummonS(path, sm);
         return sbh => {
             sbh.ch.bc.style = "inode";
@@ -334,66 +288,66 @@ public static partial class AtomicPatterns {
         };
     }
 
-    private static SyncHandoff _Summon(SyncHandoff sbh, bool pool, GCXU<VTP> path, [CanBeNull] StateMachine sm, BehOptions options) {
+    private static SyncHandoff _Summon(SyncHandoff sbh, bool pool, GCXU<VTP> path, StateMachine? sm, BehOptions options) {
         uint id = sbh.GCX.NextID();
-        sbh.bc.Summon(pool, sbh, options, path.New(sbh.GCX, ref id), SMRunner.Cull(sm, sbh.ch.cT, sbh.GCX), id);
+        sbh.bc.Summon(pool, sbh, options, path, SMRunner.Cull(sm, sbh.ch.cT, sbh.GCX), id);
         return sbh;
     }
 
-    public static SyncPattern Summon(GCXU<VTP> path, [CanBeNull] StateMachine sm, BehOptions options) => sbh =>
+    public static SyncPattern Summon(GCXU<VTP> path, StateMachine? sm, BehOptions options) => sbh =>
         _Summon(sbh, true, path, sm, options);
-    public static SyncPattern SummonUP(GCXU<VTP> path, [CanBeNull] StateMachine sm, BehOptions options) => sbh =>
+    public static SyncPattern SummonUP(GCXU<VTP> path, StateMachine? sm, BehOptions options) => sbh =>
         _Summon(sbh, false, path, sm, options);
 
-    public static SyncPattern SummonR(RootedVTP path, [CanBeNull] StateMachine sm, BehOptions options) => sbh => {
+    public static SyncPattern SummonR(RootedVTP path, StateMachine? sm, BehOptions options) => sbh => {
         sbh.ch.bc.Root(path.root(sbh.GCX));
         _Summon(sbh, true, path.path, sm, options);
     };
-    public static SyncPattern SummonRUP(RootedVTP path, [CanBeNull] StateMachine sm, BehOptions options) => sbh => {
+    public static SyncPattern SummonRUP(RootedVTP path, StateMachine? sm, BehOptions options) => sbh => {
         sbh.ch.bc.Root(path.root(sbh.GCX));
         _Summon(sbh, false, path.path, sm, options);
     };
 
-    public static SyncPattern SummonRZ([CanBeNull] StateMachine sm, BehOptions options) =>
+    public static SyncPattern SummonRZ(StateMachine? sm, BehOptions options) =>
         SummonR(new RootedVTP(0, 0, VTPRepo.Null()), sm, options);
 
-    private static BPRV2 DrawerLoc(SyncHandoff sbh, ExBPRV2 locScaleAngle, [CanBeNull] ExTP offset = null) {
+    private static BPRV2 DrawerLoc(SyncHandoff sbh, BPRV2 locScaleAngle, TP? offset = null) {
         var summonLoc = sbh.bc.FacedRV2(sbh.rv2) + ((offset == null) ? sbh.bc.ParentOffset : Vector2.zero);
-        return BPRV2(bpi => EEx.Resolve<V2RV2>(locScaleAngle(bpi), _lcs => {
-            var lcs = new TExRV2(_lcs);
-            TEx<V2RV2> offsetLoc = (offset == null) ? summonLoc : AddNV(summonLoc, offset(bpi));
-            return V2V2F(
-                ExMConversions.RV2ToXY(AddRVA(offsetLoc, ExUtils.V3(lcs.nx, lcs.ny, E0))), //locScaleAng offset is rotational
-                ExUtils.V2(lcs.rx, lcs.ry),
-                Add<float>(lcs.angle, summonLoc.angle)
+        return bpi => {
+            var offsetLoc = summonLoc + (offset?.Invoke(bpi) ?? Vector2.zero);
+            var lsa = locScaleAngle(bpi);
+            return new V2RV2(
+                (offsetLoc + new Vector3(lsa.nx, lsa.ny, 0)).TrueLocation, //locScaleAng offset is rotational
+                lsa.RV,
+                lsa.angle + summonLoc.angle
             );
-        }));
+        };
     }
 
     private static SMRunner WaitForPhase(ICancellee cT) => SMRunner.Cull(Reflector.WaitForPhaseSM, cT);
 
-    public static SyncPattern Circ(TP4 color, ExBPRV2 locScaleAngle) => sbh => {
+    public static SyncPattern Circ(TP4 color, BPRV2 locScaleAngle) => sbh => {
         uint id = sbh.GCX.NextID();
         sbh.bc.SummonCirc(sbh, "_", color, DrawerLoc(sbh, locScaleAngle), WaitForPhase(sbh.ch.cT), id);
     };
-    public static SyncPattern gRelCirc(string behId, ExTP loc, ExBPRV2 locScaleAngle, TP4 color) => sbh => {
+    public static SyncPattern gRelCirc(string behId, TP loc, BPRV2 locScaleAngle, TP4 color) => sbh => {
         uint id = sbh.GCX.NextID();
         sbh.bc.SummonCirc(sbh, behId, color, DrawerLoc(sbh, locScaleAngle, loc), WaitForPhase(sbh.ch.cT), id);
     };
 
-    public static SyncPattern RelCirc(string behId, BEHPointer beh, ExBPRV2 locScaleAngle, TP4 color) =>
-        gRelCirc(behId, _ => LBEH(beh), locScaleAngle, color);
-    public static SyncPattern Rect(TP4 color, ExBPRV2 locScaleAngle) => sbh => {
+    public static SyncPattern RelCirc(string behId, BEHPointer beh, BPRV2 locScaleAngle, TP4 color) =>
+        gRelCirc(behId, _ => beh.Loc, locScaleAngle, color);
+    public static SyncPattern Rect(TP4 color, BPRV2 locScaleAngle) => sbh => {
         uint id = sbh.GCX.NextID();
         sbh.bc.SummonRect(sbh, "_", color, DrawerLoc(sbh, locScaleAngle), WaitForPhase(sbh.ch.cT), id);
     };
-    public static SyncPattern gRelRect(string behId, ExTP loc, ExBPRV2 locScaleAngle, TP4 color) => sbh => {
+    public static SyncPattern gRelRect(string behId, TP loc, BPRV2 locScaleAngle, TP4 color) => sbh => {
         uint id = sbh.GCX.NextID();
         sbh.bc.SummonRect(sbh, behId, color, DrawerLoc(sbh, locScaleAngle, loc), WaitForPhase(sbh.ch.cT), id);
     };
 
-    public static SyncPattern RelRect(string behId, BEHPointer beh, ExBPRV2 locScaleAngle, TP4 color) =>
-        gRelRect(behId, _ => LBEH(beh), locScaleAngle, color);
+    public static SyncPattern RelRect(string behId, BEHPointer beh, BPRV2 locScaleAngle, TP4 color) =>
+        gRelRect(behId, _ => beh.Loc, locScaleAngle, color);
 
     
     public static SyncPattern Darkness(TP loc, BPY radius, TP4 color) => sbh => {
@@ -401,7 +355,11 @@ public static partial class AtomicPatterns {
         sbh.bc.SummonDarkness(sbh, "_", loc, radius, color, WaitForPhase(sbh.ch.cT), id);
     };
 
+    public static SyncPattern PowerAura(PowerAuraOptions options) =>
+        sbh => sbh.bc.SummonPowerAura(sbh, options, sbh.GCX.NextID());
+    
     /// <summary>
+    /// 
     /// Create a powerup effect.
     /// These effects are parented directly under the BEH they are attached to. Offsets, etc do not apply. 
     /// </summary>
@@ -410,11 +368,18 @@ public static partial class AtomicPatterns {
     /// <param name="time">Time the powerup exists</param>
     /// <param name="itrs">Number of cycles the powerup goes through</param>
     /// <returns></returns>
-    public static SyncPattern Powerup(string sfx, TP4 color, GCXF<float> time, GCXF<float> itrs) => sbh => {
-        uint id = sbh.GCX.NextID();
-        SFXService.Request(sfx);
-        sbh.bc.SummonPowerup(sbh, color, time(sbh.GCX), itrs(sbh.GCX), id);
-    };
+    [Obsolete("Use PowerAura instead.")]
+    public static SyncPattern Powerup(string sfx, TP4 color, GCXF<float> time, GCXF<float> itrs) {
+        var props = new PowerAuraOptions(new[] {
+            PowerAuraOption.Color(color),
+            PowerAuraOption.Time(time),
+            PowerAuraOption.Iterations(itrs),
+            PowerAuraOption.SFX(sfx),
+
+        });
+        return sbh => sbh.bc.SummonPowerAura(sbh, props, sbh.GCX.NextID());
+    }
+
     /// <summary>
     /// Create a powerup effect, using the V2RV2 offset to position.
     /// </summary>
@@ -423,11 +388,19 @@ public static partial class AtomicPatterns {
     /// <param name="time">Time the powerup exists</param>
     /// <param name="itrs">Number of cycles the powerup goes through</param>
     /// <returns></returns>
-    public static SyncPattern PowerupStatic(string sfx, TP4 color, GCXF<float> time, GCXF<float> itrs) => sbh => {
-        uint id = sbh.GCX.NextID();
-        SFXService.Request(sfx);
-        sbh.bc.SummonPowerupStatic(sbh, color, time(sbh.GCX), itrs(sbh.GCX), id);
-    };
+    [Obsolete("Use PowerAura instead.")]
+    public static SyncPattern PowerupStatic(string sfx, TP4 color, GCXF<float> time, GCXF<float> itrs) {
+        var props = new PowerAuraOptions(new[] {
+            PowerAuraOption.Color(color),
+            PowerAuraOption.Time(time),
+            PowerAuraOption.Iterations(itrs),
+            PowerAuraOption.SFX(sfx),
+            PowerAuraOption.Static(), 
+
+        });
+        return sbh => sbh.bc.SummonPowerAura(sbh, props, sbh.GCX.NextID());
+    }
+
     /// <summary>
     /// Create a powerup effect twice.
     /// <br/>The second time, it goes outwards with one iteration.
@@ -442,47 +415,18 @@ public static partial class AtomicPatterns {
     /// <param name="delay">Delay after the first powerup dies before spawning the second powerup</param>
     /// <param name="time2">Time the second powerup exists</param>
     /// <returns></returns>
+    [Obsolete("Use PowerAura instead.")]
     public static SyncPattern Powerup2(string sfx1, string sfx2, TP4 color1, TP4 color2, GCXF<float> time1, GCXF<float> itrs1, GCXF<float> delay, GCXF<float> time2) {
+        var power1 = Powerup(sfx1, color1, time1, itrs1);
         var power2 = Powerup(sfx2, color2, time2, _ => -1);
         return sbh => {
-            uint id = sbh.GCX.NextID();
+            power1(sbh);
             float t1 = time1(sbh.GCX);
-            SFXService.Request(sfx1);
-            sbh.bc.SummonPowerup(sbh, color1, t1, itrs1(sbh.GCX), id);
             float wait = t1 + delay(sbh.GCX);
             SyncPatterns.Reexec(AsyncPatterns._AsGCR(
                 power2,
                 GenCtxProperty.Delay(_ => ETime.ENGINEFPS * wait))
             )(sbh);
-        };
-    }
-
-    /// <summary>
-    /// Create a powerup effect twice, using the V2RV2 offset to position.
-    /// <br/>The second time, it goes outwards with one iteration.
-    /// <br/>This abbreviation is useful for common use cases of powerups.
-    /// </summary>
-    /// <param name="sfx1">SFX to play when the first powerup starts</param>
-    /// <param name="sfx2">SFX to play when the second powerup starts</param>
-    /// <param name="color1">Color function for the first powerup</param>
-    /// <param name="color2">Color function for the second powerup</param>
-    /// <param name="time1">Time the first powerup exists</param>
-    /// <param name="itrs1">Number of cycles the first powerup goes through</param>
-    /// <param name="delay">Delay after the first powerup dies before spawning the second powerup</param>
-    /// <param name="time2">Time the second powerup exists</param>
-    /// <returns></returns>
-    public static SyncPattern Powerup2Static(string sfx1, string sfx2, TP4 color1, TP4 color2, GCXF<float> time1, GCXF<float> itrs1, GCXF<float> delay, GCXF<float> time2) {
-        var power2 = PowerupStatic(sfx2, color2, time2, _ => -1);
-        return sbh => {
-            uint id = sbh.GCX.NextID();
-            float t1 = time1(sbh.GCX);
-            SFXService.Request(sfx1);
-            sbh.bc.SummonPowerupStatic(sbh, color1, t1, itrs1(sbh.GCX), id);
-            float wait = t1 + delay(sbh.GCX);
-            SyncPatterns.Reexec(AsyncPatterns.ICacheLoc(AsyncPatterns._AsGCR(
-                power2,
-                GenCtxProperty.Delay(_ => ETime.ENGINEFPS * wait))
-            ))(sbh);
         };
     }
 }

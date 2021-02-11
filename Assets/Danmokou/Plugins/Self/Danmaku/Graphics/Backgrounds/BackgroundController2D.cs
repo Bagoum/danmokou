@@ -9,39 +9,6 @@ using JetBrains.Annotations;
 
 namespace DMK.Graphics.Backgrounds {
 /// <summary>
-/// Struct containing information for rendering a fragment of the screen during a screen break effect.
-/// </summary>
-public struct ShatterFragment {
-    public Vector2 loc;
-    public readonly float baseShapeRot;
-    public readonly Vector2 uv;
-    private Vector2 vel;
-    private readonly float gravity;
-    public Vector3 rotations;
-    private Vector3 rotationVels;
-    private readonly Vector3 rotationAccels;
-
-    public ShatterFragment(Vector2 location, float baseShapeRot, float maxInitVelMag, float gravity, Vector2 rotAccelMag) {
-        loc = location;
-        this.baseShapeRot = baseShapeRot;
-        uv = MainCamera.RelativeToScreenUV(loc);
-        vel = M.CosSin(RNG.GetFloatOffFrame(0f, M.TAU)) * RNG.GetFloatOffFrame(0f, maxInitVelMag);
-        this.gravity = gravity;
-        rotationAccels =
-            M.Spherical(RNG.GetFloatOffFrame(0f, M.TAU), RNG.GetFloatOffFrame(0f, M.PI)) *
-            RNG.GetFloatOffFrame(rotAccelMag.x, rotAccelMag.y);
-        rotationVels = RNG.GetFloatOffFrame(1f, 2f) * rotationAccels;
-        rotations = Vector3.zero;
-    }
-
-    public void DoUpdate(float dT) {
-        vel.y -= gravity * dT;
-        rotationVels += rotationAccels * dT;
-        loc += vel * dT;
-        rotations += rotationVels * dT;
-    }
-}
-/// <summary>
 /// Configuration for a background transition effect.
 /// After it is finished executing, the BackgroundOrchestrator will destroy the source BackgroundController.
 /// A transition is finished executing when it has executed its callback (if required) and its TimeToFinish has elapsed.
@@ -69,27 +36,20 @@ public struct BackgroundTransition {
     /// Upper bound on the time required for the TRANSITION SHADER to fully complete.
     /// Note: if the implementation uses a callback to finish, you can return 0 here.
     /// </summary>
-    public float TimeToFinish() {
-        switch (type) {
-            case EffectType.Wipe1:
-                return Wipe1.time + 1f;
-            case EffectType.WipeTex:
-                return WipeTex.time + 1f;
-            case EffectType.WipeFromCenter:
-                return WipeFromCenter.time + 1f;
-            case EffectType.Shatter4:
-                return 0f;
-            case EffectType.WipeY:
-                return WipeY.time + 1f;
-            default:
-                return 0f;
-        }
-    }
+    public float TimeToFinish() =>
+        type switch {
+            EffectType.Wipe1 => Wipe1.time + 1f,
+            EffectType.WipeTex => WipeTex.time + 1f,
+            EffectType.WipeFromCenter => WipeFromCenter.time + 1f,
+            EffectType.Shatter4 => 0f,
+            EffectType.WipeY => WipeY.time + 1f,
+            _ => 0f
+        };
 
     [Serializable]
     public class WipeTexConfig {
         public float time;
-        public Texture2D tex;
+        public Texture2D tex = null!;
         public bool WhiteFirst;
         
         public void Apply(Material mat) {
@@ -132,30 +92,21 @@ public struct BackgroundTransition {
     }
 
     [Serializable]
-    public class ShatterConfig {
-        public Sprite fragmentSprite;
-        public Material fragmentMaterial;
-        public float fragmentRadius;
-        public float SquareMeshWidth => 2f * fragmentRadius;
+    public class ShatterConfig : FragmentRendering.FragmentConfig {
         public float fragMaxInitSpeed;
         public float fragGravity;
         public Vector2 fragRotAccelMag;
-        [CanBeNull] private Mesh mesh;
-        public Mesh Mesh {
-            get {
-                if (mesh == null) mesh = MeshGenerator.RenderInfo.FromSprite(fragmentSprite, SquareMeshWidth);
-                return mesh;
-            }
-        }
 
-        public void Tile4(List<ShatterFragment> fragments) {
+        public IEnumerable<FragmentRendering.Fragment> Tile4() {
             float s = fragmentRadius * Mathf.Sqrt(2f);
             float width = LocationHelpers.Width + 2f;
             float height = MainCamera.ScreenHeight;
             for (float w = 0f; w < width + s; w += s) {
                 for (float h = 0f; h < height + s; h += s) {
-                    fragments.Add(new ShatterFragment(new Vector2(w - width/2f, h - height/2f), 
-                        Mathf.PI/4, fragMaxInitSpeed, fragGravity, fragRotAccelMag));
+                    var loc = new Vector2(w - width / 2f, h - height / 2f);
+                    var uv = MainCamera.RelativeToScreenUV(loc);
+                    yield return new FragmentRendering.Fragment(loc, uv, 
+                        Mathf.PI/4, fragMaxInitSpeed, fragGravity, fragRotAccelMag);
                 }
             }
         }
@@ -171,7 +122,7 @@ public struct BackgroundTransition {
 /// </summary>
 public sealed class BackgroundController2D : BackgroundController {
     public Color tint;
-    private (SpriteRenderer sr, MaterialPropertyBlock pb)[] sr;
+    private (SpriteRenderer sr, MaterialPropertyBlock pb)[] sr = null!;
 
     public override BackgroundController Initialize(GameObject prefab, BackgroundOrchestrator orchestrator) {
         base.Initialize(prefab, orchestrator);

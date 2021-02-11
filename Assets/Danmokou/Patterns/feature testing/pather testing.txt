@@ -1,7 +1,6 @@
 pattern { }
 phase 0
 	paction 0
-		clear phase
 		shift-phase-to 1
 	
 <!> type non "hello"

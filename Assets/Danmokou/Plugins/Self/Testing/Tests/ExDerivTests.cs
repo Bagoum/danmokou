@@ -38,14 +38,14 @@ public class ExDerivTests {
     public void TestAssign() {
         var x = VF("x");
         var y = VF("y");
-        AreEqual("(y=((2*x)+2));(y+(x*2));", DerivDebug(x, Ex.Block(new[] { y }, Ex.Assign(y, E2.Mul(x).Add(E2)), x.Mul(y))));
+        AreEqual("((y=((2*x)+2));\n(y+(x*2));)", DerivDebug(x, Ex.Block(new[] { y }, Ex.Assign(y, E2.Mul(x).Add(E2)), x.Mul(y))));
     }
 
     [Test]
     public void TestPartial() {
-        var bpi = new TExPI();
-        AreEqual("(0.5+(0.1*.index:>Single))", 
-            DerivDebug(bpi.t, bpi.t.Mul(ExC(0.5f).Add(ExC(0.1f).Mul(BPYRepo.P()(bpi))))));
+        var bpi = new TExPI("bpi");
+        AreEqual("(0.5+(0.1*bpi.index:>Single))", 
+            DerivDebug(bpi.t, bpi.t.Mul(ExC(0.5f).Add(ExC(0.1f).Mul(bpi.findex)))));
         var x = VF("x");
         var y = VF("y");
         AreEqual("(y*2)", DerivDebug(x, y.Mul(2).Mul(x)));

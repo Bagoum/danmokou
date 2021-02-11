@@ -84,19 +84,16 @@ public static class CollisionMath {
             g.y = src.y - points[ii - skip].y;
             projection_unscaled = g.x * delta.x + g.y * delta.y;
             d2 = g.x * g.x + g.y * g.y;
-            if (projection_unscaled < 0) {
-                //We only check endpoint collision on the first point;
-                //due to segmenting we will end by checking on all points except the last, which is handled outside.
-                if (d2 < radius2) {
-                    segment = ii - skip;
-                    return true;
-                }
-            } else {
+            //Check circle collision at every point for accurate out segment
+            if (d2 < radius2) {
+                segment = ii;
+                return true;
+            } else if (projection_unscaled > 0) {
                 float dmag2 = delta.x * delta.x + delta.y * delta.y;
                 if (projection_unscaled < dmag2) {
                     float norm2 = d2 - projection_unscaled * projection_unscaled / dmag2;
                     if (norm2 < radius2) {
-                        segment = ii - skip;
+                        segment = ii;
                         return true;
                     }
                 }
@@ -104,7 +101,7 @@ public static class CollisionMath {
         }
         //Now perform the last point check
         ii -= skip;
-        segment = ii;
+        segment = end;
         delta.x = points[end].x - points[ii].x;
         delta.y = points[end].y - points[ii].y;
         g.x = src.x - points[ii].x;

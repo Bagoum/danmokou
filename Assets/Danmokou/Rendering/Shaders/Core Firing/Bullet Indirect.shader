@@ -120,7 +120,7 @@
 		#endif
 				//f.uv = TRANSFORM_TEX(v.uv, _MainTex);
 		#ifdef FT_FRAME_ANIM
-				f.uv.x = (f.uv.x + fmod(trunc(INSTANCE_TIME * _InvFrameT), _Frames)) / _Frames;
+				f.uv.x = (f.uv.x + trunc(fmod(INSTANCE_TIME * _InvFrameT, _Frames))) / _Frames;
 		#endif
 		        FADEIN(f.c, INSTANCE_TIME);
 				return f;

@@ -1,0 +1,34 @@
+gtr {
+	wt 30 _
+	wait-child
+} firesame
+	## lazors
+	paction 0 :2
+		async x-pc-fire-1 <> gcr2 3 _ <> {
+		} sfx
+		async gdlaser-* <> gcr {
+			while(> powerf p)
+			root zero
+			preloop { 
+				pid = f playerid
+			}
+		} { 
+!{ laseropts()
+##start(30 * (t - LaserLastActiveT(mine)))
+varLength(15, if (> t LaserLastActiveT(mine), lerp(0, 0.2, t - LaserLastActiveT(mine), min(15, 30 * LaserLastActiveT(mine)), 0), 30 * t))
+dynamic(tpnrot(rotate(OptionAngle(mine), cy 1)))
+delete(> (t - LaserLastActiveT(mine), 1) | (neq &pid playerid))
+deactivate((<= powerf p) | (> playerUnfiringT(mine) 0))
+nonpiercing
+!}
+			gsr {
+				color(green/b)
+			} laser(nroffset(OptionLocation(mine)),
+				0, _, {
+					$laseropts
+					tint(rgba(1,1,1, 1)) ## if(lasercolliding mine, lerpt(0.2, 0.6, 1, 0), 1)))
+					player(1, 1, 1, oh1-green-pt)
+			})
+		}
+	## cancellation
+	noop

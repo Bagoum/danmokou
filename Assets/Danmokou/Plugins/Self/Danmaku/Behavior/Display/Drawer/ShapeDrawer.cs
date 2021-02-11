@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace DMK.Behavior.Display {
 public abstract class ShapeDrawer : SpriteDisplayController {
-    private TP4 color;
+    private TP4 color = default!;
     protected V2RV2 lastRV2 { get; private set; }
 
     public void Initialize(TP4 colorizer) {

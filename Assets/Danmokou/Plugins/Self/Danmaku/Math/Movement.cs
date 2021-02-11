@@ -17,16 +17,16 @@ public readonly struct LimitedTimeMovement {
     public readonly float enabledFor;
     public readonly Action done;
     public readonly ICancellee cT;
-    public readonly int firingIndex;
-    [CanBeNull] public readonly Pred condition;
+    public readonly ParametricInfo pi;
+    public readonly Pred? condition;
     public bool ThisCannotContinue(ParametricInfo bpi) => !(condition?.Invoke(bpi) ?? true);
 
-    public LimitedTimeMovement(VTP path, float enabledFor, Action done, ICancellee cT, int p, [CanBeNull] Pred condition=null) {
+    public LimitedTimeMovement(VTP path, float enabledFor, Action done, ICancellee cT, ParametricInfo pi, Pred? condition=null) {
         this.VTP2 = path;
         this.enabledFor = enabledFor;
         this.done = done;
         this.cT = cT;
-        this.firingIndex = p;
+        this.pi = pi;
         this.condition = condition;
     }
 }
@@ -106,25 +106,26 @@ public struct Movement {
 
     /// <summary>
     /// Initialize a parametric info container.
-    /// BPI time should initially be set to zero, and will be updated to timeOffset + FRAMEOFFSET.
+    /// bpi.t should contain the desired starting time of the container. This function will set it to zero and
+    ///  incrementally update it until it reaches its initial value.
     /// </summary>
     /// <param name="bpi">Parametric info</param>
-    /// <param name="timeOffset">Desired initial time for BPI (without offset)</param>
     /// <returns>Direction to face</returns>
-    public Vector2 UpdateZero(ref ParametricInfo bpi, float timeOffset) {
+    public Vector2 UpdateZero(ref ParametricInfo bpi) {
         const float dT = ETime.FRAME_TIME;
         var nrv = Vector2.zero;
+        float timeOffset = bpi.t;
         var zeroTime = timeOffset < float.Epsilon;
         //We have to run this regardless of whether timeOffset=0 so offset functions are correct on frame 1
         for (bpi.t = 0f; timeOffset >= 0; timeOffset -= dT) {
             float effdT = (timeOffset < dT) ? timeOffset : dT;
             bpi.t += effdT;
-            vtp(in this, in effdT, bpi, out var delta);
+            vtp(in this, effdT, bpi, out var delta);
+            bpi.loc.x += delta.x;
+            bpi.loc.y += delta.y;
             nrv.x += delta.x;
             nrv.y += delta.y;
         }
-        bpi.loc.x += nrv.x;
-        bpi.loc.y += nrv.y;
         //If timeOffset=0, then simulate the next update for direction
         if (zeroTime) {
             bpi.t += dT;
@@ -152,13 +153,14 @@ public struct Movement {
         angle = ang_deg;
         cos_rot = cos_r;
         sin_rot = sin_r;
-        vtp(in this, in dT, bpi, out Vector2 nrv);
+        vtp(in this, dT, bpi, out Vector2 nrv);
         accDelta.x += nrv.x;
         accDelta.y += nrv.y;
         bpi.loc.x += nrv.x;
         bpi.loc.y += nrv.y;
     }
 
+    [UsedImplicitly]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void UpdateDeltaNoTime(BulletManager.AbsSimpleBulletCollection sbc, int ii) {
         ref var sb = ref sbc[ii];
@@ -180,7 +182,7 @@ public struct Movement {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void UpdateDeltaAssignAcc(ref ParametricInfo bpi, out Vector2 delta, in float dT) {
         bpi.t += dT;
-        vtp(in this, in dT, bpi, out delta);
+        vtp(in this, dT, bpi, out delta);
         bpi.loc.x += delta.x;
         bpi.loc.y += delta.y;
     }
@@ -198,7 +200,7 @@ public struct Movement {
 /// An "extension" of the Movement struct to describe the nested movement function of a laser.
 /// </summary>
 public struct LaserMovement {
-    [CanBeNull] private readonly LVTP lvtp;
+    private readonly LVTP? lvtp;
     [UsedImplicitly] private readonly float angle;
     [UsedImplicitly]
     public readonly float cos_rot;
@@ -207,9 +209,9 @@ public struct LaserMovement {
     [UsedImplicitly]
     public Vector2 rootPos;
     private readonly Vector2 simpleDir;
-    [CanBeNull] private readonly BPY rotation;
-    private sbyte flipX;
-    private sbyte flipY;
+    private readonly BPY? rotation;
+    public sbyte flipX;
+    public sbyte flipY;
     private sbyte tflipX;
     private sbyte tflipY;
     public readonly bool isSimple;
@@ -233,7 +235,7 @@ public struct LaserMovement {
     /// </summary>
     /// <param name="base_rot_deg"></param>
     /// <param name="frame_rot"></param>
-    public LaserMovement(float base_rot_deg, [CanBeNull] BPY frame_rot) {
+    public LaserMovement(float base_rot_deg, BPY? frame_rot) {
         angle = base_rot_deg;
         cos_rot = M.CosDeg(base_rot_deg);
         sin_rot = M.SinDeg(base_rot_deg);
@@ -253,7 +255,7 @@ public struct LaserMovement {
         if (isSimple) {
             d1 = new Vector2(simpleDir.x * dT * flipX, simpleDir.y * dT * flipY);
         } else {
-            lvtp(in this, in dT, in lt, bpi, out d1);
+            lvtp!(in this, dT, lt, bpi, out d1);
         }
         bpi.loc.x += d1.x;
         bpi.loc.y += d1.y;

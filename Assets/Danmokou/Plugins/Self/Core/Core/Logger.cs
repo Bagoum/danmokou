@@ -27,13 +27,13 @@ public static class Log {
     static Log() {
         var d = DateTime.Now;
         var log = $"{LOGDIR}log_{d.Year}-{d.Month}-{d.Day}-{d.Hour}-{d.Minute}-{DateTime.Now.Second}.log";
-        SaveUtils.CheckDirectory(log);
+        FileUtils.CheckDirectory(log);
         file = new StreamWriter(log);
     }
 
     public static void CloseLog() {
         file.Close();
-        file = null;
+        file = null!;
     }
 
     public static void Unity(string msg, bool stackTrace = true, Level level = Level.INFO) {
@@ -45,7 +45,7 @@ public static class Log {
         msg = $"Frame {ETime.FrameNumber}: {msg}";
         LogOption lo = stackTrace ? LogOption.None : LogOption.NoStacktrace;
         LogType unityLT = LogType.Log;
-        file?.WriteLine(msg);
+        file.WriteLine(msg);
         if (level == Level.WARNING) unityLT = LogType.Warning;
         if (level == Level.ERROR) {
             unityLT = LogType.Error;
@@ -73,11 +73,12 @@ public static class Log {
     private static string _Print(Exception e) {
         StringBuilder msg = new StringBuilder();
         var lastStackTrace = e.StackTrace;
-        while (e != null) {
-            msg.Append(e.Message);
+        Exception? exc = e;
+        while (exc != null) {
+            msg.Append(exc.Message);
             msg.Append("\n");
-            lastStackTrace = e.StackTrace;
-            e = e.InnerException;
+            lastStackTrace = exc.StackTrace;
+            exc = exc.InnerException;
         }
         msg.Append("\n");
         msg.Append(lastStackTrace);

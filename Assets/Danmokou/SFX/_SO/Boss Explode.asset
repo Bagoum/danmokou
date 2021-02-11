@@ -17,8 +17,9 @@ MonoBehaviour:
   volume: 0.2
   timeout: -1
   pausable: 1
+  slowable: 1
+  pitch: 1
   loop: 0
   loopTimeCheck: 0
-  pitch: 1
   priority: -1
   feature: 0

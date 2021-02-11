@@ -62,7 +62,7 @@
 			float4 _Tint;
 			float _HueShift;
 			
-			//float4 locUVBuffer[1023];
+			//float4 locUVBuffer[511];
 	// THIS IS A PROOF OF CONCEPT AND MAY NOT BE UPDATED
 
 			fragment vert(vertex v, uint idx : SV_VertexID) {

@@ -7,6 +7,7 @@ namespace DMK.Scriptables {
 public class CameraTransitionConfig : ScriptableObject {
     [Serializable]
     public struct TransitionConfig {
+        public SFXConfig? sfx;
         public Material material;
         public Texture2D transitionTexture;
         public float time;
@@ -28,7 +29,7 @@ public class CameraTransitionConfig : ScriptableObject {
         }
     }
 
-    public Texture2D fadeToTex;
+    public Texture2D fadeToTex = null!;
     public TransitionConfig fadeIn;
     public TransitionConfig fadeOut;
 }

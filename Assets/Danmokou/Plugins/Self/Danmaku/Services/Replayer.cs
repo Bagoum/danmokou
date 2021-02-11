@@ -14,14 +14,11 @@ namespace DMK.Services {
 /// Records information about a completed game run-through with an attached replay.
 /// </summary>
 public class ReplayMetadata {
-    [JsonIgnore] public InstanceRecord Record => 
-        SaveData.r.FinishedGames.TryGetValue(RecordUuid, out var gr) ? gr : SerializedRecord;
-    
     /// <summary>
     /// Serializing the record in the replay file allows transferring replays.
     /// </summary>
-    public InstanceRecord SerializedRecord { get; set; }
-    public string RecordUuid { get; set; }
+    public InstanceRecord Record { get; set; }
+    [JsonIgnore] public string RecordUuid => Record.Uuid;
     //Frozen options
     public float DialogueSpeed { get; set; }
     public bool SmoothInput { get; set; }
@@ -30,10 +27,11 @@ public class ReplayMetadata {
     public int Length { get; set; }
 
     [UsedImplicitly]
+#pragma warning disable 8618
     public ReplayMetadata() {}
+#pragma warning restore 8618
     public ReplayMetadata(InstanceRecord rec) {
-        SerializedRecord = rec;
-        RecordUuid = rec.Uuid;
+        Record = rec;
         DialogueSpeed = SaveData.s.DialogueWaitMultiplier;
         SmoothInput = SaveData.s.AllowInputLinearization;
         Locale = SaveData.s.Locale;
@@ -71,6 +69,30 @@ public static class Replayer {
         NONE
     }
 
+    public readonly struct ReplayerConfig {
+        public enum FinishMethod {
+            ERROR,
+            REPEAT,
+            STOP
+        }
+
+        public readonly FinishMethod finishMethod;
+        public readonly Func<FrameInput[]> frames;
+        public readonly Action? onFinish;
+        public ReplayerConfig(FinishMethod finishMethod, Func<FrameInput[]> frames, Action? onFinish = null) {
+            this.finishMethod = finishMethod;
+            this.frames = frames;
+            this.onFinish = onFinish;
+        }
+
+        private (FinishMethod, Func<FrameInput[]>) Tuple => (finishMethod, frames);
+
+        public static bool operator ==(ReplayerConfig b1, ReplayerConfig b2) => b1.Tuple == b2.Tuple;
+        public static bool operator !=(ReplayerConfig b1, ReplayerConfig b2) => !(b1 == b2);
+        public override int GetHashCode() => Tuple.GetHashCode();
+        public override bool Equals(object o) => o is ReplayerConfig bc && this == bc;
+    }
+
     private static ReplayStatus status = ReplayStatus.NONE;
     private static int lastFrame = -1;
     private static int? replayStartFrame;
@@ -83,30 +105,21 @@ public static class Replayer {
             return replayStartFrame.Value;
         }
     }
-    [CanBeNull] private static List<FrameInput> recording;
-    private static FrameInput[] replaying;
-    [CanBeNull] private static Func<FrameInput[]> lazyReplaying;
-    [CanBeNull]
-    private static FrameInput[] Replaying {
-        get => replaying = replaying ?? lazyReplaying?.Invoke();
-        set {
-            if (value == null) {
-                replaying = null;
-                lazyReplaying = null;
-            } else throw new Exception("Cannot assign Replayer.Replaying to a non-null value");
-        }
-    }
+    private static List<FrameInput>? recording;
+    private static ReplayerConfig? replaying;
+    private static FrameInput[]? loadedFrames;
+    private static FrameInput[]? LoadedFrames => loadedFrames ??= replaying?.frames.Invoke();
 
     public static bool IsRecording => status == ReplayStatus.RECORDING;
 
-    public static Replay? PostedReplay = null;
+    public static Replay? PostedReplay { get; private set; } = null;
 
     public static void LoadLazy() {
-        var _ = Replaying;
+        var _ = LoadedFrames;
     }
 
     public static void BeginRecording() {
-        Log.Unity("Replay recording started");
+        Log.Unity("Replay recording started.");
         lastFrame = -1;
         replayStartFrame = null;
         recording = new List<FrameInput>(1000000);
@@ -114,35 +127,40 @@ public static class Replayer {
         PostedReplay = null;
     }
 
-    public static void BeginReplaying(Func<FrameInput[]> data) {
+    public static void BeginReplaying(ReplayerConfig data) {
         Log.Unity($"Replay playback started.");
         lastFrame = -1;
         replayStartFrame = null;
+        recording = null;
         //Minor optimization for replay restart
-        if (lazyReplaying != data) {
-            recording = null;
-            Replaying = null;
-            lazyReplaying = data;
+        if (!replaying.Try(out var r) || r != data) {
+            Log.Unity($"Setting frames to lazy-load for replay.");
+            loadedFrames = null;
+            replaying = data;
         }
         status = ReplayStatus.REPLAYING;
     }
 
-    public static void End(InstanceRecord rec) {
+    public static Replay? End(InstanceRecord? rec) {
         if (status == ReplayStatus.RECORDING) {
             Log.Unity($"Finished recording {recording?.Count ?? -1} frames.");
         } else if (status == ReplayStatus.REPLAYING) {
-            Log.Unity($"Finished replaying {lastFrame - ReplayStartFrame + 1}/{Replaying?.Length ?? 0} frames.");
+            Log.Unity($"Finished replaying {lastFrame - ReplayStartFrame + 1}/{LoadedFrames?.Length ?? 0} frames.");
         }
         status = ReplayStatus.NONE;
-        PostedReplay = (recording != null) ? new Replay(recording.ToArray(), rec) : (Replay?) null;
+        PostedReplay = (recording != null && rec != null) ? new Replay(recording.ToArray(), rec) : (Replay?) null;
         recording = null;
+        loadedFrames = null;
+        replaying = null;
+        return PostedReplay;
     }
 
     public static void Cancel() {
-        Log.Unity("Cancelling in-progress replay recording.");
+        Log.Unity("Cancelling in-progress replayer.");
         status = ReplayStatus.NONE;
         recording = null;
-        Replaying = null;
+        loadedFrames = null;
+        replaying = null;
         PostedReplay = null;
     }
 
@@ -154,12 +172,20 @@ public static class Replayer {
         ReplayFrame(null);
         if (status == ReplayStatus.RECORDING && recording != null) {
             recording.Add(RecordFrame);
-        } else if (status == ReplayStatus.REPLAYING && Replaying != null) {
-            if (replayIndex >= Replaying?.Length) {
-                Log.UnityError($"Ran out of replay data. On frame {lastFrame}, requested index {replayIndex}, " +
-                               $"but there are only {Replaying.Length}.");
-            }
-            ReplayFrame(Replaying[replayIndex]);
+        } else if (status == ReplayStatus.REPLAYING && LoadedFrames != null) {
+            if (replayIndex >= LoadedFrames.Length) {
+                replaying?.onFinish?.Invoke();
+                if (replaying?.finishMethod == ReplayerConfig.FinishMethod.REPEAT) {
+                    Log.Unity("Restarting replay.");
+                    BeginReplaying(replaying.Value);
+                    BeginFrame();
+                } else if (replaying?.finishMethod == ReplayerConfig.FinishMethod.STOP)
+                    Cancel();
+                else
+                    Log.UnityError($"Ran out of replay data. On frame {lastFrame}, requested index {replayIndex}, " +
+                                   $"but there are only {LoadedFrames.Length}.");
+            } else
+                ReplayFrame(LoadedFrames[replayIndex]);
         }
     }
 }

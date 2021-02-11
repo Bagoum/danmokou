@@ -1,8 +1,10 @@
-﻿using DMK.Reflection;
+﻿using DMK.Core;
+using DMK.Reflection;
 using Ex = System.Linq.Expressions.Expression;
-using P = System.Func<DMK.Expressions.ITExVelocity, DMK.Expressions.TEx<float>, DMK.Expressions.TExPI, DMK.Expressions.RTExV2, DMK.Expressions.TEx<UnityEngine.Vector2>>;
+using P = System.Func<DMK.Expressions.ITexMovement, DMK.Expressions.TEx<float>, DMK.Expressions.TExPI, DMK.Expressions.TExV2, DMK.Expressions.TEx<UnityEngine.Vector2>>;
 
 namespace DMK.DMath.Functions {
+[Reflect]
 public static class ExtraMovementFuncs {
 
     /// <summary>

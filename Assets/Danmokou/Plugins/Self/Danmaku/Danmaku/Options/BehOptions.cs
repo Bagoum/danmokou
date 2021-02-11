@@ -16,6 +16,7 @@ namespace DMK.Danmaku.Options {
 /// Properties that modify the behavior of BEH summons.
 /// This includes complex bullets, like pathers, but NOT lasers (<see cref="LaserOption"/>).
 /// </summary>
+[Reflect]
 public class BehOption {
     /// <summary>
     /// Make the movement of the bullet smoother. (Pather only)
@@ -171,27 +172,27 @@ public readonly struct RealizedBehOptions {
     public readonly int? hp;
     public readonly int? layer;
     public readonly ItemDrops? drops;
-    [CanBeNull] public readonly BPY hueShift;
-    [CanBeNull] public readonly BPY rotator;
+    public readonly BPY? hueShift;
+    public readonly BPY? rotator;
     public readonly (TP4 black, TP4 white)? recolor;
-    [CanBeNull] public readonly TP4 tint;
-    [CanBeNull] public readonly Pred delete;
+    public readonly TP4? tint;
+    public readonly Pred? delete;
     public readonly PlayerBulletCfg? playerBullet;
 
-    public RealizedBehOptions(BehOptions opts, GenCtx gcx, uint bpiid, Vector2 parentOffset, V2RV2 localOffset, ICancellee cT) {
+    public RealizedBehOptions(BehOptions opts, GenCtx gcx, FiringCtx fctx, Vector2 parentOffset, V2RV2 localOffset, ICancellee cT) {
         smooth = opts.smooth;
         smr = SMRunner.Run(opts.sm, cT, gcx);
         scale = opts.scale?.Invoke(gcx) ?? 1f;
         hp = (opts.hp?.Invoke(gcx)).FMap(x => (int) x);
         layer = opts.layer;
         drops = opts.drops;
-        hueShift = opts.hueShift?.Add(gcx, bpiid);
-        tint = opts.tint?.Add(gcx, bpiid);
-        rotator = opts.rotator?.Add(gcx, bpiid);
+        hueShift = opts.hueShift?.Invoke(gcx, fctx);
+        tint = opts.tint?.Invoke(gcx, fctx);
+        rotator = opts.rotator?.Invoke(gcx, fctx);
         if (opts.recolor.Try(out var rc)) {
-            recolor = (rc.black.Add(gcx, bpiid), rc.white.Add(gcx, bpiid));
+            recolor = (rc.black.Invoke(gcx, fctx), rc.white.Invoke(gcx, fctx));
         } else recolor = null;
-        delete = opts.delete?.Add(gcx, bpiid);
+        delete = opts.delete?.Invoke(gcx, fctx);
         playerBullet = opts.playerBullet;
     }
 
@@ -213,9 +214,9 @@ public readonly struct RealizedBehOptions {
 
 public class BehOptions {
     public readonly bool smooth;
-    [CanBeNull] public readonly StateMachine sm;
-    [CanBeNull] public readonly GCXF<float> scale;
-    [CanBeNull] public readonly GCXF<float> hp;
+    public readonly StateMachine? sm;
+    public readonly GCXF<float>? scale;
+    public readonly GCXF<float>? hp;
     public readonly GCXU<Pred>? delete;
     public readonly int? layer = null;
     public readonly ItemDrops? drops = null;
@@ -224,7 +225,7 @@ public class BehOptions {
     public readonly GCXU<BPY>? rotator;
     public readonly (GCXU<TP4> black, GCXU<TP4> white)? recolor;
     public readonly PlayerBulletCfg? playerBullet;
-    [CanBeNull] private readonly string id = null;
+    private readonly string? id = null;
     public string ID => id ?? "_";
 
     public BehOptions(params BehOption[] props) : this(props as IEnumerable<BehOption>) { }

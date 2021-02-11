@@ -1,11 +1,13 @@
-﻿using DMK.DMath;
+﻿using DMK.Core;
+using DMK.DMath;
 using DMK.Reflection;
 
 namespace DMK.Behavior.Functions {
 public class RotateMe : BehaviorEntity {
 
-    public string rotator;
-    private TP3 rotate;
+    [ReflectInto(typeof(TP3))]
+    public string rotator = "";
+    private TP3 rotate = null!;
 
     protected override void Awake() {
         base.Awake();

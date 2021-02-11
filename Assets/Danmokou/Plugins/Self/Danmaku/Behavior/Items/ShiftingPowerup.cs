@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Linq;
 using DMK.Behavior.Display;
 using DMK.Core;
+using DMK.Danmaku;
+using DMK.Danmaku.Options;
 using DMK.DMath;
 using DMK.Reflection;
 using DMK.Scriptables;
@@ -17,13 +20,16 @@ public class ShiftingPowerup : BouncyItem {
         public string color;
     }
 
-    public Variant[] variants;
+    [ReflectInto(typeof(TP4))] [UsedImplicitly] public string[] _variantColors => 
+        variants.Select(v => v.color).ToArray();
+
+    public Variant[] variants = null!;
     private int currVariant;
-    private PowerUp effect;
-    public GameObject switchTell;
+    private PowerAura effect = null!;
+    public GameObject switchTell = null!;
     public float switchTellScale;
     public float switchTellIterations;
-    public SFXConfig onSwitch;
+    public SFXConfig? onSwitch;
     public float timePerVariant;
     private float timeUntilSwitch;
     private float StopShiftingAfter => timePerVariant * (2 * variants.Length - 1);
@@ -36,7 +42,7 @@ public class ShiftingPowerup : BouncyItem {
         base.Awake();
     }
     
-    public override void Initialize(Vector2 root, Vector2 targetOffset, [CanBeNull] PoC collectionPoint = null) {
+    public override void Initialize(Vector2 root, Vector2 targetOffset, PoC? collectionPoint = null) {
         base.Initialize(root, targetOffset, collectionPoint);
         currVariant = RNG.GetInt(0, variants.Length);
         timeUntilSwitch = timePerVariant;
@@ -45,7 +51,7 @@ public class ShiftingPowerup : BouncyItem {
 
     protected override void CollectMe() {
         if (effect != null) effect.InvokeCull();
-        GameManagement.instance.SetSubshot(variants[currVariant].type);
+        GameManagement.Instance.SetSubshot(variants[currVariant].type);
         base.CollectMe();
     }
 
@@ -56,9 +62,14 @@ public class ShiftingPowerup : BouncyItem {
             effect.InvokeCull();
         }
         if (time + timePerVariant < StopShiftingAfter) {
-            effect = Instantiate(switchTell, tr).GetComponent<PowerUp>();
-            effect.transform.localScale = new Vector3(switchTellScale, switchTellScale, switchTellScale);
-            effect.Initialize(ReflWrap<TP4>.Wrap(v.color), timePerVariant, switchTellIterations);
+            effect = Instantiate(switchTell, tr).GetComponent<PowerAura>();
+            var opts = new PowerAuraOptions(new[] {
+                PowerAuraOption.Color(ReflWrap<TP4>.Wrap(v.color)),
+                PowerAuraOption.Time(_ => timePerVariant),
+                PowerAuraOption.Iterations(_ => switchTellIterations),
+                PowerAuraOption.Scale(_ => switchTellScale),
+            });
+            effect.Initialize(new RealizedPowerAuraOptions(opts, GenCtx.Empty, Vector2.zero, Cancellable.Null, null!));
         }
         SFXService.Request(onSwitch);
     }

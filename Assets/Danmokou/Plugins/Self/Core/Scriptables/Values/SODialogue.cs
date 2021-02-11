@@ -6,6 +6,6 @@ using UnityEngine;
 namespace DMK.Scriptables {
 [CreateAssetMenu(menuName = "Data/Dialogue")]
 public class SODialogue : ScriptableObject {
-    public TranslateableDialogue[] assetGroups;
+    public TranslateableDialogue[] assetGroups = null!;
 }
 }

@@ -7,10 +7,6 @@ using DMK.Services;
 using JetBrains.Annotations;
 using DMK.SM;
 using UnityEngine;
-using ExBPY = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<float>>;
-using ExBPRV2 = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<DMK.DMath.V2RV2>>;
-using ExTP = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<UnityEngine.Vector2>>;
-using ExPred = System.Func<DMK.Expressions.TExPI, DMK.Expressions.TEx<bool>>;
 using static DMK.Danmaku.Options.LaserOption;
 
 namespace DMK.Danmaku.Options {
@@ -18,6 +14,7 @@ namespace DMK.Danmaku.Options {
 /// <summary>
 /// Properties that modify the behavior of lasers.
 /// </summary>
+[Reflect]
 public class LaserOption {
     /// <summary>
     /// Set the length, in time, of a laser.
@@ -41,8 +38,7 @@ public class LaserOption {
     public static LaserOption Delete(GCXU<Pred> cond) => new DeleteProp(cond);
 
     /// <summary>
-    /// Every frame, if the condition is true, sets lastActiveTime in private data hoisting to the current laser time (but only once).
-    /// <br/>Note: This is probably unnecessary except for player bullets, which currently have limited support for controls such as updatef. 
+    /// Every frame, if the condition is true, sets LastActiveTime in private data hoisting to the current laser time (but only once).
     /// </summary>
     public static LaserOption Deactivate(GCXU<Pred> cond) => new DeactivateProp(cond);
     
@@ -126,8 +122,13 @@ public class LaserOption {
     /// Tint the laser. This is a multiplicative effect on its normal color.
     /// <br/> WARNING: This is a rendering function. Do not use `rand` (`brand` ok), or else replays will desync.
     /// </summary>
-    public static LaserOption Tint(GCXU<FnLaserV4> tint) => new TintProp(tint);
+    public static LaserOption Tint(GCXU<TP4> tint) => new TintProp(tint);
 
+    /// <summary>
+    /// Player bullets only.
+    /// </summary>
+    public static LaserOption Nonpiercing() => new NonpiercingFlag();
+    
     public static LaserOption Player(int cdFrames, int bossDmg, int stageDmg, string effect) =>
         new PlayerBulletProp(new PlayerBulletCfg(cdFrames, bossDmg, stageDmg, ResourceManager.GetEffect(effect)));
     
@@ -149,9 +150,9 @@ public class LaserOption {
         public EndpointProp(string f) : base(f) { }
     }
     public class SfxProp : LaserOption {
-        [CanBeNull] public readonly string onFire;
-        [CanBeNull] public readonly string onOn;
-        public SfxProp(string onFire, string onOn) {
+        public readonly string? onFire;
+        public readonly string? onOn;
+        public SfxProp(string? onFire, string? onOn) {
             this.onFire = onFire;
             this.onOn = onOn;
         }
@@ -212,13 +213,15 @@ public class LaserOption {
             white = w;
         }
     }
-    public class TintProp : ValueProp<GCXU<FnLaserV4>> {
-        public TintProp(GCXU<FnLaserV4> v) : base(v) { }
+    public class TintProp : ValueProp<GCXU<TP4>> {
+        public TintProp(GCXU<TP4> v) : base(v) { }
     }
 
     public class PlayerBulletProp : ValueProp<PlayerBulletCfg> {
         public PlayerBulletProp(PlayerBulletCfg cfg) : base(cfg) { }
     }
+    
+    public class NonpiercingFlag : LaserOption { }
     
     #endregion
 }
@@ -226,33 +229,34 @@ public class LaserOption {
 public readonly struct RealizedLaserOptions {
     private const float DEFAULT_LASER_LEN = 15;
     public readonly float maxLength;
-    [CanBeNull] public readonly BPY varLength;
-    [CanBeNull] public readonly BPY start;
-    [CanBeNull] public readonly Pred delete;
-    [CanBeNull] public readonly Pred deactivate;
+    public readonly BPY? varLength;
+    public readonly BPY? start;
+    public readonly Pred? delete;
+    public readonly Pred? deactivate;
     public readonly bool repeat;
-    [CanBeNull] public readonly string endpoint;
-    [CanBeNull] public readonly string firesfx;
-    [CanBeNull] public readonly string hotsfx;
+    public readonly string? endpoint;
+    public readonly string? firesfx;
+    public readonly string? hotsfx;
     public readonly LaserMovement lpath;
     public readonly bool isStatic;
     public readonly SMRunner smr;
     public readonly float yScale;
     public readonly int? layer;
     public readonly float staggerMultiplier;
-    [CanBeNull] public readonly BPY hueShift;
+    public readonly BPY? hueShift;
     public readonly (TP4 black, TP4 white)? recolor;
-    [CanBeNull] public readonly FnLaserV4 tint;
+    public readonly TP4? tint;
+    public readonly bool nonpiercing;
     public readonly PlayerBulletCfg? playerBullet;
 
     public RealizedBehOptions AsBEH => new RealizedBehOptions(this);
 
-    public RealizedLaserOptions(LaserOptions opts, GenCtx gcx, uint bpiid, Vector2 parentOffset, V2RV2 localOffset, ICancellee cT) {
+    public RealizedLaserOptions(LaserOptions opts, GenCtx gcx, FiringCtx fctx, Vector2 parentOffset, V2RV2 localOffset, ICancellee cT) {
         maxLength = opts.length?.max.Invoke(gcx) ?? DEFAULT_LASER_LEN;
-        varLength = opts.length?.var?.Add(gcx, bpiid);
-        start = opts.start?.Add(gcx, bpiid);
-        delete = opts.delete?.Add(gcx, bpiid);
-        deactivate = opts.deactivate?.Add(gcx, bpiid);
+        varLength = opts.length?.var?.Invoke(gcx, fctx);
+        start = opts.start?.Invoke(gcx, fctx);
+        delete = opts.delete?.Invoke(gcx, fctx);
+        deactivate = opts.deactivate?.Invoke(gcx, fctx);
         repeat = opts.repeat?.Invoke(gcx) ?? false;
         endpoint = opts.endpoint;
         firesfx = opts.firesfx;
@@ -260,19 +264,20 @@ public readonly struct RealizedLaserOptions {
         layer = opts.layer;
         staggerMultiplier = opts.staggerMultiplier;
         if (opts.curve != null) {
-            lpath = new LaserMovement(opts.curve.Value.Add(gcx, bpiid), parentOffset, localOffset);
+            lpath = new LaserMovement(opts.curve(gcx, fctx), parentOffset, localOffset);
             isStatic = !opts.dynamic;
         } else {
-            lpath = new LaserMovement(localOffset.angle + (opts.rotateOffset?.Invoke(gcx) ?? 0f), opts.rotate?.Add?.Invoke(gcx, bpiid));
+            lpath = new LaserMovement(localOffset.angle + (opts.rotateOffset?.Invoke(gcx) ?? 0f), opts.rotate?.Invoke(gcx, fctx));
             isStatic = true;
         }
         smr = SMRunner.Run(opts.sm, cT, gcx);
         yScale = opts.yScale?.Invoke(gcx) ?? 1f;
-        hueShift = opts.hueShift?.Add(gcx, bpiid);
+        hueShift = opts.hueShift?.Invoke(gcx, fctx);
         if (opts.recolor.Try(out var rc)) {
-            recolor = (rc.black.Add(gcx, bpiid), rc.white.Add(gcx, bpiid));
+            recolor = (rc.black(gcx, fctx), rc.white(gcx, fctx));
         } else recolor = null;
-        tint = opts.tint?.Add(gcx, bpiid);
+        tint = opts.tint?.Invoke(gcx, fctx);
+        nonpiercing = opts.nonpiercing;
         playerBullet = opts.playerBullet;
     }
 }
@@ -282,50 +287,69 @@ public class LaserOptions {
     public readonly GCXU<BPY>? start;
     public readonly GCXU<Pred>? delete;
     public readonly GCXU<Pred>? deactivate;
-    [CanBeNull] public readonly GCXF<bool> repeat;
-    [CanBeNull] public readonly string endpoint;
-    [CanBeNull] public readonly string firesfx;
-    [CanBeNull] public readonly string hotsfx;
+    public readonly GCXF<bool>? repeat;
+    public readonly string? endpoint;
+    public readonly string? firesfx;
+    public readonly string? hotsfx;
     public readonly bool dynamic;
     public readonly GCXU<LVTP>? curve = null;
-    [CanBeNull] public readonly GCXF<float> rotateOffset;
+    public readonly GCXF<float>? rotateOffset;
     public readonly GCXU<BPY>? rotate = null;
-    [CanBeNull] public readonly StateMachine sm;
-    [CanBeNull] public readonly GCXF<float> yScale;
+    public readonly StateMachine? sm;
+    public readonly GCXF<float>? yScale;
     public readonly int? layer = null;
     public readonly float staggerMultiplier = 1f;
     public readonly GCXU<BPY>? hueShift;
     public readonly (GCXU<TP4> black, GCXU<TP4> white)? recolor;
-    public readonly GCXU<FnLaserV4>? tint;
+    public readonly GCXU<TP4>? tint;
+    public readonly bool nonpiercing;
     public readonly PlayerBulletCfg? playerBullet;
 
     public LaserOptions(params LaserOption[] props) : this(props as IEnumerable<LaserOption>) { }
 
     public LaserOptions(IEnumerable<LaserOption> props) {
         foreach (var p in props.Unroll()) {
-            if (p is LengthProp l) length = l.value;
-            else if (p is StartProp stp) start = stp.value;
-            else if (p is DeleteProp dp) delete = dp.value;
-            else if (p is DeactivateProp dcp) deactivate = dcp.value;
-            else if (p is RepeatProp r) repeat = r.value;
-            else if (p is RotateOffsetProp roff) rotateOffset = roff.value;
-            else if (p is RotateProp rotp) rotate = rotp.value;
+            if      (p is LengthProp l) 
+                length = l.value;
+            else if (p is StartProp stp) 
+                start = stp.value;
+            else if (p is DeleteProp dp) 
+                delete = dp.value;
+            else if (p is DeactivateProp dcp) 
+                deactivate = dcp.value;
+            else if (p is RepeatProp r) 
+                repeat = r.value;
+            else if (p is RotateOffsetProp roff) 
+                rotateOffset = roff.value;
+            else if (p is RotateProp rotp) 
+                rotate = rotp.value;
             else if (p is CurveProp cur) {
                 dynamic = cur.dynamic;
                 curve = cur.curve;
-            } else if (p is EndpointProp ep) endpoint = ep.value;
+            } else if (p is EndpointProp ep) 
+                endpoint = ep.value;
             else if (p is SfxProp hsp) {
                 firesfx = hsp.onFire;
                 hotsfx = hsp.onOn;
             }
-            else if (p is SMProp smp) sm = smp.value;
-            else if (p is YScaleProp yp) yScale = yp.value;
-            else if (p is LayerProp lp) layer = lp.value.Int();
-            else if (p is StaggerProp sp) staggerMultiplier = sp.value;
-            else if (p is HueShiftProp hshp) hueShift = hshp.value;
-            else if (p is RecolorProp rcp) recolor = (rcp.black, rcp.white);
-            else if (p is TintProp tp) tint = tp.value;
-            else if (p is PlayerBulletProp pbp) playerBullet = pbp.value;
+            else if (p is SMProp smp) 
+                sm = smp.value;
+            else if (p is YScaleProp yp) 
+                yScale = yp.value;
+            else if (p is LayerProp lp) 
+                layer = lp.value.Int();
+            else if (p is StaggerProp sp) 
+                staggerMultiplier = sp.value;
+            else if (p is HueShiftProp hshp)
+                hueShift = hshp.value;
+            else if (p is RecolorProp rcp) 
+                recolor = (rcp.black, rcp.white);
+            else if (p is TintProp tp) 
+                tint = tp.value;
+            else if (p is NonpiercingFlag)
+                nonpiercing = true;
+            else if (p is PlayerBulletProp pbp) 
+                playerBullet = pbp.value;
             else throw new Exception($"Laser property {p.GetType()} not handled.");
         }
         if (length?.var != null || start != null) {
