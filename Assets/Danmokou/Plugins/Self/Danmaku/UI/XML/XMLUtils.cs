@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using DMK.Achievements;
 using DMK.Core;
 using DMK.Danmaku;
 using DMK.GameInstance;
@@ -24,9 +25,10 @@ public static class XMLUtils {
     public const string hideClass = "hide";
     public const string descriptorClass = "descriptor";
     public const string centerTextClass = "centertext";
+    public static string CheckmarkClass(bool active) => active ? "checked" : "unchecked";
 
     public static UIScreen ReplayScreen(Action<List<XMLMenu.CacheInstruction>> cacheTentative, Action cacheConfirm) =>
-        new UIScreen(SaveData.p.ReplayData.Count.Range().Select(i =>
+        new LazyUIScreen(() => SaveData.p.ReplayData.Count.Range().Select(i =>
             new CacheNavigateUINode(cacheTentative, () =>
                     SaveData.p.ReplayData.TryN(i)?.metadata.Record.AsDisplay(true, true) ?? generic_deleted,
                 new FuncNode(() => {
@@ -49,9 +51,12 @@ public static class XMLUtils {
             key.campaign = key.boss.Item1.campaign = key.challenge.Item1.Item1.Item1.campaign =
                 key.stage.Item1.campaign = campaigns[cmpIndex].Key;
             AssignStage(0);
-            AssignBoss(0);
+            if (campaigns[cmpIndex].bosses.Length > 0)
+                AssignBoss(campaigns[cmpIndex].bosses[0].boss.key);
+            else
+                throw new Exception("No high score handling for days menu implemented yet"); //AssignBoss(days!.bosses[]);
         }
-        void AssignBoss(int boss) {
+        void AssignBoss(string boss) {
             key.boss.Item1.boss = key.challenge.Item1.Item1.boss = boss;
             AssignBossPhase(0);
         }
@@ -78,7 +83,7 @@ public static class XMLUtils {
                 var node = new UINode(g.AsDisplay(true, false));
                 if (replays.TryGetValue(g.Uuid, out var i)) node.SetConfirmOverride(() => (true, replayScreen.top[i]));
                 return node.With(monospaceClass).With(small2Class)
-                    .With(replays.ContainsKey(g.Uuid) ? "checked" : "unchecked")
+                    .With(CheckmarkClass(replays.ContainsKey(g.Uuid)))
                     .VisibleIf(() => DUHelpers.Tuple4Eq(key, g.RequestKey));
             });
         var optnodes = new UINode[] {
@@ -90,32 +95,29 @@ public static class XMLUtils {
             }.FilterNone().ToArray(), key.type),
             new OptionNodeLR<int>(practice_campaign, AssignCampaign,
                 campaigns.Select((c, i) => (new LocalizedString(c.campaign.shortTitle), i)).ToArray(), cmpIndex),
-            new DynamicOptionNodeLR<int>(practice_m_whichboss, AssignBoss, () =>
+            new DynamicOptionNodeLR<string>(practice_m_whichboss, AssignBoss, () =>
                     key.type == 1 ?
-                        campaigns[cmpIndex].bosses.Select((b, i) => (b.boss.BossPracticeName, i)).ToArray() :
-                        new[] {(LocalizedString.Empty, 0)} //required to avoid errors with the option node
-                , 0).VisibleIf(() => key.type == 1),
+                        campaigns[cmpIndex].bosses.Select(b => (b.boss.BossPracticeName.ValueOrEn, b.boss.key)).ToArray() :
+                        new[] {("", "")} //required to avoid errors with the option node
+                , "").VisibleIf(() => key.type == 1),
             new DynamicOptionNodeLR<int>(practice_m_whichstage, AssignStage, () =>
                     key.type == 3 ?
-                        campaigns[cmpIndex].stages.Select((s, i) => (new LocalizedString(s.stage.stageNumber), i)).ToArray() :
-                        new[] {(LocalizedString.Empty, 0)} //required to avoid errors with the option node
+                        campaigns[cmpIndex].stages.Select((s, i) => (s.stage.stageNumber, i)).ToArray() :
+                        new[] {("", 0)} //required to avoid errors with the option node
                 , 0).VisibleIf(() => key.type == 3),
             new DynamicOptionNodeLR<int>(practice_m_whichphase, AssignBossPhase, () =>
                     key.type == 1 ?
-                        campaigns[cmpIndex].bosses[key.boss.Item1.boss].Phases.Select(
+                        campaigns[cmpIndex].bossKeyMap[key.boss.Item1.boss].Phases.Select(
                             //p.index is used as request key
-                            (p, i) => (LocalizedString.Format(
-                                "{0}. {1}", 
-                                new LocalizedString($"{i + 1}"), 
-                                p.Title), p.index)).ToArray() :
-                        new[] {(LocalizedString.Empty, 0)}, 0)
+                            (p, i) => ($"{i + 1}. {p.Title}", p.index)).ToArray() :
+                        new[] {("", 0)}, 0)
                 .With(ve => ve.Q("ValueContainer").style.width = new StyleLength(new Length(80, LengthUnit.Percent)))
                 .VisibleIf(() => key.type == 1),
             new DynamicOptionNodeLR<int>(practice_m_whichphase, AssignStagePhase, () =>
                     key.type == 3 ?
                         campaigns[cmpIndex].stages[key.stage.Item1.stage].Phases.Select(
-                            p => (p.Title, p.index)).Prepend((practice_fullstage, 1)).ToArray() :
-                        new[] {(LocalizedString.Empty, 0)}, 0)
+                            p => (p.Title.ValueOrEn, p.index)).Prepend((practice_fullstage.ValueOrEn, 1)).ToArray() :
+                        new[] {("", 0)}, 0)
                 .VisibleIf(() => key.type == 3),
         };
         return new UIScreen(optnodes.Append(new PassthroughNode(LocalizedString.Empty)).Concat(scoreNodes).ToArray());
@@ -134,7 +136,8 @@ public static class XMLUtils {
                     cb();
                 }
             }
-            string[] descr = {descriptorClass};
+            //TODO: temp workaround for wrapping custom difficulty descriptions
+            string[] descr = {descriptorClass, "wrap"};
             double[] _pctMods = {
                 0.31, 0.45, 0.58, 0.7, 0.85, 1, 1.2, 1.4, 1.6, 1.8, 2
             };
@@ -239,20 +242,20 @@ public static class XMLUtils {
             (playerSwitch == null || playerSwitch == ir.SharedInstanceMetadata.team.players[0].player) &&
             (shotSwitch == null || shotSwitch == ir.SharedInstanceMetadata.team.players[0])
             ;
-        int? bossIndex;
+        string? boss;
 
         Statistics.StatsGenerator stats;
         void UpdateStats() => 
             stats = new Statistics.StatsGenerator(games.Where(Filter), campaigns, cbp => 
                 (campaignIndex == null || (campaigns[campaignIndex.Value].Key == cbp.Item1.campaign)) &&
-                (bossIndex == null || (bossIndex == cbp.Item1.boss)));
+                (boss == null || (boss == cbp.Item1.boss)));
         
         void AssignCampaign(int? cmpInd) {
             campaignIndex = cmpInd;
             AssignBoss(null);
         }
-        void AssignBoss(int? boss) {
-            bossIndex = boss;
+        void AssignBoss(string? nboss) {
+            boss = nboss;
             foreach (var cb in load_cbs) cb();
             UpdateStats();
         }
@@ -276,7 +279,7 @@ public static class XMLUtils {
             );
         }
 
-        var nodes = new UINode[] {
+        Func<UINode[]> nodes = () => new UINode[] {
             new OptionNodeLR<int?>(practice_campaign, AssignCampaign,
                 campaigns
                     .Select((c, i) => (new LocalizedString(c.campaign.shortTitle), (int?) i))
@@ -332,17 +335,27 @@ public static class XMLUtils {
                 stats.TotalRuns == 0 ? generic_na : new LocalizedString($"{stats.MaxScore}")),
             new TwoLabelUINode(stats_capturerate, () => new LocalizedString(AsPct(stats.CaptureRate))),
             new TwoLabelUINode(stats_bestcard, () => 
-                stats.TotalRuns == 0 ? generic_na : ShowCard(stats.BestCapture)),
+                !stats.HasSpellHist ? generic_na : ShowCard(stats.BestCapture)),
             new TwoLabelUINode(stats_worstcard, () => 
-                stats.TotalRuns == 0 ? generic_na : ShowCard(stats.WorstCapture))
+                !stats.HasSpellHist ? generic_na : ShowCard(stats.WorstCapture))
         };
         
-        return new UIScreen(
-            nodes.Select(x => x.With(small1Class)).ToArray()
+        return new LazyUIScreen(
+            () => nodes().Select(x => x.With(small1Class)).ToArray()
         ).With(screen);
-
-
+        
     }
-    
+
+    public static UIScreen AchievementsScreen(VisualTreeAsset screen, VisualTreeAsset node, AchievementManager acvs) =>
+        new UIScreen(
+            acvs.SortedAchievements.Select(a => 
+                new UINode(a.Title)
+                    .With(ev => ev.Q<Label>("Description").text = a.VisibleDescription)
+                    .With(ev => ev.AddToClassList(CheckmarkClass(a.Completed)))
+                    .With(node)
+                ).ToArray()
+            ).With(screen);
+
+
 }
 }

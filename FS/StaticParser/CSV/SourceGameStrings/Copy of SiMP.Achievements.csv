@@ -1,0 +1,97 @@
+Key,EN,Notes,JP
+open,Embarking Step,SKIPPING INTEGRATION OF JP BECAUSE OF TEXT WRAP BUG.,踏み出す足
+d_open,Open Spirits in Memetic Paradise.,,
+tutorial,Learn the Red and the Blue,,赤き・青き真実
+d_tutorial,Play the tutorial.,,
+st1,Stage 1 Complete,,1面クリア
+d_st1,Clear stage 1.,,
+st2,Stage 2 Complete,,2面クリア
+d_st2,Clear stage 2.,,
+st3,Stage 3 Complete,,3面クリア
+d_st3,Clear stage 3.,,
+st4,Stage 4 Complete,,4面クリア
+d_st4,Clear stage 4.,,
+st5,Stage 5 Complete,,5面クリア
+d_st5,Clear stage 5.,,
+maindone,"Use a separate cutting board for raw meats and produce, or scrub boards thoroughly between usages.",,
+d_maindone,Clear the main game.,,
+mainendgood,Fishing Date with Kaguya,,かぐやとの釣りデート
+d_mainendgood,Get the good ending to the main game (Normal or harder).,,
+mainendbad,Wandering the Depths of Oblivion,,闇の淵を彷徨うもの
+d_mainendbad,Get the bad ending to the main game (Normal or harder).,,
+exdone,Truth Explaining Lies and Lies Explaining Truth,,真実を説く虚偽・虚偽を説く真実
+d_exdone,Clear the EX stage.,,
+main1cc,"Not That Tough Without Yukari, Are You?",,紫がいないと、お前なんか弱くね？
+d_main1cc,"Clear the main game (1CC, Normal or harder).",,
+ex1cc,One Undivided with No Second,,二のない一
+d_ex1cc,"Clear the EX stage (1CC, Normal or harder).",,
+mainnull,"Without Love, It Cannot Be Seen",,愛がなければ視えない
+d_mainnull,"Clear the main game with the null shot (1CC, Normal or harder).",,
+exnull,Wisdom of the Tathagata,,如来の知恵
+d_exnull,"Clear the EX stage with the null shot (1CC, Normal or harder).",,
+nometer,"It Is Physically Impossible, Therefore It Does Not Exist",,物理的に不可能だから存在しない
+d_nometer,"Clear the main game without breaking the laws of general relativity (1CC,  Normal or harder).",,
+meter,"This Is Fantasy, Not Mystery",,ミステリーじゃない。ファンタジーだ
+d_meter,Break the laws of general relativity.,,
+c42,42,,
+d_c42,Clear the main game on custom difficulty 42 with at most 42 deaths.,,
+aya,A Moa Dreaming of Haast,,ハーストを夢見るモア
+d_aya,Defeat Aya with the maximum number of stars.,,
+kasen1,When the Hermit is Sus,,この仙人なんか怪しい。。。
+d_kasen1,Defeat Kasen with the maximum number of stars.,,
+kaguya,I Swear I'm Reisen,,私鈴仙ですよ！本当に！
+d_kaguya,Defeat the rabbit with the maximum number of stars.,,
+yukari,"Come Amuse Me, Child of Man",,楽しませてくれ、人の子よ
+d_yukari,Defeat (?) Yukari with the maximum number of stars.,,
+nemo,SQL Injection Vulnerabilities in 2021???,,2021でSQL注入脆弱性？？？
+d_nemo,Defeat [NULL REFERENCE EXCEPTION] with the maximum number of stars.,,
+seija,You Do Not Have This Achievement,,お前はこのトロフィーは持っていない
+d_seija,Defeat Seija with zero stars.,,
+mima,Become As Gods,,私は、神になる
+d_mima,Defeat Mima with the maximum number of stars.,,
+kasen2,Thunderclad Disciple of the Yellow Emperor,,雷に巻かれた黄帝の使徒
+d_kasen2,Defeat Kasen and her dragon with the maximum number of stars.,,
+reimu,Cook meat to an internal temperature of at least 145º to avoid contamination by harmful bacteria.,,
+d_reimu,Defeat Reimu with the maximum number of stars.,,
+mokou,Every Soul Has Its Dark,,どのソールにでも、ダークがある
+d_mokou,Defeat Mokou with the maximum number of stars.,,
+yukariex,I Hate the Color Green,,緑色が嫌い！
+d_yukariex,Defeat Shikumo Midori with the maximum number of stars.,,
+shinki,"If You Meet the Buddha, Kill the Buddha",,仏に逢うては仏を殺せ
+d_shinki,Defeat Shinki with the maximum number of stars.,,
+recitation,Lectures of the Primordial Vampire,,元祖の吸血鬼の講
+d_recitation,Sit patiently through a night of Buddhist recitations.,,
+eileen,Eileen the Crow,,烏羽の狩人
+d_eileen,Succumb to the Blade of Mercy.,,
+options,I Keep My Options Open,,選択は、ある方が便利
+d_options,Pick a multishot but don't change it for the entirety of a campaign.,,
+mushrooms,I Hate Mushrooms,,キノコが嫌い
+d_mushrooms,Don't eat any mushrooms for the entirety of a campaign.,,
+bombplz,Please Just Let Me Bomb,,ボムを一つくらいくれてください！
+d_bombplz,Die four times on the same card.,,
+deathbombplz,"Wrong Game, Kiddo",,ゲーム間違ってるよ
+d_deathbombplz,Try (emphasis on try) to deathbomb.,,
+darksouls,Welcome to Dark Souls,,ダークソウルへようこそ
+d_darksouls,Die before reaching the first boss.,,
+s100mil,Ichi Juu Hyaku Sen Man Oku,,一・十・百・千・万・億
+d_s100mil,"Get 100,000,000 points in a single game.",,
+s330mil,Gunbarrel Diplomacy,,砲身の先の外交
+d_s330mil,"Get 330,000,000 points in a single game.",,
+s666mil,What if I were to Purchase Fast Food and Disguise it as My Own Score?,,ファストフードを自分の料理に偽装したら？
+d_s666mil,"Get 666,000,000 points in a single game.",,
+s1bil,Billionaires Shouldn't Exist,,ビリオネアはあってはならぬ
+d_s1bil,"Get 1,000,000,000 points in a single game.",,
+smul420,Blaze It,,燃やせ！
+d_smul420,Raise your score multiplier to 4.20.,,
+smul690,Nice...,,いい
+d_smul690,Raise your score multiplier to 6.90.,,
+graze1337,Hackerman,,ハッカーマン
+d_graze1337,Get 1337 graze in a single game.,,
+graze9000,It's Over Nine Thousand!,,八千以上だ！（英語では九千）
+d_graze9000,Get over nine thousand graze in a single game.,,
+maxlives,What happens if I get an extra life when I already have the maximum amount?,,
+d_maxlives,"The life is still counted, but it's not shown on the UI.",,
+replay,"The Witch of Theatergoing, Drama, and Spectatorship",,観劇と戯曲と傍観の魔女
+d_replay,Watch a replay.,,
+practice,The Answer Lies in Your Memories,,記憶に隠れる解答
+d_practice,Play the practice modes.,,

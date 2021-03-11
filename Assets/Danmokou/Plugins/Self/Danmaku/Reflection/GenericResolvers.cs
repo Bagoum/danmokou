@@ -268,7 +268,6 @@ public static partial class Reflector {
         } else if (q.AllowsScan && FuncTypeResolve(arg, t, out obj)) {
             q.Advance();
         }
-        //TODO maybe merge these
         else if (FallThroughOptions.TryGetValue(t, out var ftmi)) {
             //MakeFallthrough allows the nested lookup to not be required to consume all post-aggregation.
             var ftype = ftmi.mi.GetParameters()[0].ParameterType;

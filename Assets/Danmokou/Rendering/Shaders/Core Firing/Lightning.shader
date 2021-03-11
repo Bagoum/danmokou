@@ -82,7 +82,7 @@
 		ZWrite Off
 		
 		Pass {
-		    Blend SrcAlpha One
+		    Blend SrcAlpha One, OneMinusDstAlpha One
 			CGPROGRAM
 		    float4 frag(fragment f) : SV_Target {
 		        return fragLightning(f, 0);
@@ -91,7 +91,7 @@
 		}
 
 		Pass {
-		    Blend SrcAlpha [_BlendTo]
+		    Blend SrcAlpha [_BlendTo], OneMinusDstAlpha One
 			CGPROGRAM
 			
         #ifdef FT_RECOLORIZE
@@ -110,7 +110,7 @@
 			ENDCG
 		}
 		Pass {
-		    Blend SrcAlpha One
+		    Blend SrcAlpha One, OneMinusDstAlpha One
 			CGPROGRAM
 		    float4 frag(fragment f) : SV_Target {
 		        return fragLightning(f, 1);

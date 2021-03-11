@@ -19,18 +19,15 @@ MonoBehaviour:
     hardcoded:
       en: 
       jp: 
-      _showEnOnly: 0
-  description: 'A laser-based fighting style borrowed from Marisa.
-
-    If only Reimu
-    weren''t so lazy, she might have learned how to make piercing lasers.'
+  description: A laser-based fighting style borrowed from Marisa.
   type: Lasers
   prefab: {fileID: 6169168473649848314, guid: 70fe2ad54c4c68946bdaa2cad558abc0, type: 3}
   bomb: 0
   defaultPower: 1000
   playerChild: 1
-  demoReplay: {fileID: 4900000, guid: f58a179b4f5afb7489944bbfdd2484f5, type: 3}
+  demoReplay: {fileID: 11400000, guid: cb661392b80571a4789ee38880206435, type: 2}
   demoSetupSM: {fileID: 4900000, guid: 83d895926f063264f9adc5887261db81, type: 3}
+  shotDifficulty: 0
   isMultiShot: 0
   multiD: {fileID: 0}
   multiM: {fileID: 0}

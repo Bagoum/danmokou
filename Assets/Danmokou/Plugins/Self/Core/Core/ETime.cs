@@ -158,61 +158,67 @@ public class ETime : MonoBehaviour {
     }
 
     private void Update() {
-        FirstUpdateForScreen = true;
-        //Updates still go out on loading. Player movement is disabled but other things need to run
-        noSlowDT = ASSUME_SCREEN_FRAME_TIME;
-        if (EngineStateManager.IsLoadingOrPaused) {
-            InputManager.OncePerFrameToggleControls();
-            //Send out limited updates ignoring slowdown
-            for (; noSlowDT > FRAME_BOUNDARY;) {
-                noSlowDT -= FRAME_TIME;
-                LastUpdateForScreen = noSlowDT <= FRAME_BOUNDARY;
-                EngineStateManager.CheckForStateUpdates();
-                if (EngineStateManager.PendingChange) continue;
+        try {
+            FirstUpdateForScreen = true;
+            //Updates still go out on loading. Player movement is disabled but other things need to run
+            noSlowDT = ASSUME_SCREEN_FRAME_TIME;
+            if (EngineStateManager.IsLoadingOrPaused) {
+                InputManager.OncePerFrameToggleControls();
+                //Send out limited updates ignoring slowdown
+                for (; noSlowDT > FRAME_BOUNDARY;) {
+                    noSlowDT -= FRAME_TIME;
+                    LastUpdateForScreen = noSlowDT <= FRAME_BOUNDARY;
+                    EngineStateManager.CheckForStateUpdates();
+                    if (EngineStateManager.PendingChange) continue;
 
-                for (int ii = 0; ii < updaters.Count; ++ii) {
-                    DeletionMarker<IRegularUpdater> updater = updaters.arr[ii];
-                    if (!updater.markedForDeletion && updater.obj.UpdateDuringPause) updater.obj.RegularUpdate();
-                }
-                updaters.Compact();
-                FlushUpdaterAdds();
-                FirstUpdateForScreen = false;
-            }
-            noSlowDT = 0;
-        } else {
-            for (; untilNextRegularFrame + dT > FRAME_BOUNDARY;) {
-                //If the unity frame is skipped, then don't destroy trigger-based controls.
-                //If this toggle is moved out of the loop, then it is possible for trigger-based controls
-                // to be ignored if the unity framerate is faster than the game update rate
-                // (eg. 240hz, or 60hz + slowdown 0.25).
-                if (FirstUpdateForScreen) InputManager.OncePerFrameToggleControls();
-                untilNextRegularFrame -= FRAME_TIME;
-                LastUpdateForScreen = untilNextRegularFrame + dT <= FRAME_BOUNDARY;
-                EngineStateManager.CheckForStateUpdates();
-                if (EngineStateManager.PendingChange) continue;
-                StartOfFrameInvokes();
-                //Parallelize updates if there are many. Note that this allocates ~2kb
-                if (updaters.Count < PARALLELCUTOFF) {
                     for (int ii = 0; ii < updaters.Count; ++ii) {
                         DeletionMarker<IRegularUpdater> updater = updaters.arr[ii];
-                        if (!updater.markedForDeletion) updater.obj.RegularUpdateParallel();
+                        if (!updater.markedForDeletion && updater.obj.UpdateDuringPause) updater.obj.RegularUpdate();
                     }
-                } else ParallelUpdateStep();
-                for (int ii = 0; ii < updaters.Count; ++ii) {
-                    DeletionMarker<IRegularUpdater> updater = updaters.arr[ii];
-                    if (!updater.markedForDeletion) updater.obj.RegularUpdate();
+                    updaters.Compact();
+                    FlushUpdaterAdds();
+                    FirstUpdateForScreen = false;
                 }
-                updaters.Compact();
-                //Note: The updaters array is only modified by this command. 
-                FlushUpdaterAdds();
-                EndOfFrameInvokes();
-                FrameNumber++;
-                FirstUpdateForScreen = false;
+                noSlowDT = 0;
+            } else {
+                for (; untilNextRegularFrame + dT > FRAME_BOUNDARY;) {
+                    //If the unity frame is skipped, then don't destroy trigger-based controls.
+                    //If this toggle is moved out of the loop, then it is possible for trigger-based controls
+                    // to be ignored if the unity framerate is faster than the game update rate
+                    // (eg. 240hz, or 60hz + slowdown 0.25).
+                    if (FirstUpdateForScreen) InputManager.OncePerFrameToggleControls();
+                    untilNextRegularFrame -= FRAME_TIME;
+                    LastUpdateForScreen = untilNextRegularFrame + dT <= FRAME_BOUNDARY;
+                    EngineStateManager.CheckForStateUpdates();
+                    if (EngineStateManager.PendingChange) continue;
+                    StartOfFrameInvokes();
+                    //Parallelize updates if there are many. Note that this allocates ~2kb
+                    if (updaters.Count < PARALLELCUTOFF) {
+                        for (int ii = 0; ii < updaters.Count; ++ii) {
+                            DeletionMarker<IRegularUpdater> updater = updaters.arr[ii];
+                            if (!updater.markedForDeletion) updater.obj.RegularUpdateParallel();
+                        }
+                    } else ParallelUpdateStep();
+                    for (int ii = 0; ii < updaters.Count; ++ii) {
+                        DeletionMarker<IRegularUpdater> updater = updaters.arr[ii];
+                        if (!updater.markedForDeletion) updater.obj.RegularUpdate();
+                    }
+                    updaters.Compact();
+                    //Note: The updaters array is only modified by this command. 
+                    FlushUpdaterAdds();
+                    EndOfFrameInvokes();
+                    FrameNumber++;
+                    FirstUpdateForScreen = false;
+                }
+                untilNextRegularFrame += dT;
+                if (Mathf.Abs(untilNextRegularFrame) < FRAME_YIELD) untilNextRegularFrame = 0f;
             }
-            untilNextRegularFrame += dT;
-            if (Mathf.Abs(untilNextRegularFrame) < FRAME_YIELD) untilNextRegularFrame = 0f;
+            EngineStateManager.UpdateGameState();
+        } catch (Exception e) {
+            Log.UnityError("Error thrown in the ETime update loop.");
+            Log.UnityException(e);
+            throw;
         }
-        EngineStateManager.UpdateGameState();
     }
 
     private static IEnumerator NoVsyncHandler() {
@@ -297,6 +303,7 @@ public class ETime : MonoBehaviour {
         /// True iff the timer is currently accumulating.
         /// </summary>
         private bool enabled = false;
+        private readonly bool phaseLocal;
 
         private void Start(float mult) {
             multiplier = mult;
@@ -339,26 +346,29 @@ public class ETime : MonoBehaviour {
             timer.Stop();
         }
 
-        private Timer(string name) {
+        private Timer(string name, bool phaseLocal) {
             this.name = name;
+            this.phaseLocal = phaseLocal;
             token = RegisterRegularUpdater(this);
         }
 
         private readonly DeletionMarker<IRegularUpdater> token;
 
-        public static Timer GetTimer(string name) {
+        public static Timer GetTimer(string name, bool phaseLocal=true) {
             if (!timerMap.TryGetValue(name, out Timer t)) {
-                t = timerMap[name] = new Timer(name);
+                t = timerMap[name] = new Timer(name, phaseLocal);
             }
             return t;
         }
 
         public static Timer PhaseTimer => GetTimer("phaset");
 
-        public static void ResetAll() {
+        public static void ResetPhase() {
             foreach (var v in timerMap.Values.ToArray()) {
-                v.Restart();
-                v.Stop();
+                if (v.phaseLocal) {
+                    v.Restart();
+                    v.Stop();
+                }
             }
         }
 

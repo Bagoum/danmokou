@@ -43,21 +43,12 @@ public static class SceneIntermediary {
         public override string ToString() => $"{scene.sceneName} ({reason})";
     }
 
-    private static SceneConfig false_scfg = null!;
     private static CameraTransitionConfig defaultTransition = null!;
 
-    public static void Setup(SceneConfig sc, CameraTransitionConfig dfltTransition) {
-        false_scfg = sc;
+    public static void Setup(CameraTransitionConfig dfltTransition) {
         defaultTransition = dfltTransition;
     }
 
-    /// <summary>
-    /// Use GameManagement.ReloadScene instead. Also preferably deprecate-ish this.
-    /// </summary>
-    public static bool _ReloadScene(Action onLoaded) {
-        false_scfg.sceneName = SceneManager.GetActiveScene().name;
-        return LoadScene(new SceneRequest(false_scfg, SceneRequest.Reason.RELOAD, null, onLoaded, null));
-    }
 
     public static bool LoadScene(SceneRequest req) {
         if (!EngineStateManager.IsLoading && !LOADING) {

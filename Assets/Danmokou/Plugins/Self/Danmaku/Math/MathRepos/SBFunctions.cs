@@ -26,8 +26,8 @@ public class TExMov : TEx<Movement>, ITexMovement {
     public MemberExpression root => Ex.Field(ex, "rootPos");
     public MemberExpression rootX => Ex.Field(Ex.Field(ex, "rootPos"), "x");
     public MemberExpression rootY => Ex.Field(Ex.Field(ex, "rootPos"), "y");
-    public Expression flipX => Ex.Field(ex, "flipX").As<float>();
-    public Expression flipY => Ex.Field(ex, "flipY").As<float>();
+    public Expression flipX => Ex.Field(ex, "flipX");
+    public Expression flipY => Ex.Field(ex, "flipY");
     public TExMov(ExMode m, string? name) : base(m, name) { }
     public TExMov(Expression ex) : base(ex) { }
     public Ex FlipX() => _flipX.InstanceOf(this);
@@ -43,8 +43,8 @@ public class TExLMov : TEx<LaserMovement>, ITexMovement {
     public MemberExpression root => Ex.Field(ex, "rootPos");
     public MemberExpression rootX => Ex.Field(Ex.Field(ex, "rootPos"), "x");
     public MemberExpression rootY => Ex.Field(Ex.Field(ex, "rootPos"), "y");
-    public Expression flipX => Ex.Field(ex, "flipX").As<float>();
-    public Expression flipY => Ex.Field(ex, "flipY").As<float>();
+    public Expression flipX => Ex.Field(ex, "flipX");
+    public Expression flipY => Ex.Field(ex, "flipY");
     public TExLMov(ExMode m, string? name) : base(m, name) { }
     public TExLMov(Expression ex) : base(ex) { }
 

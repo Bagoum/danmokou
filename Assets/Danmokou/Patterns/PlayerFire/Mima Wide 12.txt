@@ -5,7 +5,7 @@ gtr {
 	## free fire
 	async glcircle-blue/b <> gcr2 12 _ <> { 
 		sfx x-pc-fire-1
-	} simple tprot cy 7 { 
+	} simple tprot cy 9 { 
 		player 37 37 oh1-blue
 		scale 0.4
 	}

@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using DMK.Achievements;
 using DMK.Behavior;
 using DMK.Core;
 using DMK.Danmaku;
@@ -33,8 +34,8 @@ namespace DMK.Core {
 /// A singleton manager for persistent game data.
 /// This is the only scene-persistent object in the game.
 /// </summary>
-public class GameManagement : RegularUpdater {
-    public static readonly Version EngineVersion = new Version(6, 1, 0);
+public class GameManagement : CoroutineRegularUpdater {
+    public static readonly Version EngineVersion = new Version(7, 0, 0);
     public static bool Initialized { get; private set; } = false;
     public static DifficultySettings Difficulty => Instance.Difficulty;
 
@@ -48,7 +49,7 @@ public class GameManagement : RegularUpdater {
     public static InstanceData Instance { get; private set; } = new InstanceData(InstanceMode.NULL);
     [UsedImplicitly] public static bool Continued => Instance.Continued;
 
-    public static void NewInstance(InstanceMode mode, long? highScore, InstanceRequest? req = null) =>
+    public static void NewInstance(InstanceMode mode, long? highScore = null, InstanceRequest? req = null) =>
         Instance = new InstanceData(mode, req, highScore);
 
 #if UNITY_EDITOR
@@ -105,7 +106,8 @@ public class GameManagement : RegularUpdater {
     public GameUniqueReferences references = null!;
     public static GameUniqueReferences References => gm.references;
     public static PrefabReferences Prefabs => References.prefabReferences;
-    public SceneConfig defaultSceneConfig = null!;
+    public static AchievementManager? Achievements { get; private set; }
+
     public SOPlayerHitbox visiblePlayer = null!;
     public static Vector2 VisiblePlayerLocation => gm.visiblePlayer.location;
 
@@ -122,7 +124,7 @@ public class GameManagement : RegularUpdater {
         _ = SaveData.s;
         
         Log.Unity($"Danmokou {EngineVersion}, {References.gameIdentifier} {References.gameVersion}");
-        SceneIntermediary.Setup(defaultSceneConfig, References.defaultTransition);
+        SceneIntermediary.Setup(References.defaultTransition);
         ParticlePooler.Prepare();
         GhostPooler.Prepare(Prefabs.cutinGhost);
         BEHPooler.Prepare(Prefabs.inode);
@@ -140,6 +142,21 @@ public class GameManagement : RegularUpdater {
         GetComponent<BulletManager>().Setup();
         GetComponentInChildren<SFXService>().Setup();
         GetComponentInChildren<AudioTrackService>().Setup();
+
+        if (References.achievements != null)
+            Achievements = References.achievements.MakeRepo().Construct();
+        
+        RunDroppableRIEnumerator(DelayedInitialAchievementsCheck());
+    }
+
+    private IEnumerator DelayedInitialAchievementsCheck() {
+        for (int ii = 0; ii < 10; ++ii)
+            yield return null; //just in case of initial frame wonkiness
+        
+        for (float t = 0; t < 2f; t += ETime.FRAME_TIME)
+            yield return null;
+        
+        Achievements?.UpdateAll();
     }
 
     private void OnSceneLoad() {
@@ -202,7 +219,7 @@ public class GameManagement : RegularUpdater {
         BulletManager.ClearEmpty();
         BulletManager.ClearAllBullets();
         BulletManager.DestroyCopiedPools();
-        Events.CampaignDataHasChanged.Proc();
+        InstanceData.CampaignDataUpdated.Proc();
 #if UNITY_EDITOR || ALLOW_RELOAD
         Events.LocalReset.Proc();
 #endif
@@ -219,7 +236,9 @@ public class GameManagement : RegularUpdater {
 
     private static bool TryTriggerLocalReset() {
         if (!SceneIntermediary.IsFirstScene) return false;
-        if (Input.GetKeyDown(KeyCode.R)) { } else if (Input.GetKeyDown(KeyCode.T)) {
+        if (Input.GetKeyDown(KeyCode.R)) {
+            
+        } else if (Input.GetKeyDown(KeyCode.T)) {
             defaultDifficulty = new DifficultySettings(FixedDifficulty.Easy);
         } else if (Input.GetKeyDown(KeyCode.Y)) {
             defaultDifficulty = new DifficultySettings(FixedDifficulty.Normal);
@@ -238,7 +257,7 @@ public class GameManagement : RegularUpdater {
         BulletManager.ClearEmpty();
         Events.Event0.Reset();
         ETime.Slowdown.RevokeAll(MultiOp.Priority.CLEAR_PHASE);
-        ETime.Timer.ResetAll();
+        ETime.Timer.ResetPhase();
         Events.ClearPhase.Proc();
         //Delay this so copy pools can be softculled correctly
         //TODO: can I remove this? might be permissible to keep copied pools throughout the scene
@@ -265,6 +284,7 @@ public class GameManagement : RegularUpdater {
 
     public override void RegularUpdate() {
         Instance._RegularUpdate();
+        base.RegularUpdate();
     }
 
 

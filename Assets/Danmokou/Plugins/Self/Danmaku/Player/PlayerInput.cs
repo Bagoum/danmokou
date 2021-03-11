@@ -322,18 +322,8 @@ public class PlayerInput : BehaviorEntity {
                 pos.y = TopPlayerBound;
                 velocity.y = Mathf.Min(velocity.y, 0f);
             }
-            //CRITICAL
-            //This updates the positions of all walls, etc in the collision engine.
-            //If you do not do this, collision detection against moving walls will be jittery and only work
-            //properly once every few frames, since the physics engine won't recognize that the wall has moved
-            //until the physics update is called (.02 seconds). 
-            //It only affects moving walls and does not matter for player movement (the player does not have a collider).
-            //TODO find out if this works with the regular-update model (if it's ever necessary).
-            //Physics2D.SyncTransforms();
             var prev = hitbox.location;
             SetLocation(pos + velocity * dT); 
-                    // + MoveAgainstWall(pos, blueBoxRadius, velocity * dT, collMask);
-            //positions.Add(hitbox.location);
             if (IsMoving) {
                 var delta = hitbox.location - prev;
                 var dir = delta.normalized;
@@ -419,7 +409,7 @@ public class PlayerInput : BehaviorEntity {
     }
     //Assumption for state enumerators is that the token is not initially cancelled.
     private IEnumerator StateNormal(ICancellee<PlayerState> cT) {
-        GameManagement.Instance.MeterInUse = false;
+        GameManagement.Instance.StopUsingMeter();
         hitbox.Active = true;
         state = PlayerState.NORMAL;
         while (true) {
@@ -432,7 +422,7 @@ public class PlayerInput : BehaviorEntity {
         }
     }
     private IEnumerator StateRespawn(ICancellee<PlayerState> cT) {
-        GameManagement.Instance.MeterInUse = false;
+        GameManagement.Instance.StopUsingMeter();
         state = PlayerState.RESPAWN;
         RespawnOnHitEffect.Proc(hitbox.location, hitbox.location, 0f);
         //The hitbox position doesn't update during respawn, so don't allow collision.
@@ -453,7 +443,7 @@ public class PlayerInput : BehaviorEntity {
         if (!MaybeCancelState(cT)) RunDroppableRIEnumerator(StateNormal(cT));
     }
     private IEnumerator StateWitchTime(ICancellee<PlayerState> cT) {
-        GameManagement.Instance.MeterInUse = true;
+        GameManagement.Instance.StartUsingMeter();
         state = PlayerState.WITCHTIME;
         speedLines.Play();
         var t = ETime.Slowdown.CreateModifier(WitchTimeSlowdown, MultiOp.Priority.CLEAR_SCENE);
@@ -474,7 +464,7 @@ public class PlayerInput : BehaviorEntity {
         PlayerDeactivatedMeter.Proc();
         t.TryRevoke();
         speedLines.Stop();
-        GameManagement.Instance.MeterInUse = false;
+        GameManagement.Instance.StopUsingMeter();
         if (!cT.Cancelled(out _)) RunDroppableRIEnumerator(StateNormal(cT));
     }
 
@@ -563,38 +553,7 @@ public class PlayerInput : BehaviorEntity {
         new Color32(20, 220, 255, 255), new Color32(10, 170, 255, 255));
     private static readonly IGradient pivGrad = DropLabel.MakeGradient(
         new Color32(0, 235, 162, 255), new Color32(0, 172, 70, 255));
-
-
-    private static Vector2 MoveAgainstWall(Vector2 source, float blueBoxRadius, Vector2 delta, LayerMask mask) {
-        RaycastHit2D ray = Physics2D.CircleCast(source, blueBoxRadius, delta.normalized, delta.magnitude, mask);
-        if (ray.collider != null) {
-            Vector2 adjusted = Vector2.zero;
-            while (ray.distance < float.Epsilon) {
-                //If we are inside the object, move outwards along the normal, and then try to move back.
-                Vector2 movBack = blueBoxRadius * ray.normal;
-                adjusted += movBack;
-                delta -= movBack;
-                source += movBack;
-                ray = Physics2D.CircleCast(source, blueBoxRadius, delta.normalized, delta.magnitude, mask);
-
-                //In some cases moving out and back can actually disconnect the collision. 
-                if (ray.collider == null) {
-                    return delta + movBack;
-                }
-            }
-            //Move along the delta-vector as far as the ray goes.
-            Vector2 rawMove = delta.normalized * ray.distance;
-            adjusted += rawMove;
-            delta -= rawMove;
-
-            //Then move along the delta-vector's dot product with the surface.
-            adjusted += delta - M.ProjectionUnit(delta, ray.normal);
-            return adjusted;
-        } else {
-            return delta;
-        }
-    }
-
+    
     public GameObject InvokeParentedTimedEffect(EffectStrategy effect, float time) {
         var v = tr.position;
         var effectGO = effect.ProcNotNull(v, v, 0);

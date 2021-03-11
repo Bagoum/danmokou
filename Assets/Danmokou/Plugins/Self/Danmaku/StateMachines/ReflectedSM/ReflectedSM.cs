@@ -170,12 +170,10 @@ if (> t &fadein,
 
     public static TaskPattern StageAnnounce() => smh => {
         UIManager.AnnounceStage(smh.Exec, smh.cT, out float t);
-        GameManagement.Instance.ExternalLenience(t);
         return WaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, t, false);
     };
     public static TaskPattern StageDeannounce() => smh => {
         UIManager.DeannounceStage(smh.cT, out float t);
-        GameManagement.Instance.ExternalLenience(t);
         return WaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, t, false);
     };
     
@@ -673,7 +671,7 @@ if (> t &fadein,
 
     private static IEnumerator _LifeToScore(int value, ICancellee cT, Action done) {
         while (GameManagement.Instance.Lives > 1 && !cT.Cancelled) {
-            GameManagement.Instance.SwapLifeScore(value);
+            GameManagement.Instance.SwapLifeScore(value, true);
             for (int ii = 0; ii < 60; ++ii) {
                 yield return null;
                 if (cT.Cancelled) break;

@@ -325,34 +325,30 @@ public class CompactingArray<T> {
     protected int count;
     public int Count => count;
     protected bool[] rem;
-    public T[] arr;
-    private bool requiresCompact;
+    protected T[] arr;
+    protected int NullElements { get; set; } = 0;
     private readonly int firstResize;
 
     public CompactingArray(int size = 8, int firstResize=16) {
         arr = new T[size];
         rem = new bool[size];
         count = 0;
-        requiresCompact = false;
         this.firstResize = firstResize;
-    }
-
-    public void DeleteLast() {
-        rem[--count] = false;
     }
 
     public void Delete(int ind) {
         rem[ind] = true;
-        requiresCompact = true;
+        ++NullElements;
     }
 
     public void Compact() {
-        if (requiresCompact) {
+        if (NullElements > 0) {
             int ii = 0;
 
             while (true) {
                 //Prevents incorrect compacting if requiresCompact is not accurate
-                if (ii == count) return;
+                if (ii == count)
+                    return;
                 if (rem[ii++]) {
                     rem[ii - 1] = false;
                     break;
@@ -362,19 +358,20 @@ public class CompactingArray<T> {
             int start_copy = ii;
             for (; ii < count; ++ii) {
                 if (rem[ii]) {
-                    if (ii > start_copy) {
-                        Array.Copy(arr, start_copy,
-                            arr, start_copy - deficit, ii - start_copy);
-                    }
+                    //Found an empty space
+                    if (ii > start_copy) 
+                        //There is at least one element to push backwards
+                        Array.Copy(arr, start_copy, arr, start_copy - deficit, ii - start_copy);
+                    
                     rem[ii] = false;
                     ++deficit;
                     start_copy = ii + 1;
                 }
             }
-            Array.Copy(arr, start_copy,
-                arr, start_copy - deficit, count - start_copy);
+            if (count > start_copy)
+                Array.Copy(arr, start_copy, arr, start_copy - deficit, count - start_copy);
             count -= deficit;
-            requiresCompact = false;
+            NullElements = 0;
         }
     }
 
@@ -388,13 +385,15 @@ public class CompactingArray<T> {
             rem.CopyTo(nrem, 0);
             rem = nrem;
         }
+        rem[count] = false;
         arr[count++] = obj;
     }
 
     public void AddV(T obj) => Add(ref obj);
 
-    public void Empty(bool trueClear) {
-        if (trueClear) Array.Clear(arr, 0, arr.Length);
+    public void Empty() {
+        Array.Clear(arr, 0, arr.Length);
+        Array.Clear(rem, 0, rem.Length);
         count = 0;
     }
 
@@ -532,9 +531,8 @@ public class DMCompactingArray<T> {
     /// <param name="priority"></param>
     /// <returns></returns>
     public DeletionMarker<T> AddPriority(T obj, int priority) {
-        MaybeResize();
         var dm = DeletionMarker<T>.Get(obj, priority);
-        arr.Insert(ref count, dm, NextIndexForPriority(priority));
+        AddPriority(dm);
         return dm;
     }
 

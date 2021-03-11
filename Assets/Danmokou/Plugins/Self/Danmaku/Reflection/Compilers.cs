@@ -162,8 +162,8 @@ public static class Compilers {
                 tac,
                 tac.GetByExprType<TExV2>()),
             new DelegateArg<Movement>("vtp_mov", true, true),
-            new DelegateArg<float>("vtp_dt", false, true),
-            new DelegateArg<ParametricInfo>("vtp_bpi", false, true),
+            new DelegateArg<float>("vtp_dt", true, true),
+            new DelegateArg<ParametricInfo>("vtp_bpi", true, true),
             new DelegateArg<Vector2>("vtp_delta", true, true)
         );
     }
@@ -177,9 +177,9 @@ public static class Compilers {
                 tac,
                 tac.GetByExprType<TExV2>()),
             new DelegateArg<LaserMovement>("lvtp_mov", true, true),
-            new DelegateArg<float>("lvtp_dt"),
-            new DelegateArg<float>(LASER_TIME_ALIAS),
-            new DelegateArg<ParametricInfo>("lvtp_bpi", false, true),
+            new DelegateArg<float>("lvtp_dt", true),
+            new DelegateArg<float>(LASER_TIME_ALIAS, true),
+            new DelegateArg<ParametricInfo>("lvtp_bpi", true, true),
             new DelegateArg<Vector2>("lvtp_delta", true, true)
         );
 

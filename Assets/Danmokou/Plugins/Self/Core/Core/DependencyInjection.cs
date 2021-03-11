@@ -20,6 +20,11 @@ public static class DependencyInjection {
     private static readonly Dictionary<Type, IService> services = new Dictionary<Type, IService>();
 
 
+    /// <summary>
+    /// Register a service that can be reached globally via dependency injection.
+    /// <br/>Note: It's preferable to use RegularUpdater.RegisterDI instead, as that
+    /// handles service deletion.
+    /// </summary>
     public static IDeletionMarker Register<T>(T provider) where T : class {
         if (!services.TryGetValue(typeof(T), out var s)) {
             s = services[typeof(T)] = new Service<T>(false);

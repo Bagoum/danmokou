@@ -1,0 +1,11 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="UINode.uss" />
+    <ui:VisualElement class="node">
+        <ui:VisualElement name="Selector" class="pointer prefix" />
+        <ui:VisualElement name="Checkmark" class="checkmark prefix" style="background-image: url(&apos;/Assets/Danmokou/Sprites/UI/trophy.png&apos;);" />
+        <ui:VisualElement style="flex-grow: 1; margin-bottom: 30px;">
+            <ui:Label text="Without Love, It Cannot Be Seen" focusable="true" name="Label" class="text coretext" style="padding-left: 0; padding-right: 0; white-space: normal; font-size: 85px;" />
+            <ui:Label text="Clear the main game with the null shot (1CC, Normal or harder).&#10;" focusable="true" name="Description" class="text coretext" style="-unity-text-align: upper-left; font-size: 62px; padding-left: 0; padding-right: 0;" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

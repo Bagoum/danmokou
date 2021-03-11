@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using DMK.Achievements;
 using DMK.Core;
 using UnityEngine;
 
@@ -26,6 +27,8 @@ public class GameUniqueReferences : ScriptableObject {
 
     public FieldBounds bounds;
 
+    public AchievementProviderSO? achievements;
+    
     public SODialogue[] dialogue = null!;
     [Header("Script Keyable")] public BossConfig[] bossMetadata = null!;
     public DialogueProfile[] dialogueProfiles = null!;
@@ -36,6 +39,13 @@ public class GameUniqueReferences : ScriptableObject {
     public SOPrefabs[] summonables = null!;
     public SOTextAssets[] fileStateMachines = null!;
     public string[] scriptFolders = null!;
+
+    /// <summary>
+    /// If all stage and boss SMs have exactly one untyped phase at the beginning (setup phase 0)
+    /// and all other phases are typed, you can enable this to make menu loading faster.
+    /// (The setup phase 0 may have properties, as long as they are not `type`.)
+    /// </summary>
+    public bool fastParsing;
 
     private static IEnumerable<PlayerConfig> CampaignShots(CampaignConfig? c) =>
         c == null ? new PlayerConfig[0] : c.players;

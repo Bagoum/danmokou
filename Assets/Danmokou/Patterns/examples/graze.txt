@@ -1,7 +1,7 @@
 pattern {}
 phase 0
 	paction 0
-		shift-phase-to 1
+		shift-phase-to 2
 		
 		
 phase 0
@@ -12,7 +12,9 @@ phase 0
 phase 0
     paction 0
         position 0 2
-			async gem-green/ <0.5;:> gcr2 24 _ <12h> {
+			async _ <> gcr2 60 _ <> {
+			} valueitem
+			async gem-green/ <0.5;:> gcr2 24 0 <12h> {
 				sfx x-fire-burst-1
 			} gsr2c 12 {
 			} s tprot cx 3

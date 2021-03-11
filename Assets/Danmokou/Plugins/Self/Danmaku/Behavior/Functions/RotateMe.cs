@@ -11,7 +11,7 @@ public class RotateMe : BehaviorEntity {
 
     protected override void Awake() {
         base.Awake();
-        rotate = rotator.Into<TP3>();
+        rotate = ReflWrap<TP3>.Wrap(rotator);
     }
 
     public override void RegularUpdate() {

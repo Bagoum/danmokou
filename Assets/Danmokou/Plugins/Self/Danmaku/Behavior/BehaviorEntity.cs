@@ -277,7 +277,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
                 RunSMFromScript(behaviorScript);
             } catch (Exception e) {
                 Log.UnityError("Failed to load attached SM on startup!");
-                Log.Print(e);
+                Log.UnityException(e);
             }
         }
     }
@@ -326,7 +326,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     /// <returns></returns>
     public IEnumerator ExecuteVelocity(LimitedTimeMovement ltv) {
         if (ltv.cT.Cancelled) { ltv.done(); yield break; }
-        Movement vel = new Movement(ltv.VTP2, GlobalPosition(), V2RV2.Angle(original_angle));
+        Movement vel = new Movement(ltv.vtp, GlobalPosition(), V2RV2.Angle(original_angle));
         float doTime = (ltv.enabledFor < float.Epsilon) ? float.MaxValue : ltv.enabledFor;
         ParametricInfo tbpi = ltv.pi;
         tbpi.loc = bpi.loc;
@@ -387,7 +387,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
 
     private void DestroyFinal() {
         if (displayer != null) displayer.Hide();
-        bpi.ctx.Dispose();
+        bpi.Dispose();
         if (isPooled) {
             PooledDone();
         } else {
@@ -576,7 +576,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
             if (sm.cullOnFinish) {
                 if (PoofOnPhaseEnd) Poof();
                 else {
-                    if (DeathEffectOnParentCull && sm.cT.Cancelled) TryDeathEffect();
+                    if (DeathEffectOnParentCull && sm.cT.Root.Cancelled) TryDeathEffect();
                     InvokeCull();
                 }
             }

@@ -101,6 +101,10 @@ public class PhaseProperty {
     /// <returns></returns>
     public static PhaseProperty HideTimeout() => new HideTimeoutFlag();
     /// <summary>
+    /// Declares that this phase is a stage announce section.
+    /// </summary>
+    public static PhaseProperty Announce() => new PhaseTypeProp(PhaseType.ANNOUNCE);
+    /// <summary>
     /// Declares that this phase is a stage section.
     /// </summary>
     public static PhaseProperty Stage() => new PhaseTypeProp(PhaseType.STAGE);
@@ -111,7 +115,7 @@ public class PhaseProperty {
     public static PhaseProperty Skip() => new SkipFlag();
 
     /// <summary>
-    /// Declare that this phase is a dialogue phase. (Same as CARD DIALOGUE ``).
+    /// Declare that this phase is a dialogue phase. (Same as TYPE DIALOGUE ``).
     /// </summary>
     /// <returns></returns>
     public static PhaseProperty Dialogue() => new PhaseTypeProp(PhaseType.DIALOGUE);
@@ -342,10 +346,10 @@ public class PhaseProperty {
 }
 
 public readonly struct SoftcullProperties {
-    private readonly Vector2 center;
-    private readonly float advance;
-    private readonly float minDist;
-    private readonly float maxDist;
+    public readonly Vector2 center;
+    public readonly float advance;
+    public readonly float minDist;
+    public readonly float maxDist;
     public readonly string autocullTarget;
     private readonly string autocullDefault;
     public string DefaultPool => $"{autocullTarget}-{autocullDefault}";
@@ -369,6 +373,9 @@ public readonly struct SoftcullProperties {
         var dist = (location - center).magnitude;
         return advance * (1 - Mathf.Clamp01((dist - minDist) / (maxDist - minDist)));
     }
+
+    public SoftcullProperties WithNoAdvance() =>
+        new SoftcullProperties(center, 0f, minDist, maxDist, autocullTarget, autocullDefault);
 }
 public class PhaseProperties {
     private readonly bool hideTimeout;

@@ -128,7 +128,7 @@
 }
 
 .header {
-    -unity-font: url('/Assets/Danmokou/Fonts/Odibee-YoZ Joint.ttf');
+    -unity-font: url('/Assets/Danmokou/Fonts/Odibee-CorpSt-Joint.ttf');
     font-size: 140px;
     color: rgb(255, 255, 255);
     -unity-text-align: upper-center;

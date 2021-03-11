@@ -28,53 +28,54 @@ public static partial class LocalizedStrings {
 		};
 		
 		public static readonly LocalizedString shot_camera = new LocalizedString("Camera") {
-			jp = "カメラ",
+			jp = "<line-height=5>カメラ</line-height>",
 		};
 		
 		public static readonly LocalizedString shot_home_laser_exp = new LocalizedString("Homing Amulet / Persuasion Laser") {
-			jp = "誘導アミュレット・封魔レーザ",
+			jp = "<line-height=5>誘導アミュレット・封魔レーザ</line-height>",
 		};
 		
 		public static readonly LocalizedString shot_mima_laser = new LocalizedString("A View Upon All Creation") {
-			jp = "森羅万象を見下ろすもの",
+			jp = "<line-height=5>森羅万象を見下ろす者</line-height>",
 		};
 		
 		public static readonly LocalizedString shot_mima_trailing = new LocalizedString("Phantasmic Lasers") {
-			jp = "幻想のレーザ",
+			jp = "<line-height=5>幻想のレーザ</line-height>",
 		};
 		
 		public static readonly LocalizedString shot_mima_wide = new LocalizedString("Falling Stars Escaping Death") {
-			jp = "死神から逃げる流星",
+			jp = "<line-height=5>死神から逃げる流星</line-height>",
 		};
 		
 		public static readonly LocalizedString shot_mokou_arrowpather = new LocalizedString("Flame-Headed Gae Bolg") {
-			jp = "炎頭のゲイ・ボルグ",
+			jp = "<line-height=5>炎頭のゲイ・ボルグ</line-height>",
 		};
 		
 		public static readonly LocalizedString shot_mokou_laser = new LocalizedString("Electroplasmic Railgun") {
-			jp = "電磁投射砲",
+			jp = "<line-height=5>電磁投射砲</line-height>",
 		};
 		
 		public static readonly LocalizedString shot_mokou_narrow = new LocalizedString("The Flaming Sword of Vengeful Deicide") {
-			jp = "執念深い神殺しの炎刀",
+			jp = "<line-height=5>神殺しの炎刀</line-height>",
 		};
 		
 		public static readonly LocalizedString shot_mokou_sun = new LocalizedString("The Autophagic Sun Smoldering in the Void") {
-			jp = "無で燻る自食の太陽",
+			jp = "<line-height=5>無で燻る自食の太陽</line-height>",
 		};
 		
 		public static readonly LocalizedString shot_kasen_narrow = new LocalizedString("Narrow") {
 		};
 		
 		public static readonly LocalizedString shot_null = new LocalizedString("Null Shot") {
+			jp = "<line-height=5>無</line-height>",
 		};
 		
 		public static readonly LocalizedString shot_reimu_ddcb = new LocalizedString("Homing Amulets / Persuasion Needles") {
-			jp = "誘導アミュレット・封魔針",
+			jp = "<line-height=5>誘導アミュレット・封魔針</line-height>",
 		};
 		
 		public static readonly LocalizedString shot_reimu_laser = new LocalizedString("Youkai Exterminatifier") {
-			jp = "高効力の妖怪退治ショット",
+			jp = "<line-height=5>高効力の妖怪退治ショット</line-height>",
 		};
 		
 	}

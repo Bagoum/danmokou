@@ -11,7 +11,7 @@ public class OneUpItem : Item {
     protected override float CollectRadiusBonus => 0.1f;
 
     protected override void CollectMe() {
-        GameManagement.Instance.LifeExtend();
+        GameManagement.Instance.AddOneUpItem();
         base.CollectMe();
     }
 }

@@ -101,7 +101,9 @@ MonoBehaviour:
   unfilled: {fileID: 7619097465883325108}
   filled: {fileID: 7619097466634714976}
   fillSound: {fileID: 11400000, guid: a986c44ed3a71fd42ab37fd6e759d70f, type: 2}
-  scaleTime: 0.3
+  scaler: eoutback(5, t)
+  scaleTime: 0.5
+  rotator: eoutsine(t)
   rotTime: 0.5
 --- !u!1 &7619097466016813325
 GameObject:
@@ -204,7 +206,9 @@ MonoBehaviour:
   unfilled: {fileID: 7619097466016813363}
   filled: {fileID: 7619097466092190938}
   fillSound: {fileID: 11400000, guid: a986c44ed3a71fd42ab37fd6e759d70f, type: 2}
-  scaleTime: 0.3
+  scaler: eoutback(5, t)
+  scaleTime: 0.5
+  rotator: eoutsine(t)
   rotTime: 0.5
 --- !u!1 &7619097466092190932
 GameObject:
@@ -1189,5 +1193,7 @@ MonoBehaviour:
   unfilled: {fileID: 7619097467407949348}
   filled: {fileID: 7619097467210764907}
   fillSound: {fileID: 11400000, guid: a986c44ed3a71fd42ab37fd6e759d70f, type: 2}
-  scaleTime: 0.3
+  scaler: eoutback(5, t)
+  scaleTime: 0.5
+  rotator: eoutsine(t)
   rotTime: 0.5

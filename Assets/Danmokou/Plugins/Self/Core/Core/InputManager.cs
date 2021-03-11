@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using DMK.DMath;
 using UnityEngine;
 using KC = UnityEngine.KeyCode;
 using static FileUtils;
 using ProtoBuf;
+using UnityEngine.SocialPlatforms;
 
 
 namespace DMK.Core {
@@ -26,13 +28,18 @@ public class InputChecker {
         keyDescr = k;
         this.isController = isController;
     }
-    
+    //Use this combiner when there are multiple keys that do the same thing
     public InputChecker Or(InputChecker other) => 
         new InputChecker(() => Active || other.Active, 
             LocalizedString.Format(new LocalizedString("{0} or {1}", "{0}や{1}"), keyDescr, other.keyDescr));
 }
 
-public class InputHandler {
+public interface IInputHandler {
+    bool Active { get; }
+    LocalizedString Desc { get; }
+    void Update();
+}
+public class InputHandler : IInputHandler {
     private bool refractory;
     private readonly InputTriggerMethod trigger;
     private bool toggledValue;
@@ -43,7 +50,7 @@ public class InputHandler {
                             true);
     private bool _active;
     public InputChecker checker;
-    public string Desc => checker.keyDescr;
+    public LocalizedString Desc => checker.keyDescr;
 
     private InputHandler(InputTriggerMethod method, InputChecker check) {
         refractory = false;
@@ -51,9 +58,9 @@ public class InputHandler {
         checker = check;
     }
     
-    public static InputHandler Toggle(InputChecker check) => new InputHandler(InputTriggerMethod.ONCE_TOGGLE, check);
-    public static InputHandler Hold(InputChecker check) => new InputHandler(InputTriggerMethod.PERSISTENT, check);
-    public static InputHandler Trigger(InputChecker check) => new InputHandler(InputTriggerMethod.ONCE, check);
+    public static IInputHandler Toggle(InputChecker check) => new InputHandler(InputTriggerMethod.ONCE_TOGGLE, check);
+    public static IInputHandler Hold(InputChecker check) => new InputHandler(InputTriggerMethod.PERSISTENT, check);
+    public static IInputHandler Trigger(InputChecker check) => new InputHandler(InputTriggerMethod.ONCE, check);
 
     public void Update() {
         var keyDown = checker.Active;
@@ -67,8 +74,31 @@ public class InputHandler {
         }
     }
 }
+//Use this combiner when multiple keys combine to form one command (eg. ctrl+shift+R)
+public class AndInputHandler : IInputHandler {
+    private readonly IInputHandler[] parts;
+    private readonly LocalizedString desc;
+    public bool Active {
+        get {
+            for (int ii = 0; ii < parts.Length; ++ii) {
+                if (!parts[ii].Active)
+                    return false;
+            }
+            return true;
+        }
+    }
+    public LocalizedString Desc => desc;
 
-public abstract class InputProvider {
+
+    public AndInputHandler(params IInputHandler[] parts) {
+        this.parts = parts;
+        this.desc = string.Join("+", parts.Select(p => p.Desc));
+    }
+    
+    public void Update() {
+        for (int ii = 0; ii < parts.Length; ++ii)
+            parts[ii].Update();
+    }
     
 }
 public static class InputManager {
@@ -112,28 +142,35 @@ public static class InputManager {
     private static readonly InputChecker ArrowLeft = Key(KeyCode.LeftArrow);
     private static readonly InputChecker ArrowUp = Key(KeyCode.UpArrow);
     private static readonly InputChecker ArrowDown = Key(KeyCode.DownArrow);
-    public static readonly InputHandler
+    public static readonly IInputHandler
         FocusHold = InputHandler.Hold(Key(i.FocusHold).Or(AxisG0(aCRightTrigger, true)));
-    public static readonly InputHandler ShootHold = InputHandler.Hold(Key(i.ShootHold).Or(AxisG0(aCLeftTrigger, true)));
-    public static readonly InputHandler Bomb = InputHandler.Trigger(Key(i.Bomb).Or(Key(cX, true)));
-    public static readonly InputHandler Meter = InputHandler.Hold(Key(i.Bomb).Or(Key(cX, true)));
+    public static readonly IInputHandler ShootHold = InputHandler.Hold(Key(i.ShootHold).Or(AxisG0(aCLeftTrigger, true)));
+    public static readonly IInputHandler Bomb = InputHandler.Trigger(Key(i.Bomb).Or(Key(cX, true)));
+    public static readonly IInputHandler Meter = InputHandler.Hold(Key(i.Bomb).Or(Key(cX, true)));
 
-    public static readonly InputHandler UILeft = InputHandler.Trigger(ArrowLeft.Or(AxisL0(aCDPadX, true)));
-    public static readonly InputHandler UIRight = InputHandler.Trigger(ArrowRight.Or(AxisG0(aCDPadX, true)));
-    public static readonly InputHandler UIUp = InputHandler.Trigger(ArrowUp.Or(AxisG0(aCDPadY, true)));
-    public static readonly InputHandler UIDown = InputHandler.Trigger(ArrowDown.Or(AxisL0(aCDPadY, true)));
+    public static readonly IInputHandler UILeft = InputHandler.Trigger(ArrowLeft.Or(AxisL0(aCDPadX, true)));
+    public static readonly IInputHandler UIRight = InputHandler.Trigger(ArrowRight.Or(AxisG0(aCDPadX, true)));
+    public static readonly IInputHandler UIUp = InputHandler.Trigger(ArrowUp.Or(AxisG0(aCDPadY, true)));
+    public static readonly IInputHandler UIDown = InputHandler.Trigger(ArrowDown.Or(AxisL0(aCDPadY, true)));
 
-    public static readonly InputHandler UIConfirm = InputHandler.Trigger(Key(KC.Z).Or(Key(cA, true)));
-    public static readonly InputHandler UIBack = InputHandler.Trigger(Key(KC.X).Or(Key(cB, true)));
-    private static readonly InputHandler UISkipDialogue = InputHandler.Trigger(Key(KC.LeftControl));
+    public static readonly IInputHandler UIConfirm = InputHandler.Trigger(Key(KC.Z).Or(Key(cA, true)));
+    public static readonly IInputHandler UIBack = InputHandler.Trigger(Key(KC.X).Or(Key(cB, true)));
+    private static readonly IInputHandler UISkipDialogue = InputHandler.Trigger(Key(KC.LeftControl));
 
-    public static readonly InputHandler Pause = InputHandler.Trigger(
+    public static readonly IInputHandler Pause = InputHandler.Trigger(
 #if WEBGL
+//Esc is reserved in WebGL
         Key(KC.BackQuote).Or(Key(cStart, true))
 #else
         Key(KC.BackQuote).Or(Key(KC.Escape)).Or(Key(cStart, true))
 #endif
         );
+    
+    public static readonly IInputHandler ReplayDebugSave = new AndInputHandler(
+        InputHandler.Hold(Key(KC.LeftControl)),
+        InputHandler.Hold(Key(KC.LeftShift)),
+        InputHandler.Trigger(Key(KC.R))
+    );
 
     static InputManager() {
         unsafe {
@@ -176,11 +213,11 @@ public static class InputManager {
     private static FrameInput? replay = null;
     public static void ReplayFrame(FrameInput? fi) => replay = fi;
 
-    private static readonly InputHandler[] Updaters = {
+    private static readonly IInputHandler[] Updaters = {
         FocusHold, ShootHold, Bomb,
         UIDown, UIUp, UILeft, UIRight, UIConfirm, UIBack, UISkipDialogue, Pause,
         Meter,
-
+        ReplayDebugSave
     };
 
     private const short shortRef = short.MaxValue;

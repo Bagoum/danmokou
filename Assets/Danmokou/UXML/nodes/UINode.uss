@@ -242,6 +242,7 @@
 
 .node .coretext {
     flex-grow: 1;
+    white-space: nowrap;
 }
 
 .node.descriptor {
@@ -260,4 +261,8 @@
 .checkmark {
     background-image: url('/Assets/Danmokou/Sprites/UI/bomb-full-2.png');
     display: none;
+}
+
+.node.wrap .coretext {
+    white-space: normal;
 }

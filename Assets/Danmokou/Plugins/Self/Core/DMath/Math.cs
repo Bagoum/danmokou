@@ -315,6 +315,10 @@ public static class M {
 
     public static float Identity(float x) => x;
 
+    public static float EOutBack(float a, float x) {
+        return 1 + (a+1) * Mathf.Pow(x - 1, 3) + a * (x - 1) * (x - 1);
+    }
+
 
     /// <summary>
     /// If the magnitude of a vector is greater than 1, normalize it, else noop.

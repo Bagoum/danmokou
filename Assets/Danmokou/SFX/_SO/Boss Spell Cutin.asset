@@ -14,5 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   defaultName: x-spell-cutin
   clip: {fileID: 8300000, guid: dbb228c76d1311d4c91c6e2f154212b4, type: 3}
-  volume: 0.23
+  volume: 0.25
   timeout: -1
+  pausable: 0
+  slowable: 0
+  pitch: 1
+  loop: 0
+  loopTimeCheck: 0
+  priority: -1
+  feature: 0

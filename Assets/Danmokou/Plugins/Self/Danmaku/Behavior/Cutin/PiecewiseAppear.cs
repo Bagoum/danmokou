@@ -104,7 +104,7 @@ public class PiecewiseAppear : CoroutineRegularUpdater {
 
     private IEnumerable<Fragment> GenerateFragments(bool invert) {
         var bounds = Bounds;
-        float s = config.fragmentRadius * Mathf.Sqrt(2f);
+        float s = config.fragmentRadius * (float)Math.Sqrt(2);
         Vector2 trloc = Center;
         var ixd = Mathf.FloorToInt((s + bounds.max.x - bounds.min.x) / s);
         var iyd = Mathf.FloorToInt((s + bounds.max.y - bounds.min.y) / s);

@@ -3,15 +3,19 @@ using System.Collections;
 using System.Collections.Generic;
 using DMK.Behavior;
 using DMK.Core;
+using DMK.Player;
 using DMK.SM;
 using UnityEngine;
 
 namespace DMK.Testing {
 public class TestHarness : RegularUpdater {
+    public static TestHarness main = null!;
+    public PlayerInput playerRef = null!;
     public TextAsset[] behaviorScripts = null!;
     private static readonly Dictionary<string, TextAsset> scriptsByName = new Dictionary<string, TextAsset>();
 
     private void Awake() {
+        main = this;
         scriptsByName.Clear();
         foreach (var script in behaviorScripts) scriptsByName[script.name] = script;
     }

@@ -13,6 +13,7 @@ public class CoroutineRegularUpdater : RegularUpdater {
         coroutines.Close();
         if (coroutines.Count > 0) {
             Log.UnityError($"{gameObject.name} has {coroutines.Count} leftover coroutines.");
+            coroutines.Close();
         }
     }
 

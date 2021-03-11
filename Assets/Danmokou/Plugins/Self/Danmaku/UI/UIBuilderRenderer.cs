@@ -141,6 +141,8 @@ public class UIBuilderRenderer : CoroutineRegularUpdater {
     protected override void OnDisable() {
         settings.targetTexture = unsetRT;
         uiMaterial.SetTexture(PropConsts.renderTex, unsetRT);
+        if (rt != null) rt.Release();
+        rt = null!;
         allCancel.Cancel();
         base.OnDisable();
     }

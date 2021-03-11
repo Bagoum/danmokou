@@ -23,12 +23,15 @@ To get the newest version from git, run:
   - The signatures of functions operating over firing options, lasers, and player data have changed (see the note below about FiringCtx). The names have also been standardized. See `Assets/Danmokou/Plugins/Self/Danmaku/Math/MathRepos/GenericMath/ExM.cs`.
 - **Pending issues:**
   - There is a bug in the current version of UIToolkit that makes Chinese/Japanese/Korean text break when used on a label with text-wrap. To avoid this, the text wrapping on the UINode and UINodeLRSwitch UXML files has been disabled for now. When this bug is fixed, this will be reverted.
-- Parser code ported to C#
+- Fixed a very long-standing issue with mysterious transparent pixels in render textures. See [this doc](ColorBlending.md) for a primer on what was going on.
+- In-game achievements and achievements screen
 - Implementation of localization utilities in FS/StaticParser, and basic end-to-end localization of the engine complete for Japanese
   - Dialogue localization is not yet handled in a fully satisfactory way, but it works.
+- Parser code ported to C#
 - Shot demo on shot selection screen
 - Statistics display screen
 - Nonpiercing lasers (see the Reimu Lazors shot)
+- Added a feature for clearing bullets on the screen when the player dies
 - Expression functions for lasers, options, and player fire now operate via an extra field in the BPI struct called "FiringCtx". The object is bound to the FiringCtx and is used by the expression function. For example, a laser fired by an option can use `OptionLocation(mine)` to get its location. An option can use `PlayerMarisaAPos(mine, 0.5)` to get the recorded position of the player 0.5 seconds ago (computed according to MoF MarisaA rules). A player laser can use `LaserIsColliding(mine)` to get a bool for whether or not it is currently colliding with an enemy. This fixes a lot of the very strange static and case-specific handling for these usages.
   - Private data hoisting now also operates via FiringCtx.
   - Method data hoisting (within eg. StopSampling) now also operates via FiringCtx.
@@ -49,11 +52,15 @@ if (> t &fadein,
 )
 ```
 
-- Support for precompiling expressions (IL2CPP/AoT platforms are now functional, including WebGL and (untested) Switch)
+- Support for precompiling expressions (IL2CPP/AoT platforms are now functional, including WebGL and (untested) Switch). NO_EXPR support removed.
 - `[CanBeNull]` annotations replaced with C#8 nullable reference annotations
-- Gradient remapping code now uses custom `DGradient` class instead of Unity gradients, making texture coloring time take about 75% less time.
+- Gradient remapping code now uses custom `DGradient` class instead of Unity gradients, making runtime texture coloring take about 75% less time.
 - Fixed a float rounding error that would cause frame-animated bullets to disappear for one frame when looping around on some computers.
 - Support for a play-mode menu and a "commentator" on menus (see SiMP v4)
+- Time-variant autoculling at end of boss phase (bullets farther away from the boss appear to cull later)
+- Powerup effect refactored into PowerAura with options architecture (renamed to avoid the name overlap with the Powerup item)
+- Phase performance display at end of boss phase
+- Fixed a bug where bosses could be destroyed during the two-frame window between phases
 
 # v6.0.0 (2021/01/23)
 

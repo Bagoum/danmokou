@@ -100,7 +100,7 @@ public class Enemy : RegularUpdater {
     }
     
     public ItemDrops AutoDeathItems => new ItemDrops(
-        Math.Max(1, maxHP / 500m), 
+        Math.Max(1, maxHP / 300m), 
         maxHP >= 400 ? Mathf.CeilToInt(maxHP / 900f) : 0, 
         maxHP >= 300 ? Mathf.CeilToInt(maxHP / 800f) : 0,
         maxHP >= 400 ? Mathf.CeilToInt(maxHP / 700f) : 0,
@@ -336,6 +336,7 @@ public class Enemy : RegularUpdater {
         } else queuedDamage += dmg;
     }
     private void PollDamage() {
+        if (!Vulnerable.TakesDamage()) queuedDamage = 0;
         if (queuedDamage < 1) return;
         HP = M.Clamp(0f, maxHP, HP - queuedDamage);
         labelAccDmg += (long)queuedDamage;
@@ -455,7 +456,7 @@ public class Enemy : RegularUpdater {
         for (int ii = 0; ii < numBullets; ++ii) {
             var mov = new Movement(SuicideVTP, Beh.rBPI.loc,
                 angleTo + (ii - numBullets / 2) * 120f / numBullets);
-            BulletManager.RequestSimple(bt!, null, null, mov, new ParametricInfo(in mov), false);
+            BulletManager.RequestSimple(bt!, null, null, in mov, new ParametricInfo(in mov), false);
         }
     }
     

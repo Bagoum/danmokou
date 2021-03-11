@@ -4,16 +4,16 @@ mima,Mima,,魅魔
 kasen,Kasen,,華仙
 reimu,Reimu,,霊夢
 ,,,
-shot_camera,Camera,,カメラ
-shot_home_laser_exp,Homing Amulet / Persuasion Laser,,誘導アミュレット・封魔レーザ
-shot_mima_laser,A View Upon All Creation,,森羅万象を見下ろすもの
-shot_mima_trailing,Phantasmic Lasers,,幻想のレーザ
-shot_mima_wide,Falling Stars Escaping Death,,死神から逃げる流星
-shot_mokou_arrowpather,Flame-Headed Gae Bolg,,炎頭のゲイ・ボルグ
-shot_mokou_laser,Electroplasmic Railgun,,電磁投射砲
-shot_mokou_narrow,The Flaming Sword of Vengeful Deicide,,執念深い神殺しの炎刀
-shot_mokou_sun,The Autophagic Sun Smoldering in the Void,,無で燻る自食の太陽
+shot_camera,Camera,,<line-height=5>カメラ</line-height>
+shot_home_laser_exp,Homing Amulet / Persuasion Laser,,<line-height=5>誘導アミュレット・封魔レーザ</line-height>
+shot_mima_laser,A View Upon All Creation,,<line-height=5>森羅万象を見下ろす者</line-height>
+shot_mima_trailing,Phantasmic Lasers,,<line-height=5>幻想のレーザ</line-height>
+shot_mima_wide,Falling Stars Escaping Death,,<line-height=5>死神から逃げる流星</line-height>
+shot_mokou_arrowpather,Flame-Headed Gae Bolg,,<line-height=5>炎頭のゲイ・ボルグ</line-height>
+shot_mokou_laser,Electroplasmic Railgun,,<line-height=5>電磁投射砲</line-height>
+shot_mokou_narrow,The Flaming Sword of Vengeful Deicide,,<line-height=5>神殺しの炎刀</line-height>
+shot_mokou_sun,The Autophagic Sun Smoldering in the Void,,<line-height=5>無で燻る自食の太陽</line-height>
 shot_kasen_narrow,Narrow,,
-shot_null,Null Shot,,
-shot_reimu_ddcb,Homing Amulets / Persuasion Needles,,誘導アミュレット・封魔針
-shot_reimu_laser,Youkai Exterminatifier,,高効力の妖怪退治ショット
+shot_null,Null Shot,,<line-height=5>無</line-height>
+shot_reimu_ddcb,Homing Amulets / Persuasion Needles,,<line-height=5>誘導アミュレット・封魔針</line-height>
+shot_reimu_laser,Youkai Exterminatifier,,<line-height=5>高効力の妖怪退治ショット</line-height>

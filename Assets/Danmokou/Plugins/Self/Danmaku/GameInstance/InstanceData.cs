@@ -66,7 +66,7 @@ public class InstanceData {
     public int LifeItems { get; private set; }
     public int NextLifeItems => pointLives.Try(nextItemLifeIndex, 9001);
     public long Graze { get; private set; }
-    public double PlayerDamageMultiplier => M.Lerp(0, 3, Difficulty.Counter, 1.25, 1);
+    public double PlayerDamageMultiplier => M.Lerp(0, 3, Difficulty.Counter, 1.20, 1);
     public const double powerMax = 4;
     public const double powerMin = 1;
 #if UNITY_EDITOR
@@ -81,7 +81,7 @@ public class InstanceData {
     public int PowerF => (int)Math.Floor(Power);
     public int PowerIndex => PowerF - (int) powerMin;
     public double PIV { get; private set; }
-    private double EffectivePIV => PIV + 0.01 * (long)(Graze / 42);
+    private double EffectivePIV => PIV + Graze / (double)1337;
     private const double pivPerPPP = 0.01;
     public const double pivFallStep = 0.1;
     public double Faith { get; private set; }
@@ -93,82 +93,76 @@ public class InstanceData {
     private const double faithLenienceFall = 5;
     private const double faithLenienceValue = 0.2;
     private const double faithLeniencePointPP = 0.3;
-    private double FaithLenienceGraze => M.Lerp(0, 3, Difficulty.Counter, 0.4, 0.3);
+    private double FaithLenienceGraze => M.Lerp(0, 3, Difficulty.Counter, 0.42, 0.3);
     private const double faithLenienceEnemyDestroy = 0.1;
     private const double faithBoostValue = 0.02;
     private const double faithBoostPointPP = 0.09;
-    private double FaithBoostGraze => M.Lerp(0, 3, Difficulty.Counter, 0.03, 0.02);
+    private double FaithBoostGraze => M.Lerp(0, 3, Difficulty.Counter, 0.033, 0.02);
     
     private const double faithLeniencePhase = 4;
     
     public double Meter { get; private set; }
     public bool MeterEnabled => MeterMechanicEnabled && Difficulty.meterEnabled;
     public bool EnoughMeterToUse => MeterEnabled && Meter >= meterUseThreshold;
-    private double MeterBoostGraze => M.Lerp(0, 3, Difficulty.Counter, 0.0075, 0.005);
+    private double MeterBoostGraze => M.Lerp(0, 3, Difficulty.Counter, 0.008, 0.005);
     private const double meterBoostGem = 0.021;
     private const double meterRefillRate = 0.002;
     private const double meterUseRate = 0.314;
     public const double meterUseThreshold = 0.42;
     private const double meterUseInstantCost = 0.042;
     
-    public bool MeterInUse { get; set; }
+    public bool MeterInUse { get; private set; }
+
+    public void StartUsingMeter() {
+        MeterInUse = true;
+        LastMeterStartFrame = ETime.FrameNumber;
+    }
+
+    public void StopUsingMeter() {
+        MeterInUse = false;
+    }
     private double MeterPivPerPPPMultiplier => MeterInUse ? 2 : 1;
     private double MeterScorePerValueMultiplier => MeterInUse ? 2 : 1;
     
-    public bool Reloaded { get; set; }
-    
     public int Continues { get; private set; }
+    public int ContinuesUsed { get; private set; } = 0;
+    public bool Continued => ContinuesUsed > 0;
     public int HitsTaken { get; private set; }
 
     private int nextScoreLifeIndex;
     public long? NextScoreLife => mode.OneLife() ? null : scoreLives.TryN(nextScoreLifeIndex);
     private int nextItemLifeIndex;
     public readonly InstanceMode mode;
-    public bool Continued { get; private set; }
+    public bool IsCampaign => mode == InstanceMode.CAMPAIGN;
+    public bool IsAtleastNormalCampaign => IsCampaign && Difficulty.standard >= FixedDifficulty.Normal;
+    
     private PlayerTeam team;
     public PlayerConfig? Player => team.Player;
     public ShotConfig? Shot => team.Shot;
     public Subshot Subshot => team.Subshot;
     public string MultishotString => (Shot != null && Shot.isMultiShot) ? Subshot.Describe() : "";
     
-    public int EnemiesDestroyed { get; private set; }
-    public int TotalFrames { get; private set; }
-    public int MeterFrames { get; private set; }
-    public void SetSubshot(Subshot newSubshot) {
-        team.Subshot = newSubshot;
-        PlayerInput.RequestShotUpdate.Publish((Shot, Subshot));
-        Events.CampaignDataHasChanged.Proc();
-    }
-
-    /// <summary>
-    /// Has no effect if the provided player/shot must exist in the team config.
-    /// Returns true iff it exists in the team config.
-    /// </summary>
-    public bool SetPlayer(PlayerConfig player, ShotConfig shot, Subshot? subshot = null) {
-        var ind = team.players.IndexOf(x => x == (player, shot));
-        if (ind > -1) {
-            team.Subshot = subshot ?? team.Subshot;
-            team.SelectedIndex = ind;
-            PlayerInput.RequestPlayerUpdate.Publish(player);
-            PlayerInput.RequestShotUpdate.Publish((shot, team.Subshot));
-            Events.CampaignDataHasChanged.Proc();
-            return true;
-        } else {
-            return false;
-        }
-    }
-    
-    //This uses boss key instead of boss index since phaseSM doesn't have trivial access to boss index
-    public List<CardHistory> CardCaptures { get; }
+    public CardHistory CardHistory { get; }
 
     public readonly MultiAdder Lenience = new MultiAdder(0, null);
     public bool Lenient => Lenience.Value > 0;
     public BehaviorEntity? CurrentBoss { get; private set; }
     private ICancellee? CurrentBossCT { get; set; }
 
+    /// <summary>
+    /// Only present for campaign-type games
+    /// </summary>
+    private readonly CampaignConfig? campaign;
+    /// <summary>
+    /// Present for all games, including "null_campaign" default for unscoped games
+    /// </summary>
+    public readonly string campaignKey;
+    public InstanceRequest? Request { get; }
+    public readonly Dictionary<((string, string), int), (int, int)> PreviousSpellHistory;
+    
     private static readonly long[] scoreLives = {
-         2000000,
-         5000000,
+        2000000,
+        5000000,
         10000000,
         15000000,
         20000000,
@@ -198,19 +192,23 @@ public class InstanceData {
         9001,
         int.MaxValue
     };
-
-    /// <summary>
-    /// Only present for campaign-type games
-    /// </summary>
-    private readonly CampaignConfig? campaign;
-    /// <summary>
-    /// Present for all games, including "null_campaign" default for unscoped games
-    /// </summary>
-    private readonly string campaignKey;
-    public InstanceRequest? Request { get; }
+    //Miscellaneous stats
+    public List<BossConfig> BossesEncountered { get; } = new List<BossConfig>();
+    public int EnemiesDestroyed { get; private set; }
+    public int TotalFrames { get; private set; }
+    public int LastMeterStartFrame { get; private set; }
+    public int LastTookHitFrame { get; private set; }
+    public int MeterFrames { get; private set; }
+    public int SubshotSwitches { get; private set; }
+    public int OneUpItemsCollected { get; private set; }
 
     public InstanceData(InstanceMode mode, InstanceRequest? req = null, long? maxScore = null) {
         this.Request = req;
+        //Minor hack to avoid running the SaveData static constructor in the editor during type initialization
+        PreviousSpellHistory = (req == null) ? 
+            new Dictionary<((string, string), int), (int, int)>() :
+            SaveData.r.GetCampaignSpellHistory();
+        
         this.mode = mode;
         this.Difficulty = req?.metadata.difficulty ?? GameManagement.defaultDifficulty;
         this.MaxScore = maxScore ?? 9001;
@@ -226,7 +224,7 @@ public class InstanceData {
         Lives = Difficulty.startingLives ?? Lives;
         Bombs = StartBombs(mode);
         Power = StartPower(mode, team.Shot);
-        CardCaptures = new List<CardHistory>();
+        CardHistory = new CardHistory();
         this.Score = 0;
         this.PIV = 1;
         Meter = StartMeter(mode);
@@ -240,23 +238,52 @@ public class InstanceData {
         faithLenience = 0f;
         UIVisibleFaithDecayLenienceRatio = 0f;
         Continues = mode.OneLife() ? 0 : defltContinues;
-        Continued = false;
-        Reloaded = false;
         HitsTaken = 0;
         EnemiesDestroyed = 0;
         Graze = 0;
         CurrentBoss = null;
         MeterInUse = false;
     }
+    
+    
+    public void SetSubshot(Subshot newSubshot) {
+        if (team.Shot == null || !team.Shot.isMultiShot)
+            UselessPowerupCollected.Proc();
+        if (team.Subshot == newSubshot)
+            return;
+        team.Subshot = newSubshot;
+        if (team.Shot != null && team.Shot.isMultiShot)
+            ++SubshotSwitches;
+        PlayerInput.RequestShotUpdate.Publish((Shot, Subshot));
+        CampaignDataUpdated.Proc();
+    }
+
+    /// <summary>
+    /// Has no effect if the provided player/shot must exist in the team config.
+    /// Returns true iff it exists in the team config.
+    /// </summary>
+    public bool SetPlayer(PlayerConfig player, ShotConfig shot, Subshot? subshot = null) {
+        var ind = team.players.IndexOf(x => x == (player, shot));
+        if (ind > -1) {
+            team.Subshot = subshot ?? team.Subshot;
+            team.SelectedIndex = ind;
+            PlayerInput.RequestPlayerUpdate.Publish(player);
+            PlayerInput.RequestShotUpdate.Publish((shot, team.Subshot));
+            CampaignDataUpdated.Proc();
+            return true;
+        } else {
+            return false;
+        }
+    }
 
     public bool TryContinue() {
         if (Continues > 0) {
-            Continued = true;
             //We can allow continues in replays! But in the current impl, the watcher will have to press continue.
             //Replayer.Cancel();
             --Continues;
+            ++ContinuesUsed;
             Score = lastScore = UIVisibleScore = nextItemLifeIndex = nextScoreLifeIndex = LifeItems = 0;
-            CardCaptures.Clear(); //Partial game is saved when lives=0. Don't double on captures.
+            CardHistory.Clear();//Partial game is saved when lives=0. Don't double on captures.
             PIV = 1;
             Meter = StartMeter(mode);
             if (campaign != null) {
@@ -266,9 +293,14 @@ public class InstanceData {
             }
             Bombs = StartBombs(mode);
             remVisibleScoreLerpTime = Faith = faithLenience = 0;
-            Events.CampaignDataHasChanged.Proc();
+            CampaignDataUpdated.Proc();
             return true;
         } else return false;
+    }
+
+    public (int success, int total)? LookForSpellHistory(string bossKey, int phaseIndex) {
+        var key = ((campaignKey, bossKey), phaseIndex);
+        return PreviousSpellHistory.TryGetValue(key, out var rate) ? rate : ((int, int)?)null;
     }
 
 
@@ -278,26 +310,29 @@ public class InstanceData {
     public bool TryConsumeBombs(int delta) {
         if (Bombs + delta >= 0) {
             Bombs += delta;
-            Events.CampaignDataHasChanged.Proc();
+            CampaignDataUpdated.Proc();
             return true;
         }
         return false;
     }
 
-    public void SwapLifeScore(int score) {
+    public void SwapLifeScore(long score, bool usePIVMultiplier) {
         AddLives(-1, false);
+        if (usePIVMultiplier) score = (long) (score * PIV);
         AddScore(score);
         LifeSwappedForScore.Proc();
-        Events.CampaignDataHasChanged.Proc();
+        CampaignDataUpdated.Proc();
     }
     public void AddLives(int delta, bool asHit = true) {
         //if (mode == CampaignMode.NULL) return;
         Log.Unity($"Adding player lives: {delta}");
         if (delta < 0 && asHit) {
             ++HitsTaken;
+            LastTookHitFrame = ETime.FrameNumber;
             Bombs = Math.Max(Bombs, StartBombs(mode));
             AddPower(powerDeathLoss);
             Meter = 1;
+            PlayerTookHit.Proc();
         }
         if (delta < 0 && mode.OneLife()) Lives = 0;
         else Lives = Math.Max(0, Lives + delta);
@@ -307,19 +342,20 @@ public class InstanceData {
                 //Special-case boss practice handling
                 if (Request.lowerRequest.Resolve(_ => null, 
                         b => (BossPracticeRequest?) b, _ => null, _ => null).Try(out var bpr)) {
-                    CardCaptures.Add(new CardHistory() {
+                    CardHistory.Add(new CardRecord() {
                         campaign = bpr.boss.campaign.Key,
                         boss = bpr.boss.boss.key,
-                        bossIndex = bpr.boss.bossIndex,
                         phase = bpr.phase.index,
-                        captured = false
+                        stars = 0,
+                        hits = 1,
+                        method = null
                     });
                 }
                 SaveData.r.RecordGame(new InstanceRecord(Request, this, false));
             }
             EngineStateManager.HandlePlayerDeath();
         }
-        Events.CampaignDataHasChanged.Proc();
+        CampaignDataUpdated.Proc();
     }
 
     /// <summary>
@@ -375,7 +411,7 @@ public class InstanceData {
             if (Power >= powerMax) PowerFull.Proc();
             else PowerGained.Proc();
         }
-        Events.CampaignDataHasChanged.Proc();
+        CampaignDataUpdated.Proc();
     }
 
     /// <summary>
@@ -424,34 +460,42 @@ public class InstanceData {
         AddFaithLenience(FaithLenienceGraze);
         AddMeter(delta * MeterBoostGraze);
         Counter.GrazeProc(delta);
-        Events.CampaignDataHasChanged.Proc();
+        CampaignDataUpdated.Proc();
     }
 
     public void AddPointPlusItems(int delta) {
         PIV += pivPerPPP * MeterPivPerPPPMultiplier * delta;
         AddFaith(delta * faithBoostPointPP);
         AddFaithLenience(faithLeniencePointPP);
-        Events.CampaignDataHasChanged.Proc();
+        CampaignDataUpdated.Proc();
     }
 
     public void AddGems(int delta) {
         AddMeter(delta * meterBoostGem);
     }
 
-    public void LifeExtend() {
+    public void AddOneUpItem() {
+        ++OneUpItemsCollected;
+        LifeExtend();
+    }
+
+    private void LifeExtend() {
         ++Lives;
         AnyExtendAcquired.Proc();
-        Events.CampaignDataHasChanged.Proc();
+        CampaignDataUpdated.Proc();
     }
 
     public void PhaseEnd(PhaseCompletion pc) {
-        if (pc.props.phaseType?.IsCard() == true && pc.props.Boss != null && pc.Captured.Try(out var captured)) {
-            CardCaptures.Add(new CardHistory() {
+        if (pc.props.phaseType?.IsCard() == true && pc.props.Boss != null && pc.CaptureStars.Try(out var captured)) {
+            CardHistory.Add(new CardRecord() {
                 campaign = campaignKey,
                 boss = pc.props.Boss.key,
                 phase = pc.props.Index,
-                captured = captured
+                stars = captured,
+                hits = pc.hits,
+                method = pc.clear
             });
+            CardHistoryUpdated.Proc();
         }
         if (pc.props.phaseType?.IsPattern() ?? false) AddFaithLenience(faithLeniencePhase);
 
@@ -466,7 +510,7 @@ public class InstanceData {
             ++nextScoreLifeIndex;
             LifeExtend();
             ScoreExtendAcquired.Proc();
-            Events.CampaignDataHasChanged.Proc();
+            CampaignDataUpdated.Proc();
         }
         remVisibleScoreLerpTime = visibleScoreLerpTime;
         //updated in RegUpd
@@ -478,7 +522,7 @@ public class InstanceData {
             LifeExtend();
             ItemExtendAcquired.Proc();
         }
-        Events.CampaignDataHasChanged.Proc();
+        CampaignDataUpdated.Proc();
     }
 
     public void DestroyNormalEnemy() {
@@ -497,7 +541,7 @@ public class InstanceData {
             remVisibleScoreLerpTime -= ETime.FRAME_TIME;
             if (remVisibleScoreLerpTime <= 0) UIVisibleScore = Score;
             else UIVisibleScore = (long) M.LerpU(lastScore, Score, 1 - remVisibleScoreLerpTime / visibleScoreLerpTime);
-            Events.CampaignDataHasChanged.Proc();
+            CampaignDataUpdated.Proc();
         }
         UIVisibleFaithDecayLenienceRatio = M.LerpU(UIVisibleFaithDecayLenienceRatio, 
             Math.Min(1f, faithLenience / 3f), 6f * ETime.FRAME_TIME);
@@ -511,14 +555,15 @@ public class InstanceData {
                 PIV = Math.Max(1, PIV - pivFallStep);
                 Faith = 0.5f;
                 faithLenience = faithLenienceFall;
-                Events.CampaignDataHasChanged.Proc();
+                CampaignDataUpdated.Proc();
             }
         }
     }
 
 
-    public void SetCurrentBoss(BehaviorEntity boss, ICancellee bossCT) {
+    public void SetCurrentBoss(BossConfig cfg, BehaviorEntity boss, ICancellee bossCT) {
         if (CurrentBossCT != null) CloseBoss();
+        BossesEncountered.Add(cfg);
         CurrentBoss = boss;
         CurrentBossCT = bossCT;
     }
@@ -530,6 +575,10 @@ public class InstanceData {
         } else Log.UnityError("You tried to close a boss section when no boss exists.");
     }
 
+    public static readonly Events.Event0 UselessPowerupCollected = new Events.Event0();
+    public static readonly Events.Event0 CampaignDataUpdated = new Events.Event0();
+    public static readonly Events.Event0 PlayerTookHit = new Events.Event0();
+    public static readonly Events.Event0 CardHistoryUpdated = new Events.Event0();
     public static readonly Events.Event0 MeterNowUsable = new Events.Event0();
     public static readonly Events.Event0 PowerLost = new Events.Event0();
     public static readonly Events.Event0 PowerGained = new Events.Event0();

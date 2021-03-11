@@ -44,6 +44,7 @@ public class XMLPauseMenu : XMLMenu {
                 ("1Hz", 1),
                 ("6Hz", 6),
 #endif
+                ("12Hz", 12),
                 ("30Hz", 30),
                 ("40Hz", 40),
                 ("60Hz", 60),

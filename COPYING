@@ -66,6 +66,7 @@ Sound effects (Assets/Danmokou/Audio/SFX)
 	- "camera-snap1*" under CC-BY from here: https://freesound.org/people/thecheeseman/sounds/51360/
 	- "camera-focus" under CC-BY from here: https://freesound.org/people/Puniho/sounds/115126/
 	- "meter-activated" under CC-BY from here: https://freesound.org/people/hykenfreak/sounds/248182/
+	- "achievement-1" under CC-BY from here: https://freesound.org/people/LittleRobotSoundFactory/sounds/274179/
 
 All fonts (Assets/Danmokou/Fonts) are licensed permissively. Licenses are in the Licenses/Fonts folder.
 
@@ -90,6 +91,7 @@ Images (Assets/Danmokou/Sprites)
 - entity/taisei_*: by Taisei Project (with modification).
 - DD/*: by DD: https://www.pixiv.net/en/users/4650367 . Noncommercial use only. 
 - .py: Python scripts licensed by Bagoum under MIT.
+- UI/trophy.png: https://pixabay.com/vectors/success-badge-trophy-award-winner-5974538/
 - UI/pins/crow*: stock by Roy3D on DeviantArt (https://www.deviantart.com/roy3d/art/Crows-2-PNG-Stock-412584565), modifications made.
 - UI/commense: Yukari sprites by dairi (https://www.pixiv.net/en/users/4920496). Noncommercial use only. 
 - items/gems*: under CC-BY from Code Inferno Games (codeinferno.com):  https://opengameart.org/content/animated-spinning-gems

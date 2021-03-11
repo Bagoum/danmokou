@@ -27,7 +27,7 @@ public abstract class RegularUpdater : MonoBehaviour, IRegularUpdater {
     protected void Listen(Events.Event0 ev, Action sub) {
         tokens.Add(ev.Subscribe(sub));
     }
-
+    
     protected void RegisterDI<T>(T me) where T : class => tokens.Add(DependencyInjection.Register(me));
 
     protected virtual void OnEnable() => EnableUpdates();

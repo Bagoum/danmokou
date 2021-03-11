@@ -107,6 +107,7 @@ MonoBehaviour:
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
+    allowGraze: 0
   displayer: {fileID: 0}
   offsetFree: pxy -0.6 0.1
   offsetFocus: pxy -0.5 -0.3
@@ -117,9 +118,7 @@ MonoBehaviour:
   opacityFree: 
   opacityFocus: 
   spriteRotation: 420 * t * pm1(p)
-  freeOffsetRotational: 1
-  focusOffsetRotational: 1
-  freeAngleOffset: 5
+  freeAngleOffset: 7
   focusAngleOffset: 2
   freeFocusLerpTime: 0.2
   powerLerpTime: 0
@@ -231,6 +230,7 @@ MonoBehaviour:
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
+    allowGraze: 0
   displayer: {fileID: 0}
   offsetFree: pxy -0.3 0.4
   offsetFocus: pxy -0.4 0.2
@@ -241,8 +241,6 @@ MonoBehaviour:
   opacityFree: 
   opacityFocus: 
   spriteRotation: 420 * t * pm1(p)
-  freeOffsetRotational: 1
-  focusOffsetRotational: 1
   freeAngleOffset: 
   focusAngleOffset: 
   freeFocusLerpTime: 0.2
@@ -355,6 +353,7 @@ MonoBehaviour:
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
+    allowGraze: 0
   displayer: {fileID: 0}
   offsetFree: pxy 0.55 -0.4
   offsetFocus: py 0.7
@@ -365,9 +364,7 @@ MonoBehaviour:
   opacityFree: 
   opacityFocus: 
   spriteRotation: 420 * t * pm1(p)
-  freeOffsetRotational: 1
-  focusOffsetRotational: 1
-  freeAngleOffset: -15
+  freeAngleOffset: -19
   focusAngleOffset: 0
   freeFocusLerpTime: 0.2
   powerLerpTime: 0
@@ -479,6 +476,7 @@ MonoBehaviour:
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
+    allowGraze: 0
   displayer: {fileID: 0}
   offsetFree: pxy -0.55 -0.4
   offsetFocus: py 0.7
@@ -489,9 +487,7 @@ MonoBehaviour:
   opacityFree: 
   opacityFocus: 
   spriteRotation: 420 * t * pm1(p)
-  freeOffsetRotational: 1
-  focusOffsetRotational: 1
-  freeAngleOffset: 15
+  freeAngleOffset: 19
   focusAngleOffset: 0
   freeFocusLerpTime: 0.2
   powerLerpTime: 0
@@ -603,6 +599,7 @@ MonoBehaviour:
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
+    allowGraze: 0
   displayer: {fileID: 0}
   offsetFree: pxy 0.6 0.1
   offsetFocus: pxy 0.5 -0.3
@@ -613,9 +610,7 @@ MonoBehaviour:
   opacityFree: 
   opacityFocus: 
   spriteRotation: 420 * t * pm1(p)
-  freeOffsetRotational: 1
-  focusOffsetRotational: 1
-  freeAngleOffset: -5
+  freeAngleOffset: -7
   focusAngleOffset: -2
   freeFocusLerpTime: 0.2
   powerLerpTime: 0
@@ -727,6 +722,7 @@ MonoBehaviour:
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
+    allowGraze: 0
   displayer: {fileID: 0}
   offsetFree: pxy 0.3 0.4
   offsetFocus: pxy 0.4 0.2
@@ -737,8 +733,6 @@ MonoBehaviour:
   opacityFree: 
   opacityFocus: 
   spriteRotation: 420 * t * pm1(p)
-  freeOffsetRotational: 1
-  focusOffsetRotational: 1
   freeAngleOffset: 
   focusAngleOffset: 
   freeFocusLerpTime: 0.2

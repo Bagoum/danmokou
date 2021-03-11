@@ -47,7 +47,7 @@ MonoBehaviour:
   destructible: 0
   deletable: 0
   grazeEveryFrames: 60
-  screenCullRadius: 15
+  screenCullRadius: 12
   renderPriority: 0
   renderMode: 0
   fadeIn: {fileID: 11400000, guid: 3ac08ee0b5cc1894a97ec35c140268ae, type: 2}
@@ -80,6 +80,7 @@ MonoBehaviour:
     framesPerSecond: 0
   gradients: []
   spriteSpecificGradients: []
+  identicalForms: []
   TTL: 0
   timeRandomization: 0
   rotateRandomization: 0
@@ -111,3 +112,4 @@ MonoBehaviour:
   end: 0
   points: []
   target: {fileID: 0}
+  debug: 0

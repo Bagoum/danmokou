@@ -826,9 +826,9 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Profaned Flame /<size=0.4> </size>Fujiwara<size=1.6> no </size>Mokou /
-    Profaned Flame /<size=0.4> </size>Fujiwara<size=1.6> no </size>Mokou / Profaned
-    Flame /<size=0.4> </size>Fujiwara<size=1.6> no </size>Mokou /<color=#ff000000>|</color>
+  m_text: Profaned Flame /<size=0.4> </size>Fujiwara<size=1.7> no </size>Mokou /
+    Profaned Flame / <size=0.4> </size>Fujiwara<size=1.7> no </size>Mokou / Profaned
+    Flame / <size=0.4> </size>Fujiwara<size=1.7> no </size>Mokou /<color=#ff000000>|</color>
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 223c9916a7673ad489f8f14fb1b9ce2f, type: 2}
   m_sharedMaterial: {fileID: 2100000, guid: 40f969de77192a04681aadf888a6a816, type: 2}
@@ -865,7 +865,7 @@ MonoBehaviour:
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 512
   m_textAlignment: 65535
-  m_characterSpacing: -5
+  m_characterSpacing: -12
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -897,6 +897,7 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_renderer: {fileID: 1060366902275062222}
   m_maskType: 0
+  _SortingLayer: 0
   _SortingLayerID: -247109493
   _SortingOrder: -9
 --- !u!114 &6702499488466320482

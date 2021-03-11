@@ -1,8 +1,10 @@
 ﻿using System.Collections;
 using DMK.Behavior;
 using DMK.Core;
+using DMK.Danmaku;
 using DMK.Scriptables;
 using DMK.Services;
+using DMK.SM;
 using UnityEngine;
 
 namespace DMK.Player {
@@ -75,8 +77,9 @@ public class PlayerHP : CoroutineRegularUpdater {
     }
 
     private void _DoHit(int dmg) {
+        BulletManager.AutodeleteCircleOverTime(new SoftcullProperties(input.BPI.loc, 1.1f, 0f, 7f, "cwheel"));
         GameManagement.Instance.AddLives(-dmg);
-        DependencyInjection.MaybeFind<IRaiko>()?.ShakeExtra(1.5f, 0.8f);
+        DependencyInjection.MaybeFind<IRaiko>()?.ShakeExtra(1.5f, 0.9f);
         Invuln(hitInvulnFrames);
         if (RespawnOnHit) input.RequestNextState(PlayerInput.PlayerState.RESPAWN);
         else input.InvokeParentedTimedEffect(OnHitEffect, hitInvuln);

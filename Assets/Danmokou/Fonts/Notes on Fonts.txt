@@ -1,0 +1,7 @@
+There are a few merged fonts here. I've made them by squashing two fonts together in Fontforge. Merging fonts is a bit awkward but it's necessary for two reasons:
+- TextMeshPro can't handle dynamic fallback materials (ie. autogenerating a fallback material and then changing the original in code), which are necessary to support the colorization of UI text for bosses.
+- UIToolkit doesn't support fallbacks at all (though this should change in the next version).
+
+The merged fonts are as follows:
+- Odibee-CorpSt-Joint (see Odibee and Corporate Logo in the Licenses folder), used for most UI text
+- Monospace/Fira-Yasashisa-Joint (see Fira Code and Yasashisa Gothic in the Licenses folder), used specifically for replay dislay. This font is monospaced for English and Japanese text alike (by squashing the width of the Japanese glyphs).

@@ -21,6 +21,7 @@ using InstanceLowRequest = DMK.Core.DU<DMK.GameInstance.CampaignRequest, DMK.Gam
 namespace DMK.GameInstance {
 public interface IChallengeRequest {
 
+    InstanceRequest Requester { get; }
     LocalizedString Description { get; }
     Challenge[] Challenges { get; }
 
@@ -49,20 +50,20 @@ public interface IChallengeRequest {
 
 public readonly struct SceneChallengeReqest : IChallengeRequest {
     public readonly PhaseChallengeRequest cr;
-    public readonly InstanceRequest gr;
+    public InstanceRequest Requester { get; }
     public readonly FixedDifficulty difficulty;
 
     public SceneChallengeReqest(InstanceRequest gr, PhaseChallengeRequest cr) {
-        this.gr = gr;
+        this.Requester = gr;
         this.cr = cr;
-        difficulty = gr.metadata.difficulty.standard ??
+        difficulty = Requester.metadata.difficulty.standard ??
                      throw new Exception("Scene challenges must used fixed difficulties");
     }
 
     public void Initialize() {
         //Prevents load lag if this is executed on scene change while camera transition is up
         StateMachineManager.FromText(cr.Boss.stateMachine);
-        UIManager.RequestChallengeDisplay(cr, gr.metadata);
+        UIManager.RequestChallengeDisplay(cr, Requester.metadata);
     }
 
     public void Start(BehaviorEntity exec) {
@@ -74,11 +75,12 @@ public readonly struct SceneChallengeReqest : IChallengeRequest {
         Log.Unity($"PASSED challenge {cr.Description}");
         //This saves completion. Needs to be done locally in case of continuations.
         //The callback will handle replaying.
-        var record = gr.MakeSaveGameRecord(ctx.cm.ChallengePhotos.ToArray());
+        var record = Requester.MakeGameRecord(ctx.cm.ChallengePhotos.ToArray());
+        Requester.TrySave(record);
 
-        if (gr.replay == null && cr.NextChallenge(gr.metadata).Try(out var nextC)) {
+        if (Requester.replay == null && cr.NextChallenge(Requester.metadata).Try(out var nextC)) {
             Log.Unity($"Autoproceeding to next challenge: {nextC.Description}");
-            var nextGr = new InstanceRequest(gr.cb, gr.metadata, new InstanceLowRequest(nextC), null);
+            var nextGr = new InstanceRequest(Requester.cb, Requester.metadata, new InstanceLowRequest(nextC), null);
             nextGr.SetupInstance();
             Replayer.Cancel(); //can't replay both scenes together,
             //or even just the second scene due to time-dependency of world objects such as shots
@@ -140,9 +142,9 @@ public readonly struct PhaseChallengeRequest {
         challenge = c;
     }
 
-    public ((((string, int), int), int), int) Key => (phase.Key, ChallengeIdx);
+    public ((((string, int), string), int), int) Key => (phase.Key, ChallengeIdx);
 
-    public static PhaseChallengeRequest Reconstruct(((((string, int), int), int), int) key) {
+    public static PhaseChallengeRequest Reconstruct(((((string, int), string), int), int) key) {
         var phase = SMAnalysis.DayPhase.Reconstruct(key.Item1);
         return new PhaseChallengeRequest(phase, phase.challenges[key.Item2]);
     }

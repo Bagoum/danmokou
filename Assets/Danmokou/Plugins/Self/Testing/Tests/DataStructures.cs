@@ -183,6 +183,32 @@ public class DataStructures {
     }
 
     [Test]
+    public void CompactingArray2() {
+        void AssertTryGet(CompactingArray<int> c, int index, int? val) {
+            if (c.TryGet(index, out var v))
+                Assert.AreEqual(v, val);
+            else
+                Assert.AreEqual(null, val);
+        }
+        var ca = new CompactingArray<int>(8);
+        ca.AddV(100);
+        ca.AddV(101);
+        ca.AddV(102);
+        ca.AddV(103);
+        Assert.AreEqual(ca.Count, 4);
+        AssertTryGet(ca, 2, 102);
+        AssertTryGet(ca, 3, 103);
+        ca.Delete(3);
+        AssertTryGet(ca, 2, 102);
+        AssertTryGet(ca, 3, null);
+        ca.Compact();
+        Assert.AreEqual(ca.Count, 3);
+        AssertTryGet(ca, 2, 102);
+        ca.AddV(203);
+        Assert.AreEqual(ca.Count, 4);
+    }
+
+    [Test]
     public void DMCArray() {
         var ca = new DMCompactingArray<I>(4);
         DeletionMarker<I>[] dmi = new DeletionMarker<I>[12];

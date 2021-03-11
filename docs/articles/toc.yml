@@ -18,6 +18,8 @@
       href: playerFire1.md
     - name: Pitfalls and Warnings
       href: warnings.md
+    - name: A Primer on Color Blending Oddities
+      href: ColorBlending.md
     - name: IL2CPP/AoT Support
       href: AoT Support.md
 - name: References (Advanced)

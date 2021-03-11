@@ -19,22 +19,18 @@ MonoBehaviour:
     hardcoded:
       en: 
       jp: 
-      _showEnOnly: 0
   description: 'A fighting style mimicking a legendary weapon now long passed out
     of even fantasy.
 
-    Slow pathers aim at the nearest enemy, while supplementary
-    fire spreads wide.
-
-    When focused, the pathers speed up and the supplementary
-    fire points inwards.'
+'
   type: Aimed
   prefab: {fileID: 1281575726812465804, guid: 26ed099ff2b407f4f8bdc2437c625ed3, type: 3}
   bomb: 0
   defaultPower: 1000
   playerChild: 1
-  demoReplay: {fileID: 4900000, guid: f58a179b4f5afb7489944bbfdd2484f5, type: 3}
+  demoReplay: {fileID: 11400000, guid: cb661392b80571a4789ee38880206435, type: 2}
   demoSetupSM: {fileID: 4900000, guid: 83d895926f063264f9adc5887261db81, type: 3}
+  shotDifficulty: 1
   isMultiShot: 0
   multiD: {fileID: 0}
   multiM: {fileID: 0}

@@ -381,6 +381,17 @@ public static partial class LocalizedStrings {
 			}, arg0),
 		};
 		
+		public static readonly LocalizedString shotsel_multi_prefix = new LocalizedString(Render(Locale.EN, new[] {
+			"Multishot:",
+			"\n",
+		})) {
+			jp = Render(Locale.JP, new[] {
+				"<line-height=5>可変ショット",
+				"\n",
+				"</line-height>",
+			}),
+		};
+		
 		public static string death_continue(object arg0) => Localization.Locale switch {
 			Locale.JP => Render(Localization.Locale, new[] {
 				"続ける（後",
@@ -450,6 +461,9 @@ public static partial class LocalizedStrings {
 		};
 		
 		public static readonly LocalizedString main_stats = new LocalizedString("Stats") {
+		};
+		
+		public static readonly LocalizedString main_achievements = new LocalizedString("Achievements") {
 		};
 		
 		public static readonly LocalizedString main_replays = new LocalizedString("Replays") {
@@ -560,6 +574,9 @@ public static partial class LocalizedStrings {
 		
 		public static readonly LocalizedString stats_totaltime = new LocalizedString("Total Play Time") {
 			jp = "総計プレイ時間",
+		};
+		
+		public static readonly LocalizedString achievements_locked = new LocalizedString("???") {
 		};
 		
 	}

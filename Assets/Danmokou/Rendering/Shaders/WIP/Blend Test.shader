@@ -13,7 +13,7 @@
 		Cull Off
 		Lighting Off
 		ZWrite Off
-		Blend OneMinusSrcColor OneMinusSrcAlpha
+		Blend OneMinusSrcColor OneMinusSrcAlpha, OneMinusDstAlpha One
 
 		GrabPass { "_PreUITex" }
 

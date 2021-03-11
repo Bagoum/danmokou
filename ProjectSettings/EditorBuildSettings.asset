@@ -5,10 +5,10 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 0
+  - enabled: 1
     path: Assets/SiMP/Scenes/SiMP.MainMenu.unity
     guid: 6b2d775f9661bd44da76415034461224
-  - enabled: 1
+  - enabled: 0
     path: Assets/Danmokou/MiniProjects/MP.MainMenu.unity
     guid: 6ce87ca5eeaeca643beda1e510b20d3b
   - enabled: 0
@@ -59,7 +59,7 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/LuA/LuA.SceneLevel.unity
     guid: e1480753093a7cd43afb2b458aef2f74
-  - enabled: 1
+  - enabled: 0
     path: Assets/Danmokou/MiniProjects/Scenes/MiniprojectLevel.unity
     guid: 2a1f4e4cd49e99341855fa916af2cc1f
   - enabled: 0

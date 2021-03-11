@@ -19,21 +19,16 @@ MonoBehaviour:
     hardcoded:
       en: 
       jp: 
-      _showEnOnly: 0
-  description: 'A hybrid shot Reimu developed with Marisa while her needles were
-    out for repair.
-
-    When unfocused, fire homing ofuda.
-
-    When focused, fire
-    homing lasers.'
+  description: A hybrid shot Reimu developed with Marisa while her needles were out
+    for repair.
   type: Homing
   prefab: {fileID: 6169168473649848314, guid: 50a90aefef8754f4d9966c3ad7ee51c7, type: 3}
   bomb: 1
   defaultPower: 1
   playerChild: 1
-  demoReplay: {fileID: 4900000, guid: f58a179b4f5afb7489944bbfdd2484f5, type: 3}
+  demoReplay: {fileID: 11400000, guid: cb661392b80571a4789ee38880206435, type: 2}
   demoSetupSM: {fileID: 4900000, guid: 83d895926f063264f9adc5887261db81, type: 3}
+  shotDifficulty: 0
   isMultiShot: 0
   multiD: {fileID: 0}
   multiM: {fileID: 0}

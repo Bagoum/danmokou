@@ -234,7 +234,7 @@ public partial class BulletManager {
             bulletCollisionTarget.Player.Hit(dmg);
             bulletCollisionTarget.Player.Graze(graze);
         } else {
-            //Collision checker also does compacting, which needs to occur even if there's no target
+            //Collision checker also does compacting/culling, which needs to occur even if there's no target
             for (int ii = 0; ii < activeCEmpty.Count; ++ii) {
                 activeCEmpty[ii].NullCollisionCleanup();
             }
@@ -306,9 +306,11 @@ public partial class BulletManager {
     /// While most controls are bounded by ICancellee, some aren't, so they need to be destroyed.
     /// </summary>
     public static void ClearPoolControls(bool clearPlayer=true) {
-        foreach (var pool in simpleBulletPools.Values.Where(p => clearPlayer || !p.IsPlayer)) {
-            pool.ClearControls();
-            pool.ResetPoolMetadata();
+        foreach (var pool in simpleBulletPools.Values) {
+            if (clearPlayer || !pool.IsPlayer) {
+                pool.ClearControls();
+                pool.ResetPoolMetadata();
+            }
         }
         BehaviorEntity.ClearPoolControls(clearPlayer);
         CurvedTileRenderLaser.ClearPoolControls(clearPlayer);

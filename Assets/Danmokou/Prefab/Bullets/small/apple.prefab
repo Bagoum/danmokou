@@ -48,7 +48,7 @@ MonoBehaviour:
   destructible: 1
   deletable: 1
   grazeEveryFrames: 60
-  screenCullRadius: 3
+  screenCullRadius: 2
   renderPriority: 450
   renderMode: 0
   fadeIn: {fileID: 11400000, guid: 7509dddf785098f48aadafff0a2ac5b4, type: 2}

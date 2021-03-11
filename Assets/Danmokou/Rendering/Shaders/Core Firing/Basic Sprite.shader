@@ -33,7 +33,7 @@
 		Lighting Off
 		ZWrite Off
 		BlendOp [_BlendOp]
-		Blend [_BlendFrom] [_BlendTo]
+		Blend [_BlendFrom] [_BlendTo], OneMinusDstAlpha One
 
 		Pass {
 			CGPROGRAM

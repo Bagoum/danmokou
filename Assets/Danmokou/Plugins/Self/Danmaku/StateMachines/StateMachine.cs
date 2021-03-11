@@ -253,10 +253,13 @@ public abstract class StateMachine {
     }
 
     private static void MaybeQueueProperties(IParseQueue p) {
-        while (p.Scan() == SMParser.PROP_KW) {
+        while (p.MaybeScan() == SMParser.PROP_KW) {
             p.Advance();
             p.Ctx.QueuedProps.Add(p.NextChild().Into<PhaseProperty>());
-            if (!p.IsNewline) throw new Exception($"Line {p.GetLastLine()} is missing a newline at the end of the the property declaration. Instead, it found \"{p.Scan()}\".");
+            //Note that newlines are skipped in scan
+            if (!p.IsNewline) 
+                throw new Exception(
+                    $"Line {p.GetLastLine()} is missing a newline at the end of the the property declaration.");
         }
     }
 
@@ -267,6 +270,23 @@ public abstract class StateMachine {
         p.ThrowOnLeftovers(() => "Behavior script has extra text. Check the highlighted text for an illegal command.");
         bakeCtx?.Dispose();
         return result;
+    }
+
+    public static List<PhaseProperties> ParsePhases(string dump) {
+        var bakeCtx = BakeCodeGenerator.OpenContext(BakeCodeGenerator.CookingContext.KeyType.SM, "phase_" + dump);
+        var ps = new List<PhaseProperties>();
+        var p = IParseQueue.Lex(dump);
+        while (!p.Empty) {
+            MaybeQueueProperties(p);
+            if (p.Ctx.QueuedProps.Count > 0) {
+                ps.Add(new PhaseProperties(p.Ctx.QueuedProps));
+                p.Ctx.QueuedProps.Clear();
+            }
+            while (!p.Empty && p.MaybeScan() != SMParser.PROP_KW)
+                p.Advance();
+        }
+        bakeCtx?.Dispose();
+        return ps;
     }
 
     protected StateMachine(List<StateMachine> states) {

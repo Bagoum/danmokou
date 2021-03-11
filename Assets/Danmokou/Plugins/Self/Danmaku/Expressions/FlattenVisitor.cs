@@ -9,16 +9,17 @@ using System.Text;
 using DMK.Core;
 using DMK.DMath;
 using JetBrains.Annotations;
+using LanguageExt.TypeClasses;
 using Ex = System.Linq.Expressions.Expression;
 using PEx = System.Linq.Expressions.ParameterExpression;
 // ReSharper disable CompareOfFloatsByEqualityOperator
 
 namespace DMK.Expressions {
 class DeactivateConstantVisitor : ExpressionVisitor {
+    private readonly Dictionary<ParameterExpression, Ex> ConstValPrmsMap;
     public DeactivateConstantVisitor(Dictionary<ParameterExpression, Ex> prmMap) {
         ConstValPrmsMap = prmMap;
     }
-    private readonly Dictionary<ParameterExpression, Ex> ConstValPrmsMap;
     protected override Expression VisitParameter(ParameterExpression node) {
         ConstValPrmsMap.Remove(node);
         return node;
@@ -54,9 +55,12 @@ class FlattenVisitor : ExpressionVisitor {
         this.reduceMethod = reduceMethod;
         this.reduceField = reduceField;
     }
-    public static Ex Flatten(Ex ex, bool reduceMethod = true, bool reduceField = true) => 
-        new FlattenVisitor(reduceMethod, reduceField).Visit(ex);
-    
+    public static Ex Flatten(Ex ex, bool reduceMethod = true, bool reduceField = true) {
+        var fv = new FlattenVisitor(reduceMethod, reduceField);
+        ex = fv.Visit(ex);
+        return ex;
+    }
+
     protected override Expression VisitBinary(BinaryExpression node) {
         var l = AssignTypes.Contains(node.NodeType) ? node.Left : Visit(node.Left);
         var r = Visit(node.Right);
@@ -78,13 +82,7 @@ class FlattenVisitor : ExpressionVisitor {
         }
         bool Bifocal(Func<float,bool> cond, Func<Ex, Ex> ret, out Ex early) {
             return LeftIs(cond, ret, out early) || RightIs(cond, ret, out early);
-        }/*
-        bool Bifocal2(Func<Ex, bool> cond2, Func<float, Ex, Ex> ret, out Ex early) {
-            early = null;
-            if (l.TryAsConst(out float f) && cond2(r)) early = ret(f, r);
-            else if (r.TryAsConst(out f) && cond2(l)) early = ret(f, l);
-            return early != null;
-        }*/
+        }
         if (l.TryAsConst(out float vl) && r.TryAsConst(out float vr) &&
             BinOpReducers.TryGetValue(node.NodeType, out var reducer)) {
             return ExC(reducer(vl, vr));
@@ -109,7 +107,6 @@ class FlattenVisitor : ExpressionVisitor {
                 //The assignment still needs to occur, allowing for this sort of setup
             }
         }
-        if (l == node.Left && r == node.Right) return node;
         return Expression.MakeBinary(node.NodeType, l, r);
     }
 
@@ -168,8 +165,27 @@ class FlattenVisitor : ExpressionVisitor {
             if (o.TryAsConst(out float f)) return ExC(-1f * f);
             if (o.NodeType == ExpressionType.Negate && o is UnaryExpression ue) return ue.Operand;
         }
-        if (o == node.Operand) return node;
         return Ex.MakeUnary(node.NodeType, o, node.Type);
+    }
+
+    private static readonly HashSet<Type> SafeNewReduceTypes = new HashSet<Type>() {
+        typeof(Vector2),
+        typeof(Vector3),
+        typeof(Vector4),
+        typeof(CCircle),
+        typeof(CRect),
+    };
+    protected override Expression VisitNew(NewExpression node) {
+        var newArgs = new object?[node.Arguments.Count];
+        var visited = new Ex[node.Arguments.Count];
+        bool isAllConst = SafeNewReduceTypes.Contains(node.Type);
+        for (int ii = 0; ii < node.Arguments.Count; ++ii) {
+            visited[ii] = Visit(node.Arguments[ii]);
+            isAllConst &= visited[ii].TryAsAnyConst(out newArgs[ii]);
+        }
+        return isAllConst ?
+            (Expression) Ex.Constant(node.Constructor.Invoke(newArgs)) :
+            Ex.New(node.Constructor, visited);
     }
 
     private static readonly HashSet<Type> SafeRepoTypes = new HashSet<Type>() {
@@ -183,14 +199,9 @@ class FlattenVisitor : ExpressionVisitor {
         var newArgs = new object?[node.Arguments.Count];
         var visited = new Ex[node.Arguments.Count];
         bool isAllConst = node.Object == null && SafeRepoTypes.Contains(node.Method.DeclaringType); //only static methods
-        bool allUnchanged = true;
         for (int ii = 0; ii < node.Arguments.Count; ++ii) {
-            if ((visited[ii] = Visit(node.Arguments[ii])) != node.Arguments[ii]) {
-                allUnchanged = false;
-            }
-            if (isAllConst && !visited[ii].TryAsAnyConst(out newArgs[ii])) {
-                isAllConst = false;
-            }
+            visited[ii] = Visit(node.Arguments[ii]);
+            isAllConst &= visited[ii].TryAsAnyConst(out newArgs[ii]);
         }
         if (isAllConst) return Ex.Constant(node.Method.Invoke(null, newArgs));
         if (reduceMethod && node.Method.DeclaringType == mathType) {
@@ -202,7 +213,7 @@ class FlattenVisitor : ExpressionVisitor {
             if (node.Method.Name == "CosDeg") return ExMHelpers.dLookupCosDeg(v);
             if (node.Method.Name == "CosSinDeg") return ExMHelpers.dLookupCosSinDeg(v);
         }
-        return allUnchanged ? node : Ex.Call(node.Object, node.Method, visited);
+        return Ex.Call(node.Object, node.Method, visited);
     }
 
     protected override Expression VisitBlock(BlockExpression node) {
@@ -221,7 +232,7 @@ class FlattenVisitor : ExpressionVisitor {
             //Do not reduce properties, only fields.
             if (node.Member is FieldInfo fi) return ExC(fi.GetValue(obj));
         }
-        return (cont == node.Expression) ? node : Ex.MakeMemberAccess(cont, node.Member);
+        return Ex.MakeMemberAccess(cont, node.Member);
     }
 }
 

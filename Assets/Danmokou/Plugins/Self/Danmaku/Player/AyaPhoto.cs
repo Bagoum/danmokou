@@ -53,9 +53,7 @@ public class AyaPhoto {
         Format = photo.graphicsFormat;
         KeepAlive = false;
         FileUtils.WriteTex(FullFilename, photo);
-        //Photo data may initially have incorrect alphas.
-        //We destroy and reload it to prevent this issue.
-        Object.Destroy(photo);
+        tex = photo;
         allPhotos.Add(this);
     }
 

@@ -98,7 +98,7 @@ public struct BackgroundTransition {
         public Vector2 fragRotAccelMag;
 
         public IEnumerable<FragmentRendering.Fragment> Tile4() {
-            float s = fragmentRadius * Mathf.Sqrt(2f);
+            float s = fragmentRadius * (float)Math.Sqrt(2);
             float width = LocationHelpers.Width + 2f;
             float height = MainCamera.ScreenHeight;
             for (float w = 0f; w < width + s; w += s) {

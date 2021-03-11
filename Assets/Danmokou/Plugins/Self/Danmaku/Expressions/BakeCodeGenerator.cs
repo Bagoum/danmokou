@@ -318,7 +318,7 @@ private static {f.returnType.ToCode(true)} {f.fnName}() {{
 #if EXBAKE_LOAD
         return (Baker.CurrentServe ?? throw new Exception("Tried to load an expression with no active serve")).Next<D>();
 #endif
-        var result = Ex.Lambda<D>(new FlattenVisitor(true, true).Visit(ex), prms).Compile();
+        var result = Ex.Lambda<D>(FlattenVisitor.Flatten(ex, true, true), prms).Compile();
 #if EXBAKE_SAVE
         var sb = new StringBuilder();
         //Replace must be first to handle private hoisting, otherwise flatten might reconstruct the expressions
@@ -326,7 +326,7 @@ private static {f.returnType.ToCode(true)} {f.fnName}() {{
             tac.Ctx.HoistedReplacements,
             DefaultObjectReplacements,
             GeneralConstHandling(Baker, tac)).Visit(ex);
-        var flattened = new FlattenVisitor(true, false).Visit(constReplaced);
+        var flattened = FlattenVisitor.Flatten(constReplaced, true, false);
         //Run replacement again to handle the method simplification for cos/sin
         var constReplaced2 = new ReplaceExVisitor(
             tac.Ctx.HoistedReplacements,

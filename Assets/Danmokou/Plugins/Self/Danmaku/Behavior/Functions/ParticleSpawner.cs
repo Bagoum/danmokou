@@ -16,7 +16,7 @@ public class ParticleSpawner : ProcReader {
 
     private void Awake() {
         tr = transform;
-        burstScale = burstScaler.Into<FXY>();
+        burstScale = ReflWrap<FXY>.Wrap(burstScaler);
         var em = particlePrefab.GetComponent<ParticleSystem>().emission;
         baseBurst = em.GetBurst(0);
     }

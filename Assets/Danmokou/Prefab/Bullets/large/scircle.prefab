@@ -46,7 +46,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   destructible: 1
-  deletable: 1
+  deletable: 0
   grazeEveryFrames: 60
   screenCullRadius: 3
   renderPriority: -100
@@ -81,6 +81,7 @@ MonoBehaviour:
     framesPerSecond: 0
   gradients: []
   spriteSpecificGradients: []
+  identicalForms: []
   TTL: 0
   timeRandomization: 0
   rotateRandomization: 0
@@ -112,6 +113,7 @@ MonoBehaviour:
   end: 0
   points: []
   target: {fileID: 0}
+  debug: 0
 --- !u!212 &1835629917958368149
 SpriteRenderer:
   m_ObjectHideFlags: 0

@@ -153,6 +153,10 @@ public enum PhaseType {
     /// </summary>
     FINAL,
     /// <summary>
+    /// Stage section where graphics, but no enemies/bullets, appear on screen.
+    /// </summary>
+    ANNOUNCE,
+    /// <summary>
     /// Dialogue section. The score multiplier is granted lenience and the executor is granted infinite health during this.
     /// </summary>
     DIALOGUE,
@@ -286,9 +290,10 @@ public static class EnumHelpers2 {
 
     public static bool IsStageBoss(this PhaseType st) => st == PhaseType.STAGEENDBOSS || st == PhaseType.STAGEMIDBOSS;
     public static bool IsPattern(this PhaseType st) => st.IsCard() || st.IsStage();
-    public static bool IsLenient(this PhaseType st) => st == PhaseType.DIALOGUE;
+    public static bool IsLenient(this PhaseType st) => st == PhaseType.DIALOGUE || st == PhaseType.ANNOUNCE;
     public static bool IsStage(this PhaseType st) => st == PhaseType.STAGE;
-    public static bool RequiresHPGuard(this PhaseType st) => st == PhaseType.DIALOGUE || st.IsCard();
+    public static bool AppearsInPractice(this PhaseType st) => st != PhaseType.ANNOUNCE;
+    public static bool RequiresHPGuard(this PhaseType st) => st.IsLenient() || st.IsCard();
 
     public static Vulnerability? DefaultVulnerability(this PhaseType st) =>
         st == PhaseType.TIMEOUT ? Vulnerability.PASS_THROUGH :

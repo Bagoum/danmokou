@@ -39,7 +39,7 @@ public interface IUIManager {
     void ShowStaticTimeout(float maxTime);
     void DoTimeout(bool withSound, float maxTime, ICancellee cT, float? stayOnZero = null);
     void ShowPhaseType(PhaseType? phase);
-    void SetSpellname(string? title);
+    void SetSpellname(string? title, (int success, int total)? rate = null);
 }
 
 public class UIManager : RegularUpdater, IUIManager, IUnpauseAnimateProvider {
@@ -55,6 +55,9 @@ public class UIManager : RegularUpdater, IUIManager, IUnpauseAnimateProvider {
     public UIBuilderRenderer uiRenderer = null!;
     public SpriteRenderer frame = null!;
     public TextMeshPro spellnameText = null!;
+    public GameObject cardSuccessContainer = null!;
+    public TextMeshPro cardSuccessText = null!;
+    public TextMeshPro cardAttemptsText = null!;
     public TextMeshPro timeout = null!;
     public TextMeshPro difficulty = null!;
     public TextMeshPro score = null!;
@@ -110,6 +113,7 @@ public class UIManager : RegularUpdater, IUIManager, IUnpauseAnimateProvider {
         rightSidebar.GetPropertyBlock(rightSidebarPB = new MaterialPropertyBlock());
         timeout.text = "";
         spellnameText.text = "";
+        cardSuccessContainer.SetActive(false);
         message.text = centerMessage.text = "";
         multishotIndicator.text = Instance.MultishotString;
         challengeHeader.text = challengeText.text = "";
@@ -124,7 +128,7 @@ public class UIManager : RegularUpdater, IUIManager, IUnpauseAnimateProvider {
     protected override void BindListeners() {
         base.BindListeners();
         Listen(Events.GameStateHasChanged, HandleGameStateChange);
-        Listen(Events.CampaignDataHasChanged, () => updateAllUI = true);
+        Listen(InstanceData.CampaignDataUpdated, () => updateAllUI = true);
         Listen(InstanceData.ItemExtendAcquired, LifeExtendItems);
         Listen(InstanceData.ScoreExtendAcquired, LifeExtendScore);
         Listen(PlayerInput.MeterIsActive, SetMeterActivated);
@@ -273,7 +277,14 @@ public class UIManager : RegularUpdater, IUIManager, IUnpauseAnimateProvider {
         spellnameText.color = to;
     }
 
-    public void SetSpellname(string? title) {
+    public void SetSpellname(string? title, (int success, int total)? rate = null) {
+        if (rate.Try(out var r)) {
+            cardSuccessContainer.SetActive(true);
+            cardSuccessText.text = $"{r.success}";
+            cardAttemptsText.text = $"{r.total}";
+        } else {
+            cardSuccessContainer.SetActive(false);
+        }
         spellnameText.text = title ?? "";
         if (spellnameController != null) StopCoroutine(spellnameController);
         spellnameController = StartCoroutine(FadeSpellname(spellnameFadeIn, spellColorTransparent, spellColor));
@@ -323,6 +334,10 @@ public class UIManager : RegularUpdater, IUIManager, IUnpauseAnimateProvider {
             p.sprite.color = bossHPColor;
         }
     }
+    [ContextMenu("set color green")]
+    public void _setcolorgreen() => SetBossColor(Color.green, Color.green);
+    [ContextMenu("set color red")]
+    public void _setcolorred() => SetBossColor(Color.red, Color.red);
 
     public void ShowBossLives(int bossLives) {
         foreach (var p in bossHealthSprites) {

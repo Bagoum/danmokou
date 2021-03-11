@@ -678,6 +678,16 @@ public partial class BulletManager {
         public static SPCF AllowCull(bool cullActive) {
             return pool => GetMaybeCopyPool(pool).allowCameraCull = cullActive;
         }
+        
+        /// <summary>
+        /// Set whether or not a pool's bullets can be deleted by effects
+        ///  such as photos, bombs, and player damage clears.
+        /// This is reset automatically via clear phase.
+        /// </summary>
+        public static SPCF AllowDelete(bool deleteActive) {
+            return pool => GetMaybeCopyPool(pool).SetDeleteActive(deleteActive);
+        }
+        
         /// <summary>
         /// Unconditionally softcull all bullets in a pool with an automatically-determined cull style.
         /// </summary>
@@ -732,6 +742,7 @@ public partial class BulletManager {
     /// <summary>
     /// For bombs/camera effects. Special bullets like EMPTY, as well as undeletable bullets like SUN,
     /// will not be deleted.
+    /// <br/>This will delete objects over time if the `advance` property on props is nonzero.
     /// </summary>
     public static void Autodelete(SoftcullProperties props, Pred cond) {
         void DeletePool(SimpleBulletCollection pool) {
@@ -744,5 +755,30 @@ public partial class BulletManager {
         for (int ii = 0; ii < activeNpc.Count; ++ii) DeletePool(activeNpc[ii]);
         for (int ii = 0; ii < activeCNpc.Count; ++ii) DeletePool(activeCNpc[ii]);
     }
+    
+    /// <summary>
+    /// For bombs/camera effects. Special bullets like EMPTY, as well as undeletable bullets like SUN,
+    /// will not be deleted.
+    /// <br/>This will operate over time using props.advance.
+    /// </summary>
+    public static void AutodeleteCircleOverTime(SoftcullProperties props) {
+        var timer = ETime.Timer.GetTimer(RNG.RandString(), false);
+        timer.Restart();
+        Pred survive = _ => timer.Seconds < props.advance;
+        Pred deleteCond = bpi =>
+            (bpi.loc - props.center).magnitude / props.maxDist < timer.Seconds / props.advance;
+        var lprops = props.WithNoAdvance();
+        void DeletePool(SimpleBulletCollection pool) {
+            if (!pool.Deletable || pool.Count == 0) return;
+            string targetPool = PortColorFormat(pool.Style, lprops);
+            pool.AddPoolControl(new BulletControl(
+                new SBCFc(SimpleBulletControls.Softcull_noexpr(lprops, targetPool, deleteCond))
+                , survive, null));
+        }
+        for (int ii = 0; ii < activeNpc.Count; ++ii) DeletePool(activeNpc[ii]);
+        for (int ii = 0; ii < activeCNpc.Count; ++ii) DeletePool(activeCNpc[ii]);
+    }
+    
+    
 }
 }

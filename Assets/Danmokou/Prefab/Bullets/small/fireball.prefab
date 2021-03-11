@@ -48,7 +48,7 @@ MonoBehaviour:
   destructible: 1
   deletable: 1
   grazeEveryFrames: 60
-  screenCullRadius: 3
+  screenCullRadius: 2
   renderPriority: 300
   renderMode: 0
   fadeIn: {fileID: 11400000, guid: 698800a8652ce124ba88163a87c8a42f, type: 2}
@@ -113,6 +113,7 @@ MonoBehaviour:
   end: 0
   points: []
   target: {fileID: 0}
+  debug: 0
 --- !u!212 &7046721748885383069
 SpriteRenderer:
   m_ObjectHideFlags: 0

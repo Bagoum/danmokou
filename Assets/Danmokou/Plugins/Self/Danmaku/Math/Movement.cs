@@ -13,7 +13,7 @@ namespace DMK.DMath {
 /// A struct containing configuration for moving a BehaviorEntity via the `move` StateMachine.
 /// </summary>
 public readonly struct LimitedTimeMovement {
-    public readonly VTP VTP2;
+    public readonly VTP vtp;
     public readonly float enabledFor;
     public readonly Action done;
     public readonly ICancellee cT;
@@ -22,7 +22,7 @@ public readonly struct LimitedTimeMovement {
     public bool ThisCannotContinue(ParametricInfo bpi) => !(condition?.Invoke(bpi) ?? true);
 
     public LimitedTimeMovement(VTP path, float enabledFor, Action done, ICancellee cT, ParametricInfo pi, Pred? condition=null) {
-        this.VTP2 = path;
+        this.vtp = path;
         this.enabledFor = enabledFor;
         this.done = done;
         this.cT = cT;
@@ -35,19 +35,18 @@ public readonly struct LimitedTimeMovement {
 /// A struct that can move objects along specific paths in space.
 /// </summary>
 public struct Movement {
-    //32 byte struct. (30 unpacked)
+    //36 byte struct. (36 unpacked)
         //Funcx1  = 8
         //V2      = 8
-        //Floatx3 = 12
-        //Misc    = 2
+        //Floatx5 = 20
     private readonly VTP vtp;
     public Vector2 rootPos;
     //Used by TExVel
     public float angle;
     public float cos_rot;
     public float sin_rot;
-    public sbyte flipX;
-    public sbyte flipY;
+    public float flipX;
+    public float flipY;
     public Vector2 Direction => new Vector2(cos_rot, sin_rot);
 
     /// <summary>
@@ -67,7 +66,7 @@ public struct Movement {
     }
 
     public Movement(VTP vtp, Vector2 rootPos, float ang) : this(vtp, rootPos, M.CosDeg(ang), M.SinDeg(ang), 1, 1) { }
-    private Movement(VTP vtp, Vector2 rootPos, float c, float s, sbyte fx, sbyte fy) {
+    private Movement(VTP vtp, Vector2 rootPos, float c, float s, float fx, float fy) {
         cos_rot = c;
         sin_rot = s;
         this.rootPos = rootPos;
@@ -120,7 +119,7 @@ public struct Movement {
         for (bpi.t = 0f; timeOffset >= 0; timeOffset -= dT) {
             float effdT = (timeOffset < dT) ? timeOffset : dT;
             bpi.t += effdT;
-            vtp(in this, effdT, bpi, out var delta);
+            vtp(ref this, in effdT, ref bpi, out var delta);
             bpi.loc.x += delta.x;
             bpi.loc.y += delta.y;
             nrv.x += delta.x;
@@ -129,7 +128,7 @@ public struct Movement {
         //If timeOffset=0, then simulate the next update for direction
         if (zeroTime) {
             bpi.t += dT;
-            vtp(in this, dT, bpi, out nrv);
+            vtp(ref this, dT, ref bpi, out nrv);
             bpi.t = 0;
         } 
         float mag = nrv.x * nrv.x + nrv.y * nrv.y;
@@ -153,7 +152,7 @@ public struct Movement {
         angle = ang_deg;
         cos_rot = cos_r;
         sin_rot = sin_r;
-        vtp(in this, dT, bpi, out Vector2 nrv);
+        vtp(ref this, in dT, ref bpi, out Vector2 nrv);
         accDelta.x += nrv.x;
         accDelta.y += nrv.y;
         bpi.loc.x += nrv.x;
@@ -182,7 +181,7 @@ public struct Movement {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void UpdateDeltaAssignAcc(ref ParametricInfo bpi, out Vector2 delta, in float dT) {
         bpi.t += dT;
-        vtp(in this, dT, bpi, out delta);
+        vtp(ref this, in dT, ref bpi, out delta);
         bpi.loc.x += delta.x;
         bpi.loc.y += delta.y;
     }
@@ -210,10 +209,10 @@ public struct LaserMovement {
     public Vector2 rootPos;
     private readonly Vector2 simpleDir;
     private readonly BPY? rotation;
-    public sbyte flipX;
-    public sbyte flipY;
-    private sbyte tflipX;
-    private sbyte tflipY;
+    public float flipX;
+    public float flipY;
+    private float tflipX;
+    private float tflipY;
     public readonly bool isSimple;
     
     public LaserMovement(LVTP path, Vector2 parentLoc, V2RV2 localLoc) {
@@ -255,7 +254,7 @@ public struct LaserMovement {
         if (isSimple) {
             d1 = new Vector2(simpleDir.x * dT * flipX, simpleDir.y * dT * flipY);
         } else {
-            lvtp!(in this, dT, lt, bpi, out d1);
+            lvtp!(ref this, in dT, in lt, ref bpi, out d1);
         }
         bpi.loc.x += d1.x;
         bpi.loc.y += d1.y;

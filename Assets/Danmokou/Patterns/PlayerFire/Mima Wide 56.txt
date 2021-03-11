@@ -6,8 +6,8 @@ gtr {
 	async lstar-teal/ <> gcr2 18 _ <> { 
 		delay 12
 		sfx x-pc-fire-1
-	} simple tprot cy 6 { 
-		player 18 18 oh1-teal
+	} simple tprot cy 7.3 { 
+		player 20 20 oh1-teal
 		dir(400 * pm1(p) * t)
 	}
 	## free cancellation

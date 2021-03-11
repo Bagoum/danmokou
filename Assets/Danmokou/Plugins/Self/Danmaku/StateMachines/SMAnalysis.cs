@@ -5,6 +5,7 @@ using DMK.Core;
 using DMK.GameInstance;
 using DMK.Scriptables;
 using JetBrains.Annotations;
+using UnityEngine;
 using static DMK.Core.LocalizedStrings.UI;
 
 namespace DMK.SM {
@@ -127,21 +128,21 @@ public static class SMAnalysis {
         /// Index of this phase in the original state machine.
         /// </summary>
         public readonly int index;
-        private readonly AnalyzedPhaseConstruct parent;
+        private readonly AnalyzedPhasedConstruct parent;
         /// <summary>
         /// 1-indexed index of this phase in the parent's list of nontrivial phases.
         /// </summary>
-        public int IndexInParentPhases => parent.Phases.IndexOf(this) + 1;
+        public int NontrivialPhaseIndex => parent.Phases.IndexOf(this) + 1;
         public LocalizedString Title =>
             type switch {
-                PhaseType.STAGE => practice_stage_section_ls(IndexInParentPhases),
+                PhaseType.STAGE => practice_stage_section_ls(NontrivialPhaseIndex),
                 PhaseType.STAGEMIDBOSS => practice_midboss,
                 PhaseType.STAGEENDBOSS => practice_endboss,
                 PhaseType.DIALOGUE => title ?? practice_dialogue,
                 _ => title ?? new LocalizedString("!!!UNTITLED PHASE (REPORT ME)!!!")
             };
 
-        public Phase(AnalyzedPhaseConstruct parent, PhaseType c, int phaseNum, LocalizedString? name) {
+        public Phase(AnalyzedPhasedConstruct parent, PhaseType c, int phaseNum, LocalizedString? name) {
             type = c;
             title = name;
             index = phaseNum;
@@ -203,9 +204,9 @@ public static class SMAnalysis {
             boss = b;
         }
         
-        public (((string, int), int), int) Key => (boss.Key, cardIndex);
+        public (((string, int), string), int) Key => (boss.Key, cardIndex);
 
-        public static DayPhase Reconstruct((((string, int), int), int) key) =>
+        public static DayPhase Reconstruct((((string, int), string), int) key) =>
             AnalyzedDayBoss.Reconstruct(key.Item1).phases.First(p => p.cardIndex == key.Item2);
         
     }
@@ -213,16 +214,41 @@ public static class SMAnalysis {
     /// <summary>
     /// Returns nontrivial phases only (ie. skips 0th phase and untyped phases)
     /// </summary>
-    public static List<Phase> Analyze(AnalyzedPhaseConstruct parent, PatternSM? pat, bool ignoreZero = true) {
+    public static List<Phase> Analyze(AnalyzedPhasedConstruct parent, PatternSM? pat, bool ignoreZero = true) {
         var ret = new List<Phase>();
         if (pat == null) return ret;
         foreach (var (i, p) in pat.phases.Enumerate()) {
             if (ignoreZero && i == 0) continue;
-            if (p.props.phaseType.HasValue) {
-                ret.Add(new Phase(parent, p.props.phaseType.Value, i, p.props.cardTitle));
+            if (p.props.phaseType.Try(out var pt) && pt.AppearsInPractice()) {
+                ret.Add(new Phase(parent, pt, i, p.props.cardTitle));
             }
         }
         return ret;
+    }
+
+    /// <summary>
+    /// Assumes that there is exactly one untyped phase (phase 0) and all other phases are typed.
+    /// Phase 0 may have or not have properties.
+    /// </summary>
+    public static List<Phase> Analyze(AnalyzedPhasedConstruct parent, List<PhaseProperties> phases) {
+        var ret = new List<Phase>();
+        int deficit = phases[0].phaseType == null ? 0 : 1;
+        for (int ii = 1 - deficit; ii < phases.Count; ++ii) {
+            var p = phases[ii];
+            if (p.phaseType == null)
+                throw new Exception("Fast parsing: found an untyped phase.");
+            if (p.phaseType.Value.AppearsInPractice()) {
+                ret.Add(new Phase(parent, p.phaseType.Value, ii + deficit, p.cardTitle));
+            }
+        }
+        return ret;
+    }
+
+    public static List<Phase> Analyze(AnalyzedPhasedConstruct parent, TextAsset? sm) {
+        if (sm == null) return new List<Phase>();
+        if (GameManagement.References.fastParsing)
+            return Analyze(parent, StateMachine.ParsePhases(sm.text));
+        return Analyze(parent, StateMachineManager.FromText(sm) as PatternSM);
     }
 
     public static List<DayPhase> AnalyzeDay(AnalyzedDayBoss boss, PatternSM pat, bool ignoreZero = true) {
@@ -244,54 +270,57 @@ public static class SMAnalysis {
         return ret;
     }
 
-    public interface AnalyzedPhaseConstruct {
+    public interface AnalyzedPhasedConstruct {
         List<Phase> Phases { get; }
     }
-    public class AnalyzedStage : AnalyzedPhaseConstruct {
+    public class AnalyzedStage : AnalyzedPhasedConstruct {
         public readonly StageConfig stage;
+        private List<Phase>? phases;
         /// <summary>
         /// List of active nontrivial phases only (ie. skips 0th phase)
         /// </summary>
-        public readonly List<Phase> phases;
-        public List<Phase> Phases => phases;
+        public List<Phase> Phases => phases ??= SMAnalysis.Analyze(this, stage.stateMachine);
         public readonly int stageIndex;
         public readonly AnalyzedCampaign campaign;
         public AnalyzedStage(AnalyzedCampaign campaign, int index) {
             stage = (this.campaign = campaign).campaign.stages[stageIndex = index];
-            phases = SMAnalysis.Analyze(this, StateMachineManager.FromText(stage.stateMachine) as PatternSM);
         }
         public (string, int) Key => (campaign.Key, stageIndex);
         public static AnalyzedStage Reconstruct((string, int) key) =>
             AnalyzedCampaign.Reconstruct(key.Item1).stages[key.Item2];
     }
-    public class AnalyzedBoss : AnalyzedPhaseConstruct {
+    public class AnalyzedBoss : AnalyzedPhasedConstruct {
         public readonly BossConfig boss;
+        private List<Phase>? phases;
         /// <summary>
         /// List of active nontrivial phases only (ie. skips 0th phase)
         /// </summary>
-        public readonly List<Phase> phases;
-        public List<Phase> Phases => phases;
+        public List<Phase> Phases => phases ??= SMAnalysis.Analyze(this, boss.stateMachine);
         public readonly int bossIndex;
         public readonly AnalyzedCampaign campaign;
 
         public AnalyzedBoss(AnalyzedCampaign campaign, int index) {
             boss = (this.campaign = campaign).campaign.practiceBosses[bossIndex = index];
-            phases = SMAnalysis.Analyze(this, StateMachineManager.FromText(boss.stateMachine) as PatternSM);
         }
 
-        public (string, int) Key => (campaign.Key, bossIndex);
-        public static AnalyzedBoss Reconstruct((string, int) key) =>
-            AnalyzedCampaign.Reconstruct(key.Item1).bosses[key.Item2];
+        public (string campaign, string bossKey) Key => (campaign.Key, boss.key);
+
+        public static AnalyzedBoss Reconstruct((string campaign, string bossKey) key) =>
+            AnalyzedCampaign.Reconstruct(key.campaign).bossKeyMap[key.bossKey];
     }
 
     public class AnalyzedCampaign {
         public readonly CampaignConfig campaign;
         public readonly AnalyzedBoss[] bosses;
         public readonly AnalyzedStage[] stages;
+        public readonly Dictionary<string, AnalyzedBoss> bossKeyMap = new Dictionary<string, AnalyzedBoss>();
         public IEnumerable<AnalyzedStage> practiceStages => stages.Where(s => s.stage.practiceable);
 
         public AnalyzedCampaign(CampaignConfig campaign) {
             bosses = (this.campaign = campaign).practiceBosses.Length.Range().Select(i => new AnalyzedBoss(this, i)).ToArray();
+            for (int ii = 0; ii < bosses.Length; ++ii) {
+                bossKeyMap[bosses[ii].boss.key] = bosses[ii];
+            }
             stages = campaign.stages.Length.Range().Select(i => new AnalyzedStage(this, i)).ToArray();
         }
 
@@ -299,7 +328,7 @@ public static class SMAnalysis {
         public static AnalyzedCampaign Reconstruct(string key) =>
             GameManagement.Campaigns.First(c => c.campaign.key == key);
     }
-    public class AnalyzedDayBoss : AnalyzedPhaseConstruct {
+    public class AnalyzedDayBoss : AnalyzedPhasedConstruct {
         public readonly BossConfig boss;
         public readonly List<DayPhase> phases;
         public List<Phase> Phases => phases.Select(x => x.phase).ToList();
@@ -315,25 +344,30 @@ public static class SMAnalysis {
             phases = SMAnalysis.AnalyzeDay(this, (StateMachineManager.FromText(boss.stateMachine) as PatternSM)!);
         }
         
-        public ((string, int), int) Key => (day.Key, bossIndex);
-        public static AnalyzedDayBoss Reconstruct(((string, int), int) key) => 
-            AnalyzedDay.Reconstruct(key.Item1).bosses[key.Item2];
+        public ((string, int), string) Key => (day.Key, boss.key);
+        public static AnalyzedDayBoss Reconstruct(((string, int), string) key) => 
+            AnalyzedDay.Reconstruct(key.Item1).bossKeyMap[key.Item2];
     }
 
     public class AnalyzedDay {
         public readonly DayConfig day;
         public readonly AnalyzedDayBoss[] bosses;
+        public readonly int dayIndex;
+        public readonly AnalyzedDayCampaign campaign;
+        public readonly Dictionary<string, AnalyzedDayBoss> bossKeyMap = new Dictionary<string, AnalyzedDayBoss>();
+        
         public IEnumerable<DayPhase> Phases => bosses.SelectMany(b => b.phases);
         public bool Enabled(SharedInstanceMetadata meta) => dayIndex == 0 || campaign.days[dayIndex - 1].OneBossesConcluded(meta);
         public bool OneBossesConcluded(SharedInstanceMetadata meta) => bosses.Any(b => b.Concluded(meta));
         public bool AllBossesConcluded(SharedInstanceMetadata meta) => bosses.All(b => b.Concluded(meta));
-        public readonly int dayIndex;
-        public readonly AnalyzedDayCampaign campaign;
 
         public AnalyzedDay(AnalyzedDayCampaign campaign, DayConfig[] days, int index) {
             this.campaign = campaign;
             this.day = days[dayIndex = index];
             bosses = day.bosses.Length.Range().Select(i => new AnalyzedDayBoss(this, i)).ToArray();
+            for (int ii = 0; ii < bosses.Length; ++ii) {
+                bossKeyMap[bosses[ii].boss.key] = bosses[ii];
+            }
         }
         
         public (string, int) Key => (campaign.campaign.key, dayIndex);

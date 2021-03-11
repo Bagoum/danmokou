@@ -67,7 +67,8 @@ public partial class BulletManager : RegularUpdater {
         public readonly int damageAgainstPlayer;
         public readonly int againstEnemyCooldown;
         public readonly bool destructible;
-        public readonly bool deletable;
+        private readonly bool default_deletable;
+        public bool deletable;
         public readonly CollidableInfo cc;
         public readonly ushort grazeEveryFrames;
         private readonly float DEFAULT_CULL_RAD;
@@ -113,7 +114,7 @@ public partial class BulletManager : RegularUpdater {
             damageAgainstPlayer = sbes.damage;
             againstEnemyCooldown = sbes.framesPerHit;
             destructible = sbes.destructible;
-            deletable = sbes.deletable;
+            default_deletable = deletable = sbes.deletable;
             collisionTarget = main.bulletCollisionTarget;
             this.cc = new CollidableInfo(cc);
             //Minus 1 to allow for zero offset
@@ -124,6 +125,7 @@ public partial class BulletManager : RegularUpdater {
         }
 
         public void ResetMetadata() {
+            deletable = default_deletable;
             CULL_RAD = DEFAULT_CULL_RAD;
             recolor = null;
             if (riLoaded) Tint = null;

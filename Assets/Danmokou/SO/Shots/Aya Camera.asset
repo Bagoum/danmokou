@@ -19,15 +19,15 @@ MonoBehaviour:
     hardcoded:
       en: 
       jp: 
-      _showEnOnly: 0
   description: L'appareil-photo de Shameimaru Aya
   type: Camera
   prefab: {fileID: 8581214160010154699, guid: 2e4874e3a03b4a14791a14a1515a95cc, type: 3}
   bomb: 0
   defaultPower: 1000
   playerChild: 0
-  demoReplay: {fileID: 4900000, guid: f58a179b4f5afb7489944bbfdd2484f5, type: 3}
+  demoReplay: {fileID: 11400000, guid: cb661392b80571a4789ee38880206435, type: 2}
   demoSetupSM: {fileID: 4900000, guid: 83d895926f063264f9adc5887261db81, type: 3}
+  shotDifficulty: 0
   isMultiShot: 0
   multiD: {fileID: 0}
   multiM: {fileID: 0}

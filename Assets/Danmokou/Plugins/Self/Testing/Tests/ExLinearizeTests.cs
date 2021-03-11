@@ -90,14 +90,14 @@ public class ExLinearizeTests {
     z = (5f);
     (true ?
         (y) + (x) :
-        2f);");
+        2f);;");
         //cond can be simplified
         var ex3 = Ex.Condition(Ex.GreaterThan(zi, ExC(5f)),
             yi.Add(x),
             ExC(2f)
         );
-        AreEqual(ex3.Linearize().ToCSharpString(), @"((z > 5f) ?
-    (y + x) :
+        AreEqual(ex3.Linearize().ToCSharpString(), @"((z) > (5f) ?
+    (y) + (x) :
     2f);");
 
 

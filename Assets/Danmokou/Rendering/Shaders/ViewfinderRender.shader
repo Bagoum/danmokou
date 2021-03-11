@@ -17,9 +17,7 @@
 		Cull Off
 		Lighting Off
 		ZWrite Off
-		//Not entirely sure why One is required here, but if you don't use it, then areas
-		// where there are partially transparent objects will lerp to black (the clear color).
-		Blend One One
+		Blend SrcAlpha OneMinusSrcAlpha, OneMinusDstAlpha One
 
 		Pass {
 			CGPROGRAM

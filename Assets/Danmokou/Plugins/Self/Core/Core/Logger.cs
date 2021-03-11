@@ -68,7 +68,7 @@ public static class Log {
         return new Exception(_Print(e));
     }
 
-    public static void Print(Exception e) => Log.UnityError(_Print(e));
+    public static void UnityException(Exception e) => Log.UnityError(_Print(e));
 
     private static string _Print(Exception e) {
         StringBuilder msg = new StringBuilder();

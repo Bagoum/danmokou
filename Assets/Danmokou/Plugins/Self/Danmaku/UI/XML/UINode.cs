@@ -361,10 +361,12 @@ public class UINode {
     protected VisualElement boundNode = null!;
     private ScrollView scroll = null!;
     private string[] boundClasses = new string[0];
+    private Label? boundLabel;
+    protected Label BoundLabel => boundLabel ??= bound.Q<Label>();
 
     public void ScrollTo() => scroll.ScrollTo(bound);
     
-    protected virtual void BindText() => bound.Q<Label>().text = Description;
+    protected virtual void BindText() => BoundLabel.text = Description;
 
     protected VisualElement BindScroll(ScrollView scroller) {
         (scroll = scroller).Add(bound);
@@ -428,7 +430,6 @@ public class TwoLabelUINode : UINode {
     }
 
     protected override void BindText() {
-        bound.Q<Label>("Label").text = Description;
         bound.Q<Label>("Label2").text = desc2();
         base.BindText();
     }
@@ -527,7 +528,7 @@ public class ConfirmFuncNode : FuncNode {
         isConfirm = newConfirm;
     }
     protected override void BindText() {
-        bound.Q<Label>().text = isConfirm ? LocalizedStrings.UI.are_you_sure : Description;
+        BoundLabel.text = isConfirm ? LocalizedStrings.UI.are_you_sure : Description;
     }
     public override void ResetProgress() {
         SetConfirm(false);
@@ -642,7 +643,7 @@ public class DynamicComplexOptionNodeLR<T> : UINode, IComplexOptionNodeLR {
 
 public class DynamicOptionNodeLR<T> : UINode, IOptionNodeLR {
     private readonly Action<T> onChange;
-    private readonly Func<(LocalizedString key, T val)[]> values;
+    private readonly Func<(string key, T val)[]> values;
     private int index;
     public int Index {
         get { return index = M.Clamp(0, values().Length - 1, index); }
@@ -653,7 +654,7 @@ public class DynamicOptionNodeLR<T> : UINode, IOptionNodeLR {
     public void SetIndexFromVal(T val) {
         index = this.values().Enumerate().FirstOrDefault(x => x.Item2.val!.Equals(val)).Item1;
     }
-    public DynamicOptionNodeLR(LocalizedString description, Action<T> onChange, Func<(LocalizedString, T)[]> values, T defaulter, params UINode[] children) : base(description, children) {
+    public DynamicOptionNodeLR(LocalizedString description, Action<T> onChange, Func<(string, T)[]> values, T defaulter, params UINode[] children) : base(description, children) {
         this.onChange = onChange;
         this.values = values;
         SetIndexFromVal(defaulter);
@@ -679,12 +680,17 @@ public class DynamicOptionNodeLR<T> : UINode, IOptionNodeLR {
     }
 
     protected override void BindText() {
-        bound.Q<Label>("Key").text = Description;
+        KeyLabel.text = Description;
         AssignValueText();
     }
     private void AssignValueText() {
-        bound.Q<Label>("Value").text = values()[Index].key;
+        ValLabel.text = values()[Index].key;
     }
+
+    private Label? keyLabel;
+    private Label KeyLabel => keyLabel ??= bound.Q<Label>("Key");
+    private Label? valLabel;
+    private Label  ValLabel => valLabel ??= bound.Q<Label>("Value");
 }
 public class OptionNodeLR<T> : UINode, IOptionNodeLR {
     private readonly Action<T> onChange;
@@ -728,12 +734,17 @@ public class OptionNodeLR<T> : UINode, IOptionNodeLR {
     }
 
     protected override void BindText() {
-        bound.Q<Label>("Key").text = Description;
+        KeyLabel.text = Description;
         AssignValueText();
     }
     private void AssignValueText() {
-        bound.Q<Label>("Value").text = values[Index].key;
+        ValLabel.text = values[Index].key;
     }
+
+    private Label? keyLabel;
+    private Label KeyLabel => keyLabel ??= bound.Q<Label>("Key");
+    private Label? valLabel;
+    private Label  ValLabel => valLabel ??= bound.Q<Label>("Value");
 }
 
 public class TextInputNode : UINode {

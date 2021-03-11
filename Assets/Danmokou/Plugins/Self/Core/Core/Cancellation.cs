@@ -26,7 +26,10 @@ public static class CancelHelpers {
 
 public interface ICancellee {
     bool Cancelled { get; }
-    ICancellee Joinable { get; }
+    /// <summary>
+    /// Get the youngest ancestor cancellee that is not a passthrough.
+    /// </summary>
+    ICancellee Root { get; }
 }
 
 public class Cancellable : ICancellee {
@@ -34,7 +37,13 @@ public class Cancellable : ICancellee {
     private CancelLevel level = CancelLevel.None;
     public void Cancel() => Cancel(CancelLevel.Operation);
     public bool Cancelled => level > CancelLevel.None;
-    public ICancellee Joinable => this;
+    public ICancellee Root => this;
+    public static int debugCounter = 0;
+    public readonly int debugId;
+
+    public Cancellable() {
+        debugId = ++debugCounter;
+    }
 
     public void Cancel(CancelLevel toLevel) {
         if (toLevel > level) level = toLevel;
@@ -42,16 +51,20 @@ public class Cancellable : ICancellee {
 }
 
 /// <summary>
-/// Is locally cancellable, but when joined in nesting, the local information will be discarded.
+/// Is locally cancellable, but when joined via SMRunner.MakeNested, the local information will be discarded.
+/// This is used to handle cases where enemies fire splintering shots and then die. The splintering shots
+/// should continue until the phase, not the enemy, is destroyed.
 /// </summary>
 public class PassthroughCancellee : ICancellee {
-    private readonly ICancellee root;
+    public readonly ICancellee root;
     private readonly ICancellee local;
-    public ICancellee Joinable => root;
+    public ICancellee Root => root.Root;
+    public readonly int debugId;
 
     public PassthroughCancellee(ICancellee? root, ICancellee? local) {
-        this.root = root?.Joinable ?? Cancellable.Null;
+        this.root = root ?? Cancellable.Null;
         this.local = local ?? Cancellable.Null;
+        debugId = ++Cancellable.debugCounter;
     }
 
     public bool Cancelled => root.Cancelled || local.Cancelled;
@@ -60,11 +73,13 @@ public class PassthroughCancellee : ICancellee {
 public class JointCancellee : ICancellee {
     private readonly ICancellee c1;
     private readonly ICancellee c2;
-    public ICancellee Joinable => this;
+    public ICancellee Root => this;
+    public readonly int debugId;
 
     public JointCancellee(ICancellee? c1, ICancellee? c2) {
-        this.c1 = c1?.Joinable ?? Cancellable.Null;
-        this.c2 = c2?.Joinable ?? Cancellable.Null;
+        this.c1 = c1 ?? Cancellable.Null;
+        this.c2 = c2 ?? Cancellable.Null;
+        debugId = ++Cancellable.debugCounter;
     }
 
     public bool Cancelled => c1.Cancelled || c2.Cancelled;

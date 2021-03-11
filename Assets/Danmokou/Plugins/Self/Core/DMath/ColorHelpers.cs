@@ -40,15 +40,10 @@ public static class ColorHelpers {
         new GradientAlphaKey(1, 1)
     };
 
-    public static DGradient FromKeys(GradientColorKey[] colors, GradientAlphaKey[]? alpha = null) {
-        return new DGradient(colors, alpha);
-    }
-
-    public static DGradient FromKeys(IEnumerable<GradientColorKey> colors, IEnumerable<GradientAlphaKey>? alpha = null) =>
-        FromKeys(colors.ToArray(), alpha?.ToArray());
+    public static DGradient FromKeys(IEnumerable<GradientColorKey> colors, IEnumerable<GradientAlphaKey>? alpha = null) => new DGradient(colors, alpha);
 
     public static DGradient FromKeys(IEnumerable<(float, Color)> colors, IEnumerable<(float, float)>? alpha) =>
-        new DGradient(colors.ToArray(), alpha?.ToArray());
+        new DGradient(colors, alpha);
 
     public static DGradient EvenlySpaced(params Color[] colors) {
         float dist = 1f / (colors.Length - 1);
@@ -189,15 +184,15 @@ public class DGradient : IGradient {
     public readonly Color32 colorStart;
     public readonly Color32 colorEnd;
 
-    public DGradient(GradientColorKey[] colors, GradientAlphaKey[]? alphas) : this(
-        colors.Select(k => (k.time, k.color)).ToArray(),
-        alphas?.Select(k => (k.time, k.alpha)).ToArray()) { }
+    public DGradient(IEnumerable<GradientColorKey> colors, IEnumerable<GradientAlphaKey>? alphas) : this(
+        colors.Select(k => (k.time, k.color)),
+        alphas?.Select(k => (k.time, k.alpha))) { }
 
-    public DGradient((float t , Color c)[] colors, (float t, float a)[]? alphas) {
+    public DGradient(IEnumerable<(float t , Color c)> colors, IEnumerable<(float t, float a)>? alphas) {
         this.colors = colors.OrderBy(x => x.t).ToArray();
         this.alphas = alphas?.OrderBy(x => x.t).ToArray();
         colorStart = this.colors[0].c;
-        colorEnd = this.colors[colors.Length - 1].c;
+        colorEnd = this.colors[this.colors.Length - 1].c;
     }
 
     public Gradient ToUnityGradient() {
@@ -209,13 +204,15 @@ public class DGradient : IGradient {
 
     public static DGradient FromUnityGradient(Gradient g) => new DGradient(g.colorKeys, g.alphaKeys);
     
+    private static readonly Color32 baseColor = new Color32(byte.MaxValue, byte.MaxValue, byte.MaxValue, byte.MaxValue);
     public Color32 Evaluate32(float time) {
-        Color32 c = new Color32(byte.MaxValue, byte.MaxValue, byte.MaxValue, byte.MaxValue);
+        Color32 c;
         if (time <= colors[0].t)
             c = colorStart;
         else if (time >= colors[colors.Length - 1].t)
             c = colorEnd;
         else {
+            c = baseColor;
             for (int ic = 1; ic < colors.Length; ++ic) {
                 if (time < colors[ic].t) {
                     ref var pc = ref colors[ic - 1];

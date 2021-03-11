@@ -13,7 +13,7 @@
         Cull Off
         Lighting Off
         ZWrite Off
-        Blend SrcAlpha OneMinusSrcAlpha
+        Blend SrcAlpha OneMinusSrcAlpha, OneMinusDstAlpha One
         //Blend OneMinusDstColor OneMinusSrcAlpha
 
         Pass {

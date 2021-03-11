@@ -25,8 +25,6 @@ namespace DMK.DMath.Functions {
 /// <br/>These functions should not be invoked by users; instead, use the functions in <see cref="VTPRepo" />.
 /// </summary>
 public static class VTPConstructors {
-    //Note for expressions: since this is parented by VTP2, which is not parented,
-    //you can reassign values to BPI.t, but NOT to bpi.loc.
     public static ExCoordF CartesianRot(ExTP erv) => (c, s, bpi, nrv, fxy) => {
         var v2 = new TExV2();
         return Ex.Block(new ParameterExpression[] { v2 },
@@ -38,10 +36,9 @@ public static class VTPConstructors {
     };
 
     public static CoordF CartesianRot(TP rv) => delegate(float c, float s, ParametricInfo bpi, out Vector2 nrv) {
-        nrv = rv(bpi);
-        bpi.t = c * nrv.x - s * nrv.y;
-        nrv.y = s * nrv.x + c * nrv.y;
-        nrv.x = bpi.t;
+        var v2 = rv(bpi);
+        nrv.x = c * v2.x - s * v2.y;
+        nrv.y = s * v2.x + c * v2.y;
     };
     public static ExCoordF CartesianNRot(ExTP enrv) => (c, s, bpi, nrv, fxy) => 
         Ex.Block(
@@ -64,25 +61,12 @@ public static class VTPConstructors {
             Expression.Empty()
         );
     }
-/*
-    public static ExCoordF OffsetAsVelocity(ExCoordF vtp, float dT) {
-        TExV2 v2 = TExV2.Variable();
-        Ex delta = Ex.Constant(dT);
-        return (c, s, bpi, nrv) => Ex.Block(new ParameterExpression[] {v2},
-            vtp(c, s, bpi, nrv),
-            Ex.Assign(v2, nrv),
-            Ex.Assign(bpi.t, bpi.t.Sub(delta)),
-            vtp(c, s, bpi, nrv),
-            Ex.Assign(nrv.x, v2.x.Sub(nrv.x).Div(delta)),
-            Ex.Assign(nrv.y, v2.y.Sub(nrv.y).Div(delta))
-        );
-    }*/
     
     public static CoordF Cartesian(TP rv, TP tpnrv) => delegate(float c, float s, ParametricInfo bpi, out Vector2 nrv) {
         nrv = tpnrv(bpi);
-        bpi.loc = rv(bpi);
-        nrv.x += c * bpi.loc.x - s * bpi.loc.y;
-        nrv.y += s * bpi.loc.x + c * bpi.loc.y;
+        var v2 = rv(bpi);
+        nrv.x += c * v2.x - s * v2.y;
+        nrv.y += s * v2.x + c * v2.y;
     };
     public static ExCoordF Polar(ExBPY r, ExBPY theta) {
         var vr = ExUtils.VFloat();
@@ -108,13 +92,10 @@ public static class VTPConstructors {
     }
     
     public static CoordF Polar(BPY r, BPY theta) => delegate(float c, float s, ParametricInfo bpi, out Vector2 nrv) {
-        float baseRot = M.degRad * theta(bpi);
-        bpi.t = r(bpi);
-        nrv.x = bpi.t * Mathf.Cos(baseRot);
-        nrv.y = bpi.t * Mathf.Sin(baseRot);
-        bpi.t = c * nrv.x - s * nrv.y;
-        nrv.y = s * nrv.x + c * nrv.y;
-        nrv.x = bpi.t;
+        var cs = M.CosSinDeg(theta(bpi));
+        var rad = r(bpi);
+        nrv.x = rad * (c * cs.x - s * cs.y);
+        nrv.y = rad * (s * cs.x + c * cs.y);
     };
     
 }
@@ -139,7 +120,7 @@ public static class VTPControllers {
                 delta.y.Is(vel.flipY.Mul(y).Mul(dt))
             )));
     
-    public static VTP Velocity(CoordF coordF) => delegate(in Movement vel, float dT, ParametricInfo bpi, out Vector2 delta) {
+    public static VTP Velocity(CoordF coordF) => delegate(ref Movement vel, in float dT, ref ParametricInfo bpi, out Vector2 delta) {
         coordF(vel.cos_rot, vel.sin_rot, bpi, out delta);
         delta.x *= vel.flipX * dT;
         delta.y *= vel.flipY * dT;
@@ -151,7 +132,7 @@ public static class VTPControllers {
                 delta.y.Is(vel.flipY.Mul(y).Add(vel.rootY).Sub(bpi.locy))
             )));
     
-    public static VTP Offset(CoordF coordF) => delegate(in Movement vel, float dT, ParametricInfo bpi, out Vector2 delta) {
+    public static VTP Offset(CoordF coordF) => delegate(ref Movement vel, in float dT, ref ParametricInfo bpi, out Vector2 delta) {
         coordF(vel.cos_rot, vel.sin_rot, bpi, out delta);
         delta.x = delta.x * vel.flipX + vel.rootPos.x - bpi.loc.x;
         delta.y = delta.y * vel.flipY + vel.rootPos.y - bpi.loc.y;
@@ -166,7 +147,7 @@ public static class VTPRepo {
         [DontReflect]
         public static bool IsNone(this VTP func) => func == NoVTP;
         public static readonly ExVTP ExNoVTP = VTPControllers.Velocity(CartesianNRot(Parametrics.Zero()));
-        public static readonly VTP NoVTP = delegate(in Movement vel, float dT, ParametricInfo bpi, out Vector2 nrv) {
+        public static readonly VTP NoVTP = delegate(ref Movement vel, in float dT, ref ParametricInfo bpi, out Vector2 nrv) {
             nrv = Vector2.zero;
         };
         /// <summary>

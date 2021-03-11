@@ -217,6 +217,11 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8269135563123465073, guid: 935d6d3b359104c4fa7b5a1adaa0eda5,
+        type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 8809623435329334476, guid: 935d6d3b359104c4fa7b5a1adaa0eda5,
         type: 3}
       propertyPath: m_Materials.Array.data[0]
@@ -461,8 +466,6 @@ MonoBehaviour:
   failureSound: {fileID: 11400000, guid: d27fed347086bd648aad28a9b2fa76d8, type: 2}
   backSound: {fileID: 11400000, guid: d23b067b4fe25b04199a60093042cd98, type: 2}
   UIScreenV: {fileID: 9197481963319205126, guid: 5ecff330a014db2458613929877a39e5,
-    type: 3}
-  GenericUINodeV: {fileID: 9197481963319205126, guid: a814838ea7fd5364e96b285b2bfd246b,
     type: 3}
 --- !u!4 &1270661512
 Transform:

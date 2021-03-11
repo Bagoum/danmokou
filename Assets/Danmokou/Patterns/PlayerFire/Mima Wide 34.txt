@@ -5,7 +5,7 @@ gtr {
 	async star-green/ <> gcr2 15 _ <> { 
 		delay 15
 		sfx x-pc-fire-1
-	} simple tprot cy 7 { 
+	} simple tprot cy 8 { 
 		player 18 16 oh1-green
 		dir(400 * pm1(p) * t)
 	}

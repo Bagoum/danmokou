@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using DMK.Behavior;
 using DMK.Core;
@@ -13,6 +14,7 @@ using DMK.Pooling;
 using DMK.SM;
 using JetBrains.Annotations;
 using UnityEngine;
+using UnityEngine.Profiling;
 using UnityEngine.Rendering;
 
 namespace DMK.Danmaku {
@@ -66,7 +68,7 @@ public partial class BulletManager {
         public ushort grazeFrameCounter;
         public ushort cullFrameCounter;
 
-        public SimpleBullet(BPY? scaleF, SBV2? dirF, Movement movement, ParametricInfo bpi) {
+        public SimpleBullet(BPY? scaleF, SBV2? dirF, in Movement movement, ParametricInfo bpi) {
             scaleFunc = scaleF;
             dirFunc = dirF;
             scale = 1f;
@@ -144,6 +146,7 @@ public partial class BulletManager {
         }
 
         public abstract void SetCullRad(float r);
+        public abstract void SetDeleteActive(bool active);
 
         public abstract void SetRecolor(TP4 black, TP4 white);
 
@@ -184,8 +187,10 @@ public partial class BulletManager {
         /// </summary>
         /// <param name="ind">Index of bullet.</param>
         public void DeleteSB(int ind) {
-            arr[ind].bpi.ctx.Dispose();
-            Delete(ind);
+            if (!rem[ind]) {
+                arr[ind].bpi.Dispose();
+                Delete(ind);
+            }
         }
 
         public abstract void Speedup(float ratio);
@@ -222,6 +227,7 @@ public partial class BulletManager {
         public bool TryGetRecolor(out (TP4, TP4) recolor) => bc.recolor.Try(out recolor);
 
         public override void SetCullRad(float r) => bc.CULL_RAD = r;
+        public override void SetDeleteActive(bool active) => bc.deletable = active;
 
         public override void SetRecolor(TP4 black, TP4 white) {
             if (!bc.Recolorizable) 
@@ -262,6 +268,7 @@ public partial class BulletManager {
             return BEHPooler.INode(mov, new ParametricInfo(in mov, sb.bpi.index), sb.direction, behName);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected virtual CollisionResult CheckGrazeCollision(in Hitbox hitbox, ref SimpleBullet sb) 
             => throw new NotImplementedException();
 
@@ -274,11 +281,11 @@ public partial class BulletManager {
             base.Add(ref sb);
             if (isNew) {
                 int numPcs = controls.Count;
-                for (int pi = 0; pi < numPcs; ++pi) {
-                    controls[pi].action(this, count - 1, sb.bpi);
+                var ind = count - 1; //count may change if a deletion/addition occurs
+                for (int pi = 0; pi < numPcs && !rem[ind]; ++pi) {
+                    controls[pi].action(this, ind, sb.bpi);
                 }
             }
-            if (rem[count - 1]) DeleteLast(); //Easy way to handle zero-frame deletion
         }
         
         public new void Add(ref SimpleBullet sb) => throw new Exception("Do not use SBC.Add");
@@ -293,24 +300,36 @@ public partial class BulletManager {
             int numPcs = controls.Count;
             //Note on optimization: keeping accDelta in SB is faster(!) than either a local variable or a SBInProgress struct.
             for (int ii = 0; ii < temp_last; ++ii) {
-                ref SimpleBullet sb = ref arr[ii];
-                nextDT = ETime.FRAME_TIME;
-                for (int pi = 0; pi < postVelPcs; ++pi) controls[pi].action(this, ii, sb.bpi);
-                sb.movement.UpdateDeltaAssignAcc(ref sb.bpi, out sb.accDelta, in nextDT);
-                sb.scale = sb.scaleFunc?.Invoke(sb.bpi) ?? 1f;
-                //See Bullet Notes > Colliding Pool Controls for details
-                for (int pi = postVelPcs; pi < postDirPcs; ++pi) controls[pi].action(this, ii, sb.bpi);
-                if (sb.dirFunc != null) sb.direction = sb.dirFunc(ref sb);
-                else {
-                    float mag = sb.accDelta.x * sb.accDelta.x + sb.accDelta.y * sb.accDelta.y;
-                    if (mag > M.MAG_ERR) {
-                        mag = 1f / (float)Math.Sqrt(mag);
-                        sb.direction.x = sb.accDelta.x * mag;
-                        sb.direction.y = sb.accDelta.y * mag;
-                    }
+                if (!rem[ii]) {
+                    ref SimpleBullet sb = ref arr[ii];
+                    nextDT = ETime.FRAME_TIME;
+                    
+                    for (int pi = 0; pi < postVelPcs; ++pi) 
+                        controls[pi].action(this, ii, sb.bpi);
+                    
+                    //in nextDT is a significant optimization
+                    sb.movement.UpdateDeltaAssignAcc(ref sb.bpi, out sb.accDelta, in nextDT);
+                    if (sb.scaleFunc != null)
+                        sb.scale = sb.scaleFunc(sb.bpi);
+                    
+                    //See Bullet Notes > Colliding Pool Controls for details
+                    for (int pi = postVelPcs; pi < postDirPcs; ++pi) 
+                        controls[pi].action(this, ii, sb.bpi);
+                    
+                    if (sb.dirFunc == null) {
+                        float mag = sb.accDelta.x * sb.accDelta.x + sb.accDelta.y * sb.accDelta.y;
+                        if (mag > M.MAG_ERR) {
+                            mag = 1f / (float) Math.Sqrt(mag);
+                            sb.direction.x = sb.accDelta.x * mag;
+                            sb.direction.y = sb.accDelta.y * mag;
+                        }
+                    } else
+                        sb.direction = sb.dirFunc(ref sb);
+                    
+                    //Post-vel controls may destroy the bullet. As soon as this occurs, stop iterating
+                    for (int pi = postDirPcs; pi < numPcs && !rem[ii]; ++pi) 
+                        controls[pi].action(this, ii, sb.bpi);
                 }
-                //Post-vel controls may destroy the bullet. As soon as this occurs, stop iterating
-                for (int pi = postDirPcs; pi < numPcs && !rem[ii]; ++pi) controls[pi].action(this, ii, sb.bpi);
             }
             PruneControls();
         }
@@ -318,6 +337,7 @@ public partial class BulletManager {
         public virtual CollisionCheckResults CheckCollision(in Hitbox hitbox) {
             int graze = 0;
             int collisionDamage = 0;
+            Profiler.BeginSample("CheckCollision");
             for (int ii = 0; ii < count; ++ii) {
                 // During velocity iteration, bullet controls may destroy some items, so we need to do null checks.
                 if (!rem[ii]) {
@@ -339,11 +359,23 @@ public partial class BulletManager {
                     }
                 }
             }
-            Compact();
+            Profiler.EndSample();
+            Profiler.BeginSample("Compact");
+            if (NullElements > Math.Min(1000, Count / 10))
+                Compact();
+            Profiler.EndSample();
             return new CollisionCheckResults(collisionDamage, graze);
         }
 
         public void NullCollisionCleanup() {
+            for (int ii = 0; ii < count; ++ii) {
+                if (!rem[ii]) {
+                    ref SimpleBullet sbn = ref arr[ii];
+                    if (allowCameraCull && (++sbn.cullFrameCounter & CULL_EVERY_MASK) == 0 && LocationHelpers.OffPlayableScreenBy(bc.CULL_RAD, sbn.bpi.loc)) {
+                        DeleteSB(ii);
+                    }
+                }
+            }
             Compact();
         }
 
@@ -383,11 +415,138 @@ public partial class BulletManager {
 
         public void Reset() {
             // This should free links to BPY/VTP constructed by SMs going out of scope
-            Empty(true);
+            Empty();
             ResetPoolMetadata();
             temp_last = 0;
         }
 
+        
+        private void LegacyRender(Camera c, BulletManager bm, int layer) {
+            if (TryGetRecolor(out var rc)) {
+                LegacyRenderRecolorizable(c, bm, layer, rc);
+                return;
+            }
+            var tint = Tint;
+            var hasTint = tint != null;
+            MeshGenerator.RenderInfo ri = GetOrLoadRI();
+            for (int ii = 0; ii < Count;) {
+                int ib = 0;
+                for (; ib < batchSize && ii < Count; ++ii) {
+                    if (!rem[ii]) {
+                        ref SimpleBullet sb = ref arr[ii];
+                        ref var m = ref bm.matArr[ib];
+                        m.m00 = m.m11 = sb.direction.x * sb.scale;
+                        m.m10 = sb.direction.y * sb.scale;
+                        m.m01 = -m.m10;
+                        m.m22 = m.m33 = 1;
+                        m.m03 = sb.bpi.loc.x;
+                        m.m13 = sb.bpi.loc.y;
+                        if (hasTint) bm.tintArr[ib] = tint!(sb.bpi);
+                        bm.timeArr[ib] = sb.bpi.t;
+                        ++ib;
+                    }
+                }
+                if (hasTint) bm.pb.SetVectorArray(tintPropertyId, bm.tintArr);
+                bm.pb.SetFloatArray(timePropertyId, bm.timeArr);
+                bm.CallLegacyRender(ri, c, layer, ib);
+            }
+        }
+        
+        private void LegacyRenderRecolorizable(Camera c, BulletManager bm, int layer, 
+            (TP4 black, TP4 white) rc) {
+            var tint = Tint;
+            var hasTint = tint != null;
+            MeshGenerator.RenderInfo ri = GetOrLoadRI();
+            for (int ii = 0; ii < Count;) {
+                int ib = 0;
+                for (; ib < batchSize && ii < Count; ++ii) {
+                    if (!rem[ii]) {
+                        ref SimpleBullet sb = ref arr[ii];
+                        ref var m = ref bm.matArr[ib];
+                        m.m00 = m.m11 = sb.direction.x * sb.scale;
+                        m.m10 = sb.direction.y * sb.scale;
+                        m.m01 = -m.m10;
+                        m.m22 = m.m33 = 1;
+                        m.m03 = sb.bpi.loc.x;
+                        m.m13 = sb.bpi.loc.y;
+                        bm.recolorBArr[ib] = rc.black(sb.bpi);
+                        bm.recolorWArr[ib] = rc.white(sb.bpi);
+                        if (hasTint) bm.tintArr[ib] = tint!(sb.bpi);
+                        bm.timeArr[ib] = sb.bpi.t;
+                        ++ib;
+                    }
+                }
+                bm.pb.SetVectorArray(recolorBPropertyId, bm.recolorBArr);
+                bm.pb.SetVectorArray(recolorWPropertyId, bm.recolorWArr);
+                if (hasTint) bm.pb.SetVectorArray(tintPropertyId, bm.tintArr);
+                bm.pb.SetFloatArray(timePropertyId, bm.timeArr);
+                bm.CallLegacyRender(ri, c, layer, ib);
+            }
+        }
+
+        private void Render(Camera c, BulletManager bm, int layer) {
+            if (TryGetRecolor(out var rc)) {
+                RenderRecolorizable(c, bm, layer, rc);
+                return;
+            }
+            var tint = Tint;
+            var hasTint = tint != null;
+            MeshGenerator.RenderInfo ri = GetOrLoadRI();
+            for (int ii = 0; ii < Count;) {
+                int ib = 0;
+                for (; ib < batchSize && ii < Count; ++ii) {
+                    if (!rem[ii]) {
+                        ref SimpleBullet sb = ref arr[ii];
+                        bm.posDirArr[ib].x = sb.bpi.loc.x;
+                        bm.posDirArr[ib].y = sb.bpi.loc.y;
+                        bm.posDirArr[ib].z = sb.direction.x * sb.scale;
+                        bm.posDirArr[ib].w = sb.direction.y * sb.scale; 
+                        bm.timeArr[ib] = sb.bpi.t;
+                        if (hasTint) bm.tintArr[ib] = tint!(sb.bpi);
+                        ++ib;
+                    }
+                }
+                bm.pb.SetVectorArray(posDirPropertyId, bm.posDirArr);
+                if (hasTint) bm.pb.SetVectorArray(tintPropertyId, bm.tintArr);
+                bm.pb.SetFloatArray(timePropertyId, bm.timeArr);
+                bm.CallRender(ri, c, layer, ib);
+            }
+        }
+
+        private void RenderRecolorizable(Camera c, BulletManager bm, int layer, (TP4 black, TP4 white) rc) {
+            var tint = Tint;
+            var hasTint = tint != null;
+            MeshGenerator.RenderInfo ri = GetOrLoadRI();
+            
+            for (int ii = 0; ii < Count;) {
+                int ib = 0;
+                for (; ib < batchSize && ii < Count; ++ii) {
+                    if (!rem[ii]) {
+                        ref SimpleBullet sb = ref arr[ii];
+                        bm.posDirArr[ib].x = sb.bpi.loc.x;
+                        bm.posDirArr[ib].y = sb.bpi.loc.y;
+                        bm.posDirArr[ib].z = sb.direction.x * sb.scale;
+                        bm.posDirArr[ib].w = sb.direction.y * sb.scale; 
+                        bm.recolorBArr[ib] = rc.black(sb.bpi);
+                        bm.recolorWArr[ib] = rc.white(sb.bpi);
+                        bm.timeArr[ib] = sb.bpi.t;
+                        if (hasTint) bm.tintArr[ib] = tint!(sb.bpi);
+                        ++ib;
+                    }
+                }
+                bm.pb.SetVectorArray(recolorBPropertyId, bm.recolorBArr);
+                bm.pb.SetVectorArray(recolorWPropertyId, bm.recolorWArr);
+                bm.pb.SetVectorArray(posDirPropertyId, bm.posDirArr);
+                if (hasTint) bm.pb.SetVectorArray(tintPropertyId, bm.tintArr);
+                bm.pb.SetFloatArray(timePropertyId, bm.timeArr);
+                bm.CallRender(ri, c, layer, ib);
+            }
+        }
+
+        public void SwitchRender(Camera c, BulletManager bm, int layer) {
+            if (SaveData.s.LegacyRenderer) LegacyRender(c, bm, layer);
+            else Render(c, bm, layer);
+        }
         
         
 #if UNITY_EDITOR
@@ -420,10 +579,12 @@ public partial class BulletManager {
 
         public override void UpdateVelocityAndControls() {
             for (int ii = 0; ii < temp_last; ++ii) {
-                ref SimpleBullet sbn = ref arr[ii];
-                sbn.bpi.t += ETime.FRAME_TIME;
-                if (sbn.bpi.t > ttl) {
-                    DeleteSB(ii);
+                if (!rem[ii]) {
+                    ref SimpleBullet sbn = ref arr[ii];
+                    sbn.bpi.t += ETime.FRAME_TIME;
+                    if (sbn.bpi.t > ttl) {
+                        DeleteSB(ii);
+                    }
                 }
             }
         }
@@ -436,23 +597,30 @@ public partial class BulletManager {
     private class CircleSBC : SimpleBulletCollection {
         public CircleSBC(List<SimpleBulletCollection> target, BulletInCode bc) : base(target, bc) {}
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected override CollisionResult CheckGrazeCollision(in Hitbox hitbox, ref SimpleBullet sb) => 
             CollisionMath.GrazeCircleOnCircle(in hitbox, sb.bpi.loc, bc.cc.radius * sb.scale);
     }
     private class RectSBC : SimpleBulletCollection {
         public RectSBC(List<SimpleBulletCollection> target, BulletInCode bc) : base(target, bc) {}
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected override CollisionResult CheckGrazeCollision(in Hitbox hitbox, ref SimpleBullet sb) => 
             CollisionMath.GrazeCircleOnRect(in hitbox, sb.bpi.loc, bc.cc.halfRect.x, 
                 bc.cc.halfRect.y, bc.cc.maxDist2, sb.scale, sb.direction.x, sb.direction.y);
     }
     private class LineSBC : SimpleBulletCollection {
         public LineSBC(List<SimpleBulletCollection> target, BulletInCode bc) : base(target, bc) {}
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected override CollisionResult CheckGrazeCollision(in Hitbox hitbox, ref SimpleBullet sb) => 
             CollisionMath.GrazeCircleOnRotatedSegment(in hitbox, sb.bpi.loc, bc.cc.radius, bc.cc.linePt1, 
                 bc.cc.delta, sb.scale, bc.cc.deltaMag2, bc.cc.maxDist2, sb.direction.x, sb.direction.y);
     }
     private class NoCollSBC : SimpleBulletCollection {
         public NoCollSBC(List<SimpleBulletCollection> target, BulletInCode bc) : base(target, bc) {}
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected override CollisionResult CheckGrazeCollision(in Hitbox hitbox, ref SimpleBullet sb) 
             => CollisionResult.noColl;
     }
@@ -470,144 +638,27 @@ public partial class BulletManager {
         if ((c.cullingMask & ppLayerMask) != 0) {
             for (int ii = 0; ii < activePlayer.Count; ++ii) {
                 sbc = activePlayer[ii];
-                if (sbc.Count > 0) SwitchRenderPool(c, sbc, ppRenderLayer);
+                if (sbc.Count > 0) sbc.SwitchRender(c, this, ppRenderLayer);
             }
             playerRendered = true;
         }
         if ((c.cullingMask & epLayerMask) != 0) {
             for (int ii = 0; ii < activeNpc.Count; ++ii) {
                 sbc = activeNpc[ii];
-                if (sbc.Count > 0) SwitchRenderPool(c, sbc, epRenderLayer);
+                if (sbc.Count > 0) sbc.SwitchRender(c, this, epRenderLayer);
             }
             //customEmptyStyle bullets do not need to be rendered
             for (int ii = 0; ii < activeCNpc.Count; ++ii) {
                 sbc = activeCNpc[ii];
-                if (sbc.Count > 0) SwitchRenderPool(c, sbc, epRenderLayer);
+                if (sbc.Count > 0) sbc.SwitchRender(c, this, epRenderLayer);
             }
             enemyRendered = true;
         }
         RNG.RNG_ALLOWED = true;
     }
 
-    private void SwitchRenderPool(Camera c, SimpleBulletCollection pool, int layer) {
-        if (SaveData.s.LegacyRenderer) LegacyRenderPool(c, pool, layer);
-        else RenderPool(c, pool, layer);
-    }
-    private void LegacyRenderPool(Camera c, SimpleBulletCollection pool, int layer) {
-        if (pool.TryGetRecolor(out var rc)) {
-            LegacyRenderPool_Recolorizable(c, pool, layer, rc);
-            return;
-        }
-        var tint = pool.Tint;
-        var hasTint = tint != null;
-        int ii = 0;
-        MeshGenerator.RenderInfo ri = pool.GetOrLoadRI();
-        for (int ct = pool.Count; ct > 0; ct -= batchSize) {
-            int run = Math.Min(ct, batchSize);
-            for (int ib = 0; ib < run; ++ib, ++ii) {
-                ref SimpleBullet sb = ref pool.arr[ii];
-                ref var m = ref matArr[ib];
-                m.m00 = m.m11 = sb.direction.x * sb.scale;
-                m.m10 = sb.direction.y * sb.scale;
-                m.m01 = -m.m10;
-                m.m22 = m.m33 = 1;
-                m.m03 = sb.bpi.loc.x;
-                m.m13 = sb.bpi.loc.y;
-                if (hasTint) tintArr[ib] = tint!(sb.bpi);
-                timeArr[ib] = sb.bpi.t;
-            }
-            if (hasTint) pb.SetVectorArray(tintPropertyId, tintArr);
-            pb.SetFloatArray(timePropertyId, timeArr);
-            CallLegacyRender(ri, c, layer, run);
-        }
-    }
-    
-    private void LegacyRenderPool_Recolorizable(Camera c, SimpleBulletCollection pool, int layer, 
-        (TP4 black, TP4 white) rc) {
-        var tint = pool.Tint;
-        var hasTint = tint != null;
-        int ii = 0;
-        MeshGenerator.RenderInfo ri = pool.GetOrLoadRI();
-        for (int ct = pool.Count; ct > 0; ct -= batchSize) {
-            int run = Math.Min(ct, batchSize);
-            for (int ib = 0; ib < run; ++ib, ++ii) {
-                ref SimpleBullet sb = ref pool.arr[ii];
-                ref var m = ref matArr[ib];
-                m.m00 = m.m11 = sb.direction.x * sb.scale;
-                m.m10 = sb.direction.y * sb.scale;
-                m.m01 = -m.m10;
-                m.m22 = m.m33 = 1;
-                m.m03 = sb.bpi.loc.x;
-                m.m13 = sb.bpi.loc.y;
-                recolorBArr[ib] = rc.black(sb.bpi);
-                recolorWArr[ib] = rc.white(sb.bpi);
-                if (hasTint) tintArr[ib] = tint!(sb.bpi);
-                timeArr[ib] = sb.bpi.t;
-            }
-            pb.SetVectorArray(recolorBPropertyId, recolorBArr);
-            pb.SetVectorArray(recolorWPropertyId, recolorWArr);
-            if (hasTint) pb.SetVectorArray(tintPropertyId, tintArr);
-            pb.SetFloatArray(timePropertyId, timeArr);
-            CallLegacyRender(ri, c, layer, run);
-        }
-    }
-
-    private static readonly Vector4 white = Vector4.one;
-    private void RenderPool(Camera c, SimpleBulletCollection pool, int layer) {
-        if (pool.TryGetRecolor(out var rc)) {
-            RenderPool_Recolorizable(c, pool, layer, rc);
-            return;
-        }
-        var tint = pool.Tint;
-        var hasTint = tint != null;
-        int ii = 0;
-        MeshGenerator.RenderInfo ri = pool.GetOrLoadRI();
-        for (int ct = pool.Count; ct > 0; ct -= batchSize) {
-            int run = Math.Min(ct, batchSize);
-            for (int ib = 0; ib < run; ++ib, ++ii) {
-                ref SimpleBullet sb = ref pool.arr[ii];
-                posDirArr[ib].x = sb.bpi.loc.x;
-                posDirArr[ib].y = sb.bpi.loc.y;
-                posDirArr[ib].z = sb.direction.x * sb.scale;
-                posDirArr[ib].w = sb.direction.y * sb.scale; 
-                timeArr[ib] = sb.bpi.t;
-                if (hasTint) tintArr[ib] = tint!(sb.bpi);
-            }
-            pb.SetVectorArray(posDirPropertyId, posDirArr);
-            if (hasTint) pb.SetVectorArray(tintPropertyId, tintArr);
-            pb.SetFloatArray(timePropertyId, timeArr);
-            CallRender(ri, c, layer, run);
-        }
-    }
-
-    private void RenderPool_Recolorizable(Camera c, SimpleBulletCollection pool, int layer, (TP4 black, TP4 white) rc) {
-        var tint = pool.Tint;
-        var hasTint = tint != null;
-        int ii = 0;
-        MeshGenerator.RenderInfo ri = pool.GetOrLoadRI();
-        for (int ct = pool.Count; ct > 0; ct -= batchSize) {
-            int run = Math.Min(ct, batchSize);
-            for (int ib = 0; ib < run; ++ib, ++ii) {
-                ref SimpleBullet sb = ref pool.arr[ii];
-                posDirArr[ib].x = sb.bpi.loc.x;
-                posDirArr[ib].y = sb.bpi.loc.y;
-                posDirArr[ib].z = sb.direction.x * sb.scale;
-                posDirArr[ib].w = sb.direction.y * sb.scale;
-                recolorBArr[ib] = rc.black(sb.bpi);
-                recolorWArr[ib] = rc.white(sb.bpi);
-                timeArr[ib] = sb.bpi.t;
-                if (hasTint) tintArr[ib] = tint!(sb.bpi);
-            }
-            pb.SetVectorArray(recolorBPropertyId, recolorBArr);
-            pb.SetVectorArray(recolorWPropertyId, recolorWArr);
-            pb.SetVectorArray(posDirPropertyId, posDirArr);
-            if (hasTint) pb.SetVectorArray(tintPropertyId, tintArr);
-            pb.SetFloatArray(timePropertyId, timeArr);
-            CallRender(ri, c, layer, run);
-        }
-    }
-
     private void CallLegacyRender(MeshGenerator.RenderInfo ri, Camera c, int layer, int ct) {
+        if (ct == 0) return;
         UnityEngine.Graphics.DrawMeshInstanced(ri.mesh, 0, ri.material,
             matArr,
             count: ct,
@@ -618,6 +669,7 @@ public partial class BulletManager {
             camera: c);
     }
     private void CallRender(MeshGenerator.RenderInfo ri, Camera c, int layer, int ct) {
+        if (ct == 0) return;
         UnityEngine.Graphics.DrawMeshInstancedProcedural(ri.mesh, 0, ri.material,
           bounds: drawBounds,
           count: ct,
@@ -630,7 +682,7 @@ public partial class BulletManager {
 
     private unsafe void PrepareRendering() {
 #if UNITY_EDITOR
-        Debug.Log($"Sizes: BS {Marshal.SizeOf(typeof(SimpleBullet))}, VelStruct {Marshal.SizeOf(typeof(Movement))}, " +
+        Debug.Log($"Sizes: BS {Marshal.SizeOf(typeof(SimpleBullet))},  Movement {Marshal.SizeOf(typeof(Movement))}, " +
                   $"BPI {Marshal.SizeOf(typeof(ParametricInfo))}, CollInfo {Marshal.SizeOf(typeof(CollisionResult))}, " +
                   $"Float {sizeof(float)} (4), Long {sizeof(long)} (8), V2 {sizeof(Vector2)} (8)");
 #endif

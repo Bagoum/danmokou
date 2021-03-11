@@ -48,7 +48,7 @@ MonoBehaviour:
   destructible: 1
   deletable: 1
   grazeEveryFrames: 60
-  screenCullRadius: 3
+  screenCullRadius: 2
   renderPriority: 510
   renderMode: 0
   fadeIn: {fileID: 11400000, guid: 7509dddf785098f48aadafff0a2ac5b4, type: 2}
@@ -85,6 +85,7 @@ MonoBehaviour:
   - color: orange
     gradient: {fileID: 0}
     sprite: {fileID: 475904014001560618, guid: 97990fc5d15d3ec4f8fa2723a53d37a3, type: 3}
+  identicalForms: []
   TTL: 0
   timeRandomization: 0
   rotateRandomization: 0
@@ -116,6 +117,7 @@ MonoBehaviour:
   end: 0
   points: []
   target: {fileID: 0}
+  debug: 0
 --- !u!212 &3461940056756248319
 SpriteRenderer:
   m_ObjectHideFlags: 0

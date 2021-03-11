@@ -63,7 +63,7 @@
 		Lighting Off
 		ZWrite Off
 		BlendOp [_BlendOp]
-		Blend [_BlendFrom] [_BlendTo]
+		Blend [_BlendFrom] [_BlendTo], OneMinusDstAlpha One
 		
 		Pass {
 			CGPROGRAM
@@ -155,7 +155,7 @@
 		}
 		
 		//Superposed
-		Blend SrcAlpha OneMinusSrcAlpha
+		Blend SrcAlpha OneMinusSrcAlpha, OneMinusDstAlpha One
 		Pass {
 			CGPROGRAM
             #pragma multi_compile_local __ FT_SUPERPOSE

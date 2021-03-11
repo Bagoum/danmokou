@@ -27,11 +27,12 @@ public class Tutorial : BehaviorEntity {
     private readonly Dictionary<TextMeshPro, Vector2> defaultLoc = new Dictionary<TextMeshPro, Vector2>();
     public GameObject tutorialBoss = null!;
     public TextAsset bossSM = null!;
+    public int skip;
 
     protected override void Awake() {
         base.Awake();
 #if UNITY_EDITOR
-        RunDroppableRIEnumerator(RunTutorial(SKIP));
+        RunDroppableRIEnumerator(RunTutorial(skip));
 #else
         RunDroppableRIEnumerator(RunTutorial(0));
 #endif
@@ -72,11 +73,11 @@ public class Tutorial : BehaviorEntity {
                     yield return null;
         }
         IEnumerator waitlf(Func<bool> cond) => wait(() => ETime.FirstUpdateForScreen && cond());
-        IEnumerator waiti(InputHandler ih) {
+        IEnumerator waiti(IInputHandler ih) {
             yield return null;
             yield return waitlf(() => ih.Active);
         }
-        IEnumerator waitir(InputHandler ih) {
+        IEnumerator waitir(IInputHandler ih) {
             yield return null;
             yield return waitlf(() => !ih.Active);
         }
@@ -140,11 +141,15 @@ public class Tutorial : BehaviorEntity {
         var boss = GameObject.Instantiate(tutorialBoss).GetComponent<BehaviorEntity>();
         boss.Initialize(SMRunner.CullRoot(StateMachine.CreateFromDump(bossSM.text), bcs));
         IEnumerator phase() {
-            for (int ii = 0; ii < 4; ++ii) yield return null; //phase delay
-            var pct = boss.PhaseShifter ?? throw new Exception("Couldn't hook into boss PhaseShifter");
+            while (boss.PhaseShifter == null)
+                yield return null;
+            var pct = boss.PhaseShifter;
             if (canSkip()) boss.ShiftPhase();
             else yield return wait(() => pct.Cancelled);
-            for (int ii = 0; ii < 4; ++ii) yield return null; //phase delay
+            for (int ii = 0; ii < 244; ++ii) {
+                yield return null; //phase delay
+                if (EngineStateManager.IsRunning) ++ii;
+            }
         }
         IEnumerator shift() {
             boss.ShiftPhase();
@@ -249,7 +254,5 @@ public class Tutorial : BehaviorEntity {
         Prompt(text10, end52);
         SaveData.r.CompleteTutorial();
     }
-
-    private const int SKIP = 0;
 }
 }

@@ -252,7 +252,7 @@ public class SFXService : RegularUpdater, ISFXService {
         for (int ii = 0; ii < loopTimeoutsArr.Count; ++ii) {
             Destroy(loopTimeoutsArr[ii].source);
         }
-        constructed.Empty(true);
+        constructed.Empty();
         loopTimeouts.Clear();
         loopTimeoutsArr.Clear();
     }

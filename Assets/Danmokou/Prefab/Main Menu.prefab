@@ -185,6 +185,10 @@ MonoBehaviour:
     type: 3}
   SpellPracticeNodeV: {fileID: 9197481963319205126, guid: 8562b3e7e0847cc438b597c8451b9cee,
     type: 3}
+  AchievementsScreenV: {fileID: 9197481963319205126, guid: 3a50173fd4f918c498b883b24068d494,
+    type: 3}
+  AchievementsNodeV: {fileID: 9197481963319205126, guid: 5ca42b9c1ff90ea499bdec566109fc03,
+    type: 3}
   difficultySubmenu: {fileID: 5365018383905480166}
   playmodeSubmenu: {fileID: 5615592919199676993}
   shotDisplayContainer: {fileID: 865111494282575137}

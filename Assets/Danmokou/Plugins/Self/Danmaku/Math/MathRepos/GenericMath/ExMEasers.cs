@@ -49,15 +49,6 @@ public static class ExMEasers {
     /// In-Quad easing function.
     /// </summary>
     public static tfloat EInQuad(tfloat x) => Sqr(x);
-    /// <summary>
-    /// Sine easing function with 010 pattern.
-    /// </summary>
-    public static tfloat ESine010(tfloat x) => Sin(pi.Mul(x));
-    /// <summary>
-    /// Softmod easing function with 010 pattern.
-    /// </summary>
-    [Alias("smod-010")]
-    public static tfloat ESoftmod010(tfloat x) => Mul(E2, SoftMod(E05, x));
 
     public static tfloat EBounce2(tfloat x) => EEx.Resolve<float>((Ex)x, c => {
         var c1 = VFloat();
@@ -70,6 +61,31 @@ public static class ExMEasers {
                 ))
         );
     }); //https://www.desmos.com/calculator/ix37mllnyp
+
+
+    //These functions aren't 0-1 contortions, or they take multiple arguments.
+    #region EaseLikes
+    
+    /// <summary>
+    /// Sine easing function with 010 pattern.
+    /// </summary>
+    public static tfloat ESine010(tfloat x) => Sin(pi.Mul(x));
+    /// <summary>
+    /// Softmod easing function with 010 pattern.
+    /// </summary>
+    [Alias("smod-010")]
+    public static tfloat ESoftmod010(tfloat x) => Mul(E2, SoftMod(E05, x));
+
+    /// <summary>
+    /// Overshoot 1 and then ease back.
+    /// </summary>
+    /// <param name="p1">Parameter controlling overshoot</param>
+    /// <param name="x">0-1 time</param>
+    public static tfloat EOutBack(efloat p1, efloat x) => EEx.Resolve<float, float>(p1, Ex.Subtract(x, E1), (a, y) =>
+        E1.Add(a.Add(E1).Mul(y).Mul(y).Mul(y)).Add(a.Mul(y).Mul(y))
+    );
+
+    #endregion
 
 }
 }

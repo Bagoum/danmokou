@@ -130,7 +130,7 @@ public static class FragmentRendering {
 
         public void Destroy() {
             for (int ii = 0; ii < fragments.Length; ++ii)
-                fragments[ii].bpi.ctx.Dispose();
+                fragments[ii].bpi.Dispose();
             cb?.Invoke();
         }
     }

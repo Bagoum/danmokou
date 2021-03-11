@@ -28,13 +28,13 @@ public class BossConfig : ScriptableObject {
     /// </summary>
     public LocalizedStringReference m_casualName = null!;
     public LocalizedString CasualName => 
-        m_casualName.SetDefaultOrEmpty(FromBaseKey(""));
+        m_casualName.SetDefault(FromBaseKey(""));
     /// <summary>
     /// For display on the Boss Practice screen, eg. "Yukari (Ex)". Defaults to CasualName.
     /// </summary>
     public LocalizedStringReference m_bossPracticeName = null!;
     public LocalizedString BossPracticeName => 
-        m_bossPracticeName.SetDefault(FromBaseKey(".practice")).Or(CasualName);
+        m_bossPracticeName.SetDefaultOrEmpty(FromBaseKey(".practice")).Or(CasualName);
     /// <summary>
     /// For display in replay descriptions. Defaults to BossPracticeName.
     /// </summary>

@@ -12,6 +12,11 @@ namespace DMK.Core {
 /// Module for managing events.
 /// </summary>
 public static class Events {
+    public interface IEvent<T> {
+        void Publish(T obj);
+        DeletionMarker<Action<T>> Subscribe(Action<T> cb);
+    }
+    
     /// <summary>
     /// Request this type in reflection to create event objects.
     /// </summary>
@@ -143,11 +148,6 @@ public static class Events {
         public DeletionMarker<Action> Subscribe(Action cb) => callbacks.Add(cb);
     }
 
-    public interface IEvent<T> {
-        void Publish(T obj);
-        DeletionMarker<Action<T>> Subscribe(Action<T> cb);
-    }
-
     public class Event<T> : IEvent<T> {
         private readonly DMCompactingArray<Action<T>> callbacks = new DMCompactingArray<Action<T>>();
 
@@ -166,7 +166,6 @@ public static class Events {
     
     public static readonly IEvent<EngineState> GameStateHasChanged = new Event<EngineState>();
     public static readonly IEvent<(long score, bool bonus)> ScoreItemHasReceived = new Event<(long, bool)>();
-    public static readonly Event0 CampaignDataHasChanged = new Event0();
     public static readonly Event0 ClearPhase = new Event0();
 #if UNITY_EDITOR || ALLOW_RELOAD
     public static readonly Event0 LocalReset = new Event0();

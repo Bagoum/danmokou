@@ -233,7 +233,7 @@ public struct ParametricInfo {
     /// <summary>Life-time (with minor adjustment)</summary>
     public float t;
     /// <summary>Context containing additional bound variables</summary>
-    public readonly FiringCtx ctx;
+    public FiringCtx ctx;
 
     public static ParametricInfo WithRandomId(Vector2 position, int findex, float t) => new ParametricInfo(position, findex, RNG.GetUInt(), t);
     public static ParametricInfo WithRandomId(Vector2 position, int findex) => WithRandomId(position, findex, 0f);
@@ -247,11 +247,8 @@ public struct ParametricInfo {
         this.t = t;
         this.ctx = ctx ?? FiringCtx.New();
     }
-    public static readonly ExFunction withRandomId = ExUtils.Wrap<ParametricInfo>("WithRandomId", new[] {typeof(Vector2), typeof(int), typeof(float)});
 
     public ParametricInfo Rehash() => new ParametricInfo(loc, index, RNG.Rehash(id), t, ctx);
-    
-    public ParametricInfo CopyWithP(int newP) => new ParametricInfo(loc, newP, id, t, ctx);
     public ParametricInfo CopyWithT(float newT) => new ParametricInfo(loc, index, id, newT, ctx);
 
     public ParametricInfo CopyCtx(uint newId) => new ParametricInfo(loc, index, newId, t, ctx.Copy());
@@ -268,9 +265,21 @@ public struct ParametricInfo {
             loc.x = 2 * around - loc.x;
         }
     }
+
+    public void Dispose() {
+        ctx.Dispose();
+        //Prevents double dispose
+        ctx = FiringCtx.Empty;
+    }
 }
 
-//Note to future self: ref bpi is not a worthwhile optimization. However, out nrv was super successful.
+//Note: ref mov/ in dT/ ref bpi/ out delta are significant optimizations.
+// (I don't know why in float is so significant. Probably because in the SimpleBullet case
+// it's read from the same memory location for all bullets within a pool. That would be good cache performance.)
+//ref bpi is used over in bpi because there are methods on bpi (copyWithP, copyWithT, etc) that
+// would trigger defensive struct copies. (Methods and properties both trigger defensive copies.)
+//ref mov is used for the same reason, though no such methods/properties currently exist.
+
 /// <summary>
 /// A function that converts ParametricInfo into a possibly-rotated Cartesian coordinate.
 /// </summary>
@@ -279,13 +288,13 @@ public delegate void CoordF(float cos, float sin, ParametricInfo bpi, out Vector
 /// A function that converts ParametricInfo into a possibly-rotated Cartesian coordinate
 /// representing the next position that the Velocity struct should take with a timestep of dT.
 /// </summary>
-public delegate void VTP(in Movement vel, float dT, ParametricInfo bpi, out Vector2 delta);
+public delegate void VTP(ref Movement vel, in float dT, ref ParametricInfo bpi, out Vector2 delta);
 /// <summary>
 /// A function that converts ParametricInfo into a possibly-rotated Cartesian coordinate
 /// representing the next position that the LaserVelocity struct should take with a timestep of dT
 /// and a laser lifetime of lT.
 /// </summary>
-public delegate void LVTP(in LaserMovement vel, float dT, float lT, ParametricInfo bpi, out Vector2 delta);
+public delegate void LVTP(ref LaserMovement vel, in float dT, in float lT, ref ParametricInfo bpi, out Vector2 delta);
 
 
 public readonly struct RootedVTP {
@@ -336,11 +345,6 @@ public delegate float SBF(ref BulletManager.SimpleBullet sb);
 /// A function that converts ParametricInfo into a V2RV2.
 /// </summary>
 public delegate V2RV2 BPRV2(ParametricInfo bpi);
-
-/// <summary>
-/// A function that converts a float into a float.
-/// </summary>
-public delegate float FXY(float t);
 
 /// <summary>
 /// A function that converts ParametricInfo into a boolean.

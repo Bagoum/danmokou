@@ -42,7 +42,7 @@ You'd have to rewrite any scripts from scratch. The scripting language is highly
 
 **Can I submit PRs?**
 
-You may freely submit PRs for bugfixes or new features. **If you submit a PR, you agree to license that code under MIT or a weaker license.** If you would like to submit non-code resources, please contact me.
+You may freely submit PRs for bugfixes or new features. **If you submit a PR, you must license that code under MIT or a MIT-compatible license.** If you would like to submit non-code resources, please contact me.
 
 **How do I contact you?**
 
@@ -63,7 +63,7 @@ See Chapter 18 of IoMIoE.
 
 **What does 陰陽葬 mean?**
 
-This is the Japanese title for my Touhou fangame **Spirits in Memetic Paradise**. You can play it [here](https://www.bulletforge.org/u/bagoum/p/dong-fang-yin-yang-zang-spirits-in-memetic-paradise).
+This is the Japanese title for my Touhou fangame **Spirits in Memetic Paradise**. You can play it [here](https://bagoum.itch.io/spirits-in-memetic-paradise).
 
 # Testing
 

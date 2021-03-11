@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
+using DMK.Achievements;
 using DMK.Danmaku;
 using DMK.GameInstance;
 using DMK.Graphics;
@@ -27,7 +28,19 @@ public static class SaveData {
     public class Record {
         [ProtoMember(1)] public bool TutorialDone = false;
         [ProtoMember(2)] public Dictionary<string, InstanceRecord> FinishedGames = new Dictionary<string, InstanceRecord>();
+        [ProtoMember(3)] public Dictionary<string, State> Achievements = new Dictionary<string, State>();
 
+        public State? GetAchievementState(string acvKey) =>
+            Achievements.TryGetValue(acvKey, out var s) ? s : (State?) null;
+
+        public void UpdateAchievement(Achievement a) {
+            if (!GetAchievementState(a.Key).Try(out var s) || s < a.State) {
+                Achievements[a.Key] = a.State;
+            }
+            SaveRecord();
+        }
+
+        [JsonIgnore]
         public IEnumerable<InstanceRecord> FinishedCampaignGames => 
             FinishedGames.Values.Where(gr => gr.RequestKey.type == 0);
 
@@ -42,13 +55,15 @@ public static class SaveData {
             ))
             .FilterNone()
             .ToImmutableHashSet();
-
-
+        
         [JsonIgnore]
         public bool MainCampaignCompleted => CompletedCampaigns.Contains(GameManagement.References.campaign.key);
 
+        public static readonly Events.Event0 TutorialCompleted = new Events.Event0();
+
         public void CompleteTutorial() {
             TutorialDone = true;
+            TutorialCompleted.Proc();
             SaveData.SaveRecord();
         }
 
@@ -62,10 +77,10 @@ public static class SaveData {
             SaveData.SaveRecord();
         }
 
-        public Dictionary<((string, int), int), (int success, int total)> GetCampaignSpellHistory() =>
+        public Dictionary<((string, string), int), (int success, int total)> GetCampaignSpellHistory() =>
             Statistics.AccSpellHistory(FinishedCampaignGames);
 
-        public Dictionary<((string, int), int), (int success, int total)> GetPracticeSpellHistory() =>
+        public Dictionary<((string, string), int), (int success, int total)> GetPracticeSpellHistory() =>
             Statistics.AccSpellHistory(FinishedGames.Values.Where(gr => gr.RequestKey.type == 1));
 
 
@@ -220,8 +235,8 @@ public static class SaveData {
             if (i < ReplayData.Count) {
                 var filename = ReplayFilename(ReplayData[i]);
                 try {
-                    File.Delete(FileUtils.SAVEDIR + filename + RMETAEXT);
-                    File.Delete(FileUtils.SAVEDIR + filename + RFRAMEEXT);
+                    File.Delete(filename + RMETAEXT);
+                    File.Delete(filename + RFRAMEEXT);
                 } catch (Exception e) {
                     Log.Unity(e.Message, true, Log.Level.WARNING);
                 }
@@ -234,11 +249,15 @@ public static class SaveData {
         private const string RFRAMEEXT = ".dat";
         private static string ReplayFilename(Replay r) => REPLAYS_DIR + r.metadata.AsFilename;
 
+        private static InputManager.FrameInput[] AssertReplayLength(InputManager.FrameInput[] frames) {
+            if (frames.Length == 0) throw new Exception("Loaded a replay with zero length");
+            return frames;
+        }
         private static Func<InputManager.FrameInput[]> LoadReplayFrames(string file) => () =>
-            ReadProtoCompressed<InputManager.FrameInput[]>(file + RFRAMEEXT) ?? throw new Exception($"Couldn't load replay from file {file}");
+            AssertReplayLength(ReadProtoCompressed<InputManager.FrameInput[]>(file + RFRAMEEXT) ?? throw new Exception($"Couldn't load replay from file {file}"));
         
         public static Func<InputManager.FrameInput[]> LoadReplayFrames(TextAsset file) => () =>
-            ReadProtoCompressed<InputManager.FrameInput[]>(file) ?? throw new Exception($"Couldn't load replay from textAsset {file.name}");
+            AssertReplayLength(ReadProtoCompressed<InputManager.FrameInput[]>(file) ?? throw new Exception($"Couldn't load replay from textAsset {file.name}"));
         
         public static void SaveReplayFrames(string file, InputManager.FrameInput[] frames) =>
             WriteProtoCompressed(file + RFRAMEEXT, frames);
@@ -269,6 +288,7 @@ public static class SaveData {
         ETime.SetVSync(s.Vsync);
         Log.Unity($"Initial settings: resolution {s.Resolution}, fullscreen {s.Fullscreen}, vsync {s.Vsync}");
         r = ReadRecord() ?? new Record();
+        Achievement.AchievementStateUpdated.Subscribe(r.UpdateAchievement);
         p = new Replays();
         StartProfiling();
     }

@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using DMK.Achievements;
 using DMK.Core;
+using DMK.DMath;
 using DMK.GameInstance;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
@@ -25,13 +27,16 @@ public class ReplayMetadata {
     public Locale Locale { get; set; } = Locale.EN;
     // Not important but it's convenient
     public int Length { get; set; }
+    
+    public bool Debug { get; set; }
 
     [UsedImplicitly]
 #pragma warning disable 8618
     public ReplayMetadata() {}
 #pragma warning restore 8618
-    public ReplayMetadata(InstanceRecord rec) {
+    public ReplayMetadata(InstanceRecord rec, bool debug=false) {
         Record = rec;
+        Debug = debug;
         DialogueSpeed = SaveData.s.DialogueWaitMultiplier;
         SmoothInput = SaveData.s.AllowInputLinearization;
         Locale = SaveData.s.Locale;
@@ -51,8 +56,8 @@ public readonly struct Replay {
     public readonly Func<FrameInput[]> frames;
     public readonly ReplayMetadata metadata;
 
-    public Replay(FrameInput[] frames, InstanceRecord rec) :
-        this(() => frames, new ReplayMetadata(rec)) {
+    public Replay(FrameInput[] frames, InstanceRecord rec, bool debug=false) :
+        this(() => frames, new ReplayMetadata(rec, debug)) {
         metadata.Length = frames.Length;
     }
 
@@ -129,6 +134,7 @@ public static class Replayer {
 
     public static void BeginReplaying(ReplayerConfig data) {
         Log.Unity($"Replay playback started.");
+        Achievement.ACHIEVEMENT_PROGRESS_ENABLED = false;
         lastFrame = -1;
         replayStartFrame = null;
         recording = null;
@@ -148,6 +154,7 @@ public static class Replayer {
             Log.Unity($"Finished replaying {lastFrame - ReplayStartFrame + 1}/{LoadedFrames?.Length ?? 0} frames.");
         }
         status = ReplayStatus.NONE;
+        Achievement.ACHIEVEMENT_PROGRESS_ENABLED = true;
         PostedReplay = (recording != null && rec != null) ? new Replay(recording.ToArray(), rec) : (Replay?) null;
         recording = null;
         loadedFrames = null;
@@ -155,9 +162,22 @@ public static class Replayer {
         return PostedReplay;
     }
 
+    private static void SaveDebugReplay() {
+        if (recording == null ||
+            status != ReplayStatus.RECORDING ||
+            GameManagement.Instance.Request == null)
+            return;
+        
+        var r = new Replay(recording.ToArray(), GameManagement.Instance.Request.MakeGameRecord(), true);
+        r.metadata.Record.AssignName($"Debug{RNG.RandStringOffFrame()}");
+        SaveData.p.SaveNewReplay(r);
+        Log.Unity($"Saved a debug replay {r.metadata.Record.CustomName}");
+    }
+
     public static void Cancel() {
         Log.Unity("Cancelling in-progress replayer.");
         status = ReplayStatus.NONE;
+        Achievement.ACHIEVEMENT_PROGRESS_ENABLED = true;
         recording = null;
         loadedFrames = null;
         replaying = null;
@@ -171,6 +191,8 @@ public static class Replayer {
         int replayIndex = -ReplayStartFrame + (lastFrame = ETime.FrameNumber);
         ReplayFrame(null);
         if (status == ReplayStatus.RECORDING && recording != null) {
+            if (InputManager.ReplayDebugSave.Active)
+                SaveDebugReplay();
             recording.Add(RecordFrame);
         } else if (status == ReplayStatus.REPLAYING && LoadedFrames != null) {
             if (replayIndex >= LoadedFrames.Length) {

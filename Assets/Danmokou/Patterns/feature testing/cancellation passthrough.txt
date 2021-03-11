@@ -1,0 +1,49 @@
+<#> warnprefix
+pattern({
+	##boss jy.yukari
+})
+phase(0)
+	paction(0)
+		shift-phase-to(3)
+		
+
+<!> type(non, `Case 2`)
+phase(0)
+    paction 0
+		position 0 0
+		async tfairy <;:-100> summons tprot cx 5
+			>> _ delay 1 async icrow <-180> summons
+				tprot cx 3
+				stall
+				
+<!> type(non, `Case 1`)
+phase(0)
+    paction 0
+		position 0 0
+		async circle-blue/w <-100> s tprot cx 4
+		bullet-control persist circle-blue/w sm onlyonce < y -4
+			async icrow <-180> summons
+				tprot cx 3
+				stall
+
+<!> type(non, `Case 3`)
+phase 0
+    paction 0
+		position -2 2
+		## The first crow fires a second crow and then dies.
+		async crow <> summon
+			rvelocity cx 2
+			>> 1 _ 1 async crow <> summon
+				rvelocity cy -2
+				## The second crow fires a laser and then dies.
+				phase 2
+					saction 1
+						async laser-red/w <180> laser null 2 4 {
+							length	10
+							dynamic 	roffset pxy(0.8 * t, sine 2 sine(2p, 1, &lt) t)
+							sm	async gem-red/w <> gcr2 6 _ <> { p this } gsr2 2 <10> { onlaser * 0.1 p } s tprot lerpin 0.5 1 cy -1
+						}
+				{ hp 100 }
+			{ hp 100 }
+		## After both crows have died, the laser's SM is still running.
+

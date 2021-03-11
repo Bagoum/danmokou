@@ -72,7 +72,7 @@ public struct DelegatedCreator {
         pi.ctx.playerFireCfg = options.player;
         BulletManager.RequestSimple(style, 
             options.scale?.Invoke(sbh.GCX, pi.ctx), 
-            options.direction?.Invoke(sbh.GCX, pi.ctx), mov, pi);
+            options.direction?.Invoke(sbh.GCX, pi.ctx), in mov, pi);
     }
 
     public void Complex(SyncHandoff sbh, GCXU<VTP> path, uint id, BehOptions options) {
@@ -80,7 +80,7 @@ public struct DelegatedCreator {
         V2RV2 lrv2 = FacedRV2(sbh.rv2);
         var opts = new RealizedBehOptions(options, sbh.GCX, pi.ctx, ParentOffset, lrv2, sbh.ch.cT);
         if (opts.playerBullet != null) style = BulletManager.GetOrMakeComplexPlayerCopy(style);
-        BulletManager.RequestComplex(style, mov, pi, ref opts);
+        BulletManager.RequestComplex(style, in mov, pi, ref opts);
     }
 
     private const float DEFAULT_REMEMBER = 3f;
@@ -88,7 +88,7 @@ public struct DelegatedCreator {
         var (mov, pi) = PathHandlers(sbh, path, id);
         var opts = new RealizedBehOptions(options, sbh.GCX, pi.ctx, ParentOffset, FacedRV2(sbh.rv2), sbh.ch.cT);
         if (opts.playerBullet != null) style = BulletManager.GetOrMakeComplexPlayerCopy(style);
-        BulletManager.RequestPather(style, mov, pi, 
+        BulletManager.RequestPather(style, in mov, pi, 
             maxLength.GetValueOrDefault(DEFAULT_REMEMBER), remember, ref opts);
     }
 
@@ -96,12 +96,12 @@ public struct DelegatedCreator {
         var (mov, pi) = PathHandlers(sbh, path, id);
         var opts = new RealizedLaserOptions(options, sbh.GCX, pi.ctx, ParentOffset, FacedRV2(sbh.rv2), sbh.ch.cT);
         if (opts.playerBullet != null) style = BulletManager.GetOrMakeComplexPlayerCopy(style);
-        BulletManager.RequestLaser(transformParent, style, mov, pi, cold, hot, ref opts);
+        BulletManager.RequestLaser(transformParent, style, in mov, pi, cold, hot, ref opts);
     }
 
     public void Summon(bool pooled, SyncHandoff sbh, BehOptions options, GCXU<VTP> path, SMRunner sm, uint id) {
         var (mov, pi) = PathHandlers(sbh, path, id);
-        BulletManager.RequestSummon(pooled, style, mov, pi, options.ID, transformParent, sm,
+        BulletManager.RequestSummon(pooled, style, in mov, pi, options.ID, transformParent, sm,
             new RealizedBehOptions(options, sbh.GCX, pi.ctx, ParentOffset, FacedRV2(sbh.rv2), sbh.ch.cT));
     }
 
@@ -158,36 +158,36 @@ public partial class BulletManager {
                                 $"You probably made an error somewhere. " +
                                 $"If you didn't, remove this exception in the code.");
     }
-    public static void RequestSimple(string styleName, BPY? scale, SBV2? dir, Movement mov, ParametricInfo pi, bool checkSentry=true) {
+    public static void RequestSimple(string styleName, BPY? scale, SBV2? dir, in Movement mov, ParametricInfo pi, bool checkSentry=true) {
         if (checkSentry) CheckSentry();
-        SimpleBullet sb = new SimpleBullet(scale, dir, mov, pi);
+        SimpleBullet sb = new SimpleBullet(scale, dir, in mov, pi);
         GetMaybeCopyPool(styleName).Add(ref sb, true);
     }
 
     public static void RequestNullSimple(string styleName, Vector2 loc, Vector2 dir, float time=0) =>
         RequestSimple(styleName, null, null, new Movement(loc, dir), new ParametricInfo(loc, 0, t:time), false);
 
-    public static void RequestComplex(string style, Movement mov, ParametricInfo pi, ref RealizedBehOptions opts) {
+    public static void RequestComplex(string style, in Movement mov, ParametricInfo pi, ref RealizedBehOptions opts) {
         CheckSentry();
         if (CheckComplexPool(style, out var bsm)) {
             var bullet = (Bullet) BEHPooler.RequestUninitialized(bsm.RecolorOrThrow.prefab, out _);
             bullet.Initialize(bsm, opts, null, mov, pi, main.bulletCollisionTarget, out _);
         } else throw new Exception("Could not find complex bullet style: " + style);
     }
-    public static void RequestPather(string style, Movement mov, ParametricInfo pi, float maxRemember, BPY remember, ref RealizedBehOptions opts) {
+    public static void RequestPather(string style, in Movement mov, ParametricInfo pi, float maxRemember, BPY remember, ref RealizedBehOptions opts) {
         CheckSentry();
         if (CheckComplexPool(style, out var bsm)) {
             Pather.Request(bsm, mov, pi, maxRemember, remember, main.bulletCollisionTarget, ref opts);
         } else throw new Exception("Pather must be an faBulletStyle: " + style);
     }
-    public static void RequestLaser(BehaviorEntity? parent, string style, Movement mov, ParametricInfo pi, float cold, float hot, ref RealizedLaserOptions options) {
+    public static void RequestLaser(BehaviorEntity? parent, string style, in Movement mov, ParametricInfo pi, float cold, float hot, ref RealizedLaserOptions options) {
         CheckSentry();
         if (CheckComplexPool(style, out var bsm)) {
             Laser.Request(bsm, parent, mov, pi, cold, hot, main.bulletCollisionTarget, ref options);
         } else throw new Exception("Laser must be an faBulletStyle: " + style);
     }
     
-    public static BehaviorEntity RequestSummon(bool pooled, string prefabName, Movement mov, ParametricInfo pi, string behName, BehaviorEntity? parent, SMRunner sm, RealizedBehOptions? opts) {
+    public static BehaviorEntity RequestSummon(bool pooled, string prefabName, in Movement mov, ParametricInfo pi, string behName, BehaviorEntity? parent, SMRunner sm, RealizedBehOptions? opts) {
         CheckSentry();
         if (CheckComplexPool(prefabName, out var bsm)) {
             BehaviorEntity beh = pooled ?

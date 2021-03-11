@@ -44,7 +44,7 @@ namespace DMK.Testing {
                 TestTPoints(e01, otherPts);
                 TestTPoints(e01, new[] { (0f, 0f), (0.5f, 0.5f), (1f, 1f)});
             }
-            BPY s = BPY(x => Smooth(ExMEasers.EIOSine, x.t));
+            BPY s = BPY(x => ExMEasers.EIOSine(x.t));
             TestE01(s, new []{ (0.1f, 0.02447f) });
             s = BPY(x => SmoothLoop(ExMEasers.EIOSine, x.t));
             TestE01(s, new []{ (1.1f, 1.02447f) });

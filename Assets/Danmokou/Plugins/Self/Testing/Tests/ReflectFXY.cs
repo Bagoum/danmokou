@@ -68,13 +68,13 @@ namespace DMK.Testing {
                 TestTPoints(e010, otherPts);
                 TestTPoints(e010, new[] { (0f, 0f), (ratio, 1f), (1f, 0f)});
             }
-            FXY sineES = FXY(x => Smooth(ExMEasers.ESine010, x.FloatVal));
-            FXY smES = FXY(x => Smooth(ExMEasers.ESoftmod010, x.FloatVal));
+            FXY sineES = FXY(x => ExMEasers.ESine010(x.FloatVal));
+            FXY smES = FXY(x => ExMEasers.ESoftmod010(x.FloatVal));
             FXY quadES = FXY(x => EQuad0m10(ExC(0.3f), ExC(1f), x.FloatVal));
             Test010(sineES, new[] { (0.1f, 0.30901699f )});
             Test010(smES, new[] { (0.1f, 0.2f ), (0.7f, 0.6f)});
             Test010(quadES, new (float, float)[] {}, 0.3f);
-            FXY smthin = FXY(x => Smooth(ExMEasers.EInSine, x.FloatVal));
+            FXY smthin = FXY(x => ExMEasers.EInSine(x.FloatVal));
             FXY sc = FXY(x => SmoothIO(ExMEasers.EInSine, ExMEasers.EOutSine, 
                 ExC(6.0f), ExC(2.0f), ExC(3.0f), x.FloatVal));
             TestTPoints(sc, new[] {
@@ -95,7 +95,7 @@ namespace DMK.Testing {
                 (4.3f, 1-smthin(0.15f)),
                 (6.5f, 0f)
             });
-            FXY smthio = FXY(x => Smooth(ExMEasers.EIOSine, x.FloatVal));
+            FXY smthio = FXY(x => ExMEasers.EIOSine(x.FloatVal));
             sc = "smoothioe io-sine 4 0.5 x".Into<FXY>();
             TestTPoints(sc, 
                 (-1f, 0f), 

@@ -246,7 +246,9 @@ public class MainCamera : RegularUpdater {
         RenderTo = _renderTo;
         var tex = ss.IntoTex();
         ss.Release();
-        FileUtils.WriteTex("DMK_Saves/Aya/temp.jpg", tex);
+        //For debugging
+        //FileUtils.WriteTex("DMK_Saves/Aya/temp.jpg", tex);
+        
         //For some reason, I've had strange issues with things turning upside down if I return the RT
         // instead of converting it immediately to a tex. IDK but be warned
         RenderTexture.active = rt;
@@ -255,7 +257,7 @@ public class MainCamera : RegularUpdater {
 
     public static RenderTexture DefaultTempRT() => DefaultTempRT(SaveData.s.Resolution);
 
-    public static RenderTexture DefaultTempRT((int w, int h) res) => RenderTexture.GetTemporary(res.w,
+    private static RenderTexture DefaultTempRT((int w, int h) res) => RenderTexture.GetTemporary(res.w,
         //24 bit depth is required for sprite masks to work (used in dialogue handling)
         res.h, 24, RenderTextureFormat.ARGB32);
 

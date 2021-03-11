@@ -30,7 +30,6 @@ public class TExPI : TEx<ParametricInfo> {
     public readonly UnaryExpression findex;
     public Ex FiringCtx => ex.Field("ctx");
     private static readonly ExFunction rehash = ExUtils.Wrap<ParametricInfo, int>("Rehash", 0);
-    private static readonly ExFunction copyWithP = ExUtils.Wrap<ParametricInfo, int>("CopyWithP", 1);
     private static readonly ExFunction copyWithT = ExUtils.Wrap<ParametricInfo, float>("CopyWithT", 1);
     private static readonly ExFunction flipSimple =
         ExUtils.Wrap<ParametricInfo>("FlipSimple", new[] {typeof(bool), tfloat});
@@ -58,7 +57,6 @@ public class TExPI : TEx<ParametricInfo> {
     }
 
     public TExPI Rehash() => new TExPI(rehash.InstanceOf(this));
-    public TExPI CopyWithP(Ex newP) => new TExPI(copyWithP.InstanceOf(this, newP));
     public TExPI CopyWithT(Ex newT) => new TExPI(copyWithT.InstanceOf(this, newT));
 
     public new static TExPI Box(Ex ex) => new TExPI(ex);

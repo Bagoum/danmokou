@@ -17,7 +17,7 @@
 
 		//Ghosts are additive
 		Pass {
-			Blend SrcAlpha One
+			Blend SrcAlpha One, OneMinusDstAlpha One
 			CGPROGRAM
 			#pragma vertex vert
 			#pragma fragment frag

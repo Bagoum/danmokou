@@ -68,7 +68,7 @@ public class PatternSM : SequentialSM {
         foreach (var (i,b) in all.Enumerate()) {
             var target = smh.Exec;
             if (i > 0) {
-                target = UnityEngine.Object.Instantiate(b.boss).GetComponent<BehaviorEntity>();
+                target = Object.Instantiate(b.boss).GetComponent<BehaviorEntity>();
                 var mov = new Movement(new Vector2(-50f, 0f), 0f);
                 target.Initialize(null, mov, new ParametricInfo(in mov), SMRunner.Null);
                 subsummons.Add(target);
@@ -94,7 +94,7 @@ public class PatternSM : SequentialSM {
         var subsummons = new List<BehaviorEntity>();
         var ui = DependencyInjection.MaybeFind<IUIManager>();
         if (props.boss != null) {
-            GameManagement.Instance.SetCurrentBoss(jsmh.Exec, jsmh.cT);
+            GameManagement.Instance.SetCurrentBoss(props.boss, jsmh.Exec, jsmh.cT);
             ui?.SetBossHPLoader(jsmh.Exec.Enemy);
             (subbosses, subsummons) = ConfigureAllBosses(ui, jsmh, props.boss, props.bosses);
         }
@@ -203,9 +203,12 @@ public class PhaseSM : SequentialSM {
         IBackgroundOrchestrator? bgo, IAyaPhotoBoard? photoBoard) {
         cutins = Task.CompletedTask;
         ui?.ShowPhaseType(props.phaseType);
-        if (props.cardTitle != null || props.phaseType != null) 
-            ui?.SetSpellname(props.cardTitle?.ToString());
-        if (!props.HideTimeout && smh.Exec.TriggersUITimeout) 
+        if (props.cardTitle != null || props.phaseType != null) {
+            var rate = (props.Boss != null) ?
+                GameManagement.Instance.LookForSpellHistory(props.Boss.key, props.Index) :
+                null;
+            ui?.SetSpellname(props.cardTitle?.ToString(), rate);
+        } if (!props.HideTimeout && smh.Exec.TriggersUITimeout) 
             ui?.ShowStaticTimeout(Timeout);
         if (props.livesOverride.HasValue) 
             ui?.ShowBossLives(props.livesOverride.Value);
@@ -219,8 +222,8 @@ public class PhaseSM : SequentialSM {
             if ((props.hpbar ?? props.phaseType?.HPBarLength()).Try(out var hpbar)) {
                 smh.Exec.Enemy.SetHPBar(hpbar, props.phaseType ?? PhaseType.NONSPELL);
             }
-            if ((props.phaseType?.DefaultVulnerability()).Try(out var v)) 
-                smh.Exec.Enemy.SetVulnerable(v);
+            smh.Exec.Enemy.SetVulnerable(props.phaseType?.DefaultVulnerability() ?? 
+                                         (props.Boss == null ? Vulnerability.VULNERABLE : Vulnerability.NO_DAMAGE));
         }
         if (props.BossPhotoHP.Try(out var pins)) {
             photoBoard?.SetupPins(pins);
@@ -232,7 +235,7 @@ public class PhaseSM : SequentialSM {
                 SFXService.BossCutin();
                 //Service not required since no callback
                 DependencyInjection.MaybeFind<IRaiko>()?.Shake(props.Boss.bossCutinTime / 2f, null, 1f, smh.cT, null);
-                UnityEngine.Object.Instantiate(props.Boss.bossCutin);
+                Object.Instantiate(props.Boss.bossCutin);
                 bgo?.QueueTransition(props.Boss.bossCutinTrIn);
                 bgo?.ConstructTarget(props.Boss.bossCutinBg, true);
                 WaitingUtils.WaitFor(smh, props.Boss.bossCutinBgTime, false).ContinueWithSync(() => {
@@ -246,7 +249,7 @@ public class PhaseSM : SequentialSM {
             } else if (props.GetSpellCutin(out var sc)) {
                 SFXService.BossSpellCutin();
                 DependencyInjection.MaybeFind<IRaiko>()?.Shake(1.5f, null, 1f, smh.cT, null);
-                UnityEngine.Object.Instantiate(sc);
+                Object.Instantiate(sc);
             }
         }
         if (!forcedBG && props.Background != null) {
@@ -297,18 +300,25 @@ public class PhaseSM : SequentialSM {
                 true); //Wait for synchronization before returning to parent
             joint_smh.ThrowIfCancelled();
         } catch (OperationCanceledException) {
-            if (smh.Exec.PhaseShifter == pcTS) smh.Exec.PhaseShifter = null;
+            if (smh.Exec.PhaseShifter == pcTS)
+                smh.Exec.PhaseShifter = null;
+            //This is critical to avoid boss destruction during the two-frame phase buffer
+            if (smh.Exec.isEnemy)
+                smh.Exec.Enemy.SetVulnerable(Vulnerability.NO_DAMAGE);
             lenienceToken?.TryRevoke();
-            if (props.Cleanup) GameManagement.ClearPhaseAutocull(props.SoftcullProps(smh.Exec));
+            if (props.Cleanup)
+                GameManagement.ClearPhaseAutocull(props.SoftcullProps(smh.Exec));
             if (smh.Exec.AllowFinishCalls) {
                 //TODO why does this use parentCT?
                 finishPhase?.Trigger(smh.Exec, smh.GCX, smh.parentCT);
                 await OnFinish(smh, pcTS, start_campaign, bgo, photoBoard);
             }
-            if (smh.Cancelled) throw;
+            if (smh.Cancelled) 
+                throw;
             if (props.phaseType != null) 
                 Log.Unity($"Cleared {props.phaseType.Value} phase: {props.cardTitle?.ValueOrEn ?? ""}");
-            if (endPhase != null) await endPhase.Start(smh);
+            if (endPhase != null)
+                await endPhase.Start(smh);
         }
     }
 

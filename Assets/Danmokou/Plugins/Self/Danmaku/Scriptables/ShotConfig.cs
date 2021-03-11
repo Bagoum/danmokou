@@ -8,10 +8,18 @@ using UnityEngine;
 
 namespace DMK.Scriptables {
 /// <summary>
-/// Provides stage metadata.
+/// Provides shot metadata.
 /// </summary>
 [CreateAssetMenu(menuName = "Data/Shot Configuration")]
 public class ShotConfig : ScriptableObject {
+    public enum StarRating {
+        Zero,
+        One,
+        Two,
+        Three,
+        Five
+    }
+    
     public string key = "";
     /// <summary>
     /// eg. "Homing Needles - Persuasion Laser"
@@ -28,8 +36,9 @@ public class ShotConfig : ScriptableObject {
     public bool HasBomb => bomb.IsValid();
     public double defaultPower = 1000;
     public bool playerChild = true;
-    public TextAsset? demoReplay;
+    public StaticReplay? demoReplay;
     public TextAsset? demoSetupSM;
+    public StarRating shotDifficulty;
     [Header("Multi-Shot Configuration")] public bool isMultiShot;
     public ShotConfig? multiD;
     public ShotConfig? multiM;

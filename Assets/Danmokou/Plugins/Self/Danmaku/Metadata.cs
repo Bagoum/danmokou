@@ -124,9 +124,21 @@ public readonly struct SMRunner {
     public readonly bool cullOnFinish;
     private readonly bool root;
 
-    public ICancellee MakeNested(ICancellee local) => root ?
-        new JointCancellee(cT, local) :
-        (ICancellee)new PassthroughCancellee(cT, local);
+    /// <summary>
+    /// When a summon (root:False) fires another summon, the nested summon should
+    /// only depend on the cancellation of the phase-declaring boss/stage.
+    /// <br/>Thus, the local cancellation information of summons is destroyed when
+    /// using MakeNested to derive a nested summon's token.
+    /// <br/>Note that using PhaseSM or PatternSM on the summon will make the nested
+    /// summon dependent on the summon's cancellation. This is because cT here will
+    /// instead point to the JointCancellee constructed in PhaseSM or PatternSM,
+    /// which will not discard information.
+    /// </summary>
+    public ICancellee MakeNested(ICancellee local) =>
+        root ?
+            new JointCancellee(cT, local) :
+            (ICancellee)new PassthroughCancellee(cT.Root, local);
+    
     private readonly GenCtx? gcx;
     public GenCtx? NewGCX => gcx?.Copy();
 
@@ -140,7 +152,7 @@ public readonly struct SMRunner {
     public static SMRunner RunNoCancelRoot(StateMachine? sm) => new SMRunner(sm, Cancellable.Null, false, true, null);
     public SMRunner(StateMachine? sm, ICancellee cT, bool cullOnFinish, bool root, GenCtx? gcx) {
         this.sm = sm;
-        this.cT = cT.Joinable; //child-visible section
+        this.cT = cT;
         this.cullOnFinish = cullOnFinish;
         this.gcx = gcx;
         this.root = root;
@@ -166,7 +178,8 @@ public readonly struct PhaseCompletion {
     public readonly PhaseProperties props;
     public readonly PhaseClearMethod clear;
     public readonly BehaviorEntity exec;
-    public readonly bool noHits;
+    public readonly int hits;
+    public bool NoHits => hits == 0;
     public readonly bool noMeter;
     private readonly int elapsedFrames;
     public float ElapsedTime => elapsedFrames / ETime.ENGINEFPS;
@@ -190,12 +203,13 @@ public readonly struct PhaseCompletion {
         }
     }
 
+    public const int MaxCaptureStars = 3;
     public int? CaptureStars {
         get {
             if (!StandardCardFinish) 
                 return null;
             if (PerfectCaptured == true) 
-                return 3;
+                return MaxCaptureStars;
             if (Captured == true) 
                 return 2;
             if (Cleared == true) 
@@ -215,7 +229,7 @@ public readonly struct PhaseCompletion {
     /// Null if there was no card at all (eg. minor enemies or cancellation).
     /// <br/>A capture requires clearing the card and taking no hits.
     /// </summary>
-    public bool? Captured => Cleared.And(noHits);
+    public bool? Captured => Cleared.And(NoHits);
 
     /// <summary>
     /// True if the card was cleared. False if it was not cleared.
@@ -225,7 +239,7 @@ public readonly struct PhaseCompletion {
     public bool? Cleared => StandardCardFinish ?
         (bool?) ((clear.Destructive()) ||
                  //For timeouts, clearing requires no-hit
-                 (props.phaseType == PhaseType.TIMEOUT && clear == PhaseClearMethod.TIMEOUT && noHits))
+                 (props.phaseType == PhaseType.TIMEOUT && clear == PhaseClearMethod.TIMEOUT && NoHits))
         : null;
 
     /// <summary>
@@ -233,18 +247,18 @@ public readonly struct PhaseCompletion {
     /// </summary>
     public bool StandardCardFinish => (props.phaseType?.IsCard() ?? false) && clear != PhaseClearMethod.CANCELLED;
 
+    private ItemDrops DropPerfectCapture => new ItemDrops(42, 7, 42, 0, 20, true).Mul(ItemMultiplier);
     private ItemDrops DropCapture => new ItemDrops(42, 0, 42, 0, 20, true).Mul(ItemMultiplier);
-    //Final spells give no items if not captured, this is because some final spells have infinite timers
-    private ItemDrops DropClear => new ItemDrops(
-        props.phaseType == PhaseType.FINAL ? 0 : 29, 0, 13, 0, 13, true).Mul(ItemMultiplier);
+    private ItemDrops DropClear => new ItemDrops(29, 0, 13, 0, 13, true).Mul(ItemMultiplier);
     private ItemDrops DropNoHit => new ItemDrops(0, 0, 37, 0, 13, true).Mul(ItemMultiplier);
 
     public ItemDrops? DropItems {
         get {
             if (GameManagement.Instance.mode.DisallowCardItems()) return null;
+            if (PerfectCaptured == true) return DropPerfectCapture;
             if (Captured == true) return DropCapture;
             else if (Cleared == true) return DropClear;
-            else if (noHits) return DropNoHit;
+            else if (NoHits) return DropNoHit;
             return null;
         }
     }
@@ -254,7 +268,7 @@ public readonly struct PhaseCompletion {
         this.clear = clear;
         this.exec = exec;
         this.timeout = timeout;
-        this.noHits = GameManagement.Instance.HitsTaken == snap.hitsTaken;
+        this.hits = GameManagement.Instance.HitsTaken - snap.hitsTaken;
         this.noMeter = GameManagement.Instance.MeterFrames == snap.meterFrames;
         this.elapsedFrames = ETime.FrameNumber - snap.frame;
     }

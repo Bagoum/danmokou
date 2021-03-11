@@ -45,11 +45,12 @@ public class XMLMainMenuCampaign : XMLMainMenu {
     private UIScreen ReplayScreen = null!;
     private UIScreen HighScoreScreen = null!;
     private UIScreen StatsScreen = null!;
+    private UIScreen? AchievementsScreen;
 
     protected override IEnumerable<UIScreen> Screens => new[] {
         PlaymodeScreen, DifficultyScreen, CustomDifficultyScreen, CampaignShotScreen, ExtraShotScreen,
         StagePracticeScreen, BossPracticeScreen, OptionsScreen, ReplayScreen, HighScoreScreen,
-        StatsScreen,
+        StatsScreen, AchievementsScreen,
         MainScreen
     }.NotNull();
 
@@ -63,6 +64,8 @@ public class XMLMainMenuCampaign : XMLMainMenu {
     public VisualTreeAsset HighScoreScreenV = null!;
     public VisualTreeAsset StatsScreenV = null!;
     public VisualTreeAsset SpellPracticeNodeV = null!;
+    public VisualTreeAsset AchievementsScreenV = null!;
+    public VisualTreeAsset AchievementsNodeV = null!;
 
     public DifficultySubmenu difficultySubmenu = null!;
     public PlayModeSubmenu playmodeSubmenu = null!;
@@ -85,6 +88,13 @@ public class XMLMainMenuCampaign : XMLMainMenu {
         
         UIScreen? CreatePlayerScreen(SMAnalysis.AnalyzedCampaign? c, bool enableDemo) {
             if (c == null) return null;
+            foreach (var sc in c.campaign.players
+                .SelectMany(p => p.shots2)
+                .Select(s2 => s2.shot)) {
+                if (sc.prefab != null)
+                    sc.prefab.GetComponentsInChildren<FireOption>()
+                        .ForEach(fo => fo.Preload());
+            }
             PlayerInput? demoPlayer = null;
             Cancellable? demoCT = null;
             OptionNodeLR<PlayerConfig> playerSelect = null!;
@@ -96,8 +106,6 @@ public class XMLMainMenuCampaign : XMLMainMenu {
                         .Select(s => (p, s.shot)))
                     .ToArray());
             var smeta = new SharedInstanceMetadata(team, new DifficultySettings(FixedDifficulty.Normal));
-            GameManagement.NewInstance(InstanceMode.NULL, null, 
-                new InstanceRequest(() => true, smeta, new CampaignRequest(c)));
             
             void CleanupDemo() {
                 if (demoPlayer != null) {
@@ -114,6 +122,8 @@ public class XMLMainMenuCampaign : XMLMainMenu {
                     demoPlayer = null;
                 }
                 //Team-switching works through SetPlayer, but that would lose the reference to demoPlayer
+                GameManagement.NewInstance(InstanceMode.NULL, null, 
+                    new InstanceRequest(() => true, smeta, new CampaignRequest(c!)));
                 GameManagement.Instance.SetPlayer(playerSelect.Value, shotSelect.Value, subshotSelect.Value);
                 if (demoPlayer == null) {
                     demoPlayer = Instantiate(playerSelect.Value.prefab).GetComponent<PlayerInput>();
@@ -124,7 +134,7 @@ public class XMLMainMenuCampaign : XMLMainMenu {
                 if (effShot.demoReplay != null) {
                     Replayer.BeginReplaying(new Replayer.ReplayerConfig(
                         Replayer.ReplayerConfig.FinishMethod.REPEAT, 
-                        SaveData.Replays.LoadReplayFrames(effShot.demoReplay),
+                        effShot.demoReplay.Frames,
                         () => demoPlayer.transform.position = new Vector2(0, -3)
                     ));
                     demoCT?.Cancel();
@@ -146,10 +156,10 @@ public class XMLMainMenuCampaign : XMLMainMenu {
             void HidePlayers() {
                 foreach (var f in displays) f.display.Show(false);
             }
-            void ShowShot(PlayerConfig p, int shotIndex, ShotConfig s, Subshot sub, bool first) {
+            void ShowShot(PlayerConfig p, ShotConfig s, Subshot sub, bool first) {
                 if (!first) UpdateDemo();
                 var index = displays.IndexOf(sd => sd.player == p);
-                displays[index].display.SetShot(p, shotIndex, s, sub);
+                displays[index].display.SetShot(p, s, sub);
                 displays.ForEachI((i, x) => {
                     //Only show the selected player on entry so the others don't randomly appear on screen during swipe
                     if (!first || i == index) x.display.Show(true);
@@ -159,7 +169,7 @@ public class XMLMainMenuCampaign : XMLMainMenu {
 
             HidePlayers();
             void _ShowShot(bool first = false) {
-                ShowShot(playerSelect.Value, shotSelect.Index, shotSelect.Value, subshotSelect.Value, first);
+                ShowShot(playerSelect.Value, shotSelect.Value, subshotSelect.Value, first);
             }
             
             playerSelect = new OptionNodeLR<PlayerConfig>(LocalizedString.Empty, _ => _ShowShot(),
@@ -168,8 +178,8 @@ public class XMLMainMenuCampaign : XMLMainMenu {
             //Place a fixed node in the second column for shot description
             shotSelect = new DynamicOptionNodeLR<ShotConfig>(LocalizedString.Empty, _ => _ShowShot(), () =>
                     playerSelect.Value.shots2.Select(s => (s.shot.isMultiShot ? 
-                            shotsel_multi_ls(s.ordinal) : 
-                            shotsel_type_ls(s.ordinal), s.shot)).ToArray(),
+                            shotsel_multi(s.ordinal) : 
+                            shotsel_type(s.ordinal), s.shot)).ToArray(),
                 playerSelect.Value.shots2[0].shot);
             subshotSelect = new OptionNodeLR<Subshot>(LocalizedString.Empty, _ => _ShowShot(),
                 EnumHelpers2.Subshots.Select(x => (shotsel_variant_ls(x.Describe()), x)).ToArray(), Subshot.TYPE_D);
@@ -223,7 +233,7 @@ public class XMLMainMenuCampaign : XMLMainMenu {
 
         StagePracticeScreen = new LazyUIScreen(() => PStages.Select(stage =>
             (UINode) new NavigateUINode(practice_stage_ls(stage.stage.stageNumber),
-                stage.phases.Select(phase =>
+                stage.Phases.Select(phase =>
                     new CacheNavigateUINode(TentativeCache, phase.Title).SetConfirmOverride(
                         GetDifficultyThenShot(stage.campaign.campaign, meta => {
                             ConfirmCache();
@@ -245,7 +255,7 @@ public class XMLMainMenuCampaign : XMLMainMenu {
         var cmpSpellHist = SaveData.r.GetCampaignSpellHistory();
         var prcSpellHist = SaveData.r.GetPracticeSpellHistory();
         BossPracticeScreen = new LazyUIScreen(() => PBosses.Select(boss =>
-            (UINode) new NavigateUINode(boss.boss.BossPracticeName, boss.phases.Select(phase => {
+            (UINode) new NavigateUINode(boss.boss.BossPracticeName, boss.Phases.Select(phase => {
                     var req = new BossPracticeRequest(boss, phase);
                     return new CacheNavigateUINode(TentativeCache, phase.Title).SetConfirmOverride(
                         GetDifficultyThenShot(boss.campaign.campaign, meta => {
@@ -269,6 +279,9 @@ public class XMLMainMenuCampaign : XMLMainMenu {
         HighScoreScreen = XMLUtils.HighScoreScreen(ReplayScreen, FinishedCampaigns.ToArray())
             .With(HighScoreScreenV);
         StatsScreen = XMLUtils.StatisticsScreen(StatsScreenV, SaveData.r.FinishedCampaignGames, Campaigns);
+        if (GameManagement.Achievements != null)
+            AchievementsScreen = XMLUtils.AchievementsScreen(
+                AchievementsScreenV, AchievementsNodeV, GameManagement.Achievements);
         MainScreen = new UIScreen(
             new TransferNode(PlaymodeScreen, main_gamestart).With(large1Class),
             new OptionNodeLR<Locale>(main_lang, l => {
@@ -285,6 +298,8 @@ public class XMLMainMenuCampaign : XMLMainMenu {
             new TransferNode(StatsScreen, main_stats)
                 .EnabledIf(FinishedCampaigns.Any())
                 .With(large1Class),
+            AchievementsScreen == null ? null :
+                new TransferNode(AchievementsScreen, main_achievements).With(large1Class),
             new TransferNode(ReplayScreen, main_replays)
                 .EnabledIf(SaveData.p.ReplayData.Count > 0)
                 .With(large1Class),

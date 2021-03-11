@@ -17,7 +17,7 @@
 		Cull Off
 		Lighting Off
 		ZWrite Off
-		Blend SrcAlpha [_BlendTo]
+		Blend SrcAlpha [_BlendTo], OneMinusDstAlpha One
 
 		Pass {
 			CGPROGRAM

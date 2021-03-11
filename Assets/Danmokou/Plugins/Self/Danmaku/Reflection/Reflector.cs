@@ -71,7 +71,7 @@ public static partial class Reflector {
             {typeof(CRect), arg => Parser.ParseRect(arg)},
             {typeof(CCircle), arg => Parser.ParseCircle(arg)},
             {typeof(BEHPointer), BehaviorEntity.GetPointerForID},
-            {typeof(ETime.Timer), ETime.Timer.GetTimer},
+            {typeof(ETime.Timer), arg => ETime.Timer.GetTimer(arg)},
         };
 
 

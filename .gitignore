@@ -16,9 +16,6 @@ Assets/Danmokou/Sprites/.py/SpriteUtils/img
 Assets/Danmokou/Plugins/Self/Danmaku/Expressions/Generated
 Assets/Danmokou/Plugins/Self/Danmaku/AoTHelper_CG.cs
 
-FS/Actor
-FS/ActorCS
-
 *.csproj
 *.unityproj
 *.sln

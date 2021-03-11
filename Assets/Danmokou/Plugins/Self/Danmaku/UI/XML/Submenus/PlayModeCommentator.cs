@@ -23,13 +23,14 @@ public class PlayModeCommentator : Commentator {
 
     public void SetComment(Mode m, bool locked) => SetComment(
         locked ? lockedComment :
-        (!SaveData.r.TutorialDone && m != Mode.TUTORIAL) ? mainNoTutorialComment :
-        m switch {
-            Mode.EX => exComment,
-            Mode.STAGEPRAC => stPracComment,
-            Mode.BOSSPRAC => bossPracComment,
-            Mode.TUTORIAL => tutorialComment,
-            _ => mainComment
+        (!SaveData.r.TutorialDone && GameManagement.References.tutorial != null && m != Mode.TUTORIAL) ? 
+            mainNoTutorialComment :
+            m switch {
+                Mode.EX => exComment,
+                Mode.STAGEPRAC => stPracComment,
+                Mode.BOSSPRAC => bossPracComment,
+                Mode.TUTORIAL => tutorialComment,
+                _ => mainComment
     });
 }
 }
