@@ -466,6 +466,9 @@ public static partial class LocalizedStrings {
 		public static readonly LocalizedString main_achievements = new LocalizedString("Achievements") {
 		};
 		
+		public static readonly LocalizedString main_musicroom = new LocalizedString("Music Room") {
+		};
+		
 		public static readonly LocalizedString main_replays = new LocalizedString("Replays") {
 		};
 		

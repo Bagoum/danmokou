@@ -23,6 +23,16 @@ let Eq(str, maxArg, units) =
 [<Test>]
 let TestBasic() =
     Assert.IsFailed(stringParser "{")
+    Eq("hello\\nworld", -1, [
+        String "hello"
+        String "\\n"
+        String "world"
+    ])
+    Eq("hello\nworld", -1, [
+        String "hello"
+        String "\\n"
+        String "world"
+    ])
     Eq("hello {0} world {1:F1}!", 1, [
         String "hello "
         StandardFormat "0"

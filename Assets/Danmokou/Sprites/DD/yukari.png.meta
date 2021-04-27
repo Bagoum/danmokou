@@ -192,8 +192,8 @@ TextureImporter:
   textureSettings:
     serializedVersion: 2
     filterMode: 0
-    aniso: -1
-    mipBias: -100
+    aniso: 1
+    mipBias: 0
     wrapU: 1
     wrapV: 1
     wrapW: 1
@@ -214,6 +214,8 @@ TextureImporter:
   textureType: 8
   textureShape: 1
   singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
   maxTextureSizeSet: 0
   compressionQualitySet: 0
   textureFormatSet: 0
@@ -1382,6 +1384,60 @@ TextureImporter:
     edges: []
     weights: []
     secondaryTextures: []
+    nameFileIdTable:
+      yukari_1: -1605733724966370840
+      yukari_11: 4966214715986234848
+      yukari_8: 818861747257065417
+      yukari_21: 8392072638532727177
+      yukari_17: 4690849462139288610
+      yukari_15: 7165614654797141392
+      ohp3: -8729089316335779894
+      yukari_18: -1705435212745340282
+      oho1: -2675161875900984047
+      yukari_14: -6609194668131470989
+      yukari_37: -6345135705703890605
+      yukari_43: -1482102286408631359
+      yukari_40: 539965284088401465
+      yukari_4: -6475086966736304238
+      yukari_7: 3995748174559475427
+      yukari_33: 3538245511717133642
+      yukari_32: -6444211997945782074
+      yukari_27: -4558121657206772584
+      yukari_19: 1642314802290833181
+      oho2: 737007831497848616
+      ohp1: -4281433220610310427
+      ohp2: 7142137018320130930
+      yukari_35: 187931677361956771
+      yukari_31: -5565817217495491415
+      yukari_0: -8925091146876875158
+      ohr4: -6651517086586016722
+      yukari_3: -7203736071956295639
+      yukari_20: -4202262739981499320
+      yukari_12: 5870003534154754573
+      oho3: -849307395895609828
+      yukari_23: 3978426108794593430
+      ohr2: -2267619428952613458
+      ohp4: 4241293518516975008
+      yukari_16: 6266328886908813087
+      ohr1: -7901581771170960016
+      yukari_41: -8193149264099738114
+      yukari_42: -6480158598322160439
+      yukari_2: -2118832571572566087
+      yukari_30: 1132239975660442751
+      yukari_25: 7906732070977376806
+      yukari_34: -8388121019028826413
+      yukari_5: -1605262566054181330
+      yukari_9: 1041345289707844988
+      yukari_36: 5172776408514503253
+      yukari_29: -2920627137387324738
+      yukari_10: 4876520005265986186
+      yukari_38: -2758104866689944633
+      yukari_6: 7143509163768009636
+      yukari_22: 6157278021932708119
+      yukari_13: -3346805967649502215
+      oho4: -7954482687672251284
+      ohr3: -3579734602441801207
+      yukari_39: 1408319431420616384
   spritePackingTag: 
   pSDRemoveMatte: 0
   pSDShowRemoveMatteOption: 0

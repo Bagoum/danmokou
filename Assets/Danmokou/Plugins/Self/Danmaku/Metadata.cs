@@ -185,10 +185,10 @@ public readonly struct PhaseCompletion {
     public float ElapsedTime => elapsedFrames / ETime.ENGINEFPS;
     //The props timeout may be overriden
     private readonly float timeout;
-    private float elapsedRatio => timeout > 0 ? ElapsedTime / timeout : 0;
-    private float Elapsed => props.phaseType == PhaseType.TIMEOUT ? 0 : elapsedRatio;
+    private float ElapsedRatio => timeout > 0 ? ElapsedTime / timeout : 0;
     private const float ELAPSED_YIELD = 0.58f;
-    private float ElapsedItemMultiplier => Mathf.Lerp(1, 0.27183f, (Elapsed - ELAPSED_YIELD) / (1 - ELAPSED_YIELD));
+    private float ElapsedItemMultiplier => props.phaseType == PhaseType.TIMEOUT ? 1 : 
+        Mathf.Lerp(1, 0.27183f, (ElapsedRatio - ELAPSED_YIELD) / (1 - ELAPSED_YIELD));
     private float ItemMultiplier => props.cardValueMult * ElapsedItemMultiplier;
 
     public string Performance {

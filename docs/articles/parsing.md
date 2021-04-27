@@ -73,8 +73,9 @@ phase 40
 - If the first argument to a constructor is `List<StateMachine>`, then this is provided by parsing as many SMs as possible following parenting rules after all the rest of the arguments. For example:
 
 ```
-public PhaseActionSM(List<StateMachine> states, Blocking blocking, float wait);
+public PhaseParallelActionSM(List<StateMachine> states, float wait);
 
+# Note: indentation is purely visual
 paction(0)
 	noop	# PhaseParallelActionSM can parent NoOpLASM : LASM
 	noop
@@ -82,7 +83,7 @@ paction(0)
 paction(0)	# PhaseParallelActionSM cannot parent PhaseActionSM
 ```
 
-- However, if it is `StateMachine[]`, then this is provided *normally*, that is to say, with array delimiters.
+- However, if it is `StateMachine[]`, then this is provided *normally*, that is to say, with array delimiters, and the children may be of any time.
 
 ```
 gtrepeat {

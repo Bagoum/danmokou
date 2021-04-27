@@ -114,8 +114,8 @@ TextureImporter:
   textureSettings:
     serializedVersion: 2
     filterMode: 0
-    aniso: -1
-    mipBias: -100
+    aniso: 1
+    mipBias: 0
     wrapU: 1
     wrapV: 1
     wrapW: 1
@@ -136,6 +136,8 @@ TextureImporter:
   textureType: 8
   textureShape: 1
   singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
   maxTextureSizeSet: 0
   compressionQualitySet: 0
   textureFormatSet: 0
@@ -674,6 +676,30 @@ TextureImporter:
     edges: []
     weights: []
     secondaryTextures: []
+    nameFileIdTable:
+      dot_reimu_11: 3698647145939316007
+      dot_reimu_0: -1235959834179624449
+      dot_reimu_5: -360007032142112339
+      dot_reimu_6: 4693420981575447153
+      dot_reimu_13: -6768759964530835878
+      dot_reimu_10: -4094760533282403463
+      dot_reimu_20: -6662285098792788367
+      dot_reimu_3: -5194526759643651784
+      dot_reimu_14: 519686201888232666
+      dot_reimu_17: -8539491988218315194
+      dot_reimu_19: -8623421028230811867
+      dot_reimu_18: -3281934189626465889
+      dot_reimu_8: 3002396001289103435
+      dot_reimu_1: -5224314122099578947
+      dot_reimu_2: -4243785863562183402
+      dot_reimu_12: -6397296570816421239
+      dot_reimu_15: 2053134501179007806
+      dot_reimu_21: 6171974653181709790
+      dot_reimu_22: 5274860825589186042
+      dot_reimu_7: 4773302692324436098
+      dot_reimu_16: -7873430218205413074
+      dot_reimu_4: 5062604654787798953
+      dot_reimu_9: -1258415493155314809
   spritePackingTag: 
   pSDRemoveMatte: 0
   pSDShowRemoveMatteOption: 0

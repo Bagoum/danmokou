@@ -153,8 +153,8 @@ TextureImporter:
   textureSettings:
     serializedVersion: 2
     filterMode: 0
-    aniso: -1
-    mipBias: -100
+    aniso: 1
+    mipBias: 0
     wrapU: 1
     wrapV: 1
     wrapW: 1
@@ -175,6 +175,8 @@ TextureImporter:
   textureType: 8
   textureShape: 1
   singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
   maxTextureSizeSet: 0
   compressionQualitySet: 0
   textureFormatSet: 0
@@ -986,6 +988,43 @@ TextureImporter:
     edges: []
     weights: []
     secondaryTextures: []
+    nameFileIdTable:
+      sunny_5: -3144742982708514576
+      sunny_13: 1599789180633269908
+      sunny_25: -3129707786504147328
+      sunny_1: 1416569017930042947
+      sunny_10: -7097574434370003320
+      sunny_15: -4831629370757097981
+      sunny_4: 3805319053503285496
+      sunny_6: 3612368555649085214
+      sunny_9: -7923934518358853769
+      sunny_34: -5736500156258172499
+      sunny_7: 338077824935439930
+      sunny_17: -7392272393233264911
+      sunny_26: -7786956659073355968
+      sunny_27: 7536330603688825469
+      sunny_31: -5323695456674193257
+      sunny_21: -3978826535914653865
+      sunny_23: -1519405260654265494
+      sunny_22: -8431620468906889226
+      sunny_29: -6554719030809536092
+      sunny_3: 481890085341156454
+      sunny_18: 4984810502935511569
+      sunny_24: -8885837913942001377
+      sunny_0: -1447735423192876108
+      sunny_11: -6514558872456816129
+      sunny_28: -1787509686660077986
+      sunny_30: -7840784839659584831
+      sunny_12: 9108269420461781511
+      sunny_16: 7149369056218003441
+      sunny_35: 4664794178571053208
+      sunny_2: 4731948495108019620
+      sunny_8: 8606248960617093763
+      sunny_20: 2358251362401975184
+      sunny_32: 2015358278469630165
+      sunny_14: -6725881934991401980
+      sunny_33: 6707005409327162214
+      sunny_19: 3686060919895382960
   spritePackingTag: 
   pSDRemoveMatte: 0
   pSDShowRemoveMatteOption: 0

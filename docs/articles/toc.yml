@@ -9,7 +9,7 @@
     - name: Bullet Styles
       href: bullets.md
     - name: How to Add Stuff
-      href: Adding Stuff.md
+      href: AddingStuff.md
     - name: Parsing Rules
       href: parsing.md
     - name: Abstractions
@@ -21,15 +21,15 @@
     - name: A Primer on Color Blending Oddities
       href: ColorBlending.md
     - name: IL2CPP/AoT Support
-      href: AoT Support.md
+      href: AoTSupport.md
 - name: References (Advanced)
   items:
     - name: Shader Features
-      href: Shader Features.md
+      href: ShaderFeatures.md
     - name: Resolution and Rendering
-      href: Resolution and Rendering.md
+      href: ResolutionRendering.md
     - name: Math Documentation
-      href: Math Documentation.md
+      href: MathDocumentation.md
 - name: Basic Tutorials
   items:
     - name: 01 - The First Bullet

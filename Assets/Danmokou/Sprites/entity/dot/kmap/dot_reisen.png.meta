@@ -270,8 +270,8 @@ TextureImporter:
   textureSettings:
     serializedVersion: 2
     filterMode: 0
-    aniso: -1
-    mipBias: -100
+    aniso: 1
+    mipBias: 0
     wrapU: 1
     wrapV: 1
     wrapW: 1
@@ -292,6 +292,8 @@ TextureImporter:
   textureType: 8
   textureShape: 1
   singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
   maxTextureSizeSet: 0
   compressionQualitySet: 0
   textureFormatSet: 0
@@ -746,6 +748,26 @@ TextureImporter:
     edges: []
     weights: []
     secondaryTextures: []
+    nameFileIdTable:
+      dot_reisen_4: -5606279122655163781
+      dot_reisen_0: -1689499577261684444
+      dot_reisen_14: 4646069417139567282
+      dot_reisen_16: -5734100650574932995
+      dot_reisen_2: -4783677840014394338
+      dot_reisen_18: 5448944023848377741
+      dot_reisen_13: 6076866904979503979
+      dot_reisen_9: -2350118482015447062
+      dot_reisen_17: 3655955399767461668
+      dot_reisen_1: 5826663988598648592
+      dot_reisen_5: -8064172180848285870
+      dot_reisen_7: -535643753816095210
+      dot_reisen_3: -2398663687062852532
+      dot_reisen_8: 6370312030271544338
+      dot_reisen_10: -9185848084752832331
+      dot_reisen_15: -8138333371448345922
+      dot_reisen_11: -2296597520054010974
+      dot_reisen_6: 7977949110546701668
+      dot_reisen_12: 3038275772335966131
   spritePackingTag: 
   pSDRemoveMatte: 0
   pSDShowRemoveMatteOption: 0

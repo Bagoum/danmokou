@@ -2,7 +2,7 @@
     <Style src="UIScreen.uss" />
     <ui:VisualElement name="Container" style="padding-left: 720px;">
         <ui:VisualElement class="column" style="max-width: 40%; padding-top: 500px;">
-            <ui:ListView focusable="True" show-border="false" show-bound-collection-size="true" class="columnList" />
+            <ui:ScrollView class="columnList" />
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

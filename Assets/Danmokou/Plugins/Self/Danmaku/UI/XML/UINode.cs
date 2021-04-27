@@ -246,6 +246,7 @@ public class UINode {
         _overrideRight = overr;
         return this;
     }
+    public UINode SetChildrenInaccessible() => SetRightOverride(() => this);
 
     private int rightChildIndex = 0;
 

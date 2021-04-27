@@ -246,8 +246,8 @@ TextureImporter:
   textureSettings:
     serializedVersion: 2
     filterMode: 0
-    aniso: -1
-    mipBias: -100
+    aniso: 1
+    mipBias: 0
     wrapU: 1
     wrapV: 1
     wrapW: 1
@@ -268,6 +268,8 @@ TextureImporter:
   textureType: 8
   textureShape: 1
   singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
   maxTextureSizeSet: 0
   compressionQualitySet: 0
   textureFormatSet: 0
@@ -692,6 +694,24 @@ TextureImporter:
     edges: []
     weights: []
     secondaryTextures: []
+    nameFileIdTable:
+      dot_kaguya_14: -2010519230302348111
+      dot_kaguya_15: 3316190028476425825
+      dot_kaguya_4: 7713473369878693175
+      dot_kaguya_9: 6551713848503580499
+      dot_kaguya_12: 7288022682533214538
+      dot_kaguya_2: 1367657959182735635
+      dot_kaguya_13: 4168911883912475585
+      dot_kaguya_1: -7718228992152264792
+      dot_kaguya_10: 4379338163918800768
+      dot_kaguya_0: 2223920096743656307
+      dot_kaguya_7: -4495309697200839941
+      dot_kaguya_11: 6096128209302534778
+      dot_kaguya_5: -4446768744277037364
+      dot_kaguya_3: 1459876936820550490
+      dot_kaguya_8: 3489113278030162731
+      dot_kaguya_16: -791447371929509651
+      dot_kaguya_6: 601528327962448728
   spritePackingTag: 
   pSDRemoveMatte: 0
   pSDShowRemoveMatteOption: 0

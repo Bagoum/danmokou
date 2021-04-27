@@ -8,16 +8,10 @@ To get the newest version from git, run:
 
 `git submodule update` (if you have made modifications to the submodules, you will need to `pull --rebase` them individually)
 
-**DMK is only supported in version 2020.1.17**. There is currently a bug in 2020.2 and 2021.1b that cause any build containing both TextMeshPro and FSharp.dll to crash in all builds. 
-
-# Future
-
-- Player team switching
-
-# v7.0.0 (2021/03/14)
+# v7.0.0 (2021/03/23)
 
 - **Breaking changes:**
-  - Please upgrade your Unity to **2020.2**. 2021 should also work. 2019 is no longer supported.
+  - Please upgrade your Unity to **2020.2**. 2021 currently has a bug with UIToolkit disallowing switching between debug and release modes. 2019 is no longer supported (it does not support some C#8 changes).
   - `SS`, `SSD`, `SDD`, `SSDD` and related simple-bullet firing functions have been removed. Use `simple` instead with `scale`/`dir`/`dir2` options (<xref:DMK.Danmaku.Options.SBOption>)
   - Previous versions of DMK allowed implicit casts from TP to TP3 and from TP3 to TP in script code. This kind of circular cast is architecturally problematic, and support has been removed in v7.0.0. Now, TP may be implicitly casted to TP3, but the downcast is not allowed. Instead, use the `TP` function, as follows: `nroffset(tp(qrotate(...)))`. The reason that the TP->TP3 cast is prioritized is to protect the rule that *implicit casts should not result in information loss*.
   - The signatures of functions operating over firing options, lasers, and player data have changed (see the note below about FiringCtx). The names have also been standardized. See `Assets/Danmokou/Plugins/Self/Danmaku/Math/MathRepos/GenericMath/ExM.cs`.

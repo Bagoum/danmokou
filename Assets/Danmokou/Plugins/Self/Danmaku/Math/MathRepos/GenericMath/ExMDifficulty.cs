@@ -12,7 +12,7 @@ namespace DMK.DMath.Functions {
 [Reflect]
 public static class ExMDifficulty {
     //Note: difficulty is parsed statically at script compile time (when not using EXBAKE_SAVE/LOAD),
-    //whereas rank (future) will be dynamic.
+    //whereas rank (future) will always be dynamic.
     
 #if !EXBAKE_SAVE && !EXBAKE_LOAD
     /// <summary>

@@ -45,7 +45,7 @@ public static class SaveData {
             FinishedGames.Values.Where(gr => gr.RequestKey.type == 0);
 
         [JsonIgnore]
-        public ICollection<string> CompletedCampaigns => FinishedGames.Values
+        private ICollection<string> CompletedCampaigns => FinishedGames.Values
             .Where(g => g.Completed)
             .Select(g => g.ReconstructedRequestKey.Resolve(
                 c => c,
@@ -55,9 +55,12 @@ public static class SaveData {
             ))
             .FilterNone()
             .ToImmutableHashSet();
+
+        public bool CampaignCompleted(string key) =>
+            CompletedCampaigns.Contains(key);
         
         [JsonIgnore]
-        public bool MainCampaignCompleted => CompletedCampaigns.Contains(GameManagement.References.campaign.key);
+        public bool MainCampaignCompleted => CampaignCompleted(GameManagement.References.campaign.key);
 
         public static readonly Events.Event0 TutorialCompleted = new Events.Event0();
 

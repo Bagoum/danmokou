@@ -300,7 +300,7 @@ public class GameManagement : CoroutineRegularUpdater {
         _campaigns ??= References.Campaigns.Select(c => new AnalyzedCampaign(c)).ToArray();
 
     public static IEnumerable<AnalyzedCampaign> FinishedCampaigns =>
-        Campaigns.Where(c => SaveData.r.CompletedCampaigns.Contains(c.campaign.key));
+        Campaigns.Where(c => SaveData.r.CampaignCompleted(c.campaign.key));
 
     public static AnalyzedCampaign MainCampaign =>
         Campaigns.FirstOrDefault(c => c.campaign.key == References.campaign.key)!;

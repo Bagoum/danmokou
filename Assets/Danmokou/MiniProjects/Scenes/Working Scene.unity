@@ -319,7 +319,7 @@ PrefabInstance:
         type: 3}
       propertyPath: behaviorScript
       value: 
-      objectReference: {fileID: 4900000, guid: c0984728d7562ef4eb2be21bc5e53b44, type: 3}
+      objectReference: {fileID: 4900000, guid: b853ae2ee7187844d9bced300f308eed, type: 3}
     - target: {fileID: 4823259105108341091, guid: 43d5da5eb5b153e4087eb90e97832a00,
         type: 3}
       propertyPath: m_Color.b

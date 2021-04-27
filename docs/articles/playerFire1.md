@@ -6,8 +6,6 @@
 
 Players may use simple bullets, lasers, or pathers as firables.
 
-**WARNING: this doc is based on DMK v4.0.0. Do not continue if you are on a lower version.**
-
 To use simple bullets as a fire type, use the normal name of the bullet style, and use the `simple` command with the `player` property. The arguments are, in order:
 
 - Damage dealt to boss enemies

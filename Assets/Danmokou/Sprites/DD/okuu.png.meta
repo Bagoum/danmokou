@@ -171,8 +171,8 @@ TextureImporter:
   textureSettings:
     serializedVersion: 2
     filterMode: 0
-    aniso: -1
-    mipBias: -100
+    aniso: 1
+    mipBias: 0
     wrapU: 1
     wrapV: 1
     wrapW: 1
@@ -193,6 +193,8 @@ TextureImporter:
   textureType: 8
   textureShape: 1
   singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
   maxTextureSizeSet: 0
   compressionQualitySet: 0
   textureFormatSet: 0
@@ -1214,6 +1216,53 @@ TextureImporter:
     edges: []
     weights: []
     secondaryTextures: []
+    nameFileIdTable:
+      okuu_37: -8181574709904321863
+      okuu_24: -6612578669357300668
+      okuu_2: 6613305041809596651
+      okuu_32: 8330413958836121723
+      okuu_12: -8120971421551330919
+      okuu_33: 6925920237115442222
+      okuu_4: -102725568455292515
+      okuu_27: 3642377582278193750
+      okuu_31: -5970318321050935218
+      okuu_3: -573439813930665480
+      okuu_29: 381722209422872567
+      okuu_40: 1708380295470134096
+      okuu_15: -163043647819014508
+      okuu_13: -8372044341771826844
+      okuu_21: -3248123295925624113
+      okuu_7: -8782724035335865962
+      okuu_16: -1635746529073763698
+      okuu_20: 153101408245194568
+      okuu_25: -1160430492274587441
+      okuu_35: 1834393037370134625
+      okuu_26: -7527327349811758715
+      okuu_36: 4383720460602727530
+      okuu_38: 4330502666030830984
+      okuu_34: -8647643161020770232
+      okuu_28: 8811176757896975544
+      okuu_10: -7979784258028690579
+      okuu_11: 4901707498349160968
+      okuu_17: -7982253211642463631
+      okuu_9: -3244375827483262791
+      okuu_18: 5643911703507207296
+      okuu_19: -7710353881882654016
+      okuu_45: -7320987780965711069
+      okuu_30: 489790694731003148
+      okuu_39: -6321379813344247066
+      okuu_43: 8567368613008130403
+      okuu_5: -8701778964694930652
+      okuu_6: 3666039250447363935
+      okuu_42: -6031642567502994770
+      okuu_22: -1864472025218089452
+      okuu_8: -2060836880308652685
+      okuu_14: 2689851585216035242
+      okuu_0: -7191301689014931236
+      okuu_41: -2039637549663995249
+      okuu_44: -7881190861287585800
+      okuu_23: 1643011646671862726
+      okuu_1: -3122192354156156927
   spritePackingTag: 
   pSDRemoveMatte: 0
   pSDShowRemoveMatteOption: 0

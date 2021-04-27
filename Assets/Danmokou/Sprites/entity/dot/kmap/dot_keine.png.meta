@@ -225,8 +225,8 @@ TextureImporter:
   textureSettings:
     serializedVersion: 2
     filterMode: 0
-    aniso: -1
-    mipBias: -100
+    aniso: 1
+    mipBias: 0
     wrapU: 1
     wrapV: 1
     wrapW: 1
@@ -247,6 +247,8 @@ TextureImporter:
   textureType: 8
   textureShape: 1
   singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
   maxTextureSizeSet: 0
   compressionQualitySet: 0
   textureFormatSet: 0
@@ -974,6 +976,39 @@ TextureImporter:
     edges: []
     weights: []
     secondaryTextures: []
+    nameFileIdTable:
+      dot_keine_10: 6305381344179968536
+      dot_keine_17: -7209574935517340468
+      dot_keine_30: -4586591846881378439
+      dot_keine_26: -5272342015432776461
+      dot_keine_1: -7214019999560754139
+      dot_keine_8: 5470624943759514200
+      dot_keine_24: -7166969706480641956
+      dot_keine_7: -3740209518384894941
+      dot_keine_23: -666851828201689999
+      dot_keine_28: -1135253328574485055
+      dot_keine_4: 2864685520673714631
+      dot_keine_0: -1807212716761881737
+      dot_keine_5: 1520306773088265433
+      dot_keine_11: -6131140943975227932
+      dot_keine_27: 7524269527589714077
+      dot_keine_13: 7165010758202290648
+      dot_keine_15: 8375845648626016536
+      dot_keine_31: -5750822595569776807
+      dot_keine_2: -720136745642128311
+      dot_keine_19: -1698750471583585568
+      dot_keine_20: -6395084886439658698
+      dot_keine_14: 6172059675669206397
+      dot_keine_9: 3371993138309412450
+      dot_keine_18: 2110772113515135345
+      dot_keine_25: 3030508764253308940
+      dot_keine_3: -992799250225629574
+      dot_keine_16: -3585888649275735386
+      dot_keine_12: -5721630835590026256
+      dot_keine_6: -6950736488266691796
+      dot_keine_21: -2334156106567413848
+      dot_keine_22: -6663438280826258137
+      dot_keine_29: 3095415841332005307
   spritePackingTag: 
   pSDRemoveMatte: 0
   pSDShowRemoveMatteOption: 0

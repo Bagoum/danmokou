@@ -1,34 +1,43 @@
 # Bullet Types
 
-The currently implemented bullet types are as follows, in increasing order of rendering priority:
+The currently implemented bullet types are as follows, in increasing order of rendering priority.
+
+Note: if a bullet name starts with "G", that means it is a glowy style (usually rendered additively).
 
 | Bullet Type                                 | Notes                             |
 | ------------------------------------------- | --------------------------------- |
 | **Lasers** (`laser` command)                |                                   |
 | Laser                                       |                                   |
+| StretchLaser                                |                                   |
+| ArrowLaser                                  |                                   |
+| SunnyLaser                                  |                                   |
 | GLaser                                      | Additive rendering                |
+| GStretchLaser                               | Additive rendering                |
 | GDLaser                                     | Additive rendering                |
-| Mulaser                                     | Should not be given a hitbox      |
-| Zonelaser                                   | Should not be given a hitbox      |
+| MuLaser                                     | Should not be given a hitbox      |
+| ZoneLaser                                   | Should not be given a hitbox      |
 | **Pathers** (`pather` command)              |                                   |
 | Pather                                      |                                   |
-| GPather                                     | Additive rendering                |
+| ArrowPather                                 |                                   |
 | Lightning                                   |                                   |
+| GPather                                     | Additive rendering                |
 | **Simple Bullets** (`s`, `simple` commands) |                                   |
 | SCircle                                     | Nonrotational                     |
+| EllyScythe                                  |                                   |
 | LCircle                                     |                                   |
 | LEllipse                                    |                                   |
 | LStar                                       |                                   |
 | Fireball                                    |                                   |
 | Sakura                                      |                                   |
-| Amulet                                      |                                   |
+| Apple                                       |                                   |
+| Amulet                                      | Also AmuletReimu                  |
 | Circle                                      |                                   |
 | Ellipse                                     |                                   |
 | Gem                                         |                                   |
 | Shell                                       |                                   |
 | Arrow                                       |                                   |
 | Star                                        |                                   |
-| Triangle                                    | Used as suicide bullets           |
+| Triangle                                    | Default suicide bullet style      |
 | Dot                                         |                                   |
 | Strip                                       |                                   |
 | Sun                                         | Additive rendering, nonrotational |
@@ -38,7 +47,7 @@ The currently implemented bullet types are as follows, in increasing order of re
 
 When summoning bullets, use the format: `{SHAPE}-{COLOR}{GRADIENT}`, where:
 
-- shape is one of the styles listed above, but in lowercase
+- shape is one of the styles listed above, in lowercase
 - color is one of: black, purple, teal, green, orange, yellow, red, pink, blue
 - gradient is one of: `/w`,`/`, `/b` (light, colored, and inverted colorings respectively)
 

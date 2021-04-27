@@ -189,6 +189,8 @@ MonoBehaviour:
     type: 3}
   AchievementsNodeV: {fileID: 9197481963319205126, guid: 5ca42b9c1ff90ea499bdec566109fc03,
     type: 3}
+  MusicRoomScreenV: {fileID: 9197481963319205126, guid: b237038fda43c5342accbd6200e4f862,
+    type: 3}
   difficultySubmenu: {fileID: 5365018383905480166}
   playmodeSubmenu: {fileID: 5615592919199676993}
   shotDisplayContainer: {fileID: 865111494282575137}

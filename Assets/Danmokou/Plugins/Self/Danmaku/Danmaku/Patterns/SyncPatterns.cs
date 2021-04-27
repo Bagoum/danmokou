@@ -240,41 +240,6 @@ public static partial class SyncPatterns {
         };
     }
     
-    public static SyncPattern GuideEmpty_noexpr(string? suffix, BPY indexer, (string, SBV2)[] saveV2s,
-        (string, SBF)[] saveFs, GCXU<VTP> emptyPath, SyncPattern[] guided) {
-        var emptySP = AtomicPatterns.S(emptyPath);
-        suffix ??= $".{RNG.RandString(8)}";
-        string estyle = $"{BulletManager.EMPTY}{suffix}";
-        List<SBCFp> controlsL = new List<SBCFp>();
-        if (saveV2s.Length > 0) {
-            var data = new (ReflectEx.Hoist<Vector2> target, BPY indexer, SBV2 valuer)[saveV2s.Length];
-            for (int ii = 0; ii < saveV2s.Length; ++ii) {
-                data[ii] = (new ReflectEx.Hoist<Vector2>(saveV2s[ii].Item1), indexer, saveV2s[ii].Item2);
-            }
-            controlsL.Add(BulletManager.SimpleBulletControls.SaveV2_noexpr(data, _ => true));
-        }
-        if (saveFs.Length > 0) {
-            var data = new (ReflectEx.Hoist<float> target, BPY indexer, SBF valuer)[saveFs.Length];
-            for (int ii = 0; ii < saveFs.Length; ++ii) {
-                data[ii] = (new ReflectEx.Hoist<float>(saveFs[ii].Item1), indexer, saveFs[ii].Item2);
-            }
-            controlsL.Add(BulletManager.SimpleBulletControls.SaveF_noexpr(data, _ => true));
-        }
-        var controls = controlsL.Select(x => new BulletManager.BulletControl(new SBCFc(x),
-            BulletManager.Consts.PERSISTENT, Cancellable.Null)).ToArray();
-        guided = guided.Select(Loc0).ToArray();
-        return sbh => {
-            BulletManager.AssertControls(estyle, controls);
-            var emptySbh = sbh.CopyGCX();
-            emptySbh.ch.bc.style = estyle;
-            emptySP(emptySbh);
-            emptySbh.GCX.Dispose();
-            for (int ii = 0; ii < guided.Length; ++ii) {
-                guided[ii](sbh);
-            }
-        };
-    }
-    
     #endregion
     private struct SPExecutionTracker {
         private LoopControl<SyncPattern> looper;

@@ -545,17 +545,7 @@ public partial class BulletManager {
                 Ex.Block(targets.Select(t =>
                     t.target.Save(((Ex) t.indexer(extbpi)).As<int>(), t.valuer(extbpi), bpi))));
         }, BulletControl.P_SAVE);
-        
-        public static SBCFp SaveV2_noexpr((ReflectEx.Hoist<Vector2> target, BPY indexer, SBV2 valuer)[] targets, Pred cond) {
-            return new SBCFp(ct => (sbc, ii, bpi) => {
-                if (cond(bpi)) {
-                    foreach (var t in targets) {
-                        t.target.Save((int) t.indexer(bpi), t.valuer(ref sbc[ii]));
-                    }
-                }
-            }, BulletControl.P_SAVE);
-        }
-        
+
         /// <summary>
         /// Save float values in public data hoisting.
         /// <br/>Note: This is automatically called by the GuideEmpty function.
@@ -569,16 +559,6 @@ public partial class BulletManager {
                 Ex.Block(targets.Select(t =>
                     t.target.Save(((Ex) t.indexer(extbpi)).As<int>(), t.valuer(extbpi), bpi))));
         }, BulletControl.P_SAVE);
-        
-        public static SBCFp SaveF_noexpr((ReflectEx.Hoist<float> target, BPY indexer, SBF valuer)[] targets, Pred cond) {
-            return new SBCFp(ct => (sbc, ii, bpi) => {
-                if (cond(bpi)) {
-                    foreach (var t in targets) {
-                        t.target.Save((int) t.indexer(bpi), t.valuer(ref sbc[ii]));
-                    }
-                }
-            }, BulletControl.P_SAVE);
-        }
 
         /// <summary>
         /// Update existing V2 values in the private data hoisting for the bullet.

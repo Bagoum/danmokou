@@ -51,7 +51,7 @@ Take a look at the following fields:
 - Any bosses must have their boss metadata object added to Boss Metadata (see the [boss tutorial](tbosses.md)).
 - Any characters that appear in dialogue must have their dialogue profile added to Dialogue Profiles. There is currently no dialogue tutorial.
 - Tracks contains all the metadata for music played in the game.
-- Items links to an ItemReferences object, which links to prefabs for each of the item types that exist by default in the game. You may want to change the item prefabs if you're making your own game with a unique style.
+- Items links to an ItemReferences object, which links to prefabs for each of the item types that exist by default in the game. To visually change items, simply change the prefabs linked here. To add new item types, you should subclass DMK.Behavior.Items.Item (see the folder Danmaku/Behavior/Items), add an entry to the <xref:DMK.Core.ItemType> enum, and wire up support in DMK.Pooler.ItemPooler.RequestItem.
 - Summonables links all the summonable storage objects used by the game. Normally you will have the Default Summonable Styles object, which links summonables such as enemies and screen effects, as well as a game-specific summonables object for game-specific enemies or game-specific screen effects. 
 
 ## Code

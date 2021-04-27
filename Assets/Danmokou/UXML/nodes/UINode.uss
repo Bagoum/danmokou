@@ -15,6 +15,10 @@
     align-items: center;
 }
 
+.font-ubuntu {
+    -unity-font: url('/Assets/Danmokou/Fonts/ubuntu-font-family-0.83/Ubuntu-L.ttf');
+}
+
 .hide {
     display: none;
 }

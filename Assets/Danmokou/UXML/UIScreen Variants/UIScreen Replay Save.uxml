@@ -3,7 +3,7 @@
     <ui:Label text="New Replay" display-tooltip-when-elided="True" class="header" />
     <ui:VisualElement name="Container" style="padding-left: 600px; padding-right: 480px;">
         <ui:VisualElement class="column wd5">
-            <ui:ListView focusable="True" show-border="false" show-bound-collection-size="true" class="columnList" />
+            <ui:ScrollView class="columnList" />
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

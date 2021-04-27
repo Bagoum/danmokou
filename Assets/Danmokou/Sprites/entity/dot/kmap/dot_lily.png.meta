@@ -69,8 +69,8 @@ TextureImporter:
   textureSettings:
     serializedVersion: 2
     filterMode: 0
-    aniso: -1
-    mipBias: -100
+    aniso: 1
+    mipBias: 0
     wrapU: 1
     wrapV: 1
     wrapW: 1
@@ -91,6 +91,8 @@ TextureImporter:
   textureType: 8
   textureShape: 1
   singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
   maxTextureSizeSet: 0
   compressionQualitySet: 0
   textureFormatSet: 0
@@ -398,6 +400,19 @@ TextureImporter:
     edges: []
     weights: []
     secondaryTextures: []
+    nameFileIdTable:
+      dot_lily_10: 6562867713712350764
+      dot_lily_9: -1583422744530843116
+      dot_lily_7: -2388002819281927583
+      dot_lily_11: 1052974861262245759
+      dot_lily_1: 4060334506927203510
+      dot_lily_5: 9141101408032593362
+      dot_lily_4: -2424852770940752448
+      dot_lily_2: -7238798292142406168
+      dot_lily_6: 7774038956666565407
+      dot_lily_8: -5495256393509830629
+      dot_lily_0: 7739618963680665358
+      dot_lily_3: -3772437350882372312
   spritePackingTag: 
   pSDRemoveMatte: 0
   pSDShowRemoveMatteOption: 0

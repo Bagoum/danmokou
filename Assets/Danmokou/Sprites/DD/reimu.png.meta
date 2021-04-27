@@ -153,8 +153,8 @@ TextureImporter:
   textureSettings:
     serializedVersion: 2
     filterMode: 0
-    aniso: -1
-    mipBias: -100
+    aniso: 1
+    mipBias: 0
     wrapU: 1
     wrapV: 1
     wrapW: 1
@@ -175,6 +175,8 @@ TextureImporter:
   textureType: 8
   textureShape: 1
   singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
   maxTextureSizeSet: 0
   compressionQualitySet: 0
   textureFormatSet: 0
@@ -1070,6 +1072,47 @@ TextureImporter:
     edges: []
     weights: []
     secondaryTextures: []
+    nameFileIdTable:
+      oha4: 4695833354741967189
+      reimu_9: -865492837845741942
+      reimu_15: -2085414386574335758
+      reimu_20: -5498250786745116292
+      reimu_28: 3717975211236476360
+      reimu_18: -5684086761647187864
+      reimu_4: 6762124007882689112
+      reimu_10: -3355352157446676642
+      reimu_12: 6823094972800110870
+      oha2: 2847382411381677094
+      reimu_amulet_2: -2580542869261807455
+      reimu_30: -9075884247972941117
+      reimu_32: -5791135553867045881
+      reimu_orb_4: -2571616503975631570
+      reimu_14: -5425684682266424973
+      reimu_23: -1335402344658697521
+      reimu_amulet_1: -5655127470543279052
+      reimu_orb_3: 3818182386508469091
+      reimu_1: -2182622433948752608
+      reimu_11: 8465632479084846818
+      reimu_0: -6526597336363400846
+      reimu_3: 1951979921115826207
+      reimu_31: -8578262988976265178
+      reimu_needle: 475904014001560618
+      reimu_7: -5651560387842162596
+      reimu_orb_1: 3451516188334087793
+      reimu_21: 7735434639345953439
+      reimu_6: -1571346506241653757
+      reimu_13: 1456264429820348860
+      reimu_29: 618041068233184544
+      reimu_22: -2363311196912263255
+      oha3: -9081458668086881848
+      reimu_16: 188749464568781134
+      reimu_19: -5030115898254913183
+      reimu_5: -5191110334488865902
+      reimu_17: 4884675645428117443
+      reimu_orb_2: -3370256387710733728
+      reimu_2: 5348214566728501794
+      oha1: 2016393811908889612
+      reimu_8: 4614050099165156534
   spritePackingTag: 
   pSDRemoveMatte: 0
   pSDShowRemoveMatteOption: 0

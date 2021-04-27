@@ -14,7 +14,7 @@ A lot of this engine's power is in its ability to turn simple text into complex 
       FormattableString.Invariant($"lerpsmooth bounce2 {timeToFirstHit} {timeToSecondHitPost} t {fireMultiplier.x} {fireMultiplier.y}").Into<BPY>();
   ```
 
-- Functions in the math libraries may construct caches of data (see `stopsampling`). Various forms of data caching are linked in DataHoisting, PrivateDataHoisting, and PublicDataHoisting. When the boss clears a phase, these data caches are emptied to prevent cross-contamination between bullets (`DataHoisting.ClearValues`). When switching between scenes, the data caches are destroyed and unlinked from the data hoisting classes. The reason for this is to prevent out-of-scope reflected content, such as complex boss StateMachines, from remaining in memory when they are no longer in use, and to preserve complete logical independence between scenes. As a result, as a general rule, any constructed objects that depends on functions that use data caches must be destroyed when the scene ends. If you are using static objects or objects on the GameManagement GameObject (which is persistent across scenes) that depend on these libraries, you should wrap it in `ReflWrap<T>`, which will lazily load the object the first time it's used in a scene. For an example, see `PlayerBombs.cs:TB1_1`.
+- Functions related to public data hoisting (eg. `retrievehoisted`) construct caches of data that are persistent during boss phases. When the boss clears a phase, these data caches are emptied to prevent cross-contamination between bullets (`PublicDataHoisting.ClearValues`). When switching between scenes, the data caches are destroyed and unlinked from the data hoisting classes. The reason for this is to prevent out-of-scope reflected content, such as complex boss StateMachines, from remaining in memory when they are no longer in use, and to preserve complete logical independence between scenes. As a result, as a general rule, any constructed objects that depends on functions that use data caches must be destroyed when the scene ends. If you are using static objects or objects on the GameManagement GameObject (which is persistent across scenes) that depend on these libraries, you should wrap it in `ReflWrap<T>`, which will lazily load the object the first time it's used in a scene. For an example, see `PlayerBombs.cs:TB1_1`.
 
 ## Backgrounds
 
@@ -22,13 +22,13 @@ A lot of this engine's power is in its ability to turn simple text into complex 
 
 ## Language Version
 
-- DMK v7 uses the latest "C#8-ish" features enabled in Unity. However, the engine currently uses `[CanBeNull]` annotations where C#8 nullable reference annotations would be present, since I have not yet found out how to enable nullable reference types project-wide.
+- DMK v7 uses the latest "C#8-ish" features enabled in Unity, including nullable reference types. Nullable reference types are enabled via `Danmokou/Assets/csc.rsp`.
 
 ## Compilation Targets
 
 - Mono platforms (PC/Android) work perfectly with everything.
-- IL2CPP/Ahead-of-Time Compilation platforms require special handling in order to support expression compilation (see [the precompilation doc](AoT Support.md)). This is for two reasons related to AoT language design:
+- IL2CPP/Ahead-of-Time Compilation platforms require special handling in order to support expression compilation (see [the precompilation doc](AoTSupport.md)). This is for two reasons related to AoT language design:
   - IL2CPP cannot handle expressions compiled to byref functions. [Related Github issue](https://github.com/dotnet/runtime/issues/31075). The root cause seems to be a dotnet policy, but this is solvable with a few minor engine deoptimizations.
   - IL2CPP cannot handle expressions compiled to functions using value types. [Related forum thread](https://forum.unity.com/threads/are-c-expression-trees-or-ilgenerator-allowed-on-ios.489498/). As far as I can tell this is not solvable except by boxing, which would be far too heavy on the GC, but Unity should eventually get around to fixing the root cause. When that happens, I will standardize IL2CPP support. 
-- In DMK v6 and earlier, the `NO_EXPR` compilation flag allowed a small amount of runtime reflection for AoT platforms. This is superseded in v7 by precompilation support (see [the precompilation doc](AoT Support.md)).
+- In DMK v6 and earlier, the `NO_EXPR` compilation flag allowed a small amount of runtime reflection for AoT platforms. This is superseded in v7 by precompilation support (see [the precompilation doc](AoTSupport.md)).
 - DMK replay files do not work in IL2CPP. This will be fixed eventually.

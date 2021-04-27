@@ -30,9 +30,8 @@ Here is a (not entirely complete) feature list for DMK:
 - Built-in architecture for challenge-based scene games
 - Efficient compiled scripting language with the same interfaces as C#
 - Instantaneous runtime script recompilation
-- Replay, spell history, high score support
+- Support for practice modes, replays, spell history, high scores, statistics, and achievements
 - Dialogue engine with Ace Attorney-style text unrolling
-- Script analysis and practice architecture
 - Curved lasers, curvy lasers, and wavy lasers (yes, they're all different)
 - Arbitrary functions for bullet movement  (No other engine supports this!)
 - Optimized rendering pathway batching 500+ bullets at a time 

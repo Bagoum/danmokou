@@ -11,7 +11,7 @@ These are verbose instructions on how to set up Danmokou on your first run.
 ## Part 1: Unity Setup
 
 - Download/Install Unity Hub (https://store.unity.com/download-nuo), then run it
-- Within Unity Hub > Installs, add Unity version **2020.1.17f1** (Do **not** use 2020.2 or 2021.*. They have a bug with FSharp.Core.dll which will cause all exported builds to crash on startup.)
+- Within Unity Hub > Installs, add Unity version **2020.2.7f1** (Do **not** use 2021 or 2019).
 - Within Unity Hub > Projects, click ADD and browse to the root Danmokou folder. 
 - Click on the project to load it. **The first time you load it, Unity may take several minutes to import resources.**
   - If you get an error about the default layout, then close Unity, move the three `.dwlt` files in the `DMK_DEFAULTS` folder to the `Library` folder, and open Unity.
@@ -69,5 +69,5 @@ If using VS Code, you may come across an issue where many references in the code
 
 Only do this if you are rebuilding the F# project. This is not necessary for the vast majority of users. If you have no idea what this means, then you don't need to do it.
 
-- Build the F# project in the `FS` folder targeted at 4.7.2. I have provided DLLs so you don't have to do this unless you make changes to the F# code.
-- Copy the output DLLs (Common, FParsec, FParsecCS, FSharp.Core, Parser, System.ValueTuple) to `Assets/Danmokou/Plugins/Self/Core`.
+- Build the `ParserCS` project in the `FS` folder targeted at 4.7.2. I have provided DLLs so you don't have to do this unless you make changes to the code.
+- Copy the output DLL (ParserCS) to `Assets/Danmokou/Plugins/Self/Core/FS`.

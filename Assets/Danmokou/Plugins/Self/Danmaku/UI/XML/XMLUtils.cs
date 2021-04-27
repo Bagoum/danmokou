@@ -6,6 +6,7 @@ using DMK.Core;
 using DMK.Danmaku;
 using DMK.GameInstance;
 using DMK.Scriptables;
+using DMK.Services;
 using JetBrains.Annotations;
 using DMK.SM;
 using UnityEngine.UIElements;
@@ -15,6 +16,7 @@ using static DMK.Core.LocalizedStrings.CDifficulty;
 
 namespace DMK.UI.XML {
 public static class XMLUtils {
+    public const string fontUbuntuClass = "font-ubuntu";
     public const string monospaceClass = "monospace";
     public const string large1Class = "large1";
     public const string small1Class = "small1";
@@ -124,6 +126,8 @@ public static class XMLUtils {
     }
     
     
+    //TODO: temp workaround for wrapping custom difficulty descriptions
+    private static readonly string[] descr = {descriptorClass, "wrap"};
 
     public static UIScreen CreateCustomDifficultyEdit(VisualTreeAsset screen, 
         Func<DifficultySettings, (bool, UINode)> dfcCont) {
@@ -136,8 +140,6 @@ public static class XMLUtils {
                     cb();
                 }
             }
-            //TODO: temp workaround for wrapping custom difficulty descriptions
-            string[] descr = {descriptorClass, "wrap"};
             double[] _pctMods = {
                 0.31, 0.45, 0.58, 0.7, 0.85, 1, 1.2, 1.4, 1.6, 1.8, 2
             };
@@ -356,6 +358,19 @@ public static class XMLUtils {
                 ).ToArray()
             ).With(screen);
 
+    public static UIScreen MusicRoomScreen(VisualTreeAsset screen, IEnumerable<IAudioTrackInfo> musics) =>
+        new UIScreen(
+            musics.SelectNotNull(m => m.DisplayInMusicRoom switch {
+                true => new FuncNode(() => AudioTrackService.InvokeBGM(m), 
+                    LocalizedString.Format("({0}) {1}", m.TrackPlayLocation, m.Title), true,
+                        new UINode(m.MusicRoomDescription).With(descr).With(small2Class, fontUbuntuClass)
+                    ).SetChildrenInaccessible().With(small1Class),
+                false => new UINode("????????????????",
+                    new UINode("This track is not yet unlocked.").With(descr).With(small2Class, fontUbuntuClass)
+                    ).SetChildrenInaccessible().With(small1Class),
+                _ => null
+            }).ToArray()
+        ).With(screen);
 
 }
 }

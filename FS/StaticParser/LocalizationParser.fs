@@ -36,6 +36,7 @@ let private trivialString =
     ] |> many1Chars
 
 let internal escape = (anyOf escapeChars |>> function
+    | 'r' -> ""
     | 'n' -> "\\n"
     | 't' -> "\\t"
     | '{' -> "{{" //This is how brackets are escaped in C# string formatting
@@ -81,8 +82,9 @@ and internal fullString allowUnescapedQuote s =
         formatFragment
     ]) s
 
-let stringParser s =
+let stringParser (s: string) =
      let state = { highestArg = -1 }
+     let s = s.Replace("\n", "\\n").Replace("\r", "")
      if String.IsNullOrWhiteSpace s
      then OK ([], state)
      else

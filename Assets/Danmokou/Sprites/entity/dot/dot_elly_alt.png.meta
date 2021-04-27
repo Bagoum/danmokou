@@ -84,8 +84,8 @@ TextureImporter:
   textureSettings:
     serializedVersion: 2
     filterMode: 0
-    aniso: -1
-    mipBias: -100
+    aniso: 1
+    mipBias: 0
     wrapU: 1
     wrapV: 1
     wrapW: 1
@@ -106,6 +106,8 @@ TextureImporter:
   textureType: 8
   textureShape: 1
   singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
   maxTextureSizeSet: 0
   compressionQualitySet: 0
   textureFormatSet: 0
@@ -506,6 +508,24 @@ TextureImporter:
     edges: []
     weights: []
     secondaryTextures: []
+    nameFileIdTable:
+      dot_elly_alt_13: -7205927690186419586
+      dot_elly_alt_9: 2301389226478865993
+      dot_elly_alt_0: 733978662205961473
+      dot_elly_alt_11: -1898630341518209381
+      dot_elly_alt_4: 9066667862013498675
+      dot_elly_alt_12: 2132650291239661345
+      dot_elly_alt_16: 5024022596927524508
+      dot_elly_alt_5: -1444508702898889530
+      dot_elly_alt_15: 9052716868242390513
+      dot_elly_alt_6: 4141072102779297990
+      dot_elly_alt_10: -9173434052663917901
+      dot_elly_alt_8: -4851455483172057416
+      dot_elly_alt_7: 2128895896472637950
+      dot_elly_alt_2: 1696125261017987795
+      dot_elly_alt_3: 7957176254620793794
+      dot_elly_alt_14: 1051866149096295771
+      dot_elly_alt_1: 5348531001479206858
   spritePackingTag: 
   pSDRemoveMatte: 0
   pSDShowRemoveMatteOption: 0

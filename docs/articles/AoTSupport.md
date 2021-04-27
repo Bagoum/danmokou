@@ -34,7 +34,8 @@ protected override void Awake() {
 
 //FireOption option locations is dependent on the player shot power,
 // so it is of type string[]. Attribute usage is the same
-[ReflectInto(typeof(TP3))] public string[] powerOffsetFree;
+[ReflectInto(typeof(TP3))]
+public string[] powerOffsetFree;
 
 //BossConfig rotators are properties that return type TP3 directly. 
 [ReflectInto]

@@ -45,12 +45,13 @@ public class XMLMainMenuCampaign : XMLMainMenu {
     private UIScreen ReplayScreen = null!;
     private UIScreen HighScoreScreen = null!;
     private UIScreen StatsScreen = null!;
+    private UIScreen MusicRoomScreen = null!;
     private UIScreen? AchievementsScreen;
 
     protected override IEnumerable<UIScreen> Screens => new[] {
         PlaymodeScreen, DifficultyScreen, CustomDifficultyScreen, CampaignShotScreen, ExtraShotScreen,
         StagePracticeScreen, BossPracticeScreen, OptionsScreen, ReplayScreen, HighScoreScreen,
-        StatsScreen, AchievementsScreen,
+        StatsScreen, AchievementsScreen, MusicRoomScreen,
         MainScreen
     }.NotNull();
 
@@ -66,6 +67,7 @@ public class XMLMainMenuCampaign : XMLMainMenu {
     public VisualTreeAsset SpellPracticeNodeV = null!;
     public VisualTreeAsset AchievementsScreenV = null!;
     public VisualTreeAsset AchievementsNodeV = null!;
+    public VisualTreeAsset MusicRoomScreenV = null!;
 
     public DifficultySubmenu difficultySubmenu = null!;
     public PlayModeSubmenu playmodeSubmenu = null!;
@@ -279,6 +281,7 @@ public class XMLMainMenuCampaign : XMLMainMenu {
         HighScoreScreen = XMLUtils.HighScoreScreen(ReplayScreen, FinishedCampaigns.ToArray())
             .With(HighScoreScreenV);
         StatsScreen = XMLUtils.StatisticsScreen(StatsScreenV, SaveData.r.FinishedCampaignGames, Campaigns);
+        MusicRoomScreen = XMLUtils.MusicRoomScreen(MusicRoomScreenV, References.tracks);
         if (GameManagement.Achievements != null)
             AchievementsScreen = XMLUtils.AchievementsScreen(
                 AchievementsScreenV, AchievementsNodeV, GameManagement.Achievements);
@@ -297,6 +300,9 @@ public class XMLMainMenuCampaign : XMLMainMenu {
                 .With(large1Class),
             new TransferNode(StatsScreen, main_stats)
                 .EnabledIf(FinishedCampaigns.Any())
+                .With(large1Class),
+            new TransferNode(MusicRoomScreen, main_musicroom)
+                .EnabledIf(MusicRoomScreen.top.Length > 0)
                 .With(large1Class),
             AchievementsScreen == null ? null :
                 new TransferNode(AchievementsScreen, main_achievements).With(large1Class),

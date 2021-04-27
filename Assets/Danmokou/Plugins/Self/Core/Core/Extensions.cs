@@ -165,7 +165,7 @@ public static class IEnumExtensions {
     public static IEnumerable<double> Step(this (double min, double max) bound, double step) {
         for (double x = bound.min; x < bound.max; x += step) yield return x;
     }
-    public static IEnumerable<U> SelectNotNull<T, U>(this IEnumerable<T> arr, Func<T, U> f) where U : class {
+    public static IEnumerable<U> SelectNotNull<T, U>(this IEnumerable<T> arr, Func<T, U?> f) where U : class {
         foreach (var x in arr) {
             var y = f(x);
             if (y != null) yield return y;
