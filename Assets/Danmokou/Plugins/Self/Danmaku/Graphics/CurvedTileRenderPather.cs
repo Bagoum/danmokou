@@ -82,7 +82,7 @@ public class CurvedTileRenderPather : CurvedTileRender {
         ParametricInfo pi, BPY rememberTime, float maxRememberTime, SOPlayerHitbox collisionTarget, 
         ref RealizedBehOptions options) {
         exec = locationer;
-        int newTexW = (int) Math.Ceiling(maxRememberTime * ETime.ENGINEFPS) + 1;
+        int newTexW = (int) Math.Ceiling(maxRememberTime * ETime.ENGINEFPS_F) + 1;
         base.Initialize(locationer, cfg, material, isNew, false, options.playerBullet != null, newTexW);
         if (locationer.HasParent()) throw new NotImplementedException("Pather cannot be parented");
         movement = mov;
@@ -178,7 +178,7 @@ public class CurvedTileRenderPather : CurvedTileRender {
         lastDataIndex = (lastDataIndex > 0) ? lastDataIndex - 1 : 0;
         if (lastDataIndex == last) return; //Need at least two frames to draw
 
-        int remembered = (int) Math.Ceiling((nextRemember = remember(bpi)) * ETime.ENGINEFPS);
+        int remembered = (int) Math.Ceiling((nextRemember = remember(bpi)) * ETime.ENGINEFPS_F);
         if (remembered < 2) remembered = 2;
         if (remembered > cL - lastDataIndex) remembered = cL - lastDataIndex;
         

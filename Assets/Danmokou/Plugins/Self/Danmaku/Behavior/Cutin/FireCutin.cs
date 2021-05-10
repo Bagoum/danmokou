@@ -114,9 +114,9 @@ public class FireCutin : BehaviorEntity {
         //SetColorA(upperText, 1);
         //SetColorA(lowerText, 1);
         for (float t = 0; t < timeFromMidToFirstHit; t += ETime.FRAME_TIME) yield return null;
-        SFXService.Request("x-metal");
+        DependencyInjection.SFXService.Request("x-metal");
         for (float t = 0; t < timeFromFirstToSecondHit; t += ETime.FRAME_TIME) yield return null;
-        SFXService.Request("x-metal");
+        DependencyInjection.SFXService.Request("x-metal");
     }
 
     protected override void RegularUpdateRender() {

@@ -1,5 +1,6 @@
 ﻿using DMK.Core;
 using DMK.Expressions;
+using DMK.GameInstance;
 using Ex = System.Linq.Expressions.Expression;
 using static DMK.Expressions.ExMHelpers;
 using tfloat = DMK.Expressions.TEx<float>;
@@ -12,7 +13,9 @@ namespace DMK.DMath.Functions {
 [Reflect]
 public static class ExMDifficulty {
     //Note: difficulty is parsed statically at script compile time (when not using EXBAKE_SAVE/LOAD),
-    //whereas rank (future) will always be dynamic.
+    //whereas rank is always dynamic.
+    
+    #region Difficulty
     
 #if !EXBAKE_SAVE && !EXBAKE_LOAD
     /// <summary>
@@ -20,7 +23,7 @@ public static class ExMDifficulty {
     /// </summary>
     public static tfloat D() => Ex.Constant(Difficulty.Value);
     /// <summary>
-    /// Get the difficulty counter. 1 is easy, 4 is lunatic.
+    /// Get the difficulty counter. 0 is easy, 3 is lunatic.
     /// </summary>
     public static tfloat Dc() => Ex.Constant(Difficulty.Counter);
     /// <summary>
@@ -94,8 +97,33 @@ public static class ExMDifficulty {
     
 #endif
     
-    
-    
-    
+    #endregion
+
+
+    #region Rank
+
+    /// <summary>
+    /// Minumum possible rank value (inclusive).
+    /// </summary>
+    public static tfloat MinRank() => Ex.Constant((float) InstanceData.minRankLevel);
+    /// <summary>
+    /// Maximum possible rank value (inclusive).
+    /// </summary>
+    public static tfloat MaxRank() => Ex.Constant((float) InstanceData.maxRankLevel);
+    /// <summary>
+    /// Get the dynamic difficulty rank, which varies between MinRank and MaxRank.
+    /// </summary>
+    [Alias("r")]
+    public static tfloat Rank() => ExM.Instance.Field("RankLevel").As<float>();
+
+    public static tfloat RankRatio() => ExMLerps.Ratio(MinRank(), MaxRank(), Rank());
+
+
+
+    #endregion
+
+
+
+
 }
 }

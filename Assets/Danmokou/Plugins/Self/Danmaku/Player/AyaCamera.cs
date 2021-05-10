@@ -122,7 +122,7 @@ public class AyaCamera : BehaviorEntity {
         if (player.IsTryingBomb && orientationSwitchWaiting < 0f) {
             orientationSwitchWaiting = orientationSwitchCooldown;
             CameraOrientation = Reverse(CameraOrientation);
-            SFXService.Request(onOrientationSwitch);
+            DependencyInjection.SFXService.Request(onOrientationSwitch);
         }
         //while firing, the angle is static and the position is controlled by the coroutine
         if (CameraState != State.FIRING) {
@@ -137,7 +137,7 @@ public class AyaCamera : BehaviorEntity {
             bool full = ChargeFull;
             charge = M.Clamp(chargeMin, chargeMax, charge + GetChargeRate(CameraState) * ETime.FRAME_TIME);
             if (!full && ChargeFull) {
-                SFXService.Request(onFullCharge);
+                DependencyInjection.SFXService.Request(onFullCharge);
             }
             text.text = string.Format(textFormat, charge);
             text.color = TextColor;
@@ -182,7 +182,7 @@ public class AyaCamera : BehaviorEntity {
         CameraState = State.FIRING;
         var slowdownToken = ETime.Slowdown.CreateModifier(0.5f, MultiOp.Priority.CLEAR_SCENE);
         viewfinder.gameObject.layer = highCameraLayer;
-        var sfx = SFXService.RequestSource(whileFire);
+        var sfx = DependencyInjection.SFXService.RequestSource(whileFire);
         void Cancel() {
             if (sfx != null) {
                 sfx.Stop();
@@ -213,12 +213,12 @@ public class AyaCamera : BehaviorEntity {
             _enemies[ii].enemy.HideViewfinderCrosshair();
         }
         Cancel();
-        SFXService.Request(onTimeout);
+        DependencyInjection.SFXService.Request(onTimeout);
         RunDroppableRIEnumerator(UpdateNormal());
     }
     private IEnumerator UpdateCharge() {
         CameraState = State.CHARGE;
-        var sfx = SFXService.RequestSource(whileCharge);
+        var sfx = DependencyInjection.SFXService.RequestSource(whileCharge);
         while (InputCharging) yield return null;
         if (sfx != null) sfx.Stop();
         RunDroppableRIEnumerator(UpdateNormal());
@@ -284,7 +284,7 @@ public class AyaCamera : BehaviorEntity {
     }
 
     private IEnumerator DoFlash(float time, bool success) {
-        SFXService.Request(onFlash);
+        DependencyInjection.SFXService.Request(onFlash);
         flash.enabled = true;
         Color c = flash.color;
         c.a = 1;
@@ -297,7 +297,7 @@ public class AyaCamera : BehaviorEntity {
         c.a = 0;
         flash.color = c;
         flash.enabled = false;
-        SFXService.Request(success ? onPictureSuccess : onPictureMiss);
+        DependencyInjection.SFXService.Request(success ? onPictureSuccess : onPictureMiss);
     }
     
 

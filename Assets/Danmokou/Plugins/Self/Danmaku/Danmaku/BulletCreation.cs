@@ -59,7 +59,7 @@ public struct DelegatedCreator {
         forceRoot = root;
     }
 
-    public void SFX() => SFXService.Request(style);
+    public void SFX() => DependencyInjection.SFXService.Request(style);
 
     private (Movement, ParametricInfo) PathHandlers(SyncHandoff sbh, GCXU<VTP> path, uint? id = null) {
         var fctx = FiringCtx.New(sbh.GCX);

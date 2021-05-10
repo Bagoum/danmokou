@@ -20,7 +20,7 @@ public static class TestParsing {
         AreEqual(4.4f, Float("4.4"));
         AreEqual(4.4f, Float("--4.4"));
         AreEqual(-4.4f, Float("-4.4"));
-        AreEqual(-.4f * ETime.ENGINEFPS, Float("+-0.4s"));
+        AreEqual(-.4f * ETime.ENGINEFPS_F, Float("+-0.4s"));
         AreEqual(-.4f * ETime.FRAME_TIME, Float("-+.4f"));
         AreEqual(-.4f * M.PHI, Float("-+.4p"));
         AreEqual(-.4f * M.IPHI, Float("-+.4h"));

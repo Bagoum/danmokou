@@ -6,12 +6,14 @@ phase(0)
 	paction(0)
 		shift-phase-to(1)
 	
-<!> type(spell, `Danmokou Chimera`)
 <!> hp(1000)
 phase(0)
 	paction 0
-		position -2 0
-		_ 1 async sun-blue/w <2;:> s null
+		position 0 2
+		async fireball-*/w <> gcr2 20 _ <> {
+			colorf({ red blue green yellow orange purple }, r)
+		} gsr2c (1 + r) {
+		} s rvelocity cx 3
 
 
 <!> type(non, `Danmokou Chimera`)

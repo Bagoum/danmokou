@@ -425,7 +425,7 @@ public static partial class AtomicPatterns {
             float wait = t1 + delay(sbh.GCX);
             SyncPatterns.Reexec(AsyncPatterns._AsGCR(
                 power2,
-                GenCtxProperty.Delay(_ => ETime.ENGINEFPS * wait))
+                GenCtxProperty.Delay(_ => ETime.ENGINEFPS_F * wait))
             )(sbh);
         };
     }
@@ -582,7 +582,7 @@ public struct LoopControl<T> {
         }
         if (props.sfx != null && (props.sfxIf?.Invoke(GCX) ?? true)) {
             int index = (props.sfxIndexer == null) ? GCX.i : (int) props.sfxIndexer(GCX);
-            SFXService.Request(props.sfx.ModIndex(index));
+            DependencyInjection.SFXService.Request(props.sfx.ModIndex(index));
         }
         unmutated_rv2 = GCX.RV2;
         if (props.rv2aMutater != null) {

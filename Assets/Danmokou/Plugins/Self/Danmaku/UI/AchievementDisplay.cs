@@ -81,7 +81,7 @@ public class AchievementDisplay : CoroutineRegularUpdater, IAchievementDisplay {
         lowerText.text = acv.Title;
         tr.localPosition = baseLoc + startOffset;
         Show();
-        SFXService.Request(sfx);
+        DependencyInjection.SFXService.Request(sfx);
         yield return tr.GoTo(baseLoc, inTime, InLerp);
         for (float t = 0; t < waitTime; t += ETime.FRAME_TIME)
             yield return null;

@@ -8,6 +8,7 @@ using DMK.Player;
 using DMK.Scriptables;
 using DMK.Services;
 using JetBrains.Annotations;
+using UnityEngine;
 
 namespace DMK.GameInstance {
 public class InstanceData {
@@ -49,7 +50,33 @@ public class InstanceData {
             return 0.7;
     }
 
+    /// <summary>
+    /// Inclusive
+    /// </summary>
+    public const int minRankLevel = 0;
+    /// <summary>
+    /// Inclusive
+    /// </summary>
+    public const int maxRankLevel = 42;
+
+    public static (int min, int max) RankLevelBoundsForDifficulty(FixedDifficulty fd) => fd switch {
+        FixedDifficulty.Lunatic => (19, maxRankLevel),
+        FixedDifficulty.Hard => (12, 35),
+        FixedDifficulty.Normal => (6, 29),
+        _ => (0, 23)
+    };
+
+    private static double RankPointsRequiredForLevel(int level) =>
+        M.BlockRound(100, 1000 * (1 + Math.Log(Math.Max(1, level), 4)));
+    
     public DifficultySettings Difficulty { get; }
+    public int RankLevel { get; private set; }
+    public (int min, int max) RankLevelBounds => RankLevelBoundsForDifficulty(Difficulty.ApproximateStandard);
+    public double RankPoints { get; private set; }
+    public double RankPointsRequired => RankPointsRequiredForLevel(RankLevel);
+    private static double DefaultRankPointsForLevel(int level) => RankPointsRequiredForLevel(level) * 0.5;
+    public double RankPointsPerSecond => M.Lerp(0, 3, Difficulty.Counter, 10, 21);
+    private const double RankPointsGraze = 3;
     
     private const int defltContinues = 42;
     public const long smallValueItemPoints = 314;
@@ -196,6 +223,7 @@ public class InstanceData {
     public List<BossConfig> BossesEncountered { get; } = new List<BossConfig>();
     public int EnemiesDestroyed { get; private set; }
     public int TotalFrames { get; private set; }
+    public int PlayerActiveFrames { get; private set; }
     public int LastMeterStartFrame { get; private set; }
     public int LastTookHitFrame { get; private set; }
     public int MeterFrames { get; private set; }
@@ -211,6 +239,8 @@ public class InstanceData {
         
         this.mode = mode;
         this.Difficulty = req?.metadata.difficulty ?? GameManagement.defaultDifficulty;
+        this.RankLevel = Difficulty.customRank ?? Difficulty.ApproximateStandard.DefaultRank();
+        this.RankPoints = DefaultRankPointsForLevel(RankLevel);
         this.MaxScore = maxScore ?? 9001;
         campaign = req?.lowerRequest.Resolve(cr => cr.campaign.campaign, _ => null!, _ => null!, _ => null!);
         campaignKey = req?.lowerRequest.Resolve(cr => cr.Key, b => b.boss.campaign.Key, s => s.Campaign.key,
@@ -282,8 +312,8 @@ public class InstanceData {
             //Replayer.Cancel();
             --Continues;
             ++ContinuesUsed;
-            Score = lastScore = UIVisibleScore = nextItemLifeIndex = nextScoreLifeIndex = LifeItems = 0;
             CardHistory.Clear();//Partial game is saved when lives=0. Don't double on captures.
+            Score = lastScore = UIVisibleScore = nextItemLifeIndex = nextScoreLifeIndex = LifeItems = 0;
             PIV = 1;
             Meter = StartMeter(mode);
             if (campaign != null) {
@@ -293,6 +323,7 @@ public class InstanceData {
             }
             Bombs = StartBombs(mode);
             remVisibleScoreLerpTime = Faith = faithLenience = 0;
+            SetRankLevel(RankLevelBounds.min);
             CampaignDataUpdated.Proc();
             return true;
         } else return false;
@@ -459,6 +490,7 @@ public class InstanceData {
         AddFaith(delta * FaithBoostGraze);
         AddFaithLenience(FaithLenienceGraze);
         AddMeter(delta * MeterBoostGraze);
+        AddRankPoints(delta * RankPointsGraze);
         Counter.GrazeProc(delta);
         CampaignDataUpdated.Proc();
     }
@@ -477,6 +509,37 @@ public class InstanceData {
     public void AddOneUpItem() {
         ++OneUpItemsCollected;
         LifeExtend();
+    }
+
+    /// <summary>
+    /// Returns true iff the rank level changed.
+    /// </summary>
+    public bool SetRankLevel(int level, double? points = null) {
+        var (min, max) = RankLevelBounds;
+        level = M.Clamp(min, max, level);
+        if (RankLevel == level) return false;
+        bool increaseRank = level > RankLevel;
+        RankLevel = level;
+        RankPoints = M.Clamp(0, RankPointsRequired - 1, points ?? DefaultRankPointsForLevel(level));
+        CampaignDataUpdated.Proc();
+        RankLevelChanged.Publish(increaseRank);
+        return true;
+    }
+    public void AddRankPoints(double delta) {
+        do {
+            RankPoints += delta;
+            if (RankPoints < 0) {
+                delta = RankPoints;
+                RankPoints = 0;
+                if (!SetRankLevel(RankLevel - 1)) break;
+            } else if (RankPoints > RankPointsRequired) {
+                delta = RankPoints - RankPointsRequired;
+                RankPoints = RankPointsRequired;
+                if (!SetRankLevel(RankLevel + 1)) break;
+            } else
+                delta = 0;
+        } while (RankPoints + delta < 0 || RankPoints + delta > RankPointsRequired);
+        CampaignDataUpdated.Proc();
     }
 
     private void LifeExtend() {
@@ -537,15 +600,23 @@ public class InstanceData {
         if (CurrentBossCT?.Cancelled == true) {
             CloseBoss();
         }
+        bool dataUpdated = false;
+        if (PlayerInput.PlayerActive && mode != InstanceMode.NULL) {
+            ++PlayerActiveFrames;
+            if (TotalFrames % ETime.ENGINEFPS == 0) {
+                AddRankPoints(RankPointsPerSecond);
+                dataUpdated = true;
+            }
+        }
         if (remVisibleScoreLerpTime > 0) {
             remVisibleScoreLerpTime -= ETime.FRAME_TIME;
             if (remVisibleScoreLerpTime <= 0) UIVisibleScore = Score;
             else UIVisibleScore = (long) M.LerpU(lastScore, Score, 1 - remVisibleScoreLerpTime / visibleScoreLerpTime);
-            CampaignDataUpdated.Proc();
+            dataUpdated = true;
         }
         UIVisibleFaithDecayLenienceRatio = M.LerpU(UIVisibleFaithDecayLenienceRatio, 
             Math.Min(1f, faithLenience / 3f), 6f * ETime.FRAME_TIME);
-        if (PlayerInput.PlayerActive && !Lenient && EngineStateManager.IsRunning) {
+        if (PlayerInput.PlayerActive && !Lenient) {
             if (faithLenience > 0) {
                 faithLenience = Math.Max(0, faithLenience - ETime.FRAME_TIME);
             } else if (Faith > 0) {
@@ -555,9 +626,14 @@ public class InstanceData {
                 PIV = Math.Max(1, PIV - pivFallStep);
                 Faith = 0.5f;
                 faithLenience = faithLenienceFall;
-                CampaignDataUpdated.Proc();
+                //In the other branches, UIManager gets updates via UpdatePB, and doesn't require a text update.
+                //TODO look into semantic separation of this and UIManager in CampaignDataUpdated
+                dataUpdated = true;
             }
         }
+        if (dataUpdated)
+            CampaignDataUpdated.Proc();
+        ;
     }
 
 
@@ -580,6 +656,10 @@ public class InstanceData {
     public static readonly Events.Event0 PlayerTookHit = new Events.Event0();
     public static readonly Events.Event0 CardHistoryUpdated = new Events.Event0();
     public static readonly Events.Event0 MeterNowUsable = new Events.Event0();
+    /// <summary>
+    /// True iff rank level was increased
+    /// </summary>
+    public static readonly Events.Event<bool> RankLevelChanged = new Events.Event<bool>();
     public static readonly Events.Event0 PowerLost = new Events.Event0();
     public static readonly Events.Event0 PowerGained = new Events.Event0();
     public static readonly Events.Event0 PowerFull = new Events.Event0();

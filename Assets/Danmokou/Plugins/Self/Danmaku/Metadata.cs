@@ -26,8 +26,10 @@ public class DifficultySettings {
     public const int MAX_SLIDER = 42;
     public const int DEFAULT_SLIDER = 18;
     public FixedDifficulty? standard;
-    public float customCounter;
     public int customValueSlider;
+    //Cached to avoid rechecking the difficulty list every op 
+    private FixedDifficulty customStandard;
+    public int? customRank;
     public int numSuicideBullets;
     public double playerDamageMod;
     
@@ -44,21 +46,24 @@ public class DifficultySettings {
     public double playerGrazeboxMultiplier;
     public double pocOffset;
     public int? startingLives;
+    [JsonIgnore] [ProtoIgnore] 
+    public FixedDifficulty ApproximateStandard => standard ?? customStandard;
     [JsonIgnore] [ProtoIgnore]
     private float CustomValue => DifficultyForSlider(customValueSlider);
     [JsonIgnore] [ProtoIgnore]
     public float Value => standard?.Value() ?? CustomValue;
     [JsonIgnore] [ProtoIgnore]
-    public float Counter => standard?.Counter() ?? customCounter;
+    public float Counter => ApproximateStandard.Counter();
     
     public DifficultySettings() : this(FixedDifficulty.Normal) { } //JSON constructor
     public DifficultySettings(FixedDifficulty standard) : this((FixedDifficulty?)standard) { }
 
     public void SetCustomDifficulty(int value) {
         customValueSlider = value;
-        customCounter = Nearest(value).Counter();
+        customStandard = Nearest(customValueSlider);
     }
-    public DifficultySettings(FixedDifficulty? standard, int slider=DEFAULT_SLIDER, int numSuicideBullets = 0,
+    public DifficultySettings(FixedDifficulty? standard, int slider=DEFAULT_SLIDER, int? rank = null, 
+        int numSuicideBullets = 0,
         double playerDamageMod=1f, float bulletSpeedMod=1f, double bossHPMod=1f, bool respawnOnDeath = false, 
         double faithDecayMult=1, double faithAcquireMult=1, double meterUsageMult=1, double meterAcquireMult=1, 
         bool bombsEnabled=true, bool meterEnabled=true, 
@@ -66,6 +71,7 @@ public class DifficultySettings {
         float pocOffset=0, int? startingLives=null
         ) {
         this.standard = standard;
+        this.customRank = rank;
         SetCustomDifficulty(slider);
         this.numSuicideBullets = numSuicideBullets;
         this.playerDamageMod = playerDamageMod;
@@ -182,7 +188,7 @@ public readonly struct PhaseCompletion {
     public bool NoHits => hits == 0;
     public readonly bool noMeter;
     private readonly int elapsedFrames;
-    public float ElapsedTime => elapsedFrames / ETime.ENGINEFPS;
+    public float ElapsedTime => elapsedFrames / ETime.ENGINEFPS_F;
     //The props timeout may be overriden
     private readonly float timeout;
     private float ElapsedRatio => timeout > 0 ? ElapsedTime / timeout : 0;

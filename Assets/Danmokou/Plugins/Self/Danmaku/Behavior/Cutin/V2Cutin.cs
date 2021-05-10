@@ -40,7 +40,7 @@ public class V2Cutin : CoroutineRegularUpdater {
         for (; t < 1.98f; t += ETime.FRAME_TIME) yield return null;
         RunDroppableRIEnumerator(
             core.RotateTo(new Vector3(0f, 0f, -10f), 3f, M.EOutSine));
-        SFXService.Request("x-metal");
+        DependencyInjection.SFXService.Request("x-metal");
     }
 }
 }

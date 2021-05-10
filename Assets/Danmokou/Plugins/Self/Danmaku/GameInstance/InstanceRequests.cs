@@ -162,7 +162,7 @@ public class InstanceRequest {
         if (Finish()) {
             record?.Update(GameManagement.Instance);
             record ??= MakeGameRecord();
-            GameManagement.NewInstance(InstanceMode.NULL);
+            GameManagement.ResetInstance();
             Replayer.End(record);
             TrySave(record);
             if (Saveable)
@@ -205,6 +205,7 @@ public class InstanceRequest {
     }
 
     public void Cancel() {
+        GameManagement.ResetInstance();
         foreach (var c in gameTrackers) c.Cancel();
         gameTrackers.Clear();
     }

@@ -182,9 +182,18 @@ public enum FixedDifficulty {
 }
 public enum InstanceMode {
     /// <summary>
-    /// No particular instance type. Used for debugging, but should not be used during gameplay.
+    /// Used when the instance is not active (eg. on the main menu).
+    /// NULL is the mode used when the program starts.
     /// </summary>
     NULL,
+#if UNITY_EDITOR || ALLOW_RELOAD
+    /// <summary>
+    /// Used when there is no real instance, but there is still gameplay (debugging situations or demos).
+    /// Using local reset by pressing R will set the mode to DEBUG.
+    /// As the default mode is NULL, you may need to press R once in debugging situations to get full functionality.
+    /// </summary>
+    DEBUG,
+#endif
     /// <summary>
     /// Playing through a full campaign (eg. 6 sequential stages). Note that EX stages are distinct campaigns.
     /// </summary>
@@ -319,37 +328,40 @@ public static class EnumHelpers2 {
         if (st == PhaseType.TIMEOUT || st == PhaseType.DIALOGUE) return 1000000000;
         return null;
     }
-    public static int Int(this Layer l) {
-        return LayerMask.NameToLayer(l switch {
+    public static int Int(this Layer l) => LayerMask.NameToLayer(l switch {
             Layer.LowFX => "LowEffects",
             Layer.HighFX => "TransparentFX",
             Layer.LowProjectile => "LowProjectile",
             _ => "HighProjectile"
         });
-    }
 
-    public static float Value(this FixedDifficulty d) {
-        if (d == FixedDifficulty.Easy) return 1.00f;     // 2^0.0
-        else if (d == FixedDifficulty.Normal) return 1.414f;  // 2^0.5
-        else if (d == FixedDifficulty.Hard) return 2.00f;     // 2^1.0
-        else if (d == FixedDifficulty.Lunatic) return 2.828f; // 2^1.5
-        throw new Exception($"Couldn't resolve difficulty setting {d}");
-    }
-    public static float Counter(this FixedDifficulty d) {
-        if (d == FixedDifficulty.Easy) return 0;
-        else if (d == FixedDifficulty.Normal) return 1;
-        else if (d == FixedDifficulty.Hard) return 2;
-        else if (d == FixedDifficulty.Lunatic) return 3;
-        throw new Exception($"Couldn't resolve difficulty setting {d}");
-    }
+    public static float Value(this FixedDifficulty d) => d switch {
+            FixedDifficulty.Lunatic => 2.828f, //2^1.5
+            FixedDifficulty.Hard => 2.00f,     //2^1.0
+            FixedDifficulty.Normal => 1.414f,  //2^0.5
+            _ => 1.00f                         //2^0.0
+        };
 
-    public static LocalizedString Describe(this FixedDifficulty d) {
-        if (d == FixedDifficulty.Easy) return difficulty_easy;
-        else if (d == FixedDifficulty.Normal) return difficulty_normal;
-        else if (d == FixedDifficulty.Hard) return difficulty_hard;
-        else if (d == FixedDifficulty.Lunatic) return difficulty_lunatic;
-        throw new Exception($"Couldn't resolve difficulty setting {d}");
-    }
+    public static float Counter(this FixedDifficulty d) => d switch {
+            FixedDifficulty.Lunatic => 3,
+            FixedDifficulty.Hard => 2,
+            FixedDifficulty.Normal => 1,
+            _ => 0
+        };
+
+    public static int DefaultRank(this FixedDifficulty d) => d switch {
+        FixedDifficulty.Lunatic => 29,
+        FixedDifficulty.Hard => 22,
+        FixedDifficulty.Normal => 13,
+        _ => 4
+    };
+
+    public static LocalizedString Describe(this FixedDifficulty d) => d switch {
+            FixedDifficulty.Lunatic => difficulty_lunatic,
+            FixedDifficulty.Hard => difficulty_hard,
+            FixedDifficulty.Normal => difficulty_normal,
+            _ => difficulty_easy
+        };
 
     public static bool IsOneCard(this InstanceMode mode) =>
         mode == InstanceMode.CARD_PRACTICE || mode == InstanceMode.SCENE_CHALLENGE;

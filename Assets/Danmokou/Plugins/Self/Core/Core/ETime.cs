@@ -70,8 +70,9 @@ public static class UpdatePriorities {
 public class ETime : MonoBehaviour {
     public static float ASSUME_SCREEN_FRAME_TIME { get; private set; } = 1 / 60f;
     private float untilNextRegularFrame = 0f;
-    public const float ENGINEFPS = 120f;
-    public const float FRAME_TIME = 1f / ENGINEFPS;
+    public const int ENGINEFPS = 120;
+    public const float ENGINEFPS_F = ENGINEFPS;
+    public const float FRAME_TIME = 1f / ENGINEFPS_F;
     public const float FRAME_YIELD = FRAME_TIME * 0.1f;
     public static MultiMultiplier Slowdown { get; } = new MultiMultiplier(1f, v => Time.timeScale = v);
     /// <summary>

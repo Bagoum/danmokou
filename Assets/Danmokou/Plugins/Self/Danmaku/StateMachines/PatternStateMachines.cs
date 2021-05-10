@@ -232,7 +232,7 @@ public class PhaseSM : SequentialSM {
         if (GameManagement.Instance.mode != InstanceMode.CARD_PRACTICE && !SaveData.Settings.TeleportAtPhaseStart) {
             if (props.bossCutin && props.Boss != null && props.Background != null) {
                 GameManagement.Instance.ExternalLenience(props.Boss.bossCutinTime);
-                SFXService.BossCutin();
+                DependencyInjection.Find<ISFXService>().RequestSFXEvent(ISFXService.SFXEventType.BossCutin);
                 //Service not required since no callback
                 DependencyInjection.MaybeFind<IRaiko>()?.Shake(props.Boss.bossCutinTime / 2f, null, 1f, smh.cT, null);
                 Object.Instantiate(props.Boss.bossCutin);
@@ -247,7 +247,7 @@ public class PhaseSM : SequentialSM {
                 cutins = WaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, props.Boss.bossCutinTime, false);
                 forcedBG = true;
             } else if (props.GetSpellCutin(out var sc)) {
-                SFXService.BossSpellCutin();
+                DependencyInjection.Find<ISFXService>().RequestSFXEvent(ISFXService.SFXEventType.BossSpellCutin);
                 DependencyInjection.MaybeFind<IRaiko>()?.Shake(1.5f, null, 1f, smh.cT, null);
                 Object.Instantiate(sc);
             }

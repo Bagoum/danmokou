@@ -472,7 +472,7 @@ public static class NumExtensions {
     public static char ToABC(this int x) => (char) ('A' + x);
 
     public static LocalizedString FramesToTime(this int f) {
-        int s = (int) (f / ETime.ENGINEFPS);
+        int s = (int) (f / ETime.ENGINEFPS_F);
         int hours = s / 3600;
         s %= 3600;
         int minutes = s / 60;

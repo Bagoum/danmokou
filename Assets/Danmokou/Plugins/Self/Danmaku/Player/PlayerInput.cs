@@ -202,7 +202,7 @@ public class PlayerInput : BehaviorEntity {
         }
         Log.Unity($"Loading player shot: {Shot.key} : sub {Subshot.Describe()}", level: Log.Level.DEBUG2);
         if (DestroyExistingShot()) 
-            SFXService.Request(Shot.onSwap);
+            DependencyInjection.SFXService.Request(Shot.onSwap);
         var realized = Shot.GetSubshot(Subshot);
         spawnedShot = realized.playerChild ? 
             GameObject.Instantiate(realized.prefab, tr) : 
@@ -234,22 +234,22 @@ public class PlayerInput : BehaviorEntity {
     
     [UsedImplicitly]
     public Vector2 PastPosition(float timeAgo) =>
-        PastPositions.SafeIndexFromBack((int) (timeAgo * ETime.ENGINEFPS));
+        PastPositions.SafeIndexFromBack((int) (timeAgo * ETime.ENGINEFPS_F));
     public static readonly ExFunction pastPosition = ExUtils.Wrap<PlayerInput>("PastPosition", typeof(float));
     
     [UsedImplicitly]
     public Vector2 PastDirection(float timeAgo) =>
-        PastDirections.SafeIndexFromBack((int) (timeAgo * ETime.ENGINEFPS));
+        PastDirections.SafeIndexFromBack((int) (timeAgo * ETime.ENGINEFPS_F));
     public static readonly ExFunction pastDirection = ExUtils.Wrap<PlayerInput>("PastDirection", typeof(float));
     
     [UsedImplicitly]
     public Vector2 MarisaAPosition(float timeAgo) =>
-        MarisaAPositions.SafeIndexFromBack((int) (timeAgo * ETime.ENGINEFPS));
+        MarisaAPositions.SafeIndexFromBack((int) (timeAgo * ETime.ENGINEFPS_F));
     public static readonly ExFunction marisaAPosition = ExUtils.Wrap<PlayerInput>("MarisaAPosition", typeof(float));
     
     [UsedImplicitly]
     public Vector2 MarisaADirection(float timeAgo) =>
-        MarisaADirections.SafeIndexFromBack((int) (timeAgo * ETime.ENGINEFPS));
+        MarisaADirections.SafeIndexFromBack((int) (timeAgo * ETime.ENGINEFPS_F));
     public static readonly ExFunction marisaADirection = ExUtils.Wrap<PlayerInput>("MarisaADirection", typeof(float));
     
     #endregion

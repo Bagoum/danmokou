@@ -472,7 +472,7 @@ public static partial class ExM {
     /// </summary>
     public static tbool Is1CC() => Ex.Not(Ex.Property(null, typeof(GameManagement), "Continued"));
 
-    private static Ex Instance => Ex.Property(null, typeof(GameManagement), "Instance");
+    public static Ex Instance => Ex.Property(null, typeof(GameManagement), "Instance");
 
 
     /// <summary>

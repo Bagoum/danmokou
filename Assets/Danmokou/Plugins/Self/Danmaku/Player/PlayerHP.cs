@@ -29,7 +29,7 @@ public class PlayerHP : CoroutineRegularUpdater {
     // the player is replaced at the start of the stage
     public void Setup(PlayerInput inp) {
         tr = transform;
-        hitInvulnFrames = Mathf.CeilToInt(hitInvuln * ETime.ENGINEFPS);
+        hitInvulnFrames = Mathf.CeilToInt(hitInvuln * ETime.ENGINEFPS_F);
         input = inp;
         input.hitbox.Player = this;
     }

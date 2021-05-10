@@ -87,7 +87,7 @@ public abstract class Item : Pooled<Item> {
     }
 
     protected virtual void CollectMe() {
-        SFXService.Request(onCollect);
+        DependencyInjection.SFXService.Request(onCollect);
         PooledDone();
     }
 

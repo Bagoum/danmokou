@@ -569,6 +569,8 @@ MonoBehaviour:
   meterActivated: {fileID: 11400000, guid: 9ad1892b93a0ea34f986b224656664a9, type: 2}
   meterDeActivated: {fileID: 11400000, guid: a142a99862f499746b6e7ef08f56f910, type: 2}
   swapHPScore: {fileID: 11400000, guid: ec75cb7ac0342f9489ad6e5610810bfc, type: 2}
+  rankUp: {fileID: 11400000, guid: 8afb4fd1a5be2234cb8e2dffc30af257, type: 2}
+  rankDown: {fileID: 11400000, guid: b98b726f19c767241b84997cfcbd93ee, type: 2}
   SFX:
   - {fileID: 11400000, guid: bf55c065f345c52478d13f50f9df8716, type: 2}
   - {fileID: 11400000, guid: 16749a71cf9ae8a45936c2df62a4df8d, type: 2}
@@ -795,14 +797,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   references: {fileID: 11400000, guid: 3435cd7b9a88a3d4db4849dae203de60, type: 2}
-  ghostPrefab: {fileID: 2099033134796106231, guid: e6a113662f3191448a2d38649dbb91b5,
-    type: 3}
-  inodePrefab: {fileID: 4607728708591253777, guid: d0dd09c7056e88d4ea59254738f4e621,
-    type: 3}
-  arbitraryCapturer: {fileID: 3557489986302996358, guid: 328052995b995fa4c8266a313c6d38f4,
-    type: 3}
-  defaultSceneConfig: {fileID: 11400000, guid: 77878c984265b1b40b9f529bb9192688, type: 2}
-  playerHitbox: {fileID: 11400000, guid: d20af02baec12db42baba53da24bff95, type: 2}
   visiblePlayer: {fileID: 11400000, guid: d20af02baec12db42baba53da24bff95, type: 2}
 --- !u!114 &2094832129283138134
 MonoBehaviour:

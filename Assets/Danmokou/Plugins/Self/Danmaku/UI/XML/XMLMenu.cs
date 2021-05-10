@@ -178,27 +178,34 @@ public abstract class XMLMenu : RegularUpdater {
             do {
                 var custom = Current.CustomEventHandling();
                 if (custom != null) {
-                    SFXService.Request(leftRightSound); //add another sound
+                    DependencyInjection.SFXService.Request(leftRightSound); //add another sound
                     Current = custom;
                 } else if (InputManager.UILeft.Active) {
-                    if (allowsfx) SFXService.Request(leftRightSound);
+                    if (allowsfx) 
+                        DependencyInjection.SFXService.Request(leftRightSound);
                     Current = Current.Left();
                 } else if (InputManager.UIRight.Active) {
-                    if (allowsfx) SFXService.Request(leftRightSound);
+                    if (allowsfx) 
+                        DependencyInjection.SFXService.Request(leftRightSound);
                     Current = Current.Right();
                 } else if (InputManager.UIUp.Active) {
-                    if (allowsfx) SFXService.Request(upDownSound);
+                    if (allowsfx) 
+                        DependencyInjection.SFXService.Request(upDownSound);
                     Current = Current.Up();
                 } else if (InputManager.UIDown.Active) {
-                    if (allowsfx) SFXService.Request(upDownSound);
+                    if (allowsfx) 
+                        DependencyInjection.SFXService.Request(upDownSound);
                     Current = Current.Down();
                 } else if (InputManager.UIConfirm.Active) {
                     var (succ, nxt) = Current.Confirm_DontNest();
-                    if (succ) HandleTransition(Current, nxt, false);
-                    if (allowsfx) SFXService.Request(succ ? confirmSound : failureSound);
+                    if (succ) 
+                        HandleTransition(Current, nxt, false);
+                    if (allowsfx) 
+                        DependencyInjection.SFXService.Request(succ ? confirmSound : failureSound);
                     if (Current?.Passthrough == true) Current = Current.Parent;
                 } else if (InputManager.UIBack.Active) {
-                    if (allowsfx) SFXService.Request(backSound);
+                    if (allowsfx) 
+                        DependencyInjection.SFXService.Request(backSound);
                     HandleTransition(Current, Current.Back(), true);
                 } else tried_change = false;
                 allowsfx = false;

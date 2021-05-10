@@ -765,7 +765,7 @@ public static class Scene1 {
         AreEqual(0, m.NumRunningSMs);
         IsFalse(cb);
         //2 second delay
-        for (int ii = 0; ii < ETime.ENGINEFPS * InstanceRequest.WaitBeforeReturn; ++ii) yield return null;
+        for (int ii = 0; ii < ETime.ENGINEFPS_F * InstanceRequest.WaitBeforeReturn; ++ii) yield return null;
         IsTrue(cb);
         AreEqual("TestPractice", SceneManager.GetActiveScene().name);
     }

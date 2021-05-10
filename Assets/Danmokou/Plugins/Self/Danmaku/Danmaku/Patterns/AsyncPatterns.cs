@@ -481,23 +481,7 @@ public static partial class AsyncPatterns {
         }
         return Inner;
     }
-    
-    
-    /// <summary>
-    /// Play a sound effect and then run the child AsyncPattern.
-    /// </summary>
-    /// <param name="style">Sound effect style</param>
-    /// <param name="next">Asynchronous invokee to modify</param>
-    /// <returns></returns>
-    public static AsyncPattern ISFX(string style, AsyncPattern next) {
-        IEnumerator Inner(AsyncHandoff abh) {
-            if (abh.Cancelled) { abh.done(); yield break; }
-            SFXService.Request(style);
-            yield return next(abh);
-        }
-        return Inner;
-    }
-    
+
 
     /// <summary>
     /// Saves the current location of the executing parent so all bullets fired will fire from

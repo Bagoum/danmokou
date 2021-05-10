@@ -97,7 +97,7 @@ public class FrameAnimBullet : ColorizableBullet {
         if (f < realizedFrames.Length) {
             currFrame = f;
             if (realizedFrames[f].collisionActive && !collisionActive && realizedFrames[f].time > 0f) {
-                SFXService.Request(hotSfx);
+                DependencyInjection.SFXService.Request(hotSfx);
             }
             collisionActive = realizedFrames[f].collisionActive;
             SetSprite(realizedFrames[f].s, realizedFrames[f].yscale);

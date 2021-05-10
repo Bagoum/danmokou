@@ -329,6 +329,8 @@ public static class M {
     public static Bounds MulBy(this Bounds b, Vector3 m) {
         return new Bounds(b.center.MulBy(m), b.size.MulBy(m));
     }
+
+    public static double BlockRound(double block, double value) => Math.Round(value / block) * block;
 }
 
 public readonly struct Hitbox {
@@ -605,7 +607,7 @@ public static class Parser {
                     } else if (c == CFRAME) {
                         multiplier *= ETime.FRAME_TIME;
                     } else if (c == CFPS) {
-                        multiplier *= ETime.ENGINEFPS;
+                        multiplier *= ETime.ENGINEFPS_F;
                     } else if (c == CPI) {
                         multiplier *= M.PI;
                     } else if (c == C360H) {

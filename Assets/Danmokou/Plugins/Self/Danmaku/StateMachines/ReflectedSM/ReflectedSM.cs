@@ -62,7 +62,7 @@ if (> t &fadein,
         var cindexer = GCXF(indexer);
         var saver = Async("_$CROSSHAIR_INVALID", _ => V2RV2.Zero, AsyncPatterns.GCRepeat2(
             x => 1,
-            x => ETime.ENGINEFPS * homeSec(x),
+            x => ETime.ENGINEFPS_F * homeSec(x),
             GCXFRepo.RV2Zero,
             new[] { GenCtxProperty.SaveV2((locSave, cindexer, locator)) }, new[] {AtomicPatterns.Noop()}
         ));
@@ -71,7 +71,8 @@ if (> t &fadein,
             float homesec = homeSec(smh.GCX);
             float sticksec = stickSec(smh.GCX);
             locSave.Save((int) cindexer(smh.GCX), locator(smh.GCX));
-            if (homesec > 0) SFXService.Request("x-crosshair");
+            if (homesec > 0) 
+                DependencyInjection.SFXService.Request("x-crosshair");
             float fadein = Mathf.Max(0.15f, homesec / 5f);
             _ = Sync(style, _ => V2RV2.Zero, SyncPatterns.Loc0(Summon(path,
                 new ReflectableLASM(smh2 => {
@@ -81,7 +82,7 @@ if (> t &fadein,
                 }), new BehOptions())))(smh);
             await saver(smh);
             smh.ThrowIfCancelled();
-            SFXService.Request("x-lockon");
+            DependencyInjection.SFXService.Request("x-lockon");
             await WaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, sticksec, false);
         };
     }
@@ -89,7 +90,7 @@ if (> t &fadein,
     public static TaskPattern dZaWarudo(GCXF<float> time) => ZaWarudo(time, _ => Vector2.zero, null, null, _ => 20);
     public static TaskPattern ZaWarudo(GCXF<float> time, GCXF<Vector2> loc, GCXF<float>? t1r, GCXF<float>? t2r, GCXF<float> scale) => smh => {
         float t = time(smh.GCX);
-        SFXService.Request("x-zawarudo");
+        DependencyInjection.SFXService.Request("x-zawarudo");
         var anim = Object.Instantiate(ResourceManager.GetSummonable("negative")).GetComponent<ScaleAnimator>();
         anim.transform.position = loc(smh.GCX);
         anim.AssignScales(0, scale(smh.GCX), 0);
@@ -301,7 +302,7 @@ if (> t &fadein,
     /// Play a sound.
     /// </summary>
     public static TaskPattern SFX(string sfx) => smh => {
-        SFXService.Request(sfx);
+        DependencyInjection.SFXService.Request(sfx);
         return Task.CompletedTask;
     };
 

@@ -43,7 +43,7 @@ public class EventLASM : ReflectableLASM {
     /// <returns></returns>
     public static Event PlayerInvuln(int frames) => smh => {
         PlayerHP.RequestPlayerInvulnerable.Publish((frames, true));
-        SFXService.Request("x-invuln");
+        DependencyInjection.SFXService.Request("x-invuln");
         return Task.CompletedTask;
     };
 
@@ -55,7 +55,7 @@ public class EventLASM : ReflectableLASM {
     public static Event BossExplode() => smh => {
         UnityEngine.Object.Instantiate(ResourceManager.GetSummonable("bossexplode")).GetComponent<ExplodeEffect>().Initialize(BossExplodeWait, smh.Exec.rBPI.loc);
         DependencyInjection.MaybeFind<IRaiko>()?.Shake(BossExplodeShake, ShakeMag, 2, smh.cT, null);
-        SFXService.BossExplode();
+        DependencyInjection.SFXService.RequestSFXEvent(ISFXService.SFXEventType.BossExplode);
         return WaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, BossExplodeWait, false);
     };
 

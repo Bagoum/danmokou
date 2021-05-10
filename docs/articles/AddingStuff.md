@@ -51,7 +51,7 @@ Take a look at the following fields:
 - Any bosses must have their boss metadata object added to Boss Metadata (see the [boss tutorial](tbosses.md)).
 - Any characters that appear in dialogue must have their dialogue profile added to Dialogue Profiles. There is currently no dialogue tutorial.
 - Tracks contains all the metadata for music played in the game.
-- Items links to an ItemReferences object, which links to prefabs for each of the item types that exist by default in the game. To visually change items, simply change the prefabs linked here. To add new item types, you should subclass DMK.Behavior.Items.Item (see the folder Danmaku/Behavior/Items), add an entry to the <xref:DMK.Core.ItemType> enum, and wire up support in DMK.Pooler.ItemPooler.RequestItem.
+- Items links to an ItemReferences object, which links to prefabs for each of the item types that exist by default in the game. To visually change items, simply change the prefabs linked here. To add new item types, you should subclass <xref:DMK.Behavior.Items.Item> (see the folder Danmaku/Behavior/Items), add an entry to the 
 - Summonables links all the summonable storage objects used by the game. Normally you will have the Default Summonable Styles object, which links summonables such as enemies and screen effects, as well as a game-specific summonables object for game-specific enemies or game-specific screen effects. 
 
 ## Code
@@ -62,6 +62,6 @@ The easiest way to change a function name is to add an alias. Take a look at the
 
 ### Adding Functions
 
-To add a function, simply write an implementation for it in one of the classes monitored by the reflector (see line 40 on `Utils/Reflection/Initialization.cs`). Ideally, you should also add it in the class that it is semantically close to. For example, if you want to add a SyncPattern, then add it in `Patterning/SyncPatterns.cs` or `Patterning/ExtraSyncPatterns.cs`. If you want to add a simple bullet option, then add it in `BulletManagement/SimpleBulletOption.cs`.
+To add a function, simply write an implementation for it in one of the classes monitored by the reflector (ie. any class in `DMK.Core` or `DMK.Danmaku` with the `Reflect` attribute). Ideally, you should also add it in the class that it is semantically close to. For example, if you want to add a SyncPattern, then add it in `Patterning/SyncPatterns.cs` or `Patterning/ExtraSyncPatterns.cs`. If you want to add a simple bullet option, then add it in `BulletManagement/SimpleBulletOption.cs`.
 
 Note that mathematics functions are written as expressions and are therefore not as easy to add as most other functions.

@@ -71,6 +71,7 @@ public class UIManager : RegularUpdater, IUIManager, IUnpauseAnimateProvider {
     public TextMeshPro message = null!;
     public TextMeshPro multishotIndicator = null!;
     public TextMeshPro centerMessage = null!;
+    public TextMeshPro debug_rank = null!;
     private const string deathCounterFormat = "死{0:D2}";
     private const string timeoutTextFormat = "<mspace=4.3>{0:F1}</mspace>";
     private const string fpsFormat = "FPS: <mspace=1.5>{0:F0}</mspace>";
@@ -254,7 +255,7 @@ public class UIManager : RegularUpdater, IUIManager, IUnpauseAnimateProvider {
             currTime -= ETime.dT;
             if (withSound && currTime < tryCross) {
                 if (0 < tryCross && tryCross <= countdownSounds.Length) {
-                    SFXService.Request(countdownSounds[tryCross - 1]);
+                    DependencyInjection.SFXService.Request(countdownSounds[tryCross - 1]);
                 }
             }
         }
@@ -458,6 +459,7 @@ public class UIManager : RegularUpdater, IUIManager, IUnpauseAnimateProvider {
                 bombPoints[ii].sprite = bombItrs[bi];
             }
         }
+        debug_rank.text = $"RANK Lv{Instance.RankLevel}, {(int)Instance.RankPoints}/{(int)Instance.RankPointsRequired}";
     }
 
     private IEnumerator FadeMessage(string msg, ICancellee cT, float timeIn = 1f, float timeStay = 4f,

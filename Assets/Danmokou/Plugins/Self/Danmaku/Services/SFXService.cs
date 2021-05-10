@@ -16,7 +16,6 @@ using UnityEngine.Serialization;
 namespace DMK.Services {
 public class SFXService : RegularUpdater, ISFXService {
     private static AudioSource src = null!;
-    private static SFXService main = null!;
     public SFXConfig lifeExtend = null!;
     public SFXConfig phaseEndFail = null!;
     public SFXConfig phaseEndSuccess = null!;
@@ -31,6 +30,8 @@ public class SFXService : RegularUpdater, ISFXService {
     public SFXConfig meterActivated = null!;
     public SFXConfig meterDeActivated = null!;
     public SFXConfig swapHPScore = null!;
+    public SFXConfig rankUp = null!;
+    public SFXConfig rankDown = null!;
     public SFXConfig[] SFX = null!;
     private static readonly Dictionary<string, SFXConfig> dclips = new Dictionary<string, SFXConfig>();
 
@@ -47,7 +48,6 @@ public class SFXService : RegularUpdater, ISFXService {
     private static readonly CompactingArray<ConstructedAudio> constructed = new CompactingArray<ConstructedAudio>();
 
     public void Setup() {
-        main = this;
         src = GetComponent<AudioSource>();
         dclips.Clear();
         for (int ii = 0; ii < SFX.Length; ++ii) {
@@ -60,19 +60,20 @@ public class SFXService : RegularUpdater, ISFXService {
         RegisterDI<ISFXService>(this);
         
         Listen(Events.GameStateHasChanged, HandleGameStateChange);
+        Listen(InstanceData.RankLevelChanged, increase => Request(increase ? rankUp : rankDown));
         Listen(InstanceData.MeterNowUsable, () => Request(meterUsable));
         Listen(InstanceData.AnyExtendAcquired, () => Request(lifeExtend));
         Listen(InstanceData.PhaseCompleted, pc => {
             if (pc.Captured.Try(out var captured)) {
-                Request(captured ? main.phaseEndSuccess : main.phaseEndFail);
+                Request(captured ? phaseEndSuccess : phaseEndFail);
             } else if (pc.props.phaseType == PhaseType.STAGE && pc.props.Cleanup) {
-                Request(main.stageSectionEnd);
+                Request(stageSectionEnd);
             }
         });
-        Listen(InstanceData.PowerFull, () => Request(main.powerFull));
-        Listen(InstanceData.PowerGained, () => Request(main.powerGained));
-        Listen(InstanceData.PowerLost, () => Request(main.powerLost));
-        Listen(InstanceData.LifeSwappedForScore, () => Request(main.swapHPScore));
+        Listen(InstanceData.PowerFull, () => Request(powerFull));
+        Listen(InstanceData.PowerGained, () => Request(powerGained));
+        Listen(InstanceData.PowerLost, () => Request(powerLost));
+        Listen(InstanceData.LifeSwappedForScore, () => Request(swapHPScore));
 
         Listen(PlayerInput.PlayerActivatedMeter, () => Request(meterActivated));
         Listen(PlayerInput.PlayerDeactivatedMeter, () => Request(meterDeActivated));
@@ -171,21 +172,16 @@ public class SFXService : RegularUpdater, ISFXService {
         new Dictionary<string, LoopingSourceInfo>();
     private static readonly List<LoopingSourceInfo> loopTimeoutsArr = new List<LoopingSourceInfo>();
 
-    public static void Request(string? style) => main.RequestSFX(style);
-    public void RequestSFX(string? style) {
+    
+    public void Request(string? style) {
         if (string.IsNullOrWhiteSpace(style) || style == "_" || style == null) return;
         if (timeouts.ContainsKey(style)) return;
         if (dclips.ContainsKey(style)) {
-            RequestSFX(dclips[style]);
+            Request(dclips[style]);
         } else throw new Exception($"No SFX exists by name {style}");
     }
 
-    public static Expression Request(Expression style) => request.Of(style);
-
-    private static readonly ExFunction request = ExUtils.Wrap<SFXService>("Request", new[] {typeof(string)});
-
-    public static void Request(SFXConfig? aci) => main.RequestSFX(aci);
-    public void RequestSFX(SFXConfig? aci) {
+    public void Request(SFXConfig? aci) {
         if (aci == null) return;
         if (aci.loop) {
             RequestLoop(aci);
@@ -202,7 +198,7 @@ public class SFXService : RegularUpdater, ISFXService {
     /// Creates a looping audio effect that needs to repeatedly be requested in order to continue playing.
     /// </summary>
     /// <param name="aci"></param>
-    private static void RequestLoop(SFXConfig aci) {
+    private void RequestLoop(SFXConfig aci) {
         if (!loopTimeouts.TryGetValue(aci.defaultName, out var looper)) {
             var _src = _RequestSource(aci);
             if (_src == null) return;
@@ -217,9 +213,9 @@ public class SFXService : RegularUpdater, ISFXService {
     /// <summary>
     /// Returns an inactive source that is not playing and not tracked by SFXService.
     /// </summary>
-    private static AudioSource? _RequestSource(SFXConfig? aci) {
+    private AudioSource? _RequestSource(SFXConfig? aci) {
         if (aci == null) return null;
-        var cmp = main.gameObject.AddComponent<AudioSource>();
+        var cmp = gameObject.AddComponent<AudioSource>();
         cmp.volume = aci.volume * SaveData.s.SEVolume;
         cmp.pitch = aci.Pitch;
         cmp.priority = aci.Priority;
@@ -227,7 +223,7 @@ public class SFXService : RegularUpdater, ISFXService {
         return cmp;
     }
 
-    public static AudioSource? RequestSource(SFXConfig? aci) {
+    public AudioSource? RequestSource(SFXConfig? aci) {
         if (aci == null) return null;
         var cmp = _RequestSource(aci);
         if (cmp != null) {
@@ -239,11 +235,14 @@ public class SFXService : RegularUpdater, ISFXService {
         return cmp;
     }
 
-    public static void BossSpellCutin() => Request(main.bossSpellCutin);
-    public static void BossCutin() => Request(main.bossCutin);
-    public static void BossExplode() => Request(main.bossExplode);
-
-
+    public void RequestSFXEvent(ISFXService.SFXEventType ev) {
+        if      (ev == ISFXService.SFXEventType.BossCutin)
+            Request(bossCutin);
+        else if (ev == ISFXService.SFXEventType.BossSpellCutin)
+            Request(bossSpellCutin);
+        else if (ev == ISFXService.SFXEventType.BossExplode)
+            Request(bossExplode);
+    }
 
     public static void ClearConstructed() {
         for (int ii = 0; ii < constructed.Count; ++ii) {

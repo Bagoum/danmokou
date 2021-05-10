@@ -27,6 +27,16 @@ namespace DMK.DMath.Functions {
 [Reflect]
 public static class ExMLerps {
     /// <summary>
+    /// Get the value t such that LerpUnclamped(a, b, t) = x.
+    /// Do not use if a = b.
+    /// </summary>
+    /// <param name="a">Lower lerp bound</param>
+    /// <param name="b">Upper lerp bound</param>
+    /// <param name="x">Resulting lerp value</param>
+    /// <returns></returns>
+    public static tfloat Ratio(efloat a, tfloat b, tfloat x) => EEx.Resolve(a, _a => x.Sub(a).Div(b.Sub(a)));
+    
+    /// <summary>
     /// Lerp between two functions.
     /// <br/>Note: Unless marked otherwise, all lerp functions clamp the controller.
     /// </summary>
@@ -50,6 +60,11 @@ public static class ExMLerps {
     /// </summary>
     public static TEx<T> LerpD<T>(TEx<T> f1, TEx<T> f2) => Lerp(FixedDifficulty.Easy.Counter(),
         FixedDifficulty.Lunatic.Counter(), ExMDifficulty.Dc(), f1, f2);
+    /// <summary>
+    /// Lerp between a value for minimum rank and maximum rank.
+    /// </summary>
+    public static TEx<T> LerpR<T>(TEx<T> f1, TEx<T> f2) => Lerp(ExMDifficulty.MinRank(),
+        ExMDifficulty.MaxRank(), ExMDifficulty.Rank(), f1, f2);
 
     /// <summary>
     /// Lerp between two functions with 0-1 as the bounds for the controller.

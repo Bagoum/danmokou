@@ -1,6 +1,9 @@
 ﻿
 using System;
 using System.Collections.Generic;
+using System.Linq.Expressions;
+using DMK.Expressions;
+using DMK.Services;
 using JetBrains.Annotations;
 
 namespace DMK.Core {
@@ -18,6 +21,12 @@ public static class DependencyInjection {
     }
 
     private static readonly Dictionary<Type, IService> services = new Dictionary<Type, IService>();
+
+    public static ISFXService SFXService => Find<ISFXService>();
+    public static Expression SFXRequest(Expression style) => 
+        sfxrequest.InstanceOf(Expression.Property(null, typeof(DependencyInjection), "SFXService"), style);
+
+    private static readonly ExFunction sfxrequest = ExUtils.Wrap<ISFXService>("Request", new[] {typeof(string)});
 
 
     /// <summary>

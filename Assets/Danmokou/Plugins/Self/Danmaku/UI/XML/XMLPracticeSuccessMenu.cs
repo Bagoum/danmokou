@@ -46,7 +46,8 @@ public class XMLPracticeSuccessMenu : XMLMenu {
 
     public void HideMe(bool sfx = false) {
         if (UITop != null) {
-            if (sfx) SFXService.Request(closePauseSound);
+            if (sfx) 
+                DependencyInjection.SFXService.Request(closePauseSound);
             UITop.style.display = DisplayStyle.None;
             MenuActive = false;
         }
@@ -55,7 +56,7 @@ public class XMLPracticeSuccessMenu : XMLMenu {
     public void ShowMe() {
         if (UITop != null && !MenuActive) {
             MenuActive = true;
-            SFXService.Request(openPauseSound);
+            DependencyInjection.SFXService.Request(openPauseSound);
             UITop.style.display = DisplayStyle.Flex;
             ResetCurrentNode();
             Redraw();

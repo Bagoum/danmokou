@@ -145,7 +145,7 @@ public class XMLPauseMenu : XMLMenu {
             if (MenuActive && withSave) {
                 MainScreen.ResetNodeProgress();
                 SaveData.AssignSettingsChanges();
-                SFXService.Request(closePauseSound);
+                DependencyInjection.SFXService.Request(closePauseSound);
             }
             //safer to do this even if the menu is already "inactive" since css may set it open initially
             UITop.style.display = DisplayStyle.None;
@@ -157,7 +157,7 @@ public class XMLPauseMenu : XMLMenu {
         //This check is because death-pause may, theoretically, occur in places where the pause menu is disabled
         if (UITop != null && !MenuActive) {
             MenuActive = true;
-            SFXService.Request(openPauseSound);
+            DependencyInjection.SFXService.Request(openPauseSound);
             UITop.style.display = DisplayStyle.Flex;
             ResetCurrentNode();
             Redraw();
