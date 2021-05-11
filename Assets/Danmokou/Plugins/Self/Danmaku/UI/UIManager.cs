@@ -71,7 +71,9 @@ public class UIManager : RegularUpdater, IUIManager, IUnpauseAnimateProvider {
     public TextMeshPro message = null!;
     public TextMeshPro multishotIndicator = null!;
     public TextMeshPro centerMessage = null!;
-    public TextMeshPro debug_rank = null!;
+    public TextMeshPro rankLevel = null!;
+    public SpriteRenderer rankPointBar = null!;
+    public Gradient rankPointBarColor = null!;
     private const string deathCounterFormat = "死{0:D2}";
     private const string timeoutTextFormat = "<mspace=4.3>{0:F1}</mspace>";
     private const string fpsFormat = "FPS: <mspace=1.5>{0:F0}</mspace>";
@@ -92,6 +94,7 @@ public class UIManager : RegularUpdater, IUIManager, IUnpauseAnimateProvider {
     private MaterialPropertyBlock pivDecayPB = null!;
     private MaterialPropertyBlock meterPB = null!;
     private MaterialPropertyBlock bossHPPB = null!;
+    private MaterialPropertyBlock rankPB = null!;
     private MaterialPropertyBlock leftSidebarPB = null!;
     private MaterialPropertyBlock rightSidebarPB = null!;
 
@@ -106,10 +109,11 @@ public class UIManager : RegularUpdater, IUIManager, IUnpauseAnimateProvider {
         if (frame.sprite == null) frame.sprite = References.defaultUIFrame;
         PIVDecayBar.GetPropertyBlock(pivDecayPB = new MaterialPropertyBlock());
         MeterBar.GetPropertyBlock(meterPB = new MaterialPropertyBlock());
-        meterPB.SetFloat(PropConsts.threshold, (float) InstanceData.meterUseThreshold);
+        meterPB.SetFloat(PropConsts.threshold, (float) InstanceConsts.meterUseThreshold);
         defaultMeterColor = MeterBar.sharedMaterial.GetColor(PropConsts.fillColor);
         defaultMeterColor2 = MeterBar.sharedMaterial.GetColor(PropConsts.fillColor2);
         BossHPBar.GetPropertyBlock(bossHPPB = new MaterialPropertyBlock());
+        rankPointBar.GetPropertyBlock(rankPB = new MaterialPropertyBlock());
         leftSidebar.GetPropertyBlock(leftSidebarPB = new MaterialPropertyBlock());
         rightSidebar.GetPropertyBlock(rightSidebarPB = new MaterialPropertyBlock());
         timeout.text = "";
@@ -148,7 +152,7 @@ public class UIManager : RegularUpdater, IUIManager, IUnpauseAnimateProvider {
     }
 
     public static void UpdateTags() {
-        main.difficulty.text = GameManagement.Difficulty.Describe();
+        main.difficulty.text = GameManagement.Difficulty.Describe().ToLower();
     }
 
     private Enemy? bossHP;
@@ -175,9 +179,8 @@ public class UIManager : RegularUpdater, IUIManager, IUnpauseAnimateProvider {
 
     private void UpdatePB() {
         //pivDecayPB.SetFloat(PropConsts.time, time);
-        pivDecayPB.SetFloat(PropConsts.fillRatio, (float) Instance.Faith);
-        pivDecayPB.SetFloat(PropConsts.innerFillRatio,
-            Mathf.Clamp01((float) Instance.UIVisibleFaithDecayLenienceRatio));
+        pivDecayPB.SetFloat(PropConsts.fillRatio, Instance.VisibleFaith.NextValue);
+        pivDecayPB.SetFloat(PropConsts.innerFillRatio, Mathf.Clamp01(Instance.VisibleFaithLenience.NextValue));
         PIVDecayBar.SetPropertyBlock(pivDecayPB);
         meterPB.SetFloat(PropConsts.fillRatio, (float) Instance.Meter);
         MeterBar.SetPropertyBlock(meterPB);
@@ -187,6 +190,9 @@ public class UIManager : RegularUpdater, IUIManager, IUnpauseAnimateProvider {
             bossHPPB.SetFloat(PropConsts.fillRatio, Dialoguer.DialogueActive ? 0 : bossHP.DisplayBarRatio);
         }
         BossHPBar.SetPropertyBlock(bossHPPB);
+        rankPB.SetColor(PropConsts.fillColor, rankPointBarColor.Evaluate((float)Instance.RankRatio));
+        rankPB.SetFloat(PropConsts.fillRatio, Instance.VisibleRankPointFill.NextValue);
+        rankPointBar.SetPropertyBlock(rankPB);
         leftSidebarPB.SetFloat(PropConsts.time, profileTime);
         rightSidebarPB.SetFloat(PropConsts.time, profileTime);
         leftSidebar.SetPropertyBlock(leftSidebarPB);
@@ -441,12 +447,12 @@ public class UIManager : RegularUpdater, IUIManager, IUnpauseAnimateProvider {
                 scoreExtend_parent.SetActive(false);
             }
         }
-        score.text = string.Format(scoreFormat, Instance.UIVisibleScore);
+        score.text = string.Format(scoreFormat, Instance.VisibleScore.NextValue);
         maxScore.text = string.Format(scoreFormat, Instance.MaxScore);
         pivMult.text = string.Format(pivMultFormat, Instance.PIV);
         lifePoints.text = string.Format(lifePointsFormat, Instance.LifeItems, Instance.NextLifeItems);
         graze.text = string.Format(grazeFormat, Instance.Graze);
-        power.text = string.Format(powerFormat, Instance.Power, InstanceData.powerMax);
+        power.text = string.Format(powerFormat, Instance.Power, InstanceConsts.powerMax);
         for (int ii = 0; ii < healthPoints.Length; ++ii) healthPoints[ii].sprite = healthEmpty;
         for (int hi = 0; hi < healthItrs.Length; ++hi) {
             for (int ii = 0; ii + hi * healthPoints.Length < Instance.Lives && ii < healthPoints.Length; ++ii) {
@@ -459,7 +465,7 @@ public class UIManager : RegularUpdater, IUIManager, IUnpauseAnimateProvider {
                 bombPoints[ii].sprite = bombItrs[bi];
             }
         }
-        debug_rank.text = $"RANK Lv{Instance.RankLevel}, {(int)Instance.RankPoints}/{(int)Instance.RankPointsRequired}";
+        rankLevel.text = $"Rank {Instance.RankLevel}";
     }
 
     private IEnumerator FadeMessage(string msg, ICancellee cT, float timeIn = 1f, float timeStay = 4f,

@@ -5,6 +5,7 @@ using UnityEngine;
 
 namespace DMK.Behavior.Items {
 public class FullPowerItem : Item {
+    protected override ItemType Type => ItemType.FULLPOWER;
     protected override short RenderOffsetIndex => 6;
     protected override float RotationTurns => 0;
 

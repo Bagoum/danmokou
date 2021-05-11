@@ -7,172 +7,62 @@ using DMK.DMath;
 using DMK.Player;
 using DMK.Scriptables;
 using DMK.Services;
+using static DMK.GameInstance.InstanceConsts;
 using JetBrains.Annotations;
 using UnityEngine;
 
 namespace DMK.GameInstance {
 public class InstanceData {
-    public static bool PowerMechanicEnabled { get; } = false;
-    public static bool MeterMechanicEnabled { get; } = true;
-    private static int StartLives(InstanceMode mode) {
-        if (mode == InstanceMode.CAMPAIGN || mode == InstanceMode.TUTORIAL || mode == InstanceMode.STAGE_PRACTICE) 
-            return 7;
-        else if (mode.OneLife()) 
-            return 1;
-        else if (mode == InstanceMode.NULL) 
-            return 14;
-        else 
-            return 1;
-    }
-
-    private static int StartBombs(InstanceMode mode) {
-        if (mode == InstanceMode.CAMPAIGN || mode == InstanceMode.TUTORIAL || mode == InstanceMode.STAGE_PRACTICE) 
-            return 2;
-        else if (mode.OneLife()) 
-            return 0;
-        else 
-            return 3;
-    }
-
-    private static double StartPower(InstanceMode mode, ShotConfig? shot) {
-        if (mode.OneLife() || !PowerMechanicEnabled) 
-            return powerMax;
-        else if (shot != null) 
-            return M.Clamp(powerMin, powerMax, shot.defaultPower);
-        else 
-            return M.Clamp(powerMin, powerMax, powerDefault);
-    }
-
-    private static double StartMeter(InstanceMode mode) {
-        if (mode.IsOneCard()) 
-            return 0;
-        else
-            return 0.7;
-    }
-
+    #region StaticEvents
+    
+    public static readonly Events.Event0 UselessPowerupCollected = new Events.Event0();
+    public static readonly Events.Event0 CampaignDataUpdated = new Events.Event0();
+    public static readonly Events.Event0 PlayerTookHit = new Events.Event0();
+    public static readonly Events.IEvent<CardRecord> CardHistoryUpdated = new Events.Event<CardRecord>();
+    public static readonly Events.Event0 MeterNowUsable = new Events.Event0();
     /// <summary>
-    /// Inclusive
+    /// True iff rank level was increased
     /// </summary>
-    public const int minRankLevel = 0;
-    /// <summary>
-    /// Inclusive
-    /// </summary>
-    public const int maxRankLevel = 42;
-
-    public static (int min, int max) RankLevelBoundsForDifficulty(FixedDifficulty fd) => fd switch {
-        FixedDifficulty.Lunatic => (19, maxRankLevel),
-        FixedDifficulty.Hard => (12, 35),
-        FixedDifficulty.Normal => (6, 29),
-        _ => (0, 23)
-    };
-
-    private static double RankPointsRequiredForLevel(int level) =>
-        M.BlockRound(100, 1000 * (1 + Math.Log(Math.Max(1, level), 4)));
+    public static readonly Events.Event<bool> RankLevelChanged = new Events.Event<bool>();
+    public static readonly Events.Event0 PowerLost = new Events.Event0();
+    public static readonly Events.Event0 PowerGained = new Events.Event0();
+    public static readonly Events.Event0 PowerFull = new Events.Event0();
+    public static readonly Events.Event0 AnyExtendAcquired = new Events.Event0();
+    public static readonly Events.Event0 ItemExtendAcquired = new Events.Event0();
+    public static readonly Events.Event0 ScoreExtendAcquired = new Events.Event0();
+    public static readonly Events.IEvent<PhaseCompletion> PhaseCompleted = new Events.Event<PhaseCompletion>();
+    public static readonly Events.Event0 LifeSwappedForScore = new Events.Event0();
+    
+    #endregion
     
     public DifficultySettings Difficulty { get; }
     public int RankLevel { get; private set; }
-    public (int min, int max) RankLevelBounds => RankLevelBoundsForDifficulty(Difficulty.ApproximateStandard);
     public double RankPoints { get; private set; }
-    public double RankPointsRequired => RankPointsRequiredForLevel(RankLevel);
-    private static double DefaultRankPointsForLevel(int level) => RankPointsRequiredForLevel(level) * 0.5;
-    public double RankPointsPerSecond => M.Lerp(0, 3, Difficulty.Counter, 10, 21);
-    private const double RankPointsGraze = 3;
-    
-    private const int defltContinues = 42;
-    public const long smallValueItemPoints = 314;
-    public const long valueItemPoints = 3142;
-    public const decimal smallValueRatio = 0.1m;
     public long MaxScore { get; private set; }
     public long Score { get; private set; }
-    private long lastScore;
-    public long UIVisibleScore { get; private set; }
-    private double remVisibleScoreLerpTime;
-    public const double visibleScoreLerpTime = 1f;
     public int Lives { get; private set; }
     public int Bombs { get; private set; }
     public int LifeItems { get; private set; }
-    public int NextLifeItems => pointLives.Try(nextItemLifeIndex, 9001);
     public long Graze { get; private set; }
-    public double PlayerDamageMultiplier => M.Lerp(0, 3, Difficulty.Counter, 1.20, 1);
-    public const double powerMax = 4;
-    public const double powerMin = 1;
-#if UNITY_EDITOR
-    private const double powerDefault = 1000;
-#else
-    private const double powerDefault = 1;
-#endif
-    private const double powerDeathLoss = -1;
-    private const double powerItemValue = 0.05;
-    private const double powerToValueConversion = 2;
     public double Power { get; private set; }
-    public int PowerF => (int)Math.Floor(Power);
-    public int PowerIndex => PowerF - (int) powerMin;
     public double PIV { get; private set; }
-    private double EffectivePIV => PIV + Graze / (double)1337;
-    private const double pivPerPPP = 0.01;
-    public const double pivFallStep = 0.1;
     public double Faith { get; private set; }
     private double faithLenience;
-    public double UIVisibleFaithDecayLenienceRatio { get; private set; }
-    private const double faithDecayRate = 0.12;
     public readonly MultiMultiplierD externalFaithDecayMultiplier = new MultiMultiplierD(1, null);
-    private double FaithDecayRateMultiplier => (CurrentBoss != null ? 0.666f : 1f) * externalFaithDecayMultiplier.Value;
-    private const double faithLenienceFall = 5;
-    private const double faithLenienceValue = 0.2;
-    private const double faithLeniencePointPP = 0.3;
-    private double FaithLenienceGraze => M.Lerp(0, 3, Difficulty.Counter, 0.42, 0.3);
-    private const double faithLenienceEnemyDestroy = 0.1;
-    private const double faithBoostValue = 0.02;
-    private const double faithBoostPointPP = 0.09;
-    private double FaithBoostGraze => M.Lerp(0, 3, Difficulty.Counter, 0.033, 0.02);
-    
-    private const double faithLeniencePhase = 4;
-    
     public double Meter { get; private set; }
-    public bool MeterEnabled => MeterMechanicEnabled && Difficulty.meterEnabled;
-    public bool EnoughMeterToUse => MeterEnabled && Meter >= meterUseThreshold;
-    private double MeterBoostGraze => M.Lerp(0, 3, Difficulty.Counter, 0.008, 0.005);
-    private const double meterBoostGem = 0.021;
-    private const double meterRefillRate = 0.002;
-    private const double meterUseRate = 0.314;
-    public const double meterUseThreshold = 0.42;
-    private const double meterUseInstantCost = 0.042;
-    
     public bool MeterInUse { get; private set; }
-
-    public void StartUsingMeter() {
-        MeterInUse = true;
-        LastMeterStartFrame = ETime.FrameNumber;
-    }
-
-    public void StopUsingMeter() {
-        MeterInUse = false;
-    }
-    private double MeterPivPerPPPMultiplier => MeterInUse ? 2 : 1;
-    private double MeterScorePerValueMultiplier => MeterInUse ? 2 : 1;
-    
     public int Continues { get; private set; }
     public int ContinuesUsed { get; private set; } = 0;
-    public bool Continued => ContinuesUsed > 0;
     public int HitsTaken { get; private set; }
-
     private int nextScoreLifeIndex;
-    public long? NextScoreLife => mode.OneLife() ? null : scoreLives.TryN(nextScoreLifeIndex);
     private int nextItemLifeIndex;
     public readonly InstanceMode mode;
-    public bool IsCampaign => mode == InstanceMode.CAMPAIGN;
-    public bool IsAtleastNormalCampaign => IsCampaign && Difficulty.standard >= FixedDifficulty.Normal;
     
     private PlayerTeam team;
-    public PlayerConfig? Player => team.Player;
-    public ShotConfig? Shot => team.Shot;
-    public Subshot Subshot => team.Subshot;
-    public string MultishotString => (Shot != null && Shot.isMultiShot) ? Subshot.Describe() : "";
     
     public CardHistory CardHistory { get; }
 
     public readonly MultiAdder Lenience = new MultiAdder(0, null);
-    public bool Lenient => Lenience.Value > 0;
     public BehaviorEntity? CurrentBoss { get; private set; }
     private ICancellee? CurrentBossCT { get; set; }
 
@@ -185,40 +75,8 @@ public class InstanceData {
     /// </summary>
     public readonly string campaignKey;
     public InstanceRequest? Request { get; }
-    public readonly Dictionary<((string, string), int), (int, int)> PreviousSpellHistory;
+    private readonly Dictionary<((string, string), int), (int, int)> PreviousSpellHistory;
     
-    private static readonly long[] scoreLives = {
-        2000000,
-        5000000,
-        10000000,
-        15000000,
-        20000000,
-        25000000,
-        30000000,
-        40000000,
-        50000000,
-        60000000,
-        70000000,
-        80000000,
-        100000000
-    };
-    private static readonly int[] pointLives = {
-        69,
-        141,
-        224,
-        314,
-        420,
-        618,
-        840,
-        1084,
-        1337,
-        1618,
-        2048,
-        2718,
-        3142,
-        9001,
-        int.MaxValue
-    };
     //Miscellaneous stats
     public List<BossConfig> BossesEncountered { get; } = new List<BossConfig>();
     public int EnemiesDestroyed { get; private set; }
@@ -229,7 +87,47 @@ public class InstanceData {
     public int MeterFrames { get; private set; }
     public int SubshotSwitches { get; private set; }
     public int OneUpItemsCollected { get; private set; }
+    
+    #region ComputedProperties
+    public (int min, int max) RankLevelBounds => Difficulty.ApproximateStandard.RankLevelBounds();
+    public double RankPointsRequired => RankPointsRequiredForLevel(RankLevel);
+    public double RankPointsPerSecond => M.Lerp(0, 3, Difficulty.Counter, 10, 42);
+    public double RankRatio => (RankLevel - minRankLevel) / (double)(maxRankLevel - minRankLevel);
+    public int NextLifeItems => pointLives.Try(nextItemLifeIndex, 9001);
+    public double PlayerDamageMultiplier => M.Lerp(0, 3, Difficulty.Counter, 1.20, 1);
+    public int PowerF => (int)Math.Floor(Power);
+    public int PowerIndex => PowerF - (int) powerMin;
+    private double EffectivePIV => PIV + Graze / (double)1337;
+    private double FaithDecayRateMultiplier => (CurrentBoss != null ? 0.666f : 1f) * externalFaithDecayMultiplier.Value;
+    private double FaithLenienceGraze => M.Lerp(0, 3, Difficulty.Counter, 0.42, 0.3);
+    private double FaithBoostGraze => M.Lerp(0, 3, Difficulty.Counter, 0.033, 0.02);
+    public bool Lenient => Lenience.Value > 0;
+    public bool MeterEnabled => MeterMechanicEnabled && Difficulty.meterEnabled;
+    public bool EnoughMeterToUse => MeterEnabled && Meter >= meterUseThreshold;
+    private double MeterBoostGraze => M.Lerp(0, 3, Difficulty.Counter, 0.010, 0.006);
+    private double MeterPivPerPPPMultiplier => MeterInUse ? 2 : 1;
+    private double MeterScorePerValueMultiplier => MeterInUse ? 2 : 1;
+    public long? NextScoreLife => mode.OneLife() ? null : scoreLives.TryN(nextScoreLifeIndex);
+    public PlayerConfig? Player => team.Player;
+    public ShotConfig? Shot => team.Shot;
+    public Subshot Subshot => team.Subshot;
+    public string MultishotString => (Shot != null && Shot.isMultiShot) ? Subshot.Describe() : "";
+    public bool Continued => ContinuesUsed > 0;
+    public bool IsCampaign => mode == InstanceMode.CAMPAIGN;
+    public bool IsAtleastNormalCampaign => IsCampaign && Difficulty.standard >= FixedDifficulty.Normal;
+    
+    #endregion
 
+    #region UILerpers
+
+    public readonly Lerpifier<long> VisibleScore;
+    public readonly Lerpifier<float> VisibleMeter;
+    public readonly Lerpifier<float> VisibleFaith;
+    public readonly Lerpifier<float> VisibleFaithLenience;
+    public readonly Lerpifier<float> VisibleRankPointFill;
+    
+    #endregion
+    
     public InstanceData(InstanceMode mode, InstanceRequest? req = null, long? maxScore = null) {
         this.Request = req;
         //Minor hack to avoid running the SaveData static constructor in the editor during type initialization
@@ -260,19 +158,26 @@ public class InstanceData {
         Meter = StartMeter(mode);
         nextScoreLifeIndex = 0;
         nextItemLifeIndex = 0;
-        remVisibleScoreLerpTime = 0;
-        lastScore = 0;
-        UIVisibleScore = 0;
         LifeItems = 0;
         Faith = 1f;
         faithLenience = 0f;
-        UIVisibleFaithDecayLenienceRatio = 0f;
         Continues = mode.OneLife() ? 0 : defltContinues;
         HitsTaken = 0;
         EnemiesDestroyed = 0;
         Graze = 0;
         CurrentBoss = null;
         MeterInUse = false;
+        
+        VisibleScore = new Lerpifier<long>((a, b, t) => (long)M.Lerp(a, b, (double)M.EOutSine(t)), 
+            () => Score, 1.3f);
+        VisibleMeter = new Lerpifier<float>((a, b, t) => M.Lerp(a, b, M.EOutPow(t, 3f)), 
+            () => (float)Meter, 0.2f);
+        VisibleFaith = new Lerpifier<float>((a, b, t) => M.Lerp(a, b, M.EOutPow(t, 4f)), 
+            () => (float)Faith, 0.2f);
+        VisibleFaithLenience = new Lerpifier<float>((a, b, t) => M.Lerp(a, b, M.EOutPow(t, 3f)), 
+            () => (float)Math.Min(1, faithLenience / 3), 0.2f);
+        VisibleRankPointFill = new Lerpifier<float>((a, b, t) => M.Lerp(a, b, M.EOutPow(t, 2f)),
+            () => (float) (RankPoints / RankPointsRequired), 0.3f);
     }
     
     
@@ -313,7 +218,8 @@ public class InstanceData {
             --Continues;
             ++ContinuesUsed;
             CardHistory.Clear();//Partial game is saved when lives=0. Don't double on captures.
-            Score = lastScore = UIVisibleScore = nextItemLifeIndex = nextScoreLifeIndex = LifeItems = 0;
+            Score = nextItemLifeIndex = nextScoreLifeIndex = LifeItems = 0;
+            VisibleScore.HardReset();
             PIV = 1;
             Meter = StartMeter(mode);
             if (campaign != null) {
@@ -322,7 +228,7 @@ public class InstanceData {
                 Lives = StartLives(mode);
             }
             Bombs = StartBombs(mode);
-            remVisibleScoreLerpTime = Faith = faithLenience = 0;
+            Faith = faithLenience = 0;
             SetRankLevel(RankLevelBounds.min);
             CampaignDataUpdated.Proc();
             return true;
@@ -337,6 +243,7 @@ public class InstanceData {
 
     /// <summary>
     /// Delta should be negative.
+    /// Note: powerbombs do not call this routine.
     /// </summary>
     public bool TryConsumeBombs(int delta) {
         if (Bombs + delta >= 0) {
@@ -345,6 +252,10 @@ public class InstanceData {
             return true;
         }
         return false;
+    }
+
+    public void BombTriggered() {
+        AddRankPoints(RankPointsBomb);
     }
 
     public void SwapLifeScore(long score, bool usePIVMultiplier) {
@@ -363,6 +274,7 @@ public class InstanceData {
             Bombs = Math.Max(Bombs, StartBombs(mode));
             AddPower(powerDeathLoss);
             Meter = 1;
+            AddRankPoints(RankPointsDeath);
             PlayerTookHit.Proc();
         }
         if (delta < 0 && mode.OneLife()) Lives = 0;
@@ -397,6 +309,17 @@ public class InstanceData {
     private void AddFaith(double delta) => Faith = M.Clamp(0, 1, Faith + delta * Difficulty.faithAcquireMultiplier);
     private void AddFaithLenience(double time) => faithLenience = Math.Max(faithLenience, time);
     public void ExternalLenience(double time) => AddFaithLenience(time);
+    
+    #region Meter
+    
+    public void StartUsingMeter() {
+        MeterInUse = true;
+        LastMeterStartFrame = ETime.FrameNumber;
+    }
+
+    public void StopUsingMeter() {
+        MeterInUse = false;
+    }
     private void AddMeter(double delta) {
         var belowThreshold = !EnoughMeterToUse;
         Meter = M.Clamp(0, 1, Meter + delta * Difficulty.meterAcquireMultiplier);
@@ -429,6 +352,8 @@ public class InstanceData {
             return false;
         }
     }
+    
+    #endregion
 
     private void AddPower(double delta) {
         if (!PowerMechanicEnabled) return;
@@ -460,31 +385,6 @@ public class InstanceData {
         Power = powerMax;
         PowerFull.Proc();
     }
-    public void AddPowerItems(int delta) {
-        if (!PowerMechanicEnabled || Power >= powerMax) {
-            AddValueItems((int)(delta * powerToValueConversion), 1);
-        } else AddPower(delta * powerItemValue);
-    }
-
-    public void AddFullPowerItems(int _) {
-        FullPower();
-    }
-    public void AddValueItems(int delta, double multiplier) {
-        AddFaith(delta * faithBoostValue);
-        AddFaithLenience(faithLenienceValue);
-        double bonus = MeterScorePerValueMultiplier;
-        long scoreDelta = (long) Math.Round(delta * valueItemPoints * bonus * EffectivePIV * multiplier);
-        AddScore(scoreDelta);
-        Events.ScoreItemHasReceived.Publish((scoreDelta, bonus > 1));
-    }
-    public void AddSmallValueItems(int delta, double multiplier) {
-        AddFaith(delta * faithBoostValue * 0.1);
-        AddFaithLenience(faithLenienceValue * 0.1);
-        double bonus = MeterScorePerValueMultiplier;
-        long scoreDelta = (long) Math.Round(delta * smallValueItemPoints * bonus * EffectivePIV * multiplier);
-        AddScore(scoreDelta);
-        Events.ScoreItemHasReceived.Publish((scoreDelta, bonus > 1));
-    }
     public void AddGraze(int delta) {
         Graze += delta;
         AddFaith(delta * FaithBoostGraze);
@@ -495,21 +395,75 @@ public class InstanceData {
         CampaignDataUpdated.Proc();
     }
 
+    #region ItemMethods
+    
+    public void SetSubshotViaItem(Subshot newSubshot) {
+        AddRankPoints(RankPointsCollectItem);
+        SetSubshot(newSubshot);
+    }
+    public void AddPowerItems(int delta) {
+        if (!PowerMechanicEnabled || Power >= powerMax) {
+            AddValueItems((int)(delta * powerToValueConversion), 1);
+        } else {
+            AddPower(delta * powerItemValue);
+            AddRankPoints(RankPointsCollectItem);
+        }
+    }
+    public void AddFullPowerItems(int _) {
+        FullPower();
+        AddRankPoints(RankPointsCollectItem);
+    }
+    public void AddValueItems(int delta, double multiplier) {
+        AddFaith(delta * faithBoostValue);
+        AddFaithLenience(faithLenienceValue);
+        double bonus = MeterScorePerValueMultiplier;
+        long scoreDelta = (long) Math.Round(delta * valueItemPoints * bonus * EffectivePIV * multiplier);
+        AddScore(scoreDelta);
+        AddRankPoints(RankPointsCollectItem);
+        Events.ScoreItemHasReceived.Publish((scoreDelta, bonus > 1));
+    }
+    public void AddSmallValueItems(int delta, double multiplier) {
+        AddFaith(delta * faithBoostValue * 0.1);
+        AddFaithLenience(faithLenienceValue * 0.1);
+        double bonus = MeterScorePerValueMultiplier;
+        long scoreDelta = (long) Math.Round(delta * smallValueItemPoints * bonus * EffectivePIV * multiplier);
+        AddScore(scoreDelta);
+        AddRankPoints(RankPointsCollectItem);
+        Events.ScoreItemHasReceived.Publish((scoreDelta, bonus > 1));
+    }
     public void AddPointPlusItems(int delta) {
         PIV += pivPerPPP * MeterPivPerPPPMultiplier * delta;
         AddFaith(delta * faithBoostPointPP);
         AddFaithLenience(faithLeniencePointPP);
+        AddRankPoints(RankPointsCollectItem);
         CampaignDataUpdated.Proc();
     }
-
     public void AddGems(int delta) {
         AddMeter(delta * meterBoostGem);
+        AddRankPoints(RankPointsCollectItem);
     }
-
     public void AddOneUpItem() {
         ++OneUpItemsCollected;
+        AddRankPoints(RankPointsCollectItem);
         LifeExtend();
     }
+    public void AddLifeItems(int delta) {
+        LifeItems += delta;
+        if (nextItemLifeIndex < pointLives.Length && LifeItems >= pointLives[nextItemLifeIndex]) {
+            ++nextItemLifeIndex;
+            LifeExtend();
+            ItemExtendAcquired.Proc();
+        }
+        AddRankPoints(RankPointsCollectItem);
+        CampaignDataUpdated.Proc();
+    }
+    public void FailedItemCollect(ItemType typ) {
+        AddRankPoints(RankPointsMissedItem);
+    }
+    
+    #endregion
+
+    #region Rank
 
     /// <summary>
     /// Returns true iff the rank level changed.
@@ -526,7 +480,7 @@ public class InstanceData {
         return true;
     }
     public void AddRankPoints(double delta) {
-        do {
+        while (delta != 0) {
             RankPoints += delta;
             if (RankPoints < 0) {
                 delta = RankPoints;
@@ -538,9 +492,12 @@ public class InstanceData {
                 if (!SetRankLevel(RankLevel + 1)) break;
             } else
                 delta = 0;
-        } while (RankPoints + delta < 0 || RankPoints + delta > RankPointsRequired);
+        }
         CampaignDataUpdated.Proc();
     }
+
+    #endregion
+    
 
     private void LifeExtend() {
         ++Lives;
@@ -550,15 +507,17 @@ public class InstanceData {
 
     public void PhaseEnd(PhaseCompletion pc) {
         if (pc.props.phaseType?.IsCard() == true && pc.props.Boss != null && pc.CaptureStars.Try(out var captured)) {
-            CardHistory.Add(new CardRecord() {
+            var crec = new CardRecord() {
                 campaign = campaignKey,
                 boss = pc.props.Boss.key,
                 phase = pc.props.Index,
                 stars = captured,
                 hits = pc.hits,
                 method = pc.clear
-            });
-            CardHistoryUpdated.Proc();
+            };
+            CardHistory.Add(crec);
+            AddRankPoints(RankPointsForCard(crec));
+            CardHistoryUpdated.Publish(crec);
         }
         if (pc.props.phaseType?.IsPattern() ?? false) AddFaithLenience(faithLeniencePhase);
 
@@ -566,26 +525,15 @@ public class InstanceData {
     }
     
     private void AddScore(long delta) {
-        lastScore = UIVisibleScore;
         Score += delta;
         MaxScore = Math.Max(MaxScore, Score);
         if (NextScoreLife.Try(out var next) && Score >= next) {
             ++nextScoreLifeIndex;
             LifeExtend();
+            AddRankPoints(RankPointsScoreExtend);
             ScoreExtendAcquired.Proc();
             CampaignDataUpdated.Proc();
         }
-        remVisibleScoreLerpTime = visibleScoreLerpTime;
-        //updated in RegUpd
-    }
-    public void AddLifeItems(int delta) {
-        LifeItems += delta;
-        if (nextItemLifeIndex < pointLives.Length && LifeItems >= pointLives[nextItemLifeIndex]) {
-            ++nextItemLifeIndex;
-            LifeExtend();
-            ItemExtendAcquired.Proc();
-        }
-        CampaignDataUpdated.Proc();
     }
 
     public void DestroyNormalEnemy() {
@@ -608,14 +556,6 @@ public class InstanceData {
                 dataUpdated = true;
             }
         }
-        if (remVisibleScoreLerpTime > 0) {
-            remVisibleScoreLerpTime -= ETime.FRAME_TIME;
-            if (remVisibleScoreLerpTime <= 0) UIVisibleScore = Score;
-            else UIVisibleScore = (long) M.LerpU(lastScore, Score, 1 - remVisibleScoreLerpTime / visibleScoreLerpTime);
-            dataUpdated = true;
-        }
-        UIVisibleFaithDecayLenienceRatio = M.LerpU(UIVisibleFaithDecayLenienceRatio, 
-            Math.Min(1f, faithLenience / 3f), 6f * ETime.FRAME_TIME);
         if (PlayerInput.PlayerActive && !Lenient) {
             if (faithLenience > 0) {
                 faithLenience = Math.Max(0, faithLenience - ETime.FRAME_TIME);
@@ -631,6 +571,11 @@ public class InstanceData {
                 dataUpdated = true;
             }
         }
+        dataUpdated |= VisibleScore.Update(ETime.FRAME_TIME);
+        VisibleMeter.Update(ETime.FRAME_TIME);
+        VisibleFaith.Update(ETime.FRAME_TIME);
+        VisibleFaithLenience.Update(ETime.FRAME_TIME);
+        VisibleRankPointFill.Update(ETime.FRAME_TIME);
         if (dataUpdated)
             CampaignDataUpdated.Proc();
         ;
@@ -650,24 +595,6 @@ public class InstanceData {
             CurrentBossCT = null;
         } else Log.UnityError("You tried to close a boss section when no boss exists.");
     }
-
-    public static readonly Events.Event0 UselessPowerupCollected = new Events.Event0();
-    public static readonly Events.Event0 CampaignDataUpdated = new Events.Event0();
-    public static readonly Events.Event0 PlayerTookHit = new Events.Event0();
-    public static readonly Events.Event0 CardHistoryUpdated = new Events.Event0();
-    public static readonly Events.Event0 MeterNowUsable = new Events.Event0();
-    /// <summary>
-    /// True iff rank level was increased
-    /// </summary>
-    public static readonly Events.Event<bool> RankLevelChanged = new Events.Event<bool>();
-    public static readonly Events.Event0 PowerLost = new Events.Event0();
-    public static readonly Events.Event0 PowerGained = new Events.Event0();
-    public static readonly Events.Event0 PowerFull = new Events.Event0();
-    public static readonly Events.Event0 AnyExtendAcquired = new Events.Event0();
-    public static readonly Events.Event0 ItemExtendAcquired = new Events.Event0();
-    public static readonly Events.Event0 ScoreExtendAcquired = new Events.Event0();
-    public static readonly Events.IEvent<PhaseCompletion> PhaseCompleted = new Events.Event<PhaseCompletion>();
-    public static readonly Events.Event0 LifeSwappedForScore = new Events.Event0();
 
 #if UNITY_EDITOR
     public void SetPower(double x) => Power = x;

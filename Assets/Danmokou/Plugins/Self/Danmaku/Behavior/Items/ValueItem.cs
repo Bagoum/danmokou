@@ -3,6 +3,7 @@ using DMK.DMath;
 
 namespace DMK.Behavior.Items {
 public class ValueItem : Item {
+    protected override ItemType Type => ItemType.VALUE;
     protected override short RenderOffsetIndex => 2;
     protected override float RotationTurns => -1;
 

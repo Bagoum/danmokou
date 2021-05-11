@@ -191,11 +191,11 @@ public static class ItemPooler {
     public static Item RequestPowerupK(ItemRequestContext ctx) => Request(items.powerupK, ctx);
 
     public static Item? RequestPower(ItemRequestContext ctx) {
-        return InstanceData.PowerMechanicEnabled ? Request(items.powerItem, ctx) : null;
+        return InstanceConsts.PowerMechanicEnabled ? Request(items.powerItem, ctx) : null;
     }
 
     public static Item? RequestFullPower(ItemRequestContext ctx) {
-        return InstanceData.PowerMechanicEnabled ? Request(items.fullPowerItem, ctx) : null;
+        return InstanceConsts.PowerMechanicEnabled ? Request(items.fullPowerItem, ctx) : null;
     }
 
     public static Item Request1UP(ItemRequestContext ctx) {

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using DMK.GameInstance;
 using UnityEngine;
 using static DMK.Core.LocalizedStrings.UI;
 
@@ -348,12 +349,19 @@ public static class EnumHelpers2 {
             FixedDifficulty.Normal => 1,
             _ => 0
         };
+    
+    public static (int min, int max) RankLevelBounds(this FixedDifficulty fd) => fd switch {
+        FixedDifficulty.Lunatic => (9, InstanceConsts.maxRankLevel),
+        FixedDifficulty.Hard => (6, 35),
+        FixedDifficulty.Normal => (3, 29),
+        _ => (InstanceConsts.minRankLevel, 23)
+    };
 
     public static int DefaultRank(this FixedDifficulty d) => d switch {
-        FixedDifficulty.Lunatic => 29,
-        FixedDifficulty.Hard => 22,
-        FixedDifficulty.Normal => 13,
-        _ => 4
+        FixedDifficulty.Lunatic => 22,
+        FixedDifficulty.Hard => 15,
+        FixedDifficulty.Normal => 9,
+        _ => 3
     };
 
     public static LocalizedString Describe(this FixedDifficulty d) => d switch {

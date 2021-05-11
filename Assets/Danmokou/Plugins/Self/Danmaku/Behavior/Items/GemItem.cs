@@ -3,6 +3,7 @@ using UnityEngine;
 
 namespace DMK.Behavior.Items {
 public class GemItem : Item {
+    protected override ItemType Type => ItemType.GEM;
     protected override float MinTimeBeforeHome => 1.1f;
     protected override short RenderOffsetIndex => 0;
     public int numGems = 1;

@@ -117,7 +117,7 @@ public class PlayerInput : BehaviorEntity {
         hitboxSprite.enabled = SaveData.s.UnfocusedHitbox;
         meter.enabled = false;
         meter.GetPropertyBlock(meterPB = new MaterialPropertyBlock());
-        meterPB.SetFloat(PropConsts.innerFillRatio, (float)InstanceData.meterUseThreshold);
+        meterPB.SetFloat(PropConsts.innerFillRatio, (float)InstanceConsts.meterUseThreshold);
         meterPB.SetColor(PropConsts.unfillColor, meterDisplayShadow);
         meterPB.SetColor(PropConsts.fillInnerColor, meterDisplayInner);
         meter.SetPropertyBlock(meterPB);
@@ -456,7 +456,7 @@ public class PlayerInput : BehaviorEntity {
             }
             MeterIsActive.Publish(GameManagement.Instance.EnoughMeterToUse ? meter.color : meterDisplayInner);
             float meterDisplayRatio = M.EOutSine(Mathf.Clamp01(f / 30f));
-            meterPB.SetFloat(PropConsts.fillRatio, (float)GameManagement.Instance.Meter * meterDisplayRatio);
+            meterPB.SetFloat(PropConsts.fillRatio, GameManagement.Instance.VisibleMeter.NextValue * meterDisplayRatio);
             meter.SetPropertyBlock(meterPB);
             yield return null;
         }

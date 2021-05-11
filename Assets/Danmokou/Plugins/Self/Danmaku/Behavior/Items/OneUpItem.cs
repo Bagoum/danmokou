@@ -2,6 +2,7 @@
 
 namespace DMK.Behavior.Items {
 public class OneUpItem : Item {
+    protected override ItemType Type => ItemType.ONEUP;
     protected override short RenderOffsetIndex => 6;
     protected override float RotationTurns => 6;
     protected override float RotationTime => 2.5f;

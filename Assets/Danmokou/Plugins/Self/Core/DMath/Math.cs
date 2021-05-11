@@ -311,6 +311,8 @@ public static class M {
     public static float EOutSine(float x) => (float) Math.Sin(HPI * x);
     public static float DEOutSine(float x) => HPI * (float) Math.Cos(HPI * x);
 
+    public static double EOutPow(double x, double pow) => 1 - Math.Pow(1 - x, pow);
+    public static float EOutPow(float x, float pow) => 1f - Mathf.Pow(1f - x, pow);
     public static float EOutQuad(float x) => 1f - Mathf.Pow(1f - x, 4f);
 
     public static float Identity(float x) => x;

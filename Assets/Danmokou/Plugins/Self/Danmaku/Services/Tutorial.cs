@@ -204,7 +204,7 @@ public class Tutorial : BehaviorEntity {
         int currLives = Instance.Lives;
         yield return waitlf(() => Instance.Lives > currLives);
         yield return shift();
-        Message(text10, valueitems36(InstanceData.valueItemPoints));
+        Message(text10, valueitems36(InstanceConsts.valueItemPoints));
         yield return confirm();
         yield return shift();
         Prompt(text10, points37);
@@ -212,7 +212,7 @@ public class Tutorial : BehaviorEntity {
         yield return shift();
         Message(text00, scoremult38);
         yield return confirm();
-        Message(text00, faith39(InstanceData.pivFallStep));
+        Message(text00, faith39(InstanceConsts.pivFallStep));
         yield return confirm();
         Message(text00, faithblue40);
         yield return confirm();

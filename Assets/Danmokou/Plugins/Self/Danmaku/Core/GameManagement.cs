@@ -318,6 +318,9 @@ public class GameManagement : CoroutineRegularUpdater {
     [ContextMenu("Debug Game Mode")]
     public void DebugGameMode() => Log.Unity(Instance.mode.ToString());
 
+    [ContextMenu("Add Lenience")]
+    public void AddLenience() => Instance.ExternalLenience(2);
+
     //[ContextMenu("Save AoT Helpers")] 
     //public void GenerateAoT() => Reflector.GenerateAoT();
 

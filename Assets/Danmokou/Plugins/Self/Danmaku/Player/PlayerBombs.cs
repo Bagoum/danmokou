@@ -55,6 +55,7 @@ public static class PlayerBombs {
             return false;
         if (bomb.BombsRequired(ctx).Try(out var rb) && !GameManagement.Instance.TryConsumeBombs(-rb)) 
             return false;
+        GameManagement.Instance.BombTriggered();
         var ienum = BombCoroutine(bomb, bomber, PlayerInput.BombDisabler.CreateToken1(MultiOp.Priority.CLEAR_SCENE));
         bomber.RunDroppableRIEnumerator(ienum);
         return true;

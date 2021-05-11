@@ -105,11 +105,11 @@ public static class ExMDifficulty {
     /// <summary>
     /// Minumum possible rank value (inclusive).
     /// </summary>
-    public static tfloat MinRank() => Ex.Constant((float) InstanceData.minRankLevel);
+    public static tfloat MinRank() => Ex.Constant((float) InstanceConsts.minRankLevel);
     /// <summary>
     /// Maximum possible rank value (inclusive).
     /// </summary>
-    public static tfloat MaxRank() => Ex.Constant((float) InstanceData.maxRankLevel);
+    public static tfloat MaxRank() => Ex.Constant((float) InstanceConsts.maxRankLevel);
     /// <summary>
     /// Get the dynamic difficulty rank, which varies between MinRank and MaxRank.
     /// </summary>

@@ -8,6 +8,7 @@ using UnityEngine;
 
 namespace DMK.Behavior.Items {
 public abstract class Item : Pooled<Item> {
+    protected abstract ItemType Type { get; }
     protected virtual bool Autocollectible => true;
     protected virtual bool Attractible => true;
     protected virtual float CollectRadiusBonus => 0;
@@ -109,6 +110,7 @@ public abstract class Item : Pooled<Item> {
             if (Attractible && CollisionMath.CircleOnPoint(loc, target.itemAttractRadius, target.location)) SetHome();
             else if (!LocationHelpers.OnScreenInDirection(loc, -screenRange * Direction) || 
                      (time > MinCullTime && !LocationHelpers.OnPlayableScreenBy(CullRadius, loc))) {
+                GameManagement.Instance.FailedItemCollect(Type);
                 PooledDone();
                 return;
             }

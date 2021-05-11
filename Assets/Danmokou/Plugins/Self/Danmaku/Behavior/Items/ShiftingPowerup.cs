@@ -13,6 +13,7 @@ using UnityEngine;
 
 namespace DMK.Behavior.Items {
 public class ShiftingPowerup : BouncyItem {
+    protected override ItemType Type => ItemType.POWERUP_SHIFT;
     [Serializable]
     public struct Variant {
         public Sprite sprite;

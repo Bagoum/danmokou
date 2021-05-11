@@ -5,6 +5,7 @@ using UnityEngine;
 
 namespace DMK.Behavior.Items {
 public class LifeItem : Item {
+    protected override ItemType Type => ItemType.LIFE;
     protected override short RenderOffsetIndex => 5;
     protected override float RotationTurns => 2;
 
