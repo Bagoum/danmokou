@@ -12,7 +12,7 @@ To get the newest version from git, run:
 
 - **Breaking changes:**
   - Please upgrade your Unity to **2020.2**. 2021 currently has a bug with UIToolkit disallowing switching between debug and release modes. 2019 is no longer supported (it does not support some C#8 changes).
-  - `SS`, `SSD`, `SDD`, `SSDD` and related simple-bullet firing functions have been removed. Use `simple` instead with `scale`/`dir`/`dir2` options (<xref:DMK.Danmaku.Options.SBOption>)
+  - `SS`, `SSD`, `SDD`, `SSDD` and related simple-bullet firing functions have been removed. Use `simple` instead with `scale`/`dir`/`dir2` options (<xref:Danmokou.Danmaku.Options.SBOption>)
   - Previous versions of DMK allowed implicit casts from TP to TP3 and from TP3 to TP in script code. This kind of circular cast is architecturally problematic, and support has been removed in v7.0.0. Now, TP may be implicitly casted to TP3, but the downcast is not allowed. Instead, use the `TP` function, as follows: `nroffset(tp(qrotate(...)))`. The reason that the TP->TP3 cast is prioritized is to protect the rule that *implicit casts should not result in information loss*.
   - The signatures of functions operating over firing options, lasers, and player data have changed (see the note below about FiringCtx). The names have also been standardized. See `Assets/Danmokou/Plugins/Self/Danmaku/Math/MathRepos/GenericMath/ExM.cs`.
 - **Pending issues:**
@@ -185,5 +185,5 @@ if (> t &fadein,
 - Added player-fireable pathers and lasers. The edges on this architecture are still rough.
   - Note: the `Home + Laser Shot (Reimu)` shows how all three above features can be used.
 - Replaced shot selection with player/shot selection. Player/shot now shows up on replay descriptions. Players have a list of usable shots, but the architecture permits matching arbitrary shots. 
-- Added the <xref:DMK.Danmaku.Options.GenCtxProperty> "Sequential", which executes children sequentially (GIR/GTR only). This replaces the `seq` StateMachine, which has been removed. 
+- Added the <xref:Danmokou.Danmaku.Options.GenCtxProperty> "Sequential", which executes children sequentially (GIR/GTR only). This replaces the `seq` StateMachine, which has been removed. 
 - Fixed a potentially crippling bug dealing with cancellation of dependent tasks between two bosses.

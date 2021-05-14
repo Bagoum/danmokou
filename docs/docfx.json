@@ -3,7 +3,7 @@
     {
       "src": [
         {
-          "src": "../Assets/Danmokou/Plugins/Self",
+          "src": "../Assets/Danmokou/Plugins/Danmokou",
           "files": [
             "Core/Core/DataStructures.cs",
             "Core/Core/Enums.cs",

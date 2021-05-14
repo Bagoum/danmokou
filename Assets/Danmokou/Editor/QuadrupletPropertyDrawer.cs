@@ -50,7 +50,7 @@ public abstract class QuadrupletPropertyDrawer : PropertyDrawer {
 }
 
 
-[CustomPropertyDrawer(typeof(DMK.Danmaku.Descriptors.FrameAnimBullet.BulletAnimSprite))]
+[CustomPropertyDrawer(typeof(Danmokou.Danmaku.Descriptors.FrameAnimBullet.BulletAnimSprite))]
 public class FrameAnimBulletDrawer : QuadrupletPropertyDrawer {
     protected override string arg1 => "s";
     protected override string arg2 => "time";

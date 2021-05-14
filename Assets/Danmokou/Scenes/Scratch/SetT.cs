@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using DMK.Core;
-using DMK.Graphics;
+using Danmokou.Core;
+using Danmokou.Graphics;
 using UnityEngine;
 
 public class SetT : MonoBehaviour {

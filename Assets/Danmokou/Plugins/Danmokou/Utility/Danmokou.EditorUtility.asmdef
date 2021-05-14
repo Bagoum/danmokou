@@ -1,0 +1,17 @@
+{
+    "name": "Danmokou.EditorUtility",
+    "rootNamespace": "",
+    "references": [
+        "GUID:ff454a4f26990564688139c493ef86ff",
+        "GUID:546e84e2f7b56b14da3f5e3f50698392"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

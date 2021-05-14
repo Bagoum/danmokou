@@ -1,4 +1,4 @@
-﻿using DMK.Scriptables;
+﻿using Danmokou.Scriptables;
 using UnityEditor;
 using UnityEngine;
 

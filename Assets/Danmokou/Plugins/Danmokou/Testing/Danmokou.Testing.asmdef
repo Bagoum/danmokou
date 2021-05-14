@@ -1,0 +1,19 @@
+{
+    "name": "Danmokou.Testing",
+    "rootNamespace": "",
+    "references": [
+        "GUID:546e84e2f7b56b14da3f5e3f50698392",
+        "GUID:ff454a4f26990564688139c493ef86ff"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

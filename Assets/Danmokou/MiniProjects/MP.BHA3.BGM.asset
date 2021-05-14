@@ -14,10 +14,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   clip: {fileID: 8300000, guid: 092718b8eb2e67a4d8e57d61ceef6df7, type: 3}
   key: bha3.bgm
+  trackPlayLocation: 
   title: bad apple
+  musicRoomDescription:
+    useReference: 1
+    reference: 
+    hardcoded:
+      en: 
+      jp: 
   volume: 0.12
   pitch: 1
   stopOnPause: 0
   loop: 1
   loopSeconds: {x: 1, y: 244}
   startWithTime: 0
+  musicRoomRequirement: 
+  showInMusicRoom: 0

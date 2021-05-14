@@ -1,5 +1,5 @@
-﻿using DMK.Core;
-using DMK.Scriptables;
+﻿using Danmokou.Core;
+using Danmokou.Scriptables;
 using UnityEditor;
 using UnityEngine;
 

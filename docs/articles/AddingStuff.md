@@ -51,14 +51,14 @@ Take a look at the following fields:
 - Any bosses must have their boss metadata object added to Boss Metadata (see the [boss tutorial](tbosses.md)).
 - Any characters that appear in dialogue must have their dialogue profile added to Dialogue Profiles. There is currently no dialogue tutorial.
 - Tracks contains all the metadata for music played in the game.
-- Items links to an ItemReferences object, which links to prefabs for each of the item types that exist by default in the game. To visually change items, simply change the prefabs linked here. To add new item types, you should subclass <xref:DMK.Behavior.Items.Item> (see the folder Danmaku/Behavior/Items), add an entry to the 
+- Items links to an ItemReferences object, which links to prefabs for each of the item types that exist by default in the game. To visually change items, simply change the prefabs linked here. To add new item types, you should subclass Danmokou.Behavior.Items.Item (see the folder Danmaku/Behavior/Items), add an entry to the Danmokou.Core.ItemType enum, and add handling for that entry in ItemPooler.RequestItem.
 - Summonables links all the summonable storage objects used by the game. Normally you will have the Default Summonable Styles object, which links summonables such as enemies and screen effects, as well as a game-specific summonables object for game-specific enemies or game-specific screen effects. 
 
 ## Code
 
 ### Changing Function Names
 
-The easiest way to change a function name is to add an alias. Take a look at the `GSRepeat` function in `Patterning/SyncPatterns.cs`. It has a tag `[Alias("GSR")]`, which means that you can call the function by the name `gsr` in scripting code. You can add as many aliases as you like.
+The easiest way to change a function name is to add an alias. Take a look at the `GSRepeat` function in `Patterning/SyncPatterns.cs`. It has a tag `[Alias("GSR")]`, which means that you can call the function by the name `gsr` in scripting code. You can add as many aliases as you like. Alternatively, you can refactor the function, but that might break existing scripts.
 
 ### Adding Functions
 

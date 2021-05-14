@@ -1,12 +1,12 @@
-﻿using DMK.Behavior;
-using DMK.Core;
-using DMK.Danmaku;
-using DMK.Dialogue;
-using DMK.Pooling;
-using DMK.Scriptables;
-using DMK.Services;
-using DMK.UI;
-using DMK.UI.XML;
+﻿using Danmokou.Behavior;
+using Danmokou.Core;
+using Danmokou.Danmaku;
+using Danmokou.Dialogue;
+using Danmokou.Pooling;
+using Danmokou.Scriptables;
+using Danmokou.Services;
+using Danmokou.UI;
+using Danmokou.UI.XML;
 using UnityEngine;
 using UnityEditor;
 

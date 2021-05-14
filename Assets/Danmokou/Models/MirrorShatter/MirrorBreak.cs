@@ -1,11 +1,11 @@
 ﻿using System.Collections;
 using System.Linq;
-using DMK.Core;
-using DMK.DMath;
+using Danmokou.Core;
+using Danmokou.DMath;
 using UnityEngine;
-using static DMK.Behavior.Display.CutinHelpers;
+using static Danmokou.Behavior.Display.CutinHelpers;
 
-namespace DMK.Behavior.Display {
+namespace Danmokou.Behavior.Display {
 public class MirrorBreak : CoroutineRegularUpdater {
     private Transform[] children = null!;
     public Transform controller = null!;

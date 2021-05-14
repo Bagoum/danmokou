@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4f64d4a00c194018afbe5db3323da211, type: 3}
   m_Name: MP.BHA3.Basic Campaign
   m_EditorClassIdentifier: 
-  startLives: 3
+  startLives: 3000
   key: mp.bha3
   shortTitle: BHA3
   endings: []

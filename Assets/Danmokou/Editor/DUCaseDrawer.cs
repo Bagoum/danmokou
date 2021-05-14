@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using DMK.Core;
-using DMK.Graphics.Backgrounds;
+using Danmokou.Core;
+using Danmokou.Graphics.Backgrounds;
 using NUnit.Framework.Internal;
 using UnityEditor;
 using UnityEngine;

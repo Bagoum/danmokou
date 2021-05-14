@@ -1,5 +1,5 @@
-﻿using DMK.Core;
-using DMK.Scriptables;
+﻿using Danmokou.Core;
+using Danmokou.Scriptables;
 using UnityEngine;
 using UnityEditor;
 
@@ -50,7 +50,7 @@ public abstract class TripletPropertyDrawer : PropertyDrawer {
 }
 
 
-[CustomPropertyDrawer(typeof(DMK.Danmaku.Descriptors.SimpleBulletEmptyScript.SpriteSpecificGradient))]
+[CustomPropertyDrawer(typeof(Danmokou.Danmaku.Descriptors.SimpleBulletEmptyScript.SpriteSpecificGradient))]
 public class SpriteVariantDrawer : TripletPropertyDrawer {
     protected override string arg1 => "color";
     protected override string arg2 => "gradient";
