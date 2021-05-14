@@ -231,8 +231,8 @@ public static class XMLUtils {
         List<Action> load_cbs = new List<Action>();
         int? campaignIndex;
         Maybe<FixedDifficulty?> difficultySwitch = Maybe<FixedDifficulty?>.None;
-        PlayerConfig? playerSwitch = null;
-        (PlayerConfig, ShotConfig)? shotSwitch = null;
+        ShipConfig? playerSwitch = null;
+        (ShipConfig, ShotConfig)? shotSwitch = null;
         bool Filter(InstanceRecord ir) =>
             (campaignIndex == null ||
              campaigns[campaignIndex.Value].Key == ir.ReconstructedRequestKey.Resolve(
@@ -241,8 +241,8 @@ public static class XMLUtils {
                  p => p.Item1.Item1.Item1.Item1,
                  s => s.Item1.Item1)) &&
             (!difficultySwitch.valid || difficultySwitch.value == ir.SharedInstanceMetadata.difficulty.standard) &&
-            (playerSwitch == null || playerSwitch == ir.SharedInstanceMetadata.team.players[0].player) &&
-            (shotSwitch == null || shotSwitch == ir.SharedInstanceMetadata.team.players[0])
+            (playerSwitch == null || playerSwitch == ir.SharedInstanceMetadata.team.ships[0].ship) &&
+            (shotSwitch == null || shotSwitch == ir.SharedInstanceMetadata.team.ships[0])
             ;
         string? boss;
 
@@ -294,22 +294,22 @@ public static class XMLUtils {
                 GameManagement.CustomAndVisibleDifficulties
                     .Select(x => (x?.Describe() ?? difficulty_custom, Maybe<FixedDifficulty?>.Of(x)))
                     .Prepend((stats_alldifficulty, Maybe<FixedDifficulty?>.None)).ToArray(), difficultySwitch),
-            new OptionNodeLR<PlayerConfig?>(stats_selplayer, x => {
+            new OptionNodeLR<ShipConfig?>(stats_selplayer, x => {
                     playerSwitch = x;
                     UpdateStats();
                 },
                 GameManagement.References.AllPlayers
-                    .Select(x => (x.ShortTitle, (PlayerConfig?) x))
+                    .Select(x => (x.ShortTitle, (ShipConfig?) x))
                     .Prepend((stats_allplayers, null)).ToArray(), playerSwitch),
-            new OptionNodeLR<(PlayerConfig, ShotConfig)?>(stats_selshot, x => {
+            new OptionNodeLR<(ShipConfig, ShotConfig)?>(stats_selshot, x => {
                     shotSwitch = x;
                     UpdateStats();
                 },
                 GameManagement.References.AllPlayers
                     .SelectMany(p => p.shots2
                         .Select(os => (new LocalizedString(ShotConfig.PlayerShotDescription(p, os.shot)), 
-                            ((PlayerConfig, ShotConfig)?) (p, os.shot))))
-                    .Prepend((stats_allshots, ((PlayerConfig, ShotConfig)?)null)).ToArray(), shotSwitch),
+                            ((ShipConfig, ShotConfig)?) (p, os.shot))))
+                    .Prepend((stats_allshots, ((ShipConfig, ShotConfig)?)null)).ToArray(), shotSwitch),
 
             new TwoLabelUINode(stats_allruns, () => new LocalizedString($"{stats.TotalRuns}")),
             new TwoLabelUINode(stats_complete, () => new LocalizedString($"{stats.CompletedRuns}")),
@@ -323,7 +323,7 @@ public static class XMLUtils {
             new TwoLabelUINode(stats_favplayer, () => 
                 stats.TotalRuns == 0 ? generic_na :
                     LocalizedString.Format(
-                "{0} ({1})", stats.FavoritePlayer.Item1.ShortTitle, $"{stats.FavoritePlayer.Item2.Length}"
+                "{0} ({1})", stats.FavoriteShip.Item1.ShortTitle, $"{stats.FavoriteShip.Item2.Length}"
             )),
             new TwoLabelUINode(stats_favshot, () => {
                 if (stats.TotalRuns == 0) return generic_na;

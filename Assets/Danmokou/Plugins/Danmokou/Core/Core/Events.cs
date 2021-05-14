@@ -13,6 +13,7 @@ namespace Danmokou.Core {
 /// </summary>
 public static class Events {
     public interface IEvent<T> {
+        Maybe<T> LastPublished { get; }
         void Publish(T obj);
         DeletionMarker<Action<T>> Subscribe(Action<T> cb);
     }
@@ -149,9 +150,21 @@ public static class Events {
     }
 
     public class Event<T> : IEvent<T> {
-        private readonly DMCompactingArray<Action<T>> callbacks = new DMCompactingArray<Action<T>>();
+        private DMCompactingArray<Action<T>> callbacks = new DMCompactingArray<Action<T>>();
+        public Maybe<T> LastPublished { get; private set; } = Maybe<T>.None;
 
+        /// <summary>
+        /// Callbacks are transferred from inheritFrom to this event.
+        /// </summary>
+        public Event(Event<T>? inheritFrom = null) {
+            if (inheritFrom != null) {
+                callbacks = inheritFrom.callbacks;
+                inheritFrom.callbacks = new DMCompactingArray<Action<T>>();
+            }
+        }
+        
         public void Publish(T obj) {
+            LastPublished = Maybe<T>.Of(obj);
             int temp_last = callbacks.Count;
             for (int ii = 0; ii < temp_last; ++ii) {
                 DeletionMarker<Action<T>> listener = callbacks.arr[ii];

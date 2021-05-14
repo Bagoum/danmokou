@@ -96,8 +96,8 @@ if (> t &fadein,
         anim.AssignScales(0, scale(smh.GCX), 0);
         anim.AssignRatios(t1r?.Invoke(smh.GCX), t2r?.Invoke(smh.GCX));
         anim.Initialize(smh.cT, t);
-        var controlToken = PlayerInput.AllControlDisabler.CreateToken1(MultiOp.Priority.CLEAR_PHASE);
-        PlayerHP.RequestPlayerInvulnerable.Publish(((int)(t * 120), false));
+        var controlToken = PlayerController.AllControlDisabler.CreateToken1(MultiOp.Priority.CLEAR_PHASE);
+        PlayerController.RequestPlayerInvulnerable.Publish(((int)(t * 120), false));
         return WaitingUtils.WaitFor(smh, t, false).ContinueWithSync(() => controlToken.TryRevoke());
     };
 

@@ -26,11 +26,9 @@ public static class InstanceConsts {
         else 
             return 3;
     }
-    public static double StartPower(InstanceMode mode, ShotConfig? shot) {
+    public static double StartPower(InstanceMode mode) {
         if (mode.OneLife() || !PowerMechanicEnabled) 
             return powerMax;
-        else if (shot != null) 
-            return M.Clamp(powerMin, powerMax, shot.defaultPower);
         else 
             return M.Clamp(powerMin, powerMax, powerDefault);
     }

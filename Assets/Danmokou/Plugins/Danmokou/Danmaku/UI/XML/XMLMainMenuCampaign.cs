@@ -73,8 +73,9 @@ public class XMLMainMenuCampaign : XMLMainMenu {
     public PlayModeSubmenu playmodeSubmenu = null!;
     public Transform shotDisplayContainer = null!;
     public BehaviorEntity? shotSetup;
+    public GameObject? demoPlayerSetup;
 
-    protected override void Start() {
+        protected override void Start() {
         if (ReturnTo == null) {
             uiRenderer.Slide(new Vector2(3, 0), Vector2.zero, 1f, DMath.M.EOutSine, null);
             uiRenderer.Fade(0, 1, 1f, x => x, null);
@@ -86,7 +87,7 @@ public class XMLMainMenuCampaign : XMLMainMenu {
         if (!Application.isPlaying) return;
         
         Func<DifficultySettings, (bool, UINode)> dfcCont = null!;
-        Func<PlayerTeam, bool> shotCont = null!;
+        Func<TeamConfig, bool> shotCont = null!;
         
         UIScreen? CreatePlayerScreen(SMAnalysis.AnalyzedCampaign? c, bool enableDemo) {
             if (c == null) return null;
@@ -97,12 +98,12 @@ public class XMLMainMenuCampaign : XMLMainMenu {
                     sc.prefab.GetComponentsInChildren<FireOption>()
                         .ForEach(fo => fo.Preload());
             }
-            PlayerInput? demoPlayer = null;
+            Player.PlayerController? demoPlayer = null;
             Cancellable? demoCT = null;
-            OptionNodeLR<PlayerConfig> playerSelect = null!;
+            OptionNodeLR<ShipConfig> playerSelect = null!;
             DynamicOptionNodeLR<ShotConfig> shotSelect = null!;
             OptionNodeLR<Subshot> subshotSelect = null!;
-            var team = new PlayerTeam(0, Subshot.TYPE_D,
+            var team = new TeamConfig(0, Subshot.TYPE_D,
                 c.campaign.players
                     .SelectMany(p => p.shots2
                         .Select(s => (p, s.shot)))
@@ -118,18 +119,13 @@ public class XMLMainMenuCampaign : XMLMainMenu {
                 Replayer.End(null);
             }
             void UpdateDemo() {
-                if (!enableDemo || shotSetup == null) return;
-                if (demoPlayer != null && playerSelect.Value != demoPlayer.thisPlayer) {
-                    demoPlayer.InvokeCull();
-                    demoPlayer = null;
-                }
-                //Team-switching works through SetPlayer, but that would lose the reference to demoPlayer
+                if (!enableDemo || shotSetup == null || demoPlayerSetup == null) return;
                 GameManagement.NewInstance(InstanceMode.NULL, null, 
                     new InstanceRequest(() => true, smeta, new CampaignRequest(c!)));
-                GameManagement.Instance.SetPlayer(playerSelect.Value, shotSelect.Value, subshotSelect.Value);
                 if (demoPlayer == null) {
-                    demoPlayer = Instantiate(playerSelect.Value.prefab).GetComponent<PlayerInput>();
+                    demoPlayer = Instantiate(demoPlayerSetup).GetComponent<Player.PlayerController>();
                 }
+                demoPlayer.UpdateTeam((playerSelect.Value, shotSelect.Value), subshotSelect.Value);
                 demoPlayer.transform.position = new Vector2(0, -3);
                 Replayer.End(null);
                 var effShot = shotSelect.Value.GetSubshot(subshotSelect.Value);
@@ -152,13 +148,13 @@ public class XMLMainMenuCampaign : XMLMainMenu {
                 }
             }
             
-            (PlayerConfig player, FancyShotDisplay display)[] displays = c.campaign.players.Select(p =>
+            (ShipConfig player, FancyShotDisplay display)[] displays = c.campaign.players.Select(p =>
                 (p, Instantiate(p.shotDisplay, shotDisplayContainer).GetComponent<FancyShotDisplay>())).ToArray();
 
             void HidePlayers() {
                 foreach (var f in displays) f.display.Show(false);
             }
-            void ShowShot(PlayerConfig p, ShotConfig s, Subshot sub, bool first) {
+            void ShowShot(ShipConfig p, ShotConfig s, Subshot sub, bool first) {
                 if (!first) UpdateDemo();
                 var index = displays.IndexOf(sd => sd.player == p);
                 displays[index].display.SetShot(p, s, sub);
@@ -174,7 +170,7 @@ public class XMLMainMenuCampaign : XMLMainMenu {
                 ShowShot(playerSelect.Value, shotSelect.Value, subshotSelect.Value, first);
             }
             
-            playerSelect = new OptionNodeLR<PlayerConfig>(LocalizedString.Empty, _ => _ShowShot(),
+            playerSelect = new OptionNodeLR<ShipConfig>(LocalizedString.Empty, _ => _ShowShot(),
                 c.campaign.players.Select(p => (p.ShortTitle, p)).ToArray(), c.campaign.players[0]);
 
             //Place a fixed node in the second column for shot description
@@ -194,7 +190,7 @@ public class XMLMainMenuCampaign : XMLMainMenu {
                     subshotSelect.With(optionNoKeyClass)
                         .VisibleIf(() => shotSelect.Value.isMultiShot),
                     new PassthroughNode(LocalizedString.Empty),
-                    new FuncNode(() => shotCont(new PlayerTeam(0, subshotSelect.Value,
+                    new FuncNode(() => shotCont(new TeamConfig(0, subshotSelect.Value,
                         (playerSelect.Value, shotSelect.Value))), play_game, false).With(centerTextClass)
                     //new UINode(() => shotSelect.Value.title).SetAlwaysVisible().FixDepth(1),
                     //new UINode(() => shotSelect.Value.description)
@@ -221,7 +217,7 @@ public class XMLMainMenuCampaign : XMLMainMenu {
         if (ExtraShotScreen != null && References.exCampaign != null) 
             shotTopMap[References.exCampaign] = ExtraShotScreen.top[1];
 
-        (bool, UINode) GetShot(CampaignConfig c, Func<PlayerTeam, bool> cont) {
+        (bool, UINode) GetShot(CampaignConfig c, Func<TeamConfig, bool> cont) {
             shotCont = cont;
             return (true, shotTopMap![c]);
         }

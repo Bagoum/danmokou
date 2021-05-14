@@ -1,4 +1,5 @@
 ﻿using System;
+using Danmokou.Core;
 using JetBrains.Annotations;
 
 namespace Danmokou.DMath {
@@ -10,13 +11,17 @@ public class Lerpifier<T> {
     private T lastTargetValue;
     public T NextValue { get; private set; }
     private float timeSinceUpdate;
+    
+    private readonly Evented<T> ev;
+    public Events.IEvent<T> OnChange => ev.OnChange;
 
-    public Lerpifier(Func<T, T, float, T> lerper, Func<T> targetValue, float lerpTime) {
+    public Lerpifier(Func<T, T, float, T> lerper, Func<T> targetValue, float lerpTime, Lerpifier<T>? inheritListeners=null) {
         this.lerper = lerper;
         this.targetValue = targetValue;
         this.lerpTime = lerpTime;
         this.lastSourceValue = lastTargetValue = NextValue = targetValue();
         this.timeSinceUpdate = this.lerpTime;
+        ev = new Evented<T>(NextValue, inheritListeners?.ev);
     }
 
     public void HardReset() {
@@ -39,7 +44,10 @@ public class Lerpifier<T> {
         NextValue = timeSinceUpdate >= lerpTime ? 
             lastTargetValue : 
             lerper(lastSourceValue, lastTargetValue, timeSinceUpdate / lerpTime);
-        return !prev!.Equals(NextValue);
+        bool changed = !prev!.Equals(NextValue);
+        if (changed)
+            ev.Value = NextValue;
+        return changed;
     }
 }
 }

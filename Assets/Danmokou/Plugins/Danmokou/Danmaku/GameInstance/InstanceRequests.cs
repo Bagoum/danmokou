@@ -71,26 +71,24 @@ public readonly struct CampaignRequest {
 }
 
 public readonly struct SharedInstanceMetadata {
-    public readonly PlayerTeam team;
+    public readonly TeamConfig team;
     public readonly DifficultySettings difficulty;
     
-    public SharedInstanceMetadata(PlayerTeam team, DifficultySettings difficulty) {
+    public SharedInstanceMetadata(TeamConfig team, DifficultySettings difficulty) {
         this.team = team;
         this.difficulty = difficulty;
     }
     
-    public SharedInstanceMetadata(Saveable saved) : this(new PlayerTeam(saved.team), saved.difficulty) { }
-
-    public (string, string) Key => (team.Describe, difficulty.DescribeSafe());
+    public SharedInstanceMetadata(Saveable saved) : this(new TeamConfig(saved.team), saved.difficulty) { }
 
     [Serializable]
     [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
     public struct Saveable {
-        public PlayerTeam.Saveable team { get; set; }
+        public TeamConfig.Saveable team { get; set; }
         public DifficultySettings difficulty { get; set; }
 
         public Saveable(SharedInstanceMetadata gm) {
-            this.team = new PlayerTeam.Saveable(gm.team);
+            this.team = new TeamConfig.Saveable(gm.team);
             this.difficulty = gm.difficulty;
         }
     }

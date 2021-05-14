@@ -33,9 +33,9 @@ public class FiringCtx {
     public readonly Dictionary<int, V2RV2> boundRV2s = new Dictionary<int, V2RV2>();
     public BehaviorEntity? firer; //Note this may be repooled or otherwise destroyed during execution
     
-    public PlayerInput? playerController; //For player bullets
+    public PlayerController? playerController; //For player bullets
     [UsedImplicitly]
-    public PlayerInput PlayerController =>
+    public PlayerController PlayerController =>
         playerController != null ?
             playerController :
             throw new Exception("FiringCtx does not have a player controller");
@@ -75,7 +75,7 @@ public class FiringCtx {
         }
         nCtx.firer = gcx?.exec;
         nCtx.playerController = nCtx.firer switch {
-            PlayerInput pi => pi,
+            PlayerController pi => pi,
             FireOption fo => fo.Player,
             _ => nCtx.playerController
         };

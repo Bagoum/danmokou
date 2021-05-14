@@ -133,11 +133,47 @@ public class UIManager : RegularUpdater, IUIManager, IUnpauseAnimateProvider {
     protected override void BindListeners() {
         base.BindListeners();
         Listen(Events.GameStateHasChanged, HandleGameStateChange);
-        Listen(InstanceData.CampaignDataUpdated, () => updateAllUI = true);
         Listen(InstanceData.ItemExtendAcquired, LifeExtendItems);
         Listen(InstanceData.ScoreExtendAcquired, LifeExtendScore);
-        Listen(PlayerInput.MeterIsActive, SetMeterActivated);
-        Listen(PlayerInput.PlayerDeactivatedMeter, UnSetMeterActivated);
+        Listen(Player.PlayerController.MeterIsActive, SetMeterActivated);
+        Listen(Player.PlayerController.PlayerDeactivatedMeter, UnSetMeterActivated);
+        ListenInv(Instance.Graze.OnChange, g => graze.text = string.Format(grazeFormat, g));
+        ListenInv(Instance.VisibleScore.OnChange, s => score.text = string.Format(scoreFormat, s));
+        ListenInv(Instance.MaxScore.OnChange, s => maxScore.text = string.Format(scoreFormat, s));
+        ListenInv(Instance.PIV.OnChange, p => pivMult.text = string.Format(pivMultFormat, p));
+        ListenInv(Instance.Power.OnChange, p => power.text = string.Format(powerFormat, p, InstanceConsts.powerMax));
+        ListenInv(Instance.Lives.OnChange, l => {
+            for (int ii = 0; ii < healthPoints.Length; ++ii) healthPoints[ii].sprite = healthEmpty;
+            for (int hi = 0; hi < healthItrs.Length; ++hi) {
+                for (int ii = 0; ii + hi * healthPoints.Length < Instance.Lives && ii < healthPoints.Length; ++ii) {
+                    healthPoints[ii].sprite = healthItrs[hi];
+                }
+            }
+        });
+        ListenInv(Instance.Bombs.OnChange, b => {
+            for (int ii = 0; ii < bombPoints.Length; ++ii) bombPoints[ii].sprite = healthEmpty;
+            for (int bi = 0; bi < bombItrs.Length; ++bi) {
+                for (int ii = 0; ii + bi * bombPoints.Length < Instance.Bombs && ii < bombPoints.Length; ++ii) {
+                    bombPoints[ii].sprite = bombItrs[bi];
+                }
+            }
+        });
+        ListenInv(InstanceData.RankLevelChanged, _ => rankLevel.text = $"Rank {Instance.RankLevel}");
+        ListenInv(InstanceData.TeamUpdated, () => multishotIndicator.text = Instance.MultishotString);
+        if (scoreExtend_parent != null) {
+            ListenInv(InstanceData.ScoreExtendAcquired, () => {
+                if (Instance.NextScoreLife.Try(out var scoreExt)) {
+                    scoreExtend_parent.SetActive(true);
+                    scoreExtend.text = string.Format(scoreFormat, scoreExt);
+                } else {
+                    scoreExtend_parent.SetActive(false);
+                }
+            });
+        }
+        ListenInv(Instance.LifeItems.OnChange,
+            _ => lifePoints.text = string.Format(lifePointsFormat, Instance.LifeItems.Value, Instance.NextLifeItems));
+        ListenInv(InstanceData.ItemExtendAcquired,
+            () => lifePoints.text = string.Format(lifePointsFormat, Instance.LifeItems.Value, Instance.NextLifeItems));
         RegisterDI<IUIManager>(this);
         RegisterDI<IUnpauseAnimateProvider>(this);
     }
@@ -147,7 +183,6 @@ public class UIManager : RegularUpdater, IUIManager, IUnpauseAnimateProvider {
 
     private void Start() {
         UpdatePB();
-        _UpdatePlayerUI();
         EngineStateManager.PauseAllowed = PauseManager.gameObject.activeSelf;
     }
 
@@ -204,8 +239,6 @@ public class UIManager : RegularUpdater, IUIManager, IUnpauseAnimateProvider {
     private int fpsUpdateCounter = fpsSmooth;
     private float accdT = 0f;
 
-    private bool updateAllUI = false;
-
     private void Update() {
         profileTime += ETime.dT;
         accdT += Time.unscaledDeltaTime;
@@ -215,8 +248,6 @@ public class UIManager : RegularUpdater, IUIManager, IUnpauseAnimateProvider {
             accdT = 0;
         }
         UpdatePB();
-        if (updateAllUI) _UpdatePlayerUI();
-        updateAllUI = false;
     }
 
     public override void RegularUpdate() { }
@@ -435,37 +466,6 @@ public class UIManager : RegularUpdater, IUIManager, IUnpauseAnimateProvider {
             val -= (long) (places * Math.Pow(10, pow));
         }
         return sb.ToString();
-    }
-
-    private void _UpdatePlayerUI() {
-        multishotIndicator.text = Instance.MultishotString;
-        if (scoreExtend_parent != null) {
-            if (Instance.NextScoreLife.Try(out var scoreExt)) {
-                scoreExtend_parent.SetActive(true);
-                scoreExtend.text = string.Format(scoreFormat, scoreExt);
-            } else {
-                scoreExtend_parent.SetActive(false);
-            }
-        }
-        score.text = string.Format(scoreFormat, Instance.VisibleScore.NextValue);
-        maxScore.text = string.Format(scoreFormat, Instance.MaxScore);
-        pivMult.text = string.Format(pivMultFormat, Instance.PIV);
-        lifePoints.text = string.Format(lifePointsFormat, Instance.LifeItems, Instance.NextLifeItems);
-        graze.text = string.Format(grazeFormat, Instance.Graze);
-        power.text = string.Format(powerFormat, Instance.Power, InstanceConsts.powerMax);
-        for (int ii = 0; ii < healthPoints.Length; ++ii) healthPoints[ii].sprite = healthEmpty;
-        for (int hi = 0; hi < healthItrs.Length; ++hi) {
-            for (int ii = 0; ii + hi * healthPoints.Length < Instance.Lives && ii < healthPoints.Length; ++ii) {
-                healthPoints[ii].sprite = healthItrs[hi];
-            }
-        }
-        for (int ii = 0; ii < bombPoints.Length; ++ii) bombPoints[ii].sprite = healthEmpty;
-        for (int bi = 0; bi < bombItrs.Length; ++bi) {
-            for (int ii = 0; ii + bi * bombPoints.Length < Instance.Bombs && ii < bombPoints.Length; ++ii) {
-                bombPoints[ii].sprite = bombItrs[bi];
-            }
-        }
-        rankLevel.text = $"Rank {Instance.RankLevel}";
     }
 
     private IEnumerator FadeMessage(string msg, ICancellee cT, float timeIn = 1f, float timeStay = 4f,

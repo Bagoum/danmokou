@@ -43,20 +43,20 @@ public static class PlayerBombs {
             _ => null
         };
 
-    private static IEnumerator BombCoroutine(PlayerBombType bomb, PlayerInput bomber, MultiAdder.Token bombDisable) =>
+    private static IEnumerator BombCoroutine(PlayerBombType bomb, PlayerController bomber, MultiAdder.Token bombDisable) =>
         bomb switch {
             PlayerBombType.TEST_BOMB_1 => DoTestBomb1(bomber, bombDisable),
             PlayerBombType.TEST_POWERBOMB_1 => DoTestBomb1(bomber, bombDisable),
             _ => throw new Exception($"No bomb handling for {bomb}")
         };
 
-    public static bool TryBomb(PlayerBombType bomb, PlayerInput bomber, PlayerBombContext ctx) {
+    public static bool TryBomb(PlayerBombType bomb, PlayerController bomber, PlayerBombContext ctx) {
         if (bomb.PowerRequired(ctx).Try(out var rp) && !GameManagement.Instance.TryConsumePower(-rp)) 
             return false;
         if (bomb.BombsRequired(ctx).Try(out var rb) && !GameManagement.Instance.TryConsumeBombs(-rb)) 
             return false;
         GameManagement.Instance.BombTriggered();
-        var ienum = BombCoroutine(bomb, bomber, PlayerInput.BombDisabler.CreateToken1(MultiOp.Priority.CLEAR_SCENE));
+        var ienum = BombCoroutine(bomb, bomber, PlayerController.BombDisabler.CreateToken1(MultiOp.Priority.CLEAR_SCENE));
         bomber.RunDroppableRIEnumerator(ienum);
         return true;
     }
@@ -79,13 +79,13 @@ async gpather-red/w <-90> gcr3 20 1.6s <> {
 	s(2)
 })
 ");
-    private static IEnumerator DoTestBomb1(PlayerInput bomber, MultiAdder.Token bombDisable) {
+    private static IEnumerator DoTestBomb1(PlayerController bomber, MultiAdder.Token bombDisable) {
         Log.Unity("Starting Test Bomb 1", level: Log.Level.DEBUG2);
-        var fireDisable = PlayerInput.FiringDisabler.CreateToken1(MultiOp.Priority.CLEAR_SCENE);
+        var fireDisable = PlayerController.FiringDisabler.CreateToken1(MultiOp.Priority.CLEAR_SCENE);
         var smh = new SMHandoff(bomber);
         _ = TB1_1.Value(smh);
         _ = TB1_2.Value.Start(smh);
-        PlayerHP.RequestPlayerInvulnerable.Publish(((int)(120f * (EventLASM.BossExplodeWait + 3f)), true));
+        PlayerController.RequestPlayerInvulnerable.Publish(((int)(120f * (EventLASM.BossExplodeWait + 3f)), true));
         for (float t = 0; t < EventLASM.BossExplodeWait; t += ETime.FRAME_TIME) yield return null;
         var circ = new CCircle(bomber.hitbox.location.x, bomber.hitbox.location.y, 8f);
         BulletManager.Autodelete(new SoftcullProperties(null, null), 

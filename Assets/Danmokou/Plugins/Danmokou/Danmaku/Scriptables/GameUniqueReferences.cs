@@ -47,17 +47,17 @@ public class GameUniqueReferences : ScriptableObject {
     /// </summary>
     public bool fastParsing;
 
-    private static IEnumerable<PlayerConfig> CampaignShots(CampaignConfig? c) =>
-        c == null ? new PlayerConfig[0] : c.players;
+    private static IEnumerable<ShipConfig> CampaignShots(CampaignConfig? c) =>
+        c == null ? new ShipConfig[0] : c.players;
 
-    private static IEnumerable<PlayerConfig> CampaignShots(DayCampaignConfig? c) =>
-        c == null ? new PlayerConfig[0] : c.players;
+    private static IEnumerable<ShipConfig> CampaignShots(DayCampaignConfig? c) =>
+        c == null ? new ShipConfig[0] : c.players;
 
-    public IEnumerable<PlayerConfig> AllPlayers =>
+    public IEnumerable<ShipConfig> AllPlayers =>
         CampaignShots(campaign).Concat(CampaignShots(exCampaign)).Concat(CampaignShots(dayCampaign));
     public IEnumerable<ShotConfig> AllShots => AllPlayers.SelectMany(x => x.shots2.Select(s => s.shot));
 
-    public PlayerConfig FindPlayer(string key) => AllPlayers.First(p => p.key == key);
+    public ShipConfig FindPlayer(string key) => AllPlayers.First(p => p.key == key);
     public ShotConfig FindShot(string key) => AllShots.First(s => s.key == key);
 }
 }

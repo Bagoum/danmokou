@@ -10,7 +10,7 @@ public class CampaignConfig : ScriptableObject {
     public string key = "";
     public string shortTitle = "";
     public EndingConfig[] endings = null!;
-    public PlayerConfig[] players = null!;
+    public ShipConfig[] players = null!;
     public StageConfig[] stages = null!;
     public BossConfig[] practiceBosses = null!;
 

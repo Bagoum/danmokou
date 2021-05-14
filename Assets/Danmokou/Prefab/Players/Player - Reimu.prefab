@@ -9,11 +9,6 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 4325623070515268529, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
-      propertyPath: m_Color.r
-      value: 0.5283019
-      objectReference: {fileID: 0}
-    - target: {fileID: 4325623070515268529, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
       propertyPath: m_Color.b
       value: 0.121683516
       objectReference: {fileID: 0}
@@ -22,21 +17,17 @@ PrefabInstance:
       propertyPath: m_Color.g
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
+    - target: {fileID: 4325623070515268529, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
-      propertyPath: animate.frames.idleAnim.Array.size
-      value: 9
+      propertyPath: m_Color.r
+      value: 0.5283019
       objectReference: {fileID: 0}
     - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
-      propertyPath: animate.frames.rightAnim.Array.size
-      value: 8
-      objectReference: {fileID: 0}
-    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.leftAnim.Array.size
-      value: 8
-      objectReference: {fileID: 0}
+      propertyPath: thisPlayer
+      value: 
+      objectReference: {fileID: 11400000, guid: 2837e4ddce10a134ebcede695c842b92,
+        type: 2}
     - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
       propertyPath: defaultShot
@@ -45,10 +36,49 @@ PrefabInstance:
         type: 2}
     - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
-      propertyPath: animate.frames.idleAnim.Array.data[4].sprite
-      value: 
-      objectReference: {fileID: 6762124007882689112, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
+      propertyPath: meterDisplay.b
+      value: 0.12156863
+      objectReference: {fileID: 0}
+    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
+      propertyPath: meterDisplay.r
+      value: 0.5294118
+      objectReference: {fileID: 0}
+    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.idleAnim.Array.size
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.leftAnim.Array.size
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.rightAnim.Array.size
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.idleAnim.Array.data[0].time
+      value: 0.14
+      objectReference: {fileID: 0}
+    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.idleAnim.Array.data[1].time
+      value: 0.14
+      objectReference: {fileID: 0}
+    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.idleAnim.Array.data[2].time
+      value: 0.14
+      objectReference: {fileID: 0}
+    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.idleAnim.Array.data[3].time
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
       propertyPath: animate.frames.idleAnim.Array.data[4].time
@@ -56,21 +86,9 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
-      propertyPath: animate.frames.idleAnim.Array.data[5].sprite
-      value: 
-      objectReference: {fileID: -1571346506241653757, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
-        type: 3}
-    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
       propertyPath: animate.frames.idleAnim.Array.data[5].time
       value: 0.14
       objectReference: {fileID: 0}
-    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.idleAnim.Array.data[6].sprite
-      value: 
-      objectReference: {fileID: -5191110334488865902, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
-        type: 3}
     - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
       propertyPath: animate.frames.idleAnim.Array.data[6].time
@@ -78,16 +96,94 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
-      propertyPath: animate.frames.idleAnim.Array.data[2].sprite
-      value: 
-      objectReference: {fileID: 5348214566728501794, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
-        type: 3}
+      propertyPath: animate.frames.idleAnim.Array.data[7].time
+      value: 0.14
+      objectReference: {fileID: 0}
     - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
-      propertyPath: animate.frames.idleAnim.Array.data[3].sprite
-      value: 
-      objectReference: {fileID: 5348214566728501794, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
+      propertyPath: animate.frames.idleAnim.Array.data[8].time
+      value: 0.14
+      objectReference: {fileID: 0}
+    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
+      propertyPath: animate.frames.leftAnim.Array.data[0].time
+      value: 0.14
+      objectReference: {fileID: 0}
+    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.leftAnim.Array.data[1].time
+      value: 0.14
+      objectReference: {fileID: 0}
+    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.leftAnim.Array.data[2].time
+      value: 0.14
+      objectReference: {fileID: 0}
+    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.leftAnim.Array.data[3].time
+      value: 0.14
+      objectReference: {fileID: 0}
+    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.leftAnim.Array.data[4].time
+      value: 0.14
+      objectReference: {fileID: 0}
+    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.leftAnim.Array.data[5].time
+      value: 0.14
+      objectReference: {fileID: 0}
+    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.leftAnim.Array.data[6].time
+      value: 0.14
+      objectReference: {fileID: 0}
+    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.leftAnim.Array.data[7].time
+      value: 0.14
+      objectReference: {fileID: 0}
+    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.rightAnim.Array.data[0].time
+      value: 0.14
+      objectReference: {fileID: 0}
+    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.rightAnim.Array.data[1].time
+      value: 0.14
+      objectReference: {fileID: 0}
+    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.rightAnim.Array.data[2].time
+      value: 0.14
+      objectReference: {fileID: 0}
+    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.rightAnim.Array.data[3].time
+      value: 0.14
+      objectReference: {fileID: 0}
+    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.rightAnim.Array.data[4].time
+      value: 0.14
+      objectReference: {fileID: 0}
+    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.rightAnim.Array.data[5].time
+      value: 0.14
+      objectReference: {fileID: 0}
+    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.rightAnim.Array.data[6].time
+      value: 0.14
+      objectReference: {fileID: 0}
+    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.rightAnim.Array.data[7].time
+      value: 0.14
+      objectReference: {fileID: 0}
     - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
       propertyPath: animate.frames.idleAnim.Array.data[0].sprite
@@ -102,15 +198,45 @@ PrefabInstance:
         type: 3}
     - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
-      propertyPath: animate.frames.rightAnim.Array.data[0].sprite
+      propertyPath: animate.frames.idleAnim.Array.data[2].sprite
       value: 
-      objectReference: {fileID: 4884675645428117443, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
+      objectReference: {fileID: 5348214566728501794, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
         type: 3}
     - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
-      propertyPath: animate.frames.rightAnim.Array.data[1].sprite
+      propertyPath: animate.frames.idleAnim.Array.data[3].sprite
       value: 
-      objectReference: {fileID: -5684086761647187864, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
+      objectReference: {fileID: 5348214566728501794, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
+        type: 3}
+    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.idleAnim.Array.data[4].sprite
+      value: 
+      objectReference: {fileID: 6762124007882689112, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
+        type: 3}
+    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.idleAnim.Array.data[5].sprite
+      value: 
+      objectReference: {fileID: -1571346506241653757, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
+        type: 3}
+    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.idleAnim.Array.data[6].sprite
+      value: 
+      objectReference: {fileID: -5191110334488865902, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
+        type: 3}
+    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.idleAnim.Array.data[7].sprite
+      value: 
+      objectReference: {fileID: -1571346506241653757, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
+        type: 3}
+    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.idleAnim.Array.data[8].sprite
+      value: 
+      objectReference: {fileID: -5651560387842162596, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
         type: 3}
     - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
@@ -126,91 +252,10 @@ PrefabInstance:
         type: 3}
     - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
-      propertyPath: animate.frames.idleAnim.Array.data[2].time
-      value: 0.14
-      objectReference: {fileID: 0}
-    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.idleAnim.Array.data[3].time
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.idleAnim.Array.data[7].sprite
-      value: 
-      objectReference: {fileID: -1571346506241653757, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
-        type: 3}
-    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.idleAnim.Array.data[7].time
-      value: 0.14
-      objectReference: {fileID: 0}
-    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.rightAnim.Array.data[2].sprite
-      value: 
-      objectReference: {fileID: -5030115898254913183, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
-        type: 3}
-    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.rightAnim.Array.data[2].time
-      value: 0.14
-      objectReference: {fileID: 0}
-    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.rightAnim.Array.data[3].sprite
-      value: 
-      objectReference: {fileID: -5498250786745116292, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
-        type: 3}
-    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.rightAnim.Array.data[3].time
-      value: 0.14
-      objectReference: {fileID: 0}
-    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.rightAnim.Array.data[4].sprite
-      value: 
-      objectReference: {fileID: 7735434639345953439, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
-        type: 3}
-    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.rightAnim.Array.data[4].time
-      value: 0.14
-      objectReference: {fileID: 0}
-    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.rightAnim.Array.data[5].sprite
-      value: 
-      objectReference: {fileID: -1335402344658697521, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
-        type: 3}
-    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.rightAnim.Array.data[5].time
-      value: 0.14
-      objectReference: {fileID: 0}
-    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.rightAnim.Array.data[6].sprite
-      value: 
-      objectReference: {fileID: -2363311196912263255, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
-        type: 3}
-    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.rightAnim.Array.data[6].time
-      value: 0.14
-      objectReference: {fileID: 0}
-    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
       propertyPath: animate.frames.leftAnim.Array.data[2].sprite
       value: 
       objectReference: {fileID: 8465632479084846818, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
         type: 3}
-    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.leftAnim.Array.data[2].time
-      value: 0.14
-      objectReference: {fileID: 0}
     - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
       propertyPath: animate.frames.leftAnim.Array.data[3].sprite
@@ -219,20 +264,10 @@ PrefabInstance:
         type: 3}
     - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
-      propertyPath: animate.frames.leftAnim.Array.data[3].time
-      value: 0.14
-      objectReference: {fileID: 0}
-    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
       propertyPath: animate.frames.leftAnim.Array.data[4].sprite
       value: 
       objectReference: {fileID: 1456264429820348860, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
         type: 3}
-    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.leftAnim.Array.data[4].time
-      value: 0.14
-      objectReference: {fileID: 0}
     - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
       propertyPath: animate.frames.leftAnim.Array.data[5].sprite
@@ -241,20 +276,64 @@ PrefabInstance:
         type: 3}
     - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
-      propertyPath: animate.frames.leftAnim.Array.data[5].time
-      value: 0.14
-      objectReference: {fileID: 0}
-    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
       propertyPath: animate.frames.leftAnim.Array.data[6].sprite
       value: 
       objectReference: {fileID: -5425684682266424973, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
         type: 3}
     - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
-      propertyPath: animate.frames.leftAnim.Array.data[6].time
-      value: 0.14
-      objectReference: {fileID: 0}
+      propertyPath: animate.frames.leftAnim.Array.data[7].sprite
+      value: 
+      objectReference: {fileID: -2085414386574335758, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
+        type: 3}
+    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.rightAnim.Array.data[0].sprite
+      value: 
+      objectReference: {fileID: 4884675645428117443, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
+        type: 3}
+    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.rightAnim.Array.data[1].sprite
+      value: 
+      objectReference: {fileID: -5684086761647187864, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
+        type: 3}
+    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.rightAnim.Array.data[2].sprite
+      value: 
+      objectReference: {fileID: -5030115898254913183, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
+        type: 3}
+    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.rightAnim.Array.data[3].sprite
+      value: 
+      objectReference: {fileID: -5498250786745116292, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
+        type: 3}
+    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.rightAnim.Array.data[4].sprite
+      value: 
+      objectReference: {fileID: 7735434639345953439, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
+        type: 3}
+    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.rightAnim.Array.data[5].sprite
+      value: 
+      objectReference: {fileID: -1335402344658697521, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
+        type: 3}
+    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.rightAnim.Array.data[6].sprite
+      value: 
+      objectReference: {fileID: -2363311196912263255, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
+        type: 3}
+    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.rightAnim.Array.data[7].sprite
+      value: 
+      objectReference: {fileID: -1335402344658697521, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
+        type: 3}
     - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
       propertyPath: animate.frames.leftAnim.Array.data[1].skipLoop
@@ -285,75 +364,6 @@ PrefabInstance:
       propertyPath: animate.frames.rightAnim.Array.data[3].skipLoop
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.idleAnim.Array.data[0].time
-      value: 0.14
-      objectReference: {fileID: 0}
-    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.idleAnim.Array.data[1].time
-      value: 0.14
-      objectReference: {fileID: 0}
-    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.idleAnim.Array.data[8].sprite
-      value: 
-      objectReference: {fileID: -5651560387842162596, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
-        type: 3}
-    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.idleAnim.Array.data[8].time
-      value: 0.14
-      objectReference: {fileID: 0}
-    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.rightAnim.Array.data[0].time
-      value: 0.14
-      objectReference: {fileID: 0}
-    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.rightAnim.Array.data[1].time
-      value: 0.14
-      objectReference: {fileID: 0}
-    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.rightAnim.Array.data[7].sprite
-      value: 
-      objectReference: {fileID: -1335402344658697521, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
-        type: 3}
-    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.rightAnim.Array.data[7].time
-      value: 0.14
-      objectReference: {fileID: 0}
-    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.leftAnim.Array.data[0].time
-      value: 0.14
-      objectReference: {fileID: 0}
-    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.leftAnim.Array.data[1].time
-      value: 0.14
-      objectReference: {fileID: 0}
-    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.leftAnim.Array.data[7].sprite
-      value: 
-      objectReference: {fileID: -2085414386574335758, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
-        type: 3}
-    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.leftAnim.Array.data[7].time
-      value: 0.14
-      objectReference: {fileID: 0}
-    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: thisPlayer
-      value: 
-      objectReference: {fileID: 11400000, guid: 2837e4ddce10a134ebcede695c842b92,
-        type: 2}
     - target: {fileID: 5693660460388628149, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
       propertyPath: m_RootOrder
@@ -403,13 +413,133 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
+      propertyPath: animate.frames.leftAnim.Array.size
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
       propertyPath: animate.frames.rightAnim.Array.size
       value: 8
       objectReference: {fileID: 0}
     - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
-      propertyPath: animate.frames.leftAnim.Array.size
-      value: 8
+      propertyPath: animate.frames.idleAnim.Array.data[0].time
+      value: 0.14
+      objectReference: {fileID: 0}
+    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.idleAnim.Array.data[1].time
+      value: 0.14
+      objectReference: {fileID: 0}
+    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.idleAnim.Array.data[2].time
+      value: 0.14
+      objectReference: {fileID: 0}
+    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.idleAnim.Array.data[4].time
+      value: 0.14
+      objectReference: {fileID: 0}
+    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.idleAnim.Array.data[5].time
+      value: 0.14
+      objectReference: {fileID: 0}
+    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.idleAnim.Array.data[6].time
+      value: 0.14
+      objectReference: {fileID: 0}
+    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.idleAnim.Array.data[7].time
+      value: 0.14
+      objectReference: {fileID: 0}
+    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.idleAnim.Array.data[8].time
+      value: 0.14
+      objectReference: {fileID: 0}
+    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.leftAnim.Array.data[0].time
+      value: 0.14
+      objectReference: {fileID: 0}
+    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.leftAnim.Array.data[1].time
+      value: 0.14
+      objectReference: {fileID: 0}
+    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.leftAnim.Array.data[2].time
+      value: 0.14
+      objectReference: {fileID: 0}
+    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.leftAnim.Array.data[3].time
+      value: 0.14
+      objectReference: {fileID: 0}
+    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.leftAnim.Array.data[4].time
+      value: 0.14
+      objectReference: {fileID: 0}
+    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.leftAnim.Array.data[5].time
+      value: 0.14
+      objectReference: {fileID: 0}
+    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.leftAnim.Array.data[6].time
+      value: 0.14
+      objectReference: {fileID: 0}
+    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.leftAnim.Array.data[7].time
+      value: 0.14
+      objectReference: {fileID: 0}
+    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.rightAnim.Array.data[0].time
+      value: 0.14
+      objectReference: {fileID: 0}
+    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.rightAnim.Array.data[1].time
+      value: 0.14
+      objectReference: {fileID: 0}
+    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.rightAnim.Array.data[2].time
+      value: 0.14
+      objectReference: {fileID: 0}
+    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.rightAnim.Array.data[3].time
+      value: 0.14
+      objectReference: {fileID: 0}
+    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.rightAnim.Array.data[4].time
+      value: 0.14
+      objectReference: {fileID: 0}
+    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.rightAnim.Array.data[5].time
+      value: 0.14
+      objectReference: {fileID: 0}
+    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.rightAnim.Array.data[6].time
+      value: 0.14
+      objectReference: {fileID: 0}
+    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.rightAnim.Array.data[7].time
+      value: 0.14
       objectReference: {fileID: 0}
     - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
@@ -419,31 +549,16 @@ PrefabInstance:
         type: 3}
     - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
-      propertyPath: animate.frames.idleAnim.Array.data[0].time
-      value: 0.14
-      objectReference: {fileID: 0}
-    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
       propertyPath: animate.frames.idleAnim.Array.data[1].sprite
       value: 
       objectReference: {fileID: -2182622433948752608, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
         type: 3}
     - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
-      propertyPath: animate.frames.idleAnim.Array.data[1].time
-      value: 0.14
-      objectReference: {fileID: 0}
-    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
       propertyPath: animate.frames.idleAnim.Array.data[2].sprite
       value: 
       objectReference: {fileID: 5348214566728501794, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
         type: 3}
-    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.idleAnim.Array.data[2].time
-      value: 0.14
-      objectReference: {fileID: 0}
     - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
       propertyPath: animate.frames.idleAnim.Array.data[3].sprite
@@ -458,20 +573,10 @@ PrefabInstance:
         type: 3}
     - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
-      propertyPath: animate.frames.idleAnim.Array.data[4].time
-      value: 0.14
-      objectReference: {fileID: 0}
-    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
       propertyPath: animate.frames.idleAnim.Array.data[5].sprite
       value: 
       objectReference: {fileID: -1571346506241653757, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
         type: 3}
-    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.idleAnim.Array.data[5].time
-      value: 0.14
-      objectReference: {fileID: 0}
     - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
       propertyPath: animate.frames.idleAnim.Array.data[6].sprite
@@ -480,20 +585,10 @@ PrefabInstance:
         type: 3}
     - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
-      propertyPath: animate.frames.idleAnim.Array.data[6].time
-      value: 0.14
-      objectReference: {fileID: 0}
-    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
       propertyPath: animate.frames.idleAnim.Array.data[7].sprite
       value: 
       objectReference: {fileID: -1571346506241653757, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
         type: 3}
-    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.idleAnim.Array.data[7].time
-      value: 0.14
-      objectReference: {fileID: 0}
     - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
       propertyPath: animate.frames.idleAnim.Array.data[8].sprite
@@ -502,118 +597,10 @@ PrefabInstance:
         type: 3}
     - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
-      propertyPath: animate.frames.idleAnim.Array.data[8].time
-      value: 0.14
-      objectReference: {fileID: 0}
-    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.rightAnim.Array.data[0].sprite
-      value: 
-      objectReference: {fileID: 4884675645428117443, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
-        type: 3}
-    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.rightAnim.Array.data[0].time
-      value: 0.14
-      objectReference: {fileID: 0}
-    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.rightAnim.Array.data[1].sprite
-      value: 
-      objectReference: {fileID: -5684086761647187864, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
-        type: 3}
-    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.rightAnim.Array.data[1].time
-      value: 0.14
-      objectReference: {fileID: 0}
-    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.rightAnim.Array.data[1].skipLoop
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.rightAnim.Array.data[2].sprite
-      value: 
-      objectReference: {fileID: -5030115898254913183, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
-        type: 3}
-    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.rightAnim.Array.data[2].time
-      value: 0.14
-      objectReference: {fileID: 0}
-    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.rightAnim.Array.data[2].skipLoop
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.rightAnim.Array.data[3].sprite
-      value: 
-      objectReference: {fileID: -5498250786745116292, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
-        type: 3}
-    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.rightAnim.Array.data[3].time
-      value: 0.14
-      objectReference: {fileID: 0}
-    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.rightAnim.Array.data[4].sprite
-      value: 
-      objectReference: {fileID: 7735434639345953439, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
-        type: 3}
-    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.rightAnim.Array.data[4].time
-      value: 0.14
-      objectReference: {fileID: 0}
-    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.rightAnim.Array.data[5].sprite
-      value: 
-      objectReference: {fileID: -1335402344658697521, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
-        type: 3}
-    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.rightAnim.Array.data[5].time
-      value: 0.14
-      objectReference: {fileID: 0}
-    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.rightAnim.Array.data[6].sprite
-      value: 
-      objectReference: {fileID: -2363311196912263255, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
-        type: 3}
-    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.rightAnim.Array.data[6].time
-      value: 0.14
-      objectReference: {fileID: 0}
-    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.rightAnim.Array.data[7].sprite
-      value: 
-      objectReference: {fileID: -1335402344658697521, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
-        type: 3}
-    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.rightAnim.Array.data[7].time
-      value: 0.14
-      objectReference: {fileID: 0}
-    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
       propertyPath: animate.frames.leftAnim.Array.data[0].sprite
       value: 
       objectReference: {fileID: -865492837845741942, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
         type: 3}
-    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.leftAnim.Array.data[0].time
-      value: 0.14
-      objectReference: {fileID: 0}
     - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
       propertyPath: animate.frames.leftAnim.Array.data[1].sprite
@@ -622,30 +609,10 @@ PrefabInstance:
         type: 3}
     - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
-      propertyPath: animate.frames.leftAnim.Array.data[1].time
-      value: 0.14
-      objectReference: {fileID: 0}
-    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.leftAnim.Array.data[1].skipLoop
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
       propertyPath: animate.frames.leftAnim.Array.data[2].sprite
       value: 
       objectReference: {fileID: 8465632479084846818, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
         type: 3}
-    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.leftAnim.Array.data[2].time
-      value: 0.14
-      objectReference: {fileID: 0}
-    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.leftAnim.Array.data[2].skipLoop
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
       propertyPath: animate.frames.leftAnim.Array.data[3].sprite
@@ -654,20 +621,10 @@ PrefabInstance:
         type: 3}
     - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
-      propertyPath: animate.frames.leftAnim.Array.data[3].time
-      value: 0.14
-      objectReference: {fileID: 0}
-    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
       propertyPath: animate.frames.leftAnim.Array.data[4].sprite
       value: 
       objectReference: {fileID: 1456264429820348860, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
         type: 3}
-    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.leftAnim.Array.data[4].time
-      value: 0.14
-      objectReference: {fileID: 0}
     - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
       propertyPath: animate.frames.leftAnim.Array.data[5].sprite
@@ -676,20 +633,10 @@ PrefabInstance:
         type: 3}
     - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
-      propertyPath: animate.frames.leftAnim.Array.data[5].time
-      value: 0.14
-      objectReference: {fileID: 0}
-    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
       propertyPath: animate.frames.leftAnim.Array.data[6].sprite
       value: 
       objectReference: {fileID: -5425684682266424973, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
         type: 3}
-    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.leftAnim.Array.data[6].time
-      value: 0.14
-      objectReference: {fileID: 0}
     - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
       propertyPath: animate.frames.leftAnim.Array.data[7].sprite
@@ -698,8 +645,71 @@ PrefabInstance:
         type: 3}
     - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
-      propertyPath: animate.frames.leftAnim.Array.data[7].time
-      value: 0.14
+      propertyPath: animate.frames.rightAnim.Array.data[0].sprite
+      value: 
+      objectReference: {fileID: 4884675645428117443, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
+        type: 3}
+    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.rightAnim.Array.data[1].sprite
+      value: 
+      objectReference: {fileID: -5684086761647187864, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
+        type: 3}
+    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.rightAnim.Array.data[2].sprite
+      value: 
+      objectReference: {fileID: -5030115898254913183, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
+        type: 3}
+    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.rightAnim.Array.data[3].sprite
+      value: 
+      objectReference: {fileID: -5498250786745116292, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
+        type: 3}
+    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.rightAnim.Array.data[4].sprite
+      value: 
+      objectReference: {fileID: 7735434639345953439, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
+        type: 3}
+    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.rightAnim.Array.data[5].sprite
+      value: 
+      objectReference: {fileID: -1335402344658697521, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
+        type: 3}
+    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.rightAnim.Array.data[6].sprite
+      value: 
+      objectReference: {fileID: -2363311196912263255, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
+        type: 3}
+    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.rightAnim.Array.data[7].sprite
+      value: 
+      objectReference: {fileID: -1335402344658697521, guid: 97990fc5d15d3ec4f8fa2723a53d37a3,
+        type: 3}
+    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.leftAnim.Array.data[1].skipLoop
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.leftAnim.Array.data[2].skipLoop
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.rightAnim.Array.data[1].skipLoop
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.rightAnim.Array.data[2].skipLoop
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 7102800307516943931, guid: 4f67648ec56d30044b03a5959e19a4e0, type: 3}

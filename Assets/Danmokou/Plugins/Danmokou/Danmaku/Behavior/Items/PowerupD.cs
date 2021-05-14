@@ -1,11 +1,13 @@
 ﻿using Danmokou.Core;
+using Danmokou.Player;
 
 namespace Danmokou.Behavior.Items {
 public abstract class PowerupItem : BouncyItem {
     protected abstract Subshot SType { get; }
-    protected override void CollectMe() {
-        GameManagement.Instance.SetSubshotViaItem(SType);
-        base.CollectMe();
+    protected override void CollectMe(PlayerController collector) {
+        collector.SetSubshot(SType);
+        GameManagement.Instance.CollectedPowerupItem();
+        base.CollectMe(collector);
     }
 }
 public class PowerupD : PowerupItem {

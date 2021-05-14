@@ -195,6 +195,8 @@ MonoBehaviour:
   playmodeSubmenu: {fileID: 5615592919199676993}
   shotDisplayContainer: {fileID: 865111494282575137}
   shotSetup: {fileID: 0}
+  demoPlayerSetup: {fileID: 3290238121844968754, guid: cd77fcd8b4e4d41489479fb8f6de0a18,
+    type: 3}
 --- !u!114 &4437263624821381404
 MonoBehaviour:
   m_ObjectHideFlags: 0

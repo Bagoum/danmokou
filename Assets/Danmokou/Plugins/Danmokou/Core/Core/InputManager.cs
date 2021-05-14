@@ -145,8 +145,9 @@ public static class InputManager {
     public static readonly IInputHandler
         FocusHold = InputHandler.Hold(Key(i.FocusHold).Or(AxisG0(aCRightTrigger, true)));
     public static readonly IInputHandler ShootHold = InputHandler.Hold(Key(i.ShootHold).Or(AxisG0(aCLeftTrigger, true)));
-    public static readonly IInputHandler Bomb = InputHandler.Trigger(Key(i.Bomb).Or(Key(cX, true)));
-    public static readonly IInputHandler Meter = InputHandler.Hold(Key(i.Bomb).Or(Key(cX, true)));
+    public static readonly IInputHandler Bomb = InputHandler.Trigger(Key(i.Special).Or(Key(cX, true)));
+    public static readonly IInputHandler Meter = InputHandler.Hold(Key(i.Special).Or(Key(cX, true)));
+    public static readonly IInputHandler Swap = InputHandler.Trigger(Key(i.Swap));
 
     public static readonly IInputHandler UILeft = InputHandler.Trigger(ArrowLeft.Or(AxisL0(aCDPadX, true)));
     public static readonly IInputHandler UIRight = InputHandler.Trigger(ArrowRight.Or(AxisG0(aCDPadX, true)));
@@ -216,7 +217,7 @@ public static class InputManager {
     private static readonly IInputHandler[] Updaters = {
         FocusHold, ShootHold, Bomb,
         UIDown, UIUp, UILeft, UIRight, UIConfirm, UIBack, UISkipDialogue, Pause,
-        Meter,
+        Meter, Swap,
         ReplayDebugSave
     };
 
@@ -246,7 +247,7 @@ public static class InputManager {
     public static bool IsFocus => replay?.focus ?? FocusHold.Active;
     public static bool IsBomb => replay?.bomb ?? Bomb.Active;
     public static bool IsMeter => replay?.meter ?? Meter.Active;
-
+    public static bool IsSwap => Swap.Active;
     public static bool IsFiring => replay?.fire ?? ShootHold.Active;
 
 }

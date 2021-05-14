@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using Danmokou.Core;
+using Danmokou.Player;
 using UnityEngine;
 
 namespace Danmokou.Behavior.Items {
@@ -10,9 +11,9 @@ public class PointPPItem : Item {
     protected override float RotationTurns => -2;
     protected override float MinTimeBeforeHome => 0.8f;
 
-    protected override void CollectMe() {
+    protected override void CollectMe(PlayerController collector) {
         GameManagement.Instance.AddPointPlusItems(1);
-        base.CollectMe();
+        base.CollectMe(collector);
     }
 }
 }

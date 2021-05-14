@@ -10,7 +10,7 @@ using UnityEngine;
 namespace Danmokou.Testing {
 public class TestHarness : RegularUpdater {
     public static TestHarness main = null!;
-    public PlayerInput playerRef = null!;
+    public Player.PlayerController playerRef = null!;
     public TextAsset[] behaviorScripts = null!;
     private static readonly Dictionary<string, TextAsset> scriptsByName = new Dictionary<string, TextAsset>();
 

@@ -17,7 +17,7 @@ public class FancyShotDisplay : FancyDisplay {
     public float starActiveScale = 0.8f;
     public float starInactiveScale = 0.5f;
 
-    public void SetShot(PlayerConfig p, ShotConfig s, Subshot sub) {
+    public void SetShot(ShipConfig p, ShotConfig s, Subshot sub) {
         shotTitle.fontSharedMaterial.SetMaterialOutline(p.uiColor);
         shotDescription.fontSharedMaterial.SetMaterialOutline(p.uiColor);
         var ss = s.GetSubshot(sub);

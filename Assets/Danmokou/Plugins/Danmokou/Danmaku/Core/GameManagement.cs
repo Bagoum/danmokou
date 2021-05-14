@@ -47,7 +47,7 @@ public class GameManagement : CoroutineRegularUpdater {
         new DifficultySettings(FixedDifficulty.Normal);
 #endif
 
-    public static InstanceData Instance { get; private set; } = new InstanceData(InstanceMode.NULL);
+    public static InstanceData Instance { get; private set; } = new InstanceData(InstanceMode.NULL, null, null, null);
     [UsedImplicitly] public static bool Continued => Instance.Continued;
 
     public static void DeactivateInstance() {
@@ -57,7 +57,7 @@ public class GameManagement : CoroutineRegularUpdater {
 
     public static void NewInstance(InstanceMode mode, long? highScore = null, InstanceRequest? req = null) {
         Log.Unity($"Creating new game instance with mode {mode}");
-        Instance = new InstanceData(mode, req, highScore);
+        Instance = new InstanceData(mode, req, highScore, Instance);
     }
 
     public static IEnumerable<FixedDifficulty> VisibleDifficulties => new[] {
@@ -184,12 +184,11 @@ public class GameManagement : CoroutineRegularUpdater {
         BulletManager.ClearEmpty();
         BulletManager.ClearAllBullets();
         BulletManager.DestroyCopiedPools();
-        InstanceData.CampaignDataUpdated.Proc();
 #if UNITY_EDITOR || ALLOW_RELOAD
         Events.LocalReset.Proc();
 #endif
         //Ordered last so cancellations from HardCancel will occur under old data
-        Instance = new InstanceData(InstanceMode.DEBUG);
+        NewInstance(InstanceMode.DEBUG);
         Debug.Log($"Reloading level: {Difficulty.Describe()} is the current difficulty");
         UIManager.UpdateTags();
     }
@@ -304,13 +303,13 @@ public class GameManagement : CoroutineRegularUpdater {
     public void SetPower4() => Instance.SetPower(4);
 
     [ContextMenu("Set Subshot D")]
-    public void SetSubshotD() => Instance.SetSubshot(Subshot.TYPE_D);
+    public void SetSubshotD() => DependencyInjection.Find<PlayerController>().SetSubshot(Subshot.TYPE_D);
 
     [ContextMenu("Set Subshot M")]
-    public void SetSubshotM() => Instance.SetSubshot(Subshot.TYPE_M);
+    public void SetSubshotM() => DependencyInjection.Find<PlayerController>().SetSubshot(Subshot.TYPE_M);
 
     [ContextMenu("Set Subshot K")]
-    public void SetSubshotK() => Instance.SetSubshot(Subshot.TYPE_K);
+    public void SetSubshotK() => DependencyInjection.Find<PlayerController>().SetSubshot(Subshot.TYPE_K);
 
     [ContextMenu("Lower Rank Level")]
     public void LowerRankLevel() => Instance.SetRankLevel(Instance.RankLevel - 1);

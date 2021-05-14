@@ -48,7 +48,7 @@ public class DidntUseMeter1CCReq : Normal1CCRequirement {
 
 public class Shot1CCReq : Normal1CCRequirement {
     public Shot1CCReq(string shotKey, Func<InstanceRecord, bool> pred) :
-        base(i => i.SharedInstanceMetadata.team.players.Any(pc => pc.shot.key == shotKey) && pred(i)) { }
+        base(i => i.SharedInstanceMetadata.team.ships.Any(pc => pc.shot.key == shotKey) && pred(i)) { }
 }
 
 }

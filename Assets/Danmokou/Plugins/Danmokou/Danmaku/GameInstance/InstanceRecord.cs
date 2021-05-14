@@ -181,8 +181,8 @@ public class InstanceRecord {
     
     public LocalizedString AsDisplay(bool showScore, bool showRequest, bool defaultName=false, bool showTime=true) {
         var team = SharedInstanceMetadata.team;
-        var p = team.players.TryN(0)?.player;
-        var s = team.players.TryN(0)?.shot;
+        var p = team.ships.TryN(0)?.ship;
+        var s = team.ships.TryN(0)?.shot;
         var pstr = ShotConfig.PlayerShotDescription(p, s).PadRight(10);
         var score = showScore ? $"{Score} ".PadLeft(11, '0') : "";
         var name = (string.IsNullOrEmpty(CustomNameOrPartial) && defaultName) ? "[NAME]" : CustomNameOrPartial;

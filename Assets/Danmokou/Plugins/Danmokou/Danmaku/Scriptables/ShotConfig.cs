@@ -51,7 +51,7 @@ public class ShotConfig : ScriptableObject {
     /// <summary>
     /// In the format Mokou-A
     /// </summary>
-    public static string PlayerShotDescription(PlayerConfig? p, ShotConfig? s) {
+    public static string PlayerShotDescription(ShipConfig? p, ShotConfig? s) {
         var playerDesc = (p == null) ? "???" : (string)p.ShortTitle;
         var shotDesc = "?";
         if (p != null && s != null) {

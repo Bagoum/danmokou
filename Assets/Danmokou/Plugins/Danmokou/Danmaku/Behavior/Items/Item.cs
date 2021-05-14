@@ -1,5 +1,6 @@
 ﻿using Danmokou.Core;
 using Danmokou.DMath;
+using Danmokou.Player;
 using Danmokou.Pooling;
 using Danmokou.Scriptables;
 using Danmokou.Services;
@@ -87,7 +88,7 @@ public abstract class Item : Pooled<Item> {
         if (State == HomingState.NO) State = HomingState.WAITING;
     }
 
-    protected virtual void CollectMe() {
+    protected virtual void CollectMe(PlayerController collector) {
         DependencyInjection.SFXService.Request(onCollect);
         PooledDone();
     }
@@ -98,7 +99,7 @@ public abstract class Item : Pooled<Item> {
             State = HomingState.HOMING;
         }
         if (CollisionMath.CircleOnPoint(loc, target.itemCollectRadius + CollectRadiusBonus, target.location)) {
-            CollectMe();
+            CollectMe(target.Player);
             return;
         } 
         if (State == HomingState.HOMING) {

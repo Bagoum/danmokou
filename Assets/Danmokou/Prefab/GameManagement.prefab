@@ -569,8 +569,8 @@ MonoBehaviour:
   meterActivated: {fileID: 11400000, guid: 9ad1892b93a0ea34f986b224656664a9, type: 2}
   meterDeActivated: {fileID: 11400000, guid: a142a99862f499746b6e7ef08f56f910, type: 2}
   swapHPScore: {fileID: 11400000, guid: ec75cb7ac0342f9489ad6e5610810bfc, type: 2}
-  rankUp: {fileID: 11400000, guid: 8afb4fd1a5be2234cb8e2dffc30af257, type: 2}
-  rankDown: {fileID: 11400000, guid: b98b726f19c767241b84997cfcbd93ee, type: 2}
+  rankUp: {fileID: 0}
+  rankDown: {fileID: 0}
   SFX:
   - {fileID: 11400000, guid: bf55c065f345c52478d13f50f9df8716, type: 2}
   - {fileID: 11400000, guid: 16749a71cf9ae8a45936c2df62a4df8d, type: 2}

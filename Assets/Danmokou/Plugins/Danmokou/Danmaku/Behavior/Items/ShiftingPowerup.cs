@@ -5,6 +5,7 @@ using Danmokou.Core;
 using Danmokou.Danmaku;
 using Danmokou.Danmaku.Options;
 using Danmokou.DMath;
+using Danmokou.Player;
 using Danmokou.Reflection;
 using Danmokou.Scriptables;
 using Danmokou.Services;
@@ -50,10 +51,11 @@ public class ShiftingPowerup : BouncyItem {
         UpdateVariant();
     }
 
-    protected override void CollectMe() {
+    protected override void CollectMe(PlayerController collector) {
         if (effect != null) effect.InvokeCull();
-        GameManagement.Instance.SetSubshot(variants[currVariant].type);
-        base.CollectMe();
+        collector.SetSubshot(variants[currVariant].type);
+        GameManagement.Instance.CollectedPowerupItem();
+        base.CollectMe(collector);
     }
 
     private void UpdateVariant() {

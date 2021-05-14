@@ -1,4 +1,5 @@
 ﻿using Danmokou.Core;
+using Danmokou.Player;
 
 namespace Danmokou.Behavior.Items {
 public class OneUpItem : Item {
@@ -11,9 +12,9 @@ public class OneUpItem : Item {
     protected override float speed1 => -1.5f;
     protected override float CollectRadiusBonus => 0.1f;
 
-    protected override void CollectMe() {
+    protected override void CollectMe(PlayerController collector) {
         GameManagement.Instance.AddOneUpItem();
-        base.CollectMe();
+        base.CollectMe(collector);
     }
 }
 }

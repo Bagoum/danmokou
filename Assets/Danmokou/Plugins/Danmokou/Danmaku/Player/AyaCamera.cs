@@ -41,7 +41,7 @@ public class AyaCamera : BehaviorEntity {
             0.5f :
             1f;
     
-    private PlayerInput player = null!;
+    private PlayerController player = null!;
     public Transform viewfinder = null!;
     private SpriteRenderer viewfinderSR = null!;
     private AyaCameraFreezeHelper freezeHelper = null!;
@@ -110,7 +110,7 @@ public class AyaCamera : BehaviorEntity {
         flash.enabled = false;
     }
 
-    public void Initialize(PlayerInput playr) {
+    public void Initialize(PlayerController playr) {
         player = playr;
         angle = BaseViewfinderAngle;
         location = TargetPosition;
@@ -142,7 +142,7 @@ public class AyaCamera : BehaviorEntity {
             text.text = string.Format(textFormat, charge);
             text.color = TextColor;
         }
-        //Log.Unity($"{CameraState} {charge} {PlayerInput.IsFiring}");
+        //Log.Unity($"{CameraState} {charge} {Team.IsFiring}");
     }
     public override int UpdatePriority => UpdatePriorities.PLAYER2;
 

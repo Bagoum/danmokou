@@ -12,7 +12,7 @@ public class SOPlayerHitbox : ScriptableObject {
     public float largeRadius;
     public float itemCollectRadius;
     public float itemAttractRadius;
-    [field: NonSerialized] public PlayerHP Player { get; set; } = null!;
+    [field: NonSerialized] public PlayerController Player { get; set; } = null!;
     public Hitbox Hitbox => new Hitbox(location, radius, largeRadius);
 }
 }

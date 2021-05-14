@@ -1,4 +1,5 @@
 ﻿using Danmokou.Core;
+using Danmokou.Player;
 using UnityEngine;
 
 namespace Danmokou.Behavior.Items {
@@ -14,9 +15,9 @@ public class GemItem : Item {
     public float timePerSprite;
     public Sprite[] sprites = null!;
 
-    protected override void CollectMe() {
+    protected override void CollectMe(PlayerController collector) {
         GameManagement.Instance.AddGems(numGems);
-        base.CollectMe();
+        base.CollectMe(collector);
     }
 
     protected override void ResetValues() {

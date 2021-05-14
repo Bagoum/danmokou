@@ -10,7 +10,7 @@ namespace Danmokou.Achievements {
 
 public class UsedMeterReq : Requirement {
     public UsedMeterReq() {
-        Listen(PlayerInput.MeterIsActive);
+        Listen(PlayerController.MeterIsActive);
     }
 
     public override State EvalState() => (Instance.MeterFrames > 30).ToACVState();
@@ -74,7 +74,7 @@ public class CampaignScoreReq : Requirement {
 
     public CampaignScoreReq(long score) {
         this.score = score;
-        Listen(InstanceData.CampaignDataUpdated);
+        Listen(Instance.Score.OnChange);
     }
 
     public override State EvalState() => (Instance.IsAtleastNormalCampaign && Instance.Score >= score).ToACVState();
@@ -85,7 +85,7 @@ public class CampaignGrazeReq : Requirement {
 
     public CampaignGrazeReq(int graze) {
         this.graze = graze;
-        Listen(InstanceData.CampaignDataUpdated);
+        Listen(Instance.Graze.OnChange);
     }
     public override State EvalState() => (Instance.IsAtleastNormalCampaign && Instance.Graze >= graze).ToACVState();
 }
@@ -95,7 +95,7 @@ public class CampaignPIVReq : Requirement {
 
     public CampaignPIVReq(double piv) {
         this.piv = piv;
-        Listen(InstanceData.CampaignDataUpdated);
+        Listen(Instance.PIV.OnChange);
     }
     public override State EvalState() => (Instance.IsAtleastNormalCampaign && Instance.PIV >= piv).ToACVState();
 }

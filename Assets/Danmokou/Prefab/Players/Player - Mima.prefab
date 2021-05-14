@@ -9,8 +9,8 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 3430530686333864449, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
-      propertyPath: InitialModule.startColor.maxColor.r
-      value: 0
+      propertyPath: InitialModule.startColor.maxColor.b
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3430530686333864449, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
@@ -19,13 +19,13 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3430530686333864449, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
-      propertyPath: InitialModule.startColor.maxColor.b
-      value: 1
+      propertyPath: InitialModule.startColor.maxColor.r
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3430530686333864449, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
-      propertyPath: InitialModule.startColor.minColor.r
-      value: 0
+      propertyPath: InitialModule.startColor.minColor.b
+      value: 0.7830189
       objectReference: {fileID: 0}
     - target: {fileID: 3430530686333864449, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
@@ -34,13 +34,13 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3430530686333864449, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
-      propertyPath: InitialModule.startColor.minColor.b
-      value: 0.7830189
+      propertyPath: InitialModule.startColor.minColor.r
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4325623070515268529, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
-      propertyPath: m_Color.r
-      value: 0
+      propertyPath: m_Color.b
+      value: 0.8666667
       objectReference: {fileID: 0}
     - target: {fileID: 4325623070515268529, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
@@ -49,9 +49,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4325623070515268529, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
-      propertyPath: m_Color.b
-      value: 0.8666667
+      propertyPath: m_Color.r
+      value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: thisPlayer
+      value: 
+      objectReference: {fileID: 11400000, guid: a748e7cdf6f25e643891d64f7767dbff,
+        type: 2}
     - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
       propertyPath: defaultShot
@@ -60,10 +66,84 @@ PrefabInstance:
         type: 2}
     - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
-      propertyPath: animate.frames.idleAnim.Array.data[4].sprite
-      value: 
-      objectReference: {fileID: 5105359810620478622, guid: 5ebd21235de640f43b1f97bb6799ee74,
+      propertyPath: meterDisplay.b
+      value: 0.8666667
+      objectReference: {fileID: 0}
+    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
+      propertyPath: meterDisplay.g
+      value: 0.6
+      objectReference: {fileID: 0}
+    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: meterDisplay.r
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: meterDisplayInner.b
+      value: 0.8396226
+      objectReference: {fileID: 0}
+    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: meterDisplayInner.g
+      value: 0.42218843
+      objectReference: {fileID: 0}
+    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: meterDisplayInner.r
+      value: 0.0039604935
+      objectReference: {fileID: 0}
+    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: meterDisplayShadow.a
+      value: 0.7058824
+      objectReference: {fileID: 0}
+    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: meterDisplayShadow.b
+      value: 0.36862746
+      objectReference: {fileID: 0}
+    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: meterDisplayShadow.g
+      value: 0.12156863
+      objectReference: {fileID: 0}
+    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: meterDisplayShadow.r
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: speedLineColor.m_ColorMax.b
+      value: 0.7830189
+      objectReference: {fileID: 0}
+    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: speedLineColor.m_ColorMax.g
+      value: 0.7340802
+      objectReference: {fileID: 0}
+    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: speedLineColor.m_ColorMax.r
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: speedLineColor.m_ColorMin.b
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: speedLineColor.m_ColorMin.g
+      value: 0.40475988
+      objectReference: {fileID: 0}
+    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: speedLineColor.m_ColorMin.r
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
       propertyPath: animate.frames.idleAnim.Array.data[4].time
@@ -71,38 +151,14 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
-      propertyPath: animate.frames.idleAnim.Array.data[5].sprite
-      value: 
-      objectReference: {fileID: -4907229329399980128, guid: 5ebd21235de640f43b1f97bb6799ee74,
-        type: 3}
-    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
       propertyPath: animate.frames.idleAnim.Array.data[5].time
       value: 0.2
       objectReference: {fileID: 0}
     - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
-      propertyPath: animate.frames.idleAnim.Array.data[6].sprite
-      value: 
-      objectReference: {fileID: -4907229329399980128, guid: 5ebd21235de640f43b1f97bb6799ee74,
-        type: 3}
-    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
       propertyPath: animate.frames.idleAnim.Array.data[6].time
       value: 0.2
       objectReference: {fileID: 0}
-    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.idleAnim.Array.data[2].sprite
-      value: 
-      objectReference: {fileID: 7347307172926079318, guid: 5ebd21235de640f43b1f97bb6799ee74,
-        type: 3}
-    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.idleAnim.Array.data[3].sprite
-      value: 
-      objectReference: {fileID: 7250920703935000169, guid: 5ebd21235de640f43b1f97bb6799ee74,
-        type: 3}
     - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
       propertyPath: animate.frames.idleAnim.Array.data[0].sprite
@@ -117,15 +173,33 @@ PrefabInstance:
         type: 3}
     - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
-      propertyPath: animate.frames.rightAnim.Array.data[0].sprite
+      propertyPath: animate.frames.idleAnim.Array.data[2].sprite
       value: 
-      objectReference: {fileID: 2614884143906281629, guid: 948e44d84458076409c43353a5c041d4,
+      objectReference: {fileID: 7347307172926079318, guid: 5ebd21235de640f43b1f97bb6799ee74,
         type: 3}
     - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
-      propertyPath: animate.frames.rightAnim.Array.data[1].sprite
+      propertyPath: animate.frames.idleAnim.Array.data[3].sprite
       value: 
-      objectReference: {fileID: 2614884143906281629, guid: 948e44d84458076409c43353a5c041d4,
+      objectReference: {fileID: 7250920703935000169, guid: 5ebd21235de640f43b1f97bb6799ee74,
+        type: 3}
+    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.idleAnim.Array.data[4].sprite
+      value: 
+      objectReference: {fileID: 5105359810620478622, guid: 5ebd21235de640f43b1f97bb6799ee74,
+        type: 3}
+    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.idleAnim.Array.data[5].sprite
+      value: 
+      objectReference: {fileID: -4907229329399980128, guid: 5ebd21235de640f43b1f97bb6799ee74,
+        type: 3}
+    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.idleAnim.Array.data[6].sprite
+      value: 
+      objectReference: {fileID: -4907229329399980128, guid: 5ebd21235de640f43b1f97bb6799ee74,
         type: 3}
     - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
@@ -141,45 +215,16 @@ PrefabInstance:
         type: 3}
     - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
-      propertyPath: thisPlayer
+      propertyPath: animate.frames.rightAnim.Array.data[0].sprite
       value: 
-      objectReference: {fileID: 11400000, guid: a748e7cdf6f25e643891d64f7767dbff,
-        type: 2}
+      objectReference: {fileID: 2614884143906281629, guid: 948e44d84458076409c43353a5c041d4,
+        type: 3}
     - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
-      propertyPath: meterDisplayShadow.g
-      value: 0.12156863
-      objectReference: {fileID: 0}
-    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
+      propertyPath: animate.frames.rightAnim.Array.data[1].sprite
+      value: 
+      objectReference: {fileID: 2614884143906281629, guid: 948e44d84458076409c43353a5c041d4,
         type: 3}
-      propertyPath: meterDisplayShadow.b
-      value: 0.36862746
-      objectReference: {fileID: 0}
-    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: meterDisplayShadow.a
-      value: 0.7058824
-      objectReference: {fileID: 0}
-    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: meterDisplayShadow.r
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: meterDisplayInner.r
-      value: 0.0039604935
-      objectReference: {fileID: 0}
-    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: meterDisplayInner.g
-      value: 0.42218843
-      objectReference: {fileID: 0}
-    - target: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: meterDisplayInner.b
-      value: 0.8396226
-      objectReference: {fileID: 0}
     - target: {fileID: 5693660460388628149, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
       propertyPath: m_RootOrder
@@ -236,18 +281,6 @@ PrefabInstance:
         type: 3}
     - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
         type: 3}
-      propertyPath: animate.frames.rightAnim.Array.data[0].sprite
-      value: 
-      objectReference: {fileID: 2614884143906281629, guid: 948e44d84458076409c43353a5c041d4,
-        type: 3}
-    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
-      propertyPath: animate.frames.rightAnim.Array.data[1].sprite
-      value: 
-      objectReference: {fileID: 2614884143906281629, guid: 948e44d84458076409c43353a5c041d4,
-        type: 3}
-    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
-        type: 3}
       propertyPath: animate.frames.leftAnim.Array.data[0].sprite
       value: 
       objectReference: {fileID: -2856173538836399905, guid: 948e44d84458076409c43353a5c041d4,
@@ -257,6 +290,18 @@ PrefabInstance:
       propertyPath: animate.frames.leftAnim.Array.data[1].sprite
       value: 
       objectReference: {fileID: -2856173538836399905, guid: 948e44d84458076409c43353a5c041d4,
+        type: 3}
+    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.rightAnim.Array.data[0].sprite
+      value: 
+      objectReference: {fileID: 2614884143906281629, guid: 948e44d84458076409c43353a5c041d4,
+        type: 3}
+    - target: {fileID: 8113129794422794037, guid: 4f67648ec56d30044b03a5959e19a4e0,
+        type: 3}
+      propertyPath: animate.frames.rightAnim.Array.data[1].sprite
+      value: 
+      objectReference: {fileID: 2614884143906281629, guid: 948e44d84458076409c43353a5c041d4,
         type: 3}
     m_RemovedComponents:
     - {fileID: 7102800307516943931, guid: 4f67648ec56d30044b03a5959e19a4e0, type: 3}

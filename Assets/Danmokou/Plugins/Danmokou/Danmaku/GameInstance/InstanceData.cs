@@ -16,7 +16,7 @@ public class InstanceData {
     #region StaticEvents
     
     public static readonly Events.Event0 UselessPowerupCollected = new Events.Event0();
-    public static readonly Events.Event0 CampaignDataUpdated = new Events.Event0();
+    public static readonly Events.Event0 TeamUpdated = new Events.Event0();
     public static readonly Events.Event0 PlayerTookHit = new Events.Event0();
     public static readonly Events.IEvent<CardRecord> CardHistoryUpdated = new Events.Event<CardRecord>();
     public static readonly Events.Event0 MeterNowUsable = new Events.Event0();
@@ -38,14 +38,14 @@ public class InstanceData {
     public DifficultySettings Difficulty { get; }
     public int RankLevel { get; private set; }
     public double RankPoints { get; private set; }
-    public long MaxScore { get; private set; }
-    public long Score { get; private set; }
-    public int Lives { get; private set; }
-    public int Bombs { get; private set; }
-    public int LifeItems { get; private set; }
-    public long Graze { get; private set; }
-    public double Power { get; private set; }
-    public double PIV { get; private set; }
+    public Evented<long> MaxScore { get; }
+    public Evented<long> Score { get; }
+    public Evented<int> Lives { get; }
+    public Evented<int> Bombs { get; }
+    public Evented<int> LifeItems { get; }
+    public Evented<long> Graze { get; }
+    public Evented<double> Power { get; }
+    public Evented<double> PIV { get; }
     public double Faith { get; private set; }
     private double faithLenience;
     public readonly MultiMultiplierD externalFaithDecayMultiplier = new MultiMultiplierD(1, null);
@@ -64,7 +64,7 @@ public class InstanceData {
     private bool modeActive = true;
     public void Deactivate() => modeActive = false;
     
-    private PlayerTeam team;
+    public ActiveTeamConfig? TeamCfg { get; }
     
     public CardHistory CardHistory { get; }
 
@@ -91,7 +91,7 @@ public class InstanceData {
     public int LastMeterStartFrame { get; private set; }
     public int LastTookHitFrame { get; private set; }
     public int MeterFrames { get; private set; }
-    public int SubshotSwitches { get; private set; }
+    public int SubshotSwitches { get; set; }
     public int OneUpItemsCollected { get; private set; }
     
     #region ComputedProperties
@@ -114,10 +114,9 @@ public class InstanceData {
     private double MeterPivPerPPPMultiplier => MeterInUse ? 2 : 1;
     private double MeterScorePerValueMultiplier => MeterInUse ? 2 : 1;
     public long? NextScoreLife => mode.OneLife() ? null : scoreLives.TryN(nextScoreLifeIndex);
-    public PlayerConfig? Player => team.Player;
-    public ShotConfig? Shot => team.Shot;
-    public Subshot Subshot => team.Subshot;
-    public string MultishotString => (Shot != null && Shot.isMultiShot) ? Subshot.Describe() : "";
+    public ShipConfig? Player => TeamCfg?.Ship;
+    public Subshot? Subshot => TeamCfg?.Subshot;
+    public string MultishotString => (TeamCfg?.HasMultishot == true) ? (Subshot?.Describe() ?? "") : "";
     public bool Continued => ContinuesUsed > 0;
     public bool IsCampaign => mode == InstanceMode.CAMPAIGN;
     public bool IsAtleastNormalCampaign => IsCampaign && Difficulty.standard >= FixedDifficulty.Normal;
@@ -134,7 +133,7 @@ public class InstanceData {
     
     #endregion
     
-    public InstanceData(InstanceMode mode, InstanceRequest? req = null, long? maxScore = null) {
+    public InstanceData(InstanceMode mode, InstanceRequest? req, long? maxScore, InstanceData? inherit) {
         this.Request = req;
         //Minor hack to avoid running the SaveData static constructor in the editor during type initialization
         PreviousSpellHistory = (req == null) ? 
@@ -145,76 +144,43 @@ public class InstanceData {
         this.Difficulty = req?.metadata.difficulty ?? GameManagement.defaultDifficulty;
         this.RankLevel = Difficulty.customRank ?? Difficulty.ApproximateStandard.DefaultRank();
         this.RankPoints = DefaultRankPointsForLevel(RankLevel);
-        this.MaxScore = maxScore ?? 9001;
+        this.MaxScore = new Evented<long>(maxScore ?? 9001, inherit?.MaxScore);
         campaign = req?.lowerRequest.Resolve(cr => cr.campaign.campaign, _ => null!, _ => null!, _ => null!);
         campaignKey = req?.lowerRequest.Resolve(cr => cr.Key, b => b.boss.campaign.Key, s => s.Campaign.key,
             s => s.stage.campaign.Key) ?? "null_campaign";
-        team = req?.metadata.team ?? PlayerTeam.Empty;
-        if (campaign != null) {
-            Lives = campaign.startLives > 0 ? campaign.startLives : StartLives(mode);
-        } else {
-            Lives = StartLives(mode);
-        }
-        Lives = Difficulty.startingLives ?? Lives;
-        Bombs = StartBombs(mode);
-        Power = StartPower(mode, team.Shot);
+        TeamCfg = req?.metadata.team != null ? new ActiveTeamConfig(req.metadata.team) : null;
+        var dfltLives = campaign != null ?
+            (campaign.startLives > 0 ? campaign.startLives : StartLives(mode)) :
+            StartLives(mode);
+        Lives = new Evented<int>(Difficulty.startingLives ?? dfltLives, inherit?.Lives);
+        Bombs = new Evented<int>(StartBombs(mode), inherit?.Bombs);
+        Power = new Evented<double>(StartPower(mode), inherit?.Power);
         CardHistory = new CardHistory();
-        this.Score = 0;
-        this.PIV = 1;
+        this.Score = new Evented<long>(0, inherit?.Score);
+        this.PIV = new Evented<double>(1, inherit?.PIV);
         Meter = StartMeter(mode);
         nextScoreLifeIndex = 0;
         nextItemLifeIndex = 0;
-        LifeItems = 0;
+        LifeItems = new Evented<int>(0, inherit?.LifeItems);
         Faith = 1f;
         faithLenience = 0f;
         Continues = mode.OneLife() ? 0 : defltContinues;
         HitsTaken = 0;
         EnemiesDestroyed = 0;
-        Graze = 0;
+        Graze = new Evented<long>(0, inherit?.Graze);
         CurrentBoss = null;
         MeterInUse = false;
         
         VisibleScore = new Lerpifier<long>((a, b, t) => (long)M.Lerp(a, b, (double)M.EOutSine(t)), 
-            () => Score, 1.3f);
+            () => Score, 1.3f, inherit?.VisibleScore);
         VisibleMeter = new Lerpifier<float>((a, b, t) => M.Lerp(a, b, M.EOutPow(t, 3f)), 
-            () => (float)Meter, 0.2f);
+            () => (float)Meter, 0.2f, inherit?.VisibleMeter);
         VisibleFaith = new Lerpifier<float>((a, b, t) => M.Lerp(a, b, M.EOutPow(t, 4f)), 
-            () => (float)Faith, 0.2f);
+            () => (float)Faith, 0.2f, inherit?.VisibleFaith);
         VisibleFaithLenience = new Lerpifier<float>((a, b, t) => M.Lerp(a, b, M.EOutPow(t, 3f)), 
-            () => (float)Math.Min(1, faithLenience / 3), 0.2f);
+            () => (float)Math.Min(1, faithLenience / 3), 0.2f, inherit?.VisibleFaithLenience);
         VisibleRankPointFill = new Lerpifier<float>((a, b, t) => M.Lerp(a, b, M.EOutPow(t, 2f)),
-            () => (float) (RankPoints / RankPointsRequired), 0.3f);
-    }
-    
-    
-    public void SetSubshot(Subshot newSubshot) {
-        if (team.Shot == null || !team.Shot.isMultiShot)
-            UselessPowerupCollected.Proc();
-        if (team.Subshot == newSubshot)
-            return;
-        team.Subshot = newSubshot;
-        if (team.Shot != null && team.Shot.isMultiShot)
-            ++SubshotSwitches;
-        PlayerInput.RequestShotUpdate.Publish((Shot, Subshot));
-        CampaignDataUpdated.Proc();
-    }
-
-    /// <summary>
-    /// Has no effect if the provided player/shot must exist in the team config.
-    /// Returns true iff it exists in the team config.
-    /// </summary>
-    public bool SetPlayer(PlayerConfig player, ShotConfig shot, Subshot? subshot = null) {
-        var ind = team.players.IndexOf(x => x == (player, shot));
-        if (ind > -1) {
-            team.Subshot = subshot ?? team.Subshot;
-            team.SelectedIndex = ind;
-            PlayerInput.RequestPlayerUpdate.Publish(player);
-            PlayerInput.RequestShotUpdate.Publish((shot, team.Subshot));
-            CampaignDataUpdated.Proc();
-            return true;
-        } else {
-            return false;
-        }
+            () => (float) (RankPoints / RankPointsRequired), 0.3f, inherit?.VisibleRankPointFill);
     }
 
     public bool TryContinue() {
@@ -224,19 +190,18 @@ public class InstanceData {
             --Continues;
             ++ContinuesUsed;
             CardHistory.Clear();//Partial game is saved when lives=0. Don't double on captures.
-            Score = nextItemLifeIndex = nextScoreLifeIndex = LifeItems = 0;
+            Score.Value = nextItemLifeIndex = nextScoreLifeIndex = LifeItems.Value = 0;
             VisibleScore.HardReset();
-            PIV = 1;
+            PIV.Value = 1;
             Meter = StartMeter(mode);
             if (campaign != null) {
-                Lives = campaign.startLives > 0 ? campaign.startLives : StartLives(mode);
+                Lives.Value = campaign.startLives > 0 ? campaign.startLives : StartLives(mode);
             } else {
-                Lives = StartLives(mode);
+                Lives.Value = StartLives(mode);
             }
-            Bombs = StartBombs(mode);
+            Bombs.Value = StartBombs(mode);
             Faith = faithLenience = 0;
             SetRankLevel(RankLevelBounds.min);
-            CampaignDataUpdated.Proc();
             return true;
         } else return false;
     }
@@ -253,8 +218,7 @@ public class InstanceData {
     /// </summary>
     public bool TryConsumeBombs(int delta) {
         if (Bombs + delta >= 0) {
-            Bombs += delta;
-            CampaignDataUpdated.Proc();
+            Bombs.Value += delta;
             return true;
         }
         return false;
@@ -269,7 +233,6 @@ public class InstanceData {
         if (usePIVMultiplier) score = (long) (score * PIV);
         AddScore(score);
         LifeSwappedForScore.Proc();
-        CampaignDataUpdated.Proc();
     }
     public void AddLives(int delta, bool asHit = true) {
         //if (mode == CampaignMode.NULL) return;
@@ -277,14 +240,16 @@ public class InstanceData {
         if (delta < 0 && asHit) {
             ++HitsTaken;
             LastTookHitFrame = ETime.FrameNumber;
-            Bombs = Math.Max(Bombs, StartBombs(mode));
+            Bombs.Value = Math.Max(Bombs, StartBombs(mode));
             AddPower(powerDeathLoss);
             Meter = 1;
             AddRankPoints(RankPointsDeath);
             PlayerTookHit.Proc();
         }
-        if (delta < 0 && mode.OneLife()) Lives = 0;
-        else Lives = Math.Max(0, Lives + delta);
+        if (delta < 0 && mode.OneLife()) 
+            Lives.Value = 0;
+        else 
+            Lives.Value = Math.Max(0, Lives + delta);
         if (Lives == 0) {
             //Record failure
             if (Request?.Saveable == true) {
@@ -304,7 +269,6 @@ public class InstanceData {
             }
             EngineStateManager.HandlePlayerDeath();
         }
-        CampaignDataUpdated.Proc();
     }
 
     /// <summary>
@@ -334,9 +298,9 @@ public class InstanceData {
         }
     }
 
-    public void RefillMeterFrame(PlayerInput.PlayerState state) {
+    public void RefillMeterFrame(PlayerController.PlayerState state) {
         double rate = 0;
-        if (state == PlayerInput.PlayerState.NORMAL) rate = meterRefillRate;
+        if (state == PlayerController.PlayerState.NORMAL) rate = meterRefillRate;
         //meter use handled under TryUseMeterFrame
         AddMeter(rate * ETime.FRAME_TIME);
     }
@@ -366,14 +330,13 @@ public class InstanceData {
         var prevFloor = Math.Floor(Power);
         var prevCeil = Math.Ceiling(Power);
         var prevPower = Power;
-        Power = M.Clamp(powerMin, powerMax, Power + delta);
+        Power.Value = M.Clamp(powerMin, powerMax, Power + delta);
         //1.95 is effectively 1, 2.00 is effectively 2
         if (Power < prevFloor) PowerLost.Proc();
         if (prevPower < prevCeil && Power >= prevCeil) {
             if (Power >= powerMax) PowerFull.Proc();
             else PowerGained.Proc();
         }
-        CampaignDataUpdated.Proc();
     }
 
     /// <summary>
@@ -388,24 +351,22 @@ public class InstanceData {
     }
 
     private void FullPower() {
-        Power = powerMax;
+        Power.Value = powerMax;
         PowerFull.Proc();
     }
     public void AddGraze(int delta) {
-        Graze += delta;
+        Graze.Value += delta;
         AddFaith(delta * FaithBoostGraze);
         AddFaithLenience(FaithLenienceGraze);
         AddMeter(delta * MeterBoostGraze);
         AddRankPoints(delta * RankPointsGraze);
         Counter.GrazeProc(delta);
-        CampaignDataUpdated.Proc();
     }
 
     #region ItemMethods
-    
-    public void SetSubshotViaItem(Subshot newSubshot) {
+
+    public void CollectedPowerupItem() {
         AddRankPoints(RankPointsCollectItem);
-        SetSubshot(newSubshot);
     }
     public void AddPowerItems(int delta) {
         if (!PowerMechanicEnabled || Power >= powerMax) {
@@ -438,11 +399,10 @@ public class InstanceData {
         Events.ScoreItemHasReceived.Publish((scoreDelta, bonus > 1));
     }
     public void AddPointPlusItems(int delta) {
-        PIV += pivPerPPP * MeterPivPerPPPMultiplier * delta;
+        PIV.Value += pivPerPPP * MeterPivPerPPPMultiplier * delta;
         AddFaith(delta * faithBoostPointPP);
         AddFaithLenience(faithLeniencePointPP);
         AddRankPoints(RankPointsCollectItem);
-        CampaignDataUpdated.Proc();
     }
     public void AddGems(int delta) {
         AddMeter(delta * meterBoostGem);
@@ -454,14 +414,13 @@ public class InstanceData {
         LifeExtend();
     }
     public void AddLifeItems(int delta) {
-        LifeItems += delta;
+        LifeItems.Value += delta;
         if (nextItemLifeIndex < pointLives.Length && LifeItems >= pointLives[nextItemLifeIndex]) {
             ++nextItemLifeIndex;
             LifeExtend();
             ItemExtendAcquired.Proc();
         }
         AddRankPoints(RankPointsCollectItem);
-        CampaignDataUpdated.Proc();
     }
     public void FailedItemCollect(ItemType typ) {
         AddRankPoints(RankPointsMissedItem);
@@ -481,7 +440,6 @@ public class InstanceData {
         bool increaseRank = level > RankLevel;
         RankLevel = level;
         RankPoints = M.Clamp(0, RankPointsRequired - 1, points ?? DefaultRankPointsForLevel(level));
-        CampaignDataUpdated.Proc();
         RankLevelChanged.Publish(increaseRank);
         return true;
     }
@@ -499,16 +457,14 @@ public class InstanceData {
             } else
                 delta = 0;
         }
-        CampaignDataUpdated.Proc();
     }
 
     #endregion
     
 
     private void LifeExtend() {
-        ++Lives;
+        ++Lives.Value;
         AnyExtendAcquired.Proc();
-        CampaignDataUpdated.Proc();
     }
 
     public void PhaseEnd(PhaseCompletion pc) {
@@ -531,14 +487,13 @@ public class InstanceData {
     }
     
     private void AddScore(long delta) {
-        Score += delta;
-        MaxScore = Math.Max(MaxScore, Score);
+        Score.Value += delta;
+        MaxScore.Value = Math.Max(MaxScore, Score);
         if (NextScoreLife.Try(out var next) && Score >= next) {
             ++nextScoreLifeIndex;
             LifeExtend();
             AddRankPoints(RankPointsScoreExtend);
             ScoreExtendAcquired.Proc();
-            CampaignDataUpdated.Proc();
         }
     }
 
@@ -548,6 +503,7 @@ public class InstanceData {
     }
 
     public void _RegularUpdate() {
+        //TODO fix
         if (mode == InstanceMode.NULL || !modeActive) return;
         
         ++TotalFrames;
@@ -556,12 +512,10 @@ public class InstanceData {
         if (CurrentBossCT?.Cancelled == true) {
             CloseBoss();
         }
-        bool dataUpdated = false;
-        if (PlayerInput.PlayerActive) {
+        if (PlayerController.PlayerActive) {
             ++PlayerActiveFrames;
             if (TotalFrames % ETime.ENGINEFPS == 0) {
                 AddRankPoints(RankPointsPerSecond);
-                dataUpdated = true;
             }
             if (!Lenient) {
                 if (faithLenience > 0) {
@@ -570,24 +524,18 @@ public class InstanceData {
                     Faith = Math.Max(0, Faith - ETime.FRAME_TIME *
                         faithDecayRate * FaithDecayRateMultiplier * Difficulty.faithDecayMultiplier);
                 } else if (PIV > 1) {
-                    PIV = Math.Max(1, PIV - pivFallStep);
+                    PIV.Value = Math.Max(1, PIV - pivFallStep);
                     Faith = 0.5f;
                     faithLenience = faithLenienceFall;
-                    //In the other branches, UIManager gets updates via UpdatePB, and doesn't require a text update.
-                    //TODO look into semantic separation of this and UIManager in CampaignDataUpdated
-                    dataUpdated = true;
                 }
             }
         }
 
-        dataUpdated |= VisibleScore.Update(ETime.FRAME_TIME);
+        VisibleScore.Update(ETime.FRAME_TIME);
         VisibleMeter.Update(ETime.FRAME_TIME);
         VisibleFaith.Update(ETime.FRAME_TIME);
         VisibleFaithLenience.Update(ETime.FRAME_TIME);
         VisibleRankPointFill.Update(ETime.FRAME_TIME);
-        if (dataUpdated)
-            CampaignDataUpdated.Proc();
-        ;
     }
 
 
@@ -606,7 +554,7 @@ public class InstanceData {
     }
 
 #if UNITY_EDITOR
-    public void SetPower(double x) => Power = x;
+    public void SetPower(double x) => Power.Value = x;
     #endif
 }
 

@@ -75,8 +75,8 @@ public class SFXService : RegularUpdater, ISFXService {
         Listen(InstanceData.PowerLost, () => Request(powerLost));
         Listen(InstanceData.LifeSwappedForScore, () => Request(swapHPScore));
 
-        Listen(PlayerInput.PlayerActivatedMeter, () => Request(meterActivated));
-        Listen(PlayerInput.PlayerDeactivatedMeter, () => Request(meterDeActivated));
+        Listen(Player.PlayerController.PlayerActivatedMeter, () => Request(meterActivated));
+        Listen(Player.PlayerController.PlayerDeactivatedMeter, () => Request(meterDeActivated));
     }
 
     public void Update() {

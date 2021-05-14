@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using Danmokou.Core;
+using Danmokou.Player;
 using UnityEngine;
 
 namespace Danmokou.Behavior.Items {
@@ -9,9 +10,9 @@ public class PowerItem : Item {
     protected override short RenderOffsetIndex => 1;
     protected override float RotationTurns => 1;
 
-    protected override void CollectMe() {
+    protected override void CollectMe(PlayerController collector) {
         GameManagement.Instance.AddPowerItems(1);
-        base.CollectMe();
+        base.CollectMe(collector);
     }
 }
 }

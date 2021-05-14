@@ -139,7 +139,8 @@ public static class FileUtils {
     public class InputConfig {
         public KeyCode FocusHold = KeyCode.LeftShift;
         public KeyCode ShootHold = KeyCode.Z;
-        public KeyCode Bomb = KeyCode.X;
+        public KeyCode Special = KeyCode.X;
+        public KeyCode Swap = KeyCode.Space;
     }
     private const string INPUT = SAVEDIR + "input.txt";
     private const string INPUTREF = SAVEDIR + "input_reference.txt";

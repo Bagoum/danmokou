@@ -66,12 +66,12 @@ public class FireOption : BehaviorEntity {
             return f;
         }
     }
-    public PlayerInput Player { get; private set; } = null!;
+    public PlayerController Player { get; private set; } = null!;
 
     //Called from initialize instead
     protected override void Awake() { }
 
-    public void Initialize(PlayerInput playr) {
+    public void Initialize(PlayerController playr) {
         Player = playr;
         //I feel kind of bad about this, but it ensures that PlayerInput is linked before the SM runs.
         base.Awake();

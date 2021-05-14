@@ -49,10 +49,10 @@ public static class Statistics {
         public int TotalDeaths => arr.Sum(ir => ir.HitsTaken);
         public (DayOfWeek, InstanceRecord[]) FavoriteDay => 
             arr.GroupBy(ir => ir.Date.DayOfWeek).MaxByGroupSize();
-        public (PlayerConfig, InstanceRecord[]) FavoritePlayer => 
-            arr.GroupBy(ir => ir.SharedInstanceMetadata.team.players[0].player).MaxByGroupSize();
-        public ((PlayerConfig, ShotConfig), InstanceRecord[]) FavoriteShot => 
-            arr.GroupBy(ir => ir.SharedInstanceMetadata.team.players[0]).MaxByGroupSize();
+        public (ShipConfig, InstanceRecord[]) FavoriteShip => 
+            arr.GroupBy(ir => ir.SharedInstanceMetadata.team.ships[0].ship).MaxByGroupSize();
+        public ((ShipConfig, ShotConfig), InstanceRecord[]) FavoriteShot => 
+            arr.GroupBy(ir => ir.SharedInstanceMetadata.team.ships[0]).MaxByGroupSize();
         public long MaxScore => arr.Max(ir => ir.Score);
 
         public float CaptureRate =>
