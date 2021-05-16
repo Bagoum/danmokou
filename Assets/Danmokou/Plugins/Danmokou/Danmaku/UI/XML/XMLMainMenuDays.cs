@@ -65,8 +65,9 @@ public class XMLMainMenuDays : XMLMainMenu {
         FixedDifficulty dfc = FixedDifficulty.Normal;
         var defaultPlayer = References.dayCampaign!.players[0];
         var defaultShot = defaultPlayer.shots2[0];
+        var defaultSupport = defaultPlayer.supports[0];
 
-        TeamConfig Team() => new TeamConfig(0, Subshot.TYPE_D, (defaultPlayer, defaultShot.shot));
+        TeamConfig Team() => new TeamConfig(0, Subshot.TYPE_D, defaultSupport.ability, (defaultPlayer, defaultShot.shot));
         //TODO I currently don't have a story around game-specific configurations of meter/etc,
         // this disabling is a stopgap measure until then.
         SharedInstanceMetadata Meta() => new SharedInstanceMetadata(Team(), new DifficultySettings(dfc) {meterEnabled = false});

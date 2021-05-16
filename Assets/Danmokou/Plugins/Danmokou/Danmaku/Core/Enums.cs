@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Danmokou.GameInstance;
+using Danmokou.Services;
 using UnityEngine;
 using static Danmokou.Core.LocalizedStrings.UI;
 
@@ -23,12 +24,14 @@ public enum Parametrization {
     ADDITIVE = 2,
     /// <summary>
     /// Combine the indexing around the repeat number of the child function.
+    /// If the local index of the child function goes past the repeat number, it will wrap back to zero.
     /// Use p1m {RPT} p2m {RPT} in FXY functions.
     /// </summary>
     MOD = 3,
     /// <summary>
     /// Combine the indexing around the repeat number of the child function.
     /// The ordering is inverted, so the first summon has local index RPT-1 and the last has local index 0.
+    /// If the local index of the child function goes past the repeat number, it will wrap back to RPT-1.
     /// Use p1m {RPT} p2m {RPT} in FXY functions.
     /// </summary>
     INVMOD = 4
@@ -185,11 +188,12 @@ public enum InstanceMode {
     /// <summary>
     /// Used when the instance is not active (eg. on the main menu).
     /// NULL is the mode used when the program starts.
+    /// A player may still exist (eg. shot demo) and make use of InstanceData, but many features may be disabled.
     /// </summary>
     NULL,
 #if UNITY_EDITOR || ALLOW_RELOAD
     /// <summary>
-    /// Used when there is no real instance, but there is still gameplay (debugging situations or demos).
+    /// Used when there is no real instance, but there is still full gameplay (primarily debugging situations with reload).
     /// Using local reset by pressing R will set the mode to DEBUG.
     /// As the default mode is NULL, you may need to press R once in debugging situations to get full functionality.
     /// </summary>
@@ -351,10 +355,10 @@ public static class EnumHelpers2 {
         };
     
     public static (int min, int max) RankLevelBounds(this FixedDifficulty fd) => fd switch {
-        FixedDifficulty.Lunatic => (9, InstanceConsts.maxRankLevel),
+        FixedDifficulty.Lunatic => (9, RankManager.maxRankLevel),
         FixedDifficulty.Hard => (6, 35),
         FixedDifficulty.Normal => (3, 29),
-        _ => (InstanceConsts.minRankLevel, 23)
+        _ => (RankManager.minRankLevel, 23)
     };
 
     public static int DefaultRank(this FixedDifficulty d) => d switch {

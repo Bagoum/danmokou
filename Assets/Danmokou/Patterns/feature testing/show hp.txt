@@ -1,4 +1,5 @@
 pattern { 
+	boss simp.kasen
 }
 phase 0
 	paction 0
@@ -7,15 +8,35 @@ phase 0
 <!> type spell `Helloワールド`
 <!> hp 100000
 phase 200
-	paction 0
-		position 0 2
-		move _ nroffset px rangesoftmod 3 * 2 t
+	saction 0
+		position 2 1
+		move 3 nroffset ease(io-sine, 3, bezier3(
+			zero,
+			pxy(-1, -6),
+			pxy(-3, 2),
+			px(-4),
+			t / 3))
+		move-target 2 io-sine px 3
+		move-target 2 io-sine px -3
+///
+		move _ nroffset px sine 4 2 t
+		##move _ nroffset px rangesoftmod 2 * 3 t
 
 <!> type spell `2`
 <!> hp 2000
 <!> hpbar 1
-phase 10
-	paction 1
+<!> root 0 3
+phase 40
+	paction 0
+		 async strip-*/w <-1;:> gcr2 6 _ <;:24> {
+			color { red green blue orange purple pink yellow black }
+			p this 
+		} guideempty .1 p { pl loc pd dir } { }
+			rvelocity rotatelerppercent 0.3 cx 2 cy 1 ##empty guide movement 
+			{
+				gsr2c 20 { } s doffset pl pd p
+					regpoly 0.4 5 &a
+			}
 		vulnerable true
 		
 <!> type non `3`

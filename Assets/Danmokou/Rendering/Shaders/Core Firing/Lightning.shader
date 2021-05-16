@@ -101,7 +101,7 @@
 
 			float4 frag(fragment f) : SV_Target { 
 			    float4 c = tex2D(_MainTex, f.uv) * f.c;
-                c.rgb = hueShift(c.rgb, _HueShift);
+                c.rgb = hueShift(c.rgb, _HueShift * DEGRAD);
             #ifdef FT_RECOLORIZE
                 c.rgb = lerp(_RecolorizeB, _RecolorizeW, c.r).rgb;
             #endif

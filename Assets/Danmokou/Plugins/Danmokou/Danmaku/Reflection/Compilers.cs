@@ -215,11 +215,12 @@ public static class Compilers {
     [Fallthrough]
     [ExprCompiler]
     public static SBCF SBCF(ExSBCF ex) =>
-        CompileDelegate<SBCF>(tac => ex(
-                tac.GetByExprType<TExSBC>(),
-                tac.GetByExprType<TEx<int>>(),
-                tac),
-            new DelegateArg<BulletManager.AbsSimpleBulletCollection>("sbcf_sbc"),
+        CompileDelegate<SBCF>(tac => {
+                var sbc = tac.GetByExprType<TExSBC>();
+                var ind = tac.GetByExprType<TEx<int>>();
+                return ex(sbc, ind, tac.AppendSB("sbcf_sbc_ref_sb", sbc[ind]));
+            },
+    new DelegateArg<BulletManager.AbsSimpleBulletCollection>("sbcf_sbc"),
             new DelegateArg<int>("sbcf_ii"),
             new DelegateArg<ParametricInfo>("sbcf_bpi")
         );

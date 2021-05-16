@@ -43,6 +43,7 @@
 			#pragma multi_compile_local __ FT_FADE_IN
 			#pragma multi_compile_local __ FT_DISPLACE
 			#pragma multi_compile_local __ FT_DISPLACE_POLAR
+			#pragma multi_compile_local __ FT_DISPLACE_RADIAL
 			#pragma multi_compile_local __ FT_DISPLACE_BIVERT
 			#pragma multi_compile_local __ FT_HUESHIFT
 			#pragma multi_compile_local __ FT_RECOLORIZE
@@ -89,7 +90,7 @@
 	            DISPLACE(f.uv, _T);
 				float4 c = tex2D(_MainTex, f.uv) * f.c;
             #ifdef FT_HUESHIFT
-				c.rgb = hueShift(c.rgb, _HueShift);
+				c.rgb = hueShift(c.rgb, _HueShift * DEGRAD);
             #endif
             #ifdef FT_RECOLORIZE
                 c.rgb = lerp(_RecolorizeB, _RecolorizeW, c.r).rgb;

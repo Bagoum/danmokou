@@ -9,6 +9,9 @@ using UnityEngine;
 
 namespace Danmokou.Behavior.Items {
 public abstract class Item : Pooled<Item> {
+    public static readonly Events.IEvent<ItemType> ItemCollected = new Events.Event<ItemType>();
+    public static readonly Events.IEvent<ItemType> ItemCulled = new Events.Event<ItemType>();
+    
     protected abstract ItemType Type { get; }
     protected virtual bool Autocollectible => true;
     protected virtual bool Attractible => true;
@@ -89,6 +92,7 @@ public abstract class Item : Pooled<Item> {
     }
 
     protected virtual void CollectMe(PlayerController collector) {
+        ItemCollected.Publish(Type);
         DependencyInjection.SFXService.Request(onCollect);
         PooledDone();
     }
@@ -111,7 +115,7 @@ public abstract class Item : Pooled<Item> {
             if (Attractible && CollisionMath.CircleOnPoint(loc, target.itemAttractRadius, target.location)) SetHome();
             else if (!LocationHelpers.OnScreenInDirection(loc, -screenRange * Direction) || 
                      (time > MinCullTime && !LocationHelpers.OnPlayableScreenBy(CullRadius, loc))) {
-                GameManagement.Instance.FailedItemCollect(Type);
+                ItemCulled.Publish(Type);
                 PooledDone();
                 return;
             }

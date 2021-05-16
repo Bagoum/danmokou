@@ -23,11 +23,12 @@ MonoBehaviour:
     hardcoded:
       en: 
       jp: 
-      _showEnOnly: 0
-  title: Kasen
   prefab: {fileID: 2884352696324497640, guid: 1200414847a32bb4680560876f031369, type: 3}
   shots2:
   - ordinal: D
     shot: {fileID: 11400000, guid: bee71e7902819374298c855449ab1f6d, type: 2}
+  supports:
+  - ordinal: S1
+    ability: {fileID: 11400000, guid: a735d449cc1221c449d66e9929f98cca, type: 2}
   uiColor: {r: 0, g: 0, b: 0, a: 0}
   shotDisplay: {fileID: 0}

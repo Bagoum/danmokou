@@ -23,13 +23,13 @@ namespace Danmokou.Behavior {
 
 [Serializable]
 public struct ItemDrops {
-    public decimal value;
+    public double value;
     public int pointPP;
     public int life;
     public int power;
     public int gems;
     public bool autocollect;
-    public ItemDrops(decimal v, int pp, int l, int pow, int gem, bool autoc=false) {
+    public ItemDrops(double v, int pp, int l, int pow, int gem, bool autoc=false) {
         value = v;
         pointPP = pp;
         life = l;
@@ -38,7 +38,7 @@ public struct ItemDrops {
         autocollect = autoc;
     }
 
-    public ItemDrops Mul(float by) => new ItemDrops((value * (decimal)by), (int)(pointPP * by), (int)(life * by), 
+    public ItemDrops Mul(float by) => new ItemDrops((value * by), (int)(pointPP * by), (int)(life * by), 
         (int)(power * by), (int)(gems * by), autocollect);
 }
 
@@ -270,7 +270,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     }
     
     public override void FirstFrame() {
-        if (displayer != null) displayer.UpdateRender();
+        RegularUpdateRender();
         
         if (behaviorScript != null) {
             try {
@@ -491,9 +491,12 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     protected virtual void RegularUpdateRender() {
         if (displayer != null) {
             displayer.FaceInDirection(LastDelta);
+            UpdateDisplayerRender();
             displayer.UpdateRender();
         }
     }
+
+    protected virtual void UpdateDisplayerRender() { }
 
     public override void RegularUpdate() {
         if (dying) {

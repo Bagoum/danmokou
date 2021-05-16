@@ -326,7 +326,7 @@ public class CompactingArray<T> {
     public int Count => count;
     protected bool[] rem;
     protected T[] arr;
-    protected int NullElements { get; set; } = 0;
+    public int NullElements { get; protected set; } = 0;
     private readonly int firstResize;
 
     public CompactingArray(int size = 8, int firstResize=16) {

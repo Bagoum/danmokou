@@ -7,28 +7,18 @@ using Danmokou.DMath;
 using Danmokou.Core;
 using Danmokou.Danmaku.Options;
 using Danmokou.DataHoist;
+using Danmokou.Player;
 using Danmokou.Scriptables;
 using JetBrains.Annotations;
 
 namespace Danmokou.Danmaku.Descriptors {
 
-public readonly struct PlayerBulletCfg {
-    public readonly int cdFrames;
-    public readonly int bossDmg;
-    public readonly int stageDmg;
-    public readonly EffectStrategy effect;
-
-    public PlayerBulletCfg(int cd, int boss, int stage, EffectStrategy eff) {
-        cdFrames = cd;
-        bossDmg = boss;
-        stageDmg = stage;
-        effect = eff;
-    }
-}
 //This is for complex bullets with custom behavior
 public class Bullet : BehaviorEntity {
     [Header("Bullet Config")] 
-    private PlayerBulletCfg? playerBullet = null;
+    private ICollider? icollider;
+    public PlayerBullet? Player { get; private set; } = null;
+    private BPY? hueShift;
     [Tooltip("This will be instantiated once per recoloring, and used for SM material editing.")]
     public Material material = null!;
 
@@ -57,6 +47,8 @@ public class Bullet : BehaviorEntity {
         if (mr != null) {
             mr.sortingOrder = sortOrder;
         }
+        var ci = GetComponent<GenericColliderInfo>();
+        icollider = (ci == null) ? null : ci.AsCollider;
     }
 
     public override int UpdatePriority => UpdatePriorities.BULLET;
@@ -71,9 +63,11 @@ public class Bullet : BehaviorEntity {
     }
 
     public virtual void Initialize(BEHStyleMetadata? style, RealizedBehOptions options, BehaviorEntity? parent, Movement mov, ParametricInfo pi, SOPlayerHitbox _target, out int layer) {
+        Player = options.playerBullet;
         base.Initialize(style, mov, pi, options.smr, parent, options: options);
         gameObject.layer = layer = options.layer ?? DefaultLayer;
         collisionTarget = _target;
+        hueShift = options.hueShift;
     }
 
 
@@ -93,7 +87,30 @@ public class Bullet : BehaviorEntity {
             throw new Exception("Some bullets remain after clear: " + allBullets.Count);
         }
     }
-    
+
+    protected override void UpdateDisplayerRender() {
+        base.UpdateDisplayerRender();
+        displayer!.SetHueShift(hueShift?.Invoke(bpi) ?? 0f);
+    }
+
+    protected override CollisionResult CollisionCheck() {
+        if (icollider == null) return base.CollisionCheck();
+        if (Player.Try(out var plb)) {
+            var fe = Enemy.FrozenEnemies;
+            for (int ii = 0; ii < fe.Count; ++ii) {
+                if (fe[ii].Active && icollider.CheckCollision(Loc, Direction, 1f, fe[ii].pos, fe[ii].radius) 
+                                  && fe[ii].enemy.TryHitIndestructible(bpi.id, plb.data.cdFrames)) {
+                    fe[ii].enemy.QueuePlayerDamage(plb.data.bossDmg, plb.data.stageDmg, plb.firer);
+                    fe[ii].enemy.ProcOnHit(plb.data.effect, Loc);
+                }
+            }
+        } else if (collisionTarget.Active) {
+            return icollider.CheckGrazeCollision(Loc, Direction, 1f, collisionTarget.Hitbox);
+        }
+        return CollisionResult.noColl;
+        
+    }
+
 
 #if UNITY_EDITOR
     public static int NumBullets => allBullets.Count;

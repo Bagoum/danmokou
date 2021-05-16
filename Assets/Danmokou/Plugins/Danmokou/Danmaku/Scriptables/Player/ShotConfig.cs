@@ -10,7 +10,7 @@ namespace Danmokou.Scriptables {
 /// <summary>
 /// Provides shot metadata.
 /// </summary>
-[CreateAssetMenu(menuName = "Data/Shot Configuration")]
+[CreateAssetMenu(menuName = "Data/Player/Shot")]
 public class ShotConfig : ScriptableObject {
     public enum StarRating {
         Zero,
@@ -32,9 +32,6 @@ public class ShotConfig : ScriptableObject {
     /// </summary>
     public string type = "";
     [Header("Unitary Shot Configuration")] public GameObject prefab = null!;
-    public PlayerBombType bomb;
-    public bool HasBomb => bomb.IsValid();
-    public double defaultPower = 1000;
     public bool playerChild = true;
     public StaticReplay? demoReplay;
     public TextAsset? demoSetupSM;

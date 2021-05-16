@@ -53,11 +53,17 @@ public class GameUniqueReferences : ScriptableObject {
     private static IEnumerable<ShipConfig> CampaignShots(DayCampaignConfig? c) =>
         c == null ? new ShipConfig[0] : c.players;
 
-    public IEnumerable<ShipConfig> AllPlayers =>
+    public IEnumerable<ShipConfig> AllShips =>
         CampaignShots(campaign).Concat(CampaignShots(exCampaign)).Concat(CampaignShots(dayCampaign));
-    public IEnumerable<ShotConfig> AllShots => AllPlayers.SelectMany(x => x.shots2.Select(s => s.shot));
+    public IEnumerable<ShotConfig> AllShots => AllShips.SelectMany(x => x.shots2.Select(s => s.shot));
 
-    public ShipConfig FindPlayer(string key) => AllPlayers.First(p => p.key == key);
+    public IEnumerable<ISupportAbilityConfig> AllSupportAbilities => 
+        AllShips.SelectMany(x => x.supports.Select(s => s.ability));
+
+    public ShipConfig FindPlayer(string key) => AllShips.First(p => p.key == key);
     public ShotConfig FindShot(string key) => AllShots.First(s => s.key == key);
+
+    public ISupportAbilityConfig? FindSupportAbility(string key) =>
+        AllSupportAbilities.FirstOrDefault(x => x.Key == key);
 }
 }

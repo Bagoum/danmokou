@@ -23,7 +23,6 @@ MonoBehaviour:
     hardcoded:
       en: 
       jp: 
-  title: Mima
   prefab: {fileID: 2884352696324497640, guid: fad6b986396808145b55bde2bfa4d1c0, type: 3}
   shots2:
   - ordinal: X
@@ -36,6 +35,9 @@ MonoBehaviour:
     shot: {fileID: 11400000, guid: d6a3d1c69b185284b8880ab96db6d135, type: 2}
   - ordinal: N
     shot: {fileID: 11400000, guid: 9b809459ea3c04943a34159db41a660f, type: 2}
+  supports:
+  - ordinal: S1
+    ability: {fileID: 11400000, guid: a735d449cc1221c449d66e9929f98cca, type: 2}
   uiColor: {r: 0, g: 0.3889113, b: 0.47058824, a: 1}
   shotDisplay: {fileID: 8782343778102116289, guid: 6e88a4f8d7640724aa8035984379fa2a,
     type: 3}

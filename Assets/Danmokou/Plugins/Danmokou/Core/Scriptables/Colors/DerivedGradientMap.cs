@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using Danmokou.Core;
 using Danmokou.DMath;
 using UnityEngine;
 
@@ -15,7 +16,7 @@ public struct PalettePoint {
 [CreateAssetMenu(menuName = "Colors/DerivedGradientMap")]
 public class DerivedGradientMap : GradientMap {
     public PalettePoint[] points = null!;
-    protected override void PrepareColors() {
+    protected override void PrepareColors(DRenderMode render) {
         gradient = ColorHelpers.FromKeys(points.Select(x => new GradientColorKey(x.palette.GetColor(x.shade), x.time))).ToUnityGradient();
     }
 }

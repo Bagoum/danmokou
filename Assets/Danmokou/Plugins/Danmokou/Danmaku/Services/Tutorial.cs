@@ -7,6 +7,7 @@ using Danmokou.Danmaku;
 using Danmokou.Danmaku.Options;
 using Danmokou.DMath;
 using Danmokou.GameInstance;
+using Danmokou.Player;
 using Danmokou.Reflection;
 using Danmokou.Scenes;
 using Danmokou.SM;
@@ -233,7 +234,7 @@ public class Tutorial : BehaviorEntity {
         yield return confirm();
         yield return shift();
         Prompt(text10, ability46(Meter.Desc));
-        GameManagement.Instance.AddGems(100);
+        DependencyInjection.Find<PlayerController>().AddGems(100);
         yield return waitlf(() => InputManager.IsMeter);
         yield return shift();
         Message(text10, ability47);

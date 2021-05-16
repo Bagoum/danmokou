@@ -770,7 +770,9 @@ public static class Scene1 {
         AreEqual("TestPractice", SceneManager.GetActiveScene().name);
     }
     private static SharedInstanceMetadata FixedDfc(FixedDifficulty fd) => 
-        new SharedInstanceMetadata(new TeamConfig(0, Subshot.TYPE_D, (TestHarness.main.playerRef.defaultPlayers[0], TestHarness.main.playerRef.defaultShots[0])), new DifficultySettings(fd));
+        new SharedInstanceMetadata(new TeamConfig(0, Subshot.TYPE_D, null, 
+            (TestHarness.main.playerRef.defaultPlayers[0], TestHarness.main.playerRef.defaultShots[0])), 
+            new DifficultySettings(fd));
     [UnityTest]
     public static IEnumerator TestDifficultySelect() {
         foreach (var dff in Enum.GetValues(typeof(FixedDifficulty)).Cast<FixedDifficulty>()) {

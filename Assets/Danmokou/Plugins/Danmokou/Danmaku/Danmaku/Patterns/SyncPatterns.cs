@@ -205,9 +205,23 @@ public static partial class SyncPatterns {
     /// <param name="guided">The child fires that follow the empty bullet. They have Loc0 applied to them.</param>
     /// <returns></returns>
     public static SyncPattern GuideEmpty(string? suffix, ExBPY indexer, (string, ExTP)[] saveV2s,
-                                        (string, ExBPY)[] saveFs, GCXU<VTP> emptyPath, SyncPattern[] guided) {
-        var emptySP = AtomicPatterns.S(emptyPath);
-        suffix ??= $".{RNG.RandString(8)}";
+        (string, ExBPY)[] saveFs, GCXU<VTP> emptyPath, SyncPattern[] guided) =>
+        _GuideEmpty(suffix, indexer, saveV2s, saveFs, emptyPath, guided, false);
+    
+    /// <summary>
+    /// Set up an empty-guided fire for player bullets.
+    /// </summary>
+    public static SyncPattern PlayerGuideEmpty(string? suffix, ExBPY indexer, (string, ExTP)[] saveV2s,
+        (string, ExBPY)[] saveFs, GCXU<VTP> emptyPath, SyncPattern[] guided) =>
+        _GuideEmpty(suffix, indexer, saveV2s, saveFs, emptyPath, guided, true);
+    
+    private static SyncPattern _GuideEmpty(string? suffix, ExBPY indexer, (string, ExTP)[] saveV2s,
+        (string, ExBPY)[] saveFs, GCXU<VTP> emptyPath, SyncPattern[] guided, bool isPlayer) {
+        var emptySP = isPlayer ?
+            AtomicPatterns.Simple(emptyPath, new SBOptions(new[] {SBOption.Player(0, 0, "null")})) :
+            AtomicPatterns.S(emptyPath);
+        if (string.IsNullOrEmpty(suffix) || suffix![0] != '.')
+            suffix = $".{RNG.RandString(8)}";
         string estyle = $"{BulletManager.EMPTY}{suffix}";
         List<SBCFp> controlsL = new List<SBCFp>();
         if (saveV2s.Length > 0) {
@@ -228,7 +242,7 @@ public static partial class SyncPatterns {
             BulletManager.Consts.PERSISTENT, Cancellable.Null)).ToArray();
         guided = guided.Select(Loc0).ToArray();
         return sbh => {
-            BulletManager.AssertControls(estyle, controls);
+            BulletManager.AssertControls(isPlayer ? BulletManager.GetOrMakePlayerCopy(estyle) : estyle, controls);
             //Technically not necessary to copy, since we're not modifying GCX
             var emptySbh = sbh.CopyGCX();
             emptySbh.ch.bc.style = estyle;

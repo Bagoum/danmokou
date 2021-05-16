@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Purple
   m_EditorClassIdentifier: 
   colorName: purple
-  highlight: {r: 0.82409835, g: 0.71000004, b: 1, a: 1}
+  highlight: {r: 0.85344595, g: 0.759, b: 1, a: 1}
   light: {r: 0.71325713, g: 0.504717, b: 1, a: 1}
   pure: {r: 0.61074394, g: 0.11792451, b: 1, a: 1}
   dark: {r: 0.38544482, g: 0, b: 0.6132076, a: 1}

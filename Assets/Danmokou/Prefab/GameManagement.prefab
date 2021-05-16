@@ -798,6 +798,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   references: {fileID: 11400000, guid: 3435cd7b9a88a3d4db4849dae203de60, type: 2}
   visiblePlayer: {fileID: 11400000, guid: d20af02baec12db42baba53da24bff95, type: 2}
+  OpenAsDebugMode: 0
 --- !u!114 &2094832129283138134
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -826,6 +827,8 @@ MonoBehaviour:
     type: 2}
   bulletCollisionTarget: {fileID: 11400000, guid: d20af02baec12db42baba53da24bff95,
     type: 2}
+  emptyBulletPrefab: {fileID: 4623879621751819397, guid: d8fc742f09281af43ba731c2c5c4638d,
+    type: 3}
   bulletStylesList: {fileID: 11400000, guid: bd4fa664bf6d67c439fe0897a43ddab0, type: 2}
   basicGradientPalettes:
   - {fileID: 11400000, guid: b8adc72a1f77dd045b941bed9d906937, type: 2}

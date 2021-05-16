@@ -58,6 +58,7 @@ practice_campaign,Campaign,,シナリオ
 ,,,
 shotsel_player,PLAYER,,機体
 shotsel_shot,SHOT,,装備
+shotsel_support,ABILITY,,能力
 shotsel_type,Type {0},,タイプ{0}
 shotsel_variant,Variant {0},,バリアント{0}
 shotsel_multi,Multishot {0},,可変ショット{0}

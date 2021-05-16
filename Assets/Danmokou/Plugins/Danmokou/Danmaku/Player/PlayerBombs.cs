@@ -22,6 +22,8 @@ public enum PlayerBombContext {
     DEATHBOMB
 }
 public static class PlayerBombs {
+    public static readonly Events.IEvent<(PlayerBombType type, PlayerBombContext ctx)> BombFired =
+        new Events.Event<(PlayerBombType, PlayerBombContext)>();
     public static bool IsValid(this PlayerBombType bt) => bt != PlayerBombType.NONE;
 
     public static int DeathbombFrames(this PlayerBombType bt) =>
@@ -31,16 +33,20 @@ public static class PlayerBombs {
             _ => 0
         };
 
-    private static double? PowerRequired(this PlayerBombType bt, PlayerBombContext ctx) =>
+    public static double? PowerRequired(this PlayerBombType bt) =>
         bt switch {
             PlayerBombType.TEST_POWERBOMB_1 => 1,
             _ => null
         };
-
-    private static int? BombsRequired(this PlayerBombType bt, PlayerBombContext ctx) =>
+    public static int? BombsRequired(this PlayerBombType bt) =>
         bt switch {
             PlayerBombType.TEST_BOMB_1 => 1,
             _ => null
+        };
+
+    private static double ContextCostMultiplier(this PlayerBombType bt, PlayerBombContext ctx) =>
+        bt switch {
+            _ => 1
         };
 
     private static IEnumerator BombCoroutine(PlayerBombType bomb, PlayerController bomber, MultiAdder.Token bombDisable) =>
@@ -51,11 +57,12 @@ public static class PlayerBombs {
         };
 
     public static bool TryBomb(PlayerBombType bomb, PlayerController bomber, PlayerBombContext ctx) {
-        if (bomb.PowerRequired(ctx).Try(out var rp) && !GameManagement.Instance.TryConsumePower(-rp)) 
+        var mult = bomb.ContextCostMultiplier(ctx);
+        if (bomb.PowerRequired().Try(out var rp) && !GameManagement.Instance.TryConsumePower(-rp * mult)) 
             return false;
-        if (bomb.BombsRequired(ctx).Try(out var rb) && !GameManagement.Instance.TryConsumeBombs(-rb)) 
+        if (bomb.BombsRequired().Try(out var rb) && !GameManagement.Instance.TryConsumeBombs((int)Math.Round(-rb * mult))) 
             return false;
-        GameManagement.Instance.BombTriggered();
+        BombFired.Publish((bomb, ctx));
         var ienum = BombCoroutine(bomb, bomber, PlayerController.BombDisabler.CreateToken1(MultiOp.Priority.CLEAR_SCENE));
         bomber.RunDroppableRIEnumerator(ienum);
         return true;

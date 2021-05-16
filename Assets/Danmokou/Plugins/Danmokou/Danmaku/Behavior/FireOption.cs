@@ -77,6 +77,7 @@ public class FireOption : BehaviorEntity {
         base.Awake();
         sr = GetComponent<SpriteRenderer>();
         original_angle = 0; //Shoot up by default
+        freeFocusLerp = Player.IsFocus ? 1 : 0;
         freeOffset = ReflWrap<TP3>.Wrap(offsetFree);
         if (string.IsNullOrWhiteSpace(offsetFocus)) offsetFocus = offsetFree;
         focusOffset = ReflWrap<TP3>.Wrap(offsetFocus);

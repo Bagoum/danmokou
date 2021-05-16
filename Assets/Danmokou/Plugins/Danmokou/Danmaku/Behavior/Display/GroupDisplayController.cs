@@ -34,6 +34,8 @@ public class GroupDisplayController : DisplayController {
         for (int ii = 0; ii < all.Length; ++ii) all[ii].SetSortingOrder(x);
     }
 
+    public override void SetProperty(int id, float val) => recvSprite.SetProperty(id, val);
+
     public override void UpdateRender() {
         base.UpdateRender();
         for (int ii = 0; ii < all.Length; ++ii) all[ii].UpdateRender();

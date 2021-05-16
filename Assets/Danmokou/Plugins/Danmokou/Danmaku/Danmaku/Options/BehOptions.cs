@@ -177,7 +177,7 @@ public readonly struct RealizedBehOptions {
     public readonly (TP4 black, TP4 white)? recolor;
     public readonly TP4? tint;
     public readonly Pred? delete;
-    public readonly PlayerBulletCfg? playerBullet;
+    public readonly PlayerBullet? playerBullet;
 
     public RealizedBehOptions(BehOptions opts, GenCtx gcx, FiringCtx fctx, Vector2 parentOffset, V2RV2 localOffset, ICancellee cT) {
         smooth = opts.smooth;
@@ -193,7 +193,7 @@ public readonly struct RealizedBehOptions {
             recolor = (rc.black.Invoke(gcx, fctx), rc.white.Invoke(gcx, fctx));
         } else recolor = null;
         delete = opts.delete?.Invoke(gcx, fctx);
-        playerBullet = opts.playerBullet;
+        playerBullet = opts.playerBullet?.Realize(fctx.PlayerController);
     }
 
     public RealizedBehOptions(RealizedLaserOptions rlo) {

@@ -1,0 +1,35 @@
+gtr {
+	start
+		fi =f p
+	wait(12)
+	##Player fire may be indefinite, but for the purposes of accurate public hoisting binding,
+	## we can assume that the number of iterations with results still on screen is <<1024.
+	## Thus, even though this p index will eventually wrap around back to 0, the collision doesn't matter.
+	tm(1024, _)
+	wait-child
+	p mod
+} fire
+	## free fire
+	async sakura-green/w <> gcr {
+		delay(30 * &fi)
+		wait(120)
+		## See above for justification.
+		tm(1024, _)
+		p mod
+	} playerguideempty .pdebug1 p { pdebug1_loc loc pdebug1_dir dir } { } tprot cy 4 {
+		gsr2c 8 {
+			bindAngle
+		} simple dtpoffset pdebug1_loc pdebug1_dir p
+			rx(0.3, 220 * t) {
+				player 12 12 oh1-green
+				dir(&angle + 220 * t + 90)
+			}
+	}
+	## free cancellation
+	noop
+	## focus
+	async needle2-purple <> gcr2 12 _ <> { 
+		sfx x-pc-fire-1 
+	} simple tprot py(13 + 3.5 * (&pi // 2)) { player  34 34 oh1-purple }
+	## focus cancellation
+	noop

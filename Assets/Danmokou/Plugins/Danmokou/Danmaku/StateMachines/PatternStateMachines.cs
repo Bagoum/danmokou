@@ -9,6 +9,7 @@ using Danmokou.Danmaku.Options;
 using Danmokou.DMath;
 using Danmokou.GameInstance;
 using Danmokou.Graphics.Backgrounds;
+using Danmokou.Player;
 using Danmokou.Scenes;
 using Danmokou.Scriptables;
 using Danmokou.Services;
@@ -231,7 +232,7 @@ public class PhaseSM : SequentialSM {
         bool forcedBG = false;
         if (GameManagement.Instance.mode != InstanceMode.CARD_PRACTICE && !SaveData.Settings.TeleportAtPhaseStart) {
             if (props.bossCutin && props.Boss != null && props.Background != null) {
-                GameManagement.Instance.ExternalLenience(props.Boss.bossCutinTime);
+                GameManagement.Instance.AddFaithLenience(props.Boss.bossCutinTime);
                 DependencyInjection.Find<ISFXService>().RequestSFXEvent(ISFXService.SFXEventType.BossCutin);
                 //Service not required since no callback
                 DependencyInjection.MaybeFind<IRaiko>()?.Shake(props.Boss.bossCutinTime / 2f, null, 1f, smh.cT, null);
@@ -306,12 +307,24 @@ public class PhaseSM : SequentialSM {
             if (smh.Exec.isEnemy)
                 smh.Exec.Enemy.SetVulnerable(Vulnerability.NO_DAMAGE);
             lenienceToken?.TryRevoke();
-            if (props.Cleanup)
-                GameManagement.ClearPhaseAutocull(props.SoftcullProps(smh.Exec));
+            float finishDelay = 0f;
+            var finishTask = Task.CompletedTask;
             if (smh.Exec.AllowFinishCalls) {
                 //TODO why does this use parentCT?
                 finishPhase?.Trigger(smh.Exec, smh.GCX, smh.parentCT);
-                await OnFinish(smh, pcTS, start_campaign, bgo, photoBoard);
+                (finishDelay, finishTask) = OnFinish(smh, pcTS, start_campaign, bgo, photoBoard);
+            }
+            if (props.Cleanup) {
+                if (finishDelay > 0) {
+                    var acTime = Mathf.Min(EndOfCardAutocullTime, finishDelay);
+                    PlayerController.RequestPlayerInvulnerable.Publish(((int)(acTime * ETime.ENGINEFPS_F), false));
+                    GameManagement.ClearPhaseAutocullOverTime_Initial(props.SoftcullPropsOverTime(smh.Exec, acTime));
+                    await finishTask;
+                    GameManagement.ClearPhaseAutocullOverTime_Final();
+                } else {
+                    GameManagement.ClearPhaseAutocull(props.SoftcullProps(smh.Exec));
+                    await finishTask;
+                }
             }
             if (smh.Cancelled) 
                 throw;
@@ -326,7 +339,7 @@ public class PhaseSM : SequentialSM {
     private const float defaultShakeTime = 0.6f;
     private static readonly FXY defaultShakeMult = x => M.Sin(M.PI * (x + 0.4f));
 
-    private async Task OnFinish(SMHandoff smh, ICancellee prepared, CampaignSnapshot start_campaign,
+    private (float estDelayTime, Task) OnFinish(SMHandoff smh, ICancellee prepared, CampaignSnapshot start_campaign,
         IBackgroundOrchestrator? bgo, IAyaPhotoBoard? photoBoard) {
         if (props.BgTransitionOut != null) {
             bgo?.QueueTransition(props.BgTransitionOut);
@@ -353,7 +366,7 @@ public class PhaseSM : SequentialSM {
                         PowerAuraOption.Color(_ => ColorHelpers.CV4(props.Boss.colors.powerAuraColor)),
                         PowerAuraOption.Time(_ => 1f),
                         PowerAuraOption.Iterations(_ => -1f),
-                        PowerAuraOption.Scale(_ => 3.5f),
+                        PowerAuraOption.Scale(_ => 4.5f),
                         PowerAuraOption.Static(), 
                         PowerAuraOption.High(), 
                     }), GenCtx.Empty, smh.Exec.GlobalPosition(), smh.cT, null!));
@@ -366,10 +379,12 @@ public class PhaseSM : SequentialSM {
         if (pc.StandardCardFinish && !smh.Cancelled && props.Boss != null && pc.CaptureStars.HasValue) {
             Object.Instantiate(GameManagement.References.prefabReferences.phasePerformance)
                 .GetComponent<PhasePerformance>().Initialize($"{props.Boss.CasualName} / Boss Card", pc);
-            await WaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, EndOfCardDelayTime, false);
+            return (EndOfCardDelayTime, WaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, EndOfCardDelayTime, false));
         }
+        return (0, Task.CompletedTask);
     }
 
+    private const float EndOfCardAutocullTime = 0.7f;
     private const float EndOfCardDelayTime = 2f;
 }
 

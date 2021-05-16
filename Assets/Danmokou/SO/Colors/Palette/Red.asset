@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Red
   m_EditorClassIdentifier: 
   colorName: red
-  highlight: {r: 1, g: 0.73, b: 0.7721875, a: 1}
+  highlight: {r: 1, g: 0.75, b: 0.789855, a: 1}
   light: {r: 1, g: 0.41176474, b: 0.50406075, a: 1}
   pure: {r: 0.9150943, g: 0, b: 0.35395133, a: 1}
   dark: {r: 0.5377358, g: 0, b: 0.24198101, a: 1}

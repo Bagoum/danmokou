@@ -9,7 +9,7 @@ namespace Danmokou.Scriptables {
 /// <summary>
 /// Provides stage metadata.
 /// </summary>
-[CreateAssetMenu(menuName = "Data/Player Configuration")]
+[CreateAssetMenu(menuName = "Data/Player/Ship")]
 public class ShipConfig : ScriptableObject {
     public float freeSpeed = 5f;
     public float focusSlowdown = 0.44f;
@@ -22,13 +22,10 @@ public class ShipConfig : ScriptableObject {
     /// </summary>
     public LocalizedStringReference shortTitle = null!;
     public LocalizedString ShortTitle => shortTitle.Value;
-    /// <summary>
-    /// Eg. Fujiwara no Mokou
-    /// </summary>
-    public string title = "";
     public GameObject prefab = null!;
     //public ShotConfig[] shots;
     public OrdinalShot[] shots2 = null!;
+    public OrdinalSupport[] supports = null!;
 
     public Color uiColor;
     public GameObject shotDisplay = null!;
@@ -38,5 +35,11 @@ public class ShipConfig : ScriptableObject {
 public struct OrdinalShot {
     public string ordinal;
     public ShotConfig shot;
+}
+
+[Serializable]
+public struct OrdinalSupport {
+    public string ordinal;
+    public SupportAbilityConfig ability;
 }
 }

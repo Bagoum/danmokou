@@ -8,6 +8,22 @@ To get the newest version from git, run:
 
 `git submodule update` (if you have made modifications to the submodules, you will need to `pull --rebase` them individually)
 
+# v8.0.0 (2021/05/29)
+
+- [WIP] Implementation of a TH18-like card engine
+- Spell and card circles now trail the boss while they are moving
+- New bullet types: GDCircle (a circle, size between "circle" and "lcircle", with heavy displacement effects), StellDecagon (a once-stellated decagon, or alternatively two pentagons on top of each other), GDLaser2c (a variant of gdlaser which has two colors-- format `gdlaser2c-red;blue/w`).
+  - Bullets may now enable multi-channel automatic colorization (only current example is gdlaser2c) by setting "Multi Channel Recolor" to "RB" and using red and blue channels in the sprite. Three-channel recoloring is not enabled but is not difficult to add to the existing code. Be warned that a typical (one-channel) bullet has about 30 recolors, a RB multi-channel bullet has about 300 recolors, and a RGB multi-channel bullet has about 3000 recolors.
+- Bullets now softcull over time at end-of-phase
+- When simple bullets are softculled, they fade out in addition to spawning a softcull effect like cwheel. The fade out process can be configured as fadeOut on SimpleBulletEmptyScript (it will use the fadeIn config if none is provided).
+- Complex bullets, including complex player bullets, may now have nontrivial colliders by attaching a GenericColliderInfo script to the same object as the Bullet script
+- Player bullets may now be noncircular
+- Player bullets may now use empty guiding
+- Implementation of complex player teams and runtime ship switching
+- Music room
+- Support for dynamic difficulty (rank)
+- Refactored base namespace to "Danmokou" (formerly "DMK")
+
 # v7.0.0 (2021/03/23)
 
 - **Breaking changes:**

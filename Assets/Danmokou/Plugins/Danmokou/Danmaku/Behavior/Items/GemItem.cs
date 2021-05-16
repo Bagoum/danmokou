@@ -16,7 +16,7 @@ public class GemItem : Item {
     public Sprite[] sprites = null!;
 
     protected override void CollectMe(PlayerController collector) {
-        GameManagement.Instance.AddGems(numGems);
+        collector.AddGems(numGems);
         base.CollectMe(collector);
     }
 

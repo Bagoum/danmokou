@@ -6,15 +6,19 @@ phase 0
 		shift-phase-to 1
 		
 <!> type non `Border of Wave, Particle, Vector, and Curve`
-<!> hpi 2000 0
-<!> photo 4
-<!> root 0 0
+<!> hpi 20000 0
+##<!> photo 4
+##<!> root 0 0
 phase 60
 	paction 0
+		position 0 0
 		beh-control persist moon-teal/w restyle moon-orange/w > t 2.4
-		async ellipse-blue/w <> gcr2 60 _ <> {
-		} gsr2c 0 {
-		} s tprot cx 2
+		async gdlaser-*/w <> gcr2 60 1 <> {
+		} gsr2c 4 {
+			color { red teal yellow black }
+		} laser null 1 _ { 
+			hueshift(120 * t)
+		}
 		async moon-*/w <1.4;:> gcr2 220 1 <> {
 		} gsr2c 4 {
 			bindLR
@@ -24,6 +28,7 @@ phase 60
 			120 * t
 		) {
 			rotate(&lr * 120 * t)
+			hueshift(120 * t)
 		}
 		
 	

@@ -9,10 +9,10 @@ using UnityEngine.Profiling;
 
 namespace Danmokou.Scriptables {
 public abstract class ColorMap : ScriptableObject {
-    protected virtual void PrepareColors() { }
+    protected virtual void PrepareColors(DRenderMode render) { }
 
-    public Sprite Recolor(Sprite baseSprite) {
-        PrepareColors();
+    public Sprite Recolor(Sprite baseSprite, DRenderMode render) {
+        PrepareColors(render);
         Texture2D tex = Instantiate(baseSprite.texture);
         NativeArray<Color32> pixels_n = tex.GetRawTextureData<Color32>();
         unsafe {
@@ -34,13 +34,13 @@ public abstract class ColorMap : ScriptableObject {
 public class GradientMap : ColorMap {
     public Gradient gradient = null!;
     [NonSerialized] private IGradient? setGradient;
-
-    private void SetFromPalette(IGradient p, GradientModifier gt, DRenderMode render) =>
+    
+    protected virtual void SetFromPalette(IGradient p, GradientModifier gt, DRenderMode render) =>
         setGradient = p.Modify(gt, render);
 
     public Sprite Recolor(IGradient p, GradientModifier gt, DRenderMode render, Sprite s) {
         SetFromPalette(p, gt, render);
-        return Recolor(s);
+        return Recolor(s, render);
     }
 
     protected override unsafe void Map(Color32* pixels, int len) {

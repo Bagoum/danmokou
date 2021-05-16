@@ -11,7 +11,7 @@ public class PowerItem : Item {
     protected override float RotationTurns => 1;
 
     protected override void CollectMe(PlayerController collector) {
-        GameManagement.Instance.AddPowerItems(1);
+        collector.AddPowerItems(1);
         base.CollectMe(collector);
     }
 }

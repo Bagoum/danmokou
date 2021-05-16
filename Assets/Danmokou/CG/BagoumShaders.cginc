@@ -41,22 +41,31 @@ float _DisplaceMagnitude;
 float _DisplaceSpeed;
 float _DisplaceXMul;
 float2 getDisplace(float2 uv, float t) {
+    t *= _DisplaceSpeed;
+    float2 disp;
+#ifdef FT_DISPLACE_RADIAL
+    // Values from last test with gdcircle: mag 0.12 spd 7 xmul 6
+    float2 puv = uvToPolar(uv);
+    disp = (uv -center) * sin(2 * _DisplaceXMul * puv.y) * sin(t + sin(_DisplaceXMul * puv.y) + puv.y);
+    return disp * _DisplaceMagnitude * tex2D(_DisplaceMask, uv).r;
+#endif
+    
+#ifdef FT_DISPLACE_POLAR
+    float mask = tex2D(_DisplaceMask, uv).r;
+    uv = uvToPolar(uv);
+    //Note: this *4/TAU basically maps the y into range [-2,2].
+    //Make sure _DisplaceXMul * 4 is a whole number.
+    uv.y *= 4 / TAU * _DisplaceXMul;
+#else
     uv.x *= _DisplaceXMul;
     float mask = tex2D(_DisplaceMask, uv).r;
-    t *= _DisplaceSpeed;
-#ifdef FT_DISPLACE_POLAR
-    uv = uvToPolar(uv);
-    //Note: this *4/TAU basically maps the y into range [-2,2]. 
-    //This multiplier should eventually be put into a separate control variable,
-    //but for now it's good.
-    uv.y *= 4 / TAU;
 #endif
 #ifdef FT_DISPLACE_BIVERT
     uv.xy = float2(0.5-abs(uv.y - 0.5), uv.x);
 #endif
     uv.x += t;
     //uv = polarToUV(uv);
-    float2 disp = tex2D(_DisplaceTex, uv).xy;
+    disp = tex2D(_DisplaceTex, uv).xy;
     disp = ((disp * 2) - 1) * _DisplaceMagnitude * mask;
     return disp;
 }

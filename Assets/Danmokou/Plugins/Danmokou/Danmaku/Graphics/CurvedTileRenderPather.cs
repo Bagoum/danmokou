@@ -66,7 +66,7 @@ public class CurvedTileRenderPather : CurvedTileRender {
     public readonly TrailRenderer trailR;
 
     private SOPlayerHitbox target = null!;
-    private PlayerBulletCfg? playerBullet;
+    private PlayerBullet? playerBullet;
 
     public CurvedTileRenderPather(PatherRenderCfg cfg, GameObject obj) : base(obj) {
         lineRadius = cfg.lineRadius;
@@ -136,7 +136,7 @@ public class CurvedTileRenderPather : CurvedTileRender {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void UpdateGraphics() {
         if (hueShift != null) {
-            pb.SetFloat(PropConsts.HueShift, M.degRad * hueShift(bpi));
+            pb.SetFloat(PropConsts.HueShift, hueShift(bpi));
         }
         if (recolor.Try(out var rc)) {
             pb.SetVector(PropConsts.RecolorB, rc.black(bpi));
@@ -222,9 +222,9 @@ public class CurvedTileRenderPather : CurvedTileRender {
             for (int ii = 0; ii < fe.Count; ++ii) {
                 if (fe[ii].Active && CollisionMath.CircleOnSegments(fe[ii].pos, fe[ii].radius, Vector2.zero, 
                         centers, read_from + cut1, 1, cL - cut2, scaledLineRadius, 1, 0, out int segment) &&
-                    fe[ii].enemy.TryHitIndestructible(bpi.id, plb.cdFrames)) {
-                    fe[ii].enemy.QueuePlayerDamage(plb.bossDmg, plb.stageDmg, target.location);
-                    fe[ii].enemy.ProcOnHit(plb.effect, centers[segment]);
+                    fe[ii].enemy.TryHitIndestructible(bpi.id, plb.data.cdFrames)) {
+                    fe[ii].enemy.QueuePlayerDamage(plb.data.bossDmg, plb.data.stageDmg, plb.firer);
+                    fe[ii].enemy.ProcOnHit(plb.data.effect, centers[segment]);
                 }
             }
             return CollisionResult.noColl;

@@ -23,8 +23,6 @@ MonoBehaviour:
     hardcoded:
       en: 
       jp: 
-      _showEnOnly: 0
-  title: Hakurei Reimu
   prefab: {fileID: 2884352696324497640, guid: fde376048de61e241998f004239cd358, type: 3}
   shots2:
   - ordinal: A
@@ -33,6 +31,9 @@ MonoBehaviour:
     shot: {fileID: 11400000, guid: 7aea117ce3a952f42911167011a10d91, type: 2}
   - ordinal: C
     shot: {fileID: 11400000, guid: 35ba3e93f4382a84ebdea9e89ab73c60, type: 2}
+  supports:
+  - ordinal: S1
+    ability: {fileID: 11400000, guid: a735d449cc1221c449d66e9929f98cca, type: 2}
   uiColor: {r: 0.6509434, g: 0, b: 0.046450462, a: 1}
   shotDisplay: {fileID: 8782343778102116289, guid: 37d24709e73ba524a90e1680f96f3f3f,
     type: 3}

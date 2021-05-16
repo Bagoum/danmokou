@@ -41,6 +41,7 @@ public struct DefaultColorizing {
     public bool Inverted;
     public bool FullInvertedAsLightDark;
     public bool TwoPaletteColorings;
+    public RGBRecolorMode MultiChannelRecolor;
     public bool Any => AnyLight || AnyColor || AnyDark || Full || Inverted;
     public bool AnyLight => FlatLight || Light || WideLight;
     public bool AnyColor => FlatColor || Color || WideColor;
@@ -56,11 +57,13 @@ public struct DefaultColorizing {
 }
 
 [Serializable]
-public struct SimpleBulletEntry {
+public struct SimpleBulletFader {
     public float slideInTime;
     public float fadeInTime;
     public float scaleInTime;
     public float scaleInStart;
+
+    public float MaxTime => Mathf.Max(slideInTime, Mathf.Max(fadeInTime, scaleInTime));
 }
 //Add this script to a bullet prefab, rather than Bullet, to indicate that it is a "simple bullet". 
 //Simple bullets will be instantiated as code abstractions rather than game objects. 
@@ -85,7 +88,8 @@ public class SimpleBulletEmptyScript : MonoBehaviour {
     public enum DisplacementMethod {
         NORMAL = 0,
         POLAR = 1,
-        BIVERTICAL = 2
+        BIVERTICAL = 2,
+        RADIAL = 3
     }
     [Serializable]
     public struct DisplacementInfo {
@@ -104,7 +108,9 @@ public class SimpleBulletEmptyScript : MonoBehaviour {
                 material.SetFloat(PropConsts.DisplaceMag, displaceMagnitude);
                 material.SetFloat(PropConsts.DisplaceSpd, displaceSpeed);
                 material.SetFloat(PropConsts.DisplaceXMul, displaceXMul);
-                if (displaceMethod == DisplacementMethod.POLAR) {
+                if (displaceMethod == DisplacementMethod.RADIAL) {
+                    material.EnableKeyword("FT_DISPLACE_RADIAL");
+                } else if (displaceMethod == DisplacementMethod.POLAR) {
                     material.EnableKeyword("FT_DISPLACE_POLAR");
                 } else if (displaceMethod == DisplacementMethod.BIVERTICAL) {
                     material.EnableKeyword("FT_DISPLACE_BIVERT");
@@ -128,7 +134,9 @@ public class SimpleBulletEmptyScript : MonoBehaviour {
     public float screenCullRadius = 3f;
     [Header("Rendering Info")] public int renderPriority;
     public DRenderMode renderMode = DRenderMode.NORMAL;
-    public SOSBEntry fadeIn = null!;
+    public SOSBEntryFader fadeIn = null!;
+    public SOSBEntryFader? fadeOut;
+    public SOSBEntryFader FadeOut => (fadeOut == null) ? fadeIn : fadeOut;
     public bool rotational;
     [Header("Automatic Colors")] public DefaultColorizing colorizing;
     [Tooltip("Base texture for gradient generation")]

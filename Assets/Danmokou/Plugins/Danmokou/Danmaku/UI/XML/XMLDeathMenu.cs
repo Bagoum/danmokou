@@ -31,7 +31,8 @@ public class XMLDeathMenu : XMLMenu {
                     EngineStateManager.AnimatedUnpause();
                     return true;
                 } else return false;
-            }, () => death_continue_ls(GameManagement.Instance.Continues), true),
+            }, () => death_continue_ls(GameManagement.Instance.Continues), true)
+                .EnabledIf(() => GameManagement.Instance.Continues > 0),
             new ConfirmFuncNode(GameManagement.Restart, restart, true)
                 .EnabledIf(() => GameManagement.CanRestart),
             new ConfirmFuncNode(GameManagement.GoToMainMenu, to_menu, true)

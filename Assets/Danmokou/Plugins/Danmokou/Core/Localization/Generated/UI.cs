@@ -318,6 +318,10 @@ public static partial class LocalizedStrings {
 			jp = "装備",
 		};
 		
+		public static readonly LocalizedString shotsel_support = new LocalizedString("ABILITY") {
+			jp = "能力",
+		};
+		
 		public static string shotsel_type(object arg0) => Localization.Locale switch {
 			Locale.JP => Render(Localization.Locale, new[] {
 				"タイプ",

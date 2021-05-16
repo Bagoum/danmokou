@@ -2,6 +2,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Linq.Expressions;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.DataHoist;
@@ -308,7 +309,7 @@ public partial class BulletManager {
         /// <returns></returns>
         public static SBCFp RestyleEffect(string copyStyle, string softcullStyle, ExPred cond) {
             return Batch(cond,
-                new[] {Restyle(copyStyle, _ => ExMPred.True()), CopyNull(softcullStyle, _ => ExMPred.True())});
+                new[] {CopyNull(softcullStyle, _ => ExMPred.True()), Restyle(copyStyle, _ => ExMPred.True())});
         }
 
         /// <summary>
@@ -319,12 +320,14 @@ public partial class BulletManager {
         /// <returns></returns>
         public static SBCFp CopyNull(string style, ExPred cond) {
             return new SBCFp((sbc, ii, bpi) => bpi.When(cond, Ex.Block(
-                AbsSimpleBulletCollection.copyNullFrom.InstanceOf(getMaybeCopyPool.Of(Ex.Constant(style)), sbc, ii)
+                AbsSimpleBulletCollection.copyNullFrom.InstanceOf(getMaybeCopyPool.Of(Ex.Constant(style)), sbc, ii, 
+                    Ex.Constant(null, typeof(SoftcullProperties?)))
             )), BulletControl.P_RUN);
         }
 
         /// <summary>
         /// Change the bullets into a softcull-type bullet rather than destroying them directly.
+        /// Also leaves behind an afterimage of the bullet as it gets deleted in a CulledPool.
         /// </summary>
         /// <param name="target">New style</param>
         /// <param name="cond">Filter condition</param>
@@ -336,9 +339,8 @@ public partial class BulletManager {
             }
             return new SBCFp((sbc, ii, bpi) => bpi.When(cond,
                 //Note that we have to still use the getMaybeCopyPool since the pool may have been destroyed when the code is run
-                Ex.Block(
-                    AbsSimpleBulletCollection.copyNullFrom.InstanceOf(getMaybeCopyPool.Of(Ex.Constant(target)), sbc, ii),
-                    sbc.DeleteSB(ii))
+                //also it's cleaner for baking, even if it's technically no logner needed as of v8 :)
+                sbc.Softcull(getMaybeCopyPool.Of(Ex.Constant(target)), ii)
                 ), BulletControl.P_CULL);
         }
 
@@ -353,8 +355,7 @@ public partial class BulletManager {
             }
             return new SBCFp(ct => (sbc, ii, bpi) => {
                 if (cond(bpi)) {
-                    GetMaybeCopyPool(target).CopyNullWithSoftcullDelay(in props, sbc, ii);
-                    sbc.DeleteSB(ii);
+                    sbc.Softcull(GetMaybeCopyPool(target), ii, props);
                 }
             }, BulletControl.P_CULL);
         }
@@ -584,8 +585,17 @@ public partial class BulletManager {
         public static SBCFp Batch(ExPred cond, SBCFp[] over) {
             if (over.Any(o => o.func == null)) return BatchSM(Compilers.Pred(cond), over.Select(o => new SBCFc(o)).ToArray());
             var priority = over.Max(o => o.priority);
-            return new SBCFp((sbc, ii, bpi) =>
-                    bpi.When(cond, Ex.Block(over.Select(x => (Ex)x.func!(sbc, ii, bpi)))), 
+            return new SBCFp((sbc, ii, bpi) => {
+                    Ex NestRemaining(int index) {
+                        if (index < over.Length) {
+                            return Ex.Block(
+                                over[index].func!(sbc, ii, bpi),
+                                Ex.IfThen(sbc.IsAlive(ii), NestRemaining(index + 1)));
+                        } else
+                            return Ex.Empty();
+                    }
+                    return bpi.When(cond, NestRemaining(0));
+                }, 
                 priority);
         }
         /// <summary>
@@ -707,26 +717,26 @@ public partial class BulletManager {
 
     public static void Autocull(SoftcullProperties props) {
         void CullPool(SimpleBulletCollection pool) {
+            if (pool.IsPlayer) return;
             if (pool.MetaType == AbsSimpleBulletCollection.CollectionType.Softcull) return;
             if (pool.Count == 0) return;
             string targetPool = PortColorFormat(pool.Style, props);
             pool.AddPoolControl(new BulletControl(new SBCFc(
                     SimpleBulletControls.Softcull_noexpr(props, targetPool, _ => true)), Consts.NOTPERSISTENT, null));
-            //Log.Unity($"Autoculled {pool.style} to {targetPool}");
+            Log.Unity($"Autoculled {pool.Style} to {targetPool}");
         }
-        //CEmpty is destroyed via DestroyedCopyPools
         for (int ii = 0; ii < activeNpc.Count; ++ii) CullPool(activeNpc[ii]);
         for (int ii = 0; ii < activeCNpc.Count; ++ii) CullPool(activeCNpc[ii]);
     }
 
     /// <summary>
-    /// For bombs/camera effects. Special bullets like EMPTY, as well as undeletable bullets like SUN,
-    /// will not be deleted.
+    /// For bombs/camera effects. Special bullets like EMPTY, as well as undeletable bullets like SUN
+    /// and noncolliding bullets, will not be deleted.
     /// <br/>This will delete objects over time if the `advance` property on props is nonzero.
     /// </summary>
     public static void Autodelete(SoftcullProperties props, Pred cond) {
         void DeletePool(SimpleBulletCollection pool) {
-            if (!pool.Deletable || pool.Count == 0) return;
+            if (!pool.Deletable || pool.Count == 0 || pool is NoCollSBC) return;
             string targetPool = PortColorFormat(pool.Style, props);
             pool.AddPoolControl(new BulletControl(
                 new SBCFc(SimpleBulletControls.Softcull_noexpr(props, targetPool, cond))
@@ -737,19 +747,55 @@ public partial class BulletManager {
     }
     
     /// <summary>
-    /// For bombs/camera effects. Special bullets like EMPTY, as well as undeletable bullets like SUN,
-    /// will not be deleted.
+    /// For end-of-phase autoculling (from v8 onwards).
+    /// <br/>This will operate over time using props.advance.
+    /// Note: empty bullets are handled separately.
+    /// </summary>
+    public static void AutocullCircleOverTime(SoftcullProperties props) {
+        var timer = ETime.Timer.GetTimer(RNG.RandString(), false);
+        timer.Restart();
+        //Don't have any mixups on the last frame...
+        var effectiveAdvance = props.advance - 4 * ETime.FRAME_TIME;
+        Pred survive = _ => timer.Seconds < effectiveAdvance;
+        Pred deleteCond = bpi => {
+            var dx = bpi.loc.x - props.center.x;
+            var dy = bpi.loc.y - props.center.y;
+            return Math.Min(1, (float)Math.Sqrt(dx * dx + dy * dy) / props.maxDist) <
+                   //Avoid issues with the last few frames
+                   (timer.Seconds + ETime.FRAME_TIME * 4) / effectiveAdvance;
+        };
+        var lprops = props.WithNoAdvance();
+        void CullPool(SimpleBulletCollection pool) {
+            if (pool.IsPlayer) return;
+            if (pool.MetaType == AbsSimpleBulletCollection.CollectionType.Softcull) return;
+            if (pool.Count == 0) return;
+            string targetPool = PortColorFormat(pool.Style, lprops);
+            pool.AddPoolControl(new BulletControl(new SBCFc(
+                SimpleBulletControls.Softcull_noexpr(lprops, targetPool, deleteCond)), survive, null));
+            Log.Unity($"DoT-Autoculling {pool.Style} to {targetPool}");
+        }
+        for (int ii = 0; ii < activeNpc.Count; ++ii) CullPool(activeNpc[ii]);
+        for (int ii = 0; ii < activeCNpc.Count; ++ii) CullPool(activeCNpc[ii]);
+    }
+    
+    /// <summary>
+    /// For bombs/camera effects. Special bullets like EMPTY, as well as undeletable bullets like SUN
+    /// and noncolliding bullets, will not be deleted.
     /// <br/>This will operate over time using props.advance.
     /// </summary>
     public static void AutodeleteCircleOverTime(SoftcullProperties props) {
         var timer = ETime.Timer.GetTimer(RNG.RandString(), false);
         timer.Restart();
         Pred survive = _ => timer.Seconds < props.advance;
-        Pred deleteCond = bpi =>
-            (bpi.loc - props.center).magnitude / props.maxDist < timer.Seconds / props.advance;
+        Pred deleteCond = bpi => {
+            var dx = bpi.loc.x - props.center.x;
+            var dy = bpi.loc.y - props.center.y;
+            return (float)Math.Sqrt(dx * dx + dy * dy) / props.maxDist <
+                   (timer.Seconds + 2 * ETime.FRAME_TIME) / props.advance;
+        };
         var lprops = props.WithNoAdvance();
         void DeletePool(SimpleBulletCollection pool) {
-            if (!pool.Deletable || pool.Count == 0) return;
+            if (!pool.Deletable || pool.Count == 0 || pool is NoCollSBC) return;
             string targetPool = PortColorFormat(pool.Style, lprops);
             pool.AddPoolControl(new BulletControl(
                 new SBCFc(SimpleBulletControls.Softcull_noexpr(lprops, targetPool, deleteCond))

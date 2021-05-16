@@ -4,6 +4,7 @@ using System.Linq.Expressions;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Danmaku;
+using Danmokou.Danmaku.Descriptors;
 using Danmokou.DataHoist;
 using Danmokou.Expressions;
 using UnityEngine;
@@ -38,7 +39,8 @@ public class FiringCtx {
     public PlayerController PlayerController =>
         playerController != null ?
             playerController :
-            throw new Exception("FiringCtx does not have a player controller");
+            throw new Exception("FiringCtx does not have a player controller. " +
+                                "Please make sure that player bullets are fired in player scripts only.");
 
     [UsedImplicitly]
     public FireOption OptionFirer {
@@ -53,7 +55,7 @@ public class FiringCtx {
     [UsedImplicitly]
     public CurvedTileRenderLaser LaserController => 
         laserController ?? throw new Exception("FiringCtx does not have a laser controller");
-    public (int bossDmg, int stageDmg, EffectStrategy eff)? playerFireCfg;
+    public PlayerBullet? playerBullet;
     
     private static readonly Stack<FiringCtx> cache = new Stack<FiringCtx>();
     public static int Allocated { get; private set; }
@@ -77,7 +79,8 @@ public class FiringCtx {
         nCtx.playerController = nCtx.firer switch {
             PlayerController pi => pi,
             FireOption fo => fo.Player,
-            _ => nCtx.playerController
+            Bullet b => b.Player?.firer,
+            _ => null
         };
         return nCtx;
     }
@@ -131,7 +134,7 @@ public class FiringCtx {
         nCtx.firer = firer;
         nCtx.playerController = playerController;
         nCtx.laserController = laserController;
-        nCtx.playerFireCfg = playerFireCfg;
+        nCtx.playerBullet = playerBullet;
         return nCtx;
     }
 
@@ -145,7 +148,7 @@ public class FiringCtx {
         firer = null;
         playerController = null;
         laserController = null;
-        playerFireCfg = null;
+        playerBullet = null;
         ++Recached;
         cache.Push(this);
     }

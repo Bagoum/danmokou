@@ -9,11 +9,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b2fdf925303e43e084e60bcd55b1f01e, type: 3}
-  m_Name: Small Bullet FadeIn Config
+  m_Script: {fileID: 11500000, guid: 1745c6a2cdb54815b4467dcfe66cefa4, type: 3}
+  m_Name: Support Bomb 1
   m_EditorClassIdentifier: 
-  value:
-    slideInTime: 0
-    fadeInTime: 0.3
-    scaleInTime: 0.3
-    scaleInStart: 2.5
+  title:
+    useReference: 0
+    reference: 
+    hardcoded:
+      en: Bomb 1
+      jp: 
+  type: 1

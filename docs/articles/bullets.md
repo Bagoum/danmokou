@@ -24,6 +24,7 @@ Note: if a bullet name starts with "G", that means it is a glowy style (usually 
 | **Simple Bullets** (`s`, `simple` commands) |                                   |
 | SCircle                                     | Nonrotational                     |
 | EllyScythe                                  |                                   |
+| StellDecagon                                |                                   |
 | LCircle                                     |                                   |
 | LEllipse                                    |                                   |
 | LStar                                       |                                   |
@@ -44,6 +45,7 @@ Note: if a bullet name starts with "G", that means it is a glowy style (usually 
 | GLCircle                                    | Additive rendering                |
 | Keine                                       | Additive rendering                |
 | GCircle                                     | Additive rendering                |
+| GDCircle                                    | Additive rendering                |
 
 When summoning bullets, use the format: `{SHAPE}-{COLOR}{GRADIENT}`, where:
 

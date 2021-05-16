@@ -84,7 +84,7 @@
 	            DISPLACE(f.uv, _T);
 				float4 c = tex2D(_MainTex, f.uv) * f.c;
             #ifdef FT_HUESHIFT
-				c.rgb = hueShift(c.rgb, _HueShift);
+				c.rgb = hueShift(c.rgb, _HueShift * DEGRAD);
             #endif
 				return c;
 			}

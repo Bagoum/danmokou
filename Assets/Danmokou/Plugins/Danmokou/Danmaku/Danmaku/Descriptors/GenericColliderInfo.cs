@@ -1,4 +1,5 @@
-﻿using UnityEditor;
+﻿using System;
+using UnityEditor;
 using UnityEngine;
 using Danmokou.DMath;
 using Danmokou.Scriptables;
@@ -25,25 +26,36 @@ public class GenericColliderInfo : MonoBehaviour {
     }
 
     public ColliderType colliderType;
-    [Tooltip("Player bullet collision, does not need to be accurate.")]
-    public float effectiveCircleRadius;
-    [Header("Circle/Line/Rect")] public float scale;
-    [Header("Circle/Line/Segments")] public float radius;
-    [Header("Line")] public Vector2 point1;
+    [Header("Circle/Line/Segments")] 
+    public float radius;
+    [Header("Line")] 
+    public Vector2 point1;
     public Vector2 point2;
-    [Header("Line/Rect/Segments")] public float rotationDeg;
-    [Header("Rect")] public float rectHalfX;
+    [Header("Line/Rect/Segments (Not yet implemented in AsCollider)")] 
+    public float rotationDeg;
+    [Header("Rect")] 
+    public float rectHalfX;
     public float rectHalfY;
-    [Header("Segments")] public int start;
+    [Header("Segments")]
+    public int start;
     public int skip;
     public int end;
     public Vector2[] points = null!;
+
+    public ICollider AsCollider => colliderType switch {
+        ColliderType.Circle => new CircleCollider(radius),
+        ColliderType.Rectangle => new RectCollider(rectHalfX, rectHalfY),
+        ColliderType.Line => new LineCollider(point1, point2, radius),
+        ColliderType.None => new NoneCollider(),
+        _ => throw new Exception($"No AsCollider handling for type {colliderType}")
+    };
+    
+    #if UNITY_EDITOR
+    
     [Tooltip("Only fill for debugging in scene use")]
     public SOPlayerHitbox? target;
     public DebugColliderType debug;
-
-    // Update is called once per frame
-    void Update() {
+    public void DoLiveCollisionTest() {
         Vector3 trp = transform.position;
         CollisionResult cr = new CollisionResult();
         var hitbox = target!.Hitbox;
@@ -57,14 +69,14 @@ public class GenericColliderInfo : MonoBehaviour {
                 CollisionMath.WeakCircleOnAABB(-rectHalfX, -rectHalfY, rectHalfX, rectHalfY,
                     target.location.x - trp.x, target.location.y - trp.y, target.largeRadius));
         } else if (colliderType == ColliderType.Circle) {
-            cr = CollisionMath.GrazeCircleOnCircle(hitbox, trp, radius * scale);
+            cr = CollisionMath.GrazeCircleOnCircle(hitbox, trp, radius);
         } else if (colliderType == ColliderType.Line) {
             float maxdist = Mathf.Max(point2.magnitude, point1.magnitude) + radius;
             cr = CollisionMath.GrazeCircleOnRotatedSegment(hitbox, trp, radius,
-                point1, point2 - point1, scale, (point2 - point1).sqrMagnitude, maxdist * maxdist,
+                point1, point2 - point1, 1f, (point2 - point1).sqrMagnitude, maxdist * maxdist,
                 Mathf.Cos(rotationDeg * Mathf.PI / 180f), Mathf.Sin(rotationDeg * Mathf.PI / 180f));
         } else if (colliderType == ColliderType.Rectangle) {
-            cr = CollisionMath.GrazeCircleOnRect(hitbox, trp, rectHalfX, rectHalfY, rectHalfX * rectHalfX + rectHalfY * rectHalfY, scale,
+            cr = CollisionMath.GrazeCircleOnRect(hitbox, trp, rectHalfX, rectHalfY, rectHalfX * rectHalfX + rectHalfY * rectHalfY, 1f,
                 Mathf.Cos(rotationDeg * Mathf.PI / 180f), Mathf.Sin(rotationDeg * Mathf.PI / 180f));
         } else if (colliderType == ColliderType.RectPtColl) {
             cr = new CollisionResult(CollisionMath.PointInRect(target.location, new CRect(
@@ -79,30 +91,29 @@ public class GenericColliderInfo : MonoBehaviour {
             Debug.Break();
         }
     }
-#if UNITY_EDITOR
+    
     private void OnDrawGizmos() {
         Handles.color = Color.magenta;
         Vector2 p = transform.position;
-        Handles.DrawWireDisc(p, Vector3.forward, effectiveCircleRadius * scale);
         Handles.color = Color.red;
         if (colliderType == ColliderType.Circle) {
-            Handles.DrawWireDisc(p, Vector3.forward, radius * scale);
+            Handles.DrawWireDisc(p, Vector3.forward, radius);
         } else if (colliderType == ColliderType.Line) {
             Vector2 d = point2 - point1;
-            Vector2 tp1 = M.RotateVectorDeg(point1 * scale, rotationDeg);
-            d = M.RotateVectorDeg(d * scale, rotationDeg);
-            Vector2 dt = M.RotateVectorDeg(scale * radius * d.normalized, 90f);
+            Vector2 tp1 = M.RotateVectorDeg(point1, rotationDeg);
+            d = M.RotateVectorDeg(d, rotationDeg);
+            Vector2 dt = M.RotateVectorDeg(radius * d.normalized, 90f);
             Handles.DrawLine(p + tp1, p + tp1 + d);
             Handles.DrawLine(p + tp1 + dt, p + tp1 + dt + d);
             Handles.DrawLine(p + tp1 - dt, p + tp1 - dt + d);
-            Handles.DrawWireDisc(p + tp1, Vector3.forward, scale * radius);
-            Handles.DrawWireDisc(p + tp1 + d, Vector3.forward, scale * radius);
+            Handles.DrawWireDisc(p + tp1, Vector3.forward, radius);
+            Handles.DrawWireDisc(p + tp1 + d, Vector3.forward, radius);
         } else if (colliderType == ColliderType.Rectangle || colliderType == ColliderType.RectPtColl) {
-            Vector2 c1 = p + M.RotateVectorDeg(new Vector2(scale * rectHalfX, scale * rectHalfY), rotationDeg);
-            Vector2 c2 = p + M.RotateVectorDeg(new Vector2(scale * rectHalfX, scale * -rectHalfY), rotationDeg);
+            Vector2 c1 = p + M.RotateVectorDeg(new Vector2(rectHalfX, rectHalfY), rotationDeg);
+            Vector2 c2 = p + M.RotateVectorDeg(new Vector2(rectHalfX, -rectHalfY), rotationDeg);
             Vector2 c3 =
-                p + M.RotateVectorDeg(new Vector2(scale * -rectHalfX, scale * -rectHalfY), rotationDeg);
-            Vector2 c4 = p + M.RotateVectorDeg(new Vector2(scale * -rectHalfX, scale * rectHalfY), rotationDeg);
+                p + M.RotateVectorDeg(new Vector2(-rectHalfX, -rectHalfY), rotationDeg);
+            Vector2 c4 = p + M.RotateVectorDeg(new Vector2(-rectHalfX, rectHalfY), rotationDeg);
             Handles.DrawLine(c1, c2);
             Handles.DrawLine(c2, c3);
             Handles.DrawLine(c1, c4);

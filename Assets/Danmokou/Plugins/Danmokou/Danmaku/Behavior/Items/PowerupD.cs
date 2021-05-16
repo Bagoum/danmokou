@@ -6,7 +6,6 @@ public abstract class PowerupItem : BouncyItem {
     protected abstract Subshot SType { get; }
     protected override void CollectMe(PlayerController collector) {
         collector.SetSubshot(SType);
-        GameManagement.Instance.CollectedPowerupItem();
         base.CollectMe(collector);
     }
 }

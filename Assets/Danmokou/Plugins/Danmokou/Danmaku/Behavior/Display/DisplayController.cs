@@ -99,6 +99,9 @@ public abstract class DisplayController : MonoBehaviour {
         tr.localScale = scale;
     }
 
+    public virtual void SetProperty(int id, float val) => pb.SetFloat(id, val);
+
+    public void SetHueShift(float f) => SetProperty(PropConsts.HueShift, f);
 
     private void FaceInDirectionRaw(float deg) {
         tr.eulerAngles = new Vector3(0, 0, deg);

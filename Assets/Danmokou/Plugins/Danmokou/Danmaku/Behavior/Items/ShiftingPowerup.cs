@@ -54,7 +54,6 @@ public class ShiftingPowerup : BouncyItem {
     protected override void CollectMe(PlayerController collector) {
         if (effect != null) effect.InvokeCull();
         collector.SetSubshot(variants[currVariant].type);
-        GameManagement.Instance.CollectedPowerupItem();
         base.CollectMe(collector);
     }
 

@@ -50,7 +50,7 @@ MonoBehaviour:
   grazeEveryFrames: 30
   screenCullRadius: 3
   renderPriority: 200
-  renderMode: 1
+  renderMode: 0
   fadeIn: {fileID: 11400000, guid: 3ac08ee0b5cc1894a97ec35c140268ae, type: 2}
   rotational: 1
   colorizing:
@@ -67,6 +67,7 @@ MonoBehaviour:
     Inverted: 1
     FullInvertedAsLightDark: 0
     TwoPaletteColorings: 1
+    MultiChannelRecolor: 0
   spriteSheet: {fileID: 21300000, guid: 6c2c5fc055b447344b27ccddd8d9f143, type: 3}
   displacement:
     displaceTex: {fileID: 0}
@@ -100,8 +101,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   colliderType: 5
-  effectiveCircleRadius: 0
-  scale: 0
   radius: 0.065
   point1: {x: 0, y: 0}
   point2: {x: 0, y: 0}

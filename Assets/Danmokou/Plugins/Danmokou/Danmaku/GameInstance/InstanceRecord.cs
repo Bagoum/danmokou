@@ -170,13 +170,13 @@ public class InstanceRecord {
     [JsonIgnore] [ProtoIgnore]
     private string RequestDescription => ReconstructedRequest.Resolve(
         //4+8
-        c => $"All:{c.campaign.campaign.shortTitle.PadRight(8)}",
+        c => $"All:{c.campaign.campaign.shortTitle}",
         //3+9
-        b => $"p{b.phase.NontrivialPhaseIndex}:{b.boss.boss.ReplayName.ValueOrEn.PadRight(9)}",
+        b => $"p{b.phase.NontrivialPhaseIndex}:{b.boss.boss.ReplayName.ValueOrEn}",
         //5+9 -- note that challenges records do not show next to standard records, so misalignment is OK
         c => $"p{c.phase.phase.NontrivialPhaseIndex}-{c.ChallengeIdx}:{c.Boss.ReplayName.ValueOrEn.PadRight(9)}",
         //8+3
-        s => $"s{s.stage.stageIndex+1}:{s.stage.campaign.campaign.shortTitle.PadRight(8)}"
+        s => $"s{s.stage.stageIndex+1}:{s.stage.campaign.campaign.shortTitle}"
     ).PadRight(12);
     
     public LocalizedString AsDisplay(bool showScore, bool showRequest, bool defaultName=false, bool showTime=true) {

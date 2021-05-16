@@ -32,6 +32,10 @@ public abstract class RegularUpdater : MonoBehaviour, IRegularUpdater {
             sub(ev.LastPublished.value);
         Listen(ev, sub);
     }
+    protected void ListenInv<T>(Events.IEvent<T> ev, Action sub) {
+        sub();
+        Listen(ev, _ => sub());
+    }
 
     protected void Listen(Events.Event0 ev, Action sub) {
         tokens.Add(ev.Subscribe(sub));

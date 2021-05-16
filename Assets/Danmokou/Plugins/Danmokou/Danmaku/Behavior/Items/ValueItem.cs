@@ -10,7 +10,8 @@ public class ValueItem : Item {
 
     private const double MAX_BONUS = 2;
 
-    protected virtual void AddMe(double bonus) => GameManagement.Instance.AddValueItems(1, bonus);
+    protected virtual void AddMe(PlayerController collector, double bonus) => 
+        collector.AddValueItems(1, bonus);
     
     protected override void CollectMe(PlayerController collector) {
         var bonus = (autocollected || collection == null) ?
@@ -18,7 +19,7 @@ public class ValueItem : Item {
             M.Lerp(1, MAX_BONUS, M.Ratio(
                 LocationHelpers.BotPlayerBound + 1,
                 collection.Bound.y, tr.position.y));
-        AddMe(bonus);
+        AddMe(collector, bonus);
         base.CollectMe(collector);
     }
 }

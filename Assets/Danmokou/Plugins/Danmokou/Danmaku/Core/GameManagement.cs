@@ -47,7 +47,7 @@ public class GameManagement : CoroutineRegularUpdater {
         new DifficultySettings(FixedDifficulty.Normal);
 #endif
 
-    public static InstanceData Instance { get; private set; } = new InstanceData(InstanceMode.NULL, null, null, null);
+    public static InstanceData Instance { get; private set; } = null!;
     [UsedImplicitly] public static bool Continued => Instance.Continued;
 
     public static void DeactivateInstance() {
@@ -74,6 +74,7 @@ public class GameManagement : CoroutineRegularUpdater {
     public static AchievementManager? Achievements { get; private set; }
 
     public SOPlayerHitbox visiblePlayer = null!;
+    public bool OpenAsDebugMode = false;
     public static Vector2 VisiblePlayerLocation => gm.visiblePlayer.location;
 
     private void Awake() {
@@ -81,6 +82,7 @@ public class GameManagement : CoroutineRegularUpdater {
             DestroyImmediate(gameObject);
             return;
         }
+        NewInstance(OpenAsDebugMode ? InstanceMode.DEBUG : InstanceMode.NULL);
         Initialized = true;
         gm = this;
         DontDestroyOnLoad(this);
@@ -181,7 +183,6 @@ public class GameManagement : CoroutineRegularUpdater {
         ReflWrap.ClearWrappers();
         StateMachineManager.ClearCachedSMs();
         BulletManager.ClearPoolControls();
-        BulletManager.ClearEmpty();
         BulletManager.ClearAllBullets();
         BulletManager.DestroyCopiedPools();
 #if UNITY_EDITOR || ALLOW_RELOAD
@@ -218,23 +219,25 @@ public class GameManagement : CoroutineRegularUpdater {
 
     private static void ClearPhase() {
         BulletManager.ClearPoolControls(false);
-        BulletManager.ClearEmpty();
+        BulletManager.ClearEmptyBullets(false);
         Events.Event0.Reset();
         ETime.Slowdown.RevokeAll(MultiOp.Priority.CLEAR_PHASE);
         ETime.Timer.ResetPhase();
         Events.ClearPhase.Proc();
-        //Delay this so copy pools can be softculled correctly
-        //TODO: can I remove this? might be permissible to keep copied pools throughout the scene
-        ETime.QueueDelayedEOFInvoke(1, BulletManager.DestroyCopiedPools);
-        //Delay this so that bullets referencing hosting data don't break down before
-        //converting into softcull (note softcull bullets don't run velocity)
-        ETime.QueueDelayedEOFInvoke(1, PublicDataHoisting.ClearValues);
     }
 
     public static void ClearPhaseAutocull(SoftcullProperties props) {
         ClearPhase();
         BulletManager.Autocull(props);
         BehaviorEntity.Autocull(props);
+    }
+
+    public static void ClearPhaseAutocullOverTime_Initial(SoftcullProperties props) {
+        BulletManager.AutocullCircleOverTime(props);
+        BehaviorEntity.Autocull(props);
+    }
+    public static void ClearPhaseAutocullOverTime_Final() {
+        ClearPhase();
     }
 
 
@@ -281,14 +284,16 @@ public class GameManagement : CoroutineRegularUpdater {
 #if UNITY_EDITOR
     public static AnalyzedBoss[] AllPBosses => Campaigns.SelectMany(c => c.bosses).ToArray();
 
+    private PlayerController Player => DependencyInjection.Find<PlayerController>();
+
     [ContextMenu("Add 1000 value")]
-    public void YeetScore() => Instance.AddValueItems(1000, 1);
+    public void YeetScore() => Player.AddValueItems(1000, 1);
 
     [ContextMenu("Add 10 PIV+")]
-    public void YeetPIV() => Instance.AddPointPlusItems(10);
+    public void YeetPIV() => Player.AddPointPlusItems(10);
 
     [ContextMenu("Add 40 life")]
-    public void YeetLife() => Instance.AddLifeItems(40);
+    public void YeetLife() => Player.AddLifeItems(40);
 
     [ContextMenu("Set Power to 1")]
     public void SetPower1() => Instance.SetPower(1);
@@ -303,13 +308,14 @@ public class GameManagement : CoroutineRegularUpdater {
     public void SetPower4() => Instance.SetPower(4);
 
     [ContextMenu("Set Subshot D")]
-    public void SetSubshotD() => DependencyInjection.Find<PlayerController>().SetSubshot(Subshot.TYPE_D);
+    public void SetSubshotD() => Player.SetSubshot(Subshot.TYPE_D);
 
     [ContextMenu("Set Subshot M")]
-    public void SetSubshotM() => DependencyInjection.Find<PlayerController>().SetSubshot(Subshot.TYPE_M);
+    public void SetSubshotM() => Player.SetSubshot(Subshot.TYPE_M);
 
     [ContextMenu("Set Subshot K")]
-    public void SetSubshotK() => DependencyInjection.Find<PlayerController>().SetSubshot(Subshot.TYPE_K);
+    public void SetSubshotK() => Player.SetSubshot(Subshot.TYPE_K);
+
 
     [ContextMenu("Lower Rank Level")]
     public void LowerRankLevel() => Instance.SetRankLevel(Instance.RankLevel - 1);
@@ -324,7 +330,7 @@ public class GameManagement : CoroutineRegularUpdater {
     public void DebugGameMode() => Log.Unity(Instance.mode.ToString());
 
     [ContextMenu("Add Lenience")]
-    public void AddLenience() => Instance.ExternalLenience(2);
+    public void AddLenience() => Instance.AddFaithLenience(2);
 
     //[ContextMenu("Save AoT Helpers")] 
     //public void GenerateAoT() => Reflector.GenerateAoT();

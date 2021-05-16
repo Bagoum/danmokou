@@ -1,6 +1,7 @@
 ﻿using Danmokou.Core;
 using Danmokou.Expressions;
 using Danmokou.GameInstance;
+using Danmokou.Services;
 using Ex = System.Linq.Expressions.Expression;
 using static Danmokou.Expressions.ExMHelpers;
 using tfloat = Danmokou.Expressions.TEx<float>;
@@ -105,11 +106,11 @@ public static class ExMDifficulty {
     /// <summary>
     /// Minumum possible rank value (inclusive).
     /// </summary>
-    public static tfloat MinRank() => Ex.Constant((float) InstanceConsts.minRankLevel);
+    public static tfloat MinRank() => Ex.Constant((float) RankManager.minRankLevel);
     /// <summary>
     /// Maximum possible rank value (inclusive).
     /// </summary>
-    public static tfloat MaxRank() => Ex.Constant((float) InstanceConsts.maxRankLevel);
+    public static tfloat MaxRank() => Ex.Constant((float) RankManager.maxRankLevel);
     /// <summary>
     /// Get the dynamic difficulty rank, which varies between MinRank and MaxRank.
     /// </summary>

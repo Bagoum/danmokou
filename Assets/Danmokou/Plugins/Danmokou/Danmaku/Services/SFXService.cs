@@ -60,7 +60,7 @@ public class SFXService : RegularUpdater, ISFXService {
         RegisterDI<ISFXService>(this);
         
         Listen(Events.GameStateHasChanged, HandleGameStateChange);
-        Listen(InstanceData.RankLevelChanged, increase => Request(increase ? rankUp : rankDown));
+        Listen(RankManager.RankLevelChanged, increase => Request(increase ? rankUp : rankDown));
         Listen(InstanceData.MeterNowUsable, () => Request(meterUsable));
         Listen(InstanceData.AnyExtendAcquired, () => Request(lifeExtend));
         Listen(InstanceData.PhaseCompleted, pc => {

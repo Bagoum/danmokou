@@ -69,7 +69,11 @@ public struct DelegatedCreator {
     }
     public void Simple(SyncHandoff sbh, SBOptions options, GCXU<VTP> path, uint? id) {
         var (mov, pi) = PathHandlers(sbh, path, id);
-        pi.ctx.playerFireCfg = options.player;
+        if (options.player.Try(out var bse)) {
+            //TODO add cdframes to sb Player cmd
+            pi.ctx.playerBullet = new PlayerBullet(new PlayerBulletCfg(1, bse.boss, bse.stage, bse.effStrat), pi.ctx.PlayerController);
+        } else
+            pi.ctx.playerBullet = null;
         BulletManager.RequestSimple(style, 
             options.scale?.Invoke(sbh.GCX, pi.ctx), 
             options.direction?.Invoke(sbh.GCX, pi.ctx), in mov, pi);

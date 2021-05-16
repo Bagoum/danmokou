@@ -18,6 +18,7 @@ public static class SceneIntermediary {
     public readonly struct SceneRequest {
         public readonly SceneConfig scene;
         public readonly Action? onQueued;
+        public readonly Action? onPreLoad;
         public readonly Action? onLoaded;
         public readonly Action? onFinished;
         public readonly Reason reason;
@@ -31,10 +32,16 @@ public static class SceneIntermediary {
             FINISH_RETURN
         }
 
-        public SceneRequest(SceneConfig sc, Reason reason, Action? onQueue = null, Action? onLoad = null, 
+        /// <param name="sc"></param>
+        /// <param name="reason"></param>
+        /// <param name="onPreLoad">Executed when the screen is hidden by the transition effect, before the scene is loaded.</param>
+        /// <param name="onLoad">Executed immediately after the scene is loaded. Probably does not precede Awake calls.</param>
+        /// <param name="onFinish">Executed when the transition effect is pulled back and standard flow is reenabled.</param>
+        public SceneRequest(SceneConfig sc, Reason reason, Action? onPreLoad = null, Action? onLoad = null, 
             Action? onFinish = null) {
             scene = sc;
-            onQueued = onQueue;
+            onQueued = null;
+            this.onPreLoad = onPreLoad;
             onLoaded = onLoad;
             onFinished = onFinish;
             this.reason = reason;
@@ -78,6 +85,7 @@ public static class SceneIntermediary {
         }
         Log.Unity($"Scene loading for {req} started.", level: Log.Level.DEBUG3);
         StaticPreSceneUnloaded();
+        req.onPreLoad?.Invoke();
         var op = SceneManager.LoadSceneAsync(req.scene.sceneName);
         while (!op.isDone) {
             yield return null;

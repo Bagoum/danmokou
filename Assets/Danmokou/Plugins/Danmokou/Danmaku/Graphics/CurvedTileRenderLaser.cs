@@ -50,7 +50,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
     private Laser laser = null!;
     private float scaledLineRadius;
     private Laser.PointContainer endpt = new Laser.PointContainer(null);
-    private PlayerBulletCfg? playerBullet;
+    private PlayerBullet? playerBullet;
     [UsedImplicitly]
     public bool playerBulletIsColliding;
     //Player bullets only
@@ -143,7 +143,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
     private void UpdateGraphics() {
         bpi.t = lifetime;
         if (hueShift != null) {
-            pb.SetFloat(PropConsts.HueShift, M.degRad * hueShift(bpi));
+            pb.SetFloat(PropConsts.HueShift, hueShift(bpi));
         }
         if (recolor.Try(out var rc)) {
             pb.SetVector(PropConsts.RecolorB, rc.black(bpi));
@@ -292,9 +292,9 @@ public class CurvedTileRenderLaser : CurvedTileRender {
                             //Don't modify playerBulletCollSegment in order that the collision check is the same for all enemies
                             //segment+1 since segment is inclusive, but collLength is exclusive
                             nextCollSegment = Math.Min(nextCollSegment, segment + 1);
-                            if (fe[ii].enemy.TryHitIndestructible(bpi.id, plb.cdFrames)) {
-                                fe[ii].enemy.QueuePlayerDamage(plb.bossDmg, plb.stageDmg, target.location);
-                                fe[ii].enemy.ProcOnHit(plb.effect, loc + centers[segment]);
+                            if (fe[ii].enemy.TryHitIndestructible(bpi.id, plb.data.cdFrames)) {
+                                fe[ii].enemy.QueuePlayerDamage(plb.data.bossDmg, plb.data.stageDmg, plb.firer);
+                                fe[ii].enemy.ProcOnHit(plb.data.effect, loc + centers[segment]);
                             }
                         }
                     }
@@ -325,9 +325,9 @@ public class CurvedTileRenderLaser : CurvedTileRender {
                         centers, 0, 1, centers.Length, scaledLineRadius, 
                         (float)Math.Cos(rot), (float)Math.Sin(rot), out int segment)) {
                         playerBulletIsColliding = true;
-                        if (fe[ii].enemy.TryHitIndestructible(bpi.id, plb.cdFrames)) {
-                            fe[ii].enemy.QueuePlayerDamage(plb.bossDmg, plb.stageDmg, target.location);
-                            fe[ii].enemy.ProcOnHit(plb.effect, loc + centers[segment]);
+                        if (fe[ii].enemy.TryHitIndestructible(bpi.id, plb.data.cdFrames)) {
+                            fe[ii].enemy.QueuePlayerDamage(plb.data.bossDmg, plb.data.stageDmg, plb.firer);
+                            fe[ii].enemy.ProcOnHit(plb.data.effect, loc + centers[segment]);
                         }
                     }
                 }

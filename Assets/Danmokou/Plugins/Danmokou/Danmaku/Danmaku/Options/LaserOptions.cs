@@ -247,7 +247,7 @@ public readonly struct RealizedLaserOptions {
     public readonly (TP4 black, TP4 white)? recolor;
     public readonly TP4? tint;
     public readonly bool nonpiercing;
-    public readonly PlayerBulletCfg? playerBullet;
+    public readonly PlayerBullet? playerBullet;
 
     public RealizedBehOptions AsBEH => new RealizedBehOptions(this);
 
@@ -278,7 +278,7 @@ public readonly struct RealizedLaserOptions {
         } else recolor = null;
         tint = opts.tint?.Invoke(gcx, fctx);
         nonpiercing = opts.nonpiercing;
-        playerBullet = opts.playerBullet;
+        playerBullet = opts.playerBullet?.Realize(fctx.PlayerController);
     }
 }
 

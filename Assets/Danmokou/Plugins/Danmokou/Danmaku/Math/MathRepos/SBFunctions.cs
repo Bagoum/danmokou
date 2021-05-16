@@ -2,6 +2,7 @@
 using Danmokou.Core;
 using Danmokou.Danmaku;
 using Danmokou.DMath;
+using Danmokou.SM;
 using JetBrains.Annotations;
 using Ex = System.Linq.Expressions.Expression;
 using ExBPY = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<float>>;
@@ -86,7 +87,13 @@ public class TExSBC : TEx<BulletManager.AbsSimpleBulletCollection> {
     public TExSB this[Ex index] => new TExSB(arr.Index(index));
     private static readonly ExFunction delete = ExUtils.Wrap<BulletManager.AbsSimpleBulletCollection>("DeleteSB",
         new[] {typeof(int)});
+    private static readonly ExFunction softcull = ExUtils.Wrap<BulletManager.AbsSimpleBulletCollection>("Softcull",
+        new[] {typeof(BulletManager.AbsSimpleBulletCollection), typeof(int), typeof(SoftcullProperties?)});
+    private static readonly ExFunction isAlive =
+        ExUtils.Wrap<BulletManager.AbsSimpleBulletCollection>("IsAlive", typeof(int));
     public Ex DeleteSB(Ex index) => delete.InstanceOf(this, index);
+    public Ex Softcull(Ex target, Ex index) => softcull.InstanceOf(this, target, index, Ex.Constant(null, typeof(SoftcullProperties?)));
+    public Ex IsAlive(Ex index) => isAlive.InstanceOf(this, index);
 
     private static readonly ExFunction speedup =
         ExUtils.Wrap<BulletManager.AbsSimpleBulletCollection>("Speedup", new[] {typeof(float)});

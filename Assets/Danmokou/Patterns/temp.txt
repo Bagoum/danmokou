@@ -1,20 +1,54 @@
 <#> warnprefix
 pattern({
-	boss bha3.elly
+	boss simp.kasen
 })
 phase(0)
 	paction(0)
-		shift-phase-to(1)
+		shift-phase-to(3)
 	
-<!> type(non, `Danmokou Chimera`)
+<!> type(spell, `Danmokou Chimera`)
 <!> hp(1000)
 phase(0)
 	paction 0
 		position 0 2
-		async fireball-*/w <> gcr2 8 _ <> {
-			colorf({ red blue green yellow orange purple }, r)
-		} gsr2c (30) {
-		} s rvelocity cx 3
+		bullet-control persist gdcircle* cull <= scale 0
+		pool-control gdcircle* tint rgba(1.4, 1.4, 1.4, 1)
+		async * <0.5;:180> gir {
+			circle
+			times(5)
+			wait(0)
+			color({ red blue green yellow orange purple })
+			p this
+		} {
+			gsr {
+				preloop
+					rv2.rx =f 0
+				colorr zonelaser-*/
+			} safelaser 3 {
+				dynamic(polar(0.5 + 0.4 * t, 8 * t))
+				varlength(20, 3 + 14 * t)
+				start(lerp(1, 3, t, 0, 20))
+				s 0.5
+			}
+			
+			gir2 12 20 <0.4;:8> {
+			} {
+				gcr {
+					colorr gdcircle-*/w
+					times 1
+				} simple null {
+					scale(lerpt(3, 3.4, 1, 0) * (1 + sine(0.5, 0.08, t + 0.6h * p)))
+					dir starrotb1
+				}
+				gcr {
+					delay 20
+					colorr gdlaser-*/w
+					bank <-120>
+				} laser null 2 1 {
+					s 0.6
+				}
+			}
+		}
 
 
 <!> type(non, `Danmokou Chimera`)
@@ -22,9 +56,9 @@ phase(0)
 <!> photo 5
 phase(34)
 	paction 0
-		async fireball-*/w <> gcr2 20 _ <> {
+		async fireball-*/w <> gcr2 40 _ <> {
 			color { red green blue yellow orange purple  }
-		} gsr2c 60 {
+		} gsr2c 30 {
 			offset(angle(1h * &times * &pi))
 		} s rvelocity cx 3
 

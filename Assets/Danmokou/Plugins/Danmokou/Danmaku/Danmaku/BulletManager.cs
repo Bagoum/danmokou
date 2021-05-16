@@ -75,23 +75,31 @@ public partial class BulletManager {
     public const string EMPTY = "empty";
 
     public static void CopyPool(string newPool, string from) {
-        var p = simpleBulletPools[from].CopyPool((from == "empty") ? activeCEmpty : activeCNpc, newPool);
+        var src = simpleBulletPools[from];
+        var p = src.MetaType == AbsSimpleBulletCollection.CollectionType.Empty ? 
+            new EmptySBC(src.CopyBC(newPool)) : 
+            src.CopyPool(activeCNpc, newPool);
+        p.SetOriginal(src);
         AddSimpleStyle(p);
         p.Activate();
     }
 
     private static readonly Dictionary<string, string> playerPoolCopyCache = new Dictionary<string, string>();
     public static string GetOrMakePlayerCopy(string pool) {
+        CheckOrCopyPool(pool, out _);
         //lmao i hate garbage
         if (!playerPoolCopyCache.TryGetValue(pool, out var playerPool)) {
             playerPool = playerPoolCopyCache[pool] = $"{PLAYERPREFIX}{pool}";
         }
         if (!simpleBulletPools.TryGetValue(playerPool, out var p)) {
-            if (!simpleBulletPools.TryGetValue(pool, out var po)) 
+            if (!simpleBulletPools.TryGetValue(pool, out var src)) 
                 throw new Exception($"{pool} does not exist, cannot make a player variant of it");
-            p = po.CopySimplePool(activePlayer, playerPool);
-            AddSimpleStyle(p);
+            p = src.MetaType == AbsSimpleBulletCollection.CollectionType.Empty ? 
+                new EmptySBC(src.CopyBC(playerPool)) : 
+                src.CopySimplePool(activePlayer, playerPool);
+            p.SetOriginal(src);
             p.SetPlayer();
+            AddSimpleStyle(p);
         }
         if (!p.Active) p.Activate();
         return playerPool;
@@ -144,8 +152,6 @@ public partial class BulletManager {
         } else return false;
     }
 
-    public static bool PoolExists(string pool) => simpleBulletPools.ContainsKey(pool);
-
     public static void AssertControls(string pool, IReadOnlyList<BulletControl> controls) => GetMaybeCopyPool(pool).AssertControls(controls);
 
     public static AbsSimpleBulletCollection GetMaybeCopyPool(string pool) {
@@ -159,8 +165,8 @@ public partial class BulletManager {
         ResetSentry();
         SimpleBulletCollection sbc;
         //Temp-last set for control updates
-        for (int ii = 0; ii< activeCEmpty.Count; ++ii) {
-            sbc = activeCEmpty[ii];
+        for (int ii = 0; ii< activeEmpty.Count; ++ii) {
+            sbc = activeEmpty[ii];
             sbc.temp_last = sbc.Count;
         }
         for (int ii = 0; ii< activeNpc.Count; ++ii) {
@@ -175,9 +181,13 @@ public partial class BulletManager {
             sbc = activePlayer[ii];
             sbc.temp_last = sbc.Count;
         }
+        for (int ii = 0; ii < activeCulled.Count; ++ii) {
+            sbc = activeCulled[ii];
+            sbc.temp_last = sbc.Count;
+        }
         //Velocity and control updates
-        for (int ii = 0; ii < activeCEmpty.Count; ++ii) {
-            sbc = activeCEmpty[ii];
+        for (int ii = 0; ii < activeEmpty.Count; ++ii) {
+            sbc = activeEmpty[ii];
             if (sbc.temp_last > 0) {
                 sbc.UpdateVelocityAndControls();
             } else sbc.PruneControls();
@@ -202,17 +212,21 @@ public partial class BulletManager {
                 sbc.UpdateVelocityAndControls();
             } else sbc.PruneControls();
         }
+        for (int ii = 0; ii < activeCulled.Count; ++ii) {
+            sbc = activeCulled[ii];
+            if (sbc.temp_last > 0) {
+                sbc.UpdateVelocityAndControls();
+            } else sbc.PruneControls();
+        }
+        
+        
         if (bulletCollisionTarget.Active) {
             var hitbox = bulletCollisionTarget.Hitbox;
             Profiler.BeginSample("NPC-fired simple bullet collision checking");
             int dmg = 0; int graze = 0;
-            for (int ii = 0; ii < activeCEmpty.Count; ++ii) {
-                sbc = activeCEmpty[ii];
-                if (sbc.Count > 0) {
-                    CollisionCheckResults ccr = sbc.CheckCollision(in hitbox);
-                    dmg = Math.Max(dmg, ccr.damage);
-                    graze += ccr.graze;
-                }
+            for (int ii = 0; ii < activeEmpty.Count; ++ii) {
+                //Empty bullets never collide
+                activeEmpty[ii].NullCollisionCleanup();
             }
             for (int ii = 0; ii < activeNpc.Count; ++ii) {
                 sbc = activeNpc[ii];
@@ -235,8 +249,8 @@ public partial class BulletManager {
             bulletCollisionTarget.Player.Graze(graze);
         } else {
             //Collision checker also does compacting/culling, which needs to occur even if there's no target
-            for (int ii = 0; ii < activeCEmpty.Count; ++ii) {
-                activeCEmpty[ii].NullCollisionCleanup();
+            for (int ii = 0; ii < activeEmpty.Count; ++ii) {
+                activeEmpty[ii].NullCollisionCleanup();
             }
             for (int ii = 0; ii < activeNpc.Count; ++ii) {
                 activeNpc[ii].NullCollisionCleanup();
@@ -244,6 +258,9 @@ public partial class BulletManager {
             for (int ii = 0; ii < activeCNpc.Count; ++ii) {
                 activeCNpc[ii].NullCollisionCleanup();
             }
+        }
+        for (int ii = 0; ii < activeCulled.Count; ++ii) {
+            activeCulled[ii].NullCollisionCleanup();
         }
         
         //Collision check (player bullets)
@@ -274,27 +291,51 @@ public partial class BulletManager {
         DestroyCopiedPools();
         activeNpc.Clear();
         activePlayer.Clear();
+        activeCulled.Clear();
         Bullet.OrphanAll();
         BehaviorEntity.DeInitializePools();
         CurvedTileRenderLaser.DeInitializePools();
     }
 
     public static void DestroyCopiedPools() {
+        //Some empty pools are copied
+        var newEmpty = new List<SimpleBulletCollection>();
+        for (int ii = 0; ii < activeEmpty.Count; ++ii) {
+            if (activeEmpty[ii].IsCopy) {
+                DestroySimpleStyle(activeEmpty[ii].Style);
+            } else {
+                newEmpty.Add(activeEmpty[ii]);
+            }
+        }
+        activeEmpty.Clear();
+        activeEmpty.AddRange(newEmpty);
+
         for (int ii = 0; ii < activeCNpc.Count; ++ii) {
             DestroySimpleStyle(activeCNpc[ii].Style);
         }
         activeCNpc.Clear();
-        for (int ii = 0; ii < activeCEmpty.Count; ++ii) {
-            DestroySimpleStyle(activeCEmpty[ii].Style);
+        //All player pools are copied
+        for (int ii = 0; ii < activePlayer.Count; ++ii) {
+            DestroySimpleStyle(activePlayer[ii].Style);
         }
-        activeCEmpty.Clear();
+        activePlayer.Clear();
+        //Culled pools might as well go too
+        for (int ii = 0; ii < activeCulled.Count; ++ii) {
+            DestroySimpleStyle(activeCulled[ii].Style);
+        }
+        activePlayer.Clear();
     }
 
-    public static void ClearEmpty() => simpleBulletPools[EMPTY].Reset();
+    public static void ClearEmptyBullets(bool clearPlayer) {
+        for (int ii = 0; ii < activeEmpty.Count; ++ii) {
+            if (clearPlayer || !activeEmpty[ii].IsPlayer)
+                activeEmpty[ii].Reset();
+        }
+    }
 
     public static void ClearAllBullets() {
-        foreach (string key in simpleBulletPools.Keys) {
-            simpleBulletPools[key].Reset();
+        foreach (var pool in simpleBulletPools.Values) {
+            pool.Reset();
         }
         ClearNonSimpleBullets();
     }
@@ -303,7 +344,7 @@ public partial class BulletManager {
         Bullet.ClearAll();
     }
     /// <summary>
-    /// While most controls are bounded by ICancellee, some aren't, so they need to be destroyed.
+    /// While most controls are bounded by ICancellee, some aren't (TODO like what?), so they need to be destroyed.
     /// </summary>
     public static void ClearPoolControls(bool clearPlayer=true) {
         foreach (var pool in simpleBulletPools.Values) {
@@ -318,6 +359,7 @@ public partial class BulletManager {
     
     private void OnDestroy() {
         ScriptableObject.Destroy(throwaway_gm);
+        ScriptableObject.Destroy(throwaway_mpm);
     }
 }
 }

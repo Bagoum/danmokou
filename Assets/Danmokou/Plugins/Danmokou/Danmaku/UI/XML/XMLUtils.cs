@@ -298,14 +298,14 @@ public static class XMLUtils {
                     playerSwitch = x;
                     UpdateStats();
                 },
-                GameManagement.References.AllPlayers
+                GameManagement.References.AllShips
                     .Select(x => (x.ShortTitle, (ShipConfig?) x))
                     .Prepend((stats_allplayers, null)).ToArray(), playerSwitch),
             new OptionNodeLR<(ShipConfig, ShotConfig)?>(stats_selshot, x => {
                     shotSwitch = x;
                     UpdateStats();
                 },
-                GameManagement.References.AllPlayers
+                GameManagement.References.AllShips
                     .SelectMany(p => p.shots2
                         .Select(os => (new LocalizedString(ShotConfig.PlayerShotDescription(p, os.shot)), 
                             ((ShipConfig, ShotConfig)?) (p, os.shot))))

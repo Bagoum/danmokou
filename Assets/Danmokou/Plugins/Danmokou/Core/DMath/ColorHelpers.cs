@@ -22,6 +22,12 @@ public enum GradientModifier {
     FULL, // No change
 }
 
+public enum RGBRecolorMode {
+    NONE,
+    RB,
+    RGB
+}
+
 public static class ColorHelpers {
 
     public static Color WithA(this Color c, float a) {

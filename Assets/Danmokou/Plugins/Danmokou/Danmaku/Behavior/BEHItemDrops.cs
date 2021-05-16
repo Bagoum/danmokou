@@ -21,8 +21,8 @@ public partial class BehaviorEntity {
                 ?.Autocollect(autocollect || t.Autocollect());
         }
     }
-    private static void DropEvenly(ItemType t, ItemType small, decimal smallRatio, Vector2 baseLoc, 
-        decimal count, bool autocollect, float r, float a0) {
+    private static void DropEvenly(ItemType t, ItemType small, double smallRatio, Vector2 baseLoc, 
+        double count, bool autocollect, float r, float a0) {
         int fullCt = (int)Math.Floor(count);
         int smallCt = (int) Math.Floor((count - fullCt) / smallRatio);
         var step = 360f / (smallCt + fullCt);
@@ -35,7 +35,7 @@ public partial class BehaviorEntity {
 
     private void DropEvenly(ItemType t, int count, bool autocollect, float r, float a0 = 90f) => 
         DropEvenly(t, Loc, count, autocollect, r, a0);
-    private void DropEvenly(ItemType t, ItemType s, decimal exchange, decimal count, bool autocollect, 
+    private void DropEvenly(ItemType t, ItemType s, double exchange, double count, bool autocollect, 
         float r, float a0 = 90f) => 
         DropEvenly(t, s, exchange, Loc, count, autocollect, r, a0);
 
@@ -46,7 +46,7 @@ public partial class BehaviorEntity {
     public void DropSomeLife() => DropEvenly(ItemType.LIFE, 100, false, 0.4f);
     [ContextMenu("Drop some value")]
     public void DropSomeValue() => DropEvenly(ItemType.VALUE, ItemType.SMALL_VALUE, 
-        InstanceConsts.smallValueRatio, 1.4m, false, 0.9f);
+        InstanceConsts.smallValueRatio, 1.4, false, 0.9f);
     [ContextMenu("Drop some PPP")]
     public void DropSomePPP() => DropEvenly(ItemType.PPP, 200, false, 0.4f);
 #endif

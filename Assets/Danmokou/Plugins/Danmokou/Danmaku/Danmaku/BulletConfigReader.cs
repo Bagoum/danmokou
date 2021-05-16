@@ -27,8 +27,6 @@ public partial class BulletManager : RegularUpdater {
     private const float PLAYER_FB_OPACITY_MUL = 0.65f;
     private readonly struct CollidableInfo {
         public readonly GenericColliderInfo.ColliderType colliderType;
-        // For circle approximation
-        public readonly float effRadius;
         // Circle/Line
         public readonly float radius;
         // Line
@@ -40,15 +38,17 @@ public partial class BulletManager : RegularUpdater {
         public readonly Vector2 halfRect;
         // Line/Rect
         public readonly float maxDist2;
+        public readonly ICollider collider;
 
         public CollidableInfo(GenericColliderInfo cc) {
-            effRadius = cc.effectiveCircleRadius;
+            collider = cc.AsCollider;
             colliderType = cc.colliderType;
             radius = cc.radius;
             linePt1 = cc.point1;
             delta = cc.point2 - cc.point1;
             deltaMag2 = delta.sqrMagnitude;
             halfRect = new Vector2(cc.rectHalfX, cc.rectHalfY);
+            //same as Collider classes
             if (colliderType == GenericColliderInfo.ColliderType.Rectangle) {
                 maxDist2 = cc.rectHalfX * cc.rectHalfX + cc.rectHalfY * cc.rectHalfY;
             } else {
@@ -58,9 +58,11 @@ public partial class BulletManager : RegularUpdater {
 
         }
     }
+    
+    //must be struct for Copy function to work as is
     private struct BulletInCode {
         public string name;
-        private readonly DeferredTextureConstruction deferredRI;
+        public readonly DeferredTextureConstruction deferredRI;
         private bool riLoaded;
         private MeshGenerator.RenderInfo ri;
         public readonly SOPlayerHitbox collisionTarget;
@@ -83,6 +85,7 @@ public partial class BulletManager : RegularUpdater {
                 GetOrLoadRI().material.SetOrUnsetKeyword(value != null, PropConsts.tintKW);
             }
         }
+        public SimpleBulletFader FadeOut => deferredRI.sbes.FadeOut;
 
         public BulletInCode Copy(string newName) {
             GetOrLoadRI();
@@ -90,8 +93,15 @@ public partial class BulletManager : RegularUpdater {
             var bic = this;
             bic.name = newName;
             bic.ri = nri;
+            bic.riLoaded = true;
+            bic.ResetMetadata();
             return bic;
         }
+
+        public void UseExitFade() {
+            DeferredTextureConstruction.SetMaterialFade(GetOrLoadRI(), FadeOut);
+        }
+        
         public void SetPlayer() {
             ri.material.SetFloat(PropConsts.scaleInT, PLAYER_SB_SCALEIN_MUL * ri.material.GetFloat(PropConsts.scaleInT));
             ri.material.SetFloat(PropConsts.fadeInT, PLAYER_SB_FADEIN_MUL * ri.material.GetFloat(PropConsts.fadeInT));
@@ -139,6 +149,7 @@ public partial class BulletManager : RegularUpdater {
     public Material simpleBulletMaterial = null!;
     public SOPlayerHitbox bulletCollisionTarget = null!;
     public static SOPlayerHitbox PlayerTarget => main.bulletCollisionTarget;
+    public GameObject emptyBulletPrefab = null!;
     public SOPrefabs bulletStylesList = null!;
     public Palette[] basicGradientPalettes = null!;
     
@@ -165,6 +176,7 @@ public partial class BulletManager : RegularUpdater {
     }
 
     private static void DestroySimpleStyle(string key) {
+        Log.Unity($"Destroying pool {key}");
         simpleBulletPools.Remove(key);
     }
 
@@ -174,8 +186,15 @@ public partial class BulletManager : RegularUpdater {
     /// </summary>
     private static readonly List<SimpleBulletCollection> activeNpc = new List<SimpleBulletCollection>(250);
     private static readonly List<SimpleBulletCollection> activePlayer = new List<SimpleBulletCollection>(50);
-    private static readonly List<SimpleBulletCollection> activeCEmpty = new List<SimpleBulletCollection>(8); //Require priority
+    /// <summary>
+    /// All empty bullet pools (EMPTY, copied NPC pools, and any player variants). These are updated first.
+    /// </summary>
+    private static readonly List<SimpleBulletCollection> activeEmpty = new List<SimpleBulletCollection>(8);
     private static readonly List<SimpleBulletCollection> activeCNpc = new List<SimpleBulletCollection>(8); //Simple only: Create alt-name pools for varying controls
+    /// <summary>
+    /// All culled bullet pools
+    /// </summary>
+    private static readonly List<SimpleBulletCollection> activeCulled = new List<SimpleBulletCollection>(250);
     private static BulletManager main = null!;
     private Transform spamContainer = null!;
     private const string epLayerName = "HighDirectRender";
@@ -185,11 +204,12 @@ public partial class BulletManager : RegularUpdater {
     private int ppLayerMask;
     private int ppRenderLayer;
     private static GradientMap throwaway_gm = null!;
+    private static MultiPaletteMap throwaway_mpm = null!;
 
     private readonly struct DeferredTextureConstruction {
         private readonly Material mat;
         private readonly bool isFrameAnim;
-        private readonly SimpleBulletEmptyScript sbes;
+        public readonly SimpleBulletEmptyScript sbes;
         private readonly int renderPriorityOffset;
         private readonly Func<Sprite> SpriteInvoke;
         public readonly bool recolorizable;
@@ -202,6 +222,22 @@ public partial class BulletManager : RegularUpdater {
             this.renderPriorityOffset = renderPriorityOffset;
             this.SpriteInvoke = spriteCreator;
             this.recolorizable = recolorizable;
+        }
+
+        public static void SetMaterialFade(MeshGenerator.RenderInfo ri, SimpleBulletFader fade) {
+            if (fade.slideInTime > 0) {
+                ri.material.EnableKeyword("FT_SLIDE_IN");
+                ri.material.SetFloat(PropConsts.slideInT, fade.slideInTime);
+            }
+            if (fade.scaleInTime > 0) {
+                ri.material.EnableKeyword("FT_SCALE_IN");
+                ri.material.SetFloat(PropConsts.scaleInT, fade.scaleInTime);
+                ri.material.SetFloat(PropConsts.scaleInMin, fade.scaleInStart);
+            }
+            if (fade.fadeInTime > 0f) {
+                ri.material.EnableKeyword("FT_FADE_IN");
+                ri.material.SetFloat(PropConsts.fadeInT, fade.fadeInTime);
+            }
         }
         public MeshGenerator.RenderInfo CreateDeferredTexture() {
             Sprite sprite = SpriteInvoke();
@@ -219,20 +255,7 @@ public partial class BulletManager : RegularUpdater {
             if (sbes.rotational) {
                 ri.material.EnableKeyword("FT_ROTATIONAL");
             }
-            var fade = sbes.fadeIn.value;
-            if (fade.slideInTime > 0) {
-                ri.material.EnableKeyword("FT_SLIDE_IN");
-                ri.material.SetFloat(PropConsts.slideInT, fade.slideInTime);
-            }
-            if (fade.scaleInTime > 0) {
-                ri.material.EnableKeyword("FT_SCALE_IN");
-                ri.material.SetFloat(PropConsts.scaleInT, fade.scaleInTime);
-                ri.material.SetFloat(PropConsts.scaleInMin, fade.scaleInStart);
-            }
-            if (fade.fadeInTime > 0f) {
-                ri.material.EnableKeyword("FT_FADE_IN");
-                ri.material.SetFloat(PropConsts.fadeInT, fade.fadeInTime);
-            }
+            SetMaterialFade(ri, sbes.fadeIn.value);
             MaterialUtils.SetBlendMode(ri.material, sbes.renderMode);
             return ri;
         }
@@ -252,34 +275,34 @@ public partial class BulletManager : RegularUpdater {
             gs[ii][0] = basicGradientPalettes[ii];
             for (int jj = 0; jj < nPalettes; ++jj) {
                 gs[ii][jj + 1] = new NamedGradient(basicGradientPalettes[ii].Mix(basicGradientPalettes[jj]), 
-                    $"{basicGradientPalettes[ii].Name},{basicGradientPalettes[jj].Name}");
+                    $"{basicGradientPalettes[ii].Name};{basicGradientPalettes[jj].Name}");
             }
         }
         return gs;
     }
 
-    private static void CreateSimpleBulletStyle(SimpleBulletEmptyScript sbes, bool isPlayerStyle, BulletInCode bc) {
-        var targetList = (isPlayerStyle ? activePlayer : activeNpc);
-        if (isPlayerStyle) {
-            AddSimpleStyle(new SimpleBulletCollection(targetList, bc));
-        } else if (sbes.TTL > 0) {
-            AddSimpleStyle(new DummySBC(targetList, bc, sbes.TTL, sbes.timeRandomization, sbes.rotateRandomization));
+    private static void CreateSimpleBulletStyle(SimpleBulletEmptyScript sbes, BulletInCode bc) {
+        if (sbes.TTL > 0) {
+            AddSimpleStyle(new DummySoftcullSBC(activeNpc, bc, sbes.TTL, sbes.timeRandomization, sbes.rotateRandomization));
         } else {
-            AddSimpleStyle(GetCollectionForColliderType(targetList, bc));
+            AddSimpleStyle(GetCollectionForColliderType(activeNpc, bc));
         }
     }
     private void RecolorTextures() {
         int nPalettes = basicGradientPalettes.Length;
         INamedGradient[][] computedPalettes = ComputePalettes();
+        var esbes = emptyBulletPrefab.GetComponent<SimpleBulletEmptyScript>();
+        AddSimpleStyle(new EmptySBC(new BulletInCode(EMPTY, 
+            new DeferredTextureConstruction(esbes, simpleBulletMaterial, 0, () => esbes.spriteSheet, false), 
+            emptyBulletPrefab.GetComponent<GenericColliderInfo>(), esbes)));
         foreach (var lis in bulletStylesList.prefabs) {
             foreach (DataPrefab x in lis.prefabs) {
-                bool isPlayerStyle = x.prefab.GetComponent<PlayerBulletEmptyScript>() != null;
                 var sbes = x.prefab.GetComponent<SimpleBulletEmptyScript>();
                 if (sbes != null) {
                     var cc = x.prefab.GetComponent<GenericColliderInfo>();
                     
                     void CreateN(string cname, int renderPriorityAdd, Func<Sprite> sprite) {
-                        CreateSimpleBulletStyle(sbes, isPlayerStyle, 
+                        CreateSimpleBulletStyle(sbes, 
                             new BulletInCode(cname, new DeferredTextureConstruction(sbes, 
                             simpleBulletMaterial, renderPriorityAdd, sprite, false), cc, sbes));
                     }
@@ -291,7 +314,7 @@ public partial class BulletManager : RegularUpdater {
                         Func<Sprite> ColorizeSprite(INamedGradient p, GradientModifier gt) => () => throwaway_gm.Recolor(p.Gradient, gt, sbes.renderMode, spritesheet);
                         for (int ii = 0; ii < nPalettes; ++ii) {
                             void CreateP(string cname, int renderPriorityAdd, Func<Sprite> sprite) {
-                                CreateSimpleBulletStyle(sbes, isPlayerStyle, 
+                                CreateSimpleBulletStyle(sbes, 
                                     new BulletInCode(cname, new DeferredTextureConstruction(sbes, 
                                     simpleBulletMaterial, renderPriorityAdd + renderOffset, sprite, 
                                     basicGradientPalettes[ii].recolorizable), cc, sbes));
@@ -306,12 +329,29 @@ public partial class BulletManager : RegularUpdater {
                                     ColorizeSprite(p, GradientModifier.FULL));
                                 if (!colors.TwoPaletteColorings) break;
                             }
+                            //Multi-channel
+                            if (colors.MultiChannelRecolor == RGBRecolorMode.RB) {
+                                var r = basicGradientPalettes[ii];
+                                for (int jj = 0; jj < nPalettes; ++jj) {
+                                    var b = basicGradientPalettes[jj];
+                                    var bname = $"{sname}-{r.Name};{b.Name}";
+                                    if (colors.DarkMod.Try(out var d))
+                                        CreateP($"{bname}{SUFF_DARK}", ii + 0 * nPalettes, () => 
+                                            throwaway_mpm.Recolor(r, d, r, d, b, d, sbes.renderMode, spritesheet));
+                                    if (colors.ColorMod.Try(out var c))
+                                        CreateP($"{bname}{SUFF_COLOR}", ii + 1 * nPalettes, () => 
+                                            throwaway_mpm.Recolor(r, c, r, c, b, c, sbes.renderMode, spritesheet));
+                                    if (colors.LightMod.Try(out var l))
+                                        CreateP($"{bname}{SUFF_LIGHT}", ii + 2 * nPalettes, () => 
+                                            throwaway_mpm.Recolor(r, l, r, l, b, l, sbes.renderMode, spritesheet));
+                                }
+                            }
                         }
                         
                         //Manual color variants
                         int extras_offset = 3 * nPalettes;
                         foreach (var color in sbes.gradients) {
-                            CreateN($"{sname}-{color.name}".ToLower(), extras_offset++, () => color.gradient.Recolor(spritesheet));
+                            CreateN($"{sname}-{color.name}".ToLower(), extras_offset++, () => color.gradient.Recolor(spritesheet, sbes.renderMode));
                         }
                         if (!sbes.colorizing.Any && sbes.gradients.Length == 0) {
                             Log.Unity("No sprite recoloring for "+ sname);
@@ -327,7 +367,7 @@ public partial class BulletManager : RegularUpdater {
                     foreach (var color in sbes.spriteSpecificGradients) {
                         if (color.gradient != null) {
                             var g = color.gradient;
-                            CreateN($"{x.name}-{color.color}".ToLower(), extras_offset_outer++, () => g.Recolor(color.sprite));
+                            CreateN($"{x.name}-{color.color}".ToLower(), extras_offset_outer++, () => g.Recolor(color.sprite, sbes.renderMode));
                         } else {
                             CreateN($"{x.name}-{color.color}".ToLower(), extras_offset_outer++, () => color.sprite);
                         }
@@ -362,13 +402,35 @@ public partial class BulletManager : RegularUpdater {
                         if (colors.Full) {
                             CreateF(SUFF_FULL(in colors), 2, GradientModifier.FULL);
                         }
+                        //Multi-channel
+                        if (colors.MultiChannelRecolor == RGBRecolorMode.RB) {
+                            var r = basicGradientPalettes[ii];
+                            for (int jj = 0; jj < nPalettes; ++jj) {
+                                var b = basicGradientPalettes[jj];
+                                void Create2F(string suffix, int offset, Func<Sprite, Sprite> recolorer) {
+                                    var variant = $"{r.Name};{b.Name}{suffix}";
+                                    var style = $"{x.name}-{variant}";
+                                    AddComplexStyle(new DeferredFramesRecoloring(x.prefab, fa, ii + offset * nPalettes, 
+                                        variant, style, recolorer, p.recolorizable, p));
+                                }
+                                if (colors.DarkMod.Try(out var d))
+                                    Create2F(SUFF_DARK, 0, s => 
+                                        throwaway_mpm.Recolor(r, d, r, d, b, d, fa.renderMode, s));
+                                if (colors.ColorMod.Try(out var c))
+                                    Create2F(SUFF_COLOR, 1, s => 
+                                        throwaway_mpm.Recolor(r, c, r, c, b, c, fa.renderMode, s));
+                                if (colors.LightMod.Try(out var l))
+                                    Create2F(SUFF_LIGHT, 2, s => 
+                                        throwaway_mpm.Recolor(r, l, r, l, b, l, fa.renderMode, s));
+                            }
+                        }
                     }
                     //Manual color variants
                     int extras_offset = 3 * nPalettes;
                     foreach (var color in fa.gradients) {
                         string style = $"{x.name}-{color.name}";
                         AddComplexStyle(new DeferredFramesRecoloring(x.prefab, fa, extras_offset++, color.name, 
-                            style, color.gradient.Recolor, false));
+                            style, s => color.gradient.Recolor(s, fa.renderMode), false));
                     }
                     
                 }
@@ -481,6 +543,7 @@ public partial class BulletManager : RegularUpdater {
         pb = new MaterialPropertyBlock();
 
         throwaway_gm = ScriptableObject.CreateInstance<GradientMap>();
+        throwaway_mpm = ScriptableObject.CreateInstance<MultiPaletteMap>();
         ColorScheme.LoadPalettes(basicGradientPalettes);
         RecolorTextures();
         foreach (var style in ResourceManager.AllSummonableNames) {

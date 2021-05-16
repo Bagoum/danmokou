@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Blue
   m_EditorClassIdentifier: 
   colorName: blue
-  highlight: {r: 0.6650944, g: 0.9255765, b: 1, a: 1}
+  highlight: {r: 0.69, g: 0.9307059, b: 1, a: 1}
   light: {r: 0.383277, g: 0.7474348, b: 0.9339623, a: 1}
   pure: {r: 0.1273585, g: 0.4420817, b: 1, a: 1}
   dark: {r: 0, g: 0.1265886, b: 0.7921569, a: 1}

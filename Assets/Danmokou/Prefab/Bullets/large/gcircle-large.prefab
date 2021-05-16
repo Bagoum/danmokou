@@ -20,15 +20,55 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2677688450528803925, guid: db3f2c44901c06743b9d508148757cc6,
         type: 3}
+      propertyPath: spriteSheet
+      value: 
+      objectReference: {fileID: 21300000, guid: 01dbbbabd8bf008418c9a5a153f40f3f,
+        type: 3}
+    - target: {fileID: 2677688450528803925, guid: db3f2c44901c06743b9d508148757cc6,
+        type: 3}
       propertyPath: renderPriority
       value: 1900
       objectReference: {fileID: 0}
     - target: {fileID: 2677688450528803925, guid: db3f2c44901c06743b9d508148757cc6,
         type: 3}
-      propertyPath: spriteSheet
-      value: 
-      objectReference: {fileID: 21300000, guid: 01dbbbabd8bf008418c9a5a153f40f3f,
+      propertyPath: colorizing.Dark
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2677688450528803925, guid: db3f2c44901c06743b9d508148757cc6,
         type: 3}
+      propertyPath: colorizing.Color
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2677688450528803925, guid: db3f2c44901c06743b9d508148757cc6,
+        type: 3}
+      propertyPath: colorizing.Light
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2677688450528803925, guid: db3f2c44901c06743b9d508148757cc6,
+        type: 3}
+      propertyPath: colorizing.FlatDark
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2677688450528803925, guid: db3f2c44901c06743b9d508148757cc6,
+        type: 3}
+      propertyPath: colorizing.FlatColor
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2677688450528803925, guid: db3f2c44901c06743b9d508148757cc6,
+        type: 3}
+      propertyPath: colorizing.FlatLight
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2677688450528803925, guid: db3f2c44901c06743b9d508148757cc6,
+        type: 3}
+      propertyPath: colorizing.WideColor
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2677688450528803925, guid: db3f2c44901c06743b9d508148757cc6,
+        type: 3}
+      propertyPath: colorizing.WideLight
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 2677688450528803925, guid: db3f2c44901c06743b9d508148757cc6,
         type: 3}
       propertyPath: displacement.displaceTex
@@ -41,11 +81,6 @@ PrefabInstance:
       objectReference: {fileID: 2800000, guid: 05d4f48b6ddafc840a9a0c0f8d730830, type: 3}
     - target: {fileID: 2677688450528803925, guid: db3f2c44901c06743b9d508148757cc6,
         type: 3}
-      propertyPath: displacement.displaceMagnitude
-      value: 0.01
-      objectReference: {fileID: 0}
-    - target: {fileID: 2677688450528803925, guid: db3f2c44901c06743b9d508148757cc6,
-        type: 3}
       propertyPath: displacement.displaceSpeed
       value: -0.5
       objectReference: {fileID: 0}
@@ -56,33 +91,8 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2677688450528803925, guid: db3f2c44901c06743b9d508148757cc6,
         type: 3}
-      propertyPath: colorizing.FlatLight
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2677688450528803925, guid: db3f2c44901c06743b9d508148757cc6,
-        type: 3}
-      propertyPath: colorizing.Light
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 2677688450528803925, guid: db3f2c44901c06743b9d508148757cc6,
-        type: 3}
-      propertyPath: colorizing.FlatColor
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2677688450528803925, guid: db3f2c44901c06743b9d508148757cc6,
-        type: 3}
-      propertyPath: colorizing.Color
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 2677688450528803925, guid: db3f2c44901c06743b9d508148757cc6,
-        type: 3}
-      propertyPath: colorizing.FlatDark
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2677688450528803925, guid: db3f2c44901c06743b9d508148757cc6,
-        type: 3}
-      propertyPath: colorizing.Dark
-      value: 1
+      propertyPath: displacement.displaceMagnitude
+      value: 0.01
       objectReference: {fileID: 0}
     - target: {fileID: 2677688450528803971, guid: db3f2c44901c06743b9d508148757cc6,
         type: 3}

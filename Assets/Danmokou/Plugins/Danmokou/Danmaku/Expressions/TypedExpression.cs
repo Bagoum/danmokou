@@ -100,6 +100,7 @@ public class TExArgCtx {
     public Expression t => BPI.t;
     public TEx<float> FloatVal => GetByExprType<TEx<float>>();
     public TExSB SB => GetByExprType<TExSB>();
+    public TExGCX GCX => GetByExprType<TExGCX>();
 
     public TExArgCtx(params Arg[] args) : this(null, args) { }
     public TExArgCtx(TExArgCtx? parent, params Arg[] args) {

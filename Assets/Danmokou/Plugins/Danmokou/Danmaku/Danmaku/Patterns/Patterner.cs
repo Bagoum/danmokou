@@ -522,12 +522,12 @@ public struct LoopControl<T> {
         //Mod handling
         if (p == Parametrization.MOD) {
             if (thisRpt == null) throw new Exception(ModNumberRequired);
-            return parentIndex * thisRpt.Value + thisIndex;
+            return parentIndex * thisRpt.Value + (thisIndex % thisRpt.Value);
         } if (p == Parametrization.INVMOD) {
             if (thisRpt == null) throw new Exception(ModNumberRequired);
-            return parentIndex * thisRpt.Value + (thisRpt.Value - 1 - thisIndex);
+            return parentIndex * thisRpt.Value + (thisRpt.Value - 1 - (thisIndex % thisRpt.Value));
         }
-        throw new NotImplementedException($"Firing handling for parametrization {p}");
+        throw new NotImplementedException($"Firing handling for parametrization {p} given repeater {thisRpt}");
     }
 
     //Use a persistent variable so that any further iterations will all fail after cancellation is triggered.

@@ -12,7 +12,7 @@ public class PointPPItem : Item {
     protected override float MinTimeBeforeHome => 0.8f;
 
     protected override void CollectMe(PlayerController collector) {
-        GameManagement.Instance.AddPointPlusItems(1);
+        collector.AddPointPlusItems(1);
         base.CollectMe(collector);
     }
 }

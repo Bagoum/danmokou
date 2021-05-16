@@ -14,10 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   prefabs:
   - groupTitle: Priority
-    prefabs:
-    - name: empty
-      prefab: {fileID: 4623879621751819397, guid: d8fc742f09281af43ba731c2c5c4638d,
-        type: 3}
+    prefabs: []
   - groupTitle: Small
     prefabs:
     - name: ellipse
@@ -65,6 +62,9 @@ MonoBehaviour:
     - name: apple
       prefab: {fileID: 4623879621751819397, guid: d821cb359f2175f499ee6fb792c99d08,
         type: 3}
+    - name: gdcircle
+      prefab: {fileID: 3592993287166364581, guid: 50bc96aca747f5d44ad2da5fc1746589,
+        type: 3}
   - groupTitle: Large
     prefabs:
     - name: scircle
@@ -90,6 +90,9 @@ MonoBehaviour:
         type: 3}
     - name: ellyscythe
       prefab: {fileID: 2677688450528804024, guid: c2ebd33a0d8d0ca458ee3f467f4a3817,
+        type: 3}
+    - name: stelldecagon
+      prefab: {fileID: 2677688450528804024, guid: dbebec251a601d9419c6ca4fbfc9bc4b,
         type: 3}
   - groupTitle: Laser
     prefabs:
@@ -132,6 +135,9 @@ MonoBehaviour:
     - name: gstretchlaser
       prefab: {fileID: 8927296229425252101, guid: c9a90cd472bfc9141bfca820184ba261,
         type: 3}
+    - name: gdlaser2c
+      prefab: {fileID: 8017668754618296889, guid: 47427f47815453c4096f2916b3729d71,
+        type: 3}
   - groupTitle: Cull
     prefabs:
     - name: cwheel
@@ -139,6 +145,9 @@ MonoBehaviour:
         type: 3}
     - name: cwheelio
       prefab: {fileID: 2677688450528804024, guid: 6da4e58fb270d5242a3ab438fa1de436,
+        type: 3}
+    - name: cth18
+      prefab: {fileID: 2677688450528804024, guid: 80dac5f971f9bf54cbd74e7d4443046c,
         type: 3}
   - groupTitle: Shot Styles
     prefabs:

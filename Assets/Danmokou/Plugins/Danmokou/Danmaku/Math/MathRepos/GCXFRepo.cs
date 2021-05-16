@@ -9,14 +9,14 @@ using Ex = System.Linq.Expressions.Expression;
 namespace Danmokou.DMath.Functions {
 public static class GCXFRepo {
 
-    public static Func<TExArgCtx, TEx<T>> _Fake<T>(Func<TExArgCtx, TEx<T>> target) => gcx => {
+    public static Func<TExArgCtx, TEx<T>> _Fake<T>(Func<TExArgCtx, TEx<T>> target) => args => {
         var fake = new TExPI();
-        var inner = target(gcx.Append("gcx_bpi", fake, true));
+        var inner = target(args.Append("gcx_bpi", fake, true));
         if ((Expression) inner is ConstantExpression) return inner;
         
         return Ex.Block(new ParameterExpression[] {fake},
             //This assign is required, else the random id will be recalculated repeatedly!
-            Ex.Assign(fake, gcx.GetByExprType<TExGCX>().bpi),
+            Ex.Assign(fake, args.GetByExprType<TExGCX>().bpi),
             inner
         );
     };

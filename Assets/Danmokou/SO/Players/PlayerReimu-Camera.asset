@@ -23,11 +23,12 @@ MonoBehaviour:
     hardcoded:
       en: 
       jp: 
-      _showEnOnly: 0
-  title: Shameireimu Aya
   prefab: {fileID: 2884352696324497640, guid: 1b04f67ada23b914fb70274c9361f3be, type: 3}
   shots2:
   - ordinal: C
     shot: {fileID: 11400000, guid: 3c69cff4d6513f14e880462e80103a4b, type: 2}
+  supports:
+  - ordinal: S1
+    ability: {fileID: 11400000, guid: a735d449cc1221c449d66e9929f98cca, type: 2}
   uiColor: {r: 0, g: 0, b: 0, a: 0}
   shotDisplay: {fileID: 0}

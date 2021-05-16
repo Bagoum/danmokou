@@ -43,6 +43,8 @@
 			#pragma multi_compile_local __ FT_SCALE_IN
 			#pragma multi_compile_local __ FT_DISPLACE
 			#pragma multi_compile_local __ FT_DISPLACE_POLAR
+			//Not currently used
+			//#pragma multi_compile_local __ FT_DISPLACE_RADIAL
 			#pragma multi_compile_local __ FT_TINT
 			//Used by lasers but not by bullets
 			//#pragma multi_compile_local __ FT_DISPLACE_BIVERT

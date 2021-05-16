@@ -7,6 +7,7 @@ using Danmokou.Behavior.Display;
 using Danmokou.Behavior.Functions;
 using Danmokou.Core;
 using Danmokou.Danmaku;
+using Danmokou.Danmaku.Options;
 using Danmokou.Dialogue;
 using Danmokou.DMath;
 using Danmokou.Expressions;
@@ -20,6 +21,7 @@ using UnityEditor;
 using UnityEngine;
 using static Danmokou.Core.GameManagement;
 using static Danmokou.DMath.LocationHelpers;
+using static Danmokou.GameInstance.InstanceConsts;
 
 namespace Danmokou.Player {
 /// <summary>
@@ -76,8 +78,7 @@ public class PlayerController : BehaviorEntity {
             _ => 1f
         };
     }
-    
-    
+
     #endregion
     
     public static MultiAdder FiringDisabler { get; private set; } = new MultiAdder(0, null);
@@ -107,15 +108,16 @@ public class PlayerController : BehaviorEntity {
     public ShipConfig[] defaultPlayers = null!;
     public ShotConfig[] defaultShots = null!;
     public Subshot defaultSubshot;
+    public SupportAbilityConfig defaultSupport = null!;
     private ActiveTeamConfig localTeamCfg = null!;
-    private ActiveTeamConfig TeamCfg => Instance.TeamCfg ?? localTeamCfg;
+    private ActiveTeamConfig Team => Instance.TeamCfg ?? localTeamCfg;
     private ShipConfig ship = null!;
     private ShotConfig shot = null!;
     private Subshot subshot;
     //TODO I need a cleaner way to handle laser destruction dependencies
     [UsedImplicitly] public static float PlayerShotItr => playerShotItr;
     private static ushort playerShotItr = 0;
-    private ShipController spawnedPlayer = null!;
+    private ShipController spawnedShip = null!;
     private GameObject? spawnedShot;
     private AyaCamera? spawnedCamera;
 
@@ -137,7 +139,7 @@ public class PlayerController : BehaviorEntity {
     private const float FreeFocusLerpTime = 0.3f;
     private float freeFocusLerp01 = 0f;
     
-    private PlayerState state;
+    public PlayerState State { get; private set; }
     private GCancellable<PlayerState>? stateCanceller;
     private DeathbombState deathbomb = DeathbombState.NULL;
     
@@ -186,7 +188,7 @@ public class PlayerController : BehaviorEntity {
     
     #endregion
     
-    public bool AllowPlayerInput => PlayerActive && StateAllowsInput(state);
+    public bool AllowPlayerInput => PlayerActive && StateAllowsInput(State);
     
     public Vector2 DesiredMovement01 {
         get {
@@ -208,9 +210,12 @@ public class PlayerController : BehaviorEntity {
     public bool IsFiring =>
         InputManager.IsFiring && AllowPlayerInput && FiringDisabler.Value == 0;
     public bool IsTryingBomb =>
-        InputManager.IsBomb && AllowPlayerInput && BombDisabler.Value == 0;
-    public bool IsTryingWitchTime => InputManager.IsMeter && AllowPlayerInput;
-    
+        InputManager.IsBomb && AllowPlayerInput && BombDisabler.Value == 0 && Team.Support is Bomb;
+    public bool IsTryingWitchTime => InputManager.IsMeter && AllowPlayerInput && Team.Support is WitchTime;
+
+    public float MeterScorePerValueMultiplier => State == PlayerState.WITCHTIME ? 2 : 1;
+    public float MeterPIVPerPPPMultiplier => State == PlayerState.WITCHTIME ? 2 : 1;
+
     private IChallengeManager? challenge;
     private ChallengeManager.Restrictions Restrictions => 
         challenge?.Restriction ?? ChallengeManager.Restrictions.Default;
@@ -225,7 +230,8 @@ public class PlayerController : BehaviorEntity {
     
     protected override void Awake() {
         base.Awake();
-        localTeamCfg = new ActiveTeamConfig(new TeamConfig(0, defaultSubshot, defaultPlayers.Zip(defaultShots).ToArray()));
+        localTeamCfg = new ActiveTeamConfig(new TeamConfig(0, defaultSubshot, defaultSupport, 
+            defaultPlayers.Zip(defaultShots).ToArray()));
         Log.Unity($"Team awake", level: Log.Level.DEBUG1);
         hitbox.location = tr.position;
         hitbox.Player = this;
@@ -234,18 +240,17 @@ public class PlayerController : BehaviorEntity {
 
         void Preload(GameObject prefab) {
             foreach (var fo in prefab.GetComponentsInChildren<FireOption>()) {
-                Log.Unity($"Preload {fo.name}");
                 fo.Preload();
             }
         }
-        foreach (var (_, s) in TeamCfg.Ships) {
+        foreach (var (_, s) in Team.Ships) {
             if (s.isMultiShot) {
                 foreach (var ss in s.Subshots!)
                     Preload(ss.prefab);
             } else Preload(s.prefab);
         }
         meter.GetPropertyBlock(meterPB = new MaterialPropertyBlock());
-        meterPB.SetFloat(PropConsts.innerFillRatio, (float)InstanceConsts.meterUseThreshold);
+        meterPB.SetFloat(PropConsts.innerFillRatio, (float)meterUseThreshold);
         UpdatePB();
         
         _UpdateTeam();
@@ -266,7 +271,6 @@ public class PlayerController : BehaviorEntity {
 
     protected override void BindListeners() {
         base.BindListeners();
-        Listen(Events.ScoreItemHasReceived, BufferScoreLabel);
         Listen(RequestPlayerInvulnerable, GoldenAuraInvuln);
         RegisterDI<PlayerController>(this);
     }
@@ -281,16 +285,16 @@ public class PlayerController : BehaviorEntity {
     
     public void UpdateTeam(int? playerIndex = null, Subshot? nsubshot = null) {
         bool didUpdate = false;
-        if (playerIndex.Try(out var pind) && TeamCfg.SelectedIndex != pind) {
-            TeamCfg.SelectedIndex = pind;
+        if (playerIndex.Try(out var pind) && Team.SelectedIndex != pind) {
+            Team.SelectedIndex = pind;
             didUpdate = true;
         }
-        if (nsubshot.Try(out var s) && TeamCfg.Subshot != s) {
-            if (!TeamCfg.HasMultishot)
+        if (nsubshot.Try(out var s) && Team.Subshot != s) {
+            if (!Team.HasMultishot)
                 InstanceData.UselessPowerupCollected.Proc();
             else
                 ++Instance.SubshotSwitches;
-            TeamCfg.Subshot = s;
+            Team.Subshot = s;
             didUpdate = true;
         }
         if (didUpdate) {
@@ -299,33 +303,33 @@ public class PlayerController : BehaviorEntity {
         }
     }
     public void UpdateTeam((ShipConfig, ShotConfig)? nplayer = null, Subshot? nsubshot = null) {
-        int? pind = nplayer.Try(out var p) ? (int?)TeamCfg.Ships.IndexOf(x => x == p) : null;
+        int? pind = nplayer.Try(out var p) ? (int?)Team.Ships.IndexOf(x => x == p) : null;
         UpdateTeam(pind, nsubshot);
     }
     private void _UpdateTeam() {
-        if (TeamCfg.Ship != ship) {
+        if (Team.Ship != ship) {
             bool fromNull = ship == null;
-            ship = TeamCfg.Ship;
+            ship = Team.Ship;
             Log.Unity($"Setting team player to {ship.key}");
-            if (spawnedPlayer != null) {
+            if (spawnedShip != null) {
                 //animate "destruction"
-                spawnedPlayer.InvokeCull();
+                spawnedShip.InvokeCull();
             }
-            spawnedPlayer = Instantiate(TeamCfg.Ship.prefab, tr).GetComponent<ShipController>();
+            spawnedShip = Instantiate(Team.Ship.prefab, tr).GetComponent<ShipController>();
             if (!fromNull) {
                 var pm = onSwitchParticle.main;
-                pm.startColor = new ParticleSystem.MinMaxGradient(spawnedPlayer.meterDisplayInner);
+                pm.startColor = new ParticleSystem.MinMaxGradient(spawnedShip.meterDisplayInner);
                 onSwitchParticle.Play();
             }
         }
-        if (TeamCfg.Shot != shot || (TeamCfg.Shot.isMultiShot && TeamCfg.Subshot != subshot)) {
+        if (Team.Shot != shot || (Team.Shot.isMultiShot && Team.Subshot != subshot)) {
             ++playerShotItr;
-            shot = TeamCfg.Shot;
-            subshot = TeamCfg.Subshot;
+            shot = Team.Shot;
+            subshot = Team.Subshot;
             Log.Unity($"Setting shot to {shot.key}:{subshot}");
             if (DestroyExistingShot())
-                DependencyInjection.SFXService.Request(TeamCfg.Shot.onSwap);
-            var realized = TeamCfg.Shot.GetSubshot(TeamCfg.Subshot);
+                DependencyInjection.SFXService.Request(Team.Shot.onSwap);
+            var realized = Team.Shot.GetSubshot(Team.Subshot);
             spawnedShot = realized.playerChild ? 
                 GameObject.Instantiate(realized.prefab, tr) : 
                 GameObject.Instantiate(realized.prefab);
@@ -337,12 +341,12 @@ public class PlayerController : BehaviorEntity {
     }
 
     private void _UpdateTeamColors() {
-        meterDisplay.Push(spawnedPlayer.meterDisplay);
-        meterDisplayShadow.Push(spawnedPlayer.meterDisplayShadow);
-        meterDisplayInner.Push(spawnedPlayer.meterDisplayInner);
+        meterDisplay.Push(spawnedShip.meterDisplay);
+        meterDisplayShadow.Push(spawnedShip.meterDisplayShadow);
+        meterDisplayInner.Push(spawnedShip.meterDisplayInner);
 
         var ps = speedLines.main;
-        ps.startColor = spawnedPlayer.speedLineColor;
+        ps.startColor = spawnedShip.speedLineColor;
     }
     
     /// <summary>
@@ -367,11 +371,11 @@ public class PlayerController : BehaviorEntity {
     
     private void MovementUpdate(float dT) {
         bpi.t += dT;
-        if (IsTryingBomb && shot.HasBomb && GameManagement.Difficulty.bombsEnabled) {
+        if (IsTryingBomb && GameManagement.Difficulty.bombsEnabled && Team.Support is Bomb b) {
             if (deathbomb == DeathbombState.NULL) 
-                PlayerBombs.TryBomb(shot.bomb, this, PlayerBombContext.NORMAL);
+                PlayerBombs.TryBomb(b.bomb, this, PlayerBombContext.NORMAL);
             else if (deathbomb == DeathbombState.WAITING && 
-                     PlayerBombs.TryBomb(shot.bomb, this, PlayerBombContext.DEATHBOMB)) {
+                     PlayerBombs.TryBomb(b.bomb, this, PlayerBombContext.DEATHBOMB)) {
                 deathbomb = DeathbombState.PERFORMED;
             }
         }
@@ -389,12 +393,12 @@ public class PlayerController : BehaviorEntity {
         }
         velocity *= IsFocus ? ship.FocusSpeed : ship.freeSpeed;
         if (spawnedCamera != null) velocity *= spawnedCamera.CameraSpeedMultiplier;
-        velocity *= StateSpeedMultiplier(state);
+        velocity *= StateSpeedMultiplier(State);
         velocity *= (float) GameManagement.Difficulty.playerSpeedMultiplier;
         SetDirection(velocity);
         //Check bounds
         Vector2 pos = tr.position;
-        if (StateAllowsLocationUpdate(state)) {
+        if (StateAllowsLocationUpdate(State)) {
             if (pos.x <= LeftPlayerBound) {
                 pos.x = LeftPlayerBound;
                 velocity.x = Mathf.Max(velocity.x, 0f);
@@ -431,11 +435,18 @@ public class PlayerController : BehaviorEntity {
     
     public override void RegularUpdate() {
         base.RegularUpdate();
+        if (PlayerActive) {
+            if (State == PlayerState.NORMAL) {
+                Instance.AddMeter(meterRefillRate * ETime.FRAME_TIME, this);
+            } else if (State == PlayerState.WITCHTIME) {
+                ++Instance.MeterFrames;
+            }
+            Instance.UpdateFaithFrame();
+        }
         if (AllowPlayerInput) {
-            GameManagement.Instance.RefillMeterFrame(state);
             if (InputManager.IsSwap) {
                 Log.Unity("Updating team");
-                UpdateTeam((TeamCfg.SelectedIndex + 1) % TeamCfg.Ships.Length);
+                UpdateTeam((Team.SelectedIndex + 1) % Team.Ships.Length);
             }
         }
         //Hilarious issue. If running a bomb that disables and then re-enables firing,
@@ -501,10 +512,10 @@ public class PlayerController : BehaviorEntity {
         }
     }
     
-    public void BufferScoreLabel((long deltaScore, bool bonus) s) {
-        labelAccScore += s.deltaScore;
+    public void BufferScoreLabel(long deltaScore, bool bonus) {
+        labelAccScore += deltaScore;
         scoreLabelBuffer = ITEM_LABEL_BUFFER;
-        scoreLabelBonus |= s.bonus;
+        scoreLabelBonus |= bonus;
     }
     
     public GameObject InvokeParentedTimedEffect(EffectStrategy effect, float time) {
@@ -532,7 +543,7 @@ public class PlayerController : BehaviorEntity {
     
     public void Graze(int graze) {
         if (graze <= 0 || invulnerabilityCounter > 0) return;
-        GameManagement.Instance.AddGraze(graze);
+        GameManagement.Instance.AddGraze(graze, this);
     }
     
     public void Hit(int dmg, bool force = false) {
@@ -548,20 +559,29 @@ public class PlayerController : BehaviorEntity {
     }
     
     private void _DoHit(int dmg) {
-        BulletManager.AutodeleteCircleOverTime(new SoftcullProperties(BPI.loc, 1.1f, 0f, 7f, "cwheel"));
+        BulletManager.AutodeleteCircleOverTime(SoftcullProperties.OverTimeDefault(BPI.loc, 1.1f, 0f, 7f));
+        BulletManager.RequestPowerAura("powerup1", 0, 0, new RealizedPowerAuraOptions(
+            new PowerAuraOptions(new[] {
+                PowerAuraOption.Color(_ => ColorHelpers.CV4(spawnedShip.meterDisplay)),
+                PowerAuraOption.Time(_ => 1.5f),
+                PowerAuraOption.Iterations(_ => -1f),
+                PowerAuraOption.Scale(_ => 3.5f),
+                PowerAuraOption.Static(), 
+                PowerAuraOption.High(), 
+            }), GenCtx.Empty, BPI.loc, Cancellable.Null, null!));
         GameManagement.Instance.AddLives(-dmg);
         DependencyInjection.MaybeFind<IRaiko>()?.ShakeExtra(1.5f, 0.9f);
         Invuln(HitInvulnFrames);
         if (RespawnOnHit) RequestNextState(PlayerState.RESPAWN);
-        else InvokeParentedTimedEffect(spawnedPlayer.OnHitEffect, hitInvuln);
+        else InvokeParentedTimedEffect(spawnedShip.OnHitEffect, hitInvuln);
     }
     
     
     private IEnumerator WaitDeathbomb(int dmg) {
-        var frames = shot.bomb.DeathbombFrames();
+        var frames = (Team.Support as Bomb)?.bomb.DeathbombFrames() ?? 0;
         if (frames > 0) {
             Log.Unity($"The player has {frames} frames to deathbomb", level: Log.Level.DEBUG2);
-            spawnedPlayer.OnPreHitEffect.Proc(bpi.loc, bpi.loc, 1f);
+            spawnedShip.OnPreHitEffect.Proc(bpi.loc, bpi.loc, 1f);
         }
         while (frames-- > 0 && deathbomb == DeathbombState.WAITING) 
             yield return null;
@@ -584,7 +604,7 @@ public class PlayerController : BehaviorEntity {
     
     private void GoldenAuraInvuln((int frames, bool showEffect) req) {
         if (req.showEffect)
-            InvokeParentedTimedEffect(spawnedPlayer.GoldenAuraEffect,
+            InvokeParentedTimedEffect(spawnedShip.GoldenAuraEffect,
                 req.frames * ETime.FRAME_TIME).transform.SetParent(tr);
         Invuln(req.frames);
     }
@@ -619,9 +639,8 @@ public class PlayerController : BehaviorEntity {
     }
     //Assumption for state enumerators is that the token is not initially cancelled.
     private IEnumerator StateNormal(ICancellee<PlayerState> cT) {
-        GameManagement.Instance.StopUsingMeter();
         hitbox.Active = true;
-        state = PlayerState.NORMAL;
+        State = PlayerState.NORMAL;
         while (true) {
             if (MaybeCancelState(cT)) yield break;
             if (IsTryingWitchTime && GameManagement.Instance.TryStartMeter()) {
@@ -632,15 +651,14 @@ public class PlayerController : BehaviorEntity {
         }
     }
     private IEnumerator StateRespawn(ICancellee<PlayerState> cT) {
-        GameManagement.Instance.StopUsingMeter();
-        state = PlayerState.RESPAWN;
-        spawnedPlayer.RespawnOnHitEffect.Proc(hitbox.location, hitbox.location, 0f);
+        State = PlayerState.RESPAWN;
+        spawnedShip.RespawnOnHitEffect.Proc(hitbox.location, hitbox.location, 0f);
         //The hitbox position doesn't update during respawn, so don't allow collision.
         hitbox.Active = false;
         for (float t = 0; t < RespawnFreezeTime; t += ETime.FRAME_TIME) yield return null;
         //Don't update the hitbox location
         tr.position = new Vector2(0f, 100f);
-        InvokeParentedTimedEffect(spawnedPlayer.RespawnAfterEffect, hitInvuln - RespawnFreezeTime);
+        InvokeParentedTimedEffect(spawnedShip.RespawnAfterEffect, hitInvuln - RespawnFreezeTime);
         //Respawn doesn't respect state cancellations
         for (float t = 0; t < RespawnDisappearTime; t += ETime.FRAME_TIME) yield return null;
         for (float t = 0; t < RespawnMoveTime; t += ETime.FRAME_TIME) {
@@ -653,15 +671,15 @@ public class PlayerController : BehaviorEntity {
         if (!MaybeCancelState(cT)) RunDroppableRIEnumerator(StateNormal(cT));
     }
     private IEnumerator StateWitchTime(ICancellee<PlayerState> cT) {
-        GameManagement.Instance.StartUsingMeter();
-        state = PlayerState.WITCHTIME;
+        GameManagement.Instance.LastMeterStartFrame = ETime.FrameNumber;
+        State = PlayerState.WITCHTIME;
         speedLines.Play();
         var t = ETime.Slowdown.CreateModifier(WitchTimeSlowdown, MultiOp.Priority.CLEAR_SCENE);
         meter.enabled = true;
         PlayerActivatedMeter.Proc();
         for (int f = 0; !MaybeCancelState(cT) &&
             IsTryingWitchTime && GameManagement.Instance.TryUseMeterFrame(); ++f) {
-            spawnedPlayer.MaybeDrawWitchTimeGhost(f);
+            spawnedShip.MaybeDrawWitchTimeGhost(f);
             MeterIsActive.Publish(GameManagement.Instance.EnoughMeterToUse ? meterDisplay : meterDisplayInner);
             float meterDisplayRatio = M.EOutSine(Mathf.Clamp01(f / 30f));
             meterPB.SetFloat(PropConsts.fillRatio, GameManagement.Instance.VisibleMeter.NextValue * meterDisplayRatio);
@@ -672,14 +690,44 @@ public class PlayerController : BehaviorEntity {
         PlayerDeactivatedMeter.Proc();
         t.TryRevoke();
         speedLines.Stop();
-        GameManagement.Instance.StopUsingMeter();
+        //MaybeCancelState already run in the for loop
         if (!cT.Cancelled(out _)) RunDroppableRIEnumerator(StateNormal(cT));
     }
     
     
     #endregion
     
+    #region ItemMethods
+
+    public void AddPowerItems(int delta) {
+        Instance.AddPowerItems(delta);
+    }
+    public void AddFullPowerItems(int _) {
+        Instance.FullPower();
+    }
+    public void AddValueItems(int delta, double multiplier) {
+        double bonus = MeterScorePerValueMultiplier;
+        BufferScoreLabel(Instance.AddValueItems(delta, bonus * multiplier), bonus > 1);
+    }
+    public void AddSmallValueItems(int delta, double multiplier) {
+        double bonus = MeterScorePerValueMultiplier;
+        BufferScoreLabel(Instance.AddSmallValueItems(delta, bonus * multiplier), bonus > 1);
+    }
+    public void AddPointPlusItems(int delta) {
+        Instance.AddPointPlusItems(delta, MeterPIVPerPPPMultiplier);
+    }
+    public void AddGems(int delta) {
+        Instance.AddGems(delta, this);
+    }
+    public void AddOneUpItem() {
+        Instance.AddOneUpItem();
+    }
+    public void AddLifeItems(int delta) {
+        Instance.AddLifeItems(delta);
+    }
     
+    #endregion
+
     #region ExpressionMethods
     
     public static readonly Expression playerID = ExUtils.Property<PlayerController>("PlayerShotItr");

@@ -104,8 +104,19 @@ public partial class BulletManager {
 
     public abstract class AbsSimpleBulletCollection : CompactingArray<SimpleBullet> {
         public enum CollectionType {
+            /// <summary>
+            /// Empty bullets (no display or collision, used for guiding; player variants and copies included)
+            /// </summary>
+            Empty,
             Normal,
-            Softcull
+            /// <summary>
+            /// Bullets such as cwheel representing animations played when a normal bullet is destroyed
+            /// </summary>
+            Softcull,
+            /// <summary>
+            /// Afterimages resulting when a normal bullet is destroyed
+            /// </summary>
+            Culled
         }
         public virtual CollectionType MetaType => CollectionType.Normal;
         
@@ -165,13 +176,10 @@ public partial class BulletManager {
         public static readonly ExFunction transferFrom = ExUtils.Wrap<AbsSimpleBulletCollection>("TransferFrom", new[] {typeof(AbsSimpleBulletCollection), typeof(int)});
 
         [UsedImplicitly]
-        public void CopyNullFrom(AbsSimpleBulletCollection sbc, int ii) =>
-            RequestNullSimple(Style, sbc[ii].bpi.loc, sbc[ii].direction);
-        public static readonly ExFunction copyNullFrom = ExUtils.Wrap<AbsSimpleBulletCollection>("CopyNullFrom", new[] {typeof(AbsSimpleBulletCollection), typeof(int)});
-
-        public void CopyNullWithSoftcullDelay(in SoftcullProperties props, AbsSimpleBulletCollection sbc, int ii) {
-            RequestNullSimple(Style, sbc[ii].bpi.loc, sbc[ii].direction, props.AdvanceTime(sbc[ii].bpi.loc));
-        }
+        public void CopyNullFrom(AbsSimpleBulletCollection sbc, int ii, SoftcullProperties? advancer) =>
+            RequestNullSimple(Style, sbc[ii].bpi.loc, sbc[ii].direction, advancer?.AdvanceTime(sbc[ii].bpi.loc) ?? 0f);
+        
+        public static readonly ExFunction copyNullFrom = ExUtils.Wrap<AbsSimpleBulletCollection>("CopyNullFrom", new[] {typeof(AbsSimpleBulletCollection), typeof(int), typeof(SoftcullProperties?)});
 
         [UsedImplicitly]
         public void CopyFrom(AbsSimpleBulletCollection sbc, int ii) {
@@ -191,6 +199,19 @@ public partial class BulletManager {
                 arr[ind].bpi.Dispose();
                 Delete(ind);
             }
+        }
+
+        [UsedImplicitly] //batch command uses this to stop when a bullet is destroyed
+        public bool IsAlive(int ind) => !rem[ind];
+
+        public void Softcull(AbsSimpleBulletCollection target, int ii, SoftcullProperties? advancer) {
+            MakeCulledCopy(ii);
+            target.CopyNullFrom(this, ii, advancer);
+            DeleteSB(ii);
+        }
+
+        protected virtual void MakeCulledCopy(int ii) {
+            throw new Exception($"SBC {Style} is not enabled for softculling");
         }
 
         public abstract void Speedup(float ratio);
@@ -217,11 +238,25 @@ public partial class BulletManager {
         public bool Deletable => bc.deletable;
         public int temp_last;
         private static readonly CollisionResult noColl = new CollisionResult(false, false);
-
+        /// <summary>
+        /// Copied pools have this set
+        /// </summary>
+        private SimpleBulletCollection? original;
+        public bool IsCopy => original != null;
         public TP4? Tint => bc.Tint;
+
+        private CulledBulletCollection? culled;
+        public CulledBulletCollection Culled => original?.Culled ?? (culled ??= new CulledBulletCollection(this));
+
+        public void SetOriginal(SimpleBulletCollection orig) {
+            original = orig;
+        }
         public void SetPlayer() {
-            IsPlayer = true;
-            bc.SetPlayer();
+            //bc.SetPlayer should not be called twice
+            if (!IsPlayer) {
+                IsPlayer = true;
+                bc.SetPlayer();
+            }
         }
 
         public bool TryGetRecolor(out (TP4, TP4) recolor) => bc.recolor.Try(out recolor);
@@ -257,6 +292,7 @@ public partial class BulletManager {
             temp_last = 0;
         }
 
+        public BulletInCode CopyBC(string newPool) => bc.Copy(newPool);
         public SimpleBulletCollection CopySimplePool(List<SimpleBulletCollection> target, string newPool) => new SimpleBulletCollection(target, bc.Copy(newPool));
         public SimpleBulletCollection CopyPool(List<SimpleBulletCollection> target, string newPool) => GetCollectionForColliderType(target, bc.Copy(newPool));
 
@@ -289,6 +325,10 @@ public partial class BulletManager {
         }
         
         public new void Add(ref SimpleBullet sb) => throw new Exception("Do not use SBC.Add");
+
+        protected override void MakeCulledCopy(int ii) {
+            Culled.AddCulled(ref arr[ii]);
+        }
 
         public override float NextDT => nextDT;
         private float nextDT;
@@ -384,7 +424,7 @@ public partial class BulletManager {
         /// Note that all damage is recorded.
         /// Note that player bullets must be circular.
         /// </summary>
-        public void CheckCollision(IReadOnlyList<Enemy.FrozenCollisionInfo> fci) {
+        public virtual void CheckCollision(IReadOnlyList<Enemy.FrozenCollisionInfo> fci) {
             int fciL = fci.Count;
             for (int ii = 0; ii < count; ++ii) {
                 if (!rem[ii]) {
@@ -394,11 +434,11 @@ public partial class BulletManager {
                     } else {
                         for (int ff = 0; ff < fciL; ++ff) {
                             if (fci[ff].Active && 
-                                CollisionMath.CircleOnCircle(fci[ff].pos, fci[ff].radius, sbn.bpi.loc, bc.cc.effRadius)) {
+                                bc.cc.collider.CheckCollision(sbn.bpi.loc, sbn.direction, sbn.scale, fci[ff].pos, fci[ff].radius)) {
                                 if (bc.destructible || fci[ff].enemy.TryHitIndestructible(sbn.bpi.id, bc.againstEnemyCooldown)) {
-                                    if (sbn.bpi.ctx.playerFireCfg.Try(out var de)) {
-                                        fci[ff].enemy.QueuePlayerDamage(de.bossDmg, de.stageDmg, PlayerTarget.location);
-                                        fci[ff].enemy.ProcOnHit(de.eff, sbn.bpi.loc);
+                                    if (sbn.bpi.ctx.playerBullet.Try(out var de)) {
+                                        fci[ff].enemy.QueuePlayerDamage(de.data.bossDmg, de.data.stageDmg, de.firer);
+                                        fci[ff].enemy.ProcOnHit(de.data.effect, sbn.bpi.loc);
                                     }
                                     if (bc.destructible) {
                                         DeleteSB(ii);
@@ -420,7 +460,7 @@ public partial class BulletManager {
             temp_last = 0;
         }
 
-        
+        #region Renderers
         private void LegacyRender(Camera c, BulletManager bm, int layer) {
             if (TryGetRecolor(out var rc)) {
                 LegacyRenderRecolorizable(c, bm, layer, rc);
@@ -548,33 +588,103 @@ public partial class BulletManager {
             else Render(c, bm, layer);
         }
         
+        #endregion
         
 #if UNITY_EDITOR
         public override int NumControls => controls.Count;
         public override object ControlAt(int ii) => controls[ii];
 #endif
+    }
+
+    private class EmptySBC : SimpleBulletCollection {
+        public override CollectionType MetaType => CollectionType.Empty;
         
+        public EmptySBC(BulletInCode bc) : base(activeEmpty, bc) { }
+
+        public override CollisionCheckResults CheckCollision(in Hitbox hitbox) {
+            throw new Exception("Do not call CheckCollision on empty bullet pools");
+        }
+        public override void CheckCollision(IReadOnlyList<Enemy.FrozenCollisionInfo> fci) { 
+            throw new Exception("Do not call CheckCollision on empty bullet pools");
+        }
     }
 
     /// <summary>
-    /// This class is for bullets that have been soft-culled. It will not perform velocity or collision checks,
+    /// When a bullet is culled, it may "fade out" instead of disappearing. This class is for handling
+    /// those afterimages. It will not perform velocity or collision checks,
     /// and it ignores pool commands. It only updates bullet times and culls bullets after some time.
     /// </summary>
-    private class DummySBC : SimpleBulletCollection {
+    private class CulledBulletCollection : SimpleBulletCollection {
+        private readonly SimpleBulletCollection src;
+        private readonly SimpleBulletFader fade;
+        public CulledBulletCollection(SimpleBulletCollection source) : base(activeCulled, source.CopyBC($"$culled_{source.Style}")) {
+            src = source;
+            bc.UseExitFade();
+            fade = bc.FadeOut;
+            AddSimpleStyle(this);
+        }
+        
+        protected  override void MakeCulledCopy(int ii) {
+            throw new Exception($"Culled SBCs are not enabled for softculling");
+        }
+
+        public override void UpdateVelocityAndControls() {
+            for (int ii = 0; ii < temp_last; ++ii) {
+                if (!rem[ii]) {
+                    ref SimpleBullet sbn = ref arr[ii];
+                    //yes, it's supposed to be minus, we are going backwards to get fadeout effect
+                    sbn.bpi.t -= ETime.FRAME_TIME;
+                    if (sbn.bpi.t < 0) {
+                        DeleteSB(ii);
+                    }
+                }
+            }
+        }
+        
+        public override void Add(ref SimpleBullet sb, bool isNew) {
+            throw new Exception("Do not call Add for a CulledBulletCollection. Use AddCulled instead.");
+        }
+
+        public void AddCulled(ref SimpleBullet sb) {
+            Activate();
+            var sbn = new SimpleBullet(ref sb);
+            sbn.bpi.t = fade.MaxTime;
+            //scale/dir/etc remain the same.
+            base.Add(ref sbn, false);
+        }
+
+        public override CollisionCheckResults CheckCollision(in Hitbox hitbox) {
+            throw new Exception("Do not call CheckCollision on culled bullet pools");
+        }
+        public override void CheckCollision(IReadOnlyList<Enemy.FrozenCollisionInfo> fci) { 
+            throw new Exception("Do not call CheckCollision on culled bullet pools");
+        }
+        
+    }
+    /// <summary>
+    /// This class is for bullets that have been soft-culled. Specifically, it handles the extra animation
+    /// that is played on top of the bullet, such as cwheel. It will not perform velocity or collision checks,
+    /// and it ignores pool commands. It only updates bullet times and culls bullets after some time.
+    /// </summary>
+    private class DummySoftcullSBC : SimpleBulletCollection {
         private readonly float ttl;
         private readonly float timeR;
         private readonly float rotR;
-        public DummySBC(List<SimpleBulletCollection> target, BulletInCode bc, float ttl, float timeR, float rotR) : base(target, bc) {
+        public override CollectionType MetaType => CollectionType.Softcull;
+        public DummySoftcullSBC(List<SimpleBulletCollection> target, BulletInCode bc, float ttl, float timeR, float rotR) : base(target, bc) {
             this.ttl = ttl;
             this.timeR = timeR;
             this.rotR = rotR / 2f;
         }
-        public override CollectionType MetaType => CollectionType.Softcull;
+        
+        protected  override void MakeCulledCopy(int ii) {
+            throw new Exception("Softcull SBCs are not enabled for softculling");
+        }
 
         public override void Add(ref SimpleBullet sb, bool isNew) {
             sb.bpi.t += RNG.GetFloat(0, this.timeR);
             sb.direction = M.RotateVectorDeg(sb.direction, RNG.GetFloat(-rotR, rotR));
-            base.Add(ref sb, isNew);
+            base.Add(ref sb, false);
         }
 
         public override void UpdateVelocityAndControls() {
@@ -592,6 +702,9 @@ public partial class BulletManager {
         public override CollisionCheckResults CheckCollision(in Hitbox hitbox) {
             Compact();
             return new CollisionCheckResults(0, 0);
+        }
+        public override void CheckCollision(IReadOnlyList<Enemy.FrozenCollisionInfo> fci) { 
+            Compact();
         }
     }
     private class CircleSBC : SimpleBulletCollection {
@@ -643,13 +756,17 @@ public partial class BulletManager {
             playerRendered = true;
         }
         if ((c.cullingMask & epLayerMask) != 0) {
+            //empty bullets are not rendered
             for (int ii = 0; ii < activeNpc.Count; ++ii) {
                 sbc = activeNpc[ii];
                 if (sbc.Count > 0) sbc.SwitchRender(c, this, epRenderLayer);
             }
-            //customEmptyStyle bullets do not need to be rendered
             for (int ii = 0; ii < activeCNpc.Count; ++ii) {
                 sbc = activeCNpc[ii];
+                if (sbc.Count > 0) sbc.SwitchRender(c, this, epRenderLayer);
+            }
+            for (int ii = 0; ii < activeCulled.Count; ++ii) {
+                sbc = activeCulled[ii];
                 if (sbc.Count > 0) sbc.SwitchRender(c, this, epRenderLayer);
             }
             enemyRendered = true;
@@ -698,12 +815,12 @@ public partial class BulletManager {
         int total = 0;
         foreach (var pool in simpleBulletPools.Values) {
             total += pool.Count;
-            if (pool.Count > 0) Log.Unity($"{pool.Style}: {pool.Count}", level: Log.Level.INFO);
+            if (pool.Count > 0) Log.Unity($"{pool.Style}: {pool.Count} (-{pool.NullElements})", level: Log.Level.INFO);
             if (pool.NumControls > 0) Log.Unity($"{pool.Style} has {pool.NumControls} controls", level: Log.Level.INFO);
         }
         total += Bullet.NumBullets;
         Log.Unity($"Custom pools: {string.Join(", ", activeCNpc.Select(x => x.Style))}");
-        Log.Unity($"Custom empty pools: {string.Join(", ", activeCEmpty.Select(x => x.Style))}");
+        Log.Unity($"Empty pools: {string.Join(", ", activeEmpty.Select(x => x.Style))}");
         Log.Unity($"Fancy bullets: {Bullet.NumBullets}", level: Log.Level.INFO);
         Log.Unity($"Total: {total}", level: Log.Level.INFO);
     }

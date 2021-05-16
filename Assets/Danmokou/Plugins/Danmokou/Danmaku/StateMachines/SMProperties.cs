@@ -355,17 +355,26 @@ public readonly struct SoftcullProperties {
     public string DefaultPool => $"{autocullTarget}-{autocullDefault}";
     public readonly bool sendToC;
 
-    public SoftcullProperties(Vector2 center, float advance, float minDist, float maxDist, string? target=null, string? dflt=null) {
+    public SoftcullProperties(Vector2 center, float advance, float minDist, float maxDist, string target, string? dflt=null) {
         this.center = center;
         this.advance = advance;
         this.minDist = minDist;
         this.maxDist = maxDist;
-        this.autocullTarget = target ?? "cwheelio";
-        this.autocullDefault = dflt ?? "red/";
+        this.autocullTarget = target;
+        this.autocullDefault = dflt ?? "black/b";
         this.sendToC = true;
     }
 
-    public SoftcullProperties(string? target, string? dflt) : this(Vector2.zero, 0, 0, 0, target, dflt) {
+    public static SoftcullProperties OverTimeDefault(Vector2 center, float advance, float minDist, float maxDist,
+        string? target = null, string? dflt = null) =>
+        new SoftcullProperties(center, advance, minDist, maxDist, target ?? "cwheel", dflt);
+    
+    public static SoftcullProperties SynchronousDefault(Vector2 center, float advance, float minDist, float maxDist,
+        string? target = null, string? dflt = null) =>
+        new SoftcullProperties(center, advance, minDist, maxDist, target ?? "cwheelio", dflt);
+
+    //TODO review other usages
+    public SoftcullProperties(string? target, string? dflt) : this(Vector2.zero, 0, 0, 0, target ?? "cwheel", dflt) {
         sendToC = false;
     }
 
@@ -398,7 +407,9 @@ public class PhaseProperties {
     private readonly string? autocullDefault;
 
     public SoftcullProperties SoftcullProps(BehaviorEntity exec) =>
-        new SoftcullProperties(exec.GlobalPosition(), 0.4f, 0.5f, 4f, autocullTarget, autocullDefault);
+        SoftcullProperties.SynchronousDefault(exec.GlobalPosition(), 0.4f, 0.5f, 4f, autocullTarget, autocullDefault);
+    public SoftcullProperties SoftcullPropsOverTime(BehaviorEntity exec, float advance) =>
+        SoftcullProperties.OverTimeDefault(exec.GlobalPosition(), advance, 0.5f, 8f, autocullTarget, autocullDefault);
     
     public readonly int? livesOverride = null;
     public readonly StateMachine? rootMove = null;

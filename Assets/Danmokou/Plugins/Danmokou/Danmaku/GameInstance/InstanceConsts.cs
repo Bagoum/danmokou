@@ -39,35 +39,6 @@ public static class InstanceConsts {
             return 0.7;
     }
 
-    #region Difficulty
-    
-    /// <summary>
-    /// Inclusive
-    /// </summary>
-    public const int minRankLevel = 0;
-    /// <summary>
-    /// Inclusive
-    /// </summary>
-    public const int maxRankLevel = 42;
-
-    //Note: since you get half of this by default, you only need the other half to go up or down a level.
-    public static double RankPointsRequiredForLevel(int level) =>
-        2000;
-    ///M.BlockRound(100, 1000 * (1 + Math.Log(Math.Max(1, level), 4)));
-    
-    public static double DefaultRankPointsForLevel(int level) => RankPointsRequiredForLevel(level) * 0.5;
-    
-    public const double RankPointsGraze = 8;
-    public const double RankPointsCollectItem = 3;
-    public const double RankPointsMissedItem = -5;
-    public const double RankPointsScoreExtend = 420;
-    public const double RankPointsDeath = -10000;
-    public const double RankPointsBomb = -1000;
-
-    public static double RankPointsForCard(CardRecord cr) => 100 * cr.stars;
-    
-    #endregion
-    
     #region Power
     
     public const double powerMax = 4;
@@ -97,7 +68,7 @@ public static class InstanceConsts {
     
     public const long smallValueItemPoints = 314;
     public const long valueItemPoints = 3142;
-    public const decimal smallValueRatio = 0.1m;
+    public const double smallValueRatio = 0.1;
     
     public const double pivPerPPP = 0.01;
     public const double pivFallStep = 0.1;
@@ -110,7 +81,7 @@ public static class InstanceConsts {
     public const double faithBoostValue = 0.02;
     public const double faithBoostPointPP = 0.09;
     public const double faithLeniencePhase = 4;
-    
+
     #endregion
 
 

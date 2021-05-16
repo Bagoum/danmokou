@@ -101,9 +101,10 @@ public class XMLMainMenuCampaign : XMLMainMenu {
             Player.PlayerController? demoPlayer = null;
             Cancellable? demoCT = null;
             OptionNodeLR<ShipConfig> playerSelect = null!;
+            DynamicOptionNodeLR<ISupportAbilityConfig> supportSelect = null!;
             DynamicOptionNodeLR<ShotConfig> shotSelect = null!;
             OptionNodeLR<Subshot> subshotSelect = null!;
-            var team = new TeamConfig(0, Subshot.TYPE_D,
+            var team = new TeamConfig(0, Subshot.TYPE_D, null,
                 c.campaign.players
                     .SelectMany(p => p.shots2
                         .Select(s => (p, s.shot)))
@@ -154,7 +155,7 @@ public class XMLMainMenuCampaign : XMLMainMenu {
             void HidePlayers() {
                 foreach (var f in displays) f.display.Show(false);
             }
-            void ShowShot(ShipConfig p, ShotConfig s, Subshot sub, bool first) {
+            void ShowShot(ShipConfig p, ShotConfig s, Subshot sub, ISupportAbilityConfig support, bool first) {
                 if (!first) UpdateDemo();
                 var index = displays.IndexOf(sd => sd.player == p);
                 displays[index].display.SetShot(p, s, sub);
@@ -167,13 +168,16 @@ public class XMLMainMenuCampaign : XMLMainMenu {
 
             HidePlayers();
             void _ShowShot(bool first = false) {
-                ShowShot(playerSelect.Value, shotSelect.Value, subshotSelect.Value, first);
+                ShowShot(playerSelect.Value, shotSelect.Value, subshotSelect.Value, supportSelect.Value, first);
             }
             
             playerSelect = new OptionNodeLR<ShipConfig>(LocalizedString.Empty, _ => _ShowShot(),
                 c.campaign.players.Select(p => (p.ShortTitle, p)).ToArray(), c.campaign.players[0]);
 
-            //Place a fixed node in the second column for shot description
+            supportSelect = new DynamicOptionNodeLR<ISupportAbilityConfig>(LocalizedString.Empty, _ => _ShowShot(),
+                () => playerSelect.Value.supports.Select(s => 
+                    (shotsel_type(s.ordinal), (ISupportAbilityConfig)s.ability)).ToArray(), 
+                playerSelect.Value.supports[0].ability);
             shotSelect = new DynamicOptionNodeLR<ShotConfig>(LocalizedString.Empty, _ => _ShowShot(), () =>
                     playerSelect.Value.shots2.Select(s => (s.shot.isMultiShot ? 
                             shotsel_multi(s.ordinal) : 
@@ -190,7 +194,10 @@ public class XMLMainMenuCampaign : XMLMainMenu {
                     subshotSelect.With(optionNoKeyClass)
                         .VisibleIf(() => shotSelect.Value.isMultiShot),
                     new PassthroughNode(LocalizedString.Empty),
-                    new FuncNode(() => shotCont(new TeamConfig(0, subshotSelect.Value,
+                    new PassthroughNode(shotsel_support).With(centerTextClass),
+                    supportSelect.With(optionNoKeyClass),
+                    new PassthroughNode(LocalizedString.Empty),
+                    new FuncNode(() => shotCont(new TeamConfig(0, subshotSelect.Value, supportSelect.Value,
                         (playerSelect.Value, shotSelect.Value))), play_game, false).With(centerTextClass)
                     //new UINode(() => shotSelect.Value.title).SetAlwaysVisible().FixDepth(1),
                     //new UINode(() => shotSelect.Value.description)

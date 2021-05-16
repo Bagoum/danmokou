@@ -11,10 +11,6 @@ using Random = System.Random;
 
 namespace Danmokou.DataHoist {
 public static class PublicDataHoisting {
-    public static void ClearValues() {
-        ClearValues(v2Data);
-        ClearValues(fData);
-    }
 
     public static void DestroyAll() {
         v2Data.Clear();

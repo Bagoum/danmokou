@@ -178,7 +178,6 @@ public static class Events {
     
     
     public static readonly IEvent<EngineState> GameStateHasChanged = new Event<EngineState>();
-    public static readonly IEvent<(long score, bool bonus)> ScoreItemHasReceived = new Event<(long, bool)>();
     public static readonly Event0 ClearPhase = new Event0();
 #if UNITY_EDITOR || ALLOW_RELOAD
     public static readonly Event0 LocalReset = new Event0();

@@ -3,6 +3,6 @@ using Danmokou.Scriptables;
 using UnityEngine;
 
 namespace Danmokou.Scriptables {
-[CreateAssetMenu(menuName = "Basic/SimpleBullet FadeIn Config")]
-public class SOSBEntry : SO<SimpleBulletEntry> { }
+[CreateAssetMenu(menuName = "Basic/SimpleBullet Fade Config")]
+public class SOSBEntryFader : SO<SimpleBulletFader> { }
 }

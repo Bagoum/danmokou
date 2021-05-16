@@ -1,5 +1,6 @@
 ﻿
 using Danmokou.Core;
+using Danmokou.Player;
 
 namespace Danmokou.Behavior.Items {
 public class SmallValueItem : ValueItem {
@@ -7,6 +8,7 @@ public class SmallValueItem : ValueItem {
     protected override short RenderOffsetIndex => 3;
     protected override float RotationTurns => -2;
     
-    protected override void AddMe(double bonus) => GameManagement.Instance.AddSmallValueItems(1, bonus);
+    protected override void AddMe(PlayerController collector, double bonus) => 
+        collector.AddSmallValueItems(1, bonus);
 }
 }

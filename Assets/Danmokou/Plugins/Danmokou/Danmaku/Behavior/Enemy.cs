@@ -7,6 +7,7 @@ using Danmokou.DMath;
 using Danmokou.DMath.Functions;
 using Danmokou.Expressions;
 using Danmokou.Graphics;
+using Danmokou.Player;
 using Danmokou.Reflection;
 using JetBrains.Annotations;
 using TMPro;
@@ -17,6 +18,10 @@ using Danmokou.Services;
 
 namespace Danmokou.Behavior {
 public class Enemy : RegularUpdater {
+    private const float cardCircleTrailMultiplier = 5f;
+    private const float cardCircleTrailCatchup = 0.03f;
+    private const float spellCircleTrailMultiplier = 30f;
+    private const float spellCircleTrailCatchup = 0.02f;
     public readonly struct FrozenCollisionInfo {
         public readonly Vector2 pos;
         public readonly float radius;
@@ -100,7 +105,7 @@ public class Enemy : RegularUpdater {
     }
     
     public ItemDrops AutoDeathItems => new ItemDrops(
-        Math.Max(1, maxHP / 300m), 
+        Math.Max(1, maxHP / 300.0), 
         maxHP >= 400 ? Mathf.CeilToInt(maxHP / 900f) : 0, 
         maxHP >= 300 ? Mathf.CeilToInt(maxHP / 800f) : 0,
         maxHP >= 400 ? Mathf.CeilToInt(maxHP / 700f) : 0,
@@ -241,6 +246,7 @@ public class Enemy : RegularUpdater {
             unfilledColor :
             Color.Lerp(currPhase.color2, currPhase.color1, Mathf.Pow(_displayBarRatio, 1.5f));
     public Color UIHPColor => currPhaseType == PhaseType.TIMEOUT ? Color.clear : HPColor;
+
     public override void RegularUpdate() {
         PollDamage();
         PollPhotoDamage();
@@ -266,6 +272,7 @@ public class Enemy : RegularUpdater {
             cardtr.localEulerAngles = rt;
             var scale = cardBreather(Beh.rBPI.t);
             cardtr.localScale = new Vector3(scale, scale, scale);
+            cardtr.localPosition = Vector2.Lerp(cardtr.localPosition, -Beh.LastDelta * cardCircleTrailMultiplier, cardCircleTrailCatchup);
         }
         if (spellCircle != null) {
             var rt = spellTr!.localEulerAngles;
@@ -283,6 +290,7 @@ public class Enemy : RegularUpdater {
                 spellCircle.gameObject.SetActive(false);
             }
             spellTr.localScale = new Vector3(lastSpellCircleRad, lastSpellCircleRad, lastSpellCircleRad);
+            spellTr.localPosition = Vector2.Lerp(spellTr.localPosition, -Beh.LastDelta * spellCircleTrailMultiplier, spellCircleTrailCatchup);
             //scPB.SetFloat(PropConsts.radius, lastSpellCircleRad);
             spellCircle.SetPropertyBlock(scPB);
             //if (spellCircleText != null) spellCircleText.SetRadius(lastSpellCircleRad + SpellCircleTextRadOffset);
@@ -317,23 +325,21 @@ public class Enemy : RegularUpdater {
     private int queuedPhotoDamage = 0;
 
     //The reason we queue damage is to avoid calling eg. SM clear effects while in the middle of other entities' update loops.
-    public void QueuePlayerDamage(int bossDmg, int stageDmg, Vector2 firerLoc) => 
-        QueuePlayerDamage(takesBossDamage ? bossDmg : stageDmg, firerLoc);
+    public void QueuePlayerDamage(int bossDmg, int stageDmg, PlayerController firer) => 
+        QueuePlayerDamage(takesBossDamage ? bossDmg : stageDmg, firer);
 
-    private void QueuePlayerDamage(int dmg, Vector2? firerLoc) {
+    private void QueuePlayerDamage(int dmg, PlayerController firer) {
         if (divertHP != null) {
-            divertHP.Value.to.QueuePlayerDamage(dmg, firerLoc);
+            divertHP.Value.to.QueuePlayerDamage(dmg, firer);
             return;
         }
         if (!Vulnerable.TakesDamage()) return;
-        if (firerLoc.Try(out var floc)) {
-            float dstToFirer = (floc - Beh.rBPI.loc).magnitude;
-            float shotgun = (SHOTGUN_MIN - dstToFirer) / (SHOTGUN_MIN - SHOTGUN_MAX);
-            double multiplier = GameManagement.Instance.PlayerDamageMultiplier *
-                                M.Lerp(0, 1, shotgun, 1, SHOTGUN_MULTIPLIER);
-            queuedDamage += dmg * multiplier * GameManagement.Difficulty.playerDamageMod;
-            Counter.DoShotgun(shotgun);
-        } else queuedDamage += dmg;
+        float dstToFirer = (firer.Loc - Beh.rBPI.loc).magnitude;
+        float shotgun = (SHOTGUN_MIN - dstToFirer) / (SHOTGUN_MIN - SHOTGUN_MAX);
+        double multiplier = GameManagement.Instance.PlayerDamageMultiplier *
+                            M.Lerp(0, 1, shotgun, 1, SHOTGUN_MULTIPLIER);
+        queuedDamage += dmg * multiplier * GameManagement.Difficulty.playerDamageMod;
+        Counter.DoShotgun(shotgun);
     }
     private void PollDamage() {
         if (!Vulnerable.TakesDamage()) queuedDamage = 0;

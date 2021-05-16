@@ -10,7 +10,7 @@ public class Lerpifier<T> {
     private T lastSourceValue;
     private T lastTargetValue;
     public T NextValue { get; private set; }
-    private float timeSinceUpdate;
+    private float elapsed;
     
     private readonly Evented<T> ev;
     public Events.IEvent<T> OnChange => ev.OnChange;
@@ -20,34 +20,29 @@ public class Lerpifier<T> {
         this.targetValue = targetValue;
         this.lerpTime = lerpTime;
         this.lastSourceValue = lastTargetValue = NextValue = targetValue();
-        this.timeSinceUpdate = this.lerpTime;
+        this.elapsed = this.lerpTime;
         ev = new Evented<T>(NextValue, inheritListeners?.ev);
     }
 
     public void HardReset() {
         this.lastSourceValue = lastTargetValue = NextValue = targetValue();
-        this.timeSinceUpdate = this.lerpTime;
+        this.elapsed = this.lerpTime;
     }
 
-    /// <summary>
-    /// Returns true if the value changed.
-    /// </summary>
-    public bool Update(float dt) {
+    public void Update(float dt) {
         var nextTarget = targetValue();
         if (!nextTarget!.Equals(lastTargetValue)) {
             lastSourceValue = NextValue;
             lastTargetValue = nextTarget;
-            timeSinceUpdate = 0;
+            elapsed = 0;
         }
-        timeSinceUpdate += dt;
+        elapsed += dt;
         var prev = NextValue;
-        NextValue = timeSinceUpdate >= lerpTime ? 
+        NextValue = elapsed >= lerpTime ? 
             lastTargetValue : 
-            lerper(lastSourceValue, lastTargetValue, timeSinceUpdate / lerpTime);
-        bool changed = !prev!.Equals(NextValue);
-        if (changed)
+            lerper(lastSourceValue, lastTargetValue, elapsed / lerpTime);
+        if (!prev!.Equals(NextValue))
             ev.Value = NextValue;
-        return changed;
     }
 }
 }

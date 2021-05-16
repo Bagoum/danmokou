@@ -135,8 +135,8 @@ public class UIManager : RegularUpdater, IUIManager, IUnpauseAnimateProvider {
         Listen(Events.GameStateHasChanged, HandleGameStateChange);
         Listen(InstanceData.ItemExtendAcquired, LifeExtendItems);
         Listen(InstanceData.ScoreExtendAcquired, LifeExtendScore);
-        Listen(Player.PlayerController.MeterIsActive, SetMeterActivated);
-        Listen(Player.PlayerController.PlayerDeactivatedMeter, UnSetMeterActivated);
+        Listen(PlayerController.MeterIsActive, SetMeterActivated);
+        Listen(PlayerController.PlayerDeactivatedMeter, UnSetMeterActivated);
         ListenInv(Instance.Graze.OnChange, g => graze.text = string.Format(grazeFormat, g));
         ListenInv(Instance.VisibleScore.OnChange, s => score.text = string.Format(scoreFormat, s));
         ListenInv(Instance.MaxScore.OnChange, s => maxScore.text = string.Format(scoreFormat, s));
@@ -151,14 +151,18 @@ public class UIManager : RegularUpdater, IUIManager, IUnpauseAnimateProvider {
             }
         });
         ListenInv(Instance.Bombs.OnChange, b => {
-            for (int ii = 0; ii < bombPoints.Length; ++ii) bombPoints[ii].sprite = healthEmpty;
+            var color = (Instance.TeamCfg?.Support.UsesBomb ?? true) ? Color.white : new Color(0.5f, 0.5f, 0.5f, 0.9f);
+            for (int ii = 0; ii < bombPoints.Length; ++ii) {
+                bombPoints[ii].sprite = healthEmpty;
+                bombPoints[ii].color = color;
+            }
             for (int bi = 0; bi < bombItrs.Length; ++bi) {
                 for (int ii = 0; ii + bi * bombPoints.Length < Instance.Bombs && ii < bombPoints.Length; ++ii) {
                     bombPoints[ii].sprite = bombItrs[bi];
                 }
             }
         });
-        ListenInv(InstanceData.RankLevelChanged, _ => rankLevel.text = $"Rank {Instance.RankLevel}");
+        ListenInv(RankManager.RankLevelChanged, () => rankLevel.text = $"Rank {Instance.RankLevel}");
         ListenInv(InstanceData.TeamUpdated, () => multishotIndicator.text = Instance.MultishotString);
         if (scoreExtend_parent != null) {
             ListenInv(InstanceData.ScoreExtendAcquired, () => {
@@ -218,6 +222,7 @@ public class UIManager : RegularUpdater, IUIManager, IUnpauseAnimateProvider {
         pivDecayPB.SetFloat(PropConsts.innerFillRatio, Mathf.Clamp01(Instance.VisibleFaithLenience.NextValue));
         PIVDecayBar.SetPropertyBlock(pivDecayPB);
         meterPB.SetFloat(PropConsts.fillRatio, (float) Instance.Meter);
+        MeterBar.color = (Instance.TeamCfg?.Support.UsesMeter ?? true) ? Color.white : new Color(0.5f, 0.5f, 0.5f, 0.7f);
         MeterBar.SetPropertyBlock(meterPB);
         //bossHPPB.SetFloat(PropConsts.time, time);
         if (bossHP != null) {

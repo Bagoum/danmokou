@@ -49,7 +49,7 @@ MonoBehaviour:
   deletable: 0
   grazeEveryFrames: 60
   screenCullRadius: 3
-  renderPriority: 0
+  renderPriority: 50
   renderMode: 0
   fadeIn: {fileID: 11400000, guid: 7e5c86201bfc27b48819af449f469ae9, type: 2}
   rotational: 1
@@ -100,8 +100,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   colliderType: 0
-  effectiveCircleRadius: 0.14
-  scale: 1
   radius: 0.14
   point1: {x: 0, y: 0}
   point2: {x: 0, y: 0}
