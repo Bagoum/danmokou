@@ -4,10 +4,16 @@ pattern({
 })
 phase(0)
 	paction(0)
-		shift-phase-to(3)
+		shift-phase-to(2)
+	
+<!> type(non, `DRAiko test`)
+<!> hp(21000)
+phase(0)
+	paction 0
+		position 0 2
 	
 <!> type(spell, `Danmokou Chimera`)
-<!> hp(1000)
+<!> hp(21000)
 phase(0)
 	paction 0
 		position 0 2
@@ -52,7 +58,7 @@ phase(0)
 
 
 <!> type(non, `Danmokou Chimera`)
-<!> hp(1000)
+<!> hp(2000)
 <!> photo 5
 phase(34)
 	paction 0

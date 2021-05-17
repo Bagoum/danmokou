@@ -3,7 +3,7 @@ pattern {
 }
 phase 0
 	paction 0
-		shift-phase-to 4
+		shift-phase-to 3
 		
 !!{ colors { black blue purple pink red orange yellow green teal black  }
 !!{ csuff { /w /b /  }
@@ -58,11 +58,12 @@ phase 0 #{
 phase 0 #{
 	paction 0
 		position 3 3
+		pool-control glcircle* tint rgba(1.3, 1.3, 1.3, 1)
 		sync gcircle-* <-4.3;-4.6:> gsr2 3 <0.3;:> color { */  */w */b }  gsr2 9 <;-0.3:> color $colors s null
 		sync sakura-* <-6;-4.4:> gsr2 3 <0.5;:> color { */  */w */b }  gsr2 9 <;-0.3:> color $colors s null
 		async fireball-* <-6.1;0.5:> gir2 15 3 <0.6;:> color { */ */w */b }  gcr2 10 9 <;-0.5:> color $colors s null
 		##sync fireball-ppr <-7.3;-5:> s tprot zero
-		async gdcircle-* <-4.4;0.7:> gir2 15 3 <0.6;:> color { */  */w */b }  gcr2 10 9 <;-0.6:> color $colors s tprot zero
+		async gglcircle-* <-4.4;0.7:> gir2 15 3 <0.6;:> color { */  */w */b }  gcr2 10 9 <;-0.6:> color $colors s tprot zero
 		sync scircle-* <-2.3;0.4:> gsr2 2 <1.4;:> color { */w */b }  gsr2 9 <;-0.85:> {
 			bank <>
 			color $colors

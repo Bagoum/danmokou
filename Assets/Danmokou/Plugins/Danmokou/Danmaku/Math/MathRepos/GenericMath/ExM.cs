@@ -48,6 +48,11 @@ public static partial class ExM {
     /// <returns></returns>
     [Alias(Parser.SM_REF_KEY)]
     public static Func<TExArgCtx, TEx<T>> Reference<T>(string alias) => ReflectEx.ReferenceLet<T>(alias);
+    
+    [Alias("s" + Parser.SM_REF_KEY)]
+    public static Func<TExArgCtx, TEx<T>> ReferenceSafe<T>(string alias, Func<TExArgCtx, TEx<T>> deflt) => b => 
+        ReflectEx.ReferenceExpr<T>(alias, b, deflt(b));
+    
     [Alias("@")]
     public static Func<TExArgCtx, TEx<T>> RetrieveHoisted<T>(ReflectEx.Hoist<T> hoist, Func<TExArgCtx, TEx<float>> indexer) => 
         tac => hoist.Retrieve(indexer(tac), tac);

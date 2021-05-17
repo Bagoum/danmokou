@@ -5,6 +5,7 @@ using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.DMath;
 using Danmokou.Expressions;
+using Danmokou.Player;
 using Danmokou.Reflection;
 using JetBrains.Annotations;
 using UnityEngine;
@@ -51,6 +52,10 @@ public class GenCtx : IDisposable {
     /// Firing BEH (copied from DelegatedCreator)
     /// </summary>
     public BehaviorEntity exec = null!;
+    /// <summary>
+    /// Used in deeply nested player fires for keeping track of the parent.
+    /// </summary>
+    public PlayerController? playerController;
     public V2RV2 RV2 {
         get => rv2s["rv2"];
         set => rv2s["rv2"] = value;
@@ -97,6 +102,7 @@ public class GenCtx : IDisposable {
         i = 0;
         pi = 0;
         exec = null!;
+        playerController = null;
         idOverride = null;
         cache.Push(this);
     }
@@ -112,6 +118,7 @@ public class GenCtx : IDisposable {
         cp.i = cp.pi = this.i;
         cp.index = this.index;
         cp.idOverride = this.idOverride;
+        cp.playerController = playerController;
         return cp;
     }
 

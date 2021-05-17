@@ -11,6 +11,8 @@ namespace Danmokou.Scriptables {
 [CreateAssetMenu(menuName = "Data/Player/Support/WitchTime")]
 public class SupportWitchTimeConfig : SupportAbilityConfig {
     public override string Key => "WitchTime";
-    public override SupportAbility Value => new WitchTime();
+    public override SupportAbility Value => new WitchTime() {
+        title = title.Value
+    };
 }
 }

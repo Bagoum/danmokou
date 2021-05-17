@@ -103,6 +103,14 @@ if (> t &fadein,
 
     #endregion
     
+    /// <summary>
+    /// Autodeletes enemy bullets. Note that some types of bullets (lasers, pathers, large bullets) may be unaffected.
+    /// </summary>
+    public static TaskPattern ScreenClear() => smh => {
+        BulletManager.SoftScreenClear();
+        return Task.CompletedTask;
+    };
+    
     public static TaskPattern dBossExplode(TP4 powerupColor, TP4 powerdownColor) {
         var paOpts = new PowerAuraOptions(new[] {
             PowerAuraOption.Color(powerupColor),
@@ -154,7 +162,7 @@ if (> t &fadein,
     /// </summary>
     public static TaskPattern SeijaX(float degrees, float time) {
         return smh => {
-            SeijaCamera.RequestXRotation.Publish((degrees, time));
+            DependencyInjection.Find<IShaderCamera>().AddXRotation(degrees, time);
             return Task.CompletedTask;
         };
     }
@@ -164,7 +172,7 @@ if (> t &fadein,
     /// </summary>
     public static TaskPattern SeijaY(float degrees, float time) {
         return smh => {
-            SeijaCamera.RequestYRotation.Publish((degrees, time));
+            DependencyInjection.Find<IShaderCamera>().AddYRotation(degrees, time);
             return Task.CompletedTask;
         };
     }
@@ -369,7 +377,7 @@ if (> t &fadein,
         else if (control is LPCF lc) 
             CurvedTileRenderLaser.ControlPool(style, lc);
         else if (control is SPCF pc) 
-            BulletManager.ControlPool(style, pc);
+            BulletManager.ControlPool(style, pc, smh.cT);
         else throw new Exception("Couldn't realize pool-control type");
         return Task.CompletedTask;
     };
@@ -530,6 +538,11 @@ if (> t &fadein,
     
     public static TaskPattern FadeSprite(BPY fader, GCXF<float> time) => smh => {
         smh.Exec.Displayer.FadeSpriteOpacity(fader, time(smh.GCX), smh.cT, WaitingUtils.GetAwaiter(out Task t));
+        return t;
+    };
+
+    public static TaskPattern Scale(BPY scaler, GCXF<float> time) => smh => {
+        smh.Exec.Displayer.Scale(scaler, time(smh.GCX), smh.cT, WaitingUtils.GetAwaiter(out Task t));
         return t;
     };
     

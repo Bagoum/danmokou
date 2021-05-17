@@ -250,7 +250,7 @@ public static partial class Parametrics {
     /// Short for `* smooth / t TIME ss0 - LOCATION loc`. Use with NROFFSET.
     /// </summary>
     public static ExTP EaseToTarget([LookupMethod] Func<tfloat, tfloat> ease, ExBPY time, ExTP location) => bpi =>
-        ExM.Mul(ease(Div(bpi.t, time(bpi))), ExMSamplers.SS0(x => Sub(location(x), x.loc))(bpi));
+        ExM.Mul(ease(Clamp01(Div(bpi.t, time(bpi)))), ExMSamplers.SS0(x => Sub(location(x), x.loc))(bpi));
         
     
     #endregion

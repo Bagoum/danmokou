@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c1742de1a5bb4d7d95b5c84d983f5bcd, type: 3}
   m_Name: Support Witch Time
   m_EditorClassIdentifier: 
+  cutin: {fileID: 0}
   title:
     useReference: 0
     reference: 

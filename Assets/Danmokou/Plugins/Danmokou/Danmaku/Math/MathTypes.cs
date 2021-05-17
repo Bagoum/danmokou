@@ -82,6 +82,8 @@ public class FiringCtx {
             Bullet b => b.Player?.firer,
             _ => null
         };
+        if (nCtx.playerController == null)
+            nCtx.playerController = gcx?.playerController;
         return nCtx;
     }
     
@@ -110,6 +112,7 @@ public class FiringCtx {
 
     public GenCtx RevertToGCX(BehaviorEntity exec) {
         var gcx = GenCtx.New(exec, V2RV2.Zero);
+        gcx.playerController = playerController;
         foreach (var sk in keyNames) {
             if (boundFloats.ContainsKey(sk.Value))
                 gcx.fs[sk.Key] = boundFloats[sk.Value];
@@ -189,8 +192,10 @@ public class FiringCtx {
     
     public static TEx GetValue(TExArgCtx tac, DataType typ, string name) =>
         Hoisted(tac, typ, name, key => GetDict(tac.BPI.FiringCtx, typ).DictGet(key));
-    public static Expression GetValue<T>(TExArgCtx tac, string name) =>
-        Hoisted(tac, FromType<T>(), name, key => GetDict(tac.BPI.FiringCtx, FromType<T>()).DictGet(key));
+    public static Expression GetValue<T>(TExArgCtx tac, string name, TEx<T>? deflt = null) =>
+        Hoisted(tac, FromType<T>(), name, key => deflt != null ?
+            GetDict(tac.BPI.FiringCtx, FromType<T>()).DictSafeGet(key, deflt) :
+            GetDict(tac.BPI.FiringCtx, FromType<T>()).DictGet(key));
 
     public static Expression SetValue(TExArgCtx tac, DataType typ, string name, Expression val) =>
         Hoisted(tac, typ, name, key => GetDict(tac.BPI.FiringCtx, typ).DictSet(key, val));
@@ -380,6 +385,6 @@ public delegate void SBCF(BulletManager.AbsSimpleBulletCollection sbc, int ii, P
 /// <summary>
 /// A pool control function performing some operation on a simple bullet pool.
 /// </summary>
-public delegate void SPCF(string pool);
+public delegate void SPCF(string pool, ICancellee cT);
 
 }

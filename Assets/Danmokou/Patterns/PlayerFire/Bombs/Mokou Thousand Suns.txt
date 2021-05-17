@@ -1,0 +1,63 @@
+!!{ id mokou_bomb_thousand_suns_inner_id
+gtr {
+	start $id =f 1
+	expose f $id
+} {
+!!{ h 12
+!!{ w 10
+!!{ d 0.8
+	assertsimple stelldecagon-purple/w
+	assertsimple sun-pink/b
+	assertsimple sun-red/w
+	bullet-control persist { { p-sun-red/w p-sun-pink/b p-stelldecagon-purple/w } } cull (& & (> t 0.1) (<= scale 0) (= s&($id, 0) 1))
+	_ 120f draiko 1.5 1.6
+	_ 300f draiko 1.5 1.6
+	_ 500f draiko 2.2 2.9
+	async stelldecagon-purple/w <> gir2 12 12 <> {
+		p this
+	} gir2 0 $w <> {
+		p add
+	} {
+		gcr {
+			root zero
+			color sun-red/w
+			delay 120
+			sfx x-metal
+		} simple nroffset pxy($d * (p2 + 0.5 - $w / 2), -4 + $d * p1) {
+			player 600 400 oh1-red
+			scale(lerpt(1, 1.7, lerpt(0, 0.2, 0, 0.6), 0))
+		}
+		gsr {
+			sfx x-fire-small-1
+		} simple nroffset easetotarget eoutsine 1.1 pxy($d * (p2 + 0.5 - $w / 2), -4 + $d * p1)  {
+			player 0 0 null
+			dir starrotb3
+			scale(lerp(5, 5.4, t + &st, 1, 0))
+		}
+	}
+	async sun-pink/b <> gcr2 12 $w <> {
+			root zero
+		delay 300
+		sfx x-metal
+		p this
+	} gsr2 12 <> {
+		p add
+	} gsr2 2 <> {
+		bindLR
+	} simple nroffset pxy(&lr * $d * (p1 + 0.5 - $w / 2), -4 + $d * p2) {
+			player 300 200 oh1-red
+			scale(lerpt(0.7, 1.2, lerpt(0, 0.2, 0, 0.5), 0))
+		}
+	async sun-red/w <> gcr2 0 $w <> {
+		root zero
+		delay 500
+		sfx x-boom-2
+		p this
+	} gsr2 12 <> {
+		p add
+	} simple nroffset pxy($d * (p1 + 0.5 - $w / 2), -4 + $d * p2) {
+			player 700 600 oh1-red
+			scale(lerpt3(0, 0.6, 1.2, 2, 0, 1.1, 0))
+		}
+	wait(time(500f + 1.4))
+}

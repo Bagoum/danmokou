@@ -78,7 +78,7 @@ public static class ReflectEx {
     }
 
     //T is on the level of typeof(float)
-    public static Ex ReferenceExpr<T>(string alias, TExArgCtx tac) {
+    public static Ex ReferenceExpr<T>(string alias, TExArgCtx tac, TEx<T>? deflt = null) {
         if (alias[0] == Parser.SM_REF_KEY_C) alias = alias.Substring(1); //Important for reflector handling of &x
         bool isExplicit = alias.StartsWith(".");
         if (isExplicit)
@@ -98,9 +98,9 @@ public static class ReflectEx {
         //The reason for using the special marker is that we cannot give good errors if an incorrect value is entered
         //(good error handling would make lookup slower, and this is hotpath),
         //so we need to make opting into this completely explicit. 
-        if (isExplicit && tac.MaybeBPI.Try(out var bpi)) {
+        if ((isExplicit || deflt != null) && tac.MaybeBPI.Try(out var bpi)) {
             try {
-                return FiringCtx.GetValue<T>(tac, alias);
+                return FiringCtx.GetValue<T>(tac, alias, deflt);
             } catch (Exception) {
                 //pass
             }

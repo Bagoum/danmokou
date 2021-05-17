@@ -175,10 +175,12 @@ public readonly struct CampaignSnapshot {
     public readonly int hitsTaken;
     public readonly int meterFrames;
     public readonly int frame;
+    public readonly int bombsUsed;
     public CampaignSnapshot(InstanceData data) {
         hitsTaken = data.HitsTaken;
         meterFrames = data.MeterFrames;
         frame = ETime.FrameNumber;
+        bombsUsed = data.BombsUsed;
     }
 }
 
@@ -189,6 +191,7 @@ public readonly struct PhaseCompletion {
     public readonly int hits;
     public bool NoHits => hits == 0;
     public readonly bool noMeter;
+    public readonly bool noBombs;
     private readonly int elapsedFrames;
     public float ElapsedTime => elapsedFrames / ETime.ENGINEFPS_F;
     //The props timeout may be overriden
@@ -235,9 +238,9 @@ public readonly struct PhaseCompletion {
     /// <summary>
     /// True if the card was captured. False if it was not captured.
     /// Null if there was no card at all (eg. minor enemies or cancellation).
-    /// <br/>A capture requires clearing the card and taking no hits.
+    /// <br/>A capture requires clearing the card, taking no hits, and not bombing. 
     /// </summary>
-    public bool? Captured => Cleared.And(NoHits);
+    public bool? Captured => Cleared.And(NoHits).And(noBombs);
 
     /// <summary>
     /// True if the card was cleared. False if it was not cleared.
@@ -278,6 +281,7 @@ public readonly struct PhaseCompletion {
         this.timeout = timeout;
         this.hits = GameManagement.Instance.HitsTaken - snap.hitsTaken;
         this.noMeter = GameManagement.Instance.MeterFrames == snap.meterFrames;
+        this.noBombs = GameManagement.Instance.BombsUsed == snap.bombsUsed;
         this.elapsedFrames = ETime.FrameNumber - snap.frame;
     }
 }

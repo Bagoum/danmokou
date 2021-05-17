@@ -1,5 +1,5 @@
 pattern { 
-	boss simp.kasen
+	##boss simp.kasen
 }
 phase 0
 	paction 0
@@ -7,9 +7,12 @@ phase 0
 
 <!> type spell `Helloワールド`
 <!> hp 100000
+<!> bg black
 phase 200
 	saction 0
-		position 2 1
+		position 0 3
+		move _ nroffset px sine 4 2 t
+///
 		move 3 nroffset ease(io-sine, 3, bezier3(
 			zero,
 			pxy(-1, -6),
@@ -19,7 +22,6 @@ phase 200
 		move-target 2 io-sine px 3
 		move-target 2 io-sine px -3
 ///
-		move _ nroffset px sine 4 2 t
 		##move _ nroffset px rangesoftmod 2 * 3 t
 
 <!> type spell `2`

@@ -306,9 +306,15 @@ public static class M {
     /// </summary>
     public static double Ratio(double a, double b, double x) => (x - a) / (b - a);
     public static float Ratio(float a, float b, float x) => (x - a) / (b - a);
+    /// <summary>
+    /// Returns (x - a) / (b - a) clamped to (0, 1).
+    /// </summary>
+    
+    public static float RatioC(float a, float b, float x) => Mathf.Clamp01((x - a) / (b - a));
 
     public static float EInSine(float x) => 1f - (float) Math.Cos(HPI * x);
     public static float EOutSine(float x) => (float) Math.Sin(HPI * x);
+    public static float EIOSine(float x) => 0.5f - 0.5f * (float) Math.Cos(PI * x);
     public static float DEOutSine(float x) => HPI * (float) Math.Cos(HPI * x);
 
     public static double EOutPow(double x, double pow) => 1 - Math.Pow(1 - x, pow);

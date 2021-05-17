@@ -125,21 +125,34 @@ public partial class BulletManager {
         public abstract string Style { get; }
         
         protected readonly DMCompactingArray<BulletControl> controls = new DMCompactingArray<BulletControl>(4);
+        private readonly DMCompactingArray<BulletControl> onCollideControls = new DMCompactingArray<BulletControl>(2);
 
         protected AbsSimpleBulletCollection() : base(1, 128) { }
         
-        public void AddPoolControl(BulletControl pc) => controls.AddPriority(pc, pc.priority);
-        
-        public void PruneControls() {
-            for (int ii = 0; ii < controls.Count; ++ii) {
-                if (controls[ii].cT.Cancelled || !controls[ii].persist(ParametricInfo.Zero)) {
-                    controls.Delete(ii);
-                }
-            }
-            controls.Compact();
+        public void AddBulletControl(BulletControl pc) {
+            if (pc.priority == BulletControl.P_ON_COLLIDE)
+                onCollideControls.Add(pc);
+            else
+                controls.AddPriority(pc, pc.priority);
         }
-        public void ClearControls() => controls.Empty();
-		
+
+        public void PruneControls() {
+            void Prune(DMCompactingArray<BulletControl> carr) {
+                for (int ii = 0; ii < carr.Count; ++ii) {
+                    if (carr[ii].cT.Cancelled || !carr[ii].persist(ParametricInfo.Zero)) {
+                        carr.Delete(ii);
+                    }
+                }
+                carr.Compact();
+            }
+            Prune(controls);
+            Prune(onCollideControls);
+        }
+        public void ClearControls() {
+            controls.Empty();
+            onCollideControls.Empty();
+        }
+
         public void AssertControls(IReadOnlyList<BulletControl> new_controls) {
             int ci = 0;
             for (int pi = 0; pi < controls.Count && ci < new_controls.Count; ++pi) {
@@ -149,7 +162,7 @@ public partial class BulletManager {
             if (ci == new_controls.Count) return;
             //No controls matched
             if (ci == 0) {
-                for (int ii =0; ii < new_controls.Count; ++ii) AddPoolControl(new_controls[ii]);
+                for (int ii =0; ii < new_controls.Count; ++ii) AddBulletControl(new_controls[ii]);
                 return;
             }
             //Some controls matched (?!)
@@ -198,6 +211,19 @@ public partial class BulletManager {
             if (!rem[ind]) {
                 arr[ind].bpi.Dispose();
                 Delete(ind);
+            }
+        }
+
+        /// <summary>
+        /// Same as DeleteSB, but also runs onCollideControls.
+        /// </summary>
+        /// <param name="ind"></param>
+        public void DeleteSB_Collision(int ind) {
+            if (!rem[ind]) {
+                for (int ii = 0; ii < onCollideControls.Count; ++ii) {
+                    onCollideControls[ii].action(this, ind, arr[ind].bpi);
+                }
+                DeleteSB(ind);
             }
         }
 
@@ -325,7 +351,7 @@ public partial class BulletManager {
         }
         
         public new void Add(ref SimpleBullet sb) => throw new Exception("Do not use SBC.Add");
-
+        
         protected override void MakeCulledCopy(int ii) {
             Culled.AddCulled(ref arr[ii]);
         }
@@ -390,7 +416,7 @@ public partial class BulletManager {
                     CollisionResult cr = CheckGrazeCollision(in hitbox, ref sbn);
                     if (cr.collide) {
                         collisionDamage = bc.damageAgainstPlayer;
-                        if (bc.destructible) DeleteSB(ii);
+                        if (bc.destructible) DeleteSB_Collision(ii);
                     } else if (checkGraze && cr.graze) {
                         sbn.grazeFrameCounter = bc.grazeEveryFrames;
                         ++graze;
@@ -431,17 +457,15 @@ public partial class BulletManager {
                     ref SimpleBullet sbn = ref arr[ii];
                     if ((++sbn.cullFrameCounter & CULL_EVERY_MASK) == 0 && LocationHelpers.OffPlayableScreenBy(bc.CULL_RAD, sbn.bpi.loc)) {
                         DeleteSB(ii);
-                    } else {
+                    } else if (sbn.bpi.ctx.playerBullet.Try(out var de) && (de.data.bossDmg > 0 || de.data.stageDmg > 0)) {
                         for (int ff = 0; ff < fciL; ++ff) {
                             if (fci[ff].Active && 
                                 bc.cc.collider.CheckCollision(sbn.bpi.loc, sbn.direction, sbn.scale, fci[ff].pos, fci[ff].radius)) {
                                 if (bc.destructible || fci[ff].enemy.TryHitIndestructible(sbn.bpi.id, bc.againstEnemyCooldown)) {
-                                    if (sbn.bpi.ctx.playerBullet.Try(out var de)) {
-                                        fci[ff].enemy.QueuePlayerDamage(de.data.bossDmg, de.data.stageDmg, de.firer);
-                                        fci[ff].enemy.ProcOnHit(de.data.effect, sbn.bpi.loc);
-                                    }
+                                    fci[ff].enemy.QueuePlayerDamage(de.data.bossDmg, de.data.stageDmg, de.firer);
+                                    fci[ff].enemy.ProcOnHit(de.data.effect, sbn.bpi.loc);
                                     if (bc.destructible) {
-                                        DeleteSB(ii);
+                                        DeleteSB_Collision(ii);
                                         break;
                                     }
                                 }

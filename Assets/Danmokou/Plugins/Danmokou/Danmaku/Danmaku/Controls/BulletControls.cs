@@ -70,6 +70,8 @@ public partial class BulletManager {
         public const int P_RUN = 130;
         //Cull is last in priority to reflect how it actually works. See the culling notes under Bullet Notes.md.
         public const int P_CULL = 140;
+
+        public const int P_ON_COLLIDE = 300;
     }
 
     
@@ -176,7 +178,8 @@ public partial class BulletManager {
                 var style = enumerated[ii];
                 var pstyle = style;
                 if (pstyle.IndexOf('.') > -1) pstyle = pstyle.Substring(0, pstyle.IndexOf('.'));
-                if (styles.Contains(pstyle)) yield return style;
+                if (styles.Contains(pstyle) || styles.Contains(style)) 
+                    yield return style;
                 else if (style.Length > 2 && style[0] == '*' && style[style.Length - 1] == '*') {
                     style = style.Substring(1, style.Length - 2);
                     foreach (var s in styles) {
@@ -199,7 +202,9 @@ public partial class BulletManager {
                     foreach (var s in styles) {
                         if (s.StartsWith(s1) && s.EndsWith(s2)) yield return s;
                     }
-                } else if (doErr) throw new InvalidDataException($"Not a valid {errTyp}: {style}");
+                } else if (CheckOrCopyPool(style, out _))
+                    yield return style;
+                else if (doErr) throw new InvalidDataException($"Not a valid {errTyp}: {style}");
             }
         }
     }
@@ -214,7 +219,7 @@ public partial class BulletManager {
             }
         }, persist, BulletControl.P_RUN, cT);
         for (int ii = 0; ii < styles.Simple.Length; ++ii) {
-            GetMaybeCopyPool(styles.Simple[ii]).AddPoolControl(pc);
+            GetMaybeCopyPool(styles.Simple[ii]).AddBulletControl(pc);
         }
     }
 
@@ -619,13 +624,26 @@ public partial class BulletManager {
         /// </summary>
         public static SBCFp SM(Pred cond, StateMachine target) => new SBCFp(cT => (sbc, ii, bpi) => {
             if (cond(bpi)) {
-                var inode = sbc.GetINodeAt(ii, "pool-triggered");
+                var inode = sbc.GetINodeAt(ii, "bulletcontrol-sm-triggered");
                 //Note: this pattern is safe because GCX is copied immediately by SMRunner
                 using var gcx = bpi.ctx.RevertToGCX(inode);
                 gcx.fs["bulletTime"] = bpi.t;
                 _ = inode.RunExternalSM(SMRunner.Cull(target, cT, gcx));
             }
         }, BulletControl.P_RUN);
+        
+        /// <summary>
+        /// When a bullet collides, if the condition is true, spawn an iNode at the position and run an SM on it.
+        /// </summary>
+        public static SBCFp OnCollide(Pred cond, StateMachine target) => new SBCFp(cT => (sbc, ii, bpi) => {
+            if (cond(bpi)) {
+                var inode = sbc.GetINodeAt(ii, "bulletcontrol-oncollide-triggered");
+                //Note: this pattern is safe because GCX is copied immediately by SMRunner
+                using var gcx = bpi.ctx.RevertToGCX(inode);
+                gcx.fs["bulletTime"] = bpi.t;
+                _ = inode.RunExternalSM(SMRunner.Cull(target, cT, gcx));
+            }
+        }, BulletControl.P_ON_COLLIDE);
 
     }
     //Since sb controls are cleared immediately after velocity update,
@@ -633,7 +651,7 @@ public partial class BulletManager {
     public static void ControlPool(Pred persist, StyleSelector styles, SBCFc control, ICancellee cT) {
         BulletControl pc = new BulletControl(control, persist, cT);
         for (int ii = 0; ii < styles.Simple.Length; ++ii) {
-            GetMaybeCopyPool(styles.Simple[ii]).AddPoolControl(pc);
+            GetMaybeCopyPool(styles.Simple[ii]).AddBulletControl(pc);
         }
     }
 
@@ -648,7 +666,7 @@ public partial class BulletManager {
         /// </summary>
         /// <returns></returns>
         public static SPCF Reset() {
-            return pool => GetMaybeCopyPool(pool).ClearControls();
+            return (pool, ct) => GetMaybeCopyPool(pool).ClearControls();
         }
         /// <summary>
         /// Set the cull radius on a pool.
@@ -656,7 +674,7 @@ public partial class BulletManager {
         /// </summary>
         /// <returns></returns>
         public static SPCF CullRad(float r) {
-            return pool => GetMaybeCopyPool(pool).SetCullRad(r);
+            return (pool, ct) => GetMaybeCopyPool(pool).SetCullRad(r);
         }
 
         /// <summary>
@@ -666,7 +684,7 @@ public partial class BulletManager {
         /// <param name="cullActive">True iff camera culling is allowed.</param>
         /// <returns></returns>
         public static SPCF AllowCull(bool cullActive) {
-            return pool => GetMaybeCopyPool(pool).allowCameraCull = cullActive;
+            return (pool, ct) => GetMaybeCopyPool(pool).allowCameraCull = cullActive;
         }
         
         /// <summary>
@@ -675,7 +693,7 @@ public partial class BulletManager {
         /// This is reset automatically via clear phase.
         /// </summary>
         public static SPCF AllowDelete(bool deleteActive) {
-            return pool => GetMaybeCopyPool(pool).SetDeleteActive(deleteActive);
+            return (pool, ct) => GetMaybeCopyPool(pool).SetDeleteActive(deleteActive);
         }
         
         /// <summary>
@@ -684,10 +702,10 @@ public partial class BulletManager {
         /// <param name="targetFormat">Base cull style, eg. cwheel</param>
         /// <returns></returns>
         public static SPCF SoftCullAll(string targetFormat) {
-            return pool => GetMaybeCopyPool(pool).AddPoolControl(new BulletControl(new SBCFc(SimpleBulletControls.
+            return (pool, ct) => GetMaybeCopyPool(pool).AddBulletControl(new BulletControl(new SBCFc(SimpleBulletControls.
                 Softcull_noexpr(new SoftcullProperties(null, null), 
                     PortColorFormat(pool, new SoftcullProperties(targetFormat, null)), 
-                    _ => true)), Consts.NOTPERSISTENT, null));
+                    _ => true)), Consts.NOTPERSISTENT, ct));
         }
 
         /// <summary>
@@ -696,7 +714,7 @@ public partial class BulletManager {
         /// <br/> Note: This can be used with all bullet styles, unlike Recolor.
         /// <br/> WARNING: This is a rendering function. Do not use `rand` (`brand` ok), or else replays will desync.
         /// </summary>
-        public static SPCF Tint(TP4 tint) => pool => 
+        public static SPCF Tint(TP4 tint) => (pool, ct) => 
             GetMaybeCopyPool(pool).SetTint(tint);
         
         /// <summary>
@@ -705,13 +723,13 @@ public partial class BulletManager {
         /// <br/> Note: This will error if you do not use it with the `recolor` palette.
         /// <br/> WARNING: This is a rendering function. Do not use `rand` (`brand` ok), or else replays will desync.
         /// </summary>
-        public static SPCF Recolor(TP4 black, TP4 white) => pool => 
+        public static SPCF Recolor(TP4 black, TP4 white) => (pool, ct) => 
             GetMaybeCopyPool(pool).SetRecolor(black, white);
     }
     
-    public static void ControlPool(StyleSelector styles, SPCF control) {
+    public static void ControlPool(StyleSelector styles, SPCF control, ICancellee cT) {
         for (int ii = 0; ii < styles.Simple.Length; ++ii) {
-            control(styles.Simple[ii]);
+            control(styles.Simple[ii], cT);
         }
     }
 
@@ -721,7 +739,7 @@ public partial class BulletManager {
             if (pool.MetaType == AbsSimpleBulletCollection.CollectionType.Softcull) return;
             if (pool.Count == 0) return;
             string targetPool = PortColorFormat(pool.Style, props);
-            pool.AddPoolControl(new BulletControl(new SBCFc(
+            pool.AddBulletControl(new BulletControl(new SBCFc(
                     SimpleBulletControls.Softcull_noexpr(props, targetPool, _ => true)), Consts.NOTPERSISTENT, null));
             Log.Unity($"Autoculled {pool.Style} to {targetPool}");
         }
@@ -738,13 +756,15 @@ public partial class BulletManager {
         void DeletePool(SimpleBulletCollection pool) {
             if (!pool.Deletable || pool.Count == 0 || pool is NoCollSBC) return;
             string targetPool = PortColorFormat(pool.Style, props);
-            pool.AddPoolControl(new BulletControl(
+            pool.AddBulletControl(new BulletControl(
                 new SBCFc(SimpleBulletControls.Softcull_noexpr(props, targetPool, cond))
                 , Consts.NOTPERSISTENT, null));
         }
         for (int ii = 0; ii < activeNpc.Count; ++ii) DeletePool(activeNpc[ii]);
         for (int ii = 0; ii < activeCNpc.Count; ++ii) DeletePool(activeCNpc[ii]);
     }
+    
+    public static void SoftScreenClear() => Autodelete(new SoftcullProperties(null, null), _ => true);
     
     /// <summary>
     /// For end-of-phase autoculling (from v8 onwards).
@@ -770,7 +790,7 @@ public partial class BulletManager {
             if (pool.MetaType == AbsSimpleBulletCollection.CollectionType.Softcull) return;
             if (pool.Count == 0) return;
             string targetPool = PortColorFormat(pool.Style, lprops);
-            pool.AddPoolControl(new BulletControl(new SBCFc(
+            pool.AddBulletControl(new BulletControl(new SBCFc(
                 SimpleBulletControls.Softcull_noexpr(lprops, targetPool, deleteCond)), survive, null));
             Log.Unity($"DoT-Autoculling {pool.Style} to {targetPool}");
         }
@@ -797,7 +817,7 @@ public partial class BulletManager {
         void DeletePool(SimpleBulletCollection pool) {
             if (!pool.Deletable || pool.Count == 0 || pool is NoCollSBC) return;
             string targetPool = PortColorFormat(pool.Style, lprops);
-            pool.AddPoolControl(new BulletControl(
+            pool.AddBulletControl(new BulletControl(
                 new SBCFc(SimpleBulletControls.Softcull_noexpr(lprops, targetPool, deleteCond))
                 , survive, null));
         }

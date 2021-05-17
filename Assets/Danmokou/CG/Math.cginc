@@ -26,6 +26,13 @@ float2 mod2(float2 x, float2 by) {
 float3 mod3(float3 x, float3 by) {
     return x - by*floor(x/by);
 }
+float softmod(float x, float by) {
+    float vd = mod(x, 2 * by);
+    if (vd > by)
+        return 2 * by - vd;
+    else
+        return vd;
+}
 
 float rehash(float x, int ii) {
     return x + REHASH * ii;
@@ -72,6 +79,12 @@ float2 rot2(float angle, float2 vec) {
 float2 rot2c(float angle, float2 vec) {
     return center + rot2(angle, vec - center);
 }
+float2 rectToPolar(float2 rect) {
+    return float2(length(rect), atan2(rect.y, rect.x));
+}
+float2 polarToRect(float2 rt) {
+    return float2(rt.x * cos(rt.y), rt.x * sin(rt.y));
+}
 //-pi to pi
 float2 uvToPolar(float2 uv) {
     uv -= float2(0.5, 0.5);
@@ -90,4 +103,11 @@ float3 hueShift(float3 color, float hue) {
     const float3 k = float3(0.57735, 0.57735, 0.57735);
     float cosAngle = cos(hue);
     return float3(color * cosAngle + cross(k, color) * sin(hue) + k * dot(k, color) * (1.0 - cosAngle));
+}
+
+float einsine(float x){
+    return 1 - cos(HPI * x);
+}
+float ratio(float a, float b, float x) {
+    return clamp((x - a) / (b - a), 0, 1);
 }

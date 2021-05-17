@@ -194,7 +194,8 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     protected override void BindListeners() {
         base.BindListeners();
 #if UNITY_EDITOR || ALLOW_RELOAD
-        if (SceneIntermediary.IsFirstScene && this is FireOption || this is BossBEH || this is LevelController) {
+        if (SceneIntermediary.IsFirstScene && this is FireOption || this is BossBEH || this is LevelController || 
+            GetComponent<RELOADER>() != null) {
             Listen(Events.LocalReset, () => {
                 HardCancel(false);
                 //Allows all cancellations processes to go through before rerunning

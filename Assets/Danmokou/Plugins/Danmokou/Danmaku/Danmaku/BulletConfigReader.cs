@@ -299,12 +299,13 @@ public partial class BulletManager : RegularUpdater {
             foreach (DataPrefab x in lis.prefabs) {
                 var sbes = x.prefab.GetComponent<SimpleBulletEmptyScript>();
                 if (sbes != null) {
+                    var sbes_mat = sbes.overrideMaterial == null ? simpleBulletMaterial : sbes.overrideMaterial;
                     var cc = x.prefab.GetComponent<GenericColliderInfo>();
                     
                     void CreateN(string cname, int renderPriorityAdd, Func<Sprite> sprite) {
                         CreateSimpleBulletStyle(sbes, 
                             new BulletInCode(cname, new DeferredTextureConstruction(sbes, 
-                            simpleBulletMaterial, renderPriorityAdd, sprite, false), cc, sbes));
+                            sbes_mat, renderPriorityAdd, sprite, false), cc, sbes));
                     }
                     
                     var colors = sbes.colorizing;
@@ -316,7 +317,7 @@ public partial class BulletManager : RegularUpdater {
                             void CreateP(string cname, int renderPriorityAdd, Func<Sprite> sprite) {
                                 CreateSimpleBulletStyle(sbes, 
                                     new BulletInCode(cname, new DeferredTextureConstruction(sbes, 
-                                    simpleBulletMaterial, renderPriorityAdd + renderOffset, sprite, 
+                                    sbes_mat, renderPriorityAdd + renderOffset, sprite, 
                                     basicGradientPalettes[ii].recolorizable), cc, sbes));
                             }
                             foreach (var p in computedPalettes[ii]) {

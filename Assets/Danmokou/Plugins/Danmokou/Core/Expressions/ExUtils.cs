@@ -244,7 +244,7 @@ public static class ExExtensions {
 
     public static Ex As<T>(this Ex me) => Ex.Convert(me, typeof(T));
 
-    public static Ex DictSafeGet(this Ex dict, Ex key, string err) {
+    public static Ex DictGetOrThrow(this Ex dict, Ex key, string err) {
         return Ex.Block(
             Ex.IfThen(Ex.Not(ExUtils.DictContains(dict, key)), Ex.Throw(Ex.Constant(new Exception(err)))),
             dict.DictGet(key)
@@ -256,6 +256,8 @@ public static class ExExtensions {
         ));*/
     }
 
+    public static Ex DictSafeGet(this Ex dict, Ex key, Ex deflt) =>
+        Ex.Condition(ExUtils.DictContains(dict, key), dict.DictGet(key), deflt);
     public static Ex DictGet(this Ex dict, Ex key) => Ex.Property(dict, "Item", key);
     public static Ex DictSet(this Ex dict, Ex key, Ex value) => Ex.Assign(Ex.Property(dict, "Item", key), value);
 

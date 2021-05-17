@@ -1,0 +1,21 @@
+pattern { }
+phase 0
+	paction 0
+		shift-phase-to 1
+
+<!> type(non, `hello world`)
+phase 0
+    paction 0
+		position 0 2
+		bullet-control persist fireball* oncollide _
+			sync glcircle-*/w <1;:> gsr2c 10 {
+				colorf({ red green blue yellow }, p)
+			} s tprot cx 2
+
+		async fireball-*/w <> gcr2 40 _ <360h> {
+			p this
+			colorf({ red green blue yellow }, p)
+		} gsr2c 20 {
+		} s tprot cx 3
+		
+        

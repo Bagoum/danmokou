@@ -147,7 +147,7 @@ public class PlayerController : BehaviorEntity {
     
     public float hitInvuln = 6;
     public int HitInvulnFrames => Mathf.CeilToInt(hitInvuln * ETime.ENGINEFPS_F);
-    private int invulnerabilityCounter = 0;
+    private int hitInvulnerabilityCounter = 0;
     
     
     #endregion
@@ -373,9 +373,9 @@ public class PlayerController : BehaviorEntity {
         bpi.t += dT;
         if (IsTryingBomb && GameManagement.Difficulty.bombsEnabled && Team.Support is Bomb b) {
             if (deathbomb == DeathbombState.NULL) 
-                PlayerBombs.TryBomb(b.bomb, this, PlayerBombContext.NORMAL);
+                PlayerBombs.TryBomb(b, this, PlayerBombContext.NORMAL);
             else if (deathbomb == DeathbombState.WAITING && 
-                     PlayerBombs.TryBomb(b.bomb, this, PlayerBombContext.DEATHBOMB)) {
+                     PlayerBombs.TryBomb(b, this, PlayerBombContext.DEATHBOMB)) {
                 deathbomb = DeathbombState.PERFORMED;
             }
         }
@@ -542,7 +542,7 @@ public class PlayerController : BehaviorEntity {
     
     
     public void Graze(int graze) {
-        if (graze <= 0 || invulnerabilityCounter > 0) return;
+        if (graze <= 0 || hitInvulnerabilityCounter > 0) return;
         GameManagement.Instance.AddGraze(graze, this);
     }
     
@@ -551,7 +551,7 @@ public class PlayerController : BehaviorEntity {
         //Log.Unity($"The player has taken a hit for {dmg} hp. Force: {force} Invuln: {invulnerabilityCounter} Deathbomb: {waitingDeathbomb}");
         if (force) _DoHit(dmg);
         else {
-            if (invulnerabilityCounter > 0 || deathbomb != DeathbombState.NULL) 
+            if (hitInvulnerabilityCounter > 0 || deathbomb != DeathbombState.NULL) 
                 return;
             deathbomb = DeathbombState.WAITING;
             RunRIEnumerator(WaitDeathbomb(dmg));
@@ -570,7 +570,7 @@ public class PlayerController : BehaviorEntity {
                 PowerAuraOption.High(), 
             }), GenCtx.Empty, BPI.loc, Cancellable.Null, null!));
         GameManagement.Instance.AddLives(-dmg);
-        DependencyInjection.MaybeFind<IRaiko>()?.ShakeExtra(1.5f, 0.9f);
+        DependencyInjection.MaybeFind<IRaiko>()?.Shake(1.5f, null, 0.9f);
         Invuln(HitInvulnFrames);
         if (RespawnOnHit) RequestNextState(PlayerState.RESPAWN);
         else InvokeParentedTimedEffect(spawnedShip.OnHitEffect, hitInvuln);
@@ -580,7 +580,7 @@ public class PlayerController : BehaviorEntity {
     private IEnumerator WaitDeathbomb(int dmg) {
         var frames = (Team.Support as Bomb)?.bomb.DeathbombFrames() ?? 0;
         if (frames > 0) {
-            Log.Unity($"The player has {frames} frames to deathbomb", level: Log.Level.DEBUG2);
+            Log.Unity($"The player has {frames} frames to deathbomb");
             spawnedShip.OnPreHitEffect.Proc(bpi.loc, bpi.loc, 1f);
         }
         while (frames-- > 0 && deathbomb == DeathbombState.WAITING) 
@@ -588,18 +588,24 @@ public class PlayerController : BehaviorEntity {
         if (deathbomb != DeathbombState.PERFORMED) 
             _DoHit(dmg);
         else 
-            Log.Unity($"The player successfully deathbombed", level: Log.Level.DEBUG2);
+            Log.Unity($"The player successfully deathbombed");
         deathbomb = DeathbombState.NULL;
     }
     
     private void Invuln(int frames) {
-        ++invulnerabilityCounter;
+        ++hitInvulnerabilityCounter;
         RunDroppableRIEnumerator(WaitOutInvuln(frames));
     }
     
     private IEnumerator WaitOutInvuln(int frames) {
-        for (int ii = frames; ii > 0; --ii) yield return null;
-        --invulnerabilityCounter;
+        var bombDisable = BombDisabler.CreateToken1(MultiOp.Priority.CLEAR_SCENE);
+        int ii = frames;
+        for (; ii > 60; --ii)
+            yield return null;
+        bombDisable.TryRevoke();
+        for (; ii > 0; --ii)
+            yield return null;
+        --hitInvulnerabilityCounter;
     }
     
     private void GoldenAuraInvuln((int frames, bool showEffect) req) {

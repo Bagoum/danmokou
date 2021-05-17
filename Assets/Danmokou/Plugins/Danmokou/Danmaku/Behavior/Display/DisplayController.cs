@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.DMath;
@@ -36,6 +37,7 @@ public abstract class DisplayController : MonoBehaviour {
     [ReflectInto(typeof(BPY))]
     public RString rotator = null!;
     public BPY? RotatorF { get; set; }
+    private float lastScalerValue = 1f;
 
     protected virtual void Awake() {
         RotatorF = rotator.Get().IntoIfNotNull<BPY>();
@@ -68,6 +70,12 @@ public abstract class DisplayController : MonoBehaviour {
         throw new Exception("DisplayController has no default handling for fading sprite opacity");
     }
 
+    public void Scale(BPY scaler, float over, ICancellee cT, Action done) {
+        var tbpi = ParametricInfo.WithRandomId(beh.rBPI.loc, beh.rBPI.index);
+        lastScalerValue = scaler(tbpi);
+        beh.RunRIEnumerator(_Scale(scaler, tbpi, over, cT, done));
+    }
+
     public virtual void Animate(AnimationType typ, bool loop, Action? done) {
         throw new Exception("DisplayController has no default animation handling");
     }
@@ -86,6 +94,7 @@ public abstract class DisplayController : MonoBehaviour {
         Vector3 scale = GetScale;
         scale.x *= flipX ? -1 : 1;
         scale.y *= flipY ? -1 : 1;
+        scale *= lastScalerValue;
         if (yPosBopPeriod > 0) {
             float yOffset = yPosBopAmplitude * M.Sin(M.TAU * time / yPosBopPeriod);
             tr.localPosition = new Vector3(0, yOffset);
@@ -125,6 +134,19 @@ public abstract class DisplayController : MonoBehaviour {
     protected void SetFlip(bool flipx, bool flipy) {
         flipX = flipx;
         flipY = flipy;
+    }
+    
+    private IEnumerator _Scale(BPY scaler, ParametricInfo tbpi, float over, ICancellee cT, Action done) {
+        if (cT.Cancelled) { done(); yield break; }
+        for (tbpi.t = 0f; tbpi.t < over - ETime.FRAME_YIELD; tbpi.t += ETime.FRAME_TIME) {
+            yield return null;
+            if (cT.Cancelled) { break; } //Set to target and then leave
+            tbpi.loc = beh.rBPI.loc;
+            lastScalerValue = scaler(tbpi);
+        }
+        tbpi.t = over;
+        lastScalerValue = scaler(tbpi);
+        done();
     }
 }
 }

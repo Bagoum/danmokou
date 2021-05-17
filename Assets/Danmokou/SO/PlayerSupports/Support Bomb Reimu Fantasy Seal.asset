@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1745c6a2cdb54815b4467dcfe66cefa4, type: 3}
+  m_Name: Support Bomb Reimu Fantasy Seal
+  m_EditorClassIdentifier: 
+  cutin: {fileID: 3347053754865622268, guid: 124c637a70c941f4cba14ed4caec89ae, type: 3}
+  spellTitle: {fileID: 3197345815071301053, guid: f59b1fcc83200c345a2b26a22a136b0a,
+    type: 3}
+  spellColor1: {r: 0.7830189, g: 0.13665895, b: 0.15988123, a: 1}
+  spellColor2: {r: 0.5188679, g: 0.38425595, b: 0.43391767, a: 1}
+  title:
+    useReference: 0
+    reference: 
+    hardcoded:
+      en: Lazy Justice ~ Fantasy Seal
+      jp: 
+  type: 5
+  sm: {fileID: 4900000, guid: 5b851f48587400845affd6be528a0b81, type: 3}

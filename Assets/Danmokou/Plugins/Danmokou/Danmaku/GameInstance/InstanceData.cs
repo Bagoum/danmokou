@@ -87,6 +87,7 @@ public class InstanceData {
     public int LastMeterStartFrame { get; set; }
     public int LastTookHitFrame { get; private set; }
     public int MeterFrames { get; set; }
+    public int BombsUsed { get; set; }
     public int SubshotSwitches { get; set; }
     public int OneUpItemsCollected { get; private set; }
     

@@ -118,6 +118,8 @@ public class SimpleBulletEmptyScript : MonoBehaviour {
             }
         }
     }
+
+    public Material? overrideMaterial;
     [Serializable]
     public struct FrameAnimMetadata {
         [Tooltip("If using a frame-anim sprite, set this to the size of a single sprite. Else set null.")]
