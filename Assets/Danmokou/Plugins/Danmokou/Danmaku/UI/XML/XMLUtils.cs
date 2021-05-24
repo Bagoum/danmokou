@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using BagoumLib;
+using BagoumLib.Functional;
 using Danmokou.Achievements;
 using Danmokou.Core;
 using Danmokou.Danmaku;
@@ -240,7 +242,7 @@ public static class XMLUtils {
                  b => b.Item1.Item1,
                  p => p.Item1.Item1.Item1.Item1,
                  s => s.Item1.Item1)) &&
-            (!difficultySwitch.valid || difficultySwitch.value == ir.SharedInstanceMetadata.difficulty.standard) &&
+            (!difficultySwitch.Valid || difficultySwitch.Value == ir.SharedInstanceMetadata.difficulty.standard) &&
             (playerSwitch == null || playerSwitch == ir.SharedInstanceMetadata.team.ships[0].ship) &&
             (shotSwitch == null || shotSwitch == ir.SharedInstanceMetadata.team.ships[0])
             ;

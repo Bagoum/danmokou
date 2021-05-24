@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using BagoumLib;
+using BagoumLib.DataStructures;
 using Danmokou.Core;
 using Danmokou.DMath;
 using Danmokou.Expressions;
@@ -43,7 +45,7 @@ public static partial class Reflector {
         try {
             _FillInvokeArray(invoke_args, starti, prms, q, nameType, methodName);
         } catch (Exception e) {
-            throw Log.StackInnerException(e);
+            throw Exceptions.FlattenNestedException(e);
         }
     }
 
@@ -145,7 +147,7 @@ public static partial class Reflector {
         try {
             return _ReflectTargetType(ctx, t);
         } catch (Exception e) {
-            throw Log.StackInnerException(e);
+            throw Exceptions.FlattenNestedException(e);
         }
     }
 

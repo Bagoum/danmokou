@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using BagoumLib;
 using Danmokou.Core;
 using Danmokou.Danmaku;
 using Danmokou.GameInstance;
@@ -86,7 +87,7 @@ public class XMLMainMenuDays : XMLMainMenu {
                 }
                 Func<(bool, UINode?)> Confirm = () => {
                     ConfirmCache();
-                    new InstanceRequest(InstanceRequest.ShowPracticeSuccessMenu, Meta(),
+                    new InstanceRequest(InstanceRequest.PracticeSuccess, Meta(),
                         challenge: new PhaseChallengeRequest(p, c)).Run();
                     return (true, null);
                 };

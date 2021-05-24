@@ -3,11 +3,13 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using BagoumLib.Cancellation;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using JetBrains.Annotations;
 using Danmokou.SM;
 using UnityEngine;
+using static BagoumLib.Tasks.WaitingUtils;
 
 namespace Danmokou.Graphics.Backgrounds {
 public interface IBackgroundOrchestrator {
@@ -142,7 +144,7 @@ public class BackgroundOrchestrator : CoroutineRegularUpdater, IBackgroundOrches
             bgt.WipeFromCenter.Apply(mat);
             CombinerKeywords.Apply(mat, CombinerKeywords.WIPEFROMCENTER);
         } else if (bgt.type == BackgroundTransition.EffectType.Shatter4) {
-            Action cb = WaitingUtils.GetCondition(out condition);
+            Action cb = GetCondition(out condition);
             FromBG.Shatter4(bgt.Shatter4, false, cb);
             CombinerKeywords.Apply(mat, CombinerKeywords.TO_ONLY);
         } else if (bgt.type == BackgroundTransition.EffectType.WipeY) {

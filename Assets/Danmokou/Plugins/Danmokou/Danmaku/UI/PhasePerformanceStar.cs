@@ -1,6 +1,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using BagoumLib;
+using BagoumLib.Mathematics;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.DMath;
@@ -34,13 +36,13 @@ public class PhasePerformanceStar : CoroutineRegularUpdater {
             filled.color = c;
             var tr = filled.transform;
             tr.localScale = Vector3.zero;
-            RunDroppableRIEnumerator(tr.ScaleTo(filledScale, scaleTime, scaler.Into<FXY>()));
-            RunDroppableRIEnumerator(tr.RotateTo(new Vector3(0, 0, 360), rotTime, rotator.Into<FXY>()));
+            tr.ScaleTo(filledScale, scaleTime, scaler.Into<Easer>()).Run(this);
+            tr.RotateTo(new Vector3(0, 0, 360), rotTime, rotator.Into<Easer>()).Run(this);
         } else {
             unfilled.enabled = true;
             var tr = unfilled.transform;
             tr.localScale = Vector3.zero;
-            RunDroppableRIEnumerator(tr.ScaleTo(unfilledScale, scaleTime, M.EOutSine));
+            tr.ScaleTo(unfilledScale, scaleTime, M.EOutSine).Run(this);
         }
     }
 }

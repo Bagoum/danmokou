@@ -1,4 +1,5 @@
 ﻿using System;
+using BagoumLib;
 using Danmokou.Behavior;
 using Danmokou.Behavior.Display;
 using Danmokou.Core;

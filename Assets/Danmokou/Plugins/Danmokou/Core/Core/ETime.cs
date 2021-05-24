@@ -6,6 +6,8 @@ using System;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
+using BagoumLib.DataStructures;
+using BagoumLib.Tweening;
 using Danmokou.DMath;
 using Danmokou.Scenes;
 using JetBrains.Annotations;
@@ -49,9 +51,9 @@ public interface IRegularUpdater {
     int UpdatePriority { get; }
 
     /// <summary>
-    /// True iff the object should receive updates while the game is paused. Primarily for utilities.
+    /// The maximum engine state that the object can act upon. Set to RUN for most objects.
     /// </summary>
-    bool UpdateDuringPause { get; }
+    EngineState UpdateDuring { get; }
 }
 
 public static class UpdatePriorities {
@@ -77,7 +79,7 @@ public class ETime : MonoBehaviour {
     public static MultiMultiplier Slowdown { get; } = new MultiMultiplier(1f, v => Time.timeScale = v);
     /// <summary>
     /// Replacement for Time.dT. Generally fixed to 1/(SCREEN REFRESH RATE),
-    /// except during slowdown.
+    /// except during slowdown. Note that the screen refresh rate is different from the engine framerate.
     /// </summary>
     public static float dT => noSlowDT * Slowdown.Value;
     private static float noSlowDT;
@@ -95,12 +97,17 @@ public class ETime : MonoBehaviour {
     /// </summary>
     public static bool LastUpdateForScreen { get; private set; }
     private static readonly DMCompactingArray<IRegularUpdater> updaters = new DMCompactingArray<IRegularUpdater>();
-    private static readonly Queue<Action> eofInvokes = new Queue<Action>();
-    private static readonly Queue<(int remFrames, Action whenZero)> delayedeofInvokes = new Queue<(int, Action)>();
-    private static readonly List<Action> persistentEofInvokes = new List<Action>();
-    private static readonly List<Action> persistentSofInvokes = new List<Action>();
+    private static readonly Queue<(Action, EngineState)> eofInvokes = new Queue<(Action, EngineState)>();
+    private static readonly List<(Action, EngineState)> persistentEofInvokes = new List<(Action, EngineState)>();
+    private static readonly List<(Action, EngineState)> persistentSofInvokes = new List<(Action, EngineState)>();
 
     private void Awake() {
+        Tween.DefaultDeltaTimeProvider = () => FRAME_TIME;
+        Tween.RegisterType<Vector2>(Vector2.Lerp, (x, y) => x * y);
+        Tween.RegisterType<Vector3>(Vector3.Lerp, (x, y) => x * y);
+        Tween.RegisterType<Vector4>(Vector4.Lerp, (x, y) => x * y);
+        Tween.RegisterType<Color>(Color.Lerp, (x, y) => x * y);
+
         SceneIntermediary.Attach();
         SceneIntermediary.RegisterSceneLoad(() => untilNextRegularFrame = 0f);
 
@@ -151,8 +158,8 @@ public class ETime : MonoBehaviour {
         RNG.RNG_ALLOWED = false;
         Profiler.BeginSample("Parallel update");
         Parallel.For(0, updaters.Count, ii => {
-            DeletionMarker<IRegularUpdater> updater = updaters.arr[ii];
-            if (!updater.markedForDeletion) updater.obj.RegularUpdateParallel();
+            DeletionMarker<IRegularUpdater> updater = updaters.Data[ii];
+            if (!updater.MarkedForDeletion) updater.Value.RegularUpdateParallel();
         });
         Profiler.EndSample();
         RNG.RNG_ALLOWED = true;
@@ -163,21 +170,22 @@ public class ETime : MonoBehaviour {
             FirstUpdateForScreen = true;
             //Updates still go out on loading. Player movement is disabled but other things need to run
             noSlowDT = ASSUME_SCREEN_FRAME_TIME;
-            if (EngineStateManager.IsLoadingOrPaused) {
+            if (EngineStateManager.State > EngineState.RUN) {
                 InputManager.OncePerFrameToggleControls();
                 //Send out limited updates ignoring slowdown
                 for (; noSlowDT > FRAME_BOUNDARY;) {
                     noSlowDT -= FRAME_TIME;
                     LastUpdateForScreen = noSlowDT <= FRAME_BOUNDARY;
-                    EngineStateManager.CheckForStateUpdates();
-                    if (EngineStateManager.PendingChange) continue;
-
+                    if (EngineStateManager.PendingUpdate) continue;
+                    StartOfFrameInvokes(EngineStateManager.State);
                     for (int ii = 0; ii < updaters.Count; ++ii) {
-                        DeletionMarker<IRegularUpdater> updater = updaters.arr[ii];
-                        if (!updater.markedForDeletion && updater.obj.UpdateDuringPause) updater.obj.RegularUpdate();
+                        DeletionMarker<IRegularUpdater> updater = updaters.Data[ii];
+                        if (!updater.MarkedForDeletion && updater.Value.UpdateDuring >= EngineStateManager.State) 
+                            updater.Value.RegularUpdate();
                     }
                     updaters.Compact();
                     FlushUpdaterAdds();
+                    EndOfFrameInvokes(EngineStateManager.State);
                     FirstUpdateForScreen = false;
                 }
                 noSlowDT = 0;
@@ -190,31 +198,30 @@ public class ETime : MonoBehaviour {
                     if (FirstUpdateForScreen) InputManager.OncePerFrameToggleControls();
                     untilNextRegularFrame -= FRAME_TIME;
                     LastUpdateForScreen = untilNextRegularFrame + dT <= FRAME_BOUNDARY;
-                    EngineStateManager.CheckForStateUpdates();
-                    if (EngineStateManager.PendingChange) continue;
-                    StartOfFrameInvokes();
+                    if (EngineStateManager.PendingUpdate) continue;
+                    StartOfFrameInvokes(EngineStateManager.State);
                     //Parallelize updates if there are many. Note that this allocates ~2kb
                     if (updaters.Count < PARALLELCUTOFF) {
                         for (int ii = 0; ii < updaters.Count; ++ii) {
-                            DeletionMarker<IRegularUpdater> updater = updaters.arr[ii];
-                            if (!updater.markedForDeletion) updater.obj.RegularUpdateParallel();
+                            DeletionMarker<IRegularUpdater> updater = updaters.Data[ii];
+                            if (!updater.MarkedForDeletion) updater.Value.RegularUpdateParallel();
                         }
                     } else ParallelUpdateStep();
                     for (int ii = 0; ii < updaters.Count; ++ii) {
-                        DeletionMarker<IRegularUpdater> updater = updaters.arr[ii];
-                        if (!updater.markedForDeletion) updater.obj.RegularUpdate();
+                        DeletionMarker<IRegularUpdater> updater = updaters.Data[ii];
+                        if (!updater.MarkedForDeletion) updater.Value.RegularUpdate();
                     }
                     updaters.Compact();
                     //Note: The updaters array is only modified by this command. 
                     FlushUpdaterAdds();
-                    EndOfFrameInvokes();
+                    EndOfFrameInvokes(EngineStateManager.State);
                     FrameNumber++;
                     FirstUpdateForScreen = false;
                 }
                 untilNextRegularFrame += dT;
                 if (Mathf.Abs(untilNextRegularFrame) < FRAME_YIELD) untilNextRegularFrame = 0f;
             }
-            EngineStateManager.UpdateGameState();
+            EngineStateManager.UpdateEngineState();
         } catch (Exception e) {
             Log.UnityError("Error thrown in the ETime update loop.");
             Log.UnityException(e);
@@ -246,27 +253,35 @@ public class ETime : MonoBehaviour {
 
     private const float FRAME_BOUNDARY = FRAME_TIME - FRAME_YIELD;
 
-    private static void StartOfFrameInvokes() {
-        for (int ii = 0; ii < persistentSofInvokes.Count; ++ii) persistentSofInvokes[ii]();
-    }
-
-    private static void EndOfFrameInvokes() {
-        for (int ii = 0; ii < persistentEofInvokes.Count; ++ii) persistentEofInvokes[ii]();
-        int ndelinv = delayedeofInvokes.Count;
-        for (int ii = 0; ii < ndelinv; ++ii) {
-            var (remFrames, onZero) = delayedeofInvokes.Dequeue();
-            if (remFrames == 0) eofInvokes.Enqueue(onZero);
-            else delayedeofInvokes.Enqueue((remFrames - 1, onZero));
+    private static void StartOfFrameInvokes(EngineState state) {
+        for (int ii = 0; ii < persistentSofInvokes.Count; ++ii) {
+            var (act, st) = persistentSofInvokes[ii];
+            if (st >= state)
+                act();
         }
-        while (eofInvokes.Count > 0) eofInvokes.Dequeue()();
     }
 
-    public static void RegisterPersistentSOFInvoke(Action act) => persistentSofInvokes.Add(act);
-    public static void RegisterPersistentEOFInvoke(Action act) => persistentEofInvokes.Add(act);
-    public static void QueueEOFInvoke(Action act) => eofInvokes.Enqueue(act);
+    private static void EndOfFrameInvokes(EngineState state) {
+        for (int ii = 0; ii < persistentEofInvokes.Count; ++ii) {
+            var (act, st) = persistentEofInvokes[ii];
+            if (st >= state)
+                act();
+        }
+        var neofInv = eofInvokes.Count;
+        for (int ii = 0; ii < neofInv; ++ii) {
+            var (act, st) = eofInvokes.Dequeue();
+            if (st >= state)
+                act();
+            else
+                eofInvokes.Enqueue((act, st));
+        }
+    }
 
-    public static void QueueDelayedEOFInvoke(int frame_delay, Action act) =>
-        delayedeofInvokes.Enqueue((frame_delay, act));
+    public static void RegisterPersistentSOFInvoke(Action act, EngineState state = EngineState.RUN) => 
+        persistentSofInvokes.Add((act, state));
+    public static void RegisterPersistentEOFInvoke(Action act, EngineState state = EngineState.RUN) => 
+        persistentEofInvokes.Add((act, state));
+    public static void QueueEOFInvoke(Action act, EngineState state = EngineState.RUN) => eofInvokes.Enqueue((act, state));
 
     private static readonly Queue<DeletionMarker<IRegularUpdater>> updaterAddQueue =
         new Queue<DeletionMarker<IRegularUpdater>>();
@@ -274,13 +289,13 @@ public class ETime : MonoBehaviour {
     private static void FlushUpdaterAdds() {
         while (updaterAddQueue.Count > 0) {
             var dm = updaterAddQueue.Dequeue();
-            dm.obj.FirstFrame();
+            dm.Value.FirstFrame();
             updaters.AddPriority(dm);
         }
     }
 
     public static DeletionMarker<IRegularUpdater> RegisterRegularUpdater(IRegularUpdater iru) {
-        var dm = DeletionMarker<IRegularUpdater>.Get(iru, iru.UpdatePriority);
+        var dm = new DeletionMarker<IRegularUpdater>(iru, iru.UpdatePriority);
         updaterAddQueue.Enqueue(dm);
         return dm;
     }
@@ -322,7 +337,7 @@ public class ETime : MonoBehaviour {
         }
 
         public int UpdatePriority => UpdatePriorities.SYSTEM;
-        public bool UpdateDuringPause => false;
+        public EngineState UpdateDuring => EngineState.RUN;
 
         public void RegularUpdateParallel() { }
 

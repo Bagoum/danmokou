@@ -1,50 +1,34 @@
 ﻿using System;
 using System.Collections;
+using BagoumLib.Cancellation;
+using BagoumLib.Mathematics;
+using BagoumLib.Tweening;
 using Danmokou.Core;
 using UnityEngine;
+using static BagoumLib.Tweening.Tween;
 
 namespace Danmokou.DMath {
 public static class Tweening {
-    public static readonly FXY Identity = x => x;
-    private static IEnumerator Ease<T>(T start, T end, Action<T> apply, 
-        Func<T, T, float, T> lerp, float time, FXY? ease = null, ICancellee? cT = null) {
-        if (cT?.Cancelled ?? false) yield break;
-        ease ??= Identity;
-        for (float t = 0; t < time; t += ETime.FRAME_TIME) {
-            apply(lerp(start, end, ease(t / time)));
-            yield return null;
-            if (cT?.Cancelled ?? false) yield break;
-        }
-        apply(end);
-    }
-
-    private static IEnumerator Ease(float start, float end, Action<float> apply, float time,
-        FXY? ease = null, ICancellee? cT = null) =>
-        Ease(start, end, apply, Mathf.LerpUnclamped, time, ease, cT);
-    private static IEnumerator Ease(Vector3 start, Vector3 end, Action<Vector3> apply, float time,
-        FXY? ease = null, ICancellee? cT = null) =>
-        Ease(start, end, apply, Vector3.LerpUnclamped, time, ease, cT);
+    
+    public static Tweener<Vector3> GoTo(this Transform tr, Vector3 loc, float time, 
+        Easer? ease = null, ICancellee? cT = null) =>
+        TweenTo(tr.localPosition, loc, time, x => tr.localPosition = x, ease, cT);
+    public static Tweener<float> ScaleTo(this Transform tr, float target, float time, 
+        Easer? ease = null, ICancellee? cT = null)
+        => TweenTo(tr.localScale.x, target, time, x => tr.localScale = new Vector3(x, x, x), ease, cT);
+    public static Tweener<Vector3> RotateTo(this Transform tr, Vector3 eulers, float time, 
+        Easer? ease = null, ICancellee? cT = null)
+        => TweenTo(tr.localEulerAngles, eulers, time, x => tr.localEulerAngles = x, ease, cT);
+    public static Tweener<float> OpacityTo(this SpriteRenderer sr, float target, float time, 
+        Easer? ease = null, ICancellee? cT = null)
+        => TweenTo(sr.color.a, target, time, sr.SetAlpha, ease, cT);
+    public static Tweener<Color> ColorTo(this SpriteRenderer sr, Color target, float time, 
+        Easer? ease = null, ICancellee? cT = null)
+        => TweenTo(sr.color, target, time, c => sr.color = c, ease, cT);
     
     
-    public static IEnumerator GoTo(this Transform tr, Vector3 loc, float time, 
-        FXY? ease = null, ICancellee? cT = null)
-        => Ease(tr.localPosition, loc, x => tr.localPosition = x, time, ease, cT);
-    public static IEnumerator ScaleTo(this Transform tr, float target, float time, 
-        FXY? ease = null, ICancellee? cT = null)
-        => Ease(tr.localScale.x, target, x => tr.localScale = new Vector3(x, x, x), time, ease, cT);
-    public static IEnumerator RotateTo(this Transform tr, Vector3 eulers, float time, 
-        FXY? ease = null, ICancellee? cT = null)
-        => Ease(tr.localEulerAngles, eulers, x => tr.localEulerAngles = x, time, ease, cT);
-    public static IEnumerator OpacityTo(this SpriteRenderer sr, float target, float time, 
-        FXY? ease = null, ICancellee? cT = null)
-        => Ease(sr.color.a, target, sr.SetAlpha, time, ease, cT);
-    public static IEnumerator ColorTo(this SpriteRenderer sr, Color target, float time, 
-        FXY? ease = null, ICancellee? cT = null)
-        => Ease(sr.color, target, c => sr.color = c, Color.LerpUnclamped, time, ease, cT);
-    
-    
-    public static IEnumerator ScaleBy(this Transform tr, float multiplier, float time, 
-        FXY? ease = null, ICancellee? cT = null)
-        => Ease(tr.localScale, tr.localScale * multiplier, x => tr.localScale = x, time, ease, cT);
+    public static Tweener<Vector3> ScaleBy(this Transform tr, float multiplier, float time, 
+        Easer? ease = null, ICancellee? cT = null)
+        => TweenBy(tr.localScale, multiplier, time, x => tr.localScale = x, ease, cT);
 }
 }

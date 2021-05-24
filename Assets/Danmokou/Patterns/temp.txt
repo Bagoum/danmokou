@@ -4,12 +4,19 @@ pattern({
 })
 phase(0)
 	paction(0)
-		shift-phase-to(2)
+		shift-phase-to(1)
 	
 <!> type(non, `DRAiko test`)
-<!> hp(21000)
+<!> hp(2000)
 phase(0)
 	paction 0
+		bullet-control persist circle-blue/w softcull cwheel-red/w > x 2
+		async circle-blue/w <0.6;:> gir2 120 2 <0.2;:> {
+		} gir2 2 50 <> {
+			circle
+		} gcr2 1 1 <> {
+			delay 1
+		} s tprot cx 1
 		position 0 2
 	
 <!> type(spell, `Danmokou Chimera`)

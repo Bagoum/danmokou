@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections;
+using BagoumLib;
+using BagoumLib.Events;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Danmaku;
@@ -31,8 +33,8 @@ public enum PlayerBombContext {
 }
 
 public static partial class PlayerBombs {
-    public static readonly Events.IEvent<(Bomb type, PlayerBombContext ctx)> BombFired =
-        new Events.Event<(Bomb, PlayerBombContext)>();
+    public static readonly IBSubject<(Bomb type, PlayerBombContext ctx)> BombFired =
+        new Event<(Bomb, PlayerBombContext)>();
     public static bool IsValid(this PlayerBombType bt) => bt != PlayerBombType.NONE;
 
     public static int DeathbombFrames(this PlayerBombType bt) =>
@@ -93,7 +95,7 @@ public static partial class PlayerBombs {
         PlayerController.FiringDisabler.CreateToken1(MultiOp.Priority.CLEAR_SCENE);
 
     private static IEnumerator DoTestBomb1(PlayerController bomber, MultiAdder.Token bombDisable) {
-        Log.Unity("Starting Test Bomb 1", level: Log.Level.DEBUG2);
+        Log.Unity("Starting Test Bomb 1", level: LogLevel.DEBUG2);
         var fireDisable = DisableFire;
         var smh = new SMHandoff(bomber);
         //Note: you should use RunExternalSM, see the mokou bomb
@@ -106,7 +108,7 @@ public static partial class PlayerBombs {
             bpi => CollisionMath.PointInCircle(bpi.loc, circ));
         fireDisable.TryRevoke();
         for (float t = 0; t < 4f; t += ETime.FRAME_TIME) yield return null;
-        Log.Unity("Ending Test Bomb 1", level: Log.Level.DEBUG2);
+        Log.Unity("Ending Test Bomb 1", level: LogLevel.DEBUG2);
         bombDisable.TryRevoke();
     }
 

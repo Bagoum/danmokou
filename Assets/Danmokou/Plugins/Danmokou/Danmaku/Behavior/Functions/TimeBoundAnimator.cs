@@ -1,4 +1,5 @@
-﻿using Danmokou.Core;
+﻿using BagoumLib.Cancellation;
+using Danmokou.Core;
 
 namespace Danmokou.Behavior.Functions {
 /// <summary>

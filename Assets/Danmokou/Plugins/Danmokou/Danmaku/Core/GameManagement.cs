@@ -23,7 +23,6 @@ using Danmokou.Scriptables;
 using Danmokou.Services;
 using Danmokou.SM;
 using Danmokou.UI;
-using FastExpressionCompiler;
 using JetBrains.Annotations;
 using UnityEditor;
 using static Danmokou.SM.SMAnalysis;
@@ -51,13 +50,17 @@ public class GameManagement : CoroutineRegularUpdater {
     [UsedImplicitly] public static bool Continued => Instance.Continued;
 
     public static void DeactivateInstance() {
-        Log.Unity("Deactivating game instance");
-        Instance.Deactivate();
+        if (Instance?.InstanceActive == true) {
+            Log.Unity("Deactivating game instance");
+            Instance.Deactivate();
+            Instance.Dispose();
+        }
     }
 
-    public static void NewInstance(InstanceMode mode, long? highScore = null, InstanceRequest? req = null) {
+    public static void NewInstance(InstanceMode mode, long? highScore = null, InstanceRequest? req = null, ReplayActor? replay = null) {
+        DeactivateInstance();
         Log.Unity($"Creating new game instance with mode {mode}");
-        Instance = new InstanceData(mode, req, highScore, Instance);
+        Instance = new InstanceData(mode, req, highScore, replay);
     }
 
     public static IEnumerable<FixedDifficulty> VisibleDifficulties => new[] {
@@ -133,10 +136,8 @@ public class GameManagement : CoroutineRegularUpdater {
 
     public static bool GoToMainMenu() => SceneIntermediary.LoadScene(
         new SceneIntermediary.SceneRequest(References.mainMenu,
-            SceneIntermediary.SceneRequest.Reason.ABORT_RETURN, () => {
-                Instance.Request?.Cancel();
-                Replayer.Cancel();
-            }));
+            //This cancels the replay and deactivates the isntance as well
+            SceneIntermediary.SceneRequest.Reason.ABORT_RETURN, () => Instance.Request?.Cancel()));
 
     public static bool GoToReplayScreen() => SceneIntermediary.LoadScene(
         new SceneIntermediary.SceneRequest(References.replaySaveMenu,

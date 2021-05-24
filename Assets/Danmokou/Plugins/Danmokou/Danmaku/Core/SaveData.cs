@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
+using BagoumLib;
 using Danmokou.Achievements;
 using Danmokou.Danmaku;
 using Danmokou.GameInstance;
@@ -227,7 +228,7 @@ public static class SaveData {
                             GameManagement.References.gameIdentifier) return null;
                         return new Replay(LoadReplayFrames(f), metadata);
                     } catch (Exception e) {
-                        Log.Unity($"Failed to read replay data: {e.Message}", true, Log.Level.WARNING);
+                        Log.Unity($"Failed to read replay data: {e.Message}", true, LogLevel.WARNING);
                         return null;
                     }
                 })
@@ -241,7 +242,7 @@ public static class SaveData {
                     File.Delete(filename + RMETAEXT);
                     File.Delete(filename + RFRAMEEXT);
                 } catch (Exception e) {
-                    Log.Unity(e.Message, true, Log.Level.WARNING);
+                    Log.Unity(e.Message, true, LogLevel.WARNING);
                 }
                 ReplayData.RemoveAt(i);
                 return true;

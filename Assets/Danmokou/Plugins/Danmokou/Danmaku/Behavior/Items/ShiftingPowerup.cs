@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using BagoumLib.Cancellation;
 using Danmokou.Behavior.Display;
 using Danmokou.Core;
 using Danmokou.Danmaku;

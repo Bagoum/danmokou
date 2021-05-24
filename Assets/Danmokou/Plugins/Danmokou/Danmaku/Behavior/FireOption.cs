@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using BagoumLib;
 using Danmokou.Core;
 using Danmokou.DMath;
 using Danmokou.Expressions;

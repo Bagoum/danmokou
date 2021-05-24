@@ -3,6 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using BagoumLib;
+using BagoumLib.Cancellation;
 using JetBrains.Annotations;
 using UnityEngine;
 using Ex = System.Linq.Expressions.Expression;
@@ -562,7 +564,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
                 await sm.sm.Start(smh);
             } catch (Exception e) {
                 if (!(e is OperationCanceledException)) {
-                    Log.UnityError(Log.StackInnerException(e)
+                    Log.UnityError(Exceptions.FlattenNestedException(e)
                         .Message); //This is only here for the vaguest of debugging purposes.
                 }
             } finally {
@@ -575,7 +577,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
             if (IsNontrivialID(ID)) {
                 Log.Unity(
                     $"BehaviorEntity {ID} finished running its SM{(sm.cullOnFinish ? " and will destroy itself." : ".")}",
-                    level: Log.Level.DEBUG1);
+                    level: LogLevel.DEBUG1);
             }
             if (sm.cullOnFinish) {
                 if (PoofOnPhaseEnd) Poof();
@@ -606,7 +608,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
                 await sm.sm.Start(smh);
             } catch (Exception e) {
                 if (!(e is OperationCanceledException)) {
-                    Log.UnityError(Log.StackInnerException(e)
+                    Log.UnityError(Exceptions.FlattenNestedException(e)
                         .Message); //This is only here for the vaguest of debugging purposes.
                 }
                 //When ending a level, the order of OnDisable is random, so a node running a sub-SM may
@@ -642,11 +644,6 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         ForceClosingFrame();
         AllowFinishCalls = true;
         PhaseShifter = null;
-    }
-
-    public override void PreSceneClose() {
-        HardCancel(false);
-        base.PreSceneClose();
     }
 
     protected override void OnDisable() {

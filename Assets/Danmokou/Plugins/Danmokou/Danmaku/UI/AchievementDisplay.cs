@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using BagoumLib.Mathematics;
 using Danmokou.Achievements;
 using Danmokou.Behavior;
 using Danmokou.Core;
@@ -36,23 +37,23 @@ public class AchievementDisplay : CoroutineRegularUpdater, IAchievementDisplay {
     private Vector2 baseLoc;
     public Vector2 startOffset = new Vector2(4, 0);
     public float inTime;
-    [ReflectInto(typeof(FXY))]
+    [ReflectInto(typeof(Easer))]
     public string inLerp = "eoutback(2.2, t)";
-    private FXY InLerp = null!;
+    private Easer InLerp = null!;
     public float waitTime;
     public Vector2 endOffset = new Vector2(0, 3);
     public float outTime;
-    [ReflectInto(typeof(FXY))]
+    [ReflectInto(typeof(Easer))]
     public string outLerp = "einsine(t)";
-    private FXY OutLerp = null!;
+    private Easer OutLerp = null!;
     public SFXConfig? sfx;
 
     private void Awake() {
         tr = transform;
         baseLoc = (Vector2)tr.localPosition - 
                   (uiParent.autoShiftCamera ? GameManagement.References.bounds.center : Vector2.zero);
-        InLerp = inLerp.Into<FXY>();
-        OutLerp = outLerp.Into<FXY>();
+        InLerp = inLerp.Into<Easer>();
+        OutLerp = outLerp.Into<Easer>();
         Hide();
     }
 

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
+using BagoumLib.Cancellation;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using NUnit.Framework;

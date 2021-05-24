@@ -143,14 +143,18 @@ public readonly struct LabelRequestContext {
     public readonly float timeToLive;
     public readonly IGradient color;
     public readonly string text;
+    private readonly float multiplier;
+
+    public float Scale(float timeRatio) => 0.7f + (multiplier - 0.7f) * (float)Math.Sin(Math.PI * (0.25 + 0.75 * timeRatio));
 
     public LabelRequestContext(Vector2 root, float radius, float speed, float angle, float timeToLive, IGradient color,
-        string text) {
+        string text, float multiplier) {
         this.root = root;
         this.radius = radius;
         this.speed = speed;
         this.angle = angle;
-        this.timeToLive = timeToLive;
+        this.timeToLive = timeToLive * multiplier;
+        this.multiplier = multiplier;
         this.color = color;
         this.text = text;
     }

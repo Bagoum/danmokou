@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using BagoumLib.DataStructures;
+using BagoumLib.Events;
 using Danmokou.Core;
 using UnityEngine;
 
 namespace Danmokou.Behavior {
 public abstract class RegularUpdater : MonoBehaviour, IRegularUpdater {
-    private readonly List<IDeletionMarker> tokens = new List<IDeletionMarker>();
+    protected readonly List<IDisposable> tokens = new List<IDisposable>();
     protected bool Enabled => tokens.Count > 0;
 
     /// <summary>
@@ -20,19 +22,19 @@ public abstract class RegularUpdater : MonoBehaviour, IRegularUpdater {
 
     protected virtual void BindListeners() { }
 
-    protected void Listen<T>(Events.IEvent<T> ev, Action<T> sub) {
+    protected void Listen<T>(IBSubject<T> ev, Action<T> sub) {
         tokens.Add(ev.Subscribe(sub));
     }
     
     /// <summary>
     /// Invoke the function with the last published value, and then listen to future changes.
     /// </summary>
-    protected void ListenInv<T>(Events.IEvent<T> ev, Action<T> sub) {
-        if (ev.LastPublished.valid)
-            sub(ev.LastPublished.value);
+    protected void ListenInv<T>(IBSubject<T> ev, Action<T> sub) {
+        if (ev.LastPublished.Valid)
+            sub(ev.LastPublished.Value);
         Listen(ev, sub);
     }
-    protected void ListenInv<T>(Events.IEvent<T> ev, Action sub) {
+    protected void ListenInv<T>(IBSubject<T> ev, Action sub) {
         sub();
         Listen(ev, _ => sub());
     }
@@ -58,17 +60,15 @@ public abstract class RegularUpdater : MonoBehaviour, IRegularUpdater {
     public virtual void FirstFrame() { }
     public virtual int UpdatePriority => UpdatePriorities.DEFAULT;
 
-    public virtual bool UpdateDuringPause => false;
+    public virtual EngineState UpdateDuring => EngineState.RUN;
 
-
-    public virtual void PreSceneClose() { }
 
     /// <summary>
     /// Safe to call twice.
     /// </summary>
     protected void DisableUpdates() {
         for (int ii = 0; ii < tokens.Count; ++ii) {
-            tokens[ii].MarkForDeletion();
+            tokens[ii].Dispose();
         }
         tokens.Clear();
     }

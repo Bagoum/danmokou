@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using BagoumLib;
 using NUnit.Framework;
 using Danmokou.Core;
 

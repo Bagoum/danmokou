@@ -750,7 +750,7 @@ public static class Scene1 {
     public static IEnumerator TestPracticeSelector1() {
         bool cb = false;
         //Running Static Analysis 1
-        new InstanceRequest(() => cb = true, FixedDfc(FixedDifficulty.Lunatic),
+        new InstanceRequest(d => cb = true, FixedDfc(FixedDifficulty.Lunatic),
             boss: new BossPracticeRequest(AllPBosses[0], 
                 new SMAnalysis.Phase(null!, PhaseType.NONSPELL, 3, new LocalizedString("_")))).Run();
         IsFalse(cb);
@@ -813,7 +813,7 @@ public static class Scene1 {
 
     private static IEnumerator WaitForLoad() {
         yield return null;
-        while (EngineStateManager.IsLoading) yield return null;
+        while (EngineStateManager.State == EngineState.LOADING_PAUSE) yield return null;
     }
 
     [UnityTest]

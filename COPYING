@@ -1,4 +1,4 @@
-Copyright (c) 2020 Bagoum <reneedebatz@gmail.com>
+Copyright (c) 2020-2021 Bagoum <reneedebatz@gmail.com>
 
 Danmokou is a danmaku (bullet hell) engine built in C# for Unity. It is free (as in free speech) software. The source code is on Github: https://github.com/Bagoum/danmokou
 
@@ -17,9 +17,9 @@ protobuf-net*: Apache 2.0 (https://www.nuget.org/packages/protobuf-net)
 MathNet*: MIT (https://www.nuget.org/packages/MathNet.Numerics)
 System.*: MIT (https://www.nuget.org/packages/System.Memory/ and others)
 LanguageExt.*: MIT (https://github.com/louthy/language-ext)
-	Modifications have been made to LanguageExt.Parsec.
+	Modifications have been made to LanguageExt.Parsec. See https://github.com/Bagoum/language-ext
 FastExpressionCompiler: MIT (https://github.com/dadhi/FastExpressionCompiler)
-	Modifications have been made to FastExpressionCompiler.
+	Modifications have been made to FastExpressionCompiler. See https://github.com/Bagoum/FastExpressionCompiler
 
 The directory Assets/Danmokou/Plugins/Self/Core/FS contains compiled binaries of the directory FS.
 
@@ -29,7 +29,7 @@ The copyright of Touhou Project is owned by Team Shanghai Alice.
 
 --- MIT license for this project's source code
 
-Copyright (c) 2020 Bagoum <reneedebatz@gmail.com>
+Copyright (c) 2020-2021 Bagoum <reneedebatz@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

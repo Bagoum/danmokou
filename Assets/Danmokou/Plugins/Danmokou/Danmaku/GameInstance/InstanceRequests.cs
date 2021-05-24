@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using BagoumLib;
+using BagoumLib.Cancellation;
+using BagoumLib.Events;
 using Danmokou.Achievements;
 using Danmokou.Behavior;
 using Danmokou.Core;
@@ -97,7 +100,7 @@ public readonly struct SharedInstanceMetadata {
 
 public class InstanceRequest {
     private readonly List<Cancellable> gameTrackers = new List<Cancellable>();
-    public readonly Func<bool>? cb;
+    public readonly Func<InstanceData, bool>? cb;
     public readonly SharedInstanceMetadata metadata;
     public readonly Replay? replay;
     public bool Saveable => replay == null;
@@ -109,17 +112,17 @@ public class InstanceRequest {
         _ => InstanceMode.SCENE_CHALLENGE,
         _ => InstanceMode.STAGE_PRACTICE);
 
-    public InstanceRequest(Func<bool>? cb, InstanceLowRequest lowerRequest, 
+    public InstanceRequest(Func<InstanceData, bool>? cb, InstanceLowRequest lowerRequest, 
         Replay replay) : this(cb, replay.metadata.Record.SharedInstanceMetadata, lowerRequest, replay) {}
 
-    public InstanceRequest(Func<bool>? cb, SharedInstanceMetadata metadata, CampaignRequest? campaign = null,
+    public InstanceRequest(Func<InstanceData, bool>? cb, SharedInstanceMetadata metadata, CampaignRequest? campaign = null,
         BossPracticeRequest? boss = null, PhaseChallengeRequest? challenge = null, StagePracticeRequest? stage = null,
         Replay? replay = null) : 
         this(cb, metadata, InstanceLowRequest.FromNullable(
             campaign, boss, challenge, stage) ?? throw new Exception("No valid request type made of GameReq"), 
             replay) { }
 
-    public InstanceRequest(Func<bool>? cb, SharedInstanceMetadata metadata, InstanceLowRequest lowerRequest, Replay? replay) {
+    public InstanceRequest(Func<InstanceData, bool>? cb, SharedInstanceMetadata metadata, InstanceLowRequest lowerRequest, Replay? replay) {
         this.metadata = metadata;
         this.cb = cb;
         this.replay = replay;
@@ -130,16 +133,16 @@ public class InstanceRequest {
     public void SetupInstance() {
         Log.Unity(
             $"Starting game with mode {Mode} on difficulty {metadata.difficulty.Describe()}.");
-        GameManagement.NewInstance(Mode, SaveData.r.GetHighScore(this), this);
-        if (replay == null) Replayer.BeginRecording();
-        else Replayer.BeginReplaying(
-            new Replayer.ReplayerConfig(
-                replay.Value.metadata.Debug ? 
-                    Replayer.ReplayerConfig.FinishMethod.STOP :
-                    Replayer.ReplayerConfig.FinishMethod.ERROR, replay.Value.frames));
+        var actor = (replay == null) ? 
+            Replayer.BeginRecording() :
+            Replayer.BeginReplaying(
+                new Replayer.ReplayerConfig(
+                    replay.Value.metadata.Debug ? 
+                        Replayer.ReplayerConfig.FinishMethod.STOP :
+                        Replayer.ReplayerConfig.FinishMethod.ERROR, replay.Value.frames));
+        GameManagement.NewInstance(Mode, SaveData.r.GetHighScore(this), this, actor);
     }
 
-    public bool Finish() => cb?.Invoke() ?? true;
     public InstanceRecord MakeGameRecord(AyaPhoto[]? photos = null, string? ending = null) {
         var record = new InstanceRecord(this, GameManagement.Instance, true) {
             Photos = photos ?? new AyaPhoto[0],
@@ -157,18 +160,17 @@ public class InstanceRequest {
     /// If the record is not already created, it will be created here.
     /// </summary>
     public bool FinishAndPostReplay(InstanceRecord? record = null) {
-        if (Finish()) {
-            record?.Update(GameManagement.Instance);
+        var d = GameManagement.Instance;
+        if (cb?.Invoke(d) ?? true) {
+            record?.Update(d);
             record ??= MakeGameRecord();
-            GameManagement.DeactivateInstance();
-            Replayer.End(record);
+            GameManagement.DeactivateInstance(); //Also stops the replay
             TrySave(record);
-            if (Saveable)
-                InstanceCompleted.Publish(record);
+            InstanceCompleted.Publish((d, record));
             return true;
         } else {
             if (record != null && Saveable) {
-                Log.Unity($"Invalidating record with UUID {record.Uuid}", level: Log.Level.INFO);
+                Log.Unity($"Invalidating record with UUID {record.Uuid}", level: LogLevel.INFO);
                 SaveData.r.InvalidateRecord(record.Uuid);
             }
             return false;
@@ -189,11 +191,7 @@ public class InstanceRequest {
         Cancel();
         RNG.Seed(seed);
         replay?.metadata.ApplySettings();
-        //If we're running a shot demo, that disables achievements
-        Achievement.ACHIEVEMENT_PROGRESS_ENABLED = true;
         InstancedRequested.Publish(this);
-        //Re-enabled in replay class
-        Achievement.ACHIEVEMENT_PROGRESS_ENABLED = replay == null;
             
         return lowerRequest.Resolve(
             SelectCampaign,
@@ -215,9 +213,9 @@ public class InstanceRequest {
     }
 
     private bool SelectCampaign(CampaignRequest c) {
-        var tracker = NewTracker();
+        ICancellee tracker = NewTracker();
         bool _Finalize(string? endingKey = null) {
-            if (FinishAndPostReplay(MakeGameRecord(null, endingKey))) {
+            if (!tracker.Cancelled && FinishAndPostReplay(MakeGameRecord(null, endingKey))) {
                 Log.Unity($"Campaign complete for {c.campaign.campaign.key}. Returning to replay save screen.");
                 return true;
             } else return false;
@@ -303,19 +301,19 @@ public class InstanceRequest {
     
 
 
-    private static SceneConfig MaybeSaveReplayScene => 
-        (References.replaySaveMenu != null && (Replayer.IsRecording || Replayer.PostedReplay != null)) ?
+    private static SceneConfig MaybeSaveReplayScene(InstanceData d) => 
+        (References.replaySaveMenu != null && d.Replay is ReplayRecorder rr) ?
         References.replaySaveMenu : References.mainMenu;
 
     public const float WaitBeforeReturn = 2f;
 
-    public static bool DefaultReturn() => LoadScene(new SceneRequest(MaybeSaveReplayScene,
+    public static bool DefaultReturn(InstanceData d) => LoadScene(new SceneRequest(MaybeSaveReplayScene(d),
         SceneRequest.Reason.FINISH_RETURN,
         () => BackgroundOrchestrator.NextSceneStartupBGC = References.defaultMenuBackground));
     
-    public static bool ShowPracticeSuccessMenu() {
+    public static bool PracticeSuccess(InstanceData d) {
         if (SceneIntermediary.LOADING) return false;
-        EngineStateManager.SendSuccessEvent();
+        InstanceData.PracticeSuccess.Proc();
         return true;
     }
     public static bool ViewReplay(Replay r) {
@@ -328,7 +326,7 @@ public class InstanceRequest {
     public static bool RunCampaign(SMAnalysis.AnalyzedCampaign? campaign, Action? cb, 
         SharedInstanceMetadata metadata) {
         if (campaign == null) return false;
-        var req = new InstanceRequest(() => LoadScene(new SceneRequest(MaybeSaveReplayScene, 
+        var req = new InstanceRequest(d => LoadScene(new SceneRequest(MaybeSaveReplayScene(d), 
             SceneRequest.Reason.FINISH_RETURN, () => {
                 cb?.Invoke();
                 BackgroundOrchestrator.NextSceneStartupBGC = References.defaultMenuBackground;
@@ -353,17 +351,19 @@ public class InstanceRequest {
     }
     
     /// <summary>
-    /// Sent before the instance is run.
+    /// Sent before the instance is run. Sent even if the instance was a replay.
     /// </summary>
-    public static readonly Events.Event<InstanceRequest> InstancedRequested = new Events.Event<InstanceRequest>();
+    public static readonly Event<InstanceRequest> InstancedRequested = new Event<InstanceRequest>();
     /// <summary>
     /// Sent once the stage is completed (during a campaign only), before the next stage is loaded.
     /// </summary>
-    public static readonly Events.Event<(string campaign, int stage)> StageCompleted =
-        new Events.Event<(string, int)>();
+    public static readonly Event<(string campaign, int stage)> StageCompleted =
+        new Event<(string, int)>();
     /// <summary>
     /// Sent once the instance is completed (during any mode), before returning to the main menu (or wherever).
+    /// Sent even if the instance was a replay. 
     /// </summary>
-    public static readonly Events.Event<InstanceRecord> InstanceCompleted = new Events.Event<InstanceRecord>();
+    public static readonly Event<(InstanceData data, InstanceRecord record)> InstanceCompleted = 
+        new Event<(InstanceData, InstanceRecord)>();
 }
 }

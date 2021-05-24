@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using BagoumLib;
+using BagoumLib.Cancellation;
+using BagoumLib.DataStructures;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Danmaku;

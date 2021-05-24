@@ -26,7 +26,7 @@ public class ContinuousAudio : ProcReader {
 
     protected override void BindListeners() {
         base.BindListeners();
-        Listen(Events.GameStateHasChanged, HandleGameStateChange);
+        Listen(Events.EngineStateHasChanged, HandleEngineStateChange);
     }
 
     public override int UpdatePriority => UpdatePriorities.SLOW;
@@ -45,7 +45,7 @@ public class ContinuousAudio : ProcReader {
         }
     }
 
-    private void HandleGameStateChange(EngineState state) {
+    private void HandleEngineStateChange(EngineState state) {
         if (state.IsPaused()) {
             src.Stop();
             ResetProcs();

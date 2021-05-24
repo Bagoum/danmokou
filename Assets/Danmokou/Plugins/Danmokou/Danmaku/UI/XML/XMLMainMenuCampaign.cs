@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using BagoumLib;
+using BagoumLib.Cancellation;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Danmaku;
@@ -117,21 +119,15 @@ public class XMLMainMenuCampaign : XMLMainMenu {
                     demoPlayer = null;
                 }
                 demoCT?.Cancel();
-                Replayer.End(null);
+                GameManagement.DeactivateInstance();
             }
             void UpdateDemo() {
                 if (!enableDemo || shotSetup == null || demoPlayerSetup == null) return;
-                GameManagement.NewInstance(InstanceMode.NULL, null, 
-                    new InstanceRequest(() => true, smeta, new CampaignRequest(c!)));
-                if (demoPlayer == null) {
-                    demoPlayer = Instantiate(demoPlayerSetup).GetComponent<Player.PlayerController>();
-                }
-                demoPlayer.UpdateTeam((playerSelect.Value, shotSelect.Value), subshotSelect.Value);
-                demoPlayer.transform.position = new Vector2(0, -3);
-                Replayer.End(null);
+                GameManagement.DeactivateInstance();
                 var effShot = shotSelect.Value.GetSubshot(subshotSelect.Value);
+                ReplayActor r;
                 if (effShot.demoReplay != null) {
-                    Replayer.BeginReplaying(new Replayer.ReplayerConfig(
+                    r = Replayer.BeginReplaying(new Replayer.ReplayerConfig(
                         Replayer.ReplayerConfig.FinishMethod.REPEAT, 
                         effShot.demoReplay.Frames,
                         () => demoPlayer.transform.position = new Vector2(0, -3)
@@ -142,11 +138,18 @@ public class XMLMainMenuCampaign : XMLMainMenu {
                         StateMachineManager.FromText(effShot.demoSetupSM)?.Start(new SMHandoff(shotSetup, demoCT));
                     }
                 } else {
-                    Replayer.BeginReplaying(new Replayer.ReplayerConfig(
+                    r = Replayer.BeginReplaying(new Replayer.ReplayerConfig(
                         Replayer.ReplayerConfig.FinishMethod.REPEAT,
                         () => new []{new InputManager.FrameInput(0, 0, false, false, false, false, false, false, false)}
                     ));
                 }
+                GameManagement.NewInstance(InstanceMode.NULL, null, 
+                    new InstanceRequest(_ => true, smeta, new CampaignRequest(c!)), r);
+                if (demoPlayer == null) {
+                    demoPlayer = Instantiate(demoPlayerSetup).GetComponent<PlayerController>();
+                }
+                demoPlayer.UpdateTeam((playerSelect.Value, shotSelect.Value), subshotSelect.Value);
+                demoPlayer.transform.position = new Vector2(0, -3);
             }
             
             (ShipConfig player, FancyShotDisplay display)[] displays = c.campaign.players.Select(p =>
@@ -242,7 +245,7 @@ public class XMLMainMenuCampaign : XMLMainMenu {
                     new CacheNavigateUINode(TentativeCache, phase.Title).SetConfirmOverride(
                         GetDifficultyThenShot(stage.campaign.campaign, meta => {
                             ConfirmCache();
-                            return new InstanceRequest(InstanceRequest.ShowPracticeSuccessMenu, meta,
+                            return new InstanceRequest(InstanceRequest.PracticeSuccess, meta,
                                 stage: new StagePracticeRequest(stage, phase.index)).Run();
                         })
                     )
@@ -250,7 +253,7 @@ public class XMLMainMenuCampaign : XMLMainMenu {
                     new CacheNavigateUINode(TentativeCache, practice_fullstage).SetConfirmOverride(
                         GetDifficultyThenShot(stage.campaign.campaign, meta => {
                             ConfirmCache();
-                            return new InstanceRequest(InstanceRequest.ShowPracticeSuccessMenu, meta,
+                            return new InstanceRequest(InstanceRequest.PracticeSuccess, meta,
                                 stage: new StagePracticeRequest(stage, 1)).Run();
                         })
                     )
@@ -265,7 +268,7 @@ public class XMLMainMenuCampaign : XMLMainMenu {
                     return new CacheNavigateUINode(TentativeCache, phase.Title).SetConfirmOverride(
                         GetDifficultyThenShot(boss.campaign.campaign, meta => {
                             ConfirmCache();
-                            return new InstanceRequest(InstanceRequest.ShowPracticeSuccessMenu, meta,
+                            return new InstanceRequest(InstanceRequest.PracticeSuccess, meta,
                                 boss: req).Run();
                         })
                     ).With(SpellPracticeNodeV).With(ev => {

@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using BagoumLib.Cancellation;
+using BagoumLib.DataStructures;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using UnityEngine;

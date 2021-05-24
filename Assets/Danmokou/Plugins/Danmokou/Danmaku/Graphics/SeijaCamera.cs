@@ -110,7 +110,9 @@ public class SeijaCamera : CoroutineRegularUpdater, IShaderCamera {
     }
 
     public void ShowBlackHole(BlackHoleEffect bhe) {
-        RunRIEnumerator(BlackHole(bhe));
+        //Since the seijaMaterial is reinstantiated every time the UI is recreated, we don't need to worry about
+        // carryover
+        RunDroppableRIEnumerator(BlackHole(bhe));
     }
 
     [ContextMenu("Black hole")]

@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using BagoumLib;
 using Danmokou.DMath;
 using JetBrains.Annotations;
 using UnityEngine;
@@ -23,7 +24,7 @@ public static class Extensions {
         }
         return ct;
     }
-
+/*
     private static Action<Task> WrapRethrow(Action cb) => t => {
         Exception? exc = t.Exception;
         try {
@@ -32,13 +33,13 @@ public static class Extensions {
             exc = new Exception(e.Message, exc);
         }
         if (exc != null) {
-            Log.UnityError("Task exceptions:\n" + Log.StackInnerException(exc).Message);
+            Log.UnityError("Task exceptions:\n" + Exceptions.FlattenNestedException(exc).Message);
             throw exc;
         }
     };
 
     public static Task ContinueWithSync(this Task t, Action done) =>
-        t.ContinueWith(WrapRethrow(done), TaskContinuationOptions.ExecuteSynchronously);
+        t.ContinueWith(WrapRethrow(done), TaskContinuationOptions.ExecuteSynchronously);*/
 
     private static T Private<T>(this object obj, string privateField) => (T) obj.GetType()
         .GetField(privateField, BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(obj)!;
@@ -60,215 +61,6 @@ public static class Extensions {
     }
 }
 
-public static class ArrayExtensions {
-
-    public static void Insert<T>(this T[] arr, ref int count, T obj, int at) {
-        if (count == arr.Length) throw new IndexOutOfRangeException();
-        Array.Copy(arr, at, arr, at + 1, count++ - at);
-        arr[at] = obj;
-    }
-
-    public static T[] Extend<T>(this T[] first, T[] second) {
-        var ret = new T[first.Length + second.Length];
-        Array.Copy(first, 0, ret, 0, first.Length);
-        Array.Copy(second, 0, ret, first.Length, second.Length);
-        return ret;
-    }
-
-    public static T ModIndex<T>(this T[] arr, int index) => arr[M.Mod(arr.Length, index)];
-
-    public static T? Try<T>(this IList<T> arr, int index) where T : class {
-        if (index >= 0 && index < arr.Count) return arr[index];
-        return null;
-    }
-
-    public static T? TryN<T>(this IList<T> arr, int index) where T : struct {
-        if (index >= 0 && index < arr.Count) return arr[index];
-        return null;
-    }
-
-    public static bool Try<T>(this T[] arr, int index, out T res) where T : class {
-        if (index >= 0 && index < arr.Length) {
-            res = arr[index];
-            return true;
-        }
-        res = null!;
-        return false;
-    }
-
-    public static T Try<T>(this T[] arr, int index, T deflt) {
-        if (index >= 0 && index < arr.Length) return arr[index];
-        return deflt;
-    }
-
-    /// <summary>
-    /// Returns -1 if not found
-    /// </summary>
-    public static int IndexOf<T>(this T[] arr, T obj) where T : class {
-        for (int ii = 0; ii < arr.Length; ++ii) {
-            if (arr[ii] == obj) return ii;
-        }
-        return -1;
-    }
-
-    /// <summary>
-    /// Returns the first T such that the associated priority is LEQ the given priority.
-    /// Make sure the array is sorted from lowest to highest priority.
-    /// </summary>
-    public static T GetBounded<T>(this (int priority, T)[] arr, int priority, T deflt) {
-        var result = deflt;
-        for (int ii = 0; ii < arr.Length; ++ii) {
-            if (priority >= arr[ii].priority) result = arr[ii].Item2;
-            else break;
-        }
-        return result;
-    }
-}
-
-public interface IUnrollable<T> {
-    IEnumerable<T> Values { get; }
-}
-
-public static class IEnumExtensions {
-    public static IEnumerable<(int idx, T val)> Enumerate<T>(this IEnumerable<T> arr) => arr.Select((x, i) => (i, x));
-
-    public static void ForEach<T>(this IEnumerable<T> arr, Action<T> act) {
-        foreach (var ele in arr) {
-            act(ele);
-        }
-    }
-
-    public static void ForEachI<T>(this IEnumerable<T> arr, Action<int, T> act) {
-        foreach (var (i, ele) in arr.Enumerate()) {
-            act(i, ele);
-        }
-    }
-
-    public static IEnumerable<T> Unroll<T>(this IEnumerable<T> arr) {
-        foreach (var p in arr) {
-            if (p is IUnrollable<T> ur) {
-                foreach (var res in ur.Values.Unroll()) yield return res;
-            } else {
-                yield return p;
-            }
-        }
-    }
-
-    public static IEnumerable<int> Range(this int max) {
-        for (int ii = 0; ii < max; ++ii) yield return ii;
-    }
-
-    public static IEnumerable<int> Range(this (int min, int max) bound) {
-        for (int ii = bound.min; ii < bound.max; ++ii) yield return ii;
-    }
-
-    public static IEnumerable<double> Step(this (double min, double max) bound, double step) {
-        for (double x = bound.min; x < bound.max; x += step) yield return x;
-    }
-    public static IEnumerable<U> SelectNotNull<T, U>(this IEnumerable<T> arr, Func<T, U?> f) where U : class {
-        foreach (var x in arr) {
-            var y = f(x);
-            if (y != null) yield return y;
-        }
-    }
-    public static IEnumerable<U> SelectNotNull<T, U>(this IEnumerable<T> arr, Func<T, U?> f) where U : struct {
-        foreach (var x in arr) {
-            var y = f(x);
-            if (y.HasValue) yield return y.Value;
-        }
-    }
-
-    public static IEnumerable<T> NotNull<T>(this IEnumerable<T?> arr) where T : class => arr.Where(x => x != null)!;
-
-    public static int IndexOf<T>(this IEnumerable<T> arr, Func<T, bool> pred) {
-        foreach (var (i, x) in arr.Enumerate()) {
-            if (pred(x)) return i;
-        }
-        return -1;
-    }
-
-    public static T? FirstOrNull<T>(this IEnumerable<T> arr) where T : struct {
-        foreach (var x in arr) return x;
-        return null;
-    }
-
-    public static IEnumerable<T> FilterNone<T>(this IEnumerable<T?> arr) where T : struct {
-        foreach (var x in arr) {
-            if (x.Try(out var y)) yield return y;
-        }
-    }
-    public static IEnumerable<T> FilterNone<T>(this IEnumerable<T?> arr) where T : class {
-        foreach (var x in arr) {
-            if (x != null) yield return x;
-        }
-    }
-
-    public static IEnumerable<(K key, V value)> Items<K, V>(this Dictionary<K, V> dict) => dict.Keys.Select(k => (k, dict[k]));
-
-    public static IEnumerable<(K key, V[] values)> GroupToArray<K, V>(this IEnumerable<IGrouping<K, V>> grp) =>
-        grp.Select(g => (g.Key, g.ToArray()));
-
-    public static (K key, V[] values) MaxByGroupSize<K, V>(this IEnumerable<IGrouping<K, V>> grp) =>
-        grp.GroupToArray().MaxBy(g => g.values.Length);
-
-    public static T MaxBy<T, U>(this IEnumerable<T> arr, Func<T, U> selector) where U : IComparable<U> {
-        bool first = true;
-        T obj = default!;
-        U val = default!;
-        foreach (var item in arr) {
-            if (first) {
-                first = false;
-                obj = item;
-                val = selector(item);
-            } else {
-                var nextVal = selector(item);
-                if (nextVal.CompareTo(val) > 0) {
-                    obj = item;
-                    val = nextVal;
-                }
-            }
-        }
-        return obj;
-    }
-    public static (T obj, U val) MaxByWith<T, U>(this IEnumerable<T> arr, Func<T, U> selector) where U : IComparable<U> {
-        bool first = true;
-        T obj = default!;
-        U val = default!;
-        foreach (var item in arr) {
-            if (first) {
-                first = false;
-                obj = item;
-                val = selector(item);
-            } else {
-                var nextVal = selector(item);
-                if (nextVal.CompareTo(val) > 0) {
-                    obj = item;
-                    val = nextVal;
-                }
-            }
-        }
-        return (obj, val);
-    }
-}
-
-public static class ListExtensions {
-    public static void AssignOrExtend<T>(this List<T> from, ref List<T>? into) {
-        if (into == null) into = from;
-        else into.AddRange(from);
-    }
-
-    public static void IncrLoop<T>(this List<T> arr, ref int idx) => arr.Count.IncrLoop(ref idx);
-
-    public static void DecrLoop<T>(this List<T> arr, ref int idx) => arr.Count.DecrLoop(ref idx);
-
-    public static void IncrLoop(this int mod, ref int idx) {
-        if (++idx >= mod) idx = 0;
-    }
-
-    public static void DecrLoop(this int mod, ref int idx) {
-        if (--idx < 0) idx = mod - 1;
-    }
-}
 
 public static class DictExtensions {
     public static V GetOrThrow<K, V>(this Dictionary<K, V> dict, K key) {
@@ -412,43 +204,10 @@ public static class DictExtensions {
 public static class FuncExtensions {
     public static Func<bool> Or(this Func<bool> x, Func<bool> y) => () => x() || y();
 
-    public static Action Void<T>(this Func<T>? x) => () => x?.Invoke();
-
-    public static Action Link(this Action a, Action b) => () => {
+    public static Action Then(this Action a, Action b) => () => {
         a();
         b();
     };
-
-}
-
-public static class NullableExtensions {
-    public static bool? And(this bool? x, bool y) => x.HasValue ? (bool?) (x.Value && y) : null;
-    public static bool? Or(this bool? x, bool y) => x.HasValue ? (bool?) (x.Value || y) : null;
-
-    public static U? FMap<T, U>(this T? x, Func<T, U> f) where T : struct where U : struct
-        => x.HasValue ? (U?) f(x.Value) : null;
-
-    public static U? Bind<T, U>(this T? x, Func<T, U?> f) where T : struct where U : struct
-        => x.HasValue ? f(x.Value) : null;
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool Try<T>(this T? x, out T y) where T : struct {
-        if (x.HasValue) {
-            y = x.Value;
-            return true;
-        } else {
-            y = default;
-            return false;
-        }
-    }
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool Try<T>(this T? x, out T y) where T : class {
-        y = x!;
-        return x != null;
-    }
-
-    public static T Elvis<T>(this T? x, T y) where T : UnityEngine.Object
-        => (x == null) ? y : x;
 
 }
 
@@ -485,17 +244,14 @@ public static class NumExtensions {
 }
 
 public static class UnityExtensions {
-    
+    public static T Elvis<T>(this T? x, T y) where T : UnityEngine.Object
+        => (x == null) ? y : x;
+
     public static void SetAlpha(this SpriteRenderer sr, float a) {
         var c = sr.color;
         c.a = a;
         sr.color = c;
     }
-}
-
-public static class DataStructExtensions {
-    public static T? TryPeek<T>(this Stack<T> stack) where T : class =>
-        stack.Count > 0 ? stack.Peek() : null;
 }
 
 }

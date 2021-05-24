@@ -139,6 +139,7 @@ MonoBehaviour:
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
+    allowGraze: 0
   displayer: {fileID: 0}
   viewfinder: {fileID: 8581214160018099304}
   flash: {fileID: 5777825400509757418}
@@ -425,5 +426,6 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_renderer: {fileID: 8581214161124765730}
   m_maskType: 0
+  _SortingLayer: 0
   _SortingLayerID: -247109493
   _SortingOrder: 1

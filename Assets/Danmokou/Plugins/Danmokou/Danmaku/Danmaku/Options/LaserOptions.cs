@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using BagoumLib;
+using BagoumLib.Cancellation;
 using Danmokou.Core;
 using Danmokou.Danmaku.Descriptors;
 using Danmokou.DMath;

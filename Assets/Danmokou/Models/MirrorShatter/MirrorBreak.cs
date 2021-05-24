@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Linq;
+using BagoumLib;
 using Danmokou.Core;
 using Danmokou.DMath;
 using UnityEngine;
@@ -40,11 +41,8 @@ public class MirrorBreak : CoroutineRegularUpdater {
         controller.gameObject.SetActive(true);
         for (; t < shatterDelay; t += ETime.FRAME_TIME) yield return null;
         foreach (var c in children) {
-            RunDroppableRIEnumerator(
-                c.RotateTo(RNG.GetV3OffFrame(rotateMin, rotateMax), scaleRotateFor, M.EOutQuad));
-            RunDroppableRIEnumerator(
-                c.ScaleBy(RNG.GetFloatOffFrame(scaleRange.x, scaleRange.y), scaleRotateFor,
-                M.EOutQuad));
+            c.RotateTo(RNG.GetV3OffFrame(rotateMin, rotateMax), scaleRotateFor, M.EOutQuad).Run(this);
+            c.ScaleBy(RNG.GetFloatOffFrame(scaleRange.x, scaleRange.y), scaleRotateFor, M.EOutQuad).Run(this);
             RunDroppableRIEnumerator(Fall(c, RNG.GetFloatOffFrame(fallDelay.x, fallDelay.y), fallAccel));
         }
     }

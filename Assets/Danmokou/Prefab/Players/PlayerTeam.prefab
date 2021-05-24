@@ -179,6 +179,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 0ad5898c3351494468a4cd358d676fd4, type: 2}
   - {fileID: 11400000, guid: 78487260bb2833846a11a012c40191cf, type: 2}
   defaultSubshot: 0
+  defaultSupport: {fileID: 11400000, guid: a735d449cc1221c449d66e9929f98cca, type: 2}
   hitbox: {fileID: 11400000, guid: d20af02baec12db42baba53da24bff95, type: 2}
   hitboxSprite: {fileID: 3290238122766512372}
   meter: {fileID: 3290238123035701155}

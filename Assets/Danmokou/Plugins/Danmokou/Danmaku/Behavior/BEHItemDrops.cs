@@ -10,8 +10,8 @@ public partial class BehaviorEntity {
     
 
     private const float LABEL_RAD = 0.67f;
-    public void DropDropLabel(IGradient color, string text, float speed=0.4f, float ttl=0.7f) {
-        var req = new LabelRequestContext(Loc, LABEL_RAD, speed, RNG.GetFloatOffFrame(40, 140), ttl, color, text);
+    public void DropDropLabel(IGradient color, string text, float speed=0.4f, float ttl=0.7f, float multiplier=1f) {
+        var req = new LabelRequestContext(Loc, LABEL_RAD, speed, RNG.GetFloatOffFrame(40, 140), ttl, color, text, multiplier);
         ItemPooler.RequestLabel(req);
     }
     

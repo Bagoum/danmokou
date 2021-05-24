@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using BagoumLib.Cancellation;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Danmaku;
@@ -52,7 +53,7 @@ public class MiniTutorial : BehaviorEntity {
         target.transform.localPosition = y.HasValue ? new Vector2(defaultLoc[target].x, y.Value) : defaultLoc[target];
     }
 
-    public override bool UpdateDuringPause => true;
+    public override EngineState UpdateDuring => EngineState.MENU_PAUSE;
 
     private IEnumerator RunTutorial(Action cb) {
         IEnumerator wait(Func<bool> cond) {
@@ -60,7 +61,7 @@ public class MiniTutorial : BehaviorEntity {
         }
         IEnumerator confirm() {
             yield return null;
-            yield return wait(() => UIConfirm.Active && !EngineStateManager.IsPaused);
+            yield return wait(() => UIConfirm.Active && EngineStateManager.State == EngineState.RUN);
         }
         DependencyInjection.Find<IUIManager>()
             .SetSpellname("Reduced Tutorial (For Players Too Smart for the Normal Tutorial)");

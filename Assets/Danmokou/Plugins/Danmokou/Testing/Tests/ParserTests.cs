@@ -1,4 +1,5 @@
 ﻿using System;
+using Danmokou.Core;
 using Danmokou.DMath;
 using Danmokou.Expressions;
 using Danmokou.Reflection;
@@ -79,7 +80,7 @@ public static class ParserTests {
 
     [Test]
     public static void tmp() {
-        
+        GameManagement.NewInstance(InstanceMode.NULL);
         AreEqual("(-1 + x + 2 * y + 3)".Into<BPY>()(new ParametricInfo() { loc = new Vector2(5, 10)}), 27);
         "(/ 5 * ^ dl 0.8 24)".Into<BPY>();
         AreEqual(@"

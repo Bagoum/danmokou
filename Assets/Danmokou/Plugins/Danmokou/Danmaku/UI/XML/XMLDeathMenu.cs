@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using Danmokou.Core;
+using Danmokou.GameInstance;
 using Danmokou.Scriptables;
 using Danmokou.Services;
 using UnityEngine.UIElements;
@@ -13,10 +14,7 @@ namespace Danmokou.UI.XML {
 /// Class to manage the death menu UI.
 /// </summary>
 [Preserve]
-public class XMLDeathMenu : XMLMenu {
-    public VisualTreeAsset UIScreen = null!;
-    public SFXConfig? openPauseSound;
-    public SFXConfig? closePauseSound;
+public class XMLDeathMenu : PausedGameplayMenu {
 
     protected override string HeaderOverride => death_header;
 
@@ -28,7 +26,7 @@ public class XMLDeathMenu : XMLMenu {
         MainScreen = new UIScreen(
             new FuncNode(() => {
                 if (GameManagement.Instance.TryContinue()) {
-                    EngineStateManager.AnimatedUnpause();
+                    ProtectHide(HideMe);
                     return true;
                 } else return false;
             }, () => death_continue_ls(GameManagement.Instance.Continues), true)
@@ -48,23 +46,9 @@ public class XMLDeathMenu : XMLMenu {
         UI.style.right = UIManager.MenuRightOffset;
     }
 
-    public void HideMe(bool sfx = false) {
-        if (UITop != null) {
-            if (sfx) 
-                DependencyInjection.SFXService.Request(closePauseSound);
-            UITop.style.display = DisplayStyle.None;
-            MenuActive = false;
-        }
-    }
-
-    public void ShowMe() {
-        if (UITop != null && !MenuActive) {
-            MenuActive = true;
-            DependencyInjection.SFXService.Request(openPauseSound);
-            UITop.style.display = DisplayStyle.Flex;
-            ResetCurrentNode();
-            Redraw();
-        }
+    protected override void BindListeners() {
+        base.BindListeners();
+        Listen(InstanceData.GameOver, ShowMe);
     }
 }
 }

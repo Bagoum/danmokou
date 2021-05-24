@@ -3,6 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
+using BagoumLib;
+using BagoumLib.Cancellation;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Danmaku.Descriptors;
@@ -26,6 +28,7 @@ using Ex = System.Linq.Expressions.Expression;
 using ExBPY = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<float>>;
 using ExTP = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<UnityEngine.Vector2>>;
 using ExBPRV2 = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<Danmokou.DMath.V2RV2>>;
+using static BagoumLib.Tasks.WaitingUtils;
 
 namespace Danmokou.Danmaku.Patterns {
 public delegate void SyncPattern(SyncHandoff sbh);
@@ -115,7 +118,7 @@ public struct AsyncHandoff {
     /// <param name="smh"></param>
     public AsyncHandoff(DelegatedCreator bc, V2RV2 rv2, Action done, SMHandoff smh) {
         this.ch = new CommonHandoff(smh.ch.cT, bc, smh.GCX.Copy(rv2));
-        this.done = FuncExtensions.Link(ch.gcx.Dispose, done);
+        this.done = FuncExtensions.Then(ch.gcx.Dispose, done);
         exec = smh.Exec;
         framesOffset = 0f;
     }
@@ -135,7 +138,7 @@ public struct AsyncHandoff {
     /// <param name="t">Task to await on for this object's completion</param>
     public AsyncHandoff(SMHandoff smh, V2RV2 rv2, out Task t) {
         this.ch = new CommonHandoff(smh.ch.cT, new DelegatedCreator(smh.Exec, "_"), smh.GCX.Copy(rv2));
-        done = FuncExtensions.Link(ch.gcx.Dispose, WaitingUtils.GetAwaiter(out t));
+        done = FuncExtensions.Then(ch.gcx.Dispose, GetAwaiter(out t));
         exec = smh.Exec;
         framesOffset = 0f;
     }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using BagoumLib.DataStructures;
 using Danmokou.Core;
 using Danmokou.DMath;
 using Danmokou.Services;
@@ -100,8 +101,8 @@ noop") as PhaseSM).TField<PhaseProperties>("props");
         AreEqual(false, props.HideTimeout);
         var r = Events.Event0.Find("evRight");
         var l = Events.Event0.Find("evLeft");
-        AreEqual(l.TField<DMCompactingArray<Action>>("callbacks").arr[0], r.TField<DeletionMarker<Action>>("refractor"));
-        AreEqual(r.TField<DMCompactingArray<Action>>("callbacks").arr[0], l.TField<DeletionMarker<Action>>("refractor"));
+        AreEqual(l.TField<DMCompactingArray<Action>>("callbacks").Data[0], r.TField<DeletionMarker<Action>>("refractor"));
+        AreEqual(r.TField<DMCompactingArray<Action>>("callbacks").Data[0], l.TField<DeletionMarker<Action>>("refractor"));
         AreEqual(true, l.TField<bool>("useRefractoryPeriod"));
         AreEqual(true, r.TField<bool>("useRefractoryPeriod"));
         Events.Event0.DestroyAll();

@@ -61,7 +61,7 @@ public abstract class XMLMenu : RegularUpdater {
     }
 
     public VisualElement UI { get; private set; } = null!;
-    protected VisualElement? UITop;
+    protected VisualElement UITop;
 
     protected virtual string UITopID => "Pause";
     protected virtual string ScreenContainerID => "UIContainer";
@@ -164,13 +164,13 @@ public abstract class XMLMenu : RegularUpdater {
         }
     }
 
-    public override bool UpdateDuringPause => true;
+    public override EngineState UpdateDuring => EngineState.MENU_PAUSE;
 
-    private bool isTransitioning = false;
+    public MultiAdder Disabler { get; } = new MultiAdder(0, null);
 
+    protected bool RegularUpdateGuard => Application.isPlaying && ETime.FirstUpdateForScreen && Disabler.Value == 0;
     public override void RegularUpdate() {
-        if (!Application.isPlaying || !ETime.FirstUpdateForScreen) return;
-        if (Current != null && MenuActive && !isTransitioning) {
+        if (RegularUpdateGuard && Current != null && MenuActive) {
             bool tried_change = true;
             bool allowsfx = true;
             var last = Current;
@@ -234,7 +234,7 @@ public abstract class XMLMenu : RegularUpdater {
             OnChangeEffects(prev);
         } else {
             prev.screen.RunPreExit();
-            isTransitioning = true;
+            var token = Disabler.CreateToken1(MultiOp.Priority.ALL);
             next.screen.RunPreEnter();
             void GoToNested() {
                 if (backwards) {
@@ -251,7 +251,7 @@ public abstract class XMLMenu : RegularUpdater {
                         uiRenderer.Slide(GetRandomSlideEndpoint(), Vector2.zero, swipeTime, M.EOutSine, s2 => {
                             if (s2) {
                                 next.screen.RunPostEnter();
-                                isTransitioning = false;
+                                token.TryRevoke();
                             }
                         });
                     }

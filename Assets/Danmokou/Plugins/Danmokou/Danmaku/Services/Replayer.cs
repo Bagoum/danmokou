@@ -56,14 +56,101 @@ public readonly struct Replay {
     public readonly Func<FrameInput[]> frames;
     public readonly ReplayMetadata metadata;
 
-    public Replay(FrameInput[] frames, InstanceRecord rec, bool debug=false) :
-        this(() => frames, new ReplayMetadata(rec, debug)) {
+    public Replay(FrameInput[] frames, InstanceRecord rec, bool? debug=null) :
+        this(() => frames, new ReplayMetadata(rec, debug ?? false)) {
         metadata.Length = frames.Length;
     }
 
     public Replay(Func<FrameInput[]> frames, ReplayMetadata metadata) {
         this.frames = frames;
         this.metadata = metadata;
+    }
+}
+
+public abstract class ReplayActor {
+    public bool Cancelled { get; protected set; } = false;
+    public int LastFrame { get; set; }= -1;
+    private int? replayStartFrame;
+    protected int ReplayStartFrame {
+        get {
+            if (replayStartFrame == null) {
+                ETime.ResetFrameNumber();
+                replayStartFrame = 0;
+            }
+            return replayStartFrame.Value;
+        }
+    }
+    protected int ReplayIndex => 
+        //Sorry for this order but replaystartframe may reset the frame number
+        -ReplayStartFrame + (LastFrame = ETime.FrameNumber);
+
+    public abstract void Step();
+    public virtual void Load() { }
+
+    public virtual void Cancel() => Cancelled = true;
+}
+
+public class ReplayRecorder : ReplayActor {
+    private readonly List<FrameInput> recording;
+    public IEnumerable<FrameInput> Recording => recording;
+
+    public ReplayRecorder() {
+        this.recording = new List<FrameInput>(1000000);
+    }
+
+    public override void Step() {
+        _ = ReplayIndex;
+        if (InputManager.ReplayDebugSave.Active)
+            Replayer.SaveDebugReplay();
+        recording.Add(RecordFrame);
+    }
+
+    public Replay Compile(InstanceRecord rec, bool? debug = null) {
+        Log.Unity($"Finished recording {recording.Count} frames.");
+        return new Replay(recording.ToArray(), rec, debug);
+    }
+}
+
+public class ReplayPlayer : ReplayActor {
+    public readonly Replayer.ReplayerConfig replaying;
+    private FrameInput[]? loadedFrames;
+    private FrameInput[] LoadedFrames => loadedFrames ??= replaying.frames();
+    
+    private readonly MultiAdder.Token token;
+
+    public ReplayPlayer(Replayer.ReplayerConfig replaying) {
+        token = Achievement.ACHIEVEMENT_PROGRESS_ENABLED.CreateToken1(MultiOp.Priority.ALL);
+        this.replaying = replaying;
+    }
+    public ReplayPlayer(ReplayPlayer prev) {
+        token = Achievement.ACHIEVEMENT_PROGRESS_ENABLED.CreateToken1(MultiOp.Priority.ALL);
+        this.replaying = prev.replaying;
+        this.loadedFrames = prev.loadedFrames;
+    }
+
+    public override void Load() {
+        var _ = LoadedFrames;
+    }
+    
+    public override void Step() {
+        if (ReplayIndex >= LoadedFrames.Length) {
+            replaying.onFinish?.Invoke();
+            Cancel();
+            if (replaying.finishMethod == Replayer.ReplayerConfig.FinishMethod.REPEAT) {
+                Log.Unity("Restarting replay.");
+                Replayer.BeginReplaying(this).Step();
+            } else if (replaying.finishMethod == Replayer.ReplayerConfig.FinishMethod.STOP) {
+            } else
+                Log.UnityError($"Ran out of replay data. On frame {LastFrame}, requested index {ReplayIndex}, " +
+                               $"but there are only {LoadedFrames.Length}.");
+        } else
+            ReplayFrame(LoadedFrames[ReplayIndex]);
+    }
+
+    public override void Cancel() {
+        Log.Unity($"Finished replaying {LastFrame - ReplayStartFrame + 1}/{LoadedFrames?.Length ?? 0} frames.");
+        token.TryRevoke();
+        base.Cancel();
     }
 }
 
@@ -98,117 +185,63 @@ public static class Replayer {
         public override bool Equals(object o) => o is ReplayerConfig bc && this == bc;
     }
 
-    private static ReplayStatus status = ReplayStatus.NONE;
-    private static int lastFrame = -1;
-    private static int? replayStartFrame;
-    private static int ReplayStartFrame {
+    private static ReplayActor? actor;
+    private static ReplayActor? Actor {
         get {
-            if (replayStartFrame == null) {
-                ETime.ResetFrameNumber();
-                replayStartFrame = 0;
+            if (actor?.Cancelled == true)
+                actor = null;
+            return actor;
+        }
+        set {
+            if (actor?.Cancelled == false) {
+                Log.UnityError($"Setting a new replay actor before the previous one {actor} is completed");
+                actor.Cancel();
             }
-            return replayStartFrame.Value;
+            actor = value;
         }
     }
-    private static List<FrameInput>? recording;
-    private static ReplayerConfig? replaying;
-    private static FrameInput[]? loadedFrames;
-    private static FrameInput[]? LoadedFrames => loadedFrames ??= replaying?.frames.Invoke();
+    
+    private static ReplayStatus Status => Actor switch {
+        null => ReplayStatus.NONE,
+        ReplayRecorder _ => ReplayStatus.RECORDING,
+        ReplayPlayer _ => ReplayStatus.REPLAYING,
+        _ => throw new Exception($"Unhandled replay actor: {Actor}")
+    };
 
-    public static bool IsRecording => status == ReplayStatus.RECORDING;
-
-    public static Replay? PostedReplay { get; private set; } = null;
 
     public static void LoadLazy() {
-        var _ = LoadedFrames;
+        Actor?.Load();
     }
 
-    public static void BeginRecording() {
+    public static ReplayActor BeginRecording() {
         Log.Unity("Replay recording started.");
-        lastFrame = -1;
-        replayStartFrame = null;
-        recording = new List<FrameInput>(1000000);
-        status = ReplayStatus.RECORDING;
-        PostedReplay = null;
+        return Actor = new ReplayRecorder();
     }
 
-    public static void BeginReplaying(ReplayerConfig data) {
+    public static ReplayActor BeginReplaying(ReplayerConfig data) {
         Log.Unity($"Replay playback started.");
-        Achievement.ACHIEVEMENT_PROGRESS_ENABLED = false;
-        lastFrame = -1;
-        replayStartFrame = null;
-        recording = null;
-        //Minor optimization for replay restart
-        if (!replaying.Try(out var r) || r != data) {
-            Log.Unity($"Setting frames to lazy-load for replay.");
-            loadedFrames = null;
-            replaying = data;
+        return Actor = new ReplayPlayer(data);
+    }
+    public static ReplayActor BeginReplaying(ReplayPlayer p) {
+        Log.Unity($"Replay playback started from existing config.");
+        return Actor = new ReplayPlayer(p);
+    }
+
+    public static void SaveDebugReplay() {
+        if (Actor is ReplayRecorder rr && GameManagement.Instance.Request != null) {
+            var r = rr.Compile(GameManagement.Instance.Request.MakeGameRecord(), true);
+            r.metadata.Record.AssignName($"Debug{RNG.RandStringOffFrame()}");
+            SaveData.p.SaveNewReplay(r);
+            Log.Unity($"Saved a debug replay {r.metadata.Record.CustomName}");
         }
-        status = ReplayStatus.REPLAYING;
-    }
 
-    public static Replay? End(InstanceRecord? rec) {
-        if (status == ReplayStatus.RECORDING) {
-            Log.Unity($"Finished recording {recording?.Count ?? -1} frames.");
-        } else if (status == ReplayStatus.REPLAYING) {
-            Log.Unity($"Finished replaying {lastFrame - ReplayStartFrame + 1}/{LoadedFrames?.Length ?? 0} frames.");
-        }
-        status = ReplayStatus.NONE;
-        Achievement.ACHIEVEMENT_PROGRESS_ENABLED = true;
-        PostedReplay = (recording != null && rec != null) ? new Replay(recording.ToArray(), rec) : (Replay?) null;
-        recording = null;
-        loadedFrames = null;
-        replaying = null;
-        return PostedReplay;
-    }
-
-    private static void SaveDebugReplay() {
-        if (recording == null ||
-            status != ReplayStatus.RECORDING ||
-            GameManagement.Instance.Request == null)
-            return;
-        
-        var r = new Replay(recording.ToArray(), GameManagement.Instance.Request.MakeGameRecord(), true);
-        r.metadata.Record.AssignName($"Debug{RNG.RandStringOffFrame()}");
-        SaveData.p.SaveNewReplay(r);
-        Log.Unity($"Saved a debug replay {r.metadata.Record.CustomName}");
-    }
-
-    public static void Cancel() {
-        Log.Unity("Cancelling in-progress replayer.");
-        status = ReplayStatus.NONE;
-        Achievement.ACHIEVEMENT_PROGRESS_ENABLED = true;
-        recording = null;
-        loadedFrames = null;
-        replaying = null;
-        PostedReplay = null;
     }
 
     public static void BeginFrame() {
-        if (lastFrame == ETime.FrameNumber) return; //during pause/load
-        //we want the counter to be treated the same for replay and record
-        //Sorry for this order but replaystartframe may reset the frame number
-        int replayIndex = -ReplayStartFrame + (lastFrame = ETime.FrameNumber);
         ReplayFrame(null);
-        if (status == ReplayStatus.RECORDING && recording != null) {
-            if (InputManager.ReplayDebugSave.Active)
-                SaveDebugReplay();
-            recording.Add(RecordFrame);
-        } else if (status == ReplayStatus.REPLAYING && LoadedFrames != null) {
-            if (replayIndex >= LoadedFrames.Length) {
-                replaying?.onFinish?.Invoke();
-                if (replaying?.finishMethod == ReplayerConfig.FinishMethod.REPEAT) {
-                    Log.Unity("Restarting replay.");
-                    BeginReplaying(replaying.Value);
-                    BeginFrame();
-                } else if (replaying?.finishMethod == ReplayerConfig.FinishMethod.STOP)
-                    Cancel();
-                else
-                    Log.UnityError($"Ran out of replay data. On frame {lastFrame}, requested index {replayIndex}, " +
-                                   $"but there are only {LoadedFrames.Length}.");
-            } else
-                ReplayFrame(LoadedFrames[replayIndex]);
-        }
+        if (Actor == null) return;
+        if (Actor.LastFrame == ETime.FrameNumber) return; //during pause/load
+        Actor.Step();
     }
 }
 }

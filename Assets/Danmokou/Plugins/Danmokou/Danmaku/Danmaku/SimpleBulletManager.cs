@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using BagoumLib;
+using BagoumLib.DataStructures;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Danmaku.Descriptors;
@@ -209,7 +211,7 @@ public partial class BulletManager {
         /// <param name="ind">Index of bullet.</param>
         public void DeleteSB(int ind) {
             if (!rem[ind]) {
-                arr[ind].bpi.Dispose();
+                Data[ind].bpi.Dispose();
                 Delete(ind);
             }
         }
@@ -221,7 +223,7 @@ public partial class BulletManager {
         public void DeleteSB_Collision(int ind) {
             if (!rem[ind]) {
                 for (int ii = 0; ii < onCollideControls.Count; ++ii) {
-                    onCollideControls[ii].action(this, ind, arr[ind].bpi);
+                    onCollideControls[ii].action(this, ind, Data[ind].bpi);
                 }
                 DeleteSB(ind);
             }
@@ -325,7 +327,7 @@ public partial class BulletManager {
         public MeshGenerator.RenderInfo GetOrLoadRI() => bc.GetOrLoadRI();
 
         public override BehaviorEntity GetINodeAt(int sbcind, string behName) {
-            ref SimpleBullet sb = ref arr[sbcind];
+            ref SimpleBullet sb = ref Data[sbcind];
             var mov = new Movement(sb.bpi.loc, V2RV2.Angle(sb.movement.angle));
             return BEHPooler.INode(mov, new ParametricInfo(in mov, sb.bpi.index), sb.direction, behName);
         }
@@ -353,7 +355,7 @@ public partial class BulletManager {
         public new void Add(ref SimpleBullet sb) => throw new Exception("Do not use SBC.Add");
         
         protected override void MakeCulledCopy(int ii) {
-            Culled.AddCulled(ref arr[ii]);
+            Culled.AddCulled(ref Data[ii]);
         }
 
         public override float NextDT => nextDT;
@@ -367,7 +369,7 @@ public partial class BulletManager {
             //Note on optimization: keeping accDelta in SB is faster(!) than either a local variable or a SBInProgress struct.
             for (int ii = 0; ii < temp_last; ++ii) {
                 if (!rem[ii]) {
-                    ref SimpleBullet sb = ref arr[ii];
+                    ref SimpleBullet sb = ref Data[ii];
                     nextDT = ETime.FRAME_TIME;
                     
                     for (int pi = 0; pi < postVelPcs; ++pi) 
@@ -407,7 +409,7 @@ public partial class BulletManager {
             for (int ii = 0; ii < count; ++ii) {
                 // During velocity iteration, bullet controls may destroy some items, so we need to do null checks.
                 if (!rem[ii]) {
-                    ref SimpleBullet sbn = ref arr[ii];
+                    ref SimpleBullet sbn = ref Data[ii];
                     bool checkGraze = false;
                     if (sbn.grazeFrameCounter-- == 0) {
                         sbn.grazeFrameCounter = 0;
@@ -436,7 +438,7 @@ public partial class BulletManager {
         public void NullCollisionCleanup() {
             for (int ii = 0; ii < count; ++ii) {
                 if (!rem[ii]) {
-                    ref SimpleBullet sbn = ref arr[ii];
+                    ref SimpleBullet sbn = ref Data[ii];
                     if (allowCameraCull && (++sbn.cullFrameCounter & CULL_EVERY_MASK) == 0 && LocationHelpers.OffPlayableScreenBy(bc.CULL_RAD, sbn.bpi.loc)) {
                         DeleteSB(ii);
                     }
@@ -454,7 +456,7 @@ public partial class BulletManager {
             int fciL = fci.Count;
             for (int ii = 0; ii < count; ++ii) {
                 if (!rem[ii]) {
-                    ref SimpleBullet sbn = ref arr[ii];
+                    ref SimpleBullet sbn = ref Data[ii];
                     if ((++sbn.cullFrameCounter & CULL_EVERY_MASK) == 0 && LocationHelpers.OffPlayableScreenBy(bc.CULL_RAD, sbn.bpi.loc)) {
                         DeleteSB(ii);
                     } else if (sbn.bpi.ctx.playerBullet.Try(out var de) && (de.data.bossDmg > 0 || de.data.stageDmg > 0)) {
@@ -478,6 +480,10 @@ public partial class BulletManager {
         }
 
         public void Reset() {
+            for (int ii = 0; ii < count; ++ii) {
+                if (!rem[ii])
+                    DeleteSB(ii);
+            }
             // This should free links to BPY/VTP constructed by SMs going out of scope
             Empty();
             ResetPoolMetadata();
@@ -497,7 +503,7 @@ public partial class BulletManager {
                 int ib = 0;
                 for (; ib < batchSize && ii < Count; ++ii) {
                     if (!rem[ii]) {
-                        ref SimpleBullet sb = ref arr[ii];
+                        ref SimpleBullet sb = ref Data[ii];
                         ref var m = ref bm.matArr[ib];
                         m.m00 = m.m11 = sb.direction.x * sb.scale;
                         m.m10 = sb.direction.y * sb.scale;
@@ -525,7 +531,7 @@ public partial class BulletManager {
                 int ib = 0;
                 for (; ib < batchSize && ii < Count; ++ii) {
                     if (!rem[ii]) {
-                        ref SimpleBullet sb = ref arr[ii];
+                        ref SimpleBullet sb = ref Data[ii];
                         ref var m = ref bm.matArr[ib];
                         m.m00 = m.m11 = sb.direction.x * sb.scale;
                         m.m10 = sb.direction.y * sb.scale;
@@ -560,7 +566,7 @@ public partial class BulletManager {
                 int ib = 0;
                 for (; ib < batchSize && ii < Count; ++ii) {
                     if (!rem[ii]) {
-                        ref SimpleBullet sb = ref arr[ii];
+                        ref SimpleBullet sb = ref Data[ii];
                         bm.posDirArr[ib].x = sb.bpi.loc.x;
                         bm.posDirArr[ib].y = sb.bpi.loc.y;
                         bm.posDirArr[ib].z = sb.direction.x * sb.scale;
@@ -586,7 +592,7 @@ public partial class BulletManager {
                 int ib = 0;
                 for (; ib < batchSize && ii < Count; ++ii) {
                     if (!rem[ii]) {
-                        ref SimpleBullet sb = ref arr[ii];
+                        ref SimpleBullet sb = ref Data[ii];
                         bm.posDirArr[ib].x = sb.bpi.loc.x;
                         bm.posDirArr[ib].y = sb.bpi.loc.y;
                         bm.posDirArr[ib].z = sb.direction.x * sb.scale;
@@ -655,7 +661,7 @@ public partial class BulletManager {
         public override void UpdateVelocityAndControls() {
             for (int ii = 0; ii < temp_last; ++ii) {
                 if (!rem[ii]) {
-                    ref SimpleBullet sbn = ref arr[ii];
+                    ref SimpleBullet sbn = ref Data[ii];
                     //yes, it's supposed to be minus, we are going backwards to get fadeout effect
                     sbn.bpi.t -= ETime.FRAME_TIME;
                     if (sbn.bpi.t < 0) {
@@ -714,7 +720,7 @@ public partial class BulletManager {
         public override void UpdateVelocityAndControls() {
             for (int ii = 0; ii < temp_last; ++ii) {
                 if (!rem[ii]) {
-                    ref SimpleBullet sbn = ref arr[ii];
+                    ref SimpleBullet sbn = ref Data[ii];
                     sbn.bpi.t += ETime.FRAME_TIME;
                     if (sbn.bpi.t > ttl) {
                         DeleteSB(ii);
@@ -839,14 +845,14 @@ public partial class BulletManager {
         int total = 0;
         foreach (var pool in simpleBulletPools.Values) {
             total += pool.Count;
-            if (pool.Count > 0) Log.Unity($"{pool.Style}: {pool.Count} (-{pool.NullElements})", level: Log.Level.INFO);
-            if (pool.NumControls > 0) Log.Unity($"{pool.Style} has {pool.NumControls} controls", level: Log.Level.INFO);
+            if (pool.Count > 0) Log.Unity($"{pool.Style}: {pool.Count} (-{pool.NullElements})", level: LogLevel.INFO);
+            if (pool.NumControls > 0) Log.Unity($"{pool.Style} has {pool.NumControls} controls", level: LogLevel.INFO);
         }
         total += Bullet.NumBullets;
         Log.Unity($"Custom pools: {string.Join(", ", activeCNpc.Select(x => x.Style))}");
         Log.Unity($"Empty pools: {string.Join(", ", activeEmpty.Select(x => x.Style))}");
-        Log.Unity($"Fancy bullets: {Bullet.NumBullets}", level: Log.Level.INFO);
-        Log.Unity($"Total: {total}", level: Log.Level.INFO);
+        Log.Unity($"Fancy bullets: {Bullet.NumBullets}", level: LogLevel.INFO);
+        Log.Unity($"Total: {total}", level: LogLevel.INFO);
     }
     #endif
 }

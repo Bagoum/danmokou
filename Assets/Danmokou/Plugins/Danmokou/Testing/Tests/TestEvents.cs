@@ -35,17 +35,21 @@ public static class TestEvents {
         r.Proc();
         r.Proc();
         o.Proc();
-        ListEqClear(msgs, new List<string> { "r", "o" });
+        ListEq(msgs, new List<string> { "r", "o" });
+        msgs.Clear();
         r.Proc();
         c.Proc();
         r.Proc();
-        ListEqClear(msgs, new List<string> { "c", "r" });
+        ListEq(msgs, new List<string> { "c", "r" });
+        msgs.Clear();
         o.Proc();
         r.Proc();
-        ListEqClear(msgs, new List<string> { });
+        ListEq(msgs, new List<string> { });
+        msgs.Clear();
         c.Proc();
         r.Proc();
-        ListEqClear(msgs, new List<string> { "c", "r" });
+        ListEq(msgs, new List<string> { "c", "r" });
+        msgs.Clear();
         Events.Event0.DestroyAll();
     }
     

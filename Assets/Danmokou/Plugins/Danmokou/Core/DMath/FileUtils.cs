@@ -5,6 +5,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
+using BagoumLib;
 using Danmokou.Core;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
@@ -85,7 +86,7 @@ public static class FileUtils {
                 return JsonConvert.DeserializeObject<T>(sr.ReadToEnd());
             }
         } catch (Exception e) {
-            Log.Unity($"Couldn't read {typeof(T)} from file {file}. (JSON)", false, Log.Level.WARNING);
+            Log.Unity($"Couldn't read {typeof(T)} from file {file}. (JSON)", false, LogLevel.WARNING);
             return null;
         }
     }
@@ -95,7 +96,7 @@ public static class FileUtils {
                 return Serializer.Deserialize<T>(fr);
             }
         } catch (Exception e) {
-            Log.Unity($"Couldn't read {typeof(T)} from file {file}. (PROTO)", false, Log.Level.WARNING);
+            Log.Unity($"Couldn't read {typeof(T)} from file {file}. (PROTO)", false, LogLevel.WARNING);
             return null;
         }
     }
@@ -105,7 +106,7 @@ public static class FileUtils {
                 return Serializer.Deserialize<T>(InflateStream(fr));
             }
         } catch (Exception e) {
-            Log.Unity($"Couldn't read {typeof(T)} from file {file}. (PROTO-C)", false, Log.Level.WARNING);
+            Log.Unity($"Couldn't read {typeof(T)} from file {file}. (PROTO-C)", false, LogLevel.WARNING);
             return null;
         }
     }
@@ -115,7 +116,7 @@ public static class FileUtils {
                 return Serializer.Deserialize<T>(InflateStream(fr));
             }
         } catch (Exception e) {
-            Log.Unity($"Couldn't read {typeof(T)} from textAsset {file.name}. (PROTO-C)", false, Log.Level.WARNING);
+            Log.Unity($"Couldn't read {typeof(T)} from textAsset {file.name}. (PROTO-C)", false, LogLevel.WARNING);
             return null;
         }
     }

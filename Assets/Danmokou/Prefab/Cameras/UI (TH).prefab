@@ -5805,6 +5805,7 @@ MonoBehaviour:
   confirmSound: {fileID: 11400000, guid: 0575ca7e870172446b6877f8b91c7636, type: 2}
   failureSound: {fileID: 11400000, guid: d27fed347086bd648aad28a9b2fa76d8, type: 2}
   backSound: {fileID: 11400000, guid: d23b067b4fe25b04199a60093042cd98, type: 2}
+  manager: {fileID: 268707954954881333}
   UIScreen: {fileID: 9197481963319205126, guid: 922fb6b84b6a8c14e850d8a158241d3a,
     type: 3}
   openPauseSound: {fileID: 11400000, guid: 39c182daf18c49a498de6d96c7954706, type: 2}
@@ -8970,6 +8971,7 @@ MonoBehaviour:
   confirmSound: {fileID: 11400000, guid: 0575ca7e870172446b6877f8b91c7636, type: 2}
   failureSound: {fileID: 11400000, guid: d27fed347086bd648aad28a9b2fa76d8, type: 2}
   backSound: {fileID: 11400000, guid: d23b067b4fe25b04199a60093042cd98, type: 2}
+  manager: {fileID: 268707954954881333}
   UIScreen: {fileID: 9197481963319205126, guid: 922fb6b84b6a8c14e850d8a158241d3a,
     type: 3}
   openPauseSound: {fileID: 11400000, guid: 39c182daf18c49a498de6d96c7954706, type: 2}
@@ -10284,6 +10286,7 @@ MonoBehaviour:
   confirmSound: {fileID: 11400000, guid: 0575ca7e870172446b6877f8b91c7636, type: 2}
   failureSound: {fileID: 11400000, guid: d27fed347086bd648aad28a9b2fa76d8, type: 2}
   backSound: {fileID: 11400000, guid: d23b067b4fe25b04199a60093042cd98, type: 2}
+  manager: {fileID: 268707954954881333}
   UIScreen: {fileID: 9197481963319205126, guid: 922fb6b84b6a8c14e850d8a158241d3a,
     type: 3}
   openPauseSound: {fileID: 11400000, guid: 39c182daf18c49a498de6d96c7954706, type: 2}

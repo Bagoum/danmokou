@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using BagoumLib;
 using Danmokou.Core;
 using Danmokou.DMath;
 using Danmokou.Expressions;
@@ -265,7 +266,7 @@ public static partial class Reflector {
                     x is WarnOnStrictAttribute wa && (int) q.Ctx.props.strict >= wa.strictness)) {
                     Log.Unity(
                         $"Line {q.GetLastLine()}: The method \"{member}\" is not permitted for use in a script with strictness {q.Ctx.props.strict}. You might accidentally be using the prefix version of an infix function.",
-                        true, Log.Level.WARNING);
+                        true, LogLevel.WARNING);
                 }
                 result = (Func<T, R>) (bpi => {
                     var baseTypes = GetArgTypes(rt, member);

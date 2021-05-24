@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using BagoumLib;
 using Danmokou.Core;
 using Danmokou.Scriptables;
 using Danmokou.Services;
@@ -17,12 +18,7 @@ namespace Danmokou.UI.XML {
 /// Class to manage the main menu UI.
 /// </summary>
 [Preserve]
-public class XMLPauseMenu : XMLMenu {
-
-    public VisualTreeAsset UIScreen = null!;
-
-    public SFXConfig? openPauseSound;
-    public SFXConfig? closePauseSound;
+public class XMLPauseMenu : PausedGameplayMenu {
 
     public static IEnumerable<UINode> GetOptions(bool staticOptions) {
         return new UINode[] {
@@ -111,11 +107,11 @@ public class XMLPauseMenu : XMLMenu {
         (generic_off, false)
     };
     protected override string HeaderOverride => pause_header;
-
+    
     private UINode unpause = null!;
 
     protected override void Awake() {
-        unpause = new FuncNode(EngineStateManager.AnimatedUnpause, LocalizedStrings.UI.unpause, true).With(small1Class);
+        unpause = new FuncNode(() => ProtectHide(() => HideOptions(true)), LocalizedStrings.UI.unpause, true).With(small1Class);
         MainScreen = new UIScreen(
             GetOptions(false).Select(x => x.With(small1Class)).Concat(
                 new[] {
@@ -140,28 +136,12 @@ public class XMLPauseMenu : XMLMenu {
         UI.style.right = UIManager.MenuRightOffset;
     }
 
-    public void HideOptions(bool withSave) {
-        if (UITop != null) {
-            if (MenuActive && withSave) {
-                MainScreen.ResetNodeProgress();
-                SaveData.AssignSettingsChanges();
-                DependencyInjection.SFXService.Request(closePauseSound);
-            }
-            //safer to do this even if the menu is already "inactive" since css may set it open initially
-            UITop.style.display = DisplayStyle.None;
-            MenuActive = false;
+    private void HideOptions(bool withSave) {
+        if (MenuActive && withSave) {
+            MainScreen.ResetNodeProgress();
+            SaveData.AssignSettingsChanges();
         }
-    }
-
-    public void ShowOptions() {
-        //This check is because death-pause may, theoretically, occur in places where the pause menu is disabled
-        if (UITop != null && !MenuActive) {
-            MenuActive = true;
-            DependencyInjection.SFXService.Request(openPauseSound);
-            UITop.style.display = DisplayStyle.Flex;
-            ResetCurrentNode();
-            Redraw();
-        }
+        base.HideMe();
     }
 
     protected override void ResetCurrentNode() {
@@ -171,6 +151,18 @@ public class XMLPauseMenu : XMLMenu {
     public void GoToOption(int opt) {
         Current = MainScreen.top[opt];
         Redraw();
+    }
+
+    public override void RegularUpdate() {
+        if (RegularUpdateGuard) {
+            if (InputManager.Pause.Active) {
+                if (MenuActive)
+                    ProtectHide(() => HideOptions(true));
+                else
+                    ShowMe();
+            } else
+                base.RegularUpdate();
+        }
     }
 }
 }

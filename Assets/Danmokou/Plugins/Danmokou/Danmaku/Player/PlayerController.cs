@@ -2,6 +2,10 @@
 using System.Collections;
 using System.Linq;
 using System.Linq.Expressions;
+using BagoumLib;
+using BagoumLib.Cancellation;
+using BagoumLib.DataStructures;
+using BagoumLib.Events;
 using Danmokou.Behavior;
 using Danmokou.Behavior.Display;
 using Danmokou.Behavior.Functions;
@@ -99,10 +103,11 @@ public class PlayerController : BehaviorEntity {
     /// <summary>
     /// Called every frame during meter activation.
     /// </summary>
-    public static readonly Events.IEvent<Color> MeterIsActive = new Events.Event<Color>();
+    public static readonly IBSubject<Color> MeterIsActive = new Event<Color>();
     
-    public static readonly Events.IEvent<(int frames, bool effect)> RequestPlayerInvulnerable =
-        new Events.Event<(int, bool)>();
+    //TODO: replace this with DI
+    public static readonly IBSubject<(int frames, bool effect)> RequestPlayerInvulnerable =
+        new Event<(int, bool)>();
     #endregion
 
     public ShipConfig[] defaultPlayers = null!;
@@ -232,7 +237,7 @@ public class PlayerController : BehaviorEntity {
         base.Awake();
         localTeamCfg = new ActiveTeamConfig(new TeamConfig(0, defaultSubshot, defaultSupport, 
             defaultPlayers.Zip(defaultShots).ToArray()));
-        Log.Unity($"Team awake", level: Log.Level.DEBUG1);
+        Log.Unity($"Team awake", level: LogLevel.DEBUG1);
         hitbox.location = tr.position;
         hitbox.Player = this;
         hitboxSprite.enabled = SaveData.s.UnfocusedHitbox;
@@ -422,8 +427,8 @@ public class PlayerController : BehaviorEntity {
                 PastDirections.Add(dir);
                 if (IsFocus) {
                     //Add offset to all tracking positions so they stay the same relative position
-                    for (int ii = 0; ii < MarisaAPositions.arr.Length; ++ii) {
-                        MarisaAPositions.arr[ii] += delta;
+                    for (int ii = 0; ii < MarisaAPositions.Count; ++ii) {
+                        MarisaAPositions[ii] += delta;
                     }
                 } else {
                     MarisaAPositions.Add(hitbox.location);
@@ -458,7 +463,8 @@ public class PlayerController : BehaviorEntity {
         
         
         if (--scoreLabelBuffer == 0 && labelAccScore > 0) {
-            DropDropLabel(scoreLabelBonus ? scoreGrad_bonus : scoreGrad, $"{labelAccScore:n0}");
+            DropDropLabel(scoreLabelBonus ? scoreGrad_bonus : scoreGrad, $"{labelAccScore:n0}", 
+                multiplier: Mathf.Max(1, (float)Math.Log(labelAccScore / 100.0, 100)));
             labelAccScore = 0;
             scoreLabelBonus = false;
         }
@@ -688,7 +694,7 @@ public class PlayerController : BehaviorEntity {
             spawnedShip.MaybeDrawWitchTimeGhost(f);
             MeterIsActive.Publish(GameManagement.Instance.EnoughMeterToUse ? meterDisplay : meterDisplayInner);
             float meterDisplayRatio = M.EOutSine(Mathf.Clamp01(f / 30f));
-            meterPB.SetFloat(PropConsts.fillRatio, GameManagement.Instance.VisibleMeter.NextValue * meterDisplayRatio);
+            meterPB.SetFloat(PropConsts.fillRatio, InstanceData.sVisibleMeter.Value * meterDisplayRatio);
             meter.SetPropertyBlock(meterPB);
             yield return null;
         }
@@ -736,8 +742,6 @@ public class PlayerController : BehaviorEntity {
 
     #region ExpressionMethods
     
-    public static readonly Expression playerID = ExUtils.Property<PlayerController>("PlayerShotItr");
-    
     [UsedImplicitly]
     public Vector2 PastPosition(float timeAgo) =>
         PastPositions.SafeIndexFromBack((int) (timeAgo * ETime.ENGINEFPS_F));
@@ -757,6 +761,8 @@ public class PlayerController : BehaviorEntity {
     public Vector2 MarisaADirection(float timeAgo) =>
         MarisaADirections.SafeIndexFromBack((int) (timeAgo * ETime.ENGINEFPS_F));
     public static readonly ExFunction marisaADirection = ExUtils.Wrap<PlayerController>("MarisaADirection", typeof(float));
+    
+    public static readonly Expression playerID = ExUtils.Property<PlayerController>("PlayerShotItr");
     
     #endregion
     

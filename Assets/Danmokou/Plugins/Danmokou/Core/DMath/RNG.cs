@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq.Expressions;
+using BagoumLib;
 using Danmokou.Core;
 using Danmokou.Expressions;
 using Danmokou.Scenes;
@@ -29,9 +30,9 @@ public static class RNG {
             throw new Exception(
                 "You are invoking random functions either outside of the regular update loop, or in parallelized pather movement code. This will desync replays and/or cause the random generation to fail.");
         }
-        if (EngineStateManager.IsLoadingOrPaused && !SceneIntermediary.LOADING) {
+        if (EngineStateManager.State > EngineState.RUN && !SceneIntermediary.LOADING) {
             Log.Unity("You are invoking random functions while replay data is not being saved. " +
-                      "This will desync replays.", true, Log.Level.WARNING);
+                      "This will desync replays.", true, LogLevel.WARNING);
         }
     }
 

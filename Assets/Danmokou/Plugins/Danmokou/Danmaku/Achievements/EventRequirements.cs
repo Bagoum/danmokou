@@ -2,6 +2,7 @@
 using System.Linq;
 using Danmokou.Core;
 using Danmokou.GameInstance;
+using Danmokou.Services;
 using JetBrains.Annotations;
 
 namespace Danmokou.Achievements {
@@ -11,9 +12,9 @@ public class StageCompletedReq : EventRequirement<(string campaign, int stage)> 
         base(InstanceRequest.StageCompleted, c => c.campaign == campaign && c.stage == stage) { }
 }
 
-public class InstanceRequirement : EventRequirement<InstanceRecord> {
+public class InstanceRequirement : EventRequirement<(InstanceData, InstanceRecord)> {
     public InstanceRequirement(Func<InstanceRecord, bool> pred) : 
-        base(InstanceRequest.InstanceCompleted, pred) { }
+        base(InstanceRequest.InstanceCompleted, dr => !(dr.Item1.Replay is ReplayPlayer && pred(dr.Item2))) { }
 }
 public class CompletedInstanceRequirement : InstanceRequirement {
     public CompletedInstanceRequirement(Func<InstanceRecord, bool> pred) : 

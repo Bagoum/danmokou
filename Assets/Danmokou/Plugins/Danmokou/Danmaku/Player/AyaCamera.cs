@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections;
+using BagoumLib.Cancellation;
+using BagoumLib.Events;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Danmaku;
@@ -224,10 +226,10 @@ public class AyaCamera : BehaviorEntity {
         RunDroppableRIEnumerator(UpdateNormal());
     }
 
-    private bool TakePicture_Freeze(float scale) {
-        if (!EngineStateManager.TemporaryEffectPause(out Action? cb)) return false;
-        WaitingUtils.WaitThenCB(freezeHelper, Cancellable.Null, freezeTime, false, cb);
-        return true;
+    private void TakePicture_Freeze(float scale) {
+        var token = EngineStateManager.RequestState(EngineState.EFFECT_PAUSE);
+        tokens.Add(token);
+        WaitingUtils.WaitThenCB(freezeHelper, Cancellable.Null, freezeTime, false, () => token.MarkForDeletion());
     }
     private bool TakePicture_Enemies(float scale) {
         var vf = ViewfinderRect(scale);
@@ -245,30 +247,28 @@ public class AyaCamera : BehaviorEntity {
             b => CollisionMath.PointInRect(b.loc, rect));
     }
 
-    public static readonly Events.IEvent<(AyaPhoto photo, bool success)> PhotoTaken 
-        = new Events.Event<(AyaPhoto, bool)>();
+    public static readonly IBSubject<(AyaPhoto photo, bool success)> PhotoTaken 
+        = new Event<(AyaPhoto, bool)>();
     private IEnumerator TakePictureAndRefractor(float scale) {
-        bool success = false;
-        if (TakePicture_Freeze(scale)) {
-            Vector2? targetLoc = null;
-            success = TakePicture_Enemies(scale);
-            viewfinderSR.enabled = false;
-            text.enabled = false;
-            var photo = MainCamera.main.RequestAyaPhoto(ViewfinderRect(scale));
-            var pphoto = GameObject.Instantiate(pinnedPhotoPrefab).GetComponent<AyaPinnedPhoto>();
-            PhotoTaken.Publish((photo, success));
-            if (success) {
-                if (GameManagement.Instance.Request?.replay == null) photo.KeepAlive = true;
-                targetLoc = DependencyInjection.MaybeFind<IAyaPhotoBoard>()?.NextPinLoc(pphoto) ?? new Vector2(-4, 0);
-            }
-            pphoto.Initialize(photo, location, targetLoc);
-            viewfinderSR.enabled = true;
-            text.enabled = true;
-            freezeHelper.RunDroppableRIEnumerator(DoFlash(flashTime, success));
-            //Wait until after the freeze to delete bullets
-            yield return null;
-            TakePicture_Delete(scale);
+        TakePicture_Freeze(scale);
+        Vector2? targetLoc = null;
+        var success = TakePicture_Enemies(scale);
+        viewfinderSR.enabled = false;
+        text.enabled = false;
+        var photo = MainCamera.main.RequestAyaPhoto(ViewfinderRect(scale));
+        var pphoto = GameObject.Instantiate(pinnedPhotoPrefab).GetComponent<AyaPinnedPhoto>();
+        PhotoTaken.Publish((photo, success));
+        if (success) {
+            if (GameManagement.Instance.Request?.replay == null) photo.KeepAlive = true;
+            targetLoc = DependencyInjection.MaybeFind<IAyaPhotoBoard>()?.NextPinLoc(pphoto) ?? new Vector2(-4, 0);
         }
+        pphoto.Initialize(photo, location, targetLoc);
+        viewfinderSR.enabled = true;
+        text.enabled = true;
+        freezeHelper.RunDroppableRIEnumerator(DoFlash(flashTime, success));
+        //Wait until after the freeze to delete bullets
+        yield return null;
+        TakePicture_Delete(scale);
         RunDroppableRIEnumerator(UpdateRefractory(success));
     }
     private IEnumerator UpdateRefractory(bool shotHit) {

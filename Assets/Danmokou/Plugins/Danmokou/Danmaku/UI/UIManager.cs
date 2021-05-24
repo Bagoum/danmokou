@@ -2,6 +2,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
+using BagoumLib;
+using BagoumLib.Cancellation;
 using UnityEngine;
 using TMPro;
 using Danmokou.Behavior;
@@ -50,8 +52,6 @@ public class UIManager : RegularUpdater, IUIManager, IUnpauseAnimateProvider {
     public static Camera Camera => main.uiCamera;
     public XMLPauseMenu PauseManager = null!;
     public static XMLPauseMenu PauseMenu => main.PauseManager;
-    public XMLDeathMenu DeathManager = null!;
-    public XMLPracticeSuccessMenu PracticeSuccessMenu = null!;
     public UIBuilderRenderer uiRenderer = null!;
     public SpriteRenderer frame = null!;
     public TextMeshPro spellnameText = null!;
@@ -132,17 +132,16 @@ public class UIManager : RegularUpdater, IUIManager, IUnpauseAnimateProvider {
 
     protected override void BindListeners() {
         base.BindListeners();
-        Listen(Events.GameStateHasChanged, HandleGameStateChange);
         Listen(InstanceData.ItemExtendAcquired, LifeExtendItems);
         Listen(InstanceData.ScoreExtendAcquired, LifeExtendScore);
         Listen(PlayerController.MeterIsActive, SetMeterActivated);
         Listen(PlayerController.PlayerDeactivatedMeter, UnSetMeterActivated);
-        ListenInv(Instance.Graze.OnChange, g => graze.text = string.Format(grazeFormat, g));
-        ListenInv(Instance.VisibleScore.OnChange, s => score.text = string.Format(scoreFormat, s));
-        ListenInv(Instance.MaxScore.OnChange, s => maxScore.text = string.Format(scoreFormat, s));
-        ListenInv(Instance.PIV.OnChange, p => pivMult.text = string.Format(pivMultFormat, p));
-        ListenInv(Instance.Power.OnChange, p => power.text = string.Format(powerFormat, p, InstanceConsts.powerMax));
-        ListenInv(Instance.Lives.OnChange, l => {
+        Listen(InstanceData.sGraze, g => graze.text = string.Format(grazeFormat, g));
+        Listen(InstanceData.sVisibleScore, s => score.text = string.Format(scoreFormat, s));
+        Listen(InstanceData.sMaxScore, s => maxScore.text = string.Format(scoreFormat, s));
+        Listen(InstanceData.sPIV, p => pivMult.text = string.Format(pivMultFormat, p));
+        Listen(InstanceData.sPower, p => power.text = string.Format(powerFormat, p, InstanceConsts.powerMax));
+        Listen(InstanceData.sLives, l => {
             for (int ii = 0; ii < healthPoints.Length; ++ii) healthPoints[ii].sprite = healthEmpty;
             for (int hi = 0; hi < healthItrs.Length; ++hi) {
                 for (int ii = 0; ii + hi * healthPoints.Length < Instance.Lives && ii < healthPoints.Length; ++ii) {
@@ -150,7 +149,7 @@ public class UIManager : RegularUpdater, IUIManager, IUnpauseAnimateProvider {
                 }
             }
         });
-        ListenInv(Instance.Bombs.OnChange, b => {
+        Listen(InstanceData.sBombs, b => {
             var color = (Instance.TeamCfg?.Support.UsesBomb ?? true) ? Color.white : new Color(0.5f, 0.5f, 0.5f, 0.9f);
             for (int ii = 0; ii < bombPoints.Length; ++ii) {
                 bombPoints[ii].sprite = healthEmpty;
@@ -174,7 +173,7 @@ public class UIManager : RegularUpdater, IUIManager, IUnpauseAnimateProvider {
                 }
             });
         }
-        ListenInv(Instance.LifeItems.OnChange,
+        Listen(InstanceData.sLifeItems,
             _ => lifePoints.text = string.Format(lifePointsFormat, Instance.LifeItems.Value, Instance.NextLifeItems));
         ListenInv(InstanceData.ItemExtendAcquired,
             () => lifePoints.text = string.Format(lifePointsFormat, Instance.LifeItems.Value, Instance.NextLifeItems));
@@ -187,7 +186,6 @@ public class UIManager : RegularUpdater, IUIManager, IUnpauseAnimateProvider {
 
     private void Start() {
         UpdatePB();
-        EngineStateManager.PauseAllowed = PauseManager.gameObject.activeSelf;
     }
 
     public static void UpdateTags() {
@@ -218,8 +216,8 @@ public class UIManager : RegularUpdater, IUIManager, IUnpauseAnimateProvider {
 
     private void UpdatePB() {
         //pivDecayPB.SetFloat(PropConsts.time, time);
-        pivDecayPB.SetFloat(PropConsts.fillRatio, Instance.VisibleFaith.NextValue);
-        pivDecayPB.SetFloat(PropConsts.innerFillRatio, Mathf.Clamp01(Instance.VisibleFaithLenience.NextValue));
+        pivDecayPB.SetFloat(PropConsts.fillRatio, InstanceData.sVisibleFaith.Value);
+        pivDecayPB.SetFloat(PropConsts.innerFillRatio, Mathf.Clamp01(InstanceData.sVisibleFaithLenience.Value));
         PIVDecayBar.SetPropertyBlock(pivDecayPB);
         meterPB.SetFloat(PropConsts.fillRatio, (float) Instance.Meter);
         MeterBar.color = (Instance.TeamCfg?.Support.UsesMeter ?? true) ? Color.white : new Color(0.5f, 0.5f, 0.5f, 0.7f);
@@ -231,7 +229,7 @@ public class UIManager : RegularUpdater, IUIManager, IUnpauseAnimateProvider {
         }
         BossHPBar.SetPropertyBlock(bossHPPB);
         rankPB.SetColor(PropConsts.fillColor, rankPointBarColor.Evaluate((float)Instance.RankRatio));
-        rankPB.SetFloat(PropConsts.fillRatio, Instance.VisibleRankPointFill.NextValue);
+        rankPB.SetFloat(PropConsts.fillRatio, InstanceData.sVisibleRankPointFill.Value);
         rankPointBar.SetPropertyBlock(rankPB);
         leftSidebarPB.SetFloat(PropConsts.time, profileTime);
         rightSidebarPB.SetFloat(PropConsts.time, profileTime);
@@ -415,33 +413,17 @@ public class UIManager : RegularUpdater, IUIManager, IUnpauseAnimateProvider {
 
     private static readonly Vector2 slideFrom = new Vector2(5, 0);
 
-    private void SlideInUI() {
+    public void SlideInUI(Action onDone) {
         uiRenderer.MoveToNormal();
         uiRenderer.Slide(slideFrom, Vector2.zero, 0.3f, DMath.M.EOutSine, success => {
             if (success) uiRenderer.MoveToFront();
+            onDone();
         });
     }
 
     public void UnpauseAnimator(Action onDone) {
         uiRenderer.MoveToNormal();
         uiRenderer.Slide(null, slideFrom, 0.3f, x => x, _ => onDone());
-    }
-
-    private void HandleGameStateChange(EngineState state) {
-        if (state == EngineState.RUN) {
-            PauseManager.HideOptions(true);
-            DeathManager.HideMe();
-            PracticeSuccessMenu.HideMe();
-        } else if (state == EngineState.PAUSE) {
-            PauseManager.ShowOptions();
-            SlideInUI();
-        } else if (state == EngineState.DEATH) {
-            DeathManager.ShowMe();
-            SlideInUI();
-        } else if (state == EngineState.SUCCESS) {
-            PracticeSuccessMenu.ShowMe();
-            SlideInUI();
-        }
     }
 
     public SpriteRenderer[] healthPoints = null!;

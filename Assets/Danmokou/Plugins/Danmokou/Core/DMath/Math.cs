@@ -316,8 +316,6 @@ public static class M {
     public static float EOutSine(float x) => (float) Math.Sin(HPI * x);
     public static float EIOSine(float x) => 0.5f - 0.5f * (float) Math.Cos(PI * x);
     public static float DEOutSine(float x) => HPI * (float) Math.Cos(HPI * x);
-
-    public static double EOutPow(double x, double pow) => 1 - Math.Pow(1 - x, pow);
     public static float EOutPow(float x, float pow) => 1f - Mathf.Pow(1f - x, pow);
     public static float EOutQuad(float x) => 1f - Mathf.Pow(1f - x, 4f);
 
@@ -326,13 +324,7 @@ public static class M {
     public static float EOutBack(float a, float x) {
         return 1 + (a+1) * Mathf.Pow(x - 1, 3) + a * (x - 1) * (x - 1);
     }
-
-
-    /// <summary>
-    /// If the magnitude of a vector is greater than 1, normalize it, else noop.
-    /// </summary>
-    public static Vector2 LimitTo1(this Vector2 xy) => xy.sqrMagnitude > 1 ? xy.normalized : xy;
-
+    
     public static Vector3 MulBy(this Vector3 x, Vector3 m) => new Vector3(x.x * m.x, x.y * m.y, x.z * m.z);
     public static Bounds MulBy(this Bounds b, Vector3 m) {
         return new Bounds(b.center.MulBy(m), b.size.MulBy(m));

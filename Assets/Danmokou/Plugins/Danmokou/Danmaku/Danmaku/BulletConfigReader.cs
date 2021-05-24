@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using System;
+using BagoumLib;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Danmaku.Descriptors;
@@ -65,7 +66,6 @@ public partial class BulletManager : RegularUpdater {
         public readonly DeferredTextureConstruction deferredRI;
         private bool riLoaded;
         private MeshGenerator.RenderInfo ri;
-        public readonly SOPlayerHitbox collisionTarget;
         public readonly int damageAgainstPlayer;
         public readonly int againstEnemyCooldown;
         public readonly bool destructible;
@@ -125,7 +125,6 @@ public partial class BulletManager : RegularUpdater {
             againstEnemyCooldown = sbes.framesPerHit;
             destructible = sbes.destructible;
             default_deletable = deletable = sbes.deletable;
-            collisionTarget = main.bulletCollisionTarget;
             this.cc = new CollidableInfo(cc);
             //Minus 1 to allow for zero offset
             grazeEveryFrames = (ushort)(sbes.grazeEveryFrames - 1);
@@ -437,7 +436,7 @@ public partial class BulletManager : RegularUpdater {
                 }
             }
         }
-        Log.Unity($"Created {simpleBulletPools.Count} bullet styles", level: Log.Level.DEBUG3);
+        Log.Unity($"Created {simpleBulletPools.Count} bullet styles", level: LogLevel.DEBUG3);
     }
 
     public const int FAB_PLAYER_RENDER_OFFSET = -1000;

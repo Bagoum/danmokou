@@ -3,6 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using BagoumLib;
+using BagoumLib.DataStructures;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Danmaku.Options;
@@ -14,6 +16,7 @@ using GCP = Danmokou.Danmaku.Options.GenCtxProperty;
 using ExBPY = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<float>>;
 using ExTP = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<UnityEngine.Vector2>>;
 using ExBPRV2 = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<Danmokou.DMath.V2RV2>>;
+using static BagoumLib.Tasks.WaitingUtils;
 
 namespace Danmokou.Danmaku.Patterns {
 /// <summary>
@@ -149,7 +152,7 @@ public static partial class AsyncPatterns {
                     }
                     DoNext(0);
                 } else {
-                    var loop_fragment_done = WaitingUtils.GetManyCallback(target.Length, loop_done);
+                    var loop_fragment_done = GetManyCallback(target.Length, loop_done);
                     for (int ii = 0; ii < target.Length; ++ii) {
                         DoAIteration(target[ii], loop_fragment_done, base_gcx);
                     }
@@ -188,7 +191,7 @@ public static partial class AsyncPatterns {
                     }
                     DoNext(0);
                 } else {
-                    var loop_fragment_done = WaitingUtils.GetManyCallback(target.Length, loop_done);
+                    var loop_fragment_done = GetManyCallback(target.Length, loop_done);
                     for (int ii = 0; ii < target.Length; ++ii) {
                         DoAIteration(target[ii], loop_fragment_done, base_gcx);
                     }

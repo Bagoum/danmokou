@@ -4,6 +4,9 @@ using System;
 using System.Threading.Tasks;
 using System.Linq;
 using System.Reflection;
+using BagoumLib;
+using BagoumLib.Cancellation;
+using BagoumLib.Tasks;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Danmaku;
@@ -15,6 +18,7 @@ using Danmokou.SM.Parsing;
 using JetBrains.Annotations;
 using ParserCS;
 using UnityEngine;
+using static BagoumLib.Tasks.WaitingUtils;
 
 namespace Danmokou.SM {
 public struct SMHandoff : IDisposable {
@@ -393,48 +397,6 @@ public static class WaitingUtils {
         }));
     }
 
-    public static Action GetAwaiter(out Task t) {
-        var tcs = new TaskCompletionSource<bool>();
-        t = tcs.Task;
-        return () => tcs.SetResult(true);
-    }
-    public static Action GetAwaiter(out Func<bool> t) {
-        bool done = false;
-        t = () => done;
-        return () => done = true;
-    }
-    public static Action<T> GetAwaiter<T>(out Task<T> t) {
-        var tcs = new TaskCompletionSource<T>();
-        t = tcs.Task;
-        return f => tcs.SetResult(f);
-    }
-    public static Action GetCondition(out Func<bool> t) {
-        bool completed = false;
-        t = () => completed;
-        return () => completed = true;
-    }
-    public static Action<T> GetFree1Condition<T>(out Func<bool> t) {
-        bool completed = false;
-        t = () => completed;
-        return _ => completed = true;
-    }
-    public static Action<T> GetFree1ManyCondition<T>(int ct, out Func<bool> t) {
-        int acc = 0;
-        t = () => acc == ct;
-        return _ => ++acc;
-    }
-    public static Action GetManyCondition(int ct, out Func<bool> t) {
-        int acc = 0;
-        t = () => acc == ct;
-        return () => ++acc;
-    }
-    public static Action GetManyCallback(int ct, Action whenAll) {
-        int acc = 0;
-        return () => {
-            if (++acc == ct) whenAll();
-        };
-    }
-
     /// <summary>
     /// This must be run on RegularCoroutine.
     /// Inner waiter-- Will cb if cancelled. This is necessary so awaiters can be informed of errors,
@@ -535,7 +497,7 @@ public class RetargetUSM : UniversalSM {
     public override Task Start(SMHandoff smh) {
         var behs = BehaviorEntity.GetExecsForIDs(targets);
         if (behs.Length == 0) {
-            Log.Unity($"Retarget operation with targets {string.Join(", ", targets)} found no BEH", level: Log.Level.WARNING);
+            Log.Unity($"Retarget operation with targets {string.Join(", ", targets)} found no BEH", level: LogLevel.WARNING);
             return Task.CompletedTask;
         } else if (behs.Length == 1) {
             return behs[0].RunExternalSM(SMRunner.Run(states[0], smh.cT, smh.GCX), false);

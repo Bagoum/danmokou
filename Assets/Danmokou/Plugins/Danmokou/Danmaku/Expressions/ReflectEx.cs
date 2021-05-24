@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq.Expressions;
 using UnityEngine;
 using System;
+using BagoumLib;
+using BagoumLib.DataStructures;
 using Danmokou.Core;
 using Danmokou.Danmaku;
 using Danmokou.DataHoist;
@@ -138,15 +140,19 @@ public static class ReflectEx {
             tac.Ctx.HoistedReplacements[Ex.Constant(data)] = Ex.Variable(typeof(SafeResizableArray<T>), key_name);
 #endif
         }
-        
+
+        private static readonly ExFunction safeAssign =
+            ExUtils.Wrap<SafeResizableArray<T>>("SafeAssign", new[] {typeof(int), typeof(T)});
+        private static readonly ExFunction safeGet = ExUtils.Wrap<SafeResizableArray<T>, int>("SafeGet");
+
         public Ex Save(Ex index, Ex val, TExArgCtx tac) {
             Bake(tac);
-            return data.exSafeAssign(Ex.Convert(index, tint), val);
+            return safeAssign.InstanceOf(Ex.Constant(data), Ex.Convert(index, tint), val);
         }
 
         public Ex Retrieve(Ex index, TExArgCtx tac) {
             Bake(tac);
-            return data.exSafeGet(Ex.Convert(index, tint));
+            return safeGet.InstanceOf(Ex.Constant(data), Ex.Convert(index, tint));
         }
     }
 }

@@ -1,6 +1,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using BagoumLib.Cancellation;
+using BagoumLib.DataStructures;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.DMath;
@@ -80,9 +82,9 @@ public class PiecewiseAppear : CoroutineRegularUpdater {
         if (!isRunning && continuations.Count > 0)
             Dequeue();
         for (int ii = 0; ii < updaters.Count; ++ii) {
-            if (!updaters.arr[ii].markedForDeletion) {
+            if (!updaters.Data[ii].MarkedForDeletion) {
                 if (updaters[ii].DoUpdate())
-                    updaters.arr[ii].MarkForDeletion();
+                    updaters.Data[ii].MarkForDeletion();
             }
         }
         updaters.Compact();
@@ -189,9 +191,9 @@ public class PiecewiseAppear : CoroutineRegularUpdater {
     
     public void Clear() {
         for (int ii = 0; ii < updaters.Count; ++ii) {
-            if (!updaters.arr[ii].markedForDeletion) {
+            if (!updaters.Data[ii].MarkedForDeletion) {
                 updaters[ii].Destroy();
-                updaters.arr[ii].MarkForDeletion();
+                updaters.Data[ii].MarkForDeletion();
             }
         }
         updaters.Compact();
@@ -202,7 +204,7 @@ public class PiecewiseAppear : CoroutineRegularUpdater {
         if (!Application.isPlaying) return;
         //Effects render to LowEffects
         for (int ii = 0; ii < updaters.Count; ++ii) {
-            if (!updaters.arr[ii].markedForDeletion)
+            if (!updaters.Data[ii].MarkedForDeletion)
                 FragmentRendering.Render(c, updaters[ii]);
         }
     }

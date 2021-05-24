@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
+using BagoumLib.Cancellation;
 using Danmokou.Core;
 using Danmokou.Danmaku;
 using Danmokou.DMath.Functions;

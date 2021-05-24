@@ -122,9 +122,9 @@
 				float tr_delay = ratio(0.1, 1, tr);
 
 				
-				rt.y += 6 * _BlackHoleAbsorbT * einsine(tr_delay) * lerp(0.2, 1, pow(1 - smoothstep(0, 6, rt.x), 3)) + 3 * ehr;
+				rt.y += 3 * _BlackHoleAbsorbT * einsine(tr_delay) * lerp(0.2, 1, pow(1 - smoothstep(0, 6, rt.x), 3)) + 2.2 * ehr;
 				float rd = mod(rt.y + 0 * per / 2, per) / per * TAU;
-				rt.x += 5 * einsine(tr_delay) * lerp(0.8, 1, 0.5 + 0.5 * sin(rd));
+				rt.x += 6 * einsine(tr_delay) * lerp(0.8, 1, 0.5 + 0.5 * sin(rd));
 
 
 				//return float4(1 - abs(rt.x) / 4, 0, smoothstep(-PI/2, PI/2, rt.y), 1);

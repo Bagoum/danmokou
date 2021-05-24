@@ -2,6 +2,9 @@
 using System;
 using System.Threading.Tasks;
 using System.Linq;
+using BagoumLib;
+using BagoumLib.Cancellation;
+using BagoumLib.Tasks;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Danmaku;
@@ -478,10 +481,10 @@ public static class Synchronization {
     /*
     public static Synchronizer Track(string alias, string keypoint) => smh => {
         if (keypoint == "end") {
-            AudioTrackService.OnTrackEnd(alias, WaitingUtils.GetAwaiter(out Task t));
+            AudioTrackService.OnTrackEnd(alias, GetAwaiter(out Task t));
             return t;
         } else {
-            AudioTrackService.AddTrackPointDelegate(alias, keypoint, WaitingUtils.GetAwaiter(out Task t));
+            AudioTrackService.AddTrackPointDelegate(alias, keypoint, GetAwaiter(out Task t));
             return t;
         }
     };*/

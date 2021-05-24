@@ -35,11 +35,9 @@ public class V2Cutin : CoroutineRegularUpdater {
         RunDroppableRIEnumerator(Velocity(core, MakeCoreVel));
         float t = 0;
         for (; t < 1.96f; t += ETime.FRAME_TIME) yield return null;
-        RunDroppableRIEnumerator(
-            core.ScaleBy(2f, 0.34f, M.EOutSine));
+        core.ScaleBy(2f, 0.34f, M.EOutSine).Run(this);
         for (; t < 1.98f; t += ETime.FRAME_TIME) yield return null;
-        RunDroppableRIEnumerator(
-            core.RotateTo(new Vector3(0f, 0f, -10f), 3f, M.EOutSine));
+        core.RotateTo(new Vector3(0f, 0f, -10f), 3f, M.EOutSine).Run(this);
         DependencyInjection.SFXService.Request("x-metal");
     }
 }

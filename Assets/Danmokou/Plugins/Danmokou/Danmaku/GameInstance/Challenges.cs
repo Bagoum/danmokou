@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using BagoumLib;
+using BagoumLib.Cancellation;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Danmaku;
@@ -82,7 +84,7 @@ public readonly struct SceneChallengeReqest : IChallengeRequest {
             Log.Unity($"Autoproceeding to next challenge: {nextC.Description}");
             var nextGr = new InstanceRequest(Requester.cb, Requester.metadata, new InstanceLowRequest(nextC), null);
             nextGr.SetupInstance();
-            Replayer.Cancel(); //can't replay both scenes together,
+            GameManagement.Instance.Replay?.Cancel(); //can't replay both scenes together,
             //or even just the second scene due to time-dependency of world objects such as shots
             ctx.cm.TrackChallenge(new SceneChallengeReqest(nextGr, nextC), ctx.onSuccess);
             ctx.cm.LinkBoss(ctx.exec);

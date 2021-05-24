@@ -1,0 +1,57 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Danmokou.Danmaku", "Danmokou.Danmaku.csproj", "{53f16438-b03a-a69c-a1b0-173c70816db2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Danmokou.PCG", "Danmokou.PCG.csproj", "{6b1fa4d1-16af-72f1-5a48-2716249607bb}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Danmokou.Core", "Danmokou.Core.csproj", "{fb76ea87-6c0d-f91b-47d2-a55fce61d2df}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Danmokou.EditorUtility", "Danmokou.EditorUtility.csproj", "{8eb23178-772d-55e9-0498-cb3d378ea2cb}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Danmokou.SiMP", "Danmokou.SiMP.csproj", "{2b51e034-c2e3-0d5d-6f71-5d0d5edfc8fe}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Danmokou.PlayTests", "Danmokou.PlayTests.csproj", "{429e7ba3-2fb2-db03-6452-ef53acf56a36}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CurvedTMP", "CurvedTMP.csproj", "{8636fb6d-4d82-34e8-f59e-89c57f421e03}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Assembly-CSharp", "Assembly-CSharp.csproj", "{2594f4f2-a0c9-4f19-5192-a952d3116383}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Danmokou.Testing", "Danmokou.Testing.csproj", "{34f4855c-f67d-8244-8961-a5a4955d050a}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Assembly-CSharp-Editor", "Assembly-CSharp-Editor.csproj", "{acab4e3b-222c-0ce0-1e20-4e29fee60fcb}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Danmokou.PCGTesting", "Danmokou.PCGTesting.csproj", "{9b8a8c74-1e0b-2104-74a4-fd415f76756c}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{53f16438-b03a-a69c-a1b0-173c70816db2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{53f16438-b03a-a69c-a1b0-173c70816db2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6b1fa4d1-16af-72f1-5a48-2716249607bb}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6b1fa4d1-16af-72f1-5a48-2716249607bb}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{fb76ea87-6c0d-f91b-47d2-a55fce61d2df}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{fb76ea87-6c0d-f91b-47d2-a55fce61d2df}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8eb23178-772d-55e9-0498-cb3d378ea2cb}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8eb23178-772d-55e9-0498-cb3d378ea2cb}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2b51e034-c2e3-0d5d-6f71-5d0d5edfc8fe}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2b51e034-c2e3-0d5d-6f71-5d0d5edfc8fe}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{429e7ba3-2fb2-db03-6452-ef53acf56a36}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{429e7ba3-2fb2-db03-6452-ef53acf56a36}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8636fb6d-4d82-34e8-f59e-89c57f421e03}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8636fb6d-4d82-34e8-f59e-89c57f421e03}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2594f4f2-a0c9-4f19-5192-a952d3116383}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2594f4f2-a0c9-4f19-5192-a952d3116383}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{34f4855c-f67d-8244-8961-a5a4955d050a}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{34f4855c-f67d-8244-8961-a5a4955d050a}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{acab4e3b-222c-0ce0-1e20-4e29fee60fcb}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{acab4e3b-222c-0ce0-1e20-4e29fee60fcb}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9b8a8c74-1e0b-2104-74a4-fd415f76756c}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9b8a8c74-1e0b-2104-74a4-fd415f76756c}.Debug|Any CPU.Build.0 = Debug|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

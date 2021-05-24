@@ -26,10 +26,6 @@ public static class TAssert {
         }
         if (extraFail.Length > 0) Assert.Fail(extraFail);
     }
-    public static void ListEqClear<T>(List<T> left, IReadOnlyList<T> right) where T : IEquatable<T> {
-        ListEq(left, right);
-        left.Clear();
-    }
     public static void ThrowsAny(Action code) {
         try {
             code();
@@ -108,7 +104,7 @@ public static class TAssert {
             Assert.IsFalse(true);
         } catch (Exception e) {
             while (e is TargetInvocationException) {
-                e = e.InnerException;
+                e = e.InnerException!;
             }
             TAssert.RegexMatches(regex, e.Message);
         }

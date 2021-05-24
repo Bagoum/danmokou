@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using BagoumLib;
 using Danmokou.Core;
 using Danmokou.DMath;
 using FastExpressionCompiler;
@@ -10,7 +11,7 @@ using UnityEngine;
 namespace Danmokou.Reflection {
 public static partial class Reflector {
 #if UNITY_EDITOR
-    private const string AOT_GEN = "Assets/Danmokou/Plugins/Self/Danmaku/AoTHelper_CG.cs";
+    private const string AOT_GEN = "Assets/Danmokou/Plugins/Danmokou/Danmaku/AoTHelper_CG.cs";
     private static readonly Type[] autogenGenerics = {
         typeof(float), typeof(bool), typeof(Vector2), typeof(Vector3),
         typeof(Vector4), typeof(V2RV2)

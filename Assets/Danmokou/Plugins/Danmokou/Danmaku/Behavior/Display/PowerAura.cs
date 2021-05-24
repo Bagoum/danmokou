@@ -1,4 +1,5 @@
-﻿using Danmokou.Core;
+﻿using BagoumLib;
+using Danmokou.Core;
 using Danmokou.Danmaku.Options;
 using Danmokou.DMath;
 using Danmokou.Graphics;

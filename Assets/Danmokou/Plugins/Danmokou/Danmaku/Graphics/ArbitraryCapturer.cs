@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using BagoumLib.DataStructures;
 using Danmokou.Core;
 using Danmokou.Services;
 using JetBrains.Annotations;

@@ -1,4 +1,5 @@
 ﻿using System;
+using BagoumLib.Events;
 using Danmokou.Core;
 
 namespace Danmokou.Achievements {
@@ -27,7 +28,7 @@ public class EventRequirement : Requirement {
 
 public class EventRequirement<T> : Requirement {
     private bool eventTriggered = false;
-    public EventRequirement(Events.IEvent<T> ev, Func<T, bool> predicate) {
+    public EventRequirement(IBSubject<T> ev, Func<T, bool> predicate) {
         ev.Subscribe(val => {
             eventTriggered = predicate(val);
             if (eventTriggered)

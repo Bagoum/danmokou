@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Reflection;
+using BagoumLib;
 using Danmokou.Core;
 using JetBrains.Annotations;
 using Unity.Collections;
@@ -91,7 +92,7 @@ public abstract class TiledRender {
 #if UNITY_EDITOR
     [ContextMenu("Get Sorting ID")]
     public void sortId() {
-        Log.Unity(render.sortingOrder.ToString(), level: Log.Level.INFO);
+        Log.Unity(render.sortingOrder.ToString(), level: LogLevel.INFO);
     }
 #endif
 

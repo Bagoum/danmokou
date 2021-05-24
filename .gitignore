@@ -13,12 +13,10 @@ Secrets
 .psd
 Assets/DoNotUpload
 Assets/Danmokou/Sprites/.py/SpriteUtils/img
-Assets/Danmokou/Plugins/Self/Danmaku/Expressions/Generated
-Assets/Danmokou/Plugins/Self/Danmaku/AoTHelper_CG.cs
+Assets/Danmokou/Plugins/Danmokou/Danmaku/Expressions/Generated
+Assets/Danmokou/Plugins/Danmokou/Danmaku/AoTHelper_CG.cs
 
-*.csproj
 *.unityproj
-*.sln
 *.tmp
 *.user
 *.userprefs

@@ -3,6 +3,9 @@ using System.Collections;
 using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
+using BagoumLib;
+using BagoumLib.Cancellation;
+using BagoumLib.Tasks;
 using Danmokou.Behavior;
 using Danmokou.Behavior.Functions;
 using Danmokou.Core;
@@ -31,6 +34,7 @@ using static Danmokou.DMath.Functions.ExMConditionals;
 using ExBPY = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<float>>;
 using ExPred = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<bool>>;
 using ExTP = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<UnityEngine.Vector2>>;
+using static BagoumLib.Tasks.WaitingUtils;
 
 namespace Danmokou.SM {
 /// <summary>
@@ -77,7 +81,7 @@ if (> t &fadein,
             _ = Sync(style, _ => V2RV2.Zero, SyncPatterns.Loc0(Summon(path,
                 new ReflectableLASM(smh2 => {
                     smh2.Exec.Displayer.FadeSpriteOpacity(bpi => CrosshairOpacity.Value(fadein, homesec, sticksec, bpi),
-                        homesec + sticksec, smh2.cT, WaitingUtils.GetAwaiter(out Task t));
+                        homesec + sticksec, smh2.cT, GetAwaiter(out Task t));
                     return t;
                 }), new BehOptions())))(smh);
             await saver(smh);
@@ -145,14 +149,14 @@ if (> t &fadein,
     [Alias("shake")]
     public static TaskPattern Raiko(GCXF<float> magnitude, GCXF<float> time, FXY by_time) => smh => {
         DependencyInjection.Find<IRaiko>().Shake(time(smh.GCX), by_time, magnitude(smh.GCX), smh.cT,
-            WaitingUtils.GetAwaiter(out Task t));
+            GetAwaiter(out Task t));
         return t;
     };
 
     public static TaskPattern dRaiko(GCXF<float> magnitude, GCXF<float> time) => smh => {
         var t = time(smh.GCX);
         DependencyInjection.Find<IRaiko>().Shake(t, null, magnitude(smh.GCX), smh.cT,
-            WaitingUtils.GetAwaiter(out Task tsk));
+            GetAwaiter(out Task tsk));
         return tsk;
     };
 
@@ -247,7 +251,7 @@ if (> t &fadein,
     public static TaskPattern Async(string style, GCXF<V2RV2> rv2, AsyncPattern ap) => smh => {
         AsyncHandoff abh = new AsyncHandoff(new DelegatedCreator(smh.Exec, 
                 BulletManager.StyleSelector.MergeStyles(smh.ch.bc.style, style)), rv2(smh.GCX) + smh.GCX.RV2, 
-            WaitingUtils.GetAwaiter(out Task t), smh);
+            GetAwaiter(out Task t), smh);
         smh.RunTryPrependRIEnumerator(ap(abh));
         return t;
     };
@@ -431,8 +435,8 @@ if (> t &fadein,
         var etime = time(smh.GCX);
         smh.GCX.idOverride = old_override;
         var cor = smh.Exec.ExecuteVelocity(new LimitedTimeMovement(epath, etime, 
-                FuncExtensions.Link(() => fctx.Dispose(),
-                WaitingUtils.GetAwaiter(out Task t)), smh.cT, 
+                FuncExtensions.Then(() => fctx.Dispose(),
+                GetAwaiter(out Task t)), smh.cT, 
                 new ParametricInfo(Vector2.zero, smh.GCX.index, randId, ctx: fctx), condition));
         smh.RunTryPrependRIEnumerator(cor);
         return t;
@@ -537,12 +541,12 @@ if (> t &fadein,
     };
     
     public static TaskPattern FadeSprite(BPY fader, GCXF<float> time) => smh => {
-        smh.Exec.Displayer.FadeSpriteOpacity(fader, time(smh.GCX), smh.cT, WaitingUtils.GetAwaiter(out Task t));
+        smh.Exec.Displayer.FadeSpriteOpacity(fader, time(smh.GCX), smh.cT, GetAwaiter(out Task t));
         return t;
     };
 
     public static TaskPattern Scale(BPY scaler, GCXF<float> time) => smh => {
-        smh.Exec.Displayer.Scale(scaler, time(smh.GCX), smh.cT, WaitingUtils.GetAwaiter(out Task t));
+        smh.Exec.Displayer.Scale(scaler, time(smh.GCX), smh.cT, GetAwaiter(out Task t));
         return t;
     };
     
@@ -653,7 +657,7 @@ if (> t &fadein,
     /// Print a message to the console.
     /// </summary>
     public static TaskPattern Debug(string debug) => smh => {
-        Log.Unity(debug, false, Log.Level.INFO);
+        Log.Unity(debug, false, LogLevel.INFO);
         return Task.CompletedTask;
     };
     
@@ -679,7 +683,7 @@ if (> t &fadein,
     /// This is done with SFX over time and will not return immediately.
     /// </summary>
     public static TaskPattern LifeToScore(int value) => smh => {
-        smh.RunRIEnumerator(_LifeToScore(value, smh.cT, WaitingUtils.GetAwaiter(out Task t)));
+        smh.RunRIEnumerator(_LifeToScore(value, smh.cT, GetAwaiter(out Task t)));
         return t;
     };
 

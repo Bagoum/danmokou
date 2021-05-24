@@ -3,7 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using BagoumLib.Events;
 using Danmokou.Core;
+using Danmokou.DMath;
 
 namespace Danmokou.Achievements {
 public interface IAchievementDisplay {
@@ -37,7 +39,7 @@ public abstract class Requirement : IRequirementWatcher {
     public void RequirementUpdated() => watcher?.RequirementUpdated();
 
     protected void Listen(Events.Event0 ev) => ev.Subscribe(RequirementUpdated);
-    protected void Listen<T>(Events.IEvent<T> ev) => ev.Subscribe(_ => RequirementUpdated());
+    protected void Listen<T>(IBSubject<T> ev) => ev.Subscribe(_ => RequirementUpdated());
 
     public Requirement SetWatcher(IRequirementWatcher w) {
         watcher = w;
@@ -48,7 +50,7 @@ public abstract class Requirement : IRequirementWatcher {
 }
 
 public class Achievement : IRequirementWatcher {
-    public static bool ACHIEVEMENT_PROGRESS_ENABLED { get; set; } = true;
+    public static MultiAdder ACHIEVEMENT_PROGRESS_ENABLED { get; } = new MultiAdder(0, null);
     public string Key { get; }
     public LocalizedString Title { get; }
     public LocalizedString Description { get; }
@@ -75,7 +77,7 @@ public class Achievement : IRequirementWatcher {
     }
 
     public void RequirementUpdated() {
-        if (!ACHIEVEMENT_PROGRESS_ENABLED) return;
+        if (ACHIEVEMENT_PROGRESS_ENABLED.Value > 0) return;
         //Don't bother checking if the achievement is already finished
         if (State == State.Completed) return;
         var nState = Req.EvalState();
@@ -87,7 +89,7 @@ public class Achievement : IRequirementWatcher {
         AchievementStateUpdated.Publish(this);
     }
 
-    public static readonly Events.Event<Achievement> AchievementStateUpdated = new Events.Event<Achievement>();
+    public static readonly Event<Achievement> AchievementStateUpdated = new Event<Achievement>();
 
     private readonly List<Action<State>> cbs = new List<Action<State>>();
     private void SendCallbacks() {

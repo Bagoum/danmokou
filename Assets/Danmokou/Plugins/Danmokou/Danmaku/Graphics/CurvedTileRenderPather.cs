@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using BagoumLib;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Danmaku;
@@ -291,7 +292,7 @@ public class CurvedTileRenderPather : CurvedTileRender {
     [ContextMenu("Debug info")]
     public void DebugPath() {
         //read_from = start + 1
-        Log.Unity($"Start {read_from} Skip 1 End {centers.Length}", level: Log.Level.INFO);
+        Log.Unity($"Start {read_from} Skip 1 End {centers.Length}", level: LogLevel.INFO);
     }
 #endif
 }

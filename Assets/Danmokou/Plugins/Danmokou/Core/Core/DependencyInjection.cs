@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
+using BagoumLib.DataStructures;
 using Danmokou.Expressions;
 using Danmokou.Services;
 using JetBrains.Annotations;
@@ -47,7 +48,7 @@ public static class DependencyInjection {
         if (services.TryGetValue(typeof(T), out var s)) {
             var ts = (Service<T>) s;
             for (int ii = 0; ii < ts.providers.Count; ++ii) {
-                if (!ts.providers.arr[ii].markedForDeletion) return ts.providers[ii];
+                if (!ts.providers.Data[ii].MarkedForDeletion) return ts.providers[ii];
             }
         }
         return null;

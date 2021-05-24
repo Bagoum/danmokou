@@ -3,12 +3,15 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using BagoumLib.Cancellation;
+using BagoumLib.Tasks;
 using Danmokou.Core;
 using Danmokou.Danmaku;
 using Danmokou.Danmaku.Options;
 using Danmokou.Danmaku.Patterns;
 using Danmokou.DMath;
 using JetBrains.Annotations;
+using static BagoumLib.Tasks.WaitingUtils;
 
 namespace Danmokou.SM {
 
@@ -87,7 +90,7 @@ public class GTRepeat : UniversalSM {
                     }
                     DoNext(0);
                 } else {
-                    var loop_fragment_done = WaitingUtils.GetManyCallback(target.Count, loop_done);
+                    var loop_fragment_done = GetManyCallback(target.Count, loop_done);
                     for (int ii = 0; ii < target.Count; ++ii) {
                         DoAIteration(target[ii], loop_fragment_done, base_gcx);
                     }
@@ -122,7 +125,7 @@ public class GTRepeat : UniversalSM {
                     }
                     DoNext(0);
                 } else {
-                    var loop_fragment_done = WaitingUtils.GetManyCallback(target.Count, loop_done);
+                    var loop_fragment_done = GetManyCallback(target.Count, loop_done);
                     for (int ii = 0; ii < target.Count; ++ii) {
                         DoAIteration(target[ii], loop_fragment_done, base_gcx);
                     }
@@ -158,7 +161,7 @@ public class GTRepeat : UniversalSM {
 
         public Task<(float, LoopControl<StateMachine>)> Wait(float elapsedFrames, float waitFrames) {
             looper.GCX.exec.RunRIEnumerator(Wait(elapsedFrames, waitFrames, looper, checkIsChildDone, 
-                WaitingUtils.GetAwaiter(out Task<(float, LoopControl<StateMachine>)> t), smh.cT));
+                GetAwaiter(out Task<(float, LoopControl<StateMachine>)> t), smh.cT));
             return t;
         }
 

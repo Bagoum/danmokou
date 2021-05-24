@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Danmokou.Core;
+using Danmokou.GameInstance;
 using Danmokou.Scriptables;
 using Danmokou.Services;
 using UnityEngine.UIElements;
@@ -13,11 +14,7 @@ namespace Danmokou.UI.XML {
 /// Class to manage the success menu UI. This is invoked when a scene or boss practice is finished.
 /// </summary>
 [Preserve]
-public class XMLPracticeSuccessMenu : XMLMenu {
-    public VisualTreeAsset UIScreen = null!;
-    
-    public SFXConfig? openPauseSound;
-    public SFXConfig? closePauseSound;
+public class XMLPracticeSuccessMenu : PausedGameplayMenu {
 
     protected override string HeaderOverride => "YOU HUNTED";
 
@@ -30,7 +27,7 @@ public class XMLPracticeSuccessMenu : XMLMenu {
             new FuncNode(GameManagement.Restart, restart, true)
                 .EnabledIf(() => GameManagement.CanRestart),
             new FuncNode(GameManagement.GoToReplayScreen, save_replay, true)
-                .EnabledIf(() => Replayer.PostedReplay != null),
+                .EnabledIf(() => GameManagement.Instance.Replay is ReplayRecorder),
             new FuncNode(GameManagement.GoToMainMenu, to_menu, true)
         ).With(UIScreen);
         MainScreen.ExitNode = MainScreen.top[2];
@@ -43,24 +40,12 @@ public class XMLPracticeSuccessMenu : XMLMenu {
         MenuActive = false;
         UI.style.right = UIManager.MenuRightOffset;
     }
-
-    public void HideMe(bool sfx = false) {
-        if (UITop != null) {
-            if (sfx) 
-                DependencyInjection.SFXService.Request(closePauseSound);
-            UITop.style.display = DisplayStyle.None;
-            MenuActive = false;
-        }
+    
+    protected override void BindListeners() {
+        base.BindListeners();
+        Listen(InstanceData.PracticeSuccess, ShowMe);
     }
 
-    public void ShowMe() {
-        if (UITop != null && !MenuActive) {
-            MenuActive = true;
-            DependencyInjection.SFXService.Request(openPauseSound);
-            UITop.style.display = DisplayStyle.Flex;
-            ResetCurrentNode();
-            Redraw();
-        }
-    }
+
 }
 }

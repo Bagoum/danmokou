@@ -6,6 +6,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
+using BagoumLib;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.DMath;
@@ -49,7 +50,7 @@ public static class BakeCodeGenerator {
     }
 
     public class CookingContext {
-        private const string outputPath = "Assets/Danmokou/Plugins/Self/Danmaku/Expressions/Generated/";
+        private const string outputPath = "Assets/Danmokou/Plugins/Danmokou/Danmaku/Expressions/Generated/";
         private const string nmSpace = "Danmokou.Expressions";
         private const string clsName = "GeneratedExpressions_CG";
         private const string header = @"//----------------------
@@ -61,6 +62,7 @@ public static class BakeCodeGenerator {
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using BagoumLib.Mathematics;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Danmaku;
@@ -373,13 +375,15 @@ private static {f.returnType.ToCode(true)} {f.fnName}() {{
             foreach (var (m, ra) in members) {
                 var val = (m is FieldInfo f) ? f.GetValue(go) : (m as PropertyInfo)!.GetValue(go);
                 if (ra.resultType != null) {
-                    if      (val is string[] strs)
+                    if (val is string[] strs)
                         strs.ForEach(s => s.IntoIfNotNull(ra.resultType));
                     else if (val is string str)
                         str.IntoIfNotNull(ra.resultType);
                     else if (val is RString rs)
                         rs.Get().IntoIfNotNull(ra.resultType);
-                    else
+                    else if (val is null) {
+                        //generally caused by unfilled field, can be ignored.
+                    } else
                         throw new Exception("ReflectInto has resultType set on an invalid property type: " +
                                             $"{typ.ToCode(true)}.{m.Name}<{val.GetType().ToCode(true)}/" +
                                             $"{ra.resultType.ToCode(true)}>");
@@ -408,7 +412,7 @@ private static {f.returnType.ToCode(true)} {f.fnName}() {{
                     StateMachineManager.FromText(textAsset);
                 }
             } catch (Exception e) {
-                Log.UnityError($"Failed to parse {path}:\n" + Log.StackInnerException(e).Message);
+                Log.UnityError($"Failed to parse {path}:\n" + Exceptions.FlattenNestedException(e).Message);
             }
         }
         Log.Unity("Invoking ReflWrap wrappers...");

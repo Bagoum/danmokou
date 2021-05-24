@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using BagoumLib;
 using Danmokou.Core;
 using UnityEngine;
 
@@ -30,7 +31,7 @@ public class DamageMeasurer : CoroutineRegularUpdater {
             }
             Log.Unity($"DPS: {total / (totalFrames / ETime.ENGINEFPS_F)}; " +
                       $"Last {group} frames: {lastg / (group / ETime.ENGINEFPS_F)}",
-                false, Log.Level.DEBUG1);
+                false, LogLevel.DEBUG1);
         }
     }
 }

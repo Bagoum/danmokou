@@ -1,8 +1,9 @@
 ﻿using System.Collections;
+using BagoumLib.DataStructures;
 using Danmokou.Core;
 
 namespace Danmokou.Behavior {
-public class CoroutineRegularUpdater : RegularUpdater {
+public class CoroutineRegularUpdater : RegularUpdater, ICoroutineRunner {
     private readonly Coroutines coroutines = new Coroutines();
 
     public override void RegularUpdate() {
@@ -12,8 +13,9 @@ public class CoroutineRegularUpdater : RegularUpdater {
     protected void ForceClosingFrame() {
         coroutines.Close();
         if (coroutines.Count > 0) {
-            Log.UnityError($"{gameObject.name} has {coroutines.Count} leftover coroutines.");
-            coroutines.Close();
+            Log.UnityError($"{gameObject.name} has {coroutines.Count} leftover coroutines." +
+                           $" This should only occur on hard shutdowns.");
+            //coroutines.Close(); //For debugging
         }
     }
 
@@ -27,6 +29,9 @@ public class CoroutineRegularUpdater : RegularUpdater {
     public void RunPrependRIEnumerator(IEnumerator ienum) => coroutines.RunPrepend(ienum);
 
     public void RunDroppableRIEnumerator(IEnumerator ienum) => coroutines.RunDroppable(ienum);
+
+    void ICoroutineRunner.Run(IEnumerator ienum) => RunRIEnumerator(ienum);
+    void ICoroutineRunner.RunDroppable(IEnumerator ienum) => RunDroppableRIEnumerator(ienum);
 
 #if UNITY_EDITOR
     public int NumRunningCoroutines => coroutines.Count;

@@ -1,4 +1,5 @@
 ﻿using System.Linq.Expressions;
+using BagoumLib.DataStructures;
 using Danmokou.Core;
 using Danmokou.Danmaku;
 using Danmokou.DMath;
@@ -79,12 +80,14 @@ public class TExSB : TEx<BulletManager.SimpleBullet> {
 
 public class TExSBC : TEx<BulletManager.AbsSimpleBulletCollection> {
     public MemberExpression style => Ex.Property(ex, "Style");
-    public MemberExpression arr => Ex.Field(ex, "arr");
+    public MemberExpression data => Ex.Property(ex, "Data");
+    private static readonly ExFunction indexer = ExUtils.Wrap<CompactingArray<BulletManager.SimpleBullet>>("ItemAt",
+        new[] {typeof(int)});
 
     public TExSBC(string name) : base(ExMode.Parameter, name) { }
     public TExSBC(Ex _ex) : base(_ex) {}
 
-    public TExSB this[Ex index] => new TExSB(arr.Index(index));
+    public TExSB this[Ex index] => new TExSB(data.Index(index));
     private static readonly ExFunction delete = ExUtils.Wrap<BulletManager.AbsSimpleBulletCollection>("DeleteSB",
         new[] {typeof(int)});
     private static readonly ExFunction softcull = ExUtils.Wrap<BulletManager.AbsSimpleBulletCollection>("Softcull",

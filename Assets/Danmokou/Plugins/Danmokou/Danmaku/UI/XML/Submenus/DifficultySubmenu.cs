@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using BagoumLib;
 using Danmokou.Core;
 using Danmokou.Danmaku;
 using Danmokou.UI.XML;

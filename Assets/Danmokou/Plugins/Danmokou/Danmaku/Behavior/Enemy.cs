@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using BagoumLib;
+using BagoumLib.Cancellation;
+using BagoumLib.DataStructures;
 using Danmokou.Behavior.Display;
 using Danmokou.Core;
 using Danmokou.Danmaku;
@@ -296,8 +299,8 @@ public class Enemy : RegularUpdater {
             //if (spellCircleText != null) spellCircleText.SetRadius(lastSpellCircleRad + SpellCircleTextRadOffset);
         }
         for (int ii = 0; ii < hitCooldowns.Count; ++ii) {
-            if (hitCooldowns[ii].Cooldown <= 1) hitCooldowns.Delete(ii);
-            else hitCooldowns.arr[ii].obj.Cooldown = hitCooldowns[ii].Cooldown - 1;
+            if (hitCooldowns[ii].cooldown <= 1) hitCooldowns.Delete(ii);
+            else hitCooldowns[ii].cooldown -= 1;
         }
         hitCooldowns.Compact();
     }
@@ -419,14 +422,23 @@ public class Enemy : RegularUpdater {
         }
     }
 
+    private class HitCooldown {
+        public readonly uint id;
+        public int cooldown;
+        
+        public HitCooldown(uint id, int cooldown) {
+            this.id = id;
+            this.cooldown = cooldown;
+        }
+    }
     //"Slower" than using a dictionary, but there are few enough colliding persistent objects at a time that 
     //it's better to optimize for garbage. 
-    private readonly DMCompactingArray<(uint ID, int Cooldown)> hitCooldowns = new DMCompactingArray<(uint, int)>(8);
+    private readonly DMCompactingArray<HitCooldown> hitCooldowns = new DMCompactingArray<HitCooldown>(8);
     public bool TryHitIndestructible(uint id, int cooldownFrames) {
         for (int ii = 0; ii < hitCooldowns.Count; ++ii) {
-            if (hitCooldowns[ii].ID == id) return false;
+            if (hitCooldowns[ii].id == id) return false;
         }
-        hitCooldowns.Add((id, cooldownFrames));
+        hitCooldowns.Add(new HitCooldown(id, cooldownFrames));
         return true;
     }
 

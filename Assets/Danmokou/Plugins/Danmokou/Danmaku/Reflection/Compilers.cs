@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using BagoumLib;
+using BagoumLib.Mathematics;
 using Danmokou.Core;
 using Danmokou.Danmaku;
 using Danmokou.DataHoist;
@@ -186,6 +188,11 @@ public static class Compilers {
     [Fallthrough]
     [ExprCompiler]
     public static FXY FXY(ExBPY ex) => CompileDelegateLambda<FXY>(ex, 
+        TExArgCtx.Arg.Make<float>("x", true));
+    
+    [Fallthrough]
+    [ExprCompiler]
+    public static Easer Easer(ExBPY ex) => CompileDelegateLambda<Easer>(ex, 
         TExArgCtx.Arg.Make<float>("x", true));
 
     [Fallthrough]

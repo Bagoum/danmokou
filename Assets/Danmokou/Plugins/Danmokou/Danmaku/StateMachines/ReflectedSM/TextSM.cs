@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
+using BagoumLib;
+using BagoumLib.Cancellation;
 using Danmokou.Core;
 using Danmokou.Danmaku;
 using Danmokou.Dialogue;
@@ -10,6 +12,7 @@ using ParserCS;
 using static ParserCS.AAParser;
 using static ParserCS.Common;
 using DUContents = Danmokou.Core.DU<float, string, Danmokou.Dialogue.Dialoguer.EventType>;
+using static BagoumLib.Tasks.WaitingUtils;
 
 namespace Danmokou.SM {
 [Reflect]
@@ -23,7 +26,7 @@ public static class TSMReflection {
     [Alias("z")]
     public static TTaskPattern Confirm() => async smh => {
         Dialoguer.WaitingOnConfirm = true;
-        smh.RunRIEnumerator(WaitingUtils.WaitForDialogueConfirm(smh.cT, WaitingUtils.GetAwaiter(out Task t)));
+        smh.RunRIEnumerator(WaitingUtils.WaitForDialogueConfirm(smh.cT, GetAwaiter(out Task t)));
         await t;
         Dialoguer.WaitingOnConfirm = false;
     };
@@ -39,7 +42,7 @@ public static class TSMReflection {
     private static TTaskPattern FadeStand(string profile_key, float time, bool fadeIn) {
         var profile = Dialoguer.GetProfile(profile_key);
         return smh => {
-            Dialoguer.FadeStand(profile, time, fadeIn, smh.cT, WaitingUtils.GetAwaiter(out Task t));
+            Dialoguer.FadeStand(profile, time, fadeIn, smh.cT, GetAwaiter(out Task t));
             return t;
         };
     }
@@ -81,9 +84,9 @@ public static class TSMReflection {
         return async smh => {
             var cts = new Cancellable();
             var joint = new JointCancellee(cts, smh.cT);
-            Dialoguer.RunDialogue(textCmds, joint, WaitingUtils.GetAwaiter(out Func<bool> isDone), continued);
+            Dialoguer.RunDialogue(textCmds, joint, GetAwaiter(out Func<bool> isDone), continued);
             smh.RunRIEnumerator(WaitingUtils.WaitWhileWithCancellable(isDone, cts, () => InputManager.DialogueToEnd,
-                joint, WaitingUtils.GetAwaiter(out Task t), ETime.FRAME_TIME * 10f));
+                joint, GetAwaiter(out Task t), ETime.FRAME_TIME * 10f));
             await t;
         };
     }

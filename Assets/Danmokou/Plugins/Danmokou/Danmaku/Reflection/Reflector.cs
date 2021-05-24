@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using BagoumLib;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Danmaku;

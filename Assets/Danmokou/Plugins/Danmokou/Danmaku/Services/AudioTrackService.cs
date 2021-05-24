@@ -33,7 +33,7 @@ public class AudioTrackService : RegularUpdater {
 
     protected override void BindListeners() {
         base.BindListeners();
-        Listen(Events.GameStateHasChanged, HandleGameStateChange);
+        Listen(Events.EngineStateHasChanged, HandleEngineStateChange);
     }
 
     public void Update() {
@@ -156,7 +156,7 @@ public class AudioTrackService : RegularUpdater {
         base.OnDisable();
     }
 
-    private void HandleGameStateChange(EngineState state) {
+    private void HandleEngineStateChange(EngineState state) {
         if (state.IsPaused() && (bgm?.StopOnPause ?? false)) {
             src1.Pause();
             src2.Pause();

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using BagoumLib.Cancellation;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.DMath;
@@ -42,9 +43,9 @@ public class TelescopingDisplay : FancyDisplay {
             tr.localScale = new Vector3(scale, scale, scale);
             sr.color = color;
         } else {
-            RunDroppableRIEnumerator(tr.GoTo(myLoc, time, M.EOutSine, canceller));
-            RunDroppableRIEnumerator(tr.ScaleTo(scale, time, M.EOutSine, canceller));
-            RunDroppableRIEnumerator(sr.ColorTo(color, time, M.EOutSine, canceller));
+            tr.GoTo(myLoc, time, M.EOutSine, canceller).Run(this);
+            tr.ScaleTo(scale, time, M.EOutSine, canceller).Run(this);
+            sr.ColorTo(color, time, M.EOutSine, canceller).Run(this);
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using BagoumLib.Cancellation;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Danmaku;
@@ -12,6 +13,7 @@ using Danmokou.Reflection;
 using Danmokou.Scenes;
 using Danmokou.SM;
 using Danmokou.UI;
+using Danmokou.UI.XML;
 using TMPro;
 using UnityEngine;
 using static Danmokou.Core.InputManager;
@@ -63,7 +65,7 @@ public class Tutorial : BehaviorEntity {
             new Vector2(x ?? defaultLoc[target].x, y ?? defaultLoc[target].y);
     }
 
-    public override bool UpdateDuringPause => true;
+    public override EngineState UpdateDuring => EngineState.MENU_PAUSE;
 
     private IEnumerator RunTutorial(int skips) {
         while (SceneIntermediary.LOADING) yield return null;
@@ -87,8 +89,8 @@ public class Tutorial : BehaviorEntity {
         Message(text10, welcome1(UIConfirm.Desc));
         yield return confirm();
         Prompt(text10, blue2(Pause.Desc));
-        yield return waitlf(() => EngineStateManager.IsPaused);
-        UIManager.PauseMenu!.GoToOption(0);
+        yield return waitlf(() => EngineStateManager.State == EngineState.MENU_PAUSE);
+        GameObject.FindObjectOfType<XMLPauseMenu>().GoToOption(0);
         const float menuLeft = -4.8f;
         Message(text00, pause3, x:menuLeft);
         yield return confirm();
@@ -109,7 +111,7 @@ public class Tutorial : BehaviorEntity {
         Message(text00, inputsmooth10, -0.7f, x:menuLeft);
         yield return confirm();
         Prompt(text00, unpause11(Pause.Desc), x:menuLeft);
-        yield return waitlf(() => !EngineStateManager.IsLoadingOrPaused);
+        yield return waitlf(() => EngineStateManager.State == EngineState.RUN);
         var mov = new Movement(new Vector2(-2, 2.5f), 0);
         BulletManager.RequestSimple("lcircle-red/", _ => 4f, null, mov, new ParametricInfo(in mov));
         var nrx = new RealizedLaserOptions(new LaserOptions(), GenCtx.New(this, V2RV2.Zero), FiringCtx.New(), new Vector2(3, 5),
@@ -149,7 +151,7 @@ public class Tutorial : BehaviorEntity {
             else yield return wait(() => pct.Cancelled);
             for (int ii = 0; ii < 244; ++ii) {
                 yield return null; //phase delay
-                if (EngineStateManager.IsRunning) ++ii;
+                if (EngineStateManager.State == EngineState.RUN) ++ii;
             }
         }
         IEnumerator shift() {
@@ -194,9 +196,11 @@ public class Tutorial : BehaviorEntity {
         yield return confirm();
         yield return shift();
         Prompt(text10, pleasedie32);
-        yield return waitlf(() => EngineStateManager.IsDeath);
+        var dead = false;
+        tokens.Add(InstanceData.GameOver.SubscribeOnce(() => dead = true));
+        yield return waitlf(() => dead);
         Prompt(text00, deathscreen33, x:menuLeft);
-        yield return waitlf(() => !EngineStateManager.IsDeath);
+        yield return waitlf(() => EngineStateManager.State == EngineState.RUN);
         yield return shift();
         Message(text10, lifeitems34, -0.3f);
         yield return confirm();

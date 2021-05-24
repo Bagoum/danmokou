@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using BagoumLib;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.UI.XML;

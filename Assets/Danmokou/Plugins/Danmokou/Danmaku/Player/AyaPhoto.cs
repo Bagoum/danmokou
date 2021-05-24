@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using BagoumLib;
 using Danmokou.Core;
 using Danmokou.DMath;
 using JetBrains.Annotations;
@@ -75,7 +76,7 @@ public class AyaPhoto {
         try {
             data = File.ReadAllBytes(FullFilename);
         } catch (Exception e) {
-            Log.Unity($"Couldn't load Aya photo {FullFilename}: {e.Message}", level: Log.Level.WARNING);
+            Log.Unity($"Couldn't load Aya photo {FullFilename}: {e.Message}", level: LogLevel.WARNING);
             texture = null;
             return false;
         }
@@ -85,7 +86,7 @@ public class AyaPhoto {
             tex = texture;
         } catch (Exception e) {
             Log.Unity($"Couldn't read data from Aya photo {FullFilename}: {e.Message}", 
-                level: Log.Level.WARNING);
+                level: LogLevel.WARNING);
             texture = null;
             return false;
         }

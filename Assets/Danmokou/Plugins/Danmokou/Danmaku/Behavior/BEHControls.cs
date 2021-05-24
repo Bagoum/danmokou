@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
+using BagoumLib;
+using BagoumLib.Cancellation;
+using BagoumLib.DataStructures;
 using Danmokou.DMath;
 using Danmokou.Core;
 using Danmokou.Danmaku;
@@ -61,7 +64,7 @@ public partial class BehaviorEntity {
         public void Activate() {
             if (!Active) {
                 activePools.Add(this);
-                Log.Unity($"Activating beh pool {style}", level: Log.Level.DEBUG1);
+                Log.Unity($"Activating beh pool {style}", level: LogLevel.DEBUG1);
                 Active = true;
             }
         }

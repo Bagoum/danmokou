@@ -1,4 +1,5 @@
-﻿using Danmokou.Core;
+﻿using BagoumLib.Events;
+using Danmokou.Core;
 using Danmokou.DMath;
 using Danmokou.Player;
 using Danmokou.Pooling;
@@ -9,8 +10,8 @@ using UnityEngine;
 
 namespace Danmokou.Behavior.Items {
 public abstract class Item : Pooled<Item> {
-    public static readonly Events.IEvent<ItemType> ItemCollected = new Events.Event<ItemType>();
-    public static readonly Events.IEvent<ItemType> ItemCulled = new Events.Event<ItemType>();
+    public static readonly IBSubject<ItemType> ItemCollected = new Event<ItemType>();
+    public static readonly IBSubject<ItemType> ItemCulled = new Event<ItemType>();
     
     protected abstract ItemType Type { get; }
     protected virtual bool Autocollectible => true;

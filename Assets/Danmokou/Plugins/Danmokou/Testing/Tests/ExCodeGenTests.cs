@@ -23,6 +23,7 @@ public class ExCodeGenTests {
 
     [Test]
     public void TestPrivateHoist() {
+        GameManagement.NewInstance(InstanceMode.NULL);
         var ex = "sine 13h 0.4 + * 13 &fitr / p ^ dl 1.2".Into<Func<TExArgCtx, TEx<float>>>();
         var exc = GCXFRepo._Fake(ex);
         var _gcx = TExArgCtx.Arg.Make<GenCtx>("gcx", true);

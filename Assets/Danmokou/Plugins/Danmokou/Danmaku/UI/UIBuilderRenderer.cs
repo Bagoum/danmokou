@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using BagoumLib;
+using BagoumLib.Cancellation;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.DMath;
@@ -147,7 +149,7 @@ public class UIBuilderRenderer : CoroutineRegularUpdater {
         base.OnDisable();
     }
 
-    public override bool UpdateDuringPause => true;
+    public override EngineState UpdateDuring => EngineState.MENU_PAUSE;
     public override int UpdatePriority => UpdatePriorities.SLOW;
 }
 }

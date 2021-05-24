@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using BagoumLib;
 using Danmokou.Core;
 using Danmokou.DMath;
 using Danmokou.Expressions;

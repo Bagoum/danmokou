@@ -1,4 +1,5 @@
-﻿using Danmokou.Behavior;
+﻿using BagoumLib.Events;
+using Danmokou.Behavior;
 using Danmokou.Behavior.Items;
 using Danmokou.Core;
 using Danmokou.DMath;
@@ -12,7 +13,7 @@ public class RankManager : RegularUpdater {
     /// <summary>
     /// True iff rank level was increased
     /// </summary>
-    public static readonly Events.IEvent<bool> RankLevelChanged = new Events.Event<bool>();
+    public static readonly IBSubject<bool> RankLevelChanged = new Event<bool>();
     #region Consts
 
     /// <summary>

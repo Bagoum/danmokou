@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using BagoumLib;
 using Danmokou.Core;
 using Danmokou.DMath;
 using JetBrains.Annotations;

@@ -1,8 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
+using BagoumLib.Tasks;
 using Danmokou.Core;
 using Danmokou.Dialogue;
 using Danmokou.Services;
+using static BagoumLib.Tasks.WaitingUtils;
 
 namespace Danmokou.SM {
 /// <summary>
@@ -47,14 +49,14 @@ public class EndcardControllerTSM : ReflectableSLSM {
     /// Fade in an endcard image.
     /// </summary>
     public static Endcard FadeIn(float t, string key) => smh => {
-        Endcards.FadeIn(t, key, smh.cT, WaitingUtils.GetAwaiter(out Task task));
+        Endcards.FadeIn(t, key, smh.cT, GetAwaiter(out Task task));
         return task;
     };
     /// <summary>
     /// Fade out an endcard image (to black).
     /// </summary>
     public static Endcard FadeOut(float t) => smh => {
-        Endcards.FadeOut(t, smh.cT, WaitingUtils.GetAwaiter(out Task task));
+        Endcards.FadeOut(t, smh.cT, GetAwaiter(out Task task));
         return task;
     };
     

@@ -484,55 +484,55 @@ public static partial class ExM {
     /// Returns the amount of time for which the player has *not* been focusing.
     /// Resets to zero while the player is focusing.
     /// </summary>
-    public static ExBPY PlayerFreeT(Func<TExArgCtx, TEx<Player.PlayerController>> p) => tac => p(tac).Field("TimeFree");
+    public static ExBPY PlayerFreeT(Func<TExArgCtx, TEx<PlayerController>> p) => tac => p(tac).Field("TimeFree");
     /// <summary>
     /// Returns the amount of time for which the player has been focusing.
     /// Resets to zero while the player is not focusing.
     /// </summary>
-    public static ExBPY PlayerFocusT(Func<TExArgCtx, TEx<Player.PlayerController>> p) => tac => p(tac).Field("TimeFocus");
+    public static ExBPY PlayerFocusT(Func<TExArgCtx, TEx<PlayerController>> p) => tac => p(tac).Field("TimeFocus");
     /// <summary>
     /// Returns the amount of time for which the player has been firing.
     /// Resets to zero while the player is not firing.
     /// </summary>
-    public static ExBPY PlayerFiringT(Func<TExArgCtx, TEx<Player.PlayerController>> p) => tac => p(tac).Field("FiringTime");
+    public static ExBPY PlayerFiringT(Func<TExArgCtx, TEx<PlayerController>> p) => tac => p(tac).Field("FiringTime");
     /// <summary>
     /// Returns the amount of time for which the player has been firing while *not* focusing.
     /// Resets to zero while the player is not firing or is focusing.
     /// </summary>
-    public static ExBPY PlayerFiringFreeT(Func<TExArgCtx, TEx<Player.PlayerController>> p) => tac => p(tac).Field("FiringTimeFree");
+    public static ExBPY PlayerFiringFreeT(Func<TExArgCtx, TEx<PlayerController>> p) => tac => p(tac).Field("FiringTimeFree");
     /// <summary>
     /// Returns the amount of time for which the player has been firing while focusing.
     /// Resets to zero while the player is not firing or is not focusing.
     /// </summary>
-    public static ExBPY PlayerFiringFocusT(Func<TExArgCtx, TEx<Player.PlayerController>> p) => tac => p(tac).Field("FiringTimeFocus");
+    public static ExBPY PlayerFiringFocusT(Func<TExArgCtx, TEx<PlayerController>> p) => tac => p(tac).Field("FiringTimeFocus");
     /// <summary>
     /// Returns the amount of time for which the player has *not* been firing.
     /// Resets to zero while the player is firing.
     /// </summary>
-    public static ExBPY PlayerUnFiringT(Func<TExArgCtx, TEx<Player.PlayerController>> p) => tac => p(tac).Field("UnFiringTime");
+    public static ExBPY PlayerUnFiringT(Func<TExArgCtx, TEx<PlayerController>> p) => tac => p(tac).Field("UnFiringTime");
     /// <summary>
     /// Returns the amount of time for which the player has *not* been firing or been focusing.
     /// Resets to zero while the player is firing AND *not* focusing.
     /// </summary>
-    public static ExBPY PlayerUnFiringFreeT(Func<TExArgCtx, TEx<Player.PlayerController>> p) => tac => p(tac).Field("UnFiringTimeFree");
+    public static ExBPY PlayerUnFiringFreeT(Func<TExArgCtx, TEx<PlayerController>> p) => tac => p(tac).Field("UnFiringTimeFree");
     /// <summary>
     /// Returns the amount of time for which the player has *not* been firing or *not* been focusing.
     /// Resets to zero while the player is firing AND focusing.
     /// </summary>
-    public static ExBPY PlayerUnFiringFocusT(Func<TExArgCtx, TEx<Player.PlayerController>> p) => tac => p(tac).Field("UnFiringTimeFocus");
+    public static ExBPY PlayerUnFiringFocusT(Func<TExArgCtx, TEx<PlayerController>> p) => tac => p(tac).Field("UnFiringTimeFocus");
     
-    public static tfloat PlayerID() =>Player.PlayerController.playerID;
+    public static tfloat PlayerID() =>PlayerController.playerID;
 
-    public static ExBPY PlayerLerpFreeToFocus(Func<TExArgCtx, TEx<Player.PlayerController>> p, ExBPY over) => 
+    public static ExBPY PlayerLerpFreeToFocus(Func<TExArgCtx, TEx<PlayerController>> p, ExBPY over) => 
         tac => Clamp01(PlayerFocusT(p)(tac).Div(over(tac)));
-    public static ExTP PlayerPastPos(Func<TExArgCtx, TEx<Player.PlayerController>> p, ExBPY ago) => 
-        tac => Player.PlayerController.pastPosition.InstanceOf(p(tac), ago(tac));
-    public static ExTP PlayerMarisaAPos(Func<TExArgCtx, TEx<Player.PlayerController>> p, ExBPY ago) => 
-        tac => Player.PlayerController.marisaAPosition.InstanceOf(p(tac), ago(tac));
-    public static ExTP PlayerPastDir(Func<TExArgCtx, TEx<Player.PlayerController>> p, ExBPY ago) => 
-        tac => Player.PlayerController.pastDirection.Of(p(tac), ago(tac));
-    public static ExTP PlayerMarisaADir(Func<TExArgCtx, TEx<Player.PlayerController>> p, ExBPY ago) => 
-        tac => Player.PlayerController.marisaADirection.Of(p(tac), ago(tac));
+    public static ExTP PlayerPastPos(Func<TExArgCtx, TEx<PlayerController>> p, ExBPY ago) => 
+        tac => PlayerController.pastPosition.InstanceOf(p(tac), ago(tac));
+    public static ExTP PlayerMarisaAPos(Func<TExArgCtx, TEx<PlayerController>> p, ExBPY ago) => 
+        tac => PlayerController.marisaAPosition.InstanceOf(p(tac), ago(tac));
+    public static ExTP PlayerPastDir(Func<TExArgCtx, TEx<PlayerController>> p, ExBPY ago) => 
+        tac => PlayerController.pastDirection.InstanceOf(p(tac), ago(tac));
+    public static ExTP PlayerMarisaADir(Func<TExArgCtx, TEx<PlayerController>> p, ExBPY ago) => 
+        tac => PlayerController.marisaADirection.InstanceOf(p(tac), ago(tac));
 
     //These types are not funcified, so they need to be explicit
     
@@ -598,7 +598,7 @@ public static partial class ExM {
         var fctx = tac.FCTX;
         if (t == typeof(CurvedTileRenderLaser)) {
             return fctx.Field("LaserController");
-        } else if (t == typeof(Player.PlayerController)) {
+        } else if (t == typeof(PlayerController)) {
             return fctx.Field("PlayerController");
         } else if (t == typeof(FireOption)) {
             return fctx.Field("OptionFirer");

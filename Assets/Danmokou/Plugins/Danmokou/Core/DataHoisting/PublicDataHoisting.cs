@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq.Expressions;
+using BagoumLib.DataStructures;
 using Danmokou.Core;
 using Danmokou.DMath;
 using Danmokou.Expressions;
@@ -21,7 +22,7 @@ public static class PublicDataHoisting {
 
     private static void ClearValues<T>(List<SafeResizableArray<T>> vals) where T : struct {
         for (int ii = 0; ii < vals.Count; ++ii) {
-            vals[ii].Empty(true);
+            vals[ii].Empty();
         }
     }
 

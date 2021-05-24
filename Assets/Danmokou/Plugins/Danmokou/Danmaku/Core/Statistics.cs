@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using BagoumLib;
 using Danmokou.GameInstance;
 using Danmokou.Scriptables;
 using Danmokou.SM;

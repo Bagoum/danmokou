@@ -6,6 +6,7 @@ using UnityEngine;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
+using BagoumLib;
 using Danmokou.Core;
 using Danmokou.DMath;
 using JetBrains.Annotations;

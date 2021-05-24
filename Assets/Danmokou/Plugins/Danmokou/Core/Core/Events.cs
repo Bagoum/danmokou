@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 using System.Linq.Expressions;
+using BagoumLib.DataStructures;
+using BagoumLib.Events;
+using BagoumLib.Functional;
 using Danmokou.Core;
 using Danmokou.Expressions;
 using JetBrains.Annotations;
@@ -12,10 +15,12 @@ namespace Danmokou.Core {
 /// Module for managing events.
 /// </summary>
 public static class Events {
-    public interface IEvent<T> {
-        Maybe<T> LastPublished { get; }
-        void Publish(T obj);
-        DeletionMarker<Action<T>> Subscribe(Action<T> cb);
+    public static IDeletionMarker SubscribeOnce(this Event0 ev, Action cb) {
+        IDeletionMarker dm = null!;
+        return dm = ev.Subscribe(() => {
+            dm.MarkForDeletion();
+            cb();
+        });
     }
     
     /// <summary>
@@ -108,8 +113,8 @@ public static class Events {
         private void Publish() {
             int temp_last = callbacks.Count;
             for (int ii = 0; ii < temp_last; ++ii) {
-                DeletionMarker<Action> listener = callbacks.arr[ii];
-                if (!listener.markedForDeletion) listener.obj();
+                DeletionMarker<Action> listener = callbacks.Data[ii];
+                if (!listener.MarkedForDeletion) listener.Value();
             }
             callbacks.Compact();
         }
@@ -149,35 +154,7 @@ public static class Events {
         public DeletionMarker<Action> Subscribe(Action cb) => callbacks.Add(cb);
     }
 
-    public class Event<T> : IEvent<T> {
-        private DMCompactingArray<Action<T>> callbacks = new DMCompactingArray<Action<T>>();
-        public Maybe<T> LastPublished { get; private set; } = Maybe<T>.None;
-
-        /// <summary>
-        /// Callbacks are transferred from inheritFrom to this event.
-        /// </summary>
-        public Event(Event<T>? inheritFrom = null) {
-            if (inheritFrom != null) {
-                callbacks = inheritFrom.callbacks;
-                inheritFrom.callbacks = new DMCompactingArray<Action<T>>();
-            }
-        }
-        
-        public void Publish(T obj) {
-            LastPublished = Maybe<T>.Of(obj);
-            int temp_last = callbacks.Count;
-            for (int ii = 0; ii < temp_last; ++ii) {
-                DeletionMarker<Action<T>> listener = callbacks.arr[ii];
-                if (!listener.markedForDeletion) listener.obj(obj);
-            }
-            callbacks.Compact();
-        }
-
-        public DeletionMarker<Action<T>> Subscribe(Action<T> cb) => callbacks.Add(cb);
-    }
-    
-    
-    public static readonly IEvent<EngineState> GameStateHasChanged = new Event<EngineState>();
+    public static readonly IBSubject<EngineState> EngineStateHasChanged = new Event<EngineState>();
     public static readonly Event0 ClearPhase = new Event0();
 #if UNITY_EDITOR || ALLOW_RELOAD
     public static readonly Event0 LocalReset = new Event0();

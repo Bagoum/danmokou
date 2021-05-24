@@ -1,4 +1,5 @@
 ﻿using System;
+using BagoumLib.Cancellation;
 using Danmokou.Core;
 using Danmokou.DMath;
 using Danmokou.Graphics;
@@ -62,8 +63,8 @@ public class FancyShotDisplay : FancyDisplay {
             tr.localPosition = myLoc;
             tr.localScale = new Vector3(scale, scale, scale);
         } else {
-            RunDroppableRIEnumerator(tr.GoTo(myLoc, time, M.EOutSine, canceller));
-            RunDroppableRIEnumerator(tr.ScaleTo(scale, time, M.EOutSine, canceller));
+            tr.GoTo(myLoc, time, M.EOutSine, canceller).Run(this);
+            tr.ScaleTo(scale, time, M.EOutSine, canceller).Run(this);
         }
     }
 }

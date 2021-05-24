@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using BagoumLib;
+using BagoumLib.DataStructures;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Expressions;
@@ -59,7 +61,7 @@ public class SFXService : RegularUpdater, ISFXService {
         base.BindListeners();
         RegisterDI<ISFXService>(this);
         
-        Listen(Events.GameStateHasChanged, HandleGameStateChange);
+        Listen(Events.EngineStateHasChanged, HandleEngineStateChange);
         Listen(RankManager.RankLevelChanged, increase => Request(increase ? rankUp : rankDown));
         Listen(InstanceData.MeterNowUsable, () => Request(meterUsable));
         Listen(InstanceData.AnyExtendAcquired, () => Request(lifeExtend));
@@ -80,7 +82,7 @@ public class SFXService : RegularUpdater, ISFXService {
     }
 
     public void Update() {
-        if (EngineStateManager.IsLoadingOrPaused) return;
+        if (EngineStateManager.State != EngineState.RUN) return;
         _timeouts.Clear();
         foreach (var kv in timeouts) {
             float v = kv.Value - ETime.dT;
@@ -256,7 +258,7 @@ public class SFXService : RegularUpdater, ISFXService {
         loopTimeoutsArr.Clear();
     }
 
-    private void HandleGameStateChange(EngineState state) {
+    private void HandleEngineStateChange(EngineState state) {
         if (state.IsPaused()) {
             for (int ii = 0; ii < constructed.Count; ++ii) {
                 if (constructed[ii].sfx.Pausable) constructed[ii].csrc.Pause();

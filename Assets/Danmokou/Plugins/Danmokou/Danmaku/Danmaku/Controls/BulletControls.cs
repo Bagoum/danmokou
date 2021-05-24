@@ -3,6 +3,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
+using BagoumLib.Cancellation;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.DataHoist;

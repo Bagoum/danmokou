@@ -1,4 +1,5 @@
-﻿using Danmokou.Behavior;
+﻿using BagoumLib.Cancellation;
+using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.DMath;
 using JetBrains.Annotations;

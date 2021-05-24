@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using BagoumLib.Cancellation;
+using BagoumLib.DataStructures;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.DMath;
@@ -62,10 +64,10 @@ public class RaikoCamera : RegularUpdater, IRaiko {
     public override void RegularUpdate() {
         Vector3 totalQuake = Vector3.zero;
         for (int ii = 0; ii < shakers.Count; ++ii) {
-            if (!shakers.arr[ii].markedForDeletion) {
+            if (!shakers.Data[ii].MarkedForDeletion) {
                 var (finished, quake) = shakers[ii].Update(ETime.FRAME_TIME);
                 if (finished)
-                    shakers.arr[ii].MarkForDeletion();
+                    shakers.Data[ii].MarkForDeletion();
                 else
                     totalQuake += quake;
             }

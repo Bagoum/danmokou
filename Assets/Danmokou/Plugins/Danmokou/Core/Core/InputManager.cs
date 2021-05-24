@@ -43,7 +43,7 @@ public class InputHandler : IInputHandler {
     private bool refractory;
     private readonly InputTriggerMethod trigger;
     private bool toggledValue;
-    public bool Active => _active && EngineStateManager.InputAllowed &&
+    public bool Active => _active && EngineStateManager.State.InputAllowed() &&
                           //Prevents events like Bomb from being triggered twice in two RU frames per one unity frame
                           (trigger == InputTriggerMethod.ONCE ?
                             ETime.FirstUpdateForScreen :

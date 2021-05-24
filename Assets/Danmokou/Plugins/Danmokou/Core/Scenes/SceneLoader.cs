@@ -12,7 +12,7 @@ public class SceneLoader : CoroutineRegularUpdater {
         Main = this;
     }
 
-    public override bool UpdateDuringPause => true;
+    public override EngineState UpdateDuring => EngineState.LOADING_PAUSE;
 
     public override int UpdatePriority => UpdatePriorities.SOF;
 }

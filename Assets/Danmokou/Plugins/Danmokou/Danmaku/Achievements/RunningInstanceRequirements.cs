@@ -69,12 +69,23 @@ public class CardCompletionRequirement : Requirement {
     }
 }
 
+
+public class ScoreReq : Requirement {
+    private readonly long score;
+
+    public ScoreReq(long score) {
+        this.score = score;
+        Listen(InstanceData.sScore);
+    }
+
+    public override State EvalState() => (Instance.Score >= score).ToACVState();
+}
 public class CampaignScoreReq : Requirement {
     private readonly long score;
 
     public CampaignScoreReq(long score) {
         this.score = score;
-        Listen(Instance.Score.OnChange);
+        Listen(InstanceData.sScore);
     }
 
     public override State EvalState() => (Instance.IsAtleastNormalCampaign && Instance.Score >= score).ToACVState();
@@ -85,7 +96,7 @@ public class CampaignGrazeReq : Requirement {
 
     public CampaignGrazeReq(int graze) {
         this.graze = graze;
-        Listen(Instance.Graze.OnChange);
+        Listen(InstanceData.sGraze);
     }
     public override State EvalState() => (Instance.IsAtleastNormalCampaign && Instance.Graze >= graze).ToACVState();
 }
@@ -95,7 +106,7 @@ public class CampaignPIVReq : Requirement {
 
     public CampaignPIVReq(double piv) {
         this.piv = piv;
-        Listen(Instance.PIV.OnChange);
+        Listen(InstanceData.sPIV);
     }
     public override State EvalState() => (Instance.IsAtleastNormalCampaign && Instance.PIV >= piv).ToACVState();
 }

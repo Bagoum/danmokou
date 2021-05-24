@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Danmokou.Core;
+using Danmokou.GameInstance;
 using Danmokou.Services;
 using UnityEngine.UIElements;
 using UnityEngine;
@@ -18,13 +19,8 @@ public class XMLReplaySaveMenu : XMLMenu {
 
     protected override void Awake() {
         if (!Application.isPlaying) return;
-        if (Replayer.PostedReplay == null) {
-            //This shouldn't happen, but here's trivial handling to avoid catastrophic problems
-            MainScreen = new UIScreen(
-                new FuncNode(GameManagement.GoToMainMenu, to_menu)
-            ).With(UIScreenV);
-        } else {
-            var r = Replayer.PostedReplay.Value;
+        if (InstanceRequest.InstanceCompleted.LastPublished.Try(out var inst) && inst.data.Replay is ReplayRecorder rr) {
+            var r = rr.Compile(inst.record);
             var replayName = new TextInputNode(replay_name);
             var save = replay_save;
             MainScreen = new UIScreen(
@@ -39,6 +35,11 @@ public class XMLReplaySaveMenu : XMLMenu {
                     save = replay_saved;
                     return true;
                 }, () => save, true),
+                new FuncNode(GameManagement.GoToMainMenu, to_menu)
+            ).With(UIScreenV);
+        } else {
+            //This shouldn't happen, but here's trivial handling to avoid catastrophic problems
+            MainScreen = new UIScreen(
                 new FuncNode(GameManagement.GoToMainMenu, to_menu)
             ).With(UIScreenV);
         }

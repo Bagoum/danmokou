@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using BagoumLib;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.DMath;
@@ -11,7 +12,7 @@ namespace Danmokou.UI {
 /// <br />Note: these objects update during pause.
 /// </summary>
 public class AyaPinnedPhoto : CoroutineRegularUpdater {
-    public override bool UpdateDuringPause => true;
+    public override EngineState UpdateDuring => EngineState.EFFECT_PAUSE;
 
     private Transform tr = null!;
     private SpriteRenderer sr = null!;
