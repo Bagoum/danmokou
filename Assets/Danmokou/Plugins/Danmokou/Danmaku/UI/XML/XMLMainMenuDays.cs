@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using BagoumLib;
+using BagoumLib.Culture;
 using Danmokou.Core;
 using Danmokou.Danmaku;
 using Danmokou.GameInstance;
@@ -91,7 +92,7 @@ public class XMLMainMenuDays : XMLMainMenu {
                         challenge: new PhaseChallengeRequest(p, c)).Run();
                     return (true, null);
                 };
-                var challengeSwitch = new DynamicComplexOptionNodeLR<int>(LocalizedString.Empty, VTALR2Option, SetChallenge,
+                var challengeSwitch = new DynamicComplexOptionNodeLR<int>(LString.Empty, VTALR2Option, SetChallenge,
                     p.challenges.Length.Range().ToArray, (i, v, on) => {
                         v.Query(null!, "bracket")
                             .ForEach(x => x.style.display = on ? DisplayStyle.Flex : DisplayStyle.None);
@@ -122,12 +123,12 @@ public class XMLMainMenuDays : XMLMainMenu {
         MainScreen = new UIScreen(
             new TransferNode(SceneSelectScreen, main_gamestart)
                 .With(large1Class),
-            new OptionNodeLR<Locale>(main_lang, l => {
+            new OptionNodeLR<string?>(main_lang, l => {
                     SaveData.UpdateLocale(l);
                     SaveData.AssignSettingsChanges();
                 }, new[] {
-                    (new LocalizedString("English"), Locale.EN),
-                    (new LocalizedString("日本語"), Locale.JP)
+                    (new LString("English"), Locales.EN),
+                    (new LString("日本語"), Locales.JP)
                 }, SaveData.s.Locale)
                 .With(large1Class),
             new TransferNode(ReplayScreen, main_replays).EnabledIf(SaveData.p.ReplayData.Count > 0)

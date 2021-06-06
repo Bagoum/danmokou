@@ -257,7 +257,7 @@ public class AyaCamera : BehaviorEntity {
         text.enabled = false;
         var photo = MainCamera.main.RequestAyaPhoto(ViewfinderRect(scale));
         var pphoto = GameObject.Instantiate(pinnedPhotoPrefab).GetComponent<AyaPinnedPhoto>();
-        PhotoTaken.Publish((photo, success));
+        PhotoTaken.OnNext((photo, success));
         if (success) {
             if (GameManagement.Instance.Request?.replay == null) photo.KeepAlive = true;
             targetLoc = DependencyInjection.MaybeFind<IAyaPhotoBoard>()?.NextPinLoc(pphoto) ?? new Vector2(-4, 0);

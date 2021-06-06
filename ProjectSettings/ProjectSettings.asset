@@ -577,7 +577,7 @@ PlayerSettings:
   webGLThreadsSupport: 0
   webGLDecompressionFallback: 0
   scriptingDefineSymbols:
-    1: EXBAKE_LOAD
+    1: 
     7: VER_SIMP
     13: WEBGL;EXBAKE_LOAD
     19: UNITY_POST_PROCESSING_STACK_V2

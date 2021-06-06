@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using BagoumLib.Culture;
 using Danmokou.GameInstance;
 using Danmokou.Services;
 using UnityEngine;
@@ -368,7 +369,7 @@ public static class EnumHelpers2 {
         _ => 3
     };
 
-    public static LocalizedString Describe(this FixedDifficulty d) => d switch {
+    public static LString Describe(this FixedDifficulty d) => d switch {
             FixedDifficulty.Lunatic => difficulty_lunatic,
             FixedDifficulty.Hard => difficulty_hard,
             FixedDifficulty.Normal => difficulty_normal,

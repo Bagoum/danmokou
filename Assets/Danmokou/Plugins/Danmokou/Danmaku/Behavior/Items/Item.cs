@@ -93,7 +93,7 @@ public abstract class Item : Pooled<Item> {
     }
 
     protected virtual void CollectMe(PlayerController collector) {
-        ItemCollected.Publish(Type);
+        ItemCollected.OnNext(Type);
         DependencyInjection.SFXService.Request(onCollect);
         PooledDone();
     }
@@ -116,7 +116,7 @@ public abstract class Item : Pooled<Item> {
             if (Attractible && CollisionMath.CircleOnPoint(loc, target.itemAttractRadius, target.location)) SetHome();
             else if (!LocationHelpers.OnScreenInDirection(loc, -screenRange * Direction) || 
                      (time > MinCullTime && !LocationHelpers.OnPlayableScreenBy(CullRadius, loc))) {
-                ItemCulled.Publish(Type);
+                ItemCulled.OnNext(Type);
                 PooledDone();
                 return;
             }

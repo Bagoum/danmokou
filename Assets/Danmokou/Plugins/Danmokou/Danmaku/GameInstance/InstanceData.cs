@@ -178,21 +178,21 @@ public class InstanceData {
             (campaign.startLives > 0 ? campaign.startLives : StartLives(mode)) :
             StartLives(mode);
         MaxScore = new Evented<long>(maxScore ?? 9001);
-        Tokens.Add(MaxScore.Subscribe(sMaxScore.Publish));
+        Tokens.Add(MaxScore.Subscribe(sMaxScore.OnNext));
         Score = new Evented<long>(0);
-        Tokens.Add(Score.Subscribe(sScore.Publish));
+        Tokens.Add(Score.Subscribe(sScore.OnNext));
         Lives = new Evented<int>(Difficulty.startingLives ?? dfltLives);
-        Tokens.Add(Lives.Subscribe(sLives.Publish));
+        Tokens.Add(Lives.Subscribe(sLives.OnNext));
         Bombs = new Evented<int>(StartBombs(mode));
-        Tokens.Add(Bombs.Subscribe(sBombs.Publish));
+        Tokens.Add(Bombs.Subscribe(sBombs.OnNext));
         Power = new Evented<double>(StartPower(mode));
-        Tokens.Add(Power.Subscribe(sPower.Publish));
+        Tokens.Add(Power.Subscribe(sPower.OnNext));
         PIV = new Evented<double>(1);
-        Tokens.Add(PIV.Subscribe(sPIV.Publish));
+        Tokens.Add(PIV.Subscribe(sPIV.OnNext));
         LifeItems = new Evented<int>(0);
-        Tokens.Add(LifeItems.Subscribe(sLifeItems.Publish));
+        Tokens.Add(LifeItems.Subscribe(sLifeItems.OnNext));
         Graze = new Evented<long>(0);
-        Tokens.Add(Graze.Subscribe(sGraze.Publish));
+        Tokens.Add(Graze.Subscribe(sGraze.OnNext));
         CardHistory = new CardHistory();
         Meter = StartMeter(mode);
         nextScoreLifeIndex = 0;
@@ -458,7 +458,7 @@ public class InstanceData {
         bool increaseRank = level > RankLevel;
         RankLevel = level;
         RankPoints = M.Clamp(0, RankPointsRequired - 1, points ?? RankManager.DefaultRankPointsForLevel(level));
-        RankManager.RankLevelChanged.Publish(increaseRank);
+        RankManager.RankLevelChanged.OnNext(increaseRank);
         return true;
     }
     public void AddRankPoints(double delta) {
@@ -498,11 +498,11 @@ public class InstanceData {
             };
             CardHistory.Add(crec);
             AddRankPoints(RankManager.RankPointsForCard(crec));
-            CardHistoryUpdated.Publish(crec);
+            CardHistoryUpdated.OnNext(crec);
         }
         if (pc.props.phaseType?.IsPattern() ?? false) AddFaithLenience(faithLeniencePhase);
 
-        PhaseCompleted.Publish(pc);
+        PhaseCompleted.OnNext(pc);
     }
 
     private void AddScore(long delta) {

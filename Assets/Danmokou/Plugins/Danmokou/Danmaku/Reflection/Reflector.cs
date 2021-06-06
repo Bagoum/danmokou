@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using BagoumLib;
+using BagoumLib.Culture;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Danmaku;
@@ -85,7 +86,7 @@ public static partial class Reflector {
     private static readonly Type type_alias = typeof(ReflectEx.Alias);
     private static readonly Type type_gcrule = typeof(GCRule);
     private static readonly Type gtype_ienum = typeof(IEnumerable<>);
-    private static readonly Type type_locstring = typeof(LocalizedString);
+    private static readonly Type type_locstring = typeof(LString);
 
 
     private static bool MatchesGeneric(Type target, Type generic) =>
@@ -114,7 +115,7 @@ public static partial class Reflector {
             obj = LocalizedStrings.IsLocalizedStringReference(str) ? 
                 LocalizedStrings.TryFindReference(str) ?? 
                     throw new Exception($"Line {p.GetLastLine()}: Couldn't resolve LocalizedString {str}")
-                : new LocalizedString(str);
+                : new LString(str);
         } else if (targetType == type_stylesel) {
             obj = new BulletManager.StyleSelector((ResolveAsArray(type_stringA, p) as string[][])!);
         } else if (targetType == type_gcrule) {

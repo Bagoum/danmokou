@@ -36,6 +36,7 @@ public class GameUniqueReferences : ScriptableObject {
     public AudioTrack[] tracks = null!;
     public ItemReferences items = null!;
     public PrefabReferences prefabReferences = null!;
+    public SuzunoyaReferences? suzunoyaReferences;
     public UXMLReferences uxmlDefaults = null!;
     public SOPrefabs[] summonables = null!;
     public SOTextAssets[] fileStateMachines = null!;

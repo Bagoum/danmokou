@@ -33,7 +33,7 @@ public class Commentator : CoroutineRegularUpdater {
 
     public void SetComment(Comment c) {
         SetSprite(c.sprite);
-        SetText(c.text.Value.ValueOrEn);
+        SetText(c.text.Value.Value);
     }
 }
 }

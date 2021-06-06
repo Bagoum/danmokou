@@ -6,11 +6,12 @@ using BagoumLib.Cancellation;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.DMath;
-using Danmokou.Graphics;
 using Danmokou.Services;
 using JetBrains.Annotations;
+using SuzunoyaUnity.Rendering;
 using UnityEngine;
 using UnityEngine.UIElements;
+using PropConsts = Danmokou.Graphics.PropConsts;
 
 namespace Danmokou.UI {
 public class UIBuilderRenderer : CoroutineRegularUpdater {
@@ -135,7 +136,7 @@ public class UIBuilderRenderer : CoroutineRegularUpdater {
 
     private void RemakeTexture() {
         if (rt != null) rt.Release();
-        rt = MainCamera.DefaultTempRT();
+        rt = RenderHelpers.DefaultTempRT();
         settings.targetTexture = rt;
         uiMaterial.SetTexture(PropConsts.renderTex, rt);
     }

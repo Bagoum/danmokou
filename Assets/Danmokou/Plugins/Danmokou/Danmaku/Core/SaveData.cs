@@ -4,6 +4,7 @@ using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using BagoumLib;
+using BagoumLib.Culture;
 using Danmokou.Achievements;
 using Danmokou.Danmaku;
 using Danmokou.GameInstance;
@@ -130,7 +131,7 @@ public static class SaveData {
 
     public class Settings {
         public bool AllowInputLinearization = false;
-        public Locale Locale = Locale.EN;
+        public string? Locale = null;
         public bool Shaders = true;
         public bool LegacyRenderer = false;
         public int RefreshRate = 60;
@@ -309,12 +310,14 @@ public static class SaveData {
 
     //Screen.setRes does not take effect immediately, so we need to do this on-change instead of together with
     //shader variable reassignment
+    //this is also used to turn backgrounds on/off
     public static void UpdateResolution((int w, int h)? wh = null) {
         if (wh.HasValue) {
             s.Resolution = wh.Value;
             Screen.SetResolution(s.Resolution.w, s.Resolution.h, s.Fullscreen);
             Log.Unity($"Set resolution to {wh.Value}");
         }
+        SuzunoyaUnity.Rendering.RenderHelpers.PreferredResolution.OnNext(s.Resolution);
         ResolutionHasChanged.Proc();
     }
 
@@ -329,9 +332,9 @@ public static class SaveData {
         InputManager.AllowControllerInput = allowed;
     }
 
-    public static void UpdateLocale(Locale loc) {
+    public static void UpdateLocale(string? loc) {
         s.Locale = loc;
-        Localization.Locale = loc;
+        Localization.Locale.Value = loc;
     }
 
     public static void AssignSettingsChanges() {

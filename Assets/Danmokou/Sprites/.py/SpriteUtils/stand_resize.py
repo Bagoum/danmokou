@@ -7,15 +7,15 @@ src = "img/stand-source/"
 out = "img/stand-output/"
 root = "normal.png"
 
-root_left = 100
-root_left2 = 912
-root_top = 64
-root_top2 = 1400
+root_left = 0
+root_left2 = 672
+root_top = 12
+root_top2 = 1152
 
-left = 380
-left2 = 560
-top = 248
-top2 = 392
+left = 220
+left2 = 408
+top = 120
+top2 = 248
 
 def root_convert(fromfile, tofile):
     img = Image.open(fromfile)

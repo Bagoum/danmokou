@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using BagoumLib.Culture;
 using BagoumLib.Events;
 using Danmokou.Core;
 using Danmokou.DMath;
@@ -52,9 +53,9 @@ public abstract class Requirement : IRequirementWatcher {
 public class Achievement : IRequirementWatcher {
     public static MultiAdder ACHIEVEMENT_PROGRESS_ENABLED { get; } = new MultiAdder(0, null);
     public string Key { get; }
-    public LocalizedString Title { get; }
-    public LocalizedString Description { get; }
-    public LocalizedString VisibleDescription =>
+    public LString Title { get; }
+    public LString Description { get; }
+    public LString VisibleDescription =>
         State == State.Locked ? LocalizedStrings.UI.achievements_locked : Description;
     public Requirement Req { get; }
     public State State { get; private set; }
@@ -67,7 +68,7 @@ public class Achievement : IRequirementWatcher {
         return this;
     }
 
-    public Achievement(string key, LocalizedString title, LocalizedString descr, Func<Requirement> req, AchievementRepo? repo=null) {
+    public Achievement(string key, LString title, LString descr, Func<Requirement> req, AchievementRepo? repo=null) {
         Key = key;
         Title = title;
         Description = descr;
@@ -86,7 +87,7 @@ public class Achievement : IRequirementWatcher {
         Log.Unity($"Achievement {Key} progressed from {State} to {nState}");
         State = nState;
         SendCallbacks();
-        AchievementStateUpdated.Publish(this);
+        AchievementStateUpdated.OnNext(this);
     }
 
     public static readonly Event<Achievement> AchievementStateUpdated = new Event<Achievement>();

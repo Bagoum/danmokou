@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3557489986302996356}
   - component: {fileID: 3557489986302996357}
-  - component: {fileID: 3557489986302996347}
+  - component: {fileID: 1823197470026011737}
   m_Layer: 0
   m_Name: ArbitraryCapturer
   m_TagString: Untagged
@@ -75,7 +75,7 @@ Camera:
   m_OcclusionCulling: 0
   m_StereoConvergence: 10
   m_StereoSeparation: 0.022
---- !u!114 &3557489986302996347
+--- !u!114 &1823197470026011737
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -84,7 +84,6 @@ MonoBehaviour:
   m_GameObject: {fileID: 3557489986302996358}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6ac6f8f0e05d424db6c97ad51478ae7f, type: 3}
+  m_Script: {fileID: 11500000, guid: 89c575b48ceee9b458ab477d5b887acb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  captured: {fileID: 8600000, guid: a89169ec2a7b94740aafca8b471875f0, type: 2}

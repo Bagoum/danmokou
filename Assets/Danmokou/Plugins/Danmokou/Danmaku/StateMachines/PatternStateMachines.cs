@@ -320,7 +320,7 @@ public class PhaseSM : SequentialSM {
             if (props.Cleanup) {
                 if (finishDelay > 0) {
                     var acTime = Mathf.Min(EndOfCardAutocullTime, finishDelay);
-                    PlayerController.RequestPlayerInvulnerable.Publish(((int)(acTime * ETime.ENGINEFPS_F), false));
+                    PlayerController.RequestPlayerInvulnerable.OnNext(((int)(acTime * ETime.ENGINEFPS_F), false));
                     GameManagement.ClearPhaseAutocullOverTime_Initial(props.SoftcullPropsOverTime(smh.Exec, acTime));
                     await finishTask;
                     GameManagement.ClearPhaseAutocullOverTime_Final();
@@ -332,7 +332,7 @@ public class PhaseSM : SequentialSM {
             if (smh.Cancelled) 
                 throw;
             if (props.phaseType != null) 
-                Log.Unity($"Cleared {props.phaseType.Value} phase: {props.cardTitle?.ValueOrEn ?? ""}");
+                Log.Unity($"Cleared {props.phaseType.Value} phase: {props.cardTitle?.Value ?? ""}");
             if (endPhase != null)
                 await endPhase.Start(smh);
         }

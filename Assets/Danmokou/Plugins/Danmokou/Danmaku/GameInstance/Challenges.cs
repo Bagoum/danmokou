@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using BagoumLib;
 using BagoumLib.Cancellation;
+using BagoumLib.Culture;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Danmaku;
@@ -24,7 +25,7 @@ namespace Danmokou.GameInstance {
 public interface IChallengeRequest {
 
     InstanceRequest Requester { get; }
-    LocalizedString Description { get; }
+    LString Description { get; }
     Challenge[] Challenges { get; }
 
     bool ControlsBoss(BossConfig? boss);
@@ -106,7 +107,7 @@ public readonly struct SceneChallengeReqest : IChallengeRequest {
             () => { BulletManager.PlayerTarget.Player.Hit(999, true); });
     }
 
-    public LocalizedString Description => cr.Description;
+    public LString Description => cr.Description;
 
     public Challenge[] Challenges => new[] {cr.challenge};
 
@@ -121,7 +122,7 @@ public readonly struct PhaseChallengeRequest {
     public readonly SMAnalysis.DayPhase phase;
     public readonly Challenge challenge;
     public int ChallengeIdx => phase.challenges.IndexOf(challenge);
-    public LocalizedString Description => challenge.Description(Boss);
+    public LString Description => challenge.Description(Boss);
 
     public PhaseChallengeRequest? NextChallenge(SharedInstanceMetadata d) {
         if (challenge is Challenge.DialogueC dc && dc.point == Challenge.DialogueC.DialoguePoint.INTRO) {
@@ -154,7 +155,7 @@ public readonly struct PhaseChallengeRequest {
 
 [Reflect]
 public abstract class Challenge {
-    public abstract LocalizedString Description(BossConfig boss);
+    public abstract LString Description(BossConfig boss);
     public virtual void SetupPhase(SMHandoff smh) { }
     public virtual bool FrameCheck(ChallengeManager.TrackingContext ctx) => true;
     public virtual bool EndCheck(ChallengeManager.TrackingContext ctx, PhaseCompletion pc) => true;
@@ -173,23 +174,23 @@ public abstract class Challenge {
     public static Challenge AlwaysFocus() => new AlwaysFocusC();
 
     public class SurviveC : Challenge {
-        public override LocalizedString Description(BossConfig boss) => "Don't die".Locale("死なないで");
+        public override LString Description(BossConfig boss) => "Don't die".Locale("死なないで");
     }
 
     public class NoHorizC : Challenge {
-        public override LocalizedString Description(BossConfig boss) => "You cannot move left/right".Locale("左右の動きは出来ない");
+        public override LString Description(BossConfig boss) => "You cannot move left/right".Locale("左右の動きは出来ない");
     }
 
     public class NoVertC : Challenge {
-        public override LocalizedString Description(BossConfig boss) => "You cannot move up/down".Locale("上下の動きは出来ない");
+        public override LString Description(BossConfig boss) => "You cannot move up/down".Locale("上下の動きは出来ない");
     }
 
     public class NoFocusC : Challenge {
-        public override LocalizedString Description(BossConfig boss) => "You cannot use slow movement".Locale("低速移動は出来ない");
+        public override LString Description(BossConfig boss) => "You cannot use slow movement".Locale("低速移動は出来ない");
     }
 
     public class AlwaysFocusC : Challenge {
-        public override LocalizedString Description(BossConfig boss) => "You cannot use fast movement".Locale("高速移動は出来ない");
+        public override LString Description(BossConfig boss) => "You cannot use fast movement".Locale("高速移動は出来ない");
     }
 
     public class DialogueC : Challenge {
@@ -198,7 +199,7 @@ public abstract class Challenge {
             CONCLUSION
         }
 
-        public override LocalizedString Description(BossConfig boss) =>
+        public override LString Description(BossConfig boss) =>
             $"Have a chat with {boss.CasualName}".Locale($"{boss.CasualName}との会話");
 
         public readonly DialoguePoint point;
@@ -212,7 +213,7 @@ public abstract class Challenge {
         public readonly float units;
         public readonly float yield = 4;
 
-        public override LocalizedString Description(BossConfig boss) =>
+        public override LString Description(BossConfig boss) =>
             $"Stay close to {boss.CasualName}".Locale($"{boss.CasualName}から離れないで");
 
         public WithinC(float units) {
@@ -240,7 +241,7 @@ public abstract class Challenge {
         public readonly float units;
         public readonly float yield = 4;
 
-        public override LocalizedString Description(BossConfig boss) =>
+        public override LString Description(BossConfig boss) =>
             $"Social distance from {boss.CasualName}".Locale($"{boss.CasualName}に近寄らないで");
 
         public WithoutC(float units) {
@@ -263,7 +264,7 @@ public abstract class Challenge {
     }
 
     public class DestroyC : Challenge {
-        public override LocalizedString Description(BossConfig boss) =>
+        public override LString Description(BossConfig boss) =>
             $"Defeat {boss.CasualName}".Locale($"{boss.CasualName}を倒せ");
 
         public override bool EndCheck(ChallengeManager.TrackingContext ctx, PhaseCompletion pc) => pc.Cleared == true;
@@ -271,7 +272,7 @@ public abstract class Challenge {
 
     public class GrazeC : Challenge {
         public readonly int graze;
-        public override LocalizedString Description(BossConfig boss) => $"Get {graze} graze".Locale($"グレイズを{graze}回しろ");
+        public override LString Description(BossConfig boss) => $"Get {graze} graze".Locale($"グレイズを{graze}回しろ");
 
         public override bool EndCheck(ChallengeManager.TrackingContext ctx, PhaseCompletion pc) =>
             GameManagement.Instance.Graze >= graze;
@@ -284,7 +285,7 @@ public abstract class Challenge {
     public class DestroyTimedC : DestroyC {
         public readonly float time;
 
-        public override LocalizedString Description(BossConfig boss) =>
+        public override LString Description(BossConfig boss) =>
             $"Defeat {boss.CasualName} within {time}s".Locale($"{boss.CasualName}を{time}秒以内で倒せ");
 
         public DestroyTimedC(float t) {

@@ -46,8 +46,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e3904d58b94947fb9ad2d273fe548dd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tint: {r: 0.6226415, g: 0.6226415, b: 0.6226415, a: 0}
-  capturer: {fileID: 4715094278317733979}
+  capturer: {fileID: 2705635778549345960}
   runWhileHidden: 0
 --- !u!1 &4715094277446323650
 GameObject:
@@ -155,7 +154,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4715094278317733973}
   - component: {fileID: 4715094278317733978}
-  - component: {fileID: 4715094278317733979}
+  - component: {fileID: 2705635778549345960}
   m_Layer: 28
   m_Name: 3D Camera
   m_TagString: Untagged
@@ -220,7 +219,7 @@ Camera:
   m_OcclusionCulling: 0
   m_StereoConvergence: 10
   m_StereoSeparation: 0.022
---- !u!114 &4715094278317733979
+--- !u!114 &2705635778549345960
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -229,7 +228,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 4715094278317733976}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6ac6f8f0e05d424db6c97ad51478ae7f, type: 3}
+  m_Script: {fileID: 11500000, guid: 89c575b48ceee9b458ab477d5b887acb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &5872936605836770040

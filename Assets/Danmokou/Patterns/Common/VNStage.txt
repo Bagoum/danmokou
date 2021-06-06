@@ -1,0 +1,15 @@
+## Basic script for a stage that only plays a visual novel scene. 
+##  A VNScriptExecutor component must be attached to the executing BEH.
+pattern { }
+phase 0
+	paction 0
+		shift-phase-to 1
+		
+<!> stage
+phase 0
+	saction 0
+		debug `vnexec start`
+		executeVN
+		debug `vnexec done`
+		shift-phase
+

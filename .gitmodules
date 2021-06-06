@@ -10,3 +10,6 @@
 [submodule "Assets/PCG"]
 	path = Assets/PCG
 	url = https://github.com/Bagoum/danmokou-pcg
+[submodule "Assets/SZYU"]
+	path = Assets/SZYU
+	url = https://github.com/Bagoum/suzunoya-unity.git

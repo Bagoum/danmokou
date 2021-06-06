@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using BagoumLib;
+using BagoumLib.Culture;
 using BagoumLib.Functional;
 using Danmokou.Achievements;
 using Danmokou.Core;
@@ -91,17 +92,17 @@ public static class XMLUtils {
                     .VisibleIf(() => DUHelpers.Tuple4Eq(key, g.RequestKey));
             });
         var optnodes = new UINode[] {
-            new OptionNodeLR<short>(practice_type, i => key.type = i, new (LocalizedString, short)?[] {
+            new OptionNodeLR<short>(practice_type, i => key.type = i, new (LString, short)?[] {
                 (practice_m_campaign, 0),
                 (practice_m_boss, 1),
-                days == null ? ((LocalizedString, short)?) null : (practice_m_scene, 2),
+                days == null ? ((LString, short)?) null : (practice_m_scene, 2),
                 (practice_m_stage, 3)
             }.FilterNone().ToArray(), key.type),
             new OptionNodeLR<int>(practice_campaign, AssignCampaign,
-                campaigns.Select((c, i) => (new LocalizedString(c.campaign.shortTitle), i)).ToArray(), cmpIndex),
+                campaigns.Select((c, i) => (new LString(c.campaign.shortTitle), i)).ToArray(), cmpIndex),
             new DynamicOptionNodeLR<string>(practice_m_whichboss, AssignBoss, () =>
                     key.type == 1 ?
-                        campaigns[cmpIndex].bosses.Select(b => (b.boss.BossPracticeName.ValueOrEn, b.boss.key)).ToArray() :
+                        campaigns[cmpIndex].bosses.Select(b => (b.boss.BossPracticeName.Value, b.boss.key)).ToArray() :
                         new[] {("", "")} //required to avoid errors with the option node
                 , "").VisibleIf(() => key.type == 1),
             new DynamicOptionNodeLR<int>(practice_m_whichstage, AssignStage, () =>
@@ -120,11 +121,11 @@ public static class XMLUtils {
             new DynamicOptionNodeLR<int>(practice_m_whichphase, AssignStagePhase, () =>
                     key.type == 3 ?
                         campaigns[cmpIndex].stages[key.stage.Item1.stage].Phases.Select(
-                            p => (p.Title.ValueOrEn, p.index)).Prepend((practice_fullstage.ValueOrEn, 1)).ToArray() :
+                            p => (p.Title.Value, p.index)).Prepend((practice_fullstage.Value, 1)).ToArray() :
                         new[] {("", 0)}, 0)
                 .VisibleIf(() => key.type == 3),
         };
-        return new UIScreen(optnodes.Append(new PassthroughNode(LocalizedString.Empty)).Concat(scoreNodes).ToArray());
+        return new UIScreen(optnodes.Append(new PassthroughNode(LString.Empty)).Concat(scoreNodes).ToArray());
     }
     
     
@@ -148,26 +149,26 @@ public static class XMLUtils {
             var pctMods = _pctMods.Select(x => {
                 var offset = (x - 1) * 100;
                 var prefix = (offset >= 0) ? "+" : "";
-                return (new LocalizedString($"{prefix}{offset}%"), x);
+                return (new LString($"{prefix}{offset}%"), x);
             }).ToArray();
-            (LocalizedString, bool)[] yesNo = {(generic_on, true), (generic_off, false)};
-            IEnumerable<(LocalizedString, double)> AddPlus(IEnumerable<double> arr) => arr.Select(x => {
+            (LString, bool)[] yesNo = {(generic_on, true), (generic_off, false)};
+            IEnumerable<(LString, double)> AddPlus(IEnumerable<double> arr) => arr.Select(x => {
                 var prefix = (x >= 0) ? "+" : "";
-                return (new LocalizedString($"{prefix}{x}"), x);
+                return (new LString($"{prefix}{x}"), x);
             });
-            UINode MakeOption<T>(LocalizedString title, IEnumerable<(LocalizedString, T)> options, Func<T> deflt, Action<T> apply,
-                LocalizedString description) {
+            UINode MakeOption<T>(LString title, IEnumerable<(LString, T)> options, Func<T> deflt, Action<T> apply,
+                LString description) {
                 var node = new OptionNodeLR<T>(title, apply, options.ToArray(), deflt(), 
-                    new UINode(LocalizedString.Format("\n\n{0}", description)).With(descr));
+                    new UINode(LString.Format("\n\n{0}", description)).With(descr));
                 load_cbs.Add(() => node.SetIndexFromVal(deflt()));
                 return node.With(small1Class);
             }
-            UINode MakePctOption(LocalizedString title, Func<double> deflt, Action<double> apply, LocalizedString description)
+            UINode MakePctOption(LString title, Func<double> deflt, Action<double> apply, LString description)
                 => MakeOption(title, pctMods, deflt, apply, description);
-            UINode MakeOnOffOption(LocalizedString title, Func<bool> deflt, Action<bool> apply, LocalizedString description)
+            UINode MakeOnOffOption(LString title, Func<bool> deflt, Action<bool> apply, LString description)
                 => MakeOption(title, yesNo, deflt, apply, description);
-            UINode MakeOptionAuto<T>(LocalizedString title, IEnumerable<T> options, Func<T> deflt, Action<T> apply, LocalizedString description)
-                => MakeOption(title, options.Select(x => (new LocalizedString(x.ToString()), x)), deflt, apply, description);
+            UINode MakeOptionAuto<T>(LString title, IEnumerable<T> options, Func<T> deflt, Action<T> apply, LString description)
+                => MakeOption(title, options.Select(x => (new LString(x.ToString()), x)), deflt, apply, description);
 
             var saved = SaveData.s.DifficultySettings;
             IEnumerable<UINode> MakeSavedDFCNodes(Func<int, UINode> creator, int excess=20) => (saved.Count + excess)
@@ -184,7 +185,7 @@ public static class XMLUtils {
                 desc_effective_ls(effective, DifficultySettings.FancifySlider(dfc.customValueSlider)));
             return new UIScreen(
                 MakeOption(scaling, (DifficultySettings.MIN_SLIDER, DifficultySettings.MAX_SLIDER + 1).Range()
-                    .Select(x => (new LocalizedString($"{x}"), x)), () => dfc.customValueSlider, dfc.SetCustomDifficulty,
+                    .Select(x => (new LString($"{x}"), x)), () => dfc.customValueSlider, dfc.SetCustomDifficulty,
                     desc_scaling),
                 optSliderHelper.With(small2Class),
                 MakeOptionAuto(suicide, new[] {0, 1, 3, 5, 7}, () => dfc.numSuicideBullets,
@@ -202,7 +203,7 @@ public static class XMLUtils {
                 MakePctOption(player_hitbox, () => dfc.playerHitboxMultiplier, x => dfc.playerHitboxMultiplier = x, desc_player_hitbox),
                 MakePctOption(player_grazebox, () => dfc.playerGrazeboxMultiplier,
                     x => dfc.playerGrazeboxMultiplier = x, desc_player_grazebox),
-                MakeOption(lives, (1, 14).Range().Select(x => (new LocalizedString($"{x}"), (int?) x)).Prepend((generic_default, null)),
+                MakeOption(lives, (1, 14).Range().Select(x => (new LString($"{x}"), (int?) x)).Prepend((generic_default, null)),
                     () => dfc.startingLives, x => dfc.startingLives = x, desc_lives),
                 MakeOption(poc, AddPlus(new[] {
                         //can't use addition to generate these because -6 + 0.4 =/= -5.6...
@@ -213,7 +214,7 @@ public static class XMLUtils {
                 new UINode(to_select).SetConfirmOverride(() => dfcCont(dfc)),
                 new UINode(save_load_setting,
                     MakeSavedDFCNodes(i => new FuncNode(() => SetNewDFC(saved?.TryN(i)?.settings), 
-                        () => LocalizedString.All(saved?.TryN(i)?.name!).Or(generic_deleted), true))
+                        () => new LString(saved?.TryN(i)?.name!).Or(generic_deleted), true))
                         .Append(newSavedSettingsName)
                         .Append(new FuncNode(() => SaveData.s.AddDifficultySettings(newSavedSettingsName.DataWIP, dfc), 
                             save_setting, true))
@@ -221,7 +222,7 @@ public static class XMLUtils {
                 ).SetRightChildIndex(-2),
                 new UINode(delete_setting, 
                     MakeSavedDFCNodes(i => new ConfirmFuncNode(() => SaveData.s.TryRemoveDifficultySettingsAt(i), 
-                        () => LocalizedString.All(saved?.TryN(i)?.name!).Or(generic_deleted), true)).ToArray()
+                        () => new LString(saved?.TryN(i)?.name!).Or(generic_deleted), true)).ToArray()
                 ).EnabledIf(() => SaveData.s.DifficultySettings.Count > 0)
             ).With(screen);
         }
@@ -266,27 +267,27 @@ public static class XMLUtils {
         AssignCampaign(null);
 
         string AsPct(float f01) => $"{(int) (f01 * 100)}%";
-        LocalizedString ShowCard((BossPracticeRequest card, float ratio) bpr) {
-            return LocalizedString.Format(
+        LString ShowCard((BossPracticeRequest card, float ratio) bpr) {
+            return LString.Format(
                 "{0} ({1})", 
                 bpr.card.phase.Title.FMap(
-                    s => {
-                        var limit = Localization.Locale switch {
-                            Locale.JP => 16,
+                    (loc, s) => {
+                        var limit = loc switch {
+                            Locales.JP => 16,
                             _ => 42
                         };
                         return s.Length > limit ?
                             s.Substring(0, limit-2) + ".." :
                             s;
                     }), 
-                new LocalizedString(AsPct(bpr.ratio))
+                new LString(AsPct(bpr.ratio))
             );
         }
 
         Func<UINode[]> nodes = () => new UINode[] {
             new OptionNodeLR<int?>(practice_campaign, AssignCampaign,
                 campaigns
-                    .Select((c, i) => (new LocalizedString(c.campaign.shortTitle), (int?) i))
+                    .Select((c, i) => (new LString(c.campaign.shortTitle), (int?) i))
                     .Prepend((stats_allcampaigns, null))
                     .ToArray(), campaignIndex),
             new OptionNodeLR<Maybe<FixedDifficulty?>>(stats_seldifficulty, x => {
@@ -309,35 +310,35 @@ public static class XMLUtils {
                 },
                 GameManagement.References.AllShips
                     .SelectMany(p => p.shots2
-                        .Select(os => (new LocalizedString(ShotConfig.PlayerShotDescription(p, os.shot)), 
+                        .Select(os => (new LString(ShotConfig.PlayerShotDescription(p, os.shot)), 
                             ((ShipConfig, ShotConfig)?) (p, os.shot))))
                     .Prepend((stats_allshots, ((ShipConfig, ShotConfig)?)null)).ToArray(), shotSwitch),
 
-            new TwoLabelUINode(stats_allruns, () => new LocalizedString($"{stats.TotalRuns}")),
-            new TwoLabelUINode(stats_complete, () => new LocalizedString($"{stats.CompletedRuns}")),
-            new TwoLabelUINode(stats_1cc, () => new LocalizedString($"{stats.OneCCRuns}")),
-            new TwoLabelUINode(stats_deaths, () => new LocalizedString($"{stats.TotalDeaths}")),
+            new TwoLabelUINode(stats_allruns, () => new LString($"{stats.TotalRuns}")),
+            new TwoLabelUINode(stats_complete, () => new LString($"{stats.CompletedRuns}")),
+            new TwoLabelUINode(stats_1cc, () => new LString($"{stats.OneCCRuns}")),
+            new TwoLabelUINode(stats_deaths, () => new LString($"{stats.TotalDeaths}")),
             new TwoLabelUINode(stats_totaltime, () => stats.TotalFrames.FramesToTime()),
             new TwoLabelUINode(stats_avgtime, () => stats.AvgFrames.FramesToTime()),
             new TwoLabelUINode(stats_favday, () => 
                 stats.TotalRuns == 0 ? generic_na :
-                new LocalizedString($"{stats.FavoriteDay.Item1} ({stats.FavoriteDay.Item2.Length})")),
+                new LString($"{stats.FavoriteDay.Item1} ({stats.FavoriteDay.Item2.Length})")),
             new TwoLabelUINode(stats_favplayer, () => 
                 stats.TotalRuns == 0 ? generic_na :
-                    LocalizedString.Format(
-                "{0} ({1})", stats.FavoriteShip.Item1.ShortTitle, $"{stats.FavoriteShip.Item2.Length}"
+                    LString.Format(
+                "{0} ({1})", stats.FavoriteShip.Item1.ShortTitle, new LString($"{stats.FavoriteShip.Item2.Length}")
             )),
             new TwoLabelUINode(stats_favshot, () => {
                 if (stats.TotalRuns == 0) return generic_na;
                 var ((pc, sc), recs) = stats.FavoriteShot;
-                return LocalizedString.Format(
-                    "{0} ({1})", ShotConfig.PlayerShotDescription(pc, sc),
-                    $"{recs.Length}"
+                return LString.Format(new LString("{0} ({1})"), 
+                    new LString(ShotConfig.PlayerShotDescription(pc, sc)),
+                    new LString($"{recs.Length}")
                 );
             }),
             new TwoLabelUINode(stats_highestscore, () => 
-                stats.TotalRuns == 0 ? generic_na : new LocalizedString($"{stats.MaxScore}")),
-            new TwoLabelUINode(stats_capturerate, () => new LocalizedString(AsPct(stats.CaptureRate))),
+                stats.TotalRuns == 0 ? generic_na : new LString($"{stats.MaxScore}")),
+            new TwoLabelUINode(stats_capturerate, () => new LString(AsPct(stats.CaptureRate))),
             new TwoLabelUINode(stats_bestcard, () => 
                 !stats.HasSpellHist ? generic_na : ShowCard(stats.BestCapture)),
             new TwoLabelUINode(stats_worstcard, () => 
@@ -364,7 +365,7 @@ public static class XMLUtils {
         new UIScreen(
             musics.SelectNotNull(m => m.DisplayInMusicRoom switch {
                 true => new FuncNode(() => AudioTrackService.InvokeBGM(m), 
-                    LocalizedString.Format("({0}) {1}", m.TrackPlayLocation, m.Title), true,
+                    new LString(string.Format("({0}) {1}", m.TrackPlayLocation, m.Title)), true,
                         new UINode(m.MusicRoomDescription).With(descr).With(small2Class, fontUbuntuClass)
                     ).SetChildrenInaccessible().With(small1Class),
                 false => new UINode("????????????????",

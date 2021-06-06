@@ -129,8 +129,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e3904d58b94947fb9ad2d273fe548dd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tint: {r: 0.6226415, g: 0.6226415, b: 0.6226415, a: 0}
-  capturer: {fileID: 4715094278317733979}
+  capturer: {fileID: 3050924404456773356}
   runWhileHidden: 1
 --- !u!1 &4715094277446323650
 GameObject:
@@ -238,7 +237,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4715094278317733973}
   - component: {fileID: 4715094278317733978}
-  - component: {fileID: 4715094278317733979}
+  - component: {fileID: 3050924404456773356}
   m_Layer: 28
   m_Name: 3D Camera
   m_TagString: Untagged
@@ -303,7 +302,7 @@ Camera:
   m_OcclusionCulling: 0
   m_StereoConvergence: 10
   m_StereoSeparation: 0.022
---- !u!114 &4715094278317733979
+--- !u!114 &3050924404456773356
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -312,7 +311,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 4715094278317733976}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6ac6f8f0e05d424db6c97ad51478ae7f, type: 3}
+  m_Script: {fileID: 11500000, guid: 89c575b48ceee9b458ab477d5b887acb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &5872936605836770040
@@ -358,6 +357,10 @@ PrefabInstance:
       value: Smoke
       objectReference: {fileID: 0}
     - target: {fileID: 4140406644459286, guid: a9726ee302999a84ea27e4657abb703f, type: 3}
+      propertyPath: m_RootOrder
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 4140406644459286, guid: a9726ee302999a84ea27e4657abb703f, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
       objectReference: {fileID: 0}
@@ -370,6 +373,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4140406644459286, guid: a9726ee302999a84ea27e4657abb703f, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: 4140406644459286, guid: a9726ee302999a84ea27e4657abb703f, type: 3}
       propertyPath: m_LocalRotation.x
       value: -0.7071068
       objectReference: {fileID: 0}
@@ -380,14 +387,6 @@ PrefabInstance:
     - target: {fileID: 4140406644459286, guid: a9726ee302999a84ea27e4657abb703f, type: 3}
       propertyPath: m_LocalRotation.z
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4140406644459286, guid: a9726ee302999a84ea27e4657abb703f, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 0.7071068
-      objectReference: {fileID: 0}
-    - target: {fileID: 4140406644459286, guid: a9726ee302999a84ea27e4657abb703f, type: 3}
-      propertyPath: m_RootOrder
-      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 4140406644459286, guid: a9726ee302999a84ea27e4657abb703f, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -413,22 +412,22 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 198677932445220266, guid: a9726ee302999a84ea27e4657abb703f,
         type: 3}
-      propertyPath: InitialModule.startLifetime.minScalar
-      value: 3
-      objectReference: {fileID: 0}
-    - target: {fileID: 198677932445220266, guid: a9726ee302999a84ea27e4657abb703f,
-        type: 3}
       propertyPath: InitialModule.startLifetime.scalar
       value: 4
       objectReference: {fileID: 0}
-    - target: {fileID: 199780847256873614, guid: a9726ee302999a84ea27e4657abb703f,
+    - target: {fileID: 198677932445220266, guid: a9726ee302999a84ea27e4657abb703f,
         type: 3}
-      propertyPath: m_Materials.Array.size
-      value: 1
+      propertyPath: InitialModule.startLifetime.minScalar
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 199780847256873614, guid: a9726ee302999a84ea27e4657abb703f,
         type: 3}
       propertyPath: m_SortingOrder
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 199780847256873614, guid: a9726ee302999a84ea27e4657abb703f,
+        type: 3}
+      propertyPath: m_Materials.Array.size
       value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []

@@ -3,6 +3,7 @@ using System.Collections;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using BagoumLib.Culture;
 using Danmokou.Core;
 using Danmokou.DMath;
 using Danmokou.Reflection;
@@ -38,7 +39,7 @@ public class AudioTrack : ScriptableObject, IAudioTrackInfo {
     public string Title => title;
     public string TrackPlayLocation => trackPlayLocation;
 
-    public LocalizedString MusicRoomDescription => musicRoomDescription.Value;
+    public LString MusicRoomDescription => musicRoomDescription.Value;
     public bool? DisplayInMusicRoom =>
         showInMusicRoom ?
             (bool?)(ReflWrap<Pred>.MaybeWrap(musicRoomRequirement)

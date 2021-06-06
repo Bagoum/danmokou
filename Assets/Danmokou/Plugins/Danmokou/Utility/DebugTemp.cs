@@ -9,9 +9,9 @@ using UnityEngine;
 
 public class DebugTemp : CoroutineRegularUpdater {
     void Start() {
-        Tween.RegisterLerper<Vector2>(Vector2.Lerp);
+        BagoumLib.Mathematics.GenericOps.RegisterLerper<Vector2>(Vector2.Lerp);
         Func<float, float> f = M.EInSine;
-        var t = new Tweener<Vector2>(Vector2.one * -1, Vector2.one, 2f, v => transform.localPosition = v).WithEaser(M.EInSine);
+        var t = new Tweener<Vector2>(Vector2.one * -1, Vector2.one, 2f, v => transform.localPosition = v, M.EInSine);
         t.Then(t.Reverse()).Loop().Run(this);
     }
 }

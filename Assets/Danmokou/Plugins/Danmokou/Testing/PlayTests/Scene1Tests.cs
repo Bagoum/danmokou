@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Linq;
+using BagoumLib.Culture;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Danmaku;
@@ -752,7 +753,7 @@ public static class Scene1 {
         //Running Static Analysis 1
         new InstanceRequest(d => cb = true, FixedDfc(FixedDifficulty.Lunatic),
             boss: new BossPracticeRequest(AllPBosses[0], 
-                new SMAnalysis.Phase(null!, PhaseType.NONSPELL, 3, new LocalizedString("_")))).Run();
+                new SMAnalysis.Phase(null!, PhaseType.NONSPELL, 3, new LString("_")))).Run();
         IsFalse(cb);
         yield return WaitForLoad();
         for (int ii = 0; ii < 10; ++ii) yield return null;

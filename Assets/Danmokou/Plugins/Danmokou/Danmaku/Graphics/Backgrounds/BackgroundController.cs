@@ -4,9 +4,11 @@ using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Services;
 using JetBrains.Annotations;
+using SuzunoyaUnity.Rendering;
 using UnityEngine;
 using UnityEngine.Rendering;
 using static Danmokou.Graphics.FragmentRendering;
+using Object = UnityEngine.Object;
 
 namespace Danmokou.Graphics.Backgrounds {
 /// <summary>
@@ -35,7 +37,9 @@ public class BackgroundController : CoroutineRegularUpdater {
         arb2Layer = LayerMask.NameToLayer("ARBITRARY_CAPTURE_2");
         arb2Mask = LayerMask.GetMask("ARBITRARY_CAPTURE_2");
         arbNullLayer = LayerMask.NameToLayer("ARBITRARY_CAPTURE_NULL");
-        if (capturer == null) capturer = MainCamera.CreateArbitraryCapturer(tr);
+        if (capturer == null)
+            capturer = Object.Instantiate(GameManagement.Prefabs.arbitraryCapturer, tr, false)
+                .GetComponent<ArbitraryCapturer>();
     }
 
     private void Start() => AssignLayersNext();

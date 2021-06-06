@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using BagoumLib.Culture;
 using Danmokou.Core;
 using NUnit.Framework;
 using Danmokou.SM;
@@ -75,10 +76,10 @@ phase 0
         AssertListEq(new List<SMAnalysis.Phase>() {
                 //phase 0,3 are ignored since they don't have type
                 new SMAnalysis.Phase(null!, PhaseType.DIALOGUE, 1, null),
-                new SMAnalysis.Phase(null!, PhaseType.NONSPELL, 2, new LocalizedString("My First Non")),
-                new SMAnalysis.Phase(null!, PhaseType.SPELL, 4, new LocalizedString("My First Spell")),
+                new SMAnalysis.Phase(null!, PhaseType.NONSPELL, 2, new LString("My First Non")),
+                new SMAnalysis.Phase(null!, PhaseType.SPELL, 4, new LString("My First Spell")),
             }, SMAnalysis.Analyze(null!, sm), (p1, p2) => 
-            p1.index == p2.index && p1.type == p2.type && p1.Title.ValueOrEn == p2.Title.ValueOrEn
+            p1.index == p2.index && p1.type == p2.type && p1.Title.Value == p2.Title.Value
         );
     }
     

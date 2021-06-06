@@ -19,4 +19,13 @@
       <ProjectReference Include="..\Parser\Parser.fsproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Reference Include="BagoumLib, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
+        <HintPath>..\..\..\..\Suzunoya\BagoumLib\bin\Release\net472\BagoumLib.dll</HintPath>
+      </Reference>
+      <Reference Include="FSParserUtils, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
+        <HintPath>..\..\..\DanmokouExt\FSParserUtils\bin\Release\net472\FSParserUtils.dll</HintPath>
+      </Reference>
+    </ItemGroup>
+
 </Project>

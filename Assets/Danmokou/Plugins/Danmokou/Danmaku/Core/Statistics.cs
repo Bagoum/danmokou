@@ -57,7 +57,7 @@ public static class Statistics {
         public long MaxScore => arr.Max(ir => ir.Score);
 
         public float CaptureRate =>
-            SuccessRate(spellHist.Values.Fold((0, 0), (a, b) => (a.Item1 + b.Item1, a.Item2 + b.Item2)));
+            SuccessRate(spellHist.Values.Aggregate((0, 0), (a, b) => (a.Item1 + b.Item1, a.Item2 + b.Item2)));
 
         public int TotalFrames => arr.Sum(ir => ir.TotalFrames);
         public int AvgFrames => TotalRuns == 0 ? 0 : TotalFrames / TotalRuns;

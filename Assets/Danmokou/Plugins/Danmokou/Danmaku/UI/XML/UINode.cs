@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using BagoumLib;
+using BagoumLib.Culture;
 using Danmokou.Core;
 using Danmokou.DMath;
 using JetBrains.Annotations;
@@ -158,14 +159,14 @@ public class UINode {
         _sameDepthSiblings ??= Siblings.Where(s => s.Depth == Depth).ToArray();
 
 
-    public LocalizedString Description => descriptor();
+    public LString Description => descriptor();
     //sorry but there's a use case where i need to modify this in the initializer. see TextInputNode
-    protected Func<LocalizedString> descriptor;
+    protected Func<LString> descriptor;
     public UIScreen screen = null!;
     public NodeState state = NodeState.Invisible;
 
-    public UINode(LocalizedString description, params UINode[] children) : this(() => description, children) { }
-    public UINode(Func<LocalizedString> descriptor, params UINode[] children) {
+    public UINode(LString description, params UINode[] children) : this(() => description, children) { }
+    public UINode(Func<LString> descriptor, params UINode[] children) {
         this.children = children;
         this.descriptor = descriptor;
         foreach (var c in children) {
@@ -419,13 +420,13 @@ public class UINode {
 }
 
 public class TwoLabelUINode : UINode {
-    private readonly Func<LocalizedString> desc2;
-    public TwoLabelUINode(Func<LocalizedString> desc1, Func<LocalizedString> desc2, params UINode[] children) :
+    private readonly Func<LString> desc2;
+    public TwoLabelUINode(Func<LString> desc1, Func<LString> desc2, params UINode[] children) :
         base(desc1, children) {
         this.desc2 = desc2;
 
     }
-    public TwoLabelUINode(LocalizedString desc1, Func<LocalizedString> desc2, params UINode[] children) :
+    public TwoLabelUINode(LString desc1, Func<LString> desc2, params UINode[] children) :
         base(desc1, children) {
         this.desc2 = desc2;
 
@@ -439,8 +440,8 @@ public class TwoLabelUINode : UINode {
 
 public class NavigateUINode : UINode {
     
-    public NavigateUINode(LocalizedString description, params UINode[] children) : base(description, children) {}
-    public NavigateUINode(Func<LocalizedString> description, params UINode[] children) : base(description, children) {}
+    public NavigateUINode(LString description, params UINode[] children) : base(description, children) {}
+    public NavigateUINode(Func<LString> description, params UINode[] children) : base(description, children) {}
     protected override (bool success, UINode? target) _Confirm() {
         //default going right
         var n = Right();
@@ -450,11 +451,11 @@ public class NavigateUINode : UINode {
 
 public class CacheNavigateUINode : NavigateUINode {
     private readonly Action<List<XMLMenu.CacheInstruction>> cacher;
-    public CacheNavigateUINode(Action<List<XMLMenu.CacheInstruction>> cacher, LocalizedString description, params UINode[] children) :
+    public CacheNavigateUINode(Action<List<XMLMenu.CacheInstruction>> cacher, LString description, params UINode[] children) :
         base(description, children) {
         this.cacher = cacher;
     }
-    public CacheNavigateUINode(Action<List<XMLMenu.CacheInstruction>> cacher, Func<LocalizedString> description, params UINode[] children) :
+    public CacheNavigateUINode(Action<List<XMLMenu.CacheInstruction>> cacher, Func<LString> description, params UINode[] children) :
         base(description, children) {
         this.cacher = cacher;
     }
@@ -473,7 +474,7 @@ public class TransferNode : UINode {
 
     private readonly UIScreen screen_target;
 
-    public TransferNode(UIScreen target, LocalizedString description, params UINode[] children) : base(description, children) {
+    public TransferNode(UIScreen target, LString description, params UINode[] children) : base(description, children) {
         this.screen_target = target;
     }
 
@@ -487,25 +488,25 @@ public class FuncNode : UINode {
     protected readonly Func<bool> target;
     protected readonly UINode? next;
 
-    public FuncNode(Func<bool> target, LocalizedString description, bool returnSelf=false, params UINode[] children) : base(description, children) {
+    public FuncNode(Func<bool> target, LString description, bool returnSelf=false, params UINode[] children) : base(description, children) {
         this.target = target;
         this.next = returnSelf ? this : null;
     }
-    public FuncNode(Func<bool> target, Func<LocalizedString> description, bool returnSelf=false, params UINode[] children) : base(description, children) {
+    public FuncNode(Func<bool> target, Func<LString> description, bool returnSelf=false, params UINode[] children) : base(description, children) {
         this.target = target;
         this.next = returnSelf ? this : null;
     }
 
-    public FuncNode(Action target, LocalizedString description, bool returnSelf = false, params UINode[] children) : this(() => {
+    public FuncNode(Action target, LString description, bool returnSelf = false, params UINode[] children) : this(() => {
         target();
         return true;
     }, description, returnSelf, children) { }
-    public FuncNode(Action target, Func<LocalizedString> description, bool returnSelf = false, params UINode[] children) : this(() => {
+    public FuncNode(Action target, Func<LString> description, bool returnSelf = false, params UINode[] children) : this(() => {
         target();
         return true;
     }, description, returnSelf, children) { }
 
-    public FuncNode(Action target, LocalizedString description, UINode next, params UINode[] children) : this(() => {
+    public FuncNode(Action target, LString description, UINode next, params UINode[] children) : this(() => {
         target();
         return true;
     }, description, true, children) {
@@ -517,14 +518,14 @@ public class FuncNode : UINode {
 
 public class OpenUrlNode : FuncNode {
 
-    public OpenUrlNode(string site, LocalizedString description) : base(() => Application.OpenURL(site), description, true) { }
+    public OpenUrlNode(string site, LString description) : base(() => Application.OpenURL(site), description, true) { }
 }
 
 public class ConfirmFuncNode : FuncNode {
     private bool isConfirm;
-    public ConfirmFuncNode(Action target, LocalizedString description, bool returnSelf=false, params UINode[] children) : base(target, description, returnSelf, children) { }
-    public ConfirmFuncNode(Action target, Func<LocalizedString> description, bool returnSelf=false, params UINode[] children) : base(target, description, returnSelf, children) { }
-    public ConfirmFuncNode(Func<bool> target, LocalizedString description, bool returnSelf=false, params UINode[] children) : base(target, description, returnSelf, children) { }
+    public ConfirmFuncNode(Action target, LString description, bool returnSelf=false, params UINode[] children) : base(target, description, returnSelf, children) { }
+    public ConfirmFuncNode(Action target, Func<LString> description, bool returnSelf=false, params UINode[] children) : base(target, description, returnSelf, children) { }
+    public ConfirmFuncNode(Func<bool> target, LString description, bool returnSelf=false, params UINode[] children) : base(target, description, returnSelf, children) { }
 
     private void SetConfirm(bool newConfirm) {
         isConfirm = newConfirm;
@@ -569,10 +570,10 @@ public class ConfirmFuncNode : FuncNode {
 }
 
 public class PassthroughNode : UINode {
-    public PassthroughNode(LocalizedString description) : base(description) {
+    public PassthroughNode(LString description) : base(description) {
         PassthroughIf(() => true);
     }
-    public PassthroughNode(Func<LocalizedString> description) : base(description) { 
+    public PassthroughNode(Func<LString> description) : base(description) { 
         PassthroughIf(() => true);
     }
 }
@@ -594,7 +595,7 @@ public class DynamicComplexOptionNodeLR<T> : UINode, IComplexOptionNodeLR {
     public int Index { get; set; }
     private VisualElement[] boundChildren = new VisualElement[0];
     
-    public DynamicComplexOptionNodeLR(LocalizedString description, VisualTreeAsset objectTree, Action<T> onChange, Func<T[]> values, Action<T, VisualElement, bool> binder) : base(description) {
+    public DynamicComplexOptionNodeLR(LString description, VisualTreeAsset objectTree, Action<T> onChange, Func<T[]> values, Action<T, VisualElement, bool> binder) : base(description) {
         this.onChange = onChange;
         this.values = values;
         this.binder = binder;
@@ -656,7 +657,7 @@ public class DynamicOptionNodeLR<T> : UINode, IOptionNodeLR {
     public void SetIndexFromVal(T val) {
         index = this.values().Enumerate().FirstOrDefault(x => x.Item2.val!.Equals(val)).Item1;
     }
-    public DynamicOptionNodeLR(LocalizedString description, Action<T> onChange, Func<(string, T)[]> values, T defaulter, params UINode[] children) : base(description, children) {
+    public DynamicOptionNodeLR(LString description, Action<T> onChange, Func<(string, T)[]> values, T defaulter, params UINode[] children) : base(description, children) {
         this.onChange = onChange;
         this.values = values;
         SetIndexFromVal(defaulter);
@@ -697,28 +698,28 @@ public class DynamicOptionNodeLR<T> : UINode, IOptionNodeLR {
 public class OptionNodeLR<T> : UINode, IOptionNodeLR {
     private readonly Action<T> onChange;
     protected virtual Action<T> OnChange => onChange;
-    private readonly (LocalizedString key, T val)[] values;
+    private readonly (LString key, T val)[] values;
     public int Index { get; set; }
     public T Value => values[Index].val;
 
     public void SetIndexFromVal(T val) {
         Index = this.values.Enumerate().First(x => 
             (x.Item2.val == null && val == null) || 
-            x.Item2.val!.Equals(val)).Item1;
+            x.Item2.val?.Equals(val) == true).Item1;
     }
-    public OptionNodeLR(LocalizedString description, Action<T> onChange, (LocalizedString, T)[] values, T defaulter, params UINode[] children) : base(description, children) {
+    public OptionNodeLR(LString description, Action<T> onChange, (LString, T)[] values, T defaulter, params UINode[] children) : base(description, children) {
         this.onChange = onChange;
         this.values = values;
         SetIndexFromVal(defaulter);
     }
 
-    public OptionNodeLR(LocalizedString description, Action<T> onChange, (string, T)[] values, T defaulter,
+    public OptionNodeLR(LString description, Action<T> onChange, (string, T)[] values, T defaulter,
         params UINode[] children) : this(description, onChange,
-        values.Select(v => (new LocalizedString(v.Item1), v.Item2)).ToArray(), defaulter, children) { }
+        values.Select(v => (new LString(v.Item1), v.Item2)).ToArray(), defaulter, children) { }
     
-    public OptionNodeLR(LocalizedString description, Action<T> onChange, T[] values, T defaulter, params UINode[] children) : base(description, children) {
+    public OptionNodeLR(LString description, Action<T> onChange, T[] values, T defaulter, params UINode[] children) : base(description, children) {
         this.onChange = onChange;
-        this.values = values.Select(x => (new LocalizedString(x.ToString()), x)).ToArray();
+        this.values = values.Select(x => (new LString(x.ToString()), x)).ToArray();
         SetIndexFromVal(defaulter);
     }
 
@@ -755,8 +756,8 @@ public class TextInputNode : UINode {
     private int bdCursorIdx => Math.Min(cursorIdx, DataWIP.Length);
     private string DisplayWIP => DataWIP.Insert(bdCursorIdx, "|");
 
-    public TextInputNode(LocalizedString title) : base((Func<LocalizedString>) null!) {
-        descriptor = () => new LocalizedString($"{title}: {DisplayWIP}");
+    public TextInputNode(LString title) : base((Func<LString>) null!) {
+        descriptor = () => new LString($"{title}: {DisplayWIP}");
     }
 
     private static readonly string[] alphanumeric = 

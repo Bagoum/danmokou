@@ -1,6 +1,8 @@
 using System;
 using System.IO;
 using System.Linq;
+using BagoumLib.Functional;
+using FCommon;
 using NUnit.Framework;
 using static FParser.SMParser;
 using ParserCS;
@@ -22,17 +24,17 @@ public class Tests {
         desired = desired.Replace("\r", "").Trim();
         if (USE_CS) {
             var result = ParserCS.SMParser.RemakeSMParserExec(source);
-            if (result.isValid) {
-                Assert.AreEqual(desired, result.value.Replace(" \n ", "\n").Trim());
+            if (result.Valid) {
+                Assert.AreEqual(desired, result.Value.Replace(" \n ", "\n").Trim());
             } else {
                 Assert.Fail(string.Join("\n", result.errors));
             }
         } else {
             switch (remakeSMParser(source)) {
-                case Errorable<string>.OK sm:
+                case Types.Errorable<string>.OK sm:
                     Assert.AreEqual(desired, sm.Item.Replace(" \n ", "\n").Trim());
                     break;
-                case Errorable<string>.Failed errs:
+                case Types.Errorable<string>.Failed errs:
                     Assert.Fail(string.Join("\n", errs.Item));
                     break;
                 default:
@@ -45,19 +47,19 @@ public class Tests {
     private static string FailString(string src) {
         if (USE_CS) {
             var result = ParserCS.SMParser.RemakeSMParserExec(src);
-            if (result.isValid) {
-                Assert.Fail($"Expected SM parse to fail, but got {result.value}");
+            if (result.Valid) {
+                Assert.Fail($"Expected SM parse to fail, but got {result.Value}");
             } else {
                 Console.WriteLine($"---\n{string.Join("\n", result.errors)}");
                 return string.Join("\n", result.errors);
             }
             return null;
         } else {
-            switch (remakeSMParser(src)) {
-                case Errorable<string>.OK sm:
+            switch (FParser.SMParser.remakeSMParser(src)) {
+                case Types.Errorable<string>.OK sm:
                     Assert.Fail($"Expected SM parse to fail, but got {sm.Item}");
                     break;
-                case Errorable<string>.Failed errs:
+                case Types.Errorable<string>.Failed errs:
                     Console.WriteLine($"---\n{string.Join("\n", errs.Item)}");
                     return string.Join("\n", errs.Item);
                 default:

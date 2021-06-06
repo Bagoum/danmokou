@@ -1,4 +1,5 @@
-﻿using Danmokou.Core;
+﻿using BagoumLib.Culture;
+using Danmokou.Core;
 using Danmokou.UI;
 using UnityEngine;
 
@@ -9,7 +10,7 @@ public abstract class SupportAbility {
 
     public GameObject? cutin;
     public GameObject? spellTitle;
-    public LocalizedString title = LocalizedString.Empty;
+    public LString title = LString.Empty;
     
     public Color spellColor1 = Color.clear;
     public Color spellColor2 = Color.clear;

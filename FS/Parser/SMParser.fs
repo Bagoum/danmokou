@@ -304,7 +304,8 @@ let internal _SMParser s =
                  | Failure (errStr, _, _) -> Failed [errStr]
           
 let SMParser s = (_SMParser s).bind(sort >> flatten).fmap(Array.ofList)
-let remakeSMParser s = SMParser s |> Errorable<_>.Fmap (String.concat " ")
+let remakeSMParser (s: string) : Errorable<string> = SMParser s |> Errorable<_>.Fmap (String.concat " ")
+let rsmP s = SMParser s |> Errorable<_>.Fmap (String.concat " ")
 
 type ParsedUnit =
     | S of string

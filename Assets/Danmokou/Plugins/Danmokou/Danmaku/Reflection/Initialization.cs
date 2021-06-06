@@ -22,19 +22,13 @@ using Vector3 = UnityEngine.Vector3;
 
 namespace Danmokou.Reflection {
 public static partial class Reflector {
-
-    private static readonly Assembly[] ReflectableAssemblies = {
+    /*private static readonly Assembly[] ReflectableAssemblies = {
         typeof(CoreAssemblyMarker).Assembly,
         typeof(DanmakuAssemblyMarker).Assembly
-    };
+    };*/
+
     static Reflector() {
-        foreach (var type in 
-            //This is more correct but way slower
-            //AppDomain.CurrentDomain.GetAssemblies()
-            //.Where(a => !a.IsDynamic)
-            //.Where(a => a.GetCustomAttributes(false).Any(c => c is ReflectAttribute))
-            ReflectableAssemblies
-            .SelectMany(a => a.GetTypes())) {
+        foreach (var type in ReflectorUtils.ReflectableAssemblyTypes) {
             foreach (var ca in type.GetCustomAttributes()) {
                 if (ca is ReflectAttribute ra) {
                     ReflectionData.RecordPublic(type, ra.returnType);

@@ -16,7 +16,7 @@ public static class StateMachineManager  {
     private static readonly Dictionary<string, TextAsset?> SMFileByName = new Dictionary<string, TextAsset?>() {
         { "", null }
     };
-    private static readonly Dictionary<string, Dictionary<Locale, TextAsset>> Dialogue = new Dictionary<string, Dictionary<Locale, TextAsset>>();
+    private static readonly Dictionary<string, Dictionary<string, TextAsset>> Dialogue = new Dictionary<string, Dictionary<string, TextAsset>>();
     
     static StateMachineManager() {
         foreach (var sm in GameManagement.References.fileStateMachines.SelectMany(x => x.assetGroups)
@@ -25,18 +25,19 @@ public static class StateMachineManager  {
             //Don't load SMs on init
         }
         foreach (var group in GameManagement.References.dialogue.SelectMany(d => d.assetGroups)) {
-            Dialogue[group.name] = new Dictionary<Locale, TextAsset>();
+            Dialogue[group.name] = new Dictionary<string, TextAsset>();
             foreach (var lc in group.files) {
-                Dialogue[group.name][lc.locale] = lc.file;
+                Dialogue[group.name][
+                    Locales.AllLocales.Contains(lc.locale) ? (lc.locale ?? "") : ""] = lc.file;
             }
         }
     }
 
-    public static StateMachine LoadDialogue(string file, Locale? lc = null) {
-        var locale = lc ?? SaveData.s.Locale;
+    public static StateMachine LoadDialogue(string file, string? lc = null) {
+        var locale = lc ?? SaveData.s.Locale ?? "";
         if (!Dialogue.TryGetValue(file, out var locales)) 
             throw new Exception($"No dialogue file by name {file}");
-        if (!locales.TryGetValue(locale, out var tx) && !locales.TryGetValue(Locale.EN, out tx)) 
+        if (!locales.TryGetValue(locale, out var tx) && !locales.TryGetValue("", out tx)) 
             throw new Exception($"Dialogue file has no applicable localization");
         //No need to cache this, since dialogue files are effectively never referenced from more than one place
         return StateMachine.CreateFromDump(tx.text);

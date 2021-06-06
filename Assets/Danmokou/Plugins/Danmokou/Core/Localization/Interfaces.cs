@@ -1,14 +1,12 @@
 ﻿namespace Danmokou.Core {
 
-public interface ILangObject {
-}
 
-public interface ILangCountable : ILangObject {
+public interface ILangCountable {
     int Count { get; }
 }
 
 
-public class TrivialLangObject : ILangObject {
+public class TrivialLangObject {
     public readonly object obj;
 
     public TrivialLangObject(object obj) {

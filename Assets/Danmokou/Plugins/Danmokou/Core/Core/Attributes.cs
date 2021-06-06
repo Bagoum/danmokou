@@ -106,6 +106,9 @@ public class ReflectIntoAttribute : Attribute {
     }
 }
 
+[AttributeUsage(AttributeTargets.Class)]
+public class LocalizationStringsRepoAttribute : Attribute { }
+
 
 
 }

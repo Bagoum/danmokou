@@ -64,10 +64,3 @@ You do not *need* to use Notepad++ to edit BDSM scripts, but I do not have langu
 When you get around to eventually extending the engine with your own functions and mechanics, you'll probably use some IDE for editing C#. The three most common are Rider, Visual Studio, and VS Code. 
 
 If using VS Code, you may come across an issue where many references in the codebase do not compile. In this case, reinstall your C# extension to version 1.23.2. 
-
-## Part Extra: F# Setup
-
-Only do this if you are rebuilding the F# project. This is not necessary for the vast majority of users. If you have no idea what this means, then you don't need to do it.
-
-- Build the `ParserCS` project in the `FS` folder targeted at 4.7.2. I have provided DLLs so you don't have to do this unless you make changes to the code.
-- Copy the output DLL (ParserCS) to `Assets/Danmokou/Plugins/Self/Core/FS`.

@@ -1,0 +1,17 @@
+{
+    "name": "Danmokou.MiniProjects",
+    "rootNamespace": "",
+    "references": [
+        "GUID:546e84e2f7b56b14da3f5e3f50698392",
+        "GUID:110987f460e1c2d45900207366219f0f"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

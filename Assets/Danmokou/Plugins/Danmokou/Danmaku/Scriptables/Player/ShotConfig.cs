@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using BagoumLib.Culture;
 using Danmokou.Core;
 using Danmokou.Player;
 using JetBrains.Annotations;
@@ -25,7 +26,7 @@ public class ShotConfig : ScriptableObject {
     /// eg. "Homing Needles - Persuasion Laser"
     /// </summary>
     public LocalizedStringReference title = null!;
-    public LocalizedString Title => title.Value;
+    public LString Title => title.Value;
     [TextArea(5, 10)] public string description = "";
     /// <summary>
     /// eg. "Forward Focus"

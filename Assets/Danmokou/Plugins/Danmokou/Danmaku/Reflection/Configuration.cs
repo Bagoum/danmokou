@@ -11,7 +11,7 @@ using JetBrains.Annotations;
 using Danmokou.SM.Parsing;
 using UnityEngine;
 using UnityEngine.Profiling;
-using static Danmokou.Core.ReflectionUtils;
+using static BagoumLib.Reflection.ReflectionUtils;
 
 namespace Danmokou.Reflection {
 public static partial class Reflector {

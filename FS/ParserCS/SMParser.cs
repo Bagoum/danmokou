@@ -2,15 +2,15 @@
 using static LanguageExt.Prelude;
 using static LanguageExt.Parsec.Prim;
 using static LanguageExt.Parsec.Char;
-using static LanguageExt.Parsec.Expr;
-using static LanguageExt.Parsec.Token;
 using static ParserCS.Common;
-using static ParserCS.Helpers;
 using System.Collections.Generic;
 using System;
 using System.Linq;
 using LanguageExt.Parsec;
 using System.Collections.Immutable;
+using BagoumLib;
+using BagoumLib.Functional;
+using static BagoumLib.Functional.Helpers;
 
 namespace ParserCS {
 public static class SMParser {
@@ -59,9 +59,9 @@ public static class SMParser {
             Func<string, List<LPU>, Errorable<LPU>> macroReinvResolve,
             LPU x) {
             Errorable<List<LPU>> resolveAcc(IEnumerable<LPU> args) => 
-                Acc(args.Select(a => ResolveUnit(argResolve, macroReinvResolve, a)));
+                args.Select(a => ResolveUnit(argResolve, macroReinvResolve, a)).Acc();
             Errorable<LPU> reloc(Errorable<ParseUnit> pu) {
-                return pu.isValid ? new LPU(pu.value, x.location) : Errorable<LPU>.Fail(pu.errors);
+                return pu.Valid ? new LPU(pu.Value, x.location) : Errorable<LPU>.Fail(pu.errors);
             }
             return x.unit.Match(
                 macroVar: argResolve,
@@ -83,8 +83,8 @@ public static class SMParser {
                     partlMacroInv: (m, pargs) => {
                         static bool isLambda(LPU lpu) => lpu.unit.type == ParseUnit.Type.LambdaMacroParam;
                         var replaced = ReplaceEntries(true, pargs, rargs, isLambda);
-                        if (replaced.isValid)
-                            return Acc(replaced.value.Select(l => RealizeOverUnit(args, l))).Bind(m.Invoke);
+                        if (replaced.Valid)
+                            return replaced.Value.Select(l => RealizeOverUnit(args, l)).Acc().Bind(m.Invoke);
                         else
                             return Errorable<LPU>.Fail(
                                 "Macro \"{name}\" provides too many arguments to partial macro " +
@@ -266,8 +266,8 @@ public static class SMParser {
         return l.Count == 1 ? l[0] : new LPU(ParseUnit.NoSpaceWords(l), loc);
     }
 
-    private static Parser<T> FailErrorable<T>(Errorable<T> errb) => errb.isValid ?
-        result(errb.value) :
+    private static Parser<T> FailErrorable<T>(Errorable<T> errb) => errb.Valid ?
+        result(errb.Value) :
         failure<T>(string.Join("\n", errb.errors));
     
     private static Parser<LPU> InvokeMacroByName(string name, List<LPU> args) =>
@@ -469,18 +469,19 @@ public static class SMParser {
                     Replacements.TryGetValue(s, out var ss) ?
                         ss :
                         new[] {s} :
-                    noStrs;
+                    Helpers.noStrs;
             case ParseUnit.Type.Quote:
                 return new[] {s};
             case ParseUnit.Type.Paren:
-                return Acc(ls.Select(pFlatten)).Map(x => x.SeparateBy(",").Prepend("(").Append(")"));
+                return ls.Select(pFlatten).Acc()
+                    .Map(x => x.SeparateBy(",").Prepend("(").Append(")"));
             case ParseUnit.Type.Words:
-                return Acc(ls.TakeWhile(l => l.unit.type != ParseUnit.Type.End).Select(pFlatten))
-                    .Map(t => t.Join());
+                return ls.TakeWhile(l => l.unit.type != ParseUnit.Type.End)
+                    .Select(pFlatten).Acc().Map(t => t.Join());
             case ParseUnit.Type.Postfix:
-                return Acc(ls.Select(pFlatten)).Map(t => t.Join());
+                return ls.Select(pFlatten).Acc().Map(t => t.Join());
             case ParseUnit.Type.NoSpaceWords:
-                return Acc(ls.Select(pFlatten)).Map(arrs => {
+                return ls.Select(pFlatten).Acc().Map(arrs => {
                     var words = new List<string>() {""};
                     foreach (var arr in arrs) {
                         bool first = true;
@@ -528,15 +529,15 @@ public static class SMParser {
             case ParseUnit.Type.Quote:
                 return new[] {(S(s), lpu.location)};
             case ParseUnit.Type.Paren:
-                return Acc(ls.Select(pFlatten2)).Map(l => (IEnumerable<(ParsedUnit, Pos)>) 
+                return ls.Select(pFlatten2).Acc().Map(l => (IEnumerable<(ParsedUnit, Pos)>) 
                     new[] {(P(l.Select(xs => xs.ToArray()).ToArray()), lpu.location)});
             case ParseUnit.Type.Words:
-                return Acc(ls.TakeWhile(l => l.unit.type != ParseUnit.Type.End).Select(pFlatten2))
+                return ls.TakeWhile(l => l.unit.type != ParseUnit.Type.End).Select(pFlatten2).Acc()
                     .Map(t => t.Join());
             case ParseUnit.Type.Postfix:
-                return Acc(ls.Select(pFlatten2)).Map(t => t.Join());
+                return ls.Select(pFlatten2).Acc().Map(t => t.Join());
             case ParseUnit.Type.NoSpaceWords:
-                return Acc(ls.Select(pFlatten)).Map(t =>
+                return ls.Select(pFlatten).Acc().Map(t =>
                     (IEnumerable<(ParsedUnit, Pos)>) new[] {(S(string.Concat(t.Join())), lpu.location)});
             case ParseUnit.Type.Newline:
                 return new[] {(S("\n"), lpu.location)};

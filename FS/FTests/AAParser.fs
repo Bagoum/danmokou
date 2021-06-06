@@ -3,8 +3,6 @@ open FParser.AAParser
 open FCommon.Types
 open FTests.Utils
 
-open FTests
-
 open FParsec
 open NUnit.Framework
 

@@ -5,7 +5,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Compile Include="ParserCommon.fs" />
         <Compile Include="SMParser.fs" />
         <Compile Include="AAParser.fs" />
     </ItemGroup>
@@ -16,6 +15,12 @@
 
     <ItemGroup>
       <ProjectReference Include="..\FCommon\FCommon.fsproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Reference Include="FSParserUtils, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
+        <HintPath>..\..\..\DanmokouExt\FSParserUtils\bin\Release\net472\FSParserUtils.dll</HintPath>
+      </Reference>
     </ItemGroup>
 
 </Project>

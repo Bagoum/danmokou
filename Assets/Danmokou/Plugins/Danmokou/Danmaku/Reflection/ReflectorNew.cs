@@ -9,7 +9,7 @@ using JetBrains.Annotations;
 using Danmokou.SM;
 using Danmokou.SM.Parsing;
 using UnityEngine;
-using static Danmokou.Core.ReflectionUtils;
+using static BagoumLib.Reflection.ReflectionUtils;
 using ExBPY = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<float>>;
 using ExPred = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<bool>>;
 using ExTP = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<UnityEngine.Vector2>>;

@@ -8,22 +8,23 @@ Code is present primarily under the directories FS, Assets/Danmokou/Plugins/Self
 The Licenses folder also contains licenses for the following packages used by this project:
 Hash Without Sine by David Hoskins
 Newtonsoft.Json by Kalle Jillheden
-Some files from these projects exists in the source code. Those files have the original licenses at the top for convenience. 
 
 Files under Assets/Danmokou/Plugins/CurvedTMP are from CurvedTextMeshPro (https://github.com/TonyViT/CurvedTextMeshPro), licensed under MIT.
-
-The directory Assets/Danmokou/Plugins/External contains many external DLLs. They are licensed as follows:
+DLLs under Assets/Danmokou/Plugins/DLLs are licensed as follows:
+BagoumLib/Suzunoya: MIT (https://github.com/Bagoum/suzunoya)
+ParserCS: This is compiled from the directory FS, and is licensed under the the same license as this repository.
 protobuf-net*: Apache 2.0 (https://www.nuget.org/packages/protobuf-net)
 MathNet*: MIT (https://www.nuget.org/packages/MathNet.Numerics)
 System.*: MIT (https://www.nuget.org/packages/System.Memory/ and others)
 LanguageExt.*: MIT (https://github.com/louthy/language-ext)
-	Modifications have been made to LanguageExt.Parsec. See https://github.com/Bagoum/language-ext
-FastExpressionCompiler: MIT (https://github.com/dadhi/FastExpressionCompiler)
+	Modifications have been made to LanguageExt.Parsec, and LanguageExt.Core has been reduced for filesize concerns. See https://github.com/Bagoum/language-ext
+ExpressionToString: MIT (https://github.com/dadhi/FastExpressionCompiler)
 	Modifications have been made to FastExpressionCompiler. See https://github.com/Bagoum/FastExpressionCompiler
 
-The directory Assets/Danmokou/Plugins/Self/Core/FS contains compiled binaries of the directory FS.
 
 The directory Assets/TextMeshPro contains default imports from the TextMeshPro plugin for Unity. TextMeshPro is licensed under the Unity Companion License (https://docs.unity3d.com/Packages/com.unity.textmeshpro@3.0/license/LICENSE.html). 
+
+All fonts (Assets/Danmokou/Fonts) are licensed permissively. Licenses are in the Licenses/Fonts folder.
 
 The copyright of Touhou Project is owned by Team Shanghai Alice.
 
@@ -68,8 +69,6 @@ Sound effects (Assets/Danmokou/Audio/SFX)
 	- "meter-activated" under CC-BY from here: https://freesound.org/people/hykenfreak/sounds/248182/
 	- "achievement-1" under CC-BY from here: https://freesound.org/people/LittleRobotSoundFactory/sounds/274179/
 
-All fonts (Assets/Danmokou/Fonts) are licensed permissively. Licenses are in the Licenses/Fonts folder.
-
 All assets under Assets/Danmokou/Kenney were created by Kenny Vleugels (kenney.nl) and are licensed thereby under CC0.
 
 3D Resources (Assets/Danmokou/Models)
@@ -101,6 +100,15 @@ Images (Assets/Danmokou/Sprites)
 
 Assets/Danmokou/MiniProjects
 - Dialogue/Icons, Dialogue/Stands/dairi_*, Cutins/Sprites: dairi (same license as before).
+- VN/Backgrounds/Sprites: miscellaneous Unsplash users, credited as follows:
+	- shrine-room.jpg: https://unsplash.com/photos/M9NTnUlNiEM
+	- shrine-courtyard.jpg: https://unsplash.com/photos/8ceNIk_TuiA
+	- town.jpg: https://unsplash.com/photos/O-SKMhBFu3k
+	- library.jpg: https://unsplash.com/photos/YLSwjSy7stw
+	- field.jpg: https://unsplash.com/photos/YhZt03_OJKs
+	- farm.jpg: https://unsplash.com/photos/QcBAZ7VREHQ
+	- flower.jpg: https://unsplash.com/photos/h7_SyoBhHF0	
+
 
 Some image resources were created with patterns from http://www.sda.nagoya-cu.ac.jp/sa08m13/image.html 
 Some image resources were created with patterns from http://www.ikiya.jp/anounce.html

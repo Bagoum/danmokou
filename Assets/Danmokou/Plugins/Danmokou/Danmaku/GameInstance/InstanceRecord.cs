@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using BagoumLib;
+using BagoumLib.Culture;
 using Danmokou.Core;
 using Danmokou.Danmaku;
 using Danmokou.DMath;
@@ -173,14 +174,14 @@ public class InstanceRecord {
         //4+8
         c => $"All:{c.campaign.campaign.shortTitle}",
         //3+9
-        b => $"p{b.phase.NontrivialPhaseIndex}:{b.boss.boss.ReplayName.ValueOrEn}",
+        b => $"p{b.phase.NontrivialPhaseIndex}:{b.boss.boss.ReplayName.Value}",
         //5+9 -- note that challenges records do not show next to standard records, so misalignment is OK
-        c => $"p{c.phase.phase.NontrivialPhaseIndex}-{c.ChallengeIdx}:{c.Boss.ReplayName.ValueOrEn.PadRight(9)}",
+        c => $"p{c.phase.phase.NontrivialPhaseIndex}-{c.ChallengeIdx}:{c.Boss.ReplayName.Value.PadRight(9)}",
         //8+3
         s => $"s{s.stage.stageIndex+1}:{s.stage.campaign.campaign.shortTitle}"
     ).PadRight(12);
     
-    public LocalizedString AsDisplay(bool showScore, bool showRequest, bool defaultName=false, bool showTime=true) {
+    public LString AsDisplay(bool showScore, bool showRequest, bool defaultName=false, bool showTime=true) {
         var team = SharedInstanceMetadata.team;
         var p = team.ships.TryN(0)?.ship;
         var s = team.ships.TryN(0)?.shot;
@@ -189,7 +190,7 @@ public class InstanceRecord {
         var name = (string.IsNullOrEmpty(CustomNameOrPartial) && defaultName) ? "[NAME]" : CustomNameOrPartial;
         var req = showRequest ? $"{RequestDescription} " : "";
         var date = showTime ? Date.SimpleTime() : Date.SimpleDate();
-        return new LocalizedString($"{name.PadRight(12)} {score} {pstr} {req}{SavedMetadata.difficulty.DescribePadR()} {date}");
+        return new LString($"{name.PadRight(12)} {score} {pstr} {req}{SavedMetadata.difficulty.DescribePadR()} {date}");
     }
 }
 

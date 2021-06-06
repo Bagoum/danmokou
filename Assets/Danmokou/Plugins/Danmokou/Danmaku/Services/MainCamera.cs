@@ -7,7 +7,9 @@ using Danmokou.DMath;
 using Danmokou.Graphics;
 using Danmokou.Player;
 using Danmokou.UI;
+using SuzunoyaUnity.Rendering;
 using UnityEngine;
+using PropConsts = Danmokou.Graphics.PropConsts;
 
 namespace Danmokou.Services {
 
@@ -114,7 +116,7 @@ public class MainCamera : RegularUpdater {
 
     private void RecreateRT() {
         if (RenderTo != null) RenderTo.Release();
-        RenderTo = DefaultTempRT();
+        RenderTo = RenderHelpers.DefaultTempRT();
     }
 
     protected override void BindListeners() {
@@ -227,7 +229,7 @@ public class MainCamera : RegularUpdater {
         ayaMaterial.SetFloat(PropConsts.ScaleY, ysr);
         ayaMaterial.SetFloat(PropConsts.Angle, rect.angle * M.degRad);
         var _renderTo = RenderTo;
-        RenderTo = DefaultTempRT();
+        RenderTo = RenderHelpers.DefaultTempRT();
         //Clear is required since the camera list may not contain BackgroundCamera,
         // which is the only one that clears
         RenderTo.GLClear();
@@ -240,7 +242,7 @@ public class MainCamera : RegularUpdater {
             c.targetTexture = _renderTo;
         }
         Shader.DisableKeyword("AYA_CAPTURE");
-        var ss = DefaultTempRT(((int) (SaveData.s.Resolution.w * xsr), (int) (SaveData.s.Resolution.h * ysr)));
+        var ss = RenderHelpers.DefaultTempRT(((int) (SaveData.s.Resolution.w * xsr), (int) (SaveData.s.Resolution.h * ysr)));
         UnityEngine.Graphics.Blit(RenderTo, ss, ayaMaterial);
         RenderTo.Release();
         RenderTo = _renderTo;
@@ -254,16 +256,6 @@ public class MainCamera : RegularUpdater {
         RenderTexture.active = rt;
         return tex;
     }
-
-    public static RenderTexture DefaultTempRT() => DefaultTempRT(SaveData.s.Resolution);
-
-    private static RenderTexture DefaultTempRT((int w, int h) res) => RenderTexture.GetTemporary(res.w,
-        //24 bit depth is required for sprite masks to work (used in dialogue handling)
-        res.h, 24, RenderTextureFormat.ARGB32);
-
-    public static ArbitraryCapturer CreateArbitraryCapturer(Transform tr) =>
-        GameObject.Instantiate(GameManagement.Prefabs.arbitraryCapturer, tr, false)
-            .GetComponent<ArbitraryCapturer>();
 
     public override void RegularUpdate() { }
 

@@ -7,6 +7,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using BagoumLib;
+using BagoumLib.Culture;
 using Danmokou.DMath;
 using JetBrains.Annotations;
 using UnityEngine;
@@ -14,9 +15,7 @@ using UnityEngine.UIElements;
 
 namespace Danmokou.Core {
 public static class Extensions {
-    public static LocalizedString Locale(this string en, string ja) => new LocalizedString(en) {
-        jp = ja
-    };
+    public static LString Locale(this string en, string ja) => new LString(en, (Locales.JP, ja));
     public static int CountOf(this string s, char c) {
         int ct = 0;
         for (int ii = 0; ii < s.Length; ++ii) {
@@ -24,26 +23,6 @@ public static class Extensions {
         }
         return ct;
     }
-/*
-    private static Action<Task> WrapRethrow(Action cb) => t => {
-        Exception? exc = t.Exception;
-        try {
-            cb();
-        } catch (Exception e) {
-            exc = new Exception(e.Message, exc);
-        }
-        if (exc != null) {
-            Log.UnityError("Task exceptions:\n" + Exceptions.FlattenNestedException(exc).Message);
-            throw exc;
-        }
-    };
-
-    public static Task ContinueWithSync(this Task t, Action done) =>
-        t.ContinueWith(WrapRethrow(done), TaskContinuationOptions.ExecuteSynchronously);*/
-
-    private static T Private<T>(this object obj, string privateField) => (T) obj.GetType()
-        .GetField(privateField, BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(obj)!;
-
 
     public static void Show(this VisualElement ve) => ve.style.display = DisplayStyle.Flex;
     public static void Hide(this VisualElement ve) => ve.style.display = DisplayStyle.None;
@@ -230,7 +209,7 @@ public static class NumExtensions {
 
     public static char ToABC(this int x) => (char) ('A' + x);
 
-    public static LocalizedString FramesToTime(this int f) {
+    public static LString FramesToTime(this int f) {
         int s = (int) (f / ETime.ENGINEFPS_F);
         int hours = s / 3600;
         s %= 3600;

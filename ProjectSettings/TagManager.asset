@@ -31,13 +31,13 @@ TagManager:
   - 
   - 
   - 
-  - 
-  - 
+  - RenderGroup2
+  - RenderGroup1
+  - RenderGroup0
   - ARBITRARY_CAPTURE_NULL
-  - ARBITRARY_CAPTURE_1
   - ARBITRARY_CAPTURE_2
+  - ARBITRARY_CAPTURE_1
   - SpecialMainCamera
-  - PostProcessing
   m_SortingLayers:
   - name: Default
     uniqueID: 0
@@ -71,6 +71,9 @@ TagManager:
     locked: 0
   - name: FX
     uniqueID: 2488654819
+    locked: 0
+  - name: SZYURender
+    uniqueID: 4279335943
     locked: 0
   - name: UI
     uniqueID: 2580262927

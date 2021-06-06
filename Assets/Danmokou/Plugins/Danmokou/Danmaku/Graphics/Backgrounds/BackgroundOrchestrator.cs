@@ -30,14 +30,12 @@ public class BackgroundOrchestrator : CoroutineRegularUpdater, IBackgroundOrches
     
     public float Time { get; private set; }
 
-    private void RecreateTextures() {
+    private void ShowHide() {
         if (FromBG == null) MaybeCreateFirst();
         else {
             if (SaveData.s.Backgrounds) {
                 FromBG.Show();
                 if (ToBG != null) ToBG.Show();
-                FromBG.capturer.RecreateTexture();
-                if (ToBG != null) ToBG.capturer.RecreateTexture();
             } else {
                 FromBG.Hide();
                 if (ToBG != null) ToBG.Hide();
@@ -78,7 +76,7 @@ public class BackgroundOrchestrator : CoroutineRegularUpdater, IBackgroundOrches
 
     protected override void BindListeners() {
         base.BindListeners();
-        Listen(SaveData.ResolutionHasChanged, RecreateTextures);
+        Listen(SaveData.ResolutionHasChanged, ShowHide);
         RegisterDI<IBackgroundOrchestrator>(this);
     }
 

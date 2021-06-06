@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using BagoumLib;
+using BagoumLib.Culture;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.UI.XML;
@@ -19,7 +20,7 @@ public abstract class IndexedSubmenuHandler : SubmenuHandler {
     public override UIScreen Initialize(XMLMainMenu menu) {
         Menu = menu;
         HideOnExit();
-        var opt = new OptionNodeLR<int>(LocalizedString.Empty, SetIndex, NumOptions.Range().ToArray(), DefaultOption);
+        var opt = new OptionNodeLR<int>(LString.Empty, SetIndex, NumOptions.Range().ToArray(), DefaultOption);
         return new UIScreen(opt
                 .With(hideClass)
                 .SetUpOverride(() => opt.Left())

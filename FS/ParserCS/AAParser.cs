@@ -2,10 +2,7 @@
 using static LanguageExt.Prelude;
 using static LanguageExt.Parsec.Prim;
 using static LanguageExt.Parsec.Char;
-using static LanguageExt.Parsec.Expr;
-using static LanguageExt.Parsec.Token;
 using static ParserCS.Common;
-using static ParserCS.Helpers;
 using System.Collections.Generic;
 using System;
 using System.Collections;
@@ -13,6 +10,8 @@ using System.Linq;
 using LanguageExt.Parsec;
 using System.Collections.Immutable;
 using System.Text;
+using BagoumLib;
+using BagoumLib.Functional;
 
 namespace ParserCS {
 public static class AAParser {
@@ -166,8 +165,8 @@ public static class AAParser {
             charsPerBlock = 3,
             blockOps = 1,
             punctOps = p => p.Switch(2, 4, 5, 6, 8),
-            blockEvent = Maybe<T>.Null,
-            punctEvent = _ => Maybe<T>.Null
+            blockEvent = Maybe<T>.None,
+            punctEvent = _ => Maybe<T>.None
         };
     }
     
@@ -186,15 +185,15 @@ public static class AAParser {
             BetweenChars(TAG_OPEN, TAG_CLOSE, manyString(satisfy(InTag)))
                 .Map(s => L(TextUnit<T>.Tag($"{TAG_OPEN}{s}{TAG_CLOSE}"))),
             Sequential(ch(INVOKE), InvokeWord, Paren1(InvokeWord), (_, key, arg) => invoker(key, arg))
-                .SelectMany(errb => errb.isValid ?
-                    result(L(TextUnit<T>.Ref(errb.value))) :
+                .SelectMany(errb => errb.Valid ?
+                    result(L(TextUnit<T>.Ref(errb.Value))) :
                     failure<IEnumerable<TextUnit<T>>>(errb.JoinedErrors)),
             many1String(satisfy(WhiteInline)).Map(x => L(TextUnit<T>.Punct(x, Punct.Space))),
             endOfLine.Map(_ => L(TextUnit<T>.Newline)), //No comments within text.
             many1(satisfy(IsPunctuation)).Map(ps => 
-                MaxConsecutive('.', ps) > 1 ? 
+                ps.MaxConsecutive('.') > 1 ? 
                     ps.Select(x => TextUnit<T>.Punct(new string(x, 1), Punct.Ellipsis)) : 
-                    ps.Map(x => TextUnit<T>.Punct(new string(x, 1), ResolvePunctuation(x, Punct.Comma))))
+                    ps.Select(x => TextUnit<T>.Punct(new string(x, 1), ResolvePunctuation(x, Punct.Comma))))
         ));
     }
 

@@ -29,7 +29,4 @@ docs/_site
 docs/api
 docs/images
 
-# these are compiled from the FS project
-# Assets/Plugins/Self/Core/FS/*.dll
-
 Assets/PCG

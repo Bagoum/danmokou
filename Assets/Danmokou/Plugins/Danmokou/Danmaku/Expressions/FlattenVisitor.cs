@@ -9,8 +9,6 @@ using System.Text;
 using BagoumLib;
 using Danmokou.Core;
 using Danmokou.DMath;
-using JetBrains.Annotations;
-using LanguageExt.TypeClasses;
 using Ex = System.Linq.Expressions.Expression;
 using PEx = System.Linq.Expressions.ParameterExpression;
 // ReSharper disable CompareOfFloatsByEqualityOperator

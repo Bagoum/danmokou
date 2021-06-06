@@ -24,14 +24,17 @@ public class CoroutineRegularUpdater : RegularUpdater, ICoroutineRunner {
         base.OnDisable();
     }
 
-    public void RunRIEnumerator(IEnumerator ienum) => coroutines.Run(ienum);
-    public void RunTryPrependRIEnumerator(IEnumerator ienum) => coroutines.RunTryPrepend(ienum);
-    public void RunPrependRIEnumerator(IEnumerator ienum) => coroutines.RunPrepend(ienum);
+    public void RunRIEnumerator(IEnumerator ienum) => 
+        coroutines.Run(ienum, new CoroutineOptions(execType: CoroutineType.AppendToEnd));
+    public void RunTryPrependRIEnumerator(IEnumerator ienum) => 
+        coroutines.Run(ienum, new CoroutineOptions(execType: CoroutineType.TryStepPrepend));
+    public void RunPrependRIEnumerator(IEnumerator ienum) => 
+        coroutines.Run(ienum, new CoroutineOptions(execType: CoroutineType.StepPrepend));
 
-    public void RunDroppableRIEnumerator(IEnumerator ienum) => coroutines.RunDroppable(ienum);
+    public void RunDroppableRIEnumerator(IEnumerator ienum) => 
+        coroutines.Run(ienum, new CoroutineOptions(true, CoroutineType.AppendToEnd));
 
-    void ICoroutineRunner.Run(IEnumerator ienum) => RunRIEnumerator(ienum);
-    void ICoroutineRunner.RunDroppable(IEnumerator ienum) => RunDroppableRIEnumerator(ienum);
+    public void Run(IEnumerator ienum, CoroutineOptions? flags = null) => coroutines.Run(ienum, flags);
 
 #if UNITY_EDITOR
     public int NumRunningCoroutines => coroutines.Count;

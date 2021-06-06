@@ -3,7 +3,7 @@ using UnityEditor;
 using UnityEngine;
 
 
-[CustomPropertyDrawer(typeof(LocalizedString))]
+[CustomPropertyDrawer(typeof(MutLString))]
 public class LocalizedStringDrawer : PropertyDrawer {
     private readonly string[] popupOptions = {
         "Unified", 

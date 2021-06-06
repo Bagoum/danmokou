@@ -10,8 +10,11 @@ To get the newest version from git, run:
 
 # v8.0.0 (2021/06/14)
 
+- **Code formatting notices:**
+  - I have re-added csproj/sln files to the repo. Be warned of possible merge conflicts.
+  - Much code in the Core assembly has been moved to the BagoumLib subproject in the [Suzunoya repo](https://github.com/Bagoum/suzunoya). It is now provided as a DLL. (The Suzunoya project will, hopefully, eventually replace the present dialogue system.)
+
 - [WIP] Implementation of a TH18-like card engine
-- Much code in the Core assembly has been moved to the BagoumLib subproject in the [Suzunoya repo](https://github.com/Bagoum/suzunoya). It is now provided as a DLL. (The Suzunoya project will, hopefully, eventually replace the present dialogue system.)
 - Complex bomb implementations for Reimu, Mokou, and Mima (who has a nice black hole effect)
 - Significant improvements to the architecture around engine state management, especially pausing, loading, and freezeframes
 - Spell and card circles now trail the boss while they are moving

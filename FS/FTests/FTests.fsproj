@@ -16,12 +16,8 @@
     <ItemGroup>
         <Compile Include="Extensions.fs" />
         <Compile Include="Utils.fs" />
-        <Compile Include="CommonFuncs.fs" />
         <Compile Include="AAParser.fs" />
         <Compile Include="SMParser.fs" />
-        <Compile Include="LocalizationParser.fs" />
-        <Compile Include="LocalizationCodeGen.fs" />
-        <Compile Include="Program.fs" />
     </ItemGroup>
 
     <ItemGroup>
@@ -32,6 +28,12 @@
     </ItemGroup>
 
     <ItemGroup>
+      <Reference Include="BagoumLib, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
+        <HintPath>..\..\..\..\Suzunoya\BagoumLib\bin\Release\net472\BagoumLib.dll</HintPath>
+      </Reference>
+      <Reference Include="FSParserUtils, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
+        <HintPath>..\..\..\DanmokouExt\FSParserUtils\bin\Release\net472\FSParserUtils.dll</HintPath>
+      </Reference>
       <Reference Include="LanguageExt.Parsec, Version=3.0.0.0, Culture=neutral, PublicKeyToken=null">
         <HintPath>..\..\..\..\ref\language-ext\LanguageExt.Parsec\bin\Release\net472\LanguageExt.Parsec.dll</HintPath>
       </Reference>

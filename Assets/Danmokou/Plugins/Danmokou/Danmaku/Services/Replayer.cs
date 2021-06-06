@@ -24,7 +24,7 @@ public class ReplayMetadata {
     //Frozen options
     public float DialogueSpeed { get; set; }
     public bool SmoothInput { get; set; }
-    public Locale Locale { get; set; } = Locale.EN;
+    public string? Locale { get; set; } = null;
     // Not important but it's convenient
     public int Length { get; set; }
     

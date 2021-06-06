@@ -1,4 +1,5 @@
 ﻿using System;
+using BagoumLib.Culture;
 using Danmokou.Core;
 using Danmokou.DMath;
 using Danmokou.Reflection;
@@ -17,7 +18,7 @@ public class BossConfig : ScriptableObject {
     /// </summary>
     public string? localizationBaseKey;
 
-    private LocalizedString? FromBaseKey(string suffix) {
+    private LString? FromBaseKey(string suffix) {
         return string.IsNullOrWhiteSpace(localizationBaseKey) ?
             null :
             LocalizedStrings.TryFindReference(localizationBaseKey + suffix);
@@ -27,25 +28,25 @@ public class BossConfig : ScriptableObject {
     /// For display in naming situations where suffixes such as -1 or (Ex) are unacceptable.
     /// </summary>
     public LocalizedStringReference m_casualName = null!;
-    public LocalizedString CasualName => 
+    public LString CasualName => 
         m_casualName.SetDefault(FromBaseKey(""));
     /// <summary>
     /// For display on the Boss Practice screen, eg. "Yukari (Ex)". Defaults to CasualName.
     /// </summary>
     public LocalizedStringReference m_bossPracticeName = null!;
-    public LocalizedString BossPracticeName => 
+    public LString BossPracticeName => 
         m_bossPracticeName.SetDefaultOrEmpty(FromBaseKey(".practice")).Or(CasualName);
     /// <summary>
     /// For display in replay descriptions. Defaults to BossPracticeName.
     /// </summary>
     public LocalizedStringReference replayNameOverride = null!;
-    public LocalizedString ReplayName => 
+    public LString ReplayName => 
         replayNameOverride.SetDefaultOrEmpty(FromBaseKey(".replay")).Or(CasualName);
     /// <summary>
     /// For display in the bottom margin when the boss in on screen. Defaults to BossPracticeName.
     /// </summary>
     public LocalizedStringReference bottomTrackerNameOverride = null!;
-    public LocalizedString BottomTrackerName => 
+    public LString BottomTrackerName => 
         bottomTrackerNameOverride.SetDefaultOrEmpty(FromBaseKey(".tracker")).Or(CasualName);
     
     public TextAsset stateMachine = null!;

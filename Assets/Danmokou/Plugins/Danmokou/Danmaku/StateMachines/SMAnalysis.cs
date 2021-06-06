@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using BagoumLib;
+using BagoumLib.Culture;
 using Danmokou.Core;
 using Danmokou.GameInstance;
 using Danmokou.Scriptables;
@@ -124,7 +125,7 @@ public static class SMAnalysis {
     /// </summary>
     public readonly struct Phase {
         public readonly PhaseType type;
-        private readonly LocalizedString? title;
+        private readonly LString? title;
         /// <summary>
         /// Index of this phase in the original state machine.
         /// </summary>
@@ -134,16 +135,16 @@ public static class SMAnalysis {
         /// 1-indexed index of this phase in the parent's list of nontrivial phases.
         /// </summary>
         public int NontrivialPhaseIndex => parent.Phases.IndexOf(this) + 1;
-        public LocalizedString Title =>
+        public LString Title =>
             type switch {
                 PhaseType.STAGE => practice_stage_section_ls(NontrivialPhaseIndex),
                 PhaseType.STAGEMIDBOSS => practice_midboss,
                 PhaseType.STAGEENDBOSS => practice_endboss,
                 PhaseType.DIALOGUE => title ?? practice_dialogue,
-                _ => title ?? new LocalizedString("!!!UNTITLED PHASE (REPORT ME)!!!")
+                _ => title ?? new LString("!!!UNTITLED PHASE (REPORT ME)!!!")
             };
 
-        public Phase(AnalyzedPhasedConstruct parent, PhaseType c, int phaseNum, LocalizedString? name) {
+        public Phase(AnalyzedPhasedConstruct parent, PhaseType c, int phaseNum, LString? name) {
             type = c;
             title = name;
             index = phaseNum;
@@ -169,13 +170,13 @@ public static class SMAnalysis {
         //Index among analyzed only
         private readonly int combatCardIndex;
         
-        private LocalizedString _Title =>
+        private LString _Title =>
             type switch {
                 DayPhaseType.DIALOGUE_INTRO => challenge_day_intro_ls(boss.ChallengeName),
                 DayPhaseType.DIALOGUE_END => challenge_day_end_ls(boss.ChallengeName),
                 _ => challenge_day_card_ls(boss.ChallengeName, combatCardIndex)
             };
-        public LocalizedString Title(SharedInstanceMetadata meta) => (boss.Enabled(meta)) ? _Title : new LocalizedString("??? Locked ???");
+        public LString Title(SharedInstanceMetadata meta) => (boss.Enabled(meta)) ? _Title : new LString("??? Locked ???");
         public readonly AnalyzedDayBoss boss;
         public bool Completed(int cIndex, SharedInstanceMetadata meta) => SaveData.r.ChallengeCompleted(this, cIndex, meta);
         public bool CompletedOne(SharedInstanceMetadata meta) => SaveData.r.PhaseCompletedOne(this, meta);
@@ -335,7 +336,7 @@ public static class SMAnalysis {
         public List<Phase> Phases => phases.Select(x => x.phase).ToList();
         public readonly AnalyzedDay day;
         public readonly int bossIndex;
-        public LocalizedString ChallengeName => boss.CasualName;
+        public LString ChallengeName => boss.CasualName;
         public bool Enabled(SharedInstanceMetadata meta) => day.Enabled(meta);
         public bool Concluded(SharedInstanceMetadata meta) => phases.All(p => p.CompletedOne(meta));
         public bool FirstPhaseCompletedOne(SharedInstanceMetadata meta) => phases[0].CompletedOne(meta);

@@ -6,38 +6,9 @@ using LanguageExt.Parsec;
 using static LanguageExt.Prelude;
 using static LanguageExt.Parsec.Prim;
 using static LanguageExt.Parsec.Char;
-using static LanguageExt.Parsec.Expr;
-using static LanguageExt.Parsec.Token;
 
 namespace ParserCS {
 public static class Common {
-    public readonly struct Maybe<T> {
-        private readonly T value;
-        private readonly bool isValid;
-
-        public Maybe(T value) {
-            this.value = value;
-            this.isValid = true;
-        }
-
-        private Maybe(T value, bool valid) {
-            this.value = value;
-            this.isValid = valid;
-        }
-
-        public static implicit operator Maybe<T>(T obj) => new Maybe<T>(obj);
-        public static readonly Maybe<T> Null = new Maybe<T>(default!, false);
-
-        public bool Try(out T val) {
-            if (isValid) {
-                val = value;
-                return true;
-            } else {
-                val = default!;
-                return false;
-            }
-        }
-    }
     
     public const char OPEN_ARG = '(';
     public const char CLOSE_ARG = ')';

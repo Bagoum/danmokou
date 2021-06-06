@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using BagoumLib.Culture;
 using Danmokou.Core;
 using Danmokou.GameInstance;
 using Danmokou.Services;
@@ -25,7 +26,7 @@ public class XMLReplaySaveMenu : XMLMenu {
             var save = replay_save;
             MainScreen = new UIScreen(
                 new UINode(() => r.metadata.Record.AsDisplay(true, true, true)).With(small1Class),
-                new PassthroughNode(LocalizedString.Empty),
+                new PassthroughNode(LString.Empty),
                 replayName,
                 new FuncNode(() => {
                     r.metadata.Record.AssignName(replayName.DataWIP);

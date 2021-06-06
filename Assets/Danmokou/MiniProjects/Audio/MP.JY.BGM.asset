@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8c3d462728373fa4db771cd7986b7536, type: 3}
+  m_Name: MP.JY.BGM
+  m_EditorClassIdentifier: 
+  clip: {fileID: 8300000, guid: b670629eb61b2d94bb9929efa7232e4c, type: 3}
+  key: jy.bgm
+  trackPlayLocation: 
+  title: akatsuki
+  musicRoomDescription:
+    useReference: 1
+    reference: 
+    hardcoded:
+      en: 
+      jp: 
+  volume: 0.17
+  pitch: 1
+  stopOnPause: 0
+  loop: 1
+  loopSeconds: {x: 1.34, y: 296}
+  startWithTime: 0
+  musicRoomRequirement: 
+  showInMusicRoom: 1

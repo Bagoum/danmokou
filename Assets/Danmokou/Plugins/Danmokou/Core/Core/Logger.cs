@@ -23,12 +23,7 @@ public static class Log {
         var log = $"{LOGDIR}log_{d.Year}-{d.Month}-{d.Day}-{d.Hour}-{d.Minute}-{DateTime.Now.Second}.log";
         FileUtils.CheckDirectory(log);
         file = new StreamWriter(log);
-        listener = Logging.Logs.Subscribe(lm => {
-            if (lm.Exception != null)
-                UnityException(lm.Exception, lm.Message);
-            else
-                Unity(lm.Message, lm.ShowStackTrace ?? true, lm.Level);
-        });
+        listener = Logging.Logs.Subscribe(Unity);
     }
 
     public static void CloseLog() {
@@ -36,6 +31,13 @@ public static class Log {
         file = null;
         listener?.Dispose();
         listener = null;
+    }
+
+    public static void Unity(LogMessage lm) {
+        if (lm.Exception != null)
+            UnityException(lm.Exception, lm.Message);
+        else
+            Unity(lm.Message, lm.ShowStackTrace ?? true, lm.Level);
     }
 
     public static void Unity(string msg, bool stackTrace = true, LogLevel level = LogLevel.INFO) {

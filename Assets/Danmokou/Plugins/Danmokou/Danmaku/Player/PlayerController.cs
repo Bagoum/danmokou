@@ -236,7 +236,7 @@ public class PlayerController : BehaviorEntity {
     protected override void Awake() {
         base.Awake();
         localTeamCfg = new ActiveTeamConfig(new TeamConfig(0, defaultSubshot, defaultSupport, 
-            defaultPlayers.Zip(defaultShots).ToArray()));
+            defaultPlayers.Zip(defaultShots, (x, y) => (x, y)).ToArray()));
         Log.Unity($"Team awake", level: LogLevel.DEBUG1);
         hitbox.location = tr.position;
         hitbox.Player = this;
@@ -692,7 +692,7 @@ public class PlayerController : BehaviorEntity {
         for (int f = 0; !MaybeCancelState(cT) &&
             IsTryingWitchTime && GameManagement.Instance.TryUseMeterFrame(); ++f) {
             spawnedShip.MaybeDrawWitchTimeGhost(f);
-            MeterIsActive.Publish(GameManagement.Instance.EnoughMeterToUse ? meterDisplay : meterDisplayInner);
+            MeterIsActive.OnNext(GameManagement.Instance.EnoughMeterToUse ? meterDisplay : meterDisplayInner);
             float meterDisplayRatio = M.EOutSine(Mathf.Clamp01(f / 30f));
             meterPB.SetFloat(PropConsts.fillRatio, InstanceData.sVisibleMeter.Value * meterDisplayRatio);
             meter.SetPropertyBlock(meterPB);

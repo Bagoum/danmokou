@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using BagoumLib.Culture;
 using Danmokou.DMath;
 using UnityEngine;
 using KC = UnityEngine.KeyCode;
@@ -18,12 +19,12 @@ public enum InputTriggerMethod {
 
 public class InputChecker {
     private readonly Func<bool> checker;
-    public readonly LocalizedString keyDescr;
+    public readonly LString keyDescr;
     private readonly bool isController;
 
     public bool Active => (!isController || InputManager.AllowControllerInput) && checker();
 
-    public InputChecker(Func<bool> f, LocalizedString k, bool isController=false) {
+    public InputChecker(Func<bool> f, LString k, bool isController=false) {
         checker = f;
         keyDescr = k;
         this.isController = isController;
@@ -31,12 +32,12 @@ public class InputChecker {
     //Use this combiner when there are multiple keys that do the same thing
     public InputChecker Or(InputChecker other) => 
         new InputChecker(() => Active || other.Active, 
-            LocalizedString.Format(new LocalizedString("{0} or {1}", "{0}や{1}"), keyDescr, other.keyDescr));
+            LString.Format(new LString("{0} or {1}", (Locales.JP, "{0}や{1}")), keyDescr, other.keyDescr));
 }
 
 public interface IInputHandler {
     bool Active { get; }
-    LocalizedString Desc { get; }
+    LString Desc { get; }
     void Update();
 }
 public class InputHandler : IInputHandler {
@@ -50,7 +51,7 @@ public class InputHandler : IInputHandler {
                             true);
     private bool _active;
     public InputChecker checker;
-    public LocalizedString Desc => checker.keyDescr;
+    public LString Desc => checker.keyDescr;
 
     private InputHandler(InputTriggerMethod method, InputChecker check) {
         refractory = false;
@@ -77,7 +78,7 @@ public class InputHandler : IInputHandler {
 //Use this combiner when multiple keys combine to form one command (eg. ctrl+shift+R)
 public class AndInputHandler : IInputHandler {
     private readonly IInputHandler[] parts;
-    private readonly LocalizedString desc;
+    private readonly LString desc;
     public bool Active {
         get {
             for (int ii = 0; ii < parts.Length; ++ii) {
@@ -87,12 +88,12 @@ public class AndInputHandler : IInputHandler {
             return true;
         }
     }
-    public LocalizedString Desc => desc;
+    public LString Desc => desc;
 
 
     public AndInputHandler(params IInputHandler[] parts) {
         this.parts = parts;
-        this.desc = string.Join("+", parts.Select(p => p.Desc));
+        this.desc = new LString(string.Join("+", parts.Select(p => p.Desc)));
     }
     
     public void Update() {
@@ -130,13 +131,13 @@ public static class InputManager {
     private static InputChecker Key(KC key, bool controller = false) => Key(() => key, controller);
 
     private static InputChecker Key(Func<KC> key, bool controller) =>
-        new InputChecker(() => Input.GetKey(key()), new LocalizedString(key().ToString()), controller);
+        new InputChecker(() => Input.GetKey(key()), new LString(key().ToString()), controller);
 
     private static InputChecker AxisL0(string axis, bool controller = false) =>
-        new InputChecker(() => Input.GetAxisRaw(axis) < -0.1f, new LocalizedString(axis), controller);
+        new InputChecker(() => Input.GetAxisRaw(axis) < -0.1f, new LString(axis), controller);
 
     private static InputChecker AxisG0(string axis, bool controller = false) =>
-        new InputChecker(() => Input.GetAxisRaw(axis) > 0.1f, new LocalizedString(axis), controller);
+        new InputChecker(() => Input.GetAxisRaw(axis) > 0.1f, new LString(axis), controller);
 
     private static readonly InputChecker ArrowRight = Key(KeyCode.RightArrow);
     private static readonly InputChecker ArrowLeft = Key(KeyCode.LeftArrow);
@@ -156,7 +157,7 @@ public static class InputManager {
 
     public static readonly IInputHandler UIConfirm = InputHandler.Trigger(Key(KC.Z).Or(Key(cA, true)));
     public static readonly IInputHandler UIBack = InputHandler.Trigger(Key(KC.X).Or(Key(cB, true)));
-    private static readonly IInputHandler UISkipDialogue = InputHandler.Trigger(Key(KC.LeftControl));
+    private static readonly IInputHandler UISkipAllDialogue = InputHandler.Trigger(Key(KC.LeftControl));
 
     public static readonly IInputHandler Pause = InputHandler.Trigger(
 #if WEBGL
@@ -205,18 +206,18 @@ public static class InputManager {
     }
 
     public static FrameInput RecordFrame => new FrameInput(HorizontalSpeed, VerticalSpeed,
-        IsFiring, IsFocus, IsBomb, IsMeter, DialogueConfirm, DialogueToEnd, DialogueSkip);
+        IsFiring, IsFocus, IsBomb, IsMeter, DialogueConfirm, DialogueToEnd, DialogueSkipAll);
 
     public static bool DialogueConfirm => replay?.dialogueConfirm ?? UIConfirm.Active;
     public static bool DialogueToEnd => replay?.dialogueToEnd ?? UIBack.Active;
-    public static bool DialogueSkip => replay?.dialogueSkip ?? UISkipDialogue.Active;
+    public static bool DialogueSkipAll => replay?.dialogueSkip ?? UISkipAllDialogue.Active;
 
     private static FrameInput? replay = null;
     public static void ReplayFrame(FrameInput? fi) => replay = fi;
 
     private static readonly IInputHandler[] Updaters = {
         FocusHold, ShootHold, Bomb,
-        UIDown, UIUp, UILeft, UIRight, UIConfirm, UIBack, UISkipDialogue, Pause,
+        UIDown, UIUp, UILeft, UIRight, UIConfirm, UIBack, UISkipAllDialogue, Pause,
         Meter, Swap,
         ReplayDebugSave
     };

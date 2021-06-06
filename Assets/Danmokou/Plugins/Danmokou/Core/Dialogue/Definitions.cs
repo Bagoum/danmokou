@@ -1,4 +1,5 @@
 ﻿using System;
+using BagoumLib.Culture;
 using Danmokou.Core;
 using UnityEngine;
 
@@ -17,7 +18,7 @@ public interface IDialogueProfile {
     Sprite FindIcon(Emote e);
     (bool flip, DialogueSprite sprite) FindLeftStand(Emote e);
     (bool flip, DialogueSprite sprite) FindRightStand(Emote e);
-    LocalizedString DisplayName { get; }
+    LString DisplayName { get; }
     string? SpeakSFX { get; }
 }
 
@@ -31,7 +32,7 @@ public struct TranslateableDialogue {
 
 [Serializable]
 public struct TranslatedDialogue {
-    public Locale locale;
+    public string? locale;
     public TextAsset file;
 }
 

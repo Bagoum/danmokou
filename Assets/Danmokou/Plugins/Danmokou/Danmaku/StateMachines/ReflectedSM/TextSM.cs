@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using BagoumLib;
 using BagoumLib.Cancellation;
+using BagoumLib.Functional;
 using Danmokou.Core;
 using Danmokou.Danmaku;
 using Danmokou.Dialogue;
@@ -54,19 +55,19 @@ public static class TSMReflection {
     public static TTaskPattern FadeStandIn(string profile_key, float time) => FadeStand(profile_key, time, true);
     public static TTaskPattern FadeStandOut(string profile_key, float time) => FadeStand(profile_key, time, false);
 
-    private static readonly Func<Config<DialogueObject>, string, Helpers.Errorable<TextCommand<DialogueObject>[]>>
+    private static readonly Func<Config<DialogueObject>, string, Errorable<TextCommand<DialogueObject>[]>>
         parser = CreateCommandParser((key, arg) => {
             return key.ToLower() switch {
                 "w" => Parser.MaybeFloat(arg).Try(out var wait) ?
                     DialogueObject.Wait(wait) :
-                    Helpers.Errorable<DialogueObject>.Fail($"Couldn't parse waiting time {arg}"),
+                    Errorable<DialogueObject>.Fail($"Couldn't parse waiting time {arg}"),
                 "sfx" => DialogueObject.SFX(arg),
-                _ => Helpers.Errorable<DialogueObject>.Fail($"No dialogue command exists by key {key}")
+                _ => Errorable<DialogueObject>.Fail($"No dialogue command exists by key {key}")
             };
         });
     private static readonly DialogueObject RollSFX = DialogueObject.Event(Dialoguer.EventType.SPEAKER_SFX);
-    private static readonly Common.Maybe<DialogueObject> DONull = Common.Maybe<DialogueObject>.Null;
-    private static int DefaultCharsPerBlock => SaveData.s.Locale == Locale.JP ? 5 : 8;
+    private static readonly Maybe<DialogueObject> DONull = Maybe<DialogueObject>.None;
+    private static int DefaultCharsPerBlock => SaveData.s.Locale == Locales.JP ? 5 : 8;
 
     private static TTaskPattern _Text(string text, bool continued) {
         //method 1: sound on spaces (ie words)
@@ -77,7 +78,7 @@ public static class TSMReflection {
             charsPerBlock = DefaultCharsPerBlock,
             blockOps = 3,
             punctOps = p => p.Switch(0f, 3.0f, 4.0f, 5.0f, 7.0f),
-            blockEvent = RollSFX,
+            blockEvent = Maybe<DialogueObject>.Of(RollSFX),
             punctEvent = p => p.Switch(DONull, DONull, DONull, DONull, RollSFX)
         };
         var textCmds = parser(cfg, text).GetOrThrow;

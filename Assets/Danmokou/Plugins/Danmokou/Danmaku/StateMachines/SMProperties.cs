@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using BagoumLib;
+using BagoumLib.Culture;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.DMath.Functions;
@@ -133,7 +134,7 @@ public class PhaseProperty {
     /// <summary>
     /// Declare the type and name of this phase.
     /// </summary>
-    public static PhaseProperty Type(PhaseType type, LocalizedString name) => new PhaseTypeProp(type, name);
+    public static PhaseProperty Type(PhaseType type, LString name) => new PhaseTypeProp(type, name);
     /// <summary>
     /// Declare the amount of photos necessary to defeat the boss.
     /// <br/>Note: this works similarly enough to HP that you could
@@ -253,8 +254,8 @@ public class PhaseProperty {
     public class BossCutinFlag : PhaseProperty { }
     public class PhaseTypeProp : PhaseProperty {
         public readonly PhaseType type;
-        public readonly LocalizedString? name;
-        public PhaseTypeProp(PhaseType type, LocalizedString? name) {
+        public readonly LString? name;
+        public PhaseTypeProp(PhaseType type, LString? name) {
             this.type = type;
             this.name = name;
         }
@@ -390,7 +391,7 @@ public readonly struct SoftcullProperties {
 public class PhaseProperties {
     private readonly bool hideTimeout;
     public bool HideTimeout => hideTimeout || (!SaveData.Settings.TeleportAtPhaseStart && phaseType?.HideTimeout() == true);
-    public readonly LocalizedString? cardTitle;
+    public readonly LString? cardTitle;
     public readonly int? hp = null;
     public readonly int? photoHP = null;
     public int? BossPhotoHP => (Boss == null) ? null : photoHP;

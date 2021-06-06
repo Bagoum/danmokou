@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using BagoumLib.Culture;
 using Danmokou.Core;
 using JetBrains.Annotations;
 using UnityEngine;
@@ -21,7 +22,7 @@ public class ShipConfig : ScriptableObject {
     /// Eg. Mokou (padded to 8)
     /// </summary>
     public LocalizedStringReference shortTitle = null!;
-    public LocalizedString ShortTitle => shortTitle.Value;
+    public LString ShortTitle => shortTitle.Value;
     public GameObject prefab = null!;
     //public ShotConfig[] shots;
     public OrdinalShot[] shots2 = null!;

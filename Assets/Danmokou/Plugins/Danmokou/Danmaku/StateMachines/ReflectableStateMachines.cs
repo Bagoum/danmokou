@@ -42,7 +42,7 @@ public class EventLASM : ReflectableLASM {
     /// <param name="frames">Invulnerability frames (120 frames per second)</param>
     /// <returns></returns>
     public static Event PlayerInvuln(int frames) => smh => {
-        Player.PlayerController.RequestPlayerInvulnerable.Publish((frames, true));
+        Player.PlayerController.RequestPlayerInvulnerable.OnNext((frames, true));
         DependencyInjection.SFXService.Request("x-invuln");
         return Task.CompletedTask;
     };

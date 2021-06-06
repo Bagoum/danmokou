@@ -166,7 +166,7 @@ public class InstanceRequest {
             record ??= MakeGameRecord();
             GameManagement.DeactivateInstance(); //Also stops the replay
             TrySave(record);
-            InstanceCompleted.Publish((d, record));
+            InstanceCompleted.OnNext((d, record));
             return true;
         } else {
             if (record != null && Saveable) {
@@ -191,7 +191,7 @@ public class InstanceRequest {
         Cancel();
         RNG.Seed(seed);
         replay?.metadata.ApplySettings();
-        InstancedRequested.Publish(this);
+        InstancedRequested.OnNext(this);
             
         return lowerRequest.Resolve(
             SelectCampaign,
@@ -245,7 +245,7 @@ public class InstanceRequest {
                     () => DependencyInjection.Find<LevelController>()
                         .Request(new LevelController.LevelRunRequest(1, tracker.Guard(() => {
                                 if (ExecuteStage(index + 1))
-                                    StageCompleted.Publish((c.campaign.Key, index));
+                                    StageCompleted.OnNext((c.campaign.Key, index));
                             }),
                         LevelController.LevelRunMethod.CONTINUE, s.stage))));
             } else return ExecuteEndcard();

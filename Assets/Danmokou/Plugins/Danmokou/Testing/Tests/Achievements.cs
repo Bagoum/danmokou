@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using BagoumLib.Culture;
 using Danmokou.Achievements;
 using Danmokou.Core;
 using NUnit.Framework;
@@ -124,7 +125,7 @@ public static class Achievements {
             () => new AndReq(reqs.Select(r => r()).ToArray());
 
         private Achievement M(string key, Func<Requirement> req) =>
-            new Achievement(key, LocalizedString.Empty, LocalizedString.Empty, req, this);
+            new Achievement(key, LString.Empty, LString.Empty, req, this);
 
         public override IEnumerable<Achievement> MakeAchievements() {
             var lbyhits = M("lbyhits-1_dmg300",

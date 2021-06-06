@@ -2,6 +2,7 @@
 using System.Linq;
 using BagoumLib;
 using BagoumLib.Cancellation;
+using BagoumLib.Culture;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.GameInstance;
@@ -101,7 +102,7 @@ public class DifficultySettings {
 
     public static float DifficultyForSlider(int slider) => Mathf.Pow(2, (slider - 12f) / 12f);
 
-    public static LocalizedString FancifySlider(int slider) {
+    public static LString FancifySlider(int slider) {
         float d = DifficultyForSlider(slider);
         //requires ordering on VisibleDifficulties
         var fds = GameManagement.VisibleDifficulties.OrderBy(fd => fd.Value()).ToArray();

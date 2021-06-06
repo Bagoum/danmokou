@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using BagoumLib;
 using BagoumLib.Cancellation;
+using BagoumLib.Culture;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Danmaku;
@@ -174,32 +175,32 @@ public class XMLMainMenuCampaign : XMLMainMenu {
                 ShowShot(playerSelect.Value, shotSelect.Value, subshotSelect.Value, supportSelect.Value, first);
             }
             
-            playerSelect = new OptionNodeLR<ShipConfig>(LocalizedString.Empty, _ => _ShowShot(),
+            playerSelect = new OptionNodeLR<ShipConfig>(LString.Empty, _ => _ShowShot(),
                 c.campaign.players.Select(p => (p.ShortTitle, p)).ToArray(), c.campaign.players[0]);
 
-            supportSelect = new DynamicOptionNodeLR<ISupportAbilityConfig>(LocalizedString.Empty, _ => _ShowShot(),
+            supportSelect = new DynamicOptionNodeLR<ISupportAbilityConfig>(LString.Empty, _ => _ShowShot(),
                 () => playerSelect.Value.supports.Select(s => 
                     (shotsel_type(s.ordinal), (ISupportAbilityConfig)s.ability)).ToArray(), 
                 playerSelect.Value.supports[0].ability);
-            shotSelect = new DynamicOptionNodeLR<ShotConfig>(LocalizedString.Empty, _ => _ShowShot(), () =>
+            shotSelect = new DynamicOptionNodeLR<ShotConfig>(LString.Empty, _ => _ShowShot(), () =>
                     playerSelect.Value.shots2.Select(s => (s.shot.isMultiShot ? 
                             shotsel_multi(s.ordinal) : 
                             shotsel_type(s.ordinal), s.shot)).ToArray(),
                 playerSelect.Value.shots2[0].shot);
-            subshotSelect = new OptionNodeLR<Subshot>(LocalizedString.Empty, _ => _ShowShot(),
+            subshotSelect = new OptionNodeLR<Subshot>(LString.Empty, _ => _ShowShot(),
                 EnumHelpers2.Subshots.Select(x => (shotsel_variant_ls(x.Describe()), x)).ToArray(), Subshot.TYPE_D);
             return new UIScreen(
                     new PassthroughNode(shotsel_player).With(centerTextClass),
                     playerSelect.With(optionNoKeyClass),
-                    new PassthroughNode(LocalizedString.Empty),
+                    new PassthroughNode(LString.Empty),
                     new PassthroughNode(shotsel_shot).With(centerTextClass),
                     shotSelect.With(optionNoKeyClass),
                     subshotSelect.With(optionNoKeyClass)
                         .VisibleIf(() => shotSelect.Value.isMultiShot),
-                    new PassthroughNode(LocalizedString.Empty),
+                    new PassthroughNode(LString.Empty),
                     new PassthroughNode(shotsel_support).With(centerTextClass),
                     supportSelect.With(optionNoKeyClass),
-                    new PassthroughNode(LocalizedString.Empty),
+                    new PassthroughNode(LString.Empty),
                     new FuncNode(() => shotCont(new TeamConfig(0, subshotSelect.Value, supportSelect.Value,
                         (playerSelect.Value, shotSelect.Value))), play_game, false).With(centerTextClass)
                     //new UINode(() => shotSelect.Value.title).SetAlwaysVisible().FixDepth(1),
@@ -293,12 +294,12 @@ public class XMLMainMenuCampaign : XMLMainMenu {
                 AchievementsScreenV, AchievementsNodeV, GameManagement.Achievements);
         MainScreen = new UIScreen(
             new TransferNode(PlaymodeScreen, main_gamestart).With(large1Class),
-            new OptionNodeLR<Locale>(main_lang, l => {
+            new OptionNodeLR<string?>(main_lang, l => {
                     SaveData.UpdateLocale(l);
                     SaveData.AssignSettingsChanges();
                 }, new[] {
-                    (new LocalizedString("English"), Locale.EN),
-                    (new LocalizedString("日本語"), Locale.JP)
+                    (new LString("English"), Locales.EN),
+                    (new LString("日本語"), Locales.JP)
                 }, SaveData.s.Locale)
                 .With(large1Class),
             new TransferNode(HighScoreScreen, main_scores)

@@ -7,12 +7,17 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="LanguageExt.Core" Version="3.4.15" />
       <PackageReference Include="System.Collections.Immutable" Version="5.0.0" />
     </ItemGroup>
 
     <ItemGroup>
-      <Reference Include="LanguageExt.Parsec, Version=3.0.0.0, Culture=neutral, PublicKeyToken=null" Condition="'$(TargetFramework)' == 'net472'">
+      <Reference Include="BagoumLib, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
+        <HintPath>..\..\..\..\Suzunoya\BagoumLib\bin\Release\net472\BagoumLib.dll</HintPath>
+      </Reference>
+      <Reference Include="LanguageExt.CoreReduced, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
+        <HintPath>..\..\..\..\ref\language-ext\LanguageExt.CoreReduced\bin\Release\net472\LanguageExt.CoreReduced.dll</HintPath>
+      </Reference>
+      <Reference Include="LanguageExt.Parsec, Version=3.0.0.0, Culture=neutral, PublicKeyToken=null">
         <HintPath>..\..\..\..\ref\language-ext\LanguageExt.Parsec\bin\Release\net472\LanguageExt.Parsec.dll</HintPath>
       </Reference>
     </ItemGroup>

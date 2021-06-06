@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using BagoumLib;
+using BagoumLib.Culture;
 using Danmokou.Core;
 using Danmokou.Scriptables;
 using Danmokou.Services;
@@ -87,9 +88,9 @@ public class XMLPauseMenu : PausedGameplayMenu {
                 SaveData.s.BGMVolume = v;
                 AudioTrackService.ReassignExistingBGMVolumeIfNotFading();
             }, 21.Range().Select(x =>
-                (new LocalizedString($"{x * 10}"), x / 10f)).ToArray(), SaveData.s.BGMVolume),
+                (new LString($"{x * 10}"), x / 10f)).ToArray(), SaveData.s.BGMVolume),
             new OptionNodeLR<float>(sfx_volume, v => { SaveData.s.SEVolume = v; }, 21.Range().Select(x =>
-                (new LocalizedString($"{x * 10}"), x / 10f)).ToArray(), SaveData.s.BGMVolume),
+                (new LString($"{x * 10}"), x / 10f)).ToArray(), SaveData.s.BGMVolume),
             new OptionNodeLR<bool>(hitbox, b => SaveData.s.UnfocusedHitbox = b, new[] {
                     (hitbox_always, true),
                     (hitbox_focus, false)
@@ -102,7 +103,7 @@ public class XMLPauseMenu : PausedGameplayMenu {
         }.FilterNone();
     }
 
-    private static (LocalizedString, bool)[] OnOffOption => new[] {
+    private static (LString, bool)[] OnOffOption => new[] {
         (generic_on, true),
         (generic_off, false)
     };
@@ -115,7 +116,7 @@ public class XMLPauseMenu : PausedGameplayMenu {
         MainScreen = new UIScreen(
             GetOptions(false).Select(x => x.With(small1Class)).Concat(
                 new[] {
-                    new PassthroughNode(LocalizedString.Empty),
+                    new PassthroughNode(LString.Empty),
                     unpause,
                     new ConfirmFuncNode(GameManagement.Restart, restart, true)
                         .EnabledIf(() => GameManagement.CanRestart)

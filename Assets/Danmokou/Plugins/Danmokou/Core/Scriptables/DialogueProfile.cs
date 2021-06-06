@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using BagoumLib.Culture;
 using Danmokou.Core;
 using Danmokou.Dialogue;
 using JetBrains.Annotations;
@@ -114,7 +115,7 @@ public class DialogueProfile : ScriptableObject, IDialogueProfile {
     public string key = null!;
     public string? speakSFX;
 
-    public LocalizedString DisplayName => displayName.Value;
+    public LString DisplayName => displayName.Value;
     public string? SpeakSFX => speakSFX;
 
     private static Sprite Cascade(string err, params Sprite?[] options) {

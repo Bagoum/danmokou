@@ -1,7 +1,9 @@
 {
     "name": "Danmokou.Core",
     "rootNamespace": "",
-    "references": [],
+    "references": [
+        "GUID:110987f460e1c2d45900207366219f0f"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": true,

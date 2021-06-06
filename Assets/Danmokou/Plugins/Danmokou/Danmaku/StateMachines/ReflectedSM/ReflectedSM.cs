@@ -21,6 +21,7 @@ using Danmokou.Player;
 using Danmokou.Reflection;
 using Danmokou.Services;
 using Danmokou.UI;
+using Danmokou.VN;
 using JetBrains.Annotations;
 using UnityEngine;
 using static Danmokou.DMath.Functions.BPYRepo;
@@ -101,7 +102,7 @@ if (> t &fadein,
         anim.AssignRatios(t1r?.Invoke(smh.GCX), t2r?.Invoke(smh.GCX));
         anim.Initialize(smh.cT, t);
         var controlToken = PlayerController.AllControlDisabler.CreateToken1(MultiOp.Priority.CLEAR_PHASE);
-        PlayerController.RequestPlayerInvulnerable.Publish(((int)(t * 120), false));
+        PlayerController.RequestPlayerInvulnerable.OnNext(((int)(t * 120), false));
         return WaitingUtils.WaitFor(smh, t, false).ContinueWithSync(() => controlToken.TryRevoke());
     };
 
@@ -246,6 +247,12 @@ if (> t &fadein,
     #region Executors
 
     /// <summary>
+    /// Run the visual novel scene attached to the executing BEH.
+    /// </summary>
+    public static TaskPattern ExecuteVN() => smh => 
+        smh.Exec.GetComponent<VNScriptExecutor>().GetScript().RunScript(smh.cT);
+
+    /// <summary>
     /// Asynchronous bullet pattern fire.
     /// </summary>
     public static TaskPattern Async(string style, GCXF<V2RV2> rv2, AsyncPattern ap) => smh => {
@@ -293,7 +300,7 @@ if (> t &fadein,
             bool done = false;
             var jsmh = smh.CreateJointCancellee(out var dialogueCT);
             smh.RunRIEnumerator(WaitingUtils.WaitWhileWithCancellable(() => done, dialogueCT,
-                () => InputManager.DialogueSkip, smh.cT, () => { }));
+                () => InputManager.DialogueSkipAll, smh.cT, () => { }));
             await sm.Start(jsmh).ContinueWithSync(() => {
                 done = true;
             });

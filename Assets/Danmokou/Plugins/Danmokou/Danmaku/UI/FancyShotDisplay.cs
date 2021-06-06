@@ -24,7 +24,7 @@ public class FancyShotDisplay : FancyDisplay {
         var ss = s.GetSubshot(sub);
         ShowStars(difficultyStars, ShotRatingToInt(ss.shotDifficulty), p.uiColor);
         shotParams.text = ss.type;
-        shotTitle.text = s.isMultiShot ? $"{LocalizedStrings.UI.shotsel_multi_prefix}{ss.Title}" : ss.Title.ValueOrEn;
+        shotTitle.text = s.isMultiShot ? $"{LocalizedStrings.UI.shotsel_multi_prefix}{ss.Title}" : ss.Title.Value;
         shotDescription.text = ss.description;
     }
 

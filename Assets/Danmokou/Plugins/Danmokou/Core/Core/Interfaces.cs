@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using BagoumLib.Culture;
+using UnityEngine;
 
 namespace Danmokou.Core {
 
@@ -26,7 +27,7 @@ public interface IAudioTrackInfo {
     /// </summary>
     bool? DisplayInMusicRoom { get; }
     
-    LocalizedString MusicRoomDescription { get; }
+    LString MusicRoomDescription { get; }
     
 }
 }
