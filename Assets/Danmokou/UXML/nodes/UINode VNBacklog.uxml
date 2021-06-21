@@ -1,0 +1,11 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="UINode.uss" />
+    <ui:VisualElement name="Borderer" class="node vnbacklog" style="border-top-color: rgb(183, 34, 34); border-top-width: 12px; border-left-width: 12px; border-left-color: rgb(132, 31, 31); margin-top: 0; margin-bottom: 0;">
+        <ui:VisualElement name="Selector" class="pointer prefix" />
+        <ui:VisualElement name="Speaker" class="prefix" style="opacity: 1; width: 250px; height: 250px; max-height: 100%; min-height: 250px;" />
+        <ui:VisualElement style="flex-grow: 1; margin-bottom: 30px;">
+            <ui:Label text="&lt;smallcaps&gt;Name Goes Here&lt;/smallcaps&gt;" focusable="true" name="Label" class="text coretext" style="padding-left: 0; padding-right: 0; white-space: normal; font-size: 75px; -unity-font: url(&apos;/Assets/SZYU/Fonts/LinBiolinum_R_G.ttf&apos;); flex-grow: 0;" />
+            <ui:Label text="This line should wrap when it gets to the end, replicating the behavior of tTMP." focusable="true" name="Description" class="text coretext" style="-unity-text-align: upper-left; font-size: 54px; padding-left: 0; padding-right: 0; -unity-font: url(&apos;/Assets/SZYU/Fonts/LinBiolinum_R_G.ttf&apos;); white-space: normal;" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

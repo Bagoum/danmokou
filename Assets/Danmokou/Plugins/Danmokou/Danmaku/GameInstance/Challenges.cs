@@ -17,8 +17,6 @@ using Danmokou.Services;
 using JetBrains.Annotations;
 using Danmokou.SM;
 using Danmokou.UI;
-using InstanceLowRequest = Danmokou.Core.DU<Danmokou.GameInstance.CampaignRequest, Danmokou.GameInstance.BossPracticeRequest, 
-    Danmokou.GameInstance.PhaseChallengeRequest, Danmokou.GameInstance.StagePracticeRequest>;
 
 
 namespace Danmokou.GameInstance {
@@ -81,9 +79,9 @@ public readonly struct SceneChallengeReqest : IChallengeRequest {
         var record = Requester.MakeGameRecord(ctx.cm.ChallengePhotos.ToArray());
         Requester.TrySave(record);
 
-        if (Requester.replay == null && cr.NextChallenge(Requester.metadata).Try(out var nextC)) {
+        if (!(Requester.replay is ReplayMode.Replaying) && cr.NextChallenge(Requester.metadata).Try(out var nextC)) {
             Log.Unity($"Autoproceeding to next challenge: {nextC.Description}");
-            var nextGr = new InstanceRequest(Requester.cb, Requester.metadata, new InstanceLowRequest(nextC), null);
+            var nextGr = new InstanceRequest(Requester.cb, Requester.metadata, nextC);
             nextGr.SetupInstance();
             GameManagement.Instance.Replay?.Cancel(); //can't replay both scenes together,
             //or even just the second scene due to time-dependency of world objects such as shots
@@ -115,7 +113,7 @@ public readonly struct SceneChallengeReqest : IChallengeRequest {
 
 }
 
-public readonly struct PhaseChallengeRequest {
+public class PhaseChallengeRequest : ILowInstanceRequest {
     public DayCampaignConfig Campaign => phase.boss.day.campaign.campaign;
     public DayConfig Day => phase.boss.day.day;
     public BossConfig Boss => phase.boss.boss;
@@ -125,11 +123,10 @@ public readonly struct PhaseChallengeRequest {
     public LString Description => challenge.Description(Boss);
 
     public PhaseChallengeRequest? NextChallenge(SharedInstanceMetadata d) {
-        if (challenge is Challenge.DialogueC dc && dc.point == Challenge.DialogueC.DialoguePoint.INTRO) {
+        if (challenge is Challenge.DialogueC {point: Challenge.DialogueC.DialoguePoint.INTRO}) {
             if (phase.Next?.CompletedOne(d) == false) return new PhaseChallengeRequest(phase.Next);
-        } else if (phase.Next?.challenges.Try(0) is Challenge.DialogueC dce &&
-                   dce.point == Challenge.DialogueC.DialoguePoint.CONCLUSION && phase.Next?.Enabled(d) == true
-                   && phase.Next?.CompletedOne(d) == false) {
+        } else if (phase.Next?.challenges.Try(0) is Challenge.DialogueC {point: Challenge.DialogueC.DialoguePoint.CONCLUSION} 
+                   && phase.Next?.Enabled(d) == true && phase.Next?.CompletedOne(d) == false) {
             return new PhaseChallengeRequest(phase.Next);
         }
         return null;
@@ -145,12 +142,14 @@ public readonly struct PhaseChallengeRequest {
         challenge = c;
     }
 
-    public ((((string, int), string), int), int) Key => (phase.Key, ChallengeIdx);
-
-    public static PhaseChallengeRequest Reconstruct(((((string, int), string), int), int) key) {
-        var phase = SMAnalysis.DayPhase.Reconstruct(key.Item1);
-        return new PhaseChallengeRequest(phase, phase.challenges[key.Item2]);
-    }
+    public ILowInstanceRequestKey Key => new PhaseChallengeRequestKey() {
+        Campaign = Campaign.key,
+        Boss = Boss.key,
+        PhaseIndex = phase.phase.index
+    };
+    public InstanceMode Mode => InstanceMode.SCENE_CHALLENGE;
+    public bool Replayable => true;
+    public string CampaignKey => Campaign.key;
 }
 
 [Reflect]

@@ -288,7 +288,7 @@ public class PlayerController : BehaviorEntity {
 
     public void SetSubshot(Subshot nsubshot) => UpdateTeam((int?) null, nsubshot);
     
-    public void UpdateTeam(int? playerIndex = null, Subshot? nsubshot = null) {
+    public void UpdateTeam(int? playerIndex = null, Subshot? nsubshot = null, bool force=false) {
         bool didUpdate = false;
         if (playerIndex.Try(out var pind) && Team.SelectedIndex != pind) {
             Team.SelectedIndex = pind;
@@ -302,14 +302,14 @@ public class PlayerController : BehaviorEntity {
             Team.Subshot = s;
             didUpdate = true;
         }
-        if (didUpdate) {
+        if (didUpdate || force) {
             _UpdateTeam();
             InstanceData.TeamUpdated.Proc();
         }
     }
-    public void UpdateTeam((ShipConfig, ShotConfig)? nplayer = null, Subshot? nsubshot = null) {
+    public void UpdateTeam((ShipConfig, ShotConfig)? nplayer = null, Subshot? nsubshot = null, bool force=false) {
         int? pind = nplayer.Try(out var p) ? (int?)Team.Ships.IndexOf(x => x == p) : null;
-        UpdateTeam(pind, nsubshot);
+        UpdateTeam(pind, nsubshot, force);
     }
     private void _UpdateTeam() {
         if (Team.Ship != ship) {

@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Threading.Tasks;
+using BagoumLib;
 using BagoumLib.DataStructures;
 using Danmokou.DMath;
 using JetBrains.Annotations;
@@ -24,10 +26,6 @@ public static class EngineStateHelpers {
         EngineState.MENU_PAUSE => 0f,
         _ => 1f,
     };
-}
-
-public interface IUnpauseAnimateProvider {
-    void UnpauseAnimator(Action done);
 }
 
 public static class EngineStateManager {

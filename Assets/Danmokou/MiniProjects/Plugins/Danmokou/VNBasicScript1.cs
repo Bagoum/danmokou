@@ -11,12 +11,9 @@ using Vector3 = System.Numerics.Vector3;
 
 namespace MiniProjects.VN {
 //C# class containing the task code
-public class _VNBasicScript1 : VNBaseScript {
-    protected override async Task _RunScript(UnityVNState vn) {
+public class _VNBasicScript1 {
+    public async Task VNBaseScript1(DMKVNState vn) {
         //
-        vn.ForceSkip += 1;
-        vn.ForceSkip -= 1;
-        
         var rg = (UnityRenderGroup) vn.DefaultRenderGroup;
         var rg2 = new UnityRenderGroup(vn, "rg2", 4, false);
 
@@ -70,10 +67,5 @@ public class _VNBasicScript1 : VNBaseScript {
         rg.ZoomTarget.Value = new Vector3(3f, 0f, 0f);
         await rg.ZoomTo(0.4f, 2);
     }
-}
-
-//Trivial MonoBeh wrapper that links to the C# class
-public class VNBasicScript1 : VNScriptExecutor {
-    public override VNBaseScript GetScript() => new _VNBasicScript1();
 }
 }

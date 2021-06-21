@@ -2,7 +2,7 @@ pattern({ })
 <!> type non `3D`
 <!> roott(1, 0, 1)
 phase(0)
-	action(block, 0)
+	paction(0)
 		sync lcircle-*/b <> gsr {
 			times(22)
 			bindItr(n)

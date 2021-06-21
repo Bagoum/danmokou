@@ -2,7 +2,7 @@ pattern({ })
 <!> type non `Squidward Dance`
 <!> roott(1, 0, 3)
 phase(0)
-	action(block, 0)
+	paction(0)
 		sync(laser-teal/w, <1;:270>, gsrepeat({
 				times(6)
 				rv2incr(<24>)

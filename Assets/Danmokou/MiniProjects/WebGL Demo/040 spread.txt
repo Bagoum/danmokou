@@ -2,7 +2,7 @@ pattern({ })
 <!> type non `Spread`
 <!> roott(1, 0, 0.5)
 phase(0)
-	action(block, 0)
+	paction(0)
 		async(arrow-*/w, <90>, 
 			girepeat({
 				wait(70)

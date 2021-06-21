@@ -2,7 +2,7 @@ pattern({ })
 <!> type non `Dynamic Lasers`
 <!> roott(1, 0, 0)
 phase(0)
-	action(block, 0)
+	paction(0)
 		position(0, 0)
 		sync arrowlaser-blueteal <> gsrepeat {
 			times(6)

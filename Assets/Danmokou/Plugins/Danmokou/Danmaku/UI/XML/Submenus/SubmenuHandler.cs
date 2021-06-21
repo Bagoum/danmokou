@@ -21,7 +21,7 @@ public abstract class IndexedSubmenuHandler : SubmenuHandler {
         Menu = menu;
         HideOnExit();
         var opt = new OptionNodeLR<int>(LString.Empty, SetIndex, NumOptions.Range().ToArray(), DefaultOption);
-        return new UIScreen(opt
+        return new UIScreen(menu, opt
                 .With(hideClass)
                 .SetUpOverride(() => opt.Left())
                 .SetDownOverride(() => opt.Right())

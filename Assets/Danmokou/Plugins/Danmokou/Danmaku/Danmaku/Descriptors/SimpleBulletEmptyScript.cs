@@ -102,7 +102,6 @@ public class SimpleBulletEmptyScript : MonoBehaviour {
 
         public void SetOnMaterial(Material material) {
             if (displaceTex != null && displaceMask != null) {
-                material.EnableKeyword("FT_DISPLACE");
                 material.SetTexture(PropConsts.DisplaceTex, displaceTex);
                 material.SetTexture(PropConsts.DisplaceMask, displaceMask);
                 material.SetFloat(PropConsts.DisplaceMag, displaceMagnitude);
@@ -114,7 +113,9 @@ public class SimpleBulletEmptyScript : MonoBehaviour {
                     material.EnableKeyword("FT_DISPLACE_POLAR");
                 } else if (displaceMethod == DisplacementMethod.BIVERTICAL) {
                     material.EnableKeyword("FT_DISPLACE_BIVERT");
-                }
+                } else
+                    material.EnableKeyword("FT_DISPLACE");
+                    
             }
         }
     }

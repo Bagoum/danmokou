@@ -1,9 +1,9 @@
 pattern { 
-	boss simp.kasen
+	##boss simp.kasen
 }
 phase 0
 	paction 0
-		shift-phase-to 3
+		shift-phase-to 4
 		
 !!{ colors { black blue purple pink red orange yellow green teal black  }
 !!{ csuff { /w /b /  }
@@ -63,7 +63,7 @@ phase 0 #{
 		sync sakura-* <-6;-4.4:> gsr2 3 <0.5;:> color { */  */w */b }  gsr2 9 <;-0.3:> color $colors s null
 		async fireball-* <-6.1;0.5:> gir2 15 3 <0.6;:> color { */ */w */b }  gcr2 10 9 <;-0.5:> color $colors s null
 		##sync fireball-ppr <-7.3;-5:> s tprot zero
-		async gglcircle-* <-4.4;0.7:> gir2 15 3 <0.6;:> color { */  */w */b }  gcr2 10 9 <;-0.6:> color $colors s tprot zero
+		async glcircle-* <-4.4;0.7:> gir2 15 3 <0.6;:> color { */  */w */b }  gcr2 10 9 <;-0.6:> color $colors s tprot zero
 		sync scircle-* <-2.3;0.4:> gsr2 2 <1.4;:> color { */w */b }  gsr2 9 <;-0.85:> {
 			bank <>
 			color $colors
@@ -76,7 +76,7 @@ phase 0 #{
 phase 0 #{
 	paction 0 
 		position 0 0
-		sync gdlaser2c-*;*/w <> gsr2 3 <12> {
+		sync gdlaser2c-*;*/w <> gsr2 0 <12> {
 			color { blue red purple  }
 		} gsr2c 9 {
 			color $colors
@@ -84,8 +84,7 @@ phase 0 #{
 			#tint rgba(1.1, 1.1, 1.1, 1)
 			hueshift(60 * max(0, t - 3))
 		}
-///
-		sync laser-** <;:3> gsr2 9 <40> { color $colors } gsr2  3 <14> { color $csuff1  } laser null 4 20 { 
+		sync gdlaser-** <;:3> gsr2 9 <40> { color $colors } gsr2  3 <14> { color $csuff1  } laser null 4 20 { 
 		##	dynamic(roffset(rx(1 + t, 10 * &lt)))
 		}
 		sync gstretchlaser-** <;:7> gsr2 9 <40> { color $colors } gsr2  3 <14> { color $csuff1  } laser null 4 20 { 

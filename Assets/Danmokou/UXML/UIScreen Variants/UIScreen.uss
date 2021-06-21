@@ -136,3 +136,38 @@
     padding-right: 0;
     margin-top: 40px;
 }
+
+.unity-scroller {
+    width: 32px;
+}
+
+.unity-slider {
+    margin-bottom: 0;
+    margin-top: 0;
+    width: 100%;
+}
+
+.unity-base-slider__tracker {
+    width: 100%;
+}
+
+.unity-base-slider__dragger {
+    width: 100%;
+    background-color: rgb(153, 153, 153);
+}
+
+.unity-base-slider__dragger:hover {
+    background-color: rgb(187, 187, 187);
+}
+
+.unity-base-slider__dragger:active {
+    background-color: rgb(238, 238, 238);
+}
+
+.unity-scroller__high-button {
+    display: none;
+}
+
+.unity-scroller__low-button {
+    display: none;
+}

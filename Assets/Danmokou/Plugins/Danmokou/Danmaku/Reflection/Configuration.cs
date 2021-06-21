@@ -89,7 +89,7 @@ public static partial class Reflector {
             bool addNormal = true;
             foreach (var attr in attrs) {
                 if (attr is AliasAttribute aa) 
-                    AddMI(aa.alias.ToLower(), mi);
+                    AddMI(aa.alias, mi);
                 else if (attr is GAliasAttribute ga) {
                     var gmi = mi.MakeGenericMethod(ga.type);
                     AddMI(ga.alias, gmi);

@@ -35,7 +35,7 @@ public static class DependencyInjection {
     /// <br/>Note: It's preferable to use RegularUpdater.RegisterDI instead, as that
     /// handles service deletion.
     /// </summary>
-    public static IDeletionMarker Register<T>(T provider) where T : class {
+    public static IDeletionMarker _Register<T>(T provider) where T : class {
         if (!services.TryGetValue(typeof(T), out var s)) {
             s = services[typeof(T)] = new Service<T>(false);
         }

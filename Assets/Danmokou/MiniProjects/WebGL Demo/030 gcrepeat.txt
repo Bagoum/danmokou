@@ -2,7 +2,7 @@ pattern({ })
 <!> type(non, `Asynchronous Repeat`)
 <!> roott(1, 0, 0)
 phase(0)
-	action(block, 0)
+	paction(0)
 		async(lellipse-*, <>, 
 			gcrepeat({
 				wait(70)

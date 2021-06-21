@@ -52,8 +52,10 @@ public class SFXService : RegularUpdater, ISFXService {
     public void Setup() {
         src = GetComponent<AudioSource>();
         dclips.Clear();
-        for (int ii = 0; ii < SFX.Length; ++ii) {
-            dclips[SFX[ii].defaultName] = SFX[ii];
+        foreach (var configs in GameManagement.References.SFX.Select(x => x.sfxs).Prepend(SFX)) {
+            for (int ii = 0; ii < configs.Length; ++ii) {
+                dclips[configs[ii].defaultName] = configs[ii];
+            }
         }
     }
 
@@ -66,10 +68,12 @@ public class SFXService : RegularUpdater, ISFXService {
         Listen(InstanceData.MeterNowUsable, () => Request(meterUsable));
         Listen(InstanceData.AnyExtendAcquired, () => Request(lifeExtend));
         Listen(InstanceData.PhaseCompleted, pc => {
-            if (pc.Captured.Try(out var captured)) {
-                Request(captured ? phaseEndSuccess : phaseEndFail);
-            } else if (pc.props.phaseType == PhaseType.STAGE && pc.props.Cleanup) {
-                Request(stageSectionEnd);
+            if (pc.props.endSound) {
+                if (pc.Captured.Try(out var captured)) {
+                    Request(captured ? phaseEndSuccess : phaseEndFail);
+                } else if (pc.props.phaseType == PhaseType.STAGE && pc.props.Cleanup) {
+                    Request(stageSectionEnd);
+                }
             }
         });
         Listen(InstanceData.PowerFull, () => Request(powerFull));
@@ -175,15 +179,24 @@ public class SFXService : RegularUpdater, ISFXService {
     private static readonly List<LoopingSourceInfo> loopTimeoutsArr = new List<LoopingSourceInfo>();
 
     
-    public void Request(string? style) {
+    public void Request(string? style, SFXType type) {
         if (string.IsNullOrWhiteSpace(style) || style == "_" || style == null) return;
         if (timeouts.ContainsKey(style)) return;
         if (dclips.ContainsKey(style)) {
-            Request(dclips[style]);
+            Request(dclips[style], type);
         } else throw new Exception($"No SFX exists by name {style}");
     }
 
-    public void Request(SFXConfig? aci) {
+    public void Request(string? style) => Request(style, SFXType.Default);
+
+    public AudioSource? RequestSource(string? style) {
+        if (string.IsNullOrWhiteSpace(style) || style == "_" || style == null) return null;
+        if (dclips.ContainsKey(style)) {
+            return RequestSource(dclips[style]);
+        } else throw new Exception($"No SFX exists by name {style}");
+    }
+
+    public void Request(SFXConfig? aci, SFXType type = SFXType.Default) {
         if (aci == null) return;
         if (aci.loop) {
             RequestLoop(aci);
@@ -193,7 +206,10 @@ public class SFXService : RegularUpdater, ISFXService {
         if (aci.Timeout > 0f) timeouts[aci.defaultName] = aci.Timeout;
 
         if (aci.RequiresHandling) RequestSource(aci);
-        else src.PlayOneShot(aci.clip, aci.volume * SaveData.s.SEVolume);
+        else src.PlayOneShot(aci.clip, aci.volume * SaveData.s.SEVolume * type switch {
+            SFXType.TypingSound => SaveData.s.TypingSoundVolume,
+            _ => 1f
+        });
     }
 
     /// <summary>

@@ -15,11 +15,14 @@ using static Danmokou.Core.LocalizedStrings.UI;
 using static Danmokou.Core.LocalizedStrings.Generic;
 
 namespace Danmokou.UI.XML {
+public interface IPauseMenu {
+    void Open();
+}
 /// <summary>
 /// Class to manage the main menu UI.
 /// </summary>
 [Preserve]
-public class XMLPauseMenu : PausedGameplayMenu {
+public class XMLPauseMenu : PausedGameplayMenu, IPauseMenu {
 
     public static IEnumerable<UINode> GetOptions(bool staticOptions) {
         return new UINode[] {
@@ -73,33 +76,32 @@ public class XMLPauseMenu : PausedGameplayMenu {
                     ("x2", 2f)
                 },
                 SaveData.s.Screenshake),
-            new OptionNodeLR<bool>(controller, SaveData.UpdateAllowController, OnOffOption,
-                SaveData.s.AllowControllerInput),
-            staticOptions ?
-                new OptionNodeLR<float>(dialogue_speed, b => SaveData.s.DialogueWaitMultiplier = b, new[] {
-                    ("x2", 0.5f),
-                    ("x1.5", .67f),
-                    ("x1", 1f),
-                    ("x0.7", 1.4f),
-                    ("x0.5", 2f),
-                }, SaveData.s.DialogueWaitMultiplier) :
-                null!,
-            new OptionNodeLR<float>(bgm_volume, v => {
-                SaveData.s.BGMVolume = v;
-                AudioTrackService.ReassignExistingBGMVolumeIfNotFading();
-            }, 21.Range().Select(x =>
-                (new LString($"{x * 10}"), x / 10f)).ToArray(), SaveData.s.BGMVolume),
-            new OptionNodeLR<float>(sfx_volume, v => { SaveData.s.SEVolume = v; }, 21.Range().Select(x =>
-                (new LString($"{x * 10}"), x / 10f)).ToArray(), SaveData.s.BGMVolume),
             new OptionNodeLR<bool>(hitbox, b => SaveData.s.UnfocusedHitbox = b, new[] {
-                    (hitbox_always, true),
-                    (hitbox_focus, false)
-                }, SaveData.s.UnfocusedHitbox),
+                (hitbox_always, true),
+                (hitbox_focus, false)
+            }, SaveData.s.UnfocusedHitbox),
             new OptionNodeLR<bool>(backgrounds, b => {
                     SaveData.s.Backgrounds = b;
                     SaveData.UpdateResolution();
                 }, OnOffOption,
                 SaveData.s.Backgrounds),
+            new OptionNodeLR<bool>(controller, SaveData.UpdateAllowController, OnOffOption,
+                SaveData.s.AllowControllerInput),
+            new OptionNodeLR<float>(bgm_volume, SaveData.s.BGMVolumeEv.OnNext, 21.Range().Select(x =>
+                (new LString($"{x * 10}"), x / 10f)).ToArray(), SaveData.s.BGMVolume),
+            new OptionNodeLR<float>(sfx_volume, v => { SaveData.s.SEVolume = v; }, 21.Range().Select(x =>
+                (new LString($"{x * 10}"), x / 10f)).ToArray(), SaveData.s.BGMVolume),
+            new OptionNodeLR<float>("Dialogue Typing Volume", v => { SaveData.s.TypingSoundVolume = v; }, 21.Range().Select(x =>
+                (new LString($"{x * 10}"), x / 10f)).ToArray(), SaveData.s.TypingSoundVolume),
+            staticOptions ?
+                new OptionNodeLR<float>(dialogue_speed, SaveData.s.DialogueSpeedEv.OnNext, new[] {
+                    ("x2", 2f),
+                    ("x1.5", 1.5f),
+                    ("x1", 1f),
+                    ("x0.75", 0.75f),
+                    ("x0.5", 0.5f),
+                }, SaveData.s.DialogueSpeed) :
+                null!,
         }.FilterNone();
     }
 
@@ -107,14 +109,13 @@ public class XMLPauseMenu : PausedGameplayMenu {
         (generic_on, true),
         (generic_off, false)
     };
-    protected override string HeaderOverride => pause_header;
     
     private UINode unpause = null!;
 
     protected override void Awake() {
         unpause = new FuncNode(() => ProtectHide(() => HideOptions(true)), LocalizedStrings.UI.unpause, true).With(small1Class);
-        MainScreen = new UIScreen(
-            GetOptions(false).Select(x => x.With(small1Class)).Concat(
+        MainScreen = new UIScreen(this,
+            GetOptions(!Replayer.RequiresConsistency).Select(x => x.With(small1Class)).Concat(
                 new[] {
                     new PassthroughNode(LString.Empty),
                     unpause,
@@ -126,15 +127,19 @@ public class XMLPauseMenu : PausedGameplayMenu {
                 }
             ).ToArray()
         ).With(UIScreen);
-        MainScreen.ExitNode = MainScreen.top[MainScreen.top.Length - 4];
+        MainScreen.ExitNode = MainScreen.Top[MainScreen.Top.Length - 4];
         base.Awake();
     }
 
     protected override void Start() {
         base.Start();
+        UI.Q<Label>("Header").text = pause_header;
         HideOptions(false);
-        MenuActive = false;
-        UI.style.right = UIManager.MenuRightOffset;
+    }
+
+    protected override void BindListeners() {
+        base.BindListeners();
+        RegisterDI<IPauseMenu>(this);
     }
 
     private void HideOptions(bool withSave) {
@@ -150,20 +155,22 @@ public class XMLPauseMenu : PausedGameplayMenu {
     }
 
     public void GoToOption(int opt) {
-        Current = MainScreen.top[opt];
+        Current = MainScreen.Top[opt];
         Redraw();
     }
 
+    private bool openQueued = false;
     public override void RegularUpdate() {
         if (RegularUpdateGuard) {
-            if (InputManager.Pause.Active) {
-                if (MenuActive)
-                    ProtectHide(() => HideOptions(true));
-                else
-                    ShowMe();
-            } else
-                base.RegularUpdate();
+            if (InputManager.Pause.Active && MenuActive)
+                ProtectHide(() => HideOptions(true));
+            else if ((InputManager.Pause.Active || openQueued) && EngineStateManager.State == EngineState.RUN)
+                ShowMe();
+            openQueued = false;
         }
+        base.RegularUpdate();
     }
+
+    public void Open() => openQueued = true;
 }
 }

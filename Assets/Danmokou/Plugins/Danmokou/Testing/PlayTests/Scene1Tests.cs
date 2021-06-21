@@ -752,7 +752,7 @@ public static class Scene1 {
         bool cb = false;
         //Running Static Analysis 1
         new InstanceRequest(d => cb = true, FixedDfc(FixedDifficulty.Lunatic),
-            boss: new BossPracticeRequest(AllPBosses[0], 
+            new BossPracticeRequest(AllPBosses[0], 
                 new SMAnalysis.Phase(null!, PhaseType.NONSPELL, 3, new LString("_")))).Run();
         IsFalse(cb);
         yield return WaitForLoad();
@@ -780,9 +780,9 @@ public static class Scene1 {
             //Running Difficulty Display Test
             DebugFloat.values.Clear();
             yield return null;
-            new InstanceRequest(null, FixedDfc(dff), boss: new BossPracticeRequest(AllPBosses[1])).Run();
+            new InstanceRequest(null, FixedDfc(dff), new BossPracticeRequest(AllPBosses[1])).Run();
             yield return WaitForLoad();
-            AreEqual(Instance.mode, InstanceMode.CARD_PRACTICE);
+            AreEqual(Instance.mode, InstanceMode.BOSS_PRACTICE);
             AreEqual(GameManagement.Difficulty.standard!.Value, dff);
             AreEqual(GameManagement.Difficulty.Value / FixedDifficulty.Hard.Value(), DebugFloat.values[0]);
             SceneManager.LoadScene(baseScene);

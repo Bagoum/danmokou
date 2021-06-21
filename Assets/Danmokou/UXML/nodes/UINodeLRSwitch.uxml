@@ -5,9 +5,9 @@
         <ui:VisualElement name="Selector" class="pointer prefix" />
         <ui:Label text="Keyname" name="Key" class="text" style="white-space: nowrap;" />
         <ui:VisualElement name="ValueContainer" class="optionsCont">
-            <ui:Label text="&lt;" class="text" />
+            <ui:Label text="&lt;" name="Left" class="text" />
             <ui:Label text="one two three four five six se" name="Value" class="text centertext" style="overflow: hidden; white-space: nowrap;" />
-            <ui:Label text="&gt;" class="text" />
+            <ui:Label text="&gt;" name="Right" class="text" />
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

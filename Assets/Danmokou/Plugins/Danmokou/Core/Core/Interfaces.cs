@@ -2,7 +2,11 @@
 using UnityEngine;
 
 namespace Danmokou.Core {
-
+public enum AudioTrackLoopMode {
+    None,
+    Naive,
+    Timed
+}
 public interface IAudioTrackInfo {
     /// <summary>
     /// eg. "Mima's theme" or "Stage 3 theme"
@@ -16,7 +20,7 @@ public interface IAudioTrackInfo {
     float Volume { get; }
     float Pitch { get; }
     bool StopOnPause { get; }
-    bool Loop { get; }
+    AudioTrackLoopMode Loop { get; }
     Vector2 LoopSeconds { get; }
     float StartTime { get; }
     

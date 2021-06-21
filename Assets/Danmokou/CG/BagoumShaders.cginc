@@ -69,7 +69,7 @@ float2 getDisplace(float2 uv, float t) {
     disp = ((disp * 2) - 1) * _DisplaceMagnitude * mask;
     return disp;
 }
-#ifdef FT_DISPLACE
+#if FT_DISPLACE || FT_DISPLACE_POLAR || FT_DISPLACE_RADIAL || FT_DISPLACE_BIVERT
     #define DISPLACE(uv, t) uv += getDisplace(uv, t)
 #else
     #define DISPLACE(uv, t) { }

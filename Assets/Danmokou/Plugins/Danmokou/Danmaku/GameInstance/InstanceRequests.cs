@@ -17,16 +17,34 @@ using Danmokou.Services;
 using JetBrains.Annotations;
 using ProtoBuf;
 using Danmokou.SM;
-using InstanceLowRequest = Danmokou.Core.DU<Danmokou.GameInstance.CampaignRequest, Danmokou.GameInstance.BossPracticeRequest, 
-    Danmokou.GameInstance.PhaseChallengeRequest, Danmokou.GameInstance.StagePracticeRequest>;
 using static Danmokou.Core.GameManagement;
 using static Danmokou.Scenes.SceneIntermediary;
-using InstanceLowRequestKey = Danmokou.Core.DU<string, ((string, string), int), ((((string, int), string), int), int), ((string, int), int)>;
 
 
 namespace Danmokou.GameInstance {
 
-public readonly struct BossPracticeRequest {
+public interface ILowInstanceRequest {
+    public ILowInstanceRequestKey Key { get; }
+    public InstanceMode Mode { get; }
+    public bool Replayable { get; }
+    public string CampaignKey { get; }
+}
+
+public class CampaignRequest : ILowInstanceRequest {
+    public readonly SMAnalysis.AnalyzedCampaign campaign;
+
+    public CampaignRequest(SMAnalysis.AnalyzedCampaign campaign) {
+        this.campaign = campaign;
+    }
+
+    public ILowInstanceRequestKey Key => new CampaignRequestKey() {
+        Campaign = campaign.Key
+    };
+    public InstanceMode Mode => InstanceMode.CAMPAIGN;
+    public bool Replayable => campaign.campaign.replayable;
+    public string CampaignKey => campaign.Key;
+}
+public class BossPracticeRequest : ILowInstanceRequest {
     public readonly SMAnalysis.AnalyzedBoss boss;
     public readonly SMAnalysis.Phase phase;
     public PhaseType PhaseType => phase.type;
@@ -37,14 +55,17 @@ public readonly struct BossPracticeRequest {
         this.phase = phase ?? boss.Phases[0];
     }
 
-    public ((string, string bossName), int) Key => (boss.Key, phase.index);
-    public static BossPracticeRequest Reconstruct(((string campaign, string bossKey), int phase) key) {
-        var boss = SMAnalysis.AnalyzedBoss.Reconstruct(key.Item1);
-        return new BossPracticeRequest(boss, boss.Phases.First(p => p.index == key.Item2));
-    }
+    public ILowInstanceRequestKey Key => new BossPracticeRequestKey() {
+        Campaign = boss.campaign.Key,
+        Boss = boss.boss.key,
+        PhaseIndex = phase.index
+    };
+    public InstanceMode Mode => InstanceMode.BOSS_PRACTICE;
+    public bool Replayable => boss.campaign.campaign.replayable;
+    public string CampaignKey => boss.campaign.Key;
 }
 
-public readonly struct StagePracticeRequest {
+public class StagePracticeRequest : ILowInstanceRequest {
     public readonly SMAnalysis.AnalyzedStage stage;
     public readonly int phase;
     public readonly LevelController.LevelRunMethod method;
@@ -54,23 +75,15 @@ public readonly struct StagePracticeRequest {
         this.phase = phase;
         this.method = method;
     }
-    
-    public ((string, int), int) Key => (stage.Key, phase);
-    public static StagePracticeRequest Reconstruct(((string, int), int) key) =>
-        new StagePracticeRequest(SMAnalysis.AnalyzedStage.Reconstruct(key.Item1), key.Item2);
-}
 
-public readonly struct CampaignRequest {
-    public readonly SMAnalysis.AnalyzedCampaign campaign;
-
-    public CampaignRequest(SMAnalysis.AnalyzedCampaign campaign) {
-        this.campaign = campaign;
-    }
-    
-    public string Key => campaign.Key;
-    public static CampaignRequest Reconstruct(string key) =>
-        new CampaignRequest(SMAnalysis.AnalyzedCampaign.Reconstruct(key));
-    
+    public ILowInstanceRequestKey Key => new StagePracticeRequestKey() {
+        Campaign = stage.campaign.Key,
+        StageIndex = stage.stageIndex,
+        PhaseIndex = phase
+    };
+    public InstanceMode Mode => InstanceMode.STAGE_PRACTICE;
+    public bool Replayable => stage.campaign.campaign.replayable;
+    public string CampaignKey => stage.campaign.Key;
 }
 
 public readonly struct SharedInstanceMetadata {
@@ -97,49 +110,66 @@ public readonly struct SharedInstanceMetadata {
     }
 }
 
+public abstract class ReplayMode {
+    public class Replaying : ReplayMode {
+        public readonly Replay replay;
+        public Replaying(Replay replay) {
+            this.replay = replay;
+        }
+    }
+    /// <summary>
+    /// Disables functionality such as VNState backlogging, and allows a replay to be saved at the end.
+    /// </summary>
+    public class RecordingReplay : ReplayMode { }
+    /// <summary>
+    /// Enables functionality such as VNState backlogging and runtime dialogue speed/language modification,
+    ///  and disallows saving a replay.
+    /// </summary>
+    public class NotRecordingReplay : ReplayMode { }
+}
 
 public class InstanceRequest {
     private readonly List<Cancellable> gameTrackers = new List<Cancellable>();
     public readonly Func<InstanceData, bool>? cb;
     public readonly SharedInstanceMetadata metadata;
-    public readonly Replay? replay;
-    public bool Saveable => replay == null;
-    public readonly InstanceLowRequest lowerRequest;
+    public readonly ReplayMode replay;
+    public bool Saveable => replay is ReplayMode.RecordingReplay;
+    public readonly ILowInstanceRequest lowerRequest;
     public readonly int seed;
-    public InstanceMode Mode => lowerRequest.Resolve(
-        _ => InstanceMode.CAMPAIGN,
-        _ => InstanceMode.CARD_PRACTICE,
-        _ => InstanceMode.SCENE_CHALLENGE,
-        _ => InstanceMode.STAGE_PRACTICE);
+    public InstanceMode Mode => lowerRequest.Mode;
 
-    public InstanceRequest(Func<InstanceData, bool>? cb, InstanceLowRequest lowerRequest, 
-        Replay replay) : this(cb, replay.metadata.Record.SharedInstanceMetadata, lowerRequest, replay) {}
+    public InstanceRequest(Func<InstanceData, bool>? cb, ILowInstanceRequest lowerRequest, Replay replay) : 
+        this(cb, replay.metadata.Record.SharedInstanceMetadata, lowerRequest, new ReplayMode.Replaying(replay)) {}
 
-    public InstanceRequest(Func<InstanceData, bool>? cb, SharedInstanceMetadata metadata, CampaignRequest? campaign = null,
-        BossPracticeRequest? boss = null, PhaseChallengeRequest? challenge = null, StagePracticeRequest? stage = null,
-        Replay? replay = null) : 
-        this(cb, metadata, InstanceLowRequest.FromNullable(
-            campaign, boss, challenge, stage) ?? throw new Exception("No valid request type made of GameReq"), 
-            replay) { }
+    public InstanceRequest(Func<InstanceData, bool>? cb, SharedInstanceMetadata metadata, ILowInstanceRequest lowReq, bool? recording = null) : 
+        this(cb, metadata, lowReq, recording switch {
+                null => null,
+                true => new ReplayMode.RecordingReplay(),
+                false => new ReplayMode.NotRecordingReplay()
+            }) { }
 
-    public InstanceRequest(Func<InstanceData, bool>? cb, SharedInstanceMetadata metadata, InstanceLowRequest lowerRequest, Replay? replay) {
+    public InstanceRequest(Func<InstanceData, bool>? cb, SharedInstanceMetadata metadata, ILowInstanceRequest lowerRequest, ReplayMode? replay) {
         this.metadata = metadata;
         this.cb = cb;
-        this.replay = replay;
+        this.replay = replay ?? (lowerRequest.Replayable ? new ReplayMode.RecordingReplay() : (ReplayMode)new ReplayMode.NotRecordingReplay());
         this.lowerRequest = lowerRequest;
-        this.seed = replay?.metadata.Record.Seed ?? new Random().Next();
+        this.seed = replay is ReplayMode.Replaying r ?  r.replay.metadata.Record.Seed : new Random().Next();
     }
 
     public void SetupInstance() {
         Log.Unity(
             $"Starting game with mode {Mode} on difficulty {metadata.difficulty.Describe()}.");
-        var actor = (replay == null) ? 
-            Replayer.BeginRecording() :
-            Replayer.BeginReplaying(
-                new Replayer.ReplayerConfig(
-                    replay.Value.metadata.Debug ? 
-                        Replayer.ReplayerConfig.FinishMethod.STOP :
-                        Replayer.ReplayerConfig.FinishMethod.ERROR, replay.Value.frames));
+        var actor = replay switch {
+            ReplayMode.NotRecordingReplay _ => null,
+            ReplayMode.RecordingReplay _ => Replayer.BeginRecording(),
+            ReplayMode.Replaying r =>
+                Replayer.BeginReplaying(
+                    new Replayer.ReplayerConfig(
+                        r.replay.metadata.Debug ?
+                            Replayer.ReplayerConfig.FinishMethod.STOP :
+                            Replayer.ReplayerConfig.FinishMethod.ERROR, r.replay.frames)),
+            _ => throw new Exception($"Unhandled replay type: {replay}")
+        };
         GameManagement.NewInstance(Mode, SaveData.r.GetHighScore(this), this, actor);
     }
 
@@ -176,12 +206,6 @@ public class InstanceRequest {
             return false;
         }
     }
-    
-    public static InstanceLowRequestKey CampaignIdentifier(InstanceLowRequest lowerRequest) => lowerRequest.Resolve(
-        c => new InstanceLowRequestKey(0, c.Key, default, default, default),
-        b => new InstanceLowRequestKey(1, default!, b.Key, default, default),
-        c => new InstanceLowRequestKey(2, default!, default, c.Key, default),
-        s => new InstanceLowRequestKey(3, default!, default, default, s.Key));
 
     private void WaitThenFinishAndPostReplay(InstanceRecord? record = null) => 
         SceneLocalCRU.Main.RunDroppableRIEnumerator(WaitingUtils.WaitFor(
@@ -190,14 +214,17 @@ public class InstanceRequest {
     public bool Run() {
         Cancel();
         RNG.Seed(seed);
-        replay?.metadata.ApplySettings();
+        if (replay is ReplayMode.Replaying r)
+            r.replay.metadata.ApplySettings();
         InstancedRequested.OnNext(this);
-            
-        return lowerRequest.Resolve(
-            SelectCampaign,
-            SelectBoss,
-            SelectChallenge,
-            SelectStage);
+
+        return lowerRequest switch {
+            CampaignRequest cr => SelectCampaign(cr),
+            BossPracticeRequest br => SelectBoss(br),
+            PhaseChallengeRequest sc => SelectChallenge(sc),
+            StagePracticeRequest sr => SelectStage(sr),
+            _ => throw new Exception($"No instance run handling for request type {lowerRequest.GetType()}")
+        };
     }
 
     public void Cancel() {
@@ -330,7 +357,7 @@ public class InstanceRequest {
             SceneRequest.Reason.FINISH_RETURN, () => {
                 cb?.Invoke();
                 BackgroundOrchestrator.NextSceneStartupBGC = References.defaultMenuBackground;
-            })), metadata, campaign: new CampaignRequest(campaign));
+            })), metadata, new CampaignRequest(campaign));
 
 
         if (SaveData.r.TutorialDone || References.miniTutorial == null) return req.Run();

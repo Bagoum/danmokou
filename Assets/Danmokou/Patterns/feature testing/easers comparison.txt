@@ -1,0 +1,28 @@
+pattern { }
+
+!!{ time 2
+!!{ xtype back
+!{ join(a, b)
+%a%%b%
+!}
+!{ func(type)
+px(5 * smoothc $join(%type, $xtype) (t / $time))
+!}
+!{ funcd(type)
+px(eased($join(%type, $xtype), $time, 5 / $time))
+!}
+phase 0
+    paction 0
+		position 0 0
+		sync circle-red/w <-2.5;3:> s nroffset $func(ein)
+		sync circle-purple/w <-2.5;2:> s nroffset $func(eio)
+		sync circle-blue/w <-2.5;1:> s nroffset $func(eout)
+		sync lellipse-red/w <-2.5;:> s nrvelocity $funcd(ein)
+		sync lellipse-purple/w <-2.5;-1:> s nrvelocity $funcd(eio)
+		sync lellipse-blue/w <-2.5;-2:> s nrvelocity $funcd(eout)
+		
+///
+
+d/dx (e ^ y) = e ^ y (dy / dx)
+d/dx (y ^ z) = d/dx (e ^ z ln y) = y ^ z (z' ln y + zy' / y)
+            

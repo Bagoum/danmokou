@@ -38,6 +38,7 @@ public class GameUniqueReferences : ScriptableObject {
     public PrefabReferences prefabReferences = null!;
     public SuzunoyaReferences? suzunoyaReferences;
     public UXMLReferences uxmlDefaults = null!;
+    public SFXConfigs[] SFX = null!;
     public SOPrefabs[] summonables = null!;
     public SOTextAssets[] fileStateMachines = null!;
     public string[] scriptFolders = null!;

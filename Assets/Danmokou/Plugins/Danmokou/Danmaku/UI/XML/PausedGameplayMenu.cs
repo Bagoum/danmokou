@@ -1,5 +1,6 @@
 ﻿using System;
 using BagoumLib.DataStructures;
+using BagoumLib.Tasks;
 using Danmokou.Core;
 using Danmokou.DMath;
 using Danmokou.Scriptables;
@@ -20,27 +21,32 @@ public class PausedGameplayMenu : XMLMenu {
             MenuActive = true;
             tokens.Add(pauseToken = EngineStateManager.RequestState(EngineState.MENU_PAUSE));
             var disable = Disabler.CreateToken1(MultiOp.Priority.ALL);
-            manager.SlideInUI(() => disable.TryRevoke());
+            _ = manager.FadeInPauseUI().ContinueWithSync(() => disable.TryRevoke());
             DependencyInjection.SFXService.Request(openPauseSound);
-            UITop.style.display = DisplayStyle.Flex;
+            UI.style.display = DisplayStyle.Flex;
             ResetCurrentNode();
             Redraw();
         }
     }
 
     protected virtual void HideMe() {
-        pauseToken?.MarkForDeletion();
-        UITop.style.display = DisplayStyle.None;
-        MenuActive = false;
+        if (MenuActive) {
+            MenuActive = false;
+            MainScreen.ResetNodeProgress();
+            pauseToken?.MarkForDeletion();
+            UI.style.display = DisplayStyle.None;
+        }
     }
 
     protected void ProtectHide(Action? hide = null) {
-        var disable = Disabler.CreateToken1(MultiOp.Priority.ALL);
-        DependencyInjection.SFXService.Request(closePauseSound);
-        manager.UnpauseAnimator(() => {
-            disable.TryRevoke();
-            (hide ?? HideMe)();
-        });
+        if (MenuActive) {
+            var disable = Disabler.CreateToken1(MultiOp.Priority.ALL);
+            DependencyInjection.SFXService.Request(closePauseSound);
+            _ = manager.FadeOutPauseUI().ContinueWithSync(() => {
+                disable.TryRevoke();
+                (hide ?? HideMe)();
+            });
+        }
     }
 }
 }

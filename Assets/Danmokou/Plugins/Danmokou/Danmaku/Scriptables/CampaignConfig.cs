@@ -9,6 +9,7 @@ public class CampaignConfig : ScriptableObject {
     public int startLives;
     public string key = "";
     public string shortTitle = "";
+    public bool replayable = true;
     public EndingConfig[] endings = null!;
     public ShipConfig[] players = null!;
     public StageConfig[] stages = null!;

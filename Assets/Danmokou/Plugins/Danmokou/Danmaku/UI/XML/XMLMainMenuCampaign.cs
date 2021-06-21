@@ -78,11 +78,12 @@ public class XMLMainMenuCampaign : XMLMainMenu {
     public BehaviorEntity? shotSetup;
     public GameObject? demoPlayerSetup;
 
-        protected override void Start() {
+    protected override void Start() {
         if (ReturnTo == null) {
-            uiRenderer.Slide(new Vector2(3, 0), Vector2.zero, 1f, DMath.M.EOutSine, null);
-            uiRenderer.Fade(0, 1, 1f, x => x, null);
-        }
+            _ = uiRenderer.Slide(new Vector2(3, 0), Vector2.zero, 1f, DMath.M.EOutSine);
+            _ = uiRenderer.Fade(0, 1, 1f, null);
+        } else
+            uiRenderer.Fade(1, 1, 0, null);
         base.Start();
     }
 
@@ -115,6 +116,7 @@ public class XMLMainMenuCampaign : XMLMainMenu {
             var smeta = new SharedInstanceMetadata(team, new DifficultySettings(FixedDifficulty.Normal));
             
             void CleanupDemo() {
+                Log.Unity("Cleaning up demo");
                 if (demoPlayer != null) {
                     demoPlayer.InvokeCull();
                     demoPlayer = null;
@@ -131,7 +133,7 @@ public class XMLMainMenuCampaign : XMLMainMenu {
                     r = Replayer.BeginReplaying(new Replayer.ReplayerConfig(
                         Replayer.ReplayerConfig.FinishMethod.REPEAT, 
                         effShot.demoReplay.Frames,
-                        () => demoPlayer.transform.position = new Vector2(0, -3)
+                        () => demoPlayer!.transform.position = new Vector2(0, -3)
                     ));
                     demoCT?.Cancel();
                     demoCT = new Cancellable();
@@ -149,7 +151,7 @@ public class XMLMainMenuCampaign : XMLMainMenu {
                 if (demoPlayer == null) {
                     demoPlayer = Instantiate(demoPlayerSetup).GetComponent<PlayerController>();
                 }
-                demoPlayer.UpdateTeam((playerSelect.Value, shotSelect.Value), subshotSelect.Value);
+                demoPlayer.UpdateTeam((playerSelect.Value, shotSelect.Value), subshotSelect.Value, true);
                 demoPlayer.transform.position = new Vector2(0, -3);
             }
             
@@ -189,7 +191,7 @@ public class XMLMainMenuCampaign : XMLMainMenu {
                 playerSelect.Value.shots2[0].shot);
             subshotSelect = new OptionNodeLR<Subshot>(LString.Empty, _ => _ShowShot(),
                 EnumHelpers2.Subshots.Select(x => (shotsel_variant_ls(x.Describe()), x)).ToArray(), Subshot.TYPE_D);
-            return new UIScreen(
+            return new UIScreen(this,
                     new PassthroughNode(shotsel_player).With(centerTextClass),
                     playerSelect.With(optionNoKeyClass),
                     new PassthroughNode(LString.Empty),
@@ -221,12 +223,12 @@ public class XMLMainMenuCampaign : XMLMainMenu {
         }
 
         DifficultyScreen = difficultySubmenu.Initialize(this, x => dfcCont(x));
-        CustomDifficultyScreen = CreateCustomDifficultyEdit(CustomDifficultyScreenV, x => dfcCont(x));
+        CustomDifficultyScreen = CreateCustomDifficultyEdit(this, CustomDifficultyScreenV, x => dfcCont(x));
         CampaignShotScreen = CreatePlayerScreen(GameManagement.MainCampaign, shotSetup != null)!;
         ExtraShotScreen = CreatePlayerScreen(GameManagement.ExtraCampaign, shotSetup != null);
-        var shotTopMap = new Dictionary<CampaignConfig, UINode>() {{References.campaign, CampaignShotScreen.top[1]}};
+        var shotTopMap = new Dictionary<CampaignConfig, UINode>() {{References.campaign, CampaignShotScreen.Top[1]}};
         if (ExtraShotScreen != null && References.exCampaign != null) 
-            shotTopMap[References.exCampaign] = ExtraShotScreen.top[1];
+            shotTopMap[References.exCampaign] = ExtraShotScreen.Top[1];
 
         (bool, UINode) GetShot(CampaignConfig c, Func<TeamConfig, bool> cont) {
             shotCont = cont;
@@ -236,18 +238,18 @@ public class XMLMainMenuCampaign : XMLMainMenu {
         Func<(bool, UINode?)> GetDifficultyThenShot(CampaignConfig c, Func<SharedInstanceMetadata, bool> cont) {
             return () => {
                 dfcCont = d => GetShot(c, p => cont(new SharedInstanceMetadata(p, d)));
-                return (true, DifficultyScreen.top[0]);
+                return (true, DifficultyScreen.Top[0]);
             };
         }
 
-        StagePracticeScreen = new LazyUIScreen(() => PStages.Select(stage =>
+        StagePracticeScreen = new LazyUIScreen(this, () => PStages.Select(stage =>
             (UINode) new NavigateUINode(practice_stage_ls(stage.stage.stageNumber),
                 stage.Phases.Select(phase =>
                     new CacheNavigateUINode(TentativeCache, phase.Title).SetConfirmOverride(
                         GetDifficultyThenShot(stage.campaign.campaign, meta => {
                             ConfirmCache();
                             return new InstanceRequest(InstanceRequest.PracticeSuccess, meta,
-                                stage: new StagePracticeRequest(stage, phase.index)).Run();
+                                new StagePracticeRequest(stage, phase.index)).Run();
                         })
                     )
                 ).Prepend(
@@ -255,7 +257,7 @@ public class XMLMainMenuCampaign : XMLMainMenu {
                         GetDifficultyThenShot(stage.campaign.campaign, meta => {
                             ConfirmCache();
                             return new InstanceRequest(InstanceRequest.PracticeSuccess, meta,
-                                stage: new StagePracticeRequest(stage, 1)).Run();
+                                new StagePracticeRequest(stage, 1)).Run();
                         })
                     )
                 ).ToArray()
@@ -263,18 +265,19 @@ public class XMLMainMenuCampaign : XMLMainMenu {
         ).ToArray()).With(StagePracticeScreenV);
         var cmpSpellHist = SaveData.r.GetCampaignSpellHistory();
         var prcSpellHist = SaveData.r.GetPracticeSpellHistory();
-        BossPracticeScreen = new LazyUIScreen(() => PBosses.Select(boss =>
+        BossPracticeScreen = new LazyUIScreen(this, () => PBosses.Select(boss =>
             (UINode) new NavigateUINode(boss.boss.BossPracticeName, boss.Phases.Select(phase => {
                     var req = new BossPracticeRequest(boss, phase);
+                    var key = (req.Key as BossPracticeRequestKey)!;
                     return new CacheNavigateUINode(TentativeCache, phase.Title).SetConfirmOverride(
                         GetDifficultyThenShot(boss.campaign.campaign, meta => {
                             ConfirmCache();
                             return new InstanceRequest(InstanceRequest.PracticeSuccess, meta,
-                                boss: req).Run();
+                                req).Run();
                         })
-                    ).With(SpellPracticeNodeV).With(ev => {
-                        var (cs, ct) = cmpSpellHist.GetOrDefault(req.Key);
-                        var (ps, pt) = prcSpellHist.GetOrDefault(req.Key);
+                    ).With(SpellPracticeNodeV).OnBound(ev => {
+                        var (cs, ct) = cmpSpellHist.GetOrDefault(key);
+                        var (ps, pt) = prcSpellHist.GetOrDefault(key);
                         ev.Q<Label>("CampaignHistory").text = $"{cs}/{ct}";
                         ev.Q<Label>("PracticeHistory").text = $"{ps}/{pt}";
                     });
@@ -282,17 +285,17 @@ public class XMLMainMenuCampaign : XMLMainMenu {
             )
         ).ToArray()).With(BossPracticeScreenV);
         PlaymodeScreen = playmodeSubmenu.Initialize(this, GetDifficultyThenShot);
-        OptionsScreen = new UIScreen(XMLPauseMenu.GetOptions(true).ToArray())
+        OptionsScreen = new UIScreen(this, XMLPauseMenu.GetOptions(true).ToArray())
             .With(OptionsScreenV).OnExit(SaveData.AssignSettingsChanges);
-        ReplayScreen = XMLUtils.ReplayScreen(TentativeCache, ConfirmCache).With(ReplayScreenV);
-        HighScoreScreen = XMLUtils.HighScoreScreen(ReplayScreen, FinishedCampaigns.ToArray())
+        ReplayScreen = XMLUtils.ReplayScreen(this, TentativeCache, ConfirmCache).With(ReplayScreenV);
+        HighScoreScreen = XMLUtils.HighScoreScreen(this, ReplayScreen, FinishedCampaigns.ToArray())
             .With(HighScoreScreenV);
-        StatsScreen = XMLUtils.StatisticsScreen(StatsScreenV, SaveData.r.FinishedCampaignGames, Campaigns);
-        MusicRoomScreen = XMLUtils.MusicRoomScreen(MusicRoomScreenV, References.tracks);
+        StatsScreen = XMLUtils.StatisticsScreen(this, StatsScreenV, SaveData.r.FinishedCampaignGames, Campaigns);
+        MusicRoomScreen = XMLUtils.MusicRoomScreen(this, MusicRoomScreenV, References.tracks);
         if (GameManagement.Achievements != null)
-            AchievementsScreen = XMLUtils.AchievementsScreen(
+            AchievementsScreen = XMLUtils.AchievementsScreen(this, 
                 AchievementsScreenV, AchievementsNodeV, GameManagement.Achievements);
-        MainScreen = new UIScreen(
+        MainScreen = new UIScreen(this,
             new TransferNode(PlaymodeScreen, main_gamestart).With(large1Class),
             new OptionNodeLR<string?>(main_lang, l => {
                     SaveData.UpdateLocale(l);
@@ -309,7 +312,7 @@ public class XMLMainMenuCampaign : XMLMainMenu {
                 .EnabledIf(FinishedCampaigns.Any())
                 .With(large1Class),
             new TransferNode(MusicRoomScreen, main_musicroom)
-                .EnabledIf(MusicRoomScreen.top.Length > 0)
+                .EnabledIf(MusicRoomScreen.Top.Length > 0)
                 .With(large1Class),
             AchievementsScreen == null ? null :
                 new TransferNode(AchievementsScreen, main_achievements).With(large1Class),
@@ -323,7 +326,7 @@ public class XMLMainMenuCampaign : XMLMainMenu {
             new OpenUrlNode("https://twitter.com/rdbatz", main_twitter)
                 .With(large1Class)
         ).With(MainScreenV);
-        MainScreen.ExitNode = MainScreen.top[MainScreen.top.Length - 2];
+        MainScreen.ExitNode = MainScreen.Top[MainScreen.Top.Length - 2];
         base.Awake();
     }
 }

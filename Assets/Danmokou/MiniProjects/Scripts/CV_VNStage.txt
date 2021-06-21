@@ -1,0 +1,17 @@
+## Basic script for a stage that only plays a visual novel scene. 
+pattern { }
+phase 0
+	paction 0
+		shift-phase-to 1
+		
+<!> stage
+<!> silent
+phase 0
+	saction 0
+		debug `vnexec start`
+		## VNScriptCrimsonVermilion1 = name of reflected task constructor function
+		## crimson_vermilion = script id (can basically be set to anything)
+		executeVN VNScriptCrimsonVermilion1 crimson_vermilion
+		debug `vnexec done`
+		shift-phase
+

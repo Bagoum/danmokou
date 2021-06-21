@@ -110,6 +110,13 @@ public class PhaseProperty {
     /// Declares that this phase is a stage section.
     /// </summary>
     public static PhaseProperty Stage() => new PhaseTypeProp(PhaseType.STAGE);
+
+    /// <summary>
+    /// Don't play a sound effect (spellcard clear or stage section clear) when this phase is cleared.
+    /// </summary>
+    /// <returns></returns>
+    public static PhaseProperty Silent() => new SilentFlag();
+    
     /// <summary>
     /// Skip this phase.
     /// </summary>
@@ -248,6 +255,7 @@ public class PhaseProperty {
     public class EmptyProp : PhaseProperty { }
 
     public class HideTimeoutFlag : PhaseProperty {}
+    public class SilentFlag : PhaseProperty { }
     public class SkipFlag : PhaseProperty { }
     public class LenientFlag : PhaseProperty { }
     
@@ -405,6 +413,7 @@ public class PhaseProperties {
     public readonly float cardValueMult = 1f;
     private readonly bool? cleanup = null;
     public bool Cleanup => cleanup ?? phaseType?.IsPattern() ?? false;
+    public readonly bool endSound = true;
     private readonly string? autocullTarget;
     private readonly string? autocullDefault;
 
@@ -448,6 +457,8 @@ public class PhaseProperties {
         foreach (var prop in props) {
             if      (prop is HideTimeoutFlag) 
                 hideTimeout = true;
+            else if (prop is SilentFlag)
+                endSound = false;
             else if (prop is SkipFlag) 
                 skip = true;
             else if (prop is LenientFlag) 

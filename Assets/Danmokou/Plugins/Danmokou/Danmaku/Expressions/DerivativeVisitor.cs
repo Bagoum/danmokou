@@ -83,20 +83,24 @@ class DerivativeVisitor : ExpressionVisitor {
     protected override Expression VisitMethodCall(MethodCallExpression node) {
         var args = node.Arguments;
         if (mathTypes.Contains(node.Method.DeclaringType)) {
-            var a1 = Visit(args[0]);
-            if (node.Method.Name == "Sin") return a1.Mul(Cos(args[0]));
-            if (node.Method.Name == "Cos") return a1.Neg().Mul(Sin(args[0]));
-            if (node.Method.Name == "SinDeg") return a1.Mul(RadDeg(CosDeg(args[0])));
-            if (node.Method.Name == "CosDeg") return a1.Neg().Mul(RadDeg(SinDeg(args[0])));
-            if (node.Method.Name == "Pow" && args[1] is UnaryExpression exp) {
+            var y = args[0];
+            var dy = Visit(y);
+            if (node.Method.Name == "Sin") return dy.Mul(Cos(y));
+            if (node.Method.Name == "Cos") return dy.Neg().Mul(Sin(y));
+            if (node.Method.Name == "SinDeg") return dy.Mul(RadDeg(CosDeg(y)));
+            if (node.Method.Name == "CosDeg") return dy.Neg().Mul(RadDeg(SinDeg(y)));
+            if (node.Method.Name == "Pow") {
                 //TODO a safer architecture for handling double casting
-                if (!(Visit(exp.Operand).TryAsConst(out float f) && f == 0))
-                    throw new DerivativeException("Power call has a non-constant exponent");
-                else return exp.Operand.Mul(Pow(args[0], exp.Operand.Sub(E1)));
+                y = (y as UnaryExpression)!.Operand;
+                dy = Visit(y);
+                //d/dx (y^z) = y^z (z'ln(y) + zy'/y)
+                var z = (args[1] as UnaryExpression)!.Operand;
+                var dz = Visit(z);
+                return Pow(y, z).Mul(dz.Mul(Ln(y).Add(z.Mul(dy).Div(y))));
             }
             if (node.Method.Name == "Floor" || node.Method.Name == "Ceiling") return E0;
-            if (node.Method.Name == "Min") return Ex.Condition(args[0].LT(args[1]), Visit(args[0]), Visit(args[1]));
-            if (node.Method.Name == "Max") return Ex.Condition(args[0].GT(args[1]), Visit(args[0]), Visit(args[1]));
+            if (node.Method.Name == "Min") return Ex.Condition(y.LT(args[1]), Visit(y), Visit(args[1]));
+            if (node.Method.Name == "Max") return Ex.Condition(y.GT(args[1]), Visit(y), Visit(args[1]));
         }
         throw new DerivativeException($"Couldn't resolve method call {node.Method.Name}");
     }

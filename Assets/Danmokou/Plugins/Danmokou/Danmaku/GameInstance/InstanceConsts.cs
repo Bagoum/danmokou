@@ -13,7 +13,11 @@ public static class InstanceConsts {
             return 7;
         else if (mode.OneLife()) 
             return 1;
-        else if (mode == InstanceMode.DEBUG || mode == InstanceMode.NULL) 
+        else if (mode == InstanceMode.NULL
+#if UNITY_EDITOR || ALLOW_RELOAD
+            || mode == InstanceMode.DEBUG 
+#endif
+        ) 
             return 14;
         else 
             return 1;

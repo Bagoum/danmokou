@@ -91,7 +91,7 @@ public class InstanceData {
     /// </summary>
     public readonly string campaignKey;
     public InstanceRequest? Request { get; }
-    private readonly Dictionary<((string, string), int), (int, int)> PreviousSpellHistory;
+    private readonly Dictionary<BossPracticeRequestKey, (int, int)> PreviousSpellHistory;
     public ReplayActor? Replay { get; }
     
     //Miscellaneous stats
@@ -163,16 +163,15 @@ public class InstanceData {
         this.Replay = replay;
         //Minor hack to avoid running the SaveData static constructor in the editor during type initialization
         PreviousSpellHistory = (req == null) ? 
-            new Dictionary<((string, string), int), (int, int)>() :
+            new Dictionary<BossPracticeRequestKey, (int, int)>() :
             SaveData.r.GetCampaignSpellHistory();
         
         this.mode = mode;
         this.Difficulty = req?.metadata.difficulty ?? GameManagement.defaultDifficulty;
         this.RankLevel = Difficulty.customRank ?? Difficulty.ApproximateStandard.DefaultRank();
         this.RankPoints = RankManager.DefaultRankPointsForLevel(RankLevel);
-        campaign = req?.lowerRequest.Resolve(cr => cr.campaign.campaign, _ => null!, _ => null!, _ => null!);
-        campaignKey = req?.lowerRequest.Resolve(cr => cr.Key, b => b.boss.campaign.Key, s => s.Campaign.key,
-            s => s.stage.campaign.Key) ?? "null_campaign";
+        campaign = req?.lowerRequest is CampaignRequest cr ? cr.campaign.campaign : null;
+        campaignKey = req?.lowerRequest.CampaignKey ?? "null_campaign";
         TeamCfg = req?.metadata.team != null ? new ActiveTeamConfig(req.metadata.team) : null;
         var dfltLives = campaign != null ?
             (campaign.startLives > 0 ? campaign.startLives : StartLives(mode)) :
@@ -245,7 +244,11 @@ public class InstanceData {
     }
 
     public (int success, int total)? LookForSpellHistory(string bossKey, int phaseIndex) {
-        var key = ((campaignKey, bossKey), phaseIndex);
+        var key = new BossPracticeRequestKey() {
+            Campaign = campaignKey,
+            Boss = bossKey,
+            PhaseIndex = phaseIndex
+        };
         return PreviousSpellHistory.TryGetValue(key, out var rate) ? rate : ((int, int)?)null;
     }
 
@@ -288,8 +291,7 @@ public class InstanceData {
             //Record failure
             if (Request?.Saveable == true) {
                 //Special-case boss practice handling
-                if (Request.lowerRequest.Resolve(_ => null, 
-                        b => (BossPracticeRequest?) b, _ => null, _ => null).Try(out var bpr)) {
+                if (Request.lowerRequest is BossPracticeRequest bpr) {
                     CardHistory.Add(new CardRecord() {
                         campaign = bpr.boss.campaign.Key,
                         boss = bpr.boss.boss.key,

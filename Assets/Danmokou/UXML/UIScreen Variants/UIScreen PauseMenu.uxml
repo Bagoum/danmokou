@@ -1,0 +1,11 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="UIScreen.uss" />
+    <ui:VisualElement name="Overlay" style="background-color: rgba(0, 0, 0, 0.69);">
+        <ui:Label text="Pause" name="Header" class="header" style="padding-left: 960px; padding-right: 1560px; margin-bottom: 60px; font-size: 160px; margin-top: 60px;" />
+        <ui:VisualElement name="Container" style="padding-left: 960px; padding-right: 1560px;">
+            <ui:VisualElement class="column" style="padding-top: 0;">
+                <ui:ScrollView />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

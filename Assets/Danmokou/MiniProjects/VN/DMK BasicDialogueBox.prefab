@@ -13,6 +13,11 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 21300000, guid: e37ac79e35627834d83f1c1065b833a7,
         type: 3}
+    - target: {fileID: 4823924057861986656, guid: 1eea939bc02a6cc498925a79f5f7afcf,
+        type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 4.5
+      objectReference: {fileID: 0}
     - target: {fileID: 8191303368862879893, guid: 1eea939bc02a6cc498925a79f5f7afcf,
         type: 3}
       propertyPath: m_Color.b
@@ -27,6 +32,26 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Color.r
       value: 0.21780443
+      objectReference: {fileID: 0}
+    - target: {fileID: 8191303369154373168, guid: 1eea939bc02a6cc498925a79f5f7afcf,
+        type: 3}
+      propertyPath: m_Color.a
+      value: 0.6509804
+      objectReference: {fileID: 0}
+    - target: {fileID: 8191303369446971394, guid: 1eea939bc02a6cc498925a79f5f7afcf,
+        type: 3}
+      propertyPath: m_text
+      value: "This is an example text box. It supports b\xE0s\xEEc L\xE1t\xEFn alph\xF8b\xE9t
+        characters (depending on the font). Via fallback fonts in TMP, \u65E5\u672C\u8A9E\u3082\u4F7F\u3048\u307E\u3059\u3002
+        <nobr>is also supported<space=-1.268333><voffset=0.9em><size=60%>ruby text</size></voffset><space=0.6483333></nobr>
+        <nobr>or in English<space=-1.074167><voffset=0.9em><size=60%>\u65E5\u672C\u8A9E\u3067\u3082</size></voffset><space=0.3591667></nobr>.
+        Text-wrap is supported, but ruby blocks will not be wrapped. The font size
+        will auto-shrink slightly to accomodate overrun."
+      objectReference: {fileID: 0}
+    - target: {fileID: 8191303369446971394, guid: 1eea939bc02a6cc498925a79f5f7afcf,
+        type: 3}
+      propertyPath: m_fontSize
+      value: 0.25
       objectReference: {fileID: 0}
     - target: {fileID: 8191303369446971394, guid: 1eea939bc02a6cc498925a79f5f7afcf,
         type: 3}
@@ -45,13 +70,32 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8191303369446971394, guid: 1eea939bc02a6cc498925a79f5f7afcf,
         type: 3}
+      propertyPath: m_uneditedText
+      value: "This is an example text box. It supports b\xE0s\xEEc L\xE1t\xEFn alph\xF8b\xE9t
+        characters (depending on the font). Via fallback fonts in TMP, \u65E5\u672C\u8A9E\u3082\u4F7F\u3048\u307E\u3059\u3002
+        <r=ruby text>is also supported</r> <r=\u65E5\u672C\u8A9E\u3067\u3082>or in
+        English</r>. Text-wrap is supported, but ruby blocks will not be wrapped.
+        The font size will auto-shrink slightly to accomodate overrun."
+      objectReference: {fileID: 0}
+    - target: {fileID: 8191303369446971394, guid: 1eea939bc02a6cc498925a79f5f7afcf,
+        type: 3}
       propertyPath: m_fontColor32.rgba
       value: 4293256191
       objectReference: {fileID: 0}
     - target: {fileID: 8191303369611832257, guid: 1eea939bc02a6cc498925a79f5f7afcf,
         type: 3}
+      propertyPath: charLoadTime
+      value: 0.2
+      objectReference: {fileID: 0}
+    - target: {fileID: 8191303369611832257, guid: 1eea939bc02a6cc498925a79f5f7afcf,
+        type: 3}
       propertyPath: defaultSortingLayer
       value: UI
+      objectReference: {fileID: 0}
+    - target: {fileID: 8191303369611832258, guid: 1eea939bc02a6cc498925a79f5f7afcf,
+        type: 3}
+      propertyPath: m_SortingLayerID
+      value: -1714704369
       objectReference: {fileID: 0}
     - target: {fileID: 8191303369611832259, guid: 1eea939bc02a6cc498925a79f5f7afcf,
         type: 3}

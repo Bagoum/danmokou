@@ -57,7 +57,7 @@ public class DifficultySubmenu : IndexedSubmenuHandler {
             return continuation(new DifficultySettings(fixedDiff));
         } else {
             if (Menu is XMLMainMenuCampaign c) {
-                return (true, c.CustomDifficultyScreen.top[0]);
+                return (true, c.CustomDifficultyScreen.Top[0]);
             } else {
                 throw new Exception($"No custom difficulty handling coded for menu {Menu.GetType()}");
             }

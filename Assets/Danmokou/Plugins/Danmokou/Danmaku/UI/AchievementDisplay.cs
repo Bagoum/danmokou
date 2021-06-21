@@ -38,7 +38,7 @@ public class AchievementDisplay : CoroutineRegularUpdater, IAchievementDisplay {
     public Vector2 startOffset = new Vector2(4, 0);
     public float inTime;
     [ReflectInto(typeof(Easer))]
-    public string inLerp = "eoutback(2.2, t)";
+    public string inLerp = "ceoutback(2.2, t)";
     private Easer InLerp = null!;
     public float waitTime;
     public Vector2 endOffset = new Vector2(0, 3);
@@ -83,10 +83,14 @@ public class AchievementDisplay : CoroutineRegularUpdater, IAchievementDisplay {
         tr.localPosition = baseLoc + startOffset;
         Show();
         DependencyInjection.SFXService.Request(sfx);
-        yield return tr.GoTo(baseLoc, inTime, InLerp);
+        var task = tr.GoTo(baseLoc, inTime, InLerp).Run(this);
+        while (!task.IsCompleted)
+            yield return null;
         for (float t = 0; t < waitTime; t += ETime.FRAME_TIME)
             yield return null;
-        yield return tr.GoTo(baseLoc + endOffset, outTime, OutLerp);
+        task = tr.GoTo(baseLoc + endOffset, outTime, OutLerp).Run(this);
+        while (!task.IsCompleted)
+            yield return null;
         Hide();
         isRunning = false;
     }

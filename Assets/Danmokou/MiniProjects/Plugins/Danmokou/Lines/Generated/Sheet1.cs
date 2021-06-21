@@ -28,7 +28,7 @@ public static partial class VNLines {
 		public static readonly LString l4 = new LString("It would be easier, but we can't set that precedent.")
 			{ ID = "l4" };
 		
-		public static readonly LString l5 = new LString("Be quiet...")
+		public static readonly LString l5 = new LString("Be quiet... zzz...")
 			{ ID = "l5" };
 		
 		public static readonly LString l6 = new LString("And what about the rest? Are you going to tell them too?")
@@ -43,7 +43,7 @@ public static partial class VNLines {
 		public static readonly LString l9 = new LString("True. But if I were behind this incident, it would have started after lunchtime.")
 			{ ID = "l9" };
 		
-		public static readonly LString l10 = new LString("Who the hell is making so much GOD DAMN NOISE this early in the morning?!")
+		public static readonly LString l10 = new LString("Who the hell is making so much <speed=0.5>GOD DAMN NOISE</speed> this early in the morning?!")
 			{ ID = "l10" };
 		
 		public static readonly LString l11 = new LString("Good morning, Reimu. Your eyes look a bit red. Were you preparing onions for lunch?")
@@ -115,7 +115,7 @@ public static partial class VNLines {
 		public static readonly LString l32 = new LString("I would consider this more of \"incident prevention\". And prevention is better than resolution.")
 			{ ID = "l32" };
 		
-		public static readonly LString l33 = new LString("Well, Kasen and I have some business to deal with, so we'll see you in the evening. Make sure to finish up this incident by then.")
+		public static readonly LString l33 = new LString("Well, Kasen and I have some business to deal with, so we'll see you in the evening. Make sure to clear up this incident by then.")
 			{ ID = "l33" };
 		
 		public static readonly LString l34 = new LString("Business? Heading down to patch up the border or something? I feel like it's been a bit porous lately. Almost as if it's being haunted by Maxwell's ghost.")
@@ -175,7 +175,7 @@ public static partial class VNLines {
 		public static readonly LString l52 = new LString("Oi! Ya took yer sweet time, hermit!")
 			{ ID = "l52" };
 		
-		public static readonly LString l53 = new LString("Marisa, your eyes are kind of red. Did you just wake up?")
+		public static readonly LString l53 = new LString("Good morning, Marisa. Your eyes are kind of red. Did you just wake up?")
 			{ ID = "l53" };
 		
 		public static readonly LString l54 = new LString("At nine in the morning? Hell no! I been cooking, ze. Wit' plenty of onions!")
@@ -214,7 +214,10 @@ public static partial class VNLines {
 		public static readonly LString l65 = new LString("Y-yeah!")
 			{ ID = "l65" };
 		
-		public static readonly LString l67 = new LString("Kicchou's the dragon turtle, right?")
+		public static readonly LString l66_1 = new LString("Aight, we're in town. Who should we be looking fer first?")
+			{ ID = "l66_1" };
+		
+		public static readonly LString l67 = new LString("Looks like we don't have to look. Kicchou's the dragon turtle, right?")
 			{ ID = "l67" };
 		
 		public static readonly LString l68 = new LString("Yeah, nae doubt.")
@@ -238,20 +241,26 @@ public static partial class VNLines {
 		public static readonly LString l75 = new LString("But consider this. Since Yukari is explicitly not involved with this investigation, if I jump her and find some evidence, then hand it over to Yukari, the evidence would still be valid according to the silver platter doctrine. Of course, if I jump her and find nothing, that's qualified immunity.")
 			{ ID = "l75" };
 		
-		public static readonly LString l76 = new LString("The silver platter doctrine's been abolished fer a while now.")
+		public static readonly LString l76 = new LString("The silver platter doctrine's been abolished fer a while now, ze.")
 			{ ID = "l76" };
 		
 		public static readonly LString l77 = new LString("Ah, damn it. Wait, but in that case, I could jump Kosuzu instead and look for some evidence on her. The third-party doctrine is still around, right? Any evidence I get from Kosuzu would be admissible.")
 			{ ID = "l77" };
 		
-		public static readonly LString l78 = new LString("...Yes, but I ain't gonna say that's a good idea. Ah, get back, Reimu, someone's comin'.")
+		public static readonly LString l78 = new LString("...Yes, but I ain't gonna say that's a good idea.")
 			{ ID = "l78" };
+		
+		public static readonly LString l78_1 = new LString("Ah, get back, Reimu, someone's comin'.")
+			{ ID = "l78_1" };
 		
 		public static readonly LString l79 = new LString("Oho? I was wondering why this store of rat dung smelled, and here I have my answer found.")
 			{ ID = "l79" };
 		
-		public static readonly LString l80 = new LString("San-- Komakusa, you bitch. How dare you show your ugly-ass face here?")
+		public static readonly LString l80 = new LString("San-- Komakusa?!")
 			{ ID = "l80" };
+		
+		public static readonly LString l80_1 = new LString("Look who finally came crawling out of her little mountain cave. What business do you have showing your dilapidated face here?")
+			{ ID = "l80_1" };
 		
 		public static readonly LString l81 = new LString("Looke around thee and have a reckon. Wherefore cometh one to a library? Of how many reasons kannst thou think, lily-livered nuran?")
 			{ ID = "l81" };
@@ -259,8 +268,11 @@ public static partial class VNLines {
 		public static readonly LString l82 = new LString("I'm asking because an illiterate peabrain like you wouldn't be able to get anything out of a library.")
 			{ ID = "l82" };
 		
-		public static readonly LString l83 = new LString("Ah... ayaya, why are you two always like this...")
+		public static readonly LString l83 = new LString("Miss Yachie, I have--")
 			{ ID = "l83" };
+		
+		public static readonly LString l83_1 = new LString(" ayaya, why are you two always like this...")
+			{ ID = "l83_1" };
 		
 		public static readonly LString l84 = new LString("Hey, this is the human village. You're not allowed to fight here. If you try, I'll--")
 			{ ID = "l84" };
@@ -274,8 +286,11 @@ public static partial class VNLines {
 		public static readonly LString l87 = new LString("Ain't y'ever learn not to raise yer voice in a library, ya horny turtle?")
 			{ ID = "l87" };
 		
-		public static readonly LString l88 = new LString("(Ah, I live for Marisa's clapbacks...) Ahem. That's right. You're the one causing a disturbance here.")
+		public static readonly LString l88 = new LString("(Ah, I live for Marisa's clapbacks...) ")
 			{ ID = "l88" };
+		
+		public static readonly LString l88_1 = new LString("Ahem. That's right. You're the one causing a disturbance here.")
+			{ ID = "l88_1" };
 		
 		public static readonly LString l89 = new LString("Shrine maiden, thou oughtèst to stand back and for a bit watch. Drawe not so hastily thy sword that thou knowst not what musst thou strike.")
 			{ ID = "l89" };
@@ -292,13 +307,13 @@ public static partial class VNLines {
 		public static readonly LString l93 = new LString("You spend all your time sucking on that dragon-shaped kiseru, but it's helped your technique fuck all.")
 			{ ID = "l93" };
 		
-		public static readonly LString l94 = new LString("Though here beareth it the same form, the taste of tobacco ist but a frail substitute for the luster of dragonscale. Kannst thou not it recognize? This pipe is with thine own scale gilded.")
+		public static readonly LString l94 = new LString("Though here beareth it the same form, the taste of tobacco is but a frail substitute for the luster of dragonscale. Kannst thou not it recognize? This pipe is with thine own scale gilded.")
 			{ ID = "l94" };
 		
 		public static readonly LString l95 = new LString("Huh?! I gave you something that valuable and you turned it into a fucking juul?! You ungrateful bitch! I ought to take your little fucking finger as payment! I'll hand you the tantou, so kneel and get your ass ready!")
 			{ ID = "l95" };
 		
-		public static readonly LString l96 = new LString("Watch out! She has a knife!")
+		public static readonly LString l96 = new LString("Watch out! She has a knife! That gives me reasonable suspicion to jump--")
 			{ ID = "l96" };
 		
 		public static readonly LString l97 = new LString("She's just talking bull. There ain't no knife.")
@@ -307,7 +322,7 @@ public static partial class VNLines {
 		public static readonly LString l98 = new LString("(Ah, Marisa's callouses are so rough against my skin...) Oh, ok...")
 			{ ID = "l98" };
 		
-		public static readonly LString l99 = new LString("Snail-witted parasite, must even matters so simple be thee so intractable? Where else should something so precious keep I? Wouldst thou have me in a drawer hide and forget it? Or wouldst thou have me craft it into jewelery I would no more than once a week wear? Of nothing else, this kiseru is always by my side.")
+		public static readonly LString l99 = new LString("Snail-witted parasite, must even matters so simple be thee so intractable? Where else should something so precious keep I? Wouldst thou have me in a drawer hide and forget it? Or wouldst thou have me craft it into jewelery I would no more than once a week wear? Of nothing else, this pipe is always by my side.")
 			{ ID = "l99" };
 		
 		public static readonly LString l100 = new LString("Fine. I'll accept that excuse. Just keep in mind that kiseru won't follow you into the fucking bay.")
@@ -316,20 +331,27 @@ public static partial class VNLines {
 		public static readonly LString l101 = new LString("No worry. I shall from the dragon's cave the odor of tobacco far keep.")
 			{ ID = "l101" };
 		
-		public static readonly LString l102 = new LString("(Kaguya) Good morning, Kosuzu! Were you able to find the books I asked for?")
+		public static readonly LString l102 = new LString("Good morning, Kosuzu! Were you able to find the books I asked for?")
 			{ ID = "l102" };
 		
 		public static readonly LString l103 = new LString("Ah, yes, the ones on co-- cognitive behavioral therapy, yes.")
 			{ ID = "l103" };
 		
-		public static readonly LString l104 = new LString("Great! Just in time for my duel with Mokou tonight <3")
+		public static readonly LString l104 = new LString(Render(null, new[] {
+				"Great! Just in time for my duel with Mokou tonight ",
+				"\\",
+				"<3",
+			}))
 			{ ID = "l104" };
 		
 		public static readonly LString l105 = new LString("Oh, I see the fugitive princess is also a fan of psychological warfare. Manipulate your enemy's understanding of self and you need not lift a finger. Isn't it so?")
 			{ ID = "l105" };
 		
-		public static readonly LString l106 = new LString("Fufufu... perhaps you need not lift a finger, but once you grow to my age, a simple technique like that becomes a bit too boring. If there are N ways to torture someone, and you pick only one at a time, then you have N possible solutions to go through. Eventually you grow weary of the repetition. But if you pick any subset, you have 2^N possible solutions. Exponential growth! Much like the computational power of the qubits in the catbox.")
+		public static readonly LString l106 = new LString("Fufufu... perhaps you need not lift a finger, but once you grow to my age, a simple technique like that becomes a bit too boring. If there are N ways to torture someone, and you pick only one at a time, then you have N possible solutions to go through. Eventually you grow weary of the repetition.")
 			{ ID = "l106" };
+		
+		public static readonly LString l106_1 = new LString("But if you pick any subset, you have 2^N possible solutions. Exponential growth! Much like the computational power of the qubits in the catbox.")
+			{ ID = "l106_1" };
 		
 		public static readonly LString l107 = new LString("Well, I have to study, but drop by sometime if you want to share techniques. Fufufu...")
 			{ ID = "l107" };
@@ -391,10 +413,13 @@ public static partial class VNLines {
 		public static readonly LString l127 = new LString("Oh! If it ain't the big panda an' the lil' panda!")
 			{ ID = "l127" };
 		
-		public static readonly LString l128 = new LString("Panda...? Ah, whatever. What are you doing here, Kurokoma?! Depending on your response, I may have to exterminate you!")
+		public static readonly LString l128 = new LString("Panda...? Ah, whatever.")
 			{ ID = "l128" };
 		
-		public static readonly LString l129 = new LString("Ya can't see? I been racing horses.")
+		public static readonly LString l128_1 = new LString("What are you doing here, Kurokoma?! Depending on your response, I may have to exterminate you!")
+			{ ID = "l128_1" };
+		
+		public static readonly LString l129 = new LString("Ya can't see? I been racin' horses.")
 			{ ID = "l129" };
 		
 		public static readonly LString l130 = new LString("Oh, in that case, there's no prob--")
@@ -424,7 +449,7 @@ public static partial class VNLines {
 		public static readonly LString l138 = new LString("I'll crush anythin' standin' in my path! That's my <ruby=ninja way>極道</ruby>!")
 			{ ID = "l138" };
 		
-		public static readonly LString l139 = new LString("You can run your mouth all your like, but you've already lost once. You don't stand a chance.")
+		public static readonly LString l139 = new LString("You can run your mouth all you want, but you've already lost once. You don't stand a chance.")
 			{ ID = "l139" };
 		
 		public static readonly LString l140 = new LString("Oh, yer 'pproaching me? Me, this Kurokoma Saki, the fastest draw in the West?")
@@ -444,9 +469,6 @@ public static partial class VNLines {
 		
 		public static readonly LString l145 = new LString("Don't worry. I play fair. I ain't gonna draw until yer within melee range.")
 			{ ID = "l145" };
-		
-		public static readonly LString l146 = new LString("Damn it...")
-			{ ID = "l146" };
 		
 		public static readonly LString l147 = new LString("Halt!")
 			{ ID = "l147" };
@@ -475,19 +497,19 @@ public static partial class VNLines {
 		public static readonly LString l155 = new LString("Yeah. Byakuren would ne'er get involved in somethin' so sus, ze. But your lot...")
 			{ ID = "l155" };
 		
-		public static readonly LString l156 = new LString("Miko! Yester'ay I got my time un'er eleven seconds!")
+		public static readonly LString l156 = new LString("Miko! Yester'ay I got my time un'er ten seconds!")
 			{ ID = "l156" };
 		
-		public static readonly LString l157 = new LString("Oh! Eleven seconds? For the first hundred? Impressive, Saki. You always manage to go even further beyond my hopes.")
+		public static readonly LString l157 = new LString("Oh! Ten seconds? For the first hundred? Impressive, Saki. You always manage to go even further beyond my hopes.")
 			{ ID = "l157" };
 		
-		public static readonly LString l158 = new LString("Yeah! Fer a longer run I can co'er two hundred in eleven seconds, but wit' no momentum, it's kinda tough...")
+		public static readonly LString l158 = new LString("Yeah! Fer a longer run I can co'er two hundred in that time, but wit' no momentum, it's kinda tough...")
 			{ ID = "l158" };
 		
-		public static readonly LString l159 = new LString("If you desire to improve your speed from a stopped position, we ought to find you a human to compete against. Horses don't make particularly formidable racing opponents short of four hundred.")
+		public static readonly LString l159 = new LString("If you desire to improve your speed from a stopped position, we ought to find you a human to compete against. Horses don't make particularly formidable racing opponents short of two hundred.")
 			{ ID = "l159" };
 		
-		public static readonly LString l160 = new LString("Ah, that 'splains a lot. I been racin' against the horses here all mornin', but in two hundred er less, they ain't much.")
+		public static readonly LString l160 = new LString("Ah, that 'splains a lot. I been racin' against the horses here all mornin', but in a hundred er less, they ain't much.")
 			{ ID = "l160" };
 		
 		public static readonly LString l161 = new LString("Racin'... <i>against</i> horses?")
@@ -499,8 +521,11 @@ public static partial class VNLines {
 		public static readonly LString l163 = new LString("Yeah! I was jus' about to! I even brought some new toys for us to play with! Here, take a look!")
 			{ ID = "l163" };
 		
-		public static readonly LString l164 = new LString("Let's see, let's see... Oh!?... Saki... your choices are always so... inventive.")
+		public static readonly LString l164 = new LString("Let's see, let's see...")
 			{ ID = "l164" };
+		
+		public static readonly LString l164_1 = new LString("Oh!?... Saki... your choices are always so... inventive.")
+			{ ID = "l164_1" };
 		
 		public static readonly LString l165 = new LString("I read in a book that humans really like bein' treated like animals. Luckily I got a lotta practice with that kinda stuff from my work down below. Ain't no reason to hol' back, Miko. I'll take <i>real</i> good care ov'ya today.")
 			{ ID = "l165" };
@@ -514,7 +539,7 @@ public static partial class VNLines {
 		public static readonly LString l168 = new LString("Apparently naw. But maybe it's a prollem that those two are hangin' out?")
 			{ ID = "l168" };
 		
-		public static readonly LString l169 = new LString("Relationship therapy isn't part of my job description, so let's let that slide.")
+		public static readonly LString l169 = new LString("Busting yakuza-corporate collusion rings is beyond my pay grade. Yukari will take care of that.")
 			{ ID = "l169" };
 		
 		public static readonly LString l171 = new LString("Next is... the vermilion phoenix, right?")
@@ -580,7 +605,7 @@ public static partial class VNLines {
 		public static readonly LString l191 = new LString("The question isn't how similar they look. The question is how they've been historically distinguished.")
 			{ ID = "l191" };
 		
-		public static readonly LString l192 = new LString("Vermilion dye is derived from cinnabar, an ore. Crimson dye is derived from the dried corpses of various scale insects, originally Kermes and later cochineal, though some prefer to name the cochineal-derived dye as carmine instead.")
+		public static readonly LString l192 = new LString("Vermilion dye is derived from cinnabar, an ore. Crimson dye is derived from the dried corpses of various scale insects, originally Kermes and later cochineal. Formally, the cochineal-based dye is called \"carmine\", but as it effectively replaced all production of the Kermes-based dye, we can draw a line through the two and call them both crimson.")
 			{ ID = "l192" };
 		
 		public static readonly LString l193 = new LString("In fact, there are shades of vermilion that look the same as crimson. But they're still vermilion, because they're created from cinnabar.")
@@ -601,7 +626,7 @@ public static partial class VNLines {
 		public static readonly LString l198 = new LString("Oh... well, I guess that solves our issue. Thanks for the help.")
 			{ ID = "l198" };
 		
-		public static readonly LString l199 = new LString("No problem. By the way, though, you did meet Kaguya today, right?")
+		public static readonly LString l199 = new LString("No problem. By the way, though, you said that you did see Kaguya today, right?")
 			{ ID = "l199" };
 		
 		public static readonly LString l200 = new LString("Yeah. She was looking for some books on... cognition behavior therapy, or something like that.")
@@ -616,7 +641,7 @@ public static partial class VNLines {
 		public static readonly LString l203 = new LString("Mostly we just murder each other. Sometimes literally, sometimes metaphorically. It's not the kind of relationship mortals could understand.")
 			{ ID = "l203" };
 		
-		public static readonly LString l204 = new LString("Would you say it's something like... love?")
+		public static readonly LString l204 = new LString("Would you say it's something like... <speed=0.1>love?</speed>")
 			{ ID = "l204" };
 		
 		public static readonly LString l205 = new LString("Hell no. We hate each other. We only spend so much time together because... our, uh, immortality binds us.")
@@ -694,7 +719,7 @@ public static partial class VNLines {
 		public static readonly LString l230 = new LString("Well, historically--")
 			{ ID = "l230" };
 		
-		public static readonly LString l231 = new LString("Humans' ability to differentiate colors has increased drastically with the passage of time, not only in terms of biological evolution but also in terms of cultural intermixing bringing increased specificity to color definitions. If you can only barely tell them apart today, chances are that your ancestors who created these terms couldn't tell them apart at all.")
+		public static readonly LString l231 = new LString("Historically, humans' ability to differentiate colors has increased drastically with the passage of time, not only in terms of biological evolution but also in terms of cultural intermixing bringing increased specificity to color definitions. If you can only barely tell them apart today, chances are that your ancestors who created these terms couldn't tell them apart at all.")
 			{ ID = "l231" };
 		
 		public static readonly LString l232 = new LString("Cluuuck cluck cluck cluck!")
@@ -706,7 +731,7 @@ public static partial class VNLines {
 		public static readonly LString l234 = new LString("But even if they couldn't tell them apart at a glance, the differences in how those colors were produced and managed as social objects would have allowed them to differentiate crimson from vermilion.")
 			{ ID = "l234" };
 		
-		public static readonly LString l235 = new LString("For a manmade object with a traceable lineage, sure. But the vermilion phoenix isn't a sculpture. If such humans saw a phoenix that seemed to have the color vermilion, then what reason would they have to not also call it the crimson phoenix? It's a matter of pure, objective observation.")
+		public static readonly LString l235 = new LString("I can grant that for a manmade object with a traceable lineage. But the vermilion phoenix isn't a sculpture. If such humans saw a phoenix that seemed to have the color vermilion, then what reason would they have to not also call it the crimson phoenix? It's a matter of pure, objective observation.")
 			{ ID = "l235" };
 		
 		public static readonly LString l236 = new LString("...Damn, how do I even respond to that...")
@@ -715,11 +740,14 @@ public static partial class VNLines {
 		public static readonly LString l237 = new LString("Same thing. Social reasons.")
 			{ ID = "l237" };
 		
-		public static readonly LString l238 = new LString("There are no social reasons attached to pure observation! Are you rejecting the objectivity of the scientific method?! If observation is socially determined, then all scientific theories are socially determined and therefore have no intercommunal validity! Do you wish to cast our process of knowledge-gathering back to the premodern age?!")
+		public static readonly LString l238 = new LString("There are no social reasons attached to pure observation! Are you rejecting the objectivity of the scientific method?! If observation is socially determined, then all scientific theories are socially determined and therefore have no intercommunal validity! Are you trying to cast our process of knowledge-gathering back to the premodern age?!")
 			{ ID = "l238" };
 		
-		public static readonly LString l239 = new LString("I dunno 'bout those scary-soundin' consequences, but there do be social reasons. Take this hypothetical. Ya live in a society where vermilion dye be used to paint high art, and where its material connection to the earth give it a connotation of eternity n' permanence. And this same society don't use crimson dye 'cause there ain't enough of the producin' insects in the area, or maybe they got a <ruby=不殺生戒>prohibition on the taking of life</ruby>, so they associate it wit' death instead. If ya see a holy immortal phoenix, yer gonna call it vermilion, not crimson, even if those colors do be effectively the same visually.")
+		public static readonly LString l239 = new LString("I dunno 'bout those scary-soundin' consequences, but there do be social reasons. Take this hypothetical. Ya live in a society where vermilion dye be used to paint high art, and where its material connection to the earth give it a connotation of eternity n' permanence. ")
 			{ ID = "l239" };
+		
+		public static readonly LString l239_1 = new LString("And this same society don't use crimson dye 'cause there ain't enough of the producin' insects in the area, or maybe they got a <ruby=不殺生戒>prohibition on the taking of life</ruby>, so they associate it wit' death instead. If ya see a holy immortal phoenix, yer gonna call it vermilion, not crimson, even if those colors do be effectively the same visually.")
+			{ ID = "l239_1" };
 		
 		public static readonly LString l240 = new LString("In fact, ain't there a big-ass country on the continent like this?")
 			{ ID = "l240" };
@@ -742,7 +770,7 @@ public static partial class VNLines {
 		public static readonly LString l246 = new LString("Cluuck clu-clu-cluck cluck.")
 			{ ID = "l246" };
 		
-		public static readonly LString l247 = new LString("Yeah, that's right. Fine, I'll concede that the vermilion phoenix and crimson phoenix might be different entities. But in that case, no, I haven't seen a vermilion phoenix anywhere nearby.")
+		public static readonly LString l247 = new LString("Yeah, that's right. Fine, I'll concede <speed=0.1><i>for now</i></speed> that the vermilion phoenix and crimson phoenix might be different entities. But in that case, no, I haven't seen a vermilion phoenix anywhere nearby.")
 			{ ID = "l247" };
 		
 		public static readonly LString l248 = new LString("Huh... was Mokou just trolling us?")
@@ -772,7 +800,7 @@ public static partial class VNLines {
 		public static readonly LString l256 = new LString("Let's do that. See ya, Kutaka!")
 			{ ID = "l256" };
 		
-		public static readonly LString l257 = new LString("Bye! Don't forget me before I forget you! And if you see Urumi, tell her I'm waiting for her here!")
+		public static readonly LString l257 = new LString("Bye! Don't forget me before I forget you! And if you see the off-white tiger, tell her I'm waiting for her here!")
 			{ ID = "l257" };
 		
 		public static readonly LString l258 = new LString("Cluuuuuuck!")
@@ -793,17 +821,23 @@ public static partial class VNLines {
 		public static readonly LString l264 = new LString("Huh?!")
 			{ ID = "l264" };
 		
-		public static readonly LString l265 = new LString("Stop! You've violated the law! Pay the court a fine or serve-- excuse me, force of habit. What are you two doing here?")
+		public static readonly LString l265 = new LString("Stop! You've violated the law! Pay the court a fine or serve--")
 			{ ID = "l265" };
 		
-		public static readonly LString l266 = new LString("This is the human village. We're supposed to be here. What about you? And have you seen a golem anywhere nearby?")
+		public static readonly LString l265_1 = new LString(" excuse me, force of habit. Nice to see you two. You seem to be looking for something.")
+			{ ID = "l265_1" };
+		
+		public static readonly LString l266 = new LString("We're looking for a, uh, M-something golem. Have you seen a giant sentient rock crafted into humanoid form anywhere nearby?")
 			{ ID = "l266" };
 		
 		public static readonly LString l267 = new LString("Wait, Reimu. This' weird, ze. Since when's there a flower stall in the human village?")
 			{ ID = "l267" };
 		
-		public static readonly LString l268 = new LString("Flower stall...? Shit, where'd this come from?! Looks like the incident has already started. Owner of this flower stall, show yourself!")
+		public static readonly LString l268 = new LString("Flower stall...? Shit, where'd this come from?!")
 			{ ID = "l268" };
+		
+		public static readonly LString l268_1 = new LString("Looks like the incident has already started. Owner of this flower stall, show yourself!")
+			{ ID = "l268_1" };
 		
 		public static readonly LString l269 = new LString("Did someone call for me?")
 			{ ID = "l269" };
@@ -820,10 +854,13 @@ public static partial class VNLines {
 		public static readonly LString l273 = new LString("Yuuka is your aunt?!")
 			{ ID = "l273" };
 		
-		public static readonly LString l274 = new LString("It's been difficult for me to visit the shrine over the past several years, for various reasons. But I'm here today in the village and soon I'll be able to head up to the shrine too. So we'll get to sit down and drink tea together again very soon. I'm looking forward to it, Marisa.")
+		public static readonly LString l274 = new LString("It's been difficult for me to visit the shrine over the past several years, for various reasons. But I'm here today in the village and soon I'll be able to head up to the shrine too.")
 			{ ID = "l274" };
 		
-		public static readonly LString l275 = new LString("Me too, auntie! I always known you'd be back. I've been growin' amaranth in my yard, so I can give 'em to ya some day. I'll have 'em prepared for you when ya visit the shrine.")
+		public static readonly LString l274_1 = new LString("So we'll get to sit down and drink tea together again very soon. I'm looking forward to it, Marisa.")
+			{ ID = "l274_1" };
+		
+		public static readonly LString l275 = new LString("Me too, auntie! I always known you'd be back. I've been grown' amaranth in my yard, so I can give 'em to ya some day. I'll have 'em prepared for you when ya visit the shrine.")
 			{ ID = "l275" };
 		
 		public static readonly LString l276 = new LString("Amaranth, is your choice? In this <ruby=浮世>ephemeral world</ruby>, we seek to at least make our relationships immortal. An impossible battle, but one worth fighting nonetheless.")
@@ -838,13 +875,13 @@ public static partial class VNLines {
 		public static readonly LString l279 = new LString("Huh? What does it mean to give edelweiss?")
 			{ ID = "l279" };
 		
-		public static readonly LString l280 = new LString("I don't know about here, but underground, giving edelweiss to a lover is a pledge of loyalty. Agh, it's a good one, but a bit off for me...")
+		public static readonly LString l280 = new LString("I don't know about here, but underground, giving edelweiss to a lover is a pledge of loyalty. Agh, if only it were applicable to my use-case...")
 			{ ID = "l280" };
 		
 		public static readonly LString l281 = new LString("Oh... then--")
 			{ ID = "l281" };
 		
-		public static readonly LString l282 = new LString("Then, Marisa, to whom do you plan to give those edelweiss?")
+		public static readonly LString l282 = new LString("Then, Marisa, to whom would you think of giving those edelweiss?")
 			{ ID = "l282" };
 		
 		public static readonly LString l283 = new LString("!!")
@@ -877,7 +914,7 @@ public static partial class VNLines {
 		public static readonly LString l292 = new LString("kinda sus ngl")
 			{ ID = "l292" };
 		
-		public static readonly LString l293 = new LString("I don't see why this would be strange. I am, after all, the self-proclaimed god of flowers (I'm technically just a youkai though). If anything, it's stange that it took me this long to start up this stand.")
+		public static readonly LString l293 = new LString("I don't see why this would be strange. I am, after all, the self-proclaimed god of flowers (I'm technically just a youkai though). If anything, it's strange that it took me this long to start up this stand. I guess that's <i>her</i> fault, but I can't blame her now that she's gone.")
 			{ ID = "l293" };
 		
 		public static readonly LString l294 = new LString("The Buddhists were quite overjoyed that I could provide them with so much lotus. And the Taoists... well, I suppose they'd care for nothing more than amaranth, obsessed with latching onto life as they are. Either way, flowers can make people happy.")
@@ -901,7 +938,7 @@ public static partial class VNLines {
 		public static readonly LString l300 = new LString("Though I may not have been present for many of the past years, news from all Gensoukyou nonetheless reaches my ears. So I already know your situation. Don't consider it teasing.")
 			{ ID = "l300" };
 		
-		public static readonly LString l301 = new LString("Wait, wait, wait! These flowers are all beside the point! Yukari told me to exterminate you! There's probably some poison in those flowers, right?!")
+		public static readonly LString l301 = new LString("Wait, wait, wait! These flowers are all beside the point! Yukari told me to exterminate you! There's probably some poison in those flowers!")
 			{ ID = "l301" };
 		
 		public static readonly LString l302 = new LString("Ah-- Reimu, wait--")
@@ -910,16 +947,19 @@ public static partial class VNLines {
 		public static readonly LString l303 = new LString("Yukari? That can't be right, I've already received a vendor permit from her. Here, take a look.")
 			{ ID = "l303" };
 		
-		public static readonly LString l304 = new LString("Let's see... it says... \"Reimu, I'm not a fan of vendor permits, since they generally result in the criminalization of those who are unable to navigate the bureaucracies of procuring one. However, in this case, I worried that you might attack Yuuka on some flimsy notion of reasonable suspicion, so I wrote this to explicitly prevent you from doing so. If you're reading this, you've already fucked up. This said, I have no plans to formalize a system around these permits, as you're the only one in Gensoukyou who ever needs to see them.\"")
+		public static readonly LString l304 = new LString("Let's see... it says... \"Reimu, I'm not a fan of vendor permits, since they generally result in the criminalization of those who are unable to navigate the bureaucracies of procuring one.")
 			{ ID = "l304" };
+		
+		public static readonly LString l304_1 = new LString("...However, in this case, I worried that you might attack Yuuka on some flimsy notion of reasonable suspicion, so I wrote this to explicitly prevent you from doing so. If you're reading this, you've already fucked up. This said, I have no plans to formalize a system around these permits, as you're the only one in Gensoukyou who ever needs to see them.\"")
+			{ ID = "l304_1" };
 		
 		public static readonly LString l305 = new LString("Yukari's foresight is quite impressive, isn't it?")
 			{ ID = "l305" };
 		
-		public static readonly LString l306 = new LString("Hmph! I bet this permit is a fake. But I'll go ahead and finish reading it to make sure.")
+		public static readonly LString l306 = new LString("Hmph! I bet this permit is a fake... But I'll go ahead and finish reading it to make sure.")
 			{ ID = "l306" };
 		
-		public static readonly LString l307 = new LString("PS. You probably think this permit is fake. In that case, did you find the Maharal's golem yet? If you remove her shem, that'll probably cause a diplomatic incident, so please restrain yourself when I tell you that she should be just behind you right now.")
+		public static readonly LString l307 = new LString("\"PS. You probably think this permit is fake. In that case, did you find the Maharal's golem yet? If you remove her shem, that'll probably cause a diplomatic incident, so please restrain yourself when I tell you that she should be just behind you right now.\"")
 			{ ID = "l307" };
 		
 		public static readonly LString l308 = new LString("Behind me?!")
@@ -940,16 +980,19 @@ public static partial class VNLines {
 		public static readonly LString l313 = new LString("Hmm... let me think a bit more, please!")
 			{ ID = "l313" };
 		
-		public static readonly LString l314 = new LString("...Auntie, when did'ya even get this permit?")
+		public static readonly LString l314 = new LString("...Auntie, when d'ya even get this permit?")
 			{ ID = "l314" };
 		
 		public static readonly LString l315 = new LString("Just a few hours ago. I saw the two of them eating mangoes in a park outside, so I went to greet them. Yukari even told me where to find some yellow lily!")
 			{ ID = "l315" };
 		
-		public static readonly LString l316 = new LString("Alright. I think I've decided. I'll get some-- eep!")
+		public static readonly LString l316 = new LString("Alright. I think I've decided. I'll get some--")
 			{ ID = "l316" };
 		
-		public static readonly LString l317 = new LString("(Youmu) Oh! Reimu and Marisa! Are you also here to purchase flowers?")
+		public static readonly LString l316_1 = new LString(" eep!")
+			{ ID = "l316_1" };
+		
+		public static readonly LString l317 = new LString("Oh! Reimu and Marisa! Are you also here to purchase flowers?")
 			{ ID = "l317" };
 		
 		public static readonly LString l318 = new LString("...Not particularly?")
@@ -961,7 +1004,7 @@ public static partial class VNLines {
 		public static readonly LString l320 = new LString("Not this time! I finally persuaded my lady to get something different. She said she'll go with hurricane lily this time.")
 			{ ID = "l320" };
 		
-		public static readonly LString l321 = new LString("!!...")
+		public static readonly LString l321 = new LString("!!!...")
 			{ ID = "l321" };
 		
 		public static readonly LString l322 = new LString("Youmu, I'm sorry, but...")
@@ -976,11 +1019,14 @@ public static partial class VNLines {
 		public static readonly LString l325 = new LString("Hurricane lily and higanbana are the same flower.")
 			{ ID = "l325" };
 		
-		public static readonly LString l326 = new LString("Noooooooooooooooおおおおおおお!!!")
+		public static readonly LString l326 = new LString("<speed=0.4>Noooooooooooooooooooooooooooooooooおおおおおおおおおおおおおおおおおおお!!!</speed>")
 			{ ID = "l326" };
 		
-		public static readonly LString l326_1 = new LString("Every single room, every single open space in Hakugyokurou is overflowing with higanbana. Everywhere I look is covered so thoroughly in red that I wouldn't be able to tell if Remilia had another go at the Scarlet Mist incident. Other than the few remaining sakura trees, it's all higanbana. Even the zen garden is covered in higanbana. I tried to persuade her, just once, to pick out something else. But it's still higanbana! Agh, at this rate I'm going to trip over a rock, crack my skull open, and nobody will be able to tell because my blood-covered corpse will blend right into the sea of crimson higanbana!")
+		public static readonly LString l326_1 = new LString("Every single room, every single open space in Hakugyokurou is overflowing with higanbana. Everywhere I look is covered so thoroughly in red that I wouldn't be able to tell if Remilia had another go at the Scarlet Mist incident. Other than the few remaining sakura trees, it's all higanbana. Even the zen garden is covered in higanbana.")
 			{ ID = "l326_1" };
+		
+		public static readonly LString l326_1_1 = new LString("I tried to persuade her, just once, to pick out something else. But it's still higanbana! Agh, at this rate I'm going to trip over a rock, crack my skull open, and nobody will be able to tell because my blood-covered corpse will blend right into the sea of crimson higanbana!")
+			{ ID = "l326_1_1" };
 		
 		public static readonly LString l326_2 = new LString("Well, higanbana is poisonous, so too much of it may be harmful for a half-human...")
 			{ ID = "l326_2" };
@@ -1003,7 +1049,7 @@ public static partial class VNLines {
 		public static readonly LString l332 = new LString("International trade allowed lycoris radiata to spread to many other lands...")
 			{ ID = "l332" };
 		
-		public static readonly LString l333 = new LString("There aren't many left! What about <ruby=龍爪花>dragonclaw</ruby>?")
+		public static readonly LString l333 = new LString("There aren't many left... what about <ruby=龍爪花>dragonclaw</ruby>?")
 			{ ID = "l333" };
 		
 		public static readonly LString l334 = new LString("It's the same too...")
@@ -1042,7 +1088,7 @@ public static partial class VNLines {
 		public static readonly LString l345 = new LString("Well, I think we all figured out what Yuyuko's fav'rite flower is... but what 'bout you, Youmu? What's yer favorite flower?")
 			{ ID = "l345" };
 		
-		public static readonly LString l346 = new LString("Me? Definitely the yellow lily. I love how it opens up in the image of the fleur-de-lys. It has a beautiful shape that expresses both power and vulnerability.")
+		public static readonly LString l346 = new LString("Me? Definitely the yellow lily. I love how it opens up in the image of the fleur-de-lys. It has a beautiful shape that expresses both power and vulnerability. A sharp sword and a kind heart, that's the kind of swordsman I aspire to be!")
 			{ ID = "l346" };
 		
 		public static readonly LString l347 = new LString("...I hate to break it to you, but the fleur-de-lys is a yellow iris.")
@@ -1051,7 +1097,7 @@ public static partial class VNLines {
 		public static readonly LString l348 = new LString("What?! No way! But fleur-de-lys literally means \"lily flower\"!")
 			{ ID = "l348" };
 		
-		public static readonly LString l349 = new LString("(yuuka reappears) Here. Take a look. This is a yellow lily, alternatively meadow lily or C***da lily. It's a nodding flower, so it doesn't point up at all. And it doesn't really look much like the fleur-de-lys in terms of shape.")
+		public static readonly LString l349 = new LString("Here. Take a look. This is a yellow lily, alternatively meadow lily or C***da lily. It's a nodding flower, so it doesn't point up at all. And it doesn't really look much like the fleur-de-lys in terms of shape.")
 			{ ID = "l349" };
 		
 		public static readonly LString l350 = new LString("What the...")
@@ -1069,10 +1115,13 @@ public static partial class VNLines {
 		public static readonly LString l354 = new LString("But shouldn't that be impossible? Saying something like \"X is my favorite flower\" is fundamentally a speech act that signals one's receptiveness to social practices involving X, such as receiving X as a gift. How is it possible for a performative statement to be wrong in such a way?")
 			{ ID = "l354" };
 		
-		public static readonly LString l355 = new LString("If we're going down that route, we should first ask-- Marisa, Reimu, what are your favorite flowers?")
+		public static readonly LString l355 = new LString("If we're going down that route, we should first ask--")
 			{ ID = "l355" };
 		
-		public static readonly LString l356 = new LString("...Verchnyava Mcara.")
+		public static readonly LString l355_1 = new LString(" Marisa, Reimu, what are your favorite flowers?")
+			{ ID = "l355_1" };
+		
+		public static readonly LString l356 = new LString("Verchnyava Mcara.")
 			{ ID = "l356" };
 		
 		public static readonly LString l357 = new LString("A practical choice. Reimu?")
@@ -1081,7 +1130,7 @@ public static partial class VNLines {
 		public static readonly LString l358 = new LString("Peach blossoms, I guess.")
 			{ ID = "l358" };
 		
-		public static readonly LString l359 = new LString("Oh? In the sense of Sun Wukong's Peach Orchard or in the sense of Liu Bei's Peach Garden Oath?")
+		public static readonly LString l359 = new LString("Oh? In the sense of Sun Wukong's short-lived Peach Orchard or in the sense of Liu Bei's Peach Garden Oath?")
 			{ ID = "l359" };
 		
 		public static readonly LString l360 = new LString("I'm no Taoist. The latter, obviously.")
@@ -1102,11 +1151,20 @@ public static partial class VNLines {
 		public static readonly LString l365 = new LString("If they gave red roses and that was somehow still infelicitous, maybe that'd be similar?")
 			{ ID = "l365" };
 		
-		public static readonly LString l366 = new LString("That's a good approach. But there's a way to think about it as simply descriptively wrong. We could also take \"X is my favorite flower\" as a description of how one would respond to X in a general situation. Absent such social relations, if you say \"red roses are my favorite flower\", and then you walk into a garden and are repulsed by the red roses, you'd simply be descriptively wrong, and thus the illocutionary result in the other situation would naturally be strange. Since we shattered your illusions by showing you a real yellow lily, doesn't that suffice?")
+		public static readonly LString l366 = new LString("That's a good approach. But there's a way to think about it as simply descriptively wrong. We could also take \"X is my favorite flower\" as a description of how one would respond to X in a general situation. ")
 			{ ID = "l366" };
 		
-		public static readonly LString l367 = new LString("That might apply in this case, but it's not sufficient as a general solution. Consider the case where you're sick in bed and someone is tending to you. If you say \"I'm cold\", there is both a descriptive and performative aspect to this utterance. You may actually feel cold and your teeth may actually be chattering, but when the person by your bedside responds by giving you another blanket, it's possible for the blanket to actually make you feel worse, even though that was the explicit function of the illocution. This is a well-known problem when dealing with bedridden people. In this case, there is no error in the description, but the statement is still \"wrong\" in terms of what it performatively causes.")
+		public static readonly LString l366_1 = new LString("Absent such social relations, if you say \"red roses are my favorite flower\", and then you walk into a garden and are repulsed by the red roses, you'd simply be descriptively wrong, and thus the illocutionary result in the other situation would naturally be strange. Since we shattered your illusions by showing you a real yellow lily, doesn't that suffice?")
+			{ ID = "l366_1" };
+		
+		public static readonly LString l367 = new LString("That might apply in this case, but it's not sufficient as a general solution. Consider the case where you're sick in bed and someone is tending to you. If you say \"I'm cold\", there is both a descriptive and performative aspect to this utterance.")
 			{ ID = "l367" };
+		
+		public static readonly LString l367_1 = new LString("You may actually feel cold and your teeth may actually be chattering, but when the person by your bedside responds by giving you another blanket, it's possible for the blanket to actually make you feel worse, even though that was the explicit function of the illocution.")
+			{ ID = "l367_1" };
+		
+		public static readonly LString l367_2 = new LString("This is a well-known problem when dealing with bedridden people. In this case, there is no error in the description, but the statement is still \"wrong\" in terms of what it performatively causes.")
+			{ ID = "l367_2" };
 		
 		public static readonly LString l368 = new LString("Yeah, Reimu's always askin' me to add an' then subtract blankets when she's sick, ze.")
 			{ ID = "l368" };
@@ -1120,10 +1178,10 @@ public static partial class VNLines {
 		public static readonly LString l371 = new LString("...I can't.")
 			{ ID = "l371" };
 		
-		public static readonly LString l372 = new LString("Okay, then let's leave it at that. <b>Youmu's favorite flower is the yellow iris.</b> And here's the vermillion jeweled allium for Yuyuko.")
+		public static readonly LString l372 = new LString("Okay, then let's leave it at that. <speed=0.4><b>Youmu's favorite flower is the yellow iris.</b></speed> And here's the vermillion jeweled allium for Yuyuko.")
 			{ ID = "l372" };
 		
-		public static readonly LString l373 = new LString("Thanks, Yuuka. I'll work harder on persuading her next time. If I can't... please just \"run out\" of higanbana next time.")
+		public static readonly LString l373 = new LString("Thanks, Yuuka. I'll work harder on persuading her. If I can't... please just \"run out\" of higanbana next time.")
 			{ ID = "l373" };
 		
 		public static readonly LString l374 = new LString("Mayumi, are you still here?")
@@ -1144,7 +1202,7 @@ public static partial class VNLines {
 		public static readonly LString l379 = new LString("Thanks...")
 			{ ID = "l379" };
 		
-		public static readonly LString l380 = new LString("...I guess we're done here? I wouldn't have guessed she was the golem without that message from Yukari, but either way, it doesn't seem like this will become an incident.")
+		public static readonly LString l380 = new LString("I have some objections to Yukari classifying haniwa as golems, but either way, I don't think there'll be an incident with her. I guess we're done here.")
 			{ ID = "l380" };
 		
 		public static readonly LString l381 = new LString("Going so soon? I have some red czar and peach blossoms in the back, you know.")
@@ -1153,7 +1211,7 @@ public static partial class VNLines {
 		public static readonly LString l382 = new LString("No! We're out! Back to the shrine! We have to, uh, discuss some private matters!")
 			{ ID = "l382" };
 		
-		public static readonly LString l383 = new LString("Okay. Come back again soon.")
+		public static readonly LString l383 = new LString("Okay. I'll see you two again soon.")
 			{ ID = "l383" };
 		
 		public static readonly LString l385 = new LString("What's up, Reimu? Ya wanted to talk?")
@@ -1180,8 +1238,11 @@ public static partial class VNLines {
 		public static readonly LString l392 = new LString("It really is of a different caliber, isn't it?")
 			{ ID = "l392" };
 		
-		public static readonly LString l393 = new LString("I have to agree. I've seen a lot of overhyped food, but this one really did deliver. How do they do all that with raw fish?... Oh, looks like we've interrupted something.")
+		public static readonly LString l393 = new LString("I have to agree. I've seen a lot of overhyped food, but this one really did deliver. How do they do all that with raw fish?")
 			{ ID = "l393" };
+		
+		public static readonly LString l393_1 = new LString("... Oh, looks like we've interrupted something.")
+			{ ID = "l393_1" };
 		
 		public static readonly LString l394 = new LString("Oh, uh, you two are, uh, back early.")
 			{ ID = "l394" };
@@ -1210,37 +1271,37 @@ public static partial class VNLines {
 		public static readonly LString l402 = new LString("Go on, don't mind us.")
 			{ ID = "l402" };
 		
-		public static readonly LString l403 = new LString("(Reimu) ...")
+		public static readonly LString l403 = new LString("...")
 			{ ID = "l403" };
 		
-		public static readonly LString l404 = new LString("(Marisa) ...")
+		public static readonly LString l404 = new LString("...")
 			{ ID = "l404" };
 		
-		public static readonly LString l405 = new LString("(Yukari) ...")
+		public static readonly LString l405 = new LString("...")
 			{ ID = "l405" };
 		
-		public static readonly LString l406 = new LString("(Kasen) ...?")
+		public static readonly LString l406 = new LString("...?")
 			{ ID = "l406" };
 		
-		public static readonly LString l407 = new LString("..You know, Marisa, you're always so smart, and so pretty, and you make a show of being disorganized but you always have your affairs perfectly in order, and you know how to cook so well, and you're so handsome and so smart, and you're the best person I've ever met! I love you, Marisa! Please marry me!")
+		public static readonly LString l407 = new LString("..You know, Marisa, you're always so smart, and so pretty, <speed=1.5>and you make a show of being disorganized but you always have your affairs perfectly in order, <speed=1.5>and you know how to cook so well, and you're so handsome and so smart, and you're the best person I've ever met!</speed></speed> I love you, Marisa! Please marry me!")
 			{ ID = "l407" };
 		
-		public static readonly LString l408 = new LString("(Yukari) !!")
+		public static readonly LString l408 = new LString("!!")
 			{ ID = "l408" };
 		
-		public static readonly LString l409 = new LString("(Kasen) ??")
+		public static readonly LString l409 = new LString("??")
 			{ ID = "l409" };
 		
-		public static readonly LString l410 = new LString("(Marisa) ?!")
+		public static readonly LString l410 = new LString("?!")
 			{ ID = "l410" };
 		
 		public static readonly LString l411 = new LString("...Sure.")
 			{ ID = "l411" };
 		
-		public static readonly LString l412 = new LString("(Marisa, you have to say it too!)")
+		public static readonly LString l412 = new LString("<silent>(Marisa, you have to say it too!)</silent>")
 			{ ID = "l412" };
 		
-		public static readonly LString l413 = new LString("...I love ya too, Reimu. I'll always be with you.")
+		public static readonly LString l413 = new LString("...I- I love ya too, Reimu. I'll always be with you.")
 			{ ID = "l413" };
 		
 		public static readonly LString l414 = new LString("Marisa, I--")

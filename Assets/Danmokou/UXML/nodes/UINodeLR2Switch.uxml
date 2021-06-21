@@ -5,9 +5,9 @@
         <ui:VisualElement name="Selector" class="pointer prefix" />
         <ui:Label name="Key" class="text" />
         <ui:VisualElement class="optionsCont">
-            <ui:Label text="&lt;" class="text" />
+            <ui:Label text="&lt;" name="Left" class="text" />
             <ui:VisualElement name="LR2ChildContainer" />
-            <ui:Label text="&gt;" class="text" />
+            <ui:Label text="&gt;" name="Right" class="text" />
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

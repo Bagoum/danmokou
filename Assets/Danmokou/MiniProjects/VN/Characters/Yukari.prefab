@@ -28,7 +28,7 @@ PrefabInstance:
     - target: {fileID: 2869238025069884022, guid: c49533a826fdb13409ee106e66235e02,
         type: 3}
       propertyPath: m_LocalPosition.y
-      value: -1
+      value: -0.7
       objectReference: {fileID: 0}
     - target: {fileID: 3158699776333818785, guid: c49533a826fdb13409ee106e66235e02,
         type: 3}
@@ -59,75 +59,102 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 9ac988fe6250e8c48bacb5d0ac63439d,
+      objectReference: {fileID: 21300000, guid: 7ea30a693426213448b898d47afd0df2,
         type: 3}
     - target: {fileID: 6243233405909575462, guid: c49533a826fdb13409ee106e66235e02,
         type: 3}
       propertyPath: emotes.Array.data[0].sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 9ac988fe6250e8c48bacb5d0ac63439d,
+      objectReference: {fileID: 21300000, guid: 7ea30a693426213448b898d47afd0df2,
         type: 3}
     - target: {fileID: 6961882707186433460, guid: c49533a826fdb13409ee106e66235e02,
         type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0.1
+      value: -0.17307693
       objectReference: {fileID: 0}
     - target: {fileID: 6961882707186433460, guid: c49533a826fdb13409ee106e66235e02,
         type: 3}
       propertyPath: m_LocalPosition.y
-      value: 2.5
+      value: 3.5
       objectReference: {fileID: 0}
     - target: {fileID: 8545645276882358446, guid: c49533a826fdb13409ee106e66235e02,
         type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: c520d6299fe5fda45bc0fc4cfb037d4b,
+      objectReference: {fileID: 21300000, guid: c0771f8ac3bff64458a99e31f8e411bc,
         type: 3}
     - target: {fileID: 9205926511721270859, guid: c49533a826fdb13409ee106e66235e02,
         type: 3}
       propertyPath: offsetPx.x
-      value: -14
+      value: -18
       objectReference: {fileID: 0}
     - target: {fileID: 9205926511721270859, guid: c49533a826fdb13409ee106e66235e02,
         type: 3}
       propertyPath: offsetPx.y
-      value: 350
+      value: 364
+      objectReference: {fileID: 0}
+    - target: {fileID: 9205926511721270859, guid: c49533a826fdb13409ee106e66235e02,
+        type: 3}
+      propertyPath: emotes.Array.size
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 9205926511721270859, guid: c49533a826fdb13409ee106e66235e02,
+        type: 3}
+      propertyPath: emotes.Array.data[6].emote
+      value: emb1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9205926511721270859, guid: c49533a826fdb13409ee106e66235e02,
+        type: 3}
+      propertyPath: emotes.Array.data[7].emote
+      value: smug
       objectReference: {fileID: 0}
     - target: {fileID: 9205926511721270859, guid: c49533a826fdb13409ee106e66235e02,
         type: 3}
       propertyPath: emotes.Array.data[0].sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 2a63269613c65af4e851e0aa6b5e5820,
+      objectReference: {fileID: 21300000, guid: 3e016f8807cb77b42bf61fc93796d5fd,
         type: 3}
     - target: {fileID: 9205926511721270859, guid: c49533a826fdb13409ee106e66235e02,
         type: 3}
       propertyPath: emotes.Array.data[1].sprite
       value: 
-      objectReference: {fileID: 21300000, guid: c520d6299fe5fda45bc0fc4cfb037d4b,
+      objectReference: {fileID: 21300000, guid: 74c176880b5039d4195c0100c6ab5a4c,
         type: 3}
     - target: {fileID: 9205926511721270859, guid: c49533a826fdb13409ee106e66235e02,
         type: 3}
       propertyPath: emotes.Array.data[2].sprite
       value: 
-      objectReference: {fileID: 21300000, guid: faf389ac02c76124ab4b3b0d5e87350d,
+      objectReference: {fileID: 21300000, guid: 4bb1248c35376cb4696b53d910f941cb,
         type: 3}
     - target: {fileID: 9205926511721270859, guid: c49533a826fdb13409ee106e66235e02,
         type: 3}
       propertyPath: emotes.Array.data[3].sprite
       value: 
-      objectReference: {fileID: 21300000, guid: ba665658a38949745b261f6b1bea631a,
+      objectReference: {fileID: 21300000, guid: 7e3f2a43793416e4e972ce15495e4f72,
         type: 3}
     - target: {fileID: 9205926511721270859, guid: c49533a826fdb13409ee106e66235e02,
         type: 3}
       propertyPath: emotes.Array.data[4].sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 31b491fe187d12046995afa2e4024a94,
+      objectReference: {fileID: 21300000, guid: b9702335c5f70ea49b576a239247cbf3,
         type: 3}
     - target: {fileID: 9205926511721270859, guid: c49533a826fdb13409ee106e66235e02,
         type: 3}
       propertyPath: emotes.Array.data[5].sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 3371349dd7d8d904fb48452d96d3f2b5,
+      objectReference: {fileID: 21300000, guid: bb7c8f57d42e71046841b3ce18da747c,
+        type: 3}
+    - target: {fileID: 9205926511721270859, guid: c49533a826fdb13409ee106e66235e02,
+        type: 3}
+      propertyPath: emotes.Array.data[6].sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: bccf55366387d204ba1dee8675d77705,
+        type: 3}
+    - target: {fileID: 9205926511721270859, guid: c49533a826fdb13409ee106e66235e02,
+        type: 3}
+      propertyPath: emotes.Array.data[7].sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: c0771f8ac3bff64458a99e31f8e411bc,
         type: 3}
     m_RemovedComponents:
     - {fileID: 5683980232856920588, guid: c49533a826fdb13409ee106e66235e02, type: 3}

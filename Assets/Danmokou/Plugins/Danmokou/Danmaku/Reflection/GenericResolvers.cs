@@ -214,7 +214,7 @@ public static partial class Reflector {
             if (p.type.GenericTypeArguments.Length == 0) 
                 throw new Exception("Method-Lookup parameter must be generic");
             RecurseParens(ref q, p.type);
-            var method_str = q.Next();
+            var method_str = q.Next().ToLower();
             q.ThrowOnLeftovers(p.type);
             //Not concerned with funced types, only the declared types.
             var funcAllTypes = p.type.GenericTypeArguments;

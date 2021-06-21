@@ -37,7 +37,7 @@ MonoBehaviour:
       useDefaultOffset: 0
       offset: {x: 0, y: 40}
       sprite: {fileID: 21300000, guid: 07dce8fe0b30a5a43b74759d6387126e, type: 3}
-    defaultOffset: {x: -36, y: 452}
+    defaultOffset: {x: -54, y: 450}
     normal:
       sprites:
       - useDefaultOffset: 0
@@ -109,6 +109,5 @@ MonoBehaviour:
     hardcoded:
       en: 
       jp: 
-      _showEnOnly: 0
   key: yuuka
   speakSFX: x-bubble-2

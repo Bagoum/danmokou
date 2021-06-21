@@ -31,9 +31,9 @@ public static class XMLUtils {
     public const string descriptorClass = "descriptor";
     public const string centerTextClass = "centertext";
     public static string CheckmarkClass(bool active) => active ? "checked" : "unchecked";
-
-    public static UIScreen ReplayScreen(Action<List<XMLMenu.CacheInstruction>> cacheTentative, Action cacheConfirm) =>
-        new LazyUIScreen(() => SaveData.p.ReplayData.Count.Range().Select(i =>
+    
+    public static UIScreen ReplayScreen(XMLMenu menu, Action<List<XMLMenu.CacheInstruction>> cacheTentative, Action cacheConfirm) =>
+        new LazyUIScreen(menu, () => SaveData.p.ReplayData.Count.Range().Select(i =>
             new CacheNavigateUINode(cacheTentative, () =>
                     SaveData.p.ReplayData.TryN(i)?.metadata.Record.AsDisplay(true, true) ?? generic_deleted,
                 new FuncNode(() => {
@@ -43,18 +43,32 @@ public static class XMLUtils {
                 new ConfirmFuncNode(() => SaveData.p.TryDeleteReplay(i), delete, true)
             ).With(monospaceClass).With(small2Class)
         ).ToArray());
-
-
-    public static UIScreen HighScoreScreen(UIScreen replayScreen,
+    
+    public static UIScreen HighScoreScreen(XMLMenu menu, UIScreen replayScreen,
         SMAnalysis.AnalyzedCampaign[] campaigns, SMAnalysis.AnalyzedDayCampaign? days = null) {
-        if (campaigns.Length == 0) return new UIScreen(new UINode(scores_nocampaign));
+        if (campaigns.Length == 0 || campaigns[0].bosses.Length == 0) return new UIScreen(menu, new UINode(scores_nocampaign));
         var replays = new Dictionary<string, int>();
-        var key = new InstanceRecord().RequestKey;
+        var mode = InstanceMode.CAMPAIGN;
         var cmpIndex = 0;
+        string _campaign;
+        string _boss;
+        int _bphase;
+        int _stage;
+        int _sphase;
+        bool Matches(ILowInstanceRequestKey key) => mode switch {
+            InstanceMode.CAMPAIGN => key is CampaignRequestKey cr && cr.Campaign == _campaign,
+            InstanceMode.BOSS_PRACTICE => key is BossPracticeRequestKey br && 
+                                          br.Campaign == _campaign && br.Boss == _boss && br.PhaseIndex == _bphase,
+            InstanceMode.STAGE_PRACTICE => key is StagePracticeRequestKey sr && 
+                                           sr.Campaign == _campaign && sr.StageIndex == _stage && sr.PhaseIndex == _sphase,
+            InstanceMode.SCENE_CHALLENGE => key is PhaseChallengeRequestKey sc &&
+                                            sc.Campaign == _campaign && sc.Boss == _boss && sc.PhaseIndex == _bphase,
+            _ => throw new Exception($"No high score screen handling for key of type {key.GetType()}")
+        };
+        
         void AssignCampaign(int cmpInd) {
             cmpIndex = cmpInd;
-            key.campaign = key.boss.Item1.campaign = key.challenge.Item1.Item1.Item1.campaign =
-                key.stage.Item1.campaign = campaigns[cmpIndex].Key;
+            _campaign = campaigns[cmpIndex].Key;
             AssignStage(0);
             if (campaigns[cmpIndex].bosses.Length > 0)
                 AssignBoss(campaigns[cmpIndex].bosses[0].boss.key);
@@ -62,23 +76,21 @@ public static class XMLUtils {
                 throw new Exception("No high score handling for days menu implemented yet"); //AssignBoss(days!.bosses[]);
         }
         void AssignBoss(string boss) {
-            key.boss.Item1.boss = key.challenge.Item1.Item1.boss = boss;
+            _boss = boss;
             AssignBossPhase(0);
         }
         void AssignStage(int stage) {
             //Better not to mix with AssignBoss to avoid invalid assignments.
-            key.stage.Item1.stage = stage;
+            _stage = stage;
             AssignStagePhase(0);
         }
         void AssignBossPhase(int phase) {
-            key.boss.phase = key.challenge.Item1.phase = phase;
+            _bphase = phase;
         }
         void AssignStagePhase(int phase) {
-            key.stage.phase = phase;
+            _sphase = phase;
         }
-        key.stage.phase = 1; //only show full-stage practice
         AssignCampaign(0);
-        key.type = 0;
         SaveData.p.ReplayData.ForEachI((i, r) => replays[r.metadata.RecordUuid] = i);
         var scoreNodes = SaveData.r.FinishedGames.Values
             //If the user doesn't enter a name on the replay screen, the score won't show up, but it will still be recorded internally
@@ -86,53 +98,55 @@ public static class XMLUtils {
             .OrderByDescending(g => g.Score).Select(g => {
                 //Don't need to show the request (eg. Yukari (Ex) p3) because it's shown by the option nodes above this
                 var node = new UINode(g.AsDisplay(true, false));
-                if (replays.TryGetValue(g.Uuid, out var i)) node.SetConfirmOverride(() => (true, replayScreen.top[i]));
+                if (replays.TryGetValue(g.Uuid, out var i)) node.SetConfirmOverride(() => (true, replayScreen.Top[i]));
                 return node.With(monospaceClass).With(small2Class)
                     .With(CheckmarkClass(replays.ContainsKey(g.Uuid)))
-                    .VisibleIf(() => DUHelpers.Tuple4Eq(key, g.RequestKey));
+                    .VisibleIf(() => Matches(g.RequestKey));
             });
-        var optnodes = new UINode[] {
-            new OptionNodeLR<short>(practice_type, i => key.type = i, new (LString, short)?[] {
-                (practice_m_campaign, 0),
-                (practice_m_boss, 1),
-                days == null ? ((LString, short)?) null : (practice_m_scene, 2),
-                (practice_m_stage, 3)
-            }.FilterNone().ToArray(), key.type),
+        bool IsBossOrChallenge() => mode == InstanceMode.BOSS_PRACTICE || mode == InstanceMode.SCENE_CHALLENGE;
+        bool IsStage() => mode == InstanceMode.STAGE_PRACTICE;
+        var optnodes = new[] {
+            new OptionNodeLR<InstanceMode>(practice_type, i => mode = i, new[] {
+                (practice_m_campaign, InstanceMode.CAMPAIGN),
+                (practice_m_boss, InstanceMode.BOSS_PRACTICE),
+                days == null ? ((LString, InstanceMode)?) null : (practice_m_scene, InstanceMode.SCENE_CHALLENGE),
+                (practice_m_stage, InstanceMode.STAGE_PRACTICE)
+            }.FilterNone().ToArray(), mode),
             new OptionNodeLR<int>(practice_campaign, AssignCampaign,
                 campaigns.Select((c, i) => (new LString(c.campaign.shortTitle), i)).ToArray(), cmpIndex),
             new DynamicOptionNodeLR<string>(practice_m_whichboss, AssignBoss, () =>
-                    key.type == 1 ?
+                    IsBossOrChallenge() ?
                         campaigns[cmpIndex].bosses.Select(b => (b.boss.BossPracticeName.Value, b.boss.key)).ToArray() :
                         new[] {("", "")} //required to avoid errors with the option node
-                , "").VisibleIf(() => key.type == 1),
+                , "").VisibleIf(() => IsBossOrChallenge()),
             new DynamicOptionNodeLR<int>(practice_m_whichstage, AssignStage, () =>
-                    key.type == 3 ?
+                    IsStage() ?
                         campaigns[cmpIndex].stages.Select((s, i) => (s.stage.stageNumber, i)).ToArray() :
                         new[] {("", 0)} //required to avoid errors with the option node
-                , 0).VisibleIf(() => key.type == 3),
+                , 0).VisibleIf(() => IsStage()),
             new DynamicOptionNodeLR<int>(practice_m_whichphase, AssignBossPhase, () =>
-                    key.type == 1 ?
-                        campaigns[cmpIndex].bossKeyMap[key.boss.Item1.boss].Phases.Select(
+                    IsBossOrChallenge() ?
+                        campaigns[cmpIndex].bossKeyMap[_boss].Phases.Select(
                             //p.index is used as request key
                             (p, i) => ($"{i + 1}. {p.Title}", p.index)).ToArray() :
                         new[] {("", 0)}, 0)
-                .With(ve => ve.Q("ValueContainer").style.width = new StyleLength(new Length(80, LengthUnit.Percent)))
-                .VisibleIf(() => key.type == 1),
+                .OnBound(ve => ve.Q("ValueContainer").style.width = new StyleLength(new Length(80, LengthUnit.Percent)))
+                .VisibleIf(() => IsBossOrChallenge()),
             new DynamicOptionNodeLR<int>(practice_m_whichphase, AssignStagePhase, () =>
-                    key.type == 3 ?
-                        campaigns[cmpIndex].stages[key.stage.Item1.stage].Phases.Select(
+                    IsStage() ?
+                        campaigns[cmpIndex].stages[_stage].Phases.Select(
                             p => (p.Title.Value, p.index)).Prepend((practice_fullstage.Value, 1)).ToArray() :
                         new[] {("", 0)}, 0)
-                .VisibleIf(() => key.type == 3),
+                .VisibleIf(() => IsStage()),
         };
-        return new UIScreen(optnodes.Append(new PassthroughNode(LString.Empty)).Concat(scoreNodes).ToArray());
+        return new UIScreen(menu, optnodes.Append(new PassthroughNode(LString.Empty)).Concat(scoreNodes).ToArray());
     }
     
     
     //TODO: temp workaround for wrapping custom difficulty descriptions
     private static readonly string[] descr = {descriptorClass, "wrap"};
 
-    public static UIScreen CreateCustomDifficultyEdit(VisualTreeAsset screen, 
+    public static UIScreen CreateCustomDifficultyEdit(XMLMenu menu, VisualTreeAsset screen, 
         Func<DifficultySettings, (bool, UINode)> dfcCont) {
             var load_cbs = new List<Action>();
             var dfc = new DifficultySettings(null);
@@ -174,7 +188,8 @@ public static class XMLUtils {
             IEnumerable<UINode> MakeSavedDFCNodes(Func<int, UINode> creator, int excess=20) => (saved.Count + excess)
                 .Range()
                 .Select(i => creator(i)
-                    .With(i == 0 ? v => v.style.marginTop = new StyleLength(150) : (Action<VisualElement>?)null)
+                    .OnBound(i == 0 ? v => v.style.marginTop = new StyleLength(150) : (Action<VisualElement>?)null)
+                    //This can change dynamically
                     .With(ve => {
                         if (saved.TryN(i) == null) ve.AddToClassList(hideClass);
                     })
@@ -183,7 +198,7 @@ public static class XMLUtils {
             var newSavedSettingsName = new TextInputNode(new_setting);
             var optSliderHelper = new PassthroughNode(() =>
                 desc_effective_ls(effective, DifficultySettings.FancifySlider(dfc.customValueSlider)));
-            return new UIScreen(
+            return new UIScreen(menu, 
                 MakeOption(scaling, (DifficultySettings.MIN_SLIDER, DifficultySettings.MAX_SLIDER + 1).Range()
                     .Select(x => (new LString($"{x}"), x)), () => dfc.customValueSlider, dfc.SetCustomDifficulty,
                     desc_scaling),
@@ -228,7 +243,7 @@ public static class XMLUtils {
         }
 
 
-    public static UIScreen StatisticsScreen(VisualTreeAsset screen,
+    public static UIScreen StatisticsScreen(XMLMenu menu, VisualTreeAsset screen,
         IEnumerable<InstanceRecord> allGames, SMAnalysis.AnalyzedCampaign[] campaigns) {
         InstanceRecord[] games = allGames.ToArray();
         List<Action> load_cbs = new List<Action>();
@@ -238,11 +253,7 @@ public static class XMLUtils {
         (ShipConfig, ShotConfig)? shotSwitch = null;
         bool Filter(InstanceRecord ir) =>
             (campaignIndex == null ||
-             campaigns[campaignIndex.Value].Key == ir.ReconstructedRequestKey.Resolve(
-                 c => c,
-                 b => b.Item1.Item1,
-                 p => p.Item1.Item1.Item1.Item1,
-                 s => s.Item1.Item1)) &&
+             campaigns[campaignIndex.Value].Key == ir.RequestKey.Campaign) &&
             (!difficultySwitch.Valid || difficultySwitch.Value == ir.SharedInstanceMetadata.difficulty.standard) &&
             (playerSwitch == null || playerSwitch == ir.SharedInstanceMetadata.team.ships[0].ship) &&
             (shotSwitch == null || shotSwitch == ir.SharedInstanceMetadata.team.ships[0])
@@ -252,8 +263,8 @@ public static class XMLUtils {
         Statistics.StatsGenerator stats;
         void UpdateStats() => 
             stats = new Statistics.StatsGenerator(games.Where(Filter), campaigns, cbp => 
-                (campaignIndex == null || (campaigns[campaignIndex.Value].Key == cbp.Item1.campaign)) &&
-                (boss == null || (boss == cbp.Item1.boss)));
+                (campaignIndex == null || (campaigns[campaignIndex.Value].Key == cbp.Campaign)) &&
+                (boss == null || (boss == cbp.Boss)));
         
         void AssignCampaign(int? cmpInd) {
             campaignIndex = cmpInd;
@@ -345,24 +356,25 @@ public static class XMLUtils {
                 !stats.HasSpellHist ? generic_na : ShowCard(stats.WorstCapture))
         };
         
-        return new LazyUIScreen(
+        return new LazyUIScreen(menu,
             () => nodes().Select(x => x.With(small1Class)).ToArray()
         ).With(screen);
         
     }
 
-    public static UIScreen AchievementsScreen(VisualTreeAsset screen, VisualTreeAsset node, AchievementManager acvs) =>
-        new UIScreen(
+    public static UIScreen AchievementsScreen(XMLMenu menu, VisualTreeAsset screen, VisualTreeAsset node, 
+        AchievementManager acvs) =>
+        new UIScreen(menu, 
             acvs.SortedAchievements.Select(a => 
                 new UINode(a.Title)
-                    .With(ev => ev.Q<Label>("Description").text = a.VisibleDescription)
-                    .With(ev => ev.AddToClassList(CheckmarkClass(a.Completed)))
+                    .OnBound(ev => ev.Q<Label>("Description").text = a.VisibleDescription)
+                    .With(CheckmarkClass(a.Completed))
                     .With(node)
                 ).ToArray()
             ).With(screen);
 
-    public static UIScreen MusicRoomScreen(VisualTreeAsset screen, IEnumerable<IAudioTrackInfo> musics) =>
-        new UIScreen(
+    public static UIScreen MusicRoomScreen(XMLMenu menu, VisualTreeAsset screen, IEnumerable<IAudioTrackInfo> musics) =>
+        new UIScreen(menu,
             musics.SelectNotNull(m => m.DisplayInMusicRoom switch {
                 true => new FuncNode(() => AudioTrackService.InvokeBGM(m), 
                     new LString(string.Format("({0}) {1}", m.TrackPlayLocation, m.Title)), true,

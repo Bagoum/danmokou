@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 using BagoumLib;
 using BagoumLib.Cancellation;
 using UnityEngine;
@@ -44,7 +45,7 @@ public interface IUIManager {
     void SetSpellname(string? title, (int success, int total)? rate = null);
 }
 
-public class UIManager : RegularUpdater, IUIManager, IUnpauseAnimateProvider {
+public class UIManager : RegularUpdater, IUIManager {
 
     private static UIManager main = null!;
     public bool autoShiftCamera;
@@ -127,7 +128,8 @@ public class UIManager : RegularUpdater, IUIManager, IUnpauseAnimateProvider {
         stackedProfiles.Push(defaultProfile);
         SetProfile(defaultProfile, defaultProfile);
         SetBossHPLoader(null);
-        if (autoShiftCamera) uiCamera.transform.localPosition = -References.bounds.center;
+        if (autoShiftCamera) uiCamera.transform.localPosition = 
+            new Vector3(-References.bounds.center.x, -References.bounds.center.y, uiCamera.transform.localPosition.z);
     }
 
     protected override void BindListeners() {
@@ -178,11 +180,7 @@ public class UIManager : RegularUpdater, IUIManager, IUnpauseAnimateProvider {
         ListenInv(InstanceData.ItemExtendAcquired,
             () => lifePoints.text = string.Format(lifePointsFormat, Instance.LifeItems.Value, Instance.NextLifeItems));
         RegisterDI<IUIManager>(this);
-        RegisterDI<IUnpauseAnimateProvider>(this);
     }
-
-    public static float MenuRightOffset =>
-        MainCamera.ResourcePPU * (MainCamera.HorizRadius - References.bounds.right - References.bounds.center.x);
 
     private void Start() {
         UpdatePB();
@@ -413,18 +411,11 @@ public class UIManager : RegularUpdater, IUIManager, IUnpauseAnimateProvider {
 
     private static readonly Vector2 slideFrom = new Vector2(5, 0);
 
-    public void SlideInUI(Action onDone) {
-        uiRenderer.MoveToNormal();
-        uiRenderer.Slide(slideFrom, Vector2.zero, 0.3f, DMath.M.EOutSine, success => {
-            if (success) uiRenderer.MoveToFront();
-            onDone();
-        });
-    }
+    public Task<Completion> FadeInPauseUI() =>
+        uiRenderer.Fade(0, 1, 0.3f, x => x);
 
-    public void UnpauseAnimator(Action onDone) {
-        uiRenderer.MoveToNormal();
-        uiRenderer.Slide(null, slideFrom, 0.3f, x => x, _ => onDone());
-    }
+    public Task<Completion> FadeOutPauseUI() => 
+        uiRenderer.Fade(null, 0, 0.3f, x => x);
 
     public SpriteRenderer[] healthPoints = null!;
     public SpriteRenderer[] bombPoints = null!;

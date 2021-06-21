@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.Serialization;
 
 namespace Danmokou.Scriptables {
-[CreateAssetMenu(menuName = "SFXConfig")]
+[CreateAssetMenu(menuName = "Audio/SFXConfig")]
 public class SFXConfig : ScriptableObject {
     public string defaultName = "";
     public AudioClip clip = null!;

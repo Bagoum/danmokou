@@ -2,7 +2,7 @@ pattern({ })
 <!> type non `Aimed Bullets`
 <!> roott(1, 0, 0)
 phase(0)
-	action(block, 0)
+	paction(0)
 		async amulet-*/ <-7;:> gcrepeat {
 			wait(2s)
 			times(_)

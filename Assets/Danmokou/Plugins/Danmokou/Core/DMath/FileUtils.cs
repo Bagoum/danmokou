@@ -17,6 +17,9 @@ public static class FileUtils {
     public const string SAVEDIR = "DMK_Saves/";
     public const string AYADIR = SAVEDIR + "Aya/";
 
+    private static readonly JsonSerializerSettings JsonSettings = new JsonSerializerSettings() {
+        TypeNameHandling = TypeNameHandling.Auto
+    };
 
     public static IEnumerable<string> EnumerateDirectory(string dir) {
         CheckDirectory(dir);
@@ -29,12 +32,12 @@ public static class FileUtils {
     }
 
     public static T CopyJson<T>(T obj) =>
-        JsonConvert.DeserializeObject<T>(JsonConvert.SerializeObject(obj));
+        JsonConvert.DeserializeObject<T>(JsonConvert.SerializeObject(obj, JsonSettings), JsonSettings);
     
     public static void WriteJson(string file, object obj) {
         CheckDirectory(file);
         using (StreamWriter sw = new StreamWriter(file)) {
-            sw.WriteLine(JsonConvert.SerializeObject(obj, Formatting.Indented));
+            sw.WriteLine(JsonConvert.SerializeObject(obj, Formatting.Indented, JsonSettings));
         }
     }
 
@@ -83,7 +86,7 @@ public static class FileUtils {
     public static T? ReadJson<T>(string file) where T : class {
         try {
             using (StreamReader sr = new StreamReader(file)) {
-                return JsonConvert.DeserializeObject<T>(sr.ReadToEnd());
+                return JsonConvert.DeserializeObject<T>(sr.ReadToEnd(), JsonSettings);
             }
         } catch (Exception e) {
             Log.Unity($"Couldn't read {typeof(T)} from file {file}. (JSON)", false, LogLevel.WARNING);

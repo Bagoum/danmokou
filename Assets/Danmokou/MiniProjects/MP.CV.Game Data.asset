@@ -14,10 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   gameIdentifier: CV
   gameVersion:
-    major: 0
+    major: 1
     minor: 1
-    patch: 0
-  mainMenu: {fileID: 11400000, guid: 68a81d395f9df184fb8d689319bd1113, type: 2}
+    patch: 1
+  mainMenu: {fileID: 11400000, guid: 341199991785876498ff8791fd82d593, type: 2}
   replaySaveMenu: {fileID: 11400000, guid: 4eb8b66bd76d4d94fa90176835284503, type: 2}
   defaultMenuBackground: {fileID: 6614173089345499342, guid: 56da452ec6a98284295330ef47ecf1c1,
     type: 3}
@@ -26,7 +26,7 @@ MonoBehaviour:
   tutorial: {fileID: 0}
   miniTutorial: {fileID: 0}
   endcard: {fileID: 0}
-  campaign: {fileID: 11400000, guid: fe95ec3f2c7559641bd592ccb150fcb9, type: 2}
+  campaign: {fileID: 11400000, guid: 525f39566cc19fd468f3ed3c6cf21fd3, type: 2}
   exCampaign: {fileID: 0}
   dayCampaign: {fileID: 0}
   defaultTransition: {fileID: 11400000, guid: 517222e0dbe56264a8bcd878fc9e4e27, type: 2}
@@ -37,15 +37,23 @@ MonoBehaviour:
     bot: -4.5
     center: {x: -1.9, y: 0}
   achievements: {fileID: 0}
-  dialogue:
-  - {fileID: 11400000, guid: b7c1d3b51649f5e4eb3f41be569c3f4b, type: 2}
+  dialogue: []
   bossMetadata: []
   dialogueProfiles: []
-  tracks: []
+  tracks:
+  - {fileID: 11400000, guid: 9d9586bf58042744aa6b8ed2c3c14827, type: 2}
+  - {fileID: 11400000, guid: de657fd8beb69854eaa0f36a9f52f1a4, type: 2}
+  - {fileID: 11400000, guid: 87fcb3c095f398b4c84ac09cd9394a44, type: 2}
+  - {fileID: 11400000, guid: 8de2ecd6a795cbb4a81c6b6e15ab15f0, type: 2}
+  - {fileID: 11400000, guid: ee23558615347934da7e51454294e0f9, type: 2}
+  - {fileID: 11400000, guid: 2196cac1dd0c01c4ba573d37fa5c6194, type: 2}
+  - {fileID: 11400000, guid: 61e3a2f12edd2af4ea1fcb37327c4b82, type: 2}
   items: {fileID: 11400000, guid: 18e6de6e951f4114e8823af9e617bff7, type: 2}
   prefabReferences: {fileID: 11400000, guid: 842bcc7c616103e4c9880c49f9735bb4, type: 2}
   suzunoyaReferences: {fileID: 11400000, guid: a936563f4e58b294db033ff8ee6be6f8, type: 2}
   uxmlDefaults: {fileID: 11400000, guid: b4213b3830762944fbcb9250a4b73463, type: 2}
+  SFX:
+  - {fileID: 11400000, guid: 2765638c24dcd6f4684c2acbc07800c4, type: 2}
   summonables:
   - {fileID: 11400000, guid: 38afc312ddb0ac242b8cfb301b1b4237, type: 2}
   - {fileID: 11400000, guid: cdee2c8a4694b2148b6bff090233f211, type: 2}

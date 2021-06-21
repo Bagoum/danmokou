@@ -23,6 +23,8 @@ using Danmokou.Services;
 using Danmokou.UI;
 using Danmokou.VN;
 using JetBrains.Annotations;
+using Suzunoya.Data;
+using SuzunoyaUnity;
 using UnityEngine;
 using static Danmokou.DMath.Functions.BPYRepo;
 using static Danmokou.DMath.Functions.ExM;
@@ -249,8 +251,10 @@ if (> t &fadein,
     /// <summary>
     /// Run the visual novel scene attached to the executing BEH.
     /// </summary>
-    public static TaskPattern ExecuteVN() => smh => 
-        smh.Exec.GetComponent<VNScriptExecutor>().GetScript().RunScript(smh.cT);
+    public static TaskPattern ExecuteVN([LookupMethod] Func<DMKVNState, Task> vnTask, string scriptId) => async smh => {
+        var save = await ((DMKVNWrapper) DependencyInjection.Find<IVNWrapper>())
+            .ExecuteVN((data, cT) => new DMKVNState(cT, scriptId, data), vnTask, new InstanceData(), smh.cT);
+    };
 
     /// <summary>
     /// Asynchronous bullet pattern fire.

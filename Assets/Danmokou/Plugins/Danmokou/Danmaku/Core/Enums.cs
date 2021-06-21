@@ -211,7 +211,7 @@ public enum InstanceMode {
     /// <summary>
     /// Boss card practice mode, which plays exactly one card.
     /// </summary>
-    CARD_PRACTICE,
+    BOSS_PRACTICE,
     /// <summary>
     /// Tutorial.
     /// </summary>
@@ -377,7 +377,7 @@ public static class EnumHelpers2 {
         };
 
     public static bool IsOneCard(this InstanceMode mode) =>
-        mode == InstanceMode.CARD_PRACTICE || mode == InstanceMode.SCENE_CHALLENGE;
+        mode == InstanceMode.BOSS_PRACTICE || mode == InstanceMode.SCENE_CHALLENGE;
     public static bool OneLife(this InstanceMode mode) => mode.IsOneCard();
     public static bool DisallowCardItems(this InstanceMode mode) => false;//mode.IsOneCard();
     public static bool PreserveReloadAudio(this InstanceMode mode) => mode.IsOneCard();

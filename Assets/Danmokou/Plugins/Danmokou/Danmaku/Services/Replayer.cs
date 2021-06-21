@@ -37,13 +37,13 @@ public class ReplayMetadata {
     public ReplayMetadata(InstanceRecord rec, bool debug=false) {
         Record = rec;
         Debug = debug;
-        DialogueSpeed = SaveData.s.DialogueWaitMultiplier;
+        DialogueSpeed = SaveData.s.DialogueSpeed;
         SmoothInput = SaveData.s.AllowInputLinearization;
         Locale = SaveData.s.Locale;
     }
 
     public void ApplySettings() {
-        SaveData.s.DialogueWaitMultiplier = DialogueSpeed;
+        SaveData.s.DialogueSpeedEv.OnNext(DialogueSpeed);
         SaveData.s.AllowInputLinearization = SmoothInput;
         SaveData.UpdateLocale(Locale);
     }
@@ -88,6 +88,11 @@ public abstract class ReplayActor {
     public virtual void Load() { }
 
     public virtual void Cancel() => Cancelled = true;
+
+    protected virtual void ResetState() {
+        replayStartFrame = null;
+        LastFrame = -1;
+    }
 }
 
 public class ReplayRecorder : ReplayActor {
@@ -122,11 +127,6 @@ public class ReplayPlayer : ReplayActor {
         token = Achievement.ACHIEVEMENT_PROGRESS_ENABLED.CreateToken1(MultiOp.Priority.ALL);
         this.replaying = replaying;
     }
-    public ReplayPlayer(ReplayPlayer prev) {
-        token = Achievement.ACHIEVEMENT_PROGRESS_ENABLED.CreateToken1(MultiOp.Priority.ALL);
-        this.replaying = prev.replaying;
-        this.loadedFrames = prev.loadedFrames;
-    }
 
     public override void Load() {
         var _ = LoadedFrames;
@@ -135,12 +135,14 @@ public class ReplayPlayer : ReplayActor {
     public override void Step() {
         if (ReplayIndex >= LoadedFrames.Length) {
             replaying.onFinish?.Invoke();
-            Cancel();
             if (replaying.finishMethod == Replayer.ReplayerConfig.FinishMethod.REPEAT) {
                 Log.Unity("Restarting replay.");
-                Replayer.BeginReplaying(this).Step();
-            } else if (replaying.finishMethod == Replayer.ReplayerConfig.FinishMethod.STOP) {
-            } else
+                ResetState();
+                ReplayFrame(LoadedFrames[ReplayIndex]);
+                return;
+            }
+            Cancel();
+            if (replaying.finishMethod != Replayer.ReplayerConfig.FinishMethod.STOP)
                 Log.UnityError($"Ran out of replay data. On frame {LastFrame}, requested index {ReplayIndex}, " +
                                $"but there are only {LoadedFrames.Length}.");
         } else
@@ -207,6 +209,7 @@ public static class Replayer {
         ReplayPlayer _ => ReplayStatus.REPLAYING,
         _ => throw new Exception($"Unhandled replay actor: {Actor}")
     };
+    public static bool RequiresConsistency => Actor != null;
 
 
     public static void LoadLazy() {
@@ -222,11 +225,6 @@ public static class Replayer {
         Log.Unity($"Replay playback started.");
         return Actor = new ReplayPlayer(data);
     }
-    public static ReplayActor BeginReplaying(ReplayPlayer p) {
-        Log.Unity($"Replay playback started from existing config.");
-        return Actor = new ReplayPlayer(p);
-    }
-
     public static void SaveDebugReplay() {
         if (Actor is ReplayRecorder rr && GameManagement.Instance.Request != null) {
             var r = rr.Compile(GameManagement.Instance.Request.MakeGameRecord(), true);

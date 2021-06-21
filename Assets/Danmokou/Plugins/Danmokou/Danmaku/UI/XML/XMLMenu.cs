@@ -2,6 +2,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
+using BagoumLib;
+using BagoumLib.Tasks;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.DMath;
@@ -15,11 +18,17 @@ using Object = UnityEngine.Object;
 using static Danmokou.Core.GameManagement;
 
 namespace Danmokou.UI.XML {
+public enum QueuedEvent {
+    Goto,
+    Confirm,
+    Left,
+    Right
+}
 /// <summary>
 /// Abstract class for all in-game UI based on UIBuilder.
 /// </summary>
 [Preserve]
-public abstract class XMLMenu : RegularUpdater {
+public abstract class XMLMenu : CoroutineRegularUpdater {
     public readonly struct CacheInstruction {
         public enum InstrType {
             GOTO_CHILD,
@@ -61,9 +70,6 @@ public abstract class XMLMenu : RegularUpdater {
     }
 
     public VisualElement UI { get; private set; } = null!;
-    protected VisualElement UITop;
-
-    protected virtual string UITopID => "Pause";
     protected virtual string ScreenContainerID => "UIContainer";
 
     protected enum ScreenTransition {
@@ -75,14 +81,17 @@ public abstract class XMLMenu : RegularUpdater {
 
     protected virtual IEnumerable<UIScreen> Screens => new[] {MainScreen};
     protected UIScreen MainScreen { get; set; } = null!;
-    protected bool MenuActive = true;
-    protected virtual string? HeaderOverride => null;
+    protected bool MenuActive { get; set; }= true;
 
     protected virtual Dictionary<Type, VisualTreeAsset> TypeMap => References.uxmlDefaults.TypeMap;
 
-    protected UINode? Current = null;
+    public UINode? Current { get; protected set; } = null;
 
     public GameObject? MainScreenOnlyObjects;
+
+    //Fields for event-based changes 
+    //Not sure if I want to generalize these to properly event-based...
+    public (UINode src, QueuedEvent ev)? QueuedEvent { get; set; }
 
     protected virtual void ResetCurrentNode() {
         Current = MainScreen.StartingNode;
@@ -105,13 +114,11 @@ public abstract class XMLMenu : RegularUpdater {
     }
 
     protected virtual void Rebind() {
-        UITop = UI.Q(UITopID);
         var container = UI.Q(ScreenContainerID);
         foreach (var s in Screens) {
             if (s != null)
                 container.Add(s.Build(TypeMap));
         }
-        if (HeaderOverride != null) UI.Q<Label>("Header").text = HeaderOverride;
 
         if (ReturnTo != null) {
             if (Current == null)
@@ -134,10 +141,10 @@ public abstract class XMLMenu : RegularUpdater {
                         throw new Exception("Couldn't rebuild menu position: node is not an option");
                 } else if (inst.type == CacheInstruction.InstrType.GOTO_SIBLING) {
                     Current = Current.Siblings[inst.instrVal];
-                    Current.OnVisit(prev);
+                    Current.OnVisit(prev, false);
                 } else if (inst.type == CacheInstruction.InstrType.GOTO_CHILD) {
                     Current = Current.children[inst.instrVal];
-                    Current.OnVisit(prev);
+                    Current.OnVisit(prev, false);
                 } else
                     throw new Exception($"Couldn't resolve instruction {inst.type}");
             }
@@ -160,8 +167,14 @@ public abstract class XMLMenu : RegularUpdater {
         }
         if (Current != null) {
             Current.AssignStatesFromSelected();
-            Current.ScrollTo();
+            RunDroppableRIEnumerator(scrollToCurrent());
         }
+    }
+
+    //Workaround for limitation that cannot ScrollTo to objects that have just been constructed or made visible
+    private IEnumerator scrollToCurrent() {
+        yield return new WaitForEndOfFrame();
+        Current?.ScrollTo();
     }
 
     public override EngineState UpdateDuring => EngineState.MENU_PAUSE;
@@ -170,6 +183,7 @@ public abstract class XMLMenu : RegularUpdater {
 
     protected bool RegularUpdateGuard => Application.isPlaying && ETime.FirstUpdateForScreen && Disabler.Value == 0;
     public override void RegularUpdate() {
+        base.RegularUpdate();
         if (RegularUpdateGuard && Current != null && MenuActive) {
             bool tried_change = true;
             bool allowsfx = true;
@@ -177,14 +191,15 @@ public abstract class XMLMenu : RegularUpdater {
             int sentry = 0;
             do {
                 var custom = Current.CustomEventHandling();
+                var qeIsCurr = QueuedEvent?.src == Current;
                 if (custom != null) {
                     DependencyInjection.SFXService.Request(leftRightSound); //add another sound
                     Current = custom;
-                } else if (InputManager.UILeft.Active) {
+                } else if (InputManager.UILeft.Active ||  (qeIsCurr && QueuedEvent?.ev == XML.QueuedEvent.Left)) {
                     if (allowsfx) 
                         DependencyInjection.SFXService.Request(leftRightSound);
                     Current = Current.Left();
-                } else if (InputManager.UIRight.Active) {
+                } else if (InputManager.UIRight.Active || (qeIsCurr && QueuedEvent?.ev == XML.QueuedEvent.Right)) {
                     if (allowsfx) 
                         DependencyInjection.SFXService.Request(leftRightSound);
                     Current = Current.Right();
@@ -193,10 +208,15 @@ public abstract class XMLMenu : RegularUpdater {
                         DependencyInjection.SFXService.Request(upDownSound);
                     Current = Current.Up();
                 } else if (InputManager.UIDown.Active) {
-                    if (allowsfx) 
+                    if (allowsfx)
                         DependencyInjection.SFXService.Request(upDownSound);
                     Current = Current.Down();
-                } else if (InputManager.UIConfirm.Active) {
+                } else if (QueuedEvent.Try(out var qe) && qe.ev == XML.QueuedEvent.Goto 
+                                                       && qe.src != Current && Current.Siblings.Contains(qe.src)) {
+                    if (allowsfx)
+                        DependencyInjection.SFXService.Request(upDownSound);
+                    Current = qe.src;
+                } else if (InputManager.UIConfirm.Active || (qeIsCurr && QueuedEvent?.ev == XML.QueuedEvent.Confirm)) {
                     var (succ, nxt) = Current.Confirm_DontNest();
                     if (succ) 
                         HandleTransition(Current, nxt, false);
@@ -212,16 +232,21 @@ public abstract class XMLMenu : RegularUpdater {
                 if (++sentry > 100) throw new Exception("There is a loop in the XML menu.");
             } while (Current?.Passthrough ?? false);
             if (tried_change) {
-                OnChangeEffects(last);
-                Redraw();
+                //TODO animations are extremely slow when navigating with mouse, notsure why.
+                //Might be due to scaling animations causing recalculation of moise containment?
+                OnChangeEffects(last, QueuedEvent == null);
             }
         }
+        if (Application.isPlaying && ETime.FirstUpdateForScreen) {
+            QueuedEvent = null;
+        }
+
     }
 
-    private void OnChangeEffects(UINode last) {
+    private void OnChangeEffects(UINode last, bool animate) {
         if (last != Current) {
             last.OnLeave(Current);
-            Current?.OnVisit(last);
+            Current?.OnVisit(last, animate);
         }
         Redraw();
     }
@@ -231,7 +256,7 @@ public abstract class XMLMenu : RegularUpdater {
     private void HandleTransition(UINode prev, UINode? next, bool backwards) {
         if (prev.screen == next?.screen || next == null) {
             Current = next;
-            OnChangeEffects(prev);
+            OnChangeEffects(prev, true);
         } else {
             prev.screen.RunPreExit();
             var token = Disabler.CreateToken1(MultiOp.Priority.ALL);
@@ -242,20 +267,19 @@ public abstract class XMLMenu : RegularUpdater {
                 } else {
                     Current = prev.screen.GoToNested(prev, next);
                 }
-                OnChangeEffects(prev);
+                OnChangeEffects(prev, false);
             }
             if (transitionMethod == ScreenTransition.SWIPE) {
-                uiRenderer.Slide(null, GetRandomSlideEndpoint(), swipeTime, M.EInSine, s => {
-                    if (s) {
-                        GoToNested();
-                        uiRenderer.Slide(GetRandomSlideEndpoint(), Vector2.zero, swipeTime, M.EOutSine, s2 => {
-                            if (s2) {
-                                next.screen.RunPostEnter();
-                                token.TryRevoke();
-                            }
-                        });
-                    }
-                });
+                async Task Transition() {
+                    var c = await uiRenderer.Slide(null, GetRandomSlideEndpoint(), swipeTime, M.EInSine);
+                    if (c != Completion.Standard) return;
+                    GoToNested();
+                    c = await uiRenderer.Slide(GetRandomSlideEndpoint(), Vector2.zero, swipeTime, M.EOutSine);
+                    if (c != Completion.Standard) return;
+                    next.screen.RunPostEnter();
+                    token.TryRevoke();
+                }
+                _ = Transition().ContinueWithSync(() => { });
             } else GoToNested();
         }
     }

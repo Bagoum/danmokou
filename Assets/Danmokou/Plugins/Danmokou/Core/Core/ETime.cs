@@ -104,12 +104,12 @@ public class ETime : MonoBehaviour {
 
     private void Awake() {
         Tween.DefaultDeltaTimeProvider = () => FRAME_TIME;
-        GenericOps.RegisterType<Vector2>(Vector2.Lerp, (x, y) => x * y, (x, y) => x + y, (x, y) => x * y);
-        GenericOps.RegisterType<Vector3>(Vector3.Lerp, (x, y) => x * y, (x, y) => x + y, 
+        GenericOps.RegisterType<Vector2>(Vector2.LerpUnclamped, (x, y) => x * y, (x, y) => x + y, (x, y) => x * y);
+        GenericOps.RegisterType<Vector3>(Vector3.LerpUnclamped, (x, y) => x * y, (x, y) => x + y, 
             (a, b) => new Vector3(a.x * b.x, a.y * b.y, a.z * b.z));
-        GenericOps.RegisterType<Vector4>(Vector4.Lerp, (x, y) => x * y, (x, y) => x + y, 
+        GenericOps.RegisterType<Vector4>(Vector4.LerpUnclamped, (x, y) => x * y, (x, y) => x + y, 
             (a, b) => new Vector4(a.x * b.x, a.y * b.y, a.z * b.z, a.w * b.w));
-        GenericOps.RegisterType<Color>(Color.Lerp, (x, y) => x * y, (x, y) => x + y, (x, y) => x * y);
+        GenericOps.RegisterType<Color>(Color.LerpUnclamped, (x, y) => x * y, (x, y) => x + y, (x, y) => x * y);
 
         SceneIntermediary.Attach();
         SceneIntermediary.RegisterSceneLoad(() => untilNextRegularFrame = 0f);

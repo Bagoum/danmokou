@@ -2,7 +2,7 @@ pattern({ })
 <!> type non `Pathers`
 <!> roott(1, 0, 2)
 phase(0)
-	action(block, 0)
+	paction(0)
 		async pather-*/ <1;:180> gcrepeat {
 			times(_)
 			wait(2s)

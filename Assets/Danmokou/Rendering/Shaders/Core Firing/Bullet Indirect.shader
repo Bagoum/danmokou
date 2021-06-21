@@ -41,13 +41,9 @@
 			#pragma multi_compile_local __ FT_SLIDE_IN
 			#pragma multi_compile_local __ FT_FADE_IN
 			#pragma multi_compile_local __ FT_SCALE_IN
-			#pragma multi_compile_local __ FT_DISPLACE
-			#pragma multi_compile_local __ FT_DISPLACE_POLAR
-			//Not currently used
-			//#pragma multi_compile_local __ FT_DISPLACE_RADIAL
+			//Radial/bivert not currently in use
+			#pragma multi_compile_local __ FT_DISPLACE FT_DISPLACE_POLAR //FT_DISPLACE_RADIAL FT_DISPLACE_BIVERT
 			#pragma multi_compile_local __ FT_TINT
-			//Used by lasers but not by bullets
-			//#pragma multi_compile_local __ FT_DISPLACE_BIVERT
 			#pragma multi_compile_local __ FT_RECOLORIZE
 			#pragma multi_compile_instancing
 			#include "UnityCG.cginc"

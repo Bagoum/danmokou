@@ -9,18 +9,15 @@ namespace Danmokou.Expressions {
 
 public class EEx {
     protected readonly Ex ex;
-    protected readonly bool requiresCopy;
-    public EEx(Ex ex, bool requiresCopy) {
+    protected bool RequiresCopy => ex.NodeType != ExpressionType.Parameter &&
+                                   ex.NodeType != ExpressionType.Constant &&
+                                   ex.NodeType != ExpressionType.MemberAccess;
+    public EEx(Ex ex) {
         this.ex = ex;
-        this.requiresCopy = requiresCopy;
     }
     //Remove this in favor of subtype
-    public static implicit operator EEx(Ex ex) => new EEx(ex, 
-        ex.NodeType != ExpressionType.Parameter && 
-        ex.NodeType != ExpressionType.Constant &&
-        ex.NodeType != ExpressionType.MemberAccess);
     public static implicit operator Ex(EEx ex) => ex.ex;
-    public static implicit operator (Ex, bool)(EEx exx) => (exx.ex, exx.requiresCopy);
+    public static implicit operator (Ex, bool)(EEx exx) => (exx.ex, exx.RequiresCopy);
     private static Ex ResolveCopy(Func<Ex[], Ex> func, params (Ex, bool)[] requiresCopy) {
         var newvars = ListCache<ParameterExpression>.Get();
         var setters = ListCache<Expression>.Get();
@@ -43,6 +40,8 @@ public class EEx {
         ListCache<Expression>.Consign(setters);
         return setters.Count > 1 ? func(usevars) : block;
     }
+    public static Ex ResolveF(EEx<float> t1, Func<TEx<float>, Ex> resolver) =>
+        ResolveCopy(x => resolver(x[0]), t1);
     public static Ex Resolve<T1>(EEx<T1> t1, Func<TEx<T1>, Ex> resolver) =>
         ResolveCopy(x => resolver(x[0]), t1);
     public static Ex ResolveV2(EEx<Vector2> t1, Func<TExV2, Ex> resolver) =>
@@ -75,16 +74,13 @@ public class EEx {
 }
 
 public class EEx<T> : EEx {
-    public EEx(Ex ex, bool requiresCopy) : base(ex, requiresCopy) { }
+    public EEx(Ex ex) : base(ex) { }
 
-    public static implicit operator EEx<T>(TEx<T> ex) => (Ex) ex;
-    public static implicit operator EEx<T>(Ex ex) => new EEx<T>(ex, 
-        ex.NodeType != ExpressionType.Parameter && 
-        ex.NodeType != ExpressionType.Constant &&
-        ex.NodeType != ExpressionType.MemberAccess);
+    public static implicit operator EEx<T>(Ex ex) => new EEx<T>(ex);
+    public static implicit operator EEx<T>(TEx<T> ex) => new EEx<T>(ex);
     public static implicit operator Ex(EEx<T> ex) => ex.ex;
-    public static implicit operator (Ex, bool)(EEx<T> exx) => (exx.ex, exx.requiresCopy);
+    public static implicit operator (Ex, bool)(EEx<T> exx) => (exx.ex, exx.RequiresCopy);
     
-    public static implicit operator EEx<T>(T obj) => Ex.Constant(obj);
+    public static implicit operator EEx<T>(T obj) => new EEx<T>(Ex.Constant(obj));
 }
 }

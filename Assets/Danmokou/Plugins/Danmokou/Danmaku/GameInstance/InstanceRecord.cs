@@ -12,9 +12,6 @@ using Danmokou.Scriptables;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
 using ProtoBuf;
-using InstanceLowRequest = Danmokou.Core.DU<Danmokou.GameInstance.CampaignRequest, Danmokou.GameInstance.BossPracticeRequest, 
-    Danmokou.GameInstance.PhaseChallengeRequest, Danmokou.GameInstance.StagePracticeRequest>;
-using InstanceLowRequestKey = Danmokou.Core.DU<string, ((string, string), int), ((((string, int), string), int), int), ((string, int), int)>;
 
 
 namespace Danmokou.GameInstance {
@@ -55,12 +52,16 @@ public struct CardRecord {
     public int stars;
     public PhaseClearMethod? method;
     public int hits;
+    [JsonIgnore] [ProtoIgnore] 
     public bool NoHits => hits == 0;
-    [JsonIgnore] [ProtoIgnore] public bool Captured => stars >= 2;
+    [JsonIgnore] [ProtoIgnore] 
+    public bool Captured => stars >= 2;
     [JsonIgnore] [ProtoIgnore]
-    public (string campaign, string boss) BossKey => (campaign, boss);
-    [JsonIgnore] [ProtoIgnore]
-    public ((string campaign, string boss), int phase) Key => (BossKey, phase);
+    public BossPracticeRequestKey Key => new BossPracticeRequestKey() {
+        Campaign = campaign,
+        Boss = boss,
+        PhaseIndex = phase
+    };
 }
 /// <summary>
 /// Records information about a game run-through that may or may not have been completed.
@@ -82,11 +83,7 @@ public class InstanceRecord {
     [JsonIgnore] [ProtoIgnore] public bool IsAtleastNormalCampaign => IsCampaign && Difficulty.standard >= FixedDifficulty.Normal;
     
     public string Campaign { get; set; }
-    public (string campaign, 
-        ((string campaign, string boss), int phase) boss, 
-        ((((string campaign, int day), string boss), int phase), int challenge) challenge, 
-        ((string campaign, int stage), int phase) stage, short type) 
-        RequestKey { get; set; }
+    public ILowInstanceRequestKey RequestKey { get; set; }
 
     public int Seed { get; set; }
     public string Uuid { get; set; }
@@ -125,7 +122,7 @@ public class InstanceRecord {
     public InstanceRecord(InstanceRequest req, InstanceData end, bool completed) {
         SavedMetadata = new SharedInstanceMetadata.Saveable(req.metadata);
         Campaign = end.campaignKey;
-        RequestKey = InstanceRequest.CampaignIdentifier(req.lowerRequest).Tuple;
+        RequestKey = req.lowerRequest.Key;
         Mode = req.Mode;
         Seed = req.seed;
         Uuid = RNG.RandStringOffFrame();
@@ -154,32 +151,24 @@ public class InstanceRecord {
         OneUpItemsCollected = end.OneUpItemsCollected;
     }
 
-    [JsonIgnore] [ProtoIgnore]
-    public InstanceLowRequestKey ReconstructedRequestKey =>
-        new InstanceLowRequestKey(RequestKey.Item5, RequestKey.Item1, RequestKey.Item2, RequestKey.Item3, RequestKey.Item4);
-    
-    [JsonIgnore] [ProtoIgnore]
-    public InstanceLowRequest ReconstructedRequest =>
-        ReconstructedRequestKey.Resolve(
-            c => new InstanceLowRequest(CampaignRequest.Reconstruct(c)),
-            b => new InstanceLowRequest(BossPracticeRequest.Reconstruct(b)),
-            c => new InstanceLowRequest(PhaseChallengeRequest.Reconstruct(c)),
-            s => new InstanceLowRequest(StagePracticeRequest.Reconstruct(s))
-        );
+    [JsonIgnore] [ProtoIgnore] public ILowInstanceRequest ReconstructedRequest => RequestKey.Reconstruct();
     public void AssignName(string newName) => CustomName = newName.Substring(0, Math.Min(newName.Length, 10));
 
     public const int BossPracticeNameLength = 11;
-    [JsonIgnore] [ProtoIgnore]
-    private string RequestDescription => ReconstructedRequest.Resolve(
+    [JsonIgnore]
+    [ProtoIgnore]
+    private string RequestDescription => (ReconstructedRequest switch {
         //4+8
-        c => $"All:{c.campaign.campaign.shortTitle}",
+        CampaignRequest c => $"All:{c.campaign.campaign.shortTitle}",
         //3+9
-        b => $"p{b.phase.NontrivialPhaseIndex}:{b.boss.boss.ReplayName.Value}",
+        BossPracticeRequest b => $"p{b.phase.NontrivialPhaseIndex}:{b.boss.boss.ReplayName.Value}",
         //5+9 -- note that challenges records do not show next to standard records, so misalignment is OK
-        c => $"p{c.phase.phase.NontrivialPhaseIndex}-{c.ChallengeIdx}:{c.Boss.ReplayName.Value.PadRight(9)}",
+        PhaseChallengeRequest c =>
+            $"p{c.phase.phase.NontrivialPhaseIndex}-{c.ChallengeIdx}:{c.Boss.ReplayName.Value.PadRight(9)}",
         //8+3
-        s => $"s{s.stage.stageIndex+1}:{s.stage.campaign.campaign.shortTitle}"
-    ).PadRight(12);
+        StagePracticeRequest s => $"s{s.stage.stageIndex + 1}:{s.stage.campaign.campaign.shortTitle}",
+        _ => throw new Exception($"No description handling for request type {ReconstructedRequest.GetType()}")
+    }).PadRight(12);
     
     public LString AsDisplay(bool showScore, bool showRequest, bool defaultName=false, bool showTime=true) {
         var team = SharedInstanceMetadata.team;

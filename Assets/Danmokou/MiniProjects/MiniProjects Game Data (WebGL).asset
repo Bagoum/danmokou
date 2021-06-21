@@ -35,13 +35,18 @@ MonoBehaviour:
     top: 4.1
     bot: -4.5
     center: {x: -1, y: 0}
+  achievements: {fileID: 0}
   dialogue: []
   bossMetadata: []
   dialogueProfiles: []
   tracks: []
   items: {fileID: 11400000, guid: 18e6de6e951f4114e8823af9e617bff7, type: 2}
+  prefabReferences: {fileID: 11400000, guid: 842bcc7c616103e4c9880c49f9735bb4, type: 2}
+  suzunoyaReferences: {fileID: 0}
   uxmlDefaults: {fileID: 11400000, guid: b4213b3830762944fbcb9250a4b73463, type: 2}
+  SFX: []
   summonables:
   - {fileID: 11400000, guid: 38afc312ddb0ac242b8cfb301b1b4237, type: 2}
   fileStateMachines: []
   scriptFolders: []
+  fastParsing: 0

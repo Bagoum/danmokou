@@ -289,8 +289,6 @@ public class TEx<T> : TEx {
         return new TEx<T>(ex);
     }
 
-    public static implicit operator EEx(TEx<T> tex) => tex.ex;
-
     public static implicit operator TEx<T>(T obj) => Expression.Constant(obj);
 
     public Expression GetExprDontUseThisGenerally() {

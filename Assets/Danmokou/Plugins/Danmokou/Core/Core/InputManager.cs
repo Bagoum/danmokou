@@ -155,7 +155,8 @@ public static class InputManager {
     public static readonly IInputHandler UIUp = InputHandler.Trigger(ArrowUp.Or(AxisG0(aCDPadY, true)));
     public static readonly IInputHandler UIDown = InputHandler.Trigger(ArrowDown.Or(AxisL0(aCDPadY, true)));
 
-    public static readonly IInputHandler UIConfirm = InputHandler.Trigger(Key(KC.Z).Or(Key(cA, true)));
+    public static readonly IInputHandler UIConfirm = InputHandler.Trigger(
+        Key(KC.Z).Or(Key(KC.Return)).Or(Key(KC.Space)).Or(Key(cA, true)));
     public static readonly IInputHandler UIBack = InputHandler.Trigger(Key(KC.X).Or(Key(cB, true)));
     private static readonly IInputHandler UISkipAllDialogue = InputHandler.Trigger(Key(KC.LeftControl));
 
@@ -167,7 +168,8 @@ public static class InputManager {
         Key(KC.BackQuote).Or(Key(KC.Escape)).Or(Key(cStart, true))
 #endif
         );
-    
+    public static readonly IInputHandler VNBacklogPause = InputHandler.Trigger(Key(KeyCode.L));
+
     public static readonly IInputHandler ReplayDebugSave = new AndInputHandler(
         InputHandler.Hold(Key(KC.LeftControl)),
         InputHandler.Hold(Key(KC.LeftShift)),
@@ -217,7 +219,7 @@ public static class InputManager {
 
     private static readonly IInputHandler[] Updaters = {
         FocusHold, ShootHold, Bomb,
-        UIDown, UIUp, UILeft, UIRight, UIConfirm, UIBack, UISkipAllDialogue, Pause,
+        UIDown, UIUp, UILeft, UIRight, UIConfirm, UIBack, UISkipAllDialogue, Pause, VNBacklogPause,
         Meter, Swap,
         ReplayDebugSave
     };

@@ -1,8 +1,0 @@
-<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
-    <Style src="UIScreen.uss" />
-    <ui:VisualElement name="Container" style="padding-left: 0; padding-right: 0;">
-        <ui:VisualElement class="column nopad">
-            <ui:ScrollView class="columnList" />
-        </ui:VisualElement>
-    </ui:VisualElement>
-</ui:UXML>

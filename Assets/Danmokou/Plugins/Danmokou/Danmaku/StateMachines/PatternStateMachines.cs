@@ -233,7 +233,7 @@ public class PhaseSM : SequentialSM {
             photoBoard?.SetupPins(pins);
         }
         bool forcedBG = false;
-        if (GameManagement.Instance.mode != InstanceMode.CARD_PRACTICE && !SaveData.Settings.TeleportAtPhaseStart) {
+        if (GameManagement.Instance.mode != InstanceMode.BOSS_PRACTICE && !SaveData.Settings.TeleportAtPhaseStart) {
             if (props.bossCutin && props.Boss != null && props.Background != null) {
                 GameManagement.Instance.AddFaithLenience(props.Boss.bossCutinTime);
                 DependencyInjection.Find<ISFXService>().RequestSFXEvent(ISFXService.SFXEventType.BossCutin);

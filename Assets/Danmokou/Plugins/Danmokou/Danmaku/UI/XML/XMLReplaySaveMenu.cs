@@ -24,7 +24,7 @@ public class XMLReplaySaveMenu : XMLMenu {
             var r = rr.Compile(inst.record);
             var replayName = new TextInputNode(replay_name);
             var save = replay_save;
-            MainScreen = new UIScreen(
+            MainScreen = new UIScreen(this,
                 new UINode(() => r.metadata.Record.AsDisplay(true, true, true)).With(small1Class),
                 new PassthroughNode(LString.Empty),
                 replayName,
@@ -40,13 +40,13 @@ public class XMLReplaySaveMenu : XMLMenu {
             ).With(UIScreenV);
         } else {
             //This shouldn't happen, but here's trivial handling to avoid catastrophic problems
-            MainScreen = new UIScreen(
+            MainScreen = new UIScreen(this, 
                 new FuncNode(GameManagement.GoToMainMenu, to_menu)
             ).With(UIScreenV);
         }
-        MainScreen.ExitNode = MainScreen.top[MainScreen.top.Length - 1];
+        MainScreen.ExitNode = MainScreen.Top[MainScreen.Top.Length - 1];
         base.Awake();
-        if (MainScreen.top.Length > 2) Current = MainScreen.top[2];
+        if (MainScreen.Top.Length > 2) Current = MainScreen.Top[2];
     }
 }
 }

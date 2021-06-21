@@ -10,7 +10,7 @@ using Danmokou.Reflection;
 using JetBrains.Annotations;
 
 namespace Danmokou.Scriptables {
-[CreateAssetMenu(menuName = "AudioTrack")]
+[CreateAssetMenu(menuName = "Audio/AudioTrack")]
 public class AudioTrack : ScriptableObject, IAudioTrackInfo {
     public AudioClip clip = null!;
 
@@ -21,8 +21,8 @@ public class AudioTrack : ScriptableObject, IAudioTrackInfo {
     public float volume = .2f;
     public float pitch = 1f;
     public bool stopOnPause;
-    public bool loop;
 
+    public AudioTrackLoopMode loopMode = AudioTrackLoopMode.Timed;
     public Vector2 loopSeconds;
     public float startWithTime = 0f;
     [ReflectInto(typeof(Pred))]
@@ -33,7 +33,7 @@ public class AudioTrack : ScriptableObject, IAudioTrackInfo {
     public float Volume => volume;
     public float Pitch => pitch;
     public bool StopOnPause => stopOnPause;
-    public bool Loop => loop;
+    public AudioTrackLoopMode Loop => loopMode;
     public Vector2 LoopSeconds => loopSeconds;
     public float StartTime => startWithTime;
     public string Title => title;

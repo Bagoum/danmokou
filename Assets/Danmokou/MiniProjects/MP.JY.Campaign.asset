@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4f64d4a00c194018afbe5db3323da211, type: 3}
+  m_Name: MP.JY.Campaign
+  m_EditorClassIdentifier: 
+  startLives: 3
+  key: mp.jy
+  shortTitle: MiniProject
+  endings: []
+  players:
+  - {fileID: 11400000, guid: 2837e4ddce10a134ebcede695c842b92, type: 2}
+  stages:
+  - {fileID: 11400000, guid: ea29b3bc3d7231f4c88a4871433e7011, type: 2}
+  practiceBosses:
+  - {fileID: 11400000, guid: 17201d06832c65444b4e2faa8c5666a4, type: 2}

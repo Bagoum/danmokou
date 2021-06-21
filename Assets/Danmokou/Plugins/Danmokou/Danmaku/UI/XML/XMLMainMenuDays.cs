@@ -55,9 +55,10 @@ public class XMLMainMenuDays : XMLMainMenu {
 
     protected override void Start() {
         if (ReturnTo == null) {
-            uiRenderer.Slide(new Vector2(3, 0), Vector2.zero, 1f, DMath.M.EOutSine, null);
-            uiRenderer.Fade(0, 1, 1f, x => x, null);
-        }
+            _ = uiRenderer.Slide(new Vector2(3, 0), Vector2.zero, 1f, DMath.M.EOutSine);
+            _ = uiRenderer.Fade(0, 1, 1f, null);
+        } else
+            uiRenderer.Fade(1, 1, 0, null);
         base.Start();
     }
     
@@ -76,7 +77,7 @@ public class XMLMainMenuDays : XMLMainMenu {
 
         var photoBoard = DependencyInjection.MaybeFind<IAyaPhotoBoard>();
 
-        SceneSelectScreen = new UIScreen(DayCampaign.days[0].bosses.SelectMany(
+        SceneSelectScreen = new UIScreen(this, DayCampaign.days[0].bosses.SelectMany(
             b => b.phases.Select(p => {
                 //TODO: this return is not safe if you change the difficulty.
                 if (!p.Enabled(Meta())) return new UINode(() => p.Title(Meta())).EnabledIf(false);
@@ -89,7 +90,7 @@ public class XMLMainMenuDays : XMLMainMenu {
                 Func<(bool, UINode?)> Confirm = () => {
                     ConfirmCache();
                     new InstanceRequest(InstanceRequest.PracticeSuccess, Meta(),
-                        challenge: new PhaseChallengeRequest(p, c)).Run();
+                        new PhaseChallengeRequest(p, c)).Run();
                     return (true, null);
                 };
                 var challengeSwitch = new DynamicComplexOptionNodeLR<int>(LString.Empty, VTALR2Option, SetChallenge,
@@ -116,11 +117,11 @@ public class XMLMainMenuDays : XMLMainMenu {
                 );
             })).ToArray()).With(VTASceneSelect);
 
-        OptionsScreen = new UIScreen(XMLPauseMenu.GetOptions(true).ToArray())
+        OptionsScreen = new UIScreen(this, XMLPauseMenu.GetOptions(true).ToArray())
             .With(OptionsScreenV).OnExit(SaveData.AssignSettingsChanges);
-        ReplayScreen = XMLUtils.ReplayScreen(TentativeCache, ConfirmCache).With(ReplayScreenV);
+        ReplayScreen = XMLUtils.ReplayScreen(this, TentativeCache, ConfirmCache).With(ReplayScreenV);
 
-        MainScreen = new UIScreen(
+        MainScreen = new UIScreen(this,
             new TransferNode(SceneSelectScreen, main_gamestart)
                 .With(large1Class),
             new OptionNodeLR<string?>(main_lang, l => {

@@ -2,7 +2,7 @@ pattern({ })
 <!> type non `Circle of Circles`
 <!> roott(1, 0, 1)
 phase(0)
-	action(block, 0)
+	paction(0)
 		async circle-*/ <1.5;:> girepeat {
 				wait(4s)
 				times(_)

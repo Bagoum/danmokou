@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using BagoumLib;
 using BagoumLib.Culture;
+using BagoumLib.Events;
 using Danmokou.Achievements;
 using Danmokou.Danmaku;
 using Danmokou.GameInstance;
@@ -14,6 +14,7 @@ using Danmokou.SM;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
 using ProtoBuf;
+using Suzunoya.Dialogue;
 using UnityEngine;
 using UnityEngine.Profiling;
 using KC = UnityEngine.KeyCode;
@@ -44,19 +45,14 @@ public static class SaveData {
 
         [JsonIgnore]
         public IEnumerable<InstanceRecord> FinishedCampaignGames => 
-            FinishedGames.Values.Where(gr => gr.RequestKey.type == 0);
+            FinishedGames.Values.Where(gr => gr.RequestKey is CampaignRequestKey);
 
         [JsonIgnore]
-        private ICollection<string> CompletedCampaigns => FinishedGames.Values
-            .Where(g => g.Completed)
-            .Select(g => g.ReconstructedRequestKey.Resolve(
-                c => c,
-                _ => null!,
-                _ => null!,
-                _ => null!
-            ))
-            .FilterNone()
-            .ToImmutableHashSet();
+        private ICollection<string> CompletedCampaigns =>
+            new HashSet<string>(
+                FinishedGames.Values
+                    .Select(g => (g.Completed && g.RequestKey is CampaignRequestKey cr) ? cr.Campaign : null)
+                    .FilterNone());
 
         public bool CampaignCompleted(string key) =>
             CompletedCampaigns.Contains(key);
@@ -82,31 +78,29 @@ public static class SaveData {
             SaveData.SaveRecord();
         }
 
-        public Dictionary<((string, string), int), (int success, int total)> GetCampaignSpellHistory() =>
+        public Dictionary<BossPracticeRequestKey, (int success, int total)> GetCampaignSpellHistory() =>
             Statistics.AccSpellHistory(FinishedCampaignGames);
 
-        public Dictionary<((string, string), int), (int success, int total)> GetPracticeSpellHistory() =>
-            Statistics.AccSpellHistory(FinishedGames.Values.Where(gr => gr.RequestKey.type == 1));
+        public Dictionary<BossPracticeRequestKey, (int success, int total)> GetPracticeSpellHistory() =>
+            Statistics.AccSpellHistory(FinishedGames.Values.Where(gr => gr.RequestKey is BossPracticeRequestKey));
 
 
         public long? GetHighScore(InstanceRequest req) {
-            var campaign = InstanceRequest.CampaignIdentifier(req.lowerRequest).Tuple;
+            var campaign = req.lowerRequest.Key;
             return FinishedGames.Values.Where(g =>
-                g.RequestKey == campaign &&
+                Equals(g.RequestKey, campaign) &&
                 g.SavedMetadata.difficulty.standard == req.metadata.difficulty.standard
             ).Select(x => x.Score).OrderByDescending(x => x).FirstOrNull();
         }
 
         public InstanceRecord? ChallengeCompletion(SMAnalysis.DayPhase phase, int c, SharedInstanceMetadata meta) {
-            var key = InstanceRequest.CampaignIdentifier(
-                new DU<CampaignRequest, BossPracticeRequest, PhaseChallengeRequest, StagePracticeRequest>(
-                    new PhaseChallengeRequest(phase, c)));
+            var key = new PhaseChallengeRequest(phase, c).Key;
             //TODO you can add filters on the meta properties (difficulty/player) as necessary.
 
             return FinishedGames.Values
                 .Where(g =>
                     g.Completed &&
-                    g.RequestKey.Tuple4Eq(key.Tuple))
+                    g.RequestKey.Equals(key))
                 .OrderByDescending(g => g.Date)
                 .FirstOrDefault();
         }
@@ -148,9 +142,13 @@ public static class SaveData {
         public FullScreenMode Fullscreen = FullScreenMode.FullScreenWindow;
         public int Vsync = 1;
         public bool UnfocusedHitbox = true;
-        public float DialogueWaitMultiplier = 1f;
+        //Don't assign to this, use the event instead
+        public float DialogueSpeed = 1f;
+        [NonSerialized] public Evented<float> DialogueSpeedEv = null!;
         public float BGMVolume = 1f;
+        [NonSerialized] public Evented<float> BGMVolumeEv = null!;
         public float SEVolume = 1f;
+        public float TypingSoundVolume = 1f;
         public bool Backgrounds = true;
         public bool AllowControllerInput = true;
 
@@ -285,6 +283,11 @@ public static class SaveData {
     static SaveData() {
         s = ReadJson<Settings>(SETTINGS) ?? Settings.Default;
         s.RefreshRate = Settings.DefaultRefresh;
+        s.DialogueSpeedEv = new Evented<float>(s.DialogueSpeed);
+        _ = SpeechSettings.SpeedMultiplier.AddDisturbance(s.DialogueSpeedEv);
+        _ = s.DialogueSpeedEv.Subscribe(v => s.DialogueSpeed = v);
+        s.BGMVolumeEv = new Evented<float>(s.BGMVolume);
+        _ = s.BGMVolumeEv.Subscribe(v => s.BGMVolume = v);
         ETime.SetForcedFPS(s.RefreshRate);
         UpdateResolution(s.Resolution);
         UpdateFullscreen(s.Fullscreen);

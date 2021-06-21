@@ -188,7 +188,7 @@ public class Dialoguer : CoroutineRegularUpdater {
             }
             sb.Add("</color>");
         }
-        void AddWait(float t) => wait_time += t * SaveData.s.DialogueWaitMultiplier;
+        void AddWait(float t) => wait_time += t / SaveData.s.DialogueSpeed;
         for (; ii < words.Length; ++ii) {
             for (; wait_time > ETime.FRAME_YIELD; wait_time -= ETime.FRAME_TIME) {
                 yield return null;
@@ -223,7 +223,7 @@ public class Dialoguer : CoroutineRegularUpdater {
                         AddWait(0.5f);
                     }, null!, null!,
                     AddWait, 
-                    dobj => dobj.contents.Resolve(AddWait, DependencyInjection.SFXService.Request, RequestEvent));
+                    dobj => dobj.contents.Resolve(AddWait, x => DependencyInjection.SFXService.Request(x), RequestEvent));
             }
             mainText.text = string.Concat(sb);
         }

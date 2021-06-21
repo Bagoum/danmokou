@@ -2,7 +2,7 @@ pattern({ })
 <!> type non `Polar Movement`
 <!> roott(1, 0, 1.5)
 phase(0)
-	action(block, 0)
+	paction(0)
 		async sakura-** <> gcrepeat {
 				wait(30)
 				times(_)

@@ -313,7 +313,7 @@ public static class WaitingUtils {
     /// so you do not need to check it after awaiting this.
     /// </summary>
     /// <returns></returns>
-    public static async Task WaitFor(BehaviorEntity Exec, ICancellee cT, float time, bool zeroToInfinity) {
+    public static async Task WaitFor(CoroutineRegularUpdater Exec, ICancellee cT, float time, bool zeroToInfinity) {
         cT.ThrowIfCancelled();
         if (zeroToInfinity && time < float.Epsilon) time = float.MaxValue;
         if (time < float.Epsilon) return;

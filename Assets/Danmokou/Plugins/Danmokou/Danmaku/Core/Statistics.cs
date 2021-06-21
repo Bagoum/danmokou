@@ -8,8 +8,8 @@ using Danmokou.SM;
 
 namespace Danmokou.Core {
 public static class Statistics {
-    public static Dictionary<((string campaign, string boss), int phase), (int success, int total)> AccSpellHistory(IEnumerable<InstanceRecord> over, Func<((string campaign, string boss), int phase), bool>? pred = null) {
-        var res = new Dictionary<((string, string), int), (int, int)>();
+    public static Dictionary<BossPracticeRequestKey, (int success, int total)> AccSpellHistory(IEnumerable<InstanceRecord> over, Func<BossPracticeRequestKey, bool>? pred = null) {
+        var res = new Dictionary<BossPracticeRequestKey, (int, int)>();
         foreach (var g in over) {
             foreach (var cpt in g.CardHistory.record.Values.SelectMany(x => x)) {
                 if (pred?.Invoke(cpt.Key) ?? true) {
@@ -26,18 +26,18 @@ public static class Statistics {
     public class StatsGenerator {
         private readonly InstanceRecord[] arr;
         private readonly SMAnalysis.AnalyzedCampaign[] campaigns;
-        private readonly Dictionary<((string, string), int), (int, int)> spellHist;
-        public bool HasSpellHist;
+        private readonly Dictionary<BossPracticeRequestKey, (int, int)> spellHist;
+        public readonly bool HasSpellHist;
 
         private static float SuccessRate((int success, int total) entry) =>
             entry.success == 0 ? 0 : // solves 0/0
             entry.success / (float) entry.total;
 
-        private static float SpellHistSuccess((((string, string), int), (int success, int total)) entry) =>
+        private static float SpellHistSuccess((BossPracticeRequestKey, (int success, int total)) entry) =>
             SuccessRate(entry.Item2);
         
         public StatsGenerator(IEnumerable<InstanceRecord> over, SMAnalysis.AnalyzedCampaign[] campaigns,
-            Func<((string campaign, string boss), int phase), bool>? spellHistPred = null) {
+            Func<BossPracticeRequestKey, bool>? spellHistPred = null) {
             arr = over.ToArray();
             this.campaigns = campaigns;
             this.spellHist = AccSpellHistory(arr, spellHistPred);
@@ -64,14 +64,14 @@ public static class Statistics {
         
         public (BossPracticeRequest, float) BestCapture {
             get {
-                var cpt = spellHist.Items().MaxBy(SpellHistSuccess);
-                return (BossPracticeRequest.Reconstruct(cpt.key), SpellHistSuccess(cpt));
+                var (cpt, succ) = spellHist.Items().MaxBy(SpellHistSuccess);
+                return ((cpt.Reconstruct() as BossPracticeRequest)!, SuccessRate(succ));
             }
         }
         public (BossPracticeRequest, float) WorstCapture {
             get {
-                var cpt = spellHist.Items().MaxBy(x => -SpellHistSuccess(x));
-                return (BossPracticeRequest.Reconstruct(cpt.key), SpellHistSuccess(cpt));
+                var (cpt, succ) = spellHist.Items().MaxBy(x => -SpellHistSuccess(x));
+                return ((cpt.Reconstruct() as BossPracticeRequest)!, SuccessRate(succ));
             }
         }
 

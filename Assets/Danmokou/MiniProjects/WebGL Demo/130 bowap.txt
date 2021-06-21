@@ -2,7 +2,7 @@ pattern({ })
 <!> type non `Border of Wave and Particle`
 <!> roott(1, 0, 2)
 phase(0)
-	action(block, 0)
+	paction(0)
 		async gem-*/w <> gcrepeat {
 			wait(8)
 			times(_)

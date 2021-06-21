@@ -2,7 +2,7 @@ pattern({ })
 <!> type non `Gallery: Stone Cradle`
 <!> roott(1, 0, 0)
 phase(0)
-	action(block, 0)
+	paction(0)
 		sync sakura-green/w <> gsrepeat {
 			tmmod(4)
 			bindItr(layer)

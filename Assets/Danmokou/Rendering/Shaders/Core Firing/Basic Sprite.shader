@@ -41,10 +41,7 @@
 			#pragma fragment frag
 			#pragma multi_compile_local __ FT_CYCLE
 			#pragma multi_compile_local __ FT_FADE_IN
-			#pragma multi_compile_local __ FT_DISPLACE
-			#pragma multi_compile_local __ FT_DISPLACE_POLAR
-			#pragma multi_compile_local __ FT_DISPLACE_RADIAL
-			#pragma multi_compile_local __ FT_DISPLACE_BIVERT
+			#pragma multi_compile_local __ FT_DISPLACE FT_DISPLACE_POLAR FT_DISPLACE_RADIAL FT_DISPLACE_BIVERT
 			#pragma multi_compile_local __ FT_HUESHIFT
 			#pragma multi_compile_local __ FT_RECOLORIZE
 			#pragma multi_compile_local __ FT_CIRCLECUT

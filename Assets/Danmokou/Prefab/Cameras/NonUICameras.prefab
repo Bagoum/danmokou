@@ -134,6 +134,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   seijaShader: {fileID: 4800000, guid: 3ac9ecccd2644abaa09a08cacad1bbc0, type: 3}
+  seijaMaterial: {fileID: 0}
 --- !u!1 &2757818208485767169
 GameObject:
   m_ObjectHideFlags: 0
@@ -282,7 +283,7 @@ Camera:
   field of view: 60
   orthographic: 1
   orthographic size: 4.5
-  m_Depth: 100
+  m_Depth: 99
   m_CullingMask:
     serializedVersion: 2
     m_Bits: 1073741824

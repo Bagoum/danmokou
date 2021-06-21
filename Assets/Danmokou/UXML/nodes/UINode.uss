@@ -270,3 +270,11 @@
 .node.wrap .coretext {
     white-space: normal;
 }
+
+.node.vnbacklog.focus #Speaker {
+    -unity-background-image-tint-color: rgb(255, 255, 255);
+}
+
+.node.vnbacklog #Speaker {
+    -unity-background-image-tint-color: rgb(178, 178, 178);
+}

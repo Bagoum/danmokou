@@ -2,7 +2,7 @@ pattern({ })
 <!> type non `Exploding Stars`
 <!> roott(1, 0, 0)
 phase(0)
-	action(block, 0)
+	paction(0)
 		sync lstar-blue/w <> gsr {
 			times(8)
 			circle

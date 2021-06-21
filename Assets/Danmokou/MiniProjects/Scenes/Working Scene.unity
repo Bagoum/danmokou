@@ -319,7 +319,7 @@ PrefabInstance:
         type: 3}
       propertyPath: behaviorScript
       value: 
-      objectReference: {fileID: 4900000, guid: b853ae2ee7187844d9bced300f308eed, type: 3}
+      objectReference: {fileID: 4900000, guid: 864d7755b30d3234d847cc480b6a6fb9, type: 3}
     - target: {fileID: 4823259105108341091, guid: 43d5da5eb5b153e4087eb90e97832a00,
         type: 3}
       propertyPath: m_Color.b
@@ -403,7 +403,7 @@ PrefabInstance:
     - target: {fileID: 6003014192476353498, guid: 43d5da5eb5b153e4087eb90e97832a00,
         type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 43d5da5eb5b153e4087eb90e97832a00, type: 3}

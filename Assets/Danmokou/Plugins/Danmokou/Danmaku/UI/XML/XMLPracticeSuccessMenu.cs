@@ -16,29 +16,26 @@ namespace Danmokou.UI.XML {
 [Preserve]
 public class XMLPracticeSuccessMenu : PausedGameplayMenu {
 
-    protected override string HeaderOverride => "YOU HUNTED";
-
     protected override void ResetCurrentNode() {
-        Current = MainScreen.top[0];
+        Current = MainScreen.Top[0];
     }
 
     protected override void Awake() {
-        MainScreen = new UIScreen(
+        MainScreen = new UIScreen(this,
             new FuncNode(GameManagement.Restart, restart, true)
                 .EnabledIf(() => GameManagement.CanRestart),
             new FuncNode(GameManagement.GoToReplayScreen, save_replay, true)
                 .EnabledIf(() => GameManagement.Instance.Replay is ReplayRecorder),
             new FuncNode(GameManagement.GoToMainMenu, to_menu, true)
         ).With(UIScreen);
-        MainScreen.ExitNode = MainScreen.top[2];
+        MainScreen.ExitNode = MainScreen.Top[2];
         base.Awake();
     }
 
     protected override void Start() {
         base.Start();
+        UI.Q<Label>("Header").text = "YOU HUNTED";
         HideMe();
-        MenuActive = false;
-        UI.style.right = UIManager.MenuRightOffset;
     }
     
     protected override void BindListeners() {

@@ -16,34 +16,31 @@ namespace Danmokou.UI.XML {
 [Preserve]
 public class XMLDeathMenu : PausedGameplayMenu {
 
-    protected override string HeaderOverride => death_header;
-
     protected override void ResetCurrentNode() {
-        Current = MainScreen.top[GameManagement.Instance.Continues > 0 ? 0 : 1];
+        Current = MainScreen.Top[GameManagement.Instance.Continues > 0 ? 0 : 1];
     }
 
     protected override void Awake() {
-        MainScreen = new UIScreen(
+        MainScreen = new UIScreen(this,
             new FuncNode(() => {
                 if (GameManagement.Instance.TryContinue()) {
                     ProtectHide(HideMe);
                     return true;
                 } else return false;
-            }, () => death_continue_ls(GameManagement.Instance.Continues), true)
-                .EnabledIf(() => GameManagement.Instance.Continues > 0),
+                }, () => death_continue_ls(GameManagement.Instance.Continues), true
+            ).EnabledIf(() => GameManagement.Instance.Continues > 0),
             new ConfirmFuncNode(GameManagement.Restart, restart, true)
                 .EnabledIf(() => GameManagement.CanRestart),
             new ConfirmFuncNode(GameManagement.GoToMainMenu, to_menu, true)
         ).With(UIScreen);
-        MainScreen.ExitNode = MainScreen.top[0];
+        MainScreen.ExitNode = MainScreen.Top[0];
         base.Awake();
     }
 
     protected override void Start() {
         base.Start();
+        UI.Q<Label>("Header").text = death_header;
         HideMe();
-        MenuActive = false;
-        UI.style.right = UIManager.MenuRightOffset;
     }
 
     protected override void BindListeners() {

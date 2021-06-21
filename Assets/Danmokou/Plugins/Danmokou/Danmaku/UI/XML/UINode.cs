@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using BagoumLib;
 using BagoumLib.Culture;
+using BagoumLib.Mathematics;
+using BagoumLib.Tweening;
 using Danmokou.Core;
 using Danmokou.DMath;
 using JetBrains.Annotations;
@@ -11,18 +13,35 @@ using UnityEngine.UIElements;
 
 namespace Danmokou.UI.XML {
 public enum NodeState {
+    /// <summary>
+    /// The cursor is on the node. Only one node per screen may be in this state at once.
+    /// </summary>
     Focused,
+    /// <summary>
+    /// This node is a parent of the focused node.
+    /// </summary>
     Selected,
+    /// <summary>
+    /// This node is a sibling of the focused node.
+    /// </summary>
     GroupFocused,
+    /// <summary>
+    /// This node is visible.
+    /// </summary>
     Visible,
+    /// <summary>
+    /// This node is not visible.
+    /// </summary>
     Invisible
 }
 
 public class UIScreen {
-    public UINode[] top;
-    public virtual UINode First => top[0];
+    protected UINode[] top;
+    public virtual UINode[] Top => top;
+    public UINode First => Top[0];
     public UIScreen? calledBy { get; private set; }
     public UINode? lastCaller { get; private set; }
+    public XMLMenu Container { get; }
 
     public UINode GoToNested(UINode caller, UINode target) {
         lastCaller = caller;
@@ -47,18 +66,28 @@ public class UIScreen {
     public void RunPreEnter() => onPreEnter?.Invoke();
     public void RunPostEnter() => onPostEnter?.Invoke();
 
-    public UIScreen(params UINode?[] nodes) {
+    public UIScreen(XMLMenu container, params UINode?[] nodes) {
+        Container = container;
         top = nodes.Where(x => x != null).ToArray()!;
         foreach (var n in top) n.Siblings = top;
         foreach (var n in ListAll()) n.screen = this;
     }
 
-    protected UINode[] AssignNewNodes(UINode[] nodes) {
+    public UINode[] AssignNewNodes(UINode[] nodes) {
         top = nodes;
+        foreach (var l in Lists) l.Clear();
         foreach (var n in top) n.Siblings = top;
         foreach (var n in ListAll()) n.screen = this;
         BuildChildren();
         return top;
+    }
+
+    public UINode AddTopNode(UINode node) {
+        top = top.Append(node).ToArray();
+        foreach (var n in top) n.Siblings = top;
+        foreach (var n in ListAll()) n.screen = this;
+        BuildChild(node);
+        return node;
     }
 
     public IEnumerable<UINode> ListAll() => top.SelectMany(x => x.ListAll());
@@ -143,9 +172,16 @@ public class UIScreen {
 
 public class LazyUIScreen : UIScreen {
     private readonly Func<UINode[]> loader;
-    public override UINode First => (top.Length > 0 ? top : AssignNewNodes(loader()))[0];
 
-    public LazyUIScreen(Func<UINode[]> loader) : base() {
+    public override UINode[] Top {
+        get {
+            if (top.Length == 0)
+                AssignNewNodes(loader());
+            return top;
+        }
+    }
+
+    public LazyUIScreen(XMLMenu container, Func<UINode[]> loader) : base(container) {
         this.loader = loader;
     }
 }
@@ -154,15 +190,12 @@ public class UINode {
     public readonly UINode[] children;
     public UINode? Parent { get; private set; }
     public UINode[] Siblings { get; set; } = null!; //including self
-    private UINode[]? _sameDepthSiblings;
-    public UINode[] SameDepthSiblings =>
-        _sameDepthSiblings ??= Siblings.Where(s => s.Depth == Depth).ToArray();
-
 
     public LString Description => descriptor();
     //sorry but there's a use case where i need to modify this in the initializer. see TextInputNode
     protected Func<LString> descriptor;
     public UIScreen screen = null!;
+    private XMLMenu Container => screen.Container;
     public NodeState state = NodeState.Invisible;
 
     public UINode(LString description, params UINode[] children) : this(() => description, children) { }
@@ -177,12 +210,11 @@ public class UINode {
 
     public IEnumerable<UINode> ListAll() => children.SelectMany(n => n.ListAll()).Prepend(this);
 
-    public int Depth => Parent?.ChildDepth ?? 0;
-    protected virtual int ChildDepth => 1 + Depth;
+    public int Depth => (Parent?.Depth ?? -1) + 1;
 
     protected static void AssignParentingStates(UINode? p) {
         for (; p != null; p = p.Parent) {
-            foreach (var x in p.SameDepthSiblings) x.state = NodeState.Visible;
+            foreach (var x in p.Siblings) x.state = NodeState.Visible;
             p.state = NodeState.Selected;
         }
     }
@@ -190,14 +222,15 @@ public class UINode {
     public virtual void AssignStatesFromSelected() {
         screen.ResetStates();
         foreach (var x in children) x.state = NodeState.Visible;
-        foreach (var x in SameDepthSiblings) x.state = NodeState.GroupFocused;
+        foreach (var x in Siblings) x.state = NodeState.GroupFocused;
         this.state = NodeState.Focused;
         AssignParentStatesFromSelected();
         screen.ApplyStates();
     }
 
     private readonly List<string> overrideClasses = new List<string>();
-    private readonly List<Action<VisualElement>> overrideInline = new List<Action<VisualElement>>();
+    private readonly List<Action<VisualElement>> onBind = new List<Action<VisualElement>>();
+    private readonly List<Action<NodeState, VisualElement>> overrideInline = new List<Action<NodeState, VisualElement>>();
 
     public UINode With(params string?[] clss) {
         foreach (var cls in clss) {
@@ -206,10 +239,17 @@ public class UINode {
         return this;
     }
 
-    public UINode With(params Action<VisualElement>?[] inline) {
-        foreach (var func in inline) {
-            if (func != null) overrideInline.Add(func);
-        }
+    public UINode OnBound(Action<VisualElement>? func) {
+        if (func != null)
+            onBind.Add(func);
+        return this;
+    }
+    public UINode With(Action<VisualElement>? func) {
+        if (func != null) overrideInline.Add((_, x) => func(x));
+        return this;
+    }
+    public UINode With(Action<NodeState, VisualElement>? func) {
+        if (func != null) overrideInline.Add(func);
         return this;
     }
 
@@ -233,7 +273,7 @@ public class UINode {
             boundNode.AddToClassList(cls);
         }
         foreach (var inline in overrideInline) {
-            inline(boundNode);
+            inline(state, boundNode);
         }
         confirmEnabled = (enableCheck?.Invoke() ?? true);
         if (!confirmEnabled) boundNode.AddToClassList(disabledClass);
@@ -274,7 +314,7 @@ public class UINode {
         return this;
     }
     public virtual UINode Up() => _overrideUp?.Invoke() ??
-                                  SameDepthSiblings.ModIndex(SameDepthSiblings.IndexOf(this) - 1);
+                                  Siblings.ModIndex(Siblings.IndexOf(this) - 1);
     
     private Func<UINode>? _overrideDown;
     public UINode SetDownOverride(Func<UINode> overr) {
@@ -282,7 +322,7 @@ public class UINode {
         return this;
     }
     public virtual UINode Down() => _overrideDown?.Invoke() ?? 
-                                    SameDepthSiblings.ModIndex(SameDepthSiblings.IndexOf(this) + 1);
+                                    Siblings.ModIndex(Siblings.IndexOf(this) + 1);
 
     private Func<UINode>? _overrideBack;
     public UINode SetBackOverride(Func<UINode> overr) {
@@ -308,15 +348,20 @@ public class UINode {
         _onVisit = onVisit;
         return this;
     }
-    public void OnVisit(UINode prev) {
+    public void OnVisit(UINode prev, bool animate) {
+        if (animate) {
+            Tween.TweenTo(1f, 1.03f, 0.08f, f => boundNode.transform.scale = new Vector3(f, f, f), Easers.EOutSine)
+                .Then(Tween.TweenTo(1.03f, 1f, 0.12f,  f => boundNode.transform.scale = new Vector3(f, f, f)))
+                .Run(Container);
+        }
         _onVisit?.Invoke(prev);
     }
     public UINode SetOnLeave(Action<UINode?> onLeave) {
         _onLeave = onLeave;
         return this;
     }
-    public void OnLeave(UINode? prev) {
-        _onLeave?.Invoke(prev);
+    public virtual void OnLeave(UINode? nxt) {
+        _onLeave?.Invoke(nxt);
     }
 
     protected virtual (bool success, UINode? target) _Confirm() => _overrideConfirm?.Invoke() ?? (false, this);
@@ -367,8 +412,15 @@ public class UINode {
     private Label? boundLabel;
     protected Label BoundLabel => boundLabel ??= bound.Q<Label>();
 
-    public void ScrollTo() => scroll.ScrollTo(bound);
-    
+    public void ScrollTo() {
+        boundNode.Focus();
+        scroll.ScrollTo(bound);
+        /*
+            boundNode.experimental.animation.Scale(1.04f, 120).Ease(M.EOutSine).OnCompleted(
+            () => boundNode.experimental.animation.Scale(1f, 120).Ease(M.EInSine).Start()
+        ).Start();*/
+    }
+
     protected virtual void BindText() => BoundLabel.text = Description;
 
     protected VisualElement BindScroll(ScrollView scroller) {
@@ -385,7 +437,33 @@ public class UINode {
     protected void CloneTree(Dictionary<Type, VisualTreeAsset> map) {
         bound = (overrideBuilder == null ? map.SearchByType(this, true) : overrideBuilder).CloneTree();
         boundNode = bound.Q<VisualElement>(null!, NodeClass);
+        foreach (var f in onBind)
+            f(boundNode);
         boundClasses = boundNode.GetClasses().ToArray();
+        if (!Passthrough) {
+            bound.RegisterCallback<MouseEnterEvent>(evt => {
+                //Log.Unity($"Enter {Description}");
+                Container.QueuedEvent = (this, QueuedEvent.Goto);
+                evt.StopPropagation();
+            });
+            bound.RegisterCallback<MouseUpEvent>(evt => {
+                //Log.Unity($"Click {Description}");
+                Container.QueuedEvent = (this, QueuedEvent.Confirm);
+                evt.StopPropagation();
+            });
+            if (this is IOptionNodeLR || this is IComplexOptionNodeLR) {
+                bound.Q("Left").RegisterCallback<MouseUpEvent>(evt => {
+                    Container.QueuedEvent = (this, QueuedEvent.Left);
+                    evt.StopPropagation();
+                });
+                bound.Q("Right").RegisterCallback<MouseUpEvent>(evt => {
+                    Container.QueuedEvent = (this, QueuedEvent.Right);
+                    evt.StopPropagation();
+                });
+            }
+        }
+        //TODO: you can use a callback like this to replace a lot of the manual handling.
+        //bound.RegisterCallback<KeyDownEvent>(evt => Debug.Log($"{Description}: {evt.keyCode} {evt.target}"));
     }
 
     private VisualTreeAsset? overrideBuilder;
@@ -537,25 +615,10 @@ public class ConfirmFuncNode : FuncNode {
         SetConfirm(false);
         base.ResetProgress();
     }
-    public override UINode Back() {
+
+    public override void OnLeave(UINode? nxt) {
         SetConfirm(false);
-        return base.Back();
-    }
-    public override UINode Left() {
-        SetConfirm(false);
-        return base.Left();
-    }
-    public override UINode Right() {
-        SetConfirm(false);
-        return base.Right();
-    }
-    public override UINode Up() {
-        SetConfirm(false);
-        return base.Up();
-    }
-    public override UINode Down() {
-        SetConfirm(false);
-        return base.Down();
+        base.OnLeave(nxt);
     }
 
     protected override (bool success, UINode? target) _Confirm() {

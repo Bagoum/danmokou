@@ -35,7 +35,7 @@ namespace Danmokou.Core {
 /// This is the only scene-persistent object in the game.
 /// </summary>
 public class GameManagement : CoroutineRegularUpdater {
-    public static readonly Version EngineVersion = new Version(7, 0, 1);
+    public static readonly Version EngineVersion = new Version(7, 0, 3);
     public static bool Initialized { get; private set; } = false;
     public static DifficultySettings Difficulty => Instance.Difficulty;
 
@@ -85,7 +85,11 @@ public class GameManagement : CoroutineRegularUpdater {
             DestroyImmediate(gameObject);
             return;
         }
-        NewInstance(OpenAsDebugMode ? InstanceMode.DEBUG : InstanceMode.NULL);
+        NewInstance(
+#if UNITY_EDITOR || ALLOW_RELOAD
+            OpenAsDebugMode ? InstanceMode.DEBUG : 
+#endif
+                InstanceMode.NULL);
         Initialized = true;
         gm = this;
         DontDestroyOnLoad(this);
@@ -188,9 +192,9 @@ public class GameManagement : CoroutineRegularUpdater {
         BulletManager.DestroyCopiedPools();
 #if UNITY_EDITOR || ALLOW_RELOAD
         Events.LocalReset.Proc();
-#endif
         //Ordered last so cancellations from HardCancel will occur under old data
         NewInstance(InstanceMode.DEBUG);
+#endif
         Debug.Log($"Reloading level: {Difficulty.Describe()} is the current difficulty");
         UIManager.UpdateTags();
     }

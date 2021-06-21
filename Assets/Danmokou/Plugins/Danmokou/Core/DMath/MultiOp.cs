@@ -50,7 +50,7 @@ public abstract class MultiOp<T> : MultiOp {
         return t;
     }
 
-    public class Token {
+    public class Token : IDisposable {
         public readonly Priority priority;
         public readonly T value;
         private readonly MultiOp<T> source;
@@ -62,6 +62,7 @@ public abstract class MultiOp<T> : MultiOp {
         }
 
         public bool TryRevoke() => source.TryRevoke(this);
+        public void Dispose() => TryRevoke();
     }
     
 }
