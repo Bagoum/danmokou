@@ -12,7 +12,7 @@ public class Mayumi : SZYUCharacter {
     public override Color UIColor => new Color(.90f, .69f, .22f);
     public override string Name => "Joutouguu Mayumi";
     
-    public override void RollEvent() => DependencyInjection.SFXService.Request("x-bubble-2", SFXType.TypingSound);
+    public override void RollEvent() => ServiceLocator.SFXService.Request("x-bubble-2", SFXType.TypingSound);
 }
 
 public class MayumiMimic : PiecewiseCharacterMimic {

@@ -22,7 +22,7 @@ public class EffectStrategy : ScriptableObject {
     public EffectStrategy[] subEffects = null!;
 
     private void ProcMinors() {
-        if (sound != null) DependencyInjection.SFXService.Request(sound);
+        if (sound != null) ServiceLocator.SFXService.Request(sound);
     }
 
     public void Proc(Vector2 source, Vector2 target, float targetPerimeterRadius) =>

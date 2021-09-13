@@ -154,8 +154,8 @@ public static class Events {
         public DeletionMarker<Action> Subscribe(Action cb) => callbacks.Add(cb);
     }
 
-    public static readonly IBSubject<EngineState> EngineStateHasChanged = new Event<EngineState>();
-    public static readonly Event0 ClearPhase = new Event0();
+    public static readonly IBSubject<EngineState> EngineStateChanged = new Event<EngineState>();
+    public static readonly Event0 PhaseCleared = new Event0();
 #if UNITY_EDITOR || ALLOW_RELOAD
     public static readonly Event0 LocalReset = new Event0();
 #endif

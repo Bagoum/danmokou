@@ -63,7 +63,7 @@ public class MiniTutorial : BehaviorEntity {
             yield return null;
             yield return wait(() => UIConfirm.Active && EngineStateManager.State == EngineState.RUN);
         }
-        DependencyInjection.Find<IUIManager>()
+        ServiceLocator.Find<IUIManager>()
             .SetSpellname("Reduced Tutorial (For Players Too Smart for the Normal Tutorial)");
 
         var mov = new Movement(new Vector2(-2, 2.5f), 0);

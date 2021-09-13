@@ -42,7 +42,7 @@ public class Laser : FrameAnimBullet {
             ctr.SetupEndpoint(endpt);
         } else ctr.SetupEndpoint(new PointContainer(null));
         ctr.Initialize(this, config, style.RecolorOrThrow.material, isNew, bpi, ref options);
-        DependencyInjection.SFXService.Request(options.firesfx);
+        ServiceLocator.SFXService.Request(options.firesfx);
         SetColdHot(cold, hot, options.hotsfx, options.repeat);
         ctr.Activate(); //This invokes UpdateMesh
     }

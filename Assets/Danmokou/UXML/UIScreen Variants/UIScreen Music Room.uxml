@@ -1,6 +1,6 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <Style src="UIScreen.uss" />
-    <ui:Label text="Music Room&#10;" display-tooltip-when-elided="True" class="header" />
+    <ui:Label text="Music Room" display-tooltip-when-elided="True" class="header" />
     <ui:VisualElement name="Container" style="padding-left: 360px; padding-right: 480px;">
         <ui:VisualElement class="column" style="flex-grow: 1.2;">
             <ui:ScrollView class="columnList" />

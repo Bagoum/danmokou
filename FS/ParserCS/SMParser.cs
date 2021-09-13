@@ -419,7 +419,7 @@ public static class SMParser {
     private static readonly Parser<LPU> MainParserNL = 
         either(CNewln, MainParser);
 
-    private static void PostfiFxSwap(LPU lpu) {
+    private static void PostfixSwap(LPU lpu) {
         if (lpu.unit.type.IsNestingType()) PostfixSwap(lpu.unit.nestVal);
     }
     private static void PostfixSwap(List<LPU> lpus) {

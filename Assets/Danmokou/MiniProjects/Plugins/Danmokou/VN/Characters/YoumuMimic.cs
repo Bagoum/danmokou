@@ -12,7 +12,7 @@ public class Youmu : SZYUCharacter {
     public override Color UIColor => new Color(1, 1, 1);
     public override string Name => "Konpaku Youmu";
     
-    public override void RollEvent() => DependencyInjection.SFXService.Request("x-bubble-3", SFXType.TypingSound);
+    public override void RollEvent() => ServiceLocator.SFXService.Request("x-bubble-3", SFXType.TypingSound);
 }
 
 public class YoumuMimic : PiecewiseCharacterMimic {

@@ -85,7 +85,7 @@ public class Tutorial : BehaviorEntity {
             yield return waitlf(() => !ih.Active);
         }
         IEnumerator confirm() => waiti(UIConfirm);
-        DependencyInjection.Find<IUIManager>().SetSpellname("Tutorial");
+        ServiceLocator.Find<IUIManager>().SetSpellname("Tutorial");
         Message(text10, welcome1(UIConfirm.Desc));
         yield return confirm();
         Prompt(text10, blue2(Pause.Desc));
@@ -238,7 +238,7 @@ public class Tutorial : BehaviorEntity {
         yield return confirm();
         yield return shift();
         Prompt(text10, ability46(Meter.Desc));
-        DependencyInjection.Find<PlayerController>().AddGems(100);
+        ServiceLocator.Find<PlayerController>().AddGems(100);
         yield return waitlf(() => InputManager.IsMeter);
         yield return shift();
         Message(text10, ability47);

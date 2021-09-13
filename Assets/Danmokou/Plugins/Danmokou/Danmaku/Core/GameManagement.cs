@@ -228,7 +228,7 @@ public class GameManagement : CoroutineRegularUpdater {
         Events.Event0.Reset();
         ETime.Slowdown.RevokeAll(MultiOp.Priority.CLEAR_PHASE);
         ETime.Timer.ResetPhase();
-        Events.ClearPhase.Proc();
+        Events.PhaseCleared.Proc();
     }
 
     public static void ClearPhaseAutocull(SoftcullProperties props) {
@@ -289,7 +289,7 @@ public class GameManagement : CoroutineRegularUpdater {
 #if UNITY_EDITOR
     public static AnalyzedBoss[] AllPBosses => Campaigns.SelectMany(c => c.bosses).ToArray();
 
-    private PlayerController Player => DependencyInjection.Find<PlayerController>();
+    private PlayerController Player => ServiceLocator.Find<PlayerController>();
 
     [ContextMenu("Add 1000 value")]
     public void YeetScore() => Player.AddValueItems(1000, 1);

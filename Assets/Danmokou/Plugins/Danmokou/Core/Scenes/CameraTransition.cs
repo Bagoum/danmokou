@@ -62,7 +62,7 @@ public class CameraTransition : MonoBehaviour {
         pb.SetTexture(PropConsts.faderTex, cfg.fadeIn.transitionTexture);
         SetReverse(cfg.fadeIn.material, cfg.fadeIn);
         Activate();
-        DependencyInjection.Find<ISFXService>().Request(cfg.fadeIn.sfx);
+        ServiceLocator.Find<ISFXService>().Request(cfg.fadeIn.sfx);
         for (float t = 0; t < cfg.fadeIn.time; t += ETime.ASSUME_SCREEN_FRAME_TIME) {
             pb.SetFloat(PropConsts.fillRatio, cfg.fadeIn.Value(t));
             sr.SetPropertyBlock(pb);
@@ -84,7 +84,7 @@ public class CameraTransition : MonoBehaviour {
             yield return null;
             //Put this here so it works well with "long first frames"
             if (t == 0) 
-                DependencyInjection.Find<ISFXService>().Request(cfg.fadeOut.sfx);
+                ServiceLocator.Find<ISFXService>().Request(cfg.fadeOut.sfx);
         }
         pb.SetFloat(PropConsts.fillRatio, 0);
         sr.SetPropertyBlock(pb);

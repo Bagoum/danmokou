@@ -51,7 +51,7 @@ public abstract class RegularUpdater : MonoBehaviour, IRegularUpdater {
         Listen(ev, sub);
     }
     
-    protected void RegisterDI<T>(T me) where T : class => tokens.Add(DependencyInjection._Register(me));
+    protected void RegisterDI<T>(T me) where T : class => tokens.Add(ServiceLocator.Register(me));
 
     protected virtual void OnEnable() => EnableUpdates();
 

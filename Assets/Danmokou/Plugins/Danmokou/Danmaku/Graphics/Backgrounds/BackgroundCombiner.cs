@@ -36,7 +36,7 @@ public class BackgroundCombiner : RegularUpdater {
 
     protected override void BindListeners() {
         base.BindListeners();
-        Listen(SaveData.ResolutionHasChanged, Reconstruct);
+        Listen(SaveData.ResolutionChanged, Reconstruct);
     }
 
     private void Start() => UpdateTextures();

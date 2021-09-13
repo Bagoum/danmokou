@@ -101,7 +101,7 @@ public static partial class PlayerBombs {
         //Note: you should use RunExternalSM, see the mokou bomb
         _ = TB1_1.Value(smh);
         _ = TB1_2.Value.Start(smh);
-        PlayerController.RequestPlayerInvulnerable.OnNext(((int) (120f * (EventLASM.BossExplodeWait + 3f)), true));
+        bomber.MakeInvulnerable((int) (120f * (EventLASM.BossExplodeWait + 3f)), true);
         for (float t = 0; t < EventLASM.BossExplodeWait; t += ETime.FRAME_TIME) yield return null;
         var circ = new CCircle(bomber.hitbox.location.x, bomber.hitbox.location.y, 8f);
         BulletManager.Autodelete(new SoftcullProperties(null, null),
@@ -117,10 +117,10 @@ public static partial class PlayerBombs {
         var fireDisable = DisableFire;
         var bhe = new BlackHoleEffect(5, 0.5f, 1.5f);
         float totalTime = 7.5f;
-        PlayerController.RequestPlayerInvulnerable.OnNext(((int) (120f * totalTime), true));
-        DependencyInjection.Find<IShaderCamera>().ShowBlackHole(bhe);
-        DependencyInjection.Find<IRaiko>().Shake(3, null, 1);
-        DependencyInjection.SFXService.Request("mima-blackhole");
+        bomber.MakeInvulnerable((int) (120f * totalTime), true);
+        ServiceLocator.Find<IShaderCamera>().ShowBlackHole(bhe);
+        ServiceLocator.Find<IRaiko>().Shake(3, null, 1);
+        ServiceLocator.SFXService.Request("mima-blackhole");
         b.SpawnCutin();
         float t = 0;
         for (; t < bhe.absorbT; t += ETime.FRAME_TIME)
@@ -142,8 +142,9 @@ public static partial class PlayerBombs {
     private static IEnumerator MokouThousandSunsBomb(Bomb b, PlayerController bomber, MultiAdder.Token bombDisable) {
         Log.Unity("Starting Mokou Thousand Suns bomb");
         var fireDisable = DisableFire;
-        PlayerController.RequestPlayerInvulnerable.OnNext((780, true));
-        DependencyInjection.SFXService.Request("mokou-thousandsuns");
+        
+        bomber.MakeInvulnerable(780, true);
+        ServiceLocator.SFXService.Request("mokou-thousandsuns");
         b.SpawnCutin();
         BulletManager.SoftScreenClear();
         var task = bomber.RunExternalSM(SMRunner.RunNoCancelRoot(b.SM!), cancelOnFinish: true);
@@ -163,7 +164,7 @@ public static partial class PlayerBombs {
     private static IEnumerator ReimuFantasySealBomb(Bomb b, PlayerController bomber, MultiAdder.Token bombDisable) {
         Log.Unity("Starting Reimu Fantasy Seal bomb");
         var fireDisable = DisableFire;
-        PlayerController.RequestPlayerInvulnerable.OnNext((900, true));
+        bomber.MakeInvulnerable(900, true);
         b.SpawnCutin();
         var task = bomber.RunExternalSM(SMRunner.RunNoCancelRoot(b.SM!), cancelOnFinish: true);
         for (int ii = 0; ii < 600; ++ii) yield return null;

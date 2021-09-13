@@ -120,7 +120,7 @@ public class MainCamera : RegularUpdater {
     }
 
     protected override void BindListeners() {
-        Listen(SaveData.ResolutionHasChanged, RecreateRT);
+        Listen(SaveData.ResolutionChanged, RecreateRT);
         base.BindListeners();
     }
 

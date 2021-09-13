@@ -12,7 +12,7 @@ public class Kurokoma : SZYUCharacter {
     public override Color UIColor => new Color(0.65f, .19f, .17f);
     public override string Name => "Kurokoma Saki";
     
-    public override void RollEvent() => DependencyInjection.SFXService.Request("x-bubble-2", SFXType.TypingSound);
+    public override void RollEvent() => ServiceLocator.SFXService.Request("x-bubble-2", SFXType.TypingSound);
 }
 
 public class KurokomaMimic : PiecewiseCharacterMimic {

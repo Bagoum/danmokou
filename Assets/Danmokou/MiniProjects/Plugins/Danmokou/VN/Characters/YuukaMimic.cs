@@ -12,7 +12,7 @@ public class Yuuka : SZYUCharacter {
     public override Color UIColor => new Color(0.78f, 0.14f, 0.25f);
     public override string Name => "Kazami Yuuka";
     
-    public override void RollEvent() => DependencyInjection.SFXService.Request("x-bubble-2", SFXType.TypingSound);
+    public override void RollEvent() => ServiceLocator.SFXService.Request("x-bubble-2", SFXType.TypingSound);
 }
 
 public class YuukaMimic : PiecewiseCharacterMimic {

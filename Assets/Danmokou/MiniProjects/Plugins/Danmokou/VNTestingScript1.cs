@@ -17,7 +17,7 @@ using UnityEngine;
 using static SuzunoyaUnity.Helpers;
 using static MiniProjects.VN.VNLines.Dialogue1;
 using static BagoumLib.Mathematics.Bezier;
-using static Danmokou.Core.DependencyInjection;
+using static Danmokou.Core.ServiceLocator;
 using Vector3 = System.Numerics.Vector3;
 
 namespace MiniProjects.VN {
@@ -26,12 +26,12 @@ namespace MiniProjects.VN {
 public static class _VNTesting {
     private static void ActivateSkip(UnityVNState vn) {
 #if UNITY_EDITOR
-        vn.SetAutoskip(Autoskip.ALL_INSTANTANEOUS);
+        vn.SetSkipMode(SkipMode.FASTFORWARD);
 #endif
     }
     private static void DeactivateSkip(UnityVNState vn) {
 #if UNITY_EDITOR
-        vn.SetAutoskip(Autoskip.None);
+        vn.SetSkipMode(null);
 #endif
     }
 

@@ -12,7 +12,7 @@ public class Reimu : SZYUCharacter {
     public override Color UIColor => new Color(0.85f, 0.1f, 0.24f);
     public override string Name => "Hakurei Reimu";
 
-    public override void RollEvent() => DependencyInjection.SFXService.Request("x-bubble-3", SFXType.TypingSound);
+    public override void RollEvent() => ServiceLocator.SFXService.Request("x-bubble-3", SFXType.TypingSound);
 }
 
 public class ReimuMimic : PiecewiseCharacterMimic {

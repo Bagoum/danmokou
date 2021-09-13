@@ -1,7 +1,11 @@
+.unity-label {
+    padding: 0;
+    margin: 0;
+}
+
 .node {
     font-size: 85px;
     background-color: rgba(0, 0, 0, 0);
-    -unity-font: url('/Assets/Danmokou/Fonts/Odibee-CorpSt-Joint.ttf');
     color: rgb(255, 255, 255);
     background-image: none;
     width: 100%;
@@ -13,10 +17,11 @@
     margin-bottom: 4px;
     flex-direction: row;
     align-items: center;
+    -unity-font-definition: url('/Assets/Danmokou/Fonts/Unity SDF Assets/Odibee-CorpSt-Joint SDF.asset');
 }
 
 .font-ubuntu {
-    -unity-font: url('/Assets/Danmokou/Fonts/ubuntu-font-family-0.83/Ubuntu-L.ttf');
+    -unity-font-definition: url('/Assets/Danmokou/Fonts/ubuntu-font-family-0.83/Ubuntu-L.ttf');
 }
 
 .hide {
@@ -24,11 +29,11 @@
 }
 
 .node.monospace {
-    -unity-font: url('/Assets/Danmokou/Fonts/Monospace/Fira-Yasashisa-Joint.ttf');
+    -unity-font-definition: url('/Assets/Danmokou/Fonts/Monospace/Fira-Yasashisa-Joint.ttf');
 }
 
 .node.monospace .text {
-    -unity-font: url('/Assets/Danmokou/Fonts/Monospace/Fira-Yasashisa-Joint.ttf');
+    -unity-font-definition: url('/Assets/Danmokou/Fonts/Monospace/Fira-Yasashisa-Joint.ttf');
 }
 
 .node {
@@ -246,7 +251,6 @@
 
 .node .coretext {
     flex-grow: 1;
-    white-space: nowrap;
 }
 
 .node.descriptor {

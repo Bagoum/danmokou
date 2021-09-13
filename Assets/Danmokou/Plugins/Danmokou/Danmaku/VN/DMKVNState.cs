@@ -10,24 +10,26 @@ using SuzunoyaUnity;
 
 namespace Danmokou.VN {
 public class DMKVNState : UnityVNState {
-    public DMKVNState(ICancellee extCToken, string? scriptId = null, InstanceData? save = null) : base(extCToken,
-        scriptId, save) { }
+    public readonly string id;
+    public DMKVNState(ICancellee extCToken, string id, InstanceData? save = null) : base(extCToken, save) {
+        this.id = id;
+    }
 
     public LazyAction lSFX(string? sfx) => new LazyAction(aSFX(sfx));
 
     public Action aSFX(string? sfx) => () => {
-        if (!Skipping)
-            DependencyInjection.SFXService.Request(sfx);
+        if (SkippingMode == null)
+            ServiceLocator.SFXService.Request(sfx);
     };
 
     public VNOperation Wait(double d) => base.Wait((float) d);
 
     public override void PauseGameplay() {
-        DependencyInjection.Find<IPauseMenu>().Open();
+        ServiceLocator.Find<IPauseMenu>().Open();
     }
 
     public override void OpenLog() {
-        DependencyInjection.Find<IVNBacklog>().Open();
+        ServiceLocator.Find<IVNBacklog>().Open();
     }
 
     public class RunningAudioTrackProxy : IDisposable {
@@ -40,7 +42,7 @@ public class DMKVNState : UnityVNState {
         }
 
         public void FadeOut(float time = 3f) {
-            if (vn.ExecCtx.LoadSkipping)
+            if (vn.SkippingMode == SkipMode.LOADING)
                 track.Cancel();
             else
                 track.FadeOutThenDestroy(time);
@@ -55,12 +57,13 @@ public class DMKVNState : UnityVNState {
     }
 
     public RunningAudioTrackProxy RunBGM(string key) {
-        var track = AudioTrackService.InvokeBGM(key, new BGMInvokeFlags(Skipping ? 0 : 2)) ?? 
+        var track = AudioTrackService.InvokeBGM(key, new BGMInvokeFlags(SkippingMode != null ? 0 : 2)) ?? 
                     throw new Exception($"No track for key {key}");
         var proxy = new RunningAudioTrackProxy(track, this);
         Tokens.Add(proxy);
         return proxy;
     }
-    
+
+    public override string ToString() => $"{id}:{base.ToString()}";
 }
 }

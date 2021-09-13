@@ -59,7 +59,7 @@ public class SeijaCamera : CoroutineRegularUpdater, IShaderCamera {
     protected override void BindListeners() {
         base.BindListeners();
         RegisterDI<IShaderCamera>(this);
-        Listen(Events.ClearPhase, () => ResetTargetFlip(1f));
+        Listen(Events.PhaseCleared, () => ResetTargetFlip(1f));
 #if UNITY_EDITOR || ALLOW_RELOAD
         Listen(Events.LocalReset, () => ResetTargetFlip(0.2f));
 #endif

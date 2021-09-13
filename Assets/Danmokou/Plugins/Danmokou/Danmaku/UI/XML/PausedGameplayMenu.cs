@@ -22,7 +22,7 @@ public class PausedGameplayMenu : XMLMenu {
             tokens.Add(pauseToken = EngineStateManager.RequestState(EngineState.MENU_PAUSE));
             var disable = Disabler.CreateToken1(MultiOp.Priority.ALL);
             _ = manager.FadeInPauseUI().ContinueWithSync(() => disable.TryRevoke());
-            DependencyInjection.SFXService.Request(openPauseSound);
+            ServiceLocator.SFXService.Request(openPauseSound);
             UI.style.display = DisplayStyle.Flex;
             ResetCurrentNode();
             Redraw();
@@ -41,7 +41,7 @@ public class PausedGameplayMenu : XMLMenu {
     protected void ProtectHide(Action? hide = null) {
         if (MenuActive) {
             var disable = Disabler.CreateToken1(MultiOp.Priority.ALL);
-            DependencyInjection.SFXService.Request(closePauseSound);
+            ServiceLocator.SFXService.Request(closePauseSound);
             _ = manager.FadeOutPauseUI().ContinueWithSync(() => {
                 disable.TryRevoke();
                 (hide ?? HideMe)();

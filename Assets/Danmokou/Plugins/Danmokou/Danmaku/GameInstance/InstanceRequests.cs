@@ -151,7 +151,9 @@ public class InstanceRequest {
     public InstanceRequest(Func<InstanceData, bool>? cb, SharedInstanceMetadata metadata, ILowInstanceRequest lowerRequest, ReplayMode? replay) {
         this.metadata = metadata;
         this.cb = cb;
-        this.replay = replay ?? (lowerRequest.Replayable ? new ReplayMode.RecordingReplay() : (ReplayMode)new ReplayMode.NotRecordingReplay());
+        this.replay = replay ?? (lowerRequest.Replayable ? 
+            new ReplayMode.RecordingReplay() : 
+            (ReplayMode)new ReplayMode.NotRecordingReplay());
         this.lowerRequest = lowerRequest;
         this.seed = replay is ReplayMode.Replaying r ?  r.replay.metadata.Record.Seed : new Random().Next();
     }
@@ -255,7 +257,7 @@ public class InstanceRequest {
                 return SceneIntermediary.LoadScene(new SceneRequest(References.endcard, SceneRequest.Reason.ENDCARD,
                     null,
                     null,
-                    () => DependencyInjection.Find<LevelController>()
+                    () => ServiceLocator.Find<LevelController>()
                         .Request(new LevelController.LevelRunRequest(1, tracker.Guard(() => _Finalize(ed.key)),
                             LevelController.LevelRunMethod.CONTINUE, new EndcardStageConfig(ed.dialogueKey)))
                 ));
@@ -269,7 +271,7 @@ public class InstanceRequest {
                     (index == 0) ? SetupInstance : (Action?) null,
                     //Note: this load during onHalfway is for the express purpose of preventing load lag
                     () => StateMachineManager.FromText(s.stage.stateMachine),
-                    () => DependencyInjection.Find<LevelController>()
+                    () => ServiceLocator.Find<LevelController>()
                         .Request(new LevelController.LevelRunRequest(1, tracker.Guard(() => {
                                 if (ExecuteStage(index + 1))
                                     StageCompleted.OnNext((c.campaign.Key, index));
@@ -287,7 +289,7 @@ public class InstanceRequest {
             SetupInstance,
             //Note: this load during onHalfway is for the express purpose of preventing load lag
             () => StateMachineManager.FromText(s.stage.stage.stateMachine),
-            () => DependencyInjection.Find<LevelController>().Request(
+            () => ServiceLocator.Find<LevelController>().Request(
                 new LevelController.LevelRunRequest(s.phase,
                     tracker.Guard(() => FinishAndPostReplay()), s.method, s.stage.stage))));
     }
@@ -317,12 +319,12 @@ public class InstanceRequest {
             SetupInstance,
             () => {
                 StateMachineManager.FromText(cr.Boss.stateMachine);
-                DependencyInjection.Find<IChallengeManager>().TrackChallenge(new SceneChallengeReqest(this, cr), 
+                ServiceLocator.Find<IChallengeManager>().TrackChallenge(new SceneChallengeReqest(this, cr), 
                     tracker.Guard<InstanceRecord>(WaitThenFinishAndPostReplay));
             },
             () => {
                 var beh = UnityEngine.Object.Instantiate(cr.Boss.boss).GetComponent<BehaviorEntity>();
-                DependencyInjection.Find<IChallengeManager>().LinkBoss(beh);
+                ServiceLocator.Find<IChallengeManager>().LinkBoss(beh);
             }));
     }
     

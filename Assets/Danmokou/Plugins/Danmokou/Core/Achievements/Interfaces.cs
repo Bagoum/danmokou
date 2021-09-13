@@ -9,9 +9,6 @@ using Danmokou.Core;
 using Danmokou.DMath;
 
 namespace Danmokou.Achievements {
-public interface IAchievementDisplay {
-    void QueueDisplayForAchievement(Achievement acv);
-}
 
 public enum State {
     Locked = 0,
@@ -61,6 +58,12 @@ public class Achievement : IRequirementWatcher {
     public State State { get; private set; }
     public bool Completed => State == State.Completed;
 
+    /// <summary>
+    /// When the achievement is obtained, it will not be displayed on screen for this many seconds.
+    /// This is useful for cases where the scene changes at the same time as an achievment is obtained
+    /// (eg. "Play the practice mode" is achieved right before the scene transitions from main menu to practice scene,
+    ///  so we add a 1 second delay via the Delay function that makes it render after the scene transition).
+    /// </summary>
     public float DelayTime { get; private set; } = 0;
 
     public Achievement Delay(float by = 1f) {

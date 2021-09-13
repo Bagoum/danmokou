@@ -12,7 +12,7 @@ public class Yachie : SZYUCharacter {
     public override Color UIColor => new Color(0.07f, 0.63f, 0.34f);
     public override string Name => "Kicchou Yachie";
     
-    public override void RollEvent() => DependencyInjection.SFXService.Request("x-bubble-2", SFXType.TypingSound);
+    public override void RollEvent() => ServiceLocator.SFXService.Request("x-bubble-2", SFXType.TypingSound);
 }
 
 public class YachieMimic : PiecewiseCharacterMimic {

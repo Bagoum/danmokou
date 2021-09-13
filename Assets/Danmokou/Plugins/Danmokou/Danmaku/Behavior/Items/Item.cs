@@ -78,7 +78,7 @@ public abstract class Item : Pooled<Item> {
         timeHoming = 0f;
         sr.sortingOrder = (short)(renderIndex++ + (short)(RenderOffsetIndex * RenderOffsetRange));
         autocollected = false;
-        this.collection = (collectionPoint != null) ? collectionPoint : DependencyInjection.MaybeFind<PoC>();
+        this.collection = (collectionPoint != null) ? collectionPoint : ServiceLocator.MaybeFind<PoC>();
     }
 
     public void Autocollect(bool doAutocollect) {
@@ -94,7 +94,7 @@ public abstract class Item : Pooled<Item> {
 
     protected virtual void CollectMe(PlayerController collector) {
         ItemCollected.OnNext(Type);
-        DependencyInjection.SFXService.Request(onCollect);
+        ServiceLocator.SFXService.Request(onCollect);
         PooledDone();
     }
 

@@ -517,7 +517,7 @@ public partial class BulletManager {
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
         public static SBCFp SFX(string sfx, ExPred cond) => new SBCFp((sbc, ii, bpi) => 
-            bpi.When(cond, DependencyInjection.SFXRequest(Ex.Constant(sfx))), BulletControl.P_RUN);
+            bpi.When(cond, ServiceLocator.SFXRequest(Ex.Constant(sfx))), BulletControl.P_RUN);
        
         /// <summary>
         /// Add external velocity to bullets. Note that position-based movement (offset, polar)

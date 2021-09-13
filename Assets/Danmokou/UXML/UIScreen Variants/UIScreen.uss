@@ -39,7 +39,7 @@
 }
 
 .shotHeader {
-    -unity-font: url('/Assets/Danmokou/Fonts/Odibee/OdibeeSans-Regular.ttf');
+    -unity-font-definition: url('/Assets/Danmokou/Fonts/Unity SDF Assets/Odibee-CorpSt-Joint SDF.asset');
     font-size: 180px;
     color: rgb(255, 255, 255);
     -unity-text-align: upper-center;
@@ -128,7 +128,7 @@
 }
 
 .header {
-    -unity-font: url('/Assets/Danmokou/Fonts/Odibee-CorpSt-Joint.ttf');
+    -unity-font-definition: url('/Assets/Danmokou/Fonts/Unity SDF Assets/Odibee-CorpSt-Joint SDF.asset');
     font-size: 140px;
     color: rgb(255, 255, 255);
     -unity-text-align: upper-center;

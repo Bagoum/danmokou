@@ -802,11 +802,11 @@ public static class Scene1 {
         yield return WaitForLoad();
         AreEqual(SceneManager.GetActiveScene().name, "TestStage1");
         IsFalse(campaignComplete);
-        DependencyInjection.Find<LevelController>().ShiftPhase();
+        ServiceLocator.Find<LevelController>().ShiftPhase();
         yield return WaitForLoad();
         AreEqual(SceneManager.GetActiveScene().name, "TestStage2");
         IsFalse(campaignComplete);
-        DependencyInjection.Find<LevelController>().ShiftPhase();
+        ServiceLocator.Find<LevelController>().ShiftPhase();
         yield return WaitForLoad();
         IsTrue(campaignComplete);
         AreEqual(SceneManager.GetActiveScene().name, baseScene);

@@ -96,7 +96,7 @@ public class PatternSM : SequentialSM {
         var jsmh = smh.CreateJointCancellee(out var cts);
         var subbosses = new List<Enemy>();
         var subsummons = new List<BehaviorEntity>();
-        var ui = DependencyInjection.MaybeFind<IUIManager>();
+        var ui = ServiceLocator.MaybeFind<IUIManager>();
         if (props.boss != null) {
             GameManagement.Instance.SetCurrentBoss(props.boss, jsmh.Exec, jsmh.cT);
             ui?.SetBossHPLoader(jsmh.Exec.Enemy);
@@ -175,7 +175,7 @@ public class PhaseSM : SequentialSM {
     private readonly FinishPSM? finishPhase = null;
     private readonly float _timeout = 0;
     private float Timeout => 
-        DependencyInjection.MaybeFind<IChallengeManager>()?.BossTimeoutOverride(props.Boss) 
+        ServiceLocator.MaybeFind<IChallengeManager>()?.BossTimeoutOverride(props.Boss) 
         ?? _timeout;
     public readonly PhaseProperties props;
 
@@ -236,9 +236,9 @@ public class PhaseSM : SequentialSM {
         if (GameManagement.Instance.mode != InstanceMode.BOSS_PRACTICE && !SaveData.Settings.TeleportAtPhaseStart) {
             if (props.bossCutin && props.Boss != null && props.Background != null) {
                 GameManagement.Instance.AddFaithLenience(props.Boss.bossCutinTime);
-                DependencyInjection.Find<ISFXService>().RequestSFXEvent(ISFXService.SFXEventType.BossCutin);
+                ServiceLocator.Find<ISFXService>().RequestSFXEvent(ISFXService.SFXEventType.BossCutin);
                 //Service not required since no callback
-                DependencyInjection.MaybeFind<IRaiko>()?.Shake(props.Boss.bossCutinTime / 2f, null, 1f, smh.cT, null);
+                ServiceLocator.MaybeFind<IRaiko>()?.Shake(props.Boss.bossCutinTime / 2f, null, 1f, smh.cT, null);
                 Object.Instantiate(props.Boss.bossCutin);
                 bgo?.QueueTransition(props.Boss.bossCutinTrIn);
                 bgo?.ConstructTarget(props.Boss.bossCutinBg, true);
@@ -251,8 +251,8 @@ public class PhaseSM : SequentialSM {
                 cutins = WaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, props.Boss.bossCutinTime, false);
                 forcedBG = true;
             } else if (props.GetSpellCutin(out var sc)) {
-                DependencyInjection.Find<ISFXService>().RequestSFXEvent(ISFXService.SFXEventType.BossSpellCutin);
-                DependencyInjection.MaybeFind<IRaiko>()?.Shake(1.5f, null, 1f, smh.cT, null);
+                ServiceLocator.Find<ISFXService>().RequestSFXEvent(ISFXService.SFXEventType.BossSpellCutin);
+                ServiceLocator.MaybeFind<IRaiko>()?.Shake(1.5f, null, 1f, smh.cT, null);
                 Object.Instantiate(sc);
             }
         }
@@ -282,8 +282,8 @@ public class PhaseSM : SequentialSM {
 
     public override Task Start(SMHandoff smh) => Start(smh, null, new Enemy[0]);
     public async Task Start(SMHandoff smh, IUIManager? ui, IReadOnlyList<Enemy> subbosses) {
-        var bgo = DependencyInjection.MaybeFind<IBackgroundOrchestrator>();
-        var photoBoard = DependencyInjection.MaybeFind<IAyaPhotoBoard>();
+        var bgo = ServiceLocator.MaybeFind<IBackgroundOrchestrator>();
+        var photoBoard = ServiceLocator.MaybeFind<IAyaPhotoBoard>();
         PreparePhase(ui, smh, out Task cutins, bgo, photoBoard);
         var lenienceToken = props.Lenient ?
             GameManagement.Instance.Lenience.CreateToken1(MultiOp.Priority.CLEAR_PHASE) :
@@ -297,7 +297,7 @@ public class PhaseSM : SequentialSM {
         //The start snapshot is taken after the root movement,
         // so meter can be used during the 1+2 seconds between cards
         var start_campaign = new CampaignSnapshot(GameManagement.Instance);
-        if (props.phaseType != null) DependencyInjection.MaybeFind<IChallengeManager>()?.SetupBossPhase(joint_smh);
+        if (props.phaseType != null) ServiceLocator.MaybeFind<IChallengeManager>()?.SetupBossPhase(joint_smh);
         try {
             await base.Start(joint_smh);
             await WaitingUtils.WaitForUnchecked(joint_smh.Exec, joint_smh.cT, 0f,
@@ -320,7 +320,8 @@ public class PhaseSM : SequentialSM {
             if (props.Cleanup) {
                 if (finishDelay > 0) {
                     var acTime = Mathf.Min(EndOfCardAutocullTime, finishDelay);
-                    PlayerController.RequestPlayerInvulnerable.OnNext(((int)(acTime * ETime.ENGINEFPS_F), false));
+                    foreach (var player in ServiceLocator.FindAll<PlayerController>())
+                        player.MakeInvulnerable((int)(acTime * ETime.ENGINEFPS_F), false);
                     GameManagement.ClearPhaseAutocullOverTime_Initial(props.SoftcullPropsOverTime(smh.Exec, acTime));
                     await finishTask;
                     GameManagement.ClearPhaseAutocullOverTime_Final();
@@ -375,7 +376,7 @@ public class PhaseSM : SequentialSM {
                     }), GenCtx.Empty, smh.Exec.GlobalPosition(), smh.cT, null!));
             }
             smh.Exec.DropItems(pc.DropItems, 1.4f, 0.6f, 1f, 0.2f, 2f);
-            DependencyInjection.MaybeFind<IRaiko>()
+            ServiceLocator.MaybeFind<IRaiko>()
                 ?.Shake(defaultShakeTime, defaultShakeMult, defaultShakeMag, smh.cT, null);
         }
         GameManagement.Instance.PhaseEnd(pc);

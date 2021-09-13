@@ -12,7 +12,7 @@ public class Kasen : SZYUCharacter {
     public override Color UIColor => new Color(0.22f, 0.59f, 0.11f);
     public override string Name => "Kasen";
     
-    public override void RollEvent() => DependencyInjection.SFXService.Request("x-bubble-2", SFXType.TypingSound);
+    public override void RollEvent() => ServiceLocator.SFXService.Request("x-bubble-2", SFXType.TypingSound);
 }
 
 public class KasenMimic : PiecewiseCharacterMimic {

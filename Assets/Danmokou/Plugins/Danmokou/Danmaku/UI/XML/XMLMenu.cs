@@ -193,39 +193,39 @@ public abstract class XMLMenu : CoroutineRegularUpdater {
                 var custom = Current.CustomEventHandling();
                 var qeIsCurr = QueuedEvent?.src == Current;
                 if (custom != null) {
-                    DependencyInjection.SFXService.Request(leftRightSound); //add another sound
+                    ServiceLocator.SFXService.Request(leftRightSound); //add another sound
                     Current = custom;
                 } else if (InputManager.UILeft.Active ||  (qeIsCurr && QueuedEvent?.ev == XML.QueuedEvent.Left)) {
                     if (allowsfx) 
-                        DependencyInjection.SFXService.Request(leftRightSound);
+                        ServiceLocator.SFXService.Request(leftRightSound);
                     Current = Current.Left();
                 } else if (InputManager.UIRight.Active || (qeIsCurr && QueuedEvent?.ev == XML.QueuedEvent.Right)) {
                     if (allowsfx) 
-                        DependencyInjection.SFXService.Request(leftRightSound);
+                        ServiceLocator.SFXService.Request(leftRightSound);
                     Current = Current.Right();
                 } else if (InputManager.UIUp.Active) {
                     if (allowsfx) 
-                        DependencyInjection.SFXService.Request(upDownSound);
+                        ServiceLocator.SFXService.Request(upDownSound);
                     Current = Current.Up();
                 } else if (InputManager.UIDown.Active) {
                     if (allowsfx)
-                        DependencyInjection.SFXService.Request(upDownSound);
+                        ServiceLocator.SFXService.Request(upDownSound);
                     Current = Current.Down();
                 } else if (QueuedEvent.Try(out var qe) && qe.ev == XML.QueuedEvent.Goto 
                                                        && qe.src != Current && Current.Siblings.Contains(qe.src)) {
                     if (allowsfx)
-                        DependencyInjection.SFXService.Request(upDownSound);
+                        ServiceLocator.SFXService.Request(upDownSound);
                     Current = qe.src;
                 } else if (InputManager.UIConfirm.Active || (qeIsCurr && QueuedEvent?.ev == XML.QueuedEvent.Confirm)) {
                     var (succ, nxt) = Current.Confirm_DontNest();
                     if (succ) 
                         HandleTransition(Current, nxt, false);
                     if (allowsfx) 
-                        DependencyInjection.SFXService.Request(succ ? confirmSound : failureSound);
+                        ServiceLocator.SFXService.Request(succ ? confirmSound : failureSound);
                     if (Current?.Passthrough == true) Current = Current.Parent;
                 } else if (InputManager.UIBack.Active) {
                     if (allowsfx) 
-                        DependencyInjection.SFXService.Request(backSound);
+                        ServiceLocator.SFXService.Request(backSound);
                     HandleTransition(Current, Current.Back(), true);
                 } else tried_change = false;
                 allowsfx = false;

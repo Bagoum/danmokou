@@ -24,7 +24,7 @@ public class InstanceData {
     public static readonly Events.Event0 TeamUpdated = new Events.Event0();
     public static readonly Events.Event0 PlayerTookHit = new Events.Event0();
     public static readonly IBSubject<CardRecord> CardHistoryUpdated = new Event<CardRecord>();
-    public static readonly Events.Event0 MeterNowUsable = new Events.Event0();
+    public static readonly Events.Event0 MeterBecameUsable = new Events.Event0();
     public static readonly Events.Event0 PowerLost = new Events.Event0();
     public static readonly Events.Event0 PowerGained = new Events.Event0();
     public static readonly Events.Event0 PowerFull = new Events.Event0();
@@ -336,7 +336,7 @@ public class InstanceData {
         var belowThreshold = !EnoughMeterToUse;
         Meter = M.Clamp(0, 1, Meter + delta * Difficulty.meterAcquireMultiplier);
         if (belowThreshold && EnoughMeterToUse && source.State != PlayerController.PlayerState.WITCHTIME) {
-            MeterNowUsable.Proc();
+            MeterBecameUsable.Proc();
         }
     }
 

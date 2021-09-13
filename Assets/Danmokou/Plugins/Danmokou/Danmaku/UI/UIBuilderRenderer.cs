@@ -65,7 +65,7 @@ public class UIBuilderRenderer : CoroutineRegularUpdater {
 
     protected override void BindListeners() {
         base.BindListeners();
-        Listen(SaveData.ResolutionHasChanged, RemakeTexture);
+        Listen(SaveData.ResolutionChanged, RemakeTexture);
     }
 
     public void MoveToNormal() {

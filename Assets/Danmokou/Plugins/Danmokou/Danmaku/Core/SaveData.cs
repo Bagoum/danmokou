@@ -321,10 +321,10 @@ public static class SaveData {
             Log.Unity($"Set resolution to {wh.Value}");
         }
         SuzunoyaUnity.Rendering.RenderHelpers.PreferredResolution.OnNext(s.Resolution);
-        ResolutionHasChanged.Proc();
+        ResolutionChanged.Proc();
     }
 
-    public static readonly Events.Event0 ResolutionHasChanged = new Events.Event0();
+    public static readonly Events.Event0 ResolutionChanged = new Events.Event0();
 
     public static void UpdateFullscreen(FullScreenMode mode) {
         Screen.fullScreenMode = s.Fullscreen = mode;

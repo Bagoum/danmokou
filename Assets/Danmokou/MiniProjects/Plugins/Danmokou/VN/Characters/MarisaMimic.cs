@@ -12,7 +12,7 @@ public class Marisa : SZYUCharacter {
     public override Color UIColor => new Color(1, .77f, .26f);
     public override string Name => "Kirisame Marisa";
     
-    public override void RollEvent() => DependencyInjection.SFXService.Request("x-bubble-2", SFXType.TypingSound);
+    public override void RollEvent() => ServiceLocator.SFXService.Request("x-bubble-2", SFXType.TypingSound);
 }
 
 public class MarisaMimic : PiecewiseCharacterMimic {

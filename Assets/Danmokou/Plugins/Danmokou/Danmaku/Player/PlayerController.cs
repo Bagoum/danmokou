@@ -105,9 +105,6 @@ public class PlayerController : BehaviorEntity {
     /// </summary>
     public static readonly IBSubject<Color> MeterIsActive = new Event<Color>();
     
-    //TODO: replace this with DI
-    public static readonly IBSubject<(int frames, bool effect)> RequestPlayerInvulnerable =
-        new Event<(int, bool)>();
     #endregion
 
     public ShipConfig[] defaultPlayers = null!;
@@ -276,12 +273,11 @@ public class PlayerController : BehaviorEntity {
 
     protected override void BindListeners() {
         base.BindListeners();
-        Listen(RequestPlayerInvulnerable, GoldenAuraInvuln);
         RegisterDI<PlayerController>(this);
     }
 
     public override void FirstFrame() {
-        challenge = DependencyInjection.MaybeFind<IChallengeManager>();
+        challenge = ServiceLocator.MaybeFind<IChallengeManager>();
     }
 
     #region TeamManagement
@@ -333,7 +329,7 @@ public class PlayerController : BehaviorEntity {
             subshot = Team.Subshot;
             Log.Unity($"Setting shot to {shot.key}:{subshot}");
             if (DestroyExistingShot())
-                DependencyInjection.SFXService.Request(Team.Shot.onSwap);
+                ServiceLocator.SFXService.Request(Team.Shot.onSwap);
             var realized = Team.Shot.GetSubshot(Team.Subshot);
             spawnedShot = realized.playerChild ? 
                 GameObject.Instantiate(realized.prefab, tr) : 
@@ -576,7 +572,7 @@ public class PlayerController : BehaviorEntity {
                 PowerAuraOption.High(), 
             }), GenCtx.Empty, BPI.loc, Cancellable.Null, null!));
         GameManagement.Instance.AddLives(-dmg);
-        DependencyInjection.MaybeFind<IRaiko>()?.Shake(1.5f, null, 0.9f);
+        ServiceLocator.MaybeFind<IRaiko>()?.Shake(1.5f, null, 0.9f);
         Invuln(HitInvulnFrames);
         if (RespawnOnHit) RequestNextState(PlayerState.RESPAWN);
         else InvokeParentedTimedEffect(spawnedShip.OnHitEffect, hitInvuln);
@@ -613,12 +609,17 @@ public class PlayerController : BehaviorEntity {
             yield return null;
         --hitInvulnerabilityCounter;
     }
-    
-    private void GoldenAuraInvuln((int frames, bool showEffect) req) {
-        if (req.showEffect)
+
+    public void MakeInvulnerable(int frames, bool showEffect) {
+        Log.Unity($"The player will be invulnerable for {frames} frames (display effect: {showEffect})");
+        GoldenAuraInvuln(frames, showEffect);
+    }
+
+    private void GoldenAuraInvuln(int frames, bool showEffect) {
+        if (showEffect)
             InvokeParentedTimedEffect(spawnedShip.GoldenAuraEffect,
-                req.frames * ETime.FRAME_TIME).transform.SetParent(tr);
-        Invuln(req.frames);
+                frames * ETime.FRAME_TIME).transform.SetParent(tr);
+        Invuln(frames);
     }
     
     #endregion

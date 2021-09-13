@@ -12,8 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 782f629a2df6243629ea8fe2873666a4, type: 3}
   m_Name: UISettings
   m_EditorClassIdentifier: 
-  themeUss: {fileID: 11400000, guid: f567955c754d54a108d615cb51ccbf2f, type: 2}
-  m_TargetTexture: {fileID: 8400000, guid: f4243e7ec56238a4997977449a562ef8, type: 2}
+  themeUss: {fileID: -4733365628477956816, guid: b9798efe0fc2f924aa456be649582a88,
+    type: 3}
+  m_TargetTexture: {fileID: 8400000, guid: be218fb1d1df0224384ea0f2654dd964, type: 2}
   m_ScaleMode: 2
   m_Scale: 1
   m_ReferenceDpi: 96
@@ -22,6 +23,7 @@ MonoBehaviour:
   m_ScreenMatchMode: 0
   m_Match: 1
   m_SortingOrder: 0
+  m_TargetDisplay: 0
   m_ClearDepthStencil: 1
   m_ClearColor: 1
   m_ColorClearValue: {r: 0, g: 0, b: 0, a: 0}
@@ -34,3 +36,4 @@ MonoBehaviour:
   m_RuntimeShader: {fileID: 4800000, guid: 1e5f18a346ed454418f93aa7eaf55791, type: 3}
   m_RuntimeWorldShader: {fileID: 4800000, guid: 7082954141e3ccc43bc3b217cf12e2e0,
     type: 3}
+  textSettings: {fileID: 11400000, guid: da0f27f2bbe56b941b6a64422c22c57e, type: 2}

@@ -75,7 +75,7 @@ public class XMLMainMenuDays : XMLMainMenu {
         // this disabling is a stopgap measure until then.
         SharedInstanceMetadata Meta() => new SharedInstanceMetadata(Team(), new DifficultySettings(dfc) {meterEnabled = false});
 
-        var photoBoard = DependencyInjection.MaybeFind<IAyaPhotoBoard>();
+        var photoBoard = ServiceLocator.MaybeFind<IAyaPhotoBoard>();
 
         SceneSelectScreen = new UIScreen(this, DayCampaign.days[0].bosses.SelectMany(
             b => b.phases.Select(p => {

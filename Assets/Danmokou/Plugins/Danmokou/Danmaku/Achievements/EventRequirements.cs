@@ -14,7 +14,7 @@ public class StageCompletedReq : EventRequirement<(string campaign, int stage)> 
 
 public class InstanceRequirement : EventRequirement<(InstanceData, InstanceRecord)> {
     public InstanceRequirement(Func<InstanceRecord, bool> pred) : 
-        base(InstanceRequest.InstanceCompleted, dr => !(dr.Item1.Replay is ReplayPlayer && pred(dr.Item2))) { }
+        base(InstanceRequest.InstanceCompleted, dr => !(dr.Item1.Replay is ReplayPlayer) && pred(dr.Item2)) { }
 }
 public class CompletedInstanceRequirement : InstanceRequirement {
     public CompletedInstanceRequirement(Func<InstanceRecord, bool> pred) : 

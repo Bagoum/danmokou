@@ -293,7 +293,7 @@ public class UIManager : RegularUpdater, IUIManager {
             currTime -= ETime.dT;
             if (withSound && currTime < tryCross) {
                 if (0 < tryCross && tryCross <= countdownSounds.Length) {
-                    DependencyInjection.SFXService.Request(countdownSounds[tryCross - 1]);
+                    ServiceLocator.SFXService.Request(countdownSounds[tryCross - 1]);
                 }
             }
         }

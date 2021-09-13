@@ -12,7 +12,7 @@ public class Kosuzu : SZYUCharacter {
     public override Color UIColor => new Color(.72f, .38f, .19f);
     public override string Name => "Motoori Kosuzu";
     
-    public override void RollEvent() => DependencyInjection.SFXService.Request("x-bubble-3", SFXType.TypingSound);
+    public override void RollEvent() => ServiceLocator.SFXService.Request("x-bubble-3", SFXType.TypingSound);
 }
 
 public class KosuzuMimic : PiecewiseCharacterMimic {

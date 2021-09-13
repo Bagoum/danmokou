@@ -161,7 +161,7 @@ public class Dialoguer : CoroutineRegularUpdater {
     }
 
     private void RequestEvent(EventType ev) {
-        if (ev == EventType.SPEAKER_SFX) DependencyInjection.SFXService.Request(currSpeaker?.SpeakSFX);
+        if (ev == EventType.SPEAKER_SFX) ServiceLocator.SFXService.Request(currSpeaker?.SpeakSFX);
     }
 
     private IEnumerator _RunDialogue(TextCommand<DialogueObject>[] words, ICancellee cT, Action done, bool continued) {
@@ -223,7 +223,7 @@ public class Dialoguer : CoroutineRegularUpdater {
                         AddWait(0.5f);
                     }, null!, null!,
                     AddWait, 
-                    dobj => dobj.contents.Resolve(AddWait, x => DependencyInjection.SFXService.Request(x), RequestEvent));
+                    dobj => dobj.contents.Resolve(AddWait, x => ServiceLocator.SFXService.Request(x), RequestEvent));
             }
             mainText.text = string.Concat(sb);
         }

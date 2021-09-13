@@ -17,7 +17,7 @@ namespace Danmokou.UI {
 /// <summary>
 /// This object is created once per scene and handles all achievement display sequentially.
 /// </summary>
-public class AchievementDisplay : CoroutineRegularUpdater, IAchievementDisplay {
+public class AchievementDisplay : CoroutineRegularUpdater {
     private class DisplayRequest {
         public readonly Achievement achievement;
         public float delayTime;
@@ -61,7 +61,6 @@ public class AchievementDisplay : CoroutineRegularUpdater, IAchievementDisplay {
     private void Show() => displayContainer.SetActive(true);
 
     protected override void BindListeners() {
-        RegisterDI<IAchievementDisplay>(this);
         Listen(Achievement.AchievementStateUpdated, a => {
             if (a.State == State.Completed) QueueDisplayForAchievement(a);
         });
@@ -82,7 +81,7 @@ public class AchievementDisplay : CoroutineRegularUpdater, IAchievementDisplay {
         lowerText.text = acv.Title;
         tr.localPosition = baseLoc + startOffset;
         Show();
-        DependencyInjection.SFXService.Request(sfx);
+        ServiceLocator.SFXService.Request(sfx);
         var task = tr.GoTo(baseLoc, inTime, InLerp).Run(this);
         while (!task.IsCompleted)
             yield return null;

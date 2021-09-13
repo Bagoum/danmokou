@@ -12,7 +12,7 @@ public class Yukari : SZYUCharacter {
     public override Color UIColor => new Color(0.70f, 0.14f, 0.77f);
     public override string Name => "Yakumo Yukari";
     
-    public override void RollEvent() => DependencyInjection.SFXService.Request("x-bubble-3", SFXType.TypingSound);
+    public override void RollEvent() => ServiceLocator.SFXService.Request("x-bubble-3", SFXType.TypingSound);
 }
 
 public class YukariMimic : PiecewiseCharacterMimic {

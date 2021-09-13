@@ -79,7 +79,7 @@ if (> t &fadein,
             float sticksec = stickSec(smh.GCX);
             locSave.Save((int) cindexer(smh.GCX), locator(smh.GCX));
             if (homesec > 0) 
-                DependencyInjection.SFXService.Request("x-crosshair");
+                ServiceLocator.SFXService.Request("x-crosshair");
             float fadein = Mathf.Max(0.15f, homesec / 5f);
             _ = Sync(style, _ => V2RV2.Zero, SyncPatterns.Loc0(Summon(path,
                 new ReflectableLASM(smh2 => {
@@ -89,7 +89,7 @@ if (> t &fadein,
                 }), new BehOptions())))(smh);
             await saver(smh);
             smh.ThrowIfCancelled();
-            DependencyInjection.SFXService.Request("x-lockon");
+            ServiceLocator.SFXService.Request("x-lockon");
             await WaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, sticksec, false);
         };
     }
@@ -97,14 +97,15 @@ if (> t &fadein,
     public static TaskPattern dZaWarudo(GCXF<float> time) => ZaWarudo(time, _ => Vector2.zero, null, null, _ => 20);
     public static TaskPattern ZaWarudo(GCXF<float> time, GCXF<Vector2> loc, GCXF<float>? t1r, GCXF<float>? t2r, GCXF<float> scale) => smh => {
         float t = time(smh.GCX);
-        DependencyInjection.SFXService.Request("x-zawarudo");
+        ServiceLocator.SFXService.Request("x-zawarudo");
         var anim = Object.Instantiate(ResourceManager.GetSummonable("negative")).GetComponent<ScaleAnimator>();
         anim.transform.position = loc(smh.GCX);
         anim.AssignScales(0, scale(smh.GCX), 0);
         anim.AssignRatios(t1r?.Invoke(smh.GCX), t2r?.Invoke(smh.GCX));
         anim.Initialize(smh.cT, t);
         var controlToken = PlayerController.AllControlDisabler.CreateToken1(MultiOp.Priority.CLEAR_PHASE);
-        PlayerController.RequestPlayerInvulnerable.OnNext(((int)(t * 120), false));
+        foreach (var player in ServiceLocator.FindAll<PlayerController>())
+            player.MakeInvulnerable((int)(t * 120), false);
         return WaitingUtils.WaitFor(smh, t, false).ContinueWithSync(() => controlToken.TryRevoke());
     };
 
@@ -151,14 +152,14 @@ if (> t &fadein,
     /// <param name="by_time">Magnitude multiplier over time</param>
     [Alias("shake")]
     public static TaskPattern Raiko(GCXF<float> magnitude, GCXF<float> time, FXY by_time) => smh => {
-        DependencyInjection.Find<IRaiko>().Shake(time(smh.GCX), by_time, magnitude(smh.GCX), smh.cT,
+        ServiceLocator.Find<IRaiko>().Shake(time(smh.GCX), by_time, magnitude(smh.GCX), smh.cT,
             GetAwaiter(out Task t));
         return t;
     };
 
     public static TaskPattern dRaiko(GCXF<float> magnitude, GCXF<float> time) => smh => {
         var t = time(smh.GCX);
-        DependencyInjection.Find<IRaiko>().Shake(t, null, magnitude(smh.GCX), smh.cT,
+        ServiceLocator.Find<IRaiko>().Shake(t, null, magnitude(smh.GCX), smh.cT,
             GetAwaiter(out Task tsk));
         return tsk;
     };
@@ -169,7 +170,7 @@ if (> t &fadein,
     /// </summary>
     public static TaskPattern SeijaX(float degrees, float time) {
         return smh => {
-            DependencyInjection.Find<IShaderCamera>().AddXRotation(degrees, time);
+            ServiceLocator.Find<IShaderCamera>().AddXRotation(degrees, time);
             return Task.CompletedTask;
         };
     }
@@ -179,7 +180,7 @@ if (> t &fadein,
     /// </summary>
     public static TaskPattern SeijaY(float degrees, float time) {
         return smh => {
-            DependencyInjection.Find<IShaderCamera>().AddYRotation(degrees, time);
+            ServiceLocator.Find<IShaderCamera>().AddYRotation(degrees, time);
             return Task.CompletedTask;
         };
     }
@@ -252,7 +253,7 @@ if (> t &fadein,
     /// Run the visual novel scene attached to the executing BEH.
     /// </summary>
     public static TaskPattern ExecuteVN([LookupMethod] Func<DMKVNState, Task> vnTask, string scriptId) => async smh => {
-        var save = await ((DMKVNWrapper) DependencyInjection.Find<IVNWrapper>())
+        var save = await ((DMKVNWrapper) ServiceLocator.Find<IVNWrapper>())
             .ExecuteVN((data, cT) => new DMKVNState(cT, scriptId, data), vnTask, new InstanceData(), smh.cT);
     };
 
@@ -325,7 +326,7 @@ if (> t &fadein,
     /// Play a sound.
     /// </summary>
     public static TaskPattern SFX(string sfx) => smh => {
-        DependencyInjection.SFXService.Request(sfx);
+        ServiceLocator.SFXService.Request(sfx);
         return Task.CompletedTask;
     };
 

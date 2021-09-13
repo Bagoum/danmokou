@@ -26,7 +26,7 @@ public class ContinuousAudio : ProcReader {
 
     protected override void BindListeners() {
         base.BindListeners();
-        Listen(Events.EngineStateHasChanged, HandleEngineStateChange);
+        Listen(Events.EngineStateChanged, HandleEngineStateChange);
     }
 
     public override int UpdatePriority => UpdatePriorities.SLOW;

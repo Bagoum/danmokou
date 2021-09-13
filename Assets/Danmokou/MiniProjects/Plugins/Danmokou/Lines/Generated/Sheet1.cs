@@ -380,7 +380,7 @@ public static partial class VNLines {
 		public static readonly LString l115 = new LString("No worry, I shall with me them take.")
 			{ ID = "l115" };
 		
-		public static readonly LString l116 = new LString("Oh, she enjoyst these sorts of rags? Despite that countenance so contorted...")
+		public static readonly LString l116 = new LString("Oh, she enjoyth these sorts of rags? Despite that countenance so contorted...")
 			{ ID = "l116" };
 		
 		public static readonly LString l117 = new LString("Uh... so...")

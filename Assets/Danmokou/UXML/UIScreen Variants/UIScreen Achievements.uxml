@@ -1,6 +1,6 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <Style src="UIScreen.uss" />
-    <ui:Label text="Achievements&#10;" display-tooltip-when-elided="True" class="header" />
+    <ui:Label text="Achievements" display-tooltip-when-elided="True" class="header" />
     <ui:VisualElement name="Container" style="padding-left: 600px; padding-right: 720px;">
         <ui:VisualElement class="column">
             <ui:ScrollView class="columnList" />

@@ -81,7 +81,7 @@ public class XMLVNBacklogMenu : PausedGameplayMenu, IVNBacklog {
     }
 
     private async Task BacklogTo(Action<VNLocation> backlogger, VNLocation loc) {
-        var overlay = DependencyInjection.MaybeFind<IUIScreenOverlay>();
+        var overlay = ServiceLocator.MaybeFind<IUIScreenOverlay>();
         if (overlay is null) {
             backlogger(loc);
             ProtectHide();
@@ -98,7 +98,7 @@ public class XMLVNBacklogMenu : PausedGameplayMenu, IVNBacklog {
 
     private UINode MakeNode(DialogueLogEntry entry) {
         var node = new UINode($"<smallcaps>{entry.speakerName}</smallcaps>")
-            .OnBound(ve => ve.Q<Label>("Description").text = FilterCJK(entry.readableSpeech))
+            .OnBound(ve => ve.Q<Label>("Description").text = entry.readableSpeech)
             .OnBound(ve => {
                 if (entry.speakerSprite != null)
                     ve.Q("Speaker").style.backgroundImage = new StyleBackground(entry.speakerSprite);

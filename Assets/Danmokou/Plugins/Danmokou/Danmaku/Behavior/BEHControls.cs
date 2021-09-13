@@ -367,7 +367,7 @@ public partial class BehaviorEntity {
         /// <returns></returns>
         public static BehCFc SFX(string sfx, Pred cond) {
             return new BehCFc(b => {
-                if (cond(b.rBPI)) DependencyInjection.SFXService.Request(sfx);
+                if (cond(b.rBPI)) ServiceLocator.SFXService.Request(sfx);
             }, BM.BulletControl.P_RUN);
         }
 

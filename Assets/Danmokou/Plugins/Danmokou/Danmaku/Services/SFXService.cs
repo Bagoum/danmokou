@@ -63,9 +63,9 @@ public class SFXService : RegularUpdater, ISFXService {
         base.BindListeners();
         RegisterDI<ISFXService>(this);
         
-        Listen(Events.EngineStateHasChanged, HandleEngineStateChange);
+        Listen(Events.EngineStateChanged, HandleEngineStateChange);
         Listen(RankManager.RankLevelChanged, increase => Request(increase ? rankUp : rankDown));
-        Listen(InstanceData.MeterNowUsable, () => Request(meterUsable));
+        Listen(InstanceData.MeterBecameUsable, () => Request(meterUsable));
         Listen(InstanceData.AnyExtendAcquired, () => Request(lifeExtend));
         Listen(InstanceData.PhaseCompleted, pc => {
             if (pc.props.endSound) {

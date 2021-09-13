@@ -22,10 +22,12 @@ public readonly struct BGMInvokeFlags {
     public readonly float? fadeOutExistingTime;
     public readonly float fadeInNewTime;
 
+    public static BGMInvokeFlags Default => new BGMInvokeFlags(2f, 2f);
     public BGMInvokeFlags(float? fadeOutExistingTime = 2f, float fadeInNewTime = 2f) {
         this.fadeOutExistingTime = fadeOutExistingTime;
         this.fadeInNewTime = fadeInNewTime;
     }
+    
 }
 public interface IRunningAudioTrack {
     IAudioTrackInfo Track { get; }
@@ -223,7 +225,7 @@ public class TimedLoopRAT : BaseRunningAudioTrack {
         tokens.Add(t1);
         var t2 = Src2Volume.AddDisturbance(fader);
         tokens.Add(t2);
-        while (fader.Value > 0) {
+        while (fader.Value < 1) {
             fader.Update(ETime.FRAME_TIME);
             yield return null;
             if (Active.Cancelled) yield break;
@@ -273,7 +275,7 @@ public class AudioTrackService : CoroutineRegularUpdater {
 
     protected override void BindListeners() {
         base.BindListeners();
-        Listen(Events.EngineStateHasChanged, HandleEngineStateChange);
+        Listen(Events.EngineStateChanged, HandleEngineStateChange);
     }
 
     public override void RegularUpdate() {
@@ -297,7 +299,7 @@ public class AudioTrackService : CoroutineRegularUpdater {
     }
 
     public static IRunningAudioTrack? InvokeBGM(IAudioTrackInfo? track, BGMInvokeFlags? flags = null) => 
-        main._InvokeBGM(track, flags ?? new BGMInvokeFlags());
+        main._InvokeBGM(track, flags ?? BGMInvokeFlags.Default);
 
     private IRunningAudioTrack? _InvokeBGM(IAudioTrackInfo? track, BGMInvokeFlags flags) {
         if (track == null) return null;

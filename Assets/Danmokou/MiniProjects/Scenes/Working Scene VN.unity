@@ -155,7 +155,7 @@ PrefabInstance:
         type: 3}
       propertyPath: behaviorScript
       value: 
-      objectReference: {fileID: 4900000, guid: f9cd1b5717f9923479309729b6c3585b, type: 3}
+      objectReference: {fileID: 4900000, guid: bd98fcbbac53f9949a370d481c6ea77e, type: 3}
     - target: {fileID: 8605995698615359453, guid: ef140f64b9a721e488bd90801075a2aa,
         type: 3}
       propertyPath: m_RootOrder

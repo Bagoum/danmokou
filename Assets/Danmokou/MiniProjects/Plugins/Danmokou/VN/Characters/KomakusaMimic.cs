@@ -12,7 +12,7 @@ public class Komakusa : SZYUCharacter {
     public override Color UIColor => new Color(0.6f, .07f, .59f);
     public override string Name => "Komakusa Sannyo";
     
-    public override void RollEvent() => DependencyInjection.SFXService.Request("x-bubble-3", SFXType.TypingSound);
+    public override void RollEvent() => ServiceLocator.SFXService.Request("x-bubble-3", SFXType.TypingSound);
 }
 
 public class KomakusaMimic : PiecewiseCharacterMimic {
