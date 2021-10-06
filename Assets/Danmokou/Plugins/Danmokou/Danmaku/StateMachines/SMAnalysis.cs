@@ -55,6 +55,7 @@ public struct SMPhaseController {
     /// <summary>
     /// Run a single phase and then hit the callback.
     /// By default, the zero phase (setup phase by convention) is run first, and then it goes to the target phase.
+    /// <br/>After the phase is run, GoToNextPhase will always return -1.
     /// </summary>
     /// <param name="gotoPhase">Target phase</param>
     /// <param name="cb">Callback</param>
@@ -73,36 +74,31 @@ public struct SMPhaseController {
         callback = cb;
         typ = ControllerType.EXTERNAL_OVERRIDE_CONTINUE;
     }
+
     /// <summary>
-    /// Set a callback that can be run on script end, or on phase end if using override.
+    /// Set an override for a GoTo, but only if one is not already set.
     /// </summary>
-    public void SetCallback(Action? cb) => callback = cb;
+    public void LowPriorityGoTo(int gotoPhase) {
+        if (typ == ControllerType.DEFAULT) SetGoTo(gotoPhase, callback);
+    }
 
     /// <summary>
     /// OK to call twice
     /// </summary>
-    /// <returns>-1</returns>
-    public int RunEndingCallback() {
+    public void RunEndingCallback() {
         callback?.Invoke();
         callback = null;
-        return -1;
-    }
-
-    /// <summary>
-    /// Set an override, but only if one is not already set.
-    /// </summary>
-    public void LowPriorityOverride(int gotoPhase, bool forceZeroOverride = false) {
-        if (typ == ControllerType.DEFAULT) Override(gotoPhase, callback, forceZeroOverride);
     }
 
     public void SetDesiredNext(int nxt) => normalNextPhase = nxt;
     
     /// <summary>
+    /// Calculates the next phase to execute, and modifies internal state to move to that state.
     /// </summary>
     /// <param name="requestedNormal">The phase desired by the SM</param>
     /// <returns>The phase the SM should go to. This number may be negative or greater than the phase length,
     /// in which case the SM should stop executing.</returns>
-    public int WhatIsNextPhase(int? requestedNormal = null) {
+    public int GoToNextPhase(int? requestedNormal = null) {
         normalNextPhase = requestedNormal ?? normalNextPhase;
         if (typ == ControllerType.EXTERNAL_OVERRIDE_SKIP ||
             (typ == ControllerType.EXTERNAL_OVERRIDE && normalNextPhase > 0)) {
@@ -113,9 +109,30 @@ public struct SMPhaseController {
             return externalOverride;
         } else if (typ == ControllerType.WAITING_OVERRIDE_RETURN) {
             typ = ControllerType.DEFAULT;
-            if (callback != null) return RunEndingCallback();
+            RunEndingCallback();
+            return -1;
         }
         return normalNextPhase;
+    }
+
+    /// <summary>
+    /// Calculates the next phase to execute. Does not modify internal state (this is a pure function).
+    /// </summary>
+    /// <param name="requestedNormal">The phase desired by the SM</param>
+    /// <returns>The phase the SM should go to. This number may be negative or greater than the phase length,
+    /// in which case the SM should stop executing.</returns>
+    [Pure]
+    public int ScanNextPhase(int? requestedNormal = null) {
+        var nnp = requestedNormal ?? normalNextPhase;
+        if (typ == ControllerType.EXTERNAL_OVERRIDE_SKIP ||
+            (typ == ControllerType.EXTERNAL_OVERRIDE && nnp > 0)) {
+            return externalOverride;
+        } else if (typ == ControllerType.EXTERNAL_OVERRIDE_CONTINUE && nnp > 0) {
+            return externalOverride;
+        } else if (typ == ControllerType.WAITING_OVERRIDE_RETURN) {
+            return -1;
+        }
+        return nnp;
     }
 
 }

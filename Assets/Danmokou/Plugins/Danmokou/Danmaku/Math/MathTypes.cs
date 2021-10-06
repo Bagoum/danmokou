@@ -380,8 +380,10 @@ public delegate Fn GCXU<Fn>(GenCtx gcx, FiringCtx fctx);
 //require access to sbc, ii.
 /// <summary>
 /// A bullet control function performing some operation on a SimpleBullet.
+/// <br/>The cancellation token is stored in the BulletControl struct. It may be used by the control
+/// to bound nested summons (eg. via the SM control).
 /// </summary>
-public delegate void SBCF(BulletManager.AbsSimpleBulletCollection sbc, int ii, ParametricInfo bpi);
+public delegate void SBCF(BulletManager.AbsSimpleBulletCollection sbc, int ii, ParametricInfo bpi, ICancellee cT);
 
 /// <summary>
 /// A pool control function performing some operation on a simple bullet pool.

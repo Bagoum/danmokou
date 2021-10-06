@@ -11,7 +11,6 @@ namespace Danmokou.Graphics.Backgrounds {
 /// set by the BackgroundOrchestrator.
 /// </summary>
 public class BackgroundCombiner : RegularUpdater {
-    private static BackgroundCombiner main = null!;
     private int renderMask;
     private MaterialPropertyBlock pb = null!;
     private SpriteRenderer sr = null!;
@@ -20,7 +19,6 @@ public class BackgroundCombiner : RegularUpdater {
     private float time = 0f;
     private BackgroundOrchestrator orchestrator = null!;
     private void Awake() {
-        main = this;
         renderMask = LayerMask.GetMask(LayerMask.LayerToName(gameObject.layer));
         pb = new MaterialPropertyBlock();
         sr = GetComponent<SpriteRenderer>();
@@ -41,8 +39,7 @@ public class BackgroundCombiner : RegularUpdater {
 
     private void Start() => UpdateTextures();
 
-    public static void SetMaterial(Material newMat, MaterialPropertyBlock newPB) => main._SetMaterial(newMat, newPB);
-    private void _SetMaterial(Material newMat, MaterialPropertyBlock newPB) {
+    public void SetMaterial(Material newMat, MaterialPropertyBlock newPB) {
         mat = newMat;
         pb = newPB;
         UpdateTextures();

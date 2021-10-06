@@ -8,8 +8,10 @@ using Danmokou.Core;
 using Danmokou.Danmaku;
 using Danmokou.Dialogue;
 using Danmokou.DMath;
+using Danmokou.VN;
 using JetBrains.Annotations;
 using ParserCS;
+using SuzunoyaUnity;
 using static ParserCS.AAParser;
 using static ParserCS.Common;
 using DUContents = Danmokou.Core.DU<float, string, Danmokou.Dialogue.Dialoguer.EventType>;
@@ -18,6 +20,7 @@ using static BagoumLib.Tasks.WaitingUtils;
 namespace Danmokou.SM {
 [Reflect]
 public static class TSMReflection {
+    private static DMKVNState VN => (DMKVNState)ServiceLocator.Find<IVNWrapper>().TrackedVNs.First().vn;
     public static TTaskPattern Re(StateMachine sm) => sm.Start;
     public static TTaskPattern Wait(Synchronizer synchr) {
         var tp = SMReflection.Wait(synchr);

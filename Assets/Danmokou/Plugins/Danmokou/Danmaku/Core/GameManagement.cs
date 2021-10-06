@@ -107,7 +107,7 @@ public class GameManagement : CoroutineRegularUpdater {
         ETime.RegisterPersistentSOFInvoke(Enemy.FreezeEnemies);
         ETime.RegisterPersistentEOFInvoke(BehaviorEntity.PrunePoolControls);
         ETime.RegisterPersistentEOFInvoke(CurvedTileRenderLaser.PrunePoolControls);
-        SceneIntermediary.RegisterSceneUnload(ClearForScene);
+        SceneIntermediary.RegisterSceneUnload(ClearScene);
         SceneIntermediary.RegisterSceneLoad(OnSceneLoad);
 
         //The reason we do this instead of Awake is that we want all resources to be
@@ -153,15 +153,13 @@ public class GameManagement : CoroutineRegularUpdater {
     /// </summary>
     public static bool Restart() {
         if (Instance.Request == null) throw new Exception("No game instance found to restart");
-        if (Instance.Request.Mode.PreserveReloadAudio()) AudioTrackService.PreserveBGM();
+        InstanceRequest.InstanceRestarted.OnNext(Instance.Request);
         return Instance.Request.Run();
     }
 
     public static bool CanRestart => Instance.Request != null;
 
-    public static void ClearForScene() {
-        AudioTrackService.ClearAllAudio(false);
-        SFXService.ClearConstructed();
+    public static void ClearScene() {
         BulletManager.ClearPoolControls();
         Events.Event0.DestroyAll();
         ETime.Slowdown.RevokeAll(MultiOp.Priority.CLEAR_SCENE);
@@ -174,11 +172,16 @@ public class GameManagement : CoroutineRegularUpdater {
         StateMachineManager.ClearCachedSMs();
         BehaviorEntity.ClearPointers();
         AyaPhoto.ClearTextures();
+        Events.SceneCleared.Proc();
     }
 
+#if UNITY_EDITOR || ALLOW_RELOAD
+
+    private void Update() {
+        TryTriggerLocalReset();
+    }
+    
     public static void LocalReset() {
-        //AudioTrackService.ClearAllAudio();
-        SFXService.ClearConstructed();
         Events.Event0.DestroyAll();
         ETime.Slowdown.RevokeAll(MultiOp.Priority.CLEAR_SCENE);
         ETime.Timer.DestroyAll();
@@ -190,18 +193,11 @@ public class GameManagement : CoroutineRegularUpdater {
         BulletManager.ClearPoolControls();
         BulletManager.ClearAllBullets();
         BulletManager.DestroyCopiedPools();
-#if UNITY_EDITOR || ALLOW_RELOAD
         Events.LocalReset.Proc();
         //Ordered last so cancellations from HardCancel will occur under old data
         NewInstance(InstanceMode.DEBUG);
-#endif
         Debug.Log($"Reloading level: {Difficulty.Describe()} is the current difficulty");
         UIManager.UpdateTags();
-    }
-
-#if UNITY_EDITOR || ALLOW_RELOAD
-    private void Update() {
-        TryTriggerLocalReset();
     }
 
     private static bool TryTriggerLocalReset() {

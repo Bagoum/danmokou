@@ -1012,8 +1012,8 @@ public static class _VNCrimsonVermilion {
 
     public static async Task VNScriptCrimsonVermilion1(DMKVNState vn) {
 #if UNITY_EDITOR
-        if (vn.LoadTo is null)
-            vn.LoadToLocation(new VNLocation("l393_1", new List<string>() {"TOP", "SHRINE2"}));
+       // if (vn.LoadTo is null)
+       //     vn.LoadToLocation(new VNLocation("l385", new List<string>() {"TOP", "SHRINE2"}));
 #endif
         await _TopLevel(vn).Execute();
     }

@@ -43,7 +43,11 @@ public class AyaPhoto {
             return p.KeepAlive;
         }).ToList();
     }
-    public AyaPhoto() { } //JSON constructor
+    /// <summary>
+    /// JSON constructor, do not use
+    /// </summary>
+    [Obsolete]
+    private AyaPhoto() { }
     public AyaPhoto(Texture2D photo, CRect rect) {
         Filename = $"{DateTime.Now.FileableTime()}-{RNG.RandStringOffFrame()}";
         PixelWidth = photo.width;

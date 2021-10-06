@@ -6,18 +6,27 @@ phase(0)
 	paction(0)
 		shift-phase-to(1)
 	
+<!> dialogue #{
+phase 0
+	saction 0
+		dialogue simp.dialogue.1.3
+		shift-phase
+#}
+	
 <!> type(non, `DRAiko test`)
 <!> hp(2000)
 phase(0)
 	paction 0
-		bullet-control persist circle-blue/w softcull cwheel-red/w > x 2
-		async circle-blue/w <0.6;:> gir2 120 2 <0.2;:> {
-		} gir2 2 50 <> {
-			circle
-		} gcr2 1 1 <> {
-			delay 1
-		} s tprot cx 1
-		position 0 2
+		async circle-blue/w <1;:> gcr2 30 _ <> {
+		} gsr2c 20 {
+		} s rvelocity cx 1.2
+		
+		gtr2 300 _ <> {
+		} {
+			debug hello
+			bullet-control once circle-blue/w cull (= 1 mod(2, floor(t)) & > x 0)
+		}
+
 	
 <!> type(spell, `Danmokou Chimera`)
 <!> hp(21000)

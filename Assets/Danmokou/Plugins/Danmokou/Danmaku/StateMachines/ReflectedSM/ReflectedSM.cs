@@ -341,42 +341,28 @@ if (> t &fadein,
         return Task.CompletedTask;
     };
 
-    /// <summary>
-    /// Add a control to bullets that makes them summon an inode to run a state machine when the predicate is satisfied.
-    /// </summary>
-    [Obsolete("Use the normal control function with the SM command.")]
-    [GAlias(typeof(BulletManager.SimpleBullet), "BulletControlSM")]
-    [GAlias(typeof(BehaviorEntity), "BEHControlSM")]
-    public static TaskPattern ParticleSMControl<T>(Pred persist, BulletManager.StyleSelector style,
-        Pred cond, StateMachine sm) => smh => {
-        if (typeof(T) == typeof(BehaviorEntity)) BehaviorEntity.ControlPoolSM(persist, style, sm, smh.cT, cond); 
-        else BulletManager.ControlPoolSM(persist, style, sm, smh.cT, cond);
-        return Task.CompletedTask;
-    };
-
-    public static TaskPattern LaserControlSM(Pred persist, BulletManager.StyleSelector style,
-        LPred cond, StateMachine sm) => smh => {
-            CurvedTileRenderLaser.ControlPoolSM(persist, style, sm, smh.cT, cond);
-            return Task.CompletedTask;
-        };
     
     /// <summary>
     /// Apply a controller function to individual entities.
     /// </summary>
-    [GAlias(typeof(SBCFc), "BulletControl")]
-    [GAlias(typeof(BehCFc), "BEHControl")]
-    [GAlias(typeof(LCF), "BulletlControl")]
-    public static TaskPattern ParticleControl<CF>(Pred persist, BulletManager.StyleSelector style, CF control) =>
-        smh => {
-            if (control is BehCFc bc) BehaviorEntity.ControlPool(persist, style, bc, smh.cT);
-            else if (control is LCF lc) CurvedTileRenderLaser.ControlPool(persist, style, lc, smh.cT);
-            else if (control is SBCFc pc) BulletManager.ControlPool(persist, style, pc, smh.cT);
+    [GAlias(typeof(BulletManager.exBulletControl), "BulletControl")]
+    [GAlias(typeof(BehaviorEntity.exBEHControl), "BEHControl")]
+    [GAlias(typeof(CurvedTileRenderLaser.exLaserControl), "LaserControl")]
+    public static TaskPattern ParticleControl<CF>(Pred persist, BulletManager.StyleSelector style, CF control) {
+        return smh => {
+            if (control is BehaviorEntity.exBEHControl bc)
+                BehaviorEntity.ControlPool(persist, style, bc, smh.cT);
+            else if (control is CurvedTileRenderLaser.exLaserControl lc)
+                CurvedTileRenderLaser.ControlPool(persist, style, lc, smh.cT);
+            else if (control is BulletManager.exBulletControl pc)
+                BulletManager.ControlPool(persist, style, pc, smh.cT);
             else throw new Exception("Couldn't realize bullet-control type");
             return Task.CompletedTask;
         };
+    }
 
     //generics aren't generated correctly in il2cpp
-    public static TaskPattern ControlBullet(Pred persist, BulletManager.StyleSelector style, SBCFc control) => smh => {
+    public static TaskPattern ControlBullet(Pred persist, BulletManager.StyleSelector style, BulletManager.exBulletControl control) => smh => {
         BulletManager.ControlPool(persist, style, control, smh.cT);
         return Task.CompletedTask;
     };
@@ -386,12 +372,12 @@ if (> t &fadein,
     /// </summary>
     [GAlias(typeof(SPCF), "PoolControl")]
     [GAlias(typeof(BehPF), "BEHPoolControl")]
-    [GAlias(typeof(LPCF), "PoolLControl")]
+    [GAlias(typeof(LPCF), "LaserPoolControl")]
     public static TaskPattern PoolControl<CF>(BulletManager.StyleSelector style, CF control) => smh => {
         if      (control is BehPF bc) 
-            BehaviorEntity.ControlPool(style, bc);
+            BehaviorEntity.ControlPool(style, bc, smh.cT);
         else if (control is LPCF lc) 
-            CurvedTileRenderLaser.ControlPool(style, lc);
+            CurvedTileRenderLaser.ControlPool(style, lc, smh.cT);
         else if (control is SPCF pc) 
             BulletManager.ControlPool(style, pc, smh.cT);
         else throw new Exception("Couldn't realize pool-control type");
@@ -406,9 +392,8 @@ if (> t &fadein,
     /// Change the running phase.
     /// </summary>
     public static TaskPattern ShiftPhaseTo(int toPhase) => smh => {
-        if (toPhase != -1) {
-            smh.Exec.phaseController.LowPriorityOverride(toPhase);
-        }
+        if (toPhase != -1)
+            smh.Exec.phaseController.LowPriorityGoTo(toPhase);
         smh.Exec.ShiftPhase();
         return Task.CompletedTask;
     };

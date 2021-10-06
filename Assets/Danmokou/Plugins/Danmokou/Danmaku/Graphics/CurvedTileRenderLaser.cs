@@ -20,12 +20,14 @@ using UnityEngine;
 namespace Danmokou.Graphics {
 /// <summary>
 /// A bullet control function performing some operation on a laser.
+/// <br/>The cancellation token is stored in the LaserControl struct. It may be used by the control
+/// to bound nested summons (eg. via the SM control).
 /// </summary>
-public delegate void LCF(CurvedTileRenderLaser ctr);
+public delegate void LCF(CurvedTileRenderLaser ctr, ICancellee cT);
 /// <summary>
 /// A pool control function performing some operation on a laser style.
 /// </summary>
-public delegate void LPCF(string pool);
+public delegate void LPCF(string pool, ICancellee cT);
 
 [Serializable]
 public class LaserRenderCfg : TiledRenderCfg {
@@ -410,7 +412,17 @@ public class CurvedTileRenderLaser : CurvedTileRender {
         }
     }
 #endif
-    
+
+    //No compilation
+    public readonly struct exLaserControl {
+        public readonly LCF action;
+        public readonly int priority;
+        
+        public exLaserControl(LCF action, int priority) {
+            this.action = action;
+            this.priority = priority;
+        }
+    }
     
     /// <summary>
     /// Complex bullet pool control descriptor.
@@ -418,10 +430,12 @@ public class CurvedTileRenderLaser : CurvedTileRender {
     public readonly struct LaserControl {
         public readonly LCF action;
         public readonly Pred persist;
+        public readonly int priority;
         public readonly ICancellee cT;
 
-        public LaserControl(LCF act, Pred persistent, ICancellee cT) {
-            action = act;
+        public LaserControl(exLaserControl lc, Pred persistent, ICancellee cT) {
+            action = lc.action;
+            priority = lc.priority;
             persist = persistent;
             this.cT = cT;
         }
@@ -454,7 +468,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
         public void IterateControls(CurvedTileRenderLaser laser) {
             int ct = controls.Count;
             for (int ii = 0; ii < ct; ++ii) {
-                controls[ii].action(laser);
+                controls[ii].action(laser, controls[ii].cT);
             }
         }
     }
@@ -484,25 +498,11 @@ public class CurvedTileRenderLaser : CurvedTileRender {
         }
         return activePools[style];
     }
-    
-    
-    //Warning: these commands MUST be destroyed in the scope in which they are created, otherwise you will get cT disposal errors.
-    public static void ControlPoolSM(Pred persist, BulletManager.StyleSelector styles, SM.StateMachine sm, ICancellee cT, LPred condFunc) {
-        LaserControl lc = new LaserControl(b => {
-            if (condFunc(b.bpi, b.lifetime)) {
-                var mov = new Movement(b.bpi.loc, V2RV2.Angle(b.laser.original_angle));
-                _ = BEHPooler.INode(mov, new ParametricInfo(in mov, b.bpi.index), b.nextTrueDelta, "l-pool-triggered")
-                    .RunExternalSM(SMRunner.Cull(sm, cT));
-            }
-        }, persist, cT);
-        for (int ii = 0; ii < styles.Complex.Length; ++ii) {
-            LazyGetControls(styles.Complex[ii]).AddPoolControl(lc);
-        }
-    }
-    
+
     /// <summary>
     /// Repository for functions that can be applied to lasers via the `bulletl-control` command.
-    /// Note lasers can also be affected by `beh-control`, but these functions deal specifically with laser draw-paths.
+    ///  Note lasers can also be affected by `beh-control`, but these functions deal specifically with laser draw-paths.
+    /// These functions are executed at *every point* on the laser during its construction.
     /// </summary>
     [Reflect]
     public static class LaserControls {
@@ -513,14 +513,14 @@ public class CurvedTileRenderLaser : CurvedTileRender {
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
         [Alias("flipx>")]
-        public static LCF FlipXGT(float wall, Pred cond) {
-            return b => {
+        public static exLaserControl FlipXGT(float wall, Pred cond) {
+            return new exLaserControl((b, cT) => {
                 if (b.bpi.loc.x > wall && cond(b.bpi)) {
                     b.FlipBPIAndDeltaSimple(false, wall);
                     b.path.FlipX();
                     b.intersectStatus = SelfIntersectionStatus.CHECK_THIS_AND_NEXT;
                 }
-            };
+            }, BulletManager.BulletControl.P_MOVE_3);
         }
         /// <summary>
         /// Flip the x-velocity and x-position of laser paths around a wall on the left.
@@ -529,14 +529,14 @@ public class CurvedTileRenderLaser : CurvedTileRender {
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
         [Alias("flipx<")]
-        public static LCF FlipXLT(float wall, Pred cond) {
-            return b => {
+        public static exLaserControl FlipXLT(float wall, Pred cond) {
+            return new exLaserControl((b, cT) => {
                 if (b.bpi.loc.x < wall && cond(b.bpi)) {
                     b.FlipBPIAndDeltaSimple(false, wall);
                     b.path.FlipX();
                     b.intersectStatus = SelfIntersectionStatus.CHECK_THIS_AND_NEXT;
                 }
-            };
+            }, BulletManager.BulletControl.P_MOVE_3);
         }
         /// <summary>
         /// Flip the y-velocity and y-position of laser paths around a wall on the top.
@@ -545,14 +545,14 @@ public class CurvedTileRenderLaser : CurvedTileRender {
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
         [Alias("flipy>")]
-        public static LCF FlipYGT(float wall, Pred cond) {
-            return b => {
+        public static exLaserControl FlipYGT(float wall, Pred cond) {
+            return new exLaserControl((b, cT) => {
                 if (b.bpi.loc.y > wall && cond(b.bpi)) {
                     b.FlipBPIAndDeltaSimple(true, wall);
                     b.path.FlipY();
                     b.intersectStatus = SelfIntersectionStatus.CHECK_THIS_AND_NEXT;
                 }
-            };
+            }, BulletManager.BulletControl.P_MOVE_3);
         }
         /// <summary>
         /// Flip the y-velocity and y-position of laser paths around a wall on the bottom.
@@ -561,17 +561,25 @@ public class CurvedTileRenderLaser : CurvedTileRender {
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
         [Alias("flipy<")]
-        public static LCF FlipYLT(float wall, Pred cond) {
-            return b => {
+        public static exLaserControl FlipYLT(float wall, Pred cond) {
+            return new exLaserControl((b, cT) => {
                 if (b.bpi.loc.y < wall && cond(b.bpi)) {
                     b.FlipBPIAndDeltaSimple(true, wall);
                     b.path.FlipY();
                     b.intersectStatus = SelfIntersectionStatus.CHECK_THIS_AND_NEXT;
                 }
-            };
+            }, BulletManager.BulletControl.P_MOVE_3);
         }
+        
+        public static exLaserControl SM(LPred cond, SM.StateMachine sm) => new exLaserControl((b, cT) => {
+            if (cond(b.bpi, b.lifetime)) {
+                var mov = new Movement(b.bpi.loc, V2RV2.Angle(b.laser.original_angle));
+                _ = BEHPooler.INode(mov, new ParametricInfo(in mov, b.bpi.index), b.nextTrueDelta, "l-pool-triggered")
+                    .RunExternalSM(SMRunner.Cull(sm, cT));
+            }
+        }, BulletManager.BulletControl.P_RUN);
     }
-    public static void ControlPool(Pred persist, BulletManager.StyleSelector styles, LCF control, ICancellee cT) {
+    public static void ControlPool(Pred persist, BulletManager.StyleSelector styles, exLaserControl control, ICancellee cT) {
         LaserControl lc = new LaserControl(control, persist, cT);
         for (int ii = 0; ii < styles.Complex.Length; ++ii) {
             LazyGetControls(styles.Complex[ii]).AddPoolControl(lc);
@@ -589,13 +597,13 @@ public class CurvedTileRenderLaser : CurvedTileRender {
         /// </summary>
         /// <returns></returns>
         public static LPCF Reset() {
-            return pool => LazyGetControls(pool).ClearControls();
+            return (pool, cT) => LazyGetControls(pool).ClearControls();
         }
     }
     
-    public static void ControlPool(BulletManager.StyleSelector styles, LPCF control) {
+    public static void ControlPool(BulletManager.StyleSelector styles, LPCF control, ICancellee cT) {
         for (int ii = 0; ii < styles.Complex.Length; ++ii) {
-            control(styles.Complex[ii]);
+            control(styles.Complex[ii], cT);
         }
     }
     public static void PrunePoolControls() {

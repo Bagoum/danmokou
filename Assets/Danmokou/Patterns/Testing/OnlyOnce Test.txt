@@ -3,6 +3,6 @@ phase 0
 	paction 0
         position 0 0
 		async scircle-purple/w <1;:> gcr { } gsr { t 5 rpp <25> } s tprot cx 1
-		bullet-control-sm persist scircle-purple/w onlyonce > mag loc 1
+		bullet-control persist scircle-purple/w sm onlyonce > mag loc 1
 			sync strip-red/w <> s tprot zero
         

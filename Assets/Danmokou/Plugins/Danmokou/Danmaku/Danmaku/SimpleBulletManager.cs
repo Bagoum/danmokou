@@ -4,6 +4,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using BagoumLib;
+using BagoumLib.Cancellation;
 using BagoumLib.DataStructures;
 using Danmokou.Behavior;
 using Danmokou.Core;
@@ -180,6 +181,17 @@ public partial class BulletManager {
 
         //TODO: investigate if isNew is actually required; is it possible to always apply the initial controls?
         public abstract void Add(ref SimpleBullet sb, bool isNew);
+
+        [UsedImplicitly]
+        public BehaviorEntity RunINodeAt(int ii, StateMachine target, ICancellee cT) {
+            var bpi = Data[ii].bpi;
+            var inode = GetINodeAt(ii, "bulletcontrol-sm-triggered");
+            //Note: this pattern is safe because GCX is copied immediately by SMRunner
+            using var gcx = bpi.ctx.RevertToGCX(inode);
+            gcx.fs["bulletTime"] = bpi.t;
+            _ = inode.RunExternalSM(SMRunner.Cull(target, cT, gcx));
+            return inode;
+        }
         
         [UsedImplicitly]
         public void TransferFrom(AbsSimpleBulletCollection sbc, int ii) {
@@ -187,22 +199,16 @@ public partial class BulletManager {
             Add(ref sb, false);
             sbc.DeleteSB(ii);
         }
-
-        public static readonly ExFunction transferFrom = ExUtils.Wrap<AbsSimpleBulletCollection>("TransferFrom", new[] {typeof(AbsSimpleBulletCollection), typeof(int)});
-
+        
         [UsedImplicitly]
         public void CopyNullFrom(AbsSimpleBulletCollection sbc, int ii, SoftcullProperties? advancer) =>
             RequestNullSimple(Style, sbc[ii].bpi.loc, sbc[ii].direction, advancer?.AdvanceTime(sbc[ii].bpi.loc) ?? 0f);
-        
-        public static readonly ExFunction copyNullFrom = ExUtils.Wrap<AbsSimpleBulletCollection>("CopyNullFrom", new[] {typeof(AbsSimpleBulletCollection), typeof(int), typeof(SoftcullProperties?)});
 
         [UsedImplicitly]
         public void CopyFrom(AbsSimpleBulletCollection sbc, int ii) {
             var sb = new SimpleBullet(ref sbc[ii], RNG.GetUInt());
             Add(ref sb, false);
         }
-
-        public static readonly ExFunction copyFrom = ExUtils.Wrap<AbsSimpleBulletCollection>("CopyFrom", new[] {typeof(AbsSimpleBulletCollection), typeof(int)});
 
         /// <summary>
         /// Marks a bullet for deletion. You may continue operating on the bullet until the next Compact call, when
@@ -223,7 +229,7 @@ public partial class BulletManager {
         public void DeleteSB_Collision(int ind) {
             if (!rem[ind]) {
                 for (int ii = 0; ii < onCollideControls.Count; ++ii) {
-                    onCollideControls[ii].action(this, ind, Data[ind].bpi);
+                    onCollideControls[ii].action(this, ind, Data[ind].bpi, onCollideControls[ii].cT);
                 }
                 DeleteSB(ind);
             }
@@ -347,7 +353,7 @@ public partial class BulletManager {
                 int numPcs = controls.Count;
                 var ind = count - 1; //count may change if a deletion/addition occurs
                 for (int pi = 0; pi < numPcs && !rem[ind]; ++pi) {
-                    controls[pi].action(this, ind, sb.bpi);
+                    controls[pi].action(this, ind, sb.bpi, controls[pi].cT);
                 }
             }
         }
@@ -373,7 +379,7 @@ public partial class BulletManager {
                     nextDT = ETime.FRAME_TIME;
                     
                     for (int pi = 0; pi < postVelPcs; ++pi) 
-                        controls[pi].action(this, ii, sb.bpi);
+                        controls[pi].action(this, ii, sb.bpi, controls[pi].cT);
                     
                     //in nextDT is a significant optimization
                     sb.movement.UpdateDeltaAssignAcc(ref sb.bpi, out sb.accDelta, in nextDT);
@@ -382,7 +388,7 @@ public partial class BulletManager {
                     
                     //See Bullet Notes > Colliding Pool Controls for details
                     for (int pi = postVelPcs; pi < postDirPcs; ++pi) 
-                        controls[pi].action(this, ii, sb.bpi);
+                        controls[pi].action(this, ii, sb.bpi, controls[pi].cT);
                     
                     if (sb.dirFunc == null) {
                         float mag = sb.accDelta.x * sb.accDelta.x + sb.accDelta.y * sb.accDelta.y;
@@ -396,7 +402,7 @@ public partial class BulletManager {
                     
                     //Post-vel controls may destroy the bullet. As soon as this occurs, stop iterating
                     for (int pi = postDirPcs; pi < numPcs && !rem[ii]; ++pi) 
-                        controls[pi].action(this, ii, sb.bpi);
+                        controls[pi].action(this, ii, sb.bpi, controls[pi].cT);
                 }
             }
             PruneControls();

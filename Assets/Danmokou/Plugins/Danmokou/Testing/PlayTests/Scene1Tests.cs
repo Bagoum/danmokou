@@ -740,7 +740,7 @@ public static class Scene1 {
                 AreEqual(0, PublicDataHoisting.GetF("v1", 1));
                 AreEqual(0, PublicDataHoisting.GetF("v1", 2));
                 AreEqual(7, PublicDataHoisting.GetF("v1", 3));
-                AreEqual(8, PublicDataHoisting.GetF("v1", 4));
+                AreEqual(0, PublicDataHoisting.GetF("v1", 4));
                 AreEqual(0, m.NumRunningSMs);
             });
         });
@@ -772,7 +772,8 @@ public static class Scene1 {
     }
     private static SharedInstanceMetadata FixedDfc(FixedDifficulty fd) => 
         new SharedInstanceMetadata(new TeamConfig(0, Subshot.TYPE_D, null, 
-            (TestHarness.main.playerRef.defaultPlayers[0], TestHarness.main.playerRef.defaultShots[0])), 
+                (ServiceLocator.Find<PlayerController>().defaultPlayers[0], 
+                    ServiceLocator.Find<PlayerController>().defaultShots[0])),
             new DifficultySettings(fd));
     [UnityTest]
     public static IEnumerator TestDifficultySelect() {

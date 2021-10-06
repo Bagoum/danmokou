@@ -17,7 +17,7 @@ using UnityEngine.Serialization;
 
 namespace Danmokou.Services {
 public class SFXService : RegularUpdater, ISFXService {
-    private static AudioSource src = null!;
+    private AudioSource src = null!;
     public SFXConfig lifeExtend = null!;
     public SFXConfig phaseEndFail = null!;
     public SFXConfig phaseEndSuccess = null!;
@@ -35,7 +35,7 @@ public class SFXService : RegularUpdater, ISFXService {
     public SFXConfig rankUp = null!;
     public SFXConfig rankDown = null!;
     public SFXConfig[] SFX = null!;
-    private static readonly Dictionary<string, SFXConfig> dclips = new Dictionary<string, SFXConfig>();
+    private readonly Dictionary<string, SFXConfig> dclips = new Dictionary<string, SFXConfig>();
 
     public readonly struct ConstructedAudio {
         public readonly AudioSource csrc;
@@ -46,8 +46,7 @@ public class SFXService : RegularUpdater, ISFXService {
             this.sfx = sfx;
         }
     }
-
-    private static readonly CompactingArray<ConstructedAudio> constructed = new CompactingArray<ConstructedAudio>();
+    private readonly CompactingArray<ConstructedAudio> constructed = new CompactingArray<ConstructedAudio>();
 
     public void Setup() {
         src = GetComponent<AudioSource>();
@@ -62,7 +61,9 @@ public class SFXService : RegularUpdater, ISFXService {
     protected override void BindListeners() {
         base.BindListeners();
         RegisterDI<ISFXService>(this);
-        
+
+        Listen(Events.SceneCleared, ClearConstructed);
+        Listen(Events.LocalReset, ClearConstructed);
         Listen(Events.EngineStateChanged, HandleEngineStateChange);
         Listen(RankManager.RankLevelChanged, increase => Request(increase ? rankUp : rankDown));
         Listen(InstanceData.MeterBecameUsable, () => Request(meterUsable));
@@ -81,8 +82,8 @@ public class SFXService : RegularUpdater, ISFXService {
         Listen(InstanceData.PowerLost, () => Request(powerLost));
         Listen(InstanceData.LifeSwappedForScore, () => Request(swapHPScore));
 
-        Listen(Player.PlayerController.PlayerActivatedMeter, () => Request(meterActivated));
-        Listen(Player.PlayerController.PlayerDeactivatedMeter, () => Request(meterDeActivated));
+        Listen(PlayerController.PlayerActivatedMeter, () => Request(meterActivated));
+        Listen(PlayerController.PlayerDeactivatedMeter, () => Request(meterDeActivated));
     }
 
     public void Update() {
@@ -172,11 +173,11 @@ public class SFXService : RegularUpdater, ISFXService {
         }
     }
 
-    private static Dictionary<string, float> timeouts = new Dictionary<string, float>();
-    private static Dictionary<string, float> _timeouts = new Dictionary<string, float>();
-    private static readonly Dictionary<string, LoopingSourceInfo> loopTimeouts =
+    private Dictionary<string, float> timeouts = new Dictionary<string, float>();
+    private Dictionary<string, float> _timeouts = new Dictionary<string, float>();
+    private readonly Dictionary<string, LoopingSourceInfo> loopTimeouts =
         new Dictionary<string, LoopingSourceInfo>();
-    private static readonly List<LoopingSourceInfo> loopTimeoutsArr = new List<LoopingSourceInfo>();
+    private readonly List<LoopingSourceInfo> loopTimeoutsArr = new List<LoopingSourceInfo>();
 
     
     public void Request(string? style, SFXType type) {
@@ -262,7 +263,7 @@ public class SFXService : RegularUpdater, ISFXService {
             Request(bossExplode);
     }
 
-    public static void ClearConstructed() {
+    private void ClearConstructed() {
         for (int ii = 0; ii < constructed.Count; ++ii) {
             if (constructed[ii].csrc != null) Destroy(constructed[ii].csrc);
         }

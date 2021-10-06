@@ -25,6 +25,9 @@ public static partial class Reflector {
         private static readonly Dictionary<Type, Dictionary<string, MethodInfo>> methodsByReturnType
             = new Dictionary<Type, Dictionary<string, MethodInfo>>();
     #if UNITY_EDITOR
+        /// <summary>
+        /// Exposing methodsByReturnType for AoT expression baking.
+        /// </summary>
         public static Dictionary<Type, Dictionary<string, MethodInfo>> MethodsByReturnType => methodsByReturnType;
     #endif
         /// <summary>
@@ -32,24 +35,13 @@ public static partial class Reflector {
         /// </summary>
         private static readonly List<(string method, MethodInfo mi)> genericMethods
             = new List<(string, MethodInfo)>();
+        
         /// <summary>
         /// Generics are lazily matched against types, and the computed .MakeGenericMethod is only then sent to
-        /// methodsByReturnType. This set contains all types that have been matched.
+        /// methodsByReturnType. This set contains all return types that have been matched.
         /// </summary>
         private static readonly HashSet<Type> computedGenericsTypes = new HashSet<Type>();
-        /// <summary>
-        /// Lazily loaded parameter types for functions in methodsByReturnType.
-        /// </summary>
-        private static readonly Dictionary<(string method, Type returnType), NamedParam[]> lazyTypes 
-            = new Dictionary<(string, Type), NamedParam[]>();
-        /// <summary>
-        /// Lazily loaded parameter types for funcified functions in methodsByReturnType.
-        /// Effective return type key = Func&lt;funcIn, funcOut&gt;
-        /// </summary>
-        private static readonly Dictionary<(string method, Type funcIn, Type funcOut), NamedParam[]> funcedTypes 
-            = new Dictionary<(string, Type, Type), NamedParam[]>();
-
-
+        
         /// <summary>
         /// Record public static methods in a class for reflection use.
         /// </summary>
@@ -59,16 +51,6 @@ public static partial class Reflector {
             Record(repo, returnType, BindingFlags.Static | BindingFlags.Public);
         
         private static void Record(Type repo, Type? returnType, BindingFlags flags) {
-            // Two generic methods never have the same return type:
-            //  List<T> MakeList<T>()...
-            //  List<T> MakeList2<T>()...
-            //  mi1.ReturnType != mi2.ReturnType
-            // However, if they have the same number of type params, we can test if they are "effectively the same"
-            //  by constructing them both with the same array of unique types, and comparing the result types.
-            // However, since the generic matching process on the return type requires that the types are the same
-            //  as the method, each method will require its own type-matching map, and there is no way to meaningfully
-            //  combine multiple generic methods under one type. 
-            // (Short of running .MakeGenericType with generic type arguments-- DO NOT DO THIS.)
             repo
                 .GetMethods(flags)
                 .Where(mi => returnType == null || mi.ReturnType == returnType)
@@ -132,26 +114,63 @@ public static partial class Reflector {
             computedGenericsTypes.Add(rt);
         }
 
-        public static NamedParam[] GetArgTypes(MethodInfo mi) =>
-            mi.GetParameters().Select(x => (NamedParam) x).ToArray();
         /// <summary>
-        /// Results are cached.
+        /// Get the argument types for a method member that returns type rt.
         /// </summary>
         public static NamedParam[] GetArgTypes(Type rt, string member) {
-            if (!lazyTypes.ContainsKey((member, rt))) {
+            if (!getArgTypesCache.ContainsKey((member, rt))) {
                 ResolveGeneric(rt);
-                if (methodsByReturnType.TryGetValue(rt, out var dct) && dct.TryGetValue(member, out var mi)) {
-                    lazyTypes[(member, rt)] = GetArgTypes(mi);
-                } else
+                if (methodsByReturnType.TryGetValue(rt, out var dct) && dct.TryGetValue(member, out var mi))
+                    getArgTypesCache[(member, rt)] = mi.GetParameters().Select(x => (NamedParam) x).ToArray();
+                else
                     throw new NotImplementedException($"The method \"{rt.RName()}.{member}\" was not found.\n");
             }
-            return lazyTypes[(member, rt)];
+            return getArgTypesCache[(member, rt)];
+        }
+        private static readonly Dictionary<(string method, Type returnType), NamedParam[]> getArgTypesCache 
+            = new Dictionary<(string, Type), NamedParam[]>();
+
+
+        private static readonly Dictionary<(Type toType, Type fromFuncType), Func<object, object, object>> funcConversions =
+            new Dictionary<(Type, Type), Func<object, object, object>>();
+        /// <summary>
+        /// De-funcify a source object whose type involves functions of one argument (eg. [TExArgCtx->tfloat]) into an
+        ///  target type (eg. [tfloat]) by applying an object of that argument type (TExArgCtx) to the
+        ///  source object according to the function registered in funcConversions.
+        /// <br/>If no function is registered, return the source object as-is.
+        /// </summary>
+        private static object Defuncify(Type targetType, Type sourceFuncType, object sourceObj, object funcArg) {
+            if (funcConversions.TryGetValue((targetType, sourceFuncType), out var conv)) 
+                return conv(sourceObj, funcArg);
+            return sourceObj;
         }
 
-        public static NamedParam[] LazyGetTypes<RT>(string member) => GetArgTypes(typeof(RT), member);
-
-        //dst type, (source type, converter)
-        public static readonly Dictionary<Type, (Type sourceType, object converter)> conversions
+        /// <summary>
+        /// For a recorded function R member(A, B, C...), return the parameter types of the hypothetical function
+        /// T->R member', such that those parameters can be meaningfully parsed by reflection code.
+        /// <br/>In most cases, this is just [T->A, T->B, T->C], but it depends on rules in TryFuncify.
+        /// </summary>
+        public static NamedParam[] FuncifyTypes<T, R>(string member) => FuncifyTypes(typeof(T), typeof(R), member);
+        public static NamedParam[] FuncifyTypes(Type t, Type r, string member) {
+            if (!funcifyTypesCache.ContainsKey((member, t, r))) {
+                NamedParam[] baseTypes = GetArgTypes(r, member);
+                NamedParam[] fTypes = new NamedParam[baseTypes.Length];
+                for (int ii = 0; ii < baseTypes.Length; ++ii) {
+                    var bt = baseTypes[ii].type;
+                    fTypes[ii] = baseTypes[ii].WithType(TryFuncify(t, bt, out var result) ? result : bt);
+                }
+                funcifyTypesCache[(member, t, r)] = fTypes;
+            }
+            return funcifyTypesCache[(member, t, r)];
+        }
+        private static readonly Dictionary<(string method, Type funcIn, Type funcOut), NamedParam[]> funcifyTypesCache 
+            = new Dictionary<(string, Type, Type), NamedParam[]>();
+        
+        /// <summary>
+        /// Dictionary mapping unparseable "wrapped" types that may occur in funcified function arguments
+        /// to parseable "unwrapped" types from which they can be derived.
+        /// </summary>
+        public static readonly Dictionary<Type, (Type sourceType, object converter)> wrappers
             = new Dictionary<Type, (Type, object)>() {
                 {typeof(EEx<bool>), (typeof(TEx<bool>), (Func<TEx<bool>, EEx<bool>>) (x => x))},
                 {typeof(EEx<float>), (typeof(TEx<float>), (Func<TEx<float>, EEx<float>>) (x => x))},
@@ -161,104 +180,125 @@ public static partial class Reflector {
                 {typeof(EEx<V2RV2>), (typeof(TEx<V2RV2>), (Func<TEx<V2RV2>, EEx<V2RV2>>) (x => x))}
             };
         
-        private static readonly Dictionary<(Type, Type), Type> funcMapped = new Dictionary<(Type, Type), Type>();
-        private static readonly Dictionary<(Type fromType, Type toType), Func<object, object, object>> funcConversions =
-            new Dictionary<(Type, Type), Func<object, object, object>>();
-        private static readonly HashSet<Type> funcableTypes = new HashSet<Type>() {
-            typeof(TEx<bool>),
-            typeof(TEx<float>),
-            typeof(TEx<Vector2>),
-            typeof(TEx<Vector3>),
-            typeof(TEx<Vector4>),
-            typeof(TEx<V2RV2>)
-        };
-        public static NamedParam[] FuncifyTypes<T, R>(string member) => FuncifyTypes(typeof(T), typeof(R), member);
-
-        public static NamedParam[] FuncifyTypes(Type t, Type r, string member) {
-            bool TryFuncify(Type bt, out Type res) {
-                if (funcMapped.ContainsKey((t, bt))) {
-                    res = funcMapped[(t, bt)];
-                } else if (funcableTypes.Contains(bt)) {
-                    var ft = res = funcMapped[(t, bt)] = Func2Type(t, bt);
-                    funcConversions[(bt, ft)] = (x, bpi) => FuncInvoke(x, ft, bpi);
-                } else if (bt.IsArray && TryFuncify(bt.GetElementType()!, out var ftele)) {
-                    var ft = res = funcMapped[(t, bt)] = ftele.MakeArrayType();
-                    funcConversions[(bt, ft)] = (x, bpi) => {
-                        var oa = x as Array ?? throw new StaticException("Couldn't arrayify");
-                        var fa = Array.CreateInstance(bt.GetElementType()!, oa.Length);
-                        for (int oi = 0; oi < oa.Length; ++oi) {
-                            fa.SetValue(funcConversions[(bt.GetElementType(), ftele)](oa.GetValue(oi), bpi), oi);
-                        }
-                        return fa;
-                    };
-                } else if (bt.IsConstructedGenericType && bt.GetGenericTypeDefinition() == typeof(ValueTuple<,>) &&
-                           bt.GenericTypeArguments.Any(x => TryFuncify(x, out _))) {
-                    var base_gts = bt.GenericTypeArguments;
-                    var gts = new Type[base_gts.Length];
-                    for (int ii = 0; ii < gts.Length; ++ii) {
-                        if (TryFuncify(base_gts[ii], out var gt)) gts[ii] = gt;
-                    }
-                    var ft = res = funcMapped[(t, bt)] = typeof(ValueTuple<,>).MakeGenericType(gts);
-                    var tupToArr = typeof(Reflector)
-                                       .GetMethod($"TupleToArr{gts.Length}", BindingFlags.Static | BindingFlags.Public)
-                                       ?.MakeGenericMethod(gts) ??
-                                   throw new StaticException("Couldn't find tuple decomposition method");
-                    funcConversions[(bt, ft)] = (x, bpi) => {
-                        var argarr = tupToArr.Invoke(null, new[] {x}) as object[] ??
-                                     throw new StaticException("Couldn't decompose tuple to array");
-                        for (int ii = 0; ii < gts.Length; ++ii) {
-                            if (funcConversions.TryGetValue((base_gts[ii], gts[ii]), out var conv)) 
-                                argarr[ii] = conv(argarr[ii], bpi);
-                        }
-                        return Activator.CreateInstance(bt, argarr);
-                    };
-                } else {
-                    res = default!;
-                    return false;
-                }
+        /// <summary>
+        /// Where arg is the type of a parameter for a recorded function R member(...ARG, ...),
+        /// construct the type of the corresponding parameter for the hypothetical function T->R member', such that
+        /// the constructed type can be parsed by reflection code with maximum generality.
+        /// <br/>In most cases, this is just T->ARG. See comments in the code for more details.
+        /// <br/>If the type ARG does not need to be changed, return False.
+        /// </summary>
+        private static bool TryFuncify(Type t, Type _arg, out Type res) {
+            if (tryFuncifyCache.ContainsKey((t, _arg))) {
+                //Cached result
+                res = tryFuncifyCache[(t, _arg)];
                 return true;
             }
-            if (!funcedTypes.ContainsKey((member, t, r))) {
-                NamedParam[] baseTypes = GetArgTypes(r, member);
-                NamedParam[] fTypes = new NamedParam[baseTypes.Length];
-                for (int ii = 0; ii < baseTypes.Length; ++ii) {
-                    var bt = baseTypes[ii].type;
-                    if (conversions.ContainsKey(bt)) {
-                        bt = conversions[bt].sourceType;
-                    }
-                    if (TryFuncify(bt, out var result)) {
-                        bt = result;
-                    }
-                    fTypes[ii] = baseTypes[ii].WithType(bt);
-                }
-                funcedTypes[(member, t, r)] = fTypes;
+            //If the type arg is a "wrapped type" like EEx<float>, then handle the unwrapped type TEx<float>
+            // and add a rewrapping step to the defuncifier.
+            Type wrappedType = _arg;
+            (Type baseType, object? rewrapper) = wrappers.TryGetValue(wrappedType, out var wrapHandler) ?
+                wrapHandler :
+                (_arg, null);
+            void AddDefuncifier(Type ft, Func<object, object, object> func) {
+                funcConversions[(wrappedType, ft)] = rewrapper == null ?
+                    func :
+                    (fobj, x) => FuncInvoke(rewrapper, Func2Type(baseType, wrappedType), func(fobj, x));
             }
-            return funcedTypes[(member, t, r)];
+            
+            if (funcifiableReturnTypes.Contains(baseType)) {
+                //Explicitly marked F(B)=T->B.
+                var ft = res = Func2Type(t, baseType);
+                AddDefuncifier(ft, (x, bpi) => FuncInvoke(x, ft, bpi));
+            } else if (baseType.IsArray && TryFuncify(t, baseType.GetElementType()!, out var ftele)) {
+                //Let B=[E]. F(B)=[F(E)].
+                res = ftele.MakeArrayType();
+                AddDefuncifier(res, (x, bpi) => {
+                    var oa = x as Array ?? throw new StaticException("Couldn't arrayify");
+                    var fa = Array.CreateInstance(baseType.GetElementType()!, oa.Length);
+                    for (int oi = 0; oi < oa.Length; ++oi) {
+                        fa.SetValue(Defuncify(baseType.GetElementType()!, ftele, oa.GetValue(oi), bpi), oi);
+                    }
+                    return fa;
+                });
+            } else if (baseType.IsConstructedGenericType && baseType.GetGenericTypeDefinition() == typeof(ValueTuple<,>) &&
+                       baseType.GenericTypeArguments.Any(x => TryFuncify(t, x, out _))) {
+                //Let B=<C,D>. F(B)=<F(C),F(D)>.
+                var base_gts = baseType.GenericTypeArguments;
+                var funced_gts = new Type[base_gts.Length];
+                for (int ii = 0; ii < funced_gts.Length; ++ii) {
+                    funced_gts[ii] = TryFuncify(t, base_gts[ii], out var gt) ? gt : base_gts[ii];
+                }
+                res = typeof(ValueTuple<,>).MakeGenericType(funced_gts);
+                var tupToArr = typeof(Reflector)
+                                   .GetMethod($"TupleToArr{funced_gts.Length}", BindingFlags.Static | BindingFlags.Public)
+                                   ?.MakeGenericMethod(funced_gts) ??
+                               throw new StaticException("Couldn't find tuple decomposition method");
+                AddDefuncifier(res, (x, bpi) => {
+                    var argarr = tupToArr.Invoke(null, new[] {x}) as object[] ??
+                                 throw new StaticException("Couldn't decompose tuple to array");
+                    for (int ii = 0; ii < funced_gts.Length; ++ii)
+                        argarr[ii] = Defuncify(base_gts[ii], funced_gts[ii], argarr[ii], bpi);
+                    return Activator.CreateInstance(baseType, argarr);
+                });
+            } else {
+                res = default!;
+                return false;
+            }
+            tryFuncifyCache[(t, wrappedType)] = res;
+            return true;
         }
+        private static readonly Dictionary<(Type, Type), Type> tryFuncifyCache = new Dictionary<(Type, Type), Type>();
 
-        private static readonly Dictionary<(Type, Type), Type> func2Types = new Dictionary<(Type, Type), Type>();
-
+        
+        /// <summary>
+        /// Return the type Func&lt;t1, t2&gt;. Results are cached.
+        /// </summary>
         public static Type Func2Type(Type t1, Type t2) {
-            if (!func2Types.TryGetValue((t1, t2), out var tf)) {
-                tf = func2Types[(t1, t2)] = typeof(Func<,>).MakeGenericType(t1, t2);
+            if (!func2TypeCache.TryGetValue((t1, t2), out var tf)) {
+                tf = func2TypeCache[(t1, t2)] = typeof(Func<,>).MakeGenericType(t1, t2);
             }
             return tf;
         }
+        private static readonly Dictionary<(Type, Type), Type> func2TypeCache = new Dictionary<(Type, Type), Type>();
 
-        private static readonly Dictionary<Type, MethodInfo> funcInvoke = new Dictionary<Type, MethodInfo>();
-
+        
+        /// <summary>
+        /// Return a function x => func(x).
+        /// </summary>
+        /// <param name="func">Function to execute.</param>
+        /// <param name="funcType">Type of func.</param>
+        /// <returns></returns>
         public static Func<object?, object?> FuncInvoker(object func, Type funcType) =>
             x => FuncInvoke(func, funcType, x);
 
-        private static object FuncInvoke(object func, Type funcType, object? over) {
-            if (!funcInvoke.TryGetValue(funcType, out var mi)) {
-                mi = funcInvoke[funcType] = funcType.GetMethod("Invoke") ??
+        /// <summary>
+        /// Return func(arg).
+        /// </summary>
+        /// <param name="func">Function to execute.</param>
+        /// <param name="funcType">Type of func.</param>
+        /// <param name="arg">Argument with which to execute func.</param>
+        /// <returns></returns>
+        private static object FuncInvoke(object func, Type funcType, object? arg) {
+            if (!funcInvokeCache.TryGetValue(funcType, out var mi)) {
+                mi = funcInvokeCache[funcType] = funcType.GetMethod("Invoke") ??
                                             throw new Exception($"No invoke method found for {funcType.RName()}");
             }
-            return mi.Invoke(func, new[] {over});
+            return mi.Invoke(func, new[] {arg});
         }
+        private static readonly Dictionary<Type, MethodInfo> funcInvokeCache = new Dictionary<Type, MethodInfo>();
 
-        public static bool TryInvokeFunced<T, R>(IParseQueue? q, string member, object?[] _prms, out object result) {
+        /// <summary>
+        /// For a recorded function R member(A, B, C...), given parameters of type [F(A), F(B), F(C)] (funcified on T),
+        /// construct a function T->R that uses T to defuncify the parameters and pass them to R.
+        /// </summary>
+        /// <param name="q">Parse queue. Not required, only used to provide syntax-related warnings.</param>
+        /// <param name="member">Name of the function to call.</param>
+        /// <param name="funcedParams">Funcified parameters to pass to the function.
+        ///  These should correspond to the types returned by <see cref="FuncifyTypes"/>.</param>
+        /// <param name="result">Out value to which the resulting function T->R is written
+        /// (only if the return value is true).</param>
+        /// <returns>True iff 'member' exists and the function could be created.</returns>
+        public static bool TryInvokeFunced<T, R>(IParseQueue? q, string member, object?[] funcedParams, out object result) {
             var rt = typeof(R);
             ResolveGeneric(rt);
             if (methodsByReturnType.TryGet2(rt, member, out var f)) {
@@ -271,25 +311,11 @@ public static partial class Reflector {
                 result = (Func<T, R>) (bpi => {
                     var baseTypes = GetArgTypes(rt, member);
                     var funcTypes = FuncifyTypes<T, R>(member);
-                    var prms = _prms.ToArray();
-                    for (int ii = 0; ii < baseTypes.Length; ++ii) {
-                        var eff_type = baseTypes[ii].type;
-                        Func<object?, object?>? converter = null;
-                        if (conversions.ContainsKey(baseTypes[ii].type)) {
-                            var (ntype, rawconv) = conversions[baseTypes[ii].type];
-                            converter = FuncInvoker(rawconv, Func2Type(eff_type = ntype, baseTypes[ii].type));
-                        }
-                        //Convert from funced object to base object (eg. ExFXY to TEx<float>)
-                        if (funcConversions.TryGetValue((eff_type, funcTypes[ii].type), out var fconv)) {
-                            prms[ii] = fconv(prms[ii] ?? 
-                                             throw new Exception("Required funced object, found null"), bpi!);
-                        }
-                        //Make trivial conversions (eg. TEx<float> to EEx<float>)
-                        if (converter != null) {
-                            prms[ii] = converter(prms[ii]);
-                        }
-                    }
-                    return (R) f.Invoke(null, prms);
+                    var baseParams = new object[baseTypes.Length];
+                    for (int ii = 0; ii < baseTypes.Length; ++ii) 
+                        //Convert from funced object to base object (eg. TExArgCtx->TEx<float> to TEx<float>)
+                        baseParams[ii] = Defuncify(baseTypes[ii].type, funcTypes[ii].type, funcedParams[ii]!, bpi!);
+                    return (R) f.Invoke(null, baseParams);
                 });
 
                 return true;

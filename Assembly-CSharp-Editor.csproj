@@ -729,6 +729,9 @@
      <Reference Include="UnityEditor.TextCoreTextEngineModule">
      <HintPath>C:/Workspace/unity/Danmokou/Library/ScriptAssemblies/UnityEditor.TextCoreTextEngineModule.dll</HintPath>
      </Reference>
+     <Reference Include="Unity.MemoryProfiler.Editor.MemoryProfilerModule">
+     <HintPath>C:/Workspace/unity/Danmokou/Library/ScriptAssemblies/Unity.MemoryProfiler.Editor.MemoryProfilerModule.dll</HintPath>
+     </Reference>
      <Reference Include="Unity.SysrootPackage.Editor">
      <HintPath>C:/Workspace/unity/Danmokou/Library/ScriptAssemblies/Unity.SysrootPackage.Editor.dll</HintPath>
      </Reference>

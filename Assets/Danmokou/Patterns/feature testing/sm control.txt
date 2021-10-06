@@ -3,28 +3,24 @@ phase 0
 	paction 0
 		shift-phase-to 1
 	
-phase 0
+<!> type non `hello world`
+phase 2.5
     paction 0
         position 0 0
 		##New
 		bullet-control persist lcircle-blue/w batch & < x 0 > t 1 {
-			cull _
 			sm _ 
 				async circle-green/w <> gcr2 120 _ <> {
 				} gsr2c 20 {
 				} s tprot cx 2
+			cull _
 		}
-		##Legacy
-		bullet-control persist lcircle-blue/w cull & > x 0 > t 1
-		bullet-control-sm persist lcircle-blue/w & > x 0 > t 1
-			async circle-red/w <> gcr2 120 _ <> {
-			} gsr2c 20 {
-			} s tprot cx 2
 		
 		sync lcircle-blue/w <> gsr2c 10 {
 		} s tprot cx 2
 
-phase 0
+<!> type non `foo bar`
+phase 2.5
     paction 0
         position 0 0
 		##New
@@ -35,12 +31,6 @@ phase 0
 				} gsr2c 20 {
 				} s tprot cx 2
 		}
-		##Legacy
-		beh-control persist gpather-blue/w restyle gpather-purple/w & > x 0 > t 1
-		beh-control-sm persist gpather-blue/w & > x 0 > t 1
-			async circle-red/w <> gcr2 120 _ <> {
-			} gsr2c 20 {
-			} s tprot cx 2
 		
 		sync gpather-blue/w <> gsr2c 10 {
 		} pather 2 2 tprot cx 2 { }

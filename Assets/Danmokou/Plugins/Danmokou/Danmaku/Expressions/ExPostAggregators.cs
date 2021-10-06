@@ -33,15 +33,5 @@ public static class ExPostAggregators {
     [PAPriority(20)] [PASourceTypes(typeof(bool))]
     public static Func<TExArgCtx, TEx<R>> PA_Or<R>(Func<TExArgCtx, TEx<R>> a, Func<TExArgCtx, TEx<bool>> b)
         => t => Ex.OrElse(a(t), b(t));
-
-
-    [PAPriority(20)]
-    public static BPY PA_Add_noexpr(BPY a, BPY b) => t => a(t) + b(t);
-    [PAPriority(20)]
-    public static BPY PA_Sub_noexpr(BPY a, BPY b) => t => a(t) - b(t);
-    [PAPriority(10)]
-    public static BPY PA_Mul_noexpr(BPY a, BPY b) => t => a(t) * b(t);
-    [PAPriority(10)]
-    public static BPY PA_Div_noexpr(BPY a, BPY b) => t => a(t) / b(t);
 }
 }

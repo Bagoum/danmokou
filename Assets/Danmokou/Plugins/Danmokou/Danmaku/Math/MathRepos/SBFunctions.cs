@@ -1,4 +1,5 @@
 ﻿using System.Linq.Expressions;
+using BagoumLib.Cancellation;
 using BagoumLib.DataStructures;
 using Danmokou.Core;
 using Danmokou.Danmaku;
@@ -8,6 +9,7 @@ using JetBrains.Annotations;
 using Ex = System.Linq.Expressions.Expression;
 using ExBPY = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<float>>;
 using ExTP = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<UnityEngine.Vector2>>;
+using static Danmokou.Danmaku.BulletManager;
 
 namespace Danmokou.Expressions {
 public interface ITexMovement {
@@ -56,7 +58,7 @@ public class TExLMov : TEx<LaserMovement>, ITexMovement {
     private static readonly ExFunction _flipY = ExUtils.Wrap<LaserMovement>("FlipY");
 }
 
-public class TExSB : TEx<BulletManager.SimpleBullet> {
+public class TExSB : TEx<SimpleBullet> {
     public readonly TExPI bpi;
     public readonly TEx<float> scale;
     public readonly TExV2 direction;
@@ -78,28 +80,40 @@ public class TExSB : TEx<BulletManager.SimpleBullet> {
     }
 }
 
-public class TExSBC : TEx<BulletManager.AbsSimpleBulletCollection> {
+public class TExSBC : TEx<AbsSimpleBulletCollection> {
     public MemberExpression style => Ex.Property(ex, "Style");
     public MemberExpression data => Ex.Property(ex, "Data");
-    private static readonly ExFunction indexer = ExUtils.Wrap<CompactingArray<BulletManager.SimpleBullet>>("ItemAt",
+    private static readonly ExFunction indexer = ExUtils.Wrap<CompactingArray<SimpleBullet>>("ItemAt",
         new[] {typeof(int)});
 
     public TExSBC(string name) : base(ExMode.Parameter, name) { }
     public TExSBC(Ex _ex) : base(_ex) {}
 
     public TExSB this[Ex index] => new TExSB(data.Index(index));
-    private static readonly ExFunction delete = ExUtils.Wrap<BulletManager.AbsSimpleBulletCollection>("DeleteSB",
+    private static readonly ExFunction delete = ExUtils.Wrap<AbsSimpleBulletCollection>("DeleteSB",
         new[] {typeof(int)});
-    private static readonly ExFunction softcull = ExUtils.Wrap<BulletManager.AbsSimpleBulletCollection>("Softcull",
-        new[] {typeof(BulletManager.AbsSimpleBulletCollection), typeof(int), typeof(SoftcullProperties?)});
+    private static readonly ExFunction softcull = ExUtils.Wrap<AbsSimpleBulletCollection>("Softcull",
+        new[] {typeof(AbsSimpleBulletCollection), typeof(int), typeof(SoftcullProperties?)});
     private static readonly ExFunction isAlive =
-        ExUtils.Wrap<BulletManager.AbsSimpleBulletCollection>("IsAlive", typeof(int));
+        ExUtils.Wrap<AbsSimpleBulletCollection>("IsAlive", typeof(int));
+    public static readonly ExFunction transferFrom = ExUtils.Wrap<AbsSimpleBulletCollection>("TransferFrom", 
+        new[] {typeof(AbsSimpleBulletCollection), typeof(int)});
+    public static readonly ExFunction copyNullFrom = ExUtils.Wrap<AbsSimpleBulletCollection>("CopyNullFrom", 
+        new[] {typeof(AbsSimpleBulletCollection), typeof(int), typeof(SoftcullProperties?)});
+    public static readonly ExFunction copyFrom = ExUtils.Wrap<AbsSimpleBulletCollection>("CopyFrom", 
+        new[] {typeof(AbsSimpleBulletCollection), typeof(int)});
+    public static readonly ExFunction runINodeAt = ExUtils.Wrap<AbsSimpleBulletCollection>("RunINodeAt", 
+        new[] {typeof(int), typeof(StateMachine), typeof(ICancellee)});
+    
     public Ex DeleteSB(Ex index) => delete.InstanceOf(this, index);
     public Ex Softcull(Ex target, Ex index) => softcull.InstanceOf(this, target, index, Ex.Constant(null, typeof(SoftcullProperties?)));
     public Ex IsAlive(Ex index) => isAlive.InstanceOf(this, index);
 
+    public Ex RunINodeAt(Ex index, Ex sm, Ex cT) => runINodeAt.InstanceOf(this, index, sm, cT);
+    
+
     private static readonly ExFunction speedup =
-        ExUtils.Wrap<BulletManager.AbsSimpleBulletCollection>("Speedup", new[] {typeof(float)});
+        ExUtils.Wrap<AbsSimpleBulletCollection>("Speedup", new[] {typeof(float)});
     public Expression Speedup(Expression ratio) => speedup.InstanceOf(this, ratio);
 }
 }

@@ -11,66 +11,9 @@ using Danmokou.Expressions;
 using Danmokou.Graphics;
 using Danmokou.Reflection;
 using UnityEngine.Profiling;
-using ExSBCF = System.Func<Danmokou.Expressions.TExSBC, Danmokou.Expressions.TEx<int>, Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx>;
 
 namespace Danmokou.Danmaku {
 
-public readonly struct SBCFp {
-    public readonly ExSBCF? func;
-    public readonly int priority;
-    public readonly Func<ICancellee, SBCF>? lazyFunc;
-    public SBCFp(ExSBCF f, int p) {
-        func = f;
-        priority = p;
-        lazyFunc = null;
-    }
-
-    public SBCFp(Func<ICancellee, SBCF> lazy, int p) {
-        func = null;
-        priority = p;
-        lazyFunc = lazy;
-    }
-}
-public readonly struct SBCFc {
-    private readonly SBCF? func;
-    private readonly Func<ICancellee, SBCF>? lazyFunc;
-    public readonly int priority;
-    public SBCFc(SBCFp p) {
-        func = p.func == null ? null : Compilers.SBCF(p.func);
-        priority = p.priority;
-        lazyFunc = p.lazyFunc;
-    }
-
-    public SBCF Func(ICancellee cT) => func ?? lazyFunc?.Invoke(cT) ?? throw new Exception("No resolution for SBCFc");
-
-    private SBCFc(SBCF f, int p) {
-        func = f;
-        priority = p;
-        lazyFunc = null;
-    }
-
-    public static SBCFc Manual(SBCF f, int p) => new SBCFc(f, p);
-}
-//Not compiled but using this for priority and lazy alternates
-public readonly struct BehCFc {
-    private readonly BehCF? func;
-    private readonly Func<ICancellee, BehCF>? lazyFunc;
-    public readonly int priority;
-
-    public BehCFc(BehCF f, int p) {
-        func = f;
-        priority = p;
-        lazyFunc = null;
-    }
-    public BehCFc(Func<ICancellee, BehCF> f, int p) {
-        func = null;
-        priority = p;
-        lazyFunc = f;
-    }
-    
-    public BehCF Func(ICancellee cT) => func ?? lazyFunc?.Invoke(cT) ?? throw new Exception("No resolution for BehCFc");
-    
-}
 
 public partial class BulletManager {
     public const string EMPTY = "empty";

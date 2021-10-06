@@ -12,46 +12,46 @@ public static class TestSMAnalysis {
     [Test]
     public static void TestSMPhaseControl() {
         var sp = SMPhaseController.Normal(0);
-        AreEqual(sp.WhatIsNextPhase(), 0);
-        AreEqual(sp.WhatIsNextPhase(1), 1);
+        AreEqual(sp.GoToNextPhase(), 0);
+        AreEqual(sp.GoToNextPhase(1), 1);
         bool ch = false;
         Action cb = () => ch = true;
         sp = SMPhaseController.Normal(0);
         sp.Override(4);
-        AreEqual(sp.WhatIsNextPhase(), 0);
-        AreEqual(sp.WhatIsNextPhase(0), 0);
-        AreEqual(sp.WhatIsNextPhase(2), 4);
-        AreEqual(sp.WhatIsNextPhase(3), 3);
+        AreEqual(sp.GoToNextPhase(), 0);
+        AreEqual(sp.GoToNextPhase(0), 0);
+        AreEqual(sp.GoToNextPhase(2), 4);
+        AreEqual(sp.GoToNextPhase(3), -1);
         sp = SMPhaseController.Normal(0);
         sp.Override(4, cb);
-        AreEqual(sp.WhatIsNextPhase(), 0);
-        AreEqual(sp.WhatIsNextPhase(0), 0);
-        AreEqual(sp.WhatIsNextPhase(2), 4);
+        AreEqual(sp.GoToNextPhase(), 0);
+        AreEqual(sp.GoToNextPhase(0), 0);
+        AreEqual(sp.GoToNextPhase(2), 4);
         IsFalse(ch);
-        AreEqual(sp.WhatIsNextPhase(3), -1);
+        AreEqual(sp.GoToNextPhase(3), -1);
         IsTrue(ch);
         ch = false;
         sp = SMPhaseController.Normal(0);
         sp.Override(4, cb, true);
-        AreEqual(sp.WhatIsNextPhase(), 4);
+        AreEqual(sp.GoToNextPhase(), 4);
         IsFalse(ch);
-        AreEqual(sp.WhatIsNextPhase(3), -1);
+        AreEqual(sp.GoToNextPhase(3), -1);
         IsTrue(ch);
         
         sp = SMPhaseController.Normal(0);
-        AreEqual(sp.WhatIsNextPhase(0), 0);
-        sp.LowPriorityOverride(3);
-        AreEqual(sp.WhatIsNextPhase(1), 3);
-        AreEqual(sp.WhatIsNextPhase(2), 2);
+        AreEqual(sp.GoToNextPhase(0), 0);
+        sp.LowPriorityGoTo(3);
+        AreEqual(sp.GoToNextPhase(1), 3);
+        AreEqual(sp.GoToNextPhase(2), 2);
         
         sp = SMPhaseController.Normal(0);
         ch = false;
         sp.Override(4, cb, false);
-        AreEqual(sp.WhatIsNextPhase(0), 0);
-        sp.LowPriorityOverride(3);
-        AreEqual(sp.WhatIsNextPhase(1), 4);
+        AreEqual(sp.GoToNextPhase(0), 0);
+        sp.LowPriorityGoTo(3);
+        AreEqual(sp.GoToNextPhase(1), 4);
         IsFalse(ch);
-        AreEqual(sp.WhatIsNextPhase(2), -1);
+        AreEqual(sp.GoToNextPhase(2), -1);
         IsTrue(ch);
     }
 

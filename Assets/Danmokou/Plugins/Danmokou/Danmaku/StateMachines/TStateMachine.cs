@@ -4,6 +4,9 @@ using BagoumLib.Tasks;
 using Danmokou.Core;
 using Danmokou.Dialogue;
 using Danmokou.Services;
+using Danmokou.VN;
+using Suzunoya.Data;
+using SuzunoyaUnity;
 using static BagoumLib.Tasks.WaitingUtils;
 
 namespace Danmokou.SM {
@@ -27,7 +30,7 @@ public class ReflectableSLSM : ScriptLineSM {
     public override Task Start(SMHandoff smh) => func(smh);
 }
 
-
+//TODO: transform this into a trivial image display.
 /// <summary>
 /// `endcard`: Controls for endcard display in dialogue scripts. 
 /// </summary>

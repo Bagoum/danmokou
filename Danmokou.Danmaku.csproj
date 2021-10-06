@@ -310,6 +310,7 @@
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\UI\FadeWhenPlayerNearby.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Math\MathRepos\ExMV3.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Math\MathRepos\RV2Repo.cs" />
+     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Services\AudioTrack.cs" />
      <None Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Danmokou.Danmaku.asmdef" />
      <Reference Include="UnityEngine">
      <HintPath>C:/Program Files/Unity/Hub/Editor/2020.3.16f1/Editor/Data/Managed/UnityEngine/UnityEngine.dll</HintPath>

@@ -370,7 +370,7 @@ public class InstanceRequest {
             //Prevents hangover information from previous campaign, will be overriden anyways
             req.SetupInstance,
             null, 
-            () => MiniTutorial.RunMiniTutorial(() => req.Run())));
+            () => ServiceLocator.Find<MiniTutorial>().RunMiniTutorial(() => req.Run())));
     }
 
     public static bool RunTutorial() {
@@ -378,9 +378,13 @@ public class InstanceRequest {
         return SceneIntermediary.LoadScene(new SceneRequest(References.tutorial, SceneRequest.Reason.START_ONE,
             () => GameManagement.NewInstance(InstanceMode.TUTORIAL, null)));
     }
-    
+
     /// <summary>
-    /// Sent before the instance is run. Sent even if the instance was a replay.
+    /// Sent before an instance is restarted. InstanceRequested will also be called immediately afterwards.
+    /// </summary>
+    public static readonly Event<InstanceRequest> InstanceRestarted = new Event<InstanceRequest>();
+    /// <summary>
+    /// Sent before an instance is run. Sent even if the instance was a replay.
     /// </summary>
     public static readonly Event<InstanceRequest> InstancedRequested = new Event<InstanceRequest>();
     /// <summary>

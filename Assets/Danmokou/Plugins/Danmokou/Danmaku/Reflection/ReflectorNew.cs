@@ -40,24 +40,48 @@ public static partial class Reflector {
 
         public NamedParam WithType(Type t) => new NamedParam(t, name, lookupMethod, nonExplicit);
     }
-
+    
+    /// <summary>
+    /// Within the context of a given return type, a function that returns whether or not a function named 'member'
+    /// matching that return type exists.
+    /// </summary>
     private delegate bool HasMember(string member);
-
+    
+    /// <summary>
+    /// Within the context of a given return type, a function that returns the parameter types for a function
+    ///  named 'member' that has the given return type.
+    /// </summary>
     private delegate NamedParam[] TypeGet(string member);
 
+    /// <summary>
+    /// Within the context of a given return type, a function that tries to execute the function 'member'
+    ///  to construct a value of that type.
+    /// </summary>
+    /// <param name="q">Parsing queue. Not required, used only for syntax-related warnings.</param>
+    /// <param name="member">Name of the function to execute.</param>
+    /// <param name="prms">Arguments to provide to the function.</param>
+    /// <param name="result">Out value in which the return value of 'member' is stored.</param>
     private delegate bool TryInvoke(IParseQueue? q, string member, object?[] prms, out object result);
 
-    private static readonly Dictionary<Type, (HasMember has, TypeGet get, TryInvoke inv)> MathAllowedFuncify =
+    /// <summary>
+    /// A dictionary containing reflection information for types that can be "funcified", where
+    /// funcification transforms a function (A,B,C...)->R into a function (A',B',C'...)->(T->R), where
+    /// A', B', C' may relate to the introduced type T.
+    /// <br/>The keys are of the form type(T->R).
+    /// </summary>
+    private static readonly Dictionary<Type, (HasMember has, TypeGet get, TryInvoke inv)> funcifiableTypes =
         new Dictionary<Type, (HasMember, TypeGet, TryInvoke)>();
+    private static readonly HashSet<Type> funcifiableReturnTypes = new HashSet<Type>();
 
-    private static void AllowMath<ExR>() {
-        MathAllowedFuncify[typeof(Func<TExArgCtx, ExR>)] = (ReflectionData.HasMember<ExR>,
+    private static void AllowFuncification<ExR>() {
+        funcifiableTypes[typeof(Func<TExArgCtx, ExR>)] = (ReflectionData.HasMember<ExR>,
             ReflectionData.FuncifyTypes<TExArgCtx, ExR>,
             ReflectionData.TryInvokeFunced<TExArgCtx, ExR>);
+        funcifiableReturnTypes.Add(typeof(ExR));
     }
 
     private static NamedParam[]? TryLookForMethod(Type rt, string member) {
-        if (MathAllowedFuncify.TryGetValue(rt, out var fs) && fs.has(member)) 
+        if (funcifiableTypes.TryGetValue(rt, out var fs) && fs.has(member)) 
             return fs.get(member);
         if (ReflectionData.HasMember(rt, member)) 
             return ReflectionData.GetArgTypes(rt, member);
@@ -75,10 +99,9 @@ public static partial class Reflector {
         };
 
     private static object? TryInvokeMethod(IParseQueue? q, Type rt, string member, object?[] prms) {
-        if (MathAllowedFuncify.TryGetValue(rt, out var fs) && fs.inv(q, member, prms, out var res)) 
+        if (funcifiableTypes.TryGetValue(rt, out var fs) && fs.inv(q, member, prms, out var res)) 
             return res;
-        if (ReflectionData.HasMember(rt, member)
-            && ReflectionData.TryInvoke(rt, member, prms, out res)) 
+        if (ReflectionData.HasMember(rt, member) && ReflectionData.TryInvoke(rt, member, prms, out res)) 
             return res;
         if (letFuncs.TryGetValue(rt, out var f) && member[0] == Parser.SM_REF_KEY_C) 
             return f(member);

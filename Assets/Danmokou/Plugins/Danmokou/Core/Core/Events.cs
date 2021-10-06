@@ -156,6 +156,7 @@ public static class Events {
 
     public static readonly IBSubject<EngineState> EngineStateChanged = new Event<EngineState>();
     public static readonly Event0 PhaseCleared = new Event0();
+    public static readonly Event0 SceneCleared = new Event0();
 #if UNITY_EDITOR || ALLOW_RELOAD
     public static readonly Event0 LocalReset = new Event0();
 #endif

@@ -103,16 +103,16 @@ public class PatternSM : SequentialSM {
             (subbosses, subsummons) = ConfigureAllBosses(ui, jsmh, props.boss, props.bosses);
         }
         bool firstBoss = true;
-        for (var next = jsmh.Exec.phaseController.WhatIsNextPhase();
+        for (var next = jsmh.Exec.phaseController.GoToNextPhase();
             next > -1 && next < phases.Length;
-            next = jsmh.Exec.phaseController.WhatIsNextPhase(next + 1)) {
+            next = jsmh.Exec.phaseController.GoToNextPhase(next + 1)) {
             if (phases[next].props.skip) 
                 continue;
             if (PHASE_BUFFER) 
                 await WaitingUtils.WaitForUnchecked(jsmh.Exec, jsmh.cT, ETime.FRAME_TIME * 2f, false);
             jsmh.ThrowIfCancelled();
             if (props.bgms != null) 
-                AudioTrackService.InvokeBGM(props.bgms.GetBounded(next, null));
+                ServiceLocator.Find<IAudioTrackService>().InvokeBGM(props.bgms.GetBounded(next, null));
             if (props.boss != null && next >= props.setUIFrom) {
                 SetUniqueBossUI(ui, firstBoss, jsmh, 
                     props.bosses == null ? props.boss : 
@@ -122,7 +122,10 @@ public class PatternSM : SequentialSM {
             //don't show lives on setup phase
             if (next > 0 && props.boss != null) ui?.ShowBossLives(RemainingLives(next));
             try {
-                await phases[next].Start(jsmh, ui, subbosses);
+                var nxtPhase = phases.Try(jsmh.Exec.phaseController.ScanNextPhase(next + 1));
+                var nextPrePrepare = nxtPhase == null ? null : 
+                    (Action<IBackgroundOrchestrator?>)nxtPhase.PrePrepareBackgroundGraphics;
+                await phases[next].Start(jsmh, ui, subbosses, nextPrePrepare);
             } catch (OperationCanceledException) {
                 //Runs the cleanup code if we were cancelled
                 break;
@@ -203,6 +206,28 @@ public class PhaseSM : SequentialSM {
         }
     }
 
+    private void _PrepareBackgroundGraphics(IBackgroundOrchestrator? bgo) {
+        if (props.Background != null) {
+            if (props.BgTransitionIn != null) bgo?.QueueTransition(props.BgTransitionIn);
+            bgo?.ConstructTarget(props.Background, true);
+        }
+    }
+    
+    /// <summary>
+    /// Try to prepare background graphics separately from the standard preparation process.
+    /// This function can be called while the previous phase is still executing (eg. during post-phase cull time).
+    /// <br/>Note that this can result in the background being set twice (once here and once in PreparePhase),
+    ///  but BackgroundOrchestrator will make the second set a noop.
+    /// </summary>
+    public void PrePrepareBackgroundGraphics(IBackgroundOrchestrator? bgo) {
+        bool requireBossCutin =
+            GameManagement.Instance.mode != InstanceMode.BOSS_PRACTICE &&
+            !SaveData.Settings.TeleportAtPhaseStart &&
+            props.bossCutin && props.Boss != null && props.Background != null;
+        if (!requireBossCutin) {
+            _PrepareBackgroundGraphics(bgo);
+        }
+    }
     private void PreparePhase(IUIManager? ui, SMHandoff smh, out Task cutins, 
         IBackgroundOrchestrator? bgo, IAyaPhotoBoard? photoBoard) {
         cutins = Task.CompletedTask;
@@ -256,10 +281,8 @@ public class PhaseSM : SequentialSM {
                 Object.Instantiate(sc);
             }
         }
-        if (!forcedBG && props.Background != null) {
-            if (props.BgTransitionIn != null) bgo?.QueueTransition(props.BgTransitionIn);
-            bgo?.ConstructTarget(props.Background, true);
-        }
+        if (!forcedBG)
+            _PrepareBackgroundGraphics(bgo);
     }
 
     private void PrepareTimeout(IUIManager? ui, IReadOnlyList<Enemy> subbosses, SMHandoff smh, Cancellable toCancel) {
@@ -281,7 +304,8 @@ public class PhaseSM : SequentialSM {
     }
 
     public override Task Start(SMHandoff smh) => Start(smh, null, new Enemy[0]);
-    public async Task Start(SMHandoff smh, IUIManager? ui, IReadOnlyList<Enemy> subbosses) {
+    public async Task Start(SMHandoff smh, IUIManager? ui, IReadOnlyList<Enemy> subbosses, 
+        Action<IBackgroundOrchestrator?>? prePrepareNextPhase=null) {
         var bgo = ServiceLocator.MaybeFind<IBackgroundOrchestrator>();
         var photoBoard = ServiceLocator.MaybeFind<IAyaPhotoBoard>();
         PreparePhase(ui, smh, out Task cutins, bgo, photoBoard);
@@ -316,6 +340,7 @@ public class PhaseSM : SequentialSM {
                 //TODO why does this use parentCT?
                 finishPhase?.Trigger(smh.Exec, smh.GCX, smh.parentCT);
                 (finishDelay, finishTask) = OnFinish(smh, pcTS, start_campaign, bgo, photoBoard);
+                prePrepareNextPhase?.Invoke(bgo);
             }
             if (props.Cleanup) {
                 if (finishDelay > 0) {
@@ -389,7 +414,7 @@ public class PhaseSM : SequentialSM {
     }
 
     private const float EndOfCardAutocullTime = 0.7f;
-    private const float EndOfCardDelayTime = 2f;
+    private const float EndOfCardDelayTime = 1.3f;
 }
 
 public class DialoguePhaseSM : PhaseSM {

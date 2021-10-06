@@ -33,7 +33,7 @@ phase 0 #{
 					* pm1mod p * 20 t
 				{ }
 			break
-		beh-control-sm persist lightning-* onlyonce  & (in y 0 ymax)  (in abs x xmax ++ xmax)
+		beh-control persist lightning-* sm onlyonce & (in y 0 ymax) (in abs x xmax ++ xmax)
 			async fireball-red/w <0;:180> gir {
 				face v
 				sfx x-fire-burst-3

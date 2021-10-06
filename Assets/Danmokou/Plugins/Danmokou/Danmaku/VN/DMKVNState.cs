@@ -57,7 +57,7 @@ public class DMKVNState : UnityVNState {
     }
 
     public RunningAudioTrackProxy RunBGM(string key) {
-        var track = AudioTrackService.InvokeBGM(key, new BGMInvokeFlags(SkippingMode != null ? 0 : 2)) ?? 
+        var track = ServiceLocator.Find<IAudioTrackService>().InvokeBGM(key, new BGMInvokeFlags(SkippingMode != null ? 0 : 2)) ?? 
                     throw new Exception($"No track for key {key}");
         var proxy = new RunningAudioTrackProxy(track, this);
         Tokens.Add(proxy);

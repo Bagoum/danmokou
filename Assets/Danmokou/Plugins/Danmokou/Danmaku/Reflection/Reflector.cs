@@ -24,7 +24,7 @@ using ExTP3 = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.T
 using ExTP4 = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<UnityEngine.Vector4>>;
 using ExBPRV2 = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<Danmokou.DMath.V2RV2>>;
 using ExVTP = System.Func<Danmokou.Expressions.ITexMovement, Danmokou.Expressions.TEx<float>, Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TExV2, Danmokou.Expressions.TEx>;
-using ExSBCF = System.Func<Danmokou.Expressions.TExSBC, Danmokou.Expressions.TEx<int>, Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx>;
+using ExSBCF = System.Func<Danmokou.Expressions.TExSBC, Danmokou.Expressions.TEx<int>, Danmokou.Expressions.TEx<BagoumLib.Cancellation.ICancellee>, Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx>;
 
 namespace Danmokou.Reflection {
 public static partial class Reflector {
@@ -65,6 +65,9 @@ public static partial class Reflector {
     public static readonly StateMachine WaitForPhaseSM =
         new ReflectableLASM(SMReflection.Wait(Synchronization.Time(_ => M.IntFloatMax)));
 
+    /// <summary>
+    /// Maps types to a function that parses that type from a single word.
+    /// </summary>
     private static readonly Dictionary<Type, Func<string, object?>> SimpleFunctionResolver =
         new Dictionary<Type, Func<string, object?>>() {
             {typeof(Events.Event0), Events.Event0.FindOrNull},
@@ -77,10 +80,7 @@ public static partial class Reflector {
         };
 
 
-
     private static readonly Type tint = typeof(int);
-    private static readonly Dictionary<Type, NamedParam[]> constructorSigs = new Dictionary<Type, NamedParam[]>();
-
     private static readonly Type type_stylesel = typeof(BulletManager.StyleSelector);
     private static readonly Type type_stringA = typeof(string[]);
     private static readonly Type type_alias = typeof(ReflectEx.Alias);
@@ -92,10 +92,20 @@ public static partial class Reflector {
     private static bool MatchesGeneric(Type target, Type generic) =>
         target.IsConstructedGenericType && target.GetGenericTypeDefinition() == generic;
 
+    /// <summary>
+    /// A cached dictionary of constructor signatures from GetConstructorSignature.
+    /// </summary>
+    private static readonly Dictionary<Type, NamedParam[]> constructorSigs = new Dictionary<Type, NamedParam[]>();
+    
+    /// <summary>
+    /// Finds a public constructor (preferably one with at least one argument) for the given type.
+    /// </summary>
+    /// <exception cref="StaticException">Thrown if the type has no public constructors.</exception>
     public static NamedParam[] GetConstructorSignature(Type t) {
         if (!constructorSigs.TryGetValue(t, out NamedParam[] args)) {
             var constrs = t.GetConstructors();
-            if (constrs.Length == 0) throw new StaticException($"Type {NameType(t)} has no constructors.");
+            if (constrs.Length == 0) 
+                throw new StaticException($"Type {NameType(t)} has no constructors.");
             var prms = constrs[0].GetParameters();
             if (prms.Length == 0) {
                 //Try to look for a non-empty constructor, if it exists.

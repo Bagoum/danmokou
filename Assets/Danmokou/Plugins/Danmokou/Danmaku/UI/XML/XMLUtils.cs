@@ -376,7 +376,7 @@ public static class XMLUtils {
     public static UIScreen MusicRoomScreen(XMLMenu menu, VisualTreeAsset screen, IEnumerable<IAudioTrackInfo> musics) =>
         new UIScreen(menu,
             musics.SelectNotNull(m => m.DisplayInMusicRoom switch {
-                true => new FuncNode(() => AudioTrackService.InvokeBGM(m), 
+                true => new FuncNode(() => ServiceLocator.Find<IAudioTrackService>().InvokeBGM(m), 
                     new LString(string.Format("({0}) {1}", m.TrackPlayLocation, m.Title)), true,
                         new UINode(m.MusicRoomDescription).With(descr).With(small2Class, fontUbuntuClass)
                     ).SetChildrenInaccessible().With(small1Class),

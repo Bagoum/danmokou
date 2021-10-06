@@ -60,7 +60,11 @@ public class DifficultySettings {
     [JsonIgnore] [ProtoIgnore] 
     public (int min, int max) RankLevelBounds => ApproximateStandard.RankLevelBounds();
     
-    public DifficultySettings() : this(FixedDifficulty.Normal) { } //JSON constructor
+    /// <summary>
+    /// JSON constructor, do not use
+    /// </summary>
+    [Obsolete]
+    public DifficultySettings() : this(FixedDifficulty.Normal) { }
     public DifficultySettings(FixedDifficulty standard) : this((FixedDifficulty?)standard) { }
 
     public void SetCustomDifficulty(int value) {

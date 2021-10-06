@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using BagoumLib;
+using BagoumLib.Cancellation;
 using BagoumLib.Mathematics;
 using Danmokou.Core;
 using Danmokou.Danmaku;
@@ -25,7 +26,7 @@ using ExTP4 = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.T
 using ExBPRV2 = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<Danmokou.DMath.V2RV2>>;
 using ExVTP = System.Func<Danmokou.Expressions.ITexMovement, Danmokou.Expressions.TEx<float>, Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TExV2, Danmokou.Expressions.TEx>;
 using ExLVTP = System.Func<Danmokou.Expressions.ITexMovement, Danmokou.Expressions.TEx<float>, Danmokou.Expressions.TEx<float>, Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TExV2, Danmokou.Expressions.TEx>;
-using ExSBCF = System.Func<Danmokou.Expressions.TExSBC, Danmokou.Expressions.TEx<int>, Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx>;
+using ExSBCF = System.Func<Danmokou.Expressions.TExSBC, Danmokou.Expressions.TEx<int>, Danmokou.Expressions.TEx<BagoumLib.Cancellation.ICancellee>, Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx>;
 
 namespace Danmokou.Reflection {
 
@@ -225,11 +226,13 @@ public static class Compilers {
         CompileDelegate<SBCF>(tac => {
                 var sbc = tac.GetByExprType<TExSBC>();
                 var ind = tac.GetByExprType<TEx<int>>();
-                return ex(sbc, ind, tac.AppendSB("sbcf_sbc_ref_sb", sbc[ind]));
+                var ct = tac.GetByExprType<TEx<ICancellee>>();
+                return ex(sbc, ind, ct, tac.AppendSB("sbcf_sbc_ref_sb", sbc[ind]));
             },
     new DelegateArg<BulletManager.AbsSimpleBulletCollection>("sbcf_sbc"),
             new DelegateArg<int>("sbcf_ii"),
-            new DelegateArg<ParametricInfo>("sbcf_bpi")
+            new DelegateArg<ParametricInfo>("sbcf_bpi"),
+            new DelegateArg<ICancellee>("sbcf_ct")
         );
 
     [Fallthrough]

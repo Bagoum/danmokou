@@ -74,59 +74,32 @@ public static partial class Reflector {
         GCProp
     }
 
-    private static string GetNameForEnum(Reflected rc) {
-        if (rc == Reflected.AsyncPattern) {
-            return "AsyncPattern";
-        } else if (rc == Reflected.SyncPattern) {
-            return "SyncPattern";
-        } else if (rc == Reflected.PAsyncPattern) {
-            return "PremadePattern";
-        } else if (rc == Reflected.TP) {
-            return "TP";
-        } else if (rc == Reflected.TP3) {
-            return "TP3";
-        } else if (rc == Reflected.Path) {
-            return "Path";
-        } else if (rc == Reflected.LaserPath) {
-            return "Laser Path";
-        } else if (rc == Reflected.FXY) {
-            return "FXY";
-        } else if (rc == Reflected.BPY) {
-            return "BPY";
-        } else if (rc == Reflected.Pred) {
-            return "Predicate";
-        } else if (rc == Reflected.SBCF) {
-            return "BulletControl";
-        } else if (rc == Reflected.BehCF) {
-            return "BEH Control";
-        } else if (rc == Reflected.LCF) {
-            return "LaserControl";
-        } else if (rc == Reflected.SPCF) {
-            return "PoolControl";
-        } else if (rc == Reflected.FPCF) {
-            return "FancyPoolControl";
-        } else if (rc == Reflected.LPCF) {
-            return "LaserPoolControl";
-        } else if (rc == Reflected.FV2) {
-            return "FV2";
-        } else if (rc == Reflected.FF) {
-            return "FF";
-        } else if (rc == Reflected.SBF) {
-            return "SB>Float Func";
-        } else if (rc == Reflected.SBV2) {
-            return "SB>V2 Func";
-        } else if (rc == Reflected.BPRV2) {
-            return "BP>V2RV2 Func";
-        } else if (rc == Reflected.GCProp) {
-            return "GenCtx Property";
-        }
-        return "NULL CLASS";
-    }
-
-    //You can use dashes and capitaliazation to distinguish names in files. They will be removed here.
-    //Note that starting dashes are kept, this is for negative numbers.
-    private const int A = 'A';
-    private const int Z = 'Z';
+    private static string GetNameForEnum(Reflected rc) =>
+        rc switch {
+            Reflected.AsyncPattern => "AsyncPattern",
+            Reflected.SyncPattern => "SyncPattern",
+            Reflected.PAsyncPattern => "PremadePattern",
+            Reflected.TP => "TP",
+            Reflected.TP3 => "TP3",
+            Reflected.Path => "Path",
+            Reflected.LaserPath => "Laser Path",
+            Reflected.FXY => "FXY",
+            Reflected.BPY => "BPY",
+            Reflected.Pred => "Predicate",
+            Reflected.SBCF => "BulletControl",
+            Reflected.BehCF => "BEH Control",
+            Reflected.LCF => "LaserControl",
+            Reflected.SPCF => "PoolControl",
+            Reflected.FPCF => "FancyPoolControl",
+            Reflected.LPCF => "LaserPoolControl",
+            Reflected.FV2 => "FV2",
+            Reflected.FF => "FF",
+            Reflected.SBF => "SB>Float Func",
+            Reflected.SBV2 => "SB>V2 Func",
+            Reflected.BPRV2 => "BP>V2RV2 Func",
+            Reflected.GCProp => "GenCtx Property",
+            _ => "NULL CLASS"
+        };
 
     private static char Lower(char c) {
         if (c >= 'A' && c <= 'Z') return (char) (c + 32);
@@ -151,6 +124,9 @@ public static partial class Reflector {
 
     public static string NameType<T>() => NameType(typeof(T));
 
+    /// <summary>
+    /// Provide a user-friendly name for the type T.
+    /// </summary>
     public static string NameType(Type t) {
         if (TypeNameMap.TryGetValue(t, out var name)) return name;
         if (t.IsArray) {

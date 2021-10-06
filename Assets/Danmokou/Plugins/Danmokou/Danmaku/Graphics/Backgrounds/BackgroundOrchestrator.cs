@@ -18,6 +18,7 @@ public interface IBackgroundOrchestrator {
 }
 public class BackgroundOrchestrator : CoroutineRegularUpdater, IBackgroundOrchestrator {
     private Transform tr = null!;
+    private BackgroundCombiner BackgroundCombiner { get; set; } = null!;
     public BackgroundController? FromBG { get; private set; }
     public BackgroundController? ToBG { get; private set; }
     
@@ -69,9 +70,9 @@ public class BackgroundOrchestrator : CoroutineRegularUpdater, IBackgroundOrches
         NextSceneStartupBGC = null;
         MaybeCreateFirst();
         Time = 0f;
-        Instantiate(backgroundCombiner, Vector3.zero, Quaternion.identity)
-            .GetComponent<BackgroundCombiner>()
-            .Initialize(this);
+        BackgroundCombiner = Instantiate(backgroundCombiner, Vector3.zero, Quaternion.identity)
+            .GetComponent<BackgroundCombiner>();
+        BackgroundCombiner.Initialize(this);
     }
 
     protected override void BindListeners() {

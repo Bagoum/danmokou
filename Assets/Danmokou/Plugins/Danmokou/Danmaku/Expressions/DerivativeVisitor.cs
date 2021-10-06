@@ -92,11 +92,14 @@ class DerivativeVisitor : ExpressionVisitor {
             if (node.Method.Name == "Pow") {
                 //TODO a safer architecture for handling double casting
                 y = (y as UnaryExpression)!.Operand;
-                dy = Visit(y);
-                //d/dx (y^z) = y^z (z'ln(y) + zy'/y)
                 var z = (args[1] as UnaryExpression)!.Operand;
+                dy = Visit(y);
                 var dz = Visit(z);
-                return Pow(y, z).Mul(dz.Mul(Ln(y).Add(z.Mul(dy).Div(y))));
+                //special case for x^c
+                if (y == x && dz == E0)
+                    return z.Mul(Pow(y, z.Sub(1)));
+                //d/dx (y^z) = d/dx (e^zln(y)) = y^z * d/dx (zln(y)) = y^z * (z'ln(y) + zy'/y)
+                return Pow(y, z).Mul(dz.Mul(Ln(y)).Add(z.Mul(dy).Div(y)));
             }
             if (node.Method.Name == "Floor" || node.Method.Name == "Ceiling") return E0;
             if (node.Method.Name == "Min") return Ex.Condition(y.LT(args[1]), Visit(y), Visit(args[1]));

@@ -23,16 +23,19 @@ public class MiniTutorial : BehaviorEntity {
     public Color prompt;
     public Color message;
     private readonly Dictionary<TextMeshPro, Vector2> defaultLoc = new Dictionary<TextMeshPro, Vector2>();
-    private static MiniTutorial main = null!;
 
     protected override void Awake() {
-        main = this;
         base.Awake();
         defaultLoc[text00] = text00.transform.localPosition;
         defaultLoc[text10] = text10.transform.localPosition;
     }
 
-    public static void RunMiniTutorial(Action cb) => main.RunDroppableRIEnumerator(main.RunTutorial(cb));
+    protected override void BindListeners() {
+        base.BindListeners();
+        RegisterDI(this);
+    }
+
+    public void RunMiniTutorial(Action cb) => RunDroppableRIEnumerator(RunTutorial(cb));
 
     private void ClearText() {
         text00.text = "";

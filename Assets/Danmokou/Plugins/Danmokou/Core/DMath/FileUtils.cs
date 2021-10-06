@@ -18,7 +18,8 @@ public static class FileUtils {
     public const string AYADIR = SAVEDIR + "Aya/";
 
     private static readonly JsonSerializerSettings JsonSettings = new JsonSerializerSettings() {
-        TypeNameHandling = TypeNameHandling.Auto
+        TypeNameHandling = TypeNameHandling.Auto,
+        ConstructorHandling = ConstructorHandling.AllowNonPublicDefaultConstructor
     };
 
     public static IEnumerable<string> EnumerateDirectory(string dir) {
@@ -32,7 +33,8 @@ public static class FileUtils {
     }
 
     public static T CopyJson<T>(T obj) =>
-        JsonConvert.DeserializeObject<T>(JsonConvert.SerializeObject(obj, JsonSettings), JsonSettings);
+        JsonConvert.DeserializeObject<T>(JsonConvert.SerializeObject(obj, JsonSettings), JsonSettings) ?? 
+        throw new Exception($"Failed to JSON-copy object {obj} of type {obj?.GetType()}");
     
     public static void WriteJson(string file, object obj) {
         CheckDirectory(file);

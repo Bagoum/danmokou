@@ -291,7 +291,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
 
     public void RunPatternSM(StateMachine? sm) {
         if (sm != null)
-            _ = BeginBehaviorSM(SMRunner.RunNoCancelRoot(sm), phaseController.WhatIsNextPhase(0));
+            _ = BeginBehaviorSM(SMRunner.RunNoCancelRoot(sm), phaseController.GoToNextPhase(0));
     }
 
     private static bool IsNontrivialID(string? id) => !string.IsNullOrWhiteSpace(id) && id != "_";

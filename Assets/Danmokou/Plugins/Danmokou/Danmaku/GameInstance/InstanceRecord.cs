@@ -117,7 +117,11 @@ public class InstanceRecord {
     public int OneUpItemsCollected { get; set; }
 
 #pragma warning disable 8618
-    public InstanceRecord() { } //JSON constructor
+    /// <summary>
+    /// JSON constructor, do not use
+    /// </summary>
+    [Obsolete]
+    public InstanceRecord() { }
 #pragma warning restore 8618
     public InstanceRecord(InstanceRequest req, InstanceData end, bool completed) {
         SavedMetadata = new SharedInstanceMetadata.Saveable(req.metadata);

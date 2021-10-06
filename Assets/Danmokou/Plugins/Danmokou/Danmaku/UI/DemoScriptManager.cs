@@ -9,6 +9,7 @@ using TMPro;
 using UnityEngine;
 
 namespace Danmokou.UI {
+#if UNITY_EDITOR || ALLOW_RELOAD
 public class DemoScriptManager : MonoBehaviour {
     public TextMeshPro scriptDisplay = null!;
     public Transform buttonGroup = null!;
@@ -37,4 +38,5 @@ public class DemoScriptManager : MonoBehaviour {
         GameManagement.LocalReset();
     }
 }
+#endif
 }

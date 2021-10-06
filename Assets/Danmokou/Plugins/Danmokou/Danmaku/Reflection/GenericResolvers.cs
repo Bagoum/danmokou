@@ -40,6 +40,19 @@ public static partial class Reflector {
         }
     }
 
+
+    /// <summary>
+    /// Fill the argument array invoke_args by parsing elements from q according to type information in prms.
+    /// <br/>Returns invoke_args.
+    /// </summary>
+    /// <param name="invoke_args">Argument array to fill.</param>
+    /// <param name="starti">Index of invoke_args to start from.</param>
+    /// <param name="prms">Type information of arguments.</param>
+    /// <param name="q">Queue from which to parse elements.</param>
+    /// <param name="nameType">The type that this argument array will eventually be used to construct.
+    /// Used for error reporting.</param>
+    /// <param name="methodName">The method by which nameType will be constructed, or null if using a constructor.
+    /// Used for error reporting.</param>
     public static void FillInvokeArray(object?[] invoke_args, int starti, NamedParam[] prms, IParseQueue q,
         Type nameType, string methodName) {
         try {
@@ -48,7 +61,6 @@ public static partial class Reflector {
             throw Exceptions.FlattenNestedException(e);
         }
     }
-
     private static object?[] _FillInvokeArray(object?[] invoke_args, int starti, NamedParam[] prms, IParseQueue q,
         Type nameType, string? methodName) {
         string MethodName() => string.IsNullOrWhiteSpace(methodName) ?
@@ -121,7 +133,16 @@ public static partial class Reflector {
 
     #region TargetTypeReflect
 
+    /// <summary>
+    /// Parse a string into an object of type T.
+    /// <br/>May throw an exception if parsing fails.
+    /// </summary>
     public static T Into<T>(this string argstring) => ((T) Into(argstring, typeof(T))!)!;
+    
+    /// <summary>
+    /// Parse a string into an object of type T.
+    /// <br/>May throw an exception if parsing fails.
+    /// </summary>
     public static object? Into(this string argstring, Type t) {
         var bakeCtx = BakeCodeGenerator.OpenContext(BakeCodeGenerator.CookingContext.KeyType.INTO, argstring);
         var p = IParseQueue.Lex(argstring);
@@ -131,13 +152,22 @@ public static partial class Reflector {
         return ret;
     }
 
-    public static T? IntoIfNotNull<T>(this string argstring) where T : class {
+    /// <summary>
+    /// Parse a string into an object of type T. Returns null if the string is null or whitespace-only.
+    /// <br/>May throw an exception if parsing fails.
+    /// </summary>
+    public static T? IntoIfNotNull<T>(this string? argstring) where T : class {
         if (string.IsNullOrWhiteSpace(argstring)) return null;
-        return Into<T>(argstring);
+        return Into<T>(argstring!);
     }
-    public static object? IntoIfNotNull(this string argstring, Type t) {
+    
+    /// <summary>
+    /// Parse a string into an object of type T. Returns null if the string is null or whitespace-only.
+    /// <br/>May throw an exception if parsing fails.
+    /// </summary>
+    public static object? IntoIfNotNull(this string? argstring, Type t) {
         if (string.IsNullOrWhiteSpace(argstring)) return null;
-        return Into(argstring, t);
+        return Into(argstring!, t);
     }
 
     public static T Into<T>(this IParseQueue ctx) => ((T) Into(ctx, typeof(T))!)!;
@@ -244,12 +274,13 @@ public static partial class Reflector {
     }
 
     private static readonly Type tPhaseProperties = typeof(PhaseProperties);
+    
     /// <summary>
     /// Top-level resolution function.
     /// </summary>
     /// <param name="q">Parsing queue to read from.</param>
     /// <param name="t">Type to construct.</param>
-    /// <param name="postAggregateContinuation">Optional parsing queue to provide extra post-aggregation.</param>
+    /// <param name="postAggregateContinuation">Optional code to execute after post-aggregation is complete.</param>
     private static object? _ReflectTargetType(IParseQueue q, Type t, Func<object?, Type, object?>? postAggregateContinuation=null) {
         RecurseParens(ref q, t);
         object? obj;
@@ -267,9 +298,8 @@ public static partial class Reflector {
             obj = ReflectSM(q);
         else if (_TryReflectMethod(arg, t, q, out obj)) {
             //this advances inside
-        } else if (q.AllowsScan && FuncTypeResolve(arg, t, out obj)) {
+        } else if (q.AllowsScan && FuncTypeResolve(arg, t, out obj))
             q.Advance();
-        }
         else if (FallThroughOptions.TryGetValue(t, out var ftmi)) {
             //MakeFallthrough allows the nested lookup to not be required to consume all post-aggregation.
             var ftype = ftmi.mi.GetParameters()[0].ParameterType;
@@ -283,7 +313,9 @@ public static partial class Reflector {
         } else if (TryCompileOption(t, out var cmp)) {
             obj = _ReflectTargetType(MakeFallthrough(q), cmp.source, postAggregateContinuation);
             obj = cmp.mi.Invoke(null, new[] {obj});
-        } else if (ResolveSpecialHandling(q, t, out obj)) { } else if (t.IsArray)
+        } else if (ResolveSpecialHandling(q, t, out obj)) {
+            
+        } else if (t.IsArray)
             obj = ResolveAsArray(t.GetElementType()!, q);
         else if (MatchesGeneric(t, gtype_ienum))
             obj = ResolveAsArray(t.GenericTypeArguments[0], q);

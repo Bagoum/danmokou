@@ -38,12 +38,12 @@ public static partial class Reflector {
         }
 
         InitializeEnumResolvers();
-        AllowMath<TEx<float>>();
-        AllowMath<TEx<bool>>(); //This will also allow stuff like (if + true false), which will error if you actually use it
-        AllowMath<TEx<Vector2>>();
-        AllowMath<TEx<Vector3>>();
-        AllowMath<TEx<Vector4>>();
-        AllowMath<TEx<V2RV2>>();
+        AllowFuncification<TEx<float>>();
+        AllowFuncification<TEx<bool>>(); //This will also allow stuff like (if + true false), which will error if you actually use it
+        AllowFuncification<TEx<Vector2>>();
+        AllowFuncification<TEx<Vector3>>();
+        AllowFuncification<TEx<Vector4>>();
+        AllowFuncification<TEx<V2RV2>>();
 
         void CreatePostAggregates(string method, string shortcut) {
             var mi = typeof(ExPostAggregators).GetMethod(method) ??
