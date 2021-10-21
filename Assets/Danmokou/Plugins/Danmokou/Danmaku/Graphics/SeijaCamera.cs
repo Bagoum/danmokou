@@ -4,6 +4,7 @@ using Danmokou.Core;
 using Danmokou.DMath;
 using Danmokou.Graphics;
 using UnityEngine;
+// ReSharper disable Unity.PreferAddressByIdToGraphicsParams
 
 namespace Danmokou.Services {
 
@@ -58,7 +59,7 @@ public class SeijaCamera : CoroutineRegularUpdater, IShaderCamera {
 
     protected override void BindListeners() {
         base.BindListeners();
-        RegisterDI<IShaderCamera>(this);
+        RegisterService<IShaderCamera>(this);
         Listen(Events.PhaseCleared, () => ResetTargetFlip(1f));
 #if UNITY_EDITOR || ALLOW_RELOAD
         Listen(Events.LocalReset, () => ResetTargetFlip(0.2f));

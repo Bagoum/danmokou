@@ -4,8 +4,7 @@ phase 0
 	paction 0
 		shift-phase-to 1
 		
-<!> stage
-<!> silent
+<!> dialogue
 phase 0
 	saction 0
 		debug `vnexec start`

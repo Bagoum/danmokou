@@ -88,7 +88,7 @@ public abstract class BaseRunningAudioTrack : IRunningAudioTrack {
     }
     
     protected virtual void Destroy() {
-        Log.Unity($"Closing audio track: {Track.Title}");
+        Logs.Log($"Closing audio track: {Track.Title}");
         LifetimeToken.Cancel();
         UnityEngine.Object.Destroy(currSrc);
         foreach (var t in tokens)
@@ -102,12 +102,12 @@ public class NaiveLoopRAT : BaseRunningAudioTrack {
         currSrc.loop = true;
         currSrc.time = track.StartTime;
         currSrc.Play();
-        Log.Unity($"Playing naive-loop audio track: {Track.Title}");
+        Logs.Log($"Playing naive-loop audio track: {Track.Title}");
     }
 
     protected override IEnumerator _FadeIn(float time) {
         if (Active.Cancelled) yield break;
-        Log.Unity($"Fading in audio track: {Track.Title}");
+        Logs.Log($"Fading in audio track: {Track.Title}");
         var fader = new PushLerper<float>(time, Mathf.Lerp);
         fader.Push(0);
         fader.Push(1);
@@ -123,7 +123,7 @@ public class NaiveLoopRAT : BaseRunningAudioTrack {
     
     protected override IEnumerator _FadeOutThenDestroy(float time) {
         if (Active.Cancelled) yield break;
-        Log.Unity($"Fading out audio track: {Track.Title}");
+        Logs.Log($"Fading out audio track: {Track.Title}");
         var fader = new PushLerper<float>(time, Mathf.Lerp);
         fader.Push(1);
         fader.Push(0);
@@ -161,7 +161,7 @@ public class TimedLoopRAT : BaseRunningAudioTrack {
         
         currSrc.time = track.StartTime;
         currSrc.Play();
-        Log.Unity($"Playing audio track: {Track.Title}");
+        Logs.Log($"Playing audio track: {Track.Title}");
     }
 
     /// <summary>
@@ -177,7 +177,7 @@ public class TimedLoopRAT : BaseRunningAudioTrack {
         if (currSrc.time > Track.LoopSeconds.y && !nextSrc.isPlaying) {
             currSrcFadeVol.Push(0, -xfadeOverlap);
             nextSrcFadeVol.Push(1);
-            Log.Unity($"Looping {Track.Title} at time {currSrc.time}");
+            Logs.Log($"Looping {Track.Title} at time {currSrc.time}");
             nextSrc.time = Track.LoopSeconds.x + (currSrc.time - Track.LoopSeconds.y);
             nextSrc.Play();
             (currSrc, nextSrc) = (nextSrc, currSrc);
@@ -198,7 +198,7 @@ public class TimedLoopRAT : BaseRunningAudioTrack {
 
     protected override IEnumerator _FadeIn(float time) {
         if (Active.Cancelled) yield break;
-        Log.Unity($"Fading in audio track: {Track.Title}");
+        Logs.Log($"Fading in audio track: {Track.Title}");
         var fader = new PushLerper<float>(time, Mathf.Lerp);
         fader.Push(0);
         fader.Push(1);
@@ -217,7 +217,7 @@ public class TimedLoopRAT : BaseRunningAudioTrack {
     
     protected override IEnumerator _FadeOutThenDestroy(float time) {
         if (Active.Cancelled) yield break;
-        Log.Unity($"Fading out audio track: {Track.Title}");
+        Logs.Log($"Fading out audio track: {Track.Title}");
         var fader = new PushLerper<float>(time, Mathf.Lerp);
         fader.Push(1);
         fader.Push(0);

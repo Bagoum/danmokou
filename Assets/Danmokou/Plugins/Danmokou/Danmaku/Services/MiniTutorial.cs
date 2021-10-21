@@ -32,7 +32,7 @@ public class MiniTutorial : BehaviorEntity {
 
     protected override void BindListeners() {
         base.BindListeners();
-        RegisterDI(this);
+        RegisterService(this);
     }
 
     public void RunMiniTutorial(Action cb) => RunDroppableRIEnumerator(RunTutorial(cb));

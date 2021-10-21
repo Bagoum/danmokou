@@ -96,8 +96,8 @@ class DerivativeVisitor : ExpressionVisitor {
                 dy = Visit(y);
                 var dz = Visit(z);
                 //special case for x^c
-                if (y == x && dz == E0)
-                    return z.Mul(Pow(y, z.Sub(1)));
+                if (y == x && z.Flatten(false) is ConstantExpression {Value: float f})
+                    return z.Mul(Pow(y, ExC(f - 1)));
                 //d/dx (y^z) = d/dx (e^zln(y)) = y^z * d/dx (zln(y)) = y^z * (z'ln(y) + zy'/y)
                 return Pow(y, z).Mul(dz.Mul(Ln(y)).Add(z.Mul(dy).Div(y)));
             }

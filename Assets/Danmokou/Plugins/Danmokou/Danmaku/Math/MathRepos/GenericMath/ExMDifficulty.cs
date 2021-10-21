@@ -5,7 +5,7 @@ using Danmokou.Services;
 using Ex = System.Linq.Expressions.Expression;
 using static Danmokou.Expressions.ExMHelpers;
 using tfloat = Danmokou.Expressions.TEx<float>;
-using static Danmokou.Core.GameManagement;
+using static Danmokou.Services.GameManagement;
 
 namespace Danmokou.DMath.Functions {
 /// <summary>

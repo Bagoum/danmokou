@@ -14,6 +14,7 @@ using Danmokou.GameInstance;
 using Danmokou.Player;
 using Danmokou.Reflection;
 using Danmokou.Scriptables;
+using Danmokou.Services;
 using Danmokou.SM;
 using FastExpressionCompiler;
 using JetBrains.Annotations;
@@ -390,18 +391,18 @@ private static {f.returnType.ToCode(true)} {f.fnName}() {{
                 }
             }
         }
-        Log.Unity("Loading GameObject reflection properties...");
+        Logs.Log("Loading GameObject reflection properties...");
         AssetDatabase.FindAssets("t:GameObject")
             .Select(AssetDatabase.GUIDToAssetPath)
             .Select(AssetDatabase.LoadAssetAtPath<GameObject>)
             .SelectMany(go => go.GetComponentsInChildren(typeof(Component)))
             .ForEach(LoadReflected);
-        Log.Unity("Loading ScriptableObject reflection properties...");
+        Logs.Log("Loading ScriptableObject reflection properties...");
         AssetDatabase.FindAssets("t:ScriptableObject")
             .Select(AssetDatabase.GUIDToAssetPath)
             .Select(AssetDatabase.LoadAssetAtPath<ScriptableObject>)
             .ForEach(LoadReflected);
-        Log.Unity("Loading TextAssets for reflection...");
+        Logs.Log("Loading TextAssets for reflection...");
         var textAssets = AssetDatabase.FindAssets("t:TextAsset", 
             GameManagement.References.scriptFolders.Prepend("Assets/Danmokou/Patterns").ToArray())
             .Select(AssetDatabase.GUIDToAssetPath).ToArray();
@@ -412,14 +413,14 @@ private static {f.returnType.ToCode(true)} {f.fnName}() {{
                     StateMachineManager.FromText(textAsset);
                 }
             } catch (Exception e) {
-                Log.UnityError($"Failed to parse {path}:\n" + Exceptions.FlattenNestedException(e).Message);
+                Logs.UnityError($"Failed to parse {path}:\n" + Exceptions.FlattenNestedException(e).Message);
             }
         }
-        Log.Unity("Invoking ReflWrap wrappers...");
+        Logs.Log("Invoking ReflWrap wrappers...");
         ReflWrap.InvokeAllWrappers();
-        Log.Unity("Exporting reflected code...");
+        Logs.Log("Exporting reflected code...");
         BakeCodeGenerator.Baker.Export();
-        Log.Unity("Expression baking complete.");
+        Logs.Log("Expression baking complete.");
     }
 #endif
 }

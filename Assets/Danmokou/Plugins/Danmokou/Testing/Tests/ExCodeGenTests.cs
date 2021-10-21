@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using Danmokou.Core;
+using Danmokou.Services;
 using Danmokou.Danmaku;
 using Danmokou.Danmaku.Patterns;
 using Danmokou.DataHoist;

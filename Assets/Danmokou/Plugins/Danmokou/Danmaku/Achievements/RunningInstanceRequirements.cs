@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Linq;
-using Danmokou.Core;
+using Danmokou.Services;
 using Danmokou.Danmaku;
 using Danmokou.GameInstance;
 using Danmokou.Player;
-using static Danmokou.Core.GameManagement;
+using static Danmokou.Services.GameManagement;
 
 namespace Danmokou.Achievements {
 
@@ -32,7 +32,7 @@ public class StarsRequirement : Requirement {
         this.campaign = campaign;
         this.boss = boss;
         this.predicate = predicate;
-        Listen(InstanceData.CardHistoryUpdated);
+        Listen(EvInstance, i => i.CardHistoryUpdated);
     }
     
     public StarsRequirement(string campaign, string boss, int phases) : this(campaign, boss,
@@ -56,7 +56,7 @@ public class CardCompletionRequirement : Requirement {
         this.boss = boss;
         this.phaseIndex = phaseIndex;
         this.predicate = predicate;
-        Listen(InstanceData.CardHistoryUpdated);
+        Listen(EvInstance, i => i.CardHistoryUpdated);
     }
 
     public override State EvalState() {
@@ -75,7 +75,7 @@ public class ScoreReq : Requirement {
 
     public ScoreReq(long score) {
         this.score = score;
-        Listen(InstanceData.sScore);
+        Listen(EvInstance, i => i.Score);
     }
 
     public override State EvalState() => (Instance.Score >= score).ToACVState();
@@ -85,7 +85,7 @@ public class CampaignScoreReq : Requirement {
 
     public CampaignScoreReq(long score) {
         this.score = score;
-        Listen(InstanceData.sScore);
+        Listen(EvInstance, i => i.Score);
     }
 
     public override State EvalState() => (Instance.IsAtleastNormalCampaign && Instance.Score >= score).ToACVState();
@@ -96,7 +96,7 @@ public class CampaignGrazeReq : Requirement {
 
     public CampaignGrazeReq(int graze) {
         this.graze = graze;
-        Listen(InstanceData.sGraze);
+        Listen(EvInstance, i => i.Graze);
     }
     public override State EvalState() => (Instance.IsAtleastNormalCampaign && Instance.Graze >= graze).ToACVState();
 }
@@ -106,7 +106,7 @@ public class CampaignPIVReq : Requirement {
 
     public CampaignPIVReq(double piv) {
         this.piv = piv;
-        Listen(InstanceData.sPIV);
+        Listen(EvInstance, i => i.PIV);
     }
     public override State EvalState() => (Instance.IsAtleastNormalCampaign && Instance.PIV >= piv).ToACVState();
 }

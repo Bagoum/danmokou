@@ -230,14 +230,19 @@ public partial class BulletManager {
     /// Convert a gradient-styled color into the equivalent gradient on another style.
     /// This works by looking for `-` as a color separator. It does not matter if the
     /// gradients/styles exist or not.
-    /// If the source style is a copy-pool (eg. ellipse-green/w.2), the copy suffix is ignored.
+    /// <br/>If the source style is a copy-pool (eg. ellipse-green/w.2), the copy suffix is ignored.
     /// Returns true iff the style is gradient-styled; ie. has a '-' in it.
+    /// <br/>The out value will be written null if props.autocullTarget=null.
     /// </summary>
     /// <param name="fromStyle">Full name of a style, eg. circle-red/w</param>
-    /// <param name="props">Container with information about color porting</param>
+    /// <param name="props">Container with information about color porting in autocullTarget.</param>
     /// <param name="target">New target style</param>
     /// <returns></returns>
-    public static bool PortColorFormat(string fromStyle, in SoftcullProperties props, out string target) {
+    public static bool PortColorFormat(string fromStyle, in SoftcullProperties props, out string? target) {
+        if (props.autocullTarget == null) {
+            target = null;
+            return true;
+        }
         target = fromStyle;
         if (fromStyle.IndexOf('.') > -1) fromStyle = fromStyle.Substring(0, fromStyle.IndexOf('.'));
         for (int ii = fromStyle.Length - 1; ii >= 0; --ii) {
@@ -250,7 +255,7 @@ public partial class BulletManager {
         }
         return false;
     }
-    public static string PortColorFormat(string fromStyle, in SoftcullProperties props) => 
+    public static string? PortColorFormat(string fromStyle, in SoftcullProperties props) => 
         PortColorFormat(fromStyle, in props, out var target) ? target : props.DefaultPool;
 
     /// <summary>
@@ -337,18 +342,18 @@ public partial class BulletManager {
         /// Change the bullets into a softcull-type bullet rather than destroying them directly.
         /// Also leaves behind an afterimage of the bullet as it gets deleted in a CulledPool.
         /// </summary>
-        /// <param name="target">New style</param>
+        /// <param name="target">New style. Can be null or _ to skip the copying and only do the afterimage.</param>
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
-        public static exBulletControl Softcull(string target, ExPred cond) {
-            var toPool = GetMaybeCopyPool(target);
-            if (toPool.MetaType != AbsSimpleBulletCollection.CollectionType.Softcull) {
+        public static exBulletControl Softcull(string? target, ExPred cond) {
+            var toPool = NullableGetMaybeCopyPool(target);
+            if (toPool != null && toPool.MetaType != AbsSimpleBulletCollection.CollectionType.Softcull) {
                 throw new InvalidOperationException("Cannot softcull to a non-softcull pool: " + target);
             }
             return new exBulletControl((sbc, ii, ct, bpi) => bpi.When(cond,
                 //Note that we have to still use the getMaybeCopyPool since the pool may have been destroyed when the code is run
-                //also it's cleaner for baking, even if it's technically no logner needed as of v8 :)
-                sbc.Softcull(getMaybeCopyPool.Of(Ex.Constant(target)), ii)
+                //also it's cleaner for baking, even if it's technically no longer needed as of v8 :)
+                sbc.Softcull(nullableGetMaybeCopyPool.Of(Ex.Constant(target, typeof(string))), ii)
                 ), BulletControl.P_CULL);
         }
 
@@ -356,14 +361,14 @@ public partial class BulletManager {
         /// Softcull but without expressions. Used internally for runtime bullet controls.
         /// </summary>
         [DontReflect]
-        public static exBulletControl Softcull_noexpr(SoftcullProperties props, string target, Pred cond) {
-            var toPool = GetMaybeCopyPool(target);
-            if (toPool.MetaType != AbsSimpleBulletCollection.CollectionType.Softcull) {
+        public static exBulletControl Softcull_noexpr(SoftcullProperties props, string? target, Pred cond) {
+            var toPool = NullableGetMaybeCopyPool(target);
+            if (toPool != null && toPool.MetaType != AbsSimpleBulletCollection.CollectionType.Softcull) {
                 throw new InvalidOperationException("Cannot softcull to a non-softcull pool: " + target);
             }
             return new exBulletControl((sbc, ii, bpi, ct) => {
                 if (cond(bpi)) {
-                    sbc.Softcull(GetMaybeCopyPool(target), ii, props);
+                    sbc.Softcull(NullableGetMaybeCopyPool(target), ii, props);
                 }
             }, BulletControl.P_CULL);
         }
@@ -613,7 +618,7 @@ public partial class BulletManager {
         /// <br/>This is slightly slower but is compatible with non-expression controls.
         /// </summary>
         private static exBulletControl Batch_noexpr(Pred cond, exBulletControl[] over) {
-            Log.Unity("Batch_noexpr should not be used in most cases.", level: LogLevel.WARNING);
+            Logs.Log("Batch_noexpr should not be used in most cases.", level: LogLevel.WARNING);
             var priority = over.Max(o => o.priority);
             var funcs = over.Select(o => o.Compile()).ToArray();
             return new exBulletControl((sbc, ii, bpi, ct) => {
@@ -728,10 +733,10 @@ public partial class BulletManager {
             if (pool.IsPlayer) return;
             if (pool.MetaType == AbsSimpleBulletCollection.CollectionType.Softcull) return;
             if (pool.Count == 0) return;
-            string targetPool = PortColorFormat(pool.Style, props);
+            var targetPool = PortColorFormat(pool.Style, props);
             pool.AddBulletControl(new BulletControl(
                     SimpleBulletControls.Softcull_noexpr(props, targetPool, _ => true), Consts.NOTPERSISTENT, null));
-            Log.Unity($"Autoculled {pool.Style} to {targetPool}");
+            Logs.Log($"Autoculled {pool.Style} to {targetPool}");
         }
         for (int ii = 0; ii < activeNpc.Count; ++ii) CullPool(activeNpc[ii]);
         for (int ii = 0; ii < activeCNpc.Count; ++ii) CullPool(activeCNpc[ii]);
@@ -745,7 +750,7 @@ public partial class BulletManager {
     public static void Autodelete(SoftcullProperties props, Pred cond) {
         void DeletePool(SimpleBulletCollection pool) {
             if (!pool.Deletable || pool.Count == 0 || pool is NoCollSBC) return;
-            string targetPool = PortColorFormat(pool.Style, props);
+            var targetPool = PortColorFormat(pool.Style, props);
             pool.AddBulletControl(new BulletControl(SimpleBulletControls.Softcull_noexpr(props, targetPool, cond)
                 , Consts.NOTPERSISTENT, null));
         }
@@ -778,10 +783,10 @@ public partial class BulletManager {
             if (pool.IsPlayer) return;
             if (pool.MetaType == AbsSimpleBulletCollection.CollectionType.Softcull) return;
             if (pool.Count == 0) return;
-            string targetPool = PortColorFormat(pool.Style, lprops);
+            var targetPool = PortColorFormat(pool.Style, lprops);
             pool.AddBulletControl(new BulletControl(
                 SimpleBulletControls.Softcull_noexpr(lprops, targetPool, deleteCond), survive, null));
-            Log.Unity($"DoT-Autoculling {pool.Style} to {targetPool}");
+            Logs.Log($"DoT-Autoculling {pool.Style} to {targetPool}");
         }
         for (int ii = 0; ii < activeNpc.Count; ++ii) CullPool(activeNpc[ii]);
         for (int ii = 0; ii < activeCNpc.Count; ++ii) CullPool(activeCNpc[ii]);
@@ -805,7 +810,7 @@ public partial class BulletManager {
         var lprops = props.WithNoAdvance();
         void DeletePool(SimpleBulletCollection pool) {
             if (!pool.Deletable || pool.Count == 0 || pool is NoCollSBC) return;
-            string targetPool = PortColorFormat(pool.Style, lprops);
+            var targetPool = PortColorFormat(pool.Style, lprops);
             pool.AddBulletControl(new BulletControl(
                 SimpleBulletControls.Softcull_noexpr(lprops, targetPool, deleteCond)
                 , survive, null));

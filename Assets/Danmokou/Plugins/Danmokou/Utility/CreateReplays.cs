@@ -7,12 +7,6 @@ using Danmokou.Services;
 using UnityEngine;
 
 public class CreateReplays : RegularUpdater {
-    private enum ReplayHelperState {
-        RECORDING,
-        REPLAYING,
-        NONE
-    }
-    
     public string saveReplayTo = null!;
     public TextAsset runReplay = null!;
     public Replayer.ReplayerConfig.FinishMethod replayFinishMethod = Replayer.ReplayerConfig.FinishMethod.REPEAT;

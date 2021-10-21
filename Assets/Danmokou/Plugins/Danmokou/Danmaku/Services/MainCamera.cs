@@ -13,8 +13,13 @@ using PropConsts = Danmokou.Graphics.PropConsts;
 
 namespace Danmokou.Services {
 
-public class MainCamera : RegularUpdater {
-    public enum CameraType {
+public interface IScreenshotter {
+    AyaPhoto AyaScreenshot(CRect rect, MainCamera.CamType[]? cameras = null);
+    Texture2D Screenshot(CRect rect, MainCamera.CamType[]? cameras = null);
+}
+
+public class MainCamera : RegularUpdater, IScreenshotter {
+    public enum CamType {
         /// <summary>
         /// Background rendering.
         /// </summary>
@@ -57,9 +62,8 @@ public class MainCamera : RegularUpdater {
     private static readonly int ResourcePixelsPerUnitID = Shader.PropertyToID("_RPPU");
     private static readonly int RenderRatioID = Shader.PropertyToID("_RenderR");
     private static readonly int GlobalXOffsetID = Shader.PropertyToID("_GlobalXOffset");
-    public static MainCamera main = null!;
 
-    public static Camera mainCam = null!;
+    private Camera mainCam = null!;
     public static float VertRadius { get; private set; }
     public static float HorizRadius { get; private set; }
     public static float ScreenWidth => HorizRadius * 2;
@@ -79,31 +83,24 @@ public class MainCamera : RegularUpdater {
     public Camera ShaderEffectCamera = null!;
     public static RenderTexture RenderTo { get; private set; } = null!;
 
-    private static readonly CameraType[] AyaCameras = {
-        CameraType.Background, CameraType.LowDirectRender, CameraType.Middle,
-        CameraType.HighDirectRender, CameraType.Top, CameraType.Effects3D, CameraType.Shader
+    private static readonly CamType[] AyaCameras = {
+        CamType.Background, CamType.LowDirectRender, CamType.Middle,
+        CamType.HighDirectRender, CamType.Top, CamType.Effects3D, CamType.Shader
     };
 
-    public Camera FindCamera(CameraType type) => type switch {
-        CameraType.Background => BackgroundCamera,
-        CameraType.LowDirectRender => LowDirectCamera,
-        CameraType.Middle => MiddleCamera,
-        CameraType.HighDirectRender => HighDirectCamera,
-        CameraType.Top => TopCamera,
-        CameraType.Effects3D => Effects3DCamera,
-        CameraType.Shader => ShaderEffectCamera,
-        CameraType.UI => UIManager.Camera,
+    public Camera FindCamera(CamType type) => type switch {
+        CamType.Background => BackgroundCamera,
+        CamType.LowDirectRender => LowDirectCamera,
+        CamType.Middle => MiddleCamera,
+        CamType.HighDirectRender => HighDirectCamera,
+        CamType.Top => TopCamera,
+        CamType.Effects3D => Effects3DCamera,
+        CamType.Shader => ShaderEffectCamera,
+        CamType.UI => ServiceLocator.Find<IUIManager>().Camera,
         _ => mainCam
     };
 
-    /*
-    public Material postprocessor;
-    [Range(1, 16)] public int bloomIterations = 2;
-    public float bloomThreshold = 1;
-*/
-
     private void Awake() {
-        MainCamera.main = this;
         mainCam = GetComponent<Camera>();
         VertRadius = mainCam.orthographicSize;
         HorizRadius = VertRadius * mainCam.pixelWidth / mainCam.pixelHeight;
@@ -120,8 +117,11 @@ public class MainCamera : RegularUpdater {
     }
 
     protected override void BindListeners() {
-        Listen(SaveData.ResolutionChanged, RecreateRT);
         base.BindListeners();
+        RegisterService<IScreenshotter>(this);
+
+        Listen(SaveData.ResolutionChanged, RecreateRT);
+        Listen(SaveData.SettingsChanged, ReassignGlobalShaderVariables);
     }
 
     /// <summary>
@@ -211,14 +211,14 @@ public class MainCamera : RegularUpdater {
         saveNext = true;
     }
 
-    public AyaPhoto RequestAyaPhoto(CRect rect, CameraType[]? cameras=null) {
-        return new AyaPhoto(RequestPhotoTex(rect, cameras), rect);
+    public AyaPhoto AyaScreenshot(CRect rect, CamType[]? cameras=null) {
+        return new AyaPhoto(Screenshot(rect, cameras), rect);
     }
 
     /// <summary>
     /// Caller must dispose the return value via Object.Destroy.
     /// </summary>
-    public Texture2D RequestPhotoTex(CRect rect, CameraType[]? cameras=null) {
+    public Texture2D Screenshot(CRect rect, CamType[]? cameras=null) {
         var rt = RenderTexture.active;
         var offset = transform.position;
         ayaMaterial.SetFloat(PropConsts.OffsetX, (rect.x - offset.x) / ScreenWidth);

@@ -102,7 +102,16 @@ public partial class BulletManager {
         if (CheckOrCopyPool(pool, out var sbc)) return sbc;
         throw new Exception($"Could not find simple bullet style by name \"{pool}\".");
     }
-    private static readonly ExFunction getMaybeCopyPool = ExUtils.Wrap<string>(typeof(BulletManager), "GetMaybeCopyPool");
+    public static AbsSimpleBulletCollection? NullableGetMaybeCopyPool(string? pool) {
+        if (pool == null || string.IsNullOrWhiteSpace(pool) || pool == "_") 
+            return null;
+        if (CheckOrCopyPool(pool, out var sbc)) return sbc;
+        throw new Exception($"Could not find simple bullet style by name \"{pool}\".");
+    }
+    private static readonly ExFunction getMaybeCopyPool = 
+        ExUtils.Wrap<string>(typeof(BulletManager), "GetMaybeCopyPool");
+    private static readonly ExFunction nullableGetMaybeCopyPool = 
+        ExUtils.Wrap<string?>(typeof(BulletManager), "NullableGetMaybeCopyPool");
 
     public override int UpdatePriority => UpdatePriorities.BM;
     public override void RegularUpdate() {
@@ -222,14 +231,11 @@ public partial class BulletManager {
 
     private void StartScene() {
         simpleBulletPools[EMPTY].Activate();
-        CreateBulletContainer();
-    }
-    private void CreateBulletContainer() {
         GameObject go = new GameObject {name = "Bullet Spam Container"};
         spamContainer = go.transform;
         spamContainer.position = Vector3.zero;
     }
-
+    
     public static void OrphanAll() {
         ClearPoolControls();
         foreach (var pool in simpleBulletPools.Values) {
@@ -267,11 +273,7 @@ public partial class BulletManager {
             DestroySimpleStyle(activePlayer[ii].Style);
         }
         activePlayer.Clear();
-        //Culled pools might as well go too
-        for (int ii = 0; ii < activeCulled.Count; ++ii) {
-            DestroySimpleStyle(activeCulled[ii].Style);
-        }
-        activePlayer.Clear();
+        //Don't delete culled pools since they are linked from the base pools
     }
 
     public static void ClearEmptyBullets(bool clearPlayer) {

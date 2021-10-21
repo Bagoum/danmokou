@@ -238,9 +238,9 @@ public partial class BulletManager {
         [UsedImplicitly] //batch command uses this to stop when a bullet is destroyed
         public bool IsAlive(int ind) => !rem[ind];
 
-        public void Softcull(AbsSimpleBulletCollection target, int ii, SoftcullProperties? advancer) {
+        public void Softcull(AbsSimpleBulletCollection? target, int ii, SoftcullProperties? advancer) {
             MakeCulledCopy(ii);
-            target.CopyNullFrom(this, ii, advancer);
+            target?.CopyNullFrom(this, ii, advancer);
             DeleteSB(ii);
         }
 
@@ -684,7 +684,7 @@ public partial class BulletManager {
         public void AddCulled(ref SimpleBullet sb) {
             Activate();
             var sbn = new SimpleBullet(ref sb);
-            sbn.bpi.t = fade.MaxTime;
+            sbn.bpi.t = Math.Min(sbn.bpi.t, fade.MaxTime);
             //scale/dir/etc remain the same.
             base.Add(ref sbn, false);
         }
@@ -844,21 +844,21 @@ public partial class BulletManager {
 #if UNITY_EDITOR
     [ContextMenu("Debug FCTX usage")]
     public void DebugFCTX() {
-        Log.Unity($"Alloc {FiringCtx.Allocated} / Popped {FiringCtx.Popped} / Cached {FiringCtx.Recached} / Copied {FiringCtx.Copied}");
+        Logs.Log($"Alloc {FiringCtx.Allocated} / Popped {FiringCtx.Popped} / Cached {FiringCtx.Recached} / Copied {FiringCtx.Copied}");
     }
     [ContextMenu("Debug bullet numbers")]
     public void DebugBulletNums() {
         int total = 0;
         foreach (var pool in simpleBulletPools.Values) {
             total += pool.Count;
-            if (pool.Count > 0) Log.Unity($"{pool.Style}: {pool.Count} (-{pool.NullElements})", level: LogLevel.INFO);
-            if (pool.NumControls > 0) Log.Unity($"{pool.Style} has {pool.NumControls} controls", level: LogLevel.INFO);
+            if (pool.Count > 0) Logs.Log($"{pool.Style}: {pool.Count} (-{pool.NullElements})", level: LogLevel.INFO);
+            if (pool.NumControls > 0) Logs.Log($"{pool.Style} has {pool.NumControls} controls", level: LogLevel.INFO);
         }
         total += Bullet.NumBullets;
-        Log.Unity($"Custom pools: {string.Join(", ", activeCNpc.Select(x => x.Style))}");
-        Log.Unity($"Empty pools: {string.Join(", ", activeEmpty.Select(x => x.Style))}");
-        Log.Unity($"Fancy bullets: {Bullet.NumBullets}", level: LogLevel.INFO);
-        Log.Unity($"Total: {total}", level: LogLevel.INFO);
+        Logs.Log($"Custom pools: {string.Join(", ", activeCNpc.Select(x => x.Style))}");
+        Logs.Log($"Empty pools: {string.Join(", ", activeEmpty.Select(x => x.Style))}");
+        Logs.Log($"Fancy bullets: {Bullet.NumBullets}", level: LogLevel.INFO);
+        Logs.Log($"Total: {total}", level: LogLevel.INFO);
     }
     #endif
 }

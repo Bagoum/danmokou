@@ -782,7 +782,7 @@ public class OptionNodeLR<T> : UINode, IOptionNodeLR {
     
     public OptionNodeLR(LString description, Action<T> onChange, T[] values, T defaulter, params UINode[] children) : base(description, children) {
         this.onChange = onChange;
-        this.values = values.Select(x => (new LString(x.ToString()), x)).ToArray();
+        this.values = values.Select(x => (new LString(x?.ToString() ?? "Null"), x)).ToArray();
         SetIndexFromVal(defaulter);
     }
 

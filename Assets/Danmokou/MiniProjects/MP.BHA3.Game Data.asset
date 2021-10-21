@@ -36,23 +36,23 @@ MonoBehaviour:
     top: 4.1
     bot: -4.5
     center: {x: -1.9, y: 0}
+  achievements: {fileID: 0}
   dialogue:
   - {fileID: 11400000, guid: b7c1d3b51649f5e4eb3f41be569c3f4b, type: 2}
   bossMetadata:
   - {fileID: 11400000, guid: 4134b00b698a2884db67381ff1d4bf6a, type: 2}
-  dialogueProfiles:
-  - {fileID: 11400000, guid: 8bd7a77c825f5e14eab7f82b97165a59, type: 2}
-  - {fileID: 11400000, guid: 098100d97b7df8a469e99a89a050a61b, type: 2}
-  - {fileID: 11400000, guid: 43918bc09f345dc4fa3933df8b74f5f1, type: 2}
-  - {fileID: 11400000, guid: 5102ed3e4a64ac1469c5ecc80d4dfa21, type: 2}
+  dialogueProfiles: []
   tracks:
   - {fileID: 11400000, guid: dbaac47ba2c21b74ba693dfde4e949d8, type: 2}
   items: {fileID: 11400000, guid: 18e6de6e951f4114e8823af9e617bff7, type: 2}
   prefabReferences: {fileID: 11400000, guid: 842bcc7c616103e4c9880c49f9735bb4, type: 2}
+  suzunoyaReferences: {fileID: 11400000, guid: a936563f4e58b294db033ff8ee6be6f8, type: 2}
   uxmlDefaults: {fileID: 11400000, guid: b4213b3830762944fbcb9250a4b73463, type: 2}
+  SFX: []
   summonables:
   - {fileID: 11400000, guid: 38afc312ddb0ac242b8cfb301b1b4237, type: 2}
   - {fileID: 11400000, guid: cdee2c8a4694b2148b6bff090233f211, type: 2}
   fileStateMachines: []
   scriptFolders:
   - Assets/Danmokou/MiniProjects/Scripts/BHA3
+  fastParsing: 0

@@ -451,7 +451,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
 
         public void Reset() => ResetPoolMetadata();
         
-        public void AddPoolControl(LaserControl pc) => controls.Add(pc);
+        public void AddPoolControl(LaserControl pc) => controls.AddPriority(pc, pc.priority);
         
         public void PruneControls() {
             for (int ii = 0; ii < controls.Count; ++ii) {

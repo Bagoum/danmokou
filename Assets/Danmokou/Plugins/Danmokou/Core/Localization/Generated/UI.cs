@@ -552,15 +552,15 @@ public static partial class LocalizedStrings {
 			{ ID = "stats_deaths" };
 		
 		public static readonly LString stats_favday = new LString("Favorite Day",
-			(Locales.JP, "愛用の曜日"))
+			(Locales.JP, "プレイしがちの曜日"))
 			{ ID = "stats_favday" };
 		
 		public static readonly LString stats_favplayer = new LString("Favorite Player",
-			(Locales.JP, "愛用の機体"))
+			(Locales.JP, "使いがちの機体"))
 			{ ID = "stats_favplayer" };
 		
 		public static readonly LString stats_favshot = new LString("Favorite Shot",
-			(Locales.JP, "愛用の装備"))
+			(Locales.JP, "使いがちの装備"))
 			{ ID = "stats_favshot" };
 		
 		public static readonly LString stats_highestscore = new LString("Highest Score",

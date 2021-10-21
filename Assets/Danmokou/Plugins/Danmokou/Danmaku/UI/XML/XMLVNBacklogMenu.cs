@@ -52,7 +52,7 @@ public class XMLVNBacklogMenu : PausedGameplayMenu, IVNBacklog {
     }
 
     protected override void BindListeners() {
-        RegisterDI<IVNBacklog>(this);
+        RegisterService<IVNBacklog>(this);
     }
 
 

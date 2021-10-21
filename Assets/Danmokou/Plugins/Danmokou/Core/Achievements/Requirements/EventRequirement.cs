@@ -11,24 +11,12 @@ namespace Danmokou.Achievements {
 //It is possible to write many normal requirements, such as TutorialDoneReq, as event requirements,
 // but that should be avoided.
 
-//Please don't use this class-- it probably means you've design something incorrectly
-public class EventRequirement : Requirement {
-    private bool eventTriggered = false;
-
-    public EventRequirement(Events.Event0 ev, Func<bool> predicate) {
-        ev.Subscribe(() => {
-            eventTriggered = predicate();
-            if (eventTriggered)
-                RequirementUpdated();
-            eventTriggered = false;
-        });
-    }
-    public override State EvalState() => eventTriggered.ToACVState();
-}
+//Be careful when using this class-- the only valid use case is for an event that marks when something occurs,
+// and the requirement is that "that thing has occurred".
 
 public class EventRequirement<T> : Requirement {
     private bool eventTriggered = false;
-    public EventRequirement(IBSubject<T> ev, Func<T, bool> predicate) {
+    public EventRequirement(IObservable<T> ev, Func<T, bool> predicate) {
         ev.Subscribe(val => {
             eventTriggered = predicate(val);
             if (eventTriggered)

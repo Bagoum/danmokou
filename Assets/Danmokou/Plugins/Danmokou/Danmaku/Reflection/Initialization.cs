@@ -28,6 +28,7 @@ public static partial class Reflector {
     };*/
 
     static Reflector() {
+        if (!Application.isPlaying) return;
         foreach (var type in ReflectorUtils.ReflectableAssemblyTypes) {
             foreach (var ca in type.GetCustomAttributes()) {
                 if (ca is ReflectAttribute ra) {
@@ -81,50 +82,6 @@ public static partial class Reflector {
         CreatePostAggregates("PA_Pow", "^");
         CreatePostAggregates("PA_And", "&");
         CreatePostAggregates("PA_Or", "|");
-        void CreatePreAggregates(string method, string shortcut) {
-            var mi = typeof(ExPreAggregators).GetMethod(method) ??
-                     throw new Exception($"Couldn't find post-aggregator \"{method}\"");
-            var attrs = Attribute.GetCustomAttributes(mi);
-            var priority = 999;
-            var types = new Type[0];
-            foreach (var attr in attrs) {
-                if (attr is PAPriorityAttribute pp) priority = pp.priority;
-                else if (attr is PASourceTypesAttribute ps) types = ps.types;
-            }
-            //types = [ (float), (v2) ... ]
-            foreach (var rt in types) {
-                var gmi = mi.MakeGenericMethod(rt);
-                var prms = gmi.GetParameters();
-                if (prms.Length != 2) throw new Exception($"Pre-aggregator \"{method}\" doesn't have 2 arguments");
-                var resultType = gmi.ReturnType;
-                var searchType1 = prms[0].ParameterType;
-                var searchType2 = prms[1].ParameterType;
-                if (preAggregators.TryGetValue(resultType, out var res)) {
-                    if (res.firstType != searchType1)
-                        throw new Exception(
-                            $"Pre-aggregators currently support only one reducer type, " +
-                            $"but return type {resultType.RName()} is associated with " +
-                            $"{res.firstType.RName()} and {searchType1.RName()}.");
-                } else {
-                    res = new PreAggregate(searchType1);
-                }
-                res.AddResolver(new PreAggregateResolver(shortcut, searchType2, gmi, priority));
-                preAggregators[resultType] = res;
-            }
-        }
-
-        CreatePreAggregates("PA_Mul", "*");
-        CreatePreAggregates("PA_GT", ">");
-        CreatePreAggregates("PA_LT", "<");
-        CreatePreAggregates("PA_GEQ", ">=");
-        CreatePreAggregates("PA_LEQ", "<=");
-        CreatePreAggregates("PA_EQ", "=");
-        CreatePreAggregates("PA_NEQ", "=/=");
-        foreach (var key in preAggregators.Keys.ToArray()) {
-            var res = preAggregators[key];
-            res.SortResolvers();
-            preAggregators[key] = res;
-        }
     }
 
     private readonly struct PostAggregate {
@@ -144,36 +101,6 @@ public static partial class Reflector {
 
     private static readonly Dictionary<Type, Dictionary<string, PostAggregate>> postAggregators =
         new Dictionary<Type, Dictionary<string, PostAggregate>>();
-
-    private readonly struct PreAggregateResolver {
-        public readonly string op;
-        public readonly Type secondType;
-        public readonly MethodInfo invoker;
-        public object Invoke(object a, object b) => invoker.Invoke(null, new[] {a, b});
-        public readonly int priority;
-
-        public PreAggregateResolver(string op, Type type2, MethodInfo mi, int priority) {
-            this.op = op;
-            this.secondType = type2;
-            this.invoker = mi;
-            this.priority = priority;
-        }
-    }
-
-    private readonly struct PreAggregate {
-        //public readonly Type resultType;
-        public readonly Type firstType;
-        public readonly List<PreAggregateResolver> resolvers;
-        public void AddResolver(PreAggregateResolver par) => resolvers.Add(par);
-        public void SortResolvers() => resolvers.Sort((a, b) => a.priority.CompareTo(b.priority));
-
-        public PreAggregate(Type type1) {
-            firstType = type1;
-            this.resolvers = new List<PreAggregateResolver>();
-        }
-    }
-
-    private static readonly Dictionary<Type, PreAggregate> preAggregators = new Dictionary<Type, PreAggregate>();
 
     private static void InitializeEnumResolvers() {
         void CEnum<E>((char first, E value)[] values) {
@@ -275,11 +202,11 @@ public static partial class Reflector {
             ("sp", Emote.SPECIAL)
         });
         SEnum(new[] {
-            ("l1", Dialoguer.StandLocation.LEFT1),
-            ("l2", Dialoguer.StandLocation.LEFT2),
-            ("r1", Dialoguer.StandLocation.RIGHT1),
-            ("r2", Dialoguer.StandLocation.RIGHT2),
-            ("center", Dialoguer.StandLocation.CENTER)
+            ("l1", TSMReflection.StandLocation.LEFT1),
+            ("l2", TSMReflection.StandLocation.LEFT2),
+            ("r1", TSMReflection.StandLocation.RIGHT1),
+            ("r2", TSMReflection.StandLocation.RIGHT2),
+            ("center", TSMReflection.StandLocation.CENTER)
         });
         SEnum(new[] {
             ("none", ReflCtx.Strictness.NONE),

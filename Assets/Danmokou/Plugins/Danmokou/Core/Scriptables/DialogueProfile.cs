@@ -9,6 +9,7 @@ using UnityEngine;
 
 namespace Danmokou.Scriptables {
 [CreateAssetMenu(menuName = "Profile/Dialogue")]
+[Obsolete("Replaced by SZYU-based dialogue handling. Will be removed in DMK v9.")]
 public class DialogueProfile : ScriptableObject, IDialogueProfile {
     [Serializable]
     public class EmotedSprites2 {

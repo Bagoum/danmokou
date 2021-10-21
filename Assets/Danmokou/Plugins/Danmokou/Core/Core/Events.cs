@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 using System.Linq.Expressions;
+using System.Reactive;
 using BagoumLib.DataStructures;
 using BagoumLib.Events;
 using BagoumLib.Functional;
@@ -37,7 +38,7 @@ public static class Events {
     /// Events that take zero parameters.
     /// </summary>
     [Reflect(typeof(EventDeclaration<Event0>))]
-    public class Event0 {
+    public class Event0 : IObservable<Unit> {
         private static readonly Dictionary<string, List<Event0>> waitingToResolve =
             new Dictionary<string, List<Event0>>();
         private static readonly Dictionary<string, Event0> storedEvents = new Dictionary<string, Event0>();
@@ -152,6 +153,9 @@ public static class Events {
         }
 
         public DeletionMarker<Action> Subscribe(Action cb) => callbacks.Add(cb);
+
+        public IDisposable Subscribe(IObserver<Unit> observer) => 
+            callbacks.Add(() => observer.OnNext(Unit.Default));
     }
 
     public static readonly IBSubject<EngineState> EngineStateChanged = new Event<EngineState>();

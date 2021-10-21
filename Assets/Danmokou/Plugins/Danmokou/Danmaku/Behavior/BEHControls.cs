@@ -95,7 +95,7 @@ public partial class BehaviorEntity {
         public void Activate() {
             if (!Active) {
                 activePools.Add(this);
-                Log.Unity($"Activating beh pool {style}", level: LogLevel.DEBUG1);
+                Logs.Log($"Activating beh pool {style}", level: LogLevel.DEBUG1);
                 Active = true;
             }
         }
@@ -197,10 +197,11 @@ public partial class BehaviorEntity {
         /// <param name="target">New style</param>
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
-        public static exBEHControl Softcull(string target, Pred cond) {
+        public static exBEHControl Softcull(string? target, Pred cond) {
             return new exBEHControl((b, cT) => {
                 if (cond(b.rBPI)) {
-                    b.SpawnSimple(target);
+                    if (target != null)
+                        b.SpawnSimple(target);
                     b.InvokeCull();
                 }
             }, BulletControl.P_CULL);
@@ -479,7 +480,7 @@ public partial class BehaviorEntity {
             if (poolStr == null) return;
             if (!BulletManager.CheckComplexPool(poolStr, out var pool) || pool.IsPlayer) 
                 return;
-            if (!BulletManager.PortColorFormat(poolStr, props, out string target)) 
+            if (!BulletManager.PortColorFormat(poolStr, props, out string? target)) 
                 return;
             pool.AddPoolControlEOF(new BEHControl(
                 BulletControls.Softcull(target, _ => true), Consts.NOTPERSISTENT));

@@ -99,7 +99,6 @@ public abstract class StateMachine {
         {"gtr2", typeof(GTRepeat2)},
         {"if", typeof(IfUSM)},
         {"script", typeof(ScriptTSM)},
-        {"endcard", typeof(EndcardControllerTSM)},
         {"debugf", typeof(DebugFloat)}
     };
     private static readonly Dictionary<Type, Type[]> smChildMap = new Dictionary<Type, Type[]>() {
@@ -497,7 +496,7 @@ public class RetargetUSM : UniversalSM {
     public override Task Start(SMHandoff smh) {
         var behs = BehaviorEntity.GetExecsForIDs(targets);
         if (behs.Length == 0) {
-            Log.Unity($"Retarget operation with targets {string.Join(", ", targets)} found no BEH", level: LogLevel.WARNING);
+            Logs.Log($"Retarget operation with targets {string.Join(", ", targets)} found no BEH", level: LogLevel.WARNING);
             return Task.CompletedTask;
         } else if (behs.Length == 1) {
             return behs[0].RunExternalSM(SMRunner.Run(states[0], smh.cT, smh.GCX), false);

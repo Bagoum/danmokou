@@ -175,7 +175,7 @@ public partial class BulletManager : RegularUpdater {
     }
 
     private static void DestroySimpleStyle(string key) {
-        Log.Unity($"Destroying pool {key}");
+        Logs.Log($"Destroying pool {key}");
         simpleBulletPools.Remove(key);
     }
 
@@ -354,7 +354,7 @@ public partial class BulletManager : RegularUpdater {
                             CreateN($"{sname}-{color.name}".ToLower(), extras_offset++, () => color.gradient.Recolor(spritesheet, sbes.renderMode));
                         }
                         if (!sbes.colorizing.Any && sbes.gradients.Length == 0) {
-                            Log.Unity("No sprite recoloring for "+ sname);
+                            Logs.Log("No sprite recoloring for "+ sname);
                             CreateN(sname, 0, () => spritesheet);
                         }
                     }
@@ -436,7 +436,7 @@ public partial class BulletManager : RegularUpdater {
                 }
             }
         }
-        Log.Unity($"Created {simpleBulletPools.Count} bullet styles", level: LogLevel.DEBUG3);
+        Logs.Log($"Created {simpleBulletPools.Count} bullet styles", level: LogLevel.DEBUG3);
     }
 
     public const int FAB_PLAYER_RENDER_OFFSET = -1000;
@@ -550,7 +550,7 @@ public partial class BulletManager : RegularUpdater {
             AddComplexStyle(new BehaviorEntity.BEHStyleMetadata(style, null));
         }
         
-        SceneIntermediary.RegisterSceneLoad(StartScene);
+        SceneIntermediary.SceneLoaded.Subscribe(StartScene);
         Camera.onPreCull += RenderBullets;
     }
 

@@ -87,7 +87,7 @@ public class ETime : MonoBehaviour {
     public static int FrameNumber { get; private set; }
 
     public static void ResetFrameNumber() {
-        Log.Unity("Resetting frame counter");
+        Logs.Log("Resetting frame counter");
         FrameNumber = 0;
     }
 
@@ -112,7 +112,7 @@ public class ETime : MonoBehaviour {
         GenericOps.RegisterType<Color>(Color.LerpUnclamped, (x, y) => x * y, (x, y) => x + y, (x, y) => x * y);
 
         SceneIntermediary.Attach();
-        SceneIntermediary.RegisterSceneLoad(() => untilNextRegularFrame = 0f);
+        SceneIntermediary.SceneLoaded.Subscribe(() => untilNextRegularFrame = 0f);
 
         //WARNING ON TIMESCALE: You must also modify FDT. See https://docs.unity3d.com/ScriptReference/Time-timeScale.html
         //This said, I don't think FixedUpdate is used anymore in this code.
@@ -126,7 +126,7 @@ public class ETime : MonoBehaviour {
     }
 
     public static void SetForcedFPS(int fps) {
-        Log.Unity($"Assuming the screen runs at {fps} fps");
+        Logs.Log($"Assuming the screen runs at {fps} fps");
         ASSUME_SCREEN_FRAME_TIME = (fps > 0) ? 1f / fps : 1f / 60f;
         //Better to use precise thread waiter. See https://blogs.unity3d.com/2019/06/03/precise-framerates-in-unity/
         //Application.targetFrameRate = fps;
@@ -226,8 +226,8 @@ public class ETime : MonoBehaviour {
             }
             EngineStateManager.UpdateEngineState();
         } catch (Exception e) {
-            Log.UnityError("Error thrown in the ETime update loop.");
-            Log.UnityException(e);
+            Logs.UnityError("Error thrown in the ETime update loop.");
+            Logs.LogException(e);
             throw;
         }
     }
@@ -403,7 +403,7 @@ public class ETime : MonoBehaviour {
     }
 
     public void OnDestroy() {
-        Log.CloseLog();
+        Logs.CloseLog();
     }
 }
 }

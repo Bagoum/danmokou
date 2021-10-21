@@ -23,7 +23,7 @@ using Danmokou.SM;
 using JetBrains.Annotations;
 using UnityEditor;
 using UnityEngine;
-using static Danmokou.Core.GameManagement;
+using static Danmokou.Services.GameManagement;
 using static Danmokou.DMath.LocationHelpers;
 using static Danmokou.GameInstance.InstanceConsts;
 
@@ -88,7 +88,7 @@ public class PlayerController : BehaviorEntity {
     public static MultiAdder FiringDisabler { get; private set; } = new MultiAdder(0, null);
     public static MultiAdder BombDisabler { get; private set; } = new MultiAdder(0, null);
     public static MultiAdder AllControlDisabler { get; private set; } = new MultiAdder(0, null);
-    public static bool PlayerActive => (AllControlDisabler.Value == 0) && !Dialoguer.DialogueActive;
+    public static bool PlayerActive => AllControlDisabler.Value == 0;
     public static bool RespawnOnHit => GameManagement.Difficulty.respawnOnDeath;
     
     #region Events
@@ -234,7 +234,7 @@ public class PlayerController : BehaviorEntity {
         base.Awake();
         localTeamCfg = new ActiveTeamConfig(new TeamConfig(0, defaultSubshot, defaultSupport, 
             defaultPlayers.Zip(defaultShots, (x, y) => (x, y)).ToArray()));
-        Log.Unity($"Team awake", level: LogLevel.DEBUG1);
+        Logs.Log($"Team awake", level: LogLevel.DEBUG1);
         hitbox.location = tr.position;
         hitbox.Player = this;
         hitboxSprite.enabled = SaveData.s.UnfocusedHitbox;
@@ -273,7 +273,7 @@ public class PlayerController : BehaviorEntity {
 
     protected override void BindListeners() {
         base.BindListeners();
-        RegisterDI<PlayerController>(this);
+        RegisterService<PlayerController>(this);
     }
 
     public override void FirstFrame() {
@@ -292,7 +292,7 @@ public class PlayerController : BehaviorEntity {
         }
         if (nsubshot.Try(out var s) && Team.Subshot != s) {
             if (!Team.HasMultishot)
-                InstanceData.UselessPowerupCollected.Proc();
+                Instance.UselessPowerupCollected.Proc();
             else
                 ++Instance.SubshotSwitches;
             Team.Subshot = s;
@@ -300,7 +300,7 @@ public class PlayerController : BehaviorEntity {
         }
         if (didUpdate || force) {
             _UpdateTeam();
-            InstanceData.TeamUpdated.Proc();
+            Instance.TeamUpdated.Proc();
         }
     }
     public void UpdateTeam((ShipConfig, ShotConfig)? nplayer = null, Subshot? nsubshot = null, bool force=false) {
@@ -311,7 +311,7 @@ public class PlayerController : BehaviorEntity {
         if (Team.Ship != ship) {
             bool fromNull = ship == null;
             ship = Team.Ship;
-            Log.Unity($"Setting team player to {ship.key}");
+            Logs.Log($"Setting team player to {ship.key}");
             if (spawnedShip != null) {
                 //animate "destruction"
                 spawnedShip.InvokeCull();
@@ -327,7 +327,7 @@ public class PlayerController : BehaviorEntity {
             ++playerShotItr;
             shot = Team.Shot;
             subshot = Team.Subshot;
-            Log.Unity($"Setting shot to {shot.key}:{subshot}");
+            Logs.Log($"Setting shot to {shot.key}:{subshot}");
             if (DestroyExistingShot())
                 ServiceLocator.SFXService.Request(Team.Shot.onSwap);
             var realized = Team.Shot.GetSubshot(Team.Subshot);
@@ -446,7 +446,7 @@ public class PlayerController : BehaviorEntity {
         }
         if (AllowPlayerInput) {
             if (InputManager.IsSwap) {
-                Log.Unity("Updating team");
+                Logs.Log("Updating team");
                 UpdateTeam((Team.SelectedIndex + 1) % Team.Ships.Length);
             }
         }
@@ -582,7 +582,7 @@ public class PlayerController : BehaviorEntity {
     private IEnumerator WaitDeathbomb(int dmg) {
         var frames = (Team.Support as Bomb)?.bomb.DeathbombFrames() ?? 0;
         if (frames > 0) {
-            Log.Unity($"The player has {frames} frames to deathbomb");
+            Logs.Log($"The player has {frames} frames to deathbomb");
             spawnedShip.OnPreHitEffect.Proc(bpi.loc, bpi.loc, 1f);
         }
         while (frames-- > 0 && deathbomb == DeathbombState.WAITING) 
@@ -590,7 +590,7 @@ public class PlayerController : BehaviorEntity {
         if (deathbomb != DeathbombState.PERFORMED) 
             _DoHit(dmg);
         else 
-            Log.Unity($"The player successfully deathbombed");
+            Logs.Log($"The player successfully deathbombed");
         deathbomb = DeathbombState.NULL;
     }
     
@@ -611,7 +611,7 @@ public class PlayerController : BehaviorEntity {
     }
 
     public void MakeInvulnerable(int frames, bool showEffect) {
-        Log.Unity($"The player will be invulnerable for {frames} frames (display effect: {showEffect})");
+        Logs.Log($"The player will be invulnerable for {frames} frames (display effect: {showEffect})");
         GoldenAuraInvuln(frames, showEffect);
     }
 
@@ -695,7 +695,7 @@ public class PlayerController : BehaviorEntity {
             spawnedShip.MaybeDrawWitchTimeGhost(f);
             MeterIsActive.OnNext(GameManagement.Instance.EnoughMeterToUse ? meterDisplay : meterDisplayInner);
             float meterDisplayRatio = M.EOutSine(Mathf.Clamp01(f / 30f));
-            meterPB.SetFloat(PropConsts.fillRatio, InstanceData.sVisibleMeter.Value * meterDisplayRatio);
+            meterPB.SetFloat(PropConsts.fillRatio, Instance.VisibleMeter.Value * meterDisplayRatio);
             meter.SetPropertyBlock(meterPB);
             yield return null;
         }

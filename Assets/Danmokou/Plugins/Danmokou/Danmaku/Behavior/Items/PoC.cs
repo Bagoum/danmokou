@@ -1,5 +1,6 @@
 ﻿using Danmokou.Core;
 using Danmokou.Scriptables;
+using Danmokou.Services;
 using UnityEngine;
 
 namespace Danmokou.Behavior.Items {
@@ -16,7 +17,7 @@ public class PoC : RegularUpdater {
 
     protected override void BindListeners() {
         base.BindListeners();
-        RegisterDI(this);
+        RegisterService(this, new ServiceLocator.ServiceOptions { Unique = true });
     }
 
     public Vector2 Bound => tr.position;

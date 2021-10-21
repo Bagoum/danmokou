@@ -304,7 +304,7 @@ public static partial class Reflector {
             if (methodsByReturnType.TryGet2(rt, member, out var f)) {
                 if (q?.Ctx.props.warnPrefix == true && Attribute.GetCustomAttributes(f).Any(x =>
                     x is WarnOnStrictAttribute wa && (int) q.Ctx.props.strict >= wa.strictness)) {
-                    Log.Unity(
+                    Logs.Log(
                         $"Line {q.GetLastLine()}: The method \"{member}\" is not permitted for use in a script with strictness {q.Ctx.props.strict}. You might accidentally be using the prefix version of an infix function.",
                         true, LogLevel.WARNING);
                 }

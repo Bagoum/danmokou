@@ -101,10 +101,6 @@ public class TranslatedDrawer : PairedPropertyDrawer {
 
     protected override string arg2 => "file";
 }
-[CustomPropertyDrawer(typeof(Endcard))]
-public class EndcardDrawer : PairedPropertyDrawer {
-    protected override string arg2 => "image";
-}
 
 [CustomPropertyDrawer(typeof(PrioritySprite))]
 public class PSpriteDrawer : PairedPropertyDrawer {

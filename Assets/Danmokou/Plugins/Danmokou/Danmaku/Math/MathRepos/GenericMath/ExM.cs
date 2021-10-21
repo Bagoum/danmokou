@@ -9,6 +9,7 @@ using Danmokou.Expressions;
 using Danmokou.Graphics;
 using Danmokou.Player;
 using Danmokou.Reflection;
+using Danmokou.Services;
 using Ex = System.Linq.Expressions.Expression;
 using static Danmokou.Expressions.ExUtils;
 using static Danmokou.Expressions.ExMHelpers;
@@ -51,7 +52,7 @@ public static partial class ExM {
     
     [Alias("s" + Parser.SM_REF_KEY)]
     public static Func<TExArgCtx, TEx<T>> ReferenceSafe<T>(string alias, Func<TExArgCtx, TEx<T>> deflt) => b => 
-        ReflectEx.ReferenceExpr<T>(alias, b, deflt(b));
+        ReflectEx.ReferenceExpr(alias, b, deflt(b));
     
     [Alias("@")]
     public static Func<TExArgCtx, TEx<T>> RetrieveHoisted<T>(ReflectEx.Hoist<T> hoist, Func<TExArgCtx, TEx<float>> indexer) => 

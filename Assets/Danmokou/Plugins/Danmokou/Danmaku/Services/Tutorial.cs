@@ -17,7 +17,7 @@ using Danmokou.UI.XML;
 using TMPro;
 using UnityEngine;
 using static Danmokou.Core.InputManager;
-using static Danmokou.Core.GameManagement;
+using static Danmokou.Services.GameManagement;
 using static Danmokou.Core.LocalizedStrings.Tutorial;
 
 namespace Danmokou.Services {
@@ -197,7 +197,7 @@ public class Tutorial : BehaviorEntity {
         yield return shift();
         Prompt(text10, pleasedie32);
         var dead = false;
-        tokens.Add(InstanceData.GameOver.SubscribeOnce(() => dead = true));
+        tokens.Add(Instance.GameOver.SubscribeOnce(() => dead = true));
         yield return waitlf(() => dead);
         Prompt(text00, deathscreen33, x:menuLeft);
         yield return waitlf(() => EngineStateManager.State == EngineState.RUN);

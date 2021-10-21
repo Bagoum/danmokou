@@ -31,7 +31,7 @@ public static class RNG {
                 "You are invoking random functions either outside of the regular update loop, or in parallelized pather movement code. This will desync replays and/or cause the random generation to fail.");
         }
         if (EngineStateManager.State > EngineState.RUN && !SceneIntermediary.LOADING) {
-            Log.Unity("You are invoking random functions while replay data is not being saved. " +
+            Logs.Log("You are invoking random functions while replay data is not being saved. " +
                       "This will desync replays.", true, LogLevel.WARNING);
         }
     }

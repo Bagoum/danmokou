@@ -32,17 +32,19 @@ public class ChallengeManager : CoroutineRegularUpdater, IChallengeManager {
 
     protected override void BindListeners() {
         base.BindListeners();
-        Listen(InstanceData.PhaseCompleted, pc => {
+        RegisterService<IChallengeManager>(this, new ServiceLocator.ServiceOptions { Unique = true });
+
+        Listen(GameManagement.EvInstance, inst => inst.PhaseCompleted, pc => {
             if (pc.clear != PhaseClearMethod.CANCELLED && pc.props.phaseType != null && pc.exec == Exec)
                 completion = pc;
         });
+        
         Listen(AyaCamera.PhotoTaken, photo => {
             //There are no restrictions on what type of challenge may receive a photo
             if (tracking != null && photo.success) {
                 challengePhotos.Add(photo.photo);
             }
         });
-        RegisterDI<IChallengeManager>(this);
     }
 
     private void OnDestroy() {
@@ -99,12 +101,12 @@ public class ChallengeManager : CoroutineRegularUpdater, IChallengeManager {
 
     public void LinkBoss(BehaviorEntity exec) {
         if (tracking == null) throw new Exception("Cannot link BEH when no challenge is tracked");
-        Log.Unity($"Linked boss {exec.ID} to challenge {tracking.Description}");
+        Logs.Log($"Linked boss {exec.ID} to challenge {tracking.Description}");
         tracking.Start(Exec = exec);
     }
 
     public void TrackChallenge(IChallengeRequest cr, Action<InstanceRecord> onSuccess) {
-        Log.Unity($"Tracking challenge {cr.Description}");
+        Logs.Log($"Tracking challenge {cr.Description}");
         CleanupState();
         tracking = cr;
         Restriction = new Restrictions(cr.Challenges);

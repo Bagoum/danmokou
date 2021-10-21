@@ -7,7 +7,7 @@ using Danmokou.Scriptables;
 using Danmokou.UI.XML;
 using UnityEngine;
 using static Danmokou.UI.PlayModeCommentator;
-using static Danmokou.Core.GameManagement;
+using static Danmokou.Services.GameManagement;
 
 namespace Danmokou.UI {
 public class PlayModeSubmenu : IndexedSubmenuHandler {

@@ -139,7 +139,7 @@ public class XMLPauseMenu : PausedGameplayMenu, IPauseMenu {
 
     protected override void BindListeners() {
         base.BindListeners();
-        RegisterDI<IPauseMenu>(this);
+        RegisterService<IPauseMenu>(this);
     }
 
     private void HideOptions(bool withSave) {

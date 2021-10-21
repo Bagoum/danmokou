@@ -45,7 +45,6 @@
      <Compile Include="Assets\SZYU\Plugins\SuzunoyaUnity\UI\DialogueBoxButton.cs" />
      <Compile Include="Assets\SZYU\Plugins\SuzunoyaUnity\Rendering\ArbitraryCapturer.cs" />
      <Compile Include="Assets\SZYU\Plugins\SuzunoyaUnity\Rendering\RenderGroupTransition.cs" />
-     <Compile Include="Assets\SZYU\Plugins\SuzunoyaUnity\SuzunoyaGlobals.cs" />
      <Compile Include="Assets\SZYU\Plugins\SuzunoyaUnity\Components\PiecewiseSpriteRender.cs" />
      <Compile Include="Assets\SZYU\Plugins\SuzunoyaUnity\Rendering\RenderHelpers.cs" />
      <Compile Include="Assets\SZYU\Plugins\SuzunoyaUnity\Rendering\UnityRenderGroup.cs" />

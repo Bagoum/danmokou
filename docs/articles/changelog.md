@@ -8,20 +8,32 @@ To get the newest version from git, run:
 
 `git submodule update` (if you have made modifications to the submodules, you will need to `pull --rebase` them individually)
 
-# v8.0.0 (2021/06/14)
+# [Unreleased] v9.0.0
 
+The following features are planned for v9.0.0.
+
+- Implementation of a TH18-like card engine
+- Procedural generation of stages and bullet patterns
+- Full-featured implementation of Suzunoya
+
+# v8.0.0 (2021/10/24)
+
+- **Breaking changes:**
+  - The functions `bullet-control-sm`, `beh-control-sm`, and `laser-control-sm` have been removed. Instead, use `bullet-control`/`beh-control`/`laser-control` with the SM command.
 - **Code formatting notices:**
   - I have re-added csproj/sln files to the repo. Be warned of possible merge conflicts.
-  - Much code in the Core assembly has been moved to the BagoumLib subproject in the [Suzunoya repo](https://github.com/Bagoum/suzunoya). It is now provided as a DLL. (The Suzunoya project will, hopefully, eventually replace the present dialogue system.)
-
-- [WIP] Implementation of a TH18-like card engine
+  - Much code in the Core assembly has been moved to the BagoumLib subproject in the [Suzunoya repo](https://github.com/Bagoum/suzunoya). It is now provided as a DLL.
+- Replaced legacy dialogue system with Suzunoya-based visual novel system. Old-style dialogue scripts will still work, but they are superseded by in-code visual novel scripts. See `MiniProjects/Scripts/CV_VNStage.txt` (wrapper stage code to execute a visual novel script) and `MiniProjects/Plugins/Danmokou/VNCrimsonVermilion.cs` (a fairly long visual novel script for the proof-of-concept [Crimson and Vermilion](https://bagoum.itch.io/crimson-and-vermilion)).
+  - Note that dialogue profiles must be ported to Suzunoya entities.
+  - Suzunoya supports much more thorough dialogue localization via the same end-to-end localization strategy as the rest of the engine. You can get it working with spreadsheets using https://github.com/Bagoum/localization-utils .
+- Improvements to service-based architecture (I hate singletons now)
 - Complex bomb implementations for Reimu, Mokou, and Mima (who has a nice black hole effect)
 - Significant improvements to the architecture around engine state management, especially pausing, loading, and freezeframes
 - Spell and card circles now trail the boss while they are moving
 - New bullet types: GDCircle (a circle, size between "circle" and "lcircle", with heavy displacement effects), StellDecagon (a once-stellated decagon, or alternatively two pentagons on top of each other), GDLaser2c (a variant of gdlaser which has two colors-- format `gdlaser2c-red;blue/w`).
   - Bullets may now enable multi-channel automatic colorization (only current example is gdlaser2c) by setting "Multi Channel Recolor" to "RB" and using red and blue channels in the sprite. Three-channel recoloring is not enabled but is trivial to add to the existing code. Be warned that a typical (one-channel) bullet has about 30 recolors, a RB multi-channel bullet has about 300 recolors, and a RGB multi-channel bullet has about 3000 recolors.
 - Simple bullets now softcull over time at end-of-phase
-- When simple bullets are softculled, they fade out in addition to spawning a softcull effect like cwheel. The fade out process can be configured as fadeOut on SimpleBulletEmptyScript (it will use the fadeIn config if none is provided).
+- When simple bullets are softculled, they fade out in addition to (now optionally) spawning a softcull effect like cwheel. The fade out process can be configured as fadeOut on SimpleBulletEmptyScript (it will use the fadeIn config if none is provided).
 - Complex bullets, including complex player bullets, may now have nontrivial colliders by attaching a GenericColliderInfo script to the same object as the Bullet script
 - Player bullets may now have noncircular hitboxes (effectiveRadius has been removed)
 - Player bullets may now use empty guiding
@@ -29,6 +41,7 @@ To get the newest version from git, run:
 - Music room
 - Support for dynamic difficulty (rank)
 - Refactored base namespace to "Danmokou" (formerly "DMK")
+- Documentation and code improvements for reflection handling
 
 # v7.0.0 (2021/03/23)
 

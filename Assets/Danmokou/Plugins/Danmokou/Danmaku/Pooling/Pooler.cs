@@ -9,9 +9,11 @@ using Danmokou.DMath;
 using Danmokou.GameInstance;
 using Danmokou.Scenes;
 using Danmokou.Scriptables;
+using Danmokou.Services;
 using JetBrains.Annotations;
 using UnityEngine;
 using Object = UnityEngine.Object;
+using static Danmokou.Services.GameManagement;
 
 // ReSharper disable StaticMemberInGenericType
 
@@ -20,28 +22,10 @@ public static class Pooler<T> where T : Pooled<T> {
     //Note: these dicts are specific to each typing T. They are not shared between Pooler<ParticlePooled> and Pooler<BEH>.
     private static readonly Dictionary<GameObject, HashSet<T>> active = new Dictionary<GameObject, HashSet<T>>();
     private static readonly Dictionary<GameObject, Queue<T>> free = new Dictionary<GameObject, Queue<T>>();
-    private static Transform particleContainer = null!;
-    private static string typName = "";
 
-    //I don't use a static constructor since I need the delegates to be loaded immediately,
-    //but static constructors don't guarantee when they're run. 
-    public static void Prepare() {
-        typName = typeof(T).Name;
-        SceneIntermediary.RegisterSceneLoad(CreateParticleContainer);
-        SceneIntermediary.RegisterSceneUnload(OrphanAll);
-        Pooled<T>.Prepare(GetContainer);
-    }
-
-    private static Transform GetContainer() {
-        return particleContainer;
-    }
-
-    private static void CreateParticleContainer() {
-        GameObject go = new GameObject {
-            name = typName + " Pool Container"
-        };
-        particleContainer = go.transform;
-        particleContainer.position = Vector3.zero;
+    static Pooler() {
+        if (!Application.isPlaying) return;
+        SceneIntermediary.SceneUnloaded.Subscribe(OrphanAll);
     }
 
     public static T Request(GameObject prefab, out bool isNew) {
@@ -70,21 +54,9 @@ public static class Pooler<T> where T : Pooled<T> {
         active.Clear();
         free.Clear();
     }
-
-    public static void ForAllActive(Action<T> iter) {
-        foreach (var kv in active) {
-            foreach (var x in kv.Value) {
-                iter(x);
-            }
-        }
-    }
 }
 
 public static class ParticlePooler {
-    public static void Prepare() {
-        Pooler<ParticlePooled>.Prepare();
-    }
-
     public static ParticlePooled Request(GameObject prefab, Vector2 location) {
         ParticlePooled n = Pooler<ParticlePooled>.Request(prefab, out bool _);
         n.Initialize(location);
@@ -92,18 +64,11 @@ public static class ParticlePooler {
     }
 }
 public static class BEHPooler {
-    private static GameObject inodePrefab = null!;
-
-    public static void Prepare(GameObject inodePref) {
-        inodePrefab = inodePref;
-        Pooler<BehaviorEntity>.Prepare();
-    }
-
     public static BehaviorEntity RequestUninitialized(GameObject prefab, out bool isNew) =>
         Pooler<BehaviorEntity>.Request(prefab, out isNew);
 
     public static BehaviorEntity INode(Movement mov, ParametricInfo pi, Vector2 rotation, string behName) {
-        var beh = RequestUninitialized(inodePrefab, out _);
+        var beh = RequestUninitialized(Prefabs.inode, out _);
         beh.Initialize(mov, pi, SMRunner.Null, behName);
         beh.SetDirection(rotation);
         return beh;
@@ -111,15 +76,8 @@ public static class BEHPooler {
 }
 
 public static class GhostPooler {
-    private static GameObject ghostPrefab = null!;
-
-    public static void Prepare(GameObject ghost) {
-        ghostPrefab = ghost;
-        Pooler<CutinGhost>.Prepare();
-    }
-
     public static CutinGhost Request(Vector2 loc, Vector2 dir, Cutin.GhostConfig cfg) {
-        var cg = Pooler<CutinGhost>.Request(ghostPrefab, out _);
+        var cg = Pooler<CutinGhost>.Request(Prefabs.cutinGhost, out _);
         cg.Initialize(loc, dir, cfg);
         return cg;
     }
@@ -161,13 +119,7 @@ public readonly struct LabelRequestContext {
 }
 
 public static class ItemPooler {
-    private static ItemReferences items = null!;
-
-    public static void Prepare(ItemReferences itemRefs) {
-        items = itemRefs;
-        Pooler<Item>.Prepare();
-        Pooler<DropLabel>.Prepare();
-    }
+    private static ItemReferences items => References.items;
 
     private static Item Request(GameObject prefab, ItemRequestContext ctx) {
         var i = Pooler<Item>.Request(prefab, out _);

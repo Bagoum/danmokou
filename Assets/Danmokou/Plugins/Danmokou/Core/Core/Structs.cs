@@ -69,7 +69,7 @@ public struct FrameRunner {
         bool didUpdate = false;
         if (currFrameIndex >= currFrames.Length) {
             var srname = currFrames.Length > 0 ? currFrames[0].sprite.name : "";
-            Log.UnityError($"Ran past the end of a {currType} update loop with {currFrames.Length} frames. " +
+            Logs.UnityError($"Ran past the end of a {currType} update loop with {currFrames.Length} frames. " +
                            $"0th frame name: {srname} ");
         }
         while (currTime >= currFrames[currFrameIndex].time) {

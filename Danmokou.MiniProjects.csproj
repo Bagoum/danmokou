@@ -43,37 +43,22 @@
   </PropertyGroup>
   <ItemGroup>
      <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\AssemblyMarker.cs" />
-     <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\VN\Characters\MokouMimic.cs" />
      <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\VN\Objects\FleurDeLysMimic.cs" />
-     <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\VN\Characters\KosuzuMimic.cs" />
-     <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\VN\Characters\KurokomaMimic.cs" />
      <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\VNTestingScript1.cs" />
-     <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\VN\Characters\KaguyaMimic.cs" />
      <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\VN\Backgrounds\TownBGMimic.cs" />
-     <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\VN\Characters\YachieMimic.cs" />
-     <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\VN\Characters\KutakaMimic.cs" />
-     <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\VN\Characters\KomakusaMimic.cs" />
      <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\VN\Backgrounds\ShrineRoomBGMimic.cs" />
-     <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\VN\Characters\KasenMimic.cs" />
-     <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\VN\Characters\MarisaMimic.cs" />
-     <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\VN\Characters\YukariMimic.cs" />
      <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\VN\Backgrounds\LibraryBGMimic.cs" />
      <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\Lines\Generated\_StringRepository.cs" />
      <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\Lines\VNLines.cs" />
      <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\VN\Objects\YellowLilyMimic.cs" />
      <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\VN\Backgrounds\ShrineCourtyardBGMimic.cs" />
-     <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\VN\Characters\ReimuMimic.cs" />
      <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\VN\Backgrounds\FlowerBGMimic.cs" />
      <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\VN\Backgrounds\FarmBGMimic.cs" />
      <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\VN\Objects\YellowIrisMimic.cs" />
      <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\VNCrimsonVermilion.cs" />
-     <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\VN\Characters\YoumuMimic.cs" />
      <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\VNBasicScript1.cs" />
-     <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\VN\Characters\MikoMimic.cs" />
      <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\VN\Backgrounds\FieldBGMimic.cs" />
      <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\Lines\Generated\Sheet1.cs" />
-     <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\VN\Characters\MayumiMimic.cs" />
-     <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\VN\Characters\YuukaMimic.cs" />
      <None Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\Danmokou.MiniProjects.asmdef" />
      <Reference Include="UnityEngine">
      <HintPath>C:/Program Files/Unity/Hub/Editor/2020.3.16f1/Editor/Data/Managed/UnityEngine/UnityEngine.dll</HintPath>

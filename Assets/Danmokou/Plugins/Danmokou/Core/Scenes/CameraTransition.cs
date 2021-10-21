@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Graphics;
 using Danmokou.Scriptables;
@@ -9,8 +10,10 @@ using UnityEngine;
 using FT = Danmokou.Scriptables.CameraTransitionConfig.TransitionConfig.FixedType;
 
 namespace Danmokou.Scenes {
-public class CameraTransition : MonoBehaviour {
-    private static CameraTransition main = null!;
+public interface ICameraTransition {
+    void Fade(CameraTransitionConfig? cfg, out float waitIn, out float waitOut);
+}
+public class CameraTransition : RegularUpdater, ICameraTransition {
     private static CameraTransitionConfig? inherited;
 
     public CameraTransitionConfig defaultConfig = null!;
@@ -18,7 +21,6 @@ public class CameraTransition : MonoBehaviour {
     private SpriteRenderer sr = null!;
 
     private void Awake() {
-        main = this;
         pb = new MaterialPropertyBlock();
         sr = GetComponent<SpriteRenderer>();
         if (inherited != null) {
@@ -29,6 +31,13 @@ public class CameraTransition : MonoBehaviour {
         }
     }
 
+    protected override void BindListeners() {
+        base.BindListeners();
+        RegisterService<ICameraTransition>(this, new ServiceLocator.ServiceOptions { Unique = true });
+    }
+    
+    public override void RegularUpdate() { }
+
     private void Deactivate() {
         sr.enabled = false;
     }
@@ -37,11 +46,11 @@ public class CameraTransition : MonoBehaviour {
         sr.enabled = true;
     }
 
-    public static void Fade(CameraTransitionConfig? cfg, out float waitIn, out float waitOut) {
-        inherited = (cfg != null) ? cfg : main.defaultConfig;
+    public void Fade(CameraTransitionConfig? cfg, out float waitIn, out float waitOut) {
+        inherited = (cfg != null) ? cfg : defaultConfig;
         waitIn = inherited.fadeIn.time;
         waitOut = inherited.fadeOut.time;
-        main.StartCoroutine(main.FadeIn(inherited));
+        StartCoroutine(FadeIn(inherited));
     }
 
     private void SetReverse(Material mat, CameraTransitionConfig.TransitionConfig cfg) {

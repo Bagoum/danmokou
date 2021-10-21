@@ -17,7 +17,7 @@ using Newtonsoft.Json;
 using UnityEngine.UIElements;
 using UnityEngine;
 using UnityEngine.Scripting;
-using static Danmokou.Core.GameManagement;
+using static Danmokou.Services.GameManagement;
 using static Danmokou.UI.XML.XMLUtils;
 using static Danmokou.Core.LocalizedStrings.UI;
 
@@ -102,7 +102,7 @@ public class XMLMainMenuCampaign : XMLMainMenu {
                     sc.prefab.GetComponentsInChildren<FireOption>()
                         .ForEach(fo => fo.Preload());
             }
-            Player.PlayerController? demoPlayer = null;
+            PlayerController? demoPlayer = null;
             Cancellable? demoCT = null;
             OptionNodeLR<ShipConfig> playerSelect = null!;
             DynamicOptionNodeLR<ISupportAbilityConfig> supportSelect = null!;
@@ -116,7 +116,7 @@ public class XMLMainMenuCampaign : XMLMainMenu {
             var smeta = new SharedInstanceMetadata(team, new DifficultySettings(FixedDifficulty.Normal));
             
             void CleanupDemo() {
-                Log.Unity("Cleaning up demo");
+                Logs.Log("Cleaning up demo");
                 if (demoPlayer != null) {
                     demoPlayer.InvokeCull();
                     demoPlayer = null;

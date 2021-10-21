@@ -5,8 +5,10 @@ using Danmokou.Achievements;
 using Danmokou.Core;
 using Danmokou.DMath;
 using Danmokou.GameInstance;
+using Danmokou.Scenes;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
+using UnityEngine;
 using UnityEngine.SocialPlatforms;
 using static Danmokou.Core.InputManager;
 
@@ -111,7 +113,7 @@ public class ReplayRecorder : ReplayActor {
     }
 
     public Replay Compile(InstanceRecord rec, bool? debug = null) {
-        Log.Unity($"Finished recording {recording.Count} frames.");
+        Logs.Log($"Finished recording {recording.Count} frames.");
         return new Replay(recording.ToArray(), rec, debug);
     }
 }
@@ -136,27 +138,31 @@ public class ReplayPlayer : ReplayActor {
         if (ReplayIndex >= LoadedFrames.Length) {
             replaying.onFinish?.Invoke();
             if (replaying.finishMethod == Replayer.ReplayerConfig.FinishMethod.REPEAT) {
-                Log.Unity("Restarting replay.");
+                Logs.Log("Restarting replay.");
                 ResetState();
                 ReplayFrame(LoadedFrames[ReplayIndex]);
                 return;
             }
             Cancel();
             if (replaying.finishMethod != Replayer.ReplayerConfig.FinishMethod.STOP)
-                Log.UnityError($"Ran out of replay data. On frame {LastFrame}, requested index {ReplayIndex}, " +
+                Logs.UnityError($"Ran out of replay data. On frame {LastFrame}, requested index {ReplayIndex}, " +
                                $"but there are only {LoadedFrames.Length}.");
         } else
             ReplayFrame(LoadedFrames[ReplayIndex]);
     }
 
     public override void Cancel() {
-        Log.Unity($"Finished replaying {LastFrame - ReplayStartFrame + 1}/{LoadedFrames?.Length ?? 0} frames.");
+        Logs.Log($"Finished replaying {LastFrame - ReplayStartFrame + 1}/{LoadedFrames.Length} frames.");
         token.TryRevoke();
         base.Cancel();
     }
 }
 
 public static class Replayer {
+    static Replayer() {
+        if (!Application.isPlaying) return;
+        SceneIntermediary.SceneLoaded.Subscribe(LoadLazy);
+    }
     public enum ReplayStatus {
         RECORDING,
         REPLAYING,
@@ -196,7 +202,7 @@ public static class Replayer {
         }
         set {
             if (actor?.Cancelled == false) {
-                Log.UnityError($"Setting a new replay actor before the previous one {actor} is completed");
+                Logs.UnityError($"Setting a new replay actor before the previous one {actor} is completed");
                 actor.Cancel();
             }
             actor = value;
@@ -212,17 +218,17 @@ public static class Replayer {
     public static bool RequiresConsistency => Actor != null;
 
 
-    public static void LoadLazy() {
+    private static void LoadLazy() {
         Actor?.Load();
     }
 
     public static ReplayActor BeginRecording() {
-        Log.Unity("Replay recording started.");
+        Logs.Log("Replay recording started.");
         return Actor = new ReplayRecorder();
     }
 
     public static ReplayActor BeginReplaying(ReplayerConfig data) {
-        Log.Unity($"Replay playback started.");
+        Logs.Log($"Replay playback started.");
         return Actor = new ReplayPlayer(data);
     }
     public static void SaveDebugReplay() {
@@ -230,7 +236,7 @@ public static class Replayer {
             var r = rr.Compile(GameManagement.Instance.Request.MakeGameRecord(), true);
             r.metadata.Record.AssignName($"Debug{RNG.RandStringOffFrame()}");
             SaveData.p.SaveNewReplay(r);
-            Log.Unity($"Saved a debug replay {r.metadata.Record.CustomName}");
+            Logs.Log($"Saved a debug replay {r.metadata.Record.CustomName}");
         }
 
     }

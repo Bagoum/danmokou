@@ -15,7 +15,7 @@ using UnityEngine.UIElements;
 using UnityEngine;
 using UnityEngine.Scripting;
 using Object = UnityEngine.Object;
-using static Danmokou.Core.GameManagement;
+using static Danmokou.Services.GameManagement;
 
 namespace Danmokou.UI.XML {
 public enum QueuedEvent {
@@ -64,7 +64,7 @@ public abstract class XMLMenu : CoroutineRegularUpdater {
 
     protected void ConfirmCache() {
         if (tentativeReturnTo != null)
-            Log.Unity($"Caching menu position with indices " +
+            Logs.Log($"Caching menu position with indices " +
                       $"{string.Join(", ", tentativeReturnTo.Select(x => x.ToString()))}");
         ReturnTo = tentativeReturnTo;
     }

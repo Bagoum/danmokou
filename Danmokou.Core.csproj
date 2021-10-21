@@ -125,7 +125,7 @@
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\DMath\Math.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\Behavior\CoroutineRegularUpdater.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\DMath\MathTypes.cs" />
-     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\Scenes\SceneLoader.cs" />
+     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\Scenes\Types.cs" />
      <None Include="Assets\Danmokou\Plugins\Danmokou\Core\Danmokou.Core.asmdef" />
      <Reference Include="UnityEngine">
      <HintPath>C:/Program Files/Unity/Hub/Editor/2020.3.16f1/Editor/Data/Managed/UnityEngine/UnityEngine.dll</HintPath>

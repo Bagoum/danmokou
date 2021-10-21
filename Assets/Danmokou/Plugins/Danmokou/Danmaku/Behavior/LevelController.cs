@@ -42,10 +42,10 @@ public class LevelController : BehaviorEntity {
 #if UNITY_EDITOR
         if (SceneIntermediary.IsFirstScene) {
             if (wip_stage != null) {
-                Log.Unity("Running default stage under editor first-scene conditions");
+                Logs.Log("Running default stage under editor first-scene conditions");
                 behaviorScript = wip_stage.stateMachine;
             } else if (behaviorScript != null) {
-                Log.Unity("Running default level script under editor first-scene conditions");
+                Logs.Log("Running default level script under editor first-scene conditions");
             }
         } else
             behaviorScript = null;
@@ -57,7 +57,7 @@ public class LevelController : BehaviorEntity {
 
     protected override void BindListeners() {
         base.BindListeners();
-        RegisterDI(this);
+        RegisterService(this, new ServiceLocator.ServiceOptions { Unique = true });
     }
 
     protected override void OnDisable() {

@@ -255,7 +255,7 @@ public class AyaCamera : BehaviorEntity {
         var success = TakePicture_Enemies(scale);
         viewfinderSR.enabled = false;
         text.enabled = false;
-        var photo = MainCamera.main.RequestAyaPhoto(ViewfinderRect(scale));
+        var photo = ServiceLocator.Find<IScreenshotter>().AyaScreenshot(ViewfinderRect(scale));
         var pphoto = GameObject.Instantiate(pinnedPhotoPrefab).GetComponent<AyaPinnedPhoto>();
         PhotoTaken.OnNext((photo, success));
         if (success) {

@@ -92,7 +92,7 @@ public abstract class TiledRender {
 #if UNITY_EDITOR
     [ContextMenu("Get Sorting ID")]
     public void sortId() {
-        Log.Unity(render.sortingOrder.ToString(), level: LogLevel.INFO);
+        Logs.Log(render.sortingOrder.ToString(), level: LogLevel.INFO);
     }
 #endif
 

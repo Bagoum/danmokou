@@ -1,26 +1,68 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using BagoumLib;
-using BagoumLib.Cancellation;
-using BagoumLib.Functional;
 using Danmokou.Core;
 using Danmokou.Danmaku;
-using Danmokou.Dialogue;
-using Danmokou.DMath;
 using Danmokou.VN;
-using JetBrains.Annotations;
-using ParserCS;
+using Suzunoya;
 using SuzunoyaUnity;
-using static ParserCS.AAParser;
-using static ParserCS.Common;
-using DUContents = Danmokou.Core.DU<float, string, Danmokou.Dialogue.Dialoguer.EventType>;
-using static BagoumLib.Tasks.WaitingUtils;
+using SuzunoyaUnity.Derived;
+using UnityEngine;
+using Vector2 = System.Numerics.Vector2;
+using Vector3 = System.Numerics.Vector3;
 
 namespace Danmokou.SM {
 [Reflect]
 public static class TSMReflection {
+    
+    public enum StandLocation {
+        LEFT1,
+        LEFT2,
+        RIGHT1,
+        RIGHT2,
+        CENTER
+    }
     private static DMKVNState VN => (DMKVNState)ServiceLocator.Find<IVNWrapper>().TrackedVNs.First().vn;
+    private static readonly Dictionary<string, Type> characterTypeMap = new Dictionary<string, Type>();
+    
+    //I don't like putting state here, but it's for backwards compatibility, so whatever
+    private static SZYUCharacter? left;
+    private static SZYUCharacter? right;
+    private static SZYUCharacter? lastSpeaker;
+    private static readonly Dictionary<StandLocation, SZYUCharacter> characters = new Dictionary<StandLocation, SZYUCharacter>();
+    private static Vector2 GetLocation(StandLocation loc) => loc switch {
+        StandLocation.LEFT1 => new Vector2(-5, 0),
+        StandLocation.LEFT2 => new Vector2(-2.8f, 0),
+        StandLocation.RIGHT1 => new Vector2(3, 0),
+        StandLocation.RIGHT2 => new Vector2(0.8f, 0),
+        StandLocation.CENTER => Vector2.Zero,
+        _ => throw new ArgumentOutOfRangeException(nameof(loc), loc, null)
+    };
+
+    static TSMReflection() {
+        if (!Application.isPlaying) return;
+        var ns = typeof(Reimu).Namespace;
+        foreach (var t in typeof(Reimu).Assembly.GetTypes()
+            .Where(t => t.Namespace == ns && t.IsSubclassOf(typeof(SZYUCharacter))))
+            characterTypeMap[t.Name.ToLower()] = t;
+    }
+
+    private static Type GetCharacterType(string name) {
+        name = name.ToLower();
+        if (!characterTypeMap.ContainsKey(name))
+            throw new Exception($"No backwards-compatible character definition for {name}");
+        return characterTypeMap[name];
+    }
+
+    private static SZYUCharacter CreateCharacter(string name) => 
+        VN.Add((Activator.CreateInstance(GetCharacterType(name)) as SZYUCharacter) ?? 
+               throw new Exception($"Character {name} couldn't be typecast SZYUCharacter"));
+
+    private static SZYUCharacter FindOrCreateCharacter(string name) =>
+        (SZYUCharacter?) VN.FindEntity(GetCharacterType(name)) ?? CreateCharacter(name);
+
     public static TTaskPattern Re(StateMachine sm) => sm.Start;
     public static TTaskPattern Wait(Synchronizer synchr) {
         var tp = SMReflection.Wait(synchr);
@@ -28,72 +70,38 @@ public static class TSMReflection {
     }
 
     [Alias("z")]
-    public static TTaskPattern Confirm() => async smh => {
-        Dialoguer.WaitingOnConfirm = true;
-        smh.RunRIEnumerator(WaitingUtils.WaitForDialogueConfirm(smh.cT, GetAwaiter(out Task t)));
-        await t;
-        Dialoguer.WaitingOnConfirm = false;
-    };
+    public static TTaskPattern Confirm() => smh => VN.SpinUntilConfirm().Task;
     
-    public static TTaskPattern Place(Dialoguer.StandLocation location, string profile_key) {
-        var profile = Dialoguer.GetProfile(profile_key);
+    public static TTaskPattern Place(StandLocation location, string profile_key) {
         return smh => {
-            Dialoguer.SetStand(profile, location, Emote.NORMAL);
+            var chr = FindOrCreateCharacter(profile_key);
+            chr.Location.BaseValue = new Vector3(GetLocation(location), 0);
+            if (characters.TryGetValue(location, out var existing) && existing != chr)
+                existing.Delete();
+            characters[location] = chr;
+            if (chr.Alpha < 1)
+                _ = chr.FadeTo(1, 0.5f).Task;
             return Task.CompletedTask;
         };
     }
 
-    private static TTaskPattern FadeStand(string profile_key, float time, bool fadeIn) {
-        var profile = Dialoguer.GetProfile(profile_key);
-        return smh => {
-            Dialoguer.FadeStand(profile, time, fadeIn, smh.cT, GetAwaiter(out Task t));
-            return t;
-        };
-    }
+    private static TTaskPattern FadeStand(string profile_key, float time, bool fadeIn) => smh => {
+        var chr = (SZYUCharacter?) VN.FindEntity(GetCharacterType(profile_key))!;
+        return chr.FadeTo(fadeIn ? 1 : 0, time).Task;
+    };
 
     public static TTaskPattern SetStandOpacity(string profile_key, float opacity) => smh => {
-        Dialoguer.SetOpacity(Dialoguer.GetProfile(profile_key), opacity);
+        var chr = (SZYUCharacter?) VN.FindEntity(GetCharacterType(profile_key))!;
+        chr.Alpha = opacity;
         return Task.CompletedTask;
     };
     public static TTaskPattern FadeStandIn(string profile_key, float time) => FadeStand(profile_key, time, true);
     public static TTaskPattern FadeStandOut(string profile_key, float time) => FadeStand(profile_key, time, false);
 
-    private static readonly Func<Config<DialogueObject>, string, Errorable<TextCommand<DialogueObject>[]>>
-        parser = CreateCommandParser((key, arg) => {
-            return key.ToLower() switch {
-                "w" => Parser.MaybeFloat(arg).Try(out var wait) ?
-                    DialogueObject.Wait(wait) :
-                    Errorable<DialogueObject>.Fail($"Couldn't parse waiting time {arg}"),
-                "sfx" => DialogueObject.SFX(arg),
-                _ => Errorable<DialogueObject>.Fail($"No dialogue command exists by key {key}")
-            };
-        });
-    private static readonly DialogueObject RollSFX = DialogueObject.Event(Dialoguer.EventType.SPEAKER_SFX);
-    private static readonly Maybe<DialogueObject> DONull = Maybe<DialogueObject>.None;
-    private static int DefaultCharsPerBlock => SaveData.s.Locale == Locales.JP ? 5 : 8;
-
-    private static TTaskPattern _Text(string text, bool continued) {
-        //method 1: sound on spaces (ie words)
-        //var cfg = new C(12, 1, 0.3, F<Punct, double>(p => p.Resolve(0.35, 2.5, 3.5, 4.5, 5.0)), noAR, F<Punct, QAR>(p => p.Resolve(rollSfx,noAR,noAR,noAR, rollSfx)));
-        //method 2: sound on char blocks
-        var cfg = new Config<DialogueObject>() {
-            speed = 36,
-            charsPerBlock = DefaultCharsPerBlock,
-            blockOps = 3,
-            punctOps = p => p.Switch(0f, 3.0f, 4.0f, 5.0f, 7.0f),
-            blockEvent = Maybe<DialogueObject>.Of(RollSFX),
-            punctEvent = p => p.Switch(DONull, DONull, DONull, DONull, RollSFX)
-        };
-        var textCmds = parser(cfg, text).GetOrThrow;
-        return async smh => {
-            var cts = new Cancellable();
-            var joint = new JointCancellee(cts, smh.cT);
-            Dialoguer.RunDialogue(textCmds, joint, GetAwaiter(out Func<bool> isDone), continued);
-            smh.RunRIEnumerator(WaitingUtils.WaitWhileWithCancellable(isDone, cts, () => InputManager.DialogueToEnd,
-                joint, GetAwaiter(out Task t), ETime.FRAME_TIME * 10f));
-            await t;
-        };
-    }
+    private static TTaskPattern _Text(string text, bool continued) =>
+        smh => continued ? 
+            lastSpeaker!.AlsoSay(text).Task : 
+            lastSpeaker!.Say(text).Task;
 
     [Alias(".")]
     public static TTaskPattern Text(string text) => _Text(text, false);
@@ -107,11 +115,26 @@ public static class TSMReflection {
         await Confirm()(smh);
     };
 
+    private static string EmoteToString(Emote e) => e switch {
+        Emote.NORMAL => "",
+        Emote.HAPPY => "happy",
+        Emote.ANGRY => "angry",
+        Emote.WORRY => "worry",
+        Emote.CRY => "cry",
+        Emote.SURPRISE => "surprise",
+        Emote.SPECIAL => "smug",
+        _ => throw new ArgumentOutOfRangeException(nameof(e), e, null)
+    };
+
     private static TTaskPattern _Speak(LR lr, string? profile_key, Emote? emote) {
-        var profile = profile_key == null ? null : Dialoguer.GetProfile(profile_key);
         return smh => {
-            if (lr == LR.LEFT) Dialoguer.SetLeftSpeaker(profile, emote);
-            else Dialoguer.SetRightSpeaker(profile, emote);
+            var chr = profile_key == null ? null : FindOrCreateCharacter(profile_key);
+            if (lr == LR.LEFT)
+                lastSpeaker = (left = chr ?? left) ?? throw new Exception("No left speaker set");
+            else
+                lastSpeaker = (right = chr ?? right) ?? throw new Exception("No right speaker set");
+            if (emote.Try(out var e))
+                lastSpeaker!.Emote.Value = EmoteToString(e);
             return Task.CompletedTask;
         };
     }
@@ -134,9 +157,8 @@ public static class TSMReflection {
     public static TTaskPattern SpeakRCE(Emote e) => _Speak(LR.RIGHT, null, e);
     
     public static TTaskPattern SetEmote(string profile, Emote e) {
-        var p = Dialoguer.GetProfile(profile);
         return smh => {
-            Dialoguer.UpdateStandEmote(p, e);
+            FindOrCreateCharacter(profile).Emote.Value = EmoteToString(e);
             return Task.CompletedTask;
         };
     }

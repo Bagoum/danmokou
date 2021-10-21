@@ -13,6 +13,11 @@ public class DMKVNState : UnityVNState {
     public readonly string id;
     public DMKVNState(ICancellee extCToken, string id, InstanceData? save = null) : base(extCToken, save) {
         this.id = id;
+        if (Replayer.RequiresConsistency) {
+            AutoplayFastforwardAllowed = false;
+            ClickConfirmAllowed = false;
+        }
+        AllowFullSkip = GameManagement.Instance.Request?.lowerRequest.Campaign.AllowDialogueSkip ?? false;
     }
 
     public LazyAction lSFX(string? sfx) => new LazyAction(aSFX(sfx));

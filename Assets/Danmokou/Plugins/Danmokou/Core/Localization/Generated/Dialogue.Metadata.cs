@@ -72,7 +72,7 @@ public static partial class LocalizedStrings {
 			{ ID = "dialogue.sagume" };
 		
 		public static readonly LString kurokoma = new LString("Kurokoma Saki",
-			(Locales.JP, "驪駒 早鬼"))
+			(Locales.JP, "驪駒早鬼"))
 			{ ID = "dialogue.kurokoma" };
 		
 		public static readonly LString tokiko = new LString("Tokiko",
@@ -98,6 +98,38 @@ public static partial class LocalizedStrings {
 		public static readonly LString yuuka = new LString("Kazami Yuuka",
 			(Locales.JP, "風見幽香"))
 			{ ID = "dialogue.yuuka" };
+		
+		public static readonly LString komakusa = new LString("Komakusa Sannyo",
+			(Locales.JP, "駒草山如"))
+			{ ID = "dialogue.komakusa" };
+		
+		public static readonly LString kosuzu = new LString("Motoori Kosuzu",
+			(Locales.JP, "本居小鈴"))
+			{ ID = "dialogue.kosuzu" };
+		
+		public static readonly LString kutaka = new LString("Niwatari Kutaka",
+			(Locales.JP, "庭渡久侘歌"))
+			{ ID = "dialogue.kutaka" };
+		
+		public static readonly LString marisa = new LString("Kirisame Marisa",
+			(Locales.JP, "霧雨魔理沙"))
+			{ ID = "dialogue.marisa" };
+		
+		public static readonly LString mayumi = new LString("Joutouguu Mayumi",
+			(Locales.JP, "杖刀偶磨弓"))
+			{ ID = "dialogue.mayumi" };
+		
+		public static readonly LString miko = new LString("Toyosatomimi no Miko",
+			(Locales.JP, "豊聡耳神子"))
+			{ ID = "dialogue.miko" };
+		
+		public static readonly LString yachie = new LString("Kicchou Yachie",
+			(Locales.JP, "吉弔八千慧"))
+			{ ID = "dialogue.yachie" };
+		
+		public static readonly LString youmu = new LString("Konpaku Youmu",
+			(Locales.JP, "魂魄妖夢"))
+			{ ID = "dialogue.youmu" };
 		
 	}
 }

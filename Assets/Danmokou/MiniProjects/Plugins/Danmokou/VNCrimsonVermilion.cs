@@ -25,8 +25,17 @@ using Vector3 = System.Numerics.Vector3;
 
 namespace MiniProjects.VN {
 
+//The reflect attribute allows the public static function VNScriptCrimsonVermilion1 to get picked up
+// by the reflector, so it can be called in script code by the command `executeVN VNScriptCrimsonVermilion1 cv1`.
 [Reflect]
 public static class _VNCrimsonVermilion {
+    public static async Task VNScriptCrimsonVermilion1(DMKVNState vn) {
+#if UNITY_EDITOR
+        // if (vn.LoadTo is null)
+        //     vn.LoadToLocation(new VNLocation("l385", new List<string>() {"TOP", "SHRINE2"}));
+#endif
+        await _TopLevel(vn).Execute();
+    }
 
     //In the general case, you probably don't want many shared objects--
     //probably limit it to the VN, the primary render groups, and maybe a dialogue box.
@@ -38,8 +47,8 @@ public static class _VNCrimsonVermilion {
         public Marisa marisa;
         public UnityRenderGroup rg;
         public UnityRenderGroup rgb;
-        public ADVDialogueBox md;
-        public ADVDialogueBox db;
+        public ADVDialogueBox mainDialogue;
+        public ADVDialogueBox blackScreenDialogue;
         public AudioSource footstep = null!;
         public DMKVNState.RunningAudioTrackProxy bgm = null!;
 #pragma warning restore 8618
@@ -59,13 +68,13 @@ public static class _VNCrimsonVermilion {
                 rg = (UnityRenderGroup) vn.DefaultRenderGroup,
                 rgb = new UnityRenderGroup(vn, "black", 1, false),
                 footstep = null!,
-                md = vn.Add(new ADVDialogueBox()),
-                db = vn.Add(new ADVDialogueBox()), 
+                mainDialogue = vn.Add(new ADVDialogueBox()),
+                blackScreenDialogue = vn.Add(new ADVDialogueBox()), 
                 reimu = vn.Add(new Reimu()),
                 marisa = vn.Add(new Marisa()),
             };
-            o.db.Alpha = 1;
-            o.db.RenderGroup.Value = o.rgb;
+            o.blackScreenDialogue.Alpha = 1;
+            o.blackScreenDialogue.RenderGroup.Value = o.rgb;
             await _AtShrine(o).Execute();
             await _AtTown(o).Execute();
             await _AtOutskirts(o).Execute();
@@ -86,8 +95,8 @@ public static class _VNCrimsonVermilion {
             //aliasing
             var reimu = o.reimu;
             var marisa = o.marisa;
-            var md = o.md;
-            var db = o.db;
+            var md = o.mainDialogue;
+            var db = o.blackScreenDialogue;
             
             //code
             reimu.Location.Value = V3(0, -7);
@@ -236,7 +245,7 @@ public static class _VNCrimsonVermilion {
             );
             return default;
         }, () => {
-            o.md.Alpha = 1;
+            o.mainDialogue.Alpha = 1;
             o.reimu.Alpha = 1;
             o.marisa.Alpha = 1;
         });
@@ -255,8 +264,8 @@ public static class _VNCrimsonVermilion {
             //aliasing
             var reimu = o.reimu;
             var marisa = o.marisa;
-            var md = o.md;
-            var db = o.db;
+            var md = o.mainDialogue;
+            var db = o.blackScreenDialogue;
 
             //code
             await vn.Sequential(
@@ -431,8 +440,8 @@ public static class _VNCrimsonVermilion {
             //aliasing
             var reimu = o.reimu;
             var marisa = o.marisa;
-            var md = o.md;
-            var db = o.db;
+            var md = o.mainDialogue;
+            var db = o.blackScreenDialogue;
             
             await vn.Sequential(Lazy(() => {
                     field.Alpha = 1;
@@ -686,8 +695,8 @@ public static class _VNCrimsonVermilion {
             //aliasing
             var reimu = o.reimu;
             var marisa = o.marisa;
-            var md = o.md;
-            var db = o.db;
+            var md = o.mainDialogue;
+            var db = o.blackScreenDialogue;
 
             await vn.Sequential(
                 Lazy(() => {
@@ -908,8 +917,8 @@ public static class _VNCrimsonVermilion {
             //aliasing
             var reimu = o.reimu;
             var marisa = o.marisa;
-            var md = o.md;
-            var db = o.db;
+            var md = o.mainDialogue;
+            var db = o.blackScreenDialogue;
 
             await vn.Sequential(
                 Lazy(() => {
@@ -1010,12 +1019,5 @@ public static class _VNCrimsonVermilion {
             return default;
         });
 
-    public static async Task VNScriptCrimsonVermilion1(DMKVNState vn) {
-#if UNITY_EDITOR
-       // if (vn.LoadTo is null)
-       //     vn.LoadToLocation(new VNLocation("l385", new List<string>() {"TOP", "SHRINE2"}));
-#endif
-        await _TopLevel(vn).Execute();
-    }
 }
 }

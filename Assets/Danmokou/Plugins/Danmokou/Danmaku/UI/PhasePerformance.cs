@@ -22,9 +22,9 @@ public class PhasePerformance : PiecewiseAppear {
     public PhasePerformanceStar[] stars = null!;
     public override Bounds Bounds => background.sprite.bounds.MulBy(background.transform.lossyScale);
     public override Vector2 Center => background.transform.position;
-    public override (Texture, bool) Texture => (MainCamera.main.RequestPhotoTex(
+    public override (Texture, bool) Texture => (ServiceLocator.Find<IScreenshotter>().Screenshot(
         new CRect(background.transform, background.sprite.bounds),
-        new[] {MainCamera.CameraType.UI}), true);
+        new[] {MainCamera.CamType.UI}), true);
 
     public void Initialize(string description, PhaseCompletion pc) {
         if (pc.props.Boss == null || pc.CaptureStars == null) {

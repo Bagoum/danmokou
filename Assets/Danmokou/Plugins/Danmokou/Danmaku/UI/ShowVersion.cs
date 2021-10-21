@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
-using static Danmokou.Core.GameManagement;
+using static Danmokou.Services.GameManagement;
 
 namespace Danmokou.UI {
 public class ShowVersion : MonoBehaviour {

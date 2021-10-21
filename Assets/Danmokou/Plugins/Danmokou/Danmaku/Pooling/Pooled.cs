@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Danmokou.Behavior;
+using Danmokou.Scenes;
 using JetBrains.Annotations;
 using UnityEngine;
 
@@ -88,16 +89,29 @@ public abstract class Pooled : CoroutineRegularUpdater {
 /// <typeparam name="P"></typeparam>
 public abstract class Pooled<P> : Pooled where P : class {
     // ReSharper disable once StaticMemberInGenericType
-    private static Func<Transform> container_ref = null!;
-    protected override Transform Container => container_ref();
+    private static Transform container = null!;
+    protected override Transform Container {
+        get {
+            if (container == null) {
+                SceneIntermediary.SceneLoaded.Subscribe(CreateParticleContainer);
+                //The event or may not run immediately on load, depending on when the static constructor runs
+                if (container == null)
+                    CreateParticleContainer();
+            }
+            return container!;
+        }
+    }
     private HashSet<P> active_ref = null!;
     private Queue<P> free_ref = null!;
     private P self_ref = null!;
-
     public virtual bool ShowUnderContainer => true;
 
-    public static void Prepare(Func<Transform> container) {
-        container_ref = container;
+    private static void CreateParticleContainer() {
+        GameObject go = new GameObject {
+            name = $"{typeof(P).Name} Pool Container"
+        };
+        container = go.transform;
+        container.position = Vector3.zero;
     }
 
     public void SetPooled(HashSet<P> active, Queue<P> free, P self) {
@@ -105,7 +119,7 @@ public abstract class Pooled<P> : Pooled where P : class {
         free_ref = free;
         isPooled = true;
         self_ref = self;
-        tr.SetParent(ShowUnderContainer ? container_ref() : null);
+        tr.SetParent(ShowUnderContainer ? Container : null);
     }
 
     protected override void PooledDone() {

@@ -20,22 +20,22 @@ namespace Danmokou.GameInstance {
 public class InstanceData {
     #region StaticEvents
     
-    public static readonly Events.Event0 UselessPowerupCollected = new Events.Event0();
-    public static readonly Events.Event0 TeamUpdated = new Events.Event0();
-    public static readonly Events.Event0 PlayerTookHit = new Events.Event0();
-    public static readonly IBSubject<CardRecord> CardHistoryUpdated = new Event<CardRecord>();
-    public static readonly Events.Event0 MeterBecameUsable = new Events.Event0();
-    public static readonly Events.Event0 PowerLost = new Events.Event0();
-    public static readonly Events.Event0 PowerGained = new Events.Event0();
-    public static readonly Events.Event0 PowerFull = new Events.Event0();
-    public static readonly Events.Event0 AnyExtendAcquired = new Events.Event0();
-    public static readonly Events.Event0 ItemExtendAcquired = new Events.Event0();
-    public static readonly Events.Event0 ScoreExtendAcquired = new Events.Event0();
-    public static readonly IBSubject<PhaseCompletion> PhaseCompleted = new Event<PhaseCompletion>();
-    public static readonly Events.Event0 LifeSwappedForScore = new Events.Event0();
+    public readonly Events.Event0 UselessPowerupCollected = new Events.Event0();
+    public readonly Events.Event0 TeamUpdated = new Events.Event0();
+    public readonly Events.Event0 PlayerTookHit = new Events.Event0();
+    public readonly Event<CardRecord> CardHistoryUpdated = new Event<CardRecord>();
+    public readonly Events.Event0 MeterBecameUsable = new Events.Event0();
+    public readonly Events.Event0 PowerLost = new Events.Event0();
+    public readonly Events.Event0 PowerGained = new Events.Event0();
+    public readonly Events.Event0 PowerFull = new Events.Event0();
+    public readonly Events.Event0 AnyExtendAcquired = new Events.Event0();
+    public readonly Events.Event0 ItemExtendAcquired = new Events.Event0();
+    public readonly Events.Event0 ScoreExtendAcquired = new Events.Event0();
+    public readonly Event<PhaseCompletion> PhaseCompleted = new Event<PhaseCompletion>();
+    public readonly Events.Event0 LifeSwappedForScore = new Events.Event0();
 
-    public static readonly Events.Event0 GameOver = new Events.Event0();
-    public static readonly Events.Event0 PracticeSuccess = new Events.Event0();
+    public readonly Events.Event0 GameOver = new Events.Event0();
+    public readonly Events.Event0 PracticeSuccess = new Events.Event0();
     
     #endregion
     
@@ -133,29 +133,12 @@ public class InstanceData {
 
     #region UILerpers
 
-    //The reason for the static duplication is that the variables are instanced, but the events are static.
-    // It's regrettable but I'm not exactly sure how to resolve it.
-    public static readonly IBSubject<long> sMaxScore = new Evented<long>(0);
-    public static readonly IBSubject<long> sScore = new Evented<long>(0);
-    public static readonly IBSubject<long> sGraze = new Evented<long>(0);
-    public static readonly IBSubject<int> sLives = new Evented<int>(0);
-    public static readonly IBSubject<int> sLifeItems = new Evented<int>(0);
-    public static readonly IBSubject<int> sBombs = new Evented<int>(0);
-    public static readonly IBSubject<double> sPower = new Evented<double>(0);
-    public static readonly IBSubject<double> sPIV = new Evented<double>(0);
-    
-    private readonly Lerpifier<long> VisibleScore;
-    private readonly Lerpifier<float> VisibleMeter;
-    private readonly Lerpifier<float> VisibleFaith;
-    private readonly Lerpifier<float> VisibleFaithLenience;
-    private readonly Lerpifier<float> VisibleRankPointFill;
-    public static readonly Evented<long> sVisibleScore = new Evented<long>(0);
-    public static readonly Evented<float> sVisibleMeter = new Evented<float>(0);
-    public static readonly Evented<float> sVisibleFaith = new Evented<float>(0);
-    public static readonly Evented<float> sVisibleFaithLenience = new Evented<float>(0);
-    public static readonly Evented<float> sVisibleRankPointFill = new Evented<float>(0);
+    public readonly Lerpifier<long> VisibleScore;
+    public readonly Lerpifier<float> VisibleMeter;
+    public readonly Lerpifier<float> VisibleFaith;
+    public readonly Lerpifier<float> VisibleFaithLenience;
+    public readonly Lerpifier<float> VisibleRankPointFill;
 
-    private readonly List<IDisposable> Tokens = new List<IDisposable>();
     #endregion
     
     public InstanceData(InstanceMode mode, InstanceRequest? req, long? maxScore, ReplayActor? replay) {
@@ -171,27 +154,19 @@ public class InstanceData {
         this.RankLevel = Difficulty.customRank ?? Difficulty.ApproximateStandard.DefaultRank();
         this.RankPoints = RankManager.DefaultRankPointsForLevel(RankLevel);
         campaign = req?.lowerRequest is CampaignRequest cr ? cr.campaign.campaign : null;
-        campaignKey = req?.lowerRequest.CampaignKey ?? "null_campaign";
+        campaignKey = req?.lowerRequest.Campaign.Key ?? "null_campaign";
         TeamCfg = req?.metadata.team != null ? new ActiveTeamConfig(req.metadata.team) : null;
         var dfltLives = campaign != null ?
             (campaign.startLives > 0 ? campaign.startLives : StartLives(mode)) :
             StartLives(mode);
         MaxScore = new Evented<long>(maxScore ?? 9001);
-        Tokens.Add(MaxScore.Subscribe(sMaxScore.OnNext));
         Score = new Evented<long>(0);
-        Tokens.Add(Score.Subscribe(sScore.OnNext));
         Lives = new Evented<int>(Difficulty.startingLives ?? dfltLives);
-        Tokens.Add(Lives.Subscribe(sLives.OnNext));
         Bombs = new Evented<int>(StartBombs(mode));
-        Tokens.Add(Bombs.Subscribe(sBombs.OnNext));
         Power = new Evented<double>(StartPower(mode));
-        Tokens.Add(Power.Subscribe(sPower.OnNext));
         PIV = new Evented<double>(1);
-        Tokens.Add(PIV.Subscribe(sPIV.OnNext));
         LifeItems = new Evented<int>(0);
-        Tokens.Add(LifeItems.Subscribe(sLifeItems.OnNext));
         Graze = new Evented<long>(0);
-        Tokens.Add(Graze.Subscribe(sGraze.OnNext));
         CardHistory = new CardHistory();
         Meter = StartMeter(mode);
         nextScoreLifeIndex = 0;
@@ -205,19 +180,14 @@ public class InstanceData {
         
         VisibleScore = new Lerpifier<long>((a, b, t) => (long)M.Lerp(a, b, (double)M.EOutSine(t)), 
             () => Score, 1.3f);
-        Tokens.Add(VisibleScore.Subscribe(sVisibleScore.OnNext));
         VisibleMeter = new Lerpifier<float>((a, b, t) => M.Lerp(a, b, M.EOutPow(t, 3f)), 
             () => (float)Meter, 0.2f);
-        Tokens.Add(VisibleMeter.Subscribe(sVisibleMeter.OnNext));
         VisibleFaith = new Lerpifier<float>((a, b, t) => M.Lerp(a, b, M.EOutPow(t, 4f)), 
             () => (float)Faith, 0.2f);
-        Tokens.Add(VisibleFaith.Subscribe(sVisibleFaith.OnNext));
         VisibleFaithLenience = new Lerpifier<float>((a, b, t) => M.Lerp(a, b, M.EOutPow(t, 3f)), 
             () => (float)Math.Min(1, faithLenience / 3), 0.2f);
-        Tokens.Add(VisibleFaithLenience.Subscribe(sVisibleFaithLenience.OnNext));
         VisibleRankPointFill = new Lerpifier<float>((a, b, t) => M.Lerp(a, b, M.EOutPow(t, 2f)),
             () => (float) (RankPoints / RankPointsRequired), 0.3f);
-        Tokens.Add(VisibleRankPointFill.Subscribe(sVisibleRankPointFill.OnNext));
     }
 
     public bool TryContinue() {
@@ -273,7 +243,7 @@ public class InstanceData {
     }
     public void AddLives(int delta, bool asHit = true) {
         //if (mode == CampaignMode.NULL) return;
-        Log.Unity($"Adding player lives: {delta}");
+        Logs.Log($"Adding player lives: {delta}");
         if (delta < 0 && asHit) {
             ++HitsTaken;
             LastTookHitFrame = ETime.FrameNumber;
@@ -518,7 +488,7 @@ public class InstanceData {
         }
     }
 
-    public void DestroyNormalEnemy() {
+    public void NormalEnemyDestroyed() {
         ++EnemiesDestroyed;
         AddFaithLenience(faithLenienceEnemyDestroy);
     }
@@ -556,12 +526,11 @@ public class InstanceData {
         if (CurrentBossCT != null) {
             CurrentBoss = null;
             CurrentBossCT = null;
-        } else Log.UnityError("You tried to close a boss section when no boss exists.");
+        } else Logs.UnityError("You tried to close a boss section when no boss exists.");
     }
 
     public void Dispose() {
-        foreach (var t in Tokens)
-            t.Dispose();
+        //
     }
     
 #if UNITY_EDITOR

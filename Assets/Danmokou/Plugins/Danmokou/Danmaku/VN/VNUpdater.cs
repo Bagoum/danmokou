@@ -14,11 +14,14 @@ public class VNUpdater : RegularUpdater {
     }
 
     protected override void BindListeners() {
-        RegisterDI<IVNWrapper>(wrapper);
+        RegisterService<IVNWrapper>(wrapper);
     }
 
     public override void RegularUpdate() {
-        wrapper.DoUpdate(ETime.FRAME_TIME, InputManager.DialogueConfirm, InputManager.DialogueToEnd);
+        wrapper.DoUpdate(ETime.FRAME_TIME, 
+            InputManager.DialogueConfirm, 
+            InputManager.DialogueToEnd, 
+            InputManager.DialogueSkipAll);
     }
 }
 }

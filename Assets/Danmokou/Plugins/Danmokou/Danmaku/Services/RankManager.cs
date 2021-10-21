@@ -6,7 +6,7 @@ using Danmokou.DMath;
 using Danmokou.GameInstance;
 using Danmokou.Player;
 using UnityEngine;
-using static Danmokou.Core.GameManagement;
+using static Danmokou.Services.GameManagement;
 
 namespace Danmokou.Services {
 public class RankManager : RegularUpdater {
@@ -50,7 +50,7 @@ public class RankManager : RegularUpdater {
         base.BindListeners();
         Listen(Item.ItemCollected, _ => Instance.AddRankPoints(RankPointsCollectItem));
         Listen(Item.ItemCulled, _ => Instance.AddRankPoints(RankPointsMissedItem));
-        Listen(PlayerBombs.BombFired, _ => Instance.AddRankPoints(RankManager.RankPointsBomb));
+        Listen(PlayerBombs.BombFired, _ => Instance.AddRankPoints(RankPointsBomb));
     }
 
     public override void RegularUpdate() {

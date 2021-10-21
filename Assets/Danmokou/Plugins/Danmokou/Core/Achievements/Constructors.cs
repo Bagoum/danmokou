@@ -10,10 +10,13 @@ public class AchievementManager {
     // requirements shared between achievements are created once for each such achievement.
     // Requirement duplication is more convenient from the perspective of defining requirements in RequirementsRepo.
     public Achievement[] Achievements { get; }
+    
+    //Prefer completed achievements, and then order by the original ordering
     public IEnumerable<Achievement> SortedAchievements =>
-        Achievements.Where(a => a.State == State.Completed)
-            .Concat(Achievements.Where(a => a.State == State.InProgress))
-            .Concat(Achievements.Where(a => a.State == State.Locked));
+        Achievements
+            .Select((x, i) => (x, i))
+            .OrderByDescending(((Achievement a, int ind) x) => (x.a.State, -x.ind))
+            .Select(x => x.Item1);
     private Dictionary<string, Achievement> AchievementsByKey { get; } = new Dictionary<string, Achievement>();
     public Achievement FindByKey(string key) => AchievementsByKey[key];
 

@@ -3,8 +3,11 @@ using System.Threading.Tasks;
 using BagoumLib.Tasks;
 using Danmokou.Core;
 using Danmokou.Dialogue;
+using Danmokou.DMath;
+using Danmokou.Player;
 using Danmokou.Services;
 using Danmokou.VN;
+using Suzunoya;
 using Suzunoya.Data;
 using SuzunoyaUnity;
 using static BagoumLib.Tasks.WaitingUtils;
@@ -16,9 +19,22 @@ namespace Danmokou.SM {
 public class ScriptTSM : SequentialSM {
     public ScriptTSM(List<StateMachine> states) : base(states) {}
 
-    public override Task Start(SMHandoff smh) {
-        Dialoguer.ShowAndResetDialogue();
-        return base.Start(smh).ContinueWithSync(Dialoguer.HideDialogue);
+    public override async Task Start(SMHandoff smh) {
+        using var token = PlayerController.AllControlDisabler.CreateToken1(MultiOp.Priority.CLEAR_PHASE);
+        //Await to keep token in scope until exit
+        await ((DMKVNWrapper) ServiceLocator.Find<IVNWrapper>())
+            .ExecuteVN((data, cT) => new DMKVNState(cT, "backwards-compat-script-vn", data),
+                vn => RunAsVN(smh, vn), new InstanceData(new GlobalData()), smh.cT);
+
+        //Dialoguer.ShowAndResetDialogue();
+        //return base.Start(smh).ContinueWithSync(Dialoguer.HideDialogue);
+    }
+
+    private Task RunAsVN(SMHandoff smh, DMKVNState vn) {
+        vn.DefaultRenderGroup.Priority.Value = 100;
+        var md = vn.Add(new ADVDialogueBox());
+        _ = md.FadeTo(1, 0.5f).Task;
+        return base.Start(smh);
     }
 }
 public abstract class ScriptLineSM : StateMachine {}
@@ -28,41 +44,6 @@ public class ReflectableSLSM : ScriptLineSM {
         this.func = func;
     }
     public override Task Start(SMHandoff smh) => func(smh);
-}
-
-//TODO: transform this into a trivial image display.
-/// <summary>
-/// `endcard`: Controls for endcard display in dialogue scripts. 
-/// </summary>
-[Reflect]
-public class EndcardControllerTSM : ReflectableSLSM {
-    public delegate Task Endcard(SMHandoff smh);
-    
-    public EndcardControllerTSM(Endcard rs) : base(new TTaskPattern(rs)) {}
-
-    /// <summary>
-    /// Turn the endcard controller on. It will appear black.
-    /// </summary>
-    public static Endcard Activate() => smh => {
-        Endcards.Activate();
-        return Task.CompletedTask;
-    };
-    
-    /// <summary>
-    /// Fade in an endcard image.
-    /// </summary>
-    public static Endcard FadeIn(float t, string key) => smh => {
-        Endcards.FadeIn(t, key, smh.cT, GetAwaiter(out Task task));
-        return task;
-    };
-    /// <summary>
-    /// Fade out an endcard image (to black).
-    /// </summary>
-    public static Endcard FadeOut(float t) => smh => {
-        Endcards.FadeOut(t, smh.cT, GetAwaiter(out Task task));
-        return task;
-    };
-    
 }
 
 }

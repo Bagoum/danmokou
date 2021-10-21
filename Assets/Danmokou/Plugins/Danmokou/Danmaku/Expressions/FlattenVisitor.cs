@@ -92,7 +92,10 @@ class FlattenVisitor : ExpressionVisitor {
             if (Bifocal(x => x == 1f, e => e, out ex)) return ex;
         }
         if (node.NodeType == ExpressionType.Subtract && RightIs(x => x == 0f, e => e, out ex)) return ex;
-        if (node.NodeType == ExpressionType.Divide && RightIs(x => x == 1f, e => e, out ex)) return ex;
+        if (node.NodeType == ExpressionType.Divide) {
+            if (LeftIs(x => x == 0f, e => ExC(Activator.CreateInstance(e.Type)), out ex)) return ex;
+            if (RightIs(x => x == 1f, e => e, out ex)) return ex;
+        }
         //Any parameter on the left-hand side is no longer constant
         if (AssignTypes.Contains(node.NodeType)) {
             new DeactivateConstantVisitor(ConstValPrmsMap).Visit(l);
@@ -192,7 +195,8 @@ class FlattenVisitor : ExpressionVisitor {
         typeof(Mathf),
         typeof(M)
     };
-    private static readonly Type mathType = typeof(M);
+    private static readonly Type dmkMathClassType = typeof(M);
+    private static readonly Type systemMathType = typeof(Math);
 
     protected override Expression VisitMethodCall(MethodCallExpression node) {
         var newArgs = new object?[node.Arguments.Count];
@@ -203,14 +207,32 @@ class FlattenVisitor : ExpressionVisitor {
             isAllConst &= visited[ii].TryAsAnyConst(out newArgs[ii]);
         }
         if (isAllConst) return Ex.Constant(node.Method.Invoke(null, newArgs));
-        if (reduceMethod && node.Method.DeclaringType == mathType) {
-            var v = Visit(visited[0].As<double>());
-            if (node.Method.Name == "Sin") return ExMHelpers.dLookupSinRad(v);
-            if (node.Method.Name == "Cos") return ExMHelpers.dLookupCosRad(v);
-            if (node.Method.Name == "CosSin") return ExMHelpers.dLookupCosSinRad(v);
-            if (node.Method.Name == "SinDeg") return ExMHelpers.dLookupSinDeg(v);
-            if (node.Method.Name == "CosDeg") return ExMHelpers.dLookupCosDeg(v);
-            if (node.Method.Name == "CosSinDeg") return ExMHelpers.dLookupCosSinDeg(v);
+        if (node.Method.DeclaringType == dmkMathClassType) {
+            if (reduceMethod) {
+                //DMK math functions take float, but the converted versions take double, so we need to convert
+                var v = Visit(visited[0].As<double>());
+                if (node.Method.Name == "Sin")
+                    return ExMHelpers.dLookupSinRad(v);
+                if (node.Method.Name == "Cos")
+                    return ExMHelpers.dLookupCosRad(v);
+                if (node.Method.Name == "CosSin")
+                    return ExMHelpers.dLookupCosSinRad(v);
+                if (node.Method.Name == "SinDeg")
+                    return ExMHelpers.dLookupSinDeg(v);
+                if (node.Method.Name == "CosDeg")
+                    return ExMHelpers.dLookupCosDeg(v);
+                if (node.Method.Name == "CosSinDeg")
+                    return ExMHelpers.dLookupCosSinDeg(v);
+            }
+        }else if (node.Method.DeclaringType == systemMathType) {
+            if (node.Method.Name == "Pow" && visited[1].TryAsConst(out double d)) {
+                if (d == 0)
+                    return Ex.Constant(1.0, typeof(double));
+                if (d == 1)
+                    return visited[0];
+                if (d == 2 && !EEx.RequiresCopyOnRepeat(visited[0]))
+                    return visited[0].Mul(visited[0]);
+            }
         }
         return Ex.Call(node.Object, node.Method, visited);
     }

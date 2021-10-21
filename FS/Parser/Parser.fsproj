@@ -6,7 +6,6 @@
 
     <ItemGroup>
         <Compile Include="SMParser.fs" />
-        <Compile Include="AAParser.fs" />
     </ItemGroup>
 
     <ItemGroup>

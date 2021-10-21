@@ -4,6 +4,7 @@ using System.Linq;
 using BagoumLib;
 using BagoumLib.Culture;
 using Danmokou.Core;
+using Danmokou.Services;
 using Danmokou.Danmaku;
 using Danmokou.GameInstance;
 using Danmokou.Player;
@@ -11,7 +12,7 @@ using JetBrains.Annotations;
 using UnityEngine.UIElements;
 using UnityEngine;
 using UnityEngine.Scripting;
-using static Danmokou.Core.GameManagement;
+using static Danmokou.Services.GameManagement;
 using static Danmokou.UI.XML.XMLUtils;
 using static Danmokou.Core.LocalizedStrings.UI;
 

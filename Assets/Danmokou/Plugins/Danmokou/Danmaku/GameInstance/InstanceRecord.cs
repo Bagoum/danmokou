@@ -4,6 +4,7 @@ using System.Linq;
 using BagoumLib;
 using BagoumLib.Culture;
 using Danmokou.Core;
+using Danmokou.Services;
 using Danmokou.Danmaku;
 using Danmokou.DMath;
 using Danmokou.GameInstance;

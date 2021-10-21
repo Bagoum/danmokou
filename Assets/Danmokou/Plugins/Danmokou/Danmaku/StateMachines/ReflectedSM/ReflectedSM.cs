@@ -186,11 +186,11 @@ if (> t &fadein,
     }
 
     public static TaskPattern StageAnnounce() => smh => {
-        UIManager.AnnounceStage(smh.Exec, smh.cT, out float t);
+        ServiceLocator.Find<IStageAnnouncer>().AnnounceStage(smh.cT, out float t);
         return WaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, t, false);
     };
     public static TaskPattern StageDeannounce() => smh => {
-        UIManager.DeannounceStage(smh.cT, out float t);
+        ServiceLocator.Find<IStageAnnouncer>().DeannounceStage(smh.cT, out float t);
         return WaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, t, false);
     };
     
@@ -251,10 +251,11 @@ if (> t &fadein,
 
     /// <summary>
     /// Run the visual novel scene attached to the executing BEH.
+    /// TODO: improve save-related handling here.
     /// </summary>
     public static TaskPattern ExecuteVN([LookupMethod] Func<DMKVNState, Task> vnTask, string scriptId) => async smh => {
         var save = await ((DMKVNWrapper) ServiceLocator.Find<IVNWrapper>())
-            .ExecuteVN((data, cT) => new DMKVNState(cT, scriptId, data), vnTask, new InstanceData(), smh.cT);
+            .ExecuteVN((data, cT) => new DMKVNState(cT, scriptId, data), vnTask, new InstanceData(new GlobalData()), smh.cT);
     };
 
     /// <summary>
@@ -299,16 +300,10 @@ if (> t &fadein,
 
     public static TaskPattern Dialogue(string file) {
         StateMachine? sm = null;
-        return async smh => {
-            Log.Unity($"Opening dialogue section {file}");
+        return smh => {
+            Logs.Log($"Opening dialogue section {file}");
             sm ??= StateMachineManager.LoadDialogue(file);
-            bool done = false;
-            var jsmh = smh.CreateJointCancellee(out var dialogueCT);
-            smh.RunRIEnumerator(WaitingUtils.WaitWhileWithCancellable(() => done, dialogueCT,
-                () => InputManager.DialogueSkipAll, smh.cT, () => { }));
-            await sm.Start(jsmh).ContinueWithSync(() => {
-                done = true;
-            });
+            return sm.Start(smh);
         };
     }
 
@@ -654,7 +649,7 @@ if (> t &fadein,
     /// Print a message to the console.
     /// </summary>
     public static TaskPattern Debug(string debug) => smh => {
-        Log.Unity(debug, false, LogLevel.INFO);
+        Logs.Log(debug, false, LogLevel.INFO);
         return Task.CompletedTask;
     };
     

@@ -25,7 +25,7 @@ public class RaikoCamera : RegularUpdater, IRaiko {
 
     protected override void BindListeners() {
         base.BindListeners();
-        RegisterDI<IRaiko>(this);
+        RegisterService<IRaiko>(this);
     }
 
     private const float ScreenshakeMultiplier = 0.04f;

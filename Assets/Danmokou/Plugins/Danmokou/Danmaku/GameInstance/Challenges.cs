@@ -64,7 +64,7 @@ public readonly struct SceneChallengeReqest : IChallengeRequest {
     public void Initialize() {
         //Prevents load lag if this is executed on scene change while camera transition is up
         StateMachineManager.FromText(cr.Boss.stateMachine);
-        UIManager.RequestChallengeDisplay(cr, Requester.metadata);
+        ServiceLocator.Find<IUIManager>().DisplayChallenge(cr, Requester.metadata);
     }
 
     public void Start(BehaviorEntity exec) {
@@ -73,14 +73,14 @@ public readonly struct SceneChallengeReqest : IChallengeRequest {
     }
 
     public bool OnSuccess(ChallengeManager.TrackingContext ctx) {
-        Log.Unity($"PASSED challenge {cr.Description}");
+        Logs.Log($"PASSED challenge {cr.Description}");
         //This saves completion. Needs to be done locally in case of continuations.
         //The callback will handle replaying.
         var record = Requester.MakeGameRecord(ctx.cm.ChallengePhotos.ToArray());
         Requester.TrySave(record);
 
         if (!(Requester.replay is ReplayMode.Replaying) && cr.NextChallenge(Requester.metadata).Try(out var nextC)) {
-            Log.Unity($"Autoproceeding to next challenge: {nextC.Description}");
+            Logs.Log($"Autoproceeding to next challenge: {nextC.Description}");
             var nextGr = new InstanceRequest(Requester.cb, Requester.metadata, nextC);
             nextGr.SetupInstance();
             GameManagement.Instance.Replay?.Cancel(); //can't replay both scenes together,
@@ -89,7 +89,7 @@ public readonly struct SceneChallengeReqest : IChallengeRequest {
             ctx.cm.LinkBoss(ctx.exec);
             return false;
         } else {
-            UIManager.MessageChallengeEnd(true, out _);
+            ServiceLocator.Find<IUIManager>().MessageChallengeEnd(true, out _);
             //The callback should have a wait procedure in it
             ctx.onSuccess(record);
             //WaitingUtils.WaitThenCB(ctx.cm, Cancellable.Null, t, false, () => ctx.onSuccess(record));
@@ -98,8 +98,8 @@ public readonly struct SceneChallengeReqest : IChallengeRequest {
     }
 
     public void OnFail(ChallengeManager.TrackingContext ctx) {
-        Log.Unity($"FAILED challenge {cr.Description}");
-        UIManager.MessageChallengeEnd(false, out float t);
+        Logs.Log($"FAILED challenge {cr.Description}");
+        ServiceLocator.Find<IUIManager>().MessageChallengeEnd(false, out float t);
         if (ctx.exec != null) ctx.exec.ShiftPhase();
         WaitingUtils.WaitThenCB(ctx.cm, Cancellable.Null, t, false,
             () => { BulletManager.PlayerTarget.Player.Hit(999, true); });
@@ -114,7 +114,8 @@ public readonly struct SceneChallengeReqest : IChallengeRequest {
 }
 
 public class PhaseChallengeRequest : ILowInstanceRequest {
-    public DayCampaignConfig Campaign => phase.boss.day.campaign.campaign;
+    public DayCampaignConfig DayCampaign => phase.boss.day.campaign.campaign;
+    public ICampaignMeta Campaign => DayCampaign;
     public DayConfig Day => phase.boss.day.day;
     public BossConfig Boss => phase.boss.boss;
     public readonly SMAnalysis.DayPhase phase;
@@ -143,13 +144,11 @@ public class PhaseChallengeRequest : ILowInstanceRequest {
     }
 
     public ILowInstanceRequestKey Key => new PhaseChallengeRequestKey() {
-        Campaign = Campaign.key,
+        Campaign = DayCampaign.key,
         Boss = Boss.key,
         PhaseIndex = phase.phase.index
     };
     public InstanceMode Mode => InstanceMode.SCENE_CHALLENGE;
-    public bool Replayable => true;
-    public string CampaignKey => Campaign.key;
 }
 
 [Reflect]

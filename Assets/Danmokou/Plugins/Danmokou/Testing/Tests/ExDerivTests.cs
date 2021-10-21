@@ -31,7 +31,12 @@ public class ExDerivTests {
     public void TestPow() {
         var x = VF("x");
         //x^c is special cased
-        AreEqual("(3*Math.Pow(Null,x:>Double,2):>Single)", DerivDebug(x, Pow(x, ExC(3f))));
+        AreEqual("0", DerivDebug(x, Pow(x, ExC(0f))));
+        AreEqual("1", DerivDebug(x, Pow(x, ExC(1f))));
+        AreEqual("(2*x)", DerivDebug(x, Pow(x, ExC(2f))));
+        AreEqual("(3*(x:>Double*x:>Double):>Single)", DerivDebug(x, Pow(x, ExC(3f))));
+        AreEqual("(3.5*Math.Pow(Null,x:>Double,2.5):>Single)", DerivDebug(x, Pow(x, ExC(3.5f))));
+        AreEqual("(-2*Math.Pow(Null,x:>Double,-3):>Single)", DerivDebug(x, Pow(x, ExC(-2f))));
         AreEqual("(Math.Pow(Null,x:>Double,x:>Double):>Single*(Math.Log(Null,x:>Double):>Single+(x/x)))", 
             DerivDebug(x, Pow(x, x)));
     }

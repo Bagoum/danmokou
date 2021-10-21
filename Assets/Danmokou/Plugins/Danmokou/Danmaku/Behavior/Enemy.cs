@@ -289,7 +289,7 @@ public class Enemy : RegularUpdater {
                 spellCircleCancel = Cancellable.Null;
             }
             lastSpellCircleRad = spellCircleRad?.Invoke(Beh.rBPI.t) ?? lastSpellCircleRad;
-            if (spellCircleCancel == Cancellable.Null && lastSpellCircleRad <= LerpFromSCScale) {
+            if (ReferenceEquals(spellCircleCancel, Cancellable.Null) && lastSpellCircleRad <= LerpFromSCScale) {
                 spellCircle.gameObject.SetActive(false);
             }
             spellTr.localScale = new Vector3(lastSpellCircleRad, lastSpellCircleRad, lastSpellCircleRad);

@@ -43,7 +43,7 @@ public static class EngineStateManager {
         if (lastState.Timescale() != State.Timescale())
             Time.timeScale = State.Timescale();
         if (lastState != State) {
-            Log.Unity($"Engine state has been set to to {State}");
+            Logs.Log($"Engine state has been set to to {State}");
             Events.EngineStateChanged.OnNext(State);
         }
     }

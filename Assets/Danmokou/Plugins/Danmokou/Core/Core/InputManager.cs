@@ -178,7 +178,7 @@ public static class InputManager {
 
     static InputManager() {
         unsafe {
-            Log.Unity($"Replay frame size (should be 6): {sizeof(FrameInput)}.");
+            Logs.Log($"Replay frame size (should be 6): {sizeof(FrameInput)}.");
         }
     }
 

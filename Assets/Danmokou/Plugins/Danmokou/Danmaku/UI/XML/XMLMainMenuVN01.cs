@@ -8,7 +8,7 @@ using Danmokou.GameInstance;
 using Danmokou.Player;
 using UnityEngine;
 using UnityEngine.UIElements;
-using static Danmokou.Core.GameManagement;
+using static Danmokou.Services.GameManagement;
 using static Danmokou.UI.XML.XMLUtils;
 using static Danmokou.Core.LocalizedStrings.UI;
 

@@ -292,7 +292,7 @@ public class CurvedTileRenderPather : CurvedTileRender {
     [ContextMenu("Debug info")]
     public void DebugPath() {
         //read_from = start + 1
-        Log.Unity($"Start {read_from} Skip 1 End {centers.Length}", level: LogLevel.INFO);
+        Logs.Log($"Start {read_from} Skip 1 End {centers.Length}", level: LogLevel.INFO);
     }
 #endif
 }

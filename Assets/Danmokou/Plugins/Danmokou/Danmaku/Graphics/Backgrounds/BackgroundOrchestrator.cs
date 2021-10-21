@@ -77,8 +77,8 @@ public class BackgroundOrchestrator : CoroutineRegularUpdater, IBackgroundOrches
 
     protected override void BindListeners() {
         base.BindListeners();
+        RegisterService<IBackgroundOrchestrator>(this, new ServiceLocator.ServiceOptions { Unique = true });
         Listen(SaveData.ResolutionChanged, ShowHide);
-        RegisterDI<IBackgroundOrchestrator>(this);
     }
 
     public override void RegularUpdate() {

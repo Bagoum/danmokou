@@ -4,6 +4,7 @@ using System.Linq;
 using BagoumLib.Culture;
 using Danmokou.Behavior;
 using Danmokou.Core;
+using Danmokou.Services;
 using Danmokou.Danmaku;
 using Danmokou.DataHoist;
 using Danmokou.DMath;
@@ -21,7 +22,7 @@ using BM = Danmokou.Danmaku.BulletManager;
 using static NUnit.Framework.Assert;
 using static Danmokou.Testing.TAssert;
 using PDH = Danmokou.DataHoist.PublicDataHoisting;
-using static Danmokou.Core.GameManagement;
+using static Danmokou.Services.GameManagement;
 
 namespace Danmokou.Testing {
 

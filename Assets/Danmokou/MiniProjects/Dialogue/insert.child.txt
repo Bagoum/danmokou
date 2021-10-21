@@ -1,0 +1,73 @@
+script
+place l2 reimu
+place r1 mima
+sre mima _
+sle reimu worry
+.z `How do I create a child?`
+srce happy
+. `Get a partner
+And create it
+`
+wait 1
+srce worry
+.c `Ok I dint have a serious answer`
+z
+slc
+.z `How do i insert a child? <size=42><color=grey>(edited)</color></size>`
+place l1 yukari
+setstandopacity yukari 0
+fadestandin yukari 0.5
+sle yukari happy
+.z `I'm WHEEZING carry on`
+place r2 seija
+setstandopacity seija 0
+fadestandin seija 0.5
+sre seija _
+.z `push the head back when it appears`
+sl reimu
+.z `How do i insert a child in luaSTG?`
+sle yukari worry
+.z `Does Ryann or someone know how to do this`
+fadestandout mima 0.5
+place r1 kurokoma
+setstandopacity kurokoma 0
+fadestandin kurokoma 0.5
+sre kurokoma worry
+.z `what child
+:thonk:`
+sre seija cry
+.z `m-m-me?`
+sl yukari
+.z `Child object I'm guessing`
+sre kurokoma angry
+.z `yeah probably a child object of a bullet or enemy if i were to guess`
+sre seija angry
+.z `don't objectify children`
+sl yukari
+.z `This isn't helping I'm sorry`
+sl reimu
+.z `well i need to repeat and a error pop up saying`
+sre seija worry
+.z `click this thing
+<size=42><color=grey>alt: Insert as child</color></size>`
+sre kurokoma happy
+.z `screenshot the error`
+sl reimu
+.z `it texts
+"taskrepeat" need ancestor: stagetask/tasker/task/dialogtask`
+sre seija angry
+.z `bitch send a screenshot
+ryann is dead zino is the new teacher`
+sre kurokoma worry
+.z `hey c'mon let's not be rude here`
+sl reimu
+. `...`
+wait(0.5)
+.cn `okay`
+z
+
+
+
+
+
+

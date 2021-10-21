@@ -2,7 +2,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using BagoumLib;
+using BagoumLib.Cancellation;
 using BagoumLib.DataStructures;
+using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Scriptables;
 using JetBrains.Annotations;
@@ -12,87 +14,59 @@ using Object = UnityEngine.Object;
 
 namespace Danmokou.Scenes {
 /// <summary>
-/// Provides functions for scene transitions.
+/// Manages scene transitions.
 /// </summary>
-public static class SceneIntermediary {
+public class SceneIntermediary : CoroutineRegularUpdater, ISceneIntermediary {
     public static bool IsFirstScene { get; private set; } = true;
-
-    public readonly struct SceneRequest {
-        public readonly SceneConfig scene;
-        public readonly Action? onQueued;
-        public readonly Action? onPreLoad;
-        public readonly Action? onLoaded;
-        public readonly Action? onFinished;
-        public readonly Reason reason;
-
-        public enum Reason {
-            RELOAD,
-            START_ONE,
-            RUN_SEQUENCE,
-            ENDCARD,
-            ABORT_RETURN,
-            FINISH_RETURN
-        }
-
-        /// <param name="sc"></param>
-        /// <param name="reason"></param>
-        /// <param name="onPreLoad">Executed when the screen is hidden by the transition effect, before the scene is loaded.</param>
-        /// <param name="onLoad">Executed immediately after the scene is loaded. Probably does not precede Awake calls.</param>
-        /// <param name="onFinish">Executed when the transition effect is pulled back and standard flow is reenabled.</param>
-        public SceneRequest(SceneConfig sc, Reason reason, Action? onPreLoad = null, Action? onLoad = null, 
-            Action? onFinish = null) {
-            scene = sc;
-            onQueued = null;
-            this.onPreLoad = onPreLoad;
-            onLoaded = onLoad;
-            onFinished = onFinish;
-            this.reason = reason;
-        }
-
-        public override string ToString() => $"{scene.sceneName} ({reason})";
-    }
-
-    private static CameraTransitionConfig defaultTransition = null!;
-
-    public static void Setup(CameraTransitionConfig dfltTransition) {
-        defaultTransition = dfltTransition;
-    }
-
-
-    public static bool LoadScene(SceneRequest req) {
-        if (EngineStateManager.State < EngineState.LOADING_PAUSE && !LOADING) {
-            Log.Unity($"Successfully requested scene load for {req}.");
-            req.onQueued?.Invoke();
-            IsFirstScene = false;
-            LOADING = true;
-            var stateToken = EngineStateManager.RequestState(EngineState.LOADING_PAUSE);
-            SceneLoader.Main.RunRIEnumerator(WaitForSceneLoad(stateToken, req, true));
-            return true;
-        } else Log.Unity($"REJECTED scene load for {req}.");
-        return false;
-    }
-
     //Use a bool here since EngineStateManager is updated at end of frame.
     //We need to keep track of whether or not this process has been queued
     public static bool LOADING { get; private set; } = false;
 
-    private static IEnumerator WaitForSceneLoad(IDeletionMarker stateToken, SceneRequest req, bool transitionOnSame) {
+    public CameraTransitionConfig defaultTransition = null!;
+    private Cancellable sceneToken = new Cancellable();
+    public ICancellee SceneBoundedToken => sceneToken;
+
+    protected override void BindListeners() {
+        base.BindListeners();
+        RegisterService<ISceneIntermediary>(this, new ServiceLocator.ServiceOptions { Unique = true });
+        Listen(PreSceneUnload, () => {
+            sceneToken.Cancel();
+            sceneToken = new Cancellable();
+        });
+    }
+
+    public bool LoadScene(SceneRequest req) {
+        if (EngineStateManager.State < EngineState.LOADING_PAUSE && !LOADING) {
+            Logs.Log($"Successfully requested scene load for {req}.");
+            req.onQueued?.Invoke();
+            IsFirstScene = false;
+            LOADING = true;
+            var stateToken = EngineStateManager.RequestState(EngineState.LOADING_PAUSE);
+            RunRIEnumerator(WaitForSceneLoad(stateToken, req, true));
+            return true;
+        } else Logs.Log($"REJECTED scene load for {req}.");
+        return false;
+    }
+
+
+    private IEnumerator WaitForSceneLoad(IDeletionMarker stateToken, SceneRequest req, bool transitionOnSame) {
         var currScene = SceneManager.GetActiveScene().name;
         float waitOut = 0f;
         if (transitionOnSame || currScene != req.scene.sceneName) {
             var transition = req.scene.transitionIn == null ? defaultTransition : req.scene.transitionIn;
-            CameraTransition.Fade(transition, out float waitIn, out waitOut);
-            Log.Unity($"Performing fade transition for {waitIn}s before loading scene.");
+            float waitIn = 0f;
+            ServiceLocator.MaybeFind<ICameraTransition>()?.Fade(transition, out waitIn, out waitOut);
+            Logs.Log($"Performing fade transition for {waitIn}s before loading scene.");
             for (; waitIn > ETime.FRAME_YIELD; waitIn -= ETime.FRAME_TIME) yield return null;
         }
-        Log.Unity($"Scene loading for {req} started.", level: LogLevel.DEBUG3);
-        StaticPreSceneUnloaded();
+        Logs.Log($"Scene loading for {req} started.", level: LogLevel.DEBUG3);
+        PreSceneUnload.Proc();
         req.onPreLoad?.Invoke();
         var op = SceneManager.LoadSceneAsync(req.scene.sceneName);
         while (!op.isDone) {
             yield return null;
         }
-        Log.Unity(
+        Logs.Log(
             $"Unity finished loading the new scene. Waiting for transition ({waitOut}s) before yielding control to player.",
             level: LogLevel.DEBUG3);
         req.onLoaded?.Invoke();
@@ -101,46 +75,25 @@ public static class SceneIntermediary {
         stateToken.MarkForDeletion();
         LOADING = false;
     }
+    
+    public override EngineState UpdateDuring => EngineState.LOADING_PAUSE;
+    public override int UpdatePriority => UpdatePriorities.SOF;
+    
 
-    private static readonly List<Action> sceneLoadDelegates = new List<Action>();
-    private static readonly List<Action> sceneUnloadDelegates = new List<Action>();
-    private static readonly List<Action> presceneUnloadDelegates = new List<Action>();
+    //Static stuff
+    public static Events.Event0 PreSceneUnload { get; } = new Events.Event0();
+    public static Events.Event0 SceneUnloaded { get; } = new Events.Event0();
+    public static Events.Event0 SceneLoaded { get; } = new Events.Event0();
 
-    private static void StaticSceneLoaded(Scene s, LoadSceneMode lsm) {
-        //Log.Unity("Static scene loading procedures (invoked by Unity)");
-        for (int ii = 0; ii < sceneLoadDelegates.Count; ++ii) {
-            sceneLoadDelegates[ii]();
-        }
-    }
-
-    private static void StaticSceneUnloaded(Scene s) {
-        for (int ii = 0; ii < sceneUnloadDelegates.Count; ++ii) {
-            sceneUnloadDelegates[ii]();
-        }
-    }
-
-    private static void StaticPreSceneUnloaded() {
-        for (int ii = 0; ii < presceneUnloadDelegates.Count; ++ii) {
-            presceneUnloadDelegates[ii]();
-        }
-    }
-
-    public static void RegisterSceneLoad(Action act) {
-        sceneLoadDelegates.Add(act);
-    }
-
-    public static void RegisterSceneUnload(Action act) {
-        sceneUnloadDelegates.Add(act);
-    }
-
-    public static void RegisterPreSceneUnload(Action act) {
-        presceneUnloadDelegates.Add(act);
-    }
-
-    //Invoked by ETime
     public static void Attach() {
-        SceneManager.sceneLoaded += StaticSceneLoaded;
-        SceneManager.sceneUnloaded += StaticSceneUnloaded;
+        SceneManager.sceneUnloaded += s => {
+            Logs.Log($"Unity scene {s.name} was unloaded");
+            SceneUnloaded.Proc();
+        };
+        SceneManager.sceneLoaded += (s, m) => {
+            Logs.Log($"Unity scene {s.name} was loaded via mode {m.ToString()}");
+            SceneLoaded.Proc();
+        };
     }
 }
 }

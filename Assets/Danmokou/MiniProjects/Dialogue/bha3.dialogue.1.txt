@@ -1,0 +1,42 @@
+script
+place l1 reimu
+place r1 elly
+sle reimu _
+sre elly happy
+.z `Good afternoon, traveller! Might I interest you in some freshly harvested wheat?`
+slce surprise
+. `Ah! There you are!
+`
+wait 0.5
+slce worry
+.c `Shinigami! What are you lazing around here for? You're needed in the village. Get over there, pronto.`
+z
+srce worry
+namecard namecard-elly
+.z `Shinigami...? Are you talking to me?`
+slc
+.z `Who else could I possibly be talking to? This place is just flowers for miles on end. Unless there's a flower god drinking afternoon tea around here?`
+srce surprise
+. `Uhh... that's...
+`
+wait 0.5
+srce worry
+.c `Ahem! To be clear, I am not a shinigami. If you're looking for a shinigami, travel twenty-two hundred seventy-six stone throws in that direction,`
+z
+.z `and look for an needlessly large chicken. She can tell you how to get to Hell, which is where the shinigami reside.`
+slce angry
+.z `Don't try bullshitting me, kiddo. I can see right through you. Only a shinigami would carry around a scythe that big!`
+srce surprise
+.z `This is a farming tool! Look, I am <i>literally</i> using it to harvest wheat!`
+slce worry
+. `Fine.`
+.cn `If you insist that much, then I have no choice.`
+z
+srce worry
+.z `You finally understand? If you're going to act up, do it somewhere else. You're getting in the way of business.`
+slce angry
+.z `I have no choice but to bring you back by force!`
+srce surprise
+.z `Hey, calm down! This is a no danmaku zone! If anything happens to the flowers--`
+slc
+.z `<i>Mondou muyou! En garde!</i>`

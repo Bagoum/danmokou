@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reactive;
 using System.Runtime.CompilerServices;
 using BagoumLib.Culture;
 using BagoumLib.Events;
@@ -36,8 +37,10 @@ public abstract class Requirement : IRequirementWatcher {
     // the tree from the top-down is re-checked once. 
     public void RequirementUpdated() => watcher?.RequirementUpdated();
 
-    protected void Listen(Events.Event0 ev) => ev.Subscribe(RequirementUpdated);
-    protected void Listen<T>(IBSubject<T> ev) => ev.Subscribe(_ => RequirementUpdated());
+    protected void Listen<T, E>(EventProxy<T> obj, Func<T, IBObservable<E>> ev) => 
+        obj.Subscribe(ev, _ => RequirementUpdated());
+    protected void Listen(IObservable<Unit> ev) => ev.Subscribe(_ => RequirementUpdated());
+    protected void Listen<T>(IBObservable<T> ev) => ev.Subscribe(_ => RequirementUpdated());
 
     public Requirement SetWatcher(IRequirementWatcher w) {
         watcher = w;
@@ -87,7 +90,7 @@ public class Achievement : IRequirementWatcher {
         var nState = Req.EvalState();
         if (nState <= State)
             return;
-        Log.Unity($"Achievement {Key} progressed from {State} to {nState}");
+        Logs.Log($"Achievement {Key} progressed from {State} to {nState}");
         State = nState;
         SendCallbacks();
         AchievementStateUpdated.OnNext(this);

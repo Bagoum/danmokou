@@ -80,7 +80,7 @@ public class AyaPhoto {
         try {
             data = File.ReadAllBytes(FullFilename);
         } catch (Exception e) {
-            Log.Unity($"Couldn't load Aya photo {FullFilename}: {e.Message}", level: LogLevel.WARNING);
+            Logs.Log($"Couldn't load Aya photo {FullFilename}: {e.Message}", level: LogLevel.WARNING);
             texture = null;
             return false;
         }
@@ -89,7 +89,7 @@ public class AyaPhoto {
             texture.LoadImage(data);
             tex = texture;
         } catch (Exception e) {
-            Log.Unity($"Couldn't read data from Aya photo {FullFilename}: {e.Message}", 
+            Logs.Log($"Couldn't read data from Aya photo {FullFilename}: {e.Message}", 
                 level: LogLevel.WARNING);
             texture = null;
             return false;

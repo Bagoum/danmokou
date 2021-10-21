@@ -227,7 +227,7 @@ public static class SaveData {
                             GameManagement.References.gameIdentifier) return null;
                         return new Replay(LoadReplayFrames(f), metadata);
                     } catch (Exception e) {
-                        Log.Unity($"Failed to read replay data: {e.Message}", true, LogLevel.WARNING);
+                        Logs.Log($"Failed to read replay data: {e.Message}", true, LogLevel.WARNING);
                         return null;
                     }
                 })
@@ -241,7 +241,7 @@ public static class SaveData {
                     File.Delete(filename + RMETAEXT);
                     File.Delete(filename + RFRAMEEXT);
                 } catch (Exception e) {
-                    Log.Unity(e.Message, true, LogLevel.WARNING);
+                    Logs.Log(e.Message, true, LogLevel.WARNING);
                 }
                 ReplayData.RemoveAt(i);
                 return true;
@@ -268,7 +268,7 @@ public static class SaveData {
         public void SaveNewReplay(Replay r) {
             var filename = ReplayFilename(r);
             var f = r.frames();
-            Log.Unity($"Saving replay {filename} with {f.Length} frames.");
+            Logs.Log($"Saving replay {filename} with {f.Length} frames.");
             WriteJson(filename + RMETAEXT, r.metadata);
             SaveReplayFrames(filename, f);
             ReplayData.Insert(0, new Replay(LoadReplayFrames(filename), r.metadata));
@@ -294,7 +294,7 @@ public static class SaveData {
         UpdateAllowController(s.AllowControllerInput);
         UpdateLocale(s.Locale);
         ETime.SetVSync(s.Vsync);
-        Log.Unity($"Initial settings: resolution {s.Resolution}, fullscreen {s.Fullscreen}, vsync {s.Vsync}");
+        Logs.Log($"Initial settings: resolution {s.Resolution}, fullscreen {s.Fullscreen}, vsync {s.Vsync}");
         r = ReadRecord() ?? new Record();
         Achievement.AchievementStateUpdated.Subscribe(r.UpdateAchievement);
         p = new Replays();
@@ -318,7 +318,7 @@ public static class SaveData {
         if (wh.HasValue) {
             s.Resolution = wh.Value;
             Screen.SetResolution(s.Resolution.w, s.Resolution.h, s.Fullscreen);
-            Log.Unity($"Set resolution to {wh.Value}");
+            Logs.Log($"Set resolution to {wh.Value}");
         }
         SuzunoyaUnity.Rendering.RenderHelpers.PreferredResolution.OnNext(s.Resolution);
         ResolutionChanged.Proc();
@@ -344,8 +344,10 @@ public static class SaveData {
         WriteJson(SETTINGS, s);
         ETime.SetForcedFPS(s.RefreshRate);
         ETime.SetVSync(s.Vsync);
-        MainCamera.main.ReassignGlobalShaderVariables();
+        SettingsChanged.Proc();
     }
+    
+    public static readonly Events.Event0 SettingsChanged = new Events.Event0();
 
     private static void StartProfiling() {
         if (s.ProfilingEnabled) {

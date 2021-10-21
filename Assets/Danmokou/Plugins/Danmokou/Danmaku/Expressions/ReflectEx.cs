@@ -100,7 +100,7 @@ public static class ReflectEx {
         //The reason for using the special marker is that we cannot give good errors if an incorrect value is entered
         //(good error handling would make lookup slower, and this is hotpath),
         //so we need to make opting into this completely explicit. 
-        if ((isExplicit || deflt != null) && tac.MaybeBPI.Try(out var bpi)) {
+        if ((isExplicit || deflt != null) && tac.MaybeBPI != null) {
             try {
                 return FiringCtx.GetValue<T>(tac, alias, deflt);
             } catch (Exception) {

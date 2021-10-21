@@ -7,10 +7,10 @@ using UnityEngine;
 namespace Danmokou.Testing {
 public class InputAlignmentDebug : RegularUpdater {
     public override void RegularUpdate() {
-        if (Input.GetKeyDown(KeyCode.H)) Log.Unity("KeyDown event");
-        if (Input.GetKey(KeyCode.H)) Log.Unity("Key event");
-        if (Input.GetKeyUp(KeyCode.H)) Log.Unity("KeyUp event");
-        if (InputManager.Bomb.Active) Log.Unity("Bomb event");
+        if (Input.GetKeyDown(KeyCode.H)) Logs.Log("KeyDown event");
+        if (Input.GetKey(KeyCode.H)) Logs.Log("Key event");
+        if (Input.GetKeyUp(KeyCode.H)) Logs.Log("KeyUp event");
+        if (InputManager.Bomb.Active) Logs.Log("Bomb event");
     }
 }
 }

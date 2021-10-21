@@ -18,6 +18,7 @@ using Danmokou.Expressions;
 using Danmokou.Pooling;
 using Danmokou.Scenes;
 using Danmokou.Scriptables;
+using Danmokou.Services;
 using Danmokou.SM;
 using UnityEditor;
 
@@ -279,8 +280,8 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
             try {
                 RunSMFromScript(behaviorScript);
             } catch (Exception e) {
-                Log.UnityError("Failed to load attached SM on startup!");
-                Log.UnityException(e);
+                Logs.UnityError("Failed to load attached SM on startup!");
+                Logs.LogException(e);
             }
         }
     }
@@ -410,7 +411,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         else if (!dying) {
             DestroyInitial(true, drops ?? AmIOutOfHP);
             if (enemy != null) enemy.DoSuicideFire();
-            GameManagement.Instance.DestroyNormalEnemy();
+            GameManagement.Instance.NormalEnemyDestroyed();
             TryDeathEffect();
             if (displayer == null) DestroyFinal();
             else displayer.Animate(AnimationType.Death, false, DestroyFinal);
@@ -564,7 +565,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
                 await sm.sm.Start(smh);
             } catch (Exception e) {
                 if (!(e is OperationCanceledException)) {
-                    Log.UnityError(Exceptions.FlattenNestedException(e)
+                    Logs.UnityError(Exceptions.FlattenNestedException(e)
                         .Message); //This is only here for the vaguest of debugging purposes.
                 }
             } finally {
@@ -575,7 +576,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
             }
             phaseController.RunEndingCallback();
             if (IsNontrivialID(ID)) {
-                Log.Unity(
+                Logs.Log(
                     $"BehaviorEntity {ID} finished running its SM{(sm.cullOnFinish ? " and will destroy itself." : ".")}",
                     level: LogLevel.DEBUG1);
             }
@@ -608,7 +609,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
                 await sm.sm.Start(smh);
             } catch (Exception e) {
                 if (!(e is OperationCanceledException)) {
-                    Log.UnityError(Exceptions.FlattenNestedException(e)
+                    Logs.UnityError(Exceptions.FlattenNestedException(e)
                         .Message); //This is only here for the vaguest of debugging purposes.
                 }
                 //When ending a level, the order of OnDisable is random, so a node running a sub-SM may

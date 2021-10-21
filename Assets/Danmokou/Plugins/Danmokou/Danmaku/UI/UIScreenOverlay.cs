@@ -42,7 +42,7 @@ public class UIScreenOverlay : CoroutineRegularUpdater, IUIScreenOverlay {
 
     protected override void BindListeners() {
         base.BindListeners();
-        RegisterDI<IUIScreenOverlay>(this);
+        RegisterService<IUIScreenOverlay>(this);
     }
 
     protected override void OnDisable() {

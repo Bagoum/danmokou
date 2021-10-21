@@ -4,11 +4,13 @@ using System.Linq;
 using BagoumLib.Culture;
 using BagoumLib.Reflection;
 using JetBrains.Annotations;
+using UnityEngine;
 
 namespace Danmokou.Core {
 [LocalizationStringsRepo]
 public static partial class LocalizedStrings {
     static LocalizedStrings() {
+        if (!Application.isPlaying) return;
         //Load strings from all classes labeled [LocalizationStringsRepo] into the runtime data map
         foreach (var t in ReflectorUtils.ReflectableAssemblyTypes
             .Where(a => a.GetCustomAttributes(false).Any(c => c is LocalizationStringsRepoAttribute))) {

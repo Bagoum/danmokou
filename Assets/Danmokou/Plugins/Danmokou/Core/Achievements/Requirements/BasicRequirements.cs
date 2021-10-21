@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reactive;
 using Danmokou.Core;
 
 namespace Danmokou.Achievements {
@@ -55,13 +56,13 @@ public class AchievementRequirement : Requirement {
 public class ListeningRequirement : Requirement {
     private readonly Func<State> eval;
 
-    public ListeningRequirement(Func<State> eval, params Events.Event0[] evs) {
+    public ListeningRequirement(Func<State> eval, params IObservable<Unit>[] evs) {
         this.eval = eval;
         foreach (var ev in evs)
             Listen(ev);
     }
 
-    public ListeningRequirement(Func<bool> eval, params Events.Event0[] evs) : 
+    public ListeningRequirement(Func<bool> eval, params IObservable<Unit>[] evs) : 
         this(() => eval().ToACVState(), evs) { }
 
     public override State EvalState() => eval();

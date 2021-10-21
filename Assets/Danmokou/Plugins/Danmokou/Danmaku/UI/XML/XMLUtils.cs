@@ -246,7 +246,6 @@ public static class XMLUtils {
     public static UIScreen StatisticsScreen(XMLMenu menu, VisualTreeAsset screen,
         IEnumerable<InstanceRecord> allGames, SMAnalysis.AnalyzedCampaign[] campaigns) {
         InstanceRecord[] games = allGames.ToArray();
-        List<Action> load_cbs = new List<Action>();
         int? campaignIndex;
         Maybe<FixedDifficulty?> difficultySwitch = Maybe<FixedDifficulty?>.None;
         ShipConfig? playerSwitch = null;
@@ -272,7 +271,6 @@ public static class XMLUtils {
         }
         void AssignBoss(string? nboss) {
             boss = nboss;
-            foreach (var cb in load_cbs) cb();
             UpdateStats();
         }
         AssignCampaign(null);

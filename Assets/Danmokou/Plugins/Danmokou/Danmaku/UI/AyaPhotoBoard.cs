@@ -44,7 +44,7 @@ public class AyaPhotoBoard : CoroutineRegularUpdater, IAyaPhotoBoard {
 
     protected override void BindListeners() {
         base.BindListeners();
-        RegisterDI<IAyaPhotoBoard>(this);
+        RegisterService<IAyaPhotoBoard>(this);
     }
 
 

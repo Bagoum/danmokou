@@ -17,8 +17,7 @@ using Danmokou.Services;
 using JetBrains.Annotations;
 using ProtoBuf;
 using Danmokou.SM;
-using static Danmokou.Core.GameManagement;
-using static Danmokou.Scenes.SceneIntermediary;
+using static Danmokou.Services.GameManagement;
 
 
 namespace Danmokou.GameInstance {
@@ -26,8 +25,7 @@ namespace Danmokou.GameInstance {
 public interface ILowInstanceRequest {
     public ILowInstanceRequestKey Key { get; }
     public InstanceMode Mode { get; }
-    public bool Replayable { get; }
-    public string CampaignKey { get; }
+    public ICampaignMeta Campaign { get; }
 }
 
 public class CampaignRequest : ILowInstanceRequest {
@@ -41,8 +39,7 @@ public class CampaignRequest : ILowInstanceRequest {
         Campaign = campaign.Key
     };
     public InstanceMode Mode => InstanceMode.CAMPAIGN;
-    public bool Replayable => campaign.campaign.replayable;
-    public string CampaignKey => campaign.Key;
+    public ICampaignMeta Campaign => campaign.campaign;
 }
 public class BossPracticeRequest : ILowInstanceRequest {
     public readonly SMAnalysis.AnalyzedBoss boss;
@@ -61,8 +58,7 @@ public class BossPracticeRequest : ILowInstanceRequest {
         PhaseIndex = phase.index
     };
     public InstanceMode Mode => InstanceMode.BOSS_PRACTICE;
-    public bool Replayable => boss.campaign.campaign.replayable;
-    public string CampaignKey => boss.campaign.Key;
+    public ICampaignMeta Campaign => boss.campaign.campaign;
 }
 
 public class StagePracticeRequest : ILowInstanceRequest {
@@ -82,8 +78,7 @@ public class StagePracticeRequest : ILowInstanceRequest {
         PhaseIndex = phase
     };
     public InstanceMode Mode => InstanceMode.STAGE_PRACTICE;
-    public bool Replayable => stage.campaign.campaign.replayable;
-    public string CampaignKey => stage.campaign.Key;
+    public ICampaignMeta Campaign => stage.campaign.campaign;
 }
 
 public readonly struct SharedInstanceMetadata {
@@ -151,7 +146,7 @@ public class InstanceRequest {
     public InstanceRequest(Func<InstanceData, bool>? cb, SharedInstanceMetadata metadata, ILowInstanceRequest lowerRequest, ReplayMode? replay) {
         this.metadata = metadata;
         this.cb = cb;
-        this.replay = replay ?? (lowerRequest.Replayable ? 
+        this.replay = replay ?? (lowerRequest.Campaign.Replayable ? 
             new ReplayMode.RecordingReplay() : 
             (ReplayMode)new ReplayMode.NotRecordingReplay());
         this.lowerRequest = lowerRequest;
@@ -159,7 +154,7 @@ public class InstanceRequest {
     }
 
     public void SetupInstance() {
-        Log.Unity(
+        Logs.Log(
             $"Starting game with mode {Mode} on difficulty {metadata.difficulty.Describe()}.");
         var actor = replay switch {
             ReplayMode.NotRecordingReplay _ => null,
@@ -202,7 +197,7 @@ public class InstanceRequest {
             return true;
         } else {
             if (record != null && Saveable) {
-                Log.Unity($"Invalidating record with UUID {record.Uuid}", level: LogLevel.INFO);
+                Logs.Log($"Invalidating record with UUID {record.Uuid}", level: LogLevel.INFO);
                 SaveData.r.InvalidateRecord(record.Uuid);
             }
             return false;
@@ -210,8 +205,8 @@ public class InstanceRequest {
     }
 
     private void WaitThenFinishAndPostReplay(InstanceRecord? record = null) => 
-        SceneLocalCRU.Main.RunDroppableRIEnumerator(WaitingUtils.WaitFor(
-            WaitBeforeReturn, Cancellable.Null, () => FinishAndPostReplay(record)));
+        WaitingUtils.WaitThenCB(GameManagement.Main, ServiceLocator.Find<ISceneIntermediary>().SceneBoundedToken, 
+            WaitBeforeReturn, false, () => FinishAndPostReplay(record));
 
     public bool Run() {
         Cancel();
@@ -245,16 +240,18 @@ public class InstanceRequest {
         ICancellee tracker = NewTracker();
         bool _Finalize(string? endingKey = null) {
             if (!tracker.Cancelled && FinishAndPostReplay(MakeGameRecord(null, endingKey))) {
-                Log.Unity($"Campaign complete for {c.campaign.campaign.key}. Returning to replay save screen.");
+                Logs.Log($"Campaign complete for {c.campaign.campaign.key}. Returning to replay save screen.");
                 return true;
             } else return false;
         }
         bool ExecuteEndcard() {
-            Log.Unity($"Game stages for {c.campaign.campaign.key} are tentatively finished." +
+            Logs.Log($"Game stages for {c.campaign.campaign.key} are tentatively finished." +
                       " Moving to endcard, if it exists." +
                       "\nIf you see a REJECTED message below this, then a reload or the like prevented completion.");
             if (c.campaign.campaign.TryGetEnding(out var ed)) {
-                return SceneIntermediary.LoadScene(new SceneRequest(References.endcard, SceneRequest.Reason.ENDCARD,
+                return ServiceLocator.Find<ISceneIntermediary>().LoadScene(new SceneRequest(
+                    References.endcard, 
+                    SceneRequest.Reason.ENDCARD,
                     null,
                     null,
                     () => ServiceLocator.Find<LevelController>()
@@ -266,7 +263,8 @@ public class InstanceRequest {
         bool ExecuteStage(int index) {
             if (index < c.campaign.stages.Length) {
                 var s = c.campaign.stages[index];
-                return SceneIntermediary.LoadScene(new SceneRequest(s.stage.sceneConfig,
+                return ServiceLocator.Find<ISceneIntermediary>().LoadScene(new SceneRequest(
+                    s.stage.sceneConfig,
                     SceneRequest.Reason.RUN_SEQUENCE,
                     (index == 0) ? SetupInstance : (Action?) null,
                     //Note: this load during onHalfway is for the express purpose of preventing load lag
@@ -284,7 +282,8 @@ public class InstanceRequest {
     
     private bool SelectStage(StagePracticeRequest s) {
         var tracker = NewTracker();
-        return SceneIntermediary.LoadScene(new SceneRequest(s.stage.stage.sceneConfig,
+        return ServiceLocator.Find<ISceneIntermediary>().LoadScene(new SceneRequest(
+            s.stage.stage.sceneConfig,
             SceneRequest.Reason.START_ONE,
             SetupInstance,
             //Note: this load during onHalfway is for the express purpose of preventing load lag
@@ -299,7 +298,7 @@ public class InstanceRequest {
         var tracker = NewTracker();
         var b = ab.boss.boss;
         BackgroundOrchestrator.NextSceneStartupBGC = b.Background(ab.PhaseType);
-        return SceneIntermediary.LoadScene(new SceneRequest(References.unitScene,
+        return ServiceLocator.Find<ISceneIntermediary>().LoadScene(new SceneRequest(References.unitScene,
             SceneRequest.Reason.START_ONE,
             SetupInstance,
             //Note: this load during onHalfway is for the express purpose of preventing load lag
@@ -314,7 +313,7 @@ public class InstanceRequest {
     private bool SelectChallenge(PhaseChallengeRequest cr) {
         var tracker = NewTracker();
         BackgroundOrchestrator.NextSceneStartupBGC = cr.Boss.Background(cr.phase.phase.type);
-        return SceneIntermediary.LoadScene(new SceneRequest(References.unitScene,
+        return ServiceLocator.Find<ISceneIntermediary>().LoadScene(new SceneRequest(References.unitScene,
             SceneRequest.Reason.START_ONE,
             SetupInstance,
             () => {
@@ -331,18 +330,18 @@ public class InstanceRequest {
 
 
     private static SceneConfig MaybeSaveReplayScene(InstanceData d) => 
-        (References.replaySaveMenu != null && d.Replay is ReplayRecorder rr) ?
+        (References.replaySaveMenu != null && d.Replay is ReplayRecorder) ?
         References.replaySaveMenu : References.mainMenu;
 
     public const float WaitBeforeReturn = 2f;
 
-    public static bool DefaultReturn(InstanceData d) => LoadScene(new SceneRequest(MaybeSaveReplayScene(d),
+    public static bool DefaultReturn(InstanceData d) => ServiceLocator.Find<ISceneIntermediary>().LoadScene(new SceneRequest(MaybeSaveReplayScene(d),
         SceneRequest.Reason.FINISH_RETURN,
         () => BackgroundOrchestrator.NextSceneStartupBGC = References.defaultMenuBackground));
     
     public static bool PracticeSuccess(InstanceData d) {
         if (SceneIntermediary.LOADING) return false;
-        InstanceData.PracticeSuccess.Proc();
+        d.PracticeSuccess.Proc();
         return true;
     }
     public static bool ViewReplay(Replay r) {
@@ -355,7 +354,8 @@ public class InstanceRequest {
     public static bool RunCampaign(SMAnalysis.AnalyzedCampaign? campaign, Action? cb, 
         SharedInstanceMetadata metadata) {
         if (campaign == null) return false;
-        var req = new InstanceRequest(d => LoadScene(new SceneRequest(MaybeSaveReplayScene(d), 
+        var req = new InstanceRequest(d => 
+            ServiceLocator.Find<ISceneIntermediary>().LoadScene(new SceneRequest(MaybeSaveReplayScene(d), 
             SceneRequest.Reason.FINISH_RETURN, () => {
                 cb?.Invoke();
                 BackgroundOrchestrator.NextSceneStartupBGC = References.defaultMenuBackground;
@@ -365,7 +365,7 @@ public class InstanceRequest {
         if (SaveData.r.TutorialDone || References.miniTutorial == null) return req.Run();
         //Note: if you Restart within the mini-tutorial, it will send you to stage 1.
         // This is because Restart calls campaign.Request.Run().
-        else return LoadScene(new SceneRequest(References.miniTutorial,
+        else return ServiceLocator.Find<ISceneIntermediary>().LoadScene(new SceneRequest(References.miniTutorial,
             SceneRequest.Reason.START_ONE,
             //Prevents hangover information from previous campaign, will be overriden anyways
             req.SetupInstance,
@@ -375,7 +375,8 @@ public class InstanceRequest {
 
     public static bool RunTutorial() {
         if (References.tutorial == null) return false;
-        return SceneIntermediary.LoadScene(new SceneRequest(References.tutorial, SceneRequest.Reason.START_ONE,
+        return ServiceLocator.Find<ISceneIntermediary>().LoadScene(
+            new SceneRequest(References.tutorial, SceneRequest.Reason.START_ONE,
             () => GameManagement.NewInstance(InstanceMode.TUTORIAL, null)));
     }
 

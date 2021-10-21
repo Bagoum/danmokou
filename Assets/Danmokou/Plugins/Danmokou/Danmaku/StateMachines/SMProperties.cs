@@ -360,12 +360,12 @@ public readonly struct SoftcullProperties {
     public readonly float advance;
     public readonly float minDist;
     public readonly float maxDist;
-    public readonly string autocullTarget;
+    public readonly string? autocullTarget;
     private readonly string autocullDefault;
-    public string DefaultPool => $"{autocullTarget}-{autocullDefault}";
+    public string? DefaultPool => autocullTarget == null ? null : $"{autocullTarget}-{autocullDefault}";
     public readonly bool sendToC;
 
-    public SoftcullProperties(Vector2 center, float advance, float minDist, float maxDist, string target, string? dflt=null) {
+    public SoftcullProperties(Vector2 center, float advance, float minDist, float maxDist, string? target, string? dflt=null) {
         this.center = center;
         this.advance = advance;
         this.minDist = minDist;
@@ -377,14 +377,14 @@ public readonly struct SoftcullProperties {
 
     public static SoftcullProperties OverTimeDefault(Vector2 center, float advance, float minDist, float maxDist,
         string? target = null, string? dflt = null) =>
-        new SoftcullProperties(center, advance, minDist, maxDist, target ?? "cwheel", dflt);
+        new SoftcullProperties(center, advance, minDist, maxDist, target, dflt);
     
     public static SoftcullProperties SynchronousDefault(Vector2 center, float advance, float minDist, float maxDist,
         string? target = null, string? dflt = null) =>
-        new SoftcullProperties(center, advance, minDist, maxDist, target ?? "cwheelio", dflt);
+        new SoftcullProperties(center, advance, minDist, maxDist, target, dflt);
 
     //TODO review other usages
-    public SoftcullProperties(string? target, string? dflt) : this(Vector2.zero, 0, 0, 0, target ?? "cwheel", dflt) {
+    public SoftcullProperties(string? target, string? dflt) : this(Vector2.zero, 0, 0, 0, target, dflt) {
         sendToC = false;
     }
 
@@ -415,10 +415,13 @@ public class PhaseProperties {
     public bool Cleanup => cleanup ?? phaseType?.IsPattern() ?? false;
     public readonly bool endSound = true;
     private readonly string? autocullTarget;
+    private readonly string? autocullBehTarget = "cwheel";
     private readonly string? autocullDefault;
 
     public SoftcullProperties SoftcullProps(BehaviorEntity exec) =>
         SoftcullProperties.SynchronousDefault(exec.GlobalPosition(), 0.4f, 0.5f, 4f, autocullTarget, autocullDefault);
+    public SoftcullProperties SoftcullPropsBeh(BehaviorEntity exec) =>
+        SoftcullProperties.SynchronousDefault(exec.GlobalPosition(), 0.4f, 0.5f, 4f, autocullBehTarget, autocullDefault);
     public SoftcullProperties SoftcullPropsOverTime(BehaviorEntity exec, float advance) =>
         SoftcullProperties.OverTimeDefault(exec.GlobalPosition(), advance, 0.5f, 8f, autocullTarget, autocullDefault);
     

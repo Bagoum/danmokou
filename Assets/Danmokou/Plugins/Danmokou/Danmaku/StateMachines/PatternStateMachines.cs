@@ -300,7 +300,7 @@ public class PhaseSM : SequentialSM {
         }
         //else smh.exec.Enemy.DestroySpellCircle();
         if (!props.HideTimeout && smh.Exec.TriggersUITimeout)
-            ui?.DoTimeout(props.phaseType?.IsCard() ?? false, timeout, smh.cT);
+            ui?.ShowTimeout(props.phaseType?.IsCard() ?? false, timeout, smh.cT);
     }
 
     public override Task Start(SMHandoff smh) => Start(smh, null, new Enemy[0]);
@@ -347,18 +347,22 @@ public class PhaseSM : SequentialSM {
                     var acTime = Mathf.Min(EndOfCardAutocullTime, finishDelay);
                     foreach (var player in ServiceLocator.FindAll<PlayerController>())
                         player.MakeInvulnerable((int)(acTime * ETime.ENGINEFPS_F), false);
-                    GameManagement.ClearPhaseAutocullOverTime_Initial(props.SoftcullPropsOverTime(smh.Exec, acTime));
+                    GameManagement.ClearPhaseAutocullOverTime_Initial(
+                        props.SoftcullPropsOverTime(smh.Exec, acTime), 
+                        props.SoftcullPropsBeh(smh.Exec));
                     await finishTask;
                     GameManagement.ClearPhaseAutocullOverTime_Final();
                 } else {
-                    GameManagement.ClearPhaseAutocull(props.SoftcullProps(smh.Exec));
+                    GameManagement.ClearPhaseAutocull(
+                        props.SoftcullProps(smh.Exec), 
+                        props.SoftcullPropsBeh(smh.Exec));
                     await finishTask;
                 }
             }
             if (smh.Cancelled) 
                 throw;
             if (props.phaseType != null) 
-                Log.Unity($"Cleared {props.phaseType.Value} phase: {props.cardTitle?.Value ?? ""}");
+                Logs.Log($"Cleared {props.phaseType.Value} phase: {props.cardTitle?.Value ?? ""}");
             if (endPhase != null)
                 await endPhase.Start(smh);
         }

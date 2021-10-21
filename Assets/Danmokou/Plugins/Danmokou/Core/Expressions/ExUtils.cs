@@ -242,7 +242,8 @@ public static class ExExtensions {
 
     public static Ex Field(this Ex me, string field) => Ex.PropertyOrField(me, field);
 
-    public static Ex As<T>(this Ex me) => Ex.Convert(me, typeof(T));
+    public static Ex As<T>(this Ex me) => 
+        me.Type == typeof(T) ? me : Ex.Convert(me, typeof(T));
 
     public static Ex DictGetOrThrow(this Ex dict, Ex key, string err) {
         return Ex.Block(

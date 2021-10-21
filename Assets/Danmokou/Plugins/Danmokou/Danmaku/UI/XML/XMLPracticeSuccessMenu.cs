@@ -40,7 +40,7 @@ public class XMLPracticeSuccessMenu : PausedGameplayMenu {
     
     protected override void BindListeners() {
         base.BindListeners();
-        Listen(InstanceData.PracticeSuccess, ShowMe);
+        Listen(GameManagement.EvInstance, i => i.PracticeSuccess, ShowMe);
     }
 
 

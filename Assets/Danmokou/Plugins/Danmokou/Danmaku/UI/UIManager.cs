@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Reactive;
 using System.Text;
 using System.Threading.Tasks;
 using BagoumLib;
@@ -21,7 +22,7 @@ using Danmokou.SM;
 using Danmokou.UI.XML;
 using JetBrains.Annotations;
 using UnityEngine.Serialization;
-using static Danmokou.Core.GameManagement;
+using static Danmokou.Services.GameManagement;
 
 namespace Danmokou.UI {
 [Serializable]
@@ -31,6 +32,7 @@ public struct PrioritySprite {
 }
 
 public interface IUIManager {
+    Camera Camera { get; }
     void SetBossHPLoader(Enemy? boss);
     void CloseBoss();
     void CloseProfile();
@@ -40,19 +42,26 @@ public interface IUIManager {
     void TrackBEH(BehaviorEntity beh, string title, ICancellee cT);
     void ShowBossLives(int bossLives);
     void ShowStaticTimeout(float maxTime);
-    void DoTimeout(bool withSound, float maxTime, ICancellee cT, float? stayOnZero = null);
+    void ShowTimeout(bool withSound, float maxTime, ICancellee cT, float? stayOnZero = null);
     void ShowPhaseType(PhaseType? phase);
     void SetSpellname(string? title, (int success, int total)? rate = null);
+
+    void DisplayChallenge(PhaseChallengeRequest cr, SharedInstanceMetadata meta);
+    void MessageChallengeEnd(bool success, out float totalTime);
+
 }
 
-public class UIManager : RegularUpdater, IUIManager {
+public interface IStageAnnouncer {
+    void AnnounceStage(ICancellee cT, out float time);
+    void DeannounceStage(ICancellee cT, out float time);
+}
 
-    private static UIManager main = null!;
+public class UIManager : CoroutineRegularUpdater, IUIManager, IStageAnnouncer {
+
     public bool autoShiftCamera;
     [FormerlySerializedAs("camera")] public Camera uiCamera = null!;
-    public static Camera Camera => main.uiCamera;
+    public Camera Camera => uiCamera;
     public XMLPauseMenu PauseManager = null!;
-    public static XMLPauseMenu PauseMenu => main.PauseManager;
     public UIBuilderRenderer uiRenderer = null!;
     public SpriteRenderer frame = null!;
     public TextMeshPro spellnameText = null!;
@@ -78,9 +87,9 @@ public class UIManager : RegularUpdater, IUIManager {
     private const string deathCounterFormat = "死{0:D2}";
     private const string timeoutTextFormat = "<mspace=4.3>{0:F1}</mspace>";
     private const string fpsFormat = "FPS: <mspace=1.5>{0:F0}</mspace>";
-    private Coroutine? timeoutCor;
+    private Cancellable? timeoutCor;
     private static readonly int ValueID = Shader.PropertyToID("_Value");
-    private Coroutine? spellnameController;
+    private Cancellable? spellnameController;
 
     private Color spellColor;
     private Color spellColorTransparent;
@@ -102,7 +111,6 @@ public class UIManager : RegularUpdater, IUIManager {
     public GameObject? trackerPrefab;
 
     private void Awake() {
-        main = this;
         spellColor = spellnameText.color;
         spellColor.a = 1;
         spellColorTransparent = spellColor;
@@ -128,22 +136,28 @@ public class UIManager : RegularUpdater, IUIManager {
         stackedProfiles.Push(defaultProfile);
         SetProfile(defaultProfile, defaultProfile);
         SetBossHPLoader(null);
-        if (autoShiftCamera) uiCamera.transform.localPosition = 
-            new Vector3(-References.bounds.center.x, -References.bounds.center.y, uiCamera.transform.localPosition.z);
+        if (autoShiftCamera) 
+            uiCamera.transform.localPosition = 
+                new Vector3(-References.bounds.center.x, -References.bounds.center.y, uiCamera.transform.localPosition.z);
     }
 
     protected override void BindListeners() {
         base.BindListeners();
-        Listen(InstanceData.ItemExtendAcquired, LifeExtendItems);
-        Listen(InstanceData.ScoreExtendAcquired, LifeExtendScore);
+        RegisterService<IUIManager>(this);
+        RegisterService<IStageAnnouncer>(this);
+        
         Listen(PlayerController.MeterIsActive, SetMeterActivated);
         Listen(PlayerController.PlayerDeactivatedMeter, UnSetMeterActivated);
-        Listen(InstanceData.sGraze, g => graze.text = string.Format(grazeFormat, g));
-        Listen(InstanceData.sVisibleScore, s => score.text = string.Format(scoreFormat, s));
-        Listen(InstanceData.sMaxScore, s => maxScore.text = string.Format(scoreFormat, s));
-        Listen(InstanceData.sPIV, p => pivMult.text = string.Format(pivMultFormat, p));
-        Listen(InstanceData.sPower, p => power.text = string.Format(powerFormat, p, InstanceConsts.powerMax));
-        Listen(InstanceData.sLives, l => {
+        
+        Listen(EvInstance, i => i.ItemExtendAcquired, LifeExtendItems);
+        Listen(EvInstance, i => i.ScoreExtendAcquired, LifeExtendScore);
+        
+        Listen(EvInstance, i => i.Graze, g => graze.text = string.Format(grazeFormat, g));
+        Listen(EvInstance, i => i.VisibleScore, s => score.text = string.Format(scoreFormat, s));
+        Listen(EvInstance, i => i.MaxScore, s => maxScore.text = string.Format(scoreFormat, s));
+        Listen(EvInstance, i => i.PIV, p => pivMult.text = string.Format(pivMultFormat, p));
+        Listen(EvInstance, i => i.Power, p => power.text = string.Format(powerFormat, p, InstanceConsts.powerMax));
+        Listen(EvInstance, i => i.Lives, l => {
             for (int ii = 0; ii < healthPoints.Length; ++ii) healthPoints[ii].sprite = healthEmpty;
             for (int hi = 0; hi < healthItrs.Length; ++hi) {
                 for (int ii = 0; ii + hi * healthPoints.Length < Instance.Lives && ii < healthPoints.Length; ++ii) {
@@ -151,8 +165,10 @@ public class UIManager : RegularUpdater, IUIManager {
                 }
             }
         });
-        Listen(InstanceData.sBombs, b => {
-            var color = (Instance.TeamCfg?.Support.UsesBomb ?? true) ? Color.white : new Color(0.5f, 0.5f, 0.5f, 0.9f);
+        Listen(EvInstance, i => i.Bombs, b => {
+            var color = (Instance.TeamCfg?.Support.UsesBomb ?? true) ?
+                Color.white :
+                new Color(0.5f, 0.5f, 0.5f, 0.9f);
             for (int ii = 0; ii < bombPoints.Length; ++ii) {
                 bombPoints[ii].sprite = healthEmpty;
                 bombPoints[ii].color = color;
@@ -163,31 +179,45 @@ public class UIManager : RegularUpdater, IUIManager {
                 }
             }
         });
-        ListenInv(RankManager.RankLevelChanged, () => rankLevel.text = $"Rank {Instance.RankLevel}");
-        ListenInv(InstanceData.TeamUpdated, () => multishotIndicator.text = Instance.MultishotString);
-        if (scoreExtend_parent != null) {
-            ListenInv(InstanceData.ScoreExtendAcquired, () => {
-                if (Instance.NextScoreLife.Try(out var scoreExt)) {
-                    scoreExtend_parent.SetActive(true);
-                    scoreExtend.text = string.Format(scoreFormat, scoreExt);
-                } else {
-                    scoreExtend_parent.SetActive(false);
-                }
-            });
+
+        void UpdateLifeText() {
+            lifePoints.text = string.Format(lifePointsFormat, Instance.LifeItems.Value, Instance.NextLifeItems);
         }
-        Listen(InstanceData.sLifeItems,
-            _ => lifePoints.text = string.Format(lifePointsFormat, Instance.LifeItems.Value, Instance.NextLifeItems));
-        ListenInv(InstanceData.ItemExtendAcquired,
-            () => lifePoints.text = string.Format(lifePointsFormat, Instance.LifeItems.Value, Instance.NextLifeItems));
-        RegisterDI<IUIManager>(this);
+        UpdateLifeText();
+        
+        void UpdateTeamText() {
+            multishotIndicator.text = Instance.MultishotString;
+        }
+        UpdateTeamText();
+        
+        void UpdateScoreExtendText() {
+            if (Instance.NextScoreLife.Try(out var scoreExt)) {
+                scoreExtend_parent.SetActive(true);
+                scoreExtend.text = string.Format(scoreFormat, scoreExt);
+            } else {
+                scoreExtend_parent.SetActive(false);
+            }
+        }
+        UpdateScoreExtendText();
+        
+
+        Listen(EvInstance, i => i.LifeItems, _ => UpdateLifeText());
+        Listen(EvInstance, i => i.ItemExtendAcquired, UpdateLifeText);
+        Listen(EvInstance, i => i.TeamUpdated, UpdateTeamText);
+        if (scoreExtend_parent != null) {
+            Listen(EvInstance, i => i.ScoreExtendAcquired, UpdateScoreExtendText);
+        }
+
+        rankLevel.text = $"Rank {Instance.RankLevel}";
+        Listen(RankManager.RankLevelChanged, _ => rankLevel.text = $"Rank {Instance.RankLevel}");
     }
 
     private void Start() {
         UpdatePB();
     }
 
-    public static void UpdateTags() {
-        main.difficulty.text = GameManagement.Difficulty.Describe().ToLower();
+    public void UpdateTags() {
+        difficulty.text = GameManagement.Difficulty.Describe().ToLower();
     }
 
     private Enemy? bossHP;
@@ -214,20 +244,20 @@ public class UIManager : RegularUpdater, IUIManager {
 
     private void UpdatePB() {
         //pivDecayPB.SetFloat(PropConsts.time, time);
-        pivDecayPB.SetFloat(PropConsts.fillRatio, InstanceData.sVisibleFaith.Value);
-        pivDecayPB.SetFloat(PropConsts.innerFillRatio, Mathf.Clamp01(InstanceData.sVisibleFaithLenience.Value));
+        pivDecayPB.SetFloat(PropConsts.fillRatio, Instance.VisibleFaith.Value);
+        pivDecayPB.SetFloat(PropConsts.innerFillRatio, Mathf.Clamp01(Instance.VisibleFaithLenience.Value));
         PIVDecayBar.SetPropertyBlock(pivDecayPB);
         meterPB.SetFloat(PropConsts.fillRatio, (float) Instance.Meter);
         MeterBar.color = (Instance.TeamCfg?.Support.UsesMeter ?? true) ? Color.white : new Color(0.5f, 0.5f, 0.5f, 0.7f);
         MeterBar.SetPropertyBlock(meterPB);
         //bossHPPB.SetFloat(PropConsts.time, time);
         if (bossHP != null) {
-            main.bossHPPB.SetColor(PropConsts.fillColor, bossHP.UIHPColor);
-            bossHPPB.SetFloat(PropConsts.fillRatio, Dialoguer.DialogueActive ? 0 : bossHP.DisplayBarRatio);
+            bossHPPB.SetColor(PropConsts.fillColor, bossHP.UIHPColor);
+            bossHPPB.SetFloat(PropConsts.fillRatio, bossHP.DisplayBarRatio);
         }
         BossHPBar.SetPropertyBlock(bossHPPB);
         rankPB.SetColor(PropConsts.fillColor, rankPointBarColor.Evaluate((float)Instance.RankRatio));
-        rankPB.SetFloat(PropConsts.fillRatio, InstanceData.sVisibleRankPointFill.Value);
+        rankPB.SetFloat(PropConsts.fillRatio, Instance.VisibleRankPointFill.Value);
         rankPointBar.SetPropertyBlock(rankPB);
         leftSidebarPB.SetFloat(PropConsts.time, profileTime);
         rightSidebarPB.SetFloat(PropConsts.time, profileTime);
@@ -251,33 +281,31 @@ public class UIManager : RegularUpdater, IUIManager {
         UpdatePB();
     }
 
-    public override void RegularUpdate() { }
-
     public void ShowStaticTimeout(float maxTime) {
         EndTimeout();
         timeout.text = (maxTime < float.Epsilon) ? "" : string.Format(timeoutTextFormat, maxTime);
     }
 
-    public void DoTimeout(bool withSound, float maxTime, ICancellee cT, float? stayOnZero = null) {
+    public void ShowTimeout(bool withSound, float maxTime, ICancellee cT, float? stayOnZero = null) {
         EndTimeout();
         if (maxTime < float.Epsilon) {
             timeout.text = "";
         } else {
-            timeoutCor = StartCoroutine(Timeout(maxTime, withSound, stayOnZero ?? 3f, cT));
+            RunDroppableRIEnumerator(TimeoutCountdown(maxTime, withSound, stayOnZero ?? 3f, 
+                new JointCancellee(cT, out timeoutCor)));
         }
     }
 
-    public void EndTimeout() {
-        if (timeoutCor != null) {
-            StopCoroutine(timeoutCor);
-            timeoutCor = null;
-        }
+    private void EndTimeout() {
+        timeoutCor?.Cancel();
+        timeoutCor = null;
         timeout.text = "";
     }
 
     public SFXConfig[] countdownSounds = null!;
 
-    private IEnumerator Timeout(float maxTime, bool withSound, float stayOnZero, ICancellee cT) {
+    private IEnumerator TimeoutCountdown(float maxTime, bool withSound, float stayOnZero, ICancellee cT) {
+        if (cT.Cancelled) yield break;
         float currTime = maxTime;
         var currTimeIdent = -2;
         while (currTime > 0) {
@@ -286,11 +314,9 @@ public class UIManager : RegularUpdater, IUIManager {
                 currTimeIdent = Mathf.RoundToInt(currTime * 10);
             }
             yield return null;
-            if (cT.Cancelled) {
-                break;
-            }
+            if (cT.Cancelled) yield break;
             var tryCross = Mathf.FloorToInt(currTime);
-            currTime -= ETime.dT;
+            currTime -= ETime.FRAME_TIME;
             if (withSound && currTime < tryCross) {
                 if (0 < tryCross && tryCross <= countdownSounds.Length) {
                     ServiceLocator.SFXService.Request(countdownSounds[tryCross - 1]);
@@ -302,15 +328,17 @@ public class UIManager : RegularUpdater, IUIManager {
         }
         while (stayOnZero > 0f) {
             yield return null;
-            stayOnZero -= ETime.dT;
+            if (cT.Cancelled) yield break;
+            stayOnZero -= ETime.FRAME_TIME;
         }
         timeout.text = "";
     }
 
-    private IEnumerator FadeSpellname(float fit, Color from, Color to) {
+    private IEnumerator FadeSpellname(float fit, Color from, Color to, ICancellee cT) {
         spellnameText.color = from;
-        for (float t = 0; t < fit; t += ETime.dT) {
+        for (float t = 0; t < fit; t += ETime.FRAME_TIME) {
             yield return null;
+            if (cT.Cancelled) yield break;
             spellnameText.color = Color.LerpUnclamped(from, to, t / fit);
         }
         spellnameText.color = to;
@@ -325,8 +353,9 @@ public class UIManager : RegularUpdater, IUIManager {
             cardSuccessContainer.SetActive(false);
         }
         spellnameText.text = title ?? "";
-        if (spellnameController != null) StopCoroutine(spellnameController);
-        spellnameController = StartCoroutine(FadeSpellname(spellnameFadeIn, spellColorTransparent, spellColor));
+        spellnameController?.Cancel();
+        RunDroppableRIEnumerator(FadeSpellname(spellnameFadeIn, spellColorTransparent, spellColor, 
+            spellnameController = new Cancellable()));
     }
 
     public Material bossColorizer = null!;
@@ -461,7 +490,7 @@ public class UIManager : RegularUpdater, IUIManager {
 
     private static IEnumerator FadeSprite(Color c, Action<Color> apply, float timeIn, float timeStay,
         float timeOut, ICancellee cT) {
-        for (float t = 0; t < timeIn; t += ETime.dT) {
+        for (float t = 0; t < timeIn; t += ETime.FRAME_TIME) {
             c.a = t / timeIn;
             apply(c);
             if (cT.Cancelled) break;
@@ -469,11 +498,11 @@ public class UIManager : RegularUpdater, IUIManager {
         }
         c.a = 1;
         apply(c);
-        for (float t = 0; t < timeStay; t += ETime.dT) {
+        for (float t = 0; t < timeStay; t += ETime.FRAME_TIME) {
             if (cT.Cancelled) break;
             yield return null;
         }
-        for (float t = 0; t < timeOut; t += ETime.dT) {
+        for (float t = 0; t < timeOut; t += ETime.FRAME_TIME) {
             c.a = 1 - t / timeOut;
             apply(c);
             if (cT.Cancelled) break;
@@ -487,17 +516,17 @@ public class UIManager : RegularUpdater, IUIManager {
 
     private void _Message(string msg) {
         messageFadeToken?.Cancel();
-        StartCoroutine(FadeMessage(msg, messageFadeToken = new Cancellable()));
+        RunDroppableRIEnumerator(FadeMessage(msg, messageFadeToken = new Cancellable()));
     }
 
     private Cancellable? cmessageFadeToken;
 
     private void _CMessage(string msg, out float totalTime) {
         cmessageFadeToken?.Cancel();
-        StartCoroutine(FadeMessageCenter(msg, cmessageFadeToken = new Cancellable(), out totalTime));
+        RunDroppableRIEnumerator(FadeMessageCenter(msg, cmessageFadeToken = new Cancellable(), out totalTime));
     }
 
-    public static void MessageChallengeEnd(bool success, out float totalTime) => main._CMessage(
+    public void MessageChallengeEnd(bool success, out float totalTime) => _CMessage(
         success ?
             "Challenge Pass!" :
             "Challenge Fail..."
@@ -519,20 +548,20 @@ public class UIManager : RegularUpdater, IUIManager {
 
     private const float stageAnnounceStay = 2f;
 
-    public static void AnnounceStage(CoroutineRegularUpdater Exec, ICancellee cT, out float time) {
-        time = 2 * (main.stageAnnouncer.moveTime + main.stageAnnouncer.spreadTime) + stageAnnounceStay;
-        main.stageAnnouncer.Queue(new PiecewiseAppear.AppearRequest(PiecewiseAppear.AppearAction.APPEAR, 1f, () => 
-            WaitingUtils.WaitThenCB(Exec, cT, stageAnnounceStay, false, () => 
-                main.stageAnnouncer.Queue(new PiecewiseAppear.AppearRequest(PiecewiseAppear.AppearAction.DISAPPEAR, 0f, null)))));
+    public void AnnounceStage(ICancellee cT, out float time) {
+        time = 2 * (stageAnnouncer.moveTime + stageAnnouncer.spreadTime) + stageAnnounceStay;
+        stageAnnouncer.Queue(new PiecewiseAppear.AppearRequest(PiecewiseAppear.AppearAction.APPEAR, 1f, () => 
+            WaitingUtils.WaitThenCB(this, cT, stageAnnounceStay, false, () => 
+                stageAnnouncer.Queue(new PiecewiseAppear.AppearRequest(PiecewiseAppear.AppearAction.DISAPPEAR, 0f, null)))));
     }
 
     private const float stageDAnnounceIn = 0.5f;
     private const float stageDAnnounceStay = 3f;
     private const float stageDAnnounceOut = 1f;
 
-    public static void DeannounceStage(ICancellee cT, out float time) {
+    public void DeannounceStage(ICancellee cT, out float time) {
         time = stageDAnnounceIn + stageDAnnounceOut + stageDAnnounceStay;
-        main.StartCoroutine(FadeSprite(Color.white, c => main.stageDeannouncer.color = c, stageDAnnounceIn,
+        RunDroppableRIEnumerator(FadeSprite(Color.white, c => stageDeannouncer.color = c, stageDAnnounceIn,
             stageDAnnounceStay,
             stageDAnnounceOut, cT));
     }
@@ -540,9 +569,9 @@ public class UIManager : RegularUpdater, IUIManager {
     public TextMeshPro challengeHeader = null!;
     public TextMeshPro challengeText = null!;
 
-    public static void RequestChallengeDisplay(PhaseChallengeRequest cr, SharedInstanceMetadata meta) {
-        main.challengeHeader.text = cr.phase.Title(meta);
-        main.challengeText.text = cr.Description;
+    public void DisplayChallenge(PhaseChallengeRequest cr, SharedInstanceMetadata meta) {
+        challengeHeader.text = cr.phase.Title(meta);
+        challengeText.text = cr.Description;
     }
 }
 }

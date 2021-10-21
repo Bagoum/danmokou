@@ -13,12 +13,14 @@ using Suzunoya.Data;
 using SuzunoyaUnity;
 using UnityEngine;
 
+namespace Danmokou.VN {
 /// <summary>
 /// Loads mimic information from GameManagement.References.SuzunoyaReferences.
 /// Also adjusts position to account for UICamera offset.
 /// </summary>
 public class DMKVNWrapper : VNWrapper {
     public UIManager ui = null!;
+
     protected override void Awake() {
         var refs = GameManagement.References.suzunoyaReferences;
         if (refs != null) {
@@ -39,7 +41,8 @@ public class DMKVNWrapper : VNWrapper {
     }
 
 
-    public async Task<I> ExecuteVN<V, I>(Func<I, ICancellee, V> constructor, Func<V, Task> task, I initialSave, ICancellee extCT)
+    public async Task<I> ExecuteVN<V, I>(Func<I, ICancellee, V> constructor, Func<V, Task> task, I initialSave,
+        ICancellee extCT)
         where I : IInstanceData where V : IVNState {
         while (true) {
             var cT = new Cancellable();
@@ -48,7 +51,7 @@ public class DMKVNWrapper : VNWrapper {
             vn.TimePerAutoplayConfirm = 0.5f;
             vn.TimePerFastforwardConfirm = 0.1f;
             var exec = TrackVN(vn);
-            Log.Unity($"Starting VN script {vn}");
+            Logs.Log($"Starting VN script {vn}");
             VNLocation? backjumpTo = null;
             if (!Replayer.RequiresConsistency)
                 exec.doBacklog = loc => {
@@ -58,26 +61,28 @@ public class DMKVNWrapper : VNWrapper {
             var logct = ServiceLocator.Find<IVNBacklog>().TryRegister(exec);
             try {
                 await task(vn);
-                return (I)vn.UpdateSavedata();
+                return (I) vn.UpdateSavedata();
             } catch (Exception e) {
                 if (cT.Cancelled && !extCT.Cancelled && !(backjumpTo is null)) {
-                    Log.Unity($"Backjumping VN {vn} to line {backjumpTo}");
+                    Logs.Log($"Backjumping VN {vn} to line {backjumpTo}");
                     initialSave = (I) vn.UpdateSavedata();
                     initialSave.Location = backjumpTo;
                     continue;
                 }
                 if (e is OperationCanceledException) {
-                    Log.Unity($"Cancelled VN script {vn}");
+                    Logs.Log($"Cancelled VN script {vn}");
                 } else {
-                    Log.UnityException(e);
+                    Logs.LogException(e);
                 }
                 throw;
             } finally {
-                Log.Unity($"Completed VN script {vn}. Final state: local {cT.ToCompletion()}, total {jcT.ToCompletion()}");
+                Logs.Log(
+                    $"Completed VN script {vn}. Final state: local {cT.ToCompletion()}, total {jcT.ToCompletion()}");
                 logct?.Cancel();
                 vn.DeleteAll();
             }
         }
 
     }
+}
 }

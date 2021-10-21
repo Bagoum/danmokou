@@ -1,9 +1,10 @@
 ﻿using System.Runtime.CompilerServices;
 using Danmokou.Core;
+using Danmokou.Services;
 using UnityEngine;
 using UnityEngine.Profiling;
 using Ex = System.Linq.Expressions.Expression;
-using static Danmokou.Core.GameManagement;
+using static Danmokou.Services.GameManagement;
 
 namespace Danmokou.DMath {
 public static class LocationHelpers {

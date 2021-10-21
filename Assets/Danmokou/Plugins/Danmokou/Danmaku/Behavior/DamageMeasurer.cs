@@ -29,7 +29,7 @@ public class DamageMeasurer : CoroutineRegularUpdater {
                 total += dmg;
                 lastg += dmg;
             }
-            Log.Unity($"DPS: {total / (totalFrames / ETime.ENGINEFPS_F)}; " +
+            Logs.Log($"DPS: {total / (totalFrames / ETime.ENGINEFPS_F)}; " +
                       $"Last {group} frames: {lastg / (group / ETime.ENGINEFPS_F)}",
                 false, LogLevel.DEBUG1);
         }

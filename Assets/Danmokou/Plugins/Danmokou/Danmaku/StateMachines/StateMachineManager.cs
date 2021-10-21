@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Danmokou.Core;
+using Danmokou.Services;
 using JetBrains.Annotations;
 using UnityEngine;
 
@@ -19,6 +20,7 @@ public static class StateMachineManager  {
     private static readonly Dictionary<string, Dictionary<string, TextAsset>> Dialogue = new Dictionary<string, Dictionary<string, TextAsset>>();
     
     static StateMachineManager() {
+        if (!Application.isPlaying) return;
         foreach (var sm in GameManagement.References.fileStateMachines.SelectMany(x => x.assetGroups)
             .SelectMany(x => x.assets)) {
             SMFileByName[sm.name] = sm.file;

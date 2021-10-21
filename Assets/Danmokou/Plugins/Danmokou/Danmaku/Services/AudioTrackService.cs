@@ -39,6 +39,8 @@ public class AudioTrackService : CoroutineRegularUpdater, IAudioTrackService {
     private static readonly Dictionary<string, IAudioTrackInfo> trackInfo = new Dictionary<string, IAudioTrackInfo>();
     private readonly DMCompactingArray<IRunningAudioTrack> tracks = new DMCompactingArray<IRunningAudioTrack>();
 
+    private bool preserveBGMOnNextScene = false;
+
     public void Setup() {
         trackInfo.Clear();
         foreach (var t in GameManagement.References.tracks) {
@@ -48,13 +50,18 @@ public class AudioTrackService : CoroutineRegularUpdater, IAudioTrackService {
 
     protected override void BindListeners() {
         base.BindListeners();
-        RegisterDI<IAudioTrackService>(this);
+        RegisterService<IAudioTrackService>(this);
 
-        Listen(Events.SceneCleared, () => ClearAllAudio(false));
+        Listen(Events.SceneCleared, () => {
+            if (preserveBGMOnNextScene)
+                preserveBGMOnNextScene = false;
+            else
+                ClearAllAudio();
+        });
         Listen(Events.EngineStateChanged, HandleEngineStateChange);
         Listen(InstanceRequest.InstanceRestarted, ir => {
             if (ir.Mode.PreserveReloadAudio())
-                _doPreserveBGM = true;
+                preserveBGMOnNextScene = true;
         });
     }
 
@@ -103,7 +110,7 @@ public class AudioTrackService : CoroutineRegularUpdater, IAudioTrackService {
     }
 
     protected override void OnDisable() {
-        ClearAllAudio(true);
+        ClearAllAudio();
         base.OnDisable();
     }
 
@@ -118,26 +125,12 @@ public class AudioTrackService : CoroutineRegularUpdater, IAudioTrackService {
         }
     }
 
-    private bool _doPreserveBGM = false;
-    private bool PreserveNextBGM() {
-        if (_doPreserveBGM) {
-            _doPreserveBGM = false;
-            return true;
-        } else return false;
-    }
-
-    public void ClearAllAudio(bool force) {
-        if (force || !PreserveNextBGM()) {
-            for (int ii = 0; ii < tracks.Count; ++ii) {
-                if (tracks.ExistsAt(ii))
-                    tracks[ii]._Destroy();
-            }
-            tracks.Empty();
+    public void ClearAllAudio() {
+        for (int ii = 0; ii < tracks.Count; ++ii) {
+            if (tracks.ExistsAt(ii))
+                tracks[ii]._Destroy();
         }
-    }
-
-    public void PreserveBGM() {
-        _doPreserveBGM = true;
+        tracks.Empty();
     }
 }
 }

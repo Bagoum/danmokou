@@ -60,15 +60,19 @@ public class SFXService : RegularUpdater, ISFXService {
 
     protected override void BindListeners() {
         base.BindListeners();
-        RegisterDI<ISFXService>(this);
+        RegisterService<ISFXService>(this);
 
         Listen(Events.SceneCleared, ClearConstructed);
         Listen(Events.LocalReset, ClearConstructed);
         Listen(Events.EngineStateChanged, HandleEngineStateChange);
         Listen(RankManager.RankLevelChanged, increase => Request(increase ? rankUp : rankDown));
-        Listen(InstanceData.MeterBecameUsable, () => Request(meterUsable));
-        Listen(InstanceData.AnyExtendAcquired, () => Request(lifeExtend));
-        Listen(InstanceData.PhaseCompleted, pc => {
+
+        Listen(PlayerController.PlayerActivatedMeter, () => Request(meterActivated));
+        Listen(PlayerController.PlayerDeactivatedMeter, () => Request(meterDeActivated));
+
+        Listen(GameManagement.EvInstance, i => i.MeterBecameUsable, () => Request(meterUsable));
+        Listen(GameManagement.EvInstance, i => i.AnyExtendAcquired, () => Request(lifeExtend));
+        Listen(GameManagement.EvInstance, i => i.PhaseCompleted, pc => {
             if (pc.props.endSound) {
                 if (pc.Captured.Try(out var captured)) {
                     Request(captured ? phaseEndSuccess : phaseEndFail);
@@ -77,13 +81,10 @@ public class SFXService : RegularUpdater, ISFXService {
                 }
             }
         });
-        Listen(InstanceData.PowerFull, () => Request(powerFull));
-        Listen(InstanceData.PowerGained, () => Request(powerGained));
-        Listen(InstanceData.PowerLost, () => Request(powerLost));
-        Listen(InstanceData.LifeSwappedForScore, () => Request(swapHPScore));
-
-        Listen(PlayerController.PlayerActivatedMeter, () => Request(meterActivated));
-        Listen(PlayerController.PlayerDeactivatedMeter, () => Request(meterDeActivated));
+        Listen(GameManagement.EvInstance, i => i.PowerFull, () => Request(powerFull));
+        Listen(GameManagement.EvInstance, i => i.PowerGained, () => Request(powerGained));
+        Listen(GameManagement.EvInstance, i => i.PowerLost, () => Request(powerLost));
+        Listen(GameManagement.EvInstance, i => i.LifeSwappedForScore, () => Request(swapHPScore));
     }
 
     public void Update() {

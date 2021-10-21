@@ -91,7 +91,7 @@ public static class FileUtils {
                 return JsonConvert.DeserializeObject<T>(sr.ReadToEnd(), JsonSettings);
             }
         } catch (Exception e) {
-            Log.Unity($"Couldn't read {typeof(T)} from file {file}. (JSON)", false, LogLevel.WARNING);
+            Logs.Log($"Couldn't read {typeof(T)} from file {file}. (JSON)", false, LogLevel.WARNING);
             return null;
         }
     }
@@ -101,7 +101,7 @@ public static class FileUtils {
                 return Serializer.Deserialize<T>(fr);
             }
         } catch (Exception e) {
-            Log.Unity($"Couldn't read {typeof(T)} from file {file}. (PROTO)", false, LogLevel.WARNING);
+            Logs.Log($"Couldn't read {typeof(T)} from file {file}. (PROTO)", false, LogLevel.WARNING);
             return null;
         }
     }
@@ -111,7 +111,7 @@ public static class FileUtils {
                 return Serializer.Deserialize<T>(InflateStream(fr));
             }
         } catch (Exception e) {
-            Log.Unity($"Couldn't read {typeof(T)} from file {file}. (PROTO-C)", false, LogLevel.WARNING);
+            Logs.Log($"Couldn't read {typeof(T)} from file {file}. (PROTO-C)", false, LogLevel.WARNING);
             return null;
         }
     }
@@ -121,7 +121,7 @@ public static class FileUtils {
                 return Serializer.Deserialize<T>(InflateStream(fr));
             }
         } catch (Exception e) {
-            Log.Unity($"Couldn't read {typeof(T)} from textAsset {file.name}. (PROTO-C)", false, LogLevel.WARNING);
+            Logs.Log($"Couldn't read {typeof(T)} from textAsset {file.name}. (PROTO-C)", false, LogLevel.WARNING);
             return null;
         }
     }

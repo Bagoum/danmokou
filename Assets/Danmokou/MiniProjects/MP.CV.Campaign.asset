@@ -16,6 +16,7 @@ MonoBehaviour:
   key: mp.cv
   shortTitle: CV
   replayable: 0
+  allowDialogueSkip: 0
   endings: []
   players:
   - {fileID: 11400000, guid: 2837e4ddce10a134ebcede695c842b92, type: 2}

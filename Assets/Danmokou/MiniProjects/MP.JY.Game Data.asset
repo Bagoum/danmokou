@@ -36,23 +36,22 @@ MonoBehaviour:
     top: 4.1
     bot: -4.5
     center: {x: -1.9, y: 0}
+  achievements: {fileID: 0}
   dialogue:
   - {fileID: 11400000, guid: b7c1d3b51649f5e4eb3f41be569c3f4b, type: 2}
   bossMetadata:
   - {fileID: 11400000, guid: 57918be07b2fa984ea3cd0c2bb9637b8, type: 2}
   - {fileID: 11400000, guid: 17201d06832c65444b4e2faa8c5666a4, type: 2}
-  dialogueProfiles:
-  - {fileID: 11400000, guid: 8bd7a77c825f5e14eab7f82b97165a59, type: 2}
-  - {fileID: 11400000, guid: e4f2342ee3ea32c4a96302013b10c69b, type: 2}
-  - {fileID: 11400000, guid: 04468b209d6180a40812cd1301a4dc42, type: 2}
-  - {fileID: 11400000, guid: ce2cc8720b8755f48a843881227e069b, type: 2}
-  - {fileID: 11400000, guid: 45726fbce08df8149a5db279928404cf, type: 2}
+  dialogueProfiles: []
   tracks:
   - {fileID: 11400000, guid: 46ef225c1f1f10644a247984bf975829, type: 2}
   items: {fileID: 11400000, guid: 18e6de6e951f4114e8823af9e617bff7, type: 2}
   prefabReferences: {fileID: 11400000, guid: 842bcc7c616103e4c9880c49f9735bb4, type: 2}
+  suzunoyaReferences: {fileID: 11400000, guid: a936563f4e58b294db033ff8ee6be6f8, type: 2}
   uxmlDefaults: {fileID: 11400000, guid: b4213b3830762944fbcb9250a4b73463, type: 2}
+  SFX: []
   summonables:
   - {fileID: 11400000, guid: 38afc312ddb0ac242b8cfb301b1b4237, type: 2}
   fileStateMachines: []
   scriptFolders: []
+  fastParsing: 0

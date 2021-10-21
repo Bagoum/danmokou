@@ -9,15 +9,17 @@ namespace Danmokou.Expressions {
 
 public class EEx {
     protected readonly Ex ex;
-    protected bool RequiresCopy => ex.NodeType != ExpressionType.Parameter &&
-                                   ex.NodeType != ExpressionType.Constant &&
-                                   ex.NodeType != ExpressionType.MemberAccess;
+    public static bool RequiresCopyOnRepeat(Expression e) => !(
+        e.NodeType == ExpressionType.Parameter ||
+        e.NodeType == ExpressionType.Constant ||
+        e.NodeType == ExpressionType.MemberAccess ||
+        (e.NodeType == ExpressionType.Convert && !RequiresCopyOnRepeat((e as UnaryExpression)!.Operand)));
     public EEx(Ex ex) {
         this.ex = ex;
     }
     //Remove this in favor of subtype
     public static implicit operator Ex(EEx ex) => ex.ex;
-    public static implicit operator (Ex, bool)(EEx exx) => (exx.ex, exx.RequiresCopy);
+    public static implicit operator (Ex, bool)(EEx exx) => (exx.ex, RequiresCopyOnRepeat(exx.ex));
     private static Ex ResolveCopy(Func<Ex[], Ex> func, params (Ex, bool)[] requiresCopy) {
         var newvars = ListCache<ParameterExpression>.Get();
         var setters = ListCache<Expression>.Get();
@@ -79,7 +81,7 @@ public class EEx<T> : EEx {
     public static implicit operator EEx<T>(Ex ex) => new EEx<T>(ex);
     public static implicit operator EEx<T>(TEx<T> ex) => new EEx<T>(ex);
     public static implicit operator Ex(EEx<T> ex) => ex.ex;
-    public static implicit operator (Ex, bool)(EEx<T> exx) => (exx.ex, exx.RequiresCopy);
+    public static implicit operator (Ex, bool)(EEx<T> exx) => (exx.ex, RequiresCopyOnRepeat(exx.ex));
     
     public static implicit operator EEx<T>(T obj) => new EEx<T>(Ex.Constant(obj));
 }
