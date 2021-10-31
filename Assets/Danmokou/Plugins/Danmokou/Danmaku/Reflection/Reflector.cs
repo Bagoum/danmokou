@@ -70,7 +70,6 @@ public static partial class Reflector {
     /// </summary>
     private static readonly Dictionary<Type, Func<string, object?>> SimpleFunctionResolver =
         new Dictionary<Type, Func<string, object?>>() {
-            {typeof(Events.Event0), Events.Event0.FindOrNull},
             {typeof(float), arg => Parser.Float(arg)},
             {typeof(V2RV2), arg => Parser.ParseV2RV2(arg)},
             {typeof(CRect), arg => Parser.ParseRect(arg)},

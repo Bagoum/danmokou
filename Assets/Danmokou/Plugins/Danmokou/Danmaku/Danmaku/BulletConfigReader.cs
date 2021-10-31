@@ -1,7 +1,10 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using System;
+using System.Linq;
 using BagoumLib;
+using BagoumLib.DataStructures;
+using BagoumLib.Events;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Danmaku.Descriptors;
@@ -26,7 +29,7 @@ public partial class BulletManager : RegularUpdater {
     private const float PLAYER_SB_FADEIN_MUL = 0.4f;
     private const float PLAYER_SB_SCALEIN_MUL = 0.1f;
     private const float PLAYER_FB_OPACITY_MUL = 0.65f;
-    private readonly struct CollidableInfo {
+    public readonly struct CollidableInfo {
         public readonly GenericColliderInfo.ColliderType colliderType;
         // Circle/Line
         public readonly float radius;
@@ -60,43 +63,75 @@ public partial class BulletManager : RegularUpdater {
         }
     }
     
-    //must be struct for Copy function to work as is
-    private struct BulletInCode {
-        public string name;
-        public readonly DeferredTextureConstruction deferredRI;
+    public class BulletInCode {
+        public readonly string name;
+        private readonly DeferredTextureConstruction deferredRI;
         private bool riLoaded;
         private MeshGenerator.RenderInfo ri;
         public readonly int damageAgainstPlayer;
         public readonly int againstEnemyCooldown;
         public readonly bool destructible;
-        private readonly bool default_deletable;
-        public bool deletable;
         public readonly CollidableInfo cc;
         public readonly ushort grazeEveryFrames;
-        private readonly float DEFAULT_CULL_RAD;
-        public float CULL_RAD;
+        public readonly DisturbedOverride<bool> Deletable;
+        public readonly DisturbedOverride<float> CULL_RAD;
+        public readonly DisturbedOverride<bool> AllowCameraCull;
+        public readonly DisturbedOverride<(TP4 black, TP4 white)?> Recolor;
+        public readonly DisturbedOverride<TP4?> Tint;
         public bool Recolorizable => deferredRI.recolorizable;
-        public (TP4 black, TP4 white)? recolor;
-        private TP4? tint;
-        public TP4? Tint {
-            get => tint;
-            set {
-                tint = value;
-                GetOrLoadRI().material.SetOrUnsetKeyword(value != null, PropConsts.tintKW);
-            }
-        }
         public SimpleBulletFader FadeOut => deferredRI.sbes.FadeOut;
 
-        public BulletInCode Copy(string newName) {
-            GetOrLoadRI();
-            MeshGenerator.RenderInfo nri = new MeshGenerator.RenderInfo(ri.material, ri.mesh, true);
-            var bic = this;
-            bic.name = newName;
-            bic.ri = nri;
-            bic.riLoaded = true;
-            bic.ResetMetadata();
-            return bic;
+        public BulletInCode(string name, DeferredTextureConstruction dfc, GenericColliderInfo cc,
+            SimpleBulletEmptyScript sbes) {
+            this.name = name;
+            deferredRI = dfc;
+            ri = default;
+            riLoaded = false;
+            damageAgainstPlayer = sbes.damage;
+            againstEnemyCooldown = sbes.framesPerHit;
+            destructible = sbes.destructible;
+            this.cc = new CollidableInfo(cc);
+            //Minus 1 to allow for zero offset
+            grazeEveryFrames = (ushort)(sbes.grazeEveryFrames - 1);
+            Deletable = new DisturbedOverride<bool>(sbes.destructible);
+            CULL_RAD = new DisturbedOverride<float>(sbes.screenCullRadius);
+            AllowCameraCull = new DisturbedOverride<bool>(true);
+            Recolor = new DisturbedOverride<(TP4, TP4)?>(null);
+            Tint = new DisturbedOverride<TP4?>(null);
+            Tint.Subscribe(tint => {
+                if (riLoaded)
+                    GetOrLoadRI().material.SetOrUnsetKeyword(tint != null, PropConsts.tintKW);
+            });
         }
+        
+        //records when?
+        private BulletInCode(BulletInCode copyFrom, string newName) {
+            copyFrom.GetOrLoadRI();
+            name = newName;
+            ri = new MeshGenerator.RenderInfo(copyFrom.ri.material, copyFrom.ri.mesh, true);
+            riLoaded = true;
+
+            deferredRI = copyFrom.deferredRI;
+            damageAgainstPlayer = copyFrom.damageAgainstPlayer;
+            againstEnemyCooldown = copyFrom.againstEnemyCooldown;
+            destructible = copyFrom.destructible;
+            this.cc = copyFrom.cc;
+            grazeEveryFrames = copyFrom.grazeEveryFrames;
+            Deletable = CopyOV(copyFrom.Deletable);
+            CULL_RAD = CopyOV(copyFrom.CULL_RAD);
+            AllowCameraCull = CopyOV(copyFrom.AllowCameraCull);
+            Recolor = CopyOV(copyFrom.Recolor);
+            Tint = CopyOV(copyFrom.Tint);
+            Tint.Subscribe(tint => {
+                if (riLoaded)
+                    GetOrLoadRI().material.SetOrUnsetKeyword(tint != null, PropConsts.tintKW);
+            });
+        }
+
+        private static DisturbedOverride<T> CopyOV<T>(DisturbedOverride<T> baseOV) =>
+            new DisturbedOverride<T>(baseOV.BaseValue);
+
+        public BulletInCode Copy(string newName) => new BulletInCode(this, newName);
 
         public void UseExitFade() {
             DeferredTextureConstruction.SetMaterialFade(GetOrLoadRI(), FadeOut);
@@ -111,33 +146,10 @@ public partial class BulletManager : RegularUpdater {
         public MeshGenerator.RenderInfo GetOrLoadRI() {
             if (!riLoaded) {
                 ri = deferredRI.CreateDeferredTexture();
+                ri.material.SetOrUnsetKeyword(Tint.Value != null, PropConsts.tintKW);
                 riLoaded = true;
             }
             return ri;
-        }
-        public BulletInCode(string name, DeferredTextureConstruction dfc, GenericColliderInfo cc,
-            SimpleBulletEmptyScript sbes) {
-            this.name = name;
-            deferredRI = dfc;
-            ri = default;
-            riLoaded = false;
-            damageAgainstPlayer = sbes.damage;
-            againstEnemyCooldown = sbes.framesPerHit;
-            destructible = sbes.destructible;
-            default_deletable = deletable = sbes.deletable;
-            this.cc = new CollidableInfo(cc);
-            //Minus 1 to allow for zero offset
-            grazeEveryFrames = (ushort)(sbes.grazeEveryFrames - 1);
-            DEFAULT_CULL_RAD = CULL_RAD = sbes.screenCullRadius;
-            recolor = null;
-            tint = null;
-        }
-
-        public void ResetMetadata() {
-            deletable = default_deletable;
-            CULL_RAD = DEFAULT_CULL_RAD;
-            recolor = null;
-            if (riLoaded) Tint = null;
         }
     }
     [Serializable]
@@ -205,7 +217,7 @@ public partial class BulletManager : RegularUpdater {
     private static GradientMap throwaway_gm = null!;
     private static MultiPaletteMap throwaway_mpm = null!;
 
-    private readonly struct DeferredTextureConstruction {
+    public readonly struct DeferredTextureConstruction {
         private readonly Material mat;
         private readonly bool isFrameAnim;
         public readonly SimpleBulletEmptyScript sbes;
@@ -550,7 +562,7 @@ public partial class BulletManager : RegularUpdater {
             AddComplexStyle(new BehaviorEntity.BEHStyleMetadata(style, null));
         }
         
-        SceneIntermediary.SceneLoaded.Subscribe(StartScene);
+        SceneIntermediary.SceneLoaded.Subscribe(_ => StartScene());
         Camera.onPreCull += RenderBullets;
     }
 

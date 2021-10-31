@@ -1,4 +1,5 @@
-﻿using Danmokou.Core;
+﻿using BagoumLib.Expressions;
+using Danmokou.Core;
 using Danmokou.Expressions;
 using Ex = System.Linq.Expressions.Expression;
 using static Danmokou.Expressions.ExMHelpers;

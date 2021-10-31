@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using BagoumLib.Expressions;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.DMath;
@@ -52,32 +53,45 @@ public static partial class BPYRepo {
     /// See <see cref="ExM.P1M"/>.
     /// </summary>
     /// <returns></returns>
-    public static ExBPY P1M(int mod) => bpi => ExM.P1M(mod, bpi.index);
-    public static ExBPY P1Ma(int[] children) => P1M(children.Aggregate(1, (x, y) => x * y));
-    public static ExBPY P1Mf(FXY mod) => P1M((int)mod(0));
-    public static ExBPY P1Maf(FXY[] children) => P1M(children.Aggregate(1, (x, y) => x * (int) y(0)));
+    public static ExBPY P1M(int mod) => 
+        bpi => ExM.P1M(mod, bpi.index);
+    public static ExBPY P1Ma(int[] children) => 
+        P1M(children.Aggregate(1, (x, y) => x * y));
+    public static ExBPY P1Mf(ExBPY mod) => 
+        bpi => ExM.P1M(mod(bpi), bpi.index);
+    public static ExBPY P1Maf(ExBPY[] children) => 
+        bpi => ExM.P1M(children.Aggregate(E1, (x, y) => x.Mul(y(bpi))), bpi.index);
 
     /// <summary>
     /// See <see cref="ExM.P2"/>.
     /// </summary>
     /// <returns></returns>
-    public static ExBPY P2() => bpi => ExM.P2(bpi.index);
+    public static ExBPY P2() => 
+        bpi => ExM.P2(bpi.index);
     /// <summary>
     /// See <see cref="ExM.P2M"/>.
     /// </summary>
     /// <returns></returns>
-    public static ExBPY P2M(int mod) => bpi => ExM.P2M(mod, bpi.index);
-    public static ExBPY P2Ma(int[] children) => P2M(children.Aggregate(1, (x, y) => x * y));
-    public static ExBPY P2Mf(FXY mod) => P2M((int)mod(0));
-    public static ExBPY P2Maf(FXY[] children) => P2M(children.Aggregate(1, (x, y) => x * (int) y(0)));
+    public static ExBPY P2M(int mod) => 
+        bpi => ExM.P2M(mod, bpi.index);
+    public static ExBPY P2Ma(int[] children) => 
+        P2M(children.Aggregate(1, (x, y) => x * y));
+    public static ExBPY P2Mf(ExBPY mod) => 
+        bpi => ExM.P2M(mod(bpi), bpi.index);
+    public static ExBPY P2Maf(ExBPY[] children) => 
+        bpi => ExM.P2M(children.Aggregate(E1, (x, y) => x.Mul(y(bpi))), bpi.index);
     /// <summary>
     /// See <see cref="ExM.PM"/>.
     /// </summary>
     /// <returns></returns>
-    public static ExBPY PM(int self, int children) => bpi => ExM.PM(self, children, bpi.index);
-    public static ExBPY PMa(int self, int[] children) => PM(self, children.Aggregate(1, (x, y) => x * y));
-    public static ExBPY PMf(FXY self, FXY children) => PM((int)self(0), (int)children(0));
-    public static ExBPY PMaf(FXY self, FXY[] children) => PM((int) self(0), children.Aggregate(1, (x, y) => x * (int) y(0)));
+    public static ExBPY PM(int self, int children) => 
+        bpi => ExM.PM(self, children, bpi.index);
+    public static ExBPY PMa(int self, int[] children) => 
+        PM(self, children.Aggregate(1, (x, y) => x * y));
+    public static ExBPY PMf(ExBPY self, ExBPY children) => 
+        bpi => ExM.PM(self(bpi), children(bpi), bpi.index);
+    public static ExBPY PMaf(ExBPY self, ExBPY[] children) => bpi =>
+        ExM.PM(self(bpi), children.Aggregate(E1, (x, y) => x.Mul(y(bpi))), bpi.index);
     
     /// <summary>
     /// Return the parametric x-position, or, if this is a float function, the input value.
@@ -91,7 +105,7 @@ public static partial class BPYRepo {
     public static ExBPY Y() => bpi => bpi.locy;
 
 
-    private static readonly ExFunction SeedRandUint = Wrap(typeof(RNG), "GetSeededFloat", new[] {typeof(float), typeof(float), typeof(uint)});
+    private static readonly ExFunction SeedRandUint = ExFunction.Wrap(typeof(RNG), "GetSeededFloat", new[] {typeof(float), typeof(float), typeof(uint)});
 
     /// <summary>
     /// Return a random number as a deterministic function of the parametric ID.
@@ -123,6 +137,9 @@ public static partial class BPYRepo {
 
     [Fallthrough(1)]
     public static ExBPY Const(float x) => bpi => Ex.Constant(x);
+    
+    
+    
     
 
     /// <summary>

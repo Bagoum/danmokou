@@ -1,4 +1,5 @@
-﻿using NUnit.Framework;
+﻿using BagoumLib.Expressions;
+using NUnit.Framework;
 using Danmokou.DMath;
 using Danmokou.DMath.Functions;
 using Danmokou.Expressions;

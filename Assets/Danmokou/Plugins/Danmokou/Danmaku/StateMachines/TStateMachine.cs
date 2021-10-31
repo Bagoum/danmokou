@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
+using BagoumLib;
+using BagoumLib.DataStructures;
 using BagoumLib.Tasks;
 using Danmokou.Core;
 using Danmokou.Dialogue;
@@ -20,7 +22,8 @@ public class ScriptTSM : SequentialSM {
     public ScriptTSM(List<StateMachine> states) : base(states) {}
 
     public override async Task Start(SMHandoff smh) {
-        using var token = PlayerController.AllControlDisabler.CreateToken1(MultiOp.Priority.CLEAR_PHASE);
+        using var token = ServiceLocator.FindAll<PlayerController>()
+            .SelectDisposable(p => p.AllControlEnabled.AddConst(false));
         //Await to keep token in scope until exit
         await ((DMKVNWrapper) ServiceLocator.Find<IVNWrapper>())
             .ExecuteVN((data, cT) => new DMKVNState(cT, "backwards-compat-script-vn", data),

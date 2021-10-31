@@ -22,6 +22,14 @@ public class PowerAuraOption {
     public static PowerAuraOption Scale(GCXF<float> scale) => new ScaleProp(scale);
     public static PowerAuraOption Color(TP4 color) => new ColorProp(color);
     public static PowerAuraOption SFX(string sfx) => new SFXProp(sfx);
+    /// <summary>
+    /// Set the time in seconds that the aura effect starts with. Useful if you need the effect to appear immediately
+    /// instead of fading inwards.
+    /// </summary>
+    public static PowerAuraOption InitialTime(GCXF<float> time) => new InitialTimeProp(time);
+    /// <summary>
+    /// Set the total time for the aura effect.
+    /// </summary>
     public static PowerAuraOption Time(GCXF<float> time) => new TimeProp(time);
 
     public static PowerAuraOption Static() => new StaticFlag();
@@ -71,6 +79,9 @@ public class PowerAuraOption {
         public ColorProp(TP4 f) : base(f) { }
     }
     
+    public class InitialTimeProp : ValueProp<GCXF<float>> {
+        public InitialTimeProp(GCXF<float> f) : base(f) { }
+    }
     public class TimeProp : ValueProp<GCXF<float>> {
         public TimeProp(GCXF<float> f) : base(f) { }
     }
@@ -105,7 +116,8 @@ public readonly struct RealizedPowerAuraOptions {
     public readonly BehaviorEntity? parent;
     public readonly Vector2 offset;
     public readonly TP4 color;
-    public readonly float time;
+    public readonly float initialTime;
+    public readonly float totalTime;
     public readonly float iterations;
     public readonly string? sfx;
     public readonly int? layer;
@@ -116,7 +128,8 @@ public readonly struct RealizedPowerAuraOptions {
     public RealizedPowerAuraOptions(PowerAuraOptions opts, GenCtx gcx, Vector2 unparentedOffset, ICancellee cT, Func<RealizedPowerAuraOptions, Action> next) {
         scale = opts.scale?.Invoke(gcx);
         color = opts.color;
-        time = opts.time?.Invoke(gcx) ?? 1f;
+        initialTime = opts.initialTime?.Invoke(gcx) ?? 0f;
+        totalTime = opts.time?.Invoke(gcx) ?? 1f;
         iterations = opts.itrs?.Invoke(gcx) ?? 1f;
         sfx = opts.sfx;
         layer = opts.layer;
@@ -142,6 +155,7 @@ public class PowerAuraOptions {
     public readonly GCXF<float>? scale;
     public readonly TP4 color = _ => Vector4.one;
     public readonly bool static_ = false;
+    public readonly GCXF<float>? initialTime;
     public readonly GCXF<float>? time;
     public readonly GCXF<float>? itrs;
     public readonly string? sfx;
@@ -156,7 +170,9 @@ public class PowerAuraOptions {
                 static_ = true;
             } else if (prop is ColorProp cp) {
                 color = cp.value;
-            } else if (prop is TimeProp tp) {
+            } else if (prop is InitialTimeProp itp) {
+                initialTime = itp.value;
+            }  else if (prop is TimeProp tp) {
                 time = tp.value;
             } else if (prop is IterationsProp ip) {
                 itrs = ip.value;

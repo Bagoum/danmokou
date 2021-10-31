@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using BagoumLib.DataStructures;
+using BagoumLib.Expressions;
 using Danmokou.Expressions;
 using Danmokou.Services;
 using JetBrains.Annotations;
@@ -54,7 +55,7 @@ public static class ServiceLocator {
     public static Expression SFXRequest(Expression style) => 
         sfxrequest.InstanceOf(Expression.Property(null, typeof(ServiceLocator), "SFXService"), style);
 
-    private static readonly ExFunction sfxrequest = ExUtils.Wrap<ISFXService>("Request", new[] {typeof(string)});
+    private static readonly ExFunction sfxrequest = ExFunction.Wrap<ISFXService>("Request", new[] {typeof(string)});
 
 
     /// <summary>

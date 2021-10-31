@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using UnityEngine;
 using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
+using BagoumLib.Expressions;
 using Danmokou.Core;
 using Danmokou.Expressions;
 using Danmokou.Reflection;

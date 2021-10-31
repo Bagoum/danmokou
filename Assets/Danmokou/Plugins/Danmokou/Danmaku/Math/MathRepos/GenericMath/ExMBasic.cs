@@ -1,4 +1,5 @@
 ﻿using System;
+using BagoumLib.Expressions;
 using Danmokou.Core;
 using Danmokou.DMath;
 using Danmokou.Expressions;
@@ -149,13 +150,13 @@ public static partial class ExM {
     /// </summary>
     public static tfloat Sign(efloat x) => EEx.Resolve(x, y => Ex.Condition(y.LT0(), EN1, E1));
     
-    private static readonly ExFunction _ExpDb = ExUtils.Wrap<double>(typeof(Math), "Exp");
+    private static readonly ExFunction _ExpDb = ExFunction.Wrap<double>(typeof(Math), "Exp");
     private static TEx<double> ExpDb(tfloat x) => _ExpDb.Of(Ex.Convert(x, typeof(double)));
     /// <summary>
     /// Returns e^x.
     /// </summary>
     public static tfloat Exp(tfloat x) => OfDFD(_ExpDb, x);
-    private static readonly ExFunction _LnDb = ExUtils.Wrap<double>(typeof(Math), "Log");
+    private static readonly ExFunction _LnDb = ExFunction.Wrap<double>(typeof(Math), "Log");
     private static TEx<double> LnDb(tfloat x) => _LnDb.Of(Ex.Convert(x, typeof(double)));
     /// <summary>
     /// Returns ln(x).
@@ -163,7 +164,7 @@ public static partial class ExM {
     public static tfloat Ln(tfloat x) => OfDFD(_LnDb, x);
     
     
-    private static readonly ExFunction _Sqrt = ExUtils.Wrap<double>(typeof(Math), "Sqrt");
+    private static readonly ExFunction _Sqrt = ExFunction.Wrap<double>(typeof(Math), "Sqrt");
     /// <summary>
     /// Returns the square root of a number.
     /// </summary>
@@ -232,7 +233,7 @@ public static partial class ExM {
     /// </summary>
     public static tfloat v3SqrMag(ev3 v3) => EEx.ResolveV3(v3, xyz => SqrMag3(xyz.x, xyz.y, xyz.z));
     
-    private static readonly ExFunction _Pow = Wrap<double>(typeof(Math), "Pow", 2);
+    private static readonly ExFunction _Pow = ExFunction.Wrap<double>(typeof(Math), "Pow", 2);
 
     /// <summary>
     /// Returns (bas)^(exp).
@@ -267,9 +268,9 @@ public static partial class ExM {
             Ex.Negate(Pow(Ex.Negate(x), y)),
             Pow(x, y)));
 
-    private static readonly ExFunction _Round = ExUtils.Wrap<double>(typeof(Math), "Round");
-    private static readonly ExFunction _Floor = ExUtils.Wrap<double>(typeof(Math), "Floor");
-    private static readonly ExFunction _Ceil = ExUtils.Wrap<double>(typeof(Math), "Ceiling");
+    private static readonly ExFunction _Round = ExFunction.Wrap<double>(typeof(Math), "Round");
+    private static readonly ExFunction _Floor = ExFunction.Wrap<double>(typeof(Math), "Floor");
+    private static readonly ExFunction _Ceil = ExFunction.Wrap<double>(typeof(Math), "Ceiling");
     
     /// <summary>
     /// Round a number to the nearest intereger.
@@ -297,7 +298,7 @@ public static partial class ExM {
     /// </summary>
     public static tfloat Ceil(tfloat ex) => OfDFD(_Ceil, ex);
 
-    private static readonly ExFunction _Abs = ExUtils.Wrap<float>(typeof(Math), "Abs", 1);
+    private static readonly ExFunction _Abs = ExFunction.Wrap<float>(typeof(Math), "Abs", 1);
 
     /// <summary>
     /// Get the absolute value of a number.
@@ -325,7 +326,7 @@ public static partial class ExM {
     /// <returns></returns>
     public static tfloat SqrDist(tv2 f1, tv2 f2) => SqrMag(Sub(f1, f2));
     
-    private static readonly ExFunction _Min = ExUtils.Wrap<float>(typeof(Math), "Min", 2);
+    private static readonly ExFunction _Min = ExFunction.Wrap<float>(typeof(Math), "Min", 2);
     /// <summary>
     /// Return the smaller of two numbers.
     /// </summary>
@@ -337,7 +338,7 @@ public static partial class ExM {
     /// </summary>
     public static tfloat MinA(efloat x1, efloat x2) =>
         EEx.Resolve(x1, x2, (a, b) => Ex.Condition(Abs(a).LT(Abs(b)), a, b));
-    private static readonly ExFunction _Max = ExUtils.Wrap<float>(typeof(Math), "Max", 2);
+    private static readonly ExFunction _Max = ExFunction.Wrap<float>(typeof(Math), "Max", 2);
     /// <summary>
     /// Return the larger of two numbers.
     /// </summary>
@@ -369,13 +370,13 @@ public static partial class ExM {
     public static tfloat HighCut(tfloat by, efloat x) => 
         EEx.Resolve(x, _x => Ex.Condition(Abs(_x).GT(by), E0, _x));
     
-    private static readonly ExFunction _Clamp = ExUtils.Wrap<Mathf, float>("Clamp", 3);
+    private static readonly ExFunction _Clamp = ExFunction.Wrap<Mathf, float>("Clamp", 3);
     
     /// <summary>
     /// Clamp a value to a [min, max] range.
     /// </summary>
     public static tfloat Clamp(tfloat min, tfloat max, tfloat x) => _Clamp.Of(x, min, max);
-    private static readonly ExFunction _Clamp01 = ExUtils.Wrap<Mathf, float>("Clamp01", 1);
+    private static readonly ExFunction _Clamp01 = ExFunction.Wrap<Mathf, float>("Clamp01", 1);
     /// <summary>
     /// Clamp a value to the [0, 1] range.
     /// </summary>
@@ -444,13 +445,13 @@ public static partial class ExM {
     
     #region Sines
     
-    private static readonly ExFunction _Sin = ExUtils.Wrap<float>(typeof(M), "Sin");
-    private static readonly ExFunction _Cos = ExUtils.Wrap<float>(typeof(M), "Cos");
-    private static readonly ExFunction _CosSin = ExUtils.Wrap<float>(typeof(M), "CosSin");
+    private static readonly ExFunction _Sin = ExFunction.Wrap<float>(typeof(M), "Sin");
+    private static readonly ExFunction _Cos = ExFunction.Wrap<float>(typeof(M), "Cos");
+    private static readonly ExFunction _CosSin = ExFunction.Wrap<float>(typeof(M), "CosSin");
     
-    private static readonly ExFunction _SinDeg = ExUtils.Wrap<float>(typeof(M), "SinDeg");
-    private static readonly ExFunction _CosDeg = ExUtils.Wrap<float>(typeof(M), "CosDeg");
-    private static readonly ExFunction _CosSinDeg = ExUtils.Wrap<float>(typeof(M), "CosSinDeg");
+    private static readonly ExFunction _SinDeg = ExFunction.Wrap<float>(typeof(M), "SinDeg");
+    private static readonly ExFunction _CosDeg = ExFunction.Wrap<float>(typeof(M), "CosDeg");
+    private static readonly ExFunction _CosSinDeg = ExFunction.Wrap<float>(typeof(M), "CosSinDeg");
     
     /// <summary>
     /// The raw sine function (period 2pi, peakheight 1).
@@ -529,20 +530,20 @@ public static partial class ExM {
         );
     }
 
-    private static readonly ExFunction _ACos = ExUtils.Wrap<double>(typeof(Math), "Acos");
+    private static readonly ExFunction _ACos = ExFunction.Wrap<double>(typeof(Math), "Acos");
     /// <summary>
     /// Get the arccosine in radians of a number.
     /// </summary>
     public static tfloat ACosR(tfloat x) => OfDFD(_ACos, x);
 
     public static tfloat ACos(tfloat x) => ACosR(x).Mul(radDeg);
-    private static readonly ExFunction _Tan = ExUtils.Wrap<double>(typeof(Math), "Tan");
+    private static readonly ExFunction _Tan = ExFunction.Wrap<double>(typeof(Math), "Tan");
     /// <summary>
     /// The raw tangent function.
     /// </summary>
     public static tfloat Tan(tfloat x) => OfDFD(_Tan, x);
     
-    private static readonly ExFunction _AtanYX = ExUtils.Wrap<Mathf, float>("Atan2", 2);
+    private static readonly ExFunction _AtanYX = ExFunction.Wrap<Mathf, float>("Atan2", 2);
     
     /// <summary>
     /// Return the angle in radians whose tangent is y/x.

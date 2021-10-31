@@ -1,4 +1,5 @@
 ﻿using System.Linq.Expressions;
+using BagoumLib.Expressions;
 using UnityEngine;
 using Ex = System.Linq.Expressions.Expression;
 using Danmokou.Behavior;
@@ -96,7 +97,7 @@ public static partial class ExM {
     public static TEx<float> YHeight() => LocationHelpers.height;
     
     private static readonly ExFunction GetEnemyVisiblePlayer =
-        ExUtils.Wrap(typeof(LocationHelpers), "GetEnemyVisiblePlayer");
+        ExFunction.Wrap(typeof(LocationHelpers), "GetEnemyVisiblePlayer");
     
     /// <summary>
     /// Get the location of the player as visible to enemies.
@@ -107,9 +108,9 @@ public static partial class ExM {
     public static TEx<Vector2> LBEH(BEHPointer beh) => Ex.Constant(beh).Field("beh").Field("BPI").Field("loc");
     
     private static readonly ExFunction distToWall =
-        ExUtils.Wrap(typeof(LocationHelpers), "DistToWall", typeof(Vector2), typeof(Vector2));
+        ExFunction.Wrap(typeof(LocationHelpers), "DistToWall", typeof(Vector2), typeof(Vector2));
     private static readonly ExFunction toWall =
-        ExUtils.Wrap(typeof(LocationHelpers), "ToWall", typeof(Vector2), typeof(Vector2));
+        ExFunction.Wrap(typeof(LocationHelpers), "ToWall", typeof(Vector2), typeof(Vector2));
 
     public static tfloat DistToWall(tv2 from, tv2 dir) => distToWall.Of(from, dir);
     public static tv2 ToWall(tv2 from, tv2 dir) => toWall.Of(from, dir);

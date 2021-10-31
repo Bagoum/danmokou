@@ -240,7 +240,7 @@ public static class SMAnalysis {
     public static List<Phase> Analyze(AnalyzedPhasedConstruct parent, PatternSM? pat, bool ignoreZero = true) {
         var ret = new List<Phase>();
         if (pat == null) return ret;
-        foreach (var (i, p) in pat.phases.Enumerate()) {
+        foreach (var (i, p) in pat.Phases.Enumerate()) {
             if (ignoreZero && i == 0) continue;
             if (p.props.phaseType.Try(out var pt) && pt.AppearsInPractice()) {
                 ret.Add(new Phase(parent, pt, i, p.props.cardTitle));
@@ -269,8 +269,10 @@ public static class SMAnalysis {
 
     public static List<Phase> Analyze(AnalyzedPhasedConstruct parent, TextAsset? sm) {
         if (sm == null) return new List<Phase>();
+#if !EXBAKE_LOAD
         if (GameManagement.References.fastParsing)
             return Analyze(parent, StateMachine.ParsePhases(sm.text));
+#endif
         return Analyze(parent, StateMachineManager.FromText(sm) as PatternSM);
     }
 
@@ -278,7 +280,7 @@ public static class SMAnalysis {
         var ret = new List<DayPhase>();
         int combatCardNumber = 0;
         int cardNumber = 0;
-        foreach (var (i, p) in pat.phases.Enumerate()) {
+        foreach (var (i, p) in pat.Phases.Enumerate()) {
             if (ignoreZero && i == 0) continue;
             if (p.props.phaseType.HasValue && p.props.challenges.Count > 0) {
                 var asDp = (p.props.challenges.Try(0) as Challenge.DialogueC)?.point;

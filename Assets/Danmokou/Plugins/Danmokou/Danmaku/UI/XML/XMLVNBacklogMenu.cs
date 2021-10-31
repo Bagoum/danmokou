@@ -87,8 +87,8 @@ public class XMLVNBacklogMenu : PausedGameplayMenu, IVNBacklog {
             ProtectHide();
             return;
         }
-        using var disabler = Disabler.CreateToken1(MultiOp.Priority.ALL);
-        using var pdisabler = pauseMenu.Disabler.CreateToken1(MultiOp.Priority.ALL);
+        using var disabler = UpdatesEnabled.AddConst(false);
+        using var pdisabler = pauseMenu.UpdatesEnabled.AddConst(false);
         await overlay.Fade(null, 1, 0.8f, null);
         backlogger(loc);
         HideMe();

@@ -123,10 +123,10 @@ public class ReplayPlayer : ReplayActor {
     private FrameInput[]? loadedFrames;
     private FrameInput[] LoadedFrames => loadedFrames ??= replaying.frames();
     
-    private readonly MultiAdder.Token token;
+    private readonly IDisposable token;
 
     public ReplayPlayer(Replayer.ReplayerConfig replaying) {
-        token = Achievement.ACHIEVEMENT_PROGRESS_ENABLED.CreateToken1(MultiOp.Priority.ALL);
+        token = Achievement.ACHIEVEMENT_PROGRESS_ENABLED.AddConst(false);
         this.replaying = replaying;
     }
 
@@ -153,7 +153,7 @@ public class ReplayPlayer : ReplayActor {
 
     public override void Cancel() {
         Logs.Log($"Finished replaying {LastFrame - ReplayStartFrame + 1}/{LoadedFrames.Length} frames.");
-        token.TryRevoke();
+        token.Dispose();
         base.Cancel();
     }
 }
@@ -161,7 +161,7 @@ public class ReplayPlayer : ReplayActor {
 public static class Replayer {
     static Replayer() {
         if (!Application.isPlaying) return;
-        SceneIntermediary.SceneLoaded.Subscribe(LoadLazy);
+        SceneIntermediary.SceneLoaded.Subscribe(_ => LoadLazy());
     }
     public enum ReplayStatus {
         RECORDING,

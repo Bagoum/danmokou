@@ -122,8 +122,7 @@ public partial class BulletManager {
             Culled
         }
         public virtual CollectionType MetaType => CollectionType.Normal;
-        
-        public bool allowCameraCull = true;
+        public abstract BulletInCode BC { get; }
         public abstract BehaviorEntity GetINodeAt(int sbcind, string behName);
         public abstract string Style { get; }
         
@@ -172,12 +171,7 @@ public partial class BulletManager {
             throw new Exception("AssertControls found that some, neither all nor none, of controls were matched.");
         }
 
-        public abstract void SetCullRad(float r);
-        public abstract void SetDeleteActive(bool active);
-
-        public abstract void SetRecolor(TP4 black, TP4 white);
-
-        public abstract void SetTint(TP4 tint);
+        public abstract IDisposable SetRecolor(TP4 black, TP4 white);
 
         //TODO: investigate if isNew is actually required; is it possible to always apply the initial controls?
         public abstract void Add(ref SimpleBullet sb, bool isNew);
@@ -265,11 +259,12 @@ public partial class BulletManager {
         public bool Active { get; private set; } = false;
         private readonly List<SimpleBulletCollection> targetList;
 
+        public bool SubjectToAutocull =>
+            !IsPlayer && MetaType == CollectionType.Normal;
         public bool IsPlayer { get; private set; } = false;
 
-        public override string Style => bc.name;
-        protected BulletInCode bc;
-        public bool Deletable => bc.deletable;
+        public override string Style => BC.name;
+        public override BulletInCode BC { get; }
         public int temp_last;
         private static readonly CollisionResult noColl = new CollisionResult(false, false);
         /// <summary>
@@ -277,7 +272,7 @@ public partial class BulletManager {
         /// </summary>
         private SimpleBulletCollection? original;
         public bool IsCopy => original != null;
-        public TP4? Tint => bc.Tint;
+        public TP4? Tint => BC.Tint.Value;
 
         private CulledBulletCollection? culled;
         public CulledBulletCollection Culled => original?.Culled ?? (culled ??= new CulledBulletCollection(this));
@@ -289,28 +284,19 @@ public partial class BulletManager {
             //bc.SetPlayer should not be called twice
             if (!IsPlayer) {
                 IsPlayer = true;
-                bc.SetPlayer();
+                BC.SetPlayer();
             }
         }
 
-        public bool TryGetRecolor(out (TP4, TP4) recolor) => bc.recolor.Try(out recolor);
-
-        public override void SetCullRad(float r) => bc.CULL_RAD = r;
-        public override void SetDeleteActive(bool active) => bc.deletable = active;
-
-        public override void SetRecolor(TP4 black, TP4 white) {
-            if (!bc.Recolorizable) 
+        public override IDisposable SetRecolor(TP4 black, TP4 white) {
+            if (!BC.Recolorizable) 
                 throw new Exception($"Cannot set recolor on non-recolorizable pool {Style}");
-            bc.recolor = (black, white);
+            return BC.Recolor.AddConst((black, white));
         }
 
-        public override void SetTint(TP4 tint) {
-            bc.Tint = tint;
-        }
-        
 
         public SimpleBulletCollection(List<SimpleBulletCollection> target, BulletInCode bc) {
-            this.bc = bc;
+            this.BC = bc;
             this.targetList = target;
         }
         
@@ -326,11 +312,11 @@ public partial class BulletManager {
             temp_last = 0;
         }
 
-        public BulletInCode CopyBC(string newPool) => bc.Copy(newPool);
-        public SimpleBulletCollection CopySimplePool(List<SimpleBulletCollection> target, string newPool) => new SimpleBulletCollection(target, bc.Copy(newPool));
-        public SimpleBulletCollection CopyPool(List<SimpleBulletCollection> target, string newPool) => GetCollectionForColliderType(target, bc.Copy(newPool));
+        public BulletInCode CopyBC(string newPool) => BC.Copy(newPool);
+        public SimpleBulletCollection CopySimplePool(List<SimpleBulletCollection> target, string newPool) => new SimpleBulletCollection(target, BC.Copy(newPool));
+        public SimpleBulletCollection CopyPool(List<SimpleBulletCollection> target, string newPool) => GetCollectionForColliderType(target, BC.Copy(newPool));
 
-        public MeshGenerator.RenderInfo GetOrLoadRI() => bc.GetOrLoadRI();
+        public MeshGenerator.RenderInfo GetOrLoadRI() => BC.GetOrLoadRI();
 
         public override BehaviorEntity GetINodeAt(int sbcind, string behName) {
             ref SimpleBullet sb = ref Data[sbcind];
@@ -341,11 +327,6 @@ public partial class BulletManager {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected virtual CollisionResult CheckGrazeCollision(in Hitbox hitbox, ref SimpleBullet sb) 
             => throw new NotImplementedException();
-
-        public void ResetPoolMetadata() {
-            bc.ResetMetadata();
-            allowCameraCull = true;
-        }
 
         public override void Add(ref SimpleBullet sb, bool isNew) {
             base.Add(ref sb);
@@ -409,6 +390,8 @@ public partial class BulletManager {
         }
 
         public virtual CollisionCheckResults CheckCollision(in Hitbox hitbox) {
+            var allowCameraCull = BC.AllowCameraCull.Value;
+            var cullRad = BC.CULL_RAD.Value;
             int graze = 0;
             int collisionDamage = 0;
             Profiler.BeginSample("CheckCollision");
@@ -423,12 +406,15 @@ public partial class BulletManager {
                     }
                     CollisionResult cr = CheckGrazeCollision(in hitbox, ref sbn);
                     if (cr.collide) {
-                        collisionDamage = bc.damageAgainstPlayer;
-                        if (bc.destructible) DeleteSB_Collision(ii);
+                        collisionDamage = BC.damageAgainstPlayer;
+                        if (BC.destructible) {
+                            MakeCulledCopy(ii);
+                            DeleteSB_Collision(ii);
+                        }
                     } else if (checkGraze && cr.graze) {
-                        sbn.grazeFrameCounter = bc.grazeEveryFrames;
+                        sbn.grazeFrameCounter = BC.grazeEveryFrames;
                         ++graze;
-                    } else if (allowCameraCull && (++sbn.cullFrameCounter & CULL_EVERY_MASK) == 0 && LocationHelpers.OffPlayableScreenBy(bc.CULL_RAD, sbn.bpi.loc)) {
+                    } else if (allowCameraCull && (++sbn.cullFrameCounter & CULL_EVERY_MASK) == 0 && LocationHelpers.OffPlayableScreenBy(cullRad, sbn.bpi.loc)) {
                         DeleteSB(ii);
                     }
                 }
@@ -442,10 +428,12 @@ public partial class BulletManager {
         }
 
         public void NullCollisionCleanup() {
+            var allowCameraCull = BC.AllowCameraCull.Value;
+            var cullRad = BC.CULL_RAD.Value;
             for (int ii = 0; ii < count; ++ii) {
                 if (!rem[ii]) {
                     ref SimpleBullet sbn = ref Data[ii];
-                    if (allowCameraCull && (++sbn.cullFrameCounter & CULL_EVERY_MASK) == 0 && LocationHelpers.OffPlayableScreenBy(bc.CULL_RAD, sbn.bpi.loc)) {
+                    if (allowCameraCull && (++sbn.cullFrameCounter & CULL_EVERY_MASK) == 0 && LocationHelpers.OffPlayableScreenBy(cullRad, sbn.bpi.loc)) {
                         DeleteSB(ii);
                     }
                 }
@@ -460,19 +448,20 @@ public partial class BulletManager {
         /// </summary>
         public virtual void CheckCollision(IReadOnlyList<Enemy.FrozenCollisionInfo> fci) {
             int fciL = fci.Count;
+            var cullRad = BC.CULL_RAD.Value;
             for (int ii = 0; ii < count; ++ii) {
                 if (!rem[ii]) {
                     ref SimpleBullet sbn = ref Data[ii];
-                    if ((++sbn.cullFrameCounter & CULL_EVERY_MASK) == 0 && LocationHelpers.OffPlayableScreenBy(bc.CULL_RAD, sbn.bpi.loc)) {
+                    if ((++sbn.cullFrameCounter & CULL_EVERY_MASK) == 0 && LocationHelpers.OffPlayableScreenBy(cullRad, sbn.bpi.loc)) {
                         DeleteSB(ii);
                     } else if (sbn.bpi.ctx.playerBullet.Try(out var de) && (de.data.bossDmg > 0 || de.data.stageDmg > 0)) {
                         for (int ff = 0; ff < fciL; ++ff) {
                             if (fci[ff].Active && 
-                                bc.cc.collider.CheckCollision(sbn.bpi.loc, sbn.direction, sbn.scale, fci[ff].pos, fci[ff].radius)) {
-                                if (bc.destructible || fci[ff].enemy.TryHitIndestructible(sbn.bpi.id, bc.againstEnemyCooldown)) {
+                                BC.cc.collider.CheckCollision(sbn.bpi.loc, sbn.direction, sbn.scale, fci[ff].pos, fci[ff].radius)) {
+                                if (BC.destructible || fci[ff].enemy.TryHitIndestructible(sbn.bpi.id, BC.againstEnemyCooldown)) {
                                     fci[ff].enemy.QueuePlayerDamage(de.data.bossDmg, de.data.stageDmg, de.firer);
                                     fci[ff].enemy.ProcOnHit(de.data.effect, sbn.bpi.loc);
-                                    if (bc.destructible) {
+                                    if (BC.destructible) {
                                         DeleteSB_Collision(ii);
                                         break;
                                     }
@@ -492,13 +481,12 @@ public partial class BulletManager {
             }
             // This should free links to BPY/VTP constructed by SMs going out of scope
             Empty();
-            ResetPoolMetadata();
             temp_last = 0;
         }
 
         #region Renderers
         private void LegacyRender(Camera c, BulletManager bm, int layer) {
-            if (TryGetRecolor(out var rc)) {
+            if (BC.Recolor.Value.Try(out var rc)) {
                 LegacyRenderRecolorizable(c, bm, layer, rc);
                 return;
             }
@@ -561,7 +549,7 @@ public partial class BulletManager {
         }
 
         private void Render(Camera c, BulletManager bm, int layer) {
-            if (TryGetRecolor(out var rc)) {
+            if (BC.Recolor.Value.Try(out var rc)) {
                 RenderRecolorizable(c, bm, layer, rc);
                 return;
             }
@@ -650,14 +638,16 @@ public partial class BulletManager {
     /// those afterimages. It will not perform velocity or collision checks,
     /// and it ignores pool commands. It only updates bullet times and culls bullets after some time.
     /// </summary>
-    private class CulledBulletCollection : SimpleBulletCollection {
+    private sealed class CulledBulletCollection : SimpleBulletCollection {
         private readonly SimpleBulletCollection src;
         private readonly SimpleBulletFader fade;
+        public override CollectionType MetaType => CollectionType.Culled;
+
         public CulledBulletCollection(SimpleBulletCollection source) : base(activeCulled, source.CopyBC($"$culled_{source.Style}")) {
             src = source;
-            bc.UseExitFade();
-            fade = bc.FadeOut;
             AddSimpleStyle(this);
+            BC.UseExitFade();
+            fade = BC.FadeOut;
         }
         
         protected  override void MakeCulledCopy(int ii) {
@@ -748,23 +738,23 @@ public partial class BulletManager {
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected override CollisionResult CheckGrazeCollision(in Hitbox hitbox, ref SimpleBullet sb) => 
-            CollisionMath.GrazeCircleOnCircle(in hitbox, sb.bpi.loc, bc.cc.radius * sb.scale);
+            CollisionMath.GrazeCircleOnCircle(in hitbox, sb.bpi.loc, BC.cc.radius * sb.scale);
     }
     private class RectSBC : SimpleBulletCollection {
         public RectSBC(List<SimpleBulletCollection> target, BulletInCode bc) : base(target, bc) {}
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected override CollisionResult CheckGrazeCollision(in Hitbox hitbox, ref SimpleBullet sb) => 
-            CollisionMath.GrazeCircleOnRect(in hitbox, sb.bpi.loc, bc.cc.halfRect.x, 
-                bc.cc.halfRect.y, bc.cc.maxDist2, sb.scale, sb.direction.x, sb.direction.y);
+            CollisionMath.GrazeCircleOnRect(in hitbox, sb.bpi.loc, BC.cc.halfRect.x, 
+                BC.cc.halfRect.y, BC.cc.maxDist2, sb.scale, sb.direction.x, sb.direction.y);
     }
     private class LineSBC : SimpleBulletCollection {
         public LineSBC(List<SimpleBulletCollection> target, BulletInCode bc) : base(target, bc) {}
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected override CollisionResult CheckGrazeCollision(in Hitbox hitbox, ref SimpleBullet sb) => 
-            CollisionMath.GrazeCircleOnRotatedSegment(in hitbox, sb.bpi.loc, bc.cc.radius, bc.cc.linePt1, 
-                bc.cc.delta, sb.scale, bc.cc.deltaMag2, bc.cc.maxDist2, sb.direction.x, sb.direction.y);
+            CollisionMath.GrazeCircleOnRotatedSegment(in hitbox, sb.bpi.loc, BC.cc.radius, BC.cc.linePt1, 
+                BC.cc.delta, sb.scale, BC.cc.deltaMag2, BC.cc.maxDist2, sb.direction.x, sb.direction.y);
     }
     private class NoCollSBC : SimpleBulletCollection {
         public NoCollSBC(List<SimpleBulletCollection> target, BulletInCode bc) : base(target, bc) {}
@@ -793,16 +783,16 @@ public partial class BulletManager {
         }
         if ((c.cullingMask & epLayerMask) != 0) {
             //empty bullets are not rendered
+            for (int ii = 0; ii < activeCulled.Count; ++ii) {
+                sbc = activeCulled[ii];
+                if (sbc.Count > 0) sbc.SwitchRender(c, this, epRenderLayer);
+            }
             for (int ii = 0; ii < activeNpc.Count; ++ii) {
                 sbc = activeNpc[ii];
                 if (sbc.Count > 0) sbc.SwitchRender(c, this, epRenderLayer);
             }
             for (int ii = 0; ii < activeCNpc.Count; ++ii) {
                 sbc = activeCNpc[ii];
-                if (sbc.Count > 0) sbc.SwitchRender(c, this, epRenderLayer);
-            }
-            for (int ii = 0; ii < activeCulled.Count; ++ii) {
-                sbc = activeCulled[ii];
                 if (sbc.Count > 0) sbc.SwitchRender(c, this, epRenderLayer);
             }
             enemyRendered = true;

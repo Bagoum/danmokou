@@ -62,6 +62,11 @@ public static class DictExtensions {
     public static bool Has2<K, K2, V>(this Dictionary<K, Dictionary<K2, V>> dict, K key, K2 key2) =>
         dict.TryGetValue(key, out var dct2) && dct2.ContainsKey(key2);
 
+    public static void Add2<K, K2, V>(this Dictionary<K, Dictionary<K2, V>> dict, K key, K2 key2, V val) {
+        if (!dict.TryGetValue(key, out var dct2))
+            dct2 = dict[key] = new Dictionary<K2, V>();
+        dct2[key2] = val;
+    }
     public static bool TryGet2<K, K2, V>(this Dictionary<K, Dictionary<K2, V>> dict, K key, K2 key2, out V val) {
         val = default!;
         return dict.TryGetValue(key, out var dct2) && dct2.TryGetValue(key2, out val);

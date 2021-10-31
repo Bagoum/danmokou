@@ -6,7 +6,7 @@ Now that we've covered how to write patterns on a basic level, we'll discuss how
 
 ## Part 1: BossConfig
 
-Open up `BasicSceneOPENME`. Attach `DMK Tutorial Example Boss Script` to the `mokou-boss` object. (**If you are not on version 4.0.0, you will need to create this script manually.**) If you open the script, you should see the following:
+Open up `BasicSceneOPENME`. Attach `DMK Tutorial Example Boss Script` to the `mokou-boss` object. If you open the script, you should see the following:
 
 ```python
 <#> warnprefix
@@ -61,8 +61,8 @@ Both phases are running the basic code for Border of Wave and Particle. However,
 Now, we want to add the following:
 
 - Boss-specific art should appear in the sidebars.
-- The boss' remaining spells should appear as stars in each of the four corners. 
-- The boss should have a rotating hexagram inside its health bar.
+- The boss' remaining spells should appear as stars in the lower left corner.
+- The boss should have a rotating hexagram over its health bar.
 - When using a spell, the boss should have another special effect.
 - The secondary HP display on the UI should reflect the boss HP. 
 - A highlight should appear in the bottom gutter indicating where the boss is.
@@ -81,7 +81,7 @@ Click on the color scheme. In the inspector window, you should see several varia
 - Ui Color is the color of the drop-shadow applied to the boss title (lower left of screen), card names (top), and messages (bottom right).
 - Ui HP Color is the color that is multiplied against the stars in each of the four corners that display the number of remaining spellcards on the boss.
 - Card Color R/G/B control the colors of the hexagram spinning around the boss. R and G are the colors of the triangles and B is the color of the shadow.
-- Spell Color 1/2/3 control the colors of the fire effect used when the boss activates a spell card.
+- Spell Color 1 controls the color of the rotating text effect that only appears during spell cards.
 
 Go ahead and assign colors to each of the variables by clicking on the black bar and changing the numbers. **Make sure to set the opacity!** As a recommendation, when setting the Spell Colors, you should use opacities less than 100%. 
 
@@ -95,7 +95,8 @@ Now click on the boss configuration, In the inspector window, you should see a l
 - Casual Name / Casual Name JP are the forms of address for the boss used in challenge descriptions for challenge-based games. For example, if the challenge is to destroy the boss, then this will be described as `Destroy {casualName}` or `{casualNameJP}を倒せ` based on locale.
 - Track Name is the name of the boss as appears on the glow in the bottom gutter that shows where the boss is on the screen. I usually use Japanese text here for brevity. If you want to use English text, you should change the font asset in Assets/Danmokou/Prefab/UI/Tracker>Container>TrackedName. Set this to `妹紅` (Mokou).
 - Colors is the color scheme we set up just before this. Set this to the color scheme object you created.
-- Rotator is a function that defines the velocity of rotation, in degrees, of the hexagram on the boss. You usually don't need to fill this out, as there's a default in place (open up BossConfig.cs and look for `defaultRotator`). 
+- Card Rotator is a function that defines the velocity of rotation, in degrees, of the hexagram on the boss. You usually don't need to fill this out, as there's a default in place (open up BossConfig.cs and look for `defaultCardRotator`). 
+- Spell Rotator is a function that does the same, but for the spell circle effect.
 - Profile contains the left and right sidebar images that are displayed while the boss is active. For licensing reasons the images that are actually used in my published games are not included in the repository, so instead, click the little circle on the right of the input entry field and select any image you like. 
 - Default Non BG and Default Spell BG are the backgrounds that the boss will automatically use when in a nonspell-type card or a spell-type card. If you have the SiMP repository downloaded, you can set these to backgrounds from there, such as `stage ex scroll` and `space.sun`. Otherwise, you can set them to `black` and `white`. 
 - Default Into Spell Transition and Default Into Non Transition are the background transitions that the boss will automatically use when moving into a spell-type card or a nonspell-type card. I recommend `WipeTex1` and `Shatter4.Normal`. 
@@ -121,7 +122,7 @@ Boss configurations are generally unique to a specific game, so they are stored 
 
  If you click on the GameManagement object in the scene, the first variable under the component `Game Management` should be `References`, and it should point to the object `Default Game References`. Go ahead and click on this to show it in the Project window, then click it in the Project window to show all its variables. If you look at the Boss Metadata variable, you should see a list with one element, `Tutorial Boss`. Add a new element and set it to the boss configuration you created.
 
-Now, restart the game. You should see all the changes! There should be one star in each corner, since Mokou has 1 spell remaining when the script starts.
+Now, restart the game. You should see all the changes! There should be one star in the lower left, since Mokou has 1 spell remaining when the script starts.
 
 If you clear Mokou's nonspell, then you can see the background quickly transition, and the Junko cutin will fly across the screen. (Cutins will not appear if you set `TeleportAtPhaseStart` to true.) If you clear Mokou's spell, the background will transition back, but no cutin will appear, since the next card is a nonspell. Also, once you clear the spell, the number of stars will drop to 0. 
 

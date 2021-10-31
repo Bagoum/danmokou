@@ -51,7 +51,7 @@ public abstract class Requirement : IRequirementWatcher {
 }
 
 public class Achievement : IRequirementWatcher {
-    public static MultiAdder ACHIEVEMENT_PROGRESS_ENABLED { get; } = new MultiAdder(0, null);
+    public static DisturbedAnd ACHIEVEMENT_PROGRESS_ENABLED { get; } = new DisturbedAnd();
     public string Key { get; }
     public LString Title { get; }
     public LString Description { get; }
@@ -84,7 +84,7 @@ public class Achievement : IRequirementWatcher {
     }
 
     public void RequirementUpdated() {
-        if (ACHIEVEMENT_PROGRESS_ENABLED.Value > 0) return;
+        if (ACHIEVEMENT_PROGRESS_ENABLED) return;
         //Don't bother checking if the achievement is already finished
         if (State == State.Completed) return;
         var nState = Req.EvalState();

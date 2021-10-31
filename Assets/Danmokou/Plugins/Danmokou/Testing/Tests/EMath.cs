@@ -1,4 +1,5 @@
 ﻿using System;
+using BagoumLib.Expressions;
 using UnityEngine;
 using NUnit.Framework;
 using Ex = System.Linq.Expressions.Expression;

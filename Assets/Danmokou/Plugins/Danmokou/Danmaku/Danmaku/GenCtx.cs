@@ -17,7 +17,6 @@ public class GenCtx : IDisposable {
     public readonly Dictionary<string, float> fs = new Dictionary<string, float>();
     public readonly Dictionary<string, Vector2> v2s = new Dictionary<string, Vector2>();
     public static readonly GenCtx Empty = new GenCtx();
-
     public float GetFloatOrThrow(string key) {
         if (TryGetFloat(key, out var f)) return f;
         else throw new Exception($"The GCX does not contain a float value {key}.");
@@ -56,6 +55,7 @@ public class GenCtx : IDisposable {
     /// Used in deeply nested player fires for keeping track of the parent.
     /// </summary>
     public PlayerController? playerController;
+    private FiringCtx fctx = null!;
     public V2RV2 RV2 {
         get => rv2s["rv2"];
         set => rv2s["rv2"] = value;
@@ -71,7 +71,7 @@ public class GenCtx : IDisposable {
     public Vector2 Loc => exec.GlobalPosition();
     public uint? idOverride = null;
     [UsedImplicitly]
-    public ParametricInfo AsBPI => new ParametricInfo(Loc, index, idOverride ?? exec.rBPI.id, i, FiringCtx.Empty);
+    public ParametricInfo AsBPI => new ParametricInfo(Loc, index, idOverride ?? exec.rBPI.id, i, fctx);
     private static readonly Stack<GenCtx> cache = new Stack<GenCtx>();
     private GenCtx() { }
 
@@ -83,6 +83,7 @@ public class GenCtx : IDisposable {
         newgc.exec = exec;
         newgc.RV2 = newgc.BaseRV2 = rv2;
         newgc.SummonTime = 0;
+        newgc.fctx = FiringCtx.New(newgc);
         return newgc;
     }
 
@@ -99,6 +100,7 @@ public class GenCtx : IDisposable {
         v3s.Clear();
         rv2s.Clear();
         exposed.Clear();
+        fctx.Dispose();
         i = 0;
         pi = 0;
         exec = null!;
@@ -140,6 +142,23 @@ public class GenCtx : IDisposable {
         else if (v2s.ContainsKey(refr.var)) ext = Reflector.ExType.V2;
         else if (v3s.ContainsKey(refr.var)) ext = Reflector.ExType.V3;
         else if (rv2s.ContainsKey(refr.var)) ext = Reflector.ExType.RV2;
+        else return false;
+        return true;
+    }
+
+    /// <summary>
+    /// If obj is a type that can be bound to GCX, then bind it, otherwise noop.
+    /// <br/>Returns true if the object was bound.
+    /// </summary>
+    public bool SetValue(string key, object? obj) {
+        if (obj is float f)
+            fs[key] = f;
+        else if (obj is Vector2 v2)
+            v2s[key] = v2;
+        else if (obj is Vector3 v3)
+            v3s[key] = v3;
+        else if (obj is V2RV2 rv2)
+            rv2s[key] = rv2;
         else return false;
         return true;
     }

@@ -10,8 +10,6 @@ using Danmokou.DMath;
 using Danmokou.Expressions;
 using Danmokou.SM;
 using Danmokou.SM.Parsing;
-//using FParser;
-using ParserCS;
 using JetBrains.Annotations;
 
 namespace Danmokou.Reflection {
@@ -73,7 +71,7 @@ public static partial class Reflector {
         if (nargs == 0) {
             if (!(q is ParenParseQueue) && !q.Empty) {
                 //Zero-arg functions may absorb empty parentheses
-                if (q._SoftScan(out _)?.Item1 is SMParser.ParsedUnit.P p) {
+                if (q._SoftScan(out _)?.Item1 is SMParser.ParsedUnit.Paren p) {
                     if (p.Item.Length == 0) q.NextChild();
                 }
             }
@@ -144,11 +142,10 @@ public static partial class Reflector {
     /// <br/>May throw an exception if parsing fails.
     /// </summary>
     public static object? Into(this string argstring, Type t) {
-        var bakeCtx = BakeCodeGenerator.OpenContext(BakeCodeGenerator.CookingContext.KeyType.INTO, argstring);
+        using var _ = BakeCodeGenerator.OpenContext(BakeCodeGenerator.CookingContext.KeyType.INTO, argstring);
         var p = IParseQueue.Lex(argstring);
         var ret = p.Into(t);
         p.ThrowOnLeftovers();
-        bakeCtx?.Dispose();
         return ret;
     }
 
@@ -199,11 +196,11 @@ public static partial class Reflector {
     private static bool RecurseScan(IParseQueue q, out IParseQueue rec, out string val) {
         var (pu, pos) = q._Scan(out var ii);
         switch (pu) {
-            case SMParser.ParsedUnit.S s:
+            case SMParser.ParsedUnit.Str s:
                 val = s.Item;
                 rec = null!;
                 return false;
-            case SMParser.ParsedUnit.P p:
+            case SMParser.ParsedUnit.Paren p:
                 if (p.Item.Length != 1)
                     throw new Exception(q.WrapThrow(ii,
                         "This parentheses must have exactly one argument."));

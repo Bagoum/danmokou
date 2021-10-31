@@ -1,7 +1,9 @@
 ﻿using System.Threading.Tasks;
 using System;
+using System.Reactive;
 using Danmokou.Behavior.Functions;
 using Danmokou.Core;
+using Danmokou.Danmaku.Patterns;
 using Danmokou.DMath;
 using Danmokou.DMath.Functions;
 using Danmokou.Player;
@@ -29,19 +31,63 @@ public class ReflectableLASM : LineActionSM {
 }
 
 /// <summary>
-/// `event`: Trigger events.
+/// `event`: Handle configuring, subscribing to, and running events.
 /// </summary>
 [Reflect]
 public class EventLASM : ReflectableLASM {
-    public delegate Task Event(SMHandoff smh);
+    public delegate Task EventTask(SMHandoff smh);
     
-    public EventLASM(Event rs) : base(new TaskPattern(rs)) { }
+    public EventLASM(EventTask rs) : base(new TaskPattern(rs)) { }
+    
+    /// <summary>
+    /// Subscribe to a runtime event and run a StateMachine when a value is provided.
+    /// </summary>
+    /// <param name="evName">Runtime event name</param>
+    /// <param name="bindVar">Key to bind value of event on trigger</param>
+    /// <param name="exec">StateMachine to execute with event</param>
+    [GAlias(typeof(float), "listenf")]
+    [GAlias(typeof(Unit), "listen0")]
+    public static EventTask Listen<T>(string evName, string bindVar, StateMachine exec) => async smh => {
+        using var _ = Events.FindRuntimeEvent<T>(evName).Ev.Subscribe(val => {
+            var smh2 = smh;
+            smh2.ch = new CommonHandoff(smh2.ch.cT, smh2.ch.bc, smh2.GCX.Copy());
+            smh2.GCX.SetValue(bindVar, val);
+            exec.Start(smh2);
+        });
+        await WaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, 0f, true);
+        smh.ThrowIfCancelled();
+    };
+
+    /// <summary>
+    /// Set a trigger event to reset when a given reset event is dispatched.
+    /// </summary>
+    public static EventTask ResetTrigger(string trigger, string resetter) => smh => {
+        Events.FindAnyRuntimeEvent(trigger).TriggerResetWith(Events.FindAnyRuntimeEvent(resetter));
+        return Task.CompletedTask;
+    };
+    
+    
+    /// <summary>
+    /// Proc a runtime event.
+    /// </summary>
+    [GAlias(typeof(float), "onnextf")]
+    public static EventTask OnNext<T>(string evName, GCXF<T> val) => smh => {
+        Events.ProcRuntimeEvent<T>(evName, val(smh.GCX));
+        return Task.CompletedTask;
+    };
+
+
+    /// <summary>
+    /// Proc a unit-typed runtime event.
+    /// </summary>
+    public static EventTask OnNext0(string evName) => OnNext(evName, _ => Unit.Default);
+    
     /// <summary>
     /// Make the player invulnerable for some number of frames.
     /// </summary>
     /// <param name="frames">Invulnerability frames (120 frames per second)</param>
     /// <returns></returns>
-    public static Event PlayerInvuln(int frames) => smh => {
+    public static EventTask PlayerInvuln(int frames) => smh => {
         foreach (var player in ServiceLocator.FindAll<PlayerController>())
             player.MakeInvulnerable(frames, true);
         ServiceLocator.SFXService.Request("x-invuln");
@@ -53,7 +99,7 @@ public class EventLASM : ReflectableLASM {
     private static readonly ReflWrap<FXY> ShakeMag = ReflWrap.FromFunc("BossExplode.ShakeMag",
         () => Compilers.FXY(b => ExMLerps.EQuad0m10(BossExplodeWait, BossExplodeShake, BPYRepo.T()(b))));
 
-    public static Event BossExplode() => smh => {
+    public static EventTask BossExplode() => smh => {
         UnityEngine.Object.Instantiate(ResourceManager.GetSummonable("bossexplode")).GetComponent<ExplodeEffect>().Initialize(BossExplodeWait, smh.Exec.rBPI.loc);
         ServiceLocator.MaybeFind<IRaiko>()?.Shake(BossExplodeShake, ShakeMag, 2, smh.cT, null);
         ServiceLocator.SFXService.RequestSFXEvent(ISFXService.SFXEventType.BossExplode);

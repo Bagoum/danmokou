@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 using BagoumLib.Cancellation;
+using BagoumLib.Expressions;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Danmaku;
@@ -175,21 +177,23 @@ public class FiringCtx {
 
     private static TEx Hoisted(TExArgCtx tac, DataType typ, string name, Func<Expression, Expression> constructor) {
         var ex = constructor(exGetKey(name));
-
-        var key_name = tac.Ctx.NameWithSuffix(name);
+#if EXBAKE_SAVE
+        //Don't duplicate hoisted references
+        var key_name = "_hoisted" + name;
         var key_assign = FormattableString.Invariant(
             $"var {key_name} = FiringCtx.GetKey(\"{name}\");");
-        var replaced = constructor(Expression.Variable(typeof(int), key_name));
-        tac.Ctx.HoistedVariables.Add(key_assign);
-        tac.Ctx.HoistedReplacements[ex] = replaced;
-
+        if (!tac.Ctx.HoistedVariables.Contains(key_assign)) {
+            tac.Ctx.HoistedVariables.Add(key_assign);
+            tac.Ctx.HoistedReplacements[exGetKey(name)] = Expression.Variable(typeof(int), key_name);
+        }
+#endif
         return ex;
     }
     
     public static TEx Contains(TExArgCtx tac, DataType typ, string name) =>
-        Hoisted(tac, typ, name, key => ExUtils.DictContains(GetDict(tac.BPI.FiringCtx, typ), key));
+        Hoisted(tac, typ, name, key => GetDict(tac.BPI.FiringCtx, typ).DictContains(key));
     public static Expression Contains<T>(TExArgCtx tac, string name) =>
-        Hoisted(tac, FromType<T>(), name, key => ExUtils.DictContains(GetDict(tac.BPI.FiringCtx, FromType<T>()), key));
+        Hoisted(tac, FromType<T>(), name, key => GetDict(tac.BPI.FiringCtx, FromType<T>()).DictContains(key));
     
     public static TEx GetValue(TExArgCtx tac, DataType typ, string name) =>
         Hoisted(tac, typ, name, key => GetDict(tac.BPI.FiringCtx, typ).DictGet(key));
@@ -387,7 +391,8 @@ public delegate void SBCF(BulletManager.AbsSimpleBulletCollection sbc, int ii, P
 
 /// <summary>
 /// A pool control function performing some operation on a simple bullet pool.
+/// <br/>The returned disposable can be used to cancel the effect.
 /// </summary>
-public delegate void SPCF(string pool, ICancellee cT);
+public delegate IDisposable SPCF(string pool, ICancellee cT);
 
 }

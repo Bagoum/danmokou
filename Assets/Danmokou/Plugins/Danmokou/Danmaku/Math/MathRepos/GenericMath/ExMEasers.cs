@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq.Expressions;
+using BagoumLib.Expressions;
 using BagoumLib.Mathematics;
 using Danmokou.Core;
 using Danmokou.Expressions;

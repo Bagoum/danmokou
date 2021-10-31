@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Linq.Expressions;
+using BagoumLib.Expressions;
 using Danmokou.Core;
 using Danmokou.Expressions;
 using Danmokou.Reflection;

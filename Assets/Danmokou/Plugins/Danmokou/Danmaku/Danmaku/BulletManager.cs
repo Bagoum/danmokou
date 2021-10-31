@@ -3,6 +3,7 @@ using UnityEngine;
 using System;
 using System.Linq;
 using BagoumLib.Cancellation;
+using BagoumLib.Expressions;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Danmaku.Descriptors;
@@ -109,9 +110,9 @@ public partial class BulletManager {
         throw new Exception($"Could not find simple bullet style by name \"{pool}\".");
     }
     private static readonly ExFunction getMaybeCopyPool = 
-        ExUtils.Wrap<string>(typeof(BulletManager), "GetMaybeCopyPool");
+        ExFunction.Wrap<string>(typeof(BulletManager), "GetMaybeCopyPool");
     private static readonly ExFunction nullableGetMaybeCopyPool = 
-        ExUtils.Wrap<string?>(typeof(BulletManager), "NullableGetMaybeCopyPool");
+        ExFunction.Wrap<string?>(typeof(BulletManager), "NullableGetMaybeCopyPool");
 
     public override int UpdatePriority => UpdatePriorities.BM;
     public override void RegularUpdate() {
@@ -294,13 +295,12 @@ public partial class BulletManager {
         Bullet.ClearAll();
     }
     /// <summary>
-    /// While most controls are bounded by ICancellee, some aren't (TODO like what?), so they need to be destroyed.
+    /// Only call this for hard endings (like scene clear). Phase tokens should handle phase deletion.
     /// </summary>
     public static void ClearPoolControls(bool clearPlayer=true) {
         foreach (var pool in simpleBulletPools.Values) {
             if (clearPlayer || !pool.IsPlayer) {
                 pool.ClearControls();
-                pool.ResetPoolMetadata();
             }
         }
         BehaviorEntity.ClearPoolControls(clearPlayer);

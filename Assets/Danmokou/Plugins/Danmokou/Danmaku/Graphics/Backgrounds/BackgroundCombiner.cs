@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using JetBrains.Annotations;
+using SuzunoyaUnity.Rendering;
 using UnityEngine;
 
 namespace Danmokou.Graphics.Backgrounds {
@@ -30,12 +31,10 @@ public class BackgroundCombiner : RegularUpdater {
 
     public void Initialize(BackgroundOrchestrator _orchestrator) {
         orchestrator = _orchestrator;
+        //reconstruct shouldn't be called until orchestrator is bound
+        Listen(RenderHelpers.PreferredResolution, _ => Reconstruct());
     }
 
-    protected override void BindListeners() {
-        base.BindListeners();
-        Listen(SaveData.ResolutionChanged, Reconstruct);
-    }
 
     private void Start() => UpdateTextures();
 

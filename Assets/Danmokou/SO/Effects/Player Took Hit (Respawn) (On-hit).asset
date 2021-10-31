@@ -25,4 +25,5 @@ MonoBehaviour:
   particlePrefab: {fileID: 5484803193899376953, guid: 3e8c08e2eb9652b419fbe995ff2f8e50,
     type: 3}
   spawnType: 0
-  subEffects: []
+  subEffects:
+  - {fileID: 11400000, guid: 46c6530adf7b6824687ff3f5f7395943, type: 2}

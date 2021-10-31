@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using BagoumLib;
 using BagoumLib.Cancellation;
 using BagoumLib.DataStructures;
+using BagoumLib.Expressions;
 using Danmokou.Behavior.Display;
 using Danmokou.Core;
 using Danmokou.Danmaku;
@@ -135,6 +136,7 @@ public class Enemy : RegularUpdater {
         }
         if (cardCircle != null) cardCircle.sortingOrder = sortOrder + 2;
         if (healthbarSprite != null) healthbarSprite.sortingOrder = sortOrder + 3;
+        if (distorter != null) distorter.sortingOrder = sortOrder;
         allEnemies[enemyIndex = enemyIndexCtr++] = this;
         aliveToken = orderedEnemies.Add(this);
         HP = maxHP;
@@ -151,7 +153,7 @@ public class Enemy : RegularUpdater {
             hpPB.SetFloat(PropConsts.subradius, hpThickness);
             healthbarStart = 0f;
             healthbarSize = 1f;
-            SetHPBarColors(PhaseType.NONSPELL);
+            SetHPBarColors(null);
             hpPB.SetColor(PropConsts.unfillColor, unfilledColor);
             _displayBarRatio = BarRatio;
             hpPB.SetFloat(PropConsts.fillRatio, DisplayBarRatio);
@@ -163,6 +165,7 @@ public class Enemy : RegularUpdater {
             cardCircle.enabled = false;
         }
         if (distorter != null) {
+            distorter.material = Instantiate(distorter.material);
             distorter.GetPropertyBlock(distortPB);
             distortPB.SetFloat(PropConsts.time, 0f);
             distorter.SetPropertyBlock(distortPB);
@@ -185,6 +188,11 @@ public class Enemy : RegularUpdater {
         spellRotator = b.SpellRotator;
         SetSpellCircleColors(b.colors.spellColor1, b.colors.spellColor2, b.colors.spellColor3);
         if (cameraCrosshair != null) cameraCrosshair.color = b.colors.uiHPColor;
+    }
+
+    public void DisableDistortion() {
+        if (distorter != null)
+            distorter.material.EnableKeyword("SHADOW_ONLY");
     }
     private void RequestCardCircle(Color colorR, Color colorG, Color colorB, TP3 rotator) {
         if (cardCircle != null) {
@@ -244,11 +252,12 @@ public class Enemy : RegularUpdater {
     public float EffectiveBarRatio => divertHP?.to.EffectiveBarRatio ?? BarRatio;
     public float DisplayBarRatio => divertHP?.to.DisplayBarRatio ?? _displayBarRatio;
 
-    //Approximation to make the max color appear earlier
     private Color HPColor => currPhaseType == PhaseType.TIMEOUT ?
             unfilledColor :
+            //Approximation to make the max color appear earlier
             Color.Lerp(currPhase.color2, currPhase.color1, Mathf.Pow(_displayBarRatio, 1.5f));
-    public Color UIHPColor => currPhaseType == PhaseType.TIMEOUT ? Color.clear : HPColor;
+    public Color UIHPColor => (currPhaseType == PhaseType.TIMEOUT || currPhaseType == PhaseType.DIALOGUE || currPhaseType == null) ? 
+        Color.clear : HPColor;
 
     public override void RegularUpdate() {
         PollDamage();
@@ -396,26 +405,31 @@ public class Enemy : RegularUpdater {
 
     private Color2 currPhase;
     private PhaseType? currPhaseType = null;
-    private Color2 CardToColor(PhaseType st) {
-        return st.IsSpell() ? spellColor : nonspellColor;
+    private Color2 CardToColor(PhaseType? st) {
+        return (st?.IsSpell() ?? false) ? spellColor : nonspellColor;
     }
-    private void SetHPBarColors(PhaseType st) {
+    private Color2 CardToColorInv(PhaseType? st) {
+        return (st?.IsSpell() ?? false) ? nonspellColor : spellColor;
+    }
+    public void SetHPBarColors(PhaseType? st) {
         currPhaseType = st;
         currPhase = CardToColor(st);
-        hpPB.SetColor(PropConsts.R2NColor, CardToColor(st.Invert()).color1);
+        hpPB.SetColor(PropConsts.R2NColor, CardToColorInv(st).color1);
         hpPB.SetFloat(PropConsts.R2CPhaseStart, healthbarStart + healthbarSize);
         hpPB.SetFloat(PropConsts.R2NPhaseStart, healthbarStart);
     }
 
     public IReadOnlyList<Enemy>? Subbosses { get; set; } = null;
-    public void SetHPBar(float portion, PhaseType color) {
-        if (healthbarStart < 0.1f || color.RequiresFullHPBar()) {
-            healthbarStart = 1f;
-        } else {
-            _displayBarRatio = 1f + _displayBarRatio * healthbarSize / (healthbarStart * portion);
+    public void SetHPBar(float? portion, PhaseType? color) {
+        if (portion.Try(out var _portion)) {
+            if (healthbarStart < 0.1f || (color?.RequiresFullHPBar() ?? false)) {
+                healthbarStart = 1f;
+            } else {
+                _displayBarRatio = 1f + _displayBarRatio * healthbarSize / (healthbarStart * _portion);
+            }
+            healthbarSize = healthbarStart * _portion;
+            healthbarStart -= healthbarSize;
         }
-        healthbarSize = healthbarStart * portion;
-        healthbarStart -= healthbarSize;
         SetHPBarColors(color);
         if (Subbosses != null) {
             foreach (var e in Subbosses) e.SetHPBar(portion, color);
@@ -538,10 +552,10 @@ public class Enemy : RegularUpdater {
         return found;
     }
 
-    public static readonly ExFunction findNearest = ExUtils.Wrap<Enemy>("FindNearest", new[] {
+    public static readonly ExFunction findNearest = ExFunction.Wrap<Enemy>("FindNearest", new[] {
         typeof(Vector2), typeof(Vector2).MakeByRefType()
     });
-    public static readonly ExFunction findNearestSave = ExUtils.Wrap<Enemy>("FindNearestSave", new[] {
+    public static readonly ExFunction findNearestSave = ExFunction.Wrap<Enemy>("FindNearestSave", new[] {
         typeof(Vector2), typeof(int?), typeof(int).MakeByRefType(), typeof(Vector2).MakeByRefType()
     });
 }

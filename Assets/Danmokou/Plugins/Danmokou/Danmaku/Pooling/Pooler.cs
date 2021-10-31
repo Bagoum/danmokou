@@ -25,7 +25,7 @@ public static class Pooler<T> where T : Pooled<T> {
 
     static Pooler() {
         if (!Application.isPlaying) return;
-        SceneIntermediary.SceneUnloaded.Subscribe(OrphanAll);
+        SceneIntermediary.SceneUnloaded.Subscribe(_ => OrphanAll());
     }
 
     public static T Request(GameObject prefab, out bool isNew) {
@@ -70,7 +70,7 @@ public static class BEHPooler {
     public static BehaviorEntity INode(Movement mov, ParametricInfo pi, Vector2 rotation, string behName) {
         var beh = RequestUninitialized(Prefabs.inode, out _);
         beh.Initialize(mov, pi, SMRunner.Null, behName);
-        beh.SetDirection(rotation);
+        beh.SetMovementDelta(rotation);
         return beh;
     }
 }

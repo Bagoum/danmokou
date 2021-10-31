@@ -349,8 +349,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Come and challenge the chessboard I have lain out for you!
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 1f1ee4254818bd849807cb6b9dced264, type: 2}
-  m_sharedMaterial: {fileID: 1744428156900035190, guid: 1f1ee4254818bd849807cb6b9dced264,
+  m_fontAsset: {fileID: 11400000, guid: 81b89331e3802f846babe030f451d7eb, type: 2}
+  m_sharedMaterial: {fileID: 1744428156900035190, guid: 81b89331e3802f846babe030f451d7eb,
     type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
@@ -521,6 +521,7 @@ MonoBehaviour:
     fragmentMaterial: {fileID: 2100000, guid: c799301a1cdde854393c1868565b3264, type: 2}
     fragmentRadius: 0.12
     fragmentSides: 4
+  moveDirectionMinMax: {x: 30, y: 50}
   moveDist: 0.7
   moveTime: 0.3
   spreadTime: 0.6

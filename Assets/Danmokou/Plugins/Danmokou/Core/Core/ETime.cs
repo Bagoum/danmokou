@@ -7,6 +7,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
 using BagoumLib.DataStructures;
+using BagoumLib.Events;
 using BagoumLib.Mathematics;
 using BagoumLib.Tweening;
 using Danmokou.DMath;
@@ -77,7 +78,8 @@ public class ETime : MonoBehaviour {
     public const float ENGINEFPS_F = ENGINEFPS;
     public const float FRAME_TIME = 1f / ENGINEFPS_F;
     public const float FRAME_YIELD = FRAME_TIME * 0.1f;
-    public static MultiMultiplier Slowdown { get; } = new MultiMultiplier(1f, v => Time.timeScale = v);
+    public static DisturbedProduct<float> Slowdown { get; } = new DisturbedProduct<float>(1f);
+    private static DisturbedProduct<float> UnityTimeRate { get; } = new DisturbedProduct<float>(1f);
     /// <summary>
     /// Replacement for Time.dT. Generally fixed to 1/(SCREEN REFRESH RATE),
     /// except during slowdown. Note that the screen refresh rate is different from the engine framerate.
@@ -112,7 +114,11 @@ public class ETime : MonoBehaviour {
         GenericOps.RegisterType<Color>(Color.LerpUnclamped, (x, y) => x * y, (x, y) => x + y, (x, y) => x * y);
 
         SceneIntermediary.Attach();
-        SceneIntermediary.SceneLoaded.Subscribe(() => untilNextRegularFrame = 0f);
+        SceneIntermediary.SceneLoaded.Subscribe(_ => untilNextRegularFrame = 0f);
+
+        UnityTimeRate.AddDisturbance(Slowdown);
+        UnityTimeRate.AddDisturbance(new MappedObservable<EngineState, float>(EngineStateManager.EvState, s => s.Timescale()));
+        UnityTimeRate.Subscribe(s => Time.timeScale = s);
 
         //WARNING ON TIMESCALE: You must also modify FDT. See https://docs.unity3d.com/ScriptReference/Time-timeScale.html
         //This said, I don't think FixedUpdate is used anymore in this code.
@@ -322,7 +328,6 @@ public class ETime : MonoBehaviour {
         /// True iff the timer is currently accumulating.
         /// </summary>
         private bool enabled = false;
-        private readonly bool phaseLocal;
 
         private void Start(float mult) {
             multiplier = mult;
@@ -365,31 +370,21 @@ public class ETime : MonoBehaviour {
             timer.Stop();
         }
 
-        private Timer(string name, bool phaseLocal) {
+        private Timer(string name) {
             this.name = name;
-            this.phaseLocal = phaseLocal;
             token = RegisterRegularUpdater(this);
         }
 
         private readonly DeletionMarker<IRegularUpdater> token;
 
-        public static Timer GetTimer(string name, bool phaseLocal=true) {
+        public static Timer GetTimer(string name) {
             if (!timerMap.TryGetValue(name, out Timer t)) {
-                t = timerMap[name] = new Timer(name, phaseLocal);
+                t = timerMap[name] = new Timer(name);
             }
             return t;
         }
 
         public static Timer PhaseTimer => GetTimer("phaset");
-
-        public static void ResetPhase() {
-            foreach (var v in timerMap.Values.ToArray()) {
-                if (v.phaseLocal) {
-                    v.Restart();
-                    v.Stop();
-                }
-            }
-        }
 
         public static void DestroyAll() {
             foreach (var v in timerMap.Values.ToArray()) {

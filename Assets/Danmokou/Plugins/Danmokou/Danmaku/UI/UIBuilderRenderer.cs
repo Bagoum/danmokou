@@ -8,9 +8,6 @@ using BagoumLib.Mathematics;
 using BagoumLib.Tweening;
 using Danmokou.Behavior;
 using Danmokou.Core;
-using Danmokou.DMath;
-using Danmokou.Services;
-using JetBrains.Annotations;
 using SuzunoyaUnity.Rendering;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -60,12 +57,11 @@ public class UIBuilderRenderer : CoroutineRegularUpdater {
         sr = GetComponent<SpriteRenderer>();
         normalOrder = sr.sortingOrder;
         allCancel = new Cancellable();
-        RemakeTexture();
     }
 
     protected override void BindListeners() {
         base.BindListeners();
-        Listen(SaveData.ResolutionChanged, RemakeTexture);
+        Listen(RenderHelpers.PreferredResolution, RemakeTexture);
     }
 
     public void MoveToNormal() {
@@ -76,9 +72,9 @@ public class UIBuilderRenderer : CoroutineRegularUpdater {
         sr.sortingOrder = frontOrder;
     }
 
-    private void RemakeTexture() {
+    private void RemakeTexture((int w, int h) res) {
         if (rt != null) rt.Release();
-        rt = RenderHelpers.DefaultTempRT();
+        rt = RenderHelpers.DefaultTempRT(res);
         settings.targetTexture = rt;
         uiMaterial.SetTexture(PropConsts.renderTex, rt);
     }

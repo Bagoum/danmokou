@@ -64,7 +64,10 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     public int NumRunningSMs => behaviorToken.Count;
     public Vector2 LastDelta { get; private set; }
 
-    public void SetDirection(Vector2 delta) {
+    /// <summary>
+    /// Given the last movement delta, update LastDelta as well as Direction (if the movement delta is nonzero).
+    /// </summary>
+    public void SetMovementDelta(Vector2 delta) {
         LastDelta = delta;
         var mag = delta.x * delta.x + delta.y * delta.y;
         if (mag > M.MAG_ERR) {
@@ -181,7 +184,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     }
 
     public DisplayController? displayer;
-    public DisplayController Displayer => (displayer != null) ? displayer : throw new Exception($"BEH {ID} does not have a displayer");
+    public DisplayController DisplayerOrThrow => (displayer != null) ? displayer : throw new Exception($"BEH {ID} does not have a displayer");
     private bool isSummoned = false;
     protected virtual int Findex => 0;
     protected virtual FiringCtx? DefaultFCTX => null;
@@ -244,7 +247,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         movement = mov;
         doVelocity = !movement.IsEmpty();
         if (doVelocity) {
-            SetDirection(movement.UpdateZero(ref bpi));
+            SetMovementDelta(movement.UpdateZero(ref bpi));
             tr.position = bpi.loc;
         }
         if (IsNontrivialID(behName)) ID = behName;
@@ -344,21 +347,21 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
             //Checking the canceller before committing position allows using eg. successive onscreen checks.
             //This is a core use case for move-while. So we split up velocitystep to allow it
             if (ltv.ThisCannotContinue(tbpi)) {
-                SetDirection(Vector2.zero);
+                SetMovementDelta(Vector2.zero);
                 ltv.done(); yield break;
             }
-            SetDirection(delta);
+            SetMovementDelta(delta);
             SetTransformGlobalPosition(bpi.loc = tbpi.loc);
             yield return null;
             if (ltv.cT.Cancelled) {
-                SetDirection(Vector2.zero);
+                SetMovementDelta(Vector2.zero);
                 ltv.done(); yield break;
             }
         }
         tbpi.loc = bpi.loc;
         VelocityStepAndLook(ref vel, ref tbpi, doTime - tbpi.t);
         bpi.loc = tbpi.loc;
-        SetDirection(Vector2.zero);
+        SetMovementDelta(Vector2.zero);
         ltv.done();
     }
 
@@ -443,7 +446,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
 
     private void VelocityStepAndLook(ref Movement vel, ref ParametricInfo pi, float dT=ETime.FRAME_TIME) {
         vel.UpdateDeltaAssignAcc(ref pi, out Vector2 delta, dT);
-        SetDirection(delta);
+        SetMovementDelta(delta);
         SetTransformGlobalPosition(pi.loc);
     }
 
@@ -482,7 +485,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         }
         beh_cullCtr = (beh_cullCtr + 1) % checkCullEvery;
         if (delete?.Invoke(rBPI) == true) InvokeCull();
-        else if (beh_cullCtr == 0 && cullableRadius.cullable && myStyle.CameraCullable 
+        else if (beh_cullCtr == 0 && cullableRadius.cullable && myStyle.CameraCullable.Value 
             && bpi.t > FIRST_CULLCHECK_TIME && LocationHelpers.OffPlayableScreenBy(ScreenCullRadius, bpi.loc)) {
             InvokeCull();
         }
@@ -559,33 +562,32 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         phaseController.SetDesiredNext(startAtPatternId);
         var cT = new Cancellable();
         var joint = sm.MakeNested(cT);
-        using (var smh = new SMHandoff(this, sm, joint)) {
-            behaviorToken.Add(cT);
-            try {
-                await sm.sm.Start(smh);
-            } catch (Exception e) {
-                if (!(e is OperationCanceledException)) {
-                    Logs.UnityError(Exceptions.FlattenNestedException(e)
-                        .Message); //This is only here for the vaguest of debugging purposes.
-                }
-            } finally {
-                //It is possible for tasks to still be running at this point (most critically if
-                // using ~), so we cancel to make sure they get destroyed
-                cT.Cancel();
-                behaviorToken.Remove(cT);
+        using var smh = new SMHandoff(this, sm, joint);
+        behaviorToken.Add(cT);
+        try {
+            await sm.sm.Start(smh);
+        } catch (Exception e) {
+            if (!(e is OperationCanceledException)) {
+                Logs.UnityError(Exceptions.FlattenNestedException(e)
+                    .Message); //This is only here for the vaguest of debugging purposes.
             }
-            phaseController.RunEndingCallback();
-            if (IsNontrivialID(ID)) {
-                Logs.Log(
-                    $"BehaviorEntity {ID} finished running its SM{(sm.cullOnFinish ? " and will destroy itself." : ".")}",
-                    level: LogLevel.DEBUG1);
-            }
-            if (sm.cullOnFinish) {
-                if (PoofOnPhaseEnd) Poof();
-                else {
-                    if (DeathEffectOnParentCull && sm.cT.Root.Cancelled) TryDeathEffect();
-                    InvokeCull();
-                }
+        } finally {
+            //It is possible for tasks to still be running at this point (most critically if
+            // using ~), so we cancel to make sure they get destroyed
+            cT.Cancel();
+            behaviorToken.Remove(cT);
+        }
+        phaseController.RunEndingCallback();
+        if (IsNontrivialID(ID)) {
+            Logs.Log(
+                $"BehaviorEntity {ID} finished running its SM{(sm.cullOnFinish ? " and will destroy itself." : ".")}",
+                level: LogLevel.DEBUG1);
+        }
+        if (sm.cullOnFinish) {
+            if (PoofOnPhaseEnd) Poof();
+            else {
+                if (DeathEffectOnParentCull && sm.cT.Root.Cancelled) TryDeathEffect();
+                InvokeCull();
             }
         }
     }
@@ -603,29 +605,28 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         if (sm.sm == null || sm.cT.Cancelled) return;
         var cT = new Cancellable();
         var joint = sm.MakeNested(cT);
-        using (var smh = new SMHandoff(this, sm, joint)) {
-            behaviorToken.Add(cT);
-            try {
-                await sm.sm.Start(smh);
-            } catch (Exception e) {
-                if (!(e is OperationCanceledException)) {
-                    Logs.UnityError(Exceptions.FlattenNestedException(e)
-                        .Message); //This is only here for the vaguest of debugging purposes.
-                }
-                //When ending a level, the order of OnDisable is random, so a node running a sub-SM may
-                //be cancelled before its caller, so the caller cannot rely on this line throwing.
-                //This is OK under the standard design pattern which is "check cT after awaiting".
-                if (sm.cT.Cancelled) throw;
-                //When running external SM, "local cancel" (due to death) is a valid output, and we should not throw.
-                //Same as how Phase does not throw if OpCanceled is raised via shiftphasetoken.
-            } finally {
-                if (cancelOnFinish) {
-                    cT.Cancel();
-                    behaviorToken.Remove(cT);
-                }
+        using var smh = new SMHandoff(this, sm, joint);
+        behaviorToken.Add(cT);
+        try {
+            await sm.sm.Start(smh);
+        } catch (Exception e) {
+            if (!(e is OperationCanceledException)) {
+                Logs.UnityError(Exceptions.FlattenNestedException(e)
+                    .Message); //This is only here for the vaguest of debugging purposes.
             }
-            if (sm.cullOnFinish) InvokeCull();
+            //When ending a level, the order of OnDisable is random, so a node running a sub-SM may
+            //be cancelled before its caller, so the caller cannot rely on this line throwing.
+            //This is OK under the standard design pattern which is "check cT after awaiting".
+            if (sm.cT.Cancelled) throw;
+            //When running external SM, "local cancel" (due to death) is a valid output, and we should not throw.
+            //Same as how Phase does not throw if OpCanceled is raised via shiftphasetoken.
+        } finally {
+            if (cancelOnFinish) {
+                cT.Cancel();
+                behaviorToken.Remove(cT);
+            }
         }
+        if (sm.cullOnFinish) InvokeCull();
     }
 
     [ContextMenu("Finish SMs")]

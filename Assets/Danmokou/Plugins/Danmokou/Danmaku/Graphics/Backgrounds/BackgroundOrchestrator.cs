@@ -8,6 +8,7 @@ using Danmokou.Behavior;
 using Danmokou.Core;
 using JetBrains.Annotations;
 using Danmokou.SM;
+using SuzunoyaUnity.Rendering;
 using UnityEngine;
 using static BagoumLib.Tasks.WaitingUtils;
 
@@ -55,10 +56,11 @@ public class BackgroundOrchestrator : CoroutineRegularUpdater, IBackgroundOrches
         }
     }
 
-    private static GameObject? lastRequestedBGC;
+    private GameObject? lastRequestedBGC;
     private void MaybeCreateFirst() {
         if (SaveData.s.Backgrounds) {
             var bgc = (lastRequestedBGC == null) ? defaultBGCPrefab : lastRequestedBGC;
+            lastRequestedBGC = null;
             FromBG = CreateBGC(bgc);
         }
     }
@@ -68,7 +70,6 @@ public class BackgroundOrchestrator : CoroutineRegularUpdater, IBackgroundOrches
         tr = transform;
         lastRequestedBGC = NextSceneStartupBGC;
         NextSceneStartupBGC = null;
-        MaybeCreateFirst();
         Time = 0f;
         BackgroundCombiner = Instantiate(backgroundCombiner, Vector3.zero, Quaternion.identity)
             .GetComponent<BackgroundCombiner>();
@@ -78,7 +79,7 @@ public class BackgroundOrchestrator : CoroutineRegularUpdater, IBackgroundOrches
     protected override void BindListeners() {
         base.BindListeners();
         RegisterService<IBackgroundOrchestrator>(this, new ServiceLocator.ServiceOptions { Unique = true });
-        Listen(SaveData.ResolutionChanged, ShowHide);
+        Listen(RenderHelpers.PreferredResolution, _ => ShowHide());
     }
 
     public override void RegularUpdate() {

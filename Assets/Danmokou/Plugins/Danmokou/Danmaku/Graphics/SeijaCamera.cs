@@ -1,4 +1,6 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
+using BagoumLib.Events;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.DMath;
@@ -9,8 +11,8 @@ using UnityEngine;
 namespace Danmokou.Services {
 
 public interface IShaderCamera {
-    void AddXRotation(float dx, float t);
-    void AddYRotation(float dy, float t);
+    IDisposable AddXRotation(float dx, float t);
+    IDisposable AddYRotation(float dy, float t);
     void ShowBlackHole(BlackHoleEffect bhe);
 }
 
@@ -35,8 +37,8 @@ public class SeijaCamera : CoroutineRegularUpdater, IShaderCamera {
 
     private Camera cam = null!;
 
-    private float targetXRot = 0f;
-    private float targetYRot = 0f;
+    private readonly DisturbedSum<float> targetXRot = new DisturbedSum<float>(0f);
+    private readonly DisturbedSum<float> targetYRot = new DisturbedSum<float>(0);
     private float sourceXRot = 0f;
     private float sourceYRot = 0f;
     private float timeToTarget = 0f;
@@ -60,17 +62,23 @@ public class SeijaCamera : CoroutineRegularUpdater, IShaderCamera {
     protected override void BindListeners() {
         base.BindListeners();
         RegisterService<IShaderCamera>(this);
-        Listen(Events.PhaseCleared, () => ResetTargetFlip(1f));
-#if UNITY_EDITOR || ALLOW_RELOAD
-        Listen(Events.LocalReset, () => ResetTargetFlip(0.2f));
-#endif
+
+        Listen(targetXRot, _ => UndoAddition());
+        Listen(targetYRot, _ => UndoAddition());
+    }
+
+    private void UndoAddition() {
+        if (timeElapsedToTarget >= timeToTarget)
+            SendLastToSource(1f);
+        else
+            SendLastToSource(Math.Max(1f, timeToTarget - timeElapsedToTarget));
     }
 
     public override void RegularUpdate() {
         base.RegularUpdate();
         if (timeElapsedToTarget >= timeToTarget) {
-            targetXRot = lastXRot = M.Mod(360, targetXRot);
-            targetYRot = lastYRot = M.Mod(360, targetYRot);
+            lastXRot = targetXRot;
+            lastYRot = targetYRot;
             SetLocation(targetXRot, targetYRot);
         } else {
             lastXRot = Mathf.Lerp(sourceXRot, targetXRot, timeElapsedToTarget / timeToTarget);
@@ -87,23 +95,18 @@ public class SeijaCamera : CoroutineRegularUpdater, IShaderCamera {
         sourceYRot = lastYRot;
     }
 
-    public void AddXRotation(float dx, float time) {
+    public IDisposable AddXRotation(float dx, float time) {
+        var disp = targetXRot.AddConst(dx);
         SendLastToSource(time);
-        targetXRot += dx;
+        return disp;
     }
 
-    public void AddYRotation(float dy, float time) {
+    public IDisposable AddYRotation(float dy, float time) {
+        var disp = targetYRot.AddConst(dy);
         SendLastToSource(time);
-        targetYRot += dy;
+        return disp;
     }
 
-    public void ResetTargetFlip(float time) {
-        if (targetXRot * targetXRot + targetYRot * targetYRot > 0) {
-            SendLastToSource(time);
-            targetXRot = 360 * Mathf.Round(targetXRot / 360);
-            targetYRot = 360 * Mathf.Round(targetYRot / 360);
-        }
-    }
 
     private void SetLocation(float xrd, float yrd) {
         seijaMaterial.SetFloat(rotX, xrd * M.degRad);

@@ -286,14 +286,8 @@
      <Reference Include="System.Collections.Immutable">
      <HintPath>C:/Workspace/unity/Danmokou/Assets/Danmokou/Plugins/DLLs/System.Collections.Immutable.dll</HintPath>
      </Reference>
-     <Reference Include="LanguageExt.Parsec">
-     <HintPath>C:/Workspace/unity/Danmokou/Assets/SZYU/Plugins/DLLs/LanguageExt.Parsec.dll</HintPath>
-     </Reference>
      <Reference Include="System.Memory">
      <HintPath>C:/Workspace/unity/Danmokou/Assets/SZYU/Plugins/DLLs/System.Memory.dll</HintPath>
-     </Reference>
-     <Reference Include="ParserCS">
-     <HintPath>C:/Workspace/unity/Danmokou/Assets/Danmokou/Plugins/DLLs/ParserCS.dll</HintPath>
      </Reference>
      <Reference Include="System.Reactive">
      <HintPath>C:/Workspace/unity/Danmokou/Assets/SZYU/Plugins/DLLs/System.Reactive.dll</HintPath>
@@ -301,17 +295,14 @@
      <Reference Include="protobuf-net">
      <HintPath>C:/Workspace/unity/Danmokou/Assets/Danmokou/Plugins/DLLs/protobuf-net.dll</HintPath>
      </Reference>
-     <Reference Include="LanguageExt.CoreReduced">
-     <HintPath>C:/Workspace/unity/Danmokou/Assets/SZYU/Plugins/DLLs/LanguageExt.CoreReduced.dll</HintPath>
-     </Reference>
      <Reference Include="protobuf-net.Core">
      <HintPath>C:/Workspace/unity/Danmokou/Assets/Danmokou/Plugins/DLLs/protobuf-net.Core.dll</HintPath>
      </Reference>
      <Reference Include="Newtonsoft.Json">
      <HintPath>C:/Workspace/unity/Danmokou/Library/PackageCache/jillejr.newtonsoft.json-for-unity@13.0.102/Plugins/Newtonsoft.Json Editor/Newtonsoft.Json.dll</HintPath>
      </Reference>
-     <Reference Include="ExpressionToString">
-     <HintPath>C:/Workspace/unity/Danmokou/Assets/Danmokou/Plugins/DLLs/ExpressionToString.dll</HintPath>
+     <Reference Include="Mizuhashi">
+     <HintPath>C:/Workspace/unity/Danmokou/Assets/SZYU/Plugins/DLLs/Mizuhashi.dll</HintPath>
      </Reference>
      <Reference Include="mscorlib">
      <HintPath>C:/Program Files/Unity/Hub/Editor/2020.3.16f1/Editor/Data/MonoBleedingEdge/lib/mono/4.7.1-api/mscorlib.dll</HintPath>

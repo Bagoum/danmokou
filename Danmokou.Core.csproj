@@ -59,8 +59,8 @@
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\Dialogue\Definitions.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\Core\Interfaces.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\Graphics\CustomMeshUtils.cs" />
-     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\DMath\MultiOp.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\UI\VSyncChecker.cs" />
+     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\Scenes\Types.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\Core\Structs.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\Core\ServiceLocator.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\Scriptables\Values\SOColor2.cs" />
@@ -118,14 +118,12 @@
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\Localization\Generated\CustomDifficulty.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\Achievements\Constructors.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\Scriptables\Colors\Palette.cs" />
-     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\DMath\AggregateOp.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\Core\DU.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\Scriptables\Values\SOVec3.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\Achievements\Interfaces.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\DMath\Math.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\Behavior\CoroutineRegularUpdater.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\DMath\MathTypes.cs" />
-     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\Scenes\Types.cs" />
      <None Include="Assets\Danmokou\Plugins\Danmokou\Core\Danmokou.Core.asmdef" />
      <Reference Include="UnityEngine">
      <HintPath>C:/Program Files/Unity/Hub/Editor/2020.3.16f1/Editor/Data/Managed/UnityEngine/UnityEngine.dll</HintPath>
@@ -367,14 +365,8 @@
      <Reference Include="System.Collections.Immutable">
      <HintPath>C:/Workspace/unity/Danmokou/Assets/Danmokou/Plugins/DLLs/System.Collections.Immutable.dll</HintPath>
      </Reference>
-     <Reference Include="LanguageExt.Parsec">
-     <HintPath>C:/Workspace/unity/Danmokou/Assets/SZYU/Plugins/DLLs/LanguageExt.Parsec.dll</HintPath>
-     </Reference>
      <Reference Include="System.Memory">
      <HintPath>C:/Workspace/unity/Danmokou/Assets/SZYU/Plugins/DLLs/System.Memory.dll</HintPath>
-     </Reference>
-     <Reference Include="ParserCS">
-     <HintPath>C:/Workspace/unity/Danmokou/Assets/Danmokou/Plugins/DLLs/ParserCS.dll</HintPath>
      </Reference>
      <Reference Include="System.Reactive">
      <HintPath>C:/Workspace/unity/Danmokou/Assets/SZYU/Plugins/DLLs/System.Reactive.dll</HintPath>
@@ -382,17 +374,14 @@
      <Reference Include="protobuf-net">
      <HintPath>C:/Workspace/unity/Danmokou/Assets/Danmokou/Plugins/DLLs/protobuf-net.dll</HintPath>
      </Reference>
-     <Reference Include="LanguageExt.CoreReduced">
-     <HintPath>C:/Workspace/unity/Danmokou/Assets/SZYU/Plugins/DLLs/LanguageExt.CoreReduced.dll</HintPath>
-     </Reference>
      <Reference Include="protobuf-net.Core">
      <HintPath>C:/Workspace/unity/Danmokou/Assets/Danmokou/Plugins/DLLs/protobuf-net.Core.dll</HintPath>
      </Reference>
      <Reference Include="Newtonsoft.Json">
      <HintPath>C:/Workspace/unity/Danmokou/Library/PackageCache/jillejr.newtonsoft.json-for-unity@13.0.102/Plugins/Newtonsoft.Json Editor/Newtonsoft.Json.dll</HintPath>
      </Reference>
-     <Reference Include="ExpressionToString">
-     <HintPath>C:/Workspace/unity/Danmokou/Assets/Danmokou/Plugins/DLLs/ExpressionToString.dll</HintPath>
+     <Reference Include="Mizuhashi">
+     <HintPath>C:/Workspace/unity/Danmokou/Assets/SZYU/Plugins/DLLs/Mizuhashi.dll</HintPath>
      </Reference>
      <Reference Include="mscorlib">
      <HintPath>C:/Program Files/Unity/Hub/Editor/2020.3.16f1/Editor/Data/MonoBleedingEdge/lib/mono/4.7.1-api/mscorlib.dll</HintPath>

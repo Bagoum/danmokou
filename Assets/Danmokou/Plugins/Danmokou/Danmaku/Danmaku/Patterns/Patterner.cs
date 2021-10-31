@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Reactive;
 using System.Threading.Tasks;
 using BagoumLib;
 using BagoumLib.Cancellation;
@@ -174,12 +175,18 @@ public static partial class AtomicPatterns {
     /// <returns></returns>
     public static SyncPattern SFX() => sbh => sbh.bc.SFX();
 
+    
     /// <summary>
-    /// Invoke one of the provided events according to the firing index.
+    /// Invoke the provided event with the provided value.
     /// </summary>
-    /// <param name="events"></param>
-    /// <returns></returns>
-    public static SyncPattern Event(Events.Event0?[] events) => sbh => events[sbh.index % events.Length]?.Proc();
+    [GAlias(typeof(float), "eventf")]
+    public static SyncPattern Event<T>(string evName,  GCXF<T> value) => sbh => 
+        Events.ProcRuntimeEvent(evName, value(sbh.GCX));
+
+    /// <summary>
+    /// Invoke one of the provided unit events according to the firing index.
+    /// </summary>
+    public static SyncPattern Event0(string evName) => Event<Unit>(evName, _ => default);
 
     #region Items
 

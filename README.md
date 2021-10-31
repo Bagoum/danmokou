@@ -6,21 +6,15 @@ The engine name may be abbreviated as **dmk**.
 
 See [the website](https://dmk.bagoum.com/) for a friendly introduction to what DMK can do.
 
-# Setup/Tutorials
+Setup and tutorial instructions can be found here: [https://dmk.bagoum.com/docs/articles/setup.html](https://dmk.bagoum.com/docs/articles/setup.html)
 
-#### Go to [https://dmk.bagoum.com/docs/articles/setup.html](https://dmk.bagoum.com/docs/articles/setup.html) for setup and tutorial instructions
+The changelog can be found here: [https://dmk.bagoum.com/docs/articles/changelog.html](https://dmk.bagoum.com/docs/articles/changelog.html)
 
-# Documentation
-
-`https://dmk.bagoum.com/docs`
+Documentation can be found here: [https://dmk.bagoum.com/docs](https://dmk.bagoum.com/docs)
 
 # Licensing
 
 The source code is licensed under MIT. See the COPYING file for details, as well as information on non-code assets. Note that submodule projects may have different licenses.
-
-# Feature Wishlist
-
-- GFW-style gameplay
 
 # FAQ
 
@@ -30,7 +24,9 @@ The source code is licensed under MIT. See the COPYING file for details, as well
 
 **Are there any examples?**
 
-Under the `Patterns` folder, everything in `examples` and `feature testing` should work. The scripts here are fairly simple. Unlike the tutorial, these are not commented. 
+For real game code, look in the directory [MiniProjects/Scripts](https://github.com/Bagoum/danmokou/tree/master/Assets/Danmokou/MiniProjects/Scripts), which contains boss scripts for recent short games I've made. You can also check out the [scripts from Spirits in Memetic Paradise](https://github.com/Bagoum/danmokou-simp/tree/master/Scripts) if you have that installed as a submodule.
+
+Under the `Patterns` folder, everything in `examples` and `feature testing` should work. The scripts there are fairly simple, but don't have many comments.
 
 The files under `demo` are from old scripts. They may not work, as the engine has gone through a lot of changes since then. 
 
@@ -71,7 +67,7 @@ This repository has some test coverage.
 
 In Unity, there are "edit-mode tests", which can be run statically, and "play-mode tests", which are run while the game is running. 
 
-Definitions for these tests are under `Assets/Plugins/Self/Testing/Tests` and `Assets/Plugins/Self/Testing/PlayTests` respectively.
+Definitions for these tests are under `Assets/Plugins/Danmokou/Testing/Tests` and `Assets/Plugins/Self/Testing/PlayTests` respectively.
 
 Most play-mode tests operate by running some state machine and checking the output game state. State machines used for testing are in the folder `Assets/Pattern/Tests`. 
 

@@ -6,7 +6,7 @@ This is a reference page for all questions in the line of "How can I add/change 
 
 You can add Unity packages through the Package Manager. As far as I know Unity does not have a NuGet-compatible solution, so general C# packages need to be manually imported as DLLs.
 
-Note that in order to reference namespaces defined in Unity packages, you have to add the package's asmdef file as a reference in the asmdef of the script doing the reference. For example, most of the engine's code is under the scope of `Plugins/Self/Danmaku/Self.Danmaku.asmdef`, so in order to reference Unity's TextMeshPro functions from code within this folder, the `Unity.TextMeshPro.asmdef` assembly definition is linked in `Self.Danmaku.asmdef`. 
+Note that in order to reference namespaces defined in Unity packages, you have to add the package's asmdef file as a reference in the asmdef of the script doing the reference. For example, most of the engine's code is under the scope of `Plugins/Danmokou/Danmaku/Danmokou.Danmaku.asmdef`, so in order to reference Unity's TextMeshPro functions from code within this folder, the `Unity.TextMeshPro.asmdef` assembly definition is linked in `Danmokou.Danmaku.asmdef`. 
 
 ## Bullets
 

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reactive;
 using BagoumLib;
 using BagoumLib.Culture;
 using BagoumLib.Events;
@@ -60,11 +61,11 @@ public static class SaveData {
         [JsonIgnore]
         public bool MainCampaignCompleted => CampaignCompleted(GameManagement.References.campaign.key);
 
-        public static readonly Events.Event0 TutorialCompleted = new Events.Event0();
+        public static readonly Event<Unit> TutorialCompleted = new Event<Unit>();
 
         public void CompleteTutorial() {
             TutorialDone = true;
-            TutorialCompleted.Proc();
+            TutorialCompleted.OnNext(default);
             SaveData.SaveRecord();
         }
 
@@ -321,10 +322,7 @@ public static class SaveData {
             Logs.Log($"Set resolution to {wh.Value}");
         }
         SuzunoyaUnity.Rendering.RenderHelpers.PreferredResolution.OnNext(s.Resolution);
-        ResolutionChanged.Proc();
     }
-
-    public static readonly Events.Event0 ResolutionChanged = new Events.Event0();
 
     public static void UpdateFullscreen(FullScreenMode mode) {
         Screen.fullScreenMode = s.Fullscreen = mode;
@@ -344,10 +342,10 @@ public static class SaveData {
         WriteJson(SETTINGS, s);
         ETime.SetForcedFPS(s.RefreshRate);
         ETime.SetVSync(s.Vsync);
-        SettingsChanged.Proc();
+        SettingsChanged.OnNext(s);
     }
     
-    public static readonly Events.Event0 SettingsChanged = new Events.Event0();
+    public static readonly Event<Settings> SettingsChanged = new Event<Settings>();
 
     private static void StartProfiling() {
         if (s.ProfilingEnabled) {

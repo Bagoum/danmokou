@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq.Expressions;
+using BagoumLib.Expressions;
 using Danmokou.Core;
 using UnityEngine;
 using Ex = System.Linq.Expressions.Expression;

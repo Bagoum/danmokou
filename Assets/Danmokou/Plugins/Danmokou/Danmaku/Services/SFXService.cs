@@ -62,9 +62,11 @@ public class SFXService : RegularUpdater, ISFXService {
         base.BindListeners();
         RegisterService<ISFXService>(this);
 
-        Listen(Events.SceneCleared, ClearConstructed);
+#if UNITY_EDITOR || ALLOW_RELOAD
         Listen(Events.LocalReset, ClearConstructed);
-        Listen(Events.EngineStateChanged, HandleEngineStateChange);
+#endif
+        Listen(Events.SceneCleared, ClearConstructed);
+        Listen(EngineStateManager.EvState, HandleEngineStateChange);
         Listen(RankManager.RankLevelChanged, increase => Request(increase ? rankUp : rankDown));
 
         Listen(PlayerController.PlayerActivatedMeter, () => Request(meterActivated));
@@ -73,10 +75,10 @@ public class SFXService : RegularUpdater, ISFXService {
         Listen(GameManagement.EvInstance, i => i.MeterBecameUsable, () => Request(meterUsable));
         Listen(GameManagement.EvInstance, i => i.AnyExtendAcquired, () => Request(lifeExtend));
         Listen(GameManagement.EvInstance, i => i.PhaseCompleted, pc => {
-            if (pc.props.endSound) {
+            if (pc.phase.Props.endSound) {
                 if (pc.Captured.Try(out var captured)) {
                     Request(captured ? phaseEndSuccess : phaseEndFail);
-                } else if (pc.props.phaseType == PhaseType.STAGE && pc.props.Cleanup) {
+                } else if (pc.phase.Props.phaseType == PhaseType.STAGE && pc.phase.Props.Cleanup) {
                     Request(stageSectionEnd);
                 }
             }

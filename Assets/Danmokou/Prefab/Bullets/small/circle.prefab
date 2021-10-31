@@ -45,6 +45,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6661135a8683fa541ab9d8319d45d38a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  overrideMaterial: {fileID: 0}
   destructible: 1
   deletable: 1
   grazeEveryFrames: 60
@@ -52,6 +53,7 @@ MonoBehaviour:
   renderPriority: 600
   renderMode: 0
   fadeIn: {fileID: 11400000, guid: 7509dddf785098f48aadafff0a2ac5b4, type: 2}
+  fadeOut: {fileID: 11400000, guid: 7509dddf785098f48aadafff0a2ac5b4, type: 2}
   rotational: 1
   colorizing:
     FlatLight: 1
@@ -67,6 +69,7 @@ MonoBehaviour:
     Inverted: 0
     FullInvertedAsLightDark: 0
     TwoPaletteColorings: 0
+    MultiChannelRecolor: 0
   spriteSheet: {fileID: 21300000, guid: eb24c362409e72e46a82ea1e0472700c, type: 3}
   displacement:
     displaceTex: {fileID: 0}
@@ -100,8 +103,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   colliderType: 0
-  effectiveCircleRadius: 0.048
-  scale: 1
   radius: 0.048
   point1: {x: 0, y: 0}
   point2: {x: 0, y: 0}

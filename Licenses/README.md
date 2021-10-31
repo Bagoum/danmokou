@@ -1,1 +1,0 @@
-See COPYING in the top-level directory for details about the licenses here.

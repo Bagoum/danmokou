@@ -14,18 +14,70 @@ using Danmokou.Danmaku.Patterns;
 using Danmokou.DMath;
 using Danmokou.Expressions;
 using Danmokou.Reflection;
+using Danmokou.Scriptables;
 using Danmokou.SM.Parsing;
-using JetBrains.Annotations;
-using ParserCS;
 using UnityEngine;
 using static BagoumLib.Tasks.WaitingUtils;
 
 namespace Danmokou.SM {
+public class SMContext {
+    public List<IDisposable> PhaseObjects { get; } = new List<IDisposable>();
+
+    public void CleanupObjects() {
+        foreach (var t in PhaseObjects)
+            t.Dispose();
+        PhaseObjects.Clear();
+    }
+}
+public class PatternContext : SMContext {
+    public PatternSM SM { get; }
+    public PatternProperties Props { get; }
+    
+    public PatternContext(PatternSM sm) {
+        SM = sm;
+        Props = sm.Props;
+    }
+}
+public class PhaseContext : SMContext {
+    public PatternContext? Pattern { get; }
+    public int Index { get; }
+    public PhaseProperties Props { get; }
+
+    public int? BossPhotoHP => Boss == null ? null : Props.photoHP;
+    public BossConfig? Boss => Pattern?.Props.boss;
+    public PhaseType? PhaseType => Props.phaseType;
+    public GameObject? Background => Props.Background != null ? Props.Background :
+        (Props.phaseType.Try(out var pt) && Boss != null) ? Boss.Background(pt) : null;
+    public SOBgTransition? BgTransitionIn => Props.BgTransitionIn != null ? Props.BgTransitionIn :
+        (Props.phaseType.Try(out var pt) && Boss != null) ? Boss.IntoTransition(pt) : null;
+    public SOBgTransition? BgTransitionOut => Props.BgTransitionOut;
+
+
+    public PhaseContext(PatternContext? pattern, int index, PhaseProperties props) {
+        Pattern = pattern;
+        Index = index;
+        Props = props;
+    }
+    
+    public bool GetSpellCutin(out GameObject go) {
+        go = null!;
+        if (Boss != null) {
+            if ((Props.spellCutinIndex ?? ((Props.phaseType?.IsSpell() == true) ? (int?)0 : null)).Try(out var index)) {
+                return Boss.spellCutins.Try(index, out go);
+            }
+        }
+        return false;
+    }
+
+}
+
 public struct SMHandoff : IDisposable {
     public BehaviorEntity Exec {
         get => GCX.exec;
         set => GCX.exec = value;
     }
+    public SMContext Context { get; set; }
+    
     public CommonHandoff ch;
     public ICancellee cT => ch.cT;
     public readonly ICancellee parentCT;
@@ -43,6 +95,7 @@ public struct SMHandoff : IDisposable {
         ch.gcx.index = index.GetValueOrDefault(exec.rBPI.index);
         parentCT = Cancellable.Null;
         CanPrepend = false;
+        Context = new SMContext();
     }
 
     public SMHandoff(BehaviorEntity exec, SMRunner smr, ICancellee? cT = null) {
@@ -51,9 +104,13 @@ public struct SMHandoff : IDisposable {
         this.ch = new CommonHandoff(cT ?? smr.cT, gcx);
         this.parentCT = smr.cT;
         CanPrepend = false;
+        Context = new SMContext();
     }
 
-    public void Dispose() => GCX.Dispose();
+    public void Dispose() {
+        GCX.Dispose();
+        Context.CleanupObjects();
+    }
 
     public void RunRIEnumerator(IEnumerator cor) => Exec.RunRIEnumerator(cor);
     public void RunTryPrependRIEnumerator(IEnumerator cor) {
@@ -267,16 +324,15 @@ public abstract class StateMachine {
     }
 
     public static StateMachine CreateFromDump(string dump) {
-        var bakeCtx = BakeCodeGenerator.OpenContext(BakeCodeGenerator.CookingContext.KeyType.SM, dump);
+        using var _ = BakeCodeGenerator.OpenContext(BakeCodeGenerator.CookingContext.KeyType.SM, dump);
         var p = IParseQueue.Lex(dump);
         var result = Create(p);
         p.ThrowOnLeftovers(() => "Behavior script has extra text. Check the highlighted text for an illegal command.");
-        bakeCtx?.Dispose();
         return result;
     }
 
     public static List<PhaseProperties> ParsePhases(string dump) {
-        var bakeCtx = BakeCodeGenerator.OpenContext(BakeCodeGenerator.CookingContext.KeyType.SM, "phase_" + dump);
+        using var _ = BakeCodeGenerator.OpenContext(BakeCodeGenerator.CookingContext.KeyType.SM, "phase_" + dump);
         var ps = new List<PhaseProperties>();
         var p = IParseQueue.Lex(dump);
         while (!p.Empty) {
@@ -288,7 +344,6 @@ public abstract class StateMachine {
             while (!p.Empty && p.MaybeScan() != SMParser.PROP_KW)
                 p.Advance();
         }
-        bakeCtx?.Dispose();
         return ps;
     }
 

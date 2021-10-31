@@ -1,0 +1,31 @@
+<#> warnprefix
+pattern({
+	boss simp.shinki
+ })
+phase(0)
+	paction(0)
+		shift-phase-to(1)
+	
+<!> type(non, `p1`)
+##<!> photo(2)
+<!> hp 2000
+phase(0)
+	paction 0
+		position -1 0
+		async arrow-blue/w <0.5;:> gcr2 40 _ <> { } s tprot cx 1
+		_ 1
+			seijax 180 2
+		_ 2
+			seijax 180 2
+		_ 3
+			seijax 180 2
+		_ 4
+			seijax 180 2
+		
+<!> type(non, `p2 NO CONTROLS`)
+<!> hp(1000)
+phase(0)
+	paction 0
+		noop
+		
+///

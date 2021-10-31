@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq.Expressions;
+using BagoumLib.Expressions;
 using Danmokou.Core;
 using Danmokou.Expressions;
 using Ex = System.Linq.Expressions.Expression;
@@ -358,9 +359,9 @@ public static class ExMLerps {
     /// <param name="start">Starting point</param>
     /// <param name="ctrl">Control point</param>
     /// <param name="end">Ending point</param>
-    /// <param name="time">0-1 lerp controller</param>
-    public static TEx<T> Bezier<T>(TEx<T> start, TEx<T> ctrl, TEx<T> end, efloat time) => 
-        EEx.Resolve(time, t => {
+    /// <param name="time">0-1 lerp controller (automatically clamped)</param>
+    public static TEx<T> Bezier<T>(TEx<T> start, TEx<T> ctrl, TEx<T> end, TEx<float> time) => 
+        EEx.Resolve<float>(Clamp01(time), t => {
             var c = E1.Sub(t);
             return c.Mul(c).Mul(start)
                 .Add(E2.Mul(c).Mul(t).Mul(ctrl))
@@ -369,20 +370,52 @@ public static class ExMLerps {
 
     /// <summary>
     /// Perform a cubic bezier interpolation.
+    /// <br/>This is the same as CalcBezier in BagoumLib when start=0 and end=1.
+    /// <br/>This is not the same as the cubic bezier interpolation used in CSS and
+    ///  most animation engines. For that functionality, use CubicBezier.
     /// </summary>
     /// <param name="start">Starting point</param>
     /// <param name="ctrl1">First control point</param>
     /// <param name="ctrl2">Second control point</param>
     /// <param name="end">Ending point</param>
-    /// <param name="time">0-1 lerp controller</param>
-    public static TEx<T> Bezier3<T>(TEx<T> start, TEx<T> ctrl1, TEx<T> ctrl2, TEx<T> end, efloat time)
-        => EEx.Resolve(time, t => {
+    /// <param name="time">0-1 lerp controller (automatically clamped)</param>
+    public static TEx<T> Bezier3<T>(TEx<T> start, TEx<T> ctrl1, TEx<T> ctrl2, TEx<T> end, TEx<float> time)
+        => EEx.Resolve<float>(Clamp01(time), t => {
             var c = E1.Sub(t);
             return c.Mul(c).Mul(c).Mul(start)
                 .Add(ExC(3f).Mul(c).Mul(c).Mul(t).Mul(ctrl1))
                 .Add(ExC(3f).Mul(c).Mul(t).Mul(t).Mul(ctrl2))
                 .Add(t.Mul(t).Mul(t).Mul(end));
         });
+
+    /// <summary>
+    /// Perform a cubic bezier easing interpolation using the same logic as cubic-bezier in CSS.
+    /// <br/>This is significantly more computationally expensive than other bezier methods since it requires
+    ///  calculating the roots of the bezier function.
+    /// <br/>For optimization purposes, it is required that both control coordinates reduce to constants.
+    /// </summary>
+    /// <param name="time1">Time of first control point</param>
+    /// <param name="prog1">Progression of first control point</param>
+    /// <param name="time2">Time of first control point</param>
+    /// <param name="prog2">Progression of first control point</param>
+    /// <param name="time">0-1 lerp controller (automatically clamped)</param>
+    public static ExBPY CubicBezier(ExBPY time1, ExBPY prog1, ExBPY time2, ExBPY prog2, ExBPY time) => b => {
+        var f = new FlattenVisitor(false, true);
+        if (!f.Visit(time1(b)).TryAsConst(out float t1))
+            throw new Exception("CubicBezier argument time1 is not a constant.");
+        if (!f.Visit(prog1(b)).TryAsConst(out float p1))
+            throw new Exception("CubicBezier argument prog1 is not a constant.");
+        if (!f.Visit(time2(b)).TryAsConst(out float t2))
+            throw new Exception("CubicBezier argument time2 is not a constant.");
+        if (!f.Visit(prog2(b)).TryAsConst(out float p2))
+            throw new Exception("CubicBezier argument prog2 is not a constant.");
+        var easer = BagoumLib.Mathematics.Bezier.CBezier(t1, p1, t2, p2);
+        return new ExFunction(easer.GetType().GetMethod("Invoke")!).InstanceOf(Ex.Constant(easer), Clamp01(time(b)));
+    };
+
+    public static Func<TExArgCtx, TEx<T>> CubicBezierLerp<T>(ExBPY time1, ExBPY prog1, ExBPY time2, ExBPY prog2,
+        ExBPY time, Func<TExArgCtx, TEx<T>> f1, Func<TExArgCtx, TEx<T>> f2) => b =>
+        LerpU(E0, E1, CubicBezier(time1, prog1, time2, prog2, time)(b), f1(b), f2(b));
 
 }
 }

@@ -86,7 +86,7 @@ Material:
     - _P1: 1
     - _P2: 0.135
     - _Parallax: 0.02
-    - _R: 2.5
+    - _R: 2.7
     - _RI: 0.6
     - _S: 1
     - _SR: 2.2
@@ -117,6 +117,6 @@ Material:
     - _DimC: {r: 0.754717, g: 0, b: 0, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _EmptyC: {r: 0.5660378, g: 0.23912634, b: 0.20825917, a: 1}
-    - _Shadow: {r: 0, g: 0, b: 0, a: 0.50980395}
+    - _Shadow: {r: 0, g: 0, b: 0, a: 0.5019608}
     - _T: {r: 0, g: 0.5, b: 0, a: 1}
   m_BuildTextureStacks: []

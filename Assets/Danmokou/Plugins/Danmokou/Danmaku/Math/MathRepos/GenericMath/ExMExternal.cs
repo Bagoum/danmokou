@@ -1,4 +1,5 @@
-﻿using Danmokou.Core;
+﻿using BagoumLib.Expressions;
+using Danmokou.Core;
 using Danmokou.Expressions;
 using Ex = System.Linq.Expressions.Expression;
 using static Danmokou.Expressions.ExMHelpers;
@@ -13,7 +14,7 @@ namespace Danmokou.DMath.Functions {
 [Reflect]
 public static class ExMExternal {
     private static readonly ExFunction campaignCompleted =
-        ExUtils.Wrap<SaveData.Record>("CampaignCompleted", typeof(string));
+        ExFunction.Wrap<SaveData.Record>("CampaignCompleted", typeof(string));
 
     private static Ex saveRecord => Ex.Property(null, typeof(SaveData), "r");
 

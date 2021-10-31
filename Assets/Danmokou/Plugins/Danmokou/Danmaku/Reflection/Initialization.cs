@@ -28,6 +28,7 @@ public static partial class Reflector {
     };*/
 
     static Reflector() {
+        Debug.Log($"Entered static: {Application.isPlaying}");
         if (!Application.isPlaying) return;
         foreach (var type in ReflectorUtils.ReflectableAssemblyTypes) {
             foreach (var ca in type.GetCustomAttributes()) {
@@ -220,6 +221,11 @@ public static partial class Reflector {
             ('d', Palette.Shade.DARK),
             ('o', Palette.Shade.OUTLINE),
             ('b', Palette.Shade.BLACK)
+        });
+        CEnum(new[] {
+            ('t', Events.RuntimeEventType.Trigger),
+            ('n', Events.RuntimeEventType.Normal),
+            ('_', Events.RuntimeEventType.Normal)
         });
     }
 }

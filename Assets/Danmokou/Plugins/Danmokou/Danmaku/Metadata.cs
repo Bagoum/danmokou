@@ -193,7 +193,7 @@ public readonly struct CampaignSnapshot {
 }
 
 public readonly struct PhaseCompletion {
-    public readonly PhaseProperties props;
+    public readonly PhaseContext phase;
     public readonly PhaseClearMethod clear;
     public readonly BehaviorEntity exec;
     public readonly int hits;
@@ -206,9 +206,9 @@ public readonly struct PhaseCompletion {
     private readonly float timeout;
     private float ElapsedRatio => timeout > 0 ? ElapsedTime / timeout : 0;
     private const float ELAPSED_YIELD = 0.58f;
-    private float ElapsedItemMultiplier => props.phaseType == PhaseType.TIMEOUT ? 1 : 
+    private float ElapsedItemMultiplier => phase.Props.phaseType == PhaseType.TIMEOUT ? 1 : 
         Mathf.Lerp(1, 0.27183f, (ElapsedRatio - ELAPSED_YIELD) / (1 - ELAPSED_YIELD));
-    private float ItemMultiplier => props.cardValueMult * ElapsedItemMultiplier;
+    private float ItemMultiplier => phase.Props.cardValueMult * ElapsedItemMultiplier;
 
     public string Performance {
         get {
@@ -258,13 +258,13 @@ public readonly struct PhaseCompletion {
     public bool? Cleared => StandardCardFinish ?
         (bool?) ((clear.Destructive()) ||
                  //For timeouts, clearing requires no-hit
-                 (props.phaseType == PhaseType.TIMEOUT && clear == PhaseClearMethod.TIMEOUT && NoHits))
+                 (phase.Props.phaseType == PhaseType.TIMEOUT && clear == PhaseClearMethod.TIMEOUT && NoHits))
         : null;
 
     /// <summary>
     /// True if the phase is a card-type phase and it was not externally cancelled.
     /// </summary>
-    public bool StandardCardFinish => (props.phaseType?.IsCard() ?? false) && clear != PhaseClearMethod.CANCELLED;
+    public bool StandardCardFinish => (phase.Props.phaseType?.IsCard() ?? false) && clear != PhaseClearMethod.CANCELLED;
 
     private ItemDrops DropPerfectCapture => new ItemDrops(42, 7, 42, 0, 20, true).Mul(ItemMultiplier);
     private ItemDrops DropCapture => new ItemDrops(42, 0, 42, 0, 20, true).Mul(ItemMultiplier);
@@ -282,8 +282,8 @@ public readonly struct PhaseCompletion {
         }
     }
 
-    public PhaseCompletion(PhaseProperties props, PhaseClearMethod clear, BehaviorEntity exec, CampaignSnapshot snap, float timeout) {
-        this.props = props;
+    public PhaseCompletion(PhaseContext phase, PhaseClearMethod clear, BehaviorEntity exec, CampaignSnapshot snap, float timeout) {
+        this.phase = phase;
         this.clear = clear;
         this.exec = exec;
         this.timeout = timeout;

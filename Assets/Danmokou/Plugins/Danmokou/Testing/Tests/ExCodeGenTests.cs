@@ -11,7 +11,6 @@ using Danmokou.DMath.Functions;
 using Danmokou.Expressions;
 using Danmokou.Reflection;
 using Danmokou.SM;
-using FastExpressionCompiler;
 using NUnit.Framework;
 using UnityEngine;
 using Ex = System.Linq.Expressions.Expression;
@@ -64,7 +63,6 @@ public class ExCodeGenTests {
         var ifex = Ex.Block(new ParameterExpression[0],
             Ex.IfThenElse(block, block2, block2),
             Ex.Constant(2f));
-        var ifexs = ifex.ToCSharpString();
         //if: only the condition needs to be linearized
         //cond: condition, true, false need to be linarized
         

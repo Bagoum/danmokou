@@ -14,14 +14,14 @@ public class PausedGameplayMenu : XMLMenu {
     public SFXConfig? openPauseSound;
     public SFXConfig? closePauseSound;
 
-    private IDeletionMarker? pauseToken;
+    private IDisposable? pauseToken;
     
     protected void ShowMe() {
         if (!MenuActive) {
             MenuActive = true;
             tokens.Add(pauseToken = EngineStateManager.RequestState(EngineState.MENU_PAUSE));
-            var disable = Disabler.CreateToken1(MultiOp.Priority.ALL);
-            _ = manager.FadeInPauseUI().ContinueWithSync(() => disable.TryRevoke());
+            var disable = UpdatesEnabled.AddConst(false);
+            _ = manager.FadeInPauseUI().ContinueWithSync(disable.Dispose);
             ServiceLocator.SFXService.Request(openPauseSound);
             UI.style.display = DisplayStyle.Flex;
             ResetCurrentNode();
@@ -33,17 +33,17 @@ public class PausedGameplayMenu : XMLMenu {
         if (MenuActive) {
             MenuActive = false;
             MainScreen.ResetNodeProgress();
-            pauseToken?.MarkForDeletion();
+            pauseToken?.Dispose();
             UI.style.display = DisplayStyle.None;
         }
     }
 
     protected void ProtectHide(Action? hide = null) {
         if (MenuActive) {
-            var disable = Disabler.CreateToken1(MultiOp.Priority.ALL);
+            var disable = UpdatesEnabled.AddConst(false);
             ServiceLocator.SFXService.Request(closePauseSound);
             _ = manager.FadeOutPauseUI().ContinueWithSync(() => {
-                disable.TryRevoke();
+                disable.Dispose();
                 (hide ?? HideMe)();
             });
         }

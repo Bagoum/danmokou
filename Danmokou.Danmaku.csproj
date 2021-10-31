@@ -170,7 +170,6 @@
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Scriptables\DUs\SOBgTransition.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\VN\Characters\MarisaMimic.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Behavior\Functions\RotateMe.cs" />
-     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Player\AyaCameraFreezeHelper.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\VN\Characters\YukariMimic.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\UI\XML\Submenus\PlayModeSubmenu.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Player\ShipController.cs" />
@@ -183,6 +182,7 @@
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Expressions\ReplaceConstVisitor.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Behavior\Display\DisplayController.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Math\MathRepos\ExMPred.cs" />
+     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Services\FreezeFrameHelper.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Expressions\EvaluatableExpression.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Behavior\Display\DropLabel.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Behavior\Items\BouncyItem.cs" />
@@ -195,6 +195,7 @@
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Pooling\ParticlePooled.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Scriptables\DayCampaignConfig.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Graphics\Backgrounds\BackgroundController2D.cs" />
+     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\StateMachines\SMParser.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Reflection\Initialization.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Danmaku\BMTestHarness.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\VN\Characters\ReimuMimic.cs" />
@@ -206,7 +207,7 @@
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\VN\Characters\SagumeMimic.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Graphics\SeijaCamera.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\UI\XML\XMLDeathMenu.cs" />
-     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\StateMachines\SMParsing.cs" />
+     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\StateMachines\ParseQueue.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Behavior\BossBEH.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Scriptables\SOPlayerHitbox.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\UI\ShowVersion.cs" />
@@ -281,12 +282,14 @@
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Scriptables\Player\SupportBombConfig.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\UI\PhasePerformance.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Math\MathRepos\GenericMath\ExMLerps.cs" />
+     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Player\PlayerControllerHelpers.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Behavior\BEHItemDrops.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Graphics\NonUICameraContainer.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Achievements\RunningInstanceRequirements.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Math\MathRepos\GenericMath\ExMMod.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Behavior\Enemy.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Scriptables\Player\ShipConfig.cs" />
+     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\AoTHelper_CG.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Danmaku\Descriptors\Laser.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Danmaku\Options\LaserOptions.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Math\MathRepos\GenericMath\ExMBasic.cs" />
@@ -322,7 +325,6 @@
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Behavior\Items\ShiftingPowerup.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Graphics\TiledRender.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Math\MathRepos\VTPRepo.cs" />
-     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Expressions\LinearizeVisitor.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\VN\Characters\MayumiMimic.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Reflection\Configuration.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Danmaku\Patterns\Patterner.cs" />
@@ -577,14 +579,8 @@
      <Reference Include="System.Collections.Immutable">
      <HintPath>C:/Workspace/unity/Danmokou/Assets/Danmokou/Plugins/DLLs/System.Collections.Immutable.dll</HintPath>
      </Reference>
-     <Reference Include="LanguageExt.Parsec">
-     <HintPath>C:/Workspace/unity/Danmokou/Assets/SZYU/Plugins/DLLs/LanguageExt.Parsec.dll</HintPath>
-     </Reference>
      <Reference Include="System.Memory">
      <HintPath>C:/Workspace/unity/Danmokou/Assets/SZYU/Plugins/DLLs/System.Memory.dll</HintPath>
-     </Reference>
-     <Reference Include="ParserCS">
-     <HintPath>C:/Workspace/unity/Danmokou/Assets/Danmokou/Plugins/DLLs/ParserCS.dll</HintPath>
      </Reference>
      <Reference Include="System.Reactive">
      <HintPath>C:/Workspace/unity/Danmokou/Assets/SZYU/Plugins/DLLs/System.Reactive.dll</HintPath>
@@ -592,17 +588,14 @@
      <Reference Include="protobuf-net">
      <HintPath>C:/Workspace/unity/Danmokou/Assets/Danmokou/Plugins/DLLs/protobuf-net.dll</HintPath>
      </Reference>
-     <Reference Include="LanguageExt.CoreReduced">
-     <HintPath>C:/Workspace/unity/Danmokou/Assets/SZYU/Plugins/DLLs/LanguageExt.CoreReduced.dll</HintPath>
-     </Reference>
      <Reference Include="protobuf-net.Core">
      <HintPath>C:/Workspace/unity/Danmokou/Assets/Danmokou/Plugins/DLLs/protobuf-net.Core.dll</HintPath>
      </Reference>
      <Reference Include="Newtonsoft.Json">
      <HintPath>C:/Workspace/unity/Danmokou/Library/PackageCache/jillejr.newtonsoft.json-for-unity@13.0.102/Plugins/Newtonsoft.Json Editor/Newtonsoft.Json.dll</HintPath>
      </Reference>
-     <Reference Include="ExpressionToString">
-     <HintPath>C:/Workspace/unity/Danmokou/Assets/Danmokou/Plugins/DLLs/ExpressionToString.dll</HintPath>
+     <Reference Include="Mizuhashi">
+     <HintPath>C:/Workspace/unity/Danmokou/Assets/SZYU/Plugins/DLLs/Mizuhashi.dll</HintPath>
      </Reference>
      <Reference Include="mscorlib">
      <HintPath>C:/Program Files/Unity/Hub/Editor/2020.3.16f1/Editor/Data/MonoBleedingEdge/lib/mono/4.7.1-api/mscorlib.dll</HintPath>

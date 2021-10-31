@@ -44,10 +44,8 @@ public class ReflWrap<T> : ReflWrap where T : class {
     
     public static ReflWrap<T> FromFunc(string uniqueKey, Func<T> constructor) => 
         new ReflWrap<T>(() => {
-            var bakeCtx = BakeCodeGenerator.OpenContext(BakeCodeGenerator.CookingContext.KeyType.MANUAL, uniqueKey);
-            var result = constructor();
-            bakeCtx?.Dispose();
-            return result;
+            using var _ = BakeCodeGenerator.OpenContext(BakeCodeGenerator.CookingContext.KeyType.MANUAL, uniqueKey);
+            return constructor();
         });
 
     public override void Reset() {

@@ -27,7 +27,7 @@ phase 0
 			position -15 0
 		@ { $other }
 			diverthp $me
-		shift-phase-to 14
+		shift-phase-to 2
 
 
 !{ power1()
@@ -99,7 +99,7 @@ phase 38
 		} polar(
 			lssht(-6, (&swt + 0.3), 2.8 * t, 0.6 * t),
 			&lr * lssht(0.8, &swt + 1, 0, 12 * t))
-		{ dir2  if > t &swt (norm accdelta) cossindeg(&lr * starrot4) }
+		{ dir2  if < t &swt cossindeg(&lr * starrot4) (norm accdelta) }
 		gtr2 4.5s _ <> {
 			wait-child
 			timereset
@@ -112,10 +112,14 @@ phase 38
 				$jpower2
 			wait 1.5
 !!{ maxt 1.5
-			bullet-control once star-* batch onscreen loc {
+			## This update needs to occur before the direction update (priority 100)
+			##   to make the fireball direction correct on the first frame.
+			bullet-control once star-* batchp 70 onscreen loc {
 				updatef swt t _
-				restyleeffect fireball-red/ cwheel-red/ > &.lr 0
-				restyleeffect fireball-blue/ cwheel-blue/ < &.lr 0
+			}
+			bullet-control once star-* batch onscreen loc {
+				restyleeffect fireball-red/ _ > &.lr 0
+				restyleeffect fireball-blue/ _ < &.lr 0
 			}
 			
 #}
@@ -127,6 +131,7 @@ phase 38
 <!> rootother $other 0 -4
 phase 39
 	paction 0
+		pool-control circle-* allowdelete false
 
 !!{ r0 3
 !!{ r1 3.8
@@ -156,17 +161,17 @@ $fromtos(%from, %to, %soft, < mod 360 $theta 180)
 		$psigt(circle-blue/w, circle-red/w)
 		$psiltC(circle-red/b, circle-blue/b)
 		$psigt(circle-blue/b, circle-red/b)
-		$thetalt(circle-blue/w, circle-blue/b, cwheel-blue/)
-		$thetagt(circle-blue/b, circle-blue/w, cwheel-blue/)
-		$thetagt(circle-red/w, circle-red/b, cwheel-red/)
-		$thetalt(circle-red/b, circle-red/w, cwheel-red/)
+		$thetalt(circle-blue/w, circle-blue/b, _)
+		$thetagt(circle-blue/b, circle-blue/w, _)
+		$thetagt(circle-red/w, circle-red/b, _)
+		$thetalt(circle-red/b, circle-red/w, _)
 		pool-control circle-purple/w cullrad 0.5
 		timer restart pt
 		@ $other
 			_ 0.5 $jpower1
-		bullet-control _ gem-yellow/w restyleeffect circle-blue/w cwheel-blue/ (> t 2 | (> timersec(pt) 2 & > t 1))
+		bullet-control _ gem-yellow/w restyleeffect circle-blue/w _ (> t 2 | (> timersec(pt) 2 & > t 1))
 !!{ pctrl > t 1
-		bullet-control _ gem-purple/w copynull cwheel-purple/ onlyonce > t (1 - 1f)
+		bullet-control _ gem-purple/w copynull _ onlyonce > t (1 - 1f)
 		bullet-control _ gem-purple/w batch $pctrl {
 			updatef {
 				sh 1
@@ -243,7 +248,7 @@ phase 36
 			bullet-control once triangle-purple/w batch (> y -6 & in t 0.35 3.4) {
 				updatef tret t _
 				time 100 _
-				restyleeffect circle-blue/b cwheel-blue/ _
+				restyleeffect circle-blue/b _ _
 				sfx x-transform-2 _
 			}
 		bullet-control _ circle-blue/b batch > t (100.7 + &.tret * 3.9 / 1.7) {
@@ -386,7 +391,7 @@ bullet-control once %from batch (> y -2.5 & onscreenby $range loc) {
 	} _
 	copy %to _
 	##restyle %to _
-	copynull %eff _
+	copynull _ _
 }
 
 !}
@@ -611,7 +616,7 @@ phase 42
 				witha lerpt -1 1 0 0.8 blue
 		_ 1.5 bullet-control persist lcircle-purple/w batch in (t - $t1) 0 2f {
 			updatef tsw t _
-			restyleeffect lcircle-blue/ cwheel-blue/ _
+			restyleeffect lcircle-blue/ _ _
 		}
 		gtr {
 			delay 3s
@@ -637,7 +642,7 @@ phase 42
 				rxy 2.8 2.8
 				witha lerpt 0 1 0 0.5 red
 			savef ysw 0 timersec(pt)
-			bullet-control persist fireball-yellow/w restyleeffect fireball-red/ cwheel-red/ > t 0.7
+			bullet-control persist fireball-yellow/w restyleeffect fireball-red/ _ > t 0.7
 			break
 		
 		async lcircle-purple/w <> gcr2 /i dl 14 _ <> {

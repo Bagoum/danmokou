@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using BagoumLib;
+using BagoumLib.Events;
 using BagoumLib.Tasks;
 using Danmokou.Behavior;
 using Danmokou.Core;
@@ -179,9 +180,9 @@ public abstract class XMLMenu : CoroutineRegularUpdater {
 
     public override EngineState UpdateDuring => EngineState.MENU_PAUSE;
 
-    public MultiAdder Disabler { get; } = new MultiAdder(0, null);
+    public DisturbedAnd UpdatesEnabled { get; } = new DisturbedAnd();
 
-    protected bool RegularUpdateGuard => Application.isPlaying && ETime.FirstUpdateForScreen && Disabler.Value == 0;
+    protected bool RegularUpdateGuard => Application.isPlaying && ETime.FirstUpdateForScreen && UpdatesEnabled;
     public override void RegularUpdate() {
         base.RegularUpdate();
         if (RegularUpdateGuard && Current != null && MenuActive) {
@@ -259,7 +260,7 @@ public abstract class XMLMenu : CoroutineRegularUpdater {
             OnChangeEffects(prev, true);
         } else {
             prev.screen.RunPreExit();
-            var token = Disabler.CreateToken1(MultiOp.Priority.ALL);
+            var token = UpdatesEnabled.AddConst(false);
             next.screen.RunPreEnter();
             void GoToNested() {
                 if (backwards) {
@@ -277,7 +278,7 @@ public abstract class XMLMenu : CoroutineRegularUpdater {
                     c = await uiRenderer.Slide(GetRandomSlideEndpoint(), Vector2.zero, swipeTime, M.EOutSine);
                     if (c != Completion.Standard) return;
                     next.screen.RunPostEnter();
-                    token.TryRevoke();
+                    token.Dispose();
                 }
                 _ = Transition().ContinueWithSync(() => { });
             } else GoToNested();

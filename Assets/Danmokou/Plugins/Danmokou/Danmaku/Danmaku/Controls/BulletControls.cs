@@ -3,8 +3,12 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reactive;
 using BagoumLib;
 using BagoumLib.Cancellation;
+using BagoumLib.DataStructures;
+using BagoumLib.Events;
+using BagoumLib.Expressions;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.DataHoist;
@@ -30,24 +34,33 @@ public partial class BulletManager {
         public static readonly Pred PERSISTENT = _ => true;
         public static readonly Pred NOTPERSISTENT = _ => false;
     }
-    public class exBulletControl {
-        public readonly ExSBCF? func;
+    //Expression bullet control
+    public readonly struct exBulletControl {
+        public readonly ExSBCF func;
         public readonly int priority;
-        private SBCF? compiled;
         public exBulletControl(ExSBCF f, int p) {
             func = f;
             priority = p;
-            compiled = null;
         }
-        public exBulletControl(SBCF f, int p) {
-            func = null;
-            priority = p;
-            compiled = f;
+    }
+    //Compiled bullet control
+    public readonly struct cBulletControl {
+        public readonly SBCF func;
+        public readonly int priority;
+        
+        public cBulletControl(exBulletControl ex) : this(Compilers.SBCF(ex.func), ex.priority) { }
+        
+        //Don't expose this constructor. It's a problem if it gets picked up by reflection.
+        private cBulletControl(SBCF func, int priority) {
+            this.func = func;
+            this.priority = priority;
         }
 
-        public SBCF Compile() => compiled ??= Compilers.SBCF(func!);
-        public exBulletControl AsCompiled() => new exBulletControl(Compile(), priority);
+        public static cBulletControl NoExpr(SBCF func, int priority) => new cBulletControl(func, priority);
+
+        //public static implicit operator cBulletControl(exBulletControl ex) => new cBulletControl(ex);
     }
+    
     /// <summary>
     /// Simple bullet pool control descriptor.
     /// </summary>
@@ -57,19 +70,20 @@ public partial class BulletManager {
         public readonly int priority;
         public readonly ICancellee cT;
 
-        public BulletControl(exBulletControl act, Pred persistent, ICancellee? cT) {
+        public BulletControl(cBulletControl act, Pred persistent, ICancellee? cT) {
             this.cT = cT ?? Cancellable.Null;
-            action = act.Compile();
+            action = act.func;
             persist = persistent;
             this.priority = act.priority;
         }
 
         public static bool operator ==(BulletControl b1, BulletControl b2) =>
-            b1.action == b2.action && b1.persist == b2.persist && b1.priority == b2.priority;
+            b1.action == b2.action && b1.persist == b2.persist && b1.priority == b2.priority && 
+            ReferenceEquals(b1.cT, b2.cT);
 
         public static bool operator !=(BulletControl b1, BulletControl b2) => !(b1 == b2);
 
-        public override int GetHashCode() => (action, persist, priority).GetHashCode();
+        public override int GetHashCode() => (action, persist, priority, cT).GetHashCode();
 
         public override bool Equals(object o) => o is BulletControl bc && this == bc;
 
@@ -315,27 +329,33 @@ public partial class BulletManager {
         }
         /// <summary>
         /// Restyle a bullet and summon a softcull effect.
+        /// <br/>If the softcull style is null or empty, then will instead spawn a cull bullet.
         /// </summary>
         /// <param name="copyStyle">Copied style</param>
         /// <param name="softcullStyle">Softcull style</param>
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
-        public static exBulletControl RestyleEffect(string copyStyle, string softcullStyle, ExPred cond) {
+        public static exBulletControl RestyleEffect(string copyStyle, string? softcullStyle, ExPred cond) {
             return Batch(cond,
                 new[] {CopyNull(softcullStyle, _ => ExMPred.True()), Restyle(copyStyle, _ => ExMPred.True())});
         }
 
         /// <summary>
         /// Copy (nondestructively) a bullet into another pool, with no movement.
+        /// <br/>If the style is null or empty, then will instead spawn a cull bullet.
         /// </summary>
         /// <param name="style">Copied style</param>
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
-        public static exBulletControl CopyNull(string style, ExPred cond) {
-            return new exBulletControl((sbc, ii, ct, bpi) => bpi.When(cond, Ex.Block(
-                TExSBC.copyNullFrom.InstanceOf(getMaybeCopyPool.Of(Ex.Constant(style)), sbc, ii, 
-                    Ex.Constant(null, typeof(SoftcullProperties?)))
-            )), BulletControl.P_RUN);
+        public static exBulletControl CopyNull(string? style, ExPred cond) {
+            if (string.IsNullOrWhiteSpace(style) || style == "_")
+                return new exBulletControl((sbc, ii, ct, bpi) => bpi.When(cond, sbc.MakeCulledCopy(ii)),
+                    BulletControl.P_RUN);
+            else
+                return new exBulletControl((sbc, ii, ct, bpi) => bpi.When(cond, Ex.Block(
+                    TExSBC.copyNullFrom.InstanceOf(getMaybeCopyPool.Of(Ex.Constant(style)), sbc, ii, 
+                        Ex.Constant(null, typeof(SoftcullProperties?)))
+                )), BulletControl.P_RUN);
         }
 
         /// <summary>
@@ -361,12 +381,12 @@ public partial class BulletManager {
         /// Softcull but without expressions. Used internally for runtime bullet controls.
         /// </summary>
         [DontReflect]
-        public static exBulletControl Softcull_noexpr(SoftcullProperties props, string? target, Pred cond) {
+        public static cBulletControl Softcull_noexpr(SoftcullProperties props, string? target, Pred cond) {
             var toPool = NullableGetMaybeCopyPool(target);
             if (toPool != null && toPool.MetaType != AbsSimpleBulletCollection.CollectionType.Softcull) {
                 throw new InvalidOperationException("Cannot softcull to a non-softcull pool: " + target);
             }
-            return new exBulletControl((sbc, ii, bpi, ct) => {
+            return cBulletControl.NoExpr((sbc, ii, bpi, ct) => {
                 if (cond(bpi)) {
                     sbc.Softcull(NullableGetMaybeCopyPool(target), ii, props);
                 }
@@ -539,7 +559,7 @@ public partial class BulletManager {
 #if EXBAKE_SAVE
                 var key_name = bpi.Ctx.NameWithSuffix("forceMov");
                 bpi.Ctx.HoistedVariables.Add(FormattableString.Invariant(
-                    $"var {key_name} = new Movement({BakeCodeGenerator.Baker.ObjectToFunctionHoister[path]});"));
+                    $"var {key_name} = new Movement({BakeCodeGenerator.Cook.ObjectToFunctionHoister[path]});"));
                     bpi.Ctx.HoistedReplacements[Ex.Constant(vel)] = Ex.Variable(typeof(Movement), key_name);
 #endif
                 return bpi.When(cond, vel.UpdateDeltaNoTime(sbc, ii));
@@ -589,17 +609,31 @@ public partial class BulletManager {
         /// <summary>
         /// Execute an event if the condition is satisfied.
         /// </summary>
-        public static exBulletControl Event(Events.Event0 ev, ExPred cond) => new exBulletControl((sbc, ii, ct, bpi) => bpi.When(cond, ev.exProc()), BulletControl.P_RUN);
+        [GAlias(typeof(float), "eventf")]
+        public static exBulletControl Event<T>(string ev, Func<TExArgCtx, TEx<T>> val, ExPred cond) => 
+            new exBulletControl((sbc, ii, ct, bpi) => bpi.When(cond, 
+                Events.exProcRuntimeEvent<T>().Of(Ex.Constant(ev), val(bpi.AppendSB(sbName, sbc[ii])))), BulletControl.P_RUN);
+
+        /// <summary>
+        /// Execute a unit event if the condition is satisfied.
+        /// </summary>
+        public static exBulletControl Event0<T>(string ev, ExPred cond) =>
+            Event(ev, _ => new TEx<T>(Ex.Default(typeof(Unit))), cond);
 
         /// <summary>
         /// Batch several controls together under a single condition.
         /// <br/>This is useful primarily when `restyle` or `cull` is combined with other conditions.
         /// </summary>
-        public static exBulletControl Batch(ExPred cond, exBulletControl[] over) {
-            if (over.Any(o => o.func == null)) 
-                return Batch_noexpr(Compilers.Pred(cond), over.Select(o => o.AsCompiled()).ToArray());
-            
-            var priority = over.Max(o => o.priority);
+        public static exBulletControl Batch(ExPred cond, exBulletControl[] over) =>
+            BatchP(over.Max(o => o.priority), cond, over);
+        
+        /// <summary>
+        /// Batchp several controls together under a single condition.
+        /// <br/>Also, manually set the priority value. (Note that using BatchP instead of Batch can cause
+        ///  severe bugs when cull-based commands are moved outside out of their standard processing block.)
+        /// <br/>This is useful primarily when `restyle` or `cull` is combined with other conditions.
+        /// </summary>
+        public static exBulletControl BatchP(int priority, ExPred cond, exBulletControl[] over) {
             return new exBulletControl((sbc, ii, ct, bpi) => {
                     Ex NestRemaining(int index) {
                         if (index < over.Length) {
@@ -613,17 +647,18 @@ public partial class BulletManager {
                 }, 
                 priority);
         }
+        
+        
         /// <summary>
         /// Batch several controls together under a single condition.
         /// <br/>This is slightly slower but is compatible with non-expression controls.
         /// </summary>
-        private static exBulletControl Batch_noexpr(Pred cond, exBulletControl[] over) {
+        private static cBulletControl Batch_noexpr(Pred cond, cBulletControl[] over) {
             Logs.Log("Batch_noexpr should not be used in most cases.", level: LogLevel.WARNING);
             var priority = over.Max(o => o.priority);
-            var funcs = over.Select(o => o.Compile()).ToArray();
-            return new exBulletControl((sbc, ii, bpi, ct) => {
+            return cBulletControl.NoExpr((sbc, ii, bpi, ct) => {
                 if (cond(bpi)) {
-                    for (int j = 0; j < funcs.Length; ++j) funcs[j](sbc, ii, bpi, ct);
+                    for (int j = 0; j < over.Length; ++j) over[j].func(sbc, ii, bpi, ct);
                 }
             }, priority);
         }
@@ -631,19 +666,33 @@ public partial class BulletManager {
         /// <summary>
         /// If the condition is true, spawn an iNode at the position and run an SM on it.
         /// </summary>
-        public static exBulletControl SM(ExPred cond, StateMachine target) => new exBulletControl((sbc, ii, ct, bpi) => 
-            bpi.When(cond, sbc.RunINodeAt(ii, Ex.Constant(target), ct)), BulletControl.P_RUN);
+        public static exBulletControl SM(ExPred cond, StateMachine target) => new exBulletControl((sbc, ii, ct, bpi) => {
+#if EXBAKE_SAVE
+            bpi.Ctx.ProxyTypes.Add(typeof(StateMachine));
+            bpi.Ctx.HoistedReplacements[Ex.Constant(target)] = Ex.Variable(typeof(StateMachine), bpi.Ctx.NextProxyArg());  
+#elif EXBAKE_LOAD
+            bpi.Ctx.ProxyArguments.Add(target);
+#endif
+            return bpi.When(cond, sbc.RunINodeAt(ii, Ex.Constant(target), ct));
+        }, BulletControl.P_RUN);
         
         /// <summary>
         /// When a bullet collides, if the condition is true, spawn an iNode at the position and run an SM on it.
         /// </summary>
-        public static exBulletControl OnCollide(ExPred cond, StateMachine target) => new exBulletControl((sbc, ii, ct, bpi) => 
-            bpi.When(cond, sbc.RunINodeAt(ii, Ex.Constant(target), ct)), BulletControl.P_ON_COLLIDE);
+        public static exBulletControl OnCollide(ExPred cond, StateMachine target) => new exBulletControl((sbc, ii, ct, bpi) => {
+#if EXBAKE_SAVE
+            bpi.Ctx.ProxyTypes.Add(typeof(StateMachine));
+            bpi.Ctx.HoistedReplacements[Ex.Constant(target)] = Ex.Variable(typeof(StateMachine), bpi.Ctx.NextProxyArg());  
+#elif EXBAKE_LOAD
+            bpi.Ctx.ProxyArguments.Add(target);
+#endif
+            return bpi.When(cond, sbc.RunINodeAt(ii, Ex.Constant(target), ct));
+        }, BulletControl.P_ON_COLLIDE);
 
     }
     //Since sb controls are cleared immediately after velocity update,
     //it does not matter when in the frame they are added.
-    public static void ControlPool(Pred persist, StyleSelector styles, exBulletControl control, ICancellee cT) {
+    public static void ControlPool(Pred persist, StyleSelector styles, cBulletControl control, ICancellee cT) {
         BulletControl pc = new BulletControl(control, persist, cT);
         for (int ii = 0; ii < styles.Simple.Length; ++ii) {
             GetMaybeCopyPool(styles.Simple[ii]).AddBulletControl(pc);
@@ -658,19 +707,22 @@ public partial class BulletManager {
     public static class SimplePoolControls {
         /// <summary>
         /// Clear the bullet controls on a pool.
+        /// <br/>Note that this returns a null disposable.
         /// </summary>
         /// <returns></returns>
         public static SPCF Reset() {
-            return (pool, cT) => GetMaybeCopyPool(pool).ClearControls();
+            return (pool, cT) => {
+                GetMaybeCopyPool(pool).ClearControls();
+                return NullDisposable.Default;
+            };
         }
         /// <summary>
         /// Set the cull radius on a pool.
         /// This is reset automatically via clear phase.
         /// </summary>
         /// <returns></returns>
-        public static SPCF CullRad(float r) {
-            return (pool, cT) => GetMaybeCopyPool(pool).SetCullRad(r);
-        }
+        public static SPCF CullRad(float r) => 
+            (pool, cT) => GetMaybeCopyPool(pool).BC.CULL_RAD.AddConst(r);
 
         /// <summary>
         /// Set whether or not a pool can cull bullets that are out of camera range.
@@ -678,30 +730,31 @@ public partial class BulletManager {
         /// </summary>
         /// <param name="cullActive">True iff camera culling is allowed.</param>
         /// <returns></returns>
-        public static SPCF AllowCull(bool cullActive) {
-            return (pool, cT) => GetMaybeCopyPool(pool).allowCameraCull = cullActive;
-        }
-        
+        public static SPCF AllowCull(bool cullActive) => 
+            (pool, cT) => GetMaybeCopyPool(pool).BC.AllowCameraCull.AddConst(cullActive);
+
         /// <summary>
         /// Set whether or not a pool's bullets can be deleted by effects
         ///  such as photos, bombs, and player damage clears.
         /// This is reset automatically via clear phase.
         /// </summary>
-        public static SPCF AllowDelete(bool deleteActive) {
-            return (pool, cT) => GetMaybeCopyPool(pool).SetDeleteActive(deleteActive);
-        }
-        
+        public static SPCF AllowDelete(bool deleteActive) => 
+            (pool, cT) => GetMaybeCopyPool(pool).BC.Deletable.AddConst(deleteActive);
+
         /// <summary>
         /// Unconditionally softcull all bullets in a pool with an automatically-determined cull style.
+        /// <br/>Note that this returns a null disposable and is instead bounded by the cToken.
         /// </summary>
         /// <param name="targetFormat">Base cull style, eg. cwheel</param>
         /// <returns></returns>
-        public static SPCF SoftCullAll(string targetFormat) {
-            return (pool, cT) => GetMaybeCopyPool(pool).AddBulletControl(new BulletControl(SimpleBulletControls.
-                Softcull_noexpr(new SoftcullProperties(null, null), 
-                    PortColorFormat(pool, new SoftcullProperties(targetFormat, null)), 
+        public static SPCF SoftCullAll(string targetFormat) =>
+            (pool, cT) => {
+                GetMaybeCopyPool(pool).AddBulletControl(new BulletControl(SimpleBulletControls.Softcull_noexpr(
+                    new SoftcullProperties(null, null),
+                    PortColorFormat(pool, new SoftcullProperties(targetFormat, null)),
                     _ => true), Consts.NOTPERSISTENT, cT));
-        }
+                return NullDisposable.Default;
+            };
 
         /// <summary>
         /// Tint the bullets in this pool. This is a multiplicative effect on the existing color.
@@ -710,7 +763,7 @@ public partial class BulletManager {
         /// <br/> WARNING: This is a rendering function. Do not use `rand` (`brand` ok), or else replays will desync.
         /// </summary>
         public static SPCF Tint(TP4 tint) => (pool, cT) => 
-            GetMaybeCopyPool(pool).SetTint(tint);
+            GetMaybeCopyPool(pool).BC.Tint.AddConst(tint);
         
         /// <summary>
         /// Manually construct a two-color gradient for all bullets in this pool.
@@ -722,21 +775,26 @@ public partial class BulletManager {
             GetMaybeCopyPool(pool).SetRecolor(black, white);
     }
     
-    public static void ControlPool(StyleSelector styles, SPCF control, ICancellee cT) {
+    public static IDisposable ControlPool(StyleSelector styles, SPCF control, ICancellee cT) {
+        var tokens = new IDisposable[styles.Simple.Length];
         for (int ii = 0; ii < styles.Simple.Length; ++ii) {
-            control(styles.Simple[ii], cT);
+            tokens[ii] = control(styles.Simple[ii], cT);
         }
+        return new JointDisposable(null, tokens);
     }
+    
 
+    /// <summary>
+    /// Instantaneously cull all NPC bullets on screen (not including empty bullets),
+    ///  using the definitions in props to determine the cull pool.
+    /// </summary>
     public static void Autocull(SoftcullProperties props) {
         void CullPool(SimpleBulletCollection pool) {
-            if (pool.IsPlayer) return;
-            if (pool.MetaType == AbsSimpleBulletCollection.CollectionType.Softcull) return;
-            if (pool.Count == 0) return;
+            if (!pool.SubjectToAutocull) return;
             var targetPool = PortColorFormat(pool.Style, props);
             pool.AddBulletControl(new BulletControl(
                     SimpleBulletControls.Softcull_noexpr(props, targetPool, _ => true), Consts.NOTPERSISTENT, null));
-            Logs.Log($"Autoculled {pool.Style} to {targetPool}");
+            Logs.Log($"Autoculled {pool.Style} to {targetPool ?? "None"}");
         }
         for (int ii = 0; ii < activeNpc.Count; ++ii) CullPool(activeNpc[ii]);
         for (int ii = 0; ii < activeCNpc.Count; ++ii) CullPool(activeCNpc[ii]);
@@ -749,7 +807,7 @@ public partial class BulletManager {
     /// </summary>
     public static void Autodelete(SoftcullProperties props, Pred cond) {
         void DeletePool(SimpleBulletCollection pool) {
-            if (!pool.Deletable || pool.Count == 0 || pool is NoCollSBC) return;
+            if (!pool.BC.Deletable.Value || !pool.SubjectToAutocull) return;
             var targetPool = PortColorFormat(pool.Style, props);
             pool.AddBulletControl(new BulletControl(SimpleBulletControls.Softcull_noexpr(props, targetPool, cond)
                 , Consts.NOTPERSISTENT, null));
@@ -763,10 +821,10 @@ public partial class BulletManager {
     /// <summary>
     /// For end-of-phase autoculling (from v8 onwards).
     /// <br/>This will operate over time using props.advance.
-    /// Note: empty bullets are handled separately.
+    /// <br/>Does not affect empty bullets, but does cull undeletable bullets (like sun).
     /// </summary>
     public static void AutocullCircleOverTime(SoftcullProperties props) {
-        var timer = ETime.Timer.GetTimer(RNG.RandString(), false);
+        var timer = ETime.Timer.GetTimer(RNG.RandString());
         timer.Restart();
         //Don't have any mixups on the last frame...
         var effectiveAdvance = props.advance - 4 * ETime.FRAME_TIME;
@@ -780,9 +838,7 @@ public partial class BulletManager {
         };
         var lprops = props.WithNoAdvance();
         void CullPool(SimpleBulletCollection pool) {
-            if (pool.IsPlayer) return;
-            if (pool.MetaType == AbsSimpleBulletCollection.CollectionType.Softcull) return;
-            if (pool.Count == 0) return;
+            if (!pool.SubjectToAutocull) return;
             var targetPool = PortColorFormat(pool.Style, lprops);
             pool.AddBulletControl(new BulletControl(
                 SimpleBulletControls.Softcull_noexpr(lprops, targetPool, deleteCond), survive, null));
@@ -793,12 +849,12 @@ public partial class BulletManager {
     }
     
     /// <summary>
-    /// For bombs/camera effects. Special bullets like EMPTY, as well as undeletable bullets like SUN
-    /// and noncolliding bullets, will not be deleted.
+    /// For bombs/camera effects. Special bullets like EMPTY,
+    ///  as well as undeletable bullets like SUN, will not be deleted.
     /// <br/>This will operate over time using props.advance.
     /// </summary>
     public static void AutodeleteCircleOverTime(SoftcullProperties props) {
-        var timer = ETime.Timer.GetTimer(RNG.RandString(), false);
+        var timer = ETime.Timer.GetTimer(RNG.RandString());
         timer.Restart();
         Pred survive = _ => timer.Seconds < props.advance;
         Pred deleteCond = bpi => {
@@ -809,7 +865,7 @@ public partial class BulletManager {
         };
         var lprops = props.WithNoAdvance();
         void DeletePool(SimpleBulletCollection pool) {
-            if (!pool.Deletable || pool.Count == 0 || pool is NoCollSBC) return;
+            if (!pool.BC.Deletable.Value || !pool.SubjectToAutocull) return;
             var targetPool = PortColorFormat(pool.Style, lprops);
             pool.AddBulletControl(new BulletControl(
                 SimpleBulletControls.Softcull_noexpr(lprops, targetPool, deleteCond)

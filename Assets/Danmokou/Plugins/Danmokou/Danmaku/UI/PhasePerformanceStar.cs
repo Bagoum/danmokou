@@ -17,10 +17,10 @@ public class PhasePerformanceStar : CoroutineRegularUpdater {
     public SpriteRenderer unfilled = null!;
     public SpriteRenderer filled = null!;
     public SFXConfig? fillSound;
-    [ReflectInto(typeof(FXY))]
+    [ReflectInto(typeof(Easer))]
     public string scaler = "ceoutback(2.7, t)";
     public float scaleTime = 0.2f;
-    [ReflectInto(typeof(FXY))]
+    [ReflectInto(typeof(Easer))]
     public string rotator = "eoutsine(t)";
     public float rotTime = 0.2f;
 

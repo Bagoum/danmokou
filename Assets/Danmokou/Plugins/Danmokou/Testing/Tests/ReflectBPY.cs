@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Linq.Expressions;
+using BagoumLib.Expressions;
 using NUnit.Framework;
 using Danmokou.DMath;
 using Danmokou.DMath.Functions;

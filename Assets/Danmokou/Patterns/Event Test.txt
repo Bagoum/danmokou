@@ -1,0 +1,61 @@
+<#> warnprefix
+pattern({ })
+phase(0)
+	paction(0)
+		shift-phase-to(2)
+	
+<!> type(non, `ev`)
+##<!> hp(1000)
+<!> photo(2)
+## Trigger-type events can only be published once, they then need to be reset by another event
+## eventf = float-type event
+<!> eventf evf trigger
+## _ or "normal" indicates a normal event that has no restrictions on publishing
+## event0 = unit-type event (effectively, an event that does not carry a value)
+<!> event0 ev0 _
+phase(0)
+	paction 0
+		## When ev0 publishes, reset the trigger on evf
+		event resettrigger evf ev0
+		## When ev0 publishes, fire an scircle to the right
+		event listen0 ev0 _
+			sync scircle-red/w <> s tprot cx 3
+		## When evf publishes, fire mct arrow bullets in a circle, where mct is the value of the event
+		event listenf evf mct
+			sync arrow-blue/w <0.4;:> gsr2c &mct { } s rvelocity cx 1
+		## Every 60 frames, publish to evf
+		## Since evf is a trigger event, most of these publishes will be noops
+		gtr {
+			times _
+			wait 60
+			bindItr lp
+		} event onnextf evf (5 + softmod(6, &lp))
+		## After 4 seconds, publish ev0
+		_ 4 event onnext0 ev0
+		## Every 100 frames, fire big orange circles and publish ev0
+		async glcircle-orange/w <30> gcr {
+			wait 100
+			times 3
+			rpp <60>
+		} {
+			s tprot cx 2
+			event0 ev0
+		}
+		
+## bullet control events
+<!> eventf evf2 _
+<!> hp 1000000
+phase(0)
+	paction 0
+		event listenf evf2 mct
+			sync stelldecagon-pink/w <0.4;:> gsr2c ceil(&mct) { } s rvelocity cx 2
+		sync gdcircle-purple/w <1;:> simple tprot cy -1 {
+			scale(4 - t / 3)
+		}
+		## When the gdcircle is 3 seconds old, publish to evf2 with the value of gdcircle's size (scale)
+		bullet-control persist gdcircle-* eventf evf2 scale (onlyonce > t 3)
+
+
+phase(0)
+	paction 0
+		noop

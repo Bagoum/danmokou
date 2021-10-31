@@ -2,10 +2,12 @@
 using System.Collections;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reactive;
 using BagoumLib;
 using BagoumLib.Cancellation;
 using BagoumLib.DataStructures;
 using BagoumLib.Events;
+using BagoumLib.Expressions;
 using Danmokou.Behavior;
 using Danmokou.Behavior.Display;
 using Danmokou.Behavior.Functions;
@@ -32,101 +34,17 @@ namespace Danmokou.Player {
 /// A team is a code construct which contains a hitbox, several possible shots (of which one is active),
 /// and several possible players (of which one is active).
 /// </summary>
-public class PlayerController : BehaviorEntity {
-    public enum PlayerState {
-        NORMAL,
-        WITCHTIME,
-        RESPAWN,
-        NULL
-    }
-
-    public enum DeathbombState {
-        NULL,
-        WAITING,
-        PERFORMED
-    }
+public partial class PlayerController : BehaviorEntity {
     
-    #region Consts
-    private const float RespawnFreezeTime = 0.1f;
-    private const float RespawnDisappearTime = 0.5f;
-    private const float RespawnMoveTime = 1.5f;
-    private static Vector2 RespawnStartLoc => new Vector2(0, Bot - 1f);
-    private static Vector2 RespawnEndLoc => new Vector2(0, BotPlayerBound + 1f);
-    private const float WitchTimeSpeedMultiplier = 1.4f;//2f;
-    private const float WitchTimeSlowdown = 0.5f;//0.25f;
-    private const float WitchTimeAudioMultiplier = 0.8f;
-    
-    private static readonly IGradient scoreGrad = DropLabel.MakeGradient(
-        new Color32(100, 150, 255, 255), new Color32(80, 110, 255, 255));
-    private static readonly IGradient scoreGrad_bonus = DropLabel.MakeGradient(
-        new Color32(20, 220, 255, 255), new Color32(10, 170, 255, 255));
-    private static readonly IGradient pivGrad = DropLabel.MakeGradient(
-        new Color32(0, 235, 162, 255), new Color32(0, 172, 70, 255));
-    private const int ITEM_LABEL_BUFFER = 4;
-    
-    private static bool StateAllowsInput(PlayerState s) =>
-        s switch {
-            PlayerState.RESPAWN => false,
-            _ => true
-        };
-
-    private static bool StateAllowsLocationUpdate(PlayerState s) =>
-        s switch {
-            PlayerState.RESPAWN => false,
-            _ => true
-        };
-
-    private static float StateSpeedMultiplier(PlayerState s) {
-        return s switch {
-            PlayerState.WITCHTIME => WitchTimeSpeedMultiplier,
-            _ => 1f
-        };
-    }
-
-    #endregion
-    
-    public static MultiAdder FiringDisabler { get; private set; } = new MultiAdder(0, null);
-    public static MultiAdder BombDisabler { get; private set; } = new MultiAdder(0, null);
-    public static MultiAdder AllControlDisabler { get; private set; } = new MultiAdder(0, null);
-    public static bool PlayerActive => AllControlDisabler.Value == 0;
-    public static bool RespawnOnHit => GameManagement.Difficulty.respawnOnDeath;
-    
-    #region Events
-    /// <summary>
-    /// Called when the player activates the meter.
-    /// </summary>
-    public static readonly Events.Event0 PlayerActivatedMeter = new Events.Event0();
-    /// <summary>
-    /// Called when the player deactivates the meter.
-    /// </summary>
-    public static readonly Events.Event0 PlayerDeactivatedMeter = new Events.Event0();
-    /// <summary>
-    /// Called every frame during meter activation.
-    /// </summary>
-    public static readonly IBSubject<Color> MeterIsActive = new Event<Color>();
-    
-    #endregion
-
+    #region Serialized
     public ShipConfig[] defaultPlayers = null!;
     public ShotConfig[] defaultShots = null!;
     public Subshot defaultSubshot;
     public SupportAbilityConfig defaultSupport = null!;
-    private ActiveTeamConfig localTeamCfg = null!;
-    private ActiveTeamConfig Team => Instance.TeamCfg ?? localTeamCfg;
-    private ShipConfig ship = null!;
-    private ShotConfig shot = null!;
-    private Subshot subshot;
-    //TODO I need a cleaner way to handle laser destruction dependencies
-    [UsedImplicitly] public static float PlayerShotItr => playerShotItr;
-    private static ushort playerShotItr = 0;
-    private ShipController spawnedShip = null!;
-    private GameObject? spawnedShot;
-    private AyaCamera? spawnedCamera;
-
+    
     public SOPlayerHitbox hitbox = null!;
     public SpriteRenderer hitboxSprite = null!;
     public SpriteRenderer meter = null!;
-    private MaterialPropertyBlock meterPB = null!;
     public ParticleSystem speedLines = null!;
     public ParticleSystem onSwitchParticle = null!;
     
@@ -134,26 +52,83 @@ public class PlayerController : BehaviorEntity {
     [Tooltip("120 frames per sec")] public int lnrizeSpeed = 6;
     public float lnrizeRatio = .7f;
     private float timeSinceLastStandstill;
-    public bool IsMoving => timeSinceLastStandstill > 0;
     
     public float baseFocusOverlayOpacity = 0.5f;
     public SpriteRenderer[] focusOverlay = null!;
-    private const float FreeFocusLerpTime = 0.3f;
+    public float hitInvuln = 6;
+    #endregion
+
+    #region PrivateState
+    public DisturbedAnd FiringEnabled { get; } = new DisturbedAnd();
+    public DisturbedAnd BombsEnabled { get; } = new DisturbedAnd();
+    public DisturbedAnd AllControlEnabled { get; } = new DisturbedAnd();
+
+    private ushort shotItr = 0;
+    [UsedImplicitly]
+    public float PlayerShotItr() => shotItr;
+    
+    private ActiveTeamConfig localTeamCfg = null!;
+    private ShipConfig ship = null!;
+    private ShotConfig shot = null!;
+    private Subshot subshot;
+    
+    private ShipController spawnedShip = null!;
+    private GameObject? spawnedShot;
+    private AyaCamera? spawnedCamera;
+    
+    public bool IsMoving => timeSinceLastStandstill > 0;
     private float freeFocusLerp01 = 0f;
+    private MaterialPropertyBlock meterPB = null!;
     
     public PlayerState State { get; private set; }
     private GCancellable<PlayerState>? stateCanceller;
     private DeathbombState deathbomb = DeathbombState.NULL;
     
-    #region HP
-    
-    public float hitInvuln = 6;
-    public int HitInvulnFrames => Mathf.CeilToInt(hitInvuln * ETime.ENGINEFPS_F);
     private int hitInvulnerabilityCounter = 0;
-    
+    private IChallengeManager? challenge;
     
     #endregion
     
+    #region ComputedProperties
+    
+    public bool AllowPlayerInput => AllControlEnabled && StateAllowsInput(State);
+    private ActiveTeamConfig Team => Instance.TeamCfg ?? localTeamCfg;
+    private bool RespawnOnHit => GameManagement.Difficulty.respawnOnDeath;
+    public int HitInvulnFrames => Mathf.CeilToInt(hitInvuln * ETime.ENGINEFPS_F);
+    public Vector2 DesiredMovement01 {
+        get {
+            if (!AllowPlayerInput) return Vector2.zero;
+            var vel0 = new Vector2(
+                Restrictions.HorizAllowed ? InputManager.HorizontalSpeed01 : 0,
+                Restrictions.VertAllowed ? InputManager.VerticalSpeed01 : 0
+            );
+            var mag = vel0.magnitude;
+            if (mag > 1f) {
+                return vel0 / mag;
+            } else if (mag < 0.03f) {
+                return Vector2.zero;
+            } else return vel0;
+        }
+    }
+    public bool IsFocus =>
+        Restrictions.FocusAllowed && (Restrictions.FocusForced || (InputManager.IsFocus && AllowPlayerInput));
+    public bool IsFiring =>
+        InputManager.IsFiring && AllowPlayerInput && FiringEnabled;
+    public bool IsTryingBomb =>
+        InputManager.IsBomb && AllowPlayerInput && BombsEnabled && Team.Support is Bomb;
+    public bool IsTryingWitchTime => InputManager.IsMeter && AllowPlayerInput && Team.Support is WitchTime;
+
+    public float MeterScorePerValueMultiplier => State == PlayerState.WITCHTIME ? 2 : 1;
+    public float MeterPIVPerPPPMultiplier => State == PlayerState.WITCHTIME ? 2 : 1;
+    
+    private ChallengeManager.Restrictions Restrictions => 
+        challenge?.Restriction ?? ChallengeManager.Restrictions.Default;
+    
+    #endregion
+    
+    //TODO I need a cleaner way to handle laser destruction dependencies. but this is pretty ok
+    private static ushort shotItrCounter = 0;
+
     #region FiringHelpers
     public float TimeFree { get; private set; }
     public float TimeFocus { get; private set; }
@@ -189,47 +164,9 @@ public class PlayerController : BehaviorEntity {
     private readonly PushLerper<Color> meterDisplayShadow = new PushLerper<Color>(0.4f, Color.Lerp);
     
     #endregion
-    
-    public bool AllowPlayerInput => PlayerActive && StateAllowsInput(State);
-    
-    public Vector2 DesiredMovement01 {
-        get {
-            if (!AllowPlayerInput) return Vector2.zero;
-            var vel0 = new Vector2(
-                Restrictions.HorizAllowed ? InputManager.HorizontalSpeed01 : 0,
-                Restrictions.VertAllowed ? InputManager.VerticalSpeed01 : 0
-            );
-            var mag = vel0.magnitude;
-            if (mag > 1f) {
-                return vel0 / mag;
-            } else if (mag < 0.03f) {
-                return Vector2.zero;
-            } else return vel0;
-        }
-    }
-    public bool IsFocus =>
-        Restrictions.FocusAllowed && (Restrictions.FocusForced || (InputManager.IsFocus && AllowPlayerInput));
-    public bool IsFiring =>
-        InputManager.IsFiring && AllowPlayerInput && FiringDisabler.Value == 0;
-    public bool IsTryingBomb =>
-        InputManager.IsBomb && AllowPlayerInput && BombDisabler.Value == 0 && Team.Support is Bomb;
-    public bool IsTryingWitchTime => InputManager.IsMeter && AllowPlayerInput && Team.Support is WitchTime;
-
-    public float MeterScorePerValueMultiplier => State == PlayerState.WITCHTIME ? 2 : 1;
-    public float MeterPIVPerPPPMultiplier => State == PlayerState.WITCHTIME ? 2 : 1;
-
-    private IChallengeManager? challenge;
-    private ChallengeManager.Restrictions Restrictions => 
-        challenge?.Restriction ?? ChallengeManager.Restrictions.Default;
 
     public override int UpdatePriority => UpdatePriorities.PLAYER;
 
-    private static void ResetDisablers() {
-        FiringDisabler = new MultiAdder(0, null);
-        BombDisabler = new MultiAdder(0, null);
-        AllControlDisabler = new MultiAdder(0, null);
-    }
-    
     protected override void Awake() {
         base.Awake();
         localTeamCfg = new ActiveTeamConfig(new TeamConfig(0, defaultSubshot, defaultSupport, 
@@ -239,6 +176,11 @@ public class PlayerController : BehaviorEntity {
         hitbox.Player = this;
         hitboxSprite.enabled = SaveData.s.UnfocusedHitbox;
         meter.enabled = false;
+        
+        PastPositions.Add(hitbox.location);
+        PastDirections.Add(Vector2.down);
+        MarisaAPositions.Add(hitbox.location);
+        MarisaADirections.Add(Vector2.down);
 
         void Preload(GameObject prefab) {
             foreach (var fo in prefab.GetComponentsInChildren<FireOption>()) {
@@ -257,9 +199,6 @@ public class PlayerController : BehaviorEntity {
         
         _UpdateTeam();
         
-        PastPositions.Add(hitbox.location);
-        MarisaAPositions.Add(hitbox.location);
-        ResetDisablers();
         RunNextState(PlayerState.NORMAL);
         
     }
@@ -292,7 +231,7 @@ public class PlayerController : BehaviorEntity {
         }
         if (nsubshot.Try(out var s) && Team.Subshot != s) {
             if (!Team.HasMultishot)
-                Instance.UselessPowerupCollected.Proc();
+                Instance.UselessPowerupCollected.OnNext(default);
             else
                 ++Instance.SubshotSwitches;
             Team.Subshot = s;
@@ -300,7 +239,7 @@ public class PlayerController : BehaviorEntity {
         }
         if (didUpdate || force) {
             _UpdateTeam();
-            Instance.TeamUpdated.Proc();
+            Instance.TeamUpdated.OnNext(default);
         }
     }
     public void UpdateTeam((ShipConfig, ShotConfig)? nplayer = null, Subshot? nsubshot = null, bool force=false) {
@@ -324,7 +263,7 @@ public class PlayerController : BehaviorEntity {
             }
         }
         if (Team.Shot != shot || (Team.Shot.isMultiShot && Team.Subshot != subshot)) {
-            ++playerShotItr;
+            shotItr = ++shotItrCounter;
             shot = Team.Shot;
             subshot = Team.Subshot;
             Logs.Log($"Setting shot to {shot.key}:{subshot}");
@@ -396,7 +335,6 @@ public class PlayerController : BehaviorEntity {
         if (spawnedCamera != null) velocity *= spawnedCamera.CameraSpeedMultiplier;
         velocity *= StateSpeedMultiplier(State);
         velocity *= (float) GameManagement.Difficulty.playerSpeedMultiplier;
-        SetDirection(velocity);
         //Check bounds
         Vector2 pos = tr.position;
         if (StateAllowsLocationUpdate(State)) {
@@ -415,6 +353,8 @@ public class PlayerController : BehaviorEntity {
                 velocity.y = Mathf.Min(velocity.y, 0f);
             }
             var prev = hitbox.location;
+            SetMovementDelta(velocity * dT);
+            spawnedShip.SetMovementDelta(velocity * dT);
             SetLocation(pos + velocity * dT); 
             if (IsMoving) {
                 var delta = hitbox.location - prev;
@@ -430,19 +370,22 @@ public class PlayerController : BehaviorEntity {
                     MarisaAPositions.Add(hitbox.location);
                     MarisaADirections.Add(dir);
                 }
+            } else {
+                SetMovementDelta(Vector2.zero);
+                spawnedShip.SetMovementDelta(Vector2.zero);
             }
         }
     }
     
     public override void RegularUpdate() {
         base.RegularUpdate();
-        if (PlayerActive) {
+        if (AllControlEnabled) {
             if (State == PlayerState.NORMAL) {
                 Instance.AddMeter(meterRefillRate * ETime.FRAME_TIME, this);
             } else if (State == PlayerState.WITCHTIME) {
                 ++Instance.MeterFrames;
             }
-            Instance.UpdateFaithFrame();
+            Instance.UpdatePlayerFrame();
         }
         if (AllowPlayerInput) {
             if (InputManager.IsSwap) {
@@ -551,41 +494,56 @@ public class PlayerController : BehaviorEntity {
     public void Hit(int dmg, bool force = false) {
         if (dmg <= 0) return;
         //Log.Unity($"The player has taken a hit for {dmg} hp. Force: {force} Invuln: {invulnerabilityCounter} Deathbomb: {waitingDeathbomb}");
-        if (force) _DoHit(dmg);
+        if (force) {
+            _DoHit(dmg);
+        }
         else {
             if (hitInvulnerabilityCounter > 0 || deathbomb != DeathbombState.NULL) 
                 return;
-            deathbomb = DeathbombState.WAITING;
-            RunRIEnumerator(WaitDeathbomb(dmg));
+            var frames = (Team.Support as Bomb)?.bomb.DeathbombFrames() ?? 0;
+            if (frames > 0) {
+                deathbomb = DeathbombState.WAITING;
+                RunRIEnumerator(WaitDeathbomb(dmg, frames));
+            } else
+                _DoHit(dmg);
         }
     }
     
     private void _DoHit(int dmg) {
-        BulletManager.AutodeleteCircleOverTime(SoftcullProperties.OverTimeDefault(BPI.loc, 1.1f, 0f, 7f));
+        BulletManager.AutodeleteCircleOverTime(SoftcullProperties.OverTimeDefault(BPI.loc, 1.35f, 0f, 12f));
         BulletManager.RequestPowerAura("powerup1", 0, 0, new RealizedPowerAuraOptions(
             new PowerAuraOptions(new[] {
                 PowerAuraOption.Color(_ => ColorHelpers.CV4(spawnedShip.meterDisplay)),
                 PowerAuraOption.Time(_ => 1.5f),
                 PowerAuraOption.Iterations(_ => -1f),
-                PowerAuraOption.Scale(_ => 3.5f),
+                PowerAuraOption.Scale(_ => 5f),
                 PowerAuraOption.Static(), 
                 PowerAuraOption.High(), 
             }), GenCtx.Empty, BPI.loc, Cancellable.Null, null!));
         GameManagement.Instance.AddLives(-dmg);
         ServiceLocator.MaybeFind<IRaiko>()?.Shake(1.5f, null, 0.9f);
         Invuln(HitInvulnFrames);
-        if (RespawnOnHit) RequestNextState(PlayerState.RESPAWN);
+        if (RespawnOnHit) {
+            spawnedShip.DrawGhost(2f);
+            RequestNextState(PlayerState.RESPAWN);
+        }
         else InvokeParentedTimedEffect(spawnedShip.OnHitEffect, hitInvuln);
     }
     
     
-    private IEnumerator WaitDeathbomb(int dmg) {
-        var frames = (Team.Support as Bomb)?.bomb.DeathbombFrames() ?? 0;
-        if (frames > 0) {
-            Logs.Log($"The player has {frames} frames to deathbomb");
-            spawnedShip.OnPreHitEffect.Proc(bpi.loc, bpi.loc, 1f);
-        }
-        while (frames-- > 0 && deathbomb == DeathbombState.WAITING) 
+    private IEnumerator WaitDeathbomb(int dmg, int frames) {
+        spawnedShip.OnPreHitEffect.Proc(bpi.loc, bpi.loc, 1f);
+        BulletManager.RequestPowerAura("powerup1", 0, 0, new RealizedPowerAuraOptions(
+            new PowerAuraOptions(new[] {
+                PowerAuraOption.Color(_ => ColorHelpers.CV4(spawnedShip.meterDisplay.WithA(1.5f))),
+                PowerAuraOption.InitialTime(_ => 0.7f * frames / 120f), 
+                PowerAuraOption.Time(_ => 1.7f * frames / 120f),
+                PowerAuraOption.Iterations(_ => 0.8f),
+                PowerAuraOption.Scale(_ => Mathf.Pow(frames / 30f, 0.7f)),
+                PowerAuraOption.High(), 
+            }), GenCtx.New(this, V2RV2.Zero), Vector2.zero, Cancellable.Null, null!));
+        var framesRem = frames;
+        while (framesRem-- > 0 && deathbomb == DeathbombState.WAITING) 
             yield return null;
         if (deathbomb != DeathbombState.PERFORMED) 
             _DoHit(dmg);
@@ -600,11 +558,11 @@ public class PlayerController : BehaviorEntity {
     }
     
     private IEnumerator WaitOutInvuln(int frames) {
-        var bombDisable = BombDisabler.CreateToken1(MultiOp.Priority.CLEAR_SCENE);
+        var bombDisable = BombsEnabled.AddConst(false);;
         int ii = frames;
         for (; ii > 60; --ii)
             yield return null;
-        bombDisable.TryRevoke();
+        bombDisable.Dispose();
         for (; ii > 0; --ii)
             yield return null;
         --hitInvulnerabilityCounter;
@@ -687,9 +645,9 @@ public class PlayerController : BehaviorEntity {
         GameManagement.Instance.LastMeterStartFrame = ETime.FrameNumber;
         State = PlayerState.WITCHTIME;
         speedLines.Play();
-        var t = ETime.Slowdown.CreateModifier(WitchTimeSlowdown, MultiOp.Priority.CLEAR_SCENE);
+        using var t = ETime.Slowdown.AddConst(WitchTimeSlowdown);
         meter.enabled = true;
-        PlayerActivatedMeter.Proc();
+        PlayerActivatedMeter.OnNext(default);
         for (int f = 0; !MaybeCancelState(cT) &&
             IsTryingWitchTime && GameManagement.Instance.TryUseMeterFrame(); ++f) {
             spawnedShip.MaybeDrawWitchTimeGhost(f);
@@ -700,8 +658,7 @@ public class PlayerController : BehaviorEntity {
             yield return null;
         }
         meter.enabled = false;
-        PlayerDeactivatedMeter.Proc();
-        t.TryRevoke();
+        PlayerDeactivatedMeter.OnNext(default);
         speedLines.Stop();
         //MaybeCancelState already run in the for loop
         if (!cT.Cancelled(out _)) RunDroppableRIEnumerator(StateNormal(cT));
@@ -746,24 +703,24 @@ public class PlayerController : BehaviorEntity {
     [UsedImplicitly]
     public Vector2 PastPosition(float timeAgo) =>
         PastPositions.SafeIndexFromBack((int) (timeAgo * ETime.ENGINEFPS_F));
-    public static readonly ExFunction pastPosition = ExUtils.Wrap<PlayerController>("PastPosition", typeof(float));
+    public static readonly ExFunction pastPosition = ExFunction.Wrap<PlayerController>("PastPosition", typeof(float));
     
     [UsedImplicitly]
     public Vector2 PastDirection(float timeAgo) =>
         PastDirections.SafeIndexFromBack((int) (timeAgo * ETime.ENGINEFPS_F));
-    public static readonly ExFunction pastDirection = ExUtils.Wrap<PlayerController>("PastDirection", typeof(float));
+    public static readonly ExFunction pastDirection = ExFunction.Wrap<PlayerController>("PastDirection", typeof(float));
     
     [UsedImplicitly]
     public Vector2 MarisaAPosition(float timeAgo) =>
         MarisaAPositions.SafeIndexFromBack((int) (timeAgo * ETime.ENGINEFPS_F));
-    public static readonly ExFunction marisaAPosition = ExUtils.Wrap<PlayerController>("MarisaAPosition", typeof(float));
+    public static readonly ExFunction marisaAPosition = ExFunction.Wrap<PlayerController>("MarisaAPosition", typeof(float));
     
     [UsedImplicitly]
     public Vector2 MarisaADirection(float timeAgo) =>
         MarisaADirections.SafeIndexFromBack((int) (timeAgo * ETime.ENGINEFPS_F));
-    public static readonly ExFunction marisaADirection = ExUtils.Wrap<PlayerController>("MarisaADirection", typeof(float));
+    public static readonly ExFunction marisaADirection = ExFunction.Wrap<PlayerController>("MarisaADirection", typeof(float));
     
-    public static readonly Expression playerID = ExUtils.Property<PlayerController>("PlayerShotItr");
+    public static readonly ExFunction playerID = ExFunction.Wrap<PlayerController>("PlayerShotItr");
     
     #endregion
     

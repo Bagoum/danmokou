@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reactive;
 using BagoumLib;
 using BagoumLib.Culture;
 using Danmokou.Behavior;
@@ -170,10 +171,12 @@ public class PhaseProperty {
     /// <returns></returns>
     public static PhaseProperty HPBar(float portion) => new HPBarProp(portion);
     /// <summary>
-    /// Declare an event type that will be used in the script.
+    /// Declare an event type that will be used in the phase.
     /// </summary>
     /// <returns></returns>
-    public static PhaseProperty Event0(Events.EventDeclaration<Events.Event0> ev) => new EmptyProp();
+    [GAlias(typeof(float), "eventf")]
+    [GAlias(typeof(Unit), "event0")]
+    public static PhaseProperty Event<T>(string evName, Events.RuntimeEventType typ) => new EventProp<T>(evName, typ);
     /// <summary>
     /// Declare the background transition used when shifting into this spellcard.
     /// <br/>Note: This is automatically handled by the `boss` pattern property.
@@ -292,6 +295,20 @@ public class PhaseProperty {
         public HPBarProp(float portion) => this.portion = portion;
     }
 
+    public abstract class EventProp : PhaseProperty {
+        public abstract Func<IDisposable> CreateCreator();
+    }
+    public class EventProp<T> : EventProp { 
+        public readonly string evName;
+        public readonly Events.RuntimeEventType typ;
+        public EventProp(string evName, Events.RuntimeEventType typ) {
+            this.evName = evName;
+            this.typ = typ;
+        }
+
+        public override Func<IDisposable> CreateCreator() => Events.CreateRuntimeEventCreator<T>(evName, typ);
+    }
+
     public class BGTransitionProp : PhaseProperty {
         public readonly bool isInwardsTransition;
         public readonly string style;
@@ -402,14 +419,15 @@ public class PhaseProperties {
     public readonly LString? cardTitle;
     public readonly int? hp = null;
     public readonly int? photoHP = null;
-    public int? BossPhotoHP => (Boss == null) ? null : photoHP;
     public readonly float? invulnTime = null;
     public readonly float? hpbar = null;
     public readonly PhaseType? phaseType = null;
-    public SOBgTransition? BgTransitionIn { get; private set; }
-    public SOBgTransition? BgTransitionOut { get; private set; }
-    public GameObject? Background { get; private set; }
-    public BossConfig? Boss { get; private set; }
+    public readonly List<Func<IDisposable>> phaseObjectGenerators = new List<Func<IDisposable>>();
+    
+    public SOBgTransition? BgTransitionIn { get; }
+    public SOBgTransition? BgTransitionOut { get; }
+    public GameObject? Background { get; }
+
     public readonly float cardValueMult = 1f;
     private readonly bool? cleanup = null;
     public bool Cleanup => cleanup ?? phaseType?.IsPattern() ?? false;
@@ -431,30 +449,10 @@ public class PhaseProperties {
     private readonly bool? lenient = null;
     public bool Lenient => lenient ?? phaseType?.IsLenient() ?? false;
     public readonly bool bossCutin = false;
-    private readonly int? spellCutinIndex = null;
+    public readonly int? spellCutinIndex = null;
 
     public readonly List<Challenge> challenges = new List<Challenge>();
-    public int Index { get; private set; }
 
-    public bool GetSpellCutin(out GameObject go) {
-        go = null!;
-        if (Boss != null) {
-            var index = spellCutinIndex ?? ((phaseType?.IsSpell() ?? false) ? (int?)0 : null);
-            if (index.HasValue) return Boss.spellCutins.Try(index.Value, out go);
-        }
-        return false;
-    }
-
-    public void LoadDefaults(PatternProperties pat, int index) {
-        Index = index;
-        if (pat.boss != null) {
-            Boss = pat.boss;
-            if (phaseType.HasValue) {
-                Background = (Background == null) ? Boss.Background(phaseType.Value) : Background;
-                BgTransitionIn = (BgTransitionIn == null) ? Boss.IntoTransition(phaseType.Value) : BgTransitionIn;
-            }
-        }
-    }
     public PhaseProperties(IReadOnlyList<PhaseProperty> props) {
         List<StateMachine> rootMoves = new List<StateMachine>();
         foreach (var prop in props) {
@@ -479,6 +477,8 @@ public class PhaseProperties {
                 invulnTime = h.invulnT;
             } else if (prop is HPBarProp hb) 
                 hpbar = hb.portion;
+            else if (prop is EventProp ep)
+                phaseObjectGenerators.Add(ep.CreateCreator());
             else if (prop is BackgroundProp bp) 
                 Background = ResourceManager.GetBackground(bp.style);
             else if (prop is BGTransitionProp btp) {

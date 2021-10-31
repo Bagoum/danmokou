@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
+using BagoumLib.Expressions;
 using Danmokou.Core;
 using Danmokou.Expressions;
 using JetBrains.Annotations;
@@ -282,7 +283,7 @@ public static class CollisionMath {
         pt.y -= c.y;
         return pt.x * pt.x + pt.y * pt.y < c.r * c.r;
     }
-    public static readonly ExFunction pointInCircle = ExUtils.Wrap(t, "PointInCircle", new[] {ExUtils.tv2, ExUtils.tcc});
+    public static readonly ExFunction pointInCircle = ExFunction.Wrap(t, "PointInCircle", new[] {ExUtils.tv2, ExUtils.tcc});
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool PointInRect(Vector2 pt, CRect rect) {
@@ -312,7 +313,7 @@ public static class CollisionMath {
         }
         return px + radius < rect.halfW && pt.y + radius < rect.halfH;
     }
-    public static readonly ExFunction pointInRect = ExUtils.Wrap(t, "PointInRect", new[] {ExUtils.tv2, ExUtils.tcr});
+    public static readonly ExFunction pointInRect = ExFunction.Wrap(t, "PointInRect", new[] {ExUtils.tv2, ExUtils.tcr});
    
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool CircleOnAABB(AABB rect, Vector2 pt, float rad) {

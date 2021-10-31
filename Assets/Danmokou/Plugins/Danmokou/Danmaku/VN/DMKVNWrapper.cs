@@ -36,7 +36,7 @@ public class DMKVNWrapper : VNWrapper {
 
     public override ExecutingVN TrackVN(IVNState vn) {
         var evn = base.TrackVN(vn);
-        evn.tokens.Add(Events.EngineStateChanged.Subscribe(s => vn.InputAllowed.Value = s == EngineState.RUN));
+        evn.tokens.Add(EngineStateManager.EvState.Subscribe(s => vn.InputAllowed.Value = s == EngineState.RUN));
         return evn;
     }
 

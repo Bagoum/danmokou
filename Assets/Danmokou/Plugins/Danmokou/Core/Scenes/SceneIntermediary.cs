@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Reactive;
 using BagoumLib;
 using BagoumLib.Cancellation;
 using BagoumLib.DataStructures;
+using BagoumLib.Events;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Scriptables;
@@ -49,7 +51,7 @@ public class SceneIntermediary : CoroutineRegularUpdater, ISceneIntermediary {
     }
 
 
-    private IEnumerator WaitForSceneLoad(IDeletionMarker stateToken, SceneRequest req, bool transitionOnSame) {
+    private IEnumerator WaitForSceneLoad(IDisposable stateToken, SceneRequest req, bool transitionOnSame) {
         var currScene = SceneManager.GetActiveScene().name;
         float waitOut = 0f;
         if (transitionOnSame || currScene != req.scene.sceneName) {
@@ -60,7 +62,7 @@ public class SceneIntermediary : CoroutineRegularUpdater, ISceneIntermediary {
             for (; waitIn > ETime.FRAME_YIELD; waitIn -= ETime.FRAME_TIME) yield return null;
         }
         Logs.Log($"Scene loading for {req} started.", level: LogLevel.DEBUG3);
-        PreSceneUnload.Proc();
+        PreSceneUnload.OnNext(default);
         req.onPreLoad?.Invoke();
         var op = SceneManager.LoadSceneAsync(req.scene.sceneName);
         while (!op.isDone) {
@@ -72,7 +74,7 @@ public class SceneIntermediary : CoroutineRegularUpdater, ISceneIntermediary {
         req.onLoaded?.Invoke();
         for (; waitOut > ETime.FRAME_YIELD; waitOut -= ETime.FRAME_TIME) yield return null;
         req.onFinished?.Invoke();
-        stateToken.MarkForDeletion();
+        stateToken.Dispose();
         LOADING = false;
     }
     
@@ -81,18 +83,18 @@ public class SceneIntermediary : CoroutineRegularUpdater, ISceneIntermediary {
     
 
     //Static stuff
-    public static Events.Event0 PreSceneUnload { get; } = new Events.Event0();
-    public static Events.Event0 SceneUnloaded { get; } = new Events.Event0();
-    public static Events.Event0 SceneLoaded { get; } = new Events.Event0();
+    public static Event<Unit> PreSceneUnload { get; } = new Event<Unit>();
+    public static Event<Unit> SceneUnloaded { get; } = new Event<Unit>();
+    public static Event<Unit> SceneLoaded { get; } = new Event<Unit>();
 
     public static void Attach() {
         SceneManager.sceneUnloaded += s => {
             Logs.Log($"Unity scene {s.name} was unloaded");
-            SceneUnloaded.Proc();
+            SceneUnloaded.OnNext(default);
         };
         SceneManager.sceneLoaded += (s, m) => {
             Logs.Log($"Unity scene {s.name} was loaded via mode {m.ToString()}");
-            SceneLoaded.Proc();
+            SceneLoaded.OnNext(default);
         };
     }
 }

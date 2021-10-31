@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 using BagoumLib.Cancellation;
+using BagoumLib.Expressions;
 using Danmokou.Core;
 using Danmokou.Danmaku;
 using Danmokou.DMath.Functions;
@@ -168,7 +169,7 @@ public struct Movement {
         UpdateDeltaNoTime(ref sb.bpi, ref sb.accDelta, sb.movement.angle, sb.movement.cos_rot, sb.movement.sin_rot, sbc.NextDT);
     }
 
-    private static readonly ExFunction updateDeltaNoTime = ExUtils.Wrap<Movement>("UpdateDeltaNoTime",
+    private static readonly ExFunction updateDeltaNoTime = ExFunction.Wrap<Movement>("UpdateDeltaNoTime",
         new[] {typeof(BulletManager.AbsSimpleBulletCollection), typeof(int)});
     public Ex UpdateDeltaNoTime(Ex sbc, Ex ii) => updateDeltaNoTime.InstanceOf(Ex.Constant(this), sbc, ii);
 

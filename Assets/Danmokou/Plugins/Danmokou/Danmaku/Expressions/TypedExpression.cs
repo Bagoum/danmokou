@@ -8,7 +8,6 @@ using Danmokou.DMath;
 using Danmokou.DMath.Functions;
 using Danmokou.Reflection;
 using JetBrains.Annotations;
-using LanguageExt.Parsec;
 using UnityEngine;
 using static Danmokou.Expressions.ExUtils;
 
@@ -26,12 +25,21 @@ public class TExArgCtx {
         public Dictionary<string, Stack<Expression>> AliasStack { get; } =
             new Dictionary<string, Stack<Expression>>();
 
+        private static uint suffixNum = 0;
+        public string NameWithSuffix(string s) => $"{s}CG{suffixNum++}";
+       
+#if EXBAKE_SAVE || EXBAKE_LOAD
+        private static uint proxyArgNum = 0;
+        public string NextProxyArg() => $"proxy{proxyArgNum}";
+#endif
+#if EXBAKE_SAVE
         public List<string> HoistedVariables { get; } = new List<string>();
         public Dictionary<Expression, Expression> HoistedReplacements { get; } =
             new Dictionary<Expression, Expression>();
-
-        private static uint SuffixNum;
-        public string NameWithSuffix(string s) => $"{s}_cg{SuffixNum++}";
+        public List<Type> ProxyTypes { get; } = new List<Type>();
+#elif EXBAKE_LOAD
+        public List<object> ProxyArguments { get; } = new List<object>();
+#endif
     }
     public readonly struct Arg {
         public readonly string name;

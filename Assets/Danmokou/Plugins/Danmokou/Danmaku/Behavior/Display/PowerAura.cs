@@ -20,7 +20,8 @@ public class PowerAura : SpriteDisplayController {
         ServiceLocator.SFXService.Request(options.sfx);
         sprite.color = new Color(0, 0, 0, 0);
         gameObject.layer = opts.layer ?? beh.DefaultLayer;
-        pb.SetFloat(PropConsts.speed, opts.iterations / opts.time);
+        pb.SetFloat(PropConsts.speed, opts.iterations / opts.totalTime);
+        beh.rBPI.t = opts.initialTime;
     }
 
     public override void UpdateRender() {
@@ -28,7 +29,7 @@ public class PowerAura : SpriteDisplayController {
         base.UpdateRender();
         if (options.cT.Cancelled) {
             InvokeCull();
-        } else if (beh.rBPI.t > options.time) {
+        } else if (beh.rBPI.t > options.totalTime) {
             options.continuation?.Invoke();
             InvokeCull();
         }

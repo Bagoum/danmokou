@@ -38,8 +38,12 @@ public class ShipController : BehaviorEntity {
 
     public void MaybeDrawWitchTimeGhost(int frame) {
         if (frame % ghostFrequency == 0) {
-            Instantiate(ghost).GetComponent<Ghost>().Initialize(ghostSource.sprite, tr.position, ghostFadeTime);
+            DrawGhost(ghostFadeTime);
         }
+    }
+
+    public void DrawGhost(float fadeTime) {
+        Instantiate(ghost).GetComponent<Ghost>().Initialize(ghostSource.sprite, tr.position, fadeTime);
     }
 }
 }

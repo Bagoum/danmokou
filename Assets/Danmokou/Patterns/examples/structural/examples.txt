@@ -148,7 +148,7 @@ phase 0 #{
 	paction 0
 		position 0 1
 		sync glcircle-blue/w <> gsr2c 12 {} s tprot lerpout 0.5 1 cx 3
-		bullet-control-sm persist glcircle-blue/w sm > t 1.2
+		bullet-control persist glcircle-blue/w sm > t 1.2
 			async sakura-** <150> gcr2 8 36 <> {
 				color $allc
 			} gsr2 2 <60> { 

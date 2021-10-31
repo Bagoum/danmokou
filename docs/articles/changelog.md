@@ -16,20 +16,23 @@ The following features are planned for v9.0.0.
 - Procedural generation of stages and bullet patterns
 - Full-featured implementation of Suzunoya
 
-# v8.0.0 (2021/10/24)
+# v8.0.0 (2021/10/31)
 
 - **Breaking changes:**
   - The functions `bullet-control-sm`, `beh-control-sm`, and `laser-control-sm` have been removed. Instead, use `bullet-control`/`beh-control`/`laser-control` with the SM command.
 - **Code formatting notices:**
   - I have re-added csproj/sln files to the repo. Be warned of possible merge conflicts.
+  - License files now consist of a single Markdown file for each repository/submodule.
   - Much code in the Core assembly has been moved to the BagoumLib subproject in the [Suzunoya repo](https://github.com/Bagoum/suzunoya). It is now provided as a DLL.
+  - FastExpressionCompiler has been replaced with a custom expression printing solution in BagoumLib.
+  - The FS project has been deleted and its code has been moved out, some of it to [localization-utils](https://github.com/Bagoum/localization-utils), some of it to [Suzunoya/Mizuhashi](https://github.com/Bagoum/suzunoya), and some of it to Plugins/Danmokou. 
+- **Pending issues:**
+  - The UIToolkit bug with CJK characters (see Pending issues in the v7.0.0 changelog) has been **resolved** in the current version of UIToolkit.
 - Replaced legacy dialogue system with Suzunoya-based visual novel system. Old-style dialogue scripts will still work, but they are superseded by in-code visual novel scripts. See `MiniProjects/Scripts/CV_VNStage.txt` (wrapper stage code to execute a visual novel script) and `MiniProjects/Plugins/Danmokou/VNCrimsonVermilion.cs` (a fairly long visual novel script for the proof-of-concept [Crimson and Vermilion](https://bagoum.itch.io/crimson-and-vermilion)).
   - Note that dialogue profiles must be ported to Suzunoya entities.
-  - Suzunoya supports much more thorough dialogue localization via the same end-to-end localization strategy as the rest of the engine. You can get it working with spreadsheets using https://github.com/Bagoum/localization-utils .
+  - Suzunoya supports much more thorough dialogue localization via the same string localization strategy as the rest of the engine. You can get it working with spreadsheets using https://github.com/Bagoum/localization-utils .
 - Improvements to service-based architecture (I hate singletons now)
 - Complex bomb implementations for Reimu, Mokou, and Mima (who has a nice black hole effect)
-- Significant improvements to the architecture around engine state management, especially pausing, loading, and freezeframes
-- Spell and card circles now trail the boss while they are moving
 - New bullet types: GDCircle (a circle, size between "circle" and "lcircle", with heavy displacement effects), StellDecagon (a once-stellated decagon, or alternatively two pentagons on top of each other), GDLaser2c (a variant of gdlaser which has two colors-- format `gdlaser2c-red;blue/w`).
   - Bullets may now enable multi-channel automatic colorization (only current example is gdlaser2c) by setting "Multi Channel Recolor" to "RB" and using red and blue channels in the sprite. Three-channel recoloring is not enabled but is trivial to add to the existing code. Be warned that a typical (one-channel) bullet has about 30 recolors, a RB multi-channel bullet has about 300 recolors, and a RGB multi-channel bullet has about 3000 recolors.
 - Simple bullets now softcull over time at end-of-phase
@@ -38,8 +41,13 @@ The following features are planned for v9.0.0.
 - Player bullets may now have noncircular hitboxes (effectiveRadius has been removed)
 - Player bullets may now use empty guiding
 - Implementation of complex player teams and runtime ship switching
+- Significant improvements to the architecture around engine state management, especially pausing, loading, and freezeframes
+- Improved functionality and architecture of events in script code. See EventLASM.Listen, EventLASM
+- Spell and card circles now trail the boss while they are moving
+- Multiple small improvements around boss UI graphics (among which: fixed an issue where the UI HP bar would flash or temporarily display the incorrect color, fixed an issue where `set-ui-from` would not work with boss life stars, fixed issues with the UI timer not deactivating)
 - Music room
 - Support for dynamic difficulty (rank)
+- Internal handling of end-of-phase is now entirely handled via cancellation tokens and disposables, which (besides being much better for the architecture) theoretically allows for boss scripts to independently run alongside other content
 - Refactored base namespace to "Danmokou" (formerly "DMK")
 - Documentation and code improvements for reflection handling
 
@@ -49,7 +57,7 @@ The following features are planned for v9.0.0.
   - Please upgrade your Unity to **2020.2**. 2021 currently has a bug with UIToolkit disallowing switching between debug and release modes. 2019 is no longer supported (it does not support some C#8 changes).
   - `SS`, `SSD`, `SDD`, `SSDD` and related simple-bullet firing functions have been removed. Use `simple` instead with `scale`/`dir`/`dir2` options (<xref:Danmokou.Danmaku.Options.SBOption>)
   - Previous versions of DMK allowed implicit casts from TP to TP3 and from TP3 to TP in script code. This kind of circular cast is architecturally problematic, and support has been removed in v7.0.0. Now, TP may be implicitly casted to TP3, but the downcast is not allowed. Instead, use the `TP` function, as follows: `nroffset(tp(qrotate(...)))`. The reason that the TP->TP3 cast is prioritized is to protect the rule that *implicit casts should not result in information loss*.
-  - The signatures of functions operating over firing options, lasers, and player data have changed (see the note below about FiringCtx). The names have also been standardized. See `Assets/Danmokou/Plugins/Self/Danmaku/Math/MathRepos/GenericMath/ExM.cs`.
+  - The signatures of functions operating over firing options, lasers, and player data have changed (see the note below about FiringCtx). The names have also been standardized. See `Assets/Danmokou/Plugins/Danmokou/Danmaku/Math/MathRepos/GenericMath/ExM.cs`.
 - **Pending issues:**
   - There is a bug in the current version of UIToolkit that makes Chinese/Japanese/Korean text break when used on a label with text-wrap. To avoid this, the text wrapping on the UINode and UINodeLRSwitch UXML files has been disabled for now. When this bug is fixed, this will be reverted.
 - Fixed a very long-standing issue with mysterious transparent pixels in render textures. See [this doc](ColorBlending.md) for a primer on what was going on.

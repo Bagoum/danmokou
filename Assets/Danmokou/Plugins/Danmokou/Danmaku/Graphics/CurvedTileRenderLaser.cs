@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using BagoumLib;
 using BagoumLib.Cancellation;
 using BagoumLib.DataStructures;
+using BagoumLib.Events;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Danmaku;
@@ -27,7 +28,7 @@ public delegate void LCF(CurvedTileRenderLaser ctr, ICancellee cT);
 /// <summary>
 /// A pool control function performing some operation on a laser style.
 /// </summary>
-public delegate void LPCF(string pool, ICancellee cT);
+public delegate IDisposable LPCF(string pool, ICancellee cT);
 
 [Serializable]
 public class LaserRenderCfg : TiledRenderCfg {
@@ -179,7 +180,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
     protected void SetEndpoint(Vector2 localPos, Vector2 dir) {
         if (endpt.exists) {
             endpt.beh!.ExternalSetLocalPosition(localPos);
-            endpt.beh.SetDirection(dir);
+            endpt.beh.SetMovementDelta(dir);
         }
     }
 
@@ -414,11 +415,11 @@ public class CurvedTileRenderLaser : CurvedTileRender {
 #endif
 
     //No compilation
-    public readonly struct exLaserControl {
+    public readonly struct cLaserControl {
         public readonly LCF action;
         public readonly int priority;
         
-        public exLaserControl(LCF action, int priority) {
+        public cLaserControl(LCF action, int priority) {
             this.action = action;
             this.priority = priority;
         }
@@ -433,7 +434,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
         public readonly int priority;
         public readonly ICancellee cT;
 
-        public LaserControl(exLaserControl lc, Pred persistent, ICancellee cT) {
+        public LaserControl(cLaserControl lc, Pred persistent, ICancellee cT) {
             action = lc.action;
             priority = lc.priority;
             persist = persistent;
@@ -513,8 +514,8 @@ public class CurvedTileRenderLaser : CurvedTileRender {
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
         [Alias("flipx>")]
-        public static exLaserControl FlipXGT(float wall, Pred cond) {
-            return new exLaserControl((b, cT) => {
+        public static cLaserControl FlipXGT(float wall, Pred cond) {
+            return new cLaserControl((b, cT) => {
                 if (b.bpi.loc.x > wall && cond(b.bpi)) {
                     b.FlipBPIAndDeltaSimple(false, wall);
                     b.path.FlipX();
@@ -529,8 +530,8 @@ public class CurvedTileRenderLaser : CurvedTileRender {
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
         [Alias("flipx<")]
-        public static exLaserControl FlipXLT(float wall, Pred cond) {
-            return new exLaserControl((b, cT) => {
+        public static cLaserControl FlipXLT(float wall, Pred cond) {
+            return new cLaserControl((b, cT) => {
                 if (b.bpi.loc.x < wall && cond(b.bpi)) {
                     b.FlipBPIAndDeltaSimple(false, wall);
                     b.path.FlipX();
@@ -545,8 +546,8 @@ public class CurvedTileRenderLaser : CurvedTileRender {
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
         [Alias("flipy>")]
-        public static exLaserControl FlipYGT(float wall, Pred cond) {
-            return new exLaserControl((b, cT) => {
+        public static cLaserControl FlipYGT(float wall, Pred cond) {
+            return new cLaserControl((b, cT) => {
                 if (b.bpi.loc.y > wall && cond(b.bpi)) {
                     b.FlipBPIAndDeltaSimple(true, wall);
                     b.path.FlipY();
@@ -561,8 +562,8 @@ public class CurvedTileRenderLaser : CurvedTileRender {
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
         [Alias("flipy<")]
-        public static exLaserControl FlipYLT(float wall, Pred cond) {
-            return new exLaserControl((b, cT) => {
+        public static cLaserControl FlipYLT(float wall, Pred cond) {
+            return new cLaserControl((b, cT) => {
                 if (b.bpi.loc.y < wall && cond(b.bpi)) {
                     b.FlipBPIAndDeltaSimple(true, wall);
                     b.path.FlipY();
@@ -571,7 +572,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
             }, BulletManager.BulletControl.P_MOVE_3);
         }
         
-        public static exLaserControl SM(LPred cond, SM.StateMachine sm) => new exLaserControl((b, cT) => {
+        public static cLaserControl SM(LPred cond, SM.StateMachine sm) => new cLaserControl((b, cT) => {
             if (cond(b.bpi, b.lifetime)) {
                 var mov = new Movement(b.bpi.loc, V2RV2.Angle(b.laser.original_angle));
                 _ = BEHPooler.INode(mov, new ParametricInfo(in mov, b.bpi.index), b.nextTrueDelta, "l-pool-triggered")
@@ -579,7 +580,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
             }
         }, BulletManager.BulletControl.P_RUN);
     }
-    public static void ControlPool(Pred persist, BulletManager.StyleSelector styles, exLaserControl control, ICancellee cT) {
+    public static void ControlPool(Pred persist, BulletManager.StyleSelector styles, cLaserControl control, ICancellee cT) {
         LaserControl lc = new LaserControl(control, persist, cT);
         for (int ii = 0; ii < styles.Complex.Length; ++ii) {
             LazyGetControls(styles.Complex[ii]).AddPoolControl(lc);
@@ -596,15 +597,18 @@ public class CurvedTileRenderLaser : CurvedTileRender {
         /// Clear the bullet controls on a pool.
         /// </summary>
         /// <returns></returns>
-        public static LPCF Reset() {
-            return (pool, cT) => LazyGetControls(pool).ClearControls();
-        }
+        public static LPCF Reset() => (pool, cT) => {
+            LazyGetControls(pool).ClearControls();
+            return NullDisposable.Default;
+        };
     }
     
-    public static void ControlPool(BulletManager.StyleSelector styles, LPCF control, ICancellee cT) {
+    public static IDisposable ControlPool(BulletManager.StyleSelector styles, LPCF control, ICancellee cT) {
+        var tokens = new IDisposable[styles.Complex.Length];
         for (int ii = 0; ii < styles.Complex.Length; ++ii) {
-            control(styles.Complex[ii], cT);
+            tokens[ii] = control(styles.Complex[ii], cT);
         }
+        return new JointDisposable(null, tokens);
     }
     public static void PrunePoolControls() {
         for (int ii = 0; ii < activePools.Count; ++ii) {
@@ -614,7 +618,8 @@ public class CurvedTileRenderLaser : CurvedTileRender {
 
     public static void ClearPoolControls(bool clearPlayer) {
         for (int ii = 0; ii < activePools.Count; ++ii) {
-            if (clearPlayer || (activePoolsList[ii].metadata?.IsPlayer == false)) activePoolsList[ii].ClearControls();
+            if (clearPlayer || (activePoolsList[ii].metadata?.IsPlayer == false)) 
+                activePoolsList[ii].ClearControls();
         }
     }
 }

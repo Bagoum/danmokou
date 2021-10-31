@@ -4,6 +4,7 @@ using TMPro;
 using UnityEngine;
 
 namespace Danmokou.UI {
+#if UNITY_EDITOR || ALLOW_RELOAD
 public class DemoScriptButton : MonoBehaviour {
     private TextAsset script = null!;
     private DemoScriptManager manager = null!;
@@ -19,4 +20,5 @@ public class DemoScriptButton : MonoBehaviour {
         manager.RequestScript(script);
     }
 }
+#endif
 }

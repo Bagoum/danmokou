@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using UnityEngine;
 using System.Linq.Expressions;
+using BagoumLib.Expressions;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Expressions;

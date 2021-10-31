@@ -12,9 +12,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eef3d61c38c8da249ac2aabcd5c9d253, type: 3}
   m_Name: Player Deathbomb Window
   m_EditorClassIdentifier: 
-  proccer: {fileID: 0}
   sound: {fileID: 11400000, guid: e0bf36c3006757e41bf482bda9d06f8d, type: 2}
-  locator: 1
-  particlePrefab: {fileID: 1388846981691479454, guid: 79a4fa494c22a224b83bb6437574f3e7,
-    type: 3}
-  spawnType: 0
+  locator:
+    type: 0
+    Source:
+      offset: {x: 0, y: 0}
+    Target:
+      offset: {x: 0, y: 0}
+    Perimeter:
+      offset: {x: 0, y: 0}
+      multiplier: 1
+  particlePrefab: {fileID: 0}
+  spawnType: 2
+  subEffects: []

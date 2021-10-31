@@ -10,14 +10,14 @@ gtr {
 			while(> powerf p)
 			root zero
 			preloop { 
-				pid = f playerid
+				pid = f playerid mine
 			}
 		} { 
 !{ laseropts()
 ##start(30 * max(0, (t - LaserLastActiveT(mine))))
 varLength(15, if (> t LaserLastActiveT mine, lerp(0, 0.2, t - LaserLastActiveT(mine), min(15, 30 * LaserLastActiveT(mine)), 0), 30 * t))
 dynamic(tpnrot(rotate(OptionAngle(mine), cy 1)))
-delete(> (t - LaserLastActiveT(mine), 1) | (neq &pid playerid))
+delete(> (t - LaserLastActiveT(mine), 1) | (neq &pid playerid mine))
 deactivate((<= powerf p) | (> playerUnfiringT(mine) 0))
 nonpiercing
 s(0.5)

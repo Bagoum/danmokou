@@ -1,6 +1,7 @@
 ﻿using System.Linq.Expressions;
 using BagoumLib.Cancellation;
 using BagoumLib.DataStructures;
+using BagoumLib.Expressions;
 using Danmokou.Core;
 using Danmokou.Danmaku;
 using Danmokou.DMath;
@@ -35,9 +36,9 @@ public class TExMov : TEx<Movement>, ITexMovement {
     public TExMov(ExMode m, string? name) : base(m, name) { }
     public TExMov(Expression ex) : base(ex) { }
     public Ex FlipX() => _flipX.InstanceOf(this);
-    private static readonly ExFunction _flipX = ExUtils.Wrap<Movement>("FlipX");
+    private static readonly ExFunction _flipX = ExFunction.Wrap<Movement>("FlipX");
     public Ex FlipY() => _flipY.InstanceOf(this);
-    private static readonly ExFunction _flipY = ExUtils.Wrap<Movement>("FlipY");
+    private static readonly ExFunction _flipY = ExFunction.Wrap<Movement>("FlipY");
 }
 
 public class TExLMov : TEx<LaserMovement>, ITexMovement {
@@ -53,9 +54,9 @@ public class TExLMov : TEx<LaserMovement>, ITexMovement {
     public TExLMov(Expression ex) : base(ex) { }
 
     public Ex FlipX() => _flipX.InstanceOf(this);
-    private static readonly ExFunction _flipX = ExUtils.Wrap<LaserMovement>("FlipX");
+    private static readonly ExFunction _flipX = ExFunction.Wrap<LaserMovement>("FlipX");
     public Ex FlipY() => _flipY.InstanceOf(this);
-    private static readonly ExFunction _flipY = ExUtils.Wrap<LaserMovement>("FlipY");
+    private static readonly ExFunction _flipY = ExFunction.Wrap<LaserMovement>("FlipY");
 }
 
 public class TExSB : TEx<SimpleBullet> {
@@ -83,37 +84,40 @@ public class TExSB : TEx<SimpleBullet> {
 public class TExSBC : TEx<AbsSimpleBulletCollection> {
     public MemberExpression style => Ex.Property(ex, "Style");
     public MemberExpression data => Ex.Property(ex, "Data");
-    private static readonly ExFunction indexer = ExUtils.Wrap<CompactingArray<SimpleBullet>>("ItemAt",
+    private static readonly ExFunction indexer = ExFunction.Wrap<CompactingArray<SimpleBullet>>("ItemAt",
         new[] {typeof(int)});
 
     public TExSBC(string name) : base(ExMode.Parameter, name) { }
     public TExSBC(Ex _ex) : base(_ex) {}
 
     public TExSB this[Ex index] => new TExSB(data.Index(index));
-    private static readonly ExFunction delete = ExUtils.Wrap<AbsSimpleBulletCollection>("DeleteSB",
+    private static readonly ExFunction delete = ExFunction.Wrap<AbsSimpleBulletCollection>("DeleteSB",
         new[] {typeof(int)});
-    private static readonly ExFunction softcull = ExUtils.Wrap<AbsSimpleBulletCollection>("Softcull",
+    private static readonly ExFunction softcull = ExFunction.Wrap<AbsSimpleBulletCollection>("Softcull",
         new[] {typeof(AbsSimpleBulletCollection), typeof(int), typeof(SoftcullProperties?)});
     private static readonly ExFunction isAlive =
-        ExUtils.Wrap<AbsSimpleBulletCollection>("IsAlive", typeof(int));
-    public static readonly ExFunction transferFrom = ExUtils.Wrap<AbsSimpleBulletCollection>("TransferFrom", 
+        ExFunction.Wrap<AbsSimpleBulletCollection>("IsAlive", typeof(int));
+    public static readonly ExFunction transferFrom = ExFunction.Wrap<AbsSimpleBulletCollection>("TransferFrom", 
         new[] {typeof(AbsSimpleBulletCollection), typeof(int)});
-    public static readonly ExFunction copyNullFrom = ExUtils.Wrap<AbsSimpleBulletCollection>("CopyNullFrom", 
+    public static readonly ExFunction copyNullFrom = ExFunction.Wrap<AbsSimpleBulletCollection>("CopyNullFrom", 
         new[] {typeof(AbsSimpleBulletCollection), typeof(int), typeof(SoftcullProperties?)});
-    public static readonly ExFunction copyFrom = ExUtils.Wrap<AbsSimpleBulletCollection>("CopyFrom", 
+    public static readonly ExFunction copyFrom = ExFunction.Wrap<AbsSimpleBulletCollection>("CopyFrom", 
         new[] {typeof(AbsSimpleBulletCollection), typeof(int)});
-    public static readonly ExFunction runINodeAt = ExUtils.Wrap<AbsSimpleBulletCollection>("RunINodeAt", 
+    public static readonly ExFunction runINodeAt = ExFunction.Wrap<AbsSimpleBulletCollection>("RunINodeAt", 
         new[] {typeof(int), typeof(StateMachine), typeof(ICancellee)});
+    public static readonly ExFunction makeCulledCopy = ExFunction.Wrap<AbsSimpleBulletCollection>("MakeCulledCopy",
+        new[] {typeof(int)});
     
     public Ex DeleteSB(Ex index) => delete.InstanceOf(this, index);
     public Ex Softcull(Ex target, Ex index) => softcull.InstanceOf(this, target, index, Ex.Constant(null, typeof(SoftcullProperties?)));
+    public Ex MakeCulledCopy(Ex index) => makeCulledCopy.InstanceOf(this, index);
     public Ex IsAlive(Ex index) => isAlive.InstanceOf(this, index);
 
     public Ex RunINodeAt(Ex index, Ex sm, Ex cT) => runINodeAt.InstanceOf(this, index, sm, cT);
     
 
     private static readonly ExFunction speedup =
-        ExUtils.Wrap<AbsSimpleBulletCollection>("Speedup", new[] {typeof(float)});
+        ExFunction.Wrap<AbsSimpleBulletCollection>("Speedup", new[] {typeof(float)});
     public Expression Speedup(Expression ratio) => speedup.InstanceOf(this, ratio);
 }
 }

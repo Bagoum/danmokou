@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using BagoumLib;
+using BagoumLib.Expressions;
 using Danmokou.Core;
 using Danmokou.DMath;
-using FastExpressionCompiler;
 using UnityEngine;
 
 namespace Danmokou.Reflection {
@@ -41,12 +41,13 @@ public static class AoTHelper_CG {{
     public static void GenerateAoT() {
         List<string> funcs = new List<string>();
         HashSet<MethodInfo> mis = new HashSet<MethodInfo>(); //weed out alias duplicates
+        var typePrinter = new CSharpTypePrinter { PrintTypeNamespace = _ => true };
         void AddConstructedMethod(MethodInfo mi) {
             if (mis.Contains(mi)) return;
             mis.Add(mi);
-            var type_prms = string.Join(", ", mi.GetGenericArguments().Select(t => t.ToCode()));
+            var type_prms = string.Join(", ", mi.GetGenericArguments().Select(typePrinter.Print));
             var args = string.Join(", ", mi.GetParameters().Length.Range().Select(_ => "default"));
-            funcs.Add($"{mi.DeclaringType.ToCode()}.{mi.Name}<{type_prms}>({args});");
+            funcs.Add($"{typePrinter.Print(mi.DeclaringType!)}.{mi.Name}<{type_prms}>({args});");
         }
         foreach (var mi in postAggregators.Values.SelectMany(v => v.Values).Select(pa => pa.invoker).Concat(ReflectionData.MethodsByReturnType.Values.SelectMany(v => v.Values))) {
             if (!mi.IsGenericMethod) continue;

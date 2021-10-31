@@ -41,7 +41,7 @@ public class Tutorial : BehaviorEntity {
 #endif
         defaultLoc[text00] = text00.transform.localPosition;
         defaultLoc[text10] = text10.transform.localPosition;
-        GameManagement.Instance.externalFaithDecayMultiplier.CreateModifier(6, MultiOp.Priority.CLEAR_SCENE); 
+        GameManagement.Instance.externalFaithDecayMultiplier.AddConst(6); 
     }
 
     private void ClearText() {
@@ -197,7 +197,7 @@ public class Tutorial : BehaviorEntity {
         yield return shift();
         Prompt(text10, pleasedie32);
         var dead = false;
-        tokens.Add(Instance.GameOver.SubscribeOnce(() => dead = true));
+        Listen(Instance.GameOver, _ => dead = true);
         yield return waitlf(() => dead);
         Prompt(text00, deathscreen33, x:menuLeft);
         yield return waitlf(() => EngineStateManager.State == EngineState.RUN);

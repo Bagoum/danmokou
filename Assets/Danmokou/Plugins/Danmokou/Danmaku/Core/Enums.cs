@@ -319,11 +319,6 @@ public static class EnumHelpers2 {
         st == PhaseType.SPELL || st == PhaseType.TIMEOUT || st == PhaseType.FINAL;
 
     public static bool HideTimeout(this PhaseType st) => st == PhaseType.STAGE || st == PhaseType.DIALOGUE;
-    public static PhaseType Invert(this PhaseType st) {
-        if (st.IsSpell()) return PhaseType.NONSPELL;
-        if (st == PhaseType.NONSPELL) return PhaseType.SPELL;
-        return st;
-    }
 
     public static float? HPBarLength(this PhaseType st) {
         if (st.IsSpell()) return 1f;

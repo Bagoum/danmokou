@@ -27,15 +27,15 @@ public class PhasePerformance : PiecewiseAppear {
         new[] {MainCamera.CamType.UI}), true);
 
     public void Initialize(string description, PhaseCompletion pc) {
-        if (pc.props.Boss == null || pc.CaptureStars == null) {
+        if (pc.phase.Boss == null || pc.CaptureStars == null) {
             Destroy(gameObject);
             return;
         }
         descriptionText.text = description;
         performanceText.text = $"{pc.Performance} <size=3.6>({pc.ElapsedTime:F1}s)</size>";
-        background.color = pc.props.Boss.colors.uiColor;
+        background.color = pc.phase.Boss.colors.uiColor;
         Queue(new AppearRequest(AppearAction.APPEAR, 0.9f, () => 
-            RunDroppableRIEnumerator(ShowStars(pc.CaptureStars.Value, pc.props.Boss.colors.uiHPColor, () =>
+            RunDroppableRIEnumerator(ShowStars(pc.CaptureStars.Value, pc.phase.Boss.colors.uiHPColor, () =>
                 Queue(new AppearRequest(AppearAction.DISAPPEAR, 1f, () => Destroy(gameObject)))))));
     }
     

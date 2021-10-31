@@ -1,4 +1,5 @@
-﻿using Danmokou.Behavior;
+﻿using BagoumLib.Expressions;
+using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.DataHoist;
 using Danmokou.DMath;

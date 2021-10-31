@@ -39,11 +39,11 @@ public static partial class PlayerBombs {
 
     public static int DeathbombFrames(this PlayerBombType bt) =>
         bt switch {
-            PlayerBombType.TEST_BOMB_1 => 10,
-            PlayerBombType.TEST_POWERBOMB_1 => 10,
-            PlayerBombType.MimaBlackHole => 10,
-            PlayerBombType.MokouThousandSuns => 10,
-            PlayerBombType.ReimuFantasySeal => 10,
+            PlayerBombType.TEST_BOMB_1 => 20,
+            PlayerBombType.TEST_POWERBOMB_1 => 20,
+            PlayerBombType.MimaBlackHole => 20,
+            PlayerBombType.MokouThousandSuns => 20,
+            PlayerBombType.ReimuFantasySeal => 20,
             _ => 0
         };
 
@@ -67,7 +67,7 @@ public static partial class PlayerBombs {
             _ => 1
         };
 
-    private static IEnumerator BombCoroutine(Bomb b, PlayerController bomber, MultiAdder.Token bombDisable) =>
+    private static IEnumerator BombCoroutine(Bomb b, PlayerController bomber, IDisposable bombDisable) =>
         b.bomb switch {
             PlayerBombType.TEST_BOMB_1 => DoTestBomb1(bomber, bombDisable),
             PlayerBombType.TEST_POWERBOMB_1 => DoTestBomb1(bomber, bombDisable),
@@ -86,17 +86,17 @@ public static partial class PlayerBombs {
             return false;
         ++GameManagement.Instance.BombsUsed;
         BombFired.OnNext((b, ctx));
-        var ienum = BombCoroutine(b, bomber, PlayerController.BombDisabler.CreateToken1(MultiOp.Priority.CLEAR_SCENE));
+        var ienum = BombCoroutine(b, bomber, bomber.BombsEnabled.AddConst(false));
         bomber.RunDroppableRIEnumerator(ienum);
         return true;
     }
 
-    private static MultiAdder.Token DisableFire =>
-        PlayerController.FiringDisabler.CreateToken1(MultiOp.Priority.CLEAR_SCENE);
+    private static IDisposable DisableFire(PlayerController bomber) =>
+        bomber.FiringEnabled.AddConst(false);
 
-    private static IEnumerator DoTestBomb1(PlayerController bomber, MultiAdder.Token bombDisable) {
+    private static IEnumerator DoTestBomb1(PlayerController bomber, IDisposable bombDisable) {
         Logs.Log("Starting Test Bomb 1", level: LogLevel.DEBUG2);
-        var fireDisable = DisableFire;
+        var fireDisable = DisableFire(bomber);
         var smh = new SMHandoff(bomber);
         //Note: you should use RunExternalSM, see the mokou bomb
         _ = TB1_1.Value(smh);
@@ -106,15 +106,15 @@ public static partial class PlayerBombs {
         var circ = new CCircle(bomber.hitbox.location.x, bomber.hitbox.location.y, 8f);
         BulletManager.Autodelete(new SoftcullProperties(null, null),
             bpi => CollisionMath.PointInCircle(bpi.loc, circ));
-        fireDisable.TryRevoke();
+        fireDisable.Dispose();
         for (float t = 0; t < 4f; t += ETime.FRAME_TIME) yield return null;
         Logs.Log("Ending Test Bomb 1", level: LogLevel.DEBUG2);
-        bombDisable.TryRevoke();
+        bombDisable.Dispose();
     }
 
-    private static IEnumerator MimaBlackHoleBomb(Bomb b, PlayerController bomber, MultiAdder.Token bombDisable) {
+    private static IEnumerator MimaBlackHoleBomb(Bomb b, PlayerController bomber, IDisposable bombDisable) {
         Logs.Log("Starting Mima Black Hole bomb");
-        var fireDisable = DisableFire;
+        var fireDisable = DisableFire(bomber);
         var bhe = new BlackHoleEffect(5, 0.5f, 1.5f);
         float totalTime = 7.5f;
         bomber.MakeInvulnerable((int) (120f * totalTime), true);
@@ -132,16 +132,16 @@ public static partial class PlayerBombs {
                 fe[ii].enemy.QueuePlayerDamage(20000, 20000, bomber);
             }
         }
-        fireDisable.TryRevoke();
+        fireDisable.Dispose();
         for (; t < totalTime; t += ETime.FRAME_TIME)
             yield return null;
         Logs.Log("Ending Mima Black Hole bomb");
-        bombDisable.TryRevoke();
+        bombDisable.Dispose();
     }
 
-    private static IEnumerator MokouThousandSunsBomb(Bomb b, PlayerController bomber, MultiAdder.Token bombDisable) {
+    private static IEnumerator MokouThousandSunsBomb(Bomb b, PlayerController bomber, IDisposable bombDisable) {
         Logs.Log("Starting Mokou Thousand Suns bomb");
-        var fireDisable = DisableFire;
+        var fireDisable = DisableFire(bomber);
         
         bomber.MakeInvulnerable(780, true);
         ServiceLocator.SFXService.Request("mokou-thousandsuns");
@@ -154,25 +154,25 @@ public static partial class PlayerBombs {
             }
             yield return null;
         }
-        fireDisable.TryRevoke();
+        fireDisable.Dispose();
         while (!task.IsCompleted)
             yield return null;
         Logs.Log("Ending Mokou Thousand Suns bomb");
-        bombDisable.TryRevoke();
+        bombDisable.Dispose();
     }
 
-    private static IEnumerator ReimuFantasySealBomb(Bomb b, PlayerController bomber, MultiAdder.Token bombDisable) {
+    private static IEnumerator ReimuFantasySealBomb(Bomb b, PlayerController bomber, IDisposable bombDisable) {
         Logs.Log("Starting Reimu Fantasy Seal bomb");
-        var fireDisable = DisableFire;
+        var fireDisable = DisableFire(bomber);
         bomber.MakeInvulnerable(900, true);
         b.SpawnCutin();
         var task = bomber.RunExternalSM(SMRunner.RunNoCancelRoot(b.SM!), cancelOnFinish: true);
         for (int ii = 0; ii < 600; ++ii) yield return null;
-        fireDisable.TryRevoke();
+        fireDisable.Dispose();
         for (int ii = 0; ii < 180; ++ii) yield return null;
         //the task might run some more for waiting on controls
         Logs.Log("Ending Reimu Fantasy Seal bomb");
-        bombDisable.TryRevoke();
+        bombDisable.Dispose();
     }
 }
 

@@ -148,7 +148,7 @@ public class CurvedTileRenderPather : CurvedTileRender {
         }
     }
     public override void UpdateRender() {
-        exec.SetDirection(lastDelta);
+        exec.SetMovementDelta(lastDelta);
         if (ETime.LastUpdateForScreen) {
             UpdateGraphics();
             
@@ -213,7 +213,7 @@ public class CurvedTileRenderPather : CurvedTileRender {
 
     public CollisionResult CheckCollision() {
         cullCtr = (cullCtr + 1) % checkCullEvery; 
-        if (cullCtr == 0 && exec.myStyle.CameraCullable && CullCheck())
+        if (cullCtr == 0 && exec.myStyle.CameraCullable.Value && CullCheck())
             return CollisionResult.noColl;
         
         int cut1 = (int) Math.Ceiling((cL - read_from + 1) * tailCutoffRatio);

@@ -103,11 +103,12 @@ public class GameManagement : CoroutineRegularUpdater {
         
         Logs.Log($"Danmokou {EngineVersion}, {References.gameIdentifier} {References.gameVersion}");
         gameObject.AddComponent<SceneIntermediary>().defaultTransition = References.defaultTransition;
+        gameObject.AddComponent<FreezeFrameHelper>();
         ETime.RegisterPersistentSOFInvoke(Replayer.BeginFrame);
         ETime.RegisterPersistentSOFInvoke(Enemy.FreezeEnemies);
         ETime.RegisterPersistentEOFInvoke(BehaviorEntity.PrunePoolControls);
         ETime.RegisterPersistentEOFInvoke(CurvedTileRenderLaser.PrunePoolControls);
-        SceneIntermediary.SceneUnloaded.Subscribe(ClearScene);
+        SceneIntermediary.SceneUnloaded.Subscribe(_ => ClearScene());
 
         //The reason we do this instead of Awake is that we want all resources to be
         //loaded before any State Machines are constructed, which may occur in other entities' Awake calls.
@@ -154,11 +155,10 @@ public class GameManagement : CoroutineRegularUpdater {
     public static bool CanRestart => Instance.Request != null;
 
     public static void ClearScene() {
-        BulletManager.ClearPoolControls();
-        Events.Event0.DestroyAll();
-        ETime.Slowdown.RevokeAll(MultiOp.Priority.CLEAR_SCENE);
+        //TODO: is this required? or can we assume that disposables are handled correctly on scene change?
+        ETime.Slowdown.ClearDisturbances();
         ETime.Timer.DestroyAll();
-        BulletManager.OrphanAll();
+        BulletManager.OrphanAll(); //Also clears pool controls
         PublicDataHoisting.DestroyAll();
         FiringCtx.ClearNames();
         //SMs may have links to data hoisting, so we destroy both of them on phase end.
@@ -166,7 +166,7 @@ public class GameManagement : CoroutineRegularUpdater {
         StateMachineManager.ClearCachedSMs();
         BehaviorEntity.ClearPointers();
         AyaPhoto.ClearTextures();
-        Events.SceneCleared.Proc();
+        Events.SceneCleared.OnNext(default);
     }
 
 #if UNITY_EDITOR || ALLOW_RELOAD
@@ -176,8 +176,7 @@ public class GameManagement : CoroutineRegularUpdater {
     }
     
     public static void LocalReset() {
-        Events.Event0.DestroyAll();
-        ETime.Slowdown.RevokeAll(MultiOp.Priority.CLEAR_SCENE);
+        ETime.Slowdown.ClearDisturbances();
         ETime.Timer.DestroyAll();
         BehaviorEntity.DestroyAllSummons();
         PublicDataHoisting.DestroyAll();
@@ -190,7 +189,7 @@ public class GameManagement : CoroutineRegularUpdater {
         //Ordered last so cancellations from HardCancel will occur under old data
         NewInstance(InstanceMode.DEBUG);
         Debug.Log($"Reloading level: {Difficulty.Describe()} is the current difficulty");
-        Events.LocalReset.Proc();
+        Events.LocalReset.OnNext(default);
     }
 
     private static bool TryTriggerLocalReset() {
@@ -211,17 +210,8 @@ public class GameManagement : CoroutineRegularUpdater {
     }
 #endif
 
-    private static void ClearPhase() {
-        BulletManager.ClearPoolControls(false);
-        BulletManager.ClearEmptyBullets(false);
-        Events.Event0.Reset();
-        ETime.Slowdown.RevokeAll(MultiOp.Priority.CLEAR_PHASE);
-        ETime.Timer.ResetPhase();
-        Events.PhaseCleared.Proc();
-    }
-
     public static void ClearPhaseAutocull(SoftcullProperties propsSimple, SoftcullProperties propsBeh) {
-        ClearPhase();
+        BulletManager.ClearEmptyBullets(false);
         BulletManager.Autocull(propsSimple);
         BehaviorEntity.Autocull(propsBeh);
     }
@@ -231,7 +221,7 @@ public class GameManagement : CoroutineRegularUpdater {
         BehaviorEntity.Autocull(propsBeh);
     }
     public static void ClearPhaseAutocullOverTime_Final() {
-        ClearPhase();
+        BulletManager.ClearEmptyBullets(false);
     }
 
 
@@ -329,12 +319,14 @@ public class GameManagement : CoroutineRegularUpdater {
     //[ContextMenu("Save AoT Helpers")] 
     //public void GenerateAoT() => Reflector.GenerateAoT();
 
+#if EXBAKE_SAVE
     [ContextMenu("Bake Expressions")]
     public void BakeExpressions() {
         BakeCodeGenerator.BakeExpressions();
         Reflector.GenerateAoT();
         EditorApplication.ExitPlaymode();
     }
+#endif
 #endif
 
 }

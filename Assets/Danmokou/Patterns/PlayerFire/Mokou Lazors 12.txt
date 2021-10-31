@@ -12,14 +12,14 @@ gtr {
 			times(_)
 			preloop {
 				target =v2 LNearestEnemy
-				pid = f playerid
+				pid = f playerid mine
 			}
 		} laser(nroffset(OptionLocation(mine)),
 			1, 0.5, {
 				start(30 * max(0, (t - LaserLastActiveT(mine))))
 				varLength(15, 30 * t)
 				dynamic(tpnrot(rotate(atan(&target - OptionLocation(mine)), cx 1)))
-				delete(> (t - LaserLastActiveT(mine), 1) | (neq &pid playerid))
+				delete(> (t - LaserLastActiveT(mine), 1) | (neq &pid playerid mine))
 				deactivate(> playerUnfiringT(mine) 0)
 				player(13, 50, 24, oh1-red)
 		})

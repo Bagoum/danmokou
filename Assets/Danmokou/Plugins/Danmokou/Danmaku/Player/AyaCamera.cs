@@ -46,7 +46,6 @@ public class AyaCamera : BehaviorEntity {
     private PlayerController player = null!;
     public Transform viewfinder = null!;
     private SpriteRenderer viewfinderSR = null!;
-    private AyaCameraFreezeHelper freezeHelper = null!;
     public SpriteRenderer flash = null!;
     public TextMeshPro text = null!;
     public Color textUnfilledColor;
@@ -108,7 +107,6 @@ public class AyaCamera : BehaviorEntity {
         lowCameraLayer = LayerMask.NameToLayer("LowEffects");
         highCameraLayer = LayerMask.NameToLayer("TransparentFX");
         viewfinderSR = viewfinder.GetComponent<SpriteRenderer>();
-        freezeHelper = GetComponent<AyaCameraFreezeHelper>();
         flash.enabled = false;
     }
 
@@ -182,14 +180,12 @@ public class AyaCamera : BehaviorEntity {
         new CRect(location.x, location.y, CameraHalfBounds.x * scale, CameraHalfBounds.y * scale, angle);
     private IEnumerator UpdateFire() {
         CameraState = State.FIRING;
-        var slowdownToken = ETime.Slowdown.CreateModifier(0.5f, MultiOp.Priority.CLEAR_SCENE);
+        using var slowdownToken = ETime.Slowdown.AddConst(0.5f);
         viewfinder.gameObject.layer = highCameraLayer;
         var sfx = ServiceLocator.SFXService.RequestSource(whileFire);
         void Cancel() {
-            if (sfx != null) {
+            if (sfx != null)
                 sfx.Stop();
-            }
-            slowdownToken.TryRevoke();
         }
         for (float t = 0f; t < cameraLerpDownTime; t += ETime.FRAME_TIME) {
             float scale = Mathf.Lerp(cameraFireSize, 1f, M.EInSine(t / cameraLerpDownTime));
@@ -226,11 +222,6 @@ public class AyaCamera : BehaviorEntity {
         RunDroppableRIEnumerator(UpdateNormal());
     }
 
-    private void TakePicture_Freeze(float scale) {
-        var token = EngineStateManager.RequestState(EngineState.EFFECT_PAUSE);
-        tokens.Add(token);
-        WaitingUtils.WaitThenCB(freezeHelper, Cancellable.Null, freezeTime, false, () => token.MarkForDeletion());
-    }
     private bool TakePicture_Enemies(float scale) {
         var vf = ViewfinderRect(scale);
         var enemies = Enemy.FrozenEnemies;
@@ -250,7 +241,6 @@ public class AyaCamera : BehaviorEntity {
     public static readonly IBSubject<(AyaPhoto photo, bool success)> PhotoTaken 
         = new Event<(AyaPhoto, bool)>();
     private IEnumerator TakePictureAndRefractor(float scale) {
-        TakePicture_Freeze(scale);
         Vector2? targetLoc = null;
         var success = TakePicture_Enemies(scale);
         viewfinderSR.enabled = false;
@@ -265,7 +255,9 @@ public class AyaCamera : BehaviorEntity {
         pphoto.Initialize(photo, location, targetLoc);
         viewfinderSR.enabled = true;
         text.enabled = true;
-        freezeHelper.RunDroppableRIEnumerator(DoFlash(flashTime, success));
+        var freezer = ServiceLocator.Find<FreezeFrameHelper>();
+        freezer.CreateFreezeFrame(freezeTime);
+        freezer.RunDroppableRIEnumerator(DoFlash(flashTime, success));
         //Wait until after the freeze to delete bullets
         yield return null;
         TakePicture_Delete(scale);

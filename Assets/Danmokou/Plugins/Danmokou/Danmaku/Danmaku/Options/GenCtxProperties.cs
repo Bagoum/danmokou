@@ -159,12 +159,9 @@ public class GenCtxProperty {
     /// <returns></returns>
     public static GenCtxProperty Sequential() => new SequentialFlag();
     /// <summary>
-    /// When executing a function with multiple children,
-    /// instead of executing all of them simultaneously,
-    /// execute only the one given by the indexer.
+    /// Instead of executing all children simultaneously,
+    /// execute only the one at the index given by the indexer.
     /// </summary>
-    /// <param name="indexer"></param>
-    /// <returns></returns>
     public static GenCtxProperty Alternate(GCXF<float> indexer) => new AlternateProp(indexer);
     /// <summary>
     /// Causes all objects to be summoned in world space relative to an origin.

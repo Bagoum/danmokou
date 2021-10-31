@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using UnityEngine;
 using System.Linq.Expressions;
+using BagoumLib.Expressions;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Expressions;
@@ -144,10 +145,10 @@ public static partial class ExM {
     /// </summary>
     /// <returns></returns>
     public static Ex P1M(int mod, Ex t) {
-        if (t.Type == typeof(float)) {
-            Ex m = ExC((float) mod);
-            return Ex.Divide(Ex.Subtract(t, Ex.Modulo(t, m)), m);
-        } else return Ex.Convert(Ex.Divide(t, ExC(mod)), typeof(float));
+        return t.As<int>().Div(ExC(mod)).As<float>();
+    }
+    public static Ex P1M(Ex mod, Ex t) {
+        return t.As<int>().Div(mod.As<int>()).As<float>();
     }
 
     /// <summary>
@@ -160,10 +161,11 @@ public static partial class ExM {
     /// </summary>
     /// <returns></returns>
     public static Ex P2M(int mod, Ex t) {
-        bool isFloat = t.Type == typeof(float);
-        Ex m = isFloat ? ExC((float) mod) : ExC(mod);
-        Ex modded_t = Ex.Modulo(t, m);
-        return isFloat ? modded_t : Ex.Convert(modded_t, typeof(float));
+        return Ex.Modulo(t.As<int>(), ExC(mod)).As<float>();
+    }
+    
+    public static Ex P2M(Ex mod, Ex t) {
+        return Ex.Modulo(t.As<int>(), mod.As<int>()).As<float>();
     }
     /// <summary>
     /// When two firing indices have been combined via modular or additive parametrization (see <see cref="Core.Parametrization"/>), this retrieves the firing index of any point in the chain.
@@ -175,18 +177,19 @@ public static partial class ExM {
     /// <returns></returns>
     public static Ex PM(int self, int children, Ex t) {
         if (self == 0) self = SHIFT;
-        if (t.Type == typeof(float)) {
-            Ex m = ExC((float) children);
-            var divided = Ex.Divide(Ex.Subtract(t, Ex.Modulo(t, m)), m);
-            return Ex.Modulo(divided, ExC((float)self));
-        } else return Ex.Modulo(Ex.Divide(t, ExC(children)), ExC(self)).As<float>();
+        return Ex.Modulo(t.As<int>().Div(ExC(children)), ExC(self)).As<float>();
+    }
+    
+    public static Ex PM(Ex self, Ex children, Ex t) {
+        if (self is ConstantExpression {Value: int smod} && smod == 0) 
+            self = ExC(SHIFT);
+        return Ex.Modulo(t.As<int>().Div(children.As<int>()), self.As<int>()).As<float>();
     }
     public static int __Combine(int x, int y, int mod = SHIFT) {
         return (x * mod) + y;
     }
-    
-    
-    
+
+
     #endregion
 
     #region RNG
@@ -204,7 +207,7 @@ public static partial class ExM {
     /// Randomly returns either -1 or 1.
     /// </summary>
     public static tfloat Randpm1() => Ex.Condition(Rand(EN1, E1).GT0(), E1, EN1);
-    private static readonly ExFunction SeedRandInt = Wrap(typeof(RNG), "GetSeededFloat", new[] {typeof(float), typeof(float), typeof(int)});
+    private static readonly ExFunction SeedRandInt = ExFunction.Wrap(typeof(RNG), "GetSeededFloat", new[] {typeof(float), typeof(float), typeof(int)});
     /// <summary>
     /// Returns a pseudorandom value based on the seed function.
     /// The seed function only has integer discrimination.
@@ -522,7 +525,8 @@ public static partial class ExM {
     /// </summary>
     public static ExBPY PlayerUnFiringFocusT(Func<TExArgCtx, TEx<PlayerController>> p) => tac => p(tac).Field("UnFiringTimeFocus");
     
-    public static tfloat PlayerID() =>PlayerController.playerID;
+    public static ExBPY PlayerID(Func<TExArgCtx, TEx<PlayerController>> p) =>
+        tac => PlayerController.playerID.InstanceOf(p(tac));
 
     public static ExBPY PlayerLerpFreeToFocus(Func<TExArgCtx, TEx<PlayerController>> p, ExBPY over) => 
         tac => Clamp01(PlayerFocusT(p)(tac).Div(over(tac)));

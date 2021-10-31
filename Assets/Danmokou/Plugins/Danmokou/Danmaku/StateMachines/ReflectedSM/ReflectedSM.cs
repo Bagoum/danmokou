@@ -83,7 +83,7 @@ if (> t &fadein,
             float fadein = Mathf.Max(0.15f, homesec / 5f);
             _ = Sync(style, _ => V2RV2.Zero, SyncPatterns.Loc0(Summon(path,
                 new ReflectableLASM(smh2 => {
-                    smh2.Exec.Displayer.FadeSpriteOpacity(bpi => CrosshairOpacity.Value(fadein, homesec, sticksec, bpi),
+                    smh2.Exec.DisplayerOrThrow.FadeSpriteOpacity(bpi => CrosshairOpacity.Value(fadein, homesec, sticksec, bpi),
                         homesec + sticksec, smh2.cT, GetAwaiter(out Task t));
                     return t;
                 }), new BehOptions())))(smh);
@@ -95,7 +95,7 @@ if (> t &fadein,
     }
 
     public static TaskPattern dZaWarudo(GCXF<float> time) => ZaWarudo(time, _ => Vector2.zero, null, null, _ => 20);
-    public static TaskPattern ZaWarudo(GCXF<float> time, GCXF<Vector2> loc, GCXF<float>? t1r, GCXF<float>? t2r, GCXF<float> scale) => smh => {
+    public static TaskPattern ZaWarudo(GCXF<float> time, GCXF<Vector2> loc, GCXF<float>? t1r, GCXF<float>? t2r, GCXF<float> scale) => async smh => {
         float t = time(smh.GCX);
         ServiceLocator.SFXService.Request("x-zawarudo");
         var anim = Object.Instantiate(ResourceManager.GetSummonable("negative")).GetComponent<ScaleAnimator>();
@@ -103,10 +103,11 @@ if (> t &fadein,
         anim.AssignScales(0, scale(smh.GCX), 0);
         anim.AssignRatios(t1r?.Invoke(smh.GCX), t2r?.Invoke(smh.GCX));
         anim.Initialize(smh.cT, t);
-        var controlToken = PlayerController.AllControlDisabler.CreateToken1(MultiOp.Priority.CLEAR_PHASE);
+        using var token = ServiceLocator.FindAll<PlayerController>()
+            .SelectDisposable(p => p.AllControlEnabled.AddConst(false));
         foreach (var player in ServiceLocator.FindAll<PlayerController>())
             player.MakeInvulnerable((int)(t * 120), false);
-        return WaitingUtils.WaitFor(smh, t, false).ContinueWithSync(() => controlToken.TryRevoke());
+        await WaitingUtils.WaitFor(smh, t, false);
     };
 
     #endregion
@@ -170,7 +171,7 @@ if (> t &fadein,
     /// </summary>
     public static TaskPattern SeijaX(float degrees, float time) {
         return smh => {
-            ServiceLocator.Find<IShaderCamera>().AddXRotation(degrees, time);
+            smh.Context.PhaseObjects.Add(ServiceLocator.Find<IShaderCamera>().AddXRotation(degrees, time));
             return Task.CompletedTask;
         };
     }
@@ -180,7 +181,7 @@ if (> t &fadein,
     /// </summary>
     public static TaskPattern SeijaY(float degrees, float time) {
         return smh => {
-            ServiceLocator.Find<IShaderCamera>().AddYRotation(degrees, time);
+            smh.Context.PhaseObjects.Add(ServiceLocator.Find<IShaderCamera>().AddYRotation(degrees, time));
             return Task.CompletedTask;
         };
     }
@@ -308,16 +309,6 @@ if (> t &fadein,
     }
 
     /// <summary>
-    /// Whenever an event is triggered, run the child.
-    /// </summary>
-    public static TaskPattern EventListen(Events.Event0 ev, StateMachine exec) => async smh => {
-        var dm = ev.Subscribe(() => exec.Start(smh));
-        await WaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, 0f, true);
-        dm.MarkForDeletion();
-        smh.ThrowIfCancelled();
-    };
-
-    /// <summary>
     /// Play a sound.
     /// </summary>
     public static TaskPattern SFX(string sfx) => smh => {
@@ -340,27 +331,21 @@ if (> t &fadein,
     /// <summary>
     /// Apply a controller function to individual entities.
     /// </summary>
-    [GAlias(typeof(BulletManager.exBulletControl), "BulletControl")]
-    [GAlias(typeof(BehaviorEntity.exBEHControl), "BEHControl")]
-    [GAlias(typeof(CurvedTileRenderLaser.exLaserControl), "LaserControl")]
+    [GAlias(typeof(BulletManager.cBulletControl), "BulletControl")]
+    [GAlias(typeof(BehaviorEntity.cBEHControl), "BEHControl")]
+    [GAlias(typeof(CurvedTileRenderLaser.cLaserControl), "LaserControl")]
     public static TaskPattern ParticleControl<CF>(Pred persist, BulletManager.StyleSelector style, CF control) {
         return smh => {
-            if (control is BehaviorEntity.exBEHControl bc)
+            if (control is BehaviorEntity.cBEHControl bc)
                 BehaviorEntity.ControlPool(persist, style, bc, smh.cT);
-            else if (control is CurvedTileRenderLaser.exLaserControl lc)
+            else if (control is CurvedTileRenderLaser.cLaserControl lc)
                 CurvedTileRenderLaser.ControlPool(persist, style, lc, smh.cT);
-            else if (control is BulletManager.exBulletControl pc)
+            else if (control is BulletManager.cBulletControl pc)
                 BulletManager.ControlPool(persist, style, pc, smh.cT);
             else throw new Exception("Couldn't realize bullet-control type");
             return Task.CompletedTask;
         };
     }
-
-    //generics aren't generated correctly in il2cpp
-    public static TaskPattern ControlBullet(Pred persist, BulletManager.StyleSelector style, BulletManager.exBulletControl control) => smh => {
-        BulletManager.ControlPool(persist, style, control, smh.cT);
-        return Task.CompletedTask;
-    };
 
     /// <summary>
     /// Apply a controller function to a pool of entities.
@@ -370,11 +355,11 @@ if (> t &fadein,
     [GAlias(typeof(LPCF), "LaserPoolControl")]
     public static TaskPattern PoolControl<CF>(BulletManager.StyleSelector style, CF control) => smh => {
         if      (control is BehPF bc) 
-            BehaviorEntity.ControlPool(style, bc, smh.cT);
+            smh.Context.PhaseObjects.Add(BehaviorEntity.ControlPool(style, bc, smh.cT));
         else if (control is LPCF lc) 
-            CurvedTileRenderLaser.ControlPool(style, lc, smh.cT);
+            smh.Context.PhaseObjects.Add(CurvedTileRenderLaser.ControlPool(style, lc, smh.cT));
         else if (control is SPCF pc) 
-            BulletManager.ControlPool(style, pc, smh.cT);
+            smh.Context.PhaseObjects.Add(BulletManager.ControlPool(style, pc, smh.cT));
         else throw new Exception("Couldn't realize pool-control type");
         return Task.CompletedTask;
     };
@@ -533,12 +518,12 @@ if (> t &fadein,
     };
     
     public static TaskPattern FadeSprite(BPY fader, GCXF<float> time) => smh => {
-        smh.Exec.Displayer.FadeSpriteOpacity(fader, time(smh.GCX), smh.cT, GetAwaiter(out Task t));
+        smh.Exec.DisplayerOrThrow.FadeSpriteOpacity(fader, time(smh.GCX), smh.cT, GetAwaiter(out Task t));
         return t;
     };
 
     public static TaskPattern Scale(BPY scaler, GCXF<float> time) => smh => {
-        smh.Exec.Displayer.Scale(scaler, time(smh.GCX), smh.cT, GetAwaiter(out Task t));
+        smh.Exec.DisplayerOrThrow.Scale(scaler, time(smh.GCX), smh.cT, GetAwaiter(out Task t));
         return t;
     };
     
@@ -547,29 +532,21 @@ if (> t &fadein,
     #region Slowdown
 
     /// <summary>
-    /// Create a global slowdown effect.
+    /// Create a global slowdown effect. Note this will only reset when the nesting context (usually a phase)
+    ///  is cancelled.
     /// </summary>
     public static TaskPattern Slowdown(GCXF<float> ratio) => smh => {
-        ETime.Slowdown.CreateModifier(ratio(smh.GCX), MultiOp.Priority.CLEAR_PHASE);
+        smh.Context.PhaseObjects.Add(ETime.Slowdown.AddConst(ratio(smh.GCX)));
         return Task.CompletedTask;
     };
     /// <summary>
     /// Create a global slowdown effect for a limited amount of time.
     /// </summary>
-    public static TaskPattern SlowdownFor(GCXF<float> time, GCXF<float> ratio) => async smh => {
-        var t = ETime.Slowdown.CreateModifier(ratio(smh.GCX), MultiOp.Priority.CLEAR_PHASE);
-        await WaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, time(smh.GCX), false);
-        t.TryRevoke();
+    public static TaskPattern SlowdownFor(Synchronizer time, GCXF<float> ratio) => async smh => {
+        using var t = ETime.Slowdown.AddConst(ratio(smh.GCX));
+        await time(smh);
     };
 
-    /// <summary>
-    /// Reset the global slowdown to 1.
-    /// </summary>
-    public static TaskPattern SlowdownReset() => smh => {
-        ETime.Slowdown.RevokeAll(MultiOp.Priority.CLEAR_PHASE);
-        return Task.CompletedTask;
-    };
-    
     #endregion
     
     #region Shortcuts
@@ -609,7 +586,8 @@ if (> t &fadein,
             var joint_smh = smh.CreateJointCancellee(out var fireCTS);
             //order is important to ensure cancellation works on the correct frame
             var waiter = WaitingUtils.WaitForUnchecked(o, smh.cT, () => !o.Player.IsFiring || !inputReq());
-            _ = firer.Start(joint_smh);
+            //ContinueWithSync prints error logs
+            _ = firer.Start(joint_smh).ContinueWithSync(() => { });
             await waiter;
             fireCTS.Cancel();
             smh.ThrowIfCancelled();
@@ -624,7 +602,7 @@ if (> t &fadein,
             var joint_smh = smh.CreateJointCancellee(out var fireCTS);
             //order is important to ensure cancellation works on the correct frame
             var waiter = WaitingUtils.WaitForUnchecked(o, smh.cT, () => !o.Player.IsFiring);
-            _ = fire.Start(joint_smh);
+            _ = fire.Start(joint_smh).ContinueWithSync(() => { });
             await waiter;
             fireCTS.Cancel();
             smh.ThrowIfCancelled();

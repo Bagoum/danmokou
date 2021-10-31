@@ -5,13 +5,13 @@ These are verbose instructions on how to set up Danmokou on your first run.
 ## Part 0: Check Your Files
 
 - Download Danmokou. You can simply run `git clone https://github.com/Bagoum/danmokou.git`, or you can (NOT RECOMMENDED) download the engine as a zip from [the repo](https://github.com/Bagoum/danmokou). 
-- (Optional) If you are using git, run `git submodule update --init --recursive`. This will import code from SiMP and my challenge-scene game jam project, which are both fully structured games that serve as good reference. If you are not using git, you can download them manually from the repos and place them in [Assets/SiMP](https://github.com/Bagoum/danmokou-simp) and [Assets/BRuH](https://github.com/Bagoum/danmokou-bruh) respectively. 
+- Run `git submodule update --init --recursive`. This will import code from several submodules, including SiMP, which is a fully structured game you can reference, and SuzunoyaUnity, which is a visual novel engine that powers the dialogue system. If you are not using git, you can download them manually from the repos and place them in the Assets folder directly. Look for the blue links in this folder: https://github.com/Bagoum/danmokou/tree/master/Assets .
   -  (Note: the Yukari/Junko script in Assets/MiniProjects has some dependencies on the SiMP repository.)
 
 ## Part 1: Unity Setup
 
 - Download/Install Unity Hub (https://store.unity.com/download-nuo), then run it
-- Within Unity Hub > Installs, add Unity version **2020.2.7f1** (Do **not** use 2021 or 2019).
+- Within Unity Hub > Installs, add Unity version **2020.3** (Do **not** use 2019. 2021 might work.)
 - Within Unity Hub > Projects, click ADD and browse to the root Danmokou folder. 
 - Click on the project to load it. **The first time you load it, Unity may take several minutes to import resources.**
   - If you get an error about the default layout, then close Unity, move the three `.dwlt` files in the `DMK_DEFAULTS` folder to the `Library` folder, and open Unity.
@@ -22,7 +22,7 @@ These are verbose instructions on how to set up Danmokou on your first run.
 
 - At the top of the game view, you should see three text boxes, saying something like: `Display 1 | Resolution | Scale ----`. Click on the second box, which shows the resolution of the game view. Either set it to the aspect ratio 16x9, or manually input a resolution at the bottom with 16x9 ratio. Also set the "Vsync" checkbox to true.
 - You should still be in Assets/Danmokou/Scenes/BasicSceneOPENME. Go to the Hierarchy window (by default on the left side) and click on the "mokou-boss" object.
-- The Inspector window (by default on the right side) will open up and list all the components on the object. The important component here is `Boss BEH`. Look under Boss BEH for the variable named "Behavior Script". To the right of it, you should see a text file titled "DMK Tutorial Setup 00". Double click this file.
+- The Inspector window (by default on the right side) will open up and list all the components on the object. The important component here is `Boss BEH`. Look under Boss BEH for the variable named "Behavior Script". To the right of it, you should see a text file titled "DMK Tutorial Setup 00". Double-click this file.
 - Your text editor should now open the file. It should have the following contents:
 
 ```python

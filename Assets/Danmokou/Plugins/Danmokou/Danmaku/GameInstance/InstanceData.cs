@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reactive;
 using System.Reactive.Subjects;
 using BagoumLib;
 using BagoumLib.Cancellation;
@@ -20,22 +21,22 @@ namespace Danmokou.GameInstance {
 public class InstanceData {
     #region StaticEvents
     
-    public readonly Events.Event0 UselessPowerupCollected = new Events.Event0();
-    public readonly Events.Event0 TeamUpdated = new Events.Event0();
-    public readonly Events.Event0 PlayerTookHit = new Events.Event0();
+    public readonly Event<Unit> UselessPowerupCollected = new Event<Unit>();
+    public readonly Event<Unit> TeamUpdated = new Event<Unit>();
+    public readonly Event<Unit> PlayerTookHit = new Event<Unit>();
     public readonly Event<CardRecord> CardHistoryUpdated = new Event<CardRecord>();
-    public readonly Events.Event0 MeterBecameUsable = new Events.Event0();
-    public readonly Events.Event0 PowerLost = new Events.Event0();
-    public readonly Events.Event0 PowerGained = new Events.Event0();
-    public readonly Events.Event0 PowerFull = new Events.Event0();
-    public readonly Events.Event0 AnyExtendAcquired = new Events.Event0();
-    public readonly Events.Event0 ItemExtendAcquired = new Events.Event0();
-    public readonly Events.Event0 ScoreExtendAcquired = new Events.Event0();
+    public readonly Event<Unit> MeterBecameUsable = new Event<Unit>();
+    public readonly Event<Unit> PowerLost = new Event<Unit>();
+    public readonly Event<Unit> PowerGained = new Event<Unit>();
+    public readonly Event<Unit> PowerFull = new Event<Unit>();
+    public readonly Event<Unit> AnyExtendAcquired = new Event<Unit>();
+    public readonly Event<Unit> ItemExtendAcquired = new Event<Unit>();
+    public readonly Event<Unit> ScoreExtendAcquired = new Event<Unit>();
     public readonly Event<PhaseCompletion> PhaseCompleted = new Event<PhaseCompletion>();
-    public readonly Events.Event0 LifeSwappedForScore = new Events.Event0();
+    public readonly Event<Unit> LifeSwappedForScore = new Event<Unit>();
 
-    public readonly Events.Event0 GameOver = new Events.Event0();
-    public readonly Events.Event0 PracticeSuccess = new Events.Event0();
+    public readonly Event<Unit> GameOver = new Event<Unit>();
+    public readonly Event<Unit> PracticeSuccess = new Event<Unit>();
     
     #endregion
     
@@ -52,7 +53,7 @@ public class InstanceData {
     public Evented<double> PIV { get; }
     public double Faith { get; private set; }
     private double faithLenience;
-    public readonly MultiMultiplierD externalFaithDecayMultiplier = new MultiMultiplierD(1, null);
+    public readonly DisturbedEvented<float> externalFaithDecayMultiplier = new DisturbedProduct<float>(1);
     public double Meter { get; private set; }
     public int Continues { get; private set; }
     public int ContinuesUsed { get; private set; } = 0;
@@ -78,7 +79,7 @@ public class InstanceData {
     
     public CardHistory CardHistory { get; }
 
-    public readonly MultiAdder Lenience = new MultiAdder(0, null);
+    public readonly DisturbedOr Lenient = new DisturbedOr();
     public BehaviorEntity? CurrentBoss { get; private set; }
     private ICancellee? CurrentBossCT { get; set; }
 
@@ -117,7 +118,6 @@ public class InstanceData {
     private double FaithDecayRateMultiplier => (CurrentBoss != null ? 0.666f : 1f) * externalFaithDecayMultiplier.Value;
     private double FaithLenienceGraze => M.Lerp(0, 3, Difficulty.Counter, 0.42, 0.3);
     private double FaithBoostGraze => M.Lerp(0, 3, Difficulty.Counter, 0.033, 0.02);
-    public bool Lenient => Lenience.Value > 0;
     public bool MeterEnabled => MeterMechanicEnabled && Difficulty.meterEnabled;
     public bool EnoughMeterToUse => MeterEnabled && Meter >= meterUseThreshold;
     private double MeterBoostGraze => M.Lerp(0, 3, Difficulty.Counter, 0.010, 0.006);
@@ -239,7 +239,7 @@ public class InstanceData {
         AddLives(-1, false);
         if (usePIVMultiplier) score = (long) (score * PIV);
         AddScore(score);
-        LifeSwappedForScore.Proc();
+        LifeSwappedForScore.OnNext(default);
     }
     public void AddLives(int delta, bool asHit = true) {
         //if (mode == CampaignMode.NULL) return;
@@ -251,7 +251,7 @@ public class InstanceData {
             AddPower(powerDeathLoss);
             Meter = 1;
             AddRankPoints(RankManager.RankPointsDeath);
-            PlayerTookHit.Proc();
+            PlayerTookHit.OnNext(default);
         }
         if (delta < 0 && mode.OneLife()) 
             Lives.Value = 0;
@@ -273,7 +273,7 @@ public class InstanceData {
                 }
                 SaveData.r.RecordGame(new InstanceRecord(Request, this, false));
             }
-            GameOver.Proc();
+            GameOver.OnNext(default);
         }
     }
 
@@ -285,7 +285,7 @@ public class InstanceData {
     public void AddFaith(double delta) => Faith = M.Clamp(0, 1, Faith + delta * Difficulty.faithAcquireMultiplier);
     public void AddFaithLenience(double time) => faithLenience = Math.Max(faithLenience, time);
 
-    public void UpdateFaithFrame() {
+    public void UpdatePlayerFrame() {
         if (!Lenient) {
             if (faithLenience > 0) {
                 faithLenience = Math.Max(0, faithLenience - ETime.FRAME_TIME);
@@ -298,6 +298,10 @@ public class InstanceData {
                 faithLenience = faithLenienceFall;
             }
         }
+        if (++PlayerActiveFrames % ETime.ENGINEFPS == 0) {
+            //note that this needs to be guarded by the if mode == .NULL check to avoid rank increases on eg. the main menu...
+            AddRankPoints(RankManager.RankPointsPerSecond);
+        }
     }
     
     #region Meter
@@ -306,7 +310,7 @@ public class InstanceData {
         var belowThreshold = !EnoughMeterToUse;
         Meter = M.Clamp(0, 1, Meter + delta * Difficulty.meterAcquireMultiplier);
         if (belowThreshold && EnoughMeterToUse && source.State != PlayerController.PlayerState.WITCHTIME) {
-            MeterBecameUsable.Proc();
+            MeterBecameUsable.OnNext(default);
         }
     }
 
@@ -338,10 +342,10 @@ public class InstanceData {
         var prevPower = Power;
         Power.Value = M.Clamp(powerMin, powerMax, Power + delta);
         //1.95 is effectively 1, 2.00 is effectively 2
-        if (Power < prevFloor) PowerLost.Proc();
+        if (Power < prevFloor) PowerLost.OnNext(default);
         if (prevPower < prevCeil && Power >= prevCeil) {
-            if (Power >= powerMax) PowerFull.Proc();
-            else PowerGained.Proc();
+            if (Power >= powerMax) PowerFull.OnNext(default);
+            else PowerGained.OnNext(default);
         }
     }
 
@@ -358,7 +362,7 @@ public class InstanceData {
 
     public void FullPower() {
         Power.Value = powerMax;
-        PowerFull.Proc();
+        PowerFull.OnNext(default);
     }
     public void AddGraze(int delta, PlayerController source) {
         Graze.Value += delta;
@@ -413,7 +417,7 @@ public class InstanceData {
         if (nextItemLifeIndex < pointLives.Length && LifeItems >= pointLives[nextItemLifeIndex]) {
             ++nextItemLifeIndex;
             LifeExtend();
-            ItemExtendAcquired.Proc();
+            ItemExtendAcquired.OnNext(default);
         }
     }
     
@@ -455,15 +459,16 @@ public class InstanceData {
 
     public void LifeExtend() {
         ++Lives.Value;
-        AnyExtendAcquired.Proc();
+        AnyExtendAcquired.OnNext(default);
     }
 
     public void PhaseEnd(PhaseCompletion pc) {
-        if (pc.props.phaseType?.IsCard() == true && pc.props.Boss != null && pc.CaptureStars.Try(out var captured)) {
+        if (pc.phase.Props.phaseType?.IsCard() == true && pc.phase.Boss != null && 
+            pc.CaptureStars.Try(out var captured)) {
             var crec = new CardRecord() {
                 campaign = campaignKey,
-                boss = pc.props.Boss.key,
-                phase = pc.props.Index,
+                boss = pc.phase.Boss.key,
+                phase = pc.phase.Index,
                 stars = captured,
                 hits = pc.hits,
                 method = pc.clear
@@ -472,7 +477,7 @@ public class InstanceData {
             AddRankPoints(RankManager.RankPointsForCard(crec));
             CardHistoryUpdated.OnNext(crec);
         }
-        if (pc.props.phaseType?.IsPattern() ?? false) AddFaithLenience(faithLeniencePhase);
+        if (pc.phase.Props.phaseType?.IsPattern() ?? false) AddFaithLenience(faithLeniencePhase);
 
         PhaseCompleted.OnNext(pc);
     }
@@ -484,7 +489,7 @@ public class InstanceData {
             ++nextScoreLifeIndex;
             LifeExtend();
             AddRankPoints(RankManager.RankPointsScoreExtend);
-            ScoreExtendAcquired.Proc();
+            ScoreExtendAcquired.OnNext(default);
         }
     }
 
@@ -499,12 +504,6 @@ public class InstanceData {
         ++TotalFrames;
         if (CurrentBossCT?.Cancelled == true) {
             CloseBoss();
-        }
-        if (PlayerController.PlayerActive) {
-            if (++PlayerActiveFrames % ETime.ENGINEFPS == 0) {
-                //note that this needs to be guarded by the if mode == .NULL check to avoid rank increases on eg. the main menu...
-                AddRankPoints(RankManager.RankPointsPerSecond);
-            }
         }
 
         VisibleScore.Update(ETime.FRAME_TIME);

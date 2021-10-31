@@ -58,7 +58,7 @@ public class AudioTrackService : CoroutineRegularUpdater, IAudioTrackService {
             else
                 ClearAllAudio();
         });
-        Listen(Events.EngineStateChanged, HandleEngineStateChange);
+        Listen(EngineStateManager.EvState, HandleEngineStateChange);
         Listen(InstanceRequest.InstanceRestarted, ir => {
             if (ir.Mode.PreserveReloadAudio())
                 preserveBGMOnNextScene = true;

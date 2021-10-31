@@ -16,23 +16,26 @@ public static class Logs {
 
     public static readonly ISubject<LogMessage> DMKLogs = new Event<LogMessage>();
 
-    private static StreamWriter? file;
+    private static readonly string logFile;
+    private static StreamWriter? fileStream;
     private const string LOGDIR = "DMK_Logs/";
     private static readonly List<IDisposable> listeners = new List<IDisposable>();
 
     static Logs() {
         if (!Application.isPlaying) return;
         var d = DateTime.Now;
-        var log = $"{LOGDIR}log_{d.Year}-{d.Month}-{d.Day}-{d.Hour}-{d.Minute}-{DateTime.Now.Second}.log";
-        FileUtils.CheckDirectory(log);
-        file = new StreamWriter(log);
+        logFile = $"{LOGDIR}log_{d.Year}-{d.Month}-{d.Day}-{d.Hour}-{d.Minute}-{DateTime.Now.Second}.log";
+        FileUtils.CheckDirectory(logFile);
+        fileStream = new StreamWriter(logFile);
         listeners.Add(Logging.Logs.Subscribe(PrintToUnityLog));
         listeners.Add(DMKLogs.Subscribe(PrintToUnityLog));
+        Log($"Opened log file {logFile}.");
     }
 
     public static void CloseLog() {
-        file?.Close();
-        file = null;
+        Log($"Closing log file {logFile}.");
+        fileStream?.Close();
+        fileStream = null;
         foreach (var t in listeners)
             t.Dispose();
         listeners.Clear();
@@ -63,7 +66,7 @@ public static class Logs {
         
         LogOption lo = (lm.ShowStackTrace == false) ? LogOption.NoStacktrace : LogOption.None;
         LogType unityLT = LogType.Log;
-        file?.WriteLine(msg);
+        fileStream?.WriteLine(msg);
         if (lm.Level == LogLevel.WARNING) 
             unityLT = LogType.Warning;
         if (lm.Level == LogLevel.ERROR) {

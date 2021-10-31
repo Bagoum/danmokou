@@ -92,7 +92,6 @@ GameObject:
   m_Component:
   - component: {fileID: 8581214160010154702}
   - component: {fileID: 8581214160010154700}
-  - component: {fileID: 467905851354746557}
   m_Layer: 17
   m_Name: AyaCamera
   m_TagString: Untagged
@@ -164,18 +163,6 @@ MonoBehaviour:
   cameraFireControlSpeed: 4
   freezeTime: 0.4
   flashTime: 0.5
---- !u!114 &467905851354746557
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8581214160010154699}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 64f8432fc153402a846a64641fb22739, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &8581214160018099303
 GameObject:
   m_ObjectHideFlags: 0

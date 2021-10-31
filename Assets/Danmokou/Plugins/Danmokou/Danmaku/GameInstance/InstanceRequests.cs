@@ -306,6 +306,7 @@ public class InstanceRequest {
             () => {
                 var beh = UnityEngine.Object.Instantiate(b.boss).GetComponent<BehaviorEntity>();
                 beh.phaseController.Override(ab.phase.index, tracker.Guard(() => WaitThenFinishAndPostReplay()));
+                beh.Enemy.SetHPBarColors(ab.phase.type);
                 beh.RunSMFromScript(b.stateMachine);
             }));
     }
@@ -341,7 +342,7 @@ public class InstanceRequest {
     
     public static bool PracticeSuccess(InstanceData d) {
         if (SceneIntermediary.LOADING) return false;
-        d.PracticeSuccess.Proc();
+        d.PracticeSuccess.OnNext(default);
         return true;
     }
     public static bool ViewReplay(Replay r) {

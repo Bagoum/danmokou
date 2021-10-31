@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using BagoumLib.Expressions;
 using GCP = Danmokou.Danmaku.Options.GenCtxProperty;
 using Danmokou.Danmaku.Options;
 using Danmokou.DataHoist;

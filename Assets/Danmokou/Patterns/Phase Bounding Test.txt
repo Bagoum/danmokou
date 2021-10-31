@@ -1,0 +1,45 @@
+<#> warnprefix
+pattern({
+	boss simp.shinki
+ })
+phase(0)
+	paction(0)
+		shift-phase-to(1)
+	
+<!> type(non, `p1`)
+##<!> photo(2)
+<!> hp 20000
+phase(0)
+	paction 0
+		async arrow-* <0.5;:> gcr2 60 _ <> {
+		} gsr2c 20 {
+			color { blue/w recolor/ }
+		} s tprot cx 1
+		async lightning-yellow/w <0.3;:> gcr2 240 _ <> {
+		} gsr2c 7 {
+		} pather 1 1 tprot cx 2 {
+		}
+		pool-control arrow-blue/w allowdelete false
+		##pool-control arrow-blue/w cullrad 0
+		pool-control arrow-blue/w allowcull false
+		pool-control arrow-blue/w tint rgba(1, 1, 1, 0.6)
+		##slowdown 2
+		_ 2 
+			pool-control arrow-blue/w tint rgba(1, 1, 1, 0.3)
+		pool-control arrow-recolor/ recolor palette(red, d) palette(blue, w)
+		beh-pool-control lightning-yellow/w allowcull false
+		
+<!> type(non, `p2 NO CONTROLS`)
+<!> hp(1000)
+phase(0)
+	paction 0
+		async arrow-*/w <0.5;:> gcr2 60 _ <> {
+		} gsr2c 20 {
+			color { blue recolor }
+		} s tprot cx 2
+		async lightning-yellow/w <0.3;:> gcr2 240 _ <> {
+		} gsr2c 7 {
+		} pather 1 1 tprot cx 2 {
+		}
+		
+///

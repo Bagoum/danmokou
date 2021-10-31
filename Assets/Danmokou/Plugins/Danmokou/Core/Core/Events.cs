@@ -4,9 +4,12 @@ using UnityEngine;
 using System;
 using System.Linq.Expressions;
 using System.Reactive;
+using BagoumLib;
 using BagoumLib.DataStructures;
 using BagoumLib.Events;
+using BagoumLib.Expressions;
 using BagoumLib.Functional;
+using BagoumLib.Reflection;
 using Danmokou.Core;
 using Danmokou.Expressions;
 using JetBrains.Annotations;
@@ -16,153 +19,120 @@ namespace Danmokou.Core {
 /// Module for managing events.
 /// </summary>
 public static class Events {
-    public static IDeletionMarker SubscribeOnce(this Event0 ev, Action cb) {
-        IDeletionMarker dm = null!;
-        return dm = ev.Subscribe(() => {
-            dm.MarkForDeletion();
-            cb();
+    public enum RuntimeEventType {
+        Normal,
+        Trigger
+    }
+    private static readonly Dictionary<Type, Dictionary<string, RuntimeEvent>> events = 
+        new Dictionary<Type, Dictionary<string, RuntimeEvent>>();
+    private static readonly Dictionary<string, RuntimeEvent> eventsFlat = 
+        new Dictionary<string, RuntimeEvent>();
+
+    public static Func<IDisposable> CreateRuntimeEventCreator<T>(string name, RuntimeEventType typ) => 
+        () => CreateRuntimeEvent<T>(name, typ, out _);
+
+    public static IDisposable CreateRuntimeEvent<T>(string name, RuntimeEventType typ, out RuntimeEvent<T> ev) {
+        return ev = new RuntimeEvent<T>(name, typ switch {
+            RuntimeEventType.Trigger => new TriggerEvent<T>(),
+            _ => new Event<T>()
         });
     }
-    
-    /// <summary>
-    /// Request this type in reflection to create event objects.
-    /// </summary>
-    /// <typeparam name="E"></typeparam>
-    public readonly struct EventDeclaration<E> {
-        public readonly E ev;
-        private EventDeclaration(E ev) => this.ev = ev;
-        public static implicit operator EventDeclaration<E>(E e) => new EventDeclaration<E>(e);
+
+    public abstract class RuntimeEvent : IDisposable {
+        /// <summary>
+        /// For Event&lt;T&gt;, the type of value should be T.
+        /// </summary>
+        public abstract void TryOnNext(object value);
+        /// <summary>
+        /// For Event&lt;T&gt;, the type of value should be Action&lt;T&gt;.
+        /// </summary>
+        public abstract IDisposable TrySubscribe(object listener);
+
+        public abstract IDisposable SubscribeAny(Action listener);
+
+        public abstract void Dispose();
+
+        /// <summary>
+        /// If this event is a trigger event, then link the given resetter. Otherwise throw.
+        /// </summary>
+        public abstract void TriggerResetWith<T>(IObservable<T> resetter);
+        public abstract void TriggerResetWith(RuntimeEvent resetter);
     }
 
-    /// <summary>
-    /// Events that take zero parameters.
-    /// </summary>
-    [Reflect(typeof(EventDeclaration<Event0>))]
-    public class Event0 : IObservable<Unit> {
-        private static readonly Dictionary<string, List<Event0>> waitingToResolve =
-            new Dictionary<string, List<Event0>>();
-        private static readonly Dictionary<string, Event0> storedEvents = new Dictionary<string, Event0>();
+    public class RuntimeEvent<T> : RuntimeEvent {
+        public static RuntimeEvent<T> Null = new RuntimeEvent<T>("_", NullEvent<T>.Default);
+        public string EvName { get; }
+        public Event<T> Ev { get; }
 
-        private readonly DMCompactingArray<Action> callbacks = new DMCompactingArray<Action>();
-        private DeletionMarker<Action>? refractor = null;
-        private readonly bool useRefractoryPeriod = false;
-        private bool inRefractoryPeriod = false;
-        public Event0() : this(false) { }
-
-        private Event0(bool useRefractoryPeriod) {
-            this.useRefractoryPeriod = useRefractoryPeriod;
+        public RuntimeEvent(string evName, Event<T> ev) {
+            EvName = evName;
+            Ev = ev;
+            events.Add2(typeof(T), EvName, this);
+            eventsFlat[EvName] = this;
+            Logs.Log($"Created runtime event {EvName}", false, LogLevel.DEBUG3);
         }
 
-        private void ListenForReactivation(string reactivator) {
-            if (storedEvents.TryGetValue(reactivator, out Event0 refEvent)) {
-                refractor = refEvent.Subscribe(() => inRefractoryPeriod = false);
-            } else {
-                if (!waitingToResolve.TryGetValue(reactivator, out List<Event0> waiters)) {
-                    waitingToResolve[reactivator] = waiters = new List<Event0>();
+        public override string ToString() => $"{EvName}<{typeof(T).RName()}>";
+
+        public override void TryOnNext(object value) {
+            if (value is T v)
+                Ev.OnNext(v);
+            else
+                throw new Exception(
+                    $"Runtime event {this} was provided with an object of type {value.GetType().RName()}");
+        }
+
+        public override IDisposable TrySubscribe(object listener) =>
+            listener is Action<T> act ?
+                Ev.Subscribe(act) :
+                throw new Exception(
+                    $"Runtime event {this} was provided with a listener of type {listener.GetType().RName()}");
+
+        public override IDisposable SubscribeAny(Action listener) => Ev.Subscribe(_ => listener());
+
+        public override void Dispose() {
+            if (eventsFlat.TryGetValue(EvName, out var ev) && ev == this)
+                eventsFlat.Remove(EvName);
+            if (events.TryGetValue(typeof(T), out var dct))
+                if (dct.TryGetValue(EvName, out ev) && ev == this) {
+                    dct.Remove(EvName);
                 }
-                waiters.Add(this);
-            }
+            Logs.Log($"Disposed runtime event {EvName}", false, LogLevel.DEBUG3);
         }
 
-        /// <summary>
-        /// An event that may trigger repeatedly.
-        /// </summary>
-        /// <param name="name"></param>
-        /// <returns></returns>
-        public static EventDeclaration<Event0> Continuous(string name) {
-            if (storedEvents.ContainsKey(name)) throw new Exception($"Event already declared: {name}");
-            return storedEvents[name] = new Event0(false);
+        public override void TriggerResetWith<T1>(IObservable<T1> resetter) {
+            (Ev as TriggerEvent<T> ?? 
+             throw new Exception($"Runtime event {this} is not a TriggerEvent")).ResetOn(resetter);
         }
 
-        /// <summary>
-        /// An event that will only trigger once.
-        /// </summary>
-        /// <param name="name"></param>
-        /// <returns></returns>
-        public static EventDeclaration<Event0> Once(string name) {
-            if (storedEvents.ContainsKey(name)) throw new Exception($"Event already declared: {name}");
-            return storedEvents[name] = new Event0(true);
+        public override void TriggerResetWith(RuntimeEvent resetter) {
+            var t = (Ev as TriggerEvent<T> ??
+                     throw new Exception($"Runtime event {this} is not a TriggerEvent"));
+            resetter.SubscribeAny(t.Reset);
         }
-
-        /// <summary>
-        /// An event that will trigger once, but may be reset when another event is triggered.
-        /// </summary>
-        /// <param name="name"></param>
-        /// <param name="reactivator"></param>
-        /// <returns></returns>
-        public static EventDeclaration<Event0> Refract(string name, string reactivator) {
-            if (storedEvents.ContainsKey(name)) throw new Exception($"Event already declared: {name}");
-            var ev = storedEvents[name] = new Event0(true);
-            ev.ListenForReactivation(reactivator);
-            if (waitingToResolve.TryGetValue(name, out var waiters)) {
-                for (int ii = 0; ii < waiters.Count; ++ii) waiters[ii].ListenForReactivation(name);
-                waitingToResolve.Remove(name);
-            }
-            return ev;
-        }
-
-        public static Event0 Find(string name) {
-            if (!storedEvents.TryGetValue(name, out var ev)) throw new Exception($"Event not declared: {name}");
-            return ev;
-        }
-
-        public static Event0? FindOrNull(string name) {
-            if (!storedEvents.TryGetValue(name, out var ev)) return null;
-            return ev;
-        }
-
-        private void Publish() {
-            int temp_last = callbacks.Count;
-            for (int ii = 0; ii < temp_last; ++ii) {
-                DeletionMarker<Action> listener = callbacks.Data[ii];
-                if (!listener.MarkedForDeletion) listener.Value();
-            }
-            callbacks.Compact();
-        }
-
-        public void Proc() {
-            if (!inRefractoryPeriod) Publish();
-            if (useRefractoryPeriod) inRefractoryPeriod = true;
-        }
-
-        private static readonly ExFunction proc = ExUtils.Wrap<Event0>("Proc");
-        public Expression exProc() => proc.InstanceOf(Expression.Constant(this));
-
-        public static void Reset() {
-            foreach (var ev in storedEvents.Values) {
-                ev.inRefractoryPeriod = false;
-            }
-        }
-
-        public static void Reset(string[] names) {
-            for (int ii = 0; ii < names.Length; ++ii) {
-                storedEvents[names[ii]].inRefractoryPeriod = false;
-            }
-        }
-
-        public static void DestroyAll() {
-            foreach (var ev in storedEvents.Values) {
-                ev.Destroy();
-            }
-            storedEvents.Clear();
-        }
-
-        private void Destroy() {
-            callbacks.Empty();
-            refractor?.MarkForDeletion();
-        }
-
-        public DeletionMarker<Action> Subscribe(Action cb) => callbacks.Add(cb);
-
-        public IDisposable Subscribe(IObserver<Unit> observer) => 
-            callbacks.Add(() => observer.OnNext(Unit.Default));
     }
 
-    public static readonly IBSubject<EngineState> EngineStateChanged = new Event<EngineState>();
-    public static readonly Event0 PhaseCleared = new Event0();
-    public static readonly Event0 SceneCleared = new Event0();
+    public static RuntimeEvent FindAnyRuntimeEvent(string name) =>
+        eventsFlat.TryGetValue(name, out var ev) ?
+            ev :
+            throw new Exception($"No runtime event of any type by name {name}");
+    public static RuntimeEvent<T> FindRuntimeEvent<T>(string name) =>
+        events.TryGet2(typeof(T), name, out var ev) ? 
+            ((RuntimeEvent<T>)ev) : 
+            throw new Exception($"No runtime event for type {typeof(T).RName()} by name {name}");
+
+    public static void ProcRuntimeEvent<T>(string name, T value) => FindRuntimeEvent<T>(name).Ev.OnNext(value);
+    
+
+    private static readonly Dictionary<Type, ExFunction> exProcRuntimeEventCache = new Dictionary<Type, ExFunction>(); 
+    public static ExFunction exProcRuntimeEvent<T>() => 
+        exProcRuntimeEventCache.TryGetValue(typeof(T), out var v) ? v :
+            exProcRuntimeEventCache[typeof(T)] = 
+                new ExFunction(typeof(Events).GetMethod("ProcRuntimeEvent")!.MakeGenericMethod(typeof(T)));
+    
+    public static readonly Event<Unit> SceneCleared = new Event<Unit>();
 #if UNITY_EDITOR || ALLOW_RELOAD
-    public static readonly Event0 LocalReset = new Event0();
+    public static readonly Event<Unit> LocalReset = new Event<Unit>();
 #endif
 }
 }

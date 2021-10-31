@@ -37,6 +37,7 @@
             #include "Assets/Danmokou/CG/Noise.cginc"
             #include "UnityCG.cginc"
 			#pragma multi_compile __ FANCY
+			#pragma multi_compile_local __ SHADOW_ONLY
 
             struct vertex {
                 float4 loc  : POSITION;
@@ -95,7 +96,7 @@
             float4 shadow = _Shadow;
             shadow *= 1 - smoothstep(_SRI, _SR, rp / _PPU);
             
-            #if defined(FANCY)
+            #if defined(FANCY) && !SHADOW_ONLY
                 float3 srt = float3(r / ISQR2 * _BX, ang * _BY, _T * _Speed);
                 float noise = perlin3Dm(srt, float3(_BX, _BY, 10));
                 float noise2 = perlin3Dm(srt, float3(_BX, _BY, 10 / PHI));

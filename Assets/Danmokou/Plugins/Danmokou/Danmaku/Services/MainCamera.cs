@@ -107,20 +107,19 @@ public class MainCamera : RegularUpdater, IScreenshotter {
         tr = transform;
         position = tr.position;
         ayaMaterial = new Material(ayaShader);
-        ReassignGlobalShaderVariables();
-        if (RenderTo == null) RecreateRT();
+        ReassignGlobalShaderVariables(SaveData.s);
     }
 
-    private void RecreateRT() {
+    private void RecreateRT((int w, int h) res) {
         if (RenderTo != null) RenderTo.Release();
-        RenderTo = RenderHelpers.DefaultTempRT();
+        RenderTo = RenderHelpers.DefaultTempRT(res);
     }
 
     protected override void BindListeners() {
         base.BindListeners();
         RegisterService<IScreenshotter>(this);
 
-        Listen(SaveData.ResolutionChanged, RecreateRT);
+        Listen(RenderHelpers.PreferredResolution, RecreateRT);
         Listen(SaveData.SettingsChanged, ReassignGlobalShaderVariables);
     }
 
@@ -129,7 +128,7 @@ public class MainCamera : RegularUpdater, IScreenshotter {
     /// </summary>
     public static float ResourcePPU => GraphicsUtils.BestResolution.h / ScreenHeight;
 
-    public void ReassignGlobalShaderVariables() {
+    public void ReassignGlobalShaderVariables(SaveData.Settings s) {
         //Log.Unity($"Camera width: {cam.pixelWidth} Screen width: {Screen.width}");
         Shader.SetGlobalFloat(ShaderScrnHeightID, ScreenHeight);
         Shader.SetGlobalFloat(ShaderScrnWidthID, ScreenWidth);
@@ -139,7 +138,7 @@ public class MainCamera : RegularUpdater, IScreenshotter {
         Shader.SetGlobalFloat(ShaderPixelHeightID, Screen.height);
         Shader.SetGlobalFloat(ShaderPixelWidthID, Screen.width);
         Shader.SetGlobalFloat(GlobalXOffsetID, GameManagement.References.bounds.center.x);
-        if (SaveData.s.Shaders) Shader.EnableKeyword("FANCY");
+        if (s.Shaders) Shader.EnableKeyword("FANCY");
         else Shader.DisableKeyword("FANCY");
     }
 
@@ -219,7 +218,6 @@ public class MainCamera : RegularUpdater, IScreenshotter {
     /// Caller must dispose the return value via Object.Destroy.
     /// </summary>
     public Texture2D Screenshot(CRect rect, CamType[]? cameras=null) {
-        var rt = RenderTexture.active;
         var offset = transform.position;
         ayaMaterial.SetFloat(PropConsts.OffsetX, (rect.x - offset.x) / ScreenWidth);
         ayaMaterial.SetFloat(PropConsts.OffsetY, (rect.y - offset.y) / ScreenHeight);
@@ -228,7 +226,8 @@ public class MainCamera : RegularUpdater, IScreenshotter {
         ayaMaterial.SetFloat(PropConsts.ScaleX, xsr);
         ayaMaterial.SetFloat(PropConsts.ScaleY, ysr);
         ayaMaterial.SetFloat(PropConsts.Angle, rect.angle * M.degRad);
-        var _renderTo = RenderTo;
+        var originalRT = RenderTexture.active;
+        var originalRenderTo = RenderTo;
         RenderTo = RenderHelpers.DefaultTempRT();
         //Clear is required since the camera list may not contain BackgroundCamera,
         // which is the only one that clears
@@ -239,13 +238,13 @@ public class MainCamera : RegularUpdater, IScreenshotter {
             c.Render();
             //Why do we have to set it back? I don't know, but if you don't do this,
             // you'll get flashing behavior when this is called from AyaCamera
-            c.targetTexture = _renderTo;
+            c.targetTexture = originalRenderTo;
         }
         Shader.DisableKeyword("AYA_CAPTURE");
         var ss = RenderHelpers.DefaultTempRT(((int) (SaveData.s.Resolution.w * xsr), (int) (SaveData.s.Resolution.h * ysr)));
         UnityEngine.Graphics.Blit(RenderTo, ss, ayaMaterial);
         RenderTo.Release();
-        RenderTo = _renderTo;
+        RenderTo = originalRenderTo;
         var tex = ss.IntoTex();
         ss.Release();
         //For debugging
@@ -253,7 +252,7 @@ public class MainCamera : RegularUpdater, IScreenshotter {
         
         //For some reason, I've had strange issues with things turning upside down if I return the RT
         // instead of converting it immediately to a tex. IDK but be warned
-        RenderTexture.active = rt;
+        RenderTexture.active = originalRT;
         return tex;
     }
 

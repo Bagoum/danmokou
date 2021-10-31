@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq.Expressions;
 using BagoumLib;
+using BagoumLib.Expressions;
 using Danmokou.Core;
 using Danmokou.Expressions;
 using Danmokou.Scenes;
@@ -77,7 +78,7 @@ public static class RNG {
         GetFloat(lowR, highR) * M.CosSin(GetFloat(0, M.TAU));
 
     private static readonly ExFunction getFloat =
-        ExUtils.Wrap(typeof(RNG), "GetFloat", new[] {typeof(float), typeof(float)});
+        ExFunction.Wrap(typeof(RNG), "GetFloat", new[] {typeof(float), typeof(float)});
     public static Expression GetFloat(Expression low, Expression high) => getFloat.Of(low, high);
     public static float GetFloatOffFrame(float low, float high) => GetFloat(low, high, offFrame);
 

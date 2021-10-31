@@ -224,25 +224,28 @@ public static partial class SyncPatterns {
         if (string.IsNullOrEmpty(suffix) || suffix![0] != '.')
             suffix = $".{RNG.RandString(8)}";
         string estyle = $"{BulletManager.EMPTY}{suffix}";
-        List<BulletManager.exBulletControl> controlsL = new List<BulletManager.exBulletControl>();
+        var controlsL = new List<BulletManager.cBulletControl>();
         if (saveV2s.Length > 0) {
             var data = new (ReflectEx.Hoist<Vector2> target, ExBPY indexer, ExTP valuer)[saveV2s.Length];
             for (int ii = 0; ii < saveV2s.Length; ++ii) {
                 data[ii] = (new ReflectEx.Hoist<Vector2>(saveV2s[ii].Item1), indexer, saveV2s[ii].Item2);
             }
-            controlsL.Add(BulletManager.SimpleBulletControls.SaveV2(data, _ => ExMPred.True()));
+            controlsL.Add(new BulletManager.cBulletControl(
+                BulletManager.SimpleBulletControls.SaveV2(data, _ => ExMPred.True())));
         }
         if (saveFs.Length > 0) {
             var data = new (ReflectEx.Hoist<float> target, ExBPY indexer, ExBPY valuer)[saveFs.Length];
             for (int ii = 0; ii < saveFs.Length; ++ii) {
                 data[ii] = (new ReflectEx.Hoist<float>(saveFs[ii].Item1), indexer, saveFs[ii].Item2);
             }
-            controlsL.Add(BulletManager.SimpleBulletControls.SaveF(data, _ => ExMPred.True()));
+            controlsL.Add(new BulletManager.cBulletControl(
+                BulletManager.SimpleBulletControls.SaveF(data, _ => ExMPred.True())));
         }
-        var controls = controlsL.Select(x => new BulletManager.BulletControl(x, 
-            BulletManager.Consts.PERSISTENT, Cancellable.Null)).ToArray();
         guided = guided.Select(Loc0).ToArray();
         return sbh => {
+            var controls = new List<BulletManager.BulletControl>();
+            for (int ii = 0; ii < controlsL.Count; ++ii)
+                controls.Add(new BulletManager.BulletControl(controlsL[ii], BulletManager.Consts.PERSISTENT, sbh.ch.cT));
             BulletManager.AssertControls(isPlayer ? BulletManager.GetOrMakePlayerCopy(estyle) : estyle, controls);
             //Technically not necessary to copy, since we're not modifying GCX
             var emptySbh = sbh.CopyGCX();

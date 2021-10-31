@@ -13,12 +13,13 @@ MonoBehaviour:
   m_Name: Player Deathbomb Window
   m_EditorClassIdentifier: 
   defaultName: deathbomb-window
-  clip: {fileID: 8300000, guid: e6ff15f1f7d63cc499d4e75dab487efa, type: 3}
-  volume: 0.35
+  clip: {fileID: 8300000, guid: 25459cb9156997b48841ec46d6c7c099, type: 3}
+  volume: 0.42
   timeout: -1
   pausable: 0
+  slowable: 0
+  pitch: 1
   loop: 0
   loopTimeCheck: 0
-  pitch: 1
   priority: -1
   feature: 0

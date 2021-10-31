@@ -6,13 +6,14 @@ using System.Text;
 using System.Threading.Tasks;
 using BagoumLib;
 using BagoumLib.Cancellation;
+using BagoumLib.DataStructures;
+using BagoumLib.Tasks;
+using BagoumLib.Tweening;
 using UnityEngine;
 using TMPro;
 using Danmokou.Behavior;
 using Danmokou.Behavior.Display;
 using Danmokou.Core;
-using Danmokou.Danmaku;
-using Danmokou.Dialogue;
 using Danmokou.GameInstance;
 using Danmokou.Graphics;
 using Danmokou.Player;
@@ -20,9 +21,10 @@ using Danmokou.Scriptables;
 using Danmokou.Services;
 using Danmokou.SM;
 using Danmokou.UI.XML;
-using JetBrains.Annotations;
+using SuzunoyaUnity;
 using UnityEngine.Serialization;
 using static Danmokou.Services.GameManagement;
+using WaitingUtils = Danmokou.SM.WaitingUtils;
 
 namespace Danmokou.UI {
 [Serializable]
@@ -475,55 +477,52 @@ public class UIManager : CoroutineRegularUpdater, IUIManager, IStageAnnouncer {
         return sb.ToString();
     }
 
-    private IEnumerator FadeMessage(string msg, ICancellee cT, float timeIn = 1f, float timeStay = 4f,
-        float timeOut = 1f) {
+    private void InStayOutSpriteFade(TextMeshPro tmp, float timeIn, float timeStay, float timeOut, ICancellee cT,
+        Action? done = null) {
+        var m0 = tmp.color.WithA(0);
+        var m1 = m0.WithA(1);
+        new Tweener<Color>(m0, m1, timeIn, c => tmp.color = c, null, cT)
+            .Then(new Tweener<float>(0, 0, timeStay, _ => { }, null, cT))
+            .Then(new Tweener<Color>(m1, m0, timeOut, c => tmp.color = c, null, cT))
+            .Run(this, new CoroutineOptions(true))
+            .ContinueWithSync(done);
+    }
+    private void FadeMessage(string msg, ICancellee cT, float timeIn = 1f, float timeStay = 4f,
+        float timeOut = 1f, Action? done = null) {
         message.text = msg;
-        return FadeSprite(message.color, c => message.color = c, timeIn, timeStay, timeOut, cT);
+        InStayOutSpriteFade(message, timeIn, timeStay, timeOut, cT, done);
     }
 
-    private IEnumerator FadeMessageCenter(string msg, ICancellee cT, out float totalTime,
+    private void FadeMessageCenter(string msg, ICancellee cT, out float totalTime,
         float timeIn = 0.2f, float timeStay = 0.8f, float timeOut = 0.3f) {
         centerMessage.text = msg;
         totalTime = timeIn + timeStay + timeOut;
-        return FadeSprite(centerMessage.color, c => centerMessage.color = c, timeIn, timeStay, timeOut, cT);
-    }
-
-    private static IEnumerator FadeSprite(Color c, Action<Color> apply, float timeIn, float timeStay,
-        float timeOut, ICancellee cT) {
-        for (float t = 0; t < timeIn; t += ETime.FRAME_TIME) {
-            c.a = t / timeIn;
-            apply(c);
-            if (cT.Cancelled) break;
-            yield return null;
-        }
-        c.a = 1;
-        apply(c);
-        for (float t = 0; t < timeStay; t += ETime.FRAME_TIME) {
-            if (cT.Cancelled) break;
-            yield return null;
-        }
-        for (float t = 0; t < timeOut; t += ETime.FRAME_TIME) {
-            c.a = 1 - t / timeOut;
-            apply(c);
-            if (cT.Cancelled) break;
-            yield return null;
-        }
-        c.a = 0;
-        apply(c);
+        InStayOutSpriteFade(centerMessage, timeIn, timeStay, timeOut, cT);
     }
 
     private Cancellable? messageFadeToken;
+    private readonly List<string> queuedMessages = new List<string>();
 
-    private void _Message(string msg) {
-        messageFadeToken?.Cancel();
-        RunDroppableRIEnumerator(FadeMessage(msg, messageFadeToken = new Cancellable()));
+    private void _RunNextMessage() {
+        if (queuedMessages.Count == 0)
+            return;
+        var msg = queuedMessages[0];
+        FadeMessage(msg, messageFadeToken = new Cancellable(), done: () => {
+            queuedMessages.RemoveAt(0);
+            _RunNextMessage();
+        });
+    }
+    private void _QueueMessage(string msg) {
+        queuedMessages.Add(msg);
+        if (queuedMessages.Count == 1)
+            _RunNextMessage();
     }
 
     private Cancellable? cmessageFadeToken;
 
     private void _CMessage(string msg, out float totalTime) {
         cmessageFadeToken?.Cancel();
-        RunDroppableRIEnumerator(FadeMessageCenter(msg, cmessageFadeToken = new Cancellable(), out totalTime));
+        FadeMessageCenter(msg, cmessageFadeToken = new Cancellable(), out totalTime);
     }
 
     public void MessageChallengeEnd(bool success, out float totalTime) => _CMessage(
@@ -532,7 +531,7 @@ public class UIManager : CoroutineRegularUpdater, IUIManager, IStageAnnouncer {
             "Challenge Fail..."
         , out totalTime);
 
-    private void Message(string msg) => _Message(msg);
+    private void Message(string msg) => _QueueMessage(msg);
     private void LifeExtendScore() => Message("Score Extend Acquired!");
     private void LifeExtendItems() => Message("Life Item Extend Acquired!");
 
@@ -561,9 +560,7 @@ public class UIManager : CoroutineRegularUpdater, IUIManager, IStageAnnouncer {
 
     public void DeannounceStage(ICancellee cT, out float time) {
         time = stageDAnnounceIn + stageDAnnounceOut + stageDAnnounceStay;
-        RunDroppableRIEnumerator(FadeSprite(Color.white, c => stageDeannouncer.color = c, stageDAnnounceIn,
-            stageDAnnounceStay,
-            stageDAnnounceOut, cT));
+        InStayOutSpriteFade(centerMessage, stageDAnnounceIn, stageAnnounceStay, stageDAnnounceOut, cT);
     }
 
     public TextMeshPro challengeHeader = null!;

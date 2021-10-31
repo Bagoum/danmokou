@@ -42,17 +42,17 @@ It supports hue shifting, which is a pretty cool rendering feature. The current 
 
 ## Bullet Indirect / Basic Sprite Feature Comparison
 
-|                   | Instanced support?    | Basic Sprite support? | Interface         |
-| ----------------- | --------------------- | --------------------- | ----------------- |
-| FT_ROTATIONAL     | **YES**               | NO (use BEH rotation) | Initialize        |
-| FT_FRAME_ANIM     | **YES**               | NO (use BEH helpers)  | Initialize        |
-| FT_CYCLE          | NO (trivial addition) | **YES**               | Initialize        |
-| FT_SLIDE_IN       | **YES**               | NO (trivial addition) | Initialize        |
-| FT_FADE_IN        | **YES**               | **YES**               | Initialize        |
-| FT_DISPLACE*      | **YES**               | **YES**               | Initialize        |
-| FT_PLAYER_OPACITY | **YES**               | NO                    | Initialize        |
-| FT_HUESHIFT       | NO                    | **YES**               | `hueShift` option |
-| Additive Blending | **YES**               | **YES**               | Initialize        |
+|                            | Instanced support?    | Basic Sprite support? | Interface                      |
+| -------------------------- | --------------------- | --------------------- | ------------------------------ |
+| FT_ROTATIONAL              | **YES**               | NO (use BEH rotation) | Initialize                     |
+| FT_FRAME_ANIM              | **YES**               | NO (use BEH helpers)  | Initialize                     |
+| FT_CYCLE                   | NO (trivial addition) | **YES**               | Initialize                     |
+| FT_SLIDE_IN                | **YES**               | NO (trivial addition) | Initialize                     |
+| FT_FADE_IN                 | **YES**               | **YES**               | Initialize                     |
+| FT_DISPLACE*               | **YES**               | **YES**               | Initialize                     |
+| FT_HUESHIFT                | NO                    | **YES**               | `hueShift` option              |
+| Additive Blending          | **YES**               | **YES**               | _BlendOp, _BlendFrom, _BlendTo |
+| Overall opacity multiplier | **YES**               | **YES**               | _SharedOpacityMul              |
 
 # Shader Tips and Warnings
 

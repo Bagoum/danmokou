@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
+using BagoumLib.Expressions;
 using Danmokou.Danmaku;
 using Danmokou.DMath;
 using Danmokou.Reflection;
@@ -29,10 +30,10 @@ public class TExPI : TEx<ParametricInfo> {
     /// </summary>
     public readonly UnaryExpression findex;
     public Ex FiringCtx => ex.Field("ctx");
-    private static readonly ExFunction rehash = ExUtils.Wrap<ParametricInfo, int>("Rehash", 0);
-    private static readonly ExFunction copyWithT = ExUtils.Wrap<ParametricInfo, float>("CopyWithT", 1);
+    private static readonly ExFunction rehash = ExFunction.Wrap<ParametricInfo, int>("Rehash", 0);
+    private static readonly ExFunction copyWithT = ExFunction.Wrap<ParametricInfo, float>("CopyWithT", 1);
     private static readonly ExFunction flipSimple =
-        ExUtils.Wrap<ParametricInfo>("FlipSimple", new[] {typeof(bool), tfloat});
+        ExFunction.Wrap<ParametricInfo>("FlipSimple", new[] {typeof(bool), tfloat});
 
     public TExPI() : this((string?)null) { }
     public TExPI(string? name) : this(ExMode.Parameter, name) { }

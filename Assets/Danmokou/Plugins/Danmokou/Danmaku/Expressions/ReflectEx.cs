@@ -5,6 +5,7 @@ using UnityEngine;
 using System;
 using BagoumLib;
 using BagoumLib.DataStructures;
+using BagoumLib.Expressions;
 using Danmokou.Core;
 using Danmokou.Danmaku;
 using Danmokou.DataHoist;
@@ -132,18 +133,16 @@ public static class ReflectEx {
         private void Bake(TExArgCtx tac) {
 #if EXBAKE_SAVE
             var key_name = tac.Ctx.NameWithSuffix("pubHoist");
-
             var key_assign = FormattableString.Invariant(
                 $"var {key_name} = PublicDataHoisting.Register<{typeof(T)}>(\"{name}\");");
-
             tac.Ctx.HoistedVariables.Add(key_assign);
             tac.Ctx.HoistedReplacements[Ex.Constant(data)] = Ex.Variable(typeof(SafeResizableArray<T>), key_name);
 #endif
         }
 
         private static readonly ExFunction safeAssign =
-            ExUtils.Wrap<SafeResizableArray<T>>("SafeAssign", new[] {typeof(int), typeof(T)});
-        private static readonly ExFunction safeGet = ExUtils.Wrap<SafeResizableArray<T>, int>("SafeGet");
+            ExFunction.Wrap<SafeResizableArray<T>>("SafeAssign", new[] {typeof(int), typeof(T)});
+        private static readonly ExFunction safeGet = ExFunction.Wrap<SafeResizableArray<T>, int>("SafeGet");
 
         public Ex Save(Ex index, Ex val, TExArgCtx tac) {
             Bake(tac);

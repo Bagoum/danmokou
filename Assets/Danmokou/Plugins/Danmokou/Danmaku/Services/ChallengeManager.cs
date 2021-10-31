@@ -35,7 +35,7 @@ public class ChallengeManager : CoroutineRegularUpdater, IChallengeManager {
         RegisterService<IChallengeManager>(this, new ServiceLocator.ServiceOptions { Unique = true });
 
         Listen(GameManagement.EvInstance, inst => inst.PhaseCompleted, pc => {
-            if (pc.clear != PhaseClearMethod.CANCELLED && pc.props.phaseType != null && pc.exec == Exec)
+            if (pc.clear != PhaseClearMethod.CANCELLED && pc.phase.PhaseType != null && pc.exec == Exec)
                 completion = pc;
         });
         

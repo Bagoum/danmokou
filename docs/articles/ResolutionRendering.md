@@ -4,19 +4,19 @@ The screen is 16x9 units. For 4k support, high-quality images should be in 240 P
 
 The engine uses indirect mesh rendering for simple bullets. This disables some Unity convenience features like sorting layers, so we have to do some special things to get things sorted.
 
-Here are the cameras, their culling layers, and the primary sorting layers (ordered) they use. Note that sorting layers are not enforced, you can arbitrarily change sorting layer on SpriteRenderer.
+Here are the cameras ordered by depth, their culling layers, and the primary sorting layers (ordered) they use. Note that sorting layers are not enforced, you can arbitrarily change sorting layer on SpriteRenderer.
 
 | Camera               | Culling Mask                         | Sorting Layers                   | Notes                                                        |
 | -------------------- | ------------------------------------ | -------------------------------- | ------------------------------------------------------------ |
-| Main Camera          |                                      |                                  | This is here to allow other cameras to screw around without stepping on Unity rules about Camera.main. |
-| Wall Camera          | Wall                                 | Background, Walls, FX, UI        | Ground layer + Depth clear                                   |
-| Low Direct-Render    | LowDirectRender                      |                                  | Player simple bullets                                        |
-| Middle Camera        | Player, LowProjectile, LowEffects    | Player, PlayerHitbox, Projectile |                                                              |
-| High Direct-Render   | HighDirectRender                     |                                  | Enemy simple bullets                                         |
-| Top Camera           | TransparentFX, HighProjectile, Enemy | Enemy, Foreground, FX            |                                                              |
-| 3D Camera            | 3DEffects                            | Any                              | 3D effects like boss cutins                                  |
-| Shader Effect Camera |                                      |                                  | Renders postprocessing effects like Seija's screen flip.     |
-| UI Camera            | UI                                   | UI                               | UI                                                           |
+| Wall Camera          | Wall                                 | Background, Walls, FX, UI        | Depth clear + backgrounds.<br />Renders to the composite texture. |
+| Low Direct-Render    | LowDirectRender                      |                                  | Player simple bullets.<br />Renders to the composite texture. |
+| Middle Camera        | Player, LowProjectile, LowEffects    | Player, PlayerHitbox, Projectile | Renders to the composite texture.                            |
+| High Direct-Render   | HighDirectRender                     |                                  | Enemy simple bullets.<br />Renders to the composite texture. |
+| Top Camera           | TransparentFX, HighProjectile, Enemy | Enemy, Foreground, FX            | Renders to the composite texture.                            |
+| 3D Camera            | 3DEffects                            | Any                              | 3D effects like boss cutins. <br />Renders to the composite texture. |
+| Shader Effect Camera |                                      |                                  | Postprocessing effects like Seija's screen flip.<br />Renders to the composite texture. |
+| Main Camera          |                                      |                                  | Renders the composite texture to screen.                     |
+| UI Camera            | UI                                   | UI                               | Renders directly to screen.                                  |
 
 Don't try to order Mesh/Sprites and direct-render stuff on the same camera-- it doesn't seem to work. Direct-render doesn't offer control over the sorting layer. 
 
@@ -49,7 +49,7 @@ Note that if you are screwing with `cam.targetTexture`, you should set it **ever
 
 # Frame/Render Frame
 
-The engine runs at 120 fps and the screen runs at 60 fps (but may vary by computer). This means that we distinguish *render frames* as frames which precede the screen render (ie. the last frame invoked by the ETime updater loop).
+The engine runs at 120 fps (fixed) and the screen runs at 60 fps (may vary by computer). Unity's update call occurs according to the screen framerate, so within one Unity update call, the engine may run multiple engine frames. Of these multiple engine frames, the last of them is called the *render frame*, because it directly precedes Unity rendering.
 
 For replays to be correct, render frames must have no mechanical difference from non-render frames.
 

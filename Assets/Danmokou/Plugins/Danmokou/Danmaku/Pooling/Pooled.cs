@@ -93,7 +93,7 @@ public abstract class Pooled<P> : Pooled where P : class {
     protected override Transform Container {
         get {
             if (container == null) {
-                SceneIntermediary.SceneLoaded.Subscribe(CreateParticleContainer);
+                SceneIntermediary.SceneLoaded.Subscribe(_ => CreateParticleContainer());
                 //The event or may not run immediately on load, depending on when the static constructor runs
                 if (container == null)
                     CreateParticleContainer();

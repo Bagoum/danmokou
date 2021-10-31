@@ -7,6 +7,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 using BagoumLib;
+using BagoumLib.Expressions;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.DMath;
@@ -16,7 +17,6 @@ using Danmokou.Reflection;
 using Danmokou.Scriptables;
 using Danmokou.Services;
 using Danmokou.SM;
-using FastExpressionCompiler;
 using JetBrains.Annotations;
 using UnityEditor;
 using UnityEngine;
@@ -27,29 +27,29 @@ using Ex = System.Linq.Expressions.Expression;
 
 namespace Danmokou.Expressions {
 public static class BakeCodeGenerator {
-    
-    public class ConstPrinter : CodePrinter.IObjectToCode {
-        public string ToCode(object x, bool stripNamespace = false, Func<Type, string, string>? printType = null)
-            => x switch {
-                V2RV2 rv2 => 
-                    $"new V2RV2({rv2.nx}f, {rv2.ny}f, {rv2.rx}f, {rv2.ry}f, {rv2.angle}f)",
-                Vector2 v2 =>
-                    $"new Vector2({v2.x}f, {v2.y}f)",
-                Vector3 v3 =>
-                    $"new Vector3({v3.x}f, {v3.y}f, {v3.z}f)",
-                Vector4 v4 =>
-                    $"new Vector4({v4.x}f, {v4.y}f, {v4.z}f, {v4.w}f)",
-                CCircle c =>
-                    $"new CCircle({c.x}f, {c.y}f, {c.r}f)",
-                CRect r =>
-                    $"new CRect({r.x}f, {r.y}f, {r.halfW}f, {r.halfH}f, {r.angle}f)",
-                Exception e =>
-                    $"new Exception(\"{e.Message}\")",
-                _ => 
-                    $"!NO PRINTER FOR CONST {x}<{x.GetType()}>!"
-            };
+    public class DMKObjectPrinter : IObjectPrinter {
+        public IObjectPrinter Fallback { get; set; } = new CSharpObjectPrinter();
+
+        public string Print(object o) => FormattableString.Invariant(o switch {
+            V2RV2 rv2 => 
+                $"new V2RV2({rv2.nx}f, {rv2.ny}f, {rv2.rx}f, {rv2.ry}f, {rv2.angle}f)",
+            Vector2 v2 =>
+                $"new Vector2({v2.x}f, {v2.y}f)",
+            Vector3 v3 =>
+                $"new Vector3({v3.x}f, {v3.y}f, {v3.z}f)",
+            Vector4 v4 =>
+                $"new Vector4({v4.x}f, {v4.y}f, {v4.z}f, {v4.w}f)",
+            CCircle c =>
+                $"new CCircle({c.x}f, {c.y}f, {c.r}f)",
+            CRect r =>
+                $"new CRect({r.x}f, {r.y}f, {r.halfW}f, {r.halfH}f, {r.angle}f)",
+            _ => $"{Fallback.Print(o)}"
+        });
     }
 
+    /// <summary>
+    /// A context responsible for either saving or loading all code generation in the game state.
+    /// </summary>
     public class CookingContext {
         private const string outputPath = "Assets/Danmokou/Plugins/Danmokou/Danmaku/Expressions/Generated/";
         private const string nmSpace = "Danmokou.Expressions";
@@ -63,6 +63,7 @@ public static class BakeCodeGenerator {
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using BagoumLib.Cancellation;
 using BagoumLib.Mathematics;
 using Danmokou.Behavior;
 using Danmokou.Core;
@@ -72,6 +73,7 @@ using Danmokou.DataHoist;
 using Danmokou.Graphics;
 using Danmokou.Player;
 using Danmokou.Services;
+using Danmokou.SM;
 #pragma warning disable 162
 #pragma warning disable 219";
         private const string footer = "//#endif";
@@ -84,21 +86,21 @@ using Danmokou.Services;
         private HashSet<string> OpenedFileKeys { get; } = new HashSet<string>();
         public Stack<FileContext> OpenContexts { get; } = new Stack<FileContext>();
         public FileContext? CurrentFile => OpenContexts.TryPeek();
-        public FileBakeContext? CurrentBake => CurrentFile == null ? null :
-            (CurrentFile is FileBakeContext fbc) ? fbc :
+        public FileContext.Baker? CurrentBake => CurrentFile == null ? null :
+            (CurrentFile is FileContext.Baker fbc) ? fbc :
             throw new Exception("Current context is not a bake");
-        public FileServeContext? CurrentServe => CurrentFile == null ? null :
-            (CurrentFile is FileServeContext fsc) ? fsc :
+        public FileContext.Server? CurrentServe => CurrentFile == null ? null :
+            (CurrentFile is FileContext.Server fsc) ? fsc :
             throw new Exception("Current context is not a serve");
 
         public IDisposable NewContext(KeyType type, string key) {
         #if EXBAKE_SAVE
-            var fileCtx = new FileBakeContext(this, type, key);
+            var fileCtx = new FileContext.Baker(this, type, key);
             //It's still beneficial to open a duplicate context for the sake of record-keeping
             if (OpenedFileKeys.Contains(fileCtx.FileIdentifier))
                 fileCtx.DoNotExport = true;
         #else
-            var fileCtx = new FileServeContext(this, type, key);
+            var fileCtx = new FileContext.Server(this, type, key);
         #endif
             OpenedFileKeys.Add(fileCtx.FileIdentifier);
             OpenContexts.Push(fileCtx);
@@ -110,21 +112,21 @@ using Danmokou.Services;
                 ObjectToFunctionHoister[result] = $"{clsName}.{fnName}()";
         }
         
-        private void DisposeBake(FileBakeContext fbc) {
+        private void DisposeBake(FileContext.Baker fbc) {
             if (fbc != CurrentFile) throw new Exception("Tried to dispose the wrong FileBakeContext");
             if (fbc == null) throw new Exception("Dispose FileBakeContext should not be null");
             if (fbc.Export().Try(out var gf))
                 GeneratedFiles.Add(gf);
             OpenContexts.Pop();
         }
-        private void DisposeServe(FileServeContext fbc) {
+        private void DisposeServe(FileContext.Server fbc) {
             if (fbc != CurrentFile) throw new Exception("Tried to dispose the wrong FileServeContext");
             if (fbc == null) throw new Exception("Dispose FileServeContext should not be null");
             //No extra action needs to be taken
             OpenContexts.Pop();
         }
 
-        private const int FUNCS_PER_FILE = 400;
+        private const int FUNCS_PER_FILE = 300;
 
         public void Export() {
 #if EXBAKE_SAVE
@@ -136,19 +138,21 @@ using Danmokou.Services;
                 currentFuncs.Clear();
             }
             void AddFuncs(IEnumerable<string> funcs) {
-                currentFuncs.AddRange(funcs);
-                if (currentFuncs.Count > FUNCS_PER_FILE) {
-                    ExportFuncs();
+                foreach (var f in funcs) {
+                    currentFuncs.Add(f);
+                    if (currentFuncs.Count >= FUNCS_PER_FILE) {
+                        ExportFuncs();
+                    }
                 }
             }
             var dictSB = new StringBuilder();
             dictSB.AppendLine($"\tstatic {clsName}() {{");
             dictSB.AppendLine("\t_allDataMap = " +
-                              "new Dictionary<string, List<Func<object>>>() {");
+                              "new Dictionary<string, List<object>>() {");
             
             foreach (var gf in GeneratedFiles) {
                 AddFuncs(gf.funcDefs);
-                var funcs = $"new List<Func<object>>() {{\n\t{string.Join(",\n\t", gf.funcNames)}\n}}";
+                var funcs = $"new List<object>() {{\n\t{string.Join(",\n\t", gf.funcsAsObjects)}\n}}";
                 dictSB.AppendLine($"\t{{ \"{gf.filename}\", {funcs.Replace("\n", "\n\t")} }},");
             }
             ExportFuncs();
@@ -175,13 +179,13 @@ internal static partial class {clsName} {{
             public readonly string filename;
             public readonly IEnumerable<string> funcDefs;
             public string FuncText => string.Join("\n", funcDefs);
-            public readonly IEnumerable<string> funcNames; //All functions are treated as () => object
+            public readonly IEnumerable<string> funcsAsObjects; 
             
-            public ExportedFile(KeyType type, string filename, IEnumerable<string> funcDefs, IEnumerable<string> funcNames) {
+            public ExportedFile(KeyType type, string filename, IEnumerable<string> funcDefs, IEnumerable<string> funcsAsObjects) {
                 this.type = type;
                 this.filename = filename;
                 this.funcDefs = funcDefs;
-                this.funcNames = funcNames;
+                this.funcsAsObjects = funcsAsObjects;
             }
         }
 
@@ -217,71 +221,88 @@ internal static partial class {clsName} {{
             }, (long)key.GetHashCode() + (long)int.MaxValue);
 
             public abstract void Dispose();
-        }
+            
+            
+            /// <summary>
+            /// A context that records generated functions in a file and eventually prints them to source code.
+            /// </summary>
+            public class Baker : FileContext {
+                public bool DoNotExport { get; set; } = false;
+                public ITypePrinter TypePrinter { get; set; } = new CSharpTypePrinter();
+                private List<(string text, string fnName, Type returnType, (Type typ, string argName)[] argDefs)> GeneratedFunctions { get; } = new List<(string, string, Type, (Type, string)[])>();
 
-        public class FileBakeContext : FileContext {
-            public bool DoNotExport { get; set; } = false;
-            private List<(string text, string fnName, Type returnType)> GeneratedFunctions { get; } = new List<(string, string, Type)>();
+                public Baker(CookingContext parent, KeyType keyType, object key) : base(parent, keyType, key) { }
+                public ExportedFile? Export() => (DoNotExport || GeneratedFunctions.Count == 0) ?
+                    (ExportedFile?)null :
+                    new ExportedFile(keyType, FileIdentifier, ExportFuncDefs(), 
+                        GeneratedFunctions.Select(f => 
+                            "(Func<" +
+                            string.Concat(f.argDefs
+                                .Select(ts => TypePrinter.Print(ts.typ) + ", ")) + TypePrinter.Print(f.returnType)
+                            + $">){f.fnName}"));
 
-            public FileBakeContext(CookingContext parent, KeyType keyType, object key) : base(parent, keyType, key) { }
-            public ExportedFile? Export() => (DoNotExport || GeneratedFunctions.Count == 0) ?
-                (ExportedFile?)null :
-                new ExportedFile(keyType, FileIdentifier, ExportFuncDefs(), ExportFuncNames());
-
-            private IEnumerable<string> ExportFuncDefs() => GeneratedFunctions.Select(f => $@"
-private static {f.returnType.ToCode(true)} {f.fnName}() {{
+                private IEnumerable<string> ExportFuncDefs() => GeneratedFunctions.Select(f => $@"
+private static {TypePrinter.Print(f.returnType)} {f.fnName}({string.Join(", ",
+                    f.argDefs.Select(arg => $"{TypePrinter.Print(arg.typ)} {arg.argName}"))}) {{
     {f.text.Trim().Replace("\n", "\n\t")}
 }}");
 
-            private IEnumerable<string> ExportFuncNames() => GeneratedFunctions.Select(f => f.fnName);
-            private string MakeFuncName(string prefix, int index) => $"{prefix}_{index}";
+                private string MakeFuncName(string prefix, int index) => $"{prefix}_{index}";
 
-            public void Add<D>(string fnText, D result) {
-                var name = MakeFuncName(FileIdentifier, GeneratedFunctions.Count);
-                GeneratedFunctions.Add((fnText, name, typeof(D)));
-                if (!DoNotExport)
-                    parent.SetResult(name, result);
-            }
-
-            public override void Dispose() {
-                parent.DisposeBake(this);
-            }
-        }
-
-        public class FileServeContext : FileContext {
-            private readonly List<Func<object>> compiled;
-            private int index = 0;
-            
-            public FileServeContext(CookingContext parent, KeyType keyType, object key) : base(parent, keyType, key) {
-                this.compiled = GeneratedExpressions.RetrieveBakedOrEmpty(FileIdentifier);
-            }
-
-            public D Next<D>() {
-                if (index >= compiled.Count) {
-                    if (compiled.Count == 0)
-                        throw new Exception($"File {FileIdentifier} has no baked expressions, but one was requested");
-                    throw new Exception($"Not enough baked expressions for file {FileIdentifier}");
+                public void Add<D>(string fnText, D result, (Type, string)[] argDefs) {
+                    var name = MakeFuncName(FileIdentifier, GeneratedFunctions.Count);
+                    GeneratedFunctions.Add((fnText, name, typeof(D), argDefs));
+                    if (!DoNotExport)
+                        parent.SetResult(name, result);
                 }
-                var obj = compiled[index++]();
-                if (obj is D del) 
-                    return del;
-                throw new Exception($"Baked expression #{index}/{compiled.Count} for file {FileIdentifier} " +
-                                    $"is of type {obj.GetType().ToCode(true)}, requested {typeof(D).ToCode(true)}");
+
+                public override void Dispose() {
+                    parent.DisposeBake(this);
+                }
             }
             
-            public override void Dispose() {
-                parent.DisposeServe(this);
+
+            /// <summary>
+            /// A proxy that retrieves functions from a source code file that was generated by Baker.
+            /// </summary>
+            public class Server : FileContext {
+                private readonly List<object> compiled;
+                private int index = 0;
+            
+                public Server(CookingContext parent, KeyType keyType, object key) : base(parent, keyType, key) {
+                    this.compiled = GeneratedExpressions.RetrieveBakedOrEmpty(FileIdentifier);
+                }
+
+                public D Next<D>(object[] proxyArgs) {
+                    if (index >= compiled.Count) {
+                        if (compiled.Count == 0)
+                            throw new Exception($"File {FileIdentifier} has no baked expressions, but one was requested");
+                        throw new Exception($"Not enough baked expressions for file {FileIdentifier}");
+                    }
+                    var func = compiled[index++];
+                    var invoker = func.GetType().GetMethod("Invoke")!;
+                    var obj = invoker.Invoke(func, proxyArgs);
+                    if (obj is D del) 
+                        return del;
+                    throw new Exception($"Baked expression #{index}/{compiled.Count} for file {FileIdentifier} " +
+                                        $"is of type {obj.GetType().RName()}, requested {typeof(D).RName()}");
+                }
+            
+                public override void Dispose() {
+                    parent.DisposeServe(this);
+                }
             }
+            
         }
     }
 
 
-    public static CookingContext Baker { get; } = new CookingContext();
+    public static CookingContext Cook { get; } = new CookingContext();
 
 
     public static IDisposable? OpenContext(CookingContext.KeyType type, string identifier) =>
 #if EXBAKE_SAVE || EXBAKE_LOAD
-        Baker.NewContext(type, identifier);
+        Cook.NewContext(type, identifier);
 #else
         null;
 #endif
@@ -292,6 +313,7 @@ private static {f.returnType.ToCode(true)} {f.fnName}() {{
             {ExMHelpers.LookupTable, ExMHelpers.exLookupTable}
         };
 
+#if EXBAKE_SAVE
     /// <summary>
     /// Returns a function that hoists objects such as timers and updates the object-mapping dict accordingly.
     /// </summary>
@@ -316,25 +338,27 @@ private static {f.returnType.ToCode(true)} {f.fnName}() {{
                 return Ex.Constant(obj);
         };
     }
-    
+#endif
     public static D BakeAndCompile<D>(this TEx ex, TExArgCtx tac, params ParameterExpression[] prms) {
 #if EXBAKE_LOAD
-        return (Baker.CurrentServe ?? throw new Exception("Tried to load an expression with no active serve")).Next<D>();
+        return (Cook.CurrentServe ?? throw new Exception("Tried to load an expression with no active serve"))
+            .Next<D>(tac.Ctx.ProxyArguments.ToArray());
 #endif
         var result = Ex.Lambda<D>(FlattenVisitor.Flatten(ex, true, true), prms).Compile();
 #if EXBAKE_SAVE
+        var printer = new ExpressionPrinter() {ObjectPrinter = new DMKObjectPrinter()};
         var sb = new StringBuilder();
         //Replace must be first to handle private hoisting, otherwise flatten might reconstruct the expressions
         var constReplaced = new ReplaceExVisitor(
             tac.Ctx.HoistedReplacements,
             DefaultObjectReplacements,
-            GeneralConstHandling(Baker, tac)).Visit(ex);
+            GeneralConstHandling(Cook, tac)).Visit(ex);
         var flattened = FlattenVisitor.Flatten(constReplaced, true, false);
         //Run replacement again to handle the method simplification for cos/sin
         var constReplaced2 = new ReplaceExVisitor(
             tac.Ctx.HoistedReplacements,
             DefaultObjectReplacements,
-            GeneralConstHandling(Baker, tac)).Visit(flattened);
+            GeneralConstHandling(Cook, tac)).Visit(flattened);
         var linearized = new LinearizeVisitor().Visit(constReplaced2);
         //As the replaced EXs contain references to nonexistent variables, we don't want to actually compile it
         var rex = Ex.Lambda<D>(linearized, prms);
@@ -342,10 +366,11 @@ private static {f.returnType.ToCode(true)} {f.fnName}() {{
             sb.AppendLine(hoistVar);
         }
         sb.Append("return ");
-        sb.AppendLine(rex.ToCSharpString(new ConstPrinter()));
-        (Baker.CurrentBake ?? 
+        sb.Append(printer.Print(rex));
+        sb.AppendLine(";");
+        (Cook.CurrentBake ?? 
          throw new Exception("An expression was compiled with no active bake")
-            ).Add(sb.ToString(), result);
+            ).Add(sb.ToString(), result, tac.Ctx.ProxyTypes.Select(t => (t, tac.Ctx.NextProxyArg())).ToArray());
 #endif
         return result;
     }
@@ -386,8 +411,8 @@ private static {f.returnType.ToCode(true)} {f.fnName}() {{
                         //generally caused by unfilled field, can be ignored.
                     } else
                         throw new Exception("ReflectInto has resultType set on an invalid property type: " +
-                                            $"{typ.ToCode(true)}.{m.Name}<{val.GetType().ToCode(true)}/" +
-                                            $"{ra.resultType.ToCode(true)}>");
+                                            $"{typ.RName()}.{m.Name}<{val.GetType().RName()}/" +
+                                            $"{ra.resultType.RName()}>");
                 }
             }
         }
@@ -405,10 +430,11 @@ private static {f.returnType.ToCode(true)} {f.fnName}() {{
         Logs.Log("Loading TextAssets for reflection...");
         var textAssets = AssetDatabase.FindAssets("t:TextAsset", 
             GameManagement.References.scriptFolders.Prepend("Assets/Danmokou/Patterns").ToArray())
-            .Select(AssetDatabase.GUIDToAssetPath).ToArray();
+            .Select(AssetDatabase.GUIDToAssetPath);
         foreach (var path in textAssets) {
             try {
                 if (path.EndsWith(".txt")) {
+                    Logs.Log($"Loading script from file {path}");
                     var textAsset = AssetDatabase.LoadAssetAtPath<TextAsset>(path);
                     StateMachineManager.FromText(textAsset);
                 }
@@ -419,7 +445,7 @@ private static {f.returnType.ToCode(true)} {f.fnName}() {{
         Logs.Log("Invoking ReflWrap wrappers...");
         ReflWrap.InvokeAllWrappers();
         Logs.Log("Exporting reflected code...");
-        BakeCodeGenerator.Baker.Export();
+        BakeCodeGenerator.Cook.Export();
         Logs.Log("Expression baking complete.");
     }
 #endif

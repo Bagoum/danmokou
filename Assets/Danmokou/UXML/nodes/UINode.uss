@@ -21,7 +21,7 @@
 }
 
 .font-ubuntu {
-    -unity-font-definition: url('/Assets/Danmokou/Fonts/ubuntu-font-family-0.83/Ubuntu-L.ttf');
+    -unity-font-definition: url('/Assets/SZYU/Fonts/ubuntu-font-family-0.83/Ubuntu-L.ttf');
 }
 
 .hide {
