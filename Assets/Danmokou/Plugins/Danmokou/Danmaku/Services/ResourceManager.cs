@@ -30,7 +30,7 @@ public class ResourceManager : MonoBehaviour {
     private static readonly Dictionary<string, GameObject> Backgrounds = new Dictionary<string, GameObject>();
     private static readonly Dictionary<string, SOBgTransition> Transitions = new Dictionary<string, SOBgTransition>();
 
-    private void Awake() {
+    public void Setup() {
         for (ushort ii = 0; ii < effects.Length; ++ii) {
             effectMap[effects[ii].name] = effects[ii].effect;
         }

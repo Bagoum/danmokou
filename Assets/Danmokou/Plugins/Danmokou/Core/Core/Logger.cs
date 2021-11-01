@@ -41,7 +41,14 @@ public static class Logs {
         listeners.Clear();
     }
 
-    public static void Log(string msg, bool stackTrace = true, LogLevel level = LogLevel.INFO) =>
+    private const bool DEFAULT_USE_STACKTRACE =
+#if UNITY_EDITOR
+        true;
+#else
+        false;
+#endif
+    
+    public static void Log(string msg, bool stackTrace = DEFAULT_USE_STACKTRACE, LogLevel level = LogLevel.INFO) =>
         DMKLogs.OnNext(new LogMessage(msg, level, null, stackTrace));
 
     public static void LogException(Exception e) => 

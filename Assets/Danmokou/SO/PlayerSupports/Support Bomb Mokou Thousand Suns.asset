@@ -23,5 +23,11 @@ MonoBehaviour:
     hardcoded:
       en: Phoenix's Sunset ~ A Thousand Suns
       jp: 
+  shortTitle:
+    useReference: 0
+    reference: 
+    hardcoded:
+      en: 'Bomb: A Thousand Suns'
+      jp: 
   type: 4
   sm: {fileID: 4900000, guid: 477b429da4a582b48bd6011b5b887677, type: 3}

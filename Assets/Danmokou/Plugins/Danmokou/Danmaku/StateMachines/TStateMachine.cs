@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using BagoumLib;
 using BagoumLib.DataStructures;
@@ -33,11 +34,16 @@ public class ScriptTSM : SequentialSM {
         //return base.Start(smh).ContinueWithSync(Dialoguer.HideDialogue);
     }
 
-    private Task RunAsVN(SMHandoff smh, DMKVNState vn) {
+    private async Task RunAsVN(SMHandoff smh, DMKVNState vn) {
+        using var smh2 = new SMHandoff(smh, vn.CToken);
         vn.DefaultRenderGroup.Priority.Value = 100;
         var md = vn.Add(new ADVDialogueBox());
         _ = md.FadeTo(1, 0.5f).Task;
-        return base.Start(smh);
+        try {
+            await base.Start(smh2);
+        } catch (OperationCanceledException) when (!smh.Cancelled) {
+            //Don't throw upwards if the VN was cancelled locally
+        }
     }
 }
 public abstract class ScriptLineSM : StateMachine {}

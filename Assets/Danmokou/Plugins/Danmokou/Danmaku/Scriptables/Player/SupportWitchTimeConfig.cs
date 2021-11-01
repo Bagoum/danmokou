@@ -12,7 +12,8 @@ namespace Danmokou.Scriptables {
 public class SupportWitchTimeConfig : SupportAbilityConfig {
     public override string Key => "WitchTime";
     public override SupportAbility Value => new WitchTime() {
-        title = title.Value
+        title = title.Value,
+        shortTitle = shortTitle.Value
     };
 }
 }

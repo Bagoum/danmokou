@@ -138,13 +138,23 @@ public partial class BulletManager {
                 controls.AddPriority(pc, pc.priority);
         }
 
+        public void PruneControlsCancellation() {
+            //It's not correct to run controls that have been cancelled.
+            // As such, we prune for cancellation before execution, and then cancellation/persistence after execution.
+            void Prune(DMCompactingArray<BulletControl> carr) {
+                for (int ii = 0; ii < carr.Count; ++ii)
+                    if (carr[ii].cT.Cancelled)
+                        carr.Delete(ii);
+                carr.Compact();
+            }
+            Prune(controls);
+            Prune(onCollideControls);
+        }
         public void PruneControls() {
             void Prune(DMCompactingArray<BulletControl> carr) {
-                for (int ii = 0; ii < carr.Count; ++ii) {
-                    if (carr[ii].cT.Cancelled || !carr[ii].persist(ParametricInfo.Zero)) {
+                for (int ii = 0; ii < carr.Count; ++ii)
+                    if (carr[ii].cT.Cancelled || !carr[ii].persist(ParametricInfo.Zero))
                         carr.Delete(ii);
-                    }
-                }
                 carr.Compact();
             }
             Prune(controls);
@@ -350,6 +360,7 @@ public partial class BulletManager {
         public override void Speedup(float ratio) => nextDT *= ratio;
 
         public virtual void UpdateVelocityAndControls() {
+            PruneControlsCancellation();
             int postVelPcs = controls.FirstPriorityGT(BulletControl.POST_VEL_PRIORITY);
             int postDirPcs = controls.FirstPriorityGT(BulletControl.POST_DIR_PRIORITY);
             int numPcs = controls.Count;

@@ -470,7 +470,9 @@ public class CurvedTileRenderLaser : CurvedTileRender {
         public void IterateControls(CurvedTileRenderLaser laser) {
             int ct = controls.Count;
             for (int ii = 0; ii < ct; ++ii) {
-                controls[ii].action(laser, controls[ii].cT);
+                //Ignore controls that have been cancelled, as they may be invalid
+                if (!controls[ii].cT.Cancelled)
+                    controls[ii].action(laser, controls[ii].cT);
             }
         }
     }

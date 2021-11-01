@@ -41,7 +41,7 @@ public class AudioTrackService : CoroutineRegularUpdater, IAudioTrackService {
 
     private bool preserveBGMOnNextScene = false;
 
-    private void Awake() {
+    public void Setup() {
         trackInfo.Clear();
         foreach (var t in GameManagement.References.tracks) {
             if (t != null) trackInfo[t.key] = t;

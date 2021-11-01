@@ -9,6 +9,7 @@ using Danmokou.Player;
 using Danmokou.UI;
 using SuzunoyaUnity.Rendering;
 using UnityEngine;
+using UnityEngine.Profiling;
 using PropConsts = Danmokou.Graphics.PropConsts;
 
 namespace Danmokou.Services {
@@ -218,6 +219,7 @@ public class MainCamera : RegularUpdater, IScreenshotter {
     /// Caller must dispose the return value via Object.Destroy.
     /// </summary>
     public Texture2D Screenshot(CRect rect, CamType[]? cameras=null) {
+        Profiler.BeginSample("Screenshot");
         var offset = transform.position;
         ayaMaterial.SetFloat(PropConsts.OffsetX, (rect.x - offset.x) / ScreenWidth);
         ayaMaterial.SetFloat(PropConsts.OffsetY, (rect.y - offset.y) / ScreenHeight);
@@ -253,6 +255,7 @@ public class MainCamera : RegularUpdater, IScreenshotter {
         //For some reason, I've had strange issues with things turning upside down if I return the RT
         // instead of converting it immediately to a tex. IDK but be warned
         RenderTexture.active = originalRT;
+        Profiler.EndSample();
         return tex;
     }
 

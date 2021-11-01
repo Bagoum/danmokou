@@ -269,7 +269,6 @@
      <None Include="Assets\Danmokou\UXML\UIScreen Variants\UIScreen Boss Practice.uxml" />
      <None Include="Assets\Danmokou\Patterns\feature testing\cullrad test.txt" />
      <None Include="Assets\Danmokou\MiniProjects\WebGL Demo\080 aimed.txt" />
-     <None Include="Assets\Danmokou\UXML\UIPauseMenu LeftPadded.uxml" />
      <None Include="Assets\Danmokou\Rendering\Shaders\Display\MultiplyColor.shader" />
      <None Include="Assets\Danmokou\Patterns\examples\structural\examples.txt" />
      <None Include="Assets\Danmokou\Rendering\Shaders\Display\BG\FireTransition.shader" />

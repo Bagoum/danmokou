@@ -11,6 +11,7 @@ public abstract class SupportAbility {
     public GameObject? cutin;
     public GameObject? spellTitle;
     public LString title = LString.Empty;
+    public LString shortTitle = LString.Empty;
     
     public Color spellColor1 = Color.clear;
     public Color spellColor2 = Color.clear;

@@ -129,6 +129,17 @@ public readonly struct SMHandoff : IDisposable {
     /// Derive an SMHandoff from a parent for localized execution.
     /// <br/>The common handoff is copied.
     /// </summary>
+    public SMHandoff(SMHandoff parent, ICancellee newCT) {
+        this.ch = new CommonHandoff(newCT, parent.ch.bc, parent.ch.gcx.Copy());
+        parentCT = parent.parentCT;
+        CanPrepend = parent.CanPrepend;
+        Context = new DerivedSMContext(parent.Context);
+    }
+
+    /// <summary>
+    /// Derive an SMHandoff from a parent for localized execution.
+    /// <br/>The common handoff is copied.
+    /// </summary>
     public SMHandoff(SMHandoff parent, CommonHandoff ch, SMContext? context, bool? canPrepend = null) {
         this.ch = ch.Copy();
         parentCT = parent.parentCT;

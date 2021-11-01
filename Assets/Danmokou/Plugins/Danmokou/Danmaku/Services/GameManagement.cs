@@ -110,6 +110,14 @@ public class GameManagement : CoroutineRegularUpdater {
         ETime.RegisterPersistentEOFInvoke(BehaviorEntity.PrunePoolControls);
         ETime.RegisterPersistentEOFInvoke(CurvedTileRenderLaser.PrunePoolControls);
         SceneIntermediary.SceneUnloaded.Subscribe(_ => ClearScene());
+        
+        //The reason we do this instead of Awake is that we want all resources to be
+        //loaded before any State Machines are constructed, which may occur in other entities' Awake calls.
+        // I tried to get rid of those constructions, but with the presence of ResetValues, it's not easy.
+        GetComponent<ResourceManager>().Setup();
+        GetComponent<BulletManager>().Setup();
+        GetComponentInChildren<SFXService>().Setup();
+        GetComponentInChildren<AudioTrackService>().Setup();
 
         if (References.achievements != null)
             Achievements = References.achievements.MakeRepo().Construct();

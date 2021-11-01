@@ -97,6 +97,9 @@ public class XMLMainMenuCampaign : XMLMainMenu {
             DynamicOptionNodeLR<ISupportAbilityConfig> supportSelect = null!;
             DynamicOptionNodeLR<ShotConfig> shotSelect = null!;
             OptionNodeLR<Subshot> subshotSelect = null!;
+            ReplayActor? r = null;
+            
+            
             var team = new TeamConfig(0, Subshot.TYPE_D, null,
                 c.campaign.players
                     .SelectMany(p => p.shots2
@@ -104,8 +107,13 @@ public class XMLMainMenuCampaign : XMLMainMenu {
                     .ToArray());
             var smeta = new SharedInstanceMetadata(team, new DifficultySettings(FixedDifficulty.Normal));
             
+            bool ContinueAfterShot(TeamConfig tc) {
+                r?.Cancel();
+                return shotCont(tc);
+            }
             void CleanupDemo() {
                 Logs.Log("Cleaning up demo");
+                r?.Cancel();
                 if (demoPlayer != null) {
                     demoPlayer.InvokeCull();
                     demoPlayer = null;
@@ -117,7 +125,7 @@ public class XMLMainMenuCampaign : XMLMainMenu {
                 if (!enableDemo || shotSetup == null || demoPlayerSetup == null) return;
                 GameManagement.DeactivateInstance();
                 var effShot = shotSelect.Value.GetSubshot(subshotSelect.Value);
-                ReplayActor r;
+                r?.Cancel();
                 if (effShot.demoReplay != null) {
                     r = Replayer.BeginReplaying(new Replayer.ReplayerConfig(
                         Replayer.ReplayerConfig.FinishMethod.REPEAT, 
@@ -153,7 +161,7 @@ public class XMLMainMenuCampaign : XMLMainMenu {
             void ShowShot(ShipConfig p, ShotConfig s, Subshot sub, ISupportAbilityConfig support, bool first) {
                 if (!first) UpdateDemo();
                 var index = displays.IndexOf(sd => sd.player == p);
-                displays[index].display.SetShot(p, s, sub);
+                displays[index].display.SetShot(p, s, sub, support);
                 displays.ForEachI((i, x) => {
                     //Only show the selected player on entry so the others don't randomly appear on screen during swipe
                     if (!first || i == index) x.display.Show(true);
@@ -171,7 +179,7 @@ public class XMLMainMenuCampaign : XMLMainMenu {
 
             supportSelect = new DynamicOptionNodeLR<ISupportAbilityConfig>(LString.Empty, _ => _ShowShot(),
                 () => playerSelect.Value.supports.Select(s => 
-                    (shotsel_type(s.ordinal), (ISupportAbilityConfig)s.ability)).ToArray(), 
+                    (s.ordinal, (ISupportAbilityConfig)s.ability)).ToArray(), 
                 playerSelect.Value.supports[0].ability);
             shotSelect = new DynamicOptionNodeLR<ShotConfig>(LString.Empty, _ => _ShowShot(), () =>
                     playerSelect.Value.shots2.Select(s => (s.shot.isMultiShot ? 
@@ -192,7 +200,7 @@ public class XMLMainMenuCampaign : XMLMainMenu {
                     new PassthroughNode(shotsel_support).With(centerTextClass),
                     supportSelect.With(optionNoKeyClass),
                     new PassthroughNode(LString.Empty),
-                    new FuncNode(() => shotCont(new TeamConfig(0, subshotSelect.Value, supportSelect.Value,
+                    new FuncNode(() => ContinueAfterShot(new TeamConfig(0, subshotSelect.Value, supportSelect.Value,
                         (playerSelect.Value, shotSelect.Value))), play_game, false).With(centerTextClass)
                     //new UINode(() => shotSelect.Value.title).SetAlwaysVisible().FixDepth(1),
                     //new UINode(() => shotSelect.Value.description)

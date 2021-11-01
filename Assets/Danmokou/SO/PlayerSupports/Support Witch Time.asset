@@ -13,9 +13,18 @@ MonoBehaviour:
   m_Name: Support Witch Time
   m_EditorClassIdentifier: 
   cutin: {fileID: 0}
+  spellTitle: {fileID: 0}
+  spellColor1: {r: 0, g: 0, b: 0, a: 0}
+  spellColor2: {r: 0, g: 0, b: 0, a: 0}
   title:
     useReference: 0
     reference: 
     hardcoded:
-      en: Witch Time
+      en: Bullet Time
+      jp: 
+  shortTitle:
+    useReference: 0
+    reference: 
+    hardcoded:
+      en: 'Ability: Bullet Time'
       jp: 

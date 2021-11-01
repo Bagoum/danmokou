@@ -20,7 +20,7 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/LuA/LuA.MainMenu.unity
     guid: f624112b2f76c62478ebd6d443131775
-  - enabled: 1
+  - enabled: 0
     path: Assets/SiMP/Scenes/Working Scene.unity
     guid: 2cda990e2423bbf4892e6590ba056729
   - enabled: 0

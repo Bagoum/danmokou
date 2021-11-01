@@ -122,7 +122,9 @@ public partial class BehaviorEntity {
         public void IterateControls(BehaviorEntity beh) {
             int ct = controls.Count;
             for (int ii = 0; ii < ct && !beh.dying; ++ii) {
-                controls[ii].action(beh, controls[ii].cT);
+                //Ignore controls that have been cancelled, as they may be invalid
+                if (!controls[ii].cT.Cancelled)
+                    controls[ii].action(beh, controls[ii].cT);
             }
         }
     }

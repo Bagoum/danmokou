@@ -23,6 +23,7 @@ public abstract class SupportAbilityConfig : ScriptableObject, ISupportAbilityCo
     public Color spellColor2;
 
     public LocalizedStringReference title = null!;
+    public LocalizedStringReference shortTitle = null!;
 
 }
 
@@ -34,6 +35,7 @@ public class SupportBombConfig : SupportAbilityConfig {
     public override string Key => $"bomb:{type}";
     public override SupportAbility Value => new Bomb(type, sm) {
         title = title.Value,
+        shortTitle = shortTitle.Value,
         cutin = cutin,
         spellTitle = spellTitle,
         spellColor1 = spellColor1,

@@ -23,4 +23,11 @@ MonoBehaviour:
     hardcoded:
       en: Galactic Seal ~ Lost Beyond the Event Horizon
       jp: 
+  shortTitle:
+    useReference: 0
+    reference: 
+    hardcoded:
+      en: 'Bomb: Galactic Seal'
+      jp: 
   type: 3
+  sm: {fileID: 0}

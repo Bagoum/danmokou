@@ -29,6 +29,7 @@ The following features are planned by v9, which will probably be completed somet
   - FastExpressionCompiler has been replaced with a custom expression printing solution in BagoumLib.
   - The FS project has been deleted and its code has been moved out, some of it to [localization-utils](https://github.com/Bagoum/localization-utils), some of it to [Suzunoya/Mizuhashi](https://github.com/Bagoum/suzunoya), and some of it to Plugins/Danmokou. 
 - **Pending issues:**
+  - If you see a compiler error about missing PanelSettings, you can fix it by triggering a recompile (eg. by adding code or comments to any C# file in the solution). This is probably due to some oddities in UIToolkit.
   - The UIToolkit bug with CJK characters (see Pending issues in the v7.0.0 changelog) has been **resolved** in the current version of UIToolkit.
 - Replaced legacy dialogue system with Suzunoya-based visual novel system. Old-style dialogue scripts will still work, but they are superseded by in-code visual novel scripts. See `MiniProjects/Scripts/CV_VNStage.txt` (wrapper stage code to execute a visual novel script) and `MiniProjects/Plugins/Danmokou/VNCrimsonVermilion.cs` (a fairly long visual novel script for the proof-of-concept [Crimson and Vermilion](https://bagoum.itch.io/crimson-and-vermilion)).
   - Note that dialogue profiles must be ported to Suzunoya entities.

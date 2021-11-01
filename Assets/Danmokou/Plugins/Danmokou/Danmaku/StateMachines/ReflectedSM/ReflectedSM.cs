@@ -339,11 +339,12 @@ if (> t &fadein,
     public static TaskPattern ParticleControl<CF>(Pred persist, BulletManager.StyleSelector style, CF control) {
         return smh => {
             if (control is BehaviorEntity.cBEHControl bc)
-                BehaviorEntity.ControlPool(persist, style, bc, smh.cT);
+                //Use .Root because stage-enemy-generated controls should be bounded by the stage cT
+                BehaviorEntity.ControlPool(persist, style, bc, smh.cT.Root);
             else if (control is CurvedTileRenderLaser.cLaserControl lc)
-                CurvedTileRenderLaser.ControlPool(persist, style, lc, smh.cT);
+                CurvedTileRenderLaser.ControlPool(persist, style, lc, smh.cT.Root);
             else if (control is BulletManager.cBulletControl pc)
-                BulletManager.ControlPool(persist, style, pc, smh.cT);
+                BulletManager.ControlPool(persist, style, pc, smh.cT.Root);
             else throw new Exception("Couldn't realize bullet-control type");
             return Task.CompletedTask;
         };
@@ -357,11 +358,11 @@ if (> t &fadein,
     [GAlias(typeof(LPCF), "LaserPoolControl")]
     public static TaskPattern PoolControl<CF>(BulletManager.StyleSelector style, CF control) => smh => {
         if      (control is BehPF bc) 
-            smh.Context.PhaseObjects.Add(BehaviorEntity.ControlPool(style, bc, smh.cT));
+            smh.Context.PhaseObjects.Add(BehaviorEntity.ControlPool(style, bc, smh.cT.Root));
         else if (control is LPCF lc) 
-            smh.Context.PhaseObjects.Add(CurvedTileRenderLaser.ControlPool(style, lc, smh.cT));
+            smh.Context.PhaseObjects.Add(CurvedTileRenderLaser.ControlPool(style, lc, smh.cT.Root));
         else if (control is SPCF pc) 
-            smh.Context.PhaseObjects.Add(BulletManager.ControlPool(style, pc, smh.cT));
+            smh.Context.PhaseObjects.Add(BulletManager.ControlPool(style, pc, smh.cT.Root));
         else throw new Exception("Couldn't realize pool-control type");
         return Task.CompletedTask;
     };

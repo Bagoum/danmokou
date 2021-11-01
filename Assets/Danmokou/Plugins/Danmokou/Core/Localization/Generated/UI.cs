@@ -389,16 +389,17 @@ public static partial class LocalizedStrings {
 			}, arg0)))
 			{ ID = "shotsel_multi" };
 		
-		public static readonly LString shotsel_multi_prefix = new LString(Render(null, new[] {
-				"Multishot:",
-				"\n",
-			}),
-			(Locales.JP, Render(Locales.JP, new[] {
-				"<line-height=5>可変ショット",
-				"\n",
-				"</line-height>",
-			})))
+		public static readonly LString shotsel_prefix = new LString("Shot:",
+			(Locales.JP, "ショット"))
+			{ ID = "shotsel_prefix" };
+		
+		public static readonly LString shotsel_multi_prefix = new LString("Multishot:",
+			(Locales.JP, "可変ショット"))
 			{ ID = "shotsel_multi_prefix" };
+		
+		public static readonly LString shotsel_support_prefix = new LString("Support:",
+			(Locales.JP, "スキル"))
+			{ ID = "shotsel_support_prefix" };
 		
 		public static string death_continue(object arg0) => Localization.Locale.Value switch {
 			Locales.JP => Render(Localization.Locale.Value, new[] {

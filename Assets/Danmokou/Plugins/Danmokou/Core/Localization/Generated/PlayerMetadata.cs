@@ -32,54 +32,54 @@ public static partial class LocalizedStrings {
 			{ ID = "players.reimu" };
 		
 		public static readonly LString shot_camera = new LString("Camera",
-			(Locales.JP, "<line-height=5>カメラ</line-height>"))
+			(Locales.JP, "カメラ"))
 			{ ID = "players.shot_camera" };
 		
 		public static readonly LString shot_home_laser_exp = new LString("Homing Amulet / Persuasion Laser",
-			(Locales.JP, "<line-height=5>誘導アミュレット・封魔レーザ</line-height>"))
+			(Locales.JP, "誘導アミュレット・封魔レーザ"))
 			{ ID = "players.shot_home_laser_exp" };
 		
 		public static readonly LString shot_mima_laser = new LString("A View Upon All Creation",
-			(Locales.JP, "<line-height=5>森羅万象を見下ろす者</line-height>"))
+			(Locales.JP, "森羅万象を見下ろす者"))
 			{ ID = "players.shot_mima_laser" };
 		
 		public static readonly LString shot_mima_trailing = new LString("Phantasmic Lasers",
-			(Locales.JP, "<line-height=5>幻想のレーザ</line-height>"))
+			(Locales.JP, "幻想のレーザ"))
 			{ ID = "players.shot_mima_trailing" };
 		
-		public static readonly LString shot_mima_wide = new LString("Falling Stars Escaping Death",
-			(Locales.JP, "<line-height=5>死神から逃げる流星</line-height>"))
+		public static readonly LString shot_mima_wide = new LString("Falling Stars Fleeing Death",
+			(Locales.JP, "死神から逃げる流星"))
 			{ ID = "players.shot_mima_wide" };
 		
 		public static readonly LString shot_mokou_arrowpather = new LString("Flame-Headed Gae Bolg",
-			(Locales.JP, "<line-height=5>炎頭のゲイ・ボルグ</line-height>"))
+			(Locales.JP, "炎頭のゲイ・ボルグ"))
 			{ ID = "players.shot_mokou_arrowpather" };
 		
 		public static readonly LString shot_mokou_laser = new LString("Electroplasmic Railgun",
-			(Locales.JP, "<line-height=5>電磁投射砲</line-height>"))
+			(Locales.JP, "電磁投射砲"))
 			{ ID = "players.shot_mokou_laser" };
 		
-		public static readonly LString shot_mokou_narrow = new LString("The Flaming Sword of Vengeful Deicide",
-			(Locales.JP, "<line-height=5>神殺しの炎刀</line-height>"))
+		public static readonly LString shot_mokou_narrow = new LString("Sigurd's Flaming Gramr",
+			(Locales.JP, "神殺しの炎刀"))
 			{ ID = "players.shot_mokou_narrow" };
 		
-		public static readonly LString shot_mokou_sun = new LString("The Autophagic Sun Smoldering in the Void",
-			(Locales.JP, "<line-height=5>無で燻る自食の太陽</line-height>"))
+		public static readonly LString shot_mokou_sun = new LString("The Smoldering Autophagic Sun",
+			(Locales.JP, "無で燻る自食の太陽"))
 			{ ID = "players.shot_mokou_sun" };
 		
 		public static readonly LString shot_kasen_narrow = new LString("Narrow")
 			{ ID = "players.shot_kasen_narrow" };
 		
 		public static readonly LString shot_null = new LString("Null Shot",
-			(Locales.JP, "<line-height=5>無</line-height>"))
+			(Locales.JP, "無"))
 			{ ID = "players.shot_null" };
 		
 		public static readonly LString shot_reimu_ddcb = new LString("Homing Amulets / Persuasion Needles",
-			(Locales.JP, "<line-height=5>誘導アミュレット・封魔針</line-height>"))
+			(Locales.JP, "誘導アミュレット・封魔針"))
 			{ ID = "players.shot_reimu_ddcb" };
 		
 		public static readonly LString shot_reimu_laser = new LString("Youkai Exterminatifier",
-			(Locales.JP, "<line-height=5>高効力の妖怪退治ショット</line-height>"))
+			(Locales.JP, "高効力の妖怪退治ショット"))
 			{ ID = "players.shot_reimu_laser" };
 		
 	}

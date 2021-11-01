@@ -1,5 +1,6 @@
 ﻿using System;
 using BagoumLib.Cancellation;
+using BagoumLib.DataStructures;
 using Danmokou.Core;
 using Danmokou.DMath;
 using Danmokou.Graphics;
@@ -18,13 +19,18 @@ public class FancyShotDisplay : FancyDisplay {
     public float starActiveScale = 0.8f;
     public float starInactiveScale = 0.5f;
 
-    public void SetShot(ShipConfig p, ShotConfig s, Subshot sub) {
+    public void SetShot(ShipConfig p, ShotConfig s, Subshot sub, ISupportAbilityConfig support) {
         shotTitle.fontSharedMaterial.SetMaterialOutline(p.uiColor);
         shotDescription.fontSharedMaterial.SetMaterialOutline(p.uiColor);
         var ss = s.GetSubshot(sub);
         ShowStars(difficultyStars, ShotRatingToInt(ss.shotDifficulty), p.uiColor);
         shotParams.text = ss.type;
-        shotTitle.text = s.isMultiShot ? $"{LocalizedStrings.UI.shotsel_multi_prefix}{ss.Title}" : ss.Title.Value;
+        var shotPrefix = s.isMultiShot ? LocalizedStrings.UI.shotsel_multi_prefix : LocalizedStrings.UI.shotsel_prefix;
+        shotTitle.text =
+            $"<size=3.4>{shotPrefix}</size>\n" +
+            $"{ss.Title}\n" +
+            $"<size=3.4>{LocalizedStrings.UI.shotsel_support_prefix}</size>\n" +
+            $"{support.Value.shortTitle}";
         shotDescription.text = ss.description;
     }
 
@@ -63,8 +69,8 @@ public class FancyShotDisplay : FancyDisplay {
             tr.localPosition = myLoc;
             tr.localScale = new Vector3(scale, scale, scale);
         } else {
-            tr.GoTo(myLoc, time, M.EOutSine, canceller).Run(this);
-            tr.ScaleTo(scale, time, M.EOutSine, canceller).Run(this);
+            tr.GoTo(myLoc, time, M.EOutSine, canceller).Run(this, new CoroutineOptions(true));
+            tr.ScaleTo(scale, time, M.EOutSine, canceller).Run(this, new CoroutineOptions(true));
         }
     }
 }

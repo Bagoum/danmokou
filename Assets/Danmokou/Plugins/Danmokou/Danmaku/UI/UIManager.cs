@@ -560,7 +560,7 @@ public class UIManager : CoroutineRegularUpdater, IUIManager, IStageAnnouncer {
 
     public void DeannounceStage(ICancellee cT, out float time) {
         time = stageDAnnounceIn + stageDAnnounceOut + stageDAnnounceStay;
-        InStayOutSpriteFade(centerMessage, stageDAnnounceIn, stageAnnounceStay, stageDAnnounceOut, cT);
+        InStayOutSpriteFade(stageDeannouncer, stageDAnnounceIn, stageAnnounceStay, stageDAnnounceOut, cT);
     }
 
     public TextMeshPro challengeHeader = null!;

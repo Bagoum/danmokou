@@ -36,10 +36,10 @@ MonoBehaviour:
   - ordinal: N
     shot: {fileID: 11400000, guid: 9b809459ea3c04943a34159db41a660f, type: 2}
   supports:
-  - ordinal: S1
+  - ordinal: Ability 1
     ability: {fileID: 11400000, guid: a735d449cc1221c449d66e9929f98cca, type: 2}
-  - ordinal: S2
-    ability: {fileID: 11400000, guid: 326681bedf4cf8c488c4f21cfdb7be52, type: 2}
+  - ordinal: Bomb 1
+    ability: {fileID: 11400000, guid: f9ca40a5be0ccd8429cba36caf58091e, type: 2}
   uiColor: {r: 0.50980395, g: 0, b: 0.1254902, a: 1}
   shotDisplay: {fileID: 7713674854582391743, guid: 949a4532b5136a344af7110e1f0be716,
     type: 3}
