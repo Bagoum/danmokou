@@ -249,7 +249,6 @@ public class Enemy : RegularUpdater {
     private float PhotoRatio => (float) PhotoHP / maxPhotoHP;
     private float BarRatio => Math.Min(PhotoRatio, HPRatio);
     private float _displayBarRatio;
-    public float EffectiveBarRatio => divertHP?.to.EffectiveBarRatio ?? BarRatio;
     public float DisplayBarRatio => divertHP?.to.DisplayBarRatio ?? _displayBarRatio;
 
     private Color HPColor => currPhaseType == PhaseType.TIMEOUT ?

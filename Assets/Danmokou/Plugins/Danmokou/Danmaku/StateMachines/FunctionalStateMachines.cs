@@ -36,16 +36,13 @@ public class GTRepeat2 : GTRepeat {
 public class GTRepeat : UniversalSM {
     private class SMExecutionTracker {
         public LoopControl<StateMachine> looper;
-        /// <summary>
-        /// SMHandoff to pass around. Note that this is dirty and the ch/Exec/GCX properties are repeatedly modified.
-        /// </summary>
-        private SMHandoff smh;
+        private readonly SMHandoff smh;
         private readonly bool waitChild;
         private readonly bool sequential;
         public SMExecutionTracker(GenCtxProperties<StateMachine> props, SMHandoff smh, out bool isClipped) {
-            looper = new LoopControl<StateMachine>(props, smh.ch, out isClipped);
-            this.smh = smh;
-            this.smh.CanPrepend = true;
+            //Make a derived copy for the canPrepend override
+            this.smh = new SMHandoff(smh, smh.ch, null, true);
+            looper = new LoopControl<StateMachine>(props, this.smh.ch, out isClipped);
             waitChild = props.waitChild;
             sequential = props.sequential;
             checkIsChildDone = null;
@@ -68,11 +65,8 @@ public class GTRepeat : UniversalSM {
         private Func<bool>? checkIsChildDone;
 
         public void DoAIteration(ref float elapsedFrames, IReadOnlyList<StateMachine> target) {
-            //See IPExecution tracker for comments on this code
-            GenCtx base_gcx = looper.GCX.Copy();
             bool done = false;
             Action loop_done = () => {
-                base_gcx.Dispose();
                 done = true;
             };
             if (waitChild) {
@@ -86,32 +80,33 @@ public class GTRepeat : UniversalSM {
                         if (ii >= target.Count || looper.Handoff.cT.Cancelled) {
                             loop_done();
                         } else 
-                            DoAIteration(target[ii], () => DoNext(ii + 1), base_gcx);
+                            DoAIteration(target[ii], () => DoNext(ii + 1));
                     }
                     DoNext(0);
                 } else {
                     var loop_fragment_done = GetManyCallback(target.Count, loop_done);
                     for (int ii = 0; ii < target.Count; ++ii) {
-                        DoAIteration(target[ii], loop_fragment_done, base_gcx);
+                        DoAIteration(target[ii], loop_fragment_done);
                     }
                 }
-            } else DoAIteration(target[(int) looper.props.childSelect(looper.GCX) % target.Count], loop_done, base_gcx);
+            } else DoAIteration(target[(int) looper.props.childSelect(looper.GCX) % target.Count], loop_done);
         }
 
-        private void DoAIteration(StateMachine target, Action childDone, GenCtx baseGCX) {
-            smh.ch = new CommonHandoff(looper.Handoff.cT, looper.Handoff.bc, baseGCX);
-            target.Start(smh).ContinueWithSync(childDone);
+        private void DoAIteration(StateMachine target, Action childDone) {
+            var itrSMH = new SMHandoff(smh, looper.Handoff, null);
+            target.Start(itrSMH).ContinueWithSync(() => {
+                itrSMH.Dispose();
+                childDone();
+            });
         }
 
         public void DoLastAIteration(IReadOnlyList<StateMachine> target) {
             //Unlike GIR, which hoists its cleanup code into a callback, GTR awaits its last child
             // and calls its cleanup code in Start.
             //Therefore, this code follows the wait-child pattern.
-            GenCtx base_gcx = looper.GCX.Copy();
             bool done = false;
             checkIsChildDone = () => done;
             Action loop_done = () => {
-                base_gcx.Dispose();
                 done = true;
                 //AllDone called by Start code
             };
@@ -121,21 +116,23 @@ public class GTRepeat : UniversalSM {
                         if (ii >= target.Count || looper.Handoff.cT.Cancelled)
                             loop_done();
                         else 
-                            DoAIteration(target[ii], () => DoNext(ii + 1), base_gcx);
+                            DoAIteration(target[ii], () => DoNext(ii + 1));
                     }
                     DoNext(0);
                 } else {
                     var loop_fragment_done = GetManyCallback(target.Count, loop_done);
                     for (int ii = 0; ii < target.Count; ++ii) {
-                        DoAIteration(target[ii], loop_fragment_done, base_gcx);
+                        DoAIteration(target[ii], loop_fragment_done);
                     }
                 }
-            } else DoAIteration(target[(int) looper.props.childSelect(looper.GCX) % target.Count], loop_done, base_gcx);
+            } else DoAIteration(target[(int) looper.props.childSelect(looper.GCX) % target.Count], loop_done);
         }
 
         public void AllDone(bool? runFinishIteration = null, bool? normalEnd = null) {
             if (runFinishIteration ?? !looper.Handoff.cT.Cancelled) 
                 FinishIteration();
+            smh.Dispose();
+            //Looper has a separate copied CH to dispose
             looper.IAmDone(normalEnd ?? !looper.Handoff.cT.Cancelled);
         }
         
@@ -182,7 +179,7 @@ public class GTRepeat : UniversalSM {
             return;
         }
         if (tracker.CleanupIfCancelled()) return;
-        float elapsedFrames = 0;
+        float elapsedFrames;
         (elapsedFrames, tracker.looper) = await tracker.Wait(0f, tracker.InitialDelay());
         if (tracker.CleanupIfCancelled()) return;
         while (tracker.RemainsExceptLast && tracker.PrepareIteration()) {

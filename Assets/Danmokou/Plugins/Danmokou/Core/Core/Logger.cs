@@ -16,7 +16,7 @@ public static class Logs {
 
     public static readonly ISubject<LogMessage> DMKLogs = new Event<LogMessage>();
 
-    private static readonly string logFile;
+    private static readonly string? logFile;
     private static StreamWriter? fileStream;
     private const string LOGDIR = "DMK_Logs/";
     private static readonly List<IDisposable> listeners = new List<IDisposable>();

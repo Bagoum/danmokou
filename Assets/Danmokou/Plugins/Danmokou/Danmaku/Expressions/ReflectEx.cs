@@ -121,10 +121,9 @@ public static class ReflectEx {
     //TODO consider replacing SafeResizeable here with a dictionary
     public readonly struct Hoist<T> {
         private readonly SafeResizableArray<T> data;
-        private readonly string name;
 
         public Hoist(string name) {
-            data = PublicDataHoisting.Register<T>(this.name = name);
+            data = PublicDataHoisting.Register<T>(name);
         }
 
         public void Save(int index, T value) => data.SafeAssign(index, value);

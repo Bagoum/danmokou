@@ -18,8 +18,7 @@ namespace Danmokou.UI.XML {
 public class XMLReplaySaveMenu : XMLMenu {
     public VisualTreeAsset UIScreenV = null!;
 
-    protected override void Awake() {
-        if (!Application.isPlaying) return;
+    public override void FirstFrame() {
         if (InstanceRequest.InstanceCompleted.LastPublished.Try(out var inst) && inst.data.Replay is ReplayRecorder rr) {
             var r = rr.Compile(inst.record);
             var replayName = new TextInputNode(replay_name);
@@ -45,7 +44,8 @@ public class XMLReplaySaveMenu : XMLMenu {
             ).With(UIScreenV);
         }
         MainScreen.ExitNode = MainScreen.Top[MainScreen.Top.Length - 1];
-        base.Awake();
+        
+        base.FirstFrame();
         if (MainScreen.Top.Length > 2) Current = MainScreen.Top[2];
     }
 }

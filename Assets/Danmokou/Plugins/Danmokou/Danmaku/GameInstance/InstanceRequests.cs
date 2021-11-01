@@ -306,7 +306,6 @@ public class InstanceRequest {
             () => {
                 var beh = UnityEngine.Object.Instantiate(b.boss).GetComponent<BehaviorEntity>();
                 beh.phaseController.Override(ab.phase.index, tracker.Guard(() => WaitThenFinishAndPostReplay()));
-                beh.Enemy.SetHPBarColors(ab.phase.type);
                 beh.RunSMFromScript(b.stateMachine);
             }));
     }

@@ -20,7 +20,7 @@ phase(0)
 		_ 3
 			seijax 180 2
 		_ 4
-			seijax 180 2
+			seijax 160 2
 		
 <!> type(non, `p2 NO CONTROLS`)
 <!> hp(1000)

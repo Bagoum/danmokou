@@ -545,7 +545,7 @@ public partial class BulletManager : RegularUpdater {
         }
     }
 
-    public void Setup() {
+    private void Awake() {
         BulletManager.main = this;
         PrepareRendering();
         epLayerMask = LayerMask.GetMask(epLayerName);

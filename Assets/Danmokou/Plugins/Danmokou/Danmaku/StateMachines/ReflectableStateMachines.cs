@@ -1,6 +1,7 @@
 ﻿using System.Threading.Tasks;
 using System;
 using System.Reactive;
+using BagoumLib.Tasks;
 using Danmokou.Behavior.Functions;
 using Danmokou.Core;
 using Danmokou.Danmaku.Patterns;
@@ -49,10 +50,9 @@ public class EventLASM : ReflectableLASM {
     [GAlias(typeof(Unit), "listen0")]
     public static EventTask Listen<T>(string evName, string bindVar, StateMachine exec) => async smh => {
         using var _ = Events.FindRuntimeEvent<T>(evName).Ev.Subscribe(val => {
-            var smh2 = smh;
-            smh2.ch = new CommonHandoff(smh2.ch.cT, smh2.ch.bc, smh2.GCX.Copy());
+            var smh2 = new SMHandoff(smh, smh.ch, null);
             smh2.GCX.SetValue(bindVar, val);
-            exec.Start(smh2);
+            exec.Start(smh2).ContinueWithSync(smh2.Dispose);
         });
         await WaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, 0f, true);
         smh.ThrowIfCancelled();
@@ -68,7 +68,7 @@ public class EventLASM : ReflectableLASM {
     
     
     /// <summary>
-    /// Proc a runtime event.
+    /// Push a value to a runtime event.
     /// </summary>
     [GAlias(typeof(float), "onnextf")]
     public static EventTask OnNext<T>(string evName, GCXF<T> val) => smh => {
@@ -78,7 +78,7 @@ public class EventLASM : ReflectableLASM {
 
 
     /// <summary>
-    /// Proc a unit-typed runtime event.
+    /// Push to a unit-typed runtime event.
     /// </summary>
     public static EventTask OnNext0(string evName) => OnNext(evName, _ => Unit.Default);
     

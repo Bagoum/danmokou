@@ -64,7 +64,7 @@ public struct DelegatedCreator {
 
     private (Movement, ParametricInfo) PathHandlers(SyncHandoff sbh, GCXU<VTP> path, uint? id = null) {
         var fctx = FiringCtx.New(sbh.GCX);
-        var mov = new Movement(path(sbh.GCX, fctx), ParentOffset, FacedRV2(sbh.rv2));
+        var mov = new Movement(path(sbh.GCX, fctx), ParentOffset, FacedRV2(sbh.RV2));
         var pi = new ParametricInfo(in mov, sbh.index, id, sbh.timeOffset, fctx);
         return (mov, pi);
     }
@@ -82,7 +82,7 @@ public struct DelegatedCreator {
 
     public void Complex(SyncHandoff sbh, GCXU<VTP> path, uint id, BehOptions options) {
         var (mov, pi) = PathHandlers(sbh, path, id);
-        V2RV2 lrv2 = FacedRV2(sbh.rv2);
+        V2RV2 lrv2 = FacedRV2(sbh.RV2);
         var opts = new RealizedBehOptions(options, sbh.GCX, pi.ctx, ParentOffset, lrv2, sbh.ch.cT);
         if (opts.playerBullet != null) style = BulletManager.GetOrMakeComplexPlayerCopy(style);
         BulletManager.RequestComplex(style, in mov, pi, ref opts);
@@ -91,7 +91,7 @@ public struct DelegatedCreator {
     private const float DEFAULT_REMEMBER = 3f;
     public void Pather(SyncHandoff sbh, float? maxLength, BPY remember, GCXU<VTP> path, uint id, BehOptions options) {
         var (mov, pi) = PathHandlers(sbh, path, id);
-        var opts = new RealizedBehOptions(options, sbh.GCX, pi.ctx, ParentOffset, FacedRV2(sbh.rv2), sbh.ch.cT);
+        var opts = new RealizedBehOptions(options, sbh.GCX, pi.ctx, ParentOffset, FacedRV2(sbh.RV2), sbh.ch.cT);
         if (opts.playerBullet != null) style = BulletManager.GetOrMakeComplexPlayerCopy(style);
         BulletManager.RequestPather(style, in mov, pi, 
             maxLength.GetValueOrDefault(DEFAULT_REMEMBER), remember, ref opts);
@@ -99,7 +99,7 @@ public struct DelegatedCreator {
 
     public void Laser(SyncHandoff sbh, GCXU<VTP> path, float cold, float hot, uint id, LaserOptions options) {
         var (mov, pi) = PathHandlers(sbh, path, id);
-        var opts = new RealizedLaserOptions(options, sbh.GCX, pi.ctx, ParentOffset, FacedRV2(sbh.rv2), sbh.ch.cT);
+        var opts = new RealizedLaserOptions(options, sbh.GCX, pi.ctx, ParentOffset, FacedRV2(sbh.RV2), sbh.ch.cT);
         if (opts.playerBullet != null) style = BulletManager.GetOrMakeComplexPlayerCopy(style);
         BulletManager.RequestLaser(transformParent, style, in mov, pi, cold, hot, ref opts);
     }
@@ -107,7 +107,7 @@ public struct DelegatedCreator {
     public void Summon(bool pooled, SyncHandoff sbh, BehOptions options, GCXU<VTP> path, SMRunner sm, uint id) {
         var (mov, pi) = PathHandlers(sbh, path, id);
         BulletManager.RequestSummon(pooled, style, in mov, pi, options.ID, transformParent, sm,
-            new RealizedBehOptions(options, sbh.GCX, pi.ctx, ParentOffset, FacedRV2(sbh.rv2), sbh.ch.cT));
+            new RealizedBehOptions(options, sbh.GCX, pi.ctx, ParentOffset, FacedRV2(sbh.RV2), sbh.ch.cT));
     }
 
     public void SummonRect(SyncHandoff sbh, string behid, TP4 color, BPRV2 loc, SMRunner sm, uint bpiid) {

@@ -20,7 +20,7 @@ public class XMLPracticeSuccessMenu : PausedGameplayMenu {
         Current = MainScreen.Top[0];
     }
 
-    protected override void Awake() {
+    public override void FirstFrame() {
         MainScreen = new UIScreen(this,
             new FuncNode(GameManagement.Restart, restart, true)
                 .EnabledIf(() => GameManagement.CanRestart),
@@ -29,15 +29,12 @@ public class XMLPracticeSuccessMenu : PausedGameplayMenu {
             new FuncNode(GameManagement.GoToMainMenu, to_menu, true)
         ).With(UIScreen);
         MainScreen.ExitNode = MainScreen.Top[2];
-        base.Awake();
-    }
-
-    protected override void Start() {
-        base.Start();
+        
+        base.FirstFrame();
         UI.Q<Label>("Header").text = "YOU HUNTED";
         HideMe();
     }
-    
+
     protected override void BindListeners() {
         base.BindListeners();
         Listen(GameManagement.EvInstance, i => i.PracticeSuccess, ShowMe);

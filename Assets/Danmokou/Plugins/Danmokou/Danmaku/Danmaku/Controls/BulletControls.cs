@@ -107,7 +107,6 @@ public partial class BulletManager {
     
     public class StyleSelector {
         private const char wildcard = '*';
-        private readonly List<string[]> selections;
         private readonly List<string> enumerated;
         private string[]? simple;
         private string[]? complex;
@@ -119,8 +118,7 @@ public partial class BulletManager {
                 .Concat(Styles(behPools.Keys, "", false)).ToArray();
 
         public StyleSelector(string[][] selections) {
-            this.selections = new List<string[]>(selections);
-            this.enumerated = Resolve(this.selections);
+            this.enumerated = Resolve(selections);
         }
 
         public StyleSelector(string one) : this(new[] {new[] {one}}) { }
@@ -175,7 +173,7 @@ public partial class BulletManager {
         }
         private static readonly Dictionary<string, Dictionary<string, string>> cachedMerges = new Dictionary<string, Dictionary<string, string>>();
 
-        private static List<string> Resolve(List<string[]> selections) {
+        private static List<string> Resolve(IReadOnlyList<string[]> selections) {
             Stack<int> indices = new Stack<int>();
             Stack<string> partials = new Stack<string>();
             List<string> done = new List<string>();

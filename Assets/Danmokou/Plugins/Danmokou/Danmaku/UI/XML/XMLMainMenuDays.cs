@@ -54,18 +54,7 @@ public class XMLMainMenuDays : XMLMainMenu {
     private static UINode[] DifficultyFuncNodes(Func<FixedDifficulty, Action> map) =>
         DifficultyNodes(d => new FuncNode(map(d), d.Describe()));
 
-    protected override void Start() {
-        if (ReturnTo == null) {
-            _ = uiRenderer.Slide(new Vector2(3, 0), Vector2.zero, 1f, DMath.M.EOutSine);
-            _ = uiRenderer.Fade(0, 1, 1f, null);
-        } else
-            uiRenderer.Fade(1, 1, 0, null);
-        base.Start();
-    }
-    
-    protected override void Awake() {
-        if (!Application.isPlaying) return;
-        
+    public override void FirstFrame() {
         FixedDifficulty dfc = FixedDifficulty.Normal;
         var defaultPlayer = References.dayCampaign!.players[0];
         var defaultShot = defaultPlayer.shots2[0];
@@ -145,7 +134,12 @@ public class XMLMainMenuDays : XMLMainMenu {
         ).With(MainScreenV);
         ResetCurrentNode();
 
-        base.Awake();
+        base.FirstFrame();
+        if (ReturnTo == null) {
+            _ = uiRenderer.Slide(new Vector2(3, 0), Vector2.zero, 1f, DMath.M.EOutSine);
+            _ = uiRenderer.Fade(0, 1, 1f, null);
+        } else
+            uiRenderer.Fade(1, 1, 0, null);
     }
 }
 }

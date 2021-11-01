@@ -93,8 +93,8 @@ public class PatternSM : SequentialSM {
     }
 
     public override async Task Start(SMHandoff smh) {
-        var jsmh = smh.CreateJointCancellee(out var cts);
         var ctx = new PatternContext(this);
+        using var jsmh = smh.CreateJointCancellee(out var cts, ctx);
         var subbosses = new List<Enemy>();
         var subsummons = new List<BehaviorEntity>();
         var ui = ServiceLocator.MaybeFind<IUIManager>();
@@ -325,8 +325,7 @@ public class PhaseSM : SequentialSM {
         await cutins;
         smh.ThrowIfCancelled();
         if (props.phaseType?.IsPattern() == true) ETime.Timer.PhaseTimer.Restart();
-        var joint_smh = smh.CreateJointCancellee(out var pcTS);
-        joint_smh.Context = ctx;
+        using var joint_smh = smh.CreateJointCancellee(out var pcTS, ctx);
         PrepareTimeout(ctx, ui, subbosses, joint_smh, pcTS);
         //The start snapshot is taken after the root movement,
         // so meter can be used during the 1+2 seconds between cards

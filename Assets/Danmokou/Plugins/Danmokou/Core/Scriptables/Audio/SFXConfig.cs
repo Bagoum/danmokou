@@ -24,7 +24,7 @@ public class SFXConfig : ScriptableObject {
     /// <summary>
     /// True if the SFX requires features that can't be handled by PlayOneShot
     /// </summary>
-    public bool RequiresHandling => pitch != 1f || Pausable || slowable;
+    public bool RequiresHandling => Mathf.Abs(pitch - 1f) > Mathf.Epsilon || Pausable || slowable;
     [Header("Loop Features")]
     public bool loop;
     public float loopTimeCheck;

@@ -443,6 +443,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
     }
 
     private class LaserMetadata {
+        // ReSharper disable once NotAccessedField.Local
         public readonly BehaviorEntity.BEHStyleMetadata? metadata;
 
         public LaserMetadata(BehaviorEntity.BEHStyleMetadata? bsm) {
@@ -616,11 +617,9 @@ public class CurvedTileRenderLaser : CurvedTileRender {
         }
     }
 
-    public static void ClearPoolControls(bool clearPlayer) {
-        for (int ii = 0; ii < activePools.Count; ++ii) {
-            if (clearPlayer || (activePoolsList[ii].metadata?.IsPlayer == false)) 
-                activePoolsList[ii].ClearControls();
-        }
+    public static void ClearPoolControls() {
+        for (int ii = 0; ii < activePools.Count; ++ii)
+            activePoolsList[ii].ClearControls();
     }
 }
 

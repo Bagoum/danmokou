@@ -21,9 +21,9 @@ using static BagoumLib.Tasks.WaitingUtils;
 
 namespace Danmokou.SM {
 public class SMContext {
-    public List<IDisposable> PhaseObjects { get; } = new List<IDisposable>();
+    public virtual List<IDisposable> PhaseObjects { get; } = new List<IDisposable>();
 
-    public void CleanupObjects() {
+    public virtual void CleanupObjects() {
         foreach (var t in PhaseObjects)
             t.Dispose();
         PhaseObjects.Clear();
@@ -71,27 +71,44 @@ public class PhaseContext : SMContext {
 
 }
 
-public struct SMHandoff : IDisposable {
-    public BehaviorEntity Exec {
-        get => GCX.exec;
-        set => GCX.exec = value;
+/// <summary>
+/// A SM context that does not cleanup objects when it is disposed.
+/// </summary>
+public class DerivedSMContext : SMContext {
+    private readonly SMContext parent;
+    public override List<IDisposable> PhaseObjects => parent.PhaseObjects;
+
+    public DerivedSMContext(SMContext parent) {
+        this.parent = parent;
     }
-    public SMContext Context { get; set; }
     
-    public CommonHandoff ch;
-    public ICancellee cT => ch.cT;
-    public readonly ICancellee parentCT;
-    public GenCtx GCX => ch.gcx;
-    public bool Cancelled => ch.cT.Cancelled;
+    public override void CleanupObjects() { }
+}
+
+/// <summary>
+/// A struct containing information for StateMachine execution.
+/// <br/>The caller is responsible for disposing this.
+/// </summary>
+public readonly struct SMHandoff : IDisposable {
     /// <summary>
     /// RunTryPrepend should delegate to Append unless within a GTR scope.
     /// </summary>
-    public bool CanPrepend { get; set; }
+    public bool CanPrepend { get; }
+    public SMContext Context { get; }
+    
+    public readonly CommonHandoff ch;
+    public readonly ICancellee parentCT;
+    public ICancellee cT => ch.cT;
+    public GenCtx GCX => ch.gcx;
+    public BehaviorEntity Exec => GCX.exec;
+    public bool Cancelled => ch.cT.Cancelled;
 
     public void ThrowIfCancelled() => ch.cT.ThrowIfCancelled();
 
     public SMHandoff(BehaviorEntity exec, ICancellee? cT = null, int? index = null) {
-        this.ch = new CommonHandoff(cT ?? Cancellable.Null, GenCtx.New(exec, V2RV2.Zero));
+        var gcx = GenCtx.New(exec, V2RV2.Zero);
+        this.ch = new CommonHandoff(cT ?? Cancellable.Null, null, gcx);
+        gcx.Dispose();
         ch.gcx.index = index.GetValueOrDefault(exec.rBPI.index);
         parentCT = Cancellable.Null;
         CanPrepend = false;
@@ -101,14 +118,40 @@ public struct SMHandoff : IDisposable {
     public SMHandoff(BehaviorEntity exec, SMRunner smr, ICancellee? cT = null) {
         var gcx = smr.NewGCX ?? GenCtx.New(exec, V2RV2.Zero);
         gcx.OverrideScope(exec, V2RV2.Zero, exec.rBPI.index);
-        this.ch = new CommonHandoff(cT ?? smr.cT, gcx);
+        this.ch = new CommonHandoff(cT ?? smr.cT, null, gcx);
+        gcx.Dispose();
         this.parentCT = smr.cT;
         CanPrepend = false;
         Context = new SMContext();
     }
 
+    /// <summary>
+    /// Derive an SMHandoff from a parent for localized execution.
+    /// <br/>The common handoff is copied.
+    /// </summary>
+    public SMHandoff(SMHandoff parent, CommonHandoff ch, SMContext? context, bool? canPrepend = null) {
+        this.ch = ch.Copy();
+        parentCT = parent.parentCT;
+        CanPrepend = canPrepend ?? parent.CanPrepend;
+        Context = context ?? new DerivedSMContext(parent.Context);
+    }
+
+    /// <summary>
+    /// Derive a joint-token SMHandoff.
+    /// </summary>
+    private SMHandoff(SMHandoff parent, SMContext? context, out Cancellable cts) {
+        this.parentCT = parent.parentCT;
+        this.ch = new CommonHandoff(
+            new JointCancellee(parent.cT, cts = new Cancellable()), parent.ch.bc, parent.ch.gcx);
+        CanPrepend = parent.CanPrepend;
+        Context = context ?? new DerivedSMContext(parent.Context);
+    }
+
+    public SMHandoff CreateJointCancellee(out Cancellable cts, SMContext? innerContext) => 
+        new SMHandoff(this, innerContext, out cts);
+
     public void Dispose() {
-        GCX.Dispose();
+        ch.Dispose();
         Context.CleanupObjects();
     }
 
@@ -116,18 +159,6 @@ public struct SMHandoff : IDisposable {
     public void RunTryPrependRIEnumerator(IEnumerator cor) {
         if (CanPrepend) Exec.RunTryPrependRIEnumerator(cor);
         else RunRIEnumerator(cor);
-    }
-
-    public SMHandoff CreateJointCancellee(ICancellee other, out ICancellee ct) {
-        ct = new JointCancellee(cT, other);
-        var nsmh = this;
-        nsmh.ch.cT = ct;
-        return nsmh;
-    }
-    
-    public SMHandoff CreateJointCancellee(out Cancellable cts) {
-        cts = new Cancellable();
-        return CreateJointCancellee(cts, out _);
     }
 }
 // WARNING: StateMachines must NOT store any state. As in, you must be able to call the same SM twice concurrently,
@@ -582,9 +613,8 @@ public class NoBlockUSM : UniversalSM {
 
     public override Task Start(SMHandoff smh) {
         //The GCX may be disposed by the parent before the child has run (due to early return), so we copy it
-        smh.ch = smh.ch.CopyGCX();
-        //ContinueWithSync prints errors
-        states[0].Start(smh).ContinueWithSync(smh.GCX.Dispose);
+        var smh2 = new SMHandoff(smh, smh.ch, null);
+        _ = states[0].Start(smh2).ContinueWithSync(smh2.Dispose);
         return Task.CompletedTask;
     }
 }

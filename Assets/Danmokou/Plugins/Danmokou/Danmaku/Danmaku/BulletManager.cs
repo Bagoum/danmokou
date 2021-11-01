@@ -297,14 +297,11 @@ public partial class BulletManager {
     /// <summary>
     /// Only call this for hard endings (like scene clear). Phase tokens should handle phase deletion.
     /// </summary>
-    public static void ClearPoolControls(bool clearPlayer=true) {
-        foreach (var pool in simpleBulletPools.Values) {
-            if (clearPlayer || !pool.IsPlayer) {
-                pool.ClearControls();
-            }
-        }
-        BehaviorEntity.ClearPoolControls(clearPlayer);
-        CurvedTileRenderLaser.ClearPoolControls(clearPlayer);
+    public static void ClearPoolControls() {
+        foreach (var pool in simpleBulletPools.Values)
+            pool.ClearControls();
+        BehaviorEntity.ClearPoolControls();
+        CurvedTileRenderLaser.ClearPoolControls();
     }
     
     private void OnDestroy() {

@@ -48,7 +48,7 @@ public class SFXService : RegularUpdater, ISFXService {
     }
     private readonly CompactingArray<ConstructedAudio> constructed = new CompactingArray<ConstructedAudio>();
 
-    public void Setup() {
+    private void Awake() {
         src = GetComponent<AudioSource>();
         dclips.Clear();
         foreach (var configs in GameManagement.References.SFX.Select(x => x.sfxs).Prepend(SFX)) {

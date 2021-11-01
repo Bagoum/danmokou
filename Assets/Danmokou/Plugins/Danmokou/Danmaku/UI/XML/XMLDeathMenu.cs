@@ -20,7 +20,7 @@ public class XMLDeathMenu : PausedGameplayMenu {
         Current = MainScreen.Top[GameManagement.Instance.Continues > 0 ? 0 : 1];
     }
 
-    protected override void Awake() {
+    public override void FirstFrame() {
         MainScreen = new UIScreen(this,
             new FuncNode(() => {
                 if (GameManagement.Instance.TryContinue()) {
@@ -34,11 +34,8 @@ public class XMLDeathMenu : PausedGameplayMenu {
             new ConfirmFuncNode(GameManagement.GoToMainMenu, to_menu, true)
         ).With(UIScreen);
         MainScreen.ExitNode = MainScreen.Top[0];
-        base.Awake();
-    }
-
-    protected override void Start() {
-        base.Start();
+        
+        base.FirstFrame();
         UI.Q<Label>("Header").text = death_header;
         HideMe();
     }

@@ -25,6 +25,7 @@ public static class Statistics {
 
     public class StatsGenerator {
         private readonly InstanceRecord[] arr;
+        // ReSharper disable once NotAccessedField.Local
         private readonly SMAnalysis.AnalyzedCampaign[] campaigns;
         private readonly Dictionary<BossPracticeRequestKey, (int, int)> spellHist;
         public readonly bool HasSpellHist;

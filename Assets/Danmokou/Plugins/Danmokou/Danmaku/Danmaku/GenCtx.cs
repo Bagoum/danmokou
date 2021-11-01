@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using BagoumLib;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.DMath;
@@ -73,13 +74,31 @@ public class GenCtx : IDisposable {
     [UsedImplicitly]
     public ParametricInfo AsBPI => new ParametricInfo(Loc, index, idOverride ?? exec.rBPI.id, i, fctx);
     private static readonly Stack<GenCtx> cache = new Stack<GenCtx>();
+    private bool _isInCache = false;
+
+    /*
+    private static int allocedCount = 0;
+    private static int recachedCount = 0;
+    private static int decachedCount = 0;
+    private static int itrCounter = 0;
+    private int _itr = 0;
+
+    public static string DebugState() =>
+        $"GCX cache: {cache.Count}; alloced: {allocedCount}; recached: {recachedCount}; decached: {decachedCount}";*/
+    
     private GenCtx() { }
 
     public uint NextID() => RNG.GetUInt();
 
     public static GenCtx New(BehaviorEntity exec, V2RV2 rv2) {
-        //if (cache.Count == 0) Log.Unity("Instantiating new GCX", true, Log.Level.DEBUG1);
+        //Logs.Log($"Acquiring new GCX {itrCounter}", true, LogLevel.DEBUG1);
+        /*if (cache.Count > 0)
+            ++decachedCount;
+        else
+            ++allocedCount;*/
         var newgc = (cache.Count > 0) ? cache.Pop() : new GenCtx();
+        newgc._isInCache = false;
+        //newgc._itr = itrCounter++;
         newgc.exec = exec;
         newgc.RV2 = newgc.BaseRV2 = rv2;
         newgc.SummonTime = 0;
@@ -89,12 +108,20 @@ public class GenCtx : IDisposable {
 
     public void OverrideScope(BehaviorEntity nexec, V2RV2 rv2, int ind) {
         exec = nexec;
-        RV2 = BaseRV2 = rv2;
+        OverrideRV2(rv2);
         index = ind;
+    }
+
+    public void OverrideRV2(V2RV2 rv2) {
+        RV2 = BaseRV2 = rv2;
     }
 
     public void Dispose() {
         if (this == Empty) return;
+        if (_isInCache)
+            throw new Exception("GenCtx was disposed twice. Please report this.");
+        //Logs.Log($"Disposing GCX {_itr}", true, LogLevel.DEBUG1);
+        _isInCache = true;
         fs.Clear();
         v2s.Clear();
         v3s.Clear();
@@ -107,6 +134,7 @@ public class GenCtx : IDisposable {
         playerController = null;
         idOverride = null;
         cache.Push(this);
+        //++recachedCount;
     }
 
     public GenCtx Copy() {
@@ -121,12 +149,6 @@ public class GenCtx : IDisposable {
         cp.index = this.index;
         cp.idOverride = this.idOverride;
         cp.playerController = playerController;
-        return cp;
-    }
-
-    public GenCtx Copy(V2RV2 rv2) {
-        var cp = Copy();
-        cp.RV2 = cp.BaseRV2 = rv2;
         return cp;
     }
 

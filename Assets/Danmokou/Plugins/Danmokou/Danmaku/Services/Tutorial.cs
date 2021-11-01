@@ -41,7 +41,7 @@ public class Tutorial : BehaviorEntity {
 #endif
         defaultLoc[text00] = text00.transform.localPosition;
         defaultLoc[text10] = text10.transform.localPosition;
-        GameManagement.Instance.externalFaithDecayMultiplier.AddConst(6); 
+        tokens.Add(GameManagement.Instance.externalFaithDecayMultiplier.AddConst(6)); 
     }
 
     private void ClearText() {

@@ -424,13 +424,7 @@ public static partial class Parametrics {
     }
 
     #endregion
-    
-    
-    /// <summary>
-    /// Only usable in GCXF functions
-    /// </summary>
-    //public static ExTP SummonLocation() => a => a.GCX.
-    
+
 }
 
 

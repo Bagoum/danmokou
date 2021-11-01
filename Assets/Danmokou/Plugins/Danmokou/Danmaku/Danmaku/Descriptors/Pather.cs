@@ -24,7 +24,7 @@ public class Pather : FrameAnimBullet {
         ctr.SetYScale(options.scale); //Needs to be done before Colorize sets first frame
         //Order is critical so rBPI override points to initialized data on SM start
         ctr.Initialize(this, config, style.RecolorOrThrow.material, isNew, movement, pi, remember, maxRemember, _target, ref options);
-        base.Initialize(style, options, null, movement.WithNoMovement(), pi, _target, out int layer); // Call after Awake/Reset
+        base.Initialize(style, options, null, movement.WithNoMovement(), pi, _target, out _); // Call after Awake/Reset
         ctr.Activate(); //This invokes UpdateMesh
     }
 

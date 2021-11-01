@@ -166,7 +166,7 @@ public static partial class PlayerBombs {
         var fireDisable = DisableFire(bomber);
         bomber.MakeInvulnerable(900, true);
         b.SpawnCutin();
-        var task = bomber.RunExternalSM(SMRunner.RunNoCancelRoot(b.SM!), cancelOnFinish: true);
+        _ = bomber.RunExternalSM(SMRunner.RunNoCancelRoot(b.SM!), cancelOnFinish: true);
         for (int ii = 0; ii < 600; ++ii) yield return null;
         fireDisable.Dispose();
         for (int ii = 0; ii < 180; ++ii) yield return null;

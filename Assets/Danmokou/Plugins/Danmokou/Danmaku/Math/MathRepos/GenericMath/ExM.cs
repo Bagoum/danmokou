@@ -147,7 +147,7 @@ public static partial class ExM {
     public static Ex P1M(int mod, Ex t) {
         return t.As<int>().Div(ExC(mod)).As<float>();
     }
-    public static Ex P1M(Ex mod, Ex t) {
+    public static Ex exP1M(Ex mod, Ex t) {
         return t.As<int>().Div(mod.As<int>()).As<float>();
     }
 
@@ -164,7 +164,7 @@ public static partial class ExM {
         return Ex.Modulo(t.As<int>(), ExC(mod)).As<float>();
     }
     
-    public static Ex P2M(Ex mod, Ex t) {
+    public static Ex exP2M(Ex mod, Ex t) {
         return Ex.Modulo(t.As<int>(), mod.As<int>()).As<float>();
     }
     /// <summary>
@@ -180,7 +180,7 @@ public static partial class ExM {
         return Ex.Modulo(t.As<int>().Div(ExC(children)), ExC(self)).As<float>();
     }
     
-    public static Ex PM(Ex self, Ex children, Ex t) {
+    public static Ex exPM(Ex self, Ex children, Ex t) {
         if (self is ConstantExpression {Value: int smod} && smod == 0) 
             self = ExC(SHIFT);
         return Ex.Modulo(t.As<int>().Div(children.As<int>()), self.As<int>()).As<float>();

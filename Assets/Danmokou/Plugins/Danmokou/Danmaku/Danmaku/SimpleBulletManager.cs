@@ -639,6 +639,7 @@ public partial class BulletManager {
     /// and it ignores pool commands. It only updates bullet times and culls bullets after some time.
     /// </summary>
     private sealed class CulledBulletCollection : SimpleBulletCollection {
+        // ReSharper disable once NotAccessedField.Local
         private readonly SimpleBulletCollection src;
         private readonly SimpleBulletFader fade;
         public override CollectionType MetaType => CollectionType.Culled;

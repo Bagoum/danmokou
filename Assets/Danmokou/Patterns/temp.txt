@@ -4,7 +4,7 @@ pattern({
 })
 phase(0)
 	paction(0)
-		shift-phase-to(1)
+		shift-phase-to(2)
 	
 
 <!> type non cbezier
@@ -22,8 +22,7 @@ phase 0
 <!> hp(1000)
 phase(0)
 	paction 0
-		async sakura-green/w <1;:> gcr2 30 _ <> {
-		} gsr2c 20 {
+		async sakura-green/w <1;:> gcr2 0.5 _ <4h> {
 		} s rvelocity cx 1.2
 		
 		gtr2 300 _ <> {

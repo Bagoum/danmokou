@@ -58,9 +58,9 @@ public static partial class BPYRepo {
     public static ExBPY P1Ma(int[] children) => 
         P1M(children.Aggregate(1, (x, y) => x * y));
     public static ExBPY P1Mf(ExBPY mod) => 
-        bpi => ExM.P1M(mod(bpi), bpi.index);
+        bpi => ExM.exP1M(mod(bpi), bpi.index);
     public static ExBPY P1Maf(ExBPY[] children) => 
-        bpi => ExM.P1M(children.Aggregate(E1, (x, y) => x.Mul(y(bpi))), bpi.index);
+        bpi => ExM.exP1M(children.Aggregate(E1, (x, y) => x.Mul(y(bpi))), bpi.index);
 
     /// <summary>
     /// See <see cref="ExM.P2"/>.
@@ -77,9 +77,9 @@ public static partial class BPYRepo {
     public static ExBPY P2Ma(int[] children) => 
         P2M(children.Aggregate(1, (x, y) => x * y));
     public static ExBPY P2Mf(ExBPY mod) => 
-        bpi => ExM.P2M(mod(bpi), bpi.index);
+        bpi => ExM.exP2M(mod(bpi), bpi.index);
     public static ExBPY P2Maf(ExBPY[] children) => 
-        bpi => ExM.P2M(children.Aggregate(E1, (x, y) => x.Mul(y(bpi))), bpi.index);
+        bpi => ExM.exP2M(children.Aggregate(E1, (x, y) => x.Mul(y(bpi))), bpi.index);
     /// <summary>
     /// See <see cref="ExM.PM"/>.
     /// </summary>
@@ -89,9 +89,9 @@ public static partial class BPYRepo {
     public static ExBPY PMa(int self, int[] children) => 
         PM(self, children.Aggregate(1, (x, y) => x * y));
     public static ExBPY PMf(ExBPY self, ExBPY children) => 
-        bpi => ExM.PM(self(bpi), children(bpi), bpi.index);
+        bpi => ExM.exPM(self(bpi), children(bpi), bpi.index);
     public static ExBPY PMaf(ExBPY self, ExBPY[] children) => bpi =>
-        ExM.PM(self(bpi), children.Aggregate(E1, (x, y) => x.Mul(y(bpi))), bpi.index);
+        ExM.exPM(self(bpi), children.Aggregate(E1, (x, y) => x.Mul(y(bpi))), bpi.index);
     
     /// <summary>
     /// Return the parametric x-position, or, if this is a float function, the input value.

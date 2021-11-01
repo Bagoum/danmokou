@@ -104,12 +104,8 @@ public abstract class XMLMenu : CoroutineRegularUpdater {
     public SFXConfig? failureSound;
     public SFXConfig? backSound;
 
-    protected virtual void Awake() {
-        if (!Application.isPlaying) return;
+    public override void FirstFrame() {
         Current = MainScreen.StartingNode!;
-    }
-
-    protected virtual void Start() {
         UI = GetComponent<UIDocument>().rootVisualElement;
         Rebind();
     }

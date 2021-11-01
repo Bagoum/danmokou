@@ -38,13 +38,10 @@ public class XMLVNBacklogMenu : PausedGameplayMenu, IVNBacklog {
 
     private ScrollView logScroll = null!;
     
-    protected override void Awake() {
+    public override void FirstFrame() {
         MainScreen = new UIScreen(this, new UINode("temp")).With(UIScreen);
-        base.Awake();
-    }
-
-    protected override void Start() {
-        base.Start();
+        
+        base.FirstFrame();
         UI.Q<Label>("Header").text = "Backlog";
         logScroll = UI.Q<ScrollView>();
         HideMe();
@@ -145,7 +142,7 @@ public class XMLVNBacklogMenu : PausedGameplayMenu, IVNBacklog {
         base.RegularUpdate();
     }
 
-    public Cancellable? TryRegister(ExecutingVN evn) {
+    public Cancellable TryRegister(ExecutingVN evn) {
         if (CurrVN != null)
             throw new Exception("Failed to register Executing VN");//return null;
         CurrVN = evn;

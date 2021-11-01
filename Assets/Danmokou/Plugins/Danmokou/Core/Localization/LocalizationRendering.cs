@@ -5,6 +5,7 @@ namespace Danmokou.Core {
 public static class LocalizationRendering {
 
     public static string PLURAL(object arg, string singular, string plural) =>
+        // ReSharper disable once CompareOfFloatsByEqualityOperator
         Convert.ToDouble(arg) == 1 ? singular : plural;
 	
     public static string JP_COUNTER(object arg, string counter_type) {

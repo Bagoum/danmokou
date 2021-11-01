@@ -289,7 +289,6 @@
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Math\MathRepos\GenericMath\ExMMod.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Behavior\Enemy.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Scriptables\Player\ShipConfig.cs" />
-     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\AoTHelper_CG.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Danmaku\Descriptors\Laser.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Danmaku\Options\LaserOptions.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Math\MathRepos\GenericMath\ExMBasic.cs" />

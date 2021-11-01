@@ -75,13 +75,12 @@ public static partial class Reflector {
             {typeof(CRect), arg => Parser.ParseRect(arg)},
             {typeof(CCircle), arg => Parser.ParseCircle(arg)},
             {typeof(BEHPointer), BehaviorEntity.GetPointerForID},
-            {typeof(ETime.Timer), arg => ETime.Timer.GetTimer(arg)},
+            {typeof(ETime.Timer), ETime.Timer.GetTimer},
         };
 
 
     private static readonly Type tint = typeof(int);
     private static readonly Type type_stylesel = typeof(BulletManager.StyleSelector);
-    private static readonly Type type_stringA = typeof(string[]);
     private static readonly Type type_alias = typeof(ReflectEx.Alias);
     private static readonly Type type_gcrule = typeof(GCRule);
     private static readonly Type gtype_ienum = typeof(IEnumerable<>);
@@ -126,7 +125,7 @@ public static partial class Reflector {
                     throw new Exception($"Line {p.GetLastLine()}: Couldn't resolve LocalizedString {str}")
                 : new LString(str);
         } else if (targetType == type_stylesel) {
-            obj = new BulletManager.StyleSelector((ResolveAsArray(type_stringA, p) as string[][])!);
+            obj = new BulletManager.StyleSelector((ResolveAsArray(typeof(string[]), p) as string[][])!);
         } else if (targetType == type_gcrule) {
             ReferenceMember rfr = new ReferenceMember(p.Next());
             string OpAndMaybeType = p.Next();

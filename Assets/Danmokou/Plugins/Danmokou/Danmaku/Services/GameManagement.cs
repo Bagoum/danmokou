@@ -36,7 +36,7 @@ namespace Danmokou.Services {
 /// This is the only scene-persistent object in the game.
 /// </summary>
 public class GameManagement : CoroutineRegularUpdater {
-    public static readonly Version EngineVersion = new Version(7, 0, 3);
+    public static readonly Version EngineVersion = new Version(8, 0, 0);
     public static bool Initialized { get; private set; } = false;
     public static DifficultySettings Difficulty => Instance.Difficulty;
 
@@ -54,6 +54,7 @@ public class GameManagement : CoroutineRegularUpdater {
 
     public static void DeactivateInstance() {
         //Actually null on startup
+        // ReSharper disable once ConstantConditionalAccessQualifier
         if (Instance?.InstanceActive == true) {
             Logs.Log("Deactivating game instance");
             Instance.Deactivate();
@@ -109,13 +110,6 @@ public class GameManagement : CoroutineRegularUpdater {
         ETime.RegisterPersistentEOFInvoke(BehaviorEntity.PrunePoolControls);
         ETime.RegisterPersistentEOFInvoke(CurvedTileRenderLaser.PrunePoolControls);
         SceneIntermediary.SceneUnloaded.Subscribe(_ => ClearScene());
-
-        //The reason we do this instead of Awake is that we want all resources to be
-        //loaded before any State Machines are constructed, which may occur in other entities' Awake calls.
-        GetComponent<ResourceManager>().Setup();
-        GetComponent<BulletManager>().Setup();
-        GetComponentInChildren<SFXService>().Setup();
-        GetComponentInChildren<AudioTrackService>().Setup();
 
         if (References.achievements != null)
             Achievements = References.achievements.MakeRepo().Construct();
@@ -315,6 +309,13 @@ public class GameManagement : CoroutineRegularUpdater {
 
     [ContextMenu("Add Lenience")]
     public void AddLenience() => Instance.AddFaithLenience(2);
+
+    /*
+    [ContextMenu("Debug GCX stats")]
+    public void DebugGCXStats() {
+        Logs.Log(GenCtx.DebugState());
+    }
+    */
 
     //[ContextMenu("Save AoT Helpers")] 
     //public void GenerateAoT() => Reflector.GenerateAoT();

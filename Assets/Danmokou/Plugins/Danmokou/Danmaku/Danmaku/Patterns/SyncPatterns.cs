@@ -73,8 +73,8 @@ public static partial class SyncPatterns {
     /// <returns></returns>
     public static SyncPattern AddTime(GCXF<float> frames, SyncPattern sp) {
         return sbh => {
-            sbh.AddTime(frames(sbh.GCX));
-            sp(sbh);
+            using var sbh2 = new SyncHandoff(sbh.ch, sbh.timeOffset + frames(sbh.GCX) * ETime.FRAME_TIME);
+            sp(sbh2);
         };
     }
 
@@ -247,11 +247,8 @@ public static partial class SyncPatterns {
             for (int ii = 0; ii < controlsL.Count; ++ii)
                 controls.Add(new BulletManager.BulletControl(controlsL[ii], BulletManager.Consts.PERSISTENT, sbh.ch.cT));
             BulletManager.AssertControls(isPlayer ? BulletManager.GetOrMakePlayerCopy(estyle) : estyle, controls);
-            //Technically not necessary to copy, since we're not modifying GCX
-            var emptySbh = sbh.CopyGCX();
-            emptySbh.ch.bc.style = estyle;
+            using var emptySbh = sbh.Copy(estyle);
             emptySP(emptySbh);
-            emptySbh.GCX.Dispose();
             for (int ii = 0; ii < guided.Length; ++ii) {
                 guided[ii](sbh);
             }
@@ -261,9 +258,10 @@ public static partial class SyncPatterns {
     #endregion
     private struct SPExecutionTracker {
         private LoopControl<SyncPattern> looper;
-        /// <summary>
-        /// Basic SyncHandoff to pass around. DIRTY.
-        /// </summary>
+        //Dirty sync handoff information to pass to children.
+        //It's less optimal performance-wise to copy SyncHandoff in GSR children
+        // (especially since there's no benefit around asynchronicity),
+        // so we modify sbh.
         private SyncHandoff sbh;
         public SPExecutionTracker(GenCtxProperties<SyncPattern> props, SyncHandoff sbh, out bool isClipped) {
             looper = new LoopControl<SyncPattern>(props, sbh.ch, out isClipped);
@@ -285,7 +283,10 @@ public static partial class SyncPatterns {
             }
         }
         public void FinishIteration() => looper.FinishIteration();
-        public void AllDone(bool normalEnd) => looper.IAmDone(normalEnd);
+        public void AllDone(bool normalEnd) {
+            looper.IAmDone(normalEnd);
+            //Do not dispose SBH-- it will be disposed by the caller
+        }
     }
     
     /// <summary>

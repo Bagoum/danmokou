@@ -10,11 +10,13 @@ To get the newest version from git, run:
 
 # [Unreleased] v9.0.0
 
-The following features are planned for v9.0.0.
+The following features are planned by v9, which will probably be completed sometime early next year.
 
+- Default handling for graze flake items and bullet cancel flake items (may be in a minor release of v8)
 - Implementation of a TH18-like card engine
 - Procedural generation of stages and bullet patterns
 - Full-featured implementation of Suzunoya
+  - **The classes for DialogueProfile will be deleted in v9, so make sure you port any custom dialogue profiles to Suzunoya entities by then.**
 
 # v8.0.0 (2021/10/31)
 
@@ -35,19 +37,19 @@ The following features are planned for v9.0.0.
 - Complex bomb implementations for Reimu, Mokou, and Mima (who has a nice black hole effect)
 - New bullet types: GDCircle (a circle, size between "circle" and "lcircle", with heavy displacement effects), StellDecagon (a once-stellated decagon, or alternatively two pentagons on top of each other), GDLaser2c (a variant of gdlaser which has two colors-- format `gdlaser2c-red;blue/w`).
   - Bullets may now enable multi-channel automatic colorization (only current example is gdlaser2c) by setting "Multi Channel Recolor" to "RB" and using red and blue channels in the sprite. Three-channel recoloring is not enabled but is trivial to add to the existing code. Be warned that a typical (one-channel) bullet has about 30 recolors, a RB multi-channel bullet has about 300 recolors, and a RGB multi-channel bullet has about 3000 recolors.
-- Simple bullets now softcull over time at end-of-phase
 - When simple bullets are softculled, they fade out in addition to (now optionally) spawning a softcull effect like cwheel. The fade out process can be configured as fadeOut on SimpleBulletEmptyScript (it will use the fadeIn config if none is provided).
-- Complex bullets, including complex player bullets, may now have nontrivial colliders by attaching a GenericColliderInfo script to the same object as the Bullet script
-- Player bullets may now have noncircular hitboxes (effectiveRadius has been removed)
-- Player bullets may now use empty guiding
+- Simple bullets now softcull over time at end-of-phase. By default, they only fade out and do not have a softcull effect.
+- Complex bullets, including complex player bullets, may now have nontrivial colliders by attaching a GenericColliderInfo script to the same object as the Bullet script.
+- Player bullets may now have noncircular hitboxes (effectiveRadius has been removed).
+- Player bullets may now use empty guiding.
 - Implementation of complex player teams and runtime ship switching
 - Significant improvements to the architecture around engine state management, especially pausing, loading, and freezeframes
 - Improved functionality and architecture of events in script code. See EventLASM.Listen, EventLASM
-- Spell and card circles now trail the boss while they are moving
+- Spell and card circles now trail the boss while they are moving.
 - Multiple small improvements around boss UI graphics (among which: fixed an issue where the UI HP bar would flash or temporarily display the incorrect color, fixed an issue where `set-ui-from` would not work with boss life stars, fixed issues with the UI timer not deactivating)
-- Music room
+- Proof-of-concept implementation of a music room
 - Support for dynamic difficulty (rank)
-- Internal handling of end-of-phase is now entirely handled via cancellation tokens and disposables, which (besides being much better for the architecture) theoretically allows for boss scripts to independently run alongside other content
+- Internal handling of end-of-phase is now entirely handled via cancellation tokens and disposables, which (besides being much better for the architecture) theoretically allows for boss scripts to independently run alongside other content.
 - Refactored base namespace to "Danmokou" (formerly "DMK")
 - Documentation and code improvements for reflection handling
 

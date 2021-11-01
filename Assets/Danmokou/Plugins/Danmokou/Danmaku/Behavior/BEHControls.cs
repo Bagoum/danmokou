@@ -505,10 +505,9 @@ public partial class BehaviorEntity {
         }
     }
 
-    public static void ClearPoolControls(bool clearPlayer) {
-        for (int ii = 0; ii < activePools.Count; ++ii) {
-            if (clearPlayer || !activePools[ii].IsPlayer) activePools[ii].ClearControls();
-        }
+    public static void ClearPoolControls() {
+        for (int ii = 0; ii < activePools.Count; ++ii)
+            activePools[ii].ClearControls();
     }
 }
 }

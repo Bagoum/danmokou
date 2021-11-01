@@ -255,6 +255,7 @@ if (> t &fadein,
     /// TODO: improve save-related handling here.
     /// </summary>
     public static TaskPattern ExecuteVN([LookupMethod] Func<DMKVNState, Task> vnTask, string scriptId) => async smh => {
+        // ReSharper disable once UnusedVariable
         var save = await ((DMKVNWrapper) ServiceLocator.Find<IVNWrapper>())
             .ExecuteVN((data, cT) => new DMKVNState(cT, scriptId, data), vnTask, new InstanceData(new GlobalData()), smh.cT);
     };
@@ -263,9 +264,9 @@ if (> t &fadein,
     /// Asynchronous bullet pattern fire.
     /// </summary>
     public static TaskPattern Async(string style, GCXF<V2RV2> rv2, AsyncPattern ap) => smh => {
-        AsyncHandoff abh = new AsyncHandoff(new DelegatedCreator(smh.Exec, 
-                BulletManager.StyleSelector.MergeStyles(smh.ch.bc.style, style)), rv2(smh.GCX) + smh.GCX.RV2, 
-            GetAwaiter(out Task t), smh);
+        var abh = new AsyncHandoff(new DelegatedCreator(smh.Exec, 
+                BulletManager.StyleSelector.MergeStyles(smh.ch.bc.style, style)), GetAwaiter(out Task t), smh);
+        abh.ch.gcx.OverrideRV2(rv2(smh.GCX) + smh.GCX.RV2);
         smh.RunTryPrependRIEnumerator(ap(abh));
         return t;
     };
@@ -273,9 +274,10 @@ if (> t &fadein,
     /// Synchronous bullet pattern fire.
     /// </summary>
     public static TaskPattern Sync(string style, GCXF<V2RV2> rv2, SyncPattern sp) => smh => {
-        sp(new SyncHandoff(new DelegatedCreator(smh.Exec, 
-            BulletManager.StyleSelector.MergeStyles(smh.ch.bc.style, style), null), rv2(smh.GCX) + smh.GCX.RV2, smh, out var newGcx));
-        newGcx.Dispose();
+        using var sbh = new SyncHandoff(new DelegatedCreator(smh.Exec,
+            BulletManager.StyleSelector.MergeStyles(smh.ch.bc.style, style), null), smh);
+        sbh.ch.gcx.OverrideRV2(rv2(smh.GCX) + smh.GCX.RV2);
+        sp(sbh);
         return Task.CompletedTask;
     };
 
@@ -583,11 +585,10 @@ if (> t &fadein,
             var (firer, onCancel, inputReq) = o.Player.IsFocus ?  
                 (focusFire, focusCancel, (Func<bool>) (() => o.Player.IsFocus)) :
                 (freeFire, freeCancel, (Func<bool>) (() => !o.Player.IsFocus));
-            var joint_smh = smh.CreateJointCancellee(out var fireCTS);
+            var joint_smh = smh.CreateJointCancellee(out var fireCTS, null);
             //order is important to ensure cancellation works on the correct frame
             var waiter = WaitingUtils.WaitForUnchecked(o, smh.cT, () => !o.Player.IsFiring || !inputReq());
-            //ContinueWithSync prints error logs
-            _ = firer.Start(joint_smh).ContinueWithSync(() => { });
+            _ = firer.Start(joint_smh).ContinueWithSync(joint_smh.Dispose);
             await waiter;
             fireCTS.Cancel();
             smh.ThrowIfCancelled();
@@ -599,10 +600,10 @@ if (> t &fadein,
                     throw new Exception("Cannot use fire command on a BehaviorEntity that is not an Option");
             if (!o.Player.IsFiring) await WaitingUtils.WaitForUnchecked(o, smh.cT, () => o.Player.IsFiring);
             smh.ThrowIfCancelled();
-            var joint_smh = smh.CreateJointCancellee(out var fireCTS);
+            var joint_smh = smh.CreateJointCancellee(out var fireCTS, null);
             //order is important to ensure cancellation works on the correct frame
             var waiter = WaitingUtils.WaitForUnchecked(o, smh.cT, () => !o.Player.IsFiring);
-            _ = fire.Start(joint_smh).ContinueWithSync(() => { });
+            _ = fire.Start(joint_smh).ContinueWithSync(joint_smh.Dispose);
             await waiter;
             fireCTS.Cancel();
             smh.ThrowIfCancelled();

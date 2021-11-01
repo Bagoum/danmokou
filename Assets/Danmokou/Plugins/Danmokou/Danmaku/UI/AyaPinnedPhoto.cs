@@ -50,6 +50,7 @@ public class AyaPinnedPhoto : CoroutineRegularUpdater {
         if (photo.TryLoad(out Sprite? s)) {
             sr.sprite = s;
             sr.GetPropertyBlock(pb);
+            // ReSharper disable once Unity.PreferAddressByIdToGraphicsParams
             pb.SetFloat("_PhotoPPU", photo.PPU);
             sr.SetPropertyBlock(pb);
             sr.enabled = true;

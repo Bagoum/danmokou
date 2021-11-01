@@ -112,7 +112,7 @@ public class XMLPauseMenu : PausedGameplayMenu, IPauseMenu {
     
     private UINode unpause = null!;
 
-    protected override void Awake() {
+    public override void FirstFrame() {
         unpause = new FuncNode(() => ProtectHide(() => HideOptions(true)), LocalizedStrings.UI.unpause, true).With(small1Class);
         MainScreen = new UIScreen(this,
             GetOptions(!Replayer.RequiresConsistency).Select(x => x.With(small1Class)).Concat(
@@ -128,11 +128,8 @@ public class XMLPauseMenu : PausedGameplayMenu, IPauseMenu {
             ).ToArray()
         ).With(UIScreen);
         MainScreen.ExitNode = MainScreen.Top[MainScreen.Top.Length - 4];
-        base.Awake();
-    }
-
-    protected override void Start() {
-        base.Start();
+        
+        base.FirstFrame();
         UI.Q<Label>("Header").text = pause_header;
         HideOptions(false);
     }

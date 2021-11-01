@@ -78,18 +78,7 @@ public class XMLMainMenuCampaign : XMLMainMenu {
     public BehaviorEntity? shotSetup;
     public GameObject? demoPlayerSetup;
 
-    protected override void Start() {
-        if (ReturnTo == null) {
-            _ = uiRenderer.Slide(new Vector2(3, 0), Vector2.zero, 1f, DMath.M.EOutSine);
-            _ = uiRenderer.Fade(0, 1, 1f, null);
-        } else
-            uiRenderer.Fade(1, 1, 0, null);
-        base.Start();
-    }
-
-    protected override void Awake() {
-        if (!Application.isPlaying) return;
-        
+    public override void FirstFrame() {
         Func<DifficultySettings, (bool, UINode)> dfcCont = null!;
         Func<TeamConfig, bool> shotCont = null!;
         
@@ -327,7 +316,13 @@ public class XMLMainMenuCampaign : XMLMainMenu {
                 .With(large1Class)
         ).With(MainScreenV);
         MainScreen.ExitNode = MainScreen.Top[MainScreen.Top.Length - 2];
-        base.Awake();
+        
+        base.FirstFrame();
+        if (ReturnTo == null) {
+            _ = uiRenderer.Slide(new Vector2(3, 0), Vector2.zero, 1f, DMath.M.EOutSine);
+            _ = uiRenderer.Fade(0, 1, 1f, null);
+        } else
+            uiRenderer.Fade(1, 1, 0, null);
     }
 }
 }

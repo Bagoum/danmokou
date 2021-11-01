@@ -24,17 +24,8 @@ public class XMLMainMenuVN01 : XMLMainMenu {
     
     public VisualTreeAsset MainScreenV = null!;
     public VisualTreeAsset OptionsScreenV = null!;
-    
-    
-    protected override void Start() {
-        _ = uiRenderer.Slide(new Vector2(3, 0), Vector2.zero, 1f, DMath.M.EOutSine);
-        _ = uiRenderer.Fade(0, 1, 1f, null);
-        base.Start();
-    }
 
-    protected override void Awake() {
-        if (!Application.isPlaying) return;
-        
+    public override void FirstFrame() {
         FixedDifficulty dfc = FixedDifficulty.Normal;
         var defaultPlayer = References.campaign.players[0];
         var defaultShot = defaultPlayer.shots2[0];
@@ -65,8 +56,9 @@ public class XMLMainMenuVN01 : XMLMainMenu {
             ).With(MainScreenV);
         ResetCurrentNode();
 
-        base.Awake();
-        
+        base.FirstFrame();
+        _ = uiRenderer.Slide(new Vector2(3, 0), Vector2.zero, 1f, DMath.M.EOutSine);
+        _ = uiRenderer.Fade(0, 1, 1f, null);
     }
 }
 }

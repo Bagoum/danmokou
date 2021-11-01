@@ -37,123 +37,119 @@ public delegate void SyncPattern(SyncHandoff sbh);
 public delegate IEnumerator AsyncPattern(AsyncHandoff abh);
 
 
-public struct CommonHandoff {
-    public ICancellee cT;
+public struct CommonHandoff : IDisposable {
+    public readonly ICancellee cT;
     public DelegatedCreator bc;
     public readonly GenCtx gcx;
-    public V2RV2 RV2 {
-        get => gcx.RV2;
-        set => gcx.RV2 = value;
+
+    /// <summary>
+    /// GCX is automatically copied.
+    /// </summary>
+    public CommonHandoff(ICancellee cT, DelegatedCreator? bc, GenCtx gcx) {
+        this.cT = cT;
+        this.bc = bc ?? new DelegatedCreator(gcx.exec, "");
+        this.gcx = gcx.Copy();
     }
 
-    public CommonHandoff(ICancellee cT, DelegatedCreator bc, GenCtx gcx) {
-        this.cT = cT;
-        this.bc = bc;
-        this.gcx = gcx;
+    public readonly CommonHandoff Copy(string? newStyle = null) {
+        var nch = new CommonHandoff(cT, bc, gcx);
+        if (newStyle != null)
+            nch.bc.style = newStyle;
+        return nch;
     }
-    public CommonHandoff(ICancellee cT, GenCtx gcx) {
-        this.cT = cT;
-        this.bc = new DelegatedCreator(gcx.exec, "");
-        this.gcx = gcx;
+
+    public readonly void Dispose() {
+        gcx.Dispose();
     }
-    
-    public CommonHandoff CopyGCX() => new CommonHandoff(cT, bc, gcx.Copy());
 }
-public struct SyncHandoff {
+
+/// <summary>
+/// A struct containing information for SyncPattern execution.
+/// <br/>The caller is responsible for disposing this after it is done.
+/// </summary>
+public struct SyncHandoff : IDisposable {
     public CommonHandoff ch;
     public DelegatedCreator bc => ch.bc;
-    public V2RV2 rv2 => ch.RV2;
+    public V2RV2 RV2 => GCX.RV2;
     public int index => GCX.index;
     /// <summary>
     /// Starting time of summoned objects (seconds)
     /// </summary>
-    public float timeOffset;
+    public readonly float timeOffset;
     public GenCtx GCX => ch.gcx;
 
-    public SyncHandoff(DelegatedCreator bc, V2RV2 rv2, SMHandoff smh, out GenCtx newGcx) {
-        newGcx = smh.GCX.Copy(rv2);
-        this.ch = new CommonHandoff(smh.cT, bc, newGcx);
+    /// <summary>
+    /// The common handoff is copied from SMH.
+    /// </summary>
+    public SyncHandoff(DelegatedCreator bc, SMHandoff smh) {
+        this.ch = new CommonHandoff(smh.cT, bc, smh.GCX);
         this.timeOffset = 0f;
     }
 
     /// <summary>
-    /// Derive a SyncHandoff from an AsyncHandoff, where the index is copied.
+    /// The common handoff is copied.
     /// </summary>
-    /// <param name="abh">Original AsyncHandoff</param>
-    /// <param name="extraFrames">Number of frames to advance bullet simulation</param>
-    public SyncHandoff(ref AsyncHandoff abh, float extraFrames) {
-        this.ch = abh.ch;
-        this.timeOffset = abh.AdjustedTimeOffset(extraFrames);
+    public SyncHandoff(CommonHandoff ch, float extraTimeSeconds, string? newStyle = null) {
+        this.ch = ch.Copy(newStyle);
+        this.timeOffset = extraTimeSeconds;
     }
 
     public static implicit operator GenCtx(SyncHandoff sbh) => sbh.GCX;
 
-    public SyncHandoff CopyGCX() {
-        var nsh = this;
-        nsh.ch = nsh.ch.CopyGCX();
-        return nsh;
-    }
-    
-    public void AddTime(float frames) {
-        timeOffset += frames * ETime.FRAME_TIME;
-    }
+    public SyncHandoff Copy(string? newStyle) => new SyncHandoff(ch, timeOffset, newStyle);
 
+    public readonly void Dispose() {
+        ch.Dispose();
+    }
 
 }
 
+/// <summary>
+/// A struct containing information about the execution of an AsyncPattern.
+/// <br/>This struct cleans up its own resources when the callee calls its Done() method to mark completion.
+/// </summary>
 public struct AsyncHandoff {
     public CommonHandoff ch;
     public bool Cancelled => ch.cT.Cancelled;
-    public Action done;
+    private readonly Action? callback;
     private readonly BehaviorEntity exec;
+
     /// <summary>
-    /// Starting time of summoned objects (frames)
+    /// The common handoff is copied from SMHandoff.
     /// </summary>
-    private float framesOffset;
-    /// <summary>
-    /// This constructor automatically copies the GCX.
-    /// </summary>
-    /// <param name="bc"></param>
-    /// <param name="rv2"></param>
-    /// <param name="done"></param>
-    /// <param name="smh"></param>
-    public AsyncHandoff(DelegatedCreator bc, V2RV2 rv2, Action done, SMHandoff smh) {
-        this.ch = new CommonHandoff(smh.ch.cT, bc, smh.GCX.Copy(rv2));
-        this.done = FuncExtensions.Then(ch.gcx.Dispose, done);
+    public AsyncHandoff(DelegatedCreator bc, Action? callback, SMHandoff smh) {
+        this.ch = new CommonHandoff(smh.ch.cT, bc, smh.GCX);
+        this.callback = callback;
         exec = smh.Exec;
-        framesOffset = 0f;
     }
 
+    /// <summary>
+    /// The common handoff is copied from SyncHandoff.
+    /// </summary>
     public AsyncHandoff(SyncHandoff sbh) {
-        this.ch = new CommonHandoff(sbh.ch.cT, sbh.bc, sbh.GCX.Copy());
-        this.done = ch.gcx.Dispose;
+        this.ch = new CommonHandoff(sbh.ch.cT, sbh.bc, sbh.GCX);
+        this.callback = null;
         exec = sbh.GCX.exec;
-        framesOffset = 0f;
     }
 
     /// <summary>
-    /// AsyncHandoff constructor for generic coroutines.
+    /// Derive an AsyncHandoff from a parent for localized execution. The common handoff is copied.
     /// </summary>
-    /// <param name="smh">SMHandoff of invoking StateMachine</param>
-    /// <param name="rv2"></param>
-    /// <param name="t">Task to await on for this object's completion</param>
-    public AsyncHandoff(SMHandoff smh, V2RV2 rv2, out Task t) {
-        this.ch = new CommonHandoff(smh.ch.cT, new DelegatedCreator(smh.Exec, "_"), smh.GCX.Copy(rv2));
-        done = FuncExtensions.Then(ch.gcx.Dispose, GetAwaiter(out t));
-        exec = smh.Exec;
-        framesOffset = 0f;
+    public AsyncHandoff(AsyncHandoff parent, CommonHandoff ch, Action? callback) {
+        this.ch = ch.Copy();
+        this.callback = callback;
+        exec = parent.exec;
     }
 
     //public void RunRIEnumerator(IEnumerator cor) => exec.RunRIEnumerator(cor);
     public void RunPrependRIEnumerator(IEnumerator cor) => exec.RunPrependRIEnumerator(cor);
 
-    public void WaitStep() {
-        if (--framesOffset < 0) framesOffset = 0;
-    }
-    public float AdjustedTimeOffset(float extraFrames) => (framesOffset + extraFrames) * ETime.FRAME_TIME;
-
-    public void AddSimulatedTime(float frames) {
-        framesOffset += frames;
+    /// <summary>
+    /// Send completion information via the callback and also dispose the copied handoff.
+    /// </summary>
+    public readonly void Done() {
+        ch.Dispose();
+        callback?.Invoke();
     }
 }
 
@@ -322,7 +318,7 @@ public static partial class AtomicPatterns {
         SummonR(new RootedVTP(0, 0, VTPRepo.Null()), sm, options);
 
     private static BPRV2 DrawerLoc(SyncHandoff sbh, BPRV2 locScaleAngle, TP? offset = null) {
-        var summonLoc = sbh.bc.FacedRV2(sbh.rv2) + ((offset == null) ? sbh.bc.ParentOffset : Vector2.zero);
+        var summonLoc = sbh.bc.FacedRV2(sbh.RV2) + ((offset == null) ? sbh.bc.ParentOffset : Vector2.zero);
         return bpi => {
             var offsetLoc = summonLoc + (offset?.Invoke(bpi) ?? Vector2.zero);
             var lsa = locScaleAngle(bpi);
@@ -453,7 +449,7 @@ public struct LoopControl<T> {
         isClipped = false;
         this.props = props;
         p = props.p;
-        ch = _ch.CopyGCX();
+        ch = _ch.Copy();
         parent_index = (props.p_mutater == null) ? ch.gcx.index : (int)props.p_mutater(ch.gcx);
         if (props.resetColor) ch.bc.style = "_";
         if (props.bank != null) {
@@ -619,7 +615,7 @@ public struct LoopControl<T> {
         if (normalEnd) {
             GCX.UpdateRules(props.end);
         }
-        GCX.Dispose();
+        ch.Dispose();
     }
 }
 

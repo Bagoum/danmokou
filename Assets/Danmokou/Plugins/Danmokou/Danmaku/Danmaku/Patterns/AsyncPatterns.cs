@@ -27,17 +27,15 @@ namespace Danmokou.Danmaku.Patterns {
 [Reflect]
 public static partial class AsyncPatterns {
     private struct APExecutionTracker {
+        private static readonly Action noop = () => { };
         private LoopControl<AsyncPattern> looper;
         /// <summary>
-        /// Basic AsyncHandoff to pass around. DIRTY.
+        /// Basic AsyncHandoff to pass around.
         /// </summary>
-        private AsyncHandoff abh;
-        private readonly Action? parent_done;
+        private readonly AsyncHandoff abh;
         public APExecutionTracker(GenCtxProperties<AsyncPattern> props, AsyncHandoff abh, out bool isClipped) {
             looper = new LoopControl<AsyncPattern>(props, abh.ch, out isClipped);
             this.abh = abh;
-            parent_done = abh.done;
-            abh.done = () => { };
             elapsedFrames = 0f;
             wasPaused = false;
         }
@@ -55,18 +53,17 @@ public static partial class AsyncPatterns {
 
         public bool PrepareLastIteration() => looper.PrepareLastIteration();
         public void DoSIteration(SyncPattern[] target) {
-            abh.ch = looper.Handoff;
+            using var itrSBH = new SyncHandoff(looper.Handoff, elapsedFrames * ETime.FRAME_TIME);
             if (looper.props.childSelect != null) {
-                target[(int) looper.props.childSelect(looper.GCX) % target.Length](new SyncHandoff(ref abh, elapsedFrames));
+                target[(int) looper.props.childSelect(looper.GCX) % target.Length](itrSBH);
             } else {
                 for (int ii = 0; ii < target.Length; ++ii) {
-                    target[ii](new SyncHandoff(ref abh, elapsedFrames));
+                    target[ii](itrSBH);
                 }
             }
         }
         public void FinishIteration() => looper.FinishIteration();
         public void WaitStep() {
-            abh.WaitStep();
             looper.WaitStep();
             if (!looper.IsUnpaused) wasPaused = true;
             else {
@@ -86,23 +83,17 @@ public static partial class AsyncPatterns {
         public void StartWait() => elapsedFrames -= looper.props.wait(looper.GCX);
         public void AllSDone(bool normalFinish) {
             looper.IAmDone(normalFinish);
-            parent_done?.Invoke();
+            abh.Done();
         }
     }
     private class IPExecutionTracker {
         private LoopControl<AsyncPattern> looper;
-        /// <summary>
-        /// Basic AsyncHandoff to pass around. DIRTY.
-        /// </summary>
-        private AsyncHandoff abh;
-        private readonly Action? parent_done;
+        private readonly AsyncHandoff abh;
         private readonly bool waitChild;
         private readonly bool sequential;
         public IPExecutionTracker(GenCtxProperties<AsyncPattern> props, AsyncHandoff abh, out bool isClipped) {
             looper = new LoopControl<AsyncPattern>(props, abh.ch, out isClipped);
             this.abh = abh;
-            parent_done = abh.done;
-            abh.done = () => { };
             elapsedFrames = 0f;
             waitChild = props.waitChild;
             sequential = props.sequential;
@@ -128,10 +119,8 @@ public static partial class AsyncPatterns {
         public void DoAIteration(AsyncPattern[] target) {
             //To prevent secondary sequential children from trying to copy this object's GCX
             // which will have already changed when the next loop starts.
-            GenCtx base_gcx = looper.GCX.Copy();
             bool done = false;
             Action loop_done = () => {
-                base_gcx.Dispose();
                 done = true;
             };
             if (waitChild) {
@@ -148,37 +137,34 @@ public static partial class AsyncPatterns {
                         if (ii >= target.Length || looper.Handoff.cT.Cancelled) {
                             loop_done();
                         } else 
-                            DoAIteration(target[ii], () => DoNext(ii + 1), base_gcx);
+                            DoAIteration(target[ii], () => DoNext(ii + 1));
                     }
                     DoNext(0);
                 } else {
                     var loop_fragment_done = GetManyCallback(target.Length, loop_done);
                     for (int ii = 0; ii < target.Length; ++ii) {
-                        DoAIteration(target[ii], loop_fragment_done, base_gcx);
+                        DoAIteration(target[ii], loop_fragment_done);
                     }
                 }
-            } else DoAIteration(target[(int)looper.props.childSelect(looper.GCX) % target.Length], loop_done, base_gcx);
+            } else DoAIteration(target[(int)looper.props.childSelect(looper.GCX) % target.Length], loop_done);
         }
 
-        private void DoAIteration(AsyncPattern target, Action done, GenCtx baseGCX) {
-            abh.ch = new CommonHandoff(looper.Handoff.cT, looper.Handoff.bc, baseGCX);
-            abh.done = done;
+        private void DoAIteration(AsyncPattern target, Action done) {
+            var itrABH = new AsyncHandoff(abh, looper.Handoff, done);
             //RunPrepend steps the coroutine and places it before the current one,
             //so we can continue running on the same frame that the child finishes (if using waitchild). 
-            abh.RunPrependRIEnumerator(target(abh));
+            itrABH.RunPrependRIEnumerator(target(itrABH));
         }
 
         public void AllADone(bool? runFinishIteration = null, bool? normalEnd = null) {
             if (runFinishIteration ?? !looper.Handoff.cT.Cancelled) 
                 FinishIteration();
             looper.IAmDone(normalEnd ?? !looper.Handoff.cT.Cancelled);
-            parent_done?.Invoke();
+            abh.Done();
         }
         
         public void DoLastAIteration(AsyncPattern[] target) {
-            GenCtx base_gcx = looper.GCX.Copy();
             Action loop_done = () => {
-                base_gcx.Dispose();
                 AllADone();
             };
             if (looper.props.childSelect == null) {
@@ -187,20 +173,19 @@ public static partial class AsyncPatterns {
                         if (ii >= target.Length || looper.Handoff.cT.Cancelled)
                             loop_done();
                         else
-                            DoAIteration(target[ii], () => DoNext(ii + 1), base_gcx);
+                            DoAIteration(target[ii], () => DoNext(ii + 1));
                     }
                     DoNext(0);
                 } else {
                     var loop_fragment_done = GetManyCallback(target.Length, loop_done);
                     for (int ii = 0; ii < target.Length; ++ii) {
-                        DoAIteration(target[ii], loop_fragment_done, base_gcx);
+                        DoAIteration(target[ii], loop_fragment_done);
                     }
                 }
-            } else DoAIteration(target[(int)looper.props.childSelect(looper.GCX) % target.Length], loop_done, base_gcx);
+            } else DoAIteration(target[(int)looper.props.childSelect(looper.GCX) % target.Length], loop_done);
         }
         
         public void WaitStep() {
-            abh.WaitStep();
             looper.WaitStep();
             if (!looper.IsUnpaused) wasPaused = true;
             else {
@@ -441,28 +426,7 @@ public static partial class AsyncPatterns {
     public static AsyncPattern ISetP(GCXF<float> p, AsyncPattern ap) => _AsGIR(ap, GCP.SetP(p));
 
     // The following functions have NOT been ported to _AsGIR. Most of them should be OK as is.
-
-    /// <summary>
-    /// Run an asynchronous invokee for a given number of frames before returning it to parent's control.
-    /// This will adjust the time value on summoned bullets (TODO simple bullets only currently),
-    /// as well as integrate over this time for velocity-based bullets.
-    /// </summary>
-    /// <param name="frames"></param>
-    /// <param name="next"></param>
-    /// <returns></returns>
-    public static AsyncPattern ISimulate(float frames, AsyncPattern next) {
-        IEnumerator Inner(AsyncHandoff abh) {
-            if (abh.Cancelled) { abh.done(); yield break; }
-            abh.AddSimulatedTime(frames);
-            Coroutines cors = new Coroutines();
-            cors.Run(next(abh));
-            for (; frames > 0; --frames) {
-                cors.Step();
-            }
-            yield return cors.AsIEnum();
-        }
-        return Inner;
-    }
+    
 
     //Pass-through IFunctions don't need inner ienums, and they don't need cancellation checks (unless they perform
     // nontrivial operations.)
@@ -478,7 +442,7 @@ public static partial class AsyncPatterns {
     /// <returns></returns>
     public static AsyncPattern IParent(string behid, AsyncPattern next) {
         IEnumerator Inner(AsyncHandoff abh) {
-            if (abh.Cancelled) { abh.done(); yield break; }
+            if (abh.Cancelled) { abh.Done(); yield break; }
             abh.ch.bc.transformParent = (behid == "this") ? abh.ch.gcx.exec : BehaviorEntity.GetExecForID(behid);
             yield return next(abh);
         }

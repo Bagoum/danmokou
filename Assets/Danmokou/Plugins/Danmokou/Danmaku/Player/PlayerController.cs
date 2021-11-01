@@ -533,6 +533,7 @@ public partial class PlayerController : BehaviorEntity {
     
     private IEnumerator WaitDeathbomb(int dmg, int frames) {
         spawnedShip.OnPreHitEffect.Proc(bpi.loc, bpi.loc, 1f);
+        using var gcx = GenCtx.New(this, V2RV2.Zero);
         BulletManager.RequestPowerAura("powerup1", 0, 0, new RealizedPowerAuraOptions(
             new PowerAuraOptions(new[] {
                 PowerAuraOption.Color(_ => ColorHelpers.CV4(spawnedShip.meterDisplay.WithA(1.5f))),
@@ -541,7 +542,7 @@ public partial class PlayerController : BehaviorEntity {
                 PowerAuraOption.Iterations(_ => 0.8f),
                 PowerAuraOption.Scale(_ => Mathf.Pow(frames / 30f, 0.7f)),
                 PowerAuraOption.High(), 
-            }), GenCtx.New(this, V2RV2.Zero), Vector2.zero, Cancellable.Null, null!));
+            }), gcx, Vector2.zero, Cancellable.Null, null!));
         var framesRem = frames;
         while (framesRem-- > 0 && deathbomb == DeathbombState.WAITING) 
             yield return null;
@@ -558,7 +559,7 @@ public partial class PlayerController : BehaviorEntity {
     }
     
     private IEnumerator WaitOutInvuln(int frames) {
-        var bombDisable = BombsEnabled.AddConst(false);;
+        var bombDisable = BombsEnabled.AddConst(false);
         int ii = frames;
         for (; ii > 60; --ii)
             yield return null;
