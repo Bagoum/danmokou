@@ -45,7 +45,7 @@ The following features are planned by v9, which will probably be completed somet
 - Player bullets may now use empty guiding.
 - Implementation of complex player teams and runtime ship switching
 - Significant improvements to the architecture around engine state management, especially pausing, loading, and freezeframes
-- Improved functionality and architecture of events in script code. See EventLASM.Listen, EventLASM
+- Improved functionality and architecture of events in script code. See EventLASM
 - Spell and card circles now trail the boss while they are moving.
 - Multiple small improvements around boss UI graphics (among which: fixed an issue where the UI HP bar would flash or temporarily display the incorrect color, fixed an issue where `set-ui-from` would not work with boss life stars, fixed issues with the UI timer not deactivating)
 - Proof-of-concept implementation of a music room

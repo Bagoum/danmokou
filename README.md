@@ -14,7 +14,7 @@ Documentation can be found here: [https://dmk.bagoum.com/docs](https://dmk.bagou
 
 # Licensing
 
-The source code is licensed under MIT. See the COPYING file for details, as well as information on non-code assets. Note that submodule projects may have different licenses.
+The source code is licensed under MIT. See the Danmokou.LICENSE file for details, as well as information on non-code assets. Note that submodule projects may have different licenses.
 
 # FAQ
 

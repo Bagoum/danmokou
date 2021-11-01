@@ -84,7 +84,7 @@ public class Achievement : IRequirementWatcher {
     }
 
     public void RequirementUpdated() {
-        if (ACHIEVEMENT_PROGRESS_ENABLED) return;
+        if (!ACHIEVEMENT_PROGRESS_ENABLED) return;
         //Don't bother checking if the achievement is already finished
         if (State == State.Completed) return;
         var nState = Req.EvalState();
