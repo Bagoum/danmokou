@@ -158,14 +158,14 @@ public readonly struct SMRunner {
     private readonly GenCtx? gcx;
     public GenCtx? NewGCX => gcx?.Copy();
 
-    public static SMRunner Null => new SMRunner(null, Cancellable.Null, false, false, null);
-    public static SMRunner Cull(StateMachine? sm, ICancellee cT, GenCtx? gcx=null) => new SMRunner(sm, cT, true, false, gcx);
+    public static SMRunner Null => new(null, Cancellable.Null, false, false, null);
+    public static SMRunner Cull(StateMachine? sm, ICancellee cT, GenCtx? gcx=null) => new(sm, cT, true, false, gcx);
     /// <summary>
     /// Use over CULL when any nested summons should be bounded by this object's cancellation (ie. bosses).
     /// </summary>
-    public static SMRunner CullRoot(StateMachine? sm, ICancellee cT, GenCtx? gcx=null) => new SMRunner(sm, cT, true, true, gcx);
-    public static SMRunner Run(StateMachine? sm, ICancellee cT, GenCtx? gcx=null) => new SMRunner(sm, cT, false, false, gcx);
-    public static SMRunner RunNoCancelRoot(StateMachine? sm) => new SMRunner(sm, Cancellable.Null, false, true, null);
+    public static SMRunner CullRoot(StateMachine? sm, ICancellee cT, GenCtx? gcx=null) => new(sm, cT, true, true, gcx);
+    public static SMRunner Run(StateMachine? sm, ICancellee cT, GenCtx? gcx=null) => new(sm, cT, false, false, gcx);
+    public static SMRunner RunNoCancelRoot(StateMachine? sm) => new(sm, Cancellable.Null, false, true, null);
     public SMRunner(StateMachine? sm, ICancellee cT, bool cullOnFinish, bool root, GenCtx? gcx) {
         this.sm = sm;
         this.cT = cT;

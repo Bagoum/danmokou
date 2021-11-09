@@ -87,11 +87,11 @@ public static class FileUtils {
     
     public static T? ReadJson<T>(string file) where T : class {
         try {
-            using (StreamReader sr = new StreamReader(file)) {
+            using (StreamReader sr = new(file)) {
                 return JsonConvert.DeserializeObject<T>(sr.ReadToEnd(), JsonSettings);
             }
         } catch (Exception e) {
-            Logs.Log($"Couldn't read {typeof(T)} from file {file}. (JSON)", false, LogLevel.WARNING);
+            Logs.Log($"Couldn't read {typeof(T)} from file {file}. (JSON)\n{e.Message}", false, LogLevel.WARNING);
             return null;
         }
     }
@@ -101,7 +101,7 @@ public static class FileUtils {
                 return Serializer.Deserialize<T>(fr);
             }
         } catch (Exception e) {
-            Logs.Log($"Couldn't read {typeof(T)} from file {file}. (PROTO)", false, LogLevel.WARNING);
+            Logs.Log($"Couldn't read {typeof(T)} from file {file}. (PROTO)\n{e.Message}", false, LogLevel.WARNING);
             return null;
         }
     }
@@ -111,7 +111,7 @@ public static class FileUtils {
                 return Serializer.Deserialize<T>(InflateStream(fr));
             }
         } catch (Exception e) {
-            Logs.Log($"Couldn't read {typeof(T)} from file {file}. (PROTO-C)", false, LogLevel.WARNING);
+            Logs.Log($"Couldn't read {typeof(T)} from file {file}. (PROTO-C)\n{e.Message}", false, LogLevel.WARNING);
             return null;
         }
     }
@@ -121,7 +121,7 @@ public static class FileUtils {
                 return Serializer.Deserialize<T>(InflateStream(fr));
             }
         } catch (Exception e) {
-            Logs.Log($"Couldn't read {typeof(T)} from textAsset {file.name}. (PROTO-C)", false, LogLevel.WARNING);
+            Logs.Log($"Couldn't read {typeof(T)} from textAsset {file.name}. (PROTO-C)\n{e.Message}", false, LogLevel.WARNING);
             return null;
         }
     }

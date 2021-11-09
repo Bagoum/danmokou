@@ -365,7 +365,7 @@ public class UIManager : CoroutineRegularUpdater, IUIManager, IStageAnnouncer {
     public SpriteRenderer leftSidebar = null!;
     public SpriteRenderer rightSidebar = null!;
     public BossConfig.ProfileRender defaultProfile = null!;
-    private readonly Stack<BossConfig.ProfileRender> stackedProfiles = new Stack<BossConfig.ProfileRender>();
+    private readonly Stack<BossConfig.ProfileRender> stackedProfiles = new();
 
     public void CloseProfile() {
         var src = stackedProfiles.Pop();
@@ -440,7 +440,7 @@ public class UIManager : CoroutineRegularUpdater, IUIManager, IStageAnnouncer {
         });
     }
 
-    private static readonly Vector2 slideFrom = new Vector2(5, 0);
+    private static readonly Vector2 slideFrom = new(5, 0);
 
     public Task<Completion> FadeInPauseUI() =>
         uiRenderer.Fade(0, 1, 0.3f, x => x);
@@ -462,7 +462,7 @@ public class UIManager : CoroutineRegularUpdater, IUIManager, IStageAnnouncer {
     private static string ToMonospaceThousands(long val, float mspace = 1.7f) {
         string ms = $"<mspace={mspace}>";
         string msc = "</mspace>";
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new();
         int pow = 0;
         for (; Math.Pow(10, pow + 3) < val; pow += 3) { }
         for (bool first = true; pow >= 0; pow -= 3, first = false) {
@@ -501,7 +501,7 @@ public class UIManager : CoroutineRegularUpdater, IUIManager, IStageAnnouncer {
     }
 
     private Cancellable? messageFadeToken;
-    private readonly List<string> queuedMessages = new List<string>();
+    private readonly List<string> queuedMessages = new();
 
     private void _RunNextMessage() {
         if (queuedMessages.Count == 0)

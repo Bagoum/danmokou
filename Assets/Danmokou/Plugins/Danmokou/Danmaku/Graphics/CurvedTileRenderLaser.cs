@@ -40,8 +40,8 @@ public class LaserRenderCfg : TiledRenderCfg {
 //These are always initialized manually, and may or may not be pooled.
 public class CurvedTileRenderLaser : CurvedTileRender {
     private LaserMovement path;
-    private Vector3 simpleEulerRotation = new Vector3(0, 0, 0);
-    private ParametricInfo bpi = new ParametricInfo();
+    private Vector3 simpleEulerRotation = new(0, 0, 0);
+    private ParametricInfo bpi = new();
     private readonly float lineRadius;
     private const float defaultUpdateStagger = 0.1f;
     private float updateStagger;
@@ -55,7 +55,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
     private readonly bool stretch = false;
     private Laser laser = null!;
     private float scaledLineRadius;
-    private Laser.PointContainer endpt = new Laser.PointContainer(null);
+    private Laser.PointContainer endpt = new(null);
     private PlayerBullet? playerBullet;
     [UsedImplicitly]
     public bool playerBulletIsColliding;
@@ -465,7 +465,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
         }
         public void ClearControls() => controls.Empty();
         
-        private readonly DMCompactingArray<LaserControl> controls = new DMCompactingArray<LaserControl>(4);
+        private readonly DMCompactingArray<LaserControl> controls = new(4);
         
         public void IterateControls(CurvedTileRenderLaser laser) {
             int ct = controls.Count;
@@ -476,16 +476,16 @@ public class CurvedTileRenderLaser : CurvedTileRender {
             }
         }
     }
-    private static readonly LaserMetadata defaultMeta = new LaserMetadata(null);
+    private static readonly LaserMetadata defaultMeta = new(null);
     
     /// <summary>
     /// Pool controls for laser paths.
     /// Keys are added the first time a command is created or a bullet is spawned and reset on scene.
     /// They are not constructed on init because they store no metadata.
     /// </summary>
-    private static readonly Dictionary<string, LaserMetadata> activePools = new Dictionary<string, LaserMetadata>();
+    private static readonly Dictionary<string, LaserMetadata> activePools = new();
     //For quick iteration
-    private static readonly List<LaserMetadata> activePoolsList = new List<LaserMetadata>(16);
+    private static readonly List<LaserMetadata> activePoolsList = new(16);
     private LaserMetadata myStyle = null!;
     
     public static void DeInitializePools() {
@@ -518,7 +518,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
         /// <returns></returns>
         [Alias("flipx>")]
         public static cLaserControl FlipXGT(float wall, Pred cond) {
-            return new cLaserControl((b, cT) => {
+            return new((b, cT) => {
                 if (b.bpi.loc.x > wall && cond(b.bpi)) {
                     b.FlipBPIAndDeltaSimple(false, wall);
                     b.path.FlipX();
@@ -534,7 +534,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
         /// <returns></returns>
         [Alias("flipx<")]
         public static cLaserControl FlipXLT(float wall, Pred cond) {
-            return new cLaserControl((b, cT) => {
+            return new((b, cT) => {
                 if (b.bpi.loc.x < wall && cond(b.bpi)) {
                     b.FlipBPIAndDeltaSimple(false, wall);
                     b.path.FlipX();
@@ -550,7 +550,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
         /// <returns></returns>
         [Alias("flipy>")]
         public static cLaserControl FlipYGT(float wall, Pred cond) {
-            return new cLaserControl((b, cT) => {
+            return new((b, cT) => {
                 if (b.bpi.loc.y > wall && cond(b.bpi)) {
                     b.FlipBPIAndDeltaSimple(true, wall);
                     b.path.FlipY();
@@ -566,7 +566,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
         /// <returns></returns>
         [Alias("flipy<")]
         public static cLaserControl FlipYLT(float wall, Pred cond) {
-            return new cLaserControl((b, cT) => {
+            return new((b, cT) => {
                 if (b.bpi.loc.y < wall && cond(b.bpi)) {
                     b.FlipBPIAndDeltaSimple(true, wall);
                     b.path.FlipY();
@@ -575,7 +575,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
             }, BulletManager.BulletControl.P_MOVE_3);
         }
         
-        public static cLaserControl SM(LPred cond, SM.StateMachine sm) => new cLaserControl((b, cT) => {
+        public static cLaserControl SM(LPred cond, SM.StateMachine sm) => new((b, cT) => {
             if (cond(b.bpi, b.lifetime)) {
                 var mov = new Movement(b.bpi.loc, V2RV2.Angle(b.laser.original_angle));
                 _ = BEHPooler.INode(mov, new ParametricInfo(in mov, b.bpi.index), b.nextTrueDelta, "l-pool-triggered")

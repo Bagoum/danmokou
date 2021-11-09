@@ -31,7 +31,7 @@ public static class PatternUtils {
     public static ExBPRV2 BRV2 => ExM.Reference<V2RV2>("brv2");
     public static GCXF<V2RV2> RV2Zero => GCXFRepo.RV2Zero;
 
-    public static ReflectEx.Hoist<Vector2> HV2(string key) => new ReflectEx.Hoist<Vector2>(key);
+    public static ReflectEx.Hoist<Vector2> HV2(string key) => new(key);
 }
 
 public static partial class AtomicPatterns {

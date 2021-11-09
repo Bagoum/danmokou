@@ -129,7 +129,7 @@ public class XMLVNBacklogMenu : PausedGameplayMenu, IVNBacklog {
     private bool openQueued = false;
     public override void RegularUpdate() {
         if (RegularUpdateGuard) {
-            if (MenuActive && (InputManager.VNBacklogPause.Active || InputManager.Pause.Active || 
+            if (MenuActive && (InputManager.VNBacklogPause.Active || InputManager.Pause.Active || InputManager.UIBack.Active || 
                                (Input.mouseScrollDelta.y < 0 && logScroll.verticalScroller.value >= logScroll.verticalScroller.highValue))) {
                 ProtectHide();
             } else if (!MenuActive && (InputManager.VNBacklogPause.Active || openQueued || Input.mouseScrollDelta.y > 0) &&

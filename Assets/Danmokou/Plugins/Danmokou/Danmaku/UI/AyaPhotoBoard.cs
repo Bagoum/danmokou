@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using BagoumLib;
+using BagoumLib.DataStructures;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.DMath;
@@ -11,10 +12,24 @@ using UnityEngine;
 
 namespace Danmokou.UI {
 public interface IAyaPhotoBoard {
-    void SetupPins(int nPins, bool createObjects = true);
-    void TearDown();
+    /// <summary>
+    /// Setup pin spaces and (optionally) pin objects.
+    /// <br/>When the returned disposable is disposed, any bound photos and pin objects will be destroyed.
+    /// </summary>
+    IDisposable SetupPins(int nPins, bool createObjects = true);
+
+    /// <summary>
+    /// If this photo board has space for another photo,
+    ///  then pass ownership of the given photo to this photo board and provide a location for the photo to be placed,
+    ///  otherwise return null.
+    /// </summary>
     Vector2? NextPinLoc(AyaPinnedPhoto attach);
-    void ConstructPhotos(AyaPhoto[]? photos, float sizeOverride);
+    
+    /// <summary>
+    /// Display several photos without creating pin objects.
+    /// <br/>If sizeOverride is positive, then overrides the size of the provided photos.
+    /// </summary>
+    IDisposable ConstructPhotos(AyaPhoto[]? photos, float sizeOverride);
 }
 
 public class AyaPhotoBoard : CoroutineRegularUpdater, IAyaPhotoBoard {
@@ -35,22 +50,22 @@ public class AyaPhotoBoard : CoroutineRegularUpdater, IAyaPhotoBoard {
     public PinStrip[] strips = null!;
     private Vector2[]? pinLocations;
     private int nextPin;
-    private readonly List<GameObject> pins = new List<GameObject>();
+    private readonly List<GameObject> pins = new();
     public GameObject pinPrefab = null!;
     public GameObject defaultPhotoPrefab = null!;
     public Sprite[] pinOptions = null!;
-    private readonly List<AyaPinnedPhoto> bound = new List<AyaPinnedPhoto>();
-    public Vector2 pinOffset = new Vector2(0, 0.3f);
+    private readonly List<AyaPinnedPhoto> bound = new();
+    public Vector2 pinOffset = new(0, 0.3f);
+    private IDisposable? boardToken = null;
 
     protected override void BindListeners() {
         base.BindListeners();
         RegisterService<IAyaPhotoBoard>(this);
     }
 
-
-    public void SetupPins(int nPins, bool createObjects = true) {
-        TearDown();
-        pinLocations = new Vector2[nPins];
+    public IDisposable SetupPins(int nPins, bool createObjects = true) {
+        boardToken?.Dispose();
+        var pL = pinLocations = new Vector2[nPins];
         nextPin = 0;
         int si = 0;
         int inStrip = nPins;
@@ -67,9 +82,13 @@ public class AyaPhotoBoard : CoroutineRegularUpdater, IAyaPhotoBoard {
                 pin.GetComponent<SpriteRenderer>().sprite = pinOptions[RNG.GetIntOffFrame(0, pinOptions.Length)];
             }
         }
+        return boardToken = new JointDisposable(() => {
+            if (pL == pinLocations)
+                TearDown();
+        });
     }
 
-    public void TearDown() {
+    private void TearDown() {
         pinLocations = null;
         nextPin = 0;
         foreach (var b in bound) Destroy(b.gameObject);
@@ -79,13 +98,15 @@ public class AyaPhotoBoard : CoroutineRegularUpdater, IAyaPhotoBoard {
     }
 
     public Vector2? NextPinLoc(AyaPinnedPhoto attach) {
+        if (pinLocations == null || nextPin >= pinLocations.Length)
+            return null;
         bound.Add(attach);
-        return pinLocations?.TryN(nextPin++);
+        return pinLocations.TryN(nextPin++);
     }
 
-    public void ConstructPhotos(AyaPhoto[]? photos, float sizeOverride) {
+    public IDisposable ConstructPhotos(AyaPhoto[]? photos, float sizeOverride) {
         photos ??= new AyaPhoto[0];
-        SetupPins(photos.Length, false);
+        var token = SetupPins(photos.Length, false);
         foreach (var p in photos) {
             var pinned = GameObject.Instantiate(defaultPhotoPrefab).GetComponent<AyaPinnedPhoto>();
             if (pinned.InitializeAt(p, NextPinLoc(pinned) ??
@@ -93,6 +114,7 @@ public class AyaPhotoBoard : CoroutineRegularUpdater, IAyaPhotoBoard {
                 if (sizeOverride > 0) pinned.SetSize(p, sizeOverride);
             }
         }
+        return token;
     }
 }
 }

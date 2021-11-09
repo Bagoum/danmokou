@@ -31,8 +31,8 @@ public static class SaveData {
     [ProtoContract]
     public class Record {
         [ProtoMember(1)] public bool TutorialDone = false;
-        [ProtoMember(2)] public Dictionary<string, InstanceRecord> FinishedGames = new Dictionary<string, InstanceRecord>();
-        [ProtoMember(3)] public Dictionary<string, State> Achievements = new Dictionary<string, State>();
+        [ProtoMember(2)] public Dictionary<string, InstanceRecord> FinishedGames { get; init; } = new();
+        [ProtoMember(3)] public Dictionary<string, State> Achievements { get; init; } = new();
 
         public State? GetAchievementState(string acvKey) =>
             Achievements.TryGetValue(acvKey, out var s) ? s : (State?) null;
@@ -61,7 +61,7 @@ public static class SaveData {
         [JsonIgnore]
         public bool MainCampaignCompleted => CampaignCompleted(GameManagement.References.campaign.key);
 
-        public static readonly Event<Unit> TutorialCompleted = new Event<Unit>();
+        public static readonly Event<Unit> TutorialCompleted = new();
 
         public void CompleteTutorial() {
             TutorialDone = true;
@@ -156,7 +156,7 @@ public static class SaveData {
         public bool ProfilingEnabled = false;
         
         public List<(string name, DifficultySettings settings)> DifficultySettings =
-            new List<(string name, DifficultySettings settings)>();
+            new();
 
         public void AddDifficultySettings(string name, DifficultySettings settings) {
             DifficultySettings.Add((name, FileUtils.CopyJson(settings)));
@@ -345,7 +345,7 @@ public static class SaveData {
         SettingsChanged.OnNext(s);
     }
     
-    public static readonly Event<Settings> SettingsChanged = new Event<Settings>();
+    public static readonly Event<Settings> SettingsChanged = new();
 
     private static void StartProfiling() {
         if (s.ProfilingEnabled) {

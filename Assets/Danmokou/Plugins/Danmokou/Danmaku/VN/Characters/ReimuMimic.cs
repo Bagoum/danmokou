@@ -8,8 +8,8 @@ using UnityEngine;
 
 namespace Danmokou.VN {
 public class Reimu : SZYUCharacter {
-    public override Color TextColor => new Color(1f, 0.85f, 0.92f);
-    public override Color UIColor => new Color(0.85f, 0.1f, 0.24f);
+    public override Color TextColor => new(1f, 0.85f, 0.92f);
+    public override Color UIColor => new(0.85f, 0.1f, 0.24f);
     public override string Name => LocalizedStrings.FindReference("dialogue.reimu");
 
     public override void RollEvent() => ServiceLocator.SFXService.Request("x-bubble-3", SFXType.TypingSound);

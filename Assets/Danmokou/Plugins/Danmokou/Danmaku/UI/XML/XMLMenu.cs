@@ -22,6 +22,7 @@ namespace Danmokou.UI.XML {
 public enum QueuedEvent {
     Goto,
     Confirm,
+    Back,
     Left,
     Right
 }
@@ -48,10 +49,10 @@ public abstract class XMLMenu : CoroutineRegularUpdater {
 
         public override string ToString() => $"{type}:{instrVal}";
 
-        public static CacheInstruction ToChild(int idx) => new CacheInstruction(InstrType.GOTO_CHILD, idx);
-        public static CacheInstruction ToSibling(int idx) => new CacheInstruction(InstrType.GOTO_SIBLING, idx);
-        public static CacheInstruction ToOption(int idx) => new CacheInstruction(InstrType.GOTO_OPTION, idx);
-        public static CacheInstruction Confirm => new CacheInstruction(InstrType.CONFIRM, 0);
+        public static CacheInstruction ToChild(int idx) => new(InstrType.GOTO_CHILD, idx);
+        public static CacheInstruction ToSibling(int idx) => new(InstrType.GOTO_SIBLING, idx);
+        public static CacheInstruction ToOption(int idx) => new(InstrType.GOTO_OPTION, idx);
+        public static CacheInstruction Confirm => new(InstrType.CONFIRM, 0);
     }
     public UIBuilderRenderer uiRenderer = null!;
     //The reason for this virtual structure is because implementers (eg. XMLMainMenuCampaign)
@@ -87,6 +88,11 @@ public abstract class XMLMenu : CoroutineRegularUpdater {
     protected virtual Dictionary<Type, VisualTreeAsset> TypeMap => References.uxmlDefaults.TypeMap;
 
     public UINode? Current { get; protected set; } = null;
+
+    protected void Close() {
+        Current?.OnLeave(null);
+        Current = null;
+    }
 
     public GameObject? MainScreenOnlyObjects;
 
@@ -156,7 +162,6 @@ public abstract class XMLMenu : CoroutineRegularUpdater {
                 screen.Bound.style.display = DisplayStyle.Flex;
             } else {
                 screen.Bound.style.display = DisplayStyle.None;
-                screen.ResetNodeProgress();
             }
         }
         if (MainScreenOnlyObjects != null) {
@@ -176,7 +181,7 @@ public abstract class XMLMenu : CoroutineRegularUpdater {
 
     public override EngineState UpdateDuring => EngineState.MENU_PAUSE;
 
-    public DisturbedAnd UpdatesEnabled { get; } = new DisturbedAnd();
+    public DisturbedAnd UpdatesEnabled { get; } = new();
 
     protected bool RegularUpdateGuard => Application.isPlaying && ETime.FirstUpdateForScreen && UpdatesEnabled;
     public override void RegularUpdate() {
@@ -220,7 +225,7 @@ public abstract class XMLMenu : CoroutineRegularUpdater {
                     if (allowsfx) 
                         ServiceLocator.SFXService.Request(succ ? confirmSound : failureSound);
                     if (Current?.Passthrough == true) Current = Current.Parent;
-                } else if (InputManager.UIBack.Active) {
+                } else if (InputManager.UIBack.Active || (qeIsCurr && QueuedEvent?.ev == XML.QueuedEvent.Back)) {
                     if (allowsfx) 
                         ServiceLocator.SFXService.Request(backSound);
                     HandleTransition(Current, Current.Back(), true);
@@ -229,13 +234,12 @@ public abstract class XMLMenu : CoroutineRegularUpdater {
                 if (++sentry > 100) throw new Exception("There is a loop in the XML menu.");
             } while (Current?.Passthrough ?? false);
             if (tried_change) {
-                //TODO animations are extremely slow when navigating with mouse, notsure why.
-                //Might be due to scaling animations causing recalculation of moise containment?
-                OnChangeEffects(last, QueuedEvent == null);
+                //Animations being slow with mouse navigation is fixed in 2021.2 (not sure how).
+                OnChangeEffects(last, true);
             }
-        }
-        if (Application.isPlaying && ETime.FirstUpdateForScreen) {
-            QueuedEvent = null;
+            if (Application.isPlaying && ETime.FirstUpdateForScreen) {
+                QueuedEvent = null;
+            }
         }
 
     }

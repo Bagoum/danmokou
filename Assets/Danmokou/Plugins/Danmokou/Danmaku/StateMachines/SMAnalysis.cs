@@ -51,7 +51,7 @@ public struct SMPhaseController {
         callback = null;
     }
     
-    public static SMPhaseController Normal(int firstPhase) => new SMPhaseController(firstPhase);
+    public static SMPhaseController Normal(int firstPhase) => new(firstPhase);
 
     /// <summary>
     /// Run a single phase and then hit the callback.
@@ -335,7 +335,7 @@ public static class SMAnalysis {
         public readonly CampaignConfig campaign;
         public readonly AnalyzedBoss[] bosses;
         public readonly AnalyzedStage[] stages;
-        public readonly Dictionary<string, AnalyzedBoss> bossKeyMap = new Dictionary<string, AnalyzedBoss>();
+        public readonly Dictionary<string, AnalyzedBoss> bossKeyMap = new();
         public IEnumerable<AnalyzedStage> practiceStages => stages.Where(s => s.stage.practiceable);
 
         public AnalyzedCampaign(CampaignConfig campaign) {
@@ -375,7 +375,7 @@ public static class SMAnalysis {
         public readonly AnalyzedDayBoss[] bosses;
         public readonly int dayIndex;
         public readonly AnalyzedDayCampaign campaign;
-        public readonly Dictionary<string, AnalyzedDayBoss> bossKeyMap = new Dictionary<string, AnalyzedDayBoss>();
+        public readonly Dictionary<string, AnalyzedDayBoss> bossKeyMap = new();
         
         public IEnumerable<DayPhase> Phases => bosses.SelectMany(b => b.phases);
         public bool Enabled(SharedInstanceMetadata meta) => dayIndex == 0 || campaign.days[dayIndex - 1].OneBossesConcluded(meta);

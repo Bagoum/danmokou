@@ -162,7 +162,7 @@ public static partial class Parametrics {
     #endregion
 
     private static TExV2 Box(TEx<Vector2> ex) {
-        return new TExV2(ex);
+        return new(ex);
     }
 
     #region Wrappers
@@ -219,7 +219,7 @@ public static partial class Parametrics {
     /// <param name="location">Target location</param>
     /// <returns></returns>
     public static ExTP VHome(ExBPY speed, ExTP location) {
-        TExV2 l = new TExV2();
+        TExV2 l = new();
         return bpi => Ex.Block(new ParameterExpression[] {l},
             Ex.Assign(l, location(bpi).Sub(bpi.loc)),
             l.Mul(Ex.Divide(speed(bpi), Sqrt(Ex.Add(SqrMag(l), EPS))))

@@ -188,7 +188,7 @@ public class PhaseSM : SequentialSM {
     public readonly PhaseProperties props;
 
     public PhaseContext MakeContext(PatternContext parent) =>
-        new PhaseContext(parent, parent.SM.Phases.IndexOf(this), props);
+        new(parent, parent.SM.Phases.IndexOf(this), props);
 
     /// <summary>
     /// </summary>
@@ -237,7 +237,7 @@ public class PhaseSM : SequentialSM {
         }
     }
     private void PreparePhase(PhaseContext ctx, IUIManager? ui, SMHandoff smh, out Task cutins, 
-        IBackgroundOrchestrator? bgo, IAyaPhotoBoard? photoBoard) {
+        IBackgroundOrchestrator? bgo) {
         cutins = Task.CompletedTask;
         ui?.ShowPhaseType(props.phaseType);
         if (props.cardTitle != null || props.phaseType != null) {
@@ -259,9 +259,6 @@ public class PhaseSM : SequentialSM {
             //Bosses are by default invulnerable on unmarked phases
             smh.Exec.Enemy.SetVulnerable(props.phaseType?.DefaultVulnerability() ?? 
                                          (ctx.Boss == null ? Vulnerability.VULNERABLE : Vulnerability.NO_DAMAGE));
-        }
-        if (ctx.BossPhotoHP.Try(out var pins)) {
-            photoBoard?.SetupPins(pins);
         }
         bool forcedBG = false;
         if (GameManagement.Instance.mode != InstanceMode.BOSS_PRACTICE && !SaveData.Settings.TeleportAtPhaseStart) {
@@ -316,8 +313,10 @@ public class PhaseSM : SequentialSM {
         foreach (var dispGenerator in props.phaseObjectGenerators)
             ctx.PhaseObjects.Add(dispGenerator());
         var bgo = ServiceLocator.MaybeFind<IBackgroundOrchestrator>();
-        var photoBoard = ServiceLocator.MaybeFind<IAyaPhotoBoard>();
-        PreparePhase(ctx, ui, smh, out Task cutins, bgo, photoBoard);
+        PreparePhase(ctx, ui, smh, out Task cutins, bgo);
+        var photoBoardToken = ctx.BossPhotoHP.Try(out var pins) ?
+            ServiceLocator.MaybeFind<IAyaPhotoBoard>()?.SetupPins(pins) :
+            null;
         var lenienceToken = props.Lenient ?
             GameManagement.Instance.Lenient.AddConst(true) :
             null;
@@ -343,13 +342,12 @@ public class PhaseSM : SequentialSM {
             //This is critical to avoid boss destruction during the two-frame phase buffer
             if (smh.Exec.isEnemy)
                 smh.Exec.Enemy.SetVulnerable(Vulnerability.NO_DAMAGE);
-            lenienceToken?.Dispose();
             float finishDelay = 0f;
             var finishTask = Task.CompletedTask;
             if (smh.Exec.AllowFinishCalls) {
                 //TODO why does this use parentCT?
                 finishPhase?.Trigger(smh.Exec, smh.GCX, smh.parentCT);
-                (finishDelay, finishTask) = OnFinish(ctx, smh, pcTS, start_campaign, bgo, photoBoard);
+                (finishDelay, finishTask) = OnFinish(ctx, smh, pcTS, start_campaign, bgo);
                 prePrepareNextPhase?.Invoke(bgo);
             }
             if (props.Cleanup) {
@@ -369,6 +367,8 @@ public class PhaseSM : SequentialSM {
                     await finishTask;
                 }
             }
+            photoBoardToken?.Dispose();
+            lenienceToken?.Dispose();
             if (smh.Cancelled) 
                 throw;
             if (props.phaseType != null) 
@@ -383,12 +383,9 @@ public class PhaseSM : SequentialSM {
     private static readonly FXY defaultShakeMult = x => M.Sin(M.PI * (x + 0.4f));
 
     private (float estDelayTime, Task) OnFinish(PhaseContext ctx, SMHandoff smh, ICancellee prepared, 
-        CampaignSnapshot start_campaign, IBackgroundOrchestrator? bgo, IAyaPhotoBoard? photoBoard) {
+        CampaignSnapshot start_campaign, IBackgroundOrchestrator? bgo) {
         if (ctx.BgTransitionOut != null) {
             bgo?.QueueTransition(ctx.BgTransitionOut);
-        }
-        if (ctx.BossPhotoHP.Try(out _)) {
-            photoBoard?.TearDown();
         }
         //The shift-phase token is cancelled by timeout or by HP. 
         var completedBy = prepared.Cancelled ?

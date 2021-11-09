@@ -64,7 +64,7 @@ public class TExSB : TEx<SimpleBullet> {
     public readonly TEx<float> scale;
     public readonly TExV2 direction;
     public readonly TExMov velocity;
-    public TExV2 accDelta => new TExV2(Ex.Field(ex, "accDelta"));
+    public TExV2 accDelta => new(Ex.Field(ex, "accDelta"));
 
     public TExSB(Expression ex) : base(ex) {
         bpi = TExPI.Box(Ex.Field(ex, "bpi"));
@@ -90,17 +90,17 @@ public class TExSBC : TEx<AbsSimpleBulletCollection> {
     public TExSBC(string name) : base(ExMode.Parameter, name) { }
     public TExSBC(Ex _ex) : base(_ex) {}
 
-    public TExSB this[Ex index] => new TExSB(data.Index(index));
+    public TExSB this[Ex index] => new(data.Index(index));
     private static readonly ExFunction delete = ExFunction.Wrap<AbsSimpleBulletCollection>("DeleteSB",
         new[] {typeof(int)});
     private static readonly ExFunction softcull = ExFunction.Wrap<AbsSimpleBulletCollection>("Softcull",
-        new[] {typeof(AbsSimpleBulletCollection), typeof(int), typeof(SoftcullProperties?)});
+        new[] {typeof(AbsSimpleBulletCollection), typeof(int), typeof(SoftcullProperties)});
     private static readonly ExFunction isAlive =
         ExFunction.Wrap<AbsSimpleBulletCollection>("IsAlive", typeof(int));
     public static readonly ExFunction transferFrom = ExFunction.Wrap<AbsSimpleBulletCollection>("TransferFrom", 
         new[] {typeof(AbsSimpleBulletCollection), typeof(int)});
     public static readonly ExFunction copyNullFrom = ExFunction.Wrap<AbsSimpleBulletCollection>("CopyNullFrom", 
-        new[] {typeof(AbsSimpleBulletCollection), typeof(int), typeof(SoftcullProperties?)});
+        new[] {typeof(AbsSimpleBulletCollection), typeof(int), typeof(SoftcullProperties)});
     public static readonly ExFunction copyFrom = ExFunction.Wrap<AbsSimpleBulletCollection>("CopyFrom", 
         new[] {typeof(AbsSimpleBulletCollection), typeof(int)});
     public static readonly ExFunction runINodeAt = ExFunction.Wrap<AbsSimpleBulletCollection>("RunINodeAt", 
@@ -109,7 +109,7 @@ public class TExSBC : TEx<AbsSimpleBulletCollection> {
         new[] {typeof(int)});
     
     public Ex DeleteSB(Ex index) => delete.InstanceOf(this, index);
-    public Ex Softcull(Ex target, Ex index) => softcull.InstanceOf(this, target, index, Ex.Constant(null, typeof(SoftcullProperties?)));
+    public Ex Softcull(Ex target, Ex index) => softcull.InstanceOf(this, target, index, Ex.Constant(null, typeof(SoftcullProperties)));
     public Ex MakeCulledCopy(Ex index) => makeCulledCopy.InstanceOf(this, index);
     public Ex IsAlive(Ex index) => isAlive.InstanceOf(this, index);
 

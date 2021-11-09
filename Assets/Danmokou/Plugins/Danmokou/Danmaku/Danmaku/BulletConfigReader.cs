@@ -63,8 +63,8 @@ public partial class BulletManager : RegularUpdater {
         }
     }
     
-    public class BulletInCode {
-        public readonly string name;
+    public record BulletInCode {
+        public string name { get; init; }
         private readonly DeferredTextureConstruction deferredRI;
         private bool riLoaded;
         private MeshGenerator.RenderInfo ri;
@@ -73,11 +73,11 @@ public partial class BulletManager : RegularUpdater {
         public readonly bool destructible;
         public readonly CollidableInfo cc;
         public readonly ushort grazeEveryFrames;
-        public readonly DisturbedOverride<bool> Deletable;
-        public readonly DisturbedOverride<float> CULL_RAD;
-        public readonly DisturbedOverride<bool> AllowCameraCull;
-        public readonly DisturbedOverride<(TP4 black, TP4 white)?> Recolor;
-        public readonly DisturbedOverride<TP4?> Tint;
+        public DisturbedOverride<bool> Deletable { get; init; }
+        public DisturbedOverride<float> CULL_RAD { get; init; }
+        public DisturbedOverride<bool> AllowCameraCull { get; init; }
+        public DisturbedOverride<(TP4 black, TP4 white)?> Recolor { get; init; }
+        public DisturbedOverride<TP4?> Tint { get; init; }
         public bool Recolorizable => deferredRI.recolorizable;
         public SimpleBulletFader FadeOut => deferredRI.sbes.FadeOut;
 
@@ -103,35 +103,28 @@ public partial class BulletManager : RegularUpdater {
                     GetOrLoadRI().material.SetOrUnsetKeyword(tint != null, PropConsts.tintKW);
             });
         }
-        
-        //records when?
-        private BulletInCode(BulletInCode copyFrom, string newName) {
-            copyFrom.GetOrLoadRI();
-            name = newName;
-            ri = new MeshGenerator.RenderInfo(copyFrom.ri.material, copyFrom.ri.mesh, true);
-            riLoaded = true;
 
-            deferredRI = copyFrom.deferredRI;
-            damageAgainstPlayer = copyFrom.damageAgainstPlayer;
-            againstEnemyCooldown = copyFrom.againstEnemyCooldown;
-            destructible = copyFrom.destructible;
-            this.cc = copyFrom.cc;
-            grazeEveryFrames = copyFrom.grazeEveryFrames;
-            Deletable = CopyOV(copyFrom.Deletable);
-            CULL_RAD = CopyOV(copyFrom.CULL_RAD);
-            AllowCameraCull = CopyOV(copyFrom.AllowCameraCull);
-            Recolor = CopyOV(copyFrom.Recolor);
-            Tint = CopyOV(copyFrom.Tint);
-            Tint.Subscribe(tint => {
+        public BulletInCode Copy(string newName) {
+            GetOrLoadRI();
+            var nbc = this with {
+                name = newName,
+                ri = new MeshGenerator.RenderInfo(ri.material, ri.mesh, true),
+                riLoaded = true,
+                Deletable = CopyOV(Deletable),
+                CULL_RAD = CopyOV(CULL_RAD),
+                AllowCameraCull = CopyOV(AllowCameraCull),
+                Recolor = CopyOV(Recolor),
+                Tint = CopyOV(Tint),
+            };
+            nbc.Tint.Subscribe(tint => {
                 if (riLoaded)
                     GetOrLoadRI().material.SetOrUnsetKeyword(tint != null, PropConsts.tintKW);
             });
+            return nbc;
         }
 
         private static DisturbedOverride<T> CopyOV<T>(DisturbedOverride<T> baseOV) =>
-            new DisturbedOverride<T>(baseOV.BaseValue);
-
-        public BulletInCode Copy(string newName) => new BulletInCode(this, newName);
+            new(baseOV.BaseValue);
 
         public void UseExitFade() {
             DeferredTextureConstruction.SetMaterialFade(GetOrLoadRI(), FadeOut);
@@ -167,8 +160,7 @@ public partial class BulletManager : RegularUpdater {
     /// <summary>
     /// Complex bullets (lasers, pathers). Active pools are stored on BehaviorEntity.activePools.
     /// </summary>
-    public static readonly Dictionary<string, BehaviorEntity.BEHStyleMetadata> behPools 
-        = new Dictionary<string, BehaviorEntity.BEHStyleMetadata>();
+    public static readonly Dictionary<string, BehaviorEntity.BEHStyleMetadata> behPools = new();
 
     private static void AddComplexStyle(BehaviorEntity.BEHStyleMetadata bsm) {
         behPools[bsm.style ?? throw new Exception("Complex BEHMetadata must have non-null style values")] = bsm;
@@ -181,7 +173,7 @@ public partial class BulletManager : RegularUpdater {
     /// Simple bullets. (NPC bullets, copy-pool NPC bullets, most player bullets).
     /// This collection is only updated when pools are created, or copy-pools are deleted.
     /// </summary>
-    private static readonly Dictionary<string, SimpleBulletCollection> simpleBulletPools = new Dictionary<string, SimpleBulletCollection>();
+    private static readonly Dictionary<string, SimpleBulletCollection> simpleBulletPools = new();
     private static void AddSimpleStyle(SimpleBulletCollection sbc) {
         simpleBulletPools[sbc.Style] = sbc;
     }
@@ -195,17 +187,17 @@ public partial class BulletManager : RegularUpdater {
     /// Currently activated bullet styles. All styles are deactivated on scene change, and
     /// activated when they are used for the first time.
     /// </summary>
-    private static readonly List<SimpleBulletCollection> activeNpc = new List<SimpleBulletCollection>(250);
-    private static readonly List<SimpleBulletCollection> activePlayer = new List<SimpleBulletCollection>(50);
+    private static readonly List<SimpleBulletCollection> activeNpc = new(250);
+    private static readonly List<SimpleBulletCollection> activePlayer = new(50);
     /// <summary>
     /// All empty bullet pools (EMPTY, copied NPC pools, and any player variants). These are updated first.
     /// </summary>
-    private static readonly List<SimpleBulletCollection> activeEmpty = new List<SimpleBulletCollection>(8);
-    private static readonly List<SimpleBulletCollection> activeCNpc = new List<SimpleBulletCollection>(8); //Simple only: Create alt-name pools for varying controls
+    private static readonly List<SimpleBulletCollection> activeEmpty = new(8);
+    private static readonly List<SimpleBulletCollection> activeCNpc = new(8); //Simple only: Create alt-name pools for varying controls
     /// <summary>
     /// All culled bullet pools
     /// </summary>
-    private static readonly List<SimpleBulletCollection> activeCulled = new List<SimpleBulletCollection>(250);
+    private static readonly List<SimpleBulletCollection> activeCulled = new(250);
     private static BulletManager main = null!;
     private Transform spamContainer = null!;
     private const string epLayerName = "HighDirectRender";
@@ -453,7 +445,7 @@ public partial class BulletManager : RegularUpdater {
 
     public const int FAB_PLAYER_RENDER_OFFSET = -1000;
     public class DeferredFramesRecoloring {
-        private static readonly Dictionary<FrameRecolorConfig, Sprite> frameCache = new Dictionary<FrameRecolorConfig, Sprite>();
+        private static readonly Dictionary<FrameRecolorConfig, Sprite> frameCache = new();
         private FrameAnimBullet.Recolor recolor;
         public string Style => recolor.style;
         private bool loaded;
@@ -466,7 +458,7 @@ public partial class BulletManager : RegularUpdater {
         private readonly bool player;
         public readonly Palette? palette;
 
-        public DeferredFramesRecoloring MakePlayerCopy() => new DeferredFramesRecoloring(recolor.prefab, b, 
+        public DeferredFramesRecoloring MakePlayerCopy() => new(recolor.prefab, b, 
             renderPriorityOffset + FAB_PLAYER_RENDER_OFFSET, paletteVariant, $"{PLAYERPREFIX}{recolor.style}", creator, recolorizable,  palette, true);
         
         public DeferredFramesRecoloring(GameObject prefab, Bullet b, int renderPriorityOffset, string paletteVariant, 

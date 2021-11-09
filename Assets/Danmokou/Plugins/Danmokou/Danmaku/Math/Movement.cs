@@ -49,7 +49,7 @@ public struct Movement {
     public float sin_rot;
     public float flipX;
     public float flipY;
-    public Vector2 Direction => new Vector2(cos_rot, sin_rot);
+    public Vector2 Direction => new(cos_rot, sin_rot);
 
     /// <summary>
     /// Create a velocity configuration.
@@ -77,7 +77,7 @@ public struct Movement {
         this.flipY = fy;
         this.angle = M.Atan2D(s, c);
     }
-    public Movement WithNoMovement() => new Movement(VTPRepo.NoVTP, rootPos, cos_rot, sin_rot, flipX, flipY);
+    public Movement WithNoMovement() => new(VTPRepo.NoVTP, rootPos, cos_rot, sin_rot, flipX, flipY);
 
     public Movement(VTP path): this(path, Vector2.zero, V2RV2.Zero) {}
 
@@ -88,7 +88,7 @@ public struct Movement {
     /// <param name="localPos">Location of this relative to parent</param>
     public Movement(Vector2 parentLoc, V2RV2 localPos) : this(VTPRepo.NoVTP, parentLoc, localPos) { }
     
-    public static Movement None => new Movement(Vector2.zero, V2RV2.Zero);
+    public static Movement None => new(Vector2.zero, V2RV2.Zero);
 
     public Movement(Vector2 loc, Vector2 dir) {
         cos_rot = dir.x;
@@ -102,7 +102,7 @@ public struct Movement {
     public Movement(Vector2 loc, float angleDeg) : this(loc, M.PolarToXY(angleDeg)) { }
 
     private Vector2 DefaultDirection() {
-        return new Vector2(cos_rot * flipX, sin_rot * flipY);
+        return new(cos_rot * flipX, sin_rot * flipY);
     }
 
     /// <summary>

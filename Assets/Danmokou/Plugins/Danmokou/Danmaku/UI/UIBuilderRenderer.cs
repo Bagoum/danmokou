@@ -17,8 +17,8 @@ namespace Danmokou.UI {
 public class UIBuilderRenderer : CoroutineRegularUpdater {
     public PanelSettings settings = null!;
     public Material uiMaterial = null!;
-
     public RenderTexture unsetRT = null!;
+    
 
     private RenderTexture rt = null!;
     private Cancellable allCancel = null!;
@@ -35,7 +35,7 @@ public class UIBuilderRenderer : CoroutineRegularUpdater {
 
     //each action type can be run independently
     private readonly Dictionary<RAction, Cancellable> cancellers =
-        new Dictionary<RAction, Cancellable>();
+        new();
 
     private ICancellee CreateNewCanceller(RAction a) {
         if (cancellers.TryGetValue(a, out var existing)) existing.Cancel();

@@ -20,7 +20,7 @@ public class DMKVNState : UnityVNState {
         AllowFullSkip = GameManagement.Instance.Request?.lowerRequest.Campaign.AllowDialogueSkip ?? false;
     }
 
-    public LazyAction lSFX(string? sfx) => new LazyAction(aSFX(sfx));
+    public LazyAction lSFX(string? sfx) => new(aSFX(sfx));
 
     public Action aSFX(string? sfx) => () => {
         if (SkippingMode == null)

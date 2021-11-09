@@ -21,7 +21,7 @@ using static BagoumLib.Tasks.WaitingUtils;
 
 namespace Danmokou.SM {
 public class SMContext {
-    public virtual List<IDisposable> PhaseObjects { get; } = new List<IDisposable>();
+    public virtual List<IDisposable> PhaseObjects { get; } = new();
 
     public virtual void CleanupObjects() {
         foreach (var t in PhaseObjects)
@@ -159,7 +159,7 @@ public readonly struct SMHandoff : IDisposable {
     }
 
     public SMHandoff CreateJointCancellee(out Cancellable cts, SMContext? innerContext) => 
-        new SMHandoff(this, innerContext, out cts);
+        new(this, innerContext, out cts);
 
     public void Dispose() {
         ch.Dispose();
@@ -177,7 +177,7 @@ public readonly struct SMHandoff : IDisposable {
 public abstract class StateMachine {
     #region InitStuff
 
-    private static readonly Dictionary<string, Type> smInitMap = new Dictionary<string, Type>() {
+    private static readonly Dictionary<string, Type> smInitMap = new() {
         {"pattern", typeof(PatternSM)},
         {"phase", typeof(PhaseSM)},
         {"phased", typeof(DialoguePhaseSM)},
@@ -200,7 +200,7 @@ public abstract class StateMachine {
         {"script", typeof(ScriptTSM)},
         {"debugf", typeof(DebugFloat)}
     };
-    private static readonly Dictionary<Type, Type[]> smChildMap = new Dictionary<Type, Type[]>() {
+    private static readonly Dictionary<Type, Type[]> smChildMap = new() {
         {typeof(PatternSM), new[] { typeof(PhaseSM)}}, {
             typeof(PhaseSM), new[] {
                 typeof(PhaseParallelActionSM), typeof(PhaseSequentialActionSM), typeof(EndPSM), typeof(FinishPSM),
@@ -274,7 +274,7 @@ public abstract class StateMachine {
 
     private static readonly Type statesTyp = typeof(List<StateMachine>);
     private static readonly Type stateTyp = typeof(StateMachine);
-    private static readonly Dictionary<Type, Type[]> constructorSigs = new Dictionary<Type, Type[]>();
+    private static readonly Dictionary<Type, Type[]> constructorSigs = new();
 
     public static StateMachine Create(IParseQueue p) => Create(p, SMConstruction.ANY);
 
@@ -587,7 +587,7 @@ public class RetargetUSM : UniversalSM {
         this.targets = targets;
     }
 
-    public static RetargetUSM Retarget(StateMachine state, params string[] targets) => new RetargetUSM(targets, state);
+    public static RetargetUSM Retarget(StateMachine state, params string[] targets) => new(targets, state);
     public static RetargetUSM Retarget(TaskPattern state, params string[] targets) => Retarget(new ReflectableLASM(state), targets);
 
     public override Task Start(SMHandoff smh) {

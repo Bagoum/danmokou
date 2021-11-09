@@ -120,10 +120,11 @@ public static class ReflectEx {
 
     //TODO consider replacing SafeResizeable here with a dictionary
     public readonly struct Hoist<T> {
+        private readonly string name;
         private readonly SafeResizableArray<T> data;
 
         public Hoist(string name) {
-            data = PublicDataHoisting.Register<T>(name);
+            data = PublicDataHoisting.Register<T>(this.name = name);
         }
 
         public void Save(int index, T value) => data.SafeAssign(index, value);
@@ -303,7 +304,7 @@ public readonly struct ReferenceMember {
         return rv2;
     }
 
-    public static implicit operator ReferenceMember(string s) => new ReferenceMember(s);
+    public static implicit operator ReferenceMember(string s) => new(s);
 }
 
 }

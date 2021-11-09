@@ -55,7 +55,7 @@ public static class XMLUtils {
         int _bphase;
         int _stage;
         int _sphase;
-        bool Matches(ILowInstanceRequestKey key) => mode switch {
+        bool Matches(LowInstanceRequestKey key) => mode switch {
             InstanceMode.CAMPAIGN => key is CampaignRequestKey cr && cr.Campaign == _campaign,
             InstanceMode.BOSS_PRACTICE => key is BossPracticeRequestKey br && 
                                           br.Campaign == _campaign && br.Boss == _boss && br.PhaseIndex == _bphase,
@@ -188,7 +188,7 @@ public static class XMLUtils {
             IEnumerable<UINode> MakeSavedDFCNodes(Func<int, UINode> creator, int excess=20) => (saved.Count + excess)
                 .Range()
                 .Select(i => creator(i)
-                    .OnBound(i == 0 ? v => v.style.marginTop = new StyleLength(150) : (Action<VisualElement>?)null)
+                    .OnBound(i == 0 ? (VisualElement v) => v.style.marginTop = new StyleLength(150) : null)
                     //This can change dynamically
                     .With(ve => {
                         if (saved.TryN(i) == null) ve.AddToClassList(hideClass);

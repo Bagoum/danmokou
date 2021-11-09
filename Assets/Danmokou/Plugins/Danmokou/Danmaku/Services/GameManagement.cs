@@ -27,8 +27,6 @@ using Danmokou.UI;
 using JetBrains.Annotations;
 using UnityEditor;
 using static Danmokou.SM.SMAnalysis;
-using GameLowRequest = Danmokou.Core.DU<Danmokou.GameInstance.CampaignRequest, Danmokou.GameInstance.BossPracticeRequest, 
-    Danmokou.GameInstance.PhaseChallengeRequest, Danmokou.GameInstance.StagePracticeRequest>;
 
 namespace Danmokou.Services {
 /// <summary>
@@ -36,20 +34,20 @@ namespace Danmokou.Services {
 /// This is the only scene-persistent object in the game.
 /// </summary>
 public class GameManagement : CoroutineRegularUpdater {
-    public static readonly Version EngineVersion = new Version(8, 0, 0);
+    public static readonly Version EngineVersion = new(8, 0, 0);
     public static bool Initialized { get; private set; } = false;
     public static DifficultySettings Difficulty => Instance.Difficulty;
 
     public static DifficultySettings defaultDifficulty { get; private set; } =
 #if UNITY_EDITOR
-        new DifficultySettings(FixedDifficulty.Lunatic);
+        new(FixedDifficulty.Lunatic);
 #else
         new DifficultySettings(FixedDifficulty.Normal);
 #endif
 
     public static InstanceData Instance => _evInstance.Value;
-    private static Evented<InstanceData> _evInstance { get; } = new Evented<InstanceData>(null!);
-    public static EventProxy<InstanceData> EvInstance { get; } = new EventProxy<InstanceData>(_evInstance);
+    private static Evented<InstanceData> _evInstance { get; } = new(null!);
+    public static EventProxy<InstanceData> EvInstance { get; } = new(_evInstance);
     [UsedImplicitly] public static bool Continued => Instance.Continued;
 
     public static void DeactivateInstance() {
@@ -167,7 +165,6 @@ public class GameManagement : CoroutineRegularUpdater {
         ReflWrap.ClearWrappers();
         StateMachineManager.ClearCachedSMs();
         BehaviorEntity.ClearPointers();
-        AyaPhoto.ClearTextures();
         Events.SceneCleared.OnNext(default);
     }
 

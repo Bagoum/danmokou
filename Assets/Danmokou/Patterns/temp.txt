@@ -4,11 +4,12 @@ pattern({
 })
 phase(0)
 	paction(0)
-		shift-phase-to(2)
+		shift-phase-to(1)
 	
 
 <!> type non cbezier
 <!> hp 1000
+<!> photo 2
 phase 0
 	paction 0
 		position -3 4
@@ -16,6 +17,10 @@ phase 0
 		sync sakura-green/w <;-4:> s roffset px bezier(0, 6.9, 5, t / 3)
 		sync sakura-red/w <;-3:> s roffset px cubic-bezier-lerp(0.78, 0.37, 1, 1.59, t / 3, 0, 5)
 		sync keine-blue/w <5;-2:0;0:89> s null
+	saction 0
+		move-target 2 io-sine cxy(3, 2) 
+		move-target 2 io-sine cxy(-3, 2) 
+		move-target 2 io-sine cxy(3, 2) 
 		
 
 <!> type(non, `sc`)

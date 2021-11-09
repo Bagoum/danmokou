@@ -28,7 +28,7 @@ using ExSBCF = System.Func<Danmokou.Expressions.TExSBC, Danmokou.Expressions.TEx
 
 namespace Danmokou.Reflection {
 public static partial class Reflector {
-    private static readonly Dictionary<Type, string> TypeNameMap = new Dictionary<Type, string>() {
+    private static readonly Dictionary<Type, string> TypeNameMap = new() {
         {typeof(float), "Float"},
         {typeof(ExBPY), "BPY"},
         {typeof(ExTP), "TP"},
@@ -69,7 +69,7 @@ public static partial class Reflector {
     /// Maps types to a function that parses that type from a single word.
     /// </summary>
     private static readonly Dictionary<Type, Func<string, object?>> SimpleFunctionResolver =
-        new Dictionary<Type, Func<string, object?>>() {
+        new() {
             {typeof(float), arg => Parser.Float(arg)},
             {typeof(V2RV2), arg => Parser.ParseV2RV2(arg)},
             {typeof(CRect), arg => Parser.ParseRect(arg)},
@@ -93,7 +93,7 @@ public static partial class Reflector {
     /// <summary>
     /// A cached dictionary of constructor signatures from GetConstructorSignature.
     /// </summary>
-    private static readonly Dictionary<Type, NamedParam[]> constructorSigs = new Dictionary<Type, NamedParam[]>();
+    private static readonly Dictionary<Type, NamedParam[]> constructorSigs = new();
     
     /// <summary>
     /// Finds a public constructor (preferably one with at least one argument) for the given type.
@@ -158,7 +158,7 @@ public static partial class Reflector {
     public static bool UseConstructor(Type t) => classAutoReflectTypes.Contains(t) ||
                                                  (t.IsValueType && !t.IsPrimitive && !t.IsEnum);
 
-    private static readonly HashSet<Type> classAutoReflectTypes = new HashSet<Type>() {
+    private static readonly HashSet<Type> classAutoReflectTypes = new() {
         typeof(GenCtxProperties<SyncPattern>),
         typeof(GenCtxProperties<AsyncPattern>),
         typeof(GenCtxProperties<StateMachine>),

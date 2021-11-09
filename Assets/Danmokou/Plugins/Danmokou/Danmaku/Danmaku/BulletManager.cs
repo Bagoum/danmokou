@@ -29,7 +29,7 @@ public partial class BulletManager {
         p.Activate();
     }
 
-    private static readonly Dictionary<string, string> playerPoolCopyCache = new Dictionary<string, string>();
+    private static readonly Dictionary<string, string> playerPoolCopyCache = new();
     public static string GetOrMakePlayerCopy(string pool) {
         CheckOrCopyPool(pool, out _);
         //lmao i hate garbage
@@ -232,7 +232,7 @@ public partial class BulletManager {
 
     private void StartScene() {
         simpleBulletPools[EMPTY].Activate();
-        GameObject go = new GameObject {name = "Bullet Spam Container"};
+        GameObject go = new() {name = "Bullet Spam Container"};
         spamContainer = go.transform;
         spamContainer.position = Vector3.zero;
     }

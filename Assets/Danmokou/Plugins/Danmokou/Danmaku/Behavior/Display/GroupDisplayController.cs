@@ -16,7 +16,7 @@ public class GroupDisplayController : DisplayController {
     }
 
     public override MaterialPropertyBlock CreatePB() {
-        return new MaterialPropertyBlock();
+        return new();
     }
 
     public override void SetMaterial(Material mat) {

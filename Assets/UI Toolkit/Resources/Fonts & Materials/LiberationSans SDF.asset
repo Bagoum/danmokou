@@ -9,7 +9,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9a8fdda5b4c5f6544bbac8a17c59089c, type: 3}
+  m_Script: {fileID: 19001, guid: 0000000000000000e000000000000000, type: 0}
   m_Name: LiberationSans SDF
   m_EditorClassIdentifier: 
   m_Version: 1.1.0
@@ -158,7 +158,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: LiberationSans Atlas Material
-  m_Shader: {fileID: 4800000, guid: 62b6d79d475fb5147ab93c75dede1914, type: 3}
+  m_Shader: {fileID: 19011, guid: 0000000000000000f000000000000000, type: 0}
   m_ShaderKeywords: 
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0

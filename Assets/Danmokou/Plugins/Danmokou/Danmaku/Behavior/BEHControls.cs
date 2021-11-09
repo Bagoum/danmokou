@@ -117,7 +117,7 @@ public partial class BehaviorEntity {
         }
         public void ClearControls() => controls.Empty();
         
-        private readonly DMCompactingArray<BEHControl> controls = new DMCompactingArray<BEHControl>(4);
+        private readonly DMCompactingArray<BEHControl> controls = new(4);
 
         public void IterateControls(BehaviorEntity beh) {
             int ct = controls.Count;
@@ -129,12 +129,12 @@ public partial class BehaviorEntity {
         }
     }
     
-    private static readonly BEHStyleMetadata defaultMeta = new BEHStyleMetadata(null, null);
+    private static readonly BEHStyleMetadata defaultMeta = new(null, null);
     
     /// <summary>
     /// Pool definitions for bullet styles that are active. Pools are deactivated on each scene and activated when used.
     /// </summary>
-    private static readonly List<BEHStyleMetadata> activePools = new List<BEHStyleMetadata>(16);
+    private static readonly List<BEHStyleMetadata> activePools = new(16);
 
     public static BEHStyleMetadata GetPool(string key) {
         if (BulletManager.CheckComplexPool(key, out var pool)) return pool;
@@ -147,7 +147,7 @@ public partial class BehaviorEntity {
         }
         activePools.Clear();
     }
-    private static readonly HashSet<string> ignoreCullStyles = new HashSet<string>();
+    private static readonly HashSet<string> ignoreCullStyles = new();
 
     //set by initialize > updatestyleinfo
     public BEHStyleMetadata myStyle { get; private set; } = defaultMeta;
@@ -171,7 +171,7 @@ public partial class BehaviorEntity {
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
         public static cBEHControl Time(float time, Pred cond) {
-            return new cBEHControl((b, cT) => {
+            return new((b, cT) => {
                 if (cond(b.rBPI)) b.SetTime(time);
             }, BulletControl.P_MOVE_1);
         }
@@ -200,7 +200,7 @@ public partial class BehaviorEntity {
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
         public static cBEHControl Softcull(string? target, Pred cond) {
-            return new cBEHControl((b, cT) => {
+            return new((b, cT) => {
                 if (cond(b.rBPI)) {
                     if (target != null)
                         b.SpawnSimple(target);
@@ -214,7 +214,7 @@ public partial class BehaviorEntity {
         /// <param name="target">New style</param>
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
-        public static cBEHControl Effect(string target, Pred cond) => new cBEHControl((b, cT) => {
+        public static cBEHControl Effect(string target, Pred cond) => new((b, cT) => {
             if (cond(b.rBPI)) b.SpawnSimple(target);
         }, BulletControl.P_RUN);
         
@@ -224,7 +224,7 @@ public partial class BehaviorEntity {
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
         public static cBEHControl Cull(Pred cond) {
-            return new cBEHControl((b, cT) => {
+            return new((b, cT) => {
                 if (cond(b.rBPI)) b.InvokeCull();
             }, BulletControl.P_CULL);
         }
@@ -236,7 +236,7 @@ public partial class BehaviorEntity {
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
         public static cBEHControl FlipX(Pred cond) {
-            return new cBEHControl((b, cT) => {
+            return new((b, cT) => {
                 if (cond(b.rBPI)) b.FlipVelX();
             }, BulletControl.P_MOVE_3);
         }
@@ -248,7 +248,7 @@ public partial class BehaviorEntity {
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
         public static cBEHControl FlipY(Pred cond) {
-            return new cBEHControl((b, cT) => {
+            return new((b, cT) => {
                 if (cond(b.rBPI)) b.FlipVelY();
             }, BulletControl.P_MOVE_3);
         }
@@ -261,7 +261,7 @@ public partial class BehaviorEntity {
         /// <returns></returns>
         [Alias("flipx>")]
         public static cBEHControl FlipXGT(BPY wall, Pred cond) {
-            return new cBEHControl((b, cT) => {
+            return new((b, cT) => {
                 var bpi = b.rBPI;
                 if (bpi.loc.x > wall(bpi) && cond(bpi)) {
                     b.rBPI.FlipSimple(false, wall(bpi));
@@ -278,7 +278,7 @@ public partial class BehaviorEntity {
         /// <returns></returns>
         [Alias("flipx<")]
         public static cBEHControl FlipXLT(BPY wall, Pred cond) {
-            return new cBEHControl((b, cT) => {
+            return new((b, cT) => {
                 var bpi = b.rBPI;
                 if (bpi.loc.x < wall(bpi) && cond(bpi)) {
                     b.rBPI.FlipSimple(false, wall(bpi));
@@ -294,7 +294,7 @@ public partial class BehaviorEntity {
         /// <returns></returns>
         [Alias("flipy>")]
         public static cBEHControl FlipYGT(BPY wall, Pred cond) {
-            return new cBEHControl((b, cT) => {
+            return new((b, cT) => {
                 var bpi = b.rBPI;
                 if (bpi.loc.y > wall(bpi) && cond(bpi)) {
                     b.rBPI.FlipSimple(true, wall(bpi));
@@ -311,7 +311,7 @@ public partial class BehaviorEntity {
         /// <returns></returns>
         [Alias("flipy<")]
         public static cBEHControl FlipYLT(BPY wall, Pred cond) {
-            return new cBEHControl((b, cT) => {
+            return new((b, cT) => {
                 var bpi = b.rBPI;
                 if (bpi.loc.y < wall(bpi) && cond(bpi)) {
                     b.rBPI.FlipSimple(true, wall(bpi));
@@ -326,7 +326,7 @@ public partial class BehaviorEntity {
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
         public static cBEHControl DX(float by, Pred cond) {
-            return new cBEHControl((b, cT) => {
+            return new((b, cT) => {
                 if (cond(b.rBPI)) {
                     b.rBPI.loc.x += by;
                 }
@@ -339,7 +339,7 @@ public partial class BehaviorEntity {
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
         public static cBEHControl DY(float by, Pred cond) {
-            return new cBEHControl((b, cT) => {
+            return new((b, cT) => {
                 if (cond(b.rBPI)) {
                     b.rBPI.loc.y += by;
                 }
@@ -352,7 +352,7 @@ public partial class BehaviorEntity {
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
         public static cBEHControl DT(float by, Pred cond) {
-            return new cBEHControl((b, cT) => {
+            return new((b, cT) => {
                 if (cond(b.rBPI)) {
                     b.SetTime(b.rBPI.t + by);
                 }
@@ -365,7 +365,7 @@ public partial class BehaviorEntity {
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
         public static cBEHControl SFX(string sfx, Pred cond) {
-            return new cBEHControl((b, cT) => {
+            return new((b, cT) => {
                 if (cond(b.rBPI)) ServiceLocator.SFXService.Request(sfx);
             }, BulletControl.P_RUN);
         }
@@ -373,7 +373,7 @@ public partial class BehaviorEntity {
         /// <summary>
         /// Freeze an object. It will still collide but it will not move.
         /// </summary>
-        public static cBEHControl Freeze(Pred cond) => new cBEHControl((b, cT) => {
+        public static cBEHControl Freeze(Pred cond) => new((b, cT) => {
             if (cond(b.rBPI)) b.nextUpdateAllowed = false;
         }, BulletControl.P_TIMECONTROL);
 
@@ -418,7 +418,7 @@ public partial class BehaviorEntity {
         /// <summary>
         /// If the condition is true, spawn an iNode at the position and run an SM on it.
         /// </summary>
-        public static cBEHControl SM(Pred cond, StateMachine target) => new cBEHControl((b, cT) => {
+        public static cBEHControl SM(Pred cond, StateMachine target) => new((b, cT) => {
             if (cond(b.rBPI)) {
                 var exec = b.GetINode("f-pool-triggered", null);
                 using var gcx = b.rBPI.ctx.RevertToGCX(exec);

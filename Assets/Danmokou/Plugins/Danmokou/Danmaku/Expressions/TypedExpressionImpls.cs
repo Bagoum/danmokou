@@ -57,10 +57,10 @@ public class TExPI : TEx<ParametricInfo> {
         findex = Ex.Convert(index, ExUtils.tfloat);
     }
 
-    public TExPI Rehash() => new TExPI(rehash.InstanceOf(this));
-    public TExPI CopyWithT(Ex newT) => new TExPI(copyWithT.InstanceOf(this, newT));
+    public TExPI Rehash() => new(rehash.InstanceOf(this));
+    public TExPI CopyWithT(Ex newT) => new(copyWithT.InstanceOf(this, newT));
 
-    public new static TExPI Box(Ex ex) => new TExPI(ex);
+    public new static TExPI Box(Ex ex) => new(ex);
 
     public Ex FlipSimpleY(Ex wall) => flipSimple.InstanceOf(this, Ex.Constant(true), wall);
 
@@ -83,7 +83,7 @@ public class TExV2 : TEx<Vector2> {
     }
 
     public static TExV2 Variable() {
-        return new TExV2();
+        return new();
     }
 }
 
@@ -106,7 +106,7 @@ public class TExV3 : TEx<Vector3> {
     }
 
     public static TExV3 Variable() {
-        return new TExV3();
+        return new();
     }
 }
 

@@ -25,6 +25,6 @@ public readonly struct PlayerBulletCfg {
         effect = eff;
     }
 
-    public PlayerBullet Realize(PlayerController firer) => new PlayerBullet(this, firer);
+    public PlayerBullet Realize(PlayerController firer) => new(this, firer);
 }
 }

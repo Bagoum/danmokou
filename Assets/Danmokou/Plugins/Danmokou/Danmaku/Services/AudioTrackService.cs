@@ -23,7 +23,7 @@ public readonly struct BGMInvokeFlags {
     public readonly float? fadeOutExistingTime;
     public readonly float fadeInNewTime;
 
-    public static BGMInvokeFlags Default => new BGMInvokeFlags(2f, 2f);
+    public static BGMInvokeFlags Default => new(2f, 2f);
     public BGMInvokeFlags(float? fadeOutExistingTime = 2f, float fadeInNewTime = 2f) {
         this.fadeOutExistingTime = fadeOutExistingTime;
         this.fadeInNewTime = fadeInNewTime;
@@ -36,8 +36,8 @@ public interface IAudioTrackService {
     IRunningAudioTrack? InvokeBGM(IAudioTrackInfo? track, BGMInvokeFlags? flags = null);
 }
 public class AudioTrackService : CoroutineRegularUpdater, IAudioTrackService {
-    private static readonly Dictionary<string, IAudioTrackInfo> trackInfo = new Dictionary<string, IAudioTrackInfo>();
-    private readonly DMCompactingArray<IRunningAudioTrack> tracks = new DMCompactingArray<IRunningAudioTrack>();
+    private static readonly Dictionary<string, IAudioTrackInfo> trackInfo = new();
+    private readonly DMCompactingArray<IRunningAudioTrack> tracks = new();
 
     private bool preserveBGMOnNextScene = false;
 

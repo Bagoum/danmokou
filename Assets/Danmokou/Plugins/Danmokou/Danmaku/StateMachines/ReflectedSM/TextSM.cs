@@ -25,13 +25,13 @@ public static class TSMReflection {
         CENTER
     }
     private static DMKVNState VN => (DMKVNState)ServiceLocator.Find<IVNWrapper>().TrackedVNs.First().vn;
-    private static readonly Dictionary<string, Type> characterTypeMap = new Dictionary<string, Type>();
+    private static readonly Dictionary<string, Type> characterTypeMap = new();
     
     //I don't like putting state here, but it's for backwards compatibility, so whatever
     private static SZYUCharacter? left;
     private static SZYUCharacter? right;
     private static SZYUCharacter? lastSpeaker;
-    private static readonly Dictionary<StandLocation, SZYUCharacter> characters = new Dictionary<StandLocation, SZYUCharacter>();
+    private static readonly Dictionary<StandLocation, SZYUCharacter> characters = new();
     private static Vector2 GetLocation(StandLocation loc) => loc switch {
         StandLocation.LEFT1 => new Vector2(-5, 0),
         StandLocation.LEFT2 => new Vector2(-2.8f, 0),

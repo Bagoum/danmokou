@@ -35,7 +35,7 @@ public class SFXService : RegularUpdater, ISFXService {
     public SFXConfig rankUp = null!;
     public SFXConfig rankDown = null!;
     public SFXConfig[] SFX = null!;
-    private readonly Dictionary<string, SFXConfig> dclips = new Dictionary<string, SFXConfig>();
+    private readonly Dictionary<string, SFXConfig> dclips = new();
 
     public readonly struct ConstructedAudio {
         public readonly AudioSource csrc;
@@ -46,7 +46,7 @@ public class SFXService : RegularUpdater, ISFXService {
             this.sfx = sfx;
         }
     }
-    private readonly CompactingArray<ConstructedAudio> constructed = new CompactingArray<ConstructedAudio>();
+    private readonly CompactingArray<ConstructedAudio> constructed = new();
 
     public void Setup() {
         src = GetComponent<AudioSource>();
@@ -176,11 +176,11 @@ public class SFXService : RegularUpdater, ISFXService {
         }
     }
 
-    private Dictionary<string, float> timeouts = new Dictionary<string, float>();
-    private Dictionary<string, float> _timeouts = new Dictionary<string, float>();
+    private Dictionary<string, float> timeouts = new();
+    private Dictionary<string, float> _timeouts = new();
     private readonly Dictionary<string, LoopingSourceInfo> loopTimeouts =
-        new Dictionary<string, LoopingSourceInfo>();
-    private readonly List<LoopingSourceInfo> loopTimeoutsArr = new List<LoopingSourceInfo>();
+        new();
+    private readonly List<LoopingSourceInfo> loopTimeoutsArr = new();
 
     
     public void Request(string? style, SFXType type) {

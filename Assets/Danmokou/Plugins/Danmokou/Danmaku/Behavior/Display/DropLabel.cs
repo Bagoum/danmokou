@@ -14,10 +14,10 @@ public class DropLabel : Pooled<DropLabel> {
         }, DropLabel.defaultAlpha);
 
     public static readonly GradientAlphaKey[] defaultAlpha = {
-        new GradientAlphaKey(0, 0),
-        new GradientAlphaKey(1, 0.1f),
-        new GradientAlphaKey(1, 0.7f),
-        new GradientAlphaKey(0, 1f),
+        new(0, 0),
+        new(1, 0.1f),
+        new(1, 0.7f),
+        new(0, 1f),
     };
     private Vector2 loc;
     private float time;

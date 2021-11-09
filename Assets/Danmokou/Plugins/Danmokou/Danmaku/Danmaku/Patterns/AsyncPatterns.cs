@@ -342,7 +342,7 @@ public static partial class AsyncPatterns {
     [Alias("GIR")]
     public static AsyncPattern GIRepeat(GenCtxProperties<AsyncPattern> props, AsyncPattern[] target) {
         IEnumerator Inner(AsyncHandoff abh) {
-            IPExecutionTracker tracker = new IPExecutionTracker(props, abh, out bool isClipped);
+            IPExecutionTracker tracker = new(props, abh, out bool isClipped);
             if (isClipped) {
                 tracker.AllADone(false, false);
                 yield break;

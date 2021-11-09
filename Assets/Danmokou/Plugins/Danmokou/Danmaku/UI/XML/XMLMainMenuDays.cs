@@ -60,12 +60,13 @@ public class XMLMainMenuDays : XMLMainMenu {
         var defaultShot = defaultPlayer.shots2[0];
         var defaultSupport = defaultPlayer.supports[0];
 
-        TeamConfig Team() => new TeamConfig(0, Subshot.TYPE_D, defaultSupport.ability, (defaultPlayer, defaultShot.shot));
+        TeamConfig Team() => new(0, Subshot.TYPE_D, defaultSupport.ability, (defaultPlayer, defaultShot.shot));
         //TODO I currently don't have a story around game-specific configurations of meter/etc,
         // this disabling is a stopgap measure until then.
-        SharedInstanceMetadata Meta() => new SharedInstanceMetadata(Team(), new DifficultySettings(dfc) {meterEnabled = false});
+        SharedInstanceMetadata Meta() => new(Team(), new DifficultySettings(dfc) {meterEnabled = false});
 
         var photoBoard = ServiceLocator.MaybeFind<IAyaPhotoBoard>();
+        IDisposable? photoBoardToken = null;
 
         SceneSelectScreen = new UIScreen(this, DayCampaign.days[0].bosses.SelectMany(
             b => b.phases.Select(p => {
@@ -75,7 +76,7 @@ public class XMLMainMenuDays : XMLMainMenu {
                 void SetChallenge(int idx) {
                     c = p.challenges[idx];
                     var completion = SaveData.r.ChallengeCompletion(p, idx, Meta());
-                    photoBoard?.ConstructPhotos(completion?.Photos, photoSize);
+                    photoBoardToken = photoBoard?.ConstructPhotos(completion?.Photos, photoSize);
                 }
                 Func<(bool, UINode?)> Confirm = () => {
                     ConfirmCache();
@@ -97,7 +98,7 @@ public class XMLMainMenuDays : XMLMainMenu {
                     challengeSwitch.With(optionNoKeyClass)
                         .SetConfirmOverride(Confirm)
                         .SetOnVisit(_ => SetChallenge(challengeSwitch.Index))
-                        .SetOnLeave(_ => photoBoard?.TearDown()),
+                        .SetOnLeave(_ => photoBoardToken?.Dispose()),
                     new UINode(() => "Press Z to start level".Locale("Zキー押すとレベルスタート"))
                         .SetConfirmOverride(Confirm).With(large1Class).With(centerTextClass)
                 ).With(large1Class).With(

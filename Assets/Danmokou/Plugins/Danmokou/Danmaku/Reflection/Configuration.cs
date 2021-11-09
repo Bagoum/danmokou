@@ -23,7 +23,7 @@ public static partial class Reflector {
         /// keyed by return type.
         /// </summary>
         private static readonly Dictionary<Type, Dictionary<string, MethodInfo>> methodsByReturnType
-            = new Dictionary<Type, Dictionary<string, MethodInfo>>();
+            = new();
     #if UNITY_EDITOR
         /// <summary>
         /// Exposing methodsByReturnType for AoT expression baking.
@@ -34,13 +34,13 @@ public static partial class Reflector {
         /// Array of all generic methods recorded.
         /// </summary>
         private static readonly List<(string method, MethodInfo mi)> genericMethods
-            = new List<(string, MethodInfo)>();
+            = new();
         
         /// <summary>
         /// Generics are lazily matched against types, and the computed .MakeGenericMethod is only then sent to
         /// methodsByReturnType. This set contains all return types that have been matched.
         /// </summary>
-        private static readonly HashSet<Type> computedGenericsTypes = new HashSet<Type>();
+        private static readonly HashSet<Type> computedGenericsTypes = new();
         
         /// <summary>
         /// Record public static methods in a class for reflection use.
@@ -128,11 +128,11 @@ public static partial class Reflector {
             return getArgTypesCache[(member, rt)];
         }
         private static readonly Dictionary<(string method, Type returnType), NamedParam[]> getArgTypesCache 
-            = new Dictionary<(string, Type), NamedParam[]>();
+            = new();
 
 
         private static readonly Dictionary<(Type toType, Type fromFuncType), Func<object, object, object>> funcConversions =
-            new Dictionary<(Type, Type), Func<object, object, object>>();
+            new();
         /// <summary>
         /// De-funcify a source object whose type involves functions of one argument (eg. [TExArgCtx->tfloat]) into an
         ///  target type (eg. [tfloat]) by applying an object of that argument type (TExArgCtx) to the
@@ -157,21 +157,21 @@ public static partial class Reflector {
                 NamedParam[] fTypes = new NamedParam[baseTypes.Length];
                 for (int ii = 0; ii < baseTypes.Length; ++ii) {
                     var bt = baseTypes[ii].type;
-                    fTypes[ii] = baseTypes[ii].WithType(TryFuncify(t, bt, out var result) ? result : bt);
+                    fTypes[ii] = baseTypes[ii] with { type = TryFuncify(t, bt, out var result) ? result : bt };
                 }
                 funcifyTypesCache[(member, t, r)] = fTypes;
             }
             return funcifyTypesCache[(member, t, r)];
         }
         private static readonly Dictionary<(string method, Type funcIn, Type funcOut), NamedParam[]> funcifyTypesCache 
-            = new Dictionary<(string, Type, Type), NamedParam[]>();
+            = new();
         
         /// <summary>
         /// Dictionary mapping unparseable "wrapped" types that may occur in funcified function arguments
         /// to parseable "unwrapped" types from which they can be derived.
         /// </summary>
         public static readonly Dictionary<Type, (Type sourceType, object converter)> wrappers
-            = new Dictionary<Type, (Type, object)>() {
+            = new() {
                 {typeof(EEx<bool>), (typeof(TEx<bool>), (Func<TEx<bool>, EEx<bool>>) (x => x))},
                 {typeof(EEx<float>), (typeof(TEx<float>), (Func<TEx<float>, EEx<float>>) (x => x))},
                 {typeof(EEx<Vector2>), (typeof(TEx<Vector2>), (Func<TEx<Vector2>, EEx<Vector2>>) (x => x))},
@@ -247,7 +247,7 @@ public static partial class Reflector {
             tryFuncifyCache[(t, wrappedType)] = res;
             return true;
         }
-        private static readonly Dictionary<(Type, Type), Type> tryFuncifyCache = new Dictionary<(Type, Type), Type>();
+        private static readonly Dictionary<(Type, Type), Type> tryFuncifyCache = new();
 
         
         /// <summary>
@@ -259,7 +259,7 @@ public static partial class Reflector {
             }
             return tf;
         }
-        private static readonly Dictionary<(Type, Type), Type> func2TypeCache = new Dictionary<(Type, Type), Type>();
+        private static readonly Dictionary<(Type, Type), Type> func2TypeCache = new();
 
         
         /// <summary>
@@ -285,7 +285,7 @@ public static partial class Reflector {
             }
             return mi.Invoke(func, new[] {arg});
         }
-        private static readonly Dictionary<Type, MethodInfo> funcInvokeCache = new Dictionary<Type, MethodInfo>();
+        private static readonly Dictionary<Type, MethodInfo> funcInvokeCache = new();
 
         /// <summary>
         /// For a recorded function R member(A, B, C...), given parameters of type [F(A), F(B), F(C)] (funcified on T),

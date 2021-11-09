@@ -15,7 +15,6 @@ using PropConsts = Danmokou.Graphics.PropConsts;
 namespace Danmokou.Services {
 
 public interface IScreenshotter {
-    AyaPhoto AyaScreenshot(CRect rect, MainCamera.CamType[]? cameras = null);
     Texture2D Screenshot(CRect rect, MainCamera.CamType[]? cameras = null);
 }
 
@@ -163,7 +162,7 @@ public class MainCamera : RegularUpdater, IScreenshotter {
     /// Camera-relative world coordinates
     /// </summary>
     public Vector2 GetWorldCoordinates(float x, float y) {
-        return new Vector2(position.x + x, position.y + y);
+        return new(position.x + x, position.y + y);
     }
 
     /// <summary>
@@ -173,7 +172,7 @@ public class MainCamera : RegularUpdater, IScreenshotter {
     /// <param name="height">Height in screen units</param>
     /// <returns></returns>
     public static Vector2 Descale(float width, float height) {
-        return new Vector2(width / ScreenWidth, height / ScreenHeight);
+        return new(width / ScreenWidth, height / ScreenHeight);
     }
 
     /// <summary>
@@ -182,7 +181,7 @@ public class MainCamera : RegularUpdater, IScreenshotter {
     /// <param name="xy">Camera-relative position</param>
     /// <returns></returns>
     public static Vector2 RelativeToScreenUV(Vector2 xy) {
-        return new Vector2(0.5f + xy.x / ScreenWidth, 0.5f + xy.y / ScreenHeight);
+        return new(0.5f + xy.x / ScreenWidth, 0.5f + xy.y / ScreenHeight);
     }
 
 
@@ -211,10 +210,6 @@ public class MainCamera : RegularUpdater, IScreenshotter {
         saveNext = true;
     }
 
-    public AyaPhoto AyaScreenshot(CRect rect, CamType[]? cameras=null) {
-        return new AyaPhoto(Screenshot(rect, cameras), rect);
-    }
-
     /// <summary>
     /// Caller must dispose the return value via Object.Destroy.
     /// </summary>
@@ -233,21 +228,29 @@ public class MainCamera : RegularUpdater, IScreenshotter {
         RenderTo = RenderHelpers.DefaultTempRT();
         //Clear is required since the camera list may not contain BackgroundCamera,
         // which is the only one that clears
+        Profiler.BeginSample("Clear");
         RenderTo.GLClear();
+        Profiler.EndSample();
         Shader.EnableKeyword("AYA_CAPTURE");
         foreach (var c in (cameras ?? AyaCameras).Select(FindCamera)) {
             c.targetTexture = RenderTo;
+            Profiler.BeginSample("Render");
             c.Render();
+            Profiler.EndSample();
             //Why do we have to set it back? I don't know, but if you don't do this,
             // you'll get flashing behavior when this is called from AyaCamera
             c.targetTexture = originalRenderTo;
         }
         Shader.DisableKeyword("AYA_CAPTURE");
         var ss = RenderHelpers.DefaultTempRT(((int) (SaveData.s.Resolution.w * xsr), (int) (SaveData.s.Resolution.h * ysr)));
+        Profiler.BeginSample("Blit");
         UnityEngine.Graphics.Blit(RenderTo, ss, ayaMaterial);
+        Profiler.EndSample();
         RenderTo.Release();
         RenderTo = originalRenderTo;
+        Profiler.BeginSample("Commit");
         var tex = ss.IntoTex();
+        Profiler.EndSample();
         ss.Release();
         //For debugging
         //FileUtils.WriteTex("DMK_Saves/Aya/temp.jpg", tex);

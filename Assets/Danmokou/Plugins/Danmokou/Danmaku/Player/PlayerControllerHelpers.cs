@@ -24,8 +24,8 @@ public partial class PlayerController {
     private const float RespawnFreezeTime = 0.1f;
     private const float RespawnDisappearTime = 0.5f;
     private const float RespawnMoveTime = 1.5f;
-    private static Vector2 RespawnStartLoc => new Vector2(0, Bot - 1f);
-    private static Vector2 RespawnEndLoc => new Vector2(0, BotPlayerBound + 1f);
+    private static Vector2 RespawnStartLoc => new(0, Bot - 1f);
+    private static Vector2 RespawnEndLoc => new(0, BotPlayerBound + 1f);
     private const float WitchTimeSpeedMultiplier = 1.4f;//2f;
     private const float WitchTimeSlowdown = 0.5f;//0.25f;
     private const float WitchTimeAudioMultiplier = 0.8f;
@@ -66,11 +66,11 @@ public partial class PlayerController {
     /// <summary>
     /// Called when the player activates the meter.
     /// </summary>
-    public static readonly Event<Unit> PlayerActivatedMeter = new Event<Unit>();
+    public static readonly Event<Unit> PlayerActivatedMeter = new();
     /// <summary>
     /// Called when the player deactivates the meter.
     /// </summary>
-    public static readonly Event<Unit> PlayerDeactivatedMeter = new Event<Unit>();
+    public static readonly Event<Unit> PlayerDeactivatedMeter = new();
     /// <summary>
     /// Called every frame during meter activation.
     /// </summary>

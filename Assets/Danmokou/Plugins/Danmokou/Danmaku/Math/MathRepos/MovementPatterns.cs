@@ -43,8 +43,8 @@ public static partial class Parametrics {
 [Reflect]
 public static class MovementPatterns {
     private static ExBPY f(float f) => _ => ExC(f);
-    public static RootedVTP Null(GCXF<Vector2> root) => new RootedVTP(root, VTPRepo.Null());
-    public static RootedVTP RVTP(GCXF<Vector2> root, GCXU<VTP> path) => new RootedVTP(root, path);
+    public static RootedVTP Null(GCXF<Vector2> root) => new(root, VTPRepo.Null());
+    public static RootedVTP RVTP(GCXF<Vector2> root, GCXU<VTP> path) => new(root, path);
 
     private static ExBPY ModTime(ExBPY letValue, string withLet) =>
         LetFloats(new[] {
@@ -67,36 +67,36 @@ public static class MovementPatterns {
     private static ExVTP SetupTime(ExBPY time, string inner, bool reqDeriv) => SetupTime(time, inner.Into<ExVTP>(), reqDeriv);
     
     private static RootedVTP Setup(float x, float y, ExBPY time, string path, bool reqDeriv=false) => 
-        new RootedVTP(x, y, SetupTime(time, path, reqDeriv));
+        new(x, y, SetupTime(time, path, reqDeriv));
     
     private static RootedVTP Setup(ExBPY x, ExBPY y, ExBPY time, ExVTP path, bool reqDeriv=false) =>
-        new RootedVTP(PXY(x, y), SetupTime(time, path, reqDeriv));
+        new(PXY(x, y), SetupTime(time, path, reqDeriv));
     private static RootedVTP Setup(ExBPY x, float y, ExBPY time, ExVTP path, bool reqDeriv=false) =>
-        new RootedVTP(PXY(x, _ => y), SetupTime(time, path, reqDeriv));
+        new(PXY(x, _ => y), SetupTime(time, path, reqDeriv));
 
     //Standard model for stage enemy paths: Fixed root, fixed path,
     // time along path (as parametric input) is controllable as a separate parameter.
     //Note: use ^^ instead of ^ in order to avoid NaN errors when logsumshift pushes t negative (this can happen quite commonly).
-    public static RootedVTP DipUp1(ExBPY xmul, ExBPY time) => new RootedVTP(b => xmul(b).Mul(LeftMinus1), b => 1.5f, 
+    public static RootedVTP DipUp1(ExBPY xmul, ExBPY time) => new(b => xmul(b).Mul(LeftMinus1), b => 1.5f, 
         SetupTime(time, NROffset(PXY(
                 b => xmul(b).Mul(t(b)),
                 b => Pow(t(b), 1.4f).Sub(t(b).Mul(1.9f))
             ))));
     
-    public static RootedVTP DipUp2(ExBPY xmul, ExBPY time) => new RootedVTP(b => xmul(b).Mul(LeftMinus1), b => 0.5f, 
+    public static RootedVTP DipUp2(ExBPY xmul, ExBPY time) => new(b => xmul(b).Mul(LeftMinus1), b => 0.5f, 
         SetupTime(time, NROffset(PXY(
             b => xmul(b).Mul(t(b)),
             b => If<float>(Gt(t(b), 4), 0.4f, 0.02f).Mul(Pow(t(b).Add(-4f), 2f))
         ))));
     
-    public static RootedVTP DipUp3(ExBPY xmul, ExBPY time) => new RootedVTP(b => xmul(b).Mul(LeftMinus1), b => 0.5f, 
+    public static RootedVTP DipUp3(ExBPY xmul, ExBPY time) => new(b => xmul(b).Mul(LeftMinus1), b => 0.5f, 
         SetupTime(time, NROffset(PXY(
             b_ => xmul(b_).Mul(LogSumShift<TExPI>(_ => -1, _ => 2f, b => t(b).Mul(3f), b => t(b).Mul(0.2f), "&t")(b_)),
             b_ => LogSumShift<TExPI>(_ => 2, _ => 1.9f, _ => 0, b => t(b).Mul(2.7f), "&t")(b_)
         ))));
 
     public static RootedVTP Cross1(GCXF<float> x, GCXF<float> y, ExBPY xmul, ExBPY ymul, ExBPY time) =>
-        new RootedVTP(gcx => new Vector2(x(gcx), y(gcx)), SetupTime(time, NROffset(PXY(
+        new(gcx => new Vector2(x(gcx), y(gcx)), SetupTime(time, NROffset(PXY(
             b => xmul(b).Mul(t(b)),
             b => ymul(b).Mul(t(b))
         )), false));

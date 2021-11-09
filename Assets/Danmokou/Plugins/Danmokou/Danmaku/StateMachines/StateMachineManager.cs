@@ -13,11 +13,11 @@ namespace Danmokou.SM {
 //This class serves as a loader and repository for state machines.
 //Recall that state machines are stateless; each kind is instantiated only once for all BEH that use it.
 public static class StateMachineManager  {
-    private static readonly Dictionary<int, StateMachine> SMMapByFile = new Dictionary<int, StateMachine>();
-    private static readonly Dictionary<string, TextAsset?> SMFileByName = new Dictionary<string, TextAsset?>() {
+    private static readonly Dictionary<int, StateMachine> SMMapByFile = new();
+    private static readonly Dictionary<string, TextAsset?> SMFileByName = new() {
         { "", null }
     };
-    private static readonly Dictionary<string, Dictionary<string, TextAsset>> Dialogue = new Dictionary<string, Dictionary<string, TextAsset>>();
+    private static readonly Dictionary<string, Dictionary<string, TextAsset>> Dialogue = new();
     
     static StateMachineManager() {
         if (!Application.isPlaying) return;

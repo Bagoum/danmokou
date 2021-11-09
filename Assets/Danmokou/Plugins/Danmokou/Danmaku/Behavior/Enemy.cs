@@ -108,7 +108,7 @@ public class Enemy : RegularUpdater {
         return renderCounter;
     }
     
-    public ItemDrops AutoDeathItems => new ItemDrops(
+    public ItemDrops AutoDeathItems => new(
         Math.Max(1, maxHP / 300.0), 
         maxHP >= 400 ? Mathf.CeilToInt(maxHP / 900f) : 0, 
         maxHP >= 300 ? Mathf.CeilToInt(maxHP / 800f) : 0,
@@ -119,10 +119,10 @@ public class Enemy : RegularUpdater {
 
     private static int enemyIndexCtr = 0;
     private int enemyIndex;
-    private static readonly Dictionary<int, Enemy> allEnemies = new Dictionary<int, Enemy>();
-    private static readonly DMCompactingArray<Enemy> orderedEnemies = new DMCompactingArray<Enemy>();
+    private static readonly Dictionary<int, Enemy> allEnemies = new();
+    private static readonly DMCompactingArray<Enemy> orderedEnemies = new();
     private DeletionMarker<Enemy> aliveToken = null!;
-    private static readonly List<FrozenCollisionInfo> frozenEnemies = new List<FrozenCollisionInfo>();
+    private static readonly List<FrozenCollisionInfo> frozenEnemies = new();
     public static IReadOnlyList<FrozenCollisionInfo> FrozenEnemies => frozenEnemies;
 
     public void Initialize(BehaviorEntity _beh) {
@@ -448,7 +448,7 @@ public class Enemy : RegularUpdater {
     }
     //"Slower" than using a dictionary, but there are few enough colliding persistent objects at a time that 
     //it's better to optimize for garbage. 
-    private readonly DMCompactingArray<HitCooldown> hitCooldowns = new DMCompactingArray<HitCooldown>(8);
+    private readonly DMCompactingArray<HitCooldown> hitCooldowns = new(8);
     public bool TryHitIndestructible(uint id, int cooldownFrames) {
         for (int ii = 0; ii < hitCooldowns.Count; ++ii) {
             if (hitCooldowns[ii].id == id) return false;

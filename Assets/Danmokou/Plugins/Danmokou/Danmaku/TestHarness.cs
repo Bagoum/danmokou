@@ -10,7 +10,7 @@ using UnityEngine;
 namespace Danmokou.Testing {
 public class TestHarness : RegularUpdater {
     public TextAsset[] behaviorScripts = null!;
-    private static readonly Dictionary<string, TextAsset> scriptsByName = new Dictionary<string, TextAsset>();
+    private static readonly Dictionary<string, TextAsset> scriptsByName = new();
 
     private void Awake() {
         scriptsByName.Clear();
@@ -28,7 +28,7 @@ public class TestHarness : RegularUpdater {
         }
     }
 
-    private static readonly Queue<(Action assertion, int delay)> checks = new Queue<(Action assertion, int delay)>();
+    private static readonly Queue<(Action assertion, int delay)> checks = new();
     public static void Check(int delay, Action assertion) => checks.Enqueue((assertion, delay));
     public static void OnSOF(Action doThing) => Check(0, doThing);
 

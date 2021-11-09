@@ -22,10 +22,10 @@ public static partial class Reflector {
 
         public readonly ParsingProperties props;
         public bool AllowPostAggregate => props.strict >= Strictness.COMMAS;
-        public List<PhaseProperty> QueuedProps { get; } = new List<PhaseProperty>();
+        public List<PhaseProperty> QueuedProps { get; } = new();
         
         public ReflCtx(IParseQueue q) {
-            List<ParsingProperty> properties = new List<ParsingProperty>();
+            List<ParsingProperty> properties = new();
             props = new ParsingProperties(new ParsingProperty[0]);
             while (q.MaybeScan() == SMParser.PROP2_KW) {
                 q.Advance();

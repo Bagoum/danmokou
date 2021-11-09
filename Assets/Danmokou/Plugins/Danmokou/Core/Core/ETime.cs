@@ -298,8 +298,10 @@ public class ETime : MonoBehaviour {
     private static void FlushUpdaterAdds() {
         while (updaterAddQueue.Count > 0) {
             var dm = updaterAddQueue.Dequeue();
-            dm.Value.FirstFrame();
-            updaters.AddPriority(dm);
+            if (!dm.MarkedForDeletion) {
+                dm.Value.FirstFrame();
+                updaters.AddPriority(dm);
+            }
         }
     }
 

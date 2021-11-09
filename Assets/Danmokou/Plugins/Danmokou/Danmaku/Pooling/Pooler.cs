@@ -20,8 +20,8 @@ using static Danmokou.Services.GameManagement;
 namespace Danmokou.Pooling {
 public static class Pooler<T> where T : Pooled<T> {
     //Note: these dicts are specific to each typing T. They are not shared between Pooler<ParticlePooled> and Pooler<BEH>.
-    private static readonly Dictionary<GameObject, HashSet<T>> active = new Dictionary<GameObject, HashSet<T>>();
-    private static readonly Dictionary<GameObject, Queue<T>> free = new Dictionary<GameObject, Queue<T>>();
+    private static readonly Dictionary<GameObject, HashSet<T>> active = new();
+    private static readonly Dictionary<GameObject, Queue<T>> free = new();
 
     static Pooler() {
         if (!Application.isPlaying) return;

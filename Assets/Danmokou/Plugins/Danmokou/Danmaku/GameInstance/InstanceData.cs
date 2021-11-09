@@ -21,22 +21,22 @@ namespace Danmokou.GameInstance {
 public class InstanceData {
     #region StaticEvents
     
-    public readonly Event<Unit> UselessPowerupCollected = new Event<Unit>();
-    public readonly Event<Unit> TeamUpdated = new Event<Unit>();
-    public readonly Event<Unit> PlayerTookHit = new Event<Unit>();
-    public readonly Event<CardRecord> CardHistoryUpdated = new Event<CardRecord>();
-    public readonly Event<Unit> MeterBecameUsable = new Event<Unit>();
-    public readonly Event<Unit> PowerLost = new Event<Unit>();
-    public readonly Event<Unit> PowerGained = new Event<Unit>();
-    public readonly Event<Unit> PowerFull = new Event<Unit>();
-    public readonly Event<Unit> AnyExtendAcquired = new Event<Unit>();
-    public readonly Event<Unit> ItemExtendAcquired = new Event<Unit>();
-    public readonly Event<Unit> ScoreExtendAcquired = new Event<Unit>();
-    public readonly Event<PhaseCompletion> PhaseCompleted = new Event<PhaseCompletion>();
-    public readonly Event<Unit> LifeSwappedForScore = new Event<Unit>();
+    public readonly Event<Unit> UselessPowerupCollected = new();
+    public readonly Event<Unit> TeamUpdated = new();
+    public readonly Event<Unit> PlayerTookHit = new();
+    public readonly Event<CardRecord> CardHistoryUpdated = new();
+    public readonly Event<Unit> MeterBecameUsable = new();
+    public readonly Event<Unit> PowerLost = new();
+    public readonly Event<Unit> PowerGained = new();
+    public readonly Event<Unit> PowerFull = new();
+    public readonly Event<Unit> AnyExtendAcquired = new();
+    public readonly Event<Unit> ItemExtendAcquired = new();
+    public readonly Event<Unit> ScoreExtendAcquired = new();
+    public readonly Event<PhaseCompletion> PhaseCompleted = new();
+    public readonly Event<Unit> LifeSwappedForScore = new();
 
-    public readonly Event<Unit> GameOver = new Event<Unit>();
-    public readonly Event<Unit> PracticeSuccess = new Event<Unit>();
+    public readonly Event<Unit> GameOver = new();
+    public readonly Event<Unit> PracticeSuccess = new();
     
     #endregion
     
@@ -79,7 +79,7 @@ public class InstanceData {
     
     public CardHistory CardHistory { get; }
 
-    public readonly DisturbedOr Lenient = new DisturbedOr();
+    public readonly DisturbedOr Lenient = new();
     public BehaviorEntity? CurrentBoss { get; private set; }
     private ICancellee? CurrentBossCT { get; set; }
 
@@ -96,7 +96,7 @@ public class InstanceData {
     public ReplayActor? Replay { get; }
     
     //Miscellaneous stats
-    public List<BossConfig> BossesEncountered { get; } = new List<BossConfig>();
+    public List<BossConfig> BossesEncountered { get; } = new();
     public int EnemiesDestroyed { get; private set; }
     public int TotalFrames { get; private set; }
     public int PlayerActiveFrames { get; private set; }
@@ -214,7 +214,7 @@ public class InstanceData {
     }
 
     public (int success, int total)? LookForSpellHistory(string bossKey, int phaseIndex) {
-        var key = new BossPracticeRequestKey() {
+        var key = new BossPracticeRequestKey {
             Campaign = campaignKey,
             Boss = bossKey,
             PhaseIndex = phaseIndex

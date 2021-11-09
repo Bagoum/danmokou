@@ -87,7 +87,7 @@ public static class CompilerHelpers {
     
     
     private class GCXCompileResolver : ReflectEx.ICompileReferenceResolver {
-        public readonly List<(Reflector.ExType, string)> bound = new List<(Reflector.ExType, string)>();
+        public readonly List<(Reflector.ExType, string)> bound = new();
 
         public bool TryResolve<T>(string alias, out Ex ex) {
             var ext = Reflector.AsExType<T>();

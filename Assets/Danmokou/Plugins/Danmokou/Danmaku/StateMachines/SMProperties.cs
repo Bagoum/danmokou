@@ -372,13 +372,13 @@ public class PhaseProperty {
     #endregion
 }
 
-public readonly struct SoftcullProperties {
-    public readonly Vector2 center;
-    public readonly float advance;
-    public readonly float minDist;
-    public readonly float maxDist;
-    public readonly string? autocullTarget;
-    private readonly string autocullDefault;
+public record SoftcullProperties {
+    public Vector2 center { get; }
+    public float advance { get; init; }
+    public float minDist { get; }
+    public float maxDist { get; }
+    public string? autocullTarget { get; }
+    private string autocullDefault { get; }
     public string? DefaultPool => autocullTarget == null ? null : $"{autocullTarget}-{autocullDefault}";
     public readonly bool sendToC;
 
@@ -394,24 +394,21 @@ public readonly struct SoftcullProperties {
 
     public static SoftcullProperties OverTimeDefault(Vector2 center, float advance, float minDist, float maxDist,
         string? target = null, string? dflt = null) =>
-        new SoftcullProperties(center, advance, minDist, maxDist, target, dflt);
+        new(center, advance, minDist, maxDist, target, dflt);
     
     public static SoftcullProperties SynchronousDefault(Vector2 center, float advance, float minDist, float maxDist,
         string? target = null, string? dflt = null) =>
-        new SoftcullProperties(center, advance, minDist, maxDist, target, dflt);
+        new(center, advance, minDist, maxDist, target, dflt);
 
     //TODO review other usages
     public SoftcullProperties(string? target, string? dflt) : this(Vector2.zero, 0, 0, 0, target, dflt) {
         sendToC = false;
     }
 
-    public readonly float AdvanceTime(Vector2 location) {
+    public float AdvanceTime(Vector2 location) {
         var dist = (location - center).magnitude;
         return advance * (1 - Mathf.Clamp01((dist - minDist) / (maxDist - minDist)));
     }
-
-    public SoftcullProperties WithNoAdvance() =>
-        new SoftcullProperties(center, 0f, minDist, maxDist, autocullTarget, autocullDefault);
 }
 public class PhaseProperties {
     private readonly bool hideTimeout;
@@ -422,7 +419,7 @@ public class PhaseProperties {
     public readonly float? invulnTime = null;
     public readonly float? hpbar = null;
     public readonly PhaseType? phaseType = null;
-    public readonly List<Func<IDisposable>> phaseObjectGenerators = new List<Func<IDisposable>>();
+    public readonly List<Func<IDisposable>> phaseObjectGenerators = new();
     
     public SOBgTransition? BgTransitionIn { get; }
     public SOBgTransition? BgTransitionOut { get; }
@@ -451,10 +448,10 @@ public class PhaseProperties {
     public readonly bool bossCutin = false;
     public readonly int? spellCutinIndex = null;
 
-    public readonly List<Challenge> challenges = new List<Challenge>();
+    public readonly List<Challenge> challenges = new();
 
     public PhaseProperties(IReadOnlyList<PhaseProperty> props) {
-        List<StateMachine> rootMoves = new List<StateMachine>();
+        List<StateMachine> rootMoves = new();
         foreach (var prop in props) {
             if      (prop is HideTimeoutFlag) 
                 hideTimeout = true;

@@ -29,7 +29,7 @@ public class Bullet : BehaviorEntity {
     }
     public int renderPriority;
     private static short rendererIndex = short.MinValue;
-    private static readonly HashSet<Bullet> allBullets = new HashSet<Bullet>();
+    private static readonly HashSet<Bullet> allBullets = new();
 
 
     public float fadeInTime;

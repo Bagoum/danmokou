@@ -23,7 +23,7 @@ public static partial class PlayerBombs {
                 _ => new Vector4(1f, 1f, 1f, 0.9f))),
             TP4(_ => Red())
         ));
-    private static readonly ReflWrap<StateMachine> TB1_2 = new ReflWrap<StateMachine>(@"
+    private static readonly ReflWrap<StateMachine> TB1_2 = new(@"
 async gpather-red/w <-90> gcr3 20 1.6s <> {
     frv2 angle(randpm1 * rand 20 50)
 } pather(0.5, 0.5, tpnrot(

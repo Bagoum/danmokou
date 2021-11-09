@@ -23,7 +23,7 @@ public class TExArgCtx {
     public class RootCtx {
         public ReflectEx.ICompileReferenceResolver? ICRR { get; set; }
         public Dictionary<string, Stack<Expression>> AliasStack { get; } =
-            new Dictionary<string, Stack<Expression>>();
+            new();
 
         private static uint suffixNum = 0;
         public string NameWithSuffix(string s) => $"{s}CG{suffixNum++}";
@@ -56,7 +56,7 @@ public class TExArgCtx {
         }
 
         public static Arg Make(string name, TEx expr, bool hasTypePriority) =>
-            new Arg(name, expr.GetType(), expr, hasTypePriority);
+            new(name, expr.GetType(), expr, hasTypePriority);
 
         //t = typeof(float) or similar
         public static Arg Make<T>(string name, bool hasTypePriority, bool isRef = false) {
@@ -81,7 +81,7 @@ public class TExArgCtx {
         }
     }
 
-    public LocalLet Let(string alias, Expression val) => new LocalLet(this, alias, val);
+    public LocalLet Let(string alias, Expression val) => new(this, alias, val);
     
     private readonly Arg[] args;
     public IEnumerable<Expression> Expressions => args.Select(a => (Expression)a.expr);
@@ -137,7 +137,7 @@ public class TExArgCtx {
         }
     }
 
-    public static TExArgCtx FromBPI(TExPI bpi, string name) => new TExArgCtx(Arg.Make(name, bpi, true));
+    public static TExArgCtx FromBPI(TExPI bpi, string name) => new(Arg.Make(name, bpi, true));
 
     public TEx<T> GetByName<T>(string name) {
         if (!argNameToIndexMap.TryGetValue(name, out var idx))
@@ -269,7 +269,7 @@ public class TEx {
         this.type = ex.Type;
     }
     public static implicit operator TEx(Expression ex) {
-        return new TEx(ex);
+        return new(ex);
     }
     public static implicit operator Expression(TEx me) {
         return me.ex;
@@ -294,7 +294,7 @@ public class TEx<T> : TEx {
     public TEx(ExMode m, string? name) : base(m, typeof(T), name) {}
     
     public static implicit operator TEx<T>(Expression ex) {
-        return new TEx<T>(ex);
+        return new(ex);
     }
 
     public static implicit operator TEx<T>(T obj) => Expression.Constant(obj);

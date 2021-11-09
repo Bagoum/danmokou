@@ -32,7 +32,7 @@ public class PausedGameplayMenu : XMLMenu {
     protected virtual void HideMe() {
         if (MenuActive) {
             MenuActive = false;
-            MainScreen.ResetNodeProgress();
+            Close();
             pauseToken?.Dispose();
             UI.style.display = DisplayStyle.None;
         }

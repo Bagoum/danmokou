@@ -23,7 +23,7 @@ public class BackgroundOrchestrator : CoroutineRegularUpdater, IBackgroundOrches
     public BackgroundController? FromBG { get; private set; }
     public BackgroundController? ToBG { get; private set; }
     
-    private readonly Dictionary<GameObject, BackgroundController> instantiated = new Dictionary<GameObject, BackgroundController>();
+    private readonly Dictionary<GameObject, BackgroundController> instantiated = new();
     private BackgroundTransition? nextRequestedTransition;
 
     public GameObject backgroundCombiner = null!;
@@ -124,7 +124,7 @@ public class BackgroundOrchestrator : CoroutineRegularUpdater, IBackgroundOrches
         }
     }
 
-    private static readonly HashSet<Cancellable> transitionCTS = new HashSet<Cancellable>();
+    private static readonly HashSet<Cancellable> transitionCTS = new();
     private void DoTransition(BackgroundTransition bgt) {
         if (FromBG == null) return;
         if (ToBG == null) throw new Exception("Cannot do transition when target BG is null");

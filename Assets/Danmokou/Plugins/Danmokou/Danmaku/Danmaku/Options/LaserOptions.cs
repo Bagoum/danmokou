@@ -251,7 +251,7 @@ public readonly struct RealizedLaserOptions {
     public readonly bool nonpiercing;
     public readonly PlayerBullet? playerBullet;
 
-    public RealizedBehOptions AsBEH => new RealizedBehOptions(this);
+    public RealizedBehOptions AsBEH => new(this);
 
     public RealizedLaserOptions(LaserOptions opts, GenCtx gcx, FiringCtx fctx, Vector2 parentOffset, V2RV2 localOffset, ICancellee cT) {
         maxLength = opts.length?.max.Invoke(gcx) ?? DEFAULT_LASER_LEN;

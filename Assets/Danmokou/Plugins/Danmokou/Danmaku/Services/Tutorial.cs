@@ -27,7 +27,7 @@ public class Tutorial : BehaviorEntity {
     public TextMeshPro text10 = null!;
     public Color prompt;
     public Color message;
-    private readonly Dictionary<TextMeshPro, Vector2> defaultLoc = new Dictionary<TextMeshPro, Vector2>();
+    private readonly Dictionary<TextMeshPro, Vector2> defaultLoc = new();
     public GameObject tutorialBoss = null!;
     public TextAsset bossSM = null!;
     public int skip;

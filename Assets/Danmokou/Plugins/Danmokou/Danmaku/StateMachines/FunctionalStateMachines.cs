@@ -173,7 +173,7 @@ public class GTRepeat : UniversalSM {
     }
 
     public override async Task Start(SMHandoff smh) {
-        SMExecutionTracker tracker = new SMExecutionTracker(props, smh, out bool isClipped);
+        SMExecutionTracker tracker = new(props, smh, out bool isClipped);
         if (isClipped) {
             tracker.AllDone(false, false);
             return;

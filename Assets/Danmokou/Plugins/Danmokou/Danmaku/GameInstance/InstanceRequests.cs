@@ -23,7 +23,7 @@ using static Danmokou.Services.GameManagement;
 namespace Danmokou.GameInstance {
 
 public interface ILowInstanceRequest {
-    public ILowInstanceRequestKey Key { get; }
+    public LowInstanceRequestKey Key { get; }
     public InstanceMode Mode { get; }
     public ICampaignMeta Campaign { get; }
 }
@@ -35,7 +35,7 @@ public class CampaignRequest : ILowInstanceRequest {
         this.campaign = campaign;
     }
 
-    public ILowInstanceRequestKey Key => new CampaignRequestKey() {
+    public LowInstanceRequestKey Key => new CampaignRequestKey() {
         Campaign = campaign.Key
     };
     public InstanceMode Mode => InstanceMode.CAMPAIGN;
@@ -52,7 +52,7 @@ public class BossPracticeRequest : ILowInstanceRequest {
         this.phase = phase ?? boss.Phases[0];
     }
 
-    public ILowInstanceRequestKey Key => new BossPracticeRequestKey() {
+    public LowInstanceRequestKey Key => new BossPracticeRequestKey() {
         Campaign = boss.campaign.Key,
         Boss = boss.boss.key,
         PhaseIndex = phase.index
@@ -72,7 +72,7 @@ public class StagePracticeRequest : ILowInstanceRequest {
         this.method = method;
     }
 
-    public ILowInstanceRequestKey Key => new StagePracticeRequestKey() {
+    public LowInstanceRequestKey Key => new StagePracticeRequestKey() {
         Campaign = stage.campaign.Key,
         StageIndex = stage.stageIndex,
         PhaseIndex = phase
@@ -124,7 +124,7 @@ public abstract class ReplayMode {
 }
 
 public class InstanceRequest {
-    private readonly List<Cancellable> gameTrackers = new List<Cancellable>();
+    private readonly List<Cancellable> gameTrackers = new();
     public readonly Func<InstanceData, bool>? cb;
     public readonly SharedInstanceMetadata metadata;
     public readonly ReplayMode replay;
@@ -136,12 +136,8 @@ public class InstanceRequest {
     public InstanceRequest(Func<InstanceData, bool>? cb, ILowInstanceRequest lowerRequest, Replay replay) : 
         this(cb, replay.metadata.Record.SharedInstanceMetadata, lowerRequest, new ReplayMode.Replaying(replay)) {}
 
-    public InstanceRequest(Func<InstanceData, bool>? cb, SharedInstanceMetadata metadata, ILowInstanceRequest lowReq, bool? recording = null) : 
-        this(cb, metadata, lowReq, recording switch {
-                null => null,
-                true => new ReplayMode.RecordingReplay(),
-                false => new ReplayMode.NotRecordingReplay()
-            }) { }
+    public InstanceRequest(Func<InstanceData, bool>? cb, SharedInstanceMetadata metadata, ILowInstanceRequest lowReq) : 
+        this(cb, metadata, lowReq, null) { }
 
     public InstanceRequest(Func<InstanceData, bool>? cb, SharedInstanceMetadata metadata, ILowInstanceRequest lowerRequest, ReplayMode? replay) {
         this.metadata = metadata;
@@ -383,21 +379,21 @@ public class InstanceRequest {
     /// <summary>
     /// Sent before an instance is restarted. InstanceRequested will also be called immediately afterwards.
     /// </summary>
-    public static readonly Event<InstanceRequest> InstanceRestarted = new Event<InstanceRequest>();
+    public static readonly Event<InstanceRequest> InstanceRestarted = new();
     /// <summary>
     /// Sent before an instance is run. Sent even if the instance was a replay.
     /// </summary>
-    public static readonly Event<InstanceRequest> InstancedRequested = new Event<InstanceRequest>();
+    public static readonly Event<InstanceRequest> InstancedRequested = new();
     /// <summary>
     /// Sent once the stage is completed (during a campaign only), before the next stage is loaded.
     /// </summary>
     public static readonly Event<(string campaign, int stage)> StageCompleted =
-        new Event<(string, int)>();
+        new();
     /// <summary>
     /// Sent once the instance is completed (during any mode), before returning to the main menu (or wherever).
     /// Sent even if the instance was a replay. 
     /// </summary>
     public static readonly Event<(InstanceData data, InstanceRecord record)> InstanceCompleted = 
-        new Event<(InstanceData, InstanceRecord)>();
+        new();
 }
 }

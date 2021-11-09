@@ -79,11 +79,11 @@ public class EEx {
 public class EEx<T> : EEx {
     public EEx(Ex ex) : base(ex) { }
 
-    public static implicit operator EEx<T>(Ex ex) => new EEx<T>(ex);
-    public static implicit operator EEx<T>(TEx<T> ex) => new EEx<T>(ex);
+    public static implicit operator EEx<T>(Ex ex) => new(ex);
+    public static implicit operator EEx<T>(TEx<T> ex) => new(ex);
     public static implicit operator Ex(EEx<T> ex) => ex.ex;
     public static implicit operator (Ex, bool)(EEx<T> exx) => (exx.ex, RequiresCopyOnRepeat(exx.ex));
     
-    public static implicit operator EEx<T>(T obj) => new EEx<T>(Ex.Constant(obj));
+    public static implicit operator EEx<T>(T obj) => new(Ex.Constant(obj));
 }
 }

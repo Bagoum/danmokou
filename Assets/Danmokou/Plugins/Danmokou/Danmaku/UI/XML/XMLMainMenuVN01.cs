@@ -31,8 +31,8 @@ public class XMLMainMenuVN01 : XMLMainMenu {
         var defaultShot = defaultPlayer.shots2[0];
         var defaultSupport = defaultPlayer.supports[0];
 
-        TeamConfig Team() => new TeamConfig(0, Subshot.TYPE_D, defaultSupport.ability, (defaultPlayer, defaultShot.shot));
-        SharedInstanceMetadata Meta() => new SharedInstanceMetadata(Team(), new DifficultySettings(dfc));
+        TeamConfig Team() => new(0, Subshot.TYPE_D, defaultSupport.ability, (defaultPlayer, defaultShot.shot));
+        SharedInstanceMetadata Meta() => new(Team(), new DifficultySettings(dfc));
         
         OptionsScreen = new UIScreen(this, XMLPauseMenu.GetOptions(true).ToArray())
             .With(OptionsScreenV).OnExit(SaveData.AssignSettingsChanges);

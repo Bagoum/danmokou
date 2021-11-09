@@ -41,7 +41,7 @@ public struct ItemDrops {
         autocollect = autoc;
     }
 
-    public ItemDrops Mul(float by) => new ItemDrops((value * by), (int)(pointPP * by), (int)(life * by), 
+    public ItemDrops Mul(float by) => new((value * by), (int)(pointPP * by), (int)(life * by), 
         (int)(power * by), (int)(gems * by), autocollect);
 }
 
@@ -57,10 +57,10 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     /// ID to refer to this entity in behavior scripts.
     /// </summary>
     public string ID = "";
-    private static readonly Dictionary<string, HashSet<BehaviorEntity>> idLookup = new Dictionary<string, HashSet<BehaviorEntity>>();
+    private static readonly Dictionary<string, HashSet<BehaviorEntity>> idLookup = new();
     //This is automatically disposed by the state machine that generates it
     public Cancellable? PhaseShifter { get; set; }
-    private readonly HashSet<Cancellable> behaviorToken = new HashSet<Cancellable>();
+    private readonly HashSet<Cancellable> behaviorToken = new();
     public int NumRunningSMs => behaviorToken.Count;
     public Vector2 LastDelta { get; private set; }
 
@@ -694,8 +694,8 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         throw new Exception("Could not find beh for ID: " + id);
     }
 
-    private static readonly Dictionary<string, BEHPointer> pointersToResolve = new Dictionary<string, BEHPointer>();
-    private static readonly Dictionary<string, BEHPointer> attachedPointers = new Dictionary<string, BEHPointer>();
+    private static readonly Dictionary<string, BEHPointer> pointersToResolve = new();
+    private static readonly Dictionary<string, BEHPointer> attachedPointers = new();
 
     public static void ClearPointers() {
         pointersToResolve.Clear();

@@ -52,8 +52,8 @@ public abstract class TiledRender {
                                                  MeshUpdateFlags.DontResetBoneBounds;
 
     private static readonly VertexAttributeDescriptor[] layout = {
-        new VertexAttributeDescriptor(VertexAttribute.Position, VertexAttributeFormat.Float32, 3),
-        new VertexAttributeDescriptor(VertexAttribute.TexCoord0, VertexAttributeFormat.Float32, 2),
+        new(VertexAttribute.Position, VertexAttributeFormat.Float32, 3),
+        new(VertexAttribute.TexCoord0, VertexAttributeFormat.Float32, 2),
     };
 
     [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]

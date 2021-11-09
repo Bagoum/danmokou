@@ -101,7 +101,7 @@ public static partial class Reflector {
     }
 
     private static readonly Dictionary<Type, Dictionary<string, PostAggregate>> postAggregators =
-        new Dictionary<Type, Dictionary<string, PostAggregate>>();
+        new();
 
     private static void InitializeEnumResolvers() {
         void CEnum<E>((char first, E value)[] values) {
@@ -111,7 +111,7 @@ public static partial class Reflector {
                 for (int ii = 0; ii < values.Length; ++ii) {
                     if (values[ii].first == c) return values[ii].value!;
                 }
-                StringBuilder sb = new StringBuilder();
+                StringBuilder sb = new();
                 for (int ii = 0;;) {
                     sb.Append($"{values[ii].value} ({values[ii].first}");
                     if (++ii < values.Length) sb.Append("; ");
@@ -126,7 +126,7 @@ public static partial class Reflector {
                 for (int ii = 0; ii < values.Length; ++ii) {
                     if (s.StartsWith(values[ii].first)) return values[ii].value!;
                 }
-                StringBuilder sb = new StringBuilder();
+                StringBuilder sb = new();
                 for (int ii = 0;;) {
                     sb.Append($"{values[ii].value} ({values[ii].first})");
                     if (++ii < values.Length) sb.Append("; ");

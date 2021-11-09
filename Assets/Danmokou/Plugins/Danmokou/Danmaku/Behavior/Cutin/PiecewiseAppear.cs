@@ -33,16 +33,16 @@ public class PiecewiseAppear : CoroutineRegularUpdater {
     public SpriteRenderer sr = null!;
     public FragmentConfig config = null!;
 
-    public Vector2 moveDirectionMinMax = new Vector2(30, 50);
+    public Vector2 moveDirectionMinMax = new(30, 50);
     public float moveDist;
     public float moveTime;
     public float spreadTime;
     private float TotalTime => moveTime + spreadTime;
     
     private const string uiLayer = "UI";
-    private readonly List<AppearRequest> continuations = new List<AppearRequest>();
+    private readonly List<AppearRequest> continuations = new();
 
-    private readonly DMCompactingArray<FragmentRenderInstance> updaters = new DMCompactingArray<FragmentRenderInstance>();
+    private readonly DMCompactingArray<FragmentRenderInstance> updaters = new();
 
     private bool isRunning = false;
 

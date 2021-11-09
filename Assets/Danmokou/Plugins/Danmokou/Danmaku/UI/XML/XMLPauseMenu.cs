@@ -141,7 +141,6 @@ public class XMLPauseMenu : PausedGameplayMenu, IPauseMenu {
 
     private void HideOptions(bool withSave) {
         if (MenuActive && withSave) {
-            MainScreen.ResetNodeProgress();
             SaveData.AssignSettingsChanges();
         }
         base.HideMe();

@@ -96,7 +96,7 @@ public struct SyncHandoff : IDisposable {
 
     public static implicit operator GenCtx(SyncHandoff sbh) => sbh.GCX;
 
-    public SyncHandoff Copy(string? newStyle) => new SyncHandoff(ch, timeOffset, newStyle);
+    public SyncHandoff Copy(string? newStyle) => new(ch, timeOffset, newStyle);
 
     public readonly void Dispose() {
         ch.Dispose();

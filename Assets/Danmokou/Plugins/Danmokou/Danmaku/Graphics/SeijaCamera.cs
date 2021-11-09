@@ -37,8 +37,8 @@ public class SeijaCamera : CoroutineRegularUpdater, IShaderCamera {
 
     private Camera cam = null!;
 
-    private readonly DisturbedSum<float> targetXRot = new DisturbedSum<float>(0f);
-    private readonly DisturbedSum<float> targetYRot = new DisturbedSum<float>(0);
+    private readonly DisturbedSum<float> targetXRot = new(0f);
+    private readonly DisturbedSum<float> targetYRot = new(0);
     private float sourceXRot = 0f;
     private float sourceYRot = 0f;
     private float timeToTarget = 0f;

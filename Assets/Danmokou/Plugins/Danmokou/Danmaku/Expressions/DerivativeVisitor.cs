@@ -30,7 +30,7 @@ class DerivativeVisitor : ExpressionVisitor {
     }
     public static Ex Derivate(Ex x, Ex dx, Ex ex) => new DerivativeVisitor(x, dx).Visit(ex);
 
-    private static readonly HashSet<Type> mathTypes = new HashSet<Type>() {
+    private static readonly HashSet<Type> mathTypes = new() {
         typeof(Math),
         typeof(Mathf),
         typeof(M)
@@ -43,14 +43,14 @@ class DerivativeVisitor : ExpressionVisitor {
     public override Expression Visit(Expression node)  => (x == node) ? dx : base.Visit(node);
 
     private static readonly Dictionary<ExpressionType, Func<DerivativeVisitor, Ex, Ex, Ex>> BinOpReducers = 
-        new Dictionary<ExpressionType, Func<DerivativeVisitor, Ex, Ex, Ex>>() {
+        new() {
         {ExpressionType.Add, (v,x,y) => v.Visit(x).Add(v.Visit(y))},
         {ExpressionType.Multiply, (v,x,y) => v.Visit(x).Mul(y).Add(x.Mul(v.Visit(y)))},
         {ExpressionType.Subtract, (v,x,y) => v.Visit(x).Sub(v.Visit(y))},
         {ExpressionType.Divide, (v,x,y) => v.Visit(x).Mul(y).Sub(x.Mul(v.Visit(y))).Div(y.Mul(y))},
     };
     
-    private readonly Dictionary<ParameterExpression, Ex> derivMap = new Dictionary<ParameterExpression, Expression>();
+    private readonly Dictionary<ParameterExpression, Ex> derivMap = new();
 
     protected override Expression VisitParameter(ParameterExpression node) {
         return derivMap.TryGetValue(node, out var d) ? d : E0;

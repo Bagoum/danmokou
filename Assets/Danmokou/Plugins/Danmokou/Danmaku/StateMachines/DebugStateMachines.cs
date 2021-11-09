@@ -6,7 +6,7 @@ namespace Danmokou.SM {
 
 public class DebugFloat : LineActionSM {
     private readonly GCXF<float> f;
-    public static readonly List<float> values = new List<float>();
+    public static readonly List<float> values = new();
     public DebugFloat(GCXF<float> f) {
         this.f = f;
     }

@@ -32,16 +32,16 @@ public class AchievementDisplay : CoroutineRegularUpdater {
     public UIManager uiParent = null!;
     
     private Transform tr = null!;
-    private static readonly Queue<DisplayRequest> queued = new Queue<DisplayRequest>();
+    private static readonly Queue<DisplayRequest> queued = new();
     private bool isRunning = false;
     private Vector2 baseLoc;
-    public Vector2 startOffset = new Vector2(4, 0);
+    public Vector2 startOffset = new(4, 0);
     public float inTime;
     [ReflectInto(typeof(Easer))]
     public string inLerp = "ceoutback(2.2, t)";
     private Easer InLerp = null!;
     public float waitTime;
-    public Vector2 endOffset = new Vector2(0, 3);
+    public Vector2 endOffset = new(0, 3);
     public float outTime;
     [ReflectInto(typeof(Easer))]
     public string outLerp = "einsine(t)";

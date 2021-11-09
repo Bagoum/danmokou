@@ -24,7 +24,7 @@ namespace Danmokou.Danmaku.Options {
 /// Properties that modify the behavior of generic repeater commands (gtrepeat, girepeat, gcrepeat, gsrepeat).
 /// </summary>
 [Reflect]
-public class GenCtxProperty {
+public record GenCtxProperty {
     /// <summary>
     /// Dummy property that does nothing.
     /// </summary>
@@ -445,58 +445,58 @@ public class GenCtxProperty {
     public static GenCtxProperty BindItr(string value) => new BindItrTag(value);
 
 
-    public class CompositeProp : ValueProp<GenCtxProperty[]>, IUnrollable<GenCtxProperty> {
+    public record CompositeProp : ValueProp<GenCtxProperty[]>, IUnrollable<GenCtxProperty> {
         public IEnumerable<GenCtxProperty> Values => value;
         public CompositeProp(params GenCtxProperty[] props) : base(props) { }
     }
     
     #region Impls
 
-    public abstract class BPYProp : ValueProp<GCXF<float>> {
+    public abstract record BPYProp : ValueProp<GCXF<float>> {
         public BPYProp(GCXF<float> f) : base(f) { } 
     }
-    public abstract class PredProp : ValueProp<GCXF<bool>> {
+    public abstract record PredProp : ValueProp<GCXF<bool>> {
         public PredProp(GCXF<bool> f) : base(f) { }
     }
-    public abstract class TPProp : ValueProp<GCXF<Vector2>> {
+    public abstract record TPProp : ValueProp<GCXF<Vector2>> {
         public TPProp(GCXF<Vector2> f) : base(f) { }
     }
 
-    public class TimesProp : ValueProp<GCXF<float>?> {
+    public record TimesProp : ValueProp<GCXF<float>?> {
         public readonly int? max;
         public TimesProp(int? max, GCXF<float>? f) : base(f) => this.max = max;
     }
-    public class WaitProp : BPYProp {
+    public record WaitProp : BPYProp {
         public WaitProp(GCXF<float> f) : base(f) { }
     }
-    public class ForTimeProp : BPYProp {
+    public record ForTimeProp : BPYProp {
         public ForTimeProp(GCXF<float> f) : base(f) { }
     }
-    public class DelayProp : BPYProp {
+    public record DelayProp : BPYProp {
         public DelayProp(GCXF<float> f) : base(f) { }
     }
-    public class FRV2Prop : ValueProp<GCXF<V2RV2>> {
+    public record FRV2Prop : ValueProp<GCXF<V2RV2>> {
         public FRV2Prop(GCXF<V2RV2> f) : base(f) { }
     }
 
-    public class AlternateProp : BPYProp {
+    public record AlternateProp : BPYProp {
         public AlternateProp(GCXF<float> f) : base(f) { }
     }
-    public class WhileProp : PredProp {
+    public record WhileProp : PredProp {
         public WhileProp(GCXF<bool> f) : base(f) { }
     }
-    public class UnpauseProp : ValueProp<StateMachine> {
+    public record UnpauseProp : ValueProp<StateMachine> {
         public UnpauseProp(StateMachine f) : base(f) { }
     }
 
-    public class ClipProp : ValueProp<GCXF<bool>> {
+    public record ClipProp : ValueProp<GCXF<bool>> {
         public ClipProp(GCXF<bool> val) : base(val) { }
     }
-    public class CancelProp : ValueProp<GCXF<bool>> {
+    public record CancelProp : ValueProp<GCXF<bool>> {
         public CancelProp(GCXF<bool> val) : base(val) { }
     }
 
-    public class TargetProp : TPProp {
+    public record TargetProp : TPProp {
         public readonly RV2ControlMethod method;
         public readonly bool fromSummon;
         public TargetProp(RV2ControlMethod method, GCXF<Vector2> func, bool fromSummon) : base(func) {
@@ -505,7 +505,7 @@ public class GenCtxProperty {
         }
     }
 
-    public class SFXProp : ValueProp<string[]> {
+    public record SFXProp : ValueProp<string[]> {
         public readonly GCXF<float>? indexer;
         public readonly GCXF<bool>? pred;
 
@@ -515,10 +515,10 @@ public class GenCtxProperty {
         }
     }
 
-    public class WaitChildFlag : GenCtxProperty { }
-    public class SequentialFlag : GenCtxProperty { }
+    public record WaitChildFlag : GenCtxProperty { }
+    public record SequentialFlag : GenCtxProperty { }
 
-    public class RootProp : TPProp {
+    public record RootProp : TPProp {
         public readonly bool doAdjust;
 
         public RootProp(GCXF<Vector2> root, bool doAdjust) : base(root) {
@@ -526,24 +526,10 @@ public class GenCtxProperty {
         }
     }
 
-    public class BankProp : GenCtxProperty {
-        public readonly bool toZero;
-        public readonly GCXF<V2RV2> banker;
-        public BankProp(bool toZero, GCXF<V2RV2> f) {
-            this.toZero = toZero;
-            this.banker = f;
-        }
-        public BankProp(bool toZero, V2RV2 f) {
-            this.toZero = toZero;
-            this.banker = _ => f;
-        }
-    }
+    public record BankProp(bool toZero, GCXF<V2RV2> banker) : GenCtxProperty { }
 
-    public class ValueProp<T> : GenCtxProperty {
-        public readonly T value;
-        public ValueProp(T value) => this.value = value;
-    }
-    public class ParametrizationProp : ValueProp<Parametrization> {
+    public record ValueProp<T>(T value) : GenCtxProperty { }
+    public record ParametrizationProp : ValueProp<Parametrization> {
         public readonly GCXF<float>? mutater;
 
         public ParametrizationProp(Parametrization p, GCXF<float>? mutater) : base(p) {
@@ -551,7 +537,7 @@ public class GenCtxProperty {
         }
     }
 
-    public class ColorProp : ValueProp<string[]> {
+    public record ColorProp : ValueProp<string[]> {
         public readonly GCXF<float>? indexer;
         public readonly bool reverse;
 
@@ -560,89 +546,77 @@ public class GenCtxProperty {
             this.reverse = reverse;
         }
     }
-    public abstract class RuleProp : ValueProp<GCRule> {
-        public RuleProp(GCRule rule) : base(rule) { }
-    }
-    public abstract class RuleListProp : GenCtxProperty {
+    public abstract record RuleProp(GCRule rule) : ValueProp<GCRule>(rule) {}
+    public abstract record RuleListProp : GenCtxProperty {
         public readonly List<GCRule> rules;
         public RuleListProp(GCRule[] rules) => this.rules = new List<GCRule>(rules);
     }
 
-    public class PreLoopProp : RuleListProp {
+    public record PreLoopProp : RuleListProp {
         public PreLoopProp(GCRule[] rules) : base(rules) { }
     }
 
-    public class PostLoopProp : RuleListProp {
+    public record PostLoopProp : RuleListProp {
         public PostLoopProp(GCRule[] rules) : base(rules) { }
     }
-    public class StartProp : RuleListProp {
+    public record StartProp : RuleListProp {
         public StartProp(GCRule[] rules) : base(rules) { }
     }
-    public class EndProp : RuleListProp {
+    public record EndProp : RuleListProp {
         public EndProp(GCRule[] rules) : base(rules) { }
     }
 
     /// <summary>
     /// RV2Incr X is the same as adding `rv2 += X` at the end of PostLoopProp.
     /// </summary>
-    public class RV2IncrProp : ValueProp<GCXF<V2RV2>> {
+    public record RV2IncrProp : ValueProp<GCXF<V2RV2>> {
         public RV2IncrProp(GCXF<V2RV2> rule) : base(rule) { }
         public RV2IncrProp(V2RV2 rv2) : this(_ => rv2) { }
     }
 
-    public class MAngProp : BPYProp {
+    public record MAngProp : BPYProp {
         public MAngProp(GCXF<float> mutater) : base(mutater) { }
     }
 
-    public class SAHandlerProp : ValueProp<SummonAlongHandler> {
+    public record SAHandlerProp : ValueProp<SummonAlongHandler> {
         public SAHandlerProp(SummonAlongHandler sah) : base(sah) { }
     }
 
-    public class SaveFProp : GenCtxProperty {
-        public readonly IReadOnlyList<(ReflectEx.Hoist<float> target, GCXF<float> indexer, GCXF<float> valuer)> targets;
-        public SaveFProp((ReflectEx.Hoist<float>, GCXF<float>, GCXF<float>)[] targets) {
-            this.targets = targets;
-        }
-    }
-    public class SaveV2Prop : GenCtxProperty {
-        public readonly IReadOnlyList<(ReflectEx.Hoist<Vector2> target, GCXF<float> indexer, GCXF<Vector2> valuer)> targets;
-        public SaveV2Prop((ReflectEx.Hoist<Vector2>, GCXF<float>, GCXF<Vector2>)[] targets) {
-            this.targets = targets;
-        }
-    }
+    public record SaveFProp((ReflectEx.Hoist<float>, GCXF<float>, GCXF<float>)[] targets) : GenCtxProperty { }
+    public record SaveV2Prop((ReflectEx.Hoist<Vector2>, GCXF<float>, GCXF<Vector2>)[] targets) : GenCtxProperty { }
 
-    public class ExposeProp : ValueProp<(Reflector.ExType, string)[]> {
+    public record ExposeProp : ValueProp<(Reflector.ExType, string)[]> {
         public ExposeProp((Reflector.ExType, string)[] value) : base(value) { }
     }
 
 
-    public class TimerProp : ValueProp<ETime.Timer> {
+    public record TimerProp : ValueProp<ETime.Timer> {
         public TimerProp(ETime.Timer t) : base(t) { } 
     }
 
-    public class OnLaserProp : ValueProp<GCXF<float>> {
+    public record OnLaserProp : ValueProp<GCXF<float>> {
         public OnLaserProp(GCXF<float> f) : base(f) { }
     }
 
-    public class RV2CircleTag : GenCtxProperty { }
+    public record RV2CircleTag : GenCtxProperty { }
 
-    public class RV2SpreadProp : ValueProp<GCXF<V2RV2>> { 
+    public record RV2SpreadProp : ValueProp<GCXF<V2RV2>> { 
         public RV2SpreadProp(GCXF<V2RV2> f) : base(f) { }
         
     }
-    public class TimeResetTag : GenCtxProperty { }
-    public class CenterTag : GenCtxProperty { }
+    public record TimeResetTag : GenCtxProperty { }
+    public record CenterTag : GenCtxProperty { }
 
-    public class BindArrowTag : GenCtxProperty { }
-    public class BindLRTag : GenCtxProperty { }
-    public class BindUDTag : GenCtxProperty { }
-    public class BindAngleTag : GenCtxProperty { }
+    public record BindArrowTag : GenCtxProperty { }
+    public record BindLRTag : GenCtxProperty { }
+    public record BindUDTag : GenCtxProperty { }
+    public record BindAngleTag : GenCtxProperty { }
 
-    public class BindItrTag : ValueProp<string> {
+    public record BindItrTag : ValueProp<string> {
         public BindItrTag(string value): base(value) { }
     }
     
-    public class ResetColorTag : GenCtxProperty { }
+    public record ResetColorTag : GenCtxProperty { }
 
     #endregion
 
@@ -668,7 +642,7 @@ public class GenCtxProperties<T> {
     public readonly bool forceRootAdjust;
     public readonly (bool, GCXF<V2RV2>)? bank;
     public readonly List<GCRule>? preloop;
-    public readonly List<GCRule>? postloop = new List<GCRule>();
+    public readonly List<GCRule>? postloop = new();
     public readonly List<GCRule>? start;
     public readonly List<GCRule>? end;
     public readonly Parametrization p = Parametrization.DEFER;

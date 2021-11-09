@@ -8,8 +8,8 @@ using UnityEngine;
 
 namespace Danmokou.VN {
 public class Eraa : SZYUCharacter {
-    public override Color TextColor => new Color(1f, 0.82f, 0.6f);
-    public override Color UIColor => new Color(0.22f, 0.59f, 0.11f);
+    public override Color TextColor => new(1f, 0.82f, 0.6f);
+    public override Color UIColor => new(0.22f, 0.59f, 0.11f);
     public override string Name => LocalizedStrings.FindReference("dialogue.eraa");
     
     public override void RollEvent() { }

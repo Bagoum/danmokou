@@ -39,8 +39,8 @@ public static class AoTHelper_CG {{
 ";
     
     public static void GenerateAoT() {
-        List<string> funcs = new List<string>();
-        HashSet<MethodInfo> mis = new HashSet<MethodInfo>(); //weed out alias duplicates
+        List<string> funcs = new();
+        HashSet<MethodInfo> mis = new(); //weed out alias duplicates
         var typePrinter = new CSharpTypePrinter { PrintTypeNamespace = _ => true };
         void AddConstructedMethod(MethodInfo mi) {
             if (mis.Contains(mi)) return;

@@ -177,7 +177,7 @@ public class AyaCamera : BehaviorEntity {
     }
 
     private CRect ViewfinderRect(float scale) =>
-        new CRect(location.x, location.y, CameraHalfBounds.x * scale, CameraHalfBounds.y * scale, angle);
+        new(location.x, location.y, CameraHalfBounds.x * scale, CameraHalfBounds.y * scale, angle);
     private IEnumerator UpdateFire() {
         CameraState = State.FIRING;
         using var slowdownToken = ETime.Slowdown.AddConst(0.5f);
@@ -241,18 +241,17 @@ public class AyaCamera : BehaviorEntity {
     public static readonly IBSubject<(AyaPhoto photo, bool success)> PhotoTaken 
         = new Event<(AyaPhoto, bool)>();
     private IEnumerator TakePictureAndRefractor(float scale) {
-        Vector2? targetLoc = null;
         var success = TakePicture_Enemies(scale);
         viewfinderSR.enabled = false;
         text.enabled = false;
-        var photo = ServiceLocator.Find<IScreenshotter>().AyaScreenshot(ViewfinderRect(scale));
-        var pphoto = GameObject.Instantiate(pinnedPhotoPrefab).GetComponent<AyaPinnedPhoto>();
+        var photoRect = ViewfinderRect(scale);
+        var photoTex = ServiceLocator.Find<IScreenshotter>().Screenshot(photoRect);
+        var photo = new AyaPhoto(photoTex, photoRect, success && GameManagement.Instance.Request?.replay is null);
         PhotoTaken.OnNext((photo, success));
-        if (success) {
-            if (GameManagement.Instance.Request?.replay == null) photo.KeepAlive = true;
-            targetLoc = ServiceLocator.MaybeFind<IAyaPhotoBoard>()?.NextPinLoc(pphoto) ?? new Vector2(-4, 0);
-        }
-        pphoto.Initialize(photo, location, targetLoc);
+        var pphoto = GameObject.Instantiate(pinnedPhotoPrefab).GetComponent<AyaPinnedPhoto>();
+        pphoto.Initialize(photo, location, success ? 
+            ServiceLocator.MaybeFind<IAyaPhotoBoard>()?.NextPinLoc(pphoto) : 
+            null);
         viewfinderSR.enabled = true;
         text.enabled = true;
         var freezer = ServiceLocator.Find<FreezeFrameHelper>();

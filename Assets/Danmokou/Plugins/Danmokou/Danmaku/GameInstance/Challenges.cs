@@ -143,10 +143,12 @@ public class PhaseChallengeRequest : ILowInstanceRequest {
         challenge = c;
     }
 
-    public ILowInstanceRequestKey Key => new PhaseChallengeRequestKey() {
-        Campaign = DayCampaign.key,
+    public LowInstanceRequestKey Key => new PhaseChallengeRequestKey() {
+        Campaign = DayCampaign.Key,
+        DayIndex = phase.boss.day.dayIndex,
         Boss = Boss.key,
-        PhaseIndex = phase.phase.index
+        PhaseIndex = phase.phase.index,
+        ChallengeIndex = ChallengeIdx
     };
     public InstanceMode Mode => InstanceMode.SCENE_CHALLENGE;
 }
@@ -218,7 +220,7 @@ public abstract class Challenge {
             this.units = units;
         }
 
-        private static readonly ReflWrap<TP4> StayInColor = new ReflWrap<TP4>("witha lerpt 0 1 0 0.3 green");
+        private static readonly ReflWrap<TP4> StayInColor = new("witha lerpt 0 1 0 0.3 green");
 
         private static ReflWrap<TaskPattern> StayInRange(BehaviorEntity beh, float f) =>
             ReflWrap.FromFunc($"Challenge.StayInRange.{f}", () => SMReflection.Sync("_", GCXFRepo.RV2Zero,
@@ -246,7 +248,7 @@ public abstract class Challenge {
             this.units = units;
         }
 
-        private static readonly ReflWrap<TP4> StayOutColor = new ReflWrap<TP4>("witha lerpt 0 1 0 0.3 red");
+        private static readonly ReflWrap<TP4> StayOutColor = new("witha lerpt 0 1 0 0.3 red");
 
         private static ReflWrap<TaskPattern> StayOutRange(BehaviorEntity beh, float f) =>
             ReflWrap.FromFunc($"Challenge.StayOutRange.{f}", () => SMReflection.Sync("_", GCXFRepo.RV2Zero,

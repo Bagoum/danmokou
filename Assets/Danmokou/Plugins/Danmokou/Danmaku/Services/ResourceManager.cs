@@ -25,10 +25,10 @@ public class ResourceManager : MonoBehaviour {
     public NamedEffectStrategy[] effects = null!;
     public NamedBackgroundTransition[] bgTransitions = null!;
     public SOPrefabs backgrounds = null!;
-    private static readonly Dictionary<string, EffectStrategy> effectMap = new Dictionary<string, EffectStrategy>();
-    private static readonly Dictionary<string, GameObject> Summonables = new Dictionary<string, GameObject>();
-    private static readonly Dictionary<string, GameObject> Backgrounds = new Dictionary<string, GameObject>();
-    private static readonly Dictionary<string, SOBgTransition> Transitions = new Dictionary<string, SOBgTransition>();
+    private static readonly Dictionary<string, EffectStrategy> effectMap = new();
+    private static readonly Dictionary<string, GameObject> Summonables = new();
+    private static readonly Dictionary<string, GameObject> Backgrounds = new();
+    private static readonly Dictionary<string, SOBgTransition> Transitions = new();
 
     public void Setup() {
         for (ushort ii = 0; ii < effects.Length; ++ii) {

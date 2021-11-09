@@ -30,11 +30,11 @@ public class FiringCtx {
         V3,
         RV2
     }
-    public readonly Dictionary<int, int> boundInts = new Dictionary<int, int>();
-    public readonly Dictionary<int, float> boundFloats = new Dictionary<int, float>();
-    public readonly Dictionary<int, Vector2> boundV2s = new Dictionary<int, Vector2>();
-    public readonly Dictionary<int, Vector3> boundV3s = new Dictionary<int, Vector3>();
-    public readonly Dictionary<int, V2RV2> boundRV2s = new Dictionary<int, V2RV2>();
+    public readonly Dictionary<int, int> boundInts = new();
+    public readonly Dictionary<int, float> boundFloats = new();
+    public readonly Dictionary<int, Vector2> boundV2s = new();
+    public readonly Dictionary<int, Vector3> boundV3s = new();
+    public readonly Dictionary<int, V2RV2> boundRV2s = new();
     public BehaviorEntity? firer; //Note this may be repooled or otherwise destroyed during execution
     
     public PlayerController? playerController; //For player bullets
@@ -60,13 +60,13 @@ public class FiringCtx {
         laserController ?? throw new Exception("FiringCtx does not have a laser controller");
     public PlayerBullet? playerBullet;
     
-    private static readonly Stack<FiringCtx> cache = new Stack<FiringCtx>();
+    private static readonly Stack<FiringCtx> cache = new();
     public static int Allocated { get; private set; }
     public static int Popped { get; private set; }
     public static int Recached { get; private set; }
     public static int Copied { get; private set; }
 
-    public static readonly FiringCtx Empty = new FiringCtx();
+    public static readonly FiringCtx Empty = new();
 
     private FiringCtx() { }
     public static FiringCtx New(GenCtx? gcx = null) {
@@ -228,7 +228,7 @@ public class FiringCtx {
         return lastKey++;
     }
 
-    private static readonly Dictionary<string, int> keyNames = new Dictionary<string, int>();
+    private static readonly Dictionary<string, int> keyNames = new();
     private static int lastKey = 0;
     
 }
@@ -236,7 +236,7 @@ public class FiringCtx {
 /// A struct containing the input required for a parametric equation.
 /// </summary>
 public struct ParametricInfo {
-    public static ParametricInfo Zero = new ParametricInfo(Vector2.zero, 0, 0, 0);
+    public static ParametricInfo Zero = new(Vector2.zero, 0, 0, 0);
     /// <summary>Random ID</summary>
     public readonly uint id;
     /// <summary>Firing index</summary>
@@ -248,7 +248,7 @@ public struct ParametricInfo {
     /// <summary>Context containing additional bound variables</summary>
     public FiringCtx ctx;
 
-    public static ParametricInfo WithRandomId(Vector2 position, int findex, float t) => new ParametricInfo(position, findex, RNG.GetUInt(), t);
+    public static ParametricInfo WithRandomId(Vector2 position, int findex, float t) => new(position, findex, RNG.GetUInt(), t);
     public static ParametricInfo WithRandomId(Vector2 position, int findex) => WithRandomId(position, findex, 0f);
 
     public ParametricInfo(in Movement mov, int findex = 0, uint? id = null, float t = 0, FiringCtx? ctx = null) : 
@@ -261,10 +261,10 @@ public struct ParametricInfo {
         this.ctx = ctx ?? FiringCtx.New();
     }
 
-    public ParametricInfo Rehash() => new ParametricInfo(loc, index, RNG.Rehash(id), t, ctx);
-    public ParametricInfo CopyWithT(float newT) => new ParametricInfo(loc, index, id, newT, ctx);
+    public ParametricInfo Rehash() => new(loc, index, RNG.Rehash(id), t, ctx);
+    public ParametricInfo CopyWithT(float newT) => new(loc, index, id, newT, ctx);
 
-    public ParametricInfo CopyCtx(uint newId) => new ParametricInfo(loc, index, newId, t, ctx.Copy());
+    public ParametricInfo CopyCtx(uint newId) => new(loc, index, newId, t, ctx.Copy());
     
     /// <summary>
     /// Flips the position around an X or Y axis.

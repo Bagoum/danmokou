@@ -86,7 +86,7 @@ public static partial class ExM {
     
     #region Components
     
-    private static TExV2 Box(TEx<Vector2> ex) => new TExV2(ex);
+    private static TExV2 Box(TEx<Vector2> ex) => new(ex);
     /// <summary>
     /// Get the x-component of a Vector2.
     /// </summary>
@@ -97,7 +97,7 @@ public static partial class ExM {
     /// </summary>
     [Alias(".y")]
     public static tfloat V2Y(tv2 tp) => Box(tp).y;
-    private static TExRV2 Box(TEx<V2RV2> ex) => new TExRV2(ex);
+    private static TExRV2 Box(TEx<V2RV2> ex) => new(ex);
     
     /// <summary>
     /// Get the nonrotational X-component of an RV2.
@@ -268,7 +268,7 @@ public static partial class ExM {
         var denom = V<double>();
         var x = VFloat();
         var exp = V<double>();
-        List<Ex> stmts = new List<Ex> { num.Is(denom.Is(ExC(0.0))) };
+        List<Ex> stmts = new() { num.Is(denom.Is(ExC(0.0))) };
         for (int ii = 0; ii < against.Length; ++ii) {
             stmts.Add(x.Is(against[ii]));
             stmts.Add(exp.Is(ExpDb(x.Mul(sharp))));
@@ -287,7 +287,7 @@ public static partial class ExM {
     /// <returns></returns>
     public static tfloat Logsum(efloat sharpness, tfloat[] against)  => EEx.Resolve(sharpness, sharp => {
         var num = V<double>();
-        List<Ex> stmts = new List<Ex> { num.Is(ExC(0.0)) };
+        List<Ex> stmts = new() { num.Is(ExC(0.0)) };
         for (int ii = 0; ii < against.Length; ++ii) {
             stmts.Add(ExUtils.AddAssign(num, ExpDb(sharp.Mul(against[ii]))));
         }

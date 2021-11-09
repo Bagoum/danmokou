@@ -59,9 +59,9 @@ public partial class PlayerController : BehaviorEntity {
     #endregion
 
     #region PrivateState
-    public DisturbedAnd FiringEnabled { get; } = new DisturbedAnd();
-    public DisturbedAnd BombsEnabled { get; } = new DisturbedAnd();
-    public DisturbedAnd AllControlEnabled { get; } = new DisturbedAnd();
+    public DisturbedAnd FiringEnabled { get; } = new();
+    public DisturbedAnd BombsEnabled { get; } = new();
+    public DisturbedAnd AllControlEnabled { get; } = new();
 
     private ushort shotItr = 0;
     [UsedImplicitly]
@@ -140,13 +140,13 @@ public partial class PlayerController : BehaviorEntity {
     public float UnFiringTime { get; private set; }
 
     private const int POSITION_REMEMBER_FRAMES = 120;
-    private readonly CircularList<Vector2> PastPositions = new CircularList<Vector2>(POSITION_REMEMBER_FRAMES);
-    private readonly CircularList<Vector2> PastDirections = new CircularList<Vector2>(POSITION_REMEMBER_FRAMES);
+    private readonly CircularList<Vector2> PastPositions = new(POSITION_REMEMBER_FRAMES);
+    private readonly CircularList<Vector2> PastDirections = new(POSITION_REMEMBER_FRAMES);
     /// <summary>
     /// Unlike normal position tracking, MarisaA positions freeze when focused.
     /// </summary>
-    private readonly CircularList<Vector2> MarisaAPositions = new CircularList<Vector2>(POSITION_REMEMBER_FRAMES);
-    private readonly CircularList<Vector2> MarisaADirections = new CircularList<Vector2>(POSITION_REMEMBER_FRAMES);
+    private readonly CircularList<Vector2> MarisaAPositions = new(POSITION_REMEMBER_FRAMES);
+    private readonly CircularList<Vector2> MarisaADirections = new(POSITION_REMEMBER_FRAMES);
     #endregion
     
     #region DropLabel
@@ -159,9 +159,9 @@ public partial class PlayerController : BehaviorEntity {
     
     #region Colors
 
-    private readonly PushLerper<Color> meterDisplay = new PushLerper<Color>(0.4f, Color.Lerp);
-    private readonly PushLerper<Color> meterDisplayInner = new PushLerper<Color>(0.4f, Color.Lerp);
-    private readonly PushLerper<Color> meterDisplayShadow = new PushLerper<Color>(0.4f, Color.Lerp);
+    private readonly PushLerper<Color> meterDisplay = new(0.4f, Color.Lerp);
+    private readonly PushLerper<Color> meterDisplayInner = new(0.4f, Color.Lerp);
+    private readonly PushLerper<Color> meterDisplayShadow = new(0.4f, Color.Lerp);
     
     #endregion
 

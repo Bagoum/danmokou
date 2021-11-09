@@ -62,7 +62,7 @@ public abstract class IParseQueue {
     public bool IsNewlineOrEmpty => Empty || IsNewline;
     protected const string LINE_DELIM = "\n";
 
-    public static readonly HashSet<string> ARR_EMPTY = new HashSet<string>() {
+    public static readonly HashSet<string> ARR_EMPTY = new() {
         ".", "{}", "_"
     }; 
     public const string ARR_OPEN = "{";
@@ -188,7 +188,7 @@ public class PUListParseQueue : IParseQueue {
         for (; ii < atoms.Length && atoms[ii].TryAsString() == LINE_DELIM; ++ii) { }
         var end = ii;
         for (; end < atoms.Length && atoms[end].TryAsString() != LINE_DELIM; ++end) {}
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new();
         for (int jj = start; jj < end; ++jj) {
             sb.Append((jj == ii) ? $"≪{atoms[jj].Print()}≫" : atoms[jj].Print());
             sb.Append(" ");

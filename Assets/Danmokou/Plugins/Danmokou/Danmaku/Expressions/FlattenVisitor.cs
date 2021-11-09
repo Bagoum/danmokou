@@ -27,7 +27,7 @@ class DeactivateConstantVisitor : ExpressionVisitor {
 }
 class FlattenVisitor : ExpressionVisitor {
     private static Ex ExC(object obj) => Ex.Constant(obj);
-    private static readonly Dictionary<ExpressionType, Func<float, float, object>> BinOpReducers = new Dictionary<ExpressionType, Func<float, float, object>>() {
+    private static readonly Dictionary<ExpressionType, Func<float, float, object>> BinOpReducers = new() {
         {ExpressionType.Add, (x,y) => x + y},
         {ExpressionType.Multiply, (x,y) => x * y},
         {ExpressionType.Subtract, (x,y) => x - y},
@@ -38,10 +38,10 @@ class FlattenVisitor : ExpressionVisitor {
     };
 
     private readonly Dictionary<ParameterExpression, Ex> ConstValPrmsMap =
-        new Dictionary<ParameterExpression, Ex>();
-    private readonly Stack<int> VariableReductionAllowed = new Stack<int>();
+        new();
+    private readonly Stack<int> VariableReductionAllowed = new();
     
-    private static readonly HashSet<ExpressionType> AssignTypes = new HashSet<ExpressionType>() {
+    private static readonly HashSet<ExpressionType> AssignTypes = new() {
         ExpressionType.Assign, ExpressionType.AddAssign, ExpressionType.AndAssign, ExpressionType.AddAssignChecked,
         ExpressionType.DivideAssign, ExpressionType.ModuloAssign, ExpressionType.MultiplyAssign, ExpressionType.OrAssign,
         ExpressionType.PowerAssign, ExpressionType.PowerAssign, ExpressionType.SubtractAssign, ExpressionType.SubtractAssignChecked,
@@ -143,7 +143,7 @@ class FlattenVisitor : ExpressionVisitor {
     //Double casts can be crushed if the outer cast is *less informative* than the inner cast (or they are the same).
     // Eg. (float)(int)5.3 cannot be crushed because float is more informative than int. It should return 5.
     // Eg. (int)(float)5.3 can be crushed because int is less informative than float. It should return 5.
-    private static readonly HashSet<(Type outer, Type inner)> allowedDoubleCasts = new HashSet<(Type, Type)>() {
+    private static readonly HashSet<(Type outer, Type inner)> allowedDoubleCasts = new() {
         (typeof(int), typeof(float)),
         (typeof(float), typeof(double)),
         (typeof(int), typeof(double))
@@ -171,7 +171,7 @@ class FlattenVisitor : ExpressionVisitor {
         return Ex.MakeUnary(node.NodeType, o, node.Type);
     }
 
-    private static readonly HashSet<Type> SafeNewReduceTypes = new HashSet<Type>() {
+    private static readonly HashSet<Type> SafeNewReduceTypes = new() {
         typeof(Vector2),
         typeof(Vector3),
         typeof(Vector4),
@@ -191,7 +191,7 @@ class FlattenVisitor : ExpressionVisitor {
             Ex.New(node.Constructor, visited);
     }
 
-    private static readonly HashSet<Type> SafeRepoTypes = new HashSet<Type>() {
+    private static readonly HashSet<Type> SafeRepoTypes = new() {
         typeof(Math),
         typeof(Mathf),
         typeof(M)
@@ -271,7 +271,7 @@ class DebugVisitor : ExpressionVisitor {
         return node;
     }
 
-    private static readonly Dictionary<ExpressionType, string> BinaryOpMap = new Dictionary<ExpressionType, string>() {
+    private static readonly Dictionary<ExpressionType, string> BinaryOpMap = new() {
         {ExpressionType.Add, "+"},
         {ExpressionType.Multiply, "*"},
         {ExpressionType.Subtract, "-"},

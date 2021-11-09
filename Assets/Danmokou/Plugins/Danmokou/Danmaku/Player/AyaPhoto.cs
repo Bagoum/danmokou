@@ -17,38 +17,34 @@ namespace Danmokou.Player {
 [Serializable]
 [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
 public class AyaPhoto {
-    public string Filename { get; set; } = null!;
+    public string? Filename { get; set; } = null;
     public float Angle { get; set; }
     public int PixelWidth { get; set; }
     public int PixelHeight { get; set; }
     public float ScreenWidth { get; set; }
     public float ScreenHeight { get; set; }
     public GraphicsFormat Format { get; set; }
-    public bool KeepAlive { get; set; }
     private Texture2D? tex = null;
     
     [JsonIgnore] [ProtoIgnore]
     private string FullFilename => $"{FileUtils.AYADIR}{Filename}.jpg";
     [JsonIgnore] [ProtoIgnore]
     public float PPU => PixelWidth / ScreenWidth;
-    
-    private static List<AyaPhoto> allPhotos = new List<AyaPhoto>();
 
-    public static void ClearTextures() {
-        allPhotos = allPhotos.Where(p => {
-            //Remove texture from memory
-            if (p.tex != null) Object.Destroy(p.tex);
-            //Destroy unsuccessful screenshots
-            if (!p.KeepAlive) FileUtils.Destroy(p.FullFilename);
-            return p.KeepAlive;
-        }).ToList();
-    }
     /// <summary>
     /// JSON constructor, do not use
     /// </summary>
     [Obsolete]
     private AyaPhoto() { }
-    public AyaPhoto(Texture2D photo, CRect rect) {
+
+    /// <summary>
+    /// Create a photo.
+    /// </summary>
+    /// <param name="photo">Texture information. Ownership of this texture is passed to this object.</param>
+    /// <param name="rect">Rect describing the capture location on the screen (16x9 resolution).</param>
+    /// <param name="saveToDisk">True if the image file should be saved to disk. Note that if false, this photo
+    ///  cannot be reloaded from serialization once destroyed.</param>
+    public AyaPhoto(Texture2D photo, CRect rect, bool saveToDisk) {
         Filename = $"{DateTime.Now.FileableTime()}-{RNG.RandStringOffFrame()}";
         PixelWidth = photo.width;
         PixelHeight = photo.height;
@@ -56,10 +52,19 @@ public class AyaPhoto {
         ScreenHeight = rect.halfH * 2;
         Angle = rect.angle;
         Format = photo.graphicsFormat;
-        KeepAlive = false;
-        FileUtils.WriteTex(FullFilename, photo);
         tex = photo;
-        allPhotos.Add(this);
+        //For debugging purposes, always write the texture if in editor
+#if !UNITY_EDITOR
+        if (saveToDisk)
+#endif
+            FileUtils.WriteTex(FullFilename, photo);
+        Events.SceneCleared.SubscribeOnce(_ => DisposeTex());
+    }
+
+    private void DisposeTex() {
+        if (tex != null)
+            Object.Destroy(tex);
+        tex = null;
     }
 
     public bool TryLoad(out Sprite? sprite) {

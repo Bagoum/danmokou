@@ -15,9 +15,9 @@ namespace Danmokou.Danmaku {
 
 [SuppressMessage("ReSharper", "CollectionNeverQueried.Global")]
 public class GenCtx : IDisposable {
-    public readonly Dictionary<string, float> fs = new Dictionary<string, float>();
-    public readonly Dictionary<string, Vector2> v2s = new Dictionary<string, Vector2>();
-    public static readonly GenCtx Empty = new GenCtx();
+    public readonly Dictionary<string, float> fs = new();
+    public readonly Dictionary<string, Vector2> v2s = new();
+    public static readonly GenCtx Empty = new();
     public float GetFloatOrThrow(string key) {
         if (TryGetFloat(key, out var f)) return f;
         else throw new Exception($"The GCX does not contain a float value {key}.");
@@ -31,11 +31,11 @@ public class GenCtx : IDisposable {
     }
 
     public IReadOnlyDictionary<string, Vector2> V2s => v2s;
-    public readonly Dictionary<string, Vector3> v3s = new Dictionary<string, Vector3>();
+    public readonly Dictionary<string, Vector3> v3s = new();
     public IReadOnlyDictionary<string, Vector3> V3s => v3s;
-    public readonly Dictionary<string, V2RV2> rv2s = new Dictionary<string, V2RV2>();
+    public readonly Dictionary<string, V2RV2> rv2s = new();
     public IReadOnlyDictionary<string, V2RV2> RV2s => rv2s;
-    public readonly List<(Reflector.ExType, string)> exposed = new List<(Reflector.ExType, string)>();
+    public readonly List<(Reflector.ExType, string)> exposed = new();
     /// <summary>
     /// Loop iteration
     /// </summary>
@@ -72,8 +72,8 @@ public class GenCtx : IDisposable {
     public Vector2 Loc => exec.GlobalPosition();
     public uint? idOverride = null;
     [UsedImplicitly]
-    public ParametricInfo AsBPI => new ParametricInfo(Loc, index, idOverride ?? exec.rBPI.id, i, fctx);
-    private static readonly Stack<GenCtx> cache = new Stack<GenCtx>();
+    public ParametricInfo AsBPI => new(Loc, index, idOverride ?? exec.rBPI.id, i, fctx);
+    private static readonly Stack<GenCtx> cache = new();
     private bool _isInCache = false;
 
     /*

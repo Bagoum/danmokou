@@ -35,156 +35,7 @@ public enum NodeState {
     Invisible
 }
 
-public class UIScreen {
-    protected UINode[] top;
-    public virtual UINode[] Top => top;
-    public UINode First => Top[0];
-    public UIScreen? calledBy { get; private set; }
-    public UINode? lastCaller { get; private set; }
-    public XMLMenu Container { get; }
 
-    public UINode GoToNested(UINode caller, UINode target) {
-        lastCaller = caller;
-        target.screen.calledBy = this;
-        target.screen.onEnter?.Invoke();
-        onExit?.Invoke();
-        return target;
-    }
-
-    public UINode StartingNode => lastCaller ?? top[0];
-    public UINode? ExitNode { get; set; }
-
-    public UINode? GoBack() {
-        if (calledBy?.StartingNode != null) {
-            onExit?.Invoke();
-            calledBy.onEnter?.Invoke();
-        }
-        return calledBy?.StartingNode;
-    }
-
-    public void RunPreExit() => onPreExit?.Invoke();
-    public void RunPreEnter() => onPreEnter?.Invoke();
-    public void RunPostEnter() => onPostEnter?.Invoke();
-
-    public UIScreen(XMLMenu container, params UINode?[] nodes) {
-        Container = container;
-        top = nodes.Where(x => x != null).ToArray()!;
-        foreach (var n in top) n.Siblings = top;
-        foreach (var n in ListAll()) n.screen = this;
-    }
-
-    public UINode[] AssignNewNodes(UINode[] nodes) {
-        top = nodes;
-        foreach (var l in Lists) l.Clear();
-        foreach (var n in top) n.Siblings = top;
-        foreach (var n in ListAll()) n.screen = this;
-        BuildChildren();
-        return top;
-    }
-
-    public UINode AddTopNode(UINode node) {
-        top = top.Append(node).ToArray();
-        foreach (var n in top) n.Siblings = top;
-        foreach (var n in ListAll()) n.screen = this;
-        BuildChild(node);
-        return node;
-    }
-
-    public IEnumerable<UINode> ListAll() => top.SelectMany(x => x.ListAll());
-    public bool HasNode(UINode x) => ListAll().Contains(x);
-
-    public void ResetStates() {
-        foreach (var n in ListAll()) n.state = NodeState.Invisible;
-    }
-
-    public void ApplyStates() {
-        foreach (var n in ListAll()) n.ApplyState();
-    }
-
-    public void ResetNodeProgress() {
-        foreach (var n in ListAll()) n.ResetProgress();
-    }
-
-    public VisualElement Bound { get; private set; } = null!;
-
-    private List<ScrollView>? _lists;
-    public List<ScrollView> Lists => _lists ??= Bound.Query<ScrollView>().ToList();
-    private Dictionary<Type, VisualTreeAsset> buildMap = null!;
-
-    public VisualElement Build(Dictionary<Type, VisualTreeAsset> map) {
-        buildMap = map;
-        Bound = (overrideBuilder == null ? map[typeof(UIScreen)] : overrideBuilder).CloneTree();
-        BuildChildren();
-        return Bound;
-    }
-    private void BuildChildren() => ListAll().ForEach(BuildChild);
-    public void BuildChild(UINode node) => node.Build(buildMap, Lists[node.Depth]);
-
-    private VisualTreeAsset? overrideBuilder;
-
-    public UIScreen With(VisualTreeAsset builder) {
-        overrideBuilder = builder;
-        return this;
-    }
-    
-    private Action? onPreExit;
-    /// <summary>
-    /// This is run on exit transition start
-    /// </summary>
-    public UIScreen OnPreExit(Action cb) {
-        onPreExit = cb;
-        return this;
-    }
-    private Action? onExit;
-    /// <summary>
-    /// This is run at exit transition midpoint
-    /// </summary>
-    public UIScreen OnExit(Action cb) {
-        onExit = cb;
-        return this;
-    }
-
-    private Action? onEnter;
-    /// <summary>
-    /// This is run at entry transition midpoint
-    /// </summary>
-    public UIScreen OnEnter(Action cb) {
-        onEnter = cb;
-        return this;
-    }
-    private Action? onPreEnter;
-    /// <summary>
-    /// This is run on entry transition start
-    /// </summary>
-    public UIScreen OnPreEnter(Action cb) {
-        onPreEnter = cb;
-        return this;
-    }
-    private Action? onPostEnter;
-    /// <summary>
-    /// This is run on entry transition end
-    /// </summary>
-    public UIScreen OnPostEnter(Action cb) {
-        onPostEnter = cb;
-        return this;
-    }
-}
-
-public class LazyUIScreen : UIScreen {
-    private readonly Func<UINode[]> loader;
-
-    public override UINode[] Top {
-        get {
-            if (top.Length == 0)
-                AssignNewNodes(loader());
-            return top;
-        }
-    }
-
-    public LazyUIScreen(XMLMenu container, Func<UINode[]> loader) : base(container) {
-        this.loader = loader;
-    }
-}
 
 public class UINode {
     public readonly UINode[] children;
@@ -228,9 +79,9 @@ public class UINode {
         screen.ApplyStates();
     }
 
-    private readonly List<string> overrideClasses = new List<string>();
-    private readonly List<Action<VisualElement>> onBind = new List<Action<VisualElement>>();
-    private readonly List<Action<NodeState, VisualElement>> overrideInline = new List<Action<NodeState, VisualElement>>();
+    private readonly List<string> overrideClasses = new();
+    private readonly List<Action<VisualElement>> onBind = new();
+    private readonly List<Action<NodeState, VisualElement>> overrideInline = new();
 
     public UINode With(params string?[] clss) {
         foreach (var cls in clss) {
@@ -280,8 +131,6 @@ public class UINode {
     }
 
     private bool confirmEnabled = true; //otherwise doesn't work with ReturnTo
-    
-    public virtual void ResetProgress() { }
 
     private Func<UINode>? _overrideRight;
     public UINode SetRightOverride(Func<UINode> overr) {
@@ -350,8 +199,8 @@ public class UINode {
     }
     public void OnVisit(UINode prev, bool animate) {
         if (animate) {
-            Tween.TweenTo(1f, 1.03f, 0.08f, f => boundNode.transform.scale = new Vector3(f, f, f), Easers.EOutSine)
-                .Then(Tween.TweenTo(1.03f, 1f, 0.12f,  f => boundNode.transform.scale = new Vector3(f, f, f)))
+            boundNode.transform.ScaleTo(1.03f, 0.1f, Easers.EOutSine)
+                .Then(() => boundNode.transform.ScaleTo(1f, 0.13f))
                 .Run(Container);
         }
         _onVisit?.Invoke(prev);
@@ -403,35 +252,35 @@ public class UINode {
         throw new Exception($"Couldn't resolve nodeState {s}");
     }
 
-    public VisualElement Bound => bound;
-    public VisualElement BoundN => boundNode;
     protected VisualElement bound = null!;
     protected VisualElement boundNode = null!;
-    private ScrollView scroll = null!;
+    private VisualElement htmlContainer = null!;
     private string[] boundClasses = new string[0];
     private Label? boundLabel;
     protected Label BoundLabel => boundLabel ??= bound.Q<Label>();
 
     public void ScrollTo() {
         boundNode.Focus();
-        scroll.ScrollTo(bound);
-        /*
-            boundNode.experimental.animation.Scale(1.04f, 120).Ease(M.EOutSine).OnCompleted(
-            () => boundNode.experimental.animation.Scale(1f, 120).Ease(M.EInSine).Start()
-        ).Start();*/
+        if (htmlContainer is ScrollView sv)
+            sv.ScrollTo(bound);
     }
 
     protected virtual void BindText() => BoundLabel.text = Description;
 
-    protected VisualElement BindScroll(ScrollView scroller) {
-        (scroll = scroller).Add(bound);
-        return bound;
+    private Func<VisualElement, VisualElement>? _buildWith;
+
+    public UINode BuildWith(Func<VisualElement, VisualElement> buildWith) {
+        _buildWith = buildWith;
+        return this;
     }
 
-    public VisualElement Build(Dictionary<Type, VisualTreeAsset> map, ScrollView scroller) {
+    public UINode BuildWith<T>() where T: VisualElement => BuildWith(h => h.Q<T>());
+
+    public VisualElement Build(Dictionary<Type, VisualTreeAsset> map, VisualElement htmlContainer_) {
         CloneTree(map);
         BindText();
-        return BindScroll(scroller);
+        (this.htmlContainer = _buildWith?.Invoke(htmlContainer_) ?? htmlContainer_).Add(bound);
+        return bound;
     }
 
     protected void CloneTree(Dictionary<Type, VisualTreeAsset> map) {
@@ -441,22 +290,23 @@ public class UINode {
             f(boundNode);
         boundClasses = boundNode.GetClasses().ToArray();
         if (!Passthrough) {
-            bound.RegisterCallback<MouseEnterEvent>(evt => {
-                //Log.Unity($"Enter {Description}");
+            boundNode.RegisterCallback<MouseEnterEvent>(evt => {
+                //Logs.Log($"Enter {Description}");
                 Container.QueuedEvent = (this, QueuedEvent.Goto);
                 evt.StopPropagation();
             });
-            bound.RegisterCallback<MouseUpEvent>(evt => {
-                //Log.Unity($"Click {Description}");
-                Container.QueuedEvent = (this, QueuedEvent.Confirm);
+            boundNode.RegisterCallback<MouseUpEvent>(evt => {
+                //Logs.Log($"Click {Description}");
+                //button 0, 1, 2 = left, right, middle click
+                Container.QueuedEvent = (this, evt.button == 1 ? QueuedEvent.Back : QueuedEvent.Confirm);
                 evt.StopPropagation();
             });
             if (this is IOptionNodeLR || this is IComplexOptionNodeLR) {
-                bound.Q("Left").RegisterCallback<MouseUpEvent>(evt => {
+                boundNode.Q("Left").RegisterCallback<MouseUpEvent>(evt => {
                     Container.QueuedEvent = (this, QueuedEvent.Left);
                     evt.StopPropagation();
                 });
-                bound.Q("Right").RegisterCallback<MouseUpEvent>(evt => {
+                boundNode.Q("Right").RegisterCallback<MouseUpEvent>(evt => {
                     Container.QueuedEvent = (this, QueuedEvent.Right);
                     evt.StopPropagation();
                 });
@@ -610,10 +460,6 @@ public class ConfirmFuncNode : FuncNode {
     }
     protected override void BindText() {
         BoundLabel.text = isConfirm ? LocalizedStrings.UI.are_you_sure : Description;
-    }
-    public override void ResetProgress() {
-        SetConfirm(false);
-        base.ResetProgress();
     }
 
     public override void OnLeave(UINode? nxt) {

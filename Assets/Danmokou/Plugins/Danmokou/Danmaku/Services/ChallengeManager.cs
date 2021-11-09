@@ -23,7 +23,7 @@ public interface IChallengeManager {
 }
 
 public class ChallengeManager : CoroutineRegularUpdater, IChallengeManager {
-    private readonly List<AyaPhoto> challengePhotos = new List<AyaPhoto>();
+    private readonly List<AyaPhoto> challengePhotos = new();
     public IEnumerable<AyaPhoto> ChallengePhotos => challengePhotos;
 
     private PhaseCompletion? completion = null;
@@ -64,7 +64,7 @@ public class ChallengeManager : CoroutineRegularUpdater, IChallengeManager {
 
 
     public class Restrictions {
-        public static readonly Restrictions Default = new Restrictions();
+        public static readonly Restrictions Default = new();
         public readonly bool HorizAllowed = true;
         public readonly bool VertAllowed = true;
 
@@ -91,7 +91,7 @@ public class ChallengeManager : CoroutineRegularUpdater, IChallengeManager {
         }
     }
 
-    public Restrictions Restriction { get; private set; } = new Restrictions();
+    public Restrictions Restriction { get; private set; } = new();
 
     public void SetupBossPhase(SMHandoff smh) {
         if (smh.Exec != Exec || tracking == null) return;

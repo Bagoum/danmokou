@@ -35,6 +35,14 @@ public class AyaPinnedPhoto : CoroutineRegularUpdater {
         float overscale = size / Mathf.Max(photo.ScreenHeight, photo.ScreenWidth);
         tr.localScale = new Vector3(overscale, overscale, overscale);
     }
+    
+    /// <summary>
+    /// Set the photo information and the locations for this photo display.
+    /// </summary>
+    /// <param name="photo">Photo information.</param>
+    /// <param name="source">Starting location of this photo display.</param>
+    /// <param name="targetLocation">Ending location for the photo display to move to.
+    /// If null, will "fall off" the screen and destroy itself.</param>
     public void Initialize(AyaPhoto photo, Vector2 source, Vector2? targetLocation) {
         if (InitializeAt(photo, source)) {
             RunDroppableRIEnumerator(targetLocation.Try(out var target) ?

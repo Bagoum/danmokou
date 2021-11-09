@@ -22,7 +22,7 @@ public class MiniTutorial : BehaviorEntity {
     public TextMeshPro text10 = null!;
     public Color prompt;
     public Color message;
-    private readonly Dictionary<TextMeshPro, Vector2> defaultLoc = new Dictionary<TextMeshPro, Vector2>();
+    private readonly Dictionary<TextMeshPro, Vector2> defaultLoc = new();
 
     protected override void Awake() {
         base.Awake();

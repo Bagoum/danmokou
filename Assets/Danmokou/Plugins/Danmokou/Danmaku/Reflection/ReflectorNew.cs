@@ -18,27 +18,11 @@ using ExBPRV2 = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions
 
 namespace Danmokou.Reflection {
 public static partial class Reflector {
-    public readonly struct NamedParam {
-        public readonly Type type;
-        public readonly string name;
-        public readonly bool lookupMethod;
-        public readonly bool nonExplicit;
-
-        public NamedParam(Type t, string n, bool lookupMethod, bool nonExplicit) {
-            type = t;
-            name = n;
-            this.lookupMethod = lookupMethod;
-            this.nonExplicit = nonExplicit;
-        }
-
-        public override string ToString() => $"\"{name}\" (type {type.RName()})";
-
+    public record NamedParam(Type type, string name, bool lookupMethod, bool nonExplicit) {
         public static implicit operator NamedParam(ParameterInfo pi) => 
-            new NamedParam(pi.ParameterType, pi.Name, 
+            new(pi.ParameterType, pi.Name, 
                 Attribute.GetCustomAttributes(pi).Any(x => x is LookupMethodAttribute),
                 Attribute.GetCustomAttributes(pi).Any(x => x is NonExplicitParameterAttribute));
-
-        public NamedParam WithType(Type t) => new NamedParam(t, name, lookupMethod, nonExplicit);
     }
     
     /// <summary>
@@ -70,8 +54,8 @@ public static partial class Reflector {
     /// <br/>The keys are of the form type(T->R).
     /// </summary>
     private static readonly Dictionary<Type, (HasMember has, TypeGet get, TryInvoke inv)> funcifiableTypes =
-        new Dictionary<Type, (HasMember, TypeGet, TryInvoke)>();
-    private static readonly HashSet<Type> funcifiableReturnTypes = new HashSet<Type>();
+        new();
+    private static readonly HashSet<Type> funcifiableReturnTypes = new();
 
     private static void AllowFuncification<ExR>() {
         funcifiableTypes[typeof(Func<TExArgCtx, ExR>)] = (ReflectionData.HasMember<ExR>,
@@ -91,7 +75,7 @@ public static partial class Reflector {
     }
 
     private static readonly Dictionary<Type, Func<string, object>> letFuncs =
-        new Dictionary<Type, Func<string, object>>() {
+        new() {
             {typeof(ExBPY), ReflectEx.ReferenceLet<float>},
             {typeof(ExTP), ReflectEx.ReferenceLet<Vector2>},
             {typeof(ExTP3), ReflectEx.ReferenceLet<Vector3>},
@@ -141,9 +125,9 @@ public static partial class Reflector {
 
 
     private static readonly Dictionary<Type, (Type source, MethodInfo mi)> CompileOptions =
-        new Dictionary<Type, (Type, MethodInfo)>();
-    private static readonly HashSet<Type> checkedCompileOptions = new HashSet<Type>();
-    private static readonly List<MethodInfo> genericCompileOptions = new List<MethodInfo>();
+        new();
+    private static readonly HashSet<Type> checkedCompileOptions = new();
+    private static readonly List<MethodInfo> genericCompileOptions = new();
 
     private static void AddCompileOption(MethodInfo compiler) {
         if (compiler.IsGenericMethodDefinition)
@@ -175,7 +159,7 @@ public static partial class Reflector {
     }
     
     private static readonly Dictionary<Type, (FallthroughAttribute fa, MethodInfo mi)> FallThroughOptions =
-        new Dictionary<Type, (FallthroughAttribute, MethodInfo)>();
+        new();
 
 }
 }

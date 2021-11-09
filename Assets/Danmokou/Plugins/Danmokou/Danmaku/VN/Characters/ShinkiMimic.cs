@@ -8,8 +8,8 @@ using UnityEngine;
 
 namespace Danmokou.VN {
 public class Shinki : SZYUCharacter {
-    public override Color TextColor => new Color(0.92f, 0.78f, 0.95f);
-    public override Color UIColor => new Color(.6f, .4f, .3f);
+    public override Color TextColor => new(0.92f, 0.78f, 0.95f);
+    public override Color UIColor => new(.6f, .4f, .3f);
     public override string Name => LocalizedStrings.FindReference("dialogue.shinki");
     
     public override void RollEvent() => ServiceLocator.SFXService.Request("x-bubble-2", SFXType.TypingSound);

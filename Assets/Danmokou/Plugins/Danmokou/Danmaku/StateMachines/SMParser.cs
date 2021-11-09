@@ -67,7 +67,7 @@ public static class SMParser {
             this.unformatted = unformatted;
         }
 
-        public static Macro Create(string name, List<MacroArg> prms, LPU unformatted) => new Macro(
+        public static Macro Create(string name, List<MacroArg> prms, LPU unformatted) => new(
             name, prms.Count, prms.Select((x, i) => (x.name, i)).ToDict(), prms.Select(x => x.deflt).ToArray(),
             new LPU(unformatted.unit.CutTrailingNewline(), unformatted.location));
 
@@ -188,21 +188,21 @@ public static class SMParser {
             this.nestVal = nestVal!;
         }
 
-        public static ParseUnit Atom(string x) => new ParseUnit(Type.Atom, x);
-        public static ParseUnit Quote(string x) => new ParseUnit(Type.Quote, x);
-        public static ParseUnit MacroVar(string x) => new ParseUnit(Type.MacroVar, x);
-        public static ParseUnit MacroDef(string x) => new ParseUnit(Type.MacroDef, x);
-        public static ParseUnit LambdaMacroParam() => new ParseUnit(Type.LambdaMacroParam);
-        public static readonly ParseUnit Newline = new ParseUnit(Type.Newline);
-        public static ParseUnit End() => new ParseUnit(Type.End);
+        public static ParseUnit Atom(string x) => new(Type.Atom, x);
+        public static ParseUnit Quote(string x) => new(Type.Quote, x);
+        public static ParseUnit MacroVar(string x) => new(Type.MacroVar, x);
+        public static ParseUnit MacroDef(string x) => new(Type.MacroDef, x);
+        public static ParseUnit LambdaMacroParam() => new(Type.LambdaMacroParam);
+        public static readonly ParseUnit Newline = new(Type.Newline);
+        public static ParseUnit End() => new(Type.End);
         public static ParseUnit PartialMacroInvoke(Macro m, List<LPU> lpus) =>
-            new ParseUnit(Type.PartialMacroInvoke, partialMacroInvoke: (m, lpus));
+            new(Type.PartialMacroInvoke, partialMacroInvoke: (m, lpus));
         public static ParseUnit MacroReinvoke(string m, List<LPU> lpus) =>
-            new ParseUnit(Type.MacroReinvoke,  macroReinvoke: (m, lpus));
-        public static ParseUnit Paren(List<LPU> lpus) => new ParseUnit(Type.Paren, nestVal: lpus);
-        public static ParseUnit Words(List<LPU> lpus) => new ParseUnit(Type.Words, nestVal: lpus);
-        public static ParseUnit NoSpaceWords(List<LPU> lpus) => new ParseUnit(Type.NoSpaceWords, nestVal: lpus);
-        public static ParseUnit Postfix(List<LPU> lpus) => new ParseUnit(Type.Postfix, nestVal: lpus);
+            new(Type.MacroReinvoke,  macroReinvoke: (m, lpus));
+        public static ParseUnit Paren(List<LPU> lpus) => new(Type.Paren, nestVal: lpus);
+        public static ParseUnit Words(List<LPU> lpus) => new(Type.Words, nestVal: lpus);
+        public static ParseUnit NoSpaceWords(List<LPU> lpus) => new(Type.NoSpaceWords, nestVal: lpus);
+        public static ParseUnit Postfix(List<LPU> lpus) => new(Type.Postfix, nestVal: lpus);
 
         public static ParseUnit Nest(List<LPU> lpus) => lpus.Count == 1 ? lpus[0].unit : Words(lpus);
 
@@ -257,7 +257,7 @@ public static class SMParser {
         }
     }
 
-    private static HashSet<char> notSimpleChars = new HashSet<char>() {
+    private static HashSet<char> notSimpleChars = new() {
         COMMENT, MACRO_INVOKE, MACRO_VAR, '!',
         OPEN_ARG, CLOSE_ARG, ARG_SEP, OPEN_PF, CLOSE_PF, QUOTE
     };
@@ -448,7 +448,7 @@ public static class SMParser {
         }
     }
 
-    private static readonly Dictionary<string, string[]> Replacements = new Dictionary<string, string[]>() {
+    private static readonly Dictionary<string, string[]> Replacements = new() {
         {"{{", new[] {"{", "{"}},
         {"}}", new[] {"}", "}"}}
     };

@@ -32,7 +32,7 @@ public partial class BulletManager {
     private static readonly int timePropertyId = Shader.PropertyToID("timeBuffer");
     private static readonly int recolorBPropertyId = Shader.PropertyToID("recolorBBuffer");
     private static readonly int recolorWPropertyId = Shader.PropertyToID("recolorWBuffer");
-    private static readonly Bounds drawBounds = new Bounds(Vector3.zero, Vector3.one * 1000f);
+    private static readonly Bounds drawBounds = new(Vector3.zero, Vector3.one * 1000f);
     private readonly Vector4[] posDirArr = new Vector4[batchSize];
     private readonly Vector4[] tintArr = new Vector4[batchSize];
     private readonly Vector4[] recolorBArr = new Vector4[batchSize];
@@ -126,8 +126,8 @@ public partial class BulletManager {
         public abstract BehaviorEntity GetINodeAt(int sbcind, string behName);
         public abstract string Style { get; }
         
-        protected readonly DMCompactingArray<BulletControl> controls = new DMCompactingArray<BulletControl>(4);
-        private readonly DMCompactingArray<BulletControl> onCollideControls = new DMCompactingArray<BulletControl>(2);
+        protected readonly DMCompactingArray<BulletControl> controls = new(4);
+        private readonly DMCompactingArray<BulletControl> onCollideControls = new(2);
 
         protected AbsSimpleBulletCollection() : base(1, 128) { }
         
@@ -248,7 +248,7 @@ public partial class BulletManager {
             DeleteSB(ii);
         }
 
-        protected virtual void MakeCulledCopy(int ii) {
+        public virtual void MakeCulledCopy(int ii) {
             throw new Exception($"SBC {Style} is not enabled for softculling");
         }
 
@@ -276,7 +276,7 @@ public partial class BulletManager {
         public override string Style => BC.name;
         public override BulletInCode BC { get; }
         public int temp_last;
-        private static readonly CollisionResult noColl = new CollisionResult(false, false);
+        private static readonly CollisionResult noColl = new(false, false);
         /// <summary>
         /// Copied pools have this set
         /// </summary>
@@ -323,7 +323,7 @@ public partial class BulletManager {
         }
 
         public BulletInCode CopyBC(string newPool) => BC.Copy(newPool);
-        public SimpleBulletCollection CopySimplePool(List<SimpleBulletCollection> target, string newPool) => new SimpleBulletCollection(target, BC.Copy(newPool));
+        public SimpleBulletCollection CopySimplePool(List<SimpleBulletCollection> target, string newPool) => new(target, BC.Copy(newPool));
         public SimpleBulletCollection CopyPool(List<SimpleBulletCollection> target, string newPool) => GetCollectionForColliderType(target, BC.Copy(newPool));
 
         public MeshGenerator.RenderInfo GetOrLoadRI() => BC.GetOrLoadRI();
@@ -351,7 +351,7 @@ public partial class BulletManager {
         
         public new void Add(ref SimpleBullet sb) => throw new Exception("Do not use SBC.Add");
         
-        protected override void MakeCulledCopy(int ii) {
+        public override void MakeCulledCopy(int ii) {
             Culled.AddCulled(ref Data[ii]);
         }
 
@@ -662,7 +662,7 @@ public partial class BulletManager {
             fade = BC.FadeOut;
         }
         
-        protected  override void MakeCulledCopy(int ii) {
+        public override void MakeCulledCopy(int ii) {
             throw new Exception($"Culled SBCs are not enabled for softculling");
         }
 
@@ -715,7 +715,7 @@ public partial class BulletManager {
             this.rotR = rotR / 2f;
         }
         
-        protected  override void MakeCulledCopy(int ii) {
+        public override void MakeCulledCopy(int ii) {
             throw new Exception("Softcull SBCs are not enabled for softculling");
         }
 

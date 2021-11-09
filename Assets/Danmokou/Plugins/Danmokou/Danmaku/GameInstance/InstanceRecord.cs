@@ -20,7 +20,7 @@ namespace Danmokou.GameInstance {
 [Serializable]
 [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
 public class CardHistory {
-    public Dictionary<string, List<CardRecord>> record = new Dictionary<string, List<CardRecord>>();
+    public Dictionary<string, List<CardRecord>> record = new();
 
     public CardHistory() { }
     public CardHistory(CardHistory copy) {
@@ -58,7 +58,7 @@ public struct CardRecord {
     [JsonIgnore] [ProtoIgnore] 
     public bool Captured => stars >= 2;
     [JsonIgnore] [ProtoIgnore]
-    public BossPracticeRequestKey Key => new BossPracticeRequestKey() {
+    public BossPracticeRequestKey Key => new() {
         Campaign = campaign,
         Boss = boss,
         PhaseIndex = phase
@@ -70,7 +70,7 @@ public struct CardRecord {
 [Serializable]
 [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
 public class InstanceRecord {
-    public SharedInstanceMetadata.Saveable SavedMetadata { get; set; }
+    public SharedInstanceMetadata.Saveable SavedMetadata { get; init; }
 
     [JsonIgnore] [ProtoIgnore] 
     private SharedInstanceMetadata? _lazySharedInstanceMeta = null;
@@ -79,36 +79,36 @@ public class InstanceRecord {
         _lazySharedInstanceMeta ??= new SharedInstanceMetadata(SavedMetadata);
 
     [JsonIgnore] [ProtoIgnore] public DifficultySettings Difficulty => SavedMetadata.difficulty;
-    public InstanceMode Mode { get; set; }
+    public InstanceMode Mode { get; init; }
     [JsonIgnore] [ProtoIgnore] public bool IsCampaign => Mode == InstanceMode.CAMPAIGN;
     [JsonIgnore] [ProtoIgnore] public bool IsAtleastNormalCampaign => IsCampaign && Difficulty.standard >= FixedDifficulty.Normal;
     
-    public string Campaign { get; set; }
-    public ILowInstanceRequestKey RequestKey { get; set; }
+    public string Campaign { get; init; }
+    public LowInstanceRequestKey RequestKey { get; init; }
 
-    public int Seed { get; set; }
-    public string Uuid { get; set; }
+    public int Seed { get; init; }
+    public string Uuid { get; init; }
     public string CustomName { get; set; }
     [JsonIgnore] [ProtoIgnore]
     public string CustomNameOrPartial => string.IsNullOrEmpty(CustomName) ?
         (Completed ? "" : "[PARTIAL]") :
         CustomName;
 
-    public DateTime Date { get; set; }
+    public DateTime Date { get; init; }
     public long Score { get; set; }
 
-    public Version EngineVersion { get; set; }
-    public Version GameVersion { get; set; }
-    public string GameIdentifier { get; set; }
+    public Version EngineVersion { get; init; }
+    public Version GameVersion { get; init; }
+    public string GameIdentifier { get; init; }
 
-    public CardHistory CardHistory { get; set; } = new CardHistory();
+    public CardHistory CardHistory { get; set; } = new();
     public int ContinuesUsed { get; set; }
     [JsonIgnore] [ProtoIgnore] public bool OneCreditClear => Completed && ContinuesUsed == 0;
-    public bool Completed { get; set; }
+    public bool Completed { get; init; }
     
-    public AyaPhoto[] Photos { get; set; } = new AyaPhoto[0];
+    public AyaPhoto[] Photos { get; init; } = new AyaPhoto[0];
 
-    public string? Ending { get; set; } = null;
+    public string? Ending { get; init; } = null;
     
     //Miscellaneous stats
     public int HitsTaken { get; set; }

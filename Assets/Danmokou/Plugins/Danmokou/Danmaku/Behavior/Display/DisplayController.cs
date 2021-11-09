@@ -89,7 +89,7 @@ public abstract class DisplayController : MonoBehaviour {
         pb.SetFloat(PropConsts.time, time);
     }
 
-    protected virtual Vector3 GetScale => new Vector3(1, 1, 1);
+    protected virtual Vector3 GetScale => new(1, 1, 1);
 
     private void SetTransform() {
         Vector3 scale = GetScale;

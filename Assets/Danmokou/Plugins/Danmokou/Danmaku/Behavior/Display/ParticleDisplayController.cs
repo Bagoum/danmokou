@@ -47,7 +47,7 @@ public class ParticleDisplayController : DisplayController {
     }
 
     public override MaterialPropertyBlock CreatePB() {
-        return new MaterialPropertyBlock();
+        return new();
     }
 }
 }

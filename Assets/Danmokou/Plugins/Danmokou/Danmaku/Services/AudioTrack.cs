@@ -34,11 +34,11 @@ public interface IRunningAudioTrack {
 
 public abstract class BaseRunningAudioTrack : IRunningAudioTrack {
     public IAudioTrackInfo Track { get; }
-    public Cancellable LifetimeToken { get; } = new Cancellable();
+    public Cancellable LifetimeToken { get; } = new();
     public ICancellee Active { get; }
 
     protected readonly AudioTrackService host;
-    protected readonly List<IDisposable> tokens = new List<IDisposable>();
+    protected readonly List<IDisposable> tokens = new();
     protected DisturbedProduct<float> Src1Volume { get; }
     protected AudioSource currSrc;
 
@@ -140,8 +140,8 @@ public class TimedLoopRAT : BaseRunningAudioTrack {
     private const float xfadeTime = 0.3f;
     private const float xfadeOverlap = 0.2f;
     //Two sources are necessary to smoothly loop by crossfading the track into itself.
-    private PushLerper<float> currSrcFadeVol = new PushLerper<float>(xfadeTime, Mathf.Lerp);
-    private PushLerper<float> nextSrcFadeVol = new PushLerper<float>(xfadeTime, Mathf.Lerp);
+    private PushLerper<float> currSrcFadeVol = new(xfadeTime, Mathf.Lerp);
+    private PushLerper<float> nextSrcFadeVol = new(xfadeTime, Mathf.Lerp);
     private DisturbedProduct<float> Src2Volume { get; }
     private AudioSource nextSrc;
 

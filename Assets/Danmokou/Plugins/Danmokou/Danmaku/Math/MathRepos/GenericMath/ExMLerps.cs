@@ -70,7 +70,8 @@ public static class ExMLerps {
     /// <summary>
     /// Lerp between two functions with 0-1 as the bounds for the controller.
     /// </summary>
-    public static TEx<T> Lerp01<T>(efloat controller, TEx<T> f1, TEx<T> f2) => Lerp(E0, E1, controller, f1, f2);
+    public static TEx<T> Lerp01<T>(tfloat controller, TEx<T> f1, TEx<T> f2) =>
+        EEx.Resolve<float>(Clamp01(controller), c => c.Mul(f2).Add(((Ex)c).Complement().Mul(f1)));
     /// <summary>
     /// Lerp between two functions with smoothing applied to the controller.
     /// </summary>
@@ -101,6 +102,12 @@ public static class ExMLerps {
                 rc.Mul(f2).Add(rc.Complement().Mul(f1))
             );
         });
+    
+    /// <summary>
+    /// Lerp between two functions with 0-1 as the bounds for the controller. The controller is not clamped.
+    /// </summary>
+    public static TEx<T> Lerp01U<T>(efloat controller, TEx<T> f1, TEx<T> f2) =>
+        EEx.Resolve(controller, c => c.Mul(f2).Add(((Ex)c).Complement().Mul(f1)));
     
     /// <summary>
     /// Lerp between three functions.
@@ -399,23 +406,29 @@ public static class ExMLerps {
     /// <param name="time2">Time of first control point</param>
     /// <param name="prog2">Progression of first control point</param>
     /// <param name="time">0-1 lerp controller (automatically clamped)</param>
-    public static ExBPY CubicBezier(ExBPY time1, ExBPY prog1, ExBPY time2, ExBPY prog2, ExBPY time) => b => {
+    public static ExBPY CubicBezier(ExBPY time1, ExBPY prog1, ExBPY time2, ExBPY prog2, ExBPY time) => tac => {
         var f = new FlattenVisitor(false, true);
-        if (!f.Visit(time1(b)).TryAsConst(out float t1))
+        if (!f.Visit(time1(tac)).TryAsConst(out float t1))
             throw new Exception("CubicBezier argument time1 is not a constant.");
-        if (!f.Visit(prog1(b)).TryAsConst(out float p1))
+        if (!f.Visit(prog1(tac)).TryAsConst(out float p1))
             throw new Exception("CubicBezier argument prog1 is not a constant.");
-        if (!f.Visit(time2(b)).TryAsConst(out float t2))
+        if (!f.Visit(time2(tac)).TryAsConst(out float t2))
             throw new Exception("CubicBezier argument time2 is not a constant.");
-        if (!f.Visit(prog2(b)).TryAsConst(out float p2))
+        if (!f.Visit(prog2(tac)).TryAsConst(out float p2))
             throw new Exception("CubicBezier argument prog2 is not a constant.");
         var easer = BagoumLib.Mathematics.Bezier.CBezier(t1, p1, t2, p2);
-        return new ExFunction(easer.GetType().GetMethod("Invoke")!).InstanceOf(Ex.Constant(easer), Clamp01(time(b)));
+#if EXBAKE_SAVE
+        tac.Ctx.ProxyTypes.Add(easer.GetType());
+        tac.Ctx.HoistedReplacements[Ex.Constant(easer)] = Ex.Variable(easer.GetType(), tac.Ctx.NextProxyArg());  
+#elif EXBAKE_LOAD
+        tac.Ctx.ProxyArguments.Add(easer);
+#endif
+        return new ExFunction(easer.GetType().GetMethod("Invoke")!).InstanceOf(Ex.Constant(easer), Clamp01(time(tac)));
     };
 
     public static Func<TExArgCtx, TEx<T>> CubicBezierLerp<T>(ExBPY time1, ExBPY prog1, ExBPY time2, ExBPY prog2,
         ExBPY time, Func<TExArgCtx, TEx<T>> f1, Func<TExArgCtx, TEx<T>> f2) => b =>
-        LerpU(E0, E1, CubicBezier(time1, prog1, time2, prog2, time)(b), f1(b), f2(b));
+        Lerp01U(CubicBezier(time1, prog1, time2, prog2, time)(b), f1(b), f2(b));
 
 }
 }

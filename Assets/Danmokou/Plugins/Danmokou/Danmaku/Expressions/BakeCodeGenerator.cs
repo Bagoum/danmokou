@@ -78,13 +78,9 @@ using Danmokou.SM;
 #pragma warning disable 219";
         private const string footer = "//#endif";
         // ReSharper disable once CollectionNeverQueried.Local
-        private List<ExportedFile> GeneratedFiles { get; } = new List<ExportedFile>();
-        //Consider the function Force: VTP -> SBCF. We need to hoist the passed VTP
-        // by matching it with the function that was exported when it was created.
-        //The values in this dict are of the form `GeneratedExpressions_CG.Into4394950494_3()`.
-        public Dictionary<object, string> ObjectToFunctionHoister { get; } = new Dictionary<object, string>();
-        private HashSet<string> OpenedFileKeys { get; } = new HashSet<string>();
-        public Stack<FileContext> OpenContexts { get; } = new Stack<FileContext>();
+        private List<ExportedFile> GeneratedFiles { get; } = new();
+        private HashSet<string> OpenedFileKeys { get; } = new();
+        public Stack<FileContext> OpenContexts { get; } = new();
         public FileContext? CurrentFile => OpenContexts.TryPeek();
         public FileContext.Baker? CurrentBake => CurrentFile == null ? null :
             (CurrentFile is FileContext.Baker fbc) ? fbc :
@@ -107,11 +103,6 @@ using Danmokou.SM;
             return fileCtx;
         }
 
-        private void SetResult(string fnName, object? result) {
-            if (result != null)
-                ObjectToFunctionHoister[result] = $"{clsName}.{fnName}()";
-        }
-        
         private void DisposeBake(FileContext.Baker fbc) {
             if (fbc != CurrentFile) throw new Exception("Tried to dispose the wrong FileBakeContext");
             if (fbc == null) throw new Exception("Dispose FileBakeContext should not be null");
@@ -229,7 +220,7 @@ internal static partial class {clsName} {{
             public class Baker : FileContext {
                 public bool DoNotExport { get; set; } = false;
                 public ITypePrinter TypePrinter { get; set; } = new CSharpTypePrinter();
-                private List<(string text, string fnName, Type returnType, (Type typ, string argName)[] argDefs)> GeneratedFunctions { get; } = new List<(string, string, Type, (Type, string)[])>();
+                private List<(string text, string fnName, Type returnType, (Type typ, string argName)[] argDefs)> GeneratedFunctions { get; } = new();
 
                 public Baker(CookingContext parent, KeyType keyType, object key) : base(parent, keyType, key) { }
                 public ExportedFile? Export() => (DoNotExport || GeneratedFunctions.Count == 0) ?
@@ -249,11 +240,9 @@ private static {TypePrinter.Print(f.returnType)} {f.fnName}({string.Join(", ",
 
                 private string MakeFuncName(string prefix, int index) => $"{prefix}_{index}";
 
-                public void Add<D>(string fnText, D result, (Type, string)[] argDefs) {
+                public void Add<D>(string fnText, (Type, string)[] argDefs) {
                     var name = MakeFuncName(FileIdentifier, GeneratedFunctions.Count);
                     GeneratedFunctions.Add((fnText, name, typeof(D), argDefs));
-                    if (!DoNotExport)
-                        parent.SetResult(name, result);
                 }
 
                 public override void Dispose() {
@@ -297,7 +286,7 @@ private static {TypePrinter.Print(f.returnType)} {f.fnName}({string.Join(", ",
     }
 
 
-    public static CookingContext Cook { get; } = new CookingContext();
+    public static CookingContext Cook { get; } = new();
 
 
     public static IDisposable? OpenContext(CookingContext.KeyType type, string identifier) =>
@@ -309,7 +298,7 @@ private static {TypePrinter.Print(f.returnType)} {f.fnName}({string.Join(", ",
 
 
     private static readonly Dictionary<object, Expression> DefaultObjectReplacements =
-        new Dictionary<object, Expression>() {
+        new() {
             {ExMHelpers.LookupTable, ExMHelpers.exLookupTable}
         };
 
@@ -329,11 +318,6 @@ private static {TypePrinter.Print(f.returnType)} {f.fnName}({string.Join(", ",
                 tac.Ctx.HoistedVariables.Add(FormattableString.Invariant(
                     $"var {key_name} = BehaviorEntity.GetPointerForID(\"{p.id}\");"));
                 return dct[obj] = Ex.Variable(typeof(BEHPointer), key_name);
-            } else if (baker.ObjectToFunctionHoister.TryGetValue(obj, out var fn)) {
-                var key_name = tac.Ctx.NameWithSuffix("reflected");
-                tac.Ctx.HoistedVariables.Add(FormattableString.Invariant(
-                    $"var {key_name} = {fn};"));
-                return Ex.Variable(obj.GetType(), key_name);
             } else
                 return Ex.Constant(obj);
         };
@@ -368,9 +352,8 @@ private static {TypePrinter.Print(f.returnType)} {f.fnName}({string.Join(", ",
         sb.Append("return ");
         sb.Append(printer.Print(rex));
         sb.AppendLine(";");
-        (Cook.CurrentBake ?? 
-         throw new Exception("An expression was compiled with no active bake")
-            ).Add(sb.ToString(), result, tac.Ctx.ProxyTypes.Select(t => (t, tac.Ctx.NextProxyArg())).ToArray());
+        (Cook.CurrentBake ?? throw new Exception("An expression was compiled with no active bake"))
+            .Add<D>(sb.ToString(), tac.Ctx.ProxyTypes.Select(t => (t, tac.Ctx.NextProxyArg())).ToArray());
 #endif
         return result;
     }

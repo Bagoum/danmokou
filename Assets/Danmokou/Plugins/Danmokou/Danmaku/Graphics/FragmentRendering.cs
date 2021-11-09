@@ -79,8 +79,8 @@ public static class FragmentRendering {
         public readonly Fragment[] fragments;
         public readonly MaterialPropertyBlock pb;
         private readonly Action? cb;
-        private readonly Vector2 xBounds = new Vector2(-9, 9);
-        private readonly Vector2 yBounds = new Vector2(-7, 7);
+        private readonly Vector2 xBounds = new(-9, 9);
+        private readonly Vector2 yBounds = new(-7, 7);
         public readonly int layer;
         public readonly int layerMask;
         private readonly float? aliveFor;
@@ -165,7 +165,7 @@ public static class FragmentRendering {
     }
     
     
-    private static readonly Bounds drawBounds = new Bounds(Vector3.zero, Vector3.one * 1000f);
+    private static readonly Bounds drawBounds = new(Vector3.zero, Vector3.one * 1000f);
     private static readonly int uvPropertyId = Shader.PropertyToID("uvRBuffer");
     private static readonly Vector4[] uvArr = new Vector4[batchSize];
     private static readonly Matrix4x4[] matArr = new Matrix4x4[batchSize];

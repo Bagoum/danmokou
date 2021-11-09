@@ -16,7 +16,7 @@ public abstract class Pooled : CoroutineRegularUpdater {
     protected bool parented;
     protected Transform tr = null!;
     protected abstract Transform Container { get; }
-    private readonly List<Pooled> dependents = new List<Pooled>();
+    private readonly List<Pooled> dependents = new();
     private Pooled? parent;
 
     protected virtual void Awake() {
@@ -107,7 +107,7 @@ public abstract class Pooled<P> : Pooled where P : class {
     public virtual bool ShowUnderContainer => true;
 
     private static void CreateParticleContainer() {
-        GameObject go = new GameObject {
+        GameObject go = new() {
             name = $"{typeof(P).Name} Pool Container"
         };
         container = go.transform;

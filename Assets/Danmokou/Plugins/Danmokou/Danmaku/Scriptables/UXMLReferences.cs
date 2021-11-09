@@ -14,7 +14,7 @@ public class UXMLReferences : ScriptableObject {
     public VisualTreeAsset ComplexOptionLRNode = null!;
 
 
-    public Dictionary<Type, VisualTreeAsset> TypeMap => new Dictionary<Type, VisualTreeAsset>() {
+    public Dictionary<Type, VisualTreeAsset> TypeMap => new() {
         {typeof(UIScreen), UIScreen},
         {typeof(UINode), UINode},
         {typeof(TwoLabelUINode), TwoTextUINode},

@@ -12,7 +12,7 @@ public static class GeneratedExpressions {
 
 internal static partial class GeneratedExpressions_CG {
     public static readonly Dictionary<string, List<object>> _allDataMap =
-        new Dictionary<string, List<object>>();
+        new();
     
 }
 }

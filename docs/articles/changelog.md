@@ -18,6 +18,11 @@ The following features are planned by v9, which will probably be completed somet
 - Full-featured implementation of Suzunoya
   - **The classes for DialogueProfile will be deleted in v9, so make sure you port any custom dialogue profiles to Suzunoya entities by then.**
 
+# v8.1.0 (2021/11/14)
+
+- **Breaking changes:**
+  - Please upgrade Unity to **2021.2**. Note that if you have custom UIToolkit handling, you may need to run Window > UIToolkit > Package Asset Converter > "I want my assets to function without the UI Toolkit package installed". This upgrade makes UIToolkit much more resilient and also allows some new CSS features that are used in the updated UI.
+
 # v8.0.0 (2021/10/31)
 
 - **Breaking changes:**

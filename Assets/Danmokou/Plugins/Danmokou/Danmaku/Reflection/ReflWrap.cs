@@ -6,7 +6,7 @@ using JetBrains.Annotations;
 
 namespace Danmokou.Reflection {
 public abstract class ReflWrap {
-    private static readonly List<ReflWrap> wrappers = new List<ReflWrap>();
+    private static readonly List<ReflWrap> wrappers = new();
 
     protected ReflWrap() {
         wrappers.Add(this);
@@ -43,7 +43,7 @@ public class ReflWrap<T> : ReflWrap where T : class {
     public ReflWrap(string intosrc) : this(intosrc.Into<T>) { }
     
     public static ReflWrap<T> FromFunc(string uniqueKey, Func<T> constructor) => 
-        new ReflWrap<T>(() => {
+        new(() => {
             using var _ = BakeCodeGenerator.OpenContext(BakeCodeGenerator.CookingContext.KeyType.MANUAL, uniqueKey);
             return constructor();
         });
@@ -58,7 +58,7 @@ public class ReflWrap<T> : ReflWrap where T : class {
 
     public static implicit operator T(ReflWrap<T> wrap) => wrap.Value;
 
-    private static readonly Dictionary<string, ReflWrap<T>> autoWrapped = new Dictionary<string, ReflWrap<T>>();
+    private static readonly Dictionary<string, ReflWrap<T>> autoWrapped = new();
 
     /// <summary>
     /// Use for small objects that may be repeatedly recreated, such as FireOption offsets/etc.

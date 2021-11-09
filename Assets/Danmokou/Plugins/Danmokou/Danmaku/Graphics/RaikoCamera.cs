@@ -60,7 +60,7 @@ public class RaikoCamera : RegularUpdater, IRaiko {
         }
     }
 
-    private readonly DMCompactingArray<ShakeInProgress> shakers = new DMCompactingArray<ShakeInProgress>();
+    private readonly DMCompactingArray<ShakeInProgress> shakers = new();
     public override void RegularUpdate() {
         Vector3 totalQuake = Vector3.zero;
         for (int ii = 0; ii < shakers.Count; ++ii) {
