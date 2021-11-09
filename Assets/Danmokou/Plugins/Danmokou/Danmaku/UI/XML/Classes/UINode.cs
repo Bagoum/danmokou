@@ -10,6 +10,7 @@ using Danmokou.DMath;
 using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.UIElements;
+using static Danmokou.UI.XML.XMLUtils;
 
 namespace Danmokou.UI.XML {
 public enum NodeState {
@@ -34,8 +35,6 @@ public enum NodeState {
     /// </summary>
     Invisible
 }
-
-
 
 public class UINode {
     public readonly UINode[] children;
@@ -95,16 +94,10 @@ public class UINode {
             onBind.Add(func);
         return this;
     }
-    public UINode With(Action<VisualElement>? func) {
-        if (func != null) overrideInline.Add((_, x) => func(x));
-        return this;
-    }
     public UINode With(Action<NodeState, VisualElement>? func) {
         if (func != null) overrideInline.Add(func);
         return this;
     }
-
-    private const string disabledClass = "disabled";
 
     private Func<bool>? enableCheck;
     public UINode EnabledIf(Func<bool> s) {
@@ -232,8 +225,6 @@ public class UINode {
     public (bool success, UINode? target) Confirm_DontNest() =>
         confirmEnabled ? _Confirm() : (false, this);
 
-    protected const string NodeClass = "node";
-
     private Func<bool?>? _visible;
 
     public UINode VisibleIf(Func<bool?> visible) {
@@ -285,7 +276,7 @@ public class UINode {
 
     protected void CloneTree(Dictionary<Type, VisualTreeAsset> map) {
         bound = (overrideBuilder == null ? map.SearchByType(this, true) : overrideBuilder).CloneTree();
-        boundNode = bound.Q<VisualElement>(null!, NodeClass);
+        boundNode = bound.Q<VisualElement>(null!, nodeClass);
         foreach (var f in onBind)
             f(boundNode);
         boundClasses = boundNode.GetClasses().ToArray();
@@ -357,7 +348,6 @@ public class TwoLabelUINode : UINode {
     public TwoLabelUINode(LString desc1, Func<LString> desc2, params UINode[] children) :
         base(desc1, children) {
         this.desc2 = desc2;
-
     }
 
     protected override void BindText() {
@@ -434,12 +424,6 @@ public class FuncNode : UINode {
         return true;
     }, description, returnSelf, children) { }
 
-    public FuncNode(Action target, LString description, UINode next, params UINode[] children) : this(() => {
-        target();
-        return true;
-    }, description, true, children) {
-        this.next = next;
-    }
 
     protected override (bool success, UINode? target) _Confirm() => (target(), next);
 }
@@ -511,8 +495,6 @@ public class DynamicComplexOptionNodeLR<T> : UINode, IComplexOptionNodeLR {
         this.objectTree = objectTree;
         Index = 0;
     }
-
-    public void ResetIndex() => Index = 0;
 
     public override UINode Left() {
         var v = values();

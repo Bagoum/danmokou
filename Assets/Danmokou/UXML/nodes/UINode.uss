@@ -17,11 +17,11 @@
     margin-bottom: 4px;
     flex-direction: row;
     align-items: center;
-    -unity-font-definition: url('/Assets/Danmokou/Fonts/Unity SDF Assets/Odibee-CorpSt-Joint SDF.asset');
+    -unity-font-definition: url('project://database/Assets/Danmokou/Fonts/Unity%20SDF%20Assets/Odibee-CorpSt-Joint%20SDF.asset?fileID=11400000&guid=cbda6169226e6d64bb00b80c0210330c&type=2#Odibee-CorpSt-Joint SDF');
 }
 
 .font-ubuntu {
-    -unity-font-definition: url('/Assets/SZYU/Fonts/ubuntu-font-family-0.83/Ubuntu-L.ttf');
+    -unity-font-definition: url('project://database/Assets/SZYU/Fonts/ubuntu-font-family-0.83/Ubuntu-L.ttf?fileID=12800000&guid=590207fa916fbe2418da90ad6839aeed&type=3#Ubuntu-L');
 }
 
 .hide {
@@ -29,11 +29,11 @@
 }
 
 .node.monospace {
-    -unity-font-definition: url('/Assets/Danmokou/Fonts/Monospace/Fira-Yasashisa-Joint.ttf');
+    -unity-font-definition: url('project://database/Assets/Danmokou/Fonts/Monospace/Fira-Yasashisa-Joint.ttf?fileID=12800000&guid=d3112f22f25587348b21fcfcac90009d&type=3#Fira-Yasashisa-Joint');
 }
 
 .node.monospace .text {
-    -unity-font-definition: url('/Assets/Danmokou/Fonts/Monospace/Fira-Yasashisa-Joint.ttf');
+    -unity-font-definition: url('project://database/Assets/Danmokou/Fonts/Monospace/Fira-Yasashisa-Joint.ttf?fileID=12800000&guid=d3112f22f25587348b21fcfcac90009d&type=3#Fira-Yasashisa-Joint');
 }
 
 .node {
@@ -213,7 +213,6 @@
 
 .prefix {
     width: 100px;
-    margin-right: 20px;
     height: 100%;
     -unity-background-scale-mode: scale-to-fit;
     opacity: 0;
@@ -221,7 +220,7 @@
 }
 
 .pointer {
-    background-image: url('/Assets/Danmokou/Sprites/UI/ui arrow.png');
+    background-image: url('project://database/Assets/Danmokou/Sprites/UI/ui%20arrow%20v2.png?fileID=21300000&guid=d2353f862cd1b1e46b20d4083f15d865&type=3#ui arrow v2');
 }
 
 .node.focus .pointer {
@@ -267,7 +266,7 @@
 }
 
 .checkmark {
-    background-image: url('/Assets/Danmokou/Sprites/UI/bomb-full-2.png');
+    background-image: url('project://database/Assets/Danmokou/Sprites/UI/bomb-full-2.png?fileID=21300000&guid=06ed2abe8624def4da32e04976bdc5cd&type=3#bomb-full-2');
     display: none;
 }
 
@@ -281,4 +280,14 @@
 
 .node.vnbacklog #Speaker {
     -unity-background-image-tint-color: rgb(178, 178, 178);
+}
+
+.node .body {
+    border-bottom-width: 6px;
+    padding-left: 10px;
+    border-color: rgba(128, 128, 128, 0);
+}
+
+.node.focus .body {
+    border-color: rgba(128, 128, 128, 255);
 }

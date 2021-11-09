@@ -113,10 +113,10 @@ public abstract class XMLMenu : CoroutineRegularUpdater {
     public override void FirstFrame() {
         Current = MainScreen.StartingNode!;
         UI = GetComponent<UIDocument>().rootVisualElement;
-        Rebind();
+        Build();
     }
 
-    protected virtual void Rebind() {
+    protected virtual void Build() {
         var container = UI.Q(ScreenContainerID);
         foreach (var s in Screens) {
             if (s != null)

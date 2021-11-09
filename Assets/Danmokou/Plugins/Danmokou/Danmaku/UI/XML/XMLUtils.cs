@@ -19,6 +19,8 @@ using static Danmokou.Core.LocalizedStrings.CDifficulty;
 
 namespace Danmokou.UI.XML {
 public static class XMLUtils {
+    public const string nodeClass = "node";
+    public const string disabledClass = "disabled";
     public const string fontUbuntuClass = "font-ubuntu";
     public const string monospaceClass = "monospace";
     public const string large1Class = "large1";
@@ -190,7 +192,7 @@ public static class XMLUtils {
                 .Select(i => creator(i)
                     .OnBound(i == 0 ? (VisualElement v) => v.style.marginTop = new StyleLength(150) : null)
                     //This can change dynamically
-                    .With(ve => {
+                    .With((_, ve) => {
                         if (saved.TryN(i) == null) ve.AddToClassList(hideClass);
                     })
                     .PassthroughIf(() => saved.TryN(i) == null)

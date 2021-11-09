@@ -342,6 +342,9 @@
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\UI\XML\Classes\UIGroup.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\UI\XML\Classes\UIRenderSpace.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\MiscHelpers.cs" />
+     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\UI\XML\Classes\UIController.cs" />
+     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\UI\XML\Classes\NUIScreen.cs" />
+     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\UI\XML\Classes\NUINode.cs" />
      <None Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Danmokou.Danmaku.asmdef" />
      <Reference Include="UnityEngine">
      <HintPath>C:/Program Files/Unity/Hub/Editor/2021.2.1f1/Editor/Data/Managed/UnityEngine/UnityEngine.dll</HintPath>
