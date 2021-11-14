@@ -38,7 +38,7 @@ public interface IChallengeRequest {
     /// Called when the boss has awoken and is ready to receive commands
     /// (when the scene is fully visible).
     /// </summary>
-    void Start(BehaviorEntity exec);
+    void Start(BehaviorEntity exec, ICancellee cT);
 
     /// <summary>
     /// Returns true if the challenge operations are finished and cleanup may begin.
@@ -67,9 +67,9 @@ public readonly struct SceneChallengeReqest : IChallengeRequest {
         ServiceLocator.Find<IUIManager>().DisplayChallenge(cr, Requester.metadata);
     }
 
-    public void Start(BehaviorEntity exec) {
+    public void Start(BehaviorEntity exec, ICancellee cT) {
         exec.phaseController.Override(cr.phase.phase.index, () => { });
-        exec.RunSMFromScript(cr.Boss.stateMachine);
+        exec.RunSMFromScript(cr.Boss.stateMachine, cT);
     }
 
     public bool OnSuccess(ChallengeManager.TrackingContext ctx) {
@@ -85,8 +85,8 @@ public readonly struct SceneChallengeReqest : IChallengeRequest {
             nextGr.SetupInstance();
             GameManagement.Instance.Replay?.Cancel(); //can't replay both scenes together,
             //or even just the second scene due to time-dependency of world objects such as shots
-            ctx.cm.TrackChallenge(new SceneChallengeReqest(nextGr, nextC), ctx.onSuccess);
-            ctx.cm.LinkBoss(ctx.exec);
+            ctx.cm.TrackChallenge(new SceneChallengeReqest(nextGr, nextC), ctx.onSuccess, ctx.cT);
+            ctx.cm.LinkBoss(ctx.exec, ctx.cT);
             return false;
         } else {
             ServiceLocator.Find<IUIManager>().MessageChallengeEnd(true, out _);

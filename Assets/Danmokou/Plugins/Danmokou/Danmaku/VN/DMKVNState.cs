@@ -30,11 +30,11 @@ public class DMKVNState : UnityVNState {
     public VNOperation Wait(double d) => base.Wait((float) d);
 
     public override void PauseGameplay() {
-        ServiceLocator.Find<IPauseMenu>().Open();
+        ServiceLocator.Find<IPauseMenu>().QueueOpen();
     }
 
     public override void OpenLog() {
-        ServiceLocator.Find<IVNBacklog>().Open();
+        ServiceLocator.Find<IVNBacklog>().QueueOpen();
     }
 
     public class RunningAudioTrackProxy : IDisposable {

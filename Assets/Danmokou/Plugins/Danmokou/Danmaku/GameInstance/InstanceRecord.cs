@@ -20,6 +20,9 @@ namespace Danmokou.GameInstance {
 [Serializable]
 [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
 public class CardHistory {
+    /// <summary>
+    /// A dictionary mapping a boss key to the performance information for each of its cards.
+    /// </summary>
     public Dictionary<string, List<CardRecord>> record = new();
 
     public CardHistory() { }
@@ -39,6 +42,19 @@ public class CardHistory {
 
     public int Stars(string boss) => RecordForBoss(boss)?.Sum(x => x.stars) ?? 0;
     public int NCards(string boss) => RecordForBoss(boss)?.Count ?? 0;
+}
+
+public class CardHistoryStats {
+    public int TotalCards { get; }
+    public int[] CardsPerStarCount { get; } = new int[PhaseCompletion.MaxCaptureStars + 1];
+    public CardHistoryStats(CardHistory ch) {
+        foreach (var (_, crs) in ch.record) {
+            foreach (var cr in crs) {
+                ++TotalCards;
+                ++CardsPerStarCount[cr.stars];
+            }
+        }
+    }
 }
 
 //This uses boss key instead of boss index since phaseSM doesn't have trivial access to boss index
@@ -114,6 +130,7 @@ public class InstanceRecord {
     public int HitsTaken { get; set; }
     public int TotalFrames { get; set; }
     public int MeterFrames { get; set; }
+    public int BombsUsed { get; set; }
     public int SubshotSwitches { get; set; }
     public int OneUpItemsCollected { get; set; }
 
@@ -152,12 +169,13 @@ public class InstanceRecord {
         HitsTaken = end.HitsTaken;
         TotalFrames = end.TotalFrames;
         MeterFrames = end.MeterFrames;
+        BombsUsed = end.BombsUsed;
         SubshotSwitches = end.SubshotSwitches;
         OneUpItemsCollected = end.OneUpItemsCollected;
     }
 
     [JsonIgnore] [ProtoIgnore] public ILowInstanceRequest ReconstructedRequest => RequestKey.Reconstruct();
-    public void AssignName(string newName) => CustomName = newName.Substring(0, Math.Min(newName.Length, 10));
+    public void AssignName(string newName) => CustomName = newName[..Math.Min(newName.Length, 10)];
 
     public const int BossPracticeNameLength = 11;
     [JsonIgnore]
@@ -165,26 +183,26 @@ public class InstanceRecord {
     private string RequestDescription => (ReconstructedRequest switch {
         //4+8
         CampaignRequest c => $"All:{c.campaign.campaign.shortTitle}",
-        //3+9
-        BossPracticeRequest b => $"p{b.phase.NontrivialPhaseIndex}:{b.boss.boss.ReplayName.Value}",
+        //4+10
+        BossPracticeRequest b => $"p{b.phase.NontrivialPhaseIndex.PadLZero(2)}:{b.boss.boss.ReplayName.Value}",
         //5+9 -- note that challenges records do not show next to standard records, so misalignment is OK
         PhaseChallengeRequest c =>
-            $"p{c.phase.phase.NontrivialPhaseIndex}-{c.ChallengeIdx}:{c.Boss.ReplayName.Value.PadRight(9)}",
-        //8+3
+            $"p{c.phase.phase.NontrivialPhaseIndex}-{c.ChallengeIdx}:{c.Boss.ReplayName.Value,-9}",
+        //3+10
         StagePracticeRequest s => $"s{s.stage.stageIndex + 1}:{s.stage.campaign.campaign.shortTitle}",
         _ => throw new Exception($"No description handling for request type {ReconstructedRequest.GetType()}")
-    }).PadRight(12);
+    }).PadRight(14);
     
     public LString AsDisplay(bool showScore, bool showRequest, bool defaultName=false, bool showTime=true) {
         var team = SharedInstanceMetadata.team;
         var p = team.ships.TryN(0)?.ship;
         var s = team.ships.TryN(0)?.shot;
-        var pstr = ShotConfig.PlayerShotDescription(p, s).PadRight(10);
+        var pstr =  ShotConfig.PlayerShotDescription(p, s).Value.PadRight(11);
         var score = showScore ? $"{Score} ".PadLeft(11, '0') : "";
         var name = (string.IsNullOrEmpty(CustomNameOrPartial) && defaultName) ? "[NAME]" : CustomNameOrPartial;
         var req = showRequest ? $"{RequestDescription} " : "";
         var date = showTime ? Date.SimpleTime() : Date.SimpleDate();
-        return new LString($"{name.PadRight(12)} {score} {pstr} {req}{SavedMetadata.difficulty.DescribePadR()} {date}");
+        return new LString($"{name,-16} {score} {pstr} {req}{SavedMetadata.difficulty.DescribePadR()}  {date}");
     }
 }
 

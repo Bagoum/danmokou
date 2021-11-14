@@ -54,7 +54,7 @@ public class GameManagement : CoroutineRegularUpdater {
         //Actually null on startup
         // ReSharper disable once ConstantConditionalAccessQualifier
         if (Instance?.InstanceActive == true) {
-            Logs.Log("Deactivating game instance");
+            Logs.Log("Deactivating game instance.");
             Instance.Deactivate();
             Instance.Dispose();
         }
@@ -62,7 +62,7 @@ public class GameManagement : CoroutineRegularUpdater {
 
     public static void NewInstance(InstanceMode mode, long? highScore = null, InstanceRequest? req = null, ReplayActor? replay = null) {
         DeactivateInstance();
-        Logs.Log($"Creating new game instance with mode {mode}");
+        Logs.Log($"Creating new game instance with mode {mode} on difficulty {req?.metadata.difficulty.Describe() ?? "NULL"}.");
         _evInstance.OnNext(new InstanceData(mode, req, highScore, replay));
     }
 
@@ -140,8 +140,7 @@ public class GameManagement : CoroutineRegularUpdater {
 
     public static bool GoToReplayScreen() => ServiceLocator.Find<ISceneIntermediary>().LoadScene(
         new SceneRequest(References.replaySaveMenu,
-            SceneRequest.Reason.FINISH_RETURN,
-            () => BackgroundOrchestrator.NextSceneStartupBGC = References.defaultMenuBackground));
+            SceneRequest.Reason.FINISH_RETURN));
 
     /// <summary>
     /// Restarts the game instance.

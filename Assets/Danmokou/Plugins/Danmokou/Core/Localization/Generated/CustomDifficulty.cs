@@ -87,21 +87,46 @@ public static partial class LocalizedStrings {
 			(Locales.JP, "自機選択へ"))
 			{ ID = "to_select" };
 		
-		public static readonly LString save_load_setting = new LString("Save/Load Settings",
-			(Locales.JP, "設定をセーブ・ロード"))
-			{ ID = "save_load_setting" };
+		public static readonly LString manage_setting = new LString("Manage Presets",
+			(Locales.JP, "プリセット管理"))
+			{ ID = "manage_setting" };
 		
-		public static readonly LString delete_setting = new LString("Delete Settings",
-			(Locales.JP, "設定を削除"))
-			{ ID = "delete_setting" };
+		public static readonly LString create_setting = new LString("Create New Preset",
+			(Locales.JP, "プリセットを作る"))
+			{ ID = "create_setting" };
 		
-		public static readonly LString new_setting = new LString("New Settings Name",
-			(Locales.JP, "新設定名前"))
-			{ ID = "new_setting" };
+		public static readonly LString new_setting_name = new LString("Preset Name",
+			(Locales.JP, "プリセット名前"))
+			{ ID = "new_setting_name" };
 		
-		public static readonly LString save_setting = new LString("Save New Settings",
-			(Locales.JP, "新設定をセーブ"))
-			{ ID = "save_setting" };
+		public static readonly LString setting = new LString("Preset",
+			(Locales.JP, "プリセット"))
+			{ ID = "setting" };
+		
+		public static string setting_what_do(object arg0) => Localization.Locale.Value switch {
+			Locales.JP => Render(Localization.Locale.Value, new[] {
+				"プリセット「",
+				"{0}",
+				"」で何をする？",
+			}, arg0),
+			_ => Render(Localization.Locale.Value, new[] {
+				"What would you like to do with preset \"",
+				"{0}",
+				"\"?",
+			}, arg0),
+		};
+		
+		public static LString setting_what_do_ls(object arg0) => new LString(Render(null, new[] {
+				"What would you like to do with preset \"",
+				"{0}",
+				"\"?",
+			}, arg0),
+			(Locales.JP, Render(Locales.JP, new[] {
+				"プリセット「",
+				"{0}",
+				"」で何をする？",
+			}, arg0)))
+			{ ID = "setting_what_do" };
 		
 		public static readonly LString desc_scaling = new LString(Render(null, new[] {
 				"Set the base difficulty scaling variable.",

@@ -2,158 +2,152 @@
 using System.Collections.Generic;
 using System.Linq;
 using BagoumLib;
+using BagoumLib.Culture;
+using BagoumLib.Mathematics;
+using BagoumLib.Tweening;
+using Danmokou.Core;
+using Danmokou.DMath;
+using Danmokou.Graphics.Backgrounds;
+using Danmokou.Services;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Danmokou.UI.XML {
 
 public class UIScreen {
+    [Flags]
+    public enum Display {
+        Basic = 0,
+        WithTabs = 1 << 0,
+        Unlined = 1 << 1,
+        OverlayTH = 1 << 2,
+    }
+    public UIController Controller { get; }
+    public Display Type { get; }
+    private LString? HeaderText { get; }
     public List<UIGroup> Groups { get; } = new();
-    //Don't need links to RenderSpaces
-    protected UINode[] top;
-    public virtual UINode[] Top => top;
-    public UINode First => Top[0];
-    public UIScreen? calledBy { get; private set; }
-    public UINode? lastCaller { get; private set; }
-    public XMLMenu Container { get; }
+    public VisualElement HTML { get; private set; } = null!;
+    public UIRenderDirect DirectRender { get; private set; } = null!;
+    public UIRenderAbsoluteTerritory AbsoluteTerritory { get; private set; } = null!;
+    public Action<UIScreen, VisualElement>? Builder { private get; init; } = null!;
+    public GameObject? SceneObjects { get; set; }
+    /// <summary>
+    /// Overrides the visualTreeAsset used to construct this screen's HTML.
+    /// </summary>
+    public VisualTreeAsset? Prefab { get; init; }
+    public Action? OnExitStart { private get; init; }
+    public Action? OnExitEnd { private get; init; }
+    public Action? OnEnterStart { private get; init; }
+    public Action? OnEnterEnd { private get; init; }
+    /// <summary>
+    /// The menu container may define background handling instead of being transparent.
+    /// <br/>The visibility of the menu's background is dependent on the current screen.
+    /// </summary>
+    public float BackgroundOpacity { private get; set; }
+    
+    public (GameObject prefab, BackgroundTransition transition)? Background { private get; set; }
 
-    public UINode GoToNested(UINode caller, UINode target) {
-        lastCaller = caller;
-        target.screen.calledBy = this;
-        target.screen.onEnter?.Invoke();
-        onExit?.Invoke();
-        return target;
+    /// <summary>
+    /// Link to the UXML object to which screen-specific columns, rows, etc. can be added.
+    /// <br/>By default, this is padded 480 left and right.
+    /// </summary>
+    public VisualElement Container => HTML.Q("Container");
+    private Label Header => HTML.Q<Label>("Header");
+    public VisualElement Margin => HTML.Q("MarginContainer");
+
+    public UIScreen WithBG((GameObject, BackgroundTransition)? bgConfig) {
+        Background = bgConfig;
+        return this;
     }
 
-    public UINode StartingNode => lastCaller ?? top[0];
-    public UINode? ExitNode { get; set; }
+    private readonly IBackgroundOrchestrator? bgo;
+    
+    private Dictionary<Type, VisualTreeAsset>? buildMap;
 
-    public UINode? GoBack() {
-        if (calledBy?.StartingNode != null) {
-            onExit?.Invoke();
-            calledBy.onEnter?.Invoke();
-        }
-        return calledBy?.StartingNode;
+    public UIScreen(UIController controller, LString? header, Display display = Display.Basic) {
+        Controller = controller;
+        HeaderText = header;
+        Type = display;
+        bgo = ServiceLocator.MaybeFind<IBackgroundOrchestrator>();
+    }
+    
+    public void AddGroup(UIGroup grp) {
+        Groups.Add(grp);
+        if (buildMap != null)
+            grp.Build(buildMap);
     }
 
-    public void RunPreExit() => onPreExit?.Invoke();
-    public void RunPreEnter() => onPreEnter?.Invoke();
-    public void RunPostEnter() => onPostEnter?.Invoke();
-
-    public UIScreen(XMLMenu container, params UINode?[] nodes) {
-        Container = container;
-        top = nodes.Where(x => x != null).ToArray()!;
-        foreach (var n in top) n.Siblings = top;
-        foreach (var n in ListAll()) n.screen = this;
+    /// <summary>
+    /// Reorder the groups attached to this screen such that the provided group is first.
+    /// </summary>
+    public void SetFirst(UIGroup group) {
+        Groups.Remove(group);
+        Groups.Insert(0, group);
     }
-
-    public UINode[] AssignNewNodes(UINode[] nodes) {
-        top = nodes;
-        foreach (var l in Lists) l.Clear();
-        foreach (var n in top) n.Siblings = top;
-        foreach (var n in ListAll()) n.screen = this;
-        BuildChildren();
-        return top;
-    }
-
-    public UINode AddTopNode(UINode node) {
-        top = top.Append(node).ToArray();
-        foreach (var n in top) n.Siblings = top;
-        foreach (var n in ListAll()) n.screen = this;
-        BuildChild(node);
-        return node;
-    }
-
-    public IEnumerable<UINode> ListAll() => top.SelectMany(x => x.ListAll());
-    public bool HasNode(UINode x) => ListAll().Contains(x);
-
-    public void ResetStates() {
-        foreach (var n in ListAll()) n.state = NodeState.Invisible;
-    }
-
-    public void ApplyStates() {
-        foreach (var n in ListAll()) n.ApplyState();
-    }
-
-    public VisualElement Bound { get; private set; } = null!;
-
-    private List<ScrollView>? _lists;
-    public List<ScrollView> Lists => _lists ??= Bound.Query<ScrollView>().ToList();
-    private Dictionary<Type, VisualTreeAsset> buildMap = null!;
 
     public VisualElement Build(Dictionary<Type, VisualTreeAsset> map) {
         buildMap = map;
-        Bound = (overrideBuilder == null ? map[typeof(UIScreen)] : overrideBuilder).CloneTree();
-        BuildChildren();
-        return Bound;
+        HTML = (Prefab != null ? Prefab : map.SearchByType(this, true)).CloneTreeWithoutContainer();
+        if (HeaderText == null)
+            Header.style.display = DisplayStyle.None;
+        else
+            Header.text = HeaderText;
+        if (Type.HasFlag(Display.Unlined))
+            HTML.AddToClassList("unlined");
+        if (Type.HasFlag(Display.WithTabs))
+            throw new Exception("I haven't written tab CSS yet");
+        if (Type.HasFlag(Display.OverlayTH))
+            HTML.AddToClassList("overlayTH");
+        HTML.Add(GameManagement.References.uxmlDefaults.AbsoluteTerritory.CloneTreeWithoutContainer());
+        AbsoluteTerritory = new UIRenderAbsoluteTerritory(this);
+        DirectRender = new UIRenderDirect(this);
+        Builder?.Invoke(this, Container);
+        //calling build may awaken lazy nodes, causing new groups to spawn
+        for (int ii = 0; ii < Groups.Count; ++ii)
+            Groups[ii].Build(map);
+        SetVisible(false);
+        return HTML;
     }
-    private void BuildChildren() => ListAll().ForEach(BuildChild);
-    public void BuildChild(UINode node) => node.Build(buildMap, Lists[node.Depth]);
 
-    private VisualTreeAsset? overrideBuilder;
+    private void SetVisible(bool visible) {
+        HTML.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
+        if (SceneObjects != null)
+            SceneObjects.SetActive(visible);
+    }
 
-    public UIScreen With(VisualTreeAsset builder) {
-        overrideBuilder = builder;
-        return this;
+    public UIRenderColumn ColumnRender(int index) => new(this, index);
+
+    //TODO: merge exit/postexit and preenter/enter as part of seamless transition
+    
+
+    public void ExitStart() {
+        OnExitStart?.Invoke();
+        foreach (var g in Groups)
+            g.ScreenExitStart();
+    }
+    public void ExitEnd() {
+        SetVisible(false);
+        OnExitEnd?.Invoke();
+        //Groups may destroy themselves during exit
+        foreach (var g in Groups.ToList())
+            g.ScreenExitEnd();
+    }
+    public void EnterStart(bool fromNull) {
+        SetVisible(true);
+        Controller.BackgroundOpacity.Push(BackgroundOpacity);
+        if (Background.Try(out var bg)) {
+            bgo?.QueueTransition(bg.transition);
+            bgo?.ConstructTarget(bg.prefab, !fromNull);
+        }
+        OnEnterStart?.Invoke();
+        foreach (var g in Groups)
+            g.ScreenEnterStart();
+    }
+    public void EnterEnd() {
+        OnEnterEnd?.Invoke();
+        foreach (var g in Groups)
+            g.ScreenEnterEnd();
     }
     
-    private Action? onPreExit;
-    /// <summary>
-    /// This is run on exit transition start
-    /// </summary>
-    public UIScreen OnPreExit(Action cb) {
-        onPreExit = cb;
-        return this;
-    }
-    private Action? onExit;
-    /// <summary>
-    /// This is run at exit transition midpoint
-    /// </summary>
-    public UIScreen OnExit(Action cb) {
-        onExit = cb;
-        return this;
-    }
-
-    private Action? onEnter;
-    /// <summary>
-    /// This is run at entry transition midpoint
-    /// </summary>
-    public UIScreen OnEnter(Action cb) {
-        onEnter = cb;
-        return this;
-    }
-    private Action? onPreEnter;
-    /// <summary>
-    /// This is run on entry transition start
-    /// </summary>
-    public UIScreen OnPreEnter(Action cb) {
-        onPreEnter = cb;
-        return this;
-    }
-    private Action? onPostEnter;
-    /// <summary>
-    /// This is run on entry transition end
-    /// </summary>
-    public UIScreen OnPostEnter(Action cb) {
-        onPostEnter = cb;
-        return this;
-    }
 }
-
-
-public class LazyUIScreen : UIScreen {
-    private readonly Func<UINode[]> loader;
-
-    public override UINode[] Top {
-        get {
-            if (top.Length == 0)
-                AssignNewNodes(loader());
-            return top;
-        }
-    }
-
-    public LazyUIScreen(XMLMenu container, Func<UINode[]> loader) : base(container) {
-        this.loader = loader;
-    }
-}
-
 }

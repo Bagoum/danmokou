@@ -61,20 +61,20 @@ public class SceneIntermediary : CoroutineRegularUpdater, ISceneIntermediary {
             Logs.Log($"Performing fade transition for {waitIn}s before loading scene.");
             for (; waitIn > ETime.FRAME_YIELD; waitIn -= ETime.FRAME_TIME) yield return null;
         }
-        Logs.Log($"Scene loading for {req} started.", level: LogLevel.DEBUG3);
+        //Logs.Log($"Scene loading for {req} started.", level: LogLevel.DEBUG1);
         PreSceneUnload.OnNext(default);
         req.onPreLoad?.Invoke();
         var op = SceneManager.LoadSceneAsync(req.scene.sceneName);
         while (!op.isDone) {
             yield return null;
         }
-        Logs.Log(
-            $"Unity finished loading the new scene. Waiting for transition ({waitOut}s) before yielding control to player.",
+        Logs.Log($"Unity finished loading scene {req}. " +
+                 $"The out transition will take {waitOut}s, but the scene will start immediately.",
             level: LogLevel.DEBUG3);
         req.onLoaded?.Invoke();
-        for (; waitOut > ETime.FRAME_YIELD; waitOut -= ETime.FRAME_TIME) yield return null;
         req.onFinished?.Invoke();
         stateToken.Dispose();
+        for (; waitOut > ETime.FRAME_YIELD; waitOut -= ETime.FRAME_TIME) yield return null;
         LOADING = false;
     }
     

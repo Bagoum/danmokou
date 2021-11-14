@@ -14,6 +14,8 @@
       href: parsing.md
     - name: Abstractions
       href: abstractions.md
+    - name: UI Design Document
+      href: uidesign.md
     - name: Player Firing Conventions
       href: playerFire1.md
     - name: Pitfalls and Warnings

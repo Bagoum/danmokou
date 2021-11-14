@@ -21,7 +21,9 @@ The following features are planned by v9, which will probably be completed somet
 # v8.1.0 (2021/11/14)
 
 - **Breaking changes:**
-  - Please upgrade Unity to **2021.2**. Note that if you have custom UIToolkit handling, you may need to run Window > UIToolkit > Package Asset Converter > "I want my assets to function without the UI Toolkit package installed". This upgrade makes UIToolkit much more resilient and also allows some new CSS features that are used in the updated UI.
+  - Please upgrade Unity to **2021.2**. Note that if you have custom UIToolkit handling, you may need to run Window > UIToolkit > Package Asset Converter > "I want my assets to function without the UI Toolkit package installed". This upgrade makes UIToolkit much more resilient, allows some new CSS features that are used in the updated UI, and also enables 
+  - The architecture for UIToolkit-based UI has been overhauled. See the [UI design document](uidesign.md) for details.
+- 
 
 # v8.0.0 (2021/10/31)
 

@@ -15,24 +15,19 @@ namespace Danmokou.UI.XML {
 /// </summary>
 [Preserve]
 public class XMLPracticeSuccessMenu : PausedGameplayMenu {
-
-    protected override void ResetCurrentNode() {
-        Current = MainScreen.Top[0];
-    }
-
     public override void FirstFrame() {
-        MainScreen = new UIScreen(this,
-            new FuncNode(GameManagement.Restart, restart, true)
-                .EnabledIf(() => GameManagement.CanRestart),
-            new FuncNode(GameManagement.GoToReplayScreen, save_replay, true)
-                .EnabledIf(() => GameManagement.Instance.Replay is ReplayRecorder),
-            new FuncNode(GameManagement.GoToMainMenu, to_menu, true)
-        ).With(UIScreen);
-        MainScreen.ExitNode = MainScreen.Top[2];
-        
+        MainScreen = new UIScreen(this, "YOU HUNTED", UIScreen.Display.OverlayTH)  { Builder = (s, ve) => {
+            ve.AddColumn();
+        }, BackgroundOpacity = 0.8f  };
+        _ = new UIColumn(MainScreen, null,
+            new FuncNode(restart, GameManagement.Restart)
+                {EnabledIf = (() => GameManagement.CanRestart)},
+            new FuncNode(save_replay, GameManagement.GoToReplayScreen)
+                {EnabledIf = (() => GameManagement.Instance.Replay is ReplayRecorder)},
+            new FuncNode(to_menu, GameManagement.GoToMainMenu)) {
+            EntryIndexOverride = () => 1
+        };
         base.FirstFrame();
-        UI.Q<Label>("Header").text = "YOU HUNTED";
-        HideMe();
     }
 
     protected override void BindListeners() {

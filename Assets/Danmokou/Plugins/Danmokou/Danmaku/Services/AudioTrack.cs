@@ -198,7 +198,7 @@ public class TimedLoopRAT : BaseRunningAudioTrack {
 
     protected override IEnumerator _FadeIn(float time) {
         if (Active.Cancelled) yield break;
-        Logs.Log($"Fading in audio track: {Track.Title}");
+        //Logs.Log($"Fading in audio track: {Track.Title}");
         var fader = new PushLerper<float>(time, Mathf.Lerp);
         fader.Push(0);
         fader.Push(1);
@@ -217,7 +217,7 @@ public class TimedLoopRAT : BaseRunningAudioTrack {
     
     protected override IEnumerator _FadeOutThenDestroy(float time) {
         if (Active.Cancelled) yield break;
-        Logs.Log($"Fading out audio track: {Track.Title}");
+        //Logs.Log($"Fading out audio track: {Track.Title}");
         var fader = new PushLerper<float>(time, Mathf.Lerp);
         fader.Push(1);
         fader.Push(0);

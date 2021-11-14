@@ -133,7 +133,7 @@ public static class SaveData {
         public (int w, int h) Resolution = GraphicsUtils.BestResolution;
 #if UNITY_EDITOR
         public bool SaveAsBinary = false;
-        public static bool TeleportAtPhaseStart => false;
+        public static bool TeleportAtPhaseStart => true;
 #else
         public bool SaveAsBinary = false;
         //Don't change this!
@@ -155,16 +155,17 @@ public static class SaveData {
 
         public bool ProfilingEnabled = false;
         
-        public List<(string name, DifficultySettings settings)> DifficultySettings =
+        public List<(string name, DifficultySettings settings)> DifficultySettings { get; init; } =
             new();
 
         public void AddDifficultySettings(string name, DifficultySettings settings) {
             DifficultySettings.Add((name, FileUtils.CopyJson(settings)));
             AssignSettingsChanges();
         }
-        public void TryRemoveDifficultySettingsAt(int i) {
-            if (i < DifficultySettings.Count) DifficultySettings.RemoveAt(i);
+        public bool RemoveDifficultySettings((string, DifficultySettings) dc) {
+            var succ = DifficultySettings.Remove(dc);
             AssignSettingsChanges();
+            return succ;
         }
 
         public static int DefaultRefresh {
@@ -235,18 +236,17 @@ public static class SaveData {
                 .OrderByDescending(r => r.metadata.Record.Date).ToList();
         }
 
-        public bool TryDeleteReplay(int i) {
-            if (i < ReplayData.Count) {
-                var filename = ReplayFilename(ReplayData[i]);
-                try {
-                    File.Delete(filename + RMETAEXT);
-                    File.Delete(filename + RFRAMEEXT);
-                } catch (Exception e) {
-                    Logs.Log(e.Message, true, LogLevel.WARNING);
-                }
-                ReplayData.RemoveAt(i);
-                return true;
-            } else return false;
+        public bool TryDeleteReplay(Replay r) {
+            if (!ReplayData.Contains(r)) return false;
+            var filename = ReplayFilename(r);
+            try {
+                File.Delete(filename + RMETAEXT);
+                File.Delete(filename + RFRAMEEXT);
+            } catch (Exception e) {
+                Logs.Log(e.Message, true, LogLevel.WARNING);
+            }
+            ReplayData.Remove(r);
+            return true;
         }
 
         private const string RMETAEXT = ".txt";

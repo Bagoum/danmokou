@@ -8,7 +8,7 @@
 }
 
 .bracket {
-    -unity-font-definition: url('/Assets/Danmokou/Fonts/Unity SDF Assets/Odibee-CorpSt-Joint SDF.asset');
+    -unity-font-definition: url('project://database/Assets/Danmokou/Fonts/Unity%20SDF%20Assets/Odibee-CorpSt-Joint%20SDF.asset?fileID=11400000&guid=cbda6169226e6d64bb00b80c0210330c&type=2#Odibee-CorpSt-Joint SDF');
     font-size: 200px;
     color: rgb(200, 200, 200);
     -unity-text-align: middle-left;

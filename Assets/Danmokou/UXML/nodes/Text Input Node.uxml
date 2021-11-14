@@ -1,0 +1,14 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/Danmokou/UXML/nodes/UINode.uss?fileID=7433441132597879392&amp;guid=908aa769b12ea7c44aae7ea3f797c582&amp;type=3#UINode" />
+    <ui:VisualElement class="node" style="transition-property: opacity; transition-duration: 0.2s;">
+        <ui:VisualElement name="Selector" class="pointer prefix" />
+        <ui:VisualElement name="Checkmark" class="checkmark prefix" />
+        <ui:VisualElement name="Body" class="body" style="min-width: 700px; justify-content: flex-start;">
+            <ui:Label text="Name:" display-tooltip-when-elided="true" name="Prefix" style="color: rgb(195, 195, 195);" />
+            <ui:VisualElement name="Entry" style="flex-grow: 1; -unity-text-align: upper-center; margin-left: 20px; margin-right: 20px;">
+                <ui:Label text="&lt;Press Enter to edit&gt;" name="FadedBack" class="text coretext" style="height: 100%; padding-right: 0; border-bottom-color: rgb(128, 128, 128); position: absolute; color: rgb(140, 140, 140); font-size: 60px; -unity-text-align: lower-center; -unity-font-style: normal; width: 100%;" />
+                <ui:Label text="hello world" name="Label" class="text coretext" style="height: 100%; padding-left: 0; padding-right: 0; border-bottom-color: rgb(128, 128, 128);" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

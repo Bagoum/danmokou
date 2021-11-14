@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using BagoumLib.Cancellation;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Danmaku;
@@ -14,9 +15,9 @@ using static Danmokou.GameInstance.Challenge;
 namespace Danmokou.Services {
 public interface IChallengeManager {
     float? BossTimeoutOverride(BossConfig? bc);
-    void TrackChallenge(IChallengeRequest cr, Action<InstanceRecord> onSucess);
+    void TrackChallenge(IChallengeRequest cr, Action<InstanceRecord> onSucess, ICancellee cT);
     void SetupBossPhase(SMHandoff smh);
-    void LinkBoss(BehaviorEntity exec);
+    void LinkBoss(BehaviorEntity exec, ICancellee cT);
     IEnumerable<AyaPhoto> ChallengePhotos { get; }
 
     ChallengeManager.Restrictions Restriction { get; }
@@ -99,20 +100,20 @@ public class ChallengeManager : CoroutineRegularUpdater, IChallengeManager {
         for (int ii = 0; ii < cs.Length; ++ii) cs[ii].SetupPhase(smh);
     }
 
-    public void LinkBoss(BehaviorEntity exec) {
+    public void LinkBoss(BehaviorEntity exec, ICancellee cT) {
         if (tracking == null) throw new Exception("Cannot link BEH when no challenge is tracked");
         Logs.Log($"Linked boss {exec.ID} to challenge {tracking.Description}");
-        tracking.Start(Exec = exec);
+        tracking.Start(Exec = exec, cT);
     }
 
-    public void TrackChallenge(IChallengeRequest cr, Action<InstanceRecord> onSuccess) {
+    public void TrackChallenge(IChallengeRequest cr, Action<InstanceRecord> onSuccess, ICancellee cT) {
         Logs.Log($"Tracking challenge {cr.Description}");
         CleanupState();
         tracking = cr;
         Restriction = new Restrictions(cr.Challenges);
         challengePhotos.Clear();
         cr.Initialize();
-        RunDroppableRIEnumerator(TrackChallenges(cr, onSuccess));
+        RunDroppableRIEnumerator(TrackChallenges(cr, onSuccess, cT));
     }
 
     private void ChallengeFailed(IChallengeRequest cr, TrackingContext ctx) {
@@ -126,10 +127,10 @@ public class ChallengeManager : CoroutineRegularUpdater, IChallengeManager {
 
     //This is not controlled by smh.cT because its scope is the entire segment over which the challenge executes,
     //not just the boss phase. In the case of BPoHC stage events, this scope is the phase cT of the stage section.
-    private IEnumerator TrackChallenges(IChallengeRequest cr, Action<InstanceRecord> onSuccess) {
+    private IEnumerator TrackChallenges(IChallengeRequest cr, Action<InstanceRecord> onSuccess, ICancellee cT) {
         while (Exec == null) yield return null;
         var challenges = cr.Challenges;
-        var ctx = new TrackingContext(Exec, this, onSuccess);
+        var ctx = new TrackingContext(Exec, this, onSuccess, cT);
 
         for (; completion == null; ctx.t += ETime.FRAME_TIME) {
             for (int ii = 0; ii < challenges.Length; ++ii) {
@@ -154,12 +155,14 @@ public class ChallengeManager : CoroutineRegularUpdater, IChallengeManager {
         public readonly ChallengeManager cm;
         public readonly Action<InstanceRecord> onSuccess;
         public float t;
+        public readonly ICancellee cT;
 
-        public TrackingContext(BehaviorEntity exec, ChallengeManager cm, Action<InstanceRecord> onSuccess) {
+        public TrackingContext(BehaviorEntity exec, ChallengeManager cm, Action<InstanceRecord> onSuccess, ICancellee cT) {
             this.exec = exec;
             this.cm = cm;
             this.onSuccess = onSuccess;
             this.t = 0;
+            this.cT = cT;
         }
     }
 }

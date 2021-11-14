@@ -19,14 +19,14 @@ public class PlayModeSubmenu : IndexedSubmenuHandler {
     
     public PlayModeCommentator? commentator;
     private List<(Mode key, bool locked, TelescopingDisplay display)> modes = null!;
-    private Func<(bool, UINode?)> mainContinuation = null!;
-    private Func<(bool, UINode?)> exContinuation = null!;
+    private Func<UIResult> mainContinuation = null!;
+    private Func<UIResult> exContinuation = null!;
     protected override int NumOptions => modes.Count;
     protected override int DefaultOption =>
         (SaveData.r.TutorialDone || References.tutorial == null) ? 0 :
             modes.IndexOf(x => x.key == Mode.TUTORIAL);
     
-    public UIScreen Initialize(XMLMainMenu menu, Func<CampaignConfig, Func<SharedInstanceMetadata, bool>, Func<(bool, UINode?)>> campaignRealizer) {
+    public UIScreen Initialize(XMLMainMenu menu, Func<CampaignConfig, Func<SharedInstanceMetadata, bool>, Func<UIResult>> campaignRealizer) {
         modes = new List<(Mode key, bool locked, TelescopingDisplay display)>();
         modes.Add((Mode.MAIN, false, mainDisplay));
         mainContinuation = campaignRealizer(References.campaign,
@@ -56,7 +56,7 @@ public class PlayModeSubmenu : IndexedSubmenuHandler {
                 x.display.SetRelative(Vector2.zero, new Vector2(1.3f, -2f).normalized * 0.8f, i, index, NumOptions, isOnEnter, x.locked);
             });
         } else {
-            commentator.SetComment(modes[index].key, modes[index].locked);
+            commentator.SetCommentFromValue((modes[index].key, modes[index].locked));
             modes.ForEachI((i, x) => {
                 x.display.Show(true);
                 x.display.SetRelative(new Vector2(-3.1f, 0), new Vector2(0, -0.45f), i, index, NumOptions, isOnEnter, x.locked);
@@ -64,15 +64,15 @@ public class PlayModeSubmenu : IndexedSubmenuHandler {
         }
     }
 
-    protected override (bool success, UINode? nxt) Activate(int index) {
+    protected override UIResult Activate(int index) {
         var (mode, locked, _) = modes[index];
         if (locked)
-            return (false, null);
+            return new UIResult.StayOnNode(true);
         var c = Menu as XMLMainMenuCampaign;
         return mode switch {
-            Mode.STAGEPRAC => (true, c!.StagePracticeScreen.First),
-            Mode.BOSSPRAC => (true, c!.BossPracticeScreen.First),
-            Mode.TUTORIAL => (InstanceRequest.RunTutorial(), null),
+            Mode.STAGEPRAC => new UIResult.GoToNode(c!.StagePracticeScreen),
+            Mode.BOSSPRAC => new UIResult.GoToNode(c!.BossPracticeScreen),
+            Mode.TUTORIAL => new UIResult.StayOnNode(!InstanceRequest.RunTutorial()),
             Mode.EX => exContinuation(),
             _ => mainContinuation()
         };
@@ -84,7 +84,7 @@ public class PlayModeSubmenu : IndexedSubmenuHandler {
     }
     protected override void OnPreEnter(int index) {
         if (commentator != null) {
-            commentator.SetComment(modes[index].key, modes[index].locked);
+            commentator.SetCommentFromValue((modes[index].key, modes[index].locked));
             commentator.Appear();
         }
     }

@@ -7,34 +7,30 @@ using Danmokou.Scriptables;
 using UnityEngine.UIElements;
 
 namespace Danmokou.UI.XML {
-public class PausedGameplayMenu : XMLMenu {
+public class PausedGameplayMenu : UIController {
     public UIManager manager = null!;
-    public VisualTreeAsset UIScreen = null!;
     
     public SFXConfig? openPauseSound;
     public SFXConfig? closePauseSound;
 
     private IDisposable? pauseToken;
-    
+
+    protected override bool OpenOnInit => false;
+
     protected void ShowMe() {
         if (!MenuActive) {
-            MenuActive = true;
             tokens.Add(pauseToken = EngineStateManager.RequestState(EngineState.MENU_PAUSE));
             var disable = UpdatesEnabled.AddConst(false);
             _ = manager.FadeInPauseUI().ContinueWithSync(disable.Dispose);
             ServiceLocator.SFXService.Request(openPauseSound);
-            UI.style.display = DisplayStyle.Flex;
-            ResetCurrentNode();
-            Redraw();
+            Open();
         }
     }
 
     protected virtual void HideMe() {
         if (MenuActive) {
-            MenuActive = false;
             Close();
             pauseToken?.Dispose();
-            UI.style.display = DisplayStyle.None;
         }
     }
 

@@ -26,13 +26,9 @@
 			#pragma fragment frag
 			//If we use shader_feature, then the variants will get pruned if they're not used statically.
 			//Since there is no static material, we have to use multi compile.
-			#pragma multi_compile_local __ MIX_FROM_ONLY
-			#pragma multi_compile_local __ MIX_TO_ONLY
-			#pragma multi_compile_local __ MIX_ALPHA_BLEND			
-			#pragma multi_compile_local __ MIX_WIPE_TEX		
-			#pragma multi_compile_local __ MIX_WIPE1
-			#pragma multi_compile_local __ MIX_WIPE_CENTER
-			#pragma multi_compile_local __ MIX_WIPE_Y
+			#pragma multi_compile_local __ MIX_FROM_ONLY MIX_TO_ONLY		
+			#pragma multi_compile_local __ MIX_WIPE_TEX	MIX_WIPE1 MIX_WIPE_CENTER MIX_WIPE_Y
+			#pragma multi_compile_local __ MIX_ALPHA_BLEND	
             #include "Assets/Danmokou/CG/Math.cginc"
             #include "UnityCG.cginc"
         

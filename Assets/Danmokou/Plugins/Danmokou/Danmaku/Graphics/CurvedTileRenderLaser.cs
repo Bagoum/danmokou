@@ -369,6 +369,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
     public override void Activate() {
         UpdateGraphics();
         base.Activate();
+        bpi.loc = locater.GlobalPosition();
         UpdateRotation();
         requiresTrRotUpdate = true;
         ReassignTransform();

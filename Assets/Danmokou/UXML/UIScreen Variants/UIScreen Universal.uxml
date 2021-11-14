@@ -1,0 +1,11 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/Danmokou/UXML/UIScreen%20Variants/UIScreen.uss?fileID=7433441132597879392&amp;guid=6f4a2bd40c2da0143a9f109ca63431b9&amp;type=3#UIScreen" />
+    <ui:VisualElement class="uiScreen">
+        <ui:VisualElement name="TopLine" class="uiScreenLiner" />
+        <ui:VisualElement name="MarginContainer" style="flex-grow: 1;">
+            <ui:Label text="&lt;cspace=18&gt;REPLAYS&lt;/cspace&gt;" display-tooltip-when-elided="true" name="Header" class="header" />
+            <ui:VisualElement name="Container" />
+        </ui:VisualElement>
+        <ui:VisualElement name="BottomLine" class="uiScreenLiner" />
+    </ui:VisualElement>
+</ui:UXML>

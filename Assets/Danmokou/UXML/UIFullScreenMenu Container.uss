@@ -3,8 +3,6 @@
     height: 100%;
     background-color: rgba(0, 0, 0, 0);
     display: flex;
-    padding-left: 0;
-    padding-right: 0;
-    padding-top: 90px;
-    padding-bottom: 60px;
+    background-image: url('project://database/Assets/SZYU/Sprites/util/1u-square.jpg?fileID=2800000&guid=d12639885f66bc0409fd0dd22e006cac&type=3#1u-square');
+    -unity-background-image-tint-color: rgba(30, 6, 46, 0);
 }

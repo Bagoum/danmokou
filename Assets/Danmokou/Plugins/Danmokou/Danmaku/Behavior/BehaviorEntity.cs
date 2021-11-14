@@ -205,7 +205,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
             Listen(Events.LocalReset, () => {
                 HardCancel(false);
                 //Allows all cancellations processes to go through before rerunning
-                ETime.QueueEOFInvoke(() => RunSMFromScript(behaviorScript));
+                ETime.QueueEOFInvoke(() => RunSMFromScript(behaviorScript, Cancellable.Null));
             });
         }
 #endif
@@ -279,9 +279,10 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     public override void FirstFrame() {
         RegularUpdateRender();
         
+        //Note: this is a debugging workflow. It is not executed in the standard pathway.
         if (behaviorScript != null) {
             try {
-                RunSMFromScript(behaviorScript);
+                RunSMFromScript(behaviorScript, Cancellable.Null);
             } catch (Exception e) {
                 Logs.UnityError("Failed to load attached SM on startup!");
                 Logs.LogException(e);
@@ -289,13 +290,13 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         }
     }
 
-    public void RunSMFromScript(TextAsset? script) {
-        if (script != null) RunPatternSM(StateMachineManager.FromText(script));
+    public void RunSMFromScript(TextAsset? script, ICancellee cT) {
+        if (script != null) RunPatternSM(StateMachineManager.FromText(script), cT);
     }
 
-    public void RunPatternSM(StateMachine? sm) {
+    public void RunPatternSM(StateMachine? sm, ICancellee cT) {
         if (sm != null)
-            _ = BeginBehaviorSM(SMRunner.RunNoCancelRoot(sm), phaseController.GoToNextPhase(0));
+            _ = BeginBehaviorSM(SMRunner.RunRoot(sm, cT), phaseController.GoToNextPhase(0));
     }
 
     private static bool IsNontrivialID(string? id) => !string.IsNullOrWhiteSpace(id) && id != "_";

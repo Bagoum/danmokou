@@ -1,10 +1,10 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
-    <Style src="UINodeLRSwitch.uss" />
-    <Style src="UINode.uss" />
+    <Style src="project://database/Assets/Danmokou/UXML/nodes/UINodeLRSwitch.uss?fileID=7433441132597879392&amp;guid=9bcb55214a32b5d48b61daf342538c3e&amp;type=3#UINodeLRSwitch" />
+    <Style src="project://database/Assets/Danmokou/UXML/nodes/UINode.uss?fileID=7433441132597879392&amp;guid=908aa769b12ea7c44aae7ea3f797c582&amp;type=3#UINode" />
     <ui:VisualElement class="attribute node">
         <ui:VisualElement name="Selector" class="pointer prefix" />
         <ui:Label name="Key" class="text" />
-        <ui:VisualElement class="optionsCont">
+        <ui:VisualElement class="optionsCont" style="flex-grow: 1;">
             <ui:Label text="&lt;" name="Left" class="text" />
             <ui:VisualElement name="LR2ChildContainer" />
             <ui:Label text="&gt;" name="Right" class="text" />

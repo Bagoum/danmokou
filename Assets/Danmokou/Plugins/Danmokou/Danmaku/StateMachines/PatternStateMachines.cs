@@ -217,7 +217,7 @@ public class PhaseSM : SequentialSM {
     private void _PrepareBackgroundGraphics(PhaseContext ctx, IBackgroundOrchestrator? bgo) {
         if (ctx.Background != null) {
             if (ctx.BgTransitionIn != null) bgo?.QueueTransition(ctx.BgTransitionIn);
-            bgo?.ConstructTarget(ctx.Background, true);
+            bgo?.ConstructTarget(ctx.Background);
         }
     }
     
@@ -269,11 +269,11 @@ public class PhaseSM : SequentialSM {
                 ServiceLocator.MaybeFind<IRaiko>()?.Shake(ctx.Boss.bossCutinTime / 2f, null, 1f, smh.cT, null);
                 Object.Instantiate(ctx.Boss.bossCutin);
                 bgo?.QueueTransition(ctx.Boss.bossCutinTrIn);
-                bgo?.ConstructTarget(ctx.Boss.bossCutinBg, true);
+                bgo?.ConstructTarget(ctx.Boss.bossCutinBg);
                 WaitingUtils.WaitFor(smh, ctx.Boss.bossCutinBgTime, false).ContinueWithSync(() => {
                     if (!smh.Cancelled) {
                         bgo?.QueueTransition(ctx.Boss.bossCutinTrOut);
-                        bgo?.ConstructTarget(ctx.Background, true);
+                        bgo?.ConstructTarget(ctx.Background);
                     }
                 });
                 cutins = WaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, ctx.Boss.bossCutinTime, false);

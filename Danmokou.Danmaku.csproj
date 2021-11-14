@@ -89,6 +89,7 @@
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\UI\RefreshRateWarning.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Reflection\Reflector.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Behavior\Items\LifeItem.cs" />
+     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\UI\XML\Classes\UIGroup.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Math\MathTypes.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Math\MathRepos\BPYRepo.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\UI\UIManager.cs" />
@@ -97,6 +98,7 @@
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Danmaku\Descriptors\Collider.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\VN\Characters\KaguyaMimic.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Behavior\Cutin\V2Cutin.cs" />
+     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\UI\XML\Classes\UIRenderSpace.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Math\MathRepos\GenericMath\ExMConditionals.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Scriptables\BossConfig.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Behavior\Display\Drawer\DarknessDrawer.cs" />
@@ -104,7 +106,9 @@
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\VN\Characters\SeijaMimic.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Achievements\MetaRequirements.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Behavior\Display\Drawer\RectDrawer.cs" />
+     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\MiscHelpers.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Services\SFXService.cs" />
+     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\UI\XML\Classes\UIController.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Danmaku\BulletConfigReader.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\UI\AchievementDisplay.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Graphics\Backgrounds\BackgroundOrchestrator.cs" />
@@ -173,6 +177,7 @@
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\VN\Characters\YukariMimic.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\UI\XML\Submenus\PlayModeSubmenu.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Player\ShipController.cs" />
+     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\UI\XML\Classes\UIScreen.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Math\MathRepos\ExMV4.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Math\MathRepos\MovementPatterns.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Scriptables\AudioTrack.cs" />
@@ -206,6 +211,7 @@
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Services\ChallengeManager.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\VN\Characters\SagumeMimic.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Graphics\SeijaCamera.cs" />
+     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\UI\XML\Classes\UINode.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\UI\XML\XMLDeathMenu.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\StateMachines\ParseQueue.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Behavior\BossBEH.cs" />
@@ -266,7 +272,6 @@
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Player\SupportAbility\SupportAbility.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\UI\XML\Submenus\SubmenuHandler.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Behavior\Functions\ScaleAnimator.cs" />
-     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\UI\XML\Classes\UINode.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\StateMachines\PatternStateMachines.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Math\MathRepos\ExtraMovementFuncs.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Danmaku\Options\SimpleBulletOptions.cs" />
@@ -310,7 +315,6 @@
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\StateMachines\ReflectedSM\ReflectedSM.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Graphics\CameraRenderer.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Reflection\ReflWrap.cs" />
-     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\UI\XML\XMLMenu.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\UI\XML\XMLMainMenuDays.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Expressions\TypedExpressionImpls.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Math\Movement.cs" />
@@ -338,13 +342,7 @@
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\UI\FadeWhenPlayerNearby.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Math\MathRepos\ExMV3.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Math\MathRepos\RV2Repo.cs" />
-     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\UI\XML\Classes\UIScreen.cs" />
-     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\UI\XML\Classes\UIGroup.cs" />
-     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\UI\XML\Classes\UIRenderSpace.cs" />
-     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\MiscHelpers.cs" />
-     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\UI\XML\Classes\UIController.cs" />
-     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\UI\XML\Classes\NUIScreen.cs" />
-     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\UI\XML\Classes\NUINode.cs" />
+     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\UI\XML\XMLUtilsCSS.cs" />
      <None Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Danmokou.Danmaku.asmdef" />
      <Reference Include="UnityEngine">
      <HintPath>C:/Program Files/Unity/Hub/Editor/2021.2.1f1/Editor/Data/Managed/UnityEngine/UnityEngine.dll</HintPath>

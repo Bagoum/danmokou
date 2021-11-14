@@ -17,11 +17,11 @@ public class DifficultySubmenu : IndexedSubmenuHandler {
     public TelescopingDisplay? customDifficulty;
     public DifficultyCommentator? commentator;
     private List<(FixedDifficulty? key, TelescopingDisplay display)> dfcDisplays = null!;
-    private Func<DifficultySettings, (bool, UINode)> continuation = null!;
+    private Func<DifficultySettings, UIResult> continuation = null!;
     protected override int NumOptions => dfcDisplays.Count;
     protected override int DefaultOption => dfcDisplays.IndexOf(x => x.key == FixedDifficulty.Normal);
 
-    public UIScreen Initialize(XMLMainMenu menu, Func<DifficultySettings, (bool, UINode)> dfcContinuation) {
+    public UIScreen Initialize(XMLMainMenu menu, Func<DifficultySettings, UIResult> dfcContinuation) {
         continuation = dfcContinuation;
         dfcDisplays = new List<(FixedDifficulty?, TelescopingDisplay)>();
         if (customDifficulty != null)
@@ -44,7 +44,7 @@ public class DifficultySubmenu : IndexedSubmenuHandler {
                 x.display.SetRelative(Vector2.zero, new Vector2(2.4f, -1.6f).normalized, i, index, NumOptions, isOnEnter);
             });
         } else {
-            commentator.SetDifficulty(dfcDisplays[index].key);
+            commentator.SetCommentFromValue(dfcDisplays[index].key);
             dfcDisplays.ForEachI((i, x) => {
                 x.display.Show(true);
                 x.display.SetRelative(new Vector2(-2.9f, 0), new Vector2(1.4f, -2.6f).normalized * 0.7f, i, index, NumOptions, isOnEnter);
@@ -52,12 +52,12 @@ public class DifficultySubmenu : IndexedSubmenuHandler {
         }
     }
 
-    protected override (bool success, UINode? nxt) Activate(int index) {
+    protected override UIResult Activate(int index) {
         if (dfcDisplays[index].key.Try(out var fixedDiff)) {
             return continuation(new DifficultySettings(fixedDiff));
         } else {
             if (Menu is XMLMainMenuCampaign c) {
-                return (true, c.CustomDifficultyScreen.Top[0]);
+                return new UIResult.GoToNode(c.CustomDifficultyScreen);
             } else {
                 throw new Exception($"No custom difficulty handling coded for menu {Menu.GetType()}");
             }
@@ -70,7 +70,7 @@ public class DifficultySubmenu : IndexedSubmenuHandler {
     }
     protected override void OnPreEnter(int index) {
         if (commentator != null) {
-            commentator.SetDifficulty(dfcDisplays[index].key);
+            commentator.SetCommentFromValue(dfcDisplays[index].key);
             commentator.Appear();
         }
     }

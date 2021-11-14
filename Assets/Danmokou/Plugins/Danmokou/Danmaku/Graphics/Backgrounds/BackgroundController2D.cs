@@ -23,6 +23,7 @@ public struct BackgroundTransition {
         WipeFromCenter,
         Shatter4,
         WipeY,
+        Fade,
     }
 
     public EffectType type;
@@ -31,6 +32,7 @@ public struct BackgroundTransition {
     public WipeFromCenterConfig WipeFromCenter;
     public ShatterConfig Shatter4;
     public WipeYConfig WipeY;
+    public FadeConfig Fade;
     
     /// <summary>
     /// Upper bound on the time required for the TRANSITION SHADER to fully complete.
@@ -43,6 +45,7 @@ public struct BackgroundTransition {
             EffectType.WipeFromCenter => WipeFromCenter.time + 1f,
             EffectType.Shatter4 => 0f,
             EffectType.WipeY => WipeY.time + 1f,
+            EffectType.Fade => Fade.time,
             _ => 0f
         };
 
@@ -109,6 +112,15 @@ public struct BackgroundTransition {
                         Mathf.PI/4, fragMaxInitSpeed, fragGravity, fragRotAccelMag);
                 }
             }
+        }
+    }
+
+    [Serializable]
+    public class FadeConfig {
+        public float time;
+        
+        public void Apply(Material mat) {
+            mat.SetFloat(PropConsts.maxTime, time);
         }
     }
 }

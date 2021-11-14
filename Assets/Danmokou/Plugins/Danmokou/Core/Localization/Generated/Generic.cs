@@ -112,6 +112,26 @@ public static partial class LocalizedStrings {
 			}, arg0, arg1)))
 			{ ID = "generic.render_minssecs" };
 		
+		public static readonly LString generic_cancel = new LString("Cancel",
+			(Locales.JP, "キャンセル"))
+			{ ID = "generic.generic_cancel" };
+		
+		public static readonly LString generic_back = new LString("Back",
+			(Locales.JP, "戻る"))
+			{ ID = "generic.generic_back" };
+		
+		public static readonly LString generic_save = new LString("Save",
+			(Locales.JP, "セーブ"))
+			{ ID = "generic.generic_save" };
+		
+		public static readonly LString generic_delete = new LString("Delete",
+			(Locales.JP, "削除"))
+			{ ID = "generic.generic_delete" };
+		
+		public static readonly LString generic_load = new LString("Load",
+			(Locales.JP, "ロード"))
+			{ ID = "generic.generic_load" };
+		
 	}
 }
 }

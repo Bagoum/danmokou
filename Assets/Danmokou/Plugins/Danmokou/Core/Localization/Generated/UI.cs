@@ -151,9 +151,71 @@ public static partial class LocalizedStrings {
 			(Locales.JP, "再演"))
 			{ ID = "replay_view" };
 		
-		public static readonly LString delete = new LString("Delete",
-			(Locales.JP, "削除"))
-			{ ID = "delete" };
+		public static readonly LString replay_window = new LString("Replay",
+			(Locales.JP, "リプレイ"))
+			{ ID = "replay_window" };
+		
+		public static string replay_what_do(object arg0) => Localization.Locale.Value switch {
+			Locales.JP => Render(Localization.Locale.Value, new[] {
+				"リプレイ「",
+				"{0}",
+				"」で何をする？",
+			}, arg0),
+			_ => Render(Localization.Locale.Value, new[] {
+				"What would you like to do with replay \"",
+				"{0}",
+				"\"?",
+			}, arg0),
+		};
+		
+		public static LString replay_what_do_ls(object arg0) => new LString(Render(null, new[] {
+				"What would you like to do with replay \"",
+				"{0}",
+				"\"?",
+			}, arg0),
+			(Locales.JP, Render(Locales.JP, new[] {
+				"リプレイ「",
+				"{0}",
+				"」で何をする？",
+			}, arg0)))
+			{ ID = "replay_what_do" };
+		
+		public static readonly LString view_details = new LString("Details",
+			(Locales.JP, "詳細"))
+			{ ID = "view_details" };
+		
+		public static readonly LString record_header = new LString("Game Record",
+			(Locales.JP, "ゲーム履歴"))
+			{ ID = "record_header" };
+		
+		public static string record_what_do(object arg0) => Localization.Locale.Value switch {
+			Locales.JP => Render(Localization.Locale.Value, new[] {
+				"ゲーム履歴「",
+				"{0}",
+				"」で何をする？",
+			}, arg0),
+			_ => Render(Localization.Locale.Value, new[] {
+				"What would you like to do with record \"",
+				"{0}",
+				"\"?",
+			}, arg0),
+		};
+		
+		public static LString record_what_do_ls(object arg0) => new LString(Render(null, new[] {
+				"What would you like to do with record \"",
+				"{0}",
+				"\"?",
+			}, arg0),
+			(Locales.JP, Render(Locales.JP, new[] {
+				"ゲーム履歴「",
+				"{0}",
+				"」で何をする？",
+			}, arg0)))
+			{ ID = "record_what_do" };
+		
+		public static readonly LString record_view_replay = new LString("Go to replay",
+			(Locales.JP, "リプレイを見る"))
+			{ ID = "record_view_replay" };
 		
 		public static string practice_stage(object arg0) => Localization.Locale.Value switch {
 			Locales.JP => Render(Localization.Locale.Value, new[] {
@@ -302,7 +364,7 @@ public static partial class LocalizedStrings {
 			(Locales.JP, "フェーズ"))
 			{ ID = "practice_m_whichphase" };
 		
-		public static readonly LString practice_m_whichboss = new LString("Boss Practice",
+		public static readonly LString practice_m_whichboss = new LString("Boss",
 			(Locales.JP, "ボス"))
 			{ ID = "practice_m_whichboss" };
 		
@@ -466,8 +528,11 @@ public static partial class LocalizedStrings {
 		public static readonly LString main_bossprac = new LString("Boss Practice")
 			{ ID = "main_bossprac" };
 		
-		public static readonly LString main_scores = new LString("Scores")
+		public static readonly LString main_scores = new LString("Records")
 			{ ID = "main_scores" };
+		
+		public static readonly LString main_playerdata = new LString("Player Data")
+			{ ID = "main_playerdata" };
 		
 		public static readonly LString main_stats = new LString("Stats")
 			{ ID = "main_stats" };
@@ -496,10 +561,6 @@ public static partial class LocalizedStrings {
 		public static readonly LString replay_name = new LString("Name",
 			(Locales.JP, "リプレイ名"))
 			{ ID = "replay_name" };
-		
-		public static readonly LString replay_save = new LString("Save",
-			(Locales.JP, "セーブ"))
-			{ ID = "replay_save" };
 		
 		public static readonly LString replay_saved = new LString("Saved!",
 			(Locales.JP, "セーブ完了！"))

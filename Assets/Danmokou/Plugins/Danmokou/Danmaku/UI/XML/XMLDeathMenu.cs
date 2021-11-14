@@ -16,28 +16,26 @@ namespace Danmokou.UI.XML {
 [Preserve]
 public class XMLDeathMenu : PausedGameplayMenu {
 
-    protected override void ResetCurrentNode() {
-        Current = MainScreen.Top[GameManagement.Instance.Continues > 0 ? 0 : 1];
-    }
-
     public override void FirstFrame() {
-        MainScreen = new UIScreen(this,
-            new FuncNode(() => {
+        MainScreen = new UIScreen(this, death_header, UIScreen.Display.OverlayTH)  { Builder = (s, ve) => {
+            ve.AddColumn();
+        }, BackgroundOpacity = 0.8f  };
+        
+        _ = new UIColumn(MainScreen, null,
+            new FuncNode(() => death_continue_ls(GameManagement.Instance.Continues), () => {
                 if (GameManagement.Instance.TryContinue()) {
                     ProtectHide(HideMe);
-                    return true;
-                } else return false;
-                }, () => death_continue_ls(GameManagement.Instance.Continues), true
-            ).EnabledIf(() => GameManagement.Instance.Continues > 0),
-            new ConfirmFuncNode(GameManagement.Restart, restart, true)
-                .EnabledIf(() => GameManagement.CanRestart),
-            new ConfirmFuncNode(GameManagement.GoToMainMenu, to_menu, true)
-        ).With(UIScreen);
-        MainScreen.ExitNode = MainScreen.Top[0];
+                    return new UIResult.StayOnNode();
+                } else return new UIResult.StayOnNode(true);
+            }) {EnabledIf = (() => GameManagement.Instance.Continues > 0)},
+            new ConfirmFuncNode(restart, GameManagement.Restart)
+                {EnabledIf = (() => GameManagement.CanRestart)},
+            new ConfirmFuncNode(to_menu, GameManagement.GoToMainMenu)) {
+            ExitIndexOverride = 0,
+            EntryIndexOverride = () => GameManagement.Instance.Continues > 0 ? 0 : 1
+        };
         
         base.FirstFrame();
-        UI.Q<Label>("Header").text = death_header;
-        HideMe();
     }
 
     protected override void BindListeners() {

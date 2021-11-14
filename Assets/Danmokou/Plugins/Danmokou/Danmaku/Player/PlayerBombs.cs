@@ -147,7 +147,7 @@ public static partial class PlayerBombs {
         ServiceLocator.SFXService.Request("mokou-thousandsuns");
         b.SpawnCutin();
         BulletManager.SoftScreenClear();
-        var task = bomber.RunExternalSM(SMRunner.RunNoCancelRoot(b.SM!), cancelOnFinish: true);
+        var task = bomber.RunExternalSM(SMRunner.RunRoot(b.SM!, bomber.BoundingToken), cancelOnFinish: true);
         for (int f = 0; f < 600; ++f) {
             if (f == 500) {
                 BulletManager.SoftScreenClear();
@@ -166,7 +166,7 @@ public static partial class PlayerBombs {
         var fireDisable = DisableFire(bomber);
         bomber.MakeInvulnerable(900, true);
         b.SpawnCutin();
-        _ = bomber.RunExternalSM(SMRunner.RunNoCancelRoot(b.SM!), cancelOnFinish: true);
+        _ = bomber.RunExternalSM(SMRunner.RunRoot(b.SM!, bomber.BoundingToken), cancelOnFinish: true);
         for (int ii = 0; ii < 600; ++ii) yield return null;
         fireDisable.Dispose();
         for (int ii = 0; ii < 180; ++ii) yield return null;

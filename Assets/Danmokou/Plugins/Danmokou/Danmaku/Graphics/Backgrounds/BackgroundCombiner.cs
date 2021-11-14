@@ -39,9 +39,9 @@ public class BackgroundCombiner : RegularUpdater {
     public void SetMaterial(Material newMat, MaterialPropertyBlock newPB) {
         mat = newMat;
         pb = newPB;
+        time = 0f;
         UpdateTextures();
         sr.material = mat;
-        time = 0f;
     }
 
     private void Reconstruct() {

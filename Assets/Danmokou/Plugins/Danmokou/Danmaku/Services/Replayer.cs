@@ -54,7 +54,7 @@ public class ReplayMetadata {
     public string AsFilename => $"{Record.Mode}_{Record.SavedMetadata.difficulty.DescribeSafe()}_{Record.Uuid}";
 
 }
-public readonly struct Replay {
+public class Replay {
     public readonly Func<FrameInput[]> frames;
     public readonly ReplayMetadata metadata;
 

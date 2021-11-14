@@ -3,7 +3,7 @@ using Danmokou.Services;
 using UnityEngine;
 
 namespace Danmokou.UI {
-public class PlayModeCommentator : Commentator {
+public class PlayModeCommentator : Commentator<(PlayModeCommentator.Mode m, bool locked)> {
     public enum Mode {
         MAIN,
         EX,
@@ -22,11 +22,11 @@ public class PlayModeCommentator : Commentator {
     public Comment lockedComment;
 
 
-    public void SetComment(Mode m, bool locked) => SetComment(
-        locked ? lockedComment :
-        (!SaveData.r.TutorialDone && GameManagement.References.tutorial != null && m != Mode.TUTORIAL) ? 
+    public override void SetCommentFromValue((Mode m, bool locked) v) => SetComment(
+        v.locked ? lockedComment :
+        (!SaveData.r.TutorialDone && GameManagement.References.tutorial != null && v.m != Mode.TUTORIAL) ? 
             mainNoTutorialComment :
-            m switch {
+            v.m switch {
                 Mode.EX => exComment,
                 Mode.STAGEPRAC => stPracComment,
                 Mode.BOSSPRAC => bossPracComment,

@@ -18,12 +18,10 @@ public class XMLMainMenuVN01 : XMLMainMenu {
     private UIScreen OptionsScreen = null!;
     
     protected override IEnumerable<UIScreen> Screens => new[] {
+        MainScreen,
         OptionsScreen, 
-        MainScreen
     }.NotNull();
     
-    public VisualTreeAsset MainScreenV = null!;
-    public VisualTreeAsset OptionsScreenV = null!;
 
     public override void FirstFrame() {
         FixedDifficulty dfc = FixedDifficulty.Normal;
@@ -34,11 +32,17 @@ public class XMLMainMenuVN01 : XMLMainMenu {
         TeamConfig Team() => new(0, Subshot.TYPE_D, defaultSupport.ability, (defaultPlayer, defaultShot.shot));
         SharedInstanceMetadata Meta() => new(Team(), new DifficultySettings(dfc));
         
-        OptionsScreen = new UIScreen(this, XMLPauseMenu.GetOptions(true).ToArray())
-            .With(OptionsScreenV).OnExit(SaveData.AssignSettingsChanges);
-        MainScreen = new UIScreen(this,
-            new FuncNode(() => InstanceRequest.RunCampaign(MainCampaign, null, Meta()), 
-                main_gamestart, true).With(large1Class),
+        OptionsScreen = this.OptionsScreen();
+        
+        MainScreen = new UIScreen(this, null, UIScreen.Display.Unlined){ Builder = (s, ve) => {
+            s.Margin.SetLRMargin(720, null);
+            var c = ve.AddColumn();
+            c.style.maxWidth = 40f.Percent();
+            c.style.paddingTop = 500;
+        }, SceneObjects = MainScreenOnlyObjects};
+        _ = new UIColumn(MainScreen, null,
+            new FuncNode(main_gamestart, () => InstanceRequest.RunCampaign(MainCampaign, null, Meta()))
+                .With(large1Class),
             new OptionNodeLR<string?>(main_lang, l => {
                     SaveData.UpdateLocale(l);
                     SaveData.AssignSettingsChanges();
@@ -47,14 +51,13 @@ public class XMLMainMenuVN01 : XMLMainMenu {
                     (new LString("日本語"), Locales.JP)
                 }, SaveData.s.Locale)
                 .With(large1Class),
-            new TransferNode(OptionsScreen, main_options)
+            new TransferNode(main_options, OptionsScreen)
                 .With(large1Class),
-            new FuncNode(Application.Quit, main_quit)
+            new FuncNode(main_quit, Application.Quit)
                 .With(large1Class),
-            new OpenUrlNode("https://twitter.com/rdbatz", main_twitter)
+            new OpenUrlNode(main_twitter, "https://twitter.com/rdbatz")
                 .With(large1Class)
-            ).With(MainScreenV);
-        ResetCurrentNode();
+        );
 
         base.FirstFrame();
         _ = uiRenderer.Slide(new Vector2(3, 0), Vector2.zero, 1f, DMath.M.EOutSine);

@@ -2,56 +2,219 @@
 using System.Collections.Generic;
 using System.Linq;
 using BagoumLib;
+using BagoumLib.Cancellation;
 using BagoumLib.Culture;
 using BagoumLib.Functional;
 using Danmokou.Achievements;
+using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Danmaku;
 using Danmokou.GameInstance;
+using Danmokou.Player;
 using Danmokou.Scriptables;
 using Danmokou.Services;
-using JetBrains.Annotations;
 using Danmokou.SM;
+using UnityEngine;
 using UnityEngine.UIElements;
 using static Danmokou.Core.LocalizedStrings.Generic;
 using static Danmokou.Core.LocalizedStrings.UI;
 using static Danmokou.Core.LocalizedStrings.CDifficulty;
+using static Danmokou.Services.GameManagement;
+using static Danmokou.UI.PlayModeCommentator;
 
 namespace Danmokou.UI.XML {
-public static class XMLUtils {
-    public const string nodeClass = "node";
-    public const string disabledClass = "disabled";
-    public const string fontUbuntuClass = "font-ubuntu";
-    public const string monospaceClass = "monospace";
-    public const string large1Class = "large1";
-    public const string small1Class = "small1";
-    public const string small2Class = "small2";
-    public const string small3Class = "small3";
-    public const string visibleAdjacentClass = "visibleadjacent";
-    public const string optionNoKeyClass = "nokey";
-    public const string hideClass = "hide";
-    public const string descriptorClass = "descriptor";
-    public const string centerTextClass = "centertext";
-    public static string CheckmarkClass(bool active) => active ? "checked" : "unchecked";
+public static partial class XMLUtils {
+    public static UIScreen PlaymodeScreen(this UIController m, UIScreen bossPractice, UIScreen stagePractice, Dictionary<Mode, Sprite> sprites, PlayModeCommentator? commentator, Func<CampaignConfig, Func<SharedInstanceMetadata, bool>, Func<UIResult>> getMetadata) {
+        var floater = References.uxmlDefaults.FloatingNode;
+        var s = new UIScreen(m, null, UIScreen.Display.Unlined) {
+            Builder = (s, ve) => ve.CenterElements()
+        };
+        Action<UINode> Builder(Mode mode) => n => XMLUtils.ConfigureFloatingImage(n.NodeHTML, sprites[mode]);
+        s.SetFirst(new CommentatorAxisColumn<(Mode, bool)>(s, new UIRenderDirect(s), new[] {
+            (new UINode() {
+                OnConfirm = getMetadata(References.campaign, meta => 
+                    InstanceRequest.RunCampaign(MainCampaign, null, meta)),
+                Prefab = floater,
+                OnBuilt = Builder(Mode.MAIN)
+            }, (Mode.MAIN, false)),
+            (References.exCampaign != null ? 
+                new UINode() {
+                    EnabledIf = () => SaveData.r.MainCampaignCompleted,
+                    OnConfirm = getMetadata(References.exCampaign, meta => 
+                        InstanceRequest.RunCampaign(ExtraCampaign, null, meta)),
+                    Prefab = floater,
+                    OnBuilt = Builder(Mode.EX)
+                } : null, 
+                (Mode.EX, !SaveData.r.MainCampaignCompleted)),
+            (PracticeBossesExist ?
+                new UINode() {
+                    EnabledIf = () => PBosses.Length > 0,
+                    OnConfirm = () => new UIResult.GoToNode(bossPractice),
+                    Prefab = floater,
+                    OnBuilt = Builder(Mode.BOSSPRAC)
+                } : null,
+                (Mode.BOSSPRAC, PBosses.Length == 0)),
+            (PracticeStagesExist ?
+                new UINode() {
+                    EnabledIf = () => PStages.Length > 0,
+                    OnConfirm = () => new UIResult.GoToNode(stagePractice),
+                    Prefab = floater,
+                    OnBuilt = Builder(Mode.STAGEPRAC)
+                } : null,
+                (Mode.STAGEPRAC, PStages.Length == 0)),
+            (References.tutorial != null ? new UINode {
+                OnConfirm = () => new UIResult.StayOnNode(!InstanceRequest.RunTutorial()),
+                Prefab = floater,
+                OnBuilt = Builder(Mode.TUTORIAL)
+            } : null, (Mode.TUTORIAL, false))
+        }) {
+            EntryIndexOverride = () => SaveData.r.TutorialDone ? 0 : -1,
+            Commentator = commentator
+        });
+        return s;
+    }
+    public static UIScreen StagePracticeScreen(this UIController m, 
+        Func<CampaignConfig, Func<SharedInstanceMetadata, bool>, Func<UIResult>> getMetadata) {
+        var s = new UIScreen(m, "STAGE PRACTICE") {Builder = (s, ve) => {
+            s.Margin.SetLRMargin(720, 720);
+            ve.AddColumn().style.flexGrow = 2;
+            ve.AddColumn().style.flexGrow = 5;
+        }};
+        var stageSel1 = s.ColumnRender(1);
+        s.SetFirst(new UIColumn(s, null) {
+            LazyNodes = () => GameManagement.PStages.Select(stage => 
+                new UINode(practice_stage_ls(stage.stage.stageNumber)) {
+                    ShowHideGroup = new UIColumn(stageSel1, 
+                        stage.Phases.Select(phase =>
+                            new UINode(phase.Title) {
+                                CacheOnEnter = true,
+                                OnConfirm = getMetadata(stage.campaign.campaign, meta => {
+                                    m.ConfirmCache();
+                                    return new InstanceRequest(InstanceRequest.PracticeSuccess, meta,
+                                        new StagePracticeRequest(stage, phase.index)).Run();
+                                })
+                            }).Prepend(
+                            new UINode(practice_fullstage) {
+                                CacheOnEnter = true,
+                                OnConfirm = getMetadata(stage.campaign.campaign, meta => {
+                                    m.ConfirmCache();
+                                    return new InstanceRequest(InstanceRequest.PracticeSuccess, meta,
+                                        new StagePracticeRequest(stage, 1)).Run();
+                                })
+                            }
+                        )
+                    )
+                })
+        });
+        return s;
+    }
+
+    public static UIScreen BossPracticeScreen(this UIController m, VisualTreeAsset spellPracticeNodeV,
+        Func<CampaignConfig, Func<SharedInstanceMetadata, bool>, Func<UIResult>> getMetadata) {
+        var cmpSpellHist = SaveData.r.GetCampaignSpellHistory();
+        var prcSpellHist = SaveData.r.GetPracticeSpellHistory();
+
+        var s = new UIScreen(m, "BOSS PRACTICE") {Builder = (_, ve) => {
+            ve.AddScrollColumn().style.flexGrow = 2.3f;
+            ve.AddScrollColumn().style.flexGrow = 5f;
+        }};
+        var bossSel1 = s.ColumnRender(1);
+        s.SetFirst(new UIColumn(s, null) {
+            LazyNodes = () => GameManagement.PBosses.Select(boss =>
+                new UINode(boss.boss.BossPracticeName) {
+                    ShowHideGroup = new UIColumn(bossSel1, boss.Phases.Select(phase => {
+                        var req = new BossPracticeRequest(boss, phase);
+                        var key = (req.Key as BossPracticeRequestKey)!;
+                        return new UINode(phase.Title) {
+                            Prefab = spellPracticeNodeV,
+                            OnBuilt = n => {
+                                var (cs, ct) = cmpSpellHist.GetOrDefault(key);
+                                var (ps, pt) = prcSpellHist.GetOrDefault(key);
+                                n.NodeHTML.Q<Label>("CampaignHistory").text = $"{cs}/{ct}";
+                                n.NodeHTML.Q<Label>("PracticeHistory").text = $"{ps}/{pt}";
+                            },
+                            CacheOnEnter = true,
+                            OnConfirm = getMetadata(boss.campaign.campaign, meta => {
+                                m.ConfirmCache();
+                                return new InstanceRequest(InstanceRequest.PracticeSuccess, meta,
+                                    req).Run();
+                            })
+                        };
+                    }))
+                })
+        });
+        return s;
+    }
     
-    public static UIScreen ReplayScreen(XMLMenu menu, Action<List<XMLMenu.CacheInstruction>> cacheTentative, Action cacheConfirm) =>
-        new LazyUIScreen(menu, () => SaveData.p.ReplayData.Count.Range().Select(i =>
-            new CacheNavigateUINode(cacheTentative, () =>
-                    SaveData.p.ReplayData.TryN(i)?.metadata.Record.AsDisplay(true, true) ?? generic_deleted,
-                new FuncNode(() => {
-                    cacheConfirm();
-                    return InstanceRequest.ViewReplay(SaveData.p.ReplayData.TryN(i));
-                }, replay_view),
-                new ConfirmFuncNode(() => SaveData.p.TryDeleteReplay(i), delete, true)
-            ).With(monospaceClass).With(small2Class)
-        ).ToArray());
-    
-    public static UIScreen HighScoreScreen(XMLMenu menu, UIScreen replayScreen,
+    public static UIScreen OptionsScreen(this UIController m) {
+        var s = new UIScreen(m, "OPTIONS") {
+            Builder = (_, ve) => {
+                ve.AddColumn().style.maxWidth = new Length(60, LengthUnit.Percent);
+            },
+            OnExitEnd = SaveData.AssignSettingsChanges
+        };
+        s.SetFirst(new UIColumn(s, null, XMLPauseMenu.GetOptions(true)));
+        return s;
+    }
+    public static UIScreen ReplayScreen(this UIController m, UIScreen gameDetails) {
+        var s = new UIScreen(m, "REPLAYS") {
+            Builder = (_, ve) => ve.AddScrollColumn()
+        };
+        s.SetFirst(new UIColumn(s, null) {
+            LazyNodes = () => SaveData.p.ReplayData.Select(rep => {
+                return new FuncNode(() => rep.metadata.Record.AsDisplay(true, true), n => {
+                    var ind = n.Group.Nodes.IndexOf(n);
+                    return PopupUIGroup.LRB2(n, new(replay_window),
+                        r => new UIColumn(r,
+                                new UINode(replay_what_do_ls(rep.metadata.Record.CustomName))
+                                    { Prefab = Prefabs.PureTextNode })
+                            { Interactable = false },
+                        p => (null, new UINode[] {
+                            UIButton.Delete(() => {
+                                if (SaveData.p.TryDeleteReplay(rep)) {
+                                    n.Remove();
+                                    return true;
+                                } else return false;
+                            }, () => new UIResult.GoToNode(n.Group, ind)),
+                            new UIButton(view_details, UIButton.ButtonType.Confirm, _ => 
+                                n.ReturnGroup.Then(CreateGameResultsView(rep.metadata.Record, gameDetails))),
+                            new UIButton(replay_view, UIButton.ButtonType.Confirm, _ => {
+                                s.Controller.ConfirmCache();
+                                return new UIResult.StayOnNode(!InstanceRequest.ViewReplay(rep));
+                            })
+                        }));
+                }) {
+                    OnBuilt = n => {
+                        n.NodeHTML.style.paddingLeft = 20;
+                        n.NodeHTML.style.paddingRight = 20;
+                    },
+                    CacheOnEnter = true
+                }.With(monospaceClass, small2Class, centerTextClass);
+            })
+        });
+        return s;
+    }
+
+    public static UIScreen RecordsScreen(this UIController m, UIScreen replayScreen, UIScreen detailsScreen,
         SMAnalysis.AnalyzedCampaign[] campaigns, SMAnalysis.AnalyzedDayCampaign? days = null) {
-        if (campaigns.Length == 0 || campaigns[0].bosses.Length == 0) return new UIScreen(menu, new UINode(scores_nocampaign));
-        var replays = new Dictionary<string, int>();
+        var screen = new UIScreen(m, "RECORDS") {Builder = (s, ve) => {
+            s.Margin.SetLRMargin(600, 600);
+            var container = ve.AddColumn();
+            var opts = container.AddColumn();
+            opts.style.flexGrow = opts.style.flexShrink = 0;
+            opts.style.height = 30f.Percent();
+            opts.style.width = 100f.Percent();
+            opts.style.marginBottom = 40;
+            var scores = container.AddScrollColumn();
+            scores.SetLRMargin(40, 60);
+            scores.style.width = 100f.Percent();
+        }};
+        if (campaigns.Length == 0 || campaigns[0].bosses.Length == 0) {
+            _ = new UIColumn(screen, null, new UINode(scores_nocampaign));
+            return screen;
+        }
         var mode = InstanceMode.CAMPAIGN;
-        var cmpIndex = 0;
+        int cmpIndex;
         string _campaign;
         string _boss;
         int _bphase;
@@ -93,21 +256,31 @@ public static class XMLUtils {
             _sphase = phase;
         }
         AssignCampaign(0);
-        SaveData.p.ReplayData.ForEachI((i, r) => replays[r.metadata.RecordUuid] = i);
         var scoreNodes = SaveData.r.FinishedGames.Values
             //If the user doesn't enter a name on the replay screen, the score won't show up, but it will still be recorded internally
             .Where(g => !string.IsNullOrWhiteSpace(g.CustomNameOrPartial) && g.Score > 0)
-            .OrderByDescending(g => g.Score).Select(g => {
+            .OrderByDescending(g => g.Score).Select(g =>
                 //Don't need to show the request (eg. Yukari (Ex) p3) because it's shown by the option nodes above this
-                var node = new UINode(g.AsDisplay(true, false));
-                if (replays.TryGetValue(g.Uuid, out var i)) node.SetConfirmOverride(() => (true, replayScreen.Top[i]));
-                return node.With(monospaceClass).With(small2Class)
-                    .With(CheckmarkClass(replays.ContainsKey(g.Uuid)))
-                    .VisibleIf(() => Matches(g.RequestKey));
-            });
-        bool IsBossOrChallenge() => mode == InstanceMode.BOSS_PRACTICE || mode == InstanceMode.SCENE_CHALLENGE;
+                new FuncNode(() => g.AsDisplay(true, false), n => PopupUIGroup.LRB2(
+                        n, new(record_header), 
+                        r => new UIColumn(r,new UINode(record_what_do(g.CustomNameOrPartial)) 
+                            { Prefab = Prefabs.PureTextNode} ) { Interactable = false },
+                        p => (null, new UINode[] {
+                            new UIButton(view_details, UIButton.ButtonType.Confirm, _ =>
+                                n.ReturnGroup.Then(CreateGameResultsView(g, detailsScreen))),
+                            new UIButton(record_view_replay, UIButton.ButtonType.Confirm, _ => {
+                                foreach (var (ir, replay) in SaveData.p.ReplayData.Enumerate())
+                                    if (replay.metadata.Record.Uuid == g.Uuid)
+                                        return  n.ReturnGroup.Then(new UIResult.GoToNode(replayScreen.Groups[0], ir));
+                                return new UIResult.StayOnNode(true);
+                            }) { EnabledIf = () =>SaveData.p.ReplayData.Any(rep => rep.metadata.Record.Uuid == g.Uuid) }
+                        })
+                    )) {
+                    VisibleIf = () => Matches(g.RequestKey)
+                }.With(monospaceClass, small2Class, centerTextClass));
+        bool IsBossOrChallenge() => mode is InstanceMode.BOSS_PRACTICE or InstanceMode.SCENE_CHALLENGE;
         bool IsStage() => mode == InstanceMode.STAGE_PRACTICE;
-        var optnodes = new[] {
+        var optnodes = new UINode[] {
             new OptionNodeLR<InstanceMode>(practice_type, i => mode = i, new[] {
                 (practice_m_campaign, InstanceMode.CAMPAIGN),
                 (practice_m_boss, InstanceMode.BOSS_PRACTICE),
@@ -116,137 +289,316 @@ public static class XMLUtils {
             }.FilterNone().ToArray(), mode),
             new OptionNodeLR<int>(practice_campaign, AssignCampaign,
                 campaigns.Select((c, i) => (new LString(c.campaign.shortTitle), i)).ToArray(), cmpIndex),
-            new DynamicOptionNodeLR<string>(practice_m_whichboss, AssignBoss, () =>
+            new OptionNodeLR<string>(practice_m_whichboss, AssignBoss, () =>
                     IsBossOrChallenge() ?
-                        campaigns[cmpIndex].bosses.Select(b => (b.boss.BossPracticeName.Value, b.boss.key)).ToArray() :
-                        new[] {("", "")} //required to avoid errors with the option node
-                , "").VisibleIf(() => IsBossOrChallenge()),
-            new DynamicOptionNodeLR<int>(practice_m_whichstage, AssignStage, () =>
+                        campaigns[cmpIndex].bosses.Select(b => (b.boss.BossPracticeName, b.boss.key)).ToArray() :
+                        new (LString, string)[] {("", "")} //required to avoid errors with the option node
+                , ""){ VisibleIf = IsBossOrChallenge },
+            new OptionNodeLR<int>(practice_m_whichstage, AssignStage, () =>
                     IsStage() ?
-                        campaigns[cmpIndex].stages.Select((s, i) => (s.stage.stageNumber, i)).ToArray() :
-                        new[] {("", 0)} //required to avoid errors with the option node
-                , 0).VisibleIf(() => IsStage()),
-            new DynamicOptionNodeLR<int>(practice_m_whichphase, AssignBossPhase, () =>
+                        campaigns[cmpIndex].stages.Select((s, i) => ((LString)s.stage.stageNumber, i)).ToArray() :
+                        new (LString, int)[] {("", 0)} //required to avoid errors with the option node
+                , 0){ VisibleIf = IsStage },
+            new OptionNodeLR<int>(practice_m_whichphase, AssignBossPhase, () =>
                     IsBossOrChallenge() ?
                         campaigns[cmpIndex].bossKeyMap[_boss].Phases.Select(
                             //p.index is used as request key
-                            (p, i) => ($"{i + 1}. {p.Title}", p.index)).ToArray() :
-                        new[] {("", 0)}, 0)
-                .OnBound(ve => ve.Q("ValueContainer").style.width = new StyleLength(new Length(80, LengthUnit.Percent)))
-                .VisibleIf(() => IsBossOrChallenge()),
-            new DynamicOptionNodeLR<int>(practice_m_whichphase, AssignStagePhase, () =>
+                            (p, i) => ((LString)$"{i + 1}. {p.Title}", p.index)).ToArray() :
+                        new (LString, int)[] {("", 0)}, 0) {
+                    OnBuilt = n => n.NodeHTML.Q("ValueContainer").style.width = new StyleLength(new Length(80, LengthUnit.Percent)),
+                    VisibleIf = IsBossOrChallenge
+                },
+            new OptionNodeLR<int>(practice_m_whichphase, AssignStagePhase, () =>
                     IsStage() ?
                         campaigns[cmpIndex].stages[_stage].Phases.Select(
-                            p => (p.Title.Value, p.index)).Prepend((practice_fullstage.Value, 1)).ToArray() :
-                        new[] {("", 0)}, 0)
-                .VisibleIf(() => IsStage()),
+                            p => (p.Title, p.index)).Prepend((practice_fullstage, 1)).ToArray() :
+                        new (LString, int)[] {("", 0)}, 0) {
+                    VisibleIf = IsStage
+                }
         };
-        return new UIScreen(menu, optnodes.Append(new PassthroughNode(LString.Empty)).Concat(scoreNodes).ToArray());
+        screen.SetFirst(new VGroup(
+            new UIColumn(screen.ColumnRender(1), optnodes),
+            new UIColumn(screen.ColumnRender(2), scoreNodes)) {
+            EntryNodeOverride = optnodes[0]
+        });
+        return screen;
     }
     
-    
-    //TODO: temp workaround for wrapping custom difficulty descriptions
-    private static readonly string[] descr = {descriptorClass, "wrap"};
+    public static UIScreen CreatePlayerScreen(this UIController m, SMAnalysis.AnalyzedCampaign c, 
+        BehaviorEntity? demoSetup, GameObject? demoPlayerPrefab, Transform shotDisplayContainer, Func<TeamConfig, bool> continuation) {
+        foreach (var sc in c.campaign.players
+            .SelectMany(p => p.shots2)
+            .Select(s2 => s2.shot)) {
+            if (sc.prefab != null)
+                sc.prefab.GetComponentsInChildren<FireOption>()
+                    .ForEach(fo => fo.Preload());
+        }
+        PlayerController? demoPlayer = null;
+        Cancellable? demoCT = null;
+        OptionNodeLR<ShipConfig> playerSelect = null!;
+        OptionNodeLR<ISupportAbilityConfig> supportSelect = null!;
+        OptionNodeLR<ShotConfig> shotSelect = null!;
+        OptionNodeLR<Subshot> subshotSelect = null!;
 
-    public static UIScreen CreateCustomDifficultyEdit(XMLMenu menu, VisualTreeAsset screen, 
-        Func<DifficultySettings, (bool, UINode)> dfcCont) {
-            var load_cbs = new List<Action>();
-            var dfc = new DifficultySettings(null);
-            void SetNewDFC(DifficultySettings? newDfc) {
-                if (newDfc == null) return;
-                dfc = FileUtils.CopyJson(newDfc);
-                foreach (var cb in load_cbs) {
-                    cb();
+        var team = new TeamConfig(0, Subshot.TYPE_D, null,
+            c.campaign.players
+                .SelectMany(p => p.shots2
+                    .Select(s => (p, s.shot)))
+                .ToArray());
+        var smeta = new SharedInstanceMetadata(team, new DifficultySettings(FixedDifficulty.Normal));
+        
+        void CleanupDemo() {
+            Logs.Log("Cleaning up demo");
+            //If you don't do this, lingering references to playercontroller in the fctx of
+            // fired lasers can become problematic
+            BulletManager.ClearAllBullets();
+            if (demoPlayer != null) {
+                demoPlayer.InvokeCull();
+                demoPlayer = null;
+            }
+            demoCT?.Cancel();
+            GameManagement.DeactivateInstance();
+        }
+        void UpdateDemo() {
+            if (demoSetup == null || demoPlayerPrefab == null) return;
+            GameManagement.DeactivateInstance();
+            var effShot = shotSelect.Value.GetSubshot(subshotSelect.Value);
+            ReplayActor r;
+            if (effShot.demoReplay != null) {
+                r = Replayer.BeginReplaying(new Replayer.ReplayerConfig(
+                    Replayer.ReplayerConfig.FinishMethod.REPEAT, 
+                    effShot.demoReplay.Frames,
+                    () => demoPlayer!.transform.position = new Vector2(0, -3)
+                ));
+                demoCT?.Cancel();
+                demoCT = new Cancellable();
+                if (effShot.demoSetupSM != null) {
+                    StateMachineManager.FromText(effShot.demoSetupSM)?.Start(new SMHandoff(demoSetup, demoCT));
                 }
+            } else {
+                r = Replayer.BeginReplaying(new Replayer.ReplayerConfig(
+                    Replayer.ReplayerConfig.FinishMethod.REPEAT,
+                    () => new []{new InputManager.FrameInput(0, 0, false, false, false, false, false, false, false)}
+                ));
             }
-            double[] _pctMods = {
-                0.31, 0.45, 0.58, 0.7, 0.85, 1, 1.2, 1.4, 1.6, 1.8, 2
-            };
-            var pctMods = _pctMods.Select(x => {
-                var offset = (x - 1) * 100;
-                var prefix = (offset >= 0) ? "+" : "";
-                return (new LString($"{prefix}{offset}%"), x);
-            }).ToArray();
-            (LString, bool)[] yesNo = {(generic_on, true), (generic_off, false)};
-            IEnumerable<(LString, double)> AddPlus(IEnumerable<double> arr) => arr.Select(x => {
-                var prefix = (x >= 0) ? "+" : "";
-                return (new LString($"{prefix}{x}"), x);
-            });
-            UINode MakeOption<T>(LString title, IEnumerable<(LString, T)> options, Func<T> deflt, Action<T> apply,
-                LString description) {
-                var node = new OptionNodeLR<T>(title, apply, options.ToArray(), deflt(), 
-                    new UINode(LString.Format("\n\n{0}", description)).With(descr));
-                load_cbs.Add(() => node.SetIndexFromVal(deflt()));
-                return node.With(small1Class);
+            GameManagement.NewInstance(InstanceMode.NULL, null, 
+                new InstanceRequest(_ => true, smeta, new CampaignRequest(c!)), r);
+            if (demoPlayer == null) {
+                demoPlayer = UnityEngine.Object.Instantiate(demoPlayerPrefab).GetComponent<PlayerController>();
             }
-            UINode MakePctOption(LString title, Func<double> deflt, Action<double> apply, LString description)
-                => MakeOption(title, pctMods, deflt, apply, description);
-            UINode MakeOnOffOption(LString title, Func<bool> deflt, Action<bool> apply, LString description)
-                => MakeOption(title, yesNo, deflt, apply, description);
-            UINode MakeOptionAuto<T>(LString title, IEnumerable<T> options, Func<T> deflt, Action<T> apply, LString description)
-                => MakeOption(title, options.Select(x => (new LString(x.ToString()), x)), deflt, apply, description);
+            demoPlayer.UpdateTeam((playerSelect.Value, shotSelect.Value), subshotSelect.Value, true);
+            demoPlayer.transform.position = new Vector2(0, -3);
+        }
+        
+        (ShipConfig player, FancyShotDisplay display)[] displays = c.campaign.players.Select(p => {
+            var display = UnityEngine.Object.Instantiate(p.shotDisplay, shotDisplayContainer).GetComponent<FancyShotDisplay>();
+            display.Show(false);
+            return (p, display);
+        }).ToArray();
 
-            var saved = SaveData.s.DifficultySettings;
-            IEnumerable<UINode> MakeSavedDFCNodes(Func<int, UINode> creator, int excess=20) => (saved.Count + excess)
-                .Range()
-                .Select(i => creator(i)
-                    .OnBound(i == 0 ? (VisualElement v) => v.style.marginTop = new StyleLength(150) : null)
-                    //This can change dynamically
-                    .With((_, ve) => {
-                        if (saved.TryN(i) == null) ve.AddToClassList(hideClass);
-                    })
-                    .PassthroughIf(() => saved.TryN(i) == null)
-                );
-            var newSavedSettingsName = new TextInputNode(new_setting);
-            var optSliderHelper = new PassthroughNode(() =>
-                desc_effective_ls(effective, DifficultySettings.FancifySlider(dfc.customValueSlider)));
-            return new UIScreen(menu, 
-                MakeOption(scaling, (DifficultySettings.MIN_SLIDER, DifficultySettings.MAX_SLIDER + 1).Range()
-                    .Select(x => (new LString($"{x}"), x)), () => dfc.customValueSlider, dfc.SetCustomDifficulty,
-                    desc_scaling),
-                optSliderHelper.With(small2Class),
-                MakeOptionAuto(suicide, new[] {0, 1, 3, 5, 7}, () => dfc.numSuicideBullets,
-                    x => dfc.numSuicideBullets = x, desc_suicide),
-                MakePctOption(p_dmg, () => dfc.playerDamageMod, x => dfc.playerDamageMod = x, desc_p_dmg),
-                MakePctOption(boss_hp, () => dfc.bossHPMod, x => dfc.bossHPMod = x, desc_boss_hp),
-                MakeOnOffOption(respawn, () => dfc.respawnOnDeath, x => dfc.respawnOnDeath = x, desc_respawn),
-                MakePctOption(faith_decay, () => dfc.faithDecayMultiplier, x => dfc.faithDecayMultiplier = x, desc_faith_decay),
-                MakePctOption(faith_acquire, () => dfc.faithAcquireMultiplier, x => dfc.faithAcquireMultiplier = x, desc_faith_acquire),
-                MakePctOption(meter_usage, () => dfc.meterUsageMultiplier, x => dfc.meterUsageMultiplier = x, desc_meter_usage),
-                MakePctOption(meter_acquire, () => dfc.meterAcquireMultiplier, x => dfc.meterAcquireMultiplier = x, desc_meter_acquire),
-                MakeOnOffOption(bombs_enabled, () => dfc.bombsEnabled, x => dfc.bombsEnabled = x, desc_bombs_enabled),
-                MakeOnOffOption(meter_enabled, () => dfc.meterEnabled, x => dfc.meterEnabled = x, desc_meter_enabled),
-                MakePctOption(player_speed, () => dfc.playerSpeedMultiplier, x => dfc.playerSpeedMultiplier = x, desc_player_speed),
-                MakePctOption(player_hitbox, () => dfc.playerHitboxMultiplier, x => dfc.playerHitboxMultiplier = x, desc_player_hitbox),
-                MakePctOption(player_grazebox, () => dfc.playerGrazeboxMultiplier,
-                    x => dfc.playerGrazeboxMultiplier = x, desc_player_grazebox),
-                MakeOption(lives, (1, 14).Range().Select(x => (new LString($"{x}"), (int?) x)).Prepend((generic_default, null)),
-                    () => dfc.startingLives, x => dfc.startingLives = x, desc_lives),
-                MakeOption(poc, AddPlus(new[] {
-                        //can't use addition to generate these because -6 + 0.4 =/= -5.6...
-                        -6, -5.6, -5.2, -4.8, -4.4, -4, -3.6, -3.2, -2.8, -2.4, -2, -1.6, -1.2, -0.8, -0.4,
-                        0, 0.4, 0.8, 1.2, 1.6, 2
-                    }), () => dfc.pocOffset, x => dfc.pocOffset = x, desc_poc),
-                //new PassthroughNode(""),
-                new UINode(to_select).SetConfirmOverride(() => dfcCont(dfc)),
-                new UINode(save_load_setting,
-                    MakeSavedDFCNodes(i => new FuncNode(() => SetNewDFC(saved?.TryN(i)?.settings), 
-                        () => new LString(saved?.TryN(i)?.name!).Or(generic_deleted), true))
-                        .Append(newSavedSettingsName)
-                        .Append(new FuncNode(() => SaveData.s.AddDifficultySettings(newSavedSettingsName.DataWIP, dfc), 
-                            save_setting, true))
-                        .ToArray()
-                ).SetRightChildIndex(-2),
-                new UINode(delete_setting, 
-                    MakeSavedDFCNodes(i => new ConfirmFuncNode(() => SaveData.s.TryRemoveDifficultySettingsAt(i), 
-                        () => new LString(saved?.TryN(i)?.name!).Or(generic_deleted), true)).ToArray()
-                ).EnabledIf(() => SaveData.s.DifficultySettings.Count > 0)
-            ).With(screen);
+        void ShowShot(ShipConfig p, ShotConfig s, Subshot sub, ISupportAbilityConfig support, bool first) {
+            if (!first) UpdateDemo();
+            var index = displays.IndexOf(sd => sd.player == p);
+            displays[index].display.SetShot(p, s, sub, support);
+            foreach (var (i, (_, display)) in displays.Enumerate()) {
+                //Only show the selected player on entry so the others don't randomly appear on screen during swipe
+                display.Show(!first || i == index);
+                display.SetRelative(i, index, first);
+            };
         }
 
+        void _ShowShot(bool first = false) {
+            ShowShot(playerSelect.Value, shotSelect.Value, subshotSelect.Value, supportSelect.Value, first);
+        }
+        
+        playerSelect = new OptionNodeLR<ShipConfig>(LString.Empty, _ => _ShowShot(),
+            c.campaign.players.Select(p => (p.ShortTitle, p)).ToArray(), c.campaign.players[0]);
 
-    public static UIScreen StatisticsScreen(XMLMenu menu, VisualTreeAsset screen,
-        IEnumerable<InstanceRecord> allGames, SMAnalysis.AnalyzedCampaign[] campaigns) {
+        supportSelect = new OptionNodeLR<ISupportAbilityConfig>(LString.Empty, _ => _ShowShot(),
+            () => playerSelect.Value.supports.Select(s => 
+                ((LString)s.ordinal, (ISupportAbilityConfig)s.ability)).ToArray(), 
+            playerSelect.Value.supports[0].ability);
+        shotSelect = new OptionNodeLR<ShotConfig>(LString.Empty, _ => _ShowShot(), () =>
+                playerSelect.Value.shots2.Select(s => ((LString)(s.shot.isMultiShot ? 
+                        shotsel_multi(s.ordinal) : 
+                        shotsel_type(s.ordinal)), s.shot)).ToArray(),
+            playerSelect.Value.shots2[0].shot);
+        subshotSelect = new OptionNodeLR<Subshot>(LString.Empty, _ => _ShowShot(),
+            EnumHelpers2.Subshots.Select(x => (shotsel_variant_ls(x.Describe()), x)).ToArray(), Subshot.TYPE_D) 
+            {VisibleIf = () => shotSelect.Value.isMultiShot};
+        var screen = new UIScreen(m, null, UIScreen.Display.Unlined) {
+            Builder = (s, ve) => {
+                s.Margin.style.marginLeft = 160;
+                var g = ve.AddColumn();
+                g.style.maxWidth = new Length(25, LengthUnit.Percent);
+                g.style.paddingTop = 720;
+            },
+            OnEnterStart = () => _ShowShot(true),
+            OnEnterEnd = UpdateDemo,
+            OnExitStart = () => {
+                CleanupDemo();
+                foreach (var (player, display) in displays) {
+                    if (player != playerSelect.Value) display.Show(false);
+                };
+            },
+        };
+        _ = new UIColumn(screen, null,
+            new PassthroughNode(shotsel_player).With(centerTextClass),
+            playerSelect.With(optionNoKeyClass),
+            new PassthroughNode(LString.Empty),
+            new PassthroughNode(shotsel_shot).With(centerTextClass),
+            shotSelect.With(optionNoKeyClass),
+            new PassthroughNode(LString.Empty),
+            new PassthroughNode(shotsel_support).With(centerTextClass),
+            supportSelect.With(optionNoKeyClass),
+            new PassthroughNode(LString.Empty),
+            new FuncNode(play_game, () => continuation(new TeamConfig(0, subshotSelect.Value,
+                supportSelect.Value,
+                (playerSelect.Value, shotSelect.Value)))).With(centerTextClass)
+            //new UINode(() => shotSelect.Value.title).SetAlwaysVisible().FixDepth(1),
+            //new UINode(() => shotSelect.Value.description)
+            //    .With(shotDescrClass).With(smallClass)
+            //    .SetAlwaysVisible().FixDepth(1))
+        ) { EntryNodeOverride = playerSelect };
+        return screen;
+    }
+
+    public static UIScreen CustomDifficultyScreen(this UIController menu, Func<DifficultySettings, UIResult> dfcCont) {
+        var screen = new UIScreen(menu, "CUSTOM DIFFICULTY SETTINGS") {Builder = (_, ve) => {
+            var g1 = ve.AddScrollColumn();
+            g1.style.flexGrow = 2.4f;
+            g1.style.paddingRight = 120;
+            ve.AddScrollColumn().style.flexGrow = 2;
+        }};
+        var load_cbs = new List<Action>();
+        var dfc = new DifficultySettings(null);
+        void SetNewDFC(DifficultySettings? newDfc) {
+            if (newDfc == null) return;
+            dfc = FileUtils.CopyJson(newDfc);
+            foreach (var cb in load_cbs) {
+                cb();
+            }
+        }
+        double[] _pctMods = {
+            0.31, 0.45, 0.58, 0.7, 0.85, 1, 1.2, 1.4, 1.6, 1.8, 2
+        };
+        var pctMods = _pctMods.Select(x => {
+            var offset = (x - 1) * 100;
+            var prefix = (offset >= 0) ? "+" : "";
+            return (new LString($"{prefix}{offset}%"), x);
+        }).ToArray();
+        (LString, bool)[] yesNo = {(generic_on, true), (generic_off, false)};
+        IEnumerable<(LString, double)> AddPlus(IEnumerable<double> arr) => arr.Select(x => {
+            var prefix = (x >= 0) ? "+" : "";
+            return (new LString($"{prefix}{x}"), x);
+        });
+        var descCol = screen.ColumnRender(1);
+        UINode MakeOption<T>(LString title, IEnumerable<(LString, T)> options, Func<T> deflt, Action<T> apply,
+            LString description) {
+            var node = new OptionNodeLR<T>(title, apply, options.ToArray(), deflt()) {
+                ShowHideGroup = new UIColumn(descCol, new UINode(LString.Format("\n\n{0}", description))) {
+                    Interactable = false
+                },
+                OnBuilt = n => {
+                    n.NodeHTML.style.paddingLeft = 20;
+                    n.NodeHTML.style.paddingRight = 20;
+                },
+                OverrideClasses = new() { small1Class }
+            };
+            load_cbs.Add(() => node.SetIndexFromVal(deflt()));
+            return node;
+        }
+        UINode MakePctOption(LString title, Func<double> deflt, Action<double> apply, LString description)
+            => MakeOption(title, pctMods, deflt, apply, description);
+        UINode MakeOnOffOption(LString title, Func<bool> deflt, Action<bool> apply, LString description)
+            => MakeOption(title, yesNo, deflt, apply, description);
+        UINode MakeOptionAuto<T>(LString title, IEnumerable<T> options, Func<T> deflt, Action<T> apply, LString description)
+            => MakeOption(title, options.Select(x => (new LString(x!.ToString()), x)), deflt, apply, description);
+
+        var saved = SaveData.s.DifficultySettings;
+
+        
+        
+        UINode MakeSaveLoadDFCNode((string name, DifficultySettings settings) s) =>
+            new FuncNode(() => new LString(s.name),
+                n => {
+                    var ind = n.Group.Nodes.IndexOf(n);
+                    return PopupUIGroup.LRB2(n, new(setting),
+                        r => new UIColumn(r, new UINode(setting_what_do_ls(s.name)) {Prefab = Prefabs.PureTextNode}) 
+                            { Interactable = false },
+                        p => (null, new UINode[] {
+                            UIButton.Delete(() => {
+                                if (SaveData.s.RemoveDifficultySettings(s)) {
+                                    n.Remove();
+                                    return true;
+                                } else return false;
+                            }, () => new UIResult.GoToNode(n.Group, ind)),
+                            UIButton.Load(() => {
+                                SetNewDFC(s.settings);
+                                return true;
+                            }, n.ReturnGroup),
+                        })
+                    );
+                });
+        
+        var optSliderHelper = new PassthroughNode(() =>
+            desc_effective_ls(effective, DifficultySettings.FancifySlider(dfc.customValueSlider)));
+        screen.SetFirst(new UIColumn(screen, null,
+            MakeOption(scaling, (DifficultySettings.MIN_SLIDER, DifficultySettings.MAX_SLIDER + 1).Range()
+                .Select(x => (new LString($"{x}"), x)), () => dfc.customValueSlider, dfc.SetCustomDifficulty,
+                desc_scaling),
+            optSliderHelper.With(small2Class),
+            MakeOptionAuto(suicide, new[] {0, 1, 3, 5, 7}, () => dfc.numSuicideBullets,
+                x => dfc.numSuicideBullets = x, desc_suicide),
+            MakePctOption(p_dmg, () => dfc.playerDamageMod, x => dfc.playerDamageMod = x, desc_p_dmg),
+            MakePctOption(boss_hp, () => dfc.bossHPMod, x => dfc.bossHPMod = x, desc_boss_hp),
+            MakeOnOffOption(respawn, () => dfc.respawnOnDeath, x => dfc.respawnOnDeath = x, desc_respawn),
+            MakePctOption(faith_decay, () => dfc.faithDecayMultiplier, x => dfc.faithDecayMultiplier = x, desc_faith_decay),
+            MakePctOption(faith_acquire, () => dfc.faithAcquireMultiplier, x => dfc.faithAcquireMultiplier = x, desc_faith_acquire),
+            MakePctOption(meter_usage, () => dfc.meterUsageMultiplier, x => dfc.meterUsageMultiplier = x, desc_meter_usage),
+            MakePctOption(meter_acquire, () => dfc.meterAcquireMultiplier, x => dfc.meterAcquireMultiplier = x, desc_meter_acquire),
+            MakeOnOffOption(bombs_enabled, () => dfc.bombsEnabled, x => dfc.bombsEnabled = x, desc_bombs_enabled),
+            MakeOnOffOption(meter_enabled, () => dfc.meterEnabled, x => dfc.meterEnabled = x, desc_meter_enabled),
+            MakePctOption(player_speed, () => dfc.playerSpeedMultiplier, x => dfc.playerSpeedMultiplier = x, desc_player_speed),
+            MakePctOption(player_hitbox, () => dfc.playerHitboxMultiplier, x => dfc.playerHitboxMultiplier = x, desc_player_hitbox),
+            MakePctOption(player_grazebox, () => dfc.playerGrazeboxMultiplier,
+                x => dfc.playerGrazeboxMultiplier = x, desc_player_grazebox),
+            MakeOption(lives, (1, 14).Range().Select(x => (new LString($"{x}"), (int?) x)).Prepend((generic_default, null)),
+                () => dfc.startingLives, x => dfc.startingLives = x, desc_lives),
+            MakeOption(poc, AddPlus(new[] {
+                    //can't use addition to generate these because -6 + 0.4 =/= -5.6...
+                    -6, -5.6, -5.2, -4.8, -4.4, -4, -3.6, -3.2, -2.8, -2.4, -2, -1.6, -1.2, -0.8, -0.4,
+                    0, 0.4, 0.8, 1.2, 1.6, 2
+                }), () => dfc.pocOffset, x => dfc.pocOffset = x, desc_poc),
+            //new PassthroughNode(""),
+            new UINode(to_select) { OnConfirm = () => dfcCont(dfc) } ,
+            new UINode(manage_setting) {
+                ShowHideGroup = new UIColumn(descCol, 
+                    saved.Select(MakeSaveLoadDFCNode)
+                        .Prepend(new FuncNode(() => create_setting, 
+                            n => {
+                                var settingNameEntry = new TextInputNode(LString.Empty);
+                                return PopupUIGroup.LRB2(n, new PopupUINode(create_setting),
+                                    r => new UIColumn(r, new UINode(new_setting_name) {
+                                        Prefab = Prefabs.PureTextNode, Passthrough = true
+                                    }, settingNameEntry),
+                                    p => (null, new UINode[] {
+                                        UIButton.Save(() => {
+                                            SaveData.s.AddDifficultySettings(settingNameEntry.DataWIP, dfc);
+                                            n.Group.AddNodeDynamic(MakeSaveLoadDFCNode(saved.Last()));
+                                            return true;
+                                        }, n.ReturnGroup), 
+                                    }));
+                            }) {
+                            InlineStyle = (_, n) => n.NodeHTML.style.marginBottom = 120
+                        }))
+            }
+        ));
+        return screen;
+    }
+    
+    public static UIScreen StatisticsScreen(this UIController menu, IEnumerable<InstanceRecord> allGames, 
+        SMAnalysis.AnalyzedCampaign[] campaigns) {
         InstanceRecord[] games = allGames.ToArray();
         int? campaignIndex;
         Maybe<FixedDifficulty?> difficultySwitch = Maybe<FixedDifficulty?>.None;
@@ -280,25 +632,16 @@ public static class XMLUtils {
         string AsPct(float f01) => $"{(int) (f01 * 100)}%";
         LString ShowCard((BossPracticeRequest card, float ratio) bpr) {
             return LString.Format(
-                "{0} ({1})", 
-                bpr.card.phase.Title.FMap(
-                    (loc, s) => {
-                        var limit = loc switch {
-                            Locales.JP => 16,
-                            _ => 42
-                        };
-                        return s.Length > limit ?
-                            s.Substring(0, limit-2) + ".." :
-                            s;
-                    }), 
-                new LString(AsPct(bpr.ratio))
+                "{0}: {1}", 
+                new LString(AsPct(bpr.ratio)),
+                bpr.card.phase.Title
             );
         }
 
-        Func<UINode[]> nodes = () => new UINode[] {
+        var optNodes = new UINode[] {
             new OptionNodeLR<int?>(practice_campaign, AssignCampaign,
                 campaigns
-                    .Select((c, i) => (new LString(c.campaign.shortTitle), (int?) i))
+                    .Select((c, i) => (new LString(c.campaign.shortTitle), (int?)i))
                     .Prepend((stats_allcampaigns, null))
                     .ToArray(), campaignIndex),
             new OptionNodeLR<Maybe<FixedDifficulty?>>(stats_seldifficulty, x => {
@@ -313,7 +656,7 @@ public static class XMLUtils {
                     UpdateStats();
                 },
                 GameManagement.References.AllShips
-                    .Select(x => (x.ShortTitle, (ShipConfig?) x))
+                    .Select(x => (x.ShortTitle, (ShipConfig?)x))
                     .Prepend((stats_allplayers, null)).ToArray(), playerSwitch),
             new OptionNodeLR<(ShipConfig, ShotConfig)?>(stats_selshot, x => {
                     shotSwitch = x;
@@ -321,14 +664,15 @@ public static class XMLUtils {
                 },
                 GameManagement.References.AllShips
                     .SelectMany(p => p.shots2
-                        .Select(os => (new LString(ShotConfig.PlayerShotDescription(p, os.shot)), 
-                            ((ShipConfig, ShotConfig)?) (p, os.shot))))
-                    .Prepend((stats_allshots, ((ShipConfig, ShotConfig)?)null)).ToArray(), shotSwitch),
-
-            new TwoLabelUINode(stats_allruns, () => new LString($"{stats.TotalRuns}")),
-            new TwoLabelUINode(stats_complete, () => new LString($"{stats.CompletedRuns}")),
-            new TwoLabelUINode(stats_1cc, () => new LString($"{stats.OneCCRuns}")),
-            new TwoLabelUINode(stats_deaths, () => new LString($"{stats.TotalDeaths}")),
+                        .Select(os => (ShotConfig.PlayerShotDescription(p, os.shot),
+                            ((ShipConfig, ShotConfig)?)(p, os.shot))))
+                    .Prepend((stats_allshots, null)).ToArray(), shotSwitch),
+        };
+        var statsNodes = new UINode[] {
+            new TwoLabelUINode(stats_allruns, () => $"{stats.TotalRuns}"),
+            new TwoLabelUINode(stats_complete, () => $"{stats.CompletedRuns}"),
+            new TwoLabelUINode(stats_1cc, () => $"{stats.OneCCRuns}"),
+            new TwoLabelUINode(stats_deaths, () => $"{stats.TotalDeaths}"),
             new TwoLabelUINode(stats_totaltime, () => stats.TotalFrames.FramesToTime()),
             new TwoLabelUINode(stats_avgtime, () => stats.AvgFrames.FramesToTime()),
             new TwoLabelUINode(stats_favday, () => 
@@ -343,7 +687,7 @@ public static class XMLUtils {
                 if (stats.TotalRuns == 0) return generic_na;
                 var ((pc, sc), recs) = stats.FavoriteShot;
                 return LString.Format(new LString("{0} ({1})"), 
-                    new LString(ShotConfig.PlayerShotDescription(pc, sc)),
+                    ShotConfig.PlayerShotDescription(pc, sc),
                     new LString($"{recs.Length}")
                 );
             }),
@@ -354,38 +698,193 @@ public static class XMLUtils {
                 !stats.HasSpellHist ? generic_na : ShowCard(stats.BestCapture)),
             new TwoLabelUINode(stats_worstcard, () => 
                 !stats.HasSpellHist ? generic_na : ShowCard(stats.WorstCapture))
-        };
+        }.Select(x => x.With(small1Class));
         
-        return new LazyUIScreen(menu,
-            () => nodes().Select(x => x.With(small1Class)).ToArray()
-        ).With(screen);
-        
+        var screen = new UIScreen(menu, "STATISTICS") {Builder = (s, ve) => {
+            s.Margin.SetLRMargin(720, 720);
+            var container = ve.AddColumn();
+            var opts = container.AddColumn();
+            opts.style.flexGrow = opts.style.flexShrink = 0;
+            opts.style.height = 30f.Percent();
+            opts.style.width = 100f.Percent();
+            opts.style.marginBottom = 40;
+            var scores = container.AddScrollColumn();
+            scores.SetLRMargin(40, 60);
+            scores.style.width = 100f.Percent();
+        }};
+        screen.SetFirst(new VGroup(
+                new UIColumn(screen.ColumnRender(1), optNodes),
+                new UIColumn(screen.ColumnRender(2), statsNodes)
+            ) {
+            EntryNodeOverride = optNodes[0]
+        });
+        return screen;
     }
 
-    public static UIScreen AchievementsScreen(XMLMenu menu, VisualTreeAsset screen, VisualTreeAsset node, 
-        AchievementManager acvs) =>
-        new UIScreen(menu, 
-            acvs.SortedAchievements.Select(a => 
-                new UINode(a.Title)
-                    .OnBound(ev => ev.Q<Label>("Description").text = a.VisibleDescription)
-                    .With(CheckmarkClass(a.Completed))
-                    .With(node)
-                ).ToArray()
-            ).With(screen);
+    public static UIScreen AchievementsScreen(this UIController menu, VisualTreeAsset node, 
+        AchievementManager acvs) {
+        var screen = new UIScreen(menu, "ACHIEVEMENTS") {Builder = (s, ve) => {
+            s.Margin.SetLRMargin(600, 720);
+            ve.AddScrollColumn();
+        }};
+        _ = new UIColumn(screen, null, acvs.SortedAchievements.Select(a =>
+                new UINode(a.Title) {
+                        Prefab = node,
+                        OnBuilt = n => {
+                            n.NodeHTML.style.paddingLeft = 20;
+                            n.NodeHTML.style.paddingRight = 20;
+                        },
+                        InlineStyle = (_, n) => {
+                            n.NodeHTML.Q<Label>("Description").text = a.VisibleDescription;
+                            n.NodeHTML.AddToClassList(CheckmarkClass(a.Completed));
+                        }
+                }
+            ).ToArray()
+        );
+        return screen;
+    }
 
-    public static UIScreen MusicRoomScreen(XMLMenu menu, VisualTreeAsset screen, IEnumerable<IAudioTrackInfo> musics) =>
-        new UIScreen(menu,
-            musics.SelectNotNull(m => m.DisplayInMusicRoom switch {
-                true => new FuncNode(() => ServiceLocator.Find<IAudioTrackService>().InvokeBGM(m), 
-                    new LString(string.Format("({0}) {1}", m.TrackPlayLocation, m.Title)), true,
-                        new UINode(m.MusicRoomDescription).With(descr).With(small2Class, fontUbuntuClass)
-                    ).SetChildrenInaccessible().With(small1Class),
-                false => new UINode("????????????????",
-                    new UINode("This track is not yet unlocked.").With(descr).With(small2Class, fontUbuntuClass)
-                    ).SetChildrenInaccessible().With(small1Class),
-                _ => null
-            }).ToArray()
-        ).With(screen);
+    public static UIScreen MusicRoomScreen(this UIController menu, IEnumerable<IAudioTrackInfo> musics) {
+        var screen = new UIScreen(menu, "MUSIC ROOM") {Builder = (_, ve) => {
+            ve.AddScrollColumn().style.flexGrow = 1.7f;
+            ve.AddColumn();
+        }};
+        var descCol = new UIRenderColumn(screen, 1);
+        screen.SetFirst(new UIColumn(screen, null, musics.SelectNotNull(m => (m.DisplayInMusicRoom switch {
+            true => new FuncNode(new LString(string.Format("({0}) {1}", m.TrackPlayLocation, m.Title)), 
+                () => new UIResult.StayOnNode(ServiceLocator.Find<IAudioTrackService>().InvokeBGM(m) == null)) {
+                ShowHideGroup = new UIColumn(descCol, 
+                    new UINode(m.MusicRoomDescription).With(small2Class, fontUbuntuClass)) 
+                {Interactable = false}
+            },
+            false => new UINode("????????????????") {
+                ShowHideGroup = new UIColumn(descCol, 
+                    new UINode("This track is not yet unlocked.").With(small2Class, fontUbuntuClass))
+                {Interactable = false}
+            },
+            _ => null
+        })?.With(small1Class))));
+        return screen;
+    }
 
+    public static (IEnumerable<UINode?> left, IEnumerable<UINode?> right) GameMetadataDisplay(InstanceRecord rec) {
+        var stats = new CardHistoryStats(rec.CardHistory);
+        IEnumerable<UINode?> reqNodes = rec.RequestKey.Reconstruct() switch {
+            BossPracticeRequest br => new TwoLabelUINode?[] {
+                new(practice_campaign, br.boss.campaign.campaign.shortTitle),
+                new(practice_m_whichboss, br.boss.boss.BossPracticeName),
+                new(practice_m_whichphase, br.phase.Title)
+            },
+            CampaignRequest cr => new TwoLabelUINode?[] {
+                new(practice_campaign, cr.campaign.campaign.shortTitle)
+            },
+            PhaseChallengeRequest pr => new TwoLabelUINode?[] {
+                new(practice_campaign, pr.phase.boss.day.campaign.campaign.shortTitle),
+                new(practice_m_whichboss, pr.phase.boss.boss.BossPracticeName),
+                new(practice_m_whichphase, pr.phase.phase.Title),
+                new("Challenge", pr.ChallengeIdx)
+            },
+            StagePracticeRequest sr => new TwoLabelUINode?[] {
+                new(practice_campaign, sr.stage.campaign.campaign.shortTitle),
+                new(practice_m_whichstage, sr.stage.stage.stageNumber),
+                new(practice_m_whichphase, sr.phase == 1 ? practice_fullstage : sr.stage.Phases.First(p => p.index == sr.phase))
+            },
+            _ => throw new ArgumentOutOfRangeException()
+        };
+        var smeta = rec.SharedInstanceMetadata;
+        var ship = smeta.team.ships.TryN(0);
+        return (reqNodes
+            .Prepend(new TwoLabelUINode(practice_type, rec.Mode.Describe()))
+            //() => allows updates when a replay name is saved
+            .Prepend(new TwoLabelUINode("Name", () => rec.CustomNameOrPartial))
+            .Append(new UINode {Passthrough = true}).Concat(new TwoLabelUINode?[] {
+                new("Completed?", rec.Completed.ToString()),
+                new("Difficulty", rec.Difficulty.Describe()),
+                new("Player", ShotConfig.PlayerShotDescription(ship?.ship, ship?.shot)),
+                new("Date", rec.Date.SimpleTime())
+            }), new TwoLabelUINode?[] {
+            new("Score", rec.Score),
+            new("Continues Used", rec.ContinuesUsed),
+            new("Photos Taken", rec.Photos.Length),
+            new("Hits Taken", rec.HitsTaken),
+            new("Bombs Used", rec.BombsUsed),
+            new("1-UP items collected", rec.OneUpItemsCollected),
+            new("Game Time", rec.TotalFrames.FramesToTime()),
+            new("Bullet Time Time", rec.MeterFrames.FramesToTime()),
+            new("Total Cards", stats.TotalCards),
+            new("Perfect Card Captures", $"{stats.CardsPerStarCount[^1]}/{stats.TotalCards}"),
+            new("Card Captures By Stars", string.Join("/", stats.CardsPerStarCount.Select(x => x.ToString())))
+        });
+    }
+
+    public static UIResult CreateGameResultsView(InstanceRecord record, UIScreen resultsScreen) {
+        var (l, r) = GameMetadataDisplay(record);
+        var options = new UINode[] {
+            new FuncNode(generic_back, () => new UIResult.ReturnToScreenCaller())
+        };
+        var details = new LRBGroup(
+            new UIColumn(new UIRenderExplicit(resultsScreen, ve => ve.Q("Left")), l),
+            new UIColumn(new UIRenderExplicit(resultsScreen, ve => ve.Q("Right")), r),
+            new UIRow(new UIRenderExplicit(resultsScreen, ve => ve.Q("Bottom")), options)
+                { ExitNodeOverride = options[0] }
+        ) { ExitNodeOverride = options[0], EntryNodeOverride = options[0], OnScreenExitEnd = g => g.Destroy() };
+        resultsScreen.AddGroup(details);
+        return new UIResult.GoToNode(details);
+    }
+
+    public static readonly Action<UIScreen, VisualElement> GameResultsScreenBuilder = (s, ve) => {
+        s.Margin.SetLRMargin(600, 600);
+        var inner = ve.AddColumn();
+        var lr = inner.AddRow();
+        lr.style.height = 90f.Percent();
+        lr.AddColumn().SetPadding(20, 50, 50, 50).name = "Left";
+        lr.AddColumn().SetPadding(20, 50, 50, 50).name = "Right";
+        var bot = inner.AddNodeRow();
+        bot.style.height = 10f.Percent();
+        bot.name = "Bottom";
+    };
+
+    public static UIScreen PlayerDataScreen(this UIController m, UIScreen records, UIScreen stats, UIScreen? achievements, UIScreen replays) {
+        var s = new UIScreen(m, "PLAYER DATA") {
+            Builder = (s, ve) => {
+                s.Margin.SetLRMargin(960, 960);
+                var c = ve.AddColumn();
+                c.style.paddingTop = 240;
+            }
+        };
+        Action<UINode> setMargin = n => {
+            n.HTML.style.marginBottom = 50;
+        };
+        s.SetFirst(new UIColumn(s, null,
+                new TransferNode(main_scores, records) {
+                        EnabledIf = FinishedCampaigns.Any,
+                        OnBuilt = setMargin
+                    }.With(large2Class),
+                new TransferNode(main_stats, stats) {
+                            EnabledIf = FinishedCampaigns.Any,
+                            OnBuilt = setMargin
+                }.With(large2Class),
+                achievements == null ? null :
+                    new TransferNode(main_achievements, achievements) {
+                            OnBuilt = setMargin
+                        }.With(large2Class),
+                new TransferNode(main_replays, replays) {
+                        EnabledIf = () => SaveData.p.ReplayData.Count > 0,
+                        OnBuilt = setMargin
+                    }.With(large2Class)
+        ));
+        return s;
+    }
+
+    public static UIScreen AllPlayerDataScreens(this UIController m, UIScreen gameDetails, out UIScreen records, out UIScreen stats,
+        out UIScreen? achievements, out UIScreen replays, VisualTreeAsset achievementsNodeV) {
+        replays = m.ReplayScreen(gameDetails);
+        records = m.RecordsScreen(replays, gameDetails, FinishedCampaigns.ToArray());
+        achievements = GameManagement.Achievements != null ? 
+            m.AchievementsScreen(achievementsNodeV, GameManagement.Achievements) : 
+            null;
+        stats = m.StatisticsScreen(SaveData.r.FinishedCampaignGames, Campaigns);
+        return m.PlayerDataScreen(records, stats, achievements, replays);
+    }
 }
 }

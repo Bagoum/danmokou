@@ -123,17 +123,12 @@ public class MainCamera : RegularUpdater, IScreenshotter {
         Listen(SaveData.SettingsChanged, ReassignGlobalShaderVariables);
     }
 
-    /// <summary>
-    /// PPU of default game resources, such as utility images and UI objects. This does not change with resolution.
-    /// </summary>
-    public static float ResourcePPU => GraphicsUtils.BestResolution.h / ScreenHeight;
-
     public void ReassignGlobalShaderVariables(SaveData.Settings s) {
         //Log.Unity($"Camera width: {cam.pixelWidth} Screen width: {Screen.width}");
         Shader.SetGlobalFloat(ShaderScrnHeightID, ScreenHeight);
         Shader.SetGlobalFloat(ShaderScrnWidthID, ScreenWidth);
         Shader.SetGlobalFloat(PixelsPerUnitID, Screen.height / ScreenHeight);
-        Shader.SetGlobalFloat(ResourcePixelsPerUnitID, ResourcePPU);
+        Shader.SetGlobalFloat(ResourcePixelsPerUnitID, GraphicsUtils.ResourcePPU);
         Shader.SetGlobalFloat(RenderRatioID, Screen.height / (float) GraphicsUtils.BestResolution.h);
         Shader.SetGlobalFloat(ShaderPixelHeightID, Screen.height);
         Shader.SetGlobalFloat(ShaderPixelWidthID, Screen.width);

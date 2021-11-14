@@ -1,9 +1,11 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
-    <Style src="UINode.uss" />
+    <Style src="project://database/Assets/Danmokou/UXML/nodes/UINode.uss?fileID=7433441132597879392&amp;guid=908aa769b12ea7c44aae7ea3f797c582&amp;type=3#UINode" />
     <ui:VisualElement class="node">
         <ui:VisualElement name="Selector" class="pointer prefix" />
         <ui:VisualElement name="Checkmark" class="checkmark prefix" />
-        <ui:Label text="one two three日本語" focusable="true" name="Label" class="text coretext" style="height: 100%; padding-left: 0; padding-right: 0; white-space: nowrap;" />
-        <ui:Label text="red blue green yellow orange" focusable="true" name="Label2" class="text coretext" style="height: 100%; padding-left: 0; padding-right: 0; white-space: nowrap; -unity-text-align: upper-right;" />
+        <ui:VisualElement class="body" style="flex-grow: 1; justify-content: space-between;">
+            <ui:Label text="one two three日本語" name="Label" class="text coretext" style="height: 100%; padding-left: 0; padding-right: 0; white-space: nowrap; flex-grow: 0; flex-shrink: 0;" />
+            <ui:Label text="red blue green yellow orangered blue green yellow orangered blue green yellow orangered blue green yellow orange" name="Label2" class="text coretext" style="height: 100%; padding-left: 0; padding-right: 0; white-space: nowrap; -unity-text-align: upper-right; flex-grow: 0; overflow: hidden; text-overflow: ellipsis;" />
+        </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

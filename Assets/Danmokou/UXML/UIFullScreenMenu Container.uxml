@@ -1,4 +1,4 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
-    <Style src="UIFullScreenMenu Container.uss" />
+    <Style src="project://database/Assets/Danmokou/UXML/UIFullScreenMenu%20Container.uss?fileID=7433441132597879392&amp;guid=02a7fd8268078dd418420208ff0bf02a&amp;type=3#UIFullScreenMenu Container" />
     <ui:VisualElement name="UIContainer" />
 </ui:UXML>

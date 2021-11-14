@@ -4,6 +4,7 @@ namespace Danmokou.Scriptables {
 [CreateAssetMenu(menuName = "Data/Day Campaign Configuration")]
 public class DayCampaignConfig : ScriptableObject, ICampaignMeta {
     public string key = "";
+    public string shortTitle = "";
     public ShipConfig[] players = null!;
     public DayConfig[] days = null!;
     

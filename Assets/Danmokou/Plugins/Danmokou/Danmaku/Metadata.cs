@@ -124,7 +124,7 @@ public class DifficultySettings {
                 return desc_effective_ratio_ls(100 - percent, fds[ii - 1].Describe(), percent, fd.Describe());
             } 
         }
-        return desc_effective_more_ls(fds[fds.Length - 1].Describe());
+        return desc_effective_more_ls(fds[^1].Describe());
     }
 
     public string Describe() => standard?.Describe() ?? $"CUST:{customValueSlider:00}";
@@ -165,7 +165,7 @@ public readonly struct SMRunner {
     /// </summary>
     public static SMRunner CullRoot(StateMachine? sm, ICancellee cT, GenCtx? gcx=null) => new(sm, cT, true, true, gcx);
     public static SMRunner Run(StateMachine? sm, ICancellee cT, GenCtx? gcx=null) => new(sm, cT, false, false, gcx);
-    public static SMRunner RunNoCancelRoot(StateMachine? sm) => new(sm, Cancellable.Null, false, true, null);
+    public static SMRunner RunRoot(StateMachine? sm, ICancellee cT) => new(sm, cT, false, true, null);
     public SMRunner(StateMachine? sm, ICancellee cT, bool cullOnFinish, bool root, GenCtx? gcx) {
         this.sm = sm;
         this.cT = cT;

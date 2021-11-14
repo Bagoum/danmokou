@@ -37,44 +37,24 @@ public class XMLVNBacklogMenu : PausedGameplayMenu, IVNBacklog {
     public VisualTreeAsset BacklogEntry = null!;
 
     private ScrollView logScroll = null!;
-    
+    private UIColumn backlogEntries = null!;
+
+    protected override Color BackgroundTint => new(0.13f, 0.05f, 0.15f);
+
     public override void FirstFrame() {
-        MainScreen = new UIScreen(this, new UINode("temp")).With(UIScreen);
-        
+        MainScreen = new UIScreen(this, "BACKLOG", UIScreen.Display.OverlayTH)  { Builder = (s, ve) => {
+            s.Margin.SetLRMargin(720, 720);
+            ve.AddScrollColumn().style.backgroundColor = new Color(0, 0, 0, .25f);
+        }, BackgroundOpacity = 0.8f  };
+        backlogEntries = new UIColumn(MainScreen, null) {
+            EntryIndexOverride = () => -1
+        };
         base.FirstFrame();
-        UI.Q<Label>("Header").text = "Backlog";
-        logScroll = UI.Q<ScrollView>();
-        HideMe();
-        MenuActive = false;
+        logScroll = UIRoot.Q<ScrollView>();
     }
 
     protected override void BindListeners() {
         RegisterService<IVNBacklog>(this);
-    }
-
-
-    protected override void ResetCurrentNode() {
-        Current = MainScreen.Top[MainScreen.Top.Length - 1];
-    }
-
-    //TODO Workaround for https://issuetracker.unity3d.com/issues/nullreferenceexception-gets-thrown-in-the-console-when-the-label-text-value-contains-cjk-characters-and-text-wrap-is-enabled
-    private string FilterCJK(string s) {
-        bool foundRemovable = false;
-        for (int ii = 0; ii < s.Length; ++ii) {
-            if (s[ii] >= 128) {
-                foundRemovable = true;
-                break;
-            }
-        }
-        if (!foundRemovable)
-            return s;
-        //Log.Unity($"Filtering CJK characters out of {s} for UITK");
-        var sb = new StringBuilder();
-        for (int ii = 0; ii < s.Length; ++ii) {
-            if (s[ii] < 128)
-                sb.Append(s[ii]);
-        }
-        return sb.ToString();
     }
 
     private async Task BacklogTo(Action<VNLocation> backlogger, VNLocation loc) {
@@ -93,37 +73,38 @@ public class XMLVNBacklogMenu : PausedGameplayMenu, IVNBacklog {
         await overlay.Fade(null, 0, 0.4f, null);
     }
 
-    private UINode MakeNode(DialogueLogEntry entry) {
-        var node = new UINode($"<smallcaps>{entry.speakerName}</smallcaps>")
-            .OnBound(ve => ve.Q<Label>("Description").text = entry.readableSpeech)
-            .OnBound(ve => {
+    private void MakeNode(DialogueLogEntry entry) {
+        var backlog = CurrVN?.doBacklog;
+        var node = new UINode($"<smallcaps>{entry.speakerName}</smallcaps>") {
+            Prefab = BacklogEntry,
+            OnBuilt = n => {
+                n.NodeHTML.Q<Label>("Description").text = entry.readableSpeech;
                 if (entry.speakerSprite != null)
-                    ve.Q("Speaker").style.backgroundImage = new StyleBackground(entry.speakerSprite);
-            })
-            .With((s, ve) => {
-                var b = ve.Q("Borderer");
-                var smul = s == NodeState.Focused ? Color.white : new Color(0.75f, 0.75f, 0.75f, 1f);
+                    n.NodeHTML.Q("Speaker").style.backgroundImage = new StyleBackground(entry.speakerSprite);
+            },
+            InlineStyle = (s, n) => {
+                var b = n.NodeHTML.Q("Borderer");
+                var smul = s == UINodeVisibility.Focused ? Color.white : new Color(0.75f, 0.75f, 0.75f, 1f);
                 b.style.borderTopColor = entry.uiColor * smul;
                 b.style.borderLeftColor = entry.uiColor * smul * new Color(0.65f, 0.65f, 0.65f);
-            })
-            .With((s, ve) => ve.Q<Label>("Description").style.color = ve.Q<Label>("Label").style.color = 
-                entry.textColor * (s == NodeState.Focused ? Color.white : new Color(0.75f, 0.75f, 0.75f, 1f)))
-            .With(BacklogEntry);
-        var backlog = CurrVN?.doBacklog;
-        if (backlog != null && !(entry.location is null))
-            node.SetConfirmOverride(() => {
-                _ = BacklogTo(backlog, entry.location).ContinueWithSync(() => { });
-                return (true, node);
-            });
-        return node;
+                n.NodeHTML.Q<Label>("Description").style.color =
+                    n.NodeHTML.Q<Label>("Label").style.color =
+                        entry.textColor * (s == UINodeVisibility.Focused ? Color.white : new Color(0.75f, 0.75f, 0.75f, 1f));
+            },
+            OnConfirm = backlog != null && !(entry.location is null) ?
+                () => {
+                    _ = BacklogTo(backlog, entry.location).ContinueWithSync(() => { });
+                    return new UIResult.StayOnNode();
+                } : null
+        };
+        backlogEntries.AddNodeDynamic(node);
     }
 
     private void ReconstructScreen() {
         if (CurrVN == null) return;
-        var nodes = new List<UINode>();
+        backlogEntries.ClearNodes();
         for (int ii = Math.Max(0, CurrVN.backlog.Published.Count - BacklogCount); ii < CurrVN.backlog.Published.Count; ++ii)
-            nodes.Add(MakeNode(CurrVN.backlog.Published[ii]));
-        MainScreen.AssignNewNodes(nodes.ToArray());
+            MakeNode(CurrVN.backlog.Published[ii]);
     }
 
     private bool openQueued = false;
@@ -151,6 +132,6 @@ public class XMLVNBacklogMenu : PausedGameplayMenu, IVNBacklog {
         return ret;
     }
 
-    public void Open() => openQueued = true;
+    public void QueueOpen() => openQueued = true;
 }
 }

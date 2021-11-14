@@ -1,4 +1,5 @@
 ﻿using System;
+using BagoumLib.Cancellation;
 using Danmokou.Core;
 using Danmokou.Scenes;
 using Danmokou.Scriptables;
@@ -16,25 +17,16 @@ public class LevelController : BehaviorEntity {
         SINGLE,
         CONTINUE
     }
-    public readonly struct LevelRunRequest {
-        public readonly int toPhase;
-        public readonly Action? cb;
-        public readonly LevelRunMethod method;
-        public readonly IStageConfig stage;
-
-        public LevelRunRequest(int phase, Action? callback, LevelRunMethod runMethod, IStageConfig stageConf) {
-            toPhase = phase;
-            cb = callback;
-            method = runMethod;
-            stage = stageConf;
-        }
-    }
+    /// <summary>
+    /// Note: cb will be called regardless of cancellation.
+    /// </summary>
+    public record LevelRunRequest(int toPhase, Action? cb, LevelRunMethod method, IStageConfig stage, ICancellee cT) { }
 
     public void Request(LevelRunRequest req) {
         if (req.method == LevelRunMethod.SINGLE) phaseController.Override(req.toPhase, req.cb);
         else if (req.method == LevelRunMethod.CONTINUE) phaseController.SetGoTo(req.toPhase, req.cb);
         stage = req.stage;
-        RunPatternSM(req.stage.StateMachine);
+        RunPatternSM(req.stage.StateMachine, req.cT);
     }
 
     protected override void Awake() {

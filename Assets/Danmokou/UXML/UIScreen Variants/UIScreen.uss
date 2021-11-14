@@ -1,34 +1,17 @@
 #Container {
     flex-direction: row;
-    width: 100%;
     flex-grow: 1;
-    height: 2160px;
-    padding-left: 480px;
-    padding-right: 480px;
 }
 
 .column {
     width: 60px;
+    max-width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0);
+    flex-shrink: 1;
     flex-grow: 1;
-    border-left-color: rgb(255, 255, 255);
-    border-right-color: rgb(255, 255, 255);
-    border-top-color: rgb(255, 255, 255);
-    border-bottom-color: rgb(255, 255, 255);
-    border-right-width: 0;
-    border-left-width: 0;
-    padding-top: 90px;
-    padding-bottom: 60px;
-    padding-left: 0;
-    padding-right: 0;
 }
 
-.column.nopad {
-    padding: 0 0 0 0;
-}
-
-.columnList {
+.column > .unity-scroll-view {
     width: 100%;
     height: 100%;
 }
@@ -38,107 +21,11 @@
     flex-grow: 1.8;
 }
 
-.shotHeader {
-    -unity-font-definition: url('/Assets/Danmokou/Fonts/Unity SDF Assets/Odibee-CorpSt-Joint SDF.asset');
-    font-size: 180px;
-    color: rgb(255, 255, 255);
-    -unity-text-align: upper-center;
-    margin-top: 60px;
-    margin-bottom: -60px;
+.unity-scroll-view__content-viewport {
+    padding-right: 40px;
 }
-
-#Wrapper {
-    width: 100%;
-    height: 2160px;
-}
-
-.column.w40 {
-    flex-grow: 2;
-}
-
-.column.w60 {
-    flex-grow: 3;
-}
-
-.columnWide {
-}
-
-.w60 {
-}
-
-.w40 {
-}
-
-.column.padLeft {
-    padding-left: 150px;
-}
-
-.padLeft {
-}
-
-.w60 {
-}
-
-.w40 {
-}
-
-.column.wd08 {
-    flex-grow: 0.8;
-}
-
-.w80 {
-}
-
-.w20 {
-}
-
-.column.wd5 {
-    flex-grow: 5;
-}
-
-.column.wd2 {
-    flex-grow: 2;
-}
-
-.columnWide {
-}
-
-.w40 {
-}
-
-.w60 {
-}
-
-.column.wd4 {
-}
-
-.wd5 {
-}
-
-.wd2 {
-}
-
-.wd08 {
-}
-
-.wd2 {
-}
-
-.wd2 {
-}
-
-.header {
-    -unity-font-definition: url('/Assets/Danmokou/Fonts/Unity SDF Assets/Odibee-CorpSt-Joint SDF.asset');
-    font-size: 140px;
-    color: rgb(255, 255, 255);
-    -unity-text-align: upper-center;
-    padding-left: 0;
-    padding-right: 0;
-    margin-top: 40px;
-}
-
 .unity-scroller {
-    width: 32px;
+    width: 40px;
 }
 
 .unity-slider {
@@ -149,19 +36,21 @@
 
 .unity-base-slider__tracker {
     width: 100%;
+    background-color: rgba(108, 68, 125, 0.6);
+    border-width: 0;
 }
 
 .unity-base-slider__dragger {
     width: 100%;
-    background-color: rgb(153, 153, 153);
+    border-width: 0;
+    left: 0;
+    background-color: rgba(207, 139, 0, 0.6);
+    transition-property: background-color;
+    transition-duration: 0.2s;
 }
 
-.unity-base-slider__dragger:hover {
-    background-color: rgb(187, 187, 187);
-}
-
-.unity-base-slider__dragger:active {
-    background-color: rgb(238, 238, 238);
+.unity-base-slider__dragger:hover, .unity-base-slider__dragger:active, .unity-base-slider__dragger:active, .unity-base-slider-hover .unity-base-slider__dragger, .unity-base-slider-active .unity-base-slider__dragger, .unity-base-slider-focus .unity-base-slider__dragger {
+    background-color: #eeaa18;
 }
 
 .unity-scroller__high-button {
@@ -170,4 +59,57 @@
 
 .unity-scroller__low-button {
     display: none;
+}
+
+.uiScreen {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    overflow: hidden;
+}
+
+.uiScreenLiner {
+    background-image: url('project://database/Assets/Danmokou/Sprites/UI/UITK/fancy%20line.png?fileID=2800000&guid=1bca1eddce362f44ead387cb73ea8fde&type=3#fancy line');
+    width: 3840px;
+    height: 80px;
+    -unity-background-image-tint-color: rgb(108, 68, 125);
+    flex-shrink: 0;
+}
+
+.header {
+    padding-left: 0;
+    padding-right: 0;
+    margin-bottom: 60px;
+    -unity-font-definition: url('project://database/Assets/Danmokou/Fonts/Unity%20SDF%20Assets/NovaSquare-Regular%20SDF.asset?fileID=11400000&guid=a6ec488a76fadbf4083ef2a0ad8cf899&type=2#NovaSquare-Regular SDF');
+    font-size: 130px;
+    color: rgb(238, 170, 24);
+    -unity-text-align: upper-left;
+}
+
+.uiScreen.unlined > .uiScreenLiner {
+    display: none;
+}
+
+.uiScreen > .uiScreenLiner#TopLine {
+    margin-top: 60px;
+    margin-bottom: 40px;
+}
+.uiScreen.overlayTH > .uiScreenLiner#TopLine {
+    scale: 1 -1;
+    margin-top: 18px;
+}
+.uiScreen > .uiScreenLiner#BottomLine {
+    margin-top: 40px;
+    margin-bottom: 40px;
+}
+.uiScreen.overlayTH > .uiScreenLiner#BottomLine {
+    margin-bottom: 4px;
+}
+#MarginContainer {
+    margin-left: 480px;
+    margin-right: 480px;
+}
+.uiScreen.overlayTH #MarginContainer {
+    margin-left: 750px;
+    margin-right: 1700px;
 }

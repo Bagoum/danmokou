@@ -28,7 +28,7 @@ public readonly struct SceneRequest {
     /// <param name="reason"></param>
     /// <param name="onPreLoad">Executed when the screen is hidden by the transition effect, before the scene is loaded.</param>
     /// <param name="onLoad">Executed immediately after the scene is loaded. Probably does not precede Awake calls.</param>
-    /// <param name="onFinish">Executed when the transition effect is pulled back and standard flow is reenabled.</param>
+    /// <param name="onFinish">Executed when the transition effect is pulled back and standard flow is reenabled. Note that this may happen at any time during the visual detransition.</param>
     public SceneRequest(SceneConfig sc, Reason reason, Action? onPreLoad = null, Action? onLoad = null, 
         Action? onFinish = null) {
         scene = sc;

@@ -1,11 +1,13 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
-    <Style src="UINode.uss" />
+    <Style src="project://database/Assets/Danmokou/UXML/nodes/UINode.uss?fileID=7433441132597879392&amp;guid=908aa769b12ea7c44aae7ea3f797c582&amp;type=3#UINode" />
     <ui:VisualElement class="node small1">
         <ui:VisualElement name="Selector" class="pointer prefix" />
-        <ui:Label text="one two three日本語: Long-toothed Wings Wrapped Round the Firmament" focusable="true" class="text coretext" style="height: 100%; padding-left: 0; padding-right: 0; white-space: nowrap; -unity-text-align: middle-left; font-size: 80px; overflow: hidden;" />
-        <ui:VisualElement style="flex-shrink: 0; margin-left: 30px; margin-right: 20px; margin-bottom: 12px; -unity-text-align: upper-center; align-items: flex-end;">
-            <ui:Label text="0/10 " name="CampaignHistory" class="text" style="-unity-font-definition: url(&apos;/Assets/Danmokou/Fonts/Unity SDF Assets/Signika-Regular SDF.asset&apos;); font-size: 50px; padding-left: 0; padding-right: 0; margin-bottom: -8px;" />
-            <ui:Label text="4/6 " name="PracticeHistory" class="text" style="-unity-font-definition: url(&apos;/Assets/Danmokou/Fonts/Unity SDF Assets/Signika-Regular SDF.asset&apos;); font-size: 50px; padding-left: 0; padding-right: 0;" />
+        <ui:VisualElement name="Body" class="body" style="flex-direction: row; flex-grow: 1;">
+            <ui:Label text="one two three日本語: Long-toothed Wings Wrapped Round the Firmament" class="text coretext" style="height: 100%; padding-left: 0; padding-right: 0; white-space: nowrap; -unity-text-align: middle-left; font-size: 80px; overflow: hidden; text-overflow: ellipsis;" />
+            <ui:VisualElement style="flex-shrink: 0; margin-left: 30px; margin-right: 20px; margin-bottom: 12px; -unity-text-align: upper-center; align-items: flex-end;">
+                <ui:Label text="0/10 " name="CampaignHistory" class="text" style="-unity-font-definition: url(&apos;project://database/Assets/Danmokou/Fonts/Unity%20SDF%20Assets/Signika-Regular%20SDF.asset?fileID=11400000&amp;guid=a59d94292a6917d4da3cf1a2f7ed675f&amp;type=2#Signika-Regular SDF&apos;); font-size: 50px; padding-left: 0; padding-right: 0; margin-bottom: -8px;" />
+                <ui:Label text="4/6 " name="PracticeHistory" class="text" style="-unity-font-definition: url(&apos;project://database/Assets/Danmokou/Fonts/Unity%20SDF%20Assets/Signika-Regular%20SDF.asset?fileID=11400000&amp;guid=a59d94292a6917d4da3cf1a2f7ed675f&amp;type=2#Signika-Regular SDF&apos;); font-size: 50px; padding-left: 0; padding-right: 0;" />
+            </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

@@ -15,7 +15,6 @@ public class GameUniqueReferences : ScriptableObject {
     public Version gameVersion;
     public SceneConfig mainMenu = null!;
     public SceneConfig replaySaveMenu = null!;
-    public GameObject defaultMenuBackground = null!;
     public Sprite defaultUIFrame = null!;
     public SceneConfig unitScene = null!;
     public SceneConfig? tutorial;

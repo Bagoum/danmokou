@@ -50,8 +50,9 @@ public class BottomTracker : RegularUpdater {
                     GameManagement.References.bounds.left + yield,
                     GameManagement.References.bounds.right - yield);
                 tr.localPosition = p;
-                text.color = new Color(1, 1, 1,
-                    Mathf.Clamp01(Mathf.Lerp(0.1f, 1.5f, enemy == null ? 1 : enemy.DisplayBarRatio)));
+                //Superseded by bottom HP bar
+                //text.color = new Color(1, 1, 1,
+                //    Mathf.Clamp01(Mathf.Lerp(0.1f, 1.5f, enemy == null ? 1 : enemy.DisplayBarRatio)));
             }
         }
     }

@@ -39,6 +39,9 @@ public static class Tweening {
     public static Tweener<float> ScaleTo(this ITransform tr, float target, float time, 
         Easer? ease = null, ICancellee? cT = null)
         => TweenTo(tr.scale.x, target, time, x => tr.scale = new Vector3(x, x, x), ease, cT);
+    public static Tweener<Vector3> ScaleTo(this ITransform tr, Vector3 target, float time, 
+        Easer? ease = null, ICancellee? cT = null)
+        => TweenTo(tr.scale, target, time, x => tr.scale = x, ease, cT);
     public static Tweener<float> ScaleBy(this ITransform tr, float target, float time, 
         Easer? ease = null, ICancellee? cT = null)
         => TweenBy(tr.scale.x, target, time, x => tr.scale = new Vector3(x, x, x), ease, cT);
@@ -48,5 +51,10 @@ public static class Tweening {
     public static DeltaTweener<Vector3> RotateBy(this ITransform tr, Vector3 eulerDelta, float time, 
         Easer? ease = null, ICancellee? cT = null)
         => TweenDelta(tr.rotation.eulerAngles, eulerDelta, time, x => tr.rotation = Quaternion.Euler(x), ease, cT);
+    
+    public static Tweener<float> FadeTo(this VisualElement tr, float opacity, float time, 
+        Easer? ease = null, ICancellee? cT = null) =>
+        TweenTo(tr.style.opacity.keyword == StyleKeyword.Null ? 1 : tr.style.opacity.value, 
+            opacity, time, x => tr.style.opacity = x, ease, cT);
 }
 }

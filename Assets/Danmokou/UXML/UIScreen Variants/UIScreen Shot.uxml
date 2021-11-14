@@ -1,9 +1,0 @@
-<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
-    <Style src="UIScreen.uss" />
-    <ui:Label text=" " class="header" />
-    <ui:VisualElement name="Container" style="padding-left: 160px;">
-        <ui:VisualElement class="column" style="max-width: 25%; padding-top: 600px;">
-            <ui:ScrollView class="columnList" />
-        </ui:VisualElement>
-    </ui:VisualElement>
-</ui:UXML>

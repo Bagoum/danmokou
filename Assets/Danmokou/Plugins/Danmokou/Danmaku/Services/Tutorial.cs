@@ -34,13 +34,16 @@ public class Tutorial : BehaviorEntity {
 
     protected override void Awake() {
         base.Awake();
+        defaultLoc[text00] = text00.transform.localPosition;
+        defaultLoc[text10] = text10.transform.localPosition;
+    }
+    public override void FirstFrame() {
+        base.FirstFrame();
 #if UNITY_EDITOR
         RunDroppableRIEnumerator(RunTutorial(skip));
 #else
         RunDroppableRIEnumerator(RunTutorial(0));
 #endif
-        defaultLoc[text00] = text00.transform.localPosition;
-        defaultLoc[text10] = text10.transform.localPosition;
         tokens.Add(GameManagement.Instance.externalFaithDecayMultiplier.AddConst(6)); 
     }
 
@@ -90,7 +93,7 @@ public class Tutorial : BehaviorEntity {
         yield return confirm();
         Prompt(text10, blue2(Pause.Desc));
         yield return waitlf(() => EngineStateManager.State == EngineState.MENU_PAUSE);
-        GameObject.FindObjectOfType<XMLPauseMenu>().GoToOption(0);
+        GameObject.FindObjectOfType<XMLPauseMenu>().GoToNth(0, 0);
         const float menuLeft = -5f;
         Message(text00, pause3, x:menuLeft);
         yield return confirm();

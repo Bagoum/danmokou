@@ -303,6 +303,18 @@ public enum Subshot {
 public static class EnumHelpers2 {
     public static readonly IReadOnlyList<Subshot> Subshots = new[] {Subshot.TYPE_D, Subshot.TYPE_M, Subshot.TYPE_K};
 
+    public static LString Describe(this InstanceMode m) => m switch {
+        InstanceMode.NULL => "Null",
+    #if UNITY_EDITOR || ALLOW_RELOAD
+        InstanceMode.DEBUG => "Debug",
+    #endif
+        InstanceMode.CAMPAIGN => LocalizedStrings.UI.practice_m_campaign,
+        InstanceMode.STAGE_PRACTICE => LocalizedStrings.UI.practice_m_stage,
+        InstanceMode.BOSS_PRACTICE => LocalizedStrings.UI.practice_m_boss,
+        InstanceMode.TUTORIAL => "Tutorial",
+        InstanceMode.SCENE_CHALLENGE => LocalizedStrings.UI.practice_m_scene,
+        _ => throw new ArgumentOutOfRangeException(nameof(m), m, null)
+    };
     public static bool IsStageBoss(this PhaseType st) => st == PhaseType.STAGEENDBOSS || st == PhaseType.STAGEMIDBOSS;
     public static bool IsPattern(this PhaseType st) => st.IsCard() || st.IsStage();
     public static bool IsLenient(this PhaseType st) => st == PhaseType.DIALOGUE || st == PhaseType.ANNOUNCE;

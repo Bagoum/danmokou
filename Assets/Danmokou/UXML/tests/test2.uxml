@@ -1,3 +1,0 @@
-<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
-    <ui:Button text="Button" style="height: 779px; width: 1370px; font-size: 120px;" />
-</ui:UXML>

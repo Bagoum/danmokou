@@ -55,6 +55,8 @@ public class MM2Drawer : DUCaseDrawer<BackgroundTransition.WipeTexConfig> { }
 public class MM3Drawer : DUCaseDrawer<BackgroundTransition.WipeFromCenterConfig> { }
 [CustomPropertyDrawer(typeof(BackgroundTransition.WipeYConfig))]
 public class MM4Drawer : DUCaseDrawer<BackgroundTransition.WipeYConfig> { }
+[CustomPropertyDrawer(typeof(BackgroundTransition.FadeConfig))]
+public class MM5Drawer : DUCaseDrawer<BackgroundTransition.FadeConfig> { }
 
 [CustomPropertyDrawer(typeof(LocatorStrategy.SourceConfig))]
 public class LS0Drawer : DUCaseDrawer<LocatorStrategy.SourceConfig> { }

@@ -6,7 +6,7 @@ using TMPro;
 using UnityEngine;
 
 namespace Danmokou.UI {
-public class Commentator : CoroutineRegularUpdater {
+public abstract class Commentator<T> : CoroutineRegularUpdater {
     [Serializable]
     public struct Comment {
         public LocalizedStringReference text;
@@ -35,5 +35,7 @@ public class Commentator : CoroutineRegularUpdater {
         SetSprite(c.sprite);
         SetText(c.text.Value.Value);
     }
+
+    public abstract void SetCommentFromValue(T value);
 }
 }

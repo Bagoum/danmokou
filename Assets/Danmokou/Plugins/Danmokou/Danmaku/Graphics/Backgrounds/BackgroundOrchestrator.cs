@@ -15,7 +15,7 @@ using static BagoumLib.Tasks.WaitingUtils;
 namespace Danmokou.Graphics.Backgrounds {
 public interface IBackgroundOrchestrator {
     void QueueTransition(BackgroundTransition bgt);
-    void ConstructTarget(GameObject bgp, bool withTransition, bool destroyIfExists = false);
+    void ConstructTarget(GameObject bgp, bool withTransition = true, bool destroyIfExists = false);
 }
 public class BackgroundOrchestrator : CoroutineRegularUpdater, IBackgroundOrchestrator {
     private Transform tr = null!;
@@ -64,8 +64,10 @@ public class BackgroundOrchestrator : CoroutineRegularUpdater, IBackgroundOrches
             FromBG = CreateBGC(bgc);
         }
     }
-
     public static GameObject? NextSceneStartupBGC { get; set; }
+    //We don't update backgrounds immediately, since there are use-cases where we push two backgrounds
+    // one after another and want the first one to be ignored.
+    private Action? pendingBackgroundUpdate;
     private void Awake() {
         tr = transform;
         lastRequestedBGC = NextSceneStartupBGC;
@@ -83,6 +85,8 @@ public class BackgroundOrchestrator : CoroutineRegularUpdater, IBackgroundOrches
     }
 
     public override void RegularUpdate() {
+        pendingBackgroundUpdate?.Invoke();
+        pendingBackgroundUpdate = null;
         base.RegularUpdate();
         Time += ETime.FRAME_TIME;
     }
@@ -97,15 +101,17 @@ public class BackgroundOrchestrator : CoroutineRegularUpdater, IBackgroundOrches
             ToBG = null;
         }
     }
-    public void ConstructTarget(GameObject bgp, bool withTransition, bool destroyIfExists=false) {
+    public void ConstructTarget(GameObject bgp, bool withTransition=true, bool destroyIfExists=false) {
         lastRequestedBGC = bgp;
         if (FromBG == null) return;
-        if (destroyIfExists || 
-            (ToBG == null && FromBG.source != bgp) ||
-            (ToBG != null && ToBG.source != bgp)) {
-            ClearTransition();
-            SetTarget(CreateBGC(bgp), withTransition);
-        }
+        pendingBackgroundUpdate = () => {
+            if (destroyIfExists ||
+                (ToBG == null && FromBG.source != bgp) ||
+                (ToBG != null && ToBG.source != bgp)) {
+                ClearTransition();
+                SetTarget(CreateBGC(bgp), withTransition);
+            }
+        };
     }
 
     private void ClearTransition() {
@@ -150,6 +156,9 @@ public class BackgroundOrchestrator : CoroutineRegularUpdater, IBackgroundOrches
         } else if (bgt.type == BackgroundTransition.EffectType.WipeY) {
             bgt.WipeY.Apply(mat);
             CombinerKeywords.Apply(mat, CombinerKeywords.WIPEY); //TODO apply these two generics from within the BGT scope.
+        } else if (bgt.type == BackgroundTransition.EffectType.Fade) {
+            bgt.Fade.Apply(mat);
+            CombinerKeywords.Apply(mat, CombinerKeywords.ALPHA);
         }
         BackgroundCombiner.SetMaterial(mat, pb);
         void Finish() {
@@ -178,7 +187,7 @@ public class BackgroundOrchestrator : CoroutineRegularUpdater, IBackgroundOrches
         public const string WIPE1 = "MIX_WIPE1";
         public const string WIPEFROMCENTER = "MIX_WIPE_CENTER";
         public const string WIPEY = "MIX_WIPE_Y";
-        private static readonly string[] kws = {TO_ONLY, ALPHA, WIPE_TEX, WIPE1, WIPEFROMCENTER, WIPEY};
+        private static readonly string[] kws = {TO_ONLY, ALPHA, WIPE_TEX, WIPE1, WIPEFROMCENTER};
 
         public static void Apply(Material mat, string keyword) {
             foreach (var kw in kws) mat.DisableKeyword(kw);

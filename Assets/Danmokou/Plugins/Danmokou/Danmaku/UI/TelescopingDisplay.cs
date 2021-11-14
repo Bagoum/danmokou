@@ -11,7 +11,7 @@ using UnityEngine;
 namespace Danmokou.UI {
 public abstract class FancyDisplay : CoroutineRegularUpdater {
     protected Transform tr = null!;
-    protected SpriteRenderer sr = null!;
+    public SpriteRenderer sr = null!;
     public float selectedScale = 1f;
     public float unselectedScale = 1f;
     

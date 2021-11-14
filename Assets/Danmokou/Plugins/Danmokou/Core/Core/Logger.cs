@@ -1,13 +1,17 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Reactive;
 using System.Reactive.Subjects;
 using System.Text;
 using BagoumLib;
 using BagoumLib.Events;
+using BagoumLib.Expressions;
 using UnityEngine;
+using Debug = UnityEngine.Debug;
 
 namespace Danmokou.Core {
 public static class Logs {
@@ -65,23 +69,53 @@ public static class Logs {
     private static void PrintToUnityLog(LogMessage lm) {
         if ((int) lm.Level < MIN_LEVEL) return;
 #if UNITY_EDITOR
+        var useStacktrace = true;
 #else
         if ((int) lm.Level < BUILD_MIN) return;
+        var useStacktrace = lm.ShowStackTrace ?? (lm.Exception != null);
 #endif
         var msg = (lm.Exception == null) ? lm.Message : PrintException(lm.Exception, lm.Message);
-        msg = $"Frame {ETime.FrameNumber}: {msg}";
-        
-        LogOption lo = (lm.ShowStackTrace == false) ? LogOption.NoStacktrace : LogOption.None;
-        LogType unityLT = LogType.Log;
+        if (useStacktrace)
+            msg = $"{msg}\n{GenerateStackTrace()}";    
         fileStream?.WriteLine(msg);
-        if (lm.Level == LogLevel.WARNING) 
-            unityLT = LogType.Warning;
-        if (lm.Level == LogLevel.ERROR) {
-            //unityLT = LogType.Error;
-            Debug.LogError(msg);
-        } else {
-            Debug.LogFormat(unityLT, lo, null, msg.Replace("{", "{{").Replace("}", "}}"));
+        Debug.LogFormat(lm.Level switch {
+            LogLevel.ERROR => LogType.Error,
+            LogLevel.WARNING => LogType.Warning,
+            _ => LogType.Log
+        }, LogOption.NoStacktrace, null, msg.Replace("{", "{{").Replace("}", "}}"));
+    }
+
+    private static readonly CSharpTypePrinter TypePrinter = new();
+    private static readonly CSharpTypePrinter NSTypePrinter = new() { PrintTypeNamespace = _ => true };
+    private static string GenerateStackTrace(int skipFrames = 5) {
+        var sb = new StringBuilder();
+        var st = new StackTrace(skipFrames, true);
+        for (int ii = 0; ii < st.FrameCount; ++ii) {
+            var frame = st.GetFrame(ii);
+            var mi = frame.GetMethod();
+            if (mi.DeclaringType == null)
+                continue;
+            sb.Append(NSTypePrinter.Print(mi.DeclaringType));
+            sb.Append('.');
+            sb.Append(mi.Name);
+            sb.Append('(');
+            var prms = mi.GetParameters();
+            for (int jj = 0; jj < prms.Length; ++jj) {
+                if (jj > 0)
+                    sb.Append(", ");
+                sb.Append(TypePrinter.Print(prms[jj].ParameterType));
+            }
+            sb.Append(')');
+#if UNITY_EDITOR
+            sb.AppendFormat(" (at <a href=\"{0}\" line=\"{1}\">{0}:{1}</a>)\n", 
+                frame.GetFileName(), frame.GetFileLineNumber());
+#else
+            sb.AppendFormat(" (at {0}:{1})\n", frame.GetFileName(), frame.GetFileLineNumber());
+#endif
         }
+
+
+        return sb.ToString();
     }
 
 }

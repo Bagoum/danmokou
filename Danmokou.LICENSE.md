@@ -18,6 +18,8 @@ Non-code resources are distributed under various licenses (see below for details
 
 This project has several submodules under the Assets folder (BRuH, LuA, SiMP, and SZYU). If you are viewing this license from source code, you can find licenses for each submodule within its folder. If you are viewing this license alongside a binary executable, you should find licenses for any included submodules distributed alongside this file. Note that submodules may have different licensing terms-- you can reference the LICENSE file for each submodule for details. 
 
+- Danmokou only explicitly depends on the SZYU submodule, which provides a visual novel engine through [Suzunoya](https://github.com/Bagoum/suzunoya) and [Suzunoya-Unity](https://github.com/Bagoum/suzunoya-unity).
+
 
 
 The project incorporates code or references packages from the following projects:
@@ -68,7 +70,7 @@ All assets under Assets/Danmokou/Kenney were created by Kenny Vleugels (kenney.n
 
 Images (Assets/Danmokou/Sprites)
 - BGPatterns/kuroma/*: by Kuroma on [Pixiv](https://www.pixiv.net/en/users/4702770).
-- BGPatterns/kai_kasen_reimu: by 紅月カイ on[Pixiv](https://www.pixiv.net/en/artworks/78519209). Noncommercial use only.
+- BGPatterns/kai_kasen_reimu: by 紅月カイ on [Pixiv](https://www.pixiv.net/en/artworks/78519209). Noncommercial use only.
 - BGPatterns/buson-crows-crop: by Yosa Buson (now public domain).
 - BGPatterns/nasa: by NASA, see below.
 - BGPatterns/unsplash: miscellaneous Unsplash users, credited as follows:
@@ -106,9 +108,7 @@ Assets/Danmokou/MiniProjects
 	- yellowiris.png: CC0 https://commons.wikimedia.org/wiki/File:20140504Iris_pseudacorus2.jpg
 	- fleurdelys.png: CC-BY https://commons.wikimedia.org/wiki/File:Fleur_de_lys_(or).svg
 
-
 Some image resources were created with patterns from http://www.sda.nagoya-cu.ac.jp/sa08m13/image.html 
-Some image resources were created with patterns from http://www.ikiya.jp/anounce.html
 Some image resources were created with images from Unsplash. Here are all usages:
 https://unsplash.com/photos/wXuzS9xR49M (used in Bad Apple UI frame)
 
@@ -483,6 +483,12 @@ See the OFL license above.
 ### YOz: OFL
 
 Copyright (c) 2016-08-19, Y.Oz (Y.OzVox) (http://yozvox.web.fc2.com), with Reserved Font Name "Y.OzFont", "YOzFont", "Y.Oz" and "YOz".
+
+See the OFL license above.
+
+### Nova: OFL
+
+Copyright (c) 2011, wmk69 (wmk69@o2.pl), with Reserved Font Name NovaSquare.
 
 See the OFL license above.
 

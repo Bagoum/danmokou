@@ -79,7 +79,7 @@ public abstract class DUDisplayDrawer<T> : PropertyDrawer {
 }
 [CustomPropertyDrawer(typeof(BackgroundTransition))]
 public class BGTransitionDrawer : DUDisplayDrawer<BackgroundTransition> {
-    protected override string[] EnumValues { get; } = { "WipeTex", "Wipe1", "WipeFromCenter", "Shatter4", "WipeY" };
+    protected override string[] EnumValues { get; } = { "WipeTex", "Wipe1", "WipeFromCenter", "Shatter4", "WipeY", "Fade" };
 }
 [CustomPropertyDrawer(typeof(LocatorStrategy))]
 public class LocatorStrategyDrawer : DUDisplayDrawer<LocatorStrategy> {

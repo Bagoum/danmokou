@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using BagoumLib.Cancellation;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Player;
@@ -11,10 +12,18 @@ namespace Danmokou.Testing {
 public class TestHarness : RegularUpdater {
     public TextAsset[] behaviorScripts = null!;
     private static readonly Dictionary<string, TextAsset> scriptsByName = new();
+    private static Cancellable? cTs;
 
     private void Awake() {
+        cTs?.Cancel();
+        cTs = new Cancellable();
         scriptsByName.Clear();
         foreach (var script in behaviorScripts) scriptsByName[script.name] = script;
+    }
+
+    protected override void OnDisable() {
+        cTs?.Cancel();
+        base.OnDisable();
     }
 
     public override int UpdatePriority => UpdatePriorities.SOF;
@@ -49,7 +58,7 @@ public class TestHarness : RegularUpdater {
     #if UNITY_EDITOR
     public static void RunBehaviorScript(string sname, string behid) {
         var sm = LoadBehaviorScript(sname);
-        BehaviorEntity.GetExecForID(behid).RunPatternSM(sm);
+        BehaviorEntity.GetExecForID(behid).RunPatternSM(sm, cTs ?? Cancellable.Null);
     }
     
     
