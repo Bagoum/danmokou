@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using BagoumLib;
+using BagoumLib.Cancellation;
 using BagoumLib.DataStructures;
 using Danmokou.Behavior;
 using Danmokou.Core;
@@ -40,10 +41,12 @@ public class SFXService : RegularUpdater, ISFXService {
     public readonly struct ConstructedAudio {
         public readonly AudioSource csrc;
         public readonly SFXConfig sfx;
+        public readonly ICancellee cT;
 
-        public ConstructedAudio(AudioSource csrc, SFXConfig sfx) {
+        public ConstructedAudio(AudioSource csrc, SFXConfig sfx, ICancellee cT) {
             this.csrc = csrc;
             this.sfx = sfx;
+            this.cT = cT;
         }
     }
     private readonly CompactingArray<ConstructedAudio> constructed = new();
@@ -99,7 +102,7 @@ public class SFXService : RegularUpdater, ISFXService {
         (timeouts, _timeouts) = (_timeouts, timeouts);
         for (int ii = 0; ii < constructed.Count; ++ii) {
             var c = constructed[ii];
-            if (!c.csrc.isPlaying) {
+            if (!c.csrc.isPlaying || c.cT.Cancelled) {
                 Destroy(c.csrc);
                 constructed.Delete(ii);
             } else {
@@ -193,13 +196,6 @@ public class SFXService : RegularUpdater, ISFXService {
 
     public void Request(string? style) => Request(style, SFXType.Default);
 
-    public AudioSource? RequestSource(string? style) {
-        if (string.IsNullOrWhiteSpace(style) || style == "_" || style == null) return null;
-        if (dclips.ContainsKey(style)) {
-            return RequestSource(dclips[style]);
-        } else throw new Exception($"No SFX exists by name {style}");
-    }
-
     public void Request(SFXConfig? aci, SFXType type = SFXType.Default) {
         if (aci == null) return;
         if (aci.loop) {
@@ -209,7 +205,7 @@ public class SFXService : RegularUpdater, ISFXService {
         if (timeouts.ContainsKey(aci.defaultName)) return;
         if (aci.Timeout > 0f) timeouts[aci.defaultName] = aci.Timeout;
 
-        if (aci.RequiresHandling) RequestSource(aci);
+        if (aci.RequiresHandling) RequestSource(aci, Cancellable.Null);
         else src.PlayOneShot(aci.clip, aci.volume * SaveData.s.SEVolume * type switch {
             SFXType.TypingSound => SaveData.s.TypingSoundVolume,
             _ => 1f
@@ -245,16 +241,23 @@ public class SFXService : RegularUpdater, ISFXService {
         return cmp;
     }
 
-    public AudioSource? RequestSource(SFXConfig? aci) {
+    public AudioSource? RequestSource(SFXConfig? aci, ICancellee cT) {
         if (aci == null) return null;
         var cmp = _RequestSource(aci);
         if (cmp != null) {
-            constructed.AddV(new ConstructedAudio(cmp, aci));
+            constructed.AddV(new ConstructedAudio(cmp, aci, cT));
             if (aci.loop)
                 cmp.loop = true;
             cmp.Play();
         }
         return cmp;
+    }
+    
+    public AudioSource? RequestSource(string? style, ICancellee cT) {
+        if (string.IsNullOrWhiteSpace(style) || style is "_" or null) return null;
+        if (dclips.ContainsKey(style)) {
+            return RequestSource(dclips[style], cT);
+        } else throw new Exception($"No SFX exists by name {style}");
     }
 
     public void RequestSFXEvent(ISFXService.SFXEventType ev) {

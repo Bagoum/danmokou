@@ -1,17 +1,21 @@
 ﻿using System;
 using BagoumLib.Cancellation;
 using Danmokou.Core;
+using Danmokou.Scenes;
 using Danmokou.Services;
 using Danmokou.UI.XML;
 using JetBrains.Annotations;
 using Suzunoya.ControlFlow;
 using Suzunoya.Data;
 using SuzunoyaUnity;
+using UnityEngine;
 
 namespace Danmokou.VN {
 public class DMKVNState : UnityVNState {
     public readonly string id;
-    public DMKVNState(ICancellee extCToken, string id, InstanceData? save = null) : base(extCToken, save) {
+    public DMKVNState(ICancellee extCToken, string id, InstanceData save) : base(extCToken, save) {
+        if (LoadTo != null)
+            ServiceLocator.MaybeFind<ICameraTransition>()?.StallFadeOutUntil(() => SkippingMode != SkipMode.LOADING);
         this.id = id;
         if (Replayer.RequiresConsistency) {
             AutoplayFastforwardAllowed = false;
@@ -20,13 +24,16 @@ public class DMKVNState : UnityVNState {
         AllowFullSkip = GameManagement.Instance.Request?.lowerRequest.Campaign.AllowDialogueSkip ?? false;
     }
 
-    public LazyAction lSFX(string? sfx) => new(aSFX(sfx));
+    public LazyAction SFX(string? sfx) => new(aSFX(sfx));
 
     public Action aSFX(string? sfx) => () => {
-        if (SkippingMode == null)
+        if (SkippingMode is null or SkipMode.AUTOPLAY)
             ServiceLocator.SFXService.Request(sfx);
     };
-
+    
+    public LazyAction Source(string? sfx, Action<AudioSource> apply) => new(() => 
+        apply(ServiceLocator.SFXService.RequestSource(sfx, CToken)!));
+    
     public VNOperation Wait(double d) => base.Wait((float) d);
 
     public override void PauseGameplay() {

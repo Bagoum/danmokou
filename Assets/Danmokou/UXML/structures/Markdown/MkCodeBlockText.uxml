@@ -1,0 +1,3 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <ui:Label text="Label " display-tooltip-when-elided="true" name="Label" style="color: rgb(221, 221, 221); white-space: normal; -unity-font-definition: url(&apos;project://database/Assets/Danmokou/Fonts/Unity%20SDF%20Assets/Monoid-Regular%20SDF.asset?fileID=11400000&amp;guid=27d207d4e623a674bb6688ba95bf38d5&amp;type=2#Monoid-Regular SDF&apos;);" />
+</ui:UXML>

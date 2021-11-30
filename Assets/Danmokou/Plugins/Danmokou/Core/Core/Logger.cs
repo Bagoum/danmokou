@@ -75,6 +75,7 @@ public static class Logs {
         var useStacktrace = lm.ShowStackTrace ?? (lm.Exception != null);
 #endif
         var msg = (lm.Exception == null) ? lm.Message : PrintException(lm.Exception, lm.Message);
+        msg = $"Frame {ETime.FrameNumber}: {msg}";
         if (useStacktrace)
             msg = $"{msg}\n{GenerateStackTrace()}";    
         fileStream?.WriteLine(msg);

@@ -111,3 +111,10 @@ float einsine(float x){
 float ratio(float a, float b, float x) {
     return clamp((x - a) / (b - a), 0, 1);
 }
+
+float pm1Sigmoid(float x, float pow) {
+    return 1 - 2 / (exp(x * pow) + 1);
+}
+float pm1SigmoidBound(float x, float pow, float bound){
+    return pm1Sigmoid(x / bound, pow) * bound;
+}

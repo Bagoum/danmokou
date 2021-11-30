@@ -3,5 +3,5 @@ There are a few merged fonts here. I've made them by squashing two fonts togethe
 - UIToolkit doesn't support fallbacks at all (though this should change in the next version).
 
 The merged fonts are as follows:
-- Odibee-CorpSt-Joint (see Odibee and Corporate Logo in the Licenses folder), used for most UI text
+- Odibee-CorpSt-Joint (see Odibee and Corporate Logo in the Licenses folder), used for most UI text, via both TMP and UITK
 - Monospace/Fira-Yasashisa-Joint (see Fira Code and Yasashisa Gothic in the Licenses folder), used specifically for replay dislay. This font is monospaced for English and Japanese text alike (by squashing the width of the Japanese glyphs).

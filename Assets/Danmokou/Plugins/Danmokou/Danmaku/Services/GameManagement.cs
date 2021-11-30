@@ -24,7 +24,9 @@ using Danmokou.Scriptables;
 using Danmokou.Services;
 using Danmokou.SM;
 using Danmokou.UI;
+using Danmokou.VN;
 using JetBrains.Annotations;
+using SuzunoyaUnity;
 using UnityEditor;
 using static Danmokou.SM.SMAnalysis;
 
@@ -34,8 +36,7 @@ namespace Danmokou.Services {
 /// This is the only scene-persistent object in the game.
 /// </summary>
 public class GameManagement : CoroutineRegularUpdater {
-    public static readonly Version EngineVersion = new(8, 0, 0);
-    public static bool Initialized { get; private set; } = false;
+    public static readonly Version EngineVersion = new(8, 1, 0);
     public static DifficultySettings Difficulty => Instance.Difficulty;
 
     public static DifficultySettings defaultDifficulty { get; private set; } =
@@ -60,10 +61,10 @@ public class GameManagement : CoroutineRegularUpdater {
         }
     }
 
-    public static void NewInstance(InstanceMode mode, long? highScore = null, InstanceRequest? req = null, ReplayActor? replay = null) {
+    public static void NewInstance(InstanceMode mode, long? highScore = null, InstanceRequest? req = null, ReplayActor? replay = null, DMKVNData? vnSave = null) {
         DeactivateInstance();
         Logs.Log($"Creating new game instance with mode {mode} on difficulty {req?.metadata.difficulty.Describe() ?? "NULL"}.");
-        _evInstance.OnNext(new InstanceData(mode, req, highScore, replay));
+        _evInstance.OnNext(new InstanceData(mode, req, highScore, replay, vnSave));
     }
 
     public static IEnumerable<FixedDifficulty> VisibleDifficulties => new[] {
@@ -77,6 +78,7 @@ public class GameManagement : CoroutineRegularUpdater {
     public GameUniqueReferences references = null!;
     public static GameUniqueReferences References => Main.references;
     public static PrefabReferences Prefabs => References.prefabReferences;
+    public static UXMLReferences UXMLPrefabs => References.uxmlDefaults;
     public static AchievementManager? Achievements { get; private set; }
 
     public SOPlayerHitbox visiblePlayer = null!;
@@ -88,18 +90,14 @@ public class GameManagement : CoroutineRegularUpdater {
             DestroyImmediate(gameObject);
             return;
         }
+        Main = this;
+        DontDestroyOnLoad(this);
         NewInstance(
 #if UNITY_EDITOR || ALLOW_RELOAD
             OpenAsDebugMode ? InstanceMode.DEBUG : 
 #endif
                 InstanceMode.NULL);
-        Initialized = true;
-        Main = this;
-        DontDestroyOnLoad(this);
 
-        //This looks silly, but the static initializer needs to be actively run to ensure that the locale is set correctly.
-        _ = SaveData.s;
-        
         Logs.Log($"Danmokou {EngineVersion}, {References.gameIdentifier} {References.gameVersion}");
         gameObject.AddComponent<SceneIntermediary>().defaultTransition = References.defaultTransition;
         gameObject.AddComponent<FreezeFrameHelper>();
@@ -145,10 +143,10 @@ public class GameManagement : CoroutineRegularUpdater {
     /// <summary>
     /// Restarts the game instance.
     /// </summary>
-    public static bool Restart() {
+    public static bool Restart(DMKVNData? newSave = null) {
         if (Instance.Request == null) throw new Exception("No game instance found to restart");
         InstanceRequest.InstanceRestarted.OnNext(Instance.Request);
-        return Instance.Request.Run();
+        return (Instance.Request with {vnSave = newSave}).Run();
     }
 
     public static bool CanRestart => Instance.Request != null;
@@ -169,10 +167,6 @@ public class GameManagement : CoroutineRegularUpdater {
 
 #if UNITY_EDITOR || ALLOW_RELOAD
 
-    private void Update() {
-        TryTriggerLocalReset();
-    }
-    
     public static void LocalReset() {
         ETime.Slowdown.ClearDisturbances();
         ETime.Timer.DestroyAll();
@@ -192,15 +186,14 @@ public class GameManagement : CoroutineRegularUpdater {
 
     private static bool TryTriggerLocalReset() {
         if (!SceneIntermediary.IsFirstScene) return false;
-        if (Input.GetKeyDown(KeyCode.R)) {
-            
-        } else if (Input.GetKeyDown(KeyCode.T)) {
+        if (InputManager.GetKeyTrigger(KeyCode.R).Active) {
+        } else if (InputManager.GetKeyTrigger(KeyCode.T).Active) {
             defaultDifficulty = new DifficultySettings(FixedDifficulty.Easy);
-        } else if (Input.GetKeyDown(KeyCode.Y)) {
+        } else if (InputManager.GetKeyTrigger(KeyCode.Y).Active) {
             defaultDifficulty = new DifficultySettings(FixedDifficulty.Normal);
-        } else if (Input.GetKeyDown(KeyCode.U)) {
+        } else if (InputManager.GetKeyTrigger(KeyCode.U).Active) {
             defaultDifficulty = new DifficultySettings(FixedDifficulty.Hard);
-        } else if (Input.GetKeyDown(KeyCode.I)) {
+        } else if (InputManager.GetKeyTrigger(KeyCode.I).Active) {
             defaultDifficulty = new DifficultySettings(FixedDifficulty.Lunatic);
         } else return false;
         LocalReset();
@@ -232,6 +225,9 @@ public class GameManagement : CoroutineRegularUpdater {
     public override int UpdatePriority => UpdatePriorities.SYSTEM;
 
     public override void RegularUpdate() {
+#if UNITY_EDITOR || ALLOW_RELOAD
+        TryTriggerLocalReset();
+#endif
         Instance._RegularUpdate();
         base.RegularUpdate();
     }
@@ -314,6 +310,14 @@ public class GameManagement : CoroutineRegularUpdater {
     [ContextMenu("Add Lenience")]
     public void AddLenience() => Instance.AddFaithLenience(2);
 
+    [ContextMenu("Save VN")]
+    public void SaveVN() {
+        ServiceLocator.Find<IVNWrapper>().UpdateAllVNSaves();
+        SaveData.SaveRecord();
+        var ss = ServiceLocator.Find<IScreenshotter>().Screenshot(
+            new CRect(-References.bounds.center.x, 0, MainCamera.ScreenWidth / 2f, MainCamera.ScreenHeight / 2f, 0), new[] { MainCamera.CamType.UI });
+        SaveData.v.SaveNewSave(new(Instance.VNData, DateTime.Now, ss, 0, "hello"));
+    }
     /*
     [ContextMenu("Debug GCX stats")]
     public void DebugGCXStats() {

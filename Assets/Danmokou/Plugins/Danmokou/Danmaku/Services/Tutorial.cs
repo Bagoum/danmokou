@@ -94,7 +94,7 @@ public class Tutorial : BehaviorEntity {
         Prompt(text10, blue2(Pause.Desc));
         yield return waitlf(() => EngineStateManager.State == EngineState.MENU_PAUSE);
         GameObject.FindObjectOfType<XMLPauseMenu>().GoToNth(0, 0);
-        const float menuLeft = -5f;
+        const float menuLeft = -5.2f;
         Message(text00, pause3, x:menuLeft);
         yield return confirm();
         Message(text00, shaders4, x:menuLeft);

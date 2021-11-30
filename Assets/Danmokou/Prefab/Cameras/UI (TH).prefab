@@ -2691,7 +2691,7 @@ MeshRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: -1714704369
   m_SortingLayer: 12
-  m_SortingOrder: 1004
+  m_SortingOrder: 32005
   m_AdditionalVertexStreams: {fileID: 0}
 --- !u!114 &6292335003614254153
 MonoBehaviour:
@@ -4356,7 +4356,7 @@ MeshRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: -1714704369
   m_SortingLayer: 12
-  m_SortingOrder: 1004
+  m_SortingOrder: 32005
   m_AdditionalVertexStreams: {fileID: 0}
 --- !u!114 &5653735425976138180
 MonoBehaviour:
@@ -5332,10 +5332,7 @@ MonoBehaviour:
   confirmSound: {fileID: 11400000, guid: 0575ca7e870172446b6877f8b91c7636, type: 2}
   failureSound: {fileID: 11400000, guid: d27fed347086bd648aad28a9b2fa76d8, type: 2}
   backSound: {fileID: 11400000, guid: d23b067b4fe25b04199a60093042cd98, type: 2}
-  MainScreenOnlyObjects: {fileID: 0}
   manager: {fileID: 268707954954881333}
-  UIScreen: {fileID: 9197481963319205126, guid: f61be2e73e0a08847a1ba3ecfe0c1f78,
-    type: 3}
   openPauseSound: {fileID: 11400000, guid: 39c182daf18c49a498de6d96c7954706, type: 2}
   closePauseSound: {fileID: 11400000, guid: ae28e1c6c483e1548943d8262b94e1bf, type: 2}
 --- !u!114 &5052696388102766053
@@ -6117,8 +6114,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4278655379884286024}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 6.5, y: -4.25, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: 5.75, y: -4.3, z: 0}
+  m_LocalScale: {x: 0.8, y: 0.8, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 268707954954881323}
@@ -7679,10 +7676,7 @@ MonoBehaviour:
   confirmSound: {fileID: 11400000, guid: 0575ca7e870172446b6877f8b91c7636, type: 2}
   failureSound: {fileID: 11400000, guid: d27fed347086bd648aad28a9b2fa76d8, type: 2}
   backSound: {fileID: 11400000, guid: d23b067b4fe25b04199a60093042cd98, type: 2}
-  MainScreenOnlyObjects: {fileID: 0}
   manager: {fileID: 268707954954881333}
-  UIScreen: {fileID: 9197481963319205126, guid: f61be2e73e0a08847a1ba3ecfe0c1f78,
-    type: 3}
   openPauseSound: {fileID: 11400000, guid: 39c182daf18c49a498de6d96c7954706, type: 2}
   closePauseSound: {fileID: 11400000, guid: ae28e1c6c483e1548943d8262b94e1bf, type: 2}
 --- !u!114 &8983056133481144812
@@ -7837,10 +7831,7 @@ MonoBehaviour:
   confirmSound: {fileID: 11400000, guid: 0575ca7e870172446b6877f8b91c7636, type: 2}
   failureSound: {fileID: 11400000, guid: d27fed347086bd648aad28a9b2fa76d8, type: 2}
   backSound: {fileID: 11400000, guid: d23b067b4fe25b04199a60093042cd98, type: 2}
-  MainScreenOnlyObjects: {fileID: 0}
   manager: {fileID: 268707954954881333}
-  UIScreen: {fileID: 9197481963319205126, guid: 02c1ad27b3ecb12408eca6c8b76c3040,
-    type: 3}
   openPauseSound: {fileID: 11400000, guid: 39c182daf18c49a498de6d96c7954706, type: 2}
   closePauseSound: {fileID: 11400000, guid: ae28e1c6c483e1548943d8262b94e1bf, type: 2}
   pauseMenu: {fileID: 2751001841577565892}
@@ -8674,7 +8665,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: -1714704369
   m_SortingLayer: 12
-  m_SortingOrder: 1002
+  m_SortingOrder: 32003
   m_Sprite: {fileID: 21300000, guid: 7649cfb062f19424780e407d9839a1ef, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -9095,10 +9086,7 @@ MonoBehaviour:
   confirmSound: {fileID: 11400000, guid: 0575ca7e870172446b6877f8b91c7636, type: 2}
   failureSound: {fileID: 11400000, guid: d27fed347086bd648aad28a9b2fa76d8, type: 2}
   backSound: {fileID: 11400000, guid: d23b067b4fe25b04199a60093042cd98, type: 2}
-  MainScreenOnlyObjects: {fileID: 0}
   manager: {fileID: 268707954954881333}
-  UIScreen: {fileID: 9197481963319205126, guid: f61be2e73e0a08847a1ba3ecfe0c1f78,
-    type: 3}
   openPauseSound: {fileID: 11400000, guid: 39c182daf18c49a498de6d96c7954706, type: 2}
   closePauseSound: {fileID: 11400000, guid: ae28e1c6c483e1548943d8262b94e1bf, type: 2}
 --- !u!114 &2234159099224221338
@@ -10724,7 +10712,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: -1714704369
   m_SortingLayer: 12
-  m_SortingOrder: 1000
+  m_SortingOrder: 32001
   m_Sprite: {fileID: 21300000, guid: abcc4e9b544c03042bf4326bf6a7c024, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0

@@ -8,14 +8,14 @@ out = "img/stand-output/"
 root = "normal.png"
 
 root_left = 0
-root_left2 = 600
-root_top = 2
-root_top2 = 1050
+root_left2 = 800
+root_top = 0
+root_top2 = 1400
 
-left = 216
-left2 = 348
-top = 104
-top2 = 220
+left = 300
+left2 = 500
+top = 220
+top2 = 400
 
 def root_convert(fromfile, tofile):
     img = Image.open(fromfile)

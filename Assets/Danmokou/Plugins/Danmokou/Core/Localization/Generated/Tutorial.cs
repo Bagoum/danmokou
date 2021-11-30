@@ -278,7 +278,7 @@ public static partial class LocalizedStrings {
 			}, arg0)))
 			{ ID = "focus17" };
 		
-		public static readonly LString boss18 = new LString("This is a boss enemy. The red circle around the boss is its healthbar.",
+		public static readonly LString boss18 = new LString("This is a boss enemy. The pink circle around the boss is its healthbar.",
 			(Locales.JP, "これはボスです。ボスを回る桃色の線はボスのHPバーです。"))
 			{ ID = "boss18" };
 		

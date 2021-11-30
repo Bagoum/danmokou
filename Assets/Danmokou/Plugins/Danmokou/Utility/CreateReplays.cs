@@ -15,7 +15,7 @@ public class CreateReplays : RegularUpdater {
 
     public override void RegularUpdate() {
         if (ETime.FirstUpdateForScreen) {
-            if (Input.GetKeyDown(KeyCode.G)) {
+            if (InputManager.GetKeyTrigger(KeyCode.G).Active) {
                 if (actor is ReplayRecorder rr) {
                     SaveData.Replays.SaveReplayFrames(saveReplayTo, rr.Recording.ToArray());
                     rr.Cancel();

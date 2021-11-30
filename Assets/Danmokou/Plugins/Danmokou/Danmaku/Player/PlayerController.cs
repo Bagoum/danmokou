@@ -40,7 +40,7 @@ public partial class PlayerController : BehaviorEntity {
     public ShipConfig[] defaultPlayers = null!;
     public ShotConfig[] defaultShots = null!;
     public Subshot defaultSubshot;
-    public SupportAbilityConfig defaultSupport = null!;
+    public AbilityCfg defaultSupport = null!;
     
     public SOPlayerHitbox hitbox = null!;
     public SpriteRenderer hitboxSprite = null!;
@@ -116,8 +116,8 @@ public partial class PlayerController : BehaviorEntity {
     public bool IsFiring =>
         InputManager.IsFiring && AllowPlayerInput && FiringEnabled;
     public bool IsTryingBomb =>
-        InputManager.IsBomb && AllowPlayerInput && BombsEnabled && Team.Support is Bomb;
-    public bool IsTryingWitchTime => InputManager.IsMeter && AllowPlayerInput && Team.Support is WitchTime;
+        InputManager.IsBomb && AllowPlayerInput && BombsEnabled && Team.Support is Ability.Bomb;
+    public bool IsTryingWitchTime => InputManager.IsMeter && AllowPlayerInput && Team.Support is Ability.WitchTime;
 
     public float MeterScorePerValueMultiplier => State == PlayerState.WITCHTIME ? 2 : 1;
     public float MeterPIVPerPPPMultiplier => State == PlayerState.WITCHTIME ? 2 : 1;
@@ -312,11 +312,10 @@ public partial class PlayerController : BehaviorEntity {
     
     private void MovementUpdate(float dT) {
         bpi.t += dT;
-        if (IsTryingBomb && GameManagement.Difficulty.bombsEnabled && Team.Support is Bomb b) {
-            if (deathbomb == DeathbombState.NULL) 
-                PlayerBombs.TryBomb(b, this, PlayerBombContext.NORMAL);
-            else if (deathbomb == DeathbombState.WAITING && 
-                     PlayerBombs.TryBomb(b, this, PlayerBombContext.DEATHBOMB)) {
+        if (IsTryingBomb && GameManagement.Difficulty.bombsEnabled && Team.Support is Ability.Bomb b) {
+            if (deathbomb == DeathbombState.NULL)
+                b.TryBomb(this, BombContext.NORMAL);
+            else if (deathbomb == DeathbombState.WAITING && b.TryBomb(this, BombContext.DEATHBOMB)) {
                 deathbomb = DeathbombState.PERFORMED;
             }
         }
@@ -501,7 +500,7 @@ public partial class PlayerController : BehaviorEntity {
         else {
             if (hitInvulnerabilityCounter > 0 || deathbomb != DeathbombState.NULL) 
                 return;
-            var frames = (Team.Support as Bomb)?.bomb.DeathbombFrames() ?? 0;
+            var frames = (Team.Support as Ability.Bomb)?.DeathbombFrames ?? 0;
             if (frames > 0) {
                 deathbomb = DeathbombState.WAITING;
                 RunRIEnumerator(WaitDeathbomb(dmg, frames));

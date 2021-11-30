@@ -88,13 +88,13 @@ public class ExOptTests {
         var x = V<Vector2>("x");
         var y = VF("y");
         var ex = Ex.Block(new[] {x}, Ex.Assign(x, ExC(new Vector2(2f, 3f))), Ex.Field(x, "x").Add(ExC(6f)));
-        AreEqual("((x=(2.0, 3.0));\n(x.x+6);)", ex.Debug());
-        AreEqual("((x=(2.0, 3.0));\n8;)", ex.FlatDebug());
+        AreEqual("((x=(2.00, 3.00));\n(x.x+6);)", ex.Debug());
+        AreEqual("((x=(2.00, 3.00));\n8;)", ex.FlatDebug());
         AreEqual(Compile(ex.Flatten()), 8f);
         ex = Ex.Block(new[] {x}, Ex.Assign(x, ExC(new Vector2(2f, 3f))), Ex.IfThen(y.GT(E1), x.Is(ExC(Vector2.right))), Ex.Add(Ex.Field(x, "x"), ExC(6f)));
-        AreEqual("((x=(2.0, 3.0));\nif(y>1){(x=(1.0, 0.0))}else{};\n(x.x+6);)", ex.FlatDebug());
+        AreEqual("((x=(2.00, 3.00));\nif(y>1){(x=(1.00, 0.00))}else{};\n(x.x+6);)", ex.FlatDebug());
         ex = Ex.Block(new[] {x}, x.Is(ExC(new Vector2(2f, 3f))), Ex.IfThen(y.GT(E1), Ex.Field(x, "x").Is(ExC(6f))), Ex.Add(Ex.Field(x, "x"), ExC(6f)));
-        AreEqual("((x=(2.0, 3.0));\nif(y>1){(x.x=6)}else{};\n(x.x+6);)", ex.FlatDebug());
+        AreEqual("((x=(2.00, 3.00));\nif(y>1){(x.x=6)}else{};\n(x.x+6);)", ex.FlatDebug());
     }
 
     [Test]

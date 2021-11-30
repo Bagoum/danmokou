@@ -21,6 +21,8 @@ public abstract class RegularUpdater : MonoBehaviour, IRegularUpdater {
         }
     }
 
+    public void AddToken(IDisposable t) => tokens.Add(t);
+
     protected virtual void BindListeners() { }
 
     protected void Listen<T, E>(EventProxy<T> obj, Func<T, IObservable<E>> ev, Action<E> sub) {

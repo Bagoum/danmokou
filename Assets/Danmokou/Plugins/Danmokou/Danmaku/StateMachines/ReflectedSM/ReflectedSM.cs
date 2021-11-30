@@ -252,12 +252,11 @@ if (> t &fadein,
 
     /// <summary>
     /// Run the visual novel scene attached to the executing BEH.
-    /// TODO: improve save-related handling here.
     /// </summary>
     public static TaskPattern ExecuteVN([LookupMethod] Func<DMKVNState, Task> vnTask, string scriptId) => async smh => {
-        // ReSharper disable once UnusedVariable
-        var save = await ((DMKVNWrapper) ServiceLocator.Find<IVNWrapper>())
-            .ExecuteVN((data, cT) => new DMKVNState(cT, scriptId, data), vnTask, new InstanceData(new GlobalData()), smh.cT);
+        var _ = await ((DMKVNWrapper) ServiceLocator.Find<IVNWrapper>())
+            .ExecuteVN((data, cT) => new DMKVNState(cT, scriptId, data), vnTask, GameManagement.Instance.VNData, smh.cT);
+        //The save is automatically updated in GameManagement.Instance, no need to handle it further here.
     };
 
     /// <summary>

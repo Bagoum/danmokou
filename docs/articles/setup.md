@@ -4,14 +4,27 @@ These are verbose instructions on how to set up Danmokou on your first run.
 
 ## Part 0: Check Your Files
 
-- Download Danmokou. You can simply run `git clone https://github.com/Bagoum/danmokou.git`, or you can (NOT RECOMMENDED) download the engine as a zip from [the repo](https://github.com/Bagoum/danmokou). 
-- Run `git submodule update --init --recursive`. This will import code from several submodules, including SiMP, which is a fully structured game you can reference, and SuzunoyaUnity, which is a visual novel engine that powers the dialogue system. If you are not using git, you can download them manually from the repos and place them in the Assets folder directly. Look for the blue links in this folder: https://github.com/Bagoum/danmokou/tree/master/Assets .
-  -  (Note: the Yukari/Junko script in Assets/MiniProjects has some dependencies on the SiMP repository.)
+- Get Danmokou from [GitHub](https://github.com/Bagoum/danmokou). Details are as follows:
+  - Install git if you don't have it.
+  - Locate a folder in which you'd like to store the project files. The files will be stored directly in this directory. CD to the folder in your command line / terminal / bash shell.
+  - Run `git init`.
+  - Run `git remote add super https://github.com/Bagoum/danmokou.git`. This will allow you to reference the project repository via the alias "super".
+  - Run `git pull super v8.0.0`.
+    - v8.0.0 is the latest stable version. You can pick any version available [on the tags page](https://github.com/Bagoum/danmokou/tags), or you can run `git pull super master` to get the latest code, which may be less stable.
+  - Run `git submodule update --init --recursive`. This will import code from several submodules, including SiMP, which is a fully structured game, and SuzunoyaUnity, which is a visual novel engine that powers the dialogue system.
+    - If you do not want code from the extra submodules, then you can run `git submodule update --init --recursive Assets/SZYU` to only handle SuzunoyaUnity, which is required for the engine to work.
+- If you already have a git repository with Danmokou, you can update it as follows:
+  - **Assuming you have not made edits to any submodules:**
+    - Run `git pull --rebase super v8.0.0`, replacing "v8.0.0" with whatever version you are updating to.
+    - Run `git submodule update --recursive`.
+      - Again, you can run `git submodule update --recursive Assets/SZYU` if you want to ignore the other submodules.
+      - If updating from v7.0.0 or earlier, you will need to add an `--init` when updating SZYU.
+  - **If you have made edits to submodules, you will need to `git pull --rebase` the individual submodules instead of running `git submodule update`**.
 
 ## Part 1: Unity Setup
 
 - Download/Install Unity Hub (https://store.unity.com/download-nuo), then run it
-- Within Unity Hub > Installs, add Unity version **2020.3** (Do **not** use 2019. 2021 might work.)
+- Within Unity Hub > Installs, add Unity version **2021.2** (Required for v8.0/-)
 - Within Unity Hub > Projects, click ADD and browse to the root Danmokou folder. 
 - Click on the project to load it. **The first time you load it, Unity may take several minutes to import resources.**
   - If you get an error that the project contains compilation errors, click "Ignore". Once the project has loaded, you should see a compilation error saying something about PanelSettings missing. If you trigger a recompile (eg. by adding code or comments to any C# file in the solution), the error will disappear.

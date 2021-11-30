@@ -17,6 +17,7 @@ using Danmokou.Services;
 using JetBrains.Annotations;
 using ProtoBuf;
 using Danmokou.SM;
+using Danmokou.VN;
 using static Danmokou.Services.GameManagement;
 
 
@@ -126,31 +127,32 @@ public abstract class ReplayMode {
     public class NotRecordingReplay : ReplayMode { }
 }
 
-public class InstanceRequest {
-    private Cancellable gameTracker = new Cancellable();
+public record InstanceRequest {
+    private Cancellable gameTracker = new();
+    public Func<InstanceData, bool>? cb { get; }
+    public SharedInstanceMetadata metadata { get; }
+    public ReplayMode replay { get; }
+    public ILowInstanceRequest lowerRequest { get; }
+    public DMKVNData? vnSave { get; init; }
+    public int seed { get; }
     public ICancellee GameTracker => gameTracker;
-    public readonly Func<InstanceData, bool>? cb;
-    public readonly SharedInstanceMetadata metadata;
-    public readonly ReplayMode replay;
-    public bool Saveable => replay is ReplayMode.RecordingReplay;
-    public readonly ILowInstanceRequest lowerRequest;
-    public readonly int seed;
+    public bool Saveable => replay is not ReplayMode.Replaying;
     public InstanceMode Mode => lowerRequest.Mode;
 
     public InstanceRequest(Func<InstanceData, bool>? cb, ILowInstanceRequest lowerRequest, Replay replay) : 
-        this(cb, replay.metadata.Record.SharedInstanceMetadata, lowerRequest, new ReplayMode.Replaying(replay)) {}
+        this(cb, replay.metadata.Record.SharedInstanceMetadata, lowerRequest, new ReplayMode.Replaying(replay), null) {}
+    public InstanceRequest(Func<InstanceData, bool>? cb, SharedInstanceMetadata metadata, ILowInstanceRequest lowReq, DMKVNData? vnSave = null) : 
+        this(cb, metadata, lowReq, null, vnSave) { }
 
-    public InstanceRequest(Func<InstanceData, bool>? cb, SharedInstanceMetadata metadata, ILowInstanceRequest lowReq) : 
-        this(cb, metadata, lowReq, null) { }
-
-    public InstanceRequest(Func<InstanceData, bool>? cb, SharedInstanceMetadata metadata, ILowInstanceRequest lowerRequest, ReplayMode? replay) {
+    public InstanceRequest(Func<InstanceData, bool>? cb, SharedInstanceMetadata metadata, ILowInstanceRequest lowerRequest, ReplayMode? replay, DMKVNData? vnSave) {
         this.metadata = metadata;
         this.cb = cb;
         this.replay = replay ?? (lowerRequest.Campaign.Replayable ? 
             new ReplayMode.RecordingReplay() : 
-            (ReplayMode)new ReplayMode.NotRecordingReplay());
+            new ReplayMode.NotRecordingReplay());
+        this.vnSave = vnSave;
         this.lowerRequest = lowerRequest;
-        this.seed = replay is ReplayMode.Replaying r ?  r.replay.metadata.Record.Seed : new Random().Next();
+        this.seed = this.replay is ReplayMode.Replaying r ? r.replay.metadata.Record.Seed : new Random().Next();
     }
 
     public void SetupInstance() {
@@ -166,7 +168,9 @@ public class InstanceRequest {
                             Replayer.ReplayerConfig.FinishMethod.ERROR, r.replay.frames)),
             _ => throw new Exception($"Unhandled replay type: {replay}")
         };
-        GameManagement.NewInstance(Mode, SaveData.r.GetHighScore(this), this, actor);
+        GameManagement.NewInstance(Mode, SaveData.r.GetHighScore(this), this, actor, 
+            //Don't load VN saves in replay use-cases
+            replay is ReplayMode.NotRecordingReplay ? vnSave : null);
     }
 
     public InstanceRecord MakeGameRecord(AyaPhoto[]? photos = null, string? ending = null) {
@@ -342,13 +346,14 @@ public class InstanceRequest {
     /// <param name="campaign"></param>
     /// <param name="cb">Run when moving to replay screen.</param>
     /// <param name="metadata"></param>
+    /// <param name="vnSave"></param>
     /// <returns></returns>
     public static bool RunCampaign(SMAnalysis.AnalyzedCampaign? campaign, Action? cb, 
-        SharedInstanceMetadata metadata) {
+        SharedInstanceMetadata metadata, DMKVNData? vnSave = null) {
         if (campaign == null) return false;
         var req = new InstanceRequest(d => 
             ServiceLocator.Find<ISceneIntermediary>().LoadScene(new SceneRequest(MaybeSaveReplayScene(d), 
-            SceneRequest.Reason.FINISH_RETURN, cb)), metadata, new CampaignRequest(campaign));
+            SceneRequest.Reason.FINISH_RETURN, cb)), metadata, new CampaignRequest(campaign), vnSave);
 
 
         if (SaveData.r.TutorialDone || References.miniTutorial == null) return req.Run();

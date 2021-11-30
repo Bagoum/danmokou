@@ -168,7 +168,7 @@ public class UIManager : CoroutineRegularUpdater, IUIManager, IStageAnnouncer {
             }
         });
         Listen(EvInstance, i => i.Bombs, b => {
-            var color = (Instance.TeamCfg?.Support.UsesBomb ?? true) ?
+            var color = Instance.TeamCfg?.Support is Ability.Bomb { BombsRequired: not null } ?
                 Color.white :
                 new Color(0.5f, 0.5f, 0.5f, 0.9f);
             for (int ii = 0; ii < bombPoints.Length; ++ii) {
@@ -250,7 +250,7 @@ public class UIManager : CoroutineRegularUpdater, IUIManager, IStageAnnouncer {
         pivDecayPB.SetFloat(PropConsts.innerFillRatio, Mathf.Clamp01(Instance.VisibleFaithLenience.Value));
         PIVDecayBar.SetPropertyBlock(pivDecayPB);
         meterPB.SetFloat(PropConsts.fillRatio, (float) Instance.Meter);
-        MeterBar.color = (Instance.TeamCfg?.Support.UsesMeter ?? true) ? Color.white : new Color(0.5f, 0.5f, 0.5f, 0.7f);
+        MeterBar.color = (Instance.TeamCfg?.Support is Ability.Metered) ? Color.white : new Color(0.5f, 0.5f, 0.5f, 0.7f);
         MeterBar.SetPropertyBlock(meterPB);
         //bossHPPB.SetFloat(PropConsts.time, time);
         if (bossHP != null) {

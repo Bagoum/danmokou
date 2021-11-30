@@ -292,6 +292,9 @@
      <Reference Include="UnityEditor.Graphs">
      <HintPath>C:/Program Files/Unity/Hub/Editor/2021.2.1f1/Editor/Data/Managed/UnityEditor.Graphs.dll</HintPath>
      </Reference>
+     <Reference Include="UnityEditor.OSXStandalone.Extensions">
+     <HintPath>C:/Program Files/Unity/Hub/Editor/2021.2.1f1/Editor/Data/PlaybackEngines/MacStandaloneSupport/UnityEditor.OSXStandalone.Extensions.dll</HintPath>
+     </Reference>
      <Reference Include="UnityEditor.WindowsStandalone.Extensions">
      <HintPath>C:/Program Files/Unity/Hub/Editor/2021.2.1f1/Editor/Data/PlaybackEngines/WindowsStandaloneSupport/UnityEditor.WindowsStandalone.Extensions.dll</HintPath>
      </Reference>

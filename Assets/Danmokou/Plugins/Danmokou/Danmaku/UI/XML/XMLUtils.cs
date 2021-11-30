@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using BagoumLib;
 using BagoumLib.Cancellation;
 using BagoumLib.Culture;
@@ -14,6 +15,8 @@ using Danmokou.Player;
 using Danmokou.Scriptables;
 using Danmokou.Services;
 using Danmokou.SM;
+using Danmokou.VN;
+using Mizuhashi.Parsers;
 using UnityEngine;
 using UnityEngine.UIElements;
 using static Danmokou.Core.LocalizedStrings.Generic;
@@ -115,7 +118,7 @@ public static partial class XMLUtils {
         var prcSpellHist = SaveData.r.GetPracticeSpellHistory();
 
         var s = new UIScreen(m, "BOSS PRACTICE") {Builder = (_, ve) => {
-            ve.AddScrollColumn().style.flexGrow = 2.3f;
+            ve.AddScrollColumn().style.flexGrow = 2f;
             ve.AddScrollColumn().style.flexGrow = 5f;
         }};
         var bossSel1 = s.ColumnRender(1);
@@ -146,14 +149,196 @@ public static partial class XMLUtils {
         return s;
     }
     
-    public static UIScreen OptionsScreen(this UIController m) {
-        var s = new UIScreen(m, "OPTIONS") {
-            Builder = (_, ve) => {
-                ve.AddColumn().style.maxWidth = new Length(60, LengthUnit.Percent);
-            },
+    private static (LString, bool)[] OnOffOption => new[] {
+        (generic_on, true),
+        (generic_off, false)
+    };
+    public static UIScreen OptionsScreen(this UIController m, bool allowStaticOptions) {
+        var s = new UIScreen(m, null) {
             OnExitEnd = SaveData.AssignSettingsChanges
         };
-        s.SetFirst(new UIColumn(s, null, XMLPauseMenu.GetOptions(true)));
+        s.SetFirst(new UIRow(new UIRenderExplicit(s, ve => ve.Q("HeaderRow")), new[] {
+            new UINode("<cspace=16>GAME</cspace>") {
+                Prefab = GameManagement.UXMLPrefabs.HeaderNode,
+                //Using UIRenderConstructed allows making different "screens" for each options page
+                ShowHideGroup = new UIColumn(new UIRenderConstructed(
+                        new UIRenderDirect(s), Prefabs.UIScreenColumn, 
+                        (_, ve) => ve.style.maxWidth = new Length(60, LengthUnit.Percent)), 
+                    allowStaticOptions ?
+                            new OptionNodeLR<string?>(main_lang, l => {
+                            SaveData.UpdateLocale(l);
+                            SaveData.AssignSettingsChanges();
+                        }, new[] {
+                            (new LString("English"), Locales.EN),
+                            (new LString("日本語"), Locales.JP)
+                        }, SaveData.s.Locale) :
+                        null,
+                    allowStaticOptions ?
+                        new OptionNodeLR<bool>(smoothing, b => SaveData.s.AllowInputLinearization = b, OnOffOption,
+                            SaveData.s.AllowInputLinearization) :
+                        null,
+                    new OptionNodeLR<float>(screenshake, b => SaveData.s.Screenshake = b, new(LString, float)[] {
+                            ("Off", 0),
+                            ("x0.5", 0.5f),
+                            ("x1", 1f),
+                            ("x1.5", 1.5f),
+                            ("x2", 2f)
+                        }, SaveData.s.Screenshake),
+                    new OptionNodeLR<bool>(hitbox, b => SaveData.s.UnfocusedHitbox = b, new[] {
+                        (hitbox_always, true),
+                        (hitbox_focus, false)
+                    }, SaveData.s.UnfocusedHitbox),
+                    new OptionNodeLR<bool>(backgrounds, b => {
+                            SaveData.s.Backgrounds = b;
+                            SaveData.UpdateResolution();
+                        }, OnOffOption,
+                        SaveData.s.Backgrounds),
+                    new OptionNodeLR<bool>(controller, SaveData.UpdateAllowController, OnOffOption,
+                        SaveData.s.AllowControllerInput),
+                    allowStaticOptions ?
+                        new OptionNodeLR<float>(dialogue_speed, ds => SaveData.VNSettings.TextSpeed = ds, new(LString, float)[] {
+                            ("x2", 2f),
+                            ("x1.5", 1.5f),
+                            ("x1", 1f),
+                            ("x0.75", 0.75f),
+                            ("x0.5", 0.5f),
+                        }, SaveData.VNSettings.TextSpeed) :
+                        null,
+                    new OptionNodeLR<float>("Dialogue Box Opacity", SaveData.s.DialogueOpacityEv.OnNext, 11.Range().Select(x =>
+                        (new LString($"{x * 10}"), x / 10f)).ToArray(), SaveData.s.DialogueOpacity)
+                )
+            },
+            new UINode("<cspace=16>GRAPHICS</cspace>") {
+                Prefab = GameManagement.UXMLPrefabs.HeaderNode,
+                ShowHideGroup = new UIColumn(new UIRenderConstructed(
+                    new UIRenderDirect(s), Prefabs.UIScreenColumn, 
+                    (_, ve) => ve.style.maxWidth = new Length(60, LengthUnit.Percent)), 
+                    new OptionNodeLR<bool>(shaders, yn => SaveData.s.Shaders = yn, new[] {
+                        (shaders_low, false),
+                        (shaders_high, true)
+                    }, SaveData.s.Shaders),
+                    new OptionNodeLR<(int, int)>(resolution, b => SaveData.UpdateResolution(b), new (LString, (int, int))[] {
+                        ("3840x2160", (3840, 2160)),
+                        ("2560x1440", (2560, 1440)),
+                        ("1920x1080", (1920, 1080)),
+                        ("1600x900", (1600, 900)),
+                        ("1280x720", (1280, 720)),
+                        ("800x450", (800, 450)),
+                        ("640x360", (640, 360))
+                    }, SaveData.s.Resolution),
+                    new OptionNodeLR<FullScreenMode>(fullscreen, SaveData.UpdateFullscreen, new[] {
+                        (fullscreen_exclusive, FullScreenMode.ExclusiveFullScreen),
+                        (fullscreen_borderless, FullScreenMode.FullScreenWindow),
+                        (fullscreen_window, FullScreenMode.Windowed),
+                    }, SaveData.s.Fullscreen),
+                    new OptionNodeLR<int>(vsync, v => SaveData.s.Vsync = v, new[] {
+                        (generic_off, 0),
+                        (generic_on, 1),
+                        //(vsync_double, 2)
+                    }, SaveData.s.Vsync),
+                    new OptionNodeLR<bool>(LocalizedStrings.UI.renderer, b => SaveData.s.LegacyRenderer = b, new[] {
+                        (renderer_legacy, true),
+                        (renderer_normal, false)
+                    }, SaveData.s.LegacyRenderer)
+                )
+            },
+            new UINode("<cspace=16>SOUND</cspace>") {
+                Prefab = GameManagement.UXMLPrefabs.HeaderNode,
+                ShowHideGroup = new UIColumn(new UIRenderConstructed(
+                    new UIRenderDirect(s), Prefabs.UIScreenColumn, 
+                    (_, ve) => ve.style.maxWidth = new Length(60, LengthUnit.Percent)),
+                    new OptionNodeLR<float>(bgm_volume, SaveData.s.BGMVolumeEv.OnNext, 21.Range().Select(x =>
+                        (new LString($"{x * 10}"), x / 10f)).ToArray(), SaveData.s.BGMVolume),
+                    new OptionNodeLR<float>(sfx_volume, v => { SaveData.s.SEVolume = v; }, 21.Range().Select(x =>
+                        (new LString($"{x * 10}"), x / 10f)).ToArray(), SaveData.s.BGMVolume),
+                    new OptionNodeLR<float>("Dialogue Typing Volume", v => { SaveData.s.TypingSoundVolume = v; }, 21.Range().Select(x =>
+                        (new LString($"{x * 10}"), x / 10f)).ToArray(), SaveData.s.TypingSoundVolume)
+                )
+            }
+        }));
+        return s;
+    }
+
+    public static UIScreen SaveLoadVNScreen(this UIController m, Func<SavedInstance, bool>? loader, Func<int, SavedInstance>? saver, bool loadIsDangerous=true) {
+        int perPage = 8;
+        UINode CreateSaveLoadEntry(int i) {
+            return new FuncNode(LString.Empty, n => {
+                var ind = n.Group.Nodes.IndexOf(n);
+                var save = SaveData.v.Saves.TryGetValue(i, out var _s) ? _s : null;
+                if (saver == null && (loader == null || save == null))
+                    return new UIResult.StayOnNode(true);
+                return PopupUIGroup.LRB2(n, () => saveload_header,
+                    r => new UIColumn(r,
+                            new UINode(saveload_what_do_ls(i + 1))
+                                { Prefab = Prefabs.PureTextNode })
+                        { Interactable = false },
+                    null, new UINode?[] {
+                        (save == null) ?
+                            null :
+                            UIButton.Delete(() => SaveData.v.TryDeleteSave(save),
+                                () => new UIResult.GoToNode(n.Group, ind)),
+                        (save == null || loader == null) ?
+                            null :
+                            UIButton.Load(() => loader(save), new UIResult.StayOnNode(), loadIsDangerous),
+                        (saver == null) ?
+                            null :
+                            new UIButton(save == null ? generic_save : generic_overwrite,
+                                save == null ? UIButton.ButtonType.Confirm : UIButton.ButtonType.Danger,
+                                _ => {
+                                    SaveData.v.SaveNewSave(saver(i));
+                                    return new UIResult.ReturnToTargetGroupCaller(n);
+                                })
+                    });
+            }) {
+                Prefab = Prefabs.SaveLoadNode,
+                InlineStyle = (_, n) => {
+                    var title = n.HTML.Q<Label>("Title");
+                    title.text = $"Save #{i + 1}";
+                    var desc = n.HTML.Q<Label>("Description");
+                    var bg = n.HTML.Q("SS");
+                    if (SaveData.v.Saves.TryGetValue(i, out var save)) {
+                        title.RemoveFromClassList("saveentry-title-unset");
+                        desc.text = save.Description;
+                        bg.style.backgroundImage = save.Image.Texture;
+                    } else {
+                        title.AddToClassList("saveentry-title-unset");
+                        desc.text = "";
+                        bg.style.backgroundImage = UXMLPrefabs.defaultSaveLoadBG;
+                    }
+                }
+            };
+        }
+
+        var s = new UIScreen(m, "SAVE/LOAD") {
+            Builder = (s, ve) => {
+                s.Header.style.marginRight = 100;
+                s.Margin.SetLRMargin(360, 360);
+                var c1 = ve.AddColumn();
+                var c2 = ve.AddColumn();
+                c1.style.justifyContent = c2.style.justifyContent = Justify.SpaceBetween;
+            }
+        };
+        
+        UINode CreatePage(int p) {
+            var c1 = new UIColumn(s, null, (p * perPage, p * perPage + perPage / 2).Range()
+                .Select(CreateSaveLoadEntry));
+            return new UINode($"{p + 1}") {
+                Prefab = Prefabs.HeaderNode,
+                OnBuilt = n => {
+                    n.Label!.style.unityTextAlign = TextAnchor.MiddleCenter;
+                    n.Label.style.fontSize = 100;
+                    n.BodyHTML.SetPadding(0, 25, 0, 25);
+                },
+                ShowHideGroup = new HGroup(
+                    c1,
+                    new UIColumn(s, new UIRenderColumn(s, 1), (p * perPage + perPage / 2, (p + 1) * perPage)
+                        .Range().Select(CreateSaveLoadEntry))
+                ) { UseSameIndexLR = true, EntryNodeOverride = c1.EntryNode}
+            };
+        }
+
+        var pages = 9.Range().Select(CreatePage).ToArray();
+        s.SetFirst(new UIRow(new UIRenderExplicit(s, ve => ve.Q("HeaderRow")), pages));
         return s;
     }
     public static UIScreen ReplayScreen(this UIController m, UIScreen gameDetails) {
@@ -162,14 +347,14 @@ public static partial class XMLUtils {
         };
         s.SetFirst(new UIColumn(s, null) {
             LazyNodes = () => SaveData.p.ReplayData.Select(rep => {
-                return new FuncNode(() => rep.metadata.Record.AsDisplay(true, true), n => {
+                return new FuncNode(rep.metadata.Record.AsDisplay(true, true), n => {
                     var ind = n.Group.Nodes.IndexOf(n);
-                    return PopupUIGroup.LRB2(n, new(replay_window),
+                    return PopupUIGroup.LRB2(n, () => replay_window,
                         r => new UIColumn(r,
                                 new UINode(replay_what_do_ls(rep.metadata.Record.CustomName))
                                     { Prefab = Prefabs.PureTextNode })
                             { Interactable = false },
-                        p => (null, new UINode[] {
+                        null, new UINode[] {
                             UIButton.Delete(() => {
                                 if (SaveData.p.TryDeleteReplay(rep)) {
                                     n.Remove();
@@ -182,12 +367,8 @@ public static partial class XMLUtils {
                                 s.Controller.ConfirmCache();
                                 return new UIResult.StayOnNode(!InstanceRequest.ViewReplay(rep));
                             })
-                        }));
+                        });
                 }) {
-                    OnBuilt = n => {
-                        n.NodeHTML.style.paddingLeft = 20;
-                        n.NodeHTML.style.paddingRight = 20;
-                    },
                     CacheOnEnter = true
                 }.With(monospaceClass, small2Class, centerTextClass);
             })
@@ -206,7 +387,7 @@ public static partial class XMLUtils {
             opts.style.width = 100f.Percent();
             opts.style.marginBottom = 40;
             var scores = container.AddScrollColumn();
-            scores.SetLRMargin(40, 60);
+            scores.SetLRMargin(0, 60);
             scores.style.width = 100f.Percent();
         }};
         if (campaigns.Length == 0 || campaigns[0].bosses.Length == 0) {
@@ -262,10 +443,10 @@ public static partial class XMLUtils {
             .OrderByDescending(g => g.Score).Select(g =>
                 //Don't need to show the request (eg. Yukari (Ex) p3) because it's shown by the option nodes above this
                 new FuncNode(() => g.AsDisplay(true, false), n => PopupUIGroup.LRB2(
-                        n, new(record_header), 
+                        n, () => record_header, 
                         r => new UIColumn(r,new UINode(record_what_do(g.CustomNameOrPartial)) 
                             { Prefab = Prefabs.PureTextNode} ) { Interactable = false },
-                        p => (null, new UINode[] {
+                        null, new UINode[] {
                             new UIButton(view_details, UIButton.ButtonType.Confirm, _ =>
                                 n.ReturnGroup.Then(CreateGameResultsView(g, detailsScreen))),
                             new UIButton(record_view_replay, UIButton.ButtonType.Confirm, _ => {
@@ -274,7 +455,7 @@ public static partial class XMLUtils {
                                         return  n.ReturnGroup.Then(new UIResult.GoToNode(replayScreen.Groups[0], ir));
                                 return new UIResult.StayOnNode(true);
                             }) { EnabledIf = () =>SaveData.p.ReplayData.Any(rep => rep.metadata.Record.Uuid == g.Uuid) }
-                        })
+                        }
                     )) {
                     VisibleIf = () => Matches(g.RequestKey)
                 }.With(monospaceClass, small2Class, centerTextClass));
@@ -336,7 +517,7 @@ public static partial class XMLUtils {
         PlayerController? demoPlayer = null;
         Cancellable? demoCT = null;
         OptionNodeLR<ShipConfig> playerSelect = null!;
-        OptionNodeLR<ISupportAbilityConfig> supportSelect = null!;
+        OptionNodeLR<IAbilityCfg> supportSelect = null!;
         OptionNodeLR<ShotConfig> shotSelect = null!;
         OptionNodeLR<Subshot> subshotSelect = null!;
 
@@ -396,7 +577,7 @@ public static partial class XMLUtils {
             return (p, display);
         }).ToArray();
 
-        void ShowShot(ShipConfig p, ShotConfig s, Subshot sub, ISupportAbilityConfig support, bool first) {
+        void ShowShot(ShipConfig p, ShotConfig s, Subshot sub, IAbilityCfg support, bool first) {
             if (!first) UpdateDemo();
             var index = displays.IndexOf(sd => sd.player == p);
             displays[index].display.SetShot(p, s, sub, support);
@@ -414,9 +595,9 @@ public static partial class XMLUtils {
         playerSelect = new OptionNodeLR<ShipConfig>(LString.Empty, _ => _ShowShot(),
             c.campaign.players.Select(p => (p.ShortTitle, p)).ToArray(), c.campaign.players[0]);
 
-        supportSelect = new OptionNodeLR<ISupportAbilityConfig>(LString.Empty, _ => _ShowShot(),
+        supportSelect = new OptionNodeLR<IAbilityCfg>(LString.Empty, _ => _ShowShot(),
             () => playerSelect.Value.supports.Select(s => 
-                ((LString)s.ordinal, (ISupportAbilityConfig)s.ability)).ToArray(), 
+                ((LString)s.ordinal, (IAbilityCfg)s.ability)).ToArray(), 
             playerSelect.Value.supports[0].ability);
         shotSelect = new OptionNodeLR<ShotConfig>(LString.Empty, _ => _ShowShot(), () =>
                 playerSelect.Value.shots2.Select(s => ((LString)(s.shot.isMultiShot ? 
@@ -523,10 +704,10 @@ public static partial class XMLUtils {
             new FuncNode(() => new LString(s.name),
                 n => {
                     var ind = n.Group.Nodes.IndexOf(n);
-                    return PopupUIGroup.LRB2(n, new(setting),
+                    return PopupUIGroup.LRB2(n, () => setting,
                         r => new UIColumn(r, new UINode(setting_what_do_ls(s.name)) {Prefab = Prefabs.PureTextNode}) 
                             { Interactable = false },
-                        p => (null, new UINode[] {
+                        null, new UINode[] {
                             UIButton.Delete(() => {
                                 if (SaveData.s.RemoveDifficultySettings(s)) {
                                     n.Remove();
@@ -537,7 +718,7 @@ public static partial class XMLUtils {
                                 SetNewDFC(s.settings);
                                 return true;
                             }, n.ReturnGroup),
-                        })
+                        }
                     );
                 });
         
@@ -578,17 +759,17 @@ public static partial class XMLUtils {
                         .Prepend(new FuncNode(() => create_setting, 
                             n => {
                                 var settingNameEntry = new TextInputNode(LString.Empty);
-                                return PopupUIGroup.LRB2(n, new PopupUINode(create_setting),
+                                return PopupUIGroup.LRB2(n, () => create_setting,
                                     r => new UIColumn(r, new UINode(new_setting_name) {
                                         Prefab = Prefabs.PureTextNode, Passthrough = true
                                     }, settingNameEntry),
-                                    p => (null, new UINode[] {
+                                    null, new UINode[] {
                                         UIButton.Save(() => {
                                             SaveData.s.AddDifficultySettings(settingNameEntry.DataWIP, dfc);
                                             n.Group.AddNodeDynamic(MakeSaveLoadDFCNode(saved.Last()));
                                             return true;
                                         }, n.ReturnGroup), 
-                                    }));
+                                    });
                             }) {
                             InlineStyle = (_, n) => n.NodeHTML.style.marginBottom = 120
                         }))
@@ -709,7 +890,7 @@ public static partial class XMLUtils {
             opts.style.width = 100f.Percent();
             opts.style.marginBottom = 40;
             var scores = container.AddScrollColumn();
-            scores.SetLRMargin(40, 60);
+            scores.SetLRMargin(0, 60);
             scores.style.width = 100f.Percent();
         }};
         screen.SetFirst(new VGroup(
@@ -808,7 +989,7 @@ public static partial class XMLUtils {
             new("Photos Taken", rec.Photos.Length),
             new("Hits Taken", rec.HitsTaken),
             new("Bombs Used", rec.BombsUsed),
-            new("1-UP items collected", rec.OneUpItemsCollected),
+            new("1-UP Items Collected", rec.OneUpItemsCollected),
             new("Game Time", rec.TotalFrames.FramesToTime()),
             new("Bullet Time Time", rec.MeterFrames.FramesToTime()),
             new("Total Cards", stats.TotalCards),
@@ -885,6 +1066,183 @@ public static partial class XMLUtils {
             null;
         stats = m.StatisticsScreen(SaveData.r.FinishedCampaignGames, Campaigns);
         return m.PlayerDataScreen(records, stats, achievements, replays);
+    }
+
+    public static UIScreen LicenseScreen(this UIController m, NamedTextAsset[] licenses) {
+        var screen = new UIScreen(m, null) {Builder = (s, ve) => {
+            var container = ve.AddColumn();
+            container.name = "VContainer";
+            var opts = container.AddNodeRow();
+            opts.name = "Options";
+            opts.style.flexGrow = opts.style.flexShrink = 0;
+            opts.style.height = 8f.Percent();
+            opts.style.width = 100f.Percent();
+            opts.style.marginBottom = 40;
+        }};
+        var contRender = new UIRenderExplicit(screen, ve => ve.Q("VContainer"));
+        var ls = licenses.Where(l => l.file != null)
+            .Select(l => (l.name, MarkdownParser.Parse(l.file.text))).ToArray();
+        screen.SetFirst(new UIRow(new UIRenderExplicit(screen, ve => ve.Q("Options")), 
+                ls.Select(l => {
+                    var render = new UIRenderConstructed(contRender, Prefabs.UIScreenScrollColumn, 
+                        (_, ve) => {
+                            ve.style.width = 100f.Percent();
+                            ve.SetPadding(0, 180, 0, 210);
+                        });
+                    return new UINode(l.name) {
+                        ShowHideGroup = new UIColumn(render),
+                        OnBuilt = _ => {
+                            foreach (var b in l.Item2) {
+                                render.HTML.Q<ScrollView>().Add(RenderMarkdown(b));
+                            }
+                        }
+                    };
+                })
+            ));
+        return screen;
+    }
+
+    private static void Stringify(Markdown.TextRun t, VisualElement into, bool breakOnSpace=false) {
+        var sb = new StringBuilder();
+        var pxPerSpace = 11;
+        bool bold = false;
+        bool italic = false;
+        void CommitString() {
+            if (sb.Length == 0) return;
+            var ve = Prefabs.MkLineText.CloneTreeWithoutContainer();
+            var s = (ve as Label)!.text = sb.ToString();
+            sb.Clear();
+            int ii = 0;
+            for (; ii < s.Length; ++ii) {
+                if (!char.IsWhiteSpace(s[^(1 + ii)]))
+                    break;
+            }
+            ve.style.marginRight = pxPerSpace * ii;
+            into.Add(ve);
+        }
+        bool RequiresSubtype(Markdown.TextRun tr) => tr switch {
+            Markdown.TextRun.Bold b => RequiresSubtype(b.Bolded),
+            Markdown.TextRun.InlineCode => true,
+            Markdown.TextRun.Italic i => RequiresSubtype(i.Italicized),
+            Markdown.TextRun.Link => true,
+            Markdown.TextRun.Sequence sequence => sequence.Pieces.Any(RequiresSubtype),
+            _ => false
+        };
+        //if we render a long sequence of chars that causes a text wrap in one LineFragmentText, then a successive
+        // LineFragmentLink/LineFragmentCode will display on a new line instead of to the right of it. This is
+        // not resolvable except by preventing text wrapping, which is best done by breaking on spaces.
+        breakOnSpace |= RequiresSubtype(t);
+        void ApplyFontStyleToVE(VisualElement ve) {
+            if (bold && italic)
+                ve.style.unityFontStyleAndWeight = FontStyle.BoldAndItalic;
+            else if (bold)
+                ve.style.unityFontStyleAndWeight = FontStyle.Bold;
+            else if (italic)
+                ve.style.unityFontStyleAndWeight = FontStyle.Italic;
+        }
+        // ReSharper disable once VariableHidesOuterVariable
+        void _Stringify(Markdown.TextRun t) {
+            switch (t) {
+                case Markdown.TextRun.Atom atom:
+                    if (breakOnSpace) {
+                        var split = atom.Text.Split(' ');
+                        for (int ii = 0; ii < split.Length - 1; ++ii) {
+                            sb.Append(split[ii]);
+                            sb.Append(' ');
+                            CommitString();
+                        }
+                        sb.Append(split[^1]);
+                    } else
+                        sb.Append(atom.Text);
+                    break;
+                case Markdown.TextRun.Bold b:
+                    sb.Append("<b>");
+                    bold = true;
+                    _Stringify(b.Bolded);
+                    bold = false;
+                    sb.Append("</b>");
+                    break;
+                case Markdown.TextRun.InlineCode inlineCode:
+                    CommitString();
+                    var ve = Prefabs.MkLineCode.CloneTreeWithoutContainer();
+                    ApplyFontStyleToVE(ve);
+                    (ve as Label)!.text = inlineCode.Text;
+                    into.Add(ve);
+                    break;
+                case Markdown.TextRun.Italic i:
+                    sb.Append("<i>");
+                    italic = true;
+                    _Stringify(i.Italicized);
+                    italic = false;
+                    sb.Append("</i>");
+                    break;
+                case Markdown.TextRun.Link(var textRun, var url):
+                    CommitString();
+                    ve = Prefabs.MkLineLink.CloneTreeWithoutContainer();
+                    ApplyFontStyleToVE(ve);
+                    Stringify(textRun, ve, breakOnSpace);
+                    ve.RegisterCallback<MouseUpEvent>(evt => {
+                        //Logs.Log($"Click {Description}");
+                        //button 0, 1, 2 = left, right, middle click
+                        //Right click is handled as UIBack in InputManager
+                        if (evt.button == 0)
+                            Application.OpenURL(url);
+                        evt.StopPropagation();
+                    });
+                    into.Add(ve);
+                    break;
+                case Markdown.TextRun.Sequence sequence:
+                    foreach (var tr in sequence.Pieces)
+                        _Stringify(tr);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(t));
+            }
+        }
+        _Stringify(t);
+        CommitString();
+    }
+    private static VisualElement RenderMarkdown(Markdown.Block b) {
+        switch (b) {
+            case Markdown.Block.CodeBlock(var language, var contents):
+                var ve = Prefabs.MkCodeBlock.CloneTreeWithoutContainer();
+                var cont = ve.Q("CodeContainer");
+                foreach (var line in contents.Split('\n')) {
+                    var lve = Prefabs.MkCodeBlockText.CloneTreeWithoutContainer();
+                    (lve as Label)!.text = line;
+                    cont.Add(lve);
+                }
+                return ve;
+            case Markdown.Block.Empty empty:
+                return Prefabs.MkEmpty.CloneTreeWithoutContainer();
+            case Markdown.Block.Header header:
+                ve = Prefabs.MkHeader.CloneTreeWithoutContainer();
+                ve.AddToClassList($"mkHeader{header.Size}");
+                Stringify(header.Text, ve);
+                return ve;
+            case Markdown.Block.HRule hRule:
+                throw new Exception("HRule not handled");
+            case Markdown.Block.List(var ordered, var lines):
+                ve = Prefabs.MkList.CloneTreeWithoutContainer();
+                foreach (var (i, opt) in lines.Enumerate()) {
+                    var optHtml = Prefabs.MkListOption.CloneTreeWithoutContainer();
+                    optHtml.Q<Label>("Marker").text = ordered ? $"{i + 1}." : "-";
+                    foreach (var block in opt)
+                        optHtml.Q("Blocks").Add(RenderMarkdown(block));
+                    ve.Add(optHtml);
+                }
+                return ve;
+            case Markdown.Block.Paragraph paragraph:
+                ve = Prefabs.MkParagraph.CloneTreeWithoutContainer();
+                foreach (var line in paragraph.Lines) {
+                    var html = Prefabs.MkLine.CloneTreeWithoutContainer();
+                    Stringify(line, html);
+                    ve.Add(html);
+                }
+                return ve;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(b));
+        }
     }
 }
 }

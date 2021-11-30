@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using BagoumLib.Events;
 using BagoumLib.Tasks;
@@ -10,26 +11,47 @@ using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Danmokou.UI.XML {
-public abstract class UIRenderSpace {
-    protected List<UIGroup> Groups { get; } = new();
+public abstract class UIRenderSpace : IRenderSource {
+    protected List<IRenderSource> Sources { get; } = new();
     protected VisualElement? _html = null;
     public abstract VisualElement HTML { get; }
     public UIScreen Screen { get; }
+    public virtual bool Visible => true;
     public UIController Controller => Screen.Controller;
 
     public UIRenderSpace(UIScreen screen) {
         this.Screen = screen;
     }
-    
-    public virtual void AddGroup(UIGroup grp) => Groups.Add(grp);
-    
-    public virtual void RemoveGroup(UIGroup grp) => Groups.Remove(grp);
-    public void HideAllGroups() {
-        foreach (var g in Groups)
-            g.Hide();
+
+    protected void UpdateVisibility() {
+        if (_html != null) 
+            HTML.style.display = Visible.ToStyle();
     }
+
+    public void AddSource(IRenderSource grp) {
+        Sources.Add(grp);
+        UpdateVisibility();
+    }
+
+    public void RemoveSource(IRenderSource grp) {
+        Sources.Remove(grp);
+        UpdateVisibility();
+    }
+
+    public void SourceBecameVisible(UIGroup grp) => UpdateVisibility();
+
+    public void SourceBecameHidden(UIGroup grp) => UpdateVisibility();
+}
+/// <summary>
+/// An object that renders into a RenderSpace. Either a UIGroup or a child UIRenderSpace.
+/// </summary>
+public interface IRenderSource {
+    bool Visible { get; }
 }
 
+/// <summary>
+/// A render space linking to a specific HTML construct in the screen's HTML tree.
+/// </summary>
 public class UIRenderExplicit : UIRenderSpace {
     private readonly Func<VisualElement, VisualElement> htmlFinder;
     public override VisualElement HTML => _html ??= htmlFinder(Screen.HTML);
@@ -37,15 +59,27 @@ public class UIRenderExplicit : UIRenderSpace {
         this.htmlFinder = htmlFinder;
     }
 }
+/// <summary>
+/// A render space that renders directly to the screen container.
+/// </summary>
 public class UIRenderDirect : UIRenderSpace {
     public override VisualElement HTML => _html ??= Screen.Container;
     public UIRenderDirect(UIScreen screen) : base(screen) { }
 }
+
+/// <summary>
+/// A render space that renders to the screen's Absolute Territory,
+///  which is a darkened overlay that captures mouse clicks.
+/// <br/>Normally, the Absolute Territory is hidden, but it becomes visible
+///  when a group tries to render to it.
+/// <br/>Use this for popups and the like.
+/// </summary>
 public class UIRenderAbsoluteTerritory : UIRenderSpace {
     public override VisualElement HTML => _html!;
     private readonly Color bgc;
     private readonly DisturbedOr isTransitioning = new();
     public float Alpha { get; set; } = 0.3f;
+    public override bool Visible => Sources.Count > 0;
 
     public Task FadeIn() {
         var token = isTransitioning.AddConst(true);
@@ -57,8 +91,8 @@ public class UIRenderAbsoluteTerritory : UIRenderSpace {
             });
     }
 
-    public Task FadeOutIfNoOtherDependencies(UIGroup g) {
-        if (Groups.Count == 1 && Groups[0] == g && HTML.style.display == DisplayStyle.Flex) {
+    public Task FadeOutIfNoOtherDependencies(IRenderSource g) {
+        if (Sources.Count == 1 && Sources[0] == g && HTML.style.display == DisplayStyle.Flex) {
             var token = isTransitioning.AddConst(true);
             Tween.TweenTo(Alpha, 0, 0.1f, a => HTML.style.backgroundColor = bgc.WithA(a))
                 .Run(Controller)
@@ -67,11 +101,6 @@ public class UIRenderAbsoluteTerritory : UIRenderSpace {
                 });
         }
         return Task.CompletedTask;
-    }
-    private void VerifyHTMLDisplay() {
-        //The absolute territory captures events. We can use this to catch "out of popup" clicks when a popup is open,
-        // but when no popups are active, it's in the way.
-        HTML.style.display = (Groups.Count > 0) ? DisplayStyle.Flex : DisplayStyle.None;
     }
 
     public UIRenderAbsoluteTerritory(UIScreen screen) : base(screen) {
@@ -87,17 +116,11 @@ public class UIRenderAbsoluteTerritory : UIRenderSpace {
         });
     }
 
-    public override void AddGroup(UIGroup grp) {
-        base.AddGroup(grp);
-        VerifyHTMLDisplay();
-    }
-
-    public override void RemoveGroup(UIGroup grp) {
-        base.RemoveGroup(grp);
-        VerifyHTMLDisplay();
-    }
 }
 
+/// <summary>
+/// A render space pointing to a .column tree, or a ScrollView that is a child of a .column tree.
+/// </summary>
 public class UIRenderColumn : UIRenderSpace {
     public int Index { get; }
 
@@ -116,28 +139,40 @@ public class UIRenderColumn : UIRenderSpace {
         this.Index = index;
     }
 }
-/*
+/// <summary>
+/// A render space pointing to an HTML tree constructed from a prefab.
+/// <br/>The dislay will be set to None if no groups are rendering to this.
+/// <br/>If using for one-offs like popups, make sure to call Destroy once the popup is cleaned up.
+/// </summary>
 public class UIRenderConstructed : UIRenderSpace {
     private readonly UIRenderSpace parent;
     private readonly VisualTreeAsset prefab;
+    private readonly Action<UIRenderConstructed, VisualElement>? builder;
     public override VisualElement HTML {
         get {
-            if (_html == null)
+            if (_html == null) {
                 parent.HTML.Add(_html = prefab.CloneTreeWithoutContainer());
+                builder?.Invoke(this, _html);
+                UpdateVisibility();
+            }
             return _html;
         }
     }
+    public override bool Visible => Sources.Any(g => g.Visible);
 
-    public UIRenderConstructed(UIRenderSpace parent, VisualTreeAsset prefab) : base(parent.Screen) {
+    public UIRenderConstructed(UIRenderSpace parent, VisualTreeAsset prefab, Action<UIRenderConstructed, VisualElement>? builder = null) : base(parent.Screen) {
         this.parent = parent;
         this.prefab = prefab;
+        this.builder = builder;
+        parent.AddSource(this);
     }
 
     public void Destroy() {
-        if (Groups.Count > 0)
-            throw new Exception("Cannot destroy a RenFderSpace when it has active groups");
+        if (Sources.Count > 0)
+            throw new Exception("Cannot destroy a RenderSpace when it has active groups");
         parent.HTML.Remove(HTML);
+        parent.RemoveSource(this);
     }
 }
-*/
+
 }

@@ -32,7 +32,6 @@ public static class Scene1 {
     private const string baseScenePath = "Danmokou/Scenes/Testing/TestMainMenu";
     [SetUp]
     public static void Setup() {
-        PatternSM.PHASE_BUFFER = false;
         SceneManager.LoadScene(baseScenePath);
     }
 

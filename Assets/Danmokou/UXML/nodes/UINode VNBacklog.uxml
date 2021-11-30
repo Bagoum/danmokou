@@ -1,11 +1,11 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
-    <Style src="UINode.uss" />
+    <Style src="project://database/Assets/Danmokou/UXML/nodes/UINode.uss?fileID=7433441132597879392&amp;guid=908aa769b12ea7c44aae7ea3f797c582&amp;type=3#UINode" />
     <ui:VisualElement name="Borderer" class="node vnbacklog" style="border-top-color: rgb(183, 34, 34); border-top-width: 12px; border-left-width: 12px; border-left-color: rgb(132, 31, 31); margin-top: 0; margin-bottom: 0;">
         <ui:VisualElement name="Selector" class="pointer prefix" />
         <ui:VisualElement name="Speaker" class="prefix" style="opacity: 1; width: 250px; height: 250px; max-height: 100%; min-height: 250px;" />
         <ui:VisualElement style="flex-grow: 1; margin-bottom: 30px;">
-            <ui:Label text="&lt;smallcaps&gt;Name Goes Here&lt;/smallcaps&gt;" name="Label" class="text coretext" style="padding-left: 0; padding-right: 0; white-space: normal; font-size: 75px; -unity-font-definition: url(&apos;/Assets/SZYU/Fonts/LinBiolinum_R_G.ttf&apos;); flex-grow: 0;" />
-            <ui:Label text="This line should wrap when it gets to the end, replicating the behavior of tTMP." name="Description" class="text coretext" style="-unity-text-align: upper-left; font-size: 54px; padding-left: 0; padding-right: 0; -unity-font-definition: url(&apos;/Assets/SZYU/Fonts/LinBiolinum_R_G.ttf&apos;); white-space: normal;" />
+            <ui:Label text="&lt;smallcaps&gt;Name Goes Here&lt;/smallcaps&gt;" name="Label" class="text coretext" style="padding-left: 0; padding-right: 0; white-space: normal; font-size: 75px; -unity-font-definition: url(&apos;project://database/Assets/SZYU/Fonts/Unity%20SDF/LinBiolinum_R_G%20SDF.asset?fileID=11400000&amp;guid=7139a17b7319bb84494b6e01f410b0a2&amp;type=2#LinBiolinum_R_G SDF&apos;); flex-grow: 0;" />
+            <ui:Label text="This line should wrap when it gets to the end, replicating the behavior of tTMP." name="Description" class="text coretext" style="-unity-text-align: upper-left; font-size: 54px; padding-left: 0; padding-right: 0; -unity-font-definition: url(&apos;project://database/Assets/SZYU/Fonts/Unity%20SDF/LinBiolinum_R_G%20SDF.asset?fileID=11400000&amp;guid=7139a17b7319bb84494b6e01f410b0a2&amp;type=2#LinBiolinum_R_G SDF&apos;); white-space: normal;" />
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

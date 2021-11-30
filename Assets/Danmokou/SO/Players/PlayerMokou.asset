@@ -15,7 +15,7 @@ MonoBehaviour:
   freeSpeed: 5
   focusSlowdown: 0.44
   hitboxRadius: 0.034
-  grazeboxRadius: 0.47
+  grazeboxRadius: 0.69
   key: basic-mokou
   shortTitle:
     useReference: 1
@@ -37,9 +37,9 @@ MonoBehaviour:
     shot: {fileID: 11400000, guid: 9b809459ea3c04943a34159db41a660f, type: 2}
   supports:
   - ordinal: Ability 1
-    ability: {fileID: 11400000, guid: a735d449cc1221c449d66e9929f98cca, type: 2}
+    ability: {fileID: 11400000, guid: 13157d81a8a5ff646accca16a0311ad8, type: 2}
   - ordinal: Bomb 1
-    ability: {fileID: 11400000, guid: f9ca40a5be0ccd8429cba36caf58091e, type: 2}
+    ability: {fileID: 11400000, guid: 55ba8ec33d158e04c99115a5a6eacaf2, type: 2}
   uiColor: {r: 0.50980395, g: 0, b: 0.1254902, a: 1}
   shotDisplay: {fileID: 7713674854582391743, guid: 949a4532b5136a344af7110e1f0be716,
     type: 3}

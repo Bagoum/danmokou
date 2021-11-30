@@ -131,6 +131,18 @@ public static partial class LocalizedStrings {
 			(Locales.JP, "魂魄妖夢"))
 			{ ID = "dialogue.youmu" };
 		
+		public static readonly LString sanae = new LString("Kochiya Sanae",
+			(Locales.JP, "東風谷早苗"))
+			{ ID = "dialogue.sanae" };
+		
+		public static readonly LString kanako = new LString("Yasaka Kanako",
+			(Locales.JP, "八坂神奈子"))
+			{ ID = "dialogue.kanako" };
+		
+		public static readonly LString suwako = new LString("Moriya Suwako",
+			(Locales.JP, "洩矢諏訪子"))
+			{ ID = "dialogue.suwako" };
+		
 	}
 }
 }

@@ -14,6 +14,9 @@ using static Danmokou.Core.LocalizationRendering;
 namespace Danmokou.Core {
 public static partial class LocalizedStrings {
 	private static readonly Dictionary<string, LString> _allDataMap = new Dictionary<string, LString>() {
+		{ "dialogue.suwako", DialogueMetadata.suwako },
+		{ "dialogue.kanako", DialogueMetadata.kanako },
+		{ "dialogue.sanae", DialogueMetadata.sanae },
 		{ "dialogue.youmu", DialogueMetadata.youmu },
 		{ "dialogue.yachie", DialogueMetadata.yachie },
 		{ "dialogue.miko", DialogueMetadata.miko },
@@ -43,6 +46,7 @@ public static partial class LocalizedStrings {
 		{ "dialogue.kaguyaf", DialogueMetadata.kaguyaf },
 		{ "dialogue.eraa", DialogueMetadata.eraa },
 		{ "dialogue.aya", DialogueMetadata.aya },
+		{ "generic.generic_overwrite", Generic.generic_overwrite },
 		{ "generic.generic_load", Generic.generic_load },
 		{ "generic.generic_delete", Generic.generic_delete },
 		{ "generic.generic_save", Generic.generic_save },

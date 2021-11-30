@@ -11,10 +11,6 @@ using Danmokou.GameInstance;
 using Danmokou.Graphics.Backgrounds;
 using Danmokou.Player;
 using Danmokou.Scriptables;
-using Danmokou.Services;
-using Danmokou.SM;
-using JetBrains.Annotations;
-using Newtonsoft.Json;
 using UnityEngine.UIElements;
 using UnityEngine;
 using UnityEngine.Scripting;
@@ -66,12 +62,14 @@ public class XMLMainMenuCampaign : XMLMainMenu {
     private UIScreen GameDetailsScreen = null!;
     private UIScreen? AchievementsScreen;
     private UIScreen PlayerDataScreen = null!;
+    private UIScreen LicenseScreen = null!;
 
     protected override IEnumerable<UIScreen> Screens => new[] {
         MainScreen,
         PlaymodeScreen, DifficultyScreen, CustomDifficultyScreen, CampaignShotScreen, ExtraShotScreen,
         StagePracticeScreen, BossPracticeScreen, OptionsScreen, ReplayScreen, RecordsScreen,
-        StatsScreen, AchievementsScreen, MusicRoomScreen, GameDetailsScreen, PlayerDataScreen
+        StatsScreen, AchievementsScreen, MusicRoomScreen, GameDetailsScreen, PlayerDataScreen,
+        LicenseScreen
     }.NotNull();
     
     public VisualTreeAsset SpellPracticeNodeV = null!;
@@ -154,7 +152,7 @@ public class XMLMainMenuCampaign : XMLMainMenu {
             {Mode.TUTORIAL, tutorialMode}
         }, modeCommentator, GetMetadata);
 
-        OptionsScreen = this.OptionsScreen();
+        OptionsScreen = this.OptionsScreen(true);
         GameDetailsScreen = new UIScreen(this, "GAME DETAILS") { Builder = GameResultsScreenBuilder };
         MusicRoomScreen = this.MusicRoomScreen(References.tracks);
         MainScreen = new UIScreen(this, null, UIScreen.Display.Unlined)
@@ -167,6 +165,8 @@ public class XMLMainMenuCampaign : XMLMainMenu {
         
         PlayerDataScreen = this.AllPlayerDataScreens(GameDetailsScreen, out ReplayScreen, out StatsScreen,
             out AchievementsScreen, out RecordsScreen, AchievementsNodeV);
+        LicenseScreen = this.LicenseScreen(References.licenses);
+        
         foreach (var s in Screens)
             if (s != MainScreen)
                 s.WithBG(SecondaryBGConfig);
@@ -187,6 +187,8 @@ public class XMLMainMenuCampaign : XMLMainMenu {
                     {EnabledIf = () => MusicRoomScreen.Groups[0].Nodes.Count > 0}
                 .With(large1Class),
             new TransferNode(main_options, OptionsScreen)
+                .With(large1Class),
+            new TransferNode("Licenses", LicenseScreen)
                 .With(large1Class),
             new FuncNode(main_quit, Application.Quit)
                 .With(large1Class),

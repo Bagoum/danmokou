@@ -1,0 +1,8 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/Danmokou/UXML/UIScreen.uss?fileID=7433441132597879392&amp;guid=6f4a2bd40c2da0143a9f109ca63431b9&amp;type=3#UIScreen" />
+    <Style src="project://database/Assets/Danmokou/UXML/structures/Markdown/Markdown.uss?fileID=7433441132597879392&amp;guid=0c9045c8a8e714e4b8f7f6dc23f2a08b&amp;type=3#Markdown" />
+    <ui:VisualElement name="ListOption" style="width: 100%; font-size: 50px; flex-direction: row; -unity-font-definition: url(&apos;project://database/Assets/SZYU/Fonts/Unity%20SDF/Ubuntu-R%20SDF.asset?fileID=11400000&amp;guid=a4ca5d8a7e0241f41b58c69f59b3bca2&amp;type=2#Ubuntu-R SDF&apos;);">
+        <ui:Label text="1." display-tooltip-when-elided="true" name="Marker" style="margin-top: 0; margin-right: 15px; margin-left: 0; margin-bottom:0; width: 40px; color: rgb(190, 190, 190); padding-left: 0; padding-right: 0; padding-top: 0; padding-bottom: 0;" />
+        <ui:VisualElement name="Blocks" style="flex-grow: 1;" />
+    </ui:VisualElement>
+</ui:UXML>

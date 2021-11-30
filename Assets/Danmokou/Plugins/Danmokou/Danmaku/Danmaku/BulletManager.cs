@@ -117,7 +117,7 @@ public partial class BulletManager {
     public override int UpdatePriority => UpdatePriorities.BM;
     public override void RegularUpdate() {
 #if UNITY_EDITOR
-        if (ETime.FirstUpdateForScreen && Input.GetKeyDown(KeyCode.RightBracket))
+        if (InputManager.GetKeyTrigger(KeyCode.RightBracket).Active)
             DebugBulletNums();
 #endif
         ResetSentry();

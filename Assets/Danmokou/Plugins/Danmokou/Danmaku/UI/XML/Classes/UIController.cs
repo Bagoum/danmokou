@@ -64,8 +64,8 @@ public abstract record UIResult {
 
     public record ReturnToGroupCaller : UIResult;
 
-    public record ReturnToTargetGroupCaller(UIGroupHierarchy? Target) : UIResult {
-        public ReturnToTargetGroupCaller(UINode node) : this(node.Group.Hierarchy) { }
+    public record ReturnToTargetGroupCaller(UIGroup Target) : UIResult {
+        public ReturnToTargetGroupCaller(UINode node) : this(node.Group) { }
     }
 
     public record ReturnToScreenCaller : UIResult;
@@ -88,18 +88,26 @@ public abstract class UIController : CoroutineRegularUpdater {
     protected VisualElement UIContainer { get; private set; } = null!;
     protected PanelSettings UISettings { get; private set; } = null!;
     protected virtual IEnumerable<UIScreen> Screens => new[] {MainScreen};
+    /// <summary>
+    /// Controls the opacity of the entire menu.
+    /// Generally 0, except on pause menus.
+    /// <br/>The background that is displayed is generally a flat color.
+    /// </summary>
     public PushLerper<float> BackgroundOpacity { get; } = 
         new(0.5f, (a, b, t) => Mathf.Lerp(a, b, Easers.EIOSine(t)));
     protected UIScreen MainScreen { get; set; } = null!;
     public DisturbedAnd UpdatesEnabled { get; } = new();
     public Stack<UINode> ScreenCall { get; } = new();
     public Stack<(UIGroup group, UINode? node)> GroupCall { get; } = new();
+
     
     public UINode? Current { get; private set; }
 
     //Fields for event-based changes 
     //Not sure if I want to generalize these to properly event-based...
     public UIMouseCommand? QueuedEvent { get; set; }
+
+    protected virtual UINode? StartingNode => null;
     
     //The reason for this virtual structure is because implementers (eg. XMLMainMenuCampaign)
     // need to store the list *statically*, since the specific menu object will be deleted on scene change.
@@ -161,7 +169,7 @@ public abstract class UIController : CoroutineRegularUpdater {
     }
 
     public override EngineState UpdateDuring => EngineState.MENU_PAUSE;
-    protected bool RegularUpdateGuard => Application.isPlaying && ETime.FirstUpdateForScreen && UpdatesEnabled;
+    protected bool RegularUpdateGuard => ETime.FirstUpdateForScreen && UpdatesEnabled;
 
     protected virtual bool OpenOnInit => true;
     protected virtual Color BackgroundTint => new(0.17f, 0.05f, 0.20f);
@@ -179,11 +187,12 @@ public abstract class UIController : CoroutineRegularUpdater {
         var uid = GetComponent<UIDocument>();
         UIRoot = uid.rootVisualElement;
         UIContainer = UIRoot.Q("UIContainer");
-        tokens.Add(BackgroundOpacity.Subscribe(f => UIContainer.style.unityBackgroundImageTintColor = 
-            BackgroundTint.WithA(f)));
         UISettings = uid.panelSettings;
         Build();
         UIRoot.style.display = OpenOnInit.ToStyle();
+        tokens.Add(BackgroundOpacity.Subscribe(f => UIContainer.style.unityBackgroundImageTintColor = 
+            BackgroundTint.WithA(f)));
+        BackgroundOpacity.Push(0);
         if (OpenOnInit) {
             Open();
             DoReturn();
@@ -246,6 +255,7 @@ public abstract class UIController : CoroutineRegularUpdater {
         var dependentGroups = Current.Group.Hierarchy.SelectMany(g => g.DependentGroups).ToHashSet();
         foreach (var g in Current.Screen.Groups) {
             var fallback = dependentGroups.Contains(g) ? UINodeVisibility.GroupFocused : UINodeVisibility.Default;
+            g.Redraw();
             foreach (var n in g.Nodes)
                 n.Redraw(states.TryGetValue(n, out var s) ? s : fallback);
         }
@@ -259,8 +269,11 @@ public abstract class UIController : CoroutineRegularUpdater {
         Current?.ScrollTo();
     }
 
-    private void OperateOnResult(UIResult? result, bool animate) {
-        if (result == null || result is UIResult.GoToNode gTo && gTo.Target == Current) return;
+    //public List<(UINode?, UIResult, (UIGroup, UINode?)[])> queries = new();
+    //public List<UINode> currents = new();
+    private Task OperateOnResult(UIResult? result, bool animate) {
+        if (result == null || result is UIResult.GoToNode gTo && gTo.Target == Current) 
+            return Task.CompletedTask;
         var next = Current;
         List<UIGroup> LeftGroups = new();
         List<UIGroup> EnteredGroups = new();
@@ -270,14 +283,20 @@ public abstract class UIController : CoroutineRegularUpdater {
         }
         foreach (var r in new[] { result }.Unroll()) {
             var prev = next;
+            //queries.Add((prev, r, GroupCall.ToArray()));
             switch (r) {
                 case UIResult.DestroyMenu:
                     next = null;
-                    //Don't run onExit handling for DestroyMenu
+                    animate = false;
+                    if (prev != null)
+                        LeftGroups.Add(prev.Group);
+                    LeftGroups.AddRange(GroupCall.Select(g => g.group));
                     GroupCall.Clear();
                     ScreenCall.Clear();
                     break;
                 case UIResult.GoToNode goToNode:
+                    if (goToNode.Target.Destroyed)
+                        break;
                     if (goToNode.Target.Screen != prev?.Screen && prev != null) {
                         ScreenCall.Push(prev);
                         prev = null;
@@ -306,7 +325,8 @@ public abstract class UIController : CoroutineRegularUpdater {
                     next = goToNode.Target;
                     break;
                 case UIResult.ReturnToGroupCaller:
-                    if (GroupCall.Count > 0) {
+                    next = null;
+                    while (GroupCall.Count > 0 && next == null) {
                         PopGroupCall(prev!.Group, out var nextg);
                         next = nextg.node;
                     }
@@ -320,7 +340,7 @@ public abstract class UIController : CoroutineRegularUpdater {
                         //Logs.Log($"RPopping from group stack {n.node?.Description()}", level:LogLevel.DEBUG1);
                         PopGroupCall(ngroup, out _);
                         (ngroup, next) = n;
-                        if (n.group.Hierarchy == rtg.Target)
+                        if (n.group == rtg.Target)
                             break;
                     }
                     if (next == null)
@@ -342,20 +362,26 @@ public abstract class UIController : CoroutineRegularUpdater {
         }
         QueuedEvent = null;
         var leftAndEntered = LeftGroups.Intersect(EnteredGroups).ToHashSet();
-        if (!(result is UIResult.StayOnNode { IsNoOp: true }))
-            _ = TransitionToNode(next, animate, 
+        if (result is not UIResult.StayOnNode { IsNoOp: true })
+            return TransitionToNode(next, animate, 
                 LeftGroups.Except(leftAndEntered).ToList(), 
-                EnteredGroups.Except(leftAndEntered).ToList());
+                EnteredGroups.Except(leftAndEntered).ToList()).ContinueWithSync(() => { });
+        return Task.CompletedTask;
     }
     public override void RegularUpdate() {
         base.RegularUpdate();
-        if (ETime.FirstUpdateForScreen)
-            BackgroundOpacity.Update(ETime.dT);
+        if (ETime.FirstUpdateForScreen && Current != null) {
+            foreach (var w in Screens)
+                w.VisualUpdate(ETime.ASSUME_SCREEN_FRAME_TIME);
+            BackgroundOpacity.Update(ETime.ASSUME_SCREEN_FRAME_TIME);
+        }
         
         if (RegularUpdateGuard && Current != null) {
             bool doCustomSFX = false;
             UICommand? command = null;
             UIResult? result = null;
+            if (QueuedEvent is UIMouseCommand.Goto mgt && mgt.Target.Destroyed)
+                QueuedEvent = null;
             if (QueuedEvent is UIMouseCommand.Goto mouseGoto && mouseGoto.Target.Screen == Current.Screen && 
                 mouseGoto.Target != Current) {
                 result = new UIResult.GoToNode(mouseGoto.Target);
@@ -396,17 +422,18 @@ public abstract class UIController : CoroutineRegularUpdater {
 
     public void GoToNth(int grpIndex, int nodeIndex) =>
         OperateOnResult(new UIResult.GoToNode(MainScreen.Groups[grpIndex].Nodes[nodeIndex]), false);
-    protected void Open() {
-        foreach (var g in Screens.First().Groups) {
-            if (g.HasEntryNode) {
-                OperateOnResult(new UIResult.GoToNode(g.EntryNode), false);
-                return;
-            }
+    protected Task Open() {
+        if (StartingNode != null)
+            return OperateOnResult(new UIResult.GoToNode(StartingNode), false);
+        else {
+            foreach (var g in Screens.First().Groups) 
+                if (g.HasEntryNode) 
+                    return OperateOnResult(new UIResult.GoToNode(g.EntryNode), false);
+            throw new Exception($"Couldn't open menu {gameObject.name}");
         }
-        throw new Exception($"Couldn't open menu {gameObject.name}");
     }
 
-    protected void Close() => OperateOnResult(new UIResult.DestroyMenu(), false);
+    protected Task Close() => OperateOnResult(new UIResult.DestroyMenu(), false);
 
     private async Task TransitionToNode(UINode? next, bool animate, List<UIGroup> leftGroups, List<UIGroup> enteredGroups) {
         var prev = Current;
@@ -416,6 +443,7 @@ public abstract class UIController : CoroutineRegularUpdater {
             return;
         }
         var screenChanged = next?.Screen != prev?.Screen;
+        //currents.Add(null!);
         using var token = UpdatesEnabled.AddConst(false);
         prev?.Leave(animate);
         await Task.WhenAll(leftGroups.Select(l => l.LeaveGroup()));
@@ -433,10 +461,10 @@ public abstract class UIController : CoroutineRegularUpdater {
         next?.Enter(animate);
         Redraw();
         
-        if (screenChanged && next != null && animate)
-            enterTasks.Add(Transition(prev?.Screen, next.Screen) ?? Task.CompletedTask);
+        if (screenChanged && next != null)
+            enterTasks.Add(Transition(prev?.Screen, next.Screen, animate));
         await Task.WhenAll(enterTasks);
-        
+
         if (screenChanged) {
             prev?.Screen.ExitEnd();
             next?.Screen.EnterEnd();
@@ -447,10 +475,14 @@ public abstract class UIController : CoroutineRegularUpdater {
         }
     }
 
-    public virtual async Task Transition(UIScreen? from, UIScreen to) {
-        if (from == null) {
-            //Make sure target is in correct state. If the target was a previous transition source,
-            // it may be in a weird state after completion
+    public virtual async Task Transition(UIScreen? from, UIScreen to, bool animate) {
+        if (from == null || !animate) {
+            if (from != null) {
+                from.HTML.transform.position = Vector3.zero;
+                from.HTML.style.opacity = 0;
+                if (from.SceneObjects != null)
+                    from.SceneObjects.transform.position = Vector3.zero;
+            }
             to.HTML.transform.position = Vector3.zero;
             to.HTML.style.opacity = 1;
             if (to.SceneObjects != null)
@@ -495,5 +527,12 @@ public abstract class UIController : CoroutineRegularUpdater {
     }
     
     #endregion
+    
+    
+    [ContextMenu("Debug group call stack")]
+    public void DebugGroupCallStack() => Logs.Log(string.Join("; ", 
+        GroupCall.Select(gn => $"{gn.node?.IndexInGroup}::{gn.group}")));
+    [ContextMenu("Debug group hierarchy")]
+    public void DebugGroupHierarcy() => Logs.Log(Current?.Group.ToString() ?? "No current node");
 }
 }

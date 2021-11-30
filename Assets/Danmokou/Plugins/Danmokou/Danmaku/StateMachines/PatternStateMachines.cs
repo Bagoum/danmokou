@@ -27,13 +27,6 @@ namespace Danmokou.SM {
 /// Does not encompass text control (<see cref="ScriptTSM"/>).
 /// </summary>
 public class PatternSM : SequentialSM {
-    /// <summary>
-    /// This is sort of a hack. On `clear phase`, data is not cleared until the end
-    /// of the frame to ensure that bullets can cull before data is cleared. Therefore we also wait.
-    /// We wait for 2 frames because the data clearing occurs "at the end of the next frame".
-    /// We allow this functionality to be disabled during testing because it interferes with timing calculations.
-    /// </summary>
-    public static bool PHASE_BUFFER = true;
     public PatternProperties Props { get; }
     public PhaseSM[] Phases { get; }
 
@@ -109,8 +102,6 @@ public class PatternSM : SequentialSM {
             next = jsmh.Exec.phaseController.GoToNextPhase(next + 1)) {
             if (Phases[next].props.skip) 
                 continue;
-            if (PHASE_BUFFER) 
-                await WaitingUtils.WaitForUnchecked(jsmh.Exec, jsmh.cT, ETime.FRAME_TIME * 2f, false);
             jsmh.ThrowIfCancelled();
             ServiceLocator.Find<IAudioTrackService>().InvokeBGM(Props.bgms?.GetBounded(next, null));
             if (Props.boss != null && next >= Props.setUIFrom) {

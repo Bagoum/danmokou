@@ -182,11 +182,8 @@ public class AyaCamera : BehaviorEntity {
         CameraState = State.FIRING;
         using var slowdownToken = ETime.Slowdown.AddConst(0.5f);
         viewfinder.gameObject.layer = highCameraLayer;
-        var sfx = ServiceLocator.SFXService.RequestSource(whileFire);
-        void Cancel() {
-            if (sfx != null)
-                sfx.Stop();
-        }
+        using var cToken = new Cancellable();
+        ServiceLocator.SFXService.RequestSource(whileFire, cToken);
         for (float t = 0f; t < cameraLerpDownTime; t += ETime.FRAME_TIME) {
             float scale = Mathf.Lerp(cameraFireSize, 1f, M.EInSine(t / cameraLerpDownTime));
             charge = 100 * (1 - M.EInSine(t / cameraLerpDownTime));
@@ -195,7 +192,6 @@ public class AyaCamera : BehaviorEntity {
             var vf = ViewfinderRect(scale);
             //take shot by letting go of fire key
             if (!player.IsFiring) {
-                Cancel();
                 RunDroppableRIEnumerator(TakePictureAndRefractor(scale));
                 yield break;
             } else {
@@ -210,15 +206,14 @@ public class AyaCamera : BehaviorEntity {
         for (int ii = 0; ii < _enemies.Count; ++ii) {
             _enemies[ii].enemy.HideViewfinderCrosshair();
         }
-        Cancel();
         ServiceLocator.SFXService.Request(onTimeout);
         RunDroppableRIEnumerator(UpdateNormal());
     }
     private IEnumerator UpdateCharge() {
         CameraState = State.CHARGE;
-        var sfx = ServiceLocator.SFXService.RequestSource(whileCharge);
+        using var cToken = new Cancellable();
+        ServiceLocator.SFXService.RequestSource(whileCharge, cToken);
         while (InputCharging) yield return null;
-        if (sfx != null) sfx.Stop();
         RunDroppableRIEnumerator(UpdateNormal());
     }
 

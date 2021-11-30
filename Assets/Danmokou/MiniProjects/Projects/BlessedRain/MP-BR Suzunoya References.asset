@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e87ab70b3d8149c0861cb6fd8068c3fa, type: 3}
+  m_Name: MP-BR Suzunoya References
+  m_EditorClassIdentifier: 
+  renderGroupMimic: {fileID: 836292319904304369, guid: ad089b1aca3d7bb4a9edead2f2fb9b95,
+    type: 3}
+  entityMimics:
+  - {fileID: 3096344507094870328, guid: ed3bd479240855048a28a07d72dcd0c2, type: 3}
+  - {fileID: 5466135841841681093, guid: 969a8a9943be2d6439e82d5a15d605ba, type: 3}
+  - {fileID: 5466135841841681093, guid: ba48c8633944ce847ae7b686e8b24e8c, type: 3}
+  - {fileID: 3096344507094870328, guid: a25d89a6fb494954cbb62741a6b3fbf7, type: 3}
+  - {fileID: 3096344507094870328, guid: c366f0609bc50de4aa144599c6a88e6b, type: 3}
+  - {fileID: 5466135841841681093, guid: a3573d4a6598c124c8ca9f383d2d8390, type: 3}
+  - {fileID: 5466135841841681093, guid: 5b3de7cb0f9943a428cf5cc878003f51, type: 3}
+  - {fileID: 3096344507094870328, guid: 00a86a65d1a4727498893c387c4983ad, type: 3}
+  - {fileID: 5466135841841681093, guid: d71fbfff43c9c3940a143ad896ad5023, type: 3}
+  - {fileID: 9063733034952155874, guid: bbe5b9071529ced4f95a3a5c63e011cb, type: 3}
+  - {fileID: 2145920578030429721, guid: a690ea443acb23a4f84052850c784662, type: 3}
+  - {fileID: 7053815252376390917, guid: 6553bee84df976f49ae3bc1f7b46c23d, type: 3}
+  - {fileID: 5171041737173443338, guid: 477e934842a686d4fa99fd7af32157ee, type: 3}

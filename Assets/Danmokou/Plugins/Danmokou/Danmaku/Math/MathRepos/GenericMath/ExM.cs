@@ -474,7 +474,7 @@ public static partial class ExM {
     /// <br/>This number resets every card.
     /// </summary>
     public static tfloat PhotosTaken(BEHPointer beh) => 
-        ExC(beh).Field("beh").Field("Enemy").Field("PhotosTaken");
+        ExC(beh).Field("beh").Field("Enemy").Field("PhotosTaken").As<float>();
 
     /// <summary>
     /// Returns true if the instance has not continued.

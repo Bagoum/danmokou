@@ -48,8 +48,8 @@ public class DMKVNWrapper : VNWrapper {
             var cT = new Cancellable();
             var jcT = new JointCancellee(cT, extCT);
             var vn = constructor(initialSave, jcT);
-            vn.TimePerAutoplayConfirm = 0.5f;
-            vn.TimePerFastforwardConfirm = 0.1f;
+            vn.TimePerAutoplayConfirm = 1.5f;
+            vn.TimePerFastforwardConfirm = 0.15f;
             var exec = TrackVN(vn);
             Logs.Log($"Starting VN script {vn}");
             VNLocation? backjumpTo = null;

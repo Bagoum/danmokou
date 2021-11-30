@@ -121,7 +121,7 @@ public static partial class LocalizedStrings {
 			{ ID = "generic.generic_back" };
 		
 		public static readonly LString generic_save = new LString("Save",
-			(Locales.JP, "セーブ"))
+			(Locales.JP, "保存"))
 			{ ID = "generic.generic_save" };
 		
 		public static readonly LString generic_delete = new LString("Delete",
@@ -131,6 +131,10 @@ public static partial class LocalizedStrings {
 		public static readonly LString generic_load = new LString("Load",
 			(Locales.JP, "ロード"))
 			{ ID = "generic.generic_load" };
+		
+		public static readonly LString generic_overwrite = new LString("Overwrite",
+			(Locales.JP, "上書き保存"))
+			{ ID = "generic.generic_overwrite" };
 		
 	}
 }

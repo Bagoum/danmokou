@@ -1,22 +1,5 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &4445129906091013421
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3096344507094870328}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 07eb964792b6419c811fa0b6a3768048, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ADVSpeakerIcon: {fileID: 21300000, guid: 8c25e8d6c72ee3644915eea5fd7b6257, type: 3}
-  pieces:
-  - {fileID: 6307840960511550906}
-  - {fileID: 9146702239046028503}
-  defaultPiece: {fileID: 9146702239046028503}
 --- !u!1001 &84891482584285852
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -26,8 +9,13 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 2869238025069884022, guid: c49533a826fdb13409ee106e66235e02,
         type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0.2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2869238025069884022, guid: c49533a826fdb13409ee106e66235e02,
+        type: 3}
       propertyPath: m_LocalPosition.y
-      value: -1
+      value: -0.9
       objectReference: {fileID: 0}
     - target: {fileID: 3158699776333818785, guid: c49533a826fdb13409ee106e66235e02,
         type: 3}
@@ -58,39 +46,39 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 7b7cc4ce595ec4641ac9e0868725b62f,
+      objectReference: {fileID: 21300000, guid: bc06a6beaf501cd4fa59e83dbe0940dd,
         type: 3}
     - target: {fileID: 6243233405909575462, guid: c49533a826fdb13409ee106e66235e02,
         type: 3}
       propertyPath: emotes.Array.data[0].sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 7b7cc4ce595ec4641ac9e0868725b62f,
+      objectReference: {fileID: 21300000, guid: bc06a6beaf501cd4fa59e83dbe0940dd,
         type: 3}
     - target: {fileID: 6961882707186433460, guid: c49533a826fdb13409ee106e66235e02,
         type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0.75
+      value: -0.3846154
       objectReference: {fileID: 0}
     - target: {fileID: 6961882707186433460, guid: c49533a826fdb13409ee106e66235e02,
         type: 3}
       propertyPath: m_LocalPosition.y
-      value: 2.38333
+      value: 3.4615386
       objectReference: {fileID: 0}
     - target: {fileID: 8545645276882358446, guid: c49533a826fdb13409ee106e66235e02,
         type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 8e179fdb930a2774f98d35df10a0915e,
+      objectReference: {fileID: 21300000, guid: 6d237cade39d6164ba8439f7538dc299,
         type: 3}
     - target: {fileID: 9205926511721270859, guid: c49533a826fdb13409ee106e66235e02,
         type: 3}
       propertyPath: offsetPx.x
-      value: -90
+      value: -40
       objectReference: {fileID: 0}
     - target: {fileID: 9205926511721270859, guid: c49533a826fdb13409ee106e66235e02,
         type: 3}
       propertyPath: offsetPx.y
-      value: 286
+      value: 360
       objectReference: {fileID: 0}
     - target: {fileID: 9205926511721270859, guid: c49533a826fdb13409ee106e66235e02,
         type: 3}
@@ -106,43 +94,43 @@ PrefabInstance:
         type: 3}
       propertyPath: emotes.Array.data[0].sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 8e179fdb930a2774f98d35df10a0915e,
+      objectReference: {fileID: 21300000, guid: 2dc8b65d395311f4d86dccd2a35be64b,
         type: 3}
     - target: {fileID: 9205926511721270859, guid: c49533a826fdb13409ee106e66235e02,
         type: 3}
       propertyPath: emotes.Array.data[1].sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 38d7d834e92be474b8ceb6bc12262236,
+      objectReference: {fileID: 21300000, guid: 142549311b186ed4694855cbf717342b,
         type: 3}
     - target: {fileID: 9205926511721270859, guid: c49533a826fdb13409ee106e66235e02,
         type: 3}
       propertyPath: emotes.Array.data[2].sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 319710936915a604cb4a1a5f5e37f9b5,
+      objectReference: {fileID: 21300000, guid: bf475384603792746bf96410aa30d60b,
         type: 3}
     - target: {fileID: 9205926511721270859, guid: c49533a826fdb13409ee106e66235e02,
         type: 3}
       propertyPath: emotes.Array.data[3].sprite
       value: 
-      objectReference: {fileID: 21300000, guid: b9a8cdcb4b187d14b8e8e3eace606231,
+      objectReference: {fileID: 21300000, guid: ca4171b0a70941c4da016aa906b18236,
         type: 3}
     - target: {fileID: 9205926511721270859, guid: c49533a826fdb13409ee106e66235e02,
         type: 3}
       propertyPath: emotes.Array.data[4].sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 62bd246107609554a825d1cc4951de5f,
+      objectReference: {fileID: 21300000, guid: aae7d39922cb47245a0ac13168a1abf0,
         type: 3}
     - target: {fileID: 9205926511721270859, guid: c49533a826fdb13409ee106e66235e02,
         type: 3}
       propertyPath: emotes.Array.data[5].sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 7b5b8df382f3e244ba22de14801598a2,
+      objectReference: {fileID: 21300000, guid: 3922bbbc20e60f04b84228d61e5a5289,
         type: 3}
     - target: {fileID: 9205926511721270859, guid: c49533a826fdb13409ee106e66235e02,
         type: 3}
       propertyPath: emotes.Array.data[6].sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 3cf52461c42a1e5489eed22e5ce5ec30,
+      objectReference: {fileID: 21300000, guid: 6d237cade39d6164ba8439f7538dc299,
         type: 3}
     m_RemovedComponents:
     - {fileID: 5683980232856920588, guid: c49533a826fdb13409ee106e66235e02, type: 3}
@@ -178,3 +166,35 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c4fa8568a2a04c9cabded3d5d1289d6a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &4445129906091013421
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3096344507094870328}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 07eb964792b6419c811fa0b6a3768048, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_ADVSpeakerIcon: {fileID: 0}
+  advIcons:
+  - emote: normal
+    sprite: {fileID: 21300000, guid: 282220e6b297ea44288af319c87bb7df, type: 3}
+  - emote: angry
+    sprite: {fileID: 21300000, guid: d92d9d994c080134ba258660c8c47363, type: 3}
+  - emote: cry
+    sprite: {fileID: 21300000, guid: f4f436c3866080347b21b62a0dde5141, type: 3}
+  - emote: happy
+    sprite: {fileID: 21300000, guid: e3c9606391801b54696759797da7c6d5, type: 3}
+  - emote: surprise
+    sprite: {fileID: 21300000, guid: 7f241dacea1b22a458547dfa04620857, type: 3}
+  - emote: worry
+    sprite: {fileID: 21300000, guid: d2ee14eb941a7054da114197314bdbd4, type: 3}
+  - emote: smug
+    sprite: {fileID: 21300000, guid: dc97d41301c1cf841a21688f985d89ec, type: 3}
+  pieces:
+  - {fileID: 6307840960511550906}
+  - {fileID: 9146702239046028503}
+  defaultPiece: {fileID: 9146702239046028503}

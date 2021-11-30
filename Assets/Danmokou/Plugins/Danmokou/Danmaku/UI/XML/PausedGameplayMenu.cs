@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using BagoumLib.DataStructures;
 using BagoumLib.Tasks;
 using Danmokou.Core;
@@ -17,7 +18,7 @@ public class PausedGameplayMenu : UIController {
 
     protected override bool OpenOnInit => false;
 
-    protected void ShowMe() {
+    protected virtual void ShowMe() {
         if (!MenuActive) {
             tokens.Add(pauseToken = EngineStateManager.RequestState(EngineState.MENU_PAUSE));
             var disable = UpdatesEnabled.AddConst(false);
@@ -27,20 +28,17 @@ public class PausedGameplayMenu : UIController {
         }
     }
 
-    protected virtual void HideMe() {
-        if (MenuActive) {
-            Close();
-            pauseToken?.Dispose();
-        }
+    protected virtual Task HideMe() {
+        pauseToken?.Dispose();
+        return MenuActive ? Close() : Task.CompletedTask;
     }
 
-    protected void ProtectHide(Action? hide = null) {
+    protected void ProtectHide() {
         if (MenuActive) {
             var disable = UpdatesEnabled.AddConst(false);
             ServiceLocator.SFXService.Request(closePauseSound);
             _ = manager.FadeOutPauseUI().ContinueWithSync(() => {
-                disable.Dispose();
-                (hide ?? HideMe)();
+                _ = HideMe().ContinueWithSync(disable.Dispose);
             });
         }
     }

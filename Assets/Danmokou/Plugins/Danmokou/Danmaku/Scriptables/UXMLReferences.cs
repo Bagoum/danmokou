@@ -12,6 +12,7 @@ public class UXMLReferences : ScriptableObject {
     public VisualTreeAsset UIScreenScrollColumn = null!;
     public VisualTreeAsset UIScreenRow = null!;
     public VisualTreeAsset UIScreenRowNoStretch = null!;
+    public VisualTreeAsset Popup = null!;
     
     public VisualTreeAsset UINode = null!;
     public VisualTreeAsset TwoTextUINode = null!;
@@ -19,15 +20,30 @@ public class UXMLReferences : ScriptableObject {
     public VisualTreeAsset ComplexOptionLRNode = null!;
     public VisualTreeAsset FloatingNode = null!;
     public VisualTreeAsset AbsoluteTerritory = null!;
-    public VisualTreeAsset PopupNode = null!;
     public VisualTreeAsset PopupButton = null!;
     public VisualTreeAsset PureTextNode = null!;
     public VisualTreeAsset TextInputNode = null!;
+    public VisualTreeAsset HeaderNode = null!;
+    public VisualTreeAsset SaveLoadNode = null!;
+
+    public Texture2D defaultSaveLoadBG = null!;
+
+    [Header("Markdown renderers")] 
+    public VisualTreeAsset MkCodeBlock = null!;
+    public VisualTreeAsset MkCodeBlockText = null!;
+    public VisualTreeAsset MkEmpty = null!;
+    public VisualTreeAsset MkHeader = null!;
+    public VisualTreeAsset MkLine = null!;
+    public VisualTreeAsset MkLineText = null!;
+    public VisualTreeAsset MkLineCode = null!;
+    public VisualTreeAsset MkLineLink = null!;
+    public VisualTreeAsset MkList = null!;
+    public VisualTreeAsset MkListOption = null!;
+    public VisualTreeAsset MkParagraph = null!;
 
     public Dictionary<Type, VisualTreeAsset> TypeMap => new() {
         {typeof(UIScreen), UIScreen},
         {typeof(UINode), UINode},
-        {typeof(PopupUINode), PopupNode},
         {typeof(UIButton), PopupButton},
         {typeof(TwoLabelUINode), TwoTextUINode},
         {typeof(TextInputNode), TextInputNode},

@@ -102,7 +102,7 @@ public class XMLMainMenuDays : XMLMainMenu {
                                         new Color(1, 1, 1, 0.52f));
                                 }) {
                                 OnConfirm = Confirm,
-                                OnEnter = n => SetChallenge((n as IOptionNodeLR)!.Index),
+                                OnEnter = n => SetChallenge((n as IBaseOptionNodeLR)!.Index),
                                 OnLeave = _ => photoBoardToken?.Dispose()
                             }.With(optionNoKeyClass),
                             new UINode(() => "Press Z to start level".Locale("Zキー押すとレベルスタート")) 
@@ -117,7 +117,7 @@ public class XMLMainMenuDays : XMLMainMenu {
                 }))
         };
 
-        OptionsScreen = this.OptionsScreen();
+        OptionsScreen = this.OptionsScreen(true);
         GameDetailsScreen = new UIScreen(this, "GAME DETAILS") { Builder = GameResultsScreenBuilder };
         ReplayScreen = this.ReplayScreen(GameDetailsScreen);
 

@@ -315,7 +315,7 @@ public static class EnumHelpers2 {
         InstanceMode.SCENE_CHALLENGE => LocalizedStrings.UI.practice_m_scene,
         _ => throw new ArgumentOutOfRangeException(nameof(m), m, null)
     };
-    public static bool IsStageBoss(this PhaseType st) => st == PhaseType.STAGEENDBOSS || st == PhaseType.STAGEMIDBOSS;
+    public static bool IsStageBoss(this PhaseType st) => st is PhaseType.STAGEENDBOSS or PhaseType.STAGEMIDBOSS;
     public static bool IsPattern(this PhaseType st) => st.IsCard() || st.IsStage();
     public static bool IsLenient(this PhaseType st) => st == PhaseType.DIALOGUE || st == PhaseType.ANNOUNCE;
     public static bool IsStage(this PhaseType st) => st == PhaseType.STAGE;

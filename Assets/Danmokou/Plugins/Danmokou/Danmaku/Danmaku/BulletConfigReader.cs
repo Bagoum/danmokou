@@ -179,7 +179,6 @@ public partial class BulletManager : RegularUpdater {
     }
 
     private static void DestroySimpleStyle(string key) {
-        Logs.Log($"Destroying pool {key}");
         simpleBulletPools.Remove(key);
     }
 

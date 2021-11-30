@@ -279,7 +279,8 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     public override void FirstFrame() {
         RegularUpdateRender();
         
-        //Note: this is a debugging workflow. It is not executed in the standard pathway.
+        //Note: This pathway is only used for minor summoned effects (such as cutins), not for bosses or stages.
+        //TODO can you make this a debug/test-only pathway?
         if (behaviorScript != null) {
             try {
                 RunSMFromScript(behaviorScript, Cancellable.Null);

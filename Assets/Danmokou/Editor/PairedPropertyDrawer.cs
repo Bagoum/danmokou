@@ -7,6 +7,7 @@ using Danmokou.Scriptables;
 using Danmokou.Services;
 using Danmokou.UI;
 using Danmokou.UI.XML;
+using SuzunoyaUnity;
 using UnityEngine;
 using UnityEditor;
 
@@ -59,7 +60,7 @@ public abstract class PairedPropertyDrawer : PropertyDrawer {
 }
 
 
-[CustomPropertyDrawer(typeof(SMAsset))]
+[CustomPropertyDrawer(typeof(NamedTextAsset))]
 public class TextAssetDrawer : PairedPropertyDrawer { }
 
 [CustomPropertyDrawer(typeof(DataPrefab))]
@@ -141,4 +142,12 @@ public class OrdinalShotDrawer : PairedPropertyDrawer {
     protected override string arg1 => "ordinal";
 
     protected override string arg2 => "shot";
+}
+
+[CustomPropertyDrawer(typeof(EmoteVariant))]
+public class EmoteVariantDrawer : PairedPropertyDrawer {
+    
+    protected override string arg1 => "emote";
+
+    protected override string arg2 => "sprite";
 }

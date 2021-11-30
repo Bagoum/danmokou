@@ -35,8 +35,7 @@ public interface IChallengeRequest {
     void Initialize();
 
     /// <summary>
-    /// Called when the boss has awoken and is ready to receive commands
-    /// (when the scene is fully visible).
+    /// Called when the boss has awoken and is ready to receive commands.
     /// </summary>
     void Start(BehaviorEntity exec, ICancellee cT);
 

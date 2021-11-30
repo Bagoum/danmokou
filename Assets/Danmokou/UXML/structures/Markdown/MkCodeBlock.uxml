@@ -1,0 +1,8 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/Danmokou/UXML/UIScreen.uss?fileID=7433441132597879392&amp;guid=6f4a2bd40c2da0143a9f109ca63431b9&amp;type=3#UIScreen" />
+    <Style src="project://database/Assets/Danmokou/UXML/structures/Markdown/Markdown.uss?fileID=7433441132597879392&amp;guid=0c9045c8a8e714e4b8f7f6dc23f2a08b&amp;type=3#Markdown" />
+    <Style src="project://database/Assets/Danmokou/UXML/nodes/UINode.uss?fileID=7433441132597879392&amp;guid=908aa769b12ea7c44aae7ea3f797c582&amp;type=3#UINode" />
+    <ui:VisualElement name="CodeBlock" style="margin-top: 0; margin-bottom: 30px; font-size: 45px; background-image: url(&apos;project://database/Assets/Danmokou/Sprites/util/1u-square.jpg?fileID=2800000&amp;guid=001024098b6c2264ea398d43a2067f4c&amp;type=3#1u-square&apos;); max-width: 100%; margin-left: 0; margin-right: 250px; -unity-background-image-tint-color: rgba(0, 0, 0, 0.35);">
+        <ui:VisualElement name="CodeContainer" style="padding-left: 40px; padding-right: 40px; padding-top: 30px; padding-bottom: 30px; white-space: normal; color: rgb(226, 226, 226);" />
+    </ui:VisualElement>
+</ui:UXML>

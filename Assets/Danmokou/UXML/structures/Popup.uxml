@@ -1,0 +1,12 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/Danmokou/UXML/nodes/UINode.uss?fileID=7433441132597879392&amp;guid=908aa769b12ea7c44aae7ea3f797c582&amp;type=3#UINode" />
+    <ui:VisualElement class="popup">
+        <ui:Label text="Replay Action" display-tooltip-when-elided="true" name="Header" style="width: 100%; padding-left: 50px; padding-right: 50px; font-size: 120px; display: none; color: rgb(245, 245, 245);" />
+        <ui:VisualElement name="BodyHTML" style="padding-left: 40px; padding-right: 40px; margin-top: 30px;" />
+        <ui:VisualElement style="width: 70%; height: 8px; background-image: url(&apos;project://database/Assets/Danmokou/Sprites/util/1u-circle-soft70.png?fileID=2800000&amp;guid=87a41886daf625e44a2aaddbe77b7947&amp;type=3#1u-circle-soft70&apos;); margin-top: 25px; margin-bottom: 25px; -unity-background-image-tint-color: rgba(255, 255, 255, 0.61);" />
+        <ui:VisualElement name="OptionsHTML" style="flex-direction: row; justify-content: space-between; width: 100%;">
+            <ui:VisualElement name="Left" style="flex-direction: row; flex-shrink: 0;" />
+            <ui:VisualElement name="Right" style="flex-direction: row; margin-left: 40px; flex-shrink: 0;" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

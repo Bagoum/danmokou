@@ -1,4 +1,5 @@
-﻿using Danmokou.Scriptables;
+﻿using BagoumLib.Cancellation;
+using Danmokou.Scriptables;
 using UnityEngine;
 
 namespace Danmokou.Services {
@@ -19,7 +20,7 @@ public interface ISFXService {
     void RequestSFXEvent(SFXEventType ev);
 
 
-    AudioSource? RequestSource(string? key);
-    AudioSource? RequestSource(SFXConfig? aci);
+    AudioSource? RequestSource(string? key, ICancellee cT);
+    AudioSource? RequestSource(SFXConfig? aci, ICancellee cT);
 }
 }

@@ -72,11 +72,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 268707954954881333, guid: 935d6d3b359104c4fa7b5a1adaa0eda5,
-        type: 3}
-      propertyPath: scoreExtend_parent
-      value: 
-      objectReference: {fileID: 0}
     - target: {fileID: 268707954954881334, guid: 935d6d3b359104c4fa7b5a1adaa0eda5,
         type: 3}
       propertyPath: m_Name
@@ -212,6 +207,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_AnchoredPosition.x
       value: 4.8
+      objectReference: {fileID: 0}
+    - target: {fileID: 3994495521957073945, guid: 935d6d3b359104c4fa7b5a1adaa0eda5,
+        type: 3}
+      propertyPath: m_fontSize
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 4327695457595861122, guid: 935d6d3b359104c4fa7b5a1adaa0eda5,
         type: 3}
@@ -417,6 +417,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_AnchoredPosition.y
       value: -80
+      objectReference: {fileID: 0}
+    - target: {fileID: 8172822422940741288, guid: 935d6d3b359104c4fa7b5a1adaa0eda5,
+        type: 3}
+      propertyPath: m_fontSize
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 8177327239664296512, guid: 935d6d3b359104c4fa7b5a1adaa0eda5,
         type: 3}

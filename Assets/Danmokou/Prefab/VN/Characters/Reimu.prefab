@@ -9,6 +9,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 2869238025069884022, guid: c49533a826fdb13409ee106e66235e02,
         type: 3}
+      propertyPath: m_LocalScale.x
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2869238025069884022, guid: c49533a826fdb13409ee106e66235e02,
+        type: 3}
       propertyPath: m_LocalPosition.y
       value: -1
       objectReference: {fileID: 0}
@@ -37,6 +42,33 @@ PrefabInstance:
       propertyPath: m_Name
       value: Reimu
       objectReference: {fileID: 0}
+    - target: {fileID: 5380628742521391622, guid: c49533a826fdb13409ee106e66235e02,
+        type: 3}
+      propertyPath: advIcons.Array.size
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 5380628742521391622, guid: c49533a826fdb13409ee106e66235e02,
+        type: 3}
+      propertyPath: advIcons.Array.data[6].emote
+      value: satisfied
+      objectReference: {fileID: 0}
+    - target: {fileID: 5380628742521391622, guid: c49533a826fdb13409ee106e66235e02,
+        type: 3}
+      propertyPath: advIcons.Array.data[7].emote
+      value: emb1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5380628742521391622, guid: c49533a826fdb13409ee106e66235e02,
+        type: 3}
+      propertyPath: advIcons.Array.data[6].sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 2470cf83f8df2544f90c6c8b2623ed4c,
+        type: 3}
+    - target: {fileID: 5380628742521391622, guid: c49533a826fdb13409ee106e66235e02,
+        type: 3}
+      propertyPath: advIcons.Array.data[7].sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 8ce9a42c990d64e4a838005ce5431c8f,
+        type: 3}
     - target: {fileID: 5683980232856920588, guid: c49533a826fdb13409ee106e66235e02,
         type: 3}
       propertyPath: ADVSpeakerIcon

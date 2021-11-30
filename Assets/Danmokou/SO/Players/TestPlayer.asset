@@ -15,7 +15,7 @@ MonoBehaviour:
   freeSpeed: 5
   focusSlowdown: 0.44
   hitboxRadius: 0.034
-  grazeboxRadius: 0.47
+  grazeboxRadius: 0.69
   key: basic-mokou
   shortTitle:
     useReference: 1
@@ -29,7 +29,7 @@ MonoBehaviour:
     shot: {fileID: 11400000, guid: 94c9dbd65f23dec46894ae6f01f35d23, type: 2}
   supports:
   - ordinal: S1
-    ability: {fileID: 11400000, guid: a735d449cc1221c449d66e9929f98cca, type: 2}
+    ability: {fileID: 11400000, guid: 229e243b674c46642952faa5cee4a80b, type: 2}
   uiColor: {r: 0.50980395, g: 0, b: 0.1254902, a: 1}
   shotDisplay: {fileID: 7713674854582391743, guid: 949a4532b5136a344af7110e1f0be716,
     type: 3}

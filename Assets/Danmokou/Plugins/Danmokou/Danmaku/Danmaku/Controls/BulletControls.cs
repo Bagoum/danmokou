@@ -794,7 +794,7 @@ public partial class BulletManager {
             var targetPool = PortColorFormat(pool.Style, props);
             pool.AddBulletControl(new BulletControl(
                     SimpleBulletControls.Softcull_noexpr(props, targetPool, _ => true), Consts.NOTPERSISTENT, null));
-            Logs.Log($"Autoculled {pool.Style} to {targetPool ?? "None"}");
+            //Logs.Log($"Autoculled {pool.Style} to {targetPool ?? "None"}");
         }
         for (int ii = 0; ii < activeNpc.Count; ++ii) CullPool(activeNpc[ii]);
         for (int ii = 0; ii < activeCNpc.Count; ++ii) CullPool(activeCNpc[ii]);
@@ -842,7 +842,7 @@ public partial class BulletManager {
             var targetPool = PortColorFormat(pool.Style, lprops);
             pool.AddBulletControl(new BulletControl(
                 SimpleBulletControls.Softcull_noexpr(lprops, targetPool, deleteCond), survive, null));
-            Logs.Log($"DoT-Autoculling {pool.Style} to {targetPool}");
+            //Logs.Log($"DoT-Autoculling {pool.Style} to {targetPool}");
         }
         for (int ii = 0; ii < activeNpc.Count; ++ii) CullPool(activeNpc[ii]);
         for (int ii = 0; ii < activeCNpc.Count; ++ii) CullPool(activeCNpc[ii]);

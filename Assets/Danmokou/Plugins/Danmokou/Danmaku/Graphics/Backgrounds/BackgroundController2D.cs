@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using BagoumLib.Tasks;
 using Danmokou.DMath;
 using Danmokou.Services;
 using UnityEngine;
@@ -34,20 +35,42 @@ public struct BackgroundTransition {
     public WipeYConfig WipeY;
     public FadeConfig Fade;
     
+
     /// <summary>
-    /// Upper bound on the time required for the TRANSITION SHADER to fully complete.
-    /// Note: if the implementation uses a callback to finish, you can return 0 here.
+    /// 
     /// </summary>
-    public float TimeToFinish() =>
-        type switch {
-            EffectType.Wipe1 => Wipe1.time + 1f,
-            EffectType.WipeTex => WipeTex.time + 1f,
-            EffectType.WipeFromCenter => WipeFromCenter.time + 1f,
-            EffectType.Shatter4 => 0f,
-            EffectType.WipeY => WipeY.time + 1f,
-            EffectType.Fade => Fade.time,
-            _ => 0f
-        };
+    /// <param name="orch">Orchestrator managing transition</param>
+    /// <param name="mat">Orchestrator's sprite material</param>
+    /// <param name="condition">If provided, the orchestrator can wait for this to be set to true as a marker
+    /// of the transition completing.</param>
+    /// <returns>Expected time for the transition to finish. The orchestrator should wait for this amount of time
+    /// if condition is not provided.</returns>
+    public float Apply(BackgroundOrchestrator orch, Material mat, ref Func<bool>? condition) {
+        switch (type) {
+            case EffectType.WipeTex:
+                WipeTex.Apply(mat);
+                return WipeTex.time + 1f;
+            case EffectType.Wipe1:
+                Wipe1.Apply(mat);
+                return Wipe1.time + 1f;
+            case EffectType.WipeFromCenter:
+                WipeFromCenter.Apply(mat);
+                return WipeFromCenter.time + 1f;
+            case EffectType.Shatter4:            
+                Action cb = WaitingUtils.GetCondition(out condition);
+                orch.FromBG!.Shatter4(Shatter4, false, cb);
+                CombinerKeywords.Apply(mat, CombinerKeywords.TO_ONLY);
+                return 0;
+            case EffectType.WipeY:
+                WipeY.Apply(mat);
+                return WipeY.time + 1f;
+            case EffectType.Fade:
+                Fade.Apply(mat);
+                return Fade.time + 1f;
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
+    }
 
     [Serializable]
     public class WipeTexConfig {
@@ -59,6 +82,7 @@ public struct BackgroundTransition {
             mat.SetFloat(PropConsts.maxTime, time);
             mat.SetTexture(PropConsts.faderTex, tex);
             mat.SetFloat(PropConsts.pmDirection, WhiteFirst ? 1 : -1);
+            CombinerKeywords.Apply(mat, CombinerKeywords.WIPE_TEX);
         }
     }
 
@@ -72,6 +96,7 @@ public struct BackgroundTransition {
             mat.SetFloat(PropConsts.maxTime, time);
             mat.SetFloat(PropConsts.angle0, M.degRad * initialAngle);
             mat.SetFloat(PropConsts.pmDirection, CCW ? 1 : -1);
+            CombinerKeywords.Apply(mat, CombinerKeywords.WIPE1);
         }
     }
     [Serializable]
@@ -80,6 +105,7 @@ public struct BackgroundTransition {
 
         public void Apply(Material mat) {
             mat.SetFloat(PropConsts.maxTime, time);
+            CombinerKeywords.Apply(mat, CombinerKeywords.WIPEFROMCENTER);
         }
     }
 
@@ -91,6 +117,7 @@ public struct BackgroundTransition {
         public void Apply(Material mat) {
             mat.SetFloat(PropConsts.maxTime, time);
             mat.SetFloat(PropConsts.pmDirection, up ? 1 : -1);
+            CombinerKeywords.Apply(mat, CombinerKeywords.WIPEY);
         }
     }
 
@@ -121,6 +148,7 @@ public struct BackgroundTransition {
         
         public void Apply(Material mat) {
             mat.SetFloat(PropConsts.maxTime, time);
+            CombinerKeywords.Apply(mat, CombinerKeywords.ALPHA);
         }
     }
 }

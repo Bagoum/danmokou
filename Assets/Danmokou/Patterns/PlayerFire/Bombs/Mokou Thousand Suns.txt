@@ -24,7 +24,7 @@ gtr {
 			delay 120
 			sfx x-metal
 		} simple nroffset pxy($d * (p2 + 0.5 - $w / 2), -4 + $d * p1) {
-			player 600 400 oh1-red
+			player 300 200 oh1-red
 			scale(lerpt(1, 1.7, lerpt(0, 0.2, 0, 0.6), 0))
 		}
 		gsr {
@@ -45,7 +45,7 @@ gtr {
 	} gsr2 2 <> {
 		bindLR
 	} simple nroffset pxy(&lr * $d * (p1 + 0.5 - $w / 2), -4 + $d * p2) {
-			player 300 200 oh1-red
+			player 150 100 oh1-red
 			scale(lerpt(0.7, 1.2, lerpt(0, 0.2, 0, 0.5), 0))
 		}
 	async sun-red/w <> gcr2 0 $w <> {
@@ -56,7 +56,7 @@ gtr {
 	} gsr2 12 <> {
 		p add
 	} simple nroffset pxy($d * (p1 + 0.5 - $w / 2), -4 + $d * p2) {
-			player 700 600 oh1-red
+			player 300 200 oh1-red
 			scale(lerpt3(0, 0.6, 1.2, 2, 0, 1.1, 0))
 		}
 	wait(time(500f + 1.4))

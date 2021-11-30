@@ -155,7 +155,7 @@ PrefabInstance:
         type: 3}
       propertyPath: behaviorScript
       value: 
-      objectReference: {fileID: 4900000, guid: bd98fcbbac53f9949a370d481c6ea77e, type: 3}
+      objectReference: {fileID: 4900000, guid: 11a46fa5ca50f37448f07f1ae8ccb348, type: 3}
     - target: {fileID: 8605995698615359453, guid: ef140f64b9a721e488bd90801075a2aa,
         type: 3}
       propertyPath: m_RootOrder
@@ -507,7 +507,7 @@ PrefabInstance:
         type: 3}
       propertyPath: references
       value: 
-      objectReference: {fileID: 11400000, guid: 1e32573acad029e49bb5f1156b983784,
+      objectReference: {fileID: 11400000, guid: 878099c5d79bcab4faf8402cb8728b92,
         type: 2}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: cca0d5f4466f12c48b79ed20b74f5cef, type: 3}

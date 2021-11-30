@@ -21,7 +21,7 @@ public class DamageMeasurer : CoroutineRegularUpdater {
             for (int ii = 0; ii < group; ++ii, ++totalFrames) {
                 var prevHp = enemy.HP;
                 yield return null;
-                if (Input.GetKeyDown(KeyCode.Q)) {
+                if (InputManager.GetKeyTrigger(KeyCode.Q).Active) {
                     RunDroppableRIEnumerator(MeasureDamage());
                     yield break;
                 }

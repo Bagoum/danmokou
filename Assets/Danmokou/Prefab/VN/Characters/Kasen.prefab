@@ -1,22 +1,5 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &5569039647161172021
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3096344507094870328}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 346f52c447f04ac598dbd30c1fec688c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ADVSpeakerIcon: {fileID: 21300000, guid: e37ac79e35627834d83f1c1065b833a7, type: 3}
-  pieces:
-  - {fileID: 6307840960511550906}
-  - {fileID: 9146702239046028503}
-  defaultPiece: {fileID: 9146702239046028503}
 --- !u!1001 &84891482584285852
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -167,3 +150,33 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c4fa8568a2a04c9cabded3d5d1289d6a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &5569039647161172021
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3096344507094870328}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 346f52c447f04ac598dbd30c1fec688c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_ADVSpeakerIcon: {fileID: 0}
+  advIcons:
+  - emote: normal
+    sprite: {fileID: 21300000, guid: bc45d6a2efac7684e85ab108af736d61, type: 3}
+  - emote: angry
+    sprite: {fileID: 21300000, guid: 962554064de65f94a87dac359af0bf7a, type: 3}
+  - emote: cry
+    sprite: {fileID: 21300000, guid: 69d5caa4da7020340bf1ffe625905769, type: 3}
+  - emote: happy
+    sprite: {fileID: 21300000, guid: 52f64ff19fcd9164793e340e449950f7, type: 3}
+  - emote: surprise
+    sprite: {fileID: 21300000, guid: 0636938ce14f8c74394a5dbae93b4048, type: 3}
+  - emote: worry
+    sprite: {fileID: 21300000, guid: ce3a50c6165a3ec4283cd41b209afc3f, type: 3}
+  pieces:
+  - {fileID: 6307840960511550906}
+  - {fileID: 9146702239046028503}
+  defaultPiece: {fileID: 9146702239046028503}

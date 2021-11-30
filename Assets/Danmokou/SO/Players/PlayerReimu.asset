@@ -15,7 +15,7 @@ MonoBehaviour:
   freeSpeed: 4.6
   focusSlowdown: 0.44
   hitboxRadius: 0.034
-  grazeboxRadius: 0.47
+  grazeboxRadius: 0.69
   key: basic-reimu
   shortTitle:
     useReference: 1
@@ -32,8 +32,10 @@ MonoBehaviour:
   - ordinal: C
     shot: {fileID: 11400000, guid: 35ba3e93f4382a84ebdea9e89ab73c60, type: 2}
   supports:
-  - ordinal: S1
-    ability: {fileID: 11400000, guid: a735d449cc1221c449d66e9929f98cca, type: 2}
+  - ordinal: Ability 1
+    ability: {fileID: 11400000, guid: 13157d81a8a5ff646accca16a0311ad8, type: 2}
+  - ordinal: Bomb 1
+    ability: {fileID: 11400000, guid: 3a0c5b4cb7a173245835d11e28585c65, type: 2}
   uiColor: {r: 0.6509434, g: 0, b: 0.046450462, a: 1}
   shotDisplay: {fileID: 8782343778102116289, guid: 37d24709e73ba524a90e1680f96f3f3f,
     type: 3}

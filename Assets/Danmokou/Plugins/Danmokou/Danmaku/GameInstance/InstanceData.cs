@@ -12,6 +12,7 @@ using Danmokou.DMath;
 using Danmokou.Player;
 using Danmokou.Scriptables;
 using Danmokou.Services;
+using Danmokou.VN;
 using static Danmokou.GameInstance.InstanceConsts;
 using JetBrains.Annotations;
 using UnityEngine;
@@ -40,6 +41,7 @@ public class InstanceData {
     
     #endregion
     
+    public DMKVNData VNData { get; }
     public DifficultySettings Difficulty { get; }
     public int RankLevel { get; set; }
     public double RankPoints { get; set; }
@@ -65,15 +67,13 @@ public class InstanceData {
     /// Set to false after eg. a game is completed, but before starting a new game
     /// If the mode is null or modeActive is false, the instance will not update
     /// </summary>
-    public bool InstanceActive { get; private set; }= true;
+    public bool InstanceActive { get; private set; } = true;
     public void Deactivate() {
         if (InstanceActive) {
             InstanceActive = false;
             Replay?.Cancel();
         }
     }
-
-    private bool InstanceActiveGuard() => mode != InstanceMode.NULL && InstanceActive;
     
     public ActiveTeamConfig? TeamCfg { get; }
     
@@ -108,6 +108,8 @@ public class InstanceData {
     public int OneUpItemsCollected { get; private set; }
     
     #region ComputedProperties
+
+    private bool InstanceActiveGuard => mode != InstanceMode.NULL && InstanceActive;
     public double RankPointsRequired => RankManager.RankPointsRequiredForLevel(RankLevel);
     public double RankRatio => (RankLevel - RankManager.minRankLevel) / (double)(RankManager.maxRankLevel - RankManager.minRankLevel);
     public int NextLifeItems => pointLives.Try(nextItemLifeIndex, 9001);
@@ -141,7 +143,9 @@ public class InstanceData {
 
     #endregion
     
-    public InstanceData(InstanceMode mode, InstanceRequest? req, long? maxScore, ReplayActor? replay) {
+    public InstanceData(InstanceMode mode, InstanceRequest? req, long? maxScore, ReplayActor? replay, 
+        DMKVNData? vnSave) {
+        this.VNData = vnSave ?? new(SaveData.r.GlobalVNData);
         this.Request = req;
         this.Replay = replay;
         //Minor hack to avoid running the SaveData static constructor in the editor during type initialization
@@ -427,7 +431,7 @@ public class InstanceData {
     
     
     public bool SetRankLevel(int level, double? points = null) {
-        if (!InstanceActiveGuard()) return false;
+        if (!InstanceActiveGuard) return false;
         var (min, max) = Difficulty.RankLevelBounds;
         level = M.Clamp(min, max, level);
         if (RankLevel == level) return false;
@@ -438,7 +442,7 @@ public class InstanceData {
         return true;
     }
     public void AddRankPoints(double delta) {
-        if (!InstanceActiveGuard()) return;
+        if (!InstanceActiveGuard) return;
         while (delta != 0) {
             RankPoints += delta;
             if (RankPoints < 0) {
@@ -499,7 +503,7 @@ public class InstanceData {
     }
 
     public void _RegularUpdate() {
-        if (!InstanceActiveGuard()) return;
+        if (!InstanceActiveGuard) return;
         
         ++TotalFrames;
         if (CurrentBossCT?.Cancelled == true) {

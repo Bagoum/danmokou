@@ -7,6 +7,10 @@ using static Danmokou.DMath.LocationHelpers;
 
 namespace Danmokou.Player {
 public partial class PlayerController {
+    public enum BombContext {
+        NORMAL,
+        DEATHBOMB
+    }
     public enum PlayerState {
         NORMAL,
         WITCHTIME,
@@ -75,6 +79,11 @@ public partial class PlayerController {
     /// Called every frame during meter activation.
     /// </summary>
     public static readonly IBSubject<Color> MeterIsActive = new Event<Color>();
+    /// <summary>
+    /// Called when a bomb is used.
+    /// </summary>
+    public static readonly IBSubject<(Ability.Bomb type, BombContext ctx)> BombFired =
+        new Event<(Ability.Bomb, BombContext)>();
     
     #endregion
 }

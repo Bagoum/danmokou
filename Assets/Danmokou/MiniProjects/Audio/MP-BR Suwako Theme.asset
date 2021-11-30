@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8c3d462728373fa4db771cd7986b7536, type: 3}
+  m_Name: MP-BR Suwako Theme
+  m_EditorClassIdentifier: 
+  clip: {fileID: 8300000, guid: 4fe9a1280d20d2642b1df886195f7c4a, type: 3}
+  key: br.suwako
+  trackPlayLocation: 
+  title: suwako
+  musicRoomDescription:
+    useReference: 1
+    reference: 
+    hardcoded:
+      en: 
+      jp: 
+  volume: 0.1
+  pitch: 1
+  stopOnPause: 0
+  loopMode: 1
+  loopSeconds: {x: 0, y: 0}
+  startWithTime: 0
+  musicRoomRequirement: 
+  showInMusicRoom: 0

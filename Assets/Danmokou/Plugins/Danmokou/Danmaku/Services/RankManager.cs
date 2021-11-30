@@ -50,7 +50,7 @@ public class RankManager : RegularUpdater {
         base.BindListeners();
         Listen(Item.ItemCollected, _ => Instance.AddRankPoints(RankPointsCollectItem));
         Listen(Item.ItemCulled, _ => Instance.AddRankPoints(RankPointsMissedItem));
-        Listen(PlayerBombs.BombFired, _ => Instance.AddRankPoints(RankPointsBomb));
+        Listen(PlayerController.BombFired, _ => Instance.AddRankPoints(RankPointsBomb));
     }
 
     public override void RegularUpdate() {

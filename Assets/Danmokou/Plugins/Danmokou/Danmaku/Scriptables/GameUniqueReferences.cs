@@ -42,7 +42,10 @@ public class GameUniqueReferences : ScriptableObject {
     public SFXConfigs[] SFX = null!;
     public SOPrefabs[] summonables = null!;
     public SOTextAssets[] fileStateMachines = null!;
+    public NamedTextAsset[] licenses = null!;
+#if UNITY_EDITOR
     public string[] scriptFolders = null!;
+#endif
 
     /// <summary>
     /// If all stage and boss SMs have exactly one untyped phase at the beginning (setup phase 0)
@@ -61,13 +64,13 @@ public class GameUniqueReferences : ScriptableObject {
         CampaignShots(campaign).Concat(CampaignShots(exCampaign)).Concat(CampaignShots(dayCampaign));
     public IEnumerable<ShotConfig> AllShots => AllShips.SelectMany(x => x.shots2.Select(s => s.shot));
 
-    public IEnumerable<ISupportAbilityConfig> AllSupportAbilities => 
+    public IEnumerable<IAbilityCfg> AllSupportAbilities => 
         AllShips.SelectMany(x => x.supports.Select(s => s.ability));
 
     public ShipConfig FindPlayer(string key) => AllShips.First(p => p.key == key);
     public ShotConfig FindShot(string key) => AllShots.First(s => s.key == key);
 
-    public ISupportAbilityConfig? FindSupportAbility(string key) =>
+    public IAbilityCfg? FindSupportAbility(string key) =>
         AllSupportAbilities.FirstOrDefault(x => x.Key == key);
 }
 }

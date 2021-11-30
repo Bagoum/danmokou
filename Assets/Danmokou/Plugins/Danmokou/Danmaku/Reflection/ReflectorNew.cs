@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using BagoumLib.Expressions;
 using Danmokou.Core;
 using Danmokou.DMath;
 using Danmokou.Expressions;
@@ -18,11 +19,14 @@ using ExBPRV2 = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions
 
 namespace Danmokou.Reflection {
 public static partial class Reflector {
+    private static readonly CSharpTypePrinter TypePrinter = new();
     public record NamedParam(Type type, string name, bool lookupMethod, bool nonExplicit) {
         public static implicit operator NamedParam(ParameterInfo pi) => 
             new(pi.ParameterType, pi.Name, 
                 Attribute.GetCustomAttributes(pi).Any(x => x is LookupMethodAttribute),
                 Attribute.GetCustomAttributes(pi).Any(x => x is NonExplicitParameterAttribute));
+
+        public override string ToString() => $"{name}<{TypePrinter.Print(type)}>";
     }
     
     /// <summary>

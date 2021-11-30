@@ -363,7 +363,6 @@ private static {TypePrinter.Print(f.returnType)} {f.fnName}({string.Join(", ",
     [SuppressMessage("ReSharper", "InvokeAsExtensionMethod")]
     public static void BakeExpressions() {
         //These calls ensure that static reflections are correctly initialized
-        PlayerBombs.IsValid(PlayerBombType.NONE);
         new Challenge.WithinC(0);
         new Challenge.WithoutC(0);
         

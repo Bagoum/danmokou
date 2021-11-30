@@ -483,7 +483,7 @@ public static class WaitingUtils {
     /// Outer waiter-- Will not cancel if cancelled
     /// </summary>
     public static void WaitThenCancel(CoroutineRegularUpdater Exec, ICancellee cT, float time, bool zeroToInfinity,
-        Cancellable toCancel) {
+        ICancellable toCancel) {
         cT.ThrowIfCancelled();
         if (zeroToInfinity && time < float.Epsilon) {
             time = float.MaxValue;
@@ -526,7 +526,7 @@ public static class WaitingUtils {
         done();
     }
 
-    public static IEnumerator WaitWhileWithCancellable(Func<bool> amIFinishedWaiting, Cancellable canceller, Func<bool> cancelIf, ICancellee cT, Action done, float delay=0f) {
+    public static IEnumerator WaitWhileWithCancellable(Func<bool> amIFinishedWaiting, ICancellable canceller, Func<bool> cancelIf, ICancellee cT, Action done, float delay=0f) {
         while (!amIFinishedWaiting() && !cT.Cancelled) {
             if (delay < ETime.FRAME_YIELD && cancelIf()) {
                 canceller.Cancel();

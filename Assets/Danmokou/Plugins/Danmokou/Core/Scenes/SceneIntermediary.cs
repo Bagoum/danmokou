@@ -56,8 +56,7 @@ public class SceneIntermediary : CoroutineRegularUpdater, ISceneIntermediary {
         float waitOut = 0f;
         if (transitionOnSame || currScene != req.scene.sceneName) {
             var transition = req.scene.transitionIn == null ? defaultTransition : req.scene.transitionIn;
-            float waitIn = 0f;
-            ServiceLocator.MaybeFind<ICameraTransition>()?.Fade(transition, out waitIn, out waitOut);
+            ServiceLocator.Find<ICameraTransition>().Fade(transition, out var waitIn, out waitOut);
             Logs.Log($"Performing fade transition for {waitIn}s before loading scene.");
             for (; waitIn > ETime.FRAME_YIELD; waitIn -= ETime.FRAME_TIME) yield return null;
         }

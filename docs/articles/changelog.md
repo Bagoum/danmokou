@@ -8,22 +8,51 @@ To get the newest version from git, run:
 
 `git submodule update` (if you have made modifications to the submodules, you will need to `pull --rebase` them individually)
 
-# [Unreleased] v9.0.0
+# [Unreleased] v9.1.0
 
-The following features are planned by v9, which will probably be completed sometime early next year.
+The following features are planned for minor release v9.1.0, which will probably be completed by February.
 
-- Default handling for graze flake items and bullet cancel flake items (may be in a minor release of v8)
+- Default handling for graze flake items and bullet cancel flake items
 - Implementation of a TH18-like card engine
 - Procedural generation of stages and bullet patterns
 - Full-featured implementation of Suzunoya
-  - **The classes for DialogueProfile will be deleted in v9, so make sure you port any custom dialogue profiles to Suzunoya entities by then.**
+  - **The classes for DialogueProfile will be deleted in v9.1.0, so make sure you port any custom dialogue profiles to Suzunoya entities by then.**
 
-# v8.1.0 (2021/11/14)
 
-- **Breaking changes:**
-  - Please upgrade Unity to **2021.2**. Note that if you have custom UIToolkit handling, you may need to run Window > UIToolkit > Package Asset Converter > "I want my assets to function without the UI Toolkit package installed". This upgrade makes UIToolkit much more resilient, allows some new CSS features that are used in the updated UI, and also enables 
-  - The architecture for UIToolkit-based UI has been overhauled. See the [UI design document](uidesign.md) for details.
-- 
+
+# v9.0.0 (2021/12/31)
+
+I was planning to make this v8.1.0, but the UI changes are too significant for a minor release.
+
+This release includes code for [Blessed Rain](https://bagoum.itch.io/blessed-rain), a short visual novel, in the MiniProjects folder. As of this release, Suzunoya functionality is mostly complete, but I haven't thoroughly tested functionality related to choices and external tasks, and there are some theoretical issues in save/load handling with regards to nondeterminism as well as certain configurations of global switches that open or close branches between executions.
+
+#### Breaking changes
+
+- Please upgrade Unity to **2021.2**. Note that if you get errors at runtime about missing settings, you may need to run Window > UIToolkit > Package Asset Converter > "I want my assets to function without the UI Toolkit package installed". This upgrade makes UIToolkit much more resilient, allows some new CSS features that are used in the updated UI, and also enables some C#8 and C#9 features that are now used in the codebase.
+- The architecture for UIToolkit-based UI has been overhauled. As a part of this, all the UIScreen uxml files were replaced with a single universal file, the UIScreen and UINode classes were completely rewritten, and the process of constructing UIs in code was changed in a backwards-incompatible way. See the [UI design document](uidesign.md) for details on the new UI architecture, which I plan to keep stable.
+
+#### Pending issues
+
+- If you jump to the Replays screen from the Records screen, then view a replay, then return from the replay, then return to the records screen, the cursor will be invisible but navigation will still be possible. This is due to limitations in the menu position regeneration process in the 
+
+#### Features
+
+- Replaced the default UI handling. It should be a lot prettier now. If you had any code modifying or dependent on the default UI handling, you will need to change it.
+- Added save/load handling for visual novels in DMK.
+
+#### Changes
+
+- Moved bomb handling out of PlayerBombs into per-bomb classes. This architecture allows per-project extension.
+- Removed the UISkip button (previously assigned to X). Instead, the Confirm button (assigned to Z/Enter, clicking and scrolling down also work in non-recorded contexts) now doubles as a skip button.
+
+#### Fixes
+
+- Fixed a bug where rotated straight lasers might incorrectly calculate rotation on the first frame.
+- Fixed undesired functionality where scripts continue executing during end-of-screen cleanup if an awaited task was cancelled before the script executor received a Destroy call.
+- Fixed a UI bug where shot descriptors on the Statistics page and elsewhere don't update with language settings.
+- Fixed handling for 240fps monitors, and removed the "Refresh Rate" option from the game. The game should now run smoothly on any computer, with or without Vsync (though on strange framerates like 50 or 144, there may be some visual tearing, since the base framerate is 120).
+- Fixed a bug where backlogging in a visual novel context might not destroy looping sound effects.
+- Fixed an issue in dialogue where string characters would not be affected by surrounding color tags while fading in. This was caused by a more general design problem with TextMeshPro where alpha tags *modify* the enclosing color tag instead of creating a new enclosure.
 
 # v8.0.0 (2021/10/31)
 

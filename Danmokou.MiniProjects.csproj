@@ -43,22 +43,25 @@
   </PropertyGroup>
   <ItemGroup>
      <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\AssemblyMarker.cs" />
+     <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\Lines\Generated\CrimsonVermilion.cs" />
+     <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\Lines\Generated\BlessedRain.cs" />
      <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\VN\Objects\FleurDeLysMimic.cs" />
-     <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\VNTestingScript1.cs" />
      <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\VN\Backgrounds\TownBGMimic.cs" />
+     <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\VN\Backgrounds\Shrine2BGMimic.cs" />
+     <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\VN\Backgrounds\ForestBGMimic.cs" />
      <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\VN\Backgrounds\ShrineRoomBGMimic.cs" />
      <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\VN\Backgrounds\LibraryBGMimic.cs" />
      <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\Lines\Generated\_StringRepository.cs" />
-     <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\Lines\VNLines.cs" />
+     <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\Lines\ScriptLocalization.cs" />
+     <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\VNBlessedRain.cs" />
      <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\VN\Objects\YellowLilyMimic.cs" />
      <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\VN\Backgrounds\ShrineCourtyardBGMimic.cs" />
      <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\VN\Backgrounds\FlowerBGMimic.cs" />
      <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\VN\Backgrounds\FarmBGMimic.cs" />
      <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\VN\Objects\YellowIrisMimic.cs" />
      <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\VNCrimsonVermilion.cs" />
-     <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\VNBasicScript1.cs" />
+     <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\MiscHelpers.cs" />
      <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\VN\Backgrounds\FieldBGMimic.cs" />
-     <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\Lines\Generated\Sheet1.cs" />
      <None Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\Danmokou.MiniProjects.asmdef" />
      <Reference Include="UnityEngine">
      <HintPath>C:/Program Files/Unity/Hub/Editor/2021.2.1f1/Editor/Data/Managed/UnityEngine/UnityEngine.dll</HintPath>
@@ -305,6 +308,9 @@
      </Reference>
      <Reference Include="UnityEditor.Graphs">
      <HintPath>C:/Program Files/Unity/Hub/Editor/2021.2.1f1/Editor/Data/Managed/UnityEditor.Graphs.dll</HintPath>
+     </Reference>
+     <Reference Include="UnityEditor.OSXStandalone.Extensions">
+     <HintPath>C:/Program Files/Unity/Hub/Editor/2021.2.1f1/Editor/Data/PlaybackEngines/MacStandaloneSupport/UnityEditor.OSXStandalone.Extensions.dll</HintPath>
      </Reference>
      <Reference Include="UnityEditor.WindowsStandalone.Extensions">
      <HintPath>C:/Program Files/Unity/Hub/Editor/2021.2.1f1/Editor/Data/PlaybackEngines/WindowsStandaloneSupport/UnityEditor.WindowsStandalone.Extensions.dll</HintPath>

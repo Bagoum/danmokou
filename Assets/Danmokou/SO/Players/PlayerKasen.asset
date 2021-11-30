@@ -15,7 +15,7 @@ MonoBehaviour:
   freeSpeed: 4.2
   focusSlowdown: 0.44
   hitboxRadius: 0.034
-  grazeboxRadius: 0.47
+  grazeboxRadius: 0.69
   key: basic-kasen
   shortTitle:
     useReference: 1
@@ -29,6 +29,6 @@ MonoBehaviour:
     shot: {fileID: 11400000, guid: bee71e7902819374298c855449ab1f6d, type: 2}
   supports:
   - ordinal: S1
-    ability: {fileID: 11400000, guid: a735d449cc1221c449d66e9929f98cca, type: 2}
+    ability: {fileID: 11400000, guid: 229e243b674c46642952faa5cee4a80b, type: 2}
   uiColor: {r: 0, g: 0, b: 0, a: 0}
   shotDisplay: {fileID: 0}

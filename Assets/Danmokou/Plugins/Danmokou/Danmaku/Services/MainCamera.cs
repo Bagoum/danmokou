@@ -228,13 +228,12 @@ public class MainCamera : RegularUpdater, IScreenshotter {
         Profiler.EndSample();
         Shader.EnableKeyword("AYA_CAPTURE");
         foreach (var c in (cameras ?? AyaCameras).Select(FindCamera)) {
+            var camOriginalRenderTo = c.targetTexture;
             c.targetTexture = RenderTo;
             Profiler.BeginSample("Render");
             c.Render();
             Profiler.EndSample();
-            //Why do we have to set it back? I don't know, but if you don't do this,
-            // you'll get flashing behavior when this is called from AyaCamera
-            c.targetTexture = originalRenderTo;
+            c.targetTexture = camOriginalRenderTo;
         }
         Shader.DisableKeyword("AYA_CAPTURE");
         var ss = RenderHelpers.DefaultTempRT(((int) (SaveData.s.Resolution.w * xsr), (int) (SaveData.s.Resolution.h * ysr)));

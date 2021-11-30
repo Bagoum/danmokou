@@ -4,10 +4,13 @@ phase 0
 		shift-phase-to 1
 		
 <!> hp 600
-phase 0.6
+phase 10
     paction 0
         position -3 0
-		slowdownfor 1 0.2
+		async circle-red/w <> gcr2 120 _ <> {
+		} gsr2c 20 {
+		} s tprot cx 3
+		slowdownfor 6 0.2
         
             
 <!> hp 600

@@ -19,7 +19,7 @@ public class FancyShotDisplay : FancyDisplay {
     public float starActiveScale = 0.8f;
     public float starInactiveScale = 0.5f;
 
-    public void SetShot(ShipConfig p, ShotConfig s, Subshot sub, ISupportAbilityConfig support) {
+    public void SetShot(ShipConfig p, ShotConfig s, Subshot sub, IAbilityCfg support) {
         shotTitle.fontSharedMaterial.SetMaterialOutline(p.uiColor);
         shotDescription.fontSharedMaterial.SetMaterialOutline(p.uiColor);
         var ss = s.GetSubshot(sub);
@@ -30,7 +30,7 @@ public class FancyShotDisplay : FancyDisplay {
             $"<size=3.4>{shotPrefix}</size>\n" +
             $"{ss.Title}\n" +
             $"<size=3.4>{LocalizedStrings.UI.shotsel_support_prefix}</size>\n" +
-            $"{support.Value.shortTitle}";
+            $"{support.Value.ShortTitle}";
         shotDescription.text = ss.description;
     }
 

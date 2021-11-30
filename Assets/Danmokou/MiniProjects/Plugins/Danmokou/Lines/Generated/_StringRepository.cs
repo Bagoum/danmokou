@@ -10,7 +10,7 @@ using BagoumLib.Culture;
 using static BagoumLib.Culture.LocalizationRendering;
 
 namespace MiniProjects.VN {
-public static partial class VNLines {
+public static partial class ScriptLocalization {
 	private static readonly Dictionary<string, LString> _allDataMap = new Dictionary<string, LString>() {
 	};
 }

@@ -73,7 +73,18 @@ public static class UpdatePriorities {
 
 public class ETime : MonoBehaviour {
     public static float ASSUME_SCREEN_FRAME_TIME { get; private set; } = 1 / 60f;
+    private static bool UsePauseHandling => EngineStateManager.State > EngineState.RUN;
     private float untilNextRegularFrame = 0f;
+    private float untilNextPauseFrame = 0f;
+    private float UntilNextFrame {
+        get => UsePauseHandling ? untilNextPauseFrame : untilNextRegularFrame;
+        set {
+            if (UsePauseHandling)
+                untilNextPauseFrame = value;
+            else
+                untilNextRegularFrame = value;
+        }
+    }
     public const int ENGINEFPS = 120;
     public const float ENGINEFPS_F = ENGINEFPS;
     public const float FRAME_TIME = 1f / ENGINEFPS_F;
@@ -82,10 +93,13 @@ public class ETime : MonoBehaviour {
     private static DisturbedProduct<float> UnityTimeRate { get; } = new DisturbedProduct<float>(1f);
     /// <summary>
     /// Replacement for Time.dT. Generally fixed to 1/(SCREEN REFRESH RATE),
-    /// except during slowdown. Note that the screen refresh rate is different from the engine framerate.
+    /// except during slowdown. Is 0 when the game is paused.
     /// </summary>
-    public static float dT => noSlowDT * Slowdown.Value;
-    private static float noSlowDT;
+    //Note: we dynamically query Slowdown.Value in dT because it might update during the frame,
+    // and such updates should be handled ASAP to be responsive. (I do not believe it affects correctness/replays.)
+    public static float dT => UsePauseHandling ? 0 : (ASSUME_SCREEN_FRAME_TIME * Slowdown.Value);
+    private static float EngineStepTime =>
+        UsePauseHandling ? ASSUME_SCREEN_FRAME_TIME : (ASSUME_SCREEN_FRAME_TIME * Slowdown.Value);
     public static int FrameNumber { get; private set; }
 
     public static void ResetFrameNumber() {
@@ -95,7 +109,8 @@ public class ETime : MonoBehaviour {
 
     public static bool FirstUpdateForScreen { get; private set; }
     /// <summary>
-    /// Note: when applying slowdown effects, this may be set to true multiple times within a unity frame.
+    /// Note: when applying slowdown effects, this may be set to true multiple times within a unity frame,
+    /// or it may be skipped for one unity frame when the slowdown changes.
     /// As such, limit usage to cosmetics.
     /// </summary>
     public static bool LastUpdateForScreen { get; private set; }
@@ -131,9 +146,9 @@ public class ETime : MonoBehaviour {
         StartCoroutine(NoVsyncHandler());
     }
 
-    public static void SetForcedFPS(int fps) {
+    private static void SetForcedFPS(float fps) {
         Logs.Log($"Assuming the screen runs at {fps} fps");
-        ASSUME_SCREEN_FRAME_TIME = (fps > 0) ? 1f / fps : 1f / 60f;
+        ASSUME_SCREEN_FRAME_TIME = 1f / fps;
         //Better to use precise thread waiter. See https://blogs.unity3d.com/2019/06/03/precise-framerates-in-unity/
         //Application.targetFrameRate = fps;
     }
@@ -145,6 +160,8 @@ public class ETime : MonoBehaviour {
         ThreadWaiter = ct == 0;
         lastFrameTime = Time.realtimeSinceStartup;
         QualitySettings.vSyncCount = ct;
+        SetForcedFPS(Screen.currentResolution.refreshRate);
+
     }
 
     private static void ParallelUpdateStep() {
@@ -177,59 +194,39 @@ public class ETime : MonoBehaviour {
     private void Update() {
         try {
             FirstUpdateForScreen = true;
-            //Updates still go out on loading. Player movement is disabled but other things need to run
-            noSlowDT = ASSUME_SCREEN_FRAME_TIME;
-            if (EngineStateManager.State > EngineState.RUN) {
-                InputManager.OncePerFrameToggleControls();
-                //Send out limited updates ignoring slowdown
-                for (; noSlowDT > FRAME_BOUNDARY;) {
-                    noSlowDT -= FRAME_TIME;
-                    LastUpdateForScreen = noSlowDT <= FRAME_BOUNDARY;
-                    if (EngineStateManager.PendingUpdate) continue;
-                    StartOfFrameInvokes(EngineStateManager.State);
+            for (; UntilNextFrame + EngineStepTime > FRAME_BOUNDARY;) {
+                //If the unity frame is skipped, then don't destroy trigger-based controls.
+                //If this toggle is moved out of the loop, then it is possible for trigger-based controls
+                // to be ignored if the unity framerate is faster than the game update rate
+                // (eg. 240hz, or 60hz + slowdown 0.25).
+                if (FirstUpdateForScreen) InputManager.OncePerFrameToggleControls();
+                UntilNextFrame -= FRAME_TIME;
+                LastUpdateForScreen = UntilNextFrame + EngineStepTime <= FRAME_BOUNDARY;
+                if (EngineStateManager.PendingUpdate) continue;
+                StartOfFrameInvokes(EngineStateManager.State);
+                //Parallelize updates if there are many. Note that this allocates ~2kb
+                if (updaters.Count < PARALLELCUTOFF || UsePauseHandling) {
                     for (int ii = 0; ii < updaters.Count; ++ii) {
                         DeletionMarker<IRegularUpdater> updater = updaters.Data[ii];
-                        if (!updater.MarkedForDeletion && updater.Value.UpdateDuring >= EngineStateManager.State) 
-                            updater.Value.RegularUpdate();
+                        if (!updater.MarkedForDeletion && updater.Value.UpdateDuring >= EngineStateManager.State)
+                            updater.Value.RegularUpdateParallel();
                     }
-                    updaters.Compact();
-                    FlushUpdaterAdds();
-                    EndOfFrameInvokes(EngineStateManager.State);
-                    FirstUpdateForScreen = false;
+                } else ParallelUpdateStep();
+                for (int ii = 0; ii < updaters.Count; ++ii) {
+                    DeletionMarker<IRegularUpdater> updater = updaters.Data[ii];
+                    if (!updater.MarkedForDeletion && updater.Value.UpdateDuring >= EngineStateManager.State) 
+                        updater.Value.RegularUpdate();
                 }
-                noSlowDT = 0;
-            } else {
-                for (; untilNextRegularFrame + dT > FRAME_BOUNDARY;) {
-                    //If the unity frame is skipped, then don't destroy trigger-based controls.
-                    //If this toggle is moved out of the loop, then it is possible for trigger-based controls
-                    // to be ignored if the unity framerate is faster than the game update rate
-                    // (eg. 240hz, or 60hz + slowdown 0.25).
-                    if (FirstUpdateForScreen) InputManager.OncePerFrameToggleControls();
-                    untilNextRegularFrame -= FRAME_TIME;
-                    LastUpdateForScreen = untilNextRegularFrame + dT <= FRAME_BOUNDARY;
-                    if (EngineStateManager.PendingUpdate) continue;
-                    StartOfFrameInvokes(EngineStateManager.State);
-                    //Parallelize updates if there are many. Note that this allocates ~2kb
-                    if (updaters.Count < PARALLELCUTOFF) {
-                        for (int ii = 0; ii < updaters.Count; ++ii) {
-                            DeletionMarker<IRegularUpdater> updater = updaters.Data[ii];
-                            if (!updater.MarkedForDeletion) updater.Value.RegularUpdateParallel();
-                        }
-                    } else ParallelUpdateStep();
-                    for (int ii = 0; ii < updaters.Count; ++ii) {
-                        DeletionMarker<IRegularUpdater> updater = updaters.Data[ii];
-                        if (!updater.MarkedForDeletion) updater.Value.RegularUpdate();
-                    }
-                    updaters.Compact();
-                    //Note: The updaters array is only modified by this command. 
-                    FlushUpdaterAdds();
-                    EndOfFrameInvokes(EngineStateManager.State);
-                    FrameNumber++;
-                    FirstUpdateForScreen = false;
-                }
-                untilNextRegularFrame += dT;
-                if (Mathf.Abs(untilNextRegularFrame) < FRAME_YIELD) untilNextRegularFrame = 0f;
+                updaters.Compact();
+                //Note: The updaters array is only modified by this command. 
+                FlushUpdaterAdds();
+                EndOfFrameInvokes(EngineStateManager.State);
+                FrameNumber++;
+                FirstUpdateForScreen = false;
             }
+            UntilNextFrame += EngineStepTime;
+            if (Mathf.Abs(UntilNextFrame) < FRAME_YIELD) UntilNextFrame = 0f;
+            
             EngineStateManager.UpdateEngineState();
         } catch (Exception e) {
             Logs.UnityError("Error thrown in the ETime update loop.");

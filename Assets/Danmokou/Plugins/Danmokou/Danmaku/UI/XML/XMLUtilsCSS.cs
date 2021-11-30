@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using BagoumLib;
+using BagoumLib.Culture;
 using BagoumLib.Reflection;
 using Danmokou.Scriptables;
 using Danmokou.Services;
@@ -30,7 +31,8 @@ public static partial class XMLUtils {
     public static string CheckmarkClass(bool active) => active ? "checked" : "unchecked";
 
     private static UXMLReferences Prefabs => GameManagement.References.uxmlDefaults;
-
+    public static LString CSpace(this LString s, int space = 12) =>
+        LString.Format($"<cspace={space}>{{0}}</cspace>", s);
     public static Length Percent(this float f) => new Length(f, LengthUnit.Percent);
 
     public static DisplayStyle ToStyle(this bool b) => b ? DisplayStyle.Flex : DisplayStyle.None;
@@ -69,7 +71,12 @@ public static partial class XMLUtils {
         root.AddVE(child == null ? null : child.CloneTreeWithoutContainer());
 
     public static VisualElement AddColumn(this VisualElement root) => root.AddVTA(Prefabs.UIScreenColumn);
-    public static VisualElement AddScrollColumn(this VisualElement root) => root.AddVTA(Prefabs.UIScreenScrollColumn);
+    public static VisualElement AddScrollColumn(this VisualElement root) {
+        var s = root.AddVTA(Prefabs.UIScreenScrollColumn);
+        s.Q<ScrollView>().verticalPageSize = 10000;
+        return s;
+    }
+
     public static VisualElement AddRow(this VisualElement root) => root.AddVTA(Prefabs.UIScreenRow);
     public static VisualElement AddNodeRow(this VisualElement root) => root.AddVTA(Prefabs.UIScreenRowNoStretch);
     

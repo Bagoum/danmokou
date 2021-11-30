@@ -15,7 +15,7 @@ public struct PrefabGroup {
 }
 
 [System.Serializable]
-public struct SMAsset {
+public struct NamedTextAsset {
     public string name;
     public TextAsset file;
 }
@@ -23,7 +23,7 @@ public struct SMAsset {
 [System.Serializable]
 public struct SMAssetGroup {
     public string groupTitle;
-    public SMAsset[] assets;
+    public NamedTextAsset[] assets;
 }
 
 }

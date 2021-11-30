@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Graphics;
@@ -12,6 +14,7 @@ using FT = Danmokou.Scriptables.CameraTransitionConfig.TransitionConfig.FixedTyp
 namespace Danmokou.Scenes {
 public interface ICameraTransition {
     void Fade(CameraTransitionConfig? cfg, out float waitIn, out float waitOut);
+    public void StallFadeOutUntil(Func<bool> cond);
 }
 public class CameraTransition : RegularUpdater, ICameraTransition {
     private static CameraTransitionConfig? inherited;
@@ -53,6 +56,7 @@ public class CameraTransition : RegularUpdater, ICameraTransition {
         StartCoroutine(FadeIn(inherited));
     }
 
+
     private void SetReverse(Material mat, CameraTransitionConfig.TransitionConfig cfg) {
         EnableDisableKW(mat, cfg.reverseKeyword, "FT_REVERSE");
         EnableDisableKW(mat, cfg.fixedType == FT.CIRCLEWIPE, "REQ_CIRCLE");
@@ -87,17 +91,32 @@ public class CameraTransition : RegularUpdater, ICameraTransition {
         pb.SetTexture(PropConsts.faderTex, cfg.fadeOut.transitionTexture);
         SetReverse(cfg.fadeOut.material, cfg.fadeOut);
         Activate();
-        for (float t = 0; t < cfg.fadeOut.time; t += ETime.ASSUME_SCREEN_FRAME_TIME) {
-            pb.SetFloat(PropConsts.fillRatio, cfg.fadeOut.Value(t));
+        bool didSfx = false;
+        //Give an extra frame before opening up, to allow Stall calls if necessary
+        for (float t = -ETime.FRAME_TIME; t < cfg.fadeOut.time - ETime.FRAME_TIME; t += ETime.ASSUME_SCREEN_FRAME_TIME) {
+            if (t > 0 && fadeOutStallers.Count > 0) {
+                while (fadeOutStallers.Any(f => !f())) {
+                    yield return null;
+                }
+                fadeOutStallers.Clear();
+            }
+            
+            pb.SetFloat(PropConsts.fillRatio, cfg.fadeOut.Value(Math.Max(t, 0)));
             sr.SetPropertyBlock(pb);
             yield return null;
             //Put this here so it works well with "long first frames"
-            if (t == 0) 
+            if (!didSfx) 
                 ServiceLocator.Find<ISFXService>().Request(cfg.fadeOut.sfx);
+            didSfx = true;
         }
         pb.SetFloat(PropConsts.fillRatio, 0);
         sr.SetPropertyBlock(pb);
         Deactivate();
+    }
+
+    private readonly List<Func<bool>> fadeOutStallers = new();
+    public void StallFadeOutUntil(Func<bool> cond) {
+        fadeOutStallers.Add(cond);
     }
 }
 }

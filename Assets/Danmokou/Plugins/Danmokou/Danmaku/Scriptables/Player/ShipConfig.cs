@@ -41,6 +41,6 @@ public struct OrdinalShot {
 [Serializable]
 public struct OrdinalSupport {
     public string ordinal;
-    public SupportAbilityConfig ability;
+    public AbilityCfg ability;
 }
 }

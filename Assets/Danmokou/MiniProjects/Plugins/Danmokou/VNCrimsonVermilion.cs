@@ -8,6 +8,7 @@ using BagoumLib.Mathematics;
 using Danmokou.Core;
 using Danmokou.DMath;
 using Danmokou.VN;
+using JetBrains.Annotations;
 using Suzunoya;
 using Suzunoya.ControlFlow;
 using Suzunoya.Data;
@@ -17,9 +18,8 @@ using SuzunoyaUnity.Derived;
 using SuzunoyaUnity.Rendering;
 using UnityEngine;
 using static SuzunoyaUnity.Helpers;
-using static MiniProjects.VN.VNLines.Dialogue1;
+using static MiniProjects.VN.ScriptLocalization.CrimsonVermilion;
 using static BagoumLib.Mathematics.Bezier;
-using static Danmokou.Core.ServiceLocator;
 using Vector3 = System.Numerics.Vector3;
 // ReSharper disable AccessToDisposedClosure
 
@@ -27,13 +27,9 @@ namespace MiniProjects.VN {
 
 //The reflect attribute allows the public static function VNScriptCrimsonVermilion1 to get picked up
 // by the reflector, so it can be called in script code by the command `executeVN VNScriptCrimsonVermilion1 cv1`.
-[Reflect]
+[Reflect] [UsedImplicitly]
 public static class _VNCrimsonVermilion {
     public static async Task VNScriptCrimsonVermilion1(DMKVNState vn) {
-#if UNITY_EDITOR
-        // if (vn.LoadTo is null)
-        //     vn.LoadToLocation(new VNLocation("l385", new List<string>() {"TOP", "SHRINE2"}));
-#endif
         await _TopLevel(vn).Execute();
     }
 
@@ -56,9 +52,9 @@ public static class _VNCrimsonVermilion {
         //Note: vn.SkipGuard/vn.lSFX works for normal SFX, they just need SkipGuard.
         //Looping SFX should work trivially *as long as you don't fade them out*.
         //Audio tracks work through RunningAudioTrackProxy.
-        //In the future, make these both lazy, svp.
-        public void GetFootstep(string key = "vn-footstep-1") => footstep = SFXService.RequestSource(key)!;
-        public LazyAction GetBGM(string key) => new LazyAction(() => bgm = vn.RunBGM(key));
+        public LazyAction GetFootstep(string key = "vn-footstep-1") 
+            => vn.Source(key, x => footstep = x);
+        public LazyAction GetBGM(string key) => new(() => bgm = vn.RunBGM(key));
     }
 
     private static BoundedContext<Unit> _TopLevel(DMKVNState vn) => 
@@ -102,31 +98,30 @@ public static class _VNCrimsonVermilion {
             reimu.Location.Value = V3(0, -7);
             await reimu.SetEmote("satisfied");
             await vn.Sequential(
-            room.FadeTo(0.2f, 1f).And(reimu.FadeTo(1f, 1f), md.FadeTo(1f, 1f)),
-            kasen.Say(l0, flags: SpeakFlags.Anonymous).C,
-            yukari.Say(l1, flags: SpeakFlags.Anonymous).C,
-            reimu.MoveTo(V3(0, -5.4), 1f).And(
-                room.FadeTo(0.35f, 1f),
-                reimu.Say(l2)
-            ).C,
-            kasen.Say(l3, flags: SpeakFlags.Anonymous).C,
-            yukari.Say(l4, flags: SpeakFlags.Anonymous).C,
-            reimu.MoveTo(V3(0, -3.8), 1f).And(
-                room.FadeTo(0.5f, 1f),
-                reimu.Say(l5)
-            ).C,
-            kasen.Say(l6, flags: SpeakFlags.Anonymous).C,
-            yukari.Say(l7, flags: SpeakFlags.Anonymous).C,
-            kasen.Say(l8, flags: SpeakFlags.Anonymous).C,
-            yukari.Say(l9, flags: SpeakFlags.Anonymous).C,
-            reimu.SetEmote("surprise"),
-            vn.lSFX("vn-impact-1"),
-            reimu.MoveTo(V3(0, 0), 0.7f, CBezier(.54, .77, .63, 1.47)).And(
-                room.FadeTo(1f, 0.4f),
-                reimu.Say(l10)
-            ).C);
-            o.GetFootstep();
-            await vn.Sequential(
+                room.FadeTo(0.2f, 1f).And(reimu.FadeTo(1f, 1f), md.FadeTo(1f, 1f)),
+                kasen.Say(l0, flags: SpeakFlags.Anonymous).C,
+                yukari.Say(l1, flags: SpeakFlags.Anonymous).C,
+                reimu.MoveTo(V3(0, -5.4), 1f).And(
+                    room.FadeTo(0.35f, 1f),
+                    reimu.Say(l2)
+                ).C,
+                kasen.Say(l3, flags: SpeakFlags.Anonymous).C,
+                yukari.Say(l4, flags: SpeakFlags.Anonymous).C,
+                reimu.MoveTo(V3(0, -3.8), 1f).And(
+                    room.FadeTo(0.5f, 1f),
+                    reimu.Say(l5)
+                ).C,
+                kasen.Say(l6, flags: SpeakFlags.Anonymous).C,
+                yukari.Say(l7, flags: SpeakFlags.Anonymous).C,
+                kasen.Say(l8, flags: SpeakFlags.Anonymous).C,
+                yukari.Say(l9, flags: SpeakFlags.Anonymous).C,
+                reimu.SetEmote("surprise"),
+                vn.SFX("vn-impact-1"),
+                reimu.MoveTo(V3(0, 0), 0.7f, CBezier(.54, .77, .63, 1.47)).And(
+                    room.FadeTo(1f, 0.4f),
+                    reimu.Say(l10)
+                ).C,
+                o.GetFootstep(),
                 reimu.MoveTo(V3(-12, 0), 1.2f, CBezier(.37, -0.37, .81, .93)).And(
                     vn.Wait(0.2f).Then(o.rg.DoTransition(new RenderGroupTransition.Fade(o.rgb, 1f)))
                 ),
@@ -227,12 +222,12 @@ public static class _VNCrimsonVermilion {
                 marisa.SayC(l60),
                 yukari.SayC(l61),
                 yukari.EmoteSayC("smug", l62),
-                vn.lSFX("vn-yukari-power"),
+                vn.SFX("vn-yukari-power"),
                 yukari.MoveBy(V3(0, 1), 0.8f).And(
                     yukari.FadeTo(0f, 0.8f)
                 ),
                 kasen.EmoteSayC("happy", l63),
-                vn.lSFX("vn-yukari-power"),
+                vn.SFX("vn-yukari-power"),
                 kasen.MoveBy(V3(0, 1), 0.8f).And(
                     kasen.FadeTo(0f, 0.8f)
                 ),
@@ -278,7 +273,7 @@ public static class _VNCrimsonVermilion {
                 }),
             o.rgb.DoTransition(new RenderGroupTransition.Fade(o.rg, 1f)),
             marisa.SayC(l66_1),
-            Lazy(() => o.GetFootstep()),
+            o.GetFootstep(),
             o.GetBGM("s02-7"),
             yachie.MoveBy(V3(2, 0), 1.5f).And(yachie.FadeTo(1f, 1.5f))
                 .Then(yachie.RotateTo(V3(0, 180), 1f))
@@ -291,7 +286,7 @@ public static class _VNCrimsonVermilion {
             reimu.EmoteSayC("worry", l67),
             marisa.EmoteSayC("worry", l68),
             reimu.EmoteSayC("", l69),
-            Lazy(() => o.GetFootstep()),
+            o.GetFootstep(),
             reimu.MoveBy(V3(-1, 0), 1f).And(reimu.FadeTo(0f, 1f))
                 .And(vn.Wait(0.4f).Then(marisa.MoveBy(V3(-1.4, 0), 1f).And(marisa.FadeTo(0f, 1f))))
                 .Then(() => o.footstep.Stop()),
@@ -314,8 +309,8 @@ public static class _VNCrimsonVermilion {
                 md.Clear();
             }),
             o.rgb.DoTransition(new RenderGroupTransition.Fade(o.rg, 1f)),
-            vn.lSFX("vn-suzunaan-bell"),
-            Lazy(() => o.GetFootstep()),
+            vn.SFX("vn-suzunaan-bell"),
+            o.GetFootstep(),
             //Lazy(() => DeactivateSkip(vn)),
             yachie.MoveTo(V3(2.5, 0), 4.5f).Then(() => o.footstep.Stop()),
             o.GetBGM("s02-6"),
@@ -375,7 +370,7 @@ public static class _VNCrimsonVermilion {
             reimu.ESayC("emb1", l98),
             komakusa.ESayC("worry", l99),
             yachie.EmoteSayC("worry", l100),
-            vn.lSFX("vn-suzunaan-bell"),
+            vn.SFX("vn-suzunaan-bell"),
             kaguya.MoveTo(V3(1.7, 0), 2f).And(kaguya.FadeTo(1, 2)).And(
                 komakusa.MoveBy(V3(-0.7, 0), 1f),
                 yachie.MoveBy(V3(0.7, 0), 1)
@@ -400,7 +395,7 @@ public static class _VNCrimsonVermilion {
             yachie.SayC(l111),
             komakusa.ESayC("", l112),
             yachie.EmoteSayC("smug", l113),
-            Lazy(() => o.GetFootstep()),
+            o.GetFootstep(),
             yachie.MoveTo(V3(-15, 0), 2.5f, CBezier(.54, -.3, .62, .75)).And(
                 vn.Wait(2).Then(vn.aSFX("vn-suzunaan-bell")).Then(() => o.footstep.Stop()),
                 kosuzu.EmoteSay("surprise", l114)).C,
@@ -458,7 +453,7 @@ public static class _VNCrimsonVermilion {
                 o.rgb.DoTransition(new RenderGroupTransition.Fade(o.rg, 1f)),
                 kurokoma.SayC(l124),
                 new EmptyCharacter("Equestrian", vn).SayC(l125),
-                Lazy(() => o.GetFootstep()),
+                o.GetFootstep(),
                 reimu.MoveTo(V3(2, 0), 3)
                     .And(marisa.MoveTo(V3(5, 0), 3.5f))
                     .Then(() => o.footstep.Stop()),
@@ -617,7 +612,7 @@ public static class _VNCrimsonVermilion {
                 }),
                 o.rgb.DoTransition(new RenderGroupTransition.Fade(o.rg, 1f)),
                 chicken.SayC(l212),
-                Lazy(() => o.GetFootstep()),
+                o.GetFootstep(),
                 kutaka.EmoteSay("happy", l213).And(
                     reimu.MoveTo(V3(2, 0), 3).And(marisa.MoveTo(V3(5, 0), 3.5f))
                         .Then(() => o.footstep.Stop())
@@ -716,7 +711,7 @@ public static class _VNCrimsonVermilion {
                 o.rgb.DoTransition(new RenderGroupTransition.Fade(o.rg, 1f)),
                 mayumi.SayC(l260),
                 mayumi.SayC(l261),
-                Lazy(() => o.GetFootstep()),
+                o.GetFootstep(),
                 mayumi.Say(l262).And(
                     reimu.MoveTo(V3(-1.5, 0), 4).And(marisa.MoveTo(V3(1.5, 0), 4.5f))
                         .Then(() => o.footstep.Stop())
@@ -797,7 +792,7 @@ public static class _VNCrimsonVermilion {
                 mayumi.AlsoSay(l316_1).And(
                     mayumi.MoveBy(V3(-1, 0), 0.8f),
                     mayumi.FadeTo(0, 0.8f)).C,
-                Lazy(() => o.GetFootstep()),
+                o.GetFootstep(),
                 youmu.MoveTo(V3(-5, 0), 2f).Then(() => o.footstep.Stop()),
                 vn.Wait(0.3).Then(youmu.EmoteSay("happy", l317)).C,
                 reimu.EmoteSayC("", l318),
@@ -878,7 +873,7 @@ public static class _VNCrimsonVermilion {
                 youmu.ESayC("worry", l371),
                 yuuka.ESayC("happy", l372),
                 youmu.SayC(l373),
-                Lazy(() => o.GetFootstep()),
+                o.GetFootstep(),
                 youmu.RotateTo(V3(0, 180), 0.4f).And(
                     youmu.MoveTo(V3(-12, 0), 2f)).Then(() => o.footstep.Stop()),
                 vn.Wait(0.3).Then(yuuka.EmoteSay("", l374)).C,
@@ -940,14 +935,14 @@ public static class _VNCrimsonVermilion {
                 marisa.ESayC("emb1", l389),
                 reimu.SayC(l390),
                 reimu.SayC(l391),
-                vn.lSFX("vn-yukari-power"),
+                vn.SFX("vn-yukari-power"),
                 yukari.MoveBy(V3(0, -1), 0.8f).And(
                     yukari.FadeTo(1f, 0.8f),
                     yukari.EmoteSay("", l392),
                     reimu.MoveTo(V3(1, 0), 0.6f),
                     vn.Wait(0.3).Then(marisa.MoveTo(V3(4.5, 0), 0.6f))
                 ).C,
-                vn.lSFX("vn-yukari-power"),
+                vn.SFX("vn-yukari-power"),
                 kasen.MoveBy(V3(0, -1), 0.8f).And(
                     kasen.FadeTo(1f, 0.8f),
                     kasen.EmoteSay("happy", l393)
@@ -989,7 +984,7 @@ public static class _VNCrimsonVermilion {
                 yukari.EmoteSayC("happy", l417),
                 kasen.SayC(l418),
                 yukari.EmoteSayC("smug", l419),
-                vn.lSFX("vn-yukari-power"),
+                vn.SFX("vn-yukari-power"),
                 yukari.EmoteSay("happy", l420).And(
                     yukari.MoveBy(V3(0, 1), 0.8f).And(
                         yukari.FadeTo(0f, 0.8f)

@@ -18,9 +18,9 @@ public class XMLPracticeSuccessMenu : PausedGameplayMenu {
     public override void FirstFrame() {
         MainScreen = new UIScreen(this, "YOU HUNTED", UIScreen.Display.OverlayTH)  { Builder = (s, ve) => {
             ve.AddColumn();
-        }, BackgroundOpacity = 0.8f  };
+        }, MenuBackgroundOpacity = 0.8f  };
         _ = new UIColumn(MainScreen, null,
-            new FuncNode(restart, GameManagement.Restart)
+            new FuncNode(restart, () => GameManagement.Restart())
                 {EnabledIf = (() => GameManagement.CanRestart)},
             new FuncNode(save_replay, GameManagement.GoToReplayScreen)
                 {EnabledIf = (() => GameManagement.Instance.Replay is ReplayRecorder)},

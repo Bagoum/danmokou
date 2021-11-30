@@ -3,11 +3,13 @@
     <Style src="project://database/Assets/Danmokou/UXML/nodes/UINode.uss?fileID=7433441132597879392&amp;guid=908aa769b12ea7c44aae7ea3f797c582&amp;type=3#UINode" />
     <ui:VisualElement class="attribute node">
         <ui:VisualElement name="Selector" class="pointer prefix" />
-        <ui:Label name="Key" class="text" />
-        <ui:VisualElement class="optionsCont" style="flex-grow: 1;">
-            <ui:Label text="&lt;" name="Left" class="text" />
-            <ui:VisualElement name="LR2ChildContainer" />
-            <ui:Label text="&gt;" name="Right" class="text" />
+        <ui:VisualElement name="Body" class="body" style="flex-grow: 1;">
+            <ui:Label name="Key" class="text" />
+            <ui:VisualElement class="optionsCont" style="flex-grow: 1;">
+                <ui:Label text="&lt;" name="Left" class="text" />
+                <ui:VisualElement name="LR2ChildContainer" />
+                <ui:Label text="&gt;" name="Right" class="text" />
+            </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

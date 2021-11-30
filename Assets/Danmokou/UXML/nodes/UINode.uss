@@ -1,10 +1,13 @@
 :root {
     --goldtext: rgb(238, 170, 24);
     --goldsub: rgb(207, 139, 0);
+    --goldsub60: rgba(207, 139, 0, 0.6);
     --goldsub0: rgba(207, 139, 0, 0);
     --violettext: rgb(185, 95, 243);
     --violetsub: rgb(127, 57, 156);
     --violetsub0: rgba(127, 18, 150, 0);
+    --violetsub30: rgba(127, 18, 150, 0.5);
+    --violetliner: rgb(108, 68, 125);
     --violetbg: rgba(92, 22, 106, 0.7);
 }
 
@@ -34,19 +37,15 @@
 }
 
 .font-ubuntu {
-    -unity-font-definition: url('project://database/Assets/SZYU/Fonts/ubuntu-font-family-0.83/Ubuntu-L.ttf?fileID=12800000&guid=590207fa916fbe2418da90ad6839aeed&type=3#Ubuntu-L');
+    -unity-font-definition: url('project://database/Assets/SZYU/Fonts/Unity%20SDF/Ubuntu-L%20SDF.asset?fileID=11400000&guid=98f4f451ca482fa4ebc8dd8dafe12b06&type=2#Ubuntu-L SDF');
 }
 
 .hide {
     display: none;
 }
 
-.node.monospace {
-    -unity-font-definition: url('project://database/Assets/Danmokou/Fonts/Monospace/Fira-Yasashisa-Joint.ttf?fileID=12800000&guid=d3112f22f25587348b21fcfcac90009d&type=3#Fira-Yasashisa-Joint');
-}
-
-.node.monospace .text {
-    -unity-font-definition: url('project://database/Assets/Danmokou/Fonts/Monospace/Fira-Yasashisa-Joint.ttf?fileID=12800000&guid=d3112f22f25587348b21fcfcac90009d&type=3#Fira-Yasashisa-Joint');
+.monospace {
+    -unity-font-definition: url('project://database/Assets/Danmokou/Fonts/Unity%20SDF%20Assets/Fira-Yasashisa-Joint%20SDF.asset?fileID=11400000&guid=9697e36c4624ace47aeadba6f395ffbd&type=2#Fira-Yasashisa-Joint SDF');
 }
 
 .node .text {
@@ -87,6 +86,7 @@
 .node.large1 {
     font-size: 100px;
 }
+
 .node.large2 {
     font-size: 120px;
 }
@@ -122,6 +122,7 @@
 .node.nospaceprefix .prefix {
     margin-left: -100px;
 }
+
 .prefix {
     width: 100px;
     height: 100%;
@@ -167,19 +168,6 @@
 .node .coretext {
     flex-grow: 1;
 }
-/*
-.node.descriptor {
-    min-height: 1500px;
-    -unity-text-align: upper-left;
-}
-
-.node.descriptor.visible {
-    color: rgb(240, 240, 240);
-}
-
-.node.descriptor.visible .text {
-    color: rgb(240, 240, 240);
-}*/
 
 .checkmark {
     background-image: url('project://database/Assets/Danmokou/Sprites/UI/bomb-full-2.png?fileID=21300000&guid=06ed2abe8624def4da32e04976bdc5cd&type=3#bomb-full-2');
@@ -230,6 +218,10 @@
     -unity-background-image-tint-color: var(--violetbg);
 }
 
+.node.header.selected .body {
+    border-bottom-color: var(--goldsub);
+}
+
 .pbutton .text {
     font-size: 85px;
     background-color: rgb(91, 91, 91);
@@ -261,15 +253,12 @@
     padding-right: 80px;
     padding-top: 60px;
     padding-bottom: 40px;
-    background-color: rgba(33, 4, 39, 0.6);
-    border-left-color: rgb(185, 185, 185);
-    border-right-color: rgb(185, 185, 185);
-    border-top-color: rgb(185, 185, 185);
-    border-bottom-color: rgb(185, 185, 185);
-    border-left-width: 0;
-    border-right-width: 0;
-    border-top-width: 4px;
-    border-bottom-width: 4px;
+    background-color: rgba(33, 4, 39, 0.78);
+    border-color: var(--violetliner);
+    border-left-width: 5px;
+    border-right-width: 5px;
+    border-top-width: 5px;
+    border-bottom-width: 5px;
     position: absolute;
     max-width: 1600px;
     -unity-text-align: upper-center;
@@ -277,4 +266,71 @@
     align-items: center;
     min-width: 1000px;
     -unity-font-definition: url('project://database/Assets/Danmokou/Fonts/Unity%20SDF%20Assets/Odibee-CorpSt-Joint%20SDF.asset?fileID=11400000&guid=cbda6169226e6d64bb00b80c0210330c&type=2#Odibee-CorpSt-Joint SDF');
+    border-top-left-radius: 12px;
+    border-bottom-left-radius: 12px;
+    border-top-right-radius: 12px;
+    border-bottom-right-radius: 12px;
+}
+
+.popup > #Header {
+    color: var(--goldtext);
+}
+
+.node.header.selected {
+    opacity: 1;
+}
+
+.node.saveentry .body {
+    border-color: var(--goldsub60);
+    background-image: url('project://database/Assets/Danmokou/Sprites/util/1u-square-feather-90pct.png?fileID=2800000&guid=20a7ca53c3ccd9b4ebf9b8745c32a5f6&type=3#1u-square-feather-90pct');
+}
+
+.node.saveentry.focus .body {
+    border-color: var(--goldsub);
+}
+
+.saveentry-description {
+    -unity-font-definition: url('project://database/Assets/SZYU/Fonts/Unity%20SDF/LinBiolinum_R_G%20SDF.asset?fileID=11400000&guid=7139a17b7319bb84494b6e01f410b0a2&type=2#LinBiolinum_R_G SDF');
+    font-size: 60px;
+    padding-left: 0;
+    padding-right: 0;
+    white-space: normal;
+    -unity-text-align: upper-left;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.saveentry-ss {
+    width: 640px;
+    height: 360px;
+    flex-shrink: 0;
+    background-image: url('project://database/Assets/Danmokou/Sprites/UI/UITK/purple%20bg.png?fileID=2800000&guid=ea44ee5932ff7c84aa1697105b26bd29&type=3#purple bg');
+    border-color: var(--goldsub);
+    border-left-width: 4px;
+    border-right-width: 4px;
+    border-top-width: 4px;
+    border-bottom-width: 4px;
+    border-top-left-radius: 20px;
+    border-bottom-left-radius: 20px;
+    border-top-right-radius: 20px;
+    border-bottom-right-radius: 20px;
+}
+
+.saveentry-title {
+    font-size: 80px;
+    padding-left: 0;
+    padding-right: 0;
+    margin-bottom: -8px;
+    flex-shrink: 0;
+}
+
+.saveentry-title-unset {
+    color: rgb(128, 128, 128);
+}
+
+.saveentry {
+    width: 50%;
+    height: 33%;
+    margin-top: 0;
+    margin-bottom: 0;
 }

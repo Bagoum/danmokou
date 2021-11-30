@@ -4,8 +4,7 @@ pattern({
 })
 phase(0)
 	paction(0)
-		shift-phase-to(1)
-	
+		shift-phase-to(2)
 
 <!> type non cbezier
 <!> hp 1000

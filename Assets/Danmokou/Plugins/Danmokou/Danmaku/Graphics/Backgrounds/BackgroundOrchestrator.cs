@@ -136,30 +136,10 @@ public class BackgroundOrchestrator : CoroutineRegularUpdater, IBackgroundOrches
         if (ToBG == null) throw new Exception("Cannot do transition when target BG is null");
         var pb = new MaterialPropertyBlock();
         var mat = Instantiate(baseMixerMaterial);
-        float timeout = bgt.TimeToFinish();
         var cts = new Cancellable();
         transitionCTS.Add(cts);
         Func<bool>? condition = null;
-        if        (bgt.type == BackgroundTransition.EffectType.WipeTex) {
-            bgt.WipeTex.Apply(mat);
-            CombinerKeywords.Apply(mat, CombinerKeywords.WIPE_TEX);
-        } else if (bgt.type == BackgroundTransition.EffectType.Wipe1) {
-            bgt.Wipe1.Apply(mat);
-            CombinerKeywords.Apply(mat, CombinerKeywords.WIPE1);
-        } else if (bgt.type == BackgroundTransition.EffectType.WipeFromCenter) {
-            bgt.WipeFromCenter.Apply(mat);
-            CombinerKeywords.Apply(mat, CombinerKeywords.WIPEFROMCENTER);
-        } else if (bgt.type == BackgroundTransition.EffectType.Shatter4) {
-            Action cb = GetCondition(out condition);
-            FromBG.Shatter4(bgt.Shatter4, false, cb);
-            CombinerKeywords.Apply(mat, CombinerKeywords.TO_ONLY);
-        } else if (bgt.type == BackgroundTransition.EffectType.WipeY) {
-            bgt.WipeY.Apply(mat);
-            CombinerKeywords.Apply(mat, CombinerKeywords.WIPEY); //TODO apply these two generics from within the BGT scope.
-        } else if (bgt.type == BackgroundTransition.EffectType.Fade) {
-            bgt.Fade.Apply(mat);
-            CombinerKeywords.Apply(mat, CombinerKeywords.ALPHA);
-        }
+        float timeout = bgt.Apply(this, mat, ref condition);
         BackgroundCombiner.SetMaterial(mat, pb);
         void Finish() {
             if (!cts.Cancelled) FinishTransition();
@@ -179,20 +159,21 @@ public class BackgroundOrchestrator : CoroutineRegularUpdater, IBackgroundOrches
         FromBG = ToBG = null;
         base.OnDisable();
     }
+}
 
-    private static class CombinerKeywords {
-        public const string TO_ONLY = "MIX_TO_ONLY";
-        public const string ALPHA = "MIX_ALPHA_BLEND";
-        public const string WIPE_TEX = "MIX_WIPE_TEX";
-        public const string WIPE1 = "MIX_WIPE1";
-        public const string WIPEFROMCENTER = "MIX_WIPE_CENTER";
-        public const string WIPEY = "MIX_WIPE_Y";
-        private static readonly string[] kws = {TO_ONLY, ALPHA, WIPE_TEX, WIPE1, WIPEFROMCENTER};
 
-        public static void Apply(Material mat, string keyword) {
-            foreach (var kw in kws) mat.DisableKeyword(kw);
-            mat.EnableKeyword(keyword);
-        }
+public static class CombinerKeywords {
+    public const string TO_ONLY = "MIX_TO_ONLY";
+    public const string ALPHA = "MIX_ALPHA_BLEND";
+    public const string WIPE_TEX = "MIX_WIPE_TEX";
+    public const string WIPE1 = "MIX_WIPE1";
+    public const string WIPEFROMCENTER = "MIX_WIPE_CENTER";
+    public const string WIPEY = "MIX_WIPE_Y";
+    private static readonly string[] kws = {TO_ONLY, ALPHA, WIPE_TEX, WIPE1, WIPEFROMCENTER};
+
+    public static void Apply(Material mat, string keyword) {
+        foreach (var kw in kws) mat.DisableKeyword(kw);
+        mat.EnableKeyword(keyword);
     }
 }
 }

@@ -123,7 +123,7 @@ public static partial class LocalizedStrings {
 			(Locales.JP, "再開"))
 			{ ID = "unpause" };
 		
-		public static readonly LString to_menu = new LString("Return to Menu",
+		public static readonly LString to_menu = new LString("Return to Title",
 			(Locales.JP, "タイトルに戻る"))
 			{ ID = "to_menu" };
 		
@@ -140,10 +140,10 @@ public static partial class LocalizedStrings {
 			{ ID = "are_you_sure" };
 		
 		public static readonly LString to_desktop = new LString("Quit to Desktop",
-			(Locales.JP, "終了"))
+			(Locales.JP, "ゲーム終了"))
 			{ ID = "to_desktop" };
 		
-		public static readonly LString pause_header = new LString("Pause",
+		public static readonly LString pause_header = new LString("PAUSE",
 			(Locales.JP, "一時停止"))
 			{ ID = "pause_header" };
 		
@@ -216,6 +216,35 @@ public static partial class LocalizedStrings {
 		public static readonly LString record_view_replay = new LString("Go to replay",
 			(Locales.JP, "リプレイを見る"))
 			{ ID = "record_view_replay" };
+		
+		public static readonly LString saveload_header = new LString("Save/Load",
+			(Locales.JP, "保存・ロード"))
+			{ ID = "saveload_header" };
+		
+		public static string saveload_what_do(object arg0) => Localization.Locale.Value switch {
+			Locales.JP => Render(Localization.Locale.Value, new[] {
+				"サーブファイル",
+				"{0}",
+				"で何をする？",
+			}, arg0),
+			_ => Render(Localization.Locale.Value, new[] {
+				"What would you like to do with save file ",
+				"{0}",
+				"?",
+			}, arg0),
+		};
+		
+		public static LString saveload_what_do_ls(object arg0) => new LString(Render(null, new[] {
+				"What would you like to do with save file ",
+				"{0}",
+				"?",
+			}, arg0),
+			(Locales.JP, Render(Locales.JP, new[] {
+				"サーブファイル",
+				"{0}",
+				"で何をする？",
+			}, arg0)))
+			{ ID = "saveload_what_do" };
 		
 		public static string practice_stage(object arg0) => Localization.Locale.Value switch {
 			Locales.JP => Render(Localization.Locale.Value, new[] {
@@ -507,10 +536,12 @@ public static partial class LocalizedStrings {
 		public static readonly LString difficulty_custom = new LString("Custom")
 			{ ID = "difficulty_custom" };
 		
-		public static readonly LString play_game = new LString("Start!")
+		public static readonly LString play_game = new LString("Start!",
+			(Locales.JP, "スタート！"))
 			{ ID = "play_game" };
 		
-		public static readonly LString main_gamestart = new LString("Play!")
+		public static readonly LString main_gamestart = new LString("Play!",
+			(Locales.JP, "プレイ！"))
 			{ ID = "main_gamestart" };
 		
 		public static readonly LString main_main = new LString("Main Scenario")
@@ -519,7 +550,8 @@ public static partial class LocalizedStrings {
 		public static readonly LString main_extra = new LString("Extra Stage")
 			{ ID = "main_extra" };
 		
-		public static readonly LString main_lang = new LString("Language")
+		public static readonly LString main_lang = new LString("Language",
+			(Locales.JP, "言語"))
 			{ ID = "main_lang" };
 		
 		public static readonly LString main_stageprac = new LString("Stage Practice")
@@ -528,35 +560,57 @@ public static partial class LocalizedStrings {
 		public static readonly LString main_bossprac = new LString("Boss Practice")
 			{ ID = "main_bossprac" };
 		
-		public static readonly LString main_scores = new LString("Records")
+		public static readonly LString main_scores = new LString("Records",
+			(Locales.JP, "ゲーム履歴"))
 			{ ID = "main_scores" };
 		
-		public static readonly LString main_playerdata = new LString("Player Data")
+		public static readonly LString main_playerdata = new LString("Player Data",
+			(Locales.JP, "プレイヤーデータ"))
 			{ ID = "main_playerdata" };
 		
-		public static readonly LString main_stats = new LString("Stats")
+		public static readonly LString main_stats = new LString("Statistics",
+			(Locales.JP, "統計表"))
 			{ ID = "main_stats" };
 		
-		public static readonly LString main_achievements = new LString("Achievements")
+		public static readonly LString main_achievements = new LString("Achievements",
+			(Locales.JP, "トローフィ"))
 			{ ID = "main_achievements" };
 		
-		public static readonly LString main_musicroom = new LString("Music Room")
+		public static readonly LString main_musicroom = new LString("Music Room",
+			(Locales.JP, "音楽"))
 			{ ID = "main_musicroom" };
 		
-		public static readonly LString main_replays = new LString("Replays")
+		public static readonly LString main_replays = new LString("Replays",
+			(Locales.JP, "リプレイ"))
 			{ ID = "main_replays" };
 		
-		public static readonly LString main_tutorial = new LString("Tutorial")
+		public static readonly LString main_tutorial = new LString("Tutorial",
+			(Locales.JP, "チュートリアル"))
 			{ ID = "main_tutorial" };
 		
-		public static readonly LString main_options = new LString("Options")
+		public static readonly LString main_options = new LString("Options",
+			(Locales.JP, "環境設定"))
 			{ ID = "main_options" };
 		
-		public static readonly LString main_quit = new LString("Quit")
+		public static readonly LString main_quit = new LString("Quit",
+			(Locales.JP, "ゲーム終了"))
 			{ ID = "main_quit" };
 		
-		public static readonly LString main_twitter = new LString("Twitter (Browser)")
+		public static readonly LString main_twitter = new LString("Twitter",
+			(Locales.JP, "ツイッターへ"))
 			{ ID = "main_twitter" };
+		
+		public static readonly LString main_newgame = new LString("New Game",
+			(Locales.JP, "はじめから"))
+			{ ID = "main_newgame" };
+		
+		public static readonly LString main_continue = new LString("Continue",
+			(Locales.JP, "つづきから"))
+			{ ID = "main_continue" };
+		
+		public static readonly LString main_load = new LString("Load",
+			(Locales.JP, "ロード"))
+			{ ID = "main_load" };
 		
 		public static readonly LString replay_name = new LString("Name",
 			(Locales.JP, "リプレイ名"))

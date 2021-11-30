@@ -16,6 +16,7 @@ using UnityEngine;
 public static class FileUtils {
     public const string SAVEDIR = "DMK_Saves/";
     public const string AYADIR = SAVEDIR + "Aya/";
+    public const string VNDIR = SAVEDIR + "VN/";
 
     private static readonly JsonSerializerSettings JsonSettings = new JsonSerializerSettings() {
         TypeNameHandling = TypeNameHandling.Auto,
@@ -38,9 +39,8 @@ public static class FileUtils {
     
     public static void WriteJson(string file, object obj) {
         CheckDirectory(file);
-        using (StreamWriter sw = new StreamWriter(file)) {
-            sw.WriteLine(JsonConvert.SerializeObject(obj, Formatting.Indented, JsonSettings));
-        }
+        using StreamWriter sw = new(file);
+        sw.WriteLine(JsonConvert.SerializeObject(obj, Formatting.Indented, JsonSettings));
     }
 
     public static void WriteProto(string file, object obj) {
@@ -84,7 +84,11 @@ public static class FileUtils {
         output.Position = 0;
         return output;
     }
-    
+
+    public static string Read(string file) {
+        using StreamReader sr = new(file);
+        return sr.ReadToEnd();
+    }
     public static T? ReadJson<T>(string file) where T : class {
         try {
             using (StreamReader sr = new(file)) {
@@ -131,7 +135,7 @@ public static class FileUtils {
         CheckDirectory(file);
         File.WriteAllBytes(file, tex.EncodeToJPG(95));
     }
-
+    
     public static void WriteString(string file, string text) {
         CheckDirectory(file);
         File.WriteAllText(file, text);

@@ -1,0 +1,13 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/Danmokou/UXML/nodes/UINode.uss?fileID=7433441132597879392&amp;guid=908aa769b12ea7c44aae7ea3f797c582&amp;type=3#UINode" />
+    <ui:VisualElement class="node saveentry" style="height: 380px; width: 100%;">
+        <ui:VisualElement name="Selector" class="pointer prefix" />
+        <ui:VisualElement name="Body" class="body" style="flex-direction: row; flex-grow: 1; border-top-width: 7px; border-left-width: 7px; border-right-width: 7px; border-bottom-width: 7px; border-top-left-radius: 30px; border-bottom-left-radius: 30px; border-top-right-radius: 30px; border-bottom-right-radius: 30px; padding-left: 30px; padding-right: 60px; padding-top: 30px; padding-bottom: 30px; align-items: center;">
+            <ui:VisualElement name="SS" class="saveentry-ss" style="height: 342px; width: 608px;" />
+            <ui:VisualElement style="margin-left: 80px; -unity-text-align: upper-center; align-items: flex-start; flex-grow: 1; height: 94%;">
+                <ui:Label text="Save #1" name="Title" class="text saveentry-title" style="flex-shrink: 0;" />
+                <ui:Label text="Titles like &quot;crimson phoenix&quot; and &quot;vermilion phoenix&quot; are deeply historical concepts. So you can&apos;t eyeball a color wheel to understand them." name="Description" class="text saveentry-description" style="letter-spacing: -2px; font-size: 58px;" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

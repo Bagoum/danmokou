@@ -63,6 +63,8 @@ public class UINode {
     /// The .node VisualElement constructed by this node. Usually points to the only child of HTML, which should have the class .node.
     /// </summary>
     public VisualElement NodeHTML { get; private set; } = null!;
+    public VisualElement BodyHTML => NodeHTML.Q("Body");
+
     /// <summary>
     /// Parent of HTML. Either Render.HTML or a descendant of Render.HTML.
     /// </summary>
@@ -70,13 +72,18 @@ public class UINode {
     /// <summary>
     /// The top-level descriptor label for this node.
     /// </summary>
-    protected Label? Label { get; set; }
+    public Label? Label { get; set; }
 
     public bool IsEnabled { get; private set; } = true;
     
+    /// <summary>
+    /// Cached result of VisibleIf.
+    /// </summary>
     private bool _visible = true;
     
     public bool AllowInteraction => (Passthrough != true) && Group.Interactable && _visible;
+    public int IndexInGroup => Group.Nodes.IndexOf(this);
+    public bool Destroyed { get; private set; } = false;
     
     #region InitOptions
 
@@ -94,6 +101,8 @@ public class UINode {
     /// <summary>
     /// Provide a function that determines whether or not the node is visible.
     ///  By default, a node is always visible.
+    /// <br/>Note that this does not override group visibility; if a group is not visible,
+    ///  none of its nodes will be visible.
     /// </summary>
     public Func<bool>? VisibleIf { private get; init; }
     /// <summary>
@@ -174,7 +183,7 @@ public class UINode {
     public UIScreen Screen => Group.Screen;
     public UIController Controller => Group.Controller;
     /// <summary>
-    /// Creates a ReturnToTargetGroupCaller targeting this node.
+    /// Creates a ReturnToTargetGroupCaller targeting this node's group.
     /// </summary>
     public UIResult ReturnGroup => new UIResult.ReturnToTargetGroupCaller(this);
 
@@ -196,9 +205,9 @@ public class UINode {
         NodeHTML.RegisterCallback<MouseUpEvent>(evt => {
             //Logs.Log($"Click {Description}");
             //button 0, 1, 2 = left, right, middle click
-            if (AllowInteraction)
-                Controller.QueuedEvent = new UIMouseCommand.NormalCommand(
-                    evt.button == 1 ? UICommand.Back : UICommand.Confirm, this);
+            //Right click is handled as UIBack in InputManager
+            if (AllowInteraction && evt.button == 0)
+                Controller.QueuedEvent = new UIMouseCommand.NormalCommand(UICommand.Confirm, this);
             evt.StopPropagation();
         });
     }
@@ -214,6 +223,7 @@ public class UINode {
     }
 
     public void Remove() {
+        Destroyed = true;
         Group.Nodes.Remove(this);
         ContainerHTML.Remove(HTML);
     }
@@ -233,15 +243,27 @@ public class UINode {
     }
 
     private static UINodeVisibility Max(UINodeVisibility a, UINodeVisibility b) => a > b ? a : b;
+
+    /// <summary>
+    /// Cached result of whether or not this node rendered (ie. _visible && Group.Visible)
+    /// </summary>
+    private bool lastFrameRendered = true;
     public void Redraw(UINodeVisibility visibility) {
+        _visible = VisibleIf?.Invoke() ?? true;
+        //Don't do any HTML updates if the node is not rendered between both frames.
+        //This makes structures such as save/load (~1/10 of nodes are rendered at a time) much more efficient.
+        var thisFrameRender = _visible && Group.Visible;
+        if (!lastFrameRendered && !thisFrameRender)
+            return;
+        
+        lastFrameRendered = thisFrameRender;
         NodeHTML.ClearClassList();
         foreach (var c in boundClasses)
             NodeHTML.AddToClassList(c);
-        _visible = VisibleIf?.Invoke() ?? true;
         //For inaccessible groups, we make them group-focused
         if (visibility >= UINodeVisibility.Default && !Group.HasInteractableNodes)
             visibility = Max(visibility, UINodeVisibility.GroupFocused);
-        NodeHTML.AddToClassList((!Group.Visible || !_visible) ? "invisible" : visibility switch {
+        NodeHTML.AddToClassList(!thisFrameRender ? "invisible" : visibility switch {
             UINodeVisibility.Active => "focus",
             UINodeVisibility.Focused => "focus",
             UINodeVisibility.GroupFocused => "group",
@@ -254,10 +276,10 @@ public class UINode {
             NodeHTML.AddToClassList("active");
         foreach (var cls in OverrideClasses)
             NodeHTML.AddToClassList(cls);
-        InlineStyle?.Invoke(visibility, this);
         if (!(IsEnabled = EnabledIf?.Invoke() ?? true))
             NodeHTML.AddToClassList(disabledClass);
         Rebind();
+        InlineStyle?.Invoke(visibility, this);
     }
     
     #endregion
@@ -295,7 +317,7 @@ public class UINode {
                     _ = anim(animToken);
             }
         }
-        ShowHideGroup?.Show();
+        ShowHideGroup?.EnterShow();
         OnEnter?.Invoke(this);
         Group.EnteredNode(this, animate);
     }
@@ -310,12 +332,12 @@ public class UINode {
                     _ = anim(animToken);
             }
         }
-        ShowHideGroup?.Hide();
+        ShowHideGroup?.LeaveHide();
         OnLeave?.Invoke(this);
     }
     protected virtual IEnumerable<Func<ICancellee, Task>> EnterAnimations() {
         if (UseDefaultAnimations) {
-            yield return cT => NodeHTML.transform.ScaleTo(1.03f, 0.1f, Easers.EOutSine, cT)
+            yield return cT => NodeHTML.transform.ScaleTo(1.02f, 0.1f, Easers.EOutSine, cT)
                                 .Then(() => NodeHTML.transform.ScaleTo(1f, 0.13f, cT: cT))
                                 .Run(Controller, new CoroutineOptions(true));
         }
@@ -327,13 +349,6 @@ public class UINode {
     #endregion
 }
 
-public class ValuedUINode<T> : UINode {
-    public T Value { get; }
-
-    public ValuedUINode(LString desc, T value) : base(desc) {
-        this.Value = value;
-    }
-}
 public class PassthroughNode : UINode {
     public PassthroughNode(LString? desc = null) : base(desc ?? LString.Empty) {
         Passthrough = true;
@@ -361,6 +376,7 @@ public class FuncNode : UINode {
     public FuncNode(Func<LString> description, Func<FuncNode, UIResult> command) : base(description) {
         this.Command = command;
     }
+    public FuncNode(LString description, Func<FuncNode, UIResult> command) : this(() => description, command) { }
     public FuncNode(Func<LString> description, Func<UIResult> command) : this(description, _ => command()) { }
     public FuncNode(LString description, Func<UIResult> command) : this(() => description, command) { }
     public FuncNode(Func<LString> description, Action command) : this(description, () => {
@@ -426,12 +442,13 @@ public class ConfirmFuncNode : UINode {
     }
 }
 
-public interface IOptionNodeLR {
+public interface IBaseOptionNodeLR {
     int Index { get; set; }
 }
 //Separated for buildMap compatibilty
-public interface IComplexOptionNodeLR {
-    int Index { get; set; }
+public interface IOptionNodeLR : IBaseOptionNodeLR {
+}
+public interface IComplexOptionNodeLR : IBaseOptionNodeLR {
 }
 public abstract class BaseLROptionUINode<T> : UINode {
     protected int index;
@@ -501,7 +518,7 @@ public class OptionNodeLR<T> : BaseLROptionUINode<T>, IOptionNodeLR {
     }
 
     private void ScaleEndpoint(VisualElement ep) {
-        ep.ScaleTo(1.27f, 0.06f, Easers.EOutSine)
+        ep.ScaleTo(1.35f, 0.06f, Easers.EOutSine)
             .Then(() => ep.ScaleTo(1f, 0.15f))
             .Run(Controller);
     }
@@ -596,28 +613,37 @@ public class TextInputNode : UINode {
 
     private static readonly string[] validChars = 
         "abcdefghijklmnopqrstuvwxyz0123456789".Select(x => x.ToString()).ToArray();
+
+    private static string KCToString(KeyCode kc) {
+        if (kc is >= KeyCode.A and <= KeyCode.Z)
+            return ((char)('a' + (kc - KeyCode.A))).ToString();
+        if (kc is >= KeyCode.Alpha0 and <= KeyCode.Alpha9)
+            return ((char)('0' + (kc - KeyCode.Alpha0))).ToString();
+        throw new Exception($"No handling for keycode {kc}");
+    }
     
     public override UIResult? CustomEventHandling() {
         if (!isEntryEnabled) return null;
-        if (Input.GetKeyDown(KeyCode.Space)) {
+        if (InputManager.GetKeyTrigger(KeyCode.Space).Active) {
             DataWIP = DataWIP.Insert(bdCursorIdx, " ");
             ++cursorIdx;
             return new UIResult.StayOnNode();
         }
-        foreach (var kc in validChars)
-            if (Input.GetKeyDown(kc)) {
-                DataWIP = DataWIP.Insert(bdCursorIdx, (Input.GetKey(KeyCode.LeftShift) || 
-                                                       Input.GetKey(KeyCode.RightShift)) ? kc.ToUpper() : kc);
+        foreach (var kc in InputManager.Alphanumeric)
+            if (InputManager.GetKeyTrigger(kc).Active) {
+                DataWIP = DataWIP.Insert(bdCursorIdx, (InputManager.GetKeyTrigger(KeyCode.LeftShift).Active || 
+                                                       InputManager.GetKeyTrigger(KeyCode.RightShift).Active) ? 
+                    KCToString(kc).ToUpper() : KCToString(kc).ToLower());
                 ++cursorIdx;
                 return new UIResult.StayOnNode();
             }
-        if (Input.GetKeyDown(KeyCode.Backspace)) {
+        if (InputManager.GetKeyTrigger(KeyCode.Backspace).Active) {
             DataWIP =
                 ((cursorIdx > 1) ? DataWIP[..(cursorIdx - 1)] : "") +
                 ((cursorIdx < DataWIP.Length) ? DataWIP[cursorIdx..] : "");
             cursorIdx = Math.Max(0, cursorIdx - 1);
             return new UIResult.StayOnNode();
-        } else if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.Escape)) {
+        } else if (InputManager.GetKeyTrigger(KeyCode.Return).Active || InputManager.GetKeyTrigger(KeyCode.Escape).Active) {
             return EnableDisableEntry();
         } else return null;
     }
@@ -640,7 +666,7 @@ public class TextInputNode : UINode {
     protected override UIResult NavigateInternal(UICommand req) => req switch {
         UICommand.Left => Left(),
         UICommand.Right => Right(),
-        UICommand.Confirm => EnableDisableEntry(),
+        UICommand.Confirm => !isEntryEnabled ? EnableDisableEntry() : base.NavigateInternal(req),
         UICommand.Back => isEntryEnabled ? EnableDisableEntry() : base.NavigateInternal(req),
         _ => base.NavigateInternal(req)
     };
@@ -648,23 +674,6 @@ public class TextInputNode : UINode {
     public override void Leave(bool animate) {
         isEntryEnabled = false;
         base.Leave(animate);
-    }
-}
-
-public class PopupUINode : UINode {
-    public Label Header => NodeHTML.Q<Label>("Header");
-    public VisualElement Body => NodeHTML.Q("BodyHTML");
-    public VisualElement Options => NodeHTML.Q("OptionsHTML");
-
-    public bool EasyExit { get; init; } = true;
-
-    public PopupUINode(LString? header) : base(header ?? LString.Empty) {
-        
-    }
-
-    protected override void Rebind() {
-        var header = Header.text = Description();
-        Header.style.display = string.IsNullOrEmpty(header) ? DisplayStyle.None : DisplayStyle.Flex;
     }
 }
 
@@ -697,11 +706,11 @@ public class UIButton : UINode {
 
     public static UIButton Cancel(UINode source) =>
         new(() => LocalizedStrings.Generic.generic_cancel, ButtonType.Cancel, _ => 
-            new UIResult.ReturnToTargetGroupCaller(source.Group.Hierarchy));
+            new UIResult.ReturnToTargetGroupCaller(source.Group));
     
     public static UIButton Back(UINode source) =>
         new(() => LocalizedStrings.Generic.generic_back, ButtonType.Cancel, _ => 
-            new UIResult.ReturnToTargetGroupCaller(source.Group.Hierarchy));
+            new UIResult.ReturnToTargetGroupCaller(source.Group));
 
     public static UIButton Delete(Func<bool> deleter, Func<UIResult> returner) =>
         new(() => LocalizedStrings.Generic.generic_delete, ButtonType.Danger, 
@@ -710,8 +719,8 @@ public class UIButton : UINode {
     public static UIButton Save(Func<bool> saver, UIResult returner) =>
         new(() => LocalizedStrings.Generic.generic_save, ButtonType.Confirm, 
             _ => saver() ? returner : new UIResult.StayOnNode(true));
-    public static UIButton Load(Func<bool> load, UIResult returner) =>
-        new(() => LocalizedStrings.Generic.generic_load, ButtonType.Confirm, 
+    public static UIButton Load(Func<bool> load, UIResult returner, bool danger=false) =>
+        new(() => LocalizedStrings.Generic.generic_load, danger ? ButtonType.Danger : ButtonType.Confirm, 
             _ => load() ? returner : new UIResult.StayOnNode(true));
     
     protected override void Rebind() {

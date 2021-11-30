@@ -12,7 +12,7 @@ public class ActiveTeamConfig {
     //Index/subshot in team are initial values, which may be overriden here by eg. powerups.
     public int SelectedIndex { get; set; }
     public Subshot Subshot { get; set; }
-    public SupportAbility Support { get; }
+    public Ability Support { get; }
     public (ShipConfig ship, ShotConfig shot)[] Ships => team.ships;
     public ShipConfig Ship => team.ships[SelectedIndex].ship;
     public ShotConfig Shot => team.ships[SelectedIndex].shot;
@@ -23,17 +23,17 @@ public class ActiveTeamConfig {
         this.team = team;
         SelectedIndex = team.selectedIndex;
         Subshot = team.subshot;
-        Support = team.supportAbility?.Value ?? new NullAbility();
+        Support = team.supportAbility?.Value ?? new Ability.Null();
     }
 }
 public readonly struct TeamConfig {
     public readonly (ShipConfig ship, ShotConfig shot)[] ships;
     public readonly int selectedIndex;
-    public readonly ISupportAbilityConfig? supportAbility;
+    public readonly IAbilityCfg? supportAbility;
     public readonly Subshot subshot;
     public bool HasMultishot => ships.Any(s => s.shot.isMultiShot);
     
-    public TeamConfig(int which, Subshot sub, ISupportAbilityConfig? support, params (ShipConfig, ShotConfig)[] ships) {
+    public TeamConfig(int which, Subshot sub, IAbilityCfg? support, params (ShipConfig, ShotConfig)[] ships) {
         this.ships = ships;
         this.supportAbility = support;
         selectedIndex = which;

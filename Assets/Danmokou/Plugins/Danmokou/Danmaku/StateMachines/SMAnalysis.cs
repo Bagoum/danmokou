@@ -213,7 +213,7 @@ public static class SMAnalysis {
         public DayPhase? Next {
             get {
                 var idx = boss.phases.IndexOf(this);
-                if (idx > 0)
+                if (idx >= 0)
                     return boss.phases.Try(idx + 1);
                 else
                     return null;

@@ -39,13 +39,13 @@ public class ReplayMetadata {
     public ReplayMetadata(InstanceRecord rec, bool debug=false) {
         Record = rec;
         Debug = debug;
-        DialogueSpeed = SaveData.s.DialogueSpeed;
+        DialogueSpeed = SaveData.VNSettings.TextSpeed;
         SmoothInput = SaveData.s.AllowInputLinearization;
         Locale = SaveData.s.Locale;
     }
 
     public void ApplySettings() {
-        SaveData.s.DialogueSpeedEv.OnNext(DialogueSpeed);
+        SaveData.VNSettings.TextSpeed = DialogueSpeed;
         SaveData.s.AllowInputLinearization = SmoothInput;
         SaveData.UpdateLocale(Locale);
     }

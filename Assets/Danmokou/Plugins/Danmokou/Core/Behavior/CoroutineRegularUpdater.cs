@@ -13,7 +13,7 @@ public class CoroutineRegularUpdater : RegularUpdater, ICoroutineRunner {
     protected void ForceClosingFrame() {
         coroutines.Close();
         if (coroutines.Count > 0) {
-            Logs.UnityError($"{gameObject.name} has {coroutines.Count} leftover coroutines." +
+            Logs.UnityError($"{this.GetType().Name} ({gameObject.name}) has {coroutines.Count} leftover coroutines." +
                            $" This should only occur on hard shutdowns.");
             //coroutines.Close(); //For debugging
         }

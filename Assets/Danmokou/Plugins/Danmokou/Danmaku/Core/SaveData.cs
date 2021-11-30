@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reactive;
+using System.Runtime.Serialization;
 using BagoumLib;
 using BagoumLib.Culture;
 using BagoumLib.Events;
@@ -12,9 +13,11 @@ using Danmokou.GameInstance;
 using Danmokou.Graphics;
 using Danmokou.Services;
 using Danmokou.SM;
+using Danmokou.VN;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
 using ProtoBuf;
+using Suzunoya.Data;
 using Suzunoya.Dialogue;
 using UnityEngine;
 using UnityEngine.Profiling;
@@ -23,26 +26,16 @@ using static FileUtils;
 
 namespace Danmokou.Core {
 public static class SaveData {
-    private const string SETTINGS = FileUtils.SAVEDIR + "settings.txt";
-    private static string RECORD => FileUtils.SAVEDIR + $"record-{GameManagement.References.gameIdentifier}.txt";
+    private const string SETTINGS = FileUtils.SAVEDIR + "settings.json";
+    private static string RECORD => FileUtils.SAVEDIR + $"record-{GameManagement.References.gameIdentifier}.json";
     private const string REPLAYS_DIR = FileUtils.SAVEDIR + "Replays/";
 
     [Serializable]
-    [ProtoContract]
     public class Record {
-        [ProtoMember(1)] public bool TutorialDone = false;
-        [ProtoMember(2)] public Dictionary<string, InstanceRecord> FinishedGames { get; init; } = new();
-        [ProtoMember(3)] public Dictionary<string, State> Achievements { get; init; } = new();
-
-        public State? GetAchievementState(string acvKey) =>
-            Achievements.TryGetValue(acvKey, out var s) ? s : (State?) null;
-
-        public void UpdateAchievement(Achievement a) {
-            if (!GetAchievementState(a.Key).Try(out var s) || s < a.State) {
-                Achievements[a.Key] = a.State;
-            }
-            SaveRecord();
-        }
+        public bool TutorialDone = false;
+        public Dictionary<string, InstanceRecord> FinishedGames { get; init; } = new();
+        public Dictionary<string, State> Achievements { get; init; } = new();
+        public GlobalData GlobalVNData { get; init; } = new();
 
         [JsonIgnore]
         public IEnumerable<InstanceRecord> FinishedCampaignGames => 
@@ -63,6 +56,17 @@ public static class SaveData {
 
         public static readonly Event<Unit> TutorialCompleted = new();
 
+        
+        public State? GetAchievementState(string acvKey) =>
+            Achievements.TryGetValue(acvKey, out var s) ? s : (State?) null;
+
+        public void UpdateAchievement(Achievement a) {
+            if (!GetAchievementState(a.Key).Try(out var s) || s < a.State) {
+                Achievements[a.Key] = a.State;
+            }
+            SaveRecord();
+        }
+        
         public void CompleteTutorial() {
             TutorialDone = true;
             TutorialCompleted.OnNext(default);
@@ -129,29 +133,25 @@ public static class SaveData {
         public string? Locale = null;
         public bool Shaders = true;
         public bool LegacyRenderer = false;
-        public int RefreshRate = 60;
         public (int w, int h) Resolution = GraphicsUtils.BestResolution;
 #if UNITY_EDITOR
-        public bool SaveAsBinary = false;
         public static bool TeleportAtPhaseStart => true;
 #else
-        public bool SaveAsBinary = false;
-        //Don't change this!
+        //Don't change this! TeleportAtPhaseStart is a editor utility.
         public static bool TeleportAtPhaseStart => false;
 #endif
         public float Screenshake = 1f;
         public FullScreenMode Fullscreen = FullScreenMode.FullScreenWindow;
-        public int Vsync = 1;
+        public int Vsync = 0;
         public bool UnfocusedHitbox = true;
-        //Don't assign to this, use the event instead
-        public float DialogueSpeed = 1f;
-        [NonSerialized] public Evented<float> DialogueSpeedEv = null!;
         public float BGMVolume = 1f;
         [NonSerialized] public Evented<float> BGMVolumeEv = null!;
         public float SEVolume = 1f;
         public float TypingSoundVolume = 1f;
         public bool Backgrounds = true;
         public bool AllowControllerInput = true;
+        [NonSerialized] public Evented<float> DialogueOpacityEv = null!;
+        public float DialogueOpacity = 0.9f;
 
         public bool ProfilingEnabled = false;
         
@@ -168,16 +168,6 @@ public static class SaveData {
             return succ;
         }
 
-        public static int DefaultRefresh {
-            get {
-                int hz = Screen.currentResolution.refreshRate;
-                if (hz < 35) return 30;
-                else if (hz < 50) return 40;
-                else if (hz < 80) return 60;
-                else if (hz < 160) return 120;
-                return 60;
-            }
-        }
         public static Settings Default {
             get {
                 int w = Screen.currentResolution.width;
@@ -204,10 +194,8 @@ public static class SaveData {
                     LegacyRenderer = true,
                     UnfocusedHitbox = false,
                     Vsync = 0,
-                    RefreshRate = 60,
                     Resolution = (1600, 900),
 #else
-                    RefreshRate = DefaultRefresh,
                     Resolution = Resolution,
 #endif
                 };
@@ -215,18 +203,72 @@ public static class SaveData {
         }
     }
 
+    public class VNSaves {
+        private const string VNMETAEXT = ".txt";
+        private const string VNIMGEXT = ".jpg";
+        private const string VNDATAEXT = ".dat";
+
+        public Dictionary<int, SavedInstance> Saves { get; } = new();
+        public SavedInstance MostRecentSave => Saves.Values.MaxBy(s => s.SaveTime);
+
+        public VNSaves() {
+            foreach (var save in FileUtils.EnumerateDirectory(VNDIR)
+                .Where(f => f.EndsWith(VNMETAEXT))
+                .Select(f => f[..^VNMETAEXT.Length])
+                .SelectNotNull(f => {
+                    try {
+                        var metadata = ReadJson<SavedInstance>(f + VNMETAEXT);
+                        if (metadata?.GameIdentifier != GameManagement.References.gameIdentifier)
+                            return null;
+                        return metadata;
+                    } catch (Exception e) {
+                        Logs.Log($"Failed to read replay data: {e.Message}", true, LogLevel.WARNING);
+                        return null;
+                    }
+                })) {
+                if (!Saves.ContainsKey(save.Slot) || save.SaveTime > Saves[save.Slot].SaveTime)
+                    Saves[save.Slot] = save;
+            }
+        }
+        private static string SaveFilename(SavedInstance inst) => VNDIR + inst.Filename;
+        
+        public void SaveNewSave(SavedInstance inst) {
+            var prev = Saves.TryGetValue(inst.Slot, out var _prev) ? _prev : null;
+            Logs.Log($"Saving vn-save {inst.DesiredSaveLocation} at slot {inst.Slot}. " +
+                     $"Previous exists at this slot: {prev != null}");
+            WriteJson(inst.DesiredSaveLocation, inst);
+            if (prev != null)
+                TryDeleteSave(prev);
+            Saves[inst.Slot] = inst;
+        }
+        public bool TryDeleteSave(SavedInstance inst) {
+            if (!Saves.Values.Contains(inst)) return false;
+            try {
+                File.Delete(inst.DesiredSaveLocation);
+                inst.RemoveFromDisk();
+            } catch (Exception e) {
+                Logs.Log(e.Message, true, LogLevel.WARNING);
+            }
+            Saves.Remove(inst.Slot);
+            return true;
+        }
+        
+    }
     public class Replays {
+
+        private const string RMETAEXT = ".txt";
+        private const string RFRAMEEXT = ".dat";
         public List<Replay> ReplayData { get; }
 
         public Replays() {
             ReplayData = FileUtils.EnumerateDirectory(REPLAYS_DIR)
                 .Where(f => f.EndsWith(RMETAEXT))
-                .Select(f => f.Substring(0, f.Length - RMETAEXT.Length))
-                .SelectNotNull<string, Replay>(f => {
+                .Select(f => f[..^RMETAEXT.Length])
+                .SelectNotNull(f => {
                     try {
                         var metadata = ReadJson<ReplayMetadata>(f + RMETAEXT);
-                        if (metadata == null || metadata.Record.GameIdentifier !=
-                            GameManagement.References.gameIdentifier) return null;
+                        if (metadata?.Record.GameIdentifier != GameManagement.References.gameIdentifier) 
+                            return null;
                         return new Replay(LoadReplayFrames(f), metadata);
                     } catch (Exception e) {
                         Logs.Log($"Failed to read replay data: {e.Message}", true, LogLevel.WARNING);
@@ -236,6 +278,14 @@ public static class SaveData {
                 .OrderByDescending(r => r.metadata.Record.Date).ToList();
         }
 
+        public void SaveNewReplay(Replay r) {
+            var filename = ReplayFilename(r);
+            var f = r.frames();
+            Logs.Log($"Saving replay {filename} with {f.Length} frames.");
+            WriteJson(filename + RMETAEXT, r.metadata);
+            SaveReplayFrames(filename, f);
+            ReplayData.Insert(0, new Replay(LoadReplayFrames(filename), r.metadata));
+        }
         public bool TryDeleteReplay(Replay r) {
             if (!ReplayData.Contains(r)) return false;
             var filename = ReplayFilename(r);
@@ -248,9 +298,6 @@ public static class SaveData {
             ReplayData.Remove(r);
             return true;
         }
-
-        private const string RMETAEXT = ".txt";
-        private const string RFRAMEEXT = ".dat";
         private static string ReplayFilename(Replay r) => REPLAYS_DIR + r.metadata.AsFilename;
 
         private static InputManager.FrameInput[] AssertReplayLength(InputManager.FrameInput[] frames) {
@@ -266,30 +313,19 @@ public static class SaveData {
         public static void SaveReplayFrames(string file, InputManager.FrameInput[] frames) =>
             WriteProtoCompressed(file + RFRAMEEXT, frames);
 
-        public void SaveNewReplay(Replay r) {
-            var filename = ReplayFilename(r);
-            var f = r.frames();
-            Logs.Log($"Saving replay {filename} with {f.Length} frames.");
-            WriteJson(filename + RMETAEXT, r.metadata);
-            SaveReplayFrames(filename, f);
-            ReplayData.Insert(0, new Replay(LoadReplayFrames(filename), r.metadata));
-        }
     }
 
     public static Settings s { get; }
     public static Record r { get; }
-
     public static Replays p { get; }
+    public static VNSaves v { get; }
+    public static Suzunoya.Data.Settings VNSettings => r.GlobalVNData.Settings;
 
     static SaveData() {
         s = ReadJson<Settings>(SETTINGS) ?? Settings.Default;
-        s.RefreshRate = Settings.DefaultRefresh;
-        s.DialogueSpeedEv = new Evented<float>(s.DialogueSpeed);
-        _ = SpeechSettings.SpeedMultiplier.AddDisturbance(s.DialogueSpeedEv);
-        _ = s.DialogueSpeedEv.Subscribe(v => s.DialogueSpeed = v);
-        s.BGMVolumeEv = new Evented<float>(s.BGMVolume);
-        _ = s.BGMVolumeEv.Subscribe(v => s.BGMVolume = v);
-        ETime.SetForcedFPS(s.RefreshRate);
+        s.BGMVolumeEv = new(s.BGMVolume);
+        _ = s.BGMVolumeEv.Subscribe(vol => s.BGMVolume = vol);
+        s.DialogueOpacityEv = new(s.DialogueOpacity);
         UpdateResolution(s.Resolution);
         UpdateFullscreen(s.Fullscreen);
         UpdateAllowController(s.AllowControllerInput);
@@ -299,18 +335,13 @@ public static class SaveData {
         r = ReadRecord() ?? new Record();
         Achievement.AchievementStateUpdated.Subscribe(r.UpdateAchievement);
         p = new Replays();
+        v = new VNSaves();
         StartProfiling();
     }
 
-    private static Record? ReadRecord() => s.SaveAsBinary ? ReadProto<Record>(RECORD) : ReadJson<Record>(RECORD);
+    private static Record? ReadRecord() => ReadJson<Record>(RECORD);
 
-    public static void SaveRecord() {
-        if (s.SaveAsBinary) {
-            WriteProto(RECORD, r);
-        } else {
-            WriteJson(RECORD, r);
-        }
-    }
+    public static void SaveRecord() => WriteJson(RECORD, r);
 
     //Screen.setRes does not take effect immediately, so we need to do this on-change instead of together with
     //shader variable reassignment
@@ -340,7 +371,8 @@ public static class SaveData {
 
     public static void AssignSettingsChanges() {
         WriteJson(SETTINGS, s);
-        ETime.SetForcedFPS(s.RefreshRate);
+        //dialogue speed settings are stored in the global VN info in record
+        SaveData.SaveRecord();
         ETime.SetVSync(s.Vsync);
         SettingsChanged.OnNext(s);
     }

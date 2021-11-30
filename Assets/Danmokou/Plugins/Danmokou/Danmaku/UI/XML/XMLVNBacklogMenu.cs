@@ -25,7 +25,7 @@ namespace Danmokou.UI.XML {
 /// </summary>
 [Preserve]
 public class XMLVNBacklogMenu : PausedGameplayMenu, IVNBacklog {
-    public static int BacklogCount { get; set; } = 69;
+    public static int BacklogCount { get; set; } = 120;
     private ICancellee? currToken;
     private ExecutingVN? currVn;
     private ExecutingVN? CurrVN {
@@ -45,7 +45,7 @@ public class XMLVNBacklogMenu : PausedGameplayMenu, IVNBacklog {
         MainScreen = new UIScreen(this, "BACKLOG", UIScreen.Display.OverlayTH)  { Builder = (s, ve) => {
             s.Margin.SetLRMargin(720, 720);
             ve.AddScrollColumn().style.backgroundColor = new Color(0, 0, 0, .25f);
-        }, BackgroundOpacity = 0.8f  };
+        }, MenuBackgroundOpacity = 0.8f  };
         backlogEntries = new UIColumn(MainScreen, null) {
             EntryIndexOverride = () => -1
         };
@@ -68,8 +68,7 @@ public class XMLVNBacklogMenu : PausedGameplayMenu, IVNBacklog {
         using var pdisabler = pauseMenu.UpdatesEnabled.AddConst(false);
         await overlay.Fade(null, 1, 0.8f, null);
         backlogger(loc);
-        HideMe();
-        await overlay.Fade(1, 1, 0.5f, null);
+        await Task.WhenAll(HideMe(), overlay.Fade(1, 1, 0.5f, null));
         await overlay.Fade(null, 0, 0.4f, null);
     }
 

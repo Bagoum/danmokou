@@ -33,7 +33,7 @@ gtr {
 		dynamic polar 
 			* 2 t
 			+ (40 * (&lt + &st)) sine(2.1, 15, 3 * &lt - t)
-		player(6, 60, 40, oh1-red)
+		player(6, 30, 20, oh1-red)
 		tint(rgba(1, 1, 1, 2))
 		varlength(20, 3 * t)
 	}
@@ -83,7 +83,7 @@ gtr {
 		gsr {
 			color black
 		} simple dtpoffset $join($id, loc) $join($id, dir) p zero {
-			player 2500 2500 null
+			player 1300 1200 null
 			scale 2
 		}
 		gsr2c 4 {

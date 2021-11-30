@@ -110,7 +110,7 @@ public class AyaPhotoBoard : CoroutineRegularUpdater, IAyaPhotoBoard {
         foreach (var p in photos) {
             var pinned = GameObject.Instantiate(defaultPhotoPrefab).GetComponent<AyaPinnedPhoto>();
             if (pinned.InitializeAt(p, NextPinLoc(pinned) ??
-                                       throw new Exception($"Couldn't find a location to place photo {p.Filename}"))) {
+                                       throw new Exception($"Couldn't find a location to place photo {p}"))) {
                 if (sizeOverride > 0) pinned.SetSize(p, sizeOverride);
             }
         }

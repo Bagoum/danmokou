@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   defaultName: vn-yukari-power
   clip: {fileID: 8300000, guid: 693904623cc6a3043b43fd73dc4ba607, type: 3}
-  volume: 0.25
+  volume: 0.2
   timeout: -1
   pausable: 0
   slowable: 0

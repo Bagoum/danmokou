@@ -105,11 +105,14 @@ public class AndInputHandler : IInputHandler {
 public static class InputManager {
     public static bool AllowControllerInput { get; set; }
     public static readonly IReadOnlyList<KC> Alphanumeric = new[] {
-        KC.A, KC.B, KC.C, KC.D, KC.E, KC.F, KC.G, KC.H, KC.I, KC.L, KC.M, KC.N,
-        KC.O, KC.P, KC.Q, KC.R, KC.T, KC.U, KC.V, KC.W, KC.X, KC.Y, KC.Z,
+        KC.A, KC.B, KC.C, KC.D, KC.E, KC.F, KC.G, KC.H, KC.I, KC.J, KC.K, KC.L, KC.M, KC.N,
+        KC.O, KC.P, KC.Q, KC.R, KC.S, KC.T, KC.U, KC.V, KC.W, KC.X, KC.Y, KC.Z,
         KC.Alpha0, KC.Alpha1, KC.Alpha2, KC.Alpha3, KC.Alpha4,
         KC.Alpha5, KC.Alpha6, KC.Alpha7, KC.Alpha8, KC.Alpha9
     };
+
+    private static readonly List<IInputHandler> CustomInputHandlers = new();
+    private static readonly Dictionary<KC, IInputHandler> KeyTriggers = new();
 
     private const string aCHoriz = "Horizontal";
     private const string aCVert = "Vertical";
@@ -130,6 +133,8 @@ public static class InputManager {
     private const KC cStart = KC.JoystickButton7;
     private static InputChecker Key(KC key, bool controller = false) => Key(() => key, controller);
 
+    private static InputChecker Mouse(int key) =>
+        new InputChecker(() => Input.GetMouseButton(key), new LString(key.ToString()));
     private static InputChecker Key(Func<KC> key, bool controller) =>
         new InputChecker(() => Input.GetKey(key()), new LString(key().ToString()), controller);
 
@@ -155,9 +160,11 @@ public static class InputManager {
     public static readonly IInputHandler UIUp = InputHandler.Trigger(ArrowUp.Or(AxisG0(aCDPadY, true)));
     public static readonly IInputHandler UIDown = InputHandler.Trigger(ArrowDown.Or(AxisL0(aCDPadY, true)));
 
+    //mouse button 0, 1, 2 = left, right, middle click
+    //don't listen to mouse left click for confirm-- left clicks need to be reported by the targeted elemnt
     public static readonly IInputHandler UIConfirm = InputHandler.Trigger(
         Key(KC.Z).Or(Key(KC.Return)).Or(Key(KC.Space)).Or(Key(cA, true)));
-    public static readonly IInputHandler UIBack = InputHandler.Trigger(Key(KC.X).Or(Key(cB, true)));
+    public static readonly IInputHandler UIBack = InputHandler.Trigger(Key(KC.X).Or(Key(cB, true)).Or(Mouse(1)));
     private static readonly IInputHandler UISkipAllDialogue = InputHandler.Trigger(Key(KC.LeftControl));
 
     public static readonly IInputHandler Pause = InputHandler.Trigger(
@@ -175,6 +182,14 @@ public static class InputManager {
         InputHandler.Hold(Key(KC.LeftShift)),
         InputHandler.Trigger(Key(KC.R))
     );
+
+    public static IInputHandler GetKeyTrigger(KC key) {
+        if (!KeyTriggers.TryGetValue(key, out var v)) {
+            CustomInputHandlers.Add(v = KeyTriggers[key] = InputHandler.Trigger(Key(key)));
+            v.Update();
+        }
+        return v;
+    }
 
     static InputManager() {
         unsafe {
@@ -196,23 +211,23 @@ public static class InputManager {
         public bool bomb => data1.NthBool(2);
         public bool meter => data1.NthBool(3);
         public bool dialogueConfirm => data1.NthBool(4);
-        public bool dialogueToEnd => data1.NthBool(5);
-        public bool dialogueSkip => data1.NthBool(6);
+        //This was formerly dialogueToEnd, but the separate key for dialogueToEnd was removed in v8.1.0.
+        public bool UNUSED => data1.NthBool(5);
+        public bool dialogueSkipAll => data1.NthBool(6);
 
         public FrameInput(short horiz, short vert, bool fire, bool focus, bool bomb, bool meter,
-            bool dialogueConfirm, bool dialogueToEnd, bool dialogueSkip) {
+            bool dialogueConfirm, bool unused, bool dialogueSkip) {
             horizontal = horiz;
             vertical = vert;
-            data1 = BitCompression.FromBools(fire, focus, bomb, meter, dialogueConfirm, dialogueToEnd, dialogueSkip);
+            data1 = BitCompression.FromBools(fire, focus, bomb, meter, dialogueConfirm, unused, dialogueSkip);
         }
     }
 
     public static FrameInput RecordFrame => new FrameInput(HorizontalSpeed, VerticalSpeed,
-        IsFiring, IsFocus, IsBomb, IsMeter, DialogueConfirm, DialogueToEnd, DialogueSkipAll);
+        IsFiring, IsFocus, IsBomb, IsMeter, DialogueConfirm, false, DialogueSkipAll);
 
     public static bool DialogueConfirm => replay?.dialogueConfirm ?? UIConfirm.Active;
-    public static bool DialogueToEnd => replay?.dialogueToEnd ?? UIBack.Active;
-    public static bool DialogueSkipAll => replay?.dialogueSkip ?? UISkipAllDialogue.Active;
+    public static bool DialogueSkipAll => replay?.dialogueSkipAll ?? UISkipAllDialogue.Active;
 
     private static FrameInput? replay = null;
     public static void ReplayFrame(FrameInput? fi) => replay = fi;
@@ -244,7 +259,10 @@ public static class InputManager {
 
     //Called by GameManagement
     public static void OncePerFrameToggleControls() {
-        foreach (var u in Updaters) u.Update();
+        for (int ii = 0; ii < Updaters.Length; ++ii)
+            Updaters[ii].Update();
+        for (int ii = 0; ii < CustomInputHandlers.Count; ++ii)
+            CustomInputHandlers[ii].Update();
     }
 
     public static bool IsFocus => replay?.focus ?? FocusHold.Active;

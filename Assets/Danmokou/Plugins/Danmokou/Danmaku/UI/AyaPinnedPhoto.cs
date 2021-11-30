@@ -55,7 +55,7 @@ public class AyaPinnedPhoto : CoroutineRegularUpdater {
         SetSize(photo, desiredSize);
         tr.position = loc = point;
         tr.eulerAngles = new Vector3(0, 0, photo.Angle);
-        if (photo.TryLoad(out Sprite? s)) {
+        if (photo.TryLoad(out var s)) {
             sr.sprite = s;
             sr.GetPropertyBlock(pb);
             // ReSharper disable once Unity.PreferAddressByIdToGraphicsParams

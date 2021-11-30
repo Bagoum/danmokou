@@ -22,6 +22,7 @@ MonoBehaviour:
     type: 3}
   UIScreenRowNoStretch: {fileID: 9197481963319205126, guid: ec9196b6a00d0be4282ebe5f816e1c5c,
     type: 3}
+  Popup: {fileID: 9197481963319205126, guid: 5abe3063ab4c7ca4a8bf9590d76a2b82, type: 3}
   UINode: {fileID: 9197481963319205126, guid: a814838ea7fd5364e96b285b2bfd246b, type: 3}
   TwoTextUINode: {fileID: 9197481963319205126, guid: 058456922323ca342a74da3c8aaec2cc,
     type: 3}
@@ -33,11 +34,33 @@ MonoBehaviour:
     type: 3}
   AbsoluteTerritory: {fileID: 9197481963319205126, guid: 87bda74dff7da444f8f85bd1969fa5ca,
     type: 3}
-  PopupNode: {fileID: 9197481963319205126, guid: 5abe3063ab4c7ca4a8bf9590d76a2b82,
-    type: 3}
   PopupButton: {fileID: 9197481963319205126, guid: 11f2f516d9a7a954dbc63e629c153f04,
     type: 3}
   PureTextNode: {fileID: 9197481963319205126, guid: 68aa4c7096d5e0343aff4b51e6e7f6ff,
     type: 3}
   TextInputNode: {fileID: 9197481963319205126, guid: 1ef97bd3c326a1845abf4105681ef0a9,
+    type: 3}
+  HeaderNode: {fileID: 9197481963319205126, guid: 7661ef4ef9465ce4d8684a85041313c7,
+    type: 3}
+  SaveLoadNode: {fileID: 9197481963319205126, guid: d4c1a5168513d344bb24059bcd7d30d4,
+    type: 3}
+  defaultSaveLoadBG: {fileID: 2800000, guid: ea44ee5932ff7c84aa1697105b26bd29, type: 3}
+  MkCodeBlock: {fileID: 9197481963319205126, guid: 4576ae9bbc048b9449cf927a4459612a,
+    type: 3}
+  MkCodeBlockText: {fileID: 9197481963319205126, guid: d029b13093ce2a94ab634e948b74c70f,
+    type: 3}
+  MkEmpty: {fileID: 9197481963319205126, guid: 1256a8be1db8cd24d955ddf6f2525174, type: 3}
+  MkHeader: {fileID: 9197481963319205126, guid: f7e4653f3c3d8af4aa0f495ecf712c29,
+    type: 3}
+  MkLine: {fileID: 9197481963319205126, guid: 3f7227f9ded3cd8478f7974f131c3396, type: 3}
+  MkLineText: {fileID: 9197481963319205126, guid: 6c1dc041bc4aeed4eb9f755a2fe0a7b8,
+    type: 3}
+  MkLineCode: {fileID: 9197481963319205126, guid: 4f5dc28c3c0aa8c4483014c06700250e,
+    type: 3}
+  MkLineLink: {fileID: 9197481963319205126, guid: f390f76e68f2a2243a3c30ec4d1abcc2,
+    type: 3}
+  MkList: {fileID: 9197481963319205126, guid: adc75dbfed692f54c85053bc05201674, type: 3}
+  MkListOption: {fileID: 9197481963319205126, guid: 4229a5b3072cbd641ba3422f96582a9c,
+    type: 3}
+  MkParagraph: {fileID: 9197481963319205126, guid: 8376647b710a37147a87ddeb9d9a311c,
     type: 3}
