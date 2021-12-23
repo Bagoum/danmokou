@@ -80,8 +80,6 @@
             static const float rsmth = 0.004f;
             static const float dsmth = 0.012f;
             
-            float _RPPU;
-            
             float _T;
             float _BX;
             float _BY;
@@ -89,15 +87,16 @@
             float _FireMagnitude;
 
             float4 frag(fragment f) : SV_Target {
+            	//6 is the screen unit size of the sprite this is normally attached to,
+            	// so all parameters are in terms of screen unit size instead of uv.
+                float r = length(f.uv) * 6;
                 float baseang = atan2(f.uv.y, f.uv.x) / TAU; // -1/2 (@-180) to 1/2 (@180)
                 //float side = abs(ang) < 0.25 ? 1 : 0;
                 float ang = fmod(baseang + 1.75, 1); // 0 to 1, starting at 90
                 ang = 1 - 2 * abs(0.5 - ang); // 90 = 0; -90 = 1; 0,180 = 0.5
-                float r = length(f.uv) * _MainTex_TexelSize.z / _RPPU;
-                float3 srt = float3(r * _BX, ang * _BY, _T * _Speed);
-                
+            	
             #ifdef FANCY
-                float noise = perlin3Dlayer01(srt);
+                float noise = perlin3Dlayer01(float3(r * _BX, ang * _BY, _T * _Speed));
                 //Square [0,1] noise to make it have less an effect on where shifts are
                 //Negative so that the noise always increases the effective size of the hp bar
                 float noise_ang = clamp(0, 1.4, ang + noise * noise * -_FireMagnitude);

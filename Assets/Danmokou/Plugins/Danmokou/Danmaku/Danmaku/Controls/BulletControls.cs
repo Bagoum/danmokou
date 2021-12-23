@@ -365,7 +365,7 @@ public partial class BulletManager {
         /// <returns></returns>
         public static exBulletControl Softcull(string? target, ExPred cond) {
             var toPool = NullableGetMaybeCopyPool(target);
-            if (toPool != null && toPool.MetaType != AbsSimpleBulletCollection.CollectionType.Softcull) {
+            if (toPool != null && toPool.MetaType != SimpleBulletCollection.CollectionType.Softcull) {
                 throw new InvalidOperationException("Cannot softcull to a non-softcull pool: " + target);
             }
             return new exBulletControl((sbc, ii, ct, bpi) => bpi.When(cond,
@@ -381,7 +381,7 @@ public partial class BulletManager {
         [DontReflect]
         public static cBulletControl Softcull_noexpr(SoftcullProperties props, string? target, Pred cond) {
             var toPool = NullableGetMaybeCopyPool(target);
-            if (toPool != null && toPool.MetaType != AbsSimpleBulletCollection.CollectionType.Softcull) {
+            if (toPool != null && toPool.MetaType != SimpleBulletCollection.CollectionType.Softcull) {
                 throw new InvalidOperationException("Cannot softcull to a non-softcull pool: " + target);
             }
             return cBulletControl.NoExpr((sbc, ii, bpi, ct) => {

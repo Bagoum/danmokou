@@ -30,6 +30,7 @@ public class Tutorial : BehaviorEntity {
     private readonly Dictionary<TextMeshPro, Vector2> defaultLoc = new();
     public GameObject tutorialBoss = null!;
     public TextAsset bossSM = null!;
+    public XMLPauseMenu pauseMenu = null!;
     public int skip;
 
     protected override void Awake() {
@@ -78,7 +79,10 @@ public class Tutorial : BehaviorEntity {
                 while (!cond())
                     yield return null;
         }
-        IEnumerator waitlf(Func<bool> cond) => wait(() => ETime.FirstUpdateForScreen && cond());
+        IEnumerator waitlf(Func<bool> cond) {
+            yield return null;
+            yield return wait(() => ETime.FirstUpdateForScreen && cond());
+        }
         IEnumerator waiti(IInputHandler ih) {
             yield return null;
             yield return waitlf(() => ih.Active);
@@ -93,23 +97,23 @@ public class Tutorial : BehaviorEntity {
         yield return confirm();
         Prompt(text10, blue2(Pause.Desc));
         yield return waitlf(() => EngineStateManager.State == EngineState.MENU_PAUSE);
-        GameObject.FindObjectOfType<XMLPauseMenu>().GoToNth(0, 0);
-        const float menuLeft = -5.2f;
-        Message(text00, pause3, x:menuLeft);
+        pauseMenu.GoToNth(0, 0);
+        const float menuLeft = 3.8f;
+        Prompt(text00, options2_1, 1.3f, x:-1f);
+        yield return waitlf(() => pauseMenu.Current?.Description().Value.Contains("GAME") ?? false);
+        Prompt(text00, graphics3_1, 1.3f, x:menuLeft);
+        yield return waitlf(() => pauseMenu.Current?.Description().Value.Contains("GRAPHICS") ?? false);
+        Message(text00, shaders4, 1.1f, x:menuLeft);
         yield return confirm();
-        Message(text00, shaders4, x:menuLeft);
-        yield return confirm();
-        Prompt(text00, shaders5, 1.6f, x:menuLeft);
+        Prompt(text00, shaders5, 1.1f, x:menuLeft);
         var sd = SaveData.s.Shaders;
         yield return waitlf(() => SaveData.s.Shaders != sd);
-        Prompt(text00, res6, 1.25f, x:menuLeft);
+        Prompt(text00, res6, 0.6f, x:menuLeft);
         var r = SaveData.s.Resolution;
         yield return waitlf(() => SaveData.s.Resolution != r);
-        Message(text00, refresh7, 0.9f, x:menuLeft);
+        Message(text00, fullscreen8, 0.1f, x:menuLeft);
         yield return confirm();
-        Message(text00, fullscreen8, 0.55f, x:menuLeft);
-        yield return confirm();
-        Message(text00, vsync9, 0.15f, x:menuLeft);
+        Message(text00, vsync9, -0.35f, x:menuLeft);
         yield return confirm();
         Message(text00, inputsmooth10, -0.7f, x:menuLeft);
         yield return confirm();
@@ -184,7 +188,7 @@ public class Tutorial : BehaviorEntity {
         Prompt(text10, shoot26);
         yield return phase();
 
-        Message(text10, lives27, 0.3f);
+        Message(text10, lives27, 0.4f);
         yield return confirm();
         Instance.SetLives(10);
         Message(text10, dots28);
@@ -205,7 +209,7 @@ public class Tutorial : BehaviorEntity {
         Prompt(text00, deathscreen33, x:menuLeft);
         yield return waitlf(() => EngineStateManager.State == EngineState.RUN);
         yield return shift();
-        Message(text10, lifeitems34, -0.3f);
+        Message(text10, lifeitems34, -0.4f);
         yield return confirm();
         yield return shift();
         Prompt(text10, lifeitems35);

@@ -15,6 +15,7 @@ using Danmokou.DMath;
 using Danmokou.Scriptables;
 using Danmokou.Services;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.Profiling;
 using UnityEngine.UIElements;
 using static Danmokou.Core.InputManager;
@@ -87,7 +88,12 @@ public abstract class UIController : CoroutineRegularUpdater {
     protected VisualElement UIRoot { get; private set; } = null!;
     protected VisualElement UIContainer { get; private set; } = null!;
     protected PanelSettings UISettings { get; private set; } = null!;
-    protected virtual IEnumerable<UIScreen> Screens => new[] {MainScreen};
+    protected virtual UIScreen?[] Screens => new[] {MainScreen};
+    /// <summary>
+    /// Event issued when the UI receives a visual update. Screens may subscribe to this
+    ///  in order to control their rendering.
+    /// </summary>
+    public Event<float> UIVisualUpdateEv { get; } = new();
     /// <summary>
     /// Controls the opacity of the entire menu.
     /// Generally 0, except on pause menus.
@@ -209,7 +215,7 @@ public abstract class UIController : CoroutineRegularUpdater {
                     OperateOnResult(new UIResult.GoToNode(
                         toGroup.ScreenIndex == null ? 
                             Current.Group.Screen.Groups[toGroup.GroupIndex].EntryNode :
-                            Screens.ToArray()[toGroup.ScreenIndex.Value].Groups[toGroup.GroupIndex].EntryNode), false);
+                            Screens[toGroup.ScreenIndex.Value]!.Groups[toGroup.GroupIndex].EntryNode), false);
                     break;
                 case CacheInstruction.ToGroupNode toGroupNode:
                     OperateOnResult(new UIResult.GoToNode(Current.Group.Nodes[toGroupNode.NodeIndex]), false);
@@ -228,8 +234,9 @@ public abstract class UIController : CoroutineRegularUpdater {
     }
 
     private void Build() {
-        foreach (var s in Screens.FilterNone())
-            UIContainer.Add(s.Build(GameManagement.References.uxmlDefaults.TypeMap));
+        foreach (var s in Screens)
+            if (s != null)
+                UIContainer.Add(s.Build(GameManagement.References.uxmlDefaults.TypeMap));
     }
 
 
@@ -371,8 +378,7 @@ public abstract class UIController : CoroutineRegularUpdater {
     public override void RegularUpdate() {
         base.RegularUpdate();
         if (ETime.FirstUpdateForScreen && Current != null) {
-            foreach (var w in Screens)
-                w.VisualUpdate(ETime.ASSUME_SCREEN_FRAME_TIME);
+            UIVisualUpdateEv.OnNext(ETime.ASSUME_SCREEN_FRAME_TIME);
             BackgroundOpacity.Update(ETime.ASSUME_SCREEN_FRAME_TIME);
         }
         
@@ -426,7 +432,7 @@ public abstract class UIController : CoroutineRegularUpdater {
         if (StartingNode != null)
             return OperateOnResult(new UIResult.GoToNode(StartingNode), false);
         else {
-            foreach (var g in Screens.First().Groups) 
+            foreach (var g in Screens.First(x => x != null)!.Groups) 
                 if (g.HasEntryNode) 
                     return OperateOnResult(new UIResult.GoToNode(g.EntryNode), false);
             throw new Exception($"Couldn't open menu {gameObject.name}");

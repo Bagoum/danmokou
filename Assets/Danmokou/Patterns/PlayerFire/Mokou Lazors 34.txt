@@ -10,7 +10,7 @@ gtr {
 	} gsr {
 		times(2)
 		bindLR
-	} simple rvelocity rx(lerpt(0.3, 0.7, 4, 12), 90 + &lr * lerpsmooth(io-sine, 0, 0.5, t, 20, 193)) 
+	} simple rvelocity rx(lerpt(0.3, 0.7, 4, 16), 90 + &lr * lerpsmooth(io-sine, 0, 0.5, t, 20, 193)) 
 	{ player 30 30 oh-reimu-amulet }
 	## free cancellation
 	noop

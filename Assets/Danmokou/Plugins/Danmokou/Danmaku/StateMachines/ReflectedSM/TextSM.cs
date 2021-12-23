@@ -114,7 +114,7 @@ public static class TSMReflection {
         await _Text(text, false)(smh);
         await Confirm()(smh);
     };
-
+    
     private static string EmoteToString(Emote e) => e switch {
         Emote.NORMAL => "",
         Emote.HAPPY => "happy",

@@ -13,15 +13,18 @@ using UnityEngine;
 namespace Danmokou.VN {
 public class DMKVNState : UnityVNState {
     public readonly string id;
-    public DMKVNState(ICancellee extCToken, string id, InstanceData save) : base(extCToken, save) {
+    public DMKVNState(ICancellee extCToken, string id, InstanceData save, bool loadToSaveLocation) : 
+        base(extCToken, save, loadToSaveLocation) {
         if (LoadTo != null)
             ServiceLocator.MaybeFind<ICameraTransition>()?.StallFadeOutUntil(() => SkippingMode != SkipMode.LOADING);
         this.id = id;
-        if (Replayer.RequiresConsistency) {
-            AutoplayFastforwardAllowed = false;
-            ClickConfirmAllowed = false;
-        }
+        AutoplayFastforwardAllowed = !Replayer.RequiresConsistency;
         AllowFullSkip = GameManagement.Instance.Request?.lowerRequest.Campaign.AllowDialogueSkip ?? false;
+    }
+
+    public override bool ClickConfirmOrSkip() {
+        InputManager.ExternalUIConfirm.SetForFrame();
+        return true;
     }
 
     public LazyAction SFX(string? sfx) => new(aSFX(sfx));

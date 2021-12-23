@@ -17,22 +17,49 @@ public enum InputTriggerMethod {
     PERSISTENT
 }
 
+/// <summary>
+/// An input method that, on any frame, is either active or inactive.
+/// </summary>
+public interface IInputChecker {
+    public bool Active { get; }
+}
 public class InputChecker {
-    private readonly Func<bool> checker;
+    protected readonly Func<bool> checker;
     public readonly LString keyDescr;
     private readonly bool isController;
 
     public bool Active => (!isController || InputManager.AllowControllerInput) && checker();
 
-    public InputChecker(Func<bool> f, LString k, bool isController=false) {
-        checker = f;
-        keyDescr = k;
+    public InputChecker(Func<bool> check, LString desc, bool isController=false) {
+        checker = check;
+        keyDescr = desc;
         this.isController = isController;
     }
     //Use this combiner when there are multiple keys that do the same thing
     public InputChecker Or(InputChecker other) => 
         new InputChecker(() => Active || other.Active, 
             LString.Format(new LString("{0} or {1}", (Locales.JP, "{0}や{1}")), keyDescr, other.keyDescr));
+    
+    public InputChecker OrSilent(IInputChecker other) => 
+        new InputChecker(() => Active || other.Active, keyDescr);
+}
+
+public class MockInputChecker : IInputChecker {
+    private int activeCt = 0;
+    public bool Active => activeCt > 0;
+
+    /// <summary>
+    /// Sets the input as active for the next frame.
+    /// </summary>
+    /// <returns></returns>
+    public void SetForFrame() {
+        InputManager.QueueOnInputUpdate(() => {
+            ++activeCt;
+            InputManager.QueueOnInputUpdate(() => {
+                --activeCt;
+            });
+        });
+    }
 }
 
 public interface IInputHandler {
@@ -103,6 +130,8 @@ public class AndInputHandler : IInputHandler {
     
 }
 public static class InputManager {
+    private static readonly Queue<Action> onInputUpdate = new();
+    public static void QueueOnInputUpdate(Action cb) => onInputUpdate.Enqueue(cb);
     public static bool AllowControllerInput { get; set; }
     public static readonly IReadOnlyList<KC> Alphanumeric = new[] {
         KC.A, KC.B, KC.C, KC.D, KC.E, KC.F, KC.G, KC.H, KC.I, KC.J, KC.K, KC.L, KC.M, KC.N,
@@ -148,6 +177,10 @@ public static class InputManager {
     private static readonly InputChecker ArrowLeft = Key(KeyCode.LeftArrow);
     private static readonly InputChecker ArrowUp = Key(KeyCode.UpArrow);
     private static readonly InputChecker ArrowDown = Key(KeyCode.DownArrow);
+
+    public static readonly MockInputChecker ExternalUIConfirm = new();
+    public static readonly MockInputChecker ExternalUISkipAllDialogue = new();
+    
     public static readonly IInputHandler
         FocusHold = InputHandler.Hold(Key(i.FocusHold).Or(AxisG0(aCRightTrigger, true)));
     public static readonly IInputHandler ShootHold = InputHandler.Hold(Key(i.ShootHold).Or(AxisG0(aCLeftTrigger, true)));
@@ -163,9 +196,10 @@ public static class InputManager {
     //mouse button 0, 1, 2 = left, right, middle click
     //don't listen to mouse left click for confirm-- left clicks need to be reported by the targeted elemnt
     public static readonly IInputHandler UIConfirm = InputHandler.Trigger(
-        Key(KC.Z).Or(Key(KC.Return)).Or(Key(KC.Space)).Or(Key(cA, true)));
+        Key(KC.Z).Or(Key(KC.Return)).Or(Key(KC.Space)).Or(Key(cA, true)).OrSilent(ExternalUIConfirm));
     public static readonly IInputHandler UIBack = InputHandler.Trigger(Key(KC.X).Or(Key(cB, true)).Or(Mouse(1)));
-    private static readonly IInputHandler UISkipAllDialogue = InputHandler.Trigger(Key(KC.LeftControl));
+    private static readonly IInputHandler UISkipAllDialogue = InputHandler.Trigger(Key(KC.LeftControl)
+        .OrSilent(ExternalUISkipAllDialogue));
 
     public static readonly IInputHandler Pause = InputHandler.Trigger(
 #if WEBGL
@@ -255,21 +289,26 @@ public static class InputManager {
     private static short _vertSpeedShort => M.ClampS(-shortRef, shortRef, (short)(_vertSpeed01 * shortRef));
     private static short VerticalSpeed => replay?.vertical ?? _vertSpeedShort;
     public static float VerticalSpeed01 => VerticalSpeed / (float) shortRef;
-
-
-    //Called by GameManagement
-    public static void OncePerFrameToggleControls() {
-        for (int ii = 0; ii < Updaters.Length; ++ii)
-            Updaters[ii].Update();
-        for (int ii = 0; ii < CustomInputHandlers.Count; ++ii)
-            CustomInputHandlers[ii].Update();
-    }
-
     public static bool IsFocus => replay?.focus ?? FocusHold.Active;
     public static bool IsBomb => replay?.bomb ?? Bomb.Active;
     public static bool IsMeter => replay?.meter ?? Meter.Active;
     public static bool IsSwap => Swap.Active;
     public static bool IsFiring => replay?.fire ?? ShootHold.Active;
+    
+    
+
+    //Called by GameManagement
+    public static void OncePerFrameToggleControls() {
+        //Don't handle any cbs pushed during the handling process-- this is required for proper MockInput support
+        var ninv = onInputUpdate.Count;
+        while (ninv-- > 0)
+            onInputUpdate.Dequeue()();
+        
+        for (int ii = 0; ii < Updaters.Length; ++ii)
+            Updaters[ii].Update();
+        for (int ii = 0; ii < CustomInputHandlers.Count; ++ii)
+            CustomInputHandlers[ii].Update();
+    }
 
 }
 }

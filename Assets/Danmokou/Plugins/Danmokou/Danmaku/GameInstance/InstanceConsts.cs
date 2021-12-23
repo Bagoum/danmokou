@@ -24,7 +24,7 @@ public static class InstanceConsts {
     }
     public static int StartBombs(InstanceMode mode) {
         if (mode == InstanceMode.CAMPAIGN || mode == InstanceMode.TUTORIAL || mode == InstanceMode.STAGE_PRACTICE) 
-            return 2;
+            return 3;
         else if (mode.OneLife()) 
             return 0;
         else 

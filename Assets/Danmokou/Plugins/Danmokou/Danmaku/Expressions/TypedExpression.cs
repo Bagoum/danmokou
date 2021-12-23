@@ -249,7 +249,7 @@ public class TEx {
             return new TExSB(ex);
         else if (t == typeof(V2RV2))
             return new TExRV2(ex);
-        else if (t == typeof(BulletManager.AbsSimpleBulletCollection))
+        else if (t == typeof(BulletManager.SimpleBulletCollection))
             return new TExSBC(ex);
         else if (t == typeof(Movement))
             return new TExMov(ex);

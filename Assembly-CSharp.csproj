@@ -42,6 +42,7 @@
     <ImplicitlyExpandDesignTimeFacades>false</ImplicitlyExpandDesignTimeFacades>
   </PropertyGroup>
   <ItemGroup>
+     <Compile Include="Assets\TestLinuxReflection.cs" />
      <Compile Include="Assets\Danmokou\Models\MirrorShatter\MirrorBreak.cs" />
      <Compile Include="Assets\Danmokou\Scenes\Scratch\SetT.cs" />
      <None Include="Assets\SiMP\Dialogue\simp.dialogue.ex.e.txt" />
@@ -94,7 +95,6 @@
      <None Include="Assets\Danmokou\MiniProjects\WebGL Demo\120 three dee.txt" />
      <None Include="Assets\SZYU\Fonts\ubuntu-font-family-0.83\LICENCE-FAQ.txt" />
      <None Include="Assets\Danmokou\Rendering\Shaders\Display\DownDistorter.shader" />
-     <None Include="Assets\Danmokou\Rendering\Shaders\Display\SpellCircleFire.shader" />
      <None Include="Assets\Danmokou\UXML\tests\test1.uxml" />
      <None Include="Assets\BRuH\Dialogue\en\tokiko.2.txt" />
      <None Include="Assets\Danmokou\Patterns\Testing\GTR2 Test.txt" />
@@ -303,7 +303,6 @@
      <None Include="Assets\Danmokou\MiniProjects\Scripts\JY\jy.stage.txt" />
      <None Include="Assets\Danmokou\MiniProjects\Scripts\BHA3\bha3.all.txt" />
      <None Include="Assets\Danmokou\Patterns\cutin slides\GhostSpellCutins\slide rd to lu.txt" />
-     <None Include="Assets\SZYU\Plugins\DLLs\Suzunoya.deps.json" />
      <None Include="Assets\Danmokou\Patterns\feature testing\sm control.txt" />
      <None Include="Assets\SiMP\Scripts\simp.kasen2.txt" />
      <None Include="Assets\Danmokou\Rendering\Shaders\Display\UI\ADVDialogueSprite.shader" />
@@ -388,7 +387,6 @@
      <None Include="Assets\Danmokou\Rendering\Shaders\Display\UI\FillBar MoF 2Way.shader" />
      <None Include="Assets\BRuH\Dialogue\jp\jp.kurokoma.2.txt" />
      <None Include="Assets\Danmokou\Patterns\feature testing\new lerps.txt" />
-     <None Include="Assets\SiMP\Dialogue\simp.dialogue.demo-end.txt" />
      <None Include="Assets\SZYU\Fonts\ubuntu-font-family-0.83\FONTLOG.txt" />
      <None Include="Assets\TextMesh Pro\Fonts\LiberationSans - OFL.txt" />
      <None Include="Assets\Danmokou\Patterns\feature testing\easers comparison.txt" />
@@ -407,6 +405,7 @@
      <None Include="Assets\Danmokou\Patterns\Tutorial\DMK Tutorial Setup 00.txt" />
      <None Include="Assets\Danmokou\Patterns\minor utility\namecard0.txt" />
      <None Include="Assets\Danmokou\UXML\UIScreen.uss" />
+     <None Include="Assets\Danmokou\Rendering\Shaders\Display\FinalScreenRender.shader" />
      <None Include="Assets\TextMesh Pro\Sprites\EmojiOne.json" />
      <None Include="Assets\Danmokou\Patterns\feature testing\background transition.txt" />
      <None Include="Assets\SiMP\Scripts\simp.aya.txt" />
@@ -660,37 +659,43 @@
      <HintPath>C:/Program Files/Unity/Hub/Editor/2021.2.1f1/Editor/Data/Managed/UnityEngine/UnityEditor.UnityConnectModule.dll</HintPath>
      </Reference>
      <Reference Include="MathNet.Numerics">
-     <HintPath>C:/Workspace/unity/Danmokou/Assets/Danmokou/Plugins/DLLs/MathNet.Numerics.dll</HintPath>
+     <HintPath>E:/Workspace/unity/Danmokou/Assets/Danmokou/Plugins/DLLs/MathNet.Numerics.dll</HintPath>
      </Reference>
      <Reference Include="BagoumLib">
-     <HintPath>C:/Workspace/unity/Danmokou/Assets/SZYU/Plugins/DLLs/BagoumLib.dll</HintPath>
+     <HintPath>E:/Workspace/unity/Danmokou/Assets/SZYU/Plugins/DLLs/BagoumLib.dll</HintPath>
      </Reference>
      <Reference Include="System.Runtime.CompilerServices.Unsafe">
-     <HintPath>C:/Workspace/unity/Danmokou/Assets/SZYU/Plugins/DLLs/System.Runtime.CompilerServices.Unsafe.dll</HintPath>
+     <HintPath>E:/Workspace/unity/Danmokou/Assets/SZYU/Plugins/DLLs/System.Runtime.CompilerServices.Unsafe.dll</HintPath>
      </Reference>
      <Reference Include="Suzunoya">
-     <HintPath>C:/Workspace/unity/Danmokou/Assets/SZYU/Plugins/DLLs/Suzunoya.dll</HintPath>
+     <HintPath>E:/Workspace/unity/Danmokou/Assets/SZYU/Plugins/DLLs/Suzunoya.dll</HintPath>
      </Reference>
      <Reference Include="System.Threading.Tasks.Extensions">
-     <HintPath>C:/Workspace/unity/Danmokou/Assets/SZYU/Plugins/DLLs/System.Threading.Tasks.Extensions.dll</HintPath>
+     <HintPath>E:/Workspace/unity/Danmokou/Assets/SZYU/Plugins/DLLs/System.Threading.Tasks.Extensions.dll</HintPath>
      </Reference>
      <Reference Include="System.Collections.Immutable">
-     <HintPath>C:/Workspace/unity/Danmokou/Assets/Danmokou/Plugins/DLLs/System.Collections.Immutable.dll</HintPath>
+     <HintPath>E:/Workspace/unity/Danmokou/Assets/Danmokou/Plugins/DLLs/System.Collections.Immutable.dll</HintPath>
      </Reference>
      <Reference Include="System.Reactive">
-     <HintPath>C:/Workspace/unity/Danmokou/Assets/SZYU/Plugins/DLLs/System.Reactive.dll</HintPath>
+     <HintPath>E:/Workspace/unity/Danmokou/Assets/SZYU/Plugins/DLLs/System.Reactive.dll</HintPath>
      </Reference>
      <Reference Include="protobuf-net">
-     <HintPath>C:/Workspace/unity/Danmokou/Assets/Danmokou/Plugins/DLLs/protobuf-net.dll</HintPath>
+     <HintPath>E:/Workspace/unity/Danmokou/Assets/Danmokou/Plugins/DLLs/protobuf-net.dll</HintPath>
      </Reference>
      <Reference Include="protobuf-net.Core">
-     <HintPath>C:/Workspace/unity/Danmokou/Assets/Danmokou/Plugins/DLLs/protobuf-net.Core.dll</HintPath>
+     <HintPath>E:/Workspace/unity/Danmokou/Assets/Danmokou/Plugins/DLLs/protobuf-net.Core.dll</HintPath>
      </Reference>
      <Reference Include="Newtonsoft.Json">
-     <HintPath>C:/Workspace/unity/Danmokou/Library/PackageCache/jillejr.newtonsoft.json-for-unity@13.0.102/Plugins/Newtonsoft.Json Editor/Newtonsoft.Json.dll</HintPath>
+     <HintPath>E:/Workspace/unity/Danmokou/Library/PackageCache/jillejr.newtonsoft.json-for-unity@13.0.102/Plugins/Newtonsoft.Json Editor/Newtonsoft.Json.dll</HintPath>
      </Reference>
      <Reference Include="Mizuhashi">
-     <HintPath>C:/Workspace/unity/Danmokou/Assets/SZYU/Plugins/DLLs/Mizuhashi.dll</HintPath>
+     <HintPath>E:/Workspace/unity/Danmokou/Assets/SZYU/Plugins/DLLs/Mizuhashi.dll</HintPath>
+     </Reference>
+     <Reference Include="Unity.Android.Types">
+     <HintPath>C:/Program Files/Unity/Hub/Editor/2021.2.1f1/Editor/Data/PlaybackEngines/AndroidPlayer/Unity.Android.Types.dll</HintPath>
+     </Reference>
+     <Reference Include="Unity.Android.Gradle">
+     <HintPath>C:/Program Files/Unity/Hub/Editor/2021.2.1f1/Editor/Data/PlaybackEngines/AndroidPlayer/Unity.Android.Gradle.dll</HintPath>
      </Reference>
      <Reference Include="mscorlib">
      <HintPath>C:/Program Files/Unity/Hub/Editor/2021.2.1f1/Editor/Data/UnityReferenceAssemblies/unity-4.8-api/mscorlib.dll</HintPath>
@@ -1053,49 +1058,49 @@
      <HintPath>C:/Program Files/Unity/Hub/Editor/2021.2.1f1/Editor/Data/UnityReferenceAssemblies/unity-4.8-api/Facades/System.Xml.XPath.XDocument.dll</HintPath>
      </Reference>
      <Reference Include="Unity.MemoryProfiler">
-     <HintPath>C:/Workspace/unity/Danmokou/Library/ScriptAssemblies/Unity.MemoryProfiler.dll</HintPath>
+     <HintPath>E:/Workspace/unity/Danmokou/Library/ScriptAssemblies/Unity.MemoryProfiler.dll</HintPath>
      </Reference>
      <Reference Include="Unity.VSCode.Editor">
-     <HintPath>C:/Workspace/unity/Danmokou/Library/ScriptAssemblies/Unity.VSCode.Editor.dll</HintPath>
+     <HintPath>E:/Workspace/unity/Danmokou/Library/ScriptAssemblies/Unity.VSCode.Editor.dll</HintPath>
      </Reference>
      <Reference Include="Unity.TextMeshPro.Editor">
-     <HintPath>C:/Workspace/unity/Danmokou/Library/ScriptAssemblies/Unity.TextMeshPro.Editor.dll</HintPath>
+     <HintPath>E:/Workspace/unity/Danmokou/Library/ScriptAssemblies/Unity.TextMeshPro.Editor.dll</HintPath>
      </Reference>
      <Reference Include="Unity.VisualStudio.Editor">
-     <HintPath>C:/Workspace/unity/Danmokou/Library/ScriptAssemblies/Unity.VisualStudio.Editor.dll</HintPath>
+     <HintPath>E:/Workspace/unity/Danmokou/Library/ScriptAssemblies/Unity.VisualStudio.Editor.dll</HintPath>
      </Reference>
      <Reference Include="Unity.Sysroot.Linux_x86_64">
-     <HintPath>C:/Workspace/unity/Danmokou/Library/ScriptAssemblies/Unity.Sysroot.Linux_x86_64.dll</HintPath>
+     <HintPath>E:/Workspace/unity/Danmokou/Library/ScriptAssemblies/Unity.Sysroot.Linux_x86_64.dll</HintPath>
      </Reference>
      <Reference Include="Unity.Toolchain.Win-x86_64-Linux-x86_64">
-     <HintPath>C:/Workspace/unity/Danmokou/Library/ScriptAssemblies/Unity.Toolchain.Win-x86_64-Linux-x86_64.dll</HintPath>
+     <HintPath>E:/Workspace/unity/Danmokou/Library/ScriptAssemblies/Unity.Toolchain.Win-x86_64-Linux-x86_64.dll</HintPath>
      </Reference>
      <Reference Include="Unity.TextMeshPro">
-     <HintPath>C:/Workspace/unity/Danmokou/Library/ScriptAssemblies/Unity.TextMeshPro.dll</HintPath>
+     <HintPath>E:/Workspace/unity/Danmokou/Library/ScriptAssemblies/Unity.TextMeshPro.dll</HintPath>
      </Reference>
      <Reference Include="Unity.2D.Sprite.Editor">
-     <HintPath>C:/Workspace/unity/Danmokou/Library/ScriptAssemblies/Unity.2D.Sprite.Editor.dll</HintPath>
+     <HintPath>E:/Workspace/unity/Danmokou/Library/ScriptAssemblies/Unity.2D.Sprite.Editor.dll</HintPath>
      </Reference>
      <Reference Include="Unity.MemoryProfiler.Editor">
-     <HintPath>C:/Workspace/unity/Danmokou/Library/ScriptAssemblies/Unity.MemoryProfiler.Editor.dll</HintPath>
+     <HintPath>E:/Workspace/unity/Danmokou/Library/ScriptAssemblies/Unity.MemoryProfiler.Editor.dll</HintPath>
      </Reference>
      <Reference Include="Unity.MemoryProfiler.Editor.MemoryProfilerModule">
-     <HintPath>C:/Workspace/unity/Danmokou/Library/ScriptAssemblies/Unity.MemoryProfiler.Editor.MemoryProfilerModule.dll</HintPath>
+     <HintPath>E:/Workspace/unity/Danmokou/Library/ScriptAssemblies/Unity.MemoryProfiler.Editor.MemoryProfilerModule.dll</HintPath>
      </Reference>
      <Reference Include="UnityEditor.UI">
-     <HintPath>C:/Workspace/unity/Danmokou/Library/ScriptAssemblies/UnityEditor.UI.dll</HintPath>
+     <HintPath>E:/Workspace/unity/Danmokou/Library/ScriptAssemblies/UnityEditor.UI.dll</HintPath>
      </Reference>
      <Reference Include="Unity.Rider.Editor">
-     <HintPath>C:/Workspace/unity/Danmokou/Library/ScriptAssemblies/Unity.Rider.Editor.dll</HintPath>
+     <HintPath>E:/Workspace/unity/Danmokou/Library/ScriptAssemblies/Unity.Rider.Editor.dll</HintPath>
      </Reference>
      <Reference Include="UnityEngine.UI">
-     <HintPath>C:/Workspace/unity/Danmokou/Library/ScriptAssemblies/UnityEngine.UI.dll</HintPath>
+     <HintPath>E:/Workspace/unity/Danmokou/Library/ScriptAssemblies/UnityEngine.UI.dll</HintPath>
      </Reference>
      <Reference Include="Unity.SysrootPackage.Editor">
-     <HintPath>C:/Workspace/unity/Danmokou/Library/ScriptAssemblies/Unity.SysrootPackage.Editor.dll</HintPath>
+     <HintPath>E:/Workspace/unity/Danmokou/Library/ScriptAssemblies/Unity.SysrootPackage.Editor.dll</HintPath>
      </Reference>
      <Reference Include="Unity.EditorCoroutines.Editor">
-     <HintPath>C:/Workspace/unity/Danmokou/Library/ScriptAssemblies/Unity.EditorCoroutines.Editor.dll</HintPath>
+     <HintPath>E:/Workspace/unity/Danmokou/Library/ScriptAssemblies/Unity.EditorCoroutines.Editor.dll</HintPath>
      </Reference>
   </ItemGroup>
   <ItemGroup>

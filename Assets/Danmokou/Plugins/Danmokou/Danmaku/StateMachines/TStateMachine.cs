@@ -27,7 +27,7 @@ public class ScriptTSM : SequentialSM {
             .SelectDisposable(p => p.AllControlEnabled.AddConst(false));
         //Await to keep token in scope until exit
         await ((DMKVNWrapper) ServiceLocator.Find<IVNWrapper>())
-            .ExecuteVN((data, cT) => new DMKVNState(cT, "backwards-compat-script-vn", data),
+            .ExecuteVN((data, cT) => new DMKVNState(cT, "backwards-compat-script-vn", data, false),
                 vn => RunAsVN(smh, vn), GameManagement.Instance.VNData, smh.cT);
 
         //Dialoguer.ShowAndResetDialogue();

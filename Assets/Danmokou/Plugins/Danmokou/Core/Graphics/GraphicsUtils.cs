@@ -6,10 +6,6 @@ using UnityEngine.Experimental.Rendering;
 namespace Danmokou.Graphics {
 public static class GraphicsUtils {
     public static readonly (int w, int h) BestResolution = (3840, 2160);
-    /// <summary>
-    /// Basic DMK image resources are made in 240ppu.
-    /// </summary>
-    public const int ResourcePPU = 240;
         
     public static RenderTexture CopyAsTemp(this RenderTexture src) {
         var rt = RenderTexture.GetTemporary(src.descriptor);

@@ -83,7 +83,7 @@ gtr {
 		gsr {
 			color black
 		} simple dtpoffset $join($id, loc) $join($id, dir) p zero {
-			player 1300 1200 null
+			player 900 700 null
 			scale 2
 		}
 		gsr2c 4 {

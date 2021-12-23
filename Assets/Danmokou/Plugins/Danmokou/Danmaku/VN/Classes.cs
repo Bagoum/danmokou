@@ -5,7 +5,6 @@ using Danmokou.Core;
 using Danmokou.DMath;
 using Danmokou.Services;
 using JetBrains.Annotations;
-using Microsoft.SqlServer.Server;
 using Newtonsoft.Json;
 using Suzunoya.Data;
 using UnityEngine;
@@ -53,7 +52,7 @@ public record SavedInstance {
         FileUtils.Read($"{FileUtils.VNDIR}{Filename}.dat"), global ?? SaveData.r.GlobalVNData);
 
     public void RemoveFromDisk() {
-        File.Delete($"{FileUtils.VNDIR}{Filename}.dat");
+        FileUtils.Delete($"{FileUtils.VNDIR}{Filename}.dat");
         Image.RemoveFromDisk();
     }
 }

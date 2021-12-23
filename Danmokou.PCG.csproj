@@ -316,41 +316,53 @@
      <Reference Include="UnityEditor.OSXStandalone.Extensions">
      <HintPath>C:/Program Files/Unity/Hub/Editor/2021.2.1f1/Editor/Data/PlaybackEngines/MacStandaloneSupport/UnityEditor.OSXStandalone.Extensions.dll</HintPath>
      </Reference>
+     <Reference Include="UnityEditor.Android.Extensions">
+     <HintPath>C:/Program Files/Unity/Hub/Editor/2021.2.1f1/Editor/Data/PlaybackEngines/AndroidPlayer/UnityEditor.Android.Extensions.dll</HintPath>
+     </Reference>
      <Reference Include="UnityEditor.WindowsStandalone.Extensions">
      <HintPath>C:/Program Files/Unity/Hub/Editor/2021.2.1f1/Editor/Data/PlaybackEngines/WindowsStandaloneSupport/UnityEditor.WindowsStandalone.Extensions.dll</HintPath>
      </Reference>
+     <Reference Include="UnityEditor.LinuxStandalone.Extensions">
+     <HintPath>C:/Program Files/Unity/Hub/Editor/2021.2.1f1/Editor/Data/PlaybackEngines/LinuxStandaloneSupport/UnityEditor.LinuxStandalone.Extensions.dll</HintPath>
+     </Reference>
      <Reference Include="MathNet.Numerics">
-     <HintPath>C:/Workspace/unity/Danmokou/Assets/Danmokou/Plugins/DLLs/MathNet.Numerics.dll</HintPath>
+     <HintPath>E:/Workspace/unity/Danmokou/Assets/Danmokou/Plugins/DLLs/MathNet.Numerics.dll</HintPath>
      </Reference>
      <Reference Include="BagoumLib">
-     <HintPath>C:/Workspace/unity/Danmokou/Assets/SZYU/Plugins/DLLs/BagoumLib.dll</HintPath>
+     <HintPath>E:/Workspace/unity/Danmokou/Assets/SZYU/Plugins/DLLs/BagoumLib.dll</HintPath>
      </Reference>
      <Reference Include="System.Runtime.CompilerServices.Unsafe">
-     <HintPath>C:/Workspace/unity/Danmokou/Assets/SZYU/Plugins/DLLs/System.Runtime.CompilerServices.Unsafe.dll</HintPath>
+     <HintPath>E:/Workspace/unity/Danmokou/Assets/SZYU/Plugins/DLLs/System.Runtime.CompilerServices.Unsafe.dll</HintPath>
      </Reference>
      <Reference Include="Suzunoya">
-     <HintPath>C:/Workspace/unity/Danmokou/Assets/SZYU/Plugins/DLLs/Suzunoya.dll</HintPath>
+     <HintPath>E:/Workspace/unity/Danmokou/Assets/SZYU/Plugins/DLLs/Suzunoya.dll</HintPath>
      </Reference>
      <Reference Include="System.Threading.Tasks.Extensions">
-     <HintPath>C:/Workspace/unity/Danmokou/Assets/SZYU/Plugins/DLLs/System.Threading.Tasks.Extensions.dll</HintPath>
+     <HintPath>E:/Workspace/unity/Danmokou/Assets/SZYU/Plugins/DLLs/System.Threading.Tasks.Extensions.dll</HintPath>
      </Reference>
      <Reference Include="System.Collections.Immutable">
-     <HintPath>C:/Workspace/unity/Danmokou/Assets/Danmokou/Plugins/DLLs/System.Collections.Immutable.dll</HintPath>
+     <HintPath>E:/Workspace/unity/Danmokou/Assets/Danmokou/Plugins/DLLs/System.Collections.Immutable.dll</HintPath>
      </Reference>
      <Reference Include="System.Reactive">
-     <HintPath>C:/Workspace/unity/Danmokou/Assets/SZYU/Plugins/DLLs/System.Reactive.dll</HintPath>
+     <HintPath>E:/Workspace/unity/Danmokou/Assets/SZYU/Plugins/DLLs/System.Reactive.dll</HintPath>
      </Reference>
      <Reference Include="protobuf-net">
-     <HintPath>C:/Workspace/unity/Danmokou/Assets/Danmokou/Plugins/DLLs/protobuf-net.dll</HintPath>
+     <HintPath>E:/Workspace/unity/Danmokou/Assets/Danmokou/Plugins/DLLs/protobuf-net.dll</HintPath>
      </Reference>
      <Reference Include="protobuf-net.Core">
-     <HintPath>C:/Workspace/unity/Danmokou/Assets/Danmokou/Plugins/DLLs/protobuf-net.Core.dll</HintPath>
+     <HintPath>E:/Workspace/unity/Danmokou/Assets/Danmokou/Plugins/DLLs/protobuf-net.Core.dll</HintPath>
      </Reference>
      <Reference Include="Newtonsoft.Json">
-     <HintPath>C:/Workspace/unity/Danmokou/Library/PackageCache/jillejr.newtonsoft.json-for-unity@13.0.102/Plugins/Newtonsoft.Json Editor/Newtonsoft.Json.dll</HintPath>
+     <HintPath>E:/Workspace/unity/Danmokou/Library/PackageCache/jillejr.newtonsoft.json-for-unity@13.0.102/Plugins/Newtonsoft.Json Editor/Newtonsoft.Json.dll</HintPath>
      </Reference>
      <Reference Include="Mizuhashi">
-     <HintPath>C:/Workspace/unity/Danmokou/Assets/SZYU/Plugins/DLLs/Mizuhashi.dll</HintPath>
+     <HintPath>E:/Workspace/unity/Danmokou/Assets/SZYU/Plugins/DLLs/Mizuhashi.dll</HintPath>
+     </Reference>
+     <Reference Include="Unity.Android.Types">
+     <HintPath>C:/Program Files/Unity/Hub/Editor/2021.2.1f1/Editor/Data/PlaybackEngines/AndroidPlayer/Unity.Android.Types.dll</HintPath>
+     </Reference>
+     <Reference Include="Unity.Android.Gradle">
+     <HintPath>C:/Program Files/Unity/Hub/Editor/2021.2.1f1/Editor/Data/PlaybackEngines/AndroidPlayer/Unity.Android.Gradle.dll</HintPath>
      </Reference>
      <Reference Include="mscorlib">
      <HintPath>C:/Program Files/Unity/Hub/Editor/2021.2.1f1/Editor/Data/UnityReferenceAssemblies/unity-4.8-api/mscorlib.dll</HintPath>
@@ -713,13 +725,13 @@
      <HintPath>C:/Program Files/Unity/Hub/Editor/2021.2.1f1/Editor/Data/UnityReferenceAssemblies/unity-4.8-api/Facades/System.Xml.XPath.XDocument.dll</HintPath>
      </Reference>
      <Reference Include="Unity.TextMeshPro">
-     <HintPath>C:/Workspace/unity/Danmokou/Library/ScriptAssemblies/Unity.TextMeshPro.dll</HintPath>
+     <HintPath>E:/Workspace/unity/Danmokou/Library/ScriptAssemblies/Unity.TextMeshPro.dll</HintPath>
      </Reference>
      <Reference Include="UnityEditor.UI">
-     <HintPath>C:/Workspace/unity/Danmokou/Library/ScriptAssemblies/UnityEditor.UI.dll</HintPath>
+     <HintPath>E:/Workspace/unity/Danmokou/Library/ScriptAssemblies/UnityEditor.UI.dll</HintPath>
      </Reference>
      <Reference Include="UnityEngine.UI">
-     <HintPath>C:/Workspace/unity/Danmokou/Library/ScriptAssemblies/UnityEngine.UI.dll</HintPath>
+     <HintPath>E:/Workspace/unity/Danmokou/Library/ScriptAssemblies/UnityEngine.UI.dll</HintPath>
      </Reference>
   </ItemGroup>
   <ItemGroup>

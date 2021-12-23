@@ -9,10 +9,8 @@ using BagoumLib.Culture;
 using BagoumLib.DataStructures;
 using BagoumLib.Mathematics;
 using BagoumLib.Tasks;
-using Danmokou.Core;
 using Danmokou.DMath;
 using Danmokou.Services;
-using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.UIElements;
 using static Danmokou.UI.XML.UIResult;
@@ -535,7 +533,7 @@ public class CommentatorAxisColumn<T> : UIColumn {
 }
 
 /// <summary>
-/// A UIGroup that is a wrapper around other UIGroups, and has no nodes of its own.
+/// A UIGroup that is a wrapper around other UIGroups, and (usually) has no nodes of its own.
 /// </summary>
 public abstract class CompositeUIGroup : UIGroup {
     public List<UIGroup> Groups { get; }

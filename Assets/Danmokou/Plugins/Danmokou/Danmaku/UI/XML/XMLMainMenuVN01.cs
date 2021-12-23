@@ -19,12 +19,12 @@ public class XMLMainMenuVN01 : XMLMainMenu {
     private UIScreen OptionsScreen = null!;
     private UIScreen LicenseScreen = null!;
     
-    protected override IEnumerable<UIScreen> Screens => new[] {
+    protected override UIScreen?[] Screens => new[] {
         MainScreen,
         LoadGameScreen,
         OptionsScreen, 
         LicenseScreen
-    }.NotNull();
+    };
     
 
     public override void FirstFrame() {
@@ -42,25 +42,25 @@ public class XMLMainMenuVN01 : XMLMainMenu {
         LicenseScreen = this.LicenseScreen(References.licenses).WithBG(SecondaryBGConfig);
         
         MainScreen = new UIScreen(this, null, UIScreen.Display.Unlined){ Builder = (s, ve) => {
-            s.Margin.SetLRMargin(480, null);
+            s.Margin.SetLRMargin(480, 480);
             var c = ve.AddColumn();
             c.style.maxWidth = 20f.Percent();
             c.style.paddingTop = 640;
         }, SceneObjects = MainScreenOnlyObjects}.WithBG(PrimaryBGConfig);
-        _ = new UIColumn(MainScreen, null,
-            new UINode[] {
-                new FuncNode(main_newgame, () => InstanceRequest.RunCampaign(MainCampaign, null, Meta())),
-                new FuncNode(main_continue, () => InstanceRequest.RunCampaign(MainCampaign, null, Meta(), 
-                        SaveData.v.MostRecentSave.GetData())) {
-                    EnabledIf = () => SaveData.v.Saves.Count > 0
-                },
-                new TransferNode(main_load, LoadGameScreen),
-                new TransferNode(main_options, OptionsScreen),
-                new TransferNode("Licenses", LicenseScreen),
-                new FuncNode(main_quit, Application.Quit),
-                new OpenUrlNode(main_twitter, "https://twitter.com/rdbatz")
-            }.Select(x => x.With(large1Class, centerTextClass))
-        );
+        _ = new UIColumn(MainScreen, null, new[] {
+            new FuncNode(main_newgame, () => InstanceRequest.RunCampaign(MainCampaign, null, Meta())),
+            new FuncNode(main_continue, () => InstanceRequest.RunCampaign(MainCampaign, null, Meta(), 
+                    SaveData.v.MostRecentSave.GetData())) {
+                EnabledIf = () => SaveData.v.Saves.Count > 0
+            },
+            new TransferNode(main_load, LoadGameScreen),
+            new TransferNode(main_options, OptionsScreen),
+            new TransferNode(main_licenses, LicenseScreen),
+            new FuncNode(main_quit, Application.Quit),
+            new OpenUrlNode(main_twitter, "https://twitter.com/rdbatz")
+        }.Select(x => x.With(large1Class, centerTextClass))) {
+            ExitIndexOverride = -2
+        };
 
         base.FirstFrame();
         //_ = uiRenderer.Slide(new Vector2(3, 0), Vector2.zero, 1f, DMath.M.EOutSine);

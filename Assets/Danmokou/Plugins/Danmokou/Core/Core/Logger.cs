@@ -25,11 +25,13 @@ public static class Logs {
     private const string LOGDIR = "DMK_Logs/";
     private static readonly List<IDisposable> listeners = new List<IDisposable>();
 
+    public static bool Verbose { get; set; } = true;
+
     static Logs() {
         if (!Application.isPlaying) return;
         var d = DateTime.Now;
         logFile = $"{LOGDIR}log_{d.Year}-{d.Month}-{d.Day}-{d.Hour}-{d.Minute}-{DateTime.Now.Second}.log";
-        FileUtils.CheckDirectory(logFile);
+        FileUtils.CheckPath(ref logFile);
         fileStream = new StreamWriter(logFile);
         listeners.Add(Logging.Logs.Subscribe(PrintToUnityLog));
         listeners.Add(DMKLogs.Subscribe(PrintToUnityLog));
@@ -67,12 +69,12 @@ public static class Logs {
         Exceptions.PrintNestedException(e);
 
     private static void PrintToUnityLog(LogMessage lm) {
-        if ((int) lm.Level < MIN_LEVEL) return;
+        if (!Verbose && (int) lm.Level < MIN_LEVEL) return;
 #if UNITY_EDITOR
         var useStacktrace = true;
 #else
-        if ((int) lm.Level < BUILD_MIN) return;
-        var useStacktrace = lm.ShowStackTrace ?? (lm.Exception != null);
+        if (!Verbose && (int) lm.Level < BUILD_MIN) return;
+        var useStacktrace = Verbose || (lm.ShowStackTrace ?? (lm.Exception != null));
 #endif
         var msg = (lm.Exception == null) ? lm.Message : PrintException(lm.Exception, lm.Message);
         msg = $"Frame {ETime.FrameNumber}: {msg}";

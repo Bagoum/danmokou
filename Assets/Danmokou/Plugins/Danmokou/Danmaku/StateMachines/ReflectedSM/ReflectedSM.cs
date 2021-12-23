@@ -47,7 +47,7 @@ namespace Danmokou.SM {
 public static class SMReflection {
     private static readonly ReflWrap<Func<float, float, float, ParametricInfo, float>> CrosshairOpacity =
         ReflWrap.FromFunc("SMReflection.CrosshairOpacity", () =>
-            CompileDelegate<Func<float, float, float, ParametricInfo, float>, float>(@"
+            CompileDelegate<Func<float, float, float, ParametricInfo, float>>(@"
 if (> t &fadein,
     if(> t &homesec,
         c(einsine((t - &homesec) / &sticksec)),
@@ -255,7 +255,7 @@ if (> t &fadein,
     /// </summary>
     public static TaskPattern ExecuteVN([LookupMethod] Func<DMKVNState, Task> vnTask, string scriptId) => async smh => {
         var _ = await ((DMKVNWrapper) ServiceLocator.Find<IVNWrapper>())
-            .ExecuteVN((data, cT) => new DMKVNState(cT, scriptId, data), vnTask, GameManagement.Instance.VNData, smh.cT);
+            .ExecuteVN((data, cT) => new DMKVNState(cT, scriptId, data, true), vnTask, GameManagement.Instance.VNData, smh.cT);
         //The save is automatically updated in GameManagement.Instance, no need to handle it further here.
     };
 

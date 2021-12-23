@@ -13,10 +13,18 @@ using ProtoBuf;
 using UnityEngine;
 #pragma warning disable 168
 
+/// <summary>
+/// Module providing methods to access on-disk files, as well as some convenience methods for parsing files.
+/// <br/>It is preferable to use this module over File due to requirements around Application.persistentDataPath.
+/// </summary>
 public static class FileUtils {
     public const string SAVEDIR = "DMK_Saves/";
     public const string AYADIR = SAVEDIR + "Aya/";
     public const string VNDIR = SAVEDIR + "VN/";
+    public enum ImageFormat {
+        JPG,
+        PNG
+    }
 
     private static readonly JsonSerializerSettings JsonSettings = new JsonSerializerSettings() {
         TypeNameHandling = TypeNameHandling.Auto,
@@ -24,13 +32,25 @@ public static class FileUtils {
     };
 
     public static IEnumerable<string> EnumerateDirectory(string dir) {
-        CheckDirectory(dir);
+        CheckPath(ref dir);
         return Directory.EnumerateFiles(dir);
     }
 
-    public static void CheckDirectory(string final) {
-        var dir = Path.GetDirectoryName(final);
-        if (dir != null && !Directory.Exists(dir)) Directory.CreateDirectory(dir);
+    /// <summary>
+    /// Modifies the path string to point to a valid location for R/W data
+    /// (ie. may prepend Application.persistentDataPath), and ensures the existence of the directory.
+    /// </summary>
+    public static void CheckPath(ref string path) {
+#if !UNITY_EDITOR && !UNITY_STANDALONE_WIN
+        path = $"{Application.persistentDataPath}/{path}";
+#endif
+        void CheckDirectory(string? dir) {
+            if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir)) {
+                CheckDirectory(Path.GetDirectoryName(dir));
+                Directory.CreateDirectory(dir);
+            }
+        }
+        CheckDirectory(Path.GetDirectoryName(path));
     }
 
     public static T CopyJson<T>(T obj) =>
@@ -38,22 +58,20 @@ public static class FileUtils {
         throw new Exception($"Failed to JSON-copy object {obj} of type {obj?.GetType()}");
     
     public static void WriteJson(string file, object obj) {
-        CheckDirectory(file);
+        CheckPath(ref file);
         using StreamWriter sw = new(file);
         sw.WriteLine(JsonConvert.SerializeObject(obj, Formatting.Indented, JsonSettings));
     }
 
     public static void WriteProto(string file, object obj) {
-        CheckDirectory(file);
-        using (var fw = File.Create(file)) {
-            Serializer.Serialize(fw, obj);
-        }
+        CheckPath(ref file);
+        using var fw = File.Create(file);
+        Serializer.Serialize(fw, obj);
     }
     public static void WriteProtoCompressed(string file, object obj) {
-        CheckDirectory(file);
-        using (var fw = File.Create(file)) {
-            DeflateStream(fw, s => Serializer.Serialize(s, obj));
-        }
+        CheckPath(ref file);
+        using var fw = File.Create(file);
+        DeflateStream(fw, s => Serializer.Serialize(s, obj));
     }
 
     private static void DeflateStream(Stream target, Action<Stream> writer) {
@@ -61,19 +79,17 @@ public static class FileUtils {
         writer(strm);
         strm.Position = 0;
         var compressed = Compress(strm);
-        using (var w = new BinaryWriter(target)) {
-            w.Write(compressed);
-        }
+        using var w = new BinaryWriter(target);
+        w.Write(compressed);
     }
     private static Stream InflateStream(Stream source) => Decompress(source);
     private static byte[] Compress(Stream input) {
-        using (var compressStream = new MemoryStream()) {
-            using (var compressor = new DeflateStream(compressStream, CompressionMode.Compress)) {
-                input.CopyTo(compressor);
-                compressor.Close();
-            }
-            return compressStream.ToArray();
+        using var compressStream = new MemoryStream();
+        using (var compressor = new DeflateStream(compressStream, CompressionMode.Compress)) {
+            input.CopyTo(compressor);
+            compressor.Close();
         }
+        return compressStream.ToArray();
     }
     
     private static Stream Decompress(Stream input) {
@@ -86,34 +102,35 @@ public static class FileUtils {
     }
 
     public static string Read(string file) {
+        CheckPath(ref file);
         using StreamReader sr = new(file);
         return sr.ReadToEnd();
     }
     public static T? ReadJson<T>(string file) where T : class {
+        CheckPath(ref file);
         try {
-            using (StreamReader sr = new(file)) {
-                return JsonConvert.DeserializeObject<T>(sr.ReadToEnd(), JsonSettings);
-            }
+            using StreamReader sr = new(file);
+            return JsonConvert.DeserializeObject<T>(sr.ReadToEnd(), JsonSettings);
         } catch (Exception e) {
             Logs.Log($"Couldn't read {typeof(T)} from file {file}. (JSON)\n{e.Message}", false, LogLevel.WARNING);
             return null;
         }
     }
     public static T? ReadProto<T>(string file) where T : class {
+        CheckPath(ref file);
         try {
-            using (var fr = File.OpenRead(file)) {
-                return Serializer.Deserialize<T>(fr);
-            }
+            using var fr = File.OpenRead(file);
+            return Serializer.Deserialize<T>(fr);
         } catch (Exception e) {
             Logs.Log($"Couldn't read {typeof(T)} from file {file}. (PROTO)\n{e.Message}", false, LogLevel.WARNING);
             return null;
         }
     }
     public static T? ReadProtoCompressed<T>(string file) where T : class {
+        CheckPath(ref file);
         try {
-            using (var fr = File.OpenRead(file)) {
-                return Serializer.Deserialize<T>(InflateStream(fr));
-            }
+            using var fr = File.OpenRead(file);
+            return Serializer.Deserialize<T>(InflateStream(fr));
         } catch (Exception e) {
             Logs.Log($"Couldn't read {typeof(T)} from file {file}. (PROTO-C)\n{e.Message}", false, LogLevel.WARNING);
             return null;
@@ -121,9 +138,8 @@ public static class FileUtils {
     }
     public static T? ReadProtoCompressed<T>(TextAsset file) where T : class {
         try {
-            using (var fr = new MemoryStream(file.bytes)) {
-                return Serializer.Deserialize<T>(InflateStream(fr));
-            }
+            using var fr = new MemoryStream(file.bytes);
+            return Serializer.Deserialize<T>(InflateStream(fr));
         } catch (Exception e) {
             Logs.Log($"Couldn't read {typeof(T)} from textAsset {file.name}. (PROTO-C)\n{e.Message}", false, LogLevel.WARNING);
             return null;
@@ -131,18 +147,28 @@ public static class FileUtils {
     }
     
 
-    public static void WriteTex(string file, Texture2D tex) {
-        CheckDirectory(file);
-        File.WriteAllBytes(file, tex.EncodeToJPG(95));
+    public static void WriteTex(string file, Texture2D tex, ImageFormat format = ImageFormat.JPG) {
+        CheckPath(ref file);
+        File.WriteAllBytes(file, format switch {
+            ImageFormat.JPG => tex.EncodeToJPG(95),
+            ImageFormat.PNG => tex.EncodeToPNG(),
+            _ => throw new ArgumentOutOfRangeException(nameof(format), format, null)
+        });
     }
     
     public static void WriteString(string file, string text) {
-        CheckDirectory(file);
+        CheckPath(ref file);
         File.WriteAllText(file, text);
     }
 
-    public static void Destroy(string file) {
+    public static void Delete(string file) {
+        CheckPath(ref file);
         if (File.Exists(file)) File.Delete(file);
+    }
+
+    public static byte[] ReadAllBytes(string file) {
+        CheckPath(ref file);
+        return File.ReadAllBytes(file);
     }
 
 

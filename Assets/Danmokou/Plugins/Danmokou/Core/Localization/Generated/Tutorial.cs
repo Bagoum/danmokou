@@ -15,29 +15,37 @@ namespace Danmokou.Core {
 public static partial class LocalizedStrings {
 	public static partial class Tutorial {
 		
-		public static string mtcirc1(object arg0) => Localization.Locale.Value switch {
+		public static string mtcirc1(object arg0, object arg1) => Localization.Locale.Value switch {
 			Locales.JP => Render(Localization.Locale.Value, new[] {
-				"左上に大きな赤い丸と緑色の四角が見えるはず。赤い丸が見えなければ、それとも赤い丸はプレイエリアの真ん中に位置していれば、ポーズメニューで「レンダラー」の設定を「旧型」に変えてください。（",
+				"左上に大きな赤い丸と緑色の四角が見えるはず。赤い丸が見えなければ、それとも赤い丸はプレイエリアの真ん中に位置していれば、環境設定メニューの「GRAPHICS」タブで「レンダラー」の設定を「旧型」に変えてください。（",
 				"{0}",
-				"押すと続く）",
-			}, arg0),
+				"押すと続く、",
+				"{1}",
+				"押すとポーズメニューを開く）",
+			}, arg0, arg1),
 			_ => Render(Localization.Locale.Value, new[] {
-				"You should see a large red circle on a green box in the upper left corner. If the red circle is invisible or in the center of the screen, turn the renderer option to LEGACY in the pause menu. (",
+				"You should see a large red circle on a green box in the upper left corner. If the red circle is invisible or in the center of the screen, turn the renderer option to LEGACY in the graphics section of the options menu. (",
 				"{0}",
-				" to continue)",
-			}, arg0),
+				" to continue, ",
+				"{1}",
+				" to open the pause menu)",
+			}, arg0, arg1),
 		};
 		
-		public static LString mtcirc1_ls(object arg0) => new LString(Render(null, new[] {
-				"You should see a large red circle on a green box in the upper left corner. If the red circle is invisible or in the center of the screen, turn the renderer option to LEGACY in the pause menu. (",
+		public static LString mtcirc1_ls(object arg0, object arg1) => new LString(Render(null, new[] {
+				"You should see a large red circle on a green box in the upper left corner. If the red circle is invisible or in the center of the screen, turn the renderer option to LEGACY in the graphics section of the options menu. (",
 				"{0}",
-				" to continue)",
-			}, arg0),
+				" to continue, ",
+				"{1}",
+				" to open the pause menu)",
+			}, arg0, arg1),
 			(Locales.JP, Render(Locales.JP, new[] {
-				"左上に大きな赤い丸と緑色の四角が見えるはず。赤い丸が見えなければ、それとも赤い丸はプレイエリアの真ん中に位置していれば、ポーズメニューで「レンダラー」の設定を「旧型」に変えてください。（",
+				"左上に大きな赤い丸と緑色の四角が見えるはず。赤い丸が見えなければ、それとも赤い丸はプレイエリアの真ん中に位置していれば、環境設定メニューの「GRAPHICS」タブで「レンダラー」の設定を「旧型」に変えてください。（",
 				"{0}",
-				"押すと続く）",
-			}, arg0)))
+				"押すと続く、",
+				"{1}",
+				"押すとポーズメニューを開く）",
+			}, arg0, arg1)))
 			{ ID = "mtcirc1" };
 		
 		public static string mtsafe2(object arg0) => Localization.Locale.Value switch {
@@ -121,69 +129,61 @@ public static partial class LocalizedStrings {
 			}, arg0)))
 			{ ID = "blue2" };
 		
-		public static readonly LString pause3 = new LString("The pause menu has important settings as well as control flow options.",
-			(Locales.JP, "パーズメニューには、設定と制御流れの機構があります。"))
-			{ ID = "pause3" };
+		public static readonly LString options2_1 = new LString("<--- Open the options menu. The options menu has important settings as well as control flow options.",
+			(Locales.JP, "<-------環境設定メニューを開いてください。環境設定メニューには、設定と制御流れの機構があります。"))
+			{ ID = "options2_1" };
+		
+		public static readonly LString graphics3_1 = new LString("Go to the GRAPHICS tab.",
+			(Locales.JP, "「GRAPHICS」タブに移動してください。"))
+			{ ID = "graphics3_1" };
 		
 		public static readonly LString shaders4 = new LString("If the game is running slow, you can try lowering visual quality or lowering the resolution.",
 			(Locales.JP, "フレームレートが低ければ画質や解像度を下げて見てください。"))
 			{ ID = "shaders4" };
 		
 		public static readonly LString shaders5 = new LString(Render(null, new[] {
-				"Visual Quality option ------->",
+				"<------- Visual Quality option",
 				"\n",
 				"Try changing the visual quality. It takes effect on unpause.",
 			}),
 			(Locales.JP, Render(Locales.JP, new[] {
-				"画質設定ーーーー＞",
+				"<-------画質設定",
 				"\n",
 				"画質を変えてください。ポースを解除するたびに効果が出ます。",
 			})))
 			{ ID = "shaders5" };
 		
 		public static readonly LString res6 = new LString(Render(null, new[] {
-				"Resolution option ---------->",
+				"<------- Resolution option",
 				"\n",
 				"Try changing the resolution. It takes effect immediately.",
 			}),
 			(Locales.JP, Render(Locales.JP, new[] {
-				"解像度設定ーーーー＞",
+				"<-------解像度設定",
 				"\n",
 				"解像度を変えてください。即時に効果が出ます。",
 			})))
 			{ ID = "res6" };
 		
-		public static readonly LString refresh7 = new LString(Render(null, new[] {
-				"Refresh rate option ---------->",
-				"\n",
-				"This is the game speed. The engine will determine this automatically, but you can adjust it if the game is too fast or too slow.",
-			}),
-			(Locales.JP, Render(Locales.JP, new[] {
-				"リフレッシュ速度ー＞",
-				"\n",
-				"ゲームは自動的に最適の選択肢を選ぶので、フレームレートが普通であればこの設定を変える必要はありません。",
-			})))
-			{ ID = "refresh7" };
-		
 		public static readonly LString fullscreen8 = new LString(Render(null, new[] {
-				"Fullscreen option ---------->",
+				"<------- Fullscreen option",
 				"\n",
 				"Some computers have trouble playing games in fullscreen. Try turning this off if you have lag.",
 			}),
 			(Locales.JP, Render(Locales.JP, new[] {
-				"フルスクリーン設定ー＞",
+				"<-------フルスクリーン設定",
 				"\n",
 				"インプットラグとかが発生するとこれを変えて見てください。",
 			})))
 			{ ID = "fullscreen8" };
 		
 		public static readonly LString vsync9 = new LString(Render(null, new[] {
-				"Vsync option --------------->",
+				"<------- Vsync option",
 				"\n",
 				"Vsync will make the game run smoother, but it may cause input lag.",
 			}),
 			(Locales.JP, Render(Locales.JP, new[] {
-				"垂直同期設定ー＞",
+				"<-------垂直同期設定",
 				"\n",
 				"垂直同期はフレームレートを円滑にするが、インプットラグを生じる可能性があります。",
 			})))
@@ -220,8 +220,8 @@ public static partial class LocalizedStrings {
 			(Locales.JP, "左上に大きな赤い丸と緑色の四角、右側に二つのレーザが見えるはず。"))
 			{ ID = "redcircle12" };
 		
-		public static readonly LString legacy13 = new LString("If you cannot see the red circle, or the red circle appears to be in the center of the screen, turn the renderer option to LEGACY in the pause menu.",
-			(Locales.JP, "赤い丸が見えなければ、それとも赤い丸はプレイエリアの真ん中に位置していれば、ポーズメニューで「レンダラー」の設定を「旧型」に変えてください。"))
+		public static readonly LString legacy13 = new LString("If you cannot see the red circle, or the red circle appears to be in the center of the screen, turn the renderer option to LEGACY in the graphics menu.",
+			(Locales.JP, "赤い丸が見えなければ、それとも赤い丸はプレイエリアの真ん中に位置していれば、環境設定メニューで「レンダラー」の設定を「旧型」に変えてください。"))
 			{ ID = "legacy13" };
 		
 		public static readonly LString safelaser14 = new LString("The lasers on the right are SAFE LASERs. Lasers with letters or patterns do no damage.",
@@ -315,14 +315,14 @@ public static partial class LocalizedStrings {
 			{ ID = "shoot26" };
 		
 		public static readonly LString lives27 = new LString(Render(null, new[] {
-				"These are your lives. ------->",
+				"These are your lives. --------->",
 				"\n",
 				"A red dot is worth 2 lives,",
 				"\n",
 				"a pink dot is worth 1 life.",
 			}),
 			(Locales.JP, Render(Locales.JP, new[] {
-				"残機ーーーーーー＞",
+				"残機ーーーーーーーー＞",
 				"\n",
 				"赤色のドットは２ライフに等しく、桃色のドットは１ライフに等しい。",
 			})))
@@ -340,8 +340,8 @@ public static partial class LocalizedStrings {
 			(Locales.JP, "今は残機は1です。"))
 			{ ID = "dots30" };
 		
-		public static readonly LString nobombs31 = new LString("If you are hit by bullets, you will lose a life. There are no bombs.",
-			(Locales.JP, "被弾したら残機は1減ります。ボムはありません。"))
+		public static readonly LString nobombs31 = new LString("If you are hit by bullets, you will lose a life.",
+			(Locales.JP, "被弾したら残機は1減ります。"))
 			{ ID = "nobombs31" };
 		
 		public static readonly LString pleasedie32 = new LString("Try getting hit by the bullets.",
@@ -353,12 +353,12 @@ public static partial class LocalizedStrings {
 			{ ID = "deathscreen33" };
 		
 		public static readonly LString lifeitems34 = new LString(Render(null, new[] {
-				"These are your life items. ->",
+				"These are your life items. ----->",
 				"\n",
 				"Fulfill the requirement to get an extra life.",
 			}),
 			(Locales.JP, Render(Locales.JP, new[] {
-				"ライフアイテムー＞",
+				"ライフアイテムーーー＞",
 				"\n",
 				"ライフアイテムを集めればエクステンドします。",
 			})))
@@ -407,7 +407,7 @@ public static partial class LocalizedStrings {
 		
 		public static string faith39(object arg0) => Localization.Locale.Value switch {
 			Locales.JP => Render(Localization.Locale.Value, new[] {
-				"スコアマルチプライヤーの真下にある白いゲージは信仰メートルです。時間が経て減少します。グレイズすれば・敵を倒せば復します。メートルをすべて失ったらスコアマルチプライヤーは",
+				"スコアマルチプライヤーの真下にある白いゲージは信仰メートルです。時間が経て減少します。グレイズすれば・敵を倒せば復します。メートルをすべて失ったらマルチプライヤーは",
 				"{0}",
 				"減少します。",
 			}, arg0),
@@ -424,7 +424,7 @@ public static partial class LocalizedStrings {
 				".",
 			}, arg0),
 			(Locales.JP, Render(Locales.JP, new[] {
-				"スコアマルチプライヤーの真下にある白いゲージは信仰メートルです。時間が経て減少します。グレイズすれば・敵を倒せば復します。メートルをすべて失ったらスコアマルチプライヤーは",
+				"スコアマルチプライヤーの真下にある白いゲージは信仰メートルです。時間が経て減少します。グレイズすれば・敵を倒せば復します。メートルをすべて失ったらマルチプライヤーは",
 				"{0}",
 				"減少します。",
 			}, arg0)))
@@ -478,7 +478,7 @@ public static partial class LocalizedStrings {
 			{ ID = "ability46" };
 		
 		public static readonly LString ability47 = new LString("While in bullet time, value items and point++ items are worth twice as much, and the player moves comparatively faster. Try collecting some items with or without bullet time.",
-			(Locales.JP, "バレットタイムが作動している間は、得点アイテム・点数増加アイテムの価値は2倍になって、自機の比較的速度は早くなります。バレットタイムが作動している・していない間にアイテムを集めて見てください。"))
+			(Locales.JP, "バレットタイムが作動している間は、得点・点数増加アイテムの価値は2倍になって、自機の比較的速度は早くなります。バレットタイムが作動している・していない間にアイテムを集めて見てください。"))
 			{ ID = "ability47" };
 		
 		public static readonly LString meter48 = new LString("You can refill the special meter by collecting yellow gem items.",
@@ -500,7 +500,7 @@ public static partial class LocalizedStrings {
 		public static readonly LString end52 = new LString(Render(null, new[] {
 				"That's all! To finish the tutorial, select ",
 				"\"",
-				"Return to Menu",
+				"Return to Title",
 				"\"",
 				" from the pause menu.",
 			}),

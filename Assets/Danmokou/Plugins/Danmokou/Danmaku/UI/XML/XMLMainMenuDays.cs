@@ -33,7 +33,7 @@ public class XMLMainMenuDays : XMLMainMenu {
     private UIScreen GameDetailsScreen = null!;
     private UIScreen ReplayScreen = null!;
 
-    protected override IEnumerable<UIScreen> Screens => new[] {
+    protected override UIScreen?[] Screens => new[] {
         MainScreen,
         SceneSelectScreen, OptionsScreen, ReplayScreen, GameDetailsScreen
     };

@@ -15,13 +15,13 @@ MonoBehaviour:
   themeUss: {fileID: -4733365628477956816, guid: b9798efe0fc2f924aa456be649582a88,
     type: 3}
   m_TargetTexture: {fileID: 8400000, guid: be218fb1d1df0224384ea0f2654dd964, type: 2}
-  m_ScaleMode: 2
-  m_Scale: 1
+  m_ScaleMode: 0
+  m_Scale: 0.5
   m_ReferenceDpi: 96
   m_FallbackDpi: 96
   m_ReferenceResolution: {x: 3840, y: 2160}
   m_ScreenMatchMode: 0
-  m_Match: 1
+  m_Match: 0
   m_SortingOrder: 0
   m_TargetDisplay: 0
   m_ClearDepthStencil: 1
@@ -31,7 +31,7 @@ MonoBehaviour:
     m_MinAtlasSize: 64
     m_MaxAtlasSize: 4096
     m_MaxSubTextureSize: 64
-    m_ActiveFilters: 31
+    m_ActiveFilters: -1
   m_AtlasBlitShader: {fileID: 9101, guid: 0000000000000000f000000000000000, type: 0}
   m_RuntimeShader: {fileID: 9100, guid: 0000000000000000f000000000000000, type: 0}
   m_RuntimeWorldShader: {fileID: 9102, guid: 0000000000000000f000000000000000, type: 0}

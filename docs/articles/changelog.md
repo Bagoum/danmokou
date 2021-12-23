@@ -8,37 +8,35 @@ To get the newest version from git, run:
 
 `git submodule update` (if you have made modifications to the submodules, you will need to `pull --rebase` them individually)
 
-# [Unreleased] v9.1.0
+# Unreleased
 
-The following features are planned for minor release v9.1.0, which will probably be completed by February.
+The following features are planned for future releases. Minor version 9.1.0 is planned for February.
 
-- Default handling for graze flake items and bullet cancel flake items
-- Implementation of a TH18-like card engine
-- Procedural generation of stages and bullet patterns
-- Full-featured implementation of Suzunoya
-  - **The classes for DialogueProfile will be deleted in v9.1.0, so make sure you port any custom dialogue profiles to Suzunoya entities by then.**
+- [9.1.0] Default handling for graze flake items and bullet cancel flake items
+- [9.1.0] Full-featured implementation of Suzunoya
+- [9.2.0] Implementation of a TH18-like card engine
+- [10.0.0] Procedural generation of stages and bullet patterns
 
-
-
-# v9.0.0 (2021/12/31)
-
-I was planning to make this v8.1.0, but the UI changes are too significant for a minor release.
+# v9.0.0 (2021/01/10)
 
 This release includes code for [Blessed Rain](https://bagoum.itch.io/blessed-rain), a short visual novel, in the MiniProjects folder. As of this release, Suzunoya functionality is mostly complete, but I haven't thoroughly tested functionality related to choices and external tasks, and there are some theoretical issues in save/load handling with regards to nondeterminism as well as certain configurations of global switches that open or close branches between executions.
 
 #### Breaking changes
 
-- Please upgrade Unity to **2021.2**. Note that if you get errors at runtime about missing settings, you may need to run Window > UIToolkit > Package Asset Converter > "I want my assets to function without the UI Toolkit package installed". This upgrade makes UIToolkit much more resilient, allows some new CSS features that are used in the updated UI, and also enables some C#8 and C#9 features that are now used in the codebase.
+- Please upgrade Unity to **2021.2** before opening this project. Note that if you get errors at runtime about missing settings, you may need to run Window > UIToolkit > Package Asset Converter > "I want my assets to function without the UI Toolkit package installed". This upgrade makes UIToolkit much more resilient, allows some new CSS features that are used in the updated UI, and also enables some C#8 and C#9 features that are now used in the codebase.
 - The architecture for UIToolkit-based UI has been overhauled. As a part of this, all the UIScreen uxml files were replaced with a single universal file, the UIScreen and UINode classes were completely rewritten, and the process of constructing UIs in code was changed in a backwards-incompatible way. See the [UI design document](uidesign.md) for details on the new UI architecture, which I plan to keep stable.
 
 #### Pending issues
 
-- If you jump to the Replays screen from the Records screen, then view a replay, then return from the replay, then return to the records screen, the cursor will be invisible but navigation will still be possible. This is due to limitations in the menu position regeneration process in the 
+- If you jump to the Replays screen from the Records screen, then view a replay, then return from the replay, then return to the records screen, the cursor will be invisible but navigation will still be possible. This is due to limitations in the menu position regeneration process.
 
 #### Features
 
 - Replaced the default UI handling. It should be a lot prettier now. If you had any code modifying or dependent on the default UI handling, you will need to change it.
 - Added save/load handling for visual novels in DMK.
+- Added an in-game license viewer. It uses a general Markdown parser from Mizuhashi, so it can support other usages as well.
+- The game screen now pillarboxes or letterboxes when the resolution of the window is not 16x9, and the windowed mode can be freely rescaled in any direction. (Note that rescaling the windowed mode by dragging the corners of the window will not increase the resolution, in the sense that if you set the windowed resolution to 800x450 in the options, and then expand the window to the size of your monitor, it will still be low-quality 800x450.)
+- DMK can now be run on Android. However, I have not written any input handling for mobile yet, so only the touch-to-navigate-menus handling works.
 
 #### Changes
 

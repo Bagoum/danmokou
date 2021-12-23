@@ -46,12 +46,7 @@ Email `reneedebatz@gmail.com` (keys on https://keys.openpgp.org/) or contact me 
 
 **Why Unity?**
 
-Honestly, I'd rather not be using Unity, but I don't know of any engines which support all this project's requirements. If you know of a good engine, or Godot has just received a major update fixing all the issues I list below, then contact me and I may be willing to do the port. 
-
-- Supports C# and expression trees
-- Supports indirect mesh instancing (see [my article](https://medium.com/@bagoum/devlog-002-graphics-drawmeshinstancedindirect-a4024e05737f), this is critical for this engine's efficiency)
-- Supports property blocks on materials
-- Supports efficient zero-allocation mesh reassignments
+Honestly, I'd rather not be using Unity, but I don't know of any engines which support all this project's requirements, and at this point there's too much investment in Unity-specific handling to have a simple port.
 
 **What does Danmokou mean?**
 

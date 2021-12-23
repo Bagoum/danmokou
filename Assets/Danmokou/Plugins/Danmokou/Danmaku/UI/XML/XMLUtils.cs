@@ -629,6 +629,7 @@ public static partial class XMLUtils {
             new PassthroughNode(LString.Empty),
             new PassthroughNode(shotsel_shot).With(centerTextClass),
             shotSelect.With(optionNoKeyClass),
+            subshotSelect.With(optionNoKeyClass),
             new PassthroughNode(LString.Empty),
             new PassthroughNode(shotsel_support).With(centerTextClass),
             supportSelect.With(optionNoKeyClass),

@@ -3,8 +3,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-using System.Runtime.Remoting.Contexts;
 using BagoumLib.Events;
 using Danmokou.Achievements;
 using Danmokou.Behavior;
@@ -36,7 +34,7 @@ namespace Danmokou.Services {
 /// This is the only scene-persistent object in the game.
 /// </summary>
 public class GameManagement : CoroutineRegularUpdater {
-    public static readonly Version EngineVersion = new(8, 1, 0);
+    public static readonly Version EngineVersion = new(9, 0, 0);
     public static DifficultySettings Difficulty => Instance.Difficulty;
 
     public static DifficultySettings defaultDifficulty { get; private set; } =

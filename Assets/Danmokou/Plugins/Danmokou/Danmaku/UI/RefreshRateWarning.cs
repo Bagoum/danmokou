@@ -15,7 +15,7 @@ public class RefreshRateWarning : MonoBehaviour {
     private static readonly int[] validRefreshes = { 30, 40, 60, 120 };
     private static (bool invalid, string msg) GetString() {
         if (!validRefreshes.Contains(Screen.currentResolution.refreshRate)) {
-            return (true, $"Your monitor refresh rate is {Screen.currentResolution.refreshRate} Hz. This may cause visual tearing.\nAn optimal refresh rate is one of {string.Join(", ", validRefreshes)}");
+            return (true, $"Your monitor refresh rate is {Screen.currentResolution.refreshRate} Hz. This may cause visual tearing.\nAn optimal refresh rate is one of 30, 40, or a multiple of 60.");
         } else return (false, "");
     }
 

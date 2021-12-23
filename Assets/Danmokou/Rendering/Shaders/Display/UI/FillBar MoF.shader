@@ -6,6 +6,8 @@
 		_YX("Yield X", Float) = 0.1
 		_YY("Yield Y", Float) = 0.1
 		
+		_CM("Color multiplier", Color) = (1, 1, 1, 1)
+		
 		_CF("Filled Color", Color) = (1, 1, 1, 1)
 		_Threshold("Threshold", Float) = 2
 		_CF2("Filled Color Over Threshold", Color) = (1, 1, 1, 1)
@@ -42,12 +44,13 @@
 				float4 c     : COLOR;
             };
 
+            float4 _CM;
             
             fragment vert(vertex v) {
                 fragment f;
                 f.loc = UnityObjectToClipPos(v.loc);
                 f.uv = v.uv;
-                f.c = v.color;
+                f.c = v.color * _CM;
                 return f;
             }
 

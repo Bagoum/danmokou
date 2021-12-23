@@ -9,7 +9,7 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: Ripple Fade
   m_Shader: {fileID: 4800000, guid: 01bf2e18c84b79d43ab3d3da4e0f197d, type: 3}
-  m_ShaderKeywords: ETC1_EXTERNAL_ALPHA
+  m_ShaderKeywords: FT_FADE_IN
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -109,6 +109,7 @@ Material:
     - _TStart: 0
     - _Thick: 0.11
     - _Thickness: 0.5
+    - _ToggleFadeIn: 1
     - _UVSec: 0
     - _Value: 0.33333334
     - _WLen: 0.3

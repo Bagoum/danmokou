@@ -175,8 +175,9 @@ public class InstanceRecord {
     }
 
     [JsonIgnore] [ProtoIgnore] public ILowInstanceRequest ReconstructedRequest => RequestKey.Reconstruct();
-    public void AssignName(string newName) => CustomName = newName[..Math.Min(newName.Length, 10)];
+    public void AssignName(string newName) => CustomName = newName[..Math.Min(newName.Length, CustomNameLength)];
 
+    public const int CustomNameLength = 16;
     public const int BossPracticeNameLength = 11;
     [JsonIgnore]
     [ProtoIgnore]
@@ -202,7 +203,7 @@ public class InstanceRecord {
         var name = (string.IsNullOrEmpty(CustomNameOrPartial) && defaultName) ? "[NAME]" : CustomNameOrPartial;
         var req = showRequest ? $"{RequestDescription} " : "";
         var date = showTime ? Date.SimpleTime() : Date.SimpleDate();
-        return new LString($"{name,-16} {score} {pstr} {req}{SavedMetadata.difficulty.DescribePadR()}  {date}");
+        return new LString($"{name,-CustomNameLength} {score} {pstr} {req}{SavedMetadata.difficulty.DescribePadR()}  {date}");
     }
 }
 

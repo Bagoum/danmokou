@@ -61,14 +61,15 @@
             float _PMDir;
             float _OutwardsPush;
             
-            float _RPPU;
             float4 _CE;
             float4 _CF;
             float4 _CFI;
             static const float rsmth = 0.004f;
 
             float4 frag(fragment f) : SV_Target {
-                float r = length(f.uv) * _MainTex_TexelSize.z / _RPPU;
+            	//6 is the screen unit size of the sprite this is normally attached to,
+            	// so all parameters are in terms of screen unit size instead of uv.
+                float r = length(f.uv) * 6;
                 float a = atan2(f.uv.y, f.uv.x) / TAU; 
                 float ang = fmod(a + 1.75, 1); // 0 to 1, starting at 90
                 ang = 1 - 2 * abs(0.5 - ang); // 90 = 0; -90 = 1; 0,180 = 0.5

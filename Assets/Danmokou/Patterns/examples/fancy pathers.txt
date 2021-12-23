@@ -2,7 +2,7 @@ pattern { }
 phase 0
 	paction 0
         position 0 0
-		shift-phase-to 1
+		shift-phase-to 2
 
 phase 0
 	paction 0

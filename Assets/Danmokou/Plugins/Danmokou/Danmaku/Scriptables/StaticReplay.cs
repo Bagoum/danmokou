@@ -14,7 +14,12 @@ public class StaticReplay : ScriptableObject {
 
     public Func<InputManager.FrameInput[]> Frames => () => {
         if (_frames == null || _frames.Length == 0)
-            _frames = SaveData.Replays.LoadReplayFrames(replayFile)();
+            try {
+                _frames = SaveData.Replays.LoadReplayFrames(replayFile)();
+            } catch (Exception ex) {
+                _frames = Array.Empty<InputManager.FrameInput>();
+                Logs.LogException(new Exception("Failed to load static replay", ex));
+            }
         return _frames;
     };
 

@@ -24,7 +24,7 @@ public interface IPauseMenu {
     void QueueOpen();
 }
 /// <summary>
-/// Class to manage the main menu UI.
+/// Class to manage the pause menu UI. Links to an options screen and a VN save/load screen.
 /// </summary>
 [Preserve]
 public class XMLPauseMenu : PausedGameplayMenu, IPauseMenu {
@@ -35,7 +35,7 @@ public class XMLPauseMenu : PausedGameplayMenu, IPauseMenu {
     private bool preserveSS = false;
     protected override UINode? StartingNode => unpause;
     
-    protected override IEnumerable<UIScreen> Screens => new[] {MainScreen, OptionsScreen, SaveLoadScreen}.FilterNone();
+    protected override UIScreen?[] Screens => new[] {MainScreen, OptionsScreen, SaveLoadScreen};
 
     public override void FirstFrame() {
         OptionsScreen = this.OptionsScreen(!Replayer.RequiresConsistency);

@@ -9,6 +9,7 @@ using System.Threading;
 using BagoumLib.DataStructures;
 using BagoumLib.Events;
 using BagoumLib.Mathematics;
+using BagoumLib.Tasks;
 using BagoumLib.Tweening;
 using Danmokou.DMath;
 using Danmokou.Scenes;
@@ -146,22 +147,44 @@ public class ETime : MonoBehaviour {
         StartCoroutine(NoVsyncHandler());
     }
 
-    private static void SetForcedFPS(float fps) {
-        Logs.Log($"Assuming the screen runs at {fps} fps");
+    private static void SetForcedFPS(int fps) {
+        Logs.Log($"Assuming the screen runs at {fps} fps, setting");
         ASSUME_SCREEN_FRAME_TIME = 1f / fps;
         //Better to use precise thread waiter. See https://blogs.unity3d.com/2019/06/03/precise-framerates-in-unity/
-        //Application.targetFrameRate = fps;
+        // This said, mobile requires targetFrameRate.
+    #if UNITY_ANDROID || UNITY_IOS
+        Application.targetFrameRate = fps;
+        //Required to make the set work on startup
+        QueueEOFInvoke(() => Application.targetFrameRate = fps);
+    #endif
     }
 
     private static bool ThreadWaiter = false;
     private static float lastFrameTime = 0;
 
     public static void SetVSync(int ct) {
+#if UNITY_ANDROID || UNITY_IOS
+        //Mobile uses targetFrameRate only
+        Logs.Log("Disabling Vsync for mobile");
+        ThreadWaiter = false;
+        QualitySettings.vSyncCount = 0;
+#else
+        Logs.Log($"Setting VSync to {ct}");
         ThreadWaiter = ct == 0;
-        lastFrameTime = Time.realtimeSinceStartup;
         QualitySettings.vSyncCount = ct;
-        SetForcedFPS(Screen.currentResolution.refreshRate);
+#endif
+        lastFrameTime = Time.realtimeSinceStartup;
+        SetForcedFPS(GetMonitorRefresh());
+    }
 
+    private static int GetMonitorRefresh() {
+        //TODO: android seems to be force-limited to 30 fps, even if the refresh rate is 60hz
+        //TODO: may be a good idea to replace assume_frame_time with a ETime.deltaTime rounding for mobile
+    #if UNITY_ANDROID || UNITY_IOS
+        return 60;
+    #else
+        return Screen.currentResolution.refreshRate;
+    #endif
     }
 
     private static void ParallelUpdateStep() {
@@ -221,7 +244,8 @@ public class ETime : MonoBehaviour {
                 //Note: The updaters array is only modified by this command. 
                 FlushUpdaterAdds();
                 EndOfFrameInvokes(EngineStateManager.State);
-                FrameNumber++;
+                if (EngineStateManager.State == EngineState.RUN)
+                    FrameNumber++;
                 FirstUpdateForScreen = false;
             }
             UntilNextFrame += EngineStepTime;
@@ -251,9 +275,7 @@ public class ETime : MonoBehaviour {
         }
         // ReSharper disable once IteratorNeverReturns
     }
-
-
-    private static readonly CountdownEvent countdown = new CountdownEvent(1);
+    
     private const int NTHREADS = 8;
     private const int PARALLELCUTOFF = 256;
 

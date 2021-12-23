@@ -28,7 +28,6 @@ public static partial class Reflector {
     };*/
 
     static Reflector() {
-        Debug.Log($"Entered static: {Application.isPlaying}");
         if (!Application.isPlaying) return;
         foreach (var type in ReflectorUtils.ReflectableAssemblyTypes) {
             foreach (var ca in type.GetCustomAttributes()) {

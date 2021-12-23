@@ -64,7 +64,7 @@ public class SerializedImage {
         }
         byte[] data;
         try {
-            data = File.ReadAllBytes(FullFilename);
+            data = FileUtils.ReadAllBytes(FullFilename);
         } catch (Exception e) {
             Logs.Log($"Couldn't load Aya photo {FullFilename}: {e.Message}", level: LogLevel.WARNING);
             texture = null!;
@@ -90,8 +90,7 @@ public class SerializedImage {
     }
 
     public void RemoveFromDisk() {
-        if (File.Exists(FullFilename))
-            File.Delete(FullFilename);
+        FileUtils.Delete(FullFilename);
     }
 }
 }

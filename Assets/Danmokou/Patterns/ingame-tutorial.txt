@@ -9,20 +9,21 @@ phase 0
 
 phase 0
 	paction 0
-		move-target 1 io-sine cy 1
+		move-target 1 io-sine cy 0
 		
 <!> type non `This is a Nonspell`
 <!> hp 4000
 <!> hpbar 1
+<!> root 0 2
 phase 0
 	paction 0
-		position 0 1
 		vulnerable true
 		move _ nroffset px sine 4 0.5 t
 
 		
 <!> type non `This is a Nonspell`
 <!> hp 4000
+<!> root 0 2
 phase 0
 	paction 0
 		vulnerable true
@@ -30,6 +31,7 @@ phase 0
 		
 <!> type spell `This is a Spell`
 <!> hp 4000
+<!> root 0 2
 phase 0
 	paction 0
 		vulnerable true
@@ -37,6 +39,7 @@ phase 0
 		
 <!> type timeout `This is a Timeout Spell`
 <!> hp 4000
+<!> root 0 2
 phase 9
 	paction 0
 		move _ nroffset py sine 4 0.5 t
@@ -48,9 +51,9 @@ phase 0
 		
 <!> type non `This is a Nonspell`
 <!> hp 4000
+<!> root 0 1
 phase 0
 	paction 0
-		position 0 1
 		vulnerable true
 		async fireball-*/b <0.5;:12> gcr2 180 _ <8c> {
 		} gsr2 2 <> {

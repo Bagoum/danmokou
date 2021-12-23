@@ -15,8 +15,8 @@ Here are the cameras ordered by depth, their culling layers, and the primary sor
 | Top Camera           | TransparentFX, HighProjectile, Enemy | Enemy, Foreground, FX            | Renders to the composite texture.                            |
 | 3D Camera            | 3DEffects                            | Any                              | 3D effects like boss cutins. <br />Renders to the composite texture. |
 | Shader Effect Camera |                                      |                                  | Postprocessing effects like Seija's screen flip.<br />Renders to the composite texture. |
-| Main Camera          |                                      |                                  | Renders the composite texture to screen.                     |
-| UI Camera            | UI                                   | UI                               | Renders directly to screen.                                  |
+| UI Camera            | UI                                   | UI                               | Renders to the composite texture.                            |
+| Main Camera          |                                      |                                  | Renders the composite texture to screen, adding black bars if the monitor is not 16x9. |
 
 Don't try to order Mesh/Sprites and direct-render stuff on the same camera-- it doesn't seem to work. Direct-render doesn't offer control over the sorting layer. 
 

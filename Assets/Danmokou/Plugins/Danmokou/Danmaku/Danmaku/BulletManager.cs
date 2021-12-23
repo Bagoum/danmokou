@@ -21,7 +21,7 @@ public partial class BulletManager {
 
     public static void CopyPool(string newPool, string from) {
         var src = simpleBulletPools[from];
-        var p = src.MetaType == AbsSimpleBulletCollection.CollectionType.Empty ? 
+        var p = src.MetaType == SimpleBulletCollection.CollectionType.Empty ? 
             new EmptySBC(src.CopyBC(newPool)) : 
             src.CopyPool(activeCNpc, newPool);
         p.SetOriginal(src);
@@ -39,7 +39,7 @@ public partial class BulletManager {
         if (!simpleBulletPools.TryGetValue(playerPool, out var p)) {
             if (!simpleBulletPools.TryGetValue(pool, out var src)) 
                 throw new Exception($"{pool} does not exist, cannot make a player variant of it");
-            p = src.MetaType == AbsSimpleBulletCollection.CollectionType.Empty ? 
+            p = src.MetaType == SimpleBulletCollection.CollectionType.Empty ? 
                 new EmptySBC(src.CopyBC(playerPool)) : 
                 src.CopySimplePool(activePlayer, playerPool);
             p.SetOriginal(src);
@@ -99,11 +99,11 @@ public partial class BulletManager {
 
     public static void AssertControls(string pool, IReadOnlyList<BulletControl> controls) => GetMaybeCopyPool(pool).AssertControls(controls);
 
-    public static AbsSimpleBulletCollection GetMaybeCopyPool(string pool) {
+    public static SimpleBulletCollection GetMaybeCopyPool(string pool) {
         if (CheckOrCopyPool(pool, out var sbc)) return sbc;
         throw new Exception($"Could not find simple bullet style by name \"{pool}\".");
     }
-    public static AbsSimpleBulletCollection? NullableGetMaybeCopyPool(string? pool) {
+    public static SimpleBulletCollection? NullableGetMaybeCopyPool(string? pool) {
         if (pool == null || string.IsNullOrWhiteSpace(pool) || pool == "_") 
             return null;
         if (CheckOrCopyPool(pool, out var sbc)) return sbc;

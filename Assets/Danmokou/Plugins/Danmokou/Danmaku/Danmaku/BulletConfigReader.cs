@@ -100,7 +100,7 @@ public partial class BulletManager : RegularUpdater {
             Tint = new DisturbedOverride<TP4?>(null);
             Tint.Subscribe(tint => {
                 if (riLoaded)
-                    GetOrLoadRI().material.SetOrUnsetKeyword(tint != null, PropConsts.tintKW);
+                    GetOrLoadRI().Material.SetOrUnsetKeyword(tint != null, PropConsts.tintKW);
             });
         }
 
@@ -108,7 +108,7 @@ public partial class BulletManager : RegularUpdater {
             GetOrLoadRI();
             var nbc = this with {
                 name = newName,
-                ri = new MeshGenerator.RenderInfo(ri.material, ri.mesh, true),
+                ri = ri.Copy(),
                 riLoaded = true,
                 Deletable = CopyOV(Deletable),
                 CULL_RAD = CopyOV(CULL_RAD),
@@ -118,7 +118,7 @@ public partial class BulletManager : RegularUpdater {
             };
             nbc.Tint.Subscribe(tint => {
                 if (riLoaded)
-                    GetOrLoadRI().material.SetOrUnsetKeyword(tint != null, PropConsts.tintKW);
+                    GetOrLoadRI().Material.SetOrUnsetKeyword(tint != null, PropConsts.tintKW);
             });
             return nbc;
         }
@@ -131,15 +131,15 @@ public partial class BulletManager : RegularUpdater {
         }
         
         public void SetPlayer() {
-            ri.material.SetFloat(PropConsts.scaleInT, PLAYER_SB_SCALEIN_MUL * ri.material.GetFloat(PropConsts.scaleInT));
-            ri.material.SetFloat(PropConsts.fadeInT, PLAYER_SB_FADEIN_MUL * ri.material.GetFloat(PropConsts.fadeInT));
-            ri.material.SetFloat(PropConsts.SharedOpacityMul, PLAYER_SB_OPACITY_MUL);
+            ri.Material.SetFloat(PropConsts.scaleInT, PLAYER_SB_SCALEIN_MUL * ri.Material.GetFloat(PropConsts.scaleInT));
+            ri.Material.SetFloat(PropConsts.fadeInT, PLAYER_SB_FADEIN_MUL * ri.Material.GetFloat(PropConsts.fadeInT));
+            ri.Material.SetFloat(PropConsts.SharedOpacityMul, PLAYER_SB_OPACITY_MUL);
         }
 
         public MeshGenerator.RenderInfo GetOrLoadRI() {
             if (!riLoaded) {
                 ri = deferredRI.CreateDeferredTexture();
-                ri.material.SetOrUnsetKeyword(Tint.Value != null, PropConsts.tintKW);
+                ri.Material.SetOrUnsetKeyword(Tint.Value != null, PropConsts.tintKW);
                 riLoaded = true;
             }
             return ri;
@@ -160,7 +160,7 @@ public partial class BulletManager : RegularUpdater {
     /// <summary>
     /// Complex bullets (lasers, pathers). Active pools are stored on BehaviorEntity.activePools.
     /// </summary>
-    public static readonly Dictionary<string, BehaviorEntity.BEHStyleMetadata> behPools = new();
+    private static readonly Dictionary<string, BehaviorEntity.BEHStyleMetadata> behPools = new();
 
     private static void AddComplexStyle(BehaviorEntity.BEHStyleMetadata bsm) {
         behPools[bsm.style ?? throw new Exception("Complex BEHMetadata must have non-null style values")] = bsm;
@@ -228,17 +228,17 @@ public partial class BulletManager : RegularUpdater {
 
         public static void SetMaterialFade(MeshGenerator.RenderInfo ri, SimpleBulletFader fade) {
             if (fade.slideInTime > 0) {
-                ri.material.EnableKeyword("FT_SLIDE_IN");
-                ri.material.SetFloat(PropConsts.slideInT, fade.slideInTime);
+                ri.Material.EnableKeyword("FT_SLIDE_IN");
+                ri.Material.SetFloat(PropConsts.slideInT, fade.slideInTime);
             }
             if (fade.scaleInTime > 0) {
-                ri.material.EnableKeyword("FT_SCALE_IN");
-                ri.material.SetFloat(PropConsts.scaleInT, fade.scaleInTime);
-                ri.material.SetFloat(PropConsts.scaleInMin, fade.scaleInStart);
+                ri.Material.EnableKeyword("FT_SCALE_IN");
+                ri.Material.SetFloat(PropConsts.scaleInT, fade.scaleInTime);
+                ri.Material.SetFloat(PropConsts.scaleInMin, fade.scaleInStart);
             }
             if (fade.fadeInTime > 0f) {
-                ri.material.EnableKeyword("FT_FADE_IN");
-                ri.material.SetFloat(PropConsts.fadeInT, fade.fadeInTime);
+                ri.Material.EnableKeyword("FT_FADE_IN");
+                ri.Material.SetFloat(PropConsts.fadeInT, fade.fadeInTime);
             }
         }
         public MeshGenerator.RenderInfo CreateDeferredTexture() {
@@ -246,19 +246,19 @@ public partial class BulletManager : RegularUpdater {
             MeshGenerator.RenderInfo ri = MeshGenerator.RenderInfo.FromSprite(mat, 
                 isFrameAnim ? sbes.frameAnimInfo.sprite0 : sprite, 
                 sbes.renderPriority + renderPriorityOffset);
-            sbes.displacement.SetOnMaterial(ri.material);
-            if (recolorizable) ri.material.EnableKeyword("FT_RECOLORIZE");
+            sbes.displacement.SetOnMaterial(ri.Material);
+            if (recolorizable) ri.Material.EnableKeyword("FT_RECOLORIZE");
             if (isFrameAnim) {
-                ri.material.EnableKeyword("FT_FRAME_ANIM");
-                ri.material.SetFloat(PropConsts.frameT, sbes.frameAnimInfo.framesPerSecond);
-                ri.material.SetFloat(PropConsts.frameCt, sbes.frameAnimInfo.numFrames);
-                ri.material.SetTexture(PropConsts.mainTex, sprite.texture);
+                ri.Material.EnableKeyword("FT_FRAME_ANIM");
+                ri.Material.SetFloat(PropConsts.frameT, sbes.frameAnimInfo.framesPerSecond);
+                ri.Material.SetFloat(PropConsts.frameCt, sbes.frameAnimInfo.numFrames);
+                ri.Material.SetTexture(PropConsts.mainTex, sprite.texture);
             }
             if (sbes.rotational) {
-                ri.material.EnableKeyword("FT_ROTATIONAL");
+                ri.Material.EnableKeyword("FT_ROTATIONAL");
             }
             SetMaterialFade(ri, sbes.fadeIn.value);
-            MaterialUtils.SetBlendMode(ri.material, sbes.renderMode);
+            MaterialUtils.SetBlendMode(ri.Material, sbes.renderMode);
             return ri;
         }
     }
@@ -538,7 +538,6 @@ public partial class BulletManager : RegularUpdater {
 
     public void Setup() {
         BulletManager.main = this;
-        PrepareRendering();
         epLayerMask = LayerMask.GetMask(epLayerName);
         epRenderLayer = LayerMask.NameToLayer(epLayerName);
         ppLayerMask = LayerMask.GetMask(ppLayerName);

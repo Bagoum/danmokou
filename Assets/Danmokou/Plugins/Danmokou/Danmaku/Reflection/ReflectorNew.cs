@@ -33,7 +33,7 @@ public static partial class Reflector {
     /// Within the context of a given return type, a function that returns whether or not a function named 'member'
     /// matching that return type exists.
     /// </summary>
-    private delegate bool HasMember(string member);
+    private delegate bool ContainsMember(string member);
     
     /// <summary>
     /// Within the context of a given return type, a function that returns the parameter types for a function
@@ -57,7 +57,7 @@ public static partial class Reflector {
     /// A', B', C' may relate to the introduced type T.
     /// <br/>The keys are of the form type(T->R).
     /// </summary>
-    private static readonly Dictionary<Type, (HasMember has, TypeGet get, TryInvoke inv)> funcifiableTypes =
+    private static readonly Dictionary<Type, (ContainsMember has, TypeGet get, TryInvoke inv)> funcifiableTypes =
         new();
     private static readonly HashSet<Type> funcifiableReturnTypes = new();
 

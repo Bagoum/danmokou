@@ -143,6 +143,7 @@ class FlattenVisitor : ExpressionVisitor {
     //Double casts can be crushed if the outer cast is *less informative* than the inner cast (or they are the same).
     // Eg. (float)(int)5.3 cannot be crushed because float is more informative than int. It should return 5.
     // Eg. (int)(float)5.3 can be crushed because int is less informative than float. It should return 5.
+    //  Note: strictly speaking, float and int are incomparable.
     private static readonly HashSet<(Type outer, Type inner)> allowedDoubleCasts = new() {
         (typeof(int), typeof(float)),
         (typeof(float), typeof(double)),

@@ -14,16 +14,16 @@ namespace Danmokou.Testing {
 
         [Test]
         public static void TGenericCompile() {
-            var func = CompileDelegate<Func<float, float, float, Vector3>, Vector3>(
+            var func = CompileDelegate<Func<float, float, float, Vector3>>(
                 "pxyz(&myVar1, &myVar2, &myVar3)",
                 new DelegateArg<float>("myVar1"),
                 new DelegateArg<float>("myVar2"),
                 new DelegateArg<float>("myVar3")
             );
             TAssert.VecEq(func(4f, 7f, 8f), new Vector3(4f, 7f, 8f));
-            Assert.Throws<Reflector.CompileException>(() => CompileDelegate<Func<float, float>, float>("&doesNotExist",
+            Assert.Throws<Reflector.CompileException>(() => CompileDelegate<Func<float, float>>("&doesNotExist",
                 new DelegateArg<float>("myVar1")));
-            Assert.Throws<Reflector.BadTypeException>(() => CompileDelegate<Func<float, Vector2, float>, float>("&myVec",
+            Assert.Throws<Reflector.BadTypeException>(() => CompileDelegate<Func<float, Vector2, float>>("&myVec",
                 new DelegateArg<float>("myFloat"),
                 new DelegateArg<Vector2>("myVec")));
 

@@ -59,8 +59,9 @@ Material:
         m_Texture: {fileID: 2800000, guid: 87c94fbd624575745b5310524d86fb08, type: 3}
         m_Scale: {x: 0, y: 0}
         m_Offset: {x: 0, y: 0}
+    m_Ints: []
     m_Floats:
-    - _BX: 8
+    - _BX: 10
     - _BY: 40
     - _BlendTo: 10
     - _BumpScale: 1
@@ -71,7 +72,7 @@ Material:
     - _DimLT: 0.6666667
     - _DstBlend: 0
     - _F: 0.602
-    - _FireMagnitude: 0.06
+    - _FireMagnitude: 0.05
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
@@ -81,7 +82,7 @@ Material:
     - _P1: 1
     - _P2: 0.353
     - _Parallax: 0.02
-    - _R: 1
+    - _R: 1.0000002
     - _S: 1
     - _Smooth: 0.03
     - _SmoothnessTextureChannel: 0
@@ -89,7 +90,7 @@ Material:
     - _Speed: 2
     - _SrcBlend: 1
     - _Subradius: 0.045
-    - _T: 7.4
+    - _T: 7
     - _Thickness: 0.5
     - _UVSec: 0
     - _Value: 0.33333334

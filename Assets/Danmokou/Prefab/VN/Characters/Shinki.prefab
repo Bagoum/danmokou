@@ -12,7 +12,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d80e015fca074f4cb2871472d3e6e49d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ADVSpeakerIcon: {fileID: 21300000, guid: 0344f8d2079d9e74fa6a48ba8d5619d4, type: 3}
+  m_ADVSpeakerIcon: {fileID: 0}
+  advIcons:
+  - emote: normal
+    sprite: {fileID: 21300000, guid: a6c8ba0d3e38dc6488039841fcd62dec, type: 3}
+  - emote: angry
+    sprite: {fileID: 21300000, guid: 53384378d10f5f943b6630e12533f9a1, type: 3}
+  - emote: cry
+    sprite: {fileID: 21300000, guid: ba123907169e6934aae39416182fdb14, type: 3}
+  - emote: happy
+    sprite: {fileID: 21300000, guid: d693de41c75561e48ba9df8ca84ba2bf, type: 3}
+  - emote: surprise
+    sprite: {fileID: 21300000, guid: 858c7c70c49c04245bdc989dd6446ec0, type: 3}
+  - emote: worry
+    sprite: {fileID: 21300000, guid: 6848cd66d63133143b24b71eef86d829, type: 3}
+  - emote: smug
+    sprite: {fileID: 21300000, guid: afacb5bd76715434cbcfc61ec7b042f0, type: 3}
   pieces:
   - {fileID: 6307840960511550906}
   - {fileID: 9146702239046028503}

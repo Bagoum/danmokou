@@ -49,7 +49,7 @@ public class SeijaCamera : CoroutineRegularUpdater, IShaderCamera {
 
 
     public Shader seijaShader = null!;
-    public Material seijaMaterial = null!;
+    private Material seijaMaterial = null!;
 
     private void Awake() {
         cam = GetComponent<Camera>();

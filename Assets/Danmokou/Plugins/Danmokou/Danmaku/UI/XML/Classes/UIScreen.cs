@@ -120,6 +120,7 @@ public class UIScreen {
         for (int ii = 0; ii < Groups.Count; ++ii)
             Groups[ii].Build(map);
         SetVisible(false);
+        Controller.AddToken(Controller.UIVisualUpdateEv.Subscribe(VisualUpdate));
         Controller.AddToken(backgroundOpacity.Subscribe(f => HTML.style.unityBackgroundImageTintColor = 
             new Color(1,1,1,f)));
         backgroundOpacity.Push(0);

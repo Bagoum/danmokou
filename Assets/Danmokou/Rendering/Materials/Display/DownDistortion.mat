@@ -63,6 +63,7 @@ Material:
         m_Texture: {fileID: 2800000, guid: 87c94fbd624575745b5310524d86fb08, type: 3}
         m_Scale: {x: 0, y: 0}
         m_Offset: {x: 0, y: 0}
+    m_Ints: []
     m_Floats:
     - _BX: 8
     - _BY: 8
@@ -79,7 +80,7 @@ Material:
     - _GlossyReflections: 1
     - _Magnitude: 0.45
     - _MagnitudeAngle: 0.1
-    - _MagnitudeRadius: 100
+    - _MagnitudeRadius: 0.4
     - _Metallic: 0
     - _Mode: 0
     - _OcclusionStrength: 1

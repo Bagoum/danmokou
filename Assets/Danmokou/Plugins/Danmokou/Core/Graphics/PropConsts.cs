@@ -27,6 +27,7 @@ public static class PropConsts {
     public static readonly int blendSrcMethod = Shader.PropertyToID("_BlendFrom");
     public static readonly int blendDstMethod = Shader.PropertyToID("_BlendTo");
     public static readonly int blendOp = Shader.PropertyToID("_BlendOp");
+    public static readonly int alpha = Shader.PropertyToID("_Alpha");
     public static readonly int radius = Shader.PropertyToID("_R");
     public static readonly int fillRatio = Shader.PropertyToID("_F");
     public static readonly int innerFillRatio = Shader.PropertyToID("_FI");
@@ -37,6 +38,7 @@ public static class PropConsts {
 
     public static readonly int tint = Shader.PropertyToID("_Tint");
 
+    public static readonly int colorMult = Shader.PropertyToID("_CM");
     public static readonly int fillColor2 = Shader.PropertyToID("_CF2");
     public static readonly int fillColor = Shader.PropertyToID("_CF");
     public static readonly int fillInnerColor = Shader.PropertyToID("_CFI");

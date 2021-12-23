@@ -29,15 +29,6 @@ public static class Extensions {
 
     public static string? Or(this string? x, string? y) =>
         string.IsNullOrWhiteSpace(x) ? y : x;
-    
-    public static Stream ToStream(this string str) {
-        MemoryStream stream = new MemoryStream();
-        StreamWriter writer = new StreamWriter(stream);
-        writer.Write(str);
-        writer.Flush();
-        stream.Position = 0;
-        return stream;
-    }
 }
 
 

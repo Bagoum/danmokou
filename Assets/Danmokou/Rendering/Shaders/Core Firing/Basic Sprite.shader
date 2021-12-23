@@ -16,6 +16,7 @@
 		[Enum(One,1,OneMinusSrcAlpha,10)] _BlendTo("Blend mode to", Float) = 10
 		[Enum(Add,0,RevSub,2)] _BlendOp("Blend mode op", Float) = 0
 		[PerRendererData] _T("Time", Float) = 0 
+		[Toggle(FT_DISPLACE_POLAR)] _ToggleDisplacePolar("Do Polar Displace?", Float) = 0
 		[Toggle(FT_CYCLE)] _ToggleCycle("Do Cycle?", Float) = 0
 		[Toggle(FT_FADE_IN)] _ToggleFadeIn("Do FadeIn?", Float) = 0
 		[Toggle(FT_HUESHIFT)] _ToggleHueShift("Do Hue Shift?", Float) = 0

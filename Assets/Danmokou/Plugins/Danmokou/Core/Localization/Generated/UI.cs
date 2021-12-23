@@ -565,7 +565,7 @@ public static partial class LocalizedStrings {
 			{ ID = "main_scores" };
 		
 		public static readonly LString main_playerdata = new LString("Player Data",
-			(Locales.JP, "プレイヤーデータ"))
+			(Locales.JP, "プレイヤデータ"))
 			{ ID = "main_playerdata" };
 		
 		public static readonly LString main_stats = new LString("Statistics",
@@ -611,6 +611,10 @@ public static partial class LocalizedStrings {
 		public static readonly LString main_load = new LString("Load",
 			(Locales.JP, "ロード"))
 			{ ID = "main_load" };
+		
+		public static readonly LString main_licenses = new LString("Licenses",
+			(Locales.JP, "ライセンス"))
+			{ ID = "main_licenses" };
 		
 		public static readonly LString replay_name = new LString("Name",
 			(Locales.JP, "リプレイ名"))

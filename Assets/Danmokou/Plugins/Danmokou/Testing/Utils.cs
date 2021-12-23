@@ -88,8 +88,8 @@ public static class TAssert {
     public static void SBPos(ref BulletManager.SimpleBullet sb, V2RV2 loc, string msg = "") =>
         VecEq(loc.TrueLocation, sb.bpi.loc, msg);
 
-    public static void PoolEq(BulletManager.AbsSimpleBulletCollection sbc1,
-        BulletManager.AbsSimpleBulletCollection sbc2) {
+    public static void PoolEq(BulletManager.SimpleBulletCollection sbc1,
+        BulletManager.SimpleBulletCollection sbc2) {
         if (sbc1.Count != sbc2.Count) Assert.Fail($"Different counts: {sbc1.Count} {sbc2.Count}");
         for (int ii = 0; ii < sbc1.Count; ++ii) {
             ref BulletManager.SimpleBullet sb1 = ref sbc1[ii];

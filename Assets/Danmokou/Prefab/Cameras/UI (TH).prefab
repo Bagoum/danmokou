@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8269135563123465073}
   - component: {fileID: 9168421543190852496}
+  - component: {fileID: 838350075727576897}
   m_Layer: 0
   m_Name: Camera
   m_TagString: Untagged
@@ -63,7 +64,7 @@ Camera:
   field of view: 60
   orthographic: 1
   orthographic size: 4.5
-  m_Depth: 100
+  m_Depth: 99
   m_CullingMask:
     serializedVersion: 2
     m_Bits: 32
@@ -78,6 +79,18 @@ Camera:
   m_OcclusionCulling: 0
   m_StereoConvergence: 10
   m_StereoSeparation: 0.022
+--- !u!114 &838350075727576897
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 37000146880203245}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 664454c1f4f171441a25bb2adb5f7586, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &268707954591982176
 GameObject:
   m_ObjectHideFlags: 0
@@ -188,6 +201,7 @@ GameObject:
   - component: {fileID: 268707954954881333}
   - component: {fileID: 7922427210909136936}
   - component: {fileID: 6825078790550220629}
+  - component: {fileID: 6760385609784745444}
   m_Layer: 0
   m_Name: UI (TH)
   m_TagString: Untagged
@@ -382,6 +396,18 @@ MonoBehaviour:
   m_InputActionsPerSecond: 10
   m_RepeatDelay: 0.5
   m_ForceModuleActive: 0
+--- !u!114 &6760385609784745444
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 268707954954881334}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4d610ac42d91df46a63f3c5430fcf16, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &336973224485304437
 GameObject:
   m_ObjectHideFlags: 0
@@ -6713,7 +6739,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &2056977187664957714
 Transform:
   m_ObjectHideFlags: 0
@@ -8774,7 +8800,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e9d37bde79c3ed0448e78a53fa8e425d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  settings: {fileID: 11400000, guid: 9859cc4a0115c984db28be38f2fbec8a, type: 2}
+  settings:
+  - {fileID: 11400000, guid: 9859cc4a0115c984db28be38f2fbec8a, type: 2}
   uiMaterial: {fileID: 2100000, guid: 24de63005e7b23a47a0e4cbbb7757d89, type: 2}
   unsetRT: {fileID: 8400000, guid: be218fb1d1df0224384ea0f2654dd964, type: 2}
 --- !u!1 &7326911303772157274

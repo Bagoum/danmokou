@@ -131,11 +131,6 @@ public static partial class Reflector {
 
     #region TargetTypeReflect
 
-    /// <summary>
-    /// Parse a string into an object of type T.
-    /// <br/>May throw an exception if parsing fails.
-    /// </summary>
-    public static T Into<T>(this string argstring) => ((T) Into(argstring, typeof(T))!)!;
     
     /// <summary>
     /// Parse a string into an object of type T.
@@ -148,6 +143,12 @@ public static partial class Reflector {
         p.ThrowOnLeftovers();
         return ret;
     }
+    
+    /// <summary>
+    /// Parse a string into an object of type T.
+    /// <br/>May throw an exception if parsing fails.
+    /// </summary>
+    public static T Into<T>(this string argstring) => ((T) Into(argstring, typeof(T))!)!;
 
     /// <summary>
     /// Parse a string into an object of type T. Returns null if the string is null or whitespace-only.

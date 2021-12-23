@@ -67,7 +67,6 @@ public partial class PlayerController : BehaviorEntity {
     [UsedImplicitly]
     public float PlayerShotItr() => shotItr;
     
-    private ActiveTeamConfig localTeamCfg = null!;
     private ShipConfig ship = null!;
     private ShotConfig shot = null!;
     private Subshot subshot;
@@ -93,7 +92,7 @@ public partial class PlayerController : BehaviorEntity {
 
     public ICancellee BoundingToken => Instance.Request?.GameTracker ?? Cancellable.Null;
     public bool AllowPlayerInput => AllControlEnabled && StateAllowsInput(State);
-    private ActiveTeamConfig Team => Instance.TeamCfg ?? localTeamCfg;
+    private ActiveTeamConfig Team { get; set; } = null!;
     private bool RespawnOnHit => GameManagement.Difficulty.respawnOnDeath;
     public int HitInvulnFrames => Mathf.CeilToInt(hitInvuln * ETime.ENGINEFPS_F);
     public Vector2 DesiredMovement01 {
@@ -170,8 +169,8 @@ public partial class PlayerController : BehaviorEntity {
 
     protected override void Awake() {
         base.Awake();
-        localTeamCfg = new ActiveTeamConfig(new TeamConfig(0, defaultSubshot, defaultSupport, 
-            defaultPlayers.Zip(defaultShots, (x, y) => (x, y)).ToArray()));
+        Team = GameManagement.Instance.GetOrSetTeam(new ActiveTeamConfig(new TeamConfig(0, defaultSubshot, defaultSupport, 
+            defaultPlayers.Zip(defaultShots, (x, y) => (x, y)).ToArray())));
         Logs.Log($"Team awake", level: LogLevel.DEBUG1);
         hitbox.location = tr.position;
         hitbox.Player = this;

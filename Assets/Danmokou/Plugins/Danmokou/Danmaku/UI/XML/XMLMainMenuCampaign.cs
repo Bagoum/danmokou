@@ -64,13 +64,13 @@ public class XMLMainMenuCampaign : XMLMainMenu {
     private UIScreen PlayerDataScreen = null!;
     private UIScreen LicenseScreen = null!;
 
-    protected override IEnumerable<UIScreen> Screens => new[] {
+    protected override UIScreen?[] Screens => new[] {
         MainScreen,
         PlaymodeScreen, DifficultyScreen, CustomDifficultyScreen, CampaignShotScreen, ExtraShotScreen,
         StagePracticeScreen, BossPracticeScreen, OptionsScreen, ReplayScreen, RecordsScreen,
         StatsScreen, AchievementsScreen, MusicRoomScreen, GameDetailsScreen, PlayerDataScreen,
         LicenseScreen
-    }.NotNull();
+    };
     
     public VisualTreeAsset SpellPracticeNodeV = null!;
     public VisualTreeAsset AchievementsNodeV = null!;
@@ -157,9 +157,9 @@ public class XMLMainMenuCampaign : XMLMainMenu {
         MusicRoomScreen = this.MusicRoomScreen(References.tracks);
         MainScreen = new UIScreen(this, null, UIScreen.Display.Unlined)
             { Builder = (s, ve) => {
-                s.Margin.SetLRMargin(720, null);
+                s.Margin.SetLRMargin(400, 560);
                 var c = ve.AddColumn();
-                c.style.maxWidth = 40f.Percent();
+                c.style.maxWidth = 20f.Percent();
                 c.style.paddingTop = 640;
             }, SceneObjects = MainScreenOnlyObjects, Background = PrimaryBGConfig};
         
@@ -169,31 +169,18 @@ public class XMLMainMenuCampaign : XMLMainMenu {
         
         foreach (var s in Screens)
             if (s != MainScreen)
-                s.WithBG(SecondaryBGConfig);
+                s?.WithBG(SecondaryBGConfig);
 
-        _ = new UIColumn(MainScreen, null,
-            new TransferNode(main_gamestart, PlaymodeScreen).With(large1Class),
-            new OptionNodeLR<string?>(main_lang, l => {
-                    SaveData.UpdateLocale(l);
-                    SaveData.AssignSettingsChanges();
-                }, new[] {
-                    (new LString("English"), Locales.EN),
-                    (new LString("日本語"), Locales.JP)
-                }, SaveData.s.Locale)
-                .With(large1Class),
-            new TransferNode(main_playerdata, PlayerDataScreen)
-                .With(large1Class),
-            new TransferNode(main_musicroom, MusicRoomScreen)
-                    {EnabledIf = () => MusicRoomScreen.Groups[0].Nodes.Count > 0}
-                .With(large1Class),
-            new TransferNode(main_options, OptionsScreen)
-                .With(large1Class),
-            new TransferNode("Licenses", LicenseScreen)
-                .With(large1Class),
-            new FuncNode(main_quit, Application.Quit)
-                .With(large1Class),
+        _ = new UIColumn(MainScreen, null, new[] {
+            new TransferNode(main_gamestart, PlaymodeScreen),
+            new TransferNode(main_playerdata, PlayerDataScreen),
+            //new TransferNode(main_musicroom, MusicRoomScreen)
+            //        {EnabledIf = () => MusicRoomScreen.Groups[0].Nodes.Count > 0}
+            new TransferNode(main_options, OptionsScreen),
+            new TransferNode(main_licenses, LicenseScreen),
+            new FuncNode(main_quit, Application.Quit),
             new OpenUrlNode(main_twitter, "https://twitter.com/rdbatz")
-                .With(large1Class)) {
+        }.Select(x => x.With(large1Class, centerTextClass))) {
             ExitIndexOverride = -2
         };
         

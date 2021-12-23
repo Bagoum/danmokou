@@ -56,12 +56,9 @@ public class MainCamera : RegularUpdater, IScreenshotter {
     }
     private static readonly int ShaderScrnWidthID = Shader.PropertyToID("_ScreenWidth");
     private static readonly int ShaderScrnHeightID = Shader.PropertyToID("_ScreenHeight");
-    private static readonly int ShaderPixelWidthID = Shader.PropertyToID("_PixelWidth");
-    private static readonly int ShaderPixelHeightID = Shader.PropertyToID("_PixelHeight");
     private static readonly int PixelsPerUnitID = Shader.PropertyToID("_PPU");
-    private static readonly int ResourcePixelsPerUnitID = Shader.PropertyToID("_RPPU");
-    private static readonly int RenderRatioID = Shader.PropertyToID("_RenderR");
     private static readonly int GlobalXOffsetID = Shader.PropertyToID("_GlobalXOffset");
+    private static readonly int MonitorAspectID = Shader.PropertyToID("_MonitorAspect");
 
     private Camera mainCam = null!;
     public static float VertRadius { get; private set; }
@@ -73,6 +70,9 @@ public class MainCamera : RegularUpdater, IScreenshotter {
 
     public Shader ayaShader = null!;
     private Material ayaMaterial = null!;
+    
+    public Shader finalRenderShader = null!;
+    private Material finalRenderMaterial = null!;
 
     public Camera BackgroundCamera = null!;
     public Camera LowDirectCamera = null!;
@@ -103,10 +103,11 @@ public class MainCamera : RegularUpdater, IScreenshotter {
     private void Awake() {
         mainCam = GetComponent<Camera>();
         VertRadius = mainCam.orthographicSize;
-        HorizRadius = VertRadius * mainCam.pixelWidth / mainCam.pixelHeight;
+        HorizRadius = VertRadius * 16f / 9f;
         tr = transform;
         position = tr.position;
         ayaMaterial = new Material(ayaShader);
+        finalRenderMaterial = new Material(finalRenderShader);
         ReassignGlobalShaderVariables(SaveData.s);
     }
 
@@ -124,14 +125,10 @@ public class MainCamera : RegularUpdater, IScreenshotter {
     }
 
     public void ReassignGlobalShaderVariables(SaveData.Settings s) {
-        //Log.Unity($"Camera width: {cam.pixelWidth} Screen width: {Screen.width}");
+        HorizRadius = VertRadius * (s.Resolution.w / (float)s.Resolution.h);
         Shader.SetGlobalFloat(ShaderScrnHeightID, ScreenHeight);
         Shader.SetGlobalFloat(ShaderScrnWidthID, ScreenWidth);
-        Shader.SetGlobalFloat(PixelsPerUnitID, Screen.height / ScreenHeight);
-        Shader.SetGlobalFloat(ResourcePixelsPerUnitID, GraphicsUtils.ResourcePPU);
-        Shader.SetGlobalFloat(RenderRatioID, Screen.height / (float) GraphicsUtils.BestResolution.h);
-        Shader.SetGlobalFloat(ShaderPixelHeightID, Screen.height);
-        Shader.SetGlobalFloat(ShaderPixelWidthID, Screen.width);
+        Shader.SetGlobalFloat(PixelsPerUnitID, s.Resolution.h / ScreenHeight);
         Shader.SetGlobalFloat(GlobalXOffsetID, GameManagement.References.bounds.center.x);
         if (s.Shaders) Shader.EnableKeyword("FANCY");
         else Shader.DisableKeyword("FANCY");
@@ -151,24 +148,7 @@ public class MainCamera : RegularUpdater, IScreenshotter {
                (loc.y < Danmaku.LocationService.bot - units) ||
                (loc.y > Danmaku.LocationService.top + units);
     }*/
-
-
-    /// <summary>
-    /// Camera-relative world coordinates
-    /// </summary>
-    public Vector2 GetWorldCoordinates(float x, float y) {
-        return new(position.x + x, position.y + y);
-    }
-
-    /// <summary>
-    /// Convert a width and height into screen ratios.
-    /// </summary>
-    /// <param name="width">Width in screen units</param>
-    /// <param name="height">Height in screen units</param>
-    /// <returns></returns>
-    public static Vector2 Descale(float width, float height) {
-        return new(width / ScreenWidth, height / ScreenHeight);
-    }
+    
 
     /// <summary>
     /// Convert camera-relative coordinates into UV coordinates
@@ -196,7 +176,8 @@ public class MainCamera : RegularUpdater, IScreenshotter {
             saveNext = false;
             FileUtils.WriteTex("DMK_Saves/Aya/mainCamPostRender.jpg", RenderTo.IntoTex());
         }
-        UnityEngine.Graphics.Blit(RenderTo, null as RenderTexture);
+        finalRenderMaterial.SetFloat(MonitorAspectID, Screen.width / (float)Screen.height);
+        UnityEngine.Graphics.Blit(RenderTo, null as RenderTexture, finalRenderMaterial);
     }
     
     private bool saveNext = false;

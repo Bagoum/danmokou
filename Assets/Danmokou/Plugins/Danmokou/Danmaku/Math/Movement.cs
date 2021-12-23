@@ -163,14 +163,14 @@ public struct Movement {
 
     [UsedImplicitly]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void UpdateDeltaNoTime(BulletManager.AbsSimpleBulletCollection sbc, int ii) {
+    public void UpdateDeltaNoTime(BulletManager.SimpleBulletCollection sbc, int ii) {
         ref var sb = ref sbc[ii];
         rootPos = sb.bpi.loc;
         UpdateDeltaNoTime(ref sb.bpi, ref sb.accDelta, sb.movement.angle, sb.movement.cos_rot, sb.movement.sin_rot, sbc.NextDT);
     }
 
     private static readonly ExFunction updateDeltaNoTime = ExFunction.Wrap<Movement>("UpdateDeltaNoTime",
-        new[] {typeof(BulletManager.AbsSimpleBulletCollection), typeof(int)});
+        new[] {typeof(BulletManager.SimpleBulletCollection), typeof(int)});
     public Ex UpdateDeltaNoTime(Ex sbc, Ex ii) => updateDeltaNoTime.InstanceOf(Ex.Constant(this), sbc, ii);
 
     /// <summary>

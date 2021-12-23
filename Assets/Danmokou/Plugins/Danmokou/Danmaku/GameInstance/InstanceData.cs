@@ -75,8 +75,10 @@ public class InstanceData {
         }
     }
     
-    public ActiveTeamConfig? TeamCfg { get; }
-    
+    public ActiveTeamConfig? TeamCfg { get; private set; }
+
+    public ActiveTeamConfig GetOrSetTeam(ActiveTeamConfig deflt) => TeamCfg ??= deflt;
+
     public CardHistory CardHistory { get; }
 
     public readonly DisturbedOr Lenient = new();
@@ -201,7 +203,9 @@ public class InstanceData {
             --Continues;
             ++ContinuesUsed;
             CardHistory.Clear();//Partial game is saved when lives=0. Don't double on captures.
-            Score.Value = nextItemLifeIndex = nextScoreLifeIndex = LifeItems.Value = 0;
+            //This needs to be done first to properly update the target score/life on continue
+            nextItemLifeIndex = nextScoreLifeIndex = 0;
+            Score.Value = LifeItems.Value = 0;
             VisibleScore.HardReset();
             PIV.Value = 1;
             Meter = StartMeter(mode);

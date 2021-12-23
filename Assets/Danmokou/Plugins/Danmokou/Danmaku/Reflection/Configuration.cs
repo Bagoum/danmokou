@@ -15,7 +15,18 @@ using static BagoumLib.Reflection.ReflectionUtils;
 
 namespace Danmokou.Reflection {
 public static partial class Reflector {
-    private static readonly NamedParam[] fudge = new NamedParam[0];
+    private static readonly NamedParam[] fudge = Array.Empty<NamedParam>();
+    
+    /// <summary>
+    /// Return the type Func&lt;t1, t2&gt;. Results are cached.
+    /// </summary>
+    public static Type Func2Type(Type t1, Type t2) {
+        if (!func2TypeCache.TryGetValue((t1, t2), out var tf)) {
+            tf = func2TypeCache[(t1, t2)] = typeof(Func<,>).MakeGenericType(t1, t2);
+        }
+        return tf;
+    }
+    private static readonly Dictionary<(Type, Type), Type> func2TypeCache = new();
 
     private static class ReflectionData {
         /// <summary>
@@ -202,7 +213,7 @@ public static partial class Reflector {
             void AddDefuncifier(Type ft, Func<object, object, object> func) {
                 funcConversions[(wrappedType, ft)] = rewrapper is null ?
                     func :
-                    (fobj, x) => FuncInvoke(rewrapper!, Func2Type(baseType, wrappedType), func(fobj, x));
+                    (fobj, x) => FuncInvoke(rewrapper, Func2Type(baseType, wrappedType), func(fobj, x));
             }
             
             if (funcifiableReturnTypes.Contains(baseType)) {
@@ -249,19 +260,7 @@ public static partial class Reflector {
         }
         private static readonly Dictionary<(Type, Type), Type> tryFuncifyCache = new();
 
-        
-        /// <summary>
-        /// Return the type Func&lt;t1, t2&gt;. Results are cached.
-        /// </summary>
-        public static Type Func2Type(Type t1, Type t2) {
-            if (!func2TypeCache.TryGetValue((t1, t2), out var tf)) {
-                tf = func2TypeCache[(t1, t2)] = typeof(Func<,>).MakeGenericType(t1, t2);
-            }
-            return tf;
-        }
-        private static readonly Dictionary<(Type, Type), Type> func2TypeCache = new();
 
-        
         /// <summary>
         /// Return a function x => func(x).
         /// </summary>

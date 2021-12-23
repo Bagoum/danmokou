@@ -45,9 +45,6 @@
 				return f;
 			}
 
-			//Global
-            float _RPPU;
-
 			sampler2D _MainTex;
 			sampler2D _FillTex;
             float4 _MainTex_TexelSize;
@@ -60,7 +57,9 @@
 			float _Subradius;
 
 			float4 frag(fragment f) : SV_Target {
-				float r = length(f.uv) * _MainTex_TexelSize.z / _RPPU;
+            	//8 is the screen unit size of the sprite this is normally attached to,
+            	// so all parameters are in terms of screen unit size instead of uv.
+				float r = length(f.uv) * 8;
 				float ang = atan2(f.uv.y, f.uv.x);
 
 				r = smoothstep(_R - _Subradius, _R + _Subradius, r);

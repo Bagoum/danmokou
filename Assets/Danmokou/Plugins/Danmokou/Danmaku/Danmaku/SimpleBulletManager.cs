@@ -95,7 +95,7 @@ public partial class BulletManager {
             direction = sb.direction;
         }
     }
-    private readonly struct CollisionCheckResults {
+    public readonly struct CollisionCheckResults {
         public readonly int damage;
         public readonly int graze;
 
@@ -105,7 +105,8 @@ public partial class BulletManager {
         }
     }
 
-    public abstract class AbsSimpleBulletCollection : CompactingArray<SimpleBullet> {
+    //Instantiate this class directly for player bullets
+    public class SimpleBulletCollection: CompactingArray<SimpleBullet> {
         public enum CollectionType {
             /// <summary>
             /// Empty bullets (no display or collision, used for guiding; player variants and copies included)
@@ -121,15 +122,97 @@ public partial class BulletManager {
             /// </summary>
             Culled
         }
-        public virtual CollectionType MetaType => CollectionType.Normal;
-        public abstract BulletInCode BC { get; }
-        public abstract BehaviorEntity GetINodeAt(int sbcind, string behName);
-        public abstract string Style { get; }
-        
+        private static readonly CollisionResult noColl = new(false, false);
+
+        public bool Active { get; private set; } = false;
+        public bool IsPlayer { get; private set; } = false;
+        public BulletInCode BC { get; }
+        private readonly List<SimpleBulletCollection> targetList;
+        public int temp_last;
+        /// <summary>
+        /// Copied pools have this set
+        /// </summary>
+        private SimpleBulletCollection? original;
+        private CulledBulletCollection? culled;
         protected readonly DMCompactingArray<BulletControl> controls = new(4);
         private readonly DMCompactingArray<BulletControl> onCollideControls = new(2);
+        
+        public virtual CollectionType MetaType => CollectionType.Normal;
+        public string Style => BC.name;
+        public TP4? Tint => BC.Tint.Value;
+        public bool SubjectToAutocull =>
+            !IsPlayer && MetaType == CollectionType.Normal;
+        public bool IsCopy => original != null;
+        public CulledBulletCollection Culled => original?.Culled ?? (culled ??= new CulledBulletCollection(this));
+        
+        public SimpleBulletCollection(List<SimpleBulletCollection> target, BulletInCode bc) : base(1, 128) {
+            this.BC = bc;
+            this.targetList = target;
+        }
 
-        protected AbsSimpleBulletCollection() : base(1, 128) { }
+        public void SetOriginal(SimpleBulletCollection orig) {
+            original = orig;
+        }
+        public void SetPlayer() {
+            //bc.SetPlayer should not be called twice
+            if (!IsPlayer) {
+                IsPlayer = true;
+                BC.SetPlayer();
+            }
+        }
+
+        public IDisposable SetRecolor(TP4 black, TP4 white) {
+            if (!BC.Recolorizable) 
+                throw new Exception($"Cannot set recolor on non-recolorizable pool {Style}");
+            return BC.Recolor.AddConst((black, white));
+        }
+
+        public void Activate() {
+            if (!Active) {
+                targetList.Add(this);
+                //Log.Unity($"Activating pool {Style}", level: Log.Level.DEBUG1);
+                Active = true;
+            }
+        }
+        public void Deactivate() {
+            Active = false;
+            temp_last = 0;
+        }
+        
+        #region Copiers
+
+        public BulletInCode CopyBC(string newPool) => BC.Copy(newPool);
+        public SimpleBulletCollection CopySimplePool(List<SimpleBulletCollection> target, string newPool) => new(target, BC.Copy(newPool));
+        public SimpleBulletCollection CopyPool(List<SimpleBulletCollection> target, string newPool) => GetCollectionForColliderType(target, BC.Copy(newPool));
+        
+        #endregion
+
+        public MeshGenerator.RenderInfo GetOrLoadRI() => BC.GetOrLoadRI();
+
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        protected virtual CollisionResult CheckGrazeCollision(in Hitbox hitbox, ref SimpleBullet sb) 
+            => throw new NotImplementedException();
+
+        #region Operators
+        
+        //TODO: investigate if isNew is actually required; is it possible to always apply the initial controls?
+        public virtual void Add(ref SimpleBullet sb, bool isNew) {
+            base.Add(ref sb);
+            if (isNew) {
+                int numPcs = controls.Count;
+                var ind = count - 1; //count may change if a deletion/addition occurs
+                for (int pi = 0; pi < numPcs && !rem[ind]; ++pi) {
+                    controls[pi].action(this, ind, sb.bpi, controls[pi].cT);
+                }
+            }
+        }
+        
+        public new void Add(ref SimpleBullet sb) => throw new Exception("Do not use SBC.Add");
+        
+        public virtual void MakeCulledCopy(int ii) {
+            Culled.AddCulled(ref Data[ii]);
+        }
         
         public void AddBulletControl(BulletControl pc) {
             if (pc.priority == BulletControl.P_ON_COLLIDE)
@@ -138,54 +221,12 @@ public partial class BulletManager {
                 controls.AddPriority(pc, pc.priority);
         }
 
-        public void PruneControlsCancellation() {
-            //It's not correct to run controls that have been cancelled.
-            // As such, we prune for cancellation before execution, and then cancellation/persistence after execution.
-            void Prune(DMCompactingArray<BulletControl> carr) {
-                for (int ii = 0; ii < carr.Count; ++ii)
-                    if (carr[ii].cT.Cancelled)
-                        carr.Delete(ii);
-                carr.Compact();
-            }
-            Prune(controls);
-            Prune(onCollideControls);
+        public BehaviorEntity GetINodeAt(int sbcind, string behName) {
+            ref SimpleBullet sb = ref Data[sbcind];
+            var mov = new Movement(sb.bpi.loc, V2RV2.Angle(sb.movement.angle));
+            return BEHPooler.INode(mov, new ParametricInfo(in mov, sb.bpi.index), sb.direction, behName);
         }
-        public void PruneControls() {
-            void Prune(DMCompactingArray<BulletControl> carr) {
-                for (int ii = 0; ii < carr.Count; ++ii)
-                    if (carr[ii].cT.Cancelled || !carr[ii].persist(ParametricInfo.Zero))
-                        carr.Delete(ii);
-                carr.Compact();
-            }
-            Prune(controls);
-            Prune(onCollideControls);
-        }
-        public void ClearControls() {
-            controls.Empty();
-            onCollideControls.Empty();
-        }
-
-        public void AssertControls(IReadOnlyList<BulletControl> new_controls) {
-            int ci = 0;
-            for (int pi = 0; pi < controls.Count && ci < new_controls.Count; ++pi) {
-                if (controls[pi] == new_controls[ci]) ++ci;
-            }
-            //All controls matched
-            if (ci == new_controls.Count) return;
-            //No controls matched
-            if (ci == 0) {
-                for (int ii =0; ii < new_controls.Count; ++ii) AddBulletControl(new_controls[ii]);
-                return;
-            }
-            //Some controls matched (?!)
-            throw new Exception("AssertControls found that some, neither all nor none, of controls were matched.");
-        }
-
-        public abstract IDisposable SetRecolor(TP4 black, TP4 white);
-
-        //TODO: investigate if isNew is actually required; is it possible to always apply the initial controls?
-        public abstract void Add(ref SimpleBullet sb, bool isNew);
-
+        
         [UsedImplicitly]
         public BehaviorEntity RunINodeAt(int ii, StateMachine target, ICancellee cT) {
             var bpi = Data[ii].bpi;
@@ -198,22 +239,28 @@ public partial class BulletManager {
         }
         
         [UsedImplicitly]
-        public void TransferFrom(AbsSimpleBulletCollection sbc, int ii) {
+        public void TransferFrom(SimpleBulletCollection sbc, int ii) {
             var sb = new SimpleBullet(ref sbc[ii]);
             Add(ref sb, false);
             sbc.DeleteSB(ii);
         }
         
         [UsedImplicitly]
-        public void CopyNullFrom(AbsSimpleBulletCollection sbc, int ii, SoftcullProperties? advancer) =>
+        public void CopyNullFrom(SimpleBulletCollection sbc, int ii, SoftcullProperties? advancer) =>
             RequestNullSimple(Style, sbc[ii].bpi.loc, sbc[ii].direction, advancer?.AdvanceTime(sbc[ii].bpi.loc) ?? 0f);
 
         [UsedImplicitly]
-        public void CopyFrom(AbsSimpleBulletCollection sbc, int ii) {
+        public void CopyFrom(SimpleBulletCollection sbc, int ii) {
             var sb = new SimpleBullet(ref sbc[ii], RNG.GetUInt());
             Add(ref sb, false);
         }
-
+        
+        public void Softcull(SimpleBulletCollection? target, int ii, SoftcullProperties? advancer) {
+            MakeCulledCopy(ii);
+            target?.CopyNullFrom(this, ii, advancer);
+            DeleteSB(ii);
+        }
+        
         /// <summary>
         /// Marks a bullet for deletion. You may continue operating on the bullet until the next Compact call, when
         /// it will actually be removed from memory, but the FiringCtx will be invalid immediately.
@@ -238,126 +285,15 @@ public partial class BulletManager {
                 DeleteSB(ind);
             }
         }
+        #endregion
 
+        #region Updaters
+        public float NextDT => nextDT;
+        private float nextDT;
+        public void Speedup(float ratio) => nextDT *= ratio;
+        
         [UsedImplicitly] //batch command uses this to stop when a bullet is destroyed
         public bool IsAlive(int ind) => !rem[ind];
-
-        public void Softcull(AbsSimpleBulletCollection? target, int ii, SoftcullProperties? advancer) {
-            MakeCulledCopy(ii);
-            target?.CopyNullFrom(this, ii, advancer);
-            DeleteSB(ii);
-        }
-
-        public virtual void MakeCulledCopy(int ii) {
-            throw new Exception($"SBC {Style} is not enabled for softculling");
-        }
-
-        public abstract void Speedup(float ratio);
-        public abstract float NextDT { get; }
-        
-        
-        
-        
-#if UNITY_EDITOR
-        public abstract int NumControls { get; }
-        public abstract object ControlAt(int ii);
-#endif
-    }
-    //Instantiate this class directly for player bullets
-    private class SimpleBulletCollection: AbsSimpleBulletCollection {
-
-        public bool Active { get; private set; } = false;
-        private readonly List<SimpleBulletCollection> targetList;
-
-        public bool SubjectToAutocull =>
-            !IsPlayer && MetaType == CollectionType.Normal;
-        public bool IsPlayer { get; private set; } = false;
-
-        public override string Style => BC.name;
-        public override BulletInCode BC { get; }
-        public int temp_last;
-        private static readonly CollisionResult noColl = new(false, false);
-        /// <summary>
-        /// Copied pools have this set
-        /// </summary>
-        private SimpleBulletCollection? original;
-        public bool IsCopy => original != null;
-        public TP4? Tint => BC.Tint.Value;
-
-        private CulledBulletCollection? culled;
-        public CulledBulletCollection Culled => original?.Culled ?? (culled ??= new CulledBulletCollection(this));
-
-        public void SetOriginal(SimpleBulletCollection orig) {
-            original = orig;
-        }
-        public void SetPlayer() {
-            //bc.SetPlayer should not be called twice
-            if (!IsPlayer) {
-                IsPlayer = true;
-                BC.SetPlayer();
-            }
-        }
-
-        public override IDisposable SetRecolor(TP4 black, TP4 white) {
-            if (!BC.Recolorizable) 
-                throw new Exception($"Cannot set recolor on non-recolorizable pool {Style}");
-            return BC.Recolor.AddConst((black, white));
-        }
-
-
-        public SimpleBulletCollection(List<SimpleBulletCollection> target, BulletInCode bc) {
-            this.BC = bc;
-            this.targetList = target;
-        }
-        
-        public void Activate() {
-            if (!Active) {
-                targetList.Add(this);
-                //Log.Unity($"Activating pool {Style}", level: Log.Level.DEBUG1);
-                Active = true;
-            }
-        }
-        public void Deactivate() {
-            Active = false;
-            temp_last = 0;
-        }
-
-        public BulletInCode CopyBC(string newPool) => BC.Copy(newPool);
-        public SimpleBulletCollection CopySimplePool(List<SimpleBulletCollection> target, string newPool) => new(target, BC.Copy(newPool));
-        public SimpleBulletCollection CopyPool(List<SimpleBulletCollection> target, string newPool) => GetCollectionForColliderType(target, BC.Copy(newPool));
-
-        public MeshGenerator.RenderInfo GetOrLoadRI() => BC.GetOrLoadRI();
-
-        public override BehaviorEntity GetINodeAt(int sbcind, string behName) {
-            ref SimpleBullet sb = ref Data[sbcind];
-            var mov = new Movement(sb.bpi.loc, V2RV2.Angle(sb.movement.angle));
-            return BEHPooler.INode(mov, new ParametricInfo(in mov, sb.bpi.index), sb.direction, behName);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        protected virtual CollisionResult CheckGrazeCollision(in Hitbox hitbox, ref SimpleBullet sb) 
-            => throw new NotImplementedException();
-
-        public override void Add(ref SimpleBullet sb, bool isNew) {
-            base.Add(ref sb);
-            if (isNew) {
-                int numPcs = controls.Count;
-                var ind = count - 1; //count may change if a deletion/addition occurs
-                for (int pi = 0; pi < numPcs && !rem[ind]; ++pi) {
-                    controls[pi].action(this, ind, sb.bpi, controls[pi].cT);
-                }
-            }
-        }
-        
-        public new void Add(ref SimpleBullet sb) => throw new Exception("Do not use SBC.Add");
-        
-        public override void MakeCulledCopy(int ii) {
-            Culled.AddCulled(ref Data[ii]);
-        }
-
-        public override float NextDT => nextDT;
-        private float nextDT;
-        public override void Speedup(float ratio) => nextDT *= ratio;
 
         public virtual void UpdateVelocityAndControls() {
             PruneControlsCancellation();
@@ -485,6 +421,53 @@ public partial class BulletManager {
             Compact();
         }
 
+        #endregion
+        
+        #region State
+        
+        public void PruneControlsCancellation() {
+            //It's not correct to run controls that have been cancelled.
+            // As such, we prune for cancellation before execution, and then cancellation/persistence after execution.
+            void Prune(DMCompactingArray<BulletControl> carr) {
+                for (int ii = 0; ii < carr.Count; ++ii)
+                    if (carr[ii].cT.Cancelled)
+                        carr.Delete(ii);
+                carr.Compact();
+            }
+            Prune(controls);
+            Prune(onCollideControls);
+        }
+        public void PruneControls() {
+            void Prune(DMCompactingArray<BulletControl> carr) {
+                for (int ii = 0; ii < carr.Count; ++ii)
+                    if (carr[ii].cT.Cancelled || !carr[ii].persist(ParametricInfo.Zero))
+                        carr.Delete(ii);
+                carr.Compact();
+            }
+            Prune(controls);
+            Prune(onCollideControls);
+        }
+        public void ClearControls() {
+            controls.Empty();
+            onCollideControls.Empty();
+        }
+
+        public void AssertControls(IReadOnlyList<BulletControl> new_controls) {
+            int ci = 0;
+            for (int pi = 0; pi < controls.Count && ci < new_controls.Count; ++pi) {
+                if (controls[pi] == new_controls[ci]) ++ci;
+            }
+            //All controls matched
+            if (ci == new_controls.Count) return;
+            //No controls matched
+            if (ci == 0) {
+                for (int ii =0; ii < new_controls.Count; ++ii) AddBulletControl(new_controls[ii]);
+                return;
+            }
+            //Some controls matched (?!)
+            throw new Exception("AssertControls found that some, neither all nor none, of controls were matched.");
+        }
+
         public void Reset() {
             for (int ii = 0; ii < count; ++ii) {
                 if (!rem[ii])
@@ -494,6 +477,8 @@ public partial class BulletManager {
             Empty();
             temp_last = 0;
         }
+        
+        #endregion
 
         #region Renderers
         private void LegacyRender(Camera c, BulletManager bm, int layer) {
@@ -626,8 +611,8 @@ public partial class BulletManager {
         #endregion
         
 #if UNITY_EDITOR
-        public override int NumControls => controls.Count;
-        public override object ControlAt(int ii) => controls[ii];
+        public int NumControls => controls.Count;
+        public object ControlAt(int ii) => controls[ii];
 #endif
     }
 
@@ -649,7 +634,7 @@ public partial class BulletManager {
     /// those afterimages. It will not perform velocity or collision checks,
     /// and it ignores pool commands. It only updates bullet times and culls bullets after some time.
     /// </summary>
-    private sealed class CulledBulletCollection : SimpleBulletCollection {
+    public sealed class CulledBulletCollection : SimpleBulletCollection {
         // ReSharper disable once NotAccessedField.Local
         private readonly SimpleBulletCollection src;
         private readonly SimpleBulletFader fade;
@@ -814,7 +799,7 @@ public partial class BulletManager {
 
     private void CallLegacyRender(MeshGenerator.RenderInfo ri, Camera c, int layer, int ct) {
         if (ct == 0) return;
-        UnityEngine.Graphics.DrawMeshInstanced(ri.mesh, 0, ri.material,
+        UnityEngine.Graphics.DrawMeshInstanced(ri.Mesh, 0, ri.Material,
             matArr,
             count: ct,
             properties: pb,
@@ -825,7 +810,7 @@ public partial class BulletManager {
     }
     private void CallRender(MeshGenerator.RenderInfo ri, Camera c, int layer, int ct) {
         if (ct == 0) return;
-        UnityEngine.Graphics.DrawMeshInstancedProcedural(ri.mesh, 0, ri.material,
+        UnityEngine.Graphics.DrawMeshInstancedProcedural(ri.Mesh, 0, ri.Material,
           bounds: drawBounds,
           count: ct,
           properties: pb,
@@ -833,14 +818,6 @@ public partial class BulletManager {
           receiveShadows: false,
           layer: layer,
           camera: c);
-    }
-
-    private unsafe void PrepareRendering() {
-#if UNITY_EDITOR
-        Debug.Log($"Sizes: BS {Marshal.SizeOf(typeof(SimpleBullet))},  Movement {Marshal.SizeOf(typeof(Movement))}, " +
-                  $"BPI {Marshal.SizeOf(typeof(ParametricInfo))}, CollInfo {Marshal.SizeOf(typeof(CollisionResult))}, " +
-                  $"Float {sizeof(float)} (4), Long {sizeof(long)} (8), V2 {sizeof(Vector2)} (8)");
-#endif
     }
 
 #if UNITY_EDITOR

@@ -27,10 +27,9 @@ using Ex = System.Linq.Expressions.Expression;
 
 namespace Danmokou.Expressions {
 public static class BakeCodeGenerator {
-    public class DMKObjectPrinter : IObjectPrinter {
-        public IObjectPrinter Fallback { get; set; } = new CSharpObjectPrinter();
+    public class DMKObjectPrinter : CSharpObjectPrinter {
 
-        public string Print(object o) => FormattableString.Invariant(o switch {
+        public override string Print(object? o) => FormattableString.Invariant(o switch {
             V2RV2 rv2 => 
                 $"new V2RV2({rv2.nx}f, {rv2.ny}f, {rv2.rx}f, {rv2.ry}f, {rv2.angle}f)",
             Vector2 v2 =>
@@ -43,7 +42,7 @@ public static class BakeCodeGenerator {
                 $"new CCircle({c.x}f, {c.y}f, {c.r}f)",
             CRect r =>
                 $"new CRect({r.x}f, {r.y}f, {r.halfW}f, {r.halfH}f, {r.angle}f)",
-            _ => $"{Fallback.Print(o)}"
+            _ => $"{base.Print(o)}"
         });
     }
 
@@ -328,7 +327,11 @@ private static {TypePrinter.Print(f.returnType)} {f.fnName}({string.Join(", ",
         return (Cook.CurrentServe ?? throw new Exception("Tried to load an expression with no active serve"))
             .Next<D>(tac.Ctx.ProxyArguments.ToArray());
 #endif
-        var result = Ex.Lambda<D>(FlattenVisitor.Flatten(ex, true, true), prms).Compile();
+        //TODO:Linux
+        var f = FlattenVisitor.Flatten(ex, true, true);
+        //Logs.Log($"Ex:{typeof(D).RName()} " +
+        //         $"{new ExpressionPrinter{ObjectPrinter = new DMKObjectPrinter()}.LinearizePrint(f)}");
+        var result = Ex.Lambda<D>(f, prms).Compile();
 #if EXBAKE_SAVE
         var printer = new ExpressionPrinter() {ObjectPrinter = new DMKObjectPrinter()};
         var sb = new StringBuilder();

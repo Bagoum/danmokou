@@ -81,7 +81,7 @@ public class TExSB : TEx<SimpleBullet> {
     }
 }
 
-public class TExSBC : TEx<AbsSimpleBulletCollection> {
+public class TExSBC : TEx<SimpleBulletCollection> {
     public MemberExpression style => Ex.Property(ex, "Style");
     public MemberExpression data => Ex.Property(ex, "Data");
     private static readonly ExFunction indexer = ExFunction.Wrap<CompactingArray<SimpleBullet>>("ItemAt",
@@ -91,21 +91,21 @@ public class TExSBC : TEx<AbsSimpleBulletCollection> {
     public TExSBC(Ex _ex) : base(_ex) {}
 
     public TExSB this[Ex index] => new(data.Index(index));
-    private static readonly ExFunction delete = ExFunction.Wrap<AbsSimpleBulletCollection>("DeleteSB",
+    private static readonly ExFunction delete = ExFunction.Wrap<SimpleBulletCollection>("DeleteSB",
         new[] {typeof(int)});
-    private static readonly ExFunction softcull = ExFunction.Wrap<AbsSimpleBulletCollection>("Softcull",
-        new[] {typeof(AbsSimpleBulletCollection), typeof(int), typeof(SoftcullProperties)});
+    private static readonly ExFunction softcull = ExFunction.Wrap<SimpleBulletCollection>("Softcull",
+        new[] {typeof(SimpleBulletCollection), typeof(int), typeof(SoftcullProperties)});
     private static readonly ExFunction isAlive =
-        ExFunction.Wrap<AbsSimpleBulletCollection>("IsAlive", typeof(int));
-    public static readonly ExFunction transferFrom = ExFunction.Wrap<AbsSimpleBulletCollection>("TransferFrom", 
-        new[] {typeof(AbsSimpleBulletCollection), typeof(int)});
-    public static readonly ExFunction copyNullFrom = ExFunction.Wrap<AbsSimpleBulletCollection>("CopyNullFrom", 
-        new[] {typeof(AbsSimpleBulletCollection), typeof(int), typeof(SoftcullProperties)});
-    public static readonly ExFunction copyFrom = ExFunction.Wrap<AbsSimpleBulletCollection>("CopyFrom", 
-        new[] {typeof(AbsSimpleBulletCollection), typeof(int)});
-    public static readonly ExFunction runINodeAt = ExFunction.Wrap<AbsSimpleBulletCollection>("RunINodeAt", 
+        ExFunction.Wrap<SimpleBulletCollection>("IsAlive", typeof(int));
+    public static readonly ExFunction transferFrom = ExFunction.Wrap<SimpleBulletCollection>("TransferFrom", 
+        new[] {typeof(SimpleBulletCollection), typeof(int)});
+    public static readonly ExFunction copyNullFrom = ExFunction.Wrap<SimpleBulletCollection>("CopyNullFrom", 
+        new[] {typeof(SimpleBulletCollection), typeof(int), typeof(SoftcullProperties)});
+    public static readonly ExFunction copyFrom = ExFunction.Wrap<SimpleBulletCollection>("CopyFrom", 
+        new[] {typeof(SimpleBulletCollection), typeof(int)});
+    public static readonly ExFunction runINodeAt = ExFunction.Wrap<SimpleBulletCollection>("RunINodeAt", 
         new[] {typeof(int), typeof(StateMachine), typeof(ICancellee)});
-    public static readonly ExFunction makeCulledCopy = ExFunction.Wrap<AbsSimpleBulletCollection>("MakeCulledCopy",
+    public static readonly ExFunction makeCulledCopy = ExFunction.Wrap<SimpleBulletCollection>("MakeCulledCopy",
         new[] {typeof(int)});
     
     public Ex DeleteSB(Ex index) => delete.InstanceOf(this, index);
@@ -117,7 +117,7 @@ public class TExSBC : TEx<AbsSimpleBulletCollection> {
     
 
     private static readonly ExFunction speedup =
-        ExFunction.Wrap<AbsSimpleBulletCollection>("Speedup", new[] {typeof(float)});
+        ExFunction.Wrap<SimpleBulletCollection>("Speedup", new[] {typeof(float)});
     public Expression Speedup(Expression ratio) => speedup.InstanceOf(this, ratio);
 }
 }

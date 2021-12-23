@@ -78,8 +78,6 @@
             float _YX;
             float _YY;
             
-            float _PPU;
-            
             float _T;
             float _BX;
             float _BY;

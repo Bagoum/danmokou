@@ -22,10 +22,11 @@ phase 0
 		move-target 2 io-sine cxy(3, 2) 
 		
 
-<!> type(non, `sc`)
+#<!> type(spell, `sc`)
 <!> hp(1000)
 phase(0)
 	paction 0
+///
 		async sakura-green/w <1;:> gcr2 0.5 _ <4h> {
 		} s rvelocity cx 1.2
 		

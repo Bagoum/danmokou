@@ -130,14 +130,15 @@ public static class SaveData {
 
     public class Settings {
         public bool AllowInputLinearization = false;
-        public string? Locale = null;
+        public string? Locale = Locales.JP;
+        public bool Verbose = false;
         public bool Shaders = true;
         public bool LegacyRenderer = false;
         public (int w, int h) Resolution = GraphicsUtils.BestResolution;
-#if UNITY_EDITOR
-        public static bool TeleportAtPhaseStart => true;
+#if UNITY_EDITOR && !EXBAKE_SAVE && !EXBAKE_LOAD
+        public static bool TeleportAtPhaseStart => false;
 #else
-        //Don't change this! TeleportAtPhaseStart is a editor utility.
+        //Don't change this! TeleportAtPhaseStart is a editor utility and should not be enabled in builds.
         public static bool TeleportAtPhaseStart => false;
 #endif
         public float Screenshake = 1f;
@@ -184,6 +185,11 @@ public static class SaveData {
                     Resolution = (800, 450);
                 else
                     Resolution = (640, 360);
+                
+                //Lower default rez for phones
+            #if UNITY_ANDROID || UNITY_IOS
+                Resolution = (1280, 720);
+            #endif
 
                 return new Settings() {
 #if WEBGL
@@ -244,7 +250,7 @@ public static class SaveData {
         public bool TryDeleteSave(SavedInstance inst) {
             if (!Saves.Values.Contains(inst)) return false;
             try {
-                File.Delete(inst.DesiredSaveLocation);
+                FileUtils.Delete(inst.DesiredSaveLocation);
                 inst.RemoveFromDisk();
             } catch (Exception e) {
                 Logs.Log(e.Message, true, LogLevel.WARNING);
@@ -343,13 +349,16 @@ public static class SaveData {
 
     public static void SaveRecord() => WriteJson(RECORD, r);
 
-    //Screen.setRes does not take effect immediately, so we need to do this on-change instead of together with
+    //Screen changes does not take effect immediately, so we need to do this on-change instead of together with
     //shader variable reassignment
     //this is also used to turn backgrounds on/off
     public static void UpdateResolution((int w, int h)? wh = null) {
         if (wh.HasValue) {
             s.Resolution = wh.Value;
+            //Changing output resolution on phones doesn't make sense and does weird things
+        #if !(UNITY_ANDROID || UNITY_IOS)
             Screen.SetResolution(s.Resolution.w, s.Resolution.h, s.Fullscreen);
+        #endif
             Logs.Log($"Set resolution to {wh.Value}");
         }
         SuzunoyaUnity.Rendering.RenderHelpers.PreferredResolution.OnNext(s.Resolution);
@@ -374,6 +383,7 @@ public static class SaveData {
         //dialogue speed settings are stored in the global VN info in record
         SaveData.SaveRecord();
         ETime.SetVSync(s.Vsync);
+        Logs.Verbose = s.Verbose;
         SettingsChanged.OnNext(s);
     }
     

@@ -356,7 +356,7 @@ public record InstanceRequest {
             SceneRequest.Reason.FINISH_RETURN, cb)), metadata, new CampaignRequest(campaign), vnSave);
 
 
-        if (SaveData.r.TutorialDone || References.miniTutorial == null) return req.Run();
+        if (true || SaveData.r.TutorialDone || References.miniTutorial == null) return req.Run();
         //Note: if you Restart within the mini-tutorial, it will send you to stage 1.
         // This is because Restart calls campaign.Request.Run().
         else return ServiceLocator.Find<ISceneIntermediary>().LoadScene(new SceneRequest(References.miniTutorial,

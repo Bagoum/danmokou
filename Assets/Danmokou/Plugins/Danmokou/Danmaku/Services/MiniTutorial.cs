@@ -75,7 +75,7 @@ public class MiniTutorial : BehaviorEntity {
             V2RV2.Angle(-90), Cancellable.Null);
         "sync _ <> relrect greenrect level <-2;2.5:1.4;1.4:0> witha 0.7 green".Into<StateMachine>()
             .Start(new SMHandoff(this, Cancellable.Null));
-        Message(text10, mtcirc1(UIConfirm.Desc));
+        Message(text10, mtcirc1(UIConfirm.Desc, Pause.Desc));
         yield return confirm();
         BulletManager.ClearAllBullets();
         BehaviorEntity.GetExecForID("greenrect").InvokeCull();

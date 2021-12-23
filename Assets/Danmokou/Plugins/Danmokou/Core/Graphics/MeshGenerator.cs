@@ -4,12 +4,16 @@ using UnityEngine;
 namespace Danmokou.Graphics {
 public static class MeshGenerator {
     public readonly struct RenderInfo {
-        public readonly Material material;
-        public readonly Mesh mesh;
-        public RenderInfo(Material mat, Mesh m, bool instantiate) {
-            this.material = instantiate ? Object.Instantiate(mat) : mat;
-            this.mesh = m;
+        public Material Material { get; }
+        public Mesh Mesh { get; }
+        public Sprite? Sprite { get; }
+        public RenderInfo(Material mat, Mesh m, Sprite? sourceSprite = null) {
+            this.Material = mat;
+            this.Mesh = m;
+            this.Sprite = sourceSprite;
         }
+
+        public RenderInfo Copy() => new(Object.Instantiate(Material), Mesh, Sprite);
 
         public static Mesh FromSprite(Sprite s, float scale = 1f) {
             Vector2[] orig_verts = s.vertices;
@@ -29,8 +33,9 @@ public static class MeshGenerator {
             renderMaterial.enableInstancing = true;
             renderMaterial.SetTexture(PropConsts.mainTex, s.texture);
             renderMaterial.renderQueue += priority;
-            return new RenderInfo(renderMaterial, FromSprite(s), false);
+            return new RenderInfo(renderMaterial, FromSprite(s), s);
         }
+
     }
 
 }

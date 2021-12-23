@@ -67,9 +67,16 @@ public static class CompilerHelpers {
 
     public static D CompileDelegate<D>(Func<TExArgCtx, TEx> func, params IDelegateArg[] args) where D : Delegate =>
         CompileDelegateLambda<D>(func, args.Select((a, i) => a.MakeTExArg(i)).ToArray());
-    public static D CompileDelegate<D, DR>(string func, params IDelegateArg[] args) where D : Delegate =>
-        CompileDelegate<D>(func.Into<Func<TExArgCtx, TEx<DR>>>(), args);
     
+    //Note: while there is a theoretical overhead to deriving the return type at runtime,
+    // this function is not called particularly often, so it's not a bottleneck.
+    public static D CompileDelegate<D>(string func, params IDelegateArg[] args) where D : Delegate {
+        var returnType = typeof(D).GetMethod("Invoke")!.ReturnType;
+        var exType = Reflector.Func2Type(typeof(TExArgCtx), typeof(TEx<>).MakeGenericType(returnType));
+        
+        return CompileDelegate<D>((func.Into(exType) as Func<TExArgCtx, TEx>)!, args);
+    }
+
     public static GCXU<T2> GCXU11<T1, T2>(Func<Func<TExArgCtx, TEx<T1>>, T2> compiler, Func<TExArgCtx, TEx<T1>> f) =>
         Automatic(compiler, f, aliases => bpi => ReflectEx.Let2(aliases, () => f(bpi), bpi), 
             (ex, mod) => tac => ex(mod(tac)));
@@ -229,7 +236,7 @@ public static class Compilers {
                 var ct = tac.GetByExprType<TEx<ICancellee>>();
                 return ex(sbc, ind, ct, tac.AppendSB("sbcf_sbc_ref_sb", sbc[ind]));
             },
-    new DelegateArg<BulletManager.AbsSimpleBulletCollection>("sbcf_sbc"),
+    new DelegateArg<BulletManager.SimpleBulletCollection>("sbcf_sbc"),
             new DelegateArg<int>("sbcf_ii"),
             new DelegateArg<ParametricInfo>("sbcf_bpi"),
             new DelegateArg<ICancellee>("sbcf_ct")
