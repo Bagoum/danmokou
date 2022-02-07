@@ -17,7 +17,7 @@ public class AchievementManager {
             .Select((x, i) => (x, i))
             .OrderByDescending(((Achievement a, int ind) x) => (x.a.State, -x.ind))
             .Select(x => x.Item1);
-    private Dictionary<string, Achievement> AchievementsByKey { get; } = new Dictionary<string, Achievement>();
+    private Dictionary<string, Achievement> AchievementsByKey { get; } = new();
     public Achievement FindByKey(string key) => AchievementsByKey[key];
 
     public AchievementManager(AchievementRepo repo) {
@@ -37,7 +37,7 @@ public abstract class AchievementRepo {
 
     protected virtual string LocalizationPrefix => "";
     
-    protected Achievement L(string key, Func<Requirement> req) => new Achievement(key, 
+    protected Achievement L(string key, Func<Requirement> req) => new(key, 
         LocalizedStrings.FindReference($"{LocalizationPrefix}.{key}"),
         LocalizedStrings.FindReference($"{LocalizationPrefix}.d_{key}"),
         req, this);
@@ -45,7 +45,7 @@ public abstract class AchievementRepo {
     public abstract IEnumerable<Achievement> MakeAchievements();
     public abstract State? SavedAchievementState(string key);
 
-    public AchievementManager Construct() => new AchievementManager(this);
+    public AchievementManager Construct() => new(this);
 }
 
 }

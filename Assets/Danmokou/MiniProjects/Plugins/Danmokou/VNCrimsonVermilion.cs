@@ -30,7 +30,7 @@ namespace MiniProjects.VN {
 [Reflect] [UsedImplicitly]
 public static class _VNCrimsonVermilion {
     public static async Task VNScriptCrimsonVermilion1(DMKVNState vn) {
-        await _TopLevel(vn).Execute();
+        await _TopLevel(vn);
     }
 
     //In the general case, you probably don't want many shared objects--
@@ -71,11 +71,11 @@ public static class _VNCrimsonVermilion {
             };
             o.blackScreenDialogue.Alpha = 1;
             o.blackScreenDialogue.RenderGroup.Value = o.rgb;
-            await _AtShrine(o).Execute();
-            await _AtTown(o).Execute();
-            await _AtOutskirts(o).Execute();
-            await _AtFlowers(o).Execute();
-            await _AtShrine2(o).Execute();
+            await _AtShrine(o);
+            await _AtTown(o);
+            await _AtOutskirts(o);
+            await _AtFlowers(o);
+            await _AtShrine2(o);
             return default;
         });
     
@@ -501,9 +501,9 @@ public static class _VNCrimsonVermilion {
                     .And(vn.Wait(0.4f).Then(vn.aSFX("vn-impact-1")))
                     .And(vn.Wait(0.2f).Then(
                         kurokoma.MoveTo(V3(-5.3, 0), 0.8f).And(
-                            kurokoma.Disturb(kurokoma.Location, JumpY(0.5f), 0.4f),
-                            reimu.Disturb(reimu.Location, JumpY(0.5f), 0.4f),
-                            vn.Wait(0.1).Then(marisa.Disturb(marisa.Location, JumpY(0.5f), 0.4f)),
+                            kurokoma.Disturb(kurokoma.ComputedLocation, JumpY(0.5f), 0.4f),
+                            reimu.Disturb(reimu.ComputedLocation, JumpY(0.5f), 0.4f),
+                            vn.Wait(0.1).Then(marisa.Disturb(marisa.ComputedLocation, JumpY(0.5f), 0.4f)),
 
                             reimu.MoveBy(V3(0.9, 0), 1),
                             marisa.MoveBy(V3(0.9, 0), 1))
@@ -740,7 +740,7 @@ public static class _VNCrimsonVermilion {
                 yuuka.SayC(l276),
                 yuuka.ESayC("smug", l277),
                 marisa.EmoteSay("emb1", l278).And(
-                    marisa.Disturb(marisa.Location, JumpY(0.5f), 0.4f)).C,
+                    marisa.Disturb(marisa.ComputedLocation, JumpY(0.5f), 0.4f)).C,
                 reimu.ESayC("worry", l279),
                 mayumi.ESayC("worry", l280),
                 reimu.ESayC("emb1", l281),
@@ -761,13 +761,13 @@ public static class _VNCrimsonVermilion {
                 reimu.ESayC("worry", l296),
                 mayumi.EmoteSay("worry", l297).And(mayumi.MoveBy(V3(0.6, 0), 1)).C,
                 reimu.EmoteSay("emb1", l298).And(
-                    reimu.Disturb(reimu.Location, JumpY(0.5f), 0.4f)).C,
+                    reimu.Disturb(reimu.ComputedLocation, JumpY(0.5f), 0.4f)).C,
                 marisa.SayC(l299),
                 yuuka.SayC(l300),
                 reimu.ESayC("angry", l301),
                 marisa.ESayC("surprise", l302),
                 yuuka.EmoteSay("worry", l303).And(
-                    yuuka.Disturb(yuuka.Location, JumpX(-1f), 3f)).C,
+                    yuuka.Disturb(yuuka.ComputedLocation, JumpX(-1f), 3f)).C,
                 reimu.ESayC("worry", l304),
                 reimu.SayC(l304_1),
                 yuuka.ESayC("happy", l305),
@@ -778,7 +778,7 @@ public static class _VNCrimsonVermilion {
                 ).C,
                 mayumi.EmoteSay("worry", l309).And(
                     mayumi.MoveBy(V3(-1, 0), 4f),
-                    mayumi.Disturb(mayumi.Location, JumpNX(-0.4f, 2), 3f)
+                    mayumi.Disturb(mayumi.ComputedLocation, JumpNX(-0.4f, 2), 3f)
                 ).C,
                 yuuka.ESayC("", l310),
                 mayumi.ESayC("surprise", l311),
@@ -804,7 +804,7 @@ public static class _VNCrimsonVermilion {
                 yuuka.SayC(l324),
                 yuuka.SayC(l325),
                 youmu.EmoteSay("surprise", l326).And(
-                    youmu.Disturb(youmu.Location, t =>
+                    youmu.Disturb(youmu.ComputedLocation, t =>
                         new Vector3(M.PolarToXY(M.Sine(1, 0.4f, 12 * M.EOutSine(t)), 600 * M.EOutSine(t))._(), 0), 3)
                 ).C,
                 youmu.EmoteSayC("angry", l326_1),

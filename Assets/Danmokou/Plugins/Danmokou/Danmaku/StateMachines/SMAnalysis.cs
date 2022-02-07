@@ -159,7 +159,7 @@ public static class SMAnalysis {
                 PhaseType.STAGEMIDBOSS => practice_midboss,
                 PhaseType.STAGEENDBOSS => practice_endboss,
                 PhaseType.DIALOGUE => title ?? practice_dialogue,
-                _ => title ?? new LString("!!!UNTITLED PHASE (REPORT ME)!!!")
+                _ => title ?? (LString)("!!!UNTITLED PHASE (REPORT ME)!!!")
             };
 
         public Phase(AnalyzedPhasedConstruct parent, PhaseType c, int phaseNum, LString? name) {
@@ -192,7 +192,7 @@ public static class SMAnalysis {
                 DayPhaseType.DIALOGUE_END => challenge_day_end_ls(boss.ChallengeName),
                 _ => challenge_day_card_ls(boss.ChallengeName, combatCardIndex)
             };
-        public LString Title(SharedInstanceMetadata meta) => (boss.Enabled(meta)) ? _Title : new LString("??? Locked ???");
+        public LString Title(SharedInstanceMetadata meta) => (boss.Enabled(meta)) ? _Title : (LString)("??? Locked ???");
         public readonly AnalyzedDayBoss boss;
         public bool Completed(int cIndex, SharedInstanceMetadata meta) => SaveData.r.ChallengeCompleted(this, cIndex, meta);
         public bool CompletedOne(SharedInstanceMetadata meta) => SaveData.r.PhaseCompletedOne(this, meta);

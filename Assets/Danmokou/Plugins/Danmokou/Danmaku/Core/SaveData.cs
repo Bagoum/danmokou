@@ -8,6 +8,8 @@ using BagoumLib;
 using BagoumLib.Culture;
 using BagoumLib.Events;
 using Danmokou.Achievements;
+using Danmokou.ADV;
+using Danmokou.Core.DInput;
 using Danmokou.Danmaku;
 using Danmokou.GameInstance;
 using Danmokou.Graphics;
@@ -128,9 +130,10 @@ public static class SaveData {
         }
     }
 
-    public class Settings {
+    public class Settings : IDMKLocaleProvider {
+        public Evented<string?> TextLocale { get; init; } = new(Locales.EN);
+        public Evented<string?> VoiceLocale { get; init; } = new(Locales.EN);
         public bool AllowInputLinearization = false;
-        public string? Locale = Locales.JP;
         public bool Verbose = false;
         public bool Shaders = true;
         public bool LegacyRenderer = false;
@@ -145,19 +148,18 @@ public static class SaveData {
         public FullScreenMode Fullscreen = FullScreenMode.FullScreenWindow;
         public int Vsync = 0;
         public bool UnfocusedHitbox = true;
-        public float BGMVolume = 1f;
-        [NonSerialized] public Evented<float> BGMVolumeEv = null!;
+        public Evented<float> BGMVolume { get; init; } = new(1f);
         public float SEVolume = 1f;
-        public float TypingSoundVolume = 1f;
         public bool Backgrounds = true;
-        public bool AllowControllerInput = true;
-        [NonSerialized] public Evented<float> DialogueOpacityEv = null!;
-        public float DialogueOpacity = 0.9f;
-
         public bool ProfilingEnabled = false;
+        
+        public float VNDialogueOpacity = 0.9f;
+        public float VNTypingSoundVolume = 1f;
+        public bool VNOnlyFastforwardReadText = true;
         
         public List<(string name, DifficultySettings settings)> DifficultySettings { get; init; } =
             new();
+
 
         public void AddDifficultySettings(string name, DifficultySettings settings) {
             DifficultySettings.Add((name, FileUtils.CopyJson(settings)));
@@ -214,16 +216,16 @@ public static class SaveData {
         private const string VNIMGEXT = ".jpg";
         private const string VNDATAEXT = ".dat";
 
-        public Dictionary<int, SavedInstance> Saves { get; } = new();
-        public SavedInstance MostRecentSave => Saves.Values.MaxBy(s => s.SaveTime);
+        public Dictionary<int, SerializedSave> Saves { get; } = new();
+        public SerializedSave MostRecentSave => Saves.Values.MaxBy(s => s.SaveTime);
 
         public VNSaves() {
-            foreach (var save in FileUtils.EnumerateDirectory(VNDIR)
+            foreach (var save in FileUtils.EnumerateDirectory(INSTANCESAVEDIR)
                 .Where(f => f.EndsWith(VNMETAEXT))
                 .Select(f => f[..^VNMETAEXT.Length])
                 .SelectNotNull(f => {
                     try {
-                        var metadata = ReadJson<SavedInstance>(f + VNMETAEXT);
+                        var metadata = ReadJson<SerializedSave>(f + VNMETAEXT);
                         if (metadata?.GameIdentifier != GameManagement.References.gameIdentifier)
                             return null;
                         return metadata;
@@ -236,21 +238,20 @@ public static class SaveData {
                     Saves[save.Slot] = save;
             }
         }
-        private static string SaveFilename(SavedInstance inst) => VNDIR + inst.Filename;
         
-        public void SaveNewSave(SavedInstance inst) {
+        public void SaveNewSave(SerializedSave inst) {
             var prev = Saves.TryGetValue(inst.Slot, out var _prev) ? _prev : null;
-            Logs.Log($"Saving vn-save {inst.DesiredSaveLocation} at slot {inst.Slot}. " +
+            Logs.Log($"Saving vn-save {inst.SaveLocation} at slot {inst.Slot}. " +
                      $"Previous exists at this slot: {prev != null}");
-            WriteJson(inst.DesiredSaveLocation, inst);
+            WriteJson(inst.SaveLocation, inst);
             if (prev != null)
                 TryDeleteSave(prev);
             Saves[inst.Slot] = inst;
         }
-        public bool TryDeleteSave(SavedInstance inst) {
+        public bool TryDeleteSave(SerializedSave inst) {
             if (!Saves.Values.Contains(inst)) return false;
             try {
-                FileUtils.Delete(inst.DesiredSaveLocation);
+                FileUtils.Delete(inst.SaveLocation);
                 inst.RemoveFromDisk();
             } catch (Exception e) {
                 Logs.Log(e.Message, true, LogLevel.WARNING);
@@ -322,6 +323,7 @@ public static class SaveData {
     }
 
     public static Settings s { get; }
+    public static readonly Evented<Settings> SettingsEv;
     public static Record r { get; }
     public static Replays p { get; }
     public static VNSaves v { get; }
@@ -329,13 +331,9 @@ public static class SaveData {
 
     static SaveData() {
         s = ReadJson<Settings>(SETTINGS) ?? Settings.Default;
-        s.BGMVolumeEv = new(s.BGMVolume);
-        _ = s.BGMVolumeEv.Subscribe(vol => s.BGMVolume = vol);
-        s.DialogueOpacityEv = new(s.DialogueOpacity);
+        _ = ServiceLocator.Register<IDMKLocaleProvider>(s);
         UpdateResolution(s.Resolution);
         UpdateFullscreen(s.Fullscreen);
-        UpdateAllowController(s.AllowControllerInput);
-        UpdateLocale(s.Locale);
         ETime.SetVSync(s.Vsync);
         Logs.Log($"Initial settings: resolution {s.Resolution}, fullscreen {s.Fullscreen}, vsync {s.Vsync}");
         r = ReadRecord() ?? new Record();
@@ -343,6 +341,7 @@ public static class SaveData {
         p = new Replays();
         v = new VNSaves();
         StartProfiling();
+        SettingsEv = new Evented<Settings>(s);
     }
 
     private static Record? ReadRecord() => ReadJson<Record>(RECORD);
@@ -368,26 +367,14 @@ public static class SaveData {
         Screen.fullScreenMode = s.Fullscreen = mode;
     }
 
-    public static void UpdateAllowController(bool allowed) {
-        s.AllowControllerInput = allowed;
-        InputManager.AllowControllerInput = allowed;
-    }
-
-    public static void UpdateLocale(string? loc) {
-        s.Locale = loc;
-        Localization.Locale.Value = loc;
-    }
-
     public static void AssignSettingsChanges() {
         WriteJson(SETTINGS, s);
         //dialogue speed settings are stored in the global VN info in record
         SaveData.SaveRecord();
         ETime.SetVSync(s.Vsync);
         Logs.Verbose = s.Verbose;
-        SettingsChanged.OnNext(s);
+        SettingsEv.OnNext(s);
     }
-    
-    public static readonly Event<Settings> SettingsChanged = new();
 
     private static void StartProfiling() {
         if (s.ProfilingEnabled) {

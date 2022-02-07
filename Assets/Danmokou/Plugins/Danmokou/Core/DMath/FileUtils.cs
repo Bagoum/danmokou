@@ -4,11 +4,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.Serialization.Formatters.Binary;
 using BagoumLib;
 using Danmokou.Core;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 using ProtoBuf;
 using UnityEngine;
 #pragma warning disable 168
@@ -20,15 +22,28 @@ using UnityEngine;
 public static class FileUtils {
     public const string SAVEDIR = "DMK_Saves/";
     public const string AYADIR = SAVEDIR + "Aya/";
-    public const string VNDIR = SAVEDIR + "VN/";
+    public const string INSTANCESAVEDIR = SAVEDIR + "Instances/";
     public enum ImageFormat {
         JPG,
         PNG
     }
 
+    //To support private setters
+    private class NonPublicPropertyResolver : DefaultContractResolver {
+        protected override JsonProperty CreateProperty(MemberInfo member, MemberSerialization memberSerialization) {
+            var prop = base.CreateProperty(member, memberSerialization);
+            if (member is PropertyInfo pi) {
+                prop.Readable = pi.GetMethod != null;
+                prop.Writable = pi.SetMethod != null;
+            }
+            return prop;
+        }
+    }
+
     private static readonly JsonSerializerSettings JsonSettings = new JsonSerializerSettings() {
         TypeNameHandling = TypeNameHandling.Auto,
-        ConstructorHandling = ConstructorHandling.AllowNonPublicDefaultConstructor
+        ConstructorHandling = ConstructorHandling.AllowNonPublicDefaultConstructor,
+        ContractResolver = new NonPublicPropertyResolver()
     };
 
     public static IEnumerable<string> EnumerateDirectory(string dir) {

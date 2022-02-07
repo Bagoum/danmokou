@@ -189,7 +189,7 @@ public static class _VNBlessedRain {
                 vn.SFX("vn-yukari-power").AsVnOp(vn),
                 y.MoveBy(V3(1, 0), 0.8f).And(y.FadeTo(1, 0.8f))
                     .And(s.EmoteSay("surprise", l78))
-                    .And(s.MoveBy(V3(0.5f, 0), 0.5f).And(s.Disturb(s.Location, JumpY(0.5f), 0.5f)))
+                    .And(s.MoveBy(V3(0.5f, 0), 0.5f).And(s.Disturb(s.ComputedLocation, JumpY(0.5f), 0.5f)))
             )).C,
             s.ESayC("worry", l79),
             y.ESayC("surprise", l80),
@@ -268,7 +268,7 @@ public static class _VNBlessedRain {
             k.SayC(l143),
             r.ESayC("", l144),
             k.ESayC("surprise", l145),
-            r.EmoteSay("surprise", l146).And(r.Disturb(r.Location, JumpY(0.5f), 0.6f)).C,
+            r.EmoteSay("surprise", l146).And(r.Disturb(r.ComputedLocation, JumpY(0.5f), 0.6f)).C,
             k.EmoteSayC("injured", l147),
             r.ESayC("angry", l148),
             k.EmoteSayC("", l149),
@@ -278,7 +278,7 @@ public static class _VNBlessedRain {
             k.SayC(l153),
             r.ESayC("happy", l154),
             k.EmoteSayC("injured", l155),
-            r.EmoteSay("surprise", l156).And(r.Disturb(r.Location, JumpY(0.5f), 0.6f)).C,
+            r.EmoteSay("surprise", l156).And(r.Disturb(r.ComputedLocation, JumpY(0.5f), 0.6f)).C,
             k.ESayC("worry", l157),
             r.SayC(l158),
             y.ESayC("happy", l159),
@@ -339,9 +339,7 @@ public static class _VNBlessedRain {
         );
         return default; 
     });
-
-
-
+    
     private static BoundedContext<Unit> _03Forest(Shared o) => new(o.vn, "3:FOREST", async () => {
         var vn = o.vn;
         using var forest = vn.Add(new ForestBG());
@@ -389,9 +387,9 @@ public static class _VNBlessedRain {
             a.SetEmote("surprise"),
             r.SetEmote("angry"),
             a.MoveBy(V3(-2, 0), 0.5f)
-                .And(r.Disturb(r.Location, t =>
+                .And(r.Disturb(r.ComputedLocation, t =>
                     new Vector3(M.Sine(1, 0.1f, 4 * M.EOutSine(t)), 0, 0), 1))
-                .And(a.Disturb(a.Location, JumpY(0.7f), 0.5f))
+                .And(a.Disturb(a.ComputedLocation, JumpY(0.7f), 0.5f))
                 .And(n.Say(l228)).C,
             a.SayC(l229),
             r.SayC(l230),
@@ -534,7 +532,7 @@ public static class _VNBlessedRain {
             a.SetEmote("surprise"),
             n.SayC(l351),
             a.Say(l352).And(
-                a.Disturb(a.Location, t =>
+                a.Disturb(a.ComputedLocation, t =>
                     new Vector3(M.Sine(1, 0.1f, 3 * M.EOutSine(t)), 0, 0), 1)).C,
             n.SayC(l353),
             a.ESayC("angry", l354),
@@ -624,7 +622,7 @@ public static class _VNBlessedRain {
             m.ESayC("surprise", l414),
             m.MoveBy(V3(-2, 0), 0.8f),
             m.ESayC("happy", l415),
-            n.Say(l416).And(r.MoveBy(V3(-2.5f, 0), 1)).Then(r.Disturb(r.Location, JumpY(0.4f), 0.5f)).C,
+            n.Say(l416).And(r.MoveBy(V3(-2.5f, 0), 1)).Then(r.Disturb(r.ComputedLocation, JumpY(0.4f), 0.5f)).C,
             r.ESayC("", l417),
             m.ESayC("", l418),
             m.SayC(l419),
@@ -686,7 +684,7 @@ public static class _VNBlessedRain {
 #if UNITY_EDITOR
         vn.DefaultLoadSkipUnit = true;
         if (SceneIntermediary.IsFirstScene && vn.LoadTo is null) 
-            vn.LoadToLocation(new VNLocation("l333", new List<string>() {"TOP", "3:FOREST"}));
+            vn.LoadToLocation(new VNLocation("l77", new List<string>() {"TOP", "2:MORIYA"}));
 #endif
         await _TopLevel(vn);
     }

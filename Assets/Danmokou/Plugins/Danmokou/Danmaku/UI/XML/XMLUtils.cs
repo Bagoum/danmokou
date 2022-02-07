@@ -7,8 +7,10 @@ using BagoumLib.Cancellation;
 using BagoumLib.Culture;
 using BagoumLib.Functional;
 using Danmokou.Achievements;
+using Danmokou.ADV;
 using Danmokou.Behavior;
 using Danmokou.Core;
+using Danmokou.Core.DInput;
 using Danmokou.Danmaku;
 using Danmokou.GameInstance;
 using Danmokou.Player;
@@ -166,12 +168,12 @@ public static partial class XMLUtils {
                         (_, ve) => ve.style.maxWidth = new Length(60, LengthUnit.Percent)), 
                     allowStaticOptions ?
                             new OptionNodeLR<string?>(main_lang, l => {
-                            SaveData.UpdateLocale(l);
-                            SaveData.AssignSettingsChanges();
+                                SaveData.s.TextLocale.OnNext(l);
+                                SaveData.AssignSettingsChanges();
                         }, new[] {
-                            (new LString("English"), Locales.EN),
-                            (new LString("日本語"), Locales.JP)
-                        }, SaveData.s.Locale) :
+                            (LText.Make("English"), Locales.EN),
+                            (LText.Make("日本語"), Locales.JP)
+                        }, SaveData.s.TextLocale) :
                         null,
                     allowStaticOptions ?
                         new OptionNodeLR<bool>(smoothing, b => SaveData.s.AllowInputLinearization = b, OnOffOption,
@@ -193,8 +195,6 @@ public static partial class XMLUtils {
                             SaveData.UpdateResolution();
                         }, OnOffOption,
                         SaveData.s.Backgrounds),
-                    new OptionNodeLR<bool>(controller, SaveData.UpdateAllowController, OnOffOption,
-                        SaveData.s.AllowControllerInput),
                     allowStaticOptions ?
                         new OptionNodeLR<float>(dialogue_speed, ds => SaveData.VNSettings.TextSpeed = ds, new(LString, float)[] {
                             ("x2", 2f),
@@ -204,8 +204,12 @@ public static partial class XMLUtils {
                             ("x0.5", 0.5f),
                         }, SaveData.VNSettings.TextSpeed) :
                         null,
-                    new OptionNodeLR<float>("Dialogue Box Opacity", SaveData.s.DialogueOpacityEv.OnNext, 11.Range().Select(x =>
-                        (new LString($"{x * 10}"), x / 10f)).ToArray(), SaveData.s.DialogueOpacity)
+                    new OptionNodeLR<float>(dialogue_opacity, x => SaveData.s.VNDialogueOpacity = x, 11.Range().Select(x =>
+                        (LText.Make($"{x * 10}"), x / 10f)).ToArray(), SaveData.s.VNDialogueOpacity),
+                    new OptionNodeLR<bool>(dialogue_skip, x => SaveData.s.VNOnlyFastforwardReadText = x, new[] {
+                        (dialogue_skip_read, true),
+                        (dialogue_skip_all, false)
+                    }, SaveData.s.VNOnlyFastforwardReadText)
                 )
             },
             new UINode("<cspace=16>GRAPHICS</cspace>") {
@@ -247,19 +251,19 @@ public static partial class XMLUtils {
                 ShowHideGroup = new UIColumn(new UIRenderConstructed(
                     new UIRenderDirect(s), Prefabs.UIScreenColumn, 
                     (_, ve) => ve.style.maxWidth = new Length(60, LengthUnit.Percent)),
-                    new OptionNodeLR<float>(bgm_volume, SaveData.s.BGMVolumeEv.OnNext, 21.Range().Select(x =>
-                        (new LString($"{x * 10}"), x / 10f)).ToArray(), SaveData.s.BGMVolume),
+                    new OptionNodeLR<float>(bgm_volume, SaveData.s.BGMVolume.OnNext, 21.Range().Select(x =>
+                        ((LString)$"{x * 10}", x / 10f)).ToArray(), SaveData.s.BGMVolume),
                     new OptionNodeLR<float>(sfx_volume, v => { SaveData.s.SEVolume = v; }, 21.Range().Select(x =>
-                        (new LString($"{x * 10}"), x / 10f)).ToArray(), SaveData.s.BGMVolume),
-                    new OptionNodeLR<float>("Dialogue Typing Volume", v => { SaveData.s.TypingSoundVolume = v; }, 21.Range().Select(x =>
-                        (new LString($"{x * 10}"), x / 10f)).ToArray(), SaveData.s.TypingSoundVolume)
+                        ((LString)$"{x * 10}", x / 10f)).ToArray(), SaveData.s.BGMVolume),
+                    new OptionNodeLR<float>("Dialogue Typing Volume", v => { SaveData.s.VNTypingSoundVolume = v; }, 21.Range().Select(x =>
+                        ((LString)$"{x * 10}", x / 10f)).ToArray(), SaveData.s.VNTypingSoundVolume)
                 )
             }
         }));
         return s;
     }
 
-    public static UIScreen SaveLoadVNScreen(this UIController m, Func<SavedInstance, bool>? loader, Func<int, SavedInstance>? saver, bool loadIsDangerous=true) {
+    public static UIScreen SaveLoadVNScreen(this UIController m, Func<SerializedSave, bool>? loader, Func<int, SerializedSave>? saver, bool loadIsDangerous=true) {
         int perPage = 8;
         UINode CreateSaveLoadEntry(int i) {
             return new FuncNode(LString.Empty, n => {
@@ -469,7 +473,7 @@ public static partial class XMLUtils {
                 (practice_m_stage, InstanceMode.STAGE_PRACTICE)
             }.FilterNone().ToArray(), mode),
             new OptionNodeLR<int>(practice_campaign, AssignCampaign,
-                campaigns.Select((c, i) => (new LString(c.campaign.shortTitle), i)).ToArray(), cmpIndex),
+                campaigns.Select((c, i) => ((LString)c.campaign.shortTitle, i)).ToArray(), cmpIndex),
             new OptionNodeLR<string>(practice_m_whichboss, AssignBoss, () =>
                     IsBossOrChallenge() ?
                         campaigns[cmpIndex].bosses.Select(b => (b.boss.BossPracticeName, b.boss.key)).ToArray() :
@@ -667,12 +671,12 @@ public static partial class XMLUtils {
         var pctMods = _pctMods.Select(x => {
             var offset = (x - 1) * 100;
             var prefix = (offset >= 0) ? "+" : "";
-            return (new LString($"{prefix}{offset}%"), x);
+            return ((LString)($"{prefix}{offset}%"), x);
         }).ToArray();
         (LString, bool)[] yesNo = {(generic_on, true), (generic_off, false)};
         IEnumerable<(LString, double)> AddPlus(IEnumerable<double> arr) => arr.Select(x => {
             var prefix = (x >= 0) ? "+" : "";
-            return (new LString($"{prefix}{x}"), x);
+            return ((LString)($"{prefix}{x}"), x);
         });
         var descCol = screen.ColumnRender(1);
         UINode MakeOption<T>(LString title, IEnumerable<(LString, T)> options, Func<T> deflt, Action<T> apply,
@@ -695,14 +699,14 @@ public static partial class XMLUtils {
         UINode MakeOnOffOption(LString title, Func<bool> deflt, Action<bool> apply, LString description)
             => MakeOption(title, yesNo, deflt, apply, description);
         UINode MakeOptionAuto<T>(LString title, IEnumerable<T> options, Func<T> deflt, Action<T> apply, LString description)
-            => MakeOption(title, options.Select(x => (new LString(x!.ToString()), x)), deflt, apply, description);
+            => MakeOption(title, options.Select(x => ((LString)(x!.ToString()), x)), deflt, apply, description);
 
         var saved = SaveData.s.DifficultySettings;
 
         
         
         UINode MakeSaveLoadDFCNode((string name, DifficultySettings settings) s) =>
-            new FuncNode(() => new LString(s.name),
+            new FuncNode(() => (LString)(s.name),
                 n => {
                     var ind = n.Group.Nodes.IndexOf(n);
                     return PopupUIGroup.LRB2(n, () => setting,
@@ -727,7 +731,7 @@ public static partial class XMLUtils {
             desc_effective_ls(effective, DifficultySettings.FancifySlider(dfc.customValueSlider)));
         screen.SetFirst(new UIColumn(screen, null,
             MakeOption(scaling, (DifficultySettings.MIN_SLIDER, DifficultySettings.MAX_SLIDER + 1).Range()
-                .Select(x => (new LString($"{x}"), x)), () => dfc.customValueSlider, dfc.SetCustomDifficulty,
+                .Select(x => ((LString)($"{x}"), x)), () => dfc.customValueSlider, dfc.SetCustomDifficulty,
                 desc_scaling),
             optSliderHelper.With(small2Class),
             MakeOptionAuto(suicide, new[] {0, 1, 3, 5, 7}, () => dfc.numSuicideBullets,
@@ -745,7 +749,7 @@ public static partial class XMLUtils {
             MakePctOption(player_hitbox, () => dfc.playerHitboxMultiplier, x => dfc.playerHitboxMultiplier = x, desc_player_hitbox),
             MakePctOption(player_grazebox, () => dfc.playerGrazeboxMultiplier,
                 x => dfc.playerGrazeboxMultiplier = x, desc_player_grazebox),
-            MakeOption(lives, (1, 14).Range().Select(x => (new LString($"{x}"), (int?) x)).Prepend((generic_default, null)),
+            MakeOption(lives, (1, 14).Range().Select(x => ((LString)($"{x}"), (int?) x)).Prepend((generic_default, null)),
                 () => dfc.startingLives, x => dfc.startingLives = x, desc_lives),
             MakeOption(poc, AddPlus(new[] {
                     //can't use addition to generate these because -6 + 0.4 =/= -5.6...
@@ -815,7 +819,7 @@ public static partial class XMLUtils {
         LString ShowCard((BossPracticeRequest card, float ratio) bpr) {
             return LString.Format(
                 "{0}: {1}", 
-                new LString(AsPct(bpr.ratio)),
+                (LString)(AsPct(bpr.ratio)),
                 bpr.card.phase.Title
             );
         }
@@ -823,7 +827,7 @@ public static partial class XMLUtils {
         var optNodes = new UINode[] {
             new OptionNodeLR<int?>(practice_campaign, AssignCampaign,
                 campaigns
-                    .Select((c, i) => (new LString(c.campaign.shortTitle), (int?)i))
+                    .Select((c, i) => ((LString)(c.campaign.shortTitle), (int?)i))
                     .Prepend((stats_allcampaigns, null))
                     .ToArray(), campaignIndex),
             new OptionNodeLR<Maybe<FixedDifficulty?>>(stats_seldifficulty, x => {
@@ -859,23 +863,23 @@ public static partial class XMLUtils {
             new TwoLabelUINode(stats_avgtime, () => stats.AvgFrames.FramesToTime()),
             new TwoLabelUINode(stats_favday, () => 
                 stats.TotalRuns == 0 ? generic_na :
-                new LString($"{stats.FavoriteDay.Item1} ({stats.FavoriteDay.Item2.Length})")),
+                (LString)($"{stats.FavoriteDay.Item1} ({stats.FavoriteDay.Item2.Length})")),
             new TwoLabelUINode(stats_favplayer, () => 
                 stats.TotalRuns == 0 ? generic_na :
                     LString.Format(
-                "{0} ({1})", stats.FavoriteShip.Item1.ShortTitle, new LString($"{stats.FavoriteShip.Item2.Length}")
+                "{0} ({1})", stats.FavoriteShip.Item1.ShortTitle, (LString)($"{stats.FavoriteShip.Item2.Length}")
             )),
             new TwoLabelUINode(stats_favshot, () => {
                 if (stats.TotalRuns == 0) return generic_na;
                 var ((pc, sc), recs) = stats.FavoriteShot;
-                return LString.Format(new LString("{0} ({1})"), 
+                return LString.Format("{0} ({1})", 
                     ShotConfig.PlayerShotDescription(pc, sc),
-                    new LString($"{recs.Length}")
+                    $"{recs.Length}"
                 );
             }),
             new TwoLabelUINode(stats_highestscore, () => 
-                stats.TotalRuns == 0 ? generic_na : new LString($"{stats.MaxScore}")),
-            new TwoLabelUINode(stats_capturerate, () => new LString(AsPct(stats.CaptureRate))),
+                stats.TotalRuns == 0 ? generic_na : $"{stats.MaxScore}"),
+            new TwoLabelUINode(stats_capturerate, () => AsPct(stats.CaptureRate)),
             new TwoLabelUINode(stats_bestcard, () => 
                 !stats.HasSpellHist ? generic_na : ShowCard(stats.BestCapture)),
             new TwoLabelUINode(stats_worstcard, () => 
@@ -933,7 +937,7 @@ public static partial class XMLUtils {
         }};
         var descCol = new UIRenderColumn(screen, 1);
         screen.SetFirst(new UIColumn(screen, null, musics.SelectNotNull(m => (m.DisplayInMusicRoom switch {
-            true => new FuncNode(new LString(string.Format("({0}) {1}", m.TrackPlayLocation, m.Title)), 
+            true => new FuncNode(string.Format("({0}) {1}", m.TrackPlayLocation, m.Title), 
                 () => new UIResult.StayOnNode(ServiceLocator.Find<IAudioTrackService>().InvokeBGM(m) == null)) {
                 ShowHideGroup = new UIColumn(descCol, 
                     new UINode(m.MusicRoomDescription).With(small2Class, fontUbuntuClass)) 
@@ -1182,7 +1186,7 @@ public static partial class XMLUtils {
                     ve = Prefabs.MkLineLink.CloneTreeWithoutContainer();
                     ApplyFontStyleToVE(ve);
                     Stringify(textRun, ve, breakOnSpace);
-                    ve.RegisterCallback<MouseUpEvent>(evt => {
+                    ve.RegisterCallback<PointerUpEvent>(evt => {
                         //Logs.Log($"Click {Description}");
                         //button 0, 1, 2 = left, right, middle click
                         //Right click is handled as UIBack in InputManager

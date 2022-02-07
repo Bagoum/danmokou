@@ -123,7 +123,7 @@ public static partial class Reflector {
             obj = LocalizedStrings.IsLocalizedStringReference(str) ? 
                 LocalizedStrings.TryFindReference(str) ?? 
                     throw new Exception($"Line {p.GetLastLine()}: Couldn't resolve LocalizedString {str}")
-                : new LString(str);
+                : (LString)str;
         } else if (targetType == type_stylesel) {
             obj = new BulletManager.StyleSelector((ResolveAsArray(typeof(string[]), p) as string[][])!);
         } else if (targetType == type_gcrule) {

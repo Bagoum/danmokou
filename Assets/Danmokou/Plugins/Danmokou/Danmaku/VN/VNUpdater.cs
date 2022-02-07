@@ -1,5 +1,6 @@
 ﻿using Danmokou.Behavior;
 using Danmokou.Core;
+using Danmokou.Core.DInput;
 using SuzunoyaUnity;
 
 namespace Danmokou.VN {

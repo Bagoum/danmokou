@@ -322,7 +322,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ayaShader: {fileID: 4800000, guid: bef6456a9365c7e49a51a5518be4ad8c, type: 3}
-  finalRenderShader: {fileID: 4800000, guid: 6f1c8959d1439f347868834112b5238a, type: 3}
+  finalRenderMaterial: {fileID: 2100000, guid: 462acd27a2832544d842cc81b8360e68, type: 2}
   BackgroundCamera: {fileID: 3729360308144925402}
   LowDirectCamera: {fileID: 2298390537673799172}
   MiddleCamera: {fileID: 7724431542230025561}

@@ -130,7 +130,7 @@ If we want to add a boss cutin, we must invoke it manually. Add the property `<!
 
 ## Part 2: On Multiple Bosses
 
-Strictly speaking, multiple boss *scripts* are not allowed in DMK. The engine is only able to handle UI modifications for one boss script at a time, and this would be fairly difficult to change. Instead, multiple bosses are handled by manipulating multiple BehaviorEntities from one script. 
+Strictly speaking, multiple boss *scripts* are not allowed in DMK. It is feasible on a technical level, but it largely doesn't make sense in terms of UI handling. Instead, multiple bosses are handled by manipulating multiple BehaviorEntities from one script. 
 
 Here are the current legal usages of multiple bosses:
 

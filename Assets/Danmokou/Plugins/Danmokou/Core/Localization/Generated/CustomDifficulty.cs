@@ -15,108 +15,108 @@ namespace Danmokou.Core {
 public static partial class LocalizedStrings {
 	public static partial class CDifficulty {
 		
-		public static readonly LString scaling = new LString("Scaling",
+		public static readonly LString scaling = new LText("Scaling",
 			(Locales.JP, "難易度"))
 			{ ID = "scaling" };
 		
-		public static readonly LString effective = new LString("Effective Difficulty",
+		public static readonly LString effective = new LText("Effective Difficulty",
 			(Locales.JP, "比較的難易度"))
 			{ ID = "effective" };
 		
-		public static readonly LString suicide = new LString("Suicide Bullets",
+		public static readonly LString suicide = new LText("Suicide Bullets",
 			(Locales.JP, "撃ち返し弾"))
 			{ ID = "suicide" };
 		
-		public static readonly LString p_dmg = new LString("Player Damage Mod",
+		public static readonly LString p_dmg = new LText("Player Damage Mod",
 			(Locales.JP, "自機ダメージ"))
 			{ ID = "p_dmg" };
 		
-		public static readonly LString boss_hp = new LString("Boss HP Mod",
+		public static readonly LString boss_hp = new LText("Boss HP Mod",
 			(Locales.JP, "ボスHP"))
 			{ ID = "boss_hp" };
 		
-		public static readonly LString respawn = new LString("Respawn on Death",
+		public static readonly LString respawn = new LText("Respawn on Death",
 			(Locales.JP, "下部からの蘇り"))
 			{ ID = "respawn" };
 		
-		public static readonly LString faith_decay = new LString("Faith Decay Mod",
+		public static readonly LString faith_decay = new LText("Faith Decay Mod",
 			(Locales.JP, "信仰減少率"))
 			{ ID = "faith_decay" };
 		
-		public static readonly LString faith_acquire = new LString("Faith Acquire Mod",
+		public static readonly LString faith_acquire = new LText("Faith Acquire Mod",
 			(Locales.JP, "信仰獲得率"))
 			{ ID = "faith_acquire" };
 		
-		public static readonly LString meter_usage = new LString("Meter Usage Mod",
+		public static readonly LString meter_usage = new LText("Meter Usage Mod",
 			(Locales.JP, "MP使用率"))
 			{ ID = "meter_usage" };
 		
-		public static readonly LString meter_acquire = new LString("Meter Acquire Mod",
+		public static readonly LString meter_acquire = new LText("Meter Acquire Mod",
 			(Locales.JP, "MP獲得率"))
 			{ ID = "meter_acquire" };
 		
-		public static readonly LString bombs_enabled = new LString("Bombs Enabled",
+		public static readonly LString bombs_enabled = new LText("Bombs Enabled",
 			(Locales.JP, "ボム使用可能"))
 			{ ID = "bombs_enabled" };
 		
-		public static readonly LString meter_enabled = new LString("Meter Enabled",
+		public static readonly LString meter_enabled = new LText("Meter Enabled",
 			(Locales.JP, "能力使用可能"))
 			{ ID = "meter_enabled" };
 		
-		public static readonly LString player_speed = new LString("Player Speed Mod",
+		public static readonly LString player_speed = new LText("Player Speed Mod",
 			(Locales.JP, "自機速度"))
 			{ ID = "player_speed" };
 		
-		public static readonly LString player_hitbox = new LString("Player Hitbox Mod",
+		public static readonly LString player_hitbox = new LText("Player Hitbox Mod",
 			(Locales.JP, "自機当たり判定"))
 			{ ID = "player_hitbox" };
 		
-		public static readonly LString player_grazebox = new LString("Player Grazebox Mod",
+		public static readonly LString player_grazebox = new LText("Player Grazebox Mod",
 			(Locales.JP, "自機グレイズ判定"))
 			{ ID = "player_grazebox" };
 		
-		public static readonly LString lives = new LString("Starting Lives",
+		public static readonly LString lives = new LText("Starting Lives",
 			(Locales.JP, "残機"))
 			{ ID = "lives" };
 		
-		public static readonly LString poc = new LString("PoC Offset",
+		public static readonly LString poc = new LText("PoC Offset",
 			(Locales.JP, "自動回収線の位置"))
 			{ ID = "poc" };
 		
-		public static readonly LString to_select = new LString("To Player Select",
+		public static readonly LString to_select = new LText("To Player Select",
 			(Locales.JP, "自機選択へ"))
 			{ ID = "to_select" };
 		
-		public static readonly LString manage_setting = new LString("Manage Presets",
+		public static readonly LString manage_setting = new LText("Manage Presets",
 			(Locales.JP, "プリセット管理"))
 			{ ID = "manage_setting" };
 		
-		public static readonly LString create_setting = new LString("Create New Preset",
+		public static readonly LString create_setting = new LText("Create New Preset",
 			(Locales.JP, "プリセットを作る"))
 			{ ID = "create_setting" };
 		
-		public static readonly LString new_setting_name = new LString("Preset Name",
+		public static readonly LString new_setting_name = new LText("Preset Name",
 			(Locales.JP, "プリセット名前"))
 			{ ID = "new_setting_name" };
 		
-		public static readonly LString setting = new LString("Preset",
+		public static readonly LString setting = new LText("Preset",
 			(Locales.JP, "プリセット"))
 			{ ID = "setting" };
 		
-		public static string setting_what_do(object arg0) => Localization.Locale.Value switch {
-			Locales.JP => Render(Localization.Locale.Value, new[] {
+		public static string setting_what_do(object arg0) => Locales.Provider.TextLocale.Value switch {
+			Locales.JP => Render(Locales.Provider.TextLocale.Value, new[] {
 				"プリセット「",
 				"{0}",
 				"」で何をする？",
 			}, arg0),
-			_ => Render(Localization.Locale.Value, new[] {
+			_ => Render(Locales.Provider.TextLocale.Value, new[] {
 				"What would you like to do with preset \"",
 				"{0}",
 				"\"?",
 			}, arg0),
 		};
 		
-		public static LString setting_what_do_ls(object arg0) => new LString(Render(null, new[] {
+		public static LString setting_what_do_ls(object arg0) => new LText(Render(null, new[] {
 				"What would you like to do with preset \"",
 				"{0}",
 				"\"?",
@@ -128,21 +128,21 @@ public static partial class LocalizedStrings {
 			}, arg0)))
 			{ ID = "setting_what_do" };
 		
-		public static readonly LString desc_scaling = new LString(Render(null, new[] {
+		public static readonly LString desc_scaling = new LText(Render(null, new[] {
 				"Set the base difficulty scaling variable.",
 				"\n",
 				"This primarily affects the number and firing rate of bullets at an exponential rate.",
 			}))
 			{ ID = "desc_scaling" };
 		
-		public static string desc_effective(object arg0, object arg1) => Localization.Locale.Value switch {
-			Locales.JP => Render(Localization.Locale.Value, new[] {
+		public static string desc_effective(object arg0, object arg1) => Locales.Provider.TextLocale.Value switch {
+			Locales.JP => Render(Locales.Provider.TextLocale.Value, new[] {
 				"    ",
 				"{0}",
 				": ",
 				"{1}",
 			}, arg0, arg1),
-			_ => Render(Localization.Locale.Value, new[] {
+			_ => Render(Locales.Provider.TextLocale.Value, new[] {
 				"    ",
 				"{0}",
 				": ",
@@ -150,7 +150,7 @@ public static partial class LocalizedStrings {
 			}, arg0, arg1),
 		};
 		
-		public static LString desc_effective_ls(object arg0, object arg1) => new LString(Render(null, new[] {
+		public static LString desc_effective_ls(object arg0, object arg1) => new LText(Render(null, new[] {
 				"    ",
 				"{0}",
 				": ",
@@ -164,8 +164,8 @@ public static partial class LocalizedStrings {
 			}, arg0, arg1)))
 			{ ID = "desc_effective" };
 		
-		public static string desc_effective_ratio(object arg0, object arg1, object arg2, object arg3) => Localization.Locale.Value switch {
-			Locales.JP => Render(Localization.Locale.Value, new[] {
+		public static string desc_effective_ratio(object arg0, object arg1, object arg2, object arg3) => Locales.Provider.TextLocale.Value switch {
+			Locales.JP => Render(Locales.Provider.TextLocale.Value, new[] {
 				"{0}",
 				"% ",
 				"{1}",
@@ -174,7 +174,7 @@ public static partial class LocalizedStrings {
 				"% ",
 				"{3}",
 			}, arg0, arg1, arg2, arg3),
-			_ => Render(Localization.Locale.Value, new[] {
+			_ => Render(Locales.Provider.TextLocale.Value, new[] {
 				"{0}",
 				"% ",
 				"{1}",
@@ -185,7 +185,7 @@ public static partial class LocalizedStrings {
 			}, arg0, arg1, arg2, arg3),
 		};
 		
-		public static LString desc_effective_ratio_ls(object arg0, object arg1, object arg2, object arg3) => new LString(Render(null, new[] {
+		public static LString desc_effective_ratio_ls(object arg0, object arg1, object arg2, object arg3) => new LText(Render(null, new[] {
 				"{0}",
 				"% ",
 				"{1}",
@@ -205,18 +205,18 @@ public static partial class LocalizedStrings {
 			}, arg0, arg1, arg2, arg3)))
 			{ ID = "desc_effective_ratio" };
 		
-		public static string desc_effective_exact(object arg0) => Localization.Locale.Value switch {
-			Locales.JP => Render(Localization.Locale.Value, new[] {
+		public static string desc_effective_exact(object arg0) => Locales.Provider.TextLocale.Value switch {
+			Locales.JP => Render(Locales.Provider.TextLocale.Value, new[] {
 				"丁度",
 				"{0}",
 			}, arg0),
-			_ => Render(Localization.Locale.Value, new[] {
+			_ => Render(Locales.Provider.TextLocale.Value, new[] {
 				"Exactly ",
 				"{0}",
 			}, arg0),
 		};
 		
-		public static LString desc_effective_exact_ls(object arg0) => new LString(Render(null, new[] {
+		public static LString desc_effective_exact_ls(object arg0) => new LText(Render(null, new[] {
 				"Exactly ",
 				"{0}",
 			}, arg0),
@@ -226,18 +226,18 @@ public static partial class LocalizedStrings {
 			}, arg0)))
 			{ ID = "desc_effective_exact" };
 		
-		public static string desc_effective_less(object arg0) => Localization.Locale.Value switch {
-			Locales.JP => Render(Localization.Locale.Value, new[] {
+		public static string desc_effective_less(object arg0) => Locales.Provider.TextLocale.Value switch {
+			Locales.JP => Render(Locales.Provider.TextLocale.Value, new[] {
 				"{0}",
 				"以下",
 			}, arg0),
-			_ => Render(Localization.Locale.Value, new[] {
+			_ => Render(Locales.Provider.TextLocale.Value, new[] {
 				"Less than ",
 				"{0}",
 			}, arg0),
 		};
 		
-		public static LString desc_effective_less_ls(object arg0) => new LString(Render(null, new[] {
+		public static LString desc_effective_less_ls(object arg0) => new LText(Render(null, new[] {
 				"Less than ",
 				"{0}",
 			}, arg0),
@@ -247,18 +247,18 @@ public static partial class LocalizedStrings {
 			}, arg0)))
 			{ ID = "desc_effective_less" };
 		
-		public static string desc_effective_more(object arg0) => Localization.Locale.Value switch {
-			Locales.JP => Render(Localization.Locale.Value, new[] {
+		public static string desc_effective_more(object arg0) => Locales.Provider.TextLocale.Value switch {
+			Locales.JP => Render(Locales.Provider.TextLocale.Value, new[] {
 				"{0}",
 				"以上",
 			}, arg0),
-			_ => Render(Localization.Locale.Value, new[] {
+			_ => Render(Locales.Provider.TextLocale.Value, new[] {
 				"More than ",
 				"{0}",
 			}, arg0),
 		};
 		
-		public static LString desc_effective_more_ls(object arg0) => new LString(Render(null, new[] {
+		public static LString desc_effective_more_ls(object arg0) => new LText(Render(null, new[] {
 				"More than ",
 				"{0}",
 			}, arg0),
@@ -268,49 +268,49 @@ public static partial class LocalizedStrings {
 			}, arg0)))
 			{ ID = "desc_effective_more" };
 		
-		public static readonly LString desc_suicide = new LString("Stage enemies fire suicide bullets in a spread pattern aimed at the player when they are killed.")
+		public static readonly LString desc_suicide = new LText("Stage enemies fire suicide bullets in a spread pattern aimed at the player when they are killed.")
 			{ ID = "desc_suicide" };
 		
-		public static readonly LString desc_p_dmg = new LString("Change the amount of damage dealt by the player's shots.")
+		public static readonly LString desc_p_dmg = new LText("Change the amount of damage dealt by the player's shots.")
 			{ ID = "desc_p_dmg" };
 		
-		public static readonly LString desc_boss_hp = new LString("Change the amount of health that boss enemies have.")
+		public static readonly LString desc_boss_hp = new LText("Change the amount of health that boss enemies have.")
 			{ ID = "desc_boss_hp" };
 		
-		public static readonly LString desc_respawn = new LString("Set whether or not the player respawns from the bottom of the screen when dying.")
+		public static readonly LString desc_respawn = new LText("Set whether or not the player respawns from the bottom of the screen when dying.")
 			{ ID = "desc_respawn" };
 		
-		public static readonly LString desc_faith_decay = new LString("Change the rate at which the faith meter automatically empties over time.")
+		public static readonly LString desc_faith_decay = new LText("Change the rate at which the faith meter automatically empties over time.")
 			{ ID = "desc_faith_decay" };
 		
-		public static readonly LString desc_faith_acquire = new LString("Change the rate at which you gain faith by defeating enemies, collecting items, etc.")
+		public static readonly LString desc_faith_acquire = new LText("Change the rate at which you gain faith by defeating enemies, collecting items, etc.")
 			{ ID = "desc_faith_acquire" };
 		
-		public static readonly LString desc_meter_usage = new LString("Change the rate at which the special meter empties while it is in use.")
+		public static readonly LString desc_meter_usage = new LText("Change the rate at which the special meter empties while it is in use.")
 			{ ID = "desc_meter_usage" };
 		
-		public static readonly LString desc_meter_acquire = new LString("Change the rate at which you gain special meter by collecting gems.")
+		public static readonly LString desc_meter_acquire = new LText("Change the rate at which you gain special meter by collecting gems.")
 			{ ID = "desc_meter_acquire" };
 		
-		public static readonly LString desc_bombs_enabled = new LString("Set whether or not the player can use bombs.")
+		public static readonly LString desc_bombs_enabled = new LText("Set whether or not the player can use bombs.")
 			{ ID = "desc_bombs_enabled" };
 		
-		public static readonly LString desc_meter_enabled = new LString("Set whether or not the player can use the special meter.")
+		public static readonly LString desc_meter_enabled = new LText("Set whether or not the player can use the special meter.")
 			{ ID = "desc_meter_enabled" };
 		
-		public static readonly LString desc_player_speed = new LString("Change the speed of the player character.")
+		public static readonly LString desc_player_speed = new LText("Change the speed of the player character.")
 			{ ID = "desc_player_speed" };
 		
-		public static readonly LString desc_player_hitbox = new LString("Change the size of the player hitbox. If a bullet comes in contact with the hitbox, the player will lose a life.")
+		public static readonly LString desc_player_hitbox = new LText("Change the size of the player hitbox. If a bullet comes in contact with the hitbox, the player will lose a life.")
 			{ ID = "desc_player_hitbox" };
 		
-		public static readonly LString desc_player_grazebox = new LString("Change the size of the player grazebox. If a bullet comes in contact with the grazebox, the player will gain some graze.")
+		public static readonly LString desc_player_grazebox = new LText("Change the size of the player grazebox. If a bullet comes in contact with the grazebox, the player will gain some graze.")
 			{ ID = "desc_player_grazebox" };
 		
-		public static readonly LString desc_lives = new LString("Change the number of lives the player has when starting the game.")
+		public static readonly LString desc_lives = new LText("Change the number of lives the player has when starting the game.")
 			{ ID = "desc_lives" };
 		
-		public static readonly LString desc_poc = new LString("Change the vertical height of the point of collection.")
+		public static readonly LString desc_poc = new LText("Change the vertical height of the point of collection.")
 			{ ID = "desc_poc" };
 		
 	}

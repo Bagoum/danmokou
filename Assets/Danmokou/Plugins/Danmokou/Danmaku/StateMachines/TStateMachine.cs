@@ -18,6 +18,7 @@ using static BagoumLib.Tasks.WaitingUtils;
 namespace Danmokou.SM {
 /// <summary>
 /// `script`: Top-level controller for dialogue files.
+/// This code is maintained for backwards compatibility; please use the new VN interfaces instead.
 /// </summary>
 public class ScriptTSM : SequentialSM {
     public ScriptTSM(List<StateMachine> states) : base(states) {}
@@ -27,7 +28,7 @@ public class ScriptTSM : SequentialSM {
             .SelectDisposable(p => p.AllControlEnabled.AddConst(false));
         //Await to keep token in scope until exit
         await ((DMKVNWrapper) ServiceLocator.Find<IVNWrapper>())
-            .ExecuteVN((data, cT) => new DMKVNState(cT, "backwards-compat-script-vn", data, false),
+            .ExecuteVN((data, cT) => new DMKVNState(cT, "backwards-compat-script-vn", data),
                 vn => RunAsVN(smh, vn), GameManagement.Instance.VNData, smh.cT);
 
         //Dialoguer.ShowAndResetDialogue();

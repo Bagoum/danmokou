@@ -5,6 +5,7 @@ using System.Reactive.Subjects;
 using BagoumLib;
 using BagoumLib.Cancellation;
 using BagoumLib.Events;
+using Danmokou.ADV;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Danmaku;
@@ -41,7 +42,8 @@ public class InstanceData {
     
     #endregion
     
-    public DMKVNData VNData { get; }
+    public ADVData ADVData { get; }
+    public Suzunoya.Data.InstanceData VNData => ADVData.VNData;
     public DifficultySettings Difficulty { get; }
     public int RankLevel { get; set; }
     public double RankPoints { get; set; }
@@ -146,14 +148,16 @@ public class InstanceData {
     #endregion
     
     public InstanceData(InstanceMode mode, InstanceRequest? req, long? maxScore, ReplayActor? replay, 
-        DMKVNData? vnSave) {
-        this.VNData = vnSave ?? new(SaveData.r.GlobalVNData);
+        ADVData? save) {
+        this.ADVData = save ?? new() {
+            VNData = new(Core.SaveData.r.GlobalVNData)
+        };
         this.Request = req;
         this.Replay = replay;
         //Minor hack to avoid running the SaveData static constructor in the editor during type initialization
         PreviousSpellHistory = (req == null) ? 
             new Dictionary<BossPracticeRequestKey, (int, int)>() :
-            SaveData.r.GetCampaignSpellHistory();
+            Core.SaveData.r.GetCampaignSpellHistory();
         
         this.mode = mode;
         this.Difficulty = req?.metadata.difficulty ?? GameManagement.defaultDifficulty;
@@ -279,7 +283,7 @@ public class InstanceData {
                         method = null
                     });
                 }
-                SaveData.r.RecordGame(new InstanceRecord(Request, this, false));
+                Core.SaveData.r.RecordGame(new InstanceRecord(Request, this, false));
             }
             GameOver.OnNext(default);
         }

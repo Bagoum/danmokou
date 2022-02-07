@@ -15,14 +15,14 @@ namespace Danmokou.Core {
 public static partial class LocalizedStrings {
 	public static partial class TestContent1 {
 		
-		public static string pickup_gold(object arg0, object arg1) => Localization.Locale.Value switch {
-			Locales.JP => Render(Localization.Locale.Value, new[] {
+		public static string pickup_gold(object arg0, object arg1) => Locales.Provider.TextLocale.Value switch {
+			Locales.JP => Render(Locales.Provider.TextLocale.Value, new[] {
 				"{0}",
 				"が金貨を",
 				JP_COUNTER(arg1, "枚"),
 				"拾いました",
 			}, arg0, arg1),
-			_ => Render(Localization.Locale.Value, new[] {
+			_ => Render(Locales.Provider.TextLocale.Value, new[] {
 				"{0}",
 				" picked up ",
 				"{1}",
@@ -31,7 +31,7 @@ public static partial class LocalizedStrings {
 			}, arg0, arg1),
 		};
 		
-		public static LString pickup_gold_ls(object arg0, object arg1) => new LString(Render(null, new[] {
+		public static LString pickup_gold_ls(object arg0, object arg1) => new LText(Render(null, new[] {
 				"{0}",
 				" picked up ",
 				"{1}",
@@ -46,8 +46,8 @@ public static partial class LocalizedStrings {
 			}, arg0, arg1)))
 			{ ID = "pickup_gold" };
 		
-		public static string escape_example(object arg0, object arg1) => Localization.Locale.Value switch {
-			Locales.JP => Render(Localization.Locale.Value, new[] {
+		public static string escape_example(object arg0, object arg1) => Locales.Provider.TextLocale.Value switch {
+			Locales.JP => Render(Locales.Provider.TextLocale.Value, new[] {
 				"{0}",
 				"が金貨を",
 				"{{",
@@ -55,7 +55,7 @@ public static partial class LocalizedStrings {
 				"}}",
 				"拾いました",
 			}, arg0, arg1),
-			_ => Render(Localization.Locale.Value, new[] {
+			_ => Render(Locales.Provider.TextLocale.Value, new[] {
 				"{0}",
 				" picked up ",
 				"{{",
@@ -66,7 +66,7 @@ public static partial class LocalizedStrings {
 			}, arg0, arg1),
 		};
 		
-		public static LString escape_example_ls(object arg0, object arg1) => new LString(Render(null, new[] {
+		public static LString escape_example_ls(object arg0, object arg1) => new LText(Render(null, new[] {
 				"{0}",
 				" picked up ",
 				"{{",

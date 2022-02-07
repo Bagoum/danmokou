@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Danmokou.Behavior;
 using Danmokou.Core;
+using Danmokou.Core.DInput;
 using Danmokou.Services;
 using UnityEngine;
 

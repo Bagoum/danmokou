@@ -15,7 +15,6 @@ using UnityEngine.UIElements;
 
 namespace Danmokou.Core {
 public static class Extensions {
-    public static LString Locale(this string en, string ja) => new LString(en, (Locales.JP, ja));
     public static int CountOf(this string s, char c) {
         int ct = 0;
         for (int ii = 0; ii < s.Length; ++ii) {

@@ -1,6 +1,7 @@
 ﻿using System;
 using BagoumLib.Cancellation;
 using Danmokou.Core;
+using Danmokou.Core.DInput;
 using Danmokou.Scenes;
 using Danmokou.Services;
 using Danmokou.UI.XML;
@@ -13,17 +14,19 @@ using UnityEngine;
 namespace Danmokou.VN {
 public class DMKVNState : UnityVNState {
     public readonly string id;
-    public DMKVNState(ICancellee extCToken, string id, InstanceData save, bool loadToSaveLocation) : 
-        base(extCToken, save, loadToSaveLocation) {
+    public DMKVNState(ICancellee extCToken, string id, InstanceData save) : base(extCToken, save) {
         if (LoadTo != null)
             ServiceLocator.MaybeFind<ICameraTransition>()?.StallFadeOutUntil(() => SkippingMode != SkipMode.LOADING);
         this.id = id;
         AutoplayFastforwardAllowed = !Replayer.RequiresConsistency;
         AllowFullSkip = GameManagement.Instance.Request?.lowerRequest.Campaign.AllowDialogueSkip ?? false;
+        Tokens.Add(SaveData.SettingsEv.Subscribe(s => {
+            FastforwardReadTextOnly = s.VNOnlyFastforwardReadText;
+        }));
     }
 
     public override bool ClickConfirmOrSkip() {
-        InputManager.ExternalUIConfirm.SetForFrame();
+        InputManager.InCodeInput.mUIConfirm.SetActive();
         return true;
     }
 

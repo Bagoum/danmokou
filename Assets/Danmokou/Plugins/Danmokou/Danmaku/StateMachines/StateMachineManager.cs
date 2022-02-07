@@ -36,7 +36,7 @@ public static class StateMachineManager  {
     }
 
     public static StateMachine LoadDialogue(string file, string? lc = null) {
-        var locale = lc ?? SaveData.s.Locale ?? "";
+        var locale = lc ?? SaveData.s.TextLocale ?? "";
         if (!Dialogue.TryGetValue(file, out var locales)) 
             throw new Exception($"No dialogue file by name {file}");
         if (!locales.TryGetValue(locale, out var tx) && !locales.TryGetValue("", out tx)) 

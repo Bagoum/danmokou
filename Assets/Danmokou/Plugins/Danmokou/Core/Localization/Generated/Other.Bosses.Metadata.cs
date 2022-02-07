@@ -15,53 +15,53 @@ namespace Danmokou.Core {
 public static partial class LocalizedStrings {
 	public static partial class BossMetadata {
 		
-		public static readonly LString tutorial = new LString("Tutorial Boss",
+		public static readonly LString tutorial = new LText("Tutorial Boss",
 			(Locales.JP, "チュートリアルボス"))
 			{ ID = "boss.tutorial" };
 		
-		public static readonly LString tutorial_tracker = new LString("妹紅さん")
+		public static readonly LString tutorial_tracker = new LText("妹紅さん")
 			{ ID = "boss.tutorial.tracker" };
 		
-		public static readonly LString elly = new LString("Elly",
+		public static readonly LString elly = new LText("Elly",
 			(Locales.JP, "エリー"))
 			{ ID = "boss.elly" };
 		
-		public static readonly LString elly_tracker = new LString("エリー")
+		public static readonly LString elly_tracker = new LText("エリー")
 			{ ID = "boss.elly.tracker" };
 		
-		public static readonly LString junko = new LString("Junko",
+		public static readonly LString junko = new LText("Junko",
 			(Locales.JP, "純弧"))
 			{ ID = "boss.junko" };
 		
-		public static readonly LString junko_tracker = new LString("純弧")
+		public static readonly LString junko_tracker = new LText("純弧")
 			{ ID = "boss.junko.tracker" };
 		
-		public static readonly LString yukari = new LString("Yukari",
+		public static readonly LString yukari = new LText("Yukari",
 			(Locales.JP, "紫"))
 			{ ID = "boss.yukari" };
 		
-		public static readonly LString yukari_tracker = new LString("紫")
+		public static readonly LString yukari_tracker = new LText("紫")
 			{ ID = "boss.yukari.tracker" };
 		
-		public static readonly LString kurokoma = new LString("Kurokoma",
+		public static readonly LString kurokoma = new LText("Kurokoma",
 			(Locales.JP, "驪駒"))
 			{ ID = "boss.kurokoma" };
 		
-		public static readonly LString kurokoma_tracker = new LString("驪駒")
+		public static readonly LString kurokoma_tracker = new LText("驪駒")
 			{ ID = "boss.kurokoma.tracker" };
 		
-		public static readonly LString sagume = new LString("Sagume",
+		public static readonly LString sagume = new LText("Sagume",
 			(Locales.JP, "サグメ"))
 			{ ID = "boss.sagume" };
 		
-		public static readonly LString sagume_tracker = new LString("サグメ")
+		public static readonly LString sagume_tracker = new LText("サグメ")
 			{ ID = "boss.sagume.tracker" };
 		
-		public static readonly LString tokiko = new LString("Tokiko",
+		public static readonly LString tokiko = new LText("Tokiko",
 			(Locales.JP, "朱鷺子"))
 			{ ID = "boss.tokiko" };
 		
-		public static readonly LString tokiko_tracker = new LString("朱鷺子")
+		public static readonly LString tokiko_tracker = new LText("朱鷺子")
 			{ ID = "boss.tokiko.tracker" };
 		
 	}

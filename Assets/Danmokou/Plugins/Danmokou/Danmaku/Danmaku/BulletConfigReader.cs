@@ -73,11 +73,11 @@ public partial class BulletManager : RegularUpdater {
         public readonly bool destructible;
         public readonly CollidableInfo cc;
         public readonly ushort grazeEveryFrames;
-        public DisturbedOverride<bool> Deletable { get; init; }
-        public DisturbedOverride<float> CULL_RAD { get; init; }
-        public DisturbedOverride<bool> AllowCameraCull { get; init; }
-        public DisturbedOverride<(TP4 black, TP4 white)?> Recolor { get; init; }
-        public DisturbedOverride<TP4?> Tint { get; init; }
+        public OverrideEvented<bool> Deletable { get; init; }
+        public OverrideEvented<float> CULL_RAD { get; init; }
+        public OverrideEvented<bool> AllowCameraCull { get; init; }
+        public OverrideEvented<(TP4 black, TP4 white)?> Recolor { get; init; }
+        public OverrideEvented<TP4?> Tint { get; init; }
         public bool Recolorizable => deferredRI.recolorizable;
         public SimpleBulletFader FadeOut => deferredRI.sbes.FadeOut;
 
@@ -93,11 +93,11 @@ public partial class BulletManager : RegularUpdater {
             this.cc = new CollidableInfo(cc);
             //Minus 1 to allow for zero offset
             grazeEveryFrames = (ushort)(sbes.grazeEveryFrames - 1);
-            Deletable = new DisturbedOverride<bool>(sbes.destructible);
-            CULL_RAD = new DisturbedOverride<float>(sbes.screenCullRadius);
-            AllowCameraCull = new DisturbedOverride<bool>(true);
-            Recolor = new DisturbedOverride<(TP4, TP4)?>(null);
-            Tint = new DisturbedOverride<TP4?>(null);
+            Deletable = new OverrideEvented<bool>(sbes.destructible);
+            CULL_RAD = new OverrideEvented<float>(sbes.screenCullRadius);
+            AllowCameraCull = new OverrideEvented<bool>(true);
+            Recolor = new OverrideEvented<(TP4, TP4)?>(null);
+            Tint = new OverrideEvented<TP4?>(null);
             Tint.Subscribe(tint => {
                 if (riLoaded)
                     GetOrLoadRI().Material.SetOrUnsetKeyword(tint != null, PropConsts.tintKW);
@@ -123,7 +123,7 @@ public partial class BulletManager : RegularUpdater {
             return nbc;
         }
 
-        private static DisturbedOverride<T> CopyOV<T>(DisturbedOverride<T> baseOV) =>
+        private static OverrideEvented<T> CopyOV<T>(OverrideEvented<T> baseOV) =>
             new(baseOV.BaseValue);
 
         public void UseExitFade() {

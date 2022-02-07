@@ -48,7 +48,7 @@ public abstract class BaseRunningAudioTrack : IRunningAudioTrack {
         this.host = host;
         var src1 = currSrc = host.gameObject.AddComponent<AudioSource>();
         Src1Volume = new DisturbedProduct<float>(track.Volume);
-        tokens.Add(Src1Volume.AddDisturbance(SaveData.s.BGMVolumeEv));
+        tokens.Add(Src1Volume.AddDisturbance(SaveData.s.BGMVolume));
         tokens.Add(Src1Volume.Subscribe(v => src1.volume = v));
         src1.clip = track.Clip;
         src1.pitch = track.Pitch;
@@ -152,7 +152,7 @@ public class TimedLoopRAT : BaseRunningAudioTrack {
         var src2 = nextSrc = host.gameObject.AddComponent<AudioSource>();
         nextSrcFadeVol.Push(0);
         Src2Volume = new DisturbedProduct<float>(track.Volume);
-        tokens.Add(Src2Volume.AddDisturbance(SaveData.s.BGMVolumeEv));
+        tokens.Add(Src2Volume.AddDisturbance(SaveData.s.BGMVolume));
         tokens.Add(Src2Volume.AddDisturbance(nextSrcFadeVol));
         tokens.Add(Src2Volume.Subscribe(v => src2.volume = v));
 

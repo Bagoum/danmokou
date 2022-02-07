@@ -10,21 +10,23 @@ To get the newest version from git, run:
 
 # Unreleased
 
-The following features are planned for future releases. Minor version 9.1.0 is planned for February.
+The following features are planned for future releases. Major version 10.0.0 is planned for sometime before July. 
 
-- [9.1.0] Default handling for graze flake items and bullet cancel flake items
-- [9.1.0] Full-featured implementation of Suzunoya
-- [9.2.0] Implementation of a TH18-like card engine
-- [10.0.0] Procedural generation of stages and bullet patterns
+- [10.0.0] Full-featured implementation of Suzunoya
+- [Backlog] Default handling for graze flake items and bullet cancel flake items
+- [Backlog] Implementation of a TH18-like card engine
+- [Backlog] Procedural generation of stages and bullet patterns
 
-# v9.0.0 (2021/01/10)
+# v9.0.0 (2021/02/13)
 
-This release includes code for [Blessed Rain](https://bagoum.itch.io/blessed-rain), a short visual novel, in the MiniProjects folder. As of this release, Suzunoya functionality is mostly complete, but I haven't thoroughly tested functionality related to choices and external tasks, and there are some theoretical issues in save/load handling with regards to nondeterminism as well as certain configurations of global switches that open or close branches between executions.
+This release includes code for [Blessed Rain](https://bagoum.itch.io/blessed-rain), a short visual novel, in the MiniProjects folder. As of this release, Suzunoya functionality is mostly complete, but I haven't thoroughly tested functionality related to choices and external tasks, and there are some theoretical issues in save/load handling with regards to nondeterminism as well as certain configurations of global switches that open or close branches between executions. This release also includes some work-in-progress code for some adventure-game style usage of  Suzunoya (think Ace Attorney).
 
 #### Breaking changes
 
-- Please upgrade Unity to **2021.2** before opening this project. Note that if you get errors at runtime about missing settings, you may need to run Window > UIToolkit > Package Asset Converter > "I want my assets to function without the UI Toolkit package installed". This upgrade makes UIToolkit much more resilient, allows some new CSS features that are used in the updated UI, and also enables some C#8 and C#9 features that are now used in the codebase.
+- Please upgrade Unity to **2021.2.1** before opening this project. Note that if you get errors at runtime about missing settings, you may need to run Window > UIToolkit > Package Asset Converter > "I want my assets to function without the UIToolkit package installed". This upgrade makes UIToolkit much more resilient, allows some new CSS features that are used in the updated UI, and also enables some C#8 and C#9 features that are now used in the codebase.
+  - Later versions of 2021.2 have various bugs with UIToolkit text rendering, but 2022.1.0b2 seems to be fine.
 - The architecture for UIToolkit-based UI has been overhauled. As a part of this, all the UIScreen uxml files were replaced with a single universal file, the UIScreen and UINode classes were completely rewritten, and the process of constructing UIs in code was changed in a backwards-incompatible way. See the [UI design document](uidesign.md) for details on the new UI architecture, which I plan to keep stable.
+- Dialogue profiles, which were made obsolete in v8.0.0 with Suzunoya integration, have been removed from the codebase.
 
 #### Pending issues
 
@@ -36,7 +38,10 @@ This release includes code for [Blessed Rain](https://bagoum.itch.io/blessed-rai
 - Added save/load handling for visual novels in DMK.
 - Added an in-game license viewer. It uses a general Markdown parser from Mizuhashi, so it can support other usages as well.
 - The game screen now pillarboxes or letterboxes when the resolution of the window is not 16x9, and the windowed mode can be freely rescaled in any direction. (Note that rescaling the windowed mode by dragging the corners of the window will not increase the resolution, in the sense that if you set the windowed resolution to 800x450 in the options, and then expand the window to the size of your monitor, it will still be low-quality 800x450.)
+- Revamped input handling to separate types of user input (currently, KBM and controller are supported), to expose a uniform API for code-triggered pseudo-input (see InCodeInputSource), and to incorporate replays as another type of input (see ReplayPlayerInputSource).
 - DMK can now be run on Android. However, I have not written any input handling for mobile yet, so only the touch-to-navigate-menus handling works.
+- Added support for multiple vectors of localization (eg. having separate text and voice localization). 
+- Added support for skipping only read text. 
 
 #### Changes
 
@@ -45,12 +50,13 @@ This release includes code for [Blessed Rain](https://bagoum.itch.io/blessed-rai
 
 #### Fixes
 
-- Fixed a bug where rotated straight lasers might incorrectly calculate rotation on the first frame.
+- Fixed a bug where rotated straight lasers might incorrectly calculate rotation on their first frame.
 - Fixed undesired functionality where scripts continue executing during end-of-screen cleanup if an awaited task was cancelled before the script executor received a Destroy call.
 - Fixed a UI bug where shot descriptors on the Statistics page and elsewhere don't update with language settings.
 - Fixed handling for 240fps monitors, and removed the "Refresh Rate" option from the game. The game should now run smoothly on any computer, with or without Vsync (though on strange framerates like 50 or 144, there may be some visual tearing, since the base framerate is 120).
 - Fixed a bug where backlogging in a visual novel context might not destroy looping sound effects.
 - Fixed an issue in dialogue where string characters would not be affected by surrounding color tags while fading in. This was caused by a more general design problem with TextMeshPro where alpha tags *modify* the enclosing color tag instead of creating a new enclosure.
+- Fixed an issue where the meter bar would not hide itself when the player approached it.
 
 # v8.0.0 (2021/10/31)
 

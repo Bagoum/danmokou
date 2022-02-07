@@ -71,8 +71,7 @@ public class MainCamera : RegularUpdater, IScreenshotter {
     public Shader ayaShader = null!;
     private Material ayaMaterial = null!;
     
-    public Shader finalRenderShader = null!;
-    private Material finalRenderMaterial = null!;
+    public Material finalRenderMaterial = null!;
 
     public Camera BackgroundCamera = null!;
     public Camera LowDirectCamera = null!;
@@ -107,7 +106,6 @@ public class MainCamera : RegularUpdater, IScreenshotter {
         tr = transform;
         position = tr.position;
         ayaMaterial = new Material(ayaShader);
-        finalRenderMaterial = new Material(finalRenderShader);
         ReassignGlobalShaderVariables(SaveData.s);
     }
 
@@ -121,7 +119,7 @@ public class MainCamera : RegularUpdater, IScreenshotter {
         RegisterService<IScreenshotter>(this);
 
         Listen(RenderHelpers.PreferredResolution, RecreateRT);
-        Listen(SaveData.SettingsChanged, ReassignGlobalShaderVariables);
+        Listen(SaveData.SettingsEv, ReassignGlobalShaderVariables);
     }
 
     public void ReassignGlobalShaderVariables(SaveData.Settings s) {

@@ -211,9 +211,9 @@ public static partial class Reflector {
                 wrapHandler :
                 (_arg, null);
             void AddDefuncifier(Type ft, Func<object, object, object> func) {
-                funcConversions[(wrappedType, ft)] = rewrapper is null ?
+                funcConversions[(wrappedType, ft)] = rewrapper == null ?
                     func :
-                    (fobj, x) => FuncInvoke(rewrapper, Func2Type(baseType, wrappedType), func(fobj, x));
+                    (fobj, x) => FuncInvoke(rewrapper!, Func2Type(baseType, wrappedType), func(fobj, x));
             }
             
             if (funcifiableReturnTypes.Contains(baseType)) {

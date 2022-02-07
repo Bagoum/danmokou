@@ -32,8 +32,6 @@ public class GameUniqueReferences : ScriptableObject {
     
     public SODialogue[] dialogue = null!;
     [Header("Script Keyable")] public BossConfig[] bossMetadata = null!;
-    [Obsolete("Replaced by SZYU-based dialogue handling. Will be removed in DMK v9.")]
-    public DialogueProfile[] dialogueProfiles = null!;
     public AudioTrack[] tracks = null!;
     public ItemReferences items = null!;
     public PrefabReferences prefabReferences = null!;

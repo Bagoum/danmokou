@@ -15,160 +15,176 @@ namespace Danmokou.Core {
 public static partial class LocalizedStrings {
 	public static partial class UI {
 		
-		public static readonly LString shaders = new LString("Visual Quality",
+		public static readonly LString shaders = new LText("Visual Quality",
 			(Locales.JP, "画質"))
 			{ ID = "shaders" };
 		
-		public static readonly LString shaders_low = new LString("Low",
+		public static readonly LString shaders_low = new LText("Low",
 			(Locales.JP, "低画質"))
 			{ ID = "shaders_low" };
 		
-		public static readonly LString shaders_high = new LString("High",
+		public static readonly LString shaders_high = new LText("High",
 			(Locales.JP, "高画質"))
 			{ ID = "shaders_high" };
 		
-		public static readonly LString resolution = new LString("Resolution",
+		public static readonly LString resolution = new LText("Resolution",
 			(Locales.JP, "解像度"))
 			{ ID = "resolution" };
 		
-		public static readonly LString refresh = new LString("Refresh Rate",
+		public static readonly LString refresh = new LText("Refresh Rate",
 			(Locales.JP, "リフレッシュ速度"))
 			{ ID = "refresh" };
 		
-		public static readonly LString fullscreen = new LString("Fullscreen",
+		public static readonly LString fullscreen = new LText("Fullscreen",
 			(Locales.JP, "表示モード"))
 			{ ID = "fullscreen" };
 		
-		public static readonly LString fullscreen_window = new LString("Windowed",
+		public static readonly LString fullscreen_window = new LText("Windowed",
 			(Locales.JP, "ウインドウ"))
 			{ ID = "fullscreen_window" };
 		
-		public static readonly LString fullscreen_borderless = new LString("Borderless",
+		public static readonly LString fullscreen_borderless = new LText("Borderless",
 			(Locales.JP, "ボーダレス"))
 			{ ID = "fullscreen_borderless" };
 		
-		public static readonly LString fullscreen_exclusive = new LString("Exclusive",
+		public static readonly LString fullscreen_exclusive = new LText("Exclusive",
 			(Locales.JP, "フルスクリーン"))
 			{ ID = "fullscreen_exclusive" };
 		
-		public static readonly LString vsync = new LString("VSync",
+		public static readonly LString vsync = new LText("VSync",
 			(Locales.JP, "垂直同期"))
 			{ ID = "vsync" };
 		
-		public static readonly LString vsync_double = new LString("Double",
+		public static readonly LString vsync_double = new LText("Double",
 			(Locales.JP, "DOUBLE"))
 			{ ID = "vsync_double" };
 		
-		public static readonly LString renderer = new LString("Renderer",
+		public static readonly LString renderer = new LText("Renderer",
 			(Locales.JP, "レンダラー"))
 			{ ID = "renderer" };
 		
-		public static readonly LString renderer_legacy = new LString("Legacy",
+		public static readonly LString renderer_legacy = new LText("Legacy",
 			(Locales.JP, "旧型"))
 			{ ID = "renderer_legacy" };
 		
-		public static readonly LString renderer_normal = new LString("Normal",
+		public static readonly LString renderer_normal = new LText("Normal",
 			(Locales.JP, "新型"))
 			{ ID = "renderer_normal" };
 		
-		public static readonly LString smoothing = new LString("Input Smoothing",
+		public static readonly LString smoothing = new LText("Input Smoothing",
 			(Locales.JP, "インプットスムージング"))
 			{ ID = "smoothing" };
 		
-		public static readonly LString controller = new LString("Controller",
+		public static readonly LString controller = new LText("Controller",
 			(Locales.JP, "コントローラー"))
 			{ ID = "controller" };
 		
-		public static readonly LString controller_off = new LString("Ignore",
+		public static readonly LString controller_off = new LText("Ignore",
 			(Locales.JP, "使わない"))
 			{ ID = "controller_off" };
 		
-		public static readonly LString controller_on = new LString("Enabled",
+		public static readonly LString controller_on = new LText("Enabled",
 			(Locales.JP, "使う"))
 			{ ID = "controller_on" };
 		
-		public static readonly LString dialogue_speed = new LString("Dialogue Speed",
+		public static readonly LString dialogue_speed = new LText("Dialogue Speed",
 			(Locales.JP, "テキスト速度"))
 			{ ID = "dialogue_speed" };
 		
-		public static readonly LString bgm_volume = new LString("BGM Volume",
+		public static readonly LString bgm_volume = new LText("BGM Volume",
 			(Locales.JP, "ミュージック音量"))
 			{ ID = "bgm_volume" };
 		
-		public static readonly LString sfx_volume = new LString("SFX Volume",
+		public static readonly LString sfx_volume = new LText("SFX Volume",
 			(Locales.JP, "効果音音量"))
 			{ ID = "sfx_volume" };
 		
-		public static readonly LString hitbox = new LString("Hitbox Display",
+		public static readonly LString hitbox = new LText("Hitbox Display",
 			(Locales.JP, "当たり判定表示"))
 			{ ID = "hitbox" };
 		
-		public static readonly LString hitbox_focus = new LString("When Focused",
+		public static readonly LString hitbox_focus = new LText("When Focused",
 			(Locales.JP, "低速移動時"))
 			{ ID = "hitbox_focus" };
 		
-		public static readonly LString hitbox_always = new LString("Always Show",
+		public static readonly LString hitbox_always = new LText("Always Show",
 			(Locales.JP, "常に"))
 			{ ID = "hitbox_always" };
 		
-		public static readonly LString backgrounds = new LString("Backgrounds",
+		public static readonly LString backgrounds = new LText("Backgrounds",
 			(Locales.JP, "背景"))
 			{ ID = "backgrounds" };
 		
-		public static readonly LString screenshake = new LString("Screenshake",
+		public static readonly LString screenshake = new LText("Screenshake",
 			(Locales.JP, "画像振動"))
 			{ ID = "screenshake" };
 		
-		public static readonly LString unpause = new LString("Unpause",
+		public static readonly LString dialogue_opacity = new LText("Dialogue Box Opacity",
+			(Locales.JP, "テキストボックス不透明度"))
+			{ ID = "dialogue_opacity" };
+		
+		public static readonly LString dialogue_skip = new LText("Text Skip",
+			(Locales.JP, "スキップ"))
+			{ ID = "dialogue_skip" };
+		
+		public static readonly LString dialogue_skip_read = new LText("Read Text Only",
+			(Locales.JP, "既読のみ"))
+			{ ID = "dialogue_skip_read" };
+		
+		public static readonly LString dialogue_skip_all = new LText("All Text",
+			(Locales.JP, "すべて"))
+			{ ID = "dialogue_skip_all" };
+		
+		public static readonly LString unpause = new LText("Unpause",
 			(Locales.JP, "再開"))
 			{ ID = "unpause" };
 		
-		public static readonly LString to_menu = new LString("Return to Title",
+		public static readonly LString to_menu = new LText("Return to Title",
 			(Locales.JP, "タイトルに戻る"))
 			{ ID = "to_menu" };
 		
-		public static readonly LString restart = new LString("Restart",
+		public static readonly LString restart = new LText("Restart",
 			(Locales.JP, "やり直す"))
 			{ ID = "restart" };
 		
-		public static readonly LString save_replay = new LString("Save Replay",
+		public static readonly LString save_replay = new LText("Save Replay",
 			(Locales.JP, "リプレイを保存する"))
 			{ ID = "save_replay" };
 		
-		public static readonly LString are_you_sure = new LString("Are you sure?",
+		public static readonly LString are_you_sure = new LText("Are you sure?",
 			(Locales.JP, "本当に？"))
 			{ ID = "are_you_sure" };
 		
-		public static readonly LString to_desktop = new LString("Quit to Desktop",
+		public static readonly LString to_desktop = new LText("Quit to Desktop",
 			(Locales.JP, "ゲーム終了"))
 			{ ID = "to_desktop" };
 		
-		public static readonly LString pause_header = new LString("PAUSE",
+		public static readonly LString pause_header = new LText("PAUSE",
 			(Locales.JP, "一時停止"))
 			{ ID = "pause_header" };
 		
-		public static readonly LString replay_view = new LString("View",
+		public static readonly LString replay_view = new LText("View",
 			(Locales.JP, "再演"))
 			{ ID = "replay_view" };
 		
-		public static readonly LString replay_window = new LString("Replay",
+		public static readonly LString replay_window = new LText("Replay",
 			(Locales.JP, "リプレイ"))
 			{ ID = "replay_window" };
 		
-		public static string replay_what_do(object arg0) => Localization.Locale.Value switch {
-			Locales.JP => Render(Localization.Locale.Value, new[] {
+		public static string replay_what_do(object arg0) => Locales.Provider.TextLocale.Value switch {
+			Locales.JP => Render(Locales.Provider.TextLocale.Value, new[] {
 				"リプレイ「",
 				"{0}",
 				"」で何をする？",
 			}, arg0),
-			_ => Render(Localization.Locale.Value, new[] {
+			_ => Render(Locales.Provider.TextLocale.Value, new[] {
 				"What would you like to do with replay \"",
 				"{0}",
 				"\"?",
 			}, arg0),
 		};
 		
-		public static LString replay_what_do_ls(object arg0) => new LString(Render(null, new[] {
+		public static LString replay_what_do_ls(object arg0) => new LText(Render(null, new[] {
 				"What would you like to do with replay \"",
 				"{0}",
 				"\"?",
@@ -180,28 +196,28 @@ public static partial class LocalizedStrings {
 			}, arg0)))
 			{ ID = "replay_what_do" };
 		
-		public static readonly LString view_details = new LString("Details",
+		public static readonly LString view_details = new LText("Details",
 			(Locales.JP, "詳細"))
 			{ ID = "view_details" };
 		
-		public static readonly LString record_header = new LString("Game Record",
+		public static readonly LString record_header = new LText("Game Record",
 			(Locales.JP, "ゲーム履歴"))
 			{ ID = "record_header" };
 		
-		public static string record_what_do(object arg0) => Localization.Locale.Value switch {
-			Locales.JP => Render(Localization.Locale.Value, new[] {
+		public static string record_what_do(object arg0) => Locales.Provider.TextLocale.Value switch {
+			Locales.JP => Render(Locales.Provider.TextLocale.Value, new[] {
 				"ゲーム履歴「",
 				"{0}",
 				"」で何をする？",
 			}, arg0),
-			_ => Render(Localization.Locale.Value, new[] {
+			_ => Render(Locales.Provider.TextLocale.Value, new[] {
 				"What would you like to do with record \"",
 				"{0}",
 				"\"?",
 			}, arg0),
 		};
 		
-		public static LString record_what_do_ls(object arg0) => new LString(Render(null, new[] {
+		public static LString record_what_do_ls(object arg0) => new LText(Render(null, new[] {
 				"What would you like to do with record \"",
 				"{0}",
 				"\"?",
@@ -213,28 +229,28 @@ public static partial class LocalizedStrings {
 			}, arg0)))
 			{ ID = "record_what_do" };
 		
-		public static readonly LString record_view_replay = new LString("Go to replay",
+		public static readonly LString record_view_replay = new LText("Go to replay",
 			(Locales.JP, "リプレイを見る"))
 			{ ID = "record_view_replay" };
 		
-		public static readonly LString saveload_header = new LString("Save/Load",
+		public static readonly LString saveload_header = new LText("Save/Load",
 			(Locales.JP, "保存・ロード"))
 			{ ID = "saveload_header" };
 		
-		public static string saveload_what_do(object arg0) => Localization.Locale.Value switch {
-			Locales.JP => Render(Localization.Locale.Value, new[] {
+		public static string saveload_what_do(object arg0) => Locales.Provider.TextLocale.Value switch {
+			Locales.JP => Render(Locales.Provider.TextLocale.Value, new[] {
 				"サーブファイル",
 				"{0}",
 				"で何をする？",
 			}, arg0),
-			_ => Render(Localization.Locale.Value, new[] {
+			_ => Render(Locales.Provider.TextLocale.Value, new[] {
 				"What would you like to do with save file ",
 				"{0}",
 				"?",
 			}, arg0),
 		};
 		
-		public static LString saveload_what_do_ls(object arg0) => new LString(Render(null, new[] {
+		public static LString saveload_what_do_ls(object arg0) => new LText(Render(null, new[] {
 				"What would you like to do with save file ",
 				"{0}",
 				"?",
@@ -246,18 +262,18 @@ public static partial class LocalizedStrings {
 			}, arg0)))
 			{ ID = "saveload_what_do" };
 		
-		public static string practice_stage(object arg0) => Localization.Locale.Value switch {
-			Locales.JP => Render(Localization.Locale.Value, new[] {
+		public static string practice_stage(object arg0) => Locales.Provider.TextLocale.Value switch {
+			Locales.JP => Render(Locales.Provider.TextLocale.Value, new[] {
 				"{0}",
 				"面",
 			}, arg0),
-			_ => Render(Localization.Locale.Value, new[] {
+			_ => Render(Locales.Provider.TextLocale.Value, new[] {
 				"Stage ",
 				"{0}",
 			}, arg0),
 		};
 		
-		public static LString practice_stage_ls(object arg0) => new LString(Render(null, new[] {
+		public static LString practice_stage_ls(object arg0) => new LText(Render(null, new[] {
 				"Stage ",
 				"{0}",
 			}, arg0),
@@ -267,23 +283,23 @@ public static partial class LocalizedStrings {
 			}, arg0)))
 			{ ID = "practice_stage" };
 		
-		public static readonly LString practice_fullstage = new LString("Full Stage",
+		public static readonly LString practice_fullstage = new LText("Full Stage",
 			(Locales.JP, "全面"))
 			{ ID = "practice_fullstage" };
 		
-		public static string practice_stage_section(object arg0) => Localization.Locale.Value switch {
-			Locales.JP => Render(Localization.Locale.Value, new[] {
+		public static string practice_stage_section(object arg0) => Locales.Provider.TextLocale.Value switch {
+			Locales.JP => Render(Locales.Provider.TextLocale.Value, new[] {
 				"第",
 				"{0}",
 				"幕",
 			}, arg0),
-			_ => Render(Localization.Locale.Value, new[] {
+			_ => Render(Locales.Provider.TextLocale.Value, new[] {
 				"Stage Section ",
 				"{0}",
 			}, arg0),
 		};
 		
-		public static LString practice_stage_section_ls(object arg0) => new LString(Render(null, new[] {
+		public static LString practice_stage_section_ls(object arg0) => new LText(Render(null, new[] {
 				"Stage Section ",
 				"{0}",
 			}, arg0),
@@ -294,30 +310,30 @@ public static partial class LocalizedStrings {
 			}, arg0)))
 			{ ID = "practice_stage_section" };
 		
-		public static readonly LString practice_midboss = new LString("Midboss",
+		public static readonly LString practice_midboss = new LText("Midboss",
 			(Locales.JP, "中ボス"))
 			{ ID = "practice_midboss" };
 		
-		public static readonly LString practice_endboss = new LString("Endboss",
+		public static readonly LString practice_endboss = new LText("Endboss",
 			(Locales.JP, "ラスボス"))
 			{ ID = "practice_endboss" };
 		
-		public static readonly LString practice_dialogue = new LString("Dialogue",
+		public static readonly LString practice_dialogue = new LText("Dialogue",
 			(Locales.JP, "会話"))
 			{ ID = "practice_dialogue" };
 		
-		public static string challenge_day_intro(object arg0) => Localization.Locale.Value switch {
-			Locales.JP => Render(Localization.Locale.Value, new[] {
+		public static string challenge_day_intro(object arg0) => Locales.Provider.TextLocale.Value switch {
+			Locales.JP => Render(Locales.Provider.TextLocale.Value, new[] {
 				"{0}",
 				"紹介",
 			}, arg0),
-			_ => Render(Localization.Locale.Value, new[] {
+			_ => Render(Locales.Provider.TextLocale.Value, new[] {
 				"{0}",
 				" Intro",
 			}, arg0),
 		};
 		
-		public static LString challenge_day_intro_ls(object arg0) => new LString(Render(null, new[] {
+		public static LString challenge_day_intro_ls(object arg0) => new LText(Render(null, new[] {
 				"{0}",
 				" Intro",
 			}, arg0),
@@ -327,18 +343,18 @@ public static partial class LocalizedStrings {
 			}, arg0)))
 			{ ID = "challenge_day_intro" };
 		
-		public static string challenge_day_end(object arg0) => Localization.Locale.Value switch {
-			Locales.JP => Render(Localization.Locale.Value, new[] {
+		public static string challenge_day_end(object arg0) => Locales.Provider.TextLocale.Value switch {
+			Locales.JP => Render(Locales.Provider.TextLocale.Value, new[] {
 				"{0}",
 				"結末",
 			}, arg0),
-			_ => Render(Localization.Locale.Value, new[] {
+			_ => Render(Locales.Provider.TextLocale.Value, new[] {
 				"{0}",
 				" End",
 			}, arg0),
 		};
 		
-		public static LString challenge_day_end_ls(object arg0) => new LString(Render(null, new[] {
+		public static LString challenge_day_end_ls(object arg0) => new LText(Render(null, new[] {
 				"{0}",
 				" End",
 			}, arg0),
@@ -348,20 +364,20 @@ public static partial class LocalizedStrings {
 			}, arg0)))
 			{ ID = "challenge_day_end" };
 		
-		public static string challenge_day_card(object arg0, object arg1) => Localization.Locale.Value switch {
-			Locales.JP => Render(Localization.Locale.Value, new[] {
+		public static string challenge_day_card(object arg0, object arg1) => Locales.Provider.TextLocale.Value switch {
+			Locales.JP => Render(Locales.Provider.TextLocale.Value, new[] {
 				"{0}",
 				"-",
 				"{1}",
 			}, arg0, arg1),
-			_ => Render(Localization.Locale.Value, new[] {
+			_ => Render(Locales.Provider.TextLocale.Value, new[] {
 				"{0}",
 				" ",
 				"{1}",
 			}, arg0, arg1),
 		};
 		
-		public static LString challenge_day_card_ls(object arg0, object arg1) => new LString(Render(null, new[] {
+		public static LString challenge_day_card_ls(object arg0, object arg1) => new LText(Render(null, new[] {
 				"{0}",
 				" ",
 				"{1}",
@@ -373,62 +389,62 @@ public static partial class LocalizedStrings {
 			}, arg0, arg1)))
 			{ ID = "challenge_day_card" };
 		
-		public static readonly LString practice_m_boss = new LString("Boss Practice")
+		public static readonly LString practice_m_boss = new LText("Boss Practice")
 			{ ID = "practice_m_boss" };
 		
-		public static readonly LString practice_m_stage = new LString("Stage Practice")
+		public static readonly LString practice_m_stage = new LText("Stage Practice")
 			{ ID = "practice_m_stage" };
 		
-		public static readonly LString practice_m_campaign = new LString("Campaign")
+		public static readonly LString practice_m_campaign = new LText("Campaign")
 			{ ID = "practice_m_campaign" };
 		
-		public static readonly LString practice_m_scene = new LString("Scene Challenge")
+		public static readonly LString practice_m_scene = new LText("Scene Challenge")
 			{ ID = "practice_m_scene" };
 		
-		public static readonly LString practice_m_whichstage = new LString("Stage",
+		public static readonly LString practice_m_whichstage = new LText("Stage",
 			(Locales.JP, "面"))
 			{ ID = "practice_m_whichstage" };
 		
-		public static readonly LString practice_m_whichphase = new LString("Phase",
+		public static readonly LString practice_m_whichphase = new LText("Phase",
 			(Locales.JP, "フェーズ"))
 			{ ID = "practice_m_whichphase" };
 		
-		public static readonly LString practice_m_whichboss = new LString("Boss",
+		public static readonly LString practice_m_whichboss = new LText("Boss",
 			(Locales.JP, "ボス"))
 			{ ID = "practice_m_whichboss" };
 		
-		public static readonly LString practice_type = new LString("Game Mode",
+		public static readonly LString practice_type = new LText("Game Mode",
 			(Locales.JP, "モード"))
 			{ ID = "practice_type" };
 		
-		public static readonly LString practice_campaign = new LString("Campaign",
+		public static readonly LString practice_campaign = new LText("Campaign",
 			(Locales.JP, "シナリオ"))
 			{ ID = "practice_campaign" };
 		
-		public static readonly LString shotsel_player = new LString("PLAYER",
+		public static readonly LString shotsel_player = new LText("PLAYER",
 			(Locales.JP, "機体"))
 			{ ID = "shotsel_player" };
 		
-		public static readonly LString shotsel_shot = new LString("SHOT",
+		public static readonly LString shotsel_shot = new LText("SHOT",
 			(Locales.JP, "装備"))
 			{ ID = "shotsel_shot" };
 		
-		public static readonly LString shotsel_support = new LString("ABILITY",
+		public static readonly LString shotsel_support = new LText("ABILITY",
 			(Locales.JP, "能力"))
 			{ ID = "shotsel_support" };
 		
-		public static string shotsel_type(object arg0) => Localization.Locale.Value switch {
-			Locales.JP => Render(Localization.Locale.Value, new[] {
+		public static string shotsel_type(object arg0) => Locales.Provider.TextLocale.Value switch {
+			Locales.JP => Render(Locales.Provider.TextLocale.Value, new[] {
 				"タイプ",
 				"{0}",
 			}, arg0),
-			_ => Render(Localization.Locale.Value, new[] {
+			_ => Render(Locales.Provider.TextLocale.Value, new[] {
 				"Type ",
 				"{0}",
 			}, arg0),
 		};
 		
-		public static LString shotsel_type_ls(object arg0) => new LString(Render(null, new[] {
+		public static LString shotsel_type_ls(object arg0) => new LText(Render(null, new[] {
 				"Type ",
 				"{0}",
 			}, arg0),
@@ -438,18 +454,18 @@ public static partial class LocalizedStrings {
 			}, arg0)))
 			{ ID = "shotsel_type" };
 		
-		public static string shotsel_variant(object arg0) => Localization.Locale.Value switch {
-			Locales.JP => Render(Localization.Locale.Value, new[] {
+		public static string shotsel_variant(object arg0) => Locales.Provider.TextLocale.Value switch {
+			Locales.JP => Render(Locales.Provider.TextLocale.Value, new[] {
 				"バリアント",
 				"{0}",
 			}, arg0),
-			_ => Render(Localization.Locale.Value, new[] {
+			_ => Render(Locales.Provider.TextLocale.Value, new[] {
 				"Variant ",
 				"{0}",
 			}, arg0),
 		};
 		
-		public static LString shotsel_variant_ls(object arg0) => new LString(Render(null, new[] {
+		public static LString shotsel_variant_ls(object arg0) => new LText(Render(null, new[] {
 				"Variant ",
 				"{0}",
 			}, arg0),
@@ -459,18 +475,18 @@ public static partial class LocalizedStrings {
 			}, arg0)))
 			{ ID = "shotsel_variant" };
 		
-		public static string shotsel_multi(object arg0) => Localization.Locale.Value switch {
-			Locales.JP => Render(Localization.Locale.Value, new[] {
+		public static string shotsel_multi(object arg0) => Locales.Provider.TextLocale.Value switch {
+			Locales.JP => Render(Locales.Provider.TextLocale.Value, new[] {
 				"可変ショット",
 				"{0}",
 			}, arg0),
-			_ => Render(Localization.Locale.Value, new[] {
+			_ => Render(Locales.Provider.TextLocale.Value, new[] {
 				"Multishot ",
 				"{0}",
 			}, arg0),
 		};
 		
-		public static LString shotsel_multi_ls(object arg0) => new LString(Render(null, new[] {
+		public static LString shotsel_multi_ls(object arg0) => new LText(Render(null, new[] {
 				"Multishot ",
 				"{0}",
 			}, arg0),
@@ -480,32 +496,32 @@ public static partial class LocalizedStrings {
 			}, arg0)))
 			{ ID = "shotsel_multi" };
 		
-		public static readonly LString shotsel_prefix = new LString("Shot:",
+		public static readonly LString shotsel_prefix = new LText("Shot:",
 			(Locales.JP, "ショット"))
 			{ ID = "shotsel_prefix" };
 		
-		public static readonly LString shotsel_multi_prefix = new LString("Multishot:",
+		public static readonly LString shotsel_multi_prefix = new LText("Multishot:",
 			(Locales.JP, "可変ショット"))
 			{ ID = "shotsel_multi_prefix" };
 		
-		public static readonly LString shotsel_support_prefix = new LString("Support:",
+		public static readonly LString shotsel_support_prefix = new LText("Support:",
 			(Locales.JP, "スキル"))
 			{ ID = "shotsel_support_prefix" };
 		
-		public static string death_continue(object arg0) => Localization.Locale.Value switch {
-			Locales.JP => Render(Localization.Locale.Value, new[] {
+		public static string death_continue(object arg0) => Locales.Provider.TextLocale.Value switch {
+			Locales.JP => Render(Locales.Provider.TextLocale.Value, new[] {
 				"続ける（後",
 				"{0}",
 				"回）",
 			}, arg0),
-			_ => Render(Localization.Locale.Value, new[] {
+			_ => Render(Locales.Provider.TextLocale.Value, new[] {
 				"Continue [",
 				"{0}",
 				"]",
 			}, arg0),
 		};
 		
-		public static LString death_continue_ls(object arg0) => new LString(Render(null, new[] {
+		public static LString death_continue_ls(object arg0) => new LText(Render(null, new[] {
 				"Continue [",
 				"{0}",
 				"]",
@@ -517,197 +533,197 @@ public static partial class LocalizedStrings {
 			}, arg0)))
 			{ ID = "death_continue" };
 		
-		public static readonly LString death_header = new LString("YOU DIED",
+		public static readonly LString death_header = new LText("YOU DIED",
 			(Locales.JP, "落命"))
 			{ ID = "death_header" };
 		
-		public static readonly LString difficulty_easy = new LString("Easy")
+		public static readonly LString difficulty_easy = new LText("Easy")
 			{ ID = "difficulty_easy" };
 		
-		public static readonly LString difficulty_normal = new LString("Normal")
+		public static readonly LString difficulty_normal = new LText("Normal")
 			{ ID = "difficulty_normal" };
 		
-		public static readonly LString difficulty_hard = new LString("Hard")
+		public static readonly LString difficulty_hard = new LText("Hard")
 			{ ID = "difficulty_hard" };
 		
-		public static readonly LString difficulty_lunatic = new LString("Lunatic")
+		public static readonly LString difficulty_lunatic = new LText("Lunatic")
 			{ ID = "difficulty_lunatic" };
 		
-		public static readonly LString difficulty_custom = new LString("Custom")
+		public static readonly LString difficulty_custom = new LText("Custom")
 			{ ID = "difficulty_custom" };
 		
-		public static readonly LString play_game = new LString("Start!",
+		public static readonly LString play_game = new LText("Start!",
 			(Locales.JP, "スタート！"))
 			{ ID = "play_game" };
 		
-		public static readonly LString main_gamestart = new LString("Play!",
+		public static readonly LString main_gamestart = new LText("Play!",
 			(Locales.JP, "プレイ！"))
 			{ ID = "main_gamestart" };
 		
-		public static readonly LString main_main = new LString("Main Scenario")
+		public static readonly LString main_main = new LText("Main Scenario")
 			{ ID = "main_main" };
 		
-		public static readonly LString main_extra = new LString("Extra Stage")
+		public static readonly LString main_extra = new LText("Extra Stage")
 			{ ID = "main_extra" };
 		
-		public static readonly LString main_lang = new LString("Language",
+		public static readonly LString main_lang = new LText("Language",
 			(Locales.JP, "言語"))
 			{ ID = "main_lang" };
 		
-		public static readonly LString main_stageprac = new LString("Stage Practice")
+		public static readonly LString main_stageprac = new LText("Stage Practice")
 			{ ID = "main_stageprac" };
 		
-		public static readonly LString main_bossprac = new LString("Boss Practice")
+		public static readonly LString main_bossprac = new LText("Boss Practice")
 			{ ID = "main_bossprac" };
 		
-		public static readonly LString main_scores = new LString("Records",
+		public static readonly LString main_scores = new LText("Records",
 			(Locales.JP, "ゲーム履歴"))
 			{ ID = "main_scores" };
 		
-		public static readonly LString main_playerdata = new LString("Player Data",
+		public static readonly LString main_playerdata = new LText("Player Data",
 			(Locales.JP, "プレイヤデータ"))
 			{ ID = "main_playerdata" };
 		
-		public static readonly LString main_stats = new LString("Statistics",
+		public static readonly LString main_stats = new LText("Statistics",
 			(Locales.JP, "統計表"))
 			{ ID = "main_stats" };
 		
-		public static readonly LString main_achievements = new LString("Achievements",
+		public static readonly LString main_achievements = new LText("Achievements",
 			(Locales.JP, "トローフィ"))
 			{ ID = "main_achievements" };
 		
-		public static readonly LString main_musicroom = new LString("Music Room",
+		public static readonly LString main_musicroom = new LText("Music Room",
 			(Locales.JP, "音楽"))
 			{ ID = "main_musicroom" };
 		
-		public static readonly LString main_replays = new LString("Replays",
+		public static readonly LString main_replays = new LText("Replays",
 			(Locales.JP, "リプレイ"))
 			{ ID = "main_replays" };
 		
-		public static readonly LString main_tutorial = new LString("Tutorial",
+		public static readonly LString main_tutorial = new LText("Tutorial",
 			(Locales.JP, "チュートリアル"))
 			{ ID = "main_tutorial" };
 		
-		public static readonly LString main_options = new LString("Options",
+		public static readonly LString main_options = new LText("Options",
 			(Locales.JP, "環境設定"))
 			{ ID = "main_options" };
 		
-		public static readonly LString main_quit = new LString("Quit",
+		public static readonly LString main_quit = new LText("Quit",
 			(Locales.JP, "ゲーム終了"))
 			{ ID = "main_quit" };
 		
-		public static readonly LString main_twitter = new LString("Twitter",
+		public static readonly LString main_twitter = new LText("Twitter",
 			(Locales.JP, "ツイッターへ"))
 			{ ID = "main_twitter" };
 		
-		public static readonly LString main_newgame = new LString("New Game",
+		public static readonly LString main_newgame = new LText("New Game",
 			(Locales.JP, "はじめから"))
 			{ ID = "main_newgame" };
 		
-		public static readonly LString main_continue = new LString("Continue",
+		public static readonly LString main_continue = new LText("Continue",
 			(Locales.JP, "つづきから"))
 			{ ID = "main_continue" };
 		
-		public static readonly LString main_load = new LString("Load",
+		public static readonly LString main_load = new LText("Load",
 			(Locales.JP, "ロード"))
 			{ ID = "main_load" };
 		
-		public static readonly LString main_licenses = new LString("Licenses",
+		public static readonly LString main_licenses = new LText("Licenses",
 			(Locales.JP, "ライセンス"))
 			{ ID = "main_licenses" };
 		
-		public static readonly LString replay_name = new LString("Name",
+		public static readonly LString replay_name = new LText("Name",
 			(Locales.JP, "リプレイ名"))
 			{ ID = "replay_name" };
 		
-		public static readonly LString replay_saved = new LString("Saved!",
+		public static readonly LString replay_saved = new LText("Saved!",
 			(Locales.JP, "セーブ完了！"))
 			{ ID = "replay_saved" };
 		
-		public static readonly LString scores_nocampaign = new LString("Finish a campaign to view scores.")
+		public static readonly LString scores_nocampaign = new LText("Finish a campaign to view scores.")
 			{ ID = "scores_nocampaign" };
 		
-		public static readonly LString stats_allcampaigns = new LString("All Campaigns",
+		public static readonly LString stats_allcampaigns = new LText("All Campaigns",
 			(Locales.JP, "すべて"))
 			{ ID = "stats_allcampaigns" };
 		
-		public static readonly LString stats_seldifficulty = new LString("Difficulty",
+		public static readonly LString stats_seldifficulty = new LText("Difficulty",
 			(Locales.JP, "難易度"))
 			{ ID = "stats_seldifficulty" };
 		
-		public static readonly LString stats_alldifficulty = new LString("All Difficulties",
+		public static readonly LString stats_alldifficulty = new LText("All Difficulties",
 			(Locales.JP, "すべて"))
 			{ ID = "stats_alldifficulty" };
 		
-		public static readonly LString stats_selplayer = new LString("Player",
+		public static readonly LString stats_selplayer = new LText("Player",
 			(Locales.JP, "機体"))
 			{ ID = "stats_selplayer" };
 		
-		public static readonly LString stats_allplayers = new LString("All Players",
+		public static readonly LString stats_allplayers = new LText("All Players",
 			(Locales.JP, "すべて"))
 			{ ID = "stats_allplayers" };
 		
-		public static readonly LString stats_selshot = new LString("Shot",
+		public static readonly LString stats_selshot = new LText("Shot",
 			(Locales.JP, "装備"))
 			{ ID = "stats_selshot" };
 		
-		public static readonly LString stats_allshots = new LString("All Shots",
+		public static readonly LString stats_allshots = new LText("All Shots",
 			(Locales.JP, "すべて"))
 			{ ID = "stats_allshots" };
 		
-		public static readonly LString stats_allruns = new LString("Runs Total",
+		public static readonly LString stats_allruns = new LText("Runs Total",
 			(Locales.JP, "プレイ回"))
 			{ ID = "stats_allruns" };
 		
-		public static readonly LString stats_complete = new LString("Runs Completed",
+		public static readonly LString stats_complete = new LText("Runs Completed",
 			(Locales.JP, "クリア回"))
 			{ ID = "stats_complete" };
 		
-		public static readonly LString stats_1cc = new LString("Runs 1CCed",
+		public static readonly LString stats_1cc = new LText("Runs 1CCed",
 			(Locales.JP, "1CCクリア回"))
 			{ ID = "stats_1cc" };
 		
-		public static readonly LString stats_deaths = new LString("Total Deaths",
+		public static readonly LString stats_deaths = new LText("Total Deaths",
 			(Locales.JP, "被弾数"))
 			{ ID = "stats_deaths" };
 		
-		public static readonly LString stats_favday = new LString("Favorite Day",
+		public static readonly LString stats_favday = new LText("Favorite Day",
 			(Locales.JP, "プレイしがちの曜日"))
 			{ ID = "stats_favday" };
 		
-		public static readonly LString stats_favplayer = new LString("Favorite Player",
+		public static readonly LString stats_favplayer = new LText("Favorite Player",
 			(Locales.JP, "使いがちの機体"))
 			{ ID = "stats_favplayer" };
 		
-		public static readonly LString stats_favshot = new LString("Favorite Shot",
+		public static readonly LString stats_favshot = new LText("Favorite Shot",
 			(Locales.JP, "使いがちの装備"))
 			{ ID = "stats_favshot" };
 		
-		public static readonly LString stats_highestscore = new LString("Highest Score",
+		public static readonly LString stats_highestscore = new LText("Highest Score",
 			(Locales.JP, "ハイスコア"))
 			{ ID = "stats_highestscore" };
 		
-		public static readonly LString stats_capturerate = new LString("Card Capture Rate",
+		public static readonly LString stats_capturerate = new LText("Card Capture Rate",
 			(Locales.JP, "スペルカードキャプチャ率"))
 			{ ID = "stats_capturerate" };
 		
-		public static readonly LString stats_bestcard = new LString("Easiest Card Capture",
+		public static readonly LString stats_bestcard = new LText("Easiest Card Capture",
 			(Locales.JP, "上手なスペルカード"))
 			{ ID = "stats_bestcard" };
 		
-		public static readonly LString stats_worstcard = new LString("Hardest Card Capture",
+		public static readonly LString stats_worstcard = new LText("Hardest Card Capture",
 			(Locales.JP, "下手なスペルカード"))
 			{ ID = "stats_worstcard" };
 		
-		public static readonly LString stats_avgtime = new LString("Average Game Length",
+		public static readonly LString stats_avgtime = new LText("Average Game Length",
 			(Locales.JP, "平均ゲーム時間"))
 			{ ID = "stats_avgtime" };
 		
-		public static readonly LString stats_totaltime = new LString("Total Play Time",
+		public static readonly LString stats_totaltime = new LText("Total Play Time",
 			(Locales.JP, "総計プレイ時間"))
 			{ ID = "stats_totaltime" };
 		
-		public static readonly LString achievements_locked = new LString("???")
+		public static readonly LString achievements_locked = new LText("???")
 			{ ID = "achievements_locked" };
 		
 	}

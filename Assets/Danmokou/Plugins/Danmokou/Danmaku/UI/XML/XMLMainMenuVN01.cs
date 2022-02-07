@@ -2,6 +2,7 @@
 using System.Linq;
 using BagoumLib;
 using BagoumLib.Culture;
+using Danmokou.ADV;
 using Danmokou.Core;
 using Danmokou.Danmaku;
 using Danmokou.GameInstance;

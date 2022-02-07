@@ -3,14 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using Danmokou.Achievements;
 using Danmokou.Core;
+using Danmokou.Core.DInput;
 using Danmokou.DMath;
 using Danmokou.GameInstance;
 using Danmokou.Scenes;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
 using UnityEngine;
-using UnityEngine.SocialPlatforms;
-using static Danmokou.Core.InputManager;
+using static Danmokou.Core.DInput.InputManager;
 
 
 namespace Danmokou.Services {
@@ -41,13 +41,13 @@ public class ReplayMetadata {
         Debug = debug;
         DialogueSpeed = SaveData.VNSettings.TextSpeed;
         SmoothInput = SaveData.s.AllowInputLinearization;
-        Locale = SaveData.s.Locale;
+        Locale = SaveData.s.TextLocale;
     }
 
     public void ApplySettings() {
         SaveData.VNSettings.TextSpeed = DialogueSpeed;
         SaveData.s.AllowInputLinearization = SmoothInput;
-        SaveData.UpdateLocale(Locale);
+        SaveData.s.TextLocale.OnNext(Locale);
     }
 
     [JsonIgnore]
@@ -107,7 +107,7 @@ public class ReplayRecorder : ReplayActor {
 
     public override void Step() {
         _ = ReplayIndex;
-        if (InputManager.ReplayDebugSave.Active)
+        if (InputManager.PlayerInput.ReplayDebugSave.Active)
             Replayer.SaveDebugReplay();
         recording.Add(RecordFrame);
     }
@@ -118,15 +118,17 @@ public class ReplayRecorder : ReplayActor {
     }
 }
 
-public class ReplayPlayer : ReplayActor {
+public class ReplayPlayerInputSource : ReplayActor, IInputSource {
     public readonly Replayer.ReplayerConfig replaying;
     private FrameInput[]? loadedFrames;
     private FrameInput[] LoadedFrames => loadedFrames ??= replaying.frames();
+    private FrameInput CurrentFrame => LoadedFrames[ReplayIndex];
     
-    private readonly IDisposable token;
+    private readonly List<IDisposable> tokens = new();
 
-    public ReplayPlayer(Replayer.ReplayerConfig replaying) {
-        token = Achievement.ACHIEVEMENT_PROGRESS_ENABLED.AddConst(false);
+    public ReplayPlayerInputSource(Replayer.ReplayerConfig replaying) {
+        tokens.Add(Achievement.ACHIEVEMENT_PROGRESS_ENABLED.AddConst(false));
+        tokens.Add(InputManager.PlayerInput.AddSource(this, AggregateInputSource.REPLAY_PRIORITY));
         this.replaying = replaying;
     }
 
@@ -140,22 +142,34 @@ public class ReplayPlayer : ReplayActor {
             if (replaying.finishMethod == Replayer.ReplayerConfig.FinishMethod.REPEAT) {
                 Logs.Log("Restarting replay.");
                 ResetState();
-                ReplayFrame(LoadedFrames[ReplayIndex]);
                 return;
             }
             Cancel();
             if (replaying.finishMethod != Replayer.ReplayerConfig.FinishMethod.STOP)
                 Logs.UnityError($"Ran out of replay data. On frame {LastFrame}, requested index {ReplayIndex}, " +
                                $"but there are only {LoadedFrames.Length}.");
-        } else
-            ReplayFrame(LoadedFrames[ReplayIndex]);
+        }
     }
 
     public override void Cancel() {
         Logs.Log($"Finished replaying {LastFrame - ReplayStartFrame + 1}/{LoadedFrames.Length} frames.");
-        token.Dispose();
+        foreach (var t in tokens)
+            t.Dispose();
         base.Cancel();
     }
+
+    public short? HorizontalSpeed => CurrentFrame.horizontal;
+    public short? VerticalSpeed => CurrentFrame.vertical;
+    public bool? Firing => CurrentFrame.fire;
+    public bool? Focus => CurrentFrame.focus;
+    public bool? Bomb => CurrentFrame.bomb;
+    public bool? Meter => CurrentFrame.meter;
+    public bool? Swap => CurrentFrame.swap;
+    public bool? DialogueConfirm => CurrentFrame.dialogueConfirm;
+    public bool? DialogueSkipAll => CurrentFrame.dialogueSkipAll;
+
+    //handled by Step
+    public void OncePerUnityFrameToggleControls() {}
 }
 
 public static class Replayer {
@@ -212,7 +226,7 @@ public static class Replayer {
     private static ReplayStatus Status => Actor switch {
         null => ReplayStatus.NONE,
         ReplayRecorder _ => ReplayStatus.RECORDING,
-        ReplayPlayer _ => ReplayStatus.REPLAYING,
+        ReplayPlayerInputSource _ => ReplayStatus.REPLAYING,
         _ => throw new Exception($"Unhandled replay actor: {Actor}")
     };
     public static bool RequiresConsistency => Actor != null;
@@ -229,7 +243,7 @@ public static class Replayer {
 
     public static ReplayActor BeginReplaying(ReplayerConfig data) {
         Logs.Log($"Replay playback started.");
-        return Actor = new ReplayPlayer(data);
+        return Actor = new ReplayPlayerInputSource(data);
     }
     public static void SaveDebugReplay() {
         if (Actor is ReplayRecorder rr && GameManagement.Instance.Request != null) {
@@ -242,7 +256,6 @@ public static class Replayer {
     }
 
     public static void BeginFrame() {
-        ReplayFrame(null);
         if (Actor == null) return;
         if (Actor.LastFrame == ETime.FrameNumber) return; //during pause/load
         Actor.Step();

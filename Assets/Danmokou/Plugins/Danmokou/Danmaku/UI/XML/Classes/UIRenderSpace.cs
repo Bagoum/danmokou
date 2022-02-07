@@ -108,10 +108,10 @@ public class UIRenderAbsoluteTerritory : UIRenderSpace {
         //TODO: this doesn't work correctly, so I'm setting the alpha value manually
         bgc = _html.style.backgroundColor.value;
         _html.style.display = DisplayStyle.None;
-        _html.RegisterCallback<MouseUpEvent>(evt => {
+        _html.RegisterCallback<PointerUpEvent>(evt => {
             Logs.Log($"Clicked on absolute territory");
             if (screen.Controller.Current == null || isTransitioning) return;
-            screen.Controller.QueuedEvent = new UIMouseCommand.NormalCommand(UICommand.Back, null);
+            screen.Controller.QueuedEvent = new UIPointerCommand.NormalCommand(UICommand.Back, null);
             evt.StopPropagation();
         });
     }

@@ -12,7 +12,7 @@ using Danmokou.SM;
 using Danmokou.UI;
 using TMPro;
 using UnityEngine;
-using static Danmokou.Core.InputManager;
+using static Danmokou.Core.DInput.InputManager;
 using static Danmokou.Core.LocalizedStrings.Tutorial;
 
 namespace Danmokou.Services {
@@ -64,7 +64,7 @@ public class MiniTutorial : BehaviorEntity {
         }
         IEnumerator confirm() {
             yield return null;
-            yield return wait(() => UIConfirm.Active && EngineStateManager.State == EngineState.RUN);
+            yield return wait(() => UIConfirm && EngineStateManager.State == EngineState.RUN);
         }
         ServiceLocator.Find<IUIManager>()
             .SetSpellname("Reduced Tutorial (For Players Too Smart for the Normal Tutorial)");
@@ -75,7 +75,7 @@ public class MiniTutorial : BehaviorEntity {
             V2RV2.Angle(-90), Cancellable.Null);
         "sync _ <> relrect greenrect level <-2;2.5:1.4;1.4:0> witha 0.7 green".Into<StateMachine>()
             .Start(new SMHandoff(this, Cancellable.Null));
-        Message(text10, mtcirc1(UIConfirm.Desc, Pause.Desc));
+        Message(text10, mtcirc1(MainSource.uiConfirm.Description, MainSource.pause.Description));
         yield return confirm();
         BulletManager.ClearAllBullets();
         BehaviorEntity.GetExecForID("greenrect").InvokeCull();
@@ -85,7 +85,7 @@ public class MiniTutorial : BehaviorEntity {
         mov = new Movement(new Vector2(-2, 5), -90);
         BulletManager.RequestLaser(null, "zonelaser-green/b", mov, new ParametricInfo(in mov), 999, 0,
             ref nrx);
-        Message(text10, mtsafe2(UIConfirm.Desc));
+        Message(text10, mtsafe2(MainSource.uiConfirm.Description));
         yield return confirm();
         cb();
     }

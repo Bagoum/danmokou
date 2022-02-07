@@ -150,7 +150,7 @@ The .With function on nodes (line 375) applies CSS classes. In this case, we wan
 
 ## Conclusion
 
-The most well-known existing form of UI handling-- HTML/CSS in the browser-- is designed almost exclusively for mouse-based traversal, and does not support the kind of keyboard-only traversal we need for a video game-oriented UI. Furthermore, I do not know of any well-documented keyboard-only UIs. As a result, the design here may seem unusual compared to other instances UI design.
+The most well-known existing form of UI handling-- HTML/CSS in the browser-- is designed almost exclusively for mouse-based traversal, and does not support the kind of keyboard-only traversal we need for a video game-oriented UI. Furthermore, I do not know of any well-documented keyboard-only UIs. As a result, the design here may seem unusual compared to other instances of UI design.
 
 There are some uncertainties around certain points in the design here. The largest is around the usage of the Group class for composite group handling. It may be cleaner to use a different abstraction, especially given that composite groups introduce nullability into the group call stack. In addition, it is unclear whether show/hide groups, popups, and composite groups should be using the same hierarchy system, since they have different display configurations and layouts. Finally, the handling for multiple screens may not be sufficient for use-cases where movement between screens is much more heavily emphasized.
 

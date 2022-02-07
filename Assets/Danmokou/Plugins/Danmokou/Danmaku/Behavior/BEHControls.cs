@@ -71,7 +71,7 @@ public partial class BehaviorEntity {
         public bool IsPlayer { get; private set; } = false;
         public bool Active { get; private set; } = false;
 
-        public DisturbedEvented<bool> CameraCullable { get; } = new DisturbedOverride<bool>(true);
+        public DisturbedEvented<bool> CameraCullable { get; } = new OverrideEvented<bool>(true);
 
         public BEHStyleMetadata(string? style, DeferredFramesRecoloring? dfc) {
             this.style = style;

@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using BagoumLib;
 using BagoumLib.Culture;
 using Danmokou.Core;
+using Danmokou.Core.DInput;
 using Danmokou.DMath;
 using Danmokou.Graphics;
 using Danmokou.Scriptables;
@@ -46,7 +47,7 @@ public class XMLPauseMenu : PausedGameplayMenu, IPauseMenu {
         if (!Replayer.RequiresConsistency) {
             SaveLoadScreen = this.SaveLoadVNScreen(inst => GameManagement.Restart(inst.GetData()), slot => {
                 preserveSS = true;
-                return new(GameManagement.Instance.VNData, DateTime.Now, lastSaveLoadSS!, slot,
+                return new(GameManagement.Instance.ADVData, DateTime.Now, lastSaveLoadSS!, slot,
                     ServiceLocator.Find<IVNWrapper>().TrackedVNs.First().backlog.LastPublished.Value.readableSpeech);
             });
             SaveLoadScreen.BackgroundOpacity = 1f;
@@ -99,9 +100,9 @@ public class XMLPauseMenu : PausedGameplayMenu, IPauseMenu {
     private bool openQueued = false;
     public override void RegularUpdate() {
         if (RegularUpdateGuard) {
-            if ((InputManager.Pause.Active || InputManager.UIBack.Active && Current == unpause) && MenuActive)
+            if ((InputManager.Pause || InputManager.UIBack && Current == unpause) && MenuActive)
                 ProtectHide();
-            else if ((InputManager.Pause.Active || openQueued) && EngineStateManager.State == EngineState.RUN)
+            else if ((InputManager.Pause || openQueued) && EngineStateManager.State == EngineState.RUN)
                 ShowMe();
             openQueued = false;
         }

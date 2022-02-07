@@ -753,7 +753,7 @@ public static class Scene1 {
         //Running Static Analysis 1
         new InstanceRequest(d => cb = true, FixedDfc(FixedDifficulty.Lunatic),
             new BossPracticeRequest(AllPBosses[0], 
-                new SMAnalysis.Phase(null!, PhaseType.NONSPELL, 3, new LString("_")))).Run();
+                new SMAnalysis.Phase(null!, PhaseType.NONSPELL, 3, new LText("_")))).Run();
         IsFalse(cb);
         yield return WaitForLoad();
         for (int ii = 0; ii < 10; ++ii) yield return null;

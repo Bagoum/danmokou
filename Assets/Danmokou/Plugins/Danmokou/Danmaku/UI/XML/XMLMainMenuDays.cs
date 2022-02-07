@@ -105,7 +105,7 @@ public class XMLMainMenuDays : XMLMainMenu {
                                 OnEnter = n => SetChallenge((n as IBaseOptionNodeLR)!.Index),
                                 OnLeave = _ => photoBoardToken?.Dispose()
                             }.With(optionNoKeyClass),
-                            new UINode(() => "Press Z to start level".Locale("Zキー押すとレベルスタート")) 
+                            new UINode(() => new LText("Press Z to start level", (Locales.JP, "Zキー押すとレベルスタート"))) 
                                     { OnConfirm = Confirm }
                                 .With(large1Class, centerTextClass)
                         )
@@ -132,12 +132,12 @@ public class XMLMainMenuDays : XMLMainMenu {
             new TransferNode(main_gamestart, SceneSelectScreen)
                 .With(large1Class),
             new OptionNodeLR<string?>(main_lang, l => {
-                    SaveData.UpdateLocale(l);
+                    SaveData.s.TextLocale.OnNext(l);
                     SaveData.AssignSettingsChanges();
                 }, new[] {
-                    (new LString("English"), Locales.EN),
-                    (new LString("日本語"), Locales.JP)
-                }, SaveData.s.Locale)
+                    ((LString)("English"), Locales.EN),
+                    ((LString)("日本語"), Locales.JP)
+                }, SaveData.s.TextLocale)
                 .With(large1Class),
             new TransferNode(main_replays, ReplayScreen) {
                 EnabledIf = () => (SaveData.p.ReplayData.Count > 0)

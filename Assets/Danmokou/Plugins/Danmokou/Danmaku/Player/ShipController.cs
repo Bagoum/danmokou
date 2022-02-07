@@ -1,21 +1,7 @@
-﻿using System;
-using System.Collections;
-using System.Linq.Expressions;
-using Danmokou.Behavior;
-using Danmokou.Behavior.Display;
+﻿using Danmokou.Behavior;
 using Danmokou.Behavior.Functions;
-using Danmokou.Core;
-using Danmokou.Dialogue;
-using Danmokou.DMath;
-using Danmokou.Expressions;
-using Danmokou.GameInstance;
-using Danmokou.Graphics;
 using Danmokou.Scriptables;
-using Danmokou.Services;
-using JetBrains.Annotations;
-using UnityEditor;
 using UnityEngine;
-using static Danmokou.DMath.LocationHelpers;
 
 namespace Danmokou.Player {
 public class ShipController : BehaviorEntity {

@@ -2,7 +2,9 @@
 	//See LetteredboxedInput for the code that handles dealing with mouse positions.
 	Properties {
 		[PerRendererData] _MainTex("Sprite Texture", 2D) = "white" {}
-		_MonitorAspect("Monitor Aspect Ratio", float) = 1
+		[PerRendererData] _MonitorAspect("Monitor Aspect Ratio", float) = 1
+		_LetterboxTex("Letterbox Texture", 2D) = "white" {}
+		_LetterboxTint("Letterbox Tint", Color) = (.8314, 0,.32157,1)
 	}
 	SubShader {
 		Tags {
@@ -40,16 +42,20 @@
 			
 			sampler2D _MainTex;
 			float4 _MainTex_TexelSize;
+			sampler2D _LetterboxTex;
+			float4 _LetterboxTex_TexelSize;
+			float4 _LetterboxTint;
 
 			float _MonitorAspect;
 			
 			float4 frag(fragment f) : SV_Target {
 				float texAspect = _MainTex_TexelSize.z / _MainTex_TexelSize.w;
+				float ltexAspect = _LetterboxTex_TexelSize.z / _LetterboxTex_TexelSize.w;
 				float monitorIsWider = step(texAspect, _MonitorAspect);
 				float2 scaledUv = monitorIsWider * float2(f.uv.x * _MonitorAspect / texAspect, f.uv.y) +
 					(1 - monitorIsWider) * float2(f.uv.x, f.uv.y * texAspect / _MonitorAspect);
 				//Scale-to-fit: draw black bars on the sides in empty area
-				float4 c = lerp(float4(0, 0, 0, 1),
+				float4 c = lerp(tex2D(_LetterboxTex, fmod(scaledUv + monitorIsWider * 0.5, 1) * float2(texAspect / ltexAspect, 1)) * _LetterboxTint,
 					tex2D(_MainTex, scaledUv + 0.5),
 					step(max(abs(scaledUv.x), abs(scaledUv.y)), 0.5));
 				return c;

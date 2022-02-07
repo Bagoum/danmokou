@@ -1,5 +1,6 @@
 ﻿using System;
 using Danmokou.Core;
+using Danmokou.Core.DInput;
 using Danmokou.Services;
 using SuzunoyaUnity;
 using SuzunoyaUnity.UI;
@@ -14,7 +15,7 @@ public class DMKADVDialogueBoxMimic : ADVDialogueBoxMimic {
     public override void Initialize(ADVDialogueBox db) {
         base.Initialize(db);
 
-        Listen(SaveData.s.DialogueOpacityEv, f => background.color = background.color.WithA(f));
+        Listen(SaveData.SettingsEv, s => background.color = background.color.WithA(s.VNDialogueOpacity));
         
         if (!bound.Container.AutoplayFastforwardAllowed && ((DMKVNState)bound.Container).AllowFullSkip) {
             if (skipButton != null) {
@@ -27,7 +28,7 @@ public class DMKADVDialogueBoxMimic : ADVDialogueBoxMimic {
     
     public virtual void FullSkip() {
         if (bound.Container.SkippingMode == null)
-            InputManager.ExternalUISkipAllDialogue.SetForFrame();
+            InputManager.InCodeInput.mDialogueSkipAll.SetActive();
         else
             bound.Container.SetSkipMode(null);
     }

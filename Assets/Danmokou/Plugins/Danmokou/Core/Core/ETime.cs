@@ -11,6 +11,7 @@ using BagoumLib.Events;
 using BagoumLib.Mathematics;
 using BagoumLib.Tasks;
 using BagoumLib.Tweening;
+using Danmokou.Core.DInput;
 using Danmokou.DMath;
 using Danmokou.Scenes;
 using JetBrains.Annotations;
@@ -122,12 +123,14 @@ public class ETime : MonoBehaviour {
 
     private void Awake() {
         Tween.DefaultDeltaTimeProvider = () => FRAME_TIME;
-        GenericOps.RegisterType<Vector2>(Vector2.LerpUnclamped, (x, y) => x * y, (x, y) => x + y, (x, y) => x * y);
-        GenericOps.RegisterType<Vector3>(Vector3.LerpUnclamped, (x, y) => x * y, (x, y) => x + y, 
-            (a, b) => new Vector3(a.x * b.x, a.y * b.y, a.z * b.z));
-        GenericOps.RegisterType<Vector4>(Vector4.LerpUnclamped, (x, y) => x * y, (x, y) => x + y, 
-            (a, b) => new Vector4(a.x * b.x, a.y * b.y, a.z * b.z, a.w * b.w));
-        GenericOps.RegisterType<Color>(Color.LerpUnclamped, (x, y) => x * y, (x, y) => x + y, (x, y) => x * y);
+        GenericOps.RegisterType<Vector2>(Vector2.LerpUnclamped, (x, y) => x * y, 
+            (Vector2.zero, (x, y) => x + y), (Vector2.one, (x, y) => x * y));
+        GenericOps.RegisterType<Vector3>(Vector3.LerpUnclamped, (x, y) => x * y, 
+            (Vector3.zero, (x, y) => x + y), (Vector3.one, (a, b) => new Vector3(a.x * b.x, a.y * b.y, a.z * b.z)));
+        GenericOps.RegisterType<Vector4>(Vector4.LerpUnclamped, (x, y) => x * y, 
+            (Vector4.zero, (x, y) => x + y), (Vector4.one, (a, b) => new Vector4(a.x * b.x, a.y * b.y, a.z * b.z, a.w * b.w)));
+        GenericOps.RegisterType<Color>(Color.LerpUnclamped, (x, y) => x * y, 
+            (Color.clear, (x, y) => x + y), (Color.white, (x, y) => x * y));
 
         SceneIntermediary.Attach();
         SceneIntermediary.SceneLoaded.Subscribe(_ => untilNextRegularFrame = 0f);
@@ -148,7 +151,7 @@ public class ETime : MonoBehaviour {
     }
 
     private static void SetForcedFPS(int fps) {
-        Logs.Log($"Assuming the screen runs at {fps} fps, setting");
+        Logs.Log($"Assuming the screen runs at {fps} fps");
         ASSUME_SCREEN_FRAME_TIME = 1f / fps;
         //Better to use precise thread waiter. See https://blogs.unity3d.com/2019/06/03/precise-framerates-in-unity/
         // This said, mobile requires targetFrameRate.
@@ -174,17 +177,7 @@ public class ETime : MonoBehaviour {
         QualitySettings.vSyncCount = ct;
 #endif
         lastFrameTime = Time.realtimeSinceStartup;
-        SetForcedFPS(GetMonitorRefresh());
-    }
-
-    private static int GetMonitorRefresh() {
-        //TODO: android seems to be force-limited to 30 fps, even if the refresh rate is 60hz
-        //TODO: may be a good idea to replace assume_frame_time with a ETime.deltaTime rounding for mobile
-    #if UNITY_ANDROID || UNITY_IOS
-        return 60;
-    #else
-        return Screen.currentResolution.refreshRate;
-    #endif
+        SetForcedFPS(Screen.currentResolution.refreshRate);
     }
 
     private static void ParallelUpdateStep() {
@@ -222,7 +215,7 @@ public class ETime : MonoBehaviour {
                 //If this toggle is moved out of the loop, then it is possible for trigger-based controls
                 // to be ignored if the unity framerate is faster than the game update rate
                 // (eg. 240hz, or 60hz + slowdown 0.25).
-                if (FirstUpdateForScreen) InputManager.OncePerFrameToggleControls();
+                if (FirstUpdateForScreen) InputManager.OncePerUnityFrameToggleControls();
                 UntilNextFrame -= FRAME_TIME;
                 LastUpdateForScreen = UntilNextFrame + EngineStepTime <= FRAME_BOUNDARY;
                 if (EngineStateManager.PendingUpdate) continue;

@@ -29,6 +29,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Assembly-CSharp-Editor", "A
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Danmokou.PCGTesting", "Danmokou.PCGTesting.csproj", "{9b8a8c74-1e0b-2104-74a4-fd415f76756c}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Danmokou.PlumWine", "Danmokou.PlumWine.csproj", "{fae1ec87-b65f-a68c-d452-3786ca8fb5c7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -62,6 +64,8 @@ Global
 		{acab4e3b-222c-0ce0-1e20-4e29fee60fcb}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9b8a8c74-1e0b-2104-74a4-fd415f76756c}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{9b8a8c74-1e0b-2104-74a4-fd415f76756c}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{fae1ec87-b65f-a68c-d452-3786ca8fb5c7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{fae1ec87-b65f-a68c-d452-3786ca8fb5c7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

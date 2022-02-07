@@ -76,8 +76,8 @@ phase 0
         AssertListEq(new List<SMAnalysis.Phase>() {
                 //phase 0,3 are ignored since they don't have type
                 new SMAnalysis.Phase(null!, PhaseType.DIALOGUE, 1, null),
-                new SMAnalysis.Phase(null!, PhaseType.NONSPELL, 2, new LString("My First Non")),
-                new SMAnalysis.Phase(null!, PhaseType.SPELL, 4, new LString("My First Spell")),
+                new SMAnalysis.Phase(null!, PhaseType.NONSPELL, 2, new LText("My First Non")),
+                new SMAnalysis.Phase(null!, PhaseType.SPELL, 4, new LText("My First Spell")),
             }, SMAnalysis.Analyze(null!, sm), (p1, p2) => 
             p1.index == p2.index && p1.type == p2.type && p1.Title.Value == p2.Title.Value
         );

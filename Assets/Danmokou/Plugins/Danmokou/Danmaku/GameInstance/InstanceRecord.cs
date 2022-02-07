@@ -203,7 +203,7 @@ public class InstanceRecord {
         var name = (string.IsNullOrEmpty(CustomNameOrPartial) && defaultName) ? "[NAME]" : CustomNameOrPartial;
         var req = showRequest ? $"{RequestDescription} " : "";
         var date = showTime ? Date.SimpleTime() : Date.SimpleDate();
-        return new LString($"{name,-CustomNameLength} {score} {pstr} {req}{SavedMetadata.difficulty.DescribePadR()}  {date}");
+        return $"{name,-CustomNameLength} {score} {pstr} {req}{SavedMetadata.difficulty.DescribePadR()}  {date}";
     }
 }
 

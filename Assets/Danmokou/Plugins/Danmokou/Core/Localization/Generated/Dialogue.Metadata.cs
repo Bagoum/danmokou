@@ -15,131 +15,131 @@ namespace Danmokou.Core {
 public static partial class LocalizedStrings {
 	public static partial class DialogueMetadata {
 		
-		public static readonly LString aya = new LString("Shameimaru Aya",
+		public static readonly LString aya = new LText("Shameimaru Aya",
 			(Locales.JP, "射命丸文"))
 			{ ID = "dialogue.aya" };
 		
-		public static readonly LString eraa = new LString("???",
+		public static readonly LString eraa = new LText("???",
 			(Locales.JP, "???"))
 			{ ID = "dialogue.eraa" };
 		
-		public static readonly LString kaguyaf = new LString("???",
+		public static readonly LString kaguyaf = new LText("???",
 			(Locales.JP, "???"))
 			{ ID = "dialogue.kaguyaf" };
 		
-		public static readonly LString kaguya = new LString("Houraisan Kaguya",
+		public static readonly LString kaguya = new LText("Houraisan Kaguya",
 			(Locales.JP, "かぐや姫"))
 			{ ID = "dialogue.kaguya" };
 		
-		public static readonly LString kasen = new LString("Kasen",
+		public static readonly LString kasen = new LText("Kasen",
 			(Locales.JP, "華仙"))
 			{ ID = "dialogue.kasen" };
 		
-		public static readonly LString keine = new LString("Kamishirasawa Keine",
+		public static readonly LString keine = new LText("Kamishirasawa Keine",
 			(Locales.JP, "上白沢慧音"))
 			{ ID = "dialogue.keine" };
 		
-		public static readonly LString mima = new LString("Mima",
+		public static readonly LString mima = new LText("Mima",
 			(Locales.JP, "魅魔様"))
 			{ ID = "dialogue.mima" };
 		
-		public static readonly LString mokou = new LString("Fujiwara no Mokou",
+		public static readonly LString mokou = new LText("Fujiwara no Mokou",
 			(Locales.JP, "藤原妹紅"))
 			{ ID = "dialogue.mokou" };
 		
-		public static readonly LString narrator = new LString("Narrator",
+		public static readonly LString narrator = new LText("Narrator",
 			(Locales.JP, "語り手"))
 			{ ID = "dialogue.narrator" };
 		
-		public static readonly LString phone = new LString("Communications Device",
+		public static readonly LString phone = new LText("Communications Device",
 			(Locales.JP, "遠隔通信装置"))
 			{ ID = "dialogue.phone" };
 		
-		public static readonly LString reimu = new LString("Hakurei Reimu",
+		public static readonly LString reimu = new LText("Hakurei Reimu",
 			(Locales.JP, "博麗霊夢"))
 			{ ID = "dialogue.reimu" };
 		
-		public static readonly LString seija = new LString("Kijin Seija",
+		public static readonly LString seija = new LText("Kijin Seija",
 			(Locales.JP, "鬼人正邪"))
 			{ ID = "dialogue.seija" };
 		
-		public static readonly LString shinki = new LString("Shinki",
+		public static readonly LString shinki = new LText("Shinki",
 			(Locales.JP, "神綺"))
 			{ ID = "dialogue.shinki" };
 		
-		public static readonly LString sagume = new LString("Kishin Sagume",
+		public static readonly LString sagume = new LText("Kishin Sagume",
 			(Locales.JP, "稀神サグメ"))
 			{ ID = "dialogue.sagume" };
 		
-		public static readonly LString kurokoma = new LString("Kurokoma Saki",
+		public static readonly LString kurokoma = new LText("Kurokoma Saki",
 			(Locales.JP, "驪駒早鬼"))
 			{ ID = "dialogue.kurokoma" };
 		
-		public static readonly LString tokiko = new LString("Tokiko",
+		public static readonly LString tokiko = new LText("Tokiko",
 			(Locales.JP, "朱鷺子"))
 			{ ID = "dialogue.tokiko" };
 		
-		public static readonly LString unknown = new LString("???",
+		public static readonly LString unknown = new LText("???",
 			(Locales.JP, "???"))
 			{ ID = "dialogue.unknown" };
 		
-		public static readonly LString yukari = new LString("Yakumo Yukari",
+		public static readonly LString yukari = new LText("Yakumo Yukari",
 			(Locales.JP, "八雲紫"))
 			{ ID = "dialogue.yukari" };
 		
-		public static readonly LString elly = new LString("Elly",
+		public static readonly LString elly = new LText("Elly",
 			(Locales.JP, "エリー"))
 			{ ID = "dialogue.elly" };
 		
-		public static readonly LString junko = new LString("Junko",
+		public static readonly LString junko = new LText("Junko",
 			(Locales.JP, "純狐"))
 			{ ID = "dialogue.junko" };
 		
-		public static readonly LString yuuka = new LString("Kazami Yuuka",
+		public static readonly LString yuuka = new LText("Kazami Yuuka",
 			(Locales.JP, "風見幽香"))
 			{ ID = "dialogue.yuuka" };
 		
-		public static readonly LString komakusa = new LString("Komakusa Sannyo",
+		public static readonly LString komakusa = new LText("Komakusa Sannyo",
 			(Locales.JP, "駒草山如"))
 			{ ID = "dialogue.komakusa" };
 		
-		public static readonly LString kosuzu = new LString("Motoori Kosuzu",
+		public static readonly LString kosuzu = new LText("Motoori Kosuzu",
 			(Locales.JP, "本居小鈴"))
 			{ ID = "dialogue.kosuzu" };
 		
-		public static readonly LString kutaka = new LString("Niwatari Kutaka",
+		public static readonly LString kutaka = new LText("Niwatari Kutaka",
 			(Locales.JP, "庭渡久侘歌"))
 			{ ID = "dialogue.kutaka" };
 		
-		public static readonly LString marisa = new LString("Kirisame Marisa",
+		public static readonly LString marisa = new LText("Kirisame Marisa",
 			(Locales.JP, "霧雨魔理沙"))
 			{ ID = "dialogue.marisa" };
 		
-		public static readonly LString mayumi = new LString("Joutouguu Mayumi",
+		public static readonly LString mayumi = new LText("Joutouguu Mayumi",
 			(Locales.JP, "杖刀偶磨弓"))
 			{ ID = "dialogue.mayumi" };
 		
-		public static readonly LString miko = new LString("Toyosatomimi no Miko",
+		public static readonly LString miko = new LText("Toyosatomimi no Miko",
 			(Locales.JP, "豊聡耳神子"))
 			{ ID = "dialogue.miko" };
 		
-		public static readonly LString yachie = new LString("Kicchou Yachie",
+		public static readonly LString yachie = new LText("Kicchou Yachie",
 			(Locales.JP, "吉弔八千慧"))
 			{ ID = "dialogue.yachie" };
 		
-		public static readonly LString youmu = new LString("Konpaku Youmu",
+		public static readonly LString youmu = new LText("Konpaku Youmu",
 			(Locales.JP, "魂魄妖夢"))
 			{ ID = "dialogue.youmu" };
 		
-		public static readonly LString sanae = new LString("Kochiya Sanae",
+		public static readonly LString sanae = new LText("Kochiya Sanae",
 			(Locales.JP, "東風谷早苗"))
 			{ ID = "dialogue.sanae" };
 		
-		public static readonly LString kanako = new LString("Yasaka Kanako",
+		public static readonly LString kanako = new LText("Yasaka Kanako",
 			(Locales.JP, "八坂神奈子"))
 			{ ID = "dialogue.kanako" };
 		
-		public static readonly LString suwako = new LString("Moriya Suwako",
+		public static readonly LString suwako = new LText("Moriya Suwako",
 			(Locales.JP, "洩矢諏訪子"))
 			{ ID = "dialogue.suwako" };
 		

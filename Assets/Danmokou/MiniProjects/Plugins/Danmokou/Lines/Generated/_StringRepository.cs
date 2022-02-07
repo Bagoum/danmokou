@@ -7,6 +7,7 @@
 
 using System.Collections.Generic;
 using BagoumLib.Culture;
+using Danmokou.Core;
 using static BagoumLib.Culture.LocalizationRendering;
 
 namespace MiniProjects.VN {

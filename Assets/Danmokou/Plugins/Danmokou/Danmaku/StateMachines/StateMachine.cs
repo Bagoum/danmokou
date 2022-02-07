@@ -9,6 +9,7 @@ using BagoumLib.Cancellation;
 using BagoumLib.Tasks;
 using Danmokou.Behavior;
 using Danmokou.Core;
+using Danmokou.Core.DInput;
 using Danmokou.Danmaku;
 using Danmokou.Danmaku.Patterns;
 using Danmokou.DMath;
@@ -516,13 +517,6 @@ public static class WaitingUtils {
     private static IEnumerator WaitForBoth(float wait_time, Func<bool> condition, ICancellee cT, Action done) {
         for (; (wait_time > ETime.FRAME_YIELD || !condition()) && !cT.Cancelled; 
             wait_time -= ETime.FRAME_TIME) yield return null;
-        done();
-    }
-    public static IEnumerator WaitForDialogueConfirm(ICancellee cT, Action done) {
-        while (!cT.Cancelled) {
-            if (InputManager.DialogueConfirm) break;
-            yield return null;
-        }
         done();
     }
 

@@ -23,10 +23,8 @@ public static class Events {
         Normal,
         Trigger
     }
-    private static readonly Dictionary<Type, Dictionary<string, RuntimeEvent>> events = 
-        new Dictionary<Type, Dictionary<string, RuntimeEvent>>();
-    private static readonly Dictionary<string, RuntimeEvent> eventsFlat = 
-        new Dictionary<string, RuntimeEvent>();
+    private static readonly Dictionary<Type, Dictionary<string, RuntimeEvent>> events = new();
+    private static readonly Dictionary<string, RuntimeEvent> eventsFlat = new();
 
     public static Func<IDisposable> CreateRuntimeEventCreator<T>(string name, RuntimeEventType typ) => 
         () => CreateRuntimeEvent<T>(name, typ, out _);

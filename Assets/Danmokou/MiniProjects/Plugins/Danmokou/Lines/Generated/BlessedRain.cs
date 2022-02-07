@@ -7,1333 +7,1334 @@
 
 using System.Collections.Generic;
 using BagoumLib.Culture;
+using Danmokou.Core;
 using static BagoumLib.Culture.LocalizationRendering;
 
 namespace MiniProjects.VN {
 public static partial class ScriptLocalization {
 	public static partial class BlessedRain {
 		
-		public static readonly LString l0 = new LString("Uuuugggghhhhh....")
+		public static readonly LString l0 = new LText("Uuuugggghhhhh....")
 			{ ID = "l0" };
 		
-		public static readonly LString l1 = new LString("Reimu gazed out at the courtyard of the shrine. She looked up and saw only an endless expanse of gray clouds; she looked down and saw in the water's reflection only an endless expanse of gray clouds.")
+		public static readonly LString l1 = new LText("Reimu gazed out at the courtyard of the shrine. She looked up and saw only an endless expanse of gray clouds; she looked down and saw in the water's reflection only an endless expanse of gray clouds.")
 			{ ID = "l1" };
 		
-		public static readonly LString l1_1 = new LString("Then she looked forward, and in the fog lingering at the boundary of the shrine grounds she saw nothing.")
+		public static readonly LString l1_1 = new LText("Then she looked forward, and in the fog lingering at the boundary of the shrine grounds she saw nothing.")
 			{ ID = "l1_1" };
 		
-		public static readonly LString l2 = new LString("I hate the rain...")
+		public static readonly LString l2 = new LText("I hate the rain...")
 			{ ID = "l2" };
 		
-		public static readonly LString l3 = new LString("She kicked out her leg, but when a drop of cold rainwater fell off the shrine overhang onto her calf, she shivered and retracted it.")
+		public static readonly LString l3 = new LText("She kicked out her leg, but when a drop of cold rainwater fell off the shrine overhang onto her calf, she shivered and retracted it.")
 			{ ID = "l3" };
 		
-		public static readonly LString l4 = new LString("Why can't the rain just stop right now?")
+		public static readonly LString l4 = new LText("Why can't the rain just stop right now?")
 			{ ID = "l4" };
 		
-		public static readonly LString l5 = new LString("The rain continued to fall.")
+		public static readonly LString l5 = new LText("The rain continued to fall.")
 			{ ID = "l5" };
 		
-		public static readonly LString l6 = new LString("If only I could go complain to the CEO of rain...")
+		public static readonly LString l6 = new LText("If only I could go complain to the CEO of rain...")
 			{ ID = "l6" };
 		
-		public static readonly LString l7 = new LString("The rain fell without desire, without purpose, without intent.")
+		public static readonly LString l7 = new LText("The rain fell without desire, without purpose, without intent.")
 			{ ID = "l7" };
 		
-		public static readonly LString l8 = new LString("Wait.")
+		public static readonly LString l8 = new LText("Wait.")
 			{ ID = "l8" };
 		
-		public static readonly LString l9 = new LString("I can just do that!")
+		public static readonly LString l9 = new LText("I can just do that!")
 			{ ID = "l9" };
 		
-		public static readonly LString l10 = new LString("Yukari would know how to go about it. Let me call her.")
+		public static readonly LString l10 = new LText("Yukari would know how to go about it. Let me call her.")
 			{ ID = "l10" };
 		
-		public static readonly LString l11 = new LString("Reimu took a deep breath in, and:")
+		public static readonly LString l11 = new LText("Reimu took a deep breath in, and:")
 			{ ID = "l11" };
 		
-		public static readonly LString l12 = new LString("<speed=0.3>YUUUUKAAAAARIIIII! WHEEEEERE AAAAARE YOOOOOOOUUUUU?</speed>")
+		public static readonly LString l12 = new LText("<speed=0.3>YUUUUKAAAAARIIIII! WHEEEEERE AAAAARE YOOOOOOOUUUUU?</speed>")
 			{ ID = "l12" };
 		
-		public static readonly LString l13 = new LString("Her voice, confused by the falling rain, did not travel far. But it travelled far enough.")
+		public static readonly LString l13 = new LText("Her voice, confused by the falling rain, did not travel far. But it travelled far enough.")
 			{ ID = "l13" };
 		
-		public static readonly LString l14 = new LString("Reimu, did you call me?")
+		public static readonly LString l14 = new LText("Reimu, did you call me?")
 			{ ID = "l14" };
 		
-		public static readonly LString l15 = new LString("Yeah, I need your help to deal with the rain.")
+		public static readonly LString l15 = new LText("Yeah, I need your help to deal with the rain.")
 			{ ID = "l15" };
 		
-		public static readonly LString l16 = new LString("Oh, is the roof leaking? I'll go get some wood.")
+		public static readonly LString l16 = new LText("Oh, is the roof leaking? I'll go get some wood.")
 			{ ID = "l16" };
 		
-		public static readonly LString l17 = new LString("Wait! It's not the roof.")
+		public static readonly LString l17 = new LText("Wait! It's not the roof.")
 			{ ID = "l17" };
 		
-		public static readonly LString l18 = new LString("It's more like, the rain has gotten me really depressed. I can't help but think that the rain should just stop.")
+		public static readonly LString l18 = new LText("It's more like, the rain has gotten me really depressed. I can't help but think that the rain should just stop.")
 			{ ID = "l18" };
 		
-		public static readonly LString l19 = new LString("Oh, I see. So you want to learn how to appreciate the rain?")
+		public static readonly LString l19 = new LText("Oh, I see. So you want to learn how to appreciate the rain?")
 			{ ID = "l19" };
 		
-		public static readonly LString l20 = new LString("No, I was just thinking that I should learn some ritual that can stop rain from falling.")
+		public static readonly LString l20 = new LText("No, I was just thinking that I should learn some ritual that can stop rain from falling.")
 			{ ID = "l20" };
 		
-		public static readonly LString l21 = new LString("Like, you know that god? Kurokemuri or something? Can't you teach me how to invoke him?")
+		public static readonly LString l21 = new LText("Like, you know that god? Kurokemuri or something? Can't you teach me how to invoke him?")
 			{ ID = "l21" };
 		
-		public static readonly LString l22 = new LString("Stopping the rain... that's a bit of a problem... and I really don't think Kuraokami would appreciate that...")
+		public static readonly LString l22 = new LText("Stopping the rain... that's a bit of a problem... and I really don't think Kuraokami would appreciate that...")
 			{ ID = "l22" };
 		
-		public static readonly LString l23 = new LString("Why?")
+		public static readonly LString l23 = new LText("Why?")
 			{ ID = "l23" };
 		
-		public static readonly LString l24 = new LString("Well, it'd be really problematic... I'm not really sure how to explain it any more than that...")
+		public static readonly LString l24 = new LText("Well, it'd be really problematic... I'm not really sure how to explain it any more than that...")
 			{ ID = "l24" };
 		
-		public static readonly LString l25 = new LString("Oh, but Kasen would know! Let me go get her.")
+		public static readonly LString l25 = new LText("Oh, but Kasen would know! Let me go get her.")
 			{ ID = "l25" };
 		
-		public static readonly LString l26 = new LString("Kasen!")
+		public static readonly LString l26 = new LText("Kasen!")
 			{ ID = "l26" };
 		
-		public static readonly LString l27 = new LString("Yukari? Did something happen?")
+		public static readonly LString l27 = new LText("Yukari? Did something happen?")
 			{ ID = "l27" };
 		
-		public static readonly LString l28 = new LString("Reimu is stuck in a philosophical paradox.")
+		public static readonly LString l28 = new LText("Reimu is stuck in a philosophical paradox.")
 			{ ID = "l28" };
 		
-		public static readonly LString l29 = new LString("No I'm not...")
+		public static readonly LString l29 = new LText("No I'm not...")
 			{ ID = "l29" };
 		
-		public static readonly LString l30 = new LString("Oh, that won't do. We have to go help her.")
+		public static readonly LString l30 = new LText("Oh, that won't do. We have to go help her.")
 			{ ID = "l30" };
 		
-		public static readonly LString l31 = new LString("I heard you were in trouble, Reimu. What's the problem?")
+		public static readonly LString l31 = new LText("I heard you were in trouble, Reimu. What's the problem?")
 			{ ID = "l31" };
 		
-		public static readonly LString l32 = new LString("Well, the rain really sucks, so I was thinking about learning some rituals to stop the rain.")
+		public static readonly LString l32 = new LText("Well, the rain really sucks, so I was thinking about learning some rituals to stop the rain.")
 			{ ID = "l32" };
 		
-		public static readonly LString l33 = new LString("Stop the rain...?")
+		public static readonly LString l33 = new LText("Stop the rain...?")
 			{ ID = "l33" };
 		
-		public static readonly LString l34 = new LString("Kasen sighed, and began adjusting the bandages on her fingers. This was not the first time Reimu had seen her sigh like this, and it would not be the last.")
+		public static readonly LString l34 = new LText("Kasen sighed, and began adjusting the bandages on her fingers. This was not the first time Reimu had seen her sigh like this, and it would not be the last.")
 			{ ID = "l34" };
 		
-		public static readonly LString l35 = new LString("You know, Reimu, there are kids in California right now <speed=0.2>DYING</speed> because they don't get enough rain. You should think about them before saying something so selfish.")
+		public static readonly LString l35 = new LText("You know, Reimu, there are kids in California right now <speed=0.2>DYING</speed> because they don't get enough rain. You should think about them before saying something so selfish.")
 			{ ID = "l35" };
 		
-		public static readonly LString l36 = new LString("Rain is one of the most important natural phenomena from the perspective of ecosystem survival. Stopping the rain in Gensoukyou would result in not only the collapse of the human village, but also the decimation of the entire population of youkai.")
+		public static readonly LString l36 = new LText("Rain is one of the most important natural phenomena from the perspective of ecosystem survival. Stopping the rain in Gensoukyou would result in not only the collapse of the human village, but also the decimation of the entire population of youkai.")
 			{ ID = "l36" };
 		
-		public static readonly LString l37 = new LString("After all, other than the Sanzu, every river and lake and paddy in Gensoukyou is given life by the rain, and every tree and bush and blade of grass grows at the rain's permission. It is--")
+		public static readonly LString l37 = new LText("After all, other than the Sanzu, every river and lake and paddy in Gensoukyou is given life by the rain, and every tree and bush and blade of grass grows at the rain's permission. It is--")
 			{ ID = "l37" };
 		
-		public static readonly LString l38 = new LString("Wait, you lost me. What's California?")
+		public static readonly LString l38 = new LText("Wait, you lost me. What's California?")
 			{ ID = "l38" };
 		
-		public static readonly LString l39 = new LString("Once upon a time, California was a land of great agricultural bounty.")
+		public static readonly LString l39 = new LText("Once upon a time, California was a land of great agricultural bounty.")
 			{ ID = "l39" };
 		
-		public static readonly LString l40 = new LString("But then the people living in California got angry that it was raining so much. So they raised their fists at the sky and shouted, \"Jesus Christ, what's with the fucking rain?!\"")
+		public static readonly LString l40 = new LText("But then the people living in California got angry that it was raining so much. So they raised their fists at the sky and shouted, \"Jesus Christ, what's with the fucking rain?!\"")
 			{ ID = "l40" };
 		
-		public static readonly LString l41 = new LString("Then the rain stopped, and the land experienced a never-ending drought, and they all died.")
+		public static readonly LString l41 = new LText("Then the rain stopped, and the land experienced a never-ending drought, and they all died.")
 			{ ID = "l41" };
 		
-		public static readonly LString l42 = new LString("I don't think that's why the rain stopped.")
+		public static readonly LString l42 = new LText("I don't think that's why the rain stopped.")
 			{ ID = "l42" };
 		
-		public static readonly LString l43 = new LString("Then how do <i>you</i> explain the rapid desertification of temperate and subtropic lands across the globe over the past half-century? Huh?")
+		public static readonly LString l43 = new LText("Then how do <i>you</i> explain the rapid desertification of temperate and subtropic lands across the globe over the past half-century? Huh?")
 			{ ID = "l43" };
 		
-		public static readonly LString l44 = new LString("Who's Jesus Christ?")
+		public static readonly LString l44 = new LText("Who's Jesus Christ?")
 			{ ID = "l44" };
 		
-		public static readonly LString l45 = new LString("It's just global warming, right?")
+		public static readonly LString l45 = new LText("It's just global warming, right?")
 			{ ID = "l45" };
 		
-		public static readonly LString l46 = new LString("Well, in Genesis 3:15--")
+		public static readonly LString l46 = new LText("Well, in Genesis 3:15--")
 			{ ID = "l46" };
 		
-		public static readonly LString l47 = new LString("Reimu, the point is that the rain is important to a lot of people. If you can't understand that perspective, then maybe you should go ask them why.")
+		public static readonly LString l47 = new LText("Reimu, the point is that the rain is important to a lot of people. If you can't understand that perspective, then maybe you should go ask them why.")
 			{ ID = "l47" };
 		
-		public static readonly LString l48 = new LString("Right now?")
+		public static readonly LString l48 = new LText("Right now?")
 			{ ID = "l48" };
 		
-		public static readonly LString l49 = new LString("--God prophesizes Christ's first coming--")
+		public static readonly LString l49 = new LText("--God prophesizes Christ's first coming--")
 			{ ID = "l49" };
 		
-		public static readonly LString l50 = new LString("Well, now's the best time. Wouldn't it be strange to ask people why they like the rain when it's sunny out?")
+		public static readonly LString l50 = new LText("Well, now's the best time. Wouldn't it be strange to ask people why they like the rain when it's sunny out?")
 			{ ID = "l50" };
 		
-		public static readonly LString l51 = new LString("But I don't want to get wet in the rain.")
+		public static readonly LString l51 = new LText("But I don't want to get wet in the rain.")
 			{ ID = "l51" };
 		
-		public static readonly LString l52 = new LString("--and declares that Christ will one day crush the devil under his foot--")
+		public static readonly LString l52 = new LText("--and declares that Christ will one day crush the devil under his foot--")
 			{ ID = "l52" };
 		
-		public static readonly LString l53 = new LString("Yukari can take you, so you won't need to get wet.")
+		public static readonly LString l53 = new LText("Yukari can take you, so you won't need to get wet.")
 			{ ID = "l53" };
 		
-		public static readonly LString l54 = new LString("Hmm... All said, I would prefer to not spend the rest of the day just sitting here...")
+		public static readonly LString l54 = new LText("Hmm... All said, I would prefer to not spend the rest of the day just sitting here...")
 			{ ID = "l54" };
 		
-		public static readonly LString l55 = new LString("Wait, Kasen, don't we have other things to do today?")
+		public static readonly LString l55 = new LText("Wait, Kasen, don't we have other things to do today?")
 			{ ID = "l55" };
 		
-		public static readonly LString l56 = new LString("Our number one priority is <i>always</i> to take care of Reimu.")
+		public static readonly LString l56 = new LText("Our number one priority is <i>always</i> to take care of Reimu.")
 			{ ID = "l56" };
 		
-		public static readonly LString l57 = new LString("Well, if you put it that way...")
+		public static readonly LString l57 = new LText("Well, if you put it that way...")
 			{ ID = "l57" };
 		
-		public static readonly LString l58 = new LString("Number one priority? What am I, a kid?")
+		public static readonly LString l58 = new LText("Number one priority? What am I, a kid?")
 			{ ID = "l58" };
 		
-		public static readonly LString l59 = new LString("Yes.")
+		public static readonly LString l59 = new LText("Yes.")
 			{ ID = "l59" };
 		
-		public static readonly LString l60 = new LString("More or less.")
+		public static readonly LString l60 = new LText("More or less.")
 			{ ID = "l60" };
 		
-		public static readonly LString l61 = new LString("Fine, I guess I have no choice...")
+		public static readonly LString l61 = new LText("Fine, I guess I have no choice...")
 			{ ID = "l61" };
 		
-		public static readonly LString l62 = new LString("No, you have a choice. You can lie here like a slob for another twelve hours and then suffer a sleepless night due to lack of energy expenditure, or you can explore Gensoukyou with me.")
+		public static readonly LString l62 = new LText("No, you have a choice. You can lie here like a slob for another twelve hours and then suffer a sleepless night due to lack of energy expenditure, or you can explore Gensoukyou with me.")
 			{ ID = "l62" };
 		
-		public static readonly LString l63 = new LString("You have to own your decisions, Reimu. Nobody's making you choose one way or another, so don't try to shirk that responsibility.")
+		public static readonly LString l63 = new LText("You have to own your decisions, Reimu. Nobody's making you choose one way or another, so don't try to shirk that responsibility.")
 			{ ID = "l63" };
 		
-		public static readonly LString l64 = new LString("Fine! I want to go adventuring!")
+		public static readonly LString l64 = new LText("Fine! I want to go adventuring!")
 			{ ID = "l64" };
 		
-		public static readonly LString l65 = new LString("--symbolizing the final confrontation between good and evil!")
+		public static readonly LString l65 = new LText("--symbolizing the final confrontation between good and evil!")
 			{ ID = "l65" };
 		
-		public static readonly LString l66 = new LString("What?")
+		public static readonly LString l66 = new LText("What?")
 			{ ID = "l66" };
 		
-		public static readonly LString l67 = new LString("Sorry, I had to finish up the bit.")
+		public static readonly LString l67 = new LText("Sorry, I had to finish up the bit.")
 			{ ID = "l67" };
 		
-		public static readonly LString l68 = new LString("So? Where are you going to go first? Maybe you should go visit the kappa at Genbu Ravine?")
+		public static readonly LString l68 = new LText("So? Where are you going to go first? Maybe you should go visit the kappa at Genbu Ravine?")
 			{ ID = "l68" };
 		
-		public static readonly LString l69 = new LString("Oh... that sounds like a--")
+		public static readonly LString l69 = new LText("Oh... that sounds like a--")
 			{ ID = "l69" };
 		
-		public static readonly LString l70 = new LString("Bad idea. The kappa like rain because they're kappa. There's nothing for a human to learn from that.")
+		public static readonly LString l70 = new LText("Bad idea. The kappa like rain because they're kappa. There's nothing for a human to learn from that.")
 			{ ID = "l70" };
 		
-		public static readonly LString l71 = new LString("I see... in that case, what about asking Sanae or Marisa?")
+		public static readonly LString l71 = new LText("I see... in that case, what about asking Sanae or Marisa?")
 			{ ID = "l71" };
 		
-		public static readonly LString l72 = new LString("Yeah, Marisa really likes the rain... ")
+		public static readonly LString l72 = new LText("Yeah, Marisa really likes the rain... ")
 			{ ID = "l72" };
 		
-		public static readonly LString l73 = new LString("which is why she's probably wandering around the middle of nowhere collecting mushrooms right now.")
+		public static readonly LString l73 = new LText("which is why she's probably wandering around the middle of nowhere collecting mushrooms right now.")
 			{ ID = "l73" };
 		
-		public static readonly LString l74 = new LString("Moriya Shrine it is.")
+		public static readonly LString l74 = new LText("Moriya Shrine it is.")
 			{ ID = "l74" };
 		
-		public static readonly LString l75 = new LString("Good luck, Reimu. Maybe you'll run into Marisa while you're out there.")
+		public static readonly LString l75 = new LText("Good luck, Reimu. Maybe you'll run into Marisa while you're out there.")
 			{ ID = "l75" };
 		
-		public static readonly LString l76 = new LString("Yukari waved her hand, and a portal swallowed up herself and Reimu.")
+		public static readonly LString l76 = new LText("Yukari waved her hand, and a portal swallowed up herself and Reimu.")
 			{ ID = "l76" };
 		
-		public static readonly LString l77 = new LString("~ Lalala ~ lala ~")
+		public static readonly LString l77 = new LText("~ Lalala ~ lala ~")
 			{ ID = "l77" };
 		
-		public static readonly LString l78 = new LString("Kyaaah!")
+		public static readonly LString l78 = new LText("Kyaaah!")
 			{ ID = "l78" };
 		
-		public static readonly LString l79 = new LString("Oh, it's you two. What brings you up here in this weather? Is there an incident?")
+		public static readonly LString l79 = new LText("Oh, it's you two. What brings you up here in this weather? Is there an incident?")
 			{ ID = "l79" };
 		
-		public static readonly LString l80 = new LString("There's no incident, but Reimu's stuck in a philosophical paradox.")
+		public static readonly LString l80 = new LText("There's no incident, but Reimu's stuck in a philosophical paradox.")
 			{ ID = "l80" };
 		
-		public static readonly LString l81 = new LString("No I'm not...")
+		public static readonly LString l81 = new LText("No I'm not...")
 			{ ID = "l81" };
 		
-		public static readonly LString l82 = new LString("Oh, that's terrible. Is there something I can do to help?")
+		public static readonly LString l82 = new LText("Oh, that's terrible. Is there something I can do to help?")
 			{ ID = "l82" };
 		
-		public static readonly LString l83 = new LString("Yup. We're doing a survey on what people think of the rain. So, Sanae, how do you feel about this rain?")
+		public static readonly LString l83 = new LText("Yup. We're doing a survey on what people think of the rain. So, Sanae, how do you feel about this rain?")
 			{ ID = "l83" };
 		
-		public static readonly LString l84 = new LString("The rain? I think the rain is beautiful.")
+		public static readonly LString l84 = new LText("The rain? I think the rain is beautiful.")
 			{ ID = "l84" };
 		
-		public static readonly LString l85 = new LString("Up here, you can see the rainclouds get fat, and then you can see them burst open into rainstorms.")
+		public static readonly LString l85 = new LText("Up here, you can see the rainclouds get fat, and then you can see them burst open into rainstorms.")
 			{ ID = "l85" };
 		
-		public static readonly LString l86 = new LString("And then you can see the Wind God Lake fill up, and then the water from the lake flows down into Genbu Ravine and Misty Lake, and then all the little youkai have fun playing down there when the storm passes.")
+		public static readonly LString l86 = new LText("And then you can see the Wind God Lake fill up, and then the water from the lake flows down into Genbu Ravine and Misty Lake, and then all the little youkai have fun playing down there when the storm passes.")
 			{ ID = "l86" };
 		
-		public static readonly LString l87 = new LString("I like to think of it as a demonstration of the interrelated nature of phenomena. Emptiness is form, form is emptiness.")
+		public static readonly LString l87 = new LText("I like to think of it as a demonstration of the interrelated nature of phenomena. Emptiness is form, form is emptiness.")
 			{ ID = "l87" };
 		
-		public static readonly LString l88 = new LString("We tend to think of all the parts of Gensoukyou as little separate pieces with their own styles and situations, as <i>form</i>.")
+		public static readonly LString l88 = new LText("We tend to think of all the parts of Gensoukyou as little separate pieces with their own styles and situations, as <i>form</i>.")
 			{ ID = "l88" };
 		
-		public static readonly LString l88_1 = new LString("But when the rain falls, the same rainwater flows everywhere, and we can experience Gensoukyou as one undifferentiated land under the sky, just as it is, without preconceptions and without judgement, as <i>emptiness</i>.")
+		public static readonly LString l88_1 = new LText("But when the rain falls, the same rainwater flows everywhere, and we can experience Gensoukyou as one undifferentiated land under the sky, just as it is, without preconceptions and without judgement, as <i>emptiness</i>.")
 			{ ID = "l88_1" };
 		
-		public static readonly LString l89 = new LString("And also, I'm not really doing anything, but it makes me proud to think that the lake at this shrine is kind of like the mother of all the flowing water in Gensoukyou.")
+		public static readonly LString l89 = new LText("And also, I'm not really doing anything, but it makes me proud to think that the lake at this shrine is kind of like the mother of all the flowing water in Gensoukyou.")
 			{ ID = "l89" };
 		
-		public static readonly LString l90 = new LString("Is it alright for a shrine maiden to be talking Buddhism like that?")
+		public static readonly LString l90 = new LText("Is it alright for a shrine maiden to be talking Buddhism like that?")
 			{ ID = "l90" };
 		
-		public static readonly LString l91 = new LString("The Meiji era is over, Yukari. It's Heisei now, Hei-sei. Everyone knows that Shinto-Buddhist syncretism is the most historically authentic form of religion in this country.")
+		public static readonly LString l91 = new LText("The Meiji era is over, Yukari. It's Heisei now, Hei-sei. Everyone knows that Shinto-Buddhist syncretism is the most historically authentic form of religion in this country.")
 			{ ID = "l91" };
 		
-		public static readonly LString l92 = new LString("We are born Shinto and buried Buddhist!")
+		public static readonly LString l92 = new LText("We are born Shinto and buried Buddhist!")
 			{ ID = "l92" };
 		
-		public static readonly LString l93 = new LString("They recently added a term in the middle. Born Shinto, married Christian, and buried Buddhist.")
+		public static readonly LString l93 = new LText("They recently added a term in the middle. Born Shinto, married Christian, and buried Buddhist.")
 			{ ID = "l93" };
 		
-		public static readonly LString l93_1 = new LString("What's Christian?")
+		public static readonly LString l93_1 = new LText("What's Christian?")
 			{ ID = "l93_1" };
 		
-		public static readonly LString l94 = new LString("I get that the rain is philosophically interesting, but at the end of the day, you still have to sit indoors and do nothing while the rain is raining, right?")
+		public static readonly LString l94 = new LText("I get that the rain is philosophically interesting, but at the end of the day, you still have to sit indoors and do nothing while the rain is raining, right?")
 			{ ID = "l94" };
 		
-		public static readonly LString l95 = new LString("I suppose. There's not much to do around the shrine when it's raining.")
+		public static readonly LString l95 = new LText("I suppose. There's not much to do around the shrine when it's raining.")
 			{ ID = "l95" };
 		
-		public static readonly LString l96 = new LString("Ah, but Suwako always stays outside when it rains. Sometimes she'll just lie down on the lake rocks and... bask in the rain.")
+		public static readonly LString l96 = new LText("Ah, but Suwako always stays outside when it rains. Sometimes she'll just lie down on the lake rocks and... bask in the rain.")
 			{ ID = "l96" };
 		
-		public static readonly LString l97 = new LString("Is that fun?")
+		public static readonly LString l97 = new LText("Is that fun?")
 			{ ID = "l97" };
 		
-		public static readonly LString l98 = new LString("I tried it once. It was terrible. I think it's a frog thing, since Kanako doesn't like it either.")
+		public static readonly LString l98 = new LText("I tried it once. It was terrible. I think it's a frog thing, since Kanako doesn't like it either.")
 			{ ID = "l98" };
 		
-		public static readonly LString l99 = new LString("So that means you don't enjoy the rain in itself. In that case, if the rain was really bothering you, or it got in the way of your plans, would you try to stop the rain?")
+		public static readonly LString l99 = new LText("So that means you don't enjoy the rain in itself. In that case, if the rain was really bothering you, or it got in the way of your plans, would you try to stop the rain?")
 			{ ID = "l99" };
 		
-		public static readonly LString l100 = new LString("Stop the rain...? I've never considered it, but I guess Kanako could probably do that.")
+		public static readonly LString l100 = new LText("Stop the rain...? I've never considered it, but I guess Kanako could probably do that.")
 			{ ID = "l100" };
 		
-		public static readonly LString l101 = new LString("Oh, that's right. Kanako is a god of rain, isn't she?")
+		public static readonly LString l101 = new LText("Oh, that's right. Kanako is a god of rain, isn't she?")
 			{ ID = "l101" };
 		
-		public static readonly LString l102 = new LString("I thought she was a god of wind. Since it's called <ruby=風神録>Wind God Chronicles</ruby> and all.")
+		public static readonly LString l102 = new LText("I thought she was a god of wind. Since it's called <ruby=風神録>Wind God Chronicles</ruby> and all.")
 			{ ID = "l102" };
 		
-		public static readonly LString l103 = new LString("In terms of her powers, she's a god of Qian, which... <i>probably</i> includes both wind and rain.")
+		public static readonly LString l103 = new LText("In terms of her powers, she's a god of Qian, which... <i>probably</i> includes both wind and rain.")
 			{ ID = "l103" };
 		
-		public static readonly LString l104 = new LString("You don't know?")
+		public static readonly LString l104 = new LText("You don't know?")
 			{ ID = "l104" };
 		
-		public static readonly LString l105 = new LString("Kanako takes care of the business side, so it doesn't really come up. Suwako does all the technical work. We hold harvest festivals here often, but I don't know what the logical justification is.")
+		public static readonly LString l105 = new LText("Kanako takes care of the business side, so it doesn't really come up. Suwako does all the technical work. We hold harvest festivals here often, but I don't know what the logical justification is.")
 			{ ID = "l105" };
 		
-		public static readonly LString l106 = new LString("I'll go get her. You can ask her directly.")
+		public static readonly LString l106 = new LText("I'll go get her. You can ask her directly.")
 			{ ID = "l106" };
 		
-		public static readonly LString l107 = new LString("I can handle the business side, they said...")
+		public static readonly LString l107 = new LText("I can handle the business side, they said...")
 			{ ID = "l107" };
 		
-		public static readonly LString l108 = new LString("Who said?")
+		public static readonly LString l108 = new LText("Who said?")
 			{ ID = "l108" };
 		
-		public static readonly LString l109 = new LString("The Outside World is a terrible, terrible place, Reimu. I hope you never have to go there.")
+		public static readonly LString l109 = new LText("The Outside World is a terrible, terrible place, Reimu. I hope you never have to go there.")
 			{ ID = "l109" };
 		
-		public static readonly LString l110 = new LString("I... see...")
+		public static readonly LString l110 = new LText("I... see...")
 			{ ID = "l110" };
 		
-		public static readonly LString l111 = new LString("Yo. I heard you were looking for me.")
+		public static readonly LString l111 = new LText("Yo. I heard you were looking for me.")
 			{ ID = "l111" };
 		
-		public static readonly LString l112 = new LString("Kanako! Listen! Reimu is stuck in a philosophical parad--")
+		public static readonly LString l112 = new LText("Kanako! Listen! Reimu is stuck in a philosophical parad--")
 			{ ID = "l112" };
 		
-		public static readonly LString l113 = new LString("Ahem! As it happens, I wanted to ask you about the rain.")
+		public static readonly LString l113 = new LText("Ahem! As it happens, I wanted to ask you about the rain.")
 			{ ID = "l113" };
 		
-		public static readonly LString l114 = new LString("Oh, the rain? We're having some beautiful showers today, aren't we? The upcoming harvest is going to be great.")
+		public static readonly LString l114 = new LText("Oh, the rain? We're having some beautiful showers today, aren't we? The upcoming harvest is going to be great.")
 			{ ID = "l114" };
 		
-		public static readonly LString l115 = new LString("Well.. more like... I was thinking of stopping the rain.")
+		public static readonly LString l115 = new LText("Well.. more like... I was thinking of stopping the rain.")
 			{ ID = "l115" };
 		
-		public static readonly LString l116 = new LString("Stopping the rain...?")
+		public static readonly LString l116 = new LText("Stopping the rain...?")
 			{ ID = "l116" };
 		
-		public static readonly LString l117 = new LString("Reimu, I don't think you appreciate the importance of rain. Without water, people can't survive.")
+		public static readonly LString l117 = new LText("Reimu, I don't think you appreciate the importance of rain. Without water, people can't survive.")
 			{ ID = "l117" };
 		
-		public static readonly LString l118 = new LString("...Yeah, everyone knows that? Three minutes without air, three days without water, three weeks without food, and humans die.")
+		public static readonly LString l118 = new LText("...Yeah, everyone knows that? Three minutes without air, three days without water, three weeks without food, and humans die.")
 			{ ID = "l118" };
 		
-		public static readonly LString l119 = new LString("Everyone knows? Says the person who managed to go two out of three days?")
+		public static readonly LString l119 = new LText("Everyone knows? Says the person who managed to go two out of three days?")
 			{ ID = "l119" };
 		
-		public static readonly LString l120 = new LString("I told you, I'm sorry about that! It was an accident! And it was Kosuzu's fault for lending me such interesting books in the first place! If she had mixed a few boring ones in, then I wouldn't have forgotten to cook!")
+		public static readonly LString l120 = new LText("I told you, I'm sorry about that! It was an accident! And it was Kosuzu's fault for lending me such interesting books in the first place! If she had mixed a few boring ones in, then I wouldn't have forgotten to cook!")
 			{ ID = "l120" };
 		
-		public static readonly LString l121 = new LString("If it weren't for me randomly showing up unannounced to the shrine, the seat of Hakurei might have been once again emptied... Ah, it doesn't seem this child will permit me to retire in the foreseeable future...")
+		public static readonly LString l121 = new LText("If it weren't for me randomly showing up unannounced to the shrine, the seat of Hakurei might have been once again emptied... Ah, it doesn't seem this child will permit me to retire in the foreseeable future...")
 			{ ID = "l121" };
 		
-		public static readonly LString l122 = new LString("How lucky the humans are to retire at only 67 years of age.")
+		public static readonly LString l122 = new LText("How lucky the humans are to retire at only 67 years of age.")
 			{ ID = "l122" };
 		
-		public static readonly LString l123 = new LString("Right? And here I am pushing **** years...")
+		public static readonly LString l123 = new LText("Right? And here I am pushing **** years...")
 			{ ID = "l123" };
 		
-		public static readonly LString l124 = new LString("But if you kick the bucket at 70, it's really not--")
+		public static readonly LString l124 = new LText("But if you kick the bucket at 70, it's really not--")
 			{ ID = "l124" };
 		
-		public static readonly LString l125 = new LString("Anyways, to return to the point, I'm not talking about humans dying of thirst. I'm talking about society.")
+		public static readonly LString l125 = new LText("Anyways, to return to the point, I'm not talking about humans dying of thirst. I'm talking about society.")
 			{ ID = "l125" };
 		
-		public static readonly LString l126 = new LString("Society thrives on water. Agriculture doesn't function without rain to water the crops, or advanced irrigation systems to carry water from rivers.")
+		public static readonly LString l126 = new LText("Society thrives on water. Agriculture doesn't function without rain to water the crops, or advanced irrigation systems to carry water from rivers.")
 			{ ID = "l126" };
 		
-		public static readonly LString l126_1 = new LString("Transportation by land is unimaginably inefficient and expensive compared to sea transport. And a good sea can feed a state on its bounty.")
+		public static readonly LString l126_1 = new LText("Transportation by land is unimaginably inefficient and expensive compared to sea transport. And a good sea can feed a state on its bounty.")
 			{ ID = "l126_1" };
 		
-		public static readonly LString l127 = new LString("And this country most of all! This country has survived for over a thousand years on rice paddies and fisheries alone. The land is barren, but we survive by the power of water.")
+		public static readonly LString l127 = new LText("And this country most of all! This country has survived for over a thousand years on rice paddies and fisheries alone. The land is barren, but we survive by the power of water.")
 			{ ID = "l127" };
 		
-		public static readonly LString l128 = new LString("And here in Gensoukyou-- locked away from the wealth of the oceans at the whims of the Youkai of Boundaries-- what keeps society alive if not the rain?")
+		public static readonly LString l128 = new LText("And here in Gensoukyou-- locked away from the wealth of the oceans at the whims of the Youkai of Boundaries-- what keeps society alive if not the rain?")
 			{ ID = "l128" };
 		
-		public static readonly LString l129 = new LString("Sorry... I was planning to code up an ocean implementation in version 2.0, but the interfaces I prepared in 1.0 weren't flexible enough, and I promised four major releases for backwards compatibility...")
+		public static readonly LString l129 = new LText("Sorry... I was planning to code up an ocean implementation in version 2.0, but the interfaces I prepared in 1.0 weren't flexible enough, and I promised four major releases for backwards compatibility...")
 			{ ID = "l129" };
 		
-		public static readonly LString l130 = new LString("Wait. I don't really care about any of that. I just want to know why the rain can't be stopped.")
+		public static readonly LString l130 = new LText("Wait. I don't really care about any of that. I just want to know why the rain can't be stopped.")
 			{ ID = "l130" };
 		
-		public static readonly LString l131 = new LString("Well, you see, rain is a cycle.")
+		public static readonly LString l131 = new LText("Well, you see, rain is a cycle.")
 			{ ID = "l131" };
 		
-		public static readonly LString l132 = new LString("There are four steps to the rain cycle. Right now, the rain is falling from the clouds above. Let's say that's the first step.")
+		public static readonly LString l132 = new LText("There are four steps to the rain cycle. Right now, the rain is falling from the clouds above. Let's say that's the first step.")
 			{ ID = "l132" };
 		
-		public static readonly LString l133 = new LString("The rain that falls will flow through rivers and waterfalls and even the earth itself, and eventually end up in lakes or oceans. That's the second step.")
+		public static readonly LString l133 = new LText("The rain that falls will flow through rivers and waterfalls and even the earth itself, and eventually end up in lakes or oceans. That's the second step.")
 			{ ID = "l133" };
 		
-		public static readonly LString l134 = new LString("Then, depending on the temperature and humidity, some of the water in the lakes and oceans will evaporate into water vapor and rise into the sky. That's the third step.")
+		public static readonly LString l134 = new LText("Then, depending on the temperature and humidity, some of the water in the lakes and oceans will evaporate into water vapor and rise into the sky. That's the third step.")
 			{ ID = "l134" };
 		
-		public static readonly LString l135 = new LString("Finally, the water vapor will stick together and form clouds of water, and when the clouds are just a little bit too heavy for the temperature and humidity, they break open and the rain starts falling.")
+		public static readonly LString l135 = new LText("Finally, the water vapor will stick together and form clouds of water, and when the clouds are just a little bit too heavy for the temperature and humidity, they break open and the rain starts falling.")
 			{ ID = "l135" };
 		
-		public static readonly LString l136 = new LString("And that's the cycle.")
+		public static readonly LString l136 = new LText("And that's the cycle.")
 			{ ID = "l136" };
 		
-		public static readonly LString l137 = new LString("You can't just stop a natural cycle. If you don't want the rain to fall, you have to prevent water vapor from condensing, which means you have to prevent water from evaporating...")
+		public static readonly LString l137 = new LText("You can't just stop a natural cycle. If you don't want the rain to fall, you have to prevent water vapor from condensing, which means you have to prevent water from evaporating...")
 			{ ID = "l137" };
 		
-		public static readonly LString l137_1 = new LString("which means you have to prevent the runoff from flowing, which means you have to stop the rain from falling. It's circular.")
+		public static readonly LString l137_1 = new LText("which means you have to prevent the runoff from flowing, which means you have to stop the rain from falling. It's circular.")
 			{ ID = "l137_1" };
 		
-		public static readonly LString l138 = new LString("The only way to stop a cycle as powerful as this... would probably be to destabilize the climate to the point where basic natural processes stopped functioning. But then everyone would die, so that's not a good idea.")
+		public static readonly LString l138 = new LText("The only way to stop a cycle as powerful as this... would probably be to destabilize the climate to the point where basic natural processes stopped functioning. But then everyone would die, so that's not a good idea.")
 			{ ID = "l138" };
 		
-		public static readonly LString l139 = new LString("Ah! Like California!")
+		public static readonly LString l139 = new LText("Ah! Like California!")
 			{ ID = "l139" };
 		
-		public static readonly LString l140 = new LString("What's California?")
+		public static readonly LString l140 = new LText("What's California?")
 			{ ID = "l140" };
 		
-		public static readonly LString l141 = new LString("It's a place where the rain stopped falling, and then everyone died.")
+		public static readonly LString l141 = new LText("It's a place where the rain stopped falling, and then everyone died.")
 			{ ID = "l141" };
 		
-		public static readonly LString l142 = new LString("<size=0.25>And yet real estate prices are still going up.</size>")
+		public static readonly LString l142 = new LText("<size=0.25>And yet real estate prices are still going up.</size>")
 			{ ID = "l142" };
 		
-		public static readonly LString l143 = new LString("I suppose that sounds about right. They're having a lot of trouble outside, it seems.")
+		public static readonly LString l143 = new LText("I suppose that sounds about right. They're having a lot of trouble outside, it seems.")
 			{ ID = "l143" };
 		
-		public static readonly LString l144 = new LString("Wait, but there was one other thing. Sanae said you're the god of <ruby=Sky>Qian</ruby>, so shouldn't you be able to control the wind and the rain?")
+		public static readonly LString l144 = new LText("Wait, but there was one other thing. Sanae said you're the god of <ruby=Sky>Qian</ruby>, so shouldn't you be able to control the wind and the rain?")
 			{ ID = "l144" };
 		
-		public static readonly LString l145 = new LString("Oh, wait, that's right. I'm the god of <ruby=Sky>Qian</ruby>, and therefore I control the rain. That is a... valid argument.")
+		public static readonly LString l145 = new LText("Oh, wait, that's right. I'm the god of <ruby=Sky>Qian</ruby>, and therefore I control the rain. That is a... valid argument.")
 			{ ID = "l145" };
 		
-		public static readonly LString l146 = new LString("So can you stop the rain?!")
+		public static readonly LString l146 = new LText("So can you stop the rain?!")
 			{ ID = "l146" };
 		
-		public static readonly LString l147 = new LString("...No.")
+		public static readonly LString l147 = new LText("...No.")
 			{ ID = "l147" };
 		
-		public static readonly LString l148 = new LString("Wait. I'm pretty sure there's a logical error here. To repeat, you are the god of <ruby=Sky>Qian</ruby>, right?")
+		public static readonly LString l148 = new LText("Wait. I'm pretty sure there's a logical error here. To repeat, you are the god of <ruby=Sky>Qian</ruby>, right?")
 			{ ID = "l148" };
 		
-		public static readonly LString l149 = new LString("Yes.")
+		public static readonly LString l149 = new LText("Yes.")
 			{ ID = "l149" };
 		
-		public static readonly LString l150 = new LString("And because <ruby=Sky>Qian</ruby> has dominion over the wind and rain, you have control over the rain, right?")
+		public static readonly LString l150 = new LText("And because <ruby=Sky>Qian</ruby> has dominion over the wind and rain, you have control over the rain, right?")
 			{ ID = "l150" };
 		
-		public static readonly LString l151 = new LString("Yes.")
+		public static readonly LString l151 = new LText("Yes.")
 			{ ID = "l151" };
 		
-		public static readonly LString l152 = new LString("And if you have <i>control</i> over a process, then you must be able to arbitrarily stop it when it is occurring, right?")
+		public static readonly LString l152 = new LText("And if you have <i>control</i> over a process, then you must be able to arbitrarily stop it when it is occurring, right?")
 			{ ID = "l152" };
 		
-		public static readonly LString l153 = new LString("That makes sense to me.")
+		public static readonly LString l153 = new LText("That makes sense to me.")
 			{ ID = "l153" };
 		
-		public static readonly LString l154 = new LString("Therefore, you can arbitrarily stop the rain right now.")
+		public static readonly LString l154 = new LText("Therefore, you can arbitrarily stop the rain right now.")
 			{ ID = "l154" };
 		
-		public static readonly LString l155 = new LString("...No.")
+		public static readonly LString l155 = new LText("...No.")
 			{ ID = "l155" };
 		
-		public static readonly LString l156 = new LString("What?! Why not?")
+		public static readonly LString l156 = new LText("What?! Why not?")
 			{ ID = "l156" };
 		
-		public static readonly LString l157 = new LString("Y- uh, you know, the... One thing I should... excuse me for one second.")
+		public static readonly LString l157 = new LText("Y- uh, you know, the... One thing I should... excuse me for one second.")
 			{ ID = "l157" };
 		
-		public static readonly LString l158 = new LString("Oh yeah! Rain is a cycle, right? So what about the part where water evaporates? That'd be <ruby=Lake>Dui</ruby> instead of <ruby=Sky>Qian</ruby>, right? You said that water evaporates from lakes and oceans.")
+		public static readonly LString l158 = new LText("Oh yeah! Rain is a cycle, right? So what about the part where water evaporates? That'd be <ruby=Lake>Dui</ruby> instead of <ruby=Sky>Qian</ruby>, right? You said that water evaporates from lakes and oceans.")
 			{ ID = "l158" };
 		
-		public static readonly LString l159 = new LString("I think the evaporation would be <ruby=River>Kan</ruby>, since it involves a dynamic movement of water.")
+		public static readonly LString l159 = new LText("I think the evaporation would be <ruby=River>Kan</ruby>, since it involves a dynamic movement of water.")
 			{ ID = "l159" };
 		
-		public static readonly LString l160 = new LString("No, I'm pretty sure evaporation is <ruby=Fire>Li</ruby>, since fire symbolizes separation, like how the water separates from the earth and rises to the sky.")
+		public static readonly LString l160 = new LText("No, I'm pretty sure evaporation is <ruby=Fire>Li</ruby>, since fire symbolizes separation, like how the water separates from the earth and rises to the sky.")
 			{ ID = "l160" };
 		
-		public static readonly LString l161 = new LString("Point is, you don't control it.")
+		public static readonly LString l161 = new LText("Point is, you don't control it.")
 			{ ID = "l161" };
 		
-		public static readonly LString l162 = new LString("Mmph... that is correct.")
+		public static readonly LString l162 = new LText("Mmph... that is correct.")
 			{ ID = "l162" };
 		
-		public static readonly LString l163 = new LString("What about the temperature? You said the temperature determines when rainfall starts, right? And that's <ruby=Fire>Li</ruby>, right?")
+		public static readonly LString l163 = new LText("What about the temperature? You said the temperature determines when rainfall starts, right? And that's <ruby=Fire>Li</ruby>, right?")
 			{ ID = "l163" };
 		
-		public static readonly LString l164 = new LString("I'd rather put it under <ruby=Wind>Xun</ruby> given that it governs state-of-being as an ambient force.")
+		public static readonly LString l164 = new LText("I'd rather put it under <ruby=Wind>Xun</ruby> given that it governs state-of-being as an ambient force.")
 			{ ID = "l164" };
 		
-		public static readonly LString l165 = new LString("But if you consider the moment itself when the rain breaks, as a sort of irruption of change, then it's more like <ruby=Thunder>Zhen</ruby>.")
+		public static readonly LString l165 = new LText("But if you consider the moment itself when the rain breaks, as a sort of irruption of change, then it's more like <ruby=Thunder>Zhen</ruby>.")
 			{ ID = "l165" };
 		
-		public static readonly LString l166 = new LString("But you don't control it.")
+		public static readonly LString l166 = new LText("But you don't control it.")
 			{ ID = "l166" };
 		
-		public static readonly LString l167 = new LString("...I suppose that is the case.")
+		public static readonly LString l167 = new LText("...I suppose that is the case.")
 			{ ID = "l167" };
 		
-		public static readonly LString l168 = new LString("Or the part where rainwater seeps deep into the earth's crust and revitalizes the soil, which would be <ruby=Earth>Kun</ruby>, right?")
+		public static readonly LString l168 = new LText("Or the part where rainwater seeps deep into the earth's crust and revitalizes the soil, which would be <ruby=Earth>Kun</ruby>, right?")
 			{ ID = "l168" };
 		
-		public static readonly LString l169 = new LString("...")
+		public static readonly LString l169 = new LText("...")
 			{ ID = "l169" };
 		
-		public static readonly LString l170 = new LString("...")
+		public static readonly LString l170 = new LText("...")
 			{ ID = "l170" };
 		
-		public static readonly LString l171 = new LString("It is <ruby=Earth>Kun</ruby>, right?")
+		public static readonly LString l171 = new LText("It is <ruby=Earth>Kun</ruby>, right?")
 			{ ID = "l171" };
 		
-		public static readonly LString l172 = new LString("Suwako would probably say it is.")
+		public static readonly LString l172 = new LText("Suwako would probably say it is.")
 			{ ID = "l172" };
 		
-		public static readonly LString l173 = new LString("...I do not control that either.")
+		public static readonly LString l173 = new LText("...I do not control that either.")
 			{ ID = "l173" };
 		
-		public static readonly LString l174 = new LString("I see. Well, there's only one way to understand this state of affairs. Kanako, in reality, you don't--")
+		public static readonly LString l174 = new LText("I see. Well, there's only one way to understand this state of affairs. Kanako, in reality, you don't--")
 			{ ID = "l174" };
 		
-		public static readonly LString l175 = new LString("Stop! You can't say that, Reimu!")
+		public static readonly LString l175 = new LText("Stop! You can't say that, Reimu!")
 			{ ID = "l175" };
 		
-		public static readonly LString l176 = new LString("You can say it, just keep it down so nobody else hears, alright?")
+		public static readonly LString l176 = new LText("You can say it, just keep it down so nobody else hears, alright?")
 			{ ID = "l176" };
 		
-		public static readonly LString l177 = new LString("--You don't handle all this alone, do you? There must be some other gods you work with to manage all the weather stuff.")
+		public static readonly LString l177 = new LText("--You don't handle all this alone, do you? There must be some other gods you work with to manage all the weather stuff.")
 			{ ID = "l177" };
 		
-		public static readonly LString l178 = new LString("...")
+		public static readonly LString l178 = new LText("...")
 			{ ID = "l178" };
 		
-		public static readonly LString l179 = new LString("Well, I understand why you don't split the credit. It's probably easier for everyone if you present a unified front to the public, right? Since that's already how it works here with Suwako.")
+		public static readonly LString l179 = new LText("Well, I understand why you don't split the credit. It's probably easier for everyone if you present a unified front to the public, right? Since that's already how it works here with Suwako.")
 			{ ID = "l179" };
 		
-		public static readonly LString l180 = new LString("Y-yes, yes. Just like the Moriya Shrine itself, I don't do all the work, but I do claim all the credit.")
+		public static readonly LString l180 = new LText("Y-yes, yes. Just like the Moriya Shrine itself, I don't do all the work, but I do claim all the credit.")
 			{ ID = "l180" };
 		
-		public static readonly LString l181 = new LString("I get how you feel. It's pretty difficult not doing the work, isn't it?")
+		public static readonly LString l181 = new LText("I get how you feel. It's pretty difficult not doing the work, isn't it?")
 			{ ID = "l181" };
 		
-		public static readonly LString l182 = new LString("I... suppose?")
+		public static readonly LString l182 = new LText("I... suppose?")
 			{ ID = "l182" };
 		
-		public static readonly LString l183 = new LString("And since you're working with a bunch of other gods, you can't just make random decisions on your own, right?")
+		public static readonly LString l183 = new LText("And since you're working with a bunch of other gods, you can't just make random decisions on your own, right?")
 			{ ID = "l183" };
 		
-		public static readonly LString l184 = new LString("Even the gods get bogged down in bureaucracy, you see. I might have authority over the rain, but if I do something stupid, I could get censured and lose my pension. So while I <i>can</i> stop the rain... I also <i>can't</i>.")
+		public static readonly LString l184 = new LText("Even the gods get bogged down in bureaucracy, you see. I might have authority over the rain, but if I do something stupid, I could get censured and lose my pension. So while I <i>can</i> stop the rain... I also <i>can't</i>.")
 			{ ID = "l184" };
 		
-		public static readonly LString l185 = new LString("Yeah, it's tough keeping your pension. Sometimes I feel like I'm on the border of getting mine slashed.")
+		public static readonly LString l185 = new LText("Yeah, it's tough keeping your pension. Sometimes I feel like I'm on the border of getting mine slashed.")
 			{ ID = "l185" };
 		
-		public static readonly LString l186 = new LString("Reimu, you don't have a pension.")
+		public static readonly LString l186 = new LText("Reimu, you don't have a pension.")
 			{ ID = "l186" };
 		
-		public static readonly LString l187 = new LString("What?! Did I already lose it all?!")
+		public static readonly LString l187 = new LText("What?! Did I already lose it all?!")
 			{ ID = "l187" };
 		
-		public static readonly LString l188 = new LString("...You're self-employed.")
+		public static readonly LString l188 = new LText("...You're self-employed.")
 			{ ID = "l188" };
 		
-		public static readonly LString l189 = new LString("I know, but what does that have to do with anything?")
+		public static readonly LString l189 = new LText("I know, but what does that have to do with anything?")
 			{ ID = "l189" };
 		
-		public static readonly LString l190 = new LString("...")
+		public static readonly LString l190 = new LText("...")
 			{ ID = "l190" };
 		
-		public static readonly LString l191 = new LString("...")
+		public static readonly LString l191 = new LText("...")
 			{ ID = "l191" };
 		
-		public static readonly LString l192 = new LString("...")
+		public static readonly LString l192 = new LText("...")
 			{ ID = "l192" };
 		
-		public static readonly LString l193 = new LString("So, that said, you can see why it'd be troublesome if you talked about these circumstances, right? So let's keep this a secret, OK?")
+		public static readonly LString l193 = new LText("So, that said, you can see why it'd be troublesome if you talked about these circumstances, right? So let's keep this a secret, OK?")
 			{ ID = "l193" };
 		
-		public static readonly LString l194 = new LString("Yup! From one religious figure to another, I understand!")
+		public static readonly LString l194 = new LText("Yup! From one religious figure to another, I understand!")
 			{ ID = "l194" };
 		
-		public static readonly LString l195 = new LString("Alright. In that case, I have to deal with some shrine stuff, so I'll be taking my leave. Another day!")
+		public static readonly LString l195 = new LText("Alright. In that case, I have to deal with some shrine stuff, so I'll be taking my leave. Another day!")
 			{ ID = "l195" };
 		
-		public static readonly LString l196 = new LString("Kanako shuffled away, unwilling to expose herself any longer to the danger of Reimu's unaimed logic.")
+		public static readonly LString l196 = new LText("Kanako shuffled away, unwilling to expose herself any longer to the danger of Reimu's unaimed logic.")
 			{ ID = "l196" };
 		
-		public static readonly LString l197 = new LString("Well, I'm satisfied. All my questions have been answered. Let's head back home.")
+		public static readonly LString l197 = new LText("Well, I'm satisfied. All my questions have been answered. Let's head back home.")
 			{ ID = "l197" };
 		
-		public static readonly LString l198 = new LString("Oh? You like the rain now?")
+		public static readonly LString l198 = new LText("Oh? You like the rain now?")
 			{ ID = "l198" };
 		
-		public static readonly LString l199 = new LString("Huh? Why would I like the rain? I hate the rain. I've just gained an understanding for why there's no choice but to shut up and deal with it.")
+		public static readonly LString l199 = new LText("Huh? Why would I like the rain? I hate the rain. I've just gained an understanding for why there's no choice but to shut up and deal with it.")
 			{ ID = "l199" };
 		
-		public static readonly LString l200 = new LString("What?! We've ended up in a position that's worse than where we started!")
+		public static readonly LString l200 = new LText("What?! We've ended up in a position that's worse than where we started!")
 			{ ID = "l200" };
 		
-		public static readonly LString l201 = new LString("What are you waiting for, Yukari? Let's leave already. I have to go back to being depressed.")
+		public static readonly LString l201 = new LText("What are you waiting for, Yukari? Let's leave already. I have to go back to being depressed.")
 			{ ID = "l201" };
 		
-		public static readonly LString l202 = new LString("No! I won't let it end like this! I need to find someone else... someone else...")
+		public static readonly LString l202 = new LText("No! I won't let it end like this! I need to find someone else... someone else...")
 			{ ID = "l202" };
 		
-		public static readonly LString l203 = new LString("That's right! Let's go see my cute little familiar.")
+		public static readonly LString l203 = new LText("That's right! Let's go see my cute little familiar.")
 			{ ID = "l203" };
 		
-		public static readonly LString l204 = new LString("Ran?")
+		public static readonly LString l204 = new LText("Ran?")
 			{ ID = "l204" };
 		
-		public static readonly LString l205 = new LString("No, Ran is the cool one.")
+		public static readonly LString l205 = new LText("No, Ran is the cool one.")
 			{ ID = "l205" };
 		
-		public static readonly LString l206 = new LString("Then Chen?")
+		public static readonly LString l206 = new LText("Then Chen?")
 			{ ID = "l206" };
 		
-		public static readonly LString l207 = new LString("Chen isn't my familiar.")
+		public static readonly LString l207 = new LText("Chen isn't my familiar.")
 			{ ID = "l207" };
 		
-		public static readonly LString l208 = new LString("Then--")
+		public static readonly LString l208 = new LText("Then--")
 			{ ID = "l208" };
 		
-		public static readonly LString l209 = new LString("The portal is ready!")
+		public static readonly LString l209 = new LText("The portal is ready!")
 			{ ID = "l209" };
 		
-		public static readonly LString l210 = new LString("Wait wait wait wait wait!")
+		public static readonly LString l210 = new LText("Wait wait wait wait wait!")
 			{ ID = "l210" };
 		
-		public static readonly LString l211 = new LString("...Damn, I was too slow. Now where the hell am I? This is still the mountain... right?")
+		public static readonly LString l211 = new LText("...Damn, I was too slow. Now where the hell am I? This is still the mountain... right?")
 			{ ID = "l211" };
 		
-		public static readonly LString l212 = new LString("Suddenly, Reimu heard the sound of trees rustling, but in the fog, she couldn't see rustling trees, no matter how many times she spun around.")
+		public static readonly LString l212 = new LText("Suddenly, Reimu heard the sound of trees rustling, but in the fog, she couldn't see rustling trees, no matter how many times she spun around.")
 			{ ID = "l212" };
 		
-		public static readonly LString l213 = new LString("Who's there?! Show yourself!")
+		public static readonly LString l213 = new LText("Who's there?! Show yourself!")
 			{ ID = "l213" };
 		
-		public static readonly LString l214 = new LString("Reimu? What's up? What're you doing out here in the rain?")
+		public static readonly LString l214 = new LText("Reimu? What's up? What're you doing out here in the rain?")
 			{ ID = "l214" };
 		
-		public static readonly LString l215 = new LString("Oh, huh... well, I guess I'm looking for Yukari's familiar.")
+		public static readonly LString l215 = new LText("Oh, huh... well, I guess I'm looking for Yukari's familiar.")
 			{ ID = "l215" };
 		
-		public static readonly LString l216 = new LString("(Ran? In this rain, she must have hidden herself in a fox den somewhere.)")
+		public static readonly LString l216 = new LText("(Ran? In this rain, she must have hidden herself in a fox den somewhere.)")
 			{ ID = "l216" };
 		
-		public static readonly LString l217 = new LString("(If it's not Ran, it must be... Aya!)")
+		public static readonly LString l217 = new LText("(If it's not Ran, it must be... Aya!)")
 			{ ID = "l217" };
 		
-		public static readonly LString l218 = new LString("So, on that note, can I ask you a question?")
+		public static readonly LString l218 = new LText("So, on that note, can I ask you a question?")
 			{ ID = "l218" };
 		
-		public static readonly LString l219 = new LString("Uh... sure? Though I'm not a fox, so I'm not sure I can help you find her...")
+		public static readonly LString l219 = new LText("Uh... sure? Though I'm not a fox, so I'm not sure I can help you find her...")
 			{ ID = "l219" };
 		
-		public static readonly LString l220 = new LString("It's not about foxes. My problem is, like, I was thinking about how the rain can't be helped...")
+		public static readonly LString l220 = new LText("It's not about foxes. My problem is, like, I was thinking about how the rain can't be helped...")
 			{ ID = "l220" };
 		
-		public static readonly LString l221 = new LString("Can't be helped...? Why does the rain need help?...")
+		public static readonly LString l221 = new LText("Can't be helped...? Why does the rain need help?...")
 			{ ID = "l221" };
 		
-		public static readonly LString l222 = new LString("Wait, pollution?! Is someone out there producing negative externalities?! I'll get a hit piece done on them by Monday!")
+		public static readonly LString l222 = new LText("Wait, pollution?! Is someone out there producing negative externalities?! I'll get a hit piece done on them by Monday!")
 			{ ID = "l222" };
 		
-		public static readonly LString l223 = new LString("Not pollution, but, you know, the rain is annoying, so I thought that maybe I could ask Kanako to stop the rain, but it turns out there are multiple gods and a lot of bureaucracy involved in the consensus on the timing, duration, and severity of the rain, so such easy adjustments aren't possible, so it's like, I just have to deal with the gods' decision--")
+		public static readonly LString l223 = new LText("Not pollution, but, you know, the rain is annoying, so I thought that maybe I could ask Kanako to stop the rain, but it turns out there are multiple gods and a lot of bureaucracy involved in the consensus on the timing, duration, and severity of the rain, so such easy adjustments aren't possible, so it's like, I just have to deal with the gods' decision--")
 			{ ID = "l223" };
 		
-		public static readonly LString l224 = new LString("For what it's worth, I'm an atheist, so I don't believe in that made-up nonsense.")
+		public static readonly LString l224 = new LText("For what it's worth, I'm an atheist, so I don't believe in that made-up nonsense.")
 			{ ID = "l224" };
 		
-		public static readonly LString l225 = new LString("An... atheist?")
+		public static readonly LString l225 = new LText("An... atheist?")
 			{ ID = "l225" };
 		
-		public static readonly LString l226 = new LString("You know, I hold the belief that religion is a fraud and that the gods don't have any special power over natural phenomena. The rain? That's just chemistry. No gods required.")
+		public static readonly LString l226 = new LText("You know, I hold the belief that religion is a fraud and that the gods don't have any special power over natural phenomena. The rain? That's just chemistry. No gods required.")
 			{ ID = "l226" };
 		
-		public static readonly LString l227 = new LString("Reimu stood there for a few moments, chewing on these words. But before her decision was visible on her face...")
+		public static readonly LString l227 = new LText("Reimu stood there for a few moments, chewing on these words. But before her decision was visible on her face...")
 			{ ID = "l227" };
 		
-		public static readonly LString l228 = new LString("her gohei flew out in front of her, pointing threateningly at Aya, who jumped back a few steps but, without her wings to stabilize her, stumbled slightly upon landing.")
+		public static readonly LString l228 = new LText("her gohei flew out in front of her, pointing threateningly at Aya, who jumped back a few steps but, without her wings to stabilize her, stumbled slightly upon landing.")
 			{ ID = "l228" };
 		
-		public static readonly LString l229 = new LString("Hey! Why are you pointing that at me? I didn't do anything wrong yet!")
+		public static readonly LString l229 = new LText("Hey! Why are you pointing that at me? I didn't do anything wrong yet!")
 			{ ID = "l229" };
 		
-		public static readonly LString l230 = new LString("Atheism is impermissible! To deny the power of the gods is to deny the foundations upon which our society is built! As an agent of the state, I shall exterminate you for your crimes!")
+		public static readonly LString l230 = new LText("Atheism is impermissible! To deny the power of the gods is to deny the foundations upon which our society is built! As an agent of the state, I shall exterminate you for your crimes!")
 			{ ID = "l230" };
 		
-		public static readonly LString l231 = new LString("Wait! Article 28! Article 28 grants religious freedom! If you exterminate me for being an atheist, that's a violation of my constitutional rights!")
+		public static readonly LString l231 = new LText("Wait! Article 28! Article 28 grants religious freedom! If you exterminate me for being an atheist, that's a violation of my constitutional rights!")
 			{ ID = "l231" };
 		
-		public static readonly LString l232 = new LString("Belief must be institutionalized and recognized by the state in order to be categorized as religion. And Gensoukyou considers atheism to be not a religion, but a delusion that undermines the social fabric and threatens the very existence of society!")
+		public static readonly LString l232 = new LText("Belief must be institutionalized and recognized by the state in order to be categorized as religion. And Gensoukyou considers atheism to be not a religion, but a delusion that undermines the social fabric and threatens the very existence of society!")
 			{ ID = "l232" };
 		
-		public static readonly LString l233 = new LString("Any grant of religious freedom by an authority is predicated on that authority's right to draw the line between religion and superstition. By exterminating you, just as my forbearers exterminated the fox-messengers and the fortune-tellers, I shall show you just where that line lies!")
+		public static readonly LString l233 = new LText("Any grant of religious freedom by an authority is predicated on that authority's right to draw the line between religion and superstition. By exterminating you, just as my forbearers exterminated the fox-messengers and the fortune-tellers, I shall show you just where that line lies!")
 			{ ID = "l233" };
 		
-		public static readonly LString l234 = new LString("Why are <i>you</i> so knowledgeable about this?!")
+		public static readonly LString l234 = new LText("Why are <i>you</i> so knowledgeable about this?!")
 			{ ID = "l234" };
 		
-		public static readonly LString l235 = new LString("...I guess Hatate told me about it when we were talking about you.")
+		public static readonly LString l235 = new LText("...I guess Hatate told me about it when we were talking about you.")
 			{ ID = "l235" };
 		
-		public static readonly LString l236 = new LString("That bitch! She's probably getting off watching this right now, isn't she? Eh, Hatate?! You find this funny, Hatate?! You, a fucking spirit photographer?! Spirit photography is OK, but a little bit of skepticism isn't?! Is that funny to you, Hatate?!")
+		public static readonly LString l236 = new LText("That bitch! She's probably getting off watching this right now, isn't she? Eh, Hatate?! You find this funny, Hatate?! You, a fucking spirit photographer?! Spirit photography is OK, but a little bit of skepticism isn't?! Is that funny to you, Hatate?!")
 			{ ID = "l236" };
 		
-		public static readonly LString l237 = new LString("Are you done? I'd rather not stay out long in the rain, so can we get this extermination over with quickly?")
+		public static readonly LString l237 = new LText("Are you done? I'd rather not stay out long in the rain, so can we get this extermination over with quickly?")
 			{ ID = "l237" };
 		
-		public static readonly LString l238 = new LString("Wait! Even if you <i>can</i> exterminate me here, you <i>shouldn't</i>! Because of Hegelian dialectics!")
+		public static readonly LString l238 = new LText("Wait! Even if you <i>can</i> exterminate me here, you <i>shouldn't</i>! Because of Hegelian dialectics!")
 			{ ID = "l238" };
 		
-		public static readonly LString l239 = new LString("You have a thesis-- that of the primacy of religion-- but it lacks completeness in terms of its explanatory power. Otherwise you wouldn't be here asking about the rain, right?")
+		public static readonly LString l239 = new LText("You have a thesis-- that of the primacy of religion-- but it lacks completeness in terms of its explanatory power. Otherwise you wouldn't be here asking about the rain, right?")
 			{ ID = "l239" };
 		
-		public static readonly LString l239_1 = new LString("So in order to improve this thesis, you must sublate its negation-- that is, atheism-- in order to arrive at a concrete answer!")
+		public static readonly LString l239_1 = new LText("So in order to improve this thesis, you must sublate its negation-- that is, atheism-- in order to arrive at a concrete answer!")
 			{ ID = "l239_1" };
 		
-		public static readonly LString l240 = new LString("Huh...")
+		public static readonly LString l240 = new LText("Huh...")
 			{ ID = "l240" };
 		
-		public static readonly LString l241 = new LString("Precisely because atheism is opposed to your thought, you must understand <i>how</i> it operates in order to move forwards! So if you want to become an even better shrine maiden, you need to understand my philosophy, and you can't do that if you exterminate me!")
+		public static readonly LString l241 = new LText("Precisely because atheism is opposed to your thought, you must understand <i>how</i> it operates in order to move forwards! So if you want to become an even better shrine maiden, you need to understand my philosophy, and you can't do that if you exterminate me!")
 			{ ID = "l241" };
 		
-		public static readonly LString l242 = new LString("Hmm... sounds kinda sus to me...")
+		public static readonly LString l242 = new LText("Hmm... sounds kinda sus to me...")
 			{ ID = "l242" };
 		
-		public static readonly LString l243 = new LString("You see, Sanae isn't smart enough to understand these kinds of complexities. But you're capable of understanding, right? Because you're the smartest and bestest shrine maiden in Gensoukyou. Right?")
+		public static readonly LString l243 = new LText("You see, Sanae isn't smart enough to understand these kinds of complexities. But you're capable of understanding, right? Because you're the smartest and bestest shrine maiden in Gensoukyou. Right?")
 			{ ID = "l243" };
 		
-		public static readonly LString l244 = new LString("Yeah! That's right!")
+		public static readonly LString l244 = new LText("Yeah! That's right!")
 			{ ID = "l244" };
 		
-		public static readonly LString l245 = new LString("Well, in that case, I guess I have no choice. I'll lend an ear. So tell me, what's with all the damn rain?")
+		public static readonly LString l245 = new LText("Well, in that case, I guess I have no choice. I'll lend an ear. So tell me, what's with all the damn rain?")
 			{ ID = "l245" };
 		
-		public static readonly LString l246 = new LString("Well, you see, rain is a cycle.")
+		public static readonly LString l246 = new LText("Well, you see, rain is a cycle.")
 			{ ID = "l246" };
 		
-		public static readonly LString l247 = new LString("There are four steps to the rain cycle. Right now, the rain is falling from the clouds above. Let's say that's the first step.")
+		public static readonly LString l247 = new LText("There are four steps to the rain cycle. Right now, the rain is falling from the clouds above. Let's say that's the first step.")
 			{ ID = "l247" };
 		
-		public static readonly LString l248 = new LString("The rain that falls will flow through--")
+		public static readonly LString l248 = new LText("The rain that falls will flow through--")
 			{ ID = "l248" };
 		
-		public static readonly LString l249 = new LString("Kanako already told me about that.")
+		public static readonly LString l249 = new LText("Kanako already told me about that.")
 			{ ID = "l249" };
 		
-		public static readonly LString l250 = new LString("She did? Well, I guess she does enjoy science, after all.")
+		public static readonly LString l250 = new LText("She did? Well, I guess she does enjoy science, after all.")
 			{ ID = "l250" };
 		
-		public static readonly LString l251 = new LString("In that case, why are you believing that drivel about the gods controlling the rain? Normally, people fall for those religious frauds because they don't understand how the science works. But you understand the science, don't you?")
+		public static readonly LString l251 = new LText("In that case, why are you believing that drivel about the gods controlling the rain? Normally, people fall for those religious frauds because they don't understand how the science works. But you understand the science, don't you?")
 			{ ID = "l251" };
 		
-		public static readonly LString l252 = new LString("Well, since Kanako controls Qian, doesn't it follow that she'd be the god of the wind and rain?")
+		public static readonly LString l252 = new LText("Well, since Kanako controls Qian, doesn't it follow that she'd be the god of the wind and rain?")
 			{ ID = "l252" };
 		
-		public static readonly LString l253 = new LString("No. Having an ability related to Qian doesn't automatically give one complete authority over the wind and rain.")
+		public static readonly LString l253 = new LText("No. Having an ability related to Qian doesn't automatically give one complete authority over the wind and rain.")
 			{ ID = "l253" };
 		
-		public static readonly LString l254 = new LString("If Kanako wants to claim that she controls the wind and rain, then she has to prove it. But she can't prove it, so we have no reason to believe that claim.")
+		public static readonly LString l254 = new LText("If Kanako wants to claim that she controls the wind and rain, then she has to prove it. But she can't prove it, so we have no reason to believe that claim.")
 			{ ID = "l254" };
 		
-		public static readonly LString l255 = new LString("Like, it'd be more correct for me to say that I'm the reincarnation of Hermes as the god of speed.")
+		public static readonly LString l255 = new LText("Like, it'd be more correct for me to say that I'm the reincarnation of Hermes as the god of speed.")
 			{ ID = "l255" };
 		
-		public static readonly LString l256 = new LString("What?! Aya, you're a god?!")
+		public static readonly LString l256 = new LText("What?! Aya, you're a god?!")
 			{ ID = "l256" };
 		
-		public static readonly LString l257 = new LString("No! That's the point! I'm really fast, and that's all there is to it! Godhood doesn't enter into the equation!")
+		public static readonly LString l257 = new LText("No! That's the point! I'm really fast, and that's all there is to it! Godhood doesn't enter into the equation!")
 			{ ID = "l257" };
 		
-		public static readonly LString l258 = new LString("This is how they get you! They show you something completely normal and then say something completely outlandish!")
+		public static readonly LString l258 = new LText("This is how they get you! They show you something completely normal and then say something completely outlandish!")
 			{ ID = "l258" };
 		
-		public static readonly LString l259 = new LString("There are no gods in Gensoukyou! They're all frauds!")
+		public static readonly LString l259 = new LText("There are no gods in Gensoukyou! They're all frauds!")
 			{ ID = "l259" };
 		
-		public static readonly LString l260 = new LString("Whoa... All of them?")
+		public static readonly LString l260 = new LText("Whoa... All of them?")
 			{ ID = "l260" };
 		
-		public static readonly LString l261 = new LString("Well, I guess there might be one legitimate god...")
+		public static readonly LString l261 = new LText("Well, I guess there might be one legitimate god...")
 			{ ID = "l261" };
 		
-		public static readonly LString l262 = new LString("Really? Who?")
+		public static readonly LString l262 = new LText("Really? Who?")
 			{ ID = "l262" };
 		
-		public static readonly LString l263 = new LString("Well... you know Yukari's gaps? Those things are scientifically nonsensical. They break the laws of relativity. They shouldn't be able to exist. In that respect, Yukari could be called a god in the proper sense, even if she doesn't claim the title herself.")
+		public static readonly LString l263 = new LText("Well... you know Yukari's gaps? Those things are scientifically nonsensical. They break the laws of relativity. They shouldn't be able to exist. In that respect, Yukari could be called a god in the proper sense, even if she doesn't claim the title herself.")
 			{ ID = "l263" };
 		
-		public static readonly LString l264 = new LString("That said, recent research in the holographic principle suggests that space manipulation might be possible given certain projections of 3D space onto 2D boundaries, so I'm sure that this problem will be fixed in a century or so. As long as global warming doesn't destroy human civilization by then.")
+		public static readonly LString l264 = new LText("That said, recent research in the holographic principle suggests that space manipulation might be possible given certain projections of 3D space onto 2D boundaries, so I'm sure that this problem will be fixed in a century or so. As long as global warming doesn't destroy human civilization by then.")
 			{ ID = "l264" };
 		
-		public static readonly LString l265 = new LString("*Author's note: The holographic principle does not suggest that you can break spacetime. I made that up for convenience. Please excuse this artistic liberty.")
+		public static readonly LString l265 = new LText("*Author's note: The holographic principle does not suggest that you can break spacetime. I made that up for convenience. Please excuse this artistic liberty.")
 			{ ID = "l265" };
 		
-		public static readonly LString l266 = new LString("Oh, like in California?")
+		public static readonly LString l266 = new LText("Oh, like in California?")
 			{ ID = "l266" };
 		
-		public static readonly LString l267 = new LString("Huh? Did something happen in California?")
+		public static readonly LString l267 = new LText("Huh? Did something happen in California?")
 			{ ID = "l267" };
 		
-		public static readonly LString l268 = new LString("I heard that the rain stopped falling in California, and then everyone died.")
+		public static readonly LString l268 = new LText("I heard that the rain stopped falling in California, and then everyone died.")
 			{ ID = "l268" };
 		
-		public static readonly LString l269 = new LString("Well, it's true that California is suffering a drought, but they're still doing pretty well over there.")
+		public static readonly LString l269 = new LText("Well, it's true that California is suffering a drought, but they're still doing pretty well over there.")
 			{ ID = "l269" };
 		
-		public static readonly LString l270 = new LString("You're probably thinking of Florida, where everyone got turned into zombies due to an epidemic.")
+		public static readonly LString l270 = new LText("You're probably thinking of Florida, where everyone got turned into zombies due to an epidemic.")
 			{ ID = "l270" };
 		
-		public static readonly LString l271 = new LString("Wow... It really is dangerous outside...")
+		public static readonly LString l271 = new LText("Wow... It really is dangerous outside...")
 			{ ID = "l271" };
 		
-		public static readonly LString l272 = new LString("Yeah. But you get the point, right?")
+		public static readonly LString l272 = new LText("Yeah. But you get the point, right?")
 			{ ID = "l272" };
 		
-		public static readonly LString l273 = new LString("Yup. The rain is a purely natural process, and nobody has the power to start or stop it.")
+		public static readonly LString l273 = new LText("Yup. The rain is a purely natural process, and nobody has the power to start or stop it.")
 			{ ID = "l273" };
 		
-		public static readonly LString l274 = new LString("That's right. So? Did you have anything else to ask?")
+		public static readonly LString l274 = new LText("That's right. So? Did you have anything else to ask?")
 			{ ID = "l274" };
 		
-		public static readonly LString l275 = new LString("Hmm... I don't think so...")
+		public static readonly LString l275 = new LText("Hmm... I don't think so...")
 			{ ID = "l275" };
 		
-		public static readonly LString l276 = new LString("Suwako has something to ask!")
+		public static readonly LString l276 = new LText("Suwako has something to ask!")
 			{ ID = "l276" };
 		
-		public static readonly LString l277 = new LString("What?! Who said that?")
+		public static readonly LString l277 = new LText("What?! Who said that?")
 			{ ID = "l277" };
 		
-		public static readonly LString l278 = new LString("Suwako thinks Aya doesn't understand the problem.")
+		public static readonly LString l278 = new LText("Suwako thinks Aya doesn't understand the problem.")
 			{ ID = "l278" };
 		
-		public static readonly LString l279 = new LString("Suwako? Weren't you listening? Scientifically speaking, rain is nothing more than a natural cycle that water goes through. Nothing more, nothing less. There's nothing to not understand there.")
+		public static readonly LString l279 = new LText("Suwako? Weren't you listening? Scientifically speaking, rain is nothing more than a natural cycle that water goes through. Nothing more, nothing less. There's nothing to not understand there.")
 			{ ID = "l279" };
 		
-		public static readonly LString l280 = new LString("Suwako says Aya is overlooking the role of society.")
+		public static readonly LString l280 = new LText("Suwako says Aya is overlooking the role of society.")
 			{ ID = "l280" };
 		
-		public static readonly LString l281 = new LString("There is no such thing as society! There are only--")
+		public static readonly LString l281 = new LText("There is no such thing as society! There are only--")
 			{ ID = "l281" };
 		
-		public static readonly LString l282 = new LString("Shut up for a bit, Reimu.")
+		public static readonly LString l282 = new LText("Shut up for a bit, Reimu.")
 			{ ID = "l282" };
 		
-		public static readonly LString l283 = new LString("In the span of a moment, Suwako's wide smile fragmented into small frustrated groans, and her naive gaze frosted over with cynicism, much like a tree that in a span of a day throws off its jacket of greenery and cloaks itself anew in snow.")
+		public static readonly LString l283 = new LText("In the span of a moment, Suwako's wide smile fragmented into small frustrated groans, and her naive gaze frosted over with cynicism, much like a tree that in a span of a day throws off its jacket of greenery and cloaks itself anew in snow.")
 			{ ID = "l283" };
 		
-		public static readonly LString l284 = new LString("Look, I'm not really supposed to be saying this out loud... so don't tell Kanako or Sanae about this, alright?")
+		public static readonly LString l284 = new LText("Look, I'm not really supposed to be saying this out loud... so don't tell Kanako or Sanae about this, alright?")
 			{ ID = "l284" };
 		
-		public static readonly LString l285 = new LString("Fine. Let's hear it.")
+		public static readonly LString l285 = new LText("Fine. Let's hear it.")
 			{ ID = "l285" };
 		
-		public static readonly LString l286 = new LString("Reimu, confused by Suwako's sudden change, was unable to speak. Aya, to the contrary, was too excited by the presence of an opposing opinion to care-- just like a proper atheist.")
+		public static readonly LString l286 = new LText("Reimu, confused by Suwako's sudden change, was unable to speak. Aya, to the contrary, was too excited by the presence of an opposing opinion to care-- just like a proper atheist.")
 			{ ID = "l286" };
 		
-		public static readonly LString l287 = new LString("You know how Kanako is really... business-oriented, right?")
+		public static readonly LString l287 = new LText("You know how Kanako is really... business-oriented, right?")
 			{ ID = "l287" };
 		
-		public static readonly LString l288 = new LString("Yeah.")
+		public static readonly LString l288 = new LText("Yeah.")
 			{ ID = "l288" };
 		
-		public static readonly LString l289 = new LString("Well, the whole thing about being the god of wind and rain is just a marketing tactic. It helps us gather more faith, especially with regards to the harvest season.")
+		public static readonly LString l289 = new LText("Well, the whole thing about being the god of wind and rain is just a marketing tactic. It helps us gather more faith, especially with regards to the harvest season.")
 			{ ID = "l289" };
 		
-		public static readonly LString l290 = new LString("That is LITERALLY my point.")
+		public static readonly LString l290 = new LText("That is LITERALLY my point.")
 			{ ID = "l290" };
 		
-		public static readonly LString l291 = new LString("Wait up. I'm not done yet.")
+		public static readonly LString l291 = new LText("Wait up. I'm not done yet.")
 			{ ID = "l291" };
 		
-		public static readonly LString l292 = new LString("By taking on this role, we offer the humans and youkai <i>freedom</i>. They don't have to worry about the rain, because we take care of it. If the rain is bad, they blame us. If the rain is good, we all get together and have a merry harvest festival.")
+		public static readonly LString l292 = new LText("By taking on this role, we offer the humans and youkai <i>freedom</i>. They don't have to worry about the rain, because we take care of it. If the rain is bad, they blame us. If the rain is good, we all get together and have a merry harvest festival.")
 			{ ID = "l292" };
 		
-		public static readonly LString l293 = new LString("It's a good deal. Most people can't survive the crushing weight of knowing that all the phenomena they see are meaningless coincidences in an uncaring universe. We save them from that knowledge, and all we ask in return is a little faith.")
+		public static readonly LString l293 = new LText("It's a good deal. Most people can't survive the crushing weight of knowing that all the phenomena they see are meaningless coincidences in an uncaring universe. We save them from that knowledge, and all we ask in return is a little faith.")
 			{ ID = "l293" };
 		
-		public static readonly LString l294 = new LString("You deny science and lie to people. That sounds like a scam to me.")
+		public static readonly LString l294 = new LText("You deny science and lie to people. That sounds like a scam to me.")
 			{ ID = "l294" };
 		
-		public static readonly LString l295 = new LString("Nobody is denying science here. After all, there's no difference between how Kanako talks about the rain cycle and how you talk about the rain cycle. All she does is add a little flourish at the end about trigram symbolism.")
+		public static readonly LString l295 = new LText("Nobody is denying science here. After all, there's no difference between how Kanako talks about the rain cycle and how you talk about the rain cycle. All she does is add a little flourish at the end about trigram symbolism.")
 			{ ID = "l295" };
 		
-		public static readonly LString l296 = new LString("At least the way we're doing it, religion doesn't need to be opposed to science in the way you consider it to be. Keep in mind Kanako is trying to become a god of scientific innovation.")
+		public static readonly LString l296 = new LText("At least the way we're doing it, religion doesn't need to be opposed to science in the way you consider it to be. Keep in mind Kanako is trying to become a god of scientific innovation.")
 			{ ID = "l296" };
 		
-		public static readonly LString l297 = new LString("Fine. I'll yield that the Moriya form of religion doesn't require denying science. It only requires lying to people. And since that lie is spoken with the purpose of extracting faith-- as you admitted-- it is, by definition, fraud.")
+		public static readonly LString l297 = new LText("Fine. I'll yield that the Moriya form of religion doesn't require denying science. It only requires lying to people. And since that lie is spoken with the purpose of extracting faith-- as you admitted-- it is, by definition, fraud.")
 			{ ID = "l297" };
 		
-		public static readonly LString l298 = new LString("You don't have to put it so uncharitably...")
+		public static readonly LString l298 = new LText("You don't have to put it so uncharitably...")
 			{ ID = "l298" };
 		
-		public static readonly LString l299 = new LString("Suwako's shoulders sagged. At this point, there was no longer a disagreement on facts, and neither of them were making logical errors. ")
+		public static readonly LString l299 = new LText("Suwako's shoulders sagged. At this point, there was no longer a disagreement on facts, and neither of them were making logical errors. ")
 			{ ID = "l299" };
 		
-		public static readonly LString l299_1 = new LString("Both of their arguments were correct, but correct in pursuit of different ideals: Suwako's of social utility, and Aya's of unyielding truth.")
+		public static readonly LString l299_1 = new LText("Both of their arguments were correct, but correct in pursuit of different ideals: Suwako's of social utility, and Aya's of unyielding truth.")
 			{ ID = "l299_1" };
 		
-		public static readonly LString l300 = new LString("In which case, the only way for Suwako to proceed was to argue that her model of social utility was better than Aya's model of truth.")
+		public static readonly LString l300 = new LText("In which case, the only way for Suwako to proceed was to argue that her model of social utility was better than Aya's model of truth.")
 			{ ID = "l300" };
 		
-		public static readonly LString l300_1 = new LString("But what does it mean for one model to be better than the other? If they are both true, then how do you compare them?")
+		public static readonly LString l300_1 = new LText("But what does it mean for one model to be better than the other? If they are both true, then how do you compare them?")
 			{ ID = "l300_1" };
 		
-		public static readonly LString l301 = new LString("--Naturally, by social utility.")
+		public static readonly LString l301 = new LText("--Naturally, by social utility.")
 			{ ID = "l301" };
 		
-		public static readonly LString l302 = new LString("Suwako cast her eyes to the ground. Her tongue crawled out of her mouth, up around her nose, through the wet bangs of hair stuck to her forehead, and under her hat, and a few moments later that hat began to slowly rock back and forth. A frog's thinking cap.")
+		public static readonly LString l302 = new LText("Suwako cast her eyes to the ground. Her tongue crawled out of her mouth, up around her nose, through the wet bangs of hair stuck to her forehead, and under her hat, and a few moments later that hat began to slowly rock back and forth. A frog's thinking cap.")
 			{ ID = "l302" };
 		
-		public static readonly LString l303 = new LString("Ah!")
+		public static readonly LString l303 = new LText("Ah!")
 			{ ID = "l303" };
 		
-		public static readonly LString l304 = new LString("She looked back up at Aya, and, opening her mouth wide, zipped her tongue back into place.")
+		public static readonly LString l304 = new LText("She looked back up at Aya, and, opening her mouth wide, zipped her tongue back into place.")
 			{ ID = "l304" };
 		
-		public static readonly LString l305 = new LString("Tell me, Aya, why do all the heavenly bodies spin in the same direction?")
+		public static readonly LString l305 = new LText("Tell me, Aya, why do all the heavenly bodies spin in the same direction?")
 			{ ID = "l305" };
 		
-		public static readonly LString l306 = new LString("...I don't know. I think it's a current research problem in astronomy.")
+		public static readonly LString l306 = new LText("...I don't know. I think it's a current research problem in astronomy.")
 			{ ID = "l306" };
 		
-		public static readonly LString l307 = new LString("I know.")
+		public static readonly LString l307 = new LText("I know.")
 			{ ID = "l307" };
 		
-		public static readonly LString l308 = new LString("It was Reimu, finally free from her stupor, who took up Suwako's challenge.")
+		public static readonly LString l308 = new LText("It was Reimu, finally free from her stupor, who took up Suwako's challenge.")
 			{ ID = "l308" };
 		
-		public static readonly LString l309 = new LString("It's written in the Kojiki that Izanagi carved out the heavens and the earth all with the same spear Ame-no-nuhuko, so it's obvious that the worlds he created would have that kind of similarity.")
+		public static readonly LString l309 = new LText("It's written in the Kojiki that Izanagi carved out the heavens and the earth all with the same spear Ame-no-nuhuko, so it's obvious that the worlds he created would have that kind of similarity.")
 			{ ID = "l309" };
 		
-		public static readonly LString l310 = new LString("Now, when the average person comes asking for an answer to this question, what do you want to do, Aya? Will you explain to them the current state of astronomy research and why it's incomplete, or will you tell them a simple story about Izanagi?")
+		public static readonly LString l310 = new LText("Now, when the average person comes asking for an answer to this question, what do you want to do, Aya? Will you explain to them the current state of astronomy research and why it's incomplete, or will you tell them a simple story about Izanagi?")
 			{ ID = "l310" };
 		
-		public static readonly LString l311 = new LString("If I'm caught somewhere deep between a truth and a lie...")
+		public static readonly LString l311 = new LText("If I'm caught somewhere deep between a truth and a lie...")
 			{ ID = "l311" };
 		
-		public static readonly LString l312 = new LString("~Another really rainy morning, it's an imperfect day~")
+		public static readonly LString l312 = new LText("~Another really rainy morning, it's an imperfect day~")
 			{ ID = "l312" };
 		
-		public static readonly LString l313 = new LString("I will choose truth!")
+		public static readonly LString l313 = new LText("I will choose truth!")
 			{ ID = "l313" };
 		
-		public static readonly LString l314 = new LString("I thought you'd say that. But why don't we put some more weight on the scales?")
+		public static readonly LString l314 = new LText("I thought you'd say that. But why don't we put some more weight on the scales?")
 			{ ID = "l314" };
 		
-		public static readonly LString l315 = new LString("Now that I've told this story, I can hold a festival for Izanagi around the fire-planet's retrograde, or any other interesting astronomical event, or even the harvest festival if we didn't already manage that. <i>You</i> can't. Do you accept that?")
+		public static readonly LString l315 = new LText("Now that I've told this story, I can hold a festival for Izanagi around the fire-planet's retrograde, or any other interesting astronomical event, or even the harvest festival if we didn't already manage that. <i>You</i> can't. Do you accept that?")
 			{ ID = "l315" };
 		
-		public static readonly LString l316 = new LString("...Yes.")
+		public static readonly LString l316 = new LText("...Yes.")
 			{ ID = "l316" };
 		
-		public static readonly LString l317 = new LString("Now, consider for a moment the number of political factions we have in Gensoukyou. There's the Moriya and Hakurei shrines, the tengu and kappa, the Eieintei and Scarlet Devil Mansion lot...")
+		public static readonly LString l317 = new LText("Now, consider for a moment the number of political factions we have in Gensoukyou. There's the Moriya and Hakurei shrines, the tengu and kappa, the Eieintei and Scarlet Devil Mansion lot...")
 			{ ID = "l317" };
 		
-		public static readonly LString l317_1 = new LString("the Buddhist and Taoist temples, the managers of Hakugyokurou, the humans, and then over a dozen independents who are easily capable of causing incidents on their own.")
+		public static readonly LString l317_1 = new LText("the Buddhist and Taoist temples, the managers of Hakugyokurou, the humans, and then over a dozen independents who are easily capable of causing incidents on their own.")
 			{ ID = "l317_1" };
 		
-		public static readonly LString l318 = new LString("When you put it that way, it really does sound like a lot.")
+		public static readonly LString l318 = new LText("When you put it that way, it really does sound like a lot.")
 			{ ID = "l318" };
 		
-		public static readonly LString l319 = new LString("It <i>is</i> a lot. Outside, it's impossible to have these many factions stuck together in a bottle without constant infighting. Kanako and I can speak from experience. But we manage quite well here in Gensoukyou. Can you guess why?")
+		public static readonly LString l319 = new LText("It <i>is</i> a lot. Outside, it's impossible to have these many factions stuck together in a bottle without constant infighting. Kanako and I can speak from experience. But we manage quite well here in Gensoukyou. Can you guess why?")
 			{ ID = "l319" };
 		
-		public static readonly LString l320 = new LString("Because when there's a festival at the Hakurei Shrine, everyone in Gensoukyou stops by. Even the kappa come out and make friendly with the humans.")
+		public static readonly LString l320 = new LText("Because when there's a festival at the Hakurei Shrine, everyone in Gensoukyou stops by. Even the kappa come out and make friendly with the humans.")
 			{ ID = "l320" };
 		
-		public static readonly LString l321 = new LString("Exactly. In other words, the silly little festivals that Aya has forsaken are the same tools by which we maintain social cohesion in Gensoukyou.")
+		public static readonly LString l321 = new LText("Exactly. In other words, the silly little festivals that Aya has forsaken are the same tools by which we maintain social cohesion in Gensoukyou.")
 			{ ID = "l321" };
 		
-		public static readonly LString l322 = new LString("So let's tally up the scales again. On one hand you have a naked truth. \"I don't know.\" On the other hand, you have a simple answer, a lack of doubt, and even macropolitical stability.")
+		public static readonly LString l322 = new LText("So let's tally up the scales again. On one hand you have a naked truth. \"I don't know.\" On the other hand, you have a simple answer, a lack of doubt, and even macropolitical stability.")
 			{ ID = "l322" };
 		
-		public static readonly LString l323 = new LString("Aya, which side would you have us choose?")
+		public static readonly LString l323 = new LText("Aya, which side would you have us choose?")
 			{ ID = "l323" };
 		
-		public static readonly LString l324 = new LString("I... ")
+		public static readonly LString l324 = new LText("I... ")
 			{ ID = "l324" };
 		
-		public static readonly LString l325 = new LString("won't accept that ultimatum! There's no reason we couldn't replace religious festivals with something that satisfies the same purpose of creating a unified national polity!")
+		public static readonly LString l325 = new LText("won't accept that ultimatum! There's no reason we couldn't replace religious festivals with something that satisfies the same purpose of creating a unified national polity!")
 			{ ID = "l325" };
 		
-		public static readonly LString l326 = new LString("Something? Like what?")
+		public static readonly LString l326 = new LText("Something? Like what?")
 			{ ID = "l326" };
 		
-		public static readonly LString l327 = new LString("...I don't know.")
+		public static readonly LString l327 = new LText("...I don't know.")
 			{ ID = "l327" };
 		
-		public static readonly LString l328 = new LString("But that answer doesn't work for me, you see? My job is to keep Gensoukyou stable <i>right now</i>. And that's why Kanako is the god of the wind and rain, and that's why we hold harvest festivals at the Moriya Shrine. End of story.")
+		public static readonly LString l328 = new LText("But that answer doesn't work for me, you see? My job is to keep Gensoukyou stable <i>right now</i>. And that's why Kanako is the god of the wind and rain, and that's why we hold harvest festivals at the Moriya Shrine. End of story.")
 			{ ID = "l328" };
 		
-		public static readonly LString l329 = new LString("Get it?")
+		public static readonly LString l329 = new LText("Get it?")
 			{ ID = "l329" };
 		
-		public static readonly LString l330 = new LString("...")
+		public static readonly LString l330 = new LText("...")
 			{ ID = "l330" };
 		
-		public static readonly LString l331 = new LString("Wait. I feel like you two are missing the point. Neither of your solutions solves the problem here.")
+		public static readonly LString l331 = new LText("Wait. I feel like you two are missing the point. Neither of your solutions solves the problem here.")
 			{ ID = "l331" };
 		
-		public static readonly LString l332 = new LString("Whether Kanako has control over the rain or not, there's no way for me to get someone to stop the rain.")
+		public static readonly LString l332 = new LText("Whether Kanako has control over the rain or not, there's no way for me to get someone to stop the rain.")
 			{ ID = "l332" };
 		
-		public static readonly LString l333 = new LString("Stop the rain? Reimu, what the fuck are you talking about? Why would you want to stop the rain?")
+		public static readonly LString l333 = new LText("Stop the rain? Reimu, what the fuck are you talking about? Why would you want to stop the rain?")
 			{ ID = "l333" };
 		
-		public static readonly LString l334 = new LString("Because it's annoying and cold and icky.")
+		public static readonly LString l334 = new LText("Because it's annoying and cold and icky.")
 			{ ID = "l334" };
 		
-		public static readonly LString l335 = new LString("The rain is <i>not</i> icky. You just have no taste.")
+		public static readonly LString l335 = new LText("The rain is <i>not</i> icky. You just have no taste.")
 			{ ID = "l335" };
 		
-		public static readonly LString l336 = new LString("Was that what you wanted help with? Stopping the rain?")
+		public static readonly LString l336 = new LText("Was that what you wanted help with? Stopping the rain?")
 			{ ID = "l336" };
 		
-		public static readonly LString l337 = new LString("Yes.")
+		public static readonly LString l337 = new LText("Yes.")
 			{ ID = "l337" };
 		
-		public static readonly LString l338 = new LString("That's not possible.")
+		public static readonly LString l338 = new LText("That's not possible.")
 			{ ID = "l338" };
 		
-		public static readonly LString l339 = new LString("That's not possible.")
+		public static readonly LString l339 = new LText("That's not possible.")
 			{ ID = "l339" };
 		
-		public static readonly LString l340 = new LString("Then what am I supposed to do?!")
+		public static readonly LString l340 = new LText("Then what am I supposed to do?!")
 			{ ID = "l340" };
 		
-		public static readonly LString l341 = new LString("Lie down on a rock and enjoy it. It's really nice.")
+		public static readonly LString l341 = new LText("Lie down on a rock and enjoy it. It's really nice.")
 			{ ID = "l341" };
 		
-		public static readonly LString l342 = new LString("You could always stay inside and read a newspaper or something.")
+		public static readonly LString l342 = new LText("You could always stay inside and read a newspaper or something.")
 			{ ID = "l342" };
 		
-		public static readonly LString l343 = new LString("Aya and Suwako suddenly whipped their heads to the side, peering through the shrubbery in the same direction. Had they heard something? Whatever it was, Reimu's human senses couldn't make it out.")
+		public static readonly LString l343 = new LText("Aya and Suwako suddenly whipped their heads to the side, peering through the shrubbery in the same direction. Had they heard something? Whatever it was, Reimu's human senses couldn't make it out.")
 			{ ID = "l343" };
 		
-		public static readonly LString l344 = new LString("Shit! Someone's coming!")
+		public static readonly LString l344 = new LText("Shit! Someone's coming!")
 			{ ID = "l344" };
 		
-		public static readonly LString l345 = new LString("Fuck, how do I do that voice again? Tongue back, throat up, uh, one, two--")
+		public static readonly LString l345 = new LText("Fuck, how do I do that voice again? Tongue back, throat up, uh, one, two--")
 			{ ID = "l345" };
 		
-		public static readonly LString l346 = new LString("Aah, Suwako is bored~~ Suwako is going to go play in the rain now!")
+		public static readonly LString l346 = new LText("Aah, Suwako is bored~~ Suwako is going to go play in the rain now!")
 			{ ID = "l346" };
 		
-		public static readonly LString l347 = new LString("Come play with Suwako again soon, alright? Byeeee~~!")
+		public static readonly LString l347 = new LText("Come play with Suwako again soon, alright? Byeeee~~!")
 			{ ID = "l347" };
 		
-		public static readonly LString l348 = new LString("So, what I could get from that was that Kanako doesn't control the rain... but we might as well say she does?")
+		public static readonly LString l348 = new LText("So, what I could get from that was that Kanako doesn't control the rain... but we might as well say she does?")
 			{ ID = "l348" };
 		
-		public static readonly LString l349 = new LString("She doesn't control how long or heavy the rain is, but when the rain is good, we have parties at the Moriya Shrine.")
+		public static readonly LString l349 = new LText("She doesn't control how long or heavy the rain is, but when the rain is good, we have parties at the Moriya Shrine.")
 			{ ID = "l349" };
 		
-		public static readonly LString l350 = new LString("That's the way Suwako prefers it, anyways. As far as I'm concerned, Kanako has as much to do with the rain as I do. In other words, nothing.")
+		public static readonly LString l350 = new LText("That's the way Suwako prefers it, anyways. As far as I'm concerned, Kanako has as much to do with the rain as I do. In other words, nothing.")
 			{ ID = "l350" };
 		
-		public static readonly LString l351 = new LString("Not a moment after she had finished speaking, Aya's shoulders tightened up and she shivered audibly.")
+		public static readonly LString l351 = new LText("Not a moment after she had finished speaking, Aya's shoulders tightened up and she shivered audibly.")
 			{ ID = "l351" };
 		
-		public static readonly LString l352 = new LString("Brrrrrr!")
+		public static readonly LString l352 = new LText("Brrrrrr!")
 			{ ID = "l352" };
 		
-		public static readonly LString l353 = new LString("Aya's wings, which had until then lain invisibly folded against her back, sprouted open wide, and she whacked the back of her hand against the distal feathers on her left wing-- not once, as if trying to slap away a mosquito, but repeatedly and to no visible end, as if trying to blow off a specter of filth.")
+		public static readonly LString l353 = new LText("Aya's wings, which had until then lain invisibly folded against her back, sprouted open wide, and she whacked the back of her hand against the distal feathers on her left wing-- not once, as if trying to slap away a mosquito, but repeatedly and to no visible end, as if trying to blow off a specter of filth.")
 			{ ID = "l353" };
 		
-		public static readonly LString l354 = new LString("Fuck! My feathers got wet again. This is why I hate the rain.")
+		public static readonly LString l354 = new LText("Fuck! My feathers got wet again. This is why I hate the rain.")
 			{ ID = "l354" };
 		
-		public static readonly LString l355 = new LString("Wait, you hate the rain too? Then why don't you try to stop it?")
+		public static readonly LString l355 = new LText("Wait, you hate the rain too? Then why don't you try to stop it?")
 			{ ID = "l355" };
 		
-		public static readonly LString l356 = new LString("Why would I want to stop the rain? It's a necessary natural process. The science of rain is simple and elegant. Even if it makes my feathers sticky and heavy, I have to appreciate the mathematical beauty of how it functions in the ecosystem.")
+		public static readonly LString l356 = new LText("Why would I want to stop the rain? It's a necessary natural process. The science of rain is simple and elegant. Even if it makes my feathers sticky and heavy, I have to appreciate the mathematical beauty of how it functions in the ecosystem.")
 			{ ID = "l356" };
 		
-		public static readonly LString l357 = new LString("Can't you appreciate that mathematical beauty too?")
+		public static readonly LString l357 = new LText("Can't you appreciate that mathematical beauty too?")
 			{ ID = "l357" };
 		
-		public static readonly LString l358 = new LString("A blob of water dropped from a branch onto Reimu's head, and her muscles contracted as if she had been injected with liquid sodium.")
+		public static readonly LString l358 = new LText("A blob of water dropped from a branch onto Reimu's head, and her muscles contracted as if she had been injected with liquid sodium.")
 			{ ID = "l358" };
 		
-		public static readonly LString l359 = new LString("No.")
+		public static readonly LString l359 = new LText("No.")
 			{ ID = "l359" };
 		
-		public static readonly LString l360 = new LString("Ah, why is it so difficult to proselytize science...")
+		public static readonly LString l360 = new LText("Ah, why is it so difficult to proselytize science...")
 			{ ID = "l360" };
 		
-		public static readonly LString l361 = new LString("Well, I don't really want to get any more wet, so I guess I'll head home. See ya, Reimu.")
+		public static readonly LString l361 = new LText("Well, I don't really want to get any more wet, so I guess I'll head home. See ya, Reimu.")
 			{ ID = "l361" };
 		
-		public static readonly LString l362 = new LString("Oh, and if you see Hatate, tell her that James Randi disproved spirit photography.")
+		public static readonly LString l362 = new LText("Oh, and if you see Hatate, tell her that James Randi disproved spirit photography.")
 			{ ID = "l362" };
 		
-		public static readonly LString l363 = new LString("Who the hell is James Randi...?")
+		public static readonly LString l363 = new LText("Who the hell is James Randi...?")
 			{ ID = "l363" };
 		
-		public static readonly LString l364 = new LString("Wait, more importantly, where's Yukari? She hasn't shown up at all since we went through the portal.")
+		public static readonly LString l364 = new LText("Wait, more importantly, where's Yukari? She hasn't shown up at all since we went through the portal.")
 			{ ID = "l364" };
 		
-		public static readonly LString l365 = new LString("Let's enumerate the possibilities. Possibility one, she made an error while setting up the gaps... No, that's impossible.")
+		public static readonly LString l365 = new LText("Let's enumerate the possibilities. Possibility one, she made an error while setting up the gaps... No, that's impossible.")
 			{ ID = "l365" };
 		
-		public static readonly LString l366 = new LString("Possibility two, she got tired of me and left me to die here in the forest... No, Kasen told her to stay with me, so that's impossible.")
+		public static readonly LString l366 = new LText("Possibility two, she got tired of me and left me to die here in the forest... No, Kasen told her to stay with me, so that's impossible.")
 			{ ID = "l366" };
 		
-		public static readonly LString l367 = new LString("Possibility three, she's hanging out somewhere nearby because she didn't want to or couldn't get involved in that discussion... OK, let's test that.")
+		public static readonly LString l367 = new LText("Possibility three, she's hanging out somewhere nearby because she didn't want to or couldn't get involved in that discussion... OK, let's test that.")
 			{ ID = "l367" };
 		
-		public static readonly LString l368 = new LString("<speed=0.3>YUUUUKAAAAARIIIII! WHEEEEERE AAAAARE YOOOOOOOUUUUU?</speed>")
+		public static readonly LString l368 = new LText("<speed=0.3>YUUUUKAAAAARIIIII! WHEEEEERE AAAAARE YOOOOOOOUUUUU?</speed>")
 			{ ID = "l368" };
 		
-		public static readonly LString l369 = new LString("Huh? 'sthat Reimu?")
+		public static readonly LString l369 = new LText("Huh? 'sthat Reimu?")
 			{ ID = "l369" };
 		
-		public static readonly LString l370 = new LString("Wait, Yukari doesn't talk like that.")
+		public static readonly LString l370 = new LText("Wait, Yukari doesn't talk like that.")
 			{ ID = "l370" };
 		
-		public static readonly LString l371 = new LString("Who's there?! Name yourself!")
+		public static readonly LString l371 = new LText("Who's there?! Name yourself!")
 			{ ID = "l371" };
 		
-		public static readonly LString l372 = new LString("Yo! Reimu! Wasn't expectin' t'see ya out here'n the rain.")
+		public static readonly LString l372 = new LText("Yo! Reimu! Wasn't expectin' t'see ya out here'n the rain.")
 			{ ID = "l372" };
 		
-		public static readonly LString l373 = new LString("Marisa?! What are you doing here?!")
+		public static readonly LString l373 = new LText("Marisa?! What are you doing here?!")
 			{ ID = "l373" };
 		
-		public static readonly LString l374 = new LString("I'm collectin' shrooms. What 'bout you?")
+		public static readonly LString l374 = new LText("I'm collectin' shrooms. What 'bout you?")
 			{ ID = "l374" };
 		
-		public static readonly LString l375 = new LString("Reimu focused for a moment. At least this time, she didn't want to ask the wrong question.")
+		public static readonly LString l375 = new LText("Reimu focused for a moment. At least this time, she didn't want to ask the wrong question.")
 			{ ID = "l375" };
 		
-		public static readonly LString l376 = new LString("I'm trying to understand how it is that people cope with the practical annoyance of dealing with rainy weather, given the impossibility of stopping the rain by one's own will.")
+		public static readonly LString l376 = new LText("I'm trying to understand how it is that people cope with the practical annoyance of dealing with rainy weather, given the impossibility of stopping the rain by one's own will.")
 			{ ID = "l376" };
 		
-		public static readonly LString l377 = new LString("Cope? Why d'ya gotta cope? When it's rainin', you should do rainy-day things.")
+		public static readonly LString l377 = new LText("Cope? Why d'ya gotta cope? When it's rainin', you should do rainy-day things.")
 			{ ID = "l377" };
 		
-		public static readonly LString l378 = new LString("Like collectin' shrooms!")
+		public static readonly LString l378 = new LText("Like collectin' shrooms!")
 			{ ID = "l378" };
 		
-		public static readonly LString l379 = new LString("Is collecting mushrooms fun?")
+		public static readonly LString l379 = new LText("Is collecting mushrooms fun?")
 			{ ID = "l379" };
 		
-		public static readonly LString l380 = new LString("Yup! So let's collect 'em together!")
+		public static readonly LString l380 = new LText("Yup! So let's collect 'em together!")
 			{ ID = "l380" };
 		
-		public static readonly LString l381 = new LString("(I can have fun with Marisa, but I'd end up getting wet... hmm... ")
+		public static readonly LString l381 = new LText("(I can have fun with Marisa, but I'd end up getting wet... hmm... ")
 			{ ID = "l381" };
 		
-		public static readonly LString l382 = new LString("The choice is obvious.)")
+		public static readonly LString l382 = new LText("The choice is obvious.)")
 			{ ID = "l382" };
 		
-		public static readonly LString l383 = new LString("Alright! So what are we looking for?")
+		public static readonly LString l383 = new LText("Alright! So what are we looking for?")
 			{ ID = "l383" };
 		
-		public static readonly LString l384 = new LString("I foun' some ol' cookbooks that say that you can use king oyster shrooms t'sub fer meat. And, y'know, meat's real expensive. So I'm gonna try out some a' those recipes.")
+		public static readonly LString l384 = new LText("I foun' some ol' cookbooks that say that you can use king oyster shrooms t'sub fer meat. And, y'know, meat's real expensive. So I'm gonna try out some a' those recipes.")
 			{ ID = "l384" };
 		
-		public static readonly LString l385 = new LString("King oyster mushrooms...")
+		public static readonly LString l385 = new LText("King oyster mushrooms...")
 			{ ID = "l385" };
 		
-		public static readonly LString l386 = new LString("I have no idea where to find those.")
+		public static readonly LString l386 = new LText("I have no idea where to find those.")
 			{ ID = "l386" };
 		
-		public static readonly LString l387 = new LString("For king oysters, we gotta look aroun' the roots of decayin' hardwood trees.")
+		public static readonly LString l387 = new LText("For king oysters, we gotta look aroun' the roots of decayin' hardwood trees.")
 			{ ID = "l387" };
 		
-		public static readonly LString l388 = new LString("Hardwood, so like hinoki? I don't know where we are right now, but I do know where we can find some hinoki.")
+		public static readonly LString l388 = new LText("Hardwood, so like hinoki? I don't know where we are right now, but I do know where we can find some hinoki.")
 			{ ID = "l388" };
 		
-		public static readonly LString l389 = new LString("Sorry, Reimu. Hinoki is a pretty hard wood, but it ain't a hardwood.")
+		public static readonly LString l389 = new LText("Sorry, Reimu. Hinoki is a pretty hard wood, but it ain't a hardwood.")
 			{ ID = "l389" };
 		
-		public static readonly LString l390 = new LString("Damn it...")
+		public static readonly LString l390 = new LText("Damn it...")
 			{ ID = "l390" };
 		
-		public static readonly LString l391 = new LString("Basically, if ya look at the leaves and they're like needles, then it ain't a hardwood.")
+		public static readonly LString l391 = new LText("Basically, if ya look at the leaves and they're like needles, then it ain't a hardwood.")
 			{ ID = "l391" };
 		
-		public static readonly LString l392 = new LString("I was plannin' to look through the maple trees a bit further in. Follow me.")
+		public static readonly LString l392 = new LText("I was plannin' to look through the maple trees a bit further in. Follow me.")
 			{ ID = "l392" };
 		
-		public static readonly LString l393 = new LString("Hey, Marisa. There are some mushrooms that are super rare, right? Are there any super rare mushrooms you want to find?")
+		public static readonly LString l393 = new LText("Hey, Marisa. There are some mushrooms that are super rare, right? Are there any super rare mushrooms you want to find?")
 			{ ID = "l393" };
 		
-		public static readonly LString l394 = new LString("Hmm... I guess the one thing I really, really, really wanna find s'a Texas Star.")
+		public static readonly LString l394 = new LText("Hmm... I guess the one thing I really, really, really wanna find s'a Texas Star.")
 			{ ID = "l394" };
 		
-		public static readonly LString l395 = new LString("What's a Texas?")
+		public static readonly LString l395 = new LText("What's a Texas?")
 			{ ID = "l395" };
 		
-		public static readonly LString l396 = new LString("I think issa place.")
+		public static readonly LString l396 = new LText("I think issa place.")
 			{ ID = "l396" };
 		
-		public static readonly LString l397 = new LString("Is it like California?")
+		public static readonly LString l397 = new LText("Is it like California?")
 			{ ID = "l397" };
 		
-		public static readonly LString l398 = new LString("What's California?")
+		public static readonly LString l398 = new LText("What's California?")
 			{ ID = "l398" };
 		
-		public static readonly LString l399 = new LString("...I'm not sure anymore.")
+		public static readonly LString l399 = new LText("...I'm not sure anymore.")
 			{ ID = "l399" };
 		
-		public static readonly LString l400 = new LString("Anyways, a Texas Star's a super-rare mushroom. It starts out assa tube, then boom! It explodes into a giant star! Its inside is orange and its outside is black, kinda like... ")
+		public static readonly LString l400 = new LText("Anyways, a Texas Star's a super-rare mushroom. It starts out assa tube, then boom! It explodes into a giant star! Its inside is orange and its outside is black, kinda like... ")
 			{ ID = "l400" };
 		
-		public static readonly LString l401 = new LString("uh...")
+		public static readonly LString l401 = new LText("uh...")
 			{ ID = "l401" };
 		
-		public static readonly LString l402 = new LString("Scorched garlic?")
+		public static readonly LString l402 = new LText("Scorched garlic?")
 			{ ID = "l402" };
 		
-		public static readonly LString l403 = new LString("I s'pose. But I ain't sure if you can make oil outta it. Hmm... black mushroom oil...")
+		public static readonly LString l403 = new LText("I s'pose. But I ain't sure if you can make oil outta it. Hmm... black mushroom oil...")
 			{ ID = "l403" };
 		
-		public static readonly LString l404 = new LString("...It's in your head now, isn't it? You're going to try to make black garlic oil using a Texas Star instead of garlic.")
+		public static readonly LString l404 = new LText("...It's in your head now, isn't it? You're going to try to make black garlic oil using a Texas Star instead of garlic.")
 			{ ID = "l404" };
 		
-		public static readonly LString l405 = new LString("If I ever find one, def'nitely. Tha'll make the mos' Marisacore pot of ramen ever.")
+		public static readonly LString l405 = new LText("If I ever find one, def'nitely. Tha'll make the mos' Marisacore pot of ramen ever.")
 			{ ID = "l405" };
 		
-		public static readonly LString l406 = new LString("Wait. What does Marisacore mean?")
+		public static readonly LString l406 = new LText("Wait. What does Marisacore mean?")
 			{ ID = "l406" };
 		
-		public static readonly LString l407 = new LString("Ya sure you wanna know?")
+		public static readonly LString l407 = new LText("Ya sure you wanna know?")
 			{ ID = "l407" };
 		
-		public static readonly LString l408 = new LString("Uh, maybe not.")
+		public static readonly LString l408 = new LText("Uh, maybe not.")
 			{ ID = "l408" };
 		
-		public static readonly LString l409 = new LString("Good answer! Marisacore, at its mos' fundamental, is 'bout borrowin'.")
+		public static readonly LString l409 = new LText("Good answer! Marisacore, at its mos' fundamental, is 'bout borrowin'.")
 			{ ID = "l409" };
 		
-		public static readonly LString l410 = new LString("What does that have to do with black mushroom oil?")
+		public static readonly LString l410 = new LText("What does that have to do with black mushroom oil?")
 			{ ID = "l410" };
 		
-		public static readonly LString l411 = new LString("I borrow the \"black\" and \"oil\" from \"black garlic oil\", and do wha'ever I want wi' 'em.")
+		public static readonly LString l411 = new LText("I borrow the \"black\" and \"oil\" from \"black garlic oil\", and do wha'ever I want wi' 'em.")
 			{ ID = "l411" };
 		
-		public static readonly LString l412 = new LString("Oh... I see...")
+		public static readonly LString l412 = new LText("Oh... I see...")
 			{ ID = "l412" };
 		
-		public static readonly LString l413 = new LString("Marisa, look over there. I think I see some shiitake on that tree.")
+		public static readonly LString l413 = new LText("Marisa, look over there. I think I see some shiitake on that tree.")
 			{ ID = "l413" };
 		
-		public static readonly LString l414 = new LString("Oh! Good catch.")
+		public static readonly LString l414 = new LText("Oh! Good catch.")
 			{ ID = "l414" };
 		
-		public static readonly LString l415 = new LString("These look purty good. Shiitake can sub fer meat in stir fries, I think.")
+		public static readonly LString l415 = new LText("These look purty good. Shiitake can sub fer meat in stir fries, I think.")
 			{ ID = "l415" };
 		
-		public static readonly LString l416 = new LString("Reimu reached up and plucked a leaf from the mostly-barren tree.")
+		public static readonly LString l416 = new LText("Reimu reached up and plucked a leaf from the mostly-barren tree.")
 			{ ID = "l416" };
 		
-		public static readonly LString l417 = new LString("Hmm... it's not a needle... So this is a hardwood.")
+		public static readonly LString l417 = new LText("Hmm... it's not a needle... So this is a hardwood.")
 			{ ID = "l417" };
 		
-		public static readonly LString l418 = new LString("Yup. Shiitake grows on har'wood too.")
+		public static readonly LString l418 = new LText("Yup. Shiitake grows on har'wood too.")
 			{ ID = "l418" };
 		
-		public static readonly LString l419 = new LString("Reimu, can ya check the roots of this tree? Ya might find some king oysters there.")
+		public static readonly LString l419 = new LText("Reimu, can ya check the roots of this tree? Ya might find some king oysters there.")
 			{ ID = "l419" };
 		
-		public static readonly LString l420 = new LString("Marisa carefully plucked the shiitake, and Reimu shuffled around the base of the tree, pulling away leaves and brush that had fallen there.")
+		public static readonly LString l420 = new LText("Marisa carefully plucked the shiitake, and Reimu shuffled around the base of the tree, pulling away leaves and brush that had fallen there.")
 			{ ID = "l420" };
 		
-		public static readonly LString l421 = new LString("There's some kind of mushroom here, but some animal ate most of it.")
+		public static readonly LString l421 = new LText("There's some kind of mushroom here, but some animal ate most of it.")
 			{ ID = "l421" };
 		
-		public static readonly LString l422 = new LString("Darn.")
+		public static readonly LString l422 = new LText("Darn.")
 			{ ID = "l422" };
 		
-		public static readonly LString l423 = new LString("Well, tha's the life of a shroom hunter! Onto the next dead tree!")
+		public static readonly LString l423 = new LText("Well, tha's the life of a shroom hunter! Onto the next dead tree!")
 			{ ID = "l423" };
 		
-		public static readonly LString l424 = new LString("I told you 'bout Marisacore, but what's Reimucore 'bout?")
+		public static readonly LString l424 = new LText("I told you 'bout Marisacore, but what's Reimucore 'bout?")
 			{ ID = "l424" };
 		
-		public static readonly LString l425 = new LString("If Marisacore is about borrowing, I suppose Reimucore would be about expropriation.")
+		public static readonly LString l425 = new LText("If Marisacore is about borrowing, I suppose Reimucore would be about expropriation.")
 			{ ID = "l425" };
 		
-		public static readonly LString l426 = new LString("Expropriation? I hope you ain't violatin' the Fifth Amen'ment.")
+		public static readonly LString l426 = new LText("Expropriation? I hope you ain't violatin' the Fifth Amen'ment.")
 			{ ID = "l426" };
 		
-		public static readonly LString l427 = new LString("And then Reimu spent the rest of this rainy day collecting mushrooms with Marisa, and for the first time in a long time, she enjoyed a rainy day.")
+		public static readonly LString l427 = new LText("And then Reimu spent the rest of this rainy day collecting mushrooms with Marisa, and for the first time in a long time, she enjoyed a rainy day.")
 			{ ID = "l427" };
 		
-		public static readonly LString l428 = new LString("I had thought that Reimu would come to appreciate the rain if she learned about the social, scientific, and religious meanings of rain, but it seems I was wrong. I should have just looked for Marisa from the start instead of pushing it off until now.")
+		public static readonly LString l428 = new LText("I had thought that Reimu would come to appreciate the rain if she learned about the social, scientific, and religious meanings of rain, but it seems I was wrong. I should have just looked for Marisa from the start instead of pushing it off until now.")
 			{ ID = "l428" };
 		
-		public static readonly LString l429 = new LString("Reason is the slave of the passions, so to speak. I suppose that makes this a Humean fable. How strange, I don't even like Hume.")
+		public static readonly LString l429 = new LText("Reason is the slave of the passions, so to speak. I suppose that makes this a Humean fable. How strange, I don't even like Hume.")
 			{ ID = "l429" };
 		
-		public static readonly LString l430 = new LString("Well, before I head back, I suppose I should go find a Texas Star to drop in their path. Black mushroom oil in ramen sounds quite inventive, don't you think?")
+		public static readonly LString l430 = new LText("Well, before I head back, I suppose I should go find a Texas Star to drop in their path. Black mushroom oil in ramen sounds quite inventive, don't you think?")
 			{ ID = "l430" };
 		
-		public static readonly LString l431 = new LString("What's the Fifth Amendment?")
+		public static readonly LString l431 = new LText("What's the Fifth Amendment?")
 			{ ID = "l431" };
 		
 	}

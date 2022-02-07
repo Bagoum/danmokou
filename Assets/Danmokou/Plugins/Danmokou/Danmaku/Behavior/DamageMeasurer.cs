@@ -2,6 +2,7 @@
 using System.Collections;
 using BagoumLib;
 using Danmokou.Core;
+using Danmokou.Core.DInput;
 using UnityEngine;
 
 namespace Danmokou.Behavior {

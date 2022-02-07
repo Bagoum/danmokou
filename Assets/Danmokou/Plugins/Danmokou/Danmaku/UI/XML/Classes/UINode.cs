@@ -10,6 +10,7 @@ using BagoumLib.DataStructures;
 using BagoumLib.Mathematics;
 using BagoumLib.Tweening;
 using Danmokou.Core;
+using Danmokou.Core.DInput;
 using Danmokou.DMath;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -196,18 +197,33 @@ public class UINode {
 
     #region Construction
     protected virtual void RegisterEvents() {
-        NodeHTML.RegisterCallback<MouseEnterEvent>(evt => {
-            //Logs.Log($"Enter {Description}");
+        bool clickIsOnSameElement = true;
+        NodeHTML.RegisterCallback<PointerEnterEvent>(evt => {
+           // Logs.Log($"Enter {Description()} {evt.position} {evt.localPosition}");
+        #if !UNITY_EDITOR && (UNITY_ANDROID || UNITY_IOS)
+            //PointerEnter is still issued while there's no touch, at the last touched point
+            if (evt.pressure <= 0)
+                return;
+        #endif
             if (AllowInteraction)
-                Controller.QueuedEvent = new UIMouseCommand.Goto(this);
+                Controller.QueuedEvent = new UIPointerCommand.Goto(this);
             evt.StopPropagation();
         });
-        NodeHTML.RegisterCallback<MouseUpEvent>(evt => {
-            //Logs.Log($"Click {Description}");
+        NodeHTML.RegisterCallback<PointerLeaveEvent>(evt => {
+            //Logs.Log($"Leave {Description()}");
+            clickIsOnSameElement = false;
+        });
+        NodeHTML.RegisterCallback<PointerDownEvent>(evt => {
+            //Logs.Log($"Down {Description()}");
+            clickIsOnSameElement = true;
+        });
+        NodeHTML.RegisterCallback<PointerUpEvent>(evt => {
+            //Logs.Log($"Click {Description()}");
             //button 0, 1, 2 = left, right, middle click
-            //Right click is handled as UIBack in InputManager
-            if (AllowInteraction && evt.button == 0)
-                Controller.QueuedEvent = new UIMouseCommand.NormalCommand(UICommand.Confirm, this);
+            //Right click is handled as UIBack in InputManager. UIBack is global (it does not depend
+            // on the current UINode), but click-to-confirm is done via callbacks specific to the UINode.
+            if (clickIsOnSameElement && AllowInteraction && evt.button == 0)
+                Controller.QueuedEvent = new UIPointerCommand.NormalCommand(UICommand.Confirm, this);
             evt.StopPropagation();
         });
     }
@@ -460,12 +476,12 @@ public abstract class BaseLROptionUINode<T> : UINode {
 
     protected override void RegisterEvents() {
         base.RegisterEvents();
-        NodeHTML.Q("Left").RegisterCallback<MouseUpEvent>(evt => {
-            Controller.QueuedEvent =  new UIMouseCommand.NormalCommand(UICommand.Left, this);
+        NodeHTML.Q("Left").RegisterCallback<PointerUpEvent>(evt => {
+            Controller.QueuedEvent =  new UIPointerCommand.NormalCommand(UICommand.Left, this);
             evt.StopPropagation();
         });
-        NodeHTML.Q("Right").RegisterCallback<MouseUpEvent>(evt => {
-            Controller.QueuedEvent = new UIMouseCommand.NormalCommand(UICommand.Right, this);
+        NodeHTML.Q("Right").RegisterCallback<PointerUpEvent>(evt => {
+            Controller.QueuedEvent = new UIPointerCommand.NormalCommand(UICommand.Right, this);
             evt.StopPropagation();
         });
     }
@@ -506,7 +522,7 @@ public class OptionNodeLR<T> : BaseLROptionUINode<T>, IOptionNodeLR {
 
     public OptionNodeLR(LString description, Action<T> onChange, T[] values, T defaulter) :
         this(() => description, onChange, () => values.Select(x => (default(LString)!, x)).ToArray(), defaulter) {
-        var valuesAndStrs = values.Select(x => (new LString(x?.ToString() ?? "Null"), x)).ToArray();
+        var valuesAndStrs = values.Select(x => ((LString)(x?.ToString() ?? "Null"), x)).ToArray();
         this.values = () => valuesAndStrs;
     }
 

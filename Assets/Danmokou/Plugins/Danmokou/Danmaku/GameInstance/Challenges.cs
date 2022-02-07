@@ -173,23 +173,28 @@ public abstract class Challenge {
     public static Challenge AlwaysFocus() => new AlwaysFocusC();
 
     public class SurviveC : Challenge {
-        public override LString Description(BossConfig boss) => "Don't die".Locale("死なないで");
+        public override LString Description(BossConfig boss) => 
+            new LText("Don't die", (Locales.JP, "死なないで"));
     }
 
     public class NoHorizC : Challenge {
-        public override LString Description(BossConfig boss) => "You cannot move left/right".Locale("左右の動きは出来ない");
+        public override LString Description(BossConfig boss) => 
+            new LText("You cannot move left/right", (Locales.JP, "左右の動きは出来ない"));
     }
 
     public class NoVertC : Challenge {
-        public override LString Description(BossConfig boss) => "You cannot move up/down".Locale("上下の動きは出来ない");
+        public override LString Description(BossConfig boss) => 
+            new LText("You cannot move up/down", (Locales.JP, "上下の動きは出来ない"));
     }
 
     public class NoFocusC : Challenge {
-        public override LString Description(BossConfig boss) => "You cannot use slow movement".Locale("低速移動は出来ない");
+        public override LString Description(BossConfig boss) => 
+            new LText("You cannot use slow movement", (Locales.JP, "低速移動は出来ない"));
     }
 
     public class AlwaysFocusC : Challenge {
-        public override LString Description(BossConfig boss) => "You cannot use fast movement".Locale("高速移動は出来ない");
+        public override LString Description(BossConfig boss) => 
+            new LText("You cannot use fast movement", (Locales.JP, "高速移動は出来ない"));
     }
 
     public class DialogueC : Challenge {
@@ -199,7 +204,7 @@ public abstract class Challenge {
         }
 
         public override LString Description(BossConfig boss) =>
-            $"Have a chat with {boss.CasualName}".Locale($"{boss.CasualName}との会話");
+            new LText($"Have a chat with {boss.CasualName}", (Locales.JP, $"{boss.CasualName}との会話"));
 
         public readonly DialoguePoint point;
 
@@ -213,7 +218,7 @@ public abstract class Challenge {
         public readonly float yield = 4;
 
         public override LString Description(BossConfig boss) =>
-            $"Stay close to {boss.CasualName}".Locale($"{boss.CasualName}から離れないで");
+            new LText($"Stay close to {boss.CasualName}", (Locales.JP, $"{boss.CasualName}から離れないで"));
 
         public WithinC(float units) {
             this.units = units;
@@ -241,7 +246,7 @@ public abstract class Challenge {
         public readonly float yield = 4;
 
         public override LString Description(BossConfig boss) =>
-            $"Social distance from {boss.CasualName}".Locale($"{boss.CasualName}に近寄らないで");
+            new LText($"Social distance from {boss.CasualName}", (Locales.JP, $"{boss.CasualName}に近寄らないで"));
 
         public WithoutC(float units) {
             this.units = units;
@@ -264,14 +269,15 @@ public abstract class Challenge {
 
     public class DestroyC : Challenge {
         public override LString Description(BossConfig boss) =>
-            $"Defeat {boss.CasualName}".Locale($"{boss.CasualName}を倒せ");
+            new LText($"Defeat {boss.CasualName}", (Locales.JP, $"{boss.CasualName}を倒せ"));
 
         public override bool EndCheck(ChallengeManager.TrackingContext ctx, PhaseCompletion pc) => pc.Cleared == true;
     }
 
     public class GrazeC : Challenge {
         public readonly int graze;
-        public override LString Description(BossConfig boss) => $"Get {graze} graze".Locale($"グレイズを{graze}回しろ");
+        public override LString Description(BossConfig boss) => 
+            new LText($"Get {graze} graze", (Locales.JP, $"グレイズを{graze}回しろ"));
 
         public override bool EndCheck(ChallengeManager.TrackingContext ctx, PhaseCompletion pc) =>
             GameManagement.Instance.Graze >= graze;
@@ -285,7 +291,7 @@ public abstract class Challenge {
         public readonly float time;
 
         public override LString Description(BossConfig boss) =>
-            $"Defeat {boss.CasualName} within {time}s".Locale($"{boss.CasualName}を{time}秒以内で倒せ");
+            new LText($"Defeat {boss.CasualName} within {time}s", (Locales.JP, $"{boss.CasualName}を{time}秒以内で倒せ"));
 
         public DestroyTimedC(float t) {
             time = t;

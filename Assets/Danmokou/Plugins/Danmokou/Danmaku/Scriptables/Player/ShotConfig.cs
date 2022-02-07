@@ -50,7 +50,7 @@ public class ShotConfig : ScriptableObject {
     /// In the format Mokou-A
     /// </summary>
     public static LString PlayerShotDescription(ShipConfig? p, ShotConfig? s) {
-        var playerDesc = (p == null) ? new LString("???") : p.ShortTitle;
+        var playerDesc = (p == null) ? (LString)"???" : p.ShortTitle;
         var shotDesc = "?";
         if (p != null && s != null) {
             var os = p.shots2.FirstOrDefault(_os => _os.shot == s);

@@ -25,6 +25,7 @@ using Danmokou.SM;
 using JetBrains.Annotations;
 using UnityEditor;
 using UnityEngine;
+using Danmokou.Core.DInput;
 using static Danmokou.Services.GameManagement;
 using static Danmokou.DMath.LocationHelpers;
 using static Danmokou.GameInstance.InstanceConsts;

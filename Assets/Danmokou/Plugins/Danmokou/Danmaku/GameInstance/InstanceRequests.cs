@@ -5,6 +5,7 @@ using BagoumLib;
 using BagoumLib.Cancellation;
 using BagoumLib.Events;
 using Danmokou.Achievements;
+using Danmokou.ADV;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Danmaku;
@@ -133,7 +134,7 @@ public record InstanceRequest {
     public SharedInstanceMetadata metadata { get; }
     public ReplayMode replay { get; }
     public ILowInstanceRequest lowerRequest { get; }
-    public DMKVNData? vnSave { get; init; }
+    public ADVData? save { get; init; }
     public int seed { get; }
     public ICancellee GameTracker => gameTracker;
     public bool Saveable => replay is not ReplayMode.Replaying;
@@ -141,16 +142,16 @@ public record InstanceRequest {
 
     public InstanceRequest(Func<InstanceData, bool>? cb, ILowInstanceRequest lowerRequest, Replay replay) : 
         this(cb, replay.metadata.Record.SharedInstanceMetadata, lowerRequest, new ReplayMode.Replaying(replay), null) {}
-    public InstanceRequest(Func<InstanceData, bool>? cb, SharedInstanceMetadata metadata, ILowInstanceRequest lowReq, DMKVNData? vnSave = null) : 
+    public InstanceRequest(Func<InstanceData, bool>? cb, SharedInstanceMetadata metadata, ILowInstanceRequest lowReq, ADVData? vnSave = null) : 
         this(cb, metadata, lowReq, null, vnSave) { }
 
-    public InstanceRequest(Func<InstanceData, bool>? cb, SharedInstanceMetadata metadata, ILowInstanceRequest lowerRequest, ReplayMode? replay, DMKVNData? vnSave) {
+    public InstanceRequest(Func<InstanceData, bool>? cb, SharedInstanceMetadata metadata, ILowInstanceRequest lowerRequest, ReplayMode? replay, ADVData? save) {
         this.metadata = metadata;
         this.cb = cb;
         this.replay = replay ?? (lowerRequest.Campaign.Replayable ? 
             new ReplayMode.RecordingReplay() : 
             new ReplayMode.NotRecordingReplay());
-        this.vnSave = vnSave;
+        this.save = save;
         this.lowerRequest = lowerRequest;
         this.seed = this.replay is ReplayMode.Replaying r ? r.replay.metadata.Record.Seed : new Random().Next();
     }
@@ -170,7 +171,7 @@ public record InstanceRequest {
         };
         GameManagement.NewInstance(Mode, SaveData.r.GetHighScore(this), this, actor, 
             //Don't load VN saves in replay use-cases
-            replay is ReplayMode.NotRecordingReplay ? vnSave : null);
+            replay is ReplayMode.NotRecordingReplay ? save : null);
     }
 
     public InstanceRecord MakeGameRecord(AyaPhoto[]? photos = null, string? ending = null) {
@@ -346,17 +347,17 @@ public record InstanceRequest {
     /// <param name="campaign"></param>
     /// <param name="cb">Run when moving to replay screen.</param>
     /// <param name="metadata"></param>
-    /// <param name="vnSave"></param>
+    /// <param name="advData"></param>
     /// <returns></returns>
     public static bool RunCampaign(SMAnalysis.AnalyzedCampaign? campaign, Action? cb, 
-        SharedInstanceMetadata metadata, DMKVNData? vnSave = null) {
+        SharedInstanceMetadata metadata, ADVData? advData = null) {
         if (campaign == null) return false;
         var req = new InstanceRequest(d => 
             ServiceLocator.Find<ISceneIntermediary>().LoadScene(new SceneRequest(MaybeSaveReplayScene(d), 
-            SceneRequest.Reason.FINISH_RETURN, cb)), metadata, new CampaignRequest(campaign), vnSave);
+            SceneRequest.Reason.FINISH_RETURN, cb)), metadata, new CampaignRequest(campaign), advData);
 
 
-        if (true || SaveData.r.TutorialDone || References.miniTutorial == null) return req.Run();
+        if (SaveData.r.TutorialDone || References.miniTutorial == null) return req.Run();
         //Note: if you Restart within the mini-tutorial, it will send you to stage 1.
         // This is because Restart calls campaign.Request.Run().
         else return ServiceLocator.Find<ISceneIntermediary>().LoadScene(new SceneRequest(References.miniTutorial,

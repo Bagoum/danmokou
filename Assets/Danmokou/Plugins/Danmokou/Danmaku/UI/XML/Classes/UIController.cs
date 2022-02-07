@@ -18,7 +18,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.Profiling;
 using UnityEngine.UIElements;
-using static Danmokou.Core.InputManager;
+using static Danmokou.Core.DInput.InputManager;
 
 namespace Danmokou.UI.XML {
 public enum UICommand {
@@ -30,14 +30,14 @@ public enum UICommand {
     Back
 }
 
-public abstract record UIMouseCommand {
+public abstract record UIPointerCommand {
     public virtual bool ValidForCurrent(UINode current) => true;
 
-    public record NormalCommand(UICommand Command, UINode? Source) : UIMouseCommand {
+    public record NormalCommand(UICommand Command, UINode? Source) : UIPointerCommand {
         public override bool ValidForCurrent(UINode current) => 
             Source == current || Source == null || Command == UICommand.Back;
     }
-    public record Goto(UINode Target) : UIMouseCommand;
+    public record Goto(UINode Target) : UIPointerCommand;
 }
 
 public abstract record UIResult {
@@ -111,7 +111,7 @@ public abstract class UIController : CoroutineRegularUpdater {
 
     //Fields for event-based changes 
     //Not sure if I want to generalize these to properly event-based...
-    public UIMouseCommand? QueuedEvent { get; set; }
+    public UIPointerCommand? QueuedEvent { get; set; }
 
     protected virtual UINode? StartingNode => null;
     
@@ -181,12 +181,12 @@ public abstract class UIController : CoroutineRegularUpdater {
     protected virtual Color BackgroundTint => new(0.17f, 0.05f, 0.20f);
 
     private UICommand? CurrentInputCommand =>
-        UILeft.Active ? UICommand.Left :
-        UIRight.Active ? UICommand.Right :
-        UIUp.Active ? UICommand.Up :
-        UIDown.Active ? UICommand.Down :
-        UIConfirm.Active ? UICommand.Confirm :
-        UIBack.Active ? UICommand.Back :
+        UILeft ? UICommand.Left :
+        UIRight ? UICommand.Right :
+        UIUp ? UICommand.Up :
+        UIDown ? UICommand.Down :
+        UIConfirm ? UICommand.Confirm :
+        UIBack ? UICommand.Back :
         null;
     
     public override void FirstFrame() {
@@ -386,9 +386,9 @@ public abstract class UIController : CoroutineRegularUpdater {
             bool doCustomSFX = false;
             UICommand? command = null;
             UIResult? result = null;
-            if (QueuedEvent is UIMouseCommand.Goto mgt && mgt.Target.Destroyed)
+            if (QueuedEvent is UIPointerCommand.Goto mgt && mgt.Target.Destroyed)
                 QueuedEvent = null;
-            if (QueuedEvent is UIMouseCommand.Goto mouseGoto && mouseGoto.Target.Screen == Current.Screen && 
+            if (QueuedEvent is UIPointerCommand.Goto mouseGoto && mouseGoto.Target.Screen == Current.Screen && 
                 mouseGoto.Target != Current) {
                 result = new UIResult.GoToNode(mouseGoto.Target);
                 ServiceLocator.SFXService.Request(
@@ -397,7 +397,7 @@ public abstract class UIController : CoroutineRegularUpdater {
                 result = r;
                 doCustomSFX = true;
             } else {
-                command = (QueuedEvent is UIMouseCommand.NormalCommand uic && QueuedEvent.ValidForCurrent(Current)) ?
+                command = (QueuedEvent is UIPointerCommand.NormalCommand uic && QueuedEvent.ValidForCurrent(Current)) ?
                     uic.Command :
                     CurrentInputCommand;
                 if (command.Try(out var cmd))

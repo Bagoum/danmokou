@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using BagoumLib.Cancellation;
 using Danmokou.Behavior;
 using Danmokou.Core;
+using Danmokou.Core.DInput;
 using Danmokou.Danmaku;
 using Danmokou.Danmaku.Options;
 using Danmokou.DMath;
@@ -16,7 +17,7 @@ using Danmokou.UI;
 using Danmokou.UI.XML;
 using TMPro;
 using UnityEngine;
-using static Danmokou.Core.InputManager;
+using static Danmokou.Core.DInput.InputManager;
 using static Danmokou.Services.GameManagement;
 using static Danmokou.Core.LocalizedStrings.Tutorial;
 
@@ -83,19 +84,11 @@ public class Tutorial : BehaviorEntity {
             yield return null;
             yield return wait(() => ETime.FirstUpdateForScreen && cond());
         }
-        IEnumerator waiti(IInputHandler ih) {
-            yield return null;
-            yield return waitlf(() => ih.Active);
-        }
-        IEnumerator waitir(IInputHandler ih) {
-            yield return null;
-            yield return waitlf(() => !ih.Active);
-        }
-        IEnumerator confirm() => waiti(UIConfirm);
+        IEnumerator confirm() => waitlf(() => UIConfirm);
         ServiceLocator.Find<IUIManager>().SetSpellname("Tutorial");
-        Message(text10, welcome1(UIConfirm.Desc));
+        Message(text10, welcome1(MainSource.uiConfirm.Description));
         yield return confirm();
-        Prompt(text10, blue2(Pause.Desc));
+        Prompt(text10, blue2(MainSource.pause.Description));
         yield return waitlf(() => EngineStateManager.State == EngineState.MENU_PAUSE);
         pauseMenu.GoToNth(0, 0);
         const float menuLeft = 3.8f;
@@ -117,7 +110,7 @@ public class Tutorial : BehaviorEntity {
         yield return confirm();
         Message(text00, inputsmooth10, -0.7f, x:menuLeft);
         yield return confirm();
-        Prompt(text00, unpause11(Pause.Desc), x:menuLeft);
+        Prompt(text00, unpause11(MainSource.pause.Description), x:menuLeft);
         yield return waitlf(() => EngineStateManager.State == EngineState.RUN);
         var mov = new Movement(new Vector2(-2, 2.5f), 0);
         BulletManager.RequestSimple("lcircle-red/", _ => 4f, null, mov, new ParametricInfo(in mov));
@@ -139,13 +132,13 @@ public class Tutorial : BehaviorEntity {
         BulletManager.ClearAllBullets();
         BehaviorEntity.GetExecForID("greenrect").InvokeCull();
 
-        Prompt(text10, fire15(ShootHold.Desc));
-        yield return waitir(ShootHold);
-        yield return waiti(ShootHold);
+        Prompt(text10, fire15(MainSource.fireHold.Description));
+        yield return waitlf(() => !IsFiring);
+        yield return waitlf(() => IsFiring);
         Prompt(text10, move16);
         yield return waitlf(() => Math.Abs(HorizontalSpeed01) > 0.1 || Math.Abs(VerticalSpeed01) > 0.1);
-        Prompt(text10, focus17(FocusHold.Desc));
-        yield return waiti(FocusHold);
+        Prompt(text10, focus17(MainSource.focusHold.Description));
+        yield return waitlf(() => IsFocus);
 
         var bcs = new Cancellable();
         var boss = GameObject.Instantiate(tutorialBoss).GetComponent<BehaviorEntity>();
@@ -244,7 +237,7 @@ public class Tutorial : BehaviorEntity {
         Message(text10, ability45);
         yield return confirm();
         yield return shift();
-        Prompt(text10, ability46(Meter.Desc));
+        Prompt(text10, ability46(MainSource.meter.Description));
         ServiceLocator.Find<PlayerController>().AddGems(100);
         yield return waitlf(() => InputManager.IsMeter);
         yield return shift();

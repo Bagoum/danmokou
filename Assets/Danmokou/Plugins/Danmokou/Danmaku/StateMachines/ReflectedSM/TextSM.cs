@@ -75,7 +75,7 @@ public static class TSMReflection {
     public static TTaskPattern Place(StandLocation location, string profile_key) {
         return smh => {
             var chr = FindOrCreateCharacter(profile_key);
-            chr.Location.BaseValue = new Vector3(GetLocation(location), 0);
+            chr.Location.Value = new Vector3(GetLocation(location), 0);
             if (characters.TryGetValue(location, out var existing) && existing != chr)
                 existing.Delete();
             characters[location] = chr;

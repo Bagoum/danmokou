@@ -1,16 +1,20 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using Danmokou.Behavior;
 using Danmokou.Core;
+using Danmokou.Core.DInput;
+using System.Linq;
 using UnityEngine;
 
 namespace Danmokou.Testing {
 public class InputAlignmentDebug : RegularUpdater {
     public override void RegularUpdate() {
-        if (Input.GetKeyDown(KeyCode.H)) Logs.Log("KeyDown event");
-        if (Input.GetKey(KeyCode.H)) Logs.Log("Key event");
-        if (Input.GetKeyUp(KeyCode.H)) Logs.Log("KeyUp event");
-        if (InputManager.Bomb.Active) Logs.Log("Bomb event");
+        foreach (var kc in Enum.GetValues(typeof(KeyCode)).Cast<KeyCode>()) {
+            if (Input.GetKeyDown(kc)) Logs.Log($"{kc} KeyDown event");
+            if (Input.GetKey(kc)) Logs.Log($"{kc} Key event");
+            if (Input.GetKeyUp(kc)) Logs.Log($"{kc} KeyUp event");
+        }
     }
 }
 }

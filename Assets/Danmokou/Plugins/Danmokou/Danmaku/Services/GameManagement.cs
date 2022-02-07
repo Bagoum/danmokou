@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using BagoumLib.Events;
 using Danmokou.Achievements;
+using Danmokou.ADV;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Danmaku;
@@ -27,6 +28,7 @@ using JetBrains.Annotations;
 using SuzunoyaUnity;
 using UnityEditor;
 using static Danmokou.SM.SMAnalysis;
+using Danmokou.Core.DInput;
 
 namespace Danmokou.Services {
 /// <summary>
@@ -59,10 +61,10 @@ public class GameManagement : CoroutineRegularUpdater {
         }
     }
 
-    public static void NewInstance(InstanceMode mode, long? highScore = null, InstanceRequest? req = null, ReplayActor? replay = null, DMKVNData? vnSave = null) {
+    public static void NewInstance(InstanceMode mode, long? highScore = null, InstanceRequest? req = null, ReplayActor? replay = null, ADVData? save = null) {
         DeactivateInstance();
         Logs.Log($"Creating new game instance with mode {mode} on difficulty {req?.metadata.difficulty.Describe() ?? "NULL"}.");
-        _evInstance.OnNext(new InstanceData(mode, req, highScore, replay, vnSave));
+        _evInstance.OnNext(new InstanceData(mode, req, highScore, replay, save));
     }
 
     public static IEnumerable<FixedDifficulty> VisibleDifficulties => new[] {
@@ -141,10 +143,10 @@ public class GameManagement : CoroutineRegularUpdater {
     /// <summary>
     /// Restarts the game instance.
     /// </summary>
-    public static bool Restart(DMKVNData? newSave = null) {
+    public static bool Restart(ADVData? newSave = null) {
         if (Instance.Request == null) throw new Exception("No game instance found to restart");
         InstanceRequest.InstanceRestarted.OnNext(Instance.Request);
-        return (Instance.Request with {vnSave = newSave}).Run();
+        return (Instance.Request with {save = newSave}).Run();
     }
 
     public static bool CanRestart => Instance.Request != null;
@@ -314,7 +316,7 @@ public class GameManagement : CoroutineRegularUpdater {
         SaveData.SaveRecord();
         var ss = ServiceLocator.Find<IScreenshotter>().Screenshot(
             new CRect(-References.bounds.center.x, 0, MainCamera.ScreenWidth / 2f, MainCamera.ScreenHeight / 2f, 0), new[] { MainCamera.CamType.UI });
-        SaveData.v.SaveNewSave(new(Instance.VNData, DateTime.Now, ss, 0, "hello"));
+        SaveData.v.SaveNewSave(new(Instance.ADVData, DateTime.Now, ss, 0, "hello"));
     }
     /*
     [ContextMenu("Debug GCX stats")]

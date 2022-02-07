@@ -17,7 +17,7 @@ public static class LocalizationRendering {
 
     private static T Cast<T>(this object obj) {
         if (obj is T t) return t;
-        throw new Exception($"Localization ({Localization.Locale}): {obj} is not of type {typeof(T)}");
+        throw new Exception($"Localization: {obj} is not of type {typeof(T)}");
     }
 }
 }

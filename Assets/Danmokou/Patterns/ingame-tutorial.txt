@@ -9,7 +9,7 @@ phase 0
 
 phase 0
 	paction 0
-		move-target 1 io-sine cy 0
+		move-target 1.5 io-sine cy 1
 		
 <!> type non `This is a Nonspell`
 <!> hp 4000

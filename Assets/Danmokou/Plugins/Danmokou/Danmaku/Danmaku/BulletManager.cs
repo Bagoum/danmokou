@@ -116,10 +116,6 @@ public partial class BulletManager {
 
     public override int UpdatePriority => UpdatePriorities.BM;
     public override void RegularUpdate() {
-#if UNITY_EDITOR
-        if (InputManager.GetKeyTrigger(KeyCode.RightBracket).Active)
-            DebugBulletNums();
-#endif
         ResetSentry();
         SimpleBulletCollection sbc;
         //Temp-last set for control updates

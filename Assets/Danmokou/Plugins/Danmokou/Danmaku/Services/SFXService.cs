@@ -207,7 +207,7 @@ public class SFXService : RegularUpdater, ISFXService {
 
         if (aci.RequiresHandling) RequestSource(aci, Cancellable.Null);
         else src.PlayOneShot(aci.clip, aci.volume * SaveData.s.SEVolume * type switch {
-            SFXType.TypingSound => SaveData.s.TypingSoundVolume,
+            SFXType.TypingSound => SaveData.s.VNTypingSoundVolume,
             _ => 1f
         });
     }
