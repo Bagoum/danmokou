@@ -61,10 +61,10 @@ public class GameManagement : CoroutineRegularUpdater {
         }
     }
 
-    public static void NewInstance(InstanceMode mode, long? highScore = null, InstanceRequest? req = null, ReplayActor? replay = null, ADVData? save = null) {
+    public static void NewInstance(InstanceMode mode, long? highScore = null, InstanceRequest? req = null, ReplayActor? replay = null) {
         DeactivateInstance();
         Logs.Log($"Creating new game instance with mode {mode} on difficulty {req?.metadata.difficulty.Describe() ?? "NULL"}.");
-        _evInstance.OnNext(new InstanceData(mode, req, highScore, replay, save));
+        _evInstance.OnNext(new InstanceData(mode, req, highScore, replay));
     }
 
     public static IEnumerable<FixedDifficulty> VisibleDifficulties => new[] {
@@ -143,10 +143,10 @@ public class GameManagement : CoroutineRegularUpdater {
     /// <summary>
     /// Restarts the game instance.
     /// </summary>
-    public static bool Restart(ADVData? newSave = null) {
+    public static bool Restart() {
         if (Instance.Request == null) throw new Exception("No game instance found to restart");
         InstanceRequest.InstanceRestarted.OnNext(Instance.Request);
-        return (Instance.Request with {save = newSave}).Run();
+        return Instance.Request.Run();
     }
 
     public static bool CanRestart => Instance.Request != null;
@@ -310,14 +310,6 @@ public class GameManagement : CoroutineRegularUpdater {
     [ContextMenu("Add Lenience")]
     public void AddLenience() => Instance.AddFaithLenience(2);
 
-    [ContextMenu("Save VN")]
-    public void SaveVN() {
-        ServiceLocator.Find<IVNWrapper>().UpdateAllVNSaves();
-        SaveData.SaveRecord();
-        var ss = ServiceLocator.Find<IScreenshotter>().Screenshot(
-            new CRect(-References.bounds.center.x, 0, MainCamera.ScreenWidth / 2f, MainCamera.ScreenHeight / 2f, 0), new[] { MainCamera.CamType.UI });
-        SaveData.v.SaveNewSave(new(Instance.ADVData, DateTime.Now, ss, 0, "hello"));
-    }
     /*
     [ContextMenu("Debug GCX stats")]
     public void DebugGCXStats() {

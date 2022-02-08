@@ -5,11 +5,13 @@ using System.Reflection;
 using System.Threading.Tasks;
 using BagoumLib;
 using BagoumLib.Cancellation;
+using BagoumLib.DataStructures;
 using BagoumLib.Mathematics;
 using BagoumLib.Reflection;
 using BagoumLib.Tweening;
 using Danmokou.Behavior;
 using Danmokou.Core;
+using Danmokou.UI.XML;
 using SuzunoyaUnity.Rendering;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -19,10 +21,11 @@ namespace Danmokou.UI {
 public class UIBuilderRenderer : CoroutineRegularUpdater {
     //Resolution at which UI resources are designed.
     public static readonly (int w, int h) UIResolution = (3840, 2160);
+    private readonly DMCompactingArray<UIController> controllers = new(8);
+    
     public PanelSettings[] settings = null!;
     public Material uiMaterial = null!;
     public RenderTexture unsetRT = null!;
-    
 
     private RenderTexture rt = null!;
     private Cancellable allCancel = null!;
@@ -32,29 +35,17 @@ public class UIBuilderRenderer : CoroutineRegularUpdater {
     private const int frontOrder = 32000;
     private int normalOrder;
 
-    public enum RAction {
-        SLIDE,
-        FADE
+    public IDisposable RegisterController(UIController c, int priority) {
+        return controllers.AddPriority(c, priority);
     }
-
-    //each action type can be run independently
-    private readonly Dictionary<RAction, Cancellable> cancellers =
-        new();
-
-    private ICancellee CreateNewCanceller(RAction a) {
-        if (cancellers.TryGetValue(a, out var existing)) existing.Cancel();
-        var c = new Cancellable();
-        cancellers[a] = c;
-        return new JointCancellee(allCancel, c);
-    }
-
-    public Task<Completion> Slide(Vector2? start, Vector2 end, float time, Easer? smooth)
-        => Tween.TweenTo(start ?? tr.localPosition, end, time, x => tr.localPosition = x, smooth, 
-            CreateNewCanceller(RAction.SLIDE)).Run(this);
     
-    public Task<Completion> Fade(float? start, float end, float time, Easer? smooth)
-        => Tween.TweenTo(start ?? sr.color.a, end, time, sr.SetAlpha, smooth, 
-            CreateNewCanceller(RAction.FADE)).Run(this);
+    public bool IsHighestPriorityActiveMenu(UIController c) {
+        for (int ii = 0; ii < controllers.Count; ++ii)
+            if (controllers.ExistsAt(ii) && controllers[ii].MenuActive)
+                return (controllers[ii] == c);
+        return false;
+    }
+
 
     private void Awake() {
         tr = transform;
@@ -66,14 +57,6 @@ public class UIBuilderRenderer : CoroutineRegularUpdater {
     protected override void BindListeners() {
         base.BindListeners();
         Listen(RenderHelpers.PreferredResolution, RemakeTexture);
-    }
-
-    public void MoveToNormal() {
-        sr.sortingOrder = normalOrder;
-    }
-
-    public void MoveToFront() {
-        sr.sortingOrder = frontOrder;
     }
 
     private void RemakeTexture((int w, int h) res) {

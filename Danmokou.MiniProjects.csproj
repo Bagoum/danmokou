@@ -44,8 +44,10 @@
   <ItemGroup>
      <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\AssemblyMarker.cs" />
      <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\Lines\Generated\CrimsonVermilion.cs" />
+     <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\CrimsonVermilionGameDef.cs" />
      <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\Lines\Generated\BlessedRain.cs" />
      <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\VN\Objects\FleurDeLysMimic.cs" />
+     <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\BlessedRainGameDef.cs" />
      <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\VN\Backgrounds\TownBGMimic.cs" />
      <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\VN\Backgrounds\Shrine2BGMimic.cs" />
      <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\VN\Backgrounds\ForestBGMimic.cs" />

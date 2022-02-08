@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using BagoumLib;
 using BagoumLib.Culture;
+using BagoumLib.Tweening;
 using Danmokou.Core;
 using Danmokou.Services;
 using Danmokou.Danmaku;
@@ -149,12 +150,12 @@ public class XMLMainMenuDays : XMLMainMenu {
             new OpenUrlNode(main_twitter, "https://twitter.com/rdbatz")
                 .With(large1Class));
 
+        bool doAnim = ReturnTo == null;
         base.FirstFrame();
-        if (ReturnTo == null) {
-            _ = uiRenderer.Slide(new Vector2(3, 0), Vector2.zero, 1f, DMath.M.EOutSine);
-            _ = uiRenderer.Fade(0, 1, 1f, null);
-        } else
-            uiRenderer.Fade(1, 1, 0, null);
+        if (doAnim) {
+            //_ = Tween.TweenTo(720f, 0f, 1f, x => UIRoot.style.left = x, M.EOutSine).Run(this);
+            _ = Tween.TweenTo(0f, 1f, 0.8f, x => UIRoot.style.opacity = x, x => x).Run(this);
+        }
     }
 }
 }

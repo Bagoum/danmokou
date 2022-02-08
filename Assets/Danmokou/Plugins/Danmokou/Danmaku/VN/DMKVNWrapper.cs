@@ -39,50 +39,5 @@ public class DMKVNWrapper : VNWrapper {
         evn.tokens.Add(EngineStateManager.EvState.Subscribe(s => vn.InputAllowed.Value = s == EngineState.RUN));
         return evn;
     }
-
-
-    public async Task<I> ExecuteVN<V, I>(Func<I, ICancellee, V> constructor, Func<V, Task> task, I initialSave,
-        ICancellee extCT)
-        where I : IInstanceData where V : IVNState {
-        while (true) {
-            var cT = new Cancellable();
-            var jcT = new JointCancellee(cT, extCT);
-            var vn = constructor(initialSave, jcT);
-            vn.TimePerAutoplayConfirm = 1.5f;
-            vn.TimePerFastforwardConfirm = 0.15f;
-            var exec = TrackVN(vn);
-            Logs.Log($"Starting VN script {vn}");
-            VNLocation? backjumpTo = null;
-            if (!Replayer.RequiresConsistency)
-                exec.doBacklog = loc => {
-                    backjumpTo = loc;
-                    cT.Cancel();
-                };
-            var logct = ServiceLocator.Find<IVNBacklog>().TryRegister(exec);
-            try {
-                await task(vn);
-                return (I) vn.UpdateSavedata();
-            } catch (Exception e) {
-                if (cT.Cancelled && !extCT.Cancelled && !(backjumpTo is null)) {
-                    Logs.Log($"Backjumping VN {vn} to line {backjumpTo}");
-                    initialSave = (I) vn.UpdateSavedata();
-                    initialSave.Location = backjumpTo;
-                    continue;
-                }
-                if (e is OperationCanceledException) {
-                    Logs.Log($"Cancelled VN script {vn}");
-                } else {
-                    Logs.LogException(e);
-                }
-                throw;
-            } finally {
-                Logs.Log(
-                    $"Completed VN script {vn}. Final state: local {cT.ToCompletion()}, total {jcT.ToCompletion()}");
-                logct?.Cancel();
-                vn.DeleteAll();
-            }
-        }
-
-    }
 }
 }

@@ -17,7 +17,6 @@ using Vector3 = System.Numerics.Vector3;
 // ReSharper disable AccessToDisposedClosure
 
 namespace MiniProjects.VN {
-[Reflect]
 public static class _VNBlessedRain {
     private record Shared(DMKVNState vn, ADVDialogueBox md, UnityRenderGroup rg, UnityRenderGroup rgb) {
         public DMKVNState.RunningAudioTrackProxy bgm { get; private set; } = null!;
@@ -50,13 +49,13 @@ public static class _VNBlessedRain {
     private static BoundedContext<Unit> _01Shrine(Shared o) => new(o.vn, "1:SHRINE", async () => {
         var vn = o.vn;
         using var room = vn.Add(new ShrineCourtyardBG());
-        room.Alpha = 1;
         using var reimu = vn.Add(new Reimu());
         using var yukari = vn.Add(new Yukari());
+        yukari.Alpha = 0;
         using var kasen = vn.Add(new Kasen());
+        kasen.Alpha = 0;
         using var narr = vn.Add(new SilentNarrator());
         reimu.Location.Value = V3(2.5f, 0);
-        reimu.Alpha = 1;
         await o.rgb.DoTransition(new RenderGroupTransition.Fade(o.rg, 1))
             .And(reimu.EmoteSay("cry", l0))
             .And(vn.Wait(0.1).Then(o.GetBGM("br.bgm1").AsVnOp(vn))).C;
@@ -170,15 +169,16 @@ public static class _VNBlessedRain {
     private static BoundedContext<Unit> _02Moriya(Shared o) => new(o.vn, "2:MORIYA", async () => {
         var vn = o.vn;
         using var shrine = vn.Add(new Shrine2BG());
-        shrine.Alpha = 1;
         using var r = vn.Add(new Reimu());
+        r.Alpha = 0;
         using var y = vn.Add(new Yukari());
+        y.Alpha = 0;
         using var s = vn.Add(new Sanae());
         using var k = vn.Add(new Kanako());
+        k.Alpha = 0;
         using var n = vn.Add(new SilentNarrator());
         await o.GetBGM("br.moriya");
         s.Location.Value = V3(3, 0);
-        s.Alpha = 1;
         await s.SetEmote("happy");
         await o.rgb.DoTransition(new RenderGroupTransition.Fade(o.rg, 1)).And(s.Say(l77)).C;
         r.Location.Value = V3(-2, 0);
@@ -343,13 +343,17 @@ public static class _VNBlessedRain {
     private static BoundedContext<Unit> _03Forest(Shared o) => new(o.vn, "3:FOREST", async () => {
         var vn = o.vn;
         using var forest = vn.Add(new ForestBG());
-        forest.Alpha = 1;
         o.vn.MainDialogue!.Clear();
         using var r = vn.Add(new Reimu());
+        r.Alpha = 0;
         using var y = vn.Add(new Yukari());
+        y.Alpha = 0;
         using var a = vn.Add(new Aya());
+        a.Alpha = 0;
         using var s = vn.Add(new Suwako());
+        s.Alpha = 0;
         using var m = vn.Add(new Marisa());
+        m.Alpha = 0;
         using var n = vn.Add(new SilentNarrator());
         r.Location.Value = V3(3, 2);
         await o.rgb.DoTransition(new RenderGroupTransition.Fade(o.rg, 1));
@@ -680,13 +684,13 @@ public static class _VNBlessedRain {
         return default;
     });
 
-    public static async Task VNScriptBlessedRain(DMKVNState vn) {
+    public static async Task<Unit> VNScriptBlessedRain(DMKVNState vn) {
 #if UNITY_EDITOR
         vn.DefaultLoadSkipUnit = true;
-        if (SceneIntermediary.IsFirstScene && vn.LoadTo is null) 
-            vn.LoadToLocation(new VNLocation("l77", new List<string>() {"TOP", "2:MORIYA"}));
+        //if (SceneIntermediary.IsFirstScene && vn.LoadTo is null) 
+            //vn.LoadToLocation(new VNLocation("l77", new List<string>() {"TOP", "2:MORIYA"}));
 #endif
-        await _TopLevel(vn);
+        return await _TopLevel(vn);
     }
 }
 }

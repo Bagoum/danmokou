@@ -91,7 +91,7 @@ public partial class PlayerController : BehaviorEntity {
     
     #region ComputedProperties
 
-    public ICancellee BoundingToken => Instance.Request?.GameTracker ?? Cancellable.Null;
+    public ICancellee BoundingToken => Instance.Request?.InstTracker ?? Cancellable.Null;
     public bool AllowPlayerInput => AllControlEnabled && StateAllowsInput(State);
     private ActiveTeamConfig Team { get; set; } = null!;
     private bool RespawnOnHit => GameManagement.Difficulty.respawnOnDeath;

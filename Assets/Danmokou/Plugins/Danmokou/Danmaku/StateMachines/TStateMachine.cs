@@ -27,12 +27,7 @@ public class ScriptTSM : SequentialSM {
         using var token = ServiceLocator.FindAll<PlayerController>()
             .SelectDisposable(p => p.AllControlEnabled.AddConst(false));
         //Await to keep token in scope until exit
-        await ((DMKVNWrapper) ServiceLocator.Find<IVNWrapper>())
-            .ExecuteVN((data, cT) => new DMKVNState(cT, "backwards-compat-script-vn", data),
-                vn => RunAsVN(smh, vn), GameManagement.Instance.VNData, smh.cT);
-
-        //Dialoguer.ShowAndResetDialogue();
-        //return base.Start(smh).ContinueWithSync(Dialoguer.HideDialogue);
+        await SMReflection.ExecuteVN(vn => RunAsVN(smh, vn), "backwards-compat-script-vn")(smh);
     }
 
     private async Task RunAsVN(SMHandoff smh, DMKVNState vn) {

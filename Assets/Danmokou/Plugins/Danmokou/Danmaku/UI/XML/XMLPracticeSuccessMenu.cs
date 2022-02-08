@@ -20,7 +20,7 @@ public class XMLPracticeSuccessMenu : PausedGameplayMenu {
             ve.AddColumn();
         }, MenuBackgroundOpacity = 0.8f  };
         _ = new UIColumn(MainScreen, null,
-            new FuncNode(restart, () => GameManagement.Restart())
+            new FuncNode(restart, GameManagement.Restart)
                 {EnabledIf = (() => GameManagement.CanRestart)},
             new FuncNode(save_replay, GameManagement.GoToReplayScreen)
                 {EnabledIf = (() => GameManagement.Instance.Replay is ReplayRecorder)},

@@ -817,6 +817,10 @@
       <Project>{72646db1-bc40-2ae9-c8c9-4a953c53b4ab}</Project>
       <Name>Danmokou.MiniProjects</Name>
     </ProjectReference>
+    <ProjectReference Include="Danmokou.PlumWine.csproj">
+      <Project>{fae1ec87-b65f-a68c-d452-3786ca8fb5c7}</Project>
+      <Name>Danmokou.PlumWine</Name>
+    </ProjectReference>
     <ProjectReference Include="Danmokou.Core.csproj">
       <Project>{fb76ea87-6c0d-f91b-47d2-a55fce61d2df}</Project>
       <Name>Danmokou.Core</Name>

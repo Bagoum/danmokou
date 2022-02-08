@@ -28,7 +28,7 @@ public class XMLDeathMenu : PausedGameplayMenu {
                     return new UIResult.StayOnNode();
                 } else return new UIResult.StayOnNode(true);
             }) {EnabledIf = (() => GameManagement.Instance.Continues > 0)},
-            new ConfirmFuncNode(restart, () => GameManagement.Restart())
+            new ConfirmFuncNode(restart, GameManagement.Restart)
                 {EnabledIf = (() => GameManagement.CanRestart)},
             new ConfirmFuncNode(to_menu, GameManagement.GoToMainMenu)) {
             ExitIndexOverride = 0,

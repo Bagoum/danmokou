@@ -4,9 +4,11 @@ using System.Linq;
 using BagoumLib;
 using BagoumLib.Cancellation;
 using BagoumLib.Culture;
+using BagoumLib.Tweening;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Danmaku;
+using Danmokou.DMath;
 using Danmokou.GameInstance;
 using Danmokou.Graphics.Backgrounds;
 using Danmokou.Player;
@@ -171,7 +173,7 @@ public class XMLMainMenuCampaign : XMLMainMenu {
             if (s != MainScreen)
                 s?.WithBG(SecondaryBGConfig);
 
-        _ = new UIColumn(MainScreen, null, new[] {
+        _ = new UIColumn(MainScreen, null, new UINode[] {
             new TransferNode(main_gamestart, PlaymodeScreen),
             new TransferNode(main_playerdata, PlayerDataScreen),
             //new TransferNode(main_musicroom, MusicRoomScreen)
@@ -183,13 +185,13 @@ public class XMLMainMenuCampaign : XMLMainMenu {
         }.Select(x => x.With(large1Class, centerTextClass))) {
             ExitIndexOverride = -2
         };
-        
+
+        bool doAnim = ReturnTo == null;
         base.FirstFrame();
-        if (ReturnTo == null) {
-            _ = uiRenderer.Slide(new Vector2(3, 0), Vector2.zero, 1f, DMath.M.EOutSine);
-            _ = uiRenderer.Fade(0, 1, 1f, null);
-        } else
-            uiRenderer.Fade(1, 1, 0, null);
+        if (doAnim) {
+            //_ = Tween.TweenTo(720f, 0f, 1f, x => UIRoot.style.left = x, M.EOutSine).Run(this);
+            _ = Tween.TweenTo(0f, 1f, 0.8f, x => UIRoot.style.opacity = x, x => x).Run(this);
+        }
     }
 }
 }

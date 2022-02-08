@@ -13,3 +13,6 @@
 [submodule "Assets/SZYU"]
 	path = Assets/SZYU
 	url = https://github.com/Bagoum/suzunoya-unity.git
+[submodule "Assets/PlumWine"]
+	path = Assets/PlumWine
+	url = https://github.com/Bagoum/danmokou-plumwine.git

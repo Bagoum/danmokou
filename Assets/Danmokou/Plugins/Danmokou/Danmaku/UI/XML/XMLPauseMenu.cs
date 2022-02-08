@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using BagoumLib;
 using BagoumLib.Culture;
+using Danmokou.ADV;
 using Danmokou.Core;
 using Danmokou.Core.DInput;
 using Danmokou.DMath;
@@ -44,10 +45,11 @@ public class XMLPauseMenu : PausedGameplayMenu, IPauseMenu {
         OptionsScreen.BackgroundOpacity = 1f;
         //Keep this around to avoid opacity fade oddities
         OptionsScreen.MenuBackgroundOpacity = 0.8f;
-        if (!Replayer.RequiresConsistency) {
-            SaveLoadScreen = this.SaveLoadVNScreen(inst => GameManagement.Restart(inst.GetData()), slot => {
+        var advMan = ServiceLocator.MaybeFind<ADVManager>();
+        if (!Replayer.RequiresConsistency && advMan != null) {
+            SaveLoadScreen = this.SaveLoadVNScreen(inst => advMan.Restart(inst.GetData()), slot => {
                 preserveSS = true;
-                return new(GameManagement.Instance.ADVData, DateTime.Now, lastSaveLoadSS!, slot,
+                return new(advMan.GetSaveReadyADVData(), DateTime.Now, lastSaveLoadSS!, slot,
                     ServiceLocator.Find<IVNWrapper>().TrackedVNs.First().backlog.LastPublished.Value.readableSpeech);
             });
             SaveLoadScreen.BackgroundOpacity = 1f;
@@ -61,9 +63,11 @@ public class XMLPauseMenu : PausedGameplayMenu, IPauseMenu {
             new TransferNode(main_options, OptionsScreen),
             Replayer.RequiresConsistency ? null : new TransferNode(saveload_header, SaveLoadScreen!),
             unpause,
-            new ConfirmFuncNode(restart, () => GameManagement.Restart()) {
-                EnabledIf = () => GameManagement.CanRestart,
-            },
+            advMan == null ? 
+                new ConfirmFuncNode(restart, GameManagement.Restart) {
+                    EnabledIf = () => GameManagement.CanRestart,
+                } :
+                null,
             new ConfirmFuncNode(to_menu, GameManagement.GoToMainMenu),
             new ConfirmFuncNode(to_desktop, Application.Quit)) { ExitNodeOverride = unpause };
         base.FirstFrame();
@@ -100,9 +104,9 @@ public class XMLPauseMenu : PausedGameplayMenu, IPauseMenu {
     private bool openQueued = false;
     public override void RegularUpdate() {
         if (RegularUpdateGuard) {
-            if ((InputManager.Pause || InputManager.UIBack && Current == unpause) && MenuActive)
+            if (IsActiveCurrentMenu && (InputManager.Pause || InputManager.UIBack && Current == unpause))
                 ProtectHide();
-            else if ((InputManager.Pause || openQueued) && EngineStateManager.State == EngineState.RUN)
+            else if (!MenuActive && (InputManager.Pause || openQueued) && EngineStateManager.State == EngineState.RUN)
                 ShowMe();
             openQueued = false;
         }

@@ -15,6 +15,7 @@ public class UXMLReferences : ScriptableObject {
     public VisualTreeAsset Popup = null!;
     
     public VisualTreeAsset UINode = null!;
+    public VisualTreeAsset EmptyNode = null!;
     public VisualTreeAsset TwoTextUINode = null!;
     public VisualTreeAsset OptionLRNode = null!;
     public VisualTreeAsset ComplexOptionLRNode = null!;
@@ -44,6 +45,7 @@ public class UXMLReferences : ScriptableObject {
     public Dictionary<Type, VisualTreeAsset> TypeMap => new() {
         {typeof(UIScreen), UIScreen},
         {typeof(UINode), UINode},
+        {typeof(EmptyNode), EmptyNode},
         {typeof(UIButton), PopupButton},
         {typeof(TwoLabelUINode), TwoTextUINode},
         {typeof(TextInputNode), TextInputNode},

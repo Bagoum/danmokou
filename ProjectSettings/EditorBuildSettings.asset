@@ -17,6 +17,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Danmokou/MiniProjects/Projects/BlessedRain/MP.BR.MainMenu VN.unity
     guid: 2d354a1c6c0a414468e9fd189bbcd348
+  - enabled: 1
+    path: Assets/PlumWine/PlumWine.MainMenu VN.unity
+    guid: 690bcd289d9bccd4f9e3219246aa7ee7
   - enabled: 0
     path: Assets/BRuH/BRuH.MainMenu.unity
     guid: 6000a27509ee77e46a0be12e6ec5cb24

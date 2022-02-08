@@ -23,6 +23,8 @@ public class DMKVNState : UnityVNState {
         Tokens.Add(SaveData.SettingsEv.Subscribe(s => {
             FastforwardReadTextOnly = s.VNOnlyFastforwardReadText;
         }));
+        TimePerAutoplayConfirm = 1.5f;
+        TimePerFastforwardConfirm = 0.15f;
     }
 
     public override bool ClickConfirmOrSkip() {

@@ -64,6 +64,7 @@ public record UIGroupHierarchy(UIGroup Group, UIGroupHierarchy? Parent) : IEnume
 
 public abstract class UIGroup : IRenderSource {
     protected static UIResult NoOp => new StayOnNode(true);
+    protected static UIResult SilentNoOp => new StayOnNode(StayOnNodeType.Silent);
     public bool Visible { get; private set; } = false;
     public UIScreen Screen { get; }
     public UIRenderSpace Render { get; }
@@ -315,6 +316,26 @@ public abstract class UIGroup : IRenderSource {
     public virtual void ScreenEnterEnd() { }
     
     public override string ToString() => $"{Hierarchy}({this.GetType()})";
+}
+
+class UIFreeformGroup : UIGroup {
+    public UIFreeformGroup(UIScreen container, UINode unselector) : base(container, null, new[] { unselector }) {
+        ExitNodeOverride = unselector;
+    }
+
+    public override UIResult? NavigateOutOfEnclosed(UIGroup enclosed, UINode current, UICommand req) =>
+        new ReturnToGroupCaller();
+
+    public override UIResult Navigate(UINode node, UICommand req) {
+        if (Nodes.Count == 1)
+            return new StayOnNode(StayOnNodeType.Silent);
+        return req switch {
+            UICommand.Back => GoToExitOrLeaveScreen(node, req) ?? SilentNoOp,
+            UICommand.Confirm => SilentNoOp,
+            //TODO
+            _ => NavigateToNextNode(node, req)
+        };
+    }
 }
 
 public class UIColumn : UIGroup {

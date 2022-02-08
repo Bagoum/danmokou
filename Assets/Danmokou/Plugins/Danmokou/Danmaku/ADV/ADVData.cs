@@ -8,13 +8,15 @@ using UnityEngine;
 namespace Danmokou.ADV {
 
 /// <summary>
-/// All save data for an saveable in-progress game instance.
-/// <br/>Note that presently, only single-stage VN games are saveable,
-///  and thus this only contains a VN save data object.
+/// All instance data for a (saveable) in-progress ADV game instance.
+/// <br/>This class should be derived for game-specific data.
 /// </summary>
 [Serializable]
-public class ADVData {
-    public InstanceData VNData { get; init; } = null!;
+public record ADVData(InstanceData VNData) {
+    public string CurrentMap { get; set; } = "";
+    //Json usage
+    [Obsolete]
+    public ADVData() : this(default(InstanceData)!) {}
 }
 
 [Serializable]

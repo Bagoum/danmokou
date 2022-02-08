@@ -25,12 +25,9 @@ using Vector3 = System.Numerics.Vector3;
 
 namespace MiniProjects.VN {
 
-//The reflect attribute allows the public static function VNScriptCrimsonVermilion1 to get picked up
-// by the reflector, so it can be called in script code by the command `executeVN VNScriptCrimsonVermilion1 cv1`.
-[Reflect] [UsedImplicitly]
 public static class _VNCrimsonVermilion {
-    public static async Task VNScriptCrimsonVermilion1(DMKVNState vn) {
-        await _TopLevel(vn);
+    public static async Task<Unit> VNScriptCrimsonVermilion1(DMKVNState vn) {
+        return await _TopLevel(vn);
     }
 
     //In the general case, you probably don't want many shared objects--
@@ -69,6 +66,8 @@ public static class _VNCrimsonVermilion {
                 reimu = vn.Add(new Reimu()),
                 marisa = vn.Add(new Marisa()),
             };
+            o.reimu.Alpha = 0;
+            o.marisa.Alpha = 0;
             o.blackScreenDialogue.Alpha = 1;
             o.blackScreenDialogue.RenderGroup.Value = o.rgb;
             await _AtShrine(o);
@@ -87,6 +86,10 @@ public static class _VNCrimsonVermilion {
             using var courtyard = vn.Add(new ShrineCourtyardBG());
             using var yukari = vn.Add(new Yukari());
             using var kasen = vn.Add(new Kasen());
+            room.Alpha = 0;
+            courtyard.Alpha = 0;
+            yukari.Alpha = 0;
+            kasen.Alpha = 0;
             
             //aliasing
             var reimu = o.reimu;
@@ -255,6 +258,12 @@ public static class _VNCrimsonVermilion {
             using var komakusa = vn.Add(new Komakusa());
             using var kosuzu = vn.Add(new Kosuzu());
             using var kaguya = vn.Add(new Kaguya());
+            town.Alpha = 0;
+            library.Alpha = 0;
+            yachie.Alpha = 0;
+            komakusa.Alpha = 0;
+            kosuzu.Alpha = 0;
+            kaguya.Alpha = 0;
 
             //aliasing
             var reimu = o.reimu;
@@ -431,6 +440,12 @@ public static class _VNCrimsonVermilion {
             using var kutaka = vn.Add(new Kutaka());
             using var mokou = vn.Add(new Mokou());
             var chicken = new EmptyCharacter("Chicken", vn);
+            field.Alpha = 0;
+            farm.Alpha = 0;
+            miko.Alpha = 0;
+            kurokoma.Alpha = 0;
+            kutaka.Alpha = 0;
+            mokou.Alpha = 0;
 
             //aliasing
             var reimu = o.reimu;
@@ -686,6 +701,13 @@ public static class _VNCrimsonVermilion {
             iris.Location.Value = V3(-1, 0);
             using var lys = vn.Add(new FleurDeLys());
             lys.Location.Value = V3(1.7, 0);
+            flower.Alpha = 0;
+            youmu.Alpha = 0;
+            mayumi.Alpha = 0;
+            yuuka.Alpha = 0;
+            lily.Alpha = 0;
+            iris.Alpha = 0;
+            lys.Alpha = 0;
 
             //aliasing
             var reimu = o.reimu;
@@ -908,6 +930,9 @@ public static class _VNCrimsonVermilion {
             using var room = vn.Add(new ShrineRoomBG());
             using var yukari = vn.Add(new Yukari());
             using var kasen = vn.Add(new Kasen());
+            room.Alpha = 0;
+            yukari.Alpha = 0;
+            kasen.Alpha = 0;
 
             //aliasing
             var reimu = o.reimu;

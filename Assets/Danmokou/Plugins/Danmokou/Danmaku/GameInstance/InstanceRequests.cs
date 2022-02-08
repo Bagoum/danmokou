@@ -129,29 +129,27 @@ public abstract class ReplayMode {
 }
 
 public record InstanceRequest {
-    private Cancellable gameTracker = new();
+    private Cancellable instTracker = new();
     public Func<InstanceData, bool>? cb { get; }
     public SharedInstanceMetadata metadata { get; }
     public ReplayMode replay { get; }
     public ILowInstanceRequest lowerRequest { get; }
-    public ADVData? save { get; init; }
     public int seed { get; }
-    public ICancellee GameTracker => gameTracker;
+    public ICancellee InstTracker => instTracker;
     public bool Saveable => replay is not ReplayMode.Replaying;
     public InstanceMode Mode => lowerRequest.Mode;
 
     public InstanceRequest(Func<InstanceData, bool>? cb, ILowInstanceRequest lowerRequest, Replay replay) : 
-        this(cb, replay.metadata.Record.SharedInstanceMetadata, lowerRequest, new ReplayMode.Replaying(replay), null) {}
-    public InstanceRequest(Func<InstanceData, bool>? cb, SharedInstanceMetadata metadata, ILowInstanceRequest lowReq, ADVData? vnSave = null) : 
-        this(cb, metadata, lowReq, null, vnSave) { }
+        this(cb, replay.metadata.Record.SharedInstanceMetadata, lowerRequest, new ReplayMode.Replaying(replay)) {}
+    public InstanceRequest(Func<InstanceData, bool>? cb, SharedInstanceMetadata metadata, ILowInstanceRequest lowReq) : 
+        this(cb, metadata, lowReq, null) { }
 
-    public InstanceRequest(Func<InstanceData, bool>? cb, SharedInstanceMetadata metadata, ILowInstanceRequest lowerRequest, ReplayMode? replay, ADVData? save) {
+    public InstanceRequest(Func<InstanceData, bool>? cb, SharedInstanceMetadata metadata, ILowInstanceRequest lowerRequest, ReplayMode? replay) {
         this.metadata = metadata;
         this.cb = cb;
         this.replay = replay ?? (lowerRequest.Campaign.Replayable ? 
             new ReplayMode.RecordingReplay() : 
             new ReplayMode.NotRecordingReplay());
-        this.save = save;
         this.lowerRequest = lowerRequest;
         this.seed = this.replay is ReplayMode.Replaying r ? r.replay.metadata.Record.Seed : new Random().Next();
     }
@@ -169,9 +167,7 @@ public record InstanceRequest {
                             Replayer.ReplayerConfig.FinishMethod.ERROR, r.replay.frames)),
             _ => throw new Exception($"Unhandled replay type: {replay}")
         };
-        GameManagement.NewInstance(Mode, SaveData.r.GetHighScore(this), this, actor, 
-            //Don't load VN saves in replay use-cases
-            replay is ReplayMode.NotRecordingReplay ? save : null);
+        GameManagement.NewInstance(Mode, SaveData.r.GetHighScore(this), this, actor);
     }
 
     public InstanceRecord MakeGameRecord(AyaPhoto[]? photos = null, string? ending = null) {
@@ -190,7 +186,7 @@ public record InstanceRequest {
     /// <summary>
     /// If the record is not already created, it will be created here.
     /// </summary>
-    public bool FinishAndPostReplay(InstanceRecord? record = null) {
+    private bool FinishAndPostReplay(InstanceRecord? record = null) {
         var d = GameManagement.Instance;
         if (cb?.Invoke(d) ?? true) {
             record?.Update(d);
@@ -214,7 +210,7 @@ public record InstanceRequest {
 
     public bool Run() {
         Cancel();
-        gameTracker = new Cancellable();
+        instTracker = new Cancellable();
         RNG.Seed(seed);
         if (replay is ReplayMode.Replaying r)
             r.replay.metadata.ApplySettings();
@@ -231,13 +227,15 @@ public record InstanceRequest {
 
     public void Cancel() {
         GameManagement.DeactivateInstance();
-        gameTracker.Cancel();
+        instTracker.Cancel();
     }
 
 
     private bool SelectCampaign(CampaignRequest c) {
         bool _Finalize(string? endingKey = null) {
-            if (!GameTracker.Cancelled && FinishAndPostReplay(MakeGameRecord(null, endingKey))) {
+            if (!InstTracker.Cancelled && FinishAndPostReplay(MakeGameRecord(null, endingKey))) {
+                //note: the transition to replay save scene is defined in the cb provided
+                // by the static RunCampaign function at the end of this file.
                 Logs.Log($"Campaign complete for {c.campaign.campaign.key}. Returning to replay save screen.");
                 return true;
             } else return false;
@@ -253,8 +251,8 @@ public record InstanceRequest {
                     null,
                     null,
                     () => ServiceLocator.Find<LevelController>()
-                        .Request(new LevelController.LevelRunRequest(1, GameTracker.Guard(() => _Finalize(ed.key)),
-                            LevelController.LevelRunMethod.CONTINUE, new EndcardStageConfig(ed.dialogueKey), GameTracker))
+                        .Request(new LevelController.LevelRunRequest(1, InstTracker.Guard(() => _Finalize(ed.key)),
+                            LevelController.LevelRunMethod.CONTINUE, new EndcardStageConfig(ed.dialogueKey), InstTracker))
                 ));
             } else return _Finalize();
         }
@@ -268,11 +266,11 @@ public record InstanceRequest {
                     //Note: this load during onHalfway is for the express purpose of preventing load lag
                     () => StateMachineManager.FromText(s.stage.stateMachine),
                     () => ServiceLocator.Find<LevelController>()
-                        .Request(new LevelController.LevelRunRequest(1, GameTracker.Guard(() => {
+                        .Request(new LevelController.LevelRunRequest(1, InstTracker.Guard(() => {
                                 if (ExecuteStage(index + 1))
                                     StageCompleted.OnNext((c.campaign.Key, index));
                             }),
-                        LevelController.LevelRunMethod.CONTINUE, s.stage, GameTracker))));
+                        LevelController.LevelRunMethod.CONTINUE, s.stage, InstTracker))));
             } else return ExecuteEndcard();
         }
         return ExecuteStage(0);
@@ -287,7 +285,7 @@ public record InstanceRequest {
             () => StateMachineManager.FromText(s.stage.stage.stateMachine),
             () => ServiceLocator.Find<LevelController>().Request(
                 new LevelController.LevelRunRequest(s.phase,
-                    GameTracker.Guard(() => FinishAndPostReplay()), s.method, s.stage.stage, GameTracker))));
+                    InstTracker.Guard(() => FinishAndPostReplay()), s.method, s.stage.stage, InstTracker))));
     }
 
 
@@ -301,8 +299,8 @@ public record InstanceRequest {
             () => StateMachineManager.FromText(b.stateMachine),
             () => {
                 var beh = UnityEngine.Object.Instantiate(b.boss).GetComponent<BehaviorEntity>();
-                beh.phaseController.Override(ab.phase.index, GameTracker.Guard(() => WaitThenFinishAndPostReplay()));
-                beh.RunSMFromScript(b.stateMachine, GameTracker);
+                beh.phaseController.Override(ab.phase.index, InstTracker.Guard(() => WaitThenFinishAndPostReplay()));
+                beh.RunSMFromScript(b.stateMachine, InstTracker);
             }));
     }
 
@@ -314,11 +312,11 @@ public record InstanceRequest {
             () => {
                 StateMachineManager.FromText(cr.Boss.stateMachine);
                 ServiceLocator.Find<IChallengeManager>().TrackChallenge(new SceneChallengeReqest(this, cr), 
-                    GameTracker.Guard<InstanceRecord>(WaitThenFinishAndPostReplay), GameTracker);
+                    InstTracker.Guard<InstanceRecord>(WaitThenFinishAndPostReplay), InstTracker);
             },
             () => {
                 var beh = UnityEngine.Object.Instantiate(cr.Boss.boss).GetComponent<BehaviorEntity>();
-                ServiceLocator.Find<IChallengeManager>().LinkBoss(beh, GameTracker);
+                ServiceLocator.Find<IChallengeManager>().LinkBoss(beh, InstTracker);
             }));
     }
     
@@ -347,14 +345,13 @@ public record InstanceRequest {
     /// <param name="campaign"></param>
     /// <param name="cb">Run when moving to replay screen.</param>
     /// <param name="metadata"></param>
-    /// <param name="advData"></param>
     /// <returns></returns>
     public static bool RunCampaign(SMAnalysis.AnalyzedCampaign? campaign, Action? cb, 
-        SharedInstanceMetadata metadata, ADVData? advData = null) {
+        SharedInstanceMetadata metadata) {
         if (campaign == null) return false;
         var req = new InstanceRequest(d => 
             ServiceLocator.Find<ISceneIntermediary>().LoadScene(new SceneRequest(MaybeSaveReplayScene(d), 
-            SceneRequest.Reason.FINISH_RETURN, cb)), metadata, new CampaignRequest(campaign), advData);
+            SceneRequest.Reason.FINISH_RETURN, cb)), metadata, new CampaignRequest(campaign));
 
 
         if (SaveData.r.TutorialDone || References.miniTutorial == null) return req.Run();

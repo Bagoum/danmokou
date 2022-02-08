@@ -72,10 +72,11 @@ public static class FileUtils {
         JsonConvert.DeserializeObject<T>(JsonConvert.SerializeObject(obj, JsonSettings), JsonSettings) ?? 
         throw new Exception($"Failed to JSON-copy object {obj} of type {obj?.GetType()}");
     
-    public static void WriteJson(string file, object obj) {
+    //The type may seem redundant here, but it's critical for serializing polymorphic types.
+    public static void WriteJson<T>(string file, T obj) {
         CheckPath(ref file);
         using StreamWriter sw = new(file);
-        sw.WriteLine(JsonConvert.SerializeObject(obj, Formatting.Indented, JsonSettings));
+        sw.WriteLine(JsonConvert.SerializeObject(obj, typeof(T), Formatting.Indented, JsonSettings));
     }
 
     public static void WriteProto(string file, object obj) {

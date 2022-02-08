@@ -108,7 +108,7 @@ public class UINode {
     public Func<bool>? VisibleIf { private get; init; }
     /// <summary>
     /// Provide a function that determines whether or not the node is "enabled". A disabled node will
-    ///  not allow confirm or edit operations. By default, a node is always enabled.
+    ///  not allow confirm or edit operations, but can still be navigated. By default, a node is always enabled.
     /// </summary>
     public Func<bool>? EnabledIf { get; init; }
     /// <summary>
@@ -363,6 +363,18 @@ public class UINode {
         Array.Empty<Func<ICancellee, Task>>();
 
     #endregion
+}
+
+public class EmptyNode : UINode {
+    public EmptyNode() : base(LString.Empty) { }
+
+    public EmptyNode(float w, float h) : this() {
+        OnBuilt = n => {
+            n.HTML.style.width = w;
+            n.HTML.style.height = h;
+            n.HTML.style.position = Position.Absolute;
+        };
+    }
 }
 
 public class PassthroughNode : UINode {

@@ -20,6 +20,9 @@ using UnityEngine;
 using Observable = System.Reactive.Linq.Observable;
 
 namespace Danmokou.GameInstance {
+/// <summary>
+/// Contains information about the currently executing danmaku game.
+/// </summary>
 public class InstanceData {
     #region StaticEvents
     
@@ -41,9 +44,7 @@ public class InstanceData {
     public readonly Event<Unit> PracticeSuccess = new();
     
     #endregion
-    
-    public ADVData ADVData { get; }
-    public Suzunoya.Data.InstanceData VNData => ADVData.VNData;
+    public Suzunoya.Data.InstanceData VNData { get; }
     public DifficultySettings Difficulty { get; }
     public int RankLevel { get; set; }
     public double RankPoints { get; set; }
@@ -147,11 +148,8 @@ public class InstanceData {
 
     #endregion
     
-    public InstanceData(InstanceMode mode, InstanceRequest? req, long? maxScore, ReplayActor? replay, 
-        ADVData? save) {
-        this.ADVData = save ?? new() {
-            VNData = new(Core.SaveData.r.GlobalVNData)
-        };
+    public InstanceData(InstanceMode mode, InstanceRequest? req, long? maxScore, ReplayActor? replay) {
+        VNData = new(SaveData.r.GlobalVNData);
         this.Request = req;
         this.Replay = replay;
         //Minor hack to avoid running the SaveData static constructor in the editor during type initialization

@@ -10,8 +10,6 @@ using UnityEngine.UIElements;
 
 namespace Danmokou.UI.XML {
 public class PausedGameplayMenu : UIController {
-    public UIManager manager = null!;
-    
     public SFXConfig? openPauseSound;
     public SFXConfig? closePauseSound;
 
@@ -24,7 +22,7 @@ public class PausedGameplayMenu : UIController {
         if (!MenuActive) {
             tokens.Add(pauseToken = EngineStateManager.RequestState(EngineState.MENU_PAUSE));
             var disable = UpdatesEnabled.AddConst(false);
-            _ = manager.FadeInPauseUI().ContinueWithSync(disable.Dispose);
+            _ = UIRoot.FadeTo(1, 0.3f, x=>x).Run(this).ContinueWithSync(disable.Dispose);
             ServiceLocator.SFXService.Request(openPauseSound);
             Open();
         }
@@ -40,7 +38,7 @@ public class PausedGameplayMenu : UIController {
         if (MenuActive) {
             var disable = UpdatesEnabled.AddConst(false);
             ServiceLocator.SFXService.Request(closePauseSound);
-            _ = manager.FadeOutPauseUI().ContinueWithSync(() => {
+            _ = UIRoot.FadeTo(0, 0.3f, x=>x).Run(this).ContinueWithSync(() => {
                 _ = HideMe().ContinueWithSync(disable.Dispose);
             });
         }

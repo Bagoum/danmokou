@@ -5,6 +5,7 @@ using BagoumLib.Culture;
 using Danmokou.ADV;
 using Danmokou.Core;
 using Danmokou.Danmaku;
+using Danmokou.DMath;
 using Danmokou.GameInstance;
 using Danmokou.Player;
 using UnityEngine;
@@ -19,6 +20,8 @@ public class XMLMainMenuVN01 : XMLMainMenu {
     private UIScreen LoadGameScreen = null!;
     private UIScreen OptionsScreen = null!;
     private UIScreen LicenseScreen = null!;
+
+    public ADVGameDef GameDef = null!;
     
     protected override UIScreen?[] Screens => new[] {
         MainScreen,
@@ -29,16 +32,10 @@ public class XMLMainMenuVN01 : XMLMainMenu {
     
 
     public override void FirstFrame() {
-        FixedDifficulty dfc = FixedDifficulty.Normal;
-        var defaultPlayer = References.campaign.players[0];
-        var defaultShot = defaultPlayer.shots2[0];
-        var defaultSupport = defaultPlayer.supports[0];
-
-        TeamConfig Team() => new(0, Subshot.TYPE_D, defaultSupport.ability, (defaultPlayer, defaultShot.shot));
-        SharedInstanceMetadata Meta() => new(Team(), new DifficultySettings(dfc));
+        var advMan = ServiceLocator.Find<ADVManager>();
 
         LoadGameScreen = this.SaveLoadVNScreen(s => 
-            InstanceRequest.RunCampaign(MainCampaign, null, Meta(), s.GetData()), null, false).WithBG(SecondaryBGConfig);
+            advMan.RunCampaign(GameDef, s.GetData()), null, false).WithBG(SecondaryBGConfig);
         OptionsScreen = this.OptionsScreen(true).WithBG(SecondaryBGConfig);
         LicenseScreen = this.LicenseScreen(References.licenses).WithBG(SecondaryBGConfig);
         
@@ -49,9 +46,10 @@ public class XMLMainMenuVN01 : XMLMainMenu {
             c.style.paddingTop = 640;
         }, SceneObjects = MainScreenOnlyObjects}.WithBG(PrimaryBGConfig);
         _ = new UIColumn(MainScreen, null, new[] {
-            new FuncNode(main_newgame, () => InstanceRequest.RunCampaign(MainCampaign, null, Meta())),
-            new FuncNode(main_continue, () => InstanceRequest.RunCampaign(MainCampaign, null, Meta(), 
-                    SaveData.v.MostRecentSave.GetData())) {
+            new FuncNode(main_newgame, () => 
+                advMan.RunCampaign(GameDef, GameDef.NewGameData())),
+            new FuncNode(main_continue, () => advMan.RunCampaign(GameDef, 
+                SaveData.v.MostRecentSave.GetData())) {
                 EnabledIf = () => SaveData.v.Saves.Count > 0
             },
             new TransferNode(main_load, LoadGameScreen),
@@ -64,8 +62,8 @@ public class XMLMainMenuVN01 : XMLMainMenu {
         };
 
         base.FirstFrame();
-        //_ = uiRenderer.Slide(new Vector2(3, 0), Vector2.zero, 1f, DMath.M.EOutSine);
-        _ = uiRenderer.Fade(0, 1, 1f, null);
+        UIRoot.style.opacity = 0;
+        _ = UIRoot.FadeTo(1, 0.8f, x => x).Run(this);
     }
 }
 }

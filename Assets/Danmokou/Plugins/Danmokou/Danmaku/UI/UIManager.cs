@@ -64,7 +64,6 @@ public class UIManager : CoroutineRegularUpdater, IUIManager, IStageAnnouncer {
     [FormerlySerializedAs("camera")] public Camera uiCamera = null!;
     public Camera Camera => uiCamera;
     public XMLPauseMenu PauseManager = null!;
-    public UIBuilderRenderer uiRenderer = null!;
     public SpriteRenderer frame = null!;
     public TextMeshPro spellnameText = null!;
     public GameObject cardSuccessContainer = null!;
@@ -442,12 +441,6 @@ public class UIManager : CoroutineRegularUpdater, IUIManager, IStageAnnouncer {
     }
 
     private static readonly Vector2 slideFrom = new(5, 0);
-
-    public Task<Completion> FadeInPauseUI() =>
-        uiRenderer.Fade(0, 1, 0.3f, x => x);
-
-    public Task<Completion> FadeOutPauseUI() => 
-        uiRenderer.Fade(null, 0, 0.3f, x => x);
 
     public SpriteRenderer[] healthPoints = null!;
     public SpriteRenderer[] bombPoints = null!;

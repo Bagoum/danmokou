@@ -252,21 +252,23 @@ if (> t &fadein,
 
     /// <summary>
     /// Run the provided visual novel script.
-    /// <br/>If the context supports game loading, will load the VN to the saved point in the instance save.
-    /// <br/>TODO: game loading is only sound for single-stage games where this is the only nontrivial command.
     /// </summary>
     /// <param name="vnTask">Visual novel script function.</param>
     /// <param name="scriptId">Description of the script used when printing debug messages.</param>
     /// <returns></returns>
     public static TaskPattern ExecuteVN([LookupMethod] Func<DMKVNState, Task> vnTask, string scriptId) => async smh => {
-        var _ = await ((DMKVNWrapper) ServiceLocator.Find<IVNWrapper>())
-            .ExecuteVN((data, cT) => {
-                var vns = new DMKVNState(cT, scriptId, data);
-                if (!Replayer.RequiresConsistency && data.Location is not null)
-                    vns.LoadToLocation(data.Location);
-                return vns;
-            }, vnTask, GameManagement.Instance.VNData, smh.cT);
-        //The save is automatically updated in GameManagement.Instance, no need to handle it further here.
+        var vn = new DMKVNState(smh.cT, scriptId, GameManagement.Instance.VNData);
+        var exec = ServiceLocator.Find<IVNWrapper>().TrackVN(vn);
+        Logs.Log($"Starting VN script {vn}");
+        ServiceLocator.Find<IVNBacklog>().TryRegister(exec);
+        try {
+            await vnTask(vn);
+            vn.UpdateSavedata();
+        } finally {
+            Logs.Log(
+                $"Completed VN script {vn}. Final completion: {vn.CToken.ToCompletion()}");
+            vn.DeleteAll();
+        }
     };
 
     /// <summary>

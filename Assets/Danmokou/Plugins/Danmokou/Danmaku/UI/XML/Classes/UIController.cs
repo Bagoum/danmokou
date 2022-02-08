@@ -44,9 +44,9 @@ public abstract record UIResult {
     public record DestroyMenu : UIResult;
 
     public enum StayOnNodeType {
-        Success,
-        Modification,
-        Failure
+        DidSomething,
+        NoOp,
+        Silent
     }
 
     public SequentialResult Then(UIResult second) => new SequentialResult(this, second);
@@ -54,7 +54,10 @@ public abstract record UIResult {
     public record SequentialResult(params UIResult[] results) : UIResult, IUnrollable<UIResult> {
         public IEnumerable<UIResult> Values => results;
     }
-    public record StayOnNode(bool IsNoOp = false) : UIResult;
+
+    public record StayOnNode(StayOnNodeType Action) : UIResult {
+        public StayOnNode(bool IsNoOp = false) : this(IsNoOp ? StayOnNodeType.NoOp : StayOnNodeType.DidSomething) { }
+    }
 
     public record GoToNode(UINode Target) : UIResult {
         public GoToNode(UIGroup Group, int? Index = null) : 
@@ -176,6 +179,11 @@ public abstract class UIController : CoroutineRegularUpdater {
 
     public override EngineState UpdateDuring => EngineState.MENU_PAUSE;
     protected bool RegularUpdateGuard => ETime.FirstUpdateForScreen && UpdatesEnabled;
+    /// <summary>
+    /// Returns true iff this menu is active and it is also the most high-priority active menu.
+    /// Of all active menus, only the most high-priority one should handle input, so use this to gate input.
+    /// </summary>
+    protected bool IsActiveCurrentMenu => MenuActive && uiRenderer.IsHighestPriorityActiveMenu(this);
 
     protected virtual bool OpenOnInit => true;
     protected virtual Color BackgroundTint => new(0.17f, 0.05f, 0.20f);
@@ -191,11 +199,16 @@ public abstract class UIController : CoroutineRegularUpdater {
     
     public override void FirstFrame() {
         var uid = GetComponent<UIDocument>();
+        //higher sort order is more visible, so give them lower priority
+        tokens.Add(uiRenderer.RegisterController(this, -(int)uid.sortingOrder));
         UIRoot = uid.rootVisualElement;
         UIContainer = UIRoot.Q("UIContainer");
         UISettings = uid.panelSettings;
         Build();
         UIRoot.style.display = OpenOnInit.ToStyle();
+        UIRoot.style.opacity = OpenOnInit ? 1 : 0;
+        UIRoot.style.width = new Length(100, LengthUnit.Percent);
+        UIRoot.style.height = new Length(100, LengthUnit.Percent);
         tokens.Add(BackgroundOpacity.Subscribe(f => UIContainer.style.unityBackgroundImageTintColor = 
             BackgroundTint.WithA(f)));
         BackgroundOpacity.Push(0);
@@ -369,7 +382,7 @@ public abstract class UIController : CoroutineRegularUpdater {
         }
         QueuedEvent = null;
         var leftAndEntered = LeftGroups.Intersect(EnteredGroups).ToHashSet();
-        if (result is not UIResult.StayOnNode { IsNoOp: true })
+        if (result is not UIResult.StayOnNode { Action : UIResult.StayOnNodeType.Silent or UIResult.StayOnNodeType.NoOp })
             return TransitionToNode(next, animate, 
                 LeftGroups.Except(leftAndEntered).ToList(), 
                 EnteredGroups.Except(leftAndEntered).ToList()).ContinueWithSync(() => { });
@@ -382,7 +395,7 @@ public abstract class UIController : CoroutineRegularUpdater {
             BackgroundOpacity.Update(ETime.ASSUME_SCREEN_FRAME_TIME);
         }
         
-        if (RegularUpdateGuard && Current != null) {
+        if (RegularUpdateGuard && Current != null && IsActiveCurrentMenu) {
             bool doCustomSFX = false;
             UICommand? command = null;
             UIResult? result = null;
@@ -406,17 +419,19 @@ public abstract class UIController : CoroutineRegularUpdater {
             if (result is UIResult.GoToNode gTo && gTo.Target == Current)
                 result = null;
             if (result != null) {
-                ServiceLocator.SFXService.Request(result is UIResult.StayOnNode{IsNoOp: true} ? 
-                    failureSound :
-                    command switch {
-                        UICommand.Left => leftRightSound,
-                        UICommand.Right => leftRightSound,
-                        UICommand.Up => upDownSound,
-                        UICommand.Down => upDownSound,
-                        UICommand.Confirm => confirmSound,
-                        UICommand.Back => backSound,
-                        _ => null
-                    });
+                ServiceLocator.SFXService.Request(
+                    result switch {
+                        UIResult.StayOnNode{Action: UIResult.StayOnNodeType.NoOp} => failureSound,
+                        UIResult.StayOnNode{Action: UIResult.StayOnNodeType.Silent} => null,
+                        _ => command switch {
+                            UICommand.Left => leftRightSound,
+                            UICommand.Right => leftRightSound,
+                            UICommand.Up => upDownSound,
+                            UICommand.Down => upDownSound,
+                            UICommand.Confirm => confirmSound,
+                            UICommand.Back => backSound,
+                            _ => null
+                        }});
             } else if (doCustomSFX)
                 //Probably need to get this from the custom node handling? idk
                 ServiceLocator.SFXService.Request(leftRightSound);

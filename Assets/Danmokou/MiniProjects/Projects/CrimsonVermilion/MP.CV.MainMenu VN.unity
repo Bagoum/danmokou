@@ -536,6 +536,7 @@ MonoBehaviour:
   BGTransition: {fileID: 11400000, guid: 2563c620593be934caa5fb76278981ea, type: 2}
   MainScreenOnlyObjects: {fileID: 729221849}
   ShotScreenObjects: {fileID: 0}
+  GameDef: {fileID: 11400000, guid: c969f53bfb84301428a21c0c16a5d55b, type: 2}
 --- !u!1001 &1199557764
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1115,6 +1116,24 @@ RectTransform:
   m_AnchoredPosition: {x: -4, y: 2.9}
   m_SizeDelta: {x: 8, y: 1}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!1 &2065076882 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6701421480483869186, guid: cca0d5f4466f12c48b79ed20b74f5cef,
+    type: 3}
+  m_PrefabInstance: {fileID: 743896006}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &2065076890
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2065076882}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 88532ec37a314be5b76783af8d925691, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &360509424075748755
 PrefabInstance:
   m_ObjectHideFlags: 0

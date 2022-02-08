@@ -27,10 +27,9 @@ namespace Danmokou.UI.XML {
 [Preserve]
 public class XMLVNBacklogMenu : PausedGameplayMenu, IVNBacklog {
     public static int BacklogCount { get; set; } = 120;
-    private ICancellee? currToken;
     private ExecutingVN? currVn;
     private ExecutingVN? CurrVN {
-        get => currToken?.Cancelled == true ? (currVn = null) : currVn;
+        get => (currVn?.Active != true) ? (currVn = null) : currVn;
         set => currVn = value;
     }
 
@@ -58,21 +57,6 @@ public class XMLVNBacklogMenu : PausedGameplayMenu, IVNBacklog {
         RegisterService<IVNBacklog>(this);
     }
 
-    private async Task BacklogTo(Action<VNLocation> backlogger, VNLocation loc) {
-        var overlay = ServiceLocator.MaybeFind<IUIScreenOverlay>();
-        if (overlay is null) {
-            backlogger(loc);
-            ProtectHide();
-            return;
-        }
-        using var disabler = UpdatesEnabled.AddConst(false);
-        using var pdisabler = pauseMenu.UpdatesEnabled.AddConst(false);
-        await overlay.Fade(null, 1, 0.8f, null);
-        backlogger(loc);
-        await Task.WhenAll(HideMe(), overlay.Fade(1, 1, 0.5f, null));
-        await overlay.Fade(null, 0, 0.4f, null);
-    }
-
     private void MakeNode(DialogueLogEntry entry) {
         var backlog = CurrVN?.doBacklog;
         var node = new UINode($"<smallcaps>{entry.speakerName}</smallcaps>") {
@@ -91,9 +75,9 @@ public class XMLVNBacklogMenu : PausedGameplayMenu, IVNBacklog {
                     n.NodeHTML.Q<Label>("Label").style.color =
                         entry.textColor * (s == UINodeVisibility.Focused ? Color.white : new Color(0.75f, 0.75f, 0.75f, 1f));
             },
-            OnConfirm = backlog != null && !(entry.location is null) ?
+            OnConfirm = backlog != null && entry.location is not null ?
                 () => {
-                    _ = BacklogTo(backlog, entry.location).ContinueWithSync(() => { });
+                    backlog(entry.location);
                     return new UIResult.StayOnNode();
                 } : null
         };
@@ -110,7 +94,7 @@ public class XMLVNBacklogMenu : PausedGameplayMenu, IVNBacklog {
     private bool openQueued = false;
     public override void RegularUpdate() {
         if (RegularUpdateGuard) {
-            if (MenuActive && (InputManager.VNBacklogPause || InputManager.Pause || InputManager.UIBack || 
+            if (IsActiveCurrentMenu && (InputManager.VNBacklogPause || InputManager.Pause || InputManager.UIBack || 
                                (Input.mouseScrollDelta.y < 0 && logScroll.verticalScroller.value >= logScroll.verticalScroller.highValue))) {
                 ProtectHide();
             } else if (!MenuActive && (InputManager.VNBacklogPause || openQueued || Input.mouseScrollDelta.y > 0) &&
@@ -123,13 +107,10 @@ public class XMLVNBacklogMenu : PausedGameplayMenu, IVNBacklog {
         base.RegularUpdate();
     }
 
-    public Cancellable TryRegister(ExecutingVN evn) {
+    public void TryRegister(ExecutingVN evn) {
         if (CurrVN != null)
             throw new Exception("Failed to register Executing VN");//return null;
         CurrVN = evn;
-        var ret = new Cancellable();
-        currToken = ret;
-        return ret;
     }
 
     public void QueueOpen() => openQueued = true;
