@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using BagoumLib;
 using BagoumLib.Cancellation;
 using BagoumLib.Mathematics;
-using BagoumLib.Tweening;
+using BagoumLib.Transitions;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.DMath;
@@ -32,7 +32,7 @@ public class UIScreenOverlay : CoroutineRegularUpdater, IUIScreenOverlay {
     }
 
     public Task<Completion> Fade(float? start, float end, float time, Easer? smooth)
-        => Tween.TweenTo(start ?? sr.color.a, end, time, sr.SetAlpha, smooth, 
+        => TransitionHelpers.TweenTo(start ?? sr.color.a, end, time, sr.SetAlpha, smooth, 
             MakeOpCanceller()).Run(this);
 
     private void Awake() {

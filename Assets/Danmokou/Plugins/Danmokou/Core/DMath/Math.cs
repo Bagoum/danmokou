@@ -49,6 +49,21 @@ public static class M {
         f >= 1 ? byte.MaxValue :
         (byte) (f * 256f);
 
+    /// <summary>
+    /// Return the degrees from d1 to d2.
+    /// <br/>Usually, this is just d2-d1, but in some cases it isn't:
+    /// eg. DeltaD(179, -179) = 2.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static float DeltaD(float d1, float d2) {
+        var d = d2 - d1;
+        if (d > 180)
+            return d - 360;
+        if (d <= -180)
+            return d + 360;
+        return d;
+    }
+    
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static float Sin(float rad) => (float)Math.Sin(rad);
 

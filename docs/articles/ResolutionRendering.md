@@ -8,7 +8,7 @@ Here are the cameras ordered by depth, their culling layers, and the primary sor
 
 | Camera               | Culling Mask                         | Sorting Layers                   | Notes                                                        |
 | -------------------- | ------------------------------------ | -------------------------------- | ------------------------------------------------------------ |
-| Wall Camera          | Wall                                 | Background, Walls, FX, UI        | Depth clear + backgrounds.<br />Renders to the composite texture. |
+| Wall Camera          | Wall                                 | Background, Walls, FX, UI        | Clear to black + backgrounds.<br />Renders to the composite texture. |
 | Low Direct-Render    | LowDirectRender                      |                                  | Player simple bullets.<br />Renders to the composite texture. |
 | Middle Camera        | Player, LowProjectile, LowEffects    | Player, PlayerHitbox, Projectile | Renders to the composite texture.                            |
 | High Direct-Render   | HighDirectRender                     |                                  | Enemy simple bullets.<br />Renders to the composite texture. |
@@ -46,6 +46,14 @@ in OnPostRender somewhere. (The target texture set is, for some reason, necessar
 Note that if you are screwing with `cam.targetTexture`, you should set it **every frame** in OnPreRender; I don't know why but Unity will give you strange issues if you don't, like the main camera rendering to the target texture as well...
 
 `RenderTextureFormat.ARGB32` (R8G8B8A8_SNORM) is the non-HDR format and `ARGBHalf` is the HDR format. This is used in `MainCamera.DefaultTempRT`. I do not use HDR.
+
+# Camera Clearing
+
+WallCamera (the lowest rendering camera) clears to black (<0,0,0,1>), which is the "base color" of the game. All other cameras listed in the table above do not clear, since they need to render on top of WallCamera in the same RenderTexture. 
+
+ArbitraryCapturer, a camera prefab used to separately capture only objects on certain Unity layers, clears to *transparent black* (<0,0,0,0>). The reason for this is that the output of an ArbitraryCapturer screen capture may itself have some transparency on it, and when that output is somehow reflected in a sprite and rendered to one of the cameras in the table above, the transparency needs to be preserved throughout.
+
+See [Color Blending](ColorBlending.md) for a discussion of some of the issues around blending colors and preserving transparency.
 
 # Frame/Render Frame
 

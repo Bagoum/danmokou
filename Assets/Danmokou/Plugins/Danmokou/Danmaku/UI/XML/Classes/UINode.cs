@@ -2,13 +2,15 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using System.Reactive;
 using System.Threading.Tasks;
 using BagoumLib;
 using BagoumLib.Cancellation;
 using BagoumLib.Culture;
 using BagoumLib.DataStructures;
+using BagoumLib.Events;
 using BagoumLib.Mathematics;
-using BagoumLib.Tweening;
+using BagoumLib.Transitions;
 using Danmokou.Core;
 using Danmokou.Core.DInput;
 using Danmokou.DMath;
@@ -60,6 +62,7 @@ public class UINode {
     /// Currently operating under the assumption that there are no templateContainer wrappers.
     /// </summary>
     public VisualElement HTML => NodeHTML;
+    public IStyle Style => HTML.style;
     /// <summary>
     /// The .node VisualElement constructed by this node. Usually points to the only child of HTML, which should have the class .node.
     /// </summary>
@@ -141,6 +144,29 @@ public class UINode {
     /// Called when this node loses focus.
     /// </summary>
     public Action<UINode>? OnLeave { get; init; }
+    
+    /*
+    /// <summary>
+    /// Called when the mouse leaves the bounds of this node.
+    /// <br/>Note that this does not mean the node has lost focus! Use <see cref="OnLeave"/>
+    ///  to track when the node loses focus.
+    /// </summary>
+    public Action<UINode, PointerLeaveEvent>? OnMouseLeave { get; init; }*/
+    
+    /// <summary>
+    /// Called when the mouse is pressed over this node.
+    /// <br/>Note that this may not be followed by OnMouseUp (if the mouse moves outside the bounds
+    ///  before being released).
+    /// <br/>OnMouseEnter and OnMouseLeave are not provided as it is preferred to use OnEnter and OnLeave,
+    ///  which are tied more closely to layout handling.
+    /// </summary>
+    public Action<UINode, PointerDownEvent>? OnMouseDown { get; init; }
+    /// <summary>
+    /// Called when the mouse is released over this node.
+    /// <br/>Note that this may not be preceded by OnMouseDown.
+    /// </summary>
+    public Action<UINode, PointerUpEvent>? OnMouseUp { get; init; }
+    
     /// <summary>
     /// Overrides Navigate, but if it returns null, then falls through to OnConfirm/Navigate to provide the final result.
     /// </summary>
@@ -197,9 +223,10 @@ public class UINode {
 
     #region Construction
     protected virtual void RegisterEvents() {
-        bool clickIsOnSameElement = true;
+        bool isInElement = false;
+        bool startedClickHere = false;
         NodeHTML.RegisterCallback<PointerEnterEvent>(evt => {
-           // Logs.Log($"Enter {Description()} {evt.position} {evt.localPosition}");
+           //Logs.Log($"Enter {Description()} {evt.position} {evt.localPosition}");
         #if !UNITY_EDITOR && (UNITY_ANDROID || UNITY_IOS)
             //PointerEnter is still issued while there's no touch, at the last touched point
             if (evt.pressure <= 0)
@@ -208,23 +235,34 @@ public class UINode {
             if (AllowInteraction)
                 Controller.QueuedEvent = new UIPointerCommand.Goto(this);
             evt.StopPropagation();
+            isInElement = true;
         });
         NodeHTML.RegisterCallback<PointerLeaveEvent>(evt => {
             //Logs.Log($"Leave {Description()}");
-            clickIsOnSameElement = false;
+            //For freeform groups ONLY, moving the cursor off a node should deselect it.
+            if (AllowInteraction && Group is UIFreeformGroup)
+                Controller.QueuedEvent = new UIPointerCommand.NormalCommand(UICommand.Back, this) { Silent = true };
+            isInElement = false;
+            startedClickHere = false;
         });
         NodeHTML.RegisterCallback<PointerDownEvent>(evt => {
             //Logs.Log($"Down {Description()}");
-            clickIsOnSameElement = true;
+            if (AllowInteraction)
+                OnMouseDown?.Invoke(this, evt);
+            startedClickHere = true;
         });
         NodeHTML.RegisterCallback<PointerUpEvent>(evt => {
             //Logs.Log($"Click {Description()}");
             //button 0, 1, 2 = left, right, middle click
             //Right click is handled as UIBack in InputManager. UIBack is global (it does not depend
             // on the current UINode), but click-to-confirm is done via callbacks specific to the UINode.
-            if (clickIsOnSameElement && AllowInteraction && evt.button == 0)
-                Controller.QueuedEvent = new UIPointerCommand.NormalCommand(UICommand.Confirm, this);
+            if (AllowInteraction && evt.button == 0) {
+                if (isInElement && startedClickHere)
+                    Controller.QueuedEvent = new UIPointerCommand.NormalCommand(UICommand.Confirm, this);
+                OnMouseUp?.Invoke(this, evt);
+            }
             evt.StopPropagation();
+            startedClickHere = false;
         });
     }
     public void Build(Dictionary<Type, VisualTreeAsset> map) {
@@ -242,6 +280,7 @@ public class UINode {
         Destroyed = true;
         Group.Nodes.Remove(this);
         ContainerHTML.Remove(HTML);
+        Controller.MoveCursorAwayFromNode(this);
     }
 
     #endregion
@@ -366,15 +405,37 @@ public class UINode {
 }
 
 public class EmptyNode : UINode {
-    public EmptyNode() : base(LString.Empty) { }
-
-    public EmptyNode(float w, float h) : this() {
+    public IFixedXMLObject Source { get; }
+    private readonly string desc;
+    public EmptyNode(IFixedXMLObject source, Action<EmptyNode>? onBuild = null) : base(source.Descriptor) {
+        this.Source = source;
+        this.desc = source.Descriptor;
+        UseDefaultAnimations = false;
+        Navigator = source.Navigate;
         OnBuilt = n => {
-            n.HTML.style.width = w;
-            n.HTML.style.height = h;
-            n.HTML.style.position = Position.Absolute;
+            _ = source.IsVisible.Subscribe(b => {
+                Passthrough = !b;
+                n.HTML.style.display = b.ToStyle();
+                if (!b)
+                    Controller.MoveCursorAwayFromNode(this);
+            });
+
+            n.HTML.ConfigureAbsoluteEmpty().ConfigureLeftTopListeners(source.Left, source.Top);
+            source.Width.Subscribe(w => n.Style.width = w);
+            source.Height.Subscribe(h => n.Style.height = h);
+            
+            //n.HTML.style.backgroundColor = new Color(0, 1, 0, 0.4f);
+            onBuild?.Invoke(this);
         };
     }
+
+    public ICObservable<float> CreateCenterOffsetChildX(ICObservable<float> childX) =>
+        new LazyEvented<float>(() => childX.Value + Source.Width.Value / 2f,
+            new UnitEventProxy<float>(childX), new UnitEventProxy<float>(Source.Width));
+    
+    public ICObservable<float> CreateCenterOffsetChildY(ICObservable<float> childY) =>
+        new LazyEvented<float>(() => childY.Value + Source.Height.Value / 2f,
+            new UnitEventProxy<float>(childY), new UnitEventProxy<float>(Source.Height));
 }
 
 public class PassthroughNode : UINode {

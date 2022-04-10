@@ -1,6 +1,6 @@
 <#> warnprefix
 pattern({
-	boss simp.kasen
+	##boss simp.kasen
 })
 phase(0)
 	paction(0)
@@ -26,8 +26,8 @@ phase 0
 <!> hp(1000)
 phase(0)
 	paction 0
-///
-		async sakura-green/w <1;:> gcr2 0.5 _ <4h> {
+		position 0 2
+		async sakura-green/ <1;:> gcr2 2 _ <4p> {
 		} s rvelocity cx 1.2
 		
 		gtr2 300 _ <> {

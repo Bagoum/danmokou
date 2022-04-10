@@ -684,13 +684,13 @@ public static class _VNBlessedRain {
         return default;
     });
 
-    public static async Task<Unit> VNScriptBlessedRain(DMKVNState vn) {
+    public static BoundedContext<Unit> VNScriptBlessedRain(DMKVNState vn) {
 #if UNITY_EDITOR
         vn.DefaultLoadSkipUnit = true;
         //if (SceneIntermediary.IsFirstScene && vn.LoadTo is null) 
             //vn.LoadToLocation(new VNLocation("l77", new List<string>() {"TOP", "2:MORIYA"}));
 #endif
-        return await _TopLevel(vn);
+        return _TopLevel(vn);
     }
 }
 }

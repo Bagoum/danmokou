@@ -12,14 +12,14 @@ To get the newest version from git, run:
 
 The following features are planned for future releases. Major version 10.0.0 is planned for sometime before July. 
 
-- [10.0.0] Full-featured implementation of Suzunoya
+- [10.0.0] ADV-style gameplay, state management, and generalized UI support
 - [Backlog] Default handling for graze flake items and bullet cancel flake items
 - [Backlog] Implementation of a TH18-like card engine
 - [Backlog] Procedural generation of stages and bullet patterns
 
 # v9.0.0 (2021/02/13)
 
-This release includes code for [Blessed Rain](https://bagoum.itch.io/blessed-rain), a short visual novel, in the MiniProjects folder. As of this release, Suzunoya functionality is mostly complete, but I haven't thoroughly tested functionality related to choices and external tasks, and there are some theoretical issues in save/load handling with regards to nondeterminism as well as certain configurations of global switches that open or close branches between executions. This release also includes some work-in-progress code for some adventure-game style usage of  Suzunoya (think Ace Attorney).
+This release includes code for [Blessed Rain](https://bagoum.itch.io/blessed-rain), a short visual novel, in the MiniProjects folder. As of this release, Suzunoya functionality is mostly complete, but I haven't thoroughly tested functionality related to choices and external tasks, and there are some theoretical issues in save/load handling with regards to nondeterminism as well as certain configurations of global switches that open or close branches between executions. This release also includes some work-in-progress code for some adventure-game style usage of  Suzunoya (think Ace Attorney), with some basic exploratory work in the [Plum Wine](https://github.com/Bagoum/danmokou-plumwine) repository.
 
 #### Breaking changes
 
@@ -41,7 +41,7 @@ This release includes code for [Blessed Rain](https://bagoum.itch.io/blessed-rai
 - Revamped input handling to separate types of user input (currently, KBM and controller are supported), to expose a uniform API for code-triggered pseudo-input (see InCodeInputSource), and to incorporate replays as another type of input (see ReplayPlayerInputSource).
 - DMK can now be run on Android. However, I have not written any input handling for mobile yet, so only the touch-to-navigate-menus handling works.
 - Added support for multiple vectors of localization (eg. having separate text and voice localization). 
-- Added support for skipping only read text. 
+- Added support for skipping only read text in VN segments.
 
 #### Changes
 

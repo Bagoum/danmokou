@@ -21,9 +21,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Danmokou.PlayTests", "Danmo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CurvedTMP", "CurvedTMP.csproj", "{8636fb6d-4d82-34e8-f59e-89c57f421e03}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Danmokou.PlumWine", "Danmokou.PlumWine.csproj", "{fae1ec87-b65f-a68c-d452-3786ca8fb5c7}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RubyTMP", "RubyTMP.csproj", "{694ec0db-bfa9-dfd1-1a85-e0e42df29778}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Danmokou.PlumWine", "Danmokou.PlumWine.csproj", "{fae1ec87-b65f-a68c-d452-3786ca8fb5c7}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Danmokou.Testing", "Danmokou.Testing.csproj", "{34f4855c-f67d-8244-8961-a5a4955d050a}"
 EndProject
@@ -56,10 +56,10 @@ Global
 		{429e7ba3-2fb2-db03-6452-ef53acf56a36}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8636fb6d-4d82-34e8-f59e-89c57f421e03}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{8636fb6d-4d82-34e8-f59e-89c57f421e03}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{fae1ec87-b65f-a68c-d452-3786ca8fb5c7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{fae1ec87-b65f-a68c-d452-3786ca8fb5c7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{694ec0db-bfa9-dfd1-1a85-e0e42df29778}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{694ec0db-bfa9-dfd1-1a85-e0e42df29778}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{fae1ec87-b65f-a68c-d452-3786ca8fb5c7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{fae1ec87-b65f-a68c-d452-3786ca8fb5c7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{34f4855c-f67d-8244-8961-a5a4955d050a}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{34f4855c-f67d-8244-8961-a5a4955d050a}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{acab4e3b-222c-0ce0-1e20-4e29fee60fcb}.Debug|Any CPU.ActiveCfg = Debug|Any CPU

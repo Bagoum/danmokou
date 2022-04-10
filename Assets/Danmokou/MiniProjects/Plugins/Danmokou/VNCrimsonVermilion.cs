@@ -26,8 +26,8 @@ using Vector3 = System.Numerics.Vector3;
 namespace MiniProjects.VN {
 
 public static class _VNCrimsonVermilion {
-    public static async Task<Unit> VNScriptCrimsonVermilion1(DMKVNState vn) {
-        return await _TopLevel(vn);
+    public static BoundedContext<Unit> VNScriptCrimsonVermilion1(DMKVNState vn) {
+        return _TopLevel(vn);
     }
 
     //In the general case, you probably don't want many shared objects--

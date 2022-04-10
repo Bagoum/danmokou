@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using BagoumLib;
 using BagoumLib.Culture;
+using BagoumLib.Events;
 using BagoumLib.Reflection;
 using Danmokou.Scriptables;
 using Danmokou.Services;
@@ -60,6 +61,22 @@ public static partial class XMLUtils {
 
     public static VisualElement SetPadding(this VisualElement root, float padding) =>
         root.SetPadding(padding, padding, padding, padding);
+
+    public static VisualElement ConfigureAbsoluteEmpty(this VisualElement empty, bool pickable = true) {
+        empty.SetPadding(0, 0, 0, 0);
+        empty.style.position = Position.Absolute;
+        var cn = new Length(-50, LengthUnit.Percent);
+        empty.style.translate = new StyleTranslate(new Translate(cn, cn, 0));
+        empty.pickingMode = pickable ? PickingMode.Position : PickingMode.Ignore;
+        return empty;
+    }
+
+    public static VisualElement ConfigureLeftTopListeners(this VisualElement n, ICObservable<float> left,
+        ICObservable<float> top) {
+        left.Subscribe(w => n.style.left = w);
+        top.Subscribe(h => n.style.top = h);
+        return n;
+    }
 
     public static VisualElement AddVE(this VisualElement root, VisualElement? child) {
         child ??= new VisualElement();

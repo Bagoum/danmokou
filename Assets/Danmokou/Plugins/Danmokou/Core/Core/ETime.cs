@@ -10,7 +10,7 @@ using BagoumLib.DataStructures;
 using BagoumLib.Events;
 using BagoumLib.Mathematics;
 using BagoumLib.Tasks;
-using BagoumLib.Tweening;
+using BagoumLib.Transitions;
 using Danmokou.Core.DInput;
 using Danmokou.DMath;
 using Danmokou.Scenes;
@@ -31,7 +31,7 @@ public interface IRegularUpdater {
     /// This function is called right before RegularUpdate. Parallel is called on ALL updaters
     /// before any RegUpd are called.
     /// </summary>
-    void RegularUpdateParallel();
+    void RegularUpdateParallel() { }
 
     /// <summary>
     /// Perform a regular update. This function will be called every ONE engine frame,
@@ -46,18 +46,18 @@ public interface IRegularUpdater {
     /// In the standard case, this means that it is called on the same frame as Awake, but after all Awake calls.
     /// Works with pooled objects (will be called after ResetV). Similar to Unity's Start.
     /// </summary>
-    void FirstFrame();
+    void FirstFrame() { }
 
     /// <summary>
     /// Updater priority. Lower priority = goes first. Note that order is not guaranteed during
     /// the parallel update section.
     /// </summary>
-    int UpdatePriority { get; }
+    int UpdatePriority => UpdatePriorities.DEFAULT;
 
     /// <summary>
     /// The maximum engine state that the object can act upon. Set to RUN for most objects.
     /// </summary>
-    EngineState UpdateDuring { get; }
+    EngineState UpdateDuring => EngineState.RUN;
 }
 
 public static class UpdatePriorities {
@@ -122,7 +122,7 @@ public class ETime : MonoBehaviour {
     private static readonly List<(Action, EngineState)> persistentSofInvokes = new List<(Action, EngineState)>();
 
     private void Awake() {
-        Tween.DefaultDeltaTimeProvider = () => FRAME_TIME;
+        TransitionHelpers.DefaultDeltaTimeProvider = () => FRAME_TIME;
         GenericOps.RegisterType<Vector2>(Vector2.LerpUnclamped, (x, y) => x * y, 
             (Vector2.zero, (x, y) => x + y), (Vector2.one, (x, y) => x * y));
         GenericOps.RegisterType<Vector3>(Vector3.LerpUnclamped, (x, y) => x * y, 

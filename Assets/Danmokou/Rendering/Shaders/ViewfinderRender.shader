@@ -17,7 +17,10 @@
 		Cull Off
 		Lighting Off
 		ZWrite Off
-		Blend SrcAlpha OneMinusSrcAlpha, OneMinusDstAlpha One
+		//As the source texes are render textures accumulating
+		// premulted colors, we use the merge (1 1-SrcA),
+		// but since the target tex is always blank, we can optimize with Blend Off.
+		Blend Off
 
 		Pass {
 			CGPROGRAM
@@ -67,6 +70,10 @@
 			float4 frag(fragment f) : SV_Target { 
 			    if (max(f.uv.x, f.uv.y) > 1 || min(f.uv.x, f.uv.y) < 0) return float4(0,0,0,1);
 				float4 c = tex2D(_MainTex, f.uv) * f.c;
+				//The source is a render texture using premult colors and the output is consumed
+				// as an exported texture, so convert back to linear colors.
+				if (c.a > 0)
+					c.rgb /= c.a;
 				return c;
 			}
 			ENDCG

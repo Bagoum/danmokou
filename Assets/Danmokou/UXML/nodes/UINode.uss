@@ -62,6 +62,9 @@
 .node.visible {
     opacity: 0.7;
 }
+.node.visible.highvis {
+    opacity: 0.8;
+}
 
 .node.group {
     opacity: 0.85;
@@ -69,6 +72,12 @@
 
 .node.selected {
     opacity: 0.85;
+}
+.node.group.highvis {
+    opacity: 0.92;
+}
+.node.group.select {
+    opacity: 0.92;
 }
 
 .node.disabled.group {
@@ -78,7 +87,6 @@
 .node.disabled.focus {
     opacity: 0.6;
 }
-
 .node.disabled.visible {
     opacity: 0.5;
 }

@@ -37,6 +37,7 @@ namespace Danmokou.Services {
 /// </summary>
 public class GameManagement : CoroutineRegularUpdater {
     public static readonly Version EngineVersion = new(9, 0, 0);
+    public static readonly int ExecutionNumber = new System.Random().Next();
     public static DifficultySettings Difficulty => Instance.Difficulty;
 
     public static DifficultySettings defaultDifficulty { get; private set; } =
@@ -98,7 +99,7 @@ public class GameManagement : CoroutineRegularUpdater {
 #endif
                 InstanceMode.NULL);
 
-        Logs.Log($"Danmokou {EngineVersion}, {References.gameIdentifier} {References.gameVersion}");
+        Logs.Log($"Danmokou {EngineVersion}, {References.gameIdentifier} {References.gameVersion}, exec {ExecutionNumber}");
         gameObject.AddComponent<SceneIntermediary>().defaultTransition = References.defaultTransition;
         gameObject.AddComponent<FreezeFrameHelper>();
         ETime.RegisterPersistentSOFInvoke(Replayer.BeginFrame);

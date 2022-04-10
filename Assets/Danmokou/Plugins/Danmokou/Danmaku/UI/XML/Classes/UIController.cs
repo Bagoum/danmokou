@@ -34,9 +34,12 @@ public abstract record UIPointerCommand {
     public virtual bool ValidForCurrent(UINode current) => true;
 
     public record NormalCommand(UICommand Command, UINode? Source) : UIPointerCommand {
+        public bool Silent { get; init; } = false;
         public override bool ValidForCurrent(UINode current) => 
             Source == current || Source == null || Command == UICommand.Back;
     }
+    
+    
     public record Goto(UINode Target) : UIPointerCommand;
 }
 
@@ -196,7 +199,10 @@ public abstract class UIController : CoroutineRegularUpdater {
         UIConfirm ? UICommand.Confirm :
         UIBack ? UICommand.Back :
         null;
-    
+
+    //Note: it should be possible to use Awake instead of FirstFrame w.r.t UIDocument being instantiated, 
+    // but many menus depend on binding to services,
+    // and services are not reliably queryable until FirstFrame.
     public override void FirstFrame() {
         var uid = GetComponent<UIDocument>();
         //higher sort order is more visible, so give them lower priority
@@ -399,6 +405,7 @@ public abstract class UIController : CoroutineRegularUpdater {
             bool doCustomSFX = false;
             UICommand? command = null;
             UIResult? result = null;
+            bool silence = false;
             if (QueuedEvent is UIPointerCommand.Goto mgt && mgt.Target.Destroyed)
                 QueuedEvent = null;
             if (QueuedEvent is UIPointerCommand.Goto mouseGoto && mouseGoto.Target.Screen == Current.Screen && 
@@ -415,10 +422,11 @@ public abstract class UIController : CoroutineRegularUpdater {
                     CurrentInputCommand;
                 if (command.Try(out var cmd))
                     result = Current.Navigate(cmd);
+                silence = (QueuedEvent as UIPointerCommand.NormalCommand)?.Silent ?? silence;
             }
             if (result is UIResult.GoToNode gTo && gTo.Target == Current)
                 result = null;
-            if (result != null) {
+            if (result != null && !silence) {
                 ServiceLocator.SFXService.Request(
                     result switch {
                         UIResult.StayOnNode{Action: UIResult.StayOnNodeType.NoOp} => failureSound,
@@ -548,6 +556,17 @@ public abstract class UIController : CoroutineRegularUpdater {
     }
     
     #endregion
+
+    /// <summary>
+    /// If a node dynamically becomes passthrough/invisible/deleted,
+    ///  or for any other reason needs to ensure that it is not the current node,
+    ///  it should call this function.
+    /// </summary>
+    public void MoveCursorAwayFromNode(UINode n) {
+        if (n == Current)
+            Current = n.Group.ExitNode;
+        Redraw();
+    }
     
     
     [ContextMenu("Debug group call stack")]

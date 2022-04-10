@@ -1,16 +1,19 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using BagoumLib;
 using BagoumLib.Cancellation;
 using BagoumLib.DataStructures;
+using BagoumLib.Events;
 using BagoumLib.Mathematics;
 using BagoumLib.Reflection;
-using BagoumLib.Tweening;
+using BagoumLib.Transitions;
 using Danmokou.Behavior;
 using Danmokou.Core;
+using Danmokou.Services;
 using Danmokou.UI.XML;
 using SuzunoyaUnity.Rendering;
 using UnityEngine;
@@ -18,22 +21,49 @@ using UnityEngine.UIElements;
 using PropConsts = Danmokou.Graphics.PropConsts;
 
 namespace Danmokou.UI {
+[Serializable]
+public struct RenderablePane {
+    public PanelSettings pane;
+    /// <summary>
+    /// All panes with the same group will be rendered to the same renderTex.
+    /// <br/>Only group 0 will be rendered to screen by UIBuilderRenderer.
+    /// <br/>Consumers can obtain render textures for groups by listening to <see cref="UIBuilderRenderer.RTGroups"/>.
+    /// </summary>
+    public int renderGroup;
+
+    public void Deconstruct(out PanelSettings p, out int g) {
+        p = pane;
+        g = renderGroup;
+    }
+}
 public class UIBuilderRenderer : CoroutineRegularUpdater {
+    public const int ADV_INTERACTABLES_GROUP = 1;
+    
     //Resolution at which UI resources are designed.
     public static readonly (int w, int h) UIResolution = (3840, 2160);
+    public static readonly Vector2 UICenter = new(1920, 1080);
     private readonly DMCompactingArray<UIController> controllers = new(8);
     
-    public PanelSettings[] settings = null!;
-    public Material uiMaterial = null!;
+    public RenderablePane[] settings = null!;
+    private MaterialPropertyBlock pb = null!;
     public RenderTexture unsetRT = null!;
 
-    private RenderTexture rt = null!;
     private Cancellable allCancel = null!;
-    private Transform tr = null!;
     private SpriteRenderer sr = null!;
 
-    private const int frontOrder = 32000;
-    private int normalOrder;
+    private readonly Dictionary<int, RenderTexture> groupToRT = new();
+    /// <summary>
+    /// Render textures for each UITK rendering group.
+    /// <br/>Note that render group 0 is automatically rendered to screen by this class.
+    /// </summary>
+    public Evented<Dictionary<int, RenderTexture>> RTGroups { get; } = new(null!);
+    
+    /// <summary>
+    /// Maps <see cref="RenderablePane.renderGroup"/> to a full-screen VE
+    /// that can be used for arbitrarily adding elements to the pane.
+    /// </summary>
+    /// Note: this code is too powerful, and it may clash with UIScreen assumptions, so not enabling it for now.
+    //private Dictionary<int, VisualElement> GroupToLeaf { get; } = new();
 
     public IDisposable RegisterController(UIController c, int priority) {
         return controllers.AddPriority(c, priority);
@@ -46,22 +76,26 @@ public class UIBuilderRenderer : CoroutineRegularUpdater {
         return false;
     }
 
-
     private void Awake() {
-        tr = transform;
-        sr = GetComponent<SpriteRenderer>();
-        normalOrder = sr.sortingOrder;
+        (sr = GetComponent<SpriteRenderer>()).GetPropertyBlock(pb = new MaterialPropertyBlock());
         allCancel = new Cancellable();
+        /*foreach (var doc in GetComponents<UIDocument>()) {
+            var grp = settings.First(s => s.pane == doc.panelSettings).renderGroup;
+            GroupToLeaf[grp] = doc.rootVisualElement;
+        }*/
     }
 
     protected override void BindListeners() {
         base.BindListeners();
+        RegisterService(this);
         Listen(RenderHelpers.PreferredResolution, RemakeTexture);
     }
 
     private void RemakeTexture((int w, int h) res) {
-        if (rt != null) rt.Release();
-        rt = RenderHelpers.DefaultTempRT(res);
+        foreach (var v in groupToRT.Values)
+            v.Release();
+        groupToRT.Clear();
+        groupToRT[0] = RenderHelpers.DefaultTempRT(res);
         /* See LetterboxedInput.cs.
         A world space canvas relates mouse input only to the target texture to which the canvas is rendering. For example, if my canvas renders to a camera with a target texture of resolution 1920x1080, then the canvas will perceive a mouse input at position <1900, 1060> as occuring in the top right of the canvas, regardless of where on the screen this input is located.
 
@@ -71,20 +105,39 @@ public class UIBuilderRenderer : CoroutineRegularUpdater {
         By overriding the ScreenToPanelSpaceFunction, we can work around this problem.
          */
         var screenToPanelWorkaround = (Func<Vector2, Vector2>)(loc => loc + new Vector2(0, res.h - Screen.height));
-        foreach (var s in settings) {
+        foreach (var (s, g) in settings) {
             s.scale = res.w / (float)UIResolution.w;
-            s.targetTexture = rt;
+            s.targetTexture = groupToRT.TryGetValue(g, out var rt) ? 
+                rt : groupToRT[g] = RenderHelpers.DefaultTempRT();
             s.SetScreenToPanelSpaceFunction(screenToPanelWorkaround);
         }
-        uiMaterial.SetTexture(PropConsts.renderTex, rt);
+        pb.SetTexture(PropConsts.renderTex, groupToRT[0]);
+        sr.SetPropertyBlock(pb);
+        RTGroups.OnNext(groupToRT);
     }
 
+    /*public void AddToPane(VisualElement ve, int renderGroup) {
+        GroupToLeaf[renderGroup].Add(ve);
+    }*/
+
+    public static Vector2 ComputeXMLDimensions(Vector2 screenDim) =>
+        new(screenDim.x / MainCamera.ScreenWidth * UIResolution.w,
+            screenDim.y / MainCamera.ScreenHeight * UIResolution.h);
+    
+    public static Vector2 ComputeXMLPosition(Vector2 screenPosition) {
+        var asDim = ComputeXMLDimensions(screenPosition + GameManagement.References.bounds.center);
+        return new Vector2(UICenter.x + asDim.x, UICenter.y - asDim.y);
+    }
+    
+
     protected override void OnDisable() {
-        foreach (var s in settings)
+        foreach (var (s, _) in settings)
             s.targetTexture = unsetRT;
-        uiMaterial.SetTexture(PropConsts.renderTex, unsetRT);
-        if (rt != null) rt.Release();
-        rt = null!;
+        pb.SetTexture(PropConsts.renderTex, unsetRT);
+        sr.SetPropertyBlock(pb);
+        foreach (var v in groupToRT.Values)
+            v.Release();
+        groupToRT.Clear();
         allCancel.Cancel();
         base.OnDisable();
     }

@@ -21,7 +21,10 @@
 		Cull Off
 		Lighting Off
 		ZWrite Off
-		Blend SrcAlpha OneMinusSrcAlpha, OneMinusDstAlpha One
+		//As the source tex is a render tex accumulating
+		// premulted colors, we use the merge (1 1-SrcA),
+		// but since the target tex is always blank, we can optimize with Blend Off.
+		Blend Off
 
 		Pass {
 			CGPROGRAM

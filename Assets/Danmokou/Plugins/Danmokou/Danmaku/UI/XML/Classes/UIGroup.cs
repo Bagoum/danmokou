@@ -319,12 +319,14 @@ public abstract class UIGroup : IRenderSource {
 }
 
 class UIFreeformGroup : UIGroup {
+    private readonly UINode unselector;
     public UIFreeformGroup(UIScreen container, UINode unselector) : base(container, null, new[] { unselector }) {
+        this.unselector = unselector;
         ExitNodeOverride = unselector;
     }
 
     public override UIResult? NavigateOutOfEnclosed(UIGroup enclosed, UINode current, UICommand req) =>
-        new ReturnToGroupCaller();
+        GoToExitOrLeaveScreen(current, req) ?? SilentNoOp;
 
     public override UIResult Navigate(UINode node, UICommand req) {
         if (Nodes.Count == 1)
@@ -333,8 +335,36 @@ class UIFreeformGroup : UIGroup {
             UICommand.Back => GoToExitOrLeaveScreen(node, req) ?? SilentNoOp,
             UICommand.Confirm => SilentNoOp,
             //TODO
-            _ => NavigateToNextNode(node, req)
+            _ => FindClosest(
+                node == unselector ? UIBuilderRenderer.UICenter :
+                node.HTML.worldBound.center, req, node)
         };
+    }
+
+    public UIResult FindClosest(Vector2 from, UICommand dir, UINode? src = null) {
+        var dirAsVec = dir switch {
+            UICommand.Down => Vector2.down,
+            UICommand.Up => Vector2.up,
+            UICommand.Left => Vector2.left,
+            UICommand.Right => Vector2.right,
+            _ => throw new Exception()
+        };
+        var dirAsAng = M.Atan2D(dirAsVec.y, dirAsVec.x);
+        foreach (var (candidate, angle, _) in Nodes.Select(n => {
+            var delta = n.HTML.worldBound.center - from;
+            //y axis is inverted in XML
+            var angleDelta = Mathf.Abs(M.DeltaD(M.Atan2D(-delta.y, delta.x), dirAsAng));
+            return (n, angleDelta, (delta / 20).magnitude + angleDelta);
+        }).OrderBy(x => x.Item3)) {
+            if (candidate == src || candidate == unselector || candidate.Passthrough is true)
+                continue;
+            if (angle >= 50)
+                continue;
+            return candidate;
+        }
+        if (src == unselector)
+            return SilentNoOp;
+        return unselector;
     }
 }
 

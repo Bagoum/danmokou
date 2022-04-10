@@ -2,11 +2,11 @@
 using System.Collections;
 using BagoumLib.Cancellation;
 using BagoumLib.Mathematics;
-using BagoumLib.Tweening;
+using BagoumLib.Transitions;
 using Danmokou.Core;
 using UnityEngine;
 using UnityEngine.UIElements;
-using static BagoumLib.Tweening.Tween;
+using static BagoumLib.Transitions.TransitionHelpers;
 
 namespace Danmokou.DMath {
 public static class Tweening {

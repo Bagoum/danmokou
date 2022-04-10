@@ -14,9 +14,28 @@ namespace Danmokou.ADV {
 [Serializable]
 public record ADVData(InstanceData VNData) {
     public string CurrentMap { get; set; } = "";
+    /// <summary>
+    /// While in a VN segment, put the serialized save data before entering the segment here.
+    /// </summary>
+    public string? UnmodifiedSaveData { get; set; } = null;
+    
     //Json usage
     [Obsolete]
     public ADVData() : this(default(InstanceData)!) {}
+
+    /// <summary>
+    /// If this data was saved while in a VN segment (ie. UnmodifiedSaveData is not null),
+    ///  then use UnmodifiedSaveData as the true save data, and use this data as a loading proxy.
+    /// </summary>
+    public (ADVData main, ADVData? loadProxy) GetLoadProxyInfo() {
+        if (UnmodifiedSaveData != null) {
+            var save = FileUtils.DeserializeJson<ADVData>(UnmodifiedSaveData) ?? 
+                       throw new Exception($"Couldn't read proxy save data");
+            save.VNData._SetGlobalData_OnlyUseForInitialization(SaveData.r.GlobalVNData);
+            return (save, this);
+        }
+        return (this, null);
+    }
 }
 
 [Serializable]

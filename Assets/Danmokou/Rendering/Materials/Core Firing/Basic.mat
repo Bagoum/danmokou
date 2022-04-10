@@ -63,6 +63,7 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    m_Ints: []
     m_Floats:
     - PixelSnap: 0
     - _BlendFrom: 5
@@ -97,6 +98,7 @@ Material:
     - _Time: 0.5
     - _ToggleCircleCut: 0
     - _ToggleCycle: 0
+    - _ToggleDisplacePolar: 0
     - _ToggleFadeIn: 0
     - _ToggleHueShift: 0
     - _ToggleSear: 0

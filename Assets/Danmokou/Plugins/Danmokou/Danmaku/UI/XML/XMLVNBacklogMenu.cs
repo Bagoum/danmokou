@@ -29,7 +29,7 @@ public class XMLVNBacklogMenu : PausedGameplayMenu, IVNBacklog {
     public static int BacklogCount { get; set; } = 120;
     private ExecutingVN? currVn;
     private ExecutingVN? CurrVN {
-        get => (currVn?.Active != true) ? (currVn = null) : currVn;
+        get => currVn is {Active: true} ? currVn :  (currVn = null);
         set => currVn = value;
     }
 

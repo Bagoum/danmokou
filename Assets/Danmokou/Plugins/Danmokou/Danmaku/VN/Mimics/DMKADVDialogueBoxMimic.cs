@@ -24,6 +24,10 @@ public class DMKADVDialogueBoxMimic : ADVDialogueBoxMimic {
                 skipButton.onClicked.AddListener(FullSkip);
             }
         }
+        
+        foreach (var b in buttons)
+            if (b is DMKDialogueBoxButton d)
+                d.Bind(this, db);
     }
     
     public virtual void FullSkip() {

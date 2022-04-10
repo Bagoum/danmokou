@@ -48,10 +48,10 @@ public class MainCamera : RegularUpdater, IScreenshotter {
         /// Camera that applies global shader effects (such as Seija flipping).
         /// </summary>
         Shader,
-        /// <summary>
-        /// Camera that doesn't actually render anything, but is marked as MainCamera for Unity purposes.
-        /// </summary>
-        Main,
+        // Camera that doesn't actually render anything, but is marked as MainCamera for Unity purposes.
+        // Not accessible here because it doesn't have any functionality besides rendering to screen,
+        //  which should not be consumed by users.
+        //Main,
         UI
     }
     private static readonly int ShaderScrnWidthID = Shader.PropertyToID("_ScreenWidth");
@@ -182,6 +182,22 @@ public class MainCamera : RegularUpdater, IScreenshotter {
     [ContextMenu("Save next PostRender")]
     public void SaveNextPostRender() {
         saveNext = true;
+    }
+
+    [ContextMenu("Screenshot all")]
+    public void ScreenshotAll() {
+        var tex = Screenshot(new CRect(0, 0, MainCamera.HorizRadius, MainCamera.VertRadius, 0),
+            AyaCameras.Append(CamType.UI).ToArray());
+        FileUtils.WriteTex("DMK_Saves/Aya/screenshotAll.png", tex, FileUtils.ImageFormat.PNG);
+        tex.DestroyTexOrRT();
+    }
+    
+    [ContextMenu("Screenshot all except BG")]
+    public void ScreenshotAllExceptBG() {
+        var tex = Screenshot(new CRect(0, 0, MainCamera.HorizRadius, MainCamera.VertRadius, 0), 
+            AyaCameras.Append(CamType.UI).Skip(1).ToArray());
+        FileUtils.WriteTex("DMK_Saves/Aya/screenshotAllExceptWall.png", tex, FileUtils.ImageFormat.PNG);
+        tex.DestroyTexOrRT();
     }
 
     /// <summary>

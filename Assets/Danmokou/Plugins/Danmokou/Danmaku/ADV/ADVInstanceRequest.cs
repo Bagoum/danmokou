@@ -37,28 +37,51 @@ public record ADVInstance(ADVInstanceRequest Request, DMKVNState VN, ExecutingVN
                 ));
     }
 }
-public record ADVInstanceRequest(ADVManager Manager, ADVGameDef Game, ADVData ADVData) {
+public class ADVInstanceRequest {
+    public ADVManager Manager { get; }
+    public ADVGameDef Game { get; }
+    public ADVData ADVData { get; private set; }
+    public ADVData? LoadProxyData { get; private set; }
+    
+    public ADVInstanceRequest(ADVManager manager, ADVGameDef game, ADVData advData) {
+        Manager = manager;
+        Game = game;
+        (ADVData, LoadProxyData) = 
+            Game.backlogFeatures == ADVBacklogFeatures.USE_PROXY_LOADING ?
+                advData.GetLoadProxyInfo() :
+                (advData, null);
+    }
+
+    public void FinalizeProxyLoad() {
+        Logs.Log($"Finished loading ADV instance (will swap proxy data: " +
+                 $"{Game.backlogFeatures == ADVBacklogFeatures.USE_PROXY_LOADING}");
+        if (Game.backlogFeatures == ADVBacklogFeatures.USE_PROXY_LOADING && LoadProxyData != null) {
+            ADVData = LoadProxyData;
+            LoadProxyData = null;
+        }
+    }
 
     public bool Run() {
         var Tracker = new Cancellable();
-        ADVInstance inst = null!;
         return ServiceLocator.Find<ISceneIntermediary>().LoadScene(new SceneRequest(
             Game.sceneConfig,
             SceneRequest.Reason.START_ONE,
             Manager.DestroyCurrentInstance,
             () => {
-                var vn = new DMKVNState(Tracker, Game.key, ADVData.VNData);
+                //Use proxy data for the VN execution, but use cleanslate data for map configuration
+                var vn = new DMKVNState(Tracker, Game.key, (LoadProxyData ?? ADVData).VNData);
                 var evn = ServiceLocator.Find<IVNWrapper>().TrackVN(vn);
                 ServiceLocator.Find<IVNBacklog>().TryRegister(evn);
-                if (Game.allowVnBackjump)
+                if (Game.backlogFeatures == ADVBacklogFeatures.ALLOW_BACKJUMP)
                     evn.doBacklog = loc => {
-                        vn.UpdateSavedata().Location = loc;
+                        vn.UpdateInstanceData().Location = loc;
                         Manager.Restart(ADVData);
                     };
-                inst = new ADVInstance(this, vn, evn, Tracker);
+                var inst = new ADVInstance(this, vn, evn, Tracker);
                 Manager.SetupInstance(inst);
-            },
-            () => Game.Run(inst).ContinueWithSync(Tracker.Guard(() => inst.Finish()))));
+                //You can start running this before the curtain pulls back.
+                Game.Run(inst).ContinueWithSync(Tracker.Guard(() => inst.Finish()));
+            }));
     }
 }
 }

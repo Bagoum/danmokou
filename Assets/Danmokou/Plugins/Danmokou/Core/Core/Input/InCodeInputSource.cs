@@ -5,12 +5,12 @@ public class InCodeInputSource : IInputHandlerInputSource, IInputSource {
     public List<IInputHandler> Handlers { get; } = new();
     private readonly Queue<(MockInputChecker, bool)> delayedEnables = new();
     public InCodeInputSource() {
-        mUIConfirm = new(this);
+        mDialogueConfirm = new(this);
         mDialogueSkipAll = new(this);
-        uiConfirm = InputHandler.Trigger(mUIConfirm);
+        dialogueConfirm = InputHandler.Trigger(mDialogueConfirm);
         dialogueSkipAll = InputHandler.Trigger(mDialogueSkipAll);
         Handlers.AddRange(new[] {
-            uiConfirm, dialogueSkipAll
+            dialogueConfirm, dialogueSkipAll
         });
     }
     
@@ -27,13 +27,11 @@ public class InCodeInputSource : IInputHandlerInputSource, IInputSource {
 
     public void SetActive(MockInputChecker m) => delayedEnables.Enqueue((m, true));
 
-    public MockInputChecker mUIConfirm { get; }
+    public MockInputChecker mDialogueConfirm { get; }
     public MockInputChecker mDialogueSkipAll { get; }
-    private IInputHandler uiConfirm { get; }
+    private IInputHandler dialogueConfirm { get; }
     private IInputHandler? dialogueSkipAll { get; }
-
-    public bool? UIConfirm => uiConfirm.Active ? true : null;
-    public bool? DialogueConfirm => UIConfirm;
+    public bool? DialogueConfirm => dialogueConfirm.Active ? true : null;
     public bool? DialogueSkipAll => (dialogueSkipAll?.Active is true) ? true : null;
 }
 }

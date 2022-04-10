@@ -139,7 +139,8 @@ public class SeijaCamera : CoroutineRegularUpdater, IShaderCamera {
     }
     private void OnRenderImage(RenderTexture src, RenderTexture dest) {
         //Dest is dirty, rendering to it directly can cause issues if there are alpha pixels.
-        dest.GLClear();
+        //However, SeijaCamera shader uses One Zero, so we don't need to explicitly clear.
+        //dest.GLClear();
         UnityEngine.Graphics.Blit(src, dest, seijaMaterial);
     }
 

@@ -5,7 +5,7 @@ using BagoumLib;
 using BagoumLib.Culture;
 using BagoumLib.Events;
 using BagoumLib.Mathematics;
-using BagoumLib.Tweening;
+using BagoumLib.Transitions;
 using Danmokou.Core;
 using Danmokou.DMath;
 using Danmokou.Graphics.Backgrounds;

@@ -78,6 +78,7 @@ Images (Assets/Danmokou/Sprites)
 - entity/taisei_*: by Taisei Project (with modification).
 - DD/*: by [DD](https://www.pixiv.net/en/users/4650367) . Noncommercial use only. 
 - .py: Python scripts licensed by Bagoum under MIT.
+- UI/faIcons/*: icons from [FontAwesome](https://github.com/FortAwesome/Font-Awesome), licensed under CC-BY 4. Modifications made.
 - [UI/trophy.png](https://pixabay.com/vectors/success-badge-trophy-award-winner-5974538/)
 - UI/pins/crow*: stock by Roy3D on [DeviantArt](https://www.deviantart.com/roy3d/art/Crows-2-PNG-Stock-412584565), modifications made.
 - UI/commense: Yukari sprites by [dairi](https://www.pixiv.net/en/users/4920496). Noncommercial use only. 
@@ -85,7 +86,7 @@ Images (Assets/Danmokou/Sprites)
 - items/gems*: under CC-BY from [Code Inferno Games (codeinferno.com)](https://opengameart.org/content/animated-spinning-gems)
 - player/focus: by Taisei Project (with modification).
 - bullets/straight-png/taisei_scythe: by Taisei Project (with modification).
-- other files in bullets, UI, util, TransitionTextures, items, player: by Bagoum, licensed under CC BY 4.
+- other files in bullets, UI, util, TransitionTextures, items, player: by Bagoum, licensed under CC-BY 4.
 
 Assets/Danmokou/MiniProjects
 - Cutins/Sprites: by dairi.

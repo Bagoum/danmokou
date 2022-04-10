@@ -8,7 +8,7 @@ using BagoumLib;
 using BagoumLib.Cancellation;
 using BagoumLib.DataStructures;
 using BagoumLib.Tasks;
-using BagoumLib.Tweening;
+using BagoumLib.Transitions;
 using UnityEngine;
 using TMPro;
 using Danmokou.Behavior;

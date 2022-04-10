@@ -36,6 +36,7 @@ public class GameUniqueReferences : ScriptableObject {
     public ItemReferences items = null!;
     public PrefabReferences prefabReferences = null!;
     public SuzunoyaReferences? suzunoyaReferences;
+    public ADVReferences? advReferences;
     public UXMLReferences uxmlDefaults = null!;
     public SFXConfigs[] SFX = null!;
     public SOPrefabs[] summonables = null!;

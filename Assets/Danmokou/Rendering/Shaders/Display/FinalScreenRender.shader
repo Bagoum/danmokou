@@ -15,7 +15,10 @@
 		Cull Off
 		Lighting Off
 		ZWrite Off
-		Blend SrcAlpha OneMinusSrcAlpha, OneMinusDstAlpha One
+		//As the source tex is a render tex accumulating
+		// premulted colors, we use the merge (1 1-SrcA),
+		// but since the target tex is always blank, we can optimize with Blend Off.
+		Blend Off
 
 		Pass {
 			CGPROGRAM
@@ -58,6 +61,8 @@
 				float4 c = lerp(tex2D(_LetterboxTex, fmod(scaledUv + monitorIsWider * 0.5, 1) * float2(texAspect / ltexAspect, 1)) * _LetterboxTint,
 					tex2D(_MainTex, scaledUv + 0.5),
 					step(max(abs(scaledUv.x), abs(scaledUv.y)), 0.5));
+				//The source is a render texture using premult colors and the output is consumed
+				// as screen data. Screen data is expected to be premult, so we do not need to deconvert.
 				return c;
 			}
 			ENDCG

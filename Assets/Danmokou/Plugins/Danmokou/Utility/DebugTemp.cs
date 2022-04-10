@@ -1,7 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using BagoumLib.Tweening;
+using BagoumLib.Transitions;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.DMath;

@@ -28,7 +28,7 @@ public class DMKVNState : UnityVNState {
     }
 
     public override bool ClickConfirmOrSkip() {
-        InputManager.InCodeInput.mUIConfirm.SetActive();
+        InputManager.InCodeInput.mDialogueConfirm.SetActive();
         return true;
     }
 

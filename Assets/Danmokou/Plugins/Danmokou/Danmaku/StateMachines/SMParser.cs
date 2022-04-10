@@ -153,10 +153,9 @@ public static class SMParser {
         }
     }
 
-    private static bool IsNestingType(this ParseUnit.Type t) => t == ParseUnit.Type.Paren ||
-                                                                t == ParseUnit.Type.Words ||
-                                                                t == ParseUnit.Type.NoSpaceWords ||
-                                                                t == ParseUnit.Type.Postfix;
+    private static bool IsNestingType(this ParseUnit.Type t) => 
+        t is ParseUnit.Type.Paren or ParseUnit.Type.Words or 
+            ParseUnit.Type.NoSpaceWords or ParseUnit.Type.Postfix;
     public class ParseUnit {
         public enum Type {
             Atom,
@@ -499,7 +498,7 @@ public static class SMParser {
                     foreach (var arr in arrs) {
                         bool first = true;
                         foreach (var x in arr) {
-                            if (first) words[words.Count - 1] += x;
+                            if (first) words[^1] += x;
                             else words.Add(x);
                             first = false;
                         }

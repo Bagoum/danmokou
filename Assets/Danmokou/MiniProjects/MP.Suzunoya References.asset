@@ -15,7 +15,6 @@ MonoBehaviour:
   renderGroupMimic: {fileID: 836292319904304369, guid: ad089b1aca3d7bb4a9edead2f2fb9b95,
     type: 3}
   entityMimics:
-  - {fileID: 5171041737173443338, guid: 477e934842a686d4fa99fd7af32157ee, type: 3}
   - {fileID: 2289053744868689767, guid: 95a9e438746f06e4998f8ce7cf6e5ad5, type: 3}
   - {fileID: 6158897325690063378, guid: 9af331c45d39e1a4ea10d26e8248ac5e, type: 3}
   - {fileID: 7053815252376390917, guid: 716d109644ddd1447a940fe3fcda3f69, type: 3}

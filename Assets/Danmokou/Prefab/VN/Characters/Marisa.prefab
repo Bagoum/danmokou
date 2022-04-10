@@ -1,5 +1,39 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!114 &6957559066487649824
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5466135841841681093}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1c339090f65c46a797df89fd9ce6e0d9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_ADVSpeakerIcon: {fileID: 0}
+  advIcons:
+  - emote: normal
+    sprite: {fileID: 21300000, guid: 23ea5f507e282934dbadac562e462936, type: 3}
+  - emote: angry
+    sprite: {fileID: 21300000, guid: 5d433b47a71f0864f9bb6ce9537922f5, type: 3}
+  - emote: cry
+    sprite: {fileID: 21300000, guid: fac98186e7af6b147bec2749c205a285, type: 3}
+  - emote: happy
+    sprite: {fileID: 21300000, guid: e4930c4353dbffc4db5d6831c7dbb639, type: 3}
+  - emote: surprise
+    sprite: {fileID: 21300000, guid: dcc540b57f4a3d34789c663a79ed410d, type: 3}
+  - emote: worry
+    sprite: {fileID: 21300000, guid: 0d18e7f9d60b6094896ea54311ad24ba, type: 3}
+  - emote: smug
+    sprite: {fileID: 21300000, guid: 18dc809316b8c47499356ebce5fc4b70, type: 3}
+  - emote: emb1
+    sprite: {fileID: 21300000, guid: 2c73ff220233ac74c8156adf094dfd12, type: 3}
+  pieces:
+  - {fileID: 3938963659613347399}
+  - {fileID: 2291325347389896490}
+  defaultPiece: {fileID: 2291325347389896490}
 --- !u!1001 &6921585264875452769
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -177,37 +211,3 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c4fa8568a2a04c9cabded3d5d1289d6a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &6957559066487649824
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5466135841841681093}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1c339090f65c46a797df89fd9ce6e0d9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_ADVSpeakerIcon: {fileID: 0}
-  advIcons:
-  - emote: normal
-    sprite: {fileID: 21300000, guid: 23ea5f507e282934dbadac562e462936, type: 3}
-  - emote: angry
-    sprite: {fileID: 21300000, guid: 5d433b47a71f0864f9bb6ce9537922f5, type: 3}
-  - emote: cry
-    sprite: {fileID: 21300000, guid: fac98186e7af6b147bec2749c205a285, type: 3}
-  - emote: happy
-    sprite: {fileID: 21300000, guid: e4930c4353dbffc4db5d6831c7dbb639, type: 3}
-  - emote: surprise
-    sprite: {fileID: 21300000, guid: dcc540b57f4a3d34789c663a79ed410d, type: 3}
-  - emote: worry
-    sprite: {fileID: 21300000, guid: 0d18e7f9d60b6094896ea54311ad24ba, type: 3}
-  - emote: smug
-    sprite: {fileID: 21300000, guid: 18dc809316b8c47499356ebce5fc4b70, type: 3}
-  - emote: emb1
-    sprite: {fileID: 21300000, guid: 2c73ff220233ac74c8156adf094dfd12, type: 3}
-  pieces:
-  - {fileID: 3938963659613347399}
-  - {fileID: 2291325347389896490}
-  defaultPiece: {fileID: 2291325347389896490}

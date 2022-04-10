@@ -263,7 +263,7 @@ if (> t &fadein,
         ServiceLocator.Find<IVNBacklog>().TryRegister(exec);
         try {
             await vnTask(vn);
-            vn.UpdateSavedata();
+            vn.UpdateInstanceData();
         } finally {
             Logs.Log(
                 $"Completed VN script {vn}. Final completion: {vn.CToken.ToCompletion()}");

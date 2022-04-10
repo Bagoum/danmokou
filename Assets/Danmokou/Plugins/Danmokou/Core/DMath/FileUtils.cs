@@ -68,15 +68,21 @@ public static class FileUtils {
         CheckDirectory(Path.GetDirectoryName(path));
     }
 
+    public static string SerializeJson<T>(T obj, Formatting f = Formatting.Indented) =>
+        JsonConvert.SerializeObject(obj, typeof(T), f, JsonSettings);
+
+    public static T? DeserializeJson<T>(string data) =>
+        JsonConvert.DeserializeObject<T>(data, JsonSettings);
+
     public static T CopyJson<T>(T obj) =>
-        JsonConvert.DeserializeObject<T>(JsonConvert.SerializeObject(obj, JsonSettings), JsonSettings) ?? 
+        DeserializeJson<T>(JsonConvert.SerializeObject(obj, JsonSettings)) ?? 
         throw new Exception($"Failed to JSON-copy object {obj} of type {obj?.GetType()}");
     
     //The type may seem redundant here, but it's critical for serializing polymorphic types.
     public static void WriteJson<T>(string file, T obj) {
         CheckPath(ref file);
         using StreamWriter sw = new(file);
-        sw.WriteLine(JsonConvert.SerializeObject(obj, typeof(T), Formatting.Indented, JsonSettings));
+        sw.WriteLine(SerializeJson(obj));
     }
 
     public static void WriteProto(string file, object obj) {
@@ -126,7 +132,7 @@ public static class FileUtils {
         CheckPath(ref file);
         try {
             using StreamReader sr = new(file);
-            return JsonConvert.DeserializeObject<T>(sr.ReadToEnd(), JsonSettings);
+            return DeserializeJson<T>(sr.ReadToEnd());
         } catch (Exception e) {
             Logs.Log($"Couldn't read {typeof(T)} from file {file}. (JSON)\n{e.Message}", false, LogLevel.WARNING);
             return null;

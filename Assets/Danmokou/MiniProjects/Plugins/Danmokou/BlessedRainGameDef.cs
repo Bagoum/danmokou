@@ -15,11 +15,9 @@ public record BlessedRainADVData(Suzunoya.Data.InstanceData VNData) : ADVData(VN
 [CreateAssetMenu(menuName = "Data/ADV/Blessed Rain Game")]
 public class BlessedRainGameDef : ADVGameDef {
     public override Task Run(ADVInstance inst) {
-        return inst.Manager.ExecuteVN(vn => {
-            if (inst.ADVData.VNData.Location is not null)
-                vn.LoadToLocation(inst.ADVData.VNData.Location);
-            return _VNBlessedRain.VNScriptBlessedRain(vn);
-        });
+        if (inst.ADVData.VNData.Location is not null)
+            inst.VN.LoadToLocation(inst.ADVData.VNData.Location);
+        return inst.Manager.ExecuteVN(_VNBlessedRain.VNScriptBlessedRain(inst.VN));
     }
 
     public override ADVData NewGameData() => new BlessedRainADVData(new(SaveData.r.GlobalVNData));

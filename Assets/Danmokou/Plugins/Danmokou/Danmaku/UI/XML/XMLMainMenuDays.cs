@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using BagoumLib;
 using BagoumLib.Culture;
-using BagoumLib.Tweening;
+using BagoumLib.Transitions;
 using Danmokou.Core;
 using Danmokou.Services;
 using Danmokou.Danmaku;
@@ -153,8 +153,8 @@ public class XMLMainMenuDays : XMLMainMenu {
         bool doAnim = ReturnTo == null;
         base.FirstFrame();
         if (doAnim) {
-            //_ = Tween.TweenTo(720f, 0f, 1f, x => UIRoot.style.left = x, M.EOutSine).Run(this);
-            _ = Tween.TweenTo(0f, 1f, 0.8f, x => UIRoot.style.opacity = x, x => x).Run(this);
+            //_ = TransitionHelpers.TweenTo(720f, 0f, 1f, x => UIRoot.style.left = x, M.EOutSine).Run(this);
+            _ = TransitionHelpers.TweenTo(0f, 1f, 0.8f, x => UIRoot.style.opacity = x, x => x).Run(this);
         }
     }
 }

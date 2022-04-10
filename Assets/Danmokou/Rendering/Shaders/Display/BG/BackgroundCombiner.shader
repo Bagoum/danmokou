@@ -18,7 +18,9 @@
 		Cull Off
 		Lighting Off
 		ZWrite Off
-		Blend SrcAlpha OneMinusSrcAlpha, OneMinusDstAlpha One
+		//As the source texes are render textures accumulating
+		// premulted colors, we use the merge (1 1-SrcA).
+		Blend One OneMinusSrcAlpha
 		
 		Pass { // From and To, Pass 0
 			CGPROGRAM

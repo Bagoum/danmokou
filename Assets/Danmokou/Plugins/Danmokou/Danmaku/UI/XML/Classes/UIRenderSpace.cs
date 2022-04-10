@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using BagoumLib.Events;
 using BagoumLib.Tasks;
-using BagoumLib.Tweening;
+using BagoumLib.Transitions;
 using Danmokou.Core;
 using SuzunoyaUnity;
 using UnityEngine;
@@ -83,7 +83,7 @@ public class UIRenderAbsoluteTerritory : UIRenderSpace {
 
     public Task FadeIn() {
         var token = isTransitioning.AddConst(true);
-        return Tween.TweenTo(HTML.style.backgroundColor.value.a, Alpha, 0.1f, 
+        return TransitionHelpers.TweenTo(HTML.style.backgroundColor.value.a, Alpha, 0.1f, 
                 a => HTML.style.backgroundColor = bgc.WithA(a))
             .Run(Controller)
             .ContinueWithSync(() => {
@@ -94,7 +94,7 @@ public class UIRenderAbsoluteTerritory : UIRenderSpace {
     public Task FadeOutIfNoOtherDependencies(IRenderSource g) {
         if (Sources.Count == 1 && Sources[0] == g && HTML.style.display == DisplayStyle.Flex) {
             var token = isTransitioning.AddConst(true);
-            Tween.TweenTo(Alpha, 0, 0.1f, a => HTML.style.backgroundColor = bgc.WithA(a))
+            TransitionHelpers.TweenTo(Alpha, 0, 0.1f, a => HTML.style.backgroundColor = bgc.WithA(a))
                 .Run(Controller)
                 .ContinueWithSync(() => {
                     token.Dispose();

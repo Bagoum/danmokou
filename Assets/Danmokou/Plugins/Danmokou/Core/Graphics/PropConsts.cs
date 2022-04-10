@@ -24,7 +24,6 @@ public static class PropConsts {
     public static readonly int scaleInT = Shader.PropertyToID("_ScaleInT");
     public static readonly int scaleInMin = Shader.PropertyToID("_ScaleInMin");
     public static readonly int cycleSpeed = Shader.PropertyToID("_CycleSpeed");
-    public static readonly int blendSrcMethod = Shader.PropertyToID("_BlendFrom");
     public static readonly int blendDstMethod = Shader.PropertyToID("_BlendTo");
     public static readonly int blendOp = Shader.PropertyToID("_BlendOp");
     public static readonly int alpha = Shader.PropertyToID("_Alpha");
