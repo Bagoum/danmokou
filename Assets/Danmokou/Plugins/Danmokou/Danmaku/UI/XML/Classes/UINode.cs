@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -95,8 +96,17 @@ public class UINode {
     /// Set whether or not this node should be "skipped over" for navigation events.
     /// <br/>Defaults to null, which operates like False, but can be overriden by the group.
     /// <br/>If the node is not visible (due to VisibleIf returning false), then it will also be skipped.
+    /// <br/>Note: use <see cref="UpdatePassthrough"/> for runtime changes.
     /// </summary>
     public bool? Passthrough { get; set; } = null;
+
+    public void UpdatePassthrough(bool? b) {
+        //if ((b != true) && (Passthrough == true))
+        //    MONKEYPATCH_mouseDelay = 0.5f;
+        Passthrough = b;
+        if (b != true)
+            Controller.MoveCursorAwayFromNode(this);
+    }
     /// <summary>
     /// Set whether this node should tentatively save its location in the controller ReturnTo cache when the user
     /// navigates to it.
@@ -174,7 +184,7 @@ public class UINode {
     /// <summary>
     /// Overrides Navigate for Confirm entries. Runs after Navigator but before Navigate.
     /// </summary>
-    public Func<UIResult>? OnConfirm { get; init; }
+    public Func<UINode, UIResult>? OnConfirm { get; init; }
     private readonly UIGroup? _showHideGroup;
     /// <summary>
     /// A UIGroup to show on entry and hide on exit.
@@ -222,19 +232,32 @@ public class UINode {
     public UINode() : this(() => LString.Empty) { }
 
     #region Construction
+    
+    //float MONKEYPATCH_mouseDelay = 0;
     protected virtual void RegisterEvents() {
+        //IEnumerator MONKEYPATCH_trackDelay() {
+        //    while (true) {
+        //        yield return null;
+        //        MONKEYPATCH_mouseDelay -= ETime.FRAME_TIME;
+        //    }
+            // ReSharper disable once IteratorNeverReturns
+        //}
+        //Controller.RunDroppableRIEnumerator(MONKEYPATCH_trackDelay());
+        
         bool isInElement = false;
         bool startedClickHere = false;
         NodeHTML.RegisterCallback<PointerEnterEvent>(evt => {
-           //Logs.Log($"Enter {Description()} {evt.position} {evt.localPosition}");
+            //Logs.Log($"Enter {Description()} {MONKEYPATCH_mouseDelay} {evt.position} {evt.localPosition}");
+            //if (MONKEYPATCH_mouseDelay > 0f) return;
         #if !UNITY_EDITOR && (UNITY_ANDROID || UNITY_IOS)
             //PointerEnter is still issued while there's no touch, at the last touched point
             if (evt.pressure <= 0)
                 return;
         #endif
-            if (AllowInteraction)
+            if (AllowInteraction) {
                 Controller.QueuedEvent = new UIPointerCommand.Goto(this);
-            evt.StopPropagation();
+                evt.StopPropagation();
+            }
             isInElement = true;
         });
         NodeHTML.RegisterCallback<PointerLeaveEvent>(evt => {
@@ -260,8 +283,8 @@ public class UINode {
                 if (isInElement && startedClickHere)
                     Controller.QueuedEvent = new UIPointerCommand.NormalCommand(UICommand.Confirm, this);
                 OnMouseUp?.Invoke(this, evt);
+                evt.StopPropagation();
             }
-            evt.StopPropagation();
             startedClickHere = false;
         });
     }
@@ -271,8 +294,7 @@ public class UINode {
         Label = NodeHTML.Query<Label>().ToList().FirstOrDefault();
         boundClasses = NodeHTML.GetClasses().ToArray();
         (ContainerHTML = BuildTarget?.Invoke(Render.HTML) ?? Render.HTML).Add(HTML);
-        if (Passthrough != true)
-            RegisterEvents();
+        RegisterEvents();
         OnBuilt?.Invoke(this);
     }
 
@@ -353,7 +375,7 @@ public class UINode {
     public UIResult Navigate(UICommand req) {
         if (req == UICommand.Confirm && !IsEnabled) return new UIResult.StayOnNode(true);
         return Navigator?.Invoke(this, req) ?? req switch {
-            UICommand.Confirm when OnConfirm != null => OnConfirm(),
+            UICommand.Confirm when OnConfirm != null => OnConfirm(this),
             _ => NavigateInternal(req)
         };
     }
@@ -414,10 +436,10 @@ public class EmptyNode : UINode {
         Navigator = source.Navigate;
         OnBuilt = n => {
             _ = source.IsVisible.Subscribe(b => {
-                Passthrough = !b;
-                n.HTML.style.display = b.ToStyle();
-                if (!b)
-                    Controller.MoveCursorAwayFromNode(this);
+                UpdatePassthrough(!b);
+                //MONKEYPATCH-- you can normally use display=b.ToStyle instead of these two
+                n.HTML.pickingMode = b ? PickingMode.Position : PickingMode.Ignore;
+                n.HTML.style.opacity = b ? 1 : 0;
             });
 
             n.HTML.ConfigureAbsoluteEmpty().ConfigureLeftTopListeners(source.Left, source.Top);
@@ -431,11 +453,11 @@ public class EmptyNode : UINode {
 
     public ICObservable<float> CreateCenterOffsetChildX(ICObservable<float> childX) =>
         new LazyEvented<float>(() => childX.Value + Source.Width.Value / 2f,
-            new UnitEventProxy<float>(childX), new UnitEventProxy<float>(Source.Width));
+            childX.Erase(), Source.Width.Erase());
     
     public ICObservable<float> CreateCenterOffsetChildY(ICObservable<float> childY) =>
         new LazyEvented<float>(() => childY.Value + Source.Height.Value / 2f,
-            new UnitEventProxy<float>(childY), new UnitEventProxy<float>(Source.Height));
+            childY.Erase(), Source.Height.Erase());
 }
 
 public class PassthroughNode : UINode {

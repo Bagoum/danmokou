@@ -1,18 +1,18 @@
 # Color Blending
 
-Unity has a few problems with how it blends colors. These problems only show up when you start rendering on a transparent background, which is not the "default Unity scene" use case, as a default setup will have a camera that clears to black (<0, 0, 0, 1>) or a similar color, and then cameras that render to screen on top of it. However, if you work with render textures and custom shaders, you might just end up banging your head against this part of Unity. This doc explains the general problem of color blending, how to think about color blending, and how to solve color blending issues in Unity.
+Unity has a few problems with how it blends colors. These problems only show up when you start rendering on a transparent background, which is not the "default Unity scene" use case, as a default setup will have a camera that clears to black (<0, 0, 0, 1>) or a similar color, and then cameras that render to screen on top of it. However, if you work with render textures and custom shaders, you might just end up banging your head against this part of Unity. This doc explains the general problem of color blending, how to think about color blending, and how to solve color blending issues in Unity. (Note that many of these issues are not Unity-specific, and you might find them in other engines.)
 
 ## Generalized Problem: Overlapping Colors
 
 Let's start by introducing a simple problem. There exists a blue circle with opacity 0.4 (<0, 0, 1, 0.4>). On top of the blue circle, there exists a red circle with opacity 0.7 (<1, 0, 0, 0.7>). What is the color of the area where they overlap?
 
-We can solve this problem in reverse by rendering this in Photoshop and then using the specialized eyedropper info tool to get the information.
+We can solve this problem in the specific by rendering this in Photoshop and then using the specialized eyedropper info tool to get the information.
 
 <img src="..\images\red_blue.jpg" alt="red_blue" style="zoom:50%;" />
 
 The RGB values are displayed as 0-255. To convert it back to 0-1, the color of the overlap area is <0.855, 0, 0.104, 0.82>.
 
-This is a very strange result, and it's not at all clear how we got from clean numbers to long fractions. Also, if we use the eyedropper on the red circle, it returns <1, 0, 0, 0.7>. It's strange that the red color has gone down even though the red circle is on top.
+This is a very strange result, and it's not at all clear how we got from clean numbers to long fractions. Also, it's strange that the red color has gone down (from 1 to 0.855) even though the red circle is on top.
 
 However, it turns out that this all becomes a lot simpler when we use *premultiplied alpha* colors (hereafter "pcolors").
 

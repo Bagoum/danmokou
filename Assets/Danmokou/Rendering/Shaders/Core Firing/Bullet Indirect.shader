@@ -14,6 +14,7 @@
 		[PerRendererData] _DisplaceSpeed("Displace Speed", float) = 1
 		[PerRendererData] _DisplaceXMul("Displace X Multiplier", float) = 1
 		[PerRendererData] _SharedOpacityMul("Opacity Multiplier", float) = 1
+		[PerRendererData] [Enum(One,1,OneMinusSrcAlpha,10)] _BlendFrom("Blend mode from", Float) = 1
 		[PerRendererData] [Enum(One,1,OneMinusSrcAlpha,10)] _BlendTo("Blend mode to", Float) = 10
 		[PerRendererData] [Enum(Add,0,RevSub,2)] _BlendOp("Blend mode op", Float) = 0
 	}
@@ -27,7 +28,7 @@
 		Lighting Off
 		ZWrite Off
 		BlendOp [_BlendOp]
-		Blend SrcAlpha [_BlendTo], OneMinusDstAlpha One
+		Blend [_BlendFrom] [_BlendTo], OneMinusDstAlpha One
 
 		Pass {
 			CGPROGRAM
@@ -131,7 +132,9 @@
     #if (defined(UNITY_INSTANCING_ENABLED) || defined(UNITY_PROCEDURAL_INSTANCING_ENABLED)) && defined(FT_RECOLORIZE)
                 c.rgb = lerp(recolorBBuffer[unity_InstanceID], recolorWBuffer[unity_InstanceID], c.r).rgb;
     #endif	
-				return c * f.c;
+				c *= f.c;
+				c.rgb *= c.a; //Premultiply
+				return c;
 			}
 			ENDCG
 		}

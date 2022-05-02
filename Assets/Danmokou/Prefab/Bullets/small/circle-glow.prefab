@@ -5,27 +5,13 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 2677688450528803925, guid: b047f16d41292634c8d9327611784d4d,
         type: 3}
-      propertyPath: renderPriority
-      value: 1900
-      objectReference: {fileID: 0}
-    - target: {fileID: 2677688450528803925, guid: b047f16d41292634c8d9327611784d4d,
-        type: 3}
       propertyPath: renderMode
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 2677688450528803925, guid: b047f16d41292634c8d9327611784d4d,
-        type: 3}
-      propertyPath: colorizing.FlatLight
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2677688450528803925, guid: b047f16d41292634c8d9327611784d4d,
-        type: 3}
-      propertyPath: colorizing.Light
-      value: 1
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 2677688450528803925, guid: b047f16d41292634c8d9327611784d4d,
         type: 3}
@@ -35,12 +21,22 @@ PrefabInstance:
         type: 3}
     - target: {fileID: 2677688450528803925, guid: b047f16d41292634c8d9327611784d4d,
         type: 3}
-      propertyPath: colorizing.FlatColor
-      value: 0
+      propertyPath: renderPriority
+      value: 1900
+      objectReference: {fileID: 0}
+    - target: {fileID: 2677688450528803925, guid: b047f16d41292634c8d9327611784d4d,
+        type: 3}
+      propertyPath: colorizing.Dark
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2677688450528803925, guid: b047f16d41292634c8d9327611784d4d,
         type: 3}
       propertyPath: colorizing.Color
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2677688450528803925, guid: b047f16d41292634c8d9327611784d4d,
+        type: 3}
+      propertyPath: colorizing.Light
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2677688450528803925, guid: b047f16d41292634c8d9327611784d4d,
@@ -50,8 +46,13 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2677688450528803925, guid: b047f16d41292634c8d9327611784d4d,
         type: 3}
-      propertyPath: colorizing.Dark
-      value: 1
+      propertyPath: colorizing.FlatColor
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2677688450528803925, guid: b047f16d41292634c8d9327611784d4d,
+        type: 3}
+      propertyPath: colorizing.FlatLight
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2677688450528803971, guid: b047f16d41292634c8d9327611784d4d,
         type: 3}
@@ -85,4 +86,6 @@ PrefabInstance:
       objectReference: {fileID: 21300000, guid: 67407e66144bc244f82ab06f17e31abe,
         type: 3}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: b047f16d41292634c8d9327611784d4d, type: 3}

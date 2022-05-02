@@ -14,6 +14,11 @@ using static Danmokou.Core.LocalizationRendering;
 namespace Danmokou.Core {
 public static partial class LocalizedStrings {
 	private static readonly Dictionary<string, LString> _allDataMap = new Dictionary<string, LString>() {
+		{ "dialogue.doremy", DialogueMetadata.doremy },
+		{ "dialogue.cirno", DialogueMetadata.cirno },
+		{ "dialogue.iku", DialogueMetadata.iku },
+		{ "dialogue.nitori", DialogueMetadata.nitori },
+		{ "dialogue.seiga", DialogueMetadata.seiga },
 		{ "dialogue.suwako", DialogueMetadata.suwako },
 		{ "dialogue.kanako", DialogueMetadata.kanako },
 		{ "dialogue.sanae", DialogueMetadata.sanae },

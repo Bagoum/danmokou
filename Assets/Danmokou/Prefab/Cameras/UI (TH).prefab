@@ -50,9 +50,17 @@ Camera:
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
+  m_Iso: 200
+  m_ShutterSpeed: 0.005
+  m_Aperture: 16
+  m_FocusDistance: 10
+  m_FocalLength: 50
+  m_BladeCount: 5
+  m_Curvature: {x: 2, y: 11}
+  m_BarrelClipping: 0.25
+  m_Anamorphism: 0
   m_SensorSize: {x: 36, y: 24}
   m_LensShift: {x: 0, y: 0}
-  m_FocalLength: 50
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
@@ -297,6 +305,7 @@ MonoBehaviour:
     atime6: 0
     atime7: 0
     m_Mode: 0
+    m_ColorSpace: -1
     m_NumColorKeys: 5
     m_NumAlphaKeys: 2
   spellnameFadeIn: 1
@@ -8870,8 +8879,9 @@ MonoBehaviour:
     renderGroup: 0
   - pane: {fileID: 11400000, guid: 9781c23dde1041b42a6960560cfa3078, type: 2}
     renderGroup: 1
-  uiMaterial: {fileID: 2100000, guid: 24de63005e7b23a47a0e4cbbb7757d89, type: 2}
   unsetRT: {fileID: 8400000, guid: be218fb1d1df0224384ea0f2654dd964, type: 2}
+  scrollHeightFix: {fileID: 7433441132597879392, guid: a3ba2f1399cdfa443b60408dc9eafc5d,
+    type: 3}
 --- !u!1 &7326911303772157274
 GameObject:
   m_ObjectHideFlags: 0

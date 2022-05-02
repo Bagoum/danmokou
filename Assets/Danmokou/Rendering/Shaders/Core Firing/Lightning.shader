@@ -5,6 +5,7 @@
 		_DisplaceTex("(Low-Res) Displacement Texture", 2D) = "white" {}
         _Tint("Tint", Color) = (1,1,1,1)
         _HueShift("Hue Shift", Float) = 0
+		[Enum(One,1,OneMinusSrcAlpha,10)] _BlendFrom("Blend mode from", Float) = 1
 		[Enum(One,1,OneMinusSrcAlpha,10)] _BlendTo("Blend mode", Float) = 10
 		_BX("BlocksX", Float) = 6
 		_BY("BlocksY", Float) = 4
@@ -91,7 +92,7 @@
 		}
 
 		Pass {
-		    Blend SrcAlpha [_BlendTo], OneMinusDstAlpha One
+			Blend [_BlendFrom] [_BlendTo], OneMinusDstAlpha One
 			CGPROGRAM
 			
         #ifdef FT_RECOLORIZE
@@ -105,6 +106,7 @@
             #ifdef FT_RECOLORIZE
                 c.rgb = lerp(_RecolorizeB, _RecolorizeW, c.r).rgb;
             #endif
+				c.rgb *= c.a; //Premultiply
                 return c;
 			}
 			ENDCG

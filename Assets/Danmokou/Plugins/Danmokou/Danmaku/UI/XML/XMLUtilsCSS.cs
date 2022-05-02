@@ -51,6 +51,14 @@ public static partial class XMLUtils {
             root.style.marginRight = r;
         return root;
     }
+
+    public static VisualElement SetBorder(this VisualElement root, Color color, float width) {
+        var s = root.style;
+        s.borderBottomWidth = s.borderLeftWidth = s.borderRightWidth = s.borderTopWidth = width;
+        s.borderBottomColor = s.borderLeftColor = s.borderRightColor = s.borderTopColor = color;
+        return root;
+    }
+    
     public static VisualElement SetPadding(this VisualElement root, float top, float right, float bot, float left) {
         root.style.paddingTop = top;
         root.style.paddingRight = right;
@@ -63,10 +71,14 @@ public static partial class XMLUtils {
         root.SetPadding(padding, padding, padding, padding);
 
     public static VisualElement ConfigureAbsoluteEmpty(this VisualElement empty, bool pickable = true) {
-        empty.SetPadding(0, 0, 0, 0);
         empty.style.position = Position.Absolute;
         var cn = new Length(-50, LengthUnit.Percent);
         empty.style.translate = new StyleTranslate(new Translate(cn, cn, 0));
+        return empty.ConfigureEmpty(pickable);
+    }
+
+    public static VisualElement ConfigureEmpty(this VisualElement empty, bool pickable = true) {
+        empty.SetPadding(0, 0, 0, 0);
         empty.pickingMode = pickable ? PickingMode.Position : PickingMode.Ignore;
         return empty;
     }

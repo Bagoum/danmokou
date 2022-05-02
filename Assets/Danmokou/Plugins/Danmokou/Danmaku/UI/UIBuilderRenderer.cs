@@ -50,6 +50,7 @@ public class UIBuilderRenderer : CoroutineRegularUpdater {
 
     private Cancellable allCancel = null!;
     private SpriteRenderer sr = null!;
+    public StyleSheet scrollHeightFix = null!;
 
     private readonly Dictionary<int, RenderTexture> groupToRT = new();
     /// <summary>
@@ -57,13 +58,6 @@ public class UIBuilderRenderer : CoroutineRegularUpdater {
     /// <br/>Note that render group 0 is automatically rendered to screen by this class.
     /// </summary>
     public Evented<Dictionary<int, RenderTexture>> RTGroups { get; } = new(null!);
-    
-    /// <summary>
-    /// Maps <see cref="RenderablePane.renderGroup"/> to a full-screen VE
-    /// that can be used for arbitrarily adding elements to the pane.
-    /// </summary>
-    /// Note: this code is too powerful, and it may clash with UIScreen assumptions, so not enabling it for now.
-    //private Dictionary<int, VisualElement> GroupToLeaf { get; } = new();
 
     public IDisposable RegisterController(UIController c, int priority) {
         return controllers.AddPriority(c, priority);
@@ -76,13 +70,16 @@ public class UIBuilderRenderer : CoroutineRegularUpdater {
         return false;
     }
 
+    public void ApplyScrollHeightFix(VisualElement ve) {
+        //while (ve != null) {
+        //    ve.styleSheets.Add(scrollHeightFix);
+         //   ve = ve.parent;
+        //}
+    }
+
     private void Awake() {
         (sr = GetComponent<SpriteRenderer>()).GetPropertyBlock(pb = new MaterialPropertyBlock());
         allCancel = new Cancellable();
-        /*foreach (var doc in GetComponents<UIDocument>()) {
-            var grp = settings.First(s => s.pane == doc.panelSettings).renderGroup;
-            GroupToLeaf[grp] = doc.rootVisualElement;
-        }*/
     }
 
     protected override void BindListeners() {
@@ -92,6 +89,7 @@ public class UIBuilderRenderer : CoroutineRegularUpdater {
     }
 
     private void RemakeTexture((int w, int h) res) {
+        Logs.Log($"The children of the UI object are: {string.Join(", ", transform.parent.parent.childCount.Range().Select(i => transform.parent.parent.GetChild(i).gameObject.name))}");
         foreach (var v in groupToRT.Values)
             v.Release();
         groupToRT.Clear();

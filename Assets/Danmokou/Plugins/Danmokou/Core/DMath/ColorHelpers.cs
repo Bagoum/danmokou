@@ -113,11 +113,13 @@ public static class ColorHelpers {
 
     public static IGradient Modify(this IGradient ig, GradientModifier gt, DRenderMode render) {
         if (render == DRenderMode.ADDITIVE) {
+            //Mediate blowout on additive
+            ig = ig.RemapTime(0, 0.9f);
+        }
+        if (render is DRenderMode.ADDITIVE or DRenderMode.SOFT_ADDITIVE) {
             if (gt == GradientModifier.DARKINV) {
-                ig = ig.RemapTime(0, 0.9f);
                 gt = GradientModifier.DARKINVSOFT;
             }
-            else ig = ig.RemapTime(0, 0.9f);
         }
         return ig.Modify(gt);
     }

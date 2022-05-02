@@ -84,7 +84,7 @@ public class XMLMainMenuDays : XMLMainMenu {
                         var completion = SaveData.r.ChallengeCompletion(p, idx, Meta());
                         photoBoardToken = photoBoard?.ConstructPhotos(completion?.Photos, photoSize);
                     }
-                    UIResult Confirm() {
+                    UIResult Confirm(UINode _) {
                         ConfirmCache();
                         new InstanceRequest(InstanceRequest.PracticeSuccess, Meta(), new PhaseChallengeRequest(p, c)).Run();
                         return new UIResult.StayOnNode();

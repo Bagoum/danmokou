@@ -63,6 +63,7 @@ public class MainCamera : RegularUpdater, IScreenshotter {
     private Camera mainCam = null!;
     public static float VertRadius { get; private set; }
     public static float HorizRadius { get; private set; }
+    public static float Aspect => HorizRadius / VertRadius;
     public static float ScreenWidth => HorizRadius * 2;
     public static float ScreenHeight => VertRadius * 2;
     private Vector2 position; // Cached to allow requests for screen coordinates from MovementLASM off main thread

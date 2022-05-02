@@ -350,17 +350,20 @@ class UIFreeformGroup : UIGroup {
             _ => throw new Exception()
         };
         var dirAsAng = M.Atan2D(dirAsVec.y, dirAsVec.x);
-        foreach (var (candidate, angle, _) in Nodes.Select(n => {
+        var ordering = Nodes.Select(n => {
             var delta = n.HTML.worldBound.center - from;
             //y axis is inverted in XML
             var angleDelta = Mathf.Abs(M.DeltaD(M.Atan2D(-delta.y, delta.x), dirAsAng));
             return (n, angleDelta, (delta / 20).magnitude + angleDelta);
-        }).OrderBy(x => x.Item3)) {
-            if (candidate == src || candidate == unselector || candidate.Passthrough is true)
-                continue;
-            if (angle >= 50)
-                continue;
-            return candidate;
+        }).OrderBy(x => x.Item3).ToArray();
+        foreach (var limit in new[] { 40, 65, 89 }) {
+            foreach (var (candidate, angle, _) in ordering) {
+                if (candidate == src || candidate == unselector || candidate.Passthrough is true)
+                    continue;
+                if (angle >= limit)
+                    continue;
+                return candidate;
+            }
         }
         if (src == unselector)
             return SilentNoOp;

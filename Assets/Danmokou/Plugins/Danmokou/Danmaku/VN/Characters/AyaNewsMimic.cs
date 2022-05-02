@@ -1,4 +1,5 @@
 ﻿using System;
+using BagoumLib.Culture;
 using Danmokou.Core;
 using Danmokou.Services;
 using Suzunoya.Entities;
@@ -10,7 +11,7 @@ namespace Danmokou.VN {
 public class AyaNews : SZYUCharacter {
     public override Color TextColor => new(.9f, .9f, .9f);
     public override Color UIColor => new(.7f, .7f, .7f);
-    public override string Name => LocalizedStrings.FindReference("dialogue.aya");
+    public override LString Name { get; set; } = LocalizedStrings.FindReference("dialogue.aya");
     
     public override void RollEvent() => ServiceLocator.SFXService.Request("x-bubble-2", SFXType.TypingSound);
 }

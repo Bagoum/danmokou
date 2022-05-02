@@ -17,20 +17,24 @@ The following features are planned for future releases. Major version 10.0.0 is 
 - [Backlog] Implementation of a TH18-like card engine
 - [Backlog] Procedural generation of stages and bullet patterns
 
-# v9.0.0 (2021/02/13)
+# v9.0.0 (2021/05/01)
 
-This release includes code for [Blessed Rain](https://bagoum.itch.io/blessed-rain), a short visual novel, in the MiniProjects folder. As of this release, Suzunoya functionality is mostly complete, but I haven't thoroughly tested functionality related to choices and external tasks, and there are some theoretical issues in save/load handling with regards to nondeterminism as well as certain configurations of global switches that open or close branches between executions. This release also includes some work-in-progress code for some adventure-game style usage of  Suzunoya (think Ace Attorney), with some basic exploratory work in the [Plum Wine](https://github.com/Bagoum/danmokou-plumwine) repository.
+This release includes code for [Blessed Rain](https://bagoum.itch.io/blessed-rain), a short visual novel, and [The Purple Heart Paradox](https://bagoum.itch.io/purple-heart), a short ADV-format visual novel, in the MiniProjects folder. As of this release, Suzunoya functionality is mostly complete, but I haven't thoroughly tested functionality related to choices and external tasks, and there are some theoretical issues in save/load handling with regards to nondeterminism as well as certain configurations of global switches that open or close branches between executions. This release also includes some work-in-progress code for some adventure-game style usage of  Suzunoya (think Ace Attorney), with some basic exploratory work in the Purple Heart project as well as in the [Plum Wine](https://github.com/Bagoum/danmokou-plumwine) repository.
 
 #### Breaking changes
 
-- Please upgrade Unity to **2021.2.1** before opening this project. Note that if you get errors at runtime about missing settings, you may need to run Window > UIToolkit > Package Asset Converter > "I want my assets to function without the UIToolkit package installed". This upgrade makes UIToolkit much more resilient, allows some new CSS features that are used in the updated UI, and also enables some C#8 and C#9 features that are now used in the codebase.
-  - Later versions of 2021.2 have various bugs with UIToolkit text rendering, but 2022.1.0b2 seems to be fine.
+- Please upgrade Unity to **2021.2.1** or **2022.2.a11+** before opening this project, preferably 2022.2.a11+. Note that if you get errors at runtime about missing settings, you may need to run Window > UIToolkit > Package Asset Converter > "I want my assets to function without the UIToolkit package installed". This upgrade makes UIToolkit much more resilient, allows some new CSS features that are used in the updated UI, and also enables some C#8 and C#9 features that are now used in the codebase.
+  - Later versions of 2021.2 have various bugs with UIToolkit text rendering. 2022.1b breaks compilation due to internal Unity errors.
 - The architecture for UIToolkit-based UI has been overhauled. As a part of this, all the UIScreen uxml files were replaced with a single universal file, the UIScreen and UINode classes were completely rewritten, and the process of constructing UIs in code was changed in a backwards-incompatible way. See the [UI design document](uidesign.md) for details on the new UI architecture, which I plan to keep stable.
 - Dialogue profiles, which were made obsolete in v8.0.0 with Suzunoya integration, have been removed from the codebase.
 
 #### Pending issues
 
 - If you jump to the Replays screen from the Records screen, then view a replay, then return from the replay, then return to the records screen, the cursor will be invisible but navigation will still be possible. This is due to limitations in the menu position regeneration process.
+- There is a UITK issue where disabling and re-enabling visual elements causes old pointer events to be resent (in 2021.2, fixed in 2022.2.a).
+- There is a pending UITK issue where some elements take extra newlines for no reason (in 2022.2.a).
+- There is a pending UITK issue where mouse scrolling is slow. [See ticket](https://issuetracker.unity3d.com/issues/ui-toolkit-slow-scroll-view-scrolling-when-entering-play-mode)
+- There is a UITK issue where closing a menu while using the mouse to drag a scrollbar on it results in the mouse not applying input to any other menus.
 
 #### Features
 
@@ -41,7 +45,8 @@ This release includes code for [Blessed Rain](https://bagoum.itch.io/blessed-rai
 - Revamped input handling to separate types of user input (currently, KBM and controller are supported), to expose a uniform API for code-triggered pseudo-input (see InCodeInputSource), and to incorporate replays as another type of input (see ReplayPlayerInputSource).
 - DMK can now be run on Android. However, I have not written any input handling for mobile yet, so only the touch-to-navigate-menus handling works.
 - Added support for multiple vectors of localization (eg. having separate text and voice localization). 
-- Added support for skipping only read text in VN segments.
+- Added support for skipping only read text in visual novel segments (default setting).
+- Added support for freeform UI menus (ie. where objects are assigned fixed positions) **and arrow-key traversal of such menus**.
 
 #### Changes
 
@@ -57,6 +62,7 @@ This release includes code for [Blessed Rain](https://bagoum.itch.io/blessed-rai
 - Fixed a bug where backlogging in a visual novel context might not destroy looping sound effects.
 - Fixed an issue in dialogue where string characters would not be affected by surrounding color tags while fading in. This was caused by a more general design problem with TextMeshPro where alpha tags *modify* the enclosing color tag instead of creating a new enclosure.
 - Fixed an issue where the meter bar would not hide itself when the player approached it.
+- Fixed some lingering issues with color blending. See [the color blending doc](ColorBlending.md).
 
 # v8.0.0 (2021/10/31)
 

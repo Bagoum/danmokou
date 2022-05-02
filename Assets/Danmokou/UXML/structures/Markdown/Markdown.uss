@@ -45,7 +45,7 @@
     color: rgb(207, 139, 0);
 }
 
-.lineFragmentLink .unity-label:hover {
+.lineFragmentLink:hover .unity-label {
     color: rgb(238, 170, 24);
 }
 
@@ -54,5 +54,4 @@
     white-space: normal;
     padding-left: 0;
     padding-right: 0;
-    margin-right: 6px;
 }

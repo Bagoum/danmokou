@@ -211,6 +211,7 @@ public abstract class UIController : CoroutineRegularUpdater {
         UIContainer = UIRoot.Q("UIContainer");
         UISettings = uid.panelSettings;
         Build();
+        uiRenderer.ApplyScrollHeightFix(UIRoot);
         UIRoot.style.display = OpenOnInit.ToStyle();
         UIRoot.style.opacity = OpenOnInit ? 1 : 0;
         UIRoot.style.width = new Length(100, LengthUnit.Percent);

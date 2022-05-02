@@ -1,4 +1,5 @@
 ﻿using System;
+using BagoumLib.Culture;
 using Danmokou.Core;
 using Danmokou.Services;
 using Suzunoya.Entities;
@@ -10,7 +11,7 @@ namespace Danmokou.VN {
 public class Sanae : SZYUCharacter {
     public override Color TextColor => new(0.85f, 1f, 0.92f);
     public override Color UIColor => new(0.1f, 0.85f, 0.34f);
-    public override string Name => LocalizedStrings.FindReference("dialogue.sanae");
+    public override LString Name { get; set; } = LocalizedStrings.FindReference("dialogue.sanae");
 
     public override void RollEvent() => ServiceLocator.SFXService.Request("x-bubble-2", SFXType.TypingSound);
 }

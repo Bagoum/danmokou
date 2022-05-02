@@ -100,6 +100,10 @@ Assets/Danmokou/MiniProjects
 	- [flower](https://unsplash.com/photos/h7_SyoBhHF0)
 	- [forest-foggy](https://unsplash.com/photos/0K9H0yts_tE)
 	- [shrine2](https://unsplash.com/photos/2ULo-3qFDgY)
+	- [waterfall](https://pixabay.com/photos/waterfall-fall-epic-nature-light-7091641/)
+	- [misty-lake](https://pixabay.com/photos/lake-fog-mist-sunrise-grass-haze-5722650/)
+	- [bedroom-normal](https://pixabay.com/photos/bedroom-bed-apartment-room-416062/)
+	- [pool](https://pixabay.com/photos/pool-rain-water-surface-background-4332152/)
 - VN/Sprites:
 	- [yellowlily.png](https://commons.wikimedia.org/wiki/File:Lilium_canadense_(lit).jpg): Public domain
 	- [yellowiris.png](https://commons.wikimedia.org/wiki/File:20140504Iris_pseudacorus2.jpg): CC0

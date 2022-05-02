@@ -335,6 +335,7 @@ public static class SaveData {
         UpdateResolution(s.Resolution);
         UpdateFullscreen(s.Fullscreen);
         ETime.SetVSync(s.Vsync);
+        Logs.Verbose = s.Verbose;
         Logs.Log($"Initial settings: resolution {s.Resolution}, fullscreen {s.Fullscreen}, vsync {s.Vsync}");
         r = ReadRecord() ?? new Record();
         Achievement.AchievementStateUpdated.Subscribe(r.UpdateAchievement);

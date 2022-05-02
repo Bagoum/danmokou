@@ -8,7 +8,8 @@ namespace Danmokou.Core {
 public enum DRenderMode {
     NORMAL,
     ADDITIVE,
-    NEGATIVE
+    NEGATIVE,
+    SOFT_ADDITIVE
 }
 
 public enum Emote {

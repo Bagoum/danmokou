@@ -5,5 +5,7 @@ namespace Danmokou.Scriptables {
 public class ADVReferences : ScriptableObject {
     [Header("Investigation Icons")] 
     public Sprite talkToIcon = null!;
+    public Sprite mapCurrentIcon = null!;
+    public Sprite mapNotCurrentIcon = null!;
 }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using BagoumLib.Events;
 using Danmokou.Core;
 using Danmokou.Core.DInput;
 using Danmokou.Services;
@@ -9,7 +10,6 @@ using UnityEngine.UI;
 
 namespace Danmokou.VN.Mimics {
 public class DMKADVDialogueBoxMimic : ADVDialogueBoxMimic {
-    
     public Image background = null!;
 
     public override void Initialize(ADVDialogueBox db) {

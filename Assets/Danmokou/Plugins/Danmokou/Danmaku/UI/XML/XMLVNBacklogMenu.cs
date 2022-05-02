@@ -76,7 +76,7 @@ public class XMLVNBacklogMenu : PausedGameplayMenu, IVNBacklog {
                         entry.textColor * (s == UINodeVisibility.Focused ? Color.white : new Color(0.75f, 0.75f, 0.75f, 1f));
             },
             OnConfirm = backlog != null && entry.location is not null ?
-                () => {
+                _ => {
                     backlog(entry.location);
                     return new UIResult.StayOnNode();
                 } : null

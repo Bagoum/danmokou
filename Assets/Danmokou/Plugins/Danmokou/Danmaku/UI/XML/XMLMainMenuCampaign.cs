@@ -111,7 +111,7 @@ public class XMLMainMenuCampaign : XMLMainMenu {
         (UINode?, FixedDifficulty?) MakeDifficultyNode(FixedDifficulty? fd) =>
             SpriteForDFC(fd) == null ? (null, fd) : 
                 (new UINode {
-                    OnConfirm = () => fd == null ? new UIResult.GoToNode(CustomDifficultyScreen) : dfcContinuation(new(fd)),
+                    OnConfirm = _ => fd == null ? new UIResult.GoToNode(CustomDifficultyScreen) : dfcContinuation(new(fd)),
                     Prefab = floater,
                     OnBuilt = n => XMLUtils.ConfigureFloatingImage(n.NodeHTML, SpriteForDFC(fd)!)
                 }, fd);
@@ -136,7 +136,7 @@ public class XMLMainMenuCampaign : XMLMainMenu {
             ExtraShotScreen.SceneObjects = ShotScreenObjects;
         }
 
-        Func<UIResult> GetMetadata(CampaignConfig c, Func<SharedInstanceMetadata, bool> cont) => () => {
+        Func<UINode, UIResult> GetMetadata(CampaignConfig c, Func<SharedInstanceMetadata, bool> cont) => _ => {
             dfcContinuation = dfc => {
                 shotContinuation = shot => cont(new SharedInstanceMetadata(shot, dfc));
                 return new UIResult.GoToNode(campaignToShotScreenMap[c]);

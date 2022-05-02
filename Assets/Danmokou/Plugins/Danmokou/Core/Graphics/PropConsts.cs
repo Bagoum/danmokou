@@ -24,6 +24,7 @@ public static class PropConsts {
     public static readonly int scaleInT = Shader.PropertyToID("_ScaleInT");
     public static readonly int scaleInMin = Shader.PropertyToID("_ScaleInMin");
     public static readonly int cycleSpeed = Shader.PropertyToID("_CycleSpeed");
+    public static readonly int blendSrcMethod = Shader.PropertyToID("_BlendFrom");
     public static readonly int blendDstMethod = Shader.PropertyToID("_BlendTo");
     public static readonly int blendOp = Shader.PropertyToID("_BlendOp");
     public static readonly int alpha = Shader.PropertyToID("_Alpha");
@@ -79,14 +80,15 @@ public static class PropConsts {
 
     public static readonly int angle0 = Shader.PropertyToID("_A0");
     public static readonly int pmDirection = Shader.PropertyToID("_PMDir");
+    public static readonly int Area = Shader.PropertyToID("_Area");
 
     public static readonly int HueShift = Shader.PropertyToID("_HueShift");
     public static readonly int RecolorB = Shader.PropertyToID("_RecolorizeB");
     public static readonly int RecolorW = Shader.PropertyToID("_RecolorizeW");
 
-
     private static readonly int outlineColorProp = Shader.PropertyToID("_OutlineColor");
     private static readonly int underlayColorProp = Shader.PropertyToID("_UnderlayColor");
+
 
     public static void SetMaterialOutline(this Material m, Color c) {
         m.SetColor(outlineColorProp, c);

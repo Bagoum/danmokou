@@ -14,6 +14,19 @@ static float2 center = float2(0.5, 0.5);
 
 static float REHASH = 43758.5453123;
 
+float intpow(float x, float p) {
+    float acc = 1;
+    while (p > 0) {
+        if (p % 2 == 1) {
+            acc *= x;
+        }
+        p = floor(p/2);
+        x = x * x;
+    }
+    return acc;
+        
+}
+
 float mod(float x, float by) {
     return x - by * floor(x/by);
 }

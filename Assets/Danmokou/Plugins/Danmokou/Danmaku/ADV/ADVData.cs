@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Reactive;
+using BagoumLib;
+using BagoumLib.Events;
 using Danmokou.Core;
 using Danmokou.Services;
 using Newtonsoft.Json;
@@ -14,6 +17,7 @@ namespace Danmokou.ADV {
 [Serializable]
 public record ADVData(InstanceData VNData) {
     public string CurrentMap { get; set; } = "";
+
     /// <summary>
     /// While in a VN segment, put the serialized save data before entering the segment here.
     /// </summary>
@@ -29,12 +33,21 @@ public record ADVData(InstanceData VNData) {
     /// </summary>
     public (ADVData main, ADVData? loadProxy) GetLoadProxyInfo() {
         if (UnmodifiedSaveData != null) {
-            var save = FileUtils.DeserializeJson<ADVData>(UnmodifiedSaveData) ?? 
-                       throw new Exception($"Couldn't read proxy save data");
-            save.VNData._SetGlobalData_OnlyUseForInitialization(SaveData.r.GlobalVNData);
-            return (save, this);
+            if (VNData.Location is null) {
+                Logs.Log("Load proxy info was stored without a VNLocation. Please report this.", level: LogLevel.WARNING);
+                return (this, null);
+            }
+            return (GetUnmodifiedSaveData()!, this);
         }
         return (this, null);
+    }
+
+    public ADVData? GetUnmodifiedSaveData() {
+        if (UnmodifiedSaveData is null) return null;
+        var save = FileUtils.DeserializeJson<ADVData>(UnmodifiedSaveData) ?? 
+                   throw new Exception($"Couldn't read proxy save data");
+        save.VNData._SetGlobalData_OnlyUseForInitialization(SaveData.r.GlobalVNData);
+        return save;
     }
 }
 

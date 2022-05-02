@@ -1,4 +1,5 @@
 ﻿using System;
+using BagoumLib.Events;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.UI.XML;
@@ -11,7 +12,7 @@ using UnityEngine.UIElements;
 namespace Danmokou.UI {
 public interface IFixedXMLReceiver {
     public void OnBuilt(EmptyNode n) { }
-    public UIResult OnConfirm();
+    public UIResult OnConfirm(UINode n);
     public void OnEnter(UINode n);
     public void OnLeave(UINode n);
     public void OnPointerDown(UINode n, PointerDownEvent ev);
@@ -24,7 +25,7 @@ public class FixedXMLHelper : CoroutineRegularUpdater {
 
     public string[] xmlClasses = null!;
     public FixedXMLObject XML { get; private set; } = null!;
-    private EmptyNode Node { get; set; } = null!;
+    public EmptyNode Node { get; private set; } = null!;
 
     public MonoBehaviour actionHandler = null!;
     private IFixedXMLReceiver Receiver => 
@@ -38,13 +39,6 @@ public class FixedXMLHelper : CoroutineRegularUpdater {
         XML = new(XMLLocation.x, XMLLocation.y, XMLSize.x, XMLSize.y) {
             Descriptor = gameObject.name
         };
-        MakeNode();
-    }
-    public override void FirstFrame() {
-        ServiceLocator.Find<XMLPersistentInteractive>().AddNode(Node);
-    }
-    
-    private void MakeNode() {
         Node = new(XML, Receiver.OnBuilt) {
             OnConfirm = Receiver.OnConfirm,
             OnEnter = Receiver.OnEnter,
@@ -54,7 +48,9 @@ public class FixedXMLHelper : CoroutineRegularUpdater {
         };
         Node.With(xmlClasses);
     }
-    
+    public override void FirstFrame() {
+        ServiceLocator.Find<XMLPersistentInteractive>().AddNode(Node);
+    }
 
     protected override void OnDisable() {
         base.OnDisable();

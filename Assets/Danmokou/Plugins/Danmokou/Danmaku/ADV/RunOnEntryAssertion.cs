@@ -16,6 +16,6 @@ public record RunOnEntryAssertion(Func<Task> OnEntry) : IAssertion<RunOnEntryAss
     public Task DeactualizeOnNoSucceeding() => Task.CompletedTask;
 
     public Task Inherit(IAssertion prev) => AssertionHelpers.Inherit(prev, this);
-    public Task _Inherit(RunOnEntryAssertion prev) => throw new NotImplementedException();
+    public Task _Inherit(RunOnEntryAssertion prev) => Task.CompletedTask;
 }
 }

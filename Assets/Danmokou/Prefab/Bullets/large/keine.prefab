@@ -29,6 +29,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -1.9797757, y: -1.0307782, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
@@ -45,13 +46,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6661135a8683fa541ab9d8319d45d38a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  overrideMaterial: {fileID: 0}
   destructible: 0
   deletable: 0
   grazeEveryFrames: 30
   screenCullRadius: 3
   renderPriority: 1900
-  renderMode: 1
+  renderMode: 3
   fadeIn: {fileID: 11400000, guid: 2410175c27da8da448663eebddf7b461, type: 2}
+  fadeOut: {fileID: 0}
   rotational: 1
   colorizing:
     FlatLight: 0
@@ -67,6 +70,7 @@ MonoBehaviour:
     Inverted: 0
     FullInvertedAsLightDark: 0
     TwoPaletteColorings: 0
+    MultiChannelRecolor: 0
   spriteSheet: {fileID: 21300000, guid: 33ca4aaede6a6de47918c593e78a141a, type: 3}
   displacement:
     displaceTex: {fileID: 0}
@@ -81,6 +85,7 @@ MonoBehaviour:
     framesPerSecond: 0
   gradients: []
   spriteSpecificGradients: []
+  identicalForms: []
   TTL: 0
   timeRandomization: 0
   rotateRandomization: 0
@@ -99,8 +104,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   colliderType: 3
-  effectiveCircleRadius: 0.2
-  scale: 1
   radius: 0.01
   point1: {x: -2.15, y: 0}
   point2: {x: -0.3, y: 0}
@@ -112,6 +115,7 @@ MonoBehaviour:
   end: 0
   points: []
   target: {fileID: 0}
+  debug: 0
 --- !u!212 &3054524282040685342
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -123,6 +127,7 @@ SpriteRenderer:
   m_CastShadows: 0
   m_ReceiveShadows: 0
   m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1

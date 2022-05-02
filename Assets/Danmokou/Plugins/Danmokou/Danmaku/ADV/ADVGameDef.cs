@@ -1,7 +1,17 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Reactive;
 using System.Threading.Tasks;
+using BagoumLib;
 using BagoumLib.Cancellation;
+using BagoumLib.Events;
+using BagoumLib.Tasks;
+using Danmokou.Core;
 using Danmokou.Scriptables;
+using Danmokou.Services;
+using Danmokou.UI;
+using Danmokou.VN;
+using Suzunoya.ControlFlow;
 using UnityEngine;
 
 namespace Danmokou.ADV {
@@ -22,13 +32,14 @@ public enum ADVBacklogFeatures {
     /// </summary>
     USE_PROXY_LOADING
 }
+
 public abstract class ADVGameDef : ScriptableObject {
     public string key = "";
     public SceneConfig sceneConfig = null!;
     public ADVBacklogFeatures backlogFeatures = ADVBacklogFeatures.USE_PROXY_LOADING;
 
 
-    public abstract Task Run(ADVInstance inst);
+    public abstract IExecutingADV Setup(ADVInstance inst);
     public abstract ADVData NewGameData();
 }
 }

@@ -12,6 +12,7 @@
 		_DisplaceSpeed("Displace Speed", float) = 1
 		_DisplaceXMul("Displace X Multiplier", float) = 1
 		_SharedOpacityMul("Opacity Multiplier", float) = 1
+		[Enum(One,1,OneMinusSrcAlpha,10)] _BlendFrom("Blend mode from", Float) = 1
 		[Enum(One,1,OneMinusSrcAlpha,10)] _BlendTo("Blend mode to", Float) = 10
 		[Enum(Add,0,RevSub,2)] _BlendOp("Blend mode op", Float) = 0
 		[PerRendererData] _T("Time", Float) = 0 
@@ -33,7 +34,7 @@
 		Lighting Off
 		ZWrite Off
 		BlendOp [_BlendOp]
-		Blend SrcAlpha [_BlendTo], OneMinusDstAlpha One
+		Blend [_BlendFrom] [_BlendTo], OneMinusDstAlpha One
 
 		Pass {
 			CGPROGRAM
@@ -96,6 +97,7 @@
                 float r = length(f.uv - float2(0.5, 0.5));
                 c = lerp(c, float4(0,0,0,0), smoothstep(-circleCutSmooth, circleCutSmooth, r - 0.5));
             #endif
+				c.rgb *= c.a; //Premultiply
 				return c;
 			}
 			ENDCG

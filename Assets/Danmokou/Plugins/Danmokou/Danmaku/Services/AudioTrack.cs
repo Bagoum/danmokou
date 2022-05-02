@@ -14,6 +14,11 @@ public interface IRunningAudioTrack {
     IAudioTrackInfo Track { get; }
     bool _RegularUpdate();
     void FadeIn(float time);
+    
+    /// <summary>
+    /// Fade out a track and automatically destroy it afterwards.
+    /// <br/>Should be safe to run twice.
+    /// </summary>
     void FadeOutThenDestroy(float time);
 
     void Pause();
@@ -36,6 +41,7 @@ public abstract class BaseRunningAudioTrack : IRunningAudioTrack {
     public IAudioTrackInfo Track { get; }
     public Cancellable LifetimeToken { get; } = new();
     public ICancellee Active { get; }
+    private bool isFadingOut = false;
 
     protected readonly AudioTrackService host;
     protected readonly List<IDisposable> tokens = new();
@@ -52,6 +58,21 @@ public abstract class BaseRunningAudioTrack : IRunningAudioTrack {
         tokens.Add(Src1Volume.Subscribe(v => src1.volume = v));
         src1.clip = track.Clip;
         src1.pitch = track.Pitch;
+    }
+
+    //Delay initial audio source play. This is useful to avoid Unity bugs where the volume doesn't update
+    // properly after creating a new source.
+    protected void PlayDelayed(int frames=2) {
+        IEnumerator _Inner() {
+            if (Active.Cancelled) yield break;
+            for (int ii = 0; ii < frames; ++ii) {
+                yield return null;
+                if (Active.Cancelled) yield break;
+            }
+            Logs.Log($"Playing {this.GetType()} audio track {Track.Title} (delayed by {frames} frames)");
+            currSrc.Play();
+        }
+        host.Run(_Inner());
     }
 
     protected bool? __RegularUpdate() {
@@ -72,7 +93,12 @@ public abstract class BaseRunningAudioTrack : IRunningAudioTrack {
 
     protected abstract IEnumerator _FadeIn(float time);
     
-    public void FadeOutThenDestroy(float time) => host.RunDroppableRIEnumerator(_FadeOutThenDestroy(time));
+    public void FadeOutThenDestroy(float time) {
+        if (isFadingOut) return;
+        isFadingOut = true;
+        host.RunDroppableRIEnumerator(_FadeOutThenDestroy(time));
+    }
+
     protected abstract IEnumerator _FadeOutThenDestroy(float time);
     
     public virtual void Pause() {
@@ -101,8 +127,7 @@ public class NaiveLoopRAT : BaseRunningAudioTrack {
     public NaiveLoopRAT(IAudioTrackInfo track, AudioTrackService host, ICancellee? cT = null) : base(track, host, cT) {
         currSrc.loop = true;
         currSrc.time = track.StartTime;
-        currSrc.Play();
-        Logs.Log($"Playing naive-loop audio track: {Track.Title}");
+        PlayDelayed();
     }
 
     protected override IEnumerator _FadeIn(float time) {
@@ -160,8 +185,7 @@ public class TimedLoopRAT : BaseRunningAudioTrack {
         src1.pitch = src2.pitch = track.Pitch;
         
         currSrc.time = track.StartTime;
-        currSrc.Play();
-        Logs.Log($"Playing audio track: {Track.Title}");
+        PlayDelayed();
     }
 
     /// <summary>

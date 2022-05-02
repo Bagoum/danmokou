@@ -1,4 +1,5 @@
 ﻿using System;
+using BagoumLib.Culture;
 using Danmokou.Core;
 using Danmokou.Services;
 using Suzunoya.Entities;
@@ -10,7 +11,7 @@ namespace Danmokou.VN {
 public class Miko : SZYUCharacter {
     public override Color TextColor => new(1, .83f, .79f);
     public override Color UIColor => new(0.4f, 0.01f, .24f);
-    public override string Name => LocalizedStrings.FindReference("dialogue.miko");
+    public override LString Name { get; set; } = LocalizedStrings.FindReference("dialogue.miko");
     
     public override void RollEvent() => ServiceLocator.SFXService.Request("x-bubble-3", SFXType.TypingSound);
 }

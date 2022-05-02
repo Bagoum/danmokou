@@ -1,4 +1,7 @@
-﻿using Danmokou.UI;
+﻿using BagoumLib;
+using BagoumLib.DataStructures;
+using BagoumLib.Events;
+using Danmokou.UI;
 using Danmokou.UI.XML;
 using Danmokou.VN.Mimics;
 using UnityEngine.UIElements;
@@ -14,9 +17,20 @@ public class DMKDialogueBoxButton : DialogueBoxButton, IFixedXMLReceiver {
     
     public void Bind(DMKADVDialogueBoxMimic parent, ADVDialogueBox db) {
         parent.Listen(db.ComputedLocation, _ => xml.UpdatedLocations());
+        var isVisible = new DisturbedAnd();
+        parent.AddToken(isVisible.AddDisturbance(db.Visible));
+        parent.AddToken(isVisible.AddDisturbance(db.ComputedTint.Map(c => c.a > 0)));
+        parent.AddToken(isVisible.AddDisturbance(db.MinimalState.Map(b => !b)));
+        parent.Listen(isVisible, xml.XML.IsVisible.OnNext);
+        parent.Listen(db.MinimalState, b => {
+            if (b)
+                FastSetState(State | ButtonState.Hide);
+            else
+                State &= (ButtonState.All ^ ButtonState.Hide);
+        });
     }
     
-    public UIResult OnConfirm() {
+    public UIResult OnConfirm(UINode n) {
         OnPointerClick(null!);
         return new UIResult.StayOnNode();
     }

@@ -32,6 +32,7 @@ public readonly struct BGMInvokeFlags {
 }
 
 public interface IAudioTrackService {
+    void ClearRunningBGM(BGMInvokeFlags? flags = null);
     IRunningAudioTrack? InvokeBGM(string? trackName, BGMInvokeFlags? flags = null);
     IRunningAudioTrack? InvokeBGM(IAudioTrackInfo? track, BGMInvokeFlags? flags = null);
 }
@@ -85,6 +86,15 @@ public class AudioTrackService : CoroutineRegularUpdater, IAudioTrackService {
         return null;
     }
 
+    public void ClearRunningBGM(BGMInvokeFlags? flags = null) {
+        var f = flags ?? BGMInvokeFlags.Default;
+        if (f.fadeOutExistingTime.Try(out var fout)) {
+            for (int ii = 0; ii < tracks.Count; ++ii) {
+                if (tracks.ExistsAt(ii))
+                    tracks[ii].FadeOutThenDestroy(fout);
+            }
+        }
+    }
     public IRunningAudioTrack? InvokeBGM(IAudioTrackInfo? track, BGMInvokeFlags? flags = null) {
         if (track == null) return null;
         for (int ii = 0; ii < tracks.Count; ++ii) {

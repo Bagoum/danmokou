@@ -9,29 +9,33 @@ using UnityEngine.Rendering;
 
 namespace Danmokou.Graphics {
 public static class MaterialUtils {
-    public static (int dst, BlendOp op) ToBlendVars(this DRenderMode rm) {
+    /// <summary>
+    /// Assumes the color is premultiplied. Color blending only (alpha is always One OneMinusSrcAlpha)
+    /// </summary>
+    public static (BlendMode src, BlendMode dst, BlendOp op) ToBlendVars(this DRenderMode rm) {
         if (rm == DRenderMode.NORMAL) {
-            //OneMinusSrcAlpha
-            return (10, BlendOp.Add);
+            return (BlendMode.One, BlendMode.OneMinusSrcAlpha, BlendOp.Add);
         } else if (rm == DRenderMode.ADDITIVE) {
-            //One
-            return (1, BlendOp.Add);
+            return (BlendMode.One, BlendMode.One, BlendOp.Add);
+        } else if (rm == DRenderMode.SOFT_ADDITIVE) {
+            return (BlendMode.OneMinusDstColor, BlendMode.One, BlendOp.Add);
         } else if (rm == DRenderMode.NEGATIVE) {
-            //One, Negative
-            return (1, BlendOp.ReverseSubtract);
+            return (BlendMode.One, BlendMode.One, BlendOp.ReverseSubtract);
         }
         throw new Exception($"Can't handle render mode {rm}");
     }
 
     public static void SetBlendMode(Material mat, DRenderMode rm) {
-        var (dst, op) = rm.ToBlendVars();
-        mat.SetFloat(PropConsts.blendDstMethod, dst);
+        var (src, dst, op) = rm.ToBlendVars();
+        mat.SetFloat(PropConsts.blendSrcMethod, (int) src);
+        mat.SetFloat(PropConsts.blendDstMethod, (int) dst);
         mat.SetFloat(PropConsts.blendOp, (int) op);
     }
 
     public static void SetBlendMode(this MaterialPropertyBlock pb, DRenderMode rm) {
-        var (dst, op) = rm.ToBlendVars();
-        pb.SetFloat(PropConsts.blendDstMethod, dst);
+        var (src, dst, op) = rm.ToBlendVars();
+        pb.SetFloat(PropConsts.blendSrcMethod, (int) src);
+        pb.SetFloat(PropConsts.blendDstMethod, (int) dst);
         pb.SetFloat(PropConsts.blendOp, (int) op);
     }
 

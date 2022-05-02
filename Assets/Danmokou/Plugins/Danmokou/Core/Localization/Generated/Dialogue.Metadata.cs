@@ -143,6 +143,26 @@ public static partial class LocalizedStrings {
 			(Locales.JP, "洩矢諏訪子"))
 			{ ID = "dialogue.suwako" };
 		
+		public static readonly LString seiga = new LText("Kaku Seiga",
+			(Locales.JP, "霍青娥"))
+			{ ID = "dialogue.seiga" };
+		
+		public static readonly LString nitori = new LText("Kawashiro Nitori",
+			(Locales.JP, "河城にとり"))
+			{ ID = "dialogue.nitori" };
+		
+		public static readonly LString iku = new LText("Nagae Iku",
+			(Locales.JP, "永江衣玖"))
+			{ ID = "dialogue.iku" };
+		
+		public static readonly LString cirno = new LText("Cirno",
+			(Locales.JP, "チルノ"))
+			{ ID = "dialogue.cirno" };
+		
+		public static readonly LString doremy = new LText("Doremy Sweet",
+			(Locales.JP, "ドレミー・スイート"))
+			{ ID = "dialogue.doremy" };
+		
 	}
 }
 }

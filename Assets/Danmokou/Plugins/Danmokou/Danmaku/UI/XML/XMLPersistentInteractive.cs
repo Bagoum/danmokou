@@ -13,7 +13,7 @@ public interface IFixedXMLObject {
     ICObservable<float> Top { get; }
     ICObservable<float> Width { get; }
     ICObservable<float> Height { get; }
-    Evented<bool> IsVisible { get; }
+    ICObservable<bool> IsVisible { get; }
     UIResult? Navigate(UINode n, UICommand c);
 }
 
@@ -28,6 +28,7 @@ public record FixedXMLObject(float l, float t, float w = 100, float h = 100) : I
     ICObservable<float> IFixedXMLObject.Height => Height;
     public Evented<float> Height { get; } = new(h);
     public Evented<bool> IsVisible { get; } = new(true);
+    ICObservable<bool> IFixedXMLObject.IsVisible => IsVisible;
     public Func<UINode, UIResult?>? OnConfirm { get; init; }
     public UIResult? Navigate(UINode n, UICommand c) => 
         c is UICommand.Confirm ? OnConfirm?.Invoke(n) : null;
@@ -45,7 +46,7 @@ public class XMLPersistentInteractive : UIController {
         public ICObservable<float> Left { get; } = new ConstantObservable<float>(0);
         public ICObservable<float> Width { get; } = new ConstantObservable<float>(0);
         public ICObservable<float> Height { get; } = new ConstantObservable<float>(0);
-        public Evented<bool> IsVisible { get; } = new(true);
+        public ICObservable<bool> IsVisible { get; } = new ConstantObservable<bool>(true);
         public UIResult? Navigate(UINode n, UICommand c) => null;
     }
     private UINode unselect = null!;

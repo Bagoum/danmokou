@@ -29,7 +29,7 @@ using static Danmokou.UI.PlayModeCommentator;
 
 namespace Danmokou.UI.XML {
 public static partial class XMLUtils {
-    public static UIScreen PlaymodeScreen(this UIController m, UIScreen bossPractice, UIScreen stagePractice, Dictionary<Mode, Sprite> sprites, PlayModeCommentator? commentator, Func<CampaignConfig, Func<SharedInstanceMetadata, bool>, Func<UIResult>> getMetadata) {
+    public static UIScreen PlaymodeScreen(this UIController m, UIScreen bossPractice, UIScreen stagePractice, Dictionary<Mode, Sprite> sprites, PlayModeCommentator? commentator, Func<CampaignConfig, Func<SharedInstanceMetadata, bool>, Func<UINode, UIResult>> getMetadata) {
         var floater = References.uxmlDefaults.FloatingNode;
         var s = new UIScreen(m, null, UIScreen.Display.Unlined) {
             Builder = (s, ve) => ve.CenterElements()
@@ -54,7 +54,7 @@ public static partial class XMLUtils {
             (PracticeBossesExist ?
                 new UINode() {
                     EnabledIf = () => PBosses.Length > 0,
-                    OnConfirm = () => new UIResult.GoToNode(bossPractice),
+                    OnConfirm = _ => new UIResult.GoToNode(bossPractice),
                     Prefab = floater,
                     OnBuilt = Builder(Mode.BOSSPRAC)
                 } : null,
@@ -62,13 +62,13 @@ public static partial class XMLUtils {
             (PracticeStagesExist ?
                 new UINode() {
                     EnabledIf = () => PStages.Length > 0,
-                    OnConfirm = () => new UIResult.GoToNode(stagePractice),
+                    OnConfirm = _ => new UIResult.GoToNode(stagePractice),
                     Prefab = floater,
                     OnBuilt = Builder(Mode.STAGEPRAC)
                 } : null,
                 (Mode.STAGEPRAC, PStages.Length == 0)),
             (References.tutorial != null ? new UINode {
-                OnConfirm = () => new UIResult.StayOnNode(!InstanceRequest.RunTutorial()),
+                OnConfirm = _ => new UIResult.StayOnNode(!InstanceRequest.RunTutorial()),
                 Prefab = floater,
                 OnBuilt = Builder(Mode.TUTORIAL)
             } : null, (Mode.TUTORIAL, false))
@@ -79,7 +79,7 @@ public static partial class XMLUtils {
         return s;
     }
     public static UIScreen StagePracticeScreen(this UIController m, 
-        Func<CampaignConfig, Func<SharedInstanceMetadata, bool>, Func<UIResult>> getMetadata) {
+        Func<CampaignConfig, Func<SharedInstanceMetadata, bool>, Func<UINode, UIResult>> getMetadata) {
         var s = new UIScreen(m, "STAGE PRACTICE") {Builder = (s, ve) => {
             s.Margin.SetLRMargin(720, 720);
             ve.AddColumn().style.flexGrow = 2;
@@ -115,7 +115,7 @@ public static partial class XMLUtils {
     }
 
     public static UIScreen BossPracticeScreen(this UIController m, VisualTreeAsset spellPracticeNodeV,
-        Func<CampaignConfig, Func<SharedInstanceMetadata, bool>, Func<UIResult>> getMetadata) {
+        Func<CampaignConfig, Func<SharedInstanceMetadata, bool>, Func<UINode, UIResult>> getMetadata) {
         var cmpSpellHist = SaveData.r.GetCampaignSpellHistory();
         var prcSpellHist = SaveData.r.GetPracticeSpellHistory();
 
@@ -757,7 +757,7 @@ public static partial class XMLUtils {
                     0, 0.4, 0.8, 1.2, 1.6, 2
                 }), () => dfc.pocOffset, x => dfc.pocOffset = x, desc_poc),
             //new PassthroughNode(""),
-            new UINode(to_select) { OnConfirm = () => dfcCont(dfc) } ,
+            new UINode(to_select) { OnConfirm = _ => dfcCont(dfc) } ,
             new UINode(manage_setting) {
                 ShowHideGroup = new UIColumn(descCol, 
                     saved.Select(MakeSaveLoadDFCNode)
@@ -1122,7 +1122,8 @@ public static partial class XMLUtils {
                 if (!char.IsWhiteSpace(s[^(1 + ii)]))
                     break;
             }
-            ve.style.marginRight = pxPerSpace * ii;
+            //No longer required as of 2022; trailing whitespace is no longer pruned
+            //ve.style.marginRight = pxPerSpace * ii;
             into.Add(ve);
         }
         bool RequiresSubtype(Markdown.TextRun tr) => tr switch {

@@ -6,6 +6,7 @@ using System;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
+using BagoumLib;
 using BagoumLib.DataStructures;
 using BagoumLib.Events;
 using BagoumLib.Mathematics;
@@ -136,7 +137,7 @@ public class ETime : MonoBehaviour {
         SceneIntermediary.SceneLoaded.Subscribe(_ => untilNextRegularFrame = 0f);
 
         UnityTimeRate.AddDisturbance(Slowdown);
-        UnityTimeRate.AddDisturbance(new MappedObservable<EngineState, float>(EngineStateManager.EvState, s => s.Timescale()));
+        UnityTimeRate.AddDisturbance(EngineStateManager.EvState.Map(s => s.Timescale()));
         UnityTimeRate.Subscribe(s => Time.timeScale = s);
 
         //WARNING ON TIMESCALE: You must also modify FDT. See https://docs.unity3d.com/ScriptReference/Time-timeScale.html

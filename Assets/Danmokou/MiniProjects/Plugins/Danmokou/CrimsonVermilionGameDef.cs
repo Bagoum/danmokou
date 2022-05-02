@@ -10,10 +10,11 @@ namespace MiniProjects.VN {
 
 [CreateAssetMenu(menuName = "Data/ADV/Crimson Verm. Game")]
 public class CrimsonVermilionGameDef : ADVGameDef {
-    public override Task Run(ADVInstance inst) {
+    public override IExecutingADV Setup(ADVInstance inst) {
         if (inst.ADVData.VNData.Location is not null)
             inst.VN.LoadToLocation(inst.ADVData.VNData.Location);
-        return inst.Manager.ExecuteVN(_VNCrimsonVermilion.VNScriptCrimsonVermilion1(inst.VN));
+        return new BarebonesExecutingADV<BlessedRainADVData>(inst, () => 
+            inst.Manager.ExecuteVN(_VNCrimsonVermilion.VNScriptCrimsonVermilion1(inst.VN)));
     }
 
     public override ADVData NewGameData() => new(new(SaveData.r.GlobalVNData));

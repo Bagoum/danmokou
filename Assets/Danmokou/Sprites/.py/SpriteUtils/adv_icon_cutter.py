@@ -6,10 +6,10 @@ from PIL import Image
 src = "img/stand-source/"
 out = "img/stand-output/"
 
-left = 832
-left2 =  1128
-top = 96
-top2 = 392
+left = 212
+left2 = 516
+top = 4
+top2 = 364
 
 
 def convert(fromfile, tofile):
