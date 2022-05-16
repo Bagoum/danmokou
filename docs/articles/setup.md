@@ -9,8 +9,8 @@ These are verbose instructions on how to set up Danmokou on your first run.
   - Locate a folder in which you'd like to store the project files. The files will be stored directly in this directory. CD to the folder in your command line / terminal / bash shell.
   - Run `git init`.
   - Run `git remote add super https://github.com/Bagoum/danmokou.git`. This will allow you to reference the project repository via the alias "super".
-  - Run `git pull super v8.0.0`.
-    - v8.0.0 is the latest stable version. You can pick any version available [on the tags page](https://github.com/Bagoum/danmokou/tags), or you can run `git pull super master` to get the latest code, which may be less stable.
+  - Run `git pull super v9.0.0`.
+    - v9.0.0 is the latest stable version. You can pick any version available [on the tags page](https://github.com/Bagoum/danmokou/tags), or you can run `git pull super master` to get the latest code, which may be less stable.
   - Run `git submodule update --init --recursive`. This will import code from several submodules, including SiMP, which is a fully structured game, and SuzunoyaUnity, which is a visual novel engine that powers the dialogue system.
     - If you do not want code from the extra submodules, then you can run `git submodule update --init --recursive Assets/SZYU` to only handle SuzunoyaUnity, which is required for the engine to work.
 - If you already have a git repository with Danmokou, you can update it as follows:
@@ -24,17 +24,17 @@ These are verbose instructions on how to set up Danmokou on your first run.
 ## Part 1: Unity Setup
 
 - Download/Install Unity Hub (https://store.unity.com/download-nuo), then run it
-- Within Unity Hub > Installs, add Unity version **2021.2** (Required for v8.0/-)
+- Within Unity Hub > Installs, add Unity version **2021.2.1f1** (Preferred for DMK v9.0.0, though 2022.2.a11+ also works)
 - Within Unity Hub > Projects, click ADD and browse to the root Danmokou folder. 
 - Click on the project to load it. **The first time you load it, Unity may take several minutes to import resources.**
-  - If you get an error that the project contains compilation errors, click "Ignore". Once the project has loaded, you should see a compilation error saying something about PanelSettings missing. If you trigger a recompile (eg. by adding code or comments to any C# file in the solution), the error will disappear.
+  - If you get an error that the project contains compilation errors, click "Ignore". Once the project has loaded, you may see a compilation error saying something about PanelSettings missing. If you trigger a recompile (eg. by adding code or comments to any C# file in the solution), the error should disappear.
   - If you get an error about the default layout, then close Unity, move the three `.dwlt` files in the `DMK_DEFAULTS` folder to the `Library` folder, and open Unity.
 - Once you are in the Unity Editor, click on the Project tab (by default in the bottom window) and browse to Assets/Danmokou/Scenes/BasicSceneOPENME.
 - (Error handling) **If you see a lot of pink squares in the game view where text should be**, then go to Window > TextMesh Pro > Import TMP Essential Resources and click Import in the popup window. If you can see the text, then you don't need to do this.
 
 ## Part 2: What is DMK?
 
-- At the top of the game view, you should see three text boxes, saying something like: `Display 1 | Resolution | Scale ----`. Click on the second box, which shows the resolution of the game view. Either set it to the aspect ratio 16x9, or manually input a resolution at the bottom with 16x9 ratio. Also set the "Vsync" checkbox to true.
+- At the top of the game view, you should see three text boxes, saying something like: `Display 1 | Resolution | Scale ----`. Click on the second box, which shows the resolution of the game view. Either set it to the aspect ratio 16x9, or manually input a resolution at the bottom with 16x9 ratio (3840x2160 is the native resolution). You may want to set the "Vsync" checkbox to true if it exists.
 - You should still be in Assets/Danmokou/Scenes/BasicSceneOPENME. Go to the Hierarchy window (by default on the left side) and click on the "mokou-boss" object.
 - The Inspector window (by default on the right side) will open up and list all the components on the object. The important component here is `Boss BEH`. Look under Boss BEH for the variable named "Behavior Script". To the right of it, you should see a text file titled "DMK Tutorial Setup 00". Double-click this file.
 - Your text editor should now open the file. It should have the following contents:

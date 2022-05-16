@@ -184,7 +184,7 @@ public static class SaveData {
                 else if (w > 1000)
                     Resolution = (1280, 720);
                 else if (w > 700)
-                    Resolution = (800, 450);
+                    Resolution = (848, 477);
                 else
                     Resolution = (640, 360);
                 

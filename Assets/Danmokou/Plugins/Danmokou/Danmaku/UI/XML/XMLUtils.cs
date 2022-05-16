@@ -227,7 +227,7 @@ public static partial class XMLUtils {
                         ("1920x1080", (1920, 1080)),
                         ("1600x900", (1600, 900)),
                         ("1280x720", (1280, 720)),
-                        ("800x450", (800, 450)),
+                        ("848x477", (848, 477)),
                         ("640x360", (640, 360))
                     }, SaveData.s.Resolution),
                     new OptionNodeLR<FullScreenMode>(fullscreen, SaveData.UpdateFullscreen, new[] {
@@ -1123,7 +1123,7 @@ public static partial class XMLUtils {
                     break;
             }
             //No longer required as of 2022; trailing whitespace is no longer pruned
-            //ve.style.marginRight = pxPerSpace * ii;
+            ve.style.marginRight = pxPerSpace * ii;
             into.Add(ve);
         }
         bool RequiresSubtype(Markdown.TextRun tr) => tr switch {

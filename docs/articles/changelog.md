@@ -10,21 +10,22 @@ To get the newest version from git, run:
 
 # Unreleased
 
-The following features are planned for future releases. Major version 10.0.0 is planned for sometime before July. 
+The following features are planned for future releases. Major version 10.0.0 is planned for sometime around July. 
 
 - [10.0.0] ADV-style gameplay, state management, and generalized UI support
+- [10.0.0] UI improvements, including custom cursor handling, controls tooltips, and smarter navigation on menus
 - [Backlog] Default handling for graze flake items and bullet cancel flake items
 - [Backlog] Implementation of a TH18-like card engine
 - [Backlog] Procedural generation of stages and bullet patterns
 
 # v9.0.0 (2021/05/01)
 
-This release includes code for [Blessed Rain](https://bagoum.itch.io/blessed-rain), a short visual novel, and [The Purple Heart Paradox](https://bagoum.itch.io/purple-heart), a short ADV-format visual novel, in the MiniProjects folder. As of this release, Suzunoya functionality is mostly complete, but I haven't thoroughly tested functionality related to choices and external tasks, and there are some theoretical issues in save/load handling with regards to nondeterminism as well as certain configurations of global switches that open or close branches between executions. This release also includes some work-in-progress code for some adventure-game style usage of  Suzunoya (think Ace Attorney), with some basic exploratory work in the Purple Heart project as well as in the [Plum Wine](https://github.com/Bagoum/danmokou-plumwine) repository.
+This release includes code for [Blessed Rain](https://bagoum.itch.io/blessed-rain), a short visual novel, and [The Purple Heart Paradox](https://bagoum.itch.io/purple-heart), a short ADV-format visual novel, in the MiniProjects folder. As of this release, Suzunoya functionality is mostly complete, but I haven't thoroughly tested functionality related to choices and external tasks, and there are some theoretical issues in save/load handling with regards to nondeterminism as well as certain configurations of global switches that open or close branches between executions. This release also includes some work-in-progress code for some adventure-game style usage of  Suzunoya (think Ace Attorney), with some basic exploratory work in the Purple Heart project.
 
 #### Breaking changes
 
-- Please upgrade Unity to **2021.2.1** or **2022.2.a11+** before opening this project, preferably 2022.2.a11+. Note that if you get errors at runtime about missing settings, you may need to run Window > UIToolkit > Package Asset Converter > "I want my assets to function without the UIToolkit package installed". This upgrade makes UIToolkit much more resilient, allows some new CSS features that are used in the updated UI, and also enables some C#8 and C#9 features that are now used in the codebase.
-  - Later versions of 2021.2 have various bugs with UIToolkit text rendering. 2022.1b breaks compilation due to internal Unity errors.
+- Please upgrade Unity to **2021.2.1** (preferred) or 2022.2.a11+ before opening this project. Note that if you get errors at runtime about missing settings, you may need to run Window > UIToolkit > Package Asset Converter > "I want my assets to function without the UIToolkit package installed". This upgrade makes UIToolkit much more resilient, allows some new CSS features that are used in the updated UI, and also enables some C#8 and C#9 features that are now used in the codebase.
+  - Later versions of 2021.2 have various bugs with UIToolkit text rendering. 2022.1 breaks compilation due to internal Unity errors (see [this Github issue](https://github.com/neuecc/UniRx/issues/510)). This should be fixed in 2022.1.1f1.
 - The architecture for UIToolkit-based UI has been overhauled. As a part of this, all the UIScreen uxml files were replaced with a single universal file, the UIScreen and UINode classes were completely rewritten, and the process of constructing UIs in code was changed in a backwards-incompatible way. See the [UI design document](uidesign.md) for details on the new UI architecture, which I plan to keep stable.
 - Dialogue profiles, which were made obsolete in v8.0.0 with Suzunoya integration, have been removed from the codebase.
 
@@ -50,6 +51,7 @@ This release includes code for [Blessed Rain](https://bagoum.itch.io/blessed-rai
 
 #### Changes
 
+- Most additive bullets now use soft additive blending instead, which should provide more visual consistency and prevent blowout.
 - Moved bomb handling out of PlayerBombs into per-bomb classes. This architecture allows per-project extension.
 - Removed the UISkip button (previously assigned to X). Instead, the Confirm button (assigned to Z/Enter, clicking and scrolling down also work in non-recorded contexts) now doubles as a skip button.
 

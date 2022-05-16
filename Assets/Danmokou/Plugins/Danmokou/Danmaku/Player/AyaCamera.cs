@@ -135,11 +135,13 @@ public class AyaCamera : BehaviorEntity {
         base.RegularUpdate();
         if (player.AllowPlayerInput) {
             bool full = ChargeFull;
+            var prevCharge = charge;
             charge = M.Clamp(chargeMin, chargeMax, charge + GetChargeRate(CameraState) * ETime.FRAME_TIME);
             if (!full && ChargeFull) {
                 ServiceLocator.SFXService.Request(onFullCharge);
             }
-            text.text = string.Format(textFormat, charge);
+            if (prevCharge != charge)
+                text.text = string.Format(textFormat, charge);
             text.color = TextColor;
         }
         //Log.Unity($"{CameraState} {charge} {Team.IsFiring}");

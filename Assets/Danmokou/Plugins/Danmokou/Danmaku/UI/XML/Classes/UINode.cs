@@ -301,7 +301,7 @@ public class UINode {
     public void Remove() {
         Destroyed = true;
         Group.Nodes.Remove(this);
-        ContainerHTML.Remove(HTML);
+        HTML.RemoveFromHierarchy();
         Controller.MoveCursorAwayFromNode(this);
     }
 
