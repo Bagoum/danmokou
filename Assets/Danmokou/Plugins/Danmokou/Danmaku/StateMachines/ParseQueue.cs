@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using BagoumLib;
+using BagoumLib.Reflection;
 using Danmokou.Core;
 using Danmokou.Reflection;
 //using FParsec;
@@ -38,7 +39,7 @@ public abstract class IParseQueue {
     }
 
     public void ThrowOnLeftovers(Type t) => ThrowOnLeftovers(() => 
-        $"Found extra text when trying to create an object of type {t.RName()}. " +
+        $"Found extra text when trying to create an object of type {t.SimpRName()}. " +
         $"Make sure your parentheses are grouped correctly and your commas are in place.");
     public virtual void ThrowOnLeftovers(Func<string>? descr = null) { }
 

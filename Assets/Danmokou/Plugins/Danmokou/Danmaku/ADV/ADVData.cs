@@ -11,7 +11,7 @@ using UnityEngine;
 namespace Danmokou.ADV {
 
 /// <summary>
-/// All instance data for a (saveable) in-progress ADV game instance.
+/// All data for a (saveable) in-progress ADV game instance.
 /// <br/>This class should be derived for game-specific data.
 /// </summary>
 [Serializable]
@@ -29,7 +29,7 @@ public record ADVData(InstanceData VNData) {
 
     /// <summary>
     /// If this data was saved while in a VN segment (ie. UnmodifiedSaveData is not null),
-    ///  then use UnmodifiedSaveData as the true save data, and use this data as a loading proxy.
+    ///  then use UnmodifiedSaveData as the replayee save data, and use this data as a loading proxy.
     /// </summary>
     public (ADVData main, ADVData? loadProxy) GetLoadProxyInfo() {
         if (UnmodifiedSaveData != null) {

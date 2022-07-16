@@ -37,20 +37,4 @@ public interface IInputSource {
 
     void OncePerUnityFrameToggleControls();
 }
-
-public static class InputHelpers {
-    public static InputChecker Key(KeyCode key) =>
-        new InputChecker(() => Input.GetKey(key), new LText(key.ToString()));
-    public static IInputHandler TKey(KeyCode key) => InputHandler.Trigger(Key(key));
-    public static InputChecker AxisL0(string axis) =>
-        new InputChecker(() => Input.GetAxisRaw(axis) < -0.1f, new LText(axis));
-
-    public static InputChecker AxisG0(string axis) =>
-        new InputChecker(() => Input.GetAxisRaw(axis) > 0.1f, new LText(axis));
-    public static float GetAxisRawC(string key) => Input.GetAxisRaw(key);
-    public static bool AxisIsActive(string key) => Mathf.Abs(Input.GetAxisRaw(key)) > 0.1f;
-    
-    public static InputChecker Mouse(int key) =>
-        new InputChecker(() => Input.GetMouseButton(key), new LText(key.ToString()));
-}
 }

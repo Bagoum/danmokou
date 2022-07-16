@@ -13,16 +13,16 @@ public interface IInputHandlerInputSource {
     /// Update all linked <see cref="IInputHandler"/>s, and returns true if any of them were set to true.
     /// </summary>
     /// <returns></returns>
-    bool UpdateHandlers() {
+    bool OncePerUnityFrameUpdateHandlers() {
         bool anyActive = false;
         for (int ii = 0; ii < Handlers.Count; ++ii)
-            anyActive |= Handlers[ii].Update();
+            anyActive |= Handlers[ii].OncePerUnityFrameUpdate();
         return anyActive;
     }
 }
 
 /// <summary>
-/// An input source that exposes self-describing IInputHandlers for its keys.
+/// An input source that exposes self-describing <see cref="IInputHandler"/>s for its keys.
 /// </summary>
 public interface IDescriptiveInputSource : IInputSource {
     IInputHandler arrowLeft { get; }

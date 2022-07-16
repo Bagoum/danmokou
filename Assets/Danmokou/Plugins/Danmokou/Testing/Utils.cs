@@ -83,7 +83,7 @@ public static class TAssert {
         BPIEq(sb1.bpi, sb2.bpi, msg);
     }
 
-    public static void SBPos(ref BulletManager.SimpleBullet sb, Vector2 loc, string msg = "") =>
+    public static void SBPos(ref BulletManager.SimpleBullet sb, Vector3 loc, string msg = "") =>
         VecEq(loc, sb.bpi.loc, msg);
     public static void SBPos(ref BulletManager.SimpleBullet sb, V2RV2 loc, string msg = "") =>
         VecEq(loc.TrueLocation, sb.bpi.loc, msg);

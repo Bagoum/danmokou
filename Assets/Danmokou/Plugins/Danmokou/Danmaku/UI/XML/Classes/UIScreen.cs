@@ -7,6 +7,7 @@ using BagoumLib.Events;
 using BagoumLib.Mathematics;
 using BagoumLib.Transitions;
 using Danmokou.Core;
+using Danmokou.Core.DInput;
 using Danmokou.DMath;
 using Danmokou.Graphics.Backgrounds;
 using Danmokou.Services;
@@ -33,6 +34,7 @@ public class UIScreen {
     public VisualElement HTML { get; private set; } = null!;
     public UIRenderDirect DirectRender { get; private set; } = null!;
     public UIRenderAbsoluteTerritory AbsoluteTerritory { get; private set; } = null!;
+    private Label? ControlHelper { get; set; } = null!;
     public Action<UIScreen, VisualElement>? Builder { private get; set; } = null!;
     public GameObject? SceneObjects { get; set; }
     /// <summary>
@@ -67,6 +69,8 @@ public class UIScreen {
     public Label Header => HTML.Q<Label>("Header");
     public VisualElement Margin => HTML.Q("MarginContainer");
 
+    //public UIRenderDirect Renderer { get; }
+
     public UIScreen WithBG((GameObject, BackgroundTransition)? bgConfig) {
         Background = bgConfig;
         return this;
@@ -81,6 +85,7 @@ public class UIScreen {
         HeaderText = header;
         Type = display;
         bgo = ServiceLocator.MaybeFind<IBackgroundOrchestrator>();
+        DirectRender = new UIRenderDirect(this);
     }
     
     public void AddGroup(UIGroup grp) {
@@ -114,8 +119,9 @@ public class UIScreen {
             HTML.AddToClassList("pauseLined");
         HTML.Add(GameManagement.References.uxmlDefaults.AbsoluteTerritory.CloneTreeWithoutContainer());
         AbsoluteTerritory = new UIRenderAbsoluteTerritory(this);
-        DirectRender = new UIRenderDirect(this);
         Builder?.Invoke(this, Container);
+        //Controls helper may be removed by builder for screens that don't need it
+        ControlHelper = HTML.Q<Label>("ControlsHelper");
         //calling build may awaken lazy nodes, causing new groups to spawn
         for (int ii = 0; ii < Groups.Count; ++ii)
             Groups[ii].Build(map);
@@ -131,10 +137,10 @@ public class UIScreen {
         HTML.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
         if (SceneObjects != null)
             SceneObjects.SetActive(visible);
+        SetControlText();
     }
 
     public UIRenderColumn ColumnRender(int index) => new(this, index);
-
 
     public void ExitStart() {
         OnExitStart?.Invoke();
@@ -168,6 +174,16 @@ public class UIScreen {
 
     public void VisualUpdate(float dT) {
         backgroundOpacity.Update(dT);
+        SetControlText();
     }
+
+    private void SetControlText() {
+        var inp = InputManager.PlayerInput.MainSource.Current;
+        string AsControl(IInputHandler h) => $"{h.Purpose}: {h.Description}";
+        if (HTML.style.display == DisplayStyle.Flex && ControlHelper != null)
+            ControlHelper.text = string.Join("    ", AsControl(inp.uiConfirm), AsControl(inp.uiBack));
+    }
+
+    public static implicit operator UIRenderSpace(UIScreen s) => s.DirectRender;
 }
 }

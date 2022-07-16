@@ -17,6 +17,7 @@ using Danmokou.Services;
 using JetBrains.Annotations;
 using Danmokou.SM;
 using Danmokou.UI;
+using UnityEngine;
 
 
 namespace Danmokou.GameInstance {
@@ -237,7 +238,7 @@ public abstract class Challenge {
         }
 
         public override bool FrameCheck(ChallengeManager.TrackingContext ctx) {
-            return ctx.t < yield || (ctx.exec.rBPI.loc - GameManagement.VisiblePlayerLocation).magnitude < units;
+            return ctx.t < yield || (ctx.exec.rBPI.LocV2 - GameManagement.VisiblePlayerLocation).magnitude < units;
         }
     }
 
@@ -263,7 +264,7 @@ public abstract class Challenge {
         }
 
         public override bool FrameCheck(ChallengeManager.TrackingContext ctx) {
-            return ctx.t < yield || (ctx.exec.rBPI.loc - GameManagement.VisiblePlayerLocation).magnitude > units;
+            return ctx.t < yield || (ctx.exec.rBPI.LocV2 - GameManagement.VisiblePlayerLocation).magnitude > units;
         }
     }
 

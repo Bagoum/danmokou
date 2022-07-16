@@ -79,7 +79,7 @@ public static class _VNCrimsonVermilion {
         });
     
     private static BoundedContext<Unit> _AtShrine(SharedObjects o) =>
-        new BoundedContext<Unit>(o.vn, "SHRINE", async () => {
+        new StrongBoundedContext<Unit>(o.vn, "SHRINE", async () => {
             var vn = o.vn;
             //autodeletion on exit :)
             using var room = vn.Add(new ShrineRoomBG());
@@ -249,7 +249,7 @@ public static class _VNCrimsonVermilion {
         });
 
     private static BoundedContext<Unit> _AtTown(SharedObjects o) =>
-        new BoundedContext<Unit>(o.vn, "TOWN", async () => {
+        new StrongBoundedContext<Unit>(o.vn, "TOWN", async () => {
             var vn = o.vn;
             //autodeletion on exit :)
             using var town = vn.Add(new TownBG());
@@ -430,7 +430,7 @@ public static class _VNCrimsonVermilion {
     });
 
     private static BoundedContext<Unit> _AtOutskirts(SharedObjects o) =>
-        new BoundedContext<Unit>(o.vn, "OUTSKIRTS", async () => {
+        new StrongBoundedContext<Unit>(o.vn, "OUTSKIRTS", async () => {
             var vn = o.vn;
             //autodeletion on exit :)
             using var field = vn.Add(new FieldBG());
@@ -688,7 +688,7 @@ public static class _VNCrimsonVermilion {
         });
 
     private static BoundedContext<Unit> _AtFlowers(SharedObjects o) =>
-        new BoundedContext<Unit>(o.vn, "FLOWERS", async () => {
+        new StrongBoundedContext<Unit>(o.vn, "FLOWERS", async () => {
             var vn = o.vn;
             //autodeletion on exit :)
             using var flower = vn.Add(new FlowerBG());
@@ -924,7 +924,7 @@ public static class _VNCrimsonVermilion {
         });
 
     private static BoundedContext<Unit> _AtShrine2(SharedObjects o) =>
-        new BoundedContext<Unit>(o.vn, "SHRINE2", async () => {
+        new StrongBoundedContext<Unit>(o.vn, "SHRINE2", async () => {
             var vn = o.vn;
             //autodeletion on exit :)
             using var room = vn.Add(new ShrineRoomBG());

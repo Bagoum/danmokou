@@ -83,7 +83,7 @@ paction(0)
 paction(0)	# PhaseParallelActionSM cannot parent PhaseActionSM
 ```
 
-- However, if it is `StateMachine[]`, then this is provided *normally*, that is to say, with array delimiters, and the children may be of any time.
+- However, if it is `StateMachine[]`, then this is provided *normally*, that is to say, with array delimiters, and the children may be of any type.
 
 ```
 gtrepeat {

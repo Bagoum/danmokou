@@ -10,6 +10,9 @@ using UnityEngine.EventSystems;
 using UnityEngine.UIElements;
 
 namespace Danmokou.UI {
+/// <summary>
+/// A class for MonoBehaviors that can receive events from UITK.
+/// </summary>
 public interface IFixedXMLReceiver {
     public void OnBuilt(EmptyNode n) { }
     public UIResult OnConfirm(UINode n);
@@ -18,6 +21,11 @@ public interface IFixedXMLReceiver {
     public void OnPointerDown(UINode n, PointerDownEvent ev);
     public void OnPointerUp(UINode n, PointerUpEvent ev);
 }
+
+/// <summary>
+/// A helper script that creates a <see cref="EmptyNode"/> and links its callback events
+///  to a provided <see cref="IFixedXMLReceiver"/>.
+/// </summary>
 public class FixedXMLHelper : CoroutineRegularUpdater {
     //in unity units
     public Vector2 Size = Vector2.one;
@@ -28,6 +36,8 @@ public class FixedXMLHelper : CoroutineRegularUpdater {
     public EmptyNode Node { get; private set; } = null!;
 
     public MonoBehaviour actionHandler = null!;
+    
+    public IFixedXMLObjectContainer? Container { get; set; }
     private IFixedXMLReceiver Receiver => 
         (actionHandler as IFixedXMLReceiver) ??
         throw new Exception($"Action handler {actionHandler} is not an IFixedXMLReceiver");
@@ -49,7 +59,7 @@ public class FixedXMLHelper : CoroutineRegularUpdater {
         Node.With(xmlClasses);
     }
     public override void FirstFrame() {
-        ServiceLocator.Find<XMLPersistentInteractive>().AddNode(Node);
+        (Container ?? ServiceLocator.Find<XMLDynamicMenu>()).AddNode(Node);
     }
 
     protected override void OnDisable() {

@@ -64,10 +64,10 @@ public class RaikoCamera : RegularUpdater, IRaiko {
     public override void RegularUpdate() {
         Vector3 totalQuake = Vector3.zero;
         for (int ii = 0; ii < shakers.Count; ++ii) {
-            if (!shakers.Data[ii].MarkedForDeletion) {
-                var (finished, quake) = shakers[ii].Update(ETime.FRAME_TIME);
+            if (shakers.GetIfExistsAt(ii, out var u)) {
+                var (finished, quake) = u.Update(ETime.FRAME_TIME);
                 if (finished)
-                    shakers.Data[ii].MarkForDeletion();
+                    shakers.Delete(ii);
                 else
                     totalQuake += quake;
             }

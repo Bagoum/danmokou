@@ -46,7 +46,7 @@ public static class _VNBlessedRain {
         return default;
     });
 
-    private static BoundedContext<Unit> _01Shrine(Shared o) => new(o.vn, "1:SHRINE", async () => {
+    private static StrongBoundedContext<Unit> _01Shrine(Shared o) => new(o.vn, "1:SHRINE", async () => {
         var vn = o.vn;
         using var room = vn.Add(new ShrineCourtyardBG());
         using var reimu = vn.Add(new Reimu());
@@ -166,7 +166,7 @@ public static class _VNBlessedRain {
         return default;
     });
 
-    private static BoundedContext<Unit> _02Moriya(Shared o) => new(o.vn, "2:MORIYA", async () => {
+    private static StrongBoundedContext<Unit> _02Moriya(Shared o) => new(o.vn, "2:MORIYA", async () => {
         var vn = o.vn;
         using var shrine = vn.Add(new Shrine2BG());
         using var r = vn.Add(new Reimu());
@@ -340,7 +340,7 @@ public static class _VNBlessedRain {
         return default; 
     });
     
-    private static BoundedContext<Unit> _03Forest(Shared o) => new(o.vn, "3:FOREST", async () => {
+    private static StrongBoundedContext<Unit> _03Forest(Shared o) => new(o.vn, "3:FOREST", async () => {
         var vn = o.vn;
         using var forest = vn.Add(new ForestBG());
         o.vn.MainDialogue!.Clear();

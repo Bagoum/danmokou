@@ -84,8 +84,6 @@ public class TExSB : TEx<SimpleBullet> {
 public class TExSBC : TEx<SimpleBulletCollection> {
     public MemberExpression style => Ex.Property(ex, "Style");
     public MemberExpression data => Ex.Property(ex, "Data");
-    private static readonly ExFunction indexer = ExFunction.Wrap<CompactingArray<SimpleBullet>>("ItemAt",
-        new[] {typeof(int)});
 
     public TExSBC(string name) : base(ExMode.Parameter, name) { }
     public TExSBC(Ex _ex) : base(_ex) {}

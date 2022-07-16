@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using BagoumLib.Expressions;
+using BagoumLib.Reflection;
 using Danmokou.Danmaku;
 using Danmokou.DMath;
 using Danmokou.Reflection;
@@ -165,7 +166,7 @@ public class TExGCX : TEx<GenCtx> {
         if (t == tv2) return v2s.DictGetOrThrow(ExC(name), $"No v2 exists by name {name}.");
         if (t == tv3) return v3s.DictGetOrThrow(ExC(name), $"No v3 exists by name {name}.");
         if (t == tvrv2) return rv2s.DictGetOrThrow(ExC(name), $"No V2RV2 exists by name {name}.");
-        throw new Exception($"No handling in GenCtx for type {Reflector.NameType(t)}");
+        throw new Exception($"No handling in GenCtx for type {t.RName()}");
     }
 }
 }

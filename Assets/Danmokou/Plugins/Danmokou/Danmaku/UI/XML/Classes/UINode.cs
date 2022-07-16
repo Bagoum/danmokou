@@ -63,6 +63,11 @@ public class UINode {
     /// Currently operating under the assumption that there are no templateContainer wrappers.
     /// </summary>
     public VisualElement HTML => NodeHTML;
+    
+    /// <summary>
+    /// Get the CSS world rect of this object's center. Note that this is in pixels with the top left as (0, 0).
+    /// </summary>
+    public Rect WorldLocation => HTML.worldBound;
     public IStyle Style => HTML.style;
     /// <summary>
     /// The .node VisualElement constructed by this node. Usually points to the only child of HTML, which should have the class .node.
@@ -313,6 +318,14 @@ public class UINode {
         NodeHTML.Focus();
         if (ContainerHTML is ScrollView sv)
             sv.ScrollTo(HTML);
+        else {
+            for (var g = ContainerHTML; g != null; g = g.parent) {
+                if (g.parent is ScrollView sv_) {
+                    sv_.ScrollTo(g);
+                    return;
+                }
+            }
+        }
     }
     protected virtual void Rebind() {
         if (Label != null)
@@ -364,7 +377,7 @@ public class UINode {
     #region Navigation
 
     /// <summary>
-    /// Proceed with standard navigation iff this returns null.
+    /// Custom navigation handling that takes priority over all UI navigation except queued events.
     /// </summary>
     public virtual UIResult? CustomEventHandling() => null;
 
@@ -705,7 +718,88 @@ public class ComplexLROptionUINode<T> : BaseLROptionUINode<T>, IComplexOptionNod
     }
 }
 
-//TODO: i eventually need to think of a better way to handle text input
+public class KeyRebindInputNode : UINode {
+    public enum Mode {
+        KBM,
+        Controller
+    }
+
+    private readonly Mode mode;
+    private readonly Action<IInspectableInputBinding[]?> applier;
+    private bool isHoldReady = false;
+    private IInspectableInputBinding[]? lastHeld = null;
+    private bool isEntryEnabled = false;
+
+    public KeyRebindInputNode(LString title, Action<IInspectableInputBinding[]?> applier, Mode mode) : base(title) {
+        this.applier = applier;
+        this.mode = mode;
+        With(fontControlsClass);
+    }
+    
+    protected override void Rebind() {
+        string t = Description();
+        NodeHTML.Q<Label>("Prefix").text = string.IsNullOrEmpty(t) ? "" : t + ":";
+        NodeHTML.Q("FadedBack").style.display = !isEntryEnabled ? DisplayStyle.Flex : DisplayStyle.None;
+        NodeHTML.Q<Label>("Label").text = isEntryEnabled ?
+            lastHeld == null ?
+                "Press desired keys" :
+                string.Join("+", lastHeld.Select(l => l.Description)) :
+            "";
+    }
+
+    public override UIResult? CustomEventHandling() {
+        if (!isEntryEnabled) return null;
+        var heldKeys = mode switch {
+            Mode.Controller => InputManager.CurrentlyHeldRebindableControllerKeys,
+            _ => InputManager.CurrentlyHeldRebindableKeys
+        };
+        if (heldKeys == null && lastHeld != null) {
+            //We're done
+            applier(lastHeld);
+            return EnableDisableEntry();
+        }
+
+        //Require that the user first hold no keys before pressing any keys
+        // This avoids issues with accidentally parsing the Z on entry
+        if (!isHoldReady) {
+            if (heldKeys == null)
+                isHoldReady = true;
+            return new UIResult.StayOnNode();
+        }
+
+            //Maintain the largest set of held keys.
+        //Eg. If I hold shift+ctrl+R, and then release R, it should continue to display shift+ctrl+R.
+        if (lastHeld == null || heldKeys?.Length >= lastHeld.Length)
+            lastHeld = heldKeys;
+
+        if (InputManager.GetKeyTrigger(KeyCode.Escape).Active)
+            return EnableDisableEntry();
+
+        return new UIResult.StayOnNode();
+    }
+    
+    
+    private UIResult EnableDisableEntry() {
+        isEntryEnabled = !isEntryEnabled;
+        isHoldReady = false;
+        lastHeld = null;
+        return new UIResult.StayOnNode();
+    }
+    
+    //This is only reached if custom handling does nothing
+    protected override UIResult NavigateInternal(UICommand req) => req switch {
+        UICommand.Confirm => !isEntryEnabled ? EnableDisableEntry() : base.NavigateInternal(req),
+        UICommand.Back => isEntryEnabled ? EnableDisableEntry() : base.NavigateInternal(req),
+        _ => base.NavigateInternal(req)
+    };
+
+    public override void Leave(bool animate) {
+        isEntryEnabled = false;
+        base.Leave(animate);
+    }
+
+}
+
 public class TextInputNode : UINode {
     public string DataWIP { get; private set; } = "";
     private bool isEntryEnabled = false;
@@ -722,32 +816,13 @@ public class TextInputNode : UINode {
         NodeHTML.Q<Label>("Label").text = DisplayWIP;
     }
 
-    private static readonly string[] validChars = 
-        "abcdefghijklmnopqrstuvwxyz0123456789".Select(x => x.ToString()).ToArray();
-
-    private static string KCToString(KeyCode kc) {
-        if (kc is >= KeyCode.A and <= KeyCode.Z)
-            return ((char)('a' + (kc - KeyCode.A))).ToString();
-        if (kc is >= KeyCode.Alpha0 and <= KeyCode.Alpha9)
-            return ((char)('0' + (kc - KeyCode.Alpha0))).ToString();
-        throw new Exception($"No handling for keycode {kc}");
-    }
-    
     public override UIResult? CustomEventHandling() {
         if (!isEntryEnabled) return null;
-        if (InputManager.GetKeyTrigger(KeyCode.Space).Active) {
-            DataWIP = DataWIP.Insert(bdCursorIdx, " ");
+        if (InputManager.TextInput is {} c) {
+            DataWIP = DataWIP.Insert(bdCursorIdx, c.ToString());
             ++cursorIdx;
             return new UIResult.StayOnNode();
         }
-        foreach (var kc in InputManager.Alphanumeric)
-            if (InputManager.GetKeyTrigger(kc).Active) {
-                DataWIP = DataWIP.Insert(bdCursorIdx, (InputManager.GetKeyTrigger(KeyCode.LeftShift).Active || 
-                                                       InputManager.GetKeyTrigger(KeyCode.RightShift).Active) ? 
-                    KCToString(kc).ToUpper() : KCToString(kc).ToLower());
-                ++cursorIdx;
-                return new UIResult.StayOnNode();
-            }
         if (InputManager.GetKeyTrigger(KeyCode.Backspace).Active) {
             DataWIP =
                 ((cursorIdx > 1) ? DataWIP[..(cursorIdx - 1)] : "") +

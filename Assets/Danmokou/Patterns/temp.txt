@@ -4,7 +4,31 @@ pattern({
 })
 phase(0)
 	paction(0)
-		shift-phase-to(2)
+		shift-phase-to(1)
+
+!{ hello(x, y)
+%x + %y
+!}
+!{ app1(f, x)
+$%f(%x)
+!}
+
+<!> type non depthsort
+<!> hp 1000
+phase 0
+	paction 0
+		position 0 ($app1($hello(1, !$), 1))
+		async scircle-red/w <0.5;:> gcr2 60 _ <5> {
+			} gsr2c 15 {
+			} s rvelocity px lerp(0, 2, t, 0, redd)
+
+<!> dialogue #{
+phase 0
+	saction 0
+		dialogue simp.dialogue.e-good
+		shift-phase
+#}
+
 
 <!> type non cbezier
 <!> hp 1000

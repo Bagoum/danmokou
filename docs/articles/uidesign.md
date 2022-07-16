@@ -12,15 +12,15 @@ First, let us define some terms:
 
 Let us examine how we might create an efficiently navigable UI layout. Our first approach might be to make the UI layout correspond to the HTML, which is how a standard browser would automate layout handling. However, this approach runs into contradictions for many common use-cases. Consider the boss practice menu: the left column displays a list of bosses, and for whichever boss is currently selected, a list of their spellcards appears in the right column. 
 
-![Unity_JYeiT9uFr2](..\images\Unity_JYeiT9uFr2.jpg)
+![Unity_JYeiT9uFr2](../images/Unity_JYeiT9uFr2.jpg)
 
 In this case, we have two separate columns. Each column can be navigated on its own with up/down keys, and this requires no special consideration. However, matters become more complex when we consider what happens when moving between the columns. If we press Right or Confirm from an entry in the left column, the current selection moves to the right column:
 
-![Unity_eZqvMJ4IsQ](..\images\Unity_eZqvMJ4IsQ.jpg)
+![Unity_eZqvMJ4IsQ](../images/Unity_eZqvMJ4IsQ.jpg)
 
 Now that we are in the right column, there is a common-sense layout requirement that pressing Left or Back should return us to the node in the left column we came from (here "Mima"). We can encode this layout behavior either *statically*-- by encoding in the layout that "Mima" is a **parent** of the current set of nodes on the right-- or *dynamically*-- by recording a stack of group-to-group transitions, and simply popping from the stack to reverse a transition. The dynamic strategy works for this use-case, but does not work for other cases that involve moving between groups of nodes. For example, consider the Game Results screen in DMK.
 
-![Unity_o2M4ZMw6tk](..\images\Unity_o2M4ZMw6tk.jpg)
+![Unity_o2M4ZMw6tk](../images/Unity_o2M4ZMw6tk.jpg)
 
 This screen has three "groups": a row at the bottom that can be navigated with left/right input, a column on the right (in which the cursor is contained) that can be navigated with up/down input, and a column on the left that can be navigated with up/down input. From the cursor, if we press Down, the cursor should move to the bottom row, preferably the "Save Replay" node. If we instead press Left, the cursor should move to the left column. Note that pressing Confirm should do nothing, unlike the boss practice screen.
 
@@ -68,9 +68,9 @@ When we move between nodes in different groups, we need to know which groups we 
 
 ```
 A - B - C
-		  \
-		    X - Y
-          /
+         \
+          X - Y
+         /
     D - E
 ```
 
@@ -94,17 +94,17 @@ Popups contain incredibly complex logic, but can be handled with just the abstra
 
 Let's start with the replays screen. This screen has a single column group with one node for each saved replay. In the screenshot below, the group call stack is empty.
 
-![Unity_1zFMZQCEM5](..\images\Unity_1zFMZQCEM5.jpg)
+![Unity_1zFMZQCEM5](../images/Unity_1zFMZQCEM5.jpg)
 
 If we press Confirm on this node, a popup should be dynamically generated containing content related to this replay. The position of the popup should be absolute (in the CSS sense), and when it appears, the rest of the screen should dim a bit. When leaving the popup, it should be destroyed. To achieve this, we will consider the popup as a group (PopupUIGroup) that is *dynamically* and *temporarily* added to the screen, and we will render it under the screen's shadow. 
 
-![Unity_Eu4n0OEejC](..\images\Unity_Eu4n0OEejC.jpg)
+![Unity_Eu4n0OEejC](../images/Unity_Eu4n0OEejC.jpg)
 
 Note how the node we came from ("var21") is highlighted, and if we press the "Back" button, we should return to "var21". This requires that the popup is a child of the column group. When we create a popup, we attach it as a child to the group of the node that constructed it, and we push that group and that node to the group call stack.
 
 You might expect that, in the second screenshot, the group call stack has one entry with the column group and "var21". While this entry is in the stack, there are also more entries. In order to maximally generalize the possible contents of a popup, the popup group is itself a composite group that contains just a header string ("Replay") and then a body group. In this case, the composite group must not only include the row of buttons at the bottom, but also the displayed content in the middle of the popup ("What would you like to do..."). Note that we cannot assume that the content in the middle of the popup is uninteractable, or that it has a fixed format. Consider the game results screen, where pressing Confirm on "Save Replay" brings up a popup where the user must navigate to content in the middle of the popup and interact with it.
 
-![Unity_yvcOzs6SXn](..\images\Unity_yvcOzs6SXn.jpg)
+![Unity_yvcOzs6SXn](../images/Unity_yvcOzs6SXn.jpg)
 
 Therefore, in the case of the replay popup, the popup group is a composite group with a single component group. This component group is a "vertical composite group", which handles any number of component groups oriented along a vertical axis. The vertical composite group has two component groups: a column with a single node ("What would you like to do..."), and a row with a set of options.
 
@@ -126,7 +126,7 @@ To see how this all comes together, let's examine the code that constructs the r
 
 The code that creates the replay screen is shown below.
 
-![rider64_5k083oQr2o](..\images\rider64_5k083oQr2o.jpg)
+![rider64_5k083oQr2o](../images/rider64_5k083oQr2o.jpg)
 
 Let's proceed through this code line by line.
 

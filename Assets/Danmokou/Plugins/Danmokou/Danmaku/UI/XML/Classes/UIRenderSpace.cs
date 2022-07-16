@@ -11,16 +11,18 @@ using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Danmokou.UI.XML {
-public abstract class UIRenderSpace : IRenderSource {
-    protected List<IRenderSource> Sources { get; } = new();
+public abstract class UIRenderSpace {
+    protected List<UIGroup> Sources { get; } = new();
     protected VisualElement? _html = null;
     public abstract VisualElement HTML { get; }
     public UIScreen Screen { get; }
+    public UIRenderSpace? Parent { get; }
     public virtual bool Visible => true;
     public UIController Controller => Screen.Controller;
 
-    public UIRenderSpace(UIScreen screen) {
+    public UIRenderSpace(UIScreen screen, UIRenderSpace? parent) {
         this.Screen = screen;
+        this.Parent = parent;
     }
 
     protected void UpdateVisibility() {
@@ -28,25 +30,34 @@ public abstract class UIRenderSpace : IRenderSource {
             HTML.style.display = Visible.ToStyle();
     }
 
-    public void AddSource(IRenderSource grp) {
-        Sources.Add(grp);
-        UpdateVisibility();
+    public void AddSource(UIGroup grp) {
+        if (!Sources.Contains(grp)) {
+            Sources.Add(grp);
+            UpdateVisibility();
+            Parent?.AddSource(grp);
+        }
     }
 
-    public void RemoveSource(IRenderSource grp) {
+    public void RemoveSource(UIGroup grp) {
         Sources.Remove(grp);
         UpdateVisibility();
+        Parent?.RemoveSource(grp);
     }
 
-    public void SourceBecameVisible(UIGroup grp) => UpdateVisibility();
+    public void SourceBecameVisible(UIGroup grp) {
+        UpdateVisibility();
+        Parent?.SourceBecameVisible(grp);
+    }
 
-    public void SourceBecameHidden(UIGroup grp) => UpdateVisibility();
-}
-/// <summary>
-/// An object that renders into a RenderSpace. Either a UIGroup or a child UIRenderSpace.
-/// </summary>
-public interface IRenderSource {
-    bool Visible { get; }
+    public void SourceBecameHidden(UIGroup grp) {
+        UpdateVisibility();
+        Parent?.SourceBecameHidden(grp);
+    }
+
+    public UIRenderConstructed Construct(VisualTreeAsset prefab,
+        Action<UIRenderConstructed, VisualElement>? builder = null) => new UIRenderConstructed(this, prefab, builder);
+    
+    public UIRenderColumn ColumnRender(int index) => new(this, index);
 }
 
 /// <summary>
@@ -55,7 +66,7 @@ public interface IRenderSource {
 public class UIRenderExplicit : UIRenderSpace {
     private readonly Func<VisualElement, VisualElement> htmlFinder;
     public override VisualElement HTML => _html ??= htmlFinder(Screen.HTML);
-    public UIRenderExplicit(UIScreen screen, Func<VisualElement, VisualElement> htmlFinder) : base(screen) {
+    public UIRenderExplicit(UIScreen screen, Func<VisualElement, VisualElement> htmlFinder) : base(screen, null) {
         this.htmlFinder = htmlFinder;
     }
 }
@@ -64,7 +75,7 @@ public class UIRenderExplicit : UIRenderSpace {
 /// </summary>
 public class UIRenderDirect : UIRenderSpace {
     public override VisualElement HTML => _html ??= Screen.Container;
-    public UIRenderDirect(UIScreen screen) : base(screen) { }
+    public UIRenderDirect(UIScreen screen) : base(screen, null) { }
 }
 
 /// <summary>
@@ -91,7 +102,7 @@ public class UIRenderAbsoluteTerritory : UIRenderSpace {
             });
     }
 
-    public Task FadeOutIfNoOtherDependencies(IRenderSource g) {
+    public Task FadeOutIfNoOtherDependencies(UIGroup g) {
         if (Sources.Count == 1 && Sources[0] == g && HTML.style.display == DisplayStyle.Flex) {
             var token = isTransitioning.AddConst(true);
             TransitionHelpers.TweenTo(Alpha, 0, 0.1f, a => HTML.style.backgroundColor = bgc.WithA(a))
@@ -103,7 +114,7 @@ public class UIRenderAbsoluteTerritory : UIRenderSpace {
         return Task.CompletedTask;
     }
 
-    public UIRenderAbsoluteTerritory(UIScreen screen) : base(screen) {
+    public UIRenderAbsoluteTerritory(UIScreen screen) : base(screen, null) {
         _html = Screen.HTML.Query("AbsoluteContainer");
         //TODO: this doesn't work correctly, so I'm setting the alpha value manually
         bgc = _html.style.backgroundColor.value;
@@ -115,7 +126,6 @@ public class UIRenderAbsoluteTerritory : UIRenderSpace {
             evt.StopPropagation();
         });
     }
-
 }
 
 /// <summary>
@@ -126,7 +136,7 @@ public class UIRenderColumn : UIRenderSpace {
 
     private VisualElement Column {
         get {
-            var col = Screen.HTML.Query(className: "column").ToList()[Index];
+            var col = Parent!.HTML.Query(className: "column").ToList()[Index];
             var colScroll = col.Query<ScrollView>().ToList();
             if (colScroll.Count > 0)
                 return colScroll[0];
@@ -135,7 +145,9 @@ public class UIRenderColumn : UIRenderSpace {
     }
     public override VisualElement HTML => _html ??= Column;
 
-    public UIRenderColumn(UIScreen screen, int index) : base(screen) {
+    public UIRenderColumn(UIScreen screen, int index) : this(screen.DirectRender, index) { }
+
+    public UIRenderColumn(UIRenderSpace parent, int index) : base(parent.Screen, parent) {
         this.Index = index;
     }
 }
@@ -160,18 +172,16 @@ public class UIRenderConstructed : UIRenderSpace {
     }
     public override bool Visible => Sources.Any(g => g.Visible);
 
-    public UIRenderConstructed(UIRenderSpace parent, VisualTreeAsset prefab, Action<UIRenderConstructed, VisualElement>? builder = null) : base(parent.Screen) {
+    public UIRenderConstructed(UIRenderSpace parent, VisualTreeAsset prefab, Action<UIRenderConstructed, VisualElement>? builder = null) : base(parent.Screen, parent) {
         this.parent = parent;
         this.prefab = prefab;
         this.builder = builder;
-        parent.AddSource(this);
     }
 
     public void Destroy() {
         if (Sources.Count > 0)
             throw new Exception("Cannot destroy a RenderSpace when it has active groups");
         parent.HTML.Remove(HTML);
-        parent.RemoveSource(this);
     }
 }
 

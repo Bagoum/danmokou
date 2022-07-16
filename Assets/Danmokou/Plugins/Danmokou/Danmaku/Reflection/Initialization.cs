@@ -192,16 +192,6 @@ public static partial class Reflector {
             ("ra", RV2ControlMethod.RANG)
         });
         SEnum(new[] {
-            ("_", Emote.NORMAL),
-            ("norm", Emote.NORMAL),
-            ("ang", Emote.ANGRY),
-            ("hap", Emote.HAPPY),
-            ("w", Emote.WORRY),
-            ("c", Emote.CRY),
-            ("su", Emote.SURPRISE),
-            ("sp", Emote.SPECIAL)
-        });
-        SEnum(new[] {
             ("l1", TSMReflection.StandLocation.LEFT1),
             ("l2", TSMReflection.StandLocation.LEFT2),
             ("r1", TSMReflection.StandLocation.RIGHT1),

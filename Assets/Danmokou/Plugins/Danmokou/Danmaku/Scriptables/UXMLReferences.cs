@@ -49,6 +49,7 @@ public class UXMLReferences : ScriptableObject {
         {typeof(UIButton), PopupButton},
         {typeof(TwoLabelUINode), TwoTextUINode},
         {typeof(TextInputNode), TextInputNode},
+        {typeof(KeyRebindInputNode), TextInputNode},
         {typeof(IOptionNodeLR), OptionLRNode},
         {typeof(IComplexOptionNodeLR), ComplexOptionLRNode}
     };

@@ -6,6 +6,7 @@ using System.Linq;
 using System.Reflection;
 using BagoumLib;
 using BagoumLib.Cancellation;
+using BagoumLib.Reflection;
 using BagoumLib.Tasks;
 using Danmokou.Behavior;
 using Danmokou.Core;
@@ -281,13 +282,13 @@ public abstract class StateMachine {
 
     public static StateMachine Create(string name, object[] args) {
         var method = SMConstruction.ANY;
-        GetParams(ref name, ref method, out Type? myType);
+        GetSignature(ref name, ref method, out Type? myType);
         return Create(name, method, myType, args);
     }
 
-    private static Reflector.NamedParam[] GetParams(ref string name, ref SMConstruction method, out Type? myType) {
+    private static Reflector.MethodSignature GetSignature(ref string name, ref SMConstruction method, out Type? myType) {
         if (!smInitMap.TryGetValue(name, out myType)) {
-            Reflector.NamedParam[]? prms;
+            Reflector.MethodSignature? prms;
             if (method == SMConstruction.AS_TREFLECTABLE || method == SMConstruction.ANY) {
                 if ((prms = Reflector.TryGetSignature<TTaskPattern>(ref name)) != null) {
                     method = SMConstruction.AS_TREFLECTABLE;
@@ -320,15 +321,16 @@ public abstract class StateMachine {
             throw new Exception("Somehow received a Create(ILLEGAL) call in SM. This should not occur.");
         MaybeQueueProperties(p);
         string name = p.Next();
-        var prms = GetParams(ref name, ref method, out var myType);
+        var sig = GetSignature(ref name, ref method, out var myType);
+        var prms = sig.Params;
                    
         object[] reflect_args = new object[prms.Length];
         if (prms.Length > 0) {
             bool requires_children = prms[0].type == statesTyp && !p.Ctx.props.trueArgumentOrder;
             int special_args_i = (requires_children) ? 1 : 0;
-            Reflector.FillInvokeArray(reflect_args, special_args_i, prms, p, myType ?? typeof(ReflectableLASM), name);
+            Reflector.FillInvokeArray(reflect_args, special_args_i, sig, p);
             if (p.Ctx.QueuedProps.Count > 0)
-                throw new Exception($"Line {p.GetLastLine()}: StateMachine {name} is not allowed to have phase properties.");
+                throw new Exception($"Line {p.GetLastLine()}: StateMachine {sig.FileLink} is not allowed to have phase properties.");
             int childCt = -1;
             if (!p.IsNewlineOrEmpty) {
                 if (IsChildCountMarker(p.MaybeScan(), out int ct)) {

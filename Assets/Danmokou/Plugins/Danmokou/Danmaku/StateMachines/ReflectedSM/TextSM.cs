@@ -114,27 +114,19 @@ public static class TSMReflection {
         await _Text(text, false)(smh);
         await Confirm()(smh);
     };
-    
-    private static string EmoteToString(Emote e) => e switch {
-        Emote.NORMAL => "",
-        Emote.HAPPY => "happy",
-        Emote.ANGRY => "angry",
-        Emote.WORRY => "worry",
-        Emote.CRY => "cry",
-        Emote.SURPRISE => "surprise",
-        Emote.SPECIAL => "smug",
-        _ => throw new ArgumentOutOfRangeException(nameof(e), e, null)
-    };
 
-    private static TTaskPattern _Speak(LR lr, string? profile_key, Emote? emote) {
+    private static string EmoteToString(string e) =>
+        (e == "_") ? "" : e;
+
+    private static TTaskPattern _Speak(LR lr, string? profile_key, string? emote) {
         return smh => {
             var chr = profile_key == null ? null : FindOrCreateCharacter(profile_key);
             if (lr == LR.LEFT)
                 lastSpeaker = (left = chr ?? left) ?? throw new Exception("No left speaker set");
             else
                 lastSpeaker = (right = chr ?? right) ?? throw new Exception("No right speaker set");
-            if (emote.Try(out var e))
-                lastSpeaker!.Emote.Value = EmoteToString(e);
+            if (emote != null)
+                lastSpeaker!.Emote.Value = EmoteToString(emote);
             return Task.CompletedTask;
         };
     }
@@ -144,19 +136,19 @@ public static class TSMReflection {
     [Alias("SR")]
     public static TTaskPattern SpeakR(string profile) => _Speak(LR.RIGHT, profile, null);
     [Alias("SLE")]
-    public static TTaskPattern SpeakLE(string profile, Emote e) => _Speak(LR.LEFT, profile, e);
+    public static TTaskPattern SpeakLE(string profile, string e) => _Speak(LR.LEFT, profile, e);
     [Alias("SRE")]
-    public static TTaskPattern SpeakRE(string profile, Emote e) => _Speak(LR.RIGHT, profile, e);
+    public static TTaskPattern SpeakRE(string profile, string e) => _Speak(LR.RIGHT, profile, e);
     [Alias("SLC")]
     public static TTaskPattern SpeakLC() => _Speak(LR.LEFT, null, null);
     [Alias("SRC")]
     public static TTaskPattern SpeakRC() => _Speak(LR.RIGHT, null, null);
     [Alias("SLCE")]
-    public static TTaskPattern SpeakLCE(Emote e) => _Speak(LR.LEFT, null, e);
+    public static TTaskPattern SpeakLCE(string e) => _Speak(LR.LEFT, null, e);
     [Alias("SRCE")]
-    public static TTaskPattern SpeakRCE(Emote e) => _Speak(LR.RIGHT, null, e);
+    public static TTaskPattern SpeakRCE(string e) => _Speak(LR.RIGHT, null, e);
     
-    public static TTaskPattern SetEmote(string profile, Emote e) {
+    public static TTaskPattern SetEmote(string profile, string e) {
         return smh => {
             FindOrCreateCharacter(profile).Emote.Value = EmoteToString(e);
             return Task.CompletedTask;

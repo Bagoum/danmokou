@@ -81,12 +81,10 @@ public class PiecewiseAppear : CoroutineRegularUpdater {
         // in the ReturnTo menu situation.
         if (!isRunning && continuations.Count > 0)
             Dequeue();
-        for (int ii = 0; ii < updaters.Count; ++ii) {
-            if (!updaters.Data[ii].MarkedForDeletion) {
-                if (updaters[ii].DoUpdate())
-                    updaters.Data[ii].MarkForDeletion();
-            }
-        }
+        for (int ii = 0; ii < updaters.Count; ++ii)
+            if (updaters.GetIfExistsAt(ii, out var u) && u.DoUpdate())
+                updaters.Delete(ii);
+        
         updaters.Compact();
         base.RegularUpdate();
     }
@@ -191,9 +189,9 @@ public class PiecewiseAppear : CoroutineRegularUpdater {
     
     public void Clear() {
         for (int ii = 0; ii < updaters.Count; ++ii) {
-            if (!updaters.Data[ii].MarkedForDeletion) {
-                updaters[ii].Destroy();
-                updaters.Data[ii].MarkForDeletion();
+            if (updaters.GetIfExistsAt(ii, out var u)) {
+                u.Destroy();
+                updaters.Delete(ii);
             }
         }
         updaters.Compact();
@@ -204,8 +202,8 @@ public class PiecewiseAppear : CoroutineRegularUpdater {
         if (!Application.isPlaying) return;
         //Effects render to LowEffects
         for (int ii = 0; ii < updaters.Count; ++ii) {
-            if (!updaters.Data[ii].MarkedForDeletion)
-                FragmentRendering.Render(c, updaters[ii]);
+            if (updaters.GetIfExistsAt(ii, out var u))
+                FragmentRendering.Render(c, u);
         }
     }
 

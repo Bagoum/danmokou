@@ -49,7 +49,7 @@ public class SFXService : RegularUpdater, ISFXService {
             this.cT = cT;
         }
     }
-    private readonly CompactingArray<ConstructedAudio> constructed = new();
+    private readonly DMCompactingArray<ConstructedAudio> constructed = new();
 
     public void Setup() {
         src = GetComponent<AudioSource>();
@@ -101,13 +101,14 @@ public class SFXService : RegularUpdater, ISFXService {
         }
         (timeouts, _timeouts) = (_timeouts, timeouts);
         for (int ii = 0; ii < constructed.Count; ++ii) {
-            var c = constructed[ii];
-            if (!c.csrc.isPlaying || c.cT.Cancelled) {
-                Destroy(c.csrc);
-                constructed.Delete(ii);
-            } else {
-                if (c.sfx.slowable) {
-                    c.csrc.pitch = c.sfx.Pitch;
+            if (constructed.GetIfExistsAt(ii, out var c)) {
+                if (!c.csrc.isPlaying || c.cT.Cancelled) {
+                    Destroy(c.csrc);
+                    constructed.Delete(ii);
+                } else {
+                    if (c.sfx.slowable) {
+                        c.csrc.pitch = c.sfx.Pitch;
+                    }
                 }
             }
         }
@@ -245,7 +246,7 @@ public class SFXService : RegularUpdater, ISFXService {
         if (aci == null) return null;
         var cmp = _RequestSource(aci);
         if (cmp != null) {
-            constructed.AddV(new ConstructedAudio(cmp, aci, cT));
+            constructed.Add(new ConstructedAudio(cmp, aci, cT));
             if (aci.loop)
                 cmp.loop = true;
             cmp.Play();
@@ -271,7 +272,8 @@ public class SFXService : RegularUpdater, ISFXService {
 
     private void ClearConstructed() {
         for (int ii = 0; ii < constructed.Count; ++ii) {
-            if (constructed[ii].csrc != null) Destroy(constructed[ii].csrc);
+            if (constructed.GetIfExistsAt(ii, out var c) && c.csrc != null)
+                Destroy(c.csrc);
         }
         for (int ii = 0; ii < loopTimeoutsArr.Count; ++ii) {
             Destroy(loopTimeoutsArr[ii].source);
@@ -284,14 +286,16 @@ public class SFXService : RegularUpdater, ISFXService {
     private void HandleEngineStateChange(EngineState state) {
         if (state.IsPaused()) {
             for (int ii = 0; ii < constructed.Count; ++ii) {
-                if (constructed[ii].sfx.Pausable) constructed[ii].csrc.Pause();
+                if (constructed.GetIfExistsAt(ii, out var c))
+                    c.csrc.Pause();
             }
             for (int ii = 0; ii < loopTimeoutsArr.Count; ++ii) {
                 loopTimeoutsArr[ii].source.Pause();
             }
         } else if (state == EngineState.RUN) {
             for (int ii = 0; ii < constructed.Count; ++ii) {
-                if (constructed[ii].sfx.Pausable) constructed[ii].csrc.UnPause();
+                if (constructed.GetIfExistsAt(ii, out var c))
+                    c.csrc.UnPause();
             }
             for (int ii = 0; ii < loopTimeoutsArr.Count; ++ii) {
                 loopTimeoutsArr[ii].source.UnPause();

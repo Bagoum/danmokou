@@ -9,5 +9,6 @@
             <ui:VisualElement name="Container" picking-mode="Ignore" />
         </ui:VisualElement>
         <ui:VisualElement name="BottomLine" class="uiScreenLiner" />
+        <ui:Label name="ControlsHelper" text="Confirm: Z or Return      Back: X or Right Click" style="position: absolute; bottom: 0; right: 0; left: 0; height: 110px; padding-left: 480px; padding-right: 480px; padding-top: 0; padding-bottom: 10px; font-size: 72px; -unity-font-definition: url(&apos;project://database/Assets/Danmokou/Fonts/Unity%20SDF%20Assets/Signika-Regular%20SDF.asset?fileID=11400000&amp;guid=a59d94292a6917d4da3cf1a2f7ed675f&amp;type=2#Signika-Regular SDF&apos;); -unity-text-align: middle-left; color: rgb(159, 159, 159);" />
     </ui:VisualElement>
 </ui:UXML>

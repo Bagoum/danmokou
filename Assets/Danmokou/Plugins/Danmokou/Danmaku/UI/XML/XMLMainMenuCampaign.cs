@@ -120,7 +120,7 @@ public class XMLMainMenuCampaign : XMLMainMenu {
             Builder = (s, ve) => ve.CenterElements()
         };
         DifficultyScreen.SetFirst(new CommentatorAxisColumn<FixedDifficulty?>(DifficultyScreen, 
-            new UIRenderDirect(DifficultyScreen), CustomAndVisibleDifficulties.Select(MakeDifficultyNode).ToArray()) {
+            DifficultyScreen, CustomAndVisibleDifficulties.Select(MakeDifficultyNode).ToArray()) {
             Commentator = difficultyCommentator,
             BaseLoc = new(-2.9f * 240f, 0),
             Axis = new Vector2(1.4f, 2.6f).normalized * (0.7f * 240f),

@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 using BagoumLib;
 using UnityEngine;
-using static FileUtils;
-using static Danmokou.Core.DInput.InputHelpers;
+using static Danmokou.Core.DInput.InputSettings;
+using static Danmokou.Core.LocalizedStrings.Controls;
 
 namespace Danmokou.Core.DInput {
 
@@ -10,60 +10,35 @@ public class KBMInputSource : IKeyedInputSource, IPrimaryInputSource {
     public List<IInputHandler> Handlers { get; } = new();
     public MainInputSource Container { get; set; } = null!;
     public KBMInputSource() {
-        arrowLeft = InputHandler.Trigger(leftArrowDown);
-        arrowRight = InputHandler.Trigger(rightArrowDown);
-        arrowUp = InputHandler.Trigger(upArrowDown);
-        arrowDown = InputHandler.Trigger(downArrowDown);
         ((IKeyedInputSource)this).AddUpdaters();
     }
 
-    private readonly IInputChecker leftArrowDown = Key(KeyCode.LeftArrow);
-    private readonly IInputChecker rightArrowDown = Key(KeyCode.RightArrow);
-    private readonly IInputChecker upArrowDown = Key(KeyCode.UpArrow);
-    private readonly IInputChecker downArrowDown = Key(KeyCode.DownArrow);
-    public IInputHandler arrowLeft { get; }
-    public IInputHandler arrowRight { get; }
-    public IInputHandler arrowUp { get; }
-    public IInputHandler arrowDown { get; }
+    public IInputHandler arrowLeft { get; } = InputHandler.Trigger(i.Left, left);
+    public IInputHandler arrowRight { get; } = InputHandler.Trigger(i.Right, right);
+    public IInputHandler arrowUp { get; } = InputHandler.Trigger(i.Up, up);
+    public IInputHandler arrowDown { get; } = InputHandler.Trigger(i.Down, down);
     
-    public IInputHandler focusHold { get; } = InputHandler.Hold(Key(i.FocusHold));
-    public IInputHandler fireHold { get; } = InputHandler.Hold(Key(i.ShootHold));
-    public IInputHandler bomb { get; } = TKey(i.Special);
-    public IInputHandler meter { get; } = InputHandler.Hold(Key(i.Special));
-    public IInputHandler swap { get; } = TKey(i.Swap);
-    public IInputHandler pause { get; } =InputHandler.Trigger(
-#if WEBGL || UNITY_ANDROID
-//Esc is reserved in WebGL, and is mapped to the back button in Android
-        Key(KeyCode.BackQuote)
-#else
-        Key(KeyCode.BackQuote).Or(Key(KeyCode.Escape))
-#endif
-        );
-    public IInputHandler vnBacklogPause { get; } = TKey(KeyCode.L);
-    public IInputHandler uiConfirm { get; } =
-        InputHandler.Trigger(Key(KeyCode.Z).Or(Key(KeyCode.Return)).Or(Key(KeyCode.Space)));
+    public IInputHandler focusHold { get; } = InputHandler.Hold(i.FocusHold, focus);
+    public IInputHandler fireHold { get; } = InputHandler.Hold(i.ShootHold, fire);
+    public IInputHandler bomb { get; } = InputHandler.Trigger(i.Special, special);
+    public IInputHandler meter { get; } = InputHandler.Hold(i.Special, special);
+    public IInputHandler swap { get; } = InputHandler.Trigger(i.Swap, LocalizedStrings.Controls.swap);
+    public IInputHandler pause { get; } =InputHandler.Trigger(i.Pause, LocalizedStrings.Controls.pause);
+    public IInputHandler vnBacklogPause { get; } = InputHandler.Trigger(i.Backlog, backlog);
+    public IInputHandler uiConfirm { get; } = InputHandler.Trigger(i.Confirm, confirm);
     
     
-    //mouse button 0, 1, 2 = left, right, middle click
-    //don't listen to mouse left click for confirm-- left clicks need to be reported by the targeted elemnt
-    public IInputHandler uiBack { get; } =
-        InputHandler.Trigger(Key(KeyCode.X)
-            .Or(Mouse(1)
-#if UNITY_ANDROID
-//System back button is mapped to ESC
-            .Or(Key(KeyCode.Escape))
-#endif
-        ));
-    public IInputHandler dialogueSkipAll { get; } = TKey(KeyCode.LeftControl);
+    public IInputHandler uiBack { get; } = InputHandler.Trigger(i.Back, back);
+    public IInputHandler dialogueSkipAll { get; } = InputHandler.Trigger(i.SkipDialogue, skip);
     
     
     public short? HorizontalSpeed =>
-        rightArrowDown.Active ? IInputSource.maxSpeed : leftArrowDown.Active ? IInputSource.minSpeed : (short)0;
+        i.Right.Active ? IInputSource.maxSpeed : i.Left.Active ? IInputSource.minSpeed : (short)0;
     public short? VerticalSpeed =>
-        upArrowDown.Active ? IInputSource.maxSpeed : downArrowDown.Active ? IInputSource.minSpeed : (short)0;
+        i.Up.Active ? IInputSource.maxSpeed : i.Down.Active ? IInputSource.minSpeed : (short)0;
     
     void IInputSource.OncePerUnityFrameToggleControls() {
-        if (((IInputHandlerInputSource)this).UpdateHandlers()) {
+        if (((IInputHandlerInputSource)this).OncePerUnityFrameUpdateHandlers()) {
             Container.MarkActive(this);
         }
     }

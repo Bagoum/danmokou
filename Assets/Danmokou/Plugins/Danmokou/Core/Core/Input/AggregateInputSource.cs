@@ -5,17 +5,20 @@ using BagoumLib.DataStructures;
 using UnityEngine;
 
 namespace Danmokou.Core.DInput {
+/// <summary>
+/// A top-level input source that combines a <see cref="MainSource"/> with any number
+/// of override sources, such as <see cref="ReplayPlayerInputSource"/> or
+/// <see cref="InCodeInputSource"/>.
+/// </summary>
 public class AggregateInputSource : IInputHandlerInputSource, IInputSource {
     public const int REPLAY_PRIORITY = -100;
     private DMCompactingArray<IInputSource> Sources { get; } = new(8);
     public MainInputSource MainSource { get; }
     private static readonly Dictionary<KeyCode, IInputHandler> KeyTriggers = new();
 
-    public readonly IInputHandler ReplayDebugSave = new AndInputHandler(
-        InputHandler.Hold(InputHelpers.Key(KeyCode.LeftControl)),
-        InputHandler.Hold(InputHelpers.Key(KeyCode.LeftShift)),
-        InputHandler.Trigger(InputHelpers.Key(KeyCode.R))
-    );
+    public readonly IInputHandler ReplayDebugSave = InputHandler.Trigger(
+        new SimultaneousInputBinding(InputManager.Ctrl, InputManager.Shift, new KBMKeyInputBinding(KeyCode.R))
+        );
     public List<IInputHandler> Handlers { get; } = new();
 
     public AggregateInputSource(MainInputSource main) {
@@ -40,18 +43,18 @@ public class AggregateInputSource : IInputHandlerInputSource, IInputSource {
                 Sources[ii].OncePerUnityFrameToggleControls();
         Sources.Compact();
         MainSource.OncePerUnityFrameToggleControls();
-        ((IInputHandlerInputSource)this).UpdateHandlers();
+        ((IInputHandlerInputSource)this).OncePerUnityFrameUpdateHandlers();
     }
     
     public IInputHandler GetKeyTrigger(KeyCode key) {
         if (!KeyTriggers.TryGetValue(key, out var v))
-            AddHandler(v = KeyTriggers[key] = InputHandler.Trigger(InputHelpers.Key(key)));
+            AddHandler(v = KeyTriggers[key] = InputHandler.Trigger(new KBMKeyInputBinding(key)));
         return v;
     }
 
     public void AddHandler(IInputHandler h) {
         Handlers.Add(h);
-        h.Update();
+        h.OncePerUnityFrameUpdate();
     }
 
     //praying these don't make garbage, lmao.

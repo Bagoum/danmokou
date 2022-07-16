@@ -116,7 +116,7 @@ public static partial class BPYRepo {
     public static ExBPY BRand(ExBPY from, ExBPY to) => bpi => SeedRandUint.Of(from(bpi), to(bpi), bpi.id);
     /// <summary>
     /// Return a random number as a deterministic function of the parametric ID.
-    /// <br/>This function returns a different value from `<see cref="BRand"/>`.
+    /// <br/>This function returns a different value from <see cref="BRand"/>.
     /// </summary>
     /// <param name="from">Minimum</param>
     /// <param name="to">Maximum</param>

@@ -4,12 +4,12 @@ using System.Diagnostics.CodeAnalysis;
 using UnityEngine;
 using System.Linq.Expressions;
 using BagoumLib.Expressions;
+using BagoumLib.Reflection;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Expressions;
 using Danmokou.Graphics;
 using Danmokou.Player;
-using Danmokou.Reflection;
 using Danmokou.Services;
 using Ex = System.Linq.Expressions.Expression;
 using static Danmokou.Expressions.ExUtils;
@@ -35,7 +35,6 @@ namespace Danmokou.DMath.Functions {
 /// <br/>Most of the math library is implemented in the DMath classes beginning with ExM.
 /// </summary>
 [Reflect]
-[SuppressMessage("ReSharper", "UnusedMethodReturnValue.Global")]
 public static partial class ExM {
     #region Aliasing
     //I have type-generalized the code for Reference/Lets but it's not possible to turn them into math expressions.

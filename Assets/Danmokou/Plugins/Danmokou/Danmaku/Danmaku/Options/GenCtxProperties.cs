@@ -7,6 +7,7 @@ using Danmokou.Danmaku.Patterns;
 using Danmokou.DMath;
 using Danmokou.DMath.Functions;
 using Danmokou.Expressions;
+using BagoumLib.Reflection;
 using Danmokou.Reflection;
 using Danmokou.SM;
 using JetBrains.Annotations;

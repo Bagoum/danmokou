@@ -347,7 +347,7 @@ public class Enemy : RegularUpdater {
             return;
         }
         if (!Vulnerable.TakesDamage()) return;
-        float dstToFirer = (firer.Loc - Beh.rBPI.loc).magnitude;
+        float dstToFirer = (firer.Loc - Beh.rBPI.LocV2).magnitude;
         float shotgun = (SHOTGUN_MIN - dstToFirer) / (SHOTGUN_MIN - SHOTGUN_MAX);
         double multiplier = GameManagement.Instance.PlayerDamageMultiplier *
                             M.Lerp(0, 1, shotgun, 1, SHOTGUN_MULTIPLIER);
@@ -484,7 +484,7 @@ public class Enemy : RegularUpdater {
         var bt = LevelController.DefaultSuicideStyle;
         if (string.IsNullOrWhiteSpace(bt)) 
             bt = "triangle-black/w";
-        var angleTo = M.AtanD(BulletManager.PlayerTarget.location - Beh.rBPI.loc);
+        var angleTo = M.AtanD(BulletManager.PlayerTarget.location - Beh.rBPI.LocV2);
         int numBullets = GameManagement.Difficulty.numSuicideBullets;
         for (int ii = 0; ii < numBullets; ++ii) {
             var mov = new Movement(SuicideVTP, Beh.rBPI.loc,

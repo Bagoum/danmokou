@@ -12,8 +12,8 @@ public static class Locales {
 
     private static IDMKLocaleProvider? _prov;
     public static IDMKLocaleProvider Provider => _prov ??= ServiceLocator.Find<IDMKLocaleProvider>();
+    public static string? TextLocale => Provider.TextLocale.Value;
 }
-
 public interface IDMKLocaleProvider {
     public Evented<string?> TextLocale { get; }
     public Evented<string?> VoiceLocale { get; }

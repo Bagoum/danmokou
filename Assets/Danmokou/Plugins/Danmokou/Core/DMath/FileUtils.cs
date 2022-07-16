@@ -8,6 +8,7 @@ using System.Reflection;
 using System.Runtime.Serialization.Formatters.Binary;
 using BagoumLib;
 using Danmokou.Core;
+using Danmokou.Core.DInput;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
@@ -191,27 +192,5 @@ public static class FileUtils {
     public static byte[] ReadAllBytes(string file) {
         CheckPath(ref file);
         return File.ReadAllBytes(file);
-    }
-
-
-    public class InputConfig {
-        public KeyCode FocusHold = KeyCode.LeftShift;
-        public KeyCode ShootHold = KeyCode.Z;
-        public KeyCode Special = KeyCode.X;
-        public KeyCode Swap = KeyCode.Space;
-    }
-    private const string INPUT = SAVEDIR + "input.txt";
-    private const string INPUTREF = SAVEDIR + "input_reference.txt";
-    public static InputConfig i { get; }
-
-    static FileUtils() {
-        var inp = ReadJson<InputConfig>(INPUT);
-        if (inp == null) {
-            inp = new InputConfig();
-            WriteJson(INPUT, inp);
-            var kcs = Enum.GetValues(typeof(KeyCode)).Cast<KeyCode>().Select(kc => $"{kc.ToString()} = {(int) kc}").ToArray();
-            WriteJson(INPUTREF, kcs);
-        }
-        i = inp;
     }
 }

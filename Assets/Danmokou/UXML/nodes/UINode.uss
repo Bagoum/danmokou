@@ -40,6 +40,10 @@
     -unity-font-definition: url('project://database/Assets/SZYU/Fonts/Unity%20SDF/Ubuntu-L%20SDF.asset?fileID=11400000&guid=98f4f451ca482fa4ebc8dd8dafe12b06&type=2#Ubuntu-L SDF');
 }
 
+.font-controls {
+    -unity-font-definition: url('project://database/Assets/Danmokou/Fonts/Unity%20SDF%20Assets/Signika-Regular%20SDF.asset?fileID=11400000&guid=a59d94292a6917d4da3cf1a2f7ed675f&type=2#Signika-Regular SDF');
+}
+
 .hide {
     display: none;
 }
@@ -62,6 +66,7 @@
 .node.visible {
     opacity: 0.7;
 }
+
 .node.visible.highvis {
     opacity: 0.8;
 }
@@ -73,9 +78,11 @@
 .node.selected {
     opacity: 0.85;
 }
+
 .node.group.highvis {
     opacity: 0.92;
 }
+
 .node.group.select {
     opacity: 0.92;
 }
@@ -87,6 +94,7 @@
 .node.disabled.focus {
     opacity: 0.6;
 }
+
 .node.disabled.visible {
     opacity: 0.5;
 }

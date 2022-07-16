@@ -493,6 +493,12 @@ Copyright (c) 2011, wmk69 (wmk69@o2.pl), with Reserved Font Name NovaSquare.
 
 See the OFL license above.
 
+### PromptFont: OFL
+
+On Github here: https://github.com/Shinmera/promptfont/
+
+See the OFL license above.
+
 ## Miscellaneous Licenses
 
 ### CC Licenses

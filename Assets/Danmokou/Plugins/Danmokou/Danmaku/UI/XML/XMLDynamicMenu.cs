@@ -7,39 +7,13 @@ using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Danmokou.UI.XML {
-public interface IFixedXMLObject {
-    string Descriptor { get; }
-    ICObservable<float> Left { get; }
-    ICObservable<float> Top { get; }
-    ICObservable<float> Width { get; }
-    ICObservable<float> Height { get; }
-    ICObservable<bool> IsVisible { get; }
-    UIResult? Navigate(UINode n, UICommand c);
-}
-
-public record FixedXMLObject(float l, float t, float w = 100, float h = 100) : IFixedXMLObject {
-    public string Descriptor { get; init; } = "";
-    ICObservable<float> IFixedXMLObject.Left => Left;
-    public Evented<float> Left { get; } = new(l);
-    ICObservable<float> IFixedXMLObject.Top => Top;
-    public Evented<float> Top { get; } = new(t);
-    ICObservable<float> IFixedXMLObject.Width => Width;
-    public Evented<float> Width { get; } = new(w);
-    ICObservable<float> IFixedXMLObject.Height => Height;
-    public Evented<float> Height { get; } = new(h);
-    public Evented<bool> IsVisible { get; } = new(true);
-    ICObservable<bool> IFixedXMLObject.IsVisible => IsVisible;
-    public Func<UINode, UIResult?>? OnConfirm { get; init; }
-    public UIResult? Navigate(UINode n, UICommand c) => 
-        c is UICommand.Confirm ? OnConfirm?.Invoke(n) : null;
-}
 
 /// <summary>
-/// An XML menu that is visible and controllable at all times. It has a single freeform group,
-///  and nodes representing on-screen targets can be dynamically added or removed.
+/// An XML menu with a single freeform group, to which
+///  nodes representing on-screen targets can be dynamically added or removed.
 /// <br/>When there are no added nodes, any inputs will result in a silent no-op.
 /// </summary>
-public class XMLPersistentInteractive : UIController {
+public class XMLDynamicMenu : UIController, IFixedXMLObjectContainer {
     private class UnselectorFixedXML : IFixedXMLObject {
         public string Descriptor => "Unselector";
         public ICObservable<float> Top { get; } = new ConstantObservable<float>(0);
@@ -49,6 +23,9 @@ public class XMLPersistentInteractive : UIController {
         public ICObservable<bool> IsVisible { get; } = new ConstantObservable<bool>(true);
         public UIResult? Navigate(UINode n, UICommand c) => null;
     }
+
+    protected virtual bool CaptureFallthroughInteraction => false;
+    
     private UINode unselect = null!;
     private UIFreeformGroup group = null!;
     private List<UINode>? _addNodeQueue = new();
@@ -62,6 +39,7 @@ public class XMLPersistentInteractive : UIController {
         unselect = new EmptyNode(new UnselectorFixedXML());
         MainScreen = new UIScreen(this, null, UIScreen.Display.Unlined) {
             Builder = (s, ve) => {
+                s.HTML.Q("ControlsHelper").RemoveFromHierarchy();
                 ve.AddColumn();
                 s.Margin.SetLRMargin(0, 0);
             }
@@ -70,11 +48,13 @@ public class XMLPersistentInteractive : UIController {
         group = new UIFreeformGroup(MainScreen, unselect);
         base.FirstFrame();
 
-        //Normally, the UI container will capture any pointer events not on nodes,
-        //but for the persistent interactive menu, we want such events to fall through
-        //to canvas/etc.
-        UIRoot.pickingMode = PickingMode.Ignore;
-        UIContainer.pickingMode = PickingMode.Ignore;
+        if (!CaptureFallthroughInteraction) {
+            //Normally, the UI container will capture any pointer events not on nodes,
+            //but for the persistent interactive menu, we want such events to fall through
+            //to canvas/etc.
+            UIRoot.pickingMode = PickingMode.Ignore;
+            UIContainer.pickingMode = PickingMode.Ignore;
+        }
         
         if (_addNodeQueue != null)
             foreach (var n in _addNodeQueue)

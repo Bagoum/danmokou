@@ -42,8 +42,7 @@ public partial class BulletManager {
     
     private const ushort CULL_EVERY_MASK = 127;
     /// <summary>
-    /// SimpleBullet contains all information about a code-abstraction bullet except style information.
-    /// As such, it can be freely shuttled between styles.
+    /// A container for all information about a code-abstraction bullet except style information.
     /// </summary>
     public struct SimpleBullet {
         //96 byte struct. (92 unpacked)
@@ -84,6 +83,9 @@ public partial class BulletManager {
             if (dirFunc != null) direction = dirFunc(ref this);
         }
 
+        /// <summary>
+        /// Constructor for copying a SimpleBullet.
+        /// </summary>
         public SimpleBullet(ref SimpleBullet sb, uint? newId = null) {
             scaleFunc = sb.scaleFunc;
             dirFunc = sb.dirFunc;
@@ -127,6 +129,7 @@ public partial class BulletManager {
         public bool Active { get; private set; } = false;
         public bool IsPlayer { get; private set; } = false;
         public BulletInCode BC { get; }
+        protected virtual SimpleBulletFader Fade => BC.FadeIn;
         private readonly List<SimpleBulletCollection> targetList;
         public int temp_last;
         /// <summary>
@@ -198,7 +201,7 @@ public partial class BulletManager {
         
         //TODO: investigate if isNew is actually required; is it possible to always apply the initial controls?
         public virtual void Add(ref SimpleBullet sb, bool isNew) {
-            base.Add(ref sb);
+            base.AddRef(ref sb);
             if (isNew) {
                 int numPcs = controls.Count;
                 var ind = count - 1; //count may change if a deletion/addition occurs
@@ -208,7 +211,8 @@ public partial class BulletManager {
             }
         }
         
-        public new void Add(ref SimpleBullet sb) => throw new Exception("Do not use SBC.Add");
+        public new void AddRef(ref SimpleBullet sb) => throw new Exception("Do not use SBC.Add");
+        public new void Add(SimpleBullet sb) => throw new Exception("Do not use SBC.Add");
         
         public virtual void MakeCulledCopy(int ii) {
             Culled.AddCulled(ref Data[ii]);
@@ -489,14 +493,21 @@ public partial class BulletManager {
             var tint = Tint;
             var hasTint = tint != null;
             MeshGenerator.RenderInfo ri = GetOrLoadRI();
+            var scaleMin = Fade.scaleInStart;
+            var scaleTime = Fade.scaleInTime;
             for (int ii = 0; ii < Count;) {
                 int ib = 0;
                 for (; ib < batchSize && ii < Count; ++ii) {
                     if (!rem[ii]) {
                         ref SimpleBullet sb = ref Data[ii];
                         ref var m = ref bm.matArr[ib];
-                        m.m00 = m.m11 = sb.direction.x * sb.scale;
-                        m.m10 = sb.direction.y * sb.scale;
+                        //Normally handled via FT_SCALE_IN / SCALEIN macro, but that doesn't work for matrix setup
+                        var scale = scaleTime > 0 ? 
+                            sb.scale * (scaleMin + (1 - scaleMin) *
+                                M.Smoothstep(0, scaleTime, sb.bpi.t)) : 
+                            sb.scale;
+                        m.m00 = m.m11 = sb.direction.x * scale;
+                        m.m10 = sb.direction.y * scale;
                         m.m01 = -m.m10;
                         m.m22 = m.m33 = 1;
                         m.m03 = sb.bpi.loc.x;
@@ -552,9 +563,9 @@ public partial class BulletManager {
             var tint = Tint;
             var hasTint = tint != null;
             MeshGenerator.RenderInfo ri = GetOrLoadRI();
-            for (int ii = 0; ii < Count;) {
+            for (int ii = 0; ii < count;) {
                 int ib = 0;
-                for (; ib < batchSize && ii < Count; ++ii) {
+                for (; ib < batchSize && ii < count; ++ii) {
                     if (!rem[ii]) {
                         ref SimpleBullet sb = ref Data[ii];
                         bm.posDirArr[ib].x = sb.bpi.loc.x;
@@ -637,14 +648,14 @@ public partial class BulletManager {
     public sealed class CulledBulletCollection : SimpleBulletCollection {
         // ReSharper disable once NotAccessedField.Local
         private readonly SimpleBulletCollection src;
-        private readonly SimpleBulletFader fade;
+        protected override SimpleBulletFader Fade { get; }
         public override CollectionType MetaType => CollectionType.Culled;
 
         public CulledBulletCollection(SimpleBulletCollection source) : base(activeCulled, source.CopyBC($"$culled_{source.Style}")) {
             src = source;
             AddSimpleStyle(this);
             BC.UseExitFade();
-            fade = BC.FadeOut;
+            Fade = BC.FadeOut;
         }
         
         public override void MakeCulledCopy(int ii) {
@@ -671,7 +682,7 @@ public partial class BulletManager {
         public void AddCulled(ref SimpleBullet sb) {
             Activate();
             var sbn = new SimpleBullet(ref sb);
-            sbn.bpi.t = Math.Min(sbn.bpi.t, fade.MaxTime);
+            sbn.bpi.t = Math.Min(sbn.bpi.t, Fade.MaxTime);
             //scale/dir/etc remain the same.
             base.Add(ref sbn, false);
         }
@@ -761,14 +772,9 @@ public partial class BulletManager {
             => CollisionResult.noColl;
     }
 
-    private bool playerRendered;
-    private bool enemyRendered;
     //Called via Camera.onPreCull event
     private void RenderBullets(Camera c) {
         if (!Application.isPlaying) { return; }
-        if (playerRendered && enemyRendered) {
-            playerRendered = enemyRendered = false;
-        }
         RNG.RNG_ALLOWED = false;
         SimpleBulletCollection sbc;
         if ((c.cullingMask & ppLayerMask) != 0) {
@@ -776,7 +782,6 @@ public partial class BulletManager {
                 sbc = activePlayer[ii];
                 if (sbc.Count > 0) sbc.SwitchRender(c, this, ppRenderLayer);
             }
-            playerRendered = true;
         }
         if ((c.cullingMask & epLayerMask) != 0) {
             //empty bullets are not rendered
@@ -792,7 +797,6 @@ public partial class BulletManager {
                 sbc = activeCNpc[ii];
                 if (sbc.Count > 0) sbc.SwitchRender(c, this, epRenderLayer);
             }
-            enemyRendered = true;
         }
         RNG.RNG_ALLOWED = true;
     }

@@ -8,6 +8,7 @@ using System.Reflection;
 using System.Text;
 using BagoumLib;
 using BagoumLib.Expressions;
+using BagoumLib.Reflection;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.DMath;

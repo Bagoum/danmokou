@@ -11,6 +11,10 @@ using Danmokou.VN;
 using SuzunoyaUnity;
 
 namespace Danmokou.ADV {
+/// <summary>
+/// Contains all top-level metadata about an executing ADV instance.
+/// <br/>The actual execution process is handled by a game-specific <see cref="IExecutingADV"/>.
+/// </summary>
 public record ADVInstance(ADVInstanceRequest Request, DMKVNState VN, ExecutingVN eVN, Cancellable Tracker) { 
     public ADVData ADVData => Request.ADVData;
     public ADVManager Manager => Request.Manager;
@@ -28,30 +32,41 @@ public record ADVInstance(ADVInstanceRequest Request, DMKVNState VN, ExecutingVN
                 ));
     }
 }
+
+/// <summary>
+/// Contains information necessary to start an ADV instance.
+/// <br/>Once the instance is started, metadata such as the execution tracker
+/// is stored in a constructed <see cref="ADVInstance"/>.
+/// </summary>
 public class ADVInstanceRequest {
     public ADVManager Manager { get; }
     public ADVGameDef Game { get; }
     public ADVData ADVData { get; private set; }
+    /// <summary>
+    /// During loading, this contains the "true" save data,
+    ///  that is replayed onto the "blank" save data in <see cref="ADVData"/>.
+    /// </summary>
     public ADVData? LoadProxyData { get; private set; }
     
     public ADVInstanceRequest(ADVManager manager, ADVGameDef game, ADVData advData) {
         Manager = manager;
         Game = game;
-        (ADVData, LoadProxyData) = 
-            Game.backlogFeatures == ADVBacklogFeatures.USE_PROXY_LOADING ?
-                advData.GetLoadProxyInfo() :
-                (advData, null);
+        (ADVData, LoadProxyData) = advData.GetLoadProxyInfo();
     }
 
     public void FinalizeProxyLoad() {
-        Logs.Log($"Finished loading ADV instance (will swap proxy data: " +
-                 $"{Game.backlogFeatures == ADVBacklogFeatures.USE_PROXY_LOADING})");
-        if (Game.backlogFeatures == ADVBacklogFeatures.USE_PROXY_LOADING && LoadProxyData != null) {
+        if (LoadProxyData == null)
+            throw new Exception($"{nameof(FinalizeProxyLoad)} called when no proxy data exists");
+        Logs.Log($"Finished loading ADV instance");
+        if (LoadProxyData != null) {
             ADVData = LoadProxyData;
             LoadProxyData = null;
         }
     }
 
+    /// <summary>
+    /// Enter the ADV scene and run the ADV instance.
+    /// </summary>
     public bool Run() {
         return ServiceLocator.Find<ISceneIntermediary>().LoadScene(new SceneRequest(
             Game.sceneConfig,
@@ -70,8 +85,7 @@ public class ADVInstanceRequest {
 #endif
         async Task RunInScene() {
         var Tracker = new Cancellable();
-        //Use proxy data for the VN execution, but use cleanslate data for map configuration
-        var vn = new DMKVNState(Tracker, Game.key, (LoadProxyData ?? ADVData).VNData);
+        var vn = new DMKVNState(Tracker, Game.key, ADVData.VNData);
         var evn = ServiceLocator.Find<IVNWrapper>().TrackVN(vn);
         ServiceLocator.Find<IVNBacklog>().TryRegister(evn);
         if (Game.backlogFeatures == ADVBacklogFeatures.ALLOW_BACKJUMP)

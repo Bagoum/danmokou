@@ -19,7 +19,6 @@ namespace Danmokou.ADV {
 
 /// <summary>
 /// Service that manages the execution of an ADV context.
-/// <br/>Note that this is not involved in the execution of VN contexts
 /// </summary>
 public class ADVManager : CoroutineRegularUpdater {
     public enum State {
@@ -43,6 +42,11 @@ public class ADVManager : CoroutineRegularUpdater {
     public void DestroyCurrentInstance() {
         ExecAdv?.Inst.Cancel();
     }
+    
+    /// <summary>
+    /// Set the provided ADV execution as the current executing ADV.
+    /// <br/>(Only one <see cref="IExecutingADV"/> may be handled by this service at a time.)
+    /// </summary>
     public void SetupInstance(IExecutingADV inst) {
         DestroyCurrentInstance();
         ExecAdv = inst;

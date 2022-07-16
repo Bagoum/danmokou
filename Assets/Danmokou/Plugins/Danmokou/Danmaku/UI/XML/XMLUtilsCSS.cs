@@ -18,6 +18,7 @@ public static partial class XMLUtils {
     public const string noPointerClass = "nopointer";
     public const string disabledClass = "disabled";
     public const string fontUbuntuClass = "font-ubuntu";
+    public const string fontControlsClass = "font-controls";
     public const string monospaceClass = "monospace";
     public const string noSpacePrefixClass = "nospaceprefix";
     public const string large1Class = "large1";

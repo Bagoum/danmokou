@@ -157,14 +157,109 @@ public static partial class XMLUtils {
     };
     public static UIScreen OptionsScreen(this UIController m, bool allowStaticOptions) {
         var s = new UIScreen(m, null) {
-            OnExitEnd = SaveData.AssignSettingsChanges
+            OnExitEnd = SaveData.AssignSettingsChanges,
+            Builder = (s, _) => {
+                s.HTML.Q("HeaderRow").SetLRMargin(-80, -80);
+            }
         };
+        //To support a setup where the top row does not scroll, we do as follows:
+        //Controls container (column)
+        // - Top row (row)
+        // - Controls space (scroll column)
+        //   - Binding rows ([row])
+        var controlsContainer =
+            new UIRenderConstructed(s, Prefabs.UIScreenColumn, (_, ve) => ve.style.width = 100f.Percent());
+        var controlsHeader = new UIRenderConstructed(controlsContainer, Prefabs.UIScreenRow);
+        var controlsSpace = new UIRenderConstructed(controlsContainer, Prefabs.UIScreenScrollColumn,
+            (_, ve) => {
+                ve.style.width = new Length(100, LengthUnit.Percent);
+                var scrollBox = ve.Q(null, "unity-scroll-view__content-viewport");
+                scrollBox.style.paddingLeft = 0;
+                scrollBox.style.paddingRight = 0;
+            }).ColumnRender(0);
+        UINode NodeForBinding(RebindableInputBinding b, int index, KeyRebindInputNode.Mode mode) {
+            return new FuncNode(() => (b.Sources[index]?.Description ?? "(No binding)"), n => {
+                if (b.ProtectedIndices.Contains(index))
+                    return PopupUIGroup.LRB2(n, () => $"Keybinding for \"{b.Purpose}\"",
+                        r => new UIColumn(r,
+                                new UINode("You cannot rebind this key.") { Prefab = Prefabs.PureTextNode })
+                            { Interactable = false },
+                        null, Array.Empty<UINode>());
+                
+                Maybe<IInspectableInputBinding>? newTempBinding = null;
+                return PopupUIGroup.LRB2(n, () => $"Keybinding for \"{b.Purpose}\"",
+                    r => new UIColumn(r, new UINode(() => {
+                            var curr = $"Current binding: {b.Sources[index]?.Description ?? "(No binding)"}";
+                            if (newTempBinding is { } nb)
+                                curr += $"\nNew binding: {nb.ValueOrNull?.Description ?? "(No binding)"}";
+                            return curr;
+                        }) { Prefab = GameManagement.References.uxmlDefaults.PureTextNode, Passthrough = true }
+                            .With(fontControlsClass),
+                        new KeyRebindInputNode(LString.Empty, keys => 
+                                newTempBinding = keys == null ? 
+                                    Maybe<IInspectableInputBinding>.None :
+                                    new(SimultaneousInputBinding.FromMany(keys)), mode)
+                            .With(noSpacePrefixClass, centerTextClass)),
+                    null,
+                    new UINode[] {
+                        new UIButton("Unassign", UIButton.ButtonType.Confirm, _ => {
+                            newTempBinding = Maybe<IInspectableInputBinding>.None;
+                            return new UIResult.StayOnNode();
+                        }),
+                        new UIButton("Confirm", UIButton.ButtonType.Confirm, _ => {
+                            if (newTempBinding is { } nb) {
+                                b.ChangeBindingAt(index, nb.ValueOrNull);
+                                InputSettings.SaveInputConfig();
+                            }
+                            return new UIResult.ReturnToTargetGroupCaller(n.Group);
+                        })
+                    }
+                );
+            }) { OnBuilt = n => n.HTML.style.width = 30f.Percent() }.With(small1Class, fontControlsClass);
+        }
+        UIGroup[] MakeBindings(RebindableInputBinding[] src, KeyRebindInputNode.Mode mode) => 
+            src.Select(b => (UIGroup)new UIRow(
+                controlsSpace.Construct(Prefabs.UIScreenRow),
+                new PassthroughNode(() => b.Purpose) {
+                    OnBuilt = n => n.HTML.style.width = 40f.Percent()
+                },
+                NodeForBinding(b, 0, mode), NodeForBinding(b, 1, mode)
+            )).ToArray();
+        var header = new UIRow(controlsHeader,
+            new PassthroughNode("Key") {
+                OnBuilt = n => n.HTML.style.width = 40f.Percent()
+            },
+            new PassthroughNode("Binding A") {
+                OnBuilt = n => n.HTML.style.width = 30f.Percent()
+            },
+            new PassthroughNode("Binding B") {
+                OnBuilt = n => n.HTML.style.width = 30f.Percent()
+            });
+        var kbBindingsLead = new UIRow(controlsSpace.Construct(Prefabs.UIScreenRow), 
+            new PassthroughNode("Keyboard Bindings").With(large1Class));
+        var kbBindings = MakeBindings(InputSettings.i.KBMBindings, KeyRebindInputNode.Mode.KBM);
+        var cBindingsLead = new UIRow(controlsSpace.Construct(Prefabs.UIScreenRow), 
+            new PassthroughNode("Controller Bindings").With(large1Class));
+        var cBindings = MakeBindings(InputSettings.i.ControllerBindings, KeyRebindInputNode.Mode.Controller);
+        
+        var controlsGroup = new UINode("<cspace=16>CONTROLS</cspace>") {
+            Prefab = GameManagement.UXMLPrefabs.HeaderNode,
+            ShowHideGroup = new VGroup(
+                kbBindings.Prepend(kbBindingsLead).Concat(
+                        cBindings.Prepend(cBindingsLead))
+                    .Prepend(header)
+                    .ToArray()
+            ) {
+                EntryNodeOverride = kbBindings[0].Nodes[2], 
+                EntryNodeBottomOverride = cBindings[^1].Nodes[2]
+            }
+        };
+        
         s.SetFirst(new UIRow(new UIRenderExplicit(s, ve => ve.Q("HeaderRow")), new[] {
             new UINode("<cspace=16>GAME</cspace>") {
                 Prefab = GameManagement.UXMLPrefabs.HeaderNode,
                 //Using UIRenderConstructed allows making different "screens" for each options page
-                ShowHideGroup = new UIColumn(new UIRenderConstructed(
-                        new UIRenderDirect(s), Prefabs.UIScreenColumn, 
+                ShowHideGroup = new UIColumn(new UIRenderConstructed(s, Prefabs.UIScreenColumn, 
                         (_, ve) => ve.style.maxWidth = new Length(60, LengthUnit.Percent)), 
                     allowStaticOptions ?
                             new OptionNodeLR<string?>(main_lang, l => {
@@ -214,8 +309,7 @@ public static partial class XMLUtils {
             },
             new UINode("<cspace=16>GRAPHICS</cspace>") {
                 Prefab = GameManagement.UXMLPrefabs.HeaderNode,
-                ShowHideGroup = new UIColumn(new UIRenderConstructed(
-                    new UIRenderDirect(s), Prefabs.UIScreenColumn, 
+                ShowHideGroup = new UIColumn(new UIRenderConstructed(s, Prefabs.UIScreenColumn, 
                     (_, ve) => ve.style.maxWidth = new Length(60, LengthUnit.Percent)), 
                     new OptionNodeLR<bool>(shaders, yn => SaveData.s.Shaders = yn, new[] {
                         (shaders_low, false),
@@ -248,8 +342,7 @@ public static partial class XMLUtils {
             },
             new UINode("<cspace=16>SOUND</cspace>") {
                 Prefab = GameManagement.UXMLPrefabs.HeaderNode,
-                ShowHideGroup = new UIColumn(new UIRenderConstructed(
-                    new UIRenderDirect(s), Prefabs.UIScreenColumn, 
+                ShowHideGroup = new UIColumn(new UIRenderConstructed(s, Prefabs.UIScreenColumn, 
                     (_, ve) => ve.style.maxWidth = new Length(60, LengthUnit.Percent)),
                     new OptionNodeLR<float>(bgm_volume, SaveData.s.BGMVolume.OnNext, 21.Range().Select(x =>
                         ((LString)$"{x * 10}", x / 10f)).ToArray(), SaveData.s.BGMVolume),
@@ -258,7 +351,7 @@ public static partial class XMLUtils {
                     new OptionNodeLR<float>("Dialogue Typing Volume", v => { SaveData.s.VNTypingSoundVolume = v; }, 21.Range().Select(x =>
                         ((LString)$"{x * 10}", x / 10f)).ToArray(), SaveData.s.VNTypingSoundVolume)
                 )
-            }
+            }, controlsGroup
         }));
         return s;
     }
@@ -337,7 +430,7 @@ public static partial class XMLUtils {
                     c1,
                     new UIColumn(s, new UIRenderColumn(s, 1), (p * perPage + perPage / 2, (p + 1) * perPage)
                         .Range().Select(CreateSaveLoadEntry))
-                ) { UseSameIndexLR = true, EntryNodeOverride = c1.EntryNode}
+                ) { EntryNodeOverride = c1.EntryNode}
             };
         }
 

@@ -9,6 +9,7 @@ using BagoumLib.Culture;
 using BagoumLib.DataStructures;
 using BagoumLib.Mathematics;
 using BagoumLib.Tasks;
+using Danmokou.Core;
 using Danmokou.DMath;
 using Danmokou.Services;
 using UnityEngine;
@@ -62,7 +63,7 @@ public record UIGroupHierarchy(UIGroup Group, UIGroupHierarchy? Parent) : IEnume
     }
 }
 
-public abstract class UIGroup : IRenderSource {
+public abstract class UIGroup {
     protected static UIResult NoOp => new StayOnNode(true);
     protected static UIResult SilentNoOp => new StayOnNode(StayOnNodeType.Silent);
     public bool Visible { get; private set; } = false;
@@ -101,6 +102,7 @@ public abstract class UIGroup : IRenderSource {
     /// <br/>Note that this node may be in a descendant of this group.
     /// </summary>
     public UINode? EntryNodeOverride { get; set; }
+    public UINode? EntryNodeBottomOverride { get; set; }
     public Func<int>? EntryIndexOverride { get; init; }
     /// <summary>
     /// Node to go to when pressing the back key from within this group. Usually something like "return to menu".
@@ -118,15 +120,16 @@ public abstract class UIGroup : IRenderSource {
     public UIGroupHierarchy Hierarchy => new(this, Parent?.Hierarchy);
     public UIController Controller => Screen.Controller;
     public bool IsCurrent => Controller.Current != null && Nodes.Contains(Controller.Current);
-    public UINode EntryNode {
+    public UINode? PreferredEntryNode {
         get {
             if (EntryNodeOverride != null)
                 return EntryNodeOverride;
             if (EntryIndexOverride != null)
                 return Nodes.ModIndex(EntryIndexOverride());
-            return FirstInteractableNode;
+            return null;
         }
     }
+    public UINode EntryNode => PreferredEntryNode ?? FirstInteractableNode;
     public UINode FirstInteractableNode {
         get {
             for (int ii = 0; ii < Nodes.Count; ++ii)
@@ -137,6 +140,8 @@ public abstract class UIGroup : IRenderSource {
     }
     public UINode EntryNodeFromBottom {
         get {
+            if (EntryNodeBottomOverride != null)
+                return EntryNodeBottomOverride;
             if (EntryNodeOverride != null)
                 return EntryNodeOverride;
             if (EntryIndexOverride != null)
@@ -154,6 +159,21 @@ public abstract class UIGroup : IRenderSource {
     /// </summary>
     public bool HasEntryNode => EntryNodeOverride != null || HasInteractableNodes;
     public bool HasInteractableNodes => Interactable && Nodes.Any(n => n.AllowInteraction);
+
+    /// <summary>
+    /// All nodes contained within this group, or within any groups that are descendants of this group
+    /// (including show-hide and composite groups, but not popups to save effort on dynamicity handling)
+    /// </summary>
+    public virtual IEnumerable<UINode> NodesAndDependentNodes {
+        get {
+            foreach (var n in Nodes) {
+                yield return n;
+                if (n.ShowHideGroup != null)
+                    foreach (var sn in n.ShowHideGroup.NodesAndDependentNodes)
+                        yield return sn;
+            }
+        }
+    }
 
     public UIGroup(UIScreen container, UIRenderSpace? render, IEnumerable<UINode?> nodes) {
         Screen = container;
@@ -262,7 +282,7 @@ public abstract class UIGroup : IRenderSource {
         var ii = bInd + 1;
         for (; ii != bInd; ++ii) {
             if (ii == Nodes.Count) {
-                if (Parent != null && Parent.NavigateOutOfEnclosed(this, node, req).Try(out var res))
+                if (TryDelegateNavigationToEnclosure(node, req, out var res))
                     return res;
                 ii = 0;
             }
@@ -272,14 +292,23 @@ public abstract class UIGroup : IRenderSource {
         return new GoToNode(this, ii);
     }
 
-    protected UIResult? GoToShowHideGroupIfExists(UINode node) =>
-        node.ShowHideGroup == null || !node.ShowHideGroup.HasEntryNode || !node.IsEnabled ?
-            null :
-            new GoToNode(node.ShowHideGroup.EntryNode);
-    protected UIResult? GoToShowHideGroupFromBelowIfExists(UINode node) =>
-        node.ShowHideGroup == null || !node.ShowHideGroup.HasEntryNode || !node.IsEnabled ?
-            null :
-            new GoToNode(node.ShowHideGroup.EntryNodeFromBottom);
+    protected UIResult? GoToShowHideGroupIfExists(UINode node, UICommand dir) {
+        if (node.ShowHideGroup == null || !node.IsEnabled) return null;
+        if (node.ShowHideGroup.HasEntryNode) return node.ShowHideGroup.EntryNode;
+        if (UIFreeformGroup.FindClosest(node.WorldLocation, dir, node.ShowHideGroup.NodesAndDependentNodes,
+                   CompositeUIGroup.angleLimits, x => x != node) is { } n)
+            return n;
+        return null;
+    }
+
+    protected UIResult? GoToShowHideGroupFromBelowIfExists(UINode node, UICommand dir) {
+        if (node.ShowHideGroup == null || !node.IsEnabled) return null;
+        if (node.ShowHideGroup.HasEntryNode) return node.ShowHideGroup.EntryNodeFromBottom;
+        if (UIFreeformGroup.FindClosest(node.WorldLocation, dir, node.ShowHideGroup.NodesAndDependentNodes,
+            CompositeUIGroup.angleLimits, x => x != node) is { } n)
+            return n;
+        return null;
+    }
 
     protected UIResult? GoToExitOrLeaveScreen(UINode current, UICommand req) =>
         (ExitNode != null && ExitNode != current) ?
@@ -335,39 +364,51 @@ class UIFreeformGroup : UIGroup {
             UICommand.Back => GoToExitOrLeaveScreen(node, req) ?? SilentNoOp,
             UICommand.Confirm => SilentNoOp,
             //TODO
-            _ => FindClosest(
-                node == unselector ? UIBuilderRenderer.UICenter :
-                node.HTML.worldBound.center, req, node)
+            _ => _FindClosest(node, req)
         };
     }
 
-    public UIResult FindClosest(Vector2 from, UICommand dir, UINode? src = null) {
-        var dirAsVec = dir switch {
-            UICommand.Down => Vector2.down,
-            UICommand.Up => Vector2.up,
-            UICommand.Left => Vector2.left,
-            UICommand.Right => Vector2.right,
-            _ => throw new Exception()
-        };
+    private static readonly float[] _angleLimits = { 37, 65, 89 };
+
+    private UIResult _FindClosest(UINode src, UICommand dir) {
+        var result = FindClosest(
+            src == unselector ? M.RectFromCenter(UIBuilderRenderer.UICenter, new(2, 2)) : src.WorldLocation
+            , dir, Nodes, _angleLimits, n => n != unselector && n != src) ?? SilentNoOp;
+        if (result is GoToNode g && g.Target == unselector)
+            return SilentNoOp;
+        return result;
+    }
+    
+    public static Vector2 DirAsVec(UICommand dir) => dir switch {
+        UICommand.Down => Vector2.down,
+        UICommand.Up => Vector2.up,
+        UICommand.Left => Vector2.left,
+        UICommand.Right => Vector2.right,
+        _ => throw new Exception()
+    };
+
+    public static UINode? FindClosest(Rect from, UICommand dir, IEnumerable<UINode> nodes, 
+        float[] angleLimits, Func<UINode, bool>? allowed = null) {
+        if (dir is not (UICommand.Down or UICommand.Up or UICommand.Left or UICommand.Right))
+            return null;
+        var dirAsVec = DirAsVec(dir);
         var dirAsAng = M.Atan2D(dirAsVec.y, dirAsVec.x);
-        var ordering = Nodes.Select(n => {
-            var delta = n.HTML.worldBound.center - from;
+        var ordering = nodes.Select(n => {
+            var delta = M.ShortestDistancePushOutOverlap(from, n.HTML.worldBound);
             //y axis is inverted in XML
             var angleDelta = Mathf.Abs(M.DeltaD(M.Atan2D(-delta.y, delta.x), dirAsAng));
             return (n, angleDelta, (delta / 20).magnitude + angleDelta);
         }).OrderBy(x => x.Item3).ToArray();
-        foreach (var limit in new[] { 40, 65, 89 }) {
+        foreach (var limit in angleLimits) {
             foreach (var (candidate, angle, _) in ordering) {
-                if (candidate == src || candidate == unselector || candidate.Passthrough is true)
+                if (!candidate.AllowInteraction || allowed?.Invoke(candidate) is false)
                     continue;
                 if (angle >= limit)
                     continue;
                 return candidate;
             }
         }
-        if (src == unselector)
-            return SilentNoOp;
-        return unselector;
+        return null;
     }
 }
 
@@ -389,10 +430,10 @@ public class UIColumn : UIGroup {
     };
     public override UIResult Navigate(UINode node, UICommand req) => req switch {
         UICommand.Left => Parent?.NavigateOutOfEnclosed(this, node, req) ?? NoOp,
-        UICommand.Right => GoToShowHideGroupIfExists(node) ?? Parent?.NavigateOutOfEnclosed(this, node, req) ?? NoOp,
+        UICommand.Right => GoToShowHideGroupIfExists(node, req) ?? Parent?.NavigateOutOfEnclosed(this, node, req) ?? NoOp,
         UICommand.Up => NavigateToPreviousNode(node, req),
         UICommand.Down => NavigateToNextNode(node, req),
-        UICommand.Confirm => GoToShowHideGroupIfExists(node) ?? NoOp,
+        UICommand.Confirm => GoToShowHideGroupIfExists(node, req) ?? NoOp,
         UICommand.Back => GoToExitOrLeaveScreen(node, req) ?? NoOp,
         _ => throw new ArgumentOutOfRangeException(nameof(req), req, null)
     };
@@ -418,13 +459,13 @@ public class UIRow : UIGroup {
         _ => null
     };
     public override UIResult Navigate(UINode node, UICommand req) => req switch {
-        UICommand.Up => (ShowHideUpwards ? GoToShowHideGroupFromBelowIfExists(node) : null) ?? 
+        UICommand.Up => (ShowHideUpwards ? GoToShowHideGroupFromBelowIfExists(node, req) : null) ?? 
                         Parent?.NavigateOutOfEnclosed(this, node, req) ?? NoOp,
-        UICommand.Down => (ShowHideDownwards ? GoToShowHideGroupIfExists(node) : null) 
+        UICommand.Down => (ShowHideDownwards ? GoToShowHideGroupIfExists(node, req) : null) 
                           ?? Parent?.NavigateOutOfEnclosed(this, node, req) ?? NoOp,
         UICommand.Left => NavigateToPreviousNode(node, req),
         UICommand.Right => NavigateToNextNode(node, req),
-        UICommand.Confirm => GoToShowHideGroupIfExists(node) ?? NoOp,
+        UICommand.Confirm => GoToShowHideGroupIfExists(node, req) ?? NoOp,
         UICommand.Back => GoToExitOrLeaveScreen(node, req) ?? NoOp,
         _ => throw new ArgumentOutOfRangeException(nameof(req), req, null)
     };
@@ -467,6 +508,8 @@ public class PopupUIGroup : CompositeUIGroup {
             EntryNodeOverride = bodyGroup.HasEntryNode ? (UINode?)bodyGroup.EntryNode : entry,
             ExitNodeOverride = exit
         };
+        //Don't allow pointer events to hit the underlying Absolute Territory
+        render.HTML.RegisterCallback<PointerUpEvent>(evt => evt.StopPropagation());
         return p;
     }
     
@@ -498,7 +541,7 @@ public class PopupUIGroup : CompositeUIGroup {
 
     protected override Task LeaveGroupTasks() {
         return Task.WhenAll(base.LeaveGroupTasks(), 
-                Screen.AbsoluteTerritory.FadeOutIfNoOtherDependencies(render),
+                Screen.AbsoluteTerritory.FadeOutIfNoOtherDependencies(this),
                 render.HTML.transform.ScaleTo(new Vector3(1, 0, 1), 0.12f, Easers.EIOSine).Run(Controller))
                 .ContinueWithSync(() => {
                     Destroy();
@@ -591,7 +634,7 @@ public class CommentatorAxisColumn<T> : UIColumn {
 /// </summary>
 public abstract class CompositeUIGroup : UIGroup {
     public List<UIGroup> Groups { get; }
-    public CompositeUIGroup(IReadOnlyList<UIGroup> groups) : this(new UIRenderDirect(groups[0].Screen), groups) { }
+    public CompositeUIGroup(IReadOnlyList<UIGroup> groups) : this(groups[0].Screen, groups) { }
     public CompositeUIGroup(UIRenderSpace render, IEnumerable<UIGroup> groups) : base(render, Array.Empty<UINode>()) {
         Groups = groups.ToList();
         foreach (var g in Groups) {
@@ -609,41 +652,49 @@ public abstract class CompositeUIGroup : UIGroup {
         ExitNodeOverride ??= g.ExitNodeOverride;
     }
 
+    public override IEnumerable<UINode> NodesAndDependentNodes => Groups.SelectMany(g => g.NodesAndDependentNodes);
+
     public sealed override UIResult Navigate(UINode node, UICommand req) =>
         throw new Exception("CompositeGroup has no nodes to navigate");
+    
+    public override UIResult? NavigateOutOfEnclosed(UIGroup enclosed, UINode current, UICommand req) =>
+        req switch {
+            UICommand.Up or UICommand.Down or UICommand.Left or UICommand.Right => NavigateAmongComposite(current, req),
+            UICommand.Back => GoToExitOrLeaveScreen(current, req),
+            _ => null
+        };
 
-    public enum EntrySelector {
-        TOP,
-        BOTTOM,
-        SAMEINDEX
-    }
-    private UIResult? NavigateInDirection(List<UIGroup> axis, bool forwards, UIGroup enclosed, UINode current, UICommand req, EntrySelector entry) {
-        var ind = axis.IndexOf(enclosed);
-        if (((ind == 0 && !forwards) || (ind == axis.Count - 1 && forwards)) &&
-            Parent != null && Parent.NavigateOutOfEnclosed(this, current, req).Try(out var res))
-            return res;
-        var step = forwards ? 1 : -1;
-        for (int ii = ind + step; ii != ind; ii = M.Mod(axis.Count, ii + step)) {
-            var g = axis.ModIndex(ii);
-            if (g.HasEntryNode)
-                return entry switch {
-                    EntrySelector.SAMEINDEX => g.HasInteractableNodes ? g.Nodes[current.IndexInGroup] : g.EntryNode,
-                    EntrySelector.TOP => g.EntryNode,
-                    EntrySelector.BOTTOM => g.EntryNodeFromBottom,
-                    _ => throw new ArgumentOutOfRangeException(nameof(entry), entry, null)
-                };
+    public static readonly float[] angleLimits = { 15, 35, 60 };
+    protected UIResult? NavigateAmongComposite(UINode current, UICommand dir) {
+        var from = current.WorldLocation;
+        UIResult? finalize(UINode? n) {
+            if (n == null || n == current) return null;
+            //Use the entry node of the group contained within this composite group,
+            //if it exists and is a different group
+            var g = n.Group;
+            while (g != current.Group && g != null && !Groups.Contains(g))
+                g = g.Parent;
+            return (g != current.Group && g?.PreferredEntryNode is {} entry) ? entry : n;
         }
-        return null;
+        if (UIFreeformGroup.FindClosest(from, dir, NodesAndDependentNodes, angleLimits, n => n != current) 
+                is {} result) 
+            return finalize(result);
+        if (TryDelegateNavigationToEnclosure(current, dir, out var res))
+            return res;
+        //Reset the position to the wall opposite the direction
+        // Eg. if the position is <500, 600> and the direction is right, set the position to <0, 600>
+        var newFrom = M.RectFromCenter(dir switch {
+            //up/down is inverted
+            UICommand.Down => new Vector2(from.center.x, 0),
+            UICommand.Up => new Vector2(from.center.x, current.Screen.HTML.worldBound.yMax),
+            UICommand.Left => new Vector2(current.Screen.HTML.worldBound.xMax, from.center.y),
+            UICommand.Right => new Vector2(0, from.center.y),
+            _ => throw new Exception()
+        }, new(2, 2));
+        Logs.Log($"Wraparound {dir} from {from} to {newFrom}");
+        //When doing wraparound, allow navigating to the same node (it should be preferred over selecting an adjacent node)
+        return finalize(UIFreeformGroup.FindClosest(newFrom, dir, NodesAndDependentNodes, angleLimits));
     }
-
-    protected UIResult? NavigateUp(List<UIGroup> topDown, UIGroup enclosed, UINode current, UICommand req, EntrySelector? entry = null) =>
-        NavigateInDirection(topDown, false, enclosed, current, req, entry ?? EntrySelector.BOTTOM);
-    protected UIResult? NavigateDown(List<UIGroup> topDown, UIGroup enclosed, UINode current, UICommand req, EntrySelector? entry = null) =>
-        NavigateInDirection(topDown, true, enclosed, current, req, entry ?? EntrySelector.TOP);
-    protected UIResult? NavigateLeft(List<UIGroup> leftRight, UIGroup enclosed, UINode current, UICommand req, EntrySelector? entry = null) =>
-        NavigateInDirection(leftRight, false, enclosed, current, req, entry ?? EntrySelector.TOP);
-    protected UIResult? NavigateRight(List<UIGroup> leftRight, UIGroup enclosed, UINode current, UICommand req, EntrySelector? entry = null) =>
-        NavigateInDirection(leftRight, true, enclosed, current, req, entry ?? EntrySelector.TOP);
 }
 
 /// <summary>
@@ -651,16 +702,7 @@ public abstract class CompositeUIGroup : UIGroup {
 /// <br/>This group has no nodes.
 /// </summary>
 public class VGroup : CompositeUIGroup {
-
     public VGroup(params UIGroup[] groups) : base(groups) { }
-
-    public override UIResult? NavigateOutOfEnclosed(UIGroup enclosed, UINode current, UICommand req) =>
-        req switch {
-            UICommand.Up => NavigateUp(Groups, enclosed, current, req),
-            UICommand.Down => NavigateDown(Groups, enclosed, current, req),
-            UICommand.Back => GoToExitOrLeaveScreen(current, req),
-            _ => null
-        };
 }
 
 /// <summary>
@@ -668,17 +710,7 @@ public class VGroup : CompositeUIGroup {
 /// <br/>This group has no nodes.
 /// </summary>
 public class HGroup : CompositeUIGroup {
-    public bool UseSameIndexLR { get; init; } = false;
-
     public HGroup(params UIGroup[] groups) : base(groups) { }
-
-    public override UIResult? NavigateOutOfEnclosed(UIGroup enclosed, UINode current, UICommand req) =>
-        req switch {
-            UICommand.Left => NavigateUp(Groups, enclosed, current, req, UseSameIndexLR ? EntrySelector.SAMEINDEX : null),
-            UICommand.Right => NavigateDown(Groups, enclosed, current, req, UseSameIndexLR ? EntrySelector.SAMEINDEX : null),
-            UICommand.Back => GoToExitOrLeaveScreen(current, req),
-            _ => null
-        };
 }
 
 /// <summary>
@@ -706,36 +738,6 @@ public abstract class LRVGroup : CompositeUIGroup {
         Right = right;
         Vert = vert;
     }
-
-    public override UIResult? NavigateOutOfEnclosed(UIGroup enclosed, UINode current, UICommand req) {
-        if (req == UICommand.Back)
-            return GoToExitOrLeaveScreen(current, req);
-        if (enclosed == Left) {
-            lastExitedLROnLeft = true;
-            return req switch {
-                UICommand.Up => NavigateUp(VertAxis, enclosed, current, req),
-                UICommand.Down => NavigateDown(VertAxis, enclosed, current, req),
-                UICommand.Right => NavigateRight(HorizAxis, enclosed, current, req),
-                _ => null
-            };
-        } else if (enclosed == Right) {
-            lastExitedLROnLeft = false;
-            return req switch {
-                UICommand.Up => NavigateUp(VertAxis, enclosed, current, req),
-                UICommand.Down => NavigateDown(VertAxis, enclosed, current, req),
-                UICommand.Left => NavigateLeft(HorizAxis, enclosed, current, req),
-                _ => null
-            };
-        } else if (enclosed == Vert) {
-            return req switch {
-                UICommand.Up => NavigateUp(VertAxis, enclosed, current, req),
-                UICommand.Down => NavigateDown(VertAxis, enclosed, current, req),
-                _ => null
-            };
-        } else
-            throw new Exception("LRVGroup should not be a parent to anything other than its LRV components");
-    }
-
 }
 
 /// <summary>

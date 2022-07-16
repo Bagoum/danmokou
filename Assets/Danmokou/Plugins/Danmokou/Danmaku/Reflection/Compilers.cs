@@ -116,7 +116,7 @@ public static class CompilerHelpers {
             //Automatic resolver found something, recompile
             return Expose(resolver.bound.ToArray(), compiler, exp, relet);
         } else {
-            var bound = new (Reflector.ExType, string)[0];
+            var bound = Array.Empty<(Reflector.ExType, string)>();
             return (gcx, fctx) => {
                 fctx.UploadAdd(bound, gcx);
                 return p;

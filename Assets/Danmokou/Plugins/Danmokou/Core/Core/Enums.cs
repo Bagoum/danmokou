@@ -12,16 +12,6 @@ public enum DRenderMode {
     SOFT_ADDITIVE
 }
 
-public enum Emote {
-    NORMAL,
-    HAPPY,
-    ANGRY,
-    WORRY,
-    CRY,
-    SURPRISE,
-    SPECIAL
-}
-
 /// <summary>
 /// A direction that is either LEFT or RIGHT.
 /// </summary>

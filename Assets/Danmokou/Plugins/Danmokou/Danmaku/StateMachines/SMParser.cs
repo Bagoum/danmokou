@@ -122,7 +122,7 @@ public static class SMParser {
             if (args.Count != nprms) {
                 var defaults = prmDefaults.SoftSkip(args.Count).FilterNone().ToArray();
                 if (args.Count + defaults.Length != nprms)
-                    return Errorable<LPU>.Fail($"Macro \"{name} requires {nprms} arguments ({args.Count} provided)");
+                    return Errorable<LPU>.Fail($"Macro \"{name}\" requires {nprms} arguments ({args.Count} provided)");
                 else
                     return Realize(args.Concat(defaults).ToList());
             } else if (args.Any(l => l.unit.type == ParseUnit.Type.LambdaMacroParam)) {
@@ -517,8 +517,8 @@ public static class SMParser {
             case ParseUnit.Type.PartialMacroInvoke:
                 var (m, args) = u.partialMacroInvoke;
                 return Errorable<IEnumerable<string>>.Fail(
-                    $"The macro \"{m.name}\" was invoked with {args.Count(a => a.unit.type != ParseUnit.Type.LambdaMacroParam)} " +
-                    $"arguments ({m.nprms} required)");
+                    $"The macro \"{m.name}\" was partially invoked with {args.Count(a => a.unit.type != ParseUnit.Type.LambdaMacroParam)} " +
+                    $" realized arguments ({m.nprms} required)");
             default:
                 return Errorable<IEnumerable<string>>.Fail(
                     "Illegal unit in output, please file a bug report");
@@ -563,8 +563,8 @@ public static class SMParser {
             case ParseUnit.Type.PartialMacroInvoke:
                 var (m, args) = u.partialMacroInvoke;
                 return Errorable<IEnumerable<(ParsedUnit, Position)>>.Fail(
-                    $"The macro \"{m.name}\" was invoked with {args.Count(a => a.unit.type != ParseUnit.Type.LambdaMacroParam)} " +
-                    $"arguments ({m.nprms} required)");
+                    $"The macro \"{m.name}\" was partially invoked with {args.Count(a => a.unit.type != ParseUnit.Type.LambdaMacroParam)} " +
+                    $"realized arguments ({m.nprms} required)");
             default:
                 return Errorable<IEnumerable<(ParsedUnit, Position)>>.Fail(
                     "Illegal unit in output, please file a bug report");
@@ -576,7 +576,8 @@ public static class SMParser {
         Sequential(
             SetState(new State(ImmutableDictionary<string, Macro>.Empty)),
             WordsTopLevel,
-            EOF,
+            EOF.Or(p => new ParseResult<Unit>(
+                new ParserError.Failure($"The character '{p.Next}' could not be handled."), p.Index, p.Index + 1)),
             GetPosition,
             (_, words, __, p) => new LPU(ParseUnit.Words(words), p)); 
         

@@ -242,18 +242,20 @@ public struct ParametricInfo {
     /// <summary>Firing index</summary>
     public readonly int index;
     /// <summary>Global position</summary>
-    public Vector2 loc;
+    public Vector3 loc;
     /// <summary>Life-time (with minor adjustment)</summary>
     public float t;
     /// <summary>Context containing additional bound variables</summary>
     public FiringCtx ctx;
 
-    public static ParametricInfo WithRandomId(Vector2 position, int findex, float t) => new(position, findex, RNG.GetUInt(), t);
-    public static ParametricInfo WithRandomId(Vector2 position, int findex) => WithRandomId(position, findex, 0f);
+    public Vector2 LocV2 => loc;
+
+    public static ParametricInfo WithRandomId(Vector3 position, int findex, float t) => new(position, findex, RNG.GetUInt(), t);
+    public static ParametricInfo WithRandomId(Vector3 position, int findex) => WithRandomId(position, findex, 0f);
 
     public ParametricInfo(in Movement mov, int findex = 0, uint? id = null, float t = 0, FiringCtx? ctx = null) : 
         this(mov.rootPos, findex, id, t, ctx) { }
-    public ParametricInfo(Vector2 position, int findex = 0, uint? id = null, float t = 0, FiringCtx? ctx = null) {
+    public ParametricInfo(Vector3 position, int findex = 0, uint? id = null, float t = 0, FiringCtx? ctx = null) {
         loc = position;
         index = findex;
         this.id = id ?? RNG.GetUInt();

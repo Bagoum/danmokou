@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using BagoumLib.Reflection;
 using Danmokou.Core;
 using Danmokou.Danmaku;
 using Danmokou.DMath;

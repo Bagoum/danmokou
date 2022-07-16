@@ -54,7 +54,7 @@ async shell-teal/b <2;:> gcr2 60 5 <-0.2;:10> { } gsr2 5 <;:72> { } s tp-rot cxf
         TestSMExceptionRegex(@"
 async shell-teal/b <2;:> gcr2 20 _ <;:5> { } gsr2 5 <;:72> { } s :: {
 			R	w
-		} tp-rot pxy 2 &R", "Instead of constructing type BPY.*of type Float.*to type Float");
+		} tp-rot pxy 2 &R", "Failed to construct an object of type BPY.*of type float.*to type float");
         /* No longer an error, as R will be looked up in private data hoisting instead.
         TestSMExceptionRegex(@"
 bullet shell-teal/b <2;:> cre 20 _ <;:5> repeat 5 <;:72> s :: {
@@ -65,14 +65,14 @@ bullet shell-teal/b <2;:> cre 20 _ <;:5> repeat 5 <;:72> s :: {
         TestSMExceptionRegex(@"sync danger <2;:> summons tprot cx 1 sad", 
             "Nested StateMachine construction.*sad is not a StateMachine");
         TestSMExceptionRegex(@"async shell-teal/b <2;:> gcr2 60 5 <-0.2;:10> { } gsr2 5 <;:72> { } s tp-rot cx sad", 
-            "to type Float.*≪sad≫");
+            "to type float.*≪sad≫");
         TestSMExceptionRegex(@"async shell-teal/b <2;:> gcr2 60 5 <-0.2;:10> { } gsr2 5 <;:72> { } s tp-rot cxy 2", 
             "TP.*ran out of text");
         TestSMExceptionRegex(@"async shell-teal/b", "ran out of text");
         TestSMExceptionRegex(@"
 async shell-teal/b <2;:> gcr2 60 5 <-0.2;:10> { } gsr2 5 <;:72> { } s tp-rot cxy 2
 async shell-teal/b <2;:> gcr2 60 5 <-0.2;:10> { } gsr2 5 <;:72> { } s tp-rot cxy 2 3",
-            "to type Float.*≪async≫");
+            "to type float.*≪async≫");
     }
 
     [UnityTest]

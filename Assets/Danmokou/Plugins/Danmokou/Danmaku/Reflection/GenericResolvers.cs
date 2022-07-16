@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using BagoumLib;
 using BagoumLib.DataStructures;
+using BagoumLib.Reflection;
 using Danmokou.Core;
 using Danmokou.DMath;
 using Danmokou.Expressions;
@@ -26,7 +27,6 @@ public static partial class Reflector {
         
         public ReflCtx(IParseQueue q) {
             List<ParsingProperty> properties = new();
-            props = new ParsingProperties(new ParsingProperty[0]);
             while (q.MaybeScan() == SMParser.PROP2_KW) {
                 q.Advance();
                 properties.Add(q.NextChild().Into<ParsingProperty>());
@@ -45,26 +45,19 @@ public static partial class Reflector {
     /// </summary>
     /// <param name="invoke_args">Argument array to fill.</param>
     /// <param name="starti">Index of invoke_args to start from.</param>
-    /// <param name="prms">Type information of arguments.</param>
+    /// <param name="sig">Type information of arguments.</param>
     /// <param name="q">Queue from which to parse elements.</param>
-    /// <param name="nameType">The type that this argument array will eventually be used to construct.
-    /// Used for error reporting.</param>
-    /// <param name="methodName">The method by which nameType will be constructed, or null if using a constructor.
-    /// Used for error reporting.</param>
-    public static void FillInvokeArray(object?[] invoke_args, int starti, NamedParam[] prms, IParseQueue q,
-        Type nameType, string methodName) {
+    public static void FillInvokeArray(object?[] invoke_args, int starti, MethodSignature sig, IParseQueue q) {
         try {
-            _FillInvokeArray(invoke_args, starti, prms, q, nameType, methodName);
+            _FillInvokeArray(invoke_args, starti, sig, q);
         } catch (Exception e) {
             throw Exceptions.FlattenNestedException(e);
         }
     }
-    private static object?[] _FillInvokeArray(object?[] invoke_args, int starti, NamedParam[] prms, IParseQueue q,
-        Type nameType, string? methodName) {
-        string MethodName() => string.IsNullOrWhiteSpace(methodName) ?
-            nameType.RName() :
-            $"{nameType.RName()}.{methodName}";
+    
+    private static object?[] _FillInvokeArray(object?[] invoke_args, int starti, MethodSignature sig, IParseQueue q) {
         int nargs = 0;
+        var prms = sig.Params;
         for (int ii = starti; ii < prms.Length; ++ii) {
             if (!prms[ii].nonExplicit) ++nargs;
         }
@@ -85,7 +78,7 @@ public static partial class Reflector {
         }
 
         if (q is ParenParseQueue p2 && nargs != p2.paren.Length) {
-            throw new ParsingException(p2.WrapThrow($"Expected {nargs} explicit arguments for {MethodName()}, " +
+            throw new ParsingException(p2.WrapThrow($"Expected {nargs} explicit arguments for {sig.FileLink}, " +
                                                     $"but the parentheses contains {p2.paren.Length}."));
         }
 
@@ -93,8 +86,8 @@ public static partial class Reflector {
         void ThrowEmpty(IParseQueue lq, int ii) {
             if (lq.Empty) {
                 throw new ParsingException(q.WrapThrowA(
-                    $"Tried to construct {MethodName()}, but the parser ran out of text when looking for argument " +
-                    $"#{ii + 1}/{prms.Length} {prms[ii]}. " +
+                    $"Tried to construct {sig.FileLink}, but the parser ran out of text when looking for argument " +
+                    $"#{ii + 1}/{prms.Length} {prms[ii].SimplifiedDescription}. " +
                     "This probably means you have parentheses that do not enclose the entire function.",
                     $" | [Arg#{ii + 1} Missing]"));
             }
@@ -110,22 +103,21 @@ public static partial class Reflector {
                     invoke_args[ii] = _ReflectParam(local, prms[ii]);
                 } catch (Exception ex) {
                     throw new InvokeException(
-                        $"Line {q.GetLastLine(ci)}: Tried to construct {MethodName()}, " +
-                        $"but failed to create argument #{ii + 1}/{prms.Length} {prms[ii]}.", ex);
+                        $"Line {q.GetLastLine(ci)}: Tried to construct {sig.FileLink}, " +
+                        $"but failed to create argument #{ii + 1}/{prms.Length} {prms[ii].SimplifiedDescription}.", ex);
 
                 }
                 local.ThrowOnLeftovers(() =>
-                    $"Argument #{ii + 1}/{prms.Length} {prms[ii]} has extra text.");
+                    $"Argument #{ii + 1}/{prms.Length} {prms[ii].SimplifiedDescription} has extra text.");
             }
         }
-        q.ThrowOnLeftovers(() => $"{MethodName()} has extra text after all {prms.Length} arguments.");
+        q.ThrowOnLeftovers(() => $"{sig.FileLink} has extra text after all {prms.Length} arguments.");
         return invoke_args;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static object?[] _FillInvokeArray(NamedParam[] prms, IParseQueue q, Type nameType,
-        string? methodName)
-        => _FillInvokeArray(new object?[prms.Length], 0, prms, q, nameType, methodName);
+    private static object?[] _FillInvokeArray(MethodSignature sig, IParseQueue q)
+        => _FillInvokeArray(new object?[sig.Params.Length], 0, sig, q);
 
 
 
@@ -246,9 +238,10 @@ public static partial class Reflector {
             q.ThrowOnLeftovers(p.type);
             //Not concerned with funced types, only the declared types.
             var funcAllTypes = p.type.GenericTypeArguments;
-            var funcRetType = funcAllTypes[funcAllTypes.Length - 1];
+            var funcRetType = funcAllTypes[^1];
             var funcPrmTypes = funcAllTypes.Take(funcAllTypes.Length - 1).ToArray();
-            var methodPrmTypes = ReflectionData.GetArgTypes(funcRetType, method_str);
+            var method = ReflectionData.GetArgTypes(funcRetType, method_str);
+            var methodPrmTypes = method.Params;
             if (funcPrmTypes.Length != methodPrmTypes.Length)
                 throw new Exception($"Provided method {method_str} takes {funcPrmTypes.Length} parameters " +
                                     $"(required {methodPrmTypes.Length})");
@@ -291,7 +284,7 @@ public static partial class Reflector {
         }
         if (q.Empty)
             throw new ParsingException(q.WrapThrow($"Ran out of text when trying to create " +
-                                                   $"an object of type {NameType(t)}."));
+                                                   $"an object of type {t.RName()}."));
         else if (t == tsm)
             obj = ReflectSM(q);
         else if (_TryReflectMethod(arg, t, q, out obj)) {
@@ -304,8 +297,9 @@ public static partial class Reflector {
             try {
                 obj = _ReflectTargetType(MakeFallthrough(q), ftype, postAggregateContinuation);
             } catch (Exception e) {
-                throw new Exception(q.WrapThrowC($"Instead of constructing type {t.RName()}, tried to construct a" +
-                                                 $" similar object of type {ftype.RName()}, but that also failed."), e);
+                throw new Exception(q.WrapThrowC(
+                    $"Failed to construct an object of type {t.SimpRName()}. Instead, tried to construct a" +
+                    $" similar object of type {ftype.SimpRName()}, but that also failed."), e);
             }
             obj = ftmi.mi.Invoke(null, new[] {obj});
         } else if (TryCompileOption(t, out var cmp)) {
@@ -320,7 +314,7 @@ public static partial class Reflector {
         else if (CastToType(arg, t, out obj))
             q.Advance();
         else
-            throw new Exception(q.WrapThrowC($"Couldn't convert the object in ≪≫ to type {t.RName()}."));
+            throw new Exception(q.WrapThrowC($"Couldn't convert the object in ≪≫ to type {t.SimpRName()}."));
 
         if (obj != null)
             obj = DoPostAggregate(t, q, obj);
@@ -386,9 +380,9 @@ public static partial class Reflector {
         return varStack1.Pop();
     }
 
-    public static NamedParam[]? TryGetSignature<T>(ref string member) => 
+    public static MethodSignature? TryGetSignature<T>(ref string member) => 
         TryGetSignature(ref member, typeof(T));
-    public static NamedParam[]? TryGetSignature(ref string member, Type rt) {
+    public static MethodSignature? TryGetSignature(ref string member, Type rt) {
         var typs = TryLookForMethod(rt, member);
         if (typs != null)
             return typs;
@@ -405,7 +399,7 @@ public static partial class Reflector {
         var typs = TryGetSignature(ref member, rt);
         if (typs == null) return false;
         q.Advance();
-        result = InvokeMethod(q, rt, member, _FillInvokeArray(typs, q, rt, member));
+        result = InvokeMethod(q, rt, member, _FillInvokeArray(typs, q));
         return true;
     }
 

@@ -15,18 +15,59 @@ using ExBPY = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.T
 using ExPred = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<bool>>;
 using ExTP = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<UnityEngine.Vector2>>;
 using ExTP3 = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<UnityEngine.Vector3>>;
+using ExTP4 = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<UnityEngine.Vector4>>;
 using ExBPRV2 = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<Danmokou.DMath.V2RV2>>;
 
 namespace Danmokou.Reflection {
 public static partial class Reflector {
-    private static readonly CSharpTypePrinter TypePrinter = new();
+    public static string SimpRName(this Type t) => SimplifiedExprPrinter.Default.Print(t);
+    private class SimplifiedExprPrinter : CSharpTypePrinter {
+        public new static readonly ITypePrinter Default = new SimplifiedExprPrinter();
+        private static readonly Dictionary<Type, Type> exTypeRemap = new() {
+            { typeof(ExTP), typeof(TP) },
+            { typeof(ExTP3), typeof(TP3) },
+            { typeof(ExTP4), typeof(TP4) },
+            { typeof(ExBPY), typeof(BPY) },
+            { typeof(ExBPRV2), typeof(BPRV2) },
+            { typeof(Func<TExArgCtx, TEx<bool>>), typeof(Pred) },
+            { typeof(Func<ITexMovement, TEx<float>, TExArgCtx, TExV2, TEx>), typeof(VTP) },
+            { typeof(Func<ITexMovement, TEx<float>, TEx<float>, TExArgCtx, TExV2, TEx>), typeof(LVTP) },
+            { typeof(Func<TExSBC, TEx<int>, TEx<BagoumLib.Cancellation.ICancellee>, TExArgCtx, TEx>), typeof(SBCF) }
+        };
+        public override string Print(Type t) {
+            if (exTypeRemap.TryGetValue(t, out var v))
+                return Print(v);
+            if (t.IsConstructedGenericType && t.GetGenericTypeDefinition() == typeof(GCXU<>))
+                return Print(t.GenericTypeArguments[0]);
+            return base.Print(t);
+        }
+    }
     public record NamedParam(Type type, string name, bool lookupMethod, bool nonExplicit) {
         public static implicit operator NamedParam(ParameterInfo pi) => 
             new(pi.ParameterType, pi.Name, 
                 Attribute.GetCustomAttributes(pi).Any(x => x is LookupMethodAttribute),
                 Attribute.GetCustomAttributes(pi).Any(x => x is NonExplicitParameterAttribute));
 
-        public override string ToString() => $"{name}<{TypePrinter.Print(type)}>";
+        public string Description => $"{name}<{CSharpTypePrinter.Default.Print(type)}>";
+        public string SimplifiedDescription => $"\"{name}\" (type: {SimplifiedExprPrinter.Default.Print(type)})";
+    }
+
+    /// <summary>
+    /// A description of a method called in reflection.
+    /// </summary>
+    /// <param name="Mi"><see cref="MethodInfo"/> or <see cref="ConstructorInfo"/> for the method.</param>
+    /// <param name="CalledAs">The name by which the user called the method (which may be an alias).</param>
+    /// <param name="Params">Simplified description of the method parameters.</param>
+    public record MethodSignature(MethodBase Mi, string? CalledAs, NamedParam[] Params) {
+        public string TypeName => Mi.DeclaringType!.RName();
+        public string Name => (CalledAs == null || CalledAs == Mi.Name.ToLower()) ? Mi.Name : 
+            $"{Mi.Name} (called via alias '{CalledAs}')";
+        public string TypeEnclosedName => Mi.Name == ".ctor" ?
+            $"new {TypeName}" :
+            $"{TypeName}.{Name}";
+        public string FileLink =>
+            Mi.DeclaringType!.GetCustomAttribute<ReflectAttribute>()?.FileLink(TypeEnclosedName) ??
+            TypeEnclosedName;
     }
     
     /// <summary>
@@ -39,7 +80,7 @@ public static partial class Reflector {
     /// Within the context of a given return type, a function that returns the parameter types for a function
     ///  named 'member' that has the given return type.
     /// </summary>
-    private delegate NamedParam[] TypeGet(string member);
+    private delegate MethodSignature TypeGet(string member);
 
     /// <summary>
     /// Within the context of a given return type, a function that tries to execute the function 'member'
@@ -68,7 +109,7 @@ public static partial class Reflector {
         funcifiableReturnTypes.Add(typeof(ExR));
     }
 
-    private static NamedParam[]? TryLookForMethod(Type rt, string member) {
+    private static MethodSignature? TryLookForMethod(Type rt, string member) {
         if (funcifiableTypes.TryGetValue(rt, out var fs) && fs.has(member)) 
             return fs.get(member);
         if (ReflectionData.HasMember(rt, member)) 

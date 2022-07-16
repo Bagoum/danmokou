@@ -1,152 +1,128 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using BagoumLib;
 using BagoumLib.Culture;
 using Danmokou.DMath;
+using Newtonsoft.Json;
 using UnityEngine;
 using KC = UnityEngine.KeyCode;
 using static FileUtils;
 using ProtoBuf;
-using UnityEngine.SocialPlatforms;
+using static Danmokou.Core.DInput.KeyCodeHelpers;
 
 
 namespace Danmokou.Core.DInput {
+
+/// <summary>
+/// Method that governs when an <see cref="InputHandler"/> is active as depending on its underlying sources.
+/// </summary>
 public enum InputTriggerMethod {
+    /// <summary>
+    /// The handler is active on the first Regular Update frame
+    /// for the Unity frame when the source was first made active.
+    /// </summary>
     ONCE,
+    /// <summary>
+    /// The handler is continuously active starting from the first Regular Update frame
+    /// for the Unity frame when the source was first made active,
+    /// and is deactivated when the source is made active again.
+    /// </summary>
     ONCE_TOGGLE,
+    /// <summary>
+    /// The handler is active while the source is active.
+    /// </summary>
     PERSISTENT
 }
-
-/// <summary>
-/// A simple input method that, at any time, is either active or inactive.
-/// </summary>
-public interface IInputChecker {
-    public LString Description { get; }
-    public bool Active { get; }
-}
-public class InputChecker : IInputChecker {
-    protected readonly Func<bool> checker;
-    public LString Description { get; }
-
-    public bool Active => checker();
-
-    public InputChecker(Func<bool> check, LString desc) {
-        checker = check;
-        Description = desc;
-    }
-    //Use this combiner when there are multiple keys that do the same thing
-    public InputChecker Or(InputChecker other) => 
-        new InputChecker(() => Active || other.Active, 
-            LString.Format(new LText("{0} or {1}", (Locales.JP, "{0}や{1}")), Description, other.Description));
-    
-    public InputChecker OrSilent(IInputChecker other) => 
-        new InputChecker(() => Active || other.Active, Description);
-}
-
-public class MockInputChecker : IInputChecker {
-    private readonly InCodeInputSource source;
-    private int activeCt = 0;
-    public LString Description { get; } = LString.Empty;
-    public bool Active => activeCt > 0;
-
-    public MockInputChecker(InCodeInputSource source) {
-        this.source = source;
-    }
-
-    public void SetActive() => source.SetActive(this);
-
-    public int _AddCounter(int delta) => activeCt += delta;
-}
-
-/// <summary>
-/// An input method which may layer update-dependent limitations over some <see cref="IInputChecker"/>s.
-/// </summary>
-public interface IInputHandler {
-    bool Active { get; }
-    LString Description { get; }
-    /// <summary>
-    /// Update the state of the input method.
-    /// </summary>
-    /// <returns>True iff the input method is now active.</returns>
-    bool Update();
-}
-public class InputHandler : IInputHandler {
-    private bool refractory;
-    private readonly InputTriggerMethod trigger;
-    private bool toggledValue;
-    public bool Active => _active && EngineStateManager.State.InputAllowed() &&
-                          //Prevents events like Bomb from being triggered twice in two RU frames per one unity frame
-                          (trigger == InputTriggerMethod.ONCE ?
-                            ETime.FirstUpdateForScreen :
-                            true);
-    private bool _active;
-    public readonly IInputChecker checker;
-    public LString Description => checker.Description;
-
-    private InputHandler(InputTriggerMethod method, IInputChecker check) {
-        refractory = false;
-        trigger = method;
-        checker = check;
-    }
-    
-    public static IInputHandler Toggle(IInputChecker check) => new InputHandler(InputTriggerMethod.ONCE_TOGGLE, check);
-    public static IInputHandler Hold(IInputChecker check) => new InputHandler(InputTriggerMethod.PERSISTENT, check);
-    public static IInputHandler Trigger(IInputChecker check) => new InputHandler(InputTriggerMethod.ONCE, check);
-
-    public bool Update() {
-        var keyDown = checker.Active;
-        if (!refractory && keyDown) {
-            refractory = trigger == InputTriggerMethod.ONCE || trigger == InputTriggerMethod.ONCE_TOGGLE;
-            if (trigger == InputTriggerMethod.ONCE_TOGGLE) _active = toggledValue = !toggledValue;
-            else _active = true;
-        } else {
-            if (refractory && !keyDown) refractory = false;
-            _active = (trigger == InputTriggerMethod.ONCE_TOGGLE) ? toggledValue : false;
-        }
-        return _active;
-    }
-}
-//Use this combiner when multiple keys combine to form one command (eg. ctrl+shift+R)
-public class AndInputHandler : IInputHandler {
-    private readonly IInputHandler[] parts;
-    public bool Active {
-        get {
-            for (int ii = 0; ii < parts.Length; ++ii) {
-                if (!parts[ii].Active)
-                    return false;
-            }
-            return true;
-        }
-    }
-    public LString Description { get; }
-
-
-    public AndInputHandler(params IInputHandler[] parts) {
-        this.parts = parts;
-        this.Description = LString.FormatFn(p => string.Join("+", p), parts.Select(p => p.Description).ToArray());
-    }
-    
-    public bool Update() {
-        bool allValid = true;
-        for (int ii = 0; ii < parts.Length; ++ii)
-            allValid &= parts[ii].Update();
-        return allValid;
-    }
-    
-}
 public static class InputManager {
-    public static readonly IReadOnlyList<KC> Alphanumeric = new[] {
-        KC.A, KC.B, KC.C, KC.D, KC.E, KC.F, KC.G, KC.H, KC.I, KC.J, KC.K, KC.L, KC.M, KC.N,
-        KC.O, KC.P, KC.Q, KC.R, KC.S, KC.T, KC.U, KC.V, KC.W, KC.X, KC.Y, KC.Z,
-        KC.Alpha0, KC.Alpha1, KC.Alpha2, KC.Alpha3, KC.Alpha4,
-        KC.Alpha5, KC.Alpha6, KC.Alpha7, KC.Alpha8, KC.Alpha9
-    };
+    public static readonly ShiftKeyBinding Shift = new();
+    public static readonly AltKeyBinding Alt = new();
+    public static readonly CtrlKeyBinding Ctrl = new();
+    public static readonly CmdKeyBinding Cmd = new();
     
+    
+    /// <summary>
+    /// Input keys that can be inspected and used for rebinding at runtime.
+    /// Includes non-reserved keycode and mousekey inputs, but not joystick inputs.
+    /// </summary>
+    public static readonly IInspectableInputBinding[] RebindableKeys;
+    public static readonly IInspectableInputBinding[] RebindableControllerKeys;
+    public static readonly Dictionary<IInspectableInputBinding, int> KeyOrdering;
+    
+
+    /// <summary>
+    /// Returns a canonicalized list of the KBM keys that are currently being held.
+    /// </summary>
+    public static IInspectableInputBinding[]? CurrentlyHeldRebindableKeys {
+        get {
+            HashSet<IInspectableInputBinding>? ret = null;
+            void Add(IInspectableInputBinding x) => (ret ??= new()).Add(x);
+            foreach (var x in RebindableKeys)
+                if (x.Active)
+                    Add(x);
+            return ret?.OrderBy(k => KeyOrdering[k]).ToArray();
+        }
+    }
+    /// <summary>
+    /// Returns a canonicalized list of the  controller keys that are currently being held.
+    /// </summary>
+    public static IInspectableInputBinding[]? CurrentlyHeldRebindableControllerKeys {
+        get {
+            HashSet<IInspectableInputBinding>? ret = null;
+            void Add(IInspectableInputBinding x) => (ret ??= new()).Add(x);
+            foreach (var x in RebindableControllerKeys)
+                if (x.Active)
+                    Add(x);
+            return ret?.OrderBy(k => KeyOrdering[k]).ToArray();
+        }
+    }
+
+    /// <summary>
+    /// Parse the keys that were pressed Down on this frame and treat them as text input.
+    /// Handles shift but not capslock.
+    /// </summary>
+    public static char? TextInput {
+        //Note: while there exist keycodes like KeyCode.Asterisk, pressing shift+8 will not produce it.
+        // Presumably, you need a special keyboard that has the asterisk key.
+        get {
+            bool capitalize = Shift.Active;
+            foreach (var kc in TextInputKeys)
+                if (Input.GetKeyDown(kc)) {
+                    var k = capitalize ? kc.Capitalize() : kc;
+                    if (k.RenderAsText() is { } c) {
+                        if (capitalize && k.IsAlphabetic())
+                            return (char)(c + ('A' - 'a'));
+                        return c;
+                    }
+                }
+            return null;
+        }
+    }
 
     static InputManager() {
+        RebindableKeys = new IInspectableInputBinding[] {
+            Ctrl, Cmd, Alt, Shift, 
+            new KBMKeyInputBinding(KeyCode.UpArrow), new KBMKeyInputBinding(KeyCode.RightArrow),
+            new KBMKeyInputBinding(KeyCode.DownArrow), new KBMKeyInputBinding(KeyCode.LeftArrow),
+            //new MouseKeyInputBinding(0), don't allow modifying left-click, it will fuck with how it is used by default
+            new MouseKeyInputBinding(1), new MouseKeyInputBinding(2)
+        }.Concat(TextInputKeys.Select(ti => new KBMKeyInputBinding(ti))).ToArray();
+        var controllerKeys = new List<IInspectableInputBinding>();
+        foreach (var axis in Enum.GetValues(typeof(ControllerAxis)).Cast<ControllerAxis>()) {
+            controllerKeys.Add(new AnyControllerInputBinding.Axis(axis, true));
+            controllerKeys.Add(new AnyControllerInputBinding.Axis(axis, false));
+        }
+        for (var ii = KeyCode.JoystickButton0; ii < KeyCode.Joystick1Button0; ++ii)
+            controllerKeys.Add(new AnyControllerInputBinding.Key(ii));
+        RebindableControllerKeys = controllerKeys.ToArray();
+        KeyOrdering = new();
+        foreach (var (i, x) in RebindableKeys.Enumerate())
+            KeyOrdering[x] = i;
+        foreach (var (i, x) in RebindableControllerKeys.Enumerate())
+            KeyOrdering[x] = i;
+        PlayerInput.AddSource(InCodeInput, AggregateInputSource.REPLAY_PRIORITY + 1);
         unsafe {
             Logs.Log($"Replay frame size (should be 6): {sizeof(FrameInput)}.");
-            PlayerInput.AddSource(InCodeInput, AggregateInputSource.REPLAY_PRIORITY + 1);
         }
     }
 
@@ -209,8 +185,7 @@ public static class InputManager {
     }
 
     public static InCodeInputSource InCodeInput { get; } = new();
-    public static AggregateInputSource PlayerInput { get; } = new(
-        new MainInputSource(new KBMInputSource(), new ControllerInputSource()));
+    public static AggregateInputSource PlayerInput { get; } = new(new MainInputSource());
     public static IDescriptiveInputSource MainSource => PlayerInput.MainSource.Current;
 
 }

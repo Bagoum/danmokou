@@ -12,6 +12,9 @@ using Suzunoya.ControlFlow;
 
 namespace Danmokou.ADV {
 
+/// <summary>
+/// The process executing an ADV instance. This is subclassed for each game.
+/// </summary>
 public interface IExecutingADV : IRegularUpdater, IDisposable {
     ADVInstance Inst { get; }
     ADVData ADVData => Inst.ADVData;
@@ -21,17 +24,23 @@ public interface IExecutingADV : IRegularUpdater, IDisposable {
     Task Run();
 }
 
+/// <summary>
+/// See <see cref="IExecutingADV"/>
+/// </summary>
+/// <typeparam name="I">Type of idealized state container</typeparam>
+/// <typeparam name="D">Type of save data</typeparam>
 public interface IExecutingADV<I, D> : IExecutingADV where I : ADVIdealizedState where D : ADVData {
     new MapStateManager<I, D> MapStates { get; }
     IMapStateManager IExecutingADV.MapStates => MapStates; 
 }
 
+/// <summary>
+/// Baseline implementation of <see cref="IExecutingADV"/> that can be used for pure VN games with no map control.
+/// </summary>
 public class BarebonesExecutingADV<D> : IExecutingADV<ADVIdealizedState, D> where D : ADVData {
     public void RegularUpdate() {}
 
-    public void Dispose() {
-        throw new NotImplementedException();
-    }
+    public void Dispose() { }
     public ADVInstance Inst { get; }
     private readonly Func<Task> executor;
     public MapStateManager<ADVIdealizedState, D> MapStates { get; }
@@ -45,6 +54,10 @@ public class BarebonesExecutingADV<D> : IExecutingADV<ADVIdealizedState, D> wher
     public Task Run() => executor();
 }
 
+/// <summary>
+/// Implementation of <see cref="IExecutingADV"/> for ADV games requiring assertion logic and map controls.
+/// <br/>Almost all game configuration is done in abstract method <see cref="ConfigureMapStates"/>.
+/// </summary>
 public abstract class ExecutingADVGame<I, D> : IExecutingADV<I, D> where I : ADVIdealizedState where D : ADVData {
     public ADVInstance Inst { get; }
     public ADVManager Manager => Inst.Manager;
@@ -129,13 +142,13 @@ public abstract class ExecutingADVGame<I, D> : IExecutingADV<I, D> where I : ADV
     /// <summary>
     /// Boilerplate code for running an ADV-based game. 
     /// </summary>
-    public virtual async Task Run() {
+    public async Task Run() {
         //Data.ExecNum = GameManagement.ExecutionNumber;
         await mapTransition.UpdateMapData(Data, new MapStateTransitionSettings<I> {
             ExtraAssertions = (map, s) => {
-                if (map == prevMap && Inst.Request.LoadProxyData?.VNData.Location is { } l) {
+                if (map == prevMap && Inst.Request.LoadProxyData?.VNData is { Location: { } l} replayer) {
                     //If saved during a VN segment, load into it
-                    Inst.VN.LoadToLocation(l, () => {
+                    Inst.VN.LoadToLocation(l, replayer, () => {
                         Inst.Request.FinalizeProxyLoad();
                         UpdateDataV(_ => { });
                     });
@@ -148,6 +161,18 @@ public abstract class ExecutingADVGame<I, D> : IExecutingADV<I, D> where I : ADV
         await completion.Task;
     }
 
+    /// <summary>
+    /// Map setup function run once during game initialization.
+    /// <br/>Subclasses must override this to make data-dependent assertions on maps.
+    /// <br/>Assertions will be re-evaluated whenever the instance data changes.
+    /// <br/>Example usage, where SomeEntity appears on MyMapName after QuestYYY is accepted:
+    /// <code>
+    /// ms.ConfigureMap("MyMapName", (i, d) => {
+    ///   if (d.QuestState.QuestYYY >= QuestState.ACCEPTED) {
+    ///     i.Assert(new EntityAssertion&lt;SomeEntity&gt;(vn));
+    /// ...
+    /// </code>
+    /// </summary>
     protected abstract MapStateManager<I, D> ConfigureMapStates();
     
     public void Dispose() {

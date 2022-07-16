@@ -1,117 +1,127 @@
 apiRules:
     - include:
-        uidRegex: Controls
-    - exclude:
-        uidRegex: ^DMK\.Behavior\.BehaviorEntity\.
+        uidRegex: ^Danmokou\.Behavior\.BehaviorEntity$
     - include:
-        uidRegex: ^DMK\.Behavior\.BehaviorEntity
+        uidRegex: ^Danmokou\.Behavior\.BehaviorEntity\.BulletControls
+    - include:
+        uidRegex: ^Danmokou\.Behavior\.BehaviorEntity\.PoolControls
     - exclude:
-        uidRegex: ^DMK\.Behavior
+        uidRegex: ^Danmokou\.Behavior\.BehaviorEntity\.
+    - exclude:
+        uidRegex: ^Danmokou\.Behavior
         type: Type
     - include:
-        uidRegex: ^DMK\.Danmaku\.Patterns
+        uidRegex: ^Danmokou\.Danmaku\.Patterns
     - exclude:
-        uidRegex: ^DMK\.Danmaku\.Options\.GenCtxProperty\.
+        uidRegex: ^Danmokou\.Danmaku\.Options\.GenCtxProperty\.
         type: Type
     - include:
-        uidRegex: ^DMK\.Danmaku\.Options\.GenCtxProperty
+        uidRegex: ^Danmokou\.Danmaku\.Options\.GenCtxProperty
     - exclude:
-        uidRegex: ^DMK\.Danmaku\.Options\.LaserOption\.
+        uidRegex: ^Danmokou\.Danmaku\.Options\.LaserOption\.
         type: Type
     - include:
-        uidRegex: ^DMK\.Danmaku\.Options\.LaserOption$
+        uidRegex: ^Danmokou\.Danmaku\.Options\.LaserOption$
     - exclude:
-        uidRegex: ^DMK\.Danmaku\.Options\.SBOption\.
+        uidRegex: ^Danmokou\.Danmaku\.Options\.SBOption\.
         type: Type
     - include:
-        uidRegex: ^DMK\.Danmaku\.Options\.SBOption$
+        uidRegex: ^Danmokou\.Danmaku\.Options\.SBOption$
     - exclude:
-        uidRegex: ^DMK\.Danmaku\.Options\.BehOption\.
+        uidRegex: ^Danmokou\.Danmaku\.Options\.BehOption\.
         type: Type
     - include:
-        uidRegex: ^DMK\.Danmaku\.Options\.BehOption$
-    - exclude:
-        uidRegex: ^DMK\.Danmaku\.BulletManager\.
+        uidRegex: ^Danmokou\.Danmaku\.Options\.BehOption$
     - include:
-        uidRegex: ^DMK\.Danmaku\.BulletManager
-    - exclude:
-        uidRegex: ^DMK\.Danmaku
-        type: Type
-    - exclude:
-        uidRegex: ^DMK\.Graphics\.CurvedTileRenderLaser\.
+        uidRegex: ^Danmokou\.Danmaku\.BulletManager$
     - include:
-        uidRegex: ^DMK\.Graphics\.CurvedTileRenderLaser
-    - exclude:
-        uidRegex: ^DMK\.Graphics
-        type: Type
-    - exclude:
-        uidRegex: ^DMK\.DMath\.Functions\.VTPConstructors
-    - exclude:
-        uidRegex: ^DMK\.DMath\.Functions\.VTPControllers
+        uidRegex: ^Danmokou\.Danmaku\.BulletManager\.SimpleBulletControls
     - include:
-        uidRegex: ^DMK\.DMath
+        uidRegex: ^Danmokou\.Danmaku\.BulletManager\.SimplePoolControls
     - exclude:
-        uidRegex: ^DMK\.Expressions
+        uidRegex: ^Danmokou\.Danmaku\.BulletManager\.
     - exclude:
-        uidRegex: ^DMK\.SM\.SMAnalysis
-    - exclude:
-        uidRegex: ^DMK\.SM\.SMPhaseController
-    - exclude:
-        uidRegex: ^DMK\.SM\.WaitingUtils
-    - exclude:
-        uidRegex: ^DMK\.SM\.PhaseProperty\.
-        type: Type
-    - exclude:
-        uidRegex: ^DMK\.SM\.PhaseProperties
-    - exclude:
-        uidRegex: ^DMK\.SM\.PatternProperty\.
-        type: Type
-    - exclude:
-        uidRegex: ^DMK\.SM\.PatternProperties
-    - exclude:
-        uidRegex: ^DMK\.SM\.ParsingProperty\.
-        type: Type
-    - exclude:
-        uidRegex: ^DMK\.SM\.ParsingProperties
-    - exclude:
-        uidRegex: ^DMK\.SM\.StateMachineManager
-    - exclude:
-        uidRegex: ^DMK\.SM\.StateMachine$
-    - exclude:
-        uidRegex: ^DMK\.SM\.Synchronizer
-    - exclude:
-        uidRegex: ^DMK\.SM\.TaskPattern
-    - exclude:
-        uidRegex: ^DMK\.SM\.UniversalSM
-    - exclude:
-        uidRegex: ^DMK\.SM\.PhaseJSM
-    - exclude:
-        uidRegex: ^DMK\.SM\.DebugFloat
-    - exclude:
-        uidRegex: ^DMK\.SM\.SMHandoff
-    - exclude:
-        uidRegex: ^DMK\.SM\.Parsing\.
-    - include:
-        uidRegex: ^DMK\.SM\..*$
-    - exclude:
-        uidRegex: ^DMK\.SM
+        uidRegex: ^Danmokou\.Danmaku
         type: Type
     - include:
-        uidRegex: ^DMK\.Core\.Events\.Event0\.Once
+        uidRegex: ^Danmokou\.Graphics\.CurvedTileRenderLaser$
     - include:
-        uidRegex: ^DMK\.Core\.Events\.Event0\.Continuous
+        uidRegex: ^Danmokou\.Graphics\.CurvedTileRenderLaser\.LaserControls
     - include:
-        uidRegex: ^DMK\.Core\.Events\.Event0\.Refract
+        uidRegex: ^Danmokou\.Graphics\.CurvedTileRenderLaser\.PoolControls
     - exclude:
-        uidRegex: ^DMK\.Core\.Events\.Event0
+        uidRegex: ^Danmokou\.Graphics\.CurvedTileRenderLaser\.
+    - exclude:
+        uidRegex: ^Danmokou\.Graphics
+        type: Type
+    - exclude:
+        uidRegex: ^Danmokou\.DMath\.Functions\.VTPConstructors
+    - exclude:
+        uidRegex: ^Danmokou\.DMath\.Functions\.VTPControllers
+    - include:
+        uidRegex: ^Danmokou\.DMath
+    - exclude:
+        uidRegex: ^Danmokou\.Expressions
+    - exclude:
+        uidRegex: ^Danmokou\.SM\.SMAnalysis
+    - exclude:
+        uidRegex: ^Danmokou\.SM\.SMPhaseController
+    - exclude:
+        uidRegex: ^Danmokou\.SM\.WaitingUtils
+    - exclude:
+        uidRegex: ^Danmokou\.SM\.PhaseProperty\.
+        type: Type
+    - exclude:
+        uidRegex: ^Danmokou\.SM\.PhaseProperties
+    - exclude:
+        uidRegex: ^Danmokou\.SM\.PatternProperty\.
+        type: Type
+    - exclude:
+        uidRegex: ^Danmokou\.SM\.PatternProperties
+    - exclude:
+        uidRegex: ^Danmokou\.SM\.ParsingProperty\.
+        type: Type
+    - exclude:
+        uidRegex: ^Danmokou\.SM\.ParsingProperties
+    - exclude:
+        uidRegex: ^Danmokou\.SM\.StateMachineManager
+    - exclude:
+        uidRegex: ^Danmokou\.SM\.StateMachine$
+    - exclude:
+        uidRegex: ^Danmokou\.SM\.Synchronizer
+    - exclude:
+        uidRegex: ^Danmokou\.SM\.TaskPattern
+    - exclude:
+        uidRegex: ^Danmokou\.SM\.UniversalSM
+    - exclude:
+        uidRegex: ^Danmokou\.SM\.PhaseJSM
+    - exclude:
+        uidRegex: ^Danmokou\.SM\.DebugFloat
+    - exclude:
+        uidRegex: ^Danmokou\.SM\.SMHandoff
+    - exclude:
+        uidRegex: ^Danmokou\.SM\.Parsing\.
+    - include:
+        uidRegex: ^Danmokou\.SM\..*$
+    - exclude:
+        uidRegex: ^Danmokou\.SM
+        type: Type
+    - include:
+        uidRegex: ^Danmokou\.Core\.Events\.Event0\.Once
+    - include:
+        uidRegex: ^Danmokou\.Core\.Events\.Event0\.Continuous
+    - include:
+        uidRegex: ^Danmokou\.Core\.Events\.Event0\.Refract
+    - exclude:
+        uidRegex: ^Danmokou\.Core\.Events\.Event0
         type: Method
     - include:
-        uidRegex: ^DMK\.Core\.Events\.Event0
+        uidRegex: ^Danmokou\.Core\.Events\.Event0
     - include:
-        uidRegex: ^DMK\.Core\.Events$
+        uidRegex: ^Danmokou\.Core\.Events$
     - include:
-        uidRegex: ^DMK\.Core
+        uidRegex: ^Danmokou\.Core
         type: Enum
     - exclude:
-        uidRegex: ^DMK\.Core
+        uidRegex: ^Danmokou\.Core
         type: Type

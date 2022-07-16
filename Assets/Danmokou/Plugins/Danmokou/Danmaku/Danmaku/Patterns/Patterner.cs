@@ -218,7 +218,7 @@ public static partial class AtomicPatterns {
     /// <param name="path">Movement descriptor</param>
     /// <returns></returns>
     [Alias("simp")]
-    public static SyncPattern S(GCXU<VTP> path) => Simple(path, new SBOptions(new SBOption[0]));
+    public static SyncPattern S(GCXU<VTP> path) => Simple(path, new SBOptions(Array.Empty<SBOption>()));
 
     /// <summary>
     /// Fires a simple bullet. Takes an array of simple bullet options as modifiers.

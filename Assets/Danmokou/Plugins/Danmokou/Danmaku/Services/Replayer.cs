@@ -118,6 +118,9 @@ public class ReplayRecorder : ReplayActor {
     }
 }
 
+/// <summary>
+/// Input source that overrides gameplay input (not menu input) as copied from a replay.
+/// </summary>
 public class ReplayPlayerInputSource : ReplayActor, IInputSource {
     public readonly Replayer.ReplayerConfig replaying;
     private FrameInput[]? loadedFrames;

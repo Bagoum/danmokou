@@ -201,8 +201,8 @@ public class ETime : MonoBehaviour {
         RNG.RNG_ALLOWED = false;
         Profiler.BeginSample("Parallel update");
         Parallel.For(0, updaters.Count, ii => {
-            DeletionMarker<IRegularUpdater> updater = updaters.Data[ii];
-            if (!updater.MarkedForDeletion) updater.Value.RegularUpdateParallel();
+            if (updaters.GetIfExistsAt(ii, out var u) && u.UpdateDuring >= EngineStateManager.State)
+                u.RegularUpdateParallel();
         });
         Profiler.EndSample();
         RNG.RNG_ALLOWED = true;
@@ -224,15 +224,13 @@ public class ETime : MonoBehaviour {
                 //Parallelize updates if there are many. Note that this allocates ~2kb
                 if (updaters.Count < PARALLELCUTOFF || UsePauseHandling) {
                     for (int ii = 0; ii < updaters.Count; ++ii) {
-                        DeletionMarker<IRegularUpdater> updater = updaters.Data[ii];
-                        if (!updater.MarkedForDeletion && updater.Value.UpdateDuring >= EngineStateManager.State)
-                            updater.Value.RegularUpdateParallel();
+                        if (updaters.GetIfExistsAt(ii, out var u) && u.UpdateDuring >= EngineStateManager.State)
+                            u.RegularUpdateParallel();
                     }
                 } else ParallelUpdateStep();
                 for (int ii = 0; ii < updaters.Count; ++ii) {
-                    DeletionMarker<IRegularUpdater> updater = updaters.Data[ii];
-                    if (!updater.MarkedForDeletion && updater.Value.UpdateDuring >= EngineStateManager.State) 
-                        updater.Value.RegularUpdate();
+                    if (updaters.GetIfExistsAt(ii, out var u) && u.UpdateDuring >= EngineStateManager.State)
+                        u.RegularUpdate();
                 }
                 updaters.Compact();
                 //Note: The updaters array is only modified by this command. 
@@ -254,8 +252,9 @@ public class ETime : MonoBehaviour {
     }
 
     private static IEnumerator NoVsyncHandler() {
+        var eof = new WaitForEndOfFrame();
         while (true) {
-            yield return new WaitForEndOfFrame();
+            yield return eof;
             lastFrameTime += ASSUME_SCREEN_FRAME_TIME;
             //In case of lag spikes (eg. on scene load), don't try to recuperate the frames
             lastFrameTime = Math.Max(lastFrameTime, Time.realtimeSinceStartup);

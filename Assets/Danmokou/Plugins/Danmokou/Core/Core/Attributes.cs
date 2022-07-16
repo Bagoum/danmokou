@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 using JetBrains.Annotations;
+using UnityEngine;
 
 namespace Danmokou.Core {
 
@@ -78,15 +80,35 @@ public class LookupMethodAttribute : Attribute {
 public class NonExplicitParameterAttribute : Attribute {
 }
 
+public class FileLinkAttribute : Attribute {
+    public readonly string file;
+    public readonly string member;
+    public readonly int line;
+
+    public FileLinkAttribute([CallerFilePath] string file = "",
+        [CallerMemberName] string member = "",
+        [CallerLineNumber] int line = 0) {
+        this.file = file;
+        this.member = member;
+        this.line = line;
+    }
+    
+    public string FileLink(string? content = null) => Logs.ToFileLink(file, line, content);
+}
+
 /// <summary>
 /// On an assembly, Reflect marks that classes in the assembly should be examined for possible reflection.
 /// <br/>If the assembly is marked, then on a class, Reflect marks that the methods in the class should be reflected.
 /// </summary>
 [AttributeUsage(AttributeTargets.Assembly | AttributeTargets.Class)]
-public class ReflectAttribute : Attribute {
+public class ReflectAttribute : FileLinkAttribute {
     public readonly Type? returnType;
-
-    public ReflectAttribute(Type? returnType = null) {
+    public ReflectAttribute(Type? returnType = null, 
+        [CallerFilePath] string file = "",
+        [CallerMemberName] string member = "",
+        // ReSharper disable ExplicitCallerInfoArgument
+        [CallerLineNumber] int line = 0) : base(file, member, line) {
+        // ReSharper restore ExplicitCallerInfoArgument
         this.returnType = returnType;
     }
 }

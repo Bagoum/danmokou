@@ -15,7 +15,10 @@ using static BagoumLib.Reflection.ReflectionUtils;
 
 namespace Danmokou.Reflection {
 public static partial class Reflector {
-    private static readonly NamedParam[] fudge = Array.Empty<NamedParam>();
+    private static void ErasedMethod() { }
+    private static readonly MethodSignature fudge = 
+        new(typeof(Reflector).GetMethod("ErasedMethod", BindingFlags.Static | BindingFlags.NonPublic)!, 
+            "erased_method", Array.Empty<NamedParam>());
     
     /// <summary>
     /// Return the type Func&lt;t1, t2&gt;. Results are cached.
@@ -126,19 +129,20 @@ public static partial class Reflector {
         }
 
         /// <summary>
-        /// Get the argument types for a method member that returns type rt.
+        /// Get the method description for a member that returns type rt.
         /// </summary>
-        public static NamedParam[] GetArgTypes(Type rt, string member) {
+        public static MethodSignature GetArgTypes(Type rt, string member) {
             if (!getArgTypesCache.ContainsKey((member, rt))) {
                 ResolveGeneric(rt);
                 if (methodsByReturnType.TryGetValue(rt, out var dct) && dct.TryGetValue(member, out var mi))
-                    getArgTypesCache[(member, rt)] = mi.GetParameters().Select(x => (NamedParam) x).ToArray();
+                    getArgTypesCache[(member, rt)] = 
+                        new(mi, member, mi.GetParameters().Select(x => (NamedParam) x).ToArray());
                 else
                     throw new NotImplementedException($"The method \"{rt.RName()}.{member}\" was not found.\n");
             }
             return getArgTypesCache[(member, rt)];
         }
-        private static readonly Dictionary<(string method, Type returnType), NamedParam[]> getArgTypesCache 
+        private static readonly Dictionary<(string method, Type returnType), MethodSignature> getArgTypesCache 
             = new();
 
 
@@ -161,21 +165,22 @@ public static partial class Reflector {
         /// T->R member', such that those parameters can be meaningfully parsed by reflection code.
         /// <br/>In most cases, this is just [T->A, T->B, T->C], but it depends on rules in TryFuncify.
         /// </summary>
-        public static NamedParam[] FuncifyTypes<T, R>(string member) => FuncifyTypes(typeof(T), typeof(R), member);
-        public static NamedParam[] FuncifyTypes(Type t, Type r, string member) {
+        public static MethodSignature FuncifyTypes<T, R>(string member) => FuncifyTypes(typeof(T), typeof(R), member);
+        public static MethodSignature FuncifyTypes(Type t, Type r, string member) {
             if (!funcifyTypesCache.ContainsKey((member, t, r))) {
-                NamedParam[] baseTypes = GetArgTypes(r, member);
+                var method = GetArgTypes(r, member);
+                var baseTypes = method.Params;
                 NamedParam[] fTypes = new NamedParam[baseTypes.Length];
                 for (int ii = 0; ii < baseTypes.Length; ++ii) {
                     var bt = baseTypes[ii].type;
                     fTypes[ii] = baseTypes[ii] with { type = TryFuncify(t, bt, out var result) ? result : bt };
                 }
-                funcifyTypesCache[(member, t, r)] = fTypes;
+                funcifyTypesCache[(member, t, r)] = method with { Params = fTypes };
             }
             return funcifyTypesCache[(member, t, r)];
         }
-        private static readonly Dictionary<(string method, Type funcIn, Type funcOut), NamedParam[]> funcifyTypesCache 
-            = new();
+        private static readonly Dictionary<(string method, Type funcIn, Type funcOut), MethodSignature> 
+            funcifyTypesCache = new();
         
         /// <summary>
         /// Dictionary mapping unparseable "wrapped" types that may occur in funcified function arguments
@@ -308,8 +313,8 @@ public static partial class Reflector {
                         true, LogLevel.WARNING);
                 }
                 result = (Func<T, R>) (bpi => {
-                    var baseTypes = GetArgTypes(rt, member);
-                    var funcTypes = FuncifyTypes<T, R>(member);
+                    var baseTypes = GetArgTypes(rt, member).Params;
+                    var funcTypes = FuncifyTypes<T, R>(member).Params;
                     var baseParams = new object[baseTypes.Length];
                     for (int ii = 0; ii < baseTypes.Length; ++ii) 
                         //Convert from funced object to base object (eg. TExArgCtx->TEx<float> to TEx<float>)

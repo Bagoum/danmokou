@@ -49,58 +49,6 @@ public static partial class Reflector {
         return typeof(TEx<float>);
     }
 
-    private enum Reflected {
-        SyncPattern,
-        AsyncPattern,
-        PAsyncPattern,
-        TP,
-        TP3,
-        BPY,
-        FXY,
-        Pred,
-        Path,
-        LaserPath,
-        SBCF,
-        BehCF,
-        LCF,
-        SPCF,
-        FPCF,
-        LPCF,
-        FV2,
-        FF,
-        SBF,
-        SBV2,
-        BPRV2,
-        GCProp
-    }
-
-    private static string GetNameForEnum(Reflected rc) =>
-        rc switch {
-            Reflected.AsyncPattern => "AsyncPattern",
-            Reflected.SyncPattern => "SyncPattern",
-            Reflected.PAsyncPattern => "PremadePattern",
-            Reflected.TP => "TP",
-            Reflected.TP3 => "TP3",
-            Reflected.Path => "Path",
-            Reflected.LaserPath => "Laser Path",
-            Reflected.FXY => "FXY",
-            Reflected.BPY => "BPY",
-            Reflected.Pred => "Predicate",
-            Reflected.SBCF => "BulletControl",
-            Reflected.BehCF => "BEH Control",
-            Reflected.LCF => "LaserControl",
-            Reflected.SPCF => "PoolControl",
-            Reflected.FPCF => "FancyPoolControl",
-            Reflected.LPCF => "LaserPoolControl",
-            Reflected.FV2 => "FV2",
-            Reflected.FF => "FF",
-            Reflected.SBF => "SB>Float Func",
-            Reflected.SBV2 => "SB>V2 Func",
-            Reflected.BPRV2 => "BP>V2RV2 Func",
-            Reflected.GCProp => "GenCtx Property",
-            _ => "NULL CLASS"
-        };
-
     private static char Lower(char c) {
         if (c >= 'A' && c <= 'Z') return (char) (c + 32);
         return c;
@@ -121,30 +69,6 @@ public static partial class Reflector {
         }
         return new string(temp, 0, ti);
     }
-
-    public static string NameType<T>() => NameType(typeof(T));
-
-    /// <summary>
-    /// Provide a user-friendly name for the type T.
-    /// </summary>
-    public static string NameType(Type t) {
-        if (TypeNameMap.TryGetValue(t, out var name)) return name;
-        if (t.IsArray) {
-            return $"[{NameType(t.GetElementType()!)}]";
-        }
-        if (t.IsConstructedGenericType) {
-            return
-                $"{NameType(t.GetGenericTypeDefinition())}<{string.Join(", ", t.GenericTypeArguments.Select(NameType))}>";
-        }
-        if (t.IsGenericType) {
-            var n = t.Name;
-            int cutFrom = n.IndexOf('`');
-            if (cutFrom > 0) return n.Substring(0, cutFrom);
-        }
-        return t.Name;
-    }
-
-    public static string RName(this Type t) => NameType(t);
 
 }
 }

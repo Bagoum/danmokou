@@ -49,14 +49,15 @@ Texture2D:
     path: 
 --- !u!21 &-92704301339705056
 Material:
-  serializedVersion: 6
+  serializedVersion: 8
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Signika-Regular SDF Material
   m_Shader: {fileID: 19010, guid: 0000000000000000f000000000000000, type: 0}
-  m_ShaderKeywords: 
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -2566,7 +2567,8 @@ MonoBehaviour:
     m_Height: 172
   m_FontFeatureTable:
     m_GlyphPairAdjustmentRecords: []
-  m_FallbackFontAssetTable: []
+  m_FallbackFontAssetTable:
+  - {fileID: 11400000, guid: d026622451650004eba1302252dd69ef, type: 2}
   m_fontAssetCreationEditorSettings:
     sourceFontFileGUID: 130c97c37427a1b43ab8406730700535
     faceIndex: 0

@@ -23,22 +23,23 @@ public enum ADVBacklogFeatures {
     ///  point in the game by using the dialogue log menu.
     /// <br/>This should only be allowed for linear games.
     /// </summary>
-    ALLOW_BACKJUMP,
-    /// <summary>
-    /// True iff proxy loading should be enabled.
-    /// <br/>Proxy loading saves an "unmodified" copy of the save data when
-    /// entering a top-level BCtx, and uses that unmodified copy to execute
-    /// the loading process.
-    /// </summary>
-    USE_PROXY_LOADING
+    ALLOW_BACKJUMP
 }
 
+/// <summary>
+/// A wrapper ScriptableObject subclassed to define functionality for an ADV game.
+/// <br/>Most actual code in subclasses occurs in a nested class implementing <see cref="IExecutingADV"/>
+///  that is returned by <see cref="Setup"/>.
+/// </summary>
 public abstract class ADVGameDef : ScriptableObject {
     public string key = "";
     public SceneConfig sceneConfig = null!;
-    public ADVBacklogFeatures backlogFeatures = ADVBacklogFeatures.USE_PROXY_LOADING;
-
-
+    public ADVBacklogFeatures backlogFeatures = ADVBacklogFeatures.NONE;
+    
+    /// <summary>
+    /// Create the game-specific execution process for this ADV game.
+    /// </summary>
+    /// <param name="inst">Instance metadata</param>
     public abstract IExecutingADV Setup(ADVInstance inst);
     public abstract ADVData NewGameData();
 }

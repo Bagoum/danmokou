@@ -128,6 +128,9 @@ public abstract class ReplayMode {
     public class NotRecordingReplay : ReplayMode { }
 }
 
+/// <summary>
+/// Contains the information required to start a danmaku instance, as well as the cancellation tracker bounding it.
+/// </summary>
 public record InstanceRequest {
     private Cancellable instTracker = new();
     public Func<InstanceData, bool>? cb { get; }

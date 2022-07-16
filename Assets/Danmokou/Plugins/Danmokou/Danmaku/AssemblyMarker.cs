@@ -9,6 +9,6 @@ using UnityEngine.Scripting;
 [assembly: Preserve]
 [assembly: Reflect]
 
-namespace Danmokou.Core {
+namespace Danmokou.Danmaku {
     public class DanmakuAssemblyMarker { }
 }

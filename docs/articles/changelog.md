@@ -10,31 +10,47 @@ To get the newest version from git, run:
 
 # Unreleased
 
-The following features are planned for future releases. Major version 10.0.0 is planned for sometime around July. 
+The following features are planned for future releases. 
 
+- [9.2.0] Safeguards around control rebinding
 - [10.0.0] ADV-style gameplay, state management, and generalized UI support
+  - Basic implementation of ADV gameplay and state management implemented in 9.0.0 (see Purple Heart).
 - [10.0.0] UI improvements, including custom cursor handling, controls tooltips, and smarter navigation on menus
+  - Control tooltips and some smarter menu navigation implemented in 9.1.0
 - [Backlog] Default handling for graze flake items and bullet cancel flake items
 - [Backlog] Implementation of a TH18-like card engine
 - [Backlog] Procedural generation of stages and bullet patterns
 
-# v9.0.0 (2021/05/01)
+# v9.1.0 (2022/07/04)
 
-This release includes code for [Blessed Rain](https://bagoum.itch.io/blessed-rain), a short visual novel, and [The Purple Heart Paradox](https://bagoum.itch.io/purple-heart), a short ADV-format visual novel, in the MiniProjects folder. As of this release, Suzunoya functionality is mostly complete, but I haven't thoroughly tested functionality related to choices and external tasks, and there are some theoretical issues in save/load handling with regards to nondeterminism as well as certain configurations of global switches that open or close branches between executions. This release also includes some work-in-progress code for some adventure-game style usage of  Suzunoya (think Ace Attorney), with some basic exploratory work in the Purple Heart project.
+This release includes various minor improvements.
+
+#### Features
+
+- Errors in script parsing are now more detailed and contain links to relevant files.
+- Improved handling of text input. Replay names and other usages of TextInputNode can now contain capitalized letters (only via Shift, not CapsLock) and non-alphanumeric characters. This does not use `Input.inputString` due to its limitations around holding keys.
+- Added smarter navigation for complex nested UI groups. When the UIGroup does not define navigation, the UI will look for the nearest HTML object in the inputted direction.
+- Added full support for keyboard/mouse and gamepad control rebinding. There is a new tab on the Options menu that allows the player to rebind controls. Note that mouse-left-click is reserved and cannot be rebound. Any control that is stored in the InputConfig class (Plugins/Danmokou/Core/Core/Input/InputConfig.cs) can be rebound by adding it to the Bindings property in that class.
+  - This also includes support for multiple connected controllers (XBox/PS4) and changing button prompts based on the most recently used input method. You can look this up as `InputManager.PlayerInput.MainSource.Current.focusHold.Description`-- replace `focusHold` with the relevant input button. See UIScreen.SetControlText as an example.
+- Fixed an issue where bullets would not use scale-in when being created or destroyed while using the legacy renderer.
+- Suzunoya now distinguishes between StrongBoundedContext (which provides guarantees that allows it to be skipped while loading) and BoundedContext (which does not provide such guarantees). It also improves the internal handling around BoundedContexts. The main consequence of this is that if you define a very long VN sequence-- such as an entire game for a traditional VN-- you may want to make some of the nested tasks StrongBoundedContexts to avoid loading lag. Also, any calls to external tasks *must* be wrapped in StrongBoundedContexts so that they can be skipped, since the internals of external tasks are not governed by VNState's loading process. Handling of external tasks will be improved with the introduction of LockedBoundedContext in a later version.
+
+# v9.0.0 (2022/05/16)
+
+This release includes code for [Blessed Rain](https://bagoum.itch.io/blessed-rain), a short visual novel, and [The Purple Heart Paradox](https://bagoum.itch.io/purple-heart), a short ADV-format visual novel, in the MiniProjects folder. As of this release, Suzunoya functionality is mostly complete, but I haven't thoroughly tested functionality related to choices and external tasks, and there are some theoretical issues in save/load handling with regards to nondeterminism as well as certain configurations of global switches that open or close branches between executions. This release also includes some work-in-progress code for some adventure-game style usage of Suzunoya (think Ace Attorney), with some basic exploratory work in the Purple Heart project.
 
 #### Breaking changes
 
-- Please upgrade Unity to **2021.2.1** (preferred) or 2022.2.a11+ before opening this project. Note that if you get errors at runtime about missing settings, you may need to run Window > UIToolkit > Package Asset Converter > "I want my assets to function without the UIToolkit package installed". This upgrade makes UIToolkit much more resilient, allows some new CSS features that are used in the updated UI, and also enables some C#8 and C#9 features that are now used in the codebase.
-  - Later versions of 2021.2 have various bugs with UIToolkit text rendering. 2022.1 breaks compilation due to internal Unity errors (see [this Github issue](https://github.com/neuecc/UniRx/issues/510)). This should be fixed in 2022.1.1f1.
+- Please upgrade Unity to 2021.2.1 or 2021.3.3+ or 2022.2.a11+ before opening this project. Note that if you get errors at runtime about missing settings, you may need to run Window > UIToolkit > Package Asset Converter > "I want my assets to function without the UIToolkit package installed". This upgrade makes UIToolkit much more resilient, allows some new CSS features that are used in the updated UI, and also enables some C#8 and C#9 features that are now used in the codebase.
 - The architecture for UIToolkit-based UI has been overhauled. As a part of this, all the UIScreen uxml files were replaced with a single universal file, the UIScreen and UINode classes were completely rewritten, and the process of constructing UIs in code was changed in a backwards-incompatible way. See the [UI design document](uidesign.md) for details on the new UI architecture, which I plan to keep stable.
 - Dialogue profiles, which were made obsolete in v8.0.0 with Suzunoya integration, have been removed from the codebase.
 
 #### Pending issues
 
 - If you jump to the Replays screen from the Records screen, then view a replay, then return from the replay, then return to the records screen, the cursor will be invisible but navigation will still be possible. This is due to limitations in the menu position regeneration process.
-- There is a UITK issue where disabling and re-enabling visual elements causes old pointer events to be resent (in 2021.2, fixed in 2022.2.a).
-- There is a pending UITK issue where some elements take extra newlines for no reason (in 2022.2.a).
-- There is a pending UITK issue where mouse scrolling is slow. [See ticket](https://issuetracker.unity3d.com/issues/ui-toolkit-slow-scroll-view-scrolling-when-entering-play-mode)
+- There is a UITK issue where disabling and re-enabling visual elements causes old pointer events to be resent in 2021.2.1. Fixed in 2021.3 and 2022.2.
+- There is a pending UITK issue where some elements take extra newlines for no reason that occurs in basically every version except 2021.2.1. [See ticket](https://issuetracker.unity3d.com/issues/ui-toolkit-labels-width-is-not-extended-causing-additional-empty-lines-when-using-specific-resolutions)
+- There is a long-pending UITK issue where mouse scrolling is slow. [See ticket](https://issuetracker.unity3d.com/issues/slow-scroll-view-scrolling-when-entering-play-mode-and-in-builds)
 - There is a UITK issue where closing a menu while using the mouse to drag a scrollbar on it results in the mouse not applying input to any other menus.
 
 #### Features

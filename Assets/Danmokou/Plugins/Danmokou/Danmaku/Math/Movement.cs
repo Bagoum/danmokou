@@ -178,8 +178,8 @@ public struct Movement {
     /// Doesn't calculate normalized direction.
     /// </summary>
     /// <param name="bpi">Parametric info</param>
-    /// <param name="dT">Delta time</param>
     /// <param name="delta">The delta moved this update (updated in addition to BPI.loc)</param>
+    /// <param name="dT">Delta time</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void UpdateDeltaAssignAcc(ref ParametricInfo bpi, out Vector2 delta, in float dT) {
         bpi.t += dT;

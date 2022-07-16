@@ -25,11 +25,11 @@ public class CoroutineRegularUpdater : RegularUpdater, ICoroutineRunner {
     }
 
     public void RunRIEnumerator(IEnumerator ienum) => 
-        coroutines.Run(ienum, new CoroutineOptions(execType: CoroutineType.AppendToEnd));
+        coroutines.Run(ienum, new CoroutineOptions(ExecType: CoroutineType.AppendToEnd));
     public void RunTryPrependRIEnumerator(IEnumerator ienum) => 
-        coroutines.Run(ienum, new CoroutineOptions(execType: CoroutineType.TryStepPrepend));
+        coroutines.Run(ienum, new CoroutineOptions(ExecType: CoroutineType.TryStepPrepend));
     public void RunPrependRIEnumerator(IEnumerator ienum) => 
-        coroutines.Run(ienum, new CoroutineOptions(execType: CoroutineType.StepPrepend));
+        coroutines.Run(ienum, new CoroutineOptions(ExecType: CoroutineType.StepPrepend));
 
     public void RunDroppableRIEnumerator(IEnumerator ienum) => 
         coroutines.Run(ienum, new CoroutineOptions(true, CoroutineType.AppendToEnd));

@@ -632,7 +632,7 @@ public static partial class LocalizedStrings {
 			(Locales.JP, "ライセンス"))
 			{ ID = "main_licenses" };
 		
-		public static readonly LString replay_name = new LText("Name",
+		public static readonly LString replay_name = new LText("Replay name",
 			(Locales.JP, "リプレイ名"))
 			{ ID = "replay_name" };
 		

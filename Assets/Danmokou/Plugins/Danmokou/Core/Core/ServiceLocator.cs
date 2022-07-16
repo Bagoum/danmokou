@@ -9,6 +9,9 @@ using Danmokou.Services;
 using JetBrains.Annotations;
 
 namespace Danmokou.Core {
+/// <summary>
+/// A store that allows registering and locating services at runtime.
+/// </summary>
 public static class ServiceLocator {
     private interface IService { }
 
@@ -30,21 +33,12 @@ public static class ServiceLocator {
                 throw new Exception($"An instance of unique service {typeof(T)} already exists.");
             return providers.Add(service);
         }
-        
-        public T? MaybeFind() {
-            for (int ii = 0; ii < providers.Count; ++ii) {
-                if (!providers.Data[ii].MarkedForDeletion) 
-                    return providers[ii];
-            }
-            return null;
-        }
+
+        public T? MaybeFind() => providers.FirstOrNull();
 
         public List<T> FindAll()  {
             var results = new List<T>();
-            for (int ii = 0; ii < providers.Count; ++ii) {
-                if (!providers.Data[ii].MarkedForDeletion)
-                    results.Add(providers[ii]);
-            }
+            providers.CopyIntoList(results);
             return results;
         }
     }
@@ -62,23 +56,33 @@ public static class ServiceLocator {
     /// Register a service that can be reached globally via service location.
     /// <br/>The caller must dispose the disposable when the registered service is no longer available
     ///  (eg. due to object deletion).
+    /// <br/>TODO send alerts to consumers when the service is disposed
     /// </summary>
     public static IDisposable Register<T>(T provider, ServiceOptions? options = null) where T : class {
         if (!services.TryGetValue(typeof(T), out var s))
             s = services[typeof(T)] = new Service<T>(options);
         return ((Service<T>) s).Add(provider);
     }
-
+    
+    /// <summary>
+    /// Find a service of type T, or return null.
+    /// </summary>
     public static T? MaybeFind<T>() where T : class =>
         services.TryGetValue(typeof(T), out var s) ? 
             ((Service<T>) s).MaybeFind() : 
             null;
 
+    /// <summary>
+    /// Find all services of type T. The returned list may be empty.
+    /// </summary>
     public static List<T> FindAll<T>() where T : class =>
         services.TryGetValue(typeof(T), out var s) ? 
             ((Service<T>) s).FindAll() : 
             new List<T>();
 
+    /// <summary>
+    /// Find a service of type T, or throw an exception.
+    /// </summary>
     public static T Find<T>() where T : class =>
         MaybeFind<T>() ?? throw new Exception($"Service locator: No provider of type {typeof(T)} found");
 

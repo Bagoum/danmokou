@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using BagoumLib;
 using BagoumLib.Culture;
+using BagoumLib.Reflection;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Danmaku;
@@ -28,17 +29,6 @@ using ExSBCF = System.Func<Danmokou.Expressions.TExSBC, Danmokou.Expressions.TEx
 
 namespace Danmokou.Reflection {
 public static partial class Reflector {
-    private static readonly Dictionary<Type, string> TypeNameMap = new() {
-        {typeof(float), "Float"},
-        {typeof(ExBPY), "BPY"},
-        {typeof(ExTP), "TP"},
-        {typeof(ExTP3), "TP3"},
-        {typeof(ExTP4), "TP4"},
-        {typeof(ExVTP), "VTP"},
-        {typeof(ExBPRV2), "BPRV2"},
-        {typeof(ExPred), "Predicate"},
-        {typeof(ExSBCF), "SB Control"},
-    };
     private static readonly Type tsm = typeof(StateMachine);
 
     private static StateMachine? ReflectSM(IParseQueue q) {
@@ -93,25 +83,26 @@ public static partial class Reflector {
     /// <summary>
     /// A cached dictionary of constructor signatures from GetConstructorSignature.
     /// </summary>
-    private static readonly Dictionary<Type, NamedParam[]> constructorSigs = new();
+    private static readonly Dictionary<Type, MethodSignature> constructorSigs = new();
     
     /// <summary>
     /// Finds a public constructor (preferably one with at least one argument) for the given type.
     /// </summary>
     /// <exception cref="StaticException">Thrown if the type has no public constructors.</exception>
-    public static NamedParam[] GetConstructorSignature(Type t) {
-        if (!constructorSigs.TryGetValue(t, out NamedParam[] args)) {
+    public static MethodSignature GetConstructorSignature(Type t) {
+        if (!constructorSigs.TryGetValue(t, out var args)) {
             var constrs = t.GetConstructors();
             if (constrs.Length == 0) 
-                throw new StaticException($"Type {NameType(t)} has no constructors.");
-            var prms = constrs[0].GetParameters();
+                throw new StaticException($"Type {t.RName()} has no constructors.");
+            var (c, prms) = (constrs[0], constrs[0].GetParameters());
             if (prms.Length == 0) {
                 //Try to look for a non-empty constructor, if it exists.
                 for (int ii = 1; ii < constrs.Length; ++ii) {
-                    if (constrs[ii].GetParameters().Length > 0) prms = constrs[ii].GetParameters();
+                    if (constrs[ii].GetParameters().Length > 0) 
+                        (c, prms) = (constrs[ii], constrs[ii].GetParameters());
                 }
             }
-            constructorSigs[t] = args = prms.Select(x => (NamedParam) x).ToArray();
+            constructorSigs[t] = args = new(c, null, prms.Select(x => (NamedParam) x).ToArray());
         }
         return args;
     }
@@ -147,7 +138,7 @@ public static partial class Reflector {
         } else if (UseConstructor(targetType)) {
             //generic struct/tuple handling
             var args = GetConstructorSignature(targetType);
-            obj = Activator.CreateInstance(targetType, _FillInvokeArray(args, p, targetType, null));
+            obj = Activator.CreateInstance(targetType, _FillInvokeArray(args, p));
         } else {
             obj = default!;
             return false;

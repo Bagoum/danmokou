@@ -208,7 +208,7 @@ public partial class BulletManager {
                 if (pstyle.IndexOf('.') > -1) pstyle = pstyle.Substring(0, pstyle.IndexOf('.'));
                 if (styles.Contains(pstyle) || styles.Contains(style)) 
                     yield return style;
-                else if (style.Length > 2 && style[0] == '*' && style[style.Length - 1] == '*') {
+                else if (style.Length > 2 && style[0] == '*' && style[^1] == '*') {
                     style = style.Substring(1, style.Length - 2);
                     foreach (var s in styles) {
                         if (s.Contains(style)) yield return s;
@@ -218,7 +218,7 @@ public partial class BulletManager {
                     foreach (var s in styles) {
                         if (s.EndsWith(style)) yield return s;
                     }
-                } else if (style[style.Length - 1] == '*') {
+                } else if (style[^1] == '*') {
                     style = style.Substring(0, style.Length - 1);
                     foreach (var s in styles) {
                         if (s.StartsWith(style)) yield return s;

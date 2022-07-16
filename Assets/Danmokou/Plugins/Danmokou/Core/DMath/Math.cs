@@ -18,6 +18,16 @@ public static class M {
     public const float MAG_ERR = 1e-10f;
     public const int IntFloatMax = int.MaxValue / 2;
 
+    /// <summary>
+    /// Returns the number with the smaller magnitude.
+    /// </summary>
+    public static float MinA(float a, float b) => Math.Abs(a) < Math.Abs(b) ? a : b;
+    
+    /// <summary>
+    /// Returns the number with the larger magnitude.
+    /// </summary>
+    public static float MaxA(float a, float b) => Math.Abs(a) > Math.Abs(b) ? a : b;
+    
     public static float Mod(float by, float x) => x - by * Mathf.Floor(x / by);
 
     public static int Mod(int by, int x) {
@@ -314,7 +324,15 @@ public static class M {
     public static Vector3 Lerp3(float lowest, float low, float high, float highest, float controller, Vector3 a, Vector3 b,
         Vector3 c) =>
         controller < high ? Lerp(lowest, low, controller, a, b) : Lerp(high, highest, controller, b, c);
-            
+
+    /// <summary>
+    /// HLSL smoothstep. Return a smoothed value of Ratio.
+    /// WARNING: <see cref="Mathf.SmoothStep"/> returns something different.
+    /// </summary>
+    public static float Smoothstep(float low, float high, float t) {
+        var t1 = M.Clamp(0, 1, (t - low) / (high - low));
+        return t1 * t1 * (3 - 2 * t1);
+    }
 
     /// <summary>
     /// Returns (x - a) / (b - a); ie. t such that LerpUnclamped(a, b, t) = x.
@@ -346,6 +364,53 @@ public static class M {
     }
 
     public static double BlockRound(double block, double value) => Math.Round(value / block) * block;
+
+    public static Vector2 ShortestDistance(Rect src, Rect dst) {
+        float dx = 0;
+        if (dst.xMin > src.xMax)
+            dx = dst.xMin - src.xMax;
+        else if (dst.xMax < src.xMin)
+            dx = dst.xMax - src.xMin;
+        float dy = 0;
+        if (dst.yMin > src.yMax)
+            dy = dst.yMin - src.yMax;
+        else if (dst.yMax < src.yMin)
+            dy = dst.yMax - src.yMin;
+        return new Vector2(dx, dy);
+    }
+
+    /// <summary>
+    /// Find the shortest distance between two AABBs. On either axis, if the rects overlap but do not contain each other,
+    /// then enforce a minimum distance.
+    /// <example>Rect 1 has x [0, 10], Rect 2 has x [6, 20]. Enforce minimum distance</example>
+    /// <example>Rect 1 has x [0, 10], Rect 2 has x [6, 8]. X-distance is 0</example>
+    /// <example>Rect 1 has x [0, 10], Rect 2 has x [12, 20]. X-distance is 2</example>
+    /// </summary>
+    public static Vector2 ShortestDistancePushOutOverlap(Rect src, Rect dst, float enforce=1) {
+        float dx = 0;
+        if (dst.xMin > src.xMax)
+            dx = dst.xMin - src.xMax;
+        else if (dst.xMax < src.xMin)
+            dx = dst.xMax - src.xMin;
+        else if (dst.xMin < src.xMin && dst.xMax < src.xMax)
+            dx = -enforce;
+        else if (dst.xMin > src.xMin && dst.xMax > src.xMax)
+            dx = enforce;
+        float dy = 0;
+        if (dst.yMin > src.yMax)
+            dy = dst.yMin - src.yMax;
+        else if (dst.yMax < src.yMin)
+            dy = dst.yMax - src.yMin;
+        else if (dst.yMin < src.yMin && dst.yMax < src.yMax)
+            dy = -enforce;
+        else if (dst.yMin > src.yMin && dst.yMax > src.yMax)
+            dy = enforce;
+        return new Vector2(dx, dy);
+    }
+
+    public static Rect RectFromCenter(Vector2 center, Vector2 wh) {
+        return new Rect(center - wh / 2f, wh);
+    }
 }
 
 public readonly struct Hitbox {
@@ -416,6 +481,7 @@ public readonly struct CRect {
     public static implicit operator CRect(V2RV2 rect) => new CRect(rect.nx, rect.ny, rect.rx, rect.ry, rect.angle);
 }
 
+//TODO update for v3
 /// <summary>
 /// A position description composed of a nonrotational offset
 /// and a rotational offset.

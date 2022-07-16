@@ -79,6 +79,8 @@ public partial class BulletManager : RegularUpdater {
         public OverrideEvented<(TP4 black, TP4 white)?> Recolor { get; init; }
         public OverrideEvented<TP4?> Tint { get; init; }
         public bool Recolorizable => deferredRI.recolorizable;
+
+        public SimpleBulletFader FadeIn => deferredRI.sbes.fadeIn;
         public SimpleBulletFader FadeOut => deferredRI.sbes.FadeOut;
 
         public BulletInCode(string name, DeferredTextureConstruction dfc, GenericColliderInfo cc,

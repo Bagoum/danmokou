@@ -110,16 +110,16 @@ public static class Logs {
             }
             sb.Append(')');
 #if UNITY_EDITOR
-            sb.AppendFormat(" (at <a href=\"{0}\" line=\"{1}\">{0}:{1}</a>)\n", 
-                frame.GetFileName(), frame.GetFileLineNumber());
+            sb.AppendFormat(" (at {0})\n", ToFileLink(frame.GetFileName(), frame.GetFileLineNumber()));
 #else
             sb.AppendFormat(" (at {0}:{1})\n", frame.GetFileName(), frame.GetFileLineNumber());
 #endif
         }
-
-
         return sb.ToString();
     }
+
+    public static string ToFileLink(string? filename, int line, string? content = null) =>
+        $"<a href=\"{filename}\" line=\"{line}\">{content ?? $"{filename}:{line}"}</a>";
 
 }
 }

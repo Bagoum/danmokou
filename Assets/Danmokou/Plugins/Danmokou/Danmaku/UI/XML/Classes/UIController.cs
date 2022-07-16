@@ -204,6 +204,8 @@ public abstract class UIController : CoroutineRegularUpdater {
     // but many menus depend on binding to services,
     // and services are not reliably queryable until FirstFrame.
     public override void FirstFrame() {
+        if (uiRenderer == null)
+            uiRenderer = ServiceLocator.Find<UIBuilderRenderer>();
         var uid = GetComponent<UIDocument>();
         //higher sort order is more visible, so give them lower priority
         tokens.Add(uiRenderer.RegisterController(this, -(int)uid.sortingOrder));

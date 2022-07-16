@@ -11,8 +11,10 @@ namespace MiniProjects.VN {
 [CreateAssetMenu(menuName = "Data/ADV/Crimson Verm. Game")]
 public class CrimsonVermilionGameDef : ADVGameDef {
     public override IExecutingADV Setup(ADVInstance inst) {
-        if (inst.ADVData.VNData.Location is not null)
-            inst.VN.LoadToLocation(inst.ADVData.VNData.Location);
+        if (inst.Request.LoadProxyData?.VNData is { Location: { } l} replayer)
+            inst.VN.LoadToLocation(l, replayer, () => {
+                inst.Request.FinalizeProxyLoad();
+            });
         return new BarebonesExecutingADV<BlessedRainADVData>(inst, () => 
             inst.Manager.ExecuteVN(_VNCrimsonVermilion.VNScriptCrimsonVermilion1(inst.VN)));
     }

@@ -104,11 +104,11 @@ public class PurpleHeartGameDef : ADVGameDef {
             var ms = new MapStateManager<PHIdealizedState, PHADVData>(() => new(this));
             //Use this proxy function to register BCTXs so they can be inspected and run on load.
             // Top-level contexts should always be <Unit>.
-            BoundedContext<Unit> Context(string id, Func<Task> innerTask, Action? shortCircuit = null) {
+            BoundedContext<Unit> Context(string id, Func<Task> innerTask) {
                 var ctx = new BoundedContext<Unit>(vn, id, async () => {
                     await innerTask();
                     return default;
-                }, shortCircuit);
+                });
                 if (bctxes.ContainsKey(ctx.ID))
                     throw new Exception($"Multiple BCTXes are defined for key {ctx.ID}");
                 bctxes[ctx.ID] = ctx;
