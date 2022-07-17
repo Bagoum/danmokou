@@ -327,7 +327,6 @@ public class PhaseSM : SequentialSM {
                 true); //Wait for synchronization before returning to parent
             joint_smh.ThrowIfCancelled();
         } catch (OperationCanceledException) {
-            ctx.CleanupObjects();
             if (smh.Exec.PhaseShifter == pcTS)
                 smh.Exec.PhaseShifter = null;
             //This is critical to avoid boss destruction during the two-frame phase buffer
@@ -358,6 +357,7 @@ public class PhaseSM : SequentialSM {
                     await finishTask;
                 }
             }
+            ctx.CleanupObjects();
             photoBoardToken?.Dispose();
             lenienceToken?.Dispose();
             if (smh.Cancelled) 

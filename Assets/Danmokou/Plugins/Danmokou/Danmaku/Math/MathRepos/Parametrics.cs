@@ -172,7 +172,7 @@ public static partial class Parametrics {
     /// </summary>
     /// <returns></returns>
     public static ExTP Loc() {
-        return bpi => bpi.loc;
+        return bpi => bpi.LocV2;
     }
 
     /// <summary>
@@ -221,7 +221,7 @@ public static partial class Parametrics {
     public static ExTP VHome(ExBPY speed, ExTP location) {
         TExV2 l = new();
         return bpi => Ex.Block(new ParameterExpression[] {l},
-            Ex.Assign(l, location(bpi).Sub(bpi.loc)),
+            Ex.Assign(l, location(bpi).Sub(bpi.LocV2)),
             l.Mul(Ex.Divide(speed(bpi), Sqrt(Ex.Add(SqrMag(l), EPS))))
         );
     }
@@ -232,7 +232,7 @@ public static partial class Parametrics {
     /// <param name="time">Time in seconds</param>
     /// <param name="location">Target location</param>
     /// <returns></returns>
-    public static ExTP VHomeTime(ExBPY time, ExTP location) => bpi => location(bpi).Sub(bpi.loc).Div(time(bpi));
+    public static ExTP VHomeTime(ExBPY time, ExTP location) => bpi => location(bpi).Sub(bpi.LocV2).Div(time(bpi));
     
     /// <summary>
     /// Short for `ss0 vhometime TIME LOCATION`.
@@ -251,7 +251,7 @@ public static partial class Parametrics {
     /// Short for `* smooth / t TIME ss0 - LOCATION loc`. Use with NROFFSET.
     /// </summary>
     public static ExTP EaseToTarget([LookupMethod] Func<tfloat, tfloat> ease, ExBPY time, ExTP location) => bpi =>
-        ExM.Mul(ease(Clamp01(Div(bpi.t, time(bpi)))), ExMSamplers.SS0(x => Sub(location(x), x.loc))(bpi));
+        ExM.Mul(ease(Clamp01(Div(bpi.t, time(bpi)))), ExMSamplers.SS0(x => Sub(location(x), x.LocV2))(bpi));
         
     
     #endregion

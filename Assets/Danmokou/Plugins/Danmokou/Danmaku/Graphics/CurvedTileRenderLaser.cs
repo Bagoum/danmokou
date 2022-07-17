@@ -186,12 +186,14 @@ public class CurvedTileRenderLaser : CurvedTileRender {
 
     private void UpdateCentersOnly(int startP, int endP) {
         int vw = texRptWidth + 1;
-        path.Update(in lifetime, ref bpi, out nextDirectionalDelta, out nextTrueDelta, in updateStagger);
+        path.Update(in lifetime, ref bpi, out nextDirectionalDelta, in updateStagger);
+        nextTrueDelta = nextDirectionalDelta;
         for (int iw = 1; iw < endP; ++iw) {
             myStyle.IterateControls(this);
             centers[iw].x = centers[iw - 1].x + nextTrueDelta.x;
             centers[iw].y = centers[iw - 1].y + nextTrueDelta.y;
-            path.Update(in lifetime, ref bpi, out nextDirectionalDelta, out nextTrueDelta, in updateStagger);
+            path.Update(in lifetime, ref bpi, out nextDirectionalDelta, in updateStagger);
+            nextTrueDelta = nextDirectionalDelta;
         }
         for (int iw = 0; iw < startP; ++iw) {
             centers[iw] = centers[startP];
@@ -212,8 +214,8 @@ public class CurvedTileRenderLaser : CurvedTileRender {
         int startP = (variableStart == null) ? 0 : M.Clamp(0, vw - 1, Mathf.RoundToInt(variableStart(bpi) / updateStagger));
         int endP = (variableLength == null) ? vw : M.Clamp(1 + startP, vw, Mathf.RoundToInt(variableLength(bpi) / updateStagger));
         bpi.t = 0;
-        path.Update(in lifetime, ref bpi, out Vector2 accP, out var d1, 0f);
-        centers[0] = d1;
+        path.Update(in lifetime, ref bpi, out Vector2 accP, 0f);
+        centers[0] = accP;
         if (!renderRequired) {
             UpdateCentersOnly(startP, endP);
         } else {
@@ -225,7 +227,8 @@ public class CurvedTileRenderLaser : CurvedTileRender {
             //This does require special handling for index 0; we give it the same direction as index 1.
             vertsPtr[0].uv.x = vertsPtr[vw].uv.x = 0f; 
             //WARNING This will break if you give it zero velocity; avoid giving lasers parametrics that eval to zero!
-            path.Update(in lifetime, ref bpi, out nextDirectionalDelta, out nextTrueDelta, in updateStagger);
+            path.Update(in lifetime, ref bpi, out nextDirectionalDelta, in updateStagger);
+            nextTrueDelta = nextDirectionalDelta;
             float denormedDirF = ddf / (float) Math.Sqrt(nextTrueDelta.x * nextTrueDelta.x + nextTrueDelta.y * nextTrueDelta.y);
             vertsPtr[0].loc.x = accP.x + denormedDirF * nextTrueDelta.y;
             vertsPtr[0].loc.y = accP.y + denormedDirF * -nextTrueDelta.x;
@@ -248,7 +251,8 @@ public class CurvedTileRenderLaser : CurvedTileRender {
                 if (intersectStatus != SelfIntersectionStatus.RAS) {
                     RecallSelfIntersection(nextDirectionalDelta, BACKSTEP, iw > 6 ? iw - 6 : 0, iw, ddf);
                 }
-                path.Update(in lifetime, ref bpi, out nextDirectionalDelta, out nextTrueDelta, in updateStagger);
+                path.Update(in lifetime, ref bpi, out nextDirectionalDelta, in updateStagger);
+                nextTrueDelta = nextDirectionalDelta;
             }
             for (int iw = 0; iw < startP; ++iw) {
                 centers[iw] = centers[startP];

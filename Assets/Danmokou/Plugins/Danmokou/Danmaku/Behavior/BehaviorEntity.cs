@@ -345,7 +345,8 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         if (ltv.ThisCannotContinue(tbpi)) { ltv.done(); yield break; }
         for (; tbpi.t < doTime - ETime.FRAME_TIME;) {
             tbpi.loc = bpi.loc;
-            vel.UpdateDeltaAssignAcc(ref tbpi, out Vector2 delta, ETime.FRAME_TIME);
+            Vector3 delta = default;
+            vel.UpdateDeltaAssignDelta(ref tbpi, ref delta, ETime.FRAME_TIME);
             //Checking the canceller before committing position allows using eg. successive onscreen checks.
             //This is a core use case for move-while. So we split up velocitystep to allow it
             if (ltv.ThisCannotContinue(tbpi)) {
@@ -447,7 +448,8 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     }
 
     private void VelocityStepAndLook(ref Movement vel, ref ParametricInfo pi, float dT=ETime.FRAME_TIME) {
-        vel.UpdateDeltaAssignAcc(ref pi, out Vector2 delta, dT);
+        Vector3 delta = default;
+        vel.UpdateDeltaAssignDelta(ref pi, ref delta, dT);
         SetMovementDelta(delta);
         SetTransformGlobalPosition(pi.loc);
     }

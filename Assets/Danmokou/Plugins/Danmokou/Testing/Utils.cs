@@ -62,6 +62,11 @@ public static class TAssert {
         Assert.AreEqual(left.z, right.z, error, msg);
     }
 
+    public static void VecEq(Vector3 left, Vector2 right, string msg = "", float error = err) =>
+        VecEq(left, (Vector3)right, msg, error);
+    public static void VecEq(Vector2 left, Vector3 right, string msg = "", float error = err) =>
+        VecEq((Vector3)left, right, msg, error);
+
     public static void ColorEq(Color expect, Color actual, string msg = "", float error = err) {
         Assert.AreEqual(expect.r, actual.r, error, $"Color red of: {msg}");
         Assert.AreEqual(expect.g, actual.g, error, $"Color grn of: {msg}");
@@ -86,7 +91,8 @@ public static class TAssert {
     public static void SBPos(ref BulletManager.SimpleBullet sb, Vector3 loc, string msg = "") =>
         VecEq(loc, sb.bpi.loc, msg);
     public static void SBPos(ref BulletManager.SimpleBullet sb, V2RV2 loc, string msg = "") =>
-        VecEq(loc.TrueLocation, sb.bpi.loc, msg);
+        //TODO update for v3
+        VecEq(loc.TrueLocation, sb.bpi.LocV2, msg);
 
     public static void PoolEq(BulletManager.SimpleBulletCollection sbc1,
         BulletManager.SimpleBulletCollection sbc2) {

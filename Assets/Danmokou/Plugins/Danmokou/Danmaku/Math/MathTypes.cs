@@ -17,7 +17,7 @@ using Danmokou.Player;
 using Danmokou.Reflection;
 using Danmokou.Scriptables;
 using JetBrains.Annotations;
-using ExVTP = System.Func<Danmokou.Expressions.ITexMovement, Danmokou.Expressions.TEx<float>, Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TExV2, Danmokou.Expressions.TEx>;
+using ExVTP = System.Func<Danmokou.Expressions.ITexMovement, Danmokou.Expressions.TEx<float>, Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TExV3, Danmokou.Expressions.TEx>;
 using ExBPY = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<float>>;
 using ExTP = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<UnityEngine.Vector2>>;
 
@@ -248,6 +248,10 @@ public struct ParametricInfo {
     /// <summary>Context containing additional bound variables</summary>
     public FiringCtx ctx;
 
+    /// <summary>
+    /// Global location as a Vector2 (ignores Z-coordinate)
+    /// </summary>
+    [UsedImplicitly]
     public Vector2 LocV2 => loc;
 
     public static ParametricInfo WithRandomId(Vector3 position, int findex, float t) => new(position, findex, RNG.GetUInt(), t);
@@ -298,18 +302,18 @@ public struct ParametricInfo {
 /// <summary>
 /// A function that converts ParametricInfo into a possibly-rotated Cartesian coordinate.
 /// </summary>
-public delegate void CoordF(float cos, float sin, ParametricInfo bpi, out Vector2 vec);
+public delegate void CoordF(float cos, float sin, ParametricInfo bpi, ref Vector3 vec);
 /// <summary>
 /// A function that converts ParametricInfo into a possibly-rotated Cartesian coordinate
 /// representing the next position that the Velocity struct should take with a timestep of dT.
 /// </summary>
-public delegate void VTP(ref Movement vel, in float dT, ref ParametricInfo bpi, out Vector2 delta);
+public delegate void VTP(ref Movement vel, in float dT, ref ParametricInfo bpi, ref Vector3 delta);
 /// <summary>
 /// A function that converts ParametricInfo into a possibly-rotated Cartesian coordinate
-/// representing the next position that the LaserVelocity struct should take with a timestep of dT
+/// representing the next position that the <see cref="LaserMovement"/> struct should take with a timestep of dT
 /// and a laser lifetime of lT.
 /// </summary>
-public delegate void LVTP(ref LaserMovement vel, in float dT, in float lT, ref ParametricInfo bpi, out Vector2 delta);
+public delegate void LVTP(ref LaserMovement vel, in float dT, in float lT, ref ParametricInfo bpi, ref Vector3 delta);
 
 
 public readonly struct RootedVTP {

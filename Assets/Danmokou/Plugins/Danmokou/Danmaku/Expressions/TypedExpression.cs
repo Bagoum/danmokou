@@ -103,9 +103,11 @@ public class TExArgCtx {
     public UnaryExpression findex => BPI.findex;
     public MemberExpression id => BPI.id;
     public MemberExpression index => BPI.index;
-    public MemberExpression loc => BPI.loc;
+    public MemberExpression LocV2 => BPI.locV2;
+    public MemberExpression LocV3 => BPI.locV3;
     public MemberExpression locx => BPI.locx;
     public MemberExpression locy => BPI.locy;
+    public MemberExpression locz => BPI.locz;
     public Expression t => BPI.t;
     public TEx<float> FloatVal => GetByExprType<TEx<float>>();
     public TExSB SB => GetByExprType<TExSB>();

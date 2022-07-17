@@ -131,9 +131,13 @@ public static partial class Reflector {
     public static object? Into(this string argstring, Type t) {
         using var _ = BakeCodeGenerator.OpenContext(BakeCodeGenerator.CookingContext.KeyType.INTO, argstring);
         var p = IParseQueue.Lex(argstring);
-        var ret = p.Into(t);
-        p.ThrowOnLeftovers();
-        return ret;
+        try {
+            var ret = p.Into(t);
+            p.ThrowOnLeftovers();
+            return ret;
+        } catch (Exception e) {
+            throw new Exception($"Failed to parse below string into type {t.RName()}:\n{argstring}", e);
+        }
     }
     
     /// <summary>

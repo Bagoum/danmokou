@@ -24,7 +24,7 @@ using ExTP = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TE
 using ExTP3 = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<UnityEngine.Vector3>>;
 using ExTP4 = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<UnityEngine.Vector4>>;
 using ExBPRV2 = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<Danmokou.DMath.V2RV2>>;
-using ExVTP = System.Func<Danmokou.Expressions.ITexMovement, Danmokou.Expressions.TEx<float>, Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TExV2, Danmokou.Expressions.TEx>;
+using ExVTP = System.Func<Danmokou.Expressions.ITexMovement, Danmokou.Expressions.TEx<float>, Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TExV3, Danmokou.Expressions.TEx>;
 using ExLVTP = System.Func<Danmokou.Expressions.ITexMovement, Danmokou.Expressions.TEx<float>, Danmokou.Expressions.TEx<float>, Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TExV2, Danmokou.Expressions.TEx>;
 using ExSBCF = System.Func<Danmokou.Expressions.TExSBC, Danmokou.Expressions.TEx<int>, Danmokou.Expressions.TEx<BagoumLib.Cancellation.ICancellee>, Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx>;
 
@@ -170,11 +170,11 @@ public static class Compilers {
                 tac.GetByExprType<TExMov>(),
                 tac.GetByExprType<TEx<float>>(),
                 tac,
-                tac.GetByExprType<TExV2>()),
+                tac.GetByExprType<TExV3>()),
             new DelegateArg<Movement>("vtp_mov", true, true),
             new DelegateArg<float>("vtp_dt", true, true),
             new DelegateArg<ParametricInfo>("vtp_bpi", true, true),
-            new DelegateArg<Vector2>("vtp_delta", true, true)
+            new DelegateArg<Vector3>("vtp_delta", true, true)
         );
     }
 
@@ -185,12 +185,12 @@ public static class Compilers {
                 tac.GetByExprType<TExLMov>(),
                 tac.GetByName<float>("lvtp_dt"),
                 tac,
-                tac.GetByExprType<TExV2>()),
+                tac.GetByExprType<TExV3>()),
             new DelegateArg<LaserMovement>("lvtp_mov", true, true),
             new DelegateArg<float>("lvtp_dt", true),
             new DelegateArg<float>(LASER_TIME_ALIAS, true),
             new DelegateArg<ParametricInfo>("lvtp_bpi", true, true),
-            new DelegateArg<Vector2>("lvtp_delta", true, true)
+            new DelegateArg<Vector3>("lvtp_delta", true, true)
         );
 
     [Fallthrough]

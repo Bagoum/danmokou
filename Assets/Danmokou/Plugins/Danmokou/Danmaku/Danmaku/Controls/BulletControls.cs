@@ -773,6 +773,12 @@ public partial class BulletManager {
         /// </summary>
         public static SPCF Recolor(TP4 black, TP4 white) => (pool, cT) => 
             GetMaybeCopyPool(pool).SetRecolor(black, white);
+
+        /// <summary>
+        /// Sort the bullets in the pool by z-axis (smallest Z on top).
+        /// </summary>
+        public static SPCF SortZ() => (pool, CT) =>
+            GetMaybeCopyPool(pool).BC.UseZCompare.AddConst(true);
     }
     
     public static IDisposable ControlPool(StyleSelector styles, SPCF control, ICancellee cT) {

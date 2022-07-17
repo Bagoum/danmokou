@@ -511,13 +511,13 @@ public class Enemy : RegularUpdater {
     }
 
     [UsedImplicitly]
-    public static bool FindNearest(Vector2 source, out Vector2 position) {
+    public static bool FindNearest(Vector3 source, out Vector2 position) {
         bool found = false;
         position = default;
         float lastDist = 0f;
         foreach (var e in frozenEnemies) {
             if (e.Active && LocationHelpers.OnPlayableScreen(e.pos)) {
-                var dst = (e.pos.x - source.x) * (e.pos.x - source.x) + (e.pos.y - source.y) * (e.pos.y - source.x);
+                var dst = (e.pos.x - source.x) * (e.pos.x - source.x) + (e.pos.y - source.y) * (e.pos.y - source.y);
                 if (!found || dst < lastDist) {
                     lastDist = dst;
                     found = true;
@@ -529,7 +529,7 @@ public class Enemy : RegularUpdater {
     }
 
     [UsedImplicitly]
-    public static bool FindNearestSave(Vector2 source, int? preferredEnemy, out int enemy, out Vector2 position) {
+    public static bool FindNearestSave(Vector3 source, int? preferredEnemy, out int enemy, out Vector2 position) {
         if (preferredEnemy.Try(out var eid) && allEnemies.TryGetValue(eid, out var pe)) {
             position = pe.Beh.GlobalPosition();
             enemy = eid;
@@ -541,7 +541,7 @@ public class Enemy : RegularUpdater {
         float lastDist = 0f;
         foreach (var e in frozenEnemies) {
             if (e.Active && LocationHelpers.OnPlayableScreen(e.pos)) {
-                var dst = (e.pos.x - source.x) * (e.pos.x - source.x) + (e.pos.y - source.y) * (e.pos.y - source.x);
+                var dst = (e.pos.x - source.x) * (e.pos.x - source.x) + (e.pos.y - source.y) * (e.pos.y - source.y);
                 if (!found || dst < lastDist) {
                     lastDist = dst;
                     found = true;
@@ -554,10 +554,10 @@ public class Enemy : RegularUpdater {
     }
 
     public static readonly ExFunction findNearest = ExFunction.Wrap<Enemy>("FindNearest", new[] {
-        typeof(Vector2), typeof(Vector2).MakeByRefType()
+        typeof(Vector3), typeof(Vector2).MakeByRefType()
     });
     public static readonly ExFunction findNearestSave = ExFunction.Wrap<Enemy>("FindNearestSave", new[] {
-        typeof(Vector2), typeof(int?), typeof(int).MakeByRefType(), typeof(Vector2).MakeByRefType()
+        typeof(Vector3), typeof(int?), typeof(int).MakeByRefType(), typeof(Vector2).MakeByRefType()
     });
 }
 }

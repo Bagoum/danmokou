@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using BagoumLib;
 using BagoumLib.Cancellation;
 using BagoumLib.DataStructures;
+using BagoumLib.Sorting;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Danmaku.Descriptors;
@@ -45,11 +46,11 @@ public partial class BulletManager {
     /// A container for all information about a code-abstraction bullet except style information.
     /// </summary>
     public struct SimpleBullet {
-        //96 byte struct. (92 unpacked)
+        //96 byte struct. (96 unpacked)
             //BPY  = 8
             //TP   = 8
             //VS   = 32
-            //V2   = 8
+            //V3   = 12
             //BPI  = 20
             //Flt  = 4
             //V2   = 8
@@ -62,7 +63,7 @@ public partial class BulletManager {
         /// Currently, this is only used for direction, and
         /// the delta is also put into BPI when this is generated.
         /// </summary>
-        public Vector2 accDelta;
+        public Vector3 accDelta;
         public ParametricInfo bpi;
         public float scale;
         public Vector2 direction;
@@ -109,6 +110,11 @@ public partial class BulletManager {
 
     //Instantiate this class directly for player bullets
     public class SimpleBulletCollection: CompactingArray<SimpleBullet> {
+        //Draw elements with higher Z first, in accordance with Unity left-handedness
+        private static readonly LeqCompare<SimpleBullet> ZCompare =
+            (in SimpleBullet sb1, in SimpleBullet sb2) =>
+                sb1.bpi.loc.z >= sb2.bpi.loc.z;
+        private SimpleBullet[]? zSortBuffer = null;
         public enum CollectionType {
             /// <summary>
             /// Empty bullets (no display or collision, used for guiding; player variants and copies included)
@@ -143,6 +149,7 @@ public partial class BulletManager {
         public virtual CollectionType MetaType => CollectionType.Normal;
         public string Style => BC.name;
         public TP4? Tint => BC.Tint.Value;
+        public virtual (TP4 black, TP4 white)? Recolor => BC.Recolor.Value;
         public bool SubjectToAutocull =>
             !IsPlayer && MetaType == CollectionType.Normal;
         public bool IsCopy => original != null;
@@ -314,7 +321,7 @@ public partial class BulletManager {
                         controls[pi].action(this, ii, sb.bpi, controls[pi].cT);
                     
                     //in nextDT is a significant optimization
-                    sb.movement.UpdateDeltaAssignAcc(ref sb.bpi, out sb.accDelta, in nextDT);
+                    sb.movement.UpdateDeltaAssignDelta(ref sb.bpi, ref sb.accDelta, in nextDT);
                     if (sb.scaleFunc != null)
                         sb.scale = sb.scaleFunc(sb.bpi);
                     
@@ -371,10 +378,7 @@ public partial class BulletManager {
                 }
             }
             Profiler.EndSample();
-            Profiler.BeginSample("Compact");
-            if (NullElements > Math.Min(1000, Count / 10))
-                Compact();
-            Profiler.EndSample();
+            CompactAndSort();
             return new CollisionCheckResults(collisionDamage, graze);
         }
 
@@ -389,7 +393,24 @@ public partial class BulletManager {
                     }
                 }
             }
-            Compact();
+            CompactAndSort();
+        }
+
+        private void CompactAndSort() {
+            Profiler.BeginSample("Compact");
+            if (NullElements > Math.Min(1000, Count / 10) || BC.UseZCompare)
+                Compact();
+            Profiler.EndSample();
+            Profiler.BeginSample("Z-sort");
+            if (BC.UseZCompare) {
+                var reqLen = (count + 1) / 2;
+                if (zSortBuffer == null || zSortBuffer.Length < reqLen)
+                    zSortBuffer = new SimpleBullet[(Data.Length + 1) / 2];
+                //Since the array is sorted every frame, it is always "mostly sorted"
+                //This makes CombMergeSort good
+                CombMergeSorter<SimpleBullet>.Sort(Data, 0, count, ZCompare, zSortBuffer);
+            }
+            Profiler.EndSample();
         }
 
         /// <summary>
@@ -479,6 +500,7 @@ public partial class BulletManager {
             }
             // This should free links to BPY/VTP constructed by SMs going out of scope
             Empty();
+            zSortBuffer = null;
             temp_last = 0;
         }
         
@@ -486,7 +508,7 @@ public partial class BulletManager {
 
         #region Renderers
         private void LegacyRender(Camera c, BulletManager bm, int layer) {
-            if (BC.Recolor.Value.Try(out var rc)) {
+            if (Recolor.Try(out var rc)) {
                 LegacyRenderRecolorizable(c, bm, layer, rc);
                 return;
             }
@@ -556,7 +578,7 @@ public partial class BulletManager {
         }
 
         private void Render(Camera c, BulletManager bm, int layer) {
-            if (BC.Recolor.Value.Try(out var rc)) {
+            if (Recolor.Try(out var rc)) {
                 RenderRecolorizable(c, bm, layer, rc);
                 return;
             }
@@ -650,6 +672,8 @@ public partial class BulletManager {
         private readonly SimpleBulletCollection src;
         protected override SimpleBulletFader Fade { get; }
         public override CollectionType MetaType => CollectionType.Culled;
+
+        public override (TP4 black, TP4 white)? Recolor => src.Recolor;
 
         public CulledBulletCollection(SimpleBulletCollection source) : base(activeCulled, source.CopyBC($"$culled_{source.Style}")) {
             src = source;

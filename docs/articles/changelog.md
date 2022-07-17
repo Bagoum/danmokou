@@ -27,13 +27,25 @@ This release includes various minor improvements.
 
 #### Features
 
+- Bullets now support a limited amount of 3D handling. By using the `Velocity3D` or `Offset3D` VTP functions, you can modify the Z-position of the bullet. You can then use the `SortZ` pool control to make the bullets order themselves by their Z-position (lowest Z is on top, per standard Unity handling). The Z-position will be ignored for rendering and collision. Bullet rotation handling is unchanged; they will only rotate in the XY plane. See `Patterns/feature testing/z position support.txt` for an example.
+  - Note that SortZ will significantly slow down bullet processing on the affected pools, because sorting is expensive. You can probably get around 8000 bullets in a single Z-sorted pool.
+  - Note that this still does not allow you to change the sorting order between different pools.
+  - Even if you do not use `SortZ`, you can still use the z-position as a variable in pool controls or the like. The functions to get x,y, and z-position are `x`, `y`, `z` respectively.
+  - V2RV2 was not changed to support 3D handling, but may be changed in the future.
 - Errors in script parsing are now more detailed and contain links to relevant files.
 - Improved handling of text input. Replay names and other usages of TextInputNode can now contain capitalized letters (only via Shift, not CapsLock) and non-alphanumeric characters. This does not use `Input.inputString` due to its limitations around holding keys.
 - Added smarter navigation for complex nested UI groups. When the UIGroup does not define navigation, the UI will look for the nearest HTML object in the inputted direction.
 - Added full support for keyboard/mouse and gamepad control rebinding. There is a new tab on the Options menu that allows the player to rebind controls. Note that mouse-left-click is reserved and cannot be rebound. Any control that is stored in the InputConfig class (Plugins/Danmokou/Core/Core/Input/InputConfig.cs) can be rebound by adding it to the Bindings property in that class.
   - This also includes support for multiple connected controllers (XBox/PS4) and changing button prompts based on the most recently used input method. You can look this up as `InputManager.PlayerInput.MainSource.Current.focusHold.Description`-- replace `focusHold` with the relevant input button. See UIScreen.SetControlText as an example.
-- Fixed an issue where bullets would not use scale-in when being created or destroyed while using the legacy renderer.
+
+#### Changes
+
 - Suzunoya now distinguishes between StrongBoundedContext (which provides guarantees that allows it to be skipped while loading) and BoundedContext (which does not provide such guarantees). It also improves the internal handling around BoundedContexts. The main consequence of this is that if you define a very long VN sequence-- such as an entire game for a traditional VN-- you may want to make some of the nested tasks StrongBoundedContexts to avoid loading lag. Also, any calls to external tasks *must* be wrapped in StrongBoundedContexts so that they can be skipped, since the internals of external tasks are not governed by VNState's loading process. Handling of external tasks will be improved with the introduction of LockedBoundedContext in a later version.
+
+#### Fixes
+
+- Fixed an issue where recolorizable pools would have inconsistent colors while culling.
+- Fixed an issue where bullets would not use scale-in when being created or destroyed while using the legacy renderer.
 
 # v9.0.0 (2022/05/16)
 

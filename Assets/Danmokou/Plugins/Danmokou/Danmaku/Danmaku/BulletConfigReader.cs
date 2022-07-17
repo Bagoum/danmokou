@@ -73,11 +73,12 @@ public partial class BulletManager : RegularUpdater {
         public readonly bool destructible;
         public readonly CollidableInfo cc;
         public readonly ushort grazeEveryFrames;
-        public OverrideEvented<bool> Deletable { get; init; }
-        public OverrideEvented<float> CULL_RAD { get; init; }
-        public OverrideEvented<bool> AllowCameraCull { get; init; }
-        public OverrideEvented<(TP4 black, TP4 white)?> Recolor { get; init; }
-        public OverrideEvented<TP4?> Tint { get; init; }
+        public OverrideEvented<bool> Deletable { get; private init; }
+        public OverrideEvented<float> CULL_RAD { get; private init; }
+        public OverrideEvented<bool> AllowCameraCull { get; private init; }
+        public OverrideEvented<(TP4 black, TP4 white)?> Recolor { get; private init; }
+        public OverrideEvented<TP4?> Tint { get; private init; }
+        public OverrideEvented<bool> UseZCompare { get; private init; }
         public bool Recolorizable => deferredRI.recolorizable;
 
         public SimpleBulletFader FadeIn => deferredRI.sbes.fadeIn;
@@ -100,6 +101,7 @@ public partial class BulletManager : RegularUpdater {
             AllowCameraCull = new OverrideEvented<bool>(true);
             Recolor = new OverrideEvented<(TP4, TP4)?>(null);
             Tint = new OverrideEvented<TP4?>(null);
+            UseZCompare = new OverrideEvented<bool>(false);
             Tint.Subscribe(tint => {
                 if (riLoaded)
                     GetOrLoadRI().Material.SetOrUnsetKeyword(tint != null, PropConsts.tintKW);
@@ -117,6 +119,7 @@ public partial class BulletManager : RegularUpdater {
                 AllowCameraCull = CopyOV(AllowCameraCull),
                 Recolor = CopyOV(Recolor),
                 Tint = CopyOV(Tint),
+                UseZCompare = CopyOV(UseZCompare)
             };
             nbc.Tint.Subscribe(tint => {
                 if (riLoaded)
@@ -125,8 +128,11 @@ public partial class BulletManager : RegularUpdater {
             return nbc;
         }
 
-        private static OverrideEvented<T> CopyOV<T>(OverrideEvented<T> baseOV) =>
-            new(baseOV.BaseValue);
+        private static OverrideEvented<T> CopyOV<T>(OverrideEvented<T> baseOV) {
+            var w = new OverrideEvented<T>(baseOV.BaseValue);
+            w.CopyDisturbances(baseOV);
+            return w;
+        }
 
         public void UseExitFade() {
             DeferredTextureConstruction.SetMaterialFade(GetOrLoadRI(), FadeOut);

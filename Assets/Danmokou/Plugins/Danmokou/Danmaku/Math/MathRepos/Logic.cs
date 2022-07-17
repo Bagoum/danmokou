@@ -46,7 +46,7 @@ public static partial class PredicateLogic {
     /// <returns></returns>
     public static ExPred RelCirc(BEHPointer beh, ExTP3 circ) {
         return bpi => CollisionMath.pointInCircle.Of(
-            Ex.Subtract(bpi.loc, LBEH(beh)),
+            Ex.Subtract(bpi.LocV2, LBEH(beh)),
             Ex.Convert(circ(bpi), typeof(CCircle))
         );
     }
@@ -57,7 +57,7 @@ public static partial class PredicateLogic {
     /// <returns></returns>
     public static ExPred Circ(ExTP3 circ) {
         return bpi => CollisionMath.pointInCircle.Of(
-            bpi.loc, Ex.Convert(circ(bpi), typeof(CCircle))
+            bpi.LocV2, Ex.Convert(circ(bpi), typeof(CCircle))
         );
     }
     /// <summary>
@@ -68,7 +68,7 @@ public static partial class PredicateLogic {
     /// <returns></returns>
     public static ExPred RelRect(BEHPointer beh, CRect rect) {
         return bpi => CollisionMath.pointInRect.Of(
-            Ex.Subtract(bpi.loc, LBEH(beh)),
+            Ex.Subtract(bpi.LocV2, LBEH(beh)),
             ExC(rect)
         );
     }
@@ -79,7 +79,7 @@ public static partial class PredicateLogic {
     /// <returns></returns>
     public static ExPred Rect(CRect rect) {
         return bpi => CollisionMath.pointInRect.Of(
-            bpi.loc, ExC(rect)
+            bpi.LocV2, ExC(rect)
         );
     }
 

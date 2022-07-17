@@ -126,7 +126,7 @@ public static partial class BPYRepo {
     /// <summary>
     /// Returns Atan(loc - this.Loc) in degrees.
     /// </summary>
-    public static ExBPY AngleTo(ExTP loc) => bpi => ATan(Sub(loc(bpi), bpi.loc));
+    public static ExBPY AngleTo(ExTP loc) => bpi => ATan(Sub(loc(bpi), bpi.LocV2));
     
     /// <summary>
     /// Returns the x-position of the left/right wall that the location is closer to.
@@ -144,7 +144,7 @@ public static partial class Parametrics {
     public static ExTP LNearestEnemy() => b => {
         var loc = new TExV2();
         return Ex.Block(new ParameterExpression[] { loc },
-            Ex.IfThen(Ex.Not(Enemy.findNearest.Of(b.loc, loc)),
+            Ex.IfThen(Ex.Not(Enemy.findNearest.Of(b.LocV3, loc)),
                 loc.Is(Ex.Constant(new Vector2(0f, 50f)))
             ),
             loc
@@ -160,7 +160,7 @@ public static partial class Parametrics {
                     FiringCtx.GetValue<int>(b, key).As<int?>(),
                     Ex.Constant(null).As<int?>())
             ),
-            Ex.IfThenElse(Enemy.findNearestSave.Of(b.loc, eid_in, eid, loc),
+            Ex.IfThenElse(Enemy.findNearestSave.Of(b.LocV3, eid_in, eid, loc),
                 FiringCtx.SetValue<int>(b, key, eid),
                 loc.Is(Ex.Constant(new Vector2(0f, 50f)))
             ),

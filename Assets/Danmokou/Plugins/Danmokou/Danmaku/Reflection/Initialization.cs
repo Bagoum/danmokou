@@ -21,6 +21,9 @@ using UnityEngine;
 using Vector3 = UnityEngine.Vector3;
 
 namespace Danmokou.Reflection {
+public static class RHelper {
+    public static bool REFLECT_IN_EDITOR = false;
+}
 public static partial class Reflector {
     /*private static readonly Assembly[] ReflectableAssemblies = {
         typeof(CoreAssemblyMarker).Assembly,
@@ -28,7 +31,9 @@ public static partial class Reflector {
     };*/
 
     static Reflector() {
-        if (!Application.isPlaying) return;
+#if UNITY_EDITOR
+        if (!Application.isPlaying && !RHelper.REFLECT_IN_EDITOR) return;
+#endif
         foreach (var type in ReflectorUtils.ReflectableAssemblyTypes) {
             foreach (var ca in type.GetCustomAttributes()) {
                 if (ca is ReflectAttribute ra) {

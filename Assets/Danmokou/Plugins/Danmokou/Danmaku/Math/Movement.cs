@@ -114,27 +114,30 @@ public struct Movement {
     /// <returns>Direction to face</returns>
     public Vector2 UpdateZero(ref ParametricInfo bpi) {
         const float dT = ETime.FRAME_TIME;
-        var nrv = Vector2.zero;
+        Vector3 accDelta = default;
         float timeOffset = bpi.t;
         var zeroTime = timeOffset < float.Epsilon;
         //We have to run this regardless of whether timeOffset=0 so offset functions are correct on frame 1
         for (bpi.t = 0f; timeOffset >= 0; timeOffset -= dT) {
             float effdT = (timeOffset < dT) ? timeOffset : dT;
             bpi.t += effdT;
-            vtp(ref this, in effdT, ref bpi, out var delta);
+            Vector3 delta = default;
+            vtp(ref this, in effdT, ref bpi, ref delta);
             bpi.loc.x += delta.x;
             bpi.loc.y += delta.y;
-            nrv.x += delta.x;
-            nrv.y += delta.y;
+            bpi.loc.z += delta.z;
+            accDelta.x += delta.x;
+            accDelta.y += delta.y;
+            accDelta.z += delta.z;
         }
         //If timeOffset=0, then simulate the next update for direction
         if (zeroTime) {
             bpi.t += dT;
-            vtp(ref this, dT, ref bpi, out nrv);
+            vtp(ref this, dT, ref bpi, ref accDelta);
             bpi.t = 0;
         } 
-        float mag = nrv.x * nrv.x + nrv.y * nrv.y;
-        if (mag > M.MAG_ERR) return nrv * 1f / (float) Math.Sqrt(mag);
+        float mag = accDelta.x * accDelta.x + accDelta.y * accDelta.y;
+        if (mag > M.MAG_ERR) return accDelta * 1f / (float) Math.Sqrt(mag);
         else return DefaultDirection();
     }
 
@@ -142,23 +145,27 @@ public struct Movement {
     /// Update a BPI according to the velocity description.
     /// Doesn't calculate normalized direction.
     /// Doesn't add to bpi.t.
+    /// <br/>Adds to <see cref="accDelta"/>.
     /// </summary>
     /// <param name="bpi">Parametric info</param>
-    /// <param name="accDelta">The delta moved this update (updated in addition to BPI.loc)</param>
+    /// <param name="accDelta">The delta moved this update (incremented in addition to BPI.loc).</param>
     /// <param name="ang_deg">Overrride angle rotation</param>
     /// <param name="cos_r">Override cosine rotation</param>
     /// <param name="sin_r">Override sine rotation</param>
     /// <param name="dT">Delta time</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void UpdateDeltaNoTime(ref ParametricInfo bpi, ref Vector2 accDelta, float ang_deg, float cos_r, float sin_r, in float dT) {
+    private void UpdateDeltaNoTime(ref ParametricInfo bpi, ref Vector3 accDelta, float ang_deg, float cos_r, float sin_r, in float dT) {
         angle = ang_deg;
         cos_rot = cos_r;
         sin_rot = sin_r;
-        vtp(ref this, in dT, ref bpi, out Vector2 nrv);
-        accDelta.x += nrv.x;
-        accDelta.y += nrv.y;
-        bpi.loc.x += nrv.x;
-        bpi.loc.y += nrv.y;
+        Vector3 delta = default;
+        vtp(ref this, in dT, ref bpi, ref delta);
+        accDelta.x += delta.x;
+        accDelta.y += delta.y;
+        accDelta.z += delta.z;
+        bpi.loc.x += delta.x;
+        bpi.loc.y += delta.y;
+        bpi.loc.z += delta.z;
     }
 
     [UsedImplicitly]
@@ -176,16 +183,19 @@ public struct Movement {
     /// <summary>
     /// Update a BPI according to the velocity description.
     /// Doesn't calculate normalized direction.
+    /// <br/>Assigns <see cref="delta"/>, but if the inner VTP is two-dimensional,
+    /// it may not assign the z-dimension.
     /// </summary>
     /// <param name="bpi">Parametric info</param>
-    /// <param name="delta">The delta moved this update (updated in addition to BPI.loc)</param>
+    /// <param name="delta">The delta moved this update (assigned in addition to BPI.loc)</param>
     /// <param name="dT">Delta time</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void UpdateDeltaAssignAcc(ref ParametricInfo bpi, out Vector2 delta, in float dT) {
+    public void UpdateDeltaAssignDelta(ref ParametricInfo bpi, ref Vector3 delta, in float dT) {
         bpi.t += dT;
-        vtp(ref this, in dT, ref bpi, out delta);
+        vtp(ref this, in dT, ref bpi, ref delta);
         bpi.loc.x += delta.x;
         bpi.loc.y += delta.y;
+        bpi.loc.z += delta.z;
     }
 
     public void FlipX() {
@@ -251,16 +261,20 @@ public struct LaserMovement {
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Update(in float lt, ref ParametricInfo bpi, out Vector2 d1, out Vector2 d2, in float dT) {
+    public void Update(in float lt, ref ParametricInfo bpi, out Vector2 delta, in float dT) {
+        //Z movement not enabled for laser draw
         bpi.t += dT;
         if (isSimple) {
-            d1 = new Vector2(simpleDir.x * dT * flipX, simpleDir.y * dT * flipY);
+            delta.x = simpleDir.x * dT * flipX;
+            delta.y = simpleDir.y * dT * flipY;
         } else {
-            lvtp!(ref this, in dT, in lt, ref bpi, out d1);
+            Vector3 d3 = default;
+            lvtp!(ref this, in dT, in lt, ref bpi, ref d3);
+            delta.x = d3.x;
+            delta.y = d3.y;
         }
-        bpi.loc.x += d1.x;
-        bpi.loc.y += d1.y;
-        d2 = d1;
+        bpi.loc.x += delta.x;
+        bpi.loc.y += delta.y;
     }
     
     public float RotationDeg(ParametricInfo bpi) {

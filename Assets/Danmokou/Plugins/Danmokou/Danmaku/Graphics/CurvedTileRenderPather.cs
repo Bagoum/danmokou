@@ -50,7 +50,7 @@ public class CurvedTileRenderPather : CurvedTileRender {
     /// <summary>
     /// The last return value of Velocity.Update. Used for backstepping.
     /// </summary>
-    private Vector2 lastDelta;
+    private Vector3 lastDelta;
     private int read_from;
     private ParametricInfo bpi;
     public ref ParametricInfo BPI => ref bpi;
@@ -129,7 +129,7 @@ public class CurvedTileRenderPather : CurvedTileRender {
     }
 
     public override void UpdateMovement(float dT) {
-        movement.UpdateDeltaAssignAcc(ref bpi, out lastDelta, dT);
+        movement.UpdateDeltaAssignDelta(ref bpi, ref lastDelta, dT);
         base.UpdateMovement(dT);
     }
 

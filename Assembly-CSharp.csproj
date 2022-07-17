@@ -232,6 +232,7 @@
      <None Include="Assets\Danmokou\Patterns\Testing\Manual Empty Guide Test.txt" />
      <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Surface.shader" />
      <None Include="Assets\Danmokou\MiniProjects\WebGL Demo\200 cradle.txt" />
+     <None Include="Assets\Danmokou\Patterns\feature testing\z position support.txt" />
      <None Include="Assets\Danmokou\CG\Math.cginc" />
      <None Include="Assets\Danmokou\Patterns\examples\push left.txt" />
      <None Include="Assets\Danmokou\UXML\nodes\Label.uxml" />

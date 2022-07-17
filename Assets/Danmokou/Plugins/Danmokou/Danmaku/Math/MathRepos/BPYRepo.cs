@@ -103,6 +103,11 @@ public static partial class BPYRepo {
     /// </summary>
     /// <returns></returns>
     public static ExBPY Y() => bpi => bpi.locy;
+    /// <summary>
+    /// Return the parametric z-position.
+    /// </summary>
+    /// <returns></returns>
+    public static ExBPY Z() => bpi => bpi.locz;
 
 
     private static readonly ExFunction SeedRandUint = ExFunction.Wrap(typeof(RNG), "GetSeededFloat", new[] {typeof(float), typeof(float), typeof(uint)});
@@ -236,7 +241,7 @@ public static partial class BPYRepo {
     /// </summary>
     /// <param name="loc"></param>
     /// <returns></returns>
-    public static ExBPY DistTo(ExTP loc) => bpi => Dist(loc(bpi), bpi.loc);
+    public static ExBPY DistTo(ExTP loc) => bpi => Dist(loc(bpi), bpi.LocV2);
     
     /// <summary>
     /// Returns T / DN.

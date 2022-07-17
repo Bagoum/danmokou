@@ -139,7 +139,7 @@ public static class SaveData {
         public bool LegacyRenderer = false;
         public (int w, int h) Resolution = GraphicsUtils.BestResolution;
 #if UNITY_EDITOR && !EXBAKE_SAVE && !EXBAKE_LOAD
-        public static bool TeleportAtPhaseStart => false;
+        public static bool TeleportAtPhaseStart => true;
 #else
         //Don't change this! TeleportAtPhaseStart is a editor utility and should not be enabled in builds.
         public static bool TeleportAtPhaseStart => false;

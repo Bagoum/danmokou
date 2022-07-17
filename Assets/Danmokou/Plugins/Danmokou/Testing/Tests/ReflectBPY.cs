@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Linq.Expressions;
 using BagoumLib.Expressions;
+using Danmokou.Danmaku.Options;
 using NUnit.Framework;
 using Danmokou.DMath;
 using Danmokou.DMath.Functions;
@@ -18,6 +19,12 @@ namespace Danmokou.Testing {
     public static class ReflectBPY {
         private const float err = 0.00001f;
 
+        [Test]
+        public static void PostAggregate() {
+            var x = "{ scale(1 - 0.05 * z) }".Into<SBOptions>();
+        }
+        
+        
         [Test]
         public static void Smooth1() {
             BPY lerp = "lerp 4 5 t 0 2".Into<BPY>();

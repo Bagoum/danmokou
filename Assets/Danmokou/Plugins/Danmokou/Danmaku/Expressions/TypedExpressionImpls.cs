@@ -18,9 +18,11 @@ namespace Danmokou.Expressions {
 public class TExPI : TEx<ParametricInfo> {
     public readonly MemberExpression id;
     public readonly MemberExpression t;
-    public readonly MemberExpression loc;
+    public readonly MemberExpression locV2;
+    public readonly MemberExpression locV3;
     public readonly MemberExpression locx;
     public readonly MemberExpression locy;
+    public readonly MemberExpression locz;
     /// <summary>
     /// While index points to an integer, it can be passed into FXY, as FXY will cast it.
     /// However, it cannot be used for parametric float operations like protate.
@@ -42,18 +44,22 @@ public class TExPI : TEx<ParametricInfo> {
     protected TExPI(ExMode m, string? name) : base(m, name) {
         id = Ex.Field(ex, "id");
         t = Ex.Field(ex, "t");
-        loc = Ex.Field(ex, "loc");
-        locx = Ex.Field(loc, "x");
-        locy = Ex.Field(loc, "y");
+        locV2 = Ex.Property(ex, "LocV2");
+        locV3 = Ex.Field(ex, "loc");
+        locx = Ex.Field(locV3, "x");
+        locy = Ex.Field(locV3, "y");
+        locz = Ex.Field(locV3, "z");
         index = Ex.Field(ex, "index");
         findex = Ex.Convert(index, ExUtils.tfloat);
     }
     public TExPI(Expression ex) : base(ex) {
         id = Ex.Field(ex, "id");
         t = Ex.Field(ex, "t");
-        loc = Ex.Field(ex, "loc");
-        locx = Ex.Field(loc, "x");
-        locy = Ex.Field(loc, "y");
+        locV2 = Ex.Property(ex, "LocV2");
+        locV3 = Ex.Field(ex, "loc");
+        locx = Ex.Field(locV3, "x");
+        locy = Ex.Field(locV3, "y");
+        locz = Ex.Field(locV3, "z");
         index = Ex.Field(ex, "index");
         findex = Ex.Convert(index, ExUtils.tfloat);
     }

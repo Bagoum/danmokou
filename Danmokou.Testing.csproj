@@ -63,6 +63,7 @@
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Testing\Tests\ReflectPath.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Testing\Tests\ReflectTP.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Testing\Tests\Localization.cs" />
+     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Testing\TestSetup.cs" />
      <None Include="Assets\Danmokou\Plugins\Danmokou\Testing\Danmokou.Testing.asmdef" />
      <Reference Include="UnityEngine">
      <HintPath>C:\Program Files\Unity\Hub\Editor\2021.3.3f1\Editor\Data\Managed\UnityEngine\UnityEngine.dll</HintPath>
