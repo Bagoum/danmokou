@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using BagoumLib;
 using BagoumLib.Cancellation;
+using BagoumLib.Functional;
 using JetBrains.Annotations;
 using UnityEngine;
 using Ex = System.Linq.Expressions.Expression;
@@ -205,19 +206,12 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
             Listen(Events.LocalReset, () => {
                 HardCancel(false);
                 //Allows all cancellations processes to go through before rerunning
-                ETime.QueueEOFInvoke(() => RunSMFromScript(behaviorScript, Cancellable.Null));
+                ETime.QueueEOFInvoke(() => _ = RunBehaviorSM(SMRunner.RunRoot(behaviorScript, Cancellable.Null)));
             });
         }
 #endif
     }
 
-    public Task Initialize(SMRunner smr) {
-        if (smr.sm != null) {
-            behaviorScript = null;
-            return BeginBehaviorSM(smr, 0);
-        }
-        return Task.CompletedTask;
-    }
     public void Initialize(Movement mov, ParametricInfo pi, SMRunner sm, string behName = "") =>
         Initialize(null, mov, pi, sm, null, behName);
 
@@ -251,7 +245,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
             tr.position = bpi.loc;
         }
         if (IsNontrivialID(behName)) ID = behName;
-        Initialize(smr);
+        _ = RunBehaviorSM(smr);
         if (displayer != null) {
             displayer.RotatorF = options?.rotator;
         }
@@ -279,25 +273,17 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     public override void FirstFrame() {
         RegularUpdateRender();
         
-        //Note: This pathway is only used for minor summoned effects (such as cutins), not for bosses or stages.
-        //TODO can you make this a debug/test-only pathway?
+        //Note: This pathway is used for player shots and minor summoned effects (such as cutins).
+        //It is not used for bosses/stages, which call directly into RunBehaviorSM.
         if (behaviorScript != null) {
             try {
-                RunSMFromScript(behaviorScript, Cancellable.Null);
+                //TODO should this be bound by InstTracker?
+                _ = RunBehaviorSM(SMRunner.RunRoot(behaviorScript, Cancellable.Null));
             } catch (Exception e) {
                 Logs.UnityError("Failed to load attached SM on startup!");
                 Logs.LogException(e);
             }
         }
-    }
-
-    public void RunSMFromScript(TextAsset? script, ICancellee cT) {
-        if (script != null) RunPatternSM(StateMachineManager.FromText(script), cT);
-    }
-
-    public void RunPatternSM(StateMachine? sm, ICancellee cT) {
-        if (sm != null)
-            _ = BeginBehaviorSM(SMRunner.RunRoot(sm, cT), phaseController.GoToNextPhase(0));
     }
 
     private static bool IsNontrivialID(string? id) => !string.IsNullOrWhiteSpace(id) && id != "_";
@@ -560,10 +546,10 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     /// Call this with any high-priority SMs-- they are not required to be pattern-type.
     /// While you can pass null here, that will still allocate some Task garbage.
     /// </summary>
-    protected async Task BeginBehaviorSM(SMRunner sm, int startAtPatternId) {
+    public async Task RunBehaviorSM(SMRunner sm, int firstPhase = 0) {
         if (sm.sm == null || sm.cT.Cancelled) return;
         HardCancel(false);
-        phaseController.SetDesiredNext(startAtPatternId);
+        phaseController.SetDesiredNext(firstPhase);
         var cT = new Cancellable();
         var joint = sm.MakeNested(cT);
         using var smh = new SMHandoff(this, sm, joint);

@@ -20,7 +20,7 @@ DMK allows you to efficiently create games that look something like this:
 
 Of the bullet hell engines you might find, Danmokou is one of the fastest, supporting over **100,000 projectiles at 4k 120 FPS**. Other engines will give you somewhere between 5,000 and 30,000 bullets at a lower resolution and framerate. It is also one of the most efficient for development with features such as instantaneous script recompilation. 
 
-The entirety of DMK is written in C# with a little bit of F#, so you can change it freely. The scripting language is a thin wrapper around native C# that makes writing code even more efficient.
+The entirety of DMK is written in C#, so you can change it freely. The scripting language is a thin wrapper around native C# that makes writing code even more efficient.
 
 Here is a (not entirely complete) feature list for DMK:
 
@@ -31,7 +31,7 @@ Here is a (not entirely complete) feature list for DMK:
 - Efficient compiled scripting language with the same interfaces as C#
 - Instantaneous runtime script recompilation
 - Support for practice modes, replays, spell history, high scores, statistics, and achievements
-- Dialogue engine with Ace Attorney-style text unrolling
+- Built-in dialogue engine with [Suzunoya](https://github.com/Bagoum/suzunoya)
 - Curved lasers, curvy lasers, and wavy lasers (yes, they're all different)
 - Arbitrary functions for bullet movement  (No other engine supports this!)
 - Optimized rendering pathway batching 500+ bullets at a time 

@@ -69,7 +69,7 @@ public readonly struct SceneChallengeReqest : IChallengeRequest {
 
     public void Start(BehaviorEntity exec, ICancellee cT) {
         exec.phaseController.Override(cr.phase.phase.index, () => { });
-        exec.RunSMFromScript(cr.Boss.stateMachine, cT);
+        _ = exec.RunBehaviorSM(SMRunner.RunRoot(cr.Boss.stateMachine, cT));
     }
 
     public bool OnSuccess(ChallengeManager.TrackingContext ctx) {

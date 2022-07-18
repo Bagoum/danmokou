@@ -201,20 +201,9 @@ public abstract record ControllerInputBinding(InputObject.Controller MyControlle
             _ => xbox
         };
 
-        [JsonIgnore] public override string Description => CAxis switch {
-            //Using font https://shinmera.github.io/promptfont/
-            ControllerAxis.AxisX => ByDir("↼", "⇀"),
-            ControllerAxis.AxisY => ByDir("⇂", "↾"),
-            ControllerAxis.Axis3 => "Axis 3 (unconfigured)",
-            ControllerAxis.Axis4 => ByDir("↽", "⇁"),
-            ControllerAxis.Axis5 => ByDir("⇃", "↿"),
-            ControllerAxis.Axis6 => ByDir("↞", "↠"),
-            ControllerAxis.Axis7 => ByDir("↡", "↟"),
-            ControllerAxis.Axis8 => "Axis 8 (unconfigured)",
-            ControllerAxis.Axis9 => ByController("↖", "↲"),
-            ControllerAxis.Axis10 => ByController("↗", "↳"),
-            _ => throw new ArgumentOutOfRangeException()
-        };
+        [JsonIgnore]
+        public override string Description =>
+            AnyControllerInputBinding.Axis.DescriptionFor(CAxis, UseGTComparison, MyController.Type);
         [JsonIgnore] public float AxisValue => 
             MyController is { } c ? Input.GetAxisRaw(c.GetVirtualAxis(CAxis)) : 0;
         [JsonIgnore] public override bool Active {

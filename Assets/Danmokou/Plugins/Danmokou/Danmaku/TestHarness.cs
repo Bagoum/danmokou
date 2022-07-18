@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using BagoumLib.Cancellation;
 using Danmokou.Behavior;
 using Danmokou.Core;
+using Danmokou.Danmaku;
 using Danmokou.Player;
 using Danmokou.SM;
 using UnityEngine;
@@ -58,7 +59,7 @@ public class TestHarness : RegularUpdater {
     #if UNITY_EDITOR
     public static void RunBehaviorScript(string sname, string behid) {
         var sm = LoadBehaviorScript(sname);
-        BehaviorEntity.GetExecForID(behid).RunPatternSM(sm, cTs ?? Cancellable.Null);
+        _ = BehaviorEntity.GetExecForID(behid).RunBehaviorSM(SMRunner.RunRoot(sm, cTs ?? Cancellable.Null));
     }
     
     

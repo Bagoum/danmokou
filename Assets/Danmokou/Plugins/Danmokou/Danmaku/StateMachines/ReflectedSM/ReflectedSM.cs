@@ -208,7 +208,7 @@ if (> t &fadein,
         return smh => {
             var beh = Object.Instantiate(bossCfg.boss).GetComponent<BehaviorEntity>();
             beh.phaseController.SetGoTo(1, null);
-            return beh.Initialize(SMRunner.CullRoot(StateMachineManager.FromText(bossCfg.stateMachine), smh.cT));
+            return beh.RunBehaviorSM(SMRunner.CullRoot(StateMachineManager.FromText(bossCfg.stateMachine), smh.cT));
         };
     }
 

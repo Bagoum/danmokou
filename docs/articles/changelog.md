@@ -21,22 +21,23 @@ The following features are planned for future releases.
 - [Backlog] Implementation of a TH18-like card engine
 - [Backlog] Procedural generation of stages and bullet patterns
 
-# v9.1.0 (2022/07/04)
+# v9.1.0 (2022/07/17)
 
-This release includes various minor improvements.
+This release includes various minor improvements on top of v9.0.0.
 
 #### Features
 
-- Bullets now support a limited amount of 3D handling. By using the `Velocity3D` or `Offset3D` VTP functions, you can modify the Z-position of the bullet. You can then use the `SortZ` pool control to make the bullets order themselves by their Z-position (lowest Z is on top, per standard Unity handling). The Z-position will be ignored for rendering and collision. Bullet rotation handling is unchanged; they will only rotate in the XY plane. See `Patterns/feature testing/z position support.txt` for an example.
-  - Note that SortZ will significantly slow down bullet processing on the affected pools, because sorting is expensive. You can probably get around 8000 bullets in a single Z-sorted pool.
-  - Note that this still does not allow you to change the sorting order between different pools.
-  - Even if you do not use `SortZ`, you can still use the z-position as a variable in pool controls or the like. The functions to get x,y, and z-position are `x`, `y`, `z` respectively.
+- Bullets now support a limited amount of 3D handling. By using the `Velocity3D` or `Offset3D` VTP functions, you can modify the Z-position of the bullet. You can then use the `SortZ` pool control to make the bullets order themselves by their Z-position (lowest Z is on top, per standard Unity handling). The Z-position will be ignored for rendering and collision. Bullet rotation handling is unchanged; they will only rotate in the XY plane. See `Patterns/feature testing/z position support.txt` for an example. In SiMP, the "God's Throwing Dice" spell on stage 5 has been updated to use this mechanism.
+  - Note that SortZ will slow down bullet processing on the affected pools, because sorting is expensive and must be done every frame. The amount of slowdown depends on how often the ordering of bullets changes. The sorting algorithm is a [bottom-up implementation of merge sort](https://github.com/Bagoum/suzunoya/blob/master/BagoumLib/Sorting/CombMergeSort.cs) that is extremely fast when the array is approximately sorted. You can find the sorting overhead in the Unity profiler as PlayerLoop > Update.ScriptRunBehaviorUpdate > BehaviorUpdate > ETime.Update > NPC-fired simple bullet collision checking > Z-sort.
+  - Note that this does not allow you to change the sorting order between different pools.
+  - Even if you do not use `SortZ`, you can still use the z-position as a variable in pool controls or the like. The functions to get x,y, and z-position are `x`, `y`, `z` respectively. For example, you may want to scale bullets based on z-position, in which you could use something like `scale(1 - 0.2 * z)`.
   - V2RV2 was not changed to support 3D handling, but may be changed in the future.
 - Errors in script parsing are now more detailed and contain links to relevant files.
 - Improved handling of text input. Replay names and other usages of TextInputNode can now contain capitalized letters (only via Shift, not CapsLock) and non-alphanumeric characters. This does not use `Input.inputString` due to its limitations around holding keys.
 - Added smarter navigation for complex nested UI groups. When the UIGroup does not define navigation, the UI will look for the nearest HTML object in the inputted direction.
 - Added full support for keyboard/mouse and gamepad control rebinding. There is a new tab on the Options menu that allows the player to rebind controls. Note that mouse-left-click is reserved and cannot be rebound. Any control that is stored in the InputConfig class (Plugins/Danmokou/Core/Core/Input/InputConfig.cs) can be rebound by adding it to the Bindings property in that class.
   - This also includes support for multiple connected controllers (XBox/PS4) and changing button prompts based on the most recently used input method. You can look this up as `InputManager.PlayerInput.MainSource.Current.focusHold.Description`-- replace `focusHold` with the relevant input button. See UIScreen.SetControlText as an example.
+- Removed the garbage allocation in the frame timer used when VSync is disabled.
 
 #### Changes
 

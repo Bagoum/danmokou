@@ -303,7 +303,7 @@ public record InstanceRequest {
             () => {
                 var beh = UnityEngine.Object.Instantiate(b.boss).GetComponent<BehaviorEntity>();
                 beh.phaseController.Override(ab.phase.index, InstTracker.Guard(() => WaitThenFinishAndPostReplay()));
-                beh.RunSMFromScript(b.stateMachine, InstTracker);
+                _ = beh.RunBehaviorSM(SMRunner.RunRoot(b.stateMachine, InstTracker));
             }));
     }
 

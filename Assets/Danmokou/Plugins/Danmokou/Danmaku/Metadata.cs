@@ -159,13 +159,28 @@ public readonly struct SMRunner {
     public GenCtx? NewGCX => gcx?.Copy();
 
     public static SMRunner Null => new(null, Cancellable.Null, false, false, null);
+    /// <summary>
+    /// Run the SM and then destroy the executing object.
+    /// </summary>
     public static SMRunner Cull(StateMachine? sm, ICancellee cT, GenCtx? gcx=null) => new(sm, cT, true, false, gcx);
     /// <summary>
-    /// Use over CULL when any nested summons should be bounded by this object's cancellation (ie. bosses).
+    /// Run the SM and then destroy the executing object.
+    /// <br/>Also, any nested summons will be bounded by <see cref="cT"/>.
     /// </summary>
     public static SMRunner CullRoot(StateMachine? sm, ICancellee cT, GenCtx? gcx=null) => new(sm, cT, true, true, gcx);
+    /// <summary>
+    /// Run the SM.
+    /// </summary>
     public static SMRunner Run(StateMachine? sm, ICancellee cT, GenCtx? gcx=null) => new(sm, cT, false, false, gcx);
+    /// <summary>
+    /// Run the SM.
+    /// <br/>Also, any nested summons will be bounded by <see cref="cT"/>.
+    /// </summary>
     public static SMRunner RunRoot(StateMachine? sm, ICancellee cT) => new(sm, cT, false, true, null);
+    /// <summary>
+    /// See <see cref="RunRoot(Danmokou.SM.StateMachine?,BagoumLib.Cancellation.ICancellee)"/>.
+    /// </summary>
+    public static SMRunner RunRoot(TextAsset? sm, ICancellee cT) => RunRoot(StateMachineManager.FromText(sm), cT);
     public SMRunner(StateMachine? sm, ICancellee cT, bool cullOnFinish, bool root, GenCtx? gcx) {
         this.sm = sm;
         this.cT = cT;

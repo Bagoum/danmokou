@@ -142,7 +142,7 @@ public class Tutorial : BehaviorEntity {
 
         var bcs = new Cancellable();
         var boss = GameObject.Instantiate(tutorialBoss).GetComponent<BehaviorEntity>();
-        boss.Initialize(SMRunner.CullRoot(StateMachine.CreateFromDump(bossSM.text), bcs));
+        _ = boss.RunBehaviorSM(SMRunner.CullRoot(StateMachine.CreateFromDump(bossSM.text), bcs));
         IEnumerator phase() {
             while (boss.PhaseShifter == null)
                 yield return null;

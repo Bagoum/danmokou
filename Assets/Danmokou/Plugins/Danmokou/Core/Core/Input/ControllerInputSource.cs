@@ -81,7 +81,7 @@ public class ControllerInputSource : IKeyedInputSource, IPrimaryInputSource {
         focusHold = InputHandler.Hold(Proxy(i.CFocusHold), focus);
         fireHold = InputHandler.Hold(Proxy(i.CShootHold), fire);
         bomb = InputHandler.Trigger(Proxy(i.CSpecial), special);
-        meter = InputHandler.Trigger(Proxy(i.CSpecial), special);
+        meter = InputHandler.Hold(Proxy(i.CSpecial), special);
         swap = InputHandler.Trigger(Proxy(i.CSwap), LocalizedStrings.Controls.swap);
         pause = InputHandler.Trigger(Proxy(i.CPause), LocalizedStrings.Controls.pause);
         vnBacklogPause = InputHandler.Trigger(Proxy(i.CBacklog), backlog);

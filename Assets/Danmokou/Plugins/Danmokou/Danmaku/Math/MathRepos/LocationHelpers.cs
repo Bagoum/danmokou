@@ -105,7 +105,7 @@ public static partial class ExM {
     /// <returns></returns>
     public static TEx<Vector2> LPlayer() => GetEnemyVisiblePlayer.Of();
 
-    public static TEx<Vector2> LBEH(BEHPointer beh) => Ex.Constant(beh).Field("beh").Field("BPI").Field("loc");
+    public static TEx<Vector2> LBEH(BEHPointer beh) => Ex.Constant(beh).Field("beh").Field("BPI").Field("LocV2");
     
     private static readonly ExFunction distToWall =
         ExFunction.Wrap(typeof(LocationHelpers), "DistToWall", typeof(Vector2), typeof(Vector2));

@@ -1,6 +1,7 @@
 ﻿using System;
 using BagoumLib.Cancellation;
 using Danmokou.Core;
+using Danmokou.Danmaku;
 using Danmokou.Scenes;
 using Danmokou.Scriptables;
 using JetBrains.Annotations;
@@ -26,7 +27,7 @@ public class LevelController : BehaviorEntity {
         if (req.method == LevelRunMethod.SINGLE) phaseController.Override(req.toPhase, req.cb);
         else if (req.method == LevelRunMethod.CONTINUE) phaseController.SetGoTo(req.toPhase, req.cb);
         stage = req.stage;
-        RunPatternSM(req.stage.StateMachine, req.cT);
+        _ = RunBehaviorSM(SMRunner.RunRoot(req.stage.StateMachine, req.cT));
     }
 
     protected override void Awake() {

@@ -183,7 +183,7 @@ public struct Movement {
     /// <summary>
     /// Update a BPI according to the velocity description.
     /// Doesn't calculate normalized direction.
-    /// <br/>Assigns <see cref="delta"/>, but if the inner VTP is two-dimensional,
+    /// <br/>Assigns <paramref name="delta"/>, but if the inner VTP is two-dimensional,
     /// it may not assign the z-dimension.
     /// </summary>
     /// <param name="bpi">Parametric info</param>
