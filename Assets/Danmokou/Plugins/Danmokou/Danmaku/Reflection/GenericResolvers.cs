@@ -32,7 +32,7 @@ public static partial class Reflector {
                 properties.Add(q.NextChild().Into<ParsingProperty>());
                 if (!q.IsNewline)
                     throw new Exception(
-                        $"Line {q.GetLastLine()} is missing a newline at the end of the the property declaration. Instead, it found \"{q.Scan()}\".");
+                        $"{q.GetLastPosition()} is missing a newline at the end of the the property declaration. Instead, it found \"{q.Scan()}\".");
             }
             props = new ParsingProperties(properties);
         }
@@ -64,7 +64,7 @@ public static partial class Reflector {
         if (nargs == 0) {
             if (!(q is ParenParseQueue) && !q.Empty) {
                 //Zero-arg functions may absorb empty parentheses
-                if (q._SoftScan(out _)?.Item1 is SMParser.ParsedUnit.Paren p) {
+                if (q._SoftScan(out _) is SMParser.ParsedUnit.Paren p) {
                     if (p.Item.Length == 0) q.NextChild();
                 }
             }
@@ -73,13 +73,13 @@ public static partial class Reflector {
         if (!(q is ParenParseQueue)) {
             var c = q.ScanChild();
             // + (x) 3
-            if (c is ParenParseQueue p && p.paren.Length == 1 && nargs != 1) {
+            if (c is ParenParseQueue p && p.Items.Length == 1 && nargs != 1) {
             } else q = q.NextChild();
         }
 
-        if (q is ParenParseQueue p2 && nargs != p2.paren.Length) {
+        if (q is ParenParseQueue p2 && nargs != p2.Items.Length) {
             throw new ParsingException(p2.WrapThrow($"Expected {nargs} explicit arguments for {sig.FileLink}, " +
-                                                    $"but the parentheses contains {p2.paren.Length}."));
+                                                    $"but the parentheses contains {p2.Items.Length}."));
         }
 
 
@@ -103,7 +103,7 @@ public static partial class Reflector {
                     invoke_args[ii] = _ReflectParam(local, prms[ii]);
                 } catch (Exception ex) {
                     throw new InvokeException(
-                        $"Line {q.GetLastLine(ci)}: Tried to construct {sig.FileLink}, " +
+                        $"{q.GetLastPosition(ci)}: Tried to construct {sig.FileLink}, " +
                         $"but failed to create argument #{ii + 1}/{prms.Length} {prms[ii].SimplifiedDescription}.", ex);
 
                 }
@@ -177,11 +177,11 @@ public static partial class Reflector {
 
     private static void RecurseParens(ref IParseQueue q, Type t) {
         while (q is ParenParseQueue p) {
-            if (p.paren.Length == 1) q = p.NextChild();
+            if (p.Items.Length == 1) q = p.NextChild();
             else
                 throw new Exception(p.WrapThrow(
                     $"Tried to find an object of type {t.RName()}, but there is a parentheses with" +
-                    $" {p.paren.Length} elements. Any parentheses should only have one element."));
+                    $" {p.Items.Length} elements. Any parentheses should only have one element."));
         }
     }
 
@@ -191,7 +191,7 @@ public static partial class Reflector {
     /// The parentheses around g will be detected by this.
     /// </summary>
     private static bool RecurseScan(IParseQueue q, out IParseQueue rec, out string val) {
-        var (pu, pos) = q._Scan(out var ii);
+        var pu = q._Scan(out var ii);
         switch (pu) {
             case SMParser.ParsedUnit.Str s:
                 val = s.Item;
@@ -201,7 +201,7 @@ public static partial class Reflector {
                 if (p.Item.Length != 1)
                     throw new Exception(q.WrapThrow(ii,
                         "This parentheses must have exactly one argument."));
-                rec = new PUListParseQueue(p.Item[0], pos, q.Ctx);
+                rec = new PUListParseQueue(p.Item[0], q.Ctx);
                 val = "";
                 return true;
             default:

@@ -694,7 +694,7 @@ PrefabInstance:
         type: 3}
       propertyPath: behaviorScript
       value: 
-      objectReference: {fileID: 4900000, guid: c0984728d7562ef4eb2be21bc5e53b44, type: 3}
+      objectReference: {fileID: 4900000, guid: 55eb144e102f2a849b905b076fcb5506, type: 3}
     - target: {fileID: 6274564262994426296, guid: 2e4cfe2f6f8095747a49bcb45d5dea46,
         type: 3}
       propertyPath: m_RootOrder
@@ -948,7 +948,7 @@ PrefabInstance:
     - target: {fileID: 3290238121844968752, guid: cd77fcd8b4e4d41489479fb8f6de0a18,
         type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: -3
       objectReference: {fileID: 0}
     - target: {fileID: 3290238121844968752, guid: cd77fcd8b4e4d41489479fb8f6de0a18,
         type: 3}

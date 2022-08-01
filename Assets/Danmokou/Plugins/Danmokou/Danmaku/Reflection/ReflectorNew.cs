@@ -69,6 +69,12 @@ public static partial class Reflector {
             Mi.DeclaringType!.GetCustomAttribute<ReflectAttribute>()?.FileLink(TypeEnclosedName) ??
             TypeEnclosedName;
     }
+
+    /// <summary>
+    /// Within the context of a given return type, use the function name provided in 'member'
+    ///  and the parse queue to construct an AST for that return type.
+    /// </summary>
+    private delegate AST? ConstructAST(IParseQueue q, string member);
     
     /// <summary>
     /// Within the context of a given return type, a function that returns whether or not a function named 'member'
@@ -98,14 +104,15 @@ public static partial class Reflector {
     /// A', B', C' may relate to the introduced type T.
     /// <br/>The keys are of the form type(T->R).
     /// </summary>
-    private static readonly Dictionary<Type, (ContainsMember has, TypeGet get, TryInvoke inv)> funcifiableTypes =
+    private static readonly Dictionary<Type, (ContainsMember has, TypeGet get, TryInvoke inv, ConstructAST makeAst)> funcifiableTypes =
         new();
     private static readonly HashSet<Type> funcifiableReturnTypes = new();
 
     private static void AllowFuncification<ExR>() {
         funcifiableTypes[typeof(Func<TExArgCtx, ExR>)] = (ReflectionData.HasMember<ExR>,
             ReflectionData.FuncifyTypes<TExArgCtx, ExR>,
-            ReflectionData.TryInvokeFunced<TExArgCtx, ExR>);
+            ReflectionData.TryInvokeFunced<TExArgCtx, ExR>,
+            ReflectionData.MakeAST<TExArgCtx, ExR>);
         funcifiableReturnTypes.Add(typeof(ExR));
     }
 

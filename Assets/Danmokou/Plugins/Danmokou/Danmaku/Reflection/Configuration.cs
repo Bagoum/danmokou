@@ -106,12 +106,12 @@ public static partial class Reflector {
             if (addNormal) AddMI(mi.Name, mi);
         }
 
-        public static bool HasMember(Type rt, string member) {
-            ResolveGeneric(rt);
-            return methodsByReturnType.Has2(rt, member);
+        public static bool HasMember(Type returnType, string member) {
+            ResolveGeneric(returnType);
+            return methodsByReturnType.Has2(returnType, member);
         }
 
-        public static bool HasMember<RT>(string member) => HasMember(typeof(RT), member);
+        public static bool HasMember<R>(string member) => HasMember(typeof(R), member);
 
         /// <summary>
         /// </summary>
@@ -160,12 +160,19 @@ public static partial class Reflector {
             return sourceObj;
         }
 
+        public static AST? MakeAST<T, R>(IParseQueue q, string member) {
+            if (!HasMember<R>(member)) return null;
+            if (FuncifyTypes<T, R>(member) is not {} sig) return null;
+            return null;
+        }
+
         /// <summary>
         /// For a recorded function R member(A, B, C...), return the parameter types of the hypothetical function
         /// T->R member', such that those parameters can be meaningfully parsed by reflection code.
         /// <br/>In most cases, this is just [T->A, T->B, T->C], but it depends on rules in TryFuncify.
         /// </summary>
         public static MethodSignature FuncifyTypes<T, R>(string member) => FuncifyTypes(typeof(T), typeof(R), member);
+        
         public static MethodSignature FuncifyTypes(Type t, Type r, string member) {
             if (!funcifyTypesCache.ContainsKey((member, t, r))) {
                 var method = GetArgTypes(r, member);
@@ -178,9 +185,77 @@ public static partial class Reflector {
                 funcifyTypesCache[(member, t, r)] = method with { Params = fTypes };
             }
             return funcifyTypesCache[(member, t, r)];
+            
+        
+            // Where arg is the type of a parameter for a recorded function R member(...ARG, ...),
+            // construct the type of the corresponding parameter for the hypothetical function T->R member', such that
+            // the constructed type can be parsed by reflection code with maximum generality.
+            // In most cases, this is just T->ARG. See comments in the code for more details.
+            // If the type ARG does not need to be changed, return False.
+            static bool TryFuncify(Type t, Type _arg, out Type res) {
+                if (tryFuncifyCache.ContainsKey((t, _arg))) {
+                    //Cached result
+                    res = tryFuncifyCache[(t, _arg)];
+                    return true;
+                }
+                //If the type arg is a "wrapped type" like EEx<float>, then handle the unwrapped type TEx<float>
+                // and add a rewrapping step to the defuncifier.
+                Type wrappedType = _arg;
+                (Type baseType, object? rewrapper) = wrappers.TryGetValue(wrappedType, out var wrapHandler) ?
+                    wrapHandler :
+                    (_arg, null);
+                void AddDefuncifier(Type ft, Func<object, object, object> func) {
+                    funcConversions[(wrappedType, ft)] = rewrapper == null ?
+                        func :
+                        (fobj, x) => FuncInvoke(rewrapper!, Func2Type(baseType, wrappedType), func(fobj, x));
+                }
+                
+                if (funcifiableReturnTypes.Contains(baseType)) {
+                    //Explicitly marked F(B)=T->B.
+                    var ft = res = Func2Type(t, baseType);
+                    AddDefuncifier(ft, (x, bpi) => FuncInvoke(x, ft, bpi));
+                } else if (baseType.IsArray && TryFuncify(t, baseType.GetElementType()!, out var ftele)) {
+                    //Let B=[E]. F(B)=[F(E)].
+                    res = ftele.MakeArrayType();
+                    AddDefuncifier(res, (x, bpi) => {
+                        var oa = x as Array ?? throw new StaticException("Couldn't arrayify");
+                        var fa = Array.CreateInstance(baseType.GetElementType()!, oa.Length);
+                        for (int oi = 0; oi < oa.Length; ++oi) {
+                            fa.SetValue(Defuncify(baseType.GetElementType()!, ftele, oa.GetValue(oi), bpi), oi);
+                        }
+                        return fa;
+                    });
+                } else if (baseType.IsConstructedGenericType && baseType.GetGenericTypeDefinition() == typeof(ValueTuple<,>) &&
+                           baseType.GenericTypeArguments.Any(x => TryFuncify(t, x, out _))) {
+                    //Let B=<C,D>. F(B)=<F(C),F(D)>.
+                    var base_gts = baseType.GenericTypeArguments;
+                    var funced_gts = new Type[base_gts.Length];
+                    for (int ii = 0; ii < funced_gts.Length; ++ii) {
+                        funced_gts[ii] = TryFuncify(t, base_gts[ii], out var gt) ? gt : base_gts[ii];
+                    }
+                    res = typeof(ValueTuple<,>).MakeGenericType(funced_gts);
+                    var tupToArr = typeof(Reflector)
+                                       .GetMethod($"TupleToArr{funced_gts.Length}", BindingFlags.Static | BindingFlags.Public)
+                                       ?.MakeGenericMethod(funced_gts) ??
+                                   throw new StaticException("Couldn't find tuple decomposition method");
+                    AddDefuncifier(res, (x, bpi) => {
+                        var argarr = tupToArr.Invoke(null, new[] {x}) as object[] ??
+                                     throw new StaticException("Couldn't decompose tuple to array");
+                        for (int ii = 0; ii < funced_gts.Length; ++ii)
+                            argarr[ii] = Defuncify(base_gts[ii], funced_gts[ii], argarr[ii], bpi);
+                        return Activator.CreateInstance(baseType, argarr);
+                    });
+                } else {
+                    res = default!;
+                    return false;
+                }
+                tryFuncifyCache[(t, wrappedType)] = res;
+                return true;
+            }
         }
         private static readonly Dictionary<(string method, Type funcIn, Type funcOut), MethodSignature> 
             funcifyTypesCache = new();
+        private static readonly Dictionary<(Type, Type), Type> tryFuncifyCache = new();
         
         /// <summary>
         /// Dictionary mapping unparseable "wrapped" types that may occur in funcified function arguments
@@ -195,85 +270,6 @@ public static partial class Reflector {
                 {typeof(EEx<Vector4>), (typeof(TEx<Vector4>), (Func<TEx<Vector4>, EEx<Vector4>>) (x => x))},
                 {typeof(EEx<V2RV2>), (typeof(TEx<V2RV2>), (Func<TEx<V2RV2>, EEx<V2RV2>>) (x => x))}
             };
-        
-        /// <summary>
-        /// Where arg is the type of a parameter for a recorded function R member(...ARG, ...),
-        /// construct the type of the corresponding parameter for the hypothetical function T->R member', such that
-        /// the constructed type can be parsed by reflection code with maximum generality.
-        /// <br/>In most cases, this is just T->ARG. See comments in the code for more details.
-        /// <br/>If the type ARG does not need to be changed, return False.
-        /// </summary>
-        private static bool TryFuncify(Type t, Type _arg, out Type res) {
-            if (tryFuncifyCache.ContainsKey((t, _arg))) {
-                //Cached result
-                res = tryFuncifyCache[(t, _arg)];
-                return true;
-            }
-            //If the type arg is a "wrapped type" like EEx<float>, then handle the unwrapped type TEx<float>
-            // and add a rewrapping step to the defuncifier.
-            Type wrappedType = _arg;
-            (Type baseType, object? rewrapper) = wrappers.TryGetValue(wrappedType, out var wrapHandler) ?
-                wrapHandler :
-                (_arg, null);
-            void AddDefuncifier(Type ft, Func<object, object, object> func) {
-                funcConversions[(wrappedType, ft)] = rewrapper == null ?
-                    func :
-                    (fobj, x) => FuncInvoke(rewrapper!, Func2Type(baseType, wrappedType), func(fobj, x));
-            }
-            
-            if (funcifiableReturnTypes.Contains(baseType)) {
-                //Explicitly marked F(B)=T->B.
-                var ft = res = Func2Type(t, baseType);
-                AddDefuncifier(ft, (x, bpi) => FuncInvoke(x, ft, bpi));
-            } else if (baseType.IsArray && TryFuncify(t, baseType.GetElementType()!, out var ftele)) {
-                //Let B=[E]. F(B)=[F(E)].
-                res = ftele.MakeArrayType();
-                AddDefuncifier(res, (x, bpi) => {
-                    var oa = x as Array ?? throw new StaticException("Couldn't arrayify");
-                    var fa = Array.CreateInstance(baseType.GetElementType()!, oa.Length);
-                    for (int oi = 0; oi < oa.Length; ++oi) {
-                        fa.SetValue(Defuncify(baseType.GetElementType()!, ftele, oa.GetValue(oi), bpi), oi);
-                    }
-                    return fa;
-                });
-            } else if (baseType.IsConstructedGenericType && baseType.GetGenericTypeDefinition() == typeof(ValueTuple<,>) &&
-                       baseType.GenericTypeArguments.Any(x => TryFuncify(t, x, out _))) {
-                //Let B=<C,D>. F(B)=<F(C),F(D)>.
-                var base_gts = baseType.GenericTypeArguments;
-                var funced_gts = new Type[base_gts.Length];
-                for (int ii = 0; ii < funced_gts.Length; ++ii) {
-                    funced_gts[ii] = TryFuncify(t, base_gts[ii], out var gt) ? gt : base_gts[ii];
-                }
-                res = typeof(ValueTuple<,>).MakeGenericType(funced_gts);
-                var tupToArr = typeof(Reflector)
-                                   .GetMethod($"TupleToArr{funced_gts.Length}", BindingFlags.Static | BindingFlags.Public)
-                                   ?.MakeGenericMethod(funced_gts) ??
-                               throw new StaticException("Couldn't find tuple decomposition method");
-                AddDefuncifier(res, (x, bpi) => {
-                    var argarr = tupToArr.Invoke(null, new[] {x}) as object[] ??
-                                 throw new StaticException("Couldn't decompose tuple to array");
-                    for (int ii = 0; ii < funced_gts.Length; ++ii)
-                        argarr[ii] = Defuncify(base_gts[ii], funced_gts[ii], argarr[ii], bpi);
-                    return Activator.CreateInstance(baseType, argarr);
-                });
-            } else {
-                res = default!;
-                return false;
-            }
-            tryFuncifyCache[(t, wrappedType)] = res;
-            return true;
-        }
-        private static readonly Dictionary<(Type, Type), Type> tryFuncifyCache = new();
-
-
-        /// <summary>
-        /// Return a function x => func(x).
-        /// </summary>
-        /// <param name="func">Function to execute.</param>
-        /// <param name="funcType">Type of func.</param>
-        /// <returns></returns>
-        public static Func<object?, object?> FuncInvoker(object func, Type funcType) =>
-            x => FuncInvoke(func, funcType, x);
 
         /// <summary>
         /// Return func(arg).
@@ -309,7 +305,7 @@ public static partial class Reflector {
                 if (q?.Ctx.props.warnPrefix == true && Attribute.GetCustomAttributes(f).Any(x =>
                     x is WarnOnStrictAttribute wa && (int) q.Ctx.props.strict >= wa.strictness)) {
                     Logs.Log(
-                        $"Line {q.GetLastLine()}: The method \"{member}\" is not permitted for use in a script with strictness {q.Ctx.props.strict}. You might accidentally be using the prefix version of an infix function.",
+                        $"{q.GetLastPosition()}: The method \"{member}\" is not permitted for use in a script with strictness {q.Ctx.props.strict}. You might accidentally be using the prefix version of an infix function.",
                         true, LogLevel.WARNING);
                 }
                 result = (Func<T, R>) (bpi => {

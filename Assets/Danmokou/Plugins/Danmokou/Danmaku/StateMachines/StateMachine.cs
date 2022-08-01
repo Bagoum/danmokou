@@ -265,7 +265,7 @@ public abstract class StateMachine {
                (childType = CheckCreatableChild(myType, q.ScanNonProperty())) != SMConstruction.ILLEGAL) {
             StateMachine newsm = Create(q.NextChild(), childType);
             if (!q.IsNewlineOrEmpty) throw new Exception(
-                $"Line {q.GetLastLine()}: Expected a newline, but found \"{q.Print()}\".");
+                $"{q.GetLastPosition()}: Expected a newline, but found \"{q.Print()}\".");
             children.Add(newsm);
             if (newsm is BreakSM) {
                 break;
@@ -330,7 +330,7 @@ public abstract class StateMachine {
             int special_args_i = (requires_children) ? 1 : 0;
             Reflector.FillInvokeArray(reflect_args, special_args_i, sig, p);
             if (p.Ctx.QueuedProps.Count > 0)
-                throw new Exception($"Line {p.GetLastLine()}: StateMachine {sig.FileLink} is not allowed to have phase properties.");
+                throw new Exception($"{p.GetLastPosition()}: StateMachine {sig.FileLink} is not allowed to have phase properties.");
             int childCt = -1;
             if (!p.IsNewlineOrEmpty) {
                 if (IsChildCountMarker(p.MaybeScan(), out int ct)) {
@@ -364,7 +364,7 @@ public abstract class StateMachine {
             //Note that newlines are skipped in scan
             if (!p.IsNewline) 
                 throw new Exception(
-                    $"Line {p.GetLastLine()} is missing a newline at the end of the the property declaration.");
+                    $"{p.GetLastPosition()} is missing a newline at the end of the the property declaration.");
         }
     }
 

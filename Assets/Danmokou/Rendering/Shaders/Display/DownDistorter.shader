@@ -104,7 +104,7 @@
                 
                 //bgc.a = 1; //This may not be 1 (if the background isn't full opacity),
             	// but if you lighten it, it won't match!
-                return shadow + bgc * (1 - shadow.a) + float4(0.3, 0, 0, 0);
+                return shadow + bgc * (1 - shadow.a);
             #else
                 return shadow;
             #endif

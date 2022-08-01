@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using BagoumLib;
 using Danmokou.Danmaku;
 using Danmokou.DMath;
 using NUnit.Framework;
+using UnityEditor.VersionControl;
 using UnityEngine;
 
 namespace Danmokou.Testing {
@@ -40,12 +42,14 @@ public static class TAssert {
             code();
             Assert.Fail("Expected code to fail");
         } catch (Exception e) {
-            RegexMatches(pattern, e.Message);
+            RegexMatches(pattern, Exceptions.FlattenNestedException(e).Message);
         }
     }
     public static void RegexMatches(string pattern, string message) {
         if (!new Regex(pattern, RegexOptions.Singleline).Match(message).Success) {
             Assert.Fail($"Could not find pattern `{pattern}` in `{message}`");
+        } else {
+            Debug.Log($"Found pattern `{pattern}` in:`\n{message}\n`\n");
         }
     }
     private const float err = 0.0001f;

@@ -44,11 +44,11 @@ public static partial class Reflector {
             q.Advance();
             return WaitForPhaseSM;
         } else {
-            var line = q.GetLastLine();
+            var pos = q.GetLastPosition();
             try {
                 return StateMachine.Create(q);
             } catch (Exception ex) {
-                throw new SMException($"Nested StateMachine construction starting on line {line} failed.", ex);
+                throw new SMException($"{pos}: Nested StateMachine construction failed.", ex);
             }
         }
     }
@@ -113,7 +113,7 @@ public static partial class Reflector {
             var str = p.Next();
             obj = LocalizedStrings.IsLocalizedStringReference(str) ? 
                 LocalizedStrings.TryFindReference(str) ?? 
-                    throw new Exception($"Line {p.GetLastLine()}: Couldn't resolve LocalizedString {str}")
+                    throw new Exception($"{p.GetLastPosition()}: Couldn't resolve LocalizedString {str}")
                 : (LString)str;
         } else if (targetType == type_stylesel) {
             obj = new BulletManager.StyleSelector((ResolveAsArray(typeof(string[]), p) as string[][])!);
@@ -122,7 +122,7 @@ public static partial class Reflector {
             string OpAndMaybeType = p.Next();
             var op = (GCOperator) ForceFuncTypeResolve(OpAndMaybeType, typeof(GCOperator))!;
             var latter = OpAndMaybeType.Split('=').Try(1) ?? throw new ParsingException(
-                $"Line {p.GetLastLine()}: Trying to parse GCRule, but found an invalid operator {OpAndMaybeType}.\n" +
+                $"{p.GetLastPosition()}: Trying to parse GCRule, but found an invalid operator {OpAndMaybeType}.\n" +
                 $"Make sure to put parentheses around the right-hand side of GCRule.");
             var ext = (ExType) ForceFuncTypeResolve(latter.Length > 0 ? latter : p.Next(), typeof(ExType))!;
             if (ext == ExType.Float) obj = new GCRule<float>(ext, rfr, op, p.Into<GCXF<float>>());
