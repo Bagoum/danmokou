@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using BagoumLib;
 using BagoumLib.Culture;
 using BagoumLib.Reflection;
@@ -92,17 +93,16 @@ public static partial class Reflector {
     public static MethodSignature GetConstructorSignature(Type t) {
         if (!constructorSigs.TryGetValue(t, out var args)) {
             var constrs = t.GetConstructors();
-            if (constrs.Length == 0) 
-                throw new StaticException($"Type {t.RName()} has no constructors.");
-            var (c, prms) = (constrs[0], constrs[0].GetParameters());
-            if (prms.Length == 0) {
-                //Try to look for a non-empty constructor, if it exists.
-                for (int ii = 1; ii < constrs.Length; ++ii) {
-                    if (constrs[ii].GetParameters().Length > 0) 
-                        (c, prms) = (constrs[ii], constrs[ii].GetParameters());
+            (ConstructorInfo c, ParameterInfo[] prms)? constr = null;
+            foreach (var c in constrs) {
+                if (c.GetCustomAttribute<DontReflectAttribute>() == null &&
+                    c.GetParameters() is { } prms && (prms.Length > 0 || constr == null)) {
+                    constr = (c, prms);
                 }
             }
-            constructorSigs[t] = args = new(c, null, prms.Select(x => (NamedParam) x).ToArray());
+            if (!constr.Try(out var cp))
+                throw new StaticException($"Type {t.RName()} has no applicable constructors.");
+            constructorSigs[t] = args = new(cp.c, null, cp.prms.Select(x => (NamedParam) x).ToArray());
         }
         return args;
     }

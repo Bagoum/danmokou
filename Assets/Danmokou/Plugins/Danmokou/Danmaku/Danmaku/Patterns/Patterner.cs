@@ -222,7 +222,7 @@ public static partial class AtomicPatterns {
 
     /// <summary>
     /// Fires a simple bullet. Takes an array of simple bullet options as modifiers.
-    /// See BulletManagement/SimpleBulletOptions.cs.
+    /// See <see cref="SBOption"/>
     /// </summary>
     /// <param name="path"></param>
     /// <param name="options"></param>

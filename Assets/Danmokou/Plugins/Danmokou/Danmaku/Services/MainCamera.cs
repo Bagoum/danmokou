@@ -157,13 +157,7 @@ public class MainCamera : RegularUpdater, IScreenshotter {
     public static Vector2 RelativeToScreenUV(Vector2 xy) {
         return new(0.5f + xy.x / ScreenWidth, 0.5f + xy.y / ScreenHeight);
     }
-
-
-    public static void SetPBScreenLoc(MaterialPropertyBlock pb, Vector2 loc) {
-        Vector2 normLoc = RelativeToScreenUV(loc);
-        pb.SetFloat(PropConsts.ScreenX, normLoc.x);
-        pb.SetFloat(PropConsts.ScreenY, normLoc.y);
-    }
+    
 
     private void OnPreRender() {
         mainCam.targetTexture = RenderTo;

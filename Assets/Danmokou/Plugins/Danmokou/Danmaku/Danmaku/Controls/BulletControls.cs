@@ -34,7 +34,10 @@ public partial class BulletManager {
         public static readonly Pred PERSISTENT = _ => true;
         public static readonly Pred NOTPERSISTENT = _ => false;
     }
-    //Expression bullet control
+    /// <summary>
+    /// A description of a bullet control as an expression that has not yet been compiled to an executable lambda.
+    /// Compile this by passing it to the constructor for <see cref="cBulletControl"/>.
+    /// </summary>
     public readonly struct exBulletControl {
         public readonly ExSBCF func;
         public readonly int priority;
@@ -43,26 +46,27 @@ public partial class BulletManager {
             priority = p;
         }
     }
-    //Compiled bullet control
+    /// <summary>
+    /// A description of a bullet control that could be executed on a simple bullet pool.
+    /// Execute it by calling <see cref="ControlPool(Pred, StyleSelector, cBulletControl, ICancellee)"/>.
+    /// </summary>
     public readonly struct cBulletControl {
         public readonly SBCF func;
         public readonly int priority;
         
         public cBulletControl(exBulletControl ex) : this(Compilers.SBCF(ex.func), ex.priority) { }
         
-        //Don't expose this constructor. It's a problem if it gets picked up by reflection.
-        private cBulletControl(SBCF func, int priority) {
+        [DontReflect]
+        public cBulletControl(SBCF func, int priority) {
             this.func = func;
             this.priority = priority;
         }
-
-        public static cBulletControl NoExpr(SBCF func, int priority) => new(func, priority);
 
         //public static implicit operator cBulletControl(exBulletControl ex) => new cBulletControl(ex);
     }
     
     /// <summary>
-    /// Simple bullet pool control descriptor.
+    /// Descriptor for a bullet control currently acting over simple bullets, bounded by cancellation.
     /// </summary>
     public readonly struct BulletControl {
         public readonly SBCF action;
@@ -340,7 +344,7 @@ public partial class BulletManager {
 
         /// <summary>
         /// Copy (nondestructively) a bullet into another pool, with no movement.
-        /// <br/>If the style is null or empty, then will instead spawn a cull bullet.
+        /// <br/>If the style is null or empty, then will instead spawn a <see cref="CulledBulletCollection"/> bullet.
         /// </summary>
         /// <param name="style">Copied style</param>
         /// <param name="cond">Filter condition</param>
@@ -358,9 +362,9 @@ public partial class BulletManager {
 
         /// <summary>
         /// Change the bullets into a softcull-type bullet rather than destroying them directly.
-        /// Also leaves behind an afterimage of the bullet as it gets deleted in a CulledPool.
+        /// Also leaves behind an afterimage of the bullet as it gets deleted in a <see cref="CulledBulletCollection"/>.
         /// </summary>
-        /// <param name="target">New style. Can be null or _ to skip the copying and only do the afterimage.</param>
+        /// <param name="target">New style. Can be null or _ to skip the copying and only do the culled afterimage.</param>
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
         public static exBulletControl Softcull(string? target, ExPred cond) {
@@ -384,7 +388,7 @@ public partial class BulletManager {
             if (toPool != null && toPool.MetaType != SimpleBulletCollection.CollectionType.Softcull) {
                 throw new InvalidOperationException("Cannot softcull to a non-softcull pool: " + target);
             }
-            return cBulletControl.NoExpr((sbc, ii, bpi, ct) => {
+            return new((sbc, ii, bpi, ct) => {
                 if (cond(bpi)) {
                     sbc.Softcull(NullableGetMaybeCopyPool(target), ii, props);
                 }
@@ -647,21 +651,6 @@ public partial class BulletManager {
                 }, 
                 priority);
         }
-        
-        
-        /// <summary>
-        /// Batch several controls together under a single condition.
-        /// <br/>This is slightly slower but is compatible with non-expression controls.
-        /// </summary>
-        private static cBulletControl Batch_noexpr(Pred cond, cBulletControl[] over) {
-            Logs.Log("Batch_noexpr should not be used in most cases.", level: LogLevel.WARNING);
-            var priority = over.Max(o => o.priority);
-            return cBulletControl.NoExpr((sbc, ii, bpi, ct) => {
-                if (cond(bpi)) {
-                    for (int j = 0; j < over.Length; ++j) over[j].func(sbc, ii, bpi, ct);
-                }
-            }, priority);
-        }
 
         /// <summary>
         /// If the condition is true, spawn an iNode at the position and run an SM on it.
@@ -690,10 +679,13 @@ public partial class BulletManager {
         }, BulletControl.P_ON_COLLIDE);
 
     }
-    //Since sb controls are cleared immediately after velocity update,
-    //it does not matter when in the frame they are added.
+    /// <summary>
+    /// Execute a bullet control on a simple bullet pool.
+    /// </summary>
     public static void ControlPool(Pred persist, StyleSelector styles, cBulletControl control, ICancellee cT) {
         BulletControl pc = new BulletControl(control, persist, cT);
+        //Since sb controls are cleared immediately after velocity update,
+        //it does not matter when in the frame they are added.
         for (int ii = 0; ii < styles.Simple.Length; ++ii) {
             GetMaybeCopyPool(styles.Simple[ii]).AddBulletControl(pc);
         }
@@ -781,6 +773,9 @@ public partial class BulletManager {
             GetMaybeCopyPool(pool).BC.UseZCompare.AddConst(true);
     }
     
+    /// <summary>
+    /// Execute a pool control on a simple bullet pool.
+    /// </summary>
     public static IDisposable ControlPool(StyleSelector styles, SPCF control, ICancellee cT) {
         var tokens = new IDisposable[styles.Simple.Length];
         for (int ii = 0; ii < styles.Simple.Length; ++ii) {

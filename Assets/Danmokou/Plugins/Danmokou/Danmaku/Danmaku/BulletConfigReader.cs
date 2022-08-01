@@ -564,6 +564,11 @@ public partial class BulletManager : RegularUpdater {
         Camera.onPreCull += RenderBullets;
     }
 
+    public override void FirstFrame() {
+        SetupRendering();
+        base.FirstFrame();
+    }
+
     /// <summary>
     /// NPC simple bullets only.
     /// </summary>

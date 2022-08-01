@@ -98,6 +98,9 @@ float2 rectToPolar(float2 rect) {
 float2 polarToRect(float2 rt) {
     return float2(rt.x * cos(rt.y), rt.x * sin(rt.y));
 }
+float2 polarToRect2(float r, float t) {
+    return float2(r * cos(t), r * sin(t));
+}
 //-pi to pi
 float2 uvToPolar(float2 uv) {
     uv -= float2(0.5, 0.5);

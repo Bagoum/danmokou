@@ -276,7 +276,6 @@ public class Enemy : RegularUpdater {
         }
         if (distorter != null) {
             distortPB.SetFloat(PropConsts.time, Beh.rBPI.t);
-            MainCamera.SetPBScreenLoc(distortPB, Beh.GlobalPosition());
             distorter.SetPropertyBlock(distortPB);
         }
         if (cardCircle != null) {

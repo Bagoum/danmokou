@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Threading.Tasks;
 using System;
+using System.Collections.Concurrent;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
@@ -119,8 +120,9 @@ public class ETime : MonoBehaviour {
     public static bool LastUpdateForScreen { get; private set; }
     private static readonly DMCompactingArray<IRegularUpdater> updaters = new DMCompactingArray<IRegularUpdater>();
     private static readonly Queue<(Action, EngineState)> eofInvokes = new Queue<(Action, EngineState)>();
-    private static readonly List<(Action, EngineState)> persistentEofInvokes = new List<(Action, EngineState)>();
-    private static readonly List<(Action, EngineState)> persistentSofInvokes = new List<(Action, EngineState)>();
+    private static readonly DMCompactingArray<(Action cb, EngineState state)> persistentEofInvokes = new();
+    private static readonly DMCompactingArray<(Action cb, EngineState state)> persistentSofInvokes = new();
+    private static readonly DMCompactingArray<(Action cb, EngineState state)> persistentUnitySofInvokes = new();
 
     private void Awake() {
         TransitionHelpers.DefaultDeltaTimeProvider = () => FRAME_TIME;
@@ -199,7 +201,15 @@ public class ETime : MonoBehaviour {
         countdown.Wait();*/
 
         RNG.RNG_ALLOWED = false;
+        /*Profiler.BeginSample("Partitioner");
+        var p = Partitioner.Create(0, updaters.Count);
+        Profiler.EndSample();*/
         Profiler.BeginSample("Parallel update");
+        /*Parallel.ForEach(p, range => {
+            for (int ii = range.Item1; ii < range.Item2; ++ii)
+                if (updaters.GetIfExistsAt(ii, out var u) && u.UpdateDuring >= EngineStateManager.State)
+                    u.RegularUpdateParallel();
+        });*/
         Parallel.For(0, updaters.Count, ii => {
             if (updaters.GetIfExistsAt(ii, out var u) && u.UpdateDuring >= EngineStateManager.State)
                 u.RegularUpdateParallel();
@@ -211,6 +221,7 @@ public class ETime : MonoBehaviour {
     private void Update() {
         try {
             FirstUpdateForScreen = true;
+            UnityStartOfFrameInvokes(EngineStateManager.State);
             for (; UntilNextFrame + EngineStepTime > FRAME_BOUNDARY;) {
                 //If the unity frame is skipped, then don't destroy trigger-based controls.
                 //If this toggle is moved out of the loop, then it is possible for trigger-based controls
@@ -274,20 +285,25 @@ public class ETime : MonoBehaviour {
 
     private const float FRAME_BOUNDARY = FRAME_TIME - FRAME_YIELD;
 
+    private static void UnityStartOfFrameInvokes(EngineState state) {
+        for (int ii = 0; ii < persistentUnitySofInvokes.Count; ++ii)
+            if (persistentUnitySofInvokes.GetIfExistsAt(ii, out var x) && x.state >= state)
+                x.cb();
+        persistentSofInvokes.Compact();
+    }
     private static void StartOfFrameInvokes(EngineState state) {
-        for (int ii = 0; ii < persistentSofInvokes.Count; ++ii) {
-            var (act, st) = persistentSofInvokes[ii];
-            if (st >= state)
-                act();
-        }
+        for (int ii = 0; ii < persistentSofInvokes.Count; ++ii)
+            if (persistentSofInvokes.GetIfExistsAt(ii, out var x) && x.state >= state)
+                x.cb();
+        persistentSofInvokes.Compact();
     }
 
     private static void EndOfFrameInvokes(EngineState state) {
-        for (int ii = 0; ii < persistentEofInvokes.Count; ++ii) {
-            var (act, st) = persistentEofInvokes[ii];
-            if (st >= state)
-                act();
-        }
+        for (int ii = 0; ii < persistentEofInvokes.Count; ++ii) 
+            if (persistentEofInvokes.GetIfExistsAt(ii, out var x) && x.state >= state)
+                x.cb();
+        persistentEofInvokes.Compact();
+        
         var neofInv = eofInvokes.Count;
         for (int ii = 0; ii < neofInv; ++ii) {
             var (act, st) = eofInvokes.Dequeue();
@@ -298,9 +314,11 @@ public class ETime : MonoBehaviour {
         }
     }
 
-    public static void RegisterPersistentSOFInvoke(Action act, EngineState state = EngineState.RUN) => 
+    public static IDisposable RegisterPersistentUnitySOFInvoke(Action act, EngineState state = EngineState.RUN) => 
+        persistentUnitySofInvokes.Add((act, state));
+    public static IDisposable RegisterPersistentSOFInvoke(Action act, EngineState state = EngineState.RUN) => 
         persistentSofInvokes.Add((act, state));
-    public static void RegisterPersistentEOFInvoke(Action act, EngineState state = EngineState.RUN) => 
+    public static IDisposable RegisterPersistentEOFInvoke(Action act, EngineState state = EngineState.RUN) => 
         persistentEofInvokes.Add((act, state));
     public static void QueueEOFInvoke(Action act, EngineState state = EngineState.RUN) => eofInvokes.Enqueue((act, state));
 

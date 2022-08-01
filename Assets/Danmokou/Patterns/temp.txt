@@ -13,11 +13,31 @@ phase(0)
 $%f(%x)
 !}
 
-<!> type non depthsort
+<!> type non nest
 <!> hp 1000
+<!> root 2 1
 phase 0
 	paction 0
-		position 0 ($app1($hello(1, !$), 1))
+		gtr {
+			times 3
+			wait-child
+			bindItr loop
+		} {
+			paction 1
+				movetarget 2 out-sine px(pm1(&loop) * 3)
+		}
+
+<!> type non depthsort
+<!> hp 1000
+<!> root 2 1
+phase 0
+	paction 0
+		async *-green/w <> gcr2 200 _ <> {
+		} gsr2c 30 {
+		} gsr2 3 <> {
+			color { ellipse circle amulet }
+		} s rvelocity px 2
+///
 		async scircle-red/w <0.5;:> gcr2 60 _ <5> {
 			} gsr2c 15 {
 			} s rvelocity px lerp(0, 2, t, 0, redd)

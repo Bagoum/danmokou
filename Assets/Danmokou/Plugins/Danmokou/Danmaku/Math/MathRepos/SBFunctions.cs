@@ -64,7 +64,8 @@ public class TExSB : TEx<SimpleBullet> {
     public readonly TEx<float> scale;
     public readonly TExV2 direction;
     public readonly TExMov velocity;
-    public TExV2 accDelta => new(Ex.Field(ex, "accDelta"));
+    public TExV2 accDeltaV3 => new(Ex.Field(ex, "accDelta"));
+    public TExV2 accDelta => new(Ex.Property(ex, "AccDeltaV2"));
 
     public TExSB(Expression ex) : base(ex) {
         bpi = TExPI.Box(Ex.Field(ex, "bpi"));
@@ -155,5 +156,10 @@ public static class SBV2Repo {
     /// Return the delta movement of the bullet this frame.
     /// </summary>
     public static ExTP AccDelta() => sb => sb.SB.accDelta;
+    
+    /// <summary>
+    /// Return the delta movement of the bullet this frame, including the Z-axis.
+    /// </summary>
+    public static ExTP AccDeltaV3() => sb => sb.SB.accDeltaV3;
 }
 }

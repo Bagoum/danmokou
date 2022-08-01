@@ -3,15 +3,15 @@ phase 0
 	paction 0
 		shift-phase-to 1
 	
-!!{ me yukari
+!!{ me mima
 	
 phase 0
     paction 0
-        position 0 0
+        position -2 0
         bullet-control PERSIST ellipse-blue/w FORCE relrect $me <1;:3;2:0>
 		##With nrvelocity, $me fires heart-shaped (!) blocks that hit a wall and then leak backwards or go forwards slowly.
 		##With rvelocity, $me fires bullets very quickly in a circle, and they slow down in such a way that you can see a rectangle, slightly offset to the right, around $me which is the speed zone.
-			rvelocity pxy
+			nrvelocity pxy
 				* 4 - 2 diff y [Lbeh $me].y
 				0
 		async ellipse-blue/w <> gcr2 20 _ <;:6h> {

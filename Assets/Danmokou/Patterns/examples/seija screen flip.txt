@@ -9,13 +9,12 @@ phase 0
 <!> photo 4
 <!> root 1 2
 phase 60
-	paction 1
+	paction 0
 		async fireball-red/w <> gcr2 20 _ <> {
 		} gsr2 9 <10> {
 			center
 		} s tprot cx 4
-		_ 1 seijay -180 5
-		draiko 1 10
+		seijay -50 5
 		sync _ <> valueitem
 		sync _ <1;:> smallvalueitem
 		

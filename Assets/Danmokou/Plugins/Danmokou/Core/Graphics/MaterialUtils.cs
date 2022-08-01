@@ -2,10 +2,14 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 using Danmokou.Core;
 using Danmokou.Graphics;
+using Unity.Collections;
 using UnityEngine;
 using UnityEngine.Rendering;
+using InternalSetNativeData = System.Action<UnityEngine.ComputeBuffer, System.IntPtr, int, int, int, int>;
 
 namespace Danmokou.Graphics {
 public static class MaterialUtils {
@@ -39,5 +43,26 @@ public static class MaterialUtils {
         pb.SetFloat(PropConsts.blendOp, (int) op);
     }
 
+    public static void SetBufferFromArray(this MaterialPropertyBlock pb, int id, ComputeBufferPool cbp, Array data, int ct) {
+        var cb = cbp.Rent();
+        cb.SetData(data, 0, 0, ct);
+        pb.SetBuffer(id, cb);
+    }
+    
+    private static readonly InternalSetNativeData SetNativeData = (InternalSetNativeData)
+        Delegate.CreateDelegate(typeof(InternalSetNativeData),
+            typeof(ComputeBuffer).GetMethod("InternalSetNativeData",
+                BindingFlags.NonPublic | BindingFlags.Instance)!);
+    
+    public static void SetBufferFromNativeArray(this MaterialPropertyBlock pb, int id, ComputeBufferPool cbp, IntPtr data, int ct, int stride) {
+        var cb = cbp.Rent();
+        SetNativeData(cb, data, 0, 0, ct, stride);
+        pb.SetBuffer(id, cb);
+    }
+    public static void SetBufferFromNativeArray<T>(this MaterialPropertyBlock pb, int id, ComputeBufferPool cbp, NativeArray<T> data, int ct) where T : struct {
+        var cb = cbp.Rent();
+        cb.SetData(data, 0, 0, ct);
+        pb.SetBuffer(id, cb);
+    }
 }
 }

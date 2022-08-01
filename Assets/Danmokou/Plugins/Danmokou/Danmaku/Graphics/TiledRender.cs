@@ -60,9 +60,9 @@ public abstract class TiledRender {
     protected struct VertexData {
         public Vector3 loc;
         public Vector2 uv;
+        
+        public static readonly int Size = UnsafeUtility.SizeOf<VertexData>();
     }
-
-    private static readonly int VertexDataSize = UnsafeUtility.SizeOf<VertexData>();
 
     protected NativeArray<VertexData> verts;
     protected unsafe VertexData* vertsPtr = (VertexData*) 0x0;
@@ -135,7 +135,7 @@ public abstract class TiledRender {
     }
 
     private void ReassignMeshVerts() {
-        if (HandleAsMesh) SetVertexBufferData(mesh, 0, roVertsPtr, 0, 0, numVerts, VertexDataSize, noValidation);
+        if (HandleAsMesh) SetVertexBufferData(mesh, 0, roVertsPtr, 0, 0, numVerts, VertexData.Size, noValidation);
         //mesh.SetVertexBufferData(verts, 0, 0, numVerts, 0, noValidation);
 
         //Don't recalculate mesh bounds-- just set them to max from the start. Based on testing,
@@ -159,7 +159,7 @@ public abstract class TiledRender {
         if (ETime.LastUpdateForScreen) {
             if (!isStatic && HandleAsMesh) {
                 //Inlined from ReassignMeshVerts
-                SetVertexBufferData(mesh, 0, roVertsPtr, 0, 0, numVerts, VertexDataSize, noValidation);
+                SetVertexBufferData(mesh, 0, roVertsPtr, 0, 0, numVerts, VertexData.Size, noValidation);
             }
             if (lifetime < DontUpdateTimeAfter) {
                 pb.SetFloat(PropConsts.time, lifetime);

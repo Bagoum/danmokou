@@ -12,8 +12,9 @@ using Random = System.Random;
 namespace Danmokou.DMath {
 /// <summary>
 /// Centralized class for access to randomness.
-/// Provides functions for deterministic randomness, as well as "offFrame" functions that
-/// should be used for non-gameplay-related randomness (camera shake, particle effects, etc).  
+/// Provides functions for deterministic randomness, as well as non-reproducible
+/// "offFrame" functions that should be used for non-gameplay-related randomness
+/// (camera shake, particle effects, etc).  
 /// </summary>
 public static class RNG {
     private static Random rand = new Random();

@@ -46,13 +46,14 @@
 
             struct fragment {
                 float4 loc   : SV_POSITION;
-                float2 uv	 : TEXCOORD0;
+            	//same as v.loc. For a 6u square, this would range from <-3,-3> to <3,3>
+                float4 model_loc : POSITION1;
             };
             
             fragment vert(vertex v) {
                 fragment f;
                 f.loc = UnityObjectToClipPos(v.loc);
-                f.uv = v.uv;
+            	f.model_loc = v.loc;
                 return f;
             }
 
@@ -70,51 +71,40 @@
             // May need to be moved into a parameter for support with other configurations.
             static const float OBJECT_SIZE = 6;
             
-            float _ScreenWidth;
-            float _ScreenHeight;//global
-            float _GlobalXOffset;//global
-            
             float _T;
             float _BX;
             float _BY;
             float _Speed;
             float _MagnitudeAngle;
             float _MagnitudeRadius;
-            float _ScreenX;
-            float _ScreenY;
             
             sampler2D _BGTex;
             float4 _BGTex_TexelSize;
 
             float4 frag(fragment f) : SV_Target {
-	            f.uv -= float2(0.5,0.5);
-	            float ang = atan2(f.uv.y, f.uv.x) / TAU; // -1/2 (@-180) to 1/2 (@180)
-            	float r = length(f.uv);
-	            float rs = r * OBJECT_SIZE;
-	            float4 shadow = _Shadow * (1 - smoothstep(_SRI, _SR, rs));
+            	float2 rt = rectToPolar(f.model_loc.xy);
+	            float4 shadow = _Shadow * (1 - smoothstep(_SRI, _SR, rt.x));
             
-            #if defined(FANCY) && !SHADOW_ONLY
-                float3 srt = float3(r / ISQR2 * _BX, ang * _BY, _T * _Speed);
+            #if defined(FANCY) && !defined(SHADOW_ONLY)
+                float3 srt = float3(rt.x / (OBJECT_SIZE*ISQR2) * _BX,
+                					rt.y * _BY / TAU, _T * _Speed);
                 float noise = perlin3Dm(srt, float3(_BX, _BY, 10));
                 float noise2 = perlin3Dm(srt, float3(_BX, _BY, 10 / PHI));
                
-                noise *= 1 - smoothstep(_RI, _R, rs);
-                noise2 *= 1 - smoothstep(_RI, _R, rs);
+                noise *= 1 - smoothstep(_RI, _R, rt.x);
+                noise2 *= 1 - smoothstep(_RI, _R, rt.x);
                 
-                float effang = ang + noise * _MagnitudeAngle;
-                float effr = rs + noise2 * _MagnitudeRadius;
+                rt.y += noise * _MagnitudeAngle * TAU;
+                rt.x += noise2 * _MagnitudeRadius;
+            	float2 effPos = polarToRect(rt);
+
+				float2 loc = ComputeGrabScreenPos(UnityObjectToClipPos(
+					float4(effPos.x, effPos.y, 0, 1)));
+            	float4 bgc = tex2D(_BGTex, loc.xy);
                 
-                float y = _ScreenY + effr * sin(effang*TAU) /_ScreenHeight;
-                
-                //for some reason, when rendering via Aya, this needs to be removed
-                //#if defined(UNITY_UV_STARTS_AT_TOP) && !defined(AYA_CAPTURE)
-                //y = 1 - y;
-                //#endif
-                
-                float4 bgc = tex2D(_BGTex, float2(_ScreenX + _GlobalXOffset / _ScreenWidth + effr * cos(effang*TAU) /_ScreenWidth, y));
                 //bgc.a = 1; //This may not be 1 (if the background isn't full opacity),
             	// but if you lighten it, it won't match!
-                return shadow + bgc * (1 - shadow.a);
+                return shadow + bgc * (1 - shadow.a) + float4(0.3, 0, 0, 0);
             #else
                 return shadow;
             #endif

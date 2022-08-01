@@ -329,6 +329,7 @@ public static class M {
     /// HLSL smoothstep. Return a smoothed value of Ratio.
     /// WARNING: <see cref="Mathf.SmoothStep"/> returns something different.
     /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static float Smoothstep(float low, float high, float t) {
         var t1 = M.Clamp(0, 1, (t - low) / (high - low));
         return t1 * t1 * (3 - 2 * t1);
