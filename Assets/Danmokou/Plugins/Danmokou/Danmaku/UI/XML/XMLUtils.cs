@@ -133,8 +133,8 @@ public static partial class XMLUtils {
                         return new UINode(phase.Title) {
                             Prefab = spellPracticeNodeV,
                             OnBuilt = n => {
-                                var (cs, ct) = cmpSpellHist.GetOrDefault(key);
-                                var (ps, pt) = prcSpellHist.GetOrDefault(key);
+                                var (cs, ct) = cmpSpellHist.GetOrDefault(key) ?? (0, 0);
+                                var (ps, pt) = prcSpellHist.GetOrDefault(key) ?? (0, 0);
                                 n.NodeHTML.Q<Label>("CampaignHistory").text = $"{cs}/{ct}";
                                 n.NodeHTML.Q<Label>("PracticeHistory").text = $"{ps}/{pt}";
                             },

@@ -18,7 +18,9 @@ using Danmokou.Expressions;
 using Danmokou.Reflection;
 using Danmokou.Scriptables;
 using Danmokou.SM.Parsing;
+using Mizuhashi;
 using UnityEngine;
+using UnityEngine.Profiling;
 using static BagoumLib.Tasks.WaitingUtils;
 
 namespace Danmokou.SM {
@@ -239,10 +241,10 @@ public abstract class StateMachine {
     private static SMConstruction CheckCreatableChild(Type? myType, string cname) {
         if (!smInitMap.TryGetValue(cname, out var childType)) {
             if (CheckCreatableChild(myType, typeof(ReflectableSLSM)) &&
-                Reflector.TryGetSignature<TTaskPattern>(ref cname) != null)
+                Reflector.TryGetSignature<TTaskPattern>(cname) != null)
                 return SMConstruction.AS_TREFLECTABLE;
             if (CheckCreatableChild(myType, typeof(ReflectableLASM)) &&
-                Reflector.TryGetSignature<TaskPattern>(ref cname) != null)
+                Reflector.TryGetSignature<TaskPattern>(cname) != null)
                 return SMConstruction.AS_REFLECTABLE;
             return SMConstruction.ILLEGAL;
         } else {
@@ -258,6 +260,7 @@ public abstract class StateMachine {
             return SMConstruction.ILLEGAL;
         }
     }
+    /*
     private static List<StateMachine> CreateChildren(Type? myType, IParseQueue q, int childCt = -1) {
         var children = new List<StateMachine>();
         SMConstruction childType;
@@ -272,31 +275,47 @@ public abstract class StateMachine {
             }
         }
         return children;
+    }*/
+    
+    private static AST ASTCreateChildren(Type? myType, IParseQueue q, int childCt = -1) {
+        var children = new List<IAST<StateMachine>>();
+        SMConstruction childType;
+        while (childCt-- != 0 && !q.Empty && 
+               (childType = CheckCreatableChild(myType, q.ScanNonProperty())) != SMConstruction.ILLEGAL) {
+            var newsm = Create(q.NextChild(), childType);
+            if (!q.IsNewlineOrEmpty) throw new Exception(
+                $"{q.GetLastPosition()}: Expected a newline, but found \"{q.Print()}\".");
+            children.Add(newsm);
+            if (newsm is AST.MethodInvoke miAst && miAst.Method.ReturnType == typeof(BreakSM)) {
+                break;
+            }
+        }
+        return new AST.SequenceList<StateMachine>(q.GetLastPosition(), children);
     }
 
     private static readonly Type statesTyp = typeof(List<StateMachine>);
     private static readonly Type stateTyp = typeof(StateMachine);
     private static readonly Dictionary<Type, Type[]> constructorSigs = new();
 
-    public static StateMachine Create(IParseQueue p) => Create(p, SMConstruction.ANY);
-
-    public static StateMachine Create(string name, object[] args) {
+    public static IAST<StateMachine> Create(IParseQueue p) => Create(p, SMConstruction.ANY);
+    public static IAST<StateMachine> Create(string name, object?[] args) {
         var method = SMConstruction.ANY;
-        GetSignature(ref name, ref method, out Type? myType);
-        return Create(name, method, myType, args);
+        var sig = GetSignature(ref name, ref method, out _);
+        return Create(default, method, sig, 
+            args.Select(x => (IAST)new AST.Preconstructed<object?>(default, x)).ToArray());
     }
 
     private static Reflector.MethodSignature GetSignature(ref string name, ref SMConstruction method, out Type? myType) {
         if (!smInitMap.TryGetValue(name, out myType)) {
             Reflector.MethodSignature? prms;
             if (method == SMConstruction.AS_TREFLECTABLE || method == SMConstruction.ANY) {
-                if ((prms = Reflector.TryGetSignature<TTaskPattern>(ref name)) != null) {
+                if ((prms = Reflector.TryGetSignature<TTaskPattern>(name)) != null) {
                     method = SMConstruction.AS_TREFLECTABLE;
                     return prms;
                 }
             }
             if (method == SMConstruction.AS_REFLECTABLE || method == SMConstruction.ANY) {
-                if ((prms = Reflector.TryGetSignature<TaskPattern>(ref name)) != null) {
+                if ((prms = Reflector.TryGetSignature<TaskPattern>(name)) != null) {
                     method = SMConstruction.AS_REFLECTABLE;
                     return prms;
                 }
@@ -306,17 +325,20 @@ public abstract class StateMachine {
         throw new Exception($"{name} is not a StateMachine or applicable auto-reflectable.");
     }
 
-    private static StateMachine Create(string name, SMConstruction method, Type? myType, object[] args) =>
-        method switch {
-            SMConstruction.AS_REFLECTABLE => 
-                new ReflectableLASM(Reflector.InvokeMethod<TaskPattern>(null, name, args)),
-            SMConstruction.AS_TREFLECTABLE => 
-            new ReflectableSLSM(Reflector.InvokeMethod<TTaskPattern>(null, name, args)),
-            _ => 
-                (StateMachine) Activator.CreateInstance(myType!, args)
-        };
     
-    private static StateMachine Create(IParseQueue p, SMConstruction method) {
+    private static IAST<StateMachine> Create(PositionRange p, SMConstruction method, Reflector.MethodSignature sig, IAST[] args) => method switch {
+            SMConstruction.AS_REFLECTABLE =>
+            new ASTFmap<TaskPattern, StateMachine>(x => new ReflectableLASM(x),
+                new AST.MethodInvoke<TaskPattern>(p, sig, args) 
+                    {Type = AST.MethodInvoke.InvokeType.SM}),
+            SMConstruction.AS_TREFLECTABLE =>
+            new ASTFmap<TTaskPattern, StateMachine>(x => new ReflectableSLSM(x),
+                new AST.MethodInvoke<TTaskPattern>(p, sig, args) 
+                    {Type = AST.MethodInvoke.InvokeType.SM}),
+            _ => new AST.MethodInvoke<StateMachine>(p, sig, args) 
+                {Type = AST.MethodInvoke.InvokeType.SM},
+        };
+    private static IAST<StateMachine> Create(IParseQueue p, SMConstruction method) {
         if (method == SMConstruction.ILLEGAL)
             throw new Exception("Somehow received a Create(ILLEGAL) call in SM. This should not occur.");
         MaybeQueueProperties(p);
@@ -324,11 +346,11 @@ public abstract class StateMachine {
         var sig = GetSignature(ref name, ref method, out var myType);
         var prms = sig.Params;
                    
-        object[] reflect_args = new object[prms.Length];
+        var args = new IAST[prms.Length];
         if (prms.Length > 0) {
-            bool requires_children = prms[0].type == statesTyp && !p.Ctx.props.trueArgumentOrder;
+            bool requires_children = prms[0].Type == statesTyp && !p.Ctx.props.trueArgumentOrder;
             int special_args_i = (requires_children) ? 1 : 0;
-            Reflector.FillInvokeArray(reflect_args, special_args_i, sig, p);
+            Reflector.FillASTArray(args, special_args_i, sig, p);
             if (p.Ctx.QueuedProps.Count > 0)
                 throw new Exception($"{p.GetLastPosition()}: StateMachine {sig.FileLink} is not allowed to have phase properties.");
             int childCt = -1;
@@ -338,12 +360,11 @@ public abstract class StateMachine {
                     childCt = ct;
                 } 
             }
-            if (requires_children) reflect_args[0] = CreateChildren(myType, p, childCt);
+            if (requires_children) args[0] = ASTCreateChildren(myType, p, childCt);
         }
-        return Create(name, method, myType, reflect_args);
+        return Create(p.GetLastPosition(), method, sig, args);
     }
-
-
+    
     private static bool IsChildCountMarker(string? s, out int ct) {
         if (s != null && s[0] == ':') {
             if (Parser.TryFloat(s, 1, s.Length, out float f)) {
@@ -371,8 +392,16 @@ public abstract class StateMachine {
     public static StateMachine CreateFromDump(string dump) {
         using var _ = BakeCodeGenerator.OpenContext(BakeCodeGenerator.CookingContext.KeyType.SM, dump);
         var p = IParseQueue.Lex(dump);
-        var result = Create(p);
+        Profiler.BeginSample("SM AST construction");
+        var ast = Create(p);
+        Profiler.EndSample();
+        ast.WarnUsage(p.Ctx);
+        //TODO temp
+        Logs.Log(ast.DebugPrintStringify());
         p.ThrowOnLeftovers(() => "Behavior script has extra text. Check the highlighted text for an illegal command.");
+        Profiler.BeginSample("SM AST realization");
+        var result = ast.Evaluate();
+        Profiler.EndSample();
         return result;
     }
 

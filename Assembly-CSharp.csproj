@@ -398,6 +398,7 @@
      <None Include="Assets\Danmokou\Patterns\PlayerFire\Mima Wide 34.txt" />
      <None Include="Assets\Danmokou\Patterns\PlayerFire\TEST Position Tracking 1234.txt" />
      <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Mobile.shader" />
+     <None Include="Assets\Danmokou\Patterns\error testing.txt" />
      <None Include="Assets\Danmokou\Rendering\Shaders\Viewfinder.shader" />
      <None Include="Assets\SiMP\Dialogue\simp.dialogue.2.1.txt" />
      <None Include="Assets\Danmokou\UXML\structures\Markdown\MkLine.uxml" />

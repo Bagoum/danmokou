@@ -12,6 +12,7 @@ using Danmokou.Expressions;
 using Danmokou.SM;
 using Danmokou.SM.Parsing;
 using JetBrains.Annotations;
+using UnityEngine.Profiling;
 
 namespace Danmokou.Reflection {
 public static partial class Reflector {
@@ -36,6 +37,12 @@ public static partial class Reflector {
             }
             props = new ParsingProperties(properties);
         }
+
+        public ReflCtx() {
+            props = new ParsingProperties(Array.Empty<ParsingProperty>());
+        }
+
+        public static ReflCtx Neutral = new ReflCtx();
     }
 
 
@@ -47,19 +54,19 @@ public static partial class Reflector {
     /// <param name="starti">Index of invoke_args to start from.</param>
     /// <param name="sig">Type information of arguments.</param>
     /// <param name="q">Queue from which to parse elements.</param>
-    public static void FillInvokeArray(object?[] invoke_args, int starti, MethodSignature sig, IParseQueue q) {
+    public static void FillASTArray(IAST[] invoke_args, int starti, MethodSignature sig, IParseQueue q) {
         try {
-            _FillInvokeArray(invoke_args, starti, sig, q);
+            _FillASTArray(invoke_args, starti, sig, q);
         } catch (Exception e) {
             throw Exceptions.FlattenNestedException(e);
         }
     }
-    
-    private static object?[] _FillInvokeArray(object?[] invoke_args, int starti, MethodSignature sig, IParseQueue q) {
+
+    private static IAST[] _FillASTArray(IAST[] asts, int starti, MethodSignature sig, IParseQueue q) {
         int nargs = 0;
         var prms = sig.Params;
         for (int ii = starti; ii < prms.Length; ++ii) {
-            if (!prms[ii].nonExplicit) ++nargs;
+            if (!prms[ii].NonExplicit) ++nargs;
         }
         if (nargs == 0) {
             if (!(q is ParenParseQueue) && !q.Empty) {
@@ -68,13 +75,17 @@ public static partial class Reflector {
                     if (p.Item.Length == 0) q.NextChild();
                 }
             }
-            return invoke_args;
+            return asts;
         }
         if (!(q is ParenParseQueue)) {
             var c = q.ScanChild();
-            // + (x) 3
             if (c is ParenParseQueue p && p.Items.Length == 1 && nargs != 1) {
-            } else q = q.NextChild();
+                // mod | (x) 3
+                //Leave the parentheses to be parsed by the first argument
+            } else 
+                // mod | (x, 3)
+                //Use the parentheses to fill arguments
+                q = q.NextChild();
         }
 
         if (q is ParenParseQueue p2 && nargs != p2.Items.Length) {
@@ -93,14 +104,14 @@ public static partial class Reflector {
             }
         }
         for (int ii = starti; ii < prms.Length; ++ii) {
-            if (prms[ii].nonExplicit) {
-                invoke_args[ii] = _ReflectNonExplicitParam(q.Ctx, prms[ii]);
+            if (prms[ii].NonExplicit) {
+                asts[ii] = ReflectNonExplicitParam(q, prms[ii]);
             } else {
                 ThrowEmpty(q, ii);
                 var local = q.NextChild(out int ci);
                 ThrowEmpty(local, ii);
                 try {
-                    invoke_args[ii] = _ReflectParam(local, prms[ii]);
+                    asts[ii] = ReflectParam(local, prms[ii]);
                 } catch (Exception ex) {
                     throw new InvokeException(
                         $"{q.GetLastPosition(ci)}: Tried to construct {sig.FileLink}, " +
@@ -112,12 +123,13 @@ public static partial class Reflector {
             }
         }
         q.ThrowOnLeftovers(() => $"{sig.FileLink} has extra text after all {prms.Length} arguments.");
-        return invoke_args;
+        return asts;
     }
-
+    
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static object?[] _FillInvokeArray(MethodSignature sig, IParseQueue q)
-        => _FillInvokeArray(new object?[sig.Params.Length], 0, sig, q);
+    private static IAST[] _FillASTArray(MethodSignature sig, IParseQueue q)
+        => _FillASTArray(new IAST[sig.Params.Length], 0, sig, q);
+
 
 
 
@@ -164,10 +176,34 @@ public static partial class Reflector {
         return Into(argstring!, t);
     }
 
-    public static T Into<T>(this IParseQueue ctx) => ((T) Into(ctx, typeof(T))!)!;
-    private static object? Into(this IParseQueue ctx, Type t) => ReflectTargetType(ctx, t);
+    public static T Into<T>(this IParseQueue q) => ((T) Into(q, typeof(T))!)!;
 
+    private static object? Into(this IParseQueue q, Type t) {
+        Profiler.BeginSample("AST construction");
+        var ast = q.IntoAST(t);
+        Profiler.EndSample();
+        //There's an odd circularity where the first constructed PUParseList
+        // creates a ReflCtx, which then calls Into to construct parsing properties
+        // *before* its constructor is complete and it gets assigned to q.Ctx.
+        if (q.Ctx != null)
+            ast.WarnUsage(q.Ctx);
+        Profiler.BeginSample("AST realization");
+        var obj = ast.EvaluateObject();
+        Profiler.EndSample();
+        return obj;
+    }
+/*
     private static object? ReflectTargetType(IParseQueue ctx, Type t) {
+        try {
+            return _ReflectTargetType(ctx, t);
+        } catch (Exception e) {
+            throw Exceptions.FlattenNestedException(e);
+        }
+    }*/
+    
+    public static IAST<T> IntoAST<T>(this IParseQueue ctx) => new ASTRuntimeCast<T>(IntoAST(ctx, typeof(T)));
+    private static IAST IntoAST(this IParseQueue ctx, Type t) => ReflectTargetType(ctx, t);
+    private static IAST ReflectTargetType(IParseQueue ctx, Type t) {
         try {
             return _ReflectTargetType(ctx, t);
         } catch (Exception e) {
@@ -223,48 +259,25 @@ public static partial class Reflector {
     private static Func<T1, R> MakeLambda1<T1, R>(Func<object?[], object> invoker)
         => arg => (R) invoker(new object?[] {arg});
 
-    
-    private static object _ReflectNonExplicitParam(ReflCtx ctx, NamedParam p) {
-        if (p.type == tPhaseProperties) {
-            var props = new PhaseProperties(ctx.QueuedProps);
-            ctx.QueuedProps.Clear();
-            return props;
+    private static AST ReflectNonExplicitParam(IParseQueue q, NamedParam p) {
+        if (p.Type == tPhaseProperties) {
+            var props = new PhaseProperties(q.Ctx.QueuedProps);
+            q.Ctx.QueuedProps.Clear();
+            return new AST.Preconstructed<PhaseProperties>(q.Position, props);
         } else
-            throw new StaticException($"No non-explicit reflection handling existsfor type {p.type.RName()}");
+            throw new StaticException($"No non-explicit reflection handling existsfor type {p.Type.RName()}");
     }
-    
-    private static object? _ReflectParam(IParseQueue q, NamedParam p) {
-        if (p.lookupMethod) {
-            if (p.type.GenericTypeArguments.Length == 0) 
+
+    private static IAST ReflectParam(IParseQueue q, NamedParam p) {
+        if (p.LookupMethod) {
+            if (p.Type.GenericTypeArguments.Length == 0) 
                 throw new Exception("Method-Lookup parameter must be generic");
-            RecurseParens(ref q, p.type);
+            RecurseParens(ref q, p.Type);
             var method_str = q.Next().ToLower();
-            q.ThrowOnLeftovers(p.type);
-            //Not concerned with funced types, only the declared types.
-            var funcAllTypes = p.type.GenericTypeArguments;
-            var funcRetType = funcAllTypes[^1];
-            var funcPrmTypes = funcAllTypes.Take(funcAllTypes.Length - 1).ToArray();
-            var method = ReflectionData.GetArgTypes(funcRetType, method_str);
-            var methodPrmTypes = method.Params;
-            if (funcPrmTypes.Length != methodPrmTypes.Length)
-                throw new Exception($"Provided method {method_str} takes {funcPrmTypes.Length} parameters " +
-                                    $"(required {methodPrmTypes.Length})");
-            for (int ii = 0; ii < funcPrmTypes.Length; ++ii) {
-                if (funcPrmTypes[ii] != methodPrmTypes[ii].type)
-                    throw new Exception($"Provided method {method_str} has parameter #{ii + 1} as type" +
-                                        $" {methodPrmTypes[ii].type.RName()} " +
-                                        $"(required {funcPrmTypes[ii].RName()})");
-            }
-            var lambdaer = typeof(Reflector)
-                               .GetMethod($"MakeLambda{funcPrmTypes.Length}", 
-                                   BindingFlags.Static | BindingFlags.NonPublic)
-                               ?.MakeGenericMethod(funcAllTypes) ??
-                           throw new StaticException($"Couldn't find lambda constructor method for " +
-                                                     $"count {funcPrmTypes.Length}");
-            Func<object[], object> invoker = args => ReflectionData.Invoke(funcRetType, method_str, args);
-            return lambdaer.Invoke(null, new object[] {invoker});
+            q.ThrowOnLeftovers(p.Type);
+            return new AST.MethodLookup(q.GetLastPosition(), p.Type, method_str);
         } else {
-            return _ReflectTargetType(q, p.type);
+            return _ReflectTargetType(q, p.Type);
         }
     }
 
@@ -276,57 +289,62 @@ public static partial class Reflector {
     /// <param name="q">Parsing queue to read from.</param>
     /// <param name="t">Type to construct.</param>
     /// <param name="postAggregateContinuation">Optional code to execute after post-aggregation is complete.</param>
-    private static object? _ReflectTargetType(IParseQueue q, Type t, Func<object?, Type, object?>? postAggregateContinuation=null) {
+    private static IAST _ReflectTargetType(IParseQueue q, Type t, Func<IAST, Type, IAST>? postAggregateContinuation=null) {
         RecurseParens(ref q, t);
-        object? obj;
+        IAST? ast = null!;
         if (RecurseScan(q, out var rec, out var arg)) {
             q.Advance();
-            obj = _ReflectTargetType(rec, t, (x, pt) => (postAggregateContinuation ?? ((y, _) => y))(DoPostAggregate(pt, q, x), pt));
+            ast = _ReflectTargetType(rec, t, (x, pt) => (postAggregateContinuation ?? ((y, _) => y))(DoPostAggregation(pt, q, x), pt));
             rec.ThrowOnLeftovers(t);
             q.ThrowOnLeftovers(t);
-            return obj;
+            return ast;
         }
         if (q.Empty)
             throw new ParsingException(q.WrapThrow($"Ran out of text when trying to create " +
                                                    $"an object of type {t.RName()}."));
         else if (t == tsm)
-            obj = ReflectSM(q);
-        else if (_TryReflectMethod(arg, t, q, out obj)) {
+            ast = ReflectSM(q);
+        else if (ReflectMethod(arg, t, q) is { } methodAST) {
             //this advances inside
-        } else if (q.AllowsScan && FuncTypeResolve(arg, t, out obj))
+            ast = methodAST;
+        } else if (letFuncs.TryGetValue(t, out var f) && arg[0] == Parser.SM_REF_KEY_C) {
             q.Advance();
-        else if (FallThroughOptions.TryGetValue(t, out var ftmi)) {
+            ast = new AST.Preconstructed<object?>(q.GetLastPosition(), f(arg));
+        } else if (FuncTypeResolve(q, arg, t) is { } simpleParsedAST) {
+            q.Advance();
+            ast = simpleParsedAST;
+        } else if (FallThroughOptions.TryGetValue(t, out var ftmi)) {
             //MakeFallthrough allows the nested lookup to not be required to consume all post-aggregation.
-            var ftype = ftmi.mi.GetParameters()[0].ParameterType;
+            var ftype = ftmi.mi.Params[0].Type;
             try {
-                obj = _ReflectTargetType(MakeFallthrough(q), ftype, postAggregateContinuation);
+                ast = _ReflectTargetType(MakeFallthrough(q), ftype, postAggregateContinuation);
             } catch (Exception e) {
                 throw new Exception(q.WrapThrowC(
                     $"Failed to construct an object of type {t.SimpRName()}. Instead, tried to construct a" +
                     $" similar object of type {ftype.SimpRName()}, but that also failed."), e);
             }
-            obj = ftmi.mi.Invoke(null, new[] {obj});
+            ast = new AST.MethodInvoke(ast, ftmi.mi) { Type = AST.MethodInvoke.InvokeType.Fallthrough };
         } else if (TryCompileOption(t, out var cmp)) {
-            obj = _ReflectTargetType(MakeFallthrough(q), cmp.source, postAggregateContinuation);
-            obj = cmp.mi.Invoke(null, new[] {obj});
-        } else if (ResolveSpecialHandling(q, t, out obj)) {
-            
+            ast = _ReflectTargetType(MakeFallthrough(q), cmp.source, postAggregateContinuation);
+            ast = new AST.MethodInvoke(ast, cmp.mi) { Type = AST.MethodInvoke.InvokeType.Compiler };
+        } else if (ResolveSpecialHandling(q, t) is {} specialTypeAST) {
+            ast = specialTypeAST;
         } else if (t.IsArray)
-            obj = ResolveAsArray(t.GetElementType()!, q);
+            ast = ResolveAsArray(t.GetElementType()!, q);
         else if (MatchesGeneric(t, gtype_ienum))
-            obj = ResolveAsArray(t.GenericTypeArguments[0], q);
-        else if (CastToType(arg, t, out obj))
+            ast = ResolveAsArray(t.GenericTypeArguments[0], q);
+        else if (CastToType(arg, t, out var x)) {
+            ast = new AST.Preconstructed<object?>(q.GetLastPosition(), x);
             q.Advance();
-        else
+        } else
             throw new Exception(q.WrapThrowC($"Couldn't convert the object in ≪≫ to type {t.SimpRName()}."));
 
-        if (obj != null)
-            obj = DoPostAggregate(t, q, obj);
+        ast = DoPostAggregation(t, q, ast);
         q.ThrowOnLeftovers(t);
         if (q.Empty && postAggregateContinuation != null) {
-            obj = postAggregateContinuation(obj, t);
+            ast = postAggregateContinuation(ast, t);
         }
-        return obj;
+        return ast;
     }
 
     private static bool CastToType(string arg, Type rt, out object result) {
@@ -346,11 +364,11 @@ public static partial class Reflector {
         }
     }
 
-    private static object? DoPostAggregate(Type rt, IParseQueue q, object? result) {
-        if (!q.AllowPostAggregate || result == null || q.Empty) return result;
+    private static IAST DoPostAggregation(Type rt, IParseQueue q, IAST result) {
+        if (!q.AllowPostAggregate || q.Empty) return result;
         if (!postAggregators.TryGet2(rt, q.MaybeScan() ?? "", out _)) return result;
-        var varStack1 = new StackList<object?>();
-        var varStack2 = new StackList<object?>();
+        var varStack1 = new StackList<IAST>();
+        var varStack2 = new StackList<IAST>();
         var opStack1 = new StackList<PostAggregate>();
         var opStack2 = new StackList<PostAggregate>();
         varStack1.Push(result);
@@ -372,7 +390,8 @@ public static partial class Reflector {
             for (int ii = 0; ii < opStack1.Count; ++ii) {
                 var op = opStack1[ii];
                 if (op.priority == resolvePriority) {
-                    varStack2.Push(op.Invoke(varStack2.Pop(), varStack1[ii + 1]));
+                    varStack2.Push(
+                        new AST.MethodInvoke(q.GetLastPosition(), op.sig, varStack2.Pop(), varStack1[ii + 1]) {Type = AST.MethodInvoke.InvokeType.PostAggregate });
                 } else {
                     varStack2.Push(varStack1[ii + 1]);
                     opStack2.Push(op);
@@ -383,30 +402,25 @@ public static partial class Reflector {
         }
         return varStack1.Pop();
     }
+    
+    public static MethodSignature? TryGetSignature<T>(string member) => 
+        TryGetSignature(member, typeof(T));
 
-    public static MethodSignature? TryGetSignature<T>(ref string member) => 
-        TryGetSignature(ref member, typeof(T));
-    public static MethodSignature? TryGetSignature(ref string member, Type rt) {
-        var typs = TryLookForMethod(rt, member);
-        if (typs != null)
-            return typs;
-        var smember = Sanitize(member);
-        if ((typs = TryLookForMethod(rt, smember)) != null) {
-            member = smember;
-            return typs;
+    public static MethodSignature? TryGetSignature(string member, Type rt) {
+        Profiler.BeginSample("Signature lookup");
+        var res = ASTTryLookForMethod(rt, member) ??
+               ASTTryLookForMethod(rt, Sanitize(member));
+        Profiler.EndSample();
+        return res;
+    }
+
+    private static IAST? ReflectMethod(string member, Type rt, IParseQueue q) {
+        if (TryGetSignature(member, rt) is { } sig) {
+            q.Advance();
+            return sig.ToAST(q.GetLastPosition(), _FillASTArray(sig, q));
         }
         return null;
     }
-
-    private static bool _TryReflectMethod(string member, Type rt, IParseQueue q, out object result) {
-        result = null!;
-        var typs = TryGetSignature(ref member, rt);
-        if (typs == null) return false;
-        q.Advance();
-        result = InvokeMethod(q, rt, member, _FillInvokeArray(typs, q));
-        return true;
-    }
-
 
     #endregion
 }

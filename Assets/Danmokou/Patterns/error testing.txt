@@ -1,0 +1,13 @@
+<#> warnprefix
+pattern({
+    ##boss simp.kasen
+})
+phase(0)
+    paction(0)
+        shift-phase-to(1)
+
+    
+phase 0
+    paction 0
+        position 0 0
+        sync circle-red/w <> s tprot(px(mod(5, 4)))

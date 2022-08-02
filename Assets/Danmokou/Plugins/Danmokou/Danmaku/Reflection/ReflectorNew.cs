@@ -2,13 +2,16 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using BagoumLib;
 using BagoumLib.Expressions;
 using Danmokou.Core;
 using Danmokou.DMath;
+using Danmokou.DMath.Functions;
 using Danmokou.Expressions;
 using JetBrains.Annotations;
 using Danmokou.SM;
 using Danmokou.SM.Parsing;
+using Mizuhashi;
 using UnityEngine;
 using static BagoumLib.Reflection.ReflectionUtils;
 using ExBPY = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<float>>;
@@ -42,14 +45,14 @@ public static partial class Reflector {
             return base.Print(t);
         }
     }
-    public record NamedParam(Type type, string name, bool lookupMethod, bool nonExplicit) {
+    public record NamedParam(Type Type, string Name, bool LookupMethod, bool NonExplicit) {
         public static implicit operator NamedParam(ParameterInfo pi) => 
             new(pi.ParameterType, pi.Name, 
                 Attribute.GetCustomAttributes(pi).Any(x => x is LookupMethodAttribute),
                 Attribute.GetCustomAttributes(pi).Any(x => x is NonExplicitParameterAttribute));
 
-        public string Description => $"{name}<{CSharpTypePrinter.Default.Print(type)}>";
-        public string SimplifiedDescription => $"\"{name}\" (type: {SimplifiedExprPrinter.Default.Print(type)})";
+        public string Description => $"{Name}<{CSharpTypePrinter.Default.Print(Type)}>";
+        public string SimplifiedDescription => $"\"{Name}\" (type: {SimplifiedExprPrinter.Default.Print(Type)})";
     }
 
     /// <summary>
@@ -68,35 +71,69 @@ public static partial class Reflector {
         public string FileLink =>
             Mi.DeclaringType!.GetCustomAttribute<ReflectAttribute>()?.FileLink(TypeEnclosedName) ??
             TypeEnclosedName;
+
+        public Type ReturnType => Mi switch {
+            ConstructorInfo constructorInfo => constructorInfo.DeclaringType!,
+            MethodInfo methodInfo => methodInfo.ReturnType,
+            _ => throw new ArgumentOutOfRangeException(nameof(Mi))
+        };
+
+        public virtual object? InvokeMi(params object?[] prms) => Mi switch {
+            ConstructorInfo cI => cI.Invoke(prms),
+            _ => Mi.Invoke(null, prms)
+        };
+
+        public virtual IAST ToAST(PositionRange pos, IAST[] arguments) => 
+            new AST.MethodInvoke(pos, this, arguments);
+        
+        public static MethodSignature FromMethod(MethodBase mi, string? calledAs = null, ParameterInfo[]? srcPrms = null) {
+            srcPrms ??= mi.GetParameters();
+            var nPrms = new NamedParam[srcPrms.Length];
+            for (int ii = 0; ii < nPrms.Length; ++ii)
+                nPrms[ii] = srcPrms[ii];
+            return new(mi, calledAs, nPrms);
+        }
     }
 
     /// <summary>
-    /// Within the context of a given return type, use the function name provided in 'member'
-    ///  and the parse queue to construct an AST for that return type.
+    /// A description of a funcified method called in reflection.
+    /// <br/>A funcified method has a "source" signature (A, B, C)->R, but is internally
+    /// converted to "funcified" signature (T->A, T->B, T->C)->(T->R). This is because
+    /// some internal reflection functions are of type <see cref="TExArgCtx"/>->TEx,
+    ///  but it is generally easier to write them as type TEx where possible.
     /// </summary>
-    private delegate AST? ConstructAST(IParseQueue q, string member);
-    
-    /// <summary>
-    /// Within the context of a given return type, a function that returns whether or not a function named 'member'
-    /// matching that return type exists.
-    /// </summary>
-    private delegate bool ContainsMember(string member);
-    
-    /// <summary>
-    /// Within the context of a given return type, a function that returns the parameter types for a function
-    ///  named 'member' that has the given return type.
-    /// </summary>
-    private delegate MethodSignature TypeGet(string member);
+    /// <param name="Mi">Method info for the method. This has the source signature (A, B, C)->R.</param>
+    /// <param name="CalledAs">The name by which the user called the method (which may be an alias).</param>
+    /// <param name="FuncedParams">The parameter list [T->A, T->B, T->C]. This is provided as <see cref="MethodSignature.Params"/>.</param>
+    /// <param name="BaseParams">The parameter list [A, B, C].</param>
+    public abstract record FuncedMethodSignature(MethodBase Mi, string? CalledAs, NamedParam[] FuncedParams, NamedParam[] BaseParams) : MethodSignature(Mi, CalledAs, FuncedParams) {
+    }
 
     /// <summary>
-    /// Within the context of a given return type, a function that tries to execute the function 'member'
-    ///  to construct a value of that type.
+    /// See <see cref="FuncedMethodSignature"/>. 
     /// </summary>
-    /// <param name="q">Parsing queue. Not required, used only for syntax-related warnings.</param>
-    /// <param name="member">Name of the function to execute.</param>
-    /// <param name="prms">Arguments to provide to the function.</param>
-    /// <param name="result">Out value in which the return value of 'member' is stored.</param>
-    private delegate bool TryInvoke(IParseQueue? q, string member, object?[] prms, out object result);
+    public record FuncedMethodSignature<T, R>(MethodBase Mi, string? CalledAs, NamedParam[] FuncedParams,
+        NamedParam[] BaseParams) : FuncedMethodSignature(Mi, CalledAs, FuncedParams, BaseParams) {
+        public override IAST ToAST(PositionRange pos, IAST[] arguments) =>
+            new AST.FuncedMethodInvoke<T, R>(pos, this, arguments);
+
+        public override object? InvokeMi(params object?[] fprms)
+            => InvokeMiFunced(fprms);
+        public Func<T,R> InvokeMiFunced(params object?[] fprms) => 
+            //Note: this lambda capture generally prevents using ArrayCache
+            bpi => {
+                var baseParams = new object?[BaseParams.Length];
+                for (int ii = 0; ii < baseParams.Length; ++ii)
+                    //Convert from funced object to base object (eg. TExArgCtx->TEx<float> to TEx<float>)
+                    baseParams[ii] = ReflectionData.Defuncify(BaseParams[ii].Type, FuncedParams[ii].Type, fprms[ii]!, bpi!);
+                return (R)base.InvokeMi(baseParams)!;
+            };
+    }
+
+    /// <summary>
+    /// Within the context of a given return type, try to get the signature for a funced method.
+    /// </summary>
+    private delegate FuncedMethodSignature? GetSignature(string member);
 
     /// <summary>
     /// A dictionary containing reflection information for types that can be "funcified", where
@@ -104,25 +141,22 @@ public static partial class Reflector {
     /// A', B', C' may relate to the introduced type T.
     /// <br/>The keys are of the form type(T->R).
     /// </summary>
-    private static readonly Dictionary<Type, (ContainsMember has, TypeGet get, TryInvoke inv, ConstructAST makeAst)> funcifiableTypes =
+    private static readonly Dictionary<Type, GetSignature> funcifiableTypes =
         new();
     private static readonly HashSet<Type> funcifiableReturnTypes = new();
 
     private static void AllowFuncification<ExR>() {
-        funcifiableTypes[typeof(Func<TExArgCtx, ExR>)] = (ReflectionData.HasMember<ExR>,
-            ReflectionData.FuncifyTypes<TExArgCtx, ExR>,
-            ReflectionData.TryInvokeFunced<TExArgCtx, ExR>,
-            ReflectionData.MakeAST<TExArgCtx, ExR>);
+        funcifiableTypes[typeof(Func<TExArgCtx, ExR>)] = ReflectionData.GetFuncedSignature<TExArgCtx, ExR>;
         funcifiableReturnTypes.Add(typeof(ExR));
     }
 
-    private static MethodSignature? TryLookForMethod(Type rt, string member) {
-        if (funcifiableTypes.TryGetValue(rt, out var fs) && fs.has(member)) 
-            return fs.get(member);
-        if (ReflectionData.HasMember(rt, member)) 
+    private static MethodSignature? ASTTryLookForMethod(Type rt, string member) {
+        if (funcifiableTypes.TryGetValue(rt, out var fs) && fs(member) is { } funcedSig) {
+            return funcedSig;
+        }
+        if (ReflectionData.HasMember(rt, member)) {
             return ReflectionData.GetArgTypes(rt, member);
-        if (letFuncs.TryGetValue(rt, out _) && member[0] == Parser.SM_REF_KEY_C) 
-            return fudge;
+        }
         return null;
     }
 
@@ -134,39 +168,19 @@ public static partial class Reflector {
             {typeof(ExBPRV2), ReflectEx.ReferenceLet<V2RV2>},
         };
 
-    private static object? TryInvokeMethod(IParseQueue? q, Type rt, string member, object?[] prms) {
-        if (funcifiableTypes.TryGetValue(rt, out var fs) && fs.inv(q, member, prms, out var res)) 
-            return res;
-        if (ReflectionData.HasMember(rt, member) && ReflectionData.TryInvoke(rt, member, prms, out res)) 
-            return res;
-        if (letFuncs.TryGetValue(rt, out var f) && member[0] == Parser.SM_REF_KEY_C) 
-            return f(member);
-        return null;
-    }
-
-    public static T InvokeMethod<T>(IParseQueue? q, string member, object?[] prms) =>
-        (T)InvokeMethod(q, typeof(T), member, prms);
-    public static object InvokeMethod(IParseQueue? q, Type rt, string member, object?[] prms) =>
-        TryInvokeMethod(q, rt, member, prms) ?? throw new Exception(
-            $"Type handling passed but object creation failed for type {rt.RName()}, method {member}. " +
-            "This is an internal error. Please report it.");
-
-    public static object ExtInvokeMethod(Type t, string member, object[] prms) {
+    public static object? ExtInvokeMethod(Type t, string member, object[] prms) {
         member = Sanitize(member);
         if (TryCompileOption(t, out var compiler)) {
-            return compiler.mi.Invoke(null, new[] {
-                ExtInvokeMethod(compiler.source, member, prms)
-            });
+            return compiler.mi.InvokeMi(ExtInvokeMethod(compiler.source, member, prms));
         } else if (t == typeof(StateMachine)) {
-            return StateMachine.Create(member, prms);
+            return StateMachine.Create(member, prms).Evaluate();
         }
-        var result = TryInvokeMethod(null, t, member, prms);
-        if (result != null) return result;
+        if (ASTTryLookForMethod(t, member) is { } result)
+            return result.InvokeMi(prms);
         //this also requires fallthrough support, which is handled through parent methods in the inner call.
         if (FallThroughOptions.TryGetValue(t, out var ftmi)) {
-            if ((result = TryInvokeMethod(null, ftmi.mi.GetParameters()[0].ParameterType, member, prms)) != null) {
-                return ftmi.mi.Invoke(null, new[] {result});
-            }
+            if ((result = ASTTryLookForMethod(ftmi.mi.Params[0].Type, member)) != null)
+                return ftmi.mi.InvokeMi(result.InvokeMi(prms));
         }
         throw new Exception($"External method invocation failed for type {t.RName()}, method {member}. " +
                             "This is probably an error in static code.");
@@ -176,7 +190,7 @@ public static partial class Reflector {
 
 
 
-    private static readonly Dictionary<Type, (Type source, MethodInfo mi)> CompileOptions =
+    private static readonly Dictionary<Type, (Type source, MethodSignature mi)> CompileOptions =
         new();
     private static readonly HashSet<Type> checkedCompileOptions = new();
     private static readonly List<MethodInfo> genericCompileOptions = new();
@@ -189,12 +203,13 @@ public static partial class Reflector {
             if (CompileOptions.ContainsKey(compiledType))
                 throw new StaticException(
                     $"Cannot have multiple expression compilers for the same return type {compiledType}.");
-            CompileOptions[compiledType] = (compiler.GetParameters()[0].ParameterType, compiler);
+            var sig = MethodSignature.FromMethod(compiler);
+            CompileOptions[compiledType] = (sig.Params[0].Type, sig);
         }
     }
         
     
-    private static bool TryCompileOption(Type compiledType, out (Type source, MethodInfo mi) compile) {
+    private static bool TryCompileOption(Type compiledType, out (Type source, MethodSignature mi) compile) {
         if (CompileOptions.TryGetValue(compiledType, out compile)) return true;
         if (!checkedCompileOptions.Contains(compiledType)) {
             for (int ii = 0; ii < genericCompileOptions.Count; ++ii) {
@@ -210,7 +225,7 @@ public static partial class Reflector {
         return false;
     }
     
-    private static readonly Dictionary<Type, (FallthroughAttribute fa, MethodInfo mi)> FallThroughOptions =
+    private static readonly Dictionary<Type, (FallthroughAttribute fa, MethodSignature mi)> FallThroughOptions =
         new();
 
 }

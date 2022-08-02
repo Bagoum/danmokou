@@ -62,14 +62,14 @@ public static partial class Reflector {
                 else if (attr is PASourceTypesAttribute ps) types = ps.types;
             }
             void CreateAggregateMethod(MethodInfo gmi) {
-                var prms = gmi.GetParameters();
-                if (prms.Length != 2) throw new Exception($"Post-aggregator \"{method}\" doesn't have 2 arguments");
-                var sourceType = prms[0].ParameterType;
-                var searchType = prms[1].ParameterType;
+                var sig = MethodSignature.FromMethod(gmi);
+                if (sig.Params.Length != 2) throw new Exception($"Post-aggregator \"{method}\" doesn't have 2 arguments");
+                var sourceType = sig.Params[0].Type;
+                var searchType = sig.Params[1].Type;
                 if (gmi.ReturnType != sourceType)
                     throw new Exception($"Post-aggregator \"{method}\" has a different return and first argument type");
                 postAggregators.SetDefaultSet(sourceType, shortcut,
-                    new PostAggregate(priority, sourceType, searchType, gmi));
+                    new PostAggregate(priority, sourceType, searchType, sig));
             }
             if (types == null) CreateAggregateMethod(mi);
             else {
@@ -92,15 +92,15 @@ public static partial class Reflector {
     private readonly struct PostAggregate {
         //public readonly Type sourceType;
         public readonly Type searchType;
-        public readonly MethodInfo invoker;
-        public object Invoke(object? a, object? b) => invoker.Invoke(null, new[] {a, b});
+        public readonly MethodSignature sig;
+        public object Invoke(object? a, object? b) => sig.InvokeMi(a, b);
         public readonly int priority;
 
-        public PostAggregate(int priority, Type source, Type search, MethodInfo mi) {
+        public PostAggregate(int priority, Type source, Type search, MethodSignature mi) {
             this.priority = priority;
             //this.sourceType = source;
             this.searchType = search;
-            this.invoker = mi;
+            this.sig = mi;
         }
     }
 

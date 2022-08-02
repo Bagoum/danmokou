@@ -22,6 +22,7 @@ namespace Danmokou.Testing {
         [Test]
         public static void PostAggregate() {
             var x = "{ scale(1 - 0.05 * z) }".Into<SBOptions>();
+            Assert.NotNull(x.scale);
         }
         
         

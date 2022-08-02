@@ -49,8 +49,8 @@ public static class AoTHelper_CG {{
             var args = string.Join(", ", mi.GetParameters().Length.Range().Select(_ => "default"));
             funcs.Add($"{typePrinter.Print(mi.DeclaringType!)}.{mi.Name}<{type_prms}>({args});");
         }
-        foreach (var mi in postAggregators.Values.SelectMany(v => v.Values).Select(pa => pa.invoker).Concat(ReflectionData.MethodsByReturnType.Values.SelectMany(v => v.Values))) {
-            if (!mi.IsGenericMethod) continue;
+        foreach (var mi in postAggregators.Values.SelectMany(v => v.Values).Select(pa => pa.sig.Mi as MethodInfo).Concat(ReflectionData.MethodsByReturnType.Values.SelectMany(v => v.Values))) {
+            if (!mi!.IsGenericMethod) continue;
             if (mi.IsGenericMethodDefinition) {
                 //nonconstructed method (eg. StopSampling<T>)
                 if (mi.GetGenericArguments().Length == 1) {

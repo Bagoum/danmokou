@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using BagoumLib.DataStructures;
 
 
 namespace Danmokou.Core {
@@ -79,4 +80,27 @@ public static class ListCache<T> {
 
     public static List<T> Get() => cached.Count > 0 ? cached.Pop() : new List<T>();
 }
+
+/// <summary>
+/// Cache for fixed-size arrays.
+/// </summary>
+/// <typeparam name="T"></typeparam>
+public static class ArrayCache<T> {
+    private static readonly Dictionary<int, Stack<T[]>> cached = new();
+    
+    public static void Consign(T[] cacheMe) {
+        Array.Clear(cacheMe, 0, cacheMe.Length);
+        if (!cached.TryGetValue(cacheMe.Length, out var l))
+            l = cached[cacheMe.Length] = new();
+        l.Push(cacheMe);
+    }
+
+    public static T[] Get(int size) =>
+        cached.TryGetValue(size, out var l) ?
+            l.Count > 0 ?
+                l.Pop() :
+                new T[size] :
+            new T[size];
+}
+
 }

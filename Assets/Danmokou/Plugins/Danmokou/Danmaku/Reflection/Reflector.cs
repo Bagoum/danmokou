@@ -32,17 +32,17 @@ namespace Danmokou.Reflection {
 public static partial class Reflector {
     private static readonly Type tsm = typeof(StateMachine);
 
-    private static StateMachine? ReflectSM(IParseQueue q) {
+    private static IAST<StateMachine?> ReflectSM(IParseQueue q) {
         string method = q.Scan();
         if (method == "file") {
             q.Advance();
-            return StateMachineManager.FromName(q.Next());
+            return new AST.SMFromFile(q.GetLastPosition(), q.Next());
         } else if (method == "null") {
             q.Advance();
-            return null;
+            return new AST.Preconstructed<StateMachine?>(q.GetLastPosition(), null);
         } else if (method == "stall") {
             q.Advance();
-            return WaitForPhaseSM;
+            return new AST.Preconstructed<StateMachine?>(q.GetLastPosition(), WaitForPhaseSM);
         } else {
             var pos = q.GetLastPosition();
             try {
@@ -102,21 +102,25 @@ public static partial class Reflector {
             }
             if (!constr.Try(out var cp))
                 throw new StaticException($"Type {t.RName()} has no applicable constructors.");
-            constructorSigs[t] = args = new(cp.c, null, cp.prms.Select(x => (NamedParam) x).ToArray());
+            constructorSigs[t] = args =
+                MethodSignature.FromMethod(cp.c, null, cp.prms);
         }
         return args;
     }
 
-
-    private static bool ResolveSpecialHandling(IParseQueue p, Type targetType, out object obj) {
+    private static IAST? ResolveSpecialHandling(IParseQueue p, Type targetType) {
         if (targetType == type_locstring) {
             var str = p.Next();
-            obj = LocalizedStrings.IsLocalizedStringReference(str) ? 
-                LocalizedStrings.TryFindReference(str) ?? 
-                    throw new Exception($"{p.GetLastPosition()}: Couldn't resolve LocalizedString {str}")
-                : (LString)str;
+            return new AST.Preconstructed<LString>(p.GetLastPosition(), 
+                LocalizedStrings.IsLocalizedStringReference(str) ? 
+                    LocalizedStrings.TryFindReference(str) ?? 
+                        throw new Exception($"{p.GetLastPosition()}: Couldn't resolve LocalizedString {str}")
+                    : (LString)str);
         } else if (targetType == type_stylesel) {
-            obj = new BulletManager.StyleSelector((ResolveAsArray(typeof(string[]), p) as string[][])!);
+            return new ASTFmap<Array, BulletManager.StyleSelector>(
+                s => new BulletManager.StyleSelector(s as string[][]),
+                ResolveAsArray(typeof(string[]), p)
+            );
         } else if (targetType == type_gcrule) {
             ReferenceMember rfr = new ReferenceMember(p.Next());
             string OpAndMaybeType = p.Next();
@@ -125,25 +129,24 @@ public static partial class Reflector {
                 $"{p.GetLastPosition()}: Trying to parse GCRule, but found an invalid operator {OpAndMaybeType}.\n" +
                 $"Make sure to put parentheses around the right-hand side of GCRule.");
             var ext = (ExType) ForceFuncTypeResolve(latter.Length > 0 ? latter : p.Next(), typeof(ExType))!;
-            if (ext == ExType.Float) obj = new GCRule<float>(ext, rfr, op, p.Into<GCXF<float>>());
-            else if (ext == ExType.V2) obj = new GCRule<Vector2>(ext, rfr, op, p.Into<GCXF<Vector2>>());
-            else if (ext == ExType.V3) obj = new GCRule<Vector3>(ext, rfr, op, p.Into<GCXF<Vector3>>());
-            else if (ext == ExType.RV2) obj = new GCRule<V2RV2>(ext, rfr, op, p.Into<GCXF<V2RV2>>());
-            else throw new StaticException($"No GCRule handling for ExType {ext}");
+            var loc = p.GetLastPosition();
+            return ext switch {
+                ExType.Float => new AST.GCRule<float>(loc, ext, rfr, op, p.IntoAST<GCXF<float>>()),
+                ExType.V2 => new AST.GCRule<Vector2>(loc, ext, rfr, op, p.IntoAST<GCXF<Vector2>>()),
+                ExType.V3 => new AST.GCRule<Vector3>(loc, ext, rfr, op, p.IntoAST<GCXF<Vector3>>()),
+                ExType.RV2 => new AST.GCRule<V2RV2>(loc, ext, rfr, op, p.IntoAST<GCXF<V2RV2>>()),
+                _ => throw new StaticException($"No GCRule handling for ExType {ext}")
+            };
         } else if (targetType == type_alias) {
             ExType declTyp = (ExType) ForceFuncTypeResolve(p.Next(), typeof(ExType))!;
             string alias = p.Next();
             var req_type = typeof(Func<,>).MakeGenericType(typeof(TExArgCtx), AsWeakTExType(declTyp));
-            obj = Activator.CreateInstance(targetType, alias, ReflectTargetType(p, req_type));
+            return new AST.Alias(p.GetLastPosition(), alias, _ReflectTargetType(p, req_type));
         } else if (UseConstructor(targetType)) {
             //generic struct/tuple handling
-            var args = GetConstructorSignature(targetType);
-            obj = Activator.CreateInstance(targetType, _FillInvokeArray(args, p));
-        } else {
-            obj = default!;
-            return false;
-        }
-        return true;
+            var sig = GetConstructorSignature(targetType);
+            return new AST.MethodInvoke(p.GetLastPosition(), sig, _FillASTArray(sig, p));
+        } else return null;
     }
 
     public static bool UseConstructor(Type t) => classAutoReflectTypes.Contains(t) ||
@@ -160,6 +163,9 @@ public static partial class Reflector {
         typeof(PatternProperties)
     };
 
+    /// <summary>
+    /// Resolves types for which there is a simple parser (such as <see cref="V2RV2"/>).
+    /// </summary>
     private static bool FuncTypeResolve(string s, Type targetType, out object? result) {
         if (SimpleFunctionResolver.TryGetValue(targetType, out Func<string, object?> resolver)) {
             try {
@@ -172,37 +178,56 @@ public static partial class Reflector {
         result = default!;
         return false;
     }
-
+    
+    /// <summary>
+    /// Resolves types for which there is a simple parser (such as <see cref="V2RV2"/>).
+    /// </summary>
+    private static AST? FuncTypeResolve(IParseQueue q, string s, Type targetType) {
+        if (SimpleFunctionResolver.TryGetValue(targetType, out Func<string, object?> resolver))
+            try {
+                return new AST.Preconstructed<object?>(q.GetLastPosition(), resolver(s));
+            } catch (Exception) {
+                // ignored
+            }
+        return null;
+    }
+    
+    /// <summary>
+    /// Resolves types for which there is a simple parser (such as <see cref="V2RV2"/>)
+    /// or throws an exception.
+    /// </summary>
+    private static AST ForceASTFuncTypeResolve(IParseQueue q, string s, Type targetType) {
+        if (SimpleFunctionResolver.TryGetValue(targetType, out Func<string, object?> resolver))
+            return new AST.Preconstructed<object?>(q.GetLastPosition(), resolver(s));
+        throw new StaticException("ForceFuncTypeResolve was used for a type without a simple resolver");
+    }
+    
     private static object? ForceFuncTypeResolve(string s, Type targetType) {
         if (SimpleFunctionResolver.TryGetValue(targetType, out Func<string, object?> resolver)) {
             return resolver(s);
         } else throw new StaticException("ForceFuncTypeResolve was used for a type without a simple resolver");
     }
 
-    public static object ResolveAsArray(Type eleType, IParseQueue q) {
+    public static IAST<Array> ResolveAsArray(Type eleType, IParseQueue q) {
         if (eleType == null) throw new StaticException($"Requested an array of null elements");
         if (IParseQueue.ARR_EMPTY.Contains(q.MaybeScan() ?? "")) {
             q.Advance();
             var empty = Array.CreateInstance(eleType, 0);
-            return empty;
+            return new AST.Preconstructed<Array>(q.GetLastPosition(), empty);
         }
         if (q.MaybeScan() != IParseQueue.ARR_OPEN) {
-            var singleton = Array.CreateInstance(eleType, 1);
-            singleton.SetValue(_ReflectTargetType(q, eleType), 0);
-            return singleton;
+            return new AST.Sequence(q.GetLastPosition(), eleType,
+                new[] { _ReflectTargetType(q, eleType) });
         }
         q.Advance(); // {
-        var arr = new List<object?>();
+        var tempList = new List<IAST>();
         while (q.MaybeScan() != IParseQueue.ARR_CLOSE) {
-            arr.Add(_ReflectTargetType(q.NextChild(), eleType));
+            tempList.Add(_ReflectTargetType(q.NextChild(), eleType));
         }
         q.Advance(); // }
-        var arr_true = Array.CreateInstance(eleType, arr.Count);
-        for (int ii = 0; ii < arr_true.Length; ++ii) {
-            arr_true.SetValue(arr[ii], ii);
-        }
-        return arr_true;
+        return new AST.Sequence(q.GetLastPosition(), eleType, tempList);
     }
+
 
     [UsedImplicitly]
     public static object[] TupleToArr2<T1, T2>((T1, T2) tup) => new object[] {tup.Item1!, tup.Item2!};

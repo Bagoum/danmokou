@@ -17,8 +17,9 @@ namespace Danmokou.Reflection {
 public static partial class Reflector {
     private static void ErasedMethod() { }
     private static readonly MethodSignature fudge = 
-        new(typeof(Reflector).GetMethod("ErasedMethod", BindingFlags.Static | BindingFlags.NonPublic)!, 
-            "erased_method", Array.Empty<NamedParam>());
+        MethodSignature.FromMethod(
+        typeof(Reflector).GetMethod("ErasedMethod", BindingFlags.Static | BindingFlags.NonPublic)!, 
+            "erased_method");
     
     /// <summary>
     /// Return the type Func&lt;t1, t2&gt;. Results are cached.
@@ -31,7 +32,7 @@ public static partial class Reflector {
     }
     private static readonly Dictionary<(Type, Type), Type> func2TypeCache = new();
 
-    private static class ReflectionData {
+    public static class ReflectionData {
         /// <summary>
         /// Contains non-generic methods, whether non-generic in source or computed via .MakeGenericMethod,
         /// keyed by return type.
@@ -91,7 +92,8 @@ public static partial class Reflector {
                     AddMI(ga.alias, gmi);
                     addNormal = false;
                 } else if (attr is FallthroughAttribute fa) {
-                    if (mi.GetParameters().Length != 1) {
+                    var sig = MethodSignature.FromMethod(mi);
+                    if (sig.Params.Length != 1) {
                         throw new StaticException($"Fallthrough methods must have exactly one argument: {mi.Name}");
                     }
                     if (FallThroughOptions.ContainsKey(mi.ReturnType))
@@ -100,7 +102,7 @@ public static partial class Reflector {
                     if (isExCompiler) {
                         AddCompileOption(mi);
                     }
-                    else FallThroughOptions[mi.ReturnType] = (fa, mi);
+                    else FallThroughOptions[mi.ReturnType] = (fa, sig);
                 }
             }
             if (addNormal) AddMI(mi.Name, mi);
@@ -135,8 +137,7 @@ public static partial class Reflector {
             if (!getArgTypesCache.ContainsKey((member, rt))) {
                 ResolveGeneric(rt);
                 if (methodsByReturnType.TryGetValue(rt, out var dct) && dct.TryGetValue(member, out var mi))
-                    getArgTypesCache[(member, rt)] = 
-                        new(mi, member, mi.GetParameters().Select(x => (NamedParam) x).ToArray());
+                    getArgTypesCache[(member, rt)] = MethodSignature.FromMethod(mi, member);
                 else
                     throw new NotImplementedException($"The method \"{rt.RName()}.{member}\" was not found.\n");
             }
@@ -154,16 +155,15 @@ public static partial class Reflector {
         ///  source object according to the function registered in funcConversions.
         /// <br/>If no function is registered, return the source object as-is.
         /// </summary>
-        private static object Defuncify(Type targetType, Type sourceFuncType, object sourceObj, object funcArg) {
+        public static object Defuncify(Type targetType, Type sourceFuncType, object sourceObj, object funcArg) {
             if (funcConversions.TryGetValue((targetType, sourceFuncType), out var conv)) 
                 return conv(sourceObj, funcArg);
             return sourceObj;
         }
 
-        public static AST? MakeAST<T, R>(IParseQueue q, string member) {
+        public static FuncedMethodSignature<T, R>? GetFuncedSignature<T, R>(string member) {
             if (!HasMember<R>(member)) return null;
-            if (FuncifyTypes<T, R>(member) is not {} sig) return null;
-            return null;
+            return GetFuncedArgTypes<T, R>(member);
         }
 
         /// <summary>
@@ -171,20 +171,23 @@ public static partial class Reflector {
         /// T->R member', such that those parameters can be meaningfully parsed by reflection code.
         /// <br/>In most cases, this is just [T->A, T->B, T->C], but it depends on rules in TryFuncify.
         /// </summary>
-        public static MethodSignature FuncifyTypes<T, R>(string member) => FuncifyTypes(typeof(T), typeof(R), member);
-        
-        public static MethodSignature FuncifyTypes(Type t, Type r, string member) {
+        public static FuncedMethodSignature<T, R> GetFuncedArgTypes<T, R>(string member) {
+            var t = typeof(T);
+            var r = typeof(R);
             if (!funcifyTypesCache.ContainsKey((member, t, r))) {
                 var method = GetArgTypes(r, member);
                 var baseTypes = method.Params;
                 NamedParam[] fTypes = new NamedParam[baseTypes.Length];
                 for (int ii = 0; ii < baseTypes.Length; ++ii) {
-                    var bt = baseTypes[ii].type;
-                    fTypes[ii] = baseTypes[ii] with { type = TryFuncify(t, bt, out var result) ? result : bt };
+                    var bt = baseTypes[ii].Type;
+                    fTypes[ii] = baseTypes[ii] with {
+                        Type = TryFuncify(t, bt, out var result) ? result : bt
+                    };
                 }
-                funcifyTypesCache[(member, t, r)] = method with { Params = fTypes };
+                funcifyTypesCache[(member, t, r)] = 
+                    new FuncedMethodSignature<T,R>(method.Mi, method.CalledAs, fTypes, baseTypes);
             }
-            return funcifyTypesCache[(member, t, r)];
+            return funcifyTypesCache[(member, t, r)] as FuncedMethodSignature<T, R>;
             
         
             // Where arg is the type of a parameter for a recorded function R member(...ARG, ...),
@@ -207,7 +210,7 @@ public static partial class Reflector {
                 void AddDefuncifier(Type ft, Func<object, object, object> func) {
                     funcConversions[(wrappedType, ft)] = rewrapper == null ?
                         func :
-                        (fobj, x) => FuncInvoke(rewrapper!, Func2Type(baseType, wrappedType), func(fobj, x));
+                        (fobj, x) => FuncInvoke(rewrapper, Func2Type(baseType, wrappedType), func(fobj, x));
                 }
                 
                 if (funcifiableReturnTypes.Contains(baseType)) {
@@ -253,7 +256,7 @@ public static partial class Reflector {
                 return true;
             }
         }
-        private static readonly Dictionary<(string method, Type funcIn, Type funcOut), MethodSignature> 
+        private static readonly Dictionary<(string method, Type funcIn, Type funcOut), FuncedMethodSignature> 
             funcifyTypesCache = new();
         private static readonly Dictionary<(Type, Type), Type> tryFuncifyCache = new();
         
@@ -286,59 +289,9 @@ public static partial class Reflector {
             return mi.Invoke(func, new[] {arg});
         }
         private static readonly Dictionary<Type, MethodInfo> funcInvokeCache = new();
-
-        /// <summary>
-        /// For a recorded function R member(A, B, C...), given parameters of type [F(A), F(B), F(C)] (funcified on T),
-        /// construct a function T->R that uses T to defuncify the parameters and pass them to R.
-        /// </summary>
-        /// <param name="q">Parse queue. Not required, only used to provide syntax-related warnings.</param>
-        /// <param name="member">Name of the function to call.</param>
-        /// <param name="funcedParams">Funcified parameters to pass to the function.
-        ///  These should correspond to the types returned by <see cref="FuncifyTypes"/>.</param>
-        /// <param name="result">Out value to which the resulting function T->R is written
-        /// (only if the return value is true).</param>
-        /// <returns>True iff 'member' exists and the function could be created.</returns>
-        public static bool TryInvokeFunced<T, R>(IParseQueue? q, string member, object?[] funcedParams, out object result) {
-            var rt = typeof(R);
-            ResolveGeneric(rt);
-            if (methodsByReturnType.TryGet2(rt, member, out var f)) {
-                if (q?.Ctx.props.warnPrefix == true && Attribute.GetCustomAttributes(f).Any(x =>
-                    x is WarnOnStrictAttribute wa && (int) q.Ctx.props.strict >= wa.strictness)) {
-                    Logs.Log(
-                        $"{q.GetLastPosition()}: The method \"{member}\" is not permitted for use in a script with strictness {q.Ctx.props.strict}. You might accidentally be using the prefix version of an infix function.",
-                        true, LogLevel.WARNING);
-                }
-                result = (Func<T, R>) (bpi => {
-                    var baseTypes = GetArgTypes(rt, member).Params;
-                    var funcTypes = FuncifyTypes<T, R>(member).Params;
-                    var baseParams = new object[baseTypes.Length];
-                    for (int ii = 0; ii < baseTypes.Length; ++ii) 
-                        //Convert from funced object to base object (eg. TExArgCtx->TEx<float> to TEx<float>)
-                        baseParams[ii] = Defuncify(baseTypes[ii].type, funcTypes[ii].type, funcedParams[ii]!, bpi!);
-                    return (R) f.Invoke(null, baseParams);
-                });
-
-                return true;
-            }
-            result = default!;
-            return false;
-        }
         
-        public static object Invoke(Type rt, string member, object?[] prms) =>
-            methodsByReturnType[rt][member].Invoke(null, prms);
 
-        public static bool TryInvoke<T>(IParseQueue? _, string member, object?[] prms, out object result) =>
-            TryInvoke(typeof(T), member, prms, out result);
 
-        public static bool TryInvoke(Type rt, string member, object?[] prms, out object result) {
-            ResolveGeneric(rt);
-            if (methodsByReturnType.Has2(rt, member)) {
-                result = Invoke(rt, member, prms);
-                return true;
-            }
-            result = default!;
-            return false;
-        }
     }
 
 }

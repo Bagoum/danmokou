@@ -64,10 +64,16 @@ public static partial class Reflector {
             temp = new char[temp.Length * 2];
         int ti = 0;
         temp[ti++] = Lower(raw_name[0]);
+        bool requiresChange = temp[0] != raw_name[0];
         for (int ii = 1; ii < len; ++ii) {
-            if (raw_name[ii] != '-') temp[ti++] = Lower(raw_name[ii]);
+            if (raw_name[ii] == '-') {
+                requiresChange = true;
+            }else {
+                temp[ti++] = Lower(raw_name[ii]);
+                requiresChange |= temp[ti - 1] != raw_name[ii];
+            }
         }
-        return new string(temp, 0, ti);
+        return requiresChange ? new string(temp, 0, ti) : raw_name;
     }
 
 }

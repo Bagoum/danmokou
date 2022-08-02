@@ -120,10 +120,11 @@ public static class DictExtensions {
         }
     }
 
-    public static V GetOrDefault<K, V>(this Dictionary<K, V> dict, K key) {
+    public static V? GetOrDefault<K, V>(this Dictionary<K, V> dict, K key) where V : struct {
         if (dict.TryGetValue(key, out var res)) return res;
-        return default!;
+        return default(V?);
     }
+    
     public static V GetOrDefault<K, V>(this Dictionary<K, V> dict, K key, V deflt) {
         if (dict.TryGetValue(key, out var res)) return res;
         return deflt;
