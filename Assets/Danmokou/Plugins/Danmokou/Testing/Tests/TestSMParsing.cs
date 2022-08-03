@@ -21,21 +21,22 @@ public class TestSMParsing {
     public void Setup() { }
     private static void AssertSMEq(string source, string desired) {
         desired = desired.Replace("\r", "").Trim();
-        var result = SMParser.RemakeSMParserExec(source);
-        if (result.Valid) {
-            Assert.AreEqual(desired, result.Value.Replace(" \n ", "\n").Trim());
+        var result = SMParser.RunSMParserAndRemakeAsString(source);
+        if (result.IsLeft) {
+            Assert.AreEqual(desired, result.Left.Replace(" \n ", "\n").Trim());
         } else {
-            Assert.Fail(string.Join("\n", result.errors));
+            Assert.Fail(string.Join("\n", result.Right.Select(e => e.Show(source))));
         }
     }
 
     private static string FailString(string src) {
-        var result = SMParser.RemakeSMParserExec(src);
-        if (result.Valid) {
-            Assert.Fail($"Expected SM parse to fail, but got {result.Value}");
+        var result = SMParser.RunSMParserAndRemakeAsString(src);
+        if (result.IsLeft) {
+            Assert.Fail($"Expected SM parse to fail, but got {result.Left}");
         } else {
-            Console.WriteLine($"---\n{string.Join("\n", result.errors)}");
-            return string.Join("\n", result.errors);
+            var err = string.Join("\n", result.Right.Select(e => e.Show(src)));
+            Console.WriteLine($"---\n{err}");
+            return err;
         }
         return null!;
         

@@ -8,6 +8,7 @@ using System.Reactive;
 using BagoumLib;
 using BagoumLib.Functional;
 using static BagoumLib.Functional.Helpers;
+using LPUOrError = BagoumLib.Functional.Either<Danmokou.SM.Parsing.SMParser.LocatedParseUnit, Mizuhashi.ParserError>;
 
 namespace Danmokou.SM.Parsing {
 public static class SMParser {
@@ -70,41 +71,47 @@ public static class SMParser {
             name, prms.Count, prms.Select((x, i) => (x.name, i)).ToDict(), prms.Select(x => x.deflt).ToArray(),
             unformatted.WithUnit(unformatted.unit.CutTrailingNewline()));
 
-        private static Errorable<LocatedParseUnit> ResolveUnit(
-            Func<string, Errorable<LocatedParseUnit>> argResolve,
-            Func<string, List<LocatedParseUnit>, Errorable<LocatedParseUnit>> macroReinvResolve,
+        private static LPUOrError ResolveUnit(
+            Func<string, LPUOrError> argResolve,
+            Func<string, List<LocatedParseUnit>, LPUOrError> macroReinvResolve,
             LocatedParseUnit x) {
-            Errorable<List<LocatedParseUnit>> resolveAcc(IEnumerable<LocatedParseUnit> args) => 
-                args.Select(a => ResolveUnit(argResolve, macroReinvResolve, a)).Acc();
-            Errorable<LocatedParseUnit> reloc(Errorable<ParseUnit> pu) {
-                return pu.Valid ? x.WithUnit(pu.Value) : Errorable<LocatedParseUnit>.Fail(pu.errors);
+            Either<List<LocatedParseUnit>, ParserError> resolveAcc(IEnumerable<LocatedParseUnit> args) => 
+                args.Select(a => ResolveUnit(argResolve, macroReinvResolve, a))
+                    .AccFailToR()
+                    .FMapR(errs => (ParserError) new ParserError.OneOf(errs));
+            LPUOrError reloc(Either<ParseUnit, ParserError> pu) {
+                return pu.IsLeft ? x.WithUnit(pu.Left) : pu.Right;
             }
             return x.unit.Match(
                 macroVar: argResolve,
                 macroReinv: macroReinvResolve,
-                paren: ns => reloc(resolveAcc(ns).Map(ParseUnit.Paren)),
-                words: ns => reloc(resolveAcc(ns).Map(ParseUnit.Words)),
-                nswords: ns => reloc(resolveAcc(ns).Map(ParseUnit.NoSpaceWords)),
-                deflt: () => Errorable<LocatedParseUnit>.OK(x));
+                paren: ns => reloc(resolveAcc(ns).FMapL(ParseUnit.Paren)),
+                words: ns => reloc(resolveAcc(ns).FMapL(ParseUnit.Words)),
+                nswords: ns => reloc(resolveAcc(ns).FMapL(ParseUnit.NoSpaceWords)),
+                deflt: () => x);
         }
 
-        private Errorable<LocatedParseUnit> RealizeOverUnit(List<LocatedParseUnit> args, LocatedParseUnit unfmtd) => Macro.ResolveUnit(
+        private LPUOrError RealizeOverUnit(List<LocatedParseUnit> args, LocatedParseUnit unfmtd) => Macro.ResolveUnit(
             s => !prmIndMap.TryGetValue(s, out var i) ? 
-                Errorable<LocatedParseUnit>.Fail($"Macro body has nonexistent variable \"%{s}\"") :
+                new ParserError.Failure($"Macro body has nonexistent variable \"%{s}\"") :
                 args[i],
             (s, rargs) => !prmIndMap.TryGetValue(s, out var i) ?
-                Errorable<LocatedParseUnit>.Fail($"Macro body has nonexistent reinvocation \"$%{s}") :
+                new ParserError.Failure($"Macro body has nonexistent reinvocation \"$%{s}") :
                 args[i].unit.Reduce().Match(
                     partlMacroInv: (m, pargs) => {
                         static bool isLambda(LocatedParseUnit lpu) => lpu.unit.type == ParseUnit.Type.LambdaMacroParam;
-                        if (ReplaceEntries(true, pargs, rargs, isLambda) is {Valid: true} replaced)
-                            return replaced.Value.Select(l => RealizeOverUnit(args, l)).Acc().Bind(m.Invoke);
+                        if (ReplaceEntries(true, pargs, rargs, isLambda) is {IsLeft: true} replaced)
+                            return replaced.Left
+                                .Select(l => RealizeOverUnit(args, l))
+                                .AccFailToR()
+                                .FMapR(errs => (ParserError) new ParserError.OneOf(errs))
+                                .BindL(m.Invoke);
                         else
-                            return Errorable<LocatedParseUnit>.Fail(
+                            return new ParserError.Failure(
                                 $"Macro \"{name}\" provides too many arguments to partial macro " +
                                 $"\"{m.name}\". ({rargs.Count} provided, {pargs.Where(isLambda).Count()} required)");
                     },
-                    deflt: () => Errorable<LocatedParseUnit>.Fail(
+                    deflt: () => new ParserError.Failure(
                         $"Macro argument \"{name}.%{s}\" (arg #{i}) must be a partial macro invocation. " +
                         $"This may occur if you already provided all necessary arguments.")
                     )
@@ -112,14 +119,14 @@ public static class SMParser {
             
             , unfmtd);
 
-        public Errorable<LocatedParseUnit> Realize(List<LocatedParseUnit> args) =>
-            nprms == 0 ? Errorable<LocatedParseUnit>.OK(unformatted) : RealizeOverUnit(args, unformatted);
+        public LPUOrError Realize(List<LocatedParseUnit> args) =>
+            nprms == 0 ? unformatted : RealizeOverUnit(args, unformatted);
 
-        public Errorable<LocatedParseUnit> Invoke(List<LocatedParseUnit> args) {
+        public LPUOrError Invoke(List<LocatedParseUnit> args) {
             if (args.Count != nprms) {
                 var defaults = prmDefaults.SoftSkip(args.Count).FilterNone().ToArray();
                 if (args.Count + defaults.Length != nprms)
-                    return Errorable<LocatedParseUnit>.Fail($"Macro \"{name}\" requires {nprms} arguments ({args.Count} provided)");
+                    return new ParserError.Failure($"Macro \"{name}\" requires {nprms} arguments ({args.Count} provided)");
                 else
                     return Realize(args.Concat(defaults).ToList());
             } else if (args.Any(l => l.unit.type == ParseUnit.Type.LambdaMacroParam)) {
@@ -161,6 +168,8 @@ public static class SMParser {
                 words.Count > 0 ? words[^1].End : default
             );
         }
+
+        public LocatedParserError Locate(ParserError p) => new LocatedParserError(Start.Index, p);
     }
 
     private static Parser<LocatedParseUnit> Locate(this Parser<ParseUnit> p) =>
@@ -313,15 +322,12 @@ public static class SMParser {
         return l.Count == 1 ? l[0].unit : ParseUnit.NoSpaceWords(l);
     }
 
-    private static Parser<T> FailErrorable<T>(Errorable<T> errb) => errb.Valid ?
-        PReturn(errb.Value) :
-        Fail<T>(string.Join("\n", errb.errors));
     
     //For a macro, we don't write the outermost location (thus we return ParseUnit), but we do write inner locations
     // within the words of this parseunit
     private static Parser<ParseUnit> InvokeMacroByName(string name, List<LocatedParseUnit> args) =>
         GetState<State>().SelectMany(state => state.macros.TryGetValue(name, out var m) ?
-                FailErrorable(m.Invoke(args)) :
+                ReturnOrError(m.Invoke(args)) :
                 Fail<LocatedParseUnit>($"No macro exists with name {name}.")
             , (s, lpu) => lpu.unit);
 
@@ -452,8 +458,11 @@ public static class SMParser {
     public abstract record ParsedUnit(PositionRange Position) {
         public Position Start => Position.Start;
         public Position End => Position.End;
+
         public record Str(string Item, PositionRange Position) : ParsedUnit(Position);
-        public record Paren(ParsedUnit[][] Item, PositionRange Position) : ParsedUnit(Position);
+        public record Paren((ParsedUnit[] units, PositionRange position)[] Items, PositionRange Position) :
+            ParsedUnit(Position);
+        
     }
 
     public static PositionRange ToRange(this ParsedUnit[] pus) {
@@ -463,10 +472,10 @@ public static class SMParser {
     }
     private static ParsedUnit S(string s, in LocatedParseUnit lpu) => 
         new ParsedUnit.Str(s, lpu.position);
-    private static ParsedUnit P(ParsedUnit[][] p, in LocatedParseUnit lpu) => 
-        new ParsedUnit.Paren(p, lpu.position);
+    private static ParsedUnit P((ParsedUnit[], PositionRange)[] parts, in PositionRange pos) => 
+        new ParsedUnit.Paren(parts, pos);
 
-    private static Errorable<IEnumerable<string>> pFlatten(LocatedParseUnit lpu) {
+    private static Either<IEnumerable<string>, List<LocatedParserError>> pFlatten(LocatedParseUnit lpu) {
         var u = lpu.unit;
         var s = u.sVal;
         var ls = u.nestVal;
@@ -477,50 +486,59 @@ public static class SMParser {
                     Replacements.TryGetValue(s, out var ss) ?
                         ss :
                         new[] {s} :
-                    noStrs;
+                    Array.Empty<string>();
             case ParseUnit.Type.Quote:
                 return new[] {s};
             case ParseUnit.Type.Paren:
-                return ls.Select(pFlatten).Acc()
-                    .Map(x => x.SeparateBy(",").Prepend("(").Append(")"));
+                return ls.Select(pFlatten).AccFailToR()
+                    .FMapL(x => x.SeparateBy(",").Prepend("(").Append(")"))
+                    .FMapR(errs => errs.Join().ToList());
             case ParseUnit.Type.Words:
                 return ls.TakeWhile(l => l.unit.type != ParseUnit.Type.End)
-                    .Select(pFlatten).Acc().Map(t => t.Join());
+                    .Select(pFlatten).AccFailToR()
+                    .FMapL(t => t.Join())
+                    .FMapR(errs => errs.Join().ToList());
             case ParseUnit.Type.NoSpaceWords:
-                return ls.Select(pFlatten).Acc().Map(arrs => {
-                    var words = new List<string>() {""};
-                    foreach (var arr in arrs) {
-                        bool first = true;
-                        foreach (var x in arr) {
-                            if (first) words[^1] += x;
-                            else words.Add(x);
-                            first = false;
+                return ls.Select(pFlatten).AccFailToR()
+                    .FMapL(arrs => {
+                        var words = new List<string>() {""};
+                        foreach (var arr in arrs) {
+                            bool first = true;
+                            foreach (var x in arr) {
+                                if (first) words[^1] += x;
+                                else words.Add(x);
+                                first = false;
+                            }
                         }
-                    }
-                    return (IEnumerable<string>) words;
-                });
+                        return (IEnumerable<string>) words;
+                    })
+                    .FMapR(errs => errs.Join().ToList());;
             case ParseUnit.Type.Newline:
                 return new[] {"\n"};
             case ParseUnit.Type.MacroDef:
-                return noStrs;
+                return Array.Empty<string>();
             case ParseUnit.Type.MacroVar:
-                return Errorable<IEnumerable<string>>.Fail($"Found a macro variable \"%{s}\" in the output.");
+                return new List<LocatedParserError>{lpu.Locate(new ParserError.Failure
+                        ($"Found a macro variable \"%{s}\" in the output."))};
             case ParseUnit.Type.LambdaMacroParam:
-                return Errorable<IEnumerable<string>>.Fail(
-                    "Found an unbound macro argument (!$) in the output.");
+                return new List<LocatedParserError>{lpu.Locate(new ParserError.Failure
+                    ("Found an unbound macro argument (!$) in the output."))};
             case ParseUnit.Type.PartialMacroInvoke:
                 var (m, args) = u.partialMacroInvoke;
-                return Errorable<IEnumerable<string>>.Fail(
-                    $"The macro \"{m.name}\" was partially invoked with {args.Count(a => a.unit.type != ParseUnit.Type.LambdaMacroParam)} " +
-                    $" realized arguments ({m.nprms} required)");
+                return new List<LocatedParserError>{lpu.Locate(new ParserError.Failure
+                    ($"The macro \"{m.name}\" was partially invoked with {args.Count(a => a.unit.type != ParseUnit.Type.LambdaMacroParam)} " +
+                    $" realized arguments ({m.nprms} required)"))};
             default:
-                return Errorable<IEnumerable<string>>.Fail(
-                    "Illegal unit in output, please file a bug report");
+                return new List<LocatedParserError>{lpu.Locate(new ParserError.Failure(
+                    "Illegal unit in output, please file a bug report"))};
         }
     }
 
-    private static readonly ParsedUnit[] noParsedUnits = { };
-    private static Errorable<IEnumerable<ParsedUnit>> pFlatten2(LocatedParseUnit lpu) {
+    private static readonly Either<IEnumerable<ParsedUnit>, List<LocatedParserError>> 
+        noParsedUnits = Array.Empty<ParsedUnit>();
+    private static Either<IEnumerable<ParsedUnit>, List<LocatedParserError>> pFlatten2(LocatedParseUnit lpu) {
+        Either<IEnumerable<ParsedUnit>, List<LocatedParserError>> Fail(string err) =>
+            new List<LocatedParserError> { lpu.Locate(new ParserError.Failure(err)) };
         var u = lpu.unit;
         var s = u.sVal;
         var ls = u.nestVal;
@@ -529,40 +547,60 @@ public static class SMParser {
             case ParseUnit.Type.Atom:
                 return s.Length > 0 ?
                     Replacements.TryGetValue(s, out var ss) ?
-                        Errorable<IEnumerable<ParsedUnit>>.OK(ss.Select(x => S(x, lpu))) :
-                        new[] {S(s, lpu)} :
+                        new Either<IEnumerable<ParsedUnit>, List<LocatedParserError>>(
+                            ss.Select(x => S(x, lpu))) :
+                        (new[] {S(s, lpu)}) :
                     noParsedUnits;
             case ParseUnit.Type.Quote:
                 return new[] {S(s, lpu)};
             case ParseUnit.Type.Paren:
-                return ls.Select(pFlatten2).Acc().Map(l => (IEnumerable<ParsedUnit>) 
-                    new[] {P(l.Select(xs => xs.ToArray()).ToArray(), lpu)});
+                var results = new (ParsedUnit[], PositionRange)[ls.Count];
+                List<LocatedParserError>? errs = null;
+                for (int ii = 0; ii < ls.Count; ++ii) {
+                    var l = ls[ii];
+                    var fl = pFlatten2(l);
+                    if (fl.IsRight) {
+                        errs ??= new();
+                        errs.AddRange(fl.Right);
+                    } else if (errs is null) {
+                        results[ii] = (fl.Left.ToArray(), l.position);
+                    }
+                }
+                return errs is null ?
+                    new[] { P(results, in lpu.position) } :
+                    errs;
             case ParseUnit.Type.Words:
-                return ls.TakeWhile(l => l.unit.type != ParseUnit.Type.End).Select(pFlatten2).Acc()
-                    .Map(t => t.Join());
+                return ls
+                    .TakeWhile(l => l.unit.type != ParseUnit.Type.End)
+                    .Select(pFlatten2)
+                    .AccFailToR()
+                    .FMapL(t => t.Join())
+                    .FMapR(es => es.Join().ToList());
             case ParseUnit.Type.NoSpaceWords:
-                return ls.Select(pFlatten).Acc().Map(t => (IEnumerable<ParsedUnit>) 
-                    new[] {S(string.Concat(t.Join()), lpu)});
+                return ls
+                    .Select(pFlatten)
+                    .AccFailToR()
+                    .FMapL(t => (IEnumerable<ParsedUnit>) 
+                        new[] {S(string.Concat(t.Join()), lpu)})
+                    .FMapR(es => es.Join().ToList());
             case ParseUnit.Type.Newline:
                 return new[] {S("\n", lpu)};
             case ParseUnit.Type.MacroDef:
                 return noParsedUnits;
             case ParseUnit.Type.MacroVar:
-                return Errorable<IEnumerable<ParsedUnit>>.Fail($"Found a macro variable \"%{s}\" in the output.");
+                return Fail($"Found a macro variable \"%{s}\" in the output.");
             case ParseUnit.Type.LambdaMacroParam:
-                return Errorable<IEnumerable<ParsedUnit>>.Fail(
+                return Fail(
                     "Found an unbound macro argument (!$) in the output.");
             case ParseUnit.Type.PartialMacroInvoke:
                 var (m, args) = u.partialMacroInvoke;
-                return Errorable<IEnumerable<ParsedUnit>>.Fail(
+                return Fail(
                     $"The macro \"{m.name}\" was partially invoked with {args.Count(a => a.unit.type != ParseUnit.Type.LambdaMacroParam)} " +
                     $"realized arguments ({m.nprms} required)");
             default:
-                return Errorable<IEnumerable<ParsedUnit>>.Fail(
-                    "Illegal unit in output, please file a bug report");
+                return Fail("Illegal unit in output, please file a bug report");
         }
     }
-
 
     private static readonly Parser<LocatedParseUnit> FullParser =
         SetState(new State(ImmutableDictionary<string, Macro>.Empty))
@@ -576,20 +614,25 @@ public static class SMParser {
         var result = parse(FullParser, s);
         return result.IsFaulted ? Errorable<LPU>.Fail(result.Reply.Error.ToString()) : result.Reply.Result;
     }*/
-    private static Errorable<LocatedParseUnit> _SMParserExec(string s) {
+    private static Either<LocatedParseUnit, LocatedParserError> RunSMParser(string s) {
         var result = FullParser(new InputStream("State Machine", s, default!));
         return result.Status == ResultStatus.OK ? 
             result.Result.Value : 
-            Errorable<LocatedParseUnit>.Fail(result.Error?.Show(s) ?? "Parsing failed, but it's unclear why.");
+            (result.Error ?? new(0, new ParserError.Failure("Parsing failed, but it's unclear why.")));
     }
 
-    public static Errorable<IEnumerable<string>> SMParserExec(string s) =>
-        _SMParserExec(s).Bind(pFlatten);
+    public static Either<string, List<LocatedParserError>> RunSMParserAndRemakeAsString(string s) =>
+        RunSMParser(s)
+            //We only get at most one error from the base combinatorial parsing
+            .FMapR(err => new List<LocatedParserError>(){err})
+            .BindL(pFlatten)
+            .FMapL(ss => string.Join(" ", ss));
 
-    public static Errorable<string> RemakeSMParserExec(string s) => SMParserExec(s).Map(ss => string.Join(" ", ss));
-
-    public static Errorable<ParsedUnit[]> SMParser2Exec(string s) =>
-        _SMParserExec(s).Bind(lpu => pFlatten2(lpu).Map(x => x.ToArray()));
+    public static Either<ParsedUnit[], List<LocatedParserError>> ExportSMParserToParsedUnits(string s) =>
+        RunSMParser(s)
+            .FMapR(err => new List<LocatedParserError>(){err})
+            .BindL(lpu => pFlatten2(lpu)
+            .FMapL(x => x.ToArray()));
 
 
 }

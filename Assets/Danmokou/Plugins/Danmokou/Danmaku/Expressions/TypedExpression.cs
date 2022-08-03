@@ -94,7 +94,7 @@ public class TExArgCtx {
 
     private readonly RootCtx? ctx;
     private readonly TExArgCtx? parent;
-    public RootCtx Ctx => ctx ?? parent?.Ctx ?? throw new Reflector.StaticException("No RootCtx found");
+    public RootCtx Ctx => ctx ?? parent?.Ctx ?? throw new StaticException("No RootCtx found");
     private TExPI? _bpi;
     public TExPI BPI => _bpi ??= GetByExprType<TExPI>();
     public TExPI? MaybeBPI => _bpi ??= MaybeGetByExprType<TExPI>(out _);
@@ -123,7 +123,7 @@ public class TExArgCtx {
         argExTypeToIndexMap = new Dictionary<Type, int>();
         for (int ii = 0; ii < args.Length; ++ii) {
             if (argNameToIndexMap.ContainsKey(args[ii].name)) {
-                throw new Reflector.CompileException($"Duplicate argument name: {args[ii].name}");
+                throw new CompileException($"Duplicate argument name: {args[ii].name}");
             }
             argNameToIndexMap[args[ii].name] = ii;
             /*
@@ -144,10 +144,10 @@ public class TExArgCtx {
 
     public TEx<T> GetByName<T>(string name) {
         if (!argNameToIndexMap.TryGetValue(name, out var idx))
-            throw new Reflector.CompileException($"The variable \"{name}\" is not provided as an argument.");
+            throw new CompileException($"The variable \"{name}\" is not provided as an argument.");
         return args[idx].expr is TEx<T> arg ?
             arg :
-            throw new Reflector.BadTypeException($"The variable \"{name}\" (#{idx+1}/{args.Length}) is not of type {typeof(T).RName()}");
+            throw new BadTypeException($"The variable \"{name}\" (#{idx+1}/{args.Length}) is not of type {typeof(T).RName()}");
     }
     public TEx<T>? MaybeGetByName<T>(string name) {
         if (!argNameToIndexMap.TryGetValue(name, out var idx))
@@ -155,11 +155,11 @@ public class TExArgCtx {
         return args[idx].expr is TEx<T> arg ?
             arg :
             //Still throw an error in this case
-            throw new Reflector.BadTypeException($"The variable \"{name}\" (#{idx+1}/{args.Length}) is not of type {typeof(T).RName()}");
+            throw new BadTypeException($"The variable \"{name}\" (#{idx+1}/{args.Length}) is not of type {typeof(T).RName()}");
     }
     public Tx GetByExprType<Tx>(out int idx) where Tx : TEx {
         if (!argExTypeToIndexMap.TryGetValue(typeof(Tx), out idx))
-            throw new Reflector.CompileException($"No variable of type {typeof(Tx).RName()} is provided as an argument.");
+            throw new CompileException($"No variable of type {typeof(Tx).RName()} is provided as an argument.");
         return (Tx)args[idx].expr;
     }
 

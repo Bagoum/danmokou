@@ -1,4 +1,5 @@
 ﻿using System;
+using Danmokou.Core;
 using NUnit.Framework;
 using Danmokou.DMath;
 using Danmokou.DMath.Functions;
@@ -21,9 +22,9 @@ namespace Danmokou.Testing {
                 new DelegateArg<float>("myVar3")
             );
             TAssert.VecEq(func(4f, 7f, 8f), new Vector3(4f, 7f, 8f));
-            Assert.Throws<Reflector.CompileException>(() => CompileDelegate<Func<float, float>>("&doesNotExist",
+            Assert.Throws<CompileException>(() => CompileDelegate<Func<float, float>>("&doesNotExist",
                 new DelegateArg<float>("myVar1")));
-            Assert.Throws<Reflector.BadTypeException>(() => CompileDelegate<Func<float, Vector2, float>>("&myVec",
+            Assert.Throws<BadTypeException>(() => CompileDelegate<Func<float, Vector2, float>>("&myVec",
                 new DelegateArg<float>("myFloat"),
                 new DelegateArg<Vector2>("myVec")));
 

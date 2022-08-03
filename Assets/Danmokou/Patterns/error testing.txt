@@ -7,7 +7,77 @@ phase(0)
         shift-phase-to(1)
 
     
-phase 0
+    
+
+!!{ colors { blue purple pink red orange yellow green teal black  }
+!!{ rainbow { red orange yellow green blue pink  }
+!!{ yukac { teal purple pink red orange yellow  }
+!!{ yukac1 { red orange yellow }
+!!{ yukac2 {  teal blue pink  }
+!!{ yukac_4 { blue teal red yellow }
+!{ power1()
+sync powerup1 <> powerup2
+	x-powerup-1 x-powerdown-1
+	witha 0.9 lerp 0 1 t purple pink
+	witha 0.9 yellow
+	1.5 2 0 0.5
+!}
+!{ power1long()
+sync powerup1 <> powerup x-powerup-1
+	witha 0.9 lerp 0 3.7 t purple yellow
+	3 5
+!}
+
+##2
+<!> bosscutin
+<!> hpi 12000 4
+<!> type non :simp.boss.yukari.rabenflug #{
+<!> root 0 1.5
+<!> showlives 4
+phase 31
     paction 0
-        position 0 0
-        sync circle-red/w <> s tprot(px(mod(5, 4)))
+		async lightning-*/w <90> gir2d (^ dl 0.4) 600 _ <> {
+		} gcr2 24 5 <-20> {
+			center
+			color { purple pink yellow pink purple }
+			sfx x-lightning
+		} pather 1 0.7 tp
+			lerpt 0.7 1.6 cx 4 zero
+			py * -2 -m t 0.4
+			{ }
+		
+		gtr {
+			wt	420 _
+			wait-child
+			preloop lr =f pm1 t
+		} saction 0 :3
+			$power1
+			move-target 1.5 io-sine pxy * &lr rand 1 1.4 y
+			sync zonelaser-*/b <> gsr2c 3 { 
+				sfx x-crow
+				target a Lplayer
+				p	this
+			} { 
+				gsr {
+					colorf { yellow purple pink } p
+				} safelaser 5 { dsfx }
+				gsr {
+					resetcolor 
+					color icrow
+					offset <-1;:>
+				} summons( :: {
+					t	* 5 t
+				} roffset pxy
+					+ * 0.3 &t cos * 1 &t
+					sin * 1 &t,
+					(async gem-*/ <90> gcr2d (^ dl 0.8) 6 _ <> {
+						cancel offscreenby 0.5 loc
+						colorf {  yellow purple pink  } p1
+						p	add
+						sfxif	x-fire-burst-1 divby 4 t
+					} gsr {
+						face v
+					} s tprot lerp 0.6 0.9 (- t * /i dl -6f mod 6 p2) cy 0.9 cx 2.6))
+			}
+#}
+

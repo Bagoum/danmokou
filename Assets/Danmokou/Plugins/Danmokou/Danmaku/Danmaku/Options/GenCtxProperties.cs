@@ -727,7 +727,7 @@ public class GenCtxProperties<T> {
         } else if (t == tTP) {
             allowWait = true;
             allowWaitChild = true;
-        } else throw new Reflector.StaticException($"Cannot call GenCtxProperties with class {t.RName()}");
+        } else throw new StaticException($"Cannot call GenCtxProperties with class {t.RName()}");
         foreach (var prop in props.Unroll().OrderBy(x => x.Priority)) {
             if (prop is TimesProp gt) {
                 maxTimes = gt.max ?? maxTimes;

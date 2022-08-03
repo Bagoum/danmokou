@@ -92,7 +92,7 @@ public static partial class Reflector {
                     AddMI(ga.alias, gmi);
                     addNormal = false;
                 } else if (attr is FallthroughAttribute fa) {
-                    var sig = MethodSignature.FromMethod(mi);
+                    var sig = MethodSignature.FromMethod(mi, isFallthrough: true);
                     if (sig.Params.Length != 1) {
                         throw new StaticException($"Fallthrough methods must have exactly one argument: {mi.Name}");
                     }
@@ -187,7 +187,7 @@ public static partial class Reflector {
                 funcifyTypesCache[(member, t, r)] = 
                     new FuncedMethodSignature<T,R>(method.Mi, method.CalledAs, fTypes, baseTypes);
             }
-            return funcifyTypesCache[(member, t, r)] as FuncedMethodSignature<T, R>;
+            return (funcifyTypesCache[(member, t, r)] as FuncedMethodSignature<T, R>)!;
             
         
             // Where arg is the type of a parameter for a recorded function R member(...ARG, ...),
@@ -210,7 +210,7 @@ public static partial class Reflector {
                 void AddDefuncifier(Type ft, Func<object, object, object> func) {
                     funcConversions[(wrappedType, ft)] = rewrapper == null ?
                         func :
-                        (fobj, x) => FuncInvoke(rewrapper, Func2Type(baseType, wrappedType), func(fobj, x));
+                        (fobj, x) => FuncInvoke(rewrapper!, Func2Type(baseType, wrappedType), func(fobj, x));
                 }
                 
                 if (funcifiableReturnTypes.Contains(baseType)) {

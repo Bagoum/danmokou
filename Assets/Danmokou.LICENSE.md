@@ -29,6 +29,7 @@ This project consumes the following projects as DLLs under Assets/Danmokou/Plugi
 - [MathNet*](https://www.nuget.org/packages/MathNet.Numerics)
 - [System.Collections.Immutable](https://www.nuget.org/packages/System.Collections.Immutable/)
 - [ExpressionToString](https://github.com/Bagoum/FastExpressionCompiler)
+- [LanguageServer.Contracts](https://github.com/Bagoum/LanguageServer.NET), based on [LanguageServer.NET](https://github.com/CXuesong/LanguageServer.NET)
 
 The directory Assets/TextMeshPro contains default imports from the TextMeshPro plugin for Unity. TextMeshPro is licensed under the [Unity Companion License](https://docs.unity3d.com/Packages/com.unity.textmeshpro@3.0/license/LICENSE.html). 
 
@@ -268,6 +269,10 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
+
+### LanguageServer.NET: Apache 2.0
+
+[LanguageServer.NET/LICENSE at master · CXuesong/LanguageServer.NET · GitHub](https://github.com/CXuesong/LanguageServer.NET/blob/master/LICENSE)
 
 ### Taisei Project
 

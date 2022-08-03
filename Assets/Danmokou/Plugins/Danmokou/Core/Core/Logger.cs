@@ -12,6 +12,7 @@ using BagoumLib.Events;
 using BagoumLib.Expressions;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
+using static Danmokou.Core.LogUtils;
 
 namespace Danmokou.Core {
 public static class Logs {
@@ -20,7 +21,7 @@ public static class Logs {
 
     public static readonly ISubject<LogMessage> DMKLogs = new Event<LogMessage>();
 
-    private static readonly string? logFile;
+    public static readonly string? logFile;
     private static StreamWriter? fileStream;
     private const string LOGDIR = "DMK_Logs/";
     private static readonly List<IDisposable> listeners = new List<IDisposable>();
@@ -28,7 +29,9 @@ public static class Logs {
     public static bool Verbose { get; set; } = true;
 
     static Logs() {
+#if UNITY_EDITOR
         if (!Application.isPlaying) return;
+#endif
         var d = DateTime.Now;
         logFile = $"{LOGDIR}log_{d.Year}-{d.Month}-{d.Day}-{d.Hour}-{d.Minute}-{DateTime.Now.Second}.log";
         FileUtils.CheckPath(ref logFile);
@@ -64,9 +67,6 @@ public static class Logs {
         Log(msg, true, LogLevel.ERROR);
     }
 
-    private static string PrintException(Exception e, string prefixMsg="") => 
-        (string.IsNullOrWhiteSpace(prefixMsg) ? "" : $"{prefixMsg}\n") +
-        Exceptions.PrintNestedException(e);
 
     private static void PrintToUnityLog(LogMessage lm) {
         if (!Verbose && (int) lm.Level < MIN_LEVEL) return;
@@ -87,10 +87,19 @@ public static class Logs {
             _ => LogType.Log
         }, LogOption.NoStacktrace, null, msg.Replace("{", "{{").Replace("}", "}}"));
     }
+}
 
+//Avoid static instantiation of Logs class when using for language server
+public static class LogUtils {
+    public static string PrintException(Exception e, string prefixMsg="") => 
+        e is ReflectionException re ? 
+            PrintException(re.WithPositionInMessage(), prefixMsg) :
+            (string.IsNullOrWhiteSpace(prefixMsg) ? "" : $"{prefixMsg}\n") +
+            Exceptions.PrintNestedException(e);
+    
     private static readonly CSharpTypePrinter TypePrinter = new();
     private static readonly CSharpTypePrinter NSTypePrinter = new() { PrintTypeNamespace = _ => true };
-    private static string GenerateStackTrace(int skipFrames = 5) {
+    public static string GenerateStackTrace(int skipFrames = 5) {
         var sb = new StringBuilder();
         var st = new StackTrace(skipFrames, true);
         for (int ii = 0; ii < st.FrameCount; ++ii) {
@@ -120,6 +129,7 @@ public static class Logs {
 
     public static string ToFileLink(string? filename, int line, string? content = null) =>
         $"<a href=\"{filename}\" line=\"{line}\">{content ?? $"{filename}:{line}"}</a>";
-
 }
+
+
 }

@@ -10,7 +10,9 @@ namespace Danmokou.Core {
 [LocalizationStringsRepo]
 public static partial class LocalizedStrings {
     static LocalizedStrings() {
+    #if UNITY_EDITOR
         if (!Application.isPlaying) return;
+    #endif
         //Load strings from all classes labeled [LocalizationStringsRepo] into the runtime data map
         foreach (var t in ReflectorUtils.ReflectableAssemblyTypes
             .Where(a => a.GetCustomAttributes(false).Any(c => c is LocalizationStringsRepoAttribute))) {

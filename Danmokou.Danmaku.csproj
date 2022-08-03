@@ -70,7 +70,6 @@
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\VN\Characters\KosuzuMimic.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\UI\FixedXMLHelper.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Behavior\Display\PowerAura.cs" />
-     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Reflection\Exceptions.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Services\GameManagement.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\ADV\ADVManager.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\VN\Characters\SeigaMimic.cs" />
@@ -376,6 +375,8 @@
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\UI\FadeWhenPlayerNearby.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Math\MathRepos\ExMV3.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Math\MathRepos\RV2Repo.cs" />
+     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Reflection\ReflectDiagnostic.cs" />
+     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Reflection\AnalysisHelpers.cs" />
      <None Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Danmokou.Danmaku.asmdef" />
      <Reference Include="UnityEngine">
      <HintPath>C:\Program Files\Unity\Hub\Editor\2021.3.6f1\Editor\Data\Managed\UnityEngine\UnityEngine.dll</HintPath>
@@ -658,6 +659,9 @@
      </Reference>
      <Reference Include="Mizuhashi">
      <HintPath>C:\bex\mnt\e\Workspace\unity\Danmokou\Assets\SZYU\Plugins\DLLs\Mizuhashi.dll</HintPath>
+     </Reference>
+     <Reference Include="LanguageServer.Contracts">
+     <HintPath>C:\bex\mnt\e\Workspace\unity\Danmokou\Assets\Danmokou\Plugins\DLLs\LanguageServer.Contracts.dll</HintPath>
      </Reference>
      <Reference Include="mscorlib">
      <HintPath>C:\Program Files\Unity\Hub\Editor\2021.3.6f1\Editor\Data\UnityReferenceAssemblies\unity-4.8-api\mscorlib.dll</HintPath>

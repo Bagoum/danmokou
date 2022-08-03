@@ -112,7 +112,7 @@ public static class ReflectEx {
             "" :
             "\n\tIf you are defining a bullet control or some other unscoped function, " +
             "then you may need to make the reference explicit by prefixing it with \"&.\" instead of \"&\".";
-        throw new Reflector.CompileException(
+        throw new CompileException(
             $"The reference {alias} is used, but does not have a value.{maybe_outofscope}");
     }
 

@@ -93,7 +93,7 @@ public class FileLinkAttribute : Attribute {
         this.line = line;
     }
     
-    public string FileLink(string? content = null) => Logs.ToFileLink(file, line, content);
+    public string FileLink(string? content = null) => LogUtils.ToFileLink(file, line, content);
 }
 
 /// <summary>

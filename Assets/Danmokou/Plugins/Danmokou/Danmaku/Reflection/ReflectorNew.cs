@@ -33,7 +33,7 @@ public static partial class Reflector {
             { typeof(ExBPY), typeof(BPY) },
             { typeof(ExBPRV2), typeof(BPRV2) },
             { typeof(Func<TExArgCtx, TEx<bool>>), typeof(Pred) },
-            { typeof(Func<ITexMovement, TEx<float>, TExArgCtx, TExV2, TEx>), typeof(VTP) },
+            { typeof(Func<ITexMovement, TEx<float>, TExArgCtx, TExV3, TEx>), typeof(VTP) },
             { typeof(Func<ITexMovement, TEx<float>, TEx<float>, TExArgCtx, TExV2, TEx>), typeof(LVTP) },
             { typeof(Func<TExSBC, TEx<int>, TEx<BagoumLib.Cancellation.ICancellee>, TExArgCtx, TEx>), typeof(SBCF) }
         };
@@ -52,6 +52,7 @@ public static partial class Reflector {
                 Attribute.GetCustomAttributes(pi).Any(x => x is NonExplicitParameterAttribute));
 
         public string Description => $"{Name}<{CSharpTypePrinter.Default.Print(Type)}>";
+        public string AsParameter => $"{Type.SimpRName()} {Name}";
         public string SimplifiedDescription => $"\"{Name}\" (type: {SimplifiedExprPrinter.Default.Print(Type)})";
     }
 
@@ -62,17 +63,40 @@ public static partial class Reflector {
     /// <param name="CalledAs">The name by which the user called the method (which may be an alias).</param>
     /// <param name="Params">Simplified description of the method parameters.</param>
     public record MethodSignature(MethodBase Mi, string? CalledAs, NamedParam[] Params) {
+        public bool IsFallthrough { get; init; } = false;
         public string TypeName => Mi.DeclaringType!.RName();
-        public string Name => (CalledAs == null || CalledAs == Mi.Name.ToLower()) ? Mi.Name : 
-            $"{Mi.Name} (called via alias '{CalledAs}')";
-        public string TypeEnclosedName => Mi.Name == ".ctor" ?
-            $"new {TypeName}" :
-            $"{TypeName}.{Name}";
+        private bool isCtor => Mi.Name == ".ctor";
+        public string Name => 
+            isCtor ? 
+                $"new {TypeName}" :
+                (CalledAs == null || CalledAs == Mi.Name.ToLower()) ? 
+                    Mi.Name : 
+                    $"{Mi.Name}/{CalledAs}";
+        public string TypeEnclosedName => 
+            isCtor ?
+                Name :
+                $"{TypeName}.{Name}";
+
+        public string AsSignature => 
+            isCtor ? 
+                $"new {TypeName}({string.Join(", ", Params.Select(p => p.AsParameter))})" :
+                $"{ReturnType.SimpRName()} {Name}({string.Join(", ", Params.Select(p => p.AsParameter))})";
+        
+        public string TypeOnlySignature {
+            get {
+                if (Params.Length == 0) 
+                    return isCtor ? "" : $"{ReturnType.SimpRName()}";
+                var suffix = isCtor ? "" : $": {ReturnType.SimpRName()}";
+                return $"({string.Join(", ", Params.Select(p => p.Type.SimpRName()))}){suffix}";
+            }
+        }
+
+
         public string FileLink =>
             Mi.DeclaringType!.GetCustomAttribute<ReflectAttribute>()?.FileLink(TypeEnclosedName) ??
             TypeEnclosedName;
 
-        public Type ReturnType => Mi switch {
+        public virtual Type ReturnType => Mi switch {
             ConstructorInfo constructorInfo => constructorInfo.DeclaringType!,
             MethodInfo methodInfo => methodInfo.ReturnType,
             _ => throw new ArgumentOutOfRangeException(nameof(Mi))
@@ -86,12 +110,12 @@ public static partial class Reflector {
         public virtual IAST ToAST(PositionRange pos, IAST[] arguments) => 
             new AST.MethodInvoke(pos, this, arguments);
         
-        public static MethodSignature FromMethod(MethodBase mi, string? calledAs = null, ParameterInfo[]? srcPrms = null) {
+        public static MethodSignature FromMethod(MethodBase mi, string? calledAs = null, ParameterInfo[]? srcPrms = null, bool isFallthrough = false) {
             srcPrms ??= mi.GetParameters();
             var nPrms = new NamedParam[srcPrms.Length];
             for (int ii = 0; ii < nPrms.Length; ++ii)
                 nPrms[ii] = srcPrms[ii];
-            return new(mi, calledAs, nPrms);
+            return new(mi, calledAs, nPrms) {IsFallthrough = isFallthrough};
         }
     }
 
@@ -114,6 +138,8 @@ public static partial class Reflector {
     /// </summary>
     public record FuncedMethodSignature<T, R>(MethodBase Mi, string? CalledAs, NamedParam[] FuncedParams,
         NamedParam[] BaseParams) : FuncedMethodSignature(Mi, CalledAs, FuncedParams, BaseParams) {
+        public override Type ReturnType => typeof(Func<T, R>);
+
         public override IAST ToAST(PositionRange pos, IAST[] arguments) =>
             new AST.FuncedMethodInvoke<T, R>(pos, this, arguments);
 
@@ -203,7 +229,7 @@ public static partial class Reflector {
             if (CompileOptions.ContainsKey(compiledType))
                 throw new StaticException(
                     $"Cannot have multiple expression compilers for the same return type {compiledType}.");
-            var sig = MethodSignature.FromMethod(compiler);
+            var sig = MethodSignature.FromMethod(compiler, isFallthrough: true);
             CompileOptions[compiledType] = (sig.Params[0].Type, sig);
         }
     }

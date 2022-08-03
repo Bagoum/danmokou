@@ -42,17 +42,17 @@ public static class ParserTests {
     public static void Errors() {
         ThrowsMessage("do not enclose the entire function", () => "+ 8 (if = p 0) 0 6".Into<BPY>());
         ThrowsMessage("must have exactly one argument", () => "(+ 8 * 5, x)".Into<FXY>());
-        ThrowsMessage("trying to create an object of type BPY", () => "+(x, *(x 2))".Into<FXY>());
+        ThrowsMessage("BPY, but then found extra text", () => "+(x, *(x 2))".Into<FXY>());
         
     }
 
     [Test]
     public static void GroupingErrors() {
-        ThrowsMessage("trying to create an object of type BPY", () => "+(x, (2)())".Into<FXY>());
-        ThrowsMessage("trying to create an object of type BPY", () => "modwithpause 5 (6 7) 8".Into<BPY>());
+        ThrowsMessage("BPY, but then found extra text", () => "+(x, (2)())".Into<FXY>());
+        ThrowsMessage("BPY, but then found extra text", () => "modwithpause 5 (6 7) 8".Into<BPY>());
         ThrowsMessage("Expected 4 explicit arguments.*contains 3", () => "modwithpause(5, (6 7), 8)".Into<BPY>());
         ThrowsMessage("could not parse the second", () => "mod(3 *, 5)".Into<FXY>());
-        ThrowsMessage("trying to create an object of type BPY", () => "+(2 * 5 x)".Into<FXY>());
+        ThrowsMessage("BPY, but then found extra text", () => "+(2 * 5 x)".Into<FXY>());
     }
     
     private static Vector2 V2(float x, float y) => new Vector2(x, y);

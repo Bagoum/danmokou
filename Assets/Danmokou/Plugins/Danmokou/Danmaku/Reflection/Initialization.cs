@@ -63,11 +63,11 @@ public static partial class Reflector {
             }
             void CreateAggregateMethod(MethodInfo gmi) {
                 var sig = MethodSignature.FromMethod(gmi);
-                if (sig.Params.Length != 2) throw new Exception($"Post-aggregator \"{method}\" doesn't have 2 arguments");
+                if (sig.Params.Length != 2) throw new StaticException($"Post-aggregator \"{method}\" doesn't have exactly 2 arguments");
                 var sourceType = sig.Params[0].Type;
                 var searchType = sig.Params[1].Type;
                 if (gmi.ReturnType != sourceType)
-                    throw new Exception($"Post-aggregator \"{method}\" has a different return and first argument type");
+                    throw new StaticException($"Post-aggregator \"{method}\" has a different return and first argument type");
                 postAggregators.SetDefaultSet(sourceType, shortcut,
                     new PostAggregate(priority, sourceType, searchType, sig));
             }

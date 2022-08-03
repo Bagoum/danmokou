@@ -276,22 +276,6 @@ public abstract class StateMachine {
         }
         return children;
     }*/
-    
-    private static AST ASTCreateChildren(Type? myType, IParseQueue q, int childCt = -1) {
-        var children = new List<IAST<StateMachine>>();
-        SMConstruction childType;
-        while (childCt-- != 0 && !q.Empty && 
-               (childType = CheckCreatableChild(myType, q.ScanNonProperty())) != SMConstruction.ILLEGAL) {
-            var newsm = Create(q.NextChild(), childType);
-            if (!q.IsNewlineOrEmpty) throw new Exception(
-                $"{q.GetLastPosition()}: Expected a newline, but found \"{q.Print()}\".");
-            children.Add(newsm);
-            if (newsm is AST.MethodInvoke miAst && miAst.Method.ReturnType == typeof(BreakSM)) {
-                break;
-            }
-        }
-        return new AST.SequenceList<StateMachine>(q.GetLastPosition(), children);
-    }
 
     private static readonly Type statesTyp = typeof(List<StateMachine>);
     private static readonly Type stateTyp = typeof(StateMachine);
@@ -338,31 +322,55 @@ public abstract class StateMachine {
             _ => new AST.MethodInvoke<StateMachine>(p, sig, args) 
                 {Type = AST.MethodInvoke.InvokeType.SM},
         };
-    private static IAST<StateMachine> Create(IParseQueue p, SMConstruction method) {
+    private static IAST<StateMachine> Create(IParseQueue q, SMConstruction method) {
         if (method == SMConstruction.ILLEGAL)
-            throw new Exception("Somehow received a Create(ILLEGAL) call in SM. This should not occur.");
-        MaybeQueueProperties(p);
-        string name = p.Next();
+            throw new StaticException("Somehow received a Create(ILLEGAL) call in SM. This should not occur.");
+        MaybeQueueProperties(q);
+        var (name, loc) = q.NextUnit(out int pind);
         var sig = GetSignature(ref name, ref method, out var myType);
         var prms = sig.Params;
                    
         var args = new IAST[prms.Length];
         if (prms.Length > 0) {
-            bool requires_children = prms[0].Type == statesTyp && !p.Ctx.props.trueArgumentOrder;
+            bool requires_children = prms[0].Type == statesTyp && !q.Ctx.props.trueArgumentOrder;
             int special_args_i = (requires_children) ? 1 : 0;
-            Reflector.FillASTArray(args, special_args_i, sig, p);
-            if (p.Ctx.QueuedProps.Count > 0)
-                throw new Exception($"{p.GetLastPosition()}: StateMachine {sig.FileLink} is not allowed to have phase properties.");
+            Reflector.FillASTArray(args, special_args_i, sig, q);
+            if (q.Ctx.QueuedProps.Count > 0)
+                throw q.WrapThrowHighlight(pind, $"StateMachine {q.AsFileLink(sig)} is not allowed to have phase properties.");
             int childCt = -1;
-            if (!p.IsNewlineOrEmpty) {
-                if (IsChildCountMarker(p.MaybeScan(), out int ct)) {
-                    p.Advance();
-                    childCt = ct;
-                } 
+            if (!q.IsNewlineOrEmpty && IsChildCountMarker(q.MaybeScan(), out int ct)) {
+                q.Advance();
+                childCt = ct;
             }
-            if (requires_children) args[0] = ASTCreateChildren(myType, p, childCt);
+            if (requires_children) {
+                var children = new List<IAST<StateMachine>>();
+                SMConstruction childType;
+                while (childCt-- != 0 && !q.Empty && 
+                       (childType = CheckCreatableChild(myType, q.ScanNonProperty())) != SMConstruction.ILLEGAL) {
+                    var newsm = Create(q.NextChild(), childType);
+                    if (!q.IsNewlineOrEmpty) {
+                        q.MaybeGetCurrentUnit(out var i);
+                        throw q.WrapThrowHighlight(i, "Expected a newline after constructing a StateMachine.");
+                    }
+                    children.Add(newsm);
+                    if (newsm is AST.MethodInvoke miAst && miAst.Method.ReturnType == typeof(BreakSM))
+                        break;
+                }
+                args[0] = new AST.SequenceList<StateMachine>(children.Count > 0 ? 
+                    children[0].Position.Merge(children[^1].Position) : loc, children);
+            }
         }
-        return Create(p.GetLastPosition(), method, sig, args);
+        //Due to inconsistent ordering of state machine arguments,
+        // we have to calculate the bounding position like this
+        var smallestStart = loc.Start;
+        var largestEnd = loc.End;
+        for (int ii = 0; ii < args.Length; ++ii) {
+            if (args[ii].Position.Start.Index < smallestStart.Index)
+                smallestStart = args[ii].Position.Start;
+            if (args[ii].Position.End.Index > largestEnd.Index)
+                largestEnd = args[ii].Position.End;
+        }
+        return Create(new PositionRange(smallestStart, largestEnd), method, sig, args);
     }
     
     private static bool IsChildCountMarker(string? s, out int ct) {
@@ -381,11 +389,11 @@ public abstract class StateMachine {
     private static void MaybeQueueProperties(IParseQueue p) {
         while (p.MaybeScan() == SMParser.PROP_KW) {
             p.Advance();
-            p.Ctx.QueuedProps.Add(p.NextChild().Into<PhaseProperty>());
+            var child = p.NextChild();
+            p.Ctx.QueuedProps.Add(child.IntoAST<PhaseProperty>());
             //Note that newlines are skipped in scan
             if (!p.IsNewline) 
-                throw new Exception(
-                    $"{p.GetLastPosition()} is missing a newline at the end of the the property declaration.");
+                throw child.WrapThrow("Missing a newline at the end of the the property declaration.");
         }
     }
 
@@ -395,7 +403,8 @@ public abstract class StateMachine {
         Profiler.BeginSample("SM AST construction");
         var ast = Create(p);
         Profiler.EndSample();
-        ast.WarnUsage(p.Ctx);
+        foreach (var d in ast.WarnUsage(p.Ctx))
+            d.Log();
         //TODO temp
         Logs.Log(ast.DebugPrintStringify());
         p.ThrowOnLeftovers(() => "Behavior script has extra text. Check the highlighted text for an illegal command.");
@@ -412,7 +421,7 @@ public abstract class StateMachine {
         while (!p.Empty) {
             MaybeQueueProperties(p);
             if (p.Ctx.QueuedProps.Count > 0) {
-                ps.Add(new PhaseProperties(p.Ctx.QueuedProps));
+                ps.Add(new PhaseProperties(p.Ctx.QueuedProps.Select(pp => pp.Evaluate()).ToList()));
                 p.Ctx.QueuedProps.Clear();
             }
             while (!p.Empty && p.MaybeScan() != SMParser.PROP_KW)
