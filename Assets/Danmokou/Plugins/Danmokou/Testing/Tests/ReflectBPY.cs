@@ -11,6 +11,7 @@ using Danmokou.Reflection;
 using UnityEngine;
 using static Danmokou.Reflection.Compilers;
 using static Danmokou.DMath.Functions.BPYRepo;
+using static Danmokou.DMath.Functions.AtomicBPYRepo;
 using static NUnit.Framework.Assert;
 using static Danmokou.DMath.Functions.ExMLerps;
 

@@ -492,7 +492,7 @@ public class PhaseProperties {
             else if (prop is RootProp rp) {
                 StateMachine rm = new ReflectableLASM(SaveData.Settings.TeleportAtPhaseStart ?
                     SMReflection.Position(_ => rp.x, _ => rp.y) :
-                    SMReflection.MoveTarget(BPYRepo.Const(rp.t), ExMEasers.EIOSine, Parametrics.CXY(rp.x, rp.y)));
+                    SMReflection.MoveTarget(AtomicBPYRepo.Const(rp.t), ExMEasers.EIOSine, Parametrics.CXY(rp.x, rp.y)));
                 rootMoves.Add(rp.who == null ? rm : RetargetUSM.Retarget(rm, rp.who));
             } else if (prop is ChallengeProp clp) 
                 challenges.Add(clp.c);

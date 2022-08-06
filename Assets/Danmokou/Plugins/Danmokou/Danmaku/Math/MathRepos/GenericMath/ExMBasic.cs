@@ -43,7 +43,7 @@ public static partial class ExM {
     /// <summary>
     /// Add two vectypes.
     /// </summary>
-    [Alias("+")] [WarnOnStrict]
+    [Alias("+")] [WarnOnStrict] [Operator]
     public static TEx<T> Add<T>(TEx<T> x, TEx<T> y) => x.Add(y);
     /// <summary>
     /// Add to the nonrotational components of an RV2.
@@ -69,12 +69,12 @@ public static partial class ExM {
     /// <summary>
     /// Subtract two vectypes.
     /// </summary>
-    [Alias("-")] [WarnOnStrict]
+    [Alias("-")] [WarnOnStrict] [Operator]
     public static TEx<T> Sub<T>(TEx<T> x, TEx<T> y) => x.Sub(y);
     /// <summary>
     /// Multiply a vectype by a number.
     /// </summary>
-    [Alias("*")] [WarnOnStrict]
+    [Alias("*")] [WarnOnStrict] [Operator]
     public static TEx<T> Mul<T>(tfloat x, TEx<T> y) => x.Mul(y);
 
     /// <summary>
@@ -94,50 +94,50 @@ public static partial class ExM {
     /// Divide two numbers. Alias: / x y
     /// </summary>
     /// <returns></returns>
-    [Alias("/")] [WarnOnStrict]
+    [Alias("/")] [WarnOnStrict] [Operator]
     public static tfloat Div(tfloat x, tfloat y) => x.Div(y);
     /// <summary>
     /// Divide two numbers in reverse order (the same as / y x). 
     /// </summary>
-    [Alias("/i")]
+    [Alias("/i")] [Operator]
     public static tfloat DivInv(tfloat x, tfloat y) => y.Div(x);
     /// <summary>
     /// Divide two numbers and returns the floor.
     /// </summary>
-    [Alias("//")] [WarnOnStrict]
+    [Alias("//")] [WarnOnStrict] [Operator]
     public static tfloat FDiv(tfloat x, tfloat y) => Floor(x.Div(y));
     /// <summary>
     /// (1-x)
     /// </summary>
-    [Alias("c")]
+    [Alias("c")] [Operator]
     public static tfloat Complement(tfloat x) => E1.Sub(x);
     /// <summary>
     /// x*(1-y)
     /// </summary>
-    [Alias("*c")]
+    [Alias("*c")] [Operator]
     public static tfloat MulComplement(tfloat x, tfloat y) => x.Mul(E1.Sub(y));
     /// <summary>
     /// max(0, x-by).
     /// </summary>
-    [Alias("-m")]
+    [Alias("-m")] [Operator]
     public static tfloat SubMax0(tfloat x, tfloat by) => Max(E0, Sub(x, by));
     
     
     /// <summary>
     /// x+1
     /// </summary>
-    [Alias("++")]
+    [Alias("++")] [Operator]
     public static tfloat Increment(tfloat x) => x.Add(E1);
     /// <summary>
     /// x-1
     /// </summary>
-    [Alias("--")]
+    [Alias("--")] [Operator]
     public static tfloat Decrement(tfloat x) => x.Sub(E1);
 
     /// <summary>
     /// x-1-y
     /// </summary>
-    [Alias("---")]
+    [Alias("---")] [Operator]
     public static tfloat DecrementSubtract(tfloat x, tfloat y) => x.Sub(E1).Sub(y);
 
     /// <summary>
@@ -245,7 +245,7 @@ public static partial class ExM {
     /// Useful for getting polynomial curves that start at zero, eg. ^- t 1.1
     /// </summary>
     /// <returns></returns>
-    [Alias("^-")]
+    [Alias("^-")] [Operator]
     public static tfloat PowSub(tfloat bas, tfloat exp) {
         var val = VFloat();
         return Ex.Block(new[] {val},
@@ -262,7 +262,7 @@ public static partial class ExM {
     /// <param name="bas">Base</param>
     /// <param name="exp">Exponent</param>
     /// <returns></returns>
-    [Alias("^^")]
+    [Alias("^^")] [Operator]
     public static tfloat NPow(efloat bas, efloat exp) => EEx.Resolve(bas, exp, (x, y) =>
         Ex.Condition(Ex.LessThan(x, E0),
             Ex.Negate(Pow(Ex.Negate(x), y)),

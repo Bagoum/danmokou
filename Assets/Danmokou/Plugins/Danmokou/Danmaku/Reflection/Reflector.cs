@@ -37,7 +37,7 @@ public static partial class Reflector {
         if (method == "file") {
             q.Advance();
             var (file, fpos) = q.NextUnit(out _);
-            return new AST.SMFromFile(pos.Merge(fpos), file);
+            return new AST.SMFromFile(pos, fpos, file);
         } else if (method == "null") {
             q.Advance();
             return new AST.Preconstructed<StateMachine?>(pos, null);
@@ -125,9 +125,9 @@ public static partial class Reflector {
                 ResolveAsArray(typeof(string[]), p)
             );
         } else if (targetType == type_gcrule) {
-            var (rfrString, firstLoc) = p.NextUnit(out _);
+            var (rfrString, rfrLoc) = p.NextUnit(out _);
             ReferenceMember rfr = new ReferenceMember(rfrString);
-            var (OpAndMaybeType, _) = p.NextUnit(out var opInd);
+            var (OpAndMaybeType, opLoc) = p.NextUnit(out var opInd);
             var op = (GCOperator)ForceFuncTypeResolve(OpAndMaybeType, typeof(GCOperator))!;
             var latter = OpAndMaybeType.Split('=').Try(1) ??
                          throw p.WrapThrowHighlight(opInd,
@@ -138,7 +138,7 @@ public static partial class Reflector {
             IAST Handle<T>() {
                 //Separate this so p.Position accurately includes advancements made in IntoAST
                 var value = nested.IntoAST<GCXF<T>>();
-                return new AST.GCRule<T>(firstLoc.Merge(value.Position), ext, rfr, op, value);
+                return new AST.GCRule<T>(rfrLoc, opLoc, ext, rfr, op, value);
             }
             return ext switch {
                 ExType.Float => Handle<float>(),
@@ -148,18 +148,19 @@ public static partial class Reflector {
                 _ => throw new StaticException($"No GCRule handling for ExType {ext}")
             };
         } else if (targetType == type_alias) {
-            ExType declTyp = (ExType) ForceFuncTypeResolve(p.Next(), typeof(ExType))!;
-            string alias = p.Next();
+            var (declStr, declPos) = p.NextUnit(out _);
+            ExType declTyp = (ExType) ForceFuncTypeResolve(declStr, typeof(ExType))!;
+            var (alias, aliasPos) = p.NextUnit(out _);
             var req_type = typeof(Func<,>).MakeGenericType(typeof(TExArgCtx), AsWeakTExType(declTyp));
             //Separate this so p.Position accurately includes advancements made in FillASTArray (if it is a NLParseList)
             var arg = ReflectTargetType(p, req_type);
-            return new AST.Alias(p.Position, alias, arg);
+            return new AST.Alias(declPos, aliasPos, alias, arg);
         } else if (UseConstructor(targetType)) {
             //generic struct/tuple handling
             var sig = GetConstructorSignature(targetType);
             //Separate this so p.Position accurately includes advancements made in FillASTArray (if it is a NLParseList)
             var args = FillASTArray(sig, p); 
-            return new AST.MethodInvoke(p.Position, sig, args);
+            return new AST.MethodInvoke(p.Position, new(p.Position.Start, p.Position.Start), sig, args);
         } else return null;
     }
 

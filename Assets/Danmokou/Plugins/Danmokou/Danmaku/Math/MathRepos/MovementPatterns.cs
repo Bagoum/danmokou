@@ -4,7 +4,7 @@ using System.Linq.Expressions;
 using BagoumLib.Expressions;
 using Danmokou.Core;
 using Ex = System.Linq.Expressions.Expression;
-using static Danmokou.DMath.Functions.BPYRepo;
+using static Danmokou.DMath.Functions.AtomicBPYRepo;
 using GCP = Danmokou.Danmaku.Options.GenCtxProperty;
 using UnityEngine;
 using RV2r = Danmokou.DMath.Functions.BPRV2Repo;
@@ -40,7 +40,7 @@ public static partial class Parametrics {
     public static ExTP goOtherSide(ExBPY y) => PXY(b => Mul(ExC(-5f), Sign(X()(b))), y);
 
 }
-[Reflect]
+[Reflect] [Atomic]
 public static class MovementPatterns {
     private static ExBPY f(float f) => _ => ExC(f);
     public static RootedVTP Null(GCXF<Vector2> root) => new(root, VTPRepo.Null());

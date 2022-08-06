@@ -367,12 +367,12 @@ public static partial class Reflector {
         if (!postAggregators.TryGet2(rt, q.MaybeScan() ?? "", out _)) return result;
         var varStack1 = new StackList<IAST>();
         var varStack2 = new StackList<IAST>();
-        var opStack1 = new StackList<PostAggregate>();
-        var opStack2 = new StackList<PostAggregate>();
+        var opStack1 = new StackList<(PostAggregate pa, PositionRange loc)>();
+        var opStack2 = new StackList<(PostAggregate pa, PositionRange loc)>();
         varStack1.Push(result);
         while (!q.Empty && postAggregators.TryGet2(rt, q.MaybeScan() ?? "", out var pa)) {
-            opStack1.Push(pa);
             var op = q.NextUnit(out var opInd);
+            opStack1.Push((pa, op.Position));
             try {
                 varStack1.Push(ReflectTargetType(q.NextChild(), pa.searchType));
             } catch (Exception e) {
@@ -384,14 +384,14 @@ public static partial class Reflector {
             varStack2.Clear();
             opStack2.Clear();
             varStack2.Push(varStack1[0]);
-            var resolvePriority = opStack1.Min(o => o.priority);
+            var resolvePriority = opStack1.Min(o => o.pa.priority);
             for (int ii = 0; ii < opStack1.Count; ++ii) {
                 var op = opStack1[ii];
-                if (op.priority == resolvePriority) {
+                if (op.pa.priority == resolvePriority) {
                     var arg1 = varStack2.Pop();
                     var arg2 = varStack1[ii + 1];
                     varStack2.Push(
-                        new AST.MethodInvoke(arg1.Position.Merge(arg2.Position), op.sig, arg1, arg2) 
+                        new AST.MethodInvoke(arg1.Position.Merge(arg2.Position), op.loc, op.pa.sig, arg1, arg2) 
                             {Type = AST.MethodInvoke.InvokeType.PostAggregate });
                 } else {
                     varStack2.Push(varStack1[ii + 1]);
@@ -420,7 +420,7 @@ public static partial class Reflector {
             q.Advance();
             //Separate this so q.Position accurately includes advancements made in FillASTArray (if it is a NLParseList)
             var args = FillASTArray(sig, q);
-            return sig.ToAST(q.Position, args);
+            return sig.ToAST(q.Position, member.Position, args);
         }
         return null;
     }

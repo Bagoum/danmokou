@@ -285,7 +285,7 @@ public abstract class StateMachine {
     public static IAST<StateMachine> Create(string name, object?[] args) {
         var method = SMConstruction.ANY;
         var sig = GetSignature(ref name, ref method, out _);
-        return Create(default, method, sig, 
+        return Create(default, default, method, sig, 
             args.Select(x => (IAST)new AST.Preconstructed<object?>(default, x)).ToArray());
     }
 
@@ -310,16 +310,16 @@ public abstract class StateMachine {
     }
 
     
-    private static IAST<StateMachine> Create(PositionRange p, SMConstruction method, Reflector.MethodSignature sig, IAST[] args) => method switch {
+    private static IAST<StateMachine> Create(PositionRange loc, PositionRange callLoc, SMConstruction method, Reflector.MethodSignature sig, IAST[] args) => method switch {
             SMConstruction.AS_REFLECTABLE =>
             new ASTFmap<TaskPattern, StateMachine>(x => new ReflectableLASM(x),
-                new AST.MethodInvoke<TaskPattern>(p, sig, args) 
+                new AST.MethodInvoke<TaskPattern>(loc, callLoc, sig, args) 
                     {Type = AST.MethodInvoke.InvokeType.SM}),
             SMConstruction.AS_TREFLECTABLE =>
             new ASTFmap<TTaskPattern, StateMachine>(x => new ReflectableSLSM(x),
-                new AST.MethodInvoke<TTaskPattern>(p, sig, args) 
+                new AST.MethodInvoke<TTaskPattern>(loc, callLoc, sig, args) 
                     {Type = AST.MethodInvoke.InvokeType.SM}),
-            _ => new AST.MethodInvoke<StateMachine>(p, sig, args) 
+            _ => new AST.MethodInvoke<StateMachine>(loc, callLoc, sig, args) 
                 {Type = AST.MethodInvoke.InvokeType.SM},
         };
     private static IAST<StateMachine> Create(IParseQueue q, SMConstruction method) {
@@ -370,7 +370,7 @@ public abstract class StateMachine {
             if (args[ii].Position.End.Index > largestEnd.Index)
                 largestEnd = args[ii].Position.End;
         }
-        return Create(new PositionRange(smallestStart, largestEnd), method, sig, args);
+        return Create(new PositionRange(smallestStart, largestEnd), loc, method, sig, args);
     }
     
     private static bool IsChildCountMarker(string? s, out int ct) {

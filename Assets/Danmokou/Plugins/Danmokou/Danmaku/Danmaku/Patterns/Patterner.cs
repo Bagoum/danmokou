@@ -158,7 +158,7 @@ public struct AsyncHandoff {
 /// </summary>
 [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
 [SuppressMessage("ReSharper", "UnusedMember.Global")]
-[Reflect]
+[Reflect] [Atomic]
 public static partial class AtomicPatterns {
     /// <summary>
     /// Do nothing.

@@ -132,5 +132,28 @@ public class ReflectIntoAttribute : Attribute {
 public class LocalizationStringsRepoAttribute : Attribute { }
 
 
+//INFORMATIONAL ATTRIBUTES
+//These attributes are used to provide richer semantic information for the
+// DMK language server.
+//It's not a big deal if they're missing on some methods.
+
+/// <summary>
+/// (Informational) The marked method is, semantically speaking, an operator.
+/// </summary>
+[AttributeUsage(AttributeTargets.Method)]
+public class OperatorAttribute : Attribute { }
+
+/// <summary>
+/// (Informational) The marked method is an "atomic" reflection method,
+///  ie. it does not recurse on higher-order functions.
+/// For example, "hpi" does not recurse, but "lerp" does recurse.
+/// <br/>When marking a class, it means that all methods in the class
+/// are atomic.
+/// </summary>
+[AttributeUsage(AttributeTargets.Method | AttributeTargets.Class)]
+public class AtomicAttribute : Attribute { }
+
+
+
 
 }

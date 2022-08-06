@@ -155,7 +155,7 @@ namespace Danmokou.Testing {
             Assert.AreEqual(cd(9.75f), cdc(9.75f), err);
             Assert.AreEqual(cd(13.75f), cd(17.75f), 0.0001f);
             Func<float, float> sc = x => 2f * Mathf.Sin(M.PI / 4 * x);
-            FXY s = FXY(EaseF(ExMEasers.EOutSine, 2, BPYRepo.X()));
+            FXY s = FXY(EaseF(ExMEasers.EOutSine, 2, AtomicBPYRepo.X()));
             AreEqual(s(0.2f), sc(0.2f), err);
             AreEqual(s(0.6f), sc(0.6f), err);
         }
@@ -170,7 +170,7 @@ namespace Danmokou.Testing {
 
         [Test]
         public static void TSmooth() {
-            FXY ios = FXY(EaseF(ExMEasers.EIOSine, 100, BPYRepo.X()));
+            FXY ios = FXY(EaseF(ExMEasers.EIOSine, 100, AtomicBPYRepo.X()));
             Assert.AreEqual(ios(10), 4.89434837f/2f, err);
             Assert.AreEqual(ios(50), 50, err);
         }

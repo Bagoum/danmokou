@@ -23,20 +23,22 @@ using ExBPRV2 = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions
 
 namespace Danmokou.Reflection {
 public static partial class Reflector {
+    private static readonly Dictionary<Type, Type> exTypeRemap = new() {
+        { typeof(ExTP), typeof(TP) },
+        { typeof(ExTP3), typeof(TP3) },
+        { typeof(ExTP4), typeof(TP4) },
+        { typeof(ExBPY), typeof(BPY) },
+        { typeof(ExBPRV2), typeof(BPRV2) },
+        { typeof(Func<TExArgCtx, TEx<bool>>), typeof(Pred) },
+        { typeof(Func<ITexMovement, TEx<float>, TExArgCtx, TExV3, TEx>), typeof(VTP) },
+        { typeof(Func<ITexMovement, TEx<float>, TEx<float>, TExArgCtx, TExV2, TEx>), typeof(LVTP) },
+        { typeof(Func<TExSBC, TEx<int>, TEx<BagoumLib.Cancellation.ICancellee>, TExArgCtx, TEx>), typeof(SBCF) }
+    };
+    public static Type RemapExType(Type t) => exTypeRemap.TryGetValue(t, out var v) ? v : t;
     public static string SimpRName(this Type t) => SimplifiedExprPrinter.Default.Print(t);
     private class SimplifiedExprPrinter : CSharpTypePrinter {
         public new static readonly ITypePrinter Default = new SimplifiedExprPrinter();
-        private static readonly Dictionary<Type, Type> exTypeRemap = new() {
-            { typeof(ExTP), typeof(TP) },
-            { typeof(ExTP3), typeof(TP3) },
-            { typeof(ExTP4), typeof(TP4) },
-            { typeof(ExBPY), typeof(BPY) },
-            { typeof(ExBPRV2), typeof(BPRV2) },
-            { typeof(Func<TExArgCtx, TEx<bool>>), typeof(Pred) },
-            { typeof(Func<ITexMovement, TEx<float>, TExArgCtx, TExV3, TEx>), typeof(VTP) },
-            { typeof(Func<ITexMovement, TEx<float>, TEx<float>, TExArgCtx, TExV2, TEx>), typeof(LVTP) },
-            { typeof(Func<TExSBC, TEx<int>, TEx<BagoumLib.Cancellation.ICancellee>, TExArgCtx, TEx>), typeof(SBCF) }
-        };
+
         public override string Print(Type t) {
             if (exTypeRemap.TryGetValue(t, out var v))
                 return Print(v);
@@ -48,8 +50,8 @@ public static partial class Reflector {
     public record NamedParam(Type Type, string Name, bool LookupMethod, bool NonExplicit) {
         public static implicit operator NamedParam(ParameterInfo pi) => 
             new(pi.ParameterType, pi.Name, 
-                Attribute.GetCustomAttributes(pi).Any(x => x is LookupMethodAttribute),
-                Attribute.GetCustomAttributes(pi).Any(x => x is NonExplicitParameterAttribute));
+                pi.GetCustomAttribute<LookupMethodAttribute>() != null,
+                pi.GetCustomAttribute<NonExplicitParameterAttribute>() != null);
 
         public string Description => $"{Name}<{CSharpTypePrinter.Default.Print(Type)}>";
         public string AsParameter => $"{Type.SimpRName()} {Name}";
@@ -107,8 +109,8 @@ public static partial class Reflector {
             _ => Mi.Invoke(null, prms)
         };
 
-        public virtual IAST ToAST(PositionRange pos, IAST[] arguments) => 
-            new AST.MethodInvoke(pos, this, arguments);
+        public virtual IAST ToAST(PositionRange pos, PositionRange callPos, IAST[] arguments) => 
+            new AST.MethodInvoke(pos, callPos, this, arguments);
         
         public static MethodSignature FromMethod(MethodBase mi, string? calledAs = null, ParameterInfo[]? srcPrms = null, bool isFallthrough = false) {
             srcPrms ??= mi.GetParameters();
@@ -140,8 +142,8 @@ public static partial class Reflector {
         NamedParam[] BaseParams) : FuncedMethodSignature(Mi, CalledAs, FuncedParams, BaseParams) {
         public override Type ReturnType => typeof(Func<T, R>);
 
-        public override IAST ToAST(PositionRange pos, IAST[] arguments) =>
-            new AST.FuncedMethodInvoke<T, R>(pos, this, arguments);
+        public override IAST ToAST(PositionRange pos, PositionRange callPos, IAST[] arguments) =>
+            new AST.FuncedMethodInvoke<T, R>(pos, callPos, this, arguments);
 
         public override object? InvokeMi(params object?[] fprms)
             => InvokeMiFunced(fprms);

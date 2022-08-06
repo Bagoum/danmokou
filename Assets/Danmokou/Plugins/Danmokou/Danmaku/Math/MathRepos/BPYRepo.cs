@@ -8,32 +8,24 @@ using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.DMath;
 using Danmokou.Expressions;
+using JetBrains.Annotations;
 using Ex = System.Linq.Expressions.Expression;
 using static Danmokou.Expressions.ExMHelpers;
 using static Danmokou.Expressions.ExUtils;
 using static Danmokou.DMath.Functions.ExM;
 using static Danmokou.DMath.Functions.ExMDifficulty;
+using static Danmokou.DMath.Functions.AtomicBPYRepo;
 using ExBPY = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<float>>;
 using ExTP = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<UnityEngine.Vector2>>;
 
 namespace Danmokou.DMath.Functions {
-/// <summary>
-/// Functions that take in parametric information and return a number.
-/// </summary>
-[SuppressMessage("ReSharper", "UnusedMember.Global")]
-[Reflect]
-public static partial class BPYRepo {
 
-    /// <summary>
-    /// Random calls are dependent on the object's parametric ID.
-    /// This function rehashes the ID for the child call, so
-    /// any other random parametrics will no longer be dependent on the child call.
-    /// </summary>
-    /// <param name="b">Target parametric-number function</param>
-    /// <returns></returns>
-    public static ExBPY Rehash(ExBPY b) {
-        return bpi => b(bpi.Rehash());
-    }
+/// <summary>
+/// See <see cref="BPYRepo"/>
+/// </summary>
+[PublicAPI] [Reflect] [Atomic]
+public static class AtomicBPYRepo {
+    
     /// <summary>
     /// Return the parametric time, or if this is a float function, the input value.
     /// </summary>
@@ -144,6 +136,24 @@ public static partial class BPYRepo {
     public static ExBPY Const(float x) => bpi => Ex.Constant(x);
     
     
+}
+
+/// <summary>
+/// Functions that take in parametric information and return a number.
+/// </summary>
+[PublicAPI]  [Reflect]
+public static partial class BPYRepo {
+
+    /// <summary>
+    /// Random calls are dependent on the object's parametric ID.
+    /// This function rehashes the ID for the child call, so
+    /// any other random parametrics will no longer be dependent on the child call.
+    /// </summary>
+    /// <param name="b">Target parametric-number function</param>
+    /// <returns></returns>
+    public static ExBPY Rehash(ExBPY b) {
+        return bpi => b(bpi.Rehash());
+    }
     
     
 

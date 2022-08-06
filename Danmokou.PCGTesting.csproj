@@ -315,6 +315,9 @@
      <Reference Include="System.Collections.Immutable">
      <HintPath>C:\bex\mnt\e\Workspace\unity\Danmokou\Assets\Danmokou\Plugins\DLLs\System.Collections.Immutable.dll</HintPath>
      </Reference>
+     <Reference Include="LanguageServer.Contracts">
+     <HintPath>C:\bex\mnt\e\Workspace\unity\Danmokou\Assets\Danmokou\Plugins\DLLs\LanguageServer.Contracts.dll</HintPath>
+     </Reference>
      <Reference Include="System.Reactive">
      <HintPath>C:\bex\mnt\e\Workspace\unity\Danmokou\Assets\SZYU\Plugins\DLLs\System.Reactive.dll</HintPath>
      </Reference>
@@ -329,9 +332,6 @@
      </Reference>
      <Reference Include="Mizuhashi">
      <HintPath>C:\bex\mnt\e\Workspace\unity\Danmokou\Assets\SZYU\Plugins\DLLs\Mizuhashi.dll</HintPath>
-     </Reference>
-     <Reference Include="LanguageServer.Contracts">
-     <HintPath>C:\bex\mnt\e\Workspace\unity\Danmokou\Assets\Danmokou\Plugins\DLLs\LanguageServer.Contracts.dll</HintPath>
      </Reference>
      <Reference Include="nunit.framework">
      <HintPath>C:\bex\mnt\e\Workspace\unity\Danmokou\Library\PackageCache\com.unity.ext.nunit@1.0.6\net35\unity-custom\nunit.framework.dll</HintPath>

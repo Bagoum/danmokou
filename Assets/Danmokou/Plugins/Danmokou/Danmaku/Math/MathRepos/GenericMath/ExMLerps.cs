@@ -186,12 +186,12 @@ public static class ExMLerps {
     
     public static Func<TExArgCtx, TEx<T>> LerpT<T>(ExBPY zeroBound, ExBPY oneBound, 
         Func<TExArgCtx, TEx<T>> f1, Func<TExArgCtx, TEx<T>> f2) => b => 
-        Lerp(zeroBound(b), oneBound(b), BPYRepo.T()(b), f1(b), f2(b));
+        Lerp(zeroBound(b), oneBound(b), AtomicBPYRepo.T()(b), f1(b), f2(b));
     
     
     public static Func<TExArgCtx, TEx<T>> LerpT3<T>(ExBPY zeroBound, ExBPY oneBound, ExBPY twoBound, ExBPY threeBound, 
         Func<TExArgCtx, TEx<T>> f1, Func<TExArgCtx, TEx<T>> f2, Func<TExArgCtx, TEx<T>> f3) => b => 
-        Lerp3(zeroBound(b), oneBound(b), twoBound(b), threeBound(b), BPYRepo.T()(b), f1(b), f2(b), f3(b));
+        Lerp3(zeroBound(b), oneBound(b), twoBound(b), threeBound(b), AtomicBPYRepo.T()(b), f1(b), f2(b), f3(b));
     
     
     /// <summary>

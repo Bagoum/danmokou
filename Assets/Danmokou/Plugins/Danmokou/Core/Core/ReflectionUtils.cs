@@ -9,7 +9,7 @@ public static class ReflectorUtils {
     public static Type[] ReflectableAssemblyTypes => _reflectableAssemblyTypes ??=
         AppDomain.CurrentDomain.GetAssemblies()
             .Where(a => !a.IsDynamic)
-            .Where(a => a.GetCustomAttributes(false).Any(c => c is ReflectAttribute))
+            .Where(a => a.GetCustomAttribute<ReflectAttribute>() != null)
             .SelectMany(a => a.GetTypes())
             .ToArray();
     

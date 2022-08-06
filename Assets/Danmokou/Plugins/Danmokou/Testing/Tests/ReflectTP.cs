@@ -21,7 +21,7 @@ namespace Danmokou.Testing {
         
         [Test]
         public static void TPivot() {
-            var pivoter = TP(Pivot(BPYRepo.T(), _ => 3f, bp => PolarToXY(1f, bp.t.Mul(90f)), 
+            var pivoter = TP(Pivot(AtomicBPYRepo.T(), _ => 3f, bp => PolarToXY(1f, bp.t.Mul(90f)), 
                 PX(bp => Mul<float>(bp.t, 2f))));
             var bpi = ParametricInfo.WithRandomId(Vector2.down * 100f, 0);
             bpi.t = 0f;
@@ -38,7 +38,7 @@ namespace Danmokou.Testing {
 
         [Test]
         public static void TestConvert() {
-            var pivoter = TP(bp => RV2ToXY(V2V2F(PX(BPYRepo.T())(bp), PY(BPYRepo.P())(bp), BPYRepo.X()(bp))));
+            var pivoter = TP(bp => RV2ToXY(V2V2F(PX(AtomicBPYRepo.T())(bp), PY(AtomicBPYRepo.P())(bp), AtomicBPYRepo.X()(bp))));
             var bpi = new ParametricInfo(Vector2.left * 30, 4, 0, 3.5f);
             VecEq(pivoter(bpi), new V2RV2(3.5f, 0, 0, 4, -30).TrueLocation);
         }

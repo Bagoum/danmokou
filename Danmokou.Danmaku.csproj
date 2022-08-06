@@ -173,6 +173,7 @@
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Behavior\Cutin\CutinHelpers.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\VN\Characters\KeineMimic.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\VN\Characters\KasenMimic.cs" />
+     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Reflection\AnalysisHelpers.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Graphics\CurvedTileRenderLaser.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Math\MathRepos\Parametrics3.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Behavior\Functions\UniformFrameAnimator.cs" />
@@ -196,6 +197,7 @@
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Scriptables\Player\Ability\WitchTimeCfg.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Scriptables\AudioTrack.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Danmaku\Descriptors\SimpleBulletEmptyScript.cs" />
+     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Reflection\ReflectDiagnostic.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Services\RankManager.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Expressions\ReplaceConstVisitor.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Behavior\Display\DisplayController.cs" />
@@ -316,6 +318,7 @@
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Player\PlayerControllerHelpers.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Behavior\BEHItemDrops.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Graphics\NonUICameraContainer.cs" />
+     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Reflection\SemanticToken.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\ADV\MapStateManager.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Player\SupportAbility\Bombs\ReimuFantasySeal.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Achievements\RunningInstanceRequirements.cs" />
@@ -375,8 +378,6 @@
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\UI\FadeWhenPlayerNearby.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Math\MathRepos\ExMV3.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Math\MathRepos\RV2Repo.cs" />
-     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Reflection\ReflectDiagnostic.cs" />
-     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Reflection\AnalysisHelpers.cs" />
      <None Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Danmokou.Danmaku.asmdef" />
      <Reference Include="UnityEngine">
      <HintPath>C:\Program Files\Unity\Hub\Editor\2021.3.6f1\Editor\Data\Managed\UnityEngine\UnityEngine.dll</HintPath>
@@ -645,6 +646,9 @@
      <Reference Include="System.Collections.Immutable">
      <HintPath>C:\bex\mnt\e\Workspace\unity\Danmokou\Assets\Danmokou\Plugins\DLLs\System.Collections.Immutable.dll</HintPath>
      </Reference>
+     <Reference Include="LanguageServer.Contracts">
+     <HintPath>C:\bex\mnt\e\Workspace\unity\Danmokou\Assets\Danmokou\Plugins\DLLs\LanguageServer.Contracts.dll</HintPath>
+     </Reference>
      <Reference Include="System.Reactive">
      <HintPath>C:\bex\mnt\e\Workspace\unity\Danmokou\Assets\SZYU\Plugins\DLLs\System.Reactive.dll</HintPath>
      </Reference>
@@ -659,9 +663,6 @@
      </Reference>
      <Reference Include="Mizuhashi">
      <HintPath>C:\bex\mnt\e\Workspace\unity\Danmokou\Assets\SZYU\Plugins\DLLs\Mizuhashi.dll</HintPath>
-     </Reference>
-     <Reference Include="LanguageServer.Contracts">
-     <HintPath>C:\bex\mnt\e\Workspace\unity\Danmokou\Assets\Danmokou\Plugins\DLLs\LanguageServer.Contracts.dll</HintPath>
      </Reference>
      <Reference Include="mscorlib">
      <HintPath>C:\Program Files\Unity\Hub\Editor\2021.3.6f1\Editor\Data\UnityReferenceAssemblies\unity-4.8-api\mscorlib.dll</HintPath>

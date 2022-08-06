@@ -377,10 +377,8 @@ private static {TypePrinter.Print(f.returnType)} {f.fnName}({string.Join(", ",
             if (!typFieldsCache.TryGetValue(typ, out var members)) {
                 members = typFieldsCache[typ] = new List<(MemberInfo, ReflectIntoAttribute)>();
                 foreach (var m in typ.GetFields().Cast<MemberInfo>().Concat(typ.GetProperties())) {
-                    foreach (var c in m.GetCustomAttributes()) {
-                        if (c is ReflectIntoAttribute ra) {
-                            members.Add((m, ra));
-                        }
+                    foreach (var ra in m.GetCustomAttributes<ReflectIntoAttribute>()) {
+                        members.Add((m, ra));
                     }
                 }
             }

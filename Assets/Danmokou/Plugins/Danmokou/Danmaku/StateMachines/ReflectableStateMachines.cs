@@ -97,7 +97,7 @@ public class EventLASM : ReflectableLASM {
     public const float BossExplodeWait = 1.8f;
     private const float BossExplodeShake = 2.5f;
     private static readonly ReflWrap<FXY> ShakeMag = ReflWrap.FromFunc("BossExplode.ShakeMag",
-        () => Compilers.FXY(b => ExMLerps.EQuad0m10(BossExplodeWait, BossExplodeShake, BPYRepo.T()(b))));
+        () => Compilers.FXY(b => ExMLerps.EQuad0m10(BossExplodeWait, BossExplodeShake, AtomicBPYRepo.T()(b))));
 
     public static EventTask BossExplode() => smh => {
         UnityEngine.Object.Instantiate(ResourceManager.GetSummonable("bossexplode")).GetComponent<ExplodeEffect>().Initialize(BossExplodeWait, smh.Exec.rBPI.loc);

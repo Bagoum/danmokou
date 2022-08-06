@@ -25,14 +25,13 @@ public static partial class ExMPred {
     /// Return true.
     /// </summary>
     /// <returns></returns>
-    [Alias("persist")]
-    [Alias("_")]
+    [Alias("persist")] [Alias("_")] [Atomic]
     public static tbool True() => Ex.Constant(true);
     /// <summary>
     /// Returns false.
     /// </summary>
     /// <returns></returns>
-    [Alias("once")]
+    [Alias("once")] [Atomic]
     public static tbool False()  => Ex.Constant(false);
 
     /// <summary>
@@ -45,7 +44,7 @@ public static partial class ExMPred {
     /// <param name="pr1">First predicate</param>
     /// <param name="pr2">Second predicate</param>
     /// <returns></returns>
-    [Alias("&")] [WarnOnStrict]
+    [Alias("&")] [WarnOnStrict] [Operator]
     public static tbool And(tbool pr1, tbool pr2) {
         return Ex.AndAlso(pr1, pr2);
     }
@@ -55,7 +54,7 @@ public static partial class ExMPred {
     /// <param name="pr1">First predicate</param>
     /// <param name="pr2">Second predicate</param>
     /// <returns></returns>
-    [Alias("|")] [WarnOnStrict]
+    [Alias("|")] [WarnOnStrict] [Operator]
     public static tbool Or(tbool pr1, tbool pr2) {
         return Ex.OrElse(pr1, pr2);
     }
@@ -63,13 +62,13 @@ public static partial class ExMPred {
     /// <summary>
     /// Return true iff the first argument is equal to the second.
     /// </summary>
-    [Alias("=")]
+    [Alias("=")] [Operator]
     public static tbool Eq(tfloat b1, tfloat b2) => Ex.Equal(b1, b2);
     
     /// <summary>
     /// Return true iff the first argument is not equal to the second.
     /// </summary>
-    [Alias("=/=")]
+    [Alias("=/=")] [Operator]
     public static tbool Neq(tfloat b1, tfloat b2) => Ex.NotEqual(b1, b2);
 
 
@@ -79,7 +78,7 @@ public static partial class ExMPred {
     /// <param name="b1">First BPY function</param>
     /// <param name="b2">Second BPY function</param>
     /// <returns></returns>
-    [Alias(">")]
+    [Alias(">")] [Operator]
     public static tbool Gt(tfloat b1, tfloat b2) {
         return Ex.GreaterThan(b1, b2);
     }
@@ -89,7 +88,7 @@ public static partial class ExMPred {
     /// <param name="b1">First BPY function</param>
     /// <param name="b2">Second BPY function</param>
     /// <returns></returns>
-    [Alias(">=")]
+    [Alias(">=")] [Operator]
     public static tbool Geq(tfloat b1, tfloat b2) {
         return Ex.GreaterThanOrEqual(b1, b2);
     }
@@ -99,7 +98,7 @@ public static partial class ExMPred {
     /// <param name="b1">First BPY function</param>
     /// <param name="b2">Second BPY function</param>
     /// <returns></returns>
-    [Alias("<")]
+    [Alias("<")] [Operator]
     public static tbool Lt(tfloat b1, tfloat b2) {
         return Ex.LessThan(b1, b2);
     }
@@ -109,7 +108,7 @@ public static partial class ExMPred {
     /// <param name="b1">First BPY function</param>
     /// <param name="b2">Second BPY function</param>
     /// <returns></returns>
-    [Alias("<=")]
+    [Alias("<=")] [Operator]
     public static tbool Leq(tfloat b1, tfloat b2) {
         return Ex.LessThanOrEqual(b1, b2);
     }
@@ -120,6 +119,7 @@ public static partial class ExMPred {
     /// <param name="br1">Lower bound BPY function</param>
     /// <param name="br2">Upper bound BPY function</param>
     /// <returns></returns>
+    [Operator]
     public static tbool In(tfloat b, tfloat br1, tfloat br2) {
         var f = ExUtils.VFloat();
         return Ex.Block(new[] {f},

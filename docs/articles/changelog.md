@@ -21,6 +21,15 @@ The following features are planned for future releases.
 - [Backlog] Implementation of a TH18-like card engine
 - [Backlog] Procedural generation of stages and bullet patterns
 
+# v9.2.0 (2022/08/05)
+
+This release is primarily for the VSCode language extension.
+
+#### Features
+
+- There's now a Visual Studio Code language extension for the DMK scripting language:
+  - Note: I recommend setting "colorized bracket pairs" off in VSCode.
+
 # v9.1.0 (2022/07/17)
 
 This release includes various minor improvements on top of v9.0.0.

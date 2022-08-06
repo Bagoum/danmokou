@@ -12,7 +12,7 @@ namespace Danmokou.DMath.Functions {
 /// <summary>
 /// See <see cref="ExM"/>. This class contains functions related to difficulty control.
 /// </summary>
-[Reflect]
+[Reflect] [Atomic]
 public static class ExMDifficulty {
     //Note: difficulty is parsed statically at script compile time (when not using EXBAKE_SAVE/LOAD),
     //whereas rank is always dynamic.

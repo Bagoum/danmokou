@@ -609,11 +609,6 @@ public static class SMParser {
                 new ParserError.Failure($"The character '{p.Next}' could not be handled."), p.Index, p.Index + 1)))
             .Locate();
         
-    /*
-    private static Errorable<LPU> _SMParserExec(string s) {
-        var result = parse(FullParser, s);
-        return result.IsFaulted ? Errorable<LPU>.Fail(result.Reply.Error.ToString()) : result.Reply.Result;
-    }*/
     private static Either<LocatedParseUnit, LocatedParserError> RunSMParser(string s) {
         var result = FullParser(new InputStream("State Machine", s, default!));
         return result.Status == ResultStatus.OK ? 

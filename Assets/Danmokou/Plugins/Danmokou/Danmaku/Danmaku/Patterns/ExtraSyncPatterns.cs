@@ -20,7 +20,7 @@ using static Danmokou.Expressions.ExMHelpers;
 using static Danmokou.DMath.Functions.ExMMod;
 using static Danmokou.Danmaku.Patterns.PatternUtils;
 using static Danmokou.Danmaku.Options.GenCtxProperty;
-using static Danmokou.DMath.Functions.BPYRepo;
+using static Danmokou.DMath.Functions.AtomicBPYRepo;
 using static Danmokou.Danmaku.Patterns.AtomicPatterns;
 using ExBPY = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<float>>;
 using ExTP = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<UnityEngine.Vector2>>;

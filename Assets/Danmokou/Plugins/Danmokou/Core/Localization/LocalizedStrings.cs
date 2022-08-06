@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using BagoumLib.Culture;
 using BagoumLib.Reflection;
 using JetBrains.Annotations;
@@ -15,7 +16,7 @@ public static partial class LocalizedStrings {
     #endif
         //Load strings from all classes labeled [LocalizationStringsRepo] into the runtime data map
         foreach (var t in ReflectorUtils.ReflectableAssemblyTypes
-            .Where(a => a.GetCustomAttributes(false).Any(c => c is LocalizationStringsRepoAttribute))) {
+            .Where(a => a.GetCustomAttribute<LocalizationStringsRepoAttribute>() != null)) {
             if (t == typeof(LocalizedStrings)) continue;
             var map = t._StaticField<Dictionary<string, LString>>(nameof(_allDataMap));
             foreach (var k in map.Keys) {

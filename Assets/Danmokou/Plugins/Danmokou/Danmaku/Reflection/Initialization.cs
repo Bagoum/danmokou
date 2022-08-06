@@ -35,11 +35,9 @@ public static partial class Reflector {
         if (!Application.isPlaying && !RHelper.REFLECT_IN_EDITOR) return;
 #endif
         foreach (var type in ReflectorUtils.ReflectableAssemblyTypes) {
-            foreach (var ca in type.GetCustomAttributes()) {
-                if (ca is ReflectAttribute ra) {
-                    ReflectionData.RecordPublic(type, ra.returnType);
-                    break;
-                }
+            foreach (var ra in type.GetCustomAttributes<ReflectAttribute>()) {
+                ReflectionData.RecordPublic(type, ra.returnType);
+                break;
             }
         }
 
@@ -93,7 +91,6 @@ public static partial class Reflector {
         //public readonly Type sourceType;
         public readonly Type searchType;
         public readonly MethodSignature sig;
-        public object Invoke(object? a, object? b) => sig.InvokeMi(a, b);
         public readonly int priority;
 
         public PostAggregate(int priority, Type source, Type search, MethodSignature mi) {

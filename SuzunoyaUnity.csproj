@@ -340,6 +340,9 @@
      <Reference Include="System.Collections.Immutable">
      <HintPath>C:\bex\mnt\e\Workspace\unity\Danmokou\Assets\Danmokou\Plugins\DLLs\System.Collections.Immutable.dll</HintPath>
      </Reference>
+     <Reference Include="LanguageServer.Contracts">
+     <HintPath>C:\bex\mnt\e\Workspace\unity\Danmokou\Assets\Danmokou\Plugins\DLLs\LanguageServer.Contracts.dll</HintPath>
+     </Reference>
      <Reference Include="System.Reactive">
      <HintPath>C:\bex\mnt\e\Workspace\unity\Danmokou\Assets\SZYU\Plugins\DLLs\System.Reactive.dll</HintPath>
      </Reference>
@@ -354,9 +357,6 @@
      </Reference>
      <Reference Include="Mizuhashi">
      <HintPath>C:\bex\mnt\e\Workspace\unity\Danmokou\Assets\SZYU\Plugins\DLLs\Mizuhashi.dll</HintPath>
-     </Reference>
-     <Reference Include="LanguageServer.Contracts">
-     <HintPath>C:\bex\mnt\e\Workspace\unity\Danmokou\Assets\Danmokou\Plugins\DLLs\LanguageServer.Contracts.dll</HintPath>
      </Reference>
      <Reference Include="mscorlib">
      <HintPath>C:\Program Files\Unity\Hub\Editor\2021.3.6f1\Editor\Data\UnityReferenceAssemblies\unity-4.8-api\mscorlib.dll</HintPath>
