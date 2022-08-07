@@ -119,6 +119,10 @@ public static class ReflectEx {
     public static Func<TExArgCtx, TEx<T>> ReferenceLet<T>(string alias) => bpi => ReferenceExpr<T>(alias, bpi);
 
     //TODO consider replacing SafeResizeable here with a dictionary
+    
+    /// <summary>
+    /// A variable that can be saved and read between different bullets in public data hoisting as long as they use the same indexer value.
+    /// </summary>
     public readonly struct Hoist<T> {
         private readonly string name;
         private readonly SafeResizableArray<T> data;

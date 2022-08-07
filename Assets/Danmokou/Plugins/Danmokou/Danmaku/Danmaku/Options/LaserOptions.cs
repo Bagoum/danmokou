@@ -284,6 +284,9 @@ public readonly struct RealizedLaserOptions {
     }
 }
 
+/// <summary>
+/// A set of properties modifying the behavior of lasers.
+/// </summary>
 public class LaserOptions {
     public readonly (GCXF<float> max, GCXU<BPY>? var)? length;
     public readonly GCXU<BPY>? start;

@@ -136,9 +136,7 @@ public static partial class Reflector {
             var ext = (ExType)ForceFuncTypeResolve(latter.Length > 0 ? latter : p.Next(), typeof(ExType))!;
             var nested = p.NextChild();
             IAST Handle<T>() {
-                //Separate this so p.Position accurately includes advancements made in IntoAST
-                var value = nested.IntoAST<GCXF<T>>();
-                return new AST.GCRule<T>(rfrLoc, opLoc, ext, rfr, op, value);
+                return new AST.GCRule<T>(rfrLoc, opLoc, ext, rfr, op, nested.IntoAST<GCXF<T>>());
             }
             return ext switch {
                 ExType.Float => Handle<float>(),
@@ -152,15 +150,13 @@ public static partial class Reflector {
             ExType declTyp = (ExType) ForceFuncTypeResolve(declStr, typeof(ExType))!;
             var (alias, aliasPos) = p.NextUnit(out _);
             var req_type = typeof(Func<,>).MakeGenericType(typeof(TExArgCtx), AsWeakTExType(declTyp));
-            //Separate this so p.Position accurately includes advancements made in FillASTArray (if it is a NLParseList)
-            var arg = ReflectTargetType(p, req_type);
-            return new AST.Alias(declPos, aliasPos, alias, arg);
+            return new AST.Alias(declPos, aliasPos, alias, ReflectTargetType(p, req_type));
         } else if (UseConstructor(targetType)) {
             //generic struct/tuple handling
             var sig = GetConstructorSignature(targetType);
-            //Separate this so p.Position accurately includes advancements made in FillASTArray (if it is a NLParseList)
-            var args = FillASTArray(sig, p); 
-            return new AST.MethodInvoke(p.Position, new(p.Position.Start, p.Position.Start), sig, args);
+            var (args, argsLoc) = FillASTArray(sig, p);
+            var loc = argsLoc ?? p.Position;
+            return new AST.MethodInvoke(loc, new(loc.Start, loc.Start), sig, args);
         } else return null;
     }
 
@@ -204,22 +200,21 @@ public static partial class Reflector {
     public static IAST<Array> ResolveAsArray(Type eleType, IParseQueue q) {
         if (eleType == null) throw new StaticException($"Requested an array of null elements");
         if (IParseQueue.ARR_EMPTY.Contains(q.MaybeScan() ?? "")) {
-            q.Advance();
+            var (_, loc) = q.NextUnit(out _);
             var empty = Array.CreateInstance(eleType, 0);
-            return new AST.Preconstructed<Array>(q.Position, empty);
+            return new AST.Preconstructed<Array>(loc, empty);
         }
         if (q.MaybeScan() != IParseQueue.ARR_OPEN) {
-            //Separate this so p.Position accurately includes advancements made in FillASTArray (if it is a NLParseList)
             var ele = ReflectTargetType(q, eleType);
-            return new AST.Sequence(q.Position, eleType, new[] { ele });
+            return new AST.SequenceArray(ele.Position, eleType, new[] { ele });
         }
-        q.Advance(); // {
+        var (_, open) = q.NextUnit(out _); // {
         var tempList = new List<IAST>();
         while (q.MaybeScan() != IParseQueue.ARR_CLOSE) {
             tempList.Add(ReflectTargetType(q.NextChild(), eleType));
         }
-        q.Advance(); // }
-        return new AST.Sequence(q.Position, eleType, tempList.ToArray());
+        var (_, close) = q.NextUnit(out _); // }
+        return new AST.SequenceArray(open.Merge(close), eleType, tempList.ToArray());
     }
 
 

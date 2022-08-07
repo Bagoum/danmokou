@@ -59,6 +59,9 @@ public class SBOption {
     #endregion
 }
 
+/// <summary>
+/// A set of properties modifying the behavior of simple bullets.
+/// </summary>
 public class SBOptions {
     public readonly GCXU<BPY>? scale = null;
     public readonly GCXU<SBV2>? direction = null;

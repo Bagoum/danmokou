@@ -105,6 +105,9 @@ public static partial class ExM {
     /// <returns></returns>
     public static TEx<Vector2> LPlayer() => GetEnemyVisiblePlayer.Of();
 
+    /// <summary>
+    /// Get the location of the BehaviorEntity with the given ID.
+    /// </summary>
     public static TEx<Vector2> LBEH(BEHPointer beh) => Ex.Constant(beh).Field("beh").Field("BPI").Field("LocV2");
     
     private static readonly ExFunction distToWall =

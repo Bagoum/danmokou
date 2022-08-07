@@ -214,6 +214,9 @@ public readonly struct RealizedBehOptions {
     }
 }
 
+/// <summary>
+/// A set of properties modifying the behavior of BEH summons.
+/// </summary>
 public class BehOptions {
     public readonly bool smooth;
     public readonly StateMachine? sm;

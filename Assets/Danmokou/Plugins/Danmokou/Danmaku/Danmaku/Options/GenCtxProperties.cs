@@ -631,6 +631,10 @@ public static class GenCtxUtils {
     public static readonly Type tAP = typeof(AsyncPattern);
     public static readonly Type tTP = typeof(StateMachine);
 }
+
+/// <summary>
+/// A set of properties modifying the behavior of a generic repeater (GIRepeat/GCRepeat/GSRepeat).
+/// </summary>
 public class GenCtxProperties<T> {
     public readonly GCXF<float> times = defltTimes;
     public readonly int? maxTimes;

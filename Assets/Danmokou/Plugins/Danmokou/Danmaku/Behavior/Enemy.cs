@@ -478,7 +478,7 @@ public class Enemy : RegularUpdater {
         } else return false;
     }
 
-    private static readonly VTP SuicideVTP = VTPRepo.RVelocity(_ => new Vector2(1.6f, 0));
+    private static readonly VTP SuicideVTP = CSVTPRepo.RVelocity(_ => new Vector2(1.6f, 0));
     public void DoSuicideFire() {
         var bt = LevelController.DefaultSuicideStyle;
         if (string.IsNullOrWhiteSpace(bt)) 

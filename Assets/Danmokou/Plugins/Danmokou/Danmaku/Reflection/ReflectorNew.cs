@@ -39,10 +39,13 @@ public static partial class Reflector {
     private class SimplifiedExprPrinter : CSharpTypePrinter {
         public new static readonly ITypePrinter Default = new SimplifiedExprPrinter();
 
+        private static readonly Type[] BypassTypes = {
+            typeof(GCXU<>), typeof(TEx<>), typeof(EEx<>)
+        };
         public override string Print(Type t) {
             if (exTypeRemap.TryGetValue(t, out var v))
                 return Print(v);
-            if (t.IsConstructedGenericType && t.GetGenericTypeDefinition() == typeof(GCXU<>))
+            if (t.IsConstructedGenericType && BypassTypes.Contains(t.GetGenericTypeDefinition()))
                 return Print(t.GenericTypeArguments[0]);
             return base.Print(t);
         }
@@ -66,8 +69,8 @@ public static partial class Reflector {
     /// <param name="Params">Simplified description of the method parameters.</param>
     public record MethodSignature(MethodBase Mi, string? CalledAs, NamedParam[] Params) {
         public bool IsFallthrough { get; init; } = false;
-        public string TypeName => Mi.DeclaringType!.RName();
-        private bool isCtor => Mi.Name == ".ctor";
+        public string TypeName => Mi.DeclaringType!.SimpRName();
+        public bool isCtor => Mi.Name == ".ctor";
         public string Name => 
             isCtor ? 
                 $"new {TypeName}" :
@@ -90,6 +93,19 @@ public static partial class Reflector {
                     return isCtor ? "" : $"{ReturnType.SimpRName()}";
                 var suffix = isCtor ? "" : $": {ReturnType.SimpRName()}";
                 return $"({string.Join(", ", Params.Select(p => p.Type.SimpRName()))}){suffix}";
+            }
+        }
+
+        /// <summary>
+        /// Number of parameters that must be parsed by reflection.
+        /// </summary>
+        public int ExplicitParameterCount {
+            get {
+                var ct = 0;
+                for (int ii = 0; ii < Params.Length; ++ii)
+                    if (!Params[ii].NonExplicit)
+                        ++ct;
+                return ct;
             }
         }
 

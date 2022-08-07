@@ -353,7 +353,7 @@ public abstract class StateMachine {
                         throw q.WrapThrowHighlight(i, "Expected a newline after constructing a StateMachine.");
                     }
                     children.Add(newsm);
-                    if (newsm is AST.MethodInvoke miAst && miAst.Method.ReturnType == typeof(BreakSM))
+                    if (newsm is AST.MethodInvoke miAst && miAst.BaseMethod.ReturnType == typeof(BreakSM))
                         break;
                 }
                 args[0] = new AST.SequenceList<StateMachine>(children.Count > 0 ? 

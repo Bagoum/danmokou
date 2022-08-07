@@ -435,7 +435,7 @@ public static partial class AsyncPatterns {
     //This holds primarily due to EMLaser, which doesn't construct the node until coroutine execution time.
     /// <summary>
     /// Any firees will be assigned the transform parent with the given BehaviorEntity ID.
-    /// <para>Currently, this only works for lasers.</para>
+    /// <br/>Currently, this only works for lasers.
     /// </summary>
     /// <param name="behid">BehaviorEntity ID</param>
     /// <param name="next">Asynchronous invokee to modify</param>

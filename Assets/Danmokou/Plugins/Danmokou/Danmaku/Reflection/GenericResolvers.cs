@@ -59,35 +59,36 @@ public static partial class Reflector {
 
     /// <summary>
     /// Fill the argument array invoke_args by parsing elements from q according to type information in prms.
-    /// <br/>Returns asts.
     /// </summary>
     /// <param name="asts">Argument array to fill.</param>
     /// <param name="starti">Index of invoke_args to start from.</param>
     /// <param name="sig">Type information of arguments.</param>
     /// <param name="q">Queue from which to parse elements.</param>
-    public static IAST[] FillASTArray(IAST[] asts, int starti, MethodSignature sig, IParseQueue q) {
-        int nargs = 0;
+    public static (IAST[] asts, PositionRange? argRange) FillASTArray(IAST[] asts, int starti, MethodSignature sig, IParseQueue q) {
+        int nargs = sig.ExplicitParameterCount;
         var prms = sig.Params;
-        for (int ii = starti; ii < prms.Length; ++ii) {
-            if (!prms[ii].NonExplicit) ++nargs;
-        }
         if (nargs == 0) {
             if (!(q is ParenParseQueue) && !q.Empty) {
                 //Zero-arg functions may absorb empty parentheses
                 if (q.MaybeGetCurrentUnit(out _) is SMParser.ParsedUnit.Paren p) {
-                    if (p.Items.Length == 0) q.NextChild();
+                    if (p.Items.Length == 0) {
+                        q.Advance();
+                        return (asts, p.Position);
+                    }
                 }
             }
-            return asts;
+            return (asts, null);
         }
         if (!(q is ParenParseQueue)) {
-            var c = q.ScanChild();
-            if (c is ParenParseQueue p && p.Items.Length == 1 && nargs != 1) {
+            if (q.MaybeGetCurrentUnit(out _) is SMParser.ParsedUnit.Paren p && p.Items.Length == 1 && nargs != 1) {
                 // mod | (x) 3
                 //Leave the parentheses to be parsed by the first argument
             } else 
                 // mod | (x, 3)
                 //Use the parentheses to fill arguments
+                //OR
+                // mod | x 3
+                //Use NLParseList to fill arguments
                 q = q.NextChild();
         }
 
@@ -126,11 +127,11 @@ public static partial class Reflector {
             }
         }
         q.ThrowOnLeftovers(() => $"{q.AsFileLink(sig)} has extra text after all {prms.Length} arguments.");
-        return asts;
+        return (asts, q is ParenParseQueue pq ? pq.Position : asts.ToRange());
     }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static IAST[] FillASTArray(MethodSignature sig, IParseQueue q)
+    private static (IAST[] asts, PositionRange? argRange) FillASTArray(MethodSignature sig, IParseQueue q)
         => FillASTArray(new IAST[sig.Params.Length], 0, sig, q);
 
 
@@ -418,9 +419,8 @@ public static partial class Reflector {
     private static IAST? ReflectMethod(SMParser.ParsedUnit.Str member, Type rt, IParseQueue q) {
         if (TryGetSignature(member.Item, rt) is { } sig) {
             q.Advance();
-            //Separate this so q.Position accurately includes advancements made in FillASTArray (if it is a NLParseList)
-            var args = FillASTArray(sig, q);
-            return sig.ToAST(q.Position, member.Position, args);
+            var (args, argsLoc) = FillASTArray(sig, q);
+            return sig.ToAST(member.Position.Merge(argsLoc ?? member.Position), member.Position, args);
         }
         return null;
     }

@@ -50,13 +50,24 @@ public static partial class ExM {
     [Alias(Parser.SM_REF_KEY)]
     public static Func<TExArgCtx, TEx<T>> Reference<T>(string alias) => ReflectEx.ReferenceLet<T>(alias);
     
+    //TODO pretty sure this is exactly the same as Reference
     [Alias("s" + Parser.SM_REF_KEY)]
     public static Func<TExArgCtx, TEx<T>> ReferenceSafe<T>(string alias, Func<TExArgCtx, TEx<T>> deflt) => b => 
         ReflectEx.ReferenceExpr(alias, b, deflt(b));
     
+    /// <summary>
+    /// Retrieve a publicly-shared hoisted variable at the given (name, index) pair.
+    /// </summary>
+    /// <param name="hoist">Hoisted variable name</param>
+    /// <param name="indexer">Indexer</param>
     [Alias("@")]
     public static Func<TExArgCtx, TEx<T>> RetrieveHoisted<T>(ReflectEx.Hoist<T> hoist, Func<TExArgCtx, TEx<float>> indexer) => 
         tac => hoist.Retrieve(indexer(tac), tac);
+    
+    /// <summary>
+    /// Retrieve a publicly-shared hoisted variable with the indexer set to 0.
+    /// </summary>
+    /// <param name="hoist">Hoisted variable name</param>
     [Alias("@0")]
     public static Func<TExArgCtx, TEx<T>> RetrieveHoisted0<T>(ReflectEx.Hoist<T> hoist) => 
         tac => hoist.Retrieve(E0, tac);

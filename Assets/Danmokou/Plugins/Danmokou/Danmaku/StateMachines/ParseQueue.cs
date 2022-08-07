@@ -17,15 +17,16 @@ namespace Danmokou.SM.Parsing {
 public abstract class IParseQueue {
     /// <summary>
     /// Returns the position range spanned by this entire parse queue.
+    /// This is not entirely accurate when the queue is not <see cref="ParenParseQueue"/>, but is close enough for debug/logging purposes.
     /// </summary>
     public abstract PositionRange Position { get; }
     /// <summary>
     /// Returns the position range spanned by the parse unit at the given index within this parse queue.
+    /// This is accurate.
     /// </summary>
     public abstract PositionRange PositionOfObject(int index);
     public abstract Reflector.ReflCtx Ctx { get; }
     public string AsFileLink(Reflector.MethodSignature sig) => Ctx.AsFileLink(sig);
-    public abstract IParseQueue ScanChild();
     public abstract IParseQueue NextChild();
     public virtual bool AllowsScan => true;
     /// <summary>
@@ -125,7 +126,6 @@ public class ParenParseQueue : IParseQueue {
     }
 
     public override PositionRange PositionOfObject(int index) => Items[index].position;
-    public override IParseQueue ScanChild() => new PUListParseQueue(paren.Items[childIndex], Ctx);
     public override IParseQueue NextChild() => 
         new PUListParseQueue(Items[childIndex++], Ctx);
     public override bool Empty => childIndex >= paren.Items.Length;
@@ -156,20 +156,16 @@ public class PUListParseQueue : IParseQueue {
         Ctx = ctx ?? new Reflector.ReflCtx(this);
     }
     public override PositionRange PositionOfObject(int index) => atoms[index].Position;
-    public override IParseQueue ScanChild() {
-        if (Index >= atoms.Length) throw WrapThrow("This section of text is too short.");
-        else
-            return atoms[Index] switch {
-                ParsedUnit.Paren p => new ParenParseQueue(p, Ctx),
-                _ => new NonLocalPUListParseQueue(this)
-            };
-    }
     public override IParseQueue NextChild() {
         if (Index >= atoms.Length) throw WrapThrow("This section of text is too short.");
         if (atoms[Index] is ParsedUnit.Paren p) {
             ++Index;
             return new ParenParseQueue(p, Ctx);
-        } else return new NonLocalPUListParseQueue(this);
+        } else {
+            //Skip past newlines so it's not captured in the NL location range
+            for (; Index < atoms.Length && atoms[Index].TryAsString() == LINE_DELIM; ++Index) { }
+            return new NonLocalPUListParseQueue(this);
+        }
     }
 
     public override bool IsNewline => Index < atoms.Length && atoms[Index].TryAsString() == LINE_DELIM;
@@ -262,7 +258,6 @@ public class NonLocalPUListParseQueue : IParseQueue {
 
     public override bool IsNewline => root.IsNewline;
     public override PositionRange PositionOfObject(int index) => root.PositionOfObject(index);
-    public override IParseQueue ScanChild() => root.ScanChild();
     public override IParseQueue NextChild() => root.NextChild();
     public override ParsedUnit? MaybeGetCurrentUnit(out int i) => root.MaybeGetCurrentUnit(out i);
     public override void Advance() => root.Advance();

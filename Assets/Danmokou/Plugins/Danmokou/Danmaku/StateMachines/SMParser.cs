@@ -75,8 +75,9 @@ public static class SMParser {
             Func<string, LPUOrError> argResolve,
             Func<string, List<LocatedParseUnit>, LPUOrError> macroReinvResolve,
             LocatedParseUnit x) {
-            Either<List<LocatedParseUnit>, ParserError> resolveAcc(IEnumerable<LocatedParseUnit> args) => 
-                args.Select(a => ResolveUnit(argResolve, macroReinvResolve, a))
+            Either<List<LocatedParseUnit>, ParserError> resolveAcc(IEnumerable<LocatedParseUnit> args) =>
+                //Reassign locations going down using WithPosition
+                args.Select(a => ResolveUnit(argResolve, macroReinvResolve, a.WithPosition(x.position)))
                     .AccFailToR()
                     .FMapR(errs => (ParserError) new ParserError.OneOf(errs));
             LPUOrError reloc(Either<ParseUnit, ParserError> pu) {
@@ -91,10 +92,10 @@ public static class SMParser {
                 deflt: () => x);
         }
 
-        private LPUOrError RealizeOverUnit(List<LocatedParseUnit> args, LocatedParseUnit unfmtd) => Macro.ResolveUnit(
+        private LPUOrError RealizeOverUnit(List<LocatedParseUnit> args, LocatedParseUnit unfmtd, PositionRange assignLocation) => Macro.ResolveUnit(
             s => !prmIndMap.TryGetValue(s, out var i) ? 
                 new ParserError.Failure($"Macro body has nonexistent variable \"%{s}\"") :
-                args[i],
+                args[i].WithPosition(assignLocation),
             (s, rargs) => !prmIndMap.TryGetValue(s, out var i) ?
                 new ParserError.Failure($"Macro body has nonexistent reinvocation \"$%{s}") :
                 args[i].unit.Reduce().Match(
@@ -102,38 +103,36 @@ public static class SMParser {
                         static bool isLambda(LocatedParseUnit lpu) => lpu.unit.type == ParseUnit.Type.LambdaMacroParam;
                         if (ReplaceEntries(true, pargs, rargs, isLambda) is {IsLeft: true} replaced)
                             return replaced.Left
-                                .Select(l => RealizeOverUnit(args, l))
+                                .Select(l => RealizeOverUnit(args, l, assignLocation))
                                 .AccFailToR()
                                 .FMapR(errs => (ParserError) new ParserError.OneOf(errs))
-                                .BindL(m.Invoke);
+                                .BindL(lpu => m.Invoke(lpu, assignLocation));
                         else
                             return new ParserError.Failure(
                                 $"Macro \"{name}\" provides too many arguments to partial macro " +
                                 $"\"{m.name}\". ({rargs.Count} provided, {pargs.Where(isLambda).Count()} required)");
                     },
                     deflt: () => new ParserError.Failure(
-                        $"Macro argument \"{name}.%{s}\" (arg #{i}) must be a partial macro invocation. " +
+                        $"Macro argument \"{name}.%{s}\" (arg #{i+1}) must be a partial macro invocation. " +
                         $"This may occur if you already provided all necessary arguments.")
                     )
-                
-            
-            , unfmtd);
+            , unfmtd.WithPosition(assignLocation));
 
-        public LPUOrError Realize(List<LocatedParseUnit> args) =>
-            nprms == 0 ? unformatted : RealizeOverUnit(args, unformatted);
+        public LPUOrError Realize(List<LocatedParseUnit> args, PositionRange assignLocation) => 
+            RealizeOverUnit(args, unformatted, assignLocation);
 
-        public LPUOrError Invoke(List<LocatedParseUnit> args) {
+        public LPUOrError Invoke(List<LocatedParseUnit> args, PositionRange assignLocation) {
             if (args.Count != nprms) {
                 var defaults = prmDefaults.SoftSkip(args.Count).FilterNone().ToArray();
                 if (args.Count + defaults.Length != nprms)
                     return new ParserError.Failure($"Macro \"{name}\" requires {nprms} arguments ({args.Count} provided)");
                 else
-                    return Realize(args.Concat(defaults).ToList());
+                    return Realize(args.Concat(defaults).ToList(), assignLocation);
             } else if (args.Any(l => l.unit.type == ParseUnit.Type.LambdaMacroParam)) {
                 return new LocatedParseUnit(ParseUnit.PartialMacroInvoke(this, args), 
-                    new(args[0].Start, args[^1].End));
+                    assignLocation);
             } else 
-                return Realize(args);
+                return Realize(args, assignLocation);
         }
 
         public static readonly Parser<string> Prm = 
@@ -160,6 +159,7 @@ public static class SMParser {
         }
 
         public LocatedParseUnit WithUnit(ParseUnit p) => new(p, position);
+        public LocatedParseUnit WithPosition(PositionRange p) => new(unit, p);
 
         public LocatedParseUnit(List<LocatedParseUnit> words) {
             this.unit = ParseUnit.Words(words);
@@ -323,11 +323,14 @@ public static class SMParser {
     }
 
     
-    //For a macro, we don't write the outermost location (thus we return ParseUnit), but we do write inner locations
-    // within the words of this parseunit
-    private static Parser<ParseUnit> InvokeMacroByName(string name, List<LocatedParseUnit> args) =>
+    //For a macro, we don't write the outermost location (in order to return ParseUnit),
+    // and we also rewrite all the inner locations to be the same as the outermost location
+    // that will be used
+    //There is regrettably not much better way to deal with macros since preserving the
+    // macro's original locations would really break the parse tree
+    private static Parser<ParseUnit> InvokeMacroByName(string name, List<LocatedParseUnit> args, PositionRange useLocation) =>
         GetState<State>().SelectMany(state => state.macros.TryGetValue(name, out var m) ?
-                ReturnOrError(m.Invoke(args)) :
+                ReturnOrError(m.Invoke(args, useLocation)) :
                 Fail<LocatedParseUnit>($"No macro exists with name {name}.")
             , (s, lpu) => lpu.unit);
 
@@ -411,9 +414,9 @@ public static class SMParser {
             simpleString1,
             ParenArgs.OptionalOr(new List<LocatedParseUnit>()),
             (_, key, args) => (key, args))
-        .Bind(ka => InvokeMacroByName(ka.key, ka.args));
+        .WrapPosition()
+        .Bind(ka => InvokeMacroByName(ka.val.key, ka.val.args, ka.position));
 
-//TODO move locate around this
     private static readonly Parser<LocatedParseUnit> MainParser = Choice(
         String("///").IgThen(SkipManySatisfy(_ => true)).FMap(_ => ParseUnit.End()), //.Label("end of file"),
         String(LAMBDA_MACRO_PRM).Select(_ => ParseUnit.LambdaMacroParam()),

@@ -427,6 +427,8 @@ public class ETime : MonoBehaviour {
 
         public Expression exFrames => Expression.PropertyOrField(Expression.Constant(this), "Frames");
         public Expression exSeconds => Expression.PropertyOrField(Expression.Constant(this), "Seconds");
+
+        public override string ToString() => $"Timer {name}";
     }
 
     public void OnDestroy() {

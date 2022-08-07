@@ -212,8 +212,8 @@ public static partial class Parametrics {
     /// </summary>
     /// <remarks>
     /// Use with StopSampling to home for only a few seconds.
-    /// <para>This is primarily for use with non-rotational velocity. 
-    /// Rotational use creates: contracting spirals (0,90), circle around player [90], expanding spiral (90,180).</para>
+    /// <br/>This is primarily for use with non-rotational velocity. 
+    /// Rotational use creates: contracting spirals (0,90), circle around player [90], expanding spiral (90,180).
     /// </remarks>
     /// <param name="speed">Speed</param>
     /// <param name="location">Target location</param>
@@ -322,7 +322,7 @@ public static partial class Parametrics {
     
     /// <summary>
     /// Rotate between two parametrics (the magnitude of the resulting vector is the magnitude of the <paramref name="from"/> vector), closing <paramref name="ratio"/> fraction of the gap per second.
-    /// <para>This function uses the last returned value as its rotation source, only sampling the source parametric once.</para>
+    /// <br/>This function uses the last returned value as its rotation source, only sampling the source parametric once.
     /// </summary>
     /// <remarks>
     /// Ratio is not multiplicative as in RotateLerpPercent. Instead, it accumulates like the function 1-e^-rt.
@@ -339,7 +339,7 @@ public static partial class Parametrics {
 
     /// <summary>
     /// Rotate between two parametrics (the magnitude of the resulting vector is the magnitude of the <paramref name="from"/> vector), closing <paramref name="rate"/> degrees of the gap per second.
-    /// <para>This function uses the last returned value as its rotation source, only sampling the source parametric once.</para>
+    /// <br/>This function uses the last returned value as its rotation source, only sampling the source parametric once.
     /// </summary>
     /// <param name="rate">Degrees of gap to close per second</param>
     /// <param name="from">Source parametric</param>

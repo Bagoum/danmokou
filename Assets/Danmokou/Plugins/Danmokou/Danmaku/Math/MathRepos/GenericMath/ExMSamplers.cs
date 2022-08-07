@@ -25,7 +25,7 @@ namespace Danmokou.DMath.Functions {
 public static class ExMSamplers {
     /// <summary>
     /// If the input time is less than the reference time, evaluate the invokee. Otherwise, return the last returned evaluation.
-    /// <para>You can call this with zero sampling time, and it will sample the invokee once. However, in this case SS0 is preferred.</para>
+    /// <br/>You can call this with zero sampling time, and it will sample the invokee once. However, in this case SS0 is preferred.
     /// </summary>
     /// <param name="time">Time at which to stop sampling</param>
     /// <param name="p">Target function</param>
@@ -36,7 +36,7 @@ public static class ExMSamplers {
 
     /// <summary>
     /// If the condition is true, evaluate the invokee. Otherwise, return the last returned evaluation.
-    /// <para>You can call this with zero sampling time, and it will sample the invokee once. However, in this case SS0 is preferred.</para>
+    /// <br/>You can call this with zero sampling time, and it will sample the invokee once. However, in this case SS0 is preferred.
     /// </summary>
     public static Func<TExArgCtx, TEx<T>> SampleIf<T>(ExPred cond, Func<TExArgCtx, TEx<T>> p) =>
         bpi => {

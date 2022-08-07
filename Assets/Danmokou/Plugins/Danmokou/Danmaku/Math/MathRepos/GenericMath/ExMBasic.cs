@@ -238,7 +238,7 @@ public static partial class ExM {
     /// <summary>
     /// Returns (bas)^(exp).
     /// </summary>
-    [Alias("^")] [WarnOnStrict]
+    [Alias("^")] [WarnOnStrict] [Operator]
     public static tfloat Pow(tfloat bas, tfloat exp) => OfDFD(_Pow, bas, exp);
     /// <summary>
     /// Returns one function raised to the power of the other, subtracted by the first function. (Alias: ^- bas exp)

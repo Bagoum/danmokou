@@ -1,4 +1,5 @@
-﻿using LanguageServer.VsCode.Contracts;
+﻿using BagoumLib;
+using LanguageServer.VsCode.Contracts;
 using Mizuhashi;
 using Position = LanguageServer.VsCode.Contracts.Position;
 
@@ -9,6 +10,21 @@ public static class AnalysisHelpers {
 
     public static Mizuhashi.Position ToDMKPosition(this Position pos, string source) =>
         new(source, pos.Line + 1, pos.Character + 1);
+
+    public static PositionRange? ToRange(this IAST?[] asts) {
+        if (asts.Length == 0) return null;
+        Mizuhashi.Position? min = null;
+        Mizuhashi.Position? max = null;
+        for (int ii = 0; ii < asts.Length; ++ii) {
+            if (asts[ii] is {} ast) {
+                if (ast.Position.Start.Index < (min ??= ast.Position.Start).Index)
+                    min = ast.Position.Start;
+                if (ast.Position.End.Index > (max ??= ast.Position.End).Index)
+                    max = ast.Position.End;
+            }
+        }
+        return (min is { } _min && max is { } _max) ? new(_min, _max) : null;
+    }
     public static Range ToRange(this PositionRange pos) =>
         new(pos.Start.ToPosition(), pos.End.ToPosition());
 

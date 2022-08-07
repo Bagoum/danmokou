@@ -38,9 +38,11 @@ public interface IAST {
     /// <summary>
     /// Return the furthest-down AST in the tree that encloses the given position,
     /// then its ancestors up to the root.
+    /// <br/>Each element is paired with the index of the child that preceded it,
+    ///  or null if it is the lowermost AST returned.
     /// <br/>Returns null if the AST does not enclose the given position.
     /// </summary>
-    IEnumerable<IAST>? NarrowestASTForPosition(PositionRange p);
+    IEnumerable<(IAST tree, int? childIndex)>? NarrowestASTForPosition(PositionRange p);
 
     /// <summary>
     /// Print out a readable, preferably one-line description of the AST (not including its children). Consumed by language server.
@@ -89,7 +91,7 @@ public record ASTRuntimeCast<T>(IAST Source) : IAST<T> {
         result :
         throw new StaticException("Runtime AST cast failed");
 
-    public IEnumerable<IAST>? NarrowestASTForPosition(PositionRange p)
+    public IEnumerable<(IAST, int?)>? NarrowestASTForPosition(PositionRange p)
         => Source.NarrowestASTForPosition(p);
 
     public string Explain() => $"{Position.Print(true)} Cast to type {typeof(T).SimpRName()}";
@@ -107,7 +109,7 @@ public record ASTFmap<T, U>(Func<T, U> Map, IAST<T> Source) : IAST<U> {
     public PositionRange Position => Source.Position;
     public U Evaluate() => Map(Source.Evaluate());
 
-    public IEnumerable<IAST>? NarrowestASTForPosition(PositionRange p)
+    public IEnumerable<(IAST, int?)>? NarrowestASTForPosition(PositionRange p)
         => Source.NarrowestASTForPosition(p);
 
     public string Explain() => $"{Position.Print(true)} " +
@@ -121,13 +123,14 @@ public record ASTFmap<T, U>(Func<T, U> Map, IAST<T> Source) : IAST<U> {
 }
 
 public abstract record AST(PositionRange Position, params IAST[] Params) : IAST {
-    public IEnumerable<IAST>? NarrowestASTForPosition(PositionRange p) {
+    public IEnumerable<(IAST, int?)>? NarrowestASTForPosition(PositionRange p) {
         if (p.Start.Index < Position.Start.Index || p.End.Index > Position.End.Index) return null;
-        foreach (var arg in Params) {
+        for (int ii = 0; ii < Params.Length; ++ii) {
+            var arg = Params[ii];
             if (arg.NarrowestASTForPosition(p) is { } results)
-                return results.Append(this);
+                return results.Append((this, ii));
         }
-        return new IAST[] { this };
+        return new (IAST, int?)[] { (this, null) };
     }
 
     public abstract string Explain();
@@ -156,7 +159,7 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
     protected IEnumerable<DocumentSymbol> FlattenParams() {
         bool DefaultFlatten(IAST ast) =>
             ast is SequenceList<StateMachine> ||
-            ast is Sequence seq && flattenArrayTypes.Contains(seq.ElementType);
+            ast is SequenceArray seq && flattenArrayTypes.Contains(seq.ElementType);
         foreach (var p in Params) {
             if (DefaultFlatten(p))
                 foreach (var s in p.ToSymbolTree().Children ?? Array.Empty<DocumentSymbol>())
@@ -216,6 +219,20 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
         yield return "}";
     }
 
+    public abstract record BaseMethodInvoke(PositionRange Position, PositionRange MethodPosition,
+        MethodSignature BaseMethod, params IAST[] Params) : AST(Position, Params), IAST {
+        public override string Explain() => $"{CompactPosition} {BaseMethod.AsSignature}";
+        public override DocumentSymbol ToSymbolTree() => MethodToSymbolTree(BaseMethod);
+
+        public override IEnumerable<SemanticToken> ToSemanticTokens() =>
+            MethodToSemanticTokens(BaseMethod, MethodPosition);
+
+        public override IEnumerable<PrintToken> DebugPrint() => DebugPrintMethod(BaseMethod);
+
+        public override IEnumerable<ReflectDiagnostic> WarnUsage(ReflCtx ctx) =>
+            WarnUsageMethod(ctx, BaseMethod, Params);
+    }
+
     /// <summary>
     /// An AST that creates an object through method invocation.
     /// </summary>
@@ -223,7 +240,7 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
     /// <param name="MethodPosition">Position of the method name alone (ie. just `MethodName`)</param>
     /// <param name="Method">Method signature</param>
     /// <param name="Params">Arguments to the method</param>
-    public record MethodInvoke(PositionRange Position, PositionRange MethodPosition, MethodSignature Method, params IAST[] Params) : AST(Position, Params), IAST {
+    public record MethodInvoke(PositionRange Position, PositionRange MethodPosition, MethodSignature Method, params IAST[] Params) : BaseMethodInvoke(Position, MethodPosition, Method, Params), IAST {
         public enum InvokeType {
             Normal,
             SM,
@@ -242,17 +259,6 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
                 prms[ii] = Params[ii].EvaluateObject();
             return Method.InvokeMi(prms);
         }
-
-        public override string Explain() => $"{CompactPosition} {Method.AsSignature}";
-        public override DocumentSymbol ToSymbolTree() => MethodToSymbolTree(Method);
-
-        public override IEnumerable<SemanticToken> ToSemanticTokens() =>
-            MethodToSemanticTokens(Method, MethodPosition);
-
-        public override IEnumerable<PrintToken> DebugPrint() => DebugPrintMethod(Method);
-
-        public override IEnumerable<ReflectDiagnostic> WarnUsage(ReflCtx ctx) =>
-            WarnUsageMethod(ctx, Method, Params);
     }
 
     /// <summary>
@@ -264,7 +270,7 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
         public T Evaluate() => EvaluateObject() switch {
             T t => t,
             var x => throw new StaticException(
-                $"AST method invocation for {Method.TypeEnclosedName} returned object of type {x?.GetType()} (expected {typeof(T)}")
+                $"AST method invocation for {BaseMethod.TypeEnclosedName} returned object of type {x?.GetType()} (expected {typeof(T)}")
         };
     }
 
@@ -274,7 +280,7 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
     /// this AST constructs a function T->R that uses T to defuncify the parameters and pass them to member.
     /// </summary>
     public record FuncedMethodInvoke<T, R>
-        (PositionRange Position, PositionRange MethodPosition, FuncedMethodSignature<T, R> Method, IAST[] Params) : AST(Position, Params),
+        (PositionRange Position, PositionRange MethodPosition, FuncedMethodSignature<T, R> Method, IAST[] Params) : BaseMethodInvoke(Position, MethodPosition, Method, Params),
             IAST<Func<T, R>> {
         public Func<T, R> Evaluate() {
             var fprms = new object?[Params.Length];
@@ -282,16 +288,6 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
                 fprms[ii] = Params[ii].EvaluateObject();
             return Method.InvokeMiFunced(fprms);
         }
-
-        public override string Explain() => $"{CompactPosition} {Method.AsSignature}";
-        public override DocumentSymbol ToSymbolTree() => MethodToSymbolTree(Method);
-        public override IEnumerable<SemanticToken> ToSemanticTokens() =>
-            MethodToSemanticTokens(Method, MethodPosition);
-
-        public override IEnumerable<ReflectDiagnostic> WarnUsage(ReflCtx ctx) =>
-            WarnUsageMethod(ctx, Method, Params);
-
-        public override IEnumerable<PrintToken> DebugPrint() => DebugPrintMethod(Method);
     }
 
     /// <summary>
@@ -424,10 +420,12 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
     }
 
 
+    public abstract record BaseSequence(PositionRange Position, IAST[] Params) : AST(Position, Params) { }
+    
     /// <summary>
     /// An AST that generates a compile-time strongly typed list of objects.
     /// </summary>
-    public record SequenceList<T>(PositionRange Position, IList<IAST<T>> Parts) : AST(Position,
+    public record SequenceList<T>(PositionRange Position, IList<IAST<T>> Parts) : BaseSequence(Position,
         Parts.Cast<IAST>().ToArray()), IAST<List<T>> {
         public List<T> Evaluate() {
             var l = new List<T>(Parts.Count);
@@ -454,7 +452,7 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
     /// <summary>
     /// An AST that generates an array of objects.
     /// </summary>
-    public record Sequence(PositionRange Position, Type ElementType, IAST[] Params) : AST(Position, Params), IAST<Array> {
+    public record SequenceArray(PositionRange Position, Type ElementType, IAST[] Params) : BaseSequence(Position, Params), IAST<Array> {
         public Array Evaluate() {
             var array = Array.CreateInstance(ElementType, Params.Length);
             for (int ii = 0; ii < Params.Length; ++ii)
