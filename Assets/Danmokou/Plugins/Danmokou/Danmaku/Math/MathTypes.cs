@@ -292,12 +292,13 @@ public struct ParametricInfo {
     }
 }
 
-//Note: ref mov/ in dT/ ref bpi/ out delta are significant optimizations.
+//Note: ref mov/ in dT/ ref bpi/ ref delta are significant optimizations.
 // (I don't know why in float is so significant. Probably because in the SimpleBullet case
 // it's read from the same memory location for all bullets within a pool. That would be good cache performance.)
 //ref bpi is used over in bpi because there are methods on bpi (copyWithP, copyWithT, etc) that
 // would trigger defensive struct copies. (Methods and properties both trigger defensive copies.)
 //ref mov is used for the same reason, though no such methods/properties currently exist.
+//ref delta is used instead of out delta because 2D equations do not assign to the Z-component for efficiency.
 
 /// <summary>
 /// A function that converts ParametricInfo into a possibly-rotated Cartesian coordinate.

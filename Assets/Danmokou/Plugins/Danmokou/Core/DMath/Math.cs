@@ -482,7 +482,6 @@ public readonly struct CRect {
     public static implicit operator CRect(V2RV2 rect) => new CRect(rect.nx, rect.ny, rect.rx, rect.ry, rect.angle);
 }
 
-//TODO update for v3
 /// <summary>
 /// A position description composed of a nonrotational offset
 /// and a rotational offset.

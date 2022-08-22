@@ -95,7 +95,6 @@ public static class TAssert {
     public static void SBPos(ref BulletManager.SimpleBullet sb, Vector3 loc, string msg = "") =>
         VecEq(loc, sb.bpi.loc, msg);
     public static void SBPos(ref BulletManager.SimpleBullet sb, V2RV2 loc, string msg = "") =>
-        //TODO update for v3
         VecEq(loc.TrueLocation, sb.bpi.LocV2, msg);
 
     public static void PoolEq(BulletManager.SimpleBulletCollection sbc1,

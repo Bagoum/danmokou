@@ -405,8 +405,6 @@ public abstract class StateMachine {
         Profiler.EndSample();
         foreach (var d in ast.WarnUsage(p.Ctx))
             d.Log();
-        //TODO temp
-        Logs.Log(ast.DebugPrintStringify());
         p.ThrowOnLeftovers(() => "Behavior script has extra text. Check the highlighted text for an illegal command.");
         Profiler.BeginSample("SM AST realization");
         var result = ast.Evaluate();

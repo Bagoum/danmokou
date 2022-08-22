@@ -50,7 +50,23 @@ public static partial class Reflector {
         /// </summary>
         private static readonly List<(string method, MethodInfo mi)> genericMethods
             = new();
-        
+
+        [PublicAPI]
+        public static Dictionary<string, MethodInfo> AllMethods() {
+            var dict = new Dictionary<string, MethodInfo>();
+            foreach (var tdict in methodsByReturnType.Values)
+                tdict.CopyInto(dict);
+            foreach (var (m, mi) in genericMethods)
+                dict[m] = mi;
+            return dict;
+        }
+
+        [PublicAPI]
+        public static Dictionary<string, MethodInfo> AllMethodsForReturnType(Type rt) {
+            ResolveGeneric(rt);
+            return methodsByReturnType[rt];
+        }
+
         /// <summary>
         /// Generics are lazily matched against types, and the computed .MakeGenericMethod is only then sent to
         /// methodsByReturnType. This set contains all return types that have been matched.

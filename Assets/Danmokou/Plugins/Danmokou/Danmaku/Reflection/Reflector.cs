@@ -121,7 +121,7 @@ public static partial class Reflector {
                     (LString)str);
         } else if (targetType == type_stylesel) {
             return new ASTFmap<Array, BulletManager.StyleSelector>(
-                s => new BulletManager.StyleSelector(s as string[][]),
+                s => new BulletManager.StyleSelector(s as string[][] ?? throw new StaticException("")),
                 ResolveAsArray(typeof(string[]), p)
             );
         } else if (targetType == type_gcrule) {
@@ -194,11 +194,10 @@ public static partial class Reflector {
     private static object? ForceFuncTypeResolve(string s, Type targetType) {
         if (SimpleFunctionResolver.TryGetValue(targetType, out Func<string, object?> resolver)) {
             return resolver(s);
-        } else throw new StaticException("ForceFuncTypeResolve was used for a type without a simple resolver");
+        } else throw new StaticException($"ForceFuncTypeResolve was used for a type {targetType} without a simple resolver");
     }
 
     public static IAST<Array> ResolveAsArray(Type eleType, IParseQueue q) {
-        if (eleType == null) throw new StaticException($"Requested an array of null elements");
         if (IParseQueue.ARR_EMPTY.Contains(q.MaybeScan() ?? "")) {
             var (_, loc) = q.NextUnit(out _);
             var empty = Array.CreateInstance(eleType, 0);

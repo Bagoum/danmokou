@@ -69,6 +69,7 @@ public static partial class Reflector {
     /// <param name="Params">Simplified description of the method parameters.</param>
     public record MethodSignature(MethodBase Mi, string? CalledAs, NamedParam[] Params) {
         public bool IsFallthrough { get; init; } = false;
+        public bool IsDeprecated => Mi.GetCustomAttribute<ObsoleteAttribute>() != null;
         public string TypeName => Mi.DeclaringType!.SimpRName();
         public bool isCtor => Mi.Name == ".ctor";
         public string Name => 
@@ -230,7 +231,10 @@ public static partial class Reflector {
                             "This is probably an error in static code.");
     }
 
-    public static T ExtInvokeMethod<T>(string member, object[] prms) => (T) ExtInvokeMethod(typeof(T), member, prms);
+    public static T ExtInvokeMethod<T>(string member, object[] prms) => 
+        ExtInvokeMethod(typeof(T), member, prms) is T obj ?
+            obj :
+            throw new StaticException($"External method invoke for method {member} returned wrong type");
 
 
 

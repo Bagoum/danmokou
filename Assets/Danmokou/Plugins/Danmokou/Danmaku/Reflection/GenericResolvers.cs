@@ -114,12 +114,16 @@ public static partial class Reflector {
                 ThrowEmpty(q, ii);
                 var local = q.NextChild();
                 ThrowEmpty(local, ii);
-                try {
-                    asts[ii] = ReflectParam(local, prms[ii]);
-                } catch (Exception ex) {
-                    throw new ReflectionException(local.Position,
+                void Fail(Either<AST.Failure, Exception?> nested) {
+                    asts[ii] = new AST.Failure(local.Position,
                         $"Tried to construct {q.AsFileLink(sig)}, but failed to create argument " +
-                        $"#{ii + 1}/{prms.Length} {prms[ii].SimplifiedDescription}.", ex);
+                        $"#{ii + 1}/{prms.Length} {prms[ii].SimplifiedDescription}.", prms[ii].Type, nested);
+                }
+                try {
+                    if ((asts[ii] = ReflectParam(local, prms[ii])) is AST.Failure f)
+                        Fail(f);
+                } catch (Exception ex) {
+                    Fail(ex);
                 }
                 var ii1 = ii;
                 local.ThrowOnLeftovers(() =>
@@ -134,8 +138,7 @@ public static partial class Reflector {
     private static (IAST[] asts, PositionRange? argRange) FillASTArray(MethodSignature sig, IParseQueue q)
         => FillASTArray(new IAST[sig.Params.Length], 0, sig, q);
 
-
-
+    
 
     #region TargetTypeReflect
 
@@ -218,24 +221,6 @@ public static partial class Reflector {
     }
 
     /// <summary>
-    /// Checks if the parse queue must be recursed by checking if the next object is a superfluous parenlist.
-    /// <br/>eg. given PUList | (mod) 1 2, the next child is (mod), which must be recursed.
-    /// <br/>If the next object is a parenlist, assert that it has a length of 1, and return a PUList for its
-    ///  first child.
-    /// <br/>If the next object is a string, return it.
-    /// </summary>
-    private static Either<(SMParser.ParsedUnit.Str value, int index), PUListParseQueue> RecurseScan(IParseQueue q) {
-        var pu = q.GetCurrentUnit(out var ii);
-        return pu switch {
-            SMParser.ParsedUnit.Str s => (s, ii),
-            SMParser.ParsedUnit.Paren p => (p.Items.Length == 1) ?
-                new PUListParseQueue(p.Items[0], q.Ctx) :
-                throw q.WrapThrowHighlight(ii, "This parentheses must have exactly one argument."),
-            _ => throw q.WrapThrowHighlight(ii, $"Couldn't resolve parser object type {pu.GetType()}.")
-        };
-    }
-
-    /// <summary>
     /// A fallthrough parse queue has the ability but not the obligation to post-aggregate.
     /// </summary>
     private static IParseQueue MakeFallthrough(IParseQueue q) {
@@ -266,7 +251,7 @@ public static partial class Reflector {
     private static IAST ReflectParam(IParseQueue q, NamedParam p) {
         if (p.LookupMethod) {
             if (p.Type.GenericTypeArguments.Length == 0) 
-                throw new Exception("Method-Lookup parameter must be generic");
+                throw new StaticException("Method-Lookup parameter must be generic");
             RecurseParens(ref q, p.Type);
             var (method, loc) = q.NextUnit(out _);
             q.ThrowOnLeftovers(p.Type);
@@ -279,71 +264,85 @@ public static partial class Reflector {
     private static readonly Type tPhaseProperties = typeof(PhaseProperties);
     
     /// <summary>
-    /// Top-level resolution function.
+    /// Top-level resolution function to create an object from a parse queue.
     /// </summary>
     /// <param name="q">Parsing queue to read from.</param>
     /// <param name="t">Type to construct.</param>
     /// <param name="postAggregateContinuation">Optional code to execute after post-aggregation is complete.</param>
     private static IAST ReflectTargetType(IParseQueue q, Type t, Func<IAST, Type, IAST>? postAggregateContinuation=null) {
-        RecurseParens(ref q, t);
-        IAST? ast;
-        var tryRecurse = RecurseScan(q);
-        if (!tryRecurse.IsLeft) {
-            var rec = tryRecurse.Right;
-            q.Advance();
-            ast = ReflectTargetType(rec, t, (x, pt) => (postAggregateContinuation ?? ((y, _) => y))(DoPostAggregation(pt, q, x), pt));
-            rec.ThrowOnLeftovers(t);
-            q.ThrowOnLeftovers(t);
-            return ast;
-        }
-        var (arg, index) = tryRecurse.Left;
-        if (q.Empty)
-            throw q.WrapThrow($"Ran out of text when trying to create an object of type {t.RName()}.");
-        else if (t == tsm)
-            ast = ReflectSM(q);
-        else if (ReflectMethod(arg, t, q) is { } methodAST) {
-            //this advances inside
-            ast = methodAST;
-        } else if (letFuncs.TryGetValue(t, out var f) && arg.Item[0] == Parser.SM_REF_KEY_C) {
-            q.Advance();
-            ast = new AST.Preconstructed<object?>(arg.Position, f(arg.Item), arg.Item);
-        } else if (FuncTypeResolve(q, arg, t) is { } simpleParsedAST) {
-            q.Advance();
-            ast = simpleParsedAST;
-        } else if (FallThroughOptions.TryGetValue(t, out var ftmi)) {
-            //MakeFallthrough allows the nested lookup to not be required to consume all post-aggregation.
-            var ftype = ftmi.mi.Params[0].Type;
-            try {
-                ast = ReflectTargetType(MakeFallthrough(q), ftype, postAggregateContinuation);
-            } catch (Exception e) {
-                throw q.WrapThrowHighlight(index,
-                    $"Failed to construct an object of type {t.SimpRName()}. Instead, tried to construct a" +
-                    $" similar object of type {ftype.SimpRName()}, but that also failed.", e);
+        //While try/catch is not the best way to handle partial parses,
+        // the 'correct' way would be using an Either-like monad with extensive bind operations,
+        // which is not possible in C#. 
+        try {
+            RecurseParens(ref q, t);
+            IAST? ast;
+            var pu = q.GetCurrentUnit(out var index);
+            if (pu is SMParser.ParsedUnit.Paren p) {
+                //given `PUList | (mod) 1 2`, the next child is (mod), which must be recursed.
+                //However, we cannot accept `PUList | (mod, 1) 2` as this is not an arglist.
+                if (p.Items.Length != 1)
+                    throw q.WrapThrowHighlight(index, "This parentheses must have exactly one argument.");
+                var rec = new PUListParseQueue(p.Items[0], q.Ctx);
+                q.Advance();
+                ast = ReflectTargetType(
+                    rec, t, (x, pt) => (postAggregateContinuation ?? ((y, _) => y))(DoPostAggregation(pt, q, x), pt));
+                rec.ThrowOnLeftovers(t);
+                q.ThrowOnLeftovers(t);
+                return ast;
             }
-            ast = new AST.MethodInvoke(ast, ftmi.mi) { Type = AST.MethodInvoke.InvokeType.Fallthrough };
-        } else if (TryCompileOption(t, out var cmp)) {
-            ast = ReflectTargetType(MakeFallthrough(q), cmp.source, postAggregateContinuation);
-            ast = new AST.MethodInvoke(ast, cmp.mi) { Type = AST.MethodInvoke.InvokeType.Compiler };
-        } else if (ResolveSpecialHandling(q, t) is {} specialTypeAST) {
-            ast = specialTypeAST;
-        } else if (t.IsArray)
-            ast = ResolveAsArray(t.GetElementType()!, q);
-        else if (MatchesGeneric(t, gtype_ienum))
-            ast = ResolveAsArray(t.GenericTypeArguments[0], q);
-        else if (CastToType(arg.Item, t, out var x)) {
-            ast = new AST.Preconstructed<object?>(arg.Position, x);
-            q.Advance();
-        } else {
-            q.Advance(); //improves error printing position accuracy
-            throw q.WrapThrowHighlight(index, $"Couldn't convert the object in ≪≫ to type {t.SimpRName()}.");
-        }
+            var arg = (pu as SMParser.ParsedUnit.Str) ?? throw new StaticException($"Couldn't result {pu.GetType()}");
+            if (q.Empty)
+                throw q.WrapThrow($"Ran out of text when trying to create an object of type {t.RName()}.");
+            else if (t == tsm)
+                ast = ReflectSM(q);
+            else if (ReflectMethod(arg, t, q) is { } methodAST) {
+                //this advances inside
+                ast = methodAST;
+            } else if (letFuncs.TryGetValue(t, out var f) && arg.Item[0] == Parser.SM_REF_KEY_C) {
+                q.Advance();
+                ast = new AST.Preconstructed<object?>(arg.Position, f(arg.Item), arg.Item);
+            } else if (FuncTypeResolve(q, arg, t) is { } simpleParsedAST) {
+                q.Advance();
+                ast = simpleParsedAST;
+            } else if (FallThroughOptions.TryGetValue(t, out var ftmi)) {
+                //MakeFallthrough allows the nested lookup to not be required to consume all post-aggregation.
+                var ftype = ftmi.mi.Params[0].Type;
+                try {
+                    ast = ReflectTargetType(MakeFallthrough(q), ftype, postAggregateContinuation);
+                } catch (Exception e) {
+                    throw q.WrapThrowHighlight(index,
+                        $"Failed to construct an object of type {t.SimpRName()}. Instead, tried to construct a" +
+                        $" similar object of type {ftype.SimpRName()}, but that also failed.", e);
+                }
+                ast = new AST.MethodInvoke(ast, ftmi.mi) { Type = AST.MethodInvoke.InvokeType.Fallthrough };
+            } else if (TryCompileOption(t, out var cmp)) {
+                ast = ReflectTargetType(MakeFallthrough(q), cmp.source, postAggregateContinuation);
+                ast = new AST.MethodInvoke(ast, cmp.mi) { Type = AST.MethodInvoke.InvokeType.Compiler };
+            } else if (ResolveSpecialHandling(q, t) is { } specialTypeAST) {
+                ast = specialTypeAST;
+            } else if (t.IsArray)
+                ast = ResolveAsArray(t.GetElementType()!, q);
+            else if (MatchesGeneric(t, gtype_ienum))
+                ast = ResolveAsArray(t.GenericTypeArguments[0], q);
+            else if (CastToType(arg.Item, t, out var x)) {
+                ast = new AST.Preconstructed<object?>(arg.Position, x);
+                q.Advance();
+            } else {
+                q.Advance(); //improves error printing position accuracy
+                throw q.WrapThrowHighlight(index, $"Couldn't convert the object in ≪≫ to type {t.SimpRName()}.");
+            }
 
-        ast = DoPostAggregation(t, q, ast);
-        q.ThrowOnLeftovers(t);
-        if (q.Empty && postAggregateContinuation != null) {
-            ast = postAggregateContinuation(ast, t);
+            ast = DoPostAggregation(t, q, ast);
+            q.ThrowOnLeftovers(t);
+            if (q.Empty && postAggregateContinuation != null) {
+                ast = postAggregateContinuation(ast, t);
+            }
+            return ast;
+        } catch (Exception e) {
+            if (e is ReflectionException re)
+                return new AST.Failure(re, t);
+            return new AST.Failure(new ReflectionException(q.Position, e.Message, e.InnerException), t);
         }
-        return ast;
     }
 
     private static bool CastToType(string arg, Type rt, out object result) {

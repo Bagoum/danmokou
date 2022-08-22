@@ -102,7 +102,7 @@ public static class SaveData {
 
         public InstanceRecord? ChallengeCompletion(SMAnalysis.DayPhase phase, int c, SharedInstanceMetadata meta) {
             var key = new PhaseChallengeRequest(phase, c).Key;
-            //TODO you can add filters on the meta properties (difficulty/player) as necessary.
+            //You can add filters on the meta properties (difficulty/player) as necessary.
 
             return FinishedGames.Values
                 .Where(g =>

@@ -15,7 +15,11 @@ using static Danmokou.Expressions.ExUtils;
 namespace Danmokou.Expressions {
 
 /// <summary>
-/// Experimental context storing an arbitrary set of arguments to an expression function.
+/// An arbitrary set of arguments to an expression function.
+/// <br/>Expression functions are written in the general form Func&lt;TExArgCtx, TEx&lt;R&gt;&gt;
+///  and compiled to Func&lt;R, T&gt;, where R is *any type* that has stored its information
+///  in TExArgCtx (usually <see cref="ParametricInfo"/> or <see cref="BulletManager.SimpleBullet"/>),
+///  and T is some standard return type like float or Vector2.
 /// </summary>
 public class TExArgCtx {
     /// <summary>

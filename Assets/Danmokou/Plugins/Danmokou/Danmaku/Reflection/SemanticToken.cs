@@ -100,8 +100,7 @@ public record SemanticToken(PositionRange Position, string TokenType, IList<stri
             if (guard) AddMod(mod);
         }
         AddModIf(mi.Mi.IsStatic, SemanticTokenModifiers.Static);
-        AddModIf(mi.Mi.GetCustomAttributes(typeof(ObsoleteAttribute), false).Length > 0,
-            SemanticTokenModifiers.Deprecated);
+        AddModIf(mi.IsDeprecated, SemanticTokenModifiers.Deprecated);
         if (SemanticTokenModifiers.TypeToMethodMod.TryGetValue(Reflector.RemapExType(mi.ReturnType), out var v))
             AddMod(v);
         else if (mi.ReturnType.IsSubclassOf(typeof(StateMachine)))

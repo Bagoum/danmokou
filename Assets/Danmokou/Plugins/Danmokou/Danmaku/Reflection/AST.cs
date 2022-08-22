@@ -5,6 +5,7 @@ using System.Reflection;
 using BagoumLib;
 using BagoumLib.Culture;
 using BagoumLib.Expressions;
+using BagoumLib.Functional;
 using BagoumLib.Reflection;
 using Danmokou.Core;
 using Danmokou.Danmaku;
@@ -29,6 +30,11 @@ public interface IAST {
     /// <br/>This is used for debugging/logging/error messaging.
     /// </summary>
     PositionRange Position { get; }
+    
+    /// <summary>
+    /// True iff none of the AST's children are <see cref="AST.Failure"/>.
+    /// </summary>
+    bool IsSound { get; }
 
     /// <summary>
     /// Generate the object.
@@ -86,6 +92,7 @@ public interface IAST<out T> : IAST {
 /// </summary>
 public record ASTRuntimeCast<T>(IAST Source) : IAST<T> {
     public PositionRange Position => Source.Position;
+    public bool IsSound => Source.IsSound;
 
     public T Evaluate() => Source.EvaluateObject() is T result ?
         result :
@@ -107,6 +114,7 @@ public record ASTRuntimeCast<T>(IAST Source) : IAST<T> {
 /// </summary>
 public record ASTFmap<T, U>(Func<T, U> Map, IAST<T> Source) : IAST<U> {
     public PositionRange Position => Source.Position;
+    public bool IsSound => Source.IsSound;
     public U Evaluate() => Map(Source.Evaluate());
 
     public IEnumerable<(IAST, int?)>? NarrowestASTForPosition(PositionRange p)
@@ -123,6 +131,7 @@ public record ASTFmap<T, U>(Func<T, U> Map, IAST<T> Source) : IAST<U> {
 }
 
 public abstract record AST(PositionRange Position, params IAST[] Params) : IAST {
+    public virtual bool IsSound => Params.All(p => p.IsSound);
     public IEnumerable<(IAST, int?)>? NarrowestASTForPosition(PositionRange p) {
         if (p.Start.Index < Position.Start.Index || p.End.Index > Position.End.Index) return null;
         for (int ii = 0; ii < Params.Length; ++ii) {
@@ -314,7 +323,7 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
             get {
                 var t = MyType;
                 if (t.IsEnum) return SemanticTokenTypes.EnumMember;
-                if (t == typeof(float) || t == typeof(int) || t == typeof(V2RV2)) 
+                if (t == typeof(float) || t == typeof(int) || t == typeof(V2RV2) || t == typeof(CRect) || t == typeof(CCircle)) 
                     return SemanticTokenTypes.Number;
                 if (t == typeof(string) || t.IsSubclassOf(typeof(LString))) 
                     return SemanticTokenTypes.String;
@@ -520,6 +529,23 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
 
         public override IEnumerable<PrintToken> DebugPrint() =>
             Content.DebugPrint().Prepend($"{CompactPosition} {Name} = ");
+    }
+
+    /// <summary>
+    /// A failed AST parse.
+    /// </summary>
+    public record Failure(ReflectionException Exc, Type ResultType) : AST(Exc.Position) {
+        public override bool IsSound => false;
+        public override string Explain() => $"{CompactPosition} Failed parse for type {ResultType.SimpRName()}";
+
+        public object? EvaluateObject() => throw Exc;
+
+        public override DocumentSymbol ToSymbolTree() => throw Exc;
+        
+        public override IEnumerable<SemanticToken> ToSemanticTokens() => throw Exc;
+
+        public Failure(PositionRange pos, string message, Type resultType, Either<Failure, Exception?> nested) :
+            this(new ReflectionException(pos, message, nested.Map(l => l.Exc, r => r)), resultType) { }
     }
 }
 }

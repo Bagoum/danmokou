@@ -28,7 +28,6 @@ public abstract class IParseQueue {
     public abstract Reflector.ReflCtx Ctx { get; }
     public string AsFileLink(Reflector.MethodSignature sig) => Ctx.AsFileLink(sig);
     public abstract IParseQueue NextChild();
-    public virtual bool AllowsScan => true;
     /// <summary>
     /// Get the parse unit at the current index.
     /// <br/>Returns null if the queue is empty.
@@ -49,16 +48,16 @@ public abstract class IParseQueue {
     public abstract string Print();
     public abstract string PrintHighlight(int ii);
     
-    public Exception OOBException() => this.WrapThrow("The parser ran out of text to read.");
-    public Exception WrapThrow(string content, Exception? inner = null) => 
+    public ReflectionException OOBException() => this.WrapThrow("The parser ran out of text to read.");
+    public ReflectionException WrapThrow(string content, Exception? inner = null) => 
         new ReflectionException(Position, $"{content}\n\t{Print()}", inner);
-    public Exception WrapThrowAppend(string content, string app, Exception? inner = null) => 
+    public ReflectionException WrapThrowAppend(string content, string app, Exception? inner = null) => 
         new ReflectionException(Position, $"{content}\n\t{Print()}{app}", inner);
     
     /// <summary>
     /// Format an exception that shows the contents of this queue, highlighting the object at the given index.
     /// </summary>
-    public Exception WrapThrowHighlight(int index, string content, Exception? inner = null) => 
+    public ReflectionException WrapThrowHighlight(int index, string content, Exception? inner = null) => 
         new ReflectionException(Position, $"{content}\n\t{PrintHighlight(index)}", inner) {
             HighlightedPosition = PositionOfObject(index)
         };
@@ -131,7 +130,6 @@ public class ParenParseQueue : IParseQueue {
     public override bool Empty => childIndex >= paren.Items.Length;
     public override bool IsNewline => false;
 
-    public override bool AllowsScan => false;
     public override ParsedUnit? MaybeGetCurrentUnit(out int i) => 
         throw new Exception($"Cannot call {nameof(MaybeGetCurrentUnit)} on a parentheses parser");
     public override void Advance() => throw new Exception("Cannot call Advance on a parentheses parser");

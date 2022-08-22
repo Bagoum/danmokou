@@ -65,7 +65,7 @@ public static partial class SyncPatterns {
             })
         ).ToArray(), inner);
 
-    private static string V2Key => PublicDataHoisting.GetRandomValidKey<Vector2>();
+    private static string MakeV2Key() => PublicDataHoisting.GetRandomValidKey<Vector2>();
 
     private const string xi = "xi";
     private const string yi = "yi";
@@ -73,7 +73,7 @@ public static partial class SyncPatterns {
     private static readonly ExBPY ryi = Reference<float>(yi);
     private static SyncPattern _FArrow(ExBPY indexer, ExBPY n, ExBPY xstep, ExBPY ystep, GenCtxProperty[] props,
         GCXU<VTP> path, string? poolSuffix, string? locSave, string? dirSave, params SyncPattern[] extraSp) {
-        return GuideEmpty(poolSuffix, indexer, AutoSaveV2(locSave ??= V2Key, dirSave ??= V2Key), 
+        return GuideEmpty(poolSuffix, indexer, AutoSaveV2(locSave ??= MakeV2Key(), dirSave ??= MakeV2Key()), 
             AutoSaveF, path, extraSp.Append(
             GSRepeat2(GCXF<float>(x => n(x).Mul(n(x).Add(E1)).Div(E2)), RV2Zero, new[] {
                 PreLoop(new GCRule[] {
@@ -99,8 +99,8 @@ public static partial class SyncPatterns {
     public static SyncPattern TreeArrow(ExBPY indexer, ExBPY n, ExBPY xStep, ExBPY yStep, GenCtxProperty[] props,
         GCXU<VTP> path, string treeColor, GCXF<float> treeXLen, ExBPY treeYLen, ExBPY treeXStep,
         ExBPY treeYStep) {
-        var loc = V2Key;
-        var dir = V2Key;
+        var loc = MakeV2Key();
+        var dir = MakeV2Key();
         return _FArrow(indexer, n, xStep, yStep, props, path, null, loc, dir, Color(treeColor, _AsGSR(
             _AsGSR(DS(HV2(loc), HV2(dir), indexer, Parametrics.PXY(rxi, ryi)),
                 Times(treeXLen),
