@@ -10,6 +10,7 @@ namespace Danmokou.Core {
 /// </summary>
 [AttributeUsage((AttributeTargets.Method))]
 public class FallthroughAttribute : Attribute {
+    //TODO you probably don't need priority anymore
     public readonly int priority;
 
     public FallthroughAttribute(int priority=0) {
@@ -17,6 +18,11 @@ public class FallthroughAttribute : Attribute {
     }
 }
 
+/// <summary>
+/// Attribute marking a reflection method that is automatically applied if none other match, and which
+///  converts an expression type into a real type (eg. ExTP to TP).
+/// <br/>Must occur together with <see cref="FallthroughAttribute"/>.
+/// </summary>
 [AttributeUsage(AttributeTargets.Method)]
 public class ExprCompilerAttribute : Attribute {
     

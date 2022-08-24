@@ -30,16 +30,30 @@ public interface IAST {
     /// <br/>This is used for debugging/logging/error messaging.
     /// </summary>
     PositionRange Position { get; }
+
+    /// <summary>
+    /// Return all nonfatal errors in the parse tree.
+    /// </summary>
+    List<AST.NestedFailure> Errors { get; }
+    /// <summary>
+    /// Returns <see cref="Errors"/> converted into <see cref="ReflectionException"/>.
+    /// </summary>
+    IEnumerable<ReflectionException> Exceptions => Errors.SelectMany(e => e.AsExceptions());
     
     /// <summary>
-    /// True iff none of the AST's children are <see cref="AST.Failure"/>.
+    /// Returns true iff the AST has problems that prevent it from being compiled.
     /// </summary>
-    bool IsSound { get; }
+    bool IsUnsound { get; }
 
+    /// <summary>
+    /// Get the type of the object that would be generated from this AST.
+    /// </summary>
+    Type ResultType => throw new NotImplementedException();
+    
     /// <summary>
     /// Generate the object.
     /// </summary>
-    object? EvaluateObject() => throw new Exception();
+    object? EvaluateObject() => throw new NotImplementedException();
 
     /// <summary>
     /// Return the furthest-down AST in the tree that encloses the given position,
@@ -85,6 +99,7 @@ public interface IAST {
 public interface IAST<out T> : IAST {
     T Evaluate();
     object? IAST.EvaluateObject() => Evaluate();
+    Type IAST.ResultType => typeof(T);
 }
 
 /// <summary>
@@ -92,7 +107,8 @@ public interface IAST<out T> : IAST {
 /// </summary>
 public record ASTRuntimeCast<T>(IAST Source) : IAST<T> {
     public PositionRange Position => Source.Position;
-    public bool IsSound => Source.IsSound;
+    public List<AST.NestedFailure> Errors => Source.Errors;
+    public bool IsUnsound => Source.IsUnsound;
 
     public T Evaluate() => Source.EvaluateObject() is T result ?
         result :
@@ -114,7 +130,8 @@ public record ASTRuntimeCast<T>(IAST Source) : IAST<T> {
 /// </summary>
 public record ASTFmap<T, U>(Func<T, U> Map, IAST<T> Source) : IAST<U> {
     public PositionRange Position => Source.Position;
-    public bool IsSound => Source.IsSound;
+    public List<AST.NestedFailure> Errors => Source.Errors;
+    public bool IsUnsound => Source.IsUnsound;
     public U Evaluate() => Map(Source.Evaluate());
 
     public IEnumerable<(IAST, int?)>? NarrowestASTForPosition(PositionRange p)
@@ -131,8 +148,26 @@ public record ASTFmap<T, U>(Func<T, U> Map, IAST<T> Source) : IAST<U> {
 }
 
 public abstract record AST(PositionRange Position, params IAST[] Params) : IAST {
-    public virtual bool IsSound => Params.All(p => p.IsSound);
-    public IEnumerable<(IAST, int?)>? NarrowestASTForPosition(PositionRange p) {
+    public virtual List<AST.NestedFailure> Errors {
+        get {
+            var errs = new List<NestedFailure>();
+            int maxIndex = -1;
+            foreach (var err in Params
+                        //We order by param position, not by error position, only to deal with cases
+                        // where params are out of order (such as implicit arguments).
+                        .OrderBy(p => p.Position.Start.Index)
+                         .SelectMany(p => p.Errors)) {
+                if (err.Head.Position.Start.Index >= maxIndex) {
+                    errs.Add(err);
+                    maxIndex = err.Head.Position.End.Index;
+                }
+            }
+            return errs;
+        }
+    }
+    public virtual bool IsUnsound => Params.Any(p => p.IsUnsound);
+
+    public virtual IEnumerable<(IAST, int?)>? NarrowestASTForPosition(PositionRange p) {
         if (p.Start.Index < Position.Start.Index || p.End.Index > Position.End.Index) return null;
         for (int ii = 0; ii < Params.Length; ++ii) {
             var arg = Params[ii];
@@ -262,6 +297,8 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
 
         public MethodInvoke(IAST nested, MethodSignature sig) : this(nested.Position, new PositionRange(nested.Position.Start, nested.Position.Start), sig, nested) { }
 
+        public Type ResultType => Method.ReturnType;
+
         public object? EvaluateObject() {
             var prms = new object?[Params.Length];
             for (int ii = 0; ii < prms.Length; ++ii)
@@ -359,6 +396,8 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
         /// <br/>The return type of the func type is the return type of the linked <see cref="Method"/>.
         /// </summary>
         public Type FuncType { get; }
+
+        public Type ResultType => FuncType;
         /// <summary>
         /// When <see cref="FuncType"/>=Func&lt;A, B, C&gt;, this is [A, B, C].
         /// </summary>
@@ -375,6 +414,10 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
             FuncAllTypes = funcType.GenericTypeArguments;
             FuncRetType = FuncAllTypes[^1];
             //Look for methods returning type R
+            if (!ReflectionData.HasMember(FuncRetType, methodName))
+                throw new ReflectionException(p,
+                    $"Method lookup for type {FuncType.SimpRName()} failed because no there is no function named " +
+                    $"\"{methodName}\" with a return type of {FuncRetType.SimpRName()}.");
             Method = ReflectionData.GetArgTypes(FuncRetType, methodName);
             if (FuncAllTypes.Length - 1 != Method.Params.Length)
                 throw new ReflectionException(p,
@@ -534,18 +577,72 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
     /// <summary>
     /// A failed AST parse.
     /// </summary>
-    public record Failure(ReflectionException Exc, Type ResultType) : AST(Exc.Position) {
-        public override bool IsSound => false;
-        public override string Explain() => $"{CompactPosition} Failed parse for type {ResultType.SimpRName()}";
+    public record Failure(ReflectionException Exc, Type ReturnType) : AST(Exc.Position), IAST {
+        public Type ResultType => ReturnType;
+        /// <summary>
+        /// In the case when an error invalidates a certain block of code, this contains the object initially
+        ///  parsed from that block of code.
+        /// </summary>
+        public IAST? Basis { get; init; }
+        public override List<NestedFailure> Errors => 
+                new () {
+                new(this, Basis?.Errors ?? new List<NestedFailure>())
+            };
+        public override bool IsUnsound => true;
+        protected Exception FirstException => Errors.SelectMany(e => e.AsExceptions()).First();
 
-        public object? EvaluateObject() => throw Exc;
+        public override string Explain() => Basis switch {
+                    Failure f => f.Explain(),
+                    { } b => $"(ERROR) {b.Explain()}",
+                    _ => $"(ERROR) {CompactPosition} Failed parse for type {ReturnType.SimpRName()}"
+                };
 
-        public override DocumentSymbol ToSymbolTree() => throw Exc;
-        
-        public override IEnumerable<SemanticToken> ToSemanticTokens() => throw Exc;
+        public override IEnumerable<(IAST, int?)>? NarrowestASTForPosition(PositionRange p) {
+            if (p.Start.Index < Position.Start.Index || p.End.Index > Position.End.Index) return null;
+            if (Basis?.NarrowestASTForPosition(p) is { } results)
+                return results.Append((this, 0));
+            return new (IAST, int?)[] { (this, null) };
+        }
 
-        public Failure(PositionRange pos, string message, Type resultType, Either<Failure, Exception?> nested) :
-            this(new ReflectionException(pos, message, nested.Map(l => l.Exc, r => r)), resultType) { }
+        public object? EvaluateObject() => throw FirstException;
+
+        public override DocumentSymbol ToSymbolTree() => throw FirstException;
+
+        public override IEnumerable<SemanticToken> ToSemanticTokens() => throw FirstException;
+
+        public Failure(ReflectionException exc, NamedParam prm) : this(exc, prm.Type) { }
+
+        public static IAST MaybeEnclose(IAST src, ReflectionException? exc) => exc == null ?
+            src :
+            new Failure(
+                new ReflectionException(src.Position, exc.Position, exc.Message, exc.InnerException)
+                , src.ResultType) { Basis = src };
+    }
+
+    public record Failure<T>(ReflectionException Exc) : Failure(Exc, typeof(T)), IAST<T> {
+        public T Evaluate() => throw FirstException;
+    }
+
+    public record NestedFailure(Failure Head, List<NestedFailure> Children) {
+        //Note: these are non-inverted,
+        //so the leaf exception is eg. "Couldn't parse PXY arg#1: www is not a float"
+        // and the root exception is "Couldn't parse PatternSM"
+        public IEnumerable<ReflectionException> AsExceptions() {
+            if (Children.Count > 0)
+                return Children
+                    .SelectMany(c => c.AsExceptions())
+                    .Select(e => Head.Exc.Copy(e));
+            //the inner exception in Exc is ignored unless this is a leaf
+            // (there shouldn't be any inner exceptions unless this is a leaf)
+            return new[] {Head.Exc};
+        }
+
+        /*inversion method
+        private static IEnumerable<ReflectionException> AsExceptions(List<NestedFailure> children, ReflectionException inner) {
+            if (children.Count == 0)
+                return new[] { inner };
+            return children.SelectMany(c => AsExceptions(c.Children, c.Head.Exc.Copy(inner)));
+        }*/
     }
 }
 }

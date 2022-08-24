@@ -423,7 +423,7 @@ private static {TypePrinter.Print(f.returnType)} {f.fnName}({string.Join(", ",
                     StateMachineManager.FromText(textAsset);
                 }
             } catch (Exception e) {
-                Logs.UnityError($"Failed to parse {path}:\n" + Exceptions.FlattenNestedException(e).Message);
+                Logs.UnityError($"Failed to parse {path}:\n" + Exceptions.PrintNestedException(e));
             }
         }
         Logs.Log("Invoking ReflWrap wrappers...");

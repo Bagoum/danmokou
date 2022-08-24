@@ -28,7 +28,41 @@ public static partial class Reflector {
         public bool AllowPostAggregate => props.strict >= Strictness.COMMAS;
         public bool UseFileLinks { get; set; } = true;
         public List<IAST<PhaseProperty>> QueuedProps { get; } = new();
-        
+        /// <summary>
+        /// Errors that are not critical, but should be reported if the end of parsing has leftovers and
+        /// does not parse past the error's position.
+        /// </summary>
+        public List<(ReflectionException exc, Type targetType)> NonfatalErrors { get; } = new();
+
+        private class NonfatalErrorComparer : IEqualityComparer<(ReflectionException, Type)> {
+            public static readonly NonfatalErrorComparer Comparer = new();
+            
+            public bool Equals((ReflectionException, Type) x, (ReflectionException, Type) y) => 
+                x.Item1.Message == y.Item1.Message;
+            public int GetHashCode((ReflectionException, Type) obj) => 
+                obj.Item1.Message.GetHashCode();
+        }
+
+        public IEnumerable<(ReflectionException, Type)> NonfatalErrorsForPosition(PositionRange pos) =>
+            NonfatalErrors
+                .Where(e => pos == e.exc.Position)
+                .Distinct(NonfatalErrorComparer.Comparer);
+
+        public Exception? ParseEndFailure(IParseQueue q, IAST ast) {
+            if (q.HasLeftovers(out var qpi)) {
+                //Nonfatals only get reported if there are leftovers
+                var errs = q.Ctx.NonfatalErrorsForPosition(q.GetCurrentUnit(out _).Position).Select(f => f.Item1);
+                //errors thrown during evaluate are thrown together with nonfatals
+                if (ast.IsUnsound)
+                    errs = errs.Prepend(ast.Exceptions.First());
+                return Exceptions.MaybeAggregate(errs.ToList()) ??
+                      q.WrapThrowLeftovers(qpi, 
+                          "Behavior script has extra text. Check the text in ≪≫ below for an illegal command.", ast.Exceptions.FirstOrDefault());
+            } else if (ast.IsUnsound)
+                return ast.Exceptions.First();
+            return null;
+        }
+
         public ReflCtx(IParseQueue q) {
             List<ParsingProperty> properties = new();
             while (q.MaybeScan() == SMParser.PROP2_KW) {
@@ -36,7 +70,7 @@ public static partial class Reflector {
                 var child = q.NextChild();
                 properties.Add(child.Into<ParsingProperty>());
                 if (!q.IsNewline)
-                    throw child.WrapThrow($"Missing a newline at the end of the the property " +
+                    throw child.WrapThrow($"Missing a newline at the end of the property " +
                                         $"declaration. Instead, it found \"{q.Scan()}\".");
             }
             props = new ParsingProperties(properties);
@@ -64,8 +98,9 @@ public static partial class Reflector {
     /// <param name="starti">Index of invoke_args to start from.</param>
     /// <param name="sig">Type information of arguments.</param>
     /// <param name="q">Queue from which to parse elements.</param>
-    public static (IAST[] asts, PositionRange? argRange) FillASTArray(IAST[] asts, int starti, MethodSignature sig, IParseQueue q) {
-        int nargs = sig.ExplicitParameterCount;
+    /// <returns>Filled array of ASTs, range covered by the ASTs, and an exception that should enclose the caller if nonnull.</returns>
+    public static (IAST[] asts, PositionRange? argRange, ReflectionException? fail) FillASTArray(IAST[] asts, int starti, MethodSignature sig, IParseQueue q) {
+        int nargs = sig.ExplicitParameterCount(starti);
         var prms = sig.Params;
         if (nargs == 0) {
             if (!(q is ParenParseQueue) && !q.Empty) {
@@ -73,17 +108,17 @@ public static partial class Reflector {
                 if (q.MaybeGetCurrentUnit(out _) is SMParser.ParsedUnit.Paren p) {
                     if (p.Items.Length == 0) {
                         q.Advance();
-                        return (asts, p.Position);
+                        return (asts, p.Position, null);
                     }
                 }
             }
-            return (asts, null);
+            return (asts, null, null);
         }
         if (!(q is ParenParseQueue)) {
             if (q.MaybeGetCurrentUnit(out _) is SMParser.ParsedUnit.Paren p && p.Items.Length == 1 && nargs != 1) {
                 // mod | (x) 3
                 //Leave the parentheses to be parsed by the first argument
-            } else 
+            } else if (!q.Empty)
                 // mod | (x, 3)
                 //Use the parentheses to fill arguments
                 //OR
@@ -92,50 +127,54 @@ public static partial class Reflector {
                 q = q.NextChild();
         }
 
-        if (q is ParenParseQueue p2 && nargs != p2.Items.Length) {
-            throw p2.WrapThrow($"Expected {nargs} explicit arguments for {q.AsFileLink(sig)}, " +
-                                $"but the parentheses contains {p2.Items.Length}.");
-        }
-
-
-        void ThrowEmpty(IParseQueue lq, int ii) {
-            if (lq.Empty) {
-                throw q.WrapThrowAppend(
-                    $"Tried to construct {q.AsFileLink(sig)}, but the parser ran out of text when looking for argument " +
-                    $"#{ii + 1}/{prms.Length} {prms[ii].SimplifiedDescription}. " +
-                    "This probably means you have parentheses that do not enclose the entire function.",
-                    $" | [Arg#{ii + 1} Missing]");
-            }
-        }
         for (int ii = starti; ii < prms.Length; ++ii) {
             if (prms[ii].NonExplicit) {
                 asts[ii] = ReflectNonExplicitParam(q, prms[ii]);
             } else {
-                ThrowEmpty(q, ii);
+                bool ThrowEmpty(IParseQueue lq) {
+                    if (lq.Empty) {
+                        asts[ii] = new AST.Failure(
+                            //The ran-out-of-text e
+                            new ReflectionException(lq.PositionUpToCurrentObject, lq.WrapThrow(
+                            $"Tried to construct {q.AsFileLink(sig)}, but the parser ran out of text when looking for argument " +
+                            $"#{ii + 1}/{prms.Length} {prms[ii].SimplifiedDescription}. " +
+                            "This probably means you have parentheses that do not enclose the entire function.") +
+                            $" | [Arg#{ii + 1} Missing]"), prms[ii]);
+                        return true;
+                    } else return false;
+                }
+                if (ThrowEmpty(q)) continue;
                 var local = q.NextChild();
-                ThrowEmpty(local, ii);
-                void Fail(Either<AST.Failure, Exception?> nested) {
-                    asts[ii] = new AST.Failure(local.Position,
-                        $"Tried to construct {q.AsFileLink(sig)}, but failed to create argument " +
-                        $"#{ii + 1}/{prms.Length} {prms[ii].SimplifiedDescription}.", prms[ii].Type, nested);
-                }
+                if (ThrowEmpty(local)) continue;
+                string MakeErr() => $"Tried to construct {q.AsFileLink(sig)}, but failed to create argument " +
+                                    $"#{ii + 1}/{prms.Length} {prms[ii].SimplifiedDescription}.";
                 try {
-                    if ((asts[ii] = ReflectParam(local, prms[ii])) is AST.Failure f)
-                        Fail(f);
+                    if ((asts[ii] = ReflectParam(local, prms[ii])).IsUnsound) {
+                        asts[ii] = new AST.Failure(new(local.Position, MakeErr()), prms[ii]) { Basis = asts[ii] };
+                        continue;
+                    }
                 } catch (Exception ex) {
-                    Fail(ex);
+                    asts[ii] = new AST.Failure(new(local.Position, MakeErr(), ex), prms[ii]);
+                    continue;
                 }
-                var ii1 = ii;
-                local.ThrowOnLeftovers(() =>
-                    $"Argument #{ii1 + 1}/{prms.Length} {prms[ii1].SimplifiedDescription} has extra text.");
+                if (local.HasLeftovers(out var lpi))
+                    asts[ii] = new AST.Failure(local.WrapThrowLeftovers(lpi,
+                            $"Argument #{ii + 1}/{prms.Length} {prms[ii].SimplifiedDescription} has extra text."),
+                        prms[ii]) { Basis = asts[ii] };
             }
         }
-        q.ThrowOnLeftovers(() => $"{q.AsFileLink(sig)} has extra text after all {prms.Length} arguments.");
-        return (asts, q is ParenParseQueue pq ? pq.Position : asts.ToRange());
+        ReflectionException? fail = null;
+        if (q is ParenParseQueue p2 && nargs != p2.Items.Length) {
+            fail = p2.WrapThrow($"Expected {nargs} explicit arguments for {q.AsFileLink(sig)}, " +
+                               $"but the parentheses contains {p2.Items.Length}.");
+        } else if (q.HasLeftovers(out var qpi))
+            fail = q.WrapThrowLeftovers(qpi, 
+                $"{q.AsFileLink(sig)} has extra text after all {prms.Length} arguments.");
+        return (asts, q is ParenParseQueue pq ? pq.Position : asts.ToRange(), fail);
     }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static (IAST[] asts, PositionRange? argRange) FillASTArray(MethodSignature sig, IParseQueue q)
+    private static (IAST[] asts, PositionRange? argRange, ReflectionException? fail) FillASTArray(MethodSignature sig, IParseQueue q)
         => FillASTArray(new IAST[sig.Params.Length], 0, sig, q);
 
     
@@ -151,9 +190,17 @@ public static partial class Reflector {
         using var _ = BakeCodeGenerator.OpenContext(BakeCodeGenerator.CookingContext.KeyType.INTO, argstring);
         var p = IParseQueue.Lex(argstring);
         try {
-            var ret = p.Into(t);
-            p.ThrowOnLeftovers();
-            return ret;
+            Profiler.BeginSample("AST construction");
+            var ast = p.IntoAST(t);
+            Profiler.EndSample();
+            foreach (var d in ast.WarnUsage(p.Ctx))
+                d.Log();
+            if (p.Ctx.ParseEndFailure(p, ast) is { } exc)
+                throw exc;
+            Profiler.BeginSample("AST realization");
+            var val = ast.EvaluateObject();
+            Profiler.EndSample();
+            return val;
         } catch (Exception e) {
             throw new Exception($"Failed to parse below string into type {t.RName()}:\n{argstring}", e);
         }
@@ -183,23 +230,21 @@ public static partial class Reflector {
         return Into(argstring!, t);
     }
 
-    public static T Into<T>(this IParseQueue q) => ((T) Into(q, typeof(T))!);
-
+    public static T Into<T>(this IParseQueue q) => ((T) q.IntoAST(typeof(T)).EvaluateObject()!);
+/*
     private static object? Into(this IParseQueue q, Type t) {
-        Profiler.BeginSample("AST construction");
         var ast = q.IntoAST(t);
-        Profiler.EndSample();
         //There's an odd circularity where the first constructed PUParseList
         // creates a ReflCtx, which then calls Into to construct parsing properties
         // *before* its constructor is complete and it gets assigned to q.Ctx.
         if (q.Ctx != null)
             foreach (var d in ast.WarnUsage(q.Ctx))
-                d.Log();
+               d.Log();
         Profiler.BeginSample("AST realization");
         var obj = ast.EvaluateObject();
         Profiler.EndSample();
         return obj;
-    }
+    }*/
     
     public static IAST<T> IntoAST<T>(this IParseQueue ctx) => new ASTRuntimeCast<T>(IntoAST(ctx, typeof(T)));
     private static IAST IntoAST(this IParseQueue ctx, Type t) => ReflectTargetType(ctx, t);
@@ -253,16 +298,18 @@ public static partial class Reflector {
             if (p.Type.GenericTypeArguments.Length == 0) 
                 throw new StaticException("Method-Lookup parameter must be generic");
             RecurseParens(ref q, p.Type);
-            var (method, loc) = q.NextUnit(out _);
-            q.ThrowOnLeftovers(p.Type);
-            return new AST.MethodLookup(loc, p.Type, method.ToLower());
+            var (method, loc) = q.ScanUnit(out _);
+            //This can throw if the method is invalid, in which case let's not consume
+            var ast = new AST.MethodLookup(loc, p.Type, method.ToLower());
+            q.Advance();
+            return q.WrapInErrorIfHasLeftovers(ast, p.Type);
         } else {
             return ReflectTargetType(q, p.Type);
         }
     }
 
     private static readonly Type tPhaseProperties = typeof(PhaseProperties);
-    
+
     /// <summary>
     /// Top-level resolution function to create an object from a parse queue.
     /// </summary>
@@ -271,7 +318,8 @@ public static partial class Reflector {
     /// <param name="postAggregateContinuation">Optional code to execute after post-aggregation is complete.</param>
     private static IAST ReflectTargetType(IParseQueue q, Type t, Func<IAST, Type, IAST>? postAggregateContinuation=null) {
         //While try/catch is not the best way to handle partial parses,
-        // the 'correct' way would be using an Either-like monad with extensive bind operations,
+        // there are way too many internal cases where exceptions may be thrown,
+        // and the 'correct' way would be using an Either-like monad with extensive bind operations,
         // which is not possible in C#. 
         try {
             RecurseParens(ref q, t);
@@ -286,9 +334,9 @@ public static partial class Reflector {
                 q.Advance();
                 ast = ReflectTargetType(
                     rec, t, (x, pt) => (postAggregateContinuation ?? ((y, _) => y))(DoPostAggregation(pt, q, x), pt));
-                rec.ThrowOnLeftovers(t);
-                q.ThrowOnLeftovers(t);
-                return ast;
+                return rec.HasLeftovers(out _) ?
+                    rec.WrapInErrorIfHasLeftovers(ast, t) :
+                    q.WrapInErrorIfHasLeftovers(ast, t);
             }
             var arg = (pu as SMParser.ParsedUnit.Str) ?? throw new StaticException($"Couldn't result {pu.GetType()}");
             if (q.Empty)
@@ -307,14 +355,12 @@ public static partial class Reflector {
             } else if (FallThroughOptions.TryGetValue(t, out var ftmi)) {
                 //MakeFallthrough allows the nested lookup to not be required to consume all post-aggregation.
                 var ftype = ftmi.mi.Params[0].Type;
-                try {
-                    ast = ReflectTargetType(MakeFallthrough(q), ftype, postAggregateContinuation);
-                } catch (Exception e) {
-                    throw q.WrapThrowHighlight(index,
-                        $"Failed to construct an object of type {t.SimpRName()}. Instead, tried to construct a" +
-                        $" similar object of type {ftype.SimpRName()}, but that also failed.", e);
-                }
+                ast = ReflectTargetType(MakeFallthrough(q), ftype, postAggregateContinuation);
                 ast = new AST.MethodInvoke(ast, ftmi.mi) { Type = AST.MethodInvoke.InvokeType.Fallthrough };
+                if (ast.IsUnsound)
+                    ast = new AST.Failure(q.WrapThrowHighlight(index,
+                        $"Failed to construct an object of type {t.SimpRName()}. Instead, tried to construct a" +
+                        $" similar object of type {ftype.SimpRName()}, but that also failed."), t) { Basis = ast };
             } else if (TryCompileOption(t, out var cmp)) {
                 ast = ReflectTargetType(MakeFallthrough(q), cmp.source, postAggregateContinuation);
                 ast = new AST.MethodInvoke(ast, cmp.mi) { Type = AST.MethodInvoke.InvokeType.Compiler };
@@ -328,14 +374,15 @@ public static partial class Reflector {
                 ast = new AST.Preconstructed<object?>(arg.Position, x);
                 q.Advance();
             } else {
-                q.Advance(); //improves error printing position accuracy
-                throw q.WrapThrowHighlight(index, $"Couldn't convert the object in ≪≫ to type {t.SimpRName()}.");
+                throw q.WrapThrowHighlight(index, $"Couldn't convert the text in ≪≫ to type {t.SimpRName()}.");
             }
-
-            ast = DoPostAggregation(t, q, ast);
-            q.ThrowOnLeftovers(t);
-            if (q.Empty && postAggregateContinuation != null) {
-                ast = postAggregateContinuation(ast, t);
+            if (!ast.IsUnsound) {
+                ast = DoPostAggregation(t, q, ast);
+                if (q.HasLeftovers(out _))
+                    return q.WrapInErrorIfHasLeftovers(ast, t);
+                if (q.Empty && postAggregateContinuation != null) {
+                    ast = postAggregateContinuation(ast, t);
+                }
             }
             return ast;
         } catch (Exception e) {
@@ -418,8 +465,9 @@ public static partial class Reflector {
     private static IAST? ReflectMethod(SMParser.ParsedUnit.Str member, Type rt, IParseQueue q) {
         if (TryGetSignature(member.Item, rt) is { } sig) {
             q.Advance();
-            var (args, argsLoc) = FillASTArray(sig, q);
-            return sig.ToAST(member.Position.Merge(argsLoc ?? member.Position), member.Position, args);
+            var (args, argsLoc, err) = FillASTArray(sig, q);
+            return AST.Failure.MaybeEnclose(
+                sig.ToAST(member.Position.Merge(argsLoc ?? member.Position), member.Position, args), err);
         }
         return null;
     }

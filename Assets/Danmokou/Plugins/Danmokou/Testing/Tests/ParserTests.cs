@@ -4,6 +4,7 @@ using Danmokou.Services;
 using Danmokou.DMath;
 using Danmokou.Expressions;
 using Danmokou.Reflection;
+using Danmokou.SM;
 using NUnit.Framework;
 using UnityEngine;
 using static NUnit.Framework.Assert;
@@ -40,9 +41,36 @@ public static class ParserTests {
 
     [Test]
     public static void Errors() {
+        ThrowsMessage("BPY, but then found extra text", () => "+(x, *(x 2))".Into<FXY>());
+        ThrowsMessage("Couldn't convert the text in ≪≫ to type float.*≪}≫", () => StateMachine.CreateFromDump(
+            @"
+pattern {}
+phase 0
+	saction 0
+		gtr {
+			wait-child
+			times(20)
+		} {
+			delay
+		}
+		move-target(5, io-sine, py(+(mod 3 4, mod 6 7)))
+"));
+        ThrowsMessage("Couldn't convert the text in ≪≫ to type float.*≪blargh≫", () => StateMachine.CreateFromDump(
+            @"
+pattern {}
+phase 0
+	saction 0
+		gtr {
+			wait-child
+			times(20)
+		} {
+			delay blargh
+		}
+		move-target(5, io-sine, py(+(mod 3 4, mod 6 7)))
+"));
+        ThrowsMessage("Couldn't convert the text in ≪≫ to type float.*≪mode≫", () => "py(+ mode 3 4 5)".Into<TP>());
         ThrowsMessage("do not enclose the entire function", () => "+ 8 (if = p 0) 0 6".Into<BPY>());
         ThrowsMessage("must have exactly one argument", () => "(+ 8 * 5, x)".Into<FXY>());
-        ThrowsMessage("BPY, but then found extra text", () => "+(x, *(x 2))".Into<FXY>());
         
     }
 

@@ -48,9 +48,12 @@ public static partial class Reflector {
             var nested = q.NextChild();
             try {
                 var result = StateMachine.Create(nested);
-                nested.ThrowOnLeftovers(() => "Nested StateMachine construction has extra text at the end.");
-                return result;
+                return nested.HasLeftovers(out var npi) ?
+                    new AST.Failure<StateMachine>(nested.WrapThrowLeftovers(npi, 
+                        "Nested StateMachine construction has extra text at the end.")) { Basis = result } :
+                    result;
             } catch (Exception ex) {
+                
                 throw new ReflectionException(pos, $"Nested StateMachine construction starting at {pos} failed.", ex);
             }
         }
@@ -154,9 +157,9 @@ public static partial class Reflector {
         } else if (UseConstructor(targetType)) {
             //generic struct/tuple handling
             var sig = GetConstructorSignature(targetType);
-            var (args, argsLoc) = FillASTArray(sig, p);
+            var (args, argsLoc, err) = FillASTArray(sig, p);
             var loc = argsLoc ?? p.Position;
-            return new AST.MethodInvoke(loc, new(loc.Start, loc.Start), sig, args);
+            return AST.Failure.MaybeEnclose(new AST.MethodInvoke(loc, new(loc.Start, loc.Start), sig, args), err);
         } else return null;
     }
 
@@ -211,6 +214,10 @@ public static partial class Reflector {
         var tempList = new List<IAST>();
         while (q.MaybeScan() != IParseQueue.ARR_CLOSE) {
             tempList.Add(ReflectTargetType(q.NextChild(), eleType));
+            //If there's an error, advance a token to prevent an infinite loop
+            if (tempList[^1].IsUnsound)
+                if (q.MaybeScan() != IParseQueue.ARR_CLOSE)
+                    q.Advance();
         }
         var (_, close) = q.NextUnit(out _); // }
         return new AST.SequenceArray(open.Merge(close), eleType, tempList.ToArray());

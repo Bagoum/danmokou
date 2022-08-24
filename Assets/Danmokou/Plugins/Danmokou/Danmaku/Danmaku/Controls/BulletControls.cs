@@ -344,7 +344,7 @@ public partial class BulletManager {
 
         /// <summary>
         /// Copy (nondestructively) a bullet into another pool, with no movement.
-        /// <br/>If the style is null or empty, then will instead spawn a <see cref="CulledBulletCollection"/> bullet.
+        /// <br/>If the style is null or empty, then will instead spawn a <see cref="BulletManager.CulledBulletCollection"/> bullet.
         /// </summary>
         /// <param name="style">Copied style</param>
         /// <param name="cond">Filter condition</param>
@@ -362,7 +362,7 @@ public partial class BulletManager {
 
         /// <summary>
         /// Change the bullets into a softcull-type bullet rather than destroying them directly.
-        /// Also leaves behind an afterimage of the bullet as it gets deleted in a <see cref="CulledBulletCollection"/>.
+        /// Also leaves behind an afterimage of the bullet as it gets deleted in a <see cref="BulletManager.CulledBulletCollection"/>.
         /// </summary>
         /// <param name="target">New style. Can be null or _ to skip the copying and only do the culled afterimage.</param>
         /// <param name="cond">Filter condition</param>

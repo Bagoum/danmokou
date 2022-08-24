@@ -462,8 +462,7 @@ public class PhaseParallelActionSM : ParallelSM {
     }
 }
 /// <summary>
-/// `saction`: A list of actions that are run in sequence. Place this under a PhaseSM.
-/// <br/>This SM is always blocking.
+/// `saction`: A list of actions that are run in sequence. Place this under <see cref="PhaseSM"/>.
 /// </summary>
 public class PhaseSequentialActionSM : SequentialSM {
     private readonly float wait;
@@ -484,7 +483,7 @@ public class PhaseSequentialActionSM : SequentialSM {
 }
 
 /// <summary>
-/// `end`: Child of PhaseSM. When a phase ends under normal conditions (ie. was not cancelled),
+/// `end`: Child of <see cref="PhaseSM"/>. When a phase ends under normal conditions (ie. was not cancelled),
 /// run these actions in parallel before moving to the next phase.
 /// </summary>
 public class EndPSM : ParallelSM {
@@ -493,7 +492,7 @@ public class EndPSM : ParallelSM {
 }
 
 /// <summary>
-/// The basic unit of control in SMs. These cannot be used directly and must instead be placed under `PhaseActionSM` or the like.
+/// The basic unit of control in SMs. These cannot be used directly and must instead be placed under <see cref="PhaseSequentialActionSM"/> or <see cref="PhaseParallelActionSM"/> or <see cref="GTRepeat"/>.
 /// </summary>
 public abstract class LineActionSM : StateMachine {
     public LineActionSM(params StateMachine[] states) : base(new List<StateMachine>(states)) { }

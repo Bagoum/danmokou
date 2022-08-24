@@ -91,12 +91,10 @@ public static class Logs {
 
 //Avoid static instantiation of Logs class when using for language server
 public static class LogUtils {
-    public static string PrintException(Exception e, string prefixMsg="") => 
-        e is ReflectionException re ? 
-            PrintException(re.WithPositionInMessage(), prefixMsg) :
-            (string.IsNullOrWhiteSpace(prefixMsg) ? "" : $"{prefixMsg}\n") +
-            Exceptions.PrintNestedException(e);
-    
+    public static string PrintException(Exception e, string prefixMsg="") =>
+        (string.IsNullOrWhiteSpace(prefixMsg) ? "" : $"{prefixMsg}\n") +
+        Exceptions.PrintNestedExceptionInverted(e);
+
     private static readonly CSharpTypePrinter TypePrinter = new();
     private static readonly CSharpTypePrinter NSTypePrinter = new() { PrintTypeNamespace = _ => true };
     public static string GenerateStackTrace(int skipFrames = 5) {

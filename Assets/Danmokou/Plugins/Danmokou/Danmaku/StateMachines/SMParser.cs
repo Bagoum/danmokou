@@ -38,12 +38,38 @@ public static class SMParser {
     public static bool WhiteInline(char c) => c != NEWLINE && char.IsWhiteSpace(c);
 
 
-    public static Parser<List<T>> Paren<T>(Parser<T> p) => Paren1(
-        Whitespace.IgThen(
-            p.SepBy(Whitespace.IgThen(Char(ARG_SEP)).IgThen(Whitespace))
-        ));
+    private static Parser<char> ArgSep = Char(ARG_SEP);
+    private static Parser<char> WhitespacedArgSep = inp => {
+        var w1 = Whitespace(inp); //cannot fail, so we don't need to check output
+        var c = ArgSep(inp);
+        if (!c.Result.Valid)
+            return new(c.Result, c.Error, w1.Start, c.End);
+        var w2 = Whitespace(inp);
+        return new(c.Result, c.Error, w1.Start, w2.End);
+    };
+    /// <summary>
+    /// Given an element parser, parse a parentheses sequence of <see cref="ARG_SEP"/>-separated elements.
+    /// </summary>
+    public static Parser<List<T>> Paren<T>(Parser<T> p) => 
+        Paren1(Whitespace.IgThen(p.SepBy(WhitespacedArgSep)));
 
-    public static Parser<T> Paren1<T>(Parser<T> p) => Between(OPEN_ARG, p, CLOSE_ARG);
+    public static Parser<T> Paren1<T>(Parser<T> p) {
+        var p1 = Char(OPEN_ARG);
+        var p2 = Char(CLOSE_ARG);
+        var err = new ParserError.Failure("This parentheses is not closed.");
+        return inp => {
+            var rp1 = p1(inp);
+            if (!rp1.Result.Valid)
+                return rp1.CastFailure<T>();
+            var r = p(inp);
+            if (!r.Result.Valid)
+                return new(r.Result, r.Error, rp1.Start, r.End);
+            var rp2 = p2(inp);
+            if (!rp2.Result.Valid)
+                return new(Maybe<T>.None, new LocatedParserError(rp1.Start, err), rp1.Start, rp2.End);
+            return new(r.Result, r.Error, rp1.Start, rp2.End);
+        };
+    }
 
     public static readonly Parser<Unit> ILSpaces = SkipManySatisfy(WhiteInline);
 
@@ -350,9 +376,16 @@ public static class SMParser {
     private static readonly Parser<List<LocatedParseUnit>> WordsTopLevel = Words(true);
     private static readonly Parser<List<LocatedParseUnit>> WordsInBlock = WordsTopLevel;
     private static readonly Parser<List<LocatedParseUnit>> WordsInline = Words(false);
-    
+
+    private static readonly List<LocatedParseUnit> empty = new();
     private static readonly Parser<List<LocatedParseUnit>> ParenArgs = 
-        Paren(WordsInBlock.FMap(ParseUnit.Nest).Locate());
+        //Strictly speaking, paren args must be nonempty, but it's easier to report that in typechecking
+        Paren(WordsInBlock.OptionalOr(empty).FMap(ParseUnit.Nest).Locate()).FMap(eles => {
+            if (eles.Count == 1 && eles[0].position.Empty && 
+                eles[0].unit.type == ParseUnit.Type.Words && eles[0].unit.nestVal.Count == 0)
+                return empty;
+            return eles;
+        });
 
     private static readonly Parser<MacroArg> MacroPrmDecl =
         Macro.Prm.Pipe(

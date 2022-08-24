@@ -558,8 +558,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
             await sm.sm.Start(smh);
         } catch (Exception e) {
             if (!(e is OperationCanceledException)) {
-                Logs.UnityError(Exceptions.FlattenNestedException(e)
-                    .Message); //This is only here for the vaguest of debugging purposes.
+                Logs.UnityError(Exceptions.PrintNestedException(e)); //This is only here for the vaguest of debugging purposes.
             }
         } finally {
             //It is possible for tasks to still be running at this point (most critically if
@@ -601,8 +600,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
             await sm.sm.Start(smh);
         } catch (Exception e) {
             if (!(e is OperationCanceledException)) {
-                Logs.UnityError(Exceptions.FlattenNestedException(e)
-                    .Message); //This is only here for the vaguest of debugging purposes.
+                Logs.UnityError(Exceptions.PrintNestedException(e)); //This is only here for the vaguest of debugging purposes.
             }
             //When ending a level, the order of OnDisable is random, so a node running a sub-SM may
             //be cancelled before its caller, so the caller cannot rely on this line throwing.

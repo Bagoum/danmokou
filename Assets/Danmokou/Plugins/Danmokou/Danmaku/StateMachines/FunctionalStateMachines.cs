@@ -31,7 +31,7 @@ public class GTRepeat2 : GTRepeat {
 
 /// <summary>
 /// `gtr`: A generic repeater for StateMachines. Supports the same interface as `gcr`/`gir`.
-/// <br/>Note: the constructor takes StateMachine[] and not List{SM}, which means you must explicitly wrap multiple SMs in brackets.
+/// <br/>Note: the constructor takes StateMachine[] and not List&lt;SM&gt;, which means you must explicitly wrap multiple SMs in brackets.
 /// </summary>
 public class GTRepeat : UniversalSM {
     private class SMExecutionTracker {

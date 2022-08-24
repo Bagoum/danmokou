@@ -50,7 +50,7 @@ public static partial class Reflector {
         /// </summary>
         private static readonly List<(string method, MethodInfo mi)> genericMethods
             = new();
-
+        
         [PublicAPI]
         public static Dictionary<string, MethodInfo> AllMethods() {
             var dict = new Dictionary<string, MethodInfo>();
@@ -61,10 +61,17 @@ public static partial class Reflector {
             return dict;
         }
 
+        /// <summary>
+        /// Retrieves all methods for a given return type. Note that this does not handle funcification,
+        /// so if your return type is ExBPY, this will not returns basic math methods such as
+        /// <see cref="Danmokou.DMath.Functions.ExM.Max"/>.
+        /// </summary>
+        /// <param name="rt"></param>
+        /// <returns></returns>
         [PublicAPI]
         public static Dictionary<string, MethodInfo> AllMethodsForReturnType(Type rt) {
             ResolveGeneric(rt);
-            return methodsByReturnType[rt];
+            return methodsByReturnType.TryGetValue(rt, out var d) ? d : new();
         }
 
         /// <summary>
@@ -115,10 +122,10 @@ public static partial class Reflector {
                     if (FallThroughOptions.ContainsKey(mi.ReturnType))
                         throw new StaticException(
                             $"Cannot have multiple fallthroughs for the same return type {mi.ReturnType}");
-                    if (isExCompiler) {
+                    if (isExCompiler)
                         AddCompileOption(mi);
-                    }
-                    else FallThroughOptions[mi.ReturnType] = (fa, sig);
+                    else 
+                        FallThroughOptions[mi.ReturnType] = (fa, sig);
                 }
             }
             if (addNormal) AddMI(mi.Name, mi);
@@ -155,7 +162,7 @@ public static partial class Reflector {
                 if (methodsByReturnType.TryGetValue(rt, out var dct) && dct.TryGetValue(member, out var mi))
                     getArgTypesCache[(member, rt)] = MethodSignature.FromMethod(mi, member);
                 else
-                    throw new NotImplementedException($"The method \"{rt.RName()}.{member}\" was not found.\n");
+                    throw new NotImplementedException($"Couldn't find a method with name \"{member}\" returning type {rt.SimpRName()}.");
             }
             return getArgTypesCache[(member, rt)];
         }

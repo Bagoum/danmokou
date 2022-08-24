@@ -6,6 +6,7 @@ using System.Linq;
 using System.Reflection;
 using BagoumLib;
 using BagoumLib.Cancellation;
+using BagoumLib.Functional;
 using BagoumLib.Reflection;
 using BagoumLib.Tasks;
 using Danmokou.Behavior;
@@ -181,7 +182,7 @@ public readonly struct SMHandoff : IDisposable {
 public abstract class StateMachine {
     #region InitStuff
 
-    private static readonly Dictionary<string, Type> smInitMap = new() {
+    public static readonly Dictionary<string, Type> SMInitMap = new() {
         {"pattern", typeof(PatternSM)},
         {"phase", typeof(PhaseSM)},
         {"phased", typeof(DialoguePhaseSM)},
@@ -204,7 +205,7 @@ public abstract class StateMachine {
         {"script", typeof(ScriptTSM)},
         {"debugf", typeof(DebugFloat)}
     };
-    private static readonly Dictionary<Type, Type[]> smChildMap = new() {
+    public static readonly Dictionary<Type, Type[]> SMChildMap = new() {
         {typeof(PatternSM), new[] { typeof(PhaseSM)}}, {
             typeof(PhaseSM), new[] {
                 typeof(PhaseParallelActionSM), typeof(PhaseSequentialActionSM), typeof(EndPSM), typeof(FinishPSM),
@@ -218,13 +219,14 @@ public abstract class StateMachine {
     };
 
     #endregion
-    private static bool CheckCreatableChild(Type? myType, Type childType) {
-        while (myType != null && !smChildMap.ContainsKey(myType)) {
-            myType = myType.BaseType;
+    public static bool CheckCreatableChild(Type myType, Type childType) {
+        var childMapper = myType;
+        while (!SMChildMap.ContainsKey(childMapper)) {
+            if (childMapper.BaseType is not {} bt)
+                throw new StaticException($"Could not verify base type for {myType.RName()}");
+            childMapper = bt;
         }
-        if (myType == null) 
-            throw new Exception($"Could not verify SM type for {childType.RName()}");
-        Type[] allowedTypes = smChildMap[myType];
+        Type[] allowedTypes = SMChildMap[childMapper];
         for (int ii = 0; ii < allowedTypes.Length; ++ii) {
             if (childType == allowedTypes[ii] || childType.IsSubclassOf(allowedTypes[ii])) return true;
         }
@@ -232,32 +234,36 @@ public abstract class StateMachine {
     }
 
     private enum SMConstruction {
-        ILLEGAL,
         CONSTRUCTOR,
         ANY,
         AS_REFLECTABLE,
         AS_TREFLECTABLE
     }
-    private static SMConstruction CheckCreatableChild(Type? myType, string cname) {
-        if (!smInitMap.TryGetValue(cname, out var childType)) {
-            if (CheckCreatableChild(myType, typeof(ReflectableSLSM)) &&
-                Reflector.TryGetSignature<TTaskPattern>(cname) != null)
-                return SMConstruction.AS_TREFLECTABLE;
-            if (CheckCreatableChild(myType, typeof(ReflectableLASM)) &&
-                Reflector.TryGetSignature<TaskPattern>(cname) != null)
-                return SMConstruction.AS_REFLECTABLE;
-            return SMConstruction.ILLEGAL;
+    private static Either<SMConstruction, ReflectionException> CheckCreatableChild(Type myType, SMParser.ParsedUnit.Str unit) {
+        var cname = unit.Item;
+        if (!SMInitMap.TryGetValue(cname, out var childType)) {
+            ReflectionException? defltErr = null;
+            if (Reflector.TryGetSignature<TTaskPattern>(cname) is {} mscr) {
+                if (CheckCreatableChild(myType, typeof(ReflectableSLSM))) 
+                    return SMConstruction.AS_TREFLECTABLE;
+                defltErr = new ReflectionException(unit.Position,
+                    $"State machine {mscr.SimpleName} is a dialogue-script {nameof(TTaskPattern)}," +
+                    $" which is not allowed to be a child of {myType.SimpRName()}.");
+            }
+            if (Reflector.TryGetSignature<TaskPattern>(cname) is {} mrefl) {
+                 if (CheckCreatableChild(myType, typeof(ReflectableLASM)))
+                     return SMConstruction.AS_REFLECTABLE;
+                 defltErr = new ReflectionException(unit.Position,
+                     $"State machine {mrefl.SimpleName} is a {nameof(TaskPattern)}," +
+                     $" which is not allowed to be a child of {myType.SimpRName()}.");
+            }
+            return defltErr ??
+                   new ReflectionException(unit.Position, $"No state machine function found by name '{cname}'.");
+        } else if (CheckCreatableChild(myType, childType)) {
+            return SMConstruction.CONSTRUCTOR;
         } else {
-            while (myType != null && !smChildMap.ContainsKey(myType)) {
-                myType = myType.BaseType;
-            }
-            if (myType == null)
-                throw new Exception($"Could not verify SM type for {cname}");
-            Type[] allowedTypes = smChildMap[myType];
-            for (int ii = 0; ii < allowedTypes.Length; ++ii) {
-                if (childType == allowedTypes[ii] || childType.IsSubclassOf(allowedTypes[ii])) return SMConstruction.CONSTRUCTOR;
-            }
-            return SMConstruction.ILLEGAL;
+            return new ReflectionException(unit.Position,
+                $"State machine {childType.SimpRName()}/{cname} is not allowed to be a child of {myType.SimpRName()}.");
         }
     }
     /*
@@ -281,32 +287,33 @@ public abstract class StateMachine {
     private static readonly Type stateTyp = typeof(StateMachine);
     private static readonly Dictionary<Type, Type[]> constructorSigs = new();
 
-    public static IAST<StateMachine> Create(IParseQueue p) => Create(p, SMConstruction.ANY);
     public static IAST<StateMachine> Create(string name, object?[] args) {
         var method = SMConstruction.ANY;
-        var sig = GetSignature(ref name, ref method, out _);
+        var sig = GetSignature(default, name, ref method, out _);
         return Create(default, default, method, sig, 
             args.Select(x => (IAST)new AST.Preconstructed<object?>(default, x)).ToArray());
     }
 
-    private static Reflector.MethodSignature GetSignature(ref string name, ref SMConstruction method, out Type? myType) {
-        if (!smInitMap.TryGetValue(name, out myType)) {
+    private static Reflector.MethodSignature GetSignature(PositionRange loc, string name, ref SMConstruction method, out Type myType) {
+        if (!SMInitMap.TryGetValue(name, out myType)) {
             Reflector.MethodSignature? prms;
             if (method == SMConstruction.AS_TREFLECTABLE || method == SMConstruction.ANY) {
                 if ((prms = Reflector.TryGetSignature<TTaskPattern>(name)) != null) {
                     method = SMConstruction.AS_TREFLECTABLE;
+                    myType = typeof(ReflectableSLSM);
                     return prms;
                 }
             }
             if (method == SMConstruction.AS_REFLECTABLE || method == SMConstruction.ANY) {
                 if ((prms = Reflector.TryGetSignature<TaskPattern>(name)) != null) {
                     method = SMConstruction.AS_REFLECTABLE;
+                    myType = typeof(ReflectableLASM);
                     return prms;
                 }
             }
         } else 
-             return Reflector.GetConstructorSignature(myType);
-        throw new Exception($"{name} is not a StateMachine or applicable auto-reflectable.");
+             return Reflector.GetConstructorSignature(myType) with { CalledAs = name };
+        throw new ReflectionException(loc, $"{name} is not a StateMachine or applicable auto-reflectable.");
     }
 
     
@@ -322,55 +329,90 @@ public abstract class StateMachine {
             _ => new AST.MethodInvoke<StateMachine>(loc, callLoc, sig, args) 
                 {Type = AST.MethodInvoke.InvokeType.SM},
         };
+
+    public static IAST<StateMachine> Create(IParseQueue q) => Create(q, SMConstruction.ANY);
     private static IAST<StateMachine> Create(IParseQueue q, SMConstruction method) {
-        if (method == SMConstruction.ILLEGAL)
-            throw new StaticException("Somehow received a Create(ILLEGAL) call in SM. This should not occur.");
-        MaybeQueueProperties(q);
-        var (name, loc) = q.NextUnit(out int pind);
-        var sig = GetSignature(ref name, ref method, out var myType);
-        var prms = sig.Params;
-                   
-        var args = new IAST[prms.Length];
-        if (prms.Length > 0) {
-            bool requires_children = prms[0].Type == statesTyp && !q.Ctx.props.trueArgumentOrder;
-            int special_args_i = (requires_children) ? 1 : 0;
-            Reflector.FillASTArray(args, special_args_i, sig, q);
-            if (q.Ctx.QueuedProps.Count > 0)
-                throw q.WrapThrowHighlight(pind, $"StateMachine {q.AsFileLink(sig)} is not allowed to have phase properties.");
-            int childCt = -1;
-            if (!q.IsNewlineOrEmpty && IsChildCountMarker(q.MaybeScan(), out int ct)) {
-                q.Advance();
-                childCt = ct;
-            }
-            if (requires_children) {
-                var children = new List<IAST<StateMachine>>();
-                SMConstruction childType;
-                while (childCt-- != 0 && !q.Empty && 
-                       (childType = CheckCreatableChild(myType, q.ScanNonProperty())) != SMConstruction.ILLEGAL) {
-                    var newsm = Create(q.NextChild(), childType);
-                    if (!q.IsNewlineOrEmpty) {
-                        q.MaybeGetCurrentUnit(out var i);
-                        throw q.WrapThrowHighlight(i, "Expected a newline after constructing a StateMachine.");
-                    }
-                    children.Add(newsm);
-                    if (newsm is AST.MethodInvoke miAst && miAst.BaseMethod.ReturnType == typeof(BreakSM))
-                        break;
+        try {
+            MaybeQueueProperties(q);
+            var (name, loc) = q.ScanUnit(out int pind);
+            var sig = GetSignature(loc, name, ref method, out var myType);
+            q.Advance();
+            var prms = sig.Params;
+
+            var args = new IAST[prms.Length];
+            ReflectionException? argErr = null;
+            ReflectionException? extraChildErr = null;
+            int? nchildren = 0;
+            if (prms.Length > 0) {
+                var requires_children = prms[0].Type == statesTyp && !q.Ctx.props.trueArgumentOrder;
+                int special_args_i = (requires_children) ? 1 : 0;
+                argErr = Reflector.FillASTArray(args, special_args_i, sig, q).fail;
+                if (q.Ctx.QueuedProps.Count > 0)
+                    throw q.WrapThrowHighlight(pind,
+                        $"StateMachine {q.AsFileLink(sig)} is not allowed to have phase properties.");
+                int childCt = -1;
+                if (!q.IsNewlineOrEmpty && IsChildCountMarker(q.MaybeScan(), out int ct)) {
+                    q.Advance();
+                    childCt = ct;
                 }
-                args[0] = new AST.SequenceList<StateMachine>(children.Count > 0 ? 
-                    children[0].Position.Merge(children[^1].Position) : loc, children);
+                if (requires_children) {
+                    var children = new List<IAST<StateMachine>>();
+                    while (childCt-- != 0 && !q.Empty) {
+                        var childTypeOrErr = CheckCreatableChild(myType, q.ScanNonProperty());
+                        if (childTypeOrErr.TryR(out var err)) {
+                            extraChildErr = err;
+                            break;
+                        }
+                        var newsm = Create(q.NextChild(), childTypeOrErr.Left);
+                        if (newsm.IsUnsound) {
+                            newsm = new AST.Failure<StateMachine>(new(newsm.Position,
+                                    $"Failed to construct child #{children.Count + 1} for state machine {sig.SimpleName}."))
+                                { Basis = newsm };
+                            //error recovery
+                            while (!q.IsNewlineOrEmpty)
+                                q.Advance();
+                        }
+                        if (!q.IsNewlineOrEmpty) {
+                            q.MaybeGetCurrentUnit(out var i);
+                            newsm = new AST.Failure<StateMachine>(q.WrapThrowHighlight(i, 
+                                "Expected a newline after constructing a StateMachine.")) { Basis = newsm };
+                        }
+                        children.Add(newsm);
+                        if (newsm is AST.MethodInvoke miAst && miAst.BaseMethod.ReturnType == typeof(BreakSM))
+                            break;
+                    }
+                    nchildren = children.Count;
+                    args[0] = new AST.SequenceList<StateMachine>(children.Count > 0 ?
+                        children[0].Position.Merge(children[^1].Position) :
+                        loc, children);
+                }
             }
+            //Due to inconsistent ordering of state machine arguments,
+            // we have to calculate the bounding position like this
+            var smallestStart = loc.Start;
+            var largestEnd = loc.End;
+            for (int ii = 0; ii < args.Length; ++ii) {
+                if (args[ii].Position.Start.Index < smallestStart.Index)
+                    smallestStart = args[ii].Position.Start;
+                if (args[ii].Position.End.Index > largestEnd.Index)
+                    largestEnd = args[ii].Position.End;
+            }
+            var ast = Create(new PositionRange(smallestStart, largestEnd), loc, method, sig, args);
+            if (argErr != null)
+                ast = new AST.Failure<StateMachine>(argErr) { Basis = ast };
+            else if (q.HasLeftovers(out var qpi)) {
+                var childSuffix = nchildren.Try(out var nc) ? $" with {nc} children" : "";
+                ast = new AST.Failure<StateMachine>(q.WrapThrowLeftovers(qpi, $"Parsed {myType.SimpRName()}{childSuffix}, but then found extra text (in ≪≫).")) { Basis = ast };
+            }
+            if (extraChildErr != null) {
+                q.Ctx.NonfatalErrors.Add((extraChildErr, typeof(StateMachine)));
+            }
+            return ast;
+        } catch (Exception e) {
+            if (e is ReflectionException re)
+                return new AST.Failure<StateMachine>(re);
+            return new AST.Failure<StateMachine>(new ReflectionException(q.PositionUpToCurrentObject, e.Message, e.InnerException));
         }
-        //Due to inconsistent ordering of state machine arguments,
-        // we have to calculate the bounding position like this
-        var smallestStart = loc.Start;
-        var largestEnd = loc.End;
-        for (int ii = 0; ii < args.Length; ++ii) {
-            if (args[ii].Position.Start.Index < smallestStart.Index)
-                smallestStart = args[ii].Position.Start;
-            if (args[ii].Position.End.Index > largestEnd.Index)
-                largestEnd = args[ii].Position.End;
-        }
-        return Create(new PositionRange(smallestStart, largestEnd), loc, method, sig, args);
     }
     
     private static bool IsChildCountMarker(string? s, out int ct) {
@@ -390,22 +432,30 @@ public abstract class StateMachine {
         while (p.MaybeScan() == SMParser.PROP_KW) {
             p.Advance();
             var child = p.NextChild();
-            p.Ctx.QueuedProps.Add(child.IntoAST<PhaseProperty>());
+            var prop = child.IntoAST<PhaseProperty>();
+            p.Ctx.QueuedProps.Add(prop);
+            if (prop.IsUnsound)
+                //error recovery
+                while (!p.IsNewlineOrEmpty)
+                    p.Advance();
             //Note that newlines are skipped in scan
-            if (!p.IsNewline) 
-                throw child.WrapThrow("Missing a newline at the end of the the property declaration.");
+            if (!p.IsNewline) {
+                p.GetCurrentUnit(out int ind);
+                throw child.WrapThrowHighlight(ind, "Missing a newline at the end of the property declaration.");
+            }
         }
     }
 
     public static StateMachine CreateFromDump(string dump) {
-        using var _ = BakeCodeGenerator.OpenContext(BakeCodeGenerator.CookingContext.KeyType.SM, dump);
+        using var __ = BakeCodeGenerator.OpenContext(BakeCodeGenerator.CookingContext.KeyType.SM, dump);
         var p = IParseQueue.Lex(dump);
         Profiler.BeginSample("SM AST construction");
         var ast = Create(p);
         Profiler.EndSample();
         foreach (var d in ast.WarnUsage(p.Ctx))
             d.Log();
-        p.ThrowOnLeftovers(() => "Behavior script has extra text. Check the highlighted text for an illegal command.");
+        if (p.Ctx.ParseEndFailure(p, ast) is { } exc)
+            throw exc;
         Profiler.BeginSample("SM AST realization");
         var result = ast.Evaluate();
         Profiler.EndSample();

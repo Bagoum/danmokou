@@ -28,7 +28,9 @@ namespace Danmokou.DMath.Functions {
 [Reflect]
 public static partial class Parametrics {
     private static readonly Ex EPS = Ex.Constant(M.MAG_ERR);
-    
+    /// <summary>
+    /// The zero vector.
+    /// </summary>
     public static ExTP Zero() => CXY(0, 0);
 
     #region ConstantVectors

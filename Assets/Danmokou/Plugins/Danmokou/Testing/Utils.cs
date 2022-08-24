@@ -42,7 +42,7 @@ public static class TAssert {
             code();
             Assert.Fail("Expected code to fail");
         } catch (Exception e) {
-            RegexMatches(pattern, Exceptions.FlattenNestedException(e).Message);
+            RegexMatches(pattern, Exceptions.PrintNestedException(e));
         }
     }
     public static void RegexMatches(string pattern, string message) {

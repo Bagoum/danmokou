@@ -72,6 +72,14 @@ public static partial class Reflector {
         public bool IsDeprecated => Mi.GetCustomAttribute<ObsoleteAttribute>() != null;
         public string TypeName => Mi.DeclaringType!.SimpRName();
         public bool isCtor => Mi.Name == ".ctor";
+        
+        public string SimpleName {
+            get {
+                var prefix = isCtor ? TypeName : Mi.Name;
+                return (CalledAs == null || CalledAs == Mi.Name.ToLower()) ?
+                    prefix : $"{prefix}/{CalledAs}";
+            }
+        }
         public string Name => 
             isCtor ? 
                 $"new {TypeName}" :
@@ -100,14 +108,12 @@ public static partial class Reflector {
         /// <summary>
         /// Number of parameters that must be parsed by reflection.
         /// </summary>
-        public int ExplicitParameterCount {
-            get {
-                var ct = 0;
-                for (int ii = 0; ii < Params.Length; ++ii)
-                    if (!Params[ii].NonExplicit)
-                        ++ct;
-                return ct;
-            }
+        public int ExplicitParameterCount(int startingFromArg = 0) {
+            var ct = 0;
+            for (int ii = startingFromArg; ii < Params.Length; ++ii)
+                if (!Params[ii].NonExplicit)
+                    ++ct;
+            return ct;
         }
 
 
@@ -188,10 +194,17 @@ public static partial class Reflector {
     /// </summary>
     private static readonly Dictionary<Type, GetSignature> funcifiableTypes =
         new();
+    /// <summary>
+    /// A dictionary mapping funcifable reflection types (eg. TExArgCtx->tfloat) to simplified types
+    /// (eg. tfloat). Used by language server.
+    /// </summary>
+    [PublicAPI]
+    public static readonly Dictionary<Type, Type> FuncifySimplifications = new();
     private static readonly HashSet<Type> funcifiableReturnTypes = new();
 
     private static void AllowFuncification<ExR>() {
         funcifiableTypes[typeof(Func<TExArgCtx, ExR>)] = ReflectionData.GetFuncedSignature<TExArgCtx, ExR>;
+        FuncifySimplifications[typeof(Func<TExArgCtx, ExR>)] = typeof(ExR);
         funcifiableReturnTypes.Add(typeof(ExR));
     }
 
@@ -257,7 +270,7 @@ public static partial class Reflector {
     }
         
     
-    private static bool TryCompileOption(Type compiledType, out (Type source, MethodSignature mi) compile) {
+    public static bool TryCompileOption(Type compiledType, out (Type source, MethodSignature mi) compile) {
         if (CompileOptions.TryGetValue(compiledType, out compile)) return true;
         if (!checkedCompileOptions.Contains(compiledType)) {
             for (int ii = 0; ii < genericCompileOptions.Count; ++ii) {
@@ -273,7 +286,7 @@ public static partial class Reflector {
         return false;
     }
     
-    private static readonly Dictionary<Type, (FallthroughAttribute fa, MethodSignature mi)> FallThroughOptions =
+    public static readonly Dictionary<Type, (FallthroughAttribute fa, MethodSignature mi)> FallThroughOptions =
         new();
 
 }
