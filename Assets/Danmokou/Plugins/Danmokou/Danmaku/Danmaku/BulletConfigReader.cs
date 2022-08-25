@@ -561,7 +561,7 @@ public partial class BulletManager : RegularUpdater {
         }
         
         SceneIntermediary.SceneLoaded.Subscribe(_ => StartScene());
-        Camera.onPreCull += RenderBullets;
+        URPCameraManager.OnRenderingStarted.Subscribe(RenderBullets);
     }
 
     /// <summary>

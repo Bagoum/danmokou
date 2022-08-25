@@ -6,6 +6,8 @@ using Danmokou.Core;
 using Danmokou.DMath;
 using Danmokou.Graphics;
 using UnityEngine;
+using UnityEngine.Rendering;
+
 // ReSharper disable Unity.PreferAddressByIdToGraphicsParams
 
 namespace Danmokou.Services {
@@ -26,7 +28,7 @@ public readonly struct BlackHoleEffect {
         this.fadeBackT = fadeBackT;
     }
 }
-public class SeijaCamera : CoroutineRegularUpdater, IShaderCamera {
+public class SeijaCamera : CoroutineRegularUpdater, IShaderCamera, IURPCamera {
     private static readonly int rotX = Shader.PropertyToID("_RotateX");
     private static readonly int rotY = Shader.PropertyToID("_RotateY");
     private static readonly int rotZ = Shader.PropertyToID("_RotateZ");
@@ -49,19 +51,27 @@ public class SeijaCamera : CoroutineRegularUpdater, IShaderCamera {
 
 
     public Shader seijaShader = null!;
-    private Material seijaMaterial = null!;
+    public Material SeijaMaterial { get; private set; } = null!;
+    private RenderTexture? tempTex = null;
 
     private void Awake() {
         cam = GetComponent<Camera>();
-        seijaMaterial = new Material(seijaShader);
-        seijaMaterial.SetFloat(xBound, GameManagement.References.bounds.right + 1);
-        seijaMaterial.SetFloat(yBound, GameManagement.References.bounds.top + 1);
+        SeijaMaterial = new Material(seijaShader);
+        SeijaMaterial.SetFloat(xBound, GameManagement.References.bounds.right + 1);
+        SeijaMaterial.SetFloat(yBound, GameManagement.References.bounds.top + 1);
         SetLocation(0, 0);
     }
 
     protected override void BindListeners() {
         base.BindListeners();
+        Listen(MainCamera.RenderToEv, r => {
+            cam.targetTexture = r;
+            ReleaseTemp();
+            if (r != null)
+                tempTex = RenderTexture.GetTemporary(r.descriptor);
+        });
         RegisterService<IShaderCamera>(this);
+        AddToken(URPCameraManager.Register(cam, this));
 
         Listen(targetXRot, _ => UndoAddition());
         Listen(targetYRot, _ => UndoAddition());
@@ -109,8 +119,8 @@ public class SeijaCamera : CoroutineRegularUpdater, IShaderCamera {
 
 
     private void SetLocation(float xrd, float yrd) {
-        seijaMaterial.SetFloat(rotX, xrd * M.degRad);
-        seijaMaterial.SetFloat(rotY, yrd * M.degRad);
+        SeijaMaterial.SetFloat(rotX, xrd * M.degRad);
+        SeijaMaterial.SetFloat(rotY, yrd * M.degRad);
     }
 
     public void ShowBlackHole(BlackHoleEffect bhe) {
@@ -122,27 +132,36 @@ public class SeijaCamera : CoroutineRegularUpdater, IShaderCamera {
     [ContextMenu("Black hole")]
     public void debugBlackHole() => ShowBlackHole(new BlackHoleEffect(5, 1, 2));
     private IEnumerator BlackHole(BlackHoleEffect bhe) {
-        seijaMaterial.EnableKeyword("FT_BLACKHOLE");
-        seijaMaterial.SetFloat("_BlackHoleAbsorbT", bhe.absorbT);
-        seijaMaterial.SetFloat("_BlackHoleBlackT", bhe.hideT);
-        seijaMaterial.SetFloat("_BlackHoleFadeT", bhe.fadeBackT);
+        SeijaMaterial.EnableKeyword("FT_BLACKHOLE");
+        SeijaMaterial.SetFloat("_BlackHoleAbsorbT", bhe.absorbT);
+        SeijaMaterial.SetFloat("_BlackHoleBlackT", bhe.hideT);
+        SeijaMaterial.SetFloat("_BlackHoleFadeT", bhe.fadeBackT);
         float t = 0;
         for (; t < bhe.absorbT + bhe.hideT + bhe.fadeBackT; t += ETime.FRAME_TIME) {
-            seijaMaterial.SetFloat(blackHoleT, t);
+            SeijaMaterial.SetFloat(blackHoleT, t);
             yield return null;
         }
-        seijaMaterial.DisableKeyword("FT_BLACKHOLE");
+        SeijaMaterial.DisableKeyword("FT_BLACKHOLE");
     }
 
-    private void OnPreRender() {
-        cam.targetTexture = MainCamera.RenderTo;
-    }
     private void OnRenderImage(RenderTexture src, RenderTexture dest) {
-        //Dest is dirty, rendering to it directly can cause issues if there are alpha pixels.
-        //However, SeijaCamera shader uses One Zero, so we don't need to explicitly clear.
-        //dest.GLClear();
-        UnityEngine.Graphics.Blit(src, dest, seijaMaterial);
+        UnityEngine.Graphics.Blit(src, dest, SeijaMaterial);
     }
 
+    public void EndCameraRendering(ScriptableRenderContext ctx) {
+        UnityEngine.Graphics.Blit(MainCamera.RenderTo, tempTex!, SeijaMaterial);
+        UnityEngine.Graphics.Blit(tempTex, MainCamera.RenderTo);
+    }
+
+    private void ReleaseTemp() {
+        if (tempTex != null)
+            tempTex.Release();
+        tempTex = null;
+    }
+    
+    protected override void OnDisable() {
+        ReleaseTemp();
+        base.OnDisable();
+    }
 }
 }

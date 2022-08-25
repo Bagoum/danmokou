@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using BagoumLib.Events;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.DMath;
@@ -10,6 +11,7 @@ using Danmokou.UI;
 using SuzunoyaUnity.Rendering;
 using UnityEngine;
 using UnityEngine.Profiling;
+using UnityEngine.Rendering;
 using PropConsts = Danmokou.Graphics.PropConsts;
 
 namespace Danmokou.Services {
@@ -18,7 +20,7 @@ public interface IScreenshotter {
     Texture2D Screenshot(CRect rect, MainCamera.CamType[]? cameras = null);
 }
 
-public class MainCamera : RegularUpdater, IScreenshotter {
+public class MainCamera : RegularUpdater, IScreenshotter, IURPCamera {
     public enum CamType {
         /// <summary>
         /// Background rendering.
@@ -81,7 +83,8 @@ public class MainCamera : RegularUpdater, IScreenshotter {
     public Camera TopCamera = null!;
     public Camera Effects3DCamera = null!;
     public Camera ShaderEffectCamera = null!;
-    public static RenderTexture RenderTo { get; private set; } = null!;
+    public static RenderTexture RenderTo => RenderToEv.Value!;
+    public static Evented<RenderTexture?> RenderToEv { get; } = new(null!);
 
     private static readonly CamType[] AyaCameras = {
         CamType.Background, CamType.LowDirectRender, CamType.Middle,
@@ -112,11 +115,12 @@ public class MainCamera : RegularUpdater, IScreenshotter {
 
     private void RecreateRT((int w, int h) res) {
         if (RenderTo != null) RenderTo.Release();
-        RenderTo = RenderHelpers.DefaultTempRT(res);
+        RenderToEv.OnNext(RenderHelpers.DefaultTempRT(res));
     }
 
     protected override void BindListeners() {
         base.BindListeners();
+        AddToken(URPCameraManager.Register(mainCam, this));
         RegisterService<IScreenshotter>(this);
 
         Listen(RenderHelpers.PreferredResolution, RecreateRT);
@@ -179,6 +183,9 @@ public class MainCamera : RegularUpdater, IScreenshotter {
         UnityEngine.Graphics.Blit(RenderTo, null as RenderTexture, finalRenderMaterial);
     }
     
+    public void BeginContextRendering(ScriptableRenderContext ctx) => OnPreRender();
+    public void EndContextRendering(ScriptableRenderContext ctx) => OnPostRender();
+    
     private bool saveNext = false;
     [ContextMenu("Save next PostRender")]
     public void SaveNextPostRender() {
@@ -216,32 +223,33 @@ public class MainCamera : RegularUpdater, IScreenshotter {
         ayaMaterial.SetFloat(PropConsts.Angle, rect.angle * M.degRad);
         var originalRT = RenderTexture.active;
         var originalRenderTo = RenderTo;
-        RenderTo = RenderHelpers.DefaultTempRT();
+        var ssRT = RenderHelpers.DefaultTempRT();
+        RenderToEv.OnNext(ssRT);
         //Clear is required since the camera list may not contain BackgroundCamera,
         // which is the only one that clears
         Profiler.BeginSample("Clear");
-        RenderTo.GLClear();
+        ssRT.GLClear();
         Profiler.EndSample();
         Shader.EnableKeyword("AYA_CAPTURE");
         foreach (var c in (cameras ?? AyaCameras).Select(FindCamera)) {
             var camOriginalRenderTo = c.targetTexture;
-            c.targetTexture = RenderTo;
+            c.targetTexture = ssRT;
             Profiler.BeginSample("Render");
             c.Render();
             Profiler.EndSample();
             c.targetTexture = camOriginalRenderTo;
         }
         Shader.DisableKeyword("AYA_CAPTURE");
-        var ss = RenderHelpers.DefaultTempRT(((int) (SaveData.s.Resolution.w * xsr), (int) (SaveData.s.Resolution.h * ysr)));
+        var ssLocalized = RenderHelpers.DefaultTempRT(((int) (SaveData.s.Resolution.w * xsr), (int) (SaveData.s.Resolution.h * ysr)));
         Profiler.BeginSample("Blit");
-        UnityEngine.Graphics.Blit(RenderTo, ss, ayaMaterial);
+        UnityEngine.Graphics.Blit(ssRT, ssLocalized, ayaMaterial);
         Profiler.EndSample();
-        RenderTo.Release();
-        RenderTo = originalRenderTo;
+        ssRT.Release();
+        RenderToEv.OnNext(originalRenderTo);
         Profiler.BeginSample("Commit");
-        var tex = ss.IntoTex();
+        var tex = ssLocalized.IntoTex();
         Profiler.EndSample();
-        ss.Release();
+        ssLocalized.Release();
         //For debugging
         //FileUtils.WriteTex("DMK_Saves/Aya/temp.jpg", tex);
         
@@ -256,7 +264,7 @@ public class MainCamera : RegularUpdater, IScreenshotter {
 
     protected override void OnDisable() {
         RenderTo.Release();
-        RenderTo = null!;
+        RenderToEv.OnNext(null!);
         base.OnDisable();
     }
 }

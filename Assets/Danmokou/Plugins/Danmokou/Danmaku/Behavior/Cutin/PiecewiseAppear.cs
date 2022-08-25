@@ -207,14 +207,12 @@ public class PiecewiseAppear : CoroutineRegularUpdater {
         }
     }
 
-    protected override void OnEnable() {
-        Camera.onPreCull += Render;
-        base.OnEnable();
+    protected override void BindListeners() {
+        Listen(URPCameraManager.OnRenderingStarted, Render);
     }
 
     protected override void OnDisable() {
         Clear();
-        Camera.onPreCull -= Render;
         base.OnDisable();
     }
     

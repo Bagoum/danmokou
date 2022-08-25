@@ -29,6 +29,7 @@ using SuzunoyaUnity;
 using UnityEditor;
 using static Danmokou.SM.SMAnalysis;
 using Danmokou.Core.DInput;
+using UnityEngine.Rendering;
 
 namespace Danmokou.Services {
 /// <summary>
@@ -100,6 +101,7 @@ public class GameManagement : CoroutineRegularUpdater {
                 InstanceMode.NULL);
 
         Logs.Log($"Danmokou {EngineVersion}, {References.gameIdentifier} {References.gameVersion}, exec {ExecutionNumber}");
+        URPCameraManager.SetupCallbacks();
         gameObject.AddComponent<SceneIntermediary>().defaultTransition = References.defaultTransition;
         gameObject.AddComponent<FreezeFrameHelper>();
         ETime.RegisterPersistentSOFInvoke(Replayer.BeginFrame);
