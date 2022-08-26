@@ -3,7 +3,6 @@ using UnityEditor;
 using UnityEngine;
 using Danmokou.DMath;
 using Danmokou.Scriptables;
-using JetBrains.Annotations;
 
 namespace Danmokou.Danmaku.Descriptors {
 /// This script is primarily used to send simple-bullet collider info to BulletManager.
@@ -72,11 +71,11 @@ public class GenericColliderInfo : MonoBehaviour {
             cr = CollisionMath.GrazeCircleOnCircle(hitbox, trp, radius);
         } else if (colliderType == ColliderType.Line) {
             float maxdist = Mathf.Max(point2.magnitude, point1.magnitude) + radius;
-            cr = CollisionMath.GrazeCircleOnRotatedSegment(hitbox, trp, radius,
+            cr = CollisionMath.GrazeCircleOnRotatedSegment(hitbox, trp.x, trp.y, radius,
                 point1, point2 - point1, 1f, (point2 - point1).sqrMagnitude, maxdist * maxdist,
                 Mathf.Cos(rotationDeg * Mathf.PI / 180f), Mathf.Sin(rotationDeg * Mathf.PI / 180f));
         } else if (colliderType == ColliderType.Rectangle) {
-            cr = CollisionMath.GrazeCircleOnRect(hitbox, trp, rectHalfX, rectHalfY, rectHalfX * rectHalfX + rectHalfY * rectHalfY, 1f,
+            cr = CollisionMath.GrazeCircleOnRect(hitbox, trp.x, trp.y, rectHalfX, rectHalfY, rectHalfX * rectHalfX + rectHalfY * rectHalfY, 1f,
                 Mathf.Cos(rotationDeg * Mathf.PI / 180f), Mathf.Sin(rotationDeg * Mathf.PI / 180f));
         } else if (colliderType == ColliderType.RectPtColl) {
             cr = new CollisionResult(CollisionMath.PointInRect(target.location, new CRect(

@@ -5,9 +5,6 @@ using Danmokou.DMath;
 using Danmokou.Graphics;
 using Danmokou.Pooling;
 using Danmokou.Scriptables;
-using Danmokou.Services;
-using JetBrains.Annotations;
-using UnityEditor;
 using UnityEngine;
 
 namespace Danmokou.Danmaku.Descriptors {

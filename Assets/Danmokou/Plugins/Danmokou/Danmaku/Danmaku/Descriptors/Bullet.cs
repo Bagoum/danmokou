@@ -108,7 +108,7 @@ public class Bullet : BehaviorEntity {
         } else if (collisionTarget.Active) {
             return icollider.CheckGrazeCollision(Loc, Direction, 1f, collisionTarget.Hitbox);
         }
-        return CollisionResult.noColl;
+        return CollisionMath.noColl;
         
     }
 

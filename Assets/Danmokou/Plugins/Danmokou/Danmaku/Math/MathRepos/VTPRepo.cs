@@ -60,6 +60,7 @@ public static class VTPConstructors {
             Expression.Empty());
     };
 
+    // ReSharper disable once RedundantAssignment
     public static CoordF CartesianNRot(TP tpnrv) => delegate(float c, float s, ParametricInfo bpi, ref Vector3 vec) {
         vec = tpnrv(bpi);
     };

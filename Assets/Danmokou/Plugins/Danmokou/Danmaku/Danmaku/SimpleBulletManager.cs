@@ -237,11 +237,11 @@ public partial class BulletManager {
         #endregion
 
         public MeshGenerator.RenderInfo GetOrLoadRI() => BC.GetOrLoadRI();
-
+        
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        protected virtual CollisionResult CheckGrazeCollision(in Hitbox hitbox, ref SimpleBullet sb) 
-            => throw new NotImplementedException();
+        protected virtual CollisionResult CheckGrazeCollision(in Hitbox hitbox, ref SimpleBullet sb) =>
+            CollisionMath.noColl;
 
         #region Operators
         
@@ -376,7 +376,6 @@ public partial class BulletManager {
                     
                     for (int pi = 0; pi < state.postVelPcs; ++pi) 
                         controls[pi].action(in state, sb.bpi, controls[pi].cT);
-                    //in nextDT is a significant optimization (TODO test if it's efficient in VelocityUpdateState)
                     
                     //Note on optimization: keeping accDelta in SB is faster(!) than either a local variable or a SBInProgress struct.
                     sb.movement.UpdateDeltaAssignDelta(ref sb.bpi, ref sb.accDelta, in state.nextDT);
@@ -432,7 +431,7 @@ public partial class BulletManager {
 
             PruneControls();
         }
-        private struct CollisionCheckingState {
+        protected struct CollisionCheckingState {
             public readonly bool allowCameraCull;
             public readonly float cullRad;
             public readonly Hitbox hitbox;
@@ -451,31 +450,35 @@ public partial class BulletManager {
                 ListCache<int>.Consign(destroyCollidedBullets);
             }
         }
-        private void CollisionProcessBatch(int start, int end, ref CollisionCheckingState state) {
+        protected virtual void CollisionProcessBatch(int start, int end, ref CollisionCheckingState state) {
+            var hitbox = state.hitbox;
+            var allowCameraCull = state.allowCameraCull;
             for (int ii = start; ii < end; ++ii) {
                 if (!rem[ii]) {
                     ref SimpleBullet sbn = ref Data[ii];
-                    bool checkGraze = false;
-                    if (sbn.grazeFrameCounter-- == 0) {
-                        sbn.grazeFrameCounter = 0;
-                        checkGraze = true;
-                    }
-                    CollisionResult cr = CheckGrazeCollision(in state.hitbox, ref sbn);
+                    var cr = CheckGrazeCollision(in hitbox, ref sbn);
                     if (cr.collide) {
                         //It's ok to use these locking mechanisms in single-threaded case
                         // since we don't enter this part often
                         Interlocked.Increment(ref state.collided);
-                        if (BC.destructible)
+                        if (BC.destructible) {
                             //Bullet deletion may create a culled bullet
                             // or run non-parallelizable collide-controls.
                             //Thus, we must run that later
                             lock (state.destroyCollidedBullets)
                                 state.destroyCollidedBullets.Add(ii);
-                    } else if (checkGraze && cr.graze) {
-                        sbn.grazeFrameCounter = BC.grazeEveryFrames;
-                        Interlocked.Increment(ref state.graze);
-                    } else if (state.allowCameraCull && (++sbn.cullFrameCounter & CULL_EVERY_MASK) == 0 &&
-                               LocationHelpers.OffPlayableScreenBy(state.cullRad, sbn.bpi.loc)) {
+                            continue;
+                        }
+                    } else if (sbn.grazeFrameCounter-- == 0) {
+                        if (cr.graze) {
+                            sbn.grazeFrameCounter = BC.grazeEveryFrames;
+                            Interlocked.Increment(ref state.graze);
+                        } else {
+                            sbn.grazeFrameCounter = 0;
+                        }
+                    }
+                    if (allowCameraCull && (++sbn.cullFrameCounter & CULL_EVERY_MASK) == 0 &&
+                               LocationHelpers.OffPlayableScreenBy(in state.cullRad, in sbn.bpi.loc)) {
                         DeleteSB(ii);
                     }
                 }
@@ -899,14 +902,14 @@ public partial class BulletManager {
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected override CollisionResult CheckGrazeCollision(in Hitbox hitbox, ref SimpleBullet sb) => 
-            CollisionMath.GrazeCircleOnCircle(in hitbox, sb.bpi.loc, BC.cc.radius * sb.scale);
+            CollisionMath.GrazeCircleOnCircle(in hitbox, sb.bpi.loc.x, sb.bpi.loc.y, BC.cc.radius * sb.scale);
     }
     private class RectSBC : SimpleBulletCollection {
         public RectSBC(List<SimpleBulletCollection> target, BulletInCode bc) : base(target, bc) {}
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected override CollisionResult CheckGrazeCollision(in Hitbox hitbox, ref SimpleBullet sb) => 
-            CollisionMath.GrazeCircleOnRect(in hitbox, sb.bpi.loc, BC.cc.halfRect.x, 
+            CollisionMath.GrazeCircleOnRect(in hitbox, sb.bpi.loc.x, sb.bpi.loc.y, BC.cc.halfRect.x, 
                 BC.cc.halfRect.y, BC.cc.maxDist2, sb.scale, sb.direction.x, sb.direction.y);
     }
     private class LineSBC : SimpleBulletCollection {
@@ -914,15 +917,12 @@ public partial class BulletManager {
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected override CollisionResult CheckGrazeCollision(in Hitbox hitbox, ref SimpleBullet sb) => 
-            CollisionMath.GrazeCircleOnRotatedSegment(in hitbox, sb.bpi.loc, BC.cc.radius, BC.cc.linePt1, 
+            CollisionMath.GrazeCircleOnRotatedSegment(in hitbox, sb.bpi.loc.x, sb.bpi.loc.y, BC.cc.radius, BC.cc.linePt1, 
                 BC.cc.delta, sb.scale, BC.cc.deltaMag2, BC.cc.maxDist2, sb.direction.x, sb.direction.y);
     }
+    //Technically the same as base SimpleBulletCollection, but I'm keeping it for "explicitness"
     private class NoCollSBC : SimpleBulletCollection {
         public NoCollSBC(List<SimpleBulletCollection> target, BulletInCode bc) : base(target, bc) {}
-        
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        protected override CollisionResult CheckGrazeCollision(in Hitbox hitbox, ref SimpleBullet sb) 
-            => CollisionResult.noColl;
     }
 
     //Called via Camera.onPreCull event

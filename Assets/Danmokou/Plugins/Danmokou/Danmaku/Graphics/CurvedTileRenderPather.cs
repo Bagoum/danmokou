@@ -13,7 +13,6 @@ using JetBrains.Annotations;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.Profiling;
 
 //Warning to future self: Pathers function really strangely in that their transform is located at the starting point, and the mesh
 //simply moves farther away from that source. The transform does not move. The reason for this is that it's difficult to maintain
@@ -214,7 +213,7 @@ public class CurvedTileRenderPather : CurvedTileRender {
     public CollisionResult CheckCollision() {
         cullCtr = (cullCtr + 1) % checkCullEvery; 
         if (cullCtr == 0 && exec.myStyle.CameraCullable.Value && CullCheck())
-            return CollisionResult.noColl;
+            return CollisionMath.noColl;
         
         int cut1 = (int) Math.Ceiling((cL - read_from + 1) * tailCutoffRatio);
         int cut2 = (int) Math.Ceiling((cL - read_from + 1) * headCutoffRatio);
@@ -228,12 +227,12 @@ public class CurvedTileRenderPather : CurvedTileRender {
                     fe[ii].enemy.ProcOnHit(plb.data.effect, centers[segment]);
                 }
             }
-            return CollisionResult.noColl;
+            return CollisionMath.noColl;
         }
         if (target.Active && CollisionMath.CircleOnAABB(
             bounds, target.location, target.largeRadius)) {
             return CollisionMath.GrazeCircleOnSegments(target.Hitbox, Vector2.zero, centers, read_from + cut1, 1, cL - cut2, scaledLineRadius, 1, 0);
-        } else return CollisionResult.noColl;
+        } else return CollisionMath.noColl;
     }
     public void FlipVelX() {
         movement.FlipX();

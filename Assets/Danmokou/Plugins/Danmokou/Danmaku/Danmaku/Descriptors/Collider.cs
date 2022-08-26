@@ -11,7 +11,7 @@ public class NoneCollider : ICollider {
     public bool CheckCollision(Vector2 loc, Vector2 dir, float scale, Vector2 targetLoc, float targetRad) =>
         false;
     public CollisionResult CheckGrazeCollision(Vector2 loc, Vector2 dir, float scale, in Hitbox target) =>
-        CollisionResult.noColl;
+        CollisionMath.noColl;
 }
 
 public class CircleCollider : ICollider {
@@ -41,7 +41,7 @@ public class RectCollider : ICollider {
     public bool CheckCollision(Vector2 loc, Vector2 dir, float scale, Vector2 targetLoc, float targetRad) =>
         CollisionMath.CircleOnRect(targetLoc, targetRad, loc, halfRectX, halfRectY, maxDist2, scale, dir.x, dir.y);
     public CollisionResult CheckGrazeCollision(Vector2 loc, Vector2 dir, float scale, in Hitbox target) =>
-        CollisionMath.GrazeCircleOnRect(in target, loc, halfRectX, halfRectY, maxDist2, scale, dir.x, dir.y);
+        CollisionMath.GrazeCircleOnRect(in target, loc.x, loc.y, halfRectX, halfRectY, maxDist2, scale, dir.x, dir.y);
 }
 
 
@@ -65,7 +65,7 @@ public class LineCollider : ICollider {
         CollisionMath.CircleOnRotatedSegment(targetLoc, targetRad, loc, radius, pt1,
             delta, scale, deltaMag2, maxDist2, dir.x, dir.y);
     public CollisionResult CheckGrazeCollision(Vector2 loc, Vector2 dir, float scale, in Hitbox target) =>
-        CollisionMath.GrazeCircleOnRotatedSegment(in target, loc, radius, pt1,
+        CollisionMath.GrazeCircleOnRotatedSegment(in target, loc.x, loc.y, radius, pt1,
             delta, scale, deltaMag2, maxDist2, dir.x, dir.y);
 }
 

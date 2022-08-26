@@ -15,10 +15,10 @@ public readonly struct CollisionResult {
         this.collide = collide;
         this.graze = graze;
     }
-    public static readonly CollisionResult noColl = new CollisionResult(false, false);
 }
 
 public static class CollisionMath {
+    public static readonly CollisionResult noColl = new(false, false);
     private static readonly Type t = typeof(CollisionMath);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -52,13 +52,32 @@ public static class CollisionMath {
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static CollisionResult GrazeCircleOnCircle(in Hitbox c1, Vector2 c2t, float c2r) {
-        c2t.x -= c1.x;
-        c2t.y -= c1.y;
-        float lr = c2r + c1.largeRadius;
-        c2r += c1.radius;
+    public static CollisionResult GrazeCircleOnCircle(in Hitbox h, Vector2 c2t, float c2r) {
+        c2t.x -= h.x;
+        c2t.y -= h.y;
+        float lr = c2r + h.largeRadius;
+        c2r += h.radius;
         float d2 = c2t.x * c2t.x + c2t.y * c2t.y;
-        return new CollisionResult(d2 < c2r * c2r,  d2 < lr * lr);
+        return new(d2 < c2r * c2r,  d2 < lr * lr);
+    }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static CollisionResult GrazeCircleOnCircle(in Hitbox h, in float cx, in float cy, in float cr) {
+        var dx = cx - h.x;
+        var dy = cy - h.y;
+        float lr = cr + h.largeRadius;
+        var r = cr + h.radius;
+        float d2 = dx * dx + dy * dy;
+        return new(d2 < r * r,  d2 < lr * lr);
+    }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void GrazeCircleOnCircle(in Hitbox h, Vector2 c2t, float c2r, out bool collide, out bool graze) {
+        c2t.x -= h.x;
+        c2t.y -= h.y;
+        float lr = c2r + h.largeRadius;
+        c2r += h.radius;
+        float d2 = c2t.x * c2t.x + c2t.y * c2t.y;
+        collide = d2 < c2r * c2r;
+        graze = d2 < lr * lr;
     }
 
     
@@ -128,7 +147,7 @@ public static class CollisionMath {
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static CollisionResult GrazeCircleOnSegments(in Hitbox c1, Vector2 src, Vector2[] points, int start, int skip, int end, float radius, float cos_rot, float sin_rot) {
-        if (start >= end) return CollisionResult.noColl;
+        if (start >= end) return noColl;
         bool grazed = false;
         // use src.x to store delta vector to target, derotated.
         src.x = c1.x - src.x;
@@ -205,39 +224,39 @@ public static class CollisionMath {
     //delta can be precomputed.
     //NOTE: it's also more efficient to compute scale stuff in here.
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static CollisionResult GrazeCircleOnRotatedSegment(in Hitbox circ, Vector2 src, float radius, Vector2 node1, Vector2 delta, float scale, float delta_mag2, float max_dist2, float cos_rot, float sin_rot) {
-        max_dist2 *= scale * scale;
-        //First, we get target - src, then DErotate it. This means we only need one rotation operation
-        src.x = circ.x - src.x;
-        src.y = circ.y - src.y;
+    public static CollisionResult GrazeCircleOnRotatedSegment(in Hitbox h, in float cx, in float cy, in float radius, in Vector2 node1, in Vector2 delta, in float scale, in float delta_mag2, in float max_dist2, in float cos_rot, in float sin_rot) {
+        //First, we get src -> target and descale it, so we don't need any other scaling
+        var x = (h.x - cx) / scale;
+        var y = (h.y - cy) / scale;
+        
         //Early exit condition: ||src -> target||^2 > 2(max_dist^2 + Lrad^2)
         //The extra 2 is because 2(x^2+y^2) is an upper bound for (x+y)^2.
-        if (src.x * src.x + src.y * src.y > 2f * (max_dist2 + circ.largeRadius2)) return CollisionResult.noColl;
+        if (x * x + y * y > 2f * (max_dist2 + h.largeRadius2)) return noColl;
         
-        //Derotation and subtract by node1 to get the G vector.
-        float _gbg = cos_rot * src.x + sin_rot * src.y - node1.x * scale;
-        src.y = cos_rot * src.y - sin_rot * src.x - node1.y * scale;
-        src.x = _gbg;
-        
-        delta.x *= scale;
-        delta.y *= scale;
-        delta_mag2 *= scale * scale;
-        radius *= scale;
-        
-        float radius2 = (radius + circ.radius) * (radius + circ.radius);
-        float lradius2 = (radius + circ.largeRadius) * (radius + circ.largeRadius);
+        //Derotate and subtract by node1:local to get the G vector (node1:world -> target)
+        float _x = cos_rot * x + sin_rot * y - node1.x;
+        y = cos_rot * y - sin_rot * x - node1.y;
+        x = _x;
 
-        float projection_unscaled = src.x * delta.x + src.y * delta.y;
-        if (projection_unscaled < 0) {
-            float d2 = src.x * src.x + src.y * src.y;
+        float radius2 = (radius + h.radius) * (radius + h.radius);
+        float lradius2 = (radius + h.largeRadius) * (radius + h.largeRadius);
+
+        //Dot product of A:(node1:world -> target) and B:(node1 -> node2)
+        float dot = x * delta.x + y * delta.y;
+        if (dot < 0) {
+            //target is in the opposite direction 
+            float d2 = x * x + y * y;
             return new CollisionResult(d2 < radius2, d2 < lradius2);
-        } else if (projection_unscaled > delta_mag2) {
-            src.x -= delta.x;
-            src.y -= delta.y;
-            float d2 = src.x * src.x + src.y * src.y;
+        } else if (dot > delta_mag2) { //ie. proj_B(A) > ||B||
+            //target is beyond node2
+            x -= delta.x;
+            y -= delta.y;
+            float d2 = x * x + y * y;
             return new CollisionResult(d2 < radius2, d2 < lradius2);
         } else {
-            float norm = src.x * src.x + src.y * src.y - projection_unscaled * projection_unscaled / delta_mag2;
+            //proj_B(A) = (dot / delta_mag)
+            //We have a right triangle A, proj_B(A), norm_B(A)
+            float norm = x * x + y * y - dot * dot / delta_mag2;
             return new CollisionResult(norm < radius2, norm < lradius2);
         }
     }
@@ -245,19 +264,13 @@ public static class CollisionMath {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool CircleOnRotatedSegment(Vector2 cLoc, float cRad, Vector2 src, float radius, 
         Vector2 node1, Vector2 delta, float scale, float delta_mag2, float max_dist2, float cos_rot, float sin_rot) {
-        max_dist2 *= scale * scale;
-        src.x = cLoc.x - src.x;
-        src.y = cLoc.y - src.y;
+        src.x = (cLoc.x - src.x) / scale;
+        src.y = (cLoc.y - src.y) / scale;
         if (src.x * src.x + src.y * src.y > 2f * (max_dist2 + cRad * cRad)) return false;
         
-        float _gbg = cos_rot * src.x + sin_rot * src.y - node1.x * scale;
-        src.y = cos_rot * src.y - sin_rot * src.x - node1.y * scale;
+        float _gbg = cos_rot * src.x + sin_rot * src.y - node1.x;
+        src.y = cos_rot * src.y - sin_rot * src.x - node1.y;
         src.x = _gbg;
-        
-        delta.x *= scale;
-        delta.y *= scale;
-        delta_mag2 *= scale * scale;
-        radius *= scale;
         
         float radius2 = (radius + cRad) * (radius + cRad);
 
@@ -337,50 +350,44 @@ public static class CollisionMath {
         dx > minX - r && dx < maxX + r && dy > minY - r && dy < maxY + r;
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static CollisionResult GrazeCircleOnRect(in Hitbox circ, Vector2 rLoc, float rectHalfX, float rectHalfY, float diag2, float scale, float cos_rot, float sin_rot) {
-        diag2 *= scale * scale;
-        rLoc.x = circ.x - rLoc.x;
-        rLoc.y = circ.y - rLoc.y;
+    public static CollisionResult GrazeCircleOnRect(in Hitbox circ, in float rectX, in float rectY, in float rectHalfX, in float rectHalfY, in float diag2, in float scale, in float cos_rot, in float sin_rot) {
+        var x = (circ.x - rectX) / scale;
+        var y = (circ.y - rectY) / scale;
         //Early exit condition: ||src -> target||^2 > 2*(diag^2 + Lrad^2)
         //The extra 2 is because 2(x^2+y^2) is an upper bound for (x+y)^2.
-        if (rLoc.x * rLoc.x + rLoc.y * rLoc.y > 2f * (diag2 + circ.largeRadius2)) return CollisionResult.noColl;
-        rectHalfX *= scale;
-        rectHalfY *= scale;
+        if (x * x + y * y > 2f * (diag2 + circ.largeRadius2)) return noColl;
         //First DErotate the delta vector and get its absolutes. Note we use -sin_rot
         //Store delta vector in Rect for efficiency
-        float gbg = cos_rot * rLoc.x + sin_rot * rLoc.y;
-        rLoc.y = cos_rot * rLoc.y - sin_rot * rLoc.x;
-        rLoc.x = gbg;
+        float _x = cos_rot * x + sin_rot * y;
+        y = cos_rot * y - sin_rot * x;
+        x = _x;
         //Inlined absolutes are much faster
-        if (rLoc.x < 0) rLoc.x *= -1;
-        if (rLoc.y < 0) rLoc.y *= -1;
+        if (x < 0) x *= -1;
+        if (y < 0) y *= -1;
         //Then we are in one of three locations:
-        if (rLoc.y < rectHalfY) {
+        if (y < rectHalfY) {
             //In "front" of the rectangle.
-            return new CollisionResult(rLoc.x - rectHalfX < circ.radius,
-                rLoc.x - rectHalfX < circ.largeRadius);
+            return new CollisionResult(x - rectHalfX < circ.radius,
+                x - rectHalfX < circ.largeRadius);
         }
-        if (rLoc.x < rectHalfX) {
+        if (x < rectHalfX) {
             // On "top" of the rectangle
-            return new CollisionResult(rLoc.y - rectHalfY < circ.radius,
-                rLoc.y - rectHalfY < circ.largeRadius);
+            return new CollisionResult(y - rectHalfY < circ.radius,
+                y - rectHalfY < circ.largeRadius);
         }
         //In front and on top.
-        rLoc.x -= rectHalfX;
-        rLoc.y -= rectHalfY;
-        float dsqr = rLoc.x * rLoc.x + rLoc.y * rLoc.y;
+        x -= rectHalfX;
+        y -= rectHalfY;
+        float dsqr = x * x + y * y;
         return new CollisionResult(dsqr < circ.radius2, dsqr < circ.largeRadius2);
     }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool CircleOnRect(Vector2 cLoc, float cRad, Vector2 rLoc, float rectHalfX, float rectHalfY, 
         float diag2, float scale, float cos_rot, float sin_rot) {
-        diag2 *= scale * scale;
-        rLoc.x = cLoc.x - rLoc.x;
-        rLoc.y = cLoc.y - rLoc.y;
+        rLoc.x = (cLoc.x - rLoc.x) / scale;
+        rLoc.y = (cLoc.y - rLoc.y) / scale;
         if (rLoc.x * rLoc.x + rLoc.y * rLoc.y > 2f * (diag2 + cRad * cRad)) return false;
-        rectHalfX *= scale;
-        rectHalfY *= scale;
         float gbg = cos_rot * rLoc.x + sin_rot * rLoc.y;
         rLoc.y = cos_rot * rLoc.y - sin_rot * rLoc.x;
         rLoc.x = gbg;

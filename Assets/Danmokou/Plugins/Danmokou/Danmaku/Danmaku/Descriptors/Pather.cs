@@ -6,7 +6,6 @@ using Danmokou.Graphics;
 using Danmokou.Pooling;
 using Danmokou.Scriptables;
 using UnityEngine;
-using UnityEngine.Profiling;
 
 namespace Danmokou.Danmaku.Descriptors {
 public class Pather : FrameAnimBullet {

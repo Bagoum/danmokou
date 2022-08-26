@@ -343,10 +343,10 @@ public class CurvedTileRenderLaser : CurvedTileRender {
                 }
             }
             
-            return CollisionResult.noColl;
+            return CollisionMath.noColl;
         }
         
-        if (!target.Active) return CollisionResult.noColl;
+        if (!target.Active) return CollisionMath.noColl;
 
         // 10000 is a number that is big enough to usually ensure only one collision iteration for simple lasers.
         // If it's not big enough, then you'll have two collision iteration, which is fine.

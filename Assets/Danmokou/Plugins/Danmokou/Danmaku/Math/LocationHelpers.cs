@@ -8,13 +8,27 @@ using static Danmokou.Services.GameManagement;
 
 namespace Danmokou.DMath {
 public static class LocationHelpers {
-    public static float Left => References.bounds.left;
+    public static Vector2 PlayableScreenCenter { get; private set; } = Vector2.zero;
+
+    public static void UpdatePlayableScreenCenter(Vector2 nLoc) {
+        PlayableScreenCenter = nLoc;
+        Left = nLoc.x + References.bounds.left;
+        Right = nLoc.x + References.bounds.right;
+        Top = nLoc.y + References.bounds.top;
+        Bot = nLoc.y + References.bounds.bot;
+
+    }
+
+    static LocationHelpers() {
+        UpdatePlayableScreenCenter(Vector2.zero);
+    }
+    public static float Left { get; private set; }
     public static float LeftMinus1 => Left - 1;
-    public static float Right => References.bounds.right;
+    public static float Right { get; private set; }
     public static float RightPlus1 => Right + 1;
-    public static float Bot => References.bounds.bot;
+    public static float Bot { get; private set; }
     public static float BotMinus1 => Bot - 1;
-    public static float Top => References.bounds.top;
+    public static float Top { get; private set; }
     public static float TopPlus1 => Top + 1;
     public static float Width => Right - Left;
     public static float Height => Top - Bot;
@@ -73,6 +87,10 @@ public static class LocationHelpers {
     }
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool OffPlayableScreenBy(float f, Vector2 loc) {
+        return (loc.x < Left - f || loc.x > Right + f || loc.y < Bot - f || loc.y > Top + f);
+    }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool OffPlayableScreenBy(in float f, in Vector3 loc) {
         return (loc.x < Left - f || loc.x > Right + f || loc.y < Bot - f || loc.y > Top + f);
     }
 

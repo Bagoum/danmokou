@@ -117,7 +117,6 @@ public class Achievement : IRequirementWatcher {
 }
 
 public static class AchievementHelpers {
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static State ToACVState(this bool b) => b ? State.Completed : State.InProgress;
 }
 
