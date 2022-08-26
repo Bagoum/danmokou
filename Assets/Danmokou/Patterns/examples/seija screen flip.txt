@@ -14,7 +14,7 @@ phase 60
 		} gsr2 9 <10> {
 			center
 		} s tprot cx 4
-		seijay -50 5
+		seijay -50 3
 		sync _ <> valueitem
 		sync _ <1;:> smallvalueitem
 		

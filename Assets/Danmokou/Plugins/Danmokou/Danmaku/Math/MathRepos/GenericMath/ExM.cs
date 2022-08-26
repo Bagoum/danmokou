@@ -50,7 +50,6 @@ public static partial class ExM {
     [Alias(Parser.SM_REF_KEY)]
     public static Func<TExArgCtx, TEx<T>> Reference<T>(string alias) => ReflectEx.ReferenceLet<T>(alias);
     
-    //TODO pretty sure this is exactly the same as Reference
     [Alias("s" + Parser.SM_REF_KEY)]
     public static Func<TExArgCtx, TEx<T>> ReferenceSafe<T>(string alias, Func<TExArgCtx, TEx<T>> deflt) => b => 
         ReflectEx.ReferenceExpr(alias, b, deflt(b));

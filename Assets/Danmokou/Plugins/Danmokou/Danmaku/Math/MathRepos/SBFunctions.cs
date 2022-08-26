@@ -82,11 +82,19 @@ public class TExSB : TEx<SimpleBullet> {
     }
 }
 
+public class TExSBCUpdater : TEx<SimpleBulletCollection.VelocityUpdateState> {
+    public TExSBC sbc => new(Ex.Field(ex, "sbc"));
+    public MemberExpression ii => Ex.Field(ex, "ii");
+    public TExSB sb => sbc[ii];
+    public TExSBCUpdater(Ex _ex) : base(_ex) {}
+    
+    private static readonly ExFunction speedup =
+        ExFunction.Wrap<SimpleBulletCollection.VelocityUpdateState>("Speedup", new[] {typeof(float)});
+    public Expression Speedup(Expression ratio) => speedup.InstanceOf(this, ratio);
+}
 public class TExSBC : TEx<SimpleBulletCollection> {
     public MemberExpression style => Ex.Property(ex, "Style");
-    public MemberExpression data => Ex.Property(ex, "Data");
-
-    public TExSBC(string name) : base(ExMode.Parameter, name) { }
+    public MemberExpression data => Ex.PropertyOrField(ex, "Data");
     public TExSBC(Ex _ex) : base(_ex) {}
 
     public TExSB this[Ex index] => new(data.Index(index));
@@ -113,11 +121,6 @@ public class TExSBC : TEx<SimpleBulletCollection> {
     public Ex IsAlive(Ex index) => isAlive.InstanceOf(this, index);
 
     public Ex RunINodeAt(Ex index, Ex sm, Ex cT) => runINodeAt.InstanceOf(this, index, sm, cT);
-    
-
-    private static readonly ExFunction speedup =
-        ExFunction.Wrap<SimpleBulletCollection>("Speedup", new[] {typeof(float)});
-    public Expression Speedup(Expression ratio) => speedup.InstanceOf(this, ratio);
 }
 }
 namespace Danmokou.DMath.Functions {

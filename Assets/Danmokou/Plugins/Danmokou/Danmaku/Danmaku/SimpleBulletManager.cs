@@ -147,7 +147,7 @@ public partial class BulletManager {
 
     //Instantiate this class directly for player bullets
     public class SimpleBulletCollection: CompactingArray<SimpleBullet> {
-        public const int PARALLELCUTOFF = 2048;
+        public const int PARALLELCUTOFF = 809600;
         
         //Draw elements with higher Z first, in accordance with Unity left-handedness
         private static readonly LeqCompare<SimpleBullet> ZCompare =
@@ -250,9 +250,9 @@ public partial class BulletManager {
             base.AddRef(ref sb);
             if (isNew) {
                 int numPcs = controls.Count;
-                var ind = count - 1; //count may change if a deletion/addition occurs
-                for (int pi = 0; pi < numPcs && !rem[ind]; ++pi) {
-                    controls[pi].action(this, ind, sb.bpi, controls[pi].cT);
+                var state = new VelocityUpdateState(this, 0, 0) { ii = count - 1 };
+                for (int pi = 0; pi < numPcs && !rem[state.ii]; ++pi) {
+                    controls[pi].action(in state, sb.bpi, controls[pi].cT);
                 }
             }
         }
@@ -335,8 +335,10 @@ public partial class BulletManager {
         /// <param name="ind"></param>
         public void DeleteSB_Collision(int ind) {
             if (!rem[ind]) {
+                ref var sb = ref Data[ind];
+                var st = new VelocityUpdateState(this, 0, 0) { ii = ind };
                 for (int ii = 0; ii < onCollideControls.Count; ++ii) {
-                    onCollideControls[ii].action(this, ind, Data[ind].bpi, onCollideControls[ii].cT);
+                    onCollideControls[ii].action(in st, sb.bpi, onCollideControls[ii].cT);
                 }
                 DeleteSB(ind);
             }
@@ -344,39 +346,45 @@ public partial class BulletManager {
         #endregion
 
         #region Updaters
-        public float NextDT => nextDT;
-        private float nextDT;
-        public void Speedup(float ratio) => nextDT *= ratio;
         
         [UsedImplicitly] //batch command uses this to stop when a bullet is destroyed
         public bool IsAlive(int ind) => !rem[ind];
 
 
-        private struct VelocityUpdateState {
+        public struct VelocityUpdateState {
+            public readonly SimpleBulletCollection sbc;
             public readonly int postVelPcs;
             public readonly int postDirPcs;
-            public VelocityUpdateState(int postVelPcs, int postDirPcs) {
+            public float nextDT;
+            public int ii;
+            public VelocityUpdateState(SimpleBulletCollection sbc, int postVelPcs, int postDirPcs) {
+                this.sbc = sbc;
                 this.postVelPcs = postVelPcs;
                 this.postDirPcs = postDirPcs;
+                this.nextDT = ETime.FRAME_TIME;
+                this.ii = 0;
             }
+            
+            [UsedImplicitly]
+            public void Speedup(float ratio) => nextDT *= ratio;
         }
-        private void VelocityProcessBatch(int start, int end, in VelocityUpdateState state) {
-            for (int ii = start; ii < end; ++ii) {
-                if (!rem[ii]) {
-                    ref var sb = ref Data[ii];
-                    nextDT = ETime.FRAME_TIME;
+        private void VelocityProcessBatch(int start, int end, VelocityUpdateState state) {
+            for (state.ii = start; state.ii < end; ++state.ii) {
+                if (!rem[state.ii]) {
+                    ref var sb = ref Data[state.ii];
+                    state.nextDT = ETime.FRAME_TIME;
                     
                     for (int pi = 0; pi < state.postVelPcs; ++pi) 
-                        controls[pi].action(this, ii, sb.bpi, controls[pi].cT);
+                        controls[pi].action(in state, sb.bpi, controls[pi].cT);
+                    //in nextDT is a significant optimization (TODO test if it's efficient in VelocityUpdateState)
                     
-                    //in nextDT is a significant optimization
                     //Note on optimization: keeping accDelta in SB is faster(!) than either a local variable or a SBInProgress struct.
-                    sb.movement.UpdateDeltaAssignDelta(ref sb.bpi, ref sb.accDelta, in nextDT);
+                    sb.movement.UpdateDeltaAssignDelta(ref sb.bpi, ref sb.accDelta, in state.nextDT);
                     if (sb.scaleFunc != null)
                         sb.scale = sb.scaleFunc(sb.bpi);
                     
                     for (int pi = state.postVelPcs; pi < state.postDirPcs; ++pi) 
-                        controls[pi].action(this, ii, sb.bpi, controls[pi].cT);
+                        controls[pi].action(in state, sb.bpi, controls[pi].cT);
                     
                     if (sb.dirFunc == null) {
                         float mag = sb.accDelta.x * sb.accDelta.x + sb.accDelta.y * sb.accDelta.y;
@@ -391,32 +399,33 @@ public partial class BulletManager {
             }
         }
         private VelocityUpdateState VelocityParallelize(VelocityUpdateState state) {
+            RNG.RNG_ALLOWED = false;
             var p = Partitioner.Create(0, count);
-            Parallel.ForEach(p, range => VelocityProcessBatch(range.Item1, range.Item2, in state));
-            //Parallel.For(0, count, ii => Process(ii, ii+1));
+            Parallel.ForEach(p, range => VelocityProcessBatch(range.Item1, range.Item2, state));
+            RNG.RNG_ALLOWED = true;
             return state;
         }
         public virtual void UpdateVelocityAndControls() {
             PruneControlsCancellation();
-            var state = new VelocityUpdateState(
+            var state = new VelocityUpdateState(this,
                 controls.FirstPriorityGT(BulletControl.POST_VEL_PRIORITY),
                 controls.FirstPriorityGT(BulletControl.POST_DIR_PRIORITY));
             int numPcs = controls.Count;
             Profiler.BeginSample("Core velocity step");
             if (temp_last < PARALLELCUTOFF)
-                VelocityProcessBatch(0, temp_last, in state);
+                VelocityProcessBatch(0, temp_last, state);
             else
                 VelocityParallelize(state);
             Profiler.EndSample();
 
             Profiler.BeginSample("Non-parallelizable controls update");
             if (state.postDirPcs < numPcs) {
-                for (int ii = 0; ii < temp_last; ++ii) {
+                for (state.ii = 0; state.ii < temp_last; ++state.ii) {
                     //rem[ii] check done in loop
-                    ref var sb = ref Data[ii];
+                    ref var sb = ref Data[state.ii];
                     //Post-vel controls may destroy the bullet. As soon as this occurs, stop iterating
-                    for (int pi = state.postDirPcs; pi < numPcs && !rem[ii]; ++pi) 
-                        controls[pi].action(this, ii, sb.bpi, controls[pi].cT);
+                    for (int pi = state.postDirPcs; pi < numPcs && !rem[state.ii]; ++pi) 
+                        controls[pi].action(in state, sb.bpi, controls[pi].cT);
                 }
             }
             Profiler.EndSample();
@@ -453,6 +462,8 @@ public partial class BulletManager {
                     }
                     CollisionResult cr = CheckGrazeCollision(in state.hitbox, ref sbn);
                     if (cr.collide) {
+                        //It's ok to use these locking mechanisms in single-threaded case
+                        // since we don't enter this part often
                         Interlocked.Increment(ref state.collided);
                         if (BC.destructible)
                             //Bullet deletion may create a culled bullet
@@ -471,9 +482,10 @@ public partial class BulletManager {
             }
         }
         private CollisionCheckingState CollisionParallelize(CollisionCheckingState state) {
+            RNG.RNG_ALLOWED = false;
             var p = Partitioner.Create(0, count);
             Parallel.ForEach(p, range => CollisionProcessBatch(range.Item1, range.Item2, ref state));
-            //Parallel.For(0, count, ii => Process(ii, ii+1));
+            RNG.RNG_ALLOWED = true;
             return state;
         }
         public virtual CollisionCheckResults CheckCollision(in Hitbox hitbox) {

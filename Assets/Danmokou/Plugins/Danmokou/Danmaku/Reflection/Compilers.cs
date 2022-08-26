@@ -26,7 +26,7 @@ using ExTP4 = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.T
 using ExBPRV2 = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<Danmokou.DMath.V2RV2>>;
 using ExVTP = System.Func<Danmokou.Expressions.ITexMovement, Danmokou.Expressions.TEx<float>, Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TExV3, Danmokou.Expressions.TEx>;
 using ExLVTP = System.Func<Danmokou.Expressions.ITexMovement, Danmokou.Expressions.TEx<float>, Danmokou.Expressions.TEx<float>, Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TExV2, Danmokou.Expressions.TEx>;
-using ExSBCF = System.Func<Danmokou.Expressions.TExSBC, Danmokou.Expressions.TEx<int>, Danmokou.Expressions.TEx<BagoumLib.Cancellation.ICancellee>, Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx>;
+using ExSBCF = System.Func<Danmokou.Expressions.TExSBCUpdater, Danmokou.Expressions.TEx<BagoumLib.Cancellation.ICancellee>, Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx>;
 
 namespace Danmokou.Reflection {
 
@@ -53,7 +53,7 @@ public static class CompilerHelpers {
     public static D CompileDelegateLambda<D>(Func<TExArgCtx, TEx> exConstructor, params TExArgCtx.Arg[] args) where D : Delegate {
         var tac = new TExArgCtx(args);
         return exConstructor(tac).BakeAndCompile<D>(tac,
-                args.Select(a => ((Expression) a.expr) is ParameterExpression p ? p : null).NotNull().ToArray());
+                args.Select(a => ((Expression) a.expr) as ParameterExpression ?? null).NotNull().ToArray());
     }
     public static D CompileDelegateLambdaBPI<D>(Func<TExArgCtx, TEx> exConstructor, params TExArgCtx.Arg[] args) where D : Delegate {
         return CompileDelegateLambda<D>(exConstructor, args.Prepend(TExArgCtx.Arg.MakeBPI).ToArray());
@@ -231,13 +231,11 @@ public static class Compilers {
     [ExprCompiler]
     public static SBCF SBCF(ExSBCF ex) =>
         CompileDelegate<SBCF>(tac => {
-                var sbc = tac.GetByExprType<TExSBC>();
-                var ind = tac.GetByExprType<TEx<int>>();
+                var st = tac.GetByExprType<TExSBCUpdater>();
                 var ct = tac.GetByExprType<TEx<ICancellee>>();
-                return ex(sbc, ind, ct, tac.AppendSB("sbcf_sbc_ref_sb", sbc[ind]));
+                return ex(st, ct, tac.AppendSB("sbcf_sbc_ref_sb", st.sb));
             },
-    new DelegateArg<BulletManager.SimpleBulletCollection>("sbcf_sbc"),
-            new DelegateArg<int>("sbcf_ii"),
+    new DelegateArg<BulletManager.SimpleBulletCollection.VelocityUpdateState>("sbcf_updater", true),
             new DelegateArg<ParametricInfo>("sbcf_bpi"),
             new DelegateArg<ICancellee>("sbcf_ct")
         );

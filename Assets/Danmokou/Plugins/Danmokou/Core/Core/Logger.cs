@@ -71,7 +71,7 @@ public static class Logs {
     private static void PrintToUnityLog(LogMessage lm) {
         if (!Verbose && (int) lm.Level < MIN_LEVEL) return;
 #if UNITY_EDITOR
-        var useStacktrace = true;
+        var useStacktrace = lm.ShowStackTrace ?? true;
 #else
         if (!Verbose && (int) lm.Level < BUILD_MIN) return;
         var useStacktrace = Verbose || (lm.ShowStackTrace ?? (lm.Exception != null));

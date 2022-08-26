@@ -170,15 +170,15 @@ public struct Movement {
 
     [UsedImplicitly]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void UpdateDeltaNoTime(BulletManager.SimpleBulletCollection sbc, int ii) {
-        ref var sb = ref sbc[ii];
+    public void UpdateDeltaNoTime(in BulletManager.SimpleBulletCollection.VelocityUpdateState st) {
+        ref var sb = ref st.sbc[st.ii];
         rootPos = sb.bpi.loc;
-        UpdateDeltaNoTime(ref sb.bpi, ref sb.accDelta, sb.movement.angle, sb.movement.cos_rot, sb.movement.sin_rot, sbc.NextDT);
+        UpdateDeltaNoTime(ref sb.bpi, ref sb.accDelta, sb.movement.angle, sb.movement.cos_rot, sb.movement.sin_rot, in st.nextDT);
     }
 
     private static readonly ExFunction updateDeltaNoTime = ExFunction.Wrap<Movement>("UpdateDeltaNoTime",
-        new[] {typeof(BulletManager.SimpleBulletCollection), typeof(int)});
-    public Ex UpdateDeltaNoTime(Ex sbc, Ex ii) => updateDeltaNoTime.InstanceOf(Ex.Constant(this), sbc, ii);
+        new[] {typeof(BulletManager.SimpleBulletCollection.VelocityUpdateState).MakeByRefType()});
+    public Ex UpdateDeltaNoTime(Ex st) => updateDeltaNoTime.InstanceOf(Ex.Constant(this), st);
 
     /// <summary>
     /// Update a BPI according to the velocity description.

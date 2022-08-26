@@ -258,6 +258,8 @@ public class TEx {
             return new TExRV2(ex);
         else if (t == typeof(BulletManager.SimpleBulletCollection))
             return new TExSBC(ex);
+        else if (t == typeof(BulletManager.SimpleBulletCollection.VelocityUpdateState))
+            return new TExSBCUpdater(ex);
         else if (t == typeof(Movement))
             return new TExMov(ex);
         else if (t == typeof(LaserMovement))

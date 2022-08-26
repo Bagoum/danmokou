@@ -148,6 +148,7 @@ public record ASTFmap<T, U>(Func<T, U> Map, IAST<T> Source) : IAST<U> {
 }
 
 public abstract record AST(PositionRange Position, params IAST[] Params) : IAST {
+    public ReflectDiagnostic[] Diagnostics { get; init; } = Array.Empty<ReflectDiagnostic>();
     public virtual List<AST.NestedFailure> Errors {
         get {
             var errs = new List<NestedFailure>();
@@ -181,18 +182,9 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
     public abstract DocumentSymbol ToSymbolTree();
     public abstract IEnumerable<SemanticToken> ToSemanticTokens();
 
-    public virtual IEnumerable<ReflectDiagnostic> WarnUsage(ReflCtx ctx) => Array.Empty<ReflectDiagnostic>();
+    public virtual IEnumerable<ReflectDiagnostic> WarnUsage(ReflCtx ctx) =>
+        Diagnostics.Concat(Params.SelectMany(p => p.WarnUsage(ctx)));
     public virtual IEnumerable<PrintToken> DebugPrint() => new PrintToken[] { Explain() };
-
-    protected IEnumerable<ReflectDiagnostic> WarnUsageMethod(ReflCtx ctx, MethodSignature mi, IAST[] args) {
-        if (ctx.props.warnPrefix && mi.Mi.GetCustomAttributes<WarnOnStrictAttribute>().Any(wa =>
-                (int)ctx.props.strict >= wa.strictness)) {
-            yield return new ReflectDiagnostic.Warning(Position,
-                $"The method \"{mi.TypeEnclosedName}\" is not permitted for use in a script with strictness {ctx.props.strict}. You might accidentally be using the prefix version of an infix function.");
-        }
-        foreach (var d in args.SelectMany(a => a.WarnUsage(ctx)))
-            yield return d;
-    }
 
     string CompactPosition => Position.Print(true);
     
@@ -273,8 +265,15 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
 
         public override IEnumerable<PrintToken> DebugPrint() => DebugPrintMethod(BaseMethod);
 
-        public override IEnumerable<ReflectDiagnostic> WarnUsage(ReflCtx ctx) =>
-            WarnUsageMethod(ctx, BaseMethod, Params);
+        public override IEnumerable<ReflectDiagnostic> WarnUsage(ReflCtx ctx) {
+            if (ctx.props.warnPrefix && BaseMethod.Mi.GetCustomAttributes<WarnOnStrictAttribute>().Any(wa =>
+                    (int)ctx.props.strict >= wa.strictness)) {
+                yield return new ReflectDiagnostic.Warning(Position,
+                    $"The method \"{BaseMethod.TypeEnclosedName}\" is not permitted for use in a script with strictness {ctx.props.strict}. You might accidentally be using the prefix version of an infix function.");
+            }
+            foreach (var d in base.WarnUsage(ctx))
+                yield return d;
+        }
     }
 
     /// <summary>
@@ -495,9 +494,6 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
         public override IEnumerable<SemanticToken> ToSemanticTokens() => 
             Parts.SelectMany(p => p.ToSemanticTokens());
 
-        public override IEnumerable<ReflectDiagnostic> WarnUsage(ReflCtx ctx) =>
-            Parts.SelectMany(p => p.WarnUsage(ctx));
-
         public override IEnumerable<PrintToken> DebugPrint() => DebugPrintArray(typeof(T), Parts);
     }
 
@@ -520,9 +516,6 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
         public override IEnumerable<SemanticToken> ToSemanticTokens() => 
             Params.SelectMany(p => p.ToSemanticTokens());
 
-        public override IEnumerable<ReflectDiagnostic> WarnUsage(ReflCtx ctx) =>
-            Params.SelectMany(p => p.WarnUsage(ctx));
-
         public override IEnumerable<PrintToken> DebugPrint() => DebugPrintArray(ElementType, Params);
     }
 
@@ -538,8 +531,6 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
             new SemanticToken(RefPosition, SemanticTokenTypes.Parameter),
             new SemanticToken(OpPosition, SemanticTokenTypes.Operator)
         }.Concat(Rule.ToSemanticTokens());
-
-        public override IEnumerable<ReflectDiagnostic> WarnUsage(ReflCtx ctx) => Rule.WarnUsage(ctx);
 
         public override string Explain() => $"{CompactPosition} GCRule<{typeof(T).SimpRName()}>";
         public override DocumentSymbol ToSymbolTree()
@@ -562,8 +553,6 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
             new SemanticToken(DeclPos, SemanticTokenTypes.Type),
             new SemanticToken(AliasPos, SemanticTokenTypes.Parameter)
         }.Concat(Content.ToSemanticTokens());
-
-        public override IEnumerable<ReflectDiagnostic> WarnUsage(ReflCtx ctx) => Content.WarnUsage(ctx);
 
         public override string Explain() => $"{CompactPosition} Alias for '{Name}'";
         public override DocumentSymbol ToSymbolTree()

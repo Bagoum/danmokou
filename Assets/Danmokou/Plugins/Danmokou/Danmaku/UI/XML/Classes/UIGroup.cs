@@ -363,7 +363,6 @@ class UIFreeformGroup : UIGroup {
         return req switch {
             UICommand.Back => GoToExitOrLeaveScreen(node, req) ?? SilentNoOp,
             UICommand.Confirm => SilentNoOp,
-            //TODO
             _ => _FindClosest(node, req)
         };
     }

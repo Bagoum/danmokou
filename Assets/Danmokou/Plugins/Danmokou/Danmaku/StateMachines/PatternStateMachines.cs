@@ -159,8 +159,8 @@ public class FinishPSM : StateMachine {
 /// <summary>
 /// `phase`: A high-level SM that controls a "phase", which is a sequence of SMs that may run for variable time
 /// under various ending conditions.
-/// <br/>Phases are the basic unit for implementing cards or similar concepts.
-/// <br/>Phases also generally share some state due to data hoisting, events, etc. If you use the `type` property to declare a card type, or you use the `clear` property, then this state and all bullets will be cleared on phase end.
+/// <br/>Phases are used to implement 'cards' or 'spells' or 'nonspells' in danmaku games.
+/// <br/>Phases also generally share some state due to data hoisting, events, etc. If you use the `type` property to declare a card type, or you use the `clear` property, then this state and all its bullets will be cleared on phase end.
 /// </summary>
 public class PhaseSM : SequentialSM {
     //Note that this is only for planned cancellation (eg. phase shift/ synchronization),

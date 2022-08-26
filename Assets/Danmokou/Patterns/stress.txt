@@ -10,11 +10,13 @@ phase 0
 <!> hp 50000
 phase 0
     paction 0
+		##bullet-control persist circle-green/w slowdown 0.5 > x 2
+	
 		## pool-control circle-green/w sortz
 		##Note that the pattern will not be perfectly even since the gsr2c has a dominant element that appears on top of the rest.
         async circle-green/w <0.8;0:0> gcr2 1 _ <0;0:11.386> {
 			p this
-		} gsr2c 80 { } simple rvelocity px 2 { 
+		} gsr2c 120 { } simple rvelocity px 2 { 
 			dir2 cx 1
 		}
 		##} gsr2c 24 { } simple offset3d(pxyz(2 * t, 0, sine(12, 1, t + 4h * mod(100, p))), zero) { 

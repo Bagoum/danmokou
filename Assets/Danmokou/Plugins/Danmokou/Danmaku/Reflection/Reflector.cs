@@ -26,10 +26,12 @@ using ExTP3 = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.T
 using ExTP4 = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<UnityEngine.Vector4>>;
 using ExBPRV2 = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<Danmokou.DMath.V2RV2>>;
 using ExVTP = System.Func<Danmokou.Expressions.ITexMovement, Danmokou.Expressions.TEx<float>, Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TExV3, Danmokou.Expressions.TEx>;
-using ExSBCF = System.Func<Danmokou.Expressions.TExSBC, Danmokou.Expressions.TEx<int>, Danmokou.Expressions.TEx<BagoumLib.Cancellation.ICancellee>, Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx>;
+using ExSBCF = System.Func<Danmokou.Expressions.TExSBCUpdater, Danmokou.Expressions.TEx<BagoumLib.Cancellation.ICancellee>, Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx>;
 
 namespace Danmokou.Reflection {
 public static partial class Reflector {
+    public static bool SOFT_FAIL_ON_UNMATCHED_LSTRING = false;
+    
     private static readonly Type tsm = typeof(StateMachine);
 
     private static IAST<StateMachine?> ReflectSM(IParseQueue q) {
@@ -117,11 +119,20 @@ public static partial class Reflector {
     private static IAST? ResolveSpecialHandling(IParseQueue p, Type targetType) {
         if (targetType == type_locstring) {
             var (str, pos) = p.NextUnit(out var lsi);
-            return new AST.Preconstructed<LString>(pos,
-                LocalizedStrings.IsLocalizedStringReference(str) ?
-                    LocalizedStrings.TryFindReference(str) ??
-                    throw p.WrapThrowHighlight(lsi, $"Couldn't resolve LocalizedString {str}") :
-                    (LString)str);
+            if (LocalizedStrings.IsLocalizedStringReference(str)) {
+                if (LocalizedStrings.TryFindReference(str) is { } ls)
+                    return new AST.Preconstructed<LString>(pos, ls);
+                else if (SOFT_FAIL_ON_UNMATCHED_LSTRING)
+                    return new AST.Preconstructed<LString>(pos,
+                        $"Unresolved LocalizedString {str}") {
+                        Diagnostics = new ReflectDiagnostic[] {
+                            new ReflectDiagnostic.Warning(pos, $"Couldn't resolve LocalizedString {str}. It may work properly in-game.")
+                        }
+                    };
+                else
+                    throw p.WrapThrowHighlight(lsi, $"Couldn't resolve LocalizedString {str}");
+            } else 
+                return new AST.Preconstructed<LString>(pos, str);
         } else if (targetType == type_stylesel) {
             return new ASTFmap<Array, BulletManager.StyleSelector>(
                 s => new BulletManager.StyleSelector(s as string[][] ?? throw new StaticException("")),
