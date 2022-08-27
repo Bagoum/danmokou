@@ -328,7 +328,6 @@ private static {TypePrinter.Print(f.returnType)} {f.fnName}({string.Join(", ",
         return (Cook.CurrentServe ?? throw new Exception("Tried to load an expression with no active serve"))
             .Next<D>(tac.Ctx.ProxyArguments.ToArray());
 #endif
-        //TODO:Linux
         var f = FlattenVisitor.Flatten(ex, true, true);
         //Logs.Log($"Ex:{typeof(D).RName()} " +
         //         $"{new ExpressionPrinter{ObjectPrinter = new DMKObjectPrinter()}.LinearizePrint(f)}");

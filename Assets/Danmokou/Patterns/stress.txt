@@ -4,14 +4,33 @@ phase 0
         position 0 0
 		shift-phase-to 1
 		
-
+## Flip control tester
+<!> type non hello
+<!> hp 50000
+phase 0
+    paction 0
+		##bullet-control persist circle-green/w flipx> 3 < scale 0.5
+		##bullet-control persist circle-red/w flipx< -3 true
+		bullet-control persist circle-*/w restyle circle-blue/w false ##> &.var1 100
+		
+        async circle-*/w <0.8;0:0> gir2 1 1 <> {
+			p this
+		} gcr2 1 _ <0;0:.2386> {
+			start {
+				var1 =f 0
+			}
+			expose {
+				f var1
+			}
+		} gsr2c 120 { 
+			colorf({ red green }, mod 2 t)
+		} simple rvelocity px(2 + &var1) { }
+		
 ##Basic stress tester
 <!> type non hello
 <!> hp 50000
 phase 0
     paction 0
-		##bullet-control persist circle-green/w slowdown 0.5 > x 2
-	
 		## pool-control circle-green/w sortz
 		##Note that the pattern will not be perfectly even since the gsr2c has a dominant element that appears on top of the rest.
         async circle-*/w <0.8;0:0> gcr2 1 _ <0;0:.11386> {

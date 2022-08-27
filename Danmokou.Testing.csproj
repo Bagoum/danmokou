@@ -350,6 +350,9 @@
      <Reference Include="Mizuhashi">
      <HintPath>E:\Workspace\unity\Danmokou\Assets\SZYU\Plugins\DLLs\Mizuhashi.dll</HintPath>
      </Reference>
+     <Reference Include="FluentIL">
+     <HintPath>E:\Workspace\unity\Danmokou\Assets\SZYU\Plugins\DLLs\FluentIL.dll</HintPath>
+     </Reference>
      <Reference Include="nunit.framework">
      <HintPath>E:\Workspace\unity\Danmokou\Library\PackageCache\com.unity.ext.nunit@1.0.6\net35\unity-custom\nunit.framework.dll</HintPath>
      </Reference>

@@ -30,6 +30,8 @@ This release is primarily for the VSCode language extension.
 - There's now a Visual Studio Code language extension for the DMK scripting language:
   - Note: I recommend setting "colorized bracket pairs" off in VSCode.
 - There is a patch for SRP/URP support in DMK, on [this branch](https://github.com/Bagoum/danmokou/tree/urp). I do not recommend using SRP/URP, but if you insist, please use the 2022.2 prerelease version of Unity and add [this commit](https://github.com/Bagoum/danmokou/commit/bfe0918de2c17b19ce72ffc9ec09e47fde53e3ef) to your repo.
+- Simple bullet updates are now parallelized when there are more than 16384 bullets in a single pool. This limit is configurable as `SimpleBulletCollection.PARALLELCUTOFF`.
+- 
 
 # v9.1.0 (2022/07/17)
 

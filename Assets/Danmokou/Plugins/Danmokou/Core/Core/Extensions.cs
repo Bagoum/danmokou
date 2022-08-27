@@ -32,49 +32,6 @@ public static class Extensions {
 
 
 public static class DictExtensions {
-    public static V GetOrThrow<K, V>(this Dictionary<K, V> dict, K key) {
-        if (dict.TryGetValue(key, out var res)) return res;
-        throw new Exception($"Key \"{key}\" does not exist.");
-    }
-
-    public static V GetOrThrow<K, V>(this IReadOnlyDictionary<K, V> dict, K key, string indict) {
-        if (dict.TryGetValue(key, out var res)) return res;
-        throw new Exception($"Key \"{key}\" does not exist in the dictionary {indict}.");
-    }
-
-    public static void AddToList<K, V>(this Dictionary<K, List<V>> dict, K key, V value) {
-        if (!dict.TryGetValue(key, out var l)) {
-            dict[key] = l = new List<V>();
-        }
-        l.Add(value);
-    }
-
-    public static bool Has2<K, K2, V>(this Dictionary<K, Dictionary<K2, V>> dict, K key, K2 key2) =>
-        dict.TryGetValue(key, out var dct2) && dct2.ContainsKey(key2);
-
-    public static void Add2<K, K2, V>(this Dictionary<K, Dictionary<K2, V>> dict, K key, K2 key2, V val) {
-        if (!dict.TryGetValue(key, out var dct2))
-            dct2 = dict[key] = new Dictionary<K2, V>();
-        dct2[key2] = val;
-    }
-    public static bool TryGet2<K, K2, V>(this Dictionary<K, Dictionary<K2, V>> dict, K key, K2 key2, out V val) {
-        val = default!;
-        return dict.TryGetValue(key, out var dct2) && dct2.TryGetValue(key2, out val);
-    }
-
-    public static V SetDefault<K, V>(this Dictionary<K, V> dict, K key) where V : new() {
-        if (!dict.TryGetValue(key, out var data)) {
-            data = dict[key] = new V();
-        }
-        return data;
-    }
-
-    public static V SetDefault<K, V>(this Dictionary<K, V> dict, K key, V deflt) {
-        if (!dict.TryGetValue(key, out var data)) {
-            data = dict[key] = deflt;
-        }
-        return data;
-    }
 
     public static void SetDefaultSet<K, K2, V>(this Dictionary<K, Dictionary<K2, V>> dict, K key, K2 key2, V value) {
         if (!dict.TryGetValue(key, out var data)) {

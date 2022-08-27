@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using BagoumLib;
 using Danmokou.Core;
 using Danmokou.Scriptables;
 using JetBrains.Annotations;

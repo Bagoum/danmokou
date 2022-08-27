@@ -43,7 +43,7 @@ public struct Movement {
         //Floatx5 = 20
     private readonly VTP vtp;
     public Vector2 rootPos;
-    //Used by TExVel
+    //used in TExMov
     public float angle;
     public float cos_rot;
     public float sin_rot;
@@ -52,7 +52,7 @@ public struct Movement {
     public Vector2 Direction => new(cos_rot, sin_rot);
 
     /// <summary>
-    /// Create a velocity configuration.
+    /// Create a movement configuration.
     /// </summary>
     /// <param name="path">Movement descriptor</param>
     /// <param name="parentLoc">Global location of parent. Set to zero if using a transform parent</param>

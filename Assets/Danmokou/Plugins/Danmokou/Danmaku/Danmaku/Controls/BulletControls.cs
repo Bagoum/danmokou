@@ -388,7 +388,7 @@ public partial class BulletManager {
             if (toPool != null && toPool.MetaType != SimpleBulletCollection.CollectionType.Softcull) {
                 throw new InvalidOperationException("Cannot softcull to a non-softcull pool: " + target);
             }
-            return new((in SimpleBulletCollection.VelocityUpdateState st, ParametricInfo bpi, ICancellee ct) => {
+            return new((in SimpleBulletCollection.VelocityUpdateState st, in ParametricInfo bpi, in ICancellee ct) => {
                 if (cond(bpi)) {
                     st.sbc.Softcull(NullableGetMaybeCopyPool(target), st.ii, props);
                 }
@@ -435,6 +435,7 @@ public partial class BulletManager {
                 w.Is(wall(bpi)),
                 //This ordering is important: it allows using `flipx> xmax onlyonce _`
                 Ex.IfThen(Ex.AndAlso(bpi.locx.GT(w), cond(bpi)), Ex.Block(
+                    //Don't use bpi.FlipSimpleX as bpi is readonly
                     st.sb.bpi.FlipSimpleX(w),
                     st.sb.velocity.FlipX()
                 ))

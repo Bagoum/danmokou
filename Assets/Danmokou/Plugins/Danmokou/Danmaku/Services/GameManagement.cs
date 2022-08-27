@@ -159,7 +159,6 @@ public class GameManagement : CoroutineRegularUpdater {
         BulletManager.OrphanAll(); //Also clears pool controls
         PublicDataHoisting.DestroyAll();
         FiringCtx.ClearNames();
-        //SMs may have links to data hoisting, so we destroy both of them on phase end.
         ReflWrap.ClearWrappers();
         StateMachineManager.ClearCachedSMs();
         BehaviorEntity.ClearPointers();

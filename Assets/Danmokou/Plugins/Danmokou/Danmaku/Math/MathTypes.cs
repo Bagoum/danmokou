@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using BagoumLib;
 using BagoumLib.Cancellation;
 using BagoumLib.Expressions;
 using Danmokou.Behavior;
@@ -23,6 +24,33 @@ using ExTP = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TE
 
 namespace Danmokou.DMath {
 public class FiringCtx {
+    public const string FLIPX = "flipX";
+    public const int FLIPX_KEY = -1;
+    public const string FLIPY = "flipY";
+    public const int FLIPY_KEY = -2;
+    private static readonly Dictionary<string, int> keyNames = new();
+    //Negative values are reserved
+    private static int lastKey = 0;
+
+    static FiringCtx() {
+        ClearNames();
+    }
+
+    private static void ReserveNames() {
+        keyNames[FLIPX] = FLIPX_KEY;
+        keyNames[FLIPY] = FLIPY_KEY;
+    }
+    public static void ClearNames() {
+        keyNames.Clear();
+        ReserveNames();
+        lastKey = 0;
+    }
+    public static int GetKey(string name) {
+        if (keyNames.TryGetValue(name, out var res)) return res;
+        keyNames[name] = lastKey;
+        return lastKey++;
+    }
+    
     public enum DataType {
         Int,
         Float,
@@ -89,17 +117,38 @@ public class FiringCtx {
             nCtx.playerController = gcx?.playerController;
         return nCtx;
     }
+
+    public void FlipX() => boundFloats[FLIPX_KEY] *= -1;
+    public void FlipY() => boundFloats[FLIPY_KEY] *= -1;
     
+    public static Expression ExFlipX(TExArgCtx tac) {
+        var d = GetDict(tac.BPI.FiringCtx, DataType.Float);
+        return d.DictSet(Expression.Constant(FLIPX_KEY), d.DictGet(Expression.Constant(FLIPX_KEY)).Mul(-1f));
+    }
+    public static Expression ExFlipY(TExArgCtx tac) {
+        var d = GetDict(tac.BPI.FiringCtx, DataType.Float);
+        return d.DictSet(Expression.Constant(FLIPY_KEY), d.DictGet(Expression.Constant(FLIPY_KEY)).Mul(-1f));
+    }
+    
+    private float? DefaultFloatValue(string varName) => varName switch {
+        "flipX" => 1,
+        "flipY" => 1,
+        _ => null
+    };
     private void UploadAddOne(Reflector.ExType ext, string varName, GenCtx gcx) {
         var varId = GetKey(varName);
-        if      (ext == Reflector.ExType.Float) 
-            boundFloats[varId] = gcx.GetFloatOrThrow(varName);
-        else if (ext == Reflector.ExType.V2) 
-            boundV2s[varId] = gcx.V2s.GetOrThrow(varName, "GCX V2 values");
-        else if (ext == Reflector.ExType.V3) 
-            boundV3s[varId] = gcx.V3s.GetOrThrow(varName, "GCX V3 values");
-        else if (ext == Reflector.ExType.RV2) 
-            boundRV2s[varId] = gcx.RV2s.GetOrThrow(varName, "GCX RV2 values");
+        if (ext == Reflector.ExType.Float)
+            boundFloats[varId] = gcx.MaybeGetFloat(varName) ?? DefaultFloatValue(varName) ??
+                throw new Exception($"No float {varName} in bullet GCX");
+        else if (ext == Reflector.ExType.V2)
+            boundV2s[varId] = gcx.V2s.MaybeGet(varName) ??
+                              throw new Exception($"No vector2 {varName} in bullet GCX");
+        else if (ext == Reflector.ExType.V3)
+            boundV3s[varId] = gcx.V3s.MaybeGet(varName) ??
+                              throw new Exception($"No vector3 {varName} in bullet GCX");
+        else if (ext == Reflector.ExType.RV2)
+            boundRV2s[varId] = gcx.RV2s.MaybeGet(varName) ??
+                               throw new Exception($"No V2RV2 {varName} in bullet GCX");
         else throw new Exception($"Cannot hoist GCX data {varName}<{ext}>.");
     }
     public void UploadAdd((Reflector.ExType, string)[] boundVars, GenCtx gcx) {
@@ -214,22 +263,8 @@ public class FiringCtx {
         DataType.Int => fctx.Field("boundInts"),
         _ => fctx.Field("boundFloats")
     };
-    
-    
-    public static void ClearNames() {
-        keyNames.Clear();
-        lastKey = 0;
-    }
 
     private static Expression exGetKey(string name) => Expression.Constant(GetKey(name));
-    public static int GetKey(string name) {
-        if (keyNames.TryGetValue(name, out var res)) return res;
-        keyNames[name] = lastKey;
-        return lastKey++;
-    }
-
-    private static readonly Dictionary<string, int> keyNames = new();
-    private static int lastKey = 0;
     
 }
 /// <summary>
@@ -387,14 +422,12 @@ public delegate T GCXF<T>(GenCtx gcx);
 /// <typeparam name="Fn">Delegate type (eg. TP, BPY, Pred)</typeparam>
 public delegate Fn GCXU<Fn>(GenCtx gcx, FiringCtx fctx);
 
-//Note: we don't use ref SB because some operations, like deletion and time modification,
-//require access to sbc, ii.
 /// <summary>
 /// A bullet control function performing some operation on a SimpleBullet.
 /// <br/>The cancellation token is stored in the BulletControl struct. It may be used by the control
 /// to bound nested summons (eg. via the SM control).
 /// </summary>
-public delegate void SBCF(in BulletManager.SimpleBulletCollection.VelocityUpdateState state, ParametricInfo bpi, ICancellee cT);
+public delegate void SBCF(in BulletManager.SimpleBulletCollection.VelocityUpdateState state, in ParametricInfo bpi, in ICancellee cT);
 
 /// <summary>
 /// A pool control function performing some operation on a simple bullet pool.

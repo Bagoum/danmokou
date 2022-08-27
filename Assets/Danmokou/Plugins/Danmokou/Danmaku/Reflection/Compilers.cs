@@ -236,8 +236,8 @@ public static class Compilers {
                 return ex(st, ct, tac.AppendSB("sbcf_sbc_ref_sb", st.sb));
             },
     new DelegateArg<BulletManager.SimpleBulletCollection.VelocityUpdateState>("sbcf_updater", true),
-            new DelegateArg<ParametricInfo>("sbcf_bpi"),
-            new DelegateArg<ICancellee>("sbcf_ct")
+            new DelegateArg<ParametricInfo>("sbcf_bpi", true),
+            new DelegateArg<ICancellee>("sbcf_ct", true)
         );
 
     [Fallthrough]

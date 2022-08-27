@@ -18,16 +18,13 @@ public class GenCtx : IDisposable {
     public readonly Dictionary<string, float> fs = new();
     public readonly Dictionary<string, Vector2> v2s = new();
     public static readonly GenCtx Empty = new();
-    public float GetFloatOrThrow(string key) {
-        if (TryGetFloat(key, out var f)) return f;
-        else throw new Exception($"The GCX does not contain a float value {key}.");
-    }
-    public bool TryGetFloat(string key, out float f) {
+
+    public float? MaybeGetFloat(string key) {
         //Note: duplicate all entries here in TExGCX
-        if (key == "i") f = i;
-        else if (key == "pi") f = pi;
-        else return fs.TryGetValue(key, out f);
-        return true;
+        if (key == "i") return i;
+        else if (key == "pi") return pi;
+        else if (fs.TryGetValue(key, out var f)) return f;
+        else return null;
     }
 
     public IReadOnlyDictionary<string, Vector2> V2s => v2s;

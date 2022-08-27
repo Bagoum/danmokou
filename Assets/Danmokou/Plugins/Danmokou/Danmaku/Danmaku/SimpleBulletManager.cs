@@ -147,7 +147,8 @@ public partial class BulletManager {
 
     //Instantiate this class directly for player bullets
     public class SimpleBulletCollection: CompactingArray<SimpleBullet> {
-        public const int PARALLELCUTOFF = 809600;
+        public const int PARALLEL_CUTOFF = 16384;
+        public const bool PARALLELISM_ENABLED = false;
         
         //Draw elements with higher Z first, in accordance with Unity left-handedness
         private static readonly LeqCompare<SimpleBullet> ZCompare =
@@ -375,7 +376,7 @@ public partial class BulletManager {
                     state.nextDT = ETime.FRAME_TIME;
                     
                     for (int pi = 0; pi < state.postVelPcs; ++pi) 
-                        controls[pi].action(in state, sb.bpi, controls[pi].cT);
+                        controls[pi].action(in state, in sb.bpi, in controls[pi].cT);
                     
                     //Note on optimization: keeping accDelta in SB is faster(!) than either a local variable or a SBInProgress struct.
                     sb.movement.UpdateDeltaAssignDelta(ref sb.bpi, ref sb.accDelta, in state.nextDT);
@@ -383,7 +384,7 @@ public partial class BulletManager {
                         sb.scale = sb.scaleFunc(sb.bpi);
                     
                     for (int pi = state.postVelPcs; pi < state.postDirPcs; ++pi) 
-                        controls[pi].action(in state, sb.bpi, controls[pi].cT);
+                        controls[pi].action(in state, in sb.bpi, in controls[pi].cT);
                     
                     if (sb.dirFunc == null) {
                         float mag = sb.accDelta.x * sb.accDelta.x + sb.accDelta.y * sb.accDelta.y;
@@ -411,7 +412,7 @@ public partial class BulletManager {
                 controls.FirstPriorityGT(BulletControl.POST_DIR_PRIORITY));
             int numPcs = controls.Count;
             Profiler.BeginSample("Core velocity step");
-            if (temp_last < PARALLELCUTOFF)
+            if (!PARALLELISM_ENABLED || temp_last < PARALLEL_CUTOFF)
                 VelocityProcessBatch(0, temp_last, state);
             else
                 VelocityParallelize(state);
@@ -494,7 +495,7 @@ public partial class BulletManager {
         public virtual CollisionCheckResults CheckCollision(in Hitbox hitbox) {
             var state = new CollisionCheckingState(BC.AllowCameraCull, BC.CULL_RAD, in hitbox);
             Profiler.BeginSample("CheckCollision");
-            if (count < PARALLELCUTOFF)
+            if (!PARALLELISM_ENABLED || count < PARALLEL_CUTOFF)
                 CollisionProcessBatch(0, count, ref state);
             else
                 state = CollisionParallelize(state);
