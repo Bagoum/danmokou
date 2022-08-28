@@ -157,9 +157,9 @@ public static class CompilerHelpers {
         }));
         if (resolver.bound.Count > 0) {
             //Automatic resolver found something, recompile
-            return Expose(resolver.bound.ToArray(), compiler, exp, modifyLets, modifyArgBag);
+            return Expose(resolver.bound.ToList(), compiler, exp, modifyLets, modifyArgBag);
         } else {
-            return new GCXU<T>(Array.Empty<(Reflector.ExType, string)>(), type =>
+            return new GCXU<T>(new(), type =>
                 compiler(modifyArgBag(exp, tac => {
                     tac.Ctx.CustomDataType = type.BuiltType;
                     return tac;
@@ -167,10 +167,10 @@ public static class CompilerHelpers {
         }
     }
 
-    public static GCXU<T> Expose<S, T>((Reflector.ExType, string)[] exportVars, Func<S, T> compiler, S exp,
+    public static GCXU<T> Expose<S, T>(List<(Reflector.ExType, string)> exportVars, Func<S, T> compiler, S exp,
         Func<S, ReflectEx.Alias[], S> relet, Func<S, Func<TExArgCtx, TExArgCtx>, S> modifyArgBag) {
-        var aliases = new ReflectEx.Alias[exportVars.Length];
-        for (int ii = 0; ii < exportVars.Length; ++ii) {
+        var aliases = new ReflectEx.Alias[exportVars.Count];
+        for (int ii = 0; ii < exportVars.Count; ++ii) {
             var (ext, boundVar) = exportVars[ii];
             aliases[ii] = new ReflectEx.Alias(boundVar, tac => FiringCtx.GetValue(tac, ext.AsFCtxType(), boundVar));
         }
@@ -184,6 +184,17 @@ public static class CompilerHelpers {
 }
 [Reflect]
 public static class Compilers {
+    /// <summary>
+    /// Assert that the variables provided are stored in the bullet's custom data, then execute the inner content.
+    /// <br/>Since <see cref="GCXU{Fn}"/> automatically stores variables used in its scope, you generally only
+    /// need to call this function when the variables will be used by some other scope, such as bullet controls.
+    /// </summary>
+    public static Func<TExArgCtx, TEx<T>> Expose<T>((Reflector.ExType, string)[] variables, Func<TExArgCtx, TEx<T>> inner) => tac => {
+        foreach (var (ext, name) in variables)
+            tac.Ctx.ICRR?.TryResolve(ext, name, out _);
+        return inner(tac);
+    };
+    
 
     #region FallthroughCompilers
     
@@ -291,42 +302,52 @@ public static class Compilers {
 
     [Fallthrough]
     [ExprCompiler]
+    [ExtendGCXUExposed]
     public static GCXU<BPY> GCXU(Func<TExArgCtx, TEx<float>> f) => GCXU11(BPY, f);
 
     [Fallthrough]
     [ExprCompiler]
+    [ExtendGCXUExposed]
     public static GCXU<Pred> GCXU(ExPred f) => GCXU11(Pred, f);
 
     [Fallthrough]
     [ExprCompiler]
+    [ExtendGCXUExposed]
     public static GCXU<TP> GCXU(ExTP f) => GCXU11(TP, f);
 
     [Fallthrough]
     [ExprCompiler]
+    [ExtendGCXUExposed]
     public static GCXU<TP3> GCXU(ExTP3 f) => GCXU11(TP3, f);
 
     [Fallthrough]
     [ExprCompiler]
+    [ExtendGCXUExposed]
     public static GCXU<TP4> GCXU(ExTP4 f) => GCXU11(TP4, f);
 
     [Fallthrough]
     [ExprCompiler]
+    [ExtendGCXUExposed]
     public static GCXU<BPRV2> GCXU(ExBPRV2 f) => GCXU11(BPRV2, f);
 
     [Fallthrough]
     [ExprCompiler]
+    [ExtendGCXUExposed]
     public static GCXU<SBF> GCXUSB(ExBPY f) => GCXU11(SBF, f);
     [Fallthrough]
     [ExprCompiler]
+    [ExtendGCXUExposed]
     public static GCXU<SBV2> GCXUSB(ExTP f) => GCXU11(SBV2, f);
 
     [Fallthrough]
     [ExprCompiler]
+    [ExtendGCXUExposed]
     public static GCXU<VTP> GCXU(ExVTP f) => Automatic(VTP, f, (ex, aliases) => VTPRepo.LetDecl(aliases, ex), 
         (ex, mod) => (a, b, tac, d) => ex(a, b, mod(tac), d));
 
     [Fallthrough]
     [ExprCompiler]
+    [ExtendGCXUExposed]
     public static GCXU<LVTP> LGCXU(ExVTP f) => Automatic(LVTP, f, (ex, aliases) => VTPRepo.LetDecl(aliases, ex),
         (ex, mod) => (a, b, tac, d) => ex(a, b, mod(tac), d));
 
@@ -336,11 +357,13 @@ public static class Compilers {
 
     [Fallthrough]
     [ExprCompiler]
+    [ExtendGCXUExposed]
     public static Func<T1, T2, R> Compile<T1, T2, R>(Func<TExArgCtx, TEx<R>> ex) =>
         CompileDelegate<Func<T1, T2, R>>(ex, DelegateArg<T1>.New, DelegateArg<T2>.New);
 
     [Fallthrough]
     [ExprCompiler]
+    [ExtendGCXUExposed]
     public static GCXU<Func<T1, T2, R>> CompileGCXU<T1, T2, R>(Func<TExArgCtx, TEx<R>> ex) =>
         CompileGCXU<Func<T1, T2, R>>(ex, DelegateArg<T1>.New, DelegateArg<T2>.New);
     

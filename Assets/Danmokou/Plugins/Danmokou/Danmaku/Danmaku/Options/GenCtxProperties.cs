@@ -393,6 +393,8 @@ public record GenCtxProperty {
     /// Make a GCX variable available for use via private hoisting.
     /// You only need to use this when making variables available to external functions like bullet controls.
     /// If functions within the scope of GCX use a variable, it will be automatically exposed.
+    /// <br/>Note: this only works in script code. If you are constructing stuff directly in C#, then
+    ///  use <see cref="VTPRepo.Expose"/> or <see cref="Compilers.Expose{T}"/> instead to provide information at the GCXU level.
     /// </summary>
     public static GenCtxProperty Expose((Reflector.ExType, string)[] variables) => new ExposeProp(variables);
 
@@ -635,7 +637,12 @@ public static class GenCtxUtils {
 /// <summary>
 /// A set of properties modifying the behavior of a generic repeater (GIRepeat/GCRepeat/GSRepeat).
 /// </summary>
-public class GenCtxProperties<T> {
+public abstract class GenCtxProperties {
+    public (Reflector.ExType, string)[]? Expose { get; protected init; }
+}
+
+/// <inheritdoc cref="GenCtxProperties"/>
+public class GenCtxProperties<T> : GenCtxProperties {
     public readonly GCXF<float> times = defltTimes;
     public readonly int? maxTimes;
     public readonly GCXF<float> wait = zeroWait;
@@ -671,7 +678,6 @@ public class GenCtxProperties<T> {
     public readonly GCXF<float>? childSelect;
     public readonly GCXF<bool>? clipIf;
     public readonly GCXF<bool>? cancelIf;
-    public readonly (Reflector.ExType, string)[]? expose;
     public readonly ETime.Timer? timer;
     public readonly bool resetTime;
     public readonly bool centered;
@@ -781,7 +787,7 @@ public class GenCtxProperties<T> {
             else if (prop is AlternateProp ap) childSelect = ap.value;
             else if (prop is ClipProp clipper) clipIf = clipper.value;
             else if (prop is CancelProp canceller) cancelIf = canceller.value;
-            else if (prop is ExposeProp exp) expose = exp.value;
+            else if (prop is ExposeProp exp) Expose = exp.value;
             else if (prop is TimeResetTag) resetTime = true;
             else if (prop is TimerProp trp) timer = trp.value;
             else if (prop is OnLaserProp olp) {

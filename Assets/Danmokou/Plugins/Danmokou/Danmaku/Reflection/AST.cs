@@ -7,8 +7,10 @@ using BagoumLib.Culture;
 using BagoumLib.Expressions;
 using BagoumLib.Functional;
 using BagoumLib.Reflection;
+using BagoumLib.Tasks;
 using Danmokou.Core;
 using Danmokou.Danmaku;
+using Danmokou.Danmaku.Options;
 using Danmokou.Danmaku.Patterns;
 using Danmokou.DMath;
 using Danmokou.DMath.Functions;
@@ -53,7 +55,7 @@ public interface IAST {
     /// <summary>
     /// Generate the object.
     /// </summary>
-    object? EvaluateObject() => throw new NotImplementedException();
+    object? EvaluateObject(ASTEvaluationData data) => throw new NotImplementedException();
 
     /// <summary>
     /// Return the furthest-down AST in the tree that encloses the given position,
@@ -97,8 +99,8 @@ public interface IAST {
 /// <see cref="IAST"/> restricted by the return type of the object.
 /// </summary>
 public interface IAST<out T> : IAST {
-    T Evaluate();
-    object? IAST.EvaluateObject() => Evaluate();
+    T Evaluate(ASTEvaluationData data);
+    object? IAST.EvaluateObject(ASTEvaluationData data) => Evaluate(data);
     Type IAST.ResultType => typeof(T);
 }
 
@@ -110,7 +112,7 @@ public record ASTRuntimeCast<T>(IAST Source) : IAST<T> {
     public List<AST.NestedFailure> Errors => Source.Errors;
     public bool IsUnsound => Source.IsUnsound;
 
-    public T Evaluate() => Source.EvaluateObject() is T result ?
+    public T Evaluate(ASTEvaluationData data) => Source.EvaluateObject(data) is T result ?
         result :
         throw new StaticException("Runtime AST cast failed");
 
@@ -132,7 +134,7 @@ public record ASTFmap<T, U>(Func<T, U> Map, IAST<T> Source) : IAST<U> {
     public PositionRange Position => Source.Position;
     public List<AST.NestedFailure> Errors => Source.Errors;
     public bool IsUnsound => Source.IsUnsound;
-    public U Evaluate() => Map(Source.Evaluate());
+    public U Evaluate(ASTEvaluationData data) => Map(Source.Evaluate(data));
 
     public IEnumerable<(IAST, int?)>? NarrowestASTForPosition(PositionRange p)
         => Source.NarrowestASTForPosition(p);
@@ -298,11 +300,42 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
 
         public Type ResultType => Method.ReturnType;
 
-        public object? EvaluateObject() {
+        private static readonly Type gcxPropsType = typeof(GenCtxProperties);
+        private static readonly Type gcxPropArrType = typeof(GenCtxProperty[]);
+        public object? EvaluateObject(ASTEvaluationData data) {
             var prms = new object?[Params.Length];
+            for (int ii = 0; ii < prms.Length; ++ii) {
+                //If we have a GCX Expose property, add it into EvaluationData before constructing the other children
+                if (Params[ii].ResultType.IsWeakSubclassOf(gcxPropsType)) {
+                    var props = (Params[ii].EvaluateObject(data) as GenCtxProperties) ?? throw new StaticException("Failed to get GCXProperties");
+                    if (props.Expose?.Length > 0)
+                        data = data.AddExposed(props.Expose);
+                    prms[ii] = props;
+                    for (int jj = 0; jj < prms.Length; ++jj)
+                        if (jj != ii)
+                            prms[jj] = Params[jj].EvaluateObject(data);
+                    goto construct;
+                } else if (Params[ii].ResultType == gcxPropArrType) {
+                    var props = (Params[ii].EvaluateObject(data) as GenCtxProperty[]) ?? throw new StaticException("Failed to get GCXProperty[]");
+                    foreach (var p in props)
+                        if (p is GenCtxProperty.ExposeProp ep)
+                            data = data.AddExposed(ep.value);
+                    prms[ii] = props;
+                    for (int jj = 0; jj < prms.Length; ++jj)
+                        if (jj != ii)
+                            prms[jj] = Params[jj].EvaluateObject(data);
+                    goto construct;
+                }
+            }
             for (int ii = 0; ii < prms.Length; ++ii)
-                prms[ii] = Params[ii].EvaluateObject();
-            return Method.InvokeMi(prms);
+                prms[ii] = Params[ii].EvaluateObject(data);
+            construct:
+            var result = Method.InvokeMi(prms);
+            if (Method.Mi.GetCustomAttribute<ExtendGCXUExposedAttribute>() != null && data.ExposedVariables.Count > 0)
+                (result as GCXU ?? throw new StaticException(
+                        $"{nameof(ExtendGCXUExposedAttribute)} used on method {Method.Name} that does not return GCXU"))
+                    .BoundAliases.AddRange(data.ExposedVariables);
+            return result;
         }
     }
 
@@ -312,7 +345,7 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
     /// </summary>
     public record MethodInvoke<T>(PositionRange Position, PositionRange MethodPosition, MethodSignature Method, params IAST[] Params) : MethodInvoke(
         Position, MethodPosition, Method, Params), IAST<T> {
-        public T Evaluate() => EvaluateObject() switch {
+        public T Evaluate(ASTEvaluationData data) => EvaluateObject(data) switch {
             T t => t,
             var x => throw new StaticException(
                 $"AST method invocation for {BaseMethod.TypeEnclosedName} returned object of type {x?.GetType()} (expected {typeof(T)}")
@@ -327,10 +360,10 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
     public record FuncedMethodInvoke<T, R>
         (PositionRange Position, PositionRange MethodPosition, FuncedMethodSignature<T, R> Method, IAST[] Params) : BaseMethodInvoke(Position, MethodPosition, Method, Params),
             IAST<Func<T, R>> {
-        public Func<T, R> Evaluate() {
+        public Func<T, R> Evaluate(ASTEvaluationData data) {
             var fprms = new object?[Params.Length];
             for (int ii = 0; ii < fprms.Length; ++ii)
-                fprms[ii] = Params[ii].EvaluateObject();
+                fprms[ii] = Params[ii].EvaluateObject(data);
             return Method.InvokeMiFunced(fprms);
         }
     }
@@ -339,7 +372,7 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
     /// An AST with a precomputed value.
     /// </summary>
     public record Preconstructed<T>(PositionRange Position, T Value, string? Display = null) : AST(Position), IAST<T> {
-        public T Evaluate() => Value;
+        public T Evaluate(ASTEvaluationData data) => Value;
         private Type MyType => Value?.GetType() ?? typeof(T);
         public string Description => Display ?? Value?.ToString() ?? "null";
         private SymbolKind SymbolType {
@@ -430,7 +463,7 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
             }
         }
 
-        public object? EvaluateObject() {
+        public object? EvaluateObject(ASTEvaluationData data) {
             var lambdaer = typeof(Reflector)
                                .GetMethod($"MakeLambda{Method.Params.Length}",
                                    BindingFlags.Static | BindingFlags.NonPublic)
@@ -457,7 +490,7 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
     /// An AST that generates a state machine by reading a file.
     /// </summary>
     public record SMFromFile(PositionRange CallPosition, PositionRange FilePosition, string Filename) : AST(CallPosition.Merge(FilePosition)), IAST<StateMachine?> {
-        public StateMachine? Evaluate() => StateMachineManager.FromName(Filename);
+        public StateMachine? Evaluate(ASTEvaluationData data) => StateMachineManager.FromName(Filename);
 
         public override string Explain() => $"{CompactPosition} StateMachine from file: {Filename}";
 
@@ -478,10 +511,10 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
     /// </summary>
     public record SequenceList<T>(PositionRange Position, IList<IAST<T>> Parts) : BaseSequence(Position,
         Parts.Cast<IAST>().ToArray()), IAST<List<T>> {
-        public List<T> Evaluate() {
+        public List<T> Evaluate(ASTEvaluationData data) {
             var l = new List<T>(Parts.Count);
             for (int ii = 0; ii < Parts.Count; ++ii)
-                l.Add(Parts[ii].Evaluate());
+                l.Add(Parts[ii].Evaluate(data));
             return l;
         }
 
@@ -501,13 +534,14 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
     /// An AST that generates an array of objects.
     /// </summary>
     public record SequenceArray(PositionRange Position, Type ElementType, IAST[] Params) : BaseSequence(Position, Params), IAST<Array> {
-        public Array Evaluate() {
+        public Array Evaluate(ASTEvaluationData data) {
             var array = Array.CreateInstance(ElementType, Params.Length);
             for (int ii = 0; ii < Params.Length; ++ii)
-                array.SetValue(Params[ii].EvaluateObject(), ii);
+                array.SetValue(Params[ii].EvaluateObject(data), ii);
             return array;
         }
 
+        public Type ResultType => ElementType.MakeArrayType();
         public override string Explain() => $"{CompactPosition} {ElementType.SimpRName()}[]";
         public override DocumentSymbol ToSymbolTree()
             => new($"{ElementType.SimpRName()}[]", null, SymbolKind.Array, 
@@ -525,7 +559,8 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
     public record GCRule<T>(PositionRange RefPosition, PositionRange OpPosition, ExType Type, 
         ReferenceMember Reference, GCOperator Operator,
         IAST<GCXF<T>> Rule) : AST(RefPosition.Merge(OpPosition).Merge(Rule.Position), Rule), IAST<Danmokou.Danmaku.GCRule<T>> {
-        public Danmokou.Danmaku.GCRule<T> Evaluate() => new(Type, Reference, Operator, Rule.Evaluate());
+        public Danmokou.Danmaku.GCRule<T> Evaluate(ASTEvaluationData data) => 
+            new(Type, Reference, Operator, Rule.Evaluate(data));
 
         public override IEnumerable<SemanticToken> ToSemanticTokens() => new[] {
             new SemanticToken(RefPosition, SemanticTokenTypes.Parameter),
@@ -546,8 +581,8 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
     /// </summary>
     public record Alias(PositionRange DeclPos, PositionRange AliasPos, string Name, IAST Content) : AST(DeclPos.Merge(AliasPos).Merge(Content.Position), Content),
         IAST<ReflectEx.Alias> {
-        public ReflectEx.Alias Evaluate() => new(Name,
-            Content.EvaluateObject() as Func<TExArgCtx, TEx> ?? throw new StaticException("Alias failed cast"));
+        public ReflectEx.Alias Evaluate(ASTEvaluationData data) => new(Name,
+            Content.EvaluateObject(data) as Func<TExArgCtx, TEx> ?? throw new StaticException("Alias failed cast"));
 
         public override IEnumerable<SemanticToken> ToSemanticTokens() => new[] {
             new SemanticToken(DeclPos, SemanticTokenTypes.Type),
@@ -593,7 +628,7 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
             return new (IAST, int?)[] { (this, null) };
         }
 
-        public object? EvaluateObject() => throw FirstException;
+        public object? EvaluateObject(ASTEvaluationData data) => throw FirstException;
 
         public override DocumentSymbol ToSymbolTree() => throw FirstException;
 
@@ -609,7 +644,7 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
     }
 
     public record Failure<T>(ReflectionException Exc) : Failure(Exc, typeof(T)), IAST<T> {
-        public T Evaluate() => throw FirstException;
+        public T Evaluate(ASTEvaluationData data) => throw FirstException;
     }
 
     public record NestedFailure(Failure Head, List<NestedFailure> Children) {

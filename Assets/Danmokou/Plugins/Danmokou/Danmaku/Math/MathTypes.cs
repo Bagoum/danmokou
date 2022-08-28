@@ -340,15 +340,15 @@ public class FiringCtx {
                                throw new Exception($"No V2RV2 {varName} in bullet GCX");
         else throw new Exception($"Cannot hoist GCX data {varName}<{ext}>.");
     }
-    public void UploadAdd((Reflector.ExType, string)[] boundVars, GenCtx gcx) {
-        for (int ii = 0; ii < boundVars.Length; ++ii) {
+    public void UploadAdd(IList<(Reflector.ExType, string)> boundVars, GenCtx gcx) {
+        for (int ii = 0; ii < boundVars.Count; ++ii) {
             var (ext, varNameS) = boundVars[ii];
             UploadAddOne(ext, varNameS, gcx);
         }
-        for (int ii = 0; ii < gcx.exposed.Count; ++ii) {
+        /*for (int ii = 0; ii < gcx.exposed.Count; ++ii) {
             var (ext, varNameS) = gcx.exposed[ii];
             UploadAddOne(ext, varNameS, gcx);
-        }
+        }*/
     }
 
     public GenCtx RevertToGCX(BehaviorEntity exec) {
@@ -613,8 +613,11 @@ public delegate T GCXF<T>(GenCtx gcx);
 /// <summary>
 /// A wrapper type used to upload values from a GCX to private data hoisting before providing a delegate to a new object.
 /// </summary>
+public record GCXU(List<(Reflector.ExType, string)> BoundAliases);
+
+/// <inheritdoc/>
 /// <typeparam name="Fn">Delegate type (eg. TP, BPY, Pred)</typeparam>
-public record GCXU<Fn>((Reflector.ExType, string)[] BoundAliases, Func<ConstructedType, Fn> LazyDelegate) {
+public record GCXU<Fn>(List<(Reflector.ExType, string)> BoundAliases, Func<ConstructedType, Fn> LazyDelegate) : GCXU(BoundAliases) {
     public ConstructedType? CustomDataType { get; private set; }
     private Func<ConstructedType, Fn> LazyDelegate { get; set; } = LazyDelegate;
     private Fn? _delegate;

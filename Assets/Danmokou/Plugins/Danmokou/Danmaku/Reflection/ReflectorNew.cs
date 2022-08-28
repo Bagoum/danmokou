@@ -231,7 +231,7 @@ public static partial class Reflector {
         if (TryCompileOption(t, out var compiler)) {
             return compiler.mi.InvokeMi(ExtInvokeMethod(compiler.source, member, prms));
         } else if (t == typeof(StateMachine)) {
-            return StateMachine.Create(member, prms).Evaluate();
+            return StateMachine.Create(member, prms).Evaluate(new());
         }
         if (ASTTryLookForMethod(t, member) is { } result)
             return result.InvokeMi(prms);

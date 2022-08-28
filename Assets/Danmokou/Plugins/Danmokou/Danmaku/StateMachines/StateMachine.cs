@@ -457,7 +457,7 @@ public abstract class StateMachine {
         if (p.Ctx.ParseEndFailure(p, ast) is { } exc)
             throw exc;
         Profiler.BeginSample("SM AST realization");
-        var result = ast.Evaluate();
+        var result = ast.Evaluate(new());
         Profiler.EndSample();
         return result;
     }
@@ -469,7 +469,7 @@ public abstract class StateMachine {
         while (!p.Empty) {
             MaybeQueueProperties(p);
             if (p.Ctx.QueuedProps.Count > 0) {
-                ps.Add(new PhaseProperties(p.Ctx.QueuedProps.Select(pp => pp.Evaluate()).ToList()));
+                ps.Add(new PhaseProperties(p.Ctx.QueuedProps.Select(pp => pp.Evaluate(new())).ToList()));
                 p.Ctx.QueuedProps.Clear();
             }
             while (!p.Empty && p.MaybeScan() != SMParser.PROP_KW)

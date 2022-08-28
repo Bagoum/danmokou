@@ -365,7 +365,7 @@ public static class VTPRepo {
     /// </summary>
     public static ExVTP Expose((Reflector.ExType, string)[] variables, ExVTP inner) => (v, dt, tac, delta) => {
         foreach (var (ext, name) in variables)
-            tac.Ctx.ICRR!.TryResolve(ext, name, out _);
+            tac.Ctx.ICRR?.TryResolve(ext, name, out _);
         return inner(v, dt, tac, delta);
     };
     

@@ -56,6 +56,12 @@ public class GAliasAttribute : Attribute {
     }
 }
 
+/// <summary>
+/// Marks that the result of this function is a GCXU whose exposed variables can be extended during AST realization.
+/// </summary>
+[AttributeUsage(AttributeTargets.Method)]
+public class ExtendGCXUExposedAttribute : Attribute { }
+
 [AttributeUsage(AttributeTargets.Method)]
 public class PASourceTypesAttribute : Attribute {
     public readonly Type[] types;

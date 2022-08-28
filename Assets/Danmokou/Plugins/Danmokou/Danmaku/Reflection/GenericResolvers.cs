@@ -198,7 +198,7 @@ public static partial class Reflector {
             if (p.Ctx.ParseEndFailure(p, ast) is { } exc)
                 throw exc;
             Profiler.BeginSample("AST realization");
-            var val = ast.EvaluateObject();
+            var val = ast.EvaluateObject(new());
             Profiler.EndSample();
             return val;
         } catch (Exception e) {
@@ -230,7 +230,7 @@ public static partial class Reflector {
         return Into(argstring!, t);
     }
 
-    public static T Into<T>(this IParseQueue q) => ((T) q.IntoAST(typeof(T)).EvaluateObject()!);
+    public static T Into<T>(this IParseQueue q) => ((T) q.IntoAST(typeof(T)).EvaluateObject(new())!);
 /*
     private static object? Into(this IParseQueue q, Type t) {
         var ast = q.IntoAST(t);

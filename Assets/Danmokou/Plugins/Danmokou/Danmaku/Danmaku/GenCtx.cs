@@ -32,7 +32,8 @@ public class GenCtx : IDisposable {
     public IReadOnlyDictionary<string, Vector3> V3s => v3s;
     public readonly Dictionary<string, V2RV2> rv2s = new();
     public IReadOnlyDictionary<string, V2RV2> RV2s => rv2s;
-    public readonly List<(Reflector.ExType, string)> exposed = new();
+    //No longer supported as of v10
+    //public readonly List<(Reflector.ExType, string)> exposed = new();
     /// <summary>
     /// Loop iteration
     /// </summary>
@@ -123,7 +124,7 @@ public class GenCtx : IDisposable {
         v2s.Clear();
         v3s.Clear();
         rv2s.Clear();
-        exposed.Clear();
+        //exposed.Clear();
         fctx.Dispose();
         i = 0;
         pi = 0;
@@ -140,7 +141,7 @@ public class GenCtx : IDisposable {
         this.v2s.CopyInto(cp.v2s);
         this.v3s.CopyInto(cp.v3s);
         this.rv2s.CopyInto(cp.rv2s);
-        cp.exposed.AddRange(this.exposed);
+        //cp.exposed.AddRange(this.exposed);
         cp.BaseRV2 = RV2; //this gets overwritten by copyinto...
         cp.i = cp.pi = this.i;
         cp.index = this.index;
