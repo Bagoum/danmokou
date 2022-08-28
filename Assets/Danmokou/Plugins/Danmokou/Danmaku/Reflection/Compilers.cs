@@ -50,11 +50,17 @@ public static class CompilerHelpers {
     
     #region RawCompilers
 
-    public static D CompileDelegateLambda<D>(Func<TExArgCtx, TEx> exConstructor, params TExArgCtx.Arg[] args) where D : Delegate {
-        var tac = new TExArgCtx(args);
-        return exConstructor(tac).BakeAndCompile<D>(tac,
-                args.Select(a => ((Expression) a.expr) as ParameterExpression ?? null).NotNull().ToArray());
+    public static TEx ConstructExpression(out TExArgCtx tac, Func<TExArgCtx, TEx> exConstructor, params TExArgCtx.Arg[] args) {
+        tac = new TExArgCtx(args);
+        return exConstructor(tac);
     }
+
+    public static D CompileExpressionToDelegate<D>(this TEx expr, TExArgCtx tac, params TExArgCtx.Arg[] args) =>
+        expr.BakeAndCompile<D>(tac,
+            args.Select(a => ((Expression)a.expr) as ParameterExpression ?? null).NotNull().ToArray());
+
+    public static D CompileDelegateLambda<D>(Func<TExArgCtx, TEx> exConstructor, params TExArgCtx.Arg[] args) where D : Delegate => ConstructExpression(out var tac, exConstructor, args).CompileExpressionToDelegate<D>(tac, args);
+
     public static D CompileDelegateLambdaBPI<D>(Func<TExArgCtx, TEx> exConstructor, params TExArgCtx.Arg[] args) where D : Delegate {
         return CompileDelegateLambda<D>(exConstructor, args.Prepend(TExArgCtx.Arg.MakeBPI).ToArray());
     }
@@ -78,13 +84,13 @@ public static class CompilerHelpers {
     }
 
     public static GCXU<T2> GCXU11<T1, T2>(Func<Func<TExArgCtx, TEx<T1>>, T2> compiler, Func<TExArgCtx, TEx<T1>> f) =>
-        Automatic(compiler, f, aliases => bpi => ReflectEx.Let2(aliases, () => f(bpi), bpi), 
+        Automatic(compiler, f, (ex, aliases) => tac => ReflectEx.Let2(aliases, () => ex(tac), tac), 
             (ex, mod) => tac => ex(mod(tac)));
     
-
+    
     public static GCXU<D> CompileGCXU<D>(Func<TExArgCtx, TEx> func, params IDelegateArg[] args) where D : Delegate =>
         Automatic(ex => CompileDelegate<D>(ex, args), func,
-            alias => tac => ReflectEx.Let2(alias, () => func(tac), tac),
+            (ex, aliases) => tac => ReflectEx.Let2(aliases, () => ex(tac), tac),
             (ex, mod) => tac => ex(mod(tac)));
     
     public static GCXU<D> CompileGCXU<D, DR>(string func, params IDelegateArg[] args) where D : Delegate =>
@@ -104,41 +110,76 @@ public static class CompilerHelpers {
             ex = Ex.Default(typeof(T));
             return true;
         }
+        
+        public bool TryResolve(Reflector.ExType ext, string alias, out Ex ex) {
+            if (!bound.Contains((ext, alias))) {
+                bound.Add((ext, alias));
+            }
+            ex = Ex.Default(ext.AsType());
+            return true;
+        }
     }
 
-    public static GCXU<T> Automatic<S, T>(Func<S, T> compiler, S exp, Func<ReflectEx.Alias[], S> relet, Func<S, Func<TExArgCtx, TExArgCtx>, S> setIcrr) {
+/*
+    public static GCXU<R> Automatic2<R>(Func<TExArgCtx, TEx> exprFunc,
+        Func<ReflectEx.Alias[], Func<Ex>, TExArgCtx, Ex> wrapInLet, params TExArgCtx.Arg[] args) {
         var resolver = new GCXCompileResolver();
-        var p = compiler(setIcrr(exp, tac => {
+        var rExprFunc = (Func<TExArgCtx, TEx>)(tac => {
+            tac.Ctx.ICRR = resolver;
+            return exprFunc(tac);
+        });
+        var expr = ConstructExpression(out var tac, rExprFunc, args);
+        if (resolver.bound.Count > 0) {
+            //Automatic resolver found something, recompile
+        } else {
+            return new GCXU<R>(Array.Empty<(Reflector.ExType, string)>(), () => )
+        }
+
+    }*/
+
+
+    /// <summary>
+    /// Detect if there are any bound variables in the provided expression function,
+    ///  and handle exposing them if there are.
+    /// </summary>
+    /// <param name="compiler">Function that compiles the expression function into a delegate.</param>
+    /// <param name="exp">Expression function (eg. TExArgCtx -> TEx)</param>
+    /// <param name="modifyLets">Function that modifies the expression function by exposing variables</param>
+    /// <param name="modifyArgBag">Function that modifies the input to the expression function</param>
+    /// <typeparam name="S">Expression function (eg. TExArgCtx -> TEx)</typeparam>
+    /// <typeparam name="T">Delegate type (eg. BPY)</typeparam>
+    /// <returns></returns>
+    public static GCXU<T> Automatic<S, T>(Func<S, T> compiler, S exp, Func<S, ReflectEx.Alias[], S> modifyLets, Func<S, Func<TExArgCtx, TExArgCtx>, S> modifyArgBag) {
+        var resolver = new GCXCompileResolver();
+        _ = compiler(modifyArgBag(exp, tac => {
             tac.Ctx.ICRR = resolver;
             return tac;
         }));
         if (resolver.bound.Count > 0) {
             //Automatic resolver found something, recompile
-            return Expose(resolver.bound.ToArray(), compiler, exp, relet);
+            return Expose(resolver.bound.ToArray(), compiler, exp, modifyLets, modifyArgBag);
         } else {
-            var bound = Array.Empty<(Reflector.ExType, string)>();
-            return (gcx, fctx) => {
-                fctx.UploadAdd(bound, gcx);
-                return p;
-            };
+            return new GCXU<T>(Array.Empty<(Reflector.ExType, string)>(), type =>
+                compiler(modifyArgBag(exp, tac => {
+                    tac.Ctx.CustomDataType = type.BuiltType;
+                    return tac;
+                })));
         }
     }
 
     public static GCXU<T> Expose<S, T>((Reflector.ExType, string)[] exportVars, Func<S, T> compiler, S exp,
-        Func<ReflectEx.Alias[], S> relet) {
+        Func<S, ReflectEx.Alias[], S> relet, Func<S, Func<TExArgCtx, TExArgCtx>, S> modifyArgBag) {
         var aliases = new ReflectEx.Alias[exportVars.Length];
         for (int ii = 0; ii < exportVars.Length; ++ii) {
             var (ext, boundVar) = exportVars[ii];
-            //The "better" way to do this would be to copy the GCX values into the let statements
-            //and recompile the expression for every caller.
-            //However, this is ridiculously expensive, so instead we HOIST.
             aliases[ii] = new ReflectEx.Alias(boundVar, tac => FiringCtx.GetValue(tac, ext.AsFCtxType(), boundVar));
         }
-        var p = compiler((aliases.Length > 0) ? relet(aliases) : exp);
-        return (gcx, fctx) => {
-            fctx.UploadAdd(exportVars, gcx);
-            return p;
-        };
+        exp = (aliases.Length > 0) ? relet(exp, aliases) : exp;
+        return new GCXU<T>(exportVars, type =>
+            compiler(modifyArgBag(exp, tac => {
+                tac.Ctx.CustomDataType = type.BuiltType;
+                return tac;
+            })));
     }
 }
 [Reflect]
@@ -209,7 +250,7 @@ public static class Compilers {
 
     [Fallthrough]
     [ExprCompiler]
-    public static SBF SBF(ExBPY ex) => CompileDelegateLambda<SBF>(ex);
+    public static SBF SBF(ExBPY ex) => CompileDelegateLambdaRSB<SBF>(ex);
     
 
     [Fallthrough]
@@ -281,12 +322,12 @@ public static class Compilers {
 
     [Fallthrough]
     [ExprCompiler]
-    public static GCXU<VTP> GCXU(ExVTP f) => Automatic(VTP, f, aliases => VTPRepo.LetDecl(aliases, f), 
+    public static GCXU<VTP> GCXU(ExVTP f) => Automatic(VTP, f, (ex, aliases) => VTPRepo.LetDecl(aliases, ex), 
         (ex, mod) => (a, b, tac, d) => ex(a, b, mod(tac), d));
 
     [Fallthrough]
     [ExprCompiler]
-    public static GCXU<LVTP> LGCXU(ExVTP f) => Automatic(LVTP, f, aliases => VTPRepo.LetDecl(aliases, f),
+    public static GCXU<LVTP> LGCXU(ExVTP f) => Automatic(LVTP, f, (ex, aliases) => VTPRepo.LetDecl(aliases, ex),
         (ex, mod) => (a, b, tac, d) => ex(a, b, mod(tac), d));
 
     #endregion

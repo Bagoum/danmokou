@@ -77,7 +77,8 @@ public static class ReflectEx {
     }*/
 
     public interface ICompileReferenceResolver {
-        bool TryResolve<T>(string alias, out Ex ex);
+        bool TryResolve<T>(string alias, out Ex ex) => TryResolve(Reflector.AsExType<T>(), alias, out ex);
+        bool TryResolve(Reflector.ExType ext, string alias, out Ex ex);
     }
 
     //T is on the level of typeof(float)

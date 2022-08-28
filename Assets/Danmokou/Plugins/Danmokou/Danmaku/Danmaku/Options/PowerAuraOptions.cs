@@ -64,6 +64,23 @@ public class PowerAuraOption {
             Iterations(_ => -1)
         })
     );
+    
+    /// <summary>
+    /// Do 5 iterations inwards with color1 over 3 seconds, then 1 iteration outwards with color2 over 0.5 seconds,
+    /// using the sound effects "x-powerup-1" and "x-powerdown-1" respectively.
+    /// </summary>
+    public static PowerAuraOption Boss2(TP4 color1, TP4 color2) => new CompositeProp(
+        Color(color1),
+        SFX("x-powerup-1"),
+        Time(_ => 3f),
+        Iterations(_ => 5),
+        Next(new[] {
+            Color(color2),
+            SFX("x-powerdown-1"),
+            Time(_ => 0.5f),
+            Iterations(_ => -1)
+        })
+    );
 
     #region impl
     public class ValueProp<T> : PowerAuraOption {

@@ -31,7 +31,27 @@ This release is primarily for the VSCode language extension.
   - Note: I recommend setting "colorized bracket pairs" off in VSCode.
 - There is a patch for SRP/URP support in DMK, on [this branch](https://github.com/Bagoum/danmokou/tree/urp). I do not recommend using SRP/URP, but if you insist, please use the 2022.2 prerelease version of Unity and add [this commit](https://github.com/Bagoum/danmokou/commit/bfe0918de2c17b19ce72ffc9ec09e47fde53e3ef) to your repo.
 - Simple bullet updates are now parallelized when there are more than 16384 bullets in a single pool. This limit is configurable as `SimpleBulletCollection.PARALLELCUTOFF`.
-- 
+
+#### Breaking Changes
+
+- The function `powerup2` has been removed. It can be replaced with `poweraura`. For example:
+
+  ```
+  sync powerup1 <> poweraura {
+      sfx(x-powerup-1)
+      color(lerp 0 1 t red pink)
+      time(1.5)
+      iterations(2)
+      next({
+          sfx(x-powerdown-1)
+          color(orange)
+          time(0.5)
+          iterations(-1)
+      })
+  }
+  ```
+
+  
 
 # v9.1.0 (2022/07/17)
 

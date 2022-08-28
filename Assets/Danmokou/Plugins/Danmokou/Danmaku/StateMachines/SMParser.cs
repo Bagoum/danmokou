@@ -22,7 +22,6 @@ public static class SMParser {
     public const char QUOTE = '`';
     public const char MACRO_INVOKE = '$';
     public const char MACRO_VAR = '%';
-    public const string MACRO_OL_OPEN = "!!{";
     public const string MACRO_OPEN = "!{";
     public const string MACRO_CLOSE = "!}";
     public const string LAMBDA_MACRO_PRM = "!$";
@@ -31,6 +30,17 @@ public static class SMParser {
     public const char CLOSE_ARG = ')';
     public const char ARG_SEP = ',';
     public const char NEWLINE = '\n';
+    
+    private static readonly ParserError macroOLOpenErr = new ParserError.Expected("\"!!{ or !!{}\"");
+    public static readonly Parser<string> MACRO_OL_OPEN = inp => {
+        if (inp.Remaining < 3)
+            return new(macroOLOpenErr, inp.Index);
+        if (inp.CharAt(0) != '!' || inp.CharAt(1) != '!' || inp.CharAt(2) != '{')
+            return new(macroOLOpenErr, inp.Index);
+        if (inp.Remaining >= 4 && inp.CharAt(3) == '}')
+            return new("!!{}", null, inp.Index, inp.Step(4));
+        return new("!!{", null, inp.Index, inp.Step(3));
+    };
 
     public static Parser<string> Bounded(char c) =>
         Between(c, ManySatisfy(x => x != c));
@@ -398,7 +408,7 @@ public static class SMParser {
 
     private static readonly Parser<ParseUnit> OLMacroParser =
         Sequential(
-                String(MACRO_OL_OPEN).IgThen(ILSpaces).IgThen(simpleString1),
+                MACRO_OL_OPEN.IgThen(ILSpaces).IgThen(simpleString1),
                 ILSpaces,
                 WordsInline,
                 CNewln,

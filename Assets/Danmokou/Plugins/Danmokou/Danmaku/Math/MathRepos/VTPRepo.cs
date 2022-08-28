@@ -358,6 +358,17 @@ public static class VTPRepo {
     public static ExVTP VPolar(ExBPY radius, ExBPY theta) =>
         VTPControllers.Velocity(VTPConstructors.Polar(radius, theta));
 
+    /// <summary>
+    /// Assert that the variables provided are stored in the bullet's custom data, then execute the inner content.
+    /// <br/>Since <see cref="GCXU{Fn}"/> automatically stores variables used in its scope, you generally only
+    /// need to call this function when the variables will be used by some other scope, such as bullet controls.
+    /// </summary>
+    public static ExVTP Expose((Reflector.ExType, string)[] variables, ExVTP inner) => (v, dt, tac, delta) => {
+        foreach (var (ext, name) in variables)
+            tac.Ctx.ICRR!.TryResolve(ext, name, out _);
+        return inner(v, dt, tac, delta);
+    };
+    
     private static ExVTP WrapLet<T>((string, Func<TExArgCtx, TEx<T>>)[] aliases, ExVTP inner) =>
         (v, t, bpi, nrv) => ReflectEx.Let(aliases, () => inner(v, t, bpi, nrv), bpi);
 

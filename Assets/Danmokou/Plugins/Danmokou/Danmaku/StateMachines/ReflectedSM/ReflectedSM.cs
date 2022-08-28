@@ -417,8 +417,7 @@ if (> t &fadein,
     /// </summary>
     public static TaskPattern MoveWhile(GCXF<float> time, Pred? condition, GCXU<VTP> path) => smh => {
         uint randId = RNG.GetUInt();
-        var fctx = FiringCtx.New();
-        var epath = path(smh.GCX, fctx);
+        var epath = path.Execute(smh.GCX, out var fctx);
         var old_override = smh.GCX.idOverride;
         //Note that this use case is limited to when the BEH is provided a temporary new ID (ie. only in MoveWhile).
         //I may deprecate this by having the move function not use a new ID.

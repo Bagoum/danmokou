@@ -30,6 +30,8 @@ using ExSBCF = System.Func<Danmokou.Expressions.TExSBCUpdater, Danmokou.Expressi
 
 namespace Danmokou.Reflection {
 public static partial class Reflector {
+    [PublicAPI]
+    //Used by language server to avoid failure on lstring parsing
     public static bool SOFT_FAIL_ON_UNMATCHED_LSTRING = false;
     
     private static readonly Type tsm = typeof(StateMachine);

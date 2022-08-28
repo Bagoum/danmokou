@@ -31,25 +31,19 @@ phase 0
 
 
 !{ power1()
-sync powerup1 <> powerup2
-	x-powerup-1 x-powerdown-1
+sync powerup1 <> poweraura boss1
 	witha 0.9 lerp 0 1 t purple pink
 	witha 0.9 yellow
-	1.5 2 0 0.5
 !}
 !{ jpower1()
-sync powerup1 <> powerup2
-	x-powerup-1 x-powerdown-1
+sync powerup1 <> poweraura boss1
 	witha 0.9 lerp 0 3 t red pink
 	witha 0.9 blue
-	1.5 2 0 0.5
 !}
 !{ jpower2()
-sync powerup1 <> powerup2
-	x-powerup-1 x-powerdown-1
+sync powerup1 <> poweraura boss1
 	witha 0.5 lerp 0 3 t red pink
 	witha 0.5 blue
-	1.5 2 0 0.5
 !}
 !{ power1long()
 sync powerup1 <> powerup x-powerup-1

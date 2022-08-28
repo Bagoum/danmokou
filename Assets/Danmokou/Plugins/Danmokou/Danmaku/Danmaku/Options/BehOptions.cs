@@ -188,13 +188,13 @@ public readonly struct RealizedBehOptions {
         hp = (opts.hp?.Invoke(gcx)).FMap(x => (int) x);
         layer = opts.layer;
         drops = opts.drops;
-        hueShift = opts.hueShift?.Invoke(gcx, fctx);
-        tint = opts.tint?.Invoke(gcx, fctx);
-        rotator = opts.rotator?.Invoke(gcx, fctx);
+        hueShift = opts.hueShift?.Execute(gcx, fctx);
+        tint = opts.tint?.Execute(gcx, fctx);
+        rotator = opts.rotator?.Execute(gcx, fctx);
         if (opts.recolor.Try(out var rc)) {
-            recolor = (rc.black.Invoke(gcx, fctx), rc.white.Invoke(gcx, fctx));
+            recolor = (rc.black.Execute(gcx, fctx), rc.white.Execute(gcx, fctx));
         } else recolor = null;
-        delete = opts.delete?.Invoke(gcx, fctx);
+        delete = opts.delete?.Execute(gcx, fctx);
         playerBullet = opts.playerBullet?.Realize(fctx.PlayerController);
     }
 

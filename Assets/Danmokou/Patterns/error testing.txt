@@ -12,11 +12,9 @@ phase 0
 	
 
 !{ power1()
-sync powerup1 <> powerup2
-	x-powerup-1 x-powerdown-1
+sync powerup1 <> poweraura boss1
 	witha 0.9 lerp 0 1 t purple rgba 0.9 0.9 0.9 0.9
 	red
-	1.5 2 0 0.5
 !}
 !!{ color3 { black purple red }
 

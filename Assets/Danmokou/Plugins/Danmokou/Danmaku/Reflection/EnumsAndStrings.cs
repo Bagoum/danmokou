@@ -24,7 +24,7 @@ public static partial class Reflector {
     public static ExType AsExType(Type t) {
         if (t == ExUtils.tv2) return ExType.V2;
         if (t == ExUtils.tv3) return ExType.V3;
-        if (t == ExUtils.tvrv2) return ExType.RV2;
+        if (t == ExUtils.tv2rv2) return ExType.RV2;
         return ExType.Float;
     }
 
@@ -35,11 +35,11 @@ public static partial class Reflector {
         return typeof(TEx<float>);
     }
 
-    private static Type AsType(ExType ext) {
-        if (ext == ExType.V2) return typeof(Vector2);
-        if (ext == ExType.V3) return typeof(Vector3);
-        if (ext == ExType.RV2) return typeof(V2RV2);
-        return typeof(float);
+    public static Type AsType(this ExType ext) {
+        if (ext == ExType.V2) return ExUtils.tv2;
+        if (ext == ExType.V3) return ExUtils.tv3;
+        if (ext == ExType.RV2) return ExUtils.tv2rv2;
+        return ExUtils.tfloat;
     }
 
     private static Type AsTExType(ExType ext) {

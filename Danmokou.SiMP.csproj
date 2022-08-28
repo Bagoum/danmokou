@@ -310,6 +310,9 @@
      <Reference Include="System.Runtime.CompilerServices.Unsafe">
      <HintPath>E:\Workspace\unity\Danmokou\Assets\SZYU\Plugins\DLLs\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
      </Reference>
+     <Reference Include="FluentIL">
+     <HintPath>E:\Workspace\unity\Danmokou\Assets\SZYU\Plugins\DLLs\FluentIL.dll</HintPath>
+     </Reference>
      <Reference Include="Suzunoya">
      <HintPath>E:\Workspace\unity\Danmokou\Assets\SZYU\Plugins\DLLs\Suzunoya.dll</HintPath>
      </Reference>
@@ -333,9 +336,6 @@
      </Reference>
      <Reference Include="Mizuhashi">
      <HintPath>E:\Workspace\unity\Danmokou\Assets\SZYU\Plugins\DLLs\Mizuhashi.dll</HintPath>
-     </Reference>
-     <Reference Include="FluentIL">
-     <HintPath>E:\Workspace\unity\Danmokou\Assets\SZYU\Plugins\DLLs\FluentIL.dll</HintPath>
      </Reference>
      <Reference Include="mscorlib">
      <HintPath>C:\Program Files\Unity\Hub\Editor\2021.3.7f1\Editor\Data\UnityReferenceAssemblies\unity-4.8-api\mscorlib.dll</HintPath>

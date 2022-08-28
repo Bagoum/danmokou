@@ -27,6 +27,7 @@ public class TExArgCtx {
     /// </summary>
     public class RootCtx {
         public ReflectEx.ICompileReferenceResolver? ICRR { get; set; }
+        public Type? CustomDataType { get; set; }
         public Dictionary<string, Stack<Expression>> AliasStack { get; } =
             new();
 

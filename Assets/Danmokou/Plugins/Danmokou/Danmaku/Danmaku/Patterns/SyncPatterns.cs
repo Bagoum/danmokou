@@ -24,9 +24,6 @@ namespace Danmokou.Danmaku.Patterns {
 /// </summary>
 [Reflect]
 public static partial class SyncPatterns {
-    public static SyncPattern Reexec(AsyncPattern ap) => sbh => 
-        sbh.GCX.exec.RunRIEnumerator(ap(new AsyncHandoff(sbh)));
-
     /*
      * PASS-ALONG SYNCPATTERNS
      */

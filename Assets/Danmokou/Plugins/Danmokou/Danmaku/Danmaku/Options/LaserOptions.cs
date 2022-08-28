@@ -255,10 +255,10 @@ public readonly struct RealizedLaserOptions {
 
     public RealizedLaserOptions(LaserOptions opts, GenCtx gcx, FiringCtx fctx, Vector2 parentOffset, V2RV2 localOffset, ICancellee cT) {
         maxLength = opts.length?.max.Invoke(gcx) ?? DEFAULT_LASER_LEN;
-        varLength = opts.length?.var?.Invoke(gcx, fctx);
-        start = opts.start?.Invoke(gcx, fctx);
-        delete = opts.delete?.Invoke(gcx, fctx);
-        deactivate = opts.deactivate?.Invoke(gcx, fctx);
+        varLength = opts.length?.var?.Execute(gcx, fctx);
+        start = opts.start?.Execute(gcx, fctx);
+        delete = opts.delete?.Execute(gcx, fctx);
+        deactivate = opts.deactivate?.Execute(gcx, fctx);
         repeat = opts.repeat?.Invoke(gcx) ?? false;
         endpoint = opts.endpoint;
         firesfx = opts.firesfx;
@@ -266,19 +266,19 @@ public readonly struct RealizedLaserOptions {
         layer = opts.layer;
         staggerMultiplier = opts.staggerMultiplier;
         if (opts.curve != null) {
-            lpath = new LaserMovement(opts.curve(gcx, fctx), parentOffset, localOffset);
+            lpath = new LaserMovement(opts.curve.Execute(gcx, fctx), parentOffset, localOffset);
             isStatic = !opts.dynamic;
         } else {
-            lpath = new LaserMovement(localOffset.angle + (opts.rotateOffset?.Invoke(gcx) ?? 0f), opts.rotate?.Invoke(gcx, fctx));
+            lpath = new LaserMovement(localOffset.angle + (opts.rotateOffset?.Invoke(gcx) ?? 0f), opts.rotate?.Execute(gcx, fctx));
             isStatic = true;
         }
         smr = SMRunner.Run(opts.sm, cT, gcx);
         yScale = opts.yScale?.Invoke(gcx) ?? 1f;
-        hueShift = opts.hueShift?.Invoke(gcx, fctx);
+        hueShift = opts.hueShift?.Execute(gcx, fctx);
         if (opts.recolor.Try(out var rc)) {
-            recolor = (rc.black(gcx, fctx), rc.white(gcx, fctx));
+            recolor = (rc.black.Execute(gcx, fctx), rc.white.Execute(gcx, fctx));
         } else recolor = null;
-        tint = opts.tint?.Invoke(gcx, fctx);
+        tint = opts.tint?.Execute(gcx, fctx);
         nonpiercing = opts.nonpiercing;
         playerBullet = opts.playerBullet?.Realize(fctx.PlayerController);
     }

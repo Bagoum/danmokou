@@ -5,11 +5,9 @@ phase 0 #{
 #}
 !{ 
 mimapower1()
-sync powerup1 <> powerup2
-	x-powerup-1 x-powerdown-1
+sync powerup1 <> poweraura boss1
 	witha 0.9 lerp 0 1 t green teal
 	witha 0.9 blue
-	1.5 2 0 0.5
 !}
 phase 0 #{
 	paction 0

@@ -50,6 +50,10 @@ public static partial class ExM {
     [Alias(Parser.SM_REF_KEY)]
     public static Func<TExArgCtx, TEx<T>> Reference<T>(string alias) => ReflectEx.ReferenceLet<T>(alias);
     
+    /// <summary>
+    /// Reference a value saved within bullet data, or return a default value if it does not exist.
+    /// <br/>You only need to use this for bullet controls, as scoped variable usage (within movement functions) will ensure that the variable exists.
+    /// </summary>
     [Alias("s" + Parser.SM_REF_KEY)]
     public static Func<TExArgCtx, TEx<T>> ReferenceSafe<T>(string alias, Func<TExArgCtx, TEx<T>> deflt) => b => 
         ReflectEx.ReferenceExpr(alias, b, deflt(b));

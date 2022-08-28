@@ -36,6 +36,68 @@ public delegate void SyncPattern(SyncHandoff sbh);
 
 public delegate IEnumerator AsyncPattern(AsyncHandoff abh);
 
+//Wrapper around the delegate pattern types with some extra metadata
+public abstract class Pattern {
+    public Metadata Meta { get; }
+    public abstract IReadOnlyList<Pattern> Children { get; }
+
+    public Pattern(Metadata m) {
+        this.Meta = m;
+    }
+
+    protected void CascadeMetadata() {
+        void CascadeMetadataTo(Pattern descendant) {
+            descendant.Meta.ExposedGCXVars.AddRange(Meta.ExposedGCXVars);
+            for (int jj = 0; jj < descendant.Children.Count; ++jj)
+                CascadeMetadataTo(descendant.Children[jj]);
+        }
+        for (int ii = 0; ii < Children.Count; ++ii)
+            CascadeMetadataTo(Children[ii]);
+    }
+
+    public record Metadata {
+        public List<(Reflector.ExType type, string name)> ExposedGCXVars { get; init; } = new();
+    }
+
+    public abstract class Async : Pattern {
+        public AsyncPattern Executor { get; }
+
+        public Async(AsyncPattern exec, Metadata m) : base(m) {
+            this.Executor = exec;
+        }
+        public class I : Async {
+            public Async[] AsyncChildren { get; }
+            public I(AsyncPattern exec, Metadata m, Async[] asyncChildren) : base(exec, m) {
+                this.AsyncChildren = asyncChildren;
+                CascadeMetadata();
+            }
+            
+            public override IReadOnlyList<Pattern> Children => AsyncChildren;
+        }
+        public class C : Async {
+            public Sync[] SyncChildren { get; }
+            public C(AsyncPattern exec, Metadata m, Sync[] syncChildren) : base(exec, m) {
+                this.SyncChildren = syncChildren;
+                CascadeMetadata();
+            }
+            
+            public override IReadOnlyList<Pattern> Children => SyncChildren;
+        }
+    }
+
+    public class Sync : Pattern {
+        public SyncPattern Executor { get; }
+        public Sync[] SyncChildren { get; }
+        public Sync(SyncPattern exec, Metadata m, Sync[] syncChildren) : base(m) {
+            this.Executor = exec;
+            this.SyncChildren = syncChildren;
+            CascadeMetadata();
+        }
+        
+        public override IReadOnlyList<Pattern> Children => SyncChildren;
+    }
+}
+
 
 public struct CommonHandoff : IDisposable {
     public readonly ICancellee cT;
@@ -405,35 +467,6 @@ public static partial class AtomicPatterns {
 
         });
         return sbh => sbh.bc.SummonPowerAura(sbh, props, sbh.GCX.NextID());
-    }
-
-    /// <summary>
-    /// Create a powerup effect twice.
-    /// <br/>The second time, it goes outwards with one iteration.
-    /// <br/>This abbreviation is useful for common use cases of powerups.
-    /// </summary>
-    /// <param name="sfx1">SFX to play when the first powerup starts</param>
-    /// <param name="sfx2">SFX to play when the second powerup starts</param>
-    /// <param name="color1">Color function for the first powerup</param>
-    /// <param name="color2">Color function for the second powerup</param>
-    /// <param name="time1">Time the first powerup exists</param>
-    /// <param name="itrs1">Number of cycles the first powerup goes through</param>
-    /// <param name="delay">Delay after the first powerup dies before spawning the second powerup</param>
-    /// <param name="time2">Time the second powerup exists</param>
-    /// <returns></returns>
-    [Obsolete("Use PowerAura instead.")]
-    public static SyncPattern Powerup2(string sfx1, string sfx2, TP4 color1, TP4 color2, GCXF<float> time1, GCXF<float> itrs1, GCXF<float> delay, GCXF<float> time2) {
-        var power1 = Powerup(sfx1, color1, time1, itrs1);
-        var power2 = Powerup(sfx2, color2, time2, _ => -1);
-        return sbh => {
-            power1(sbh);
-            float t1 = time1(sbh.GCX);
-            float wait = t1 + delay(sbh.GCX);
-            SyncPatterns.Reexec(AsyncPatterns._AsGCR(
-                power2,
-                GenCtxProperty.Delay(_ => ETime.ENGINEFPS_F * wait))
-            )(sbh);
-        };
     }
 }
 public struct LoopControl<T> {

@@ -18,7 +18,7 @@ public static class ExUtils {
     public static readonly Type tv2 = typeof(Vector2);
     public static readonly Type tv3 = typeof(Vector3);
     public static readonly Type tv4 = typeof(Vector4);
-    public static readonly Type tvrv2 = typeof(V2RV2);
+    public static readonly Type tv2rv2 = typeof(V2RV2);
     private static readonly Type tqt = typeof(Quaternion);
     public static readonly Type tcc = typeof(CCircle);
     public static readonly Type tcr = typeof(CRect);
@@ -26,7 +26,7 @@ public static class ExUtils {
     private static readonly ConstructorInfo constrV3 = tv3.GetConstructor(new[] {tfloat, tfloat, tfloat})!;
     private static readonly ConstructorInfo constrV4 = tv4.GetConstructor(new[] {tfloat, tfloat, tfloat, tfloat})!;
     private static readonly ConstructorInfo constrRV2 =
-        tvrv2.GetConstructor(new[] {tfloat, tfloat, tfloat, tfloat, tfloat})!;
+        tv2rv2.GetConstructor(new[] {tfloat, tfloat, tfloat, tfloat, tfloat})!;
     private static readonly ExFunction quatEuler = ExFunction.Wrap<Quaternion, float>("Euler", 3);
     private static readonly ExFunction quatEuler3 = ExFunction.Wrap<Quaternion, Vector3>("Euler", 1);
 

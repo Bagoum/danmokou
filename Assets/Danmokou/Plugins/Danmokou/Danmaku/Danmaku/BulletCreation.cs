@@ -64,7 +64,7 @@ public struct DelegatedCreator {
 
     private (Movement, ParametricInfo) PathHandlers(SyncHandoff sbh, GCXU<VTP> path, uint? id = null) {
         var fctx = FiringCtx.New(sbh.GCX);
-        var mov = new Movement(path(sbh.GCX, fctx), ParentOffset, FacedRV2(sbh.RV2));
+        var mov = new Movement(path.Execute(sbh.GCX, fctx), ParentOffset, FacedRV2(sbh.RV2));
         var pi = new ParametricInfo(in mov, sbh.index, id, sbh.timeOffset, fctx);
         return (mov, pi);
     }
@@ -76,8 +76,8 @@ public struct DelegatedCreator {
         } else
             pi.ctx.playerBullet = null;
         BulletManager.RequestSimple(style, 
-            options.scale?.Invoke(sbh.GCX, pi.ctx), 
-            options.direction?.Invoke(sbh.GCX, pi.ctx), in mov, pi);
+            options.scale?.Execute(sbh.GCX, pi.ctx), 
+            options.direction?.Execute(sbh.GCX, pi.ctx), in mov, pi);
     }
 
     public void Complex(SyncHandoff sbh, GCXU<VTP> path, uint id, BehOptions options) {

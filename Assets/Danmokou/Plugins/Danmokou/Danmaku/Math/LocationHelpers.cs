@@ -36,12 +36,12 @@ public static class LocationHelpers {
     public static float RightPlayerBound => Right - 0.1f;
     public static float BotPlayerBound => Bot + 0.42f;
     public static float TopPlayerBound => Top - 0.1f;
-    public static readonly Ex left = Ex.Constant(Left);
-    public static readonly Ex right = Ex.Constant(Right);
-    public static readonly Ex bot = Ex.Constant(Bot);
-    public static readonly Ex top = Ex.Constant(Top);
-    public static readonly Ex width = Ex.Constant(Width);
-    public static readonly Ex height = Ex.Constant(Height);
+    public static readonly Ex left = Ex.Property(null, typeof(LocationHelpers), "Left");
+    public static readonly Ex right = Ex.Property(null, typeof(LocationHelpers), "Right");
+    public static readonly Ex bot = Ex.Property(null, typeof(LocationHelpers), "Bot");
+    public static readonly Ex top = Ex.Property(null, typeof(LocationHelpers), "Top");
+    public static readonly Ex width = Ex.Property(null, typeof(LocationHelpers), "Width");
+    public static readonly Ex height = Ex.Property(null, typeof(LocationHelpers), "Height");
 
     public static Vector2 GetEnemyVisiblePlayer() => GameManagement.VisiblePlayerLocation;
 

@@ -48,10 +48,16 @@ gtr {
 		} {
 			## i don't like this but there isn't a good way to compare a GCX value to a bullet-control pred internal
 			savef $idify(temp1) &group 1
-			bullet-control persist { { $idify(p-gglcircle-*/w) } $colors } softcull(cwheel-black/b, & (> s&(group, -1) -1) = @($idify(temp1), &.group) 1)
+			bullet-control persist { { $idify(p-gglcircle-*/w) } $colors } softcull(cwheel-black/b, & (> &.group -1) = @($idify(temp1), &.group) 1)
 			sfx reimu-fantasyseal-onhit
 			draiko 1.6 2.2
 			sync $idify(gglcircle-*/w) <0.2;:> gsr2c 20 {
+				start {
+					group =f -1
+				}
+				expose {
+					f group
+				}
 				color $colors
 				offset angle(rand(0, 360))
 			} simple tprot px lerpt(0.2, 0.5, 4.5, 3) {

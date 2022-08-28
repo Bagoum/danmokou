@@ -15,11 +15,9 @@ phase 0
 
 
 !{ power1()
-sync powerup1 <> powerup2
-	x-powerup-1 x-powerdown-1
+sync powerup1 <> poweraura boss1
 	witha 0.9 lerp 0 1 t orange red
 	witha 0.9 yellow
-	1.5 2 0 0.5
 !}
 !{ power1atk()
 gtr {
@@ -37,11 +35,9 @@ sync powerup1 <> powerup x-powerup-1
 	3 5
 !}
 !{ yuukapower1()
-sync powerup1 <> powerup2
-	x-powerup-1 x-powerdown-1
+sync powerup1 <> poweraura boss1
 	witha 0.9 lerp 0 1 t green red
 	witha 0.9 green
-	1.5 2 0 0.5
 !}
 
 

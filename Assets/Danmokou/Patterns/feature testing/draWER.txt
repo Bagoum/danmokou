@@ -10,11 +10,9 @@ phase 0
 		move _ roffset pxy
 			sine 6 1.5 t
 			sine 6h 1 t
-		sync powerup1 <1;:170> powerup2
-			x-powerup-1 x-powerdown-1
+		sync powerup1 <1;:170> poweraura boss1
 			witha 0.9 lerp 0 3 t green blue
 			witha 0.9 red
-			1.5 2 0 0.5
 	
 ## rectangle		
 phase 0
