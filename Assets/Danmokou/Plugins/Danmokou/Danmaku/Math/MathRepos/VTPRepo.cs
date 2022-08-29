@@ -5,6 +5,7 @@ using BagoumLib.Expressions;
 using Danmokou.Core;
 using Danmokou.Expressions;
 using Danmokou.Reflection;
+using Danmokou.Reflection.CustomData;
 using UnityEngine;
 using Ex = System.Linq.Expressions.Expression;
 using static Danmokou.DMath.Functions.ExM;
@@ -156,12 +157,13 @@ public static class VTPControllers {
                 delta.y.Is(vel.flipY.Mul(y).Mul(dt))
             )));
     
+    /*
     public static ExVTP FVelocity(ExCoordF cf) => (vel, dt, bpi, delta) => InLetCtx(vel, bpi, tac =>
         cf(vel.cos, vel.sin, tac, (x, y, z) =>
             Ex.Block(
                 delta.x.Is(ReflectEx.ReferenceExpr<float>(FiringCtx.FLIPX, tac).Mul(x).Mul(dt)),
                 delta.y.Is(ReflectEx.ReferenceExpr<float>(FiringCtx.FLIPY, tac).Mul(y).Mul(dt))
-            )));
+            )));*/
 
     public static ExVTP Velocity3D(ExCoordF cf) => (vel, dt, bpi, delta) => InLetCtx(vel, bpi, tac =>
         cf(vel.cos, vel.sin, tac, (x, y, z) =>
@@ -177,16 +179,15 @@ public static class VTPControllers {
             delta.x *= vel.flipX * dT;
             delta.y *= vel.flipY * dT;
         };
-
+        
+/*
     public static VTP FVelocity(CoordF coordF) {
-        var kx = FiringCtx.GetKey(FiringCtx.FLIPX);
-        var ky = FiringCtx.GetKey(FiringCtx.FLIPY);
         return delegate(ref Movement vel, in float dT, ref ParametricInfo bpi, ref Vector3 delta) {
             coordF(vel.cos_rot, vel.sin_rot, bpi, ref delta);
             delta.x *= (bpi.ctx.boundFloats.TryGetValue(kx, out var fx) ? fx : 1) * dT;
             delta.y *= (bpi.ctx.boundFloats.TryGetValue(ky, out var fy) ? fy : 1) * dT;
         };
-    }
+    }*/
 
     public static ExVTP Offset(ExCoordF cf) => (vel, dt, bpi, delta) => InLetCtx(vel, bpi, tac =>
         cf(vel.cos, vel.sin, tac, (x, y, z) =>
@@ -365,7 +366,7 @@ public static class VTPRepo {
     /// </summary>
     public static ExVTP Expose((Reflector.ExType, string)[] variables, ExVTP inner) => (v, dt, tac, delta) => {
         foreach (var (ext, name) in variables)
-            tac.Ctx.ICRR?.TryResolve(ext, name, out _);
+            tac.Ctx.ICRR?.TryResolve(ext.AsType(), name, out _);
         return inner(v, dt, tac, delta);
     };
     

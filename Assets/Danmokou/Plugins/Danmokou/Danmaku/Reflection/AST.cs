@@ -334,7 +334,7 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
             if (Method.Mi.GetCustomAttribute<ExtendGCXUExposedAttribute>() != null && data.ExposedVariables.Count > 0)
                 (result as GCXU ?? throw new StaticException(
                         $"{nameof(ExtendGCXUExposedAttribute)} used on method {Method.Name} that does not return GCXU"))
-                    .BoundAliases.AddRange(data.ExposedVariables);
+                    .BoundAliases.AddRange(data.ExposedVariables.Select(x => (x.Item1.AsType(), x.Item2)));
             return result;
         }
     }

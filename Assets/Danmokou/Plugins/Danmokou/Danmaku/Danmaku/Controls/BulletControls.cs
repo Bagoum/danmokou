@@ -580,7 +580,7 @@ public partial class BulletManager {
             var extbpi = bpi.AppendSB(sbName, st.sb);
             return bpi.When(cond,
                 Ex.Block(targets.Select(t =>
-                    t.target.Save(((Ex) t.indexer(extbpi)).As<int>(), t.valuer(extbpi), bpi))));
+                    t.target.Save(((Ex) t.indexer(extbpi)).Cast<int>(), t.valuer(extbpi), bpi))));
         }, BulletControl.P_SAVE);
 
         /// <summary>
@@ -592,19 +592,19 @@ public partial class BulletManager {
         /// <param name="cond">Filter condition</param>
         public static exBulletControl SaveF((ReflectEx.Hoist<float> target, ExBPY indexer, ExBPY valuer)[] targets, ExPred cond) => new((st, ct, bpi) => bpi.When(cond,
             Ex.Block(targets.Select(t =>
-                t.target.Save(((Ex) t.indexer(bpi)).As<int>(), t.valuer(bpi), bpi)))), BulletControl.P_SAVE);
+                t.target.Save(((Ex) t.indexer(bpi)).Cast<int>(), t.valuer(bpi), bpi)))), BulletControl.P_SAVE);
 
         /// <summary>
         /// Update existing V2 values in the private data hoisting for the bullet.
         /// </summary>
         public static exBulletControl UpdateV2((string target, ExTP valuer)[] targets, ExPred cond) => new((st, ct, bpi) =>
-            bpi.When(cond, Ex.Block(targets.Select(t => FiringCtx.SetValue(bpi, FiringCtx.DataType.V2, t.target, t.valuer(bpi))))), BulletControl.P_SAVE);
+            bpi.When(cond, Ex.Block(targets.Select(t => PICustomData.SetValue<Vector2>(bpi, t.target, t.valuer(bpi))))), BulletControl.P_SAVE);
         
         /// <summary>
         /// Update existing float values in the private data hoisting for the bullet.
         /// </summary>
         public static exBulletControl UpdateF((string target, ExBPY valuer)[] targets, ExPred cond) => new((st, ct, bpi) =>
-            bpi.When(cond, Ex.Block(targets.Select(t => FiringCtx.SetValue(bpi, FiringCtx.DataType.Float, t.target, t.valuer(bpi))))), BulletControl.P_SAVE);
+            bpi.When(cond, Ex.Block(targets.Select(t => PICustomData.SetValue<float>(bpi, t.target, t.valuer(bpi))))), BulletControl.P_SAVE);
 
         /// <summary>
         /// Execute an event if the condition is satisfied.

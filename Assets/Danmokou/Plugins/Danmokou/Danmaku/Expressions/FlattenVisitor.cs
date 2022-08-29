@@ -212,7 +212,7 @@ class FlattenVisitor : ExpressionVisitor {
         if (node.Method.DeclaringType == dmkMathClassType) {
             if (reduceMethod) {
                 //DMK math functions take float, but the converted versions take double, so we need to convert
-                var v = Visit(visited[0].As<double>());
+                var v = Visit(visited[0].Cast<double>());
                 if (node.Method.Name == "Sin")
                     return ExMHelpers.dLookupSinRad(v);
                 if (node.Method.Name == "Cos")

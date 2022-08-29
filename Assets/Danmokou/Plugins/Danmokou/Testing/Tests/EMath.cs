@@ -24,7 +24,7 @@ public static class EMath {
         [Test]
         public static void TestLookupSin() {
             var xv = VFloat();
-            var fsin = Ex.Lambda<FXY>(ExMHelpers.dLookupSinRad(xv.As<double>()), xv).Compile();
+            var fsin = Ex.Lambda<FXY>(ExMHelpers.dLookupSinRad(xv.Cast<double>()), xv).Compile();
             for (float x = -16.5f; x < 16.5f; x += 0.0001f) {
                 AreEqual(fsin(x), Mathf.Sin(x), 0.00001f);
             }

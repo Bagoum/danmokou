@@ -265,7 +265,7 @@ private static {TypePrinter.Print(f.returnType)} {f.fnName}({string.Join(", ",
                 public D Next<D>(object[] proxyArgs) {
                     if (index >= compiled.Count) {
                         if (compiled.Count == 0)
-                            throw new Exception($"File {FileIdentifier} has no baked expressions, but one was requested");
+                            throw new Exception($"File {FileIdentifier} has no baked expressions, but one was requested. This probably means you changed the file contents after baking the expressions.");
                         throw new Exception($"Not enough baked expressions for file {FileIdentifier}");
                     }
                     var func = compiled[index++];
@@ -329,8 +329,8 @@ private static {TypePrinter.Print(f.returnType)} {f.fnName}({string.Join(", ",
             .Next<D>(tac.Ctx.ProxyArguments.ToArray());
 #endif
         var f = FlattenVisitor.Flatten(ex, true, true);
-        //Logs.Log($"Ex:{typeof(D).RName()} " +
-        //         $"{new ExpressionPrinter{ObjectPrinter = new DMKObjectPrinter()}.LinearizePrint(f)}");
+        Logs.Log($"Ex:{typeof(D).RName()} " +
+                 $"{new ExpressionPrinter{ObjectPrinter = new DMKObjectPrinter()}.LinearizePrint(f)}", false);
         var result = Ex.Lambda<D>(f, prms).Compile();
 #if EXBAKE_SAVE
         var printer = new ExpressionPrinter() {ObjectPrinter = new DMKObjectPrinter()};

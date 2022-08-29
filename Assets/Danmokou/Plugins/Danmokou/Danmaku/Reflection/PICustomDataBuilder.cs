@@ -15,26 +15,21 @@ using Ex = System.Linq.Expressions.Expression;
 
 namespace Danmokou.Reflection.CustomData {
 public readonly struct TypeDefKey {
-    public readonly List<IReadOnlyList<(Reflector.ExType type, string name)>> Exposed;
-    public TypeDefKey(List<IReadOnlyList<(Reflector.ExType, string)>> exposed) {
+    public readonly IReadOnlyList<(Type type, string name)> Exposed;
+    public TypeDefKey(IReadOnlyList<(Type, string)> exposed) {
         this.Exposed = exposed;
     }
 
     //Call this when using as a persistent key so elements don't get modified later
     public TypeDefKey Freeze() => 
-        new(Exposed.Select(s => s.ToList() as IReadOnlyList<(Reflector.ExType, string)>).ToList());
+        new(Exposed.ToList());
 
     public override bool Equals(object obj) =>
-        obj is TypeDefKey td && Exposed.AreSameNested(td.Exposed);
+        obj is TypeDefKey td && Exposed.AreSame(td.Exposed);
 
-    public override int GetHashCode() {
-        var result = 17;
-        foreach (var ele in Exposed)
-            result = result * 23 + ele.ElementWiseHashCode();
-        return result;
-    }
+    public override int GetHashCode() => Exposed.ElementWiseHashCode();
 
-    public static readonly TypeDefKey Empty = new(new());
+    public static readonly TypeDefKey Empty = new(new List<(Type, string)>());
 }
 
 public class ConstructedType {
@@ -49,10 +44,10 @@ public class ConstructedType {
     public int Copied { get; internal set; }
     public int Cleared { get; private set; }
     
-    public ConstructedType(BuiltCustomDataDescriptor desc, Type builtType, int typeIndex) {
+    public ConstructedType(BuiltCustomDataDescriptor desc, Type builtType, int typeIndex, Func<PICustomData>? constructor = null) {
         this.Descriptor = desc;
         this.BuiltType = builtType;
-        this.Constructor = Ex.Lambda<Func<PICustomData>>(Ex.New(builtType.GetConstructor(Type.EmptyTypes)!)).Compile();
+        this.Constructor = constructor ?? Ex.Lambda<Func<PICustomData>>(Ex.New(builtType.GetConstructor(Type.EmptyTypes)!)).Compile();
         this.TypeIndex = typeIndex;
     }
 
@@ -79,6 +74,11 @@ public class ConstructedType {
     }
 
     public void Return(PICustomData data) {
+        data.boundInts.Clear();
+        data.boundFloats.Clear();
+        data.boundV2s.Clear();
+        data.boundV3s.Clear();
+        data.boundRV2s.Clear();
         data.firer = null;
         data.playerController = null;
         data.laserController = null;
@@ -90,12 +90,21 @@ public class ConstructedType {
 }
 
 public class PICustomDataBuilder : CustomDataBuilder {
+    //For AOT cases, we should fall back to always using dictionary lookups (dynamic lookup).
+    public const bool DISABLE_TYPE_BUILDING = 
+#if !EXBAKE_SAVE && !EXBAKE_LOAD
+        false;
+#else
+        true;
+#endif
     private readonly Dictionary<TypeDefKey, ConstructedType> typeMap = new();
     private readonly List<ConstructedType> typeList = new();
-    
+    public ConstructedType ConstructedBaseType { get; }
+    public IReadOnlyList<ConstructedType> TypeList => typeList;
+
     public PICustomDataBuilder() : base(
         typeof(PICustomData), "DanmokouDynamic", null, typeof(float), typeof(int), typeof(Vector2), typeof(Vector3), typeof(V2RV2)) {
-        var consType = new ConstructedType(customDataDescriptors[CustomDataBaseType], CustomDataBaseType, 0);
+        var consType = ConstructedBaseType = new ConstructedType(customDataDescriptors[CustomDataBaseType], CustomDataBaseType, 0, () => new());
         typeList.Add(consType);
         typeMap[TypeDefKey.Empty] = consType;
     }
@@ -106,28 +115,15 @@ public class PICustomDataBuilder : CustomDataBuilder {
         variableNameToID[(PICustomData.FLIPX, ExUtils.tfloat)] = PICustomData.FLIPX_KEY;
         variableNameToID[(PICustomData.FLIPY, ExUtils.tfloat)] = PICustomData.FLIPY_KEY;
     }
-    
-    PICustomData GetCustomData(GenCtx gcx, List<IReadOnlyList<(Reflector.ExType, string)>> aliases, ref ConstructedType? type) {
-        type ??= GetCustomDataType(new TypeDefKey(aliases));
-        return type.MakeNew(gcx);
-    }
 
-    PICustomData GetCustomData(GenCtx gcx, IReadOnlyList<(Reflector.ExType, string)> aliases, ref ConstructedType? type) {
-        if (type != null)
-            return type.MakeNew(gcx);
-        var lis = ListCache<IReadOnlyList<(Reflector.ExType, string)>>.Get();
-        lis.Add(aliases);
-        var result = GetCustomData(gcx, lis, ref type);
-        ListCache<IReadOnlyList<(Reflector.ExType, string)>>.Consign(lis);
-        return result;
-    }
     public ConstructedType GetCustomDataType(in TypeDefKey key) {
+        if (DISABLE_TYPE_BUILDING)
+            return ConstructedBaseType;
         if (typeMap.TryGetValue(key, out var t))
             return t;
         var builtType = Builder.CreateCustomDataType(new(
-            key.Exposed.SelectMany(lis => lis.Select(x =>
-                new CustomDataFieldDescriptor(x.name, x.type.AsType())
-            )).ToArray()
+            key.Exposed.Select(x => new CustomDataFieldDescriptor(x.name, x.type)
+            ).ToArray()
         ) { BaseType = typeof(PICustomData) }, out var builtDesc);
         t = new(builtDesc, builtType, typeList.Count);
         Logs.Log($"Created custom data type with fields {builtDesc.Descriptor}");
@@ -135,13 +131,8 @@ public class PICustomDataBuilder : CustomDataBuilder {
         return typeMap[key.Freeze()] = t;
     }
 
-    public ConstructedType GetCustomDataType(IReadOnlyList<(Reflector.ExType, string)> aliases) {
-        var lis = ListCache<IReadOnlyList<(Reflector.ExType, string)>>.Get();
-        lis.Add(aliases);
-        var result = GetCustomDataType(new TypeDefKey(lis));
-        ListCache<IReadOnlyList<(Reflector.ExType, string)>>.Consign(lis);
-        return result;
-    }
+    public ConstructedType GetCustomDataType(IReadOnlyList<(Type, string)> aliases) => 
+        GetCustomDataType(new TypeDefKey(aliases));
 
 
     public static readonly PICustomDataBuilder Builder = new();

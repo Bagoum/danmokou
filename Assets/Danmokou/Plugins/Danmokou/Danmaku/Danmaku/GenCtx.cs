@@ -54,7 +54,8 @@ public class GenCtx : IDisposable {
     /// Used in deeply nested player fires for keeping track of the parent.
     /// </summary>
     public PlayerController? playerController;
-    private FiringCtx fctx = null!;
+    //Note: this doesn't store any bound variables, just the references like PICustomData.playerController
+    private PICustomData fctx = null!;
     public V2RV2 RV2 {
         get => rv2s["rv2"];
         set => rv2s["rv2"] = value;
@@ -70,7 +71,7 @@ public class GenCtx : IDisposable {
     public Vector2 Loc => exec.GlobalPosition();
     public uint? idOverride = null;
     [UsedImplicitly]
-    public ParametricInfo AsBPI => new(Loc, index, idOverride ?? exec.rBPI.id, i, fctx);
+    public ParametricInfo AsBPI => new(fctx, Loc, index, idOverride ?? exec.rBPI.id, i);
     private static readonly Stack<GenCtx> cache = new();
     private bool _isInCache = false;
 
@@ -100,7 +101,7 @@ public class GenCtx : IDisposable {
         newgc.exec = exec;
         newgc.RV2 = newgc.BaseRV2 = rv2;
         newgc.SummonTime = 0;
-        newgc.fctx = FiringCtx.New(newgc);
+        newgc.fctx = PICustomData.New(newgc);
         return newgc;
     }
 

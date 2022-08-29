@@ -18,6 +18,7 @@ using Danmokou.DMath;
 using Danmokou.Expressions;
 using Danmokou.Graphics;
 using Danmokou.Pooling;
+using Danmokou.Reflection.CustomData;
 using Danmokou.SM;
 using JetBrains.Annotations;
 using Unity.Collections;
@@ -981,7 +982,8 @@ public partial class BulletManager {
 #if UNITY_EDITOR
     [ContextMenu("Debug FCTX usage")]
     public void DebugFCTX() {
-        Logs.Log($"Alloc {FiringCtx.Allocated} / Popped {FiringCtx.Popped} / Cached {FiringCtx.Recached} / Copied {FiringCtx.Copied}");
+        foreach (var ct in PICustomDataBuilder.Builder.TypeList)
+            Logs.Log($"Custom type {ct.BuiltType.Name}({ct.Descriptor.Descriptor}): Alloc {ct.Allocated} / Popped {ct.Popped} / Cached {ct.Recached} / Copied {ct.Copied} / Cleared {ct.Cleared}");
     }
     [ContextMenu("Debug bullet numbers")]
     public void DebugBulletNums() {

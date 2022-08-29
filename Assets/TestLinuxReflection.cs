@@ -33,7 +33,7 @@ public class TestLinuxReflection : MonoBehaviour {
 
 	public static Ex PM1(Ex x) => ExC(1f).Sub(ExC(2f).Mul(
 		x.Sub(ExC(2f).Mul(Ex.Call(null, typeof(Math).GetMethod("Floor", new[]{typeof(double)})!,
-			x.Div(ExC(2f)).As<double>()).As<float>()))));
+			x.Div(ExC(2f)).Cast<double>()).Cast<float>()))));
 
 	IEnumerator Start() {
 	    GameManagement.Instance.Power.OnNext(2);
@@ -54,11 +54,11 @@ public class TestLinuxReflection : MonoBehaviour {
         var x = Ex.Parameter(typeof(float), "x");
         var y = Ex.Parameter(typeof(float), "y");
         var ex_ang =
-	        Ex.Condition(x.As<int>().Eq(ExC(0)), 
+	        Ex.Condition(x.Cast<int>().Eq(ExC(0)), 
 		        ExC(0f),
-		        Ex.Condition(x.As<int>().Eq(ExC(1)), 
+		        Ex.Condition(x.Cast<int>().Eq(ExC(1)), 
 			        PM1(y).Mul(ExC(30f)),
-			        Ex.Condition(x.As<int>().Eq(ExC(2)), 
+			        Ex.Condition(x.Cast<int>().Eq(ExC(2)), 
 				        Ex.Condition(y.Eq(ExC(2f)), ExC(0f), PM1(y).Mul(ExC(30f))),
 				        Ex.Condition(y.GT(ExC(1f)), ExC(0.6f), ExC(1f)).Mul(PM1(y).Mul(ExC(30f)))
 			        )

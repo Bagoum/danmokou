@@ -188,11 +188,12 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     public DisplayController DisplayerOrThrow => (displayer != null) ? displayer : throw new Exception($"BEH {ID} does not have a displayer");
     private bool isSummoned = false;
     protected virtual int Findex => 0;
-    protected virtual FiringCtx? DefaultFCTX => null;
+    protected virtual PICustomData DefaultFCTX() => PICustomData.New();
     protected override void Awake() {
         base.Awake();
         DefaultLayer = gameObject.layer;
-        bpi = new ParametricInfo(tr.position, Findex, RNG.GetUInt(), 0, DefaultFCTX);
+        bpi =
+            new ParametricInfo(DefaultFCTX(), tr.position, Findex, RNG.GetUInt(), 0);
         enemy = GetComponent<Enemy>();
         RegisterID();
         UpdateStyle(defaultMeta);

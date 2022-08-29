@@ -71,7 +71,7 @@ public class MiniTutorial : BehaviorEntity {
 
         var mov = new Movement(new Vector2(-2, 2.5f), 0);
         BulletManager.RequestSimple("lcircle-red/", _ => 4f, null, mov, new ParametricInfo(in mov));
-        var nrx = new RealizedLaserOptions(new LaserOptions(), GenCtx.New(this, V2RV2.Zero), FiringCtx.New(), new Vector2(3, 5),
+        var nrx = new RealizedLaserOptions(new LaserOptions(), GenCtx.New(this, V2RV2.Zero), PICustomData.New(), new Vector2(3, 5),
             V2RV2.Angle(-90), Cancellable.Null);
         "sync _ <> relrect greenrect level <-2;2.5:1.4;1.4:0> witha 0.7 green".Into<StateMachine>()
             .Start(new SMHandoff(this, Cancellable.Null));

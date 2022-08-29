@@ -63,6 +63,8 @@ public class SBOption {
 /// A set of properties modifying the behavior of simple bullets.
 /// </summary>
 public class SBOptions {
+    //Note: If adding GCXU objects here, also add them to
+    // the GCXU.ShareTypeAndCompile call in AtomicPAtterns
     public readonly GCXU<BPY>? scale = null;
     public readonly GCXU<SBV2>? direction = null;
     public readonly (int boss, int stage, EffectStrategy effStrat)? player = null;

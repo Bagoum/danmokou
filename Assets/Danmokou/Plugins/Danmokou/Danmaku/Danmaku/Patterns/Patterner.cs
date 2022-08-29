@@ -30,6 +30,7 @@ using ExBPY = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.T
 using ExTP = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<UnityEngine.Vector2>>;
 using ExBPRV2 = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<Danmokou.DMath.V2RV2>>;
 using static BagoumLib.Tasks.WaitingUtils;
+using GCXU = Danmokou.DMath.GCXU;
 
 namespace Danmokou.Danmaku.Patterns {
 public delegate void SyncPattern(SyncHandoff sbh);
@@ -160,6 +161,21 @@ public struct AsyncHandoff {
 [SuppressMessage("ReSharper", "UnusedMember.Global")]
 [Reflect] [Atomic]
 public static partial class AtomicPatterns {
+    #region GCXUCompileHelpers
+    
+    /// <inheritdoc cref="GCXU.ShareTypeAndCompile"/>
+    private static void ShareTypeAndCompile(GCXU<VTP> path, BehOptions options) {
+        GCXU.ShareTypeAndCompile(path, options.delete, options.hueShift, options.tint, options.rotator, options.recolor?.black, options.recolor?.white);
+    }
+    
+    /// <inheritdoc cref="GCXU.ShareTypeAndCompile"/>
+    private static void ShareTypeAndCompile(GCXU<VTP> path, LaserOptions options) {
+        GCXU.ShareTypeAndCompile(path, options.start, options.delete, options.deactivate, options.curve, options.rotate, options.hueShift, options.recolor?.black, options.recolor?.white, options.tint);
+    }
+    
+    
+    #endregion
+    
     /// <summary>
     /// Do nothing.
     /// </summary>
@@ -227,16 +243,18 @@ public static partial class AtomicPatterns {
     /// <param name="path"></param>
     /// <param name="options"></param>
     /// <returns></returns>
-    public static SyncPattern Simple(GCXU<VTP> path, SBOptions options) => sbh => {
-        uint id = sbh.GCX.NextID();
-        if (options.player.HasValue) {
-            sbh.ch.bc.style = BulletManager.GetOrMakePlayerCopy(sbh.bc.style);
-        }
-        sbh.bc.Simple(sbh, options, path, id);
-    };
+    public static SyncPattern Simple(GCXU<VTP> path, SBOptions options) {
+        GCXU.ShareTypeAndCompile(path, options.direction, options.scale);
+        return sbh => {
+            uint id = sbh.GCX.NextID();
+            if (options.player.HasValue) {
+                sbh.ch.bc.style = BulletManager.GetOrMakePlayerCopy(sbh.bc.style);
+            }
+            sbh.bc.Simple(sbh, options, path, id);
+        };
+    }
 
     #endregion
-
 
     /// <summary>
     /// Fires a complex bullet (ie. controlled by a GameObject).
@@ -245,11 +263,14 @@ public static partial class AtomicPatterns {
     /// <param name="path">Movement descriptor</param>
     /// <param name="options">Bullet constructor options</param>
     /// <returns></returns>
-    public static SyncPattern Complex(GCXU<VTP> path, BehOptions options) => sbh => {
-        uint id = sbh.GCX.NextID();
-        sbh.bc.Complex(sbh, path, id, options);
-    };
-    
+    public static SyncPattern Complex(GCXU<VTP> path, BehOptions options) {
+        ShareTypeAndCompile(path, options);
+        return sbh => {
+            uint id = sbh.GCX.NextID();
+            sbh.bc.Complex(sbh, path, id, options);
+        };
+    }
+
     /// <summary>
     /// Fires a Pather/Tracker projectile, which "remembers" the points it has gone through and draws a path through them.
     /// </summary>
@@ -258,10 +279,13 @@ public static partial class AtomicPatterns {
     /// <param name="path">Movement descriptor</param>
     /// <param name="options">Bullet constructor options</param>
     /// <returns></returns>
-    public static SyncPattern Pather(float maxTime, BPY remember, GCXU<VTP> path, BehOptions options) => sbh => {
-        uint id = sbh.GCX.NextID();
-        sbh.bc.Pather(sbh, maxTime > 0 ? maxTime : (float?) null, remember, path, id, options);
-    };
+    public static SyncPattern Pather(float maxTime, BPY remember, GCXU<VTP> path, BehOptions options) {
+        ShareTypeAndCompile(path, options);
+        return sbh => {
+            uint id = sbh.GCX.NextID();
+            sbh.bc.Pather(sbh, maxTime > 0 ? maxTime : (float?)null, remember, path, id, options);
+        };
+    }
 
     /// <summary>
     /// Create a laser.
@@ -271,10 +295,13 @@ public static partial class AtomicPatterns {
     /// <param name="hot">Time that the laser is in a damaging state</param>
     /// <param name="options">Laser constructor options</param>
     /// <returns></returns>
-    public static SyncPattern Laser(GCXU<VTP> path, GCXF<float> cold, GCXF<float> hot, LaserOptions options) => sbh => {
+    public static SyncPattern Laser(GCXU<VTP> path, GCXF<float> cold, GCXF<float> hot, LaserOptions options) {
+        ShareTypeAndCompile(path, options);
+        return sbh => {
             uint id = sbh.GCX.NextID();
             sbh.bc.Laser(sbh, path, cold(sbh.GCX), hot(sbh.GCX), id, options);
         };
+    }
 
     public static SyncPattern SafeLaser(GCXF<float> cold, LaserOptions options) =>
         Laser("null".Into<GCXU<VTP>>(), cold, _ => 0f, options); 
@@ -300,19 +327,33 @@ public static partial class AtomicPatterns {
         return sbh;
     }
 
-    public static SyncPattern Summon(GCXU<VTP> path, StateMachine? sm, BehOptions options) => sbh =>
-        _Summon(sbh, true, path, sm, options);
-    public static SyncPattern SummonUP(GCXU<VTP> path, StateMachine? sm, BehOptions options) => sbh =>
-        _Summon(sbh, false, path, sm, options);
+    public static SyncPattern Summon(GCXU<VTP> path, StateMachine? sm, BehOptions options) {
+        ShareTypeAndCompile(path, options);
+        return sbh =>
+            _Summon(sbh, true, path, sm, options);
+    }
 
-    public static SyncPattern SummonR(RootedVTP path, StateMachine? sm, BehOptions options) => sbh => {
-        sbh.ch.bc.Root(path.root(sbh.GCX));
-        _Summon(sbh, true, path.path, sm, options);
-    };
-    public static SyncPattern SummonRUP(RootedVTP path, StateMachine? sm, BehOptions options) => sbh => {
-        sbh.ch.bc.Root(path.root(sbh.GCX));
-        _Summon(sbh, false, path.path, sm, options);
-    };
+    public static SyncPattern SummonUP(GCXU<VTP> path, StateMachine? sm, BehOptions options) {
+        ShareTypeAndCompile(path, options);
+        return sbh =>
+            _Summon(sbh, false, path, sm, options);
+    }
+
+    public static SyncPattern SummonR(RootedVTP path, StateMachine? sm, BehOptions options) {
+        ShareTypeAndCompile(path.path, options);
+        return sbh => {
+            sbh.ch.bc.Root(path.root(sbh.GCX));
+            _Summon(sbh, true, path.path, sm, options);
+        };
+    }
+
+    public static SyncPattern SummonRUP(RootedVTP path, StateMachine? sm, BehOptions options) {
+        ShareTypeAndCompile(path.path, options);
+        return sbh => {
+            sbh.ch.bc.Root(path.root(sbh.GCX));
+            _Summon(sbh, false, path.path, sm, options);
+        };
+    }
 
     public static SyncPattern SummonRZ(StateMachine? sm, BehOptions options) =>
         SummonR(new RootedVTP(0, 0, VTPRepo.Null()), sm, options);

@@ -29,10 +29,10 @@ public static partial class PredicateLogic {
         bpi => {
             var b = V<bool>();
             var key = bpi.Ctx.NameWithSuffix("_OnlyOnce_Set");
-            return Ex.Condition(FiringCtx.Contains<int>(bpi, key),
+            return Ex.Condition(bpi.DynamicHas<int>(key),
                 ExC(false),
                 Ex.Block(new[] {b},
-                    Ex.IfThen(b.Is(pred(bpi)), FiringCtx.SetValue<int>(bpi, key, ExC(1))),
+                    Ex.IfThen(b.Is(pred(bpi)), bpi.DynamicSet<int>(key, ExC(1))),
                     b
                 )
             );

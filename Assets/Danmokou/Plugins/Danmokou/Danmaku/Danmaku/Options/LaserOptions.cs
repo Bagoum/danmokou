@@ -253,7 +253,7 @@ public readonly struct RealizedLaserOptions {
 
     public RealizedBehOptions AsBEH => new(this);
 
-    public RealizedLaserOptions(LaserOptions opts, GenCtx gcx, FiringCtx fctx, Vector2 parentOffset, V2RV2 localOffset, ICancellee cT) {
+    public RealizedLaserOptions(LaserOptions opts, GenCtx gcx, PICustomData fctx, Vector2 parentOffset, V2RV2 localOffset, ICancellee cT) {
         maxLength = opts.length?.max.Invoke(gcx) ?? DEFAULT_LASER_LEN;
         varLength = opts.length?.var?.Execute(gcx, fctx);
         start = opts.start?.Execute(gcx, fctx);
@@ -288,6 +288,8 @@ public readonly struct RealizedLaserOptions {
 /// A set of properties modifying the behavior of lasers.
 /// </summary>
 public class LaserOptions {
+    //Note: If adding GCXU objects here, also add them to
+    // the GCXU.ShareTypeAndCompile call in AtomicPAtterns
     public readonly (GCXF<float> max, GCXU<BPY>? var)? length;
     public readonly GCXU<BPY>? start;
     public readonly GCXU<Pred>? delete;

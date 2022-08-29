@@ -157,8 +157,8 @@ public class TExGCX : TEx<GenCtx> {
         v3s = Ex.Field(ex, "v3s");
         rv2s = Ex.Field(ex, "rv2s");
         index = Ex.Field(ex, "index");
-        i_float = Ex.Field(ex, "i").As<float>();
-        pi_float = Ex.Field(ex, "pi").As<float>();
+        i_float = Ex.Field(ex, "i").Cast<float>();
+        pi_float = Ex.Field(ex, "pi").Cast<float>();
         beh_loc = Ex.Property(ex, "Loc");
         bpi = Ex.Property(ex, "AsBPI");
     }

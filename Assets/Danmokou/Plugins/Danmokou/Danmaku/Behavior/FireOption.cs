@@ -60,13 +60,11 @@ public class FireOption : BehaviorEntity {
     private float powerLerp = 0.2f;
     public int findex;
     protected override int Findex => findex;
-    protected override FiringCtx DefaultFCTX {
-        get {
-            var f = FiringCtx.New();
-            f.firer = this;
-            f.playerController = Player;
-            return f;
-        }
+    protected override PICustomData DefaultFCTX() {
+        var f = PICustomData.New();
+        f.firer = this;
+        f.playerController = Player;
+        return f;
     }
     public PlayerController Player { get; private set; } = null!;
 

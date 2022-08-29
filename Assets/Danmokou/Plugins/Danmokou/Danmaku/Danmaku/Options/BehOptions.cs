@@ -181,7 +181,7 @@ public readonly struct RealizedBehOptions {
     public readonly Pred? delete;
     public readonly PlayerBullet? playerBullet;
 
-    public RealizedBehOptions(BehOptions opts, GenCtx gcx, FiringCtx fctx, Vector2 parentOffset, V2RV2 localOffset, ICancellee cT) {
+    public RealizedBehOptions(BehOptions opts, GenCtx gcx, PICustomData fctx, Vector2 parentOffset, V2RV2 localOffset, ICancellee cT) {
         smooth = opts.smooth;
         smr = SMRunner.Run(opts.sm, cT, gcx);
         scale = opts.scale?.Invoke(gcx) ?? 1f;
@@ -218,6 +218,8 @@ public readonly struct RealizedBehOptions {
 /// A set of properties modifying the behavior of BEH summons.
 /// </summary>
 public class BehOptions {
+    //Note: If adding GCXU objects here, also add them to
+    // the GCXU.ShareTypeAndCompile call in AtomicPAtterns
     public readonly bool smooth;
     public readonly StateMachine? sm;
     public readonly GCXF<float>? scale;

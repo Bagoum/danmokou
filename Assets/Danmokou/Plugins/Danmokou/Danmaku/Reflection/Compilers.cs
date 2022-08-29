@@ -100,23 +100,29 @@ public static class CompilerHelpers {
     
     
     private class GCXCompileResolver : ReflectEx.ICompileReferenceResolver {
-        public readonly List<(Reflector.ExType, string)> bound = new();
+        public List<(Type, string)> Bound { get; } = new();
+        private readonly Dictionary<(Type, string), int> counters = new();
 
-        public bool TryResolve<T>(string alias, out Ex ex) {
-            var ext = Reflector.AsExType<T>();
-            if (!bound.Contains((ext, alias))) {
-                bound.Add((ext, alias));
+        public bool TryResolve(Type t, string alias, out Ex ex) {
+            if (!counters.ContainsKey((t, alias))) {
+                Bound.Add((t, alias));
+                counters[(t, alias)] = 0;
             }
-            ex = Ex.Default(typeof(T));
+            ++counters[(t, alias)];
+            ex = Ex.Default(t);
             return true;
         }
-        
-        public bool TryResolve(Reflector.ExType ext, string alias, out Ex ex) {
-            if (!bound.Contains((ext, alias))) {
-                bound.Add((ext, alias));
+
+        public ReflectEx.Alias[] ToAliases() {
+            var aliases = new ReflectEx.Alias[Bound.Count];
+            for (int ii = 0; ii < Bound.Count; ++ii) {
+                var (t, s) = Bound[ii];
+                aliases[ii] = new ReflectEx.Alias(s,
+                    tac => PICustomData.GetValue(tac, t, s)) {
+                    SingleUse = counters[(t, s)] == 1
+                };
             }
-            ex = Ex.Default(ext.AsType());
-            return true;
+            return aliases;
         }
     }
 
@@ -155,32 +161,16 @@ public static class CompilerHelpers {
             tac.Ctx.ICRR = resolver;
             return tac;
         }));
-        if (resolver.bound.Count > 0) {
-            //Automatic resolver found something, recompile
-            return Expose(resolver.bound.ToList(), compiler, exp, modifyLets, modifyArgBag);
-        } else {
-            return new GCXU<T>(new(), type =>
-                compiler(modifyArgBag(exp, tac => {
-                    tac.Ctx.CustomDataType = type.BuiltType;
-                    return tac;
-                })));
+        if (resolver.Bound.Count > 0) {
+            exp = modifyLets(exp, resolver.ToAliases());
         }
-    }
-
-    public static GCXU<T> Expose<S, T>(List<(Reflector.ExType, string)> exportVars, Func<S, T> compiler, S exp,
-        Func<S, ReflectEx.Alias[], S> relet, Func<S, Func<TExArgCtx, TExArgCtx>, S> modifyArgBag) {
-        var aliases = new ReflectEx.Alias[exportVars.Count];
-        for (int ii = 0; ii < exportVars.Count; ++ii) {
-            var (ext, boundVar) = exportVars[ii];
-            aliases[ii] = new ReflectEx.Alias(boundVar, tac => FiringCtx.GetValue(tac, ext.AsFCtxType(), boundVar));
-        }
-        exp = (aliases.Length > 0) ? relet(exp, aliases) : exp;
-        return new GCXU<T>(exportVars, type =>
+        return new GCXU<T>(resolver.Bound, type =>
             compiler(modifyArgBag(exp, tac => {
                 tac.Ctx.CustomDataType = type.BuiltType;
                 return tac;
             })));
     }
+
 }
 [Reflect]
 public static class Compilers {
@@ -191,7 +181,7 @@ public static class Compilers {
     /// </summary>
     public static Func<TExArgCtx, TEx<T>> Expose<T>((Reflector.ExType, string)[] variables, Func<TExArgCtx, TEx<T>> inner) => tac => {
         foreach (var (ext, name) in variables)
-            tac.Ctx.ICRR?.TryResolve(ext, name, out _);
+            tac.Ctx.ICRR?.TryResolve(ext.AsType(), name, out _);
         return inner(tac);
     };
     

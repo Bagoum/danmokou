@@ -415,22 +415,25 @@ if (> t &fadein,
     /// <summary>
     /// Move the executing entity, but cancel movement if the predicate is false.
     /// </summary>
-    public static TaskPattern MoveWhile(GCXF<float> time, Pred? condition, GCXU<VTP> path) => smh => {
-        uint randId = RNG.GetUInt();
-        var epath = path.Execute(smh.GCX, out var fctx);
-        var old_override = smh.GCX.idOverride;
-        //Note that this use case is limited to when the BEH is provided a temporary new ID (ie. only in MoveWhile).
-        //I may deprecate this by having the move function not use a new ID.
-        smh.GCX.idOverride = randId;
-        var etime = time(smh.GCX);
-        smh.GCX.idOverride = old_override;
-        var cor = smh.Exec.ExecuteVelocity(new LimitedTimeMovement(epath, etime, 
+    public static TaskPattern MoveWhile(GCXF<float> time, Pred? condition, GCXU<VTP> path) { 
+        path.CompileDelegate();
+        return smh => {
+            uint randId = RNG.GetUInt();
+            var epath = path.Execute(smh.GCX, out var fctx);
+            var old_override = smh.GCX.idOverride;
+            //Note that this use case is limited to when the BEH is provided a temporary new ID (ie. only in MoveWhile).
+            //I may deprecate this by having the move function not use a new ID.
+            smh.GCX.idOverride = randId;
+            var etime = time(smh.GCX);
+            smh.GCX.idOverride = old_override;
+            var cor = smh.Exec.ExecuteVelocity(new LimitedTimeMovement(epath, etime,
                 FuncExtensions.Then(() => fctx.Dispose(),
-                GetAwaiter(out Task t)), smh.cT, 
-                new ParametricInfo(Vector2.zero, smh.GCX.index, randId, ctx: fctx), condition));
-        smh.RunTryPrependRIEnumerator(cor);
-        return t;
-    };
+                    GetAwaiter(out Task t)), smh.cT,
+                new ParametricInfo(fctx, Vector2.zero, smh.GCX.index, randId), condition));
+            smh.RunTryPrependRIEnumerator(cor);
+            return t;
+        };
+    }
 
     /// <summary>
     /// Move the executing entity.

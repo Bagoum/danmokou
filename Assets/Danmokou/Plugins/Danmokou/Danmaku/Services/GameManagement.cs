@@ -158,7 +158,7 @@ public class GameManagement : CoroutineRegularUpdater {
         ETime.Timer.DestroyAll();
         BulletManager.OrphanAll(); //Also clears pool controls
         PublicDataHoisting.DestroyAll();
-        FiringCtx.ClearNames();
+        //PICustomData.ClearNames();
         ReflWrap.ClearWrappers();
         StateMachineManager.ClearCachedSMs();
         BehaviorEntity.ClearPointers();
@@ -172,7 +172,7 @@ public class GameManagement : CoroutineRegularUpdater {
         ETime.Timer.DestroyAll();
         BehaviorEntity.DestroyAllSummons();
         PublicDataHoisting.DestroyAll();
-        FiringCtx.ClearNames();
+        //PICustomData.ClearNames();
         ReflWrap.ClearWrappers();
         StateMachineManager.ClearCachedSMs();
         BulletManager.ClearPoolControls();

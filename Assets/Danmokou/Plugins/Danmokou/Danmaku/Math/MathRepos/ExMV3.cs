@@ -71,7 +71,7 @@ public static partial class ExMV3 {
     /// </summary>
     /// <param name="tp">Parametric function to assign to x,y components</param>
     /// <returns></returns>
-    public static tv3 TP3(tv2 tp) => ((Ex) tp).As<Vector3>();
+    public static tv3 TP3(tv2 tp) => ((Ex) tp).Cast<Vector3>();
     /// <summary>
     /// The zero vector.
     /// </summary>

@@ -153,18 +153,20 @@ public static partial class Parametrics {
             loc
         );
     };
+    
+    
     public static ExTP LSaveNearestEnemy() => b => {
         var key = b.Ctx.NameWithSuffix("_LSaveNearestEnemyKey");
         var eid_in = ExUtils.V<int?>();
         var eid = ExUtils.V<int>();
         var loc = new TExV2();
         return Ex.Block(new[] { eid_in, eid, loc },
-            eid_in.Is(Ex.Condition(FiringCtx.Contains<int>(b, key),
-                    FiringCtx.GetValue<int>(b, key).As<int?>(),
-                    Ex.Constant(null).As<int?>())
+            eid_in.Is(Ex.Condition(b.DynamicHas<int>(key),
+                    b.DynamicGet<int>(key).Cast<int?>(),
+                    Ex.Constant(null).Cast<int?>())
             ),
             Ex.IfThenElse(Enemy.findNearestSave.Of(b.LocV3, eid_in, eid, loc),
-                FiringCtx.SetValue<int>(b, key, eid),
+                b.DynamicSet<int>(key, eid),
                 loc.Is(Ex.Constant(new Vector2(0f, 50f)))
             ),
             loc

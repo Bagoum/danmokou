@@ -158,10 +158,10 @@ public static partial class ExM {
     /// </summary>
     /// <returns></returns>
     public static Ex P1M(int mod, Ex t) {
-        return t.As<int>().Div(ExC(mod)).As<float>();
+        return t.Cast<int>().Div(ExC(mod)).Cast<float>();
     }
     public static Ex exP1M(Ex mod, Ex t) {
-        return t.As<int>().Div(mod.As<int>()).As<float>();
+        return t.Cast<int>().Div(mod.Cast<int>()).Cast<float>();
     }
 
     /// <summary>
@@ -174,11 +174,11 @@ public static partial class ExM {
     /// </summary>
     /// <returns></returns>
     public static Ex P2M(int mod, Ex t) {
-        return Ex.Modulo(t.As<int>(), ExC(mod)).As<float>();
+        return Ex.Modulo(t.Cast<int>(), ExC(mod)).Cast<float>();
     }
     
     public static Ex exP2M(Ex mod, Ex t) {
-        return Ex.Modulo(t.As<int>(), mod.As<int>()).As<float>();
+        return Ex.Modulo(t.Cast<int>(), mod.Cast<int>()).Cast<float>();
     }
     /// <summary>
     /// When two firing indices have been combined via modular or additive parametrization (see <see cref="Core.Parametrization"/>), this retrieves the firing index of any point in the chain.
@@ -190,13 +190,13 @@ public static partial class ExM {
     /// <returns></returns>
     public static Ex PM(int self, int children, Ex t) {
         if (self == 0) self = SHIFT;
-        return Ex.Modulo(t.As<int>().Div(ExC(children)), ExC(self)).As<float>();
+        return Ex.Modulo(t.Cast<int>().Div(ExC(children)), ExC(self)).Cast<float>();
     }
     
     public static Ex exPM(Ex self, Ex children, Ex t) {
         if (self is ConstantExpression {Value: int smod} && smod == 0) 
             self = ExC(SHIFT);
-        return Ex.Modulo(t.As<int>().Div(children.As<int>()), self.As<int>()).As<float>();
+        return Ex.Modulo(t.Cast<int>().Div(children.Cast<int>()), self.Cast<int>()).Cast<float>();
     }
     public static int __Combine(int x, int y, int mod = SHIFT) {
         return (x * mod) + y;
@@ -285,10 +285,10 @@ public static partial class ExM {
         for (int ii = 0; ii < against.Length; ++ii) {
             stmts.Add(x.Is(against[ii]));
             stmts.Add(exp.Is(ExpDb(x.Mul(sharp))));
-            stmts.Add(ExUtils.AddAssign(num, x.As<double>().Mul(exp)));
+            stmts.Add(ExUtils.AddAssign(num, x.Cast<double>().Mul(exp)));
             stmts.Add(ExUtils.AddAssign(denom, exp));
         }
-        stmts.Add(num.Div(denom).As<float>());
+        stmts.Add(num.Div(denom).Cast<float>());
         return Ex.Block(new[] {num, denom, x, exp}, stmts);
     });
     
@@ -304,7 +304,7 @@ public static partial class ExM {
         for (int ii = 0; ii < against.Length; ++ii) {
             stmts.Add(ExUtils.AddAssign(num, ExpDb(sharp.Mul(against[ii]))));
         }
-        stmts.Add(((Ex)LnDb(num)).As<float>().Div(sharp));
+        stmts.Add(((Ex)LnDb(num)).Cast<float>().Div(sharp));
         return Ex.Block(new[] {num}, stmts);
     });
 
@@ -487,7 +487,7 @@ public static partial class ExM {
     /// <br/>This number resets every card.
     /// </summary>
     public static tfloat PhotosTaken(BEHPointer beh) => 
-        ExC(beh).Field("beh").Field("Enemy").Field("PhotosTaken").As<float>();
+        ExC(beh).Field("beh").Field("Enemy").Field("PhotosTaken").Cast<float>();
 
     /// <summary>
     /// Returns true if the instance has not continued.

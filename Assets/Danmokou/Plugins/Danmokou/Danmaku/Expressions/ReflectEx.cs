@@ -14,6 +14,7 @@ using Danmokou.Reflection;
 using JetBrains.Annotations;
 using Ex = System.Linq.Expressions.Expression;
 using static Danmokou.Expressions.ExUtils;
+using ParameterExpression = System.Linq.Expressions.ParameterExpression;
 
 
 namespace Danmokou.Expressions {
@@ -32,24 +33,38 @@ public static class ReflectEx {
     public readonly struct Alias {
         public readonly string alias;
         public readonly Func<TExArgCtx, TEx> func;
+        public bool SingleUse { get; init; }
 
         public Alias(string alias, Func<TExArgCtx, TEx> func) {
             this.alias = alias;
             this.func = func;
+            this.SingleUse = false;
         }
     }
 
     public static Ex Let2(Alias[] aliases, Func<Ex> inner, TExArgCtx applier) {
-        var stmts = new Ex[aliases.Length + 1];
-        var vars = new ParameterExpression[aliases.Length];
+        var stmts = new List<Ex>();
+        var vars = new List<ParameterExpression>();
         var lets = new List<IDisposable>();
         for (int ii = 0; ii < aliases.Length; ++ii) {
-            Ex alias_value = aliases[ii].func(applier);
-            lets.Add(applier.Let(aliases[ii].alias, vars[ii] =
-                V(alias_value.Type, applier.Ctx.NameWithSuffix(aliases[ii].alias))));
-            stmts[ii] = Ex.Assign(vars[ii], alias_value);
+            var a = aliases[ii];
+            Ex alias_value = null!;
+            try {
+                alias_value = a.func(applier);
+            } catch (Exception e) {
+                int k = 5;
+                throw;
+            }
+            if (a.SingleUse) {
+                 lets.Add(applier.Let(a.alias, alias_value));
+            } else {
+                var tempVar = V(alias_value.Type, a.alias);
+                vars.Add(tempVar);
+                lets.Add(applier.Let(a.alias, tempVar));
+                stmts.Add(Ex.Assign(tempVar, alias_value));
+            }
         }
-        stmts[aliases.Length] = inner();
+        stmts.Add(inner());
         for (int ii = 0; ii < lets.Count; ++ii)
             lets[ii].Dispose();
         return Ex.Block(vars, stmts);
@@ -77,8 +92,9 @@ public static class ReflectEx {
     }*/
 
     public interface ICompileReferenceResolver {
-        bool TryResolve<T>(string alias, out Ex ex) => TryResolve(Reflector.AsExType<T>(), alias, out ex);
-        bool TryResolve(Reflector.ExType ext, string alias, out Ex ex);
+        bool TryResolve<T>(string alias, out Ex ex) => TryResolve(typeof(T), alias, out ex);
+        bool TryResolve(Type t, string alias, out Ex ex);
+        //bool TryResolve(Reflector.ExType ext, string alias, out Ex ex);
     }
 
     //T is on the level of typeof(float)
@@ -104,7 +120,9 @@ public static class ReflectEx {
         //so we need to make opting into this completely explicit. 
         if ((isExplicit || deflt != null) && tac.MaybeBPI != null) {
             try {
-                return FiringCtx.GetValue<T>(tac, alias, deflt);
+                return deflt is null ?
+                    PICustomData.GetValue<T>(tac, alias) :
+                    PICustomData.GetIfDefined<T>(tac, alias, deflt);
             } catch (Exception) {
                 //pass
             }

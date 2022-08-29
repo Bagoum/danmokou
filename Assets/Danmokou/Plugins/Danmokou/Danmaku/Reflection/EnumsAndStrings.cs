@@ -12,13 +12,13 @@ public static partial class Reflector {
         V3,
         RV2
     }
-
+/*
     public static FiringCtx.DataType AsFCtxType(this ExType t) => t switch {
         ExType.RV2 => FiringCtx.DataType.RV2,
         ExType.V3 => FiringCtx.DataType.V3,
         ExType.V2 => FiringCtx.DataType.V2,
         _ => FiringCtx.DataType.Float
-    };
+    };*/
     public static ExType AsExType<T>() => AsExType(typeof(T));
 
     public static ExType AsExType(Type t) {

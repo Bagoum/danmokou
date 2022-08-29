@@ -35,11 +35,11 @@ public static class ExMHelpers {
         }
     }
     //This is exactly what Mathf does, avoiding the function call is faster.
-    public static Ex OfDFD(ExFunction f, Ex arg) => f.Of(arg.As<double>()).As<float>();
-    public static Ex OfDFD(ExFunction f, params Ex[] args) => f.Of(args.Select(x => x.As<double>()).ToArray()).As<float>();
+    public static Ex OfDFD(ExFunction f, Ex arg) => f.Of(arg.Cast<double>()).Cast<float>();
+    public static Ex OfDFD(ExFunction f, params Ex[] args) => f.Of(args.Select(x => x.Cast<double>()).ToArray()).Cast<float>();
 
-    private static Ex dGetRadIndex(TEx<double> angleRad) => Ex.And(angleRad.Mul(ExC(radRatio)).As<int>(), ExC(LookupMask));
-    private static Ex dGetDegIndex(TEx<double> angleDeg) => Ex.And(angleDeg.Mul(ExC(degRatio)).As<int>(), ExC(LookupMask));
+    private static Ex dGetRadIndex(TEx<double> angleRad) => Ex.And(angleRad.Mul(ExC(radRatio)).Cast<int>(), ExC(LookupMask));
+    private static Ex dGetDegIndex(TEx<double> angleDeg) => Ex.And(angleDeg.Mul(ExC(degRatio)).Cast<int>(), ExC(LookupMask));
     private static Ex dLookupByIndex(Ex index) => ExC(LookupTable).Index(index);
     public static Ex dLookupCosSinRad(TEx<double> angleRad) => dLookupByIndex(dGetRadIndex(angleRad));
     public static Ex dLookupCosRad(TEx<double> angleRad) => Ex.Field(dLookupCosSinRad(angleRad), "x");
@@ -71,6 +71,7 @@ public static class ExMHelpers {
     public static Ex QRotate(Ex quat, Ex v3) => Ex.Multiply(quat, v3);
     public static Expression ExC(object x) => Ex.Constant(x);
 
+    
     public static BlockExpression RotateLerp(Ex target, Ex source, TExArgCtx bpi, bool isRate, bool isTrue, Ex rate) {
         if (isRate) rate = rate.Mul(M.degRad);
         if (isTrue) rate = rate.Mul(ETime.FRAME_TIME);
@@ -81,12 +82,12 @@ public static class ExMHelpers {
         if (isTrue) {
             var key = bpi.Ctx.NameWithSuffix("_RotateLerpKey");
             exprs[0] = v.Is(
-                Ex.Condition(FiringCtx.Contains<Vector2>(bpi, key),
-                    FiringCtx.GetValue<Vector2>(bpi, key),
-                    FiringCtx.SetValue<Vector2>(bpi, key, source)
+                Ex.Condition(bpi.DynamicHas<Vector2>(key),
+                    bpi.DynamicGet<Vector2>(key),
+                    bpi.DynamicSet<Vector2>(key, source)
                 ));
             exprs[2] = 
-                FiringCtx.SetValue<Vector2>(bpi, key, RotateRad(isRate ? (Ex)Limit(rate, ang) : ang.Mul(rate), v));
+                bpi.DynamicSet<Vector2>(key, RotateRad(isRate ? (Ex)Limit(rate, ang) : ang.Mul(rate), v));
         } else {
             exprs[0] = v.Is(source);
             exprs[2] = RotateRad(isRate ? 
@@ -104,20 +105,20 @@ public static class ExMHelpers {
         var inter_ang = HighPass(ExC(0.01f), RadDiff(target, v));
         return Ex.Block(new ParameterExpression[] {v, ang},
             Ex.Condition(
-                bpi.FCtxHas<Vector2>(dirKey).And(bpi.t.GT0()),
+                bpi.DynamicHas<Vector2>(dirKey).And(bpi.t.GT0()),
                 Ex.Block(
-                    v.Is(bpi.FCtxGet<Vector2>(dirKey)),
-                    ang.Is(Ex.Condition(bpi.FCtxGet<float>(sideKey).LT0(),
+                    v.Is(bpi.DynamicGet<Vector2>(dirKey)),
+                    ang.Is(Ex.Condition(bpi.DynamicGet<float>(sideKey).LT0(),
                         RadToNeg(inter_ang),
                         RadToPos(inter_ang)
                     )),
-                    bpi.FCtxSet<Vector2>(dirKey, RotateRad(Limit(r1, ang), v))
+                    bpi.DynamicSet<Vector2>(dirKey, RotateRad(Limit(r1, ang), v))
                 ),
                 Ex.Block(
                     v.Is(source),
                     ang.Is(RadDiff(target, v)),
-                    bpi.FCtxSet<float>(sideKey, Sign(ang)),
-                    bpi.FCtxSet<Vector2>(dirKey, RotateRad(Limit(r1, ang), v))
+                    bpi.DynamicSet<float>(sideKey, Sign(ang)),
+                    bpi.DynamicSet<Vector2>(dirKey, RotateRad(Limit(r1, ang), v))
                 )
             )
         );

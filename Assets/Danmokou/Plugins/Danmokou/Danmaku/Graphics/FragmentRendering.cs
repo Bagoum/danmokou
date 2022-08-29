@@ -51,7 +51,7 @@ public static class FragmentRendering {
             var baseVel = M.CosSin(RNG.GetFloatOffFrame(0f, M.TAU)) * RNG.GetFloatOffFrame(0f, maxInitVelMag);
             offset = b => b.t * baseVel + new Vector2(0, -0.5f * b.t * b.t * gravity);
             
-            bpi = new ParametricInfo(Vector2.zero, 0, 0, 0, FiringCtx.Empty);
+            bpi = new ParametricInfo(PICustomData.Empty, Vector2.zero, 0, 0, 0);
             var rotationAccels = !rotAccelMag.Try(out var rA) ? Vector3.zero :
                 M.Spherical(RNG.GetFloatOffFrame(0f, M.TAU), RNG.GetFloatOffFrame(0f, M.PI)) *
                 RNG.GetFloatOffFrame(rA.x, rA.y);
@@ -64,7 +64,7 @@ public static class FragmentRendering {
             this.uv = uv;
             this.baseLocation = location;
             this.offset = offset;
-            bpi = new ParametricInfo(Vector2.zero, index, RNG.GetUIntOffFrame(), 0, FiringCtx.Empty);
+            bpi = new ParametricInfo(PICustomData.Empty, Vector2.zero, index, RNG.GetUIntOffFrame(), 0);
             this.rotations = rotations;
             this.scale = scale;
         }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
+using BagoumLib.Expressions;
 using Danmokou.Core;
 using Danmokou.DataHoist;
 using Danmokou.Expressions;
@@ -36,14 +37,14 @@ public static class ExMSamplers {
 
     /// <summary>
     /// If the condition is true, evaluate the invokee. Otherwise, return the last returned evaluation.
-    /// <br/>You can call this with zero sampling time, and it will sample the invokee once. However, in this case SS0 is preferred.
+    /// <br/>You can call this with a cond of false, and it will sample the invokee once. However, in this case SS0 is preferred.
     /// </summary>
     public static Func<TExArgCtx, TEx<T>> SampleIf<T>(ExPred cond, Func<TExArgCtx, TEx<T>> p) =>
         bpi => {
             var key = bpi.Ctx.NameWithSuffix("_SampleIfKey");
-            return Ex.Condition(Ex.OrElse(cond(bpi), Ex.Not(bpi.FCtxHas<T>(key))),
-                bpi.FCtxSet<T>(key, p(bpi)),
-                bpi.FCtxGet<T>(key)
+            return Ex.Condition(Ex.OrElse(cond(bpi), Ex.Not(bpi.DynamicHas<T>(key))),
+                bpi.DynamicSet<T>(key, p(bpi)),
+                bpi.DynamicGet<T>(key)
             );
         };
 
@@ -56,9 +57,9 @@ public static class ExMSamplers {
     public static Func<TExArgCtx, TEx<T>> SS0<T>(Func<TExArgCtx, TEx<T>> p) =>
         bpi => {
             var key = bpi.Ctx.NameWithSuffix("_SampleIfKey");
-            return Ex.Condition(Ex.Not(bpi.FCtxHas<T>(key)),
-                bpi.FCtxSet<T>(key, p(bpi)),
-                bpi.FCtxGet<T>(key)
+            return Ex.Condition(Ex.Not(bpi.DynamicHas<T>(key)),
+                bpi.DynamicSet<T>(key, p(bpi)),
+                bpi.DynamicGet<T>(key)
             );
         };
 }

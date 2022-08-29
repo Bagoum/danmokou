@@ -12,9 +12,11 @@ using Danmokou.Core;
 using Danmokou.Danmaku;
 using Danmokou.Danmaku.Descriptors;
 using Danmokou.DataHoist;
+using Danmokou.Reflection.CustomData;
 using Danmokou.Services;
 using JetBrains.Annotations;
 using Danmokou.SM;
+using UnityEngine;
 using static Danmokou.Danmaku.BulletManager;
 
 namespace Danmokou.Behavior {
@@ -378,23 +380,23 @@ public partial class BehaviorEntity {
         }, BulletControl.P_TIMECONTROL);
 
         public static cBEHControl UpdateF((string target, BPY valuer)[] targets, Pred cond) {
-            var ftargets = targets.Select(t => (FiringCtx.GetKey(t.target), t.valuer)).ToArray();
+            var ftargets = targets.Select(t => (PICustomDataBuilder.Builder.GetVariableKey(t.target, typeof(float)), t.valuer)).ToArray();
             return new cBEHControl((b, cT) => {
                 if (cond(b.rBPI)) {
                     var bpi = b.rBPI;
                     for (int ii = 0; ii < ftargets.Length; ++ii) {
-                        bpi.ctx.boundFloats[ftargets[ii].Item1] = ftargets[ii].valuer(bpi);
+                        bpi.ctx.WriteFloat(ftargets[ii].Item1, ftargets[ii].valuer(bpi));
                     }
                 }
             }, BulletControl.P_SAVE);
         }
         public static cBEHControl UpdateV2((string target, TP valuer)[] targets, Pred cond) {
-            var ftargets = targets.Select(t => (FiringCtx.GetKey(t.target), t.valuer)).ToArray();
+            var ftargets = targets.Select(t => (PICustomDataBuilder.Builder.GetVariableKey(t.target, typeof(Vector2)), t.valuer)).ToArray();
             return new cBEHControl((b, cT) => {
                 if (cond(b.rBPI)) {
                     var bpi = b.rBPI;
                     for (int ii = 0; ii < ftargets.Length; ++ii) {
-                        bpi.ctx.boundV2s[ftargets[ii].Item1] = ftargets[ii].valuer(bpi);
+                        bpi.ctx.WriteVector2(ftargets[ii].Item1, ftargets[ii].valuer(bpi));
                     }
                 }
             }, BulletControl.P_SAVE);

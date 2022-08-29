@@ -212,9 +212,10 @@ public class TExArgCtx {
     
     public Expression When(Func<TExArgCtx, TEx<bool>> pred, Expression then) => Expression.IfThen(pred(this), then);
 
-    public Expression FCtxHas<T>(string key) => FiringCtx.Contains<T>(this, key);
-    public Expression FCtxGet<T>(string key) => FiringCtx.GetValue<T>(this, key);
-    public Expression FCtxSet<T>(string key, Expression val) => FiringCtx.SetValue<T>(this, key, val);
+    //Methods for dynamic (dict-based) data lookup
+    public Expression DynamicHas<T>(string key) => PICustomData.ContainsDynamic<T>(this, key);
+    public Expression DynamicGet<T>(string key) => PICustomData.GetValueDynamic<T>(this, key);
+    public Expression DynamicSet<T>(string key, Expression val) => PICustomData.SetValueDynamic<T>(this, key, val);
 }
 
 /// <summary>

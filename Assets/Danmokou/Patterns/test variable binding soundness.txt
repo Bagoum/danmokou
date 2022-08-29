@@ -13,33 +13,53 @@ sync powerup1 <> poweraura boss1
 !}
 
 <!> type non nest
-<!> hp 1000
+<!> hp 1001
+<!> roott 1 0 0
 phase 0
 	paction 0
 		## Not exposing loop2 produces error "The given key '0' was not present in the dictionary." after 1 second
+		## With PICustomData: "KeyNotFoundException: Custom data object does not have a float to get with ID 0"
 		bullet-control persist circle-*/w restyle circle-blue/ &(> t 1, = &.loop2 0)
 		
 		bullet-control persist circle-green/w sm(onlyonce > t 1, 
 			## Not exposing loop2 produces error "No float loop2 in bullet GCX" after 1 second
-			async ellipse-orange/w <> gcr2 12 4 <> { } s tprot pxy(-2 - sine(7p, 0.7, &loop1), &loop2)
+			## With PICustomData, error is the same
+			async ellipse-orange/w <> gcr2 12 4 <> { } s tprot pxy(-2 - sine(7p, 0.7, &loop1), &loop2 * 3)
 		)
+		bullet-control persist circle-green/w updatef({
+			size (+ &.size 1f)
+		}, < t 1)
+		beh-control persist pather-purple/w updatef({
+			opacity (- &.opacity 0.4f)
+		}, & > t 0.4 < t 1.7)
 		
+		async pather-purple/w <90> gcr2 120 _ <15> {
+			start {
+				opacity =f 1
+			}
+		} pather 2 2 rvelocity px 2 {
+			tint(rgba(&opacity, 1, 1, &opacity))
+			s(2)
+		}
 	
 		async circle-*/w <> gcr2 24 _ <3> {
 			bindItr loop1
 		} gsr2c 2 {
 			color { red green }
 			bindItr loop2
+			start {
+				size =f 1
+			}
 			##expose { f loop2 } ## This works via some very funky internal stuff, 
 										## where the expose list is cascaded down to GCXU as the AST is constructed
 										## It actually won't work if you call the functions in code!
 		} simple
 			##expose { f loop2 } ## VTP.Expose: This works very normally, by simply referencing the variable and allowing
 											## the auto-compiler to include it
-			rvelocity px (2 + sine(7p, 0.7, &loop1)) {
+			rvelocity px (1.6 + sine(7p, 0.7, &loop1)) {
 				scale(
-				##expose { f loop2 } ## Same principle as VTP.Expose. You only need to expose it in one place.
-				1 + 0.2 * t)
+				expose { f loop2 } ## Same principle as VTP.Expose. You only need to expose it in one place.
+				&size)
 			}
 
 

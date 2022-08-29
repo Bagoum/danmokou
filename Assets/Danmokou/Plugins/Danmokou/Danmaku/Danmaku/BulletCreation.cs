@@ -63,9 +63,8 @@ public struct DelegatedCreator {
     public void SFX() => ServiceLocator.SFXService.Request(style);
 
     private (Movement, ParametricInfo) PathHandlers(SyncHandoff sbh, GCXU<VTP> path, uint? id = null) {
-        var fctx = FiringCtx.New(sbh.GCX);
-        var mov = new Movement(path.Execute(sbh.GCX, fctx), ParentOffset, FacedRV2(sbh.RV2));
-        var pi = new ParametricInfo(in mov, sbh.index, id, sbh.timeOffset, fctx);
+        var mov = new Movement(path.Execute(sbh.GCX, out var fctx), ParentOffset, FacedRV2(sbh.RV2));
+        var pi = new ParametricInfo(fctx, in mov, sbh.index, id, sbh.timeOffset);
         return (mov, pi);
     }
     public void Simple(SyncHandoff sbh, SBOptions options, GCXU<VTP> path, uint? id) {

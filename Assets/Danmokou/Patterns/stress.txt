@@ -11,7 +11,7 @@ phase 0
     paction 0
 		##bullet-control persist circle-green/w flipx> 3 < scale 0.5
 		##bullet-control persist circle-red/w flipx< -3 true
-		bullet-control persist circle-*/w restyle circle-blue/w false ##> &.var1 100
+		##bullet-control persist circle-*/w restyle circle-blue/w &(true, > &.var1 100)
 		
         async circle-*/w <0.8;0:0> gir2 1 1 <> {
 			p this
@@ -24,8 +24,10 @@ phase 0
 			}
 		} gsr2c 120 { 
 			colorf({ red green }, mod 2 t)
-		} simple rvelocity px(2 + &var1) { }
-		
+		} simple rvelocity px(2) { }
+
+///
+
 ##Basic stress tester
 <!> type non hello
 <!> hp 50000
@@ -38,7 +40,7 @@ phase 0
 		} gsr2c 120 { 
 			colorf({ red green blue orange yellow purple }, t * 0 // &times)
 		} simple rvelocity cx 2 { 
-			dir2 cx 1
+			##dir2 cx 1
 		}
 		##} gsr2c 24 { } simple offset3d(pxyz(2 * t, 0, sine(12, 1, t + 4h * mod(100, p))), zero) { 
 			##dir2 cx 1
