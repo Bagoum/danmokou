@@ -22,11 +22,10 @@ MonoBehaviour:
   description: A dangerous technique only usable by Mokou.
   type: Indestructible
   prefab: {fileID: 3080997326687647958, guid: ee24bfc5601b8594b999017783d4f3c2, type: 3}
-  bomb: 0
-  defaultPower: 1000
   playerChild: 1
   demoReplay: {fileID: 11400000, guid: cb661392b80571a4789ee38880206435, type: 2}
-  demoSetupSM: {fileID: 4900000, guid: 83d895926f063264f9adc5887261db81, type: 3}
+  demoSetupSM: {fileID: 2811297602134710623, guid: e1a29e14b8444434fa65f98540b4b07d,
+    type: 3}
   shotDifficulty: 0
   isMultiShot: 0
   multiD: {fileID: 0}

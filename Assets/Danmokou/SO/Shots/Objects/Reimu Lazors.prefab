@@ -28,6 +28,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0.2, y: 0.9, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8564540549256565143}
   m_RootOrder: 3
@@ -43,6 +44,7 @@ SpriteRenderer:
   m_CastShadows: 0
   m_ReceiveShadows: 0
   m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
@@ -96,7 +98,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0abe240f83e4ccf4e85ab2078ca8a89f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  behaviorScript: {fileID: 4900000, guid: 253be7908cf29224ca1ea2da42cdfd00, type: 3}
+  behaviorScript: {fileID: 2811297602134710623, guid: 73ec06df6792bdd47819a0c33a9476ab,
+    type: 3}
   ID: 
   deathEffect: {fileID: 0}
   cullableRadius:
@@ -160,6 +163,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8564540549256565143}
   m_RootOrder: 0
@@ -176,7 +180,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0abe240f83e4ccf4e85ab2078ca8a89f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  behaviorScript: {fileID: 0}
+  behaviorScript: {fileID: 2811297602134710623, guid: 563ac55597624884f988bb2e95ea7489,
+    type: 3}
   ID: 
   deathEffect: {fileID: 0}
   cullableRadius:
@@ -231,6 +236,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -0.2, y: 0.9, z: 0}
   m_LocalScale: {x: -1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8564540549256565143}
   m_RootOrder: 2
@@ -246,6 +252,7 @@ SpriteRenderer:
   m_CastShadows: 0
   m_ReceiveShadows: 0
   m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
@@ -299,7 +306,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0abe240f83e4ccf4e85ab2078ca8a89f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  behaviorScript: {fileID: 4900000, guid: 253be7908cf29224ca1ea2da42cdfd00, type: 3}
+  behaviorScript: {fileID: 2811297602134710623, guid: 73ec06df6792bdd47819a0c33a9476ab,
+    type: 3}
   ID: 
   deathEffect: {fileID: 0}
   cullableRadius:
@@ -364,6 +372,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -0.7, y: 0.7, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8564540549256565143}
   m_RootOrder: 1
@@ -379,6 +388,7 @@ SpriteRenderer:
   m_CastShadows: 0
   m_ReceiveShadows: 0
   m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
@@ -432,7 +442,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0abe240f83e4ccf4e85ab2078ca8a89f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  behaviorScript: {fileID: 4900000, guid: 253be7908cf29224ca1ea2da42cdfd00, type: 3}
+  behaviorScript: {fileID: 2811297602134710623, guid: 73ec06df6792bdd47819a0c33a9476ab,
+    type: 3}
   ID: 
   deathEffect: {fileID: 0}
   cullableRadius:
@@ -497,6 +508,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0.7, y: 0.7, z: 0}
   m_LocalScale: {x: -1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8564540549256565143}
   m_RootOrder: 4
@@ -512,6 +524,7 @@ SpriteRenderer:
   m_CastShadows: 0
   m_ReceiveShadows: 0
   m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
@@ -565,7 +578,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0abe240f83e4ccf4e85ab2078ca8a89f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  behaviorScript: {fileID: 4900000, guid: 253be7908cf29224ca1ea2da42cdfd00, type: 3}
+  behaviorScript: {fileID: 2811297602134710623, guid: 73ec06df6792bdd47819a0c33a9476ab,
+    type: 3}
   ID: 
   deathEffect: {fileID: 0}
   cullableRadius:
@@ -628,6 +642,7 @@ Transform:
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 764353812466635186}
   - {fileID: 8578311448334375212}

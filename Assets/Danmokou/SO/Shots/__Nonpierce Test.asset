@@ -13,17 +13,22 @@ MonoBehaviour:
   m_Name: __Nonpierce Test
   m_EditorClassIdentifier: 
   key: nonpierce_test
-  title: A View Upon All Creation
+  title:
+    useReference: 1
+    reference: 
+    hardcoded:
+      en: 
+      jp: 
   description: "A mystical fighting style recreated from legends of Tsukuyomi.\nFeatures
     a wide laser spread as well as homing pathers. \r\nWhen focused, the lasers narrow
     and the pathers find targets more accurately.\n"
   type: Lasers
   prefab: {fileID: 6169168473649848314, guid: 384b151b5792c36409dd2c346e663375, type: 3}
-  bomb: 0
-  defaultPower: 1000
   playerChild: 1
   demoReplay: {fileID: 4900000, guid: f58a179b4f5afb7489944bbfdd2484f5, type: 3}
-  demoSetupSM: {fileID: 4900000, guid: 83d895926f063264f9adc5887261db81, type: 3}
+  demoSetupSM: {fileID: 2811297602134710623, guid: e1a29e14b8444434fa65f98540b4b07d,
+    type: 3}
+  shotDifficulty: 0
   isMultiShot: 0
   multiD: {fileID: 0}
   multiM: {fileID: 0}

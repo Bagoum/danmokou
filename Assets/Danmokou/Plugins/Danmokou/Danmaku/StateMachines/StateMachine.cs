@@ -344,7 +344,7 @@ public abstract class StateMachine {
             ReflectionException? extraChildErr = null;
             int? nchildren = 0;
             if (prms.Length > 0) {
-                var requires_children = prms[0].Type == statesTyp && !q.Ctx.props.trueArgumentOrder;
+                var requires_children = prms[0].Type == statesTyp && !q.Ctx.Props.trueArgumentOrder;
                 int special_args_i = (requires_children) ? 1 : 0;
                 argErr = Reflector.FillASTArray(args, special_args_i, sig, q).fail;
                 if (q.Ctx.QueuedProps.Count > 0)

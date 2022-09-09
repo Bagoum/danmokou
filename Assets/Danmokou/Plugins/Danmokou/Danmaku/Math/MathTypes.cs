@@ -31,27 +31,16 @@ namespace Danmokou.DMath {
 ///  provide efficient lookup of arbitrary fields.
 /// </summary>
 public class PICustomData {
-    public const string FLIPX = "flipX";
-    public const int FLIPX_KEY = -1;
-    public const string FLIPY = "flipY";
-    public const int FLIPY_KEY = -2;
     public static readonly PICustomData Empty = new();
     //For dictionary variables, such as those created for state control in SS0 or onlyonce
     private static readonly Dictionary<(Type type, string name), int> dynamicKeyNames = new();
     public static int GetDynamicKey(Type t, string name) {
         return dynamicKeyNames[(t, name)] = PICustomDataBuilder.Builder.GetVariableKey(name, t);
     }
-    
-    private static float? DefaultFloatValue(string varName) => varName switch {
-        "flipX" => 1,
-        "flipY" => 1,
-        _ => null
-    };
-
     public int typeIndex;
     
     //Late-bound variables, such as those created for state control in SS0 or onlyonce
-    //Not used in RevertToGCX
+    // In the DISABLE_TYPE_BUILDING case, this is used for all bound variables
     public readonly Dictionary<int, int> boundInts = new();
     public readonly Dictionary<int, float> boundFloats = new();
     public readonly Dictionary<int, Vector2> boundV2s = new();
@@ -111,31 +100,46 @@ public class PICustomData {
     
     public virtual PICustomData Clone() => CopyInto(new PICustomData());
 
-    public virtual bool HasFloat(int id) => false;
-    public virtual bool HasInt(int id) => false;
-    public virtual bool HasVector2(int id) => false;
-    public virtual bool HasVector3(int id) => false;
-    public virtual bool HasV2RV2(int id) => false;
-    public virtual float ReadFloat(int id) => throw new Exception(
+    public virtual bool HasFloat(int id) => 
+        PICustomDataBuilder.DISABLE_TYPE_BUILDING && boundFloats.ContainsKey(id);
+    public virtual bool HasInt(int id) => 
+        PICustomDataBuilder.DISABLE_TYPE_BUILDING && boundInts.ContainsKey(id);
+    public virtual bool HasVector2(int id) => 
+        PICustomDataBuilder.DISABLE_TYPE_BUILDING && boundV2s.ContainsKey(id);
+    public virtual bool HasVector3(int id) => 
+        PICustomDataBuilder.DISABLE_TYPE_BUILDING && boundV3s.ContainsKey(id);
+    public virtual bool HasV2RV2(int id) => 
+        PICustomDataBuilder.DISABLE_TYPE_BUILDING && boundRV2s.ContainsKey(id);
+    public virtual float ReadFloat(int id) =>
+        PICustomDataBuilder.DISABLE_TYPE_BUILDING ? boundFloats[id] : throw new Exception(
         $"The base {nameof(PICustomData)} class has no dynamic variables for {nameof(ReadFloat)}");
-    public virtual int ReadInt(int id) => throw new Exception(
+    public virtual int ReadInt(int id) =>
+        PICustomDataBuilder.DISABLE_TYPE_BUILDING ? boundInts[id] : throw new Exception(
         $"The base {nameof(PICustomData)} class has no dynamic variables for {nameof(ReadInt)}");
-    public virtual Vector2 ReadVector2(int id) => throw new Exception(
+    public virtual Vector2 ReadVector2(int id) =>
+        PICustomDataBuilder.DISABLE_TYPE_BUILDING ? boundV2s[id] : throw new Exception(
         $"The base {nameof(PICustomData)} class has no dynamic variables for {nameof(ReadVector2)}");
-    public virtual Vector3 ReadVector3(int id) => throw new Exception(
+    public virtual Vector3 ReadVector3(int id) =>
+        PICustomDataBuilder.DISABLE_TYPE_BUILDING ? boundV3s[id] : throw new Exception(
         $"The base {nameof(PICustomData)} class has no dynamic variables for {nameof(ReadVector3)}");
-    public virtual V2RV2 ReadV2RV2(int id) => throw new Exception(
+    public virtual V2RV2 ReadV2RV2(int id) =>
+        PICustomDataBuilder.DISABLE_TYPE_BUILDING ? boundRV2s[id] : throw new Exception(
         $"The base {nameof(PICustomData)} class has no dynamic variables for {nameof(ReadV2RV2)}");
     
-    public virtual float WriteFloat(int id, float val) => throw new Exception(
+    public virtual float WriteFloat(int id, float val) => 
+        PICustomDataBuilder.DISABLE_TYPE_BUILDING ? boundFloats[id] = val : throw new Exception(
         $"The base {nameof(PICustomData)} class has no dynamic variables for {nameof(WriteFloat)}");
-    public virtual int WriteInt(int id, int val) => throw new Exception(
+    public virtual int WriteInt(int id, int val) => 
+        PICustomDataBuilder.DISABLE_TYPE_BUILDING ? boundInts[id] = val : throw new Exception(
         $"The base {nameof(PICustomData)} class has no dynamic variables for {nameof(WriteInt)}");
-    public virtual Vector2 WriteVector2(int id, Vector2 val) => throw new Exception(
+    public virtual Vector2 WriteVector2(int id, Vector2 val) =>
+        PICustomDataBuilder.DISABLE_TYPE_BUILDING ? boundV2s[id] = val : throw new Exception(
         $"The base {nameof(PICustomData)} class has no dynamic variables for {nameof(WriteVector2)}");
-    public virtual Vector3 WriteVector3(int id, Vector3 val) => throw new Exception(
+    public virtual Vector3 WriteVector3(int id, Vector3 val) =>
+        PICustomDataBuilder.DISABLE_TYPE_BUILDING ? boundV3s[id] = val : throw new Exception(
         $"The base {nameof(PICustomData)} class has no dynamic variables for {nameof(WriteVector3)}");
-    public virtual V2RV2 WriteV2RV2(int id, V2RV2 val) => throw new Exception(
+    public virtual V2RV2 WriteV2RV2(int id, V2RV2 val) =>
+        PICustomDataBuilder.DISABLE_TYPE_BUILDING ? boundRV2s[id] = val : throw new Exception(
         $"The base {nameof(PICustomData)} class has no dynamic variables for {nameof(WriteV2RV2)}");
 
     public GenCtx RevertToGCX(BehaviorEntity exec) {
@@ -174,7 +178,7 @@ public class PICustomData {
         var id = PICustomDataBuilder.Builder.GetVariableKey(varName, ext);
         if (PICustomDataBuilder.DISABLE_TYPE_BUILDING) {
             if (ext == ExUtils.tfloat)
-                boundFloats[id] = gcx.MaybeGetFloat(varName) ?? DefaultFloatValue(varName) ?? (useDefaultValue ? default : 
+                boundFloats[id] = gcx.MaybeGetFloat(varName) ?? (useDefaultValue ? default : 
                     throw new Exception($"No float {varName} in bullet GCX"));
             else if (ext == ExUtils.tv2)
                 boundV2s[id] = gcx.V2s.MaybeGet(varName) ?? (useDefaultValue ? default :
@@ -188,7 +192,7 @@ public class PICustomData {
             else throw new ArgumentOutOfRangeException($"{ext}");
         } else {
             if (ext == ExUtils.tfloat)
-                WriteFloat(id, gcx.MaybeGetFloat(varName) ?? DefaultFloatValue(varName) ?? (useDefaultValue ?
+                WriteFloat(id, gcx.MaybeGetFloat(varName) ?? (useDefaultValue ?
                     default :
                     throw new Exception($"No float {varName} in bullet GCX")));
             else if (ext == ExUtils.tint)

@@ -1,0 +1,25 @@
+<#> strict(none)
+pattern { }
+phase 0
+	paction 0
+		shift-phase-to 1
+
+phase 0
+	paction 0
+		position 0 0
+		async gem-red/w <1;:> gcr2 12 _ <12h> . 
+			s tprot cx 2
+		async pather-green/w <0.5;:> gcr2 24 _ <36h> .
+			pather 1 1 tprot cx 3 { }
+		gtr {
+			timer	ff
+			wait-child
+			wt	360 _
+		} saction 0
+			wait 2
+			sfx x-fire-burst-1
+			bullet-control once gem-red/w restyleeffect gem-red/b cwheel-red/w _
+			beh-control once pather-green/w restyle pather-green/b _
+			bullet-control < timersec(ff) 4 gem-red/b freeze _
+			beh-control < timersec(ff) 4 pather-green/b freeze _
+	

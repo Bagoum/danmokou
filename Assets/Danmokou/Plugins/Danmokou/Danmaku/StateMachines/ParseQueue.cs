@@ -202,7 +202,10 @@ public class PUListParseQueue : IParseQueue {
     public PUListParseQueue((ParsedUnit[] atoms, PositionRange pos) item, Reflector.ReflCtx? ctx) {
         this.Position = item.pos;
         this.atoms = item.atoms;
-        Ctx = ctx ?? new Reflector.ReflCtx(this);
+        if (ctx == null) {
+            ctx = Ctx = new Reflector.ReflCtx();
+            ctx.ParseProperties(this);
+        } else Ctx = ctx;
     }
 
     public override PositionRange PositionUpToObject(int index) =>

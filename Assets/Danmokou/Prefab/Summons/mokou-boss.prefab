@@ -259,7 +259,7 @@ MonoBehaviour:
         time: 1
         skipLoop: 0
       upAnim:
-      - sprite: {fileID: 6147347496250323771, guid: 6b6c9cdfffd032f46b84a568f7adcdec,
+      - sprite: {fileID: 9112845425937399011, guid: 6b6c9cdfffd032f46b84a568f7adcdec,
           type: 3}
         time: 1
         skipLoop: 0

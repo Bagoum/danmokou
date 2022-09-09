@@ -268,10 +268,10 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
         public override IEnumerable<PrintToken> DebugPrint() => DebugPrintMethod(BaseMethod);
 
         public override IEnumerable<ReflectDiagnostic> WarnUsage(ReflCtx ctx) {
-            if (ctx.props.warnPrefix && BaseMethod.Mi.GetCustomAttributes<WarnOnStrictAttribute>().Any(wa =>
-                    (int)ctx.props.strict >= wa.strictness)) {
+            if (ctx.Props.warnPrefix && BaseMethod.Mi.GetCustomAttributes<WarnOnStrictAttribute>().Any(wa =>
+                    (int)ctx.Props.strict >= wa.strictness)) {
                 yield return new ReflectDiagnostic.Warning(Position,
-                    $"The method \"{BaseMethod.TypeEnclosedName}\" is not permitted for use in a script with strictness {ctx.props.strict}. You might accidentally be using the prefix version of an infix function.");
+                    $"The method \"{BaseMethod.TypeEnclosedName}\" is not permitted for use in a script with strictness {ctx.Props.strict}. You might accidentally be using the prefix version of an infix function.");
             }
             foreach (var d in base.WarnUsage(ctx))
                 yield return d;

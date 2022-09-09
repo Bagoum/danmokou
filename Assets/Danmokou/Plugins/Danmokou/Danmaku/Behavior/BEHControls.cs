@@ -385,6 +385,7 @@ public partial class BehaviorEntity {
                 if (cond(b.rBPI)) {
                     var bpi = b.rBPI;
                     for (int ii = 0; ii < ftargets.Length; ++ii) {
+                        //TODO add TYPE_BUILDING_DISABLED switch
                         bpi.ctx.WriteFloat(ftargets[ii].Item1, ftargets[ii].valuer(bpi));
                     }
                 }

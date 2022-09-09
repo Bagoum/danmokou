@@ -29,6 +29,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
@@ -44,6 +45,7 @@ SpriteRenderer:
   m_CastShadows: 0
   m_ReceiveShadows: 0
   m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
@@ -71,7 +73,7 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: -1714704369
-  m_SortingLayer: 11
+  m_SortingLayer: 12
   m_SortingOrder: 7000
   m_Sprite: {fileID: 21300000, guid: c7774acd5d41b53478fc0e5ac0876b08, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -96,7 +98,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 86421e86325267340a25a8636076d100, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  behaviorScript: {fileID: 4900000, guid: 6f77f49a95fbae14e930b38b257712fa, type: 3}
+  behaviorScript: {fileID: 2811297602134710623, guid: 7451e03b05866a04686664dddde5e4fd,
+    type: 3}
   ID: 
   deathEffect: {fileID: 0}
   cullableRadius:

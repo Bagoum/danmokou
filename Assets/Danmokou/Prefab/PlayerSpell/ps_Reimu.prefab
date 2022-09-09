@@ -17,7 +17,8 @@ PrefabInstance:
         type: 3}
       propertyPath: behaviorScript
       value: 
-      objectReference: {fileID: 4900000, guid: 8d0199503d3623b4d981e866a9a6adef, type: 3}
+      objectReference: {fileID: 2811297602134710623, guid: 417b88f239ffba24987205944494caa0,
+        type: 3}
     - target: {fileID: 6569664309894581897, guid: e77a5591d3e0dd440af06a1f0a59b890,
         type: 3}
       propertyPath: m_Name

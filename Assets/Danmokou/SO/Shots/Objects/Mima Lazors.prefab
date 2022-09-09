@@ -28,6 +28,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0.2, y: 0.9, z: 0}
   m_LocalScale: {x: 1.2, y: 1.2, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8564540549256565143}
   m_RootOrder: 3
@@ -43,6 +44,7 @@ SpriteRenderer:
   m_CastShadows: 0
   m_ReceiveShadows: 0
   m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
@@ -96,7 +98,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0abe240f83e4ccf4e85ab2078ca8a89f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  behaviorScript: {fileID: 4900000, guid: 7b5d31045b2a2f045b65905274fa3e13, type: 3}
+  behaviorScript: {fileID: 2811297602134710623, guid: dcf0dc3fb5805bb49a6b1891f52347c2,
+    type: 3}
   ID: 
   deathEffect: {fileID: 0}
   cullableRadius:
@@ -107,6 +110,7 @@ MonoBehaviour:
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
+    allowGraze: 0
   displayer: {fileID: 0}
   offsetFree: zero
   offsetFocus: zero
@@ -160,6 +164,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: -0.86602545, w: 0.49999994}
   m_LocalPosition: {x: 1, y: -1, z: 0}
   m_LocalScale: {x: 0.4, y: 0.4, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8564540549256565143}
   m_RootOrder: 6
@@ -175,6 +180,7 @@ SpriteRenderer:
   m_CastShadows: 0
   m_ReceiveShadows: 0
   m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
@@ -227,7 +233,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0abe240f83e4ccf4e85ab2078ca8a89f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  behaviorScript: {fileID: 4900000, guid: ed47e336c2b5dda4591fbbcce355d924, type: 3}
+  behaviorScript: {fileID: 2811297602134710623, guid: 3ca13c6b28b38bd48a3c3091025e01ad,
+    type: 3}
   ID: 
   deathEffect: {fileID: 0}
   cullableRadius:
@@ -238,6 +245,7 @@ MonoBehaviour:
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
+    allowGraze: 0
   displayer: {fileID: 0}
   offsetFree: cr(1.2,-20)
   offsetFocus: 
@@ -280,6 +288,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8564540549256565143}
   m_RootOrder: 0
@@ -307,6 +316,7 @@ MonoBehaviour:
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
+    allowGraze: 0
   displayer: {fileID: 0}
   offsetFree: zero
   offsetFocus: zero
@@ -350,6 +360,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -0.2, y: 0.9, z: 0}
   m_LocalScale: {x: -1.2, y: 1.2, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8564540549256565143}
   m_RootOrder: 2
@@ -365,6 +376,7 @@ SpriteRenderer:
   m_CastShadows: 0
   m_ReceiveShadows: 0
   m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
@@ -418,7 +430,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0abe240f83e4ccf4e85ab2078ca8a89f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  behaviorScript: {fileID: 4900000, guid: 7b5d31045b2a2f045b65905274fa3e13, type: 3}
+  behaviorScript: {fileID: 2811297602134710623, guid: dcf0dc3fb5805bb49a6b1891f52347c2,
+    type: 3}
   ID: 
   deathEffect: {fileID: 0}
   cullableRadius:
@@ -429,6 +442,7 @@ MonoBehaviour:
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
+    allowGraze: 0
   displayer: {fileID: 0}
   offsetFree: zero
   offsetFocus: zero
@@ -482,6 +496,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -0.7, y: 0.7, z: 0}
   m_LocalScale: {x: 1.2, y: 1.2, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8564540549256565143}
   m_RootOrder: 1
@@ -497,6 +512,7 @@ SpriteRenderer:
   m_CastShadows: 0
   m_ReceiveShadows: 0
   m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
@@ -550,7 +566,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0abe240f83e4ccf4e85ab2078ca8a89f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  behaviorScript: {fileID: 4900000, guid: 7b5d31045b2a2f045b65905274fa3e13, type: 3}
+  behaviorScript: {fileID: 2811297602134710623, guid: dcf0dc3fb5805bb49a6b1891f52347c2,
+    type: 3}
   ID: 
   deathEffect: {fileID: 0}
   cullableRadius:
@@ -561,6 +578,7 @@ MonoBehaviour:
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
+    allowGraze: 0
   displayer: {fileID: 0}
   offsetFree: zero
   offsetFocus: zero
@@ -614,6 +632,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0.7, y: 0.7, z: 0}
   m_LocalScale: {x: -1.2, y: 1.2, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8564540549256565143}
   m_RootOrder: 4
@@ -629,6 +648,7 @@ SpriteRenderer:
   m_CastShadows: 0
   m_ReceiveShadows: 0
   m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
@@ -682,7 +702,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0abe240f83e4ccf4e85ab2078ca8a89f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  behaviorScript: {fileID: 4900000, guid: 7b5d31045b2a2f045b65905274fa3e13, type: 3}
+  behaviorScript: {fileID: 2811297602134710623, guid: dcf0dc3fb5805bb49a6b1891f52347c2,
+    type: 3}
   ID: 
   deathEffect: {fileID: 0}
   cullableRadius:
@@ -693,6 +714,7 @@ MonoBehaviour:
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
+    allowGraze: 0
   displayer: {fileID: 0}
   offsetFree: zero
   offsetFocus: zero
@@ -744,6 +766,7 @@ Transform:
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 764353812466635186}
   - {fileID: 8578311448334375212}
@@ -783,6 +806,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0.86602545, w: 0.49999994}
   m_LocalPosition: {x: -1, y: -1, z: 0}
   m_LocalScale: {x: 0.4, y: 0.4, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8564540549256565143}
   m_RootOrder: 5
@@ -798,6 +822,7 @@ SpriteRenderer:
   m_CastShadows: 0
   m_ReceiveShadows: 0
   m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
@@ -850,7 +875,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0abe240f83e4ccf4e85ab2078ca8a89f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  behaviorScript: {fileID: 4900000, guid: ed47e336c2b5dda4591fbbcce355d924, type: 3}
+  behaviorScript: {fileID: 2811297602134710623, guid: 3ca13c6b28b38bd48a3c3091025e01ad,
+    type: 3}
   ID: 
   deathEffect: {fileID: 0}
   cullableRadius:
@@ -861,6 +887,7 @@ MonoBehaviour:
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
+    allowGraze: 0
   displayer: {fileID: 0}
   offsetFree: cr(1.2,200)
   offsetFocus: 

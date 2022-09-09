@@ -10,18 +10,20 @@ PrefabInstance:
     - target: {fileID: 1281575726812465804, guid: 3b77a615e29f01d498594cbb10c00332,
         type: 3}
       propertyPath: m_Name
-      value: Mokou Narrow Shot
+      value: _Debug Narrow Shot
       objectReference: {fileID: 0}
     - target: {fileID: 2152135036053510616, guid: 3b77a615e29f01d498594cbb10c00332,
         type: 3}
       propertyPath: behaviorScript
       value: 
-      objectReference: {fileID: 4900000, guid: 60a8dd76f9dfae8408228bbd1ebe55b5, type: 3}
+      objectReference: {fileID: 2811297602134710623, guid: 38c7ebb691ba79b4aab68e547869d615,
+        type: 3}
     - target: {fileID: 2845728198793315882, guid: 3b77a615e29f01d498594cbb10c00332,
         type: 3}
       propertyPath: behaviorScript
       value: 
-      objectReference: {fileID: 4900000, guid: 60a8dd76f9dfae8408228bbd1ebe55b5, type: 3}
+      objectReference: {fileID: 2811297602134710623, guid: 38c7ebb691ba79b4aab68e547869d615,
+        type: 3}
     - target: {fileID: 3643135156715668705, guid: 3b77a615e29f01d498594cbb10c00332,
         type: 3}
       propertyPath: m_RootOrder
@@ -81,11 +83,13 @@ PrefabInstance:
         type: 3}
       propertyPath: behaviorScript
       value: 
-      objectReference: {fileID: 4900000, guid: 60a8dd76f9dfae8408228bbd1ebe55b5, type: 3}
+      objectReference: {fileID: 2811297602134710623, guid: 38c7ebb691ba79b4aab68e547869d615,
+        type: 3}
     - target: {fileID: 6789427584213718160, guid: 3b77a615e29f01d498594cbb10c00332,
         type: 3}
       propertyPath: behaviorScript
       value: 
-      objectReference: {fileID: 4900000, guid: 60a8dd76f9dfae8408228bbd1ebe55b5, type: 3}
+      objectReference: {fileID: 2811297602134710623, guid: 38c7ebb691ba79b4aab68e547869d615,
+        type: 3}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 3b77a615e29f01d498594cbb10c00332, type: 3}

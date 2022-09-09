@@ -77,7 +77,8 @@ PrefabInstance:
         type: 3}
       propertyPath: behaviorScript
       value: 
-      objectReference: {fileID: 4900000, guid: 111cae0d5f1fa1a42b3fc6cc4252bcd7, type: 3}
+      objectReference: {fileID: 2811297602134710623, guid: 7d08281e539c714458691eb872593a28,
+        type: 3}
     - target: {fileID: 6070393824801969133, guid: 55e4fa769cf4b28479a5503275230561,
         type: 3}
       propertyPath: ghost.sprite

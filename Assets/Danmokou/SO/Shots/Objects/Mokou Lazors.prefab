@@ -26,6 +26,7 @@ Transform:
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 5679003816772601028}
   - {fileID: 5453237448380918074}
@@ -63,6 +64,7 @@ Transform:
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: -0.6, y: 0.1, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 3643135156715668705}
   m_RootOrder: 3
@@ -78,6 +80,7 @@ SpriteRenderer:
   m_CastShadows: 0
   m_ReceiveShadows: 0
   m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
@@ -131,7 +134,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0abe240f83e4ccf4e85ab2078ca8a89f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  behaviorScript: {fileID: 4900000, guid: 501eaebf638a7b54293716da0857b9c3, type: 3}
+  behaviorScript: {fileID: 2811297602134710623, guid: 810a8a46f14fc6c42a5061cfbe72908a,
+    type: 3}
   ID: 
   deathEffect: {fileID: 0}
   cullableRadius:
@@ -185,6 +189,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 3643135156715668705}
   m_RootOrder: 0
@@ -201,7 +206,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0abe240f83e4ccf4e85ab2078ca8a89f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  behaviorScript: {fileID: 4900000, guid: 39b4b010dec18cb49a5633605c7e9d44, type: 3}
+  behaviorScript: {fileID: 2811297602134710623, guid: a810abb8f6c2159478964af7437d387e,
+    type: 3}
   ID: 
   deathEffect: {fileID: 0}
   cullableRadius:
@@ -256,6 +262,7 @@ Transform:
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0.6, y: 0.1, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 3643135156715668705}
   m_RootOrder: 4
@@ -271,6 +278,7 @@ SpriteRenderer:
   m_CastShadows: 0
   m_ReceiveShadows: 0
   m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
@@ -324,7 +332,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0abe240f83e4ccf4e85ab2078ca8a89f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  behaviorScript: {fileID: 4900000, guid: 501eaebf638a7b54293716da0857b9c3, type: 3}
+  behaviorScript: {fileID: 2811297602134710623, guid: 810a8a46f14fc6c42a5061cfbe72908a,
+    type: 3}
   ID: 
   deathEffect: {fileID: 0}
   cullableRadius:
@@ -379,6 +388,7 @@ Transform:
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: -0.3, y: 0.5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 3643135156715668705}
   m_RootOrder: 1
@@ -394,6 +404,7 @@ SpriteRenderer:
   m_CastShadows: 0
   m_ReceiveShadows: 0
   m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
@@ -447,7 +458,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0abe240f83e4ccf4e85ab2078ca8a89f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  behaviorScript: {fileID: 4900000, guid: bd140965db0746b41836e21b63a404b6, type: 3}
+  behaviorScript: {fileID: 2811297602134710623, guid: 3bb5d5daf470ec5468adf358e2a21963,
+    type: 3}
   ID: 
   deathEffect: {fileID: 0}
   cullableRadius:
@@ -502,6 +514,7 @@ Transform:
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0.3, y: 0.5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 3643135156715668705}
   m_RootOrder: 2
@@ -517,6 +530,7 @@ SpriteRenderer:
   m_CastShadows: 0
   m_ReceiveShadows: 0
   m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
@@ -570,7 +584,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0abe240f83e4ccf4e85ab2078ca8a89f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  behaviorScript: {fileID: 4900000, guid: bd140965db0746b41836e21b63a404b6, type: 3}
+  behaviorScript: {fileID: 2811297602134710623, guid: 3bb5d5daf470ec5468adf358e2a21963,
+    type: 3}
   ID: 
   deathEffect: {fileID: 0}
   cullableRadius:

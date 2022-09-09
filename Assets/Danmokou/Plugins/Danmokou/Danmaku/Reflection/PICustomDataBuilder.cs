@@ -111,11 +111,6 @@ public class PICustomDataBuilder : CustomDataBuilder {
 
     public ConstructedType GetTypeDef(PICustomData pi) => typeList[pi.typeIndex];
 
-    public override void SetReservedKeys() {
-        variableNameToID[(PICustomData.FLIPX, ExUtils.tfloat)] = PICustomData.FLIPX_KEY;
-        variableNameToID[(PICustomData.FLIPY, ExUtils.tfloat)] = PICustomData.FLIPY_KEY;
-    }
-
     public ConstructedType GetCustomDataType(in TypeDefKey key) {
         if (DISABLE_TYPE_BUILDING)
             return ConstructedBaseType;

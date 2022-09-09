@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   key: mokou-multishot-1
   title:
-    useReference: 0
+    useReference: 1
     reference: 
     hardcoded:
       en: DO_NOT_DISPLAY
@@ -22,11 +22,11 @@ MonoBehaviour:
   description: THIS SHOULD NOT APPEAR
   type: DO_NOT_DISPLAY
   prefab: {fileID: 0}
-  bomb: 0
-  defaultPower: 1000
   playerChild: 1
   demoReplay: {fileID: 0}
-  demoSetupSM: {fileID: 0}
+  demoSetupSM: {fileID: 2811297602134710623, guid: e1a29e14b8444434fa65f98540b4b07d,
+    type: 3}
+  shotDifficulty: 0
   isMultiShot: 1
   multiD: {fileID: 11400000, guid: 94c9dbd65f23dec46894ae6f01f35d23, type: 2}
   multiM: {fileID: 11400000, guid: 054062588373598469a2911098fdc10d, type: 2}

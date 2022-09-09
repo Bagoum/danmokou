@@ -42,12 +42,14 @@
     <ImplicitlyExpandDesignTimeFacades>false</ImplicitlyExpandDesignTimeFacades>
   </PropertyGroup>
   <ItemGroup>
+     <Compile Include="Assets\Danmokou\Editor\BDSLExtensionImporter.cs" />
      <Compile Include="Assets\SZYU\Editor\RubyTMP\RubyTMP_EditorPanel.cs" />
      <Compile Include="Assets\Danmokou\Editor\LocalizedStringDrawer.cs" />
      <Compile Include="Assets\Danmokou\Editor\PairedPropertyDrawer.cs" />
      <Compile Include="Assets\Danmokou\Editor\DUCaseDrawer.cs" />
      <Compile Include="Assets\Danmokou\Editor\LSReferenceDrawer.cs" />
      <Compile Include="Assets\Danmokou\Editor\ReferenceDrawer.cs" />
+     <Compile Include="Assets\Danmokou\Editor\MissingReferencesFinder.cs" />
      <Compile Include="Assets\Danmokou\Editor\TripletPropertyDrawer.cs" />
      <Compile Include="Assets\Danmokou\Editor\QuadrupletPropertyDrawer.cs" />
      <Compile Include="Assets\SZYU\Editor\RubyTMP\RubyTMP_EditorPanelUI.cs" />

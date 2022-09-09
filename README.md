@@ -2,15 +2,15 @@
 
 **Danmokou** is a danmaku (bullet hell) engine built in C# for Unity. It is free (as in free speech) software. The source code is on Github: https://github.com/Bagoum/danmokou
 
-The engine name may be abbreviated as **dmk**.
-
 See [the website](https://dmk.bagoum.com/) for a friendly introduction to what DMK can do.
 
-Setup and tutorial instructions can be found here: [https://dmk.bagoum.com/docs/articles/setup.html](https://dmk.bagoum.com/docs/articles/setup.html)
+Setup and tutorial instructions can be found [here](https://dmk.bagoum.com/docs/articles/setup.html).
 
-The changelog can be found here: [https://dmk.bagoum.com/docs/articles/changelog.html](https://dmk.bagoum.com/docs/articles/changelog.html)
+The changelog can be found [here](https://dmk.bagoum.com/docs/articles/changelog.html).
 
-Documentation can be found here: [https://dmk.bagoum.com/docs](https://dmk.bagoum.com/docs)
+Documentation can be found [here](https://dmk.bagoum.com/docs).
+
+There is a VSCode extension for DMK's scripting language, which can be found [here](https://marketplace.visualstudio.com/items?itemName=Bagoum.dmkscripting).
 
 # Licensing
 

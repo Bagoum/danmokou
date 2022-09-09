@@ -544,7 +544,6 @@ public partial class BulletManager {
         /// <summary>
         /// Player bullet X enemies update function.
         /// Note that all damage is recorded.
-        /// Note that player bullets must be circular.
         /// </summary>
         public virtual void CheckCollision(IReadOnlyList<Enemy.FrozenCollisionInfo> fci) {
             int fciL = fci.Count;

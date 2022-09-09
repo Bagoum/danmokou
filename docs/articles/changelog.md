@@ -12,7 +12,7 @@ To get the newest version from git, run:
 
 The following features are planned for future releases. 
 
-- [9.2.0] Safeguards around control rebinding
+- [9.3.0] Safeguards around control rebinding
 - [10.0.0] ADV-style gameplay, state management, and generalized UI support
   - Basic implementation of ADV gameplay and state management implemented in 9.0.0 (see Purple Heart).
 - [10.0.0] UI improvements, including custom cursor handling, controls tooltips, and smarter navigation on menus
@@ -21,16 +21,18 @@ The following features are planned for future releases.
 - [Backlog] Implementation of a TH18-like card engine
 - [Backlog] Procedural generation of stages and bullet patterns
 
-# v9.2.0 (2022/08/05)
-
-This release is primarily for the VSCode language extension.
+# v9.2.0 (2022/09/10)
 
 #### Features
 
-- There's now a Visual Studio Code language extension for the DMK scripting language:
+- There is now a Visual Studio Code language extension for the DMK scripting language, titled "Danmokou Scripting". You can find it [here](https://marketplace.visualstudio.com/items?itemName=Bagoum.dmkscripting) (or search up "Danmokou" in the extensions tab of VSCode). The extension operates over files that end in `.bdsl`.
+  - Most DMK scripts have been renamed to end in `.bdsl` instead of `.txt`. They are still text files, so feel free to open them in Notepad or whatever text editor you use.
+  -  **You may need to reassign any variable fields in your custom code that held references to inbuilt DMK scripts.** The code still accepts any TextAsset files as scripts. BDSL files are converted to TextAssets via `Assets/Danmokou/Editor/BDSLExtensionImporter.cs`.
+    - If you have many variable fields dependent on inbuilt DMK scripts, then: make a copy of your repository, upgrade to v9.2.0 in one repository, and use "Tools > Missing References > Search in Assets" to show all broken references. You can identify what those references ought to be by looking at your un-upgraded copy.
   - Note: I recommend setting "colorized bracket pairs" off in VSCode.
-- There is a patch for SRP/URP support in DMK, on [this branch](https://github.com/Bagoum/danmokou/tree/urp). I do not recommend using SRP/URP, but if you insist, please use the 2022.2 prerelease version of Unity and add [this commit](https://github.com/Bagoum/danmokou/commit/bfe0918de2c17b19ce72ffc9ec09e47fde53e3ef) to your repo.
+- Bullet variable access (variables set within GXR repeaters and then read using `&` in bullet functions) now uses dynamic type construction instead of dictionary variable storage. This makes `&` about 5 times faster overall. This feature is controlled via the flag `PICustomDataBuilder.DISABLE_TYPE_BUILDING`. For AOT build targets that require expression baking, dynamic type construction is also not possible, so this feature is not enabled when using expression baking.
 - Simple bullet updates are now parallelized when there are more than 16384 bullets in a single pool. This limit is configurable as `SimpleBulletCollection.PARALLELCUTOFF`.
+- There is a patch for SRP/URP support in DMK, on [this branch](https://github.com/Bagoum/danmokou/tree/urp). I do not recommend using SRP/URP, but if you insist, please use the 2022.2 prerelease version of Unity and add [this commit](https://github.com/Bagoum/danmokou/commit/bfe0918de2c17b19ce72ffc9ec09e47fde53e3ef) to your repo.
 
 #### Breaking Changes
 
@@ -50,8 +52,6 @@ This release is primarily for the VSCode language extension.
       })
   }
   ```
-
-  
 
 # v9.1.0 (2022/07/17)
 

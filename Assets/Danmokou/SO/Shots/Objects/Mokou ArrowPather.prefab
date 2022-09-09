@@ -28,6 +28,7 @@ Transform:
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: -0.7, y: -0.4, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 3643135156715668705}
   m_RootOrder: 5
@@ -43,6 +44,7 @@ SpriteRenderer:
   m_CastShadows: 0
   m_ReceiveShadows: 0
   m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
@@ -96,7 +98,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0abe240f83e4ccf4e85ab2078ca8a89f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  behaviorScript: {fileID: 4900000, guid: 17d1f90874288d54789584c53e8e0867, type: 3}
+  behaviorScript: {fileID: 2811297602134710623, guid: 1560c04e04a53f24e8aea669a00b2ba6,
+    type: 3}
   ID: 
   deathEffect: {fileID: 0}
   cullableRadius:
@@ -107,6 +110,7 @@ MonoBehaviour:
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
+    allowGraze: 0
   displayer: {fileID: 0}
   offsetFree: pxy -0.25 -0.5
   offsetFocus: pxy -0.4 -0.5
@@ -117,8 +121,6 @@ MonoBehaviour:
   opacityFree: 
   opacityFocus: 
   spriteRotation: 0
-  freeOffsetRotational: 1
-  focusOffsetRotational: 1
   freeAngleOffset: 10
   focusAngleOffset: -5
   freeFocusLerpTime: 0.2
@@ -150,6 +152,7 @@ Transform:
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 5679003816772601028}
   - {fileID: 5453237448380918074}
@@ -189,6 +192,7 @@ Transform:
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: -0.6, y: 0.1, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 3643135156715668705}
   m_RootOrder: 3
@@ -204,6 +208,7 @@ SpriteRenderer:
   m_CastShadows: 0
   m_ReceiveShadows: 0
   m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
@@ -257,7 +262,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0abe240f83e4ccf4e85ab2078ca8a89f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  behaviorScript: {fileID: 4900000, guid: 17d1f90874288d54789584c53e8e0867, type: 3}
+  behaviorScript: {fileID: 2811297602134710623, guid: 1560c04e04a53f24e8aea669a00b2ba6,
+    type: 3}
   ID: 
   deathEffect: {fileID: 0}
   cullableRadius:
@@ -268,6 +274,7 @@ MonoBehaviour:
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
+    allowGraze: 0
   displayer: {fileID: 0}
   offsetFree: pxy -0.6 0.1
   offsetFocus: pxy -0.7 0
@@ -278,8 +285,6 @@ MonoBehaviour:
   opacityFree: 
   opacityFocus: 
   spriteRotation: 0
-  freeOffsetRotational: 1
-  focusOffsetRotational: 1
   freeAngleOffset: 0
   focusAngleOffset: -10
   freeFocusLerpTime: 0.2
@@ -313,6 +318,7 @@ Transform:
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0.7, y: -0.4, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 3643135156715668705}
   m_RootOrder: 6
@@ -328,6 +334,7 @@ SpriteRenderer:
   m_CastShadows: 0
   m_ReceiveShadows: 0
   m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
@@ -381,7 +388,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0abe240f83e4ccf4e85ab2078ca8a89f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  behaviorScript: {fileID: 4900000, guid: 17d1f90874288d54789584c53e8e0867, type: 3}
+  behaviorScript: {fileID: 2811297602134710623, guid: 1560c04e04a53f24e8aea669a00b2ba6,
+    type: 3}
   ID: 
   deathEffect: {fileID: 0}
   cullableRadius:
@@ -392,6 +400,7 @@ MonoBehaviour:
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
+    allowGraze: 0
   displayer: {fileID: 0}
   offsetFree: pxy 0.25 -0.5
   offsetFocus: pxy 0.4 -0.5
@@ -402,8 +411,6 @@ MonoBehaviour:
   opacityFree: 
   opacityFocus: 
   spriteRotation: 0
-  freeOffsetRotational: 1
-  focusOffsetRotational: 1
   freeAngleOffset: -10
   focusAngleOffset: 5
   freeFocusLerpTime: 0.2
@@ -436,6 +443,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 3643135156715668705}
   m_RootOrder: 0
@@ -463,6 +471,7 @@ MonoBehaviour:
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
+    allowGraze: 0
   displayer: {fileID: 0}
   offsetFree: zero
   offsetFocus: zero
@@ -473,8 +482,6 @@ MonoBehaviour:
   opacityFree: 
   opacityFocus: 
   spriteRotation: 
-  freeOffsetRotational: 1
-  focusOffsetRotational: 1
   freeAngleOffset: 
   focusAngleOffset: 
   freeFocusLerpTime: 1
@@ -508,6 +515,7 @@ Transform:
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0.6, y: 0.1, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 3643135156715668705}
   m_RootOrder: 4
@@ -523,6 +531,7 @@ SpriteRenderer:
   m_CastShadows: 0
   m_ReceiveShadows: 0
   m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
@@ -576,7 +585,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0abe240f83e4ccf4e85ab2078ca8a89f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  behaviorScript: {fileID: 4900000, guid: 17d1f90874288d54789584c53e8e0867, type: 3}
+  behaviorScript: {fileID: 2811297602134710623, guid: 1560c04e04a53f24e8aea669a00b2ba6,
+    type: 3}
   ID: 
   deathEffect: {fileID: 0}
   cullableRadius:
@@ -587,6 +597,7 @@ MonoBehaviour:
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
+    allowGraze: 0
   displayer: {fileID: 0}
   offsetFree: pxy 0.6 0.1
   offsetFocus: pxy 0.7 0
@@ -597,8 +608,6 @@ MonoBehaviour:
   opacityFree: 
   opacityFocus: 
   spriteRotation: 0
-  freeOffsetRotational: 1
-  focusOffsetRotational: 1
   freeAngleOffset: 0
   focusAngleOffset: 10
   freeFocusLerpTime: 0.2
@@ -632,6 +641,7 @@ Transform:
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: -0.3, y: 0.5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 3643135156715668705}
   m_RootOrder: 1
@@ -647,6 +657,7 @@ SpriteRenderer:
   m_CastShadows: 0
   m_ReceiveShadows: 0
   m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
@@ -700,7 +711,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0abe240f83e4ccf4e85ab2078ca8a89f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  behaviorScript: {fileID: 4900000, guid: 2e20ef92b8b4a114db6d0db7f87f4f87, type: 3}
+  behaviorScript: {fileID: 2811297602134710623, guid: d45d35b037251b442adcf4749a4b3c15,
+    type: 3}
   ID: 
   deathEffect: {fileID: 0}
   cullableRadius:
@@ -711,6 +723,7 @@ MonoBehaviour:
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
+    allowGraze: 0
   displayer: {fileID: 0}
   offsetFree: pxy -0.3 0.4
   offsetFocus: pxy -0.2 0.5
@@ -721,8 +734,6 @@ MonoBehaviour:
   opacityFree: 
   opacityFocus: 
   spriteRotation: 0
-  freeOffsetRotational: 1
-  focusOffsetRotational: 1
   freeAngleOffset: 
   focusAngleOffset: 
   freeFocusLerpTime: 0.2
@@ -756,6 +767,7 @@ Transform:
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0.3, y: 0.5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 3643135156715668705}
   m_RootOrder: 2
@@ -771,6 +783,7 @@ SpriteRenderer:
   m_CastShadows: 0
   m_ReceiveShadows: 0
   m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
@@ -824,7 +837,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0abe240f83e4ccf4e85ab2078ca8a89f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  behaviorScript: {fileID: 4900000, guid: 2e20ef92b8b4a114db6d0db7f87f4f87, type: 3}
+  behaviorScript: {fileID: 2811297602134710623, guid: d45d35b037251b442adcf4749a4b3c15,
+    type: 3}
   ID: 
   deathEffect: {fileID: 0}
   cullableRadius:
@@ -835,6 +849,7 @@ MonoBehaviour:
     CollisionActiveOnInit: 0
     destructible: 0
     grazeEveryFrames: 0
+    allowGraze: 0
   displayer: {fileID: 0}
   offsetFree: pxy 0.3 0.4
   offsetFocus: pxy 0.2 0.5
@@ -845,8 +860,6 @@ MonoBehaviour:
   opacityFree: 
   opacityFocus: 
   spriteRotation: 0
-  freeOffsetRotational: 1
-  focusOffsetRotational: 1
   freeAngleOffset: 
   focusAngleOffset: 
   freeFocusLerpTime: 0.2

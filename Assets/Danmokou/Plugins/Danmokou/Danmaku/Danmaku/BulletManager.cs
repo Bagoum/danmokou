@@ -174,14 +174,14 @@ public partial class BulletManager {
         }
         
         
+        for (int ii = 0; ii < activeEmpty.Count; ++ii) {
+            //Empty bullets never collide
+            activeEmpty[ii].NullCollisionCleanup();
+        }
         if (bulletCollisionTarget.Active) {
             var hitbox = bulletCollisionTarget.Hitbox;
             Profiler.BeginSample("NPC-fired simple bullet collision checking");
             int dmg = 0; int graze = 0;
-            for (int ii = 0; ii < activeEmpty.Count; ++ii) {
-                //Empty bullets never collide
-                activeEmpty[ii].NullCollisionCleanup();
-            }
             for (int ii = 0; ii < activeNpc.Count; ++ii) {
                 sbc = activeNpc[ii];
                 if (sbc.Count > 0) {
@@ -203,9 +203,6 @@ public partial class BulletManager {
             bulletCollisionTarget.Player.Graze(graze);
         } else {
             //Collision checker also does compacting/culling, which needs to occur even if there's no target
-            for (int ii = 0; ii < activeEmpty.Count; ++ii) {
-                activeEmpty[ii].NullCollisionCleanup();
-            }
             for (int ii = 0; ii < activeNpc.Count; ++ii) {
                 activeNpc[ii].NullCollisionCleanup();
             }

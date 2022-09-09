@@ -127,7 +127,7 @@ public class LaserOption {
     public static LaserOption Tint(GCXU<TP4> tint) => new TintProp(tint);
 
     /// <summary>
-    /// Player bullets only.
+    /// Player bullets only. By default, lasers go through enemies. Setting this makes lasers stop at the first enemy.
     /// </summary>
     public static LaserOption Nonpiercing() => new NonpiercingFlag();
     

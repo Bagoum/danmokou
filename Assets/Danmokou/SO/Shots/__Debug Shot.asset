@@ -24,7 +24,8 @@ MonoBehaviour:
   prefab: {fileID: 6083554707751935648, guid: 95be65ed0384bbb46a52868ca93cbe26, type: 3}
   playerChild: 1
   demoReplay: {fileID: 0}
-  demoSetupSM: {fileID: 0}
+  demoSetupSM: {fileID: 2811297602134710623, guid: e1a29e14b8444434fa65f98540b4b07d,
+    type: 3}
   shotDifficulty: 0
   isMultiShot: 0
   multiD: {fileID: 0}

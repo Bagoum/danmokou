@@ -2,33 +2,60 @@
 
 ## About
 
-Copyright (c) 2020-2021 Bagoum <reneedebatz@gmail.com>
+Copyright (c) 2020-2022 Bagoum <reneedebatz@gmail.com>
 
 Danmokou is a danmaku (bullet hell) engine built in C# for Unity. It is free (as in free speech) software. The source code is on Github at [Bagoum/danmokou](https://github.com/Bagoum/danmokou).
 
 
 
-All source code in the Danmokou project is distributed under the MIT license. Source code is present primarily under the directories `Assets/Danmokou/Plugins` (C#), `Assets/Danmokou/Rendering/Shaders` (HLSL), `Assets/Danmokou/CG` (HLSL), `Assets/Danmokou/UXML` (UI), as well as `Assets/Danmokou/Patterns` (Danmokou script files).
+The source code in this project is present primarily under the directories `Assets/Danmokou/Plugins` (C#), `Assets/Danmokou/Rendering/Shaders` (HLSL), `Assets/Danmokou/CG` (HLSL), `Assets/Danmokou/UXML` (UI), as well as `Assets/Danmokou/Patterns` (Danmokou script files). All source code in this project is distributed under the MIT license, provided immediately below. 
+
+```
+Copyright (c) 2020-2022 Bagoum <reneedebatz@gmail.com>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+If you are making use of this project, please reproduce this license file or link to it ([Github link](https://github.com/Bagoum/danmokou/blob/master/Assets/Danmokou.LICENSE.md)).
 
 
 
 This project has several submodules under the Assets folder (BRuH, LuA, SiMP, and SZYU). If you are viewing this license from source code, you can find licenses for each submodule within its folder. If you are viewing this license alongside a binary executable or ingame, you can find licenses for any included submodules distributed alongside this file. Note that submodules may have different licensing terms. 
 
-- Danmokou only requires the SZYU submodule, which provides a visual novel engine through [Suzunoya](https://github.com/Bagoum/suzunoya) and [Suzunoya-Unity](https://github.com/Bagoum/suzunoya-unity).
+- Danmokou only requires the SZYU submodule (licensed under MIT), which provides a visual novel engine through [Suzunoya](https://github.com/Bagoum/suzunoya) and [Suzunoya-Unity](https://github.com/Bagoum/suzunoya-unity). 
 
 
 
 The project incorporates code or references packages from the following projects:
 
-- [Newtonsoft.Json for Unity](https://github.com/jilleJr/Newtonsoft.Json-for-Unity)
-- [CurvedTextMeshPro](https://github.com/TonyViT/CurvedTextMeshPro)
+- [Newtonsoft.Json for Unity](https://github.com/jilleJr/Newtonsoft.Json-for-Unity) ([MIT](https://github.com/jilleJr/Newtonsoft.Json-for-Unity/blob/2a26db68c98003f28749203378a3863afa5e6885/LICENSE.md))
+- [TonyViT/CurvedTextMeshPro](https://github.com/TonyViT/CurvedTextMeshPro) ([MIT](https://github.com/TonyViT/CurvedTextMeshPro/blob/96767f3394b71043da4ae8f42de114bb37f738b5/LICENSE))
+- [liortal53/MissingReferencesUnity](https://github.com/liortal53/MissingReferencesUnity) ([Apache 2.0](https://github.com/liortal53/MissingReferencesUnity/blob/25449e5bcfe0ba917ff730f870e234cc147a19ba/LICENSE))
+- [taisei-project/taisei](https://github.com/taisei-project/taisei) ([MIT-ish](https://github.com/taisei-project/taisei/blob/master/COPYING))
+  - This project also incorporates some non-code resources from Taisei Project, listed below under "Non-Code Resources".
 
 This project consumes the following projects as DLLs under Assets/Danmokou/Plugins/DLLs:
 
-- [protobuf-net*](https://www.nuget.org/packages/protobuf-net)
-- [MathNet*](https://www.nuget.org/packages/MathNet.Numerics)
-- [System.Collections.Immutable](https://www.nuget.org/packages/System.Collections.Immutable/)
-- [LanguageServer.Contracts](https://github.com/Bagoum/LanguageServer.NET), based on [LanguageServer.NET](https://github.com/CXuesong/LanguageServer.NET)
+- [protobuf-net*](https://www.nuget.org/packages/protobuf-net) ([Apache 2.0](https://github.com/protobuf-net/protobuf-net/blob/22957abce76ba37f6401f5961aa5d8ace419afad/Licence.txt))
+- [MathNet*](https://www.nuget.org/packages/MathNet.Numerics) ([MIT](https://github.com/mathnet/mathnet-numerics/blob/4b13ff4a5e7014997075df34a84d61f10bdd27b3/LICENSE.md))
+- [System.Collections.Immutable](https://www.nuget.org/packages/System.Collections.Immutable/) ([MIT](https://github.com/dotnet/runtime/blob/71adfb003aa57f4c8801fc9079c9339342c58524/LICENSE.TXT))
+- [LanguageServer.Contracts](https://github.com/Bagoum/LanguageServer.NET) ([MIT](https://github.com/Bagoum/LanguageServer.NET/blob/1b27be88bff80f85cc3511fbd71b825437b85c59/LICENSE.md))
 
 The directory Assets/TextMeshPro contains default imports from the TextMeshPro plugin for Unity. TextMeshPro is licensed under the [Unity Companion License](https://docs.unity3d.com/Packages/com.unity.textmeshpro@3.0/license/LICENSE.html). 
 
@@ -134,200 +161,6 @@ https://images.nasa.gov/details-PIA16438
 https://images.nasa.gov/details-GSFC_20171208_Archive_e000245
 
 
-
-## Code Licenses
-
-### This project: MIT
-
-```
-Copyright (c) 2020-2021 Bagoum <reneedebatz@gmail.com>
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-```
-
-### Newtonsoft.Json for Unity: MIT
-
-```
-The MIT License (MIT)
-
-Copyright (c) 2019 Kalle Jillheden (jilleJr)
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-```
-
-### CurvedTextMeshPro: MIT
-
-```
-MIT License
-
-Copyright(c) 2019 Antony Vitillo(a.k.a. "Skarredghost")
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-```
-
-### Protobuf-net: Apache 2.0
-
-```
-The core Protocol Buffers technology is provided courtesy of Google.
-At the time of writing, this is released under the BSD license.
-Full details can be found here:
-
-http://code.google.com/p/protobuf/
-
-The protobuf-net logo is Copyright 2021 onwards Marc Gravell; you must
-not use this logo (or any derivative) in your own works without explicit
-permission.
-
-This .NET implementation is Copyright 2008 onwards Marc Gravell
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-```
-
-### MathNet: MIT
-
-```
-Copyright (c) 2002-2021 Math.NET
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-```
-
-### System.Collections.Immutable: MIT
-
-```
-The MIT License (MIT)
-
-Copyright (c) .NET Foundation and Contributors
-
-All rights reserved.
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-```
-
-### LanguageServer.NET: Apache 2.0
-
-[LanguageServer.NET/LICENSE at master · CXuesong/LanguageServer.NET · GitHub](https://github.com/CXuesong/LanguageServer.NET/blob/master/LICENSE)
-
-### Taisei Project
-
-```
-Copyright (c) 2011-2019, Lukas Weber <laochailan@web.de>.
-Copyright (c) 2012-2019, Andrei Alexeyev <akari@taisei-project.org>.
-
-Taisei Project is a free unofficial fan-made game based on the original Tōhō
-Project series by ZUN.
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of
-this software and associated documentation files (the "Software"), to deal in
-the Software without restriction, including without limitation the rights to
-use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
-of the Software, and to permit persons to whom the Software is furnished to do
-so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
-The original soundtrack is composed by Tuck V and available under CC-BY 4.0.
-It comprises the audio files under resources/00-taisei.pkgdir/bgm/.
- https://www.youtube.com/channel/UCaw73cuHLnFCSpjOtt_9pyg
- https://creativecommons.org/licenses/by/4.0/
-
-The character portraits under atlas/portraits/ are created by afensorm as a
-commission, and are available under CC-BY 4.0.
- https://afens.surge.sh
- https://gensokyo.social/@afensorm
- https://pixiv.me/afens
-
-The photos used in the Spellcard and menu backgrounds are generally in the
-public domain or CC0 and were not taken by us. Here are some honorary mentions.
-
-* The picture in the loading screen is the Ganges Delta taken by a NASA satellite.
- http://earthobservatory.nasa.gov/IOTD/view.php?id=7028
- and a picture of the Large Magellanic Cloud
- https://images.nasa.gov/details-PIA15254.html
-
-* The mountains in the main menu background are by Luca Zanon.
- https://unsplash.com/photos/X0OoHrPvgXE
-
-* The insect wings in Scuttle’s background are by GLady.
- https://pixabay.com/en/morpho-peleides-butterfly-43483/
-
-* For the old ones, sadly I didn’t keep a list. You may find them by doing an
-  image search. Check out the taisei-rawmedia repository for the raw files.
-```
 
 ## Font Licenses
 

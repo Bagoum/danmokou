@@ -24,8 +24,8 @@ public static partial class Reflector {
             COMMAS = 1
         }
 
-        public readonly ParsingProperties props;
-        public bool AllowPostAggregate => props.strict >= Strictness.COMMAS;
+        public ParsingProperties Props { get; private set; } = new(Array.Empty<ParsingProperty>());
+        public bool AllowPostAggregate => Props.strict >= Strictness.COMMAS;
         public bool UseFileLinks { get; set; } = true;
         public List<IAST<PhaseProperty>> QueuedProps { get; } = new();
         /// <summary>
@@ -63,7 +63,7 @@ public static partial class Reflector {
             return null;
         }
 
-        public ReflCtx(IParseQueue q) {
+        public void ParseProperties(IParseQueue q) {
             List<ParsingProperty> properties = new();
             while (q.MaybeScan() == SMParser.PROP2_KW) {
                 q.Advance();
@@ -71,13 +71,9 @@ public static partial class Reflector {
                 properties.Add(child.Into<ParsingProperty>());
                 if (!q.IsNewline)
                     throw child.WrapThrow($"Missing a newline at the end of the property " +
-                                        $"declaration. Instead, it found \"{q.Scan()}\".");
+                                          $"declaration. Instead, it found \"{q.Scan()}\".");
             }
-            props = new ParsingProperties(properties);
-        }
-
-        public ReflCtx() {
-            props = new ParsingProperties(Array.Empty<ParsingProperty>());
+            Props = new ParsingProperties(properties);
         }
 
         /// <summary>

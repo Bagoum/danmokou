@@ -329,8 +329,8 @@ private static {TypePrinter.Print(f.returnType)} {f.fnName}({string.Join(", ",
             .Next<D>(tac.Ctx.ProxyArguments.ToArray());
 #endif
         var f = FlattenVisitor.Flatten(ex, true, true);
-        Logs.Log($"Ex:{typeof(D).RName()} " +
-                 $"{new ExpressionPrinter{ObjectPrinter = new DMKObjectPrinter()}.LinearizePrint(f)}", false);
+        //Logs.Log($"Ex:{typeof(D).RName()} " +
+        //         $"{new ExpressionPrinter{ObjectPrinter = new DMKObjectPrinter()}.LinearizePrint(f)}", false);
         var result = Ex.Lambda<D>(f, prms).Compile();
 #if EXBAKE_SAVE
         var printer = new ExpressionPrinter() {ObjectPrinter = new DMKObjectPrinter()};
@@ -416,10 +416,10 @@ private static {TypePrinter.Print(f.returnType)} {f.fnName}({string.Join(", ",
             .Select(AssetDatabase.GUIDToAssetPath);
         foreach (var path in textAssets) {
             try {
-                if (path.EndsWith(".txt")) {
+                if (path.EndsWith(".txt") || path.EndsWith(".bdsl")) {
                     Logs.Log($"Loading script from file {path}");
-                    var textAsset = AssetDatabase.LoadAssetAtPath<TextAsset>(path);
-                    StateMachineManager.FromText(textAsset);
+                    //var textAsset = AssetDatabase.LoadAssetAtPath<TextAsset>(path);
+                    //StateMachineManager.FromText(textAsset);
                 }
             } catch (Exception e) {
                 Logs.UnityError($"Failed to parse {path}:\n" + Exceptions.PrintNestedException(e));

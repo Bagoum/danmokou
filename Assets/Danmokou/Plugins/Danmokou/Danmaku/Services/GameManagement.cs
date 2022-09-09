@@ -320,14 +320,14 @@ public class GameManagement : CoroutineRegularUpdater {
     //[ContextMenu("Save AoT Helpers")] 
     //public void GenerateAoT() => Reflector.GenerateAoT();
 
-#if EXBAKE_SAVE
+//#if EXBAKE_SAVE
     [ContextMenu("Bake Expressions")]
     public void BakeExpressions() {
         BakeCodeGenerator.BakeExpressions();
-        Reflector.GenerateAoT();
-        EditorApplication.ExitPlaymode();
+        //Reflector.GenerateAoT();
+        //EditorApplication.ExitPlaymode();
     }
-#endif
+//#endif
 #endif
 
 }
