@@ -14,4 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   value:
     color1: {r: 0.32941175, g: 0.52578014, b: 0.9529412, a: 1}
-    color2: {r: 0.32216185, g: 0.20392154, b: 0.9607843, a: 1}
+    color2: {r: 0.32162228, g: 0.21933962, b: 0.8773585, a: 1}

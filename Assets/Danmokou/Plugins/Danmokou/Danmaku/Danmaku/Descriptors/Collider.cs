@@ -3,11 +3,17 @@ using UnityEngine;
 
 namespace Danmokou.Danmaku.Descriptors {
 public interface ICollider {
+    /// <summary>
+    /// The maximum distance from the center at which a collision can occur.
+    /// </summary>
+    float MaxRadius { get; }
     bool CheckCollision(Vector2 loc, Vector2 dir, float scale, Vector2 targetLoc, float targetRad);
     CollisionResult CheckGrazeCollision(Vector2 loc, Vector2 dir, float scale, in Hitbox target);
 }
 
 public class NoneCollider : ICollider {
+    public float MaxRadius => 0;
+
     public bool CheckCollision(Vector2 loc, Vector2 dir, float scale, Vector2 targetLoc, float targetRad) =>
         false;
     public CollisionResult CheckGrazeCollision(Vector2 loc, Vector2 dir, float scale, in Hitbox target) =>
@@ -16,6 +22,7 @@ public class NoneCollider : ICollider {
 
 public class CircleCollider : ICollider {
     private readonly float radius;
+    public float MaxRadius => radius;
 
     public CircleCollider(float radius) {
         this.radius = radius;
@@ -31,7 +38,8 @@ public class RectCollider : ICollider {
     private readonly float halfRectX;
     private readonly float halfRectY;
     private readonly float maxDist2;
-    
+    public float MaxRadius => Mathf.Sqrt(maxDist2);
+
     public RectCollider(float halfRectX, float halfRectY) {
         this.halfRectX = halfRectX;
         this.halfRectY = halfRectY;
@@ -51,6 +59,7 @@ public class LineCollider : ICollider {
     private readonly float radius;
     private readonly float deltaMag2;
     private readonly float maxDist2;
+    public float MaxRadius => Mathf.Sqrt(Mathf.Max(pt1.sqrMagnitude, (pt1 + delta).sqrMagnitude)) + radius;
 
     public LineCollider(Vector2 pt1, Vector2 pt2, float radius) {
         this.pt1 = pt1;

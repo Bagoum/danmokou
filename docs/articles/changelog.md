@@ -31,7 +31,7 @@ The following features are planned for future releases.
     - If you have many variable fields dependent on inbuilt DMK scripts, then: make a copy of your repository, upgrade to v9.2.0 in one repository, and use "Tools > Missing References > Search in Assets" to show all broken references. You can identify what those references ought to be by looking at your un-upgraded copy.
   - Note: I recommend setting "colorized bracket pairs" off in VSCode.
 - Bullet variable access (variables set within GXR repeaters and then read using `&` in bullet functions) now uses dynamic type construction instead of dictionary variable storage. This makes `&` about 5 times faster overall. This feature is controlled via the flag `PICustomDataBuilder.DISABLE_TYPE_BUILDING`. For AOT build targets that require expression baking, dynamic type construction is also not possible, so this feature is not enabled when using expression baking.
-- Simple bullet updates are now parallelized when there are more than 16384 bullets in a single pool. This limit is configurable as `SimpleBulletCollection.PARALLELCUTOFF`.
+- Simple bullet updates can now be parallelized when there are more than 16384 bullets in a single pool. This limit is configurable as `SimpleBulletCollection.PARALLEL_CUTOFF` and can be disabled via `SimpleBulletCollection.PARALLELISM_ENABLED`. It is disabled by default as parallelization has significant garbage collection overhead.
 - There is a patch for SRP/URP support in DMK, on [this branch](https://github.com/Bagoum/danmokou/tree/urp). I do not recommend using SRP/URP, but if you insist, please use the 2022.2 prerelease version of Unity and add [this commit](https://github.com/Bagoum/danmokou/commit/bfe0918de2c17b19ce72ffc9ec09e47fde53e3ef) to your repo.
 
 #### Breaking Changes
@@ -39,14 +39,22 @@ The following features are planned for future releases.
 - The function `powerup2` has been removed. It can be replaced with `poweraura`. For example:
 
   ```
+  ## Old code
+  sync powerup1 <> powerup2
+  	x-powerup-1 x-powerdown-1
+  	witha 0.9 lerp 0 1 t purple pink
+  	witha 0.9 yellow
+  	1.5 2 0 0.5
+  
+  ## New code
   sync powerup1 <> poweraura {
       sfx(x-powerup-1)
-      color(lerp 0 1 t red pink)
+      color(witha 0.9 lerp 0 1 t purple pink)
       time(1.5)
       iterations(2)
       next({
           sfx(x-powerdown-1)
-          color(orange)
+          color(witha 0.9 yellow)
           time(0.5)
           iterations(-1)
       })
