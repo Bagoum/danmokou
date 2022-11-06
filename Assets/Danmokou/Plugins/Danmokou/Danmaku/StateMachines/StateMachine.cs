@@ -283,7 +283,7 @@ public abstract class StateMachine {
         return children;
     }*/
 
-    private static readonly Type statesTyp = typeof(List<StateMachine>);
+    public static readonly Type SMChildStatesType = typeof(List<StateMachine>);
     private static readonly Type stateTyp = typeof(StateMachine);
     private static readonly Dictionary<Type, Type[]> constructorSigs = new();
 
@@ -317,17 +317,17 @@ public abstract class StateMachine {
     }
 
     
-    private static IAST<StateMachine> Create(PositionRange loc, PositionRange callLoc, SMConstruction method, Reflector.MethodSignature sig, IAST[] args) => method switch {
+    private static IAST<StateMachine> Create(PositionRange loc, PositionRange callLoc, SMConstruction method, Reflector.MethodSignature sig, IAST[] args, bool parenthesized = false) => method switch {
             SMConstruction.AS_REFLECTABLE =>
             new ASTFmap<TaskPattern, StateMachine>(x => new ReflectableLASM(x),
                 new AST.MethodInvoke<TaskPattern>(loc, callLoc, sig, args) 
-                    {Type = AST.MethodInvoke.InvokeType.SM}),
+                    {Type = AST.MethodInvoke.InvokeType.SM, Parenthesized = parenthesized}),
             SMConstruction.AS_TREFLECTABLE =>
             new ASTFmap<TTaskPattern, StateMachine>(x => new ReflectableSLSM(x),
                 new AST.MethodInvoke<TTaskPattern>(loc, callLoc, sig, args) 
-                    {Type = AST.MethodInvoke.InvokeType.SM}),
+                    {Type = AST.MethodInvoke.InvokeType.SM, Parenthesized = parenthesized}),
             _ => new AST.MethodInvoke<StateMachine>(loc, callLoc, sig, args) 
-                {Type = AST.MethodInvoke.InvokeType.SM},
+                {Type = AST.MethodInvoke.InvokeType.SM, Parenthesized = parenthesized},
         };
 
     public static IAST<StateMachine> Create(IParseQueue q) => Create(q, SMConstruction.ANY);
@@ -340,13 +340,16 @@ public abstract class StateMachine {
             var prms = sig.Params;
 
             var args = new IAST[prms.Length];
+            bool parenthesized = false;
             ReflectionException? argErr = null;
             ReflectionException? extraChildErr = null;
             int? nchildren = 0;
             if (prms.Length > 0) {
-                var requires_children = prms[0].Type == statesTyp && !q.Ctx.Props.trueArgumentOrder;
+                var requires_children = prms[0].Type == SMChildStatesType && !q.Ctx.Props.trueArgumentOrder;
                 int special_args_i = (requires_children) ? 1 : 0;
-                argErr = Reflector.FillASTArray(args, special_args_i, sig, q).fail;
+                var fill = Reflector.FillASTArray(args, special_args_i, sig, q);
+                argErr = fill.Error;
+                parenthesized = fill.Parenthesized;
                 if (q.Ctx.QueuedProps.Count > 0)
                     throw q.WrapThrowHighlight(pind,
                         $"StateMachine {q.AsFileLink(sig)} is not allowed to have phase properties.");
@@ -397,7 +400,7 @@ public abstract class StateMachine {
                 if (args[ii].Position.End.Index > largestEnd.Index)
                     largestEnd = args[ii].Position.End;
             }
-            var ast = Create(new PositionRange(smallestStart, largestEnd), loc, method, sig, args);
+            var ast = Create(new PositionRange(smallestStart, largestEnd), loc, method, sig, args, parenthesized);
             if (argErr != null)
                 ast = new AST.Failure<StateMachine>(argErr) { Basis = ast };
             else if (q.HasLeftovers(out var qpi)) {

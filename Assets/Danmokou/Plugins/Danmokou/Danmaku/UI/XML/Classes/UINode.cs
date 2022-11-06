@@ -94,6 +94,37 @@ public class UINode {
     public bool AllowInteraction => (Passthrough != true) && Group.Interactable && _visible;
     public int IndexInGroup => Group.Nodes.IndexOf(this);
     public bool Destroyed { get; private set; } = false;
+
+    /// <summary>
+    /// If this node is positioned absolute (in the CSS sense), this property
+    ///  contains information on node sizing/positioning.
+    /// </summary>
+    public IFixedXMLObject? AbsoluteLocationSource { get; private set; } = null;
+
+    public void ConfigureAbsoluteLocation(IFixedXMLObject source, Pivot pivot = Pivot.Center, Action<UINode>? extraOnBuild = null) {
+        if (AbsoluteLocationSource != null)
+            throw new Exception($"Duplicate defintion of {nameof(AbsoluteLocationSource)}");
+        this.AbsoluteLocationSource = source;
+        UseDefaultAnimations = false;
+        Navigator = source.Navigate;
+        var existingOnBuild = OnBuilt;
+        OnBuilt = n => {
+            _ = source.IsVisible.Subscribe(b => {
+                UpdatePassthrough(!b);
+                //MONKEYPATCH-- you can normally use display=b.ToStyle instead of these two
+                n.HTML.pickingMode = b ? PickingMode.Position : PickingMode.Ignore;
+                n.HTML.style.opacity = b ? 1 : 0;
+            });
+
+            n.HTML.ConfigureAbsolute(pivot).ConfigureLeftTopListeners(source.Left, source.Top);
+            source.Width.Subscribe(w => n.Style.width = w.ToLength());
+            source.Height.Subscribe(h => n.Style.height = h.ToLength());
+            
+            //n.HTML.style.backgroundColor = new Color(0, 1, 0, 0.4f);
+            existingOnBuild?.Invoke(this);
+            extraOnBuild?.Invoke(this);
+        };
+    }
     
     #region InitOptions
 
@@ -109,7 +140,7 @@ public class UINode {
         //if ((b != true) && (Passthrough == true))
         //    MONKEYPATCH_mouseDelay = 0.5f;
         Passthrough = b;
-        if (b != true)
+        if (b is true)
             Controller.MoveCursorAwayFromNode(this);
     }
     /// <summary>
@@ -185,7 +216,7 @@ public class UINode {
     /// <summary>
     /// Overrides Navigate, but if it returns null, then falls through to OnConfirm/Navigate to provide the final result.
     /// </summary>
-    public Func<UINode, UICommand, UIResult?>? Navigator { get; init; }
+    public Func<UINode, UICommand, UIResult?>? Navigator { get; set; }
     /// <summary>
     /// Overrides Navigate for Confirm entries. Runs after Navigator but before Navigate.
     /// </summary>
@@ -268,7 +299,7 @@ public class UINode {
         NodeHTML.RegisterCallback<PointerLeaveEvent>(evt => {
             //Logs.Log($"Leave {Description()}");
             //For freeform groups ONLY, moving the cursor off a node should deselect it.
-            if (AllowInteraction && Group is UIFreeformGroup)
+            if (AllowInteraction && Group is UIFreeformGroup && Controller.Current == this)
                 Controller.QueuedEvent = new UIPointerCommand.NormalCommand(UICommand.Back, this) { Silent = true };
             isInElement = false;
             startedClickHere = false;
@@ -334,6 +365,7 @@ public class UINode {
 
     private static UINodeVisibility Max(UINodeVisibility a, UINodeVisibility b) => a > b ? a : b;
 
+    private UINodeVisibility lastVisibility = UINodeVisibility.Default;
     /// <summary>
     /// Cached result of whether or not this node rendered (ie. _visible && Group.Visible)
     /// </summary>
@@ -351,8 +383,11 @@ public class UINode {
         foreach (var c in boundClasses)
             NodeHTML.AddToClassList(c);
         //For inaccessible groups, we make them group-focused
-        if (visibility >= UINodeVisibility.Default && !Group.HasInteractableNodes)
+        //TODO changed from .HasInteractableNodes to .Interactable in order to not encompass dynamically inaccessible groups
+        // for the evidence buildout in GOTP
+        if (visibility >= UINodeVisibility.Default && !Group.Interactable)
             visibility = Max(visibility, UINodeVisibility.GroupFocused);
+        lastVisibility = visibility;
         NodeHTML.AddToClassList(!thisFrameRender ? "invisible" : visibility switch {
             UINodeVisibility.Active => "focus",
             UINodeVisibility.Focused => "focus",
@@ -371,6 +406,11 @@ public class UINode {
         Rebind();
         InlineStyle?.Invoke(visibility, this);
     }
+
+    /// <summary>
+    /// Redraw the node with the same visibility as the previous frame.
+    /// </summary>
+    public void Redraw() => Redraw(lastVisibility);
     
     #endregion
     
@@ -445,32 +485,17 @@ public class EmptyNode : UINode {
     public EmptyNode(IFixedXMLObject source, Action<EmptyNode>? onBuild = null) : base(source.Descriptor) {
         this.Source = source;
         this.desc = source.Descriptor;
-        UseDefaultAnimations = false;
-        Navigator = source.Navigate;
-        OnBuilt = n => {
-            _ = source.IsVisible.Subscribe(b => {
-                UpdatePassthrough(!b);
-                //MONKEYPATCH-- you can normally use display=b.ToStyle instead of these two
-                n.HTML.pickingMode = b ? PickingMode.Position : PickingMode.Ignore;
-                n.HTML.style.opacity = b ? 1 : 0;
-            });
-
-            n.HTML.ConfigureAbsoluteEmpty().ConfigureLeftTopListeners(source.Left, source.Top);
-            source.Width.Subscribe(w => n.Style.width = w);
-            source.Height.Subscribe(h => n.Style.height = h);
-            
-            //n.HTML.style.backgroundColor = new Color(0, 1, 0, 0.4f);
+        ConfigureAbsoluteLocation(source, extraOnBuild: n => {
+            n.HTML.ConfigureEmpty();
             onBuild?.Invoke(this);
-        };
+        });
     }
 
     public ICObservable<float> CreateCenterOffsetChildX(ICObservable<float> childX) =>
-        new LazyEvented<float>(() => childX.Value + Source.Width.Value / 2f,
-            childX.Erase(), Source.Width.Erase());
-    
+        Source.CreateCenterOffsetChildX(childX);
+
     public ICObservable<float> CreateCenterOffsetChildY(ICObservable<float> childY) =>
-        new LazyEvented<float>(() => childY.Value + Source.Height.Value / 2f,
-            childY.Erase(), Source.Height.Erase());
+        Source.CreateCenterOffsetChildY(childY);
 }
 
 public class PassthroughNode : UINode {

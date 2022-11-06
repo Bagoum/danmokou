@@ -274,7 +274,8 @@ public partial class PlayerController : BehaviorEntity {
             spawnedShot = realized.playerChild ? 
                 GameObject.Instantiate(realized.prefab, tr) : 
                 GameObject.Instantiate(realized.prefab);
-            spawnedShot.GetComponentsInChildren<FireOption>().ForEach(fo => fo.Initialize(this));
+            foreach (var fo in spawnedShot.GetComponentsInChildren<FireOption>())
+                fo.Initialize(this);
             spawnedCamera = spawnedShot.GetComponent<AyaCamera>();
             if (spawnedCamera != null) spawnedCamera.Initialize(this);
         }
@@ -298,7 +299,8 @@ public partial class PlayerController : BehaviorEntity {
         if (spawnedShot != null) {
             //This is kind of stupid but it's necessary to ensure that
             //the coroutines end immediately rather than at the end of the update loop
-            spawnedShot.GetComponentsInChildren<BehaviorEntity>().ForEach(b => b.InvokeCull());
+            foreach (var b in spawnedShot.GetComponentsInChildren<BehaviorEntity>())
+                b.InvokeCull();
             Destroy(spawnedShot.gameObject);
             return true;
         }

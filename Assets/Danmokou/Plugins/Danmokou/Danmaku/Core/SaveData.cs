@@ -148,17 +148,35 @@ public static class SaveData {
         public FullScreenMode Fullscreen = FullScreenMode.FullScreenWindow;
         public int Vsync = 0;
         public bool UnfocusedHitbox = true;
-        public Evented<float> BGMVolume { get; init; } = new(1f);
-        public float SEVolume = 1f;
+        public Evented<float> MasterVolume { get; } = new(1f);
+        public Evented<float> _BGMVolume { get; } = new(1f);
+        [JsonIgnore]
+        public DisturbedProduct<float> BGMVolume { get; } = new();
+        //_XVolume is for the base volume per the settings
+        //XVolume is for the volume corrected with the master volume
+        public Evented<float> _SEVolume { get; } = new(1f);
+        [JsonIgnore]
+        public DisturbedProduct<float> SEVolume { get; } = new();
         public bool Backgrounds = true;
         public bool ProfilingEnabled = false;
         
         public float VNDialogueOpacity = 0.9f;
-        public float VNTypingSoundVolume = 1f;
+        public Evented<float> _VNTypingSoundVolume { get; } = new(1f);
+        [JsonIgnore]
+        public DisturbedProduct<float> VNTypingSoundVolume { get; } = new();
         public bool VNOnlyFastforwardReadText = true;
         
         public List<(string name, DifficultySettings settings)> DifficultySettings { get; init; } =
             new();
+
+        public Settings() {
+            BGMVolume.AddDisturbance(MasterVolume);
+            BGMVolume.AddDisturbance(_BGMVolume);
+            SEVolume.AddDisturbance(MasterVolume);
+            SEVolume.AddDisturbance(_SEVolume);
+            VNTypingSoundVolume.AddDisturbance(MasterVolume);
+            VNTypingSoundVolume.AddDisturbance(_VNTypingSoundVolume);
+        }
 
 
         public void AddDifficultySettings(string name, DifficultySettings settings) {

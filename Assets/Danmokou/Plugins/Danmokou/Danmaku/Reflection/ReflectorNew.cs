@@ -91,10 +91,11 @@ public static partial class Reflector {
                 Name :
                 $"{TypeName}.{Name}";
 
-        public string AsSignature => 
+        public string AsSignature => AsSignatureWithParamMod((p, _) => p.AsParameter);
+        public string AsSignatureWithParamMod(Func<NamedParam, int, string> paramMod) => 
             isCtor ? 
-                $"new {TypeName}({string.Join(", ", Params.Select(p => p.AsParameter))})" :
-                $"{ReturnType.SimpRName()} {Name}({string.Join(", ", Params.Select(p => p.AsParameter))})";
+                $"new {TypeName}({string.Join(", ", Params.Select(paramMod))})" :
+                $"{ReturnType.SimpRName()} {Name}({string.Join(", ", Params.Select(paramMod))})";
         
         public string TypeOnlySignature {
             get {
@@ -132,8 +133,8 @@ public static partial class Reflector {
             _ => Mi.Invoke(null, prms)
         };
 
-        public virtual IAST ToAST(PositionRange pos, PositionRange callPos, IAST[] arguments) => 
-            new AST.MethodInvoke(pos, callPos, this, arguments);
+        public virtual IAST ToAST(PositionRange pos, PositionRange callPos, IAST[] arguments, bool parenthesized) =>
+            new AST.MethodInvoke(pos, callPos, this, arguments) { Parenthesized = parenthesized };
         
         public static MethodSignature FromMethod(MethodBase mi, string? calledAs = null, ParameterInfo[]? srcPrms = null, bool isFallthrough = false) {
             srcPrms ??= mi.GetParameters();
@@ -165,8 +166,8 @@ public static partial class Reflector {
         NamedParam[] BaseParams) : FuncedMethodSignature(Mi, CalledAs, FuncedParams, BaseParams) {
         public override Type ReturnType => typeof(Func<T, R>);
 
-        public override IAST ToAST(PositionRange pos, PositionRange callPos, IAST[] arguments) =>
-            new AST.FuncedMethodInvoke<T, R>(pos, callPos, this, arguments);
+        public override IAST ToAST(PositionRange pos, PositionRange callPos, IAST[] arguments, bool parenthesized) =>
+            new AST.FuncedMethodInvoke<T, R>(pos, callPos, this, arguments) { Parenthesized = parenthesized };
 
         public override object? InvokeMi(params object?[] fprms)
             => InvokeMiFunced(fprms);

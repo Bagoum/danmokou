@@ -170,9 +170,9 @@ public static partial class Reflector {
         } else if (UseConstructor(targetType)) {
             //generic struct/tuple handling
             var sig = GetConstructorSignature(targetType);
-            var (args, argsLoc, err) = FillASTArray(sig, p);
-            var loc = argsLoc ?? p.Position;
-            return AST.Failure.MaybeEnclose(new AST.MethodInvoke(loc, new(loc.Start, loc.Start), sig, args), err);
+            var fill = FillASTArray(sig, p);
+            var loc = fill.ArgRange ?? p.Position;
+            return AST.Failure.MaybeEnclose(new AST.MethodInvoke(loc, new(loc.Start, loc.Start), sig, fill.ASTs), fill.Error);
         } else return null;
     }
 

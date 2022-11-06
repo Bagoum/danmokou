@@ -47,6 +47,7 @@
      <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\CrimsonVermilionGameDef.cs" />
      <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\Lines\Generated\BlessedRain.cs" />
      <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\VN\Objects\FleurDeLysMimic.cs" />
+     <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\VN\Backgrounds\HakugyokurouBGMimic.cs" />
      <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\BlessedRainGameDef.cs" />
      <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\VN\Backgrounds\TownBGMimic.cs" />
      <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\VN\Backgrounds\Shrine2BGMimic.cs" />
@@ -58,6 +59,8 @@
      <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\VN\Backgrounds\LibraryBGMimic.cs" />
      <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\Lines\Generated\_StringRepository.cs" />
      <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\Lines\Generated\PurpleHeartParadox.cs" />
+     <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\Lines\Generated\GOTP.cs" />
+     <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\GhostOfThePastGameDef.cs" />
      <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\Lines\ScriptLocalization.cs" />
      <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\VNBlessedRain.cs" />
      <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\VN\Objects\YellowLilyMimic.cs" />

@@ -291,11 +291,11 @@ class DebugVisitor : ExpressionVisitor {
 
     protected override Expression VisitBlock(BlockExpression node) {
         acc.Append("(");
-        node.Expressions.ForEachI((i, x) => {
+        foreach (var (i, x) in node.Expressions.Enumerate()) {
             if (i > 0) acc.Append("\n");
             Visit(x);
             acc.Append(";");
-        });
+        }
         acc.Append(")");
         return node;
     }

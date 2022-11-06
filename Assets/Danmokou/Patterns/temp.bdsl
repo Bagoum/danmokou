@@ -1,6 +1,6 @@
 <#> strict(comma)
 pattern({
-	##boss simp.kasen
+	boss simp.kasen
 })
 phase(0)
 	paction(0)
@@ -15,17 +15,26 @@ $%f(%x)
 
 <!> type non nest
 <!> hp 1000
-<!> root 2 1
 phase 0
 	paction 0
-		gtr {
-			times 3
-			wait-child
-			bindItr loop
-		} {
-			paction 1
-				movetarget 2 out-sine px(pm1(&loop) * 3)
-		}
+		position 0 1
+		gtrepeat {
+			wait(modwithpause 5 (6 7) 8)
+			times(_)
+			for(3s)
+		} bullet-control(once, circle-red/w, batch(> t 1, {
+			sfx(x-transform-1, _)
+			restyleeffect(arrow-red/b, _, _)
+		}))
+		async circle-red/w <1;:2> gcrepeat {
+			wait(10)
+			times(_)
+			for(4s)
+			rv2incr(<6>)
+		} gsrepeat {
+			times(30)
+			circle
+		} s(rvelocity(cx(2)))
 
 <!> type non depthsort
 <!> hp 1000
@@ -35,7 +44,7 @@ phase 0
 		async *-green/w <> gcr2 200 _ <> {
 		} gsr2c 30 {
 		} gsr2 3 <> {
-			color { ellipse circle amulet }
+			color ({ ellipse circle amulet })
 		} s rvelocity px 2
 ///
 		async scircle-red/w <0.5;:> gcr2 60 _ <5> {

@@ -44,6 +44,10 @@
     -unity-font-definition: url('project://database/Assets/Danmokou/Fonts/Unity%20SDF%20Assets/Signika-Regular%20SDF.asset?fileID=11400000&guid=a59d94292a6917d4da3cf1a2f7ed675f&type=2#Signika-Regular SDF');
 }
 
+.font-biolinum {
+    -unity-font-definition: url('project://database/Assets/SZYU/Fonts/Unity%20SDF/LinBiolinum_R_G%20SDF.asset?fileID=11400000&guid=7139a17b7319bb84494b6e01f410b0a2&type=2#LinBiolinum_R_G SDF');
+}
+
 .hide {
     display: none;
 }
@@ -204,6 +208,8 @@
 }
 
 .node .body {
+    transition-property: border-color;
+    transition-duration: 0.2s;
     border-top-width: 6px;
     border-bottom-width: 6px;
     border-color: var(--goldsub0);
@@ -252,7 +258,7 @@
 }
 
 .pbutton.confirm .text {
-    background-color: rgb(131, 53, 157);
+    background-color: rgb(108, 21, 121);
 }
 
 .pbutton.danger .text {

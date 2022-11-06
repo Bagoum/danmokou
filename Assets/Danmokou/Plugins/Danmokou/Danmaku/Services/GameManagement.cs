@@ -47,9 +47,8 @@ public class GameManagement : CoroutineRegularUpdater {
         new DifficultySettings(FixedDifficulty.Normal);
 #endif
 
-    public static InstanceData Instance => _evInstance.Value;
-    private static Evented<InstanceData> _evInstance { get; } = new(null!);
-    public static EventProxy<InstanceData> EvInstance { get; } = new(_evInstance);
+    public static InstanceData Instance => EvInstance.Value;
+    public static Evented<InstanceData> EvInstance { get; } = new(null!);
     [UsedImplicitly] public static bool Continued => Instance.Continued;
 
     public static void DeactivateInstance() {
@@ -65,7 +64,7 @@ public class GameManagement : CoroutineRegularUpdater {
     public static void NewInstance(InstanceMode mode, long? highScore = null, InstanceRequest? req = null, ReplayActor? replay = null) {
         DeactivateInstance();
         Logs.Log($"Creating new game instance with mode {mode} on difficulty {req?.metadata.difficulty.Describe() ?? "NULL"}.");
-        _evInstance.OnNext(new InstanceData(mode, req, highScore, replay));
+        EvInstance.OnNext(new InstanceData(mode, req, highScore, replay));
     }
 
     public static IEnumerable<FixedDifficulty> VisibleDifficulties => new[] {

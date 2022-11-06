@@ -82,7 +82,7 @@ public struct SyncHandoff : IDisposable {
     /// <summary>
     /// The common handoff is copied from SMH.
     /// </summary>
-    public SyncHandoff(DelegatedCreator bc, SMHandoff smh) {
+    public SyncHandoff(in DelegatedCreator bc, in SMHandoff smh) {
         this.ch = new CommonHandoff(smh.cT, bc, smh.GCX);
         this.timeOffset = 0f;
     }
@@ -90,7 +90,7 @@ public struct SyncHandoff : IDisposable {
     /// <summary>
     /// The common handoff is copied.
     /// </summary>
-    public SyncHandoff(CommonHandoff ch, float extraTimeSeconds, string? newStyle = null) {
+    public SyncHandoff(in CommonHandoff ch, float extraTimeSeconds, string? newStyle = null) {
         this.ch = ch.Copy(newStyle);
         this.timeOffset = extraTimeSeconds;
     }
@@ -118,25 +118,16 @@ public struct AsyncHandoff {
     /// <summary>
     /// The common handoff is copied from SMHandoff.
     /// </summary>
-    public AsyncHandoff(DelegatedCreator bc, Action? callback, SMHandoff smh) {
+    public AsyncHandoff(in DelegatedCreator bc, Action? callback, in SMHandoff smh) {
         this.ch = new CommonHandoff(smh.ch.cT, bc, smh.GCX);
         this.callback = callback;
         exec = smh.Exec;
     }
 
     /// <summary>
-    /// The common handoff is copied from SyncHandoff.
-    /// </summary>
-    public AsyncHandoff(SyncHandoff sbh) {
-        this.ch = new CommonHandoff(sbh.ch.cT, sbh.bc, sbh.GCX);
-        this.callback = null;
-        exec = sbh.GCX.exec;
-    }
-
-    /// <summary>
     /// Derive an AsyncHandoff from a parent for localized execution. The common handoff is copied.
     /// </summary>
-    public AsyncHandoff(AsyncHandoff parent, CommonHandoff ch, Action? callback) {
+    public AsyncHandoff(in AsyncHandoff parent, in CommonHandoff ch, Action? callback) {
         this.ch = ch.Copy();
         this.callback = callback;
         exec = parent.exec;
@@ -457,7 +448,7 @@ public struct LoopControl<T> {
     private CommonHandoff ch;
     public CommonHandoff Handoff => ch;
     public GenCtx GCX => ch.gcx;
-    public LoopControl(GenCtxProperties<T> props, CommonHandoff _ch, out bool isClipped) {
+    public LoopControl(GenCtxProperties<T> props, in CommonHandoff _ch, out bool isClipped) {
         isClipped = false;
         this.props = props;
         p = props.p;

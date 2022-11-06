@@ -102,8 +102,10 @@ public class FireOption : BehaviorEntity {
         ReflWrap<TP3>.Load(offsetFocus);
         ReflWrap<BPY>.Load(opacityFree);
         ReflWrap<BPY>.Load(opacityFocus);
-        powerOffsetFree.ForEach(ReflWrap<TP3>.Load);
-        powerOffsetFocus.ForEach(ReflWrap<TP3>.Load);
+        foreach (var pOffset in powerOffsetFree)
+            ReflWrap<TP3>.Load(pOffset);
+        foreach (var pOffset in powerOffsetFocus)
+            ReflWrap<TP3>.Load(pOffset);
         ReflWrap<BPY>.Load(spriteRotation);
         ReflWrap<BPY>.Load(freeAngleOffset);
         ReflWrap<BPY>.Load(focusAngleOffset);

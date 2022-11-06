@@ -39,6 +39,12 @@ public class DMKVNState : UnityVNState {
             ServiceLocator.SFXService.Request(sfx);
     };
     
+    /// <summary>
+    /// Get a looping audio sfx.
+    /// </summary>
+    public AudioSource Source(string? sfx) => 
+        ServiceLocator.SFXService.RequestSource(sfx, CToken)!;
+    
     public LazyAction Source(string? sfx, Action<AudioSource> apply) => new(() => 
         apply(ServiceLocator.SFXService.RequestSource(sfx, CToken)!));
     

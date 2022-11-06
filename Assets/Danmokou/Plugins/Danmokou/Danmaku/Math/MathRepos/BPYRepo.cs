@@ -267,6 +267,12 @@ public static partial class BPYRepo {
     /// Returns T / DL.
     /// </summary>
     public static ExBPY tDL() => bpi => bpi.t.Div(DL());
+    
+    /// <summary>
+    /// Returns P / DN.
+    /// </summary>
+    public static ExBPY pDN() => bpi => bpi.findex.Div(DN());
+    
     /// <summary>
     /// Returns P / DH.
     /// </summary>

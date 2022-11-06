@@ -19,6 +19,7 @@ public static partial class XMLUtils {
     public const string disabledClass = "disabled";
     public const string fontUbuntuClass = "font-ubuntu";
     public const string fontControlsClass = "font-controls";
+    public const string fontBiolinumClass = "font-biolinum";
     public const string monospaceClass = "monospace";
     public const string noSpacePrefixClass = "nospaceprefix";
     public const string large1Class = "large1";
@@ -32,10 +33,13 @@ public static partial class XMLUtils {
     public const string centerTextClass = "centertext";
     public static string CheckmarkClass(bool active) => active ? "checked" : "unchecked";
 
-    private static UXMLReferences Prefabs => GameManagement.References.uxmlDefaults;
+    public static UXMLReferences Prefabs => GameManagement.References.uxmlDefaults;
     public static LString CSpace(this LString s, int space = 12) =>
         LString.Format($"<cspace={space}>{{0}}</cspace>", s);
     public static Length Percent(this float f) => new Length(f, LengthUnit.Percent);
+
+    public static StyleLength ToLength(this float? f) =>
+        f.Try(out var l) ? l : new StyleLength(StyleKeyword.Initial);
 
     public static DisplayStyle ToStyle(this bool b) => b ? DisplayStyle.Flex : DisplayStyle.None;
 
@@ -71,11 +75,24 @@ public static partial class XMLUtils {
     public static VisualElement SetPadding(this VisualElement root, float padding) =>
         root.SetPadding(padding, padding, padding, padding);
 
-    public static VisualElement ConfigureAbsoluteEmpty(this VisualElement empty, bool pickable = true) {
-        empty.style.position = Position.Absolute;
-        var cn = new Length(-50, LengthUnit.Percent);
-        empty.style.translate = new StyleTranslate(new Translate(cn, cn, 0));
-        return empty.ConfigureEmpty(pickable);
+    public enum Pivot {
+        TopLeft,
+        Center
+    }
+
+    private static Translate ToTranslation(Pivot p) => p switch {
+        Pivot.TopLeft => Translate.None(),
+        _ => new Translate((-50f).Percent(), (-50f).Percent(), 0)
+    };
+    private static TransformOrigin ToOrigin(Pivot p) => p switch {
+        Pivot.TopLeft => new TransformOrigin(0f.Percent(), 0f.Percent(), 0f),
+        _ => TransformOrigin.Initial()
+    };
+    public static VisualElement ConfigureAbsolute(this VisualElement ve, Pivot pivot = Pivot.Center) {
+        ve.style.position = Position.Absolute;
+        ve.style.translate = new StyleTranslate(ToTranslation(pivot));
+        ve.style.transformOrigin = ToOrigin(pivot);
+        return ve;
     }
 
     public static VisualElement ConfigureEmpty(this VisualElement empty, bool pickable = true) {

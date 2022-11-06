@@ -69,6 +69,10 @@ public abstract record UIResult {
         public GoToNode(UIScreen s) : this(s.Groups[0]) { }
     }
 
+    //Note: this is effectively the same as GoToNode, except you can add ReturnToOverride, which replaces
+    // the screen caller with a different node.
+    public record GoToScreen(UIScreen Screen, UINode? ReturnToOverride = null) : UIResult;
+
     public record ReturnToGroupCaller : UIResult;
 
     public record ReturnToTargetGroupCaller(UIGroup Target) : UIResult {
@@ -260,6 +264,9 @@ public abstract class UIController : CoroutineRegularUpdater {
             if (s != null)
                 UIContainer.Add(s.Build(GameManagement.References.uxmlDefaults.TypeMap));
     }
+    protected void BuildLate(UIScreen s) => 
+        UIContainer.Add(s.Build(GameManagement.References.uxmlDefaults.TypeMap));
+    
 
 
     /// <summary>
@@ -267,6 +274,8 @@ public abstract class UIController : CoroutineRegularUpdater {
     /// <br/>Other screens are not affected.
     /// </summary>
     public void Redraw() {
+        //This can occur if this gets called before FirstFrame
+        if (UIRoot == null) return;
         if (Current == null) {
             UIRoot.style.display = DisplayStyle.None;
             return;
@@ -312,6 +321,30 @@ public abstract class UIController : CoroutineRegularUpdater {
         }
         foreach (var r in new[] { result }.Unroll()) {
             var prev = next;
+            void TransferToNodeSameScreen(UINode target) {
+                if (target.Group != prev?.Group) {  
+                    var th = target.Group.Hierarchy;
+                    var ch = prev?.Group.Hierarchy;
+                    var intersection = UIGroupHierarchy.GetIntersection(ch, th);
+                    var lastSource = (prev?.Group,prev);
+                    //Pop until we reach the intersection
+                    for (var x = ch; x != intersection; x = x.Parent) {
+                        LeftGroups.Add(x!.Group);
+                        lastSource = GroupCall.Pop();
+                    }
+                    //Push until we reach the target
+                    foreach (var x in th.PrefixRemainder(intersection)) {
+                        EnteredGroups.Add(x);
+                        if (lastSource.Group != null)
+                            GroupCall.Push(lastSource!);
+                        lastSource = (x, x == target.Group ? target : 
+                            (x.HasInteractableNodes ? 
+                                (x.Nodes.Contains(x.EntryNode) ? x.EntryNode : x.FirstInteractableNode) : 
+                                null));
+                    }
+                }
+                next = target;
+            }
             //queries.Add((prev, r, GroupCall.ToArray()));
             switch (r) {
                 case UIResult.DestroyMenu:
@@ -323,6 +356,13 @@ public abstract class UIController : CoroutineRegularUpdater {
                     GroupCall.Clear();
                     ScreenCall.Clear();
                     break;
+                case UIResult.GoToScreen goToScreen:
+                    if (goToScreen.Screen != prev?.Screen && (goToScreen.ReturnToOverride ?? prev) is { } returnTo) {
+                        ScreenCall.Push(returnTo);
+                        prev = null;
+                        TransferToNodeSameScreen(goToScreen.Screen.Groups[0].EntryNode);
+                    }
+                    break;
                 case UIResult.GoToNode goToNode:
                     if (goToNode.Target.Destroyed)
                         break;
@@ -330,28 +370,7 @@ public abstract class UIController : CoroutineRegularUpdater {
                         ScreenCall.Push(prev);
                         prev = null;
                     }
-                    if (goToNode.Target.Group != prev?.Group) {  
-                        var th = goToNode.Target.Group.Hierarchy;
-                        var ch = prev?.Group.Hierarchy;
-                        var intersection = UIGroupHierarchy.GetIntersection(ch, th);
-                        var lastSource = (prev?.Group,prev);
-                        //Pop until we reach the intersection
-                        for (var x = ch; x != intersection; x = x.Parent) {
-                            LeftGroups.Add(x!.Group);
-                            lastSource = GroupCall.Pop();
-                        }
-                        //Push until we reach the target
-                        foreach (var x in th.PrefixRemainder(intersection)) {
-                            EnteredGroups.Add(x);
-                            if (lastSource.Group != null)
-                                GroupCall.Push(lastSource!);
-                            lastSource = (x, x == goToNode.Target.Group ? goToNode.Target : 
-                                (x.HasInteractableNodes ? 
-                                    (x.Nodes.Contains(x.EntryNode) ? x.EntryNode : x.FirstInteractableNode) : 
-                                    null));
-                        }
-                    }
-                    next = goToNode.Target;
+                    TransferToNodeSameScreen(goToNode.Target);
                     break;
                 case UIResult.ReturnToGroupCaller:
                     next = null;
@@ -394,7 +413,7 @@ public abstract class UIController : CoroutineRegularUpdater {
         if (result is not UIResult.StayOnNode { Action : UIResult.StayOnNodeType.Silent or UIResult.StayOnNodeType.NoOp })
             return TransitionToNode(next, animate, 
                 LeftGroups.Except(leftAndEntered).ToList(), 
-                EnteredGroups.Except(leftAndEntered).ToList()).ContinueWithSync(() => { });
+                EnteredGroups.Except(leftAndEntered).ToList()).ContinueWithSync();
         return Task.CompletedTask;
     }
     public override void RegularUpdate() {
@@ -566,10 +585,14 @@ public abstract class UIController : CoroutineRegularUpdater {
     ///  it should call this function.
     /// </summary>
     public void MoveCursorAwayFromNode(UINode n) {
-        if (n == Current)
+        if (n == Current) {
+            if (!n.Destroyed) n.Leave(false);
             Current = n.Group.ExitNode;
+        }
         Redraw();
     }
+    
+    public override int UpdatePriority => UpdatePriorities.UI;
     
     
     [ContextMenu("Debug group call stack")]

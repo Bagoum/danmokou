@@ -9,6 +9,7 @@ using UnityEngine;
 
 namespace Danmokou.VN {
 public class Seiga : SZYUCharacter {
+    public static System.Numerics.Vector3 SpeakIconOffset => new(0.8f, 2.5f, 0);
     public override Color TextColor => new(.8f, 1f, 1f);
     public override Color UIColor => new(.3f, .6f, .6f);
     public override LString Name { get; set; } = LocalizedStrings.FindReference("dialogue.seiga");

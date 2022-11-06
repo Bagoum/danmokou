@@ -207,9 +207,9 @@ public class SFXService : RegularUpdater, ISFXService {
         if (aci.Timeout > 0f) timeouts[aci.defaultName] = aci.Timeout;
 
         if (aci.RequiresHandling) RequestSource(aci, Cancellable.Null);
-        else src.PlayOneShot(aci.clip, aci.volume * SaveData.s.SEVolume * type switch {
+        else src.PlayOneShot(aci.clip, aci.volume * type switch {
             SFXType.TypingSound => SaveData.s.VNTypingSoundVolume,
-            _ => 1f
+            _ => SaveData.s.SEVolume
         });
     }
 

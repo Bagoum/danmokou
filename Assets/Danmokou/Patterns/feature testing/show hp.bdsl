@@ -1,5 +1,5 @@
 pattern { 
-	##boss simp.kasen
+	boss simp.kasen
 }
 phase 0
 	paction 0
@@ -11,8 +11,15 @@ phase 0
 phase 100
 	saction 0
 		position 0 3
-		move _ nroffset px sine 4 2 t
+		##move _ nroffset px sine 4 2 t
 ///
+		async star-purple/w <> gcr2 20 _ <3h> {
+
+		} gsr2c 35 {
+
+		} simple tprot cx 2 {
+			dir starrotb4
+		}
 		move 3 nroffset ease(io-sine, 3, bezier3(
 			zero,
 			pxy(-1, -6),

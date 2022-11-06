@@ -7,15 +7,15 @@ src = "img/stand-source/"
 out = "img/stand-output/"
 root = "normal.png"
 
-root_left = 1
-root_left2 = 621
-root_top = 0
-root_top2 = 900
+root_left = 40
+root_left2 = 676
+root_top = 24
+root_top2 = 1164
 
-left = 212
-left2 = 352
-top = 112
-top2 = 220
+left = 288
+left2 = 460
+top = 220
+top2 = 344
 
 def root_convert(fromfile, tofile):
     img = Image.open(fromfile)
@@ -43,6 +43,8 @@ def main():
     rc = (root_left + root_left2) / 2, (root_top + root_top2) / 2
     sc = (left + left2) / 2, (top + top2) / 2
     delta = (sc[0] - rc[0], rc[1] - sc[1])
+    print("Left: [%d, %d] Top: [%d, %d]" % (left, left2, top, top2))
+    print("RootLeft: [%d, %d] RootTop: [%d, %d]" % (root_left, root_left2, root_top, root_top2))
     print("Root center is at %s. Face center is at %s." % (rc, sc))
     print("The face offset is %s." % (delta,))
 

@@ -84,6 +84,7 @@
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\VN\Characters\KurokomaMimic.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Math\MathRepos\ExMRV2.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Behavior\Items\ValueItem.cs" />
+     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\VN\Characters\RemiliaMimic.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Math\MathRepos\Parametrics.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Scriptables\SOSBEntryFader.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\VN\Characters\DoremyMimic.cs" />
@@ -245,6 +246,7 @@
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\StateMachines\SMAnalysis.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Math\MathRepos\GenericMath\ExMConversions.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\VN\Characters\Narrator.cs" />
+     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\VN\Characters\YuyukoMimic.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Player\AyaPhoto.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Core\Statistics.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Services\AudioTrackService.cs" />
@@ -252,6 +254,7 @@
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Behavior\Functions\MoveMe.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Scriptables\ItemReferences.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Behavior\Items\FullPowerItem.cs" />
+     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\VN\Characters\Marisa98Mimic.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\UI\UIScreenOverlay.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\AoTHelper_CG.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\UI\XML\XMLMainMenu_NLBug.cs" />
@@ -270,6 +273,7 @@
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Utilities\Preloader.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Behavior\FireOption.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\UI\XML\XMLReplaySaveMenu.cs" />
+     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\VN\Characters\ByakurenMimic.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\VN\Characters\YoumuMimic.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Graphics\RaikoCamera.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\ADV\ADVIdealizedState.cs" />
@@ -287,6 +291,7 @@
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Behavior\Items\Item.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\UI\LetterboxedInput.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\VN\DMKVNWrapper.cs" />
+     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\ADV\EvidenceRequest.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Scriptables\EffectStrategy.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Expressions\FlattenVisitor.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Behavior\DamageMeasurer.cs" />
@@ -302,6 +307,7 @@
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\StateMachines\PatternStateMachines.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Math\MathRepos\ExtraMovementFuncs.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Danmaku\Options\SimpleBulletOptions.cs" />
+     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\VN\Characters\MurasaMimic.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Services\AudioTrack.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Player\AyaCamera.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\ADV\EditorOnly_FirstSceneExecutionHelper.cs" />
@@ -338,6 +344,8 @@
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Behavior\Display\SpriteDisplayController.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Scriptables\GameUniqueReferences.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\ADV\RunOnEntryAssertion.cs" />
+     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\VN\Characters\FlandreMimic.cs" />
+     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\VN\Characters\SakuyaMimic.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\GameInstance\InstanceConsts.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\VN\Mimics\DMKADVDialogueBoxMimic.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Services\ResourceManager.cs" />
@@ -363,8 +371,8 @@
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Behavior\Items\PowerupK.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Behavior\Cutin\Cutin.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Behavior\Items\ShiftingPowerup.cs" />
-     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Graphics\TiledRender.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Math\MathRepos\VTPRepo.cs" />
+     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Graphics\TiledRender.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Utilities\BulletSpriteToTex.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\VN\Characters\MayumiMimic.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Reflection\Configuration.cs" />
@@ -372,6 +380,7 @@
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\UI\DemoScriptManager.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Behavior\Items\PoC.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Danmaku\Patterns\SyncPatterns.cs" />
+     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\VN\Characters\NueMimic.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\VN\Characters\JunkoMimic.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Expressions\ExPostAggregators.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\VN\Characters\YuukaMimic.cs" />

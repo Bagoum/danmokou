@@ -33,8 +33,7 @@ public class BackgroundOrchestrator : CoroutineRegularUpdater, IBackgroundOrches
     public float Time { get; private set; }
 
     private void ShowHide() {
-        if (FromBG == null) MaybeCreateFirst();
-        else {
+        if (FromBG != null) {
             if (SaveData.s.Backgrounds) {
                 FromBG.Show();
                 if (ToBG != null) ToBG.Show();
@@ -57,8 +56,8 @@ public class BackgroundOrchestrator : CoroutineRegularUpdater, IBackgroundOrches
     }
 
     private GameObject? lastRequestedBGC;
-    private void MaybeCreateFirst() {
-        if (SaveData.s.Backgrounds) {
+    public override void FirstFrame() {
+        if (FromBG == null && SaveData.s.Backgrounds) {
             var bgc = (lastRequestedBGC == null) ? defaultBGCPrefab : lastRequestedBGC;
             lastRequestedBGC = null;
             FromBG = CreateBGC(bgc);

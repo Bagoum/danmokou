@@ -9,6 +9,7 @@ using UnityEngine;
 
 namespace Danmokou.VN {
 public class Doremy : SZYUCharacter {
+    public static System.Numerics.Vector3 SpeakIconOffset => new(0.8f, 2.3f, 0);
     public override Color TextColor => new(0.98f, 0.85f, 1f);
     public override Color UIColor => new(.5f, 0.1f, .65f);
     public override LString Name { get; set; } = LocalizedStrings.FindReference("dialogue.doremy");

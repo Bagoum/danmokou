@@ -347,6 +347,11 @@ public abstract class UIGroup {
     public override string ToString() => $"{Hierarchy}({this.GetType()})";
 }
 
+/// <summary>
+/// A group of arbitrarily positioned nodes that can be added or removed dynamically.
+/// <br/>Used with <see cref="XMLDynamicMenu"/>.
+/// TODO: does not support nesting groups
+/// </summary>
 class UIFreeformGroup : UIGroup {
     private readonly UINode unselector;
     public UIFreeformGroup(UIScreen container, UINode unselector) : base(container, null, new[] { unselector }) {

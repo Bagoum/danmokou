@@ -1,7 +1,7 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <Style src="project://database/Assets/Danmokou/UXML/nodes/UINode.uss?fileID=7433441132597879392&amp;guid=908aa769b12ea7c44aae7ea3f797c582&amp;type=3#UINode" />
     <ui:VisualElement class="node pbutton">
-        <ui:VisualElement name="Body" class="body" style="padding-left: 12px; padding-right: 12px; padding-top: 12px; padding-bottom: 12px; border-left-width: 7px; border-right-width: 7px; border-top-width: 7px; margin-left: 6px; margin-right: 6px; margin-top: 6px; margin-bottom: 6px; border-bottom-width: 7px; background-image: none;">
+        <ui:VisualElement name="Body" class="body" style="padding-left: 10px; padding-right: 10px; padding-top: 10px; padding-bottom: 10px; border-left-width: 9px; border-right-width: 9px; border-top-width: 9px; margin-left: 6px; margin-right: 6px; margin-top: 6px; margin-bottom: 6px; border-bottom-width: 9px; background-image: none;">
             <ui:Label text="Label" display-tooltip-when-elided="true" class="text" />
         </ui:VisualElement>
     </ui:VisualElement>

@@ -91,6 +91,10 @@ public static partial class LocalizedStrings {
 			(Locales.JP, "テキスト速度"))
 			{ ID = "dialogue_speed" };
 		
+		public static readonly LString master_volume = new LText("Master Volume",
+			(Locales.JP, "マスター音量"))
+			{ ID = "master_volume" };
+		
 		public static readonly LString bgm_volume = new LText("BGM Volume",
 			(Locales.JP, "ミュージック音量"))
 			{ ID = "bgm_volume" };

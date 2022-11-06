@@ -7,6 +7,7 @@ using BagoumLib.Events;
 using BagoumLib.Tasks;
 using Danmokou.Core;
 using Danmokou.UI;
+using Danmokou.UI.XML;
 using Danmokou.VN;
 using Suzunoya.ControlFlow;
 
@@ -19,7 +20,7 @@ public interface IExecutingADV : IRegularUpdater, IDisposable {
     ADVInstance Inst { get; }
     ADVData ADVData => Inst.ADVData;
     ADVManager Manager => Inst.Manager;
-    DMKVNState vn => Inst.VN;
+    DMKVNState VN => Inst.VN;
     IMapStateManager MapStates { get; }
     Task Run();
 }
@@ -48,7 +49,7 @@ public class BarebonesExecutingADV<D> : IExecutingADV<ADVIdealizedState, D> wher
     public BarebonesExecutingADV(ADVInstance inst, Func<Task> executor) {
         this.Inst = inst;
         this.executor = executor;
-        this.MapStates = new MapStateManager<ADVIdealizedState, D>(() => new(Inst));
+        this.MapStates = new MapStateManager<ADVIdealizedState, D>(() => new(this));
     }
 
     public Task Run() => executor();
@@ -61,9 +62,18 @@ public class BarebonesExecutingADV<D> : IExecutingADV<ADVIdealizedState, D> wher
 public abstract class ExecutingADVGame<I, D> : IExecutingADV<I, D> where I : ADVIdealizedState where D : ADVData {
     public ADVInstance Inst { get; }
     public ADVManager Manager => Inst.Manager;
-    public DMKVNState vn => Inst.VN;
+    /// <inheritdoc cref="ADVInstance.VN"/>
+    public DMKVNState VN => Inst.VN;
+    /// <summary>
+    /// Same as <see cref="VN"/> but easier to type
+    /// </summary>
+    public DMKVNState vn => VN;
     //Note that underlying data may change due to proxy loading
     protected D Data => (Inst.ADVData as D) ?? throw new Exception("Instance data is of wrong type");
+    /// <summary>
+    /// Event called immediately after save data is changed, and before assertions are recomputed.
+    /// </summary>
+    public Evented<D> DataChanged { get; }
     private string prevMap;
     public MapStateManager<I, D> MapStates { get; }
     private readonly MapStateTransition<I, D> mapTransition;
@@ -75,6 +85,7 @@ public abstract class ExecutingADVGame<I, D> : IExecutingADV<I, D> where I : ADV
     protected readonly TaskCompletionSource<Unit> completion = new();
     protected readonly List<IDisposable> tokens = new();
     private readonly List<IDisposable> transitionToken = new();
+    private readonly List<IDisposable> mapLocalTokens = new();
     /// <summary>
     /// Maps a BCtx ID to the corresponding BCtx for all BCtxes in the game
     /// </summary>
@@ -82,16 +93,41 @@ public abstract class ExecutingADVGame<I, D> : IExecutingADV<I, D> where I : ADV
     private readonly UITKRerenderer rerenderer;
     
     protected readonly Evented<(string? prevMap, string newMap)> MapWillUpdate;
+
+    /// <summary>
+    /// Set a disposable to be automatically disposed when the map changes.
+    /// </summary>
+    protected T DisposeWithMap<T>(T token) where T: IDisposable {
+        mapLocalTokens.Add(token);
+        return token;
+    }
     
-    protected void GoToMap(string map, Action<D>? updater = null) {
+    /// <summary>
+    /// Change the current map. Always call this method instead of setting <see cref="ADVData.CurrentMap"/>,
+    ///  as it triggers <see cref="MapWillUpdate"/>.
+    /// </summary>
+    /// <param name="map">New map to go to</param>
+    /// <param name="updater">Optional data update step that will run before the map change</param>
+    /// <returns></returns>
+    protected Task GoToMap(string map, Action<D>? updater = null) {
         var prev = Data.CurrentMap;
         if (prev != map) {
-            UpdateDataV(adv => {
+            return UpdateData(adv => {
                 updater?.Invoke(adv);
                 adv.CurrentMap = map;
                 MapWillUpdate.OnNext((prev, map));
             });
         }
+        return Task.CompletedTask;
+    }
+    /// <inheritdoc cref="GoToMap"/>
+    protected UIResult GoToMapUI(string map, Action<D>? updater = null) {
+        var prev = Data.CurrentMap;
+        if (prev != map) {
+            GoToMap(map, updater);
+            return new UIResult.StayOnNode();
+        }
+        return new UIResult.StayOnNode(true);
     }
 
     public ExecutingADVGame(ADVInstance inst) {
@@ -99,7 +135,7 @@ public abstract class ExecutingADVGame<I, D> : IExecutingADV<I, D> where I : ADV
         prevMap = Data.CurrentMap;
         MapWillUpdate = new((null, prevMap));
         //probably don't need to add these to tokens as they'll be destroyed with VN destruction.
-        rerenderer = vn.Add(new UITKRerenderer(UIBuilderRenderer.ADV_INTERACTABLES_GROUP), sortingID: 10000);
+        rerenderer = VN.Add(new UITKRerenderer(UIBuilderRenderer.ADV_INTERACTABLES_GROUP), sortingID: 10000);
         MapStates = ConfigureMapStates();
         mapTransition = new(MapStates);
         tokens.Add(mapTransition.ExecutingTransition.Subscribe(b => {
@@ -108,8 +144,10 @@ public abstract class ExecutingADVGame<I, D> : IExecutingADV<I, D> where I : ADV
             else
                 transitionToken.DisposeAll();
         }));
-        tokens.Add(vn.InstanceDataChanged.Subscribe(_ => UpdateDataV(_ => { })));
+        tokens.Add(MapStates.MapEndStateDeactualized.Subscribe(_ => mapLocalTokens.DisposeAll()));
+        tokens.Add(VN.InstanceDataChanged.Subscribe(_ => UpdateDataV(_ => { })));
         tokens.Add(ETime.RegisterRegularUpdater(this));
+        DataChanged = new Evented<D>(Data);
     }
 
     public abstract void RegularUpdate();
@@ -119,6 +157,7 @@ public abstract class ExecutingADVGame<I, D> : IExecutingADV<I, D> where I : ADV
     }
     protected Task UpdateData(Action<D> updater, MapStateTransitionSettings<I>? transition = null) {
         updater(Data);
+        DataChanged.OnNext(Data);
         return UpdateMap(transition);
     }
 
@@ -178,6 +217,7 @@ public abstract class ExecutingADVGame<I, D> : IExecutingADV<I, D> where I : ADV
     public void Dispose() {
         tokens.DisposeAll();
         transitionToken.DisposeAll();
+        mapLocalTokens.DisposeAll();
     }
 }
 

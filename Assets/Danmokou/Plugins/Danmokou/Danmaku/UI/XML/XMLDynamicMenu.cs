@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using BagoumLib.Events;
 using Danmokou.Core;
 using Suzunoya.Dialogue;
@@ -18,17 +19,20 @@ public class XMLDynamicMenu : UIController, IFixedXMLObjectContainer {
         public string Descriptor => "Unselector";
         public ICObservable<float> Top { get; } = new ConstantObservable<float>(0);
         public ICObservable<float> Left { get; } = new ConstantObservable<float>(0);
-        public ICObservable<float> Width { get; } = new ConstantObservable<float>(0);
-        public ICObservable<float> Height { get; } = new ConstantObservable<float>(0);
+        public ICObservable<float?> Width { get; } = new ConstantObservable<float?>(0);
+        public ICObservable<float?> Height { get; } = new ConstantObservable<float?>(0);
         public ICObservable<bool> IsVisible { get; } = new ConstantObservable<bool>(true);
         public UIResult? Navigate(UINode n, UICommand c) => null;
     }
 
     protected virtual bool CaptureFallthroughInteraction => false;
+    protected override UIScreen?[] Screens => dynamicScreens.Prepend(MainScreen).ToArray();
     
-    private UINode unselect = null!;
+    public UINode Unselect { get; private set; } = null!;
     private UIFreeformGroup group = null!;
     private List<UINode>? _addNodeQueue = new();
+    private List<UIScreen> dynamicScreens = new();
+
 
     protected override void BindListeners() {
         base.BindListeners();
@@ -36,16 +40,18 @@ public class XMLDynamicMenu : UIController, IFixedXMLObjectContainer {
     }
 
     public override void FirstFrame() {
-        unselect = new EmptyNode(new UnselectorFixedXML());
+        Unselect = new EmptyNode(new UnselectorFixedXML());
         MainScreen = new UIScreen(this, null, UIScreen.Display.Unlined) {
             Builder = (s, ve) => {
+                //TODO for the other screens, you can do this
+                //s.HTML.pickingMode = PickingMode.Position;
                 s.HTML.Q("ControlsHelper").RemoveFromHierarchy();
                 ve.AddColumn();
                 s.Margin.SetLRMargin(0, 0);
             }
         };
 
-        group = new UIFreeformGroup(MainScreen, unselect);
+        group = new UIFreeformGroup(MainScreen, Unselect);
         base.FirstFrame();
 
         if (!CaptureFallthroughInteraction) {
@@ -89,6 +95,12 @@ public class XMLDynamicMenu : UIController, IFixedXMLObjectContainer {
             _addNodeQueue.Add(n);
         else
             group.AddNodeDynamic(n);
+    }
+
+    public void AddScreen(UIScreen s) {
+        dynamicScreens.Add(s);
+        if (_addNodeQueue == null) // initial building has completed
+            BuildLate(s);
     }
 }
 }

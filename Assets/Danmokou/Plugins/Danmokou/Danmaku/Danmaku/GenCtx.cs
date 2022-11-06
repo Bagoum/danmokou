@@ -13,7 +13,11 @@ using UnityEngine;
 
 namespace Danmokou.Danmaku {
 
-[SuppressMessage("ReSharper", "CollectionNeverQueried.Global")]
+/// <summary>
+/// A set of bound variables for danmaku objects (including bullets and summons).
+/// These are modified in the process of object firing in <see cref="Danmaku.Patterns.SyncPattern"/>,
+///  and will generally eventually be frozen into a <see cref="ParametricInfo"/>.
+/// </summary>
 public class GenCtx : IDisposable {
     public readonly Dictionary<string, float> fs = new();
     public readonly Dictionary<string, Vector2> v2s = new();
@@ -32,7 +36,7 @@ public class GenCtx : IDisposable {
     public IReadOnlyDictionary<string, Vector3> V3s => v3s;
     public readonly Dictionary<string, V2RV2> rv2s = new();
     public IReadOnlyDictionary<string, V2RV2> RV2s => rv2s;
-    //No longer supported as of v10
+    //No longer supported as of DMK v9.2.0
     //public readonly List<(Reflector.ExType, string)> exposed = new();
     /// <summary>
     /// Loop iteration
@@ -70,6 +74,10 @@ public class GenCtx : IDisposable {
     }
     public Vector2 Loc => exec.GlobalPosition();
     public uint? idOverride = null;
+    /// <summary>
+    /// Get a <see cref="ParametricInfo"/> with <see cref="idOverride"/> or a random ID
+    ///  to use for <see cref="GCXF{T}"/> functions.
+    /// </summary>
     [UsedImplicitly]
     public ParametricInfo AsBPI => new(fctx, Loc, index, idOverride ?? exec.rBPI.id, i);
     private static readonly Stack<GenCtx> cache = new();

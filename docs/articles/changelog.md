@@ -12,6 +12,8 @@ To get the newest version from git, run:
 
 The following features are planned for future releases. 
 
+- [9.3.0] "Evidence presentation" (think Ace Attorney) architecture for Suzunoya
+- [9.3.0] LockedBoundedContext handling in Suzunoya
 - [9.3.0] Safeguards around control rebinding
 - [10.0.0] ADV-style gameplay, state management, and generalized UI support
   - Basic implementation of ADV gameplay and state management implemented in 9.0.0 (see Purple Heart).
@@ -20,6 +22,8 @@ The following features are planned for future releases.
 - [Backlog] Default handling for graze flake items and bullet cancel flake items
 - [Backlog] Implementation of a TH18-like card engine
 - [Backlog] Procedural generation of stages and bullet patterns
+
+
 
 # v9.2.0 (2022/09/10)
 

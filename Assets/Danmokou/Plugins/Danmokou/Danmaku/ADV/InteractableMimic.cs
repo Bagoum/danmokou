@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Reactive;
 using System.Threading.Tasks;
 using BagoumLib;
@@ -39,14 +40,16 @@ public abstract record InteractableType {
 
 /// <summary>
 /// A VN entity that can be clicked on to trigger something (generally a <see cref="BoundedContext{T}"/>).
+/// <br/>By default, the interactable will only be active and clickable during the <see cref="ADVManager.State.Investigation"/> state,
+///  but this can be changed via <see cref="InteractableStates"/>.
 /// </summary>
 public class Interactable : Rendered {
     public ADVManager Manager { get; set; } = null!;
-    public Action OnClick { get; set; } = null!;
+    public Func<UINode, UIResult?> OnClick { get; set; } = null!;
     public Evented<bool> Exhausted { get; set; } = new(false);
     public InteractableType Type { get; set; } = null!;
-    
     public HoverAction? Hover { get; set; }
+    public ADVManager.State[] InteractableStates { get; set; } = { ADVManager.State.Investigation };
     
     public abstract record HoverAction {
         public abstract IDisposable? Enter(Interactable i);
@@ -77,9 +80,10 @@ public class InteractableMimic : RenderedMimic, IFixedXMLReceiver {
     private Interactable entity = null!;
     
     private readonly PushLerperF<float> offsetter = new(0.3f, Mathf.LerpUnclamped);
-    private readonly PushLerper<float> borderColor = new(0.3f, Mathf.LerpUnclamped);
-    private static readonly Easer b = Easers.CEOutBounce(0, 0.45f, 0.7f, 0.85f, 1f);
-    private readonly Func<float, float> bounce = t => 160 * (-1f + b(Mathf.Clamp01(M.Mod(2f, t) / 1.2f)));
+    private readonly PushLerper<float> borderColor = new(0.2f, (a, b, t) => Mathf.LerpUnclamped(a, b, cssDefaultEase(t)));
+    private static readonly Easer cssDefaultEase = Bezier.CBezier(0.25f, 0.1f, 0.25f, 1f);
+    private static readonly Easer bEase = Easers.CEOutBounce(0, 0.45f, 0.7f, 0.85f, 1f);
+    private readonly Func<float, float> bounce = t => 160 * (-1f + bEase(Mathf.Clamp01(M.Mod(2f, t) / 1.2f)));
     private readonly Func<float, float> _wave = t => 20 * M.SinDeg(50 * t);
     private readonly Func<float, float> _wave0 = t => 0;
     private Func<float, float> Wave => (entity.Type ?? throw new Exception("hello")).UseWaveEffect ? _wave : _wave0;
@@ -103,18 +107,21 @@ public class InteractableMimic : RenderedMimic, IFixedXMLReceiver {
         tokens.Add(c.Visible.AddDisturbance(man.ADVState.Map(s =>
             //If loading into a new map, the method is Waiting, but we want to still show the icons.
             // ReSharper disable once AccessToModifiedClosure
-            s == ADVManager.State.Investigation || 
+            c.InteractableStates.Contains(s) ||
             (s == ADVManager.State.Waiting && isFirstState && man.VNState.Contexts.Count == 0 && 
              !man.ExecAdv!.MapStates.CurrentMapState.HasEntryVN))));
         isFirstState = false;
     }
 
     public void OnBuilt(EmptyNode n) {
-        var wb = new VisualElement().ConfigureAbsoluteEmpty(false).ConfigureLeftTopListeners(
+        var wb = new VisualElement().ConfigureAbsolute().ConfigureEmpty(false).ConfigureLeftTopListeners(
             n.CreateCenterOffsetChildX(new ConstantObservable<float>(0)),
             n.CreateCenterOffsetChildY(this.offsetter));
         n.HTML.Add(wb);
-        borderColor.Subscribe(a => wb.SetBorder(new Color(0.6f, 0f, 0.5f, a), 12));
+        borderColor.Subscribe(a => wb.SetBorder(
+            new Color(.812f, .545f, 0, a)
+            //new Color(0.6f, 0f, 0.5f, a)
+            , 10));
         w = new VisualElement().ConfigureEmpty(false);
         wb.Add(w);
         w.style.width = 160;
@@ -132,10 +139,9 @@ public class InteractableMimic : RenderedMimic, IFixedXMLReceiver {
     }
 
     public UIResult OnConfirm(UINode n) {
-        if (ServiceLocator.Find<ADVManager>().ADVState.Value == ADVManager.State.Investigation) {
-            OnLeave(n);
-            entity.OnClick();
-            return new UIResult.StayOnNode();
+        if (entity.InteractableStates.Contains(ServiceLocator.Find<ADVManager>().ADVState.Value)) {
+            //OnLeave(n); Implicitly called through UpdatePassthrough > MoveCursorAwayFromNode
+            return entity.OnClick(n) ?? new UIResult.StayOnNode();
         } else
             return new UIResult.StayOnNode(UIResult.StayOnNodeType.Silent);
     }
@@ -150,7 +156,7 @@ public class InteractableMimic : RenderedMimic, IFixedXMLReceiver {
         hoverActiveAction?.Dispose();
         hoverActiveAction = entity.Hover?.Enter(entity);
         offsetter.Push(bounce);
-        borderColor.Push(0.7f);
+        borderColor.Push(1f);
     }
 
     public void OnLeave(UINode n) {
@@ -178,11 +184,16 @@ public class InteractableMimic : RenderedMimic, IFixedXMLReceiver {
     }
 }
 
-public record InteractableAssertion(ADVManager Manager, Action OnClick, string ID) : 
+public record InteractableAssertion(ADVManager Manager, Func<UINode, UIResult?> OnClick, string ID) : 
     EntityAssertion<Interactable>(Manager.VNState, ID), IAssertion<InteractableAssertion> {
+    public InteractableAssertion(ADVManager manager, Action onClick, string id) : this(manager, _ => {
+        onClick();
+        return null;
+    }, id) { }
     public InteractableType Type { get; init; } = new InteractableType.Dialogue();
     public bool Exhausted { get; init; }
     public Interactable.HoverAction? Hover { get; init; }
+    public ADVManager.State[] InteractableStates { get; init; } = { ADVManager.State.Investigation };
 
     protected override void Bind(Interactable ie) {
         base.Bind(ie);
@@ -191,6 +202,7 @@ public record InteractableAssertion(ADVManager Manager, Action OnClick, string I
         ie.OnClick = OnClick;
         ie.Hover = Hover;
         ie.Type = Type;
+        ie.InteractableStates = InteractableStates;
     }
     
     Task IAssertion.Inherit(IAssertion prev) => AssertionHelpers.Inherit<InteractableAssertion>(prev, this);

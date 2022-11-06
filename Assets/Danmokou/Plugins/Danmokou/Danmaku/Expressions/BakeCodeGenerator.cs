@@ -385,7 +385,8 @@ private static {TypePrinter.Print(f.returnType)} {f.fnName}({string.Join(", ",
                 var val = (m is FieldInfo f) ? f.GetValue(go) : (m as PropertyInfo)!.GetValue(go);
                 if (ra.resultType != null) {
                     if (val is string[] strs)
-                        strs.ForEach(s => s.IntoIfNotNull(ra.resultType));
+                        foreach (var s in strs)
+                            s.IntoIfNotNull(ra.resultType);
                     else if (val is string str)
                         str.IntoIfNotNull(ra.resultType);
                     else if (val is RString rs)
@@ -400,16 +401,16 @@ private static {TypePrinter.Print(f.returnType)} {f.fnName}({string.Join(", ",
             }
         }
         Logs.Log("Loading GameObject reflection properties...");
-        AssetDatabase.FindAssets("t:GameObject")
-            .Select(AssetDatabase.GUIDToAssetPath)
-            .Select(AssetDatabase.LoadAssetAtPath<GameObject>)
-            .SelectMany(go => go.GetComponentsInChildren(typeof(Component)))
-            .ForEach(LoadReflected);
+        foreach (var o in AssetDatabase.FindAssets("t:GameObject")
+                    .Select(AssetDatabase.GUIDToAssetPath)
+                    .Select(AssetDatabase.LoadAssetAtPath<GameObject>)
+                    .SelectMany(go => go.GetComponentsInChildren(typeof(Component))))
+            LoadReflected(o);
         Logs.Log("Loading ScriptableObject reflection properties...");
-        AssetDatabase.FindAssets("t:ScriptableObject")
-            .Select(AssetDatabase.GUIDToAssetPath)
-            .Select(AssetDatabase.LoadAssetAtPath<ScriptableObject>)
-            .ForEach(LoadReflected);
+        foreach (var so in AssetDatabase.FindAssets("t:ScriptableObject")
+                    .Select(AssetDatabase.GUIDToAssetPath)
+                    .Select(AssetDatabase.LoadAssetAtPath<ScriptableObject>))
+            LoadReflected(so);
         Logs.Log("Loading TextAssets for reflection...");
         var textAssets = AssetDatabase.FindAssets("t:TextAsset", 
             GameManagement.References.scriptFolders.Prepend("Assets/Danmokou/Patterns").ToArray())

@@ -9,7 +9,8 @@ using UnityEngine;
 
 namespace Danmokou.VN {
 public class Youmu : SZYUCharacter {
-    public override Color TextColor => new(.76f, .93f, .80f);
+    public static System.Numerics.Vector3 SpeakIconOffset => new(1, 2, 0);
+    public override Color TextColor => new(.8f, .99f, .85f);
     public override Color UIColor => new(1, 1, 1);
     public override LString Name { get; set; } = LocalizedStrings.FindReference("dialogue.youmu");
     

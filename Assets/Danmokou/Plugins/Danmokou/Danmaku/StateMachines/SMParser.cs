@@ -66,7 +66,7 @@ public static class SMParser {
     public static Parser<T> Paren1<T>(Parser<T> p) {
         var p1 = Char(OPEN_ARG);
         var p2 = Char(CLOSE_ARG);
-        var err = new ParserError.Failure("This parentheses is not closed.");
+        var err = new ParserError.Failure("Expected parentheses to close here.");
         return inp => {
             var rp1 = p1(inp);
             if (!rp1.Result.Valid)
@@ -76,7 +76,7 @@ public static class SMParser {
                 return new(r.Result, r.Error, rp1.Start, r.End);
             var rp2 = p2(inp);
             if (!rp2.Result.Valid)
-                return new(Maybe<T>.None, new LocatedParserError(rp1.Start, err), rp1.Start, rp2.End);
+                return new(Maybe<T>.None, new LocatedParserError(rp2.Start, err), rp1.Start, rp2.End);
             return new(r.Result, r.Error, rp1.Start, rp2.End);
         };
     }

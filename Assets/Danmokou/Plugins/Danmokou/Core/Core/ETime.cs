@@ -64,7 +64,8 @@ public interface IRegularUpdater {
 
 public static class UpdatePriorities {
     public const int SOF = -100;
-    public const int SYSTEM = -40;
+    public const int SYSTEM = -80;
+    public const int UI = -60;
     public const int PLAYER = -30;
     public const int PLAYER2 = -29;
     public const int BM = -20;
@@ -322,24 +323,21 @@ public class ETime : MonoBehaviour {
         persistentEofInvokes.Add((act, state));
     public static void QueueEOFInvoke(Action act, EngineState state = EngineState.RUN) => eofInvokes.Enqueue((act, state));
 
-    private static readonly Queue<DeletionMarker<IRegularUpdater>> updaterAddQueue =
-        new Queue<DeletionMarker<IRegularUpdater>>();
+    private static readonly DMCompactingArray<IRegularUpdater> updaterAddQueue =
+        new();
 
     private static void FlushUpdaterAdds() {
-        while (updaterAddQueue.Count > 0) {
-            var dm = updaterAddQueue.Dequeue();
-            if (!dm.MarkedForDeletion) {
+        for (int ii = 0; ii < updaterAddQueue.Count; ++ii) {
+            if (updaterAddQueue.GetMarkerIfExistsAt(ii, out var dm)) {
                 dm.Value.FirstFrame();
                 updaters.AddPriority(dm);
             }
         }
+        updaterAddQueue.Empty();
     }
 
-    public static DeletionMarker<IRegularUpdater> RegisterRegularUpdater(IRegularUpdater iru) {
-        var dm = new DeletionMarker<IRegularUpdater>(iru, iru.UpdatePriority);
-        updaterAddQueue.Enqueue(dm);
-        return dm;
-    }
+    public static DeletionMarker<IRegularUpdater> RegisterRegularUpdater(IRegularUpdater iru) =>
+        updaterAddQueue.AddPriority(iru, iru.UpdatePriority);
 
 
     /// <summary>

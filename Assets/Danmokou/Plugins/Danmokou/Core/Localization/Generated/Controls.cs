@@ -19,13 +19,16 @@ public static partial class LocalizedStrings {
 			(Locales.JP, "低速移動"))
 			{ ID = "focus" };
 		
-		public static readonly LString fire = new LText("Fire")
+		public static readonly LString fire = new LText("Fire",
+			(Locales.JP, "ショット"))
 			{ ID = "fire" };
 		
-		public static readonly LString special = new LText("Special ability")
+		public static readonly LString special = new LText("Special ability",
+			(Locales.JP, "能力"))
 			{ ID = "special" };
 		
-		public static readonly LString swap = new LText("Swap characters")
+		public static readonly LString swap = new LText("Swap characters",
+			(Locales.JP, "自機変更"))
 			{ ID = "swap" };
 		
 		public static readonly LString left = new LText("Left",
@@ -44,21 +47,24 @@ public static partial class LocalizedStrings {
 			(Locales.JP, "下"))
 			{ ID = "down" };
 		
-		public static readonly LString confirm = new LText("Confirm")
+		public static readonly LString confirm = new LText("Confirm",
+			(Locales.JP, "決定"))
 			{ ID = "confirm" };
 		
 		public static readonly LString back = new LText("Back",
 			(Locales.JP, "戻る"))
 			{ ID = "back" };
 		
-		public static readonly LString pause = new LText("Pause")
+		public static readonly LString pause = new LText("Pause",
+			(Locales.JP, "ポーズ"))
 			{ ID = "pause" };
 		
 		public static readonly LString skip = new LText("Skip dialogue",
 			(Locales.JP, "スキップ"))
 			{ ID = "skip" };
 		
-		public static readonly LString backlog = new LText("Open backlog")
+		public static readonly LString backlog = new LText("Open backlog",
+			(Locales.JP, "バックログ"))
 			{ ID = "backlog" };
 		
 	}

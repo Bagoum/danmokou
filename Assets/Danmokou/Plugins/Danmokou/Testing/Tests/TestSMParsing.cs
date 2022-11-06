@@ -354,7 +354,7 @@ $apply56($add(!$, 4))
 + %x %z
 !}
 $add(4, 5)
-"), "Failed in parsing macro", "Line 2, Col 9", "Expected ')'");
+"), "Failed in parsing macro", "Line 2, Col 9", "Expected parentheses to close here.");
         Contains(FailString(@"
 !{ add(x, y)
 + %x %z

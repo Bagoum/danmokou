@@ -9,6 +9,11 @@ public class RunBGM : MonoBehaviour {
     public AudioTrack? bgm;
 
     private void Start() {
+        Rerun();
+    }
+    
+    [ContextMenu("Rerun")]
+    private void Rerun() {
         ServiceLocator.Find<IAudioTrackService>().InvokeBGM(bgm);
     }
 }

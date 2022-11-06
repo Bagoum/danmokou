@@ -10,8 +10,7 @@ namespace SuzunoyaUnity.UI {
 public class DMKDialogueBoxButton : DialogueBoxButton, IFixedXMLReceiver {
     private FixedXMLHelper xml = null!;
     
-    protected override void Awake() {
-        base.Awake();
+    private void Awake() {
         xml = GetComponent<FixedXMLHelper>();
     }
     
@@ -26,7 +25,7 @@ public class DMKDialogueBoxButton : DialogueBoxButton, IFixedXMLReceiver {
             if (b)
                 FastSetState(State | ButtonState.Hide);
             else
-                State &= (ButtonState.All ^ ButtonState.Hide);
+                State.Value &= (ButtonState.All ^ ButtonState.Hide);
         });
     }
     

@@ -12,11 +12,17 @@ using SuzunoyaUnity;
 
 namespace Danmokou.ADV {
 /// <summary>
-/// Contains all top-level metadata about an executing ADV instance.
+/// Contains all top-level metadata about an executing ADV instance that is not specific to the game.
 /// <br/>The actual execution process is handled by a game-specific <see cref="IExecutingADV"/>.
 /// </summary>
+/// <param name="Request"></param>
+/// <param name="VN"></param>
+/// <param name="eVN">Unity wrapper around <see cref="VN"/></param>
+/// <param name="Tracker">Cancellation token wrapping the ADV instance execution.</param>
 public record ADVInstance(ADVInstanceRequest Request, DMKVNState VN, ExecutingVN eVN, Cancellable Tracker) { 
+    /// <inheritdoc cref="ADVInstanceRequest.ADVData"/>
     public ADVData ADVData => Request.ADVData;
+    /// <inheritdoc cref="ADVInstanceRequest.Manager"/>
     public ADVManager Manager => Request.Manager;
     public void Cancel() {
         Tracker.Cancel();
@@ -39,8 +45,15 @@ public record ADVInstance(ADVInstanceRequest Request, DMKVNState VN, ExecutingVN
 /// is stored in a constructed <see cref="ADVInstance"/>.
 /// </summary>
 public class ADVInstanceRequest {
+    /// <inheritdoc cref="ADVManager"/>
     public ADVManager Manager { get; }
+    /// <summary>
+    /// Game definition.
+    /// </summary>
     public ADVGameDef Game { get; }
+    /// <summary>
+    /// Save data to lood from.
+    /// </summary>
     public ADVData ADVData { get; private set; }
     /// <summary>
     /// During loading, this contains the "true" save data,
@@ -83,7 +96,7 @@ public class ADVInstanceRequest {
 #else
     private
 #endif
-        async Task RunInScene() {
+    async Task RunInScene() {
         var Tracker = new Cancellable();
         var vn = new DMKVNState(Tracker, Game.key, ADVData.VNData);
         var evn = ServiceLocator.Find<IVNWrapper>().TrackVN(vn);

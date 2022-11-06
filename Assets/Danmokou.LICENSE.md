@@ -109,7 +109,28 @@ Images (Assets/Danmokou/Sprites)
 - [UI/trophy.png](https://pixabay.com/vectors/success-badge-trophy-award-winner-5974538/)
 - UI/pins/crow*: stock by Roy3D on [DeviantArt](https://www.deviantart.com/roy3d/art/Crows-2-PNG-Stock-412584565), modifications made.
 - UI/commense: Yukari sprites by [dairi](https://www.pixiv.net/en/users/4920496). Noncommercial use only. 
-- VN/characters/dairi_*: by dairi.
+- VN/Characters/dairi_*: by dairi.
+- VN/Backgrounds:
+  - Miscellaneous Unsplash users, credited as follows:
+    - [shrine-room.jpg](https://unsplash.com/photos/M9NTnUlNiEM)
+    - [shrine-courtyard.jpg](https://unsplash.com/photos/8ceNIk_TuiA)
+    - [town.jpg](https://unsplash.com/photos/O-SKMhBFu3k)
+    - [library.jpg](https://unsplash.com/photos/YLSwjSy7stw)
+    - [field.jpg](https://unsplash.com/photos/YhZt03_OJKs)
+    - [farm.jpg](https://unsplash.com/photos/QcBAZ7VREHQ)
+    - [flower](https://unsplash.com/photos/h7_SyoBhHF0)
+    - [forest-foggy](https://unsplash.com/photos/0K9H0yts_tE)
+    - [shrine2](https://unsplash.com/photos/2ULo-3qFDgY)
+    - [waterfall](https://pixabay.com/photos/waterfall-fall-epic-nature-light-7091641/)
+    - [misty-lake](https://pixabay.com/photos/lake-fog-mist-sunrise-grass-haze-5722650/)
+    - [bedroom-normal](https://pixabay.com/photos/bedroom-bed-apartment-room-416062/)
+    - [pool](https://pixabay.com/photos/pool-rain-water-surface-background-4332152/)
+  - Others:
+    - []
+- VN/Objects:
+  - [yellowlily.png](https://commons.wikimedia.org/wiki/File:Lilium_canadense_(lit).jpg): Public domain
+  - [yellowiris.png](https://commons.wikimedia.org/wiki/File:20140504Iris_pseudacorus2.jpg): CC0
+  - [fleurdelys.png](https://commons.wikimedia.org/wiki/File:Fleur_de_lys_(or).svg): CC-BY
 - items/gems*: under CC-BY from [Code Inferno Games (codeinferno.com)](https://opengameart.org/content/animated-spinning-gems)
 - player/focus: by Taisei Project (with modification).
 - bullets/straight-png/taisei_scythe: by Taisei Project (with modification).
@@ -117,24 +138,8 @@ Images (Assets/Danmokou/Sprites)
 
 Assets/Danmokou/MiniProjects
 - Cutins/Sprites: by dairi.
-- VN/Backgrounds/Sprites: miscellaneous Unsplash users, credited as follows:
-	- [shrine-room.jpg](https://unsplash.com/photos/M9NTnUlNiEM)
-	- [shrine-courtyard.jpg](https://unsplash.com/photos/8ceNIk_TuiA)
-	- [town.jpg](https://unsplash.com/photos/O-SKMhBFu3k)
-	- [library.jpg](https://unsplash.com/photos/YLSwjSy7stw)
-	- [field.jpg](https://unsplash.com/photos/YhZt03_OJKs)
-	- [farm.jpg](https://unsplash.com/photos/QcBAZ7VREHQ)
-	- [flower](https://unsplash.com/photos/h7_SyoBhHF0)
-	- [forest-foggy](https://unsplash.com/photos/0K9H0yts_tE)
-	- [shrine2](https://unsplash.com/photos/2ULo-3qFDgY)
-	- [waterfall](https://pixabay.com/photos/waterfall-fall-epic-nature-light-7091641/)
-	- [misty-lake](https://pixabay.com/photos/lake-fog-mist-sunrise-grass-haze-5722650/)
-	- [bedroom-normal](https://pixabay.com/photos/bedroom-bed-apartment-room-416062/)
-	- [pool](https://pixabay.com/photos/pool-rain-water-surface-background-4332152/)
+  - 
 - VN/Sprites:
-	- [yellowlily.png](https://commons.wikimedia.org/wiki/File:Lilium_canadense_(lit).jpg): Public domain
-	- [yellowiris.png](https://commons.wikimedia.org/wiki/File:20140504Iris_pseudacorus2.jpg): CC0
-	- [fleurdelys.png](https://commons.wikimedia.org/wiki/File:Fleur_de_lys_(or).svg): CC-BY
 
 Some image resources were created with patterns from http://www.sda.nagoya-cu.ac.jp/sa08m13/image.html 
 Some image resources were created with images from Unsplash. Here are all usages:

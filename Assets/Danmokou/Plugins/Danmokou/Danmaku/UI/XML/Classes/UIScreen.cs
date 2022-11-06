@@ -46,13 +46,15 @@ public class UIScreen {
     public Action? OnEnterStart { private get; init; }
     public Action? OnEnterEnd { private get; init; }
     /// <summary>
-    /// The menu container may define HTML background handling instead of being transparent.
+    /// The opacity of the HTML background image of the menu containing the uiScreen.
+    /// <br/>In the default setup, this is a block of dark color with opacity ~ 0.8 to lower contrast on the content behind the menu.
     /// <br/>The visibility of the menu's background is dependent on the current screen.
     /// </summary>
     public float MenuBackgroundOpacity { private get; set; }
     /// <summary>
-    /// The screen may have its own HTML background.
-    /// Note that for most cases, you want to use DMK backgrounds (see below).
+    /// The opacity of the HTML background image of the uiScreen.
+    /// <br/>In the default setup, this is a patterned background with opacity 1.
+    /// <br/>Note that in cases like main menus, you want to use DMK backgrounds (see <see cref="Background"/>).
     /// </summary>
     public float BackgroundOpacity { private get; set; }
     

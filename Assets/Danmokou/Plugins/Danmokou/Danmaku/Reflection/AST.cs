@@ -56,6 +56,11 @@ public interface IAST {
     /// Generate the object.
     /// </summary>
     object? EvaluateObject(ASTEvaluationData data) => throw new NotImplementedException();
+    
+    /// <summary>
+    /// Get all ASTs that are children to this one.
+    /// </summary>
+    IEnumerable<IAST> Children { get; }
 
     /// <summary>
     /// Return the furthest-down AST in the tree that encloses the given position,
@@ -116,6 +121,8 @@ public record ASTRuntimeCast<T>(IAST Source) : IAST<T> {
         result :
         throw new StaticException("Runtime AST cast failed");
 
+    public IEnumerable<IAST> Children => new[] { Source };
+
     public IEnumerable<(IAST, int?)>? NarrowestASTForPosition(PositionRange p)
         => Source.NarrowestASTForPosition(p);
 
@@ -135,6 +142,8 @@ public record ASTFmap<T, U>(Func<T, U> Map, IAST<T> Source) : IAST<U> {
     public List<AST.NestedFailure> Errors => Source.Errors;
     public bool IsUnsound => Source.IsUnsound;
     public U Evaluate(ASTEvaluationData data) => Map(Source.Evaluate(data));
+    
+    public IEnumerable<IAST> Children => new[] { Source };
 
     public IEnumerable<(IAST, int?)>? NarrowestASTForPosition(PositionRange p)
         => Source.NarrowestASTForPosition(p);
@@ -150,8 +159,9 @@ public record ASTFmap<T, U>(Func<T, U> Map, IAST<T> Source) : IAST<U> {
 }
 
 public abstract record AST(PositionRange Position, params IAST[] Params) : IAST {
+    public virtual IEnumerable<IAST> Children => Params;
     public ReflectDiagnostic[] Diagnostics { get; init; } = Array.Empty<ReflectDiagnostic>();
-    public virtual List<AST.NestedFailure> Errors {
+    public virtual List<NestedFailure> Errors {
         get {
             var errs = new List<NestedFailure>();
             int maxIndex = -1;
@@ -259,6 +269,10 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
 
     public abstract record BaseMethodInvoke(PositionRange Position, PositionRange MethodPosition,
         MethodSignature BaseMethod, params IAST[] Params) : AST(Position, Params), IAST {
+        /// <summary>
+        /// Whether the argument list is provided in parentheses (ie. as `func(arg1, arg2)` as opposed to `func arg1 arg2`).
+        /// </summary>
+        public bool Parenthesized { get; init; } = false;
         public override string Explain() => $"{CompactPosition} {BaseMethod.AsSignature}";
         public override DocumentSymbol ToSymbolTree() => MethodToSymbolTree(BaseMethod);
 
@@ -602,6 +616,7 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
     /// A failed AST parse.
     /// </summary>
     public record Failure(ReflectionException Exc, Type ReturnType) : AST(Exc.Position), IAST {
+        public override IEnumerable<IAST> Children => Basis == null ? Array.Empty<IAST>() : new[] { Basis };
         public Type ResultType => ReturnType;
         /// <summary>
         /// In the case when an error invalidates a certain block of code, this contains the object initially
@@ -641,6 +656,12 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
             new Failure(
                 new ReflectionException(src.Position, exc.Position, exc.Message, exc.InnerException)
                 , src.ResultType) { Basis = src };
+        
+        public static IAST<T> MaybeEnclose<T>(IAST<T> src, ReflectionException? exc) => exc == null ?
+            src :
+            new Failure<T>(
+                new ReflectionException(src.Position, exc.Position, exc.Message, exc.InnerException)) 
+                { Basis = src };
     }
 
     public record Failure<T>(ReflectionException Exc) : Failure(Exc, typeof(T)), IAST<T> {

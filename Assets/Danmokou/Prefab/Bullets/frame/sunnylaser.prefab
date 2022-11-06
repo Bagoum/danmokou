@@ -69,8 +69,13 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6730949535145078042, guid: 0a784eeed2c48cc4497011ac484eedd3,
         type: 3}
+      propertyPath: coldFrame
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 6730949535145078042, guid: 0a784eeed2c48cc4497011ac484eedd3,
+        type: 3}
       propertyPath: cycleSpeed
-      value: -1
+      value: -1.5
       objectReference: {fileID: 0}
     - target: {fileID: 6730949535145078042, guid: 0a784eeed2c48cc4497011ac484eedd3,
         type: 3}
@@ -124,7 +129,7 @@ PrefabInstance:
         type: 3}
       propertyPath: frames.Array.data[3].s
       value: 
-      objectReference: {fileID: 21300000, guid: 8852ad15a7973be479704b7b0b1bef10,
+      objectReference: {fileID: 21300000, guid: 4a93eb1c7e6d2704b850b7fafc975fba,
         type: 3}
     - target: {fileID: 6730949535145078042, guid: 0a784eeed2c48cc4497011ac484eedd3,
         type: 3}
@@ -176,18 +181,33 @@ PrefabInstance:
         type: 3}
     - target: {fileID: 6730949535145078042, guid: 0a784eeed2c48cc4497011ac484eedd3,
         type: 3}
+      propertyPath: frames.Array.data[1].time
+      value: 0.03
+      objectReference: {fileID: 0}
+    - target: {fileID: 6730949535145078042, guid: 0a784eeed2c48cc4497011ac484eedd3,
+        type: 3}
+      propertyPath: frames.Array.data[2].time
+      value: 0.03
+      objectReference: {fileID: 0}
+    - target: {fileID: 6730949535145078042, guid: 0a784eeed2c48cc4497011ac484eedd3,
+        type: 3}
+      propertyPath: frames.Array.data[3].time
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6730949535145078042, guid: 0a784eeed2c48cc4497011ac484eedd3,
+        type: 3}
       propertyPath: frames.Array.data[0].yscale
-      value: 1
+      value: 0.15
       objectReference: {fileID: 0}
     - target: {fileID: 6730949535145078042, guid: 0a784eeed2c48cc4497011ac484eedd3,
         type: 3}
       propertyPath: frames.Array.data[1].yscale
-      value: 1
+      value: 0.3
       objectReference: {fileID: 0}
     - target: {fileID: 6730949535145078042, guid: 0a784eeed2c48cc4497011ac484eedd3,
         type: 3}
       propertyPath: frames.Array.data[2].yscale
-      value: 1
+      value: 0.7
       objectReference: {fileID: 0}
     - target: {fileID: 6730949535145078042, guid: 0a784eeed2c48cc4497011ac484eedd3,
         type: 3}
@@ -201,28 +221,13 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6730949535145078042, guid: 0a784eeed2c48cc4497011ac484eedd3,
         type: 3}
+      propertyPath: frames.Array.data[5].yscale
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6730949535145078042, guid: 0a784eeed2c48cc4497011ac484eedd3,
+        type: 3}
       propertyPath: frames.Array.data[6].yscale
-      value: 0.8
-      objectReference: {fileID: 0}
-    - target: {fileID: 6730949535145078042, guid: 0a784eeed2c48cc4497011ac484eedd3,
-        type: 3}
-      propertyPath: frames.Array.data[7].yscale
-      value: 0.6
-      objectReference: {fileID: 0}
-    - target: {fileID: 6730949535145078042, guid: 0a784eeed2c48cc4497011ac484eedd3,
-        type: 3}
-      propertyPath: frames.Array.data[8].yscale
-      value: 0.4
-      objectReference: {fileID: 0}
-    - target: {fileID: 6730949535145078042, guid: 0a784eeed2c48cc4497011ac484eedd3,
-        type: 3}
-      propertyPath: frames.Array.data[9].yscale
-      value: 0.2
-      objectReference: {fileID: 0}
-    - target: {fileID: 6730949535145078042, guid: 0a784eeed2c48cc4497011ac484eedd3,
-        type: 3}
-      propertyPath: frames.Array.data[10].yscale
-      value: 0.11
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6730949535145078042, guid: 0a784eeed2c48cc4497011ac484eedd3,
         type: 3}

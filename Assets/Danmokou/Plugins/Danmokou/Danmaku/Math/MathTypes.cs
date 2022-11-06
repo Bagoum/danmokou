@@ -38,6 +38,10 @@ public class PICustomData {
         return dynamicKeyNames[(t, name)] = PICustomDataBuilder.Builder.GetVariableKey(name, t);
     }
     public int typeIndex;
+
+    //For culled bullets, sb.bpi.t points to a countdown from FADE_TIME to 0, and this points to the
+    // lifetime of the bullet, which is used to calculate direction.
+    public float culledBulletTime;
     
     //Late-bound variables, such as those created for state control in SS0 or onlyonce
     // In the DISABLE_TYPE_BUILDING case, this is used for all bound variables
@@ -213,6 +217,10 @@ public class PICustomData {
         }
     }
     
+    /// <summary>
+    /// Retrieve the variables defined in <see cref="boundVars"/> from <see cref="gcx"/>
+    ///  and set them on this object.
+    /// </summary>
     public void UploadAdd(IList<(Type, string)> boundVars, GenCtx gcx) {
         for (int ii = 0; ii < boundVars.Count; ++ii) {
             var (ext, varNameS) = boundVars[ii];
@@ -223,6 +231,10 @@ public class PICustomData {
 
     //Use for unscoped cases (bullet controls) only! Otherwise it's redundant
     // as the value will always be defined
+    /// <summary>
+    /// Create an expression that retrieves a field with name <see cref="name"/> and type <see cref="T"/>
+    ///  if it exists, else returns <see cref="deflt"/>.
+    /// </summary>
     public static Ex GetIfDefined<T>(TExArgCtx tac, string name, TEx<T> deflt) {
         if (PICustomDataBuilder.DISABLE_TYPE_BUILDING)
             return GetValueDynamic(tac, name, deflt);
@@ -236,6 +248,11 @@ public class PICustomData {
             deflt);
     }
 
+    /// <summary>
+    /// Create an expression that retrieves a field with name <see cref="name"/>.
+    /// <br/>If the subclass of <see cref="PICustomData"/> is known, then does this by direct field access,
+    /// otherwise uses the ReadT jumptable lookup.
+    /// </summary>
     public static Ex GetValue(TExArgCtx tac, Type t, string name) =>
         PICustomDataBuilder.DISABLE_TYPE_BUILDING ?
             GetValueDynamic(tac, t, name) :
@@ -251,9 +268,18 @@ public class PICustomData {
                         Ex.Constant(Metadata.GetVariableKey(name, t)))
                 ;
 
+    /// <summary>
+    /// <inheritdoc cref="GetValue"/>
+    /// </summary>
     public static Ex GetValue<T>(TExArgCtx tac, string name) =>
         GetValue(tac, typeof(T), name);
 
+    
+    /// <summary>
+    /// Create an expression that sets the value of a field with name <see cref="name"/>.
+    /// <br/>If the subclass of <see cref="PICustomData"/> is known, then does this by direct field access,
+    /// otherwise uses the WriteT jumptable lookup.
+    /// </summary>
     public static Ex SetValue(TExArgCtx tac, Type t, string name, Ex val) =>
         PICustomDataBuilder.DISABLE_TYPE_BUILDING ?
             SetValueDynamic(tac, t, name, val) :
@@ -267,6 +293,9 @@ public class PICustomData {
                     Ex.Constant(Metadata.GetVariableKey(name, t)),
                     val);
 
+    /// <summary>
+    /// <inheritdoc cref="SetValue"/>
+    /// </summary>
     public static Ex SetValue<T>(TExArgCtx tac, string name, Ex val) =>
         SetValue(tac, typeof(T), name, val);
     

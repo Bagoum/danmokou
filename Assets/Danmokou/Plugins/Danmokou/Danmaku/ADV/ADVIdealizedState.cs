@@ -17,11 +17,11 @@ public enum RunOnEntryVNPriority {
     MAP_ENTER = 1
 }
 public record ADVIdealizedState : IdealizedState {
-    private ADVInstance inst;
+    private IExecutingADV inst;
     private (BoundedContext<Unit> bctx, RunOnEntryVNPriority priority)? runOnEnterVN;
     public bool HasEntryVN => runOnEnterVN != null;
     
-    public ADVIdealizedState(ADVInstance inst) {
+    public ADVIdealizedState(IExecutingADV inst) {
         this.inst = inst;
         Assert(new RunOnEntryAssertion(EntryTask) {
             Priority = (int.MaxValue, int.MaxValue)

@@ -6,10 +6,10 @@ from PIL import Image
 src = "img/stand-source/"
 out = "img/stand-output/"
 
-left = 212
-left2 = 516
-top = 4
-top2 = 364
+left = 300
+left2 = 592
+top = 84
+top2 = 400
 
 
 def convert(fromfile, tofile):
@@ -23,5 +23,6 @@ def convert(fromfile, tofile):
 def main():
     for f in os.listdir(src):
         convert(src + f, out + f)
+    print("ADV sprites bounds: %d %d %d %d" % (left, left2, top, top2))
 
 main()

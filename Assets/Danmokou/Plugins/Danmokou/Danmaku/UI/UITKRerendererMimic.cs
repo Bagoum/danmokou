@@ -12,6 +12,7 @@ public class UITKRerenderer : Rendered {
 
     public UITKRerenderer(int uitkRenderGroup) : base() {
         this.UITKRenderGroup = uitkRenderGroup;
+        UseSortingIDAsReference = false;
     }
 }
 /// <summary>

@@ -344,12 +344,14 @@ public static partial class XMLUtils {
                 Prefab = GameManagement.UXMLPrefabs.HeaderNode,
                 ShowHideGroup = new UIColumn(new UIRenderConstructed(s, Prefabs.UIScreenColumn, 
                     (_, ve) => ve.style.maxWidth = new Length(60, LengthUnit.Percent)),
-                    new OptionNodeLR<float>(bgm_volume, SaveData.s.BGMVolume.OnNext, 21.Range().Select(x =>
-                        ((LString)$"{x * 10}", x / 10f)).ToArray(), SaveData.s.BGMVolume),
-                    new OptionNodeLR<float>(sfx_volume, v => { SaveData.s.SEVolume = v; }, 21.Range().Select(x =>
-                        ((LString)$"{x * 10}", x / 10f)).ToArray(), SaveData.s.BGMVolume),
-                    new OptionNodeLR<float>("Dialogue Typing Volume", v => { SaveData.s.VNTypingSoundVolume = v; }, 21.Range().Select(x =>
-                        ((LString)$"{x * 10}", x / 10f)).ToArray(), SaveData.s.VNTypingSoundVolume)
+                    new OptionNodeLR<float>(master_volume, SaveData.s.MasterVolume.OnNext, 21.Range().Select(x =>
+                        ((LString)$"{x * 10}", x / 10f)).ToArray(), SaveData.s.MasterVolume),
+                    new OptionNodeLR<float>(bgm_volume, SaveData.s._BGMVolume.OnNext, 21.Range().Select(x =>
+                        ((LString)$"{x * 10}", x / 10f)).ToArray(), SaveData.s._BGMVolume),
+                    new OptionNodeLR<float>(sfx_volume, SaveData.s._SEVolume.OnNext, 21.Range().Select(x =>
+                        ((LString)$"{x * 10}", x / 10f)).ToArray(), SaveData.s._SEVolume),
+                    new OptionNodeLR<float>("Dialogue Typing Volume", SaveData.s._VNTypingSoundVolume.OnNext, 21.Range().Select(x =>
+                        ((LString)$"{x * 10}", x / 10f)).ToArray(), SaveData.s._VNTypingSoundVolume)
                 )
             }, controlsGroup
         }));
@@ -608,8 +610,8 @@ public static partial class XMLUtils {
             .SelectMany(p => p.shots2)
             .Select(s2 => s2.shot)) {
             if (sc.prefab != null)
-                sc.prefab.GetComponentsInChildren<FireOption>()
-                    .ForEach(fo => fo.Preload());
+                foreach (var fo in sc.prefab.GetComponentsInChildren<FireOption>())
+                    fo.Preload();
         }
         PlayerController? demoPlayer = null;
         Cancellable? demoCT = null;

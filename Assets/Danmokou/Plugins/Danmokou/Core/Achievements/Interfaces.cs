@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reactive;
 using System.Runtime.CompilerServices;
+using BagoumLib;
 using BagoumLib.Culture;
 using BagoumLib.Events;
 using Danmokou.Core;
@@ -37,8 +38,8 @@ public abstract class Requirement : IRequirementWatcher {
     // the tree from the top-down is re-checked once. 
     public void RequirementUpdated() => watcher?.RequirementUpdated();
 
-    protected void Listen<T, E>(EventProxy<T> obj, Func<T, IBObservable<E>> ev) => 
-        obj.Subscribe(ev, _ => RequirementUpdated());
+    protected void Listen<T, E>(IObservable<T> obj, Func<T, IObservable<E>> ev) =>
+        obj.BindSubscribe(ev, _ => RequirementUpdated());
     protected void Listen(IObservable<Unit> ev) => ev.Subscribe(_ => RequirementUpdated());
     protected void Listen<T>(IBObservable<T> ev) => ev.Subscribe(_ => RequirementUpdated());
 

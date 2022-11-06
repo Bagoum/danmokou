@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reactive;
+using BagoumLib;
 using BagoumLib.DataStructures;
 using BagoumLib.Events;
 using Danmokou.Core;
@@ -9,7 +10,7 @@ using UnityEngine;
 namespace Danmokou.Behavior {
 public abstract class RegularUpdater : MonoBehaviour, IRegularUpdater {
     protected readonly List<IDisposable> tokens = new List<IDisposable>();
-    protected bool Enabled => tokens.Count > 0;
+    protected bool Enabled { get; private set; } = false;
 
     /// <summary>
     /// Safe to call twice.
@@ -18,6 +19,7 @@ public abstract class RegularUpdater : MonoBehaviour, IRegularUpdater {
         if (!Enabled) {
             tokens.Add(ETime.RegisterRegularUpdater(this));
             BindListeners();
+            Enabled = true;
         }
     }
 
@@ -25,11 +27,11 @@ public abstract class RegularUpdater : MonoBehaviour, IRegularUpdater {
 
     protected virtual void BindListeners() { }
 
-    protected void Listen<T, E>(EventProxy<T> obj, Func<T, IObservable<E>> ev, Action<E> sub) {
-        tokens.Add(obj.Subscribe(ev, sub));
+    protected void Listen<T, E>(IObservable<T> obj, Func<T, IObservable<E>> ev, Action<E> sub) {
+        tokens.Add(obj.BindSubscribe(ev, sub));
     }
-    protected void Listen<T>(EventProxy<T> obj, Func<T, IObservable<Unit>> ev, Action sub) {
-        tokens.Add(obj.Subscribe(ev, _ => sub()));
+    protected void Listen<T>(IObservable<T> obj, Func<T, IObservable<Unit>> ev, Action sub) {
+        tokens.Add(obj.BindSubscribe(ev, _ => sub()));
     }
     protected void Listen<T>(IObservable<T> ev, Action<T> sub) {
         tokens.Add(ev.Subscribe(sub));
@@ -55,10 +57,8 @@ public abstract class RegularUpdater : MonoBehaviour, IRegularUpdater {
     /// Safe to call twice.
     /// </summary>
     protected void DisableUpdates() {
-        for (int ii = 0; ii < tokens.Count; ++ii) {
-            tokens[ii].Dispose();
-        }
-        tokens.Clear();
+        tokens.DisposeAll();
+        Enabled = false;
     }
 
     protected virtual void OnDisable() => DisableUpdates();

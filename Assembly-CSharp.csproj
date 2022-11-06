@@ -103,6 +103,7 @@
      <None Include="Assets\Danmokou\Patterns\Testing\Control Batching Test.txt" />
      <None Include="Assets\Danmokou\Patterns\Testing\GCXP Sequential GTR Test.txt" />
      <None Include="Assets\Danmokou\MiniProjects\WebGL Demo\070 dynamic lasers.txt" />
+     <None Include="Assets\Danmokou\Rendering\Shaders\Display\BG\EbbFlowFire.shader" />
      <None Include="Assets\Danmokou\UXML\structures\Markdown\MkLineFragmentLink.uxml" />
      <None Include="Assets\Danmokou\Patterns\Testing\Global Slow Test.txt" />
      <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF SSD.shader" />
@@ -110,6 +111,7 @@
      <None Include="Assets\Danmokou\Rendering\Shaders\Display\Mandelbrot.shader" />
      <None Include="Assets\SiMP\Dialogue\simp.dialogue.e-bad.txt" />
      <None Include="Assets\Danmokou\Patterns\Testing\Bank Test.txt" />
+     <None Include="Assets\SZYU\Plugins\DLLs\BagoumLib.xml" />
      <None Include="Assets\Danmokou\SO\Shots\Replays\test1.dat.txt" />
      <None Include="Assets\Danmokou\Rendering\Shaders\Display\PowerAura.shader" />
      <None Include="Assets\Danmokou\MiniProjects\Dialogue\bha3.dialogue.2.txt" />
@@ -147,6 +149,7 @@
      <None Include="Assets\csc.rsp" />
      <None Include="Assets\BRuH\Scripts\tokiko.txt" />
      <None Include="Assets\BRuH\Dialogue\en\sagume.1.txt" />
+     <None Include="Assets\SZYU\Plugins\DLLs\Mizuhashi.xml" />
      <None Include="Assets\SZYU\Fonts\ubuntu-font-family-0.83\CONTRIBUTING.txt" />
      <None Include="Assets\BRuH\Dialogue\en\sagume.2.txt" />
      <None Include="Assets\Danmokou\Rendering\Shaders\Display\Radial2.shader" />
@@ -199,6 +202,7 @@
      <None Include="Assets\Danmokou\UXML\nodes\UINode Floating.uxml" />
      <None Include="Assets\Danmokou\Rendering\Shaders\_ROOT.shader" />
      <None Include="Assets\Danmokou\Patterns\Testing\SummonAlong Test.txt" />
+     <None Include="Assets\SZYU\Plugins\DLLs\FluentIL.xml" />
      <None Include="Assets\TextMesh Pro\Shaders\TMPro_Properties.cginc" />
      <None Include="Assets\SZYU\Fonts\ubuntu-font-family-0.83\TRADEMARKS.txt" />
      <None Include="Assets\Danmokou\Rendering\Shaders\WIP\Basic Raw.shader" />
@@ -246,6 +250,7 @@
      <None Include="Assets\PCG\Patterns\stage_layer_dev.txt" />
      <None Include="Assets\Danmokou\Patterns\Testing\GTR1 Test.txt" />
      <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Mobile Masking.shader" />
+     <None Include="Assets\SZYU\Plugins\DLLs\Suzunoya.xml" />
      <None Include="Assets\Danmokou\UXML\structures\Row NoStretch.uxml" />
      <None Include="Assets\Danmokou\Kenney\License.txt" />
      <None Include="Assets\Danmokou\Rendering\Shaders\Display\BG\Fragment Indirect.shader" />

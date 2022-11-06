@@ -9,7 +9,8 @@ using UnityEngine;
 
 namespace Danmokou.VN {
 public class Marisa : SZYUCharacter {
-    public override Color TextColor => new(.96f, .92f, .79f);
+    public static System.Numerics.Vector3 SpeakIconOffset => new(1, 1.7f, 0);
+    public override Color TextColor => new(.97f, .93f, .82f);
     public override Color UIColor => new(1, .77f, .26f);
     public override LString Name { get; set; } = LocalizedStrings.FindReference("dialogue.marisa");
     

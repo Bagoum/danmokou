@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reactive;
 using System.Threading.Tasks;
 using BagoumLib;
 using BagoumLib.Assertions;
@@ -45,6 +46,11 @@ public record MapStateManager<I, D>(Func<I> Constructor) : IMapStateManager, IDi
     private readonly List<Action<GenericAssert, D>> genericAsserts = new();
     private readonly List<IDisposable> tokens = new();
     public string CurrentMap { get; private set; } = "";
+    /// <summary>
+    /// Triggered right after a map is end-state deactualized because <see cref="CurrentMap"/> changed.
+    /// <br/>With default handling in <see cref="ADVIdealizedState"/>, the screen will be faded out at this time.
+    /// </summary>
+    public Event<Unit> MapEndStateDeactualized { get; } = new();
     public I CurrentMapState => mapStates[CurrentMap].State;
     ADVIdealizedState IMapStateManager.CurrentMapState => CurrentMapState;
     
@@ -77,6 +83,7 @@ public record MapStateManager<I, D>(Func<I> Constructor) : IMapStateManager, IDi
         if (newCurrentMap != CurrentMap && mapStates.TryGetValue(CurrentMap, out var s)) {
             Logs.Log($"As the map has changed, the current map {CurrentMap} will be end-state deactualized.");
             await s.State.DeactualizeOnEndState();
+            MapEndStateDeactualized.OnNext(default);
         }
         var generics = new Dictionary<string, List<IAssertion>>();
         void GenericAsserter(string map, params IAssertion[] assertions) {

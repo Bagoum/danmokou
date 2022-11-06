@@ -86,6 +86,10 @@ public static partial class Reflector {
         public static ReflCtx Neutral = new ReflCtx();
     }
 
+    public record ASTArrayFill(IAST[] ASTs, PositionRange? ArgRange) {
+        public bool Parenthesized { get; set; }
+        public ReflectionException? Error { get; set; }
+    }
 
     /// <summary>
     /// Fill the argument array invoke_args by parsing elements from q according to type information in prms.
@@ -95,7 +99,7 @@ public static partial class Reflector {
     /// <param name="sig">Type information of arguments.</param>
     /// <param name="q">Queue from which to parse elements.</param>
     /// <returns>Filled array of ASTs, range covered by the ASTs, and an exception that should enclose the caller if nonnull.</returns>
-    public static (IAST[] asts, PositionRange? argRange, ReflectionException? fail) FillASTArray(IAST[] asts, int starti, MethodSignature sig, IParseQueue q) {
+    public static ASTArrayFill FillASTArray(IAST[] asts, int starti, MethodSignature sig, IParseQueue q) {
         int nargs = sig.ExplicitParameterCount(starti);
         var prms = sig.Params;
         if (nargs == 0) {
@@ -104,11 +108,11 @@ public static partial class Reflector {
                 if (q.MaybeGetCurrentUnit(out _) is SMParser.ParsedUnit.Paren p) {
                     if (p.Items.Length == 0) {
                         q.Advance();
-                        return (asts, p.Position, null);
+                        return new(asts, p.Position);
                     }
                 }
             }
-            return (asts, null, null);
+            return new(asts, null);
         }
         if (!(q is ParenParseQueue)) {
             if (q.MaybeGetCurrentUnit(out _) is SMParser.ParsedUnit.Paren p && p.Items.Length == 1 && nargs != 1) {
@@ -129,9 +133,10 @@ public static partial class Reflector {
             } else {
                 bool ThrowEmpty(IParseQueue lq) {
                     if (lq.Empty) {
+                        var endP = lq.PositionUpToCurrentObject.End;
+                        
                         asts[ii] = new AST.Failure(
-                            //The ran-out-of-text e
-                            new ReflectionException(lq.PositionUpToCurrentObject, lq.WrapThrow(
+                            new ReflectionException(new(endP, endP.Increment()), lq.WrapThrow(
                             $"Tried to construct {q.AsFileLink(sig)}, but the parser ran out of text when looking for argument " +
                             $"#{ii + 1}/{prms.Length} {prms[ii].SimplifiedDescription}. " +
                             "This probably means you have parentheses that do not enclose the entire function.") +
@@ -166,11 +171,14 @@ public static partial class Reflector {
         } else if (q.HasLeftovers(out var qpi))
             fail = q.WrapThrowLeftovers(qpi, 
                 $"{q.AsFileLink(sig)} has extra text after all {prms.Length} arguments.");
-        return (asts, q is ParenParseQueue pq ? pq.Position : asts.ToRange(), fail);
+        return new(asts, q is ParenParseQueue pq ? pq.Position : asts.ToRange()) {
+            Error = fail,
+            Parenthesized = q is ParenParseQueue
+        };
     }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static (IAST[] asts, PositionRange? argRange, ReflectionException? fail) FillASTArray(MethodSignature sig, IParseQueue q)
+    private static ASTArrayFill FillASTArray(MethodSignature sig, IParseQueue q)
         => FillASTArray(new IAST[sig.Params.Length], 0, sig, q);
 
     
@@ -461,9 +469,9 @@ public static partial class Reflector {
     private static IAST? ReflectMethod(SMParser.ParsedUnit.Str member, Type rt, IParseQueue q) {
         if (TryGetSignature(member.Item, rt) is { } sig) {
             q.Advance();
-            var (args, argsLoc, err) = FillASTArray(sig, q);
+            var fill = FillASTArray(sig, q);
             return AST.Failure.MaybeEnclose(
-                sig.ToAST(member.Position.Merge(argsLoc ?? member.Position), member.Position, args), err);
+                sig.ToAST(member.Position.Merge(fill.ArgRange ?? member.Position), member.Position, fill.ASTs, fill.Parenthesized), fill.Error);
         }
         return null;
     }

@@ -35,12 +35,21 @@ public partial class BulletManager {
         AddToken(renderPropsTintCBP);
         AddToken(renderPropsRecolorCBP);
     }
+    /// <summary>
+    /// Struct passed to simple bullet instanced rendering containing per-bullet critical information.
+    /// </summary>
+    [StructLayout(LayoutKind.Sequential)]
     private struct RenderProperties {
         public Vector2 position;
         public Vector2 direction;
         public float time;
         public static readonly int Size = UnsafeUtility.SizeOf<RenderProperties>();
     }
+    /// <summary>
+    /// Struct passed to simple bullet instanced rendering containing per-bullet recolorizable pool information.
+    /// <br/>Only passed for recolorizable pools.
+    /// </summary>
+    [StructLayout(LayoutKind.Sequential)]
     private struct RenderPropertiesRecolor {
         public Vector4 recolorB;
         public Vector4 recolorW;
@@ -180,7 +189,7 @@ public partial class BulletManager {
         private readonly List<SimpleBulletCollection> targetList;
         public int temp_last;
         /// <summary>
-        /// Copied pools have this set
+        /// Copied pools (including player pools) have this set
         /// </summary>
         private SimpleBulletCollection? original;
         private CulledBulletCollection? culled;
@@ -194,7 +203,9 @@ public partial class BulletManager {
         public bool SubjectToAutocull =>
             !IsPlayer && MetaType == CollectionType.Normal;
         public bool IsCopy => original != null;
-        public CulledBulletCollection Culled => original?.Culled ?? (culled ??= new CulledBulletCollection(this));
+        //Player bullets need their own culled pools to handle the opacity multiplier
+        public CulledBulletCollection Culled => 
+            (IsPlayer ? null : original)?.Culled ?? (culled ??= new CulledBulletCollection(this));
         
         public SimpleBulletCollection(List<SimpleBulletCollection> target, BulletInCode bc) : base(1, 128) {
             this.BC = bc;
@@ -295,6 +306,8 @@ public partial class BulletManager {
         /// </summary>
         [UsedImplicitly]
         public void TransferFrom(SimpleBulletCollection sbc, int ii) {
+            //TODO this could theoretically be optimized to actually transfer the SimpleBullet
+            // instead of creating a new one and destroying the original
             var sb = new SimpleBullet(ref sbc[ii]);
             Add(ref sb, false);
             sbc.DeleteSB(ii);
@@ -561,6 +574,7 @@ public partial class BulletManager {
                                     fci[ff].enemy.QueuePlayerDamage(de.data.bossDmg, de.data.stageDmg, de.firer);
                                     fci[ff].enemy.ProcOnHit(de.data.effect, sbn.bpi.loc);
                                     if (BC.destructible) {
+                                        MakeCulledCopy(ii);
                                         DeleteSB_Collision(ii);
                                         break;
                                     }
@@ -824,9 +838,17 @@ public partial class BulletManager {
                 if (!rem[ii]) {
                     ref SimpleBullet sbn = ref Data[ii];
                     //yes, it's supposed to be minus, we are going backwards to get fadeout effect
-                    sbn.bpi.t -= ETime.FRAME_TIME;
-                    if (sbn.bpi.t < 0) {
+                    var fadeTime = sbn.bpi.t - ETime.FRAME_TIME;
+                    if (fadeTime < 0) {
                         DeleteSB(ii);
+                    } else {
+                        sbn.bpi.ctx.culledBulletTime += ETime.FRAME_TIME;
+                        //We only update direction, not scale/movement
+                        if (sbn.dirFunc != null) {
+                            sbn.bpi.t = sbn.bpi.ctx.culledBulletTime;
+                            sbn.direction = sbn.dirFunc(ref sbn);
+                        }
+                        sbn.bpi.t = fadeTime;
                     }
                 }
             }
@@ -839,8 +861,8 @@ public partial class BulletManager {
         public void AddCulled(ref SimpleBullet sb) {
             Activate();
             var sbn = new SimpleBullet(ref sb);
+            sbn.bpi.ctx.culledBulletTime = sbn.bpi.t;
             sbn.bpi.t = Math.Min(sbn.bpi.t, Fade.MaxTime);
-            //scale/dir/etc remain the same.
             base.Add(ref sbn, false);
         }
 

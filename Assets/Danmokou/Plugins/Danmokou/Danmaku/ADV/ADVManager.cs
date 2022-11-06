@@ -29,7 +29,7 @@ public class ADVManager : CoroutineRegularUpdater {
 
     public static ADVReferences ADVReferences => GameManagement.References.advReferences!;
     public ADVData ADVData => ExecAdv!.ADVData;
-    public DMKVNState VNState => ExecAdv!.vn;
+    public DMKVNState VNState => ExecAdv!.VN;
     public IExecutingADV? ExecAdv { get; private set; }
     public DisturbedEvented<State> ADVState { get; } = new DisturbedFold<State>(State.Investigation, 
         (x, y) => (x > y) ? x : y);
@@ -64,7 +64,7 @@ public class ADVManager : CoroutineRegularUpdater {
 
     public ADVData GetSaveReadyADVData() {
         VNState.UpdateInstanceData();
-        //If saving within VN execution, then use the unmodified save data for safety
+        //If saving within an unlocateable VN execution, then use the unmodified save data for safety
         if (VNState.InstanceData.Location is null && ADVData.UnmodifiedSaveData is not null) {
             return ADVData.GetUnmodifiedSaveData() ?? throw new Exception("Couldn't load unmodified save data");
         }
@@ -88,6 +88,7 @@ public class ADVManager : CoroutineRegularUpdater {
             throw new Exception($"Executing a top-level VN segment {task.ID} when one is already active");
         if (ADVData.UnmodifiedSaveData != null)
             throw new Exception($"Executing a top-level VN segment {task.ID} when unmodifiedSaveData is non-null");
+        vn.ResetInterruptStatus();
         var inst = ExecAdv ?? throw new Exception();
         (VNState.MainDialogue as ADVDialogueBox)?.MinimalState.PublishIfNotSame(allowParallelInvestigation);
         using var _ = ADVState.AddConst(allowParallelInvestigation ? State.Investigation : State.Dialogue);
@@ -104,6 +105,7 @@ public class ADVManager : CoroutineRegularUpdater {
                 Logs.LogException(e);
             throw;
         } finally {
+            vn.ResetInterruptStatus();
             ADVData.UnmodifiedSaveData = null;
             Logs.Log($"Completed VN segment {task.ID}. Final state: {inst.Inst.Tracker.ToCompletion()}");
             //TODO: require a smarter way to handle "reverting to previous state"

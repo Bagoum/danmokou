@@ -57,7 +57,7 @@ public static class CompilerHelpers {
 
     public static D CompileExpressionToDelegate<D>(this TEx expr, TExArgCtx tac, params TExArgCtx.Arg[] args) =>
         expr.BakeAndCompile<D>(tac,
-            args.Select(a => ((Expression)a.expr) as ParameterExpression ?? null).NotNull().ToArray());
+            args.Select(a => ((Expression)a.expr) as ParameterExpression ?? null).FilterNone().ToArray());
 
     public static D CompileDelegateLambda<D>(Func<TExArgCtx, TEx> exConstructor, params TExArgCtx.Arg[] args) where D : Delegate => ConstructExpression(out var tac, exConstructor, args).CompileExpressionToDelegate<D>(tac, args);
 

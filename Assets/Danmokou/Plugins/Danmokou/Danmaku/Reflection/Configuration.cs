@@ -89,10 +89,10 @@ public static partial class Reflector {
             Record(repo, returnType, BindingFlags.Static | BindingFlags.Public);
         
         private static void Record(Type repo, Type? returnType, BindingFlags flags) {
-            repo
-                .GetMethods(flags)
-                .Where(mi => returnType == null || mi.ReturnType == returnType)
-                .ForEach(RecordMethod);
+            foreach (var m in repo
+                         .GetMethods(flags)
+                         .Where(mi => returnType == null || mi.ReturnType == returnType))
+                RecordMethod(m);
         }
 
         private static void RecordMethod(MethodInfo mi) {

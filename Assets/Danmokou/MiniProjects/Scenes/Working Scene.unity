@@ -999,13 +999,13 @@ PrefabInstance:
         type: 3}
       propertyPath: defaultShots.Array.data[0]
       value: 
-      objectReference: {fileID: 11400000, guid: b0a37e95f0d7c1c47a93f648e065a61e,
+      objectReference: {fileID: 11400000, guid: e89357d08e40831458970df574a4eb13,
         type: 2}
     - target: {fileID: 3290238121844968753, guid: cd77fcd8b4e4d41489479fb8f6de0a18,
         type: 3}
       propertyPath: defaultShots.Array.data[1]
       value: 
-      objectReference: {fileID: 11400000, guid: e89357d08e40831458970df574a4eb13,
+      objectReference: {fileID: 11400000, guid: b0a37e95f0d7c1c47a93f648e065a61e,
         type: 2}
     - target: {fileID: 3290238121844968753, guid: cd77fcd8b4e4d41489479fb8f6de0a18,
         type: 3}
