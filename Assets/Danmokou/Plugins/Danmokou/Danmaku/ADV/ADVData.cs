@@ -75,7 +75,7 @@ public record SerializedSave {
 
     public SerializedSave(ADVData data, DateTime saveTime, Texture2D tex, int slot, string descr) {
         //this.data = data;
-        GameIdentifier = GameManagement.References.gameIdentifier;
+        GameIdentifier = GameManagement.References.gameDefinition.Key;
         SaveTime = saveTime;
         Filename = $"{slot.PadLZero(3)}-{SaveTime.FileableTime()}";
         FileUtils.WriteJson($"{SaveLocationNoExt}.dat", data);

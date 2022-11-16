@@ -53,7 +53,7 @@ public class ADVManager : CoroutineRegularUpdater {
     }
 
     public bool RunCampaign(ADVGameDef gameDef, ADVData advData) =>
-        new ADVInstanceRequest(this, gameDef, advData).Run();
+        new ADVInstanceRequest(this, gameDef, advData).Run(GameManagement.References.mainMenu) is { };
 
     /// <summary>
     /// Restart the currently executing game with a different <see cref="ADVData"/>.

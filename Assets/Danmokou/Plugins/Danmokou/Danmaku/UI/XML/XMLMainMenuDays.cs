@@ -53,8 +53,9 @@ public class XMLMainMenuDays : XMLMainMenu {
         DifficultyNodes(d => new FuncNode(d.Describe(), map(d)));
 
     public override void FirstFrame() {
+        var game = References.SceneGameDef;
         FixedDifficulty dfc = FixedDifficulty.Normal;
-        var defaultPlayer = References.dayCampaign!.players[0];
+        var defaultPlayer = game.DayCampaign.players[0];
         var defaultShot = defaultPlayer.shots2[0];
         var defaultSupport = defaultPlayer.supports[0];
 

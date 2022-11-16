@@ -93,7 +93,7 @@ public class FireOption : BehaviorEntity {
         if (!string.IsNullOrWhiteSpace(spriteRotation)) rotator = ReflWrap<BPY>.Wrap(spriteRotation);
         if (!string.IsNullOrWhiteSpace(freeAngleOffset)) freeAngle = ReflWrap<BPY>.Wrap(freeAngleOffset);
         if (!string.IsNullOrWhiteSpace(focusAngleOffset)) focusAngle = ReflWrap<BPY>.Wrap(focusAngleOffset);
-        lastPower = currPower = Math.Min(freeOffsetPower.Length - 1, GameManagement.Instance.PowerIndex);
+        lastPower = currPower = Math.Min(freeOffsetPower.Length - 1, GameManagement.Instance.PowerF.PowerIndex);
         SetLocation();
     }
 
@@ -114,7 +114,7 @@ public class FireOption : BehaviorEntity {
 
     private Vector3 SelectByPower(TP3[] powers, TP3 otherwise) {
         if (powers.Length == 0) return otherwise(bpi);
-        int index = Math.Min(powers.Length - 1, GameManagement.Instance.PowerIndex);
+        int index = Math.Min(powers.Length - 1, GameManagement.Instance.PowerF.PowerIndex);
         if (index != currPower) {
             lastPower = currPower;
             currPower = index;

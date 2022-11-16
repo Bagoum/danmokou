@@ -25,6 +25,25 @@ The following features are planned for future releases.
 
 
 
+# v10.0.0 
+
+#### Features
+
+- In order to increase the modularity of supported game mechanics, mechanics are now handled by an abstraction `IInstanceFeature` that can be slotted into `InstanceData`. `IInstanceFeature` has methods that are called upon certain game events; for example, the method `OnGraze` is called when the player grazes, and the class `MeterFeature`, which implements a mechanic for special meter abilities, implements this method by adding to the meter. Furthermore, there are interfaces for specific mechanics, such as `IPowerFeature` for the power mechanic. The strength of this architecture is that implementations can easily be switched out; you can use the class `PowerFeature`, which has traditional 1-4 Touhou-style power handling, or `PowerFeature.Disabled`, which disables power items and sets the player power to always 4.
+- In previous versions of the engine, it was not straightforward to add code handling specific to a game. In v10, this is now handled by the `GameDef` scriptable object, which is a generic container for game-specific code. There are several abstract subclasses of `GameDef` according to the type— for example, `ADVGameDef` for ADV-style games and `CampaignDanmakuGameDef` for multi-stage danmaku games. To make game-specific code, create a subclass such as `SimpGameDef : CampaignDanmakuGameDef` and implement the abstract methods.
+  - One of the abstract methods on `CampaignDanmakuGameDef` is `MakeFeatures`, which returns the set of game-specific `IInstanceFeature`s.
+- Refactored code related to danmaku game execution. It is now possible to add custom handling for the execution of multi-stage games, whether this be with regards to alternate path handling (such as in Imperishable Night) or with regards to endings or with regards to something else. You can do this by creating a scriptable object subclassing `BaseCampaignConfig`, and then override `RunEntireCampaign`. Reference `CampaignConfig.RunEntireCampaign` to see how this is normally handled.
+
+
+
+#### Breaking Changes
+
+- As part of the introduction of GameDef, achievement handling has been moved from AchievementsProviderSO to GameDef.
+
+#### Fixes
+
+- Fixed a "bug" where, during VN execution, pressing Z to select an option from the menu at the right side of the dialogue box would also cause the dialogue to advance.
+
 # v9.2.0 (2022/09/10)
 
 #### Features

@@ -58,8 +58,6 @@ public class DifficultySettings {
     public float Value => standard?.Value() ?? CustomValue;
     [JsonIgnore] [ProtoIgnore]
     public float Counter => ApproximateStandard.Counter();
-    [JsonIgnore] [ProtoIgnore] 
-    public (int min, int max) RankLevelBounds => ApproximateStandard.RankLevelBounds();
     
     /// <summary>
     /// JSON constructor, do not use
@@ -201,7 +199,7 @@ public readonly struct CampaignSnapshot {
     public readonly int bombsUsed;
     public CampaignSnapshot(InstanceData data) {
         hitsTaken = data.HitsTaken;
-        meterFrames = data.MeterFrames;
+        meterFrames = data.MeterF.MeterFrames;
         frame = ETime.FrameNumber;
         bombsUsed = data.BombsUsed;
     }
@@ -303,7 +301,7 @@ public readonly struct PhaseCompletion {
         this.exec = exec;
         this.timeout = timeout;
         this.hits = GameManagement.Instance.HitsTaken - snap.hitsTaken;
-        this.noMeter = GameManagement.Instance.MeterFrames == snap.meterFrames;
+        this.noMeter = GameManagement.Instance.MeterF.MeterFrames == snap.meterFrames;
         this.noBombs = GameManagement.Instance.BombsUsed == snap.bombsUsed;
         this.elapsedFrames = ETime.FrameNumber - snap.frame;
     }

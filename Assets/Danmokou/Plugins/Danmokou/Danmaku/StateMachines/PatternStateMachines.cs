@@ -254,7 +254,7 @@ public class PhaseSM : SequentialSM {
         bool forcedBG = false;
         if (GameManagement.Instance.mode != InstanceMode.BOSS_PRACTICE && !SaveData.Settings.TeleportAtPhaseStart) {
             if (props.bossCutin && ctx.Boss != null && ctx.Background != null) {
-                GameManagement.Instance.AddFaithLenience(ctx.Boss.bossCutinTime);
+                GameManagement.Instance.AddLenience(ctx.Boss.bossCutinTime);
                 ServiceLocator.Find<ISFXService>().RequestSFXEvent(ISFXService.SFXEventType.BossCutin);
                 //Service not required since no callback
                 ServiceLocator.MaybeFind<IRaiko>()?.Shake(ctx.Boss.bossCutinTime / 2f, null, 1f, smh.cT, null);

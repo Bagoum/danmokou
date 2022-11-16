@@ -17,24 +17,12 @@ MonoBehaviour:
     major: 1
     minor: 0
     patch: 0
+  gameDefinition: {fileID: 11400000, guid: b15d88f5363b56a4790aed1208cf8b6e, type: 2}
   mainMenu: {fileID: 11400000, guid: 0b54bed6ff87a6240bd07d144454780a, type: 2}
-  replaySaveMenu: {fileID: 0}
   defaultUIFrame: {fileID: 21300000, guid: fd60a7ae3ce4be640b9b311d9d70969e, type: 3}
   unitScene: {fileID: 0}
-  tutorial: {fileID: 0}
-  miniTutorial: {fileID: 0}
-  endcard: {fileID: 0}
-  campaign: {fileID: 0}
-  exCampaign: {fileID: 0}
   dayCampaign: {fileID: 0}
   defaultTransition: {fileID: 11400000, guid: 2389d99cb34c54345b870f24feddcffe, type: 2}
-  bounds:
-    left: -3.6
-    right: 3.6
-    top: 4.1
-    bot: -4.5
-    center: {x: -1.9, y: 0}
-  achievements: {fileID: 0}
   dialogue: []
   bossMetadata: []
   tracks:

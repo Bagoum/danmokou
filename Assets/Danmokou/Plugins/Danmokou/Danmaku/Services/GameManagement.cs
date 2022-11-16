@@ -61,10 +61,10 @@ public class GameManagement : CoroutineRegularUpdater {
         }
     }
 
-    public static void NewInstance(InstanceMode mode, long? highScore = null, InstanceRequest? req = null, ReplayActor? replay = null) {
+    public static void NewInstance(InstanceMode mode, InstanceFeatures features, InstanceRequest? req = null, ReplayActor? replay = null) {
         DeactivateInstance();
         Logs.Log($"Creating new game instance with mode {mode} on difficulty {req?.metadata.difficulty.Describe() ?? "NULL"}.");
-        EvInstance.OnNext(new InstanceData(mode, req, highScore, replay));
+        EvInstance.OnNext(new InstanceData(mode, features, req, replay));
     }
 
     public static IEnumerable<FixedDifficulty> VisibleDifficulties => new[] {
@@ -85,6 +85,11 @@ public class GameManagement : CoroutineRegularUpdater {
     public bool OpenAsDebugMode = false;
     public static Vector2 VisiblePlayerLocation => Main.visiblePlayer.location;
 
+    private static InstanceFeatures DefaultFeatures => 
+        References.gameDefinition is IDanmakuGameDef g ?
+            g.MakeFeatures(defaultDifficulty, null) :
+            InstanceFeatures.InactiveFeatures;
+
     private void Awake() {
         if (Main != null) {
             DestroyImmediate(gameObject);
@@ -96,9 +101,14 @@ public class GameManagement : CoroutineRegularUpdater {
 #if UNITY_EDITOR || ALLOW_RELOAD
             OpenAsDebugMode ? InstanceMode.DEBUG : 
 #endif
-                InstanceMode.NULL);
+                InstanceMode.NULL, 
+#if UNITY_EDITOR || ALLOW_RELOAD
+            OpenAsDebugMode ? DefaultFeatures :
+#endif
+        InstanceFeatures.InactiveFeatures
+            );
 
-        Logs.Log($"Danmokou {EngineVersion}, {References.gameIdentifier} {References.gameVersion}, exec {ExecutionNumber}");
+        Logs.Log($"Danmokou {EngineVersion}, {References.gameDefinition.Key} {References.gameDefinition.Version}, exec {ExecutionNumber}");
         gameObject.AddComponent<SceneIntermediary>().defaultTransition = References.defaultTransition;
         gameObject.AddComponent<FreezeFrameHelper>();
         ETime.RegisterPersistentSOFInvoke(Replayer.BeginFrame);
@@ -115,8 +125,8 @@ public class GameManagement : CoroutineRegularUpdater {
         GetComponentInChildren<SFXService>().Setup();
         GetComponentInChildren<AudioTrackService>().Setup();
 
-        if (References.achievements != null)
-            Achievements = References.achievements.MakeRepo().Construct();
+        //TODO fix
+        Achievements = References.gameDefinition.MakeAchievements()?.Construct();
         
         RunDroppableRIEnumerator(DelayedInitialAchievementsCheck());
     }
@@ -134,19 +144,16 @@ public class GameManagement : CoroutineRegularUpdater {
     public static bool GoToMainMenu() => ServiceLocator.Find<ISceneIntermediary>().LoadScene(
         new SceneRequest(References.mainMenu,
             //This cancels the replay and deactivates the instance as well
-            SceneRequest.Reason.ABORT_RETURN, () => Instance.Request?.Cancel()));
-
-    public static bool GoToReplayScreen() => ServiceLocator.Find<ISceneIntermediary>().LoadScene(
-        new SceneRequest(References.replaySaveMenu,
-            SceneRequest.Reason.FINISH_RETURN));
+            SceneRequest.Reason.ABORT_RETURN, () => Instance.Request?.Cancel())) is { };
 
     /// <summary>
     /// Restarts the game instance.
     /// </summary>
     public static bool Restart() {
         if (Instance.Request == null) throw new Exception("No game instance found to restart");
+        Instance.Request.Cancel();
         InstanceRequest.InstanceRestarted.OnNext(Instance.Request);
-        return Instance.Request.Run();
+        return Instance.Request.Copy().Run() is { };
     }
 
     public static bool CanRestart => Instance.Request != null;
@@ -178,7 +185,7 @@ public class GameManagement : CoroutineRegularUpdater {
         BulletManager.ClearAllBullets();
         BulletManager.DestroyCopiedPools();
         //Ordered last so cancellations from HardCancel will occur under old data
-        NewInstance(InstanceMode.DEBUG);
+        NewInstance(InstanceMode.DEBUG, DefaultFeatures);
         Debug.Log($"Reloading level: {Difficulty.Describe()} is the current difficulty");
         Events.LocalReset.OnNext(default);
     }
@@ -235,23 +242,34 @@ public class GameManagement : CoroutineRegularUpdater {
 
     private static AnalyzedDayCampaign? _dayCampaign;
     public static AnalyzedDayCampaign DayCampaign =>
-        _dayCampaign ??= new AnalyzedDayCampaign(References.dayCampaign != null ? 
-            References.dayCampaign : 
-            throw new Exception("No day campaign exists."));
+        References.gameDefinition is ISceneDanmakuGameDef g ?
+            _dayCampaign ??= new AnalyzedDayCampaign(g.DayCampaign, g) :
+            throw new Exception($"Game {References.gameDefinition.Key} is not {nameof(ISceneDanmakuGameDef)}");
 
     private static AnalyzedCampaign[]? _campaigns;
     public static AnalyzedCampaign[] Campaigns =>
-        _campaigns ??= References.Campaigns.Select(c => new AnalyzedCampaign(c)).ToArray();
+        References.gameDefinition is ICampaignDanmakuGameDef g ?
+            _campaigns ??= g.Campaigns.Select(c => new AnalyzedCampaign(c, g)).ToArray() :
+            throw new Exception($"Game {References.gameDefinition.Key} is not {nameof(ICampaignDanmakuGameDef)}");
 
     public static IEnumerable<AnalyzedCampaign> FinishedCampaigns =>
         Campaigns.Where(c => SaveData.r.CampaignCompleted(c.campaign.key));
 
-    public static AnalyzedCampaign MainCampaign =>
-        Campaigns.FirstOrDefault(c => c.campaign.key == References.campaign.key)!;
-    
-    public static AnalyzedCampaign? ExtraCampaign =>
-        References.exCampaign == null ? null :
-        Campaigns.FirstOrDefault(c => c.campaign.key == References.exCampaign.key);
+    public static AnalyzedCampaign MainCampaign {
+        get {
+            var key = References.CampaignGameDef.Campaign.Key;
+            return Campaigns.FirstOrDefault(c => c.campaign.key == key)!;
+        }
+    }
+
+    public static AnalyzedCampaign? ExtraCampaign {
+        get {
+            var c = References.CampaignGameDef;
+            return c.ExCampaign is {Key: { } key} ? 
+                Campaigns.FirstOrDefault(c => c.campaign.key == key) : 
+                null;
+        }
+    }
     public static AnalyzedBoss[] PBosses => FinishedCampaigns.SelectMany(c => c.bosses).ToArray();
     public static AnalyzedStage[] PStages => FinishedCampaigns.SelectMany(c => c.practiceStages).ToArray();
 
@@ -295,19 +313,19 @@ public class GameManagement : CoroutineRegularUpdater {
 
 
     [ContextMenu("Lower Rank Level")]
-    public void LowerRankLevel() => Instance.SetRankLevel(Instance.RankLevel - 1);
+    public void LowerRankLevel() => (Instance.RankF as RankFeature)?.SetRankLevel(Instance.RankF!.RankLevel - 1);
     [ContextMenu("Up Rank Level")]
-    public void UpRankLevel() => Instance.SetRankLevel(Instance.RankLevel + 1);
+    public void UpRankLevel() => (Instance.RankF as RankFeature)?.SetRankLevel(Instance.RankF!.RankLevel + 1);
     [ContextMenu("Add Rank Points")]
-    public void AddRankPoints() => Instance.AddRankPoints(10000);
+    public void AddRankPoints() => (Instance.RankF as RankFeature)?.AddRankPoints(10000);
     [ContextMenu("Sub Rank Points")]
-    public void SubRankPoints() => Instance.AddRankPoints(-10000);
+    public void SubRankPoints() => (Instance.RankF as RankFeature)?.AddRankPoints(-10000);
 
     [ContextMenu("Debug Game Mode")]
     public void DebugGameMode() => Logs.Log(Instance.mode.ToString());
 
     [ContextMenu("Add Lenience")]
-    public void AddLenience() => Instance.AddFaithLenience(2);
+    public void AddLenience() => Instance.AddLenience(2);
 
     /*
     [ContextMenu("Debug GCX stats")]

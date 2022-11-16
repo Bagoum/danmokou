@@ -444,6 +444,10 @@ public class PhaseProperties {
     public readonly StateMachine? rootMove = null;
     public readonly bool skip = false;
     private readonly bool? lenient = null;
+    /// <summary>
+    /// Whether or not the phase should prevent time-based meters (like combo and faith)
+    ///  from decreasing while it is active
+    /// </summary>
     public bool Lenient => lenient ?? phaseType?.IsLenient() ?? false;
     public readonly bool bossCutin = false;
     public readonly int? spellCutinIndex = null;

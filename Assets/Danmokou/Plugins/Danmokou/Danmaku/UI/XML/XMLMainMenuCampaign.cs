@@ -96,6 +96,7 @@ public class XMLMainMenuCampaign : XMLMainMenu {
     public Sprite tutorialMode = null!;
 
     public override void FirstFrame() {
+        var game = References.CampaignGameDef;
         Func<DifficultySettings, UIResult> dfcContinuation = null!;
         Func<TeamConfig, bool> shotContinuation = null!;
         var campaignToShotScreenMap = new Dictionary<CampaignConfig, UIScreen>();
@@ -146,7 +147,7 @@ public class XMLMainMenuCampaign : XMLMainMenu {
 
         StagePracticeScreen = this.StagePracticeScreen(GetMetadata);
         BossPracticeScreen = this.BossPracticeScreen(SpellPracticeNodeV, GetMetadata);
-        PlaymodeScreen = this.PlaymodeScreen(BossPracticeScreen, StagePracticeScreen, new() {
+        PlaymodeScreen = this.PlaymodeScreen(game, BossPracticeScreen, StagePracticeScreen, new() {
             { Mode.MAIN, mainMode },
             { Mode.EX, exMode },
             {Mode.BOSSPRAC, bossMode},
@@ -165,7 +166,7 @@ public class XMLMainMenuCampaign : XMLMainMenu {
                 c.style.paddingTop = 640;
             }, SceneObjects = MainScreenOnlyObjects, Background = PrimaryBGConfig};
         
-        PlayerDataScreen = this.AllPlayerDataScreens(GameDetailsScreen, out ReplayScreen, out StatsScreen,
+        PlayerDataScreen = this.AllPlayerDataScreens(game, GameDetailsScreen, out ReplayScreen, out StatsScreen,
             out AchievementsScreen, out RecordsScreen, AchievementsNodeV);
         LicenseScreen = this.LicenseScreen(References.licenses);
         

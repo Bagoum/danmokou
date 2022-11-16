@@ -12,6 +12,11 @@ using Danmokou.VN;
 using Suzunoya.ControlFlow;
 
 namespace Danmokou.ADV {
+/// <summary>
+/// An object returned when the ADV game is fully completed.
+/// </summary>
+public interface IADVCompletion { }
+public class UnitADVCompletion : IADVCompletion { }
 
 /// <summary>
 /// The process executing an ADV instance. This is subclassed for each game.
@@ -22,7 +27,7 @@ public interface IExecutingADV : IRegularUpdater, IDisposable {
     ADVManager Manager => Inst.Manager;
     DMKVNState VN => Inst.VN;
     IMapStateManager MapStates { get; }
-    Task Run();
+    Task<IADVCompletion> Run();
 }
 
 /// <summary>
@@ -52,7 +57,10 @@ public class BarebonesExecutingADV<D> : IExecutingADV<ADVIdealizedState, D> wher
         this.MapStates = new MapStateManager<ADVIdealizedState, D>(() => new(this));
     }
 
-    public Task Run() => executor();
+    public async Task<IADVCompletion> Run() {
+        await executor();
+        return new UnitADVCompletion();
+    }
 }
 
 /// <summary>
@@ -82,7 +90,7 @@ public abstract class ExecutingADVGame<I, D> : IExecutingADV<I, D> where I : ADV
     /// True when the current map is changing (eg. from Hakurei Shrine to Moriya Shrine).
     /// </summary>
     private readonly Evented<bool> executingCrossMapTransition = new(false);
-    protected readonly TaskCompletionSource<Unit> completion = new();
+    protected readonly TaskCompletionSource<IADVCompletion> completion = new();
     protected readonly List<IDisposable> tokens = new();
     private readonly List<IDisposable> transitionToken = new();
     private readonly List<IDisposable> mapLocalTokens = new();
@@ -181,7 +189,7 @@ public abstract class ExecutingADVGame<I, D> : IExecutingADV<I, D> where I : ADV
     /// <summary>
     /// Boilerplate code for running an ADV-based game. 
     /// </summary>
-    public async Task Run() {
+    public async Task<IADVCompletion> Run() {
         //Data.ExecNum = GameManagement.ExecutionNumber;
         await mapTransition.UpdateMapData(Data, new MapStateTransitionSettings<I> {
             ExtraAssertions = (map, s) => {
@@ -197,7 +205,7 @@ public abstract class ExecutingADVGame<I, D> : IExecutingADV<I, D> where I : ADV
             }
         });
         //This is when the entire game finishes
-        await completion.Task;
+        return await completion.Task;
     }
 
     /// <summary>

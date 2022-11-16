@@ -1,6 +1,7 @@
 ﻿using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Core.DInput;
+using Danmokou.UI.XML;
 using SuzunoyaUnity;
 
 namespace Danmokou.VN {
@@ -9,19 +10,30 @@ namespace Danmokou.VN {
 /// </summary>
 public class VNUpdater : RegularUpdater {
     private VNWrapper wrapper = null!;
-    
-    private void Awake() {
-        wrapper = GetComponent<VNWrapper>();
-    }
+    private bool nextFrameIsConfirm = false;
 
     protected override void BindListeners() {
+        wrapper = GetComponent<VNWrapper>();
         RegisterService<IVNWrapper>(wrapper);
+    }
+
+    public override void FirstFrame() {
+        ServiceLocator.Find<XMLDynamicMenu>().HandleUnselectConfirm = _ => {
+            nextFrameIsConfirm = true;
+            return null;
+        };
     }
 
     public override void RegularUpdate() {
         wrapper.DoUpdate(ETime.FRAME_TIME, 
-            InputManager.DialogueConfirm, 
+            //If a UIConfirm cascades to unselector, then nextFrameIsConfirm is set
+            nextFrameIsConfirm ||
+            //DialogueConfirm can be shared with UIConfirm, or it can originate from InCodeInputSource
+            //In the case where DialogueConfirm is the same key as UIConfirm,
+            // we don't want to call VNState.UserConfirm() when the UIConfirm input is "consumed" by a UINode
+            (InputManager.DialogueConfirm && !InputManager.UIConfirm), 
             InputManager.DialogueSkipAll);
+        nextFrameIsConfirm = false;
     }
 }
 }

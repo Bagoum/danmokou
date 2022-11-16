@@ -708,13 +708,13 @@ public static class Scene1 {
         });
         while (TestHarness.Running) yield return null;
     }
-    
+    /*
     [UnityTest]
     public static IEnumerator TestStaticAnalysis1_2() {
         TestHarness.OnSOF(() => {
             var m = BehaviorEntity.GetExecForID("mokou");
             bool cb = false;
-            m.phaseController.Override(3, () => cb = true, false);
+            m.phaseController.Override(3, false);
             TestHarness.RunBehaviorScript("Static Analysis 1", "mokou");
             //Case 2: setup is overriden, phase 3 is run.
             TestHarness.Check(0, () => IsTrue(!cb));
@@ -728,12 +728,12 @@ public static class Scene1 {
             });
         });
         while (TestHarness.Running) yield return null;
-    }
+    }*/
     [UnityTest]
     public static IEnumerator TestStaticAnalysis1_3() {
         TestHarness.OnSOF(() => {
             var m = BehaviorEntity.GetExecForID("mokou");
-            m.phaseController.Override(3, null, false);
+            m.phaseController.Override(3, false);
             TestHarness.RunBehaviorScript("Static Analysis 1", "mokou");
             //Case 3: setup is overriden, phase 3 is run; without a callback, goes to phase 4.
             TestHarness.Check(2, () => {
@@ -751,8 +751,7 @@ public static class Scene1 {
     public static IEnumerator TestPracticeSelector1() {
         bool cb = false;
         //Running Static Analysis 1
-        new InstanceRequest(d => cb = true, FixedDfc(FixedDifficulty.Lunatic),
-            new BossPracticeRequest(AllPBosses[0], 
+        new InstanceRequest((_, __) => cb = true, FixedDfc(FixedDifficulty.Lunatic), new BossPracticeRequest(AllPBosses[0], 
                 new SMAnalysis.Phase(null!, PhaseType.NONSPELL, 3, new LText("_")))).Run();
         IsFalse(cb);
         yield return WaitForLoad();
@@ -781,7 +780,7 @@ public static class Scene1 {
             //Running Difficulty Display Test
             DebugFloat.values.Clear();
             yield return null;
-            new InstanceRequest(null, FixedDfc(dff), new BossPracticeRequest(AllPBosses[1])).Run();
+            new InstanceRequest((_, __) => { }, FixedDfc(dff), new BossPracticeRequest(AllPBosses[1])).Run();
             yield return WaitForLoad();
             AreEqual(Instance.mode, InstanceMode.BOSS_PRACTICE);
             AreEqual(GameManagement.Difficulty.standard!.Value, dff);

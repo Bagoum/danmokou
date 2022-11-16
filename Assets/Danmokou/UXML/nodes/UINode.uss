@@ -209,7 +209,7 @@
 
 .node .body {
     transition-property: border-color;
-    transition-duration: 0.2s;
+    transition-duration: 0.1s;
     border-top-width: 6px;
     border-bottom-width: 6px;
     border-color: var(--goldsub0);

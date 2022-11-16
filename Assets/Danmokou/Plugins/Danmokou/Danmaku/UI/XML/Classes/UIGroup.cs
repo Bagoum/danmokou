@@ -175,17 +175,17 @@ public abstract class UIGroup {
         }
     }
 
-    public UIGroup(UIScreen container, UIRenderSpace? render, IEnumerable<UINode?> nodes) {
+    public UIGroup(UIScreen container, UIRenderSpace? render, IEnumerable<UINode?>? nodes) {
         Screen = container;
         Render = render ?? container.ColumnRender(0);
-        this.nodes = nodes.FilterNone().ToList();
+        this.nodes = nodes?.FilterNone().ToList() ?? new();
         foreach (var n in this.nodes)
             n.Group = this;
         Render.AddSource(this);
         Screen.AddGroup(this);
     }
 
-    public UIGroup(UIRenderSpace render, IEnumerable<UINode?> nodes) : this(render.Screen, render, nodes) { }
+    public UIGroup(UIRenderSpace render, IEnumerable<UINode?>? nodes) : this(render.Screen, render, nodes) { }
 
     public void Build(Dictionary<Type, VisualTreeAsset> map) {
         buildMap = map;
@@ -243,8 +243,7 @@ public abstract class UIGroup {
     public virtual void Redraw() { }
 
     /// <summary>
-    /// When an enclosed group has a navigation command that moves out of the bounds of the group,
-    ///  its enclosing group has the ability to determine the result.
+    /// When an group A has a navigation command that moves out of the bounds of A, this function is called on A.Parent to determine how to handle it.
     /// <br/>Eg. Pressing up on the second node in a column group navigates to the first; this function is not called.
     /// <br/>Eg. Pressing up on the first node in a column group calls this function. If the enclosing group
     ///  is also a column group, then it returns null here, and navigation wraps around to the last node.
@@ -254,8 +253,8 @@ public abstract class UIGroup {
     public abstract UIResult? NavigateOutOfEnclosed(UIGroup enclosed, UINode current, UICommand req);
 
     /// <summary>
-    /// Overriding this function allows an enclosed group to not delegate navigation to its enclosure
-    /// (useful for cases such as popups).
+    /// If permitted, delegate navigation to the parent group by calling <see cref="Parent"/>.<see cref="NavigateOutOfEnclosed"/>.
+    /// <br/>Overrides such as <see cref="PopupUIGroup"/> may disable this if they do not want to permit delegation to parent group.
     /// </summary>
     protected virtual bool TryDelegateNavigationToEnclosure(UINode current, UICommand req, out UIResult res) {
         res = default!;
@@ -296,7 +295,7 @@ public abstract class UIGroup {
         if (node.ShowHideGroup == null || !node.IsEnabled) return null;
         if (node.ShowHideGroup.HasEntryNode) return node.ShowHideGroup.EntryNode;
         if (UIFreeformGroup.FindClosest(node.WorldLocation, dir, node.ShowHideGroup.NodesAndDependentNodes,
-                   CompositeUIGroup.angleLimits, x => x != node) is { } n)
+                   CompositeUIGroup._angleLimits, x => x != node) is { } n)
             return n;
         return null;
     }
@@ -305,7 +304,7 @@ public abstract class UIGroup {
         if (node.ShowHideGroup == null || !node.IsEnabled) return null;
         if (node.ShowHideGroup.HasEntryNode) return node.ShowHideGroup.EntryNodeFromBottom;
         if (UIFreeformGroup.FindClosest(node.WorldLocation, dir, node.ShowHideGroup.NodesAndDependentNodes,
-            CompositeUIGroup.angleLimits, x => x != node) is { } n)
+            CompositeUIGroup._angleLimits, x => x != node) is { } n)
             return n;
         return null;
     }
@@ -319,7 +318,7 @@ public abstract class UIGroup {
                 null);
 
     /// <summary>
-    /// Handle default navigation for UINodes.
+    /// When a node N has no specific handle for a navigation command, this function is called on N.Group to handle default navigation.
     /// </summary>
     public abstract UIResult Navigate(UINode node, UICommand req);
 
@@ -346,76 +345,6 @@ public abstract class UIGroup {
     
     public override string ToString() => $"{Hierarchy}({this.GetType()})";
 }
-
-/// <summary>
-/// A group of arbitrarily positioned nodes that can be added or removed dynamically.
-/// <br/>Used with <see cref="XMLDynamicMenu"/>.
-/// TODO: does not support nesting groups
-/// </summary>
-class UIFreeformGroup : UIGroup {
-    private readonly UINode unselector;
-    public UIFreeformGroup(UIScreen container, UINode unselector) : base(container, null, new[] { unselector }) {
-        this.unselector = unselector;
-        ExitNodeOverride = unselector;
-    }
-
-    public override UIResult? NavigateOutOfEnclosed(UIGroup enclosed, UINode current, UICommand req) =>
-        GoToExitOrLeaveScreen(current, req) ?? SilentNoOp;
-
-    public override UIResult Navigate(UINode node, UICommand req) {
-        if (Nodes.Count == 1)
-            return new StayOnNode(StayOnNodeType.Silent);
-        return req switch {
-            UICommand.Back => GoToExitOrLeaveScreen(node, req) ?? SilentNoOp,
-            UICommand.Confirm => SilentNoOp,
-            _ => _FindClosest(node, req)
-        };
-    }
-
-    private static readonly float[] _angleLimits = { 37, 65, 89 };
-
-    private UIResult _FindClosest(UINode src, UICommand dir) {
-        var result = FindClosest(
-            src == unselector ? M.RectFromCenter(UIBuilderRenderer.UICenter, new(2, 2)) : src.WorldLocation
-            , dir, Nodes, _angleLimits, n => n != unselector && n != src) ?? SilentNoOp;
-        if (result is GoToNode g && g.Target == unselector)
-            return SilentNoOp;
-        return result;
-    }
-    
-    public static Vector2 DirAsVec(UICommand dir) => dir switch {
-        UICommand.Down => Vector2.down,
-        UICommand.Up => Vector2.up,
-        UICommand.Left => Vector2.left,
-        UICommand.Right => Vector2.right,
-        _ => throw new Exception()
-    };
-
-    public static UINode? FindClosest(Rect from, UICommand dir, IEnumerable<UINode> nodes, 
-        float[] angleLimits, Func<UINode, bool>? allowed = null) {
-        if (dir is not (UICommand.Down or UICommand.Up or UICommand.Left or UICommand.Right))
-            return null;
-        var dirAsVec = DirAsVec(dir);
-        var dirAsAng = M.Atan2D(dirAsVec.y, dirAsVec.x);
-        var ordering = nodes.Select(n => {
-            var delta = M.ShortestDistancePushOutOverlap(from, n.HTML.worldBound);
-            //y axis is inverted in XML
-            var angleDelta = Mathf.Abs(M.DeltaD(M.Atan2D(-delta.y, delta.x), dirAsAng));
-            return (n, angleDelta, (delta / 20).magnitude + angleDelta);
-        }).OrderBy(x => x.Item3).ToArray();
-        foreach (var limit in angleLimits) {
-            foreach (var (candidate, angle, _) in ordering) {
-                if (!candidate.AllowInteraction || allowed?.Invoke(candidate) is false)
-                    continue;
-                if (angle >= limit)
-                    continue;
-                return candidate;
-            }
-        }
-        return null;
-    }
-}
-
 public class UIColumn : UIGroup {
     public UIColumn(UIRenderSpace render, params UINode?[] nodes) : 
         this(render.Screen, render, nodes as IEnumerable<UINode?>) { }
@@ -634,18 +563,14 @@ public class CommentatorAxisColumn<T> : UIColumn {
 }
 
 /// <summary>
-/// A UIGroup that is a wrapper around other UIGroups, and (usually) has no nodes of its own.
+/// A UIGroup that is a wrapper around other UIGroups. May also have nodes of its own.
 /// </summary>
 public abstract class CompositeUIGroup : UIGroup {
-    public List<UIGroup> Groups { get; }
+    public List<UIGroup> Groups { get; } = new();
     public CompositeUIGroup(IReadOnlyList<UIGroup> groups) : this(groups[0].Screen, groups) { }
-    public CompositeUIGroup(UIRenderSpace render, IEnumerable<UIGroup> groups) : base(render, Array.Empty<UINode>()) {
-        Groups = groups.ToList();
-        foreach (var g in Groups) {
-            g.DependentParent = this;
-            EntryNodeOverride ??= g.EntryNodeOverride;
-            ExitNodeOverride ??= g.ExitNodeOverride;
-        }
+    public CompositeUIGroup(UIRenderSpace render, IEnumerable<UIGroup> groups, IEnumerable<UINode?>? nodes = null) : base(render, nodes) {
+        foreach (var g in groups)
+            AddGroup(g);
     }
     public CompositeUIGroup(UIRenderSpace render, params UIGroup[] groups) : this(render,(IEnumerable<UIGroup>) groups) { }
 
@@ -656,10 +581,20 @@ public abstract class CompositeUIGroup : UIGroup {
         ExitNodeOverride ??= g.ExitNodeOverride;
     }
 
-    public override IEnumerable<UINode> NodesAndDependentNodes => Groups.SelectMany(g => g.NodesAndDependentNodes);
+    public void AddGroupDynamic(UIGroup g) {
+        AddGroup(g);
+        if (Visible)
+            g.EnterShow(true);
+    }
 
-    public sealed override UIResult Navigate(UINode node, UICommand req) =>
-        throw new Exception("CompositeGroup has no nodes to navigate");
+    public override IEnumerable<UINode> NodesAndDependentNodes => 
+        Nodes.Concat(Groups.SelectMany(g => g.NodesAndDependentNodes));
+
+    public sealed override UIResult Navigate(UINode node, UICommand req) => req switch {
+        UICommand.Confirm => NoOp,
+        UICommand.Back => GoToExitOrLeaveScreen(node, req) ?? NoOp,
+        _ => NavigateAmongComposite(node, req) ?? NoOp
+    };
     
     public override UIResult? NavigateOutOfEnclosed(UIGroup enclosed, UINode current, UICommand req) =>
         req switch {
@@ -668,21 +603,25 @@ public abstract class CompositeUIGroup : UIGroup {
             _ => null
         };
 
-    public static readonly float[] angleLimits = { 15, 35, 60 };
-    protected UIResult? NavigateAmongComposite(UINode current, UICommand dir) {
+    public static readonly float[] _angleLimits = { 15, 35, 60 };
+
+    /// <summary>
+    /// For a position-based transition from CURRENT to NEXT, use the entry node
+    ///  of the highest parent of NEXT that is a child of this composite group.
+    /// </summary>
+    protected UIResult? FinalizeTransition(UINode current, UINode? next) {
+        if (next == null || next == current) return null;
+        var g = next.Group;
+        while (g != current.Group && g != null && !Groups.Contains(g))
+            g = g.Parent;
+        return (g != current.Group && g?.PreferredEntryNode is {} entry) ? entry : next;
+    }
+    
+    protected virtual UIResult? NavigateAmongComposite(UINode current, UICommand dir) {
         var from = current.WorldLocation;
-        UIResult? finalize(UINode? n) {
-            if (n == null || n == current) return null;
-            //Use the entry node of the group contained within this composite group,
-            //if it exists and is a different group
-            var g = n.Group;
-            while (g != current.Group && g != null && !Groups.Contains(g))
-                g = g.Parent;
-            return (g != current.Group && g?.PreferredEntryNode is {} entry) ? entry : n;
-        }
-        if (UIFreeformGroup.FindClosest(from, dir, NodesAndDependentNodes, angleLimits, n => n != current) 
+        if (UIFreeformGroup.FindClosest(from, dir, NodesAndDependentNodes, _angleLimits, n => n != current) 
                 is {} result) 
-            return finalize(result);
+            return FinalizeTransition(current, result);
         if (TryDelegateNavigationToEnclosure(current, dir, out var res))
             return res;
         //Reset the position to the wall opposite the direction
@@ -697,7 +636,7 @@ public abstract class CompositeUIGroup : UIGroup {
         }, new(2, 2));
         Logs.Log($"Wraparound {dir} from {from} to {newFrom}");
         //When doing wraparound, allow navigating to the same node (it should be preferred over selecting an adjacent node)
-        return finalize(UIFreeformGroup.FindClosest(newFrom, dir, NodesAndDependentNodes, angleLimits));
+        return FinalizeTransition(current, UIFreeformGroup.FindClosest(newFrom, dir, NodesAndDependentNodes, _angleLimits));
     }
 }
 

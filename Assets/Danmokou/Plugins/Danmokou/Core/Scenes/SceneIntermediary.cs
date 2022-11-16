@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Reactive;
+using System.Threading.Tasks;
 using BagoumLib;
 using BagoumLib.Cancellation;
 using BagoumLib.DataStructures;
@@ -37,21 +38,21 @@ public class SceneIntermediary : CoroutineRegularUpdater, ISceneIntermediary {
         });
     }
 
-    public bool LoadScene(SceneRequest req) {
+    public SceneLoading? LoadScene(SceneRequest req) {
         if (EngineStateManager.State < EngineState.LOADING_PAUSE && !LOADING) {
             Logs.Log($"Successfully requested scene load for {req}.");
-            req.onQueued?.Invoke();
             IsFirstScene = false;
             LOADING = true;
             var stateToken = EngineStateManager.RequestState(EngineState.LOADING_PAUSE);
-            RunRIEnumerator(WaitForSceneLoad(stateToken, req, true));
-            return true;
-        } else Logs.Log($"REJECTED scene load for {req}.");
-        return false;
+            var loader = new SceneLoading(new(), new(), new());
+            RunRIEnumerator(WaitForSceneLoad(stateToken, req, loader, true));
+            return loader;
+        } else Logs.Log($"REJECTED scene load for {req}.", true, LogLevel.WARNING);
+        return null;
     }
 
 
-    private IEnumerator WaitForSceneLoad(IDisposable stateToken, SceneRequest req, bool transitionOnSame) {
+    private IEnumerator WaitForSceneLoad(IDisposable stateToken, SceneRequest req, SceneLoading loader, bool transitionOnSame) {
         var currScene = SceneManager.GetActiveScene().name;
         float waitOut = 0f;
         if (transitionOnSame || currScene != req.scene.sceneName) {
@@ -63,6 +64,7 @@ public class SceneIntermediary : CoroutineRegularUpdater, ISceneIntermediary {
         //Logs.Log($"Scene loading for {req} started.", level: LogLevel.DEBUG1);
         PreSceneUnload.OnNext(default);
         req.onPreLoad?.Invoke();
+        loader.Preloading.SetResult(default);
         var op = SceneManager.LoadSceneAsync(req.scene.sceneName);
         while (!op.isDone) {
             yield return null;
@@ -71,7 +73,9 @@ public class SceneIntermediary : CoroutineRegularUpdater, ISceneIntermediary {
                  $"The out transition will take {waitOut}s, but the scene will start immediately.",
             level: LogLevel.DEBUG3);
         req.onLoaded?.Invoke();
+        loader.Loading.SetResult(default);
         req.onFinished?.Invoke();
+        loader.Finishing.SetResult(default);
         stateToken.Dispose();
         for (; waitOut > ETime.FRAME_YIELD; waitOut -= ETime.FRAME_TIME) yield return null;
         LOADING = false;

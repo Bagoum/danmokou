@@ -6,6 +6,7 @@ using BagoumLib.Events;
 using BagoumLib.Tasks;
 using Danmokou.Core;
 using Danmokou.Scenes;
+using Danmokou.Scriptables;
 using Danmokou.Services;
 using Danmokou.VN;
 using SuzunoyaUnity;
@@ -19,7 +20,7 @@ namespace Danmokou.ADV {
 /// <param name="VN"></param>
 /// <param name="eVN">Unity wrapper around <see cref="VN"/></param>
 /// <param name="Tracker">Cancellation token wrapping the ADV instance execution.</param>
-public record ADVInstance(ADVInstanceRequest Request, DMKVNState VN, ExecutingVN eVN, Cancellable Tracker) { 
+public record ADVInstance(ADVInstanceRequest Request, DMKVNState VN, ExecutingVN eVN, Cancellable Tracker) : IDisposable { 
     /// <inheritdoc cref="ADVInstanceRequest.ADVData"/>
     public ADVData ADVData => Request.ADVData;
     /// <inheritdoc cref="ADVInstanceRequest.Manager"/>
@@ -29,14 +30,7 @@ public record ADVInstance(ADVInstanceRequest Request, DMKVNState VN, ExecutingVN
         VN.DeleteAll(); //this cascades into destroying executingVN
     }
 
-    
-    public bool Finish() {
-        return ServiceLocator.Find<ISceneIntermediary>().LoadScene(
-            new SceneRequest(GameManagement.References.mainMenu,
-                SceneRequest.Reason.FINISH_RETURN,
-                VN.DeleteAll
-                ));
-    }
+    public void Dispose() => Cancel();
 }
 
 /// <summary>
@@ -52,7 +46,7 @@ public class ADVInstanceRequest {
     /// </summary>
     public ADVGameDef Game { get; }
     /// <summary>
-    /// Save data to lood from.
+    /// Save data to load from.
     /// </summary>
     public ADVData ADVData { get; private set; }
     /// <summary>
@@ -79,13 +73,33 @@ public class ADVInstanceRequest {
 
     /// <summary>
     /// Enter the ADV scene and run the ADV instance.
+    /// Returns null if the scene fails to load.
     /// </summary>
-    public bool Run() {
-        return ServiceLocator.Find<ISceneIntermediary>().LoadScene(new SceneRequest(
-            Game.sceneConfig,
-            SceneRequest.Reason.START_ONE,
-            Manager.DestroyCurrentInstance,
-            () => _ = RunInScene().ContinueWithSync()));
+    public Task<IADVCompletion>? Run(SceneConfig? returnTo) {
+        if (returnTo == null)
+            returnTo = GameManagement.References.mainMenu;
+        //You can start running this before the curtain pulls back, so we use TaskFromOnLoad instead of TaskFromOnFinish
+        if (ServiceLocator.Find<ISceneIntermediary>().LoadScene(SceneRequest.TaskFromOnLoad(
+                Game.sceneConfig,
+                SceneRequest.Reason.START_ONE,
+                Manager.DestroyCurrentInstance,
+                RunInScene,
+                null,
+                out var tcs)) is null)
+            return null;
+        async Task<IADVCompletion> Rest() {
+            var (result, dispose) = await tcs.Task;
+            if (ServiceLocator.Find<ISceneIntermediary>().LoadScene(
+                    new SceneRequest(returnTo,
+                        SceneRequest.Reason.FINISH_RETURN,
+                        dispose.Dispose
+                    )) is { } loader) {
+                await loader.Finishing.Task;
+            } else
+                throw new Exception("Couldn't return to menu after ADV completion");
+            return result;
+        }
+        return Rest();
     }
 
     /// <summary>
@@ -96,9 +110,9 @@ public class ADVInstanceRequest {
 #else
     private
 #endif
-    async Task RunInScene() {
+    async Task<(IADVCompletion result, IDisposable cleanup)> RunInScene() {
         var Tracker = new Cancellable();
-        var vn = new DMKVNState(Tracker, Game.key, ADVData.VNData);
+        var vn = new DMKVNState(Tracker, Game.Key, ADVData.VNData);
         var evn = ServiceLocator.Find<IVNWrapper>().TrackVN(vn);
         ServiceLocator.Find<IVNBacklog>().TryRegister(evn);
         if (Game.backlogFeatures == ADVBacklogFeatures.ALLOW_BACKJUMP)
@@ -109,8 +123,8 @@ public class ADVInstanceRequest {
         var inst = new ADVInstance(this, vn, evn, Tracker);
         using var exec = Game.Setup(inst);
         Manager.SetupInstance(exec);
-        //You can start running this before the curtain pulls back.
-        await exec.Run().ContinueWithSync(Tracker.Guard(() => inst.Finish()));
+        var result = await exec.Run();
+        return (result, inst);
     }
 }
 }

@@ -12,6 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d010943ee1bd4bbcb20e0ac87b5bc00b, type: 3}
   m_Name: PurpleHeart ADVGameDef
   m_EditorClassIdentifier: 
-  key: purpleHeart
+  m_key: PHP
+  m_version:
+    major: 1
+    minor: 0
+    patch: 0
+  m_tutorial: {fileID: 0}
+  m_miniTutorial: {fileID: 0}
   sceneConfig: {fileID: 11400000, guid: 42ef27f070f320e479dfb42d670b57b7, type: 2}
-  backlogFeatures: 2
+  backlogFeatures: 0

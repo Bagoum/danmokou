@@ -4,6 +4,7 @@ using UnityEngine;
 using Danmokou.DMath;
 using Danmokou.GameInstance;
 using Danmokou.Pooling;
+using Danmokou.Services;
 
 namespace Danmokou.Behavior {
 public partial class BehaviorEntity {
@@ -46,7 +47,7 @@ public partial class BehaviorEntity {
     public void DropSomeLife() => DropEvenly(ItemType.LIFE, 100, false, 0.4f);
     [ContextMenu("Drop some value")]
     public void DropSomeValue() => DropEvenly(ItemType.VALUE, ItemType.SMALL_VALUE, 
-        InstanceConsts.smallValueRatio, 1.4, false, 0.9f);
+        GameManagement.Instance.ScoreF.SmallValueRatio, 1.4, false, 0.9f);
     [ContextMenu("Drop some PPP")]
     public void DropSomePPP() => DropEvenly(ItemType.PPP, 200, false, 0.4f);
 #endif
@@ -68,7 +69,7 @@ public partial class BehaviorEntity {
     
     
     private void _DropItems(ItemDrops drops, float rValue=0.4f, float rPPP=0f, float rLife=0.2f, float rPower=0.6f, float rGems=0.8f) {
-        DropEvenly(ItemType.VALUE, ItemType.SMALL_VALUE, InstanceConsts.smallValueRatio, drops.value, drops.autocollect, rValue);
+        DropEvenly(ItemType.VALUE, ItemType.SMALL_VALUE, GameManagement.Instance.ScoreF.SmallValueRatio, drops.value, drops.autocollect, rValue);
         DropEvenly(ItemType.POWER, drops.power, drops.autocollect, rPower);
         DropEvenly(ItemType.PPP, drops.pointPP, drops.autocollect, rPPP);
         DropEvenly(ItemType.LIFE, drops.life, drops.autocollect, rLife);

@@ -9,7 +9,7 @@ namespace Danmokou.UI {
 public class ShowVersion : MonoBehaviour {
     private void Awake() {
         GetComponent<TextMeshPro>().text =
-            $"DMK {EngineVersion}, {References.gameIdentifier} {References.gameVersion}";
+            $"DMK {EngineVersion}, {References.gameDefinition.Key} {References.gameDefinition.Version}";
     }
 }
 }

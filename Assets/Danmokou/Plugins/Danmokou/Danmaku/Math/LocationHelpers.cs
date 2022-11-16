@@ -1,5 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 using Danmokou.Core;
+using Danmokou.Danmaku;
 using Danmokou.Services;
 using UnityEngine;
 using UnityEngine.Profiling;
@@ -9,14 +10,21 @@ using static Danmokou.Services.GameManagement;
 namespace Danmokou.DMath {
 public static class LocationHelpers {
     public static Vector2 PlayableScreenCenter { get; private set; } = Vector2.zero;
+    public static FieldBounds PlayableBounds { get; private set; } = new() {
+        left = -3.6f,
+        right = 3.6f,
+        top = 4.1f,
+        bot = -4.5f
+    };
 
     public static void UpdatePlayableScreenCenter(Vector2 nLoc) {
         PlayableScreenCenter = nLoc;
-        Left = nLoc.x + References.bounds.left;
-        Right = nLoc.x + References.bounds.right;
-        Top = nLoc.y + References.bounds.top;
-        Bot = nLoc.y + References.bounds.bot;
-
+        if (References.gameDefinition is IDanmakuGameDef g)
+            PlayableBounds = g.Bounds;
+        Left = nLoc.x + PlayableBounds.left;
+        Right = nLoc.x + PlayableBounds.right;
+        Top = nLoc.y + PlayableBounds.top;
+        Bot = nLoc.y + PlayableBounds.bot;
     }
 
     static LocationHelpers() {

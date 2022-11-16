@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using BagoumLib.Cancellation;
 using Danmokou.Behavior;
 using Danmokou.Core;
@@ -15,7 +16,7 @@ using static Danmokou.GameInstance.Challenge;
 namespace Danmokou.Services {
 public interface IChallengeManager {
     float? BossTimeoutOverride(BossConfig? bc);
-    void TrackChallenge(IChallengeRequest cr, Action<InstanceRecord> onSucess, ICancellee cT);
+    Task<InstanceRecord> TrackChallenge(IChallengeRequest cr, ICancellee cT);
     void SetupBossPhase(SMHandoff smh);
     void LinkBoss(BehaviorEntity exec, ICancellee cT);
     IEnumerable<AyaPhoto> ChallengePhotos { get; }
@@ -106,14 +107,17 @@ public class ChallengeManager : CoroutineRegularUpdater, IChallengeManager {
         tracking.Start(Exec = exec, cT);
     }
 
-    public void TrackChallenge(IChallengeRequest cr, Action<InstanceRecord> onSuccess, ICancellee cT) {
+    public Task<InstanceRecord> TrackChallenge(IChallengeRequest cr, ICancellee cT) =>
+        TrackChallenge(cr, cT, new TaskCompletionSource<InstanceRecord>());
+    public Task<InstanceRecord> TrackChallenge(IChallengeRequest cr, ICancellee cT, TaskCompletionSource<InstanceRecord> tcs) {
         Logs.Log($"Tracking challenge {cr.Description}");
         CleanupState();
         tracking = cr;
         Restriction = new Restrictions(cr.Challenges);
         challengePhotos.Clear();
         cr.Initialize();
-        RunDroppableRIEnumerator(TrackChallenges(cr, onSuccess, cT));
+        RunRIEnumerator(TrackChallenges(cr, tcs, cT));
+        return tcs.Task;
     }
 
     private void ChallengeFailed(IChallengeRequest cr, TrackingContext ctx) {
@@ -127,12 +131,16 @@ public class ChallengeManager : CoroutineRegularUpdater, IChallengeManager {
 
     //This is not controlled by smh.cT because its scope is the entire segment over which the challenge executes,
     //not just the boss phase. In the case of BPoHC stage events, this scope is the phase cT of the stage section.
-    private IEnumerator TrackChallenges(IChallengeRequest cr, Action<InstanceRecord> onSuccess, ICancellee cT) {
-        while (Exec == null) yield return null;
+    private IEnumerator TrackChallenges(IChallengeRequest cr, TaskCompletionSource<InstanceRecord> tcs, ICancellee cT) {
+        while (Exec == null) {
+            if (cT.Cancelled) goto cancelled;
+            yield return null;
+        }
         var challenges = cr.Challenges;
-        var ctx = new TrackingContext(Exec, this, onSuccess, cT);
+        var ctx = new TrackingContext(Exec, this, tcs, cT);
 
         for (; completion == null; ctx.t += ETime.FRAME_TIME) {
+            if (cT.Cancelled) goto cancelled;
             for (int ii = 0; ii < challenges.Length; ++ii) {
                 if (!challenges[ii].FrameCheck(ctx)) {
                     ChallengeFailed(cr, ctx);
@@ -142,25 +150,29 @@ public class ChallengeManager : CoroutineRegularUpdater, IChallengeManager {
             yield return null;
         }
         for (int ii = 0; ii < challenges.Length; ++ii) {
+            if (cT.Cancelled) goto cancelled;
             if (!challenges[ii].EndCheck(ctx, completion.Value)) {
                 ChallengeFailed(cr, ctx);
                 yield break;
             }
         }
         ChallengeSuccess(cr, ctx);
+        yield break;
+        cancelled: ;
+        tcs.SetCanceled();
     }
 
     public struct TrackingContext {
         public readonly BehaviorEntity exec;
         public readonly ChallengeManager cm;
-        public readonly Action<InstanceRecord> onSuccess;
+        public readonly TaskCompletionSource<InstanceRecord> tracker;
         public float t;
         public readonly ICancellee cT;
 
-        public TrackingContext(BehaviorEntity exec, ChallengeManager cm, Action<InstanceRecord> onSuccess, ICancellee cT) {
+        public TrackingContext(BehaviorEntity exec, ChallengeManager cm, TaskCompletionSource<InstanceRecord> tracker, ICancellee cT) {
             this.exec = exec;
             this.cm = cm;
-            this.onSuccess = onSuccess;
+            this.tracker = tracker;
             this.t = 0;
             this.cT = cT;
         }

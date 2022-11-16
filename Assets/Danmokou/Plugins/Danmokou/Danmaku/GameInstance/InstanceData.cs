@@ -5,6 +5,7 @@ using System.Reactive.Subjects;
 using BagoumLib;
 using BagoumLib.Cancellation;
 using BagoumLib.Events;
+using BagoumLib.Functional;
 using Danmokou.ADV;
 using Danmokou.Behavior;
 using Danmokou.Core;
@@ -30,41 +31,46 @@ public class InstanceData {
     public readonly Event<Unit> TeamUpdated = new();
     public readonly Event<Unit> PlayerTookHit = new();
     public readonly Event<CardRecord> CardHistoryUpdated = new();
-    public readonly Event<Unit> MeterBecameUsable = new();
-    public readonly Event<Unit> PowerLost = new();
-    public readonly Event<Unit> PowerGained = new();
-    public readonly Event<Unit> PowerFull = new();
-    public readonly Event<Unit> AnyExtendAcquired = new();
-    public readonly Event<Unit> ItemExtendAcquired = new();
-    public readonly Event<Unit> ScoreExtendAcquired = new();
+    public readonly Event<ExtendType> ExtendAcquired = new();
     public readonly Event<PhaseCompletion> PhaseCompleted = new();
     public readonly Event<Unit> LifeSwappedForScore = new();
 
     public readonly Event<Unit> GameOver = new();
-    public readonly Event<Unit> PracticeSuccess = new();
+    public readonly Event<ILowInstanceRequest> PracticeSuccess = new();
     
     #endregion
     public Suzunoya.Data.InstanceData VNData { get; }
     public DifficultySettings Difficulty { get; }
-    public int RankLevel { get; set; }
-    public double RankPoints { get; set; }
-    public Evented<long> MaxScore { get; }
-    public Evented<long> Score { get; }
+
+    /* "Features" is an architecture by which game mechanics
+     *  can be slotted in or out of InstanceData depending on which game
+     *  is constructing it (depending on GameDef.MakeFeatures).
+     * For example, we might use PowerFeature (Touhou-like 1 to 4 power)
+     *  for one game, and DisabledPowerFeature (power is always 4)
+     *  for a game in which we do not want power item support.
+     * Furthermore, we can tweak handling between games by writing
+     *  different interface implementations of eg. IPowerFeature.
+     * Features may generically listen to events (see the methods on
+     *  IInstanceFeature), or they may have specialized methods called
+     *  by consuming code (eg. see the methods on IPowerFeature).
+     * 
+     * Optional features are handled via a "disabled"
+     *  variant (such as PowerFeature.Disabled).
+     */
+    public List<IInstanceFeature> Features { get; } = new();
+    public IScoreFeature ScoreF { get; }
+    public IPowerFeature PowerF { get; }
+    public ILifeItemFeature LifeItemF { get; }
+    public IScoreExtendFeature ScoreExtendF { get; }
+    public IRankFeature RankF { get; }
+    public IFaithFeature FaithF { get; }
+    public IMeterFeature MeterF { get; }
     public Evented<int> Lives { get; }
     public Evented<int> Bombs { get; }
-    public Evented<int> LifeItems { get; }
     public Evented<long> Graze { get; }
-    public Evented<double> Power { get; }
-    public Evented<double> PIV { get; }
-    public double Faith { get; private set; }
-    private double faithLenience;
-    public readonly DisturbedEvented<float> externalFaithDecayMultiplier = new DisturbedProduct<float>(1);
-    public double Meter { get; private set; }
     public int Continues { get; private set; }
     public int ContinuesUsed { get; private set; } = 0;
     public int HitsTaken { get; private set; }
-    private int nextScoreLifeIndex;
-    private int nextItemLifeIndex;
     public readonly InstanceMode mode;
     /// <summary>
     /// Set to false after eg. a game is completed, but before starting a new game
@@ -84,6 +90,9 @@ public class InstanceData {
 
     public CardHistory CardHistory { get; }
 
+    /// <summary>
+    /// If this is true, then time-based features (like faith or combo) should not tick.
+    /// </summary>
     public readonly DisturbedOr Lenient = new();
     public BehaviorEntity? CurrentBoss { get; private set; }
     private ICancellee? CurrentBossCT { get; set; }
@@ -107,28 +116,14 @@ public class InstanceData {
     public int PlayerActiveFrames { get; private set; }
     public int LastMeterStartFrame { get; set; }
     public int LastTookHitFrame { get; private set; }
-    public int MeterFrames { get; set; }
     public int BombsUsed { get; set; }
     public int SubshotSwitches { get; set; }
     public int OneUpItemsCollected { get; private set; }
     
     #region ComputedProperties
 
-    private bool InstanceActiveGuard => mode != InstanceMode.NULL && InstanceActive;
-    public double RankPointsRequired => RankManager.RankPointsRequiredForLevel(RankLevel);
-    public double RankRatio => (RankLevel - RankManager.minRankLevel) / (double)(RankManager.maxRankLevel - RankManager.minRankLevel);
-    public int NextLifeItems => pointLives.Try(nextItemLifeIndex, 9001);
+    public bool InstanceActiveGuard => mode != InstanceMode.NULL && InstanceActive;
     public double PlayerDamageMultiplier => M.Lerp(0, 3, Difficulty.Counter, 1.20, 1);
-    public int PowerF => (int)Math.Floor(Power);
-    public int PowerIndex => PowerF - (int) powerMin;
-    public double EffectivePIV => PIV + Graze / (double)1337;
-    private double FaithDecayRateMultiplier => (CurrentBoss != null ? 0.666f : 1f) * externalFaithDecayMultiplier.Value;
-    private double FaithLenienceGraze => M.Lerp(0, 3, Difficulty.Counter, 0.42, 0.3);
-    private double FaithBoostGraze => M.Lerp(0, 3, Difficulty.Counter, 0.033, 0.02);
-    public bool MeterEnabled => MeterMechanicEnabled && Difficulty.meterEnabled;
-    public bool EnoughMeterToUse => MeterEnabled && Meter >= meterUseThreshold;
-    private double MeterBoostGraze => M.Lerp(0, 3, Difficulty.Counter, 0.010, 0.006);
-    public long? NextScoreLife => mode.OneLife() ? null : scoreLives.TryN(nextScoreLifeIndex);
     public ShipConfig? Player => TeamCfg?.Ship;
     public Subshot? Subshot => TeamCfg?.Subshot;
     public string MultishotString => (TeamCfg?.HasMultishot == true) ? (Subshot?.Describe() ?? "") : "";
@@ -138,64 +133,39 @@ public class InstanceData {
     
     #endregion
 
-    #region UILerpers
-
-    public readonly Lerpifier<long> VisibleScore;
-    public readonly Lerpifier<float> VisibleMeter;
-    public readonly Lerpifier<float> VisibleFaith;
-    public readonly Lerpifier<float> VisibleFaithLenience;
-    public readonly Lerpifier<float> VisibleRankPointFill;
-
-    #endregion
-    
-    public InstanceData(InstanceMode mode, InstanceRequest? req, long? maxScore, ReplayActor? replay) {
+    public InstanceData(InstanceMode mode, InstanceFeatures features, InstanceRequest? req, ReplayActor? replay) {
         VNData = new(SaveData.r.GlobalVNData);
         this.Request = req;
         this.Replay = replay;
         //Minor hack to avoid running the SaveData static constructor in the editor during type initialization
         PreviousSpellHistory = (req == null) ? 
             new Dictionary<BossPracticeRequestKey, (int, int)>() :
-            Core.SaveData.r.GetCampaignSpellHistory();
+            SaveData.r.GetCampaignSpellHistory();
         
         this.mode = mode;
         this.Difficulty = req?.metadata.difficulty ?? GameManagement.defaultDifficulty;
-        this.RankLevel = Difficulty.customRank ?? Difficulty.ApproximateStandard.DefaultRank();
-        this.RankPoints = RankManager.DefaultRankPointsForLevel(RankLevel);
         campaign = req?.lowerRequest is CampaignRequest cr ? cr.campaign.campaign : null;
         campaignKey = req?.lowerRequest.Campaign.Key ?? "null_campaign";
         TeamCfg = req?.metadata.team != null ? new ActiveTeamConfig(req.metadata.team) : null;
         var dfltLives = campaign != null ?
             (campaign.startLives > 0 ? campaign.startLives : StartLives(mode)) :
             StartLives(mode);
-        MaxScore = new Evented<long>(maxScore ?? 9001);
-        Score = new Evented<long>(0);
         Lives = new Evented<int>(Difficulty.startingLives ?? dfltLives);
         Bombs = new Evented<int>(StartBombs(mode));
-        Power = new Evented<double>(StartPower(mode));
-        PIV = new Evented<double>(1);
-        LifeItems = new Evented<int>(0);
         Graze = new Evented<long>(0);
         CardHistory = new CardHistory();
-        Meter = StartMeter(mode);
-        nextScoreLifeIndex = 0;
-        nextItemLifeIndex = 0;
-        Faith = 1f;
-        faithLenience = 0f;
         Continues = mode.OneLife() ? 0 : defltContinues;
         HitsTaken = 0;
         EnemiesDestroyed = 0;
         CurrentBoss = null;
-        
-        VisibleScore = new Lerpifier<long>((a, b, t) => (long)M.Lerp(a, b, (double)M.EOutSine(t)), 
-            () => Score, 1.3f);
-        VisibleMeter = new Lerpifier<float>((a, b, t) => M.Lerp(a, b, M.EOutPow(t, 3f)), 
-            () => (float)Meter, 0.2f);
-        VisibleFaith = new Lerpifier<float>((a, b, t) => M.Lerp(a, b, M.EOutPow(t, 4f)), 
-            () => (float)Faith, 0.2f);
-        VisibleFaithLenience = new Lerpifier<float>((a, b, t) => M.Lerp(a, b, M.EOutPow(t, 3f)), 
-            () => (float)Math.Min(1, faithLenience / 3), 0.2f);
-        VisibleRankPointFill = new Lerpifier<float>((a, b, t) => M.Lerp(a, b, M.EOutPow(t, 2f)),
-            () => (float) (RankPoints / RankPointsRequired), 0.3f);
+
+        Features.Add(ScoreF = features.Score.Create(this));
+        Features.Add(PowerF = features.Power.Create(this));
+        Features.Add(LifeItemF = features.ItemExt.Create(this));
+        Features.Add(ScoreExtendF = features.ScoreExt.Create(this));
+        Features.Add(RankF = features.Rank.Create(this));
+        Features.Add(FaithF = features.Faith.Create(this));
+        Features.Add(MeterF = features.Meter.Create(this));
     }
 
     public bool TryContinue() {
@@ -205,20 +175,14 @@ public class InstanceData {
             --Continues;
             ++ContinuesUsed;
             CardHistory.Clear();//Partial game is saved when lives=0. Don't double on captures.
-            //This needs to be done first to properly update the target score/life on continue
-            nextItemLifeIndex = nextScoreLifeIndex = 0;
-            Score.Value = LifeItems.Value = 0;
-            VisibleScore.HardReset();
-            PIV.Value = 1;
-            Meter = StartMeter(mode);
             if (campaign != null) {
                 Lives.Value = campaign.startLives > 0 ? campaign.startLives : StartLives(mode);
             } else {
                 Lives.Value = StartLives(mode);
             }
             Bombs.Value = StartBombs(mode);
-            Faith = faithLenience = 0;
-            SetRankLevel(Difficulty.RankLevelBounds.min);
+            foreach (var f in Features)
+                f.OnContinue();
             return true;
         } else return false;
     }
@@ -247,8 +211,8 @@ public class InstanceData {
 
     public void SwapLifeScore(long score, bool usePIVMultiplier) {
         AddLives(-1, false);
-        if (usePIVMultiplier) score = (long) (score * PIV);
-        AddScore(score);
+        if (usePIVMultiplier) score = (long) (score * ScoreF.PIV);
+        ScoreF.AddScore(score);
         LifeSwappedForScore.OnNext(default);
     }
     public void AddLives(int delta, bool asHit = true) {
@@ -258,9 +222,8 @@ public class InstanceData {
             ++HitsTaken;
             LastTookHitFrame = ETime.FrameNumber;
             Bombs.Value = Math.Max(Bombs, StartBombs(mode));
-            AddPower(powerDeathLoss);
-            Meter = 1;
-            AddRankPoints(RankManager.RankPointsDeath);
+            foreach (var f in Features)
+                f.OnDied();
             PlayerTookHit.OnNext(default);
         }
         if (delta < 0 && mode.OneLife()) 
@@ -281,7 +244,7 @@ public class InstanceData {
                         method = null
                     });
                 }
-                Core.SaveData.r.RecordGame(new InstanceRecord(Request, this, false));
+                SaveData.r.RecordGame(new InstanceRecord(Request, this, false));
             }
             GameOver.OnNext(default);
         }
@@ -292,187 +255,47 @@ public class InstanceData {
     /// </summary>
     public void SetLives(int to) => AddLives(to - Lives, false);
 
-    public void AddFaith(double delta) => Faith = M.Clamp(0, 1, Faith + delta * Difficulty.faithAcquireMultiplier);
-    public void AddFaithLenience(double time) => faithLenience = Math.Max(faithLenience, time);
-
-    public void UpdatePlayerFrame() {
-        if (!Lenient) {
-            if (faithLenience > 0) {
-                faithLenience = Math.Max(0, faithLenience - ETime.FRAME_TIME);
-            } else if (Faith > 0) {
-                Faith = Math.Max(0, Faith - ETime.FRAME_TIME *
-                    faithDecayRate * FaithDecayRateMultiplier * Difficulty.faithDecayMultiplier);
-            } else if (PIV > 1) {
-                PIV.Value = Math.Max(1, PIV - pivFallStep);
-                Faith = 0.5f;
-                faithLenience = faithLenienceFall;
-            }
-        }
-        if (++PlayerActiveFrames % ETime.ENGINEFPS == 0) {
-            //note that this needs to be guarded by the if mode == .NULL check to avoid rank increases on eg. the main menu...
-            AddRankPoints(RankManager.RankPointsPerSecond);
-        }
+    public void UpdatePlayerFrame(PlayerController.PlayerState state) {
+        ++PlayerActiveFrames;
+        foreach (var f in Features)
+            f.OnPlayerFrame(Lenient, state);
     }
     
     #region Meter
 
-    public void AddMeter(double delta, PlayerController source) {
-        var belowThreshold = !EnoughMeterToUse;
-        Meter = M.Clamp(0, 1, Meter + delta * Difficulty.meterAcquireMultiplier);
-        if (belowThreshold && EnoughMeterToUse && source.State != PlayerController.PlayerState.WITCHTIME) {
-            MeterBecameUsable.OnNext(default);
-        }
-    }
-
-
-    public bool TryStartMeter() {
-        if (EnoughMeterToUse) {
-            Meter -= meterUseInstantCost;
-            return true;
-        } else return false;
-    }
-
-    public bool TryUseMeterFrame() {
-        var consume = meterUseRate * Difficulty.meterUsageMultiplier * ETime.FRAME_TIME;
-        if (Meter >= consume) {
-            Meter -= consume;
-            return true;
-        } else {
-            Meter = 0;
-            return false;
-        }
-    }
     
     #endregion
 
-    private void AddPower(double delta) {
-        if (!PowerMechanicEnabled) return;
-        var prevFloor = Math.Floor(Power);
-        var prevCeil = Math.Ceiling(Power);
-        var prevPower = Power;
-        Power.Value = M.Clamp(powerMin, powerMax, Power + delta);
-        //1.95 is effectively 1, 2.00 is effectively 2
-        if (Power < prevFloor) PowerLost.OnNext(default);
-        if (prevPower < prevCeil && Power >= prevCeil) {
-            if (Power >= powerMax) PowerFull.OnNext(default);
-            else PowerGained.OnNext(default);
-        }
-    }
-
-    /// <summary>
-    /// Delta should be negative.
-    /// </summary>
-    public bool TryConsumePower(double delta) {
-        if (!PowerMechanicEnabled) return false;
-        if (Power + delta >= powerMin) {
-            AddPower(delta);
-            return true;
-        } else return false;
-    }
-
-    public void FullPower() {
-        Power.Value = powerMax;
-        PowerFull.OnNext(default);
-    }
-    public void AddGraze(int delta, PlayerController source) {
+    public void AddGraze(int delta) {
         Graze.Value += delta;
-        AddFaith(delta * FaithBoostGraze);
-        AddFaithLenience(FaithLenienceGraze);
-        AddMeter(delta * MeterBoostGraze, source);
-        AddRankPoints(delta * RankManager.RankPointsGraze);
+        foreach (var f in Features)
+            f.OnGraze(delta);
         Counter.GrazeProc(delta);
     }
 
-    #region ItemMethods
-
-    public void AddPowerItems(int delta) {
-        if (!PowerMechanicEnabled || Power >= powerMax) {
-            AddValueItems((int)(delta * powerToValueConversion), 1);
-        } else {
-            AddPower(delta * powerItemValue);
-        }
-    }
-    
     /// <summary>
-    /// Returns score delta.
+    /// Add a lenience period (ie. do not count down in a way that hurts the player) for time-based mechanics.
     /// </summary>
-    public long AddValueItems(int delta, double multiplier) {
-        AddFaith(delta * faithBoostValue);
-        AddFaithLenience(faithLenienceValue);
-        long scoreDelta = (long) Math.Round(delta * valueItemPoints * EffectivePIV * multiplier);
-        AddScore(scoreDelta);
-        return scoreDelta;
+    /// <param name="time">Time in seconds</param>
+    public void AddLenience(double time) {
+        foreach (var f in Features)
+            f.AddLenience(time);
     }
-    public long AddSmallValueItems(int delta, double multiplier) {
-        AddFaith(delta * faithBoostValue * 0.1);
-        AddFaithLenience(faithLenienceValue * 0.1);
-        long scoreDelta = (long) Math.Round(delta * smallValueItemPoints * EffectivePIV * multiplier);
-        AddScore(scoreDelta);
-        return scoreDelta;
-    }
-    public void AddPointPlusItems(int delta, double multiplier) {
-        PIV.Value += delta * pivPerPPP * multiplier;
-        AddFaith(delta * faithBoostPointPP);
-        AddFaithLenience(faithLeniencePointPP);
-    }
-    public void AddGems(int delta, PlayerController source) {
-        AddMeter(delta * meterBoostGem, source);
-    }
+
     public void AddOneUpItem() {
         ++OneUpItemsCollected;
-        LifeExtend();
+        LifeExtend(ExtendType.ONEUP_ITEM);
+        foreach (var f in Features)
+            f.OnItemOneUp();
     }
-    public void AddLifeItems(int delta) {
-        LifeItems.Value += delta;
-        if (nextItemLifeIndex < pointLives.Length && LifeItems >= pointLives[nextItemLifeIndex]) {
-            ++nextItemLifeIndex;
-            LifeExtend();
-            ItemExtendAcquired.OnNext(default);
-        }
-    }
-    
-    #endregion
 
-    #region Rank
-    
-    
-    public bool SetRankLevel(int level, double? points = null) {
-        if (!InstanceActiveGuard) return false;
-        var (min, max) = Difficulty.RankLevelBounds;
-        level = M.Clamp(min, max, level);
-        if (RankLevel == level) return false;
-        bool increaseRank = level > RankLevel;
-        RankLevel = level;
-        RankPoints = M.Clamp(0, RankPointsRequired - 1, points ?? RankManager.DefaultRankPointsForLevel(level));
-        RankManager.RankLevelChanged.OnNext(increaseRank);
-        return true;
-    }
-    public void AddRankPoints(double delta) {
-        if (!InstanceActiveGuard) return;
-        while (delta != 0) {
-            RankPoints += delta;
-            if (RankPoints < 0) {
-                delta = RankPoints;
-                RankPoints = 0;
-                if (!SetRankLevel(RankLevel - 1)) break;
-            } else if (RankPoints > RankPointsRequired) {
-                delta = RankPoints - RankPointsRequired;
-                RankPoints = RankPointsRequired;
-                if (!SetRankLevel(RankLevel + 1)) break;
-            } else
-                delta = 0;
-        }
-    }
-    
-    #endregion
-    
-
-    public void LifeExtend() {
+    public void LifeExtend(ExtendType method) {
         ++Lives.Value;
-        AnyExtendAcquired.OnNext(default);
+        ExtendAcquired.OnNext(method);
     }
 
     public void PhaseEnd(PhaseCompletion pc) {
+        CardRecord? ncrec = null;
         if (pc.phase.Props.phaseType?.IsCard() == true && pc.phase.Boss != null && 
             pc.CaptureStars.Try(out var captured)) {
             var crec = new CardRecord() {
@@ -483,44 +306,29 @@ public class InstanceData {
                 hits = pc.hits,
                 method = pc.clear
             };
+            ncrec = crec;
             CardHistory.Add(crec);
-            AddRankPoints(RankManager.RankPointsForCard(crec));
             CardHistoryUpdated.OnNext(crec);
         }
-        if (pc.phase.Props.phaseType?.IsPattern() ?? false) AddFaithLenience(faithLeniencePhase);
-
+        foreach (var f in Features)
+            f.OnPhaseEnd(in pc, in ncrec);
         PhaseCompleted.OnNext(pc);
-    }
-
-    private void AddScore(long delta) {
-        Score.Value += delta;
-        MaxScore.Value = Math.Max(MaxScore, Score);
-        if (NextScoreLife.Try(out var next) && Score >= next) {
-            ++nextScoreLifeIndex;
-            LifeExtend();
-            AddRankPoints(RankManager.RankPointsScoreExtend);
-            ScoreExtendAcquired.OnNext(default);
-        }
     }
 
     public void NormalEnemyDestroyed() {
         ++EnemiesDestroyed;
-        AddFaithLenience(faithLenienceEnemyDestroy);
+        foreach (var f in Features)
+            f.OnEnemyDestroyed();
     }
 
     public void _RegularUpdate() {
         if (!InstanceActiveGuard) return;
-        
         ++TotalFrames;
         if (CurrentBossCT?.Cancelled == true) {
             CloseBoss();
         }
-
-        VisibleScore.Update(ETime.FRAME_TIME);
-        VisibleMeter.Update(ETime.FRAME_TIME);
-        VisibleFaith.Update(ETime.FRAME_TIME);
-        VisibleFaithLenience.Update(ETime.FRAME_TIME);
-        VisibleRankPointFill.Update(ETime.FRAME_TIME);
+        foreach (var f in Features)
+            f.OnRegularUpdate();
     }
 
 
@@ -539,13 +347,22 @@ public class InstanceData {
     }
 
     public void Dispose() {
-        //
+        foreach (var f in Features)
+            f.Dispose();
     }
     
 #if UNITY_EDITOR
-    public void SetPower(double x) => Power.Value = x;
+    public void SetPower(double x) => PowerF.Power.Value = x;
     #endif
 }
 
+/// <summary>
+/// Methods by which a player can gain a life.
+/// </summary>
+public enum ExtendType {
+    SCORE,
+    LIFE_ITEM,
+    ONEUP_ITEM
+}
 
 }

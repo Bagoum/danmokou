@@ -119,7 +119,7 @@ public class ETime : MonoBehaviour {
     /// As such, limit usage to cosmetics.
     /// </summary>
     public static bool LastUpdateForScreen { get; private set; }
-    private static readonly DMCompactingArray<IRegularUpdater> updaters = new DMCompactingArray<IRegularUpdater>();
+    private static readonly DMCompactingArray<IRegularUpdater> updaters = new(256);
     private static readonly Queue<(Action, EngineState)> eofInvokes = new Queue<(Action, EngineState)>();
     private static readonly DMCompactingArray<(Action cb, EngineState state)> persistentEofInvokes = new();
     private static readonly DMCompactingArray<(Action cb, EngineState state)> persistentSofInvokes = new();
@@ -324,20 +324,26 @@ public class ETime : MonoBehaviour {
     public static void QueueEOFInvoke(Action act, EngineState state = EngineState.RUN) => eofInvokes.Enqueue((act, state));
 
     private static readonly DMCompactingArray<IRegularUpdater> updaterAddQueue =
-        new();
+        new(256);
 
     private static void FlushUpdaterAdds() {
-        for (int ii = 0; ii < updaterAddQueue.Count; ++ii) {
-            if (updaterAddQueue.GetMarkerIfExistsAt(ii, out var dm)) {
-                dm.Value.FirstFrame();
-                updaters.AddPriority(dm);
+        //FirstFrame may itself cause new objects to be added, so we need to
+        // handle adds with this fixed-point approach
+        while (updaterAddQueue.Count > 0) {
+            var toAdd = new List<DeletionMarker<IRegularUpdater>>();
+            updaterAddQueue.CopyIntoList(toAdd);
+            updaterAddQueue.Empty();
+            foreach (var iru in toAdd) {
+                iru.Value.FirstFrame();
+                updaters.AddPriority(iru);
             }
         }
-        updaterAddQueue.Empty();
     }
 
-    public static DeletionMarker<IRegularUpdater> RegisterRegularUpdater(IRegularUpdater iru) =>
-        updaterAddQueue.AddPriority(iru, iru.UpdatePriority);
+    public static DeletionMarker<IRegularUpdater> RegisterRegularUpdater(IRegularUpdater iru) {
+        var dm = updaterAddQueue.AddPriority(iru, iru.UpdatePriority);
+        return dm;
+    }
 
 
     /// <summary>

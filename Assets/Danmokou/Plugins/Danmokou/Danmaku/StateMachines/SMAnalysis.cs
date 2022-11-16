@@ -4,6 +4,7 @@ using System.Linq;
 using BagoumLib;
 using BagoumLib.Culture;
 using Danmokou.Core;
+using Danmokou.Danmaku;
 using Danmokou.GameInstance;
 using Danmokou.Scriptables;
 using Danmokou.Services;
@@ -42,37 +43,32 @@ public struct SMPhaseController {
     private ControllerType typ;
     private int externalOverride;
     private int normalNextPhase;
-    private Action? callback;
 
     private SMPhaseController(int normalNext) {
         typ = ControllerType.DEFAULT;
         externalOverride = 0;
         normalNextPhase = normalNext;
-        callback = null;
     }
     
     public static SMPhaseController Normal(int firstPhase) => new(firstPhase);
 
     /// <summary>
-    /// Run a single phase and then hit the callback.
+    /// Run a single phase and then finish execution.
     /// By default, the zero phase (setup phase by convention) is run first, and then it goes to the target phase.
     /// <br/>After the phase is run, GoToNextPhase will always return -1.
     /// </summary>
     /// <param name="gotoPhase">Target phase</param>
-    /// <param name="cb">Callback</param>
     /// <param name="forceZeroOverride">True iff the zero phase should also be skipped</param>
-    public void Override(int gotoPhase, Action? cb = null, bool forceZeroOverride = false) {
+    public void Override(int gotoPhase, bool forceZeroOverride = false) {
         externalOverride = gotoPhase;
-        callback = cb;
         typ = forceZeroOverride ? ControllerType.EXTERNAL_OVERRIDE_SKIP : ControllerType.EXTERNAL_OVERRIDE;
     }
 
     /// <summary>
-    /// Run a single phase, then continue the script, and hit a callback when the script is done normally.
+    /// Run a single phase, then continue the script, and finish execution when the script is done normally.
     /// </summary>
-    public void SetGoTo(int gotoPhase, Action? cb) {
+    public void SetGoTo(int gotoPhase) {
         externalOverride = gotoPhase;
-        callback = cb;
         typ = ControllerType.EXTERNAL_OVERRIDE_CONTINUE;
     }
 
@@ -80,15 +76,7 @@ public struct SMPhaseController {
     /// Set an override for a GoTo, but only if one is not already set.
     /// </summary>
     public void LowPriorityGoTo(int gotoPhase) {
-        if (typ == ControllerType.DEFAULT) SetGoTo(gotoPhase, callback);
-    }
-
-    /// <summary>
-    /// OK to call twice
-    /// </summary>
-    public void RunEndingCallback() {
-        callback?.Invoke();
-        callback = null;
+        if (typ == ControllerType.DEFAULT) SetGoTo(gotoPhase);
     }
 
     public void SetDesiredNext(int nxt) => normalNextPhase = nxt;
@@ -110,7 +98,6 @@ public struct SMPhaseController {
             return externalOverride;
         } else if (typ == ControllerType.WAITING_OVERRIDE_RETURN) {
             typ = ControllerType.DEFAULT;
-            RunEndingCallback();
             return -1;
         }
         return normalNextPhase;
@@ -299,6 +286,7 @@ public static class SMAnalysis {
         List<Phase> Phases { get; }
     }
     public class AnalyzedStage : AnalyzedPhasedConstruct {
+        public IDanmakuGameDef Game => campaign.Game;
         public readonly StageConfig stage;
         private List<Phase>? phases;
         /// <summary>
@@ -314,6 +302,7 @@ public static class SMAnalysis {
             AnalyzedCampaign.Reconstruct(campaign).stages[stageIndex];
     }
     public class AnalyzedBoss : AnalyzedPhasedConstruct {
+        public IDanmakuGameDef Game => campaign.Game;
         public readonly BossConfig boss;
         private List<Phase>? phases;
         /// <summary>
@@ -332,13 +321,15 @@ public static class SMAnalysis {
     }
 
     public class AnalyzedCampaign {
+        public ICampaignDanmakuGameDef Game { get; }
         public readonly CampaignConfig campaign;
         public readonly AnalyzedBoss[] bosses;
         public readonly AnalyzedStage[] stages;
         public readonly Dictionary<string, AnalyzedBoss> bossKeyMap = new();
         public IEnumerable<AnalyzedStage> practiceStages => stages.Where(s => s.stage.practiceable);
 
-        public AnalyzedCampaign(CampaignConfig campaign) {
+        public AnalyzedCampaign(CampaignConfig campaign, ICampaignDanmakuGameDef game) {
+            this.Game = game;
             bosses = (this.campaign = campaign).practiceBosses.Length.Range().Select(i => new AnalyzedBoss(this, i)).ToArray();
             for (int ii = 0; ii < bosses.Length; ++ii) {
                 bossKeyMap[bosses[ii].boss.key] = bosses[ii];
@@ -395,9 +386,11 @@ public static class SMAnalysis {
     }
 
     public class AnalyzedDayCampaign {
+        public ISceneDanmakuGameDef Game { get; }
         public readonly AnalyzedDay[] days;
         public readonly DayCampaignConfig campaign;
-        public AnalyzedDayCampaign(DayCampaignConfig campaign) {
+        public AnalyzedDayCampaign(DayCampaignConfig campaign, ISceneDanmakuGameDef game) {
+            this.Game = game;
             this.campaign = campaign;
             this.days = campaign.days.Length.Range().Select(i => new AnalyzedDay(this, campaign.days, i)).ToArray();
         }

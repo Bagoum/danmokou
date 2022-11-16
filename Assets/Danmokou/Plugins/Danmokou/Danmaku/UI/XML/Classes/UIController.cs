@@ -111,7 +111,7 @@ public abstract class UIController : CoroutineRegularUpdater {
     /// </summary>
     public PushLerper<float> BackgroundOpacity { get; } = 
         new(0.5f, (a, b, t) => Mathf.Lerp(a, b, Easers.EIOSine(t)));
-    protected UIScreen MainScreen { get; set; } = null!;
+    public UIScreen MainScreen { get; protected set; } = null!;
     public DisturbedAnd UpdatesEnabled { get; } = new();
     public Stack<UINode> ScreenCall { get; } = new();
     public Stack<(UIGroup group, UINode? node)> GroupCall { get; } = new();

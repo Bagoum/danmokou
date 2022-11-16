@@ -17,10 +17,9 @@ MonoBehaviour:
     major: 2
     minor: 0
     patch: 4
+  gameDefinition: {fileID: 11400000, guid: 4cd2e743e7bd445449de6bf16935311f, type: 2}
   mainMenu: {fileID: 11400000, guid: 68a81d395f9df184fb8d689319bd1113, type: 2}
   replaySaveMenu: {fileID: 11400000, guid: 4eb8b66bd76d4d94fa90176835284503, type: 2}
-  defaultMenuBackground: {fileID: 6614173089345499342, guid: 56da452ec6a98284295330ef47ecf1c1,
-    type: 3}
   defaultUIFrame: {fileID: 21300000, guid: fd60a7ae3ce4be640b9b311d9d70969e, type: 3}
   unitScene: {fileID: 11400000, guid: f6d073d9562719741ac86ec620f65354, type: 2}
   tutorial: {fileID: 0}
@@ -36,22 +35,22 @@ MonoBehaviour:
     top: 4.1
     bot: -4.5
     center: {x: -1.9, y: 0}
-  achievements: {fileID: 0}
   dialogue:
   - {fileID: 11400000, guid: b7c1d3b51649f5e4eb3f41be569c3f4b, type: 2}
   bossMetadata:
   - {fileID: 11400000, guid: 57918be07b2fa984ea3cd0c2bb9637b8, type: 2}
   - {fileID: 11400000, guid: 17201d06832c65444b4e2faa8c5666a4, type: 2}
-  dialogueProfiles: []
   tracks:
   - {fileID: 11400000, guid: 46ef225c1f1f10644a247984bf975829, type: 2}
   items: {fileID: 11400000, guid: 18e6de6e951f4114e8823af9e617bff7, type: 2}
   prefabReferences: {fileID: 11400000, guid: 842bcc7c616103e4c9880c49f9735bb4, type: 2}
   suzunoyaReferences: {fileID: 11400000, guid: a936563f4e58b294db033ff8ee6be6f8, type: 2}
+  advReferences: {fileID: 0}
   uxmlDefaults: {fileID: 11400000, guid: b4213b3830762944fbcb9250a4b73463, type: 2}
   SFX: []
   summonables:
   - {fileID: 11400000, guid: 38afc312ddb0ac242b8cfb301b1b4237, type: 2}
   fileStateMachines: []
+  licenses: []
   scriptFolders: []
   fastParsing: 0

@@ -14,6 +14,7 @@ using TMPro;
 using Danmokou.Behavior;
 using Danmokou.Behavior.Display;
 using Danmokou.Core;
+using Danmokou.DMath;
 using Danmokou.GameInstance;
 using Danmokou.Graphics;
 using Danmokou.Player;
@@ -119,7 +120,7 @@ public class UIManager : CoroutineRegularUpdater, IUIManager, IStageAnnouncer {
         if (frame.sprite == null) frame.sprite = References.defaultUIFrame;
         PIVDecayBar.GetPropertyBlock(pivDecayPB = new MaterialPropertyBlock());
         MeterBar.GetPropertyBlock(meterPB = new MaterialPropertyBlock());
-        meterPB.SetFloat(PropConsts.threshold, (float) InstanceConsts.meterUseThreshold);
+        meterPB.SetFloat(PropConsts.threshold, (float) Instance.MeterF.MeterUseThreshold);
         defaultMeterColor = MeterBar.sharedMaterial.GetColor(PropConsts.fillColor);
         defaultMeterColor2 = MeterBar.sharedMaterial.GetColor(PropConsts.fillColor2);
         BossHPBar.GetPropertyBlock(bossHPPB = new MaterialPropertyBlock());
@@ -139,7 +140,8 @@ public class UIManager : CoroutineRegularUpdater, IUIManager, IStageAnnouncer {
         SetBossHPLoader(null);
         if (autoShiftCamera) 
             uiCamera.transform.localPosition = 
-                new Vector3(-References.bounds.center.x, -References.bounds.center.y, uiCamera.transform.localPosition.z);
+                new Vector3(-LocationHelpers.PlayableBounds.center.x, -LocationHelpers.PlayableBounds.center.y, 
+                    uiCamera.transform.localPosition.z);
     }
 
     protected override void BindListeners() {
@@ -150,14 +152,20 @@ public class UIManager : CoroutineRegularUpdater, IUIManager, IStageAnnouncer {
         Listen(PlayerController.MeterIsActive, SetMeterActivated);
         Listen(PlayerController.PlayerDeactivatedMeter, UnSetMeterActivated);
         
-        Listen(EvInstance, i => i.ItemExtendAcquired, LifeExtendItems);
-        Listen(EvInstance, i => i.ScoreExtendAcquired, LifeExtendScore);
+        Listen(EvInstance, i => i.ExtendAcquired, ext => {
+            if (ext is ExtendType.SCORE) {
+                LifeExtendScore();
+            } else if (ext is ExtendType.LIFE_ITEM) {
+                LifeExtendItems();
+                UpdateLifeText();
+            }
+        });
         
         Listen(EvInstance, i => i.Graze, g => graze.text = string.Format(grazeFormat, g));
-        Listen(EvInstance, i => i.VisibleScore, s => score.text = string.Format(scoreFormat, s));
-        Listen(EvInstance, i => i.MaxScore, s => maxScore.text = string.Format(scoreFormat, s));
-        Listen(EvInstance, i => i.PIV, p => pivMult.text = string.Format(pivMultFormat, p));
-        Listen(EvInstance, i => i.Power, p => power.text = string.Format(powerFormat, p, InstanceConsts.powerMax));
+        Listen(EvInstance, i => i.ScoreF.VisibleScore, s => score.text = string.Format(scoreFormat, s));
+        Listen(EvInstance, i => i.ScoreF.MaxScore, s => maxScore.text = string.Format(scoreFormat, s));
+        Listen(EvInstance, i => i.ScoreF.PIV, p => pivMult.text = string.Format(pivMultFormat, p));
+        Listen(EvInstance, i => i.PowerF.Power, p => power.text = string.Format(powerFormat, p, EvInstance.Value.PowerF.PowerMax));
         Listen(EvInstance, i => i.Lives, l => {
             for (int ii = 0; ii < healthPoints.Length; ++ii) healthPoints[ii].sprite = healthEmpty;
             for (int hi = 0; hi < healthItrs.Length; ++hi) {
@@ -182,7 +190,7 @@ public class UIManager : CoroutineRegularUpdater, IUIManager, IStageAnnouncer {
         });
 
         void UpdateLifeText() {
-            lifePoints.text = string.Format(lifePointsFormat, Instance.LifeItems.Value, Instance.NextLifeItems);
+            lifePoints.text = string.Format(lifePointsFormat, Instance.LifeItemF.LifeItems.Value, Instance.LifeItemF.NextLifeItems);
         }
         UpdateLifeText();
         
@@ -192,7 +200,7 @@ public class UIManager : CoroutineRegularUpdater, IUIManager, IStageAnnouncer {
         UpdateTeamText();
         
         void UpdateScoreExtendText() {
-            if (Instance.NextScoreLife.Try(out var scoreExt)) {
+            if (Instance.ScoreExtendF.NextScoreLife.Value.Try(out var scoreExt)) {
                 scoreExtend_parent.SetActive(true);
                 scoreExtend.text = string.Format(scoreFormat, scoreExt);
             } else {
@@ -200,17 +208,21 @@ public class UIManager : CoroutineRegularUpdater, IUIManager, IStageAnnouncer {
             }
         }
         UpdateScoreExtendText();
-        
 
-        Listen(EvInstance, i => i.LifeItems, _ => UpdateLifeText());
-        Listen(EvInstance, i => i.ItemExtendAcquired, UpdateLifeText);
-        Listen(EvInstance, i => i.TeamUpdated, UpdateTeamText);
-        if (scoreExtend_parent != null) {
-            Listen(EvInstance, i => i.ScoreExtendAcquired, UpdateScoreExtendText);
+        void UpdateRankText() {
+            if (Instance.RankF is { } r) {
+                rankLevel.text = $"Rank {r.RankLevel}";
+            } else {
+                rankLevel.text = "";
+            }
         }
-
-        rankLevel.text = $"Rank {Instance.RankLevel}";
-        Listen(RankManager.RankLevelChanged, _ => rankLevel.text = $"Rank {Instance.RankLevel}");
+        UpdateRankText();
+        
+        Listen(EvInstance, i => i.LifeItemF.LifeItems, _ => UpdateLifeText());
+        Listen(EvInstance, i => i.TeamUpdated, UpdateTeamText);
+        Listen(EvInstance, i => i.RankF.RankLevelChanged, _ => UpdateRankText());
+        if (scoreExtend_parent != null)
+            Listen(EvInstance, i => i.ScoreExtendF.NextScoreLife, _ => UpdateScoreExtendText());
     }
 
     private void Start() {
@@ -245,10 +257,10 @@ public class UIManager : CoroutineRegularUpdater, IUIManager, IStageAnnouncer {
 
     private void UpdatePB() {
         //pivDecayPB.SetFloat(PropConsts.time, time);
-        pivDecayPB.SetFloat(PropConsts.fillRatio, Instance.VisibleFaith.Value);
-        pivDecayPB.SetFloat(PropConsts.innerFillRatio, Mathf.Clamp01(Instance.VisibleFaithLenience.Value));
+        pivDecayPB.SetFloat(PropConsts.fillRatio, Instance.FaithF.VisibleFaith.Value);
+        pivDecayPB.SetFloat(PropConsts.innerFillRatio, Mathf.Clamp01(Instance.FaithF.VisibleFaithLenience.Value));
         PIVDecayBar.SetPropertyBlock(pivDecayPB);
-        meterPB.SetFloat(PropConsts.fillRatio, (float) Instance.Meter);
+        meterPB.SetFloat(PropConsts.fillRatio, (float) Instance.MeterF.Meter);
         meterPB.SetColor(PropConsts.colorMult, Instance.TeamCfg?.Support is Ability.Metered ? Color.white : 
             new Color(0.5f, 0.5f, 0.5f, 0.7f));
         MeterBar.SetPropertyBlock(meterPB);
@@ -258,8 +270,8 @@ public class UIManager : CoroutineRegularUpdater, IUIManager, IStageAnnouncer {
             bossHPPB.SetFloat(PropConsts.fillRatio, bossHP.DisplayBarRatio);
         }
         BossHPBar.SetPropertyBlock(bossHPPB);
-        rankPB.SetColor(PropConsts.fillColor, rankPointBarColor.Evaluate((float)Instance.RankRatio));
-        rankPB.SetFloat(PropConsts.fillRatio, Instance.VisibleRankPointFill.Value);
+        rankPB.SetColor(PropConsts.fillColor, rankPointBarColor.Evaluate((float)(Instance.RankF?.RankRatio ?? 0)));
+        rankPB.SetFloat(PropConsts.fillRatio, Instance.RankF?.VisibleRankPointFill.Value ?? 0);
         rankPointBar.SetPropertyBlock(rankPB);
         leftSidebarPB.SetFloat(PropConsts.time, profileTime);
         rightSidebarPB.SetFloat(PropConsts.time, profileTime);
@@ -473,8 +485,8 @@ public class UIManager : CoroutineRegularUpdater, IUIManager, IStageAnnouncer {
 
     private void InStayOutSpriteFade(TextMeshPro tmp, float timeIn, float timeStay, float timeOut, ICancellee cT,
         Action? done = null) {
-        var m0 = tmp.color.WithA(0);
-        var m1 = m0.WithA(1);
+        var m0 = Helpers.WithA(tmp.color, 0);
+        var m1 = Helpers.WithA(m0, 1);
         new Tweener<Color>(m0, m1, timeIn, c => tmp.color = c, null, cT)
             .Then(new Tweener<float>(0, 0, timeStay, _ => { }, null, cT))
             .Then(new Tweener<Color>(m1, m0, timeOut, c => tmp.color = c, null, cT))

@@ -827,6 +827,10 @@
       <Project>{fb76ea87-6c0d-f91b-47d2-a55fce61d2df}</Project>
       <Name>Danmokou.Core</Name>
     </ProjectReference>
+    <ProjectReference Include="Danmokou.BRuH.csproj">
+      <Project>{6d433cd1-a4e5-b620-ef6e-59c456f1d9eb}</Project>
+      <Name>Danmokou.BRuH</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.

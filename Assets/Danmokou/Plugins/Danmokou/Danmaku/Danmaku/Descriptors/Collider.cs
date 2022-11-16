@@ -4,10 +4,28 @@ using UnityEngine;
 namespace Danmokou.Danmaku.Descriptors {
 public interface ICollider {
     /// <summary>
-    /// The maximum distance from the center at which a collision can occur.
+    /// The maximum distance from this shape's center at which a collision can occur.
     /// </summary>
     float MaxRadius { get; }
+    
+    /// <summary>
+    /// Check if this shape and a circle overlap.
+    /// </summary>
+    /// <param name="loc">Location of this shape</param>
+    /// <param name="dir">Orientation of this shape (as cos/sin pair)</param>
+    /// <param name="scale">Scale of this shape</param>
+    /// <param name="targetLoc">Circle location</param>
+    /// <param name="targetRad">Circle radius</param>
+    /// <returns>True iff there is a collision</returns>
     bool CheckCollision(Vector2 loc, Vector2 dir, float scale, Vector2 targetLoc, float targetRad);
+    
+    /// <summary>
+    /// Check if this shape and a circular hitbox overlap.
+    /// </summary>
+    /// <param name="loc">Location of this shape</param>
+    /// <param name="dir">Orientation of this shape (as cos/sin pair)</param>
+    /// <param name="scale">Scale of this shape</param>
+    /// <param name="target">Hitbox information</param>
     CollisionResult CheckGrazeCollision(Vector2 loc, Vector2 dir, float scale, in Hitbox target);
 }
 

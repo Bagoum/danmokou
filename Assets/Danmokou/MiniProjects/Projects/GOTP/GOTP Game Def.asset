@@ -12,7 +12,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 190416f0f0a549cba4536f46fe97ec62, type: 3}
   m_Name: GOTP Game Def
   m_EditorClassIdentifier: 
-  key: gotp
+  m_key: GOTV
+  m_version:
+    major: 1
+    minor: 0
+    patch: 1
+  m_tutorial: {fileID: 0}
+  m_miniTutorial: {fileID: 0}
   sceneConfig: {fileID: 11400000, guid: 42ef27f070f320e479dfb42d670b57b7, type: 2}
   backlogFeatures: 0
   evidenceReviewBg: {fileID: 21300000, guid: abcc4e9b544c03042bf4326bf6a7c024, type: 3}

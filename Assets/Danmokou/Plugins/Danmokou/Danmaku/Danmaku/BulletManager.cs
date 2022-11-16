@@ -160,12 +160,14 @@ public partial class BulletManager {
                 sbc.UpdateVelocityAndControls();
             } else sbc.PruneControls();
         }
+        Profiler.BeginSample("Player simple bullet velocity updates");
         for (int ii = 0; ii < activePlayer.Count; ++ii) {
             sbc = activePlayer[ii];
             if (sbc.temp_last > 0) {
                 sbc.UpdateVelocityAndControls();
             } else sbc.PruneControls();
         }
+        Profiler.EndSample();
         for (int ii = 0; ii < activeCulled.Count; ++ii) {
             sbc = activeCulled[ii];
             if (sbc.temp_last > 0) {
@@ -214,12 +216,13 @@ public partial class BulletManager {
             activeCulled[ii].NullCollisionCleanup();
         }
         
-        //Collision check (player bullets)
+        Profiler.BeginSample("Player simple bullet collision checking");
         var fci = Enemy.FrozenEnemies;
         for (int ii = 0; ii < activePlayer.Count; ++ii) {
             sbc = activePlayer[ii];
             if (sbc.Count > 0) sbc.CheckCollision(fci);
         }
+        Profiler.EndSample();
         
     }
 

@@ -29,7 +29,7 @@ using static FileUtils;
 namespace Danmokou.Core {
 public static class SaveData {
     private const string SETTINGS = FileUtils.SAVEDIR + "settings.json";
-    private static string RECORD => FileUtils.SAVEDIR + $"record-{GameManagement.References.gameIdentifier}.json";
+    private static string RECORD => FileUtils.SAVEDIR + $"record-{GameManagement.References.gameDefinition.Key}.json";
     private const string REPLAYS_DIR = FileUtils.SAVEDIR + "Replays/";
 
     [Serializable]
@@ -52,9 +52,6 @@ public static class SaveData {
 
         public bool CampaignCompleted(string key) =>
             CompletedCampaigns.Contains(key);
-        
-        [JsonIgnore]
-        public bool MainCampaignCompleted => CampaignCompleted(GameManagement.References.campaign.key);
 
         public static readonly Event<Unit> TutorialCompleted = new();
 
@@ -244,7 +241,7 @@ public static class SaveData {
                 .SelectNotNull(f => {
                     try {
                         var metadata = ReadJson<SerializedSave>(f + VNMETAEXT);
-                        if (metadata?.GameIdentifier != GameManagement.References.gameIdentifier)
+                        if (metadata?.GameIdentifier != GameManagement.References.gameDefinition.Key)
                             return null;
                         return metadata;
                     } catch (Exception e) {
@@ -292,7 +289,7 @@ public static class SaveData {
                 .SelectNotNull(f => {
                     try {
                         var metadata = ReadJson<ReplayMetadata>(f + RMETAEXT);
-                        if (metadata?.Record.GameIdentifier != GameManagement.References.gameIdentifier) 
+                        if (metadata?.Record.GameIdentifier != GameManagement.References.gameDefinition.Key) 
                             return null;
                         return new Replay(LoadReplayFrames(f), metadata);
                     } catch (Exception e) {

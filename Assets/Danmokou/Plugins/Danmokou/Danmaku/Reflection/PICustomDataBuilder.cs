@@ -12,6 +12,7 @@ using Danmokou.Expressions;
 using Danmokou.Player;
 using UnityEngine;
 using Ex = System.Linq.Expressions.Expression;
+#pragma warning disable CS0162
 
 namespace Danmokou.Reflection.CustomData {
 public readonly struct TypeDefKey {

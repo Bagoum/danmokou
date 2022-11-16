@@ -221,6 +221,11 @@ public class UINode {
     /// Overrides Navigate for Confirm entries. Runs after Navigator but before Navigate.
     /// </summary>
     public Func<UINode, UIResult>? OnConfirm { get; init; }
+    /// <summary>
+    /// A function that is run the first time the node is made visible.
+    /// </summary>
+    public Action<UINode>? OnFirstRender { get; init; }
+    private bool isFirstRender = true;
     private readonly UIGroup? _showHideGroup;
     /// <summary>
     /// A UIGroup to show on entry and hide on exit.
@@ -405,6 +410,10 @@ public class UINode {
             NodeHTML.AddToClassList(disabledClass);
         Rebind();
         InlineStyle?.Invoke(visibility, this);
+        if (thisFrameRender && isFirstRender) {
+            isFirstRender = false;
+            OnFirstRender?.Invoke(this);
+        }
     }
 
     /// <summary>

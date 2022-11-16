@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using BagoumLib.Cancellation;
+using BagoumLib.Events;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Core.DInput;
@@ -46,7 +47,7 @@ public class Tutorial : BehaviorEntity {
 #else
         RunDroppableRIEnumerator(RunTutorial(0));
 #endif
-        tokens.Add(GameManagement.Instance.externalFaithDecayMultiplier.AddConst(6)); 
+        tokens.Add(GameManagement.Instance.FaithF.externalFaithDecayMultiplier.AddConst(6)); 
     }
 
     private void ClearText() {
@@ -209,15 +210,15 @@ public class Tutorial : BehaviorEntity {
         int currLives = Instance.Lives;
         yield return waitlf(() => Instance.Lives > currLives);
         yield return shift();
-        Message(text10, valueitems36(InstanceConsts.valueItemPoints));
+        Message(text10, valueitems36(Instance.ScoreF.ValueItemPoints));
         yield return confirm();
         yield return shift();
         Prompt(text10, points37);
-        yield return waitlf(() => Instance.Score > 75000);
+        yield return waitlf(() => Instance.ScoreF.Score > 75000);
         yield return shift();
         Message(text00, scoremult38);
         yield return confirm();
-        Message(text00, faith39(InstanceConsts.pivFallStep));
+        Message(text00, faith39(FaithFeature.faithPivFallStep));
         yield return confirm();
         Message(text00, faithblue40);
         yield return confirm();
@@ -225,14 +226,14 @@ public class Tutorial : BehaviorEntity {
         yield return confirm();
         yield return shift();
         Prompt(text10, scoremult42);
-        yield return waitlf(() => Instance.PIV >= 1.11);
+        yield return waitlf(() => Instance.ScoreF.PIV >= 1.11);
         yield return shift();
-        yield return waitlf(() => Instance.PIV <= 1.0);
+        yield return waitlf(() => Instance.ScoreF.PIV <= 1.0);
         Message(text10, scoreext43);
         yield return confirm();
         yield return shift();
         Prompt(text10, scoreext44);
-        yield return waitlf(() => Instance.Score > 2000000);
+        yield return waitlf(() => Instance.ScoreF.Score > 2000000);
         yield return shift();
         Message(text10, ability45);
         yield return confirm();

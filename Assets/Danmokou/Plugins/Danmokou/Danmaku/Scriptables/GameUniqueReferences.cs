@@ -4,32 +4,25 @@ using System.Linq;
 using BagoumLib;
 using Danmokou.Achievements;
 using Danmokou.Core;
+using Danmokou.Danmaku;
 using UnityEngine;
 
 
 namespace Danmokou.Scriptables {
 [CreateAssetMenu(menuName = "Data/Game Data")]
 public class GameUniqueReferences : ScriptableObject {
-    [Tooltip("Preferably a short acronym")]
-    public string gameIdentifier = "";
-    public Version gameVersion;
+    public GameDef gameDefinition = null!;
+    public ICampaignDanmakuGameDef CampaignGameDef => gameDefinition is ICampaignDanmakuGameDef g ?
+        g :
+        throw new Exception($"The game {gameDefinition.Key} does not support {nameof(ICampaignDanmakuGameDef)}");
+    public ISceneDanmakuGameDef SceneGameDef => gameDefinition is ISceneDanmakuGameDef g ?
+        g :
+        throw new Exception($"The game {gameDefinition.Key} does not support {nameof(ISceneDanmakuGameDef)}");
     public SceneConfig mainMenu = null!;
-    public SceneConfig replaySaveMenu = null!;
     public Sprite defaultUIFrame = null!;
     public SceneConfig unitScene = null!;
-    public SceneConfig? tutorial;
-    public SceneConfig? miniTutorial;
-    public SceneConfig endcard = null!;
-    public CampaignConfig campaign = null!;
-    public CampaignConfig? exCampaign;
-    public IEnumerable<CampaignConfig> Campaigns => new[] {campaign, exCampaign}.FilterNone();
-    public DayCampaignConfig? dayCampaign;
     public CameraTransitionConfig defaultTransition = null!;
 
-    public FieldBounds bounds;
-
-    public AchievementProviderSO? achievements;
-    
     public SODialogue[] dialogue = null!;
     [Header("Script Keyable")] public BossConfig[] bossMetadata = null!;
     public AudioTrack[] tracks = null!;
@@ -53,23 +46,5 @@ public class GameUniqueReferences : ScriptableObject {
     /// </summary>
     public bool fastParsing;
 
-    private static IEnumerable<ShipConfig> CampaignShots(CampaignConfig? c) =>
-        c == null ? new ShipConfig[0] : c.players;
-
-    private static IEnumerable<ShipConfig> CampaignShots(DayCampaignConfig? c) =>
-        c == null ? new ShipConfig[0] : c.players;
-
-    public IEnumerable<ShipConfig> AllShips =>
-        CampaignShots(campaign).Concat(CampaignShots(exCampaign)).Concat(CampaignShots(dayCampaign));
-    public IEnumerable<ShotConfig> AllShots => AllShips.SelectMany(x => x.shots2.Select(s => s.shot));
-
-    public IEnumerable<IAbilityCfg> AllSupportAbilities => 
-        AllShips.SelectMany(x => x.supports.Select(s => s.ability));
-
-    public ShipConfig FindPlayer(string key) => AllShips.First(p => p.key == key);
-    public ShotConfig FindShot(string key) => AllShots.First(s => s.key == key);
-
-    public IAbilityCfg? FindSupportAbility(string key) =>
-        AllSupportAbilities.FirstOrDefault(x => x.Key == key);
 }
 }

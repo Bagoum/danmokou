@@ -31,8 +31,7 @@ public enum ADVBacklogFeatures {
 /// <br/>Most actual code in subclasses occurs in a nested class implementing <see cref="IExecutingADV"/>
 ///  that is returned by <see cref="Setup"/>.
 /// </summary>
-public abstract class ADVGameDef : ScriptableObject {
-    public string key = "";
+public abstract class ADVGameDef : GameDef {
     public SceneConfig sceneConfig = null!;
     public ADVBacklogFeatures backlogFeatures = ADVBacklogFeatures.NONE;
     

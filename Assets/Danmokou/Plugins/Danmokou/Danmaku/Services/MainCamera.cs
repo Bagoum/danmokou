@@ -128,7 +128,7 @@ public class MainCamera : RegularUpdater, IScreenshotter {
         Shader.SetGlobalFloat(ShaderScrnHeightID, ScreenHeight);
         Shader.SetGlobalFloat(ShaderScrnWidthID, ScreenWidth);
         Shader.SetGlobalFloat(PixelsPerUnitID, s.Resolution.h / ScreenHeight);
-        Shader.SetGlobalFloat(GlobalXOffsetID, GameManagement.References.bounds.center.x);
+        Shader.SetGlobalFloat(GlobalXOffsetID, LocationHelpers.PlayableBounds.center.x);
         if (s.Shaders) Shader.EnableKeyword("FANCY");
         else Shader.DisableKeyword("FANCY");
     }

@@ -14,12 +14,11 @@ namespace Danmokou.DMath.Functions {
 /// </summary>
 [Reflect] [Atomic]
 public static class ExMDifficulty {
-    //Note: difficulty is parsed statically at script compile time (when not using EXBAKE_SAVE/LOAD),
-    //whereas rank is always dynamic.
+    //Note: difficulty is parsed statically at script compile time (when not using EXBAKE_SAVE/LOAD), as is min/max rank, but the current rank value is dynamic.
     
-    #region Difficulty
     
 #if !EXBAKE_SAVE && !EXBAKE_LOAD
+    #region Difficulty
     /// <summary>
     /// Get the difficulty multiplier. 1 is easy, ~2.3 is lunatic. POSITIVE values outside this range are possible.
     /// </summary>
@@ -65,6 +64,9 @@ public static class ExMDifficulty {
     /// </summary>
     /// <returns></returns>
     public static tfloat D3d1() => ResolveD3(EN1, E0, E1);
+    
+    #endregion
+    
 #else
 
     public static tfloat D() => Ex.Property(null, typeof(GameManagement), "Difficulty").Field("Value");
@@ -96,34 +98,41 @@ public static class ExMDifficulty {
     /// <returns></returns>
     public static tfloat D3d1() => ResolveD3(EN1, E0, E1);
     
-    
-#endif
-    
-    #endregion
-
-
-    #region Rank
 
     /// <summary>
     /// Minumum possible rank value (inclusive).
     /// </summary>
-    public static tfloat MinRank() => Ex.Constant((float) RankManager.minRankLevel);
+    public static tfloat MinRank() => ExM.Instance.Field("RankF").Field("MinRankLevel").Cast<float>();
     /// <summary>
     /// Maximum possible rank value (inclusive).
     /// </summary>
-    public static tfloat MaxRank() => Ex.Constant((float) RankManager.maxRankLevel);
+    public static tfloat MaxRank() => ExM.Instance.Field("RankF").Field("MaxRankLevel").Cast<float>();
+
+    
+#endif
+    
+    
+    #region Rank
+
     /// <summary>
     /// Get the dynamic difficulty rank, which varies between MinRank and MaxRank.
     /// </summary>
     [Alias("r")]
-    public static tfloat Rank() => ExM.Instance.Field("RankLevel").Cast<float>();
+    public static tfloat Rank() => ExM.Instance.Field("RankF").Field("RankLevel").Cast<float>();
 
-    public static tfloat RankRatio() => ExMLerps.Ratio(MinRank(), MaxRank(), Rank());
+    public static tfloat RankRatio() => ExM.Instance.Field("RankF").Field("RankRatio").Cast<float>();
 
+    /// <summary>
+    /// Minumum possible rank value (inclusive).
+    /// </summary>
+    public static tfloat MinRank() => Ex.Constant((float) Instance.RankF!.MinRankLevel);
+    /// <summary>
+    /// Maximum possible rank value (inclusive).
+    /// </summary>
+    public static tfloat MaxRank() => Ex.Constant((float) Instance.RankF!.MaxRankLevel);
 
-
+    
     #endregion
-
 
 
 

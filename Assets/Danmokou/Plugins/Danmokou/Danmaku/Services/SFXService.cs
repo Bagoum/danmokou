@@ -70,13 +70,12 @@ public class SFXService : RegularUpdater, ISFXService {
 #endif
         Listen(Events.SceneCleared, ClearConstructed);
         Listen(EngineStateManager.EvState, HandleEngineStateChange);
-        Listen(RankManager.RankLevelChanged, increase => Request(increase ? rankUp : rankDown));
 
         Listen(PlayerController.PlayerActivatedMeter, () => Request(meterActivated));
         Listen(PlayerController.PlayerDeactivatedMeter, () => Request(meterDeActivated));
 
-        Listen(GameManagement.EvInstance, i => i.MeterBecameUsable, () => Request(meterUsable));
-        Listen(GameManagement.EvInstance, i => i.AnyExtendAcquired, () => Request(lifeExtend));
+        Listen(GameManagement.EvInstance, i => i.MeterF.MeterBecameUsable, () => Request(meterUsable));
+        Listen(GameManagement.EvInstance, i => i.ExtendAcquired, _ => Request(lifeExtend));
         Listen(GameManagement.EvInstance, i => i.PhaseCompleted, pc => {
             if (pc.phase.Props.endSound) {
                 if (pc.Captured.Try(out var captured)) {
@@ -86,10 +85,11 @@ public class SFXService : RegularUpdater, ISFXService {
                 }
             }
         });
-        Listen(GameManagement.EvInstance, i => i.PowerFull, () => Request(powerFull));
-        Listen(GameManagement.EvInstance, i => i.PowerGained, () => Request(powerGained));
-        Listen(GameManagement.EvInstance, i => i.PowerLost, () => Request(powerLost));
+        Listen(GameManagement.EvInstance, i => i.PowerF.PowerFull, () => Request(powerFull));
+        Listen(GameManagement.EvInstance, i => i.PowerF.PowerGained, () => Request(powerGained));
+        Listen(GameManagement.EvInstance, i => i.PowerF.PowerLost, () => Request(powerLost));
         Listen(GameManagement.EvInstance, i => i.LifeSwappedForScore, () => Request(swapHPScore));
+        Listen(GameManagement.EvInstance, i => i.RankF?.RankLevelChanged, increase => Request(increase ? rankUp : rankDown));
     }
 
     public void Update() {

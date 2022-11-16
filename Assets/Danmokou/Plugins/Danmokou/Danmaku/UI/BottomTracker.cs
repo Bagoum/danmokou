@@ -47,8 +47,8 @@ public class BottomTracker : RegularUpdater {
             if (containerActive) {
                 var p = tr.localPosition;
                 p.x = Mathf.Clamp(source.GlobalPosition().x,
-                    GameManagement.References.bounds.left + yield,
-                    GameManagement.References.bounds.right - yield);
+                    LocationHelpers.PlayableBounds.left + yield,
+                    LocationHelpers.PlayableBounds.right - yield);
                 tr.localPosition = p;
                 //Superseded by bottom HP bar
                 //text.color = new Color(1, 1, 1,

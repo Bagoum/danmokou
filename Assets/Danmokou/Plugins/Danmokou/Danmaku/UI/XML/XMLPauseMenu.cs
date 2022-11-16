@@ -87,7 +87,7 @@ public class XMLPauseMenu : PausedGameplayMenu, IPauseMenu {
                 lastSaveLoadSS.DestroyTexOrRT();
             }
             lastSaveLoadSS = ServiceLocator.Find<IScreenshotter>().Screenshot(
-                new CRect(-GameManagement.References.bounds.center.x, 0, MainCamera.ScreenWidth / 2f, 
+                new CRect(-LocationHelpers.PlayableBounds.center.x, 0, MainCamera.ScreenWidth / 2f, 
                     MainCamera.ScreenHeight / 2f, 0), new[] { MainCamera.CamType.UI });
             preserveSS = false;
         }

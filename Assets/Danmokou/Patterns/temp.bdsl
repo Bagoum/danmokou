@@ -13,28 +13,17 @@ phase(0)
 $%f(%x)
 !}
 
+
 <!> type non nest
-<!> hp 1000
+<!> hp 100000
 phase 0
 	paction 0
-		position 0 1
-		gtrepeat {
-			wait(modwithpause 5 (6 7) 8)
-			times(_)
-			for(3s)
-		} bullet-control(once, circle-red/w, batch(> t 1, {
-			sfx(x-transform-1, _)
-			restyleeffect(arrow-red/b, _, _)
-		}))
-		async circle-red/w <1;:2> gcrepeat {
-			wait(10)
-			times(_)
-			for(4s)
-			rv2incr(<6>)
-		} gsrepeat {
-			times(30)
-			circle
-		} s(rvelocity(cx(2)))
+		position 0 0
+		async fairy1 <-3.3;4:> gir2 10 11 <;-0.3:> {
+		} gcr2 10 13 <0.4;:> {
+		} summon null stall {
+			hp 100000
+		}
 
 <!> type non depthsort
 <!> hp 1000

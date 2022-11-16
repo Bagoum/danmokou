@@ -51,6 +51,7 @@
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Utility\CameraFocusOnPt.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Utility\InputAlignmentDebug.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Utility\DebugTemp.cs" />
+     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Utility\TmpTestUIFreeform.cs" />
      <None Include="Assets\Danmokou\Plugins\Danmokou\Utility\Danmokou.EditorUtility.asmdef" />
      <Reference Include="UnityEngine">
      <HintPath>C:\Program Files\Unity\Hub\Editor\2021.3.7f1\Editor\Data\Managed\UnityEngine\UnityEngine.dll</HintPath>

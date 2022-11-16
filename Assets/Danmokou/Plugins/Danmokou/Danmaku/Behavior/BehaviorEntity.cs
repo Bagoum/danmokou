@@ -567,7 +567,6 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
             cT.Cancel();
             behaviorToken.Remove(cT);
         }
-        phaseController.RunEndingCallback();
         if (IsNontrivialID(ID)) {
             Logs.Log(
                 $"BehaviorEntity {ID} finished running its SM{(sm.cullOnFinish ? " and will destroy itself." : ".")}",

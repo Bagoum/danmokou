@@ -3,6 +3,7 @@ using Danmokou.Core;
 using Danmokou.Services;
 using Danmokou.DMath;
 using Danmokou.Expressions;
+using Danmokou.GameInstance;
 using Danmokou.Reflection;
 using Danmokou.SM;
 using NUnit.Framework;
@@ -109,7 +110,7 @@ phase 0
 
     [Test]
     public static void tmp() {
-        GameManagement.NewInstance(InstanceMode.NULL);
+        GameManagement.NewInstance(InstanceMode.NULL, InstanceFeatures.InactiveFeatures);
         AreEqual("(-1 + x + 2 * y + 3)".Into<BPY>()(new ParametricInfo() { loc = new Vector2(5, 10)}), 27);
         "(/ 5 * ^ dl 0.8 24)".Into<BPY>();
         AreEqual(@"

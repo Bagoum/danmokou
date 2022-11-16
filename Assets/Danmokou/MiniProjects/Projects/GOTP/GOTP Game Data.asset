@@ -12,29 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8d7768018aff40589017a165e079b3c1, type: 3}
   m_Name: GOTP Game Data
   m_EditorClassIdentifier: 
-  gameIdentifier: GOTV
-  gameVersion:
-    major: 1
-    minor: 0
-    patch: 0
+  gameDefinition: {fileID: 11400000, guid: cca91ce8adc3b764f88090a7ca3d68fa, type: 2}
   mainMenu: {fileID: 11400000, guid: bc6669472c97ad241b8103007d103b58, type: 2}
-  replaySaveMenu: {fileID: 0}
   defaultUIFrame: {fileID: 21300000, guid: fd60a7ae3ce4be640b9b311d9d70969e, type: 3}
   unitScene: {fileID: 0}
-  tutorial: {fileID: 0}
-  miniTutorial: {fileID: 0}
-  endcard: {fileID: 0}
-  campaign: {fileID: 0}
-  exCampaign: {fileID: 0}
   dayCampaign: {fileID: 0}
   defaultTransition: {fileID: 11400000, guid: 558355da6684acf47b49fb6cac124fa1, type: 2}
-  bounds:
-    left: -3.6
-    right: 3.6
-    top: 4.1
-    bot: -4.5
-    center: {x: -1.9, y: 0}
-  achievements: {fileID: 0}
   dialogue: []
   bossMetadata: []
   tracks:

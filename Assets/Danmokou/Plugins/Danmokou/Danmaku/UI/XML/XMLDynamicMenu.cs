@@ -29,9 +29,11 @@ public class XMLDynamicMenu : UIController, IFixedXMLObjectContainer {
     protected override UIScreen?[] Screens => dynamicScreens.Prepend(MainScreen).ToArray();
     
     public UINode Unselect { get; private set; } = null!;
-    private UIFreeformGroup group = null!;
     private List<UINode>? _addNodeQueue = new();
     private List<UIScreen> dynamicScreens = new();
+    
+    public Func<UINode, UIResult?>? HandleUnselectConfirm { get; set; }
+    public UIFreeformGroup FreeformGroup { get; private set; }
 
 
     protected override void BindListeners() {
@@ -40,18 +42,20 @@ public class XMLDynamicMenu : UIController, IFixedXMLObjectContainer {
     }
 
     public override void FirstFrame() {
-        Unselect = new EmptyNode(new UnselectorFixedXML());
+        Unselect = new EmptyNode(new UnselectorFixedXML()) {
+            OnConfirm = UnselectorConfirm
+        };
         MainScreen = new UIScreen(this, null, UIScreen.Display.Unlined) {
             Builder = (s, ve) => {
-                //TODO for the other screens, you can do this
+                //TODO for the other screens, you can set picking mode to capture fallthrough
                 //s.HTML.pickingMode = PickingMode.Position;
                 s.HTML.Q("ControlsHelper").RemoveFromHierarchy();
-                ve.AddColumn();
+                //ve.AddColumn();
                 s.Margin.SetLRMargin(0, 0);
             }
         };
 
-        group = new UIFreeformGroup(MainScreen, Unselect);
+        FreeformGroup = new UIFreeformGroup(MainScreen, Unselect);
         base.FirstFrame();
 
         if (!CaptureFallthroughInteraction) {
@@ -64,7 +68,7 @@ public class XMLDynamicMenu : UIController, IFixedXMLObjectContainer {
         
         if (_addNodeQueue != null)
             foreach (var n in _addNodeQueue)
-                group.AddNodeDynamic(n);
+                FreeformGroup.AddNodeDynamic(n);
         _addNodeQueue = null;
         
         //testing
@@ -94,7 +98,7 @@ public class XMLDynamicMenu : UIController, IFixedXMLObjectContainer {
         if (_addNodeQueue != null)
             _addNodeQueue.Add(n);
         else
-            group.AddNodeDynamic(n);
+            FreeformGroup.AddNodeDynamic(n);
     }
 
     public void AddScreen(UIScreen s) {
@@ -102,5 +106,9 @@ public class XMLDynamicMenu : UIController, IFixedXMLObjectContainer {
         if (_addNodeQueue == null) // initial building has completed
             BuildLate(s);
     }
+
+    protected UIResult UnselectorConfirm(UINode n) => 
+        HandleUnselectConfirm?.Invoke(n) ?? 
+        new UIResult.StayOnNode(UIResult.StayOnNodeType.Silent);
 }
 }

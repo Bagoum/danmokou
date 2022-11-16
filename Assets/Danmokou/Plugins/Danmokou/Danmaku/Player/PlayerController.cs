@@ -195,7 +195,7 @@ public partial class PlayerController : BehaviorEntity {
             } else Preload(s.prefab);
         }
         meter.GetPropertyBlock(meterPB = new MaterialPropertyBlock());
-        meterPB.SetFloat(PropConsts.innerFillRatio, (float)meterUseThreshold);
+        meterPB.SetFloat(PropConsts.innerFillRatio, (float)Instance.MeterF.MeterUseThreshold);
         UpdatePB();
         
         _UpdateTeam();
@@ -381,14 +381,8 @@ public partial class PlayerController : BehaviorEntity {
     
     public override void RegularUpdate() {
         base.RegularUpdate();
-        if (AllControlEnabled) {
-            if (State == PlayerState.NORMAL) {
-                Instance.AddMeter(meterRefillRate * ETime.FRAME_TIME, this);
-            } else if (State == PlayerState.WITCHTIME) {
-                ++Instance.MeterFrames;
-            }
-            Instance.UpdatePlayerFrame();
-        }
+        if (AllControlEnabled) 
+            Instance.UpdatePlayerFrame(State);
         if (AllowPlayerInput) {
             if (InputManager.IsSwap) {
                 Logs.Log("Updating team");
@@ -490,7 +484,7 @@ public partial class PlayerController : BehaviorEntity {
     
     public void Graze(int graze) {
         if (graze <= 0 || hitInvulnerabilityCounter > 0) return;
-        GameManagement.Instance.AddGraze(graze, this);
+        GameManagement.Instance.AddGraze(graze);
     }
     
     public void Hit(int dmg, bool force = false) {
@@ -592,7 +586,7 @@ public partial class PlayerController : BehaviorEntity {
     private IEnumerator ResolveState(PlayerState next, ICancellee<PlayerState> canceller) {
         return next switch {
             PlayerState.NORMAL => StateNormal(canceller),
-            PlayerState.WITCHTIME => StateWitchTime(canceller),
+            PlayerState.WITCHTIME => throw new Exception($"Cannot generically request {nameof(PlayerState.WITCHTIME)} state"),
             PlayerState.RESPAWN => StateRespawn(canceller),
             _ => throw new Exception($"Unhandled player state: {next}")
         };
@@ -617,8 +611,8 @@ public partial class PlayerController : BehaviorEntity {
         State = PlayerState.NORMAL;
         while (true) {
             if (MaybeCancelState(cT)) yield break;
-            if (IsTryingWitchTime && GameManagement.Instance.TryStartMeter()) {
-                RunDroppableRIEnumerator(StateWitchTime(cT));
+            if (IsTryingWitchTime && GameManagement.Instance.MeterF.TryStartMeter() is {} meterToken) {
+                RunDroppableRIEnumerator(StateWitchTime(cT, meterToken));
                 yield break;
             }
             yield return null;
@@ -644,19 +638,20 @@ public partial class PlayerController : BehaviorEntity {
         
         if (!MaybeCancelState(cT)) RunDroppableRIEnumerator(StateNormal(cT));
     }
-    private IEnumerator StateWitchTime(ICancellee<PlayerState> cT) {
+    private IEnumerator StateWitchTime(ICancellee<PlayerState> cT, IDisposable meterToken) {
         GameManagement.Instance.LastMeterStartFrame = ETime.FrameNumber;
         State = PlayerState.WITCHTIME;
         speedLines.Play();
         using var t = ETime.Slowdown.AddConst(WitchTimeSlowdown);
+        using var _mt = meterToken;
         meter.enabled = true;
         PlayerActivatedMeter.OnNext(default);
         for (int f = 0; !MaybeCancelState(cT) &&
-            IsTryingWitchTime && GameManagement.Instance.TryUseMeterFrame(); ++f) {
+            IsTryingWitchTime && Instance.MeterF.TryUseMeterFrame(); ++f) {
             spawnedShip.MaybeDrawWitchTimeGhost(f);
-            MeterIsActive.OnNext(GameManagement.Instance.EnoughMeterToUse ? meterDisplay : meterDisplayInner);
+            MeterIsActive.OnNext(Instance.MeterF.EnoughMeterToUse ? meterDisplay : meterDisplayInner);
             float meterDisplayRatio = M.EOutSine(Mathf.Clamp01(f / 30f));
-            meterPB.SetFloat(PropConsts.fillRatio, Instance.VisibleMeter.Value * meterDisplayRatio);
+            meterPB.SetFloat(PropConsts.fillRatio, Instance.MeterF.VisibleMeter.Value * meterDisplayRatio);
             meter.SetPropertyBlock(meterPB);
             yield return null;
         }
@@ -673,30 +668,30 @@ public partial class PlayerController : BehaviorEntity {
     #region ItemMethods
 
     public void AddPowerItems(int delta) {
-        Instance.AddPowerItems(delta);
+        Instance.PowerF.AddPowerItems(delta);
     }
     public void AddFullPowerItems(int _) {
-        Instance.FullPower();
+        Instance.PowerF.AddFullPowerItem();
     }
     public void AddValueItems(int delta, double multiplier) {
         double bonus = MeterScorePerValueMultiplier;
-        BufferScoreLabel(Instance.AddValueItems(delta, bonus * multiplier), bonus > 1);
+        BufferScoreLabel(Instance.ScoreF.AddValueItems(delta, bonus * multiplier), bonus > 1);
     }
     public void AddSmallValueItems(int delta, double multiplier) {
         double bonus = MeterScorePerValueMultiplier;
-        BufferScoreLabel(Instance.AddSmallValueItems(delta, bonus * multiplier), bonus > 1);
+        BufferScoreLabel(Instance.ScoreF.AddSmallValueItems(delta, bonus * multiplier), bonus > 1);
     }
     public void AddPointPlusItems(int delta) {
-        Instance.AddPointPlusItems(delta, MeterPIVPerPPPMultiplier);
+        Instance.ScoreF.AddPointPlusItems(delta, MeterPIVPerPPPMultiplier);
     }
     public void AddGems(int delta) {
-        Instance.AddGems(delta, this);
+        Instance.MeterF.AddGems(delta);
     }
     public void AddOneUpItem() {
         Instance.AddOneUpItem();
     }
     public void AddLifeItems(int delta) {
-        Instance.AddLifeItems(delta);
+        Instance.LifeItemF.AddLifeItems(delta);
     }
     
     #endregion

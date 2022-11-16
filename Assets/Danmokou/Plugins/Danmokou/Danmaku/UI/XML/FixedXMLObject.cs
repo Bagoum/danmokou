@@ -31,6 +31,7 @@ public interface IFixedXMLObjectContainer {
     void AddNode(UINode n);
 } 
 
+/// <inheritdoc cref="IFixedXMLObject"/>
 public record FixedXMLObject(float l, float t, float? w = 100, float? h = 100) : IFixedXMLObject {
     public string Descriptor { get; init; } = "";
     ICObservable<float> IFixedXMLObject.Left => Left;

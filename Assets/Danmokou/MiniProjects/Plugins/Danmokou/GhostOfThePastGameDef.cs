@@ -57,10 +57,12 @@ public class GhostOfThePastGameDef : ADVGameDef {
         private void HideMD() {
             dialogueShowOffset.Push(new(0f, -0.5f, 0));
             dialogueShowAlpha.Push(new FColor(1, 1, 1, 0));
+            md.Active.Value = false;
         }
         private void ShowMD() {
             dialogueShowOffset.Push(new(0,0,0));
             dialogueShowAlpha.Push(new FColor(1, 1, 1, 1));
+            md.Active.Value = true;
         }
         
         public Executing(GhostOfThePastGameDef gdef, ADVInstance inst) : base(inst) {
@@ -157,8 +159,8 @@ public class GhostOfThePastGameDef : ADVGameDef {
             dialogueShowAlpha.Update(ETime.FRAME_TIME);
             evSize.Update(ETime.FRAME_TIME);
         }
-        
-        record MapData(string key, Func<GOTPADVData, string> desc, float mapLinkOffset) { }
+
+        record MapData(string key, Func<GOTPADVData, string> desc, float mapLinkOffset);
 
         public const string MarisaHouse = "marisaHouse";
         private const string SDM = "scarletDevilMansion";
@@ -365,7 +367,7 @@ public class GhostOfThePastGameDef : ADVGameDef {
                     SimultaneousActualization = true
                 });
                 Yuyuko yu = null!;
-                await VN.Wait(() => (yu = VN.FindEntity<Yuyuko>()) != null);
+                await VN.Wait(() => (yu = VN.FindEntity<Yuyuko>()!) != null);
                 await vn.Sequential(
                     yu.ESayC("", l111),
                     m.ESayC("cry", l112),
@@ -684,7 +686,7 @@ public class GhostOfThePastGameDef : ADVGameDef {
                     g.SayC(l239, flags: SpeakFlags.Anonymous)
                 );
             });
-            var ghost2 = Context("", async () => {
+            var ghost2 = Context("ghost2", async () => {
                 var g = VN.Find<Marisa98>();
                 var m = Marisa;
                 using var mi = VN.Add(new Mima());
@@ -696,7 +698,7 @@ public class GhostOfThePastGameDef : ADVGameDef {
                     g.SayC(l243, flags: SpeakFlags.Anonymous),
                     g.Say(l244, flags: SpeakFlags.Anonymous)
                 );
-                var ev = await evidenceRequest.WaitForEvidence();
+                var ev = await evidenceRequest.WaitForEvidence("gev1");
                 if (ev is not Evidence.Yuyuko { Status: >= Evidence.Yuyuko.Level.L1 })
                     goto fail;
                 await vn.Sequential(
@@ -704,7 +706,7 @@ public class GhostOfThePastGameDef : ADVGameDef {
                     g.SayC(l247, flags: SpeakFlags.Anonymous),
                     g.Say(l248, flags: SpeakFlags.Anonymous)
                 );
-                ev = await evidenceRequest.WaitForEvidence();
+                ev = await evidenceRequest.WaitForEvidence("gev2");
                 if (ev is not (Evidence.Nue or Evidence.Byakuren))
                     goto fail;
                 await vn.Sequential(
@@ -712,7 +714,7 @@ public class GhostOfThePastGameDef : ADVGameDef {
                     g.SayC(l251, flags: SpeakFlags.Anonymous),
                     g.Say(l252, flags: SpeakFlags.Anonymous)
                 );
-                ev = await evidenceRequest.WaitForEvidence();
+                ev = await evidenceRequest.WaitForEvidence("gev3");
                 if (ev is Evidence.Mima) {
                     mi.Location.Value = V3(-3, -3);
                     await vn.Sequential(
@@ -744,8 +746,8 @@ public class GhostOfThePastGameDef : ADVGameDef {
                         mi.ESayC("worry", l279),
                         mi.EmoteSay("happy", l280).And(mi.MoveBy(V3(-2, 0), 0.8f), mi.FadeTo(0, 0.8f)).C,
                         new LazyAction(() => {
-                            mi.Location.Value = V3(-3, 6);
-                            mi.EulerAnglesD.Value = V3(0, 0, 180);
+                            mi!.Location.Value = V3(-3, 6);
+                            mi!.EulerAnglesD.Value = V3(0, 0, 180);
                         }),
                         mi.MoveBy(V3(0, -2), 1f).And(mi.FadeTo(1, 1), mi.EmoteSay("happy", l281)).C,
                         m.ESayC("angry", l282),
@@ -822,7 +824,7 @@ public class GhostOfThePastGameDef : ADVGameDef {
                 
 
                 await rg.DoTransition(new RenderGroupTransition.Fade(rgb, 2f));
-                completion.SetResult(default);
+                completion.SetResult(new UnitADVCompletion());
                 
                 fail: ;
                 await vn.Sequential(

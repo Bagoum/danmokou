@@ -32,6 +32,8 @@ public interface IInputSource {
     bool? UIUp => null;
     bool? UIDown => null;
     //this needs to be separated since dialogueConfirm is replay-recordable but uiConfirm isn't
+    // (we can't record uiConfirm as we generally don't want to record pauses and the like,
+    // but in a more generalized game, it may be necessary to support unification)
     bool ? DialogueConfirm => null;
     bool? DialogueSkipAll => null;
 

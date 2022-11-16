@@ -361,13 +361,6 @@ public static class EnumHelpers2 {
             FixedDifficulty.Normal => 1,
             _ => 0
         };
-    
-    public static (int min, int max) RankLevelBounds(this FixedDifficulty fd) => fd switch {
-        FixedDifficulty.Lunatic => (9, RankManager.maxRankLevel),
-        FixedDifficulty.Hard => (6, 35),
-        FixedDifficulty.Normal => (3, 29),
-        _ => (RankManager.minRankLevel, 23)
-    };
 
     public static int DefaultRank(this FixedDifficulty d) => d switch {
         FixedDifficulty.Lunatic => 22,

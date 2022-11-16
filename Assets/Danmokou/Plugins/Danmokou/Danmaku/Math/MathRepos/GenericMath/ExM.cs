@@ -584,17 +584,17 @@ public static partial class ExM {
     /// <summary>
     /// Return the player's power value.
     /// </summary>
-    public static tfloat Power() => Instance.Field("Power");
+    public static tfloat Power() => Instance.Field("PowerF").Field("Power").Field("Value");
     
     /// <summary>
     /// Return the player's power value, floored.
     /// </summary>
-    public static tfloat PowerF() => Floor(Instance.Field("Power"));
+    public static tfloat PowerF() => Floor(Instance.Field("PowerF").Field("PowerInt"));
     
     /// <summary>
     /// Return the player's power index.
     /// </summary>
-    public static tfloat PowerIndex() => Floor(Instance.Field("PowerIndex"));
+    public static tfloat PowerIndex() => Floor(Instance.Field("PowerF").Field("PowerIndex"));
 
     /// <summary>
     /// If the player's power (floored) is strictly than the firing index,

@@ -16,6 +16,7 @@ public class StageConfig : ScriptableObject, IStageConfig {
     public string defaultSuicideStyle = "";
     public bool practiceable = true;
 
+    public SceneConfig Scene => sceneConfig;
     public StateMachine? StateMachine => StateMachineManager.FromText(stateMachine);
     public string DefaultSuicideStyle => defaultSuicideStyle;
 }

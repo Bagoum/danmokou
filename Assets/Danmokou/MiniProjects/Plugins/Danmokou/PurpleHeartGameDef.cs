@@ -43,10 +43,12 @@ public class PurpleHeartGameDef : ADVGameDef {
         private void HideMD() {
             dialogueShowOffset.Push(new(0f, -0.5f, 0));
             dialogueShowAlpha.Push(new FColor(1, 1, 1, 0));
+            md.Active.Value = false;
         }
         private void ShowMD() {
             dialogueShowOffset.Push(new(0,0,0));
             dialogueShowAlpha.Push(new FColor(1, 1, 1, 1));
+            md.Active.Value = true;
         }
         
         public Executing(ADVInstance inst) : base(inst) {
@@ -82,8 +84,8 @@ public class PurpleHeartGameDef : ADVGameDef {
             dialogueShowOffset.Update(ETime.FRAME_TIME);
             dialogueShowAlpha.Update(ETime.FRAME_TIME);
         }
-        
-        record MapData(string key, Func<PHADVData, string> desc, float mapLinkOffset) { }
+
+        record MapData(string key, Func<PHADVData, string> desc, float mapLinkOffset);
 
         private MapData[] maps = {
             new("YukariHouse", _ => "my house", 2),
@@ -201,7 +203,7 @@ public class PurpleHeartGameDef : ADVGameDef {
                     SimultaneousActualization = true
                 });
                 Doremy d = null!;
-                await VN.Wait(() => (d = VN.FindEntity<Doremy>()) != null);
+                await VN.Wait(() => (d = VN.FindEntity<Doremy>()!) != null);
                 await VN.SFX("vn-yukari-power");
                 await d.ESayC("happy", l51);
                 await MapTransitionTask;
@@ -402,7 +404,7 @@ public class PurpleHeartGameDef : ADVGameDef {
                     SimultaneousActualization = true
                 });
                 Seiga s = null!;
-                await VN.Wait(() => (s = VN.FindEntity<Seiga>()) != null);
+                await VN.Wait(() => (s = VN.FindEntity<Seiga>()!) != null);
                 await s.ESayC("happy", l192);
                 await MapTransitionTask;
                 await VN.Sequential(
@@ -662,7 +664,7 @@ public class PurpleHeartGameDef : ADVGameDef {
                     m.ESayC("cry", l338),
                     VN.SFX("vn-yukari-power")
                 );
-                GoToMap("Lake", p => p.State = State.S11_SelfAtLake);
+                _ = GoToMap("Lake", p => p.State = State.S11_SelfAtLake);
             });
 
             var s11main = Context("s11main", async () => {

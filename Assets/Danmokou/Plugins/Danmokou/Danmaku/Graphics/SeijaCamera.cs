@@ -54,8 +54,8 @@ public class SeijaCamera : CoroutineRegularUpdater, IShaderCamera {
     private void Awake() {
         cam = GetComponent<Camera>();
         seijaMaterial = new Material(seijaShader);
-        seijaMaterial.SetFloat(xBound, GameManagement.References.bounds.right + 1);
-        seijaMaterial.SetFloat(yBound, GameManagement.References.bounds.top + 1);
+        seijaMaterial.SetFloat(xBound, LocationHelpers.PlayableBounds.right + 1);
+        seijaMaterial.SetFloat(yBound, LocationHelpers.PlayableBounds.top + 1);
         SetLocation(0, 0);
     }
 

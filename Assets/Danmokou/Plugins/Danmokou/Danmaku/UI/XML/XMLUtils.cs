@@ -29,28 +29,31 @@ using static Danmokou.UI.PlayModeCommentator;
 
 namespace Danmokou.UI.XML {
 public static partial class XMLUtils {
-    public static UIScreen PlaymodeScreen(this UIController m, UIScreen bossPractice, UIScreen stagePractice, Dictionary<Mode, Sprite> sprites, PlayModeCommentator? commentator, Func<CampaignConfig, Func<SharedInstanceMetadata, bool>, Func<UINode, UIResult>> getMetadata) {
+    public static UIScreen PlaymodeScreen(this UIController m, ICampaignDanmakuGameDef game, UIScreen bossPractice, UIScreen stagePractice, Dictionary<Mode, Sprite> sprites, PlayModeCommentator? commentator, Func<CampaignConfig, Func<SharedInstanceMetadata, bool>, Func<UINode, UIResult>> getMetadata) {
         var floater = References.uxmlDefaults.FloatingNode;
         var s = new UIScreen(m, null, UIScreen.Display.Unlined) {
             Builder = (s, ve) => ve.CenterElements()
         };
         Action<UINode> Builder(Mode mode) => n => XMLUtils.ConfigureFloatingImage(n.NodeHTML, sprites[mode]);
-        s.SetFirst(new CommentatorAxisColumn<(Mode, bool)>(s, new UIRenderDirect(s), new[] {
+        bool tutorialIncomplete = !SaveData.r.TutorialDone && game.Tutorial != null;
+        PlayModeStatus Wrap(Mode m, bool locked) =>
+            new PlayModeStatus(m, locked) { TutorialIncomplete = tutorialIncomplete };
+        s.SetFirst(new CommentatorAxisColumn<PlayModeStatus>(s, new UIRenderDirect(s), new[] {
             (new UINode() {
-                OnConfirm = getMetadata(References.campaign, meta => 
+                OnConfirm = getMetadata(game.Campaign, meta => 
                     InstanceRequest.RunCampaign(MainCampaign, null, meta)),
                 Prefab = floater,
                 OnBuilt = Builder(Mode.MAIN)
-            }, (Mode.MAIN, false)),
-            (References.exCampaign != null ? 
+            }, Wrap(Mode.MAIN, false)),
+            (game.ExCampaign != null ? 
                 new UINode() {
-                    EnabledIf = () => SaveData.r.MainCampaignCompleted,
-                    OnConfirm = getMetadata(References.exCampaign, meta => 
+                    EnabledIf = () => SaveData.r.CampaignCompleted(game.Campaign.Key),
+                    OnConfirm = getMetadata(game.ExCampaign, meta => 
                         InstanceRequest.RunCampaign(ExtraCampaign, null, meta)),
                     Prefab = floater,
                     OnBuilt = Builder(Mode.EX)
                 } : null, 
-                (Mode.EX, !SaveData.r.MainCampaignCompleted)),
+                Wrap(Mode.EX, !SaveData.r.CampaignCompleted(game.Campaign.Key))),
             (PracticeBossesExist ?
                 new UINode() {
                     EnabledIf = () => PBosses.Length > 0,
@@ -58,7 +61,7 @@ public static partial class XMLUtils {
                     Prefab = floater,
                     OnBuilt = Builder(Mode.BOSSPRAC)
                 } : null,
-                (Mode.BOSSPRAC, PBosses.Length == 0)),
+                Wrap(Mode.BOSSPRAC, PBosses.Length == 0)),
             (PracticeStagesExist ?
                 new UINode() {
                     EnabledIf = () => PStages.Length > 0,
@@ -66,19 +69,19 @@ public static partial class XMLUtils {
                     Prefab = floater,
                     OnBuilt = Builder(Mode.STAGEPRAC)
                 } : null,
-                (Mode.STAGEPRAC, PStages.Length == 0)),
-            (References.tutorial != null ? new UINode {
-                OnConfirm = _ => new UIResult.StayOnNode(!InstanceRequest.RunTutorial()),
+                Wrap(Mode.STAGEPRAC, PStages.Length == 0)),
+            (game.Tutorial != null ? new UINode {
+                OnConfirm = _ => new UIResult.StayOnNode(!InstanceRequest.RunTutorial(game)),
                 Prefab = floater,
                 OnBuilt = Builder(Mode.TUTORIAL)
-            } : null, (Mode.TUTORIAL, false))
+            } : null, Wrap(Mode.TUTORIAL, false))
         }) {
-            EntryIndexOverride = () => SaveData.r.TutorialDone ? 0 : -1,
+            EntryIndexOverride = () => tutorialIncomplete ? -1 : 0,
             Commentator = commentator
         });
         return s;
     }
-    public static UIScreen StagePracticeScreen(this UIController m, 
+    public static UIScreen StagePracticeScreen(this UIController m,
         Func<CampaignConfig, Func<SharedInstanceMetadata, bool>, Func<UINode, UIResult>> getMetadata) {
         var s = new UIScreen(m, "STAGE PRACTICE") {Builder = (s, ve) => {
             s.Margin.SetLRMargin(720, 720);
@@ -95,16 +98,16 @@ public static partial class XMLUtils {
                                 CacheOnEnter = true,
                                 OnConfirm = getMetadata(stage.campaign.campaign, meta => {
                                     m.ConfirmCache();
-                                    return new InstanceRequest(InstanceRequest.PracticeSuccess, meta,
-                                        new StagePracticeRequest(stage, phase.index)).Run();
+                                    return new InstanceRequest(InstanceRequest.PracticeSuccess, meta, new StagePracticeRequest(stage, phase.index))
+                                        .Run();
                                 })
                             }).Prepend(
                             new UINode(practice_fullstage) {
                                 CacheOnEnter = true,
                                 OnConfirm = getMetadata(stage.campaign.campaign, meta => {
                                     m.ConfirmCache();
-                                    return new InstanceRequest(InstanceRequest.PracticeSuccess, meta,
-                                        new StagePracticeRequest(stage, 1)).Run();
+                                    return new InstanceRequest(InstanceRequest.PracticeSuccess, meta, new StagePracticeRequest(stage, 1))
+                                        .Run();
                                 })
                             }
                         )
@@ -141,8 +144,7 @@ public static partial class XMLUtils {
                             CacheOnEnter = true,
                             OnConfirm = getMetadata(boss.campaign.campaign, meta => {
                                 m.ConfirmCache();
-                                return new InstanceRequest(InstanceRequest.PracticeSuccess, meta,
-                                    req).Run();
+                                return new InstanceRequest(InstanceRequest.PracticeSuccess, meta, req).Run();
                             })
                         };
                     }))
@@ -661,8 +663,8 @@ public static partial class XMLUtils {
                     () => new []{new InputManager.FrameInput(0, 0, false, false, false, false, false, false, false)}
                 ));
             }
-            GameManagement.NewInstance(InstanceMode.NULL, null, 
-                new InstanceRequest(_ => true, smeta, new CampaignRequest(c!)), r);
+            GameManagement.NewInstance(InstanceMode.NULL, InstanceFeatures.ShotDemoFeatures, 
+                new InstanceRequest((_, __) => { }, smeta, new CampaignRequest(c!)), r);
             if (demoPlayer == null) {
                 demoPlayer = UnityEngine.Object.Instantiate(demoPlayerPrefab).GetComponent<PlayerController>();
             }
@@ -878,7 +880,7 @@ public static partial class XMLUtils {
         return screen;
     }
     
-    public static UIScreen StatisticsScreen(this UIController menu, IEnumerable<InstanceRecord> allGames, 
+    public static UIScreen StatisticsScreen(this UIController menu, IDanmakuGameDef game, IEnumerable<InstanceRecord> allGames, 
         SMAnalysis.AnalyzedCampaign[] campaigns) {
         InstanceRecord[] games = allGames.ToArray();
         int? campaignIndex;
@@ -936,14 +938,14 @@ public static partial class XMLUtils {
                     playerSwitch = x;
                     UpdateStats();
                 },
-                GameManagement.References.AllShips
+                game.AllShips
                     .Select(x => (x.ShortTitle, (ShipConfig?)x))
                     .Prepend((stats_allplayers, null)).ToArray(), playerSwitch),
             new OptionNodeLR<(ShipConfig, ShotConfig)?>(stats_selshot, x => {
                     shotSwitch = x;
                     UpdateStats();
                 },
-                GameManagement.References.AllShips
+                game.AllShips
                     .SelectMany(p => p.shots2
                         .Select(os => (ShotConfig.PlayerShotDescription(p, os.shot),
                             ((ShipConfig, ShotConfig)?)(p, os.shot))))
@@ -1157,14 +1159,14 @@ public static partial class XMLUtils {
         return s;
     }
 
-    public static UIScreen AllPlayerDataScreens(this UIController m, UIScreen gameDetails, out UIScreen records, out UIScreen stats,
+    public static UIScreen AllPlayerDataScreens(this UIController m, IDanmakuGameDef game, UIScreen gameDetails, out UIScreen records, out UIScreen stats,
         out UIScreen? achievements, out UIScreen replays, VisualTreeAsset achievementsNodeV) {
         replays = m.ReplayScreen(gameDetails);
         records = m.RecordsScreen(replays, gameDetails, FinishedCampaigns.ToArray());
         achievements = GameManagement.Achievements != null ? 
             m.AchievementsScreen(achievementsNodeV, GameManagement.Achievements) : 
             null;
-        stats = m.StatisticsScreen(SaveData.r.FinishedCampaignGames, Campaigns);
+        stats = m.StatisticsScreen(game, SaveData.r.FinishedCampaignGames, Campaigns);
         return m.PlayerDataScreen(records, stats, achievements, replays);
     }
 

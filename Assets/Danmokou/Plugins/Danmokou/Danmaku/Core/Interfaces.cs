@@ -1,21 +1,18 @@
-﻿using Danmokou.SM;
+﻿using Danmokou.Scriptables;
+using Danmokou.SM;
 using UnityEngine;
 
 namespace Danmokou.Core {
 
 public interface IStageConfig {
+    SceneConfig Scene { get; }
     StateMachine? StateMachine { get; }
     string DefaultSuicideStyle { get; }
 }
 
-public class EndcardStageConfig : IStageConfig {
-    private readonly string dialogueKey;
+public record EndcardStageConfig(string dialogueKey, SceneConfig Scene) : IStageConfig {
     public StateMachine StateMachine => new ReflectableLASM(SMReflection.Dialogue(dialogueKey));
     public string DefaultSuicideStyle => "";
-
-    public EndcardStageConfig(string dialogueKey) {
-        this.dialogueKey = dialogueKey;
-    }
 }
 
 public interface ITransformHandler {

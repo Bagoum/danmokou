@@ -41,9 +41,6 @@ public record EvidenceRequest<E>(IExecutingADV ADVProcess) {
             RequestsChanged.OnNext(default);
             interruption.ReturnInterrupt(result);
         } else if (CurrentRequest is Token.TCS tcs) {
-            if (ADVProcess.VN.Contexts.All(c => c.BCtx.Identifiable))
-                throw new Exception(
-                    "Wait-until-evidence BCTXes should not be identifiable, in order to prevent errant save/load");
             requests.Pop();
             RequestsChanged.OnNext(default);
             tcs.OnComplete.SetResult(evidence);
@@ -64,14 +61,29 @@ public record EvidenceRequest<E>(IExecutingADV ADVProcess) {
 
     /// <summary>
     /// Return an unskippable task that waits until evidence is provided.
+    /// <br/>This is constructed as a BCTX and therefore can be nested within a saveable BCTX.
+    /// </summary>
+    public StrongBoundedContext<E> WaitForEvidence(string key) => new(ADVProcess.VN, key, () => {
+            var tcs = new TaskCompletionSource<E>();
+            requests.Push(new Token.TCS(tcs));
+            RequestsChanged.OnNext(default);
+            return tcs.Task;
+        });
+
+    /* Old version, disables saving
+    /// <summary>
+    /// Return an unskippable task that waits until evidence is provided.
     /// <br/>Note that as with <see cref="Request"/>, you must not put this in a saveable BCTX.
     /// </summary>
     public Task<E> WaitForEvidence() {
+        if (ADVProcess.VN.Contexts.All(c => c.BCtx.Identifiable))
+            throw new Exception(
+                "Wait-until-evidence BCTXes should not be identifiable, in order to prevent errant save/load");
         var tcs = new TaskCompletionSource<E>();
         requests.Push(new Token.TCS(tcs));
         RequestsChanged.OnNext(default);
         return ADVProcess.VN.WaitExternal(tcs.Task);
-    }
+    }*/
     
     //TODO locked bounded context
     private abstract record Token {

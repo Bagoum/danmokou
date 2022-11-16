@@ -13,6 +13,7 @@ using BagoumLib.Reflection;
 using BagoumLib.Transitions;
 using Danmokou.Behavior;
 using Danmokou.Core;
+using Danmokou.DMath;
 using Danmokou.Services;
 using Danmokou.UI.XML;
 using SuzunoyaUnity.Rendering;
@@ -123,7 +124,7 @@ public class UIBuilderRenderer : CoroutineRegularUpdater {
             screenDim.y / MainCamera.ScreenHeight * UIResolution.h);
     
     public static Vector2 ComputeXMLPosition(Vector2 screenPosition) {
-        var asDim = ComputeXMLDimensions(screenPosition + GameManagement.References.bounds.center);
+        var asDim = ComputeXMLDimensions(screenPosition + LocationHelpers.PlayableBounds.center);
         return new Vector2(UICenter.x + asDim.x, UICenter.y - asDim.y);
     }
     

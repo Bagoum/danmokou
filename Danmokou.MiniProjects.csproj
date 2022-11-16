@@ -74,6 +74,8 @@
      <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\VN\Backgrounds\FieldBGMimic.cs" />
      <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\VN\Backgrounds\NormalBedroomBGMimic.cs" />
      <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\VN\Backgrounds\PoolBGMimic.cs" />
+     <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\JYGameDef.cs" />
+     <Compile Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\BHA3GameDef.cs" />
      <None Include="Assets\Danmokou\MiniProjects\Plugins\Danmokou\Danmokou.MiniProjects.asmdef" />
      <Reference Include="UnityEngine">
      <HintPath>C:\Program Files\Unity\Hub\Editor\2021.3.7f1\Editor\Data\Managed\UnityEngine\UnityEngine.dll</HintPath>

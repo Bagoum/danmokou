@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using Danmokou.Core;
+using Danmokou.Danmaku;
 using Danmokou.Scriptables;
 using Danmokou.Services;
 using JetBrains.Annotations;
@@ -39,10 +40,10 @@ public readonly struct TeamConfig {
         selectedIndex = which;
         subshot = sub;
     }
-    public TeamConfig(Saveable saved) : this(saved.SelectedIndex, saved.Subshot, 
-        GameManagement.References.FindSupportAbility(saved.SupportAbilityKey), saved.Players.Select(p => (
-        GameManagement.References.FindPlayer(p.playerKey), 
-        GameManagement.References.FindShot(p.shotKey))).ToArray()) { }
+    public TeamConfig(Saveable saved, IDanmakuGameDef game) : this(saved.SelectedIndex, saved.Subshot, 
+        game.FindSupportAbility(saved.SupportAbilityKey), saved.Players.Select(p => (
+            game.FindPlayer(p.playerKey), 
+            game.FindShot(p.shotKey))).ToArray()) { }
 
     [Serializable]
     [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]

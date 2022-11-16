@@ -68,7 +68,7 @@ public readonly struct SceneChallengeReqest : IChallengeRequest {
     }
 
     public void Start(BehaviorEntity exec, ICancellee cT) {
-        exec.phaseController.Override(cr.phase.phase.index, () => { });
+        exec.phaseController.Override(cr.phase.phase.index);
         _ = exec.RunBehaviorSM(SMRunner.RunRoot(cr.Boss.stateMachine, cT));
     }
 
@@ -79,19 +79,15 @@ public readonly struct SceneChallengeReqest : IChallengeRequest {
         var record = Requester.MakeGameRecord(ctx.cm.ChallengePhotos.ToArray());
         Requester.TrySave(record);
 
-        if (!(Requester.replay is ReplayMode.Replaying) && cr.NextChallenge(Requester.metadata).Try(out var nextC)) {
+        if (Requester.replay is not ReplayMode.Replaying && cr.NextChallenge(Requester.metadata).Try(out var nextC)) {
             Logs.Log($"Autoproceeding to next challenge: {nextC.Description}");
-            var nextGr = new InstanceRequest(Requester.cb, Requester.metadata, nextC);
-            nextGr.SetupInstance();
-            GameManagement.Instance.Replay?.Cancel(); //can't replay both scenes together,
-            //or even just the second scene due to time-dependency of world objects such as shots
-            ctx.cm.TrackChallenge(new SceneChallengeReqest(nextGr, nextC), ctx.onSuccess, ctx.cT);
-            ctx.cm.LinkBoss(ctx.exec, ctx.cT);
+            Requester.Cancel();
+            _ = new InstanceRequest(Requester.Finalize, Requester.metadata, nextC).RunChallengeContinuation(nextC, ctx);
             return false;
         } else {
             ServiceLocator.Find<IUIManager>().MessageChallengeEnd(true, out _);
             //The callback should have a wait procedure in it
-            ctx.onSuccess(record);
+            ctx.tracker.SetResult(record);
             //WaitingUtils.WaitThenCB(ctx.cm, Cancellable.Null, t, false, () => ctx.onSuccess(record));
             return true;
         }
@@ -99,6 +95,7 @@ public readonly struct SceneChallengeReqest : IChallengeRequest {
 
     public void OnFail(ChallengeManager.TrackingContext ctx) {
         Logs.Log($"FAILED challenge {cr.Description}");
+        ctx.tracker.SetCanceled();
         ServiceLocator.Find<IUIManager>().MessageChallengeEnd(false, out float t);
         if (ctx.exec != null) ctx.exec.ShiftPhase();
         WaitingUtils.WaitThenCB(ctx.cm, Cancellable.Null, t, false,
@@ -114,6 +111,7 @@ public readonly struct SceneChallengeReqest : IChallengeRequest {
 }
 
 public class PhaseChallengeRequest : ILowInstanceRequest {
+    public IDanmakuGameDef Game => phase.boss.day.campaign.Game;
     public DayCampaignConfig DayCampaign => phase.boss.day.campaign.campaign;
     public ICampaignMeta Campaign => DayCampaign;
     public DayConfig Day => phase.boss.day.day;

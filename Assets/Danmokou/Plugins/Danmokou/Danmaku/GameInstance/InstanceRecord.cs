@@ -92,7 +92,7 @@ public class InstanceRecord {
     private SharedInstanceMetadata? _lazySharedInstanceMeta = null;
     [JsonIgnore] [ProtoIgnore]
     public SharedInstanceMetadata SharedInstanceMetadata => 
-        _lazySharedInstanceMeta ??= new SharedInstanceMetadata(SavedMetadata);
+        _lazySharedInstanceMeta ??= new SharedInstanceMetadata(SavedMetadata, ReconstructedRequest.Game);
 
     [JsonIgnore] [ProtoIgnore] public DifficultySettings Difficulty => SavedMetadata.difficulty;
     public InstanceMode Mode { get; init; }
@@ -101,6 +101,8 @@ public class InstanceRecord {
     
     public string Campaign { get; init; }
     public LowInstanceRequestKey RequestKey { get; init; }
+
+    [JsonIgnore] [ProtoIgnore] public ILowInstanceRequest ReconstructedRequest => RequestKey.Reconstruct();
 
     public int Seed { get; init; }
     public string Uuid { get; init; }
@@ -151,8 +153,8 @@ public class InstanceRecord {
         CustomName = "";
         Date = DateTime.Now;
         EngineVersion = GameManagement.EngineVersion;
-        GameVersion = GameManagement.References.gameVersion;
-        GameIdentifier = GameManagement.References.gameIdentifier;
+        GameVersion = GameManagement.References.gameDefinition.Version;
+        GameIdentifier = GameManagement.References.gameDefinition.Key;
         Completed = completed;
 
         Update(end);
@@ -163,18 +165,17 @@ public class InstanceRecord {
     /// In such cases, you can call this method to make sure the correct values are set when the instance finishes.
     /// </summary>
     public void Update(InstanceData end) {
-        Score = end.Score;
+        Score = end.ScoreF.Score;
         CardHistory = new CardHistory(end.CardHistory);
         ContinuesUsed = end.ContinuesUsed;
         HitsTaken = end.HitsTaken;
         TotalFrames = end.TotalFrames;
-        MeterFrames = end.MeterFrames;
+        MeterFrames = end.MeterF.MeterFrames;
         BombsUsed = end.BombsUsed;
         SubshotSwitches = end.SubshotSwitches;
         OneUpItemsCollected = end.OneUpItemsCollected;
     }
-
-    [JsonIgnore] [ProtoIgnore] public ILowInstanceRequest ReconstructedRequest => RequestKey.Reconstruct();
+    public void Invalidate() => SaveData.r.InvalidateRecord(Uuid);
     public void AssignName(string newName) => CustomName = newName[..Math.Min(newName.Length, CustomNameLength)];
 
     public const int CustomNameLength = 16;

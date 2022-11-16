@@ -37,7 +37,7 @@ public abstract partial record Ability {
 
         public bool TryBomb(PlayerController bomber, PlayerController.BombContext ctx) {
             var mult = ContextCostMultiplier(ctx);
-            if (PowerRequired.Try(out var rp) && !GameManagement.Instance.TryConsumePower(-rp * mult))
+            if (PowerRequired.Try(out var rp) && !GameManagement.Instance.PowerF.TryConsumePower(-rp * mult))
                 return false;
             if (BombsRequired.Try(out var rb) &&
                 !GameManagement.Instance.TryConsumeBombs((int) Math.Round(-rb * mult)))

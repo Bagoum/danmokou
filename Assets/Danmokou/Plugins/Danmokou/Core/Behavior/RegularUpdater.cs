@@ -27,7 +27,7 @@ public abstract class RegularUpdater : MonoBehaviour, IRegularUpdater {
 
     protected virtual void BindListeners() { }
 
-    protected void Listen<T, E>(IObservable<T> obj, Func<T, IObservable<E>> ev, Action<E> sub) {
+    protected void Listen<T, E>(IObservable<T> obj, Func<T, IObservable<E>?> ev, Action<E> sub) {
         tokens.Add(obj.BindSubscribe(ev, sub));
     }
     protected void Listen<T>(IObservable<T> obj, Func<T, IObservable<Unit>> ev, Action sub) {

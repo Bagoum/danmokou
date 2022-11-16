@@ -139,7 +139,7 @@ public static class ItemPooler {
     public static Item RequestPointPP(ItemRequestContext ctx) => Request(items.pointppItem, ctx);
 
     public static Item? RequestGem(ItemRequestContext ctx) =>
-        GameManagement.Instance.Difficulty.meterEnabled ? Request(items.gemItem, ctx) : null;
+        GameManagement.Instance.MeterF.AllowGemDrops ? Request(items.gemItem, ctx) : null;
 
     public static Item RequestPowerupShift(ItemRequestContext ctx) => Request(items.powerupShift, ctx);
     public static Item RequestPowerupD(ItemRequestContext ctx) => Request(items.powerupD, ctx);
@@ -147,11 +147,11 @@ public static class ItemPooler {
     public static Item RequestPowerupK(ItemRequestContext ctx) => Request(items.powerupK, ctx);
 
     public static Item? RequestPower(ItemRequestContext ctx) {
-        return InstanceConsts.PowerMechanicEnabled ? Request(items.powerItem, ctx) : null;
+        return Instance.PowerF.AllowPowerItemDrops ? Request(items.powerItem, ctx) : null;
     }
 
     public static Item? RequestFullPower(ItemRequestContext ctx) {
-        return InstanceConsts.PowerMechanicEnabled ? Request(items.fullPowerItem, ctx) : null;
+        return Instance.PowerF.AllowPowerItemDrops ? Request(items.fullPowerItem, ctx) : null;
     }
 
     public static Item Request1UP(ItemRequestContext ctx) {

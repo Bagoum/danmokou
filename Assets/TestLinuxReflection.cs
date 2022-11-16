@@ -36,7 +36,7 @@ public class TestLinuxReflection : MonoBehaviour {
 			x.Div(ExC(2f)).Cast<double>()).Cast<float>()))));
 
 	IEnumerator Start() {
-	    GameManagement.Instance.Power.OnNext(2);
+	    GameManagement.Instance.PowerF.Power.OnNext(2);
 	    var gcx = GenCtx.New(GetComponent<BehaviorEntity>(), V2RV2.Zero);
 	    gcx.index = 7;
 	    var bpi = gcx.AsBPI;

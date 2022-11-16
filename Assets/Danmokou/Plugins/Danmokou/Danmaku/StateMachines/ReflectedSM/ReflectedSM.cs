@@ -207,7 +207,7 @@ if (> t &fadein,
         var bossCfg = ResourceManager.GetBoss(bossKey);
         return smh => {
             var beh = Object.Instantiate(bossCfg.boss).GetComponent<BehaviorEntity>();
-            beh.phaseController.SetGoTo(1, null);
+            beh.phaseController.SetGoTo(1);
             return beh.RunBehaviorSM(SMRunner.CullRoot(StateMachineManager.FromText(bossCfg.stateMachine), smh.cT));
         };
     }

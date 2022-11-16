@@ -9,6 +9,7 @@ using static NUnit.Framework.Assert;
 namespace Danmokou.Testing {
 
 public static class TestSMAnalysis {
+    /*
     [Test]
     public static void TestSMPhaseControl() {
         var sp = SMPhaseController.Normal(0);
@@ -53,7 +54,7 @@ public static class TestSMAnalysis {
         IsFalse(ch);
         AreEqual(sp.GoToNextPhase(2), -1);
         IsTrue(ch);
-    }
+    }*/
 
     private static void AssertListEq<A>(List<A> a, List<A> b, Func<A, A, bool> eq) {
         if (a.Count != b.Count) Assert.AreEqual(a, b);

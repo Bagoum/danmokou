@@ -51,7 +51,7 @@ public class AchievementDisplay : CoroutineRegularUpdater {
     private void Awake() {
         tr = transform;
         baseLoc = (Vector2)tr.localPosition - 
-                  (uiParent.autoShiftCamera ? GameManagement.References.bounds.center : Vector2.zero);
+                  (uiParent.autoShiftCamera ? LocationHelpers.PlayableBounds.center : Vector2.zero);
         InLerp = inLerp.Into<Easer>();
         OutLerp = outLerp.Into<Easer>();
         Hide();

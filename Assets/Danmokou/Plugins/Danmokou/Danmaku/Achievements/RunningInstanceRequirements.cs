@@ -13,7 +13,7 @@ public class UsedMeterReq : Requirement {
         Listen(PlayerController.MeterIsActive);
     }
 
-    public override State EvalState() => (Instance.MeterFrames > 30).ToACVState();
+    public override State EvalState() => (Instance.MeterF.MeterFrames > 30).ToACVState();
 }
 
 /// <summary>
@@ -75,20 +75,20 @@ public class ScoreReq : Requirement {
 
     public ScoreReq(long score) {
         this.score = score;
-        Listen(EvInstance, i => i.Score);
+        Listen(EvInstance, i => i.ScoreF.Score);
     }
 
-    public override State EvalState() => (Instance.Score >= score).ToACVState();
+    public override State EvalState() => (Instance.ScoreF.Score >= score).ToACVState();
 }
 public class CampaignScoreReq : Requirement {
     private readonly long score;
 
     public CampaignScoreReq(long score) {
         this.score = score;
-        Listen(EvInstance, i => i.Score);
+        Listen(EvInstance, i => i.ScoreF.Score);
     }
 
-    public override State EvalState() => (Instance.IsAtleastNormalCampaign && Instance.Score >= score).ToACVState();
+    public override State EvalState() => (Instance.IsAtleastNormalCampaign && Instance.ScoreF.Score >= score).ToACVState();
 }
 
 public class CampaignGrazeReq : Requirement {
@@ -106,9 +106,9 @@ public class CampaignPIVReq : Requirement {
 
     public CampaignPIVReq(double piv) {
         this.piv = piv;
-        Listen(EvInstance, i => i.PIV);
+        Listen(EvInstance, i => i.ScoreF.PIV);
     }
-    public override State EvalState() => (Instance.IsAtleastNormalCampaign && Instance.PIV >= piv).ToACVState();
+    public override State EvalState() => (Instance.IsAtleastNormalCampaign && Instance.ScoreF.PIV >= piv).ToACVState();
 }
 
 

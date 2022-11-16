@@ -48,13 +48,7 @@ public static class ReflectEx {
         var lets = new List<IDisposable>();
         for (int ii = 0; ii < aliases.Length; ++ii) {
             var a = aliases[ii];
-            Ex alias_value = null!;
-            try {
-                alias_value = a.func(applier);
-            } catch (Exception e) {
-                int k = 5;
-                throw;
-            }
+            Ex alias_value = a.func(applier);
             if (a.SingleUse) {
                  lets.Add(applier.Let(a.alias, alias_value));
             } else {

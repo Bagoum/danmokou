@@ -9,6 +9,7 @@ using Danmokou.DataHoist;
 using Danmokou.DMath;
 using Danmokou.DMath.Functions;
 using Danmokou.Expressions;
+using Danmokou.GameInstance;
 using Danmokou.Reflection;
 using Danmokou.SM;
 using NUnit.Framework;
@@ -23,7 +24,7 @@ public class ExCodeGenTests {
 
     [Test]
     public void TestPrivateHoist() {
-        GameManagement.NewInstance(InstanceMode.NULL);
+        GameManagement.NewInstance(InstanceMode.NULL, InstanceFeatures.InactiveFeatures);
         var ex = "sine 13h 0.4 + * 13 &fitr / p ^ dl 1.2".Into<Func<TExArgCtx, TEx<float>>>();
         var exc = GCXFRepo._Fake(ex);
         var _gcx = TExArgCtx.Arg.Make<GenCtx>("gcx", true);

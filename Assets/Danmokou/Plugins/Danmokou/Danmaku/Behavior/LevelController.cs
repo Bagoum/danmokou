@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Reactive;
+using System.Threading.Tasks;
 using BagoumLib.Cancellation;
 using Danmokou.Core;
 using Danmokou.Danmaku;
@@ -7,6 +9,11 @@ using Danmokou.Scriptables;
 using JetBrains.Annotations;
 
 namespace Danmokou.Behavior {
+/// <summary>
+/// Service that allows executing a state machine for a "level".
+/// <br/>A "level" is a self-contained construct such as a stage in a multi-stage danmaku game
+///  or a scene in a scene-based danmaku game.
+/// </summary>
 public class LevelController : BehaviorEntity {
     public IStageConfig? stage;
     public StageConfig? wip_stage;
@@ -14,20 +21,35 @@ public class LevelController : BehaviorEntity {
     public static string? DefaultSuicideStyle { get; private set; }
     public override bool TriggersUITimeout => true;
 
+    /// <inheritdoc cref="LevelRunRequest.Method"/>
     public enum LevelRunMethod {
+        /// <summary>
+        /// Run just the specified phase in the provided state machine, then finish.
+        /// </summary>
         SINGLE,
+        /// <summary>
+        /// Run the specified phase in the provided state machine, then continue executing the rest from there.
+        /// </summary>
         CONTINUE
     }
     /// <summary>
-    /// Note: cb will be called regardless of cancellation.
+    /// Struct containing information for running a state machine in a level.
     /// </summary>
-    public record LevelRunRequest(int toPhase, Action? cb, LevelRunMethod method, IStageConfig stage, ICancellee cT) { }
+    /// <param name="ToPhase">Phase of the state machine to execute.</param>
+    /// <param name="Method">Enum describing how to execute the provided state machine for the level.</param>
+    /// <param name="Stage">Stage configuration.</param>
+    /// <param name="cT">Cancellation token.</param>
+    public record LevelRunRequest(int ToPhase, LevelRunMethod Method, IStageConfig Stage, ICancellee cT) { }
 
-    public void Request(LevelRunRequest req) {
-        if (req.method == LevelRunMethod.SINGLE) phaseController.Override(req.toPhase, req.cb);
-        else if (req.method == LevelRunMethod.CONTINUE) phaseController.SetGoTo(req.toPhase, req.cb);
-        stage = req.stage;
-        _ = RunBehaviorSM(SMRunner.RunRoot(req.stage.StateMachine, req.cT));
+    /// <summary>
+    /// Run a level.
+    /// </summary>
+    public async Task<Unit> RunLevel(LevelRunRequest req) {
+        if (req.Method == LevelRunMethod.SINGLE) phaseController.Override(req.ToPhase);
+        else if (req.Method == LevelRunMethod.CONTINUE) phaseController.SetGoTo(req.ToPhase);
+        stage = req.Stage;
+        await RunBehaviorSM(SMRunner.RunRoot(req.Stage.StateMachine, req.cT));
+        return default;
     }
 
     protected override void Awake() {
