@@ -45,7 +45,7 @@ public class XMLPauseMenu : PausedGameplayMenu, IPauseMenu {
         OptionsScreen.BackgroundOpacity = 1f;
         //Keep this around to avoid opacity fade oddities
         OptionsScreen.MenuBackgroundOpacity = 0.8f;
-        var advMan = ServiceLocator.MaybeFind<ADVManager>();
+        var advMan = ServiceLocator.FindOrNull<ADVManager>();
         if (!Replayer.RequiresConsistency && advMan != null) {
             SaveLoadScreen = this.SaveLoadVNScreen(inst => advMan.Restart(inst.GetData()), slot => {
                 preserveSS = true;

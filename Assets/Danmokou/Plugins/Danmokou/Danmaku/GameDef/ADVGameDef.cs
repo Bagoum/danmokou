@@ -26,20 +26,38 @@ public enum ADVBacklogFeatures {
     ALLOW_BACKJUMP
 }
 
+
 /// <summary>
-/// A wrapper ScriptableObject subclassed to define functionality for an ADV game.
-/// <br/>Most actual code in subclasses occurs in a nested class implementing <see cref="IExecutingADV"/>
-///  that is returned by <see cref="Setup"/>.
+/// Game definition for ADV games.
 /// </summary>
-public abstract class ADVGameDef : GameDef {
-    public SceneConfig sceneConfig = null!;
-    public ADVBacklogFeatures backlogFeatures = ADVBacklogFeatures.NONE;
+public interface IADVGameDef : IGameDef {
+    SceneConfig Scene { get; }
+    ADVBacklogFeatures BacklogFeatures { get; }
+    
+    ADVData NewGameData();
     
     /// <summary>
     /// Create the game-specific execution process for this ADV game.
     /// </summary>
     /// <param name="inst">Instance metadata</param>
     public abstract IExecutingADV Setup(ADVInstance inst);
-    public abstract ADVData NewGameData();
 }
+
+/// <summary>
+/// A wrapper ScriptableObject subclassed to define functionality for an ADV game.
+/// <br/>Most actual code in subclasses occurs in a nested class implementing <see cref="IExecutingADV"/>
+///  that is returned by <see cref="Setup"/>.
+/// </summary>
+public abstract class ADVGameDef : GameDef, IADVGameDef {
+    public SceneConfig sceneConfig = null!;
+    public ADVBacklogFeatures backlogFeatures = ADVBacklogFeatures.NONE;
+    
+    public abstract IExecutingADV Setup(ADVInstance inst);
+    public abstract ADVData NewGameData();
+
+    public SceneConfig Scene => sceneConfig;
+    public ADVBacklogFeatures BacklogFeatures => backlogFeatures;
+}
+
+
 }

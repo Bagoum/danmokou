@@ -70,21 +70,6 @@ public record EvidenceRequest<E>(IExecutingADV ADVProcess) {
             return tcs.Task;
         });
 
-    /* Old version, disables saving
-    /// <summary>
-    /// Return an unskippable task that waits until evidence is provided.
-    /// <br/>Note that as with <see cref="Request"/>, you must not put this in a saveable BCTX.
-    /// </summary>
-    public Task<E> WaitForEvidence() {
-        if (ADVProcess.VN.Contexts.All(c => c.BCtx.Identifiable))
-            throw new Exception(
-                "Wait-until-evidence BCTXes should not be identifiable, in order to prevent errant save/load");
-        var tcs = new TaskCompletionSource<E>();
-        requests.Push(new Token.TCS(tcs));
-        RequestsChanged.OnNext(default);
-        return ADVProcess.VN.WaitExternal(tcs.Task);
-    }*/
-    
     //TODO locked bounded context
     private abstract record Token {
         public record TCS(TaskCompletionSource<E> OnComplete) : Token;

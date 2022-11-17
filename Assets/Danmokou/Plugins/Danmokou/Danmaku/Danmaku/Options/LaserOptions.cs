@@ -5,6 +5,7 @@ using BagoumLib.Cancellation;
 using Danmokou.Core;
 using Danmokou.Danmaku.Descriptors;
 using Danmokou.DMath;
+using Danmokou.DMath.Functions;
 using Danmokou.Services;
 using JetBrains.Annotations;
 using Danmokou.SM;
@@ -76,6 +77,13 @@ public class LaserOption {
     /// </summary>
     public static LaserOption Dynamic(GCXU<LVTP> path) => new CurveProp(true, path);
     /// <summary>
+    /// Set some values in the custom data context once per frame, right before drawing the laser.
+    /// <br/>Use this to calculate <see cref="Parametrics.LNearestEnemy"/> for player lasers.
+    /// </summary>
+    /// <param name="setter">A function that modifies the <see cref="PICustomData"/> using <see cref="ExM.Set{T}"/>. The return value is discarded.</param>
+    /// <returns></returns>
+    public static LaserOption BeforeDraw(GCXU<BPY> setter) => new BeforeDrawProp(setter);
+    /// <summary>
     /// Draw a laser with an endpoint BEH.
     /// </summary>
     public static LaserOption Endpoint(string behid) => new EndpointProp(behid);
@@ -132,7 +140,7 @@ public class LaserOption {
     public static LaserOption Nonpiercing() => new NonpiercingFlag();
     
     public static LaserOption Player(int cdFrames, int bossDmg, int stageDmg, string effect) =>
-        new PlayerBulletProp(new PlayerBulletCfg(cdFrames, bossDmg, stageDmg, ResourceManager.GetEffect(effect)));
+        new PlayerBulletProp(new PlayerBulletCfg(cdFrames, false, bossDmg, stageDmg, ResourceManager.GetEffect(effect)));
     
     #region impl
     public class CompositeProp : ValueProp<LaserOption[]>, IUnrollable<LaserOption> {
@@ -189,6 +197,10 @@ public class LaserOption {
             this.dynamic = dynamic;
         }
     }
+    
+    public class BeforeDrawProp : ValueProp<GCXU<BPY>> {
+        public BeforeDrawProp(GCXU<BPY> f) : base(f) { }
+    }
     public class RepeatProp : ValueProp<GCXF<bool>> {
         public RepeatProp(GCXF<bool> f) : base(f) { }
     }
@@ -239,6 +251,7 @@ public readonly struct RealizedLaserOptions {
     public readonly string? endpoint;
     public readonly string? firesfx;
     public readonly string? hotsfx;
+    public readonly BPY? beforeDraw;
     public readonly LaserMovement lpath;
     public readonly bool isStatic;
     public readonly SMRunner smr;
@@ -265,6 +278,7 @@ public readonly struct RealizedLaserOptions {
         hotsfx = opts.hotsfx;
         layer = opts.layer;
         staggerMultiplier = opts.staggerMultiplier;
+        beforeDraw = opts.beforeDraw?.Execute(gcx, fctx);
         if (opts.curve != null) {
             lpath = new LaserMovement(opts.curve.Execute(gcx, fctx), parentOffset, localOffset);
             isStatic = !opts.dynamic;
@@ -289,7 +303,7 @@ public readonly struct RealizedLaserOptions {
 /// </summary>
 public class LaserOptions {
     //Note: If adding GCXU objects here, also add them to
-    // the GCXU.ShareTypeAndCompile call in AtomicPAtterns
+    // the GCXU.ShareTypeAndCompile call in AtomicPatterns
     public readonly (GCXF<float> max, GCXU<BPY>? var)? length;
     public readonly GCXU<BPY>? start;
     public readonly GCXU<Pred>? delete;
@@ -300,6 +314,7 @@ public class LaserOptions {
     public readonly string? hotsfx;
     public readonly bool dynamic;
     public readonly GCXU<LVTP>? curve = null;
+    public readonly GCXU<BPY>? beforeDraw;
     public readonly GCXF<float>? rotateOffset;
     public readonly GCXU<BPY>? rotate = null;
     public readonly StateMachine? sm;
@@ -333,7 +348,9 @@ public class LaserOptions {
             else if (p is CurveProp cur) {
                 dynamic = cur.dynamic;
                 curve = cur.curve;
-            } else if (p is EndpointProp ep) 
+            } else if (p is BeforeDrawProp bd)
+                beforeDraw = bd.value;
+            else if (p is EndpointProp ep) 
                 endpoint = ep.value;
             else if (p is SfxProp hsp) {
                 firesfx = hsp.onFire;

@@ -1,10 +1,10 @@
 paction 0
 	##Temporarily necessary to register player variants
-	assertsimple amulet-red/
-	assertcomplex gpather-black/b
+	##assertsimple amulet-red/
+	#assertcomplex gpather-black/b
 	##Controls
 	beh-control persist p-gpather-black/b restyle p-gpather-red/b > t 1
-	bullet-control persist p-amulet-red/ restyleeffect p-amulet-blue/ cwheel-blue/ > t 0.5
+	bullet-control persist p-amulet-red/ restyleeffect p-amulet-blue/ _ > t 0.5
 	##By keeping the SM running, if the shooter is destroyed (due to eg. subshot switch), then the control will be destroyed
 	gtr {
 		wt 1000 _

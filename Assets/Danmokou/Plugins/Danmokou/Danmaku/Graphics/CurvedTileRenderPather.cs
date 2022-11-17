@@ -8,6 +8,7 @@ using Danmokou.Danmaku;
 using Danmokou.Danmaku.Descriptors;
 using Danmokou.Danmaku.Options;
 using Danmokou.DMath;
+using Danmokou.Player;
 using Danmokou.Scriptables;
 using JetBrains.Annotations;
 using Unity.Collections.LowLevel.Unsafe;
@@ -59,13 +60,13 @@ public class CurvedTileRenderPather : CurvedTileRender {
     private int cullCtr;
     private const int checkCullEvery = 120;
 
-    private Pather exec = null!;
+    private Pather pather = null!;
 
     //Note: trailRenderer requires reversing the sprite.
     protected override bool HandleAsMesh => false;
     public readonly TrailRenderer trailR;
 
-    private SOPlayerHitbox target = null!;
+    //player bullets only
     private PlayerBullet? playerBullet;
 
     public CurvedTileRenderPather(PatherRenderCfg cfg, GameObject obj) : base(obj) {
@@ -78,13 +79,12 @@ public class CurvedTileRenderPather : CurvedTileRender {
         PersistentYScale = scale;
         scaledLineRadius = lineRadius * scale;
     }
-    public void Initialize(Pather locationer, TiledRenderCfg cfg,  Material material, bool isNew, Movement mov, 
-        ParametricInfo pi, BPY rememberTime, float maxRememberTime, SOPlayerHitbox collisionTarget, 
-        ref RealizedBehOptions options) {
-        exec = locationer;
+    public void Initialize(Pather _pather, TiledRenderCfg cfg,  Material material, bool isNew, Movement mov, 
+        ParametricInfo pi, BPY rememberTime, float maxRememberTime, ref RealizedBehOptions options) {
+        pather = _pather;
         int newTexW = (int) Math.Ceiling(maxRememberTime * ETime.ENGINEFPS_F) + 1;
-        base.Initialize(locationer, cfg, material, isNew, false, options.playerBullet != null, newTexW);
-        if (locationer.HasParent()) throw new NotImplementedException("Pather cannot be parented");
+        base.Initialize(_pather, cfg, material, isNew, false, options.playerBullet != null, newTexW);
+        if (_pather.HasParent()) throw new NotImplementedException("Pather cannot be parented");
         movement = mov;
         bpi = pi;
         _ = movement.UpdateZero(ref bpi);
@@ -97,7 +97,6 @@ public class CurvedTileRenderPather : CurvedTileRender {
             centers[ii] = bpi.loc;
         }
         prevRemember = trailR.time = 0f;
-        target = collisionTarget;
         playerBullet = options.playerBullet;
         bounds = new AABB(movement.rootPos, Vector2.zero);
         
@@ -118,9 +117,9 @@ public class CurvedTileRenderPather : CurvedTileRender {
 
     private const float CULL_RAD = 4;
     private const float FIRST_CULLCHECK_TIME = 4;
-    //This is run during Update
-    private bool CullCheck() {
-        if (bpi.t > FIRST_CULLCHECK_TIME && LocationHelpers.OffPlayableScreenBy(CULL_RAD, centers[read_from])) {
+    public bool CullCheck() {
+        cullCtr = (cullCtr + 1) % checkCullEvery;
+        if (cullCtr == 0 && pather.myStyle.CameraCullable.Value && bpi.t > FIRST_CULLCHECK_TIME && LocationHelpers.OffPlayableScreenBy(CULL_RAD, centers[read_from])) {
             onCameraCulled();
             return true;
         }
@@ -130,6 +129,7 @@ public class CurvedTileRenderPather : CurvedTileRender {
     public override void UpdateMovement(float dT) {
         movement.UpdateDeltaAssignDelta(ref bpi, ref lastDelta, dT);
         base.UpdateMovement(dT);
+        pather.SetMovementDelta(lastDelta);
     }
 
     
@@ -147,10 +147,8 @@ public class CurvedTileRenderPather : CurvedTileRender {
         }
     }
     public override void UpdateRender() {
-        exec.SetMovementDelta(lastDelta);
         if (ETime.LastUpdateForScreen) {
             UpdateGraphics();
-            
             tr.localPosition = bpi.loc;
             //trailR.AddPosition(bpi.loc);
             // ReSharper disable once CompareOfFloatsByEqualityOperator
@@ -210,29 +208,28 @@ public class CurvedTileRenderPather : CurvedTileRender {
 
     private const float BACKSTEP = 2f;
 
-    public CollisionResult CheckCollision() {
-        cullCtr = (cullCtr + 1) % checkCullEvery; 
-        if (cullCtr == 0 && exec.myStyle.CameraCullable.Value && CullCheck())
-            return CollisionMath.noColl;
-        
-        int cut1 = (int) Math.Ceiling((cL - read_from + 1) * tailCutoffRatio);
-        int cut2 = (int) Math.Ceiling((cL - read_from + 1) * headCutoffRatio);
+    public void DoRegularUpdateCollision() {
+        int cut1 = (int)Math.Ceiling((cL - read_from + 1) * tailCutoffRatio);
+        int cut2 = (int)Math.Ceiling((cL - read_from + 1) * headCutoffRatio);
         if (playerBullet.Try(out var plb)) {
             var fe = Enemy.FrozenEnemies;
             for (int ii = 0; ii < fe.Count; ++ii) {
-                if (fe[ii].Active && CollisionMath.CircleOnSegments(fe[ii].pos, fe[ii].radius, Vector2.zero, 
-                        centers, read_from + cut1, 1, cL - cut2, scaledLineRadius, 1, 0, out int segment) &&
-                    fe[ii].enemy.TryHitIndestructible(bpi.id, plb.data.cdFrames)) {
-                    fe[ii].enemy.QueuePlayerDamage(plb.data.bossDmg, plb.data.stageDmg, plb.firer);
-                    fe[ii].enemy.ProcOnHit(plb.data.effect, centers[segment]);
+                var e = fe[ii];
+                if (e.Active 
+                    && CollisionMath.CircleOnAABB(in bounds, in e.location.x, in e.location.y, e.radius + scaledLineRadius)
+                    && CollisionMath.CircleOnSegments(e.location, fe[ii].radius, Vector2.zero,
+                        centers, read_from + cut1, 1, cL - cut2, scaledLineRadius, 1, 0, out int segment)) {
+                    fe[ii].enemy.TakeHit(in plb, in centers[segment], in bpi.id);
                 }
             }
-            return CollisionMath.noColl;
+        } else if (pather.Target.Try(out var player) && player.ComputeCollisions) {
+            var hb = player.Hurtbox;
+            if (CollisionMath.CircleOnAABB(in bounds, in hb.x, in hb.y, hb.largeRadius + scaledLineRadius)) {
+                var coll = CollisionMath.GrazeCircleOnSegments(in hb, Vector2.zero, 
+                    centers, read_from + cut1, 1, cL - cut2, scaledLineRadius, 1, 0);
+                player.ProcessCollision(in coll, pather.Damage, in bpi, in pather.collisionInfo.grazeEveryFrames);
+            }
         }
-        if (target.Active && CollisionMath.CircleOnAABB(
-            bounds, target.location, target.largeRadius)) {
-            return CollisionMath.GrazeCircleOnSegments(target.Hitbox, Vector2.zero, centers, read_from + cut1, 1, cL - cut2, scaledLineRadius, 1, 0);
-        } else return CollisionMath.noColl;
     }
     public void FlipVelX() {
         movement.FlipX();

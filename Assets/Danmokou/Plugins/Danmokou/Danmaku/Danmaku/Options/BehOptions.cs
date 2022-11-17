@@ -95,7 +95,7 @@ public class BehOption {
     /// <br/>Note: Currently only supported for pathers/lasers, and not for generic complex bullets.
     /// </summary>
     public static BehOption Player(int cdFrames, int bossDmg, int stageDmg, string effect) =>
-        new PlayerBulletProp(new PlayerBulletCfg(cdFrames, bossDmg, stageDmg, ResourceManager.GetEffect(effect)));
+        new PlayerBulletProp(new PlayerBulletCfg(cdFrames, false, bossDmg, stageDmg, ResourceManager.GetEffect(effect)));
 
     /// <summary>
     /// Set the ID of the object.

@@ -2,7 +2,10 @@
 using UnityEngine;
 using System;
 using System.Linq;
+using System.Reactive;
+using BagoumLib;
 using BagoumLib.Cancellation;
+using BagoumLib.DataStructures;
 using BagoumLib.Expressions;
 using Danmokou.Behavior;
 using Danmokou.Core;
@@ -10,6 +13,7 @@ using Danmokou.Danmaku.Descriptors;
 using Danmokou.DMath;
 using Danmokou.Expressions;
 using Danmokou.Graphics;
+using Danmokou.Player;
 using Danmokou.Reflection;
 using UnityEngine.Profiling;
 
@@ -110,9 +114,9 @@ public partial class BulletManager {
         throw new Exception($"Could not find simple bullet style by name \"{pool}\".");
     }
     private static readonly ExFunction getMaybeCopyPool = 
-        ExFunction.Wrap<string>(typeof(BulletManager), "GetMaybeCopyPool");
+        ExFunction.Wrap<string>(typeof(BulletManager), nameof(BulletManager.GetMaybeCopyPool));
     private static readonly ExFunction nullableGetMaybeCopyPool = 
-        ExFunction.Wrap<string?>(typeof(BulletManager), "NullableGetMaybeCopyPool");
+        ExFunction.Wrap<string?>(typeof(BulletManager), nameof(BulletManager.NullableGetMaybeCopyPool));
 
     public override int UpdatePriority => UpdatePriorities.BM;
     public override void RegularUpdate() {
@@ -140,90 +144,60 @@ public partial class BulletManager {
             sbc.temp_last = sbc.Count;
         }
         //Velocity and control updates
-        for (int ii = 0; ii < activeEmpty.Count; ++ii) {
-            sbc = activeEmpty[ii];
-            if (sbc.temp_last > 0) {
-                sbc.UpdateVelocityAndControls();
-            } else sbc.PruneControls();
-        }
+        for (int ii = 0; ii < activeEmpty.Count; ++ii)
+            activeEmpty[ii].UpdateVelocityAndControls();
         Profiler.BeginSample("NPC-fired simple bullet velocity updates");
-        for (int ii = 0; ii < activeNpc.Count; ++ii) {
-            sbc = activeNpc[ii];
-            if (sbc.temp_last > 0) {
-                sbc.UpdateVelocityAndControls();
-            } else sbc.PruneControls();
-        }
+        //TODO combine activeNpc and activeCNPC
+        for (int ii = 0; ii < activeNpc.Count; ++ii)
+            activeNpc[ii].UpdateVelocityAndControls();
         Profiler.EndSample();
-        for (int ii = 0; ii < activeCNpc.Count; ++ii) {
-            sbc = activeCNpc[ii];
-            if (sbc.temp_last > 0) {
-                sbc.UpdateVelocityAndControls();
-            } else sbc.PruneControls();
-        }
+        for (int ii = 0; ii < activeCNpc.Count; ++ii) 
+            activeCNpc[ii].UpdateVelocityAndControls();
         Profiler.BeginSample("Player simple bullet velocity updates");
-        for (int ii = 0; ii < activePlayer.Count; ++ii) {
-            sbc = activePlayer[ii];
-            if (sbc.temp_last > 0) {
-                sbc.UpdateVelocityAndControls();
-            } else sbc.PruneControls();
-        }
+        for (int ii = 0; ii < activePlayer.Count; ++ii)
+            activePlayer[ii].UpdateVelocityAndControls();
         Profiler.EndSample();
-        for (int ii = 0; ii < activeCulled.Count; ++ii) {
-            sbc = activeCulled[ii];
-            if (sbc.temp_last > 0) {
-                sbc.UpdateVelocityAndControls();
-            } else sbc.PruneControls();
-        }
+        for (int ii = 0; ii < activeCulled.Count; ++ii)
+            activeCulled[ii].UpdateVelocityAndControls();
         
-        
-        for (int ii = 0; ii < activeEmpty.Count; ++ii) {
-            //Empty bullets never collide
-            activeEmpty[ii].NullCollisionCleanup();
-        }
-        if (bulletCollisionTarget.Active) {
-            var hitbox = bulletCollisionTarget.Hitbox;
-            Profiler.BeginSample("NPC-fired simple bullet collision checking");
-            int dmg = 0; int graze = 0;
+    }
+
+    public override void RegularUpdateCollision() {
+        if (ServiceLocator.MaybeFind<PlayerController>().Try(out var player)) {
+            Profiler.BeginSample("NPC simple bullet collisions");
             for (int ii = 0; ii < activeNpc.Count; ++ii) {
-                sbc = activeNpc[ii];
-                if (sbc.Count > 0) {
-                    CollisionCheckResults ccr = sbc.CheckCollision(in hitbox);
-                    dmg = Math.Max(dmg, ccr.damage);
-                    graze += ccr.graze;
-                }
+                var sbc = activeNpc[ii];
+                if (sbc.Count > 0)
+                    sbc.CheckCollisions(player);
             }
             for (int ii = 0; ii < activeCNpc.Count; ++ii) {
-                sbc = activeCNpc[ii];
-                if (sbc.Count > 0) {
-                    CollisionCheckResults ccr = sbc.CheckCollision(in hitbox);
-                    dmg = Math.Max(dmg, ccr.damage);
-                    graze += ccr.graze;
-                }
+                var sbc = activeCNpc[ii];
+                if (sbc.Count > 0) 
+                    sbc.CheckCollisions(player);
             }
             Profiler.EndSample();
-            bulletCollisionTarget.Player.Hit(dmg);
-            bulletCollisionTarget.Player.Graze(graze);
-        } else {
-            //Collision checker also does compacting/culling, which needs to occur even if there's no target
-            for (int ii = 0; ii < activeNpc.Count; ++ii) {
-                activeNpc[ii].NullCollisionCleanup();
-            }
-            for (int ii = 0; ii < activeCNpc.Count; ++ii) {
-                activeCNpc[ii].NullCollisionCleanup();
-            }
-        }
-        for (int ii = 0; ii < activeCulled.Count; ++ii) {
-            activeCulled[ii].NullCollisionCleanup();
         }
         
-        Profiler.BeginSample("Player simple bullet collision checking");
-        var fci = Enemy.FrozenEnemies;
+        Profiler.BeginSample("Player simple bullet collisions");
+        var enemies = Enemy.FrozenEnemies;
         for (int ii = 0; ii < activePlayer.Count; ++ii) {
-            sbc = activePlayer[ii];
-            if (sbc.Count > 0) sbc.CheckCollision(fci);
+            var sbc = activePlayer[ii];
+            if (sbc.Count > 0)
+                for (int ie = 0; ie < enemies.Count; ++ie)
+                    if (enemies[ie].Active)
+                        sbc.CheckCollisions(enemies[ie].enemy);
         }
         Profiler.EndSample();
-        
+    }
+
+    public override void RegularUpdateFinalize() {
+        //Do this in the late step so it occurs after any custom collision handling, and before rendering
+        for (int ic = 0; ic < collections.Length; ++ic) {
+            var c = collections[ic];
+            for (int ii = 0; ii < c.Count; ++ii) {
+                c[ii].CompactAndSort();
+            }
+        }
     }
 
     private void StartScene() {

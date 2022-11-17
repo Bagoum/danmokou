@@ -6,6 +6,7 @@ using Danmokou.DMath;
 using Danmokou.Graphics;
 using JetBrains.Annotations;
 using UnityEngine;
+using UnityEngine.Profiling;
 
 namespace Danmokou.Behavior.Display {
 public class SpriteDisplayController: DisplayController {
@@ -23,7 +24,9 @@ public class SpriteDisplayController: DisplayController {
 
     public override void UpdateRender() {
         base.UpdateRender();
-        sprite.SetPropertyBlock(pb);
+        if (ETime.LastUpdateForScreen) {
+            sprite.SetPropertyBlock(pb);
+        }
     }
 
     public override void SetSortingOrder(int x) {

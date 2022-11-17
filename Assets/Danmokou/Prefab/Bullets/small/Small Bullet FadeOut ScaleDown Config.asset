@@ -9,11 +9,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fce4178c62dbe634cb2fb4b61c491402, type: 3}
-  m_Name: Circle PlayerHitbox
+  m_Script: {fileID: 11500000, guid: b2fdf925303e43e084e60bcd55b1f01e, type: 3}
+  m_Name: Small Bullet FadeOut ScaleDown Config
   m_EditorClassIdentifier: 
-  location: {x: 0, y: -43}
-  radius: 0.034
-  largeRadius: 0.3
-  itemCollectRadius: 0.2
-  itemAttractRadius: 1
+  value:
+    slideInTime: 0
+    fadeInTime: 0.2
+    scaleInTime: 0.2
+    scaleInStart: 2

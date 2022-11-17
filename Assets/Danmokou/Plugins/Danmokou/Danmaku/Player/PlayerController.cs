@@ -1,13 +1,16 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reactive;
+using System.Runtime.CompilerServices;
 using BagoumLib;
 using BagoumLib.Cancellation;
 using BagoumLib.DataStructures;
 using BagoumLib.Events;
 using BagoumLib.Expressions;
+using CommunityToolkit.HighPerformance;
 using Danmokou.Behavior;
 using Danmokou.Behavior.Display;
 using Danmokou.Behavior.Functions;
@@ -26,6 +29,8 @@ using JetBrains.Annotations;
 using UnityEditor;
 using UnityEngine;
 using Danmokou.Core.DInput;
+using UnityEngine.Profiling;
+using UnityEngine.Serialization;
 using static Danmokou.Services.GameManagement;
 using static Danmokou.DMath.LocationHelpers;
 using static Danmokou.GameInstance.InstanceConsts;
@@ -35,15 +40,17 @@ namespace Danmokou.Player {
 /// A team is a code construct which contains a hitbox, several possible shots (of which one is active),
 /// and several possible players (of which one is active).
 /// </summary>
-public partial class PlayerController : BehaviorEntity {
+public partial class PlayerController : BehaviorEntity, ICircularSimpleBulletCollisionReceiver {
     
     #region Serialized
     public ShipConfig[] defaultPlayers = null!;
     public ShotConfig[] defaultShots = null!;
     public Subshot defaultSubshot;
     public AbilityCfg defaultSupport = null!;
-    
-    public SOPlayerHitbox hitbox = null!;
+
+
+    public float MaxCollisionRadius => Ship.grazeboxRadius;
+    public Hurtbox Hurtbox { get; private set; }
     public SpriteRenderer hitboxSprite = null!;
     public SpriteRenderer meter = null!;
     public ParticleSystem speedLines = null!;
@@ -68,7 +75,7 @@ public partial class PlayerController : BehaviorEntity {
     [UsedImplicitly]
     public float PlayerShotItr() => shotItr;
     
-    private ShipConfig ship = null!;
+    public ShipConfig Ship { get; private set; } = null!;
     private ShotConfig shot = null!;
     private Subshot subshot;
     
@@ -91,6 +98,7 @@ public partial class PlayerController : BehaviorEntity {
     
     #region ComputedProperties
 
+    public bool ComputeCollisions { get; private set; } = true;
     public ICancellee BoundingToken => Instance.Request?.InstTracker ?? Cancellable.Null;
     public bool AllowPlayerInput => AllControlEnabled && StateAllowsInput(State);
     private ActiveTeamConfig Team { get; set; } = null!;
@@ -113,8 +121,7 @@ public partial class PlayerController : BehaviorEntity {
     }
     public bool IsFocus =>
         Restrictions.FocusAllowed && (Restrictions.FocusForced || (InputManager.IsFocus && AllowPlayerInput));
-    public bool IsFiring =>
-        InputManager.IsFiring && AllowPlayerInput && FiringEnabled;
+    public bool IsFiring => InputManager.IsFiring && AllowPlayerInput && FiringEnabled;
     public bool IsTryingBomb =>
         InputManager.IsBomb && AllowPlayerInput && BombsEnabled && Team.Support is Ability.Bomb;
     public bool IsTryingWitchTime => InputManager.IsMeter && AllowPlayerInput && Team.Support is Ability.WitchTime;
@@ -173,14 +180,13 @@ public partial class PlayerController : BehaviorEntity {
         Team = GameManagement.Instance.GetOrSetTeam(new ActiveTeamConfig(new TeamConfig(0, defaultSubshot, defaultSupport, 
             defaultPlayers.Zip(defaultShots, (x, y) => (x, y)).ToArray())));
         Logs.Log($"Team awake", level: LogLevel.DEBUG1);
-        hitbox.location = tr.position;
-        hitbox.Player = this;
         hitboxSprite.enabled = SaveData.s.UnfocusedHitbox;
         meter.enabled = false;
         
-        PastPositions.Add(hitbox.location);
+        var initialPosition = tr.position;
+        PastPositions.Add(initialPosition);
         PastDirections.Add(Vector2.down);
-        MarisaAPositions.Add(hitbox.location);
+        MarisaAPositions.Add(initialPosition);
         MarisaADirections.Add(Vector2.down);
 
         void Preload(GameObject prefab) {
@@ -217,7 +223,7 @@ public partial class PlayerController : BehaviorEntity {
     }
 
     public override void FirstFrame() {
-        challenge = ServiceLocator.MaybeFind<IChallengeManager>();
+        challenge = ServiceLocator.FindOrNull<IChallengeManager>();
     }
 
     #region TeamManagement
@@ -248,10 +254,11 @@ public partial class PlayerController : BehaviorEntity {
         UpdateTeam(pind, nsubshot, force);
     }
     private void _UpdateTeam() {
-        if (Team.Ship != ship) {
-            bool fromNull = ship == null;
-            ship = Team.Ship;
-            Logs.Log($"Setting team player to {ship.key}");
+        if (Team.Ship != Ship) {
+            bool fromNull = Ship == null;
+            Ship = Team.Ship;
+            Hurtbox = new(Hurtbox.location, Ship.hurtboxRadius, Ship.grazeboxRadius);
+            Logs.Log($"Setting team player to {Ship.key}");
             if (spawnedShip != null) {
                 //animate "destruction"
                 spawnedShip.InvokeCull();
@@ -309,7 +316,9 @@ public partial class PlayerController : BehaviorEntity {
 
     #endregion
     private void SetLocation(Vector2 next) {
-        bpi.loc = tr.position = hitbox.location = next;
+        bpi.loc = tr.position = next;
+        Hurtbox = new(next, Hurtbox.radius, Hurtbox.largeRadius);
+        LocationHelpers.UpdateVisiblePlayerLocation(next);
     }
     
     private void MovementUpdate(float dT) {
@@ -333,7 +342,7 @@ public partial class PlayerController : BehaviorEntity {
             velocity = Vector2.zero;
             timeSinceLastStandstill = 0f;
         }
-        velocity *= IsFocus ? ship.FocusSpeed : ship.freeSpeed;
+        velocity *= IsFocus ? Ship.FocusSpeed : Ship.freeSpeed;
         if (spawnedCamera != null) velocity *= spawnedCamera.CameraSpeedMultiplier;
         velocity *= StateSpeedMultiplier(State);
         velocity *= (float) GameManagement.Difficulty.playerSpeedMultiplier;
@@ -354,14 +363,14 @@ public partial class PlayerController : BehaviorEntity {
                 pos.y = TopPlayerBound;
                 velocity.y = Mathf.Min(velocity.y, 0f);
             }
-            var prev = hitbox.location;
+            var prev = Hurtbox.location;
             SetMovementDelta(velocity * dT);
             spawnedShip.SetMovementDelta(velocity * dT);
             SetLocation(pos + velocity * dT); 
             if (IsMoving) {
-                var delta = hitbox.location - prev;
+                var delta = Hurtbox.location - prev;
                 var dir = delta.normalized;
-                PastPositions.Add(hitbox.location);
+                PastPositions.Add(Hurtbox.location);
                 PastDirections.Add(dir);
                 if (IsFocus) {
                     //Add offset to all tracking positions so they stay the same relative position
@@ -369,7 +378,7 @@ public partial class PlayerController : BehaviorEntity {
                         MarisaAPositions[ii] += delta;
                     }
                 } else {
-                    MarisaAPositions.Add(hitbox.location);
+                    MarisaAPositions.Add(Hurtbox.location);
                     MarisaADirections.Add(dir);
                 }
             } else {
@@ -389,6 +398,13 @@ public partial class PlayerController : BehaviorEntity {
                 UpdateTeam((Team.SelectedIndex + 1) % Team.Ships.Length);
             }
         }
+        for (int ii = 0; ii < grazeCooldowns.Keys.Count; ++ii)
+            if (grazeCooldowns.Keys.GetMarkerIfExistsAt(ii, out var dm))
+                if (--grazeCooldowns[dm.Value] <= 0)
+                    grazeCooldowns.Remove(dm);
+        grazeCooldowns.Keys.Compact();
+        collisions = new(0, 0);
+        
         //Hilarious issue. If running a bomb that disables and then re-enables firing,
         //then IsFiring will return false in the movement update and true in the options code.
         //As a result, UnfiringTime will be incorrect and lasers will break.
@@ -419,7 +435,61 @@ public partial class PlayerController : BehaviorEntity {
     protected override void RegularUpdateMove() {
         MovementUpdate(ETime.FRAME_TIME);
     }
-    
+
+    private CollisionsAccumulation collisions;
+    public override void RegularUpdateFinalize() {
+        if (collisions.damage > 0)
+            Hit(1);
+        else
+            AddGraze(collisions.graze);
+        base.RegularUpdateFinalize();
+    }
+
+    public void ProcessSimple(BulletManager.SimpleBulletCollection sbc) {
+        var hb = Hurtbox;
+        var deleted = sbc.Deleted;
+        var data = sbc.Data;
+        for (int ii = 0; ii < sbc.Count; ++ii) {
+            if (!deleted[ii]) {
+                ref var sbn = ref data[ii];
+                var cr = 
+                    //This is also a valid way to do collision, though it's about 5% slower
+                    //Collider.CheckGrazeCollision(in sbn.bpi.loc.x, in sbn.bpi.loc.y, in sbn.direction, in sbn.scale, in hitbox);
+                    sbc.CheckGrazeCollision(in hb, in sbn);
+                
+                if ((cr.collide || cr.graze) 
+                    && ProcessCollision(in cr, in sbc.BC.damageAgainstPlayer, in sbn.bpi, in sbc.BC.grazeEveryFrames)
+                    && sbc.BC.destructible) {
+                    sbc.MakeCulledCopy(ii);
+                    sbc.DeleteSB_Collision(ii);
+                }
+            }
+        }
+    }
+
+    public void ProcessSimpleBuckets(BulletManager.SimpleBulletCollection sbc, ReadOnlySpan2D<List<int>> indexBuckets) {
+        var hb = Hurtbox;
+        var deleted = sbc.Deleted;
+        var data = sbc.Data;
+        for (int y = 0; y < indexBuckets.Height; ++y)
+        for (int x = 0; x < indexBuckets.Width; ++x) {
+            var bucket = indexBuckets[y, x];
+            for (int ib = 0; ib < bucket.Count; ++ib) {
+                var index = bucket[ib];
+                if (deleted[index]) continue;
+                ref var sbn = ref data[index];
+                var cr = sbc.CheckGrazeCollision(in hb, in sbn);
+                
+                if ((cr.collide || cr.graze) 
+                    && ProcessCollision(in cr, in sbc.BC.damageAgainstPlayer, in sbn.bpi, in sbc.BC.grazeEveryFrames)
+                    && sbc.BC.destructible) {
+                    sbc.MakeCulledCopy(index);
+                    sbc.DeleteSB_Collision(index);
+                }
+            }
+        }
+    }
+
     private void UpdateInputTimes(bool focus, bool fire) {
         if (focus) {
             TimeFocus += ETime.FRAME_TIME;
@@ -480,9 +550,38 @@ public partial class PlayerController : BehaviorEntity {
     }
 
     #region HPManagement
+
+    /// <summary>
+    /// Process a collision event with an NPC bullet by checking that it is not on graze cooldown, then append it to the accumulation of events <see cref="collisions"/>.
+    /// </summary>
+    /// <param name="coll">Collision result.</param>
+    /// <param name="damage">Damage dealt by this collision.</param>
+    /// <param name="bulletBPI">Bullet information.</param>
+    /// <param name="grazeEveryFrames">The number of frames between successive graze events on this bullet.</param>
+    /// <returns>Whether or not a hit was taken (ie. a collision occurred).</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool ProcessCollision(in CollisionResult coll, in int damage, in ParametricInfo bulletBPI, in ushort grazeEveryFrames) {
+        if (coll.collide) {
+            collisions = collisions.WithDamage(damage);
+            return true;
+        } else if (coll.graze && TryGrazeBullet(bulletBPI.id, grazeEveryFrames)) {
+            collisions = collisions.WithGraze(1);
+            return false;
+        } else
+            return false;
+    }
+
+    public void TakeHit() => collisions = collisions.WithDamage(1);
     
+    private readonly DictionaryWithKeys<uint, int> grazeCooldowns = new();
+    public bool TryGrazeBullet(uint id, int cooldownFrames) {
+        if (grazeCooldowns.Data.ContainsKey(id))
+            return false;
+        grazeCooldowns[id] = cooldownFrames;
+        return true;
+    }
     
-    public void Graze(int graze) {
+    public void AddGraze(int graze) {
         if (graze <= 0 || hitInvulnerabilityCounter > 0) return;
         GameManagement.Instance.AddGraze(graze);
     }
@@ -517,7 +616,7 @@ public partial class PlayerController : BehaviorEntity {
                 PowerAuraOption.High(), 
             }), GenCtx.Empty, BPI.loc, Cancellable.Null, null!));
         GameManagement.Instance.AddLives(-dmg);
-        ServiceLocator.MaybeFind<IRaiko>()?.Shake(1.5f, null, 0.9f);
+        ServiceLocator.FindOrNull<IRaiko>()?.Shake(1.5f, null, 0.9f);
         Invuln(HitInvulnFrames);
         if (RespawnOnHit) {
             spawnedShip.DrawGhost(2f);
@@ -607,7 +706,7 @@ public partial class PlayerController : BehaviorEntity {
     }
     //Assumption for state enumerators is that the token is not initially cancelled.
     private IEnumerator StateNormal(ICancellee<PlayerState> cT) {
-        hitbox.Active = true;
+        ComputeCollisions = true;
         State = PlayerState.NORMAL;
         while (true) {
             if (MaybeCancelState(cT)) yield break;
@@ -620,9 +719,9 @@ public partial class PlayerController : BehaviorEntity {
     }
     private IEnumerator StateRespawn(ICancellee<PlayerState> cT) {
         State = PlayerState.RESPAWN;
-        spawnedShip.RespawnOnHitEffect.Proc(hitbox.location, hitbox.location, 0f);
+        spawnedShip.RespawnOnHitEffect.Proc(Hurtbox.location, Hurtbox.location, 0f);
         //The hitbox position doesn't update during respawn, so don't allow collision.
-        hitbox.Active = false;
+        ComputeCollisions = false;
         for (float t = 0; t < RespawnFreezeTime; t += ETime.FRAME_TIME) yield return null;
         //Don't update the hitbox location
         tr.position = new Vector2(0f, 100f);
@@ -634,7 +733,7 @@ public partial class PlayerController : BehaviorEntity {
             yield return null;
         }
         SetLocation(RespawnEndLoc);
-        hitbox.Active = true;
+        ComputeCollisions = true;
         
         if (!MaybeCancelState(cT)) RunDroppableRIEnumerator(StateNormal(cT));
     }
@@ -728,9 +827,9 @@ public partial class PlayerController : BehaviorEntity {
     private void OnDrawGizmos() {
         Handles.color = Color.cyan;
         var position = transform.position;
-        Handles.DrawWireDisc(position, Vector3.forward, hitbox.radius);
+        Handles.DrawWireDisc(position, Vector3.forward, Hurtbox.radius);
         Handles.color = Color.blue;
-        Handles.DrawWireDisc(position, Vector3.forward, hitbox.largeRadius);
+        Handles.DrawWireDisc(position, Vector3.forward, Hurtbox.largeRadius);
         Handles.color = Color.black;
         Handles.DrawLine(position + Vector3.up * .5f, position + Vector3.down * .5f);
         Handles.DrawLine(position + Vector3.right * .2f, position + Vector3.left * .2f);

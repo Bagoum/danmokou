@@ -6,7 +6,7 @@ phase 0
 		shift-phase-to 1
 
 <!> type spell `Helloワールド`
-<!> hp 10000
+<!> hp 1000
 <!> bg black
 phase 100
 	saction 0

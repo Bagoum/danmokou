@@ -8,13 +8,18 @@ using System.Threading;
 using System.Threading.Tasks;
 using BagoumLib;
 using BagoumLib.Culture;
+using BagoumLib.Functional;
 using Danmokou.DMath;
 using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Object = UnityEngine.Object;
 
 namespace Danmokou.Core {
 public static class Extensions {
+    public static Maybe<T> ToMaybe<T>(this T? obj) where T : Object {
+        return obj == null ? Maybe<T>.None : obj;
+    }
     public static int CountOf(this string s, char c) {
         int ct = 0;
         for (int ii = 0; ii < s.Length; ++ii) {
@@ -28,6 +33,17 @@ public static class Extensions {
 
     public static string? Or(this string? x, string? y) =>
         string.IsNullOrWhiteSpace(x) ? y : x;
+
+    /// <summary>
+    /// Map an array into a list from <see cref="ListCache{T}"/>.
+    /// </summary>
+    public static List<U> MapIntoCachedList<T, U>(this T[] arr, Func<T, U> map) {
+        var lis = ListCache<U>.Get();
+        for (int ii = 0; ii < arr.Length; ++ii) {
+            lis.Add(map(arr[ii]));
+        }
+        return lis;
+    }
 }
 
 

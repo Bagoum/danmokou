@@ -95,6 +95,22 @@ public static partial class ExM {
     public static Func<TExArgCtx, TEx<T>> LetV2s<T>((string, ExTP)[] aliases, Func<TExArgCtx, TEx<T>> inner) => bpi => 
         ReflectEx.Let(aliases, () => inner(bpi), bpi);
     
+    /// <summary>
+    /// Assign local variables that can be repeatedly used without reexecution via the Reference (&amp;) function.
+    /// </summary>
+    /// <param name="aliases">List of each variable's type, name, and assigned value (eg. f myFloat 5 + t)</param>
+    /// <param name="inner">Code to execute within the scope of the variables</param>
+    public static Func<TExArgCtx, TEx<T>> Let<T>(ReflectEx.Alias[] aliases, Func<TExArgCtx, TEx<T>> inner) => bpi => 
+        ReflectEx.LetAlias(aliases, () => inner(bpi), bpi);
+
+    /// <summary>
+    /// Assign values to the BPI firing data. The values must already exist in the <see cref="PICustomData"/> context.
+    /// </summary>
+    /// <param name="aliases">List of each variable's type, name, and assigned value (eg. f myFloat 5 + t)</param>
+    /// <param name="inner">Code to execute after values are set</param>
+    public static Func<TExArgCtx, TEx<T>> Set<T>(ReflectEx.Alias[] aliases, Func<TExArgCtx, TEx<T>> inner) => bpi =>
+        ReflectEx.SetAlias(aliases, () => inner(bpi), bpi);
+    
     #endregion
     
     #region Components
@@ -558,7 +574,7 @@ public static partial class ExM {
     /// Returns true if the laser is colliding with an enemy (only applicable to player lasers).
     /// </summary>
     public static ExPred LaserColliding(Func<TExArgCtx, TEx<CurvedTileRenderLaser>> ctr) => tac => 
-        ctr(tac).Field("playerBulletIsColliding");
+        ctr(tac).Field("isColliding");
     
     /// <summary>
     /// Returns the last active time of the laser. This is the first time at which the "deactivate" option
@@ -573,7 +589,7 @@ public static partial class ExM {
     /// Returns the location of the FireOption. Primarily used for player lasers.
     /// </summary>
     public static ExTP OptionLocation(Func<TExArgCtx, TEx<FireOption>> ctr) => tac => 
-        ctr(tac).Field("Loc");
+        ctr(tac).Field("Location");
     
     /// <summary>
     /// Returns the direction of the FireOption. Primarily used for player lasers.

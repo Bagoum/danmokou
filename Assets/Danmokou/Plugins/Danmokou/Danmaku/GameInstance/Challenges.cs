@@ -11,6 +11,7 @@ using Danmokou.Danmaku.Patterns;
 using Danmokou.DMath;
 using Danmokou.DMath.Functions;
 using Danmokou.GameInstance;
+using Danmokou.Player;
 using Danmokou.Reflection;
 using Danmokou.Scriptables;
 using Danmokou.Services;
@@ -99,7 +100,7 @@ public readonly struct SceneChallengeReqest : IChallengeRequest {
         ServiceLocator.Find<IUIManager>().MessageChallengeEnd(false, out float t);
         if (ctx.exec != null) ctx.exec.ShiftPhase();
         WaitingUtils.WaitThenCB(ctx.cm, Cancellable.Null, t, false,
-            () => { BulletManager.PlayerTarget.Player.Hit(999, true); });
+            () => ServiceLocator.Find<PlayerController>().Hit(999, true));
     }
 
     public LString Description => cr.Description;
@@ -236,7 +237,7 @@ public abstract class Challenge {
         }
 
         public override bool FrameCheck(ChallengeManager.TrackingContext ctx) {
-            return ctx.t < yield || (ctx.exec.rBPI.LocV2 - GameManagement.VisiblePlayerLocation).magnitude < units;
+            return ctx.t < yield || (ctx.exec.rBPI.LocV2 - LocationHelpers.VisiblePlayerLocation).magnitude < units;
         }
     }
 
@@ -262,7 +263,7 @@ public abstract class Challenge {
         }
 
         public override bool FrameCheck(ChallengeManager.TrackingContext ctx) {
-            return ctx.t < yield || (ctx.exec.rBPI.LocV2 - GameManagement.VisiblePlayerLocation).magnitude > units;
+            return ctx.t < yield || (ctx.exec.rBPI.LocV2 - LocationHelpers.VisiblePlayerLocation).magnitude > units;
         }
     }
 

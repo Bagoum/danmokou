@@ -4,12 +4,15 @@ using System.Reactive;
 using BagoumLib.Tasks;
 using Danmokou.Behavior.Functions;
 using Danmokou.Core;
+using Danmokou.Danmaku;
 using Danmokou.Danmaku.Patterns;
 using Danmokou.DMath;
 using Danmokou.DMath.Functions;
 using Danmokou.Player;
 using Danmokou.Reflection;
 using Danmokou.Services;
+using static Danmokou.Danmaku.BulletManager;
+using static Danmokou.Core.Extensions;
 
 namespace Danmokou.SM {
 
@@ -46,8 +49,8 @@ public class EventLASM : ReflectableLASM {
     /// <param name="evName">Runtime event name</param>
     /// <param name="bindVar">Key to bind value of event on trigger</param>
     /// <param name="exec">StateMachine to execute with event</param>
-    [GAlias(typeof(float), "listenf")]
-    [GAlias(typeof(Unit), "listen0")]
+    [GAlias("listenf", typeof(float))]
+    [GAlias("listen0", typeof(Unit))]
     public static EventTask Listen<T>(string evName, string bindVar, StateMachine exec) => async smh => {
         using var _ = Events.FindRuntimeEvent<T>(evName).Ev.Subscribe(val => {
             var smh2 = new SMHandoff(smh, smh.ch, null);
@@ -70,7 +73,7 @@ public class EventLASM : ReflectableLASM {
     /// <summary>
     /// Push a value to a runtime event.
     /// </summary>
-    [GAlias(typeof(float), "onnextf")]
+    [GAlias("onnextf", typeof(float))]
     public static EventTask OnNext<T>(string evName, GCXF<T> val) => smh => {
         Events.ProcRuntimeEvent<T>(evName, val(smh.GCX));
         return Task.CompletedTask;
@@ -101,7 +104,7 @@ public class EventLASM : ReflectableLASM {
 
     public static EventTask BossExplode() => smh => {
         UnityEngine.Object.Instantiate(ResourceManager.GetSummonable("bossexplode")).GetComponent<ExplodeEffect>().Initialize(BossExplodeWait, smh.Exec.rBPI.loc);
-        ServiceLocator.MaybeFind<IRaiko>()?.Shake(BossExplodeShake, ShakeMag, 2, smh.cT, null);
+        ServiceLocator.FindOrNull<IRaiko>()?.Shake(BossExplodeShake, ShakeMag, 2, smh.cT, null);
         ServiceLocator.SFXService.RequestSFXEvent(ISFXService.SFXEventType.BossExplode);
         return WaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, BossExplodeWait, false);
     };
@@ -172,6 +175,28 @@ public class TimerControllerLASM : ReflectableLASM {
     /// <returns></returns>
     public static TimerControl Stop(ETime.Timer timer) => smh => {
         ETime.Timer.Stop(timer);
+        return Task.CompletedTask;
+    };
+}
+
+/// <summary>
+/// `collide`: Set up collision handlers for bullet-on-bullet collision.
+/// </summary>
+[Reflect]
+public class BxBCollideLASM : ReflectableLASM {
+    public delegate Task ColliderFn(SMHandoff smh);
+    public BxBCollideLASM(ColliderFn fn) : base(new TaskPattern(fn)) { }
+
+    /// <summary>
+    /// Set up collision handlers between simple bullet pools.
+    /// </summary>
+    public static ColliderFn SBOnSB(StyleSelector left, StyleSelector right, Pred leftPred, Pred rightPred, cBulletControl[] leftCtrls,
+        cBulletControl[] rightCtrls) => smh => {
+        var leftPools = left.Simple.MapIntoCachedList(BulletManager.GetMaybeCopyPool);
+        var rightPools = right.Simple.MapIntoCachedList(BulletManager.GetMaybeCopyPool);
+        _ = new BxBCollisionSBOnSB(smh.cT, leftPools, rightPools, leftPred, rightPred, leftCtrls, rightCtrls);
+        ListCache<SimpleBulletCollection>.Consign(leftPools);
+        ListCache<SimpleBulletCollection>.Consign(rightPools);
         return Task.CompletedTask;
     };
 }

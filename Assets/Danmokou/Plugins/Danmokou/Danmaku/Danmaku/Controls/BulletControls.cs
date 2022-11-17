@@ -110,16 +110,19 @@ public partial class BulletManager {
 
     
     public class StyleSelector {
+        private enum Mode {
+            SimpleBullets,
+            BEHBullets
+        }
         private const char wildcard = '*';
         private readonly List<string> enumerated;
         private string[]? simple;
         private string[]? complex;
         private string[]? all;
-        public string[] Simple => simple ??= Styles(simpleBulletPools.Keys, "simple bullet").ToArray();
-        public string[] Complex => complex ??= Styles(behPools.Keys, "complex bullet").ToArray();
+        public string[] Simple => simple ??= Styles(Mode.SimpleBullets).ToArray();
+        public string[] Complex => complex ??= Styles(Mode.BEHBullets).ToArray();
         public string[] All =>
-            all ??= Styles(simpleBulletPools.Keys, "", false)
-                .Concat(Styles(behPools.Keys, "", false)).ToArray();
+            all ??= Styles(Mode.SimpleBullets, false).Concat(Styles(Mode.BEHBullets, false)).ToArray();
 
         public StyleSelector(string[][] selections) {
             this.enumerated = Resolve(selections);
@@ -205,7 +208,11 @@ public partial class BulletManager {
             return done;
         }
 
-        private IEnumerable<string> Styles(ICollection<string> styles, string errTyp, bool doErr = true) {
+        private IEnumerable<string> Styles(Mode mode, bool doErr = true) {
+            var styles = mode switch {
+                Mode.SimpleBullets => (ICollection<string>)simpleBulletPools.Keys,
+                _ => behPools.Keys,
+            };
             for (int ii = 0; ii < enumerated.Count; ++ii) {
                 var style = enumerated[ii];
                 var pstyle = style;
@@ -234,9 +241,13 @@ public partial class BulletManager {
                     foreach (var s in styles) {
                         if (s.StartsWith(s1) && s.EndsWith(s2)) yield return s;
                     }
-                } else if (CheckOrCopyPool(style, out _))
+                } else if (mode switch {
+                               Mode.SimpleBullets => CheckOrCopyPool(style, out _),
+                               _ => CheckComplexPool(style, out _)
+                           })
                     yield return style;
-                else if (doErr) throw new InvalidDataException($"Not a valid {errTyp}: {style}");
+                else if (doErr) throw new InvalidDataException(
+                    $"Not a valid {mode switch { Mode.SimpleBullets => "simple bullet", _ => "BEH bullet"}}: {style}");
             }
         }
     }
@@ -609,7 +620,7 @@ public partial class BulletManager {
         /// <summary>
         /// Execute an event if the condition is satisfied.
         /// </summary>
-        [GAlias(typeof(float), "eventf")]
+        [GAlias("eventf", typeof(float))]
         public static exBulletControl Event<T>(string ev, Func<TExArgCtx, TEx<T>> val, ExPred cond) => 
             new((st, ct, bpi) => bpi.When(cond, 
                 Events.exProcRuntimeEvent<T>().Of(Ex.Constant(ev), val(bpi))), BulletControl.P_RUN);
@@ -712,7 +723,7 @@ public partial class BulletManager {
         /// </summary>
         /// <returns></returns>
         public static SPCF CullRad(float r) => 
-            (pool, cT) => GetMaybeCopyPool(pool).BC.CULL_RAD.AddConst(r);
+            (pool, cT) => GetMaybeCopyPool(pool).BC.CullRadius.AddConst(r);
 
         /// <summary>
         /// Set whether or not a pool can cull bullets that are out of camera range.
@@ -769,6 +780,13 @@ public partial class BulletManager {
         /// </summary>
         public static SPCF SortZ() => (pool, CT) =>
             GetMaybeCopyPool(pool).BC.UseZCompare.AddConst(true);
+
+        /// <summary>
+        /// Override the render queue value of a bullet pool. Higher values render on top.
+        /// <br/>As reference, the render value of circle-X bullets is in the 3600s.
+        /// </summary>
+        public static SPCF SetRenderQueue(int priority) => (pool, cT) =>
+            GetMaybeCopyPool(pool).BC.RenderQueue.AddConst(priority);
     }
     
     /// <summary>

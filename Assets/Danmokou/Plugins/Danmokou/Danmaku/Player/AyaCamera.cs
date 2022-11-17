@@ -69,13 +69,13 @@ public class AyaCamera : BehaviorEntity {
     private static Vector2 AimAt => (GameManagement.Instance.CurrentBoss == null) ?
         new Vector2(0f, 5f) :
         GameManagement.Instance.CurrentBoss.rBPI.loc;
-    private float BoundedViewfinderRadius => Mathf.Min(viewfinderRadius, (AimAt - player.hitbox.location).magnitude);
+    private float BoundedViewfinderRadius => Mathf.Min(viewfinderRadius, (AimAt - player.Location).magnitude);
     private float AngleToTarget =>
         (player.IsMoving && !player.IsFocus) 
             ? player.DirectionDeg
-            : M.AtanD(AimAt - player.hitbox.location);
+            : M.AtanD(AimAt - player.Location);
     private float BaseViewfinderAngle => AngleToTarget - 90;
-    private Vector2 TargetPosition => player.hitbox.location + BoundedViewfinderRadius * M.CosSinDeg(AngleToTarget);
+    private Vector2 TargetPosition => player.Location + BoundedViewfinderRadius * M.CosSinDeg(AngleToTarget);
 
     private const float lerpToAngleRate = 4f;
     private const float lerpToPositionRate = 6f;
@@ -247,7 +247,7 @@ public class AyaCamera : BehaviorEntity {
         PhotoTaken.OnNext((photo, success));
         var pphoto = GameObject.Instantiate(pinnedPhotoPrefab).GetComponent<AyaPinnedPhoto>();
         pphoto.Initialize(photo, location, success ? 
-            ServiceLocator.MaybeFind<IAyaPhotoBoard>()?.NextPinLoc(pphoto) : 
+            ServiceLocator.FindOrNull<IAyaPhotoBoard>()?.NextPinLoc(pphoto) : 
             null);
         viewfinderSR.enabled = true;
         text.enabled = true;

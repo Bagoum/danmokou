@@ -6,11 +6,13 @@ using System;
 using System.Collections.Concurrent;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Text;
 using System.Threading;
 using BagoumLib;
 using BagoumLib.DataStructures;
 using BagoumLib.Events;
 using BagoumLib.Mathematics;
+using BagoumLib.Reflection;
 using BagoumLib.Tasks;
 using BagoumLib.Transitions;
 using Danmokou.Core.DInput;
@@ -24,14 +26,18 @@ namespace Danmokou.Core {
 /// <summary>
 /// To get callbacks for engine frame updates, implement this interface and register yourself to TimeManagement.
 /// The RegularUpdater class does this automatically.
+/// <br/>RegularUpdate functions are called on all objects in the following stages:
+/// <br/>- <see cref="RegularUpdateParallel"/> (may be parallelized) 
+/// <br/>- <see cref="RegularUpdate"/>
+/// <br/>- <see cref="RegularUpdateCollision"/>
+/// <br/>- <see cref="RegularUpdateFinalize"/>
 /// </summary>
 public interface IRegularUpdater {
     /// <summary>
     /// Perform a regular update. This function will be called every ONE engine frame,
     /// with a deltaTime of TimeManagement.FRAME_TIME. This function may be called in parallel,
     /// and may not have access to the Unity thread context.
-    /// This function is called right before RegularUpdate. Parallel is called on ALL updaters
-    /// before any RegUpd are called.
+    /// This function is called before <see cref="RegularUpdate"/>.
     /// </summary>
     void RegularUpdateParallel() { }
 
@@ -43,12 +49,32 @@ public interface IRegularUpdater {
     void RegularUpdate();
 
     /// <summary>
+    /// Perform a regular update.
+    /// <br/>This function is called after all updaters have called <see cref="RegularUpdate()"/>, and before any have called <see cref="RegularUpdateFinalize"/>.
+    /// <br/>This function should contain computations that require updated information from multiple updaters (such as collision). In practice, it should compute all collisions where this object's hitbox overlaps any other object's hurtbox.
+    /// </summary>
+    void RegularUpdateCollision() { }
+
+    /// <summary>
+    /// Perform a regular update.
+    /// <br/>This function is called after all updaters have called <see cref="RegularUpdate()"/> and <see cref="RegularUpdateCollision"/>.
+    /// <br/>This function should contain computations that require knowledge of all collision information, such as rendering computations.
+    /// </summary>
+    void RegularUpdateFinalize() { }
+
+    /// <summary>
     /// This function is called at the *end* of the engine frame that an object was registered
     /// or re-registered for regular updates.
     /// In the standard case, this means that it is called on the same frame as Awake, but after all Awake calls.
     /// Works with pooled objects (will be called after ResetV). Similar to Unity's Start.
     /// </summary>
     void FirstFrame() { }
+
+    /// <summary>
+    /// True iff <see cref="RegularUpdateParallel"/> is nontrivial. If there are enough nontrivial updaters,
+    ///  then <see cref="RegularUpdateParallel"/> will be parallelized during the update step.
+    /// </summary>
+    bool HasNontrivialParallelUpdate => false;
 
     /// <summary>
     /// Updater priority. Lower priority = goes first. Note that order is not guaranteed during
@@ -233,21 +259,46 @@ public class ETime : MonoBehaviour {
                 LastUpdateForScreen = UntilNextFrame + EngineStepTime <= FRAME_BOUNDARY;
                 if (EngineStateManager.PendingUpdate) continue;
                 StartOfFrameInvokes(EngineStateManager.State);
-                //Parallelize updates if there are many. Note that this allocates ~2kb
-                if (updaters.Count < PARALLELCUTOFF || UsePauseHandling) {
-                    for (int ii = 0; ii < updaters.Count; ++ii) {
-                        if (updaters.GetIfExistsAt(ii, out var u) && u.UpdateDuring >= EngineStateManager.State)
-                            u.RegularUpdateParallel();
+                Profiler.BeginSample("Regular Update: (1) Parallel Step");
+                //Parallelize updates if there are many. Note that this allocates several kb
+                if (updaters.Count > PARALLELCUTOFF) {
+                    int heavyUpdates = 0;
+                    for (int ii = 0; ii < updaters.Count; ++ii)
+                        if (updaters.GetIfExistsAt(ii, out var u) && u.UpdateDuring >= EngineStateManager.State &&
+                            u.HasNontrivialParallelUpdate)
+                            ++heavyUpdates;
+                    if (heavyUpdates > PARALLELCUTOFF) {
+                        ParallelUpdateStep();
+                        goto normal_step;
                     }
-                } else ParallelUpdateStep();
+                }
+                for (int ii = 0; ii < updaters.Count; ++ii)
+                    if (updaters.GetIfExistsAt(ii, out var u) && u.UpdateDuring >= EngineStateManager.State)
+                        u.RegularUpdateParallel();
+                normal_step: ;
+                Profiler.EndSample();
+                Profiler.BeginSample("Regular Update: (2) Normal Step");
                 for (int ii = 0; ii < updaters.Count; ++ii) {
                     if (updaters.GetIfExistsAt(ii, out var u) && u.UpdateDuring >= EngineStateManager.State)
                         u.RegularUpdate();
                 }
+                Profiler.EndSample();
+                Profiler.BeginSample("Regular Update: (3) Collision Step");
+                for (int ii = 0; ii < updaters.Count; ++ii) {
+                    if (updaters.GetIfExistsAt(ii, out var u) && u.UpdateDuring >= EngineStateManager.State)
+                        u.RegularUpdateCollision();
+                }
+                Profiler.EndSample();
+                Profiler.BeginSample("Regular Update: (4) Finalize Step");
+                for (int ii = 0; ii < updaters.Count; ++ii) {
+                    if (updaters.GetIfExistsAt(ii, out var u) && u.UpdateDuring >= EngineStateManager.State)
+                        u.RegularUpdateFinalize();
+                }
+                Profiler.EndSample();
                 updaters.Compact();
+                EndOfFrameInvokes(EngineStateManager.State);
                 //Note: The updaters array is only modified by this command. 
                 FlushUpdaterAdds();
-                EndOfFrameInvokes(EngineStateManager.State);
                 if (EngineStateManager.State == EngineState.RUN)
                     FrameNumber++;
                 FirstUpdateForScreen = false;
@@ -325,15 +376,16 @@ public class ETime : MonoBehaviour {
 
     private static readonly DMCompactingArray<IRegularUpdater> updaterAddQueue =
         new(256);
+    private static readonly List<DeletionMarker<IRegularUpdater>> updatersToAdd_temp = new();
 
     private static void FlushUpdaterAdds() {
         //FirstFrame may itself cause new objects to be added, so we need to
         // handle adds with this fixed-point approach
         while (updaterAddQueue.Count > 0) {
-            var toAdd = new List<DeletionMarker<IRegularUpdater>>();
-            updaterAddQueue.CopyIntoList(toAdd);
+            updatersToAdd_temp.Clear();
+            updaterAddQueue.CopyIntoList(updatersToAdd_temp);
             updaterAddQueue.Empty();
-            foreach (var iru in toAdd) {
+            foreach (var iru in updatersToAdd_temp) {
                 iru.Value.FirstFrame();
                 updaters.AddPriority(iru);
             }
@@ -350,6 +402,9 @@ public class ETime : MonoBehaviour {
     /// Script and FF-viewable stopwatches that move with game time.
     /// </summary>
     public class Timer : IRegularUpdater {
+        private static readonly Dictionary<string, Timer> timerMap = new Dictionary<string, Timer>();
+        public static Timer PhaseTimer => GetTimer("phaset");
+        private readonly DeletionMarker<IRegularUpdater> token;
         public string name;
         /// <summary>
         /// Frame counter, with multiplier built-in.
@@ -364,6 +419,14 @@ public class ETime : MonoBehaviour {
         /// True iff the timer is currently accumulating.
         /// </summary>
         private bool enabled = false;
+        
+        public int UpdatePriority => UpdatePriorities.SYSTEM;
+        public EngineState UpdateDuring => EngineState.RUN;
+        
+        private Timer(string name) {
+            this.name = name;
+            token = RegisterRegularUpdater(this);
+        }
 
         private void Start(float mult) {
             multiplier = mult;
@@ -380,18 +443,12 @@ public class ETime : MonoBehaviour {
             enabled = false;
         }
 
-        public int UpdatePriority => UpdatePriorities.SYSTEM;
-        public EngineState UpdateDuring => EngineState.RUN;
-
-        public void RegularUpdateParallel() { }
 
         public void RegularUpdate() {
             if (enabled) Frames += multiplier;
         }
 
         public void FirstFrame() { }
-
-        private static readonly Dictionary<string, Timer> timerMap = new Dictionary<string, Timer>();
 
         //SM-viewable functions
         public static void Start(Timer timer, float multiplier = 1f) {
@@ -406,13 +463,6 @@ public class ETime : MonoBehaviour {
             timer.Stop();
         }
 
-        private Timer(string name) {
-            this.name = name;
-            token = RegisterRegularUpdater(this);
-        }
-
-        private readonly DeletionMarker<IRegularUpdater> token;
-
         public static Timer GetTimer(string name) {
             if (!timerMap.TryGetValue(name, out Timer t)) {
                 t = timerMap[name] = new Timer(name);
@@ -420,7 +470,6 @@ public class ETime : MonoBehaviour {
             return t;
         }
 
-        public static Timer PhaseTimer => GetTimer("phaset");
 
         public static void DestroyAll() {
             foreach (var v in timerMap.Values.ToArray()) {
@@ -437,6 +486,21 @@ public class ETime : MonoBehaviour {
 
     public void OnDestroy() {
         Logs.CloseLog();
+    }
+    
+    [ContextMenu("Debug Updaters")]
+    public void DebugUpdaters() {
+        var sb = new StringBuilder();
+        updaters.Compact();
+        sb.Append($"Updaters: {updaters.Count}\n");
+        var byType = new Dictionary<Type, int>();
+        foreach (var u in updaters) {
+            var t = u.GetType();
+            byType[t] = byType.TryGetValue(t, out var ct) ? ct + 1 : 1;
+        }
+        foreach (var k in byType.Keys.OrderByDescending(x => byType[x]))
+            sb.Append($"{k.RName()}: {byType[k]}\n");
+        Logs.Log(sb.ToString());
     }
 }
 }

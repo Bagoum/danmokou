@@ -174,8 +174,8 @@ public class PhaseProperty {
     /// Declare an event type that will be used in the phase.
     /// </summary>
     /// <returns></returns>
-    [GAlias(typeof(float), "eventf")]
-    [GAlias(typeof(Unit), "event0")]
+    [GAlias("eventf", typeof(float))]
+    [GAlias("event0", typeof(Unit))]
     public static PhaseProperty Event<T>(string evName, Events.RuntimeEventType typ) => new EventProp<T>(evName, typ);
     /// <summary>
     /// Declare the background transition used when shifting into this spellcard.

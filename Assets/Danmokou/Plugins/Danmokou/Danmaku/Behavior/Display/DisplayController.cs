@@ -9,6 +9,7 @@ using Danmokou.Reflection;
 using Danmokou.Scriptables;
 using JetBrains.Annotations;
 using UnityEngine;
+using UnityEngine.Profiling;
 
 namespace Danmokou.Behavior.Display {
 public abstract class DisplayController : MonoBehaviour {
@@ -39,6 +40,7 @@ public abstract class DisplayController : MonoBehaviour {
     public RString rotator = null!;
     public BPY? RotatorF { get; set; }
     private float lastScalerValue = 1f;
+    private Vector3 lastScale = Vector3.one;
 
     protected virtual void Awake() {
         RotatorF = rotator.Get().IntoIfNotNull<BPY>();
@@ -86,7 +88,9 @@ public abstract class DisplayController : MonoBehaviour {
     //This function is called from a BEH in RegularUpdateRender.
     public virtual void UpdateRender() {
         SetTransform();
-        pb.SetFloat(PropConsts.time, time);
+        if (ETime.LastUpdateForScreen) {
+            pb.SetFloat(PropConsts.time, time);
+        }
     }
 
     protected virtual Vector3 GetScale => new(1, 1, 1);
@@ -106,7 +110,8 @@ public abstract class DisplayController : MonoBehaviour {
         if (RotatorF != null) {
             tr.localEulerAngles = new Vector3(0, 0, RotatorF(beh.rBPI));
         }
-        tr.localScale = scale;
+        if (scale != lastScale)
+            tr.localScale = lastScale = scale;
     }
 
     public virtual void SetProperty(int id, float val) => pb.SetFloat(id, val);
@@ -119,13 +124,12 @@ public abstract class DisplayController : MonoBehaviour {
 
     public virtual void FaceInDirection(Vector2 dir) {
         if (rotationMethod != RotationMethod.Manual && dir.x * dir.x + dir.y * dir.y > 0f) {
-            FaceInDirectionRaw(M.radDeg * (rotationMethod is RotationMethod.InVelocityDirection ?
-                Mathf.Atan2(dir.y, dir.x) :
-                rotationMethod is RotationMethod.VelocityDirectionPlus90 ?
-                    Mathf.Atan2(dir.x, -dir.y) :
-                    rotationMethod is RotationMethod.VelocityDirectionMinus90 ?
-                        Mathf.Atan2(-dir.x, dir.y) :
-                        0));
+            FaceInDirectionRaw(M.radDeg * (rotationMethod switch {
+                RotationMethod.InVelocityDirection => (float)Math.Atan2(dir.y, dir.x),
+                RotationMethod.VelocityDirectionPlus90 => (float)Math.Atan2(dir.x, -dir.y),
+                RotationMethod.VelocityDirectionMinus90 => (float)Math.Atan2(-dir.x, dir.y),
+                _ => 0
+            }));
         }
     }
 

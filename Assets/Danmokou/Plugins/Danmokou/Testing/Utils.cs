@@ -87,7 +87,6 @@ public static class TAssert {
     public static void SBEq(ref BulletManager.SimpleBullet sb1, ref BulletManager.SimpleBullet sb2, string msg) {
         VecEq(sb1.direction, sb2.direction, $"{msg} Direction");
         Assert.AreEqual(sb1.scale, sb2.scale, err, $"{msg} Scale");
-        Assert.AreEqual(sb1.grazeFrameCounter, sb2.grazeFrameCounter, $"{msg} GrazeCtr");
         Assert.AreEqual(sb1.cullFrameCounter, sb2.cullFrameCounter, err, $"{msg} CullCtr");
         BPIEq(sb1.bpi, sb2.bpi, msg);
     }

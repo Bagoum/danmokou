@@ -103,6 +103,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c84a2dc24f158d244a031bf940d0c1ba, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  circleApproximationRadius: 0.01
   colliderType: 3
   radius: 0.01
   point1: {x: -2.15, y: 0}
@@ -114,7 +115,6 @@ MonoBehaviour:
   skip: 0
   end: 0
   points: []
-  target: {fileID: 0}
   debug: 0
 --- !u!212 &3054524282040685342
 SpriteRenderer:

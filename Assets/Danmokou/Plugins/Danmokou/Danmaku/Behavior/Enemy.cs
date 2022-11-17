@@ -4,9 +4,12 @@ using BagoumLib;
 using BagoumLib.Cancellation;
 using BagoumLib.DataStructures;
 using BagoumLib.Expressions;
+using BagoumLib.Functional;
+using CommunityToolkit.HighPerformance;
 using Danmokou.Behavior.Display;
 using Danmokou.Core;
 using Danmokou.Danmaku;
+using Danmokou.Danmaku.Descriptors;
 using Danmokou.DMath;
 using Danmokou.DMath.Functions;
 using Danmokou.Expressions;
@@ -19,22 +22,24 @@ using UnityEditor;
 using UnityEngine;
 using Danmokou.Scriptables;
 using Danmokou.Services;
+using UnityEngine.Profiling;
+// ReSharper disable AssignmentInConditionalExpression
 
 namespace Danmokou.Behavior {
-public class Enemy : RegularUpdater {
+public class Enemy : RegularUpdater, IBehaviorEntityDependent, ICircularSimpleBulletCollisionReceiver {
     private const float cardCircleTrailMultiplier = 5f;
     private const float cardCircleTrailCatchup = 0.03f;
     private const float spellCircleTrailMultiplier = 30f;
     private const float spellCircleTrailCatchup = 0.02f;
     public readonly struct FrozenCollisionInfo {
-        public readonly Vector2 pos;
+        public readonly Vector2 location;
         public readonly float radius;
         public readonly int enemyIndex;
         public bool Active => allEnemies.ContainsKey(enemyIndex);
         public readonly Enemy enemy;
 
         public FrozenCollisionInfo(Enemy e) {
-            pos = e.Beh.GlobalPosition();
+            location = e.Beh.GlobalPosition();
             radius = e.collisionRadius;
             enemy = e;
             enemyIndex = e.enemyIndex;
@@ -42,6 +47,7 @@ public class Enemy : RegularUpdater {
     }
 
     public BehaviorEntity Beh { get; private set; } = null!;
+    public Vector2 Location => Beh.Location;
     public bool takesBossDamage;
     private (bool _, Enemy to)? divertHP = null;
     public double HP { get; private set; }
@@ -55,7 +61,12 @@ public class Enemy : RegularUpdater {
     //private static int enemyIndexCtr = 0;
     //private int enemyIndex;
 
+    public bool canTaiAtariPlayer;
+    /// <summary>
+    /// Hurtbox radius.
+    /// </summary>
     public RFloat collisionRadius = null!;
+    public float MaxCollisionRadius => collisionRadius;
     /// <summary>
     /// The entirety of this circle must be within the viewfinder for a capture to succeed.
     /// </summary>
@@ -72,11 +83,14 @@ public class Enemy : RegularUpdater {
     public SpriteRenderer? healthbarSprite;
     private MaterialPropertyBlock hpPB = null!;
     public SpriteRenderer? cardCircle;
+    private bool hasCardCircle;
     public SpriteRenderer? spellCircle;
+    private bool hasSpellCircle;
     public ntw.CurvedTextMeshPro.TextProOnACircle? spellCircleText;
     private Transform? cardtr;
     private Transform? spellTr;
     public SpriteRenderer? distorter;
+    private bool hasDistorter;
     private MaterialPropertyBlock distortPB = null!;
     private MaterialPropertyBlock scPB = null!;
     private float healthbarStart; // 0-1
@@ -97,6 +111,7 @@ public class Enemy : RegularUpdater {
     private TP3 cardRotator = _ => new Vector3(0, 0, 60);
     private FXY spellBreather = t => 1f + M.Sine(2.674f, 0.1f, t);
     private TP3 spellRotator = _ => Vector3.zero;
+    private Maybe<PlayerController> target;
 
     private static short renderCounter = short.MinValue;
     private const short renderCounterStep = 4;
@@ -121,27 +136,30 @@ public class Enemy : RegularUpdater {
     private int enemyIndex;
     private static readonly Dictionary<int, Enemy> allEnemies = new();
     private static readonly DMCompactingArray<Enemy> orderedEnemies = new();
-    private DeletionMarker<Enemy> aliveToken = null!;
     private static readonly List<FrozenCollisionInfo> frozenEnemies = new();
     public static IReadOnlyList<FrozenCollisionInfo> FrozenEnemies => frozenEnemies;
 
     public void Initialize(BehaviorEntity _beh) {
         Beh = _beh;
+        Beh.LinkDependentUpdater(this);
         var sortOrder = NextRenderCounter();
         _beh.displayer!.SetSortingOrder(sortOrder);
-        if (spellCircle != null) {
-            spellCircle.sortingOrder = sortOrder;
+        if (hasSpellCircle = (spellCircle != null)) {
+            spellCircle!.sortingOrder = sortOrder;
             if (spellCircleText != null)
                 spellCircleText.GetComponent<TextMeshPro>().sortingOrder = sortOrder + 1;
         }
-        if (cardCircle != null) cardCircle.sortingOrder = sortOrder + 2;
+        if (hasCardCircle = (cardCircle != null))
+            cardCircle!.sortingOrder = sortOrder + 2;
         if (healthbarSprite != null) healthbarSprite.sortingOrder = sortOrder + 3;
-        if (distorter != null) distorter.sortingOrder = sortOrder;
+        if (hasDistorter = (distorter != null)) 
+            distorter!.sortingOrder = sortOrder;
         allEnemies[enemyIndex = enemyIndexCtr++] = this;
-        aliveToken = orderedEnemies.Add(this);
+        tokens.Add(orderedEnemies.Add(this));
         HP = maxHP;
         queuedDamage = 0;
         Vulnerable = Vulnerability.VULNERABLE;
+        target = ServiceLocator.MaybeFind<PlayerController>();
         hpPB = new MaterialPropertyBlock();
         distortPB = new MaterialPropertyBlock();
         scPB = new MaterialPropertyBlock();
@@ -179,6 +197,10 @@ public class Enemy : RegularUpdater {
             spellCircle.gameObject.SetActive(false);
         }
         lastSpellCircleRad = LerpFromSCScale;
+    }
+
+    public void Alive() {
+        EnableUpdates();
     }
     
     public void ConfigureBoss(BossConfig b) {
@@ -261,24 +283,12 @@ public class Enemy : RegularUpdater {
         Color.clear : HPColor;
 
     public override void RegularUpdate() {
-        PollDamage();
-        PollPhotoDamage();
-        if (--dmgLabelBuffer == 0 && labelAccDmg > 0) {
-            Beh.DropDropLabel(dmgGrad, $"{labelAccDmg:n0}");
-            labelAccDmg = 0;
-        }
         _displayBarRatio = Mathf.Lerp(_displayBarRatio, BarRatio, HPLerpRate * ETime.FRAME_TIME);
-        if (healthbarSprite != null) {
-            hpPB.SetFloat(PropConsts.fillRatio, DisplayBarRatio);
-            hpPB.SetColor(PropConsts.fillColor, HPColor);
-            hpPB.SetFloat(PropConsts.time, Beh.rBPI.t);
-            healthbarSprite.SetPropertyBlock(hpPB);
-        }
-        if (distorter != null) {
+        if (hasDistorter) {
             distortPB.SetFloat(PropConsts.time, Beh.rBPI.t);
-            distorter.SetPropertyBlock(distortPB);
+            distorter!.SetPropertyBlock(distortPB);
         }
-        if (cardCircle != null) {
+        if (hasCardCircle) {
             var rt = cardtr!.localEulerAngles;
             rt += ETime.FRAME_TIME * cardRotator(Beh.rBPI);
             cardtr.localEulerAngles = rt;
@@ -286,7 +296,7 @@ public class Enemy : RegularUpdater {
             cardtr.localScale = new Vector3(scale, scale, scale);
             cardtr.localPosition = Vector2.Lerp(cardtr.localPosition, -Beh.LastDelta * cardCircleTrailMultiplier, cardCircleTrailCatchup);
         }
-        if (spellCircle != null) {
+        if (hasSpellCircle) {
             var rt = spellTr!.localEulerAngles;
             rt += ETime.FRAME_TIME * spellRotator(Beh.rBPI);
             spellTr.localEulerAngles = rt;
@@ -299,28 +309,103 @@ public class Enemy : RegularUpdater {
             }
             lastSpellCircleRad = spellCircleRad?.Invoke(Beh.rBPI.t) ?? lastSpellCircleRad;
             if (ReferenceEquals(spellCircleCancel, Cancellable.Null) && lastSpellCircleRad <= LerpFromSCScale) {
-                spellCircle.gameObject.SetActive(false);
+                spellCircle!.gameObject.SetActive(false);
             }
             spellTr.localScale = new Vector3(lastSpellCircleRad, lastSpellCircleRad, lastSpellCircleRad);
             spellTr.localPosition = Vector2.Lerp(spellTr.localPosition, -Beh.LastDelta * spellCircleTrailMultiplier, spellCircleTrailCatchup);
             //scPB.SetFloat(PropConsts.radius, lastSpellCircleRad);
-            spellCircle.SetPropertyBlock(scPB);
+            spellCircle!.SetPropertyBlock(scPB);
             //if (spellCircleText != null) spellCircleText.SetRadius(lastSpellCircleRad + SpellCircleTextRadOffset);
         }
-        for (int ii = 0; ii < hitCooldowns.Count; ++ii) {
-            if (hitCooldowns[ii].cooldown <= 1) hitCooldowns.Delete(ii);
-            else hitCooldowns[ii].cooldown -= 1;
+        for (int ii = 0; ii < hitCooldowns.Keys.Count; ++ii) {
+            if (hitCooldowns.Keys.GetMarkerIfExistsAt(ii, out var dm)) {
+                if (--hitCooldowns[dm.Value] <= 0)
+                    hitCooldowns.Remove(dm);
+            }
         }
-        hitCooldowns.Compact();
+        hitCooldowns.Keys.Compact();
     }
 
+    public override void RegularUpdateCollision() {
+        if (canTaiAtariPlayer && collisionRadius > 0 && target.Try(out var player)) {
+            var hb = player.Hurtbox;
+            if (CollisionMath.CircleOnCircle(Location, collisionRadius, in hb.x, in hb.y, in hb.radius))
+                player.TakeHit();
+        }
+    }
+
+    public override void RegularUpdateFinalize() {
+        base.RegularUpdateFinalize();
+        PollDamage();
+        PollPhotoDamage();
+        if (--dmgLabelBuffer == 0 && labelAccDmg > 0) {
+            Beh.DropDropLabel(dmgGrad, $"{labelAccDmg:n0}");
+            labelAccDmg = 0;
+        }
+        if (healthbarSprite != null) {
+            hpPB.SetFloat(PropConsts.fillRatio, DisplayBarRatio);
+            hpPB.SetColor(PropConsts.fillColor, HPColor);
+            hpPB.SetFloat(PropConsts.time, Beh.rBPI.t);
+            healthbarSprite.SetPropertyBlock(hpPB);
+        }
+    }
+    
     public static void FreezeEnemies() {
         frozenEnemies.Clear();
         orderedEnemies.Compact();
         for (int ii = 0; ii < orderedEnemies.Count; ++ii) {
             var enemy = orderedEnemies[ii];
-            if (LocationHelpers.OnPlayableScreen(enemy.Beh.GlobalPosition()) && enemy.Vulnerable.HitsLand()) {
+            if (LocationHelpers.OnPlayableScreenBy(1 + enemy.collisionRadius, enemy.Beh.GlobalPosition()) && enemy.Vulnerable.HitsLand()) {
                 frozenEnemies.Add(new FrozenCollisionInfo(enemy));
+            }
+        }
+    }
+
+    #region ReceiveCollisionsFromPlayerBullets
+
+    /// <summary>
+    /// Receive a hit from a player bullet.
+    /// </summary>
+    /// <param name="pb">Player bullet configuration.</param>
+    /// <param name="bpi">Bullet information.</param>
+    /// <returns>True iff the hit occured (may return false if the bullet is configured to do no damage or is on cooldown)</returns>
+    public bool TakeHit(in PlayerBullet pb, in ParametricInfo bpi) =>
+        TakeHit(in pb, bpi.loc, in bpi.id);
+    
+    public bool TakeHit(in PlayerBullet pb, in Vector2 location, in uint bpiId) {
+        if ((pb.data.bossDmg > 0 || pb.data.stageDmg > 0)
+            && (pb.data.destructible || TryHitIndestructible(bpiId, pb.data.cdFrames))) {
+            QueuePlayerDamage(pb.data.bossDmg, pb.data.stageDmg, pb.firer);
+            ProcOnHit(pb.data.effect, location);
+            return true;
+        } else
+            return false;
+    }
+    
+    public void ProcessSimple(BulletManager.SimpleBulletCollection sbc) {
+        throw new Exception("Player bullet x enemy collisions must be bucketed!");
+    }
+
+    public void ProcessSimpleBuckets(BulletManager.SimpleBulletCollection sbc, ReadOnlySpan2D<List<int>> indexBuckets) {
+        var deleted = sbc.Deleted;
+        var data = sbc.Data;
+        var sbCollider = sbc.Collider;
+        var loc = Location;
+        float rad = collisionRadius;
+        for (int y = 0; y < indexBuckets.Height; ++y)
+        for (int x = 0; x < indexBuckets.Width; ++x) {
+            var bucket = indexBuckets[y, x];
+            for (int ib = 0; ib < bucket.Count; ++ib) {
+                var index = bucket[ib];
+                if (deleted[index]) continue;
+                ref var sbn = ref data[index];
+                if (sbCollider.CheckCollision(in sbn.bpi.loc.x, in sbn.bpi.loc.y, in sbn.direction, in sbn.scale, in loc.x, in loc.y, in rad)
+                    && sbn.bpi.ctx.playerBullet.Try(out var de)
+                    && TakeHit(de, in sbn.bpi)
+                    && de.data.destructible) {
+                    sbc.MakeCulledCopy(index);
+                    sbc.DeleteSB_Collision(index);
+                }
             }
         }
     }
@@ -346,7 +431,7 @@ public class Enemy : RegularUpdater {
             return;
         }
         if (!Vulnerable.TakesDamage()) return;
-        float dstToFirer = (firer.Loc - Beh.rBPI.LocV2).magnitude;
+        float dstToFirer = (firer.Location - Beh.rBPI.LocV2).magnitude;
         float shotgun = (SHOTGUN_MIN - dstToFirer) / (SHOTGUN_MIN - SHOTGUN_MAX);
         double multiplier = GameManagement.Instance.PlayerDamageMultiplier *
                             M.Lerp(0, 1, shotgun, 1, SHOTGUN_MULTIPLIER);
@@ -369,6 +454,8 @@ public class Enemy : RegularUpdater {
             }
         }
     }
+    
+    #endregion
     
     
     private long labelAccDmg = 0;
@@ -436,23 +523,11 @@ public class Enemy : RegularUpdater {
         }
     }
 
-    private class HitCooldown {
-        public readonly uint id;
-        public int cooldown;
-        
-        public HitCooldown(uint id, int cooldown) {
-            this.id = id;
-            this.cooldown = cooldown;
-        }
-    }
-    //"Slower" than using a dictionary, but there are few enough colliding persistent objects at a time that 
-    //it's better to optimize for garbage. 
-    private readonly DMCompactingArray<HitCooldown> hitCooldowns = new(8);
+    private readonly DictionaryWithKeys<uint, int> hitCooldowns = new();
     public bool TryHitIndestructible(uint id, int cooldownFrames) {
-        for (int ii = 0; ii < hitCooldowns.Count; ++ii) {
-            if (hitCooldowns[ii].id == id) return false;
-        }
-        hitCooldowns.Add(new HitCooldown(id, cooldownFrames));
+        if (hitCooldowns.Data.ContainsKey(id))
+            return false;
+        hitCooldowns[id] = cooldownFrames;
         return true;
     }
 
@@ -483,7 +558,7 @@ public class Enemy : RegularUpdater {
         var bt = LevelController.DefaultSuicideStyle;
         if (string.IsNullOrWhiteSpace(bt)) 
             bt = "triangle-black/w";
-        var angleTo = M.AtanD(BulletManager.PlayerTarget.location - Beh.rBPI.LocV2);
+        var angleTo = M.AtanD(ServiceLocator.Find<PlayerController>().Location - Beh.rBPI.LocV2);
         int numBullets = GameManagement.Difficulty.numSuicideBullets;
         for (int ii = 0; ii < numBullets; ++ii) {
             var mov = new Movement(SuicideVTP, Beh.rBPI.loc,
@@ -499,31 +574,36 @@ public class Enemy : RegularUpdater {
         if (ayaCameraRadius != null) Handles.DrawWireDisc(position, Vector3.forward, ayaCameraRadius);
         Handles.color = Color.green;
         Handles.DrawWireDisc(position, Vector3.forward, 0.9f);
+            Handles.color = Color.cyan;
+            if (collisionRadius > 0) 
+                Handles.DrawWireDisc(position, Vector3.forward, collisionRadius);
     }
 #endif
     
-    //This is called through InvokeCull on BehaviorEntity.OnDisable
-    public void IAmDead() {
+    public void Died() {
         if (healthbarSprite != null) healthbarSprite.enabled = false;
-        allEnemies.Remove(enemyIndex); 
-        aliveToken.MarkForDeletion();
+        allEnemies.Remove(enemyIndex);
+        DisableUpdates();
     }
 
     [UsedImplicitly]
     public static bool FindNearest(Vector3 source, out Vector2 position) {
+        Profiler.BeginSample("FindNearest");
         bool found = false;
         position = default;
         float lastDist = 0f;
-        foreach (var e in frozenEnemies) {
-            if (e.Active && LocationHelpers.OnPlayableScreen(e.pos)) {
-                var dst = (e.pos.x - source.x) * (e.pos.x - source.x) + (e.pos.y - source.y) * (e.pos.y - source.y);
+        for (int ie = 0; ie < frozenEnemies.Count; ++ie) {
+            var e = frozenEnemies[ie];
+            if (e.Active && LocationHelpers.OnPlayableScreen(e.location)) {
+                var dst = (e.location.x - source.x) * (e.location.x - source.x) + (e.location.y - source.y) * (e.location.y - source.y);
                 if (!found || dst < lastDist) {
                     lastDist = dst;
                     found = true;
-                    position = e.pos;
+                    position = e.location;
                 }
             }
         }
+        Profiler.EndSample();
         return found;
     }
 
@@ -539,13 +619,13 @@ public class Enemy : RegularUpdater {
         enemy = default;
         float lastDist = 0f;
         foreach (var e in frozenEnemies) {
-            if (e.Active && LocationHelpers.OnPlayableScreen(e.pos)) {
-                var dst = (e.pos.x - source.x) * (e.pos.x - source.x) + (e.pos.y - source.y) * (e.pos.y - source.y);
+            if (e.Active && LocationHelpers.OnPlayableScreen(e.location)) {
+                var dst = (e.location.x - source.x) * (e.location.x - source.x) + (e.location.y - source.y) * (e.location.y - source.y);
                 if (!found || dst < lastDist) {
                     lastDist = dst;
                     found = true;
                     enemy = e.enemyIndex;
-                    position = e.pos;
+                    position = e.location;
                 }
             }
         }
@@ -558,5 +638,7 @@ public class Enemy : RegularUpdater {
     public static readonly ExFunction findNearestSave = ExFunction.Wrap<Enemy>("FindNearestSave", new[] {
         typeof(Vector3), typeof(int?), typeof(int).MakeByRefType(), typeof(Vector2).MakeByRefType()
     });
+    
+    
 }
 }

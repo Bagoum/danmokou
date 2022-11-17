@@ -574,7 +574,7 @@ public abstract class CompositeUIGroup : UIGroup {
     }
     public CompositeUIGroup(UIRenderSpace render, params UIGroup[] groups) : this(render,(IEnumerable<UIGroup>) groups) { }
 
-    protected void AddGroup(UIGroup g) {
+    private void AddGroup(UIGroup g) {
         Groups.Add(g);
         g.DependentParent = this;
         EntryNodeOverride ??= g.EntryNodeOverride;
@@ -590,7 +590,7 @@ public abstract class CompositeUIGroup : UIGroup {
     public override IEnumerable<UINode> NodesAndDependentNodes => 
         Nodes.Concat(Groups.SelectMany(g => g.NodesAndDependentNodes));
 
-    public sealed override UIResult Navigate(UINode node, UICommand req) => req switch {
+    public override UIResult Navigate(UINode node, UICommand req) => req switch {
         UICommand.Confirm => NoOp,
         UICommand.Back => GoToExitOrLeaveScreen(node, req) ?? NoOp,
         _ => NavigateAmongComposite(node, req) ?? NoOp

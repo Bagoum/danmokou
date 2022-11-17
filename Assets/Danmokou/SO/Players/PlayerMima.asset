@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   freeSpeed: 5.4
   focusSlowdown: 0.44
-  hitboxRadius: 0.034
-  grazeboxRadius: 0.69
+  hurtboxRadius: 0.034
+  grazeboxRadius: 0.42
   key: basic-mima
   shortTitle:
     useReference: 1

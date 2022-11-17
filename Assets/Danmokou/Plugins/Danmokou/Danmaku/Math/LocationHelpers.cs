@@ -16,6 +16,7 @@ public static class LocationHelpers {
         top = 4.1f,
         bot = -4.5f
     };
+    public static Vector2 VisiblePlayerLocation { get; private set; }
 
     public static void UpdatePlayableScreenCenter(Vector2 nLoc) {
         PlayableScreenCenter = nLoc;
@@ -26,6 +27,8 @@ public static class LocationHelpers {
         Top = nLoc.y + PlayableBounds.top;
         Bot = nLoc.y + PlayableBounds.bot;
     }
+
+    public static void UpdateVisiblePlayerLocation(Vector2 nLoc) => VisiblePlayerLocation = nLoc;
 
     static LocationHelpers() {
         UpdatePlayableScreenCenter(Vector2.zero);
@@ -50,8 +53,6 @@ public static class LocationHelpers {
     public static readonly Ex top = Ex.Property(null, typeof(LocationHelpers), "Top");
     public static readonly Ex width = Ex.Property(null, typeof(LocationHelpers), "Width");
     public static readonly Ex height = Ex.Property(null, typeof(LocationHelpers), "Height");
-
-    public static Vector2 GetEnemyVisiblePlayer() => GameManagement.VisiblePlayerLocation;
 
     /// <summary>
     /// Assumes that v2 is in bounds. Dir need not be normalized.

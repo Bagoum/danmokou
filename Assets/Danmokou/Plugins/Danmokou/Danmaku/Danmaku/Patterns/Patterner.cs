@@ -161,7 +161,7 @@ public static partial class AtomicPatterns {
     
     /// <inheritdoc cref="GCXU.ShareTypeAndCompile"/>
     private static void ShareTypeAndCompile(GCXU<VTP> path, LaserOptions options) {
-        GCXU.ShareTypeAndCompile(path, options.start, options.delete, options.deactivate, options.curve, options.rotate, options.hueShift, options.recolor?.black, options.recolor?.white, options.tint);
+        GCXU.ShareTypeAndCompile(path, options.start, options.delete, options.deactivate, options.curve, options.beforeDraw, options.rotate, options.hueShift, options.recolor?.black, options.recolor?.white, options.tint);
     }
     
     
@@ -182,7 +182,7 @@ public static partial class AtomicPatterns {
     /// <summary>
     /// Invoke the provided event with the provided value.
     /// </summary>
-    [GAlias(typeof(float), "eventf")]
+    [GAlias("eventf", typeof(float))]
     public static SyncPattern Event<T>(string evName,  GCXF<T> value) => sbh => 
         Events.ProcRuntimeEvent(evName, value(sbh.GCX));
 

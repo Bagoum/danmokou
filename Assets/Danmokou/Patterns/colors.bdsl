@@ -3,7 +3,7 @@ pattern {
 }
 phase 0
 	paction 0
-		shift-phase-to 1
+		shift-phase-to 4
 		
 !!{ colors { black blue purple pink red orange yellow green teal black  }
 !!{ csuff { /w /b /  }
@@ -84,7 +84,8 @@ phase 0 #{
 			#tint rgba(1.1, 1.1, 1.1, 1)
 			hueshift(60 * max(0, t - 3))
 		}
-		sync gdlaser-** <;:3> gsr2 9 <40> { color $colors } gsr2  3 <14> { color $csuff1  } laser null 4 20 { 
+		sync gdlaser-** <;:3> gsr2 0 <40> { color $colors } gsr2  3 <14> { color $csuff1  } laser null 4 6 { 
+			repeat
 		##	dynamic(roffset(rx(1 + t, 10 * &lt)))
 		}
 		sync gstretchlaser-** <;:7> gsr2 9 <40> { color $colors } gsr2  3 <14> { color $csuff1  } laser null 4 20 { 
@@ -94,7 +95,7 @@ phase 0 #{
 		}
 		sync mulaser-*/b <1;:3> gsr2 9 <40> { color $colors }  safelaser 3 { }
 		##sync arrowpather-** <1;:183> gsr2 9 <40> { color $colors } gsr2 3 <13> { color $csuff }  pather 3 3 tprot cx 2 { }
-		sync arrowpather-** <;:183> gsr2 0 <40> { color $colors } gsr2 3 <13> { color $csuff }  pather 1 1 polar
+		sync arrowpather-** <;:183> gsr2 12 <40> { color $colors } gsr2 3 <13> { color $csuff }  pather 1 1 polar
 			+ 0.5 * 1 t
 			sine 4 20 t
 		{ }

@@ -31,16 +31,18 @@ gtr {
 		async gdlaser-*/b <> gcr {
 			root zero
 			colorf({ red black }, p // 2)
-			start df =f 2
-			expose { f df }
+			start targetLocation =v2 cy(50)
 		} laser(nroffset(OptionLocation(mine)),
 			0, _, {
-				start(30 * max(0, (t - LaserLastActiveT(mine))))
-				varLength(15, 30 * t)
+				beforeDraw(set { 
+					v2 targetLocation lerp01(0.02, &targetLocation, LNearestEnemy)
+				} 0)
 				dynamic(nrvelocity(laserrotatelerp(lerpt(3, 8, 0.7, 0),
 					rotate(OptionAngle(mine), cy 1),
-					LNearestEnemy - loc
+					&targetLocation - loc
 				)))
+				start(30 * max(0, (t - LaserLastActiveT(mine))))
+				varLength(15, 30 * t)
 				delete(> (t - LaserLastActiveT(mine), 1))
 				deactivate(> playerUnfiringFocusT(mine) 0)
 				player(12, 25, 15, oh1-red)

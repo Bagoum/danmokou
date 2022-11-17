@@ -14,7 +14,7 @@ phase 0
 		##bullet-control persist circle-red/w flipx< -3 true
 		##bullet-control persist circle-*/w restyle circle-blue/w &(true, > &.var1 100)
 		
-        async circle-*/w <0.8;0:0> gir2 1 1 <> {
+        async amulet-*/w <0.8;0:0> gir2 1 1 <> {
 			p this
 		} gcr2 1 _ <0;0:.2386> {
 			start {
@@ -34,11 +34,27 @@ phase 0
 <!> hp 50000
 phase 0
     paction 0
+        async ellipse-green/w <0.6;0:0> gcr2 1 _ <0;0:11.386> {
+            start {
+                x =f 2
+                y =f 0
+                z =f 0
+            }
+		} gsr2c 120 { } s rvelocity px let {
+            f xx 4
+        } set({
+            f x 1
+            f y 2
+            f z 3
+        }, 2)
+
+phase 0
+    paction 0
 		## pool-control circle-green/w sortz
 		##Note that the pattern will not be perfectly even since the gsr2c has a dominant element that appears on top of the rest.
         async circle-*/w <0.8;0:0> gcr2 1 _ <0;0:.11386> {
 			p this
-		} gsr2c 120 { 
+		} gsr2c 240 { 
             color green
 			##colorf({ red green blue orange yellow purple }, t * 6 // &times)
 		} simple rvelocity cx 2 { 

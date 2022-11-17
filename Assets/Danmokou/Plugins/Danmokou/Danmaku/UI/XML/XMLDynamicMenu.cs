@@ -33,7 +33,7 @@ public class XMLDynamicMenu : UIController, IFixedXMLObjectContainer {
     private List<UIScreen> dynamicScreens = new();
     
     public Func<UINode, UIResult?>? HandleUnselectConfirm { get; set; }
-    public UIFreeformGroup FreeformGroup { get; private set; }
+    public UIFreeformGroup FreeformGroup { get; private set; } = null!;
 
 
     protected override void BindListeners() {

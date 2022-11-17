@@ -71,7 +71,8 @@ public struct DelegatedCreator {
         var (mov, pi) = PathHandlers(sbh, path, id);
         if (options.player.Try(out var bse)) {
             //TODO add cdframes to sb Player cmd
-            pi.ctx.playerBullet = new PlayerBullet(new PlayerBulletCfg(1, bse.boss, bse.stage, bse.effStrat), pi.ctx.PlayerController);
+            var bc = BulletManager.GetMaybeCopyPool(style).BC;
+            pi.ctx.playerBullet = new PlayerBullet(new PlayerBulletCfg(bc.againstEnemyCooldown, bc.destructible, bse.boss, bse.stage, bse.effStrat), pi.ctx.PlayerController);
         } else
             pi.ctx.playerBullet = null;
         BulletManager.RequestSimple(style, 
@@ -175,19 +176,19 @@ public partial class BulletManager {
         CheckSentry();
         if (CheckComplexPool(style, out var bsm)) {
             var bullet = (Bullet) BEHPooler.RequestUninitialized(bsm.RecolorOrThrow.prefab, out _);
-            bullet.Initialize(bsm, opts, null, mov, pi, main.bulletCollisionTarget, out _);
+            bullet.Initialize(bsm, opts, null, mov, pi, out _);
         } else throw new Exception("Could not find complex bullet style: " + style);
     }
     public static void RequestPather(string style, in Movement mov, ParametricInfo pi, float maxRemember, BPY remember, ref RealizedBehOptions opts) {
         CheckSentry();
         if (CheckComplexPool(style, out var bsm)) {
-            Pather.Request(bsm, mov, pi, maxRemember, remember, main.bulletCollisionTarget, ref opts);
+            Pather.Request(bsm, mov, pi, maxRemember, remember, ref opts);
         } else throw new Exception("Pather must be an faBulletStyle: " + style);
     }
     public static void RequestLaser(BehaviorEntity? parent, string style, in Movement mov, ParametricInfo pi, float cold, float hot, ref RealizedLaserOptions options) {
         CheckSentry();
         if (CheckComplexPool(style, out var bsm)) {
-            Laser.Request(bsm, parent, mov, pi, cold, hot, main.bulletCollisionTarget, ref options);
+            Laser.Request(bsm, parent, mov, pi, cold, hot, ref options);
         } else throw new Exception("Laser must be an faBulletStyle: " + style);
     }
     

@@ -24,11 +24,9 @@ public partial record Ability {
                 yield return null;
             BulletManager.SoftScreenClear();
             var fe = Enemy.FrozenEnemies;
-            for (int ii = 0; ii < fe.Count; ++ii) {
-                if (fe[ii].Active) {
+            for (int ii = 0; ii < fe.Count; ++ii)
+                if (fe[ii].Active)
                     fe[ii].enemy.QueuePlayerDamage(8000, 8000, bomber);
-                }
-            }
             fireDisable.Dispose();
             for (; t < totalTime; t += ETime.FRAME_TIME)
                 yield return null;

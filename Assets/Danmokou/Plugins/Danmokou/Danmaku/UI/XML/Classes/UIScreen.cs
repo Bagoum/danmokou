@@ -86,7 +86,7 @@ public class UIScreen {
         Controller = controller;
         HeaderText = header;
         Type = display;
-        bgo = ServiceLocator.MaybeFind<IBackgroundOrchestrator>();
+        bgo = ServiceLocator.FindOrNull<IBackgroundOrchestrator>();
         DirectRender = new UIRenderDirect(this);
     }
     

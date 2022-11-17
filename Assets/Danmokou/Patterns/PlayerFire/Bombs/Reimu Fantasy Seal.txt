@@ -35,7 +35,7 @@ gtr {
 			+ (40 * (&lt + &st)) sine(2.1, 15, 3 * &lt - t)
 		player(6, 30, 20, oh1-red)
 		tint(rgba(1, 1, 1, 2))
-		varlength(20, 3 * t)
+		varlength(6, 3 * t)
 	}
 	pool-control  $idify(p-gglcircle-black/w) tint rgba(1, 1, 1, 0)
 	pool-control { { $idify(p-gglcircle-*/w) } $colors } tint rgba(1, 1, 1, 2)

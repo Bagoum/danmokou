@@ -1,13 +1,14 @@
 ﻿using System;
+using Danmokou.Core;
 using UnityEditor;
 using UnityEngine;
 using Danmokou.DMath;
+using Danmokou.Player;
 using Danmokou.Scriptables;
 
 namespace Danmokou.Danmaku.Descriptors {
-/// This script is primarily used to send simple-bullet collider info to BulletManager.
-/// Alternatively, you can use it to debug collision algorithms.
-/// You should not stick this directly on objects; it is not optimized at all.
+/// This script is primarily used to send simple-bullet collider info to BulletManager. In general, you can use .<see cref="AsCollider"/> or .<see cref="AsCircleApproximation"/> to get optimized collision detectors for entities with this script.
+/// Alternatively, you can use this script to debug collision algorithms.
 public class GenericColliderInfo : MonoBehaviour {
     public enum ColliderType {
         Circle,
@@ -23,6 +24,11 @@ public class GenericColliderInfo : MonoBehaviour {
         AABB,
         WeakAABB
     }
+    
+    /// <summary>
+    /// For non-circular colliders, this is used to approximate the collider as a circle.
+    /// </summary>
+    public float circleApproximationRadius;
 
     public ColliderType colliderType;
     [Header("Circle/Line/Segments")] 
@@ -30,12 +36,12 @@ public class GenericColliderInfo : MonoBehaviour {
     [Header("Line")] 
     public Vector2 point1;
     public Vector2 point2;
-    [Header("Line/Rect/Segments (Not yet implemented in AsCollider)")] 
+    [Header("Line/Rect/Segments")] 
     public float rotationDeg;
     [Header("Rect")] 
     public float rectHalfX;
     public float rectHalfY;
-    [Header("Segments")]
+    [Header("Segments (Not yet implemented in AsCollider)")]
     public int start;
     public int skip;
     public int end;
@@ -48,37 +54,41 @@ public class GenericColliderInfo : MonoBehaviour {
         ColliderType.None => new NoneCollider(),
         _ => throw new Exception($"No AsCollider handling for type {colliderType}")
     };
+    public ApproximatedCircleCollider AsCircleApproximation => colliderType switch {
+        ColliderType.Circle => new ApproximatedCircleCollider(radius, radius),
+        _ => (circleApproximationRadius > 0 || colliderType is ColliderType.None) ? 
+            new ApproximatedCircleCollider(circleApproximationRadius, AsCollider.MaxRadius) : 
+            throw new Exception($"Collider for {gameObject.name} does not have a circle approximation radius. Please add a circle approximation radius to the GenericColliderInfo script on the prefab.")
+    };
     
     #if UNITY_EDITOR
     
-    [Tooltip("Only fill for debugging in scene use")]
-    public SOPlayerHitbox? target;
     public DebugColliderType debug;
     public void DoLiveCollisionTest() {
         Vector3 trp = transform.position;
         CollisionResult cr = new CollisionResult();
-        var hitbox = target!.Hitbox;
+        var hitbox = ServiceLocator.Find<PlayerController>().Hurtbox;
         if (debug == DebugColliderType.AABB) {
             cr = new CollisionResult(false,
                 CollisionMath.CircleOnAABB(
                     new AABB(trp, new Vector2(rectHalfX, rectHalfY))
-                    , target.location, target.largeRadius));
+                    , hitbox.x, hitbox.y, hitbox.largeRadius));
         } else if (debug == DebugColliderType.WeakAABB) {
             cr = new CollisionResult(false,
                 CollisionMath.WeakCircleOnAABB(-rectHalfX, -rectHalfY, rectHalfX, rectHalfY,
-                    target.location.x - trp.x, target.location.y - trp.y, target.largeRadius));
+                    hitbox.x - trp.x, hitbox.y - trp.y, hitbox.largeRadius));
         } else if (colliderType == ColliderType.Circle) {
-            cr = CollisionMath.GrazeCircleOnCircle(hitbox, trp, radius);
+            cr = CollisionMath.GrazeCircleOnCircle(hitbox, trp.x, trp.y, radius);
         } else if (colliderType == ColliderType.Line) {
             float maxdist = Mathf.Max(point2.magnitude, point1.magnitude) + radius;
             cr = CollisionMath.GrazeCircleOnRotatedSegment(hitbox, trp.x, trp.y, radius,
-                point1, point2 - point1, 1f, (point2 - point1).sqrMagnitude, maxdist * maxdist,
-                Mathf.Cos(rotationDeg * Mathf.PI / 180f), Mathf.Sin(rotationDeg * Mathf.PI / 180f));
+                point1, point2 - point1, 1f, (point2 - point1).sqrMagnitude, maxdist * maxdist, new Vector2(
+                Mathf.Cos(rotationDeg * Mathf.PI / 180f), Mathf.Sin(rotationDeg * Mathf.PI / 180f)));
         } else if (colliderType == ColliderType.Rectangle) {
-            cr = CollisionMath.GrazeCircleOnRect(hitbox, trp.x, trp.y, rectHalfX, rectHalfY, rectHalfX * rectHalfX + rectHalfY * rectHalfY, 1f,
-                Mathf.Cos(rotationDeg * Mathf.PI / 180f), Mathf.Sin(rotationDeg * Mathf.PI / 180f));
+            cr = CollisionMath.GrazeCircleOnRect(hitbox, trp.x, trp.y, new Vector2(rectHalfX, rectHalfY), rectHalfX * rectHalfX + rectHalfY * rectHalfY, 1f,
+                new Vector2(Mathf.Cos(rotationDeg * Mathf.PI / 180f), Mathf.Sin(rotationDeg * Mathf.PI / 180f)));
         } else if (colliderType == ColliderType.RectPtColl) {
-            cr = new CollisionResult(CollisionMath.PointInRect(target.location, new CRect(
+            cr = new CollisionResult(CollisionMath.PointInRect(new(hitbox.x, hitbox.y), new CRect(
                 trp.x, trp.y,
                 rectHalfX, rectHalfY, rotationDeg
             )), false);
@@ -94,6 +104,7 @@ public class GenericColliderInfo : MonoBehaviour {
     private void OnDrawGizmos() {
         Handles.color = Color.magenta;
         Vector2 p = transform.position;
+        Handles.DrawWireDisc(p, Vector3.forward, circleApproximationRadius);
         Handles.color = Color.red;
         if (colliderType == ColliderType.Circle) {
             Handles.DrawWireDisc(p, Vector3.forward, radius);

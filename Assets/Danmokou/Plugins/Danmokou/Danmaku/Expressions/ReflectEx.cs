@@ -10,6 +10,7 @@ using Danmokou.Core;
 using Danmokou.Danmaku;
 using Danmokou.DataHoist;
 using Danmokou.DMath;
+using Danmokou.DMath.Functions;
 using Danmokou.Reflection;
 using JetBrains.Annotations;
 using Ex = System.Linq.Expressions.Expression;
@@ -21,7 +22,7 @@ namespace Danmokou.Expressions {
 public static class ReflectEx {
 
 
-    public static TEx<T> Let<T, L>(string alias, Func<TExArgCtx, TEx<L>> content, Func<TEx<T>> inner, TExArgCtx applier) {
+    public static TEx<T> Let1<T, L>(string alias, Func<TExArgCtx, TEx<L>> content, Func<TEx<T>> inner, TExArgCtx applier) {
         var variabl = V<L>();
         using var let = applier.Let(alias, variabl);
         return Ex.Block(new[] {variabl},
@@ -31,39 +32,22 @@ public static class ReflectEx {
     }
 
     public readonly struct Alias {
+        /// <summary>
+        /// Type of the aliased variable, on the level of typeof(float)
+        /// </summary>
+        public readonly Type type;
         public readonly string alias;
         public readonly Func<TExArgCtx, TEx> func;
-        public bool SingleUse { get; init; }
+        public bool DirectAssignment { get; init; }
 
-        public Alias(string alias, Func<TExArgCtx, TEx> func) {
+        public Alias(Type type, string alias, Func<TExArgCtx, TEx> func) {
+            this.type = type;
             this.alias = alias;
             this.func = func;
-            this.SingleUse = false;
+            this.DirectAssignment = false;
         }
     }
-
-    public static Ex Let2(Alias[] aliases, Func<Ex> inner, TExArgCtx applier) {
-        var stmts = new List<Ex>();
-        var vars = new List<ParameterExpression>();
-        var lets = new List<IDisposable>();
-        for (int ii = 0; ii < aliases.Length; ++ii) {
-            var a = aliases[ii];
-            Ex alias_value = a.func(applier);
-            if (a.SingleUse) {
-                 lets.Add(applier.Let(a.alias, alias_value));
-            } else {
-                var tempVar = V(alias_value.Type, a.alias);
-                vars.Add(tempVar);
-                lets.Add(applier.Let(a.alias, tempVar));
-                stmts.Add(Ex.Assign(tempVar, alias_value));
-            }
-        }
-        stmts.Add(inner());
-        for (int ii = 0; ii < lets.Count; ++ii)
-            lets[ii].Dispose();
-        return Ex.Block(vars, stmts);
-    }
-
+    
     public static Ex Let<L>((string alias, Func<TExArgCtx, TEx<L>> content)[] aliases, Func<Ex> inner, TExArgCtx applier) {
         var stmts = new Ex[aliases.Length + 1];
         var vars = new ParameterExpression[aliases.Length];
@@ -79,6 +63,42 @@ public static class ReflectEx {
             lets[ii].Dispose();
         return Ex.Block(vars, stmts);
     }
+    
+    public static Ex LetAlias(IEnumerable<Alias> aliases, Func<Ex> inner, TExArgCtx applier) {
+        var stmts = new List<Ex>();
+        var vars = new List<ParameterExpression>();
+        var lets = new List<IDisposable>();
+        foreach (var a in aliases) {
+            Ex alias_value = a.func(applier);
+            if (a.DirectAssignment) {
+                lets.Add(applier.Let(a.alias, alias_value));
+            } else {
+                var tempVar = V(alias_value.Type, a.alias);
+                vars.Add(tempVar);
+                lets.Add(applier.Let(a.alias, tempVar));
+                stmts.Add(Ex.Assign(tempVar, alias_value));
+            }
+        }
+        stmts.Add(inner());
+        for (int ii = 0; ii < lets.Count; ++ii)
+            lets[ii].Dispose();
+        return Ex.Block(vars, stmts);
+    }
+
+    public static Ex SetAlias(Alias[] aliases, Func<Ex> inner, TExArgCtx tac) {
+        var stmts = new List<Ex>();
+        foreach (var a in aliases) {
+            if (tac.Ctx.ICRR != null && tac.Ctx.ICRR.TryResolve(a.type, a.alias, out var ex)) {
+                tac.Ctx.ICRR.MarkDirty(a.type, a.alias);
+                _ = a.func(tac); //if the call requires any aliases
+                //pass-- we can't assign to this temp var
+            } else
+                stmts.Add(PICustomData.SetValue(tac, a.type, a.alias, a.func(tac)));
+        }
+        stmts.Add(inner());
+        return Ex.Block(stmts);
+    }
+    
 /*
     private static TEx<T> LetLambda<WF, T, L>((string alias, string[] args, Func<WF, TEx<L>> content)[] lambdas,
         Func<TEx<T>> inner, Dictionary<string, (string[], Func<WF, TEx<L>>)> stack) {
@@ -88,9 +108,21 @@ public static class ReflectEx {
     public interface ICompileReferenceResolver {
         bool TryResolve<T>(string alias, out Ex ex) => TryResolve(typeof(T), alias, out ex);
         bool TryResolve(Type t, string alias, out Ex ex);
+
+        /// <summary>
+        /// Mark that an aliased variable is written to (via <see cref="ExM.Set{T}"/>) and therefore must be
+        ///  recomputed by every reader.
+        /// </summary>
+        void MarkDirty(Type t, string alias);
         //bool TryResolve(Reflector.ExType ext, string alias, out Ex ex);
     }
 
+    public static Expression? GetAliasFromStack(string alias, TExArgCtx tac) {
+        if (tac.Ctx.AliasStack.TryGetValue(alias, out var f))
+            return f.Peek();
+        return null;
+    }
+    
     //T is on the level of typeof(float)
     public static Ex ReferenceExpr<T>(string alias, TExArgCtx tac, TEx<T>? deflt = null) {
         if (alias[0] == Parser.SM_REF_KEY_C) alias = alias.Substring(1); //Important for reflector handling of &x
@@ -98,15 +130,15 @@ public static class ReflectEx {
         if (isExplicit)
             alias = alias.Substring(1);
         //Standard method, used by Let and GCXPath.expose (which internally compiles to Let) 
-        if (tac.Ctx.AliasStack.TryGetValue(alias, out var f))
-            return f.Peek();
+        if (GetAliasFromStack(alias, tac) is { } ex)
+            return ex;
         //Used by GCXF<T>, ie. when a fixed GCX exists. This is for slower pattern expressions
         if (tac.MaybeGetByExprType<TExGCX>(out _).Try(out var gcx))
             return gcx.FindReference<T>(alias);
         if (tac.MaybeGetByName<T>(alias).Try(out var prm))
             return prm;
         //Automatic GCXPath.expose resolution
-        if (tac.Ctx.ICRR != null && tac.Ctx.ICRR.TryResolve<T>(alias, out Ex ex))
+        if (tac.Ctx.ICRR != null && tac.Ctx.ICRR.TryResolve<T>(alias, out ex))
             return ex;
         //In functions not scoped by the GCX (eg. bullet controls)
         //The reason for using the special marker is that we cannot give good errors if an incorrect value is entered

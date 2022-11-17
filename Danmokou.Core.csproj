@@ -393,6 +393,9 @@
      <Reference Include="MathNet.Numerics">
      <HintPath>E:\Workspace\unity\Danmokou\Assets\Danmokou\Plugins\DLLs\MathNet.Numerics.dll</HintPath>
      </Reference>
+     <Reference Include="CommunityToolkit.HighPerformance">
+     <HintPath>E:\Workspace\unity\Danmokou\Assets\Danmokou\Plugins\DLLs\CommunityToolkit.HighPerformance.dll</HintPath>
+     </Reference>
      <Reference Include="BagoumLib">
      <HintPath>E:\Workspace\unity\Danmokou\Assets\SZYU\Plugins\DLLs\BagoumLib.dll</HintPath>
      </Reference>

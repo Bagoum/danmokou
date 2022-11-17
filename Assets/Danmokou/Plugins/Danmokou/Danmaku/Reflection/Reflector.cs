@@ -166,7 +166,7 @@ public static partial class Reflector {
             ExType declTyp = (ExType) ForceFuncTypeResolve(declStr, typeof(ExType))!;
             var (alias, aliasPos) = p.NextUnit(out _);
             var req_type = typeof(Func<,>).MakeGenericType(typeof(TExArgCtx), AsWeakTExType(declTyp));
-            return new AST.Alias(declPos, aliasPos, alias, ReflectTargetType(p, req_type));
+            return new AST.Alias(declPos, aliasPos, AsType(declTyp), alias, ReflectTargetType(p, req_type));
         } else if (UseConstructor(targetType)) {
             //generic struct/tuple handling
             var sig = GetConstructorSignature(targetType);

@@ -90,7 +90,7 @@ public class PatternSM : SequentialSM {
         using var jsmh = smh.CreateJointCancellee(out var cts, ctx);
         var subbosses = new List<Enemy>();
         var subsummons = new List<BehaviorEntity>();
-        var ui = ServiceLocator.MaybeFind<IUIManager>();
+        var ui = ServiceLocator.FindOrNull<IUIManager>();
         if (Props.boss != null) {
             GameManagement.Instance.SetCurrentBoss(Props.boss, jsmh.Exec, jsmh.cT);
             ui?.SetBossHPLoader(jsmh.Exec.Enemy);
@@ -173,7 +173,7 @@ public class PhaseSM : SequentialSM {
     private readonly FinishPSM? finishPhase = null;
     private readonly float _timeout = 0;
     private float Timeout(BossConfig? boss) => 
-        ServiceLocator.MaybeFind<IChallengeManager>()?.BossTimeoutOverride(boss) 
+        ServiceLocator.FindOrNull<IChallengeManager>()?.BossTimeoutOverride(boss) 
         ?? _timeout;
 
     public readonly PhaseProperties props;
@@ -257,7 +257,7 @@ public class PhaseSM : SequentialSM {
                 GameManagement.Instance.AddLenience(ctx.Boss.bossCutinTime);
                 ServiceLocator.Find<ISFXService>().RequestSFXEvent(ISFXService.SFXEventType.BossCutin);
                 //Service not required since no callback
-                ServiceLocator.MaybeFind<IRaiko>()?.Shake(ctx.Boss.bossCutinTime / 2f, null, 1f, smh.cT, null);
+                ServiceLocator.FindOrNull<IRaiko>()?.Shake(ctx.Boss.bossCutinTime / 2f, null, 1f, smh.cT, null);
                 Object.Instantiate(ctx.Boss.bossCutin);
                 bgo?.QueueTransition(ctx.Boss.bossCutinTrIn);
                 bgo?.ConstructTarget(ctx.Boss.bossCutinBg);
@@ -271,7 +271,7 @@ public class PhaseSM : SequentialSM {
                 forcedBG = true;
             } else if (ctx.GetSpellCutin(out var sc)) {
                 ServiceLocator.Find<ISFXService>().RequestSFXEvent(ISFXService.SFXEventType.BossSpellCutin);
-                ServiceLocator.MaybeFind<IRaiko>()?.Shake(1.5f, null, 1f, smh.cT, null);
+                ServiceLocator.FindOrNull<IRaiko>()?.Shake(1.5f, null, 1f, smh.cT, null);
                 Object.Instantiate(sc);
             }
         }
@@ -303,10 +303,10 @@ public class PhaseSM : SequentialSM {
         Action<IBackgroundOrchestrator?>? prePrepareNextPhase=null) {
         foreach (var dispGenerator in props.phaseObjectGenerators)
             ctx.PhaseObjects.Add(dispGenerator());
-        var bgo = ServiceLocator.MaybeFind<IBackgroundOrchestrator>();
+        var bgo = ServiceLocator.FindOrNull<IBackgroundOrchestrator>();
         PreparePhase(ctx, ui, smh, out Task cutins, bgo);
         var photoBoardToken = ctx.BossPhotoHP.Try(out var pins) ?
-            ServiceLocator.MaybeFind<IAyaPhotoBoard>()?.SetupPins(pins) :
+            ServiceLocator.FindOrNull<IAyaPhotoBoard>()?.SetupPins(pins) :
             null;
         var lenienceToken = props.Lenient ?
             GameManagement.Instance.Lenient.AddConst(true) :
@@ -320,7 +320,7 @@ public class PhaseSM : SequentialSM {
         //The start snapshot is taken after the root movement,
         // so meter can be used during the 1+2 seconds between cards
         var start_campaign = new CampaignSnapshot(GameManagement.Instance);
-        if (props.phaseType != null) ServiceLocator.MaybeFind<IChallengeManager>()?.SetupBossPhase(joint_smh);
+        if (props.phaseType != null) ServiceLocator.FindOrNull<IChallengeManager>()?.SetupBossPhase(joint_smh);
         try {
             await base.Start(joint_smh);
             await WaitingUtils.WaitForUnchecked(joint_smh.Exec, joint_smh.cT, 0f,
@@ -403,7 +403,7 @@ public class PhaseSM : SequentialSM {
                     }), GenCtx.Empty, smh.Exec.GlobalPosition(), smh.cT, null!));
             }
             smh.Exec.DropItems(pc.DropItems, 1.4f, 0.6f, 1f, 0.2f, 2f);
-            ServiceLocator.MaybeFind<IRaiko>()
+            ServiceLocator.FindOrNull<IRaiko>()
                 ?.Shake(defaultShakeTime, defaultShakeMult, defaultShakeMag, smh.cT, null);
         }
         GameManagement.Instance.PhaseEnd(pc);

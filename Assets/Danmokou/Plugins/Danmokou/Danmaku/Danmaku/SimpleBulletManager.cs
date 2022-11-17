@@ -4,12 +4,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using BagoumLib;
 using BagoumLib.Cancellation;
 using BagoumLib.DataStructures;
+using BagoumLib.Functional;
 using BagoumLib.Sorting;
+using CommunityToolkit.HighPerformance;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Danmaku.Descriptors;
@@ -19,6 +22,7 @@ using Danmokou.Expressions;
 using Danmokou.Graphics;
 using Danmokou.Pooling;
 using Danmokou.Reflection.CustomData;
+using Danmokou.Services;
 using Danmokou.SM;
 using JetBrains.Annotations;
 using Unity.Collections;
@@ -91,7 +95,7 @@ public partial class BulletManager {
     /// A container for all information about a code-abstraction bullet except style information.
     /// </summary>
     public struct SimpleBullet {
-        //96 byte struct. (96 unpacked)
+        //96 byte struct. (94 unpacked)
             //BPY  = 8
             //TP   = 8
             //VS   = 32
@@ -99,7 +103,7 @@ public partial class BulletManager {
             //BPI  = 20
             //Flt  = 4
             //V2   = 8
-            //Sx2  = 4
+            //S    = 2
         public readonly BPY? scaleFunc;
         public readonly SBV2? dirFunc;
         public Movement movement; //Don't make this readonly
@@ -115,7 +119,6 @@ public partial class BulletManager {
         public float scale;
         public Vector2 direction;
         
-        public ushort grazeFrameCounter;
         public ushort cullFrameCounter;
 
         public SimpleBullet(BPY? scaleF, SBV2? dirF, in Movement movement, ParametricInfo bpi) {
@@ -123,7 +126,7 @@ public partial class BulletManager {
             dirFunc = dirF;
             scale = 1f;
             this.movement = movement;
-            grazeFrameCounter = cullFrameCounter = 0;
+            cullFrameCounter = 0;
             this.accDelta = Vector2.zero;
             this.bpi = bpi;
             direction = this.movement.UpdateZero(ref this.bpi);
@@ -139,19 +142,19 @@ public partial class BulletManager {
             dirFunc = sb.dirFunc;
             scale = sb.scale;
             movement = sb.movement;
-            grazeFrameCounter = cullFrameCounter = 0;
+            cullFrameCounter = 0;
             accDelta = sb.accDelta;
             bpi = sb.bpi.CopyCtx(newId ?? sb.bpi.id);
             direction = sb.direction;
         }
     }
-    public readonly struct CollisionCheckResults {
-        public readonly int damage;
-        public readonly int graze;
 
-        public CollisionCheckResults(int dmg, int graze) {
-            this.damage = dmg;
-            this.graze = graze;
+    public readonly struct FrameBucketing {
+        //this would be more efficient for MCD calcs if you paired it to bucket, but that's probably too computationally expensive
+        public readonly float maxScale;
+        
+        public FrameBucketing(float maxScale) {
+            this.maxScale = maxScale;
         }
     }
 
@@ -185,6 +188,9 @@ public partial class BulletManager {
         public bool Active { get; private set; } = false;
         public bool IsPlayer { get; private set; } = false;
         public BulletInCode BC { get; }
+        protected readonly CollidableInfo ColliderGeneric;
+        public readonly ICollider Collider;
+        public readonly ApproximatedCircleCollider CircleCollider;
         protected virtual SimpleBulletFader Fade => BC.FadeIn;
         private readonly List<SimpleBulletCollection> targetList;
         public int temp_last;
@@ -195,7 +201,15 @@ public partial class BulletManager {
         private CulledBulletCollection? culled;
         protected readonly DMCompactingArray<BulletControl> controls = new(4);
         private readonly DMCompactingArray<BulletControl> onCollideControls = new(2);
-        
+        private readonly AbstractDMCompactingArray<IDeletionMarker> bucketingRequests = new(4);
+        private List<int>[]? buckets;
+        public ReadOnlySpan2D<List<int>> bucketsSpan => new(buckets!, bucketsY, bucketsX);
+        //This is null when bucketing did not take place this frame
+        private FrameBucketing? frameBucket;
+        private int bucketsX;
+        private int bucketsY;
+        private float invBucketSize;
+
         public virtual CollectionType MetaType => CollectionType.Normal;
         public string Style => BC.name;
         public TP4? Tint => BC.Tint.Value;
@@ -209,6 +223,9 @@ public partial class BulletManager {
         
         public SimpleBulletCollection(List<SimpleBulletCollection> target, BulletInCode bc) : base(1, 128) {
             this.BC = bc;
+            ColliderGeneric = bc.cc;
+            Collider = ColliderGeneric.collider;
+            CircleCollider = ColliderGeneric.circleCollider;
             this.targetList = target;
         }
 
@@ -239,6 +256,7 @@ public partial class BulletManager {
         public void Deactivate() {
             Active = false;
             temp_last = 0;
+            buckets = null;
         }
         
         #region Copiers
@@ -251,9 +269,13 @@ public partial class BulletManager {
 
         public MeshGenerator.RenderInfo GetOrLoadRI() => BC.GetOrLoadRI();
         
-
+        /// <summary>
+        /// Test collision between a target and a bullet.
+        /// <br/>Note that you can also use <see cref="Collider"/>.<see cref="ICollider.CheckGrazeCollision"/>, which is marginally slower
+        ///  but may generally be more flexible.
+        /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        protected virtual CollisionResult CheckGrazeCollision(in Hitbox hitbox, ref SimpleBullet sb) =>
+        public virtual CollisionResult CheckGrazeCollision(in Hurtbox hurtbox, in SimpleBullet sb) =>
             CollisionMath.noColl;
 
         #region Operators
@@ -264,7 +286,7 @@ public partial class BulletManager {
             if (isNew) {
                 int numPcs = controls.Count;
                 var state = new VelocityUpdateState(this, 0, 0) { ii = count - 1 };
-                for (int pi = 0; pi < numPcs && !rem[state.ii]; ++pi) {
+                for (int pi = 0; pi < numPcs && !Deleted[state.ii]; ++pi) {
                     controls[pi].action(in state, sb.bpi, controls[pi].cT);
                 }
             }
@@ -338,7 +360,7 @@ public partial class BulletManager {
         /// </summary>
         /// <param name="ind">Index of bullet.</param>
         public void DeleteSB(int ind) {
-            if (!rem[ind]) {
+            if (!Deleted[ind]) {
                 Data[ind].bpi.Dispose();
                 Delete(ind);
             }
@@ -349,11 +371,11 @@ public partial class BulletManager {
         /// </summary>
         /// <param name="ind"></param>
         public void DeleteSB_Collision(int ind) {
-            if (!rem[ind]) {
+            if (!Deleted[ind]) {
                 ref var sb = ref Data[ind];
                 var st = new VelocityUpdateState(this, 0, 0) { ii = ind };
                 for (int ii = 0; ii < onCollideControls.Count; ++ii) {
-                    onCollideControls[ii].action(in st, sb.bpi, onCollideControls[ii].cT);
+                    onCollideControls[ii].action(in st, in sb.bpi, in onCollideControls[ii].cT);
                 }
                 DeleteSB(ind);
             }
@@ -363,9 +385,8 @@ public partial class BulletManager {
         #region Updaters
         
         [UsedImplicitly] //batch command uses this to stop when a bullet is destroyed
-        public bool IsAlive(int ind) => !rem[ind];
-
-
+        public bool IsAlive(int ind) => !Deleted[ind];
+        
         public struct VelocityUpdateState {
             public readonly SimpleBulletCollection sbc;
             public readonly int postVelPcs;
@@ -384,8 +405,13 @@ public partial class BulletManager {
             public void Speedup(float ratio) => nextDT *= ratio;
         }
         private void VelocityProcessBatch(int start, int end, VelocityUpdateState state) {
+            var numPcs = controls.Count;
+            var allowCameraCull = BC.AllowCameraCull.Value;
+            var cullRad = BC.CullRadius.Value;
+            //Note that state.ii is also consumed by controls that need to do indexed deletion;
+            // you can't replace this with a local without adding another argument to SBCF
             for (state.ii = start; state.ii < end; ++state.ii) {
-                if (!rem[state.ii]) {
+                if (!Deleted[state.ii]) {
                     ref var sb = ref Data[state.ii];
                     state.nextDT = ETime.FRAME_TIME;
                     
@@ -409,6 +435,17 @@ public partial class BulletManager {
                         }
                     } else
                         sb.direction = sb.dirFunc(ref sb);
+                    
+                    if (!PARALLELISM_ENABLED)
+                        //Post-vel controls may destroy the bullet. As soon as this occurs, stop iterating
+                        for (int pi = state.postDirPcs; pi < numPcs && !Deleted[state.ii]; ++pi) 
+                            controls[pi].action(in state, sb.bpi, controls[pi].cT);
+                    
+                    //Don't check Deleted[state.ii] here for efficiency. Double-deletion is safe
+                    if (allowCameraCull && (++sb.cullFrameCounter & CULL_EVERY_MASK) == 0 &&
+                        LocationHelpers.OffPlayableScreenBy(in cullRad, in sb.bpi.loc)) {
+                        DeleteSB(state.ii);
+                    }
                 }
             }
         }
@@ -419,12 +456,11 @@ public partial class BulletManager {
             RNG.RNG_ALLOWED = true;
             return state;
         }
-        public virtual void UpdateVelocityAndControls() {
+        private void UpdateVelocityAndControlsNonBucketed() {
             PruneControlsCancellation();
             var state = new VelocityUpdateState(this,
                 controls.FirstPriorityGT(BulletControl.POST_VEL_PRIORITY),
                 controls.FirstPriorityGT(BulletControl.POST_DIR_PRIORITY));
-            int numPcs = controls.Count;
             Profiler.BeginSample("Core velocity step");
             if (!PARALLELISM_ENABLED || temp_last < PARALLEL_CUTOFF)
                 VelocityProcessBatch(0, temp_last, state);
@@ -432,117 +468,38 @@ public partial class BulletManager {
                 VelocityParallelize(state);
             Profiler.EndSample();
 
-            Profiler.BeginSample("Non-parallelizable controls update");
-            if (state.postDirPcs < numPcs) {
-                for (state.ii = 0; state.ii < temp_last; ++state.ii) {
-                    //rem[ii] check done in loop
-                    ref var sb = ref Data[state.ii];
-                    //Post-vel controls may destroy the bullet. As soon as this occurs, stop iterating
-                    for (int pi = state.postDirPcs; pi < numPcs && !rem[state.ii]; ++pi) 
-                        controls[pi].action(in state, sb.bpi, controls[pi].cT);
+            //Post-dir controls can't be parallelized, so they need to be moved out of the parallel loop
+            if (PARALLELISM_ENABLED) {
+                int numPcs = controls.Count;
+                Profiler.BeginSample("Non-parallelizable controls update");
+                if (state.postDirPcs < numPcs) {
+                    for (state.ii = 0; state.ii < temp_last; ++state.ii) {
+                        ref var sb = ref Data[state.ii];
+                        //Post-vel controls may destroy the bullet. As soon as this occurs, stop iterating
+                        for (int pi = state.postDirPcs; pi < numPcs && !Deleted[state.ii]; ++pi)
+                            controls[pi].action(in state, sb.bpi, controls[pi].cT);
+                    }
                 }
+                Profiler.EndSample();
             }
-            Profiler.EndSample();
-
             PruneControls();
         }
-        protected struct CollisionCheckingState {
-            public readonly bool allowCameraCull;
-            public readonly float cullRad;
-            public readonly Hitbox hitbox;
-            public int graze;
-            public int collided;
-            public readonly List<int> destroyCollidedBullets;
-            
-            public CollisionCheckingState(bool allowCameraCull, float cullRad, in Hitbox hb) : this() {
-                this.allowCameraCull = allowCameraCull;
-                this.cullRad = cullRad;
-                this.hitbox = hb;
-                this.destroyCollidedBullets = ListCache<int>.Get();
-            }
 
-            public void DisposeLists() {
-                ListCache<int>.Consign(destroyCollidedBullets);
-            }
-        }
-        protected virtual void CollisionProcessBatch(int start, int end, ref CollisionCheckingState state) {
-            var hitbox = state.hitbox;
-            var allowCameraCull = state.allowCameraCull;
-            for (int ii = start; ii < end; ++ii) {
-                if (!rem[ii]) {
-                    ref SimpleBullet sbn = ref Data[ii];
-                    var cr = CheckGrazeCollision(in hitbox, ref sbn);
-                    if (cr.collide) {
-                        //It's ok to use these locking mechanisms in single-threaded case
-                        // since we don't enter this part often
-                        Interlocked.Increment(ref state.collided);
-                        if (BC.destructible) {
-                            //Bullet deletion may create a culled bullet
-                            // or run non-parallelizable collide-controls.
-                            //Thus, we must run that later
-                            lock (state.destroyCollidedBullets)
-                                state.destroyCollidedBullets.Add(ii);
-                            continue;
-                        }
-                    } else if (sbn.grazeFrameCounter-- == 0) {
-                        if (cr.graze) {
-                            sbn.grazeFrameCounter = BC.grazeEveryFrames;
-                            Interlocked.Increment(ref state.graze);
-                        } else {
-                            sbn.grazeFrameCounter = 0;
-                        }
-                    }
-                    if (allowCameraCull && (++sbn.cullFrameCounter & CULL_EVERY_MASK) == 0 &&
-                               LocationHelpers.OffPlayableScreenBy(in state.cullRad, in sbn.bpi.loc)) {
-                        DeleteSB(ii);
-                    }
-                }
-            }
-        }
-        private CollisionCheckingState CollisionParallelize(CollisionCheckingState state) {
-            RNG.RNG_ALLOWED = false;
-            var p = Partitioner.Create(0, count);
-            Parallel.ForEach(p, range => CollisionProcessBatch(range.Item1, range.Item2, ref state));
-            RNG.RNG_ALLOWED = true;
-            return state;
-        }
-        public virtual CollisionCheckResults CheckCollision(in Hitbox hitbox) {
-            var state = new CollisionCheckingState(BC.AllowCameraCull, BC.CULL_RAD, in hitbox);
-            Profiler.BeginSample("CheckCollision");
-            if (!PARALLELISM_ENABLED || count < PARALLEL_CUTOFF)
-                CollisionProcessBatch(0, count, ref state);
+        public virtual void UpdateVelocityAndControls() {
+            bucketingRequests.Compact();
+            if (bucketingRequests.Count > 0 || IsPlayer)
+                UpdateVelocityAndControlsBucketed();
             else
-                state = CollisionParallelize(state);
-            Profiler.EndSample();
-            for (int ii = 0; ii < state.destroyCollidedBullets.Count; ++ii) {
-                MakeCulledCopy(state.destroyCollidedBullets[ii]);
-                DeleteSB_Collision(state.destroyCollidedBullets[ii]);
-            }
-            state.DisposeLists();
-            CompactAndSort();
-            return new CollisionCheckResults(state.collided > 0 ? BC.damageAgainstPlayer : 0, state.graze);
+                UpdateVelocityAndControlsNonBucketed();
         }
-
-        public void NullCollisionCleanup() {
-            var allowCameraCull = BC.AllowCameraCull.Value;
-            var cullRad = BC.CULL_RAD.Value;
-            for (int ii = 0; ii < count; ++ii) {
-                if (!rem[ii]) {
-                    ref SimpleBullet sbn = ref Data[ii];
-                    if (allowCameraCull && (++sbn.cullFrameCounter & CULL_EVERY_MASK) == 0 && LocationHelpers.OffPlayableScreenBy(cullRad, sbn.bpi.loc)) {
-                        DeleteSB(ii);
-                    }
-                }
-            }
-            CompactAndSort();
-        }
-
-        private void CompactAndSort() {
+        
+        public void CompactAndSort() {
             Profiler.BeginSample("Compact");
-            if (NullElements > Math.Min(1000, Count / 10) || BC.UseZCompare)
+            if (NullElements > Math.Min(2000, Count / 10) || BC.UseZCompare)
                 Compact();
             Profiler.EndSample();
             Profiler.BeginSample("Z-sort");
+            EmptyBuckets();
             if (BC.UseZCompare) {
                 var reqLen = (count + 1) / 2;
                 if (zSortBuffer == null || zSortBuffer.Length < reqLen)
@@ -554,38 +511,128 @@ public partial class BulletManager {
             Profiler.EndSample();
         }
 
+        public void CheckCollisions(ISimpleBulletCollisionReceiver recv) {
+            if (GetCollisionFormat().Try(out var fmt)) {
+                if (fmt.Valid) {
+                    recv.ProcessSimpleBucketed(this, fmt.Value);
+                } else
+                    recv.ProcessSimple(this);
+            } //else pass
+        }
+
         /// <summary>
-        /// Player bullet X enemies update function.
-        /// Note that all damage is recorded.
+        /// Get the method by which collision should be checked on this bullet pool for this frame.
         /// </summary>
-        public virtual void CheckCollision(IReadOnlyList<Enemy.FrozenCollisionInfo> fci) {
-            int fciL = fci.Count;
-            var cullRad = BC.CULL_RAD.Value;
-            for (int ii = 0; ii < count; ++ii) {
-                if (!rem[ii]) {
-                    ref SimpleBullet sbn = ref Data[ii];
-                    if ((++sbn.cullFrameCounter & CULL_EVERY_MASK) == 0 && LocationHelpers.OffPlayableScreenBy(cullRad, sbn.bpi.loc)) {
-                        DeleteSB(ii);
-                    } else if (sbn.bpi.ctx.playerBullet.Try(out var de) && (de.data.bossDmg > 0 || de.data.stageDmg > 0)) {
-                        for (int ff = 0; ff < fciL; ++ff) {
-                            if (fci[ff].Active && 
-                                BC.cc.collider.CheckCollision(sbn.bpi.loc, sbn.direction, sbn.scale, fci[ff].pos, fci[ff].radius)) {
-                                if (BC.destructible || fci[ff].enemy.TryHitIndestructible(sbn.bpi.id, BC.againstEnemyCooldown)) {
-                                    fci[ff].enemy.QueuePlayerDamage(de.data.bossDmg, de.data.stageDmg, de.firer);
-                                    fci[ff].enemy.ProcOnHit(de.data.effect, sbn.bpi.loc);
-                                    if (BC.destructible) {
-                                        MakeCulledCopy(ii);
-                                        DeleteSB_Collision(ii);
-                                        break;
-                                    }
-                                }
-                            }
+        /// <returns>Some(bucketing) for bucketed collisions, None for non-bucketed collisions, and null for no collision.</returns>
+        public virtual Maybe<FrameBucketing>? GetCollisionFormat() =>
+            frameBucket.Try(out var f) ? Maybe<FrameBucketing>.Of(f) : Maybe<FrameBucketing>.None; 
+        
+        #region Bucketing
+
+        public void RequestBucketing(IDeletionMarker tracker) => bucketingRequests.AddPriority(tracker);
+
+        private void CreateBuckets() {
+            if (buckets != null) return;
+            frameBucket = null;
+            invBucketSize = 2f; //TODO
+            //Add one extra bucket layer on each side (left and right) to handle offscreen objects
+            bucketsX = Mathf.CeilToInt(LocationHelpers.Width * invBucketSize) + 2;
+            bucketsY = Mathf.CeilToInt(LocationHelpers.Height * invBucketSize) + 2;
+            buckets = new List<int>[bucketsX * bucketsY];
+            for (int ii = 0; ii < buckets.Length; ++ii)
+                buckets[ii] = new();
+        }
+
+        private void EmptyBuckets() {
+            if (buckets == null) return;
+            for (int ii = 0; ii < buckets.Length; ++ii)
+                buckets[ii].Clear();
+            frameBucket = null;
+        }
+
+        public (int x, int y) BucketIndexPair(in Vector2 loc) {
+            // -1 at end is because we add extra buckets (one layer on each side) for offscreen stuff
+            int xIndex = M.Clamp(0, bucketsX - 1, (int)Math.Floor((loc.x - LocationHelpers.Left) * invBucketSize) + 1);
+            int yIndex = M.Clamp(0, bucketsY - 1, (int)Math.Floor((loc.y - LocationHelpers.Bot) * invBucketSize) + 1);
+            return (xIndex, yIndex);
+        }
+        private int BucketIndex(in Vector3 loc) {
+            // +1 at end is because we add extra buckets (one layer on each side) for offscreen stuff
+            int xIndex = M.Clamp(0, bucketsX - 1, (int)Math.Floor((loc.x - LocationHelpers.Left) * invBucketSize) + 1);
+            int yIndex = M.Clamp(0, bucketsY - 1, (int)Math.Floor((loc.y - LocationHelpers.Bot) * invBucketSize) + 1);
+            return xIndex + bucketsX * yIndex;
+        }
+
+        private void UpdateVelocityAndControlsBucketed() {
+            CreateBuckets();
+            PruneControlsCancellation();
+            var state = new VelocityUpdateState(this,
+                controls.FirstPriorityGT(BulletControl.POST_VEL_PRIORITY),
+                controls.FirstPriorityGT(BulletControl.POST_DIR_PRIORITY));
+            int numPcs = controls.Count;
+            var cullRad = BC.CullRadius.Value;
+            float maxScale = 1;
+            //Also, we do camera culling here, as it's too expensive to do it in collision.
+            Profiler.BeginSample("Core velocity step (bucketed)");
+            for (state.ii = 0; state.ii < temp_last; ++state.ii) {
+                if (!Deleted[state.ii]) {
+                    ref var sb = ref Data[state.ii];
+                    state.nextDT = ETime.FRAME_TIME;
+                    
+                    for (int pi = 0; pi < state.postVelPcs; ++pi) 
+                        controls[pi].action(in state, in sb.bpi, in controls[pi].cT);
+                    
+                    //Note on optimization: keeping accDelta in SB is faster(!) than either a local variable or a SBInProgress struct.
+                    sb.movement.UpdateDeltaAssignDelta(ref sb.bpi, ref sb.accDelta, in state.nextDT);
+                    if (sb.scaleFunc != null && (sb.scale = sb.scaleFunc(sb.bpi)) > maxScale)
+                        maxScale = sb.scale;
+                    
+                    for (int pi = state.postVelPcs; pi < state.postDirPcs; ++pi) 
+                        controls[pi].action(in state, in sb.bpi, in controls[pi].cT);
+                    
+                    if (sb.dirFunc == null) {
+                        float mag = sb.accDelta.x * sb.accDelta.x + sb.accDelta.y * sb.accDelta.y;
+                        if (mag > M.MAG_ERR) {
+                            mag = 1f / (float) Math.Sqrt(mag);
+                            sb.direction.x = sb.accDelta.x * mag;
+                            sb.direction.y = sb.accDelta.y * mag;
                         }
+                    } else
+                        sb.direction = sb.dirFunc(ref sb);
+                    
+                    //Post-vel controls may destroy the bullet. As soon as this occurs, stop iterating
+                    for (int pi = state.postDirPcs; pi < numPcs && !Deleted[state.ii]; ++pi) 
+                        controls[pi].action(in state, sb.bpi, controls[pi].cT);
+
+                    if (!Deleted[state.ii]) {
+                        if ((++sb.cullFrameCounter & CULL_EVERY_MASK) == 0 && LocationHelpers.OffPlayableScreenBy(cullRad, sb.bpi.loc))
+                            DeleteSB(state.ii);
+                        else
+                            buckets![BucketIndex(in sb.bpi.loc)].Add(state.ii);
                     }
                 }
             }
-            Compact();
+            Profiler.EndSample();
+            frameBucket = new(maxScale);
+            PruneControls();
+            
         }
+
+        public void DebugBuckets() {
+            var sb = new StringBuilder();
+            sb.Append($"{bucketsX}*{bucketsY}={buckets.Length} buckets (size {invBucketSize}\n");
+            for (var iy = 0; iy < bucketsY; ++iy)
+            for (var ix = 0; ix < bucketsX; ++ix) {
+                var b = buckets[ix + iy * bucketsX];
+                if (b.Count > 0)
+                    sb.Append($"Bucket {ix},{iy}: {b.Count}\n");
+            }
+            Logs.Log(sb.ToString());
+        }
+        
+        
+        
+        #endregion
 
         #endregion
         
@@ -636,7 +683,7 @@ public partial class BulletManager {
 
         public void Reset() {
             for (int ii = 0; ii < count; ++ii) {
-                if (!rem[ii])
+                if (!Deleted[ii])
                     DeleteSB(ii);
             }
             // This should free links to BPY/VTP constructed by SMs going out of scope
@@ -661,7 +708,7 @@ public partial class BulletManager {
             for (int ii = 0; ii < count;) {
                 int ib = 0;
                 for (; ib < legacyBatchSize && ii < count; ++ii) {
-                    if (!rem[ii]) {
+                    if (!Deleted[ii]) {
                         ref var sb = ref Data[ii];
                         ref var m = ref bm.matArr[ib];
                         //Normally handled via FT_SCALE_IN / SCALEIN macro, but that doesn't work for matrix setup
@@ -695,7 +742,7 @@ public partial class BulletManager {
             for (int ii = 0; ii < count;) {
                 int ib = 0;
                 for (; ib < legacyBatchSize && ii < count; ++ii) {
-                    if (!rem[ii]) {
+                    if (!Deleted[ii]) {
                         ref var sb = ref Data[ii];
                         ref var m = ref bm.matArr[ib];
                         //Normally handled via FT_SCALE_IN / SCALEIN macro, but that doesn't work for matrix setup
@@ -734,7 +781,7 @@ public partial class BulletManager {
             for (int ii = 0; ii < count;) {
                 int ib = 0;
                 for (; ib < batchSize && ii < count; ++ii) {
-                    if (!rem[ii]) {
+                    if (!Deleted[ii]) {
                         ref var sb = ref Data[ii];
                         ref var rp = ref bm.renderPropsArr[ib];
                         rp.position.x = sb.bpi.loc.x;
@@ -761,7 +808,7 @@ public partial class BulletManager {
             for (int ii = 0; ii < count;) {
                 int ib = 0;
                 for (; ib < batchSize && ii < count; ++ii) {
-                    if (!rem[ii]) {
+                    if (!Deleted[ii]) {
                         ref var sb = ref Data[ii];
                         ref var rp = ref bm.renderPropsArr[ib];
                         rp.position.x = sb.bpi.loc.x;
@@ -796,17 +843,10 @@ public partial class BulletManager {
 #endif
     }
 
-    private class EmptySBC : SimpleBulletCollection {
+    private class EmptySBC : NoCollSBC {
         public override CollectionType MetaType => CollectionType.Empty;
         
         public EmptySBC(BulletInCode bc) : base(activeEmpty, bc) { }
-
-        public override CollisionCheckResults CheckCollision(in Hitbox hitbox) {
-            throw new Exception("Do not call CheckCollision on empty bullet pools");
-        }
-        public override void CheckCollision(IReadOnlyList<Enemy.FrozenCollisionInfo> fci) { 
-            throw new Exception("Do not call CheckCollision on empty bullet pools");
-        }
     }
 
     /// <summary>
@@ -814,7 +854,7 @@ public partial class BulletManager {
     /// those afterimages. It will not perform velocity or collision checks,
     /// and it ignores pool commands. It only updates bullet times and culls bullets after some time.
     /// </summary>
-    public sealed class CulledBulletCollection : SimpleBulletCollection {
+    public sealed class CulledBulletCollection : NoCollSBC {
         // ReSharper disable once NotAccessedField.Local
         private readonly SimpleBulletCollection src;
         protected override SimpleBulletFader Fade { get; }
@@ -835,7 +875,7 @@ public partial class BulletManager {
 
         public override void UpdateVelocityAndControls() {
             for (int ii = 0; ii < temp_last; ++ii) {
-                if (!rem[ii]) {
+                if (!Deleted[ii]) {
                     ref SimpleBullet sbn = ref Data[ii];
                     //yes, it's supposed to be minus, we are going backwards to get fadeout effect
                     var fadeTime = sbn.bpi.t - ETime.FRAME_TIME;
@@ -865,13 +905,6 @@ public partial class BulletManager {
             sbn.bpi.t = Math.Min(sbn.bpi.t, Fade.MaxTime);
             base.Add(ref sbn, false);
         }
-
-        public override CollisionCheckResults CheckCollision(in Hitbox hitbox) {
-            throw new Exception("Do not call CheckCollision on culled bullet pools");
-        }
-        public override void CheckCollision(IReadOnlyList<Enemy.FrozenCollisionInfo> fci) { 
-            throw new Exception("Do not call CheckCollision on culled bullet pools");
-        }
         
     }
     /// <summary>
@@ -879,7 +912,7 @@ public partial class BulletManager {
     /// that is played on top of the bullet, such as cwheel. It will not perform velocity or collision checks,
     /// and it ignores pool commands. It only updates bullet times and culls bullets after some time.
     /// </summary>
-    private class DummySoftcullSBC : SimpleBulletCollection {
+    private class DummySoftcullSBC : NoCollSBC {
         private readonly float ttl;
         private readonly float timeR;
         private readonly float rotR;
@@ -902,7 +935,7 @@ public partial class BulletManager {
 
         public override void UpdateVelocityAndControls() {
             for (int ii = 0; ii < temp_last; ++ii) {
-                if (!rem[ii]) {
+                if (!Deleted[ii]) {
                     ref SimpleBullet sbn = ref Data[ii];
                     sbn.bpi.t += ETime.FRAME_TIME;
                     if (sbn.bpi.t > ttl) {
@@ -911,41 +944,34 @@ public partial class BulletManager {
                 }
             }
         }
-
-        public override CollisionCheckResults CheckCollision(in Hitbox hitbox) {
-            Compact();
-            return new CollisionCheckResults(0, 0);
-        }
-        public override void CheckCollision(IReadOnlyList<Enemy.FrozenCollisionInfo> fci) { 
-            Compact();
-        }
     }
     private class CircleSBC : SimpleBulletCollection {
         public CircleSBC(List<SimpleBulletCollection> target, BulletInCode bc) : base(target, bc) {}
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        protected override CollisionResult CheckGrazeCollision(in Hitbox hitbox, ref SimpleBullet sb) => 
-            CollisionMath.GrazeCircleOnCircle(in hitbox, sb.bpi.loc.x, sb.bpi.loc.y, BC.cc.radius * sb.scale);
+        public override CollisionResult CheckGrazeCollision(in Hurtbox hurtbox, in SimpleBullet sb) => 
+            CollisionMath.GrazeCircleOnCircle(in hurtbox, in sb.bpi.loc.x, in sb.bpi.loc.y, in ColliderGeneric.radius, in sb.scale);
     }
     private class RectSBC : SimpleBulletCollection {
         public RectSBC(List<SimpleBulletCollection> target, BulletInCode bc) : base(target, bc) {}
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        protected override CollisionResult CheckGrazeCollision(in Hitbox hitbox, ref SimpleBullet sb) => 
-            CollisionMath.GrazeCircleOnRect(in hitbox, sb.bpi.loc.x, sb.bpi.loc.y, BC.cc.halfRect.x, 
-                BC.cc.halfRect.y, BC.cc.maxDist2, sb.scale, sb.direction.x, sb.direction.y);
+        public override CollisionResult CheckGrazeCollision(in Hurtbox hurtbox, in SimpleBullet sb) => 
+            CollisionMath.GrazeCircleOnRect(in hurtbox, in sb.bpi.loc.x, in sb.bpi.loc.y, in ColliderGeneric.halfRect, in ColliderGeneric.maxDist2, in sb.scale, in sb.direction);
     }
     private class LineSBC : SimpleBulletCollection {
         public LineSBC(List<SimpleBulletCollection> target, BulletInCode bc) : base(target, bc) {}
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        protected override CollisionResult CheckGrazeCollision(in Hitbox hitbox, ref SimpleBullet sb) => 
-            CollisionMath.GrazeCircleOnRotatedSegment(in hitbox, sb.bpi.loc.x, sb.bpi.loc.y, BC.cc.radius, BC.cc.linePt1, 
-                BC.cc.delta, sb.scale, BC.cc.deltaMag2, BC.cc.maxDist2, sb.direction.x, sb.direction.y);
+        public override CollisionResult CheckGrazeCollision(in Hurtbox hurtbox, in SimpleBullet sb) => 
+            CollisionMath.GrazeCircleOnRotatedSegment(in hurtbox, in sb.bpi.loc.x, in sb.bpi.loc.y, in ColliderGeneric.radius, in ColliderGeneric.linePt1, 
+                in ColliderGeneric.delta, in sb.scale, in ColliderGeneric.deltaMag2, in ColliderGeneric.maxDist2, in sb.direction);
     }
-    //Technically the same as base SimpleBulletCollection, but I'm keeping it for "explicitness"
-    private class NoCollSBC : SimpleBulletCollection {
+    
+    public class NoCollSBC : SimpleBulletCollection {
         public NoCollSBC(List<SimpleBulletCollection> target, BulletInCode bc) : base(target, bc) {}
+
+        public override Maybe<FrameBucketing>? GetCollisionFormat() => default(Maybe<FrameBucketing>?);
     }
 
     //Called via Camera.onPreCull event

@@ -12,6 +12,7 @@ using Danmokou.Danmaku.Descriptors;
 using Danmokou.Danmaku.Options;
 using Danmokou.DataHoist;
 using Danmokou.DMath;
+using Danmokou.Player;
 using Danmokou.Pooling;
 using Danmokou.Scriptables;
 using JetBrains.Annotations;
@@ -45,6 +46,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
     private readonly float lineRadius;
     private const float defaultUpdateStagger = 0.1f;
     private float updateStagger;
+    private BPY? beforeDrawHandler;
     private BPY? variableLength;
     private BPY? variableStart;
     private Pred? deactivator;
@@ -56,13 +58,14 @@ public class CurvedTileRenderLaser : CurvedTileRender {
     private Laser laser = null!;
     private float scaledLineRadius;
     private Laser.PointContainer endpt = new(null);
-    private PlayerBullet? playerBullet;
-    [UsedImplicitly]
-    public bool playerBulletIsColliding;
+    public bool isColliding;
     //Player bullets only
+    private PlayerBullet? playerBullet;
     private int nonpiercingLength;
     private bool nonpiercing;
     public float LastActiveTime { get; private set; }
+    
+    private AABB bounds;
 
     public CurvedTileRenderLaser(LaserRenderCfg cfg, GameObject obj) : base(obj) {
         alignEnd = cfg.alignEnd;
@@ -76,19 +79,20 @@ public class CurvedTileRenderLaser : CurvedTileRender {
     }
 
     //TileRenders are always Initialize-initialized.
-    public void Initialize(Laser locationer, TiledRenderCfg cfg, Material material, bool isNew, ParametricInfo pi, ref RealizedLaserOptions options) {
-        laser = locationer;
+    public void Initialize(Laser _laser, TiledRenderCfg cfg, Material material, bool isNew, ParametricInfo pi, ref RealizedLaserOptions options) {
+        this.laser = _laser;
         updateStagger = options.staggerMultiplier * defaultUpdateStagger;
+        beforeDrawHandler = options.beforeDraw;
         variableLength = options.varLength;
         variableStart = options.start;
         deactivator = options.deactivate;
         playerBullet = options.playerBullet;
         int newTexW = Mathf.CeilToInt(options.maxLength / updateStagger);
-        base.Initialize(locationer, cfg, material, isNew, options.isStatic, playerBullet != null, newTexW); //doesn't do any mesh generation, safe to call first
+        base.Initialize(_laser, cfg, material, isNew, options.isStatic, playerBullet != null, newTexW); //doesn't do any mesh generation, safe to call first
         path = options.lpath;
         bpi = pi;
         bpi.loc = locater.GlobalPosition();
-        playerBulletIsColliding = false;
+        isColliding = false;
         nonpiercingLength = centers.Length;
         nonpiercing = options.nonpiercing;
         hueShift = options.hueShift;
@@ -105,7 +109,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
     //(this, material, isNew, bpi.id, firingIndex, ref RealizedLaserOptions);
 
     public void UpdateLaserStyle(string? style) {
-        myStyle = string.IsNullOrEmpty(style) ? defaultMeta : LazyGetControls(style!);
+        myStyle = string.IsNullOrEmpty(style) ? defaultMeta : CollectionForStyle(style!);
     }
 
     private const float ToNearestIndexCutoff = 0.07f;
@@ -143,6 +147,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
         bpi.loc = locater.GlobalPosition();
         UpdateRotation();
         base.UpdateMovement(dT);
+        isColliding = false;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -188,13 +193,24 @@ public class CurvedTileRenderLaser : CurvedTileRender {
         int vw = texRptWidth + 1;
         path.Update(in lifetime, ref bpi, out nextDirectionalDelta, in updateStagger);
         nextTrueDelta = nextDirectionalDelta;
+        float minX = centers[0].x; 
+        float maxX = minX;
+        float minY = centers[0].y;
+        float maxY = minY;
         for (int iw = 1; iw < endP; ++iw) {
             myStyle.IterateControls(this);
-            centers[iw].x = centers[iw - 1].x + nextTrueDelta.x;
-            centers[iw].y = centers[iw - 1].y + nextTrueDelta.y;
+            var x = centers[iw].x = centers[iw - 1].x + nextTrueDelta.x;
+            var y = centers[iw].y = centers[iw - 1].y + nextTrueDelta.y;
+            if (iw > startP) {
+                if (x < minX) minX = x;
+                else if (x > maxX) maxX = x;
+                if (y < minY) minY = y;
+                else if (y > maxY) maxY = y;
+            }
             path.Update(in lifetime, ref bpi, out nextDirectionalDelta, in updateStagger);
             nextTrueDelta = nextDirectionalDelta;
         }
+        bounds = new AABB(minX, maxX, minY, maxY, path.rootPos);
         for (int iw = 0; iw < startP; ++iw) {
             centers[iw] = centers[startP];
         }
@@ -207,6 +223,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
         int vw = texRptWidth + 1;
         path.rootPos = bpi.loc;
         bpi.t = lifetime;
+        _ = beforeDrawHandler?.Invoke(bpi);
         if (deactivator?.Invoke(bpi) == true) {
             deactivator = null;
             LastActiveTime = bpi.t;
@@ -235,12 +252,22 @@ public class CurvedTileRenderLaser : CurvedTileRender {
             vertsPtr[vw].loc.x = accP.x + denormedDirF * -nextTrueDelta.y;
             vertsPtr[vw].loc.y = accP.y + denormedDirF * nextTrueDelta.x;
             //You still need to update starting from zero, not startP, so that the displayed points will be in the correct position for eg. velocity equations.
+            float minX = centers[0].x; 
+            float maxX = minX;
+            float minY = centers[0].y;
+            float maxY = minY;
             for (int iw = 1; iw < endP; ++iw) {
                 myStyle.IterateControls(this);
                 accP.x += nextTrueDelta.x;
                 accP.y += nextTrueDelta.y;
-                centers[iw].x = accP.x;
-                centers[iw].y = accP.y;
+                var x = centers[iw].x = accP.x;
+                var y = centers[iw].y = accP.y;
+                if (iw > startP) {
+                    if (x < minX) minX = x;
+                    else if (x > maxX) maxX = x;
+                    if (y < minY) minY = y;
+                    else if (y > maxY) maxY = y;
+                }
                 float dist = (float) Math.Sqrt(nextTrueDelta.x * nextTrueDelta.x + nextTrueDelta.y * nextTrueDelta.y);
                 vertsPtr[iw].uv.x = vertsPtr[iw + vw].uv.x = vertsPtr[iw - 1].uv.x + dist * distToSpriteWMult;
                 denormedDirF = ddf / dist;
@@ -254,6 +281,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
                 path.Update(in lifetime, ref bpi, out nextDirectionalDelta, in updateStagger);
                 nextTrueDelta = nextDirectionalDelta;
             }
+            bounds = new AABB(minX, maxX, minY, maxY, path.rootPos);
             for (int iw = 0; iw < startP; ++iw) {
                 centers[iw] = centers[startP];
                 vertsPtr[iw] = vertsPtr[startP];
@@ -284,9 +312,9 @@ public class CurvedTileRenderLaser : CurvedTileRender {
     }
 
     private const float BACKSTEP = 2f;
-
-    public CollisionResult CheckCollision(SOPlayerHitbox target) {
-        playerBulletIsColliding = false;
+    
+    public void DoRegularUpdateCollision() {
+        isColliding = false;
         float rot = M.degRad * (parented ? tr.eulerAngles.z : simpleEulerRotation.z);
         if (playerBullet.Try(out var plb)) {
             var fe = Enemy.FrozenEnemies;
@@ -295,31 +323,32 @@ public class CurvedTileRenderLaser : CurvedTileRender {
                 void CheckUntilNonpiercingLength() {
                     int nextCollSegment = nonpiercingLength;
                     for (int ii = 0; ii < fe.Count; ++ii) {
-                        if (fe[ii].Active && CollisionMath.CircleOnSegments(fe[ii].pos, fe[ii].radius, loc, 
-                            centers, 0, 1, nonpiercingLength, scaledLineRadius, 
-                            (float)Math.Cos(rot), (float)Math.Sin(rot), out int segment)) {
-                            playerBulletIsColliding = true;
-                            //Don't modify playerBulletCollSegment in order that the collision check is the same for all enemies
+                        var e = fe[ii];
+                        if (e.Active
+                            && CollisionMath.CircleOnAABB(in bounds, in e.location.x, in e.location.y, e.radius + scaledLineRadius)
+                            && CollisionMath.CircleOnSegments(e.location, e.radius,
+                                loc, centers, 0, 1, nonpiercingLength, scaledLineRadius,
+                                (float)Math.Cos(rot), (float)Math.Sin(rot), out int segment)) {
+                            //we set this to true regardless of TakeHit as it's a graphical feature
+                            // that doesn't care about cooldown or damage
+                            isColliding = true;
+                            //Don't modify nonpiercing, so that the collision check is the same for all enemies
                             //segment+1 since segment is inclusive, but collLength is exclusive
                             nextCollSegment = Math.Min(nextCollSegment, segment + 1);
-                            if (fe[ii].enemy.TryHitIndestructible(bpi.id, plb.data.cdFrames)) {
-                                fe[ii].enemy.QueuePlayerDamage(plb.data.bossDmg, plb.data.stageDmg, plb.firer);
-                                fe[ii].enemy.ProcOnHit(plb.data.effect, loc + centers[segment]);
-                            }
+                            e.enemy.TakeHit(in plb, loc + centers[segment], in bpi.id);
                         }
                     }
                     nonpiercingLength = nextCollSegment;
                 }
                 CheckUntilNonpiercingLength();
                 
-                if (!playerBulletIsColliding && nonpiercingLength < centers.Length) {
+                if (!isColliding && nonpiercingLength < centers.Length) {
                     //Extend the nonpiercing laser and try again
                     nonpiercingLength = Mathf.RoundToInt(Mathf.Clamp(
-                        Mathf.Lerp(nonpiercingLength, centers.Length, 0.05f), 
+                        Mathf.Lerp(nonpiercingLength, centers.Length, 0.02f), 
                         nonpiercingLength + 1, centers.Length));
                     CheckUntilNonpiercingLength();
                 }
-                
                 //Pull the laser draw back
                 unsafe {
                     for (int iw = nonpiercingLength; iw < centers.Length; ++iw) {
@@ -328,32 +357,34 @@ public class CurvedTileRenderLaser : CurvedTileRender {
                         vertsPtr[iw + centers.Length] = vertsPtr[nonpiercingLength - 1 + centers.Length];
                     }
                 }
-
+                //Logs.Log($"{nonpiercingLength}/{centers.Length}");
             } else {
                 for (int ii = 0; ii < fe.Count; ++ii) {
-                    if (fe[ii].Active && CollisionMath.CircleOnSegments(fe[ii].pos, fe[ii].radius, loc, 
-                        centers, 0, 1, centers.Length, scaledLineRadius, 
-                        (float)Math.Cos(rot), (float)Math.Sin(rot), out int segment)) {
-                        playerBulletIsColliding = true;
-                        if (fe[ii].enemy.TryHitIndestructible(bpi.id, plb.data.cdFrames)) {
-                            fe[ii].enemy.QueuePlayerDamage(plb.data.bossDmg, plb.data.stageDmg, plb.firer);
-                            fe[ii].enemy.ProcOnHit(plb.data.effect, loc + centers[segment]);
-                        }
+                    var e = fe[ii];
+                    if (e.Active 
+                        && CollisionMath.CircleOnAABB(in bounds, in e.location.x, in e.location.y, e.radius + scaledLineRadius)
+                        && CollisionMath.CircleOnSegments(e.location, e.radius, 
+                            loc, centers, 0, 1, centers.Length, scaledLineRadius, 
+                            (float)Math.Cos(rot), (float)Math.Sin(rot), out int segment)) {
+                        isColliding = true;
+                        e.enemy.TakeHit(in plb, loc + centers[segment], in bpi.id);
                     }
                 }
             }
-            
-            return CollisionMath.noColl;
+        } else {
+            if (laser.Target.Try(out var player) && player.ComputeCollisions) {
+                var hb = player.Hurtbox;
+                if (!path.isSimple && !CollisionMath.CircleOnAABB(in bounds, in hb.x, in hb.y, hb.largeRadius + scaledLineRadius))
+                    return;
+                // 10000 is a number that is big enough to usually ensure only one collision iteration for simple lasers.
+                // If it's not big enough, then you'll have two collision iteration, which is fine.
+                var coll = CollisionMath.GrazeCircleOnSegments(in hb, locater.GlobalPosition(), centers, 0, 
+                    path.isSimple ? 10000 : 1, centers.Length, scaledLineRadius, (float)Math.Cos(rot), (float)Math.Sin(rot));
+                player.ProcessCollision(in coll, laser.Damage, in bpi, in laser.collisionInfo.grazeEveryFrames);
+            }
         }
-        
-        if (!target.Active) return CollisionMath.noColl;
-
-        // 10000 is a number that is big enough to usually ensure only one collision iteration for simple lasers.
-        // If it's not big enough, then you'll have two collision iteration, which is fine.
-        return CollisionMath.GrazeCircleOnSegments(target.Hitbox, locater.GlobalPosition(), centers, 0, 
-            path.isSimple ? 10000 : 1, centers.Length, scaledLineRadius, (float)Math.Cos(rot), (float)Math.Sin(rot));
     }
-
+    
     private bool requiresTrRotUpdate = false;
     //This function may be called during parallel update step, so we can't do the rotation reassignment here
     private void UpdateRotation() {
@@ -500,7 +531,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
         activePools.Clear();
         activePoolsList.Clear();
     }
-    private static LaserMetadata LazyGetControls(string style) {
+    private static LaserMetadata CollectionForStyle(string style) {
         if (!activePools.ContainsKey(style)) {
             activePools[style] = new LaserMetadata(BehaviorEntity.GetPool(style));
             activePoolsList.Add(activePools[style]);
@@ -591,7 +622,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
     public static void ControlPool(Pred persist, BulletManager.StyleSelector styles, cLaserControl control, ICancellee cT) {
         LaserControl lc = new LaserControl(control, persist, cT);
         for (int ii = 0; ii < styles.Complex.Length; ++ii) {
-            LazyGetControls(styles.Complex[ii]).AddPoolControl(lc);
+            CollectionForStyle(styles.Complex[ii]).AddPoolControl(lc);
         }
     }
     
@@ -606,7 +637,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
         /// </summary>
         /// <returns></returns>
         public static LPCF Reset() => (pool, cT) => {
-            LazyGetControls(pool).ClearControls();
+            CollectionForStyle(pool).ClearControls();
             return NullDisposable.Default;
         };
     }

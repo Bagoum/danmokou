@@ -27,6 +27,9 @@ namespace Danmokou.Danmaku {
 public partial class BulletManager : RegularUpdater {
     private const float PLAYER_SB_OPACITY_MUL = 0.5f;
     private const float PLAYER_SB_FADEIN_MUL = 0.4f;
+    //It's necessary to scale in player bullets faster since they move faster.
+    // In some cases, such as firing slow-moving sun bullets, this may make
+    // the shot look awkward, in which case please add a scale option to the bullet.
     private const float PLAYER_SB_SCALEIN_MUL = 0.1f;
     private const float PLAYER_FB_OPACITY_MUL = 0.65f;
     public readonly struct CollidableInfo {
@@ -43,9 +46,11 @@ public partial class BulletManager : RegularUpdater {
         // Line/Rect
         public readonly float maxDist2;
         public readonly ICollider collider;
+        public readonly ApproximatedCircleCollider circleCollider;
 
         public CollidableInfo(GenericColliderInfo cc) {
             collider = cc.AsCollider;
+            circleCollider = cc.AsCircleApproximation;
             colliderType = cc.colliderType;
             radius = cc.radius;
             linePt1 = cc.point1;
@@ -74,11 +79,12 @@ public partial class BulletManager : RegularUpdater {
         public readonly CollidableInfo cc;
         public readonly ushort grazeEveryFrames;
         public OverrideEvented<bool> Deletable { get; private init; }
-        public OverrideEvented<float> CULL_RAD { get; private init; }
+        public OverrideEvented<float> CullRadius { get; private init; }
         public OverrideEvented<bool> AllowCameraCull { get; private init; }
         public OverrideEvented<(TP4 black, TP4 white)?> Recolor { get; private init; }
         public OverrideEvented<TP4?> Tint { get; private init; }
         public OverrideEvented<bool> UseZCompare { get; private init; }
+        public OverrideEvented<int> RenderQueue { get; private init; }
         public bool Recolorizable => deferredRI.recolorizable;
 
         public SimpleBulletFader FadeIn => deferredRI.sbes.fadeIn;
@@ -97,14 +103,23 @@ public partial class BulletManager : RegularUpdater {
             //Minus 1 to allow for zero offset
             grazeEveryFrames = (ushort)(sbes.grazeEveryFrames - 1);
             Deletable = new OverrideEvented<bool>(sbes.destructible);
-            CULL_RAD = new OverrideEvented<float>(sbes.screenCullRadius);
+            CullRadius = new OverrideEvented<float>(sbes.screenCullRadius);
             AllowCameraCull = new OverrideEvented<bool>(true);
             Recolor = new OverrideEvented<(TP4, TP4)?>(null);
             Tint = new OverrideEvented<TP4?>(null);
             UseZCompare = new OverrideEvented<bool>(false);
+            RenderQueue = new(dfc.RenderQueue);
+            MakeSubscriptions();
+        }
+
+        private void MakeSubscriptions() {
             Tint.Subscribe(tint => {
                 if (riLoaded)
                     GetOrLoadRI().Material.SetOrUnsetKeyword(tint != null, PropConsts.tintKW);
+            });
+            RenderQueue.Subscribe(rq => {
+                if (riLoaded)
+                    GetOrLoadRI().Material.renderQueue = rq;
             });
         }
 
@@ -115,16 +130,14 @@ public partial class BulletManager : RegularUpdater {
                 ri = ri.Copy(),
                 riLoaded = true,
                 Deletable = CopyOV(Deletable),
-                CULL_RAD = CopyOV(CULL_RAD),
+                CullRadius = CopyOV(CullRadius),
                 AllowCameraCull = CopyOV(AllowCameraCull),
                 Recolor = CopyOV(Recolor),
                 Tint = CopyOV(Tint),
-                UseZCompare = CopyOV(UseZCompare)
+                UseZCompare = CopyOV(UseZCompare),
+                RenderQueue = CopyOV(RenderQueue)
             };
-            nbc.Tint.Subscribe(tint => {
-                if (riLoaded)
-                    GetOrLoadRI().Material.SetOrUnsetKeyword(tint != null, PropConsts.tintKW);
-            });
+            nbc.MakeSubscriptions();
             return nbc;
         }
 
@@ -148,6 +161,7 @@ public partial class BulletManager : RegularUpdater {
             if (!riLoaded) {
                 ri = deferredRI.CreateDeferredTexture();
                 ri.Material.SetOrUnsetKeyword(Tint.Value != null, PropConsts.tintKW);
+                ri.Material.renderQueue = RenderQueue.Value;
                 riLoaded = true;
             }
             return ri;
@@ -159,8 +173,6 @@ public partial class BulletManager : RegularUpdater {
         public ColorMap gradient;
     }
     public Material simpleBulletMaterial = null!;
-    public SOPlayerHitbox bulletCollisionTarget = null!;
-    public static SOPlayerHitbox PlayerTarget => main.bulletCollisionTarget;
     public GameObject emptyBulletPrefab = null!;
     public SOPrefabs bulletStylesList = null!;
     public Palette[] basicGradientPalettes = null!;
@@ -205,6 +217,9 @@ public partial class BulletManager : RegularUpdater {
     /// All culled bullet pools
     /// </summary>
     private static readonly List<SimpleBulletCollection> activeCulled = new(250);
+    private static readonly List<SimpleBulletCollection>[] collections = {
+        activeEmpty, activeNpc, activeCNpc, activePlayer, activeCulled
+    };
     private static BulletManager main = null!;
     private Transform spamContainer = null!;
     private const string epLayerName = "HighDirectRender";
@@ -217,16 +232,17 @@ public partial class BulletManager : RegularUpdater {
     private static MultiPaletteMap throwaway_mpm = null!;
 
     public readonly struct DeferredTextureConstruction {
-        private readonly Material mat;
+        private readonly Material baseMat;
         private readonly bool isFrameAnim;
         public readonly SimpleBulletEmptyScript sbes;
         private readonly int renderPriorityOffset;
         private readonly Func<Sprite> SpriteInvoke;
         public readonly bool recolorizable;
+        public int RenderQueue => baseMat.renderQueue + sbes.renderPriority + renderPriorityOffset;
 
-        public DeferredTextureConstruction(SimpleBulletEmptyScript sbes, Material mat, int renderPriorityOffset, 
+        public DeferredTextureConstruction(SimpleBulletEmptyScript sbes, Material baseMat, int renderPriorityOffset, 
             Func<Sprite> spriteCreator, bool recolorizable) {
-            this.mat = mat;
+            this.baseMat = baseMat;
             this.sbes = sbes;
             this.isFrameAnim = sbes.frameAnimInfo.sprite0 != null && sbes.frameAnimInfo.numFrames > 0;
             this.renderPriorityOffset = renderPriorityOffset;
@@ -251,9 +267,9 @@ public partial class BulletManager : RegularUpdater {
         }
         public MeshGenerator.RenderInfo CreateDeferredTexture() {
             Sprite sprite = SpriteInvoke();
-            MeshGenerator.RenderInfo ri = MeshGenerator.RenderInfo.FromSprite(mat, 
-                isFrameAnim ? sbes.frameAnimInfo.sprite0 : sprite, 
-                sbes.renderPriority + renderPriorityOffset);
+            MeshGenerator.RenderInfo ri = MeshGenerator.RenderInfo.FromSprite(baseMat, 
+                isFrameAnim ? sbes.frameAnimInfo.sprite0 : sprite);
+            ri.Material.renderQueue = RenderQueue;
             sbes.displacement.SetOnMaterial(ri.Material);
             if (recolorizable) ri.Material.EnableKeyword("FT_RECOLORIZE");
             if (isFrameAnim) {

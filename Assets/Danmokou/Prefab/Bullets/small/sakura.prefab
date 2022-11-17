@@ -54,7 +54,7 @@ MonoBehaviour:
   renderPriority: 400
   renderMode: 0
   fadeIn: {fileID: 11400000, guid: 7509dddf785098f48aadafff0a2ac5b4, type: 2}
-  fadeOut: {fileID: 0}
+  fadeOut: {fileID: 11400000, guid: 39008d8df48819e40924b817407cccec, type: 2}
   rotational: 1
   colorizing:
     FlatLight: 0
@@ -103,6 +103,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c84a2dc24f158d244a031bf940d0c1ba, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  circleApproximationRadius: 0.08
   colliderType: 3
   radius: 0.05
   point1: {x: -0.08, y: 0}
@@ -114,7 +115,6 @@ MonoBehaviour:
   skip: 0
   end: 0
   points: []
-  target: {fileID: 0}
   debug: 0
 --- !u!212 &3633413593534741963
 SpriteRenderer:

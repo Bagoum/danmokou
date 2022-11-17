@@ -45,10 +45,13 @@ public abstract class RegularUpdater : MonoBehaviour, IRegularUpdater {
 
     protected virtual void OnEnable() => EnableUpdates();
 
-    public abstract void RegularUpdate();
     public virtual void RegularUpdateParallel() { }
+    public abstract void RegularUpdate();
+    public virtual void RegularUpdateCollision() { }
+    public virtual void RegularUpdateFinalize() { }
     public virtual void FirstFrame() { }
     public virtual int UpdatePriority => UpdatePriorities.DEFAULT;
+    public virtual bool HasNontrivialParallelUpdate => false;
 
     public virtual EngineState UpdateDuring => EngineState.RUN;
 
@@ -57,8 +60,10 @@ public abstract class RegularUpdater : MonoBehaviour, IRegularUpdater {
     /// Safe to call twice.
     /// </summary>
     protected void DisableUpdates() {
-        tokens.DisposeAll();
-        Enabled = false;
+        if (Enabled) {
+            tokens.DisposeAll();
+            Enabled = false;
+        }
     }
 
     protected virtual void OnDisable() => DisableUpdates();

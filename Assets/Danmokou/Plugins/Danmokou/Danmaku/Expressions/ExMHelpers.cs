@@ -165,7 +165,7 @@ public static class ExMHelpers {
             var let = pivotVar.Substring(1);
             return t => shifter(sharpness(t), new TEx<float>[] {
                 f1(t), f2(t).Add(
-                    ReflectEx.Let<float, float>(let, pivot, () => f1(t).Sub(f2(t)), t)
+                    ReflectEx.Let1<float, float>(let, pivot, () => f1(t).Sub(f2(t)), t)
                 )
             });
         } else throw new Exception($"{pivotVar} is not a valid pivoting target.");

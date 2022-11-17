@@ -31,6 +31,12 @@ PrefabInstance:
         type: 2}
     - target: {fileID: 5118737884568401677, guid: 82bce57f53a948d4fa843d035d63ad6a,
         type: 3}
+      propertyPath: fadeOut
+      value: 
+      objectReference: {fileID: 11400000, guid: d569b74772f1eb047a472c41de1201ab,
+        type: 2}
+    - target: {fileID: 5118737884568401677, guid: 82bce57f53a948d4fa843d035d63ad6a,
+        type: 3}
       propertyPath: deletable
       value: 0
       objectReference: {fileID: 0}

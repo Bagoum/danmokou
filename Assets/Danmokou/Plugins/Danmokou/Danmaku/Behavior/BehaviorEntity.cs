@@ -12,6 +12,7 @@ using Ex = System.Linq.Expressions.Expression;
 using Danmokou.Behavior.Display;
 using Danmokou.Core;
 using Danmokou.Danmaku;
+using Danmokou.Danmaku.Descriptors;
 using Danmokou.Danmaku.Options;
 using Danmokou.DataHoist;
 using Danmokou.DMath;
@@ -22,6 +23,7 @@ using Danmokou.Scriptables;
 using Danmokou.Services;
 using Danmokou.SM;
 using UnityEditor;
+using UnityEngine.Profiling;
 
 namespace Danmokou.Behavior {
 
@@ -63,19 +65,13 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     public Cancellable? PhaseShifter { get; set; }
     private readonly HashSet<Cancellable> behaviorToken = new();
     public int NumRunningSMs => behaviorToken.Count;
+    /// <summary>
+    /// Components such as <see cref="Enemy"/> which have a separate execution loop
+    ///  but depend on this for enable/disable calls.
+    /// </summary>
+    private readonly List<IBehaviorEntityDependent> dependentComponents = new();
     public Vector2 LastDelta { get; private set; }
 
-    /// <summary>
-    /// Given the last movement delta, update LastDelta as well as Direction (if the movement delta is nonzero).
-    /// </summary>
-    public void SetMovementDelta(Vector2 delta) {
-        LastDelta = delta;
-        var mag = delta.x * delta.x + delta.y * delta.y;
-        if (mag > M.MAG_ERR) {
-            mag = (float)Math.Sqrt(mag);
-            Direction = new Vector2(delta.x / mag, delta.y / mag);
-        }
-    }
     //Normalized lastDelta that does not update when the delta is zero.
     public Vector2 Direction { get; private set; }
     public float DirectionDeg => M.AtanD(Direction);
@@ -112,7 +108,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     /// </summary>
     public virtual ref ParametricInfo rBPI => ref bpi;
     public ParametricInfo BPI => rBPI;
-    public Vector2 Loc => rBPI.loc;
+    public Vector2 Location => rBPI.loc;
 
     public virtual void SetTime(float t) {
         rBPI.t = t;
@@ -135,45 +131,8 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         cullableRadius.cullRadius.value;
     private const int checkCullEvery = 120;
     private int beh_cullCtr = 0;
-    
-    protected bool collisionActive = false;
-    protected SOPlayerHitbox collisionTarget = null!;
-    protected int Damage => 1;
-
-    [Serializable]
-    public struct CollisionInfo {
-        [Tooltip("Only used for default BEH circle collision")]
-        public float collisionRadius;
-        public bool CollisionActiveOnInit;
-        public bool destructible;
-        public ushort grazeEveryFrames;
-        public bool allowGraze;
-    }
-
-    public CollisionInfo collisionInfo;
-    private int grazeFrameCounter = 0;
     private Pred? delete;
     public int DefaultLayer { get; private set; }
-
-    /// <summary>
-    /// Sets the transform position iff `doMovement` is enabled.
-    /// This is an public function. BPI is not updated.
-    /// </summary>
-    /// <param name="p">Target global position</param>
-    private void SetTransformGlobalPosition(Vector2 p) {
-        if (parented) tr.position = p;
-        else tr.localPosition = p; // Slightly faster pathway
-    }
-    
-    /// <summary>
-    /// Sets the transform position iff `doMovement` is enabled.
-    /// This is an external function. BPI is updated.
-    /// </summary>
-    /// <param name="p">Target local position</param>
-    public void ExternalSetLocalPosition(Vector2 p) {
-        tr.localPosition = p;
-        bpi.loc = tr.position;
-    }
 
     public enum DirectionRelation {
         RUFlipsLD,
@@ -198,12 +157,12 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         RegisterID();
         UpdateStyle(defaultMeta);
     }
-
+    
     protected override void BindListeners() {
         base.BindListeners();
 #if UNITY_EDITOR || ALLOW_RELOAD
-        if (SceneIntermediary.IsFirstScene && this is FireOption || this is BossBEH || this is LevelController || 
-            GetComponent<RELOADER>() != null) {
+        if (SceneIntermediary.IsFirstScene && this is not Bullet && 
+            (this is FireOption || this is BossBEH || this is LevelController || GetComponent<RELOADER>() != null)) {
             Listen(Events.LocalReset, () => {
                 HardCancel(false);
                 //Allows all cancellations processes to go through before rerunning
@@ -262,17 +221,18 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
 
     protected override void ResetValues() {
         base.ResetValues();
-        collisionTarget = BulletManager.PlayerTarget;
-        collisionActive = collisionInfo.CollisionActiveOnInit;
         phaseController = SMPhaseController.Normal(0);
         dying = false;
         Direction = Vector2.right;
         if (enemy != null) enemy.Initialize(this);
         if (displayer != null) displayer.ResetV(this);
+        for (int ii = 0; ii < dependentComponents.Count; ++ii)
+            dependentComponents[ii].Alive();
     }
     
     public override void FirstFrame() {
-        RegularUpdateRender();
+        //Finalize contains rendering code, so we call it
+        RegularUpdateFinalize();
         
         //Note: This pathway is used for player shots and minor summoned effects (such as cutins).
         //It is not used for bosses/stages, which call directly into RunBehaviorSM.
@@ -286,6 +246,8 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
             }
         }
     }
+
+    public void LinkDependentUpdater(IBehaviorEntityDependent ru) => dependentComponents.Add(ru);
 
     private static bool IsNontrivialID(string? id) => !string.IsNullOrWhiteSpace(id) && id != "_";
 
@@ -313,6 +275,38 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
             pointersToResolve[ID] = behp;
             attachedPointers.Remove(ID);
         }
+    }
+    
+    /// <summary>
+    /// Given the last movement delta, update LastDelta as well as Direction (if the movement delta is nonzero).
+    /// </summary>
+    public void SetMovementDelta(Vector2 delta) {
+        LastDelta = delta;
+        var mag = delta.x * delta.x + delta.y * delta.y;
+        if (mag > M.MAG_ERR) {
+            mag = (float)Math.Sqrt(mag);
+            Direction = new Vector2(delta.x / mag, delta.y / mag);
+        }
+    }
+    
+    /// <summary>
+    /// Sets the transform position iff `doMovement` is enabled.
+    /// This is an private function. BPI is not updated.
+    /// </summary>
+    /// <param name="p">Target global position</param>
+    private void SetTransformGlobalPosition(Vector2 p) {
+        if (parented) tr.position = p;
+        else tr.localPosition = p; // Slightly faster pathway
+    }
+    
+    /// <summary>
+    /// Sets the transform position iff `doMovement` is enabled.
+    /// This is an external function. BPI is updated.
+    /// </summary>
+    /// <param name="p">Target local position</param>
+    public void ExternalSetLocalPosition(Vector2 p) {
+        tr.localPosition = p;
+        bpi.loc = tr.position;
     }
 
     /// <summary>
@@ -375,11 +369,11 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     private void DestroyInitial(bool allowFinalize, bool allowDrops=false) {
         if (dying) return;
         dying = true;
-        collisionActive = false;
         if (allowDrops) DropItemsOnDeath();
         UnregisterID();
-        if (enemy != null) enemy.IAmDead();
         HardCancel(allowFinalize);
+        for (int ii = 0; ii < dependentComponents.Count; ++ii)
+            dependentComponents[ii].Died();
     }
 
     private void DestroyFinal() {
@@ -459,58 +453,51 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         myStyle.IterateControls(this);
     }
 
-    private void RegularUpdateCollide() {
-        if (collisionActive) {
-            var cr = CollisionCheck();
-            if (grazeFrameCounter-- == 0) {
-                grazeFrameCounter = 0;
-                if (cr.graze && collisionInfo.allowGraze) {
-                    grazeFrameCounter = collisionInfo.grazeEveryFrames - 1;
-                    collisionTarget.Player.Graze(1);
-                }
-            }
-            if (cr.collide) {
-                collisionTarget.Player.Hit(Damage);
-                if (collisionInfo.destructible) InvokeCull();
-            }
-        }
-        beh_cullCtr = (beh_cullCtr + 1) % checkCullEvery;
-        if (delete?.Invoke(rBPI) == true) InvokeCull();
-        else if (beh_cullCtr == 0 && cullableRadius.cullable && myStyle.CameraCullable.Value 
-            && bpi.t > FIRST_CULLCHECK_TIME && LocationHelpers.OffPlayableScreenBy(ScreenCullRadius, bpi.loc)) {
+    /// <summary>
+    /// Check if this object needs to be culled automatically.
+    /// </summary>
+    /// <returns>True iff the object was culled.</returns>
+    protected virtual bool RegularUpdateCullCheck() {
+        if (delete?.Invoke(rBPI) == true) {
             InvokeCull();
+            return true;
+        }
+        else if (beh_cullCtr == 0 && cullableRadius.cullable && myStyle.CameraCullable.Value 
+                 && bpi.t > FIRST_CULLCHECK_TIME && LocationHelpers.OffPlayableScreenBy(ScreenCullRadius, bpi.loc)) {
+            InvokeCull();
+            return true;
+        } else {
+            beh_cullCtr = (beh_cullCtr + 1) % checkCullEvery;
+            return false;
         }
     }
-    
-    protected virtual CollisionResult CollisionCheck() {
-        return CollisionMath.GrazeCircleOnCircle(collisionTarget.Hitbox, rBPI.loc, collisionInfo.collisionRadius);
-    }
-
-    protected virtual void RegularUpdateRender() {
-        if (displayer != null) {
-            displayer.FaceInDirection(LastDelta);
-            UpdateDisplayerRender();
-            displayer.UpdateRender();
-        }
-    }
-
-    protected virtual void UpdateDisplayerRender() { }
 
     public override void RegularUpdate() {
+        Profiler.BeginSample("BehaviorEntity Update");
         if (dying) {
             base.RegularUpdate();
-            RegularUpdateRender();
         } else {
             if (nextUpdateAllowed) {
                 RegularUpdateMove();
                 base.RegularUpdate();
             } else nextUpdateAllowed = true;
             RegularUpdateControl();
-            if (!dying) RegularUpdateCollide();
-            //controls may cause destruction
-            if (Enabled) RegularUpdateRender();
+            if (!dying) RegularUpdateCullCheck();
         }
+        Profiler.EndSample();
     }
+
+    public override void RegularUpdateFinalize() {
+        Profiler.BeginSample("BehaviorEntity displayer update");
+        if (displayer != null) {
+            displayer.FaceInDirection(LastDelta);
+            UpdateDisplayerRender();
+            displayer.UpdateRender();
+        }
+        Profiler.EndSample();
+    }
+
+    protected virtual void UpdateDisplayerRender() { }
 
     protected bool nextUpdateAllowed = true;
 
@@ -635,7 +622,6 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         AllowFinishCalls = true;
         PhaseShifter = null;
     }
-
     protected override void OnDisable() {
         ExternalDestroy();
         base.OnDisable();
@@ -727,13 +713,6 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         Debug.Log($"${tr.gameObject.name} parented by ${tr.parent.gameObject.name}");
     }
 
-    private void OnDrawGizmos() {
-        var loc = transform.position;
-        Handles.color = Color.cyan;
-        if (collisionInfo.collisionRadius > 0) 
-            Handles.DrawWireDisc(loc, Vector3.forward, collisionInfo.collisionRadius);
-    }
-
 #endif
 }
 
@@ -742,7 +721,7 @@ public class BEHPointer {
     public BehaviorEntity? beh;
     public BehaviorEntity Beh => (beh != null) ? beh : throw new Exception($"BEHPointer {id} has not been bound");
     private bool found;
-    public Vector2 Loc => Beh.Loc;
+    public Vector2 Loc => Beh.Location;
 
     public BEHPointer(string id, BehaviorEntity? beh = null) {
         this.id = id;

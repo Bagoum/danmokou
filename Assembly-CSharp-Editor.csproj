@@ -311,6 +311,9 @@
      <Reference Include="MathNet.Numerics">
      <HintPath>E:\Workspace\unity\Danmokou\Assets\Danmokou\Plugins\DLLs\MathNet.Numerics.dll</HintPath>
      </Reference>
+     <Reference Include="CommunityToolkit.HighPerformance">
+     <HintPath>E:\Workspace\unity\Danmokou\Assets\Danmokou\Plugins\DLLs\CommunityToolkit.HighPerformance.dll</HintPath>
+     </Reference>
      <Reference Include="BagoumLib">
      <HintPath>E:\Workspace\unity\Danmokou\Assets\SZYU\Plugins\DLLs\BagoumLib.dll</HintPath>
      </Reference>
@@ -779,6 +782,10 @@
       <Project>{2594f4f2-a0c9-4f19-5192-a952d3116383}</Project>
       <Name>Assembly-CSharp</Name>
     </ProjectReference>
+    <ProjectReference Include="Danmokou.BRuH.csproj">
+      <Project>{6d433cd1-a4e5-b620-ef6e-59c456f1d9eb}</Project>
+      <Name>Danmokou.BRuH</Name>
+    </ProjectReference>
     <ProjectReference Include="Danmokou.SiMP.csproj">
       <Project>{2b51e034-c2e3-0d5d-6f71-5d0d5edfc8fe}</Project>
       <Name>Danmokou.SiMP</Name>
@@ -826,10 +833,6 @@
     <ProjectReference Include="Danmokou.Core.csproj">
       <Project>{fb76ea87-6c0d-f91b-47d2-a55fce61d2df}</Project>
       <Name>Danmokou.Core</Name>
-    </ProjectReference>
-    <ProjectReference Include="Danmokou.BRuH.csproj">
-      <Project>{6d433cd1-a4e5-b620-ef6e-59c456f1d9eb}</Project>
-      <Name>Danmokou.BRuH</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

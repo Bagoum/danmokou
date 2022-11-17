@@ -32,6 +32,7 @@ namespace Danmokou.DMath {
 ///  provide efficient lookup of arbitrary fields.
 /// </summary>
 public class PICustomData {
+    public const string bpiAsCustomDataTypeAlias = "$_typedCustomData";
     public static readonly PICustomData Empty = new();
     //For dictionary variables, such as those created for state control in SS0 or onlyonce
     private static readonly Dictionary<(Type type, string name), int> dynamicKeyNames = new();
@@ -39,6 +40,7 @@ public class PICustomData {
         return dynamicKeyNames[(t, name)] = PICustomDataBuilder.Builder.GetVariableKey(name, t);
     }
     public int typeIndex;
+    public ConstructedType Constructor => Metadata.GetTypeDef(this);
 
     //For culled bullets, sb.bpi.t points to a countdown from FADE_TIME to 0, and this points to the
     // lifetime of the bullet, which is used to calculate direction.
@@ -103,7 +105,16 @@ public class PICustomData {
     /// </summary>
     public virtual PICustomData CopyIntoVirtual(PICustomData copyee) => CopyInto(copyee);
     
+    /// <summary>
+    /// Clone this object.
+    /// <br/>Do not use this method; use <see cref="Clone_NoAlloc"/> instead.
+    /// </summary>
     public virtual PICustomData Clone() => CopyInto(new PICustomData());
+
+    /// <summary>
+    /// Clone this object. The data type is pooled, so this method has amortized O(0) allocations.
+    /// </summary>
+    public PICustomData Clone_NoAlloc() => CopyIntoVirtual(Constructor.MakeNew());
 
     public virtual bool HasFloat(int id) => 
         PICustomDataBuilder.DISABLE_TYPE_BUILDING && boundFloats.ContainsKey(id);
@@ -176,7 +187,7 @@ public class PICustomData {
 
     public void Dispose() {
         if (this == Empty) return;
-        Metadata.GetTypeDef(this).Return(this);
+        Constructor.Return(this);
     }
 
     public void UploadWrite(Type ext, string varName, GenCtx gcx, bool useDefaultValue = false) { 
@@ -222,7 +233,7 @@ public class PICustomData {
     /// Retrieve the variables defined in <see cref="boundVars"/> from <see cref="gcx"/>
     ///  and set them on this object.
     /// </summary>
-    public void UploadAdd(IList<(Type, string)> boundVars, GenCtx gcx) {
+    public void UploadAdd(IReadOnlyList<(Type, string)> boundVars, GenCtx gcx) {
         for (int ii = 0; ii < boundVars.Count; ++ii) {
             var (ext, varNameS) = boundVars[ii];
             UploadWrite(ext, varNameS, gcx);
@@ -257,10 +268,9 @@ public class PICustomData {
     public static Ex GetValue(TExArgCtx tac, Type t, string name) =>
         PICustomDataBuilder.DISABLE_TYPE_BUILDING ?
             GetValueDynamic(tac, t, name) :
-            tac.Ctx.CustomDataType is { } cdt ?
+            tac.Ctx.CustomDataType is var (_, downcast) ?
                 //For scoped calls, use field access, eg. (bpi.ctx as CustomData1).m0_myFloat
-                tac.BPI.FiringCtx.As(cdt)
-                    .Field(Metadata.GetFieldName(name, t)) :
+                downcast(tac).Field(Metadata.GetFieldName(name, t)) :
                 //For unscoped calls, use the ReadT call
                 ExFunction.WrapAny<PICustomData>(
                     Metadata.FieldReaderMethodName(t))
@@ -284,9 +294,8 @@ public class PICustomData {
     public static Ex SetValue(TExArgCtx tac, Type t, string name, Ex val) =>
         PICustomDataBuilder.DISABLE_TYPE_BUILDING ?
             SetValueDynamic(tac, t, name, val) :
-        tac.Ctx.CustomDataType is { } cdt ?
-            tac.BPI.FiringCtx.As(cdt)
-                .Field(Metadata.GetFieldName(name, t)).Is(val) :
+        tac.Ctx.CustomDataType is var (_, downcast) ?
+            downcast(tac).Field(Metadata.GetFieldName(name, t)).Is(val) :
             ExFunction.WrapAny<PICustomData>(
                     Metadata.FieldWriterMethodName(t))
                 .InstanceOf(
@@ -655,7 +664,7 @@ public struct ParametricInfo {
     public ParametricInfo Rehash() => new(ctx, loc, index, RNG.Rehash(id), t);
     public ParametricInfo CopyWithT(float newT) => new(ctx, loc, index, id, newT);
 
-    public ParametricInfo CopyCtx(uint newId) => new(ctx.Clone(), loc, index, newId, t);
+    public ParametricInfo CopyCtx(uint newId) => new(ctx.Clone_NoAlloc(), loc, index, newId, t);
     
     /// <summary>
     /// Flips the position around an X or Y axis.
@@ -773,7 +782,7 @@ public delegate T GCXF<T>(GenCtx gcx);
 /// A wrapper type used to upload values from a GCX to private data hoisting before providing a delegate to a new object.
 /// <br/>It is recommended to call <see cref="CompileDelegate"/> or <see cref="ShareTypeAndCompile"/> immediately after construction, as this avoids compiling expressions or types during gameplay, and is also required for AOT support.
 /// </summary>
-public abstract record GCXU(List<(Type, string)> BoundAliases) {
+public abstract record GCXU(IReadOnlyList<(Type, string)> BoundAliases) {
     public ConstructedType? CustomDataType { get; private set; }
 
     public abstract void CompileDelegate();
@@ -837,7 +846,7 @@ public abstract record GCXU(List<(Type, string)> BoundAliases) {
 
 /// <inheritdoc/>
 /// <typeparam name="Fn">Delegate type (eg. TP, BPY, Pred)</typeparam>
-public record GCXU<Fn>(List<(Type, string)> BoundAliases, Func<ConstructedType, Fn> LazyDelegate) : GCXU(BoundAliases) {
+public record GCXU<Fn>(IReadOnlyList<(Type, string)> BoundAliases, Func<ConstructedType, Fn> LazyDelegate) : GCXU(BoundAliases) {
     private Func<ConstructedType, Fn> LazyDelegate { get; set; } = LazyDelegate;
     private Fn? _delegate;
 

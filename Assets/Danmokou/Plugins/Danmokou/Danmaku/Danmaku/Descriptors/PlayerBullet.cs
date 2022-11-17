@@ -14,12 +14,14 @@ public readonly struct PlayerBullet {
 }
 public readonly struct PlayerBulletCfg {
     public readonly int cdFrames;
+    public readonly bool destructible;
     public readonly int bossDmg;
     public readonly int stageDmg;
     public readonly EffectStrategy effect;
 
-    public PlayerBulletCfg(int cd, int boss, int stage, EffectStrategy eff) {
+    public PlayerBulletCfg(int cd, bool destructible, int boss, int stage, EffectStrategy eff) {
         cdFrames = cd;
+        this.destructible = destructible;
         bossDmg = boss;
         stageDmg = stage;
         effect = eff;

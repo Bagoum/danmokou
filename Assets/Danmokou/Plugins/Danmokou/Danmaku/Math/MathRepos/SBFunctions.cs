@@ -100,7 +100,7 @@ public class TExSBC : TEx<SimpleBulletCollection> {
     public TExSB this[Ex index] => new(data.Index(index));
     private static readonly ExFunction delete = ExFunction.Wrap<SimpleBulletCollection>("DeleteSB",
         new[] {typeof(int)});
-    private static readonly ExFunction softcull = ExFunction.Wrap<SimpleBulletCollection>("Softcull",
+    private static readonly ExFunction softcull = ExFunction.Wrap<SimpleBulletCollection>(nameof(SimpleBulletCollection.Softcull),
         new[] {typeof(SimpleBulletCollection), typeof(int), typeof(SoftcullProperties)});
     private static readonly ExFunction isAlive =
         ExFunction.Wrap<SimpleBulletCollection>("IsAlive", typeof(int));

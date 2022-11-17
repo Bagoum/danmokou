@@ -47,7 +47,7 @@ namespace Danmokou.SM {
 public static class SMReflection {
     private static readonly ReflWrap<Func<float, float, float, ParametricInfo, float>> CrosshairOpacity =
         ReflWrap.FromFunc("SMReflection.CrosshairOpacity", () =>
-            CompileDelegate<Func<float, float, float, ParametricInfo, float>>(@"
+            PrepareDelegate<Func<float, float, float, ParametricInfo, float>>(@"
 if (> t &fadein,
     if(> t &homesec,
         c(einsine((t - &homesec) / &sticksec)),
@@ -333,8 +333,8 @@ if (> t &fadein,
     /// Save some information in public data hoisting.
     /// <br/>Public data hoisting is two-layer: it requires a name and an index.
     /// </summary>
-    [GAlias(typeof(float), "SaveF")]
-    [GAlias(typeof(Vector2), "SaveV2")]
+    [GAlias("SaveF", typeof(float))]
+    [GAlias("SaveV2", typeof(Vector2))]
     public static TaskPattern Save<T>(ReflectEx.Hoist<T> name, GCXF<float> indexer, GCXF<T> valuer) => smh => {
         name.Save((int) indexer(smh.GCX), valuer(smh.GCX));
         return Task.CompletedTask;
@@ -344,9 +344,9 @@ if (> t &fadein,
     /// <summary>
     /// Apply a controller function to individual entities.
     /// </summary>
-    [GAlias(typeof(BulletManager.cBulletControl), "BulletControl")]
-    [GAlias(typeof(BehaviorEntity.cBEHControl), "BEHControl")]
-    [GAlias(typeof(CurvedTileRenderLaser.cLaserControl), "LaserControl")]
+    [GAlias("BulletControl", typeof(BulletManager.cBulletControl))]
+    [GAlias("BEHControl", typeof(BehaviorEntity.cBEHControl))]
+    [GAlias("LaserControl", typeof(CurvedTileRenderLaser.cLaserControl))]
     public static TaskPattern ParticleControl<CF>(Pred persist, BulletManager.StyleSelector style, CF control) {
         return smh => {
             if (control is BehaviorEntity.cBEHControl bc)
@@ -364,9 +364,9 @@ if (> t &fadein,
     /// <summary>
     /// Apply a controller function to a pool of entities.
     /// </summary>
-    [GAlias(typeof(SPCF), "PoolControl")]
-    [GAlias(typeof(BehPF), "BEHPoolControl")]
-    [GAlias(typeof(LPCF), "LaserPoolControl")]
+    [GAlias("PoolControl", typeof(SPCF))]
+    [GAlias("BEHPoolControl", typeof(BehPF))]
+    [GAlias("LaserPoolControl", typeof(LPCF))]
     public static TaskPattern PoolControl<CF>(BulletManager.StyleSelector style, CF control) => smh => {
         if      (control is BehPF bc) 
             smh.Context.PhaseObjects.Add(BehaviorEntity.ControlPool(style, bc, smh.cT.Root));

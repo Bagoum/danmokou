@@ -43,6 +43,7 @@
   </PropertyGroup>
   <ItemGroup>
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Utility\MatRevealKW.cs" />
+     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Utility\TmpTestUIFreeform.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Utility\DebugCamRender.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Utility\SetIL2CPP.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Utility\CreateReplays.cs" />
@@ -51,7 +52,6 @@
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Utility\CameraFocusOnPt.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Utility\InputAlignmentDebug.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Utility\DebugTemp.cs" />
-     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Utility\TmpTestUIFreeform.cs" />
      <None Include="Assets\Danmokou\Plugins\Danmokou\Utility\Danmokou.EditorUtility.asmdef" />
      <Reference Include="UnityEngine">
      <HintPath>C:\Program Files\Unity\Hub\Editor\2021.3.7f1\Editor\Data\Managed\UnityEngine\UnityEngine.dll</HintPath>
@@ -304,6 +304,9 @@
      </Reference>
      <Reference Include="MathNet.Numerics">
      <HintPath>E:\Workspace\unity\Danmokou\Assets\Danmokou\Plugins\DLLs\MathNet.Numerics.dll</HintPath>
+     </Reference>
+     <Reference Include="CommunityToolkit.HighPerformance">
+     <HintPath>E:\Workspace\unity\Danmokou\Assets\Danmokou\Plugins\DLLs\CommunityToolkit.HighPerformance.dll</HintPath>
      </Reference>
      <Reference Include="BagoumLib">
      <HintPath>E:\Workspace\unity\Danmokou\Assets\SZYU\Plugins\DLLs\BagoumLib.dll</HintPath>

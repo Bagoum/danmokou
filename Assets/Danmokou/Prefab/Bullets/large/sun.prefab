@@ -90,7 +90,7 @@ MonoBehaviour:
   timeRandomization: 0
   rotateRandomization: 0
   damage: 1
-  framesPerHit: 360
+  framesPerHit: 60
 --- !u!114 &-354249633457500882
 MonoBehaviour:
   m_ObjectHideFlags: 0

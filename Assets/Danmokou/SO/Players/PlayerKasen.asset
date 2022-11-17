@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   freeSpeed: 4.2
   focusSlowdown: 0.44
-  hitboxRadius: 0.034
-  grazeboxRadius: 0.69
+  hurtboxRadius: 0.034
+  grazeboxRadius: 0.42
   key: basic-kasen
   shortTitle:
     useReference: 1

@@ -45,6 +45,7 @@
      <Compile Include="Assets\TestLinuxReflection.cs" />
      <Compile Include="Assets\Danmokou\Models\MirrorShatter\MirrorBreak.cs" />
      <Compile Include="Assets\Danmokou\Scenes\Scratch\SetT.cs" />
+     <None Include="Assets\Danmokou\Patterns\examples\bullet on bullet collision.bdsl" />
      <None Include="Assets\Danmokou\Patterns\Phase Bounding Test.bdsl" />
      <None Include="Assets\Danmokou\Patterns\feature testing\movement references.bdsl" />
      <None Include="Assets\Danmokou\Patterns\examples\time control ex.bdsl" />
@@ -91,6 +92,7 @@
      <None Include="Assets\Danmokou\Patterns\feature testing\graphme.bdsl" />
      <None Include="Assets\Danmokou\Rendering\Shaders\Display\UI\UI RT.shader" />
      <None Include="Assets\Danmokou\Patterns\minor utility\demo_setup_sm.bdsl" />
+     <None Include="Assets\SZYU\Plugins\DLLs\System.Runtime.CompilerServices.Unsafe.xml" />
      <None Include="Assets\Danmokou\Patterns\Testing\Phony Stage 2.txt" />
      <None Include="Assets\Danmokou\Patterns\PlayerFire\TEST Position Tracking 1234.bdsl" />
      <None Include="Assets\link.xml" />
@@ -407,6 +409,7 @@
      <None Include="Assets\Danmokou\Patterns\examples\fancy pathers.bdsl" />
      <None Include="Assets\Danmokou\Rendering\Shaders\Viewfinder.shader" />
      <None Include="Assets\SiMP\Dialogue\simp.dialogue.2.1.txt" />
+     <None Include="Assets\Danmokou\Patterns\examples\set let symmetry.bdsl" />
      <None Include="Assets\Danmokou\UXML\structures\Markdown\MkLine.uxml" />
      <None Include="Assets\Danmokou\Rendering\Shaders\Display\NegativeBelow.shader" />
      <None Include="Assets\SiMP\Dialogue\simp.dialogue.1.2.txt" />
@@ -416,6 +419,7 @@
      <None Include="Assets\Danmokou\Rendering\Shaders\Display\FinalScreenRender.shader" />
      <None Include="Assets\SiMP\Scripts\simp.stage2_v3.bdsl" />
      <None Include="Assets\TextMesh Pro\Sprites\EmojiOne.json" />
+     <None Include="Assets\Danmokou\Plugins\DLLs\CommunityToolkit.HighPerformance.xml" />
      <None Include="Assets\Danmokou\Patterns\Testing\RunFor Test.txt" />
      <None Include="Assets\TextMesh Pro\Shaders\TMP_Sprite.shader" />
      <None Include="Assets\Danmokou\Patterns\PlayerFire\Reimu DDCB 1234.bdsl" />
@@ -669,6 +673,9 @@
      </Reference>
      <Reference Include="MathNet.Numerics">
      <HintPath>E:\Workspace\unity\Danmokou\Assets\Danmokou\Plugins\DLLs\MathNet.Numerics.dll</HintPath>
+     </Reference>
+     <Reference Include="CommunityToolkit.HighPerformance">
+     <HintPath>E:\Workspace\unity\Danmokou\Assets\Danmokou\Plugins\DLLs\CommunityToolkit.HighPerformance.dll</HintPath>
      </Reference>
      <Reference Include="BagoumLib">
      <HintPath>E:\Workspace\unity\Danmokou\Assets\SZYU\Plugins\DLLs\BagoumLib.dll</HintPath>
@@ -1125,6 +1132,10 @@
      </Reference>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="Danmokou.BRuH.csproj">
+      <Project>{6d433cd1-a4e5-b620-ef6e-59c456f1d9eb}</Project>
+      <Name>Danmokou.BRuH</Name>
+    </ProjectReference>
     <ProjectReference Include="Danmokou.SiMP.csproj">
       <Project>{2b51e034-c2e3-0d5d-6f71-5d0d5edfc8fe}</Project>
       <Name>Danmokou.SiMP</Name>
@@ -1172,10 +1183,6 @@
     <ProjectReference Include="Danmokou.Core.csproj">
       <Project>{fb76ea87-6c0d-f91b-47d2-a55fce61d2df}</Project>
       <Name>Danmokou.Core</Name>
-    </ProjectReference>
-    <ProjectReference Include="Danmokou.BRuH.csproj">
-      <Project>{6d433cd1-a4e5-b620-ef6e-59c456f1d9eb}</Project>
-      <Name>Danmokou.BRuH</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

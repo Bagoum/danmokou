@@ -345,10 +345,14 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
                 prms[ii] = Params[ii].EvaluateObject(data);
             construct:
             var result = Method.InvokeMi(prms);
-            if (Method.Mi.GetCustomAttribute<ExtendGCXUExposedAttribute>() != null && data.ExposedVariables.Count > 0)
-                (result as GCXU ?? throw new StaticException(
-                        $"{nameof(ExtendGCXUExposedAttribute)} used on method {Method.Name} that does not return GCXU"))
-                    .BoundAliases.AddRange(data.ExposedVariables.Select(x => (x.Item1.AsType(), x.Item2)));
+            if (Method.Mi.GetCustomAttribute<ExtendGCXUExposedAttribute>() != null && data.ExposedVariables.Count > 0) {
+                var gcxu = (result as GCXU ?? throw new StaticException(
+                    $"{nameof(ExtendGCXUExposedAttribute)} used on method {Method.Name} that does not return GCXU"));
+                return gcxu with {
+                    BoundAliases = gcxu.BoundAliases.Concat(
+                        data.ExposedVariables.Select(x => (x.Item1.AsType(), x.Item2))).ToList()
+                };
+            }
             return result;
         }
     }
@@ -593,9 +597,9 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
     /// <summary>
     /// AST for <see cref="ReflectEx.Alias"/>
     /// </summary>
-    public record Alias(PositionRange DeclPos, PositionRange AliasPos, string Name, IAST Content) : AST(DeclPos.Merge(AliasPos).Merge(Content.Position), Content),
+    public record Alias(PositionRange DeclPos, PositionRange AliasPos, Type Type, string Name, IAST Content) : AST(DeclPos.Merge(AliasPos).Merge(Content.Position), Content),
         IAST<ReflectEx.Alias> {
-        public ReflectEx.Alias Evaluate(ASTEvaluationData data) => new(Name,
+        public ReflectEx.Alias Evaluate(ASTEvaluationData data) => new(Type, Name,
             Content.EvaluateObject(data) as Func<TExArgCtx, TEx> ?? throw new StaticException("Alias failed cast"));
 
         public override IEnumerable<SemanticToken> ToSemanticTokens() => new[] {
@@ -603,7 +607,7 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
             new SemanticToken(AliasPos, SemanticTokenTypes.Parameter)
         }.Concat(Content.ToSemanticTokens());
 
-        public override string Explain() => $"{CompactPosition} Alias for '{Name}'";
+        public override string Explain() => $"{CompactPosition} Variable '{Name}' (type {Type.RName()})";
         public override DocumentSymbol ToSymbolTree()
             => new(Name, $"Alias", SymbolKind.Variable, 
                 Position.ToRange(), FlattenParams());

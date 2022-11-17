@@ -12,7 +12,7 @@ public partial class BehaviorEntity {
 
     private const float LABEL_RAD = 0.67f;
     public void DropDropLabel(IGradient color, string text, float speed=0.4f, float ttl=0.7f, float multiplier=1f) {
-        var req = new LabelRequestContext(Loc, LABEL_RAD, speed, RNG.GetFloatOffFrame(40, 140), ttl, color, text, multiplier);
+        var req = new LabelRequestContext(Location, LABEL_RAD, speed, RNG.GetFloatOffFrame(40, 140), ttl, color, text, multiplier);
         ItemPooler.RequestLabel(req);
     }
     
@@ -35,10 +35,10 @@ public partial class BehaviorEntity {
     }
 
     private void DropEvenly(ItemType t, int count, bool autocollect, float r, float a0 = 90f) => 
-        DropEvenly(t, Loc, count, autocollect, r, a0);
+        DropEvenly(t, Location, count, autocollect, r, a0);
     private void DropEvenly(ItemType t, ItemType s, double exchange, double count, bool autocollect, 
         float r, float a0 = 90f) => 
-        DropEvenly(t, s, exchange, Loc, count, autocollect, r, a0);
+        DropEvenly(t, s, exchange, Location, count, autocollect, r, a0);
 
 #if UNITY_EDITOR
     [ContextMenu("Drop some power")]

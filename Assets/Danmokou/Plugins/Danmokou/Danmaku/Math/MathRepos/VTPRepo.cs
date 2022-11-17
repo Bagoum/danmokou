@@ -388,9 +388,8 @@ public static class VTPRepo {
     /// <summary>
     /// Bind values to the aliases and then execute the inner content with those aliases.
     /// </summary>
-    [Alias(":::")]
-    public static ExVTP LetDecl(ReflectEx.Alias[] aliases, ExVTP inner) => (c, s, bpi, nrv) =>
-        ReflectEx.Let2(aliases, () => inner(c, s, bpi, nrv), bpi);
+    public static ExVTP Let(ReflectEx.Alias[] aliases, ExVTP inner) => (c, s, bpi, nrv) =>
+        ReflectEx.LetAlias(aliases, () => inner(c, s, bpi, nrv), bpi);
 }
 
 public static class CSVTPRepo {

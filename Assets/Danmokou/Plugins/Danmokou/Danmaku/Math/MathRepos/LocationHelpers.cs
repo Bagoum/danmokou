@@ -4,6 +4,7 @@ using UnityEngine;
 using Ex = System.Linq.Expressions.Expression;
 using Danmokou.Behavior;
 using Danmokou.Core;
+using Danmokou.Danmaku.Options;
 using Danmokou.DataHoist;
 using Danmokou.Expressions;
 using static Danmokou.DMath.Functions.ExM;
@@ -95,15 +96,13 @@ public static partial class ExM {
     /// Height of the playing field (YMax - YMin)
     /// </summary>
     public static TEx<float> YHeight() => LocationHelpers.height;
-    
-    private static readonly ExFunction GetEnemyVisiblePlayer =
-        ExFunction.Wrap(typeof(LocationHelpers), "GetEnemyVisiblePlayer");
-    
+
     /// <summary>
     /// Get the location of the player as visible to enemies.
     /// </summary>
     /// <returns></returns>
-    public static TEx<Vector2> LPlayer() => GetEnemyVisiblePlayer.Of();
+    public static TEx<Vector2> LPlayer() =>
+        Ex.Property(null, typeof(LocationHelpers), nameof(LocationHelpers.VisiblePlayerLocation));
 
     /// <summary>
     /// Get the location of the BehaviorEntity with the given ID.
@@ -144,6 +143,11 @@ public static partial class BPYRepo {
 }
 public static partial class Parametrics {
 
+    /// <summary>
+    /// Get the location of the closest enemy.
+    /// <br/>WARNING: It is inoptimal to use this in <see cref="LaserOption"/>.<see cref="LaserOption.Dynamic"/>.
+    /// Instead, use <see cref="LaserOption.BeforeDraw"/> with this function, and use the saved value in Dynamic.
+    /// </summary>
     public static ExTP LNearestEnemy() => b => {
         var loc = new TExV2();
         return Ex.Block(new ParameterExpression[] { loc },

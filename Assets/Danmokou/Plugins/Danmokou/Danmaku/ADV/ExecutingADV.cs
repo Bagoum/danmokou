@@ -27,6 +27,9 @@ public interface IExecutingADV : IRegularUpdater, IDisposable {
     ADVManager Manager => Inst.Manager;
     DMKVNState VN => Inst.VN;
     IMapStateManager MapStates { get; }
+    /// <summary>
+    /// Run the ADV. Returns an <see cref="IADVCompletion"/> when the entirety of the ADV is complete.
+    /// </summary>
     Task<IADVCompletion> Run();
 }
 

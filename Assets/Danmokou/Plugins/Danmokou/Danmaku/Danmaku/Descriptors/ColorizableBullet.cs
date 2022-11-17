@@ -9,10 +9,9 @@ namespace Danmokou.Danmaku.Descriptors {
 public class ColorizableBullet : Bullet {
 
     public override void Initialize(BEHStyleMetadata? style, RealizedBehOptions options,
-        BehaviorEntity? parent, Movement mov, ParametricInfo pi, SOPlayerHitbox _target,
-        out int layer) {
+        BehaviorEntity? parent, Movement mov, ParametricInfo pi, out int layer) {
         if (style?.recolor != null) Colorize(style.recolor.GetOrLoadRecolor());
-        base.Initialize(style, options, parent, mov, pi, _target, out layer);
+        base.Initialize(style, options, parent, mov, pi, out layer);
     }
 
     protected virtual void Colorize(FrameAnimBullet.Recolor r) {

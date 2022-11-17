@@ -18,12 +18,12 @@ public class Pather : FrameAnimBullet {
         base.Awake();
     }
 
-    private void Initialize(bool isNew, Movement movement, ParametricInfo pi, SOPlayerHitbox _target, float maxRemember,
+    private void Initialize(bool isNew, Movement movement, ParametricInfo pi, float maxRemember,
         BPY remember, BEHStyleMetadata style, ref RealizedBehOptions options) {
         ctr.SetYScale(options.scale); //Needs to be done before Colorize sets first frame
         //Order is critical so rBPI override points to initialized data on SM start
-        ctr.Initialize(this, config, style.RecolorOrThrow.material, isNew, movement, pi, remember, maxRemember, _target, ref options);
-        base.Initialize(style, options, null, movement.WithNoMovement(), pi, _target, out _); // Call after Awake/Reset
+        ctr.Initialize(this, config, style.RecolorOrThrow.material, isNew, movement, pi, remember, maxRemember, ref options);
+        base.Initialize(style, options, null, movement.WithNoMovement(), pi, out _); // Call after Awake/Reset
         ctr.Activate(); //This invokes UpdateMesh
     }
 
@@ -32,15 +32,21 @@ public class Pather : FrameAnimBullet {
     public override void RegularUpdateParallel() {
         if (nextUpdateAllowed) ctr.UpdateMovement(ETime.FRAME_TIME);
     }
+    public override bool HasNontrivialParallelUpdate => true;
     
     protected override void RegularUpdateMove() { }
+    protected override bool RegularUpdateCullCheck() => base.RegularUpdateCullCheck() || ctr.CullCheck();
 
-    protected override void RegularUpdateRender() {
-        base.RegularUpdateRender();
-        ctr.UpdateRender();
+    public override void RegularUpdateCollision() {
+        if (collisionActive)
+            ctr.DoRegularUpdateCollision();
     }
 
-    protected override CollisionResult CollisionCheck() => ctr.CheckCollision();
+    public override void RegularUpdateFinalize() {
+        ctr.UpdateRender();
+        base.RegularUpdateFinalize();
+    }
+
 
     protected override void SetSprite(Sprite s, float yscale) {
         ctr.SetSprite(s, yscale);
@@ -52,9 +58,9 @@ public class Pather : FrameAnimBullet {
         base.InvokeCull();
     }
 
-    public static void Request(BEHStyleMetadata style, Movement movement, ParametricInfo pi, float maxRemember, BPY remember, SOPlayerHitbox collisionTarget, ref RealizedBehOptions opts) {
+    public static void Request(BEHStyleMetadata style, Movement movement, ParametricInfo pi, float maxRemember, BPY remember, ref RealizedBehOptions opts) {
         Pather created = (Pather) BEHPooler.RequestUninitialized(style.RecolorOrThrow.prefab, out bool isNew);
-        created.Initialize(isNew, movement, pi, collisionTarget, maxRemember, remember, style, ref opts);
+        created.Initialize(isNew, movement, pi, maxRemember, remember, style, ref opts);
     }
 
     public override ref ParametricInfo rBPI => ref ctr.BPI;

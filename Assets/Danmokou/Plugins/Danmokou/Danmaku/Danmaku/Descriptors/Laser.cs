@@ -28,10 +28,10 @@ public class Laser : FrameAnimBullet {
         ctr = new CurvedTileRenderLaser(config, gameObject);
         base.Awake();
     }
-    private void Initialize(bool isNew, BehaviorEntity? parent, Movement movement, ParametricInfo pi, SOPlayerHitbox _target, float cold, float hot, BEHStyleMetadata style, ref RealizedLaserOptions options) {
+    private void Initialize(bool isNew, BehaviorEntity? parent, Movement movement, ParametricInfo pi, float cold, float hot, BEHStyleMetadata style, ref RealizedLaserOptions options) {
         pi.ctx.laserController = ctr;
         ctr.SetYScale(options.yScale * defaultWidthMultiplier); //Needs to be done before Colorize sets first frame
-        base.Initialize(style, options.AsBEH, parent, movement, pi, _target, out _); // Call after Awake/Reset
+        base.Initialize(style, options.AsBEH, parent, movement, pi, out _); // Call after Awake/Reset
         if (options.endpoint != null) {
             var beh = BEHPooler.INode(Movement.None, new ParametricInfo(Vector2.zero, bpi.index),
                 Vector2.right, options.endpoint);
@@ -47,13 +47,16 @@ public class Laser : FrameAnimBullet {
     public override void RegularUpdateParallel() {
         ctr.UpdateMovement(ETime.FRAME_TIME);
     }
+    public override bool HasNontrivialParallelUpdate => true;
 
-    protected override void RegularUpdateRender() {
-        base.RegularUpdateRender();
-        ctr.UpdateRender();
+    public override void RegularUpdateCollision() {
+        if (collisionActive)
+            ctr.DoRegularUpdateCollision();
     }
-
-    protected override CollisionResult CollisionCheck() => ctr.CheckCollision(collisionTarget);
+    public override void RegularUpdateFinalize() {
+        ctr.UpdateRender();
+        base.RegularUpdateFinalize();
+    }
 
     protected override void SetSprite(Sprite s, float yscale) {
         ctr.SetSprite(s, yscale);
@@ -78,9 +81,9 @@ public class Laser : FrameAnimBullet {
     }
 
     public static void Request(BEHStyleMetadata style, BehaviorEntity? parent, Movement vel, ParametricInfo pi, 
-        float cold, float hot, SOPlayerHitbox collisionTarget, ref RealizedLaserOptions options) {
+        float cold, float hot, ref RealizedLaserOptions options) {
         Laser created = (Laser) BEHPooler.RequestUninitialized(style.RecolorOrThrow.prefab, out bool isNew);
-        created.Initialize(isNew, parent, vel, pi, collisionTarget, cold, hot, style, ref options);
+        created.Initialize(isNew, parent, vel, pi, cold, hot, style, ref options);
     }
     
     protected override void UpdateStyle(BEHStyleMetadata newStyle) {

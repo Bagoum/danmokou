@@ -81,9 +81,7 @@ public class GameManagement : CoroutineRegularUpdater {
     public static UXMLReferences UXMLPrefabs => References.uxmlDefaults;
     public static AchievementManager? Achievements { get; private set; }
 
-    public SOPlayerHitbox visiblePlayer = null!;
     public bool OpenAsDebugMode = false;
-    public static Vector2 VisiblePlayerLocation => Main.visiblePlayer.location;
 
     private static InstanceFeatures DefaultFeatures => 
         References.gameDefinition is IDanmakuGameDef g ?
@@ -153,7 +151,7 @@ public class GameManagement : CoroutineRegularUpdater {
         if (Instance.Request == null) throw new Exception("No game instance found to restart");
         Instance.Request.Cancel();
         InstanceRequest.InstanceRestarted.OnNext(Instance.Request);
-        return Instance.Request.Copy().Run() is { };
+        return Instance.Request.Copy().Run();
     }
 
     public static bool CanRestart => Instance.Request != null;

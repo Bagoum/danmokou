@@ -194,6 +194,7 @@ public abstract class StateMachine {
         //{"bpat", typeof(BulletPatternLASM)},
         {"event", typeof(EventLASM)},
         {"anim", typeof(AnimatorControllerLASM)},
+        {"collide", typeof(BxBCollideLASM)},
         {"@", typeof(RetargetUSM)},
         {"~", typeof(NoBlockUSM)},
         {"break", typeof(BreakSM)},

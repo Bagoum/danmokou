@@ -27,7 +27,11 @@ public class TExArgCtx {
     /// </summary>
     public class RootCtx {
         public ReflectEx.ICompileReferenceResolver? ICRR { get; set; }
-        public Type? CustomDataType { get; set; }
+        /// <summary>
+        /// When the type of the custom data (<see cref="PICustomData"/>) is known, this contains
+        ///  the type, as well as a function to get the custom data downcast to that type.
+        /// </summary>
+        public (Type type, Func<TExArgCtx, Expression> bpiAsType)? CustomDataType { get; set; }
         public Dictionary<string, Stack<Expression>> AliasStack { get; } =
             new();
 

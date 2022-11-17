@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using BagoumLib;
+using BagoumLib.Functional;
 using Danmokou.Behavior;
 using UnityEngine;
 using Danmokou.DMath;
@@ -11,17 +12,33 @@ using Danmokou.DataHoist;
 using Danmokou.Player;
 using Danmokou.Scriptables;
 using JetBrains.Annotations;
+using UnityEditor;
 
 namespace Danmokou.Danmaku.Descriptors {
+
+[Serializable]
+public struct CollisionInfo {
+    public bool CollisionActiveOnInit;
+    public bool destructible;
+    public ushort grazeEveryFrames;
+}
 
 //This is for complex bullets with custom behavior
 public class Bullet : BehaviorEntity {
     [Header("Bullet Config")] 
     private ICollider? icollider;
+    //for enemy bullets
+    public Maybe<PlayerController> Target { get; private set; }
+    //for player bullets
     public PlayerBullet? Player { get; private set; } = null;
     private BPY? hueShift;
     [Tooltip("This will be instantiated once per recoloring, and used for SM material editing.")]
     public Material material = null!;
+    
+    protected bool collisionActive = false;
+
+    public CollisionInfo collisionInfo;
+    public int Damage => 1;
 
     protected void SetMaterial(Material newMat) {
         material = newMat;
@@ -60,20 +77,47 @@ public class Bullet : BehaviorEntity {
     /// </summary>
     protected override void ResetValues() {
         base.ResetValues();
+        collisionActive = collisionInfo.CollisionActiveOnInit;
         allBullets.Add(this);
     }
 
-    public virtual void Initialize(BEHStyleMetadata? style, RealizedBehOptions options, BehaviorEntity? parent, Movement mov, ParametricInfo pi, SOPlayerHitbox _target, out int layer) {
+    public virtual void Initialize(BEHStyleMetadata? style, RealizedBehOptions options, BehaviorEntity? parent, Movement mov, ParametricInfo pi, out int layer) {
+        Target = ServiceLocator.MaybeFind<PlayerController>();
         Player = options.playerBullet;
         base.Initialize(style, mov, pi, options.smr, parent, options: options);
         gameObject.layer = layer = options.layer ?? DefaultLayer;
-        collisionTarget = _target;
         hueShift = options.hueShift;
     }
+    
 
+    public override void RegularUpdateCollision() {
+        if (icollider == null) return;
+        if (Player.Try(out var plb)) {
+            var enemies = Enemy.FrozenEnemies;
+            for (int ii = 0; ii < enemies.Count; ++ii) {
+                if (enemies[ii].Active &&
+                    icollider.CheckCollision(in bpi.loc.x, in bpi.loc.y, Direction, 1f,  
+                        enemies[ii].location.x, enemies[ii].location.y, enemies[ii].radius)) {
+                    enemies[ii].enemy.TakeHit(in plb, in bpi);
+                    if (collisionInfo.destructible) {
+                        InvokeCull();
+                        return;
+                    }
+                }
+            }
+        } else if (Target.Valid) {
+            var coll = icollider.CheckGrazeCollision(in bpi.loc.x, in bpi.loc.y, Direction, 1f, Target.Value.Hurtbox);
+            Target.Value.ProcessCollision(coll, Damage, in bpi, in collisionInfo.grazeEveryFrames);
+            if (coll.collide && collisionInfo.destructible) {
+                InvokeCull();
+                return;
+            }
+        }
+    }
 
     public override void InvokeCull() {
         if (dying) return;
+        collisionActive = false;
         allBullets.Remove(this);
         base.InvokeCull();
     }
@@ -94,27 +138,10 @@ public class Bullet : BehaviorEntity {
         displayer!.SetHueShift(hueShift?.Invoke(bpi) ?? 0f);
     }
 
-    protected override CollisionResult CollisionCheck() {
-        if (icollider == null) return base.CollisionCheck();
-        if (Player.Try(out var plb)) {
-            var fe = Enemy.FrozenEnemies;
-            for (int ii = 0; ii < fe.Count; ++ii) {
-                if (fe[ii].Active && icollider.CheckCollision(Loc, Direction, 1f, fe[ii].pos, fe[ii].radius) 
-                                  && fe[ii].enemy.TryHitIndestructible(bpi.id, plb.data.cdFrames)) {
-                    fe[ii].enemy.QueuePlayerDamage(plb.data.bossDmg, plb.data.stageDmg, plb.firer);
-                    fe[ii].enemy.ProcOnHit(plb.data.effect, Loc);
-                }
-            }
-        } else if (collisionTarget.Active) {
-            return icollider.CheckGrazeCollision(Loc, Direction, 1f, collisionTarget.Hitbox);
-        }
-        return CollisionMath.noColl;
-        
-    }
-
 
 #if UNITY_EDITOR
     public static int NumBullets => allBullets.Count;
+    
 #endif
 }
 }

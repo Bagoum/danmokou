@@ -6,12 +6,23 @@ gtr {
 	async needle-orange <> gcr2 1 _ <> { 
 		delay(3 * p)
 		sfx x-pc-fire-1
-	} simple tprot py 13 { player 2 2 oh1-red }
+		start {
+			myang =f 90
+		}
+	} simple tprot py 13 { 
+		player 2 2 oh1-red 
+		dir &myang
+	}
 	## free cancellation
 	noop
 	## focus
-	async needle2-purple <> gcr2 12 _ <> { 
-		sfx x-pc-fire-1 
-	} simple tprot py(13 + 3.5 * (p // 2)) { player  34 34 oh1-purple }
+	async moon-teal/w <;0.5:> gcr2 140 _ <> { 
+		clip(> p 0)
+		delay 140 ##We still need this delay so flashing Z doesn't repeatedly fire this
+		while > playerfiringfocusT mine 0
+	} complex tprot cy 2.7 { 
+		## scale(- 0.75 sine 5 0.15 + 2 t)
+		player 60 460 170 oh1-red
+	}
 	## focus cancellation
 	noop

@@ -414,15 +414,17 @@ public static class M {
     }
 }
 
-public readonly struct Hitbox {
+public readonly struct Hurtbox {
     public readonly float x;
     public readonly float y;
     public readonly float radius;
     public readonly float radius2;
     public readonly float largeRadius;
     public readonly float largeRadius2;
+    public readonly Vector2 location;
 
-    public Hitbox(Vector2 loc, float rad, float lrad) {
+    public Hurtbox(Vector2 loc, float rad, float lrad) {
+        location = loc;
         x = loc.x;
         y = loc.y;
         radius = rad;
@@ -430,6 +432,8 @@ public readonly struct Hitbox {
         largeRadius = lrad;
         largeRadius2 = lrad * lrad;
     }
+
+    public Hurtbox(Vector2 loc, float rad) : this(loc, rad, rad) { }
 }
 
 public readonly struct CCircle {

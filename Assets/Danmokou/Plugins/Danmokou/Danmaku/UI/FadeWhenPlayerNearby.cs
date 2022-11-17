@@ -1,6 +1,9 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using BagoumLib.Functional;
 using Danmokou.Behavior;
+using Danmokou.Core;
+using Danmokou.Player;
 using Danmokou.Scriptables;
 using TMPro;
 using UnityEngine;
@@ -10,20 +13,27 @@ public class FadeWhenPlayerNearby : CoroutineRegularUpdater {
     public SpriteRenderer[] sprites = null!;
     public TextMeshPro[] texts = null!;
 
-    public SOPlayerHitbox player = null!;
     public Vector2 radius;
     public Vector2 fade;
 
     private Transform tr = null!;
+    private PlayerController player = null!;
 
     private void Awake() {
         tr = transform;
-        RunDroppableRIEnumerator(CheckPlayer());
+    }
+
+    public override void FirstFrame() {
+        var p = ServiceLocator.FindOrNull<PlayerController>();
+        if (p != null) {
+            player = p;
+            RunDroppableRIEnumerator(CheckPlayer());
+        }
     }
 
     private IEnumerator CheckPlayer() {
         while (true) {
-            float dist = (player.location - (Vector2) tr.position).magnitude;
+            float dist = (player.Location - (Vector2) tr.position).magnitude;
             float ratio = Mathf.Clamp01((dist - radius.x) / (radius.y - radius.x));
             float opacity = Mathf.Lerp(fade.x, fade.y, ratio);
 

@@ -4,7 +4,7 @@ pattern({
 })
 phase(0)
 	paction(0)
-		shift-phase-to(1)
+		shift-phase-to(2)
 
 !{ hello(x, y)
 %x + %y
@@ -15,14 +15,36 @@ $%f(%x)
 
 
 <!> type non nest
+<!> hp 10000
+phase 0
+	paction 0
+		position -3 4
+
+		sync ellipse-red/w <0;:> gsr2 1 <> {
+			start {
+				x =f 1
+			}
+		} s tprot pxy 1 set({
+			f x (&x + 1f)
+		}, -1 * (&x - 1))
+
+		sync lellipse-green/w <0;:> gsr2 1 <> {
+
+		} s tprot pxy 1 let({
+			f x (t + 1)
+			v2 y px(1)
+		}, -1 * (&x - [&y].x))
+
+
+<!> type non nest
 <!> hp 100000
 phase 0
 	paction 0
-		position 0 0
+		position -2 0
 		async fairy1 <-3.3;4:> gir2 10 11 <;-0.3:> {
 		} gcr2 10 13 <0.4;:> {
 		} summon null stall {
-			hp 100000
+			hp 1000
 		}
 
 <!> type non depthsort

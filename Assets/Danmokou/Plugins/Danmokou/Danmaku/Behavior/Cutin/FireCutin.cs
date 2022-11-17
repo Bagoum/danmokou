@@ -119,7 +119,8 @@ public class FireCutin : BehaviorEntity {
         ServiceLocator.SFXService.Request("x-metal");
     }
 
-    protected override void RegularUpdateRender() {
+    public override void RegularUpdateFinalize() {
+        base.RegularUpdateFinalize();
         tr.localPosition += (Vector3) velMov(bpi) * ETime.FRAME_TIME;
         upperTr.localPosition = upperTextBaseLoc + upperTextLerp(bpi);
         upperTr.localScale = (new Vector3(1, 1, 1)) * upperTextScaler(bpi);
@@ -133,7 +134,6 @@ public class FireCutin : BehaviorEntity {
         textBackPB.SetFloat(PropConsts.time, bpi.t);
         textBackPB.SetFloat(PropConsts.fillRatio, textBackFiller(bpi));
         textBacker.SetPropertyBlock(textBackPB);
-        base.RegularUpdateRender();
     }
 }
 }

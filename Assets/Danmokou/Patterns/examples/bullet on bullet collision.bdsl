@@ -1,0 +1,69 @@
+<#> strict(comma)
+pattern({
+})
+phase(0)
+	paction(0)
+		shift-phase-to(2)
+
+
+
+
+<!> type non `basic circle example`
+<!> hp 10000
+phase 0
+	paction 0
+		position 0 0
+		collide sbonsb circle-red/w circle-green/w _ _ {
+			softcull(_, _)
+		} { 
+			restyleeffect(arrow-blue/w, _, _)
+		}
+
+		async circle-red/w <-2;2:> gcr2 5 6 <-0.3;:> {
+		} gsr2 10 <;0.2:> {
+			center
+		} s tprot cx 1
+		
+		async circle-green/w <2;1.02:> gcr2 5 6 <0.3;:> {
+		} gsr2 10 <;0.2:> {
+			center
+		} s tprot cx -1
+
+<!> type non `repeated collision test`
+<!> hp 10000
+phase 0
+	paction 0
+		position 0 -3
+		collide sbonsb circle-red/ keine-blue/w _ (> t 0.1) {
+			updatef(localt t, _)
+			restyleeffect(circle-purple/, _, _)
+		} { 
+		}
+		collide sbonsb circle-purple/ keine-blue/w (> (t - &.localt) 0.1) _ {
+			updatef(localt t, _)
+			restyleeffect(circle-green/, _, _)
+		} { 
+		}
+		collide sbonsb circle-green/ keine-blue/w (> (t - &.localt) 0.1) _ {
+			restyleeffect(circle-blue/, _, > (t - &.localt) 0.1)
+		} { 
+		}
+
+		sync circle-red/ <> gsr2 40 <-0.2;:> {
+			root cy 1
+			center
+			p this
+			start { localt =f 0 }
+			expose { f localt }
+		} gsr2 40 <;0.2:> {
+			center
+			p mod
+			maxtimes 20
+		} simple nroffset(circle(2, 0.00, t + p * 1.4h)) {
+		}
+
+		sync keine-blue/w <> gsr2 3 <-0.6;:30> {
+			center
+		} simple tprot(circle(2, 4, t) + py(lerpt(0, 2, -0.4, 0.8))) {
+			scale 0.6
+		}

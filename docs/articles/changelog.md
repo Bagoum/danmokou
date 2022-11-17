@@ -12,7 +12,6 @@ To get the newest version from git, run:
 
 The following features are planned for future releases. 
 
-- [9.3.0] "Evidence presentation" (think Ace Attorney) architecture for Suzunoya
 - [9.3.0] LockedBoundedContext handling in Suzunoya
 - [9.3.0] Safeguards around control rebinding
 - [10.0.0] ADV-style gameplay, state management, and generalized UI support
@@ -29,16 +28,64 @@ The following features are planned for future releases.
 
 #### Features
 
+- Added a scripting function `set` which allows setting values on bullet data when it is executed. Consider the following case for homing lasers:
+
+  ```
+  async gdlaser-*/b <> gcr {
+  	root zero
+  	colorf({ red black }, p // 2)
+  	start targetLocation =v2 cy(50)
+  } laser(nroffset(OptionLocation(mine)),
+  	0, _, {
+  		beforeDraw(set {
+  			v2 targetLocation lerp01(0.02, &targetLocation, LNearestEnemy)
+  		} 0)
+  		dynamic(nrvelocity(laserrotatelerp(lerpt(3, 8, 0.7, 0),
+  			rotate(OptionAngle(mine), cy 1),
+  			&targetLocation - loc
+  		)))
+  		... 
+  })
+  ```
+
+  In this example, `set` is used with `beforeDraw` (a laser option that runs a BPY right before it draws the laser) to update the laser's target location based on the closest enemy. This is more visually pleasing and also more optimized than directly using `LNearestEnemy` inside `dynamic`, since the contents of `dynamic` are evaluated at every point along the laser, and `LNearestEnemy` is an expensive function.
+
+- Added the `SetRenderQueue` pool control, which allows changing the rendering order of specific simple bullet pools. See [the bullets documentation](bullets.md) for details.
+
+- Added initial support for bucketing bullets. "Bucketing" groups bullets based on their screen location, which makes collision detection far more efficient. Since there is an overhead to the bucketing process, it is not particularly useful for computing many-against-one collisions (such as enemy bullets against the player). It is used for player bullet on enemy collisions and  bullet on bullet collisions. You can call `RequestBucketing` on a simple bullet collection to make sure it is bucketed. To handle collisions, you can either implement `ISimpleBulletCollisionReceiver` and call `SimpleBulletCollection.CheckCollisions` (example in `PlayerController.cs`), or you can call `SimpleBulletCollection.GetCollisionFormat` and do custom handling (example in `BxBCollision.cs`).
+
+- Added initial support for bullet-on-bullet collision. See `examples/bullet on bullet collision.bdsl`.
+
+- Optimized handling of player bullets by adding bucketing for simple bullets, as well as AABB pruning for lasers and pathers.
+
+- It is now possible to use generic complex bullets in player shots. (The only generic complex bullet currently present in the engine is `moon`, eg. `moon-blue/w`.) To use complex bullets, use the `complex` bullet firing function (as opposed to `s/laser/pather`).
+
+- There is now generalized support in Danmokou's VN library for presenting "evidence" (think Ace Attorney) during dialogue, as demonstrated in [this](https://bagoum.itch.io/ghost-of-tranquil-vows) proof-of-concept game (relevant code is in `GhostOfThePastGameDef.cs`). To do this, first create a field `evidenceRequester = new EvidenceRequest<E>()` in the `IExecutingADV` process, where `E` is a parent type for the evidence that a player can present. Then, there are two ways that you can use to request evidence from the player:
+
+  - `using (var _ = evidenceRequester.Request(CONTINUTATION)) { ... }`. In this case, the player can optionally present evidence while the code inside the brackets is being executed, and if they do, the CONTINUATION function, which must be of type `Func<E, BoundedContext<InterruptionStatus>>`, will be run on the provided evidence. It should return either `InterruptionStatus.Continue` (the code should continue running) or `InterruptionStatus.Abort` (the code should stop running). Note that you cannot save or load within such dialogue when using this method.
+  - `var ev = await evidenceRequester.WaitForEvidence(KEY)`. In this case, the player *must* present evidence to continue the game execution. Save/load can still be used with this method, and KEY will be used to preserve the value of the evidence provided when saving. (Note that your evidence type E must be serializable!)
+
 - In order to increase the modularity of supported game mechanics, mechanics are now handled by an abstraction `IInstanceFeature` that can be slotted into `InstanceData`. `IInstanceFeature` has methods that are called upon certain game events; for example, the method `OnGraze` is called when the player grazes, and the class `MeterFeature`, which implements a mechanic for special meter abilities, implements this method by adding to the meter. Furthermore, there are interfaces for specific mechanics, such as `IPowerFeature` for the power mechanic. The strength of this architecture is that implementations can easily be switched out; you can use the class `PowerFeature`, which has traditional 1-4 Touhou-style power handling, or `PowerFeature.Disabled`, which disables power items and sets the player power to always 4.
-- In previous versions of the engine, it was not straightforward to add code handling specific to a game. In v10, this is now handled by the `GameDef` scriptable object, which is a generic container for game-specific code. There are several abstract subclasses of `GameDef` according to the type— for example, `ADVGameDef` for ADV-style games and `CampaignDanmakuGameDef` for multi-stage danmaku games. To make game-specific code, create a subclass such as `SimpGameDef : CampaignDanmakuGameDef` and implement the abstract methods.
+
+- In previous versions of the engine, it was not straightforward to add game-specific code handling. In v10, this is now handled by the `GameDef` scriptable object, which is a generic container for game-specific code. There are several abstract subclasses of `GameDef` according to the type— for example, `ADVGameDef` for ADV-style games and `CampaignDanmakuGameDef` for multi-stage danmaku games. To make game-specific code, create a subclass such as `SimpGameDef : CampaignDanmakuGameDef` and implement the abstract methods.
+
   - One of the abstract methods on `CampaignDanmakuGameDef` is `MakeFeatures`, which returns the set of game-specific `IInstanceFeature`s.
-- Refactored code related to danmaku game execution. It is now possible to add custom handling for the execution of multi-stage games, whether this be with regards to alternate path handling (such as in Imperishable Night) or with regards to endings or with regards to something else. You can do this by creating a scriptable object subclassing `BaseCampaignConfig`, and then override `RunEntireCampaign`. Reference `CampaignConfig.RunEntireCampaign` to see how this is normally handled.
 
+- Refactored code related to danmaku game execution. It is now possible to add custom handling for the execution of multi-stage games, whether this be with regards to alternate path handling (such as in Imperishable Night) or with regards to endings or with regards to anything else. You can do this by creating a scriptable object subclassing `BaseCampaignConfig`, and then override `RunEntireCampaign`. Reference `CampaignConfig.RunEntireCampaign` for the default handling.
 
+- `FreeformUIGroup`, which is used to make keyboard-friendly interactable UI from arbitrarily-positioned nodes, can now have UIGroups within it. Use `AddGroupDynamic` to add UIGroups.
+
+- Expression compilation with GCXU is now faster due to some extra indirection provided by `ReadyToCompileExpr`.
 
 #### Breaking Changes
 
 - As part of the introduction of GameDef, achievement handling has been moved from AchievementsProviderSO to GameDef.
+
+#### Changes
+
+- Right-clicking while playing dialogue will now bring up the pause menu instead of moving to the next line.
+- Collision handling has been generalized across the engine. Now, there are three phases to RegularUpdate, which are: RegularUpdate, RegularUpdateCollision, RegularUpdateFinalize. In RegularUpdateCollision, entities should find any targets whose hurtboxes overlap the entity's hitbox, and call collision functions on those targets. In RegularUpdateFinalize, entities should perform calculations based on the sum of collisions they received. Rendering handling is also best placed in RegularUpdateFinalize.
+- Parallelization support has been removed from simple bullet collision-checking in order to support bucketing.
 
 #### Fixes
 

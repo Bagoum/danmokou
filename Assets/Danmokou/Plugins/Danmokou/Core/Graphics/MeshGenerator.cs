@@ -28,11 +28,10 @@ public static class MeshGenerator {
                 uv = s.uv
             };
         }
-        public static RenderInfo FromSprite(Material baseMaterial, Sprite s, int priority = 0) {
+        public static RenderInfo FromSprite(Material baseMaterial, Sprite s) {
             var renderMaterial = Object.Instantiate(baseMaterial);
             renderMaterial.enableInstancing = true;
             renderMaterial.SetTexture(PropConsts.mainTex, s.texture);
-            renderMaterial.renderQueue += priority;
             return new RenderInfo(renderMaterial, FromSprite(s), s);
         }
 

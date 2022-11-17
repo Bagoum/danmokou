@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq.Expressions;
 using BagoumLib.DataStructures;
 using BagoumLib.Expressions;
+using BagoumLib.Functional;
 using Danmokou.Expressions;
 using Danmokou.Services;
 using JetBrains.Annotations;
@@ -34,10 +35,11 @@ public static class ServiceLocator {
             return providers.Add(service);
         }
 
-        public T? MaybeFind() => providers.FirstOrNull();
+        public T? FindOrNull() => providers.FirstOrNull();
+        public Maybe<T> MaybeFind() => providers.FirstOrNone();
 
         public List<T> FindAll()  {
-            var results = new List<T>();
+            var results = ListCache<T>.Get();
             providers.CopyIntoList(results);
             return results;
         }
@@ -67,24 +69,33 @@ public static class ServiceLocator {
     /// <summary>
     /// Find a service of type T, or return null.
     /// </summary>
-    public static T? MaybeFind<T>() where T : class =>
+    public static T? FindOrNull<T>() where T : class =>
+        services.TryGetValue(typeof(T), out var s) ? 
+            ((Service<T>) s).FindOrNull() : 
+            null;
+    
+    /// <summary>
+    /// Find a service of type T, or return null.
+    /// </summary>
+    public static Maybe<T> MaybeFind<T>() where T : class =>
         services.TryGetValue(typeof(T), out var s) ? 
             ((Service<T>) s).MaybeFind() : 
-            null;
+            Maybe<T>.None;
 
     /// <summary>
     /// Find all services of type T. The returned list may be empty.
+    /// <br/>The returned list can be recached via <see cref="ListCache{T}"/>.
     /// </summary>
     public static List<T> FindAll<T>() where T : class =>
         services.TryGetValue(typeof(T), out var s) ? 
             ((Service<T>) s).FindAll() : 
-            new List<T>();
+            ListCache<T>.Get();
 
     /// <summary>
     /// Find a service of type T, or throw an exception.
     /// </summary>
     public static T Find<T>() where T : class =>
-        MaybeFind<T>() ?? throw new Exception($"Service locator: No provider of type {typeof(T)} found");
+        FindOrNull<T>() ?? throw new Exception($"Service locator: No provider of type {typeof(T)} found");
 
 }
 }

@@ -50,7 +50,7 @@ public class GAliasAttribute : Attribute {
     public readonly string alias;
     public readonly Type type;
 
-    public GAliasAttribute(Type t, string alias) {
+    public GAliasAttribute(string alias, Type t) {
         type = t;
         this.alias = alias;
     }

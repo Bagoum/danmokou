@@ -175,7 +175,7 @@ public record InstanceRequest {
     }
 
     /// <summary>
-    /// Make a new instance request from the same information.
+    /// Make a new instance request from the same information (the seed will be changed).
     /// </summary>
     public InstanceRequest Copy() => new(Finalize, metadata, lowerRequest, replay);
 
@@ -418,7 +418,7 @@ public record InstanceRequest {
     public static readonly Event<(string campaign, int stage)> StageCompleted =
         new();
     /// <summary>
-    /// Sent once the instance is completed (during any mode), before returning to the main menu (or wherever).
+    /// Sent once the instance is completed (during any mode), before executing the callback (which may eg. return to the main menu).
     /// Sent even if the instance was a replay. 
     /// </summary>
     public static readonly Event<(InstanceData data, InstanceRecord record)> InstanceCompleted = 

@@ -6,9 +6,6 @@ gtr {
 !!{ h 12
 !!{ w 10
 !!{ d 0.8
-	assertsimple stelldecagon-purple/w
-	assertsimple sun-pink/b
-	assertsimple sun-red/w
 	bullet-control persist { { p-sun-red/w p-sun-pink/b p-stelldecagon-purple/w } } cull (& & (> t 0.1) (<= scale 0) (= s&($id, 0) 1))
 	_ 120f draiko 1.5 1.6
 	_ 300f draiko 1.5 1.6

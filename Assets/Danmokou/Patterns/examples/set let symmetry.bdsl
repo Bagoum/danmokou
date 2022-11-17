@@ -1,0 +1,30 @@
+<#> strict(comma)
+pattern({
+})
+phase(0)
+	paction(0)
+		shift-phase-to(1)
+
+
+
+
+<!> type non nest
+<!> hp 10000
+phase 0
+	paction 0
+		position -2 2
+
+		sync ellipse-red/w <0;:> gsr2 1 <> {
+			start {
+				x =f 1
+				y =v2 px(1)
+			}
+		} s tprot pxy(1, set({
+			f x (&x + 1f)
+		}, -1 * (&x - 1)))
+
+		sync lellipse-green/w <0;:> gsr2 1 <> {
+		} s tprot pxy(1, let({
+			f x (t + 1)
+			v2 y px(1)
+		}, -1 * (&x - [&y].x)))

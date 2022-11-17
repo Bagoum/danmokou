@@ -43,12 +43,17 @@ public class FrameAnimBullet : ColorizableBullet {
     protected override void ResetValues() {
         base.ResetValues();
         frameTime = 0f;
-        realizedFrames = frames.ToArray();
+        if (realizedFrames == null!)
+            realizedFrames = frames.ToArray();
+        else {
+            for (int ii = 0; ii < frames.Length; ++ii)
+                realizedFrames[ii] = frames[ii];
+        }
         SetFrame(0);
     }
 
-    protected override void RegularUpdateRender() {
-        base.RegularUpdateRender();
+    public override void RegularUpdateFinalize() {
+        base.RegularUpdateFinalize();
         frameTime += ETime.FRAME_TIME;
         while (frameTime >= realizedFrames[currFrame].time) {
             frameTime -= realizedFrames[currFrame].time;

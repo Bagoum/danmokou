@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Linq;
+using CommunityToolkit.HighPerformance.Buffers;
 using Danmokou.DMath;
 using Danmokou.Expressions;
 using UnityEngine;
+using UnityEngine.Profiling;
 
 namespace Danmokou.Reflection {
 public static partial class Reflector {
@@ -55,6 +57,7 @@ public static partial class Reflector {
     }
 
     private static char[] temp = new char[256];
+    private static readonly StringPool sanitizer = new();
 
     private static string Sanitize(string raw_name) {
         //return $"{raw_name[0].ToString().ToLower()}{raw_name.Substring(1).ToLower().Replace("-", "")}";
@@ -68,12 +71,20 @@ public static partial class Reflector {
         for (int ii = 1; ii < len; ++ii) {
             if (raw_name[ii] == '-') {
                 requiresChange = true;
-            }else {
+            } else {
                 temp[ti++] = Lower(raw_name[ii]);
                 requiresChange |= temp[ti - 1] != raw_name[ii];
             }
         }
-        return requiresChange ? new string(temp, 0, ti) : raw_name;
+        Profiler.BeginSample("Sanitize");
+        var output = requiresChange ? 
+            //Span doesn't work in the language server since it got moved to a different repository in NET Core
+            // as such, when building for language server, use new string
+            new string(temp, 0, ti)
+            //sanitizer.GetOrAdd(new ReadOnlySpan<char>(temp, 0, ti)) 
+            : raw_name;
+        Profiler.EndSample();
+        return output;
     }
 
 }

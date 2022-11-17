@@ -12,12 +12,14 @@ namespace Danmokou.Scriptables {
 /// </summary>
 [CreateAssetMenu(menuName = "Data/Player/Ship")]
 public class ShipConfig : ScriptableObject {
-    public const float STANDARD_GRAZEBOX = 0.69f;
+    public const float STANDARD_GRAZEBOX = 0.42f;
     
     public float freeSpeed = 5f;
     public float focusSlowdown = 0.44f;
-    public float hitboxRadius = 0.034f;
-    public float grazeboxRadius = 0.69f;
+    public float hurtboxRadius = 0.034f;
+    public float grazeboxRadius = 0.42f;
+    public float itemCollectRadius = 0.2f;
+    public float itemAttractRadius = 1f;
     public float FocusSpeed => freeSpeed * focusSlowdown;
     public string key = "";
     /// <summary>

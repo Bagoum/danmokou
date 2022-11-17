@@ -329,7 +329,8 @@ private static {TypePrinter.Print(f.returnType)} {f.fnName}({string.Join(", ",
             .Next<D>(tac.Ctx.ProxyArguments.ToArray());
 #endif
         var f = FlattenVisitor.Flatten(ex, true, true);
-        //Logs.Log($"Ex:{typeof(D).RName()} " +
+        //if (typeof(D) == typeof(VTP))
+        //    Logs.Log($"Ex:{typeof(D).RName()} " +
         //         $"{new ExpressionPrinter{ObjectPrinter = new DMKObjectPrinter()}.LinearizePrint(f)}", false);
         var result = Ex.Lambda<D>(f, prms).Compile();
 #if EXBAKE_SAVE
