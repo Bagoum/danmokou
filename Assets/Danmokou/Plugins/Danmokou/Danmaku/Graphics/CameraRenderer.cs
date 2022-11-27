@@ -11,6 +11,6 @@ public class CameraRenderer : MonoBehaviour {
     }
 
     private void OnPreRender() {
-        cam.targetTexture = MainCamera.RenderTo;
+        cam.targetTexture = DMKMainCamera.RenderTo;
     }
 }

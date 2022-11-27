@@ -257,11 +257,11 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent, ICircularSimpleBu
         float baseRad = Math.Max(LerpFromSCScale, lastSpellCircleRad);
         spellCircleRad = t => {
             if (t < baseT + SpellCircleLerpTime) {
-                return Mathf.Lerp(baseRad, startRad * spellBreather(Beh.rBPI.t), (t - baseT) / SpellCircleLerpTime);
+                return M.Lerp(baseRad, startRad * spellBreather(Beh.rBPI.t), (t - baseT) / SpellCircleLerpTime);
             }
             float pt = t - baseT - SpellCircleLerpTime;
-            return Mathf.Max(MinSCScale,
-                Mathf.Lerp(startRad * spellBreather(Beh.rBPI.t), MinSCScale, pt / timeout));
+            return Math.Max(MinSCScale,
+                M.Lerp(startRad * spellBreather(Beh.rBPI.t), MinSCScale, pt / timeout));
         };
         RecheckGraphicsSettings();
     }
@@ -275,15 +275,15 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent, ICircularSimpleBu
     private float _displayBarRatio;
     public float DisplayBarRatio => divertHP?.to.DisplayBarRatio ?? _displayBarRatio;
 
-    private Color HPColor => currPhaseType == PhaseType.TIMEOUT ?
+    private Color HPColor => currPhaseType == PhaseType.Timeout ?
             unfilledColor :
             //Approximation to make the max color appear earlier
             Color.Lerp(currPhase.color2, currPhase.color1, Mathf.Pow(_displayBarRatio, 1.5f));
-    public Color UIHPColor => (currPhaseType == PhaseType.TIMEOUT || currPhaseType == PhaseType.DIALOGUE || currPhaseType == null) ? 
+    public Color UIHPColor => (currPhaseType == PhaseType.Timeout || currPhaseType == PhaseType.Dialogue || currPhaseType == null) ? 
         Color.clear : HPColor;
 
     public override void RegularUpdate() {
-        _displayBarRatio = Mathf.Lerp(_displayBarRatio, BarRatio, HPLerpRate * ETime.FRAME_TIME);
+        _displayBarRatio = M.Lerp(_displayBarRatio, BarRatio, HPLerpRate * ETime.FRAME_TIME);
         if (hasDistorter) {
             distortPB.SetFloat(PropConsts.time, Beh.rBPI.t);
             distorter!.SetPropertyBlock(distortPB);
@@ -304,7 +304,7 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent, ICircularSimpleBu
             if (spellCircleCancel.Cancelled) {
                 float baseT = Beh.rBPI.t;
                 float currRad = lastSpellCircleRad;
-                spellCircleRad = t => Mathf.Lerp(currRad, LerpFromSCScale, (t - baseT) / SpellCircleLerpTime);
+                spellCircleRad = t => M.Lerp(currRad, LerpFromSCScale, (t - baseT) / SpellCircleLerpTime);
                 spellCircleCancel = Cancellable.Null;
             }
             lastSpellCircleRad = spellCircleRad?.Invoke(Beh.rBPI.t) ?? lastSpellCircleRad;
@@ -320,7 +320,7 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent, ICircularSimpleBu
         for (int ii = 0; ii < hitCooldowns.Keys.Count; ++ii) {
             if (hitCooldowns.Keys.GetMarkerIfExistsAt(ii, out var dm)) {
                 if (--hitCooldowns[dm.Value] <= 0)
-                    hitCooldowns.Remove(dm);
+                    dm.MarkForDeletion();
             }
         }
         hitCooldowns.Keys.Compact();
@@ -401,10 +401,12 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent, ICircularSimpleBu
                 ref var sbn = ref data[index];
                 if (sbCollider.CheckCollision(in sbn.bpi.loc.x, in sbn.bpi.loc.y, in sbn.direction, in sbn.scale, in loc.x, in loc.y, in rad)
                     && sbn.bpi.ctx.playerBullet.Try(out var de)
-                    && TakeHit(de, in sbn.bpi)
-                    && de.data.destructible) {
-                    sbc.MakeCulledCopy(index);
-                    sbc.DeleteSB_Collision(index);
+                    && TakeHit(de, in sbn.bpi)) {
+                    sbc.RunCollisionControls(index);
+                    if (de.data.destructible) {
+                        sbc.MakeCulledCopy(index);
+                        sbc.DeleteSB(index);
+                    }
                 }
             }
         }
@@ -523,6 +525,7 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent, ICircularSimpleBu
         }
     }
 
+    //Note that we should not use a dictionary from ID to frame number, since hit cooldowns freeze with the enemy
     private readonly DictionaryWithKeys<uint, int> hitCooldowns = new();
     public bool TryHitIndestructible(uint id, int cooldownFrames) {
         if (hitCooldowns.Data.ContainsKey(id))

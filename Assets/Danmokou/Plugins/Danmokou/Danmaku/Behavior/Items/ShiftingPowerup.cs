@@ -74,7 +74,7 @@ public class ShiftingPowerup : BouncyItem {
             });
             effect.Initialize(new RealizedPowerAuraOptions(opts, GenCtx.Empty, Vector2.zero, Cancellable.Null, null!));
         }
-        ServiceLocator.SFXService.Request(onSwitch);
+        ISFXService.SFXService.Request(onSwitch);
     }
 
     public override void RegularUpdate() {

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System;
 using System.Threading.Tasks;
 using System.Linq;
+using System.Reactive;
 using System.Reflection;
 using BagoumLib;
 using BagoumLib.Cancellation;
@@ -29,9 +30,7 @@ public class SMContext {
     public virtual List<IDisposable> PhaseObjects { get; } = new();
 
     public virtual void CleanupObjects() {
-        foreach (var t in PhaseObjects)
-            t.Dispose();
-        PhaseObjects.Clear();
+        PhaseObjects.DisposeAll();
     }
 }
 public class PatternContext : SMContext {
@@ -83,10 +82,13 @@ public class DerivedSMContext : SMContext {
     private readonly SMContext parent;
     public override List<IDisposable> PhaseObjects => parent.PhaseObjects;
 
-    public DerivedSMContext(SMContext parent) {
+    private DerivedSMContext(SMContext parent) {
         this.parent = parent;
     }
-    
+
+    public static DerivedSMContext DeriveFrom(SMContext parent) =>
+        parent as DerivedSMContext ?? new DerivedSMContext(parent);
+
     public override void CleanupObjects() { }
 }
 
@@ -109,6 +111,13 @@ public readonly struct SMHandoff : IDisposable {
     public bool Cancelled => ch.cT.Cancelled;
 
     public void ThrowIfCancelled() => ch.cT.ThrowIfCancelled();
+
+    public void PipeResult(TaskCompletionSource<Unit> target) {
+        if (Cancelled)
+            target.SetCanceled();
+        else
+            target.SetResult(default);
+    }
 
     public SMHandoff(BehaviorEntity exec, ICancellee? cT = null, int? index = null) {
         var gcx = GenCtx.New(exec, V2RV2.Zero);
@@ -138,7 +147,7 @@ public readonly struct SMHandoff : IDisposable {
         this.ch = new CommonHandoff(newCT, parent.ch.bc, parent.ch.gcx.Copy());
         parentCT = parent.parentCT;
         CanPrepend = parent.CanPrepend;
-        Context = new DerivedSMContext(parent.Context);
+        Context = DerivedSMContext.DeriveFrom(parent.Context);
     }
 
     /// <summary>
@@ -149,21 +158,20 @@ public readonly struct SMHandoff : IDisposable {
         this.ch = ch.Copy();
         parentCT = parent.parentCT;
         CanPrepend = canPrepend ?? parent.CanPrepend;
-        Context = context ?? new DerivedSMContext(parent.Context);
+        Context = context ?? DerivedSMContext.DeriveFrom(parent.Context);
     }
 
     /// <summary>
     /// Derive a joint-token SMHandoff.
     /// </summary>
-    private SMHandoff(SMHandoff parent, SMContext? context, out Cancellable cts) {
+    private SMHandoff(SMHandoff parent, SMContext? context, out ICancellable cts) {
         this.parentCT = parent.parentCT;
-        this.ch = new CommonHandoff(
-            new JointCancellee(parent.cT, cts = new Cancellable()), parent.ch.bc, parent.ch.gcx);
+        this.ch = new CommonHandoff(cts = new JointCancellable(parent.cT), parent.ch.bc, parent.ch.gcx);
         CanPrepend = parent.CanPrepend;
-        Context = context ?? new DerivedSMContext(parent.Context);
+        Context = context ?? DerivedSMContext.DeriveFrom(parent.Context);
     }
 
-    public SMHandoff CreateJointCancellee(out Cancellable cts, SMContext? innerContext) => 
+    public SMHandoff CreateJointCancellee(out ICancellable cts, SMContext? innerContext) => 
         new(this, innerContext, out cts);
 
     public void Dispose() {
@@ -493,139 +501,6 @@ public abstract class StateMachine {
 
     public abstract Task Start(SMHandoff smh);
 }
-
-public static class WaitingUtils {
-    public static Task WaitFor(SMHandoff smh, float time, bool zeroToInfinity) =>
-        WaitFor(smh.Exec, smh.cT, time, zeroToInfinity);
-    /// <summary>
-    /// Task style-- will throw if cancelled. This checks cT.IsCancelled before returning,
-    /// so you do not need to check it after awaiting this.
-    /// </summary>
-    /// <returns></returns>
-    public static async Task WaitFor(CoroutineRegularUpdater Exec, ICancellee cT, float time, bool zeroToInfinity) {
-        cT.ThrowIfCancelled();
-        if (zeroToInfinity && time < float.Epsilon) time = float.MaxValue;
-        if (time < float.Epsilon) return;
-        Exec.RunRIEnumerator(WaitFor(time, cT, GetAwaiter(out Task t)));
-        await t;
-        //I do want this throw here, which is why I don't 'return t'
-        cT.ThrowIfCancelled();
-    }
-    /// <summary>
-    /// Task style. Will return as soon as the time is up or cancellation is triggered.
-    /// You must check cT.IsCancelled after awaiting this.
-    /// </summary>
-    /// <returns></returns>
-    public static Task WaitForUnchecked(CoroutineRegularUpdater Exec, ICancellee cT, float time, bool zeroToInfinity) {
-        cT.ThrowIfCancelled();
-        if (zeroToInfinity && time < float.Epsilon) time = float.MaxValue;
-        if (time < float.Epsilon) return Task.CompletedTask;
-        Exec.RunRIEnumerator(WaitFor(time, cT, GetAwaiter(out Task t)));
-        return t;
-    }
-    /// <summary>
-    /// Task style. Will return as soon as the condition is satisfied or cancellation is triggered.
-    /// You must check cT.IsCancelled after awaiting this.
-    /// </summary>
-    /// <returns></returns>
-    public static Task WaitForUnchecked(CoroutineRegularUpdater Exec, ICancellee cT, Func<bool> condition) {
-        cT.ThrowIfCancelled();
-        Exec.RunRIEnumerator(WaitFor(condition, cT, GetAwaiter(out Task t)));
-        return t;
-    }
-
-    /// <summary>
-    /// Outer waiter-- Will not cb if cancelled
-    /// </summary>
-    public static void WaitThenCB(CoroutineRegularUpdater Exec, ICancellee cT, float time, bool zeroToInfinity,
-        Action? cb) {
-        cT.ThrowIfCancelled();
-        if (zeroToInfinity && time < float.Epsilon) time = float.MaxValue;
-        Exec.RunRIEnumerator(WaitFor(time, cT, () => {
-            if (!cT.Cancelled) cb?.Invoke();
-        }));
-    }
-    /// <summary>
-    /// Outer waiter-- Will cb if cancelled
-    /// </summary>
-    public static void WaitThenCBEvenIfCancelled(CoroutineRegularUpdater Exec, ICancellee cT, float time, bool zeroToInfinity,
-        Action cb) {
-        cT.ThrowIfCancelled();
-        if (zeroToInfinity && time < float.Epsilon) time = float.MaxValue;
-        Exec.RunRIEnumerator(WaitFor(time, cT, cb));
-    }
-    /// <summary>
-    /// Outer waiter-- Will not cb if cancelled
-    /// </summary>
-    public static void WaitThenCB(CoroutineRegularUpdater Exec, ICancellee cT, float time, Func<bool> condition,
-        Action cb) {
-        cT.ThrowIfCancelled();
-        Exec.RunRIEnumerator(WaitForBoth(time, condition, cT, () => {
-            if (!cT.Cancelled) cb();
-        }));
-    }
-    /// <summary>
-    /// Outer waiter-- Will cb if cancelled
-    /// </summary>
-    public static void WaitThenCBEvenIfCancelled(CoroutineRegularUpdater Exec, ICancellee cT, float time, Func<bool> condition, Action cb) {
-        cT.ThrowIfCancelled();
-        Exec.RunRIEnumerator(WaitForBoth(time, condition, cT, cb));
-    }
-
-    /// <summary>
-    /// Outer waiter-- Will not cancel if cancelled
-    /// </summary>
-    public static void WaitThenCancel(CoroutineRegularUpdater Exec, ICancellee cT, float time, bool zeroToInfinity,
-        ICancellable toCancel) {
-        cT.ThrowIfCancelled();
-        if (zeroToInfinity && time < float.Epsilon) {
-            time = float.MaxValue;
-        }
-        Exec.RunRIEnumerator(WaitFor(time, cT, () => {
-            if (!cT.Cancelled) toCancel.Cancel();
-        }));
-    }
-
-    /// <summary>
-    /// This must be run on RegularCoroutine.
-    /// Inner waiter-- Will cb if cancelled. This is necessary so awaiters can be informed of errors,
-    /// specifically the task-style waiter, which would otherwise spin infinitely.
-    /// </summary>
-    public static IEnumerator WaitFor(float wait_time, ICancellee cT, Action done) {
-        for (; wait_time > ETime.FRAME_YIELD && !cT.Cancelled; 
-            wait_time -= ETime.FRAME_TIME) yield return null;
-        done();
-    }
-    /// <summary>
-    /// Returns when the condition is true
-    /// </summary>
-    private static IEnumerator WaitFor(Func<bool> condition, ICancellee cT, Action done) {
-        while (!condition() && !cT.Cancelled) yield return null;
-        done();
-    }
-    /// <summary>
-    /// Returns when the condition is true AND time is up
-    /// </summary>
-    private static IEnumerator WaitForBoth(float wait_time, Func<bool> condition, ICancellee cT, Action done) {
-        for (; (wait_time > ETime.FRAME_YIELD || !condition()) && !cT.Cancelled; 
-            wait_time -= ETime.FRAME_TIME) yield return null;
-        done();
-    }
-
-    public static IEnumerator WaitWhileWithCancellable(Func<bool> amIFinishedWaiting, ICancellable canceller, Func<bool> cancelIf, ICancellee cT, Action done, float delay=0f) {
-        while (!amIFinishedWaiting() && !cT.Cancelled) {
-            if (delay < ETime.FRAME_YIELD && cancelIf()) {
-                canceller.Cancel();
-                break;
-            }
-            yield return null;
-            delay -= ETime.FRAME_TIME;
-        }
-        done();
-    }
-    
-}
-
 /// <summary>
 /// `break`: Indicates that its parent should take no more children.
 /// </summary>
@@ -649,12 +524,15 @@ public abstract class SequentialSM : StateMachine {
 public class ParallelSM : StateMachine {
     public ParallelSM(List<StateMachine> states) : base(states) { }
 
-    public override Task Start(SMHandoff smh) =>
+    public override Task Start(SMHandoff smh) {
         //Minor garbage optimization
-        states.Count == 1 ? 
-            states[0].Start(smh) :
-            //WARNING: Due to how WhenAll works, any child exceptions will only be thrown at the end of execution.
-            Task.WhenAll(states.Select(s => s.Start(smh)));
+        if (states.Count == 1) return states[0].Start(smh);
+        var tasks = new Task[states.Count];
+        for (int ii = 0; ii < states.Count; ++ii)
+            tasks[ii] = states[ii].Start(smh);
+        //WARNING: Due to how WhenAll works, any child exceptions will only be thrown at the end of execution.
+        return TaskHelpers.TaskWhenAll(tasks);
+    }
 }
 
 public abstract class UniversalSM : StateMachine {
@@ -709,10 +587,14 @@ public class NoBlockUSM : UniversalSM {
     public NoBlockUSM(StateMachine state) : base(state) { }
 
     public override Task Start(SMHandoff smh) {
-        //The GCX may be disposed by the parent before the child has run (due to early return), so we copy it
-        var smh2 = new SMHandoff(smh, smh.ch, null);
-        _ = states[0].Start(smh2).ContinueWithSync(smh2.Dispose);
+        _ = ExecuteBlocking(smh);
         return Task.CompletedTask;
+    }
+
+    private async Task ExecuteBlocking(SMHandoff smh) {
+        //The GCX may be disposed by the parent before the child has run (due to early return), so we copy it
+        using var smh2 = new SMHandoff(smh, smh.ch, null);
+        await states[0].Start(smh2);
     }
 }
 }

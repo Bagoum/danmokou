@@ -1,4 +1,5 @@
-﻿using BagoumLib.Events;
+﻿using BagoumLib;
+using BagoumLib.Events;
 using Danmokou.Core;
 using Danmokou.DMath;
 using Danmokou.Player;
@@ -22,7 +23,7 @@ public abstract class Item : Pooled<Item> {
     protected virtual float peakt => 0.8f;
     protected Vector2 Direction => ((collection != null) ? collection.direction : LRUD.UP).Direction();
     protected virtual Vector2 Velocity(float t) => 
-        Mathf.Lerp(speed0, speed1, t * (speed0 / (speed0 - speed1))/peakt) * Direction;
+        M.Lerp(speed0, speed1, t * (speed0 / (speed0 - speed1))/peakt) * Direction;
     
     protected Vector2 loc;
 
@@ -95,7 +96,7 @@ public abstract class Item : Pooled<Item> {
 
     protected virtual void CollectMe(PlayerController collector) {
         ItemCollected.OnNext(Type);
-        ServiceLocator.SFXService.Request(onCollect);
+        ISFXService.SFXService.Request(onCollect);
         PooledDone();
     }
 
@@ -110,7 +111,7 @@ public abstract class Item : Pooled<Item> {
         } 
         if (State == HomingState.HOMING) {
             timeHoming += ETime.FRAME_TIME;
-            loc = Vector2.Lerp(loc, target.Location, Mathf.Lerp(homeRate * ETime.FRAME_TIME, peakedHomeRate, timeHoming/maxTimeHoming));
+            loc = Vector2.Lerp(loc, target.Location, M.Lerp(homeRate * ETime.FRAME_TIME, peakedHomeRate, timeHoming/maxTimeHoming));
         } else {
             loc += ETime.FRAME_TIME * (Velocity(time) + summonTarget * 
                 M.DEOutSine(Mathf.Clamp01(time / lerpIntoOffsetTime)) / lerpIntoOffsetTime);

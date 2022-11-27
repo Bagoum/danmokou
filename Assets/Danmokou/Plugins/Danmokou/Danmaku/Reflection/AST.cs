@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using BagoumLib;
 using BagoumLib.Culture;
 using BagoumLib.Expressions;
@@ -274,7 +275,13 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
         /// </summary>
         public bool Parenthesized { get; init; } = false;
         public override string Explain() => $"{CompactPosition} {BaseMethod.AsSignature}";
-        public override DocumentSymbol ToSymbolTree() => MethodToSymbolTree(BaseMethod);
+        public override DocumentSymbol ToSymbolTree() {
+            if (BaseMethod.isCtor && BaseMethod.ReturnType == typeof(PhaseSM) && !Params[1].IsUnsound && Params[1].EvaluateObject(new()) is PhaseProperties props) {
+                return new($"{props.phaseType?.ToString() ?? "Phase"}", props.cardTitle?.Value ?? "",
+                    SymbolKind.Method, Position.ToRange(), FlattenParams());
+            }
+            return MethodToSymbolTree(BaseMethod);
+        }
 
         public override IEnumerable<SemanticToken> ToSemanticTokens() =>
             MethodToSemanticTokens(BaseMethod, MethodPosition);

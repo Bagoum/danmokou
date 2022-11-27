@@ -27,8 +27,8 @@ public static class ExUtils {
     private static readonly ConstructorInfo constrV4 = tv4.GetConstructor(new[] {tfloat, tfloat, tfloat, tfloat})!;
     private static readonly ConstructorInfo constrRV2 =
         tv2rv2.GetConstructor(new[] {tfloat, tfloat, tfloat, tfloat, tfloat})!;
-    private static readonly ExFunction quatEuler = ExFunction.Wrap<Quaternion, float>("Euler", 3);
-    private static readonly ExFunction quatEuler3 = ExFunction.Wrap<Quaternion, Vector3>("Euler", 1);
+    private static readonly ExFunction quatEuler = ExFunction.Wrap<Quaternion, float>(nameof(Quaternion.Euler), 3);
+    private static readonly ExFunction quatEuler3 = ExFunction.Wrap<Quaternion, Vector3>(nameof(Quaternion.Euler), 1);
 
     public static Ex V2(Ex x, Ex y) {
         return Ex.New(constrV2, x, y);

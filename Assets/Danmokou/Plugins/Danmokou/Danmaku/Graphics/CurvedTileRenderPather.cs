@@ -15,10 +15,10 @@ using Unity.Collections.LowLevel.Unsafe;
 using UnityEditor;
 using UnityEngine;
 
-//Warning to future self: Pathers function really strangely in that their transform is located at the starting point, and the mesh
-//simply moves farther away from that source. The transform does not move. The reason for this is that it's difficult to maintain
-//a list of points you travelled through relative to your current point, but it's easy to maintain a list of points that someone else
-//has travelled through relative to your static point, which is essentially what we do. This is why pathers do not support parenting.
+//Note: The location of a pather is the location of its latest point. The process of drawing through previous points
+// is handled automatically via Unity's TrailRenderer. In older versions of DMK, this process was handled via a manual draw,
+// which required keeping the pather transform at its starting position and storing a list of offsets from the starting position.
+// This means that pathers *might* support parenting now, but I haven't tried.
 
 namespace Danmokou.Graphics {
 [Serializable]
@@ -208,7 +208,10 @@ public class CurvedTileRenderPather : CurvedTileRender {
 
     private const float BACKSTEP = 2f;
 
-    public void DoRegularUpdateCollision() {
+    public void DoRegularUpdateCollision(bool collisionActive) {
+        pather.IsColliding = false;
+        if (!collisionActive)
+            goto finalize;
         int cut1 = (int)Math.Ceiling((cL - read_from + 1) * tailCutoffRatio);
         int cut2 = (int)Math.Ceiling((cL - read_from + 1) * headCutoffRatio);
         if (playerBullet.Try(out var plb)) {
@@ -219,18 +222,28 @@ public class CurvedTileRenderPather : CurvedTileRender {
                     && CollisionMath.CircleOnAABB(in bounds, in e.location.x, in e.location.y, e.radius + scaledLineRadius)
                     && CollisionMath.CircleOnSegments(e.location, fe[ii].radius, Vector2.zero,
                         centers, read_from + cut1, 1, cL - cut2, scaledLineRadius, 1, 0, out int segment)) {
+                    pather.IsColliding = true;
                     fe[ii].enemy.TakeHit(in plb, in centers[segment], in bpi.id);
+                    pather.myStyle.IterateCollideControls(pather);
                 }
             }
-        } else if (pather.Target.Try(out var player) && player.ComputeCollisions) {
+        } else if (pather.Target.Try(out var player) && player.ReceivesCollisions) {
             var hb = player.Hurtbox;
             if (CollisionMath.CircleOnAABB(in bounds, in hb.x, in hb.y, hb.largeRadius + scaledLineRadius)) {
                 var coll = CollisionMath.GrazeCircleOnSegments(in hb, Vector2.zero, 
-                    centers, read_from + cut1, 1, cL - cut2, scaledLineRadius, 1, 0);
+                    centers, read_from + cut1, 1, cL - cut2, scaledLineRadius, 1, 0, out int segment);
+                pather.IsColliding |= coll.collide;
+                if (coll.graze && !pather.GrazeAllowed)
+                    coll = coll.NoGraze();
                 player.ProcessCollision(in coll, pather.Damage, in bpi, in pather.collisionInfo.grazeEveryFrames);
+                if (coll.collide) 
+                    pather.myStyle.IterateCollideControls(pather);
             }
         }
+        finalize: ;
+        pather.FinalizeCollisionTimings();
     }
+    
     public void FlipVelX() {
         movement.FlipX();
         intersectStatus = SelfIntersectionStatus.CHECK_THIS_AND_NEXT;

@@ -13,7 +13,7 @@ public class Keine : SZYUCharacter {
     public override Color UIColor => new(.3f, .6f, .6f);
     public override LString Name { get; set; } = LocalizedStrings.FindReference("dialogue.keine");
     
-    public override void RollEvent() => ServiceLocator.SFXService.Request("x-bubble-2", SFXType.TypingSound);
+    public override void RollEvent() => ISFXService.SFXService.Request("x-bubble-2", SFXType.TypingSound);
 }
 
 public class KeineMimic : PiecewiseCharacterMimic {

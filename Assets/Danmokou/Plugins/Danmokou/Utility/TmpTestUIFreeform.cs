@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using BagoumLib;
 using BagoumLib.Mathematics;
 using BagoumLib.Transitions;
 using Danmokou.Behavior;
@@ -11,6 +12,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 
 public class TmpTestUIFreeform : CoroutineRegularUpdater {
+    /*
     private XMLDynamicMenu menu;
     private UIGroup g;
     public override void FirstFrame() {
@@ -49,5 +51,5 @@ public class TmpTestUIFreeform : CoroutineRegularUpdater {
         };
         g.AddNodeDynamic(n);
         
-    }
+    }*/
 }

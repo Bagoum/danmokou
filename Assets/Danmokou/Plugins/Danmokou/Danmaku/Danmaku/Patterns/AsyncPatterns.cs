@@ -36,7 +36,7 @@ public static partial class AsyncPatterns {
         public APExecutionTracker(GenCtxProperties<AsyncPattern> props, AsyncHandoff abh, out bool isClipped) {
             looper = new LoopControl<AsyncPattern>(props, abh.ch, out isClipped);
             this.abh = abh;
-            elapsedFrames = 0f;
+            extraFrames = 0f;
             wasPaused = false;
         }
 
@@ -53,7 +53,7 @@ public static partial class AsyncPatterns {
 
         public bool PrepareLastIteration() => looper.PrepareLastIteration();
         public void DoSIteration(SyncPattern[] target) {
-            using var itrSBH = new SyncHandoff(looper.Handoff, elapsedFrames * ETime.FRAME_TIME);
+            using var itrSBH = new SyncHandoff(looper.Handoff, extraFrames * ETime.FRAME_TIME);
             if (looper.props.childSelect != null) {
                 target[(int) looper.props.childSelect(looper.GCX) % target.Length](itrSBH);
             } else {
@@ -71,16 +71,16 @@ public static partial class AsyncPatterns {
                     _ = looper.GCX.exec.RunExternalSM(SMRunner.Run(looper.props.unpause, abh.ch.cT, looper.GCX));
                 }
                 wasPaused = false;
-                ++elapsedFrames;
+                ++extraFrames;
             }
         }
 
         private bool wasPaused;
 
-        private float elapsedFrames;
-        public bool IsWaiting => !looper.IsUnpaused || elapsedFrames < 0;
-        public void StartInitialDelay() => elapsedFrames -= looper.props.delay(looper.GCX);
-        public void StartWait() => elapsedFrames -= looper.props.wait(looper.GCX);
+        private float extraFrames;
+        public bool IsWaiting => !looper.IsUnpaused || extraFrames < 0;
+        public void StartInitialDelay() => extraFrames -= looper.props.delay(looper.GCX);
+        public void StartWait() => extraFrames -= looper.props.wait(looper.GCX);
         public void AllSDone(bool normalFinish) {
             looper.IAmDone(normalFinish);
             abh.Done();

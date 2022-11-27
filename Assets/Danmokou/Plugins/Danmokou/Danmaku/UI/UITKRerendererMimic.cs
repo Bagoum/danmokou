@@ -1,6 +1,5 @@
 ﻿using System;
-using Danmokou.Behavior;
-using Danmokou.Core;
+using BagoumLib;
 using Danmokou.Graphics;
 using Suzunoya.Entities;
 using SuzunoyaUnity.Mimics;

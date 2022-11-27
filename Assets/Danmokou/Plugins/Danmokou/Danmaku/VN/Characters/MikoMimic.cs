@@ -13,7 +13,7 @@ public class Miko : SZYUCharacter {
     public override Color UIColor => new(0.4f, 0.01f, .24f);
     public override LString Name { get; set; } = LocalizedStrings.FindReference("dialogue.miko");
     
-    public override void RollEvent() => ServiceLocator.SFXService.Request("x-bubble-3", SFXType.TypingSound);
+    public override void RollEvent() => ISFXService.SFXService.Request("x-bubble-3", SFXType.TypingSound);
 }
 
 public class MikoMimic : PiecewiseCharacterMimic {

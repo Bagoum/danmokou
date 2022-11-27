@@ -102,11 +102,11 @@ public static class ExMDifficulty {
     /// <summary>
     /// Minumum possible rank value (inclusive).
     /// </summary>
-    public static tfloat MinRank() => ExM.Instance.Field("RankF").Field("MinRankLevel").Cast<float>();
+    public static tfloat MinRank() => RankFeature.Field("MinRankLevel").Cast<float>();
     /// <summary>
     /// Maximum possible rank value (inclusive).
     /// </summary>
-    public static tfloat MaxRank() => ExM.Instance.Field("RankF").Field("MaxRankLevel").Cast<float>();
+    public static tfloat MaxRank() => RankFeature.Field("MaxRankLevel").Cast<float>();
 
     
 #endif
@@ -114,13 +114,15 @@ public static class ExMDifficulty {
     
     #region Rank
 
+    private static Ex RankFeature => ExM.Instance.Field(nameof(InstanceData.RankF));
+
     /// <summary>
     /// Get the dynamic difficulty rank, which varies between MinRank and MaxRank.
     /// </summary>
     [Alias("r")]
-    public static tfloat Rank() => ExM.Instance.Field("RankF").Field("RankLevel").Cast<float>();
+    public static tfloat Rank() => RankFeature.Field(nameof(IRankFeature.RankLevel)).Cast<float>();
 
-    public static tfloat RankRatio() => ExM.Instance.Field("RankF").Field("RankRatio").Cast<float>();
+    public static tfloat RankRatio() => RankFeature.Field(nameof(IRankFeature.RankRatio)).Cast<float>();
 
     /// <summary>
     /// Minumum possible rank value (inclusive).

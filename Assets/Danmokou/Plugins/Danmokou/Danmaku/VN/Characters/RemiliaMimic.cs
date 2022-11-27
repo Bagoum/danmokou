@@ -14,7 +14,7 @@ public class Remilia : SZYUCharacter {
     public override Color UIColor => new(.52f, .05f, .36f);
     public override LString Name { get; set; } = LocalizedStrings.FindReference("dialogue.remilia");
     
-    public override void RollEvent() => ServiceLocator.SFXService.Request("x-bubble-3", SFXType.TypingSound);
+    public override void RollEvent() => ISFXService.SFXService.Request("x-bubble-3", SFXType.TypingSound);
 }
 
 public class RemiliaMimic : PiecewiseCharacterMimic {

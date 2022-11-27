@@ -300,7 +300,7 @@ public record InstanceRequest {
             async Task<InstanceRecord> Rest() {
                 await tcs.Task;
                 //Allow slight delay for item collection
-                await SM.WaitingUtils.WaitFor(GameManagement.Main, InstTracker, WaitBeforeReturn, false);
+                await RUWaitingUtils.WaitFor(GameManagement.Main, InstTracker, WaitBeforeReturn, false);
                 return CompileAndSaveRecord();
             }
             return Rest();
@@ -323,7 +323,7 @@ public record InstanceRequest {
             async Task<InstanceRecord> Rest() {
                 var rec = await tcs.Task;
                 //Allow slight delay for item collection
-                await SM.WaitingUtils.WaitFor(GameManagement.Main, InstTracker, WaitBeforeReturn, false);
+                await RUWaitingUtils.WaitFor(GameManagement.Main, InstTracker, WaitBeforeReturn, false);
                 return CompileAndSaveRecord(rec);
             }
             return Rest();
@@ -342,7 +342,7 @@ public record InstanceRequest {
         var t = ctx.cm.TrackChallenge(new SceneChallengeReqest(this, cr), InstTracker, ctx.tracker);
         ctx.cm.LinkBoss(ctx.exec, InstTracker);
         var rec = await t;
-        await SM.WaitingUtils.WaitFor(GameManagement.Main, InstTracker, WaitBeforeReturn, false);
+        await RUWaitingUtils.WaitFor(GameManagement.Main, InstTracker, WaitBeforeReturn, false);
         var result = CompileAndSaveRecord(rec);
         Finalize(this, result);
         return result;
@@ -357,7 +357,7 @@ public record InstanceRequest {
     public const float WaitBeforeReturn = 2f;
 
     private static void WaitThenReturn(SceneRequest toScene) => 
-        SM.WaitingUtils.WaitThenCB(GameManagement.Main, ServiceLocator.Find<ISceneIntermediary>().SceneBoundedToken, 
+        RUWaitingUtils.WaitThenCB(GameManagement.Main, ServiceLocator.Find<ISceneIntermediary>().SceneBoundedToken, 
             WaitBeforeReturn, false, () => ServiceLocator.Find<ISceneIntermediary>().LoadScene(toScene));
 
     private static SceneRequest DefaultReturnScene(InstanceRequest req) => ReturnScene(

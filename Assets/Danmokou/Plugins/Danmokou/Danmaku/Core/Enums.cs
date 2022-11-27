@@ -144,39 +144,39 @@ public enum PhaseType {
     /// <summary>
     /// Nonspells.
     /// </summary>
-    NONSPELL,
+    Nonspell,
     /// <summary>
     /// Spells. Automatically summons a spell cutin and spell circle if applicable.
     /// </summary>
-    SPELL,
+    Spell,
     /// <summary>
     /// Timeouts. Same as SPELL, but also sets the HP to infinity and gives full rewards for timing out.
     /// </summary>
-    TIMEOUT,
+    Timeout,
     /// <summary>
     /// Final spell. Same as SPELL, but doesn't drop value items on completion.
     /// </summary>
-    FINAL,
+    FinalSpell,
     /// <summary>
     /// Stage section where graphics, but no enemies/bullets, appear on screen.
     /// </summary>
-    ANNOUNCE,
+    Announce,
     /// <summary>
     /// Dialogue section. The score multiplier is granted lenience and the executor is granted infinite health during this.
     /// </summary>
-    DIALOGUE,
+    Dialogue,
     /// <summary>
     /// Standard stage section. Only use in stage scripts.
     /// </summary>
-    STAGE,
+    Stage,
     /// <summary>
     /// A stage section wrapping a midboss summon. Only use in stage scripts.
     /// </summary>
-    STAGEMIDBOSS,
+    StageMidboss,
     /// <summary>
     /// A stage section wrapping an endboss summon. Only use in stage scripts.
     /// </summary>
-    STAGEENDBOSS
+    StageEndboss
 }
 
 public enum FixedDifficulty {
@@ -315,30 +315,30 @@ public static class EnumHelpers2 {
         InstanceMode.SCENE_CHALLENGE => LocalizedStrings.UI.practice_m_scene,
         _ => throw new ArgumentOutOfRangeException(nameof(m), m, null)
     };
-    public static bool IsStageBoss(this PhaseType st) => st is PhaseType.STAGEENDBOSS or PhaseType.STAGEMIDBOSS;
+    public static bool IsStageBoss(this PhaseType st) => st is PhaseType.StageEndboss or PhaseType.StageMidboss;
     public static bool IsPattern(this PhaseType st) => st.IsCard() || st.IsStage();
-    public static bool IsLenient(this PhaseType st) => st == PhaseType.DIALOGUE || st == PhaseType.ANNOUNCE;
-    public static bool IsStage(this PhaseType st) => st == PhaseType.STAGE;
-    public static bool AppearsInPractice(this PhaseType st) => st != PhaseType.ANNOUNCE;
+    public static bool IsLenient(this PhaseType st) => st == PhaseType.Dialogue || st == PhaseType.Announce;
+    public static bool IsStage(this PhaseType st) => st == PhaseType.Stage;
+    public static bool AppearsInPractice(this PhaseType st) => st != PhaseType.Announce;
     public static bool RequiresHPGuard(this PhaseType st) => st.IsLenient() || st.IsCard();
 
     public static Vulnerability? DefaultVulnerability(this PhaseType st) =>
-        st == PhaseType.TIMEOUT ? Vulnerability.PASS_THROUGH :
+        st == PhaseType.Timeout ? Vulnerability.PASS_THROUGH :
         st.RequiresHPGuard() ? Vulnerability.NO_DAMAGE : (Vulnerability?)null;
-    public static bool RequiresFullHPBar(this PhaseType st) => st == PhaseType.FINAL || st == PhaseType.TIMEOUT;
-    public static bool IsCard(this PhaseType st) => st == PhaseType.NONSPELL || st.IsSpell();
+    public static bool RequiresFullHPBar(this PhaseType st) => st == PhaseType.FinalSpell || st == PhaseType.Timeout;
+    public static bool IsCard(this PhaseType st) => st == PhaseType.Nonspell || st.IsSpell();
     public static bool IsSpell(this PhaseType st) =>
-        st == PhaseType.SPELL || st == PhaseType.TIMEOUT || st == PhaseType.FINAL;
+        st == PhaseType.Spell || st == PhaseType.Timeout || st == PhaseType.FinalSpell;
 
-    public static bool HideTimeout(this PhaseType st) => st == PhaseType.STAGE || st == PhaseType.DIALOGUE;
+    public static bool HideTimeout(this PhaseType st) => st == PhaseType.Stage || st == PhaseType.Dialogue;
 
     public static float? HPBarLength(this PhaseType st) {
         if (st.IsSpell()) return 1f;
-        if (st == PhaseType.NONSPELL) return 0.5f;
+        if (st == PhaseType.Nonspell) return 0.5f;
         return null;
     }
     public static int? DefaultHP(this PhaseType st) {
-        if (st == PhaseType.TIMEOUT || st == PhaseType.DIALOGUE) return 1000000000;
+        if (st == PhaseType.Timeout || st == PhaseType.Dialogue) return 1000000000;
         return null;
     }
     public static int Int(this Layer l) => LayerMask.NameToLayer(l switch {

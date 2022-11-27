@@ -6,7 +6,7 @@ using UnityEngine.UIElements;
 
 namespace Danmokou.Scriptables {
 [CreateAssetMenu(menuName = "Data/UXML References")]
-public class UXMLReferences : ScriptableObject {
+public class UXMLReferences : ScriptableObject, IUXMLReferences {
     public VisualTreeAsset UIScreen = null!;
     public VisualTreeAsset UIScreenColumn = null!;
     public VisualTreeAsset UIScreenScrollColumn = null!;
@@ -15,6 +15,7 @@ public class UXMLReferences : ScriptableObject {
     public VisualTreeAsset Popup = null!;
     
     public VisualTreeAsset UINode = null!;
+    public VisualTreeAsset OptionsColumnUINode = null!;
     public VisualTreeAsset EmptyNode = null!;
     public VisualTreeAsset TwoTextUINode = null!;
     public VisualTreeAsset OptionLRNode = null!;
@@ -53,5 +54,13 @@ public class UXMLReferences : ScriptableObject {
         {typeof(IOptionNodeLR), OptionLRNode},
         {typeof(IComplexOptionNodeLR), ComplexOptionLRNode}
     };
+
+    VisualTreeAsset IUXMLReferences.UIScreenColumn => UIScreenColumn;
+    VisualTreeAsset IUXMLReferences.UIScreenScrollColumn => UIScreenScrollColumn;
+    VisualTreeAsset IUXMLReferences.UIScreenRow => UIScreenRow;
+    VisualTreeAsset IUXMLReferences.UIScreenRowNoStretch => UIScreenRowNoStretch;
+    VisualTreeAsset IUXMLReferences.Popup => Popup;
+    VisualTreeAsset IUXMLReferences.AbsoluteTerritory => AbsoluteTerritory;
+    VisualTreeAsset IUXMLReferences.PureTextNode => UIScreenRow;
 }
 }

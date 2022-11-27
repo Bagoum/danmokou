@@ -1,4 +1,5 @@
 ﻿using System;
+using BagoumLib;
 using Danmokou.Core;
 using UnityEditor;
 using UnityEngine;
@@ -94,7 +95,7 @@ public class GenericColliderInfo : MonoBehaviour {
             )), false);
         } else if (colliderType == ColliderType.Segments) {
             cr = CollisionMath.GrazeCircleOnSegments(hitbox, transform.position, points, start, skip, end, radius,
-                Mathf.Cos(rotationDeg * Mathf.PI / 180f), Mathf.Sin(rotationDeg * Mathf.PI / 180f));
+                Mathf.Cos(rotationDeg * Mathf.PI / 180f), Mathf.Sin(rotationDeg * Mathf.PI / 180f), out _);
         }
         if (cr.graze) {
             Debug.Break();

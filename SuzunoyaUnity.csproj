@@ -72,7 +72,12 @@
      <Compile Include="Assets\SZYU\Plugins\SuzunoyaUnity\Events\CharacterSpeakingDisturbance.cs" />
      <Compile Include="Assets\SZYU\Plugins\SuzunoyaUnity\Adapters.cs" />
      <Compile Include="Assets\SZYU\Plugins\SuzunoyaUnity\DerivedEntities\SZYUCharacter.cs" />
+     <Compile Include="Assets\SZYU\Plugins\SuzunoyaUnity\Examples\ExampleVNScript.cs" />
+     <Compile Include="Assets\SZYU\Plugins\SuzunoyaUnity\Examples\ExampleCharacterMimic.cs" />
+     <Compile Include="Assets\SZYU\Plugins\SuzunoyaUnity\Examples\ExampleVNUpdater.cs" />
+     <Compile Include="Assets\SZYU\Plugins\SuzunoyaUnity\Examples\ExampleCharacter2Mimic.cs" />
      <None Include="Assets\SZYU\Plugins\SuzunoyaUnity\SuzunoyaUnity.asmdef" />
+     <None Include="Assets\SZYU\Plugins\SuzunoyaUnity\Examples\save_file_vn.txt" />
      <Reference Include="UnityEngine">
      <HintPath>C:\Program Files\Unity\Hub\Editor\2021.3.7f1\Editor\Data\Managed\UnityEngine\UnityEngine.dll</HintPath>
      </Reference>

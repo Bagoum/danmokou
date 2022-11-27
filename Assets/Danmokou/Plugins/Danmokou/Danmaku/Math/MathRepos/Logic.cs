@@ -8,6 +8,7 @@ using Ex = System.Linq.Expressions.Expression;
 using static Danmokou.Expressions.ExUtils;
 using static Danmokou.DMath.Functions.ExM;
 using static Danmokou.Expressions.ExMHelpers;
+using ExBPY = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<float>>;
 using ExPred = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<bool>>;
 using ExTP3 = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<UnityEngine.Vector3>>;
 
@@ -23,20 +24,35 @@ public static partial class PredicateLogic {
     /// <summary>
     /// Nest a predicate such that it only returns True once for a single bullet.
     /// </summary>
-    /// <param name="pred"></param>
-    /// <returns></returns>
-    public static ExPred OnlyOnce(ExPred pred) =>
-        bpi => {
-            var b = V<bool>();
-            var key = bpi.Ctx.NameWithSuffix("_OnlyOnce_Set");
-            return Ex.Condition(bpi.DynamicHas<int>(key),
-                ExC(false),
-                Ex.Block(new[] {b},
-                    Ex.IfThen(b.Is(pred(bpi)), bpi.DynamicSet<int>(key, ExC(1))),
-                    b
-                )
-            );
-        };
+    public static ExPred OnlyOnce(ExPred pred) => bpi => {
+        var b = V<bool>();
+        var key = bpi.Ctx.NameWithSuffix("_OnlyOnce_Set");
+        return Ex.Condition(bpi.DynamicHas<int>(key),
+            ExC(false),
+            Ex.Block(new[] {b},
+                Ex.IfThen(b.Is(pred(bpi)), bpi.DynamicSet<int>(key, ExC(1))),
+                b
+            )
+        );
+    };
+
+    /// <summary>
+    /// Nest a predicate such that it can only return True once in a fixed period.
+    /// </summary>
+    public static ExPred Cooldown(ExBPY cooldown, ExPred pred) => bpi => {
+        var b = V<bool>();
+        var key = bpi.Ctx.NameWithSuffix("_Cooldown_Set");
+        return Ex.Condition(Ex.Not(bpi.DynamicHas<int>(key)).Or(
+                Ex.LessThanOrEqual(
+                    bpi.DynamicGet<int>(key).Add(((Ex)cooldown(bpi)).Cast<int>()),
+                    ExM.FrameNumber)),
+            Ex.Block(new[] {b},
+                Ex.IfThen(b.Is(pred(bpi)), bpi.DynamicSet<int>(key, ExM.FrameNumber)),
+                b
+            ),
+            ExC(false)
+        );
+    };
 
     /// <summary>
     /// Return true if the object is in the given circle relative to a BehaviorEntity.

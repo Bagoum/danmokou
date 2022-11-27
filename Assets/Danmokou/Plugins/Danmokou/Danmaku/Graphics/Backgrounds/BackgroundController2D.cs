@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using BagoumLib.Mathematics;
 using BagoumLib.Tasks;
 using Danmokou.DMath;
 using Danmokou.Services;
@@ -94,7 +95,7 @@ public struct BackgroundTransition {
 
         public void Apply(Material mat) {
             mat.SetFloat(PropConsts.maxTime, time);
-            mat.SetFloat(PropConsts.angle0, M.degRad * initialAngle);
+            mat.SetFloat(PropConsts.angle0, BMath.degRad * initialAngle);
             mat.SetFloat(PropConsts.pmDirection, CCW ? 1 : -1);
             CombinerKeywords.Apply(mat, CombinerKeywords.WIPE1);
         }
@@ -130,11 +131,11 @@ public struct BackgroundTransition {
         public IEnumerable<FragmentRendering.Fragment> Tile4() {
             float s = fragmentRadius * (float)Math.Sqrt(2);
             float width = LocationHelpers.Width + 2f;
-            float height = MainCamera.ScreenHeight;
+            float height = DMKMainCamera.ScreenHeight;
             for (float w = 0f; w < width + s; w += s) {
                 for (float h = 0f; h < height + s; h += s) {
                     var loc = new Vector2(w - width / 2f, h - height / 2f);
-                    var uv = MainCamera.RelativeToScreenUV(loc);
+                    var uv = DMKMainCamera.RelativeToScreenUV(loc);
                     yield return new FragmentRendering.Fragment(loc, uv, 
                         Mathf.PI/4, fragMaxInitSpeed, fragGravity, fragRotAccelMag);
                 }

@@ -13,7 +13,7 @@ public class Sanae : SZYUCharacter {
     public override Color UIColor => new(0.1f, 0.85f, 0.34f);
     public override LString Name { get; set; } = LocalizedStrings.FindReference("dialogue.sanae");
 
-    public override void RollEvent() => ServiceLocator.SFXService.Request("x-bubble-2", SFXType.TypingSound);
+    public override void RollEvent() => ISFXService.SFXService.Request("x-bubble-2", SFXType.TypingSound);
 }
 
 public class SanaeMimic : PiecewiseCharacterMimic {

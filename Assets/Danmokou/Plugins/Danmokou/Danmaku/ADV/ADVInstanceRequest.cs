@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using BagoumLib;
 using BagoumLib.Cancellation;
 using BagoumLib.Events;
 using BagoumLib.Tasks;
@@ -9,42 +10,20 @@ using Danmokou.Scenes;
 using Danmokou.Scriptables;
 using Danmokou.Services;
 using Danmokou.VN;
+using Suzunoya.ADV;
+using Suzunoya.ControlFlow;
 using SuzunoyaUnity;
 
 namespace Danmokou.ADV {
-/// <summary>
-/// Contains all top-level metadata about an executing ADV instance that is not specific to the game.
-/// <br/>The actual execution process is handled by a game-specific <see cref="IExecutingADV"/>.
-/// </summary>
-/// <param name="Request"></param>
-/// <param name="VN"></param>
-/// <param name="eVN">Unity wrapper around <see cref="VN"/></param>
-/// <param name="Tracker">Cancellation token wrapping the ADV instance execution.</param>
-public record ADVInstance(ADVInstanceRequest Request, DMKVNState VN, ExecutingVN eVN, Cancellable Tracker) : IDisposable { 
-    /// <inheritdoc cref="ADVInstanceRequest.ADVData"/>
-    public ADVData ADVData => Request.ADVData;
-    /// <inheritdoc cref="ADVInstanceRequest.Manager"/>
-    public ADVManager Manager => Request.Manager;
-    public void Cancel() {
-        Tracker.Cancel();
-        VN.DeleteAll(); //this cascades into destroying executingVN
-    }
 
-    public void Dispose() => Cancel();
-}
-
-/// <summary>
-/// Contains information necessary to start an ADV instance.
-/// <br/>Once the instance is started, metadata such as the execution tracker
-/// is stored in a constructed <see cref="ADVInstance"/>.
-/// </summary>
-public class ADVInstanceRequest {
-    /// <inheritdoc cref="ADVManager"/>
+/// <inheritdoc/>
+public class ADVInstanceRequest : IADVInstanceRequest {
+    /// <inheritdoc cref="ADVManagerWrapper"/>
     public ADVManager Manager { get; }
     /// <summary>
     /// Game definition.
     /// </summary>
-    public ADVGameDef Game { get; }
+    public IADVGameDef Game { get; }
     /// <summary>
     /// Save data to load from.
     /// </summary>
@@ -54,10 +33,14 @@ public class ADVInstanceRequest {
     ///  that is replayed onto the "blank" save data in <see cref="ADVData"/>.
     /// </summary>
     public ADVData? LoadProxyData { get; private set; }
-    
-    public ADVInstanceRequest(ADVManager manager, ADVGameDef game, ADVData advData) {
+
+    private Action<IADVCompletion, IDisposable> Finalize { get; }
+
+    public ADVInstanceRequest(ADVManager manager, IADVGameDef game, ADVData advData,
+        Action<IADVCompletion, IDisposable>? finalize = null) {
         Manager = manager;
         Game = game;
+        this.Finalize = finalize ?? ((a, b) => DefaultReturn(a, b));
         (ADVData, LoadProxyData) = advData.GetLoadProxyInfo();
     }
 
@@ -75,56 +58,54 @@ public class ADVInstanceRequest {
     /// Enter the ADV scene and run the ADV instance.
     /// Returns null if the scene fails to load.
     /// </summary>
-    public Task<IADVCompletion>? Run(SceneConfig? returnTo) {
-        if (returnTo == null)
-            returnTo = GameManagement.References.mainMenu;
+    public bool Run() {
         //You can start running this before the curtain pulls back, so we use TaskFromOnLoad instead of TaskFromOnFinish
         if (ServiceLocator.Find<ISceneIntermediary>().LoadScene(SceneRequest.TaskFromOnLoad(
-                Game.sceneConfig,
+                Game.Scene,
                 SceneRequest.Reason.START_ONE,
                 Manager.DestroyCurrentInstance,
                 RunInScene,
                 null,
                 out var tcs)) is null)
-            return null;
-        async Task<IADVCompletion> Rest() {
-            var (result, dispose) = await tcs.Task;
-            if (ServiceLocator.Find<ISceneIntermediary>().LoadScene(
-                    new SceneRequest(returnTo,
-                        SceneRequest.Reason.FINISH_RETURN,
-                        dispose.Dispose
-                    )) is { } loader) {
-                await loader.Finishing.Task;
-            } else
-                throw new Exception("Couldn't return to menu after ADV completion");
-            return result;
-        }
-        return Rest();
+            return false;
+        _ = tcs.Task.ContinueSuccessWithSync(result => Finalize(result.result, result.cleanup));
+        return true;
     }
 
     /// <summary>
     /// Run the ADV instance in the current scene. 
     /// </summary>
 #if UNITY_EDITOR
-    public 
+    public
 #else
     private
 #endif
-    async Task<(IADVCompletion result, IDisposable cleanup)> RunInScene() {
+        async Task<(IADVCompletion result, IDisposable cleanup)> RunInScene() {
         var Tracker = new Cancellable();
         var vn = new DMKVNState(Tracker, Game.Key, ADVData.VNData);
         var evn = ServiceLocator.Find<IVNWrapper>().TrackVN(vn);
         ServiceLocator.Find<IVNBacklog>().TryRegister(evn);
-        if (Game.backlogFeatures == ADVBacklogFeatures.ALLOW_BACKJUMP)
+        if (Game.BacklogFeatures == ADVBacklogFeatures.ALLOW_BACKJUMP)
             evn.doBacklog = loc => {
                 vn.UpdateInstanceData().Location = loc;
-                Manager.Restart(ADVData);
+                Restart();
             };
-        var inst = new ADVInstance(this, vn, evn, Tracker);
+        var inst = new ADVInstance(this, vn, Tracker);
         using var exec = Game.Setup(inst);
         Manager.SetupInstance(exec);
         var result = await exec.Run();
         return (result, inst);
     }
+
+    public bool Restart(ADVData? data = null) {
+        return new ADVInstanceRequest(Manager, Game, data ?? ADVData, Finalize).Run();
+    }
+
+    public static bool DefaultReturn(IADVCompletion result, IDisposable dispose) =>
+        ServiceLocator.Find<ISceneIntermediary>().LoadScene(
+            new SceneRequest(GameManagement.References.mainMenu,
+                SceneRequest.Reason.FINISH_RETURN,
+                dispose.Dispose
+            )) is { } loader;
 }
 }

@@ -13,7 +13,7 @@ public class Kaguya : SZYUCharacter {
     public override Color UIColor => new(.76f, .18f, .45f);
     public override LString Name { get; set; } = LocalizedStrings.FindReference("dialogue.kaguya");
     
-    public override void RollEvent() => ServiceLocator.SFXService.Request("x-bubble-3", SFXType.TypingSound);
+    public override void RollEvent() => ISFXService.SFXService.Request("x-bubble-3", SFXType.TypingSound);
 }
 
 public class KaguyaMimic : PiecewiseCharacterMimic {

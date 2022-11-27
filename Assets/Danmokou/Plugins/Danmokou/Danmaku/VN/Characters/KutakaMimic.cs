@@ -13,7 +13,7 @@ public class Kutaka : SZYUCharacter {
     public override Color UIColor => new(.80f, .53f, .25f);
     public override LString Name { get; set; } = LocalizedStrings.FindReference("dialogue.kutaka");
     
-    public override void RollEvent() => ServiceLocator.SFXService.Request("x-bubble-3", SFXType.TypingSound);
+    public override void RollEvent() => ISFXService.SFXService.Request("x-bubble-3", SFXType.TypingSound);
 }
 
 public class KutakaMimic : PiecewiseCharacterMimic {

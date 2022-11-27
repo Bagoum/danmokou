@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using BagoumLib.Events;
+using BagoumLib.Mathematics;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.DMath;
@@ -81,8 +82,8 @@ public class SeijaCamera : CoroutineRegularUpdater, IShaderCamera {
             lastYRot = targetYRot;
             SetLocation(targetXRot, targetYRot);
         } else {
-            lastXRot = Mathf.Lerp(sourceXRot, targetXRot, timeElapsedToTarget / timeToTarget);
-            lastYRot = Mathf.Lerp(sourceYRot, targetYRot, timeElapsedToTarget / timeToTarget);
+            lastXRot = M.Lerp(sourceXRot, targetXRot, timeElapsedToTarget / timeToTarget);
+            lastYRot = M.Lerp(sourceYRot, targetYRot, timeElapsedToTarget / timeToTarget);
             SetLocation(lastXRot, lastYRot);
         }
         timeElapsedToTarget += ETime.FRAME_TIME;
@@ -109,8 +110,8 @@ public class SeijaCamera : CoroutineRegularUpdater, IShaderCamera {
 
 
     private void SetLocation(float xrd, float yrd) {
-        seijaMaterial.SetFloat(rotX, xrd * M.degRad);
-        seijaMaterial.SetFloat(rotY, yrd * M.degRad);
+        seijaMaterial.SetFloat(rotX, xrd * BMath.degRad);
+        seijaMaterial.SetFloat(rotY, yrd * BMath.degRad);
     }
 
     public void ShowBlackHole(BlackHoleEffect bhe) {
@@ -135,7 +136,7 @@ public class SeijaCamera : CoroutineRegularUpdater, IShaderCamera {
     }
 
     private void OnPreRender() {
-        cam.targetTexture = MainCamera.RenderTo;
+        cam.targetTexture = DMKMainCamera.RenderTo;
     }
     private void OnRenderImage(RenderTexture src, RenderTexture dest) {
         //Dest is dirty, rendering to it directly can cause issues if there are alpha pixels.

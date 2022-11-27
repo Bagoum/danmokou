@@ -14,7 +14,7 @@ public class Nue : SZYUCharacter {
     public override Color UIColor => new(.34f, .38f, .45f);
     public override LString Name { get; set; } = LocalizedStrings.FindReference("dialogue.nue");
     
-    public override void RollEvent() => ServiceLocator.SFXService.Request("x-bubble-3", SFXType.TypingSound);
+    public override void RollEvent() => ISFXService.SFXService.Request("x-bubble-3", SFXType.TypingSound);
 }
 
 public class NueMimic : PiecewiseCharacterMimic {

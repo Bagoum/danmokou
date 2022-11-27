@@ -33,7 +33,7 @@ public class LetterboxedInput : BaseInput {
         var raw = trueScreenLoc;
         var (screenW, screenH) = (Screen.width, Screen.height);
         var screenAspect = screenW / (float)screenH;
-        var (internW, internH) = (MainCamera.RenderTo.width, MainCamera.RenderTo.height);
+        var (internW, internH) = (DMKMainCamera.RenderTo.width, DMKMainCamera.RenderTo.height);
         var internAspect = internW / (float)internH;
 
         float scale;

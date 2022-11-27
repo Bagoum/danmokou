@@ -201,7 +201,7 @@ public partial class BulletManager {
         private CulledBulletCollection? culled;
         protected readonly DMCompactingArray<BulletControl> controls = new(4);
         private readonly DMCompactingArray<BulletControl> onCollideControls = new(2);
-        private readonly AbstractDMCompactingArray<IDeletionMarker> bucketingRequests = new(4);
+        private readonly AnyTypeDMCompactingArray<IDeletionMarker> bucketingRequests = new(4);
         private List<int>[]? buckets;
         public ReadOnlySpan2D<List<int>> bucketsSpan => new(buckets!, bucketsY, bucketsX);
         //This is null when bucketing did not take place this frame
@@ -366,20 +366,16 @@ public partial class BulletManager {
             }
         }
 
-        /// <summary>
-        /// Same as DeleteSB, but also runs onCollideControls.
-        /// </summary>
-        /// <param name="ind"></param>
-        public void DeleteSB_Collision(int ind) {
+        public void RunCollisionControls(int ind) {
             if (!Deleted[ind]) {
                 ref var sb = ref Data[ind];
                 var st = new VelocityUpdateState(this, 0, 0) { ii = ind };
                 for (int ii = 0; ii < onCollideControls.Count; ++ii) {
                     onCollideControls[ii].action(in st, in sb.bpi, in onCollideControls[ii].cT);
                 }
-                DeleteSB(ind);
             }
         }
+        
         #endregion
 
         #region Updaters
@@ -439,7 +435,7 @@ public partial class BulletManager {
                     if (!PARALLELISM_ENABLED)
                         //Post-vel controls may destroy the bullet. As soon as this occurs, stop iterating
                         for (int pi = state.postDirPcs; pi < numPcs && !Deleted[state.ii]; ++pi) 
-                            controls[pi].action(in state, sb.bpi, controls[pi].cT);
+                            controls[pi].action(in state, in sb.bpi, in controls[pi].cT);
                     
                     //Don't check Deleted[state.ii] here for efficiency. Double-deletion is safe
                     if (allowCameraCull && (++sb.cullFrameCounter & CULL_EVERY_MASK) == 0 &&

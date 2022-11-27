@@ -15,7 +15,7 @@ public class Suwako : SZYUCharacter {
 
     public string DialogueSFX { get; set; } = "x-bubble-4";
     
-    public override void RollEvent() => ServiceLocator.SFXService.Request(DialogueSFX, SFXType.TypingSound);
+    public override void RollEvent() => ISFXService.SFXService.Request(DialogueSFX, SFXType.TypingSound);
 }
 
 public class SuwakoMimic : PiecewiseCharacterMimic {

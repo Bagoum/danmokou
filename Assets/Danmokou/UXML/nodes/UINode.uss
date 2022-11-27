@@ -356,3 +356,24 @@
     margin-top: 0;
     margin-bottom: 0;
 }
+
+.optionsselect {
+}
+
+.optionsselect .body {
+    text-overflow: ellipsis;
+    background-image: url('project://database/Assets/Danmokou/Sprites/UI/UITK/optionsselectbox_inactive.png?fileID=21300000&guid=6bc4cea3b34fc324aa0cc9f1752c0c0c&type=3#optionsselectbox_inactive');
+    border-left-width: 0;
+    border-right-width: 0;
+    border-top-width: 0;
+    border-bottom-width: 0;
+    -unity-background-image-tint-color: rgba(184, 148, 179, 255);
+    transition-property: -unity-background-image-tint-color;
+    transition-duration: 0.3s;
+}
+
+.optionsselect.focus .body {
+    text-overflow: ellipsis;
+    background-image: url('project://database/Assets/Danmokou/Sprites/UI/UITK/optionsselectbox.png?fileID=21300000&guid=b45ebdf23b6201047bf3f6fe2d8d1ffa&type=3#optionsselectbox');
+    -unity-background-image-tint-color: rgba(255, 255, 255, 255);
+}

@@ -130,7 +130,7 @@ public class FireOption : BehaviorEntity {
         powerLerp = Mathf.Clamp01(powerLerp + ETime.FRAME_TIME / powerLerpTime);
         var lerpDir = Player.IsFocus ? 1 : -1;
         freeFocusLerp = Mathf.Clamp01(freeFocusLerp + lerpDir * ETime.FRAME_TIME / freeFocusLerpTime);
-        original_angle = Mathf.Lerp(freeAngle(bpi), focusAngle(bpi), freeFocusLerp);
+        original_angle = M.Lerp(freeAngle(bpi), focusAngle(bpi), freeFocusLerp);
         tr.localPosition = Vector3.Lerp(FreeOffset, FocusOffset, freeFocusLerp);
         if (doOpacity) {
             var color = rootColor;

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using BagoumLib;
 using BagoumLib.Cancellation;
 using BagoumLib.Events;
 using Danmokou.Behavior;
@@ -122,11 +123,11 @@ public class AyaCamera : BehaviorEntity {
         if (player.IsTryingBomb && orientationSwitchWaiting < 0f) {
             orientationSwitchWaiting = orientationSwitchCooldown;
             CameraOrientation = Reverse(CameraOrientation);
-            ServiceLocator.SFXService.Request(onOrientationSwitch);
+            ISFXService.SFXService.Request(onOrientationSwitch);
         }
         //while firing, the angle is static and the position is controlled by the coroutine
         if (CameraState != State.FIRING) {
-            angle = Mathf.Lerp(angle, BaseViewfinderAngle, lerpToAngleRate * ETime.FRAME_TIME);
+            angle = M.Lerp(angle, BaseViewfinderAngle, lerpToAngleRate * ETime.FRAME_TIME);
             tr.position = location = Vector2.Lerp(location, TargetPosition, lerpToPositionRate * ETime.FRAME_TIME);
             viewfinder.eulerAngles = new Vector3(0f, 0f, angle + CameraOrientationAngleOffset);
         }
@@ -138,7 +139,7 @@ public class AyaCamera : BehaviorEntity {
             var prevCharge = charge;
             charge = M.Clamp(chargeMin, chargeMax, charge + GetChargeRate(CameraState) * ETime.FRAME_TIME);
             if (!full && ChargeFull) {
-                ServiceLocator.SFXService.Request(onFullCharge);
+                ISFXService.SFXService.Request(onFullCharge);
             }
             if (prevCharge != charge)
                 text.text = string.Format(textFormat, charge);
@@ -185,9 +186,9 @@ public class AyaCamera : BehaviorEntity {
         using var slowdownToken = ETime.Slowdown.AddConst(0.5f);
         viewfinder.gameObject.layer = highCameraLayer;
         using var cToken = new Cancellable();
-        ServiceLocator.SFXService.RequestSource(whileFire, cToken);
+        ISFXService.SFXService.RequestSource(whileFire, cToken);
         for (float t = 0f; t < cameraLerpDownTime; t += ETime.FRAME_TIME) {
-            float scale = Mathf.Lerp(cameraFireSize, 1f, M.EInSine(t / cameraLerpDownTime));
+            float scale = M.Lerp(cameraFireSize, 1f, M.EInSine(t / cameraLerpDownTime));
             charge = 100 * (1 - M.EInSine(t / cameraLerpDownTime));
             viewfinder.localScale = new Vector3(scale, scale, scale);
             tr.position = location += cameraFireControlSpeed * ETime.FRAME_TIME * player.DesiredMovement01;
@@ -208,13 +209,13 @@ public class AyaCamera : BehaviorEntity {
         for (int ii = 0; ii < _enemies.Count; ++ii) {
             _enemies[ii].enemy.HideViewfinderCrosshair();
         }
-        ServiceLocator.SFXService.Request(onTimeout);
+        ISFXService.SFXService.Request(onTimeout);
         RunDroppableRIEnumerator(UpdateNormal());
     }
     private IEnumerator UpdateCharge() {
         CameraState = State.CHARGE;
         using var cToken = new Cancellable();
-        ServiceLocator.SFXService.RequestSource(whileCharge, cToken);
+        ISFXService.SFXService.RequestSource(whileCharge, cToken);
         while (InputCharging) yield return null;
         RunDroppableRIEnumerator(UpdateNormal());
     }
@@ -272,7 +273,7 @@ public class AyaCamera : BehaviorEntity {
     }
 
     private IEnumerator DoFlash(float time, bool success) {
-        ServiceLocator.SFXService.Request(onFlash);
+        ISFXService.SFXService.Request(onFlash);
         flash.enabled = true;
         Color c = flash.color;
         c.a = 1;
@@ -285,7 +286,7 @@ public class AyaCamera : BehaviorEntity {
         c.a = 0;
         flash.color = c;
         flash.enabled = false;
-        ServiceLocator.SFXService.Request(success ? onPictureSuccess : onPictureMiss);
+        ISFXService.SFXService.Request(success ? onPictureSuccess : onPictureMiss);
     }
     
 

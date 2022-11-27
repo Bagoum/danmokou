@@ -12,21 +12,23 @@ To get the newest version from git, run:
 
 The following features are planned for future releases. 
 
-- [9.3.0] LockedBoundedContext handling in Suzunoya
-- [9.3.0] Safeguards around control rebinding
-- [10.0.0] ADV-style gameplay, state management, and generalized UI support
-  - Basic implementation of ADV gameplay and state management implemented in 9.0.0 (see Purple Heart).
-- [10.0.0] UI improvements, including custom cursor handling, controls tooltips, and smarter navigation on menus
-  - Control tooltips and some smarter menu navigation implemented in 9.1.0
+- [10.1.0] Safeguards around control rebinding
+- [10.1.0] UI improvements: tooltips and custom cursors
 - [Backlog] Default handling for graze flake items and bullet cancel flake items
 - [Backlog] Implementation of a TH18-like card engine
 - [Backlog] Procedural generation of stages and bullet patterns
 
-
-
-# v10.0.0 
+# v10.0.0 (2022/12/03)
 
 #### Features
+
+- The `oncollide` bullet control can now be run on simple bullets as well as complex bullets (such as pathers or lasers). See `examples/on collide control.bdsl` for some examples.
+
+- Added three new simple bullet pool controls: `destructible`, which sets whether or not bullets will be destroyed when they collide with the player, `damage`, which sets the amount of damage bullets do to the player (limited to 0 or 1), and `nograze`, which disallows grazing on the bullet.
+
+  - `damage` and `nograze` have also been added to BehaviorEntity and Laser options, so they work on pathers and lasers as well, though you provide them in the options array instead of as pool controls. See `examples/on collide control.bdsl` for some examples.
+  
+- The `lasercolliding` function has been removed and replaced with a general `colliding` function that works on all complex bullets, including lasers and pathers. See `examples/on collide control.bdsl` for examples on how to use this function more generally with some of its helper functions.
 
 - Added a scripting function `set` which allows setting values on bullet data when it is executed. Consider the following case for homing lasers:
 
@@ -50,24 +52,24 @@ The following features are planned for future releases.
 
   In this example, `set` is used with `beforeDraw` (a laser option that runs a BPY right before it draws the laser) to update the laser's target location based on the closest enemy. This is more visually pleasing and also more optimized than directly using `LNearestEnemy` inside `dynamic`, since the contents of `dynamic` are evaluated at every point along the laser, and `LNearestEnemy` is an expensive function.
 
-- Added the `SetRenderQueue` pool control, which allows changing the rendering order of specific simple bullet pools. See [the bullets documentation](bullets.md) for details.
+- Added the `SetRenderQueue` simple bullet pool control, which allows changing the rendering order of specific simple bullet pools. See [the bullets documentation](bullets.md) for details on render queue numbers.
 
 - Added initial support for bucketing bullets. "Bucketing" groups bullets based on their screen location, which makes collision detection far more efficient. Since there is an overhead to the bucketing process, it is not particularly useful for computing many-against-one collisions (such as enemy bullets against the player). It is used for player bullet on enemy collisions and  bullet on bullet collisions. You can call `RequestBucketing` on a simple bullet collection to make sure it is bucketed. To handle collisions, you can either implement `ISimpleBulletCollisionReceiver` and call `SimpleBulletCollection.CheckCollisions` (example in `PlayerController.cs`), or you can call `SimpleBulletCollection.GetCollisionFormat` and do custom handling (example in `BxBCollision.cs`).
 
-- Added initial support for bullet-on-bullet collision. See `examples/bullet on bullet collision.bdsl`.
+  - Added initial support for bullet-on-bullet collision, currently only between simple bullets. See `examples/bullet on bullet collision.bdsl`.
 
-- Optimized handling of player bullets by adding bucketing for simple bullets, as well as AABB pruning for lasers and pathers.
+- Optimized handling of player bullets by adding bucketing for simple bullets, as well as AABB pruning for lasers and pathers. This fixes some cases where large amounts of enemies (100+) could cause lag during player bullet collision checking.
 
 - It is now possible to use generic complex bullets in player shots. (The only generic complex bullet currently present in the engine is `moon`, eg. `moon-blue/w`.) To use complex bullets, use the `complex` bullet firing function (as opposed to `s/laser/pather`).
 
-- There is now generalized support in Danmokou's VN library for presenting "evidence" (think Ace Attorney) during dialogue, as demonstrated in [this](https://bagoum.itch.io/ghost-of-tranquil-vows) proof-of-concept game (relevant code is in `GhostOfThePastGameDef.cs`). To do this, first create a field `evidenceRequester = new EvidenceRequest<E>()` in the `IExecutingADV` process, where `E` is a parent type for the evidence that a player can present. Then, there are two ways that you can use to request evidence from the player:
+- There is now generalized support in Suzunoya's VN library for presenting "evidence" (think Ace Attorney) during dialogue, as demonstrated in [this](https://bagoum.itch.io/ghost-of-tranquil-vows) proof-of-concept game (relevant code is in `GhostOfThePastGameDef.cs`). To do this, first create a field `evidenceRequester = new EvidenceRequest<E>()` once during game setup, where `E` is a parent type for the evidence that a player can present. Then, there are two ways that you can use to request evidence from the player:
 
-  - `using (var _ = evidenceRequester.Request(CONTINUTATION)) { ... }`. In this case, the player can optionally present evidence while the code inside the brackets is being executed, and if they do, the CONTINUATION function, which must be of type `Func<E, BoundedContext<InterruptionStatus>>`, will be run on the provided evidence. It should return either `InterruptionStatus.Continue` (the code should continue running) or `InterruptionStatus.Abort` (the code should stop running). Note that you cannot save or load within such dialogue when using this method.
+  - `using (var _ = evidenceRequester.Request(CONTINUTATION)) { ... }`. In this case, the player can optionally present evidence while the code inside the brackets is being executed, and if they do, the CONTINUATION function, which must be of type `Func<E, BoundedContext<InterruptionStatus>>`, will be run on the provided evidence. After running some code, it should return either `InterruptionStatus.Continue` (the nesting code should continue running) or `InterruptionStatus.Abort` (the nesting code should stop running). Note that you cannot save or load within the CONTINUATION function, but if you make the CONTINUATION function a `StrongBoundedContext<InterruptionStatus>` with `LoadSafe = false`, then saving/loading within the CONTINUATION function will send the player to the point right before they started the CONTINUATION function.
   - `var ev = await evidenceRequester.WaitForEvidence(KEY)`. In this case, the player *must* present evidence to continue the game execution. Save/load can still be used with this method, and KEY will be used to preserve the value of the evidence provided when saving. (Note that your evidence type E must be serializable!)
 
 - In order to increase the modularity of supported game mechanics, mechanics are now handled by an abstraction `IInstanceFeature` that can be slotted into `InstanceData`. `IInstanceFeature` has methods that are called upon certain game events; for example, the method `OnGraze` is called when the player grazes, and the class `MeterFeature`, which implements a mechanic for special meter abilities, implements this method by adding to the meter. Furthermore, there are interfaces for specific mechanics, such as `IPowerFeature` for the power mechanic. The strength of this architecture is that implementations can easily be switched out; you can use the class `PowerFeature`, which has traditional 1-4 Touhou-style power handling, or `PowerFeature.Disabled`, which disables power items and sets the player power to always 4.
 
-- In previous versions of the engine, it was not straightforward to add game-specific code handling. In v10, this is now handled by the `GameDef` scriptable object, which is a generic container for game-specific code. There are several abstract subclasses of `GameDef` according to the type— for example, `ADVGameDef` for ADV-style games and `CampaignDanmakuGameDef` for multi-stage danmaku games. To make game-specific code, create a subclass such as `SimpGameDef : CampaignDanmakuGameDef` and implement the abstract methods.
+- In previous versions of the engine, it was not straightforward to add game-specific code handling. In v10, this is now handled by the `GameDef` scriptable object, which is a generic container for game-specific code. There are several abstract subclasses of `GameDef` according to the type— for example, `ADVGameDef` for ADV-style games and `CampaignDanmakuGameDef` for multi-stage danmaku games. To make game-specific code, create a subclass such as `SiMPGameDef : CampaignDanmakuGameDef` and implement the abstract methods.
 
   - One of the abstract methods on `CampaignDanmakuGameDef` is `MakeFeatures`, which returns the set of game-specific `IInstanceFeature`s.
 
@@ -77,19 +79,29 @@ The following features are planned for future releases.
 
 - Expression compilation with GCXU is now faster due to some extra indirection provided by `ReadyToCompileExpr`.
 
+- Improved memory allocation handling for UI handling, player bullet firing, the GTRepeat StateMachine, DMCompactingArray, and string allocation.
+
+- Added support for on-screen option selection in VN/ADV contexts. You can set up default handling by (once at the beginning of setup) creating a `SelectionRequest` object from one of the `SetupSelector` methods on `DMKExecutingADV` (in the ADV context) or `VNUtils` (in the VN-only context), and then (every time you want the player to make a selection) awaiting the task `selector.WaitForSelection(...)`. Note that the default handling is DMK-specific, but you can wire up your own UI listeners elsewise.
+
 #### Breaking Changes
 
 - As part of the introduction of GameDef, achievement handling has been moved from AchievementsProviderSO to GameDef.
+- Deprecated SOPlayerHitbox in favor of using ServiceLocator to get the PlayerController object where necessary.
+- Replaced the laser-specific function `lasercolliding` with the bullet function `colliding`.
+- Much of the Danmokou ADV library has been moved to Suzunoya. You may need to update imports if you have been using it.
+- Parallelization support has been removed from simple bullet collision-checking in order to support bucketing.
 
 #### Changes
 
 - Right-clicking while playing dialogue will now bring up the pause menu instead of moving to the next line.
 - Collision handling has been generalized across the engine. Now, there are three phases to RegularUpdate, which are: RegularUpdate, RegularUpdateCollision, RegularUpdateFinalize. In RegularUpdateCollision, entities should find any targets whose hurtboxes overlap the entity's hitbox, and call collision functions on those targets. In RegularUpdateFinalize, entities should perform calculations based on the sum of collisions they received. Rendering handling is also best placed in RegularUpdateFinalize.
-- Parallelization support has been removed from simple bullet collision-checking in order to support bucketing.
+- The core UI library (built on top of Unity's UIToolkit) has been moved to the Danmokou.Core assembly (Assets/Danmokou/Plugin/Danmokou/Core/UI). This does not affect most usage, but it does mean that it's easier to pull it out and use it outside of DMK.
 
 #### Fixes
 
 - Fixed a "bug" where, during VN execution, pressing Z to select an option from the menu at the right side of the dialogue box would also cause the dialogue to advance.
+- Fixed an issue where the UI would flash off for one frame when changing the resolution.
+- Fixed a bug where the background would stop rendering until the game was unpaused when changing the resolution.
 
 # v9.2.0 (2022/09/10)
 

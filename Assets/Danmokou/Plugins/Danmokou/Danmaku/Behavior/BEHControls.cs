@@ -106,27 +106,41 @@ public partial class BehaviorEntity {
             Active = false;
         }
 
-        public void AddPoolControlEOF(BEHControl pc) => 
-            ETime.QueueEOFInvoke(() => controls.AddPriority(pc, pc.priority));
+        public void AddBulletControlEOF(BEHControl pc) => 
+            ETime.QueueEOFInvoke(() => (pc.priority == BulletControl.P_ON_COLLIDE ? onCollideControls : controls)
+                .AddPriority(pc, pc.priority));
         
         public void PruneControls() {
-            for (int ii = 0; ii < controls.Count; ++ii) {
-                if (controls[ii].cT.Cancelled || !controls[ii].persist(ParametricInfo.Zero)) {
-                    controls.Delete(ii);
+            void Prune(DMCompactingArray<BEHControl> carr) {
+                for (int ii = 0; ii < carr.Count; ++ii) {
+                    if (carr[ii].cT.Cancelled || !carr[ii].persist(ParametricInfo.Zero)) {
+                        carr.Delete(ii);
+                    }
                 }
+                carr.Compact();
             }
-            controls.Compact();
+            Prune(controls);
+            Prune(onCollideControls);
         }
-        public void ClearControls() => controls.Empty();
-        
+        public void ClearControls() {
+            controls.Empty();
+            onCollideControls.Empty();
+        }
+
         private readonly DMCompactingArray<BEHControl> controls = new(4);
+        private readonly DMCompactingArray<BEHControl> onCollideControls = new(4);
 
         public void IterateControls(BehaviorEntity beh) {
-            int ct = controls.Count;
-            for (int ii = 0; ii < ct && !beh.dying; ++ii) {
+            for (int ii = 0; ii < controls.Count && !beh.dying; ++ii) {
                 //Ignore controls that have been cancelled, as they may be invalid
                 if (!controls[ii].cT.Cancelled)
                     controls[ii].action(beh, controls[ii].cT);
+            }
+        }
+        public void IterateCollideControls(BehaviorEntity beh) {
+            for (int ii = 0; ii < onCollideControls.Count; ++ii) {
+                if (!onCollideControls[ii].cT.Cancelled)
+                    onCollideControls[ii].action(beh, onCollideControls[ii].cT);
             }
         }
     }
@@ -368,7 +382,7 @@ public partial class BehaviorEntity {
         /// <returns></returns>
         public static cBEHControl SFX(string sfx, Pred cond) {
             return new((b, cT) => {
-                if (cond(b.rBPI)) ServiceLocator.SFXService.Request(sfx);
+                if (cond(b.rBPI)) ISFXService.SFXService.Request(sfx);
             }, BulletControl.P_RUN);
         }
 
@@ -417,7 +431,6 @@ public partial class BehaviorEntity {
             }, priority);
         }
 
-        
         /// <summary>
         /// If the condition is true, spawn an iNode at the position and run an SM on it.
         /// </summary>
@@ -428,12 +441,24 @@ public partial class BehaviorEntity {
                 _ = exec.RunExternalSM(SMRunner.Cull(target, cT, gcx));
             }
         }, BulletControl.P_RUN);
+        
+        
+        /// <summary>
+        /// When the bullet collides, if the condition is true, spawn an iNode at the position and run an SM on it.
+        /// </summary>
+        public static cBEHControl OnCollide(Pred cond, StateMachine target) => new((b, cT) => {
+            if (cond(b.rBPI)) {
+                var exec = b.GetINode("f-collide-triggered", null);
+                using var gcx = b.rBPI.ctx.RevertToGCX(exec);
+                _ = exec.RunExternalSM(SMRunner.Cull(target, cT, gcx));
+            }
+        }, BulletControl.P_ON_COLLIDE);
     }
     
-    public static void ControlPool(Pred persist, StyleSelector styles, cBEHControl control, ICancellee cT) {
+    public static void ControlBullets(Pred persist, StyleSelector styles, cBEHControl control, ICancellee cT) {
         BEHControl pc = new BEHControl(control, persist, cT);
         for (int ii = 0; ii < styles.Complex.Length; ++ii) {
-            GetPool(styles.Complex[ii]).AddPoolControlEOF(pc);
+            GetPool(styles.Complex[ii]).AddBulletControlEOF(pc);
         }
     }
 
@@ -470,7 +495,7 @@ public partial class BehaviorEntity {
         /// <returns></returns>
         public static BehPF SoftCullAll(string targetFormat) =>
             (pool, cT) => {
-                GetPool(pool).AddPoolControlEOF(new BEHControl(
+                GetPool(pool).AddBulletControlEOF(new BEHControl(
                     BulletControls.Softcull(
                         BulletManager.PortColorFormat(pool, new SoftcullProperties(targetFormat, null)),
                         _ => true), Consts.NOTPERSISTENT, cT));
@@ -498,7 +523,7 @@ public partial class BehaviorEntity {
                 return;
             if (!BulletManager.PortColorFormat(poolStr, props, out string? target)) 
                 return;
-            pool.AddPoolControlEOF(new BEHControl(
+            pool.AddBulletControlEOF(new BEHControl(
                 BulletControls.Softcull(target, _ => true), Consts.NOTPERSISTENT, null));
         }
         foreach (var pool in (cullPools ?? activePools.Select(x => x.style))) CullPool(pool);

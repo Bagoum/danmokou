@@ -37,6 +37,8 @@ public readonly struct CollisionResult {
         this.collide = collide;
         this.graze = graze;
     }
+
+    public CollisionResult NoGraze() => new(collide, false);
 }
 
 public static class CollisionMath {
@@ -170,8 +172,22 @@ public static class CollisionMath {
     }
 
     
+    /// <summary>
+    /// Check collision between a circle hurtbox and a sequence of segments with circular radii (ie. a pather or laser).
+    /// </summary>
+    /// <param name="c1">Circular hitbox</param>
+    /// <param name="src">Base location of segments</param>
+    /// <param name="points">Offset from src of each segment</param>
+    /// <param name="start">First segment to consider</param>
+    /// <param name="skip">Delta of segment indexes to test collision against (eg. if this is 2, then check collision on the interpolated sequence of start, start+2, start+4... end)</param>
+    /// <param name="end">Last segment to consider, exclusive</param>
+    /// <param name="radius">Radius of each segment point</param>
+    /// <param name="cos_rot">Cosine rotation of sequence of segments</param>
+    /// <param name="sin_rot">Sine rotation of sequence of segments</param>
+    /// <param name="segment">Segment at which collision occurred</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static CollisionResult GrazeCircleOnSegments(in Hurtbox c1, Vector2 src, Vector2[] points, int start, int skip, int end, float radius, float cos_rot, float sin_rot) {
+    public static CollisionResult GrazeCircleOnSegments(in Hurtbox c1, Vector2 src, Vector2[] points, int start, int skip, int end, float radius, float cos_rot, float sin_rot, out int segment) {
+        segment = 0;
         if (start >= end) return noColl;
         bool grazed = false;
         // use src.x to store delta vector to target, derotated.
@@ -199,6 +215,7 @@ public static class CollisionMath {
                 //due to segmenting we will end by checking on all points except the last, which is handled outside.
                 grazed |= d2 < lradius2;
                 if (d2 < radius2) {
+                    segment = ii;
                     return new CollisionResult(true, grazed);
                 }
             } else {
@@ -207,6 +224,7 @@ public static class CollisionMath {
                     float norm2 = d2 - projection_unscaled * projection_unscaled / dmag2;
                     grazed |= norm2 < lradius2;
                     if (norm2 < radius2) {
+                        segment = ii;
                         return new CollisionResult(true, grazed);
                     }
                 }
@@ -214,6 +232,7 @@ public static class CollisionMath {
         }
         //Now perform the last point check
         ii -= skip;
+        segment = end;
         delta.x = points[end].x - points[ii].x;
         delta.y = points[end].y - points[ii].y;
         g.x = src.x - points[ii].x;

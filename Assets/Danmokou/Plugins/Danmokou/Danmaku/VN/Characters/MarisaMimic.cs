@@ -14,7 +14,7 @@ public class Marisa : SZYUCharacter {
     public override Color UIColor => new(1, .77f, .26f);
     public override LString Name { get; set; } = LocalizedStrings.FindReference("dialogue.marisa");
     
-    public override void RollEvent() => ServiceLocator.SFXService.Request("x-bubble-2", SFXType.TypingSound);
+    public override void RollEvent() => ISFXService.SFXService.Request("x-bubble-2", SFXType.TypingSound);
 }
 
 public class MarisaMimic : PiecewiseCharacterMimic {

@@ -13,7 +13,7 @@ public class AyaNews : SZYUCharacter {
     public override Color UIColor => new(.7f, .7f, .7f);
     public override LString Name { get; set; } = LocalizedStrings.FindReference("dialogue.aya");
     
-    public override void RollEvent() => ServiceLocator.SFXService.Request("x-bubble-2", SFXType.TypingSound);
+    public override void RollEvent() => ISFXService.SFXService.Request("x-bubble-2", SFXType.TypingSound);
 }
 
 public class AyaNewsMimic : PiecewiseCharacterMimic {

@@ -1,5 +1,6 @@
 ﻿using System;
 using BagoumLib.Expressions;
+using BagoumLib.Mathematics;
 using UnityEngine;
 using NUnit.Framework;
 using Ex = System.Linq.Expressions.Expression;
@@ -65,8 +66,8 @@ public static class EMath {
             var yz = TP3(bpi => YZrX(ExC(3f), ExC(2f), bpi.t, 5f));
             var xy = TP3(bpi => XYrZ(ExC(3f), ExC(2f), bpi.t, 5f));
             var b = new ParametricInfo() { t = 1f };
-            var c = 2f * Mathf.Cos(b.t * M.TAU / 3f);
-            var s = 2f * Mathf.Sin(b.t * M.TAU / 3f);
+            var c = 2f * Mathf.Cos(b.t * BMath.TAU / 3f);
+            var s = 2f * Mathf.Sin(b.t * BMath.TAU / 3f);
             VecEq(new Vector3(c,5f,s), xz(b));
             VecEq(new Vector3(5f,c,s), yz(b));
             VecEq(new Vector3(c,s,5f), xy(b));
@@ -78,8 +79,8 @@ public static class EMath {
             var v21 = new TExV2();
             var cyl = Ex.Lambda<Func<float, float, float, float, Vector2, Vector3>>(CylinderWrap(f1, f2, f3, f4, v21), f1, f2, f3, f4, v21).Compile();
             
-            VecEq(cyl(2f, M.HPI, M.PI, 0f, new Vector2(1f, 0f)), new Vector3(Mathf.Cos(1f/2f) * 2f - 2f, 0f, -2f * Mathf.Sin(1f/2f)));
-            VecEq(cyl(2f, M.HPI, M.PI, 0f, new Vector2(1f + 2*M.PI, 0f)), new Vector3(-4f, 0f, 1f));
+            VecEq(cyl(2f, BMath.HPI, BMath.PI, 0f, new Vector2(1f, 0f)), new Vector3(Mathf.Cos(1f/2f) * 2f - 2f, 0f, -2f * Mathf.Sin(1f/2f)));
+            VecEq(cyl(2f, BMath.HPI, BMath.PI, 0f, new Vector2(1f + 2*BMath.PI, 0f)), new Vector3(-4f, 0f, 1f));
 
             for (float r = 1; r < 3; r += 0.8f) {
                 for (float ang0 = -1; ang0 < 2; ang0 += 0.8f) {

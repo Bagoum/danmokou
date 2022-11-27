@@ -14,7 +14,7 @@ public class Yuyuko : SZYUCharacter {
     public override Color UIColor => new(0.90f, 0.54f, 0.70f);
     public override LString Name { get; set; } = LocalizedStrings.FindReference("dialogue.yuyuko");
     
-    public override void RollEvent() => ServiceLocator.SFXService.Request("x-bubble-3", SFXType.TypingSound);
+    public override void RollEvent() => ISFXService.SFXService.Request("x-bubble-3", SFXType.TypingSound);
 }
 
 public class YuyukoMimic : PiecewiseCharacterMimic {

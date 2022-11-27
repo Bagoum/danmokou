@@ -1,4 +1,5 @@
 ﻿using Danmokou.Core;
+using Danmokou.DMath;
 using Danmokou.Graphics;
 using Danmokou.Pooling;
 using UnityEngine;
@@ -42,9 +43,9 @@ public class CutinGhost : Pooled<CutinGhost> {
             Color c = Color.Lerp(cfg.startColor, cfg.endColor, ratio);
             c.a *= 1f - ratio;
             sr.color = c;
-            float s = Mathf.Lerp(cfg.scale.x, cfg.scale.y, ratio);
+            float s = M.Lerp(cfg.scale.x, cfg.scale.y, ratio);
             tr.localScale = new Vector3(s, s, 1.0f);
-            float b = Mathf.Lerp(cfg.blurRad.x, cfg.blurRad.y, ratio / cfg.blurMaxAt);
+            float b = M.Lerp(cfg.blurRad.x, cfg.blurRad.y, ratio / cfg.blurMaxAt);
             pb.SetFloat(PropConsts.blurRadius, b);
             sr.SetPropertyBlock(pb);
 

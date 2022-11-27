@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using BagoumLib;
+using BagoumLib.Mathematics;
 using Danmokou.Core;
 using Danmokou.DMath;
 using Danmokou.DMath.Functions;
@@ -48,12 +49,12 @@ public static class FragmentRendering {
             this.baseShapeRot = baseShapeRot;
             this.uv = uv;
             baseLocation = location;
-            var baseVel = M.CosSin(RNG.GetFloatOffFrame(0f, M.TAU)) * RNG.GetFloatOffFrame(0f, maxInitVelMag);
+            var baseVel = M.CosSin(RNG.GetFloatOffFrame(0f, BMath.TAU)) * RNG.GetFloatOffFrame(0f, maxInitVelMag);
             offset = b => b.t * baseVel + new Vector2(0, -0.5f * b.t * b.t * gravity);
             
             bpi = new ParametricInfo(PICustomData.Empty, Vector2.zero, 0, 0, 0);
             var rotationAccels = !rotAccelMag.Try(out var rA) ? Vector3.zero :
-                M.Spherical(RNG.GetFloatOffFrame(0f, M.TAU), RNG.GetFloatOffFrame(0f, M.PI)) *
+                M.Spherical(RNG.GetFloatOffFrame(0f, BMath.TAU), RNG.GetFloatOffFrame(0f, BMath.PI)) *
                 RNG.GetFloatOffFrame(rA.x, rA.y);
             var rotationVels = RNG.GetFloatOffFrame(1f, 2f) * rotationAccels;
             rotations = t => t * rotationVels + 0.5f * t * t * rotationAccels;
@@ -99,7 +100,7 @@ public static class FragmentRendering {
             pb.SetTexture(PropConsts.mainTex, tex);
             pb.SetFloat(PropConsts.FragmentDiameter, config.FragmentDiameter);
             pb.SetFloat(PropConsts.FragmentSides, config.fragmentSides);
-            var size = texSize ?? new Vector2(MainCamera.ScreenWidth, MainCamera.ScreenHeight);
+            var size = texSize ?? new Vector2(DMKMainCamera.ScreenWidth, DMKMainCamera.ScreenHeight);
             pb.SetFloat(PropConsts.texWidth, size.x);
             pb.SetFloat(PropConsts.texHeight, size.y);
             this.cb = cb;

@@ -8,7 +8,7 @@ using BagoumLib.Functional;
 using Danmokou.Expressions;
 using Danmokou.Services;
 using JetBrains.Annotations;
-
+/*
 namespace Danmokou.Core {
 /// <summary>
 /// A store that allows registering and locating services at runtime.
@@ -46,12 +46,6 @@ public static class ServiceLocator {
     }
 
     private static readonly Dictionary<Type, IService> services = new Dictionary<Type, IService>();
-
-    public static ISFXService SFXService => Find<ISFXService>();
-    public static Expression SFXRequest(Expression style) => 
-        sfxrequest.InstanceOf(Expression.Property(null, typeof(ServiceLocator), "SFXService"), style);
-
-    private static readonly ExFunction sfxrequest = ExFunction.Wrap<ISFXService>("Request", new[] {typeof(string)});
 
 
     /// <summary>
@@ -98,4 +92,4 @@ public static class ServiceLocator {
         FindOrNull<T>() ?? throw new Exception($"Service locator: No provider of type {typeof(T)} found");
 
 }
-}
+}*/

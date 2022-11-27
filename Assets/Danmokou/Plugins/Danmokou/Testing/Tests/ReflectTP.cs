@@ -1,4 +1,5 @@
 ﻿using BagoumLib.Expressions;
+using BagoumLib.Mathematics;
 using NUnit.Framework;
 using Danmokou.DMath;
 using Danmokou.DMath.Functions;
@@ -52,7 +53,7 @@ namespace Danmokou.Testing {
             var bpi = new ParametricInfo(Vector2.down, 0, 0, 0f);
             VecEq(circ(bpi), V2(3f, 0));
             VecEq(circ(bpi.CopyWithT(1f)), V2(0, 3f));
-            VecEq(dcirc(bpi.CopyWithT(1f)), V2(-3f * M.TAU/4f, 0f));
+            VecEq(dcirc(bpi.CopyWithT(1f)), V2(-3f * BMath.TAU/4f, 0f));
             VecEq(circ(bpi.CopyWithT(2.5f)), V2(-Mathf.Sqrt(4.5f), -Mathf.Sqrt(4.5f))); //3^2 = 2 * sqrt(4.5)^2
         }
     }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using CommunityToolkit.HighPerformance.Buffers;
+using Danmokou.Core;
 using Danmokou.DMath;
 using Danmokou.Expressions;
 using UnityEngine;
@@ -57,7 +58,6 @@ public static partial class Reflector {
     }
 
     private static char[] temp = new char[256];
-    private static readonly StringPool sanitizer = new();
 
     private static string Sanitize(string raw_name) {
         //return $"{raw_name[0].ToString().ToLower()}{raw_name.Substring(1).ToLower().Replace("-", "")}";
@@ -78,10 +78,7 @@ public static partial class Reflector {
         }
         Profiler.BeginSample("Sanitize");
         var output = requiresChange ? 
-            //Span doesn't work in the language server since it got moved to a different repository in NET Core
-            // as such, when building for language server, use new string
-            new string(temp, 0, ti)
-            //sanitizer.GetOrAdd(new ReadOnlySpan<char>(temp, 0, ti)) 
+            temp.MakeString(0, ti)
             : raw_name;
         Profiler.EndSample();
         return output;

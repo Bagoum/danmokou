@@ -13,7 +13,7 @@ public class Iku : SZYUCharacter {
     public override Color UIColor => new(.5f, 0f, .45f);
     public override LString Name { get; set; } = LocalizedStrings.FindReference("dialogue.iku");
     
-    public override void RollEvent() => ServiceLocator.SFXService.Request("x-bubble-2", SFXType.TypingSound);
+    public override void RollEvent() => ISFXService.SFXService.Request("x-bubble-2", SFXType.TypingSound);
 }
 
 public class IkuMimic : PiecewiseCharacterMimic {

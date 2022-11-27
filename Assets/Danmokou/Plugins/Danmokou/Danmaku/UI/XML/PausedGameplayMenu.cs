@@ -5,6 +5,7 @@ using BagoumLib.Tasks;
 using Danmokou.Core;
 using Danmokou.DMath;
 using Danmokou.Scriptables;
+using Danmokou.Services;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -23,8 +24,8 @@ public class PausedGameplayMenu : UIController {
             tokens.Add(pauseToken = EngineStateManager.RequestState(EngineState.MENU_PAUSE));
             var disable = UpdatesEnabled.AddConst(false);
             _ = UIRoot.FadeTo(1, 0.3f, x=>x).Run(this).ContinueWithSync(disable.Dispose);
-            ServiceLocator.SFXService.Request(openPauseSound);
-            Open();
+            ISFXService.SFXService.Request(openPauseSound);
+            Open().ContinueWithSync();
         }
     }
 
@@ -37,7 +38,7 @@ public class PausedGameplayMenu : UIController {
     protected void ProtectHide() {
         if (MenuActive) {
             var disable = UpdatesEnabled.AddConst(false);
-            ServiceLocator.SFXService.Request(closePauseSound);
+            ISFXService.SFXService.Request(closePauseSound);
             _ = UIRoot.FadeTo(0, 0.3f, x=>x).Run(this).ContinueWithSync(() => {
                 _ = HideMe().ContinueWithSync(disable.Dispose);
             });

@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using BagoumLib;
 using BagoumLib.Events;
 using Danmokou.Achievements;
 using Danmokou.ADV;
@@ -29,6 +30,8 @@ using SuzunoyaUnity;
 using UnityEditor;
 using static Danmokou.SM.SMAnalysis;
 using Danmokou.Core.DInput;
+using Danmokou.Reflection.CustomData;
+using Danmokou.UI.XML;
 
 namespace Danmokou.Services {
 /// <summary>
@@ -49,7 +52,6 @@ public class GameManagement : CoroutineRegularUpdater {
 
     public static InstanceData Instance => EvInstance.Value;
     public static Evented<InstanceData> EvInstance { get; } = new(null!);
-    [UsedImplicitly] public static bool Continued => Instance.Continued;
 
     public static void DeactivateInstance() {
         //Actually null on startup
@@ -79,6 +81,7 @@ public class GameManagement : CoroutineRegularUpdater {
     public static GameUniqueReferences References => Main.references;
     public static PrefabReferences Prefabs => References.prefabReferences;
     public static UXMLReferences UXMLPrefabs => References.uxmlDefaults;
+    public static ADVReferences ADVReferences => References.advReferences!;
     public static AchievementManager? Achievements { get; private set; }
 
     public bool OpenAsDebugMode = false;
@@ -115,6 +118,8 @@ public class GameManagement : CoroutineRegularUpdater {
         ETime.RegisterPersistentEOFInvoke(CurvedTileRenderLaser.PrunePoolControls);
         SceneIntermediary.SceneUnloaded.Subscribe(_ => ClearScene());
         
+        RegisterService<IUXMLReferences>(UXMLPrefabs);
+        
         //The reason we do this instead of Awake is that we want all resources to be
         //loaded before any State Machines are constructed, which may occur in other entities' Awake calls.
         // I tried to get rid of those constructions, but with the presence of ResetValues, it's not easy.
@@ -126,6 +131,8 @@ public class GameManagement : CoroutineRegularUpdater {
         //TODO fix
         Achievements = References.gameDefinition.MakeAchievements()?.Construct();
         
+        References.gameDefinition.ApplyConfigurations();
+
         RunDroppableRIEnumerator(DelayedInitialAchievementsCheck());
     }
 
@@ -166,6 +173,8 @@ public class GameManagement : CoroutineRegularUpdater {
         ReflWrap.ClearWrappers();
         StateMachineManager.ClearCachedSMs();
         BehaviorEntity.ClearPointers();
+        PICustomDataBuilder.Builder.ClearCustomDataTypeCaches();
+        GC.Collect();
         Events.SceneCleared.OnNext(default);
     }
 
@@ -182,6 +191,8 @@ public class GameManagement : CoroutineRegularUpdater {
         BulletManager.ClearPoolControls();
         BulletManager.ClearAllBullets();
         BulletManager.DestroyCopiedPools();
+        PICustomDataBuilder.Builder.ClearCustomDataTypeCaches();
+        GC.Collect();
         //Ordered last so cancellations from HardCancel will occur under old data
         NewInstance(InstanceMode.DEBUG, DefaultFeatures);
         Debug.Log($"Reloading level: {Difficulty.Describe()} is the current difficulty");

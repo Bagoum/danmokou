@@ -14,7 +14,7 @@ public class Byakuren : SZYUCharacter {
     public override Color UIColor => new(0.70f, 0.24f, 0.70f);
     public override LString Name { get; set; } = LocalizedStrings.FindReference("dialogue.byakuren");
     
-    public override void RollEvent() => ServiceLocator.SFXService.Request("x-bubble-2", SFXType.TypingSound);
+    public override void RollEvent() => ISFXService.SFXService.Request("x-bubble-2", SFXType.TypingSound);
 }
 
 public class ByakurenMimic : PiecewiseCharacterMimic {

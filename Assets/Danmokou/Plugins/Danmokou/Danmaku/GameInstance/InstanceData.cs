@@ -44,7 +44,7 @@ public class InstanceData {
 
     /* "Features" is an architecture by which game mechanics
      *  can be slotted in or out of InstanceData depending on which game
-     *  is constructing it (depending on GameDef.MakeFeatures).
+     *  is constructing it (via GameDef.MakeFeatures).
      * For example, we might use PowerFeature (Touhou-like 1 to 4 power)
      *  for one game, and DisabledPowerFeature (power is always 4)
      *  for a game in which we do not want power item support.

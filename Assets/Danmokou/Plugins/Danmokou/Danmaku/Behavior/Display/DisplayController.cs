@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using BagoumLib.Cancellation;
+using BagoumLib.Mathematics;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.DMath;
@@ -101,11 +102,11 @@ public abstract class DisplayController : MonoBehaviour {
         scale.y *= flipY ? -1 : 1;
         scale *= lastScalerValue;
         if (yPosBopPeriod > 0) {
-            float yOffset = yPosBopAmplitude * M.Sin(M.TAU * time / yPosBopPeriod);
+            float yOffset = yPosBopAmplitude * M.Sin(BMath.TAU * time / yPosBopPeriod);
             tr.localPosition = new Vector3(0, yOffset);
         }
         if (yScaleBopPeriod > 0) {
-            scale.y *= 1 + yScaleBopAmplitude * M.Sin(M.TAU * time / yScaleBopPeriod);
+            scale.y *= 1 + yScaleBopAmplitude * M.Sin(BMath.TAU * time / yScaleBopPeriod);
         }
         if (RotatorF != null) {
             tr.localEulerAngles = new Vector3(0, 0, RotatorF(beh.rBPI));
@@ -124,7 +125,7 @@ public abstract class DisplayController : MonoBehaviour {
 
     public virtual void FaceInDirection(Vector2 dir) {
         if (rotationMethod != RotationMethod.Manual && dir.x * dir.x + dir.y * dir.y > 0f) {
-            FaceInDirectionRaw(M.radDeg * (rotationMethod switch {
+            FaceInDirectionRaw(BMath.radDeg * (rotationMethod switch {
                 RotationMethod.InVelocityDirection => (float)Math.Atan2(dir.y, dir.x),
                 RotationMethod.VelocityDirectionPlus90 => (float)Math.Atan2(dir.x, -dir.y),
                 RotationMethod.VelocityDirectionMinus90 => (float)Math.Atan2(-dir.x, dir.y),

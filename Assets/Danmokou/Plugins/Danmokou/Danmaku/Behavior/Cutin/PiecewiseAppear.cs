@@ -108,24 +108,19 @@ public class PiecewiseAppear : CoroutineRegularUpdater {
         Vector2 trloc = Center;
         var ixd = Mathf.FloorToInt((s + bounds.max.x - bounds.min.x) / s);
         var iyd = Mathf.FloorToInt((s + bounds.max.y - bounds.min.y) / s);
-        (float xf, float yf) GetRatios(in ParametricInfo bpi) {
+        float Effective01Time(in ParametricInfo bpi) {
             var _ix = bpi.index / iyd;
             var _iy = bpi.index % iyd;
-            return (_ix / (float) ixd, _iy / (float) iyd);
-        }
-        float Effective01Time(in ParametricInfo bpi) {
-            var (xf, yf) = GetRatios(in bpi);
+            var xf = _ix / (float) ixd;
+            var yf = _iy / (float) iyd;
             var t = (bpi.t - 0.5f * (1.9f - xf - yf) * spreadTime) / moveTime + 
-                   RNG.GetSeededFloat(-0.05f, 0f, RNG.Rehash(bpi.id));
+                    RNG.GetSeededFloat(-0.05f, 0f, RNG.Rehash(bpi.id));
             t = Mathf.Clamp01(t);
             return M.EInSine(invert ? 1 - t : t);
         }
-        TP mover = bpi => {
-            var endpoint = moveDist * M.CosSinDeg(RNG.GetSeededFloat(moveDirectionMinMax.x, 
-                moveDirectionMinMax.y, bpi.id));
-            return Vector2.Lerp(Vector2.zero, endpoint, Effective01Time(in bpi));
-        };
-        BPY scaler = t => Mathf.Lerp(1f, 0f, Effective01Time(in t));
+        TP mover = bpi => M.CosSinDeg(RNG.GetSeededFloat(moveDirectionMinMax.x, 
+            moveDirectionMinMax.y, bpi.id)) * (moveDist * Effective01Time(in bpi));
+        BPY scaler = bpi => 1 - Effective01Time(in bpi);
         int ix = 0;
         for (float x = bounds.min.x; x < bounds.max.x + s; x += s, ++ix) {
             int iy = 0;
@@ -151,7 +146,7 @@ public class PiecewiseAppear : CoroutineRegularUpdater {
         if (req.cb != null) {
             if (req.callbackAtRatio > 0)
                 RunDroppableRIEnumerator(
-                    WaitingUtils.WaitFor(req.callbackAtRatio * TotalTime, Cancellable.Null, req.cb));
+                    RUWaitingUtils.WaitFor(req.callbackAtRatio * TotalTime, Cancellable.Null, req.cb));
             else
                 req.cb();
         }

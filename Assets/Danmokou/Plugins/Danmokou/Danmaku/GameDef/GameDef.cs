@@ -19,6 +19,8 @@ public abstract class GameDef : ScriptableObject, IGameDef {
     public SceneConfig? Tutorial => m_tutorial;
     public SceneConfig? MiniTutorial => m_miniTutorial;
     public virtual AchievementRepo? MakeAchievements() => null;
+    
+    public virtual void ApplyConfigurations() { }
 }
 
 public interface IGameDef {
@@ -31,5 +33,9 @@ public interface IGameDef {
     SceneConfig? Tutorial { get; }
     SceneConfig? MiniTutorial { get; }
 
+    /// <summary>
+    /// Apply any settings specific to this game definition to the engine at large.
+    /// </summary>
+    void ApplyConfigurations() { }
 }
 }

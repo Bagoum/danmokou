@@ -106,7 +106,7 @@ public static class CompilerHelpers {
     
     //Note: while there is a theoretical overhead to deriving the return type at runtime,
     // this function is not called particularly often, so it's not a bottleneck.
-    public static D PrepareDelegate<D>(string func, params IDelegateArg[] args) where D : Delegate {
+    public static D CompileDelegate<D>(string func, params IDelegateArg[] args) where D : Delegate {
         var returnType = typeof(D).GetMethod("Invoke")!.ReturnType;
         var exType = Reflector.Func2Type(typeof(TExArgCtx), typeof(TEx<>).MakeGenericType(returnType));
         
@@ -186,7 +186,7 @@ public static class CompilerHelpers {
         return new GCXU<T>(resolver.Bound, type => {
             ReflectEx.Alias? bpiAsTypeAlias = null;
             if (resolver.Bound.Count > 0) {
-                //When there are multiple usages of (bpi.data as CustomDataType), cache the value of that in an alias.
+                //When there are multiple usages of (bpi.data as CustomDataType), cache the value of that in an local variable.
                 //Note: in practice this optimization for type-as doesn't seem to do much, probably because MSIL automatically
                 // optimizes for it even if you don't do it here.
                 if (resolver.TotalUsages > 1 && !PICustomDataBuilder.DISABLE_TYPE_BUILDING) {
@@ -198,8 +198,10 @@ public static class CompilerHelpers {
             return compiler(modifyArgBag(exp, tac => {
                 tac.Ctx.CustomDataType = (type.BuiltType,
                     bpiAsTypeAlias.Try(out var alias) ?
+                        //Read the local variable for (bpi.data as CustomDataType) if we set it above
                         tac => ReflectEx.GetAliasFromStack(alias.alias, tac) ??
                                throw new Exception("Couldn't find bpi-as-customtype alias on the stack")
+                        //Otherwise recalculate it
                         : tac => tac.BPI.FiringCtx.As(type.BuiltType));
                 return tac;
             })).Compile();

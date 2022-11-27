@@ -19,7 +19,7 @@ namespace Danmokou.Danmaku.Options {
 /// This includes complex bullets, like pathers, but NOT lasers (<see cref="LaserOption"/>).
 /// </summary>
 [Reflect]
-public class BehOption {
+public record BehOption {
     /// <summary>
     /// Make the movement of the bullet smoother. (Pather only)
     /// </summary>
@@ -42,6 +42,11 @@ public class BehOption {
     /// <br/>This will throw an error if used on a non-enemy.
     /// </summary>
     public static BehOption HP(GCXF<float> hp) => new HPProp(hp);
+
+    /// <summary>
+    /// Set the amount of damage that a Bullet does.
+    /// </summary>
+    public static BehOption Damage(GCXF<float> damage) => new DamageProp(damage);
 
     public static BehOption Drops3(int value, int ppp, int life) => Drops4(value, ppp, life, 0);
     public static BehOption Drops4(int value, int ppp, int life, int power) => new ItemsProp(new ItemDrops(value, ppp, life, power, 0));
@@ -102,47 +107,54 @@ public class BehOption {
     /// </summary>
     public static BehOption Name(string name) => new NameProp(name);
     
+    /// <summary>
+    /// Set that an NPC bullet is not allowed to cause grazes against the player.
+    /// </summary>
+    public static BehOption NoGraze() => new NoGrazeFlag();
+    
     #region impl
     
-    public class CompositeProp : ValueProp<BehOption[]>, IUnrollable<BehOption> {
+    public record CompositeProp : ValueProp<BehOption[]>, IUnrollable<BehOption> {
         public IEnumerable<BehOption> Values => value;
         public CompositeProp(params BehOption[] props) : base(props) { }
     }
     
-    public class ValueProp<T> : BehOption {
+    public record ValueProp<T> : BehOption {
         public readonly T value;
         public ValueProp(T value) => this.value = value;
     }
 
-    public class ItemsProp : ValueProp<ItemDrops> {
+    public record ItemsProp : ValueProp<ItemDrops> {
         public ItemsProp(ItemDrops i) : base(i) { }
     }
 
-    public class SmoothProp : BehOption {}
-    public class SMProp: ValueProp<StateMachine> {
+    public record SmoothProp : BehOption {}
+    public record SMProp: ValueProp<StateMachine> {
         public SMProp(StateMachine sm) : base(sm) { } 
     }
 
-    public class ScaleProp : ValueProp<GCXF<float>> {
+    public record ScaleProp : ValueProp<GCXF<float>> {
         public ScaleProp(GCXF<float> f) : base(f) { }
     }
-    public class HPProp : ValueProp<GCXF<float>> {
+    public record HPProp : ValueProp<GCXF<float>> {
         public HPProp(GCXF<float> f) : base(f) { }
     }
 
-    public class LayerProp : ValueProp<Layer> {
+    public record DamageProp(GCXF<float> damage) : BehOption;
+
+    public record LayerProp : ValueProp<Layer> {
         public LayerProp(Layer l) : base(l) { }
     }
-    public class HueShiftProp : ValueProp<GCXU<BPY>> {
+    public record HueShiftProp : ValueProp<GCXU<BPY>> {
         public HueShiftProp(GCXU<BPY> f) : base(f) { }
     }
-    public class TintProp : ValueProp<GCXU<TP4>> {
+    public record TintProp : ValueProp<GCXU<TP4>> {
         public TintProp(GCXU<TP4> f) : base(f) { }
     }
-    public class RotateProp : ValueProp<GCXU<BPY>> {
+    public record RotateProp : ValueProp<GCXU<BPY>> {
         public RotateProp(GCXU<BPY> f) : base(f) { }
     }
-    public class RecolorProp : BehOption {
+    public record RecolorProp : BehOption {
         public readonly GCXU<TP4> black;
         public readonly GCXU<TP4> white;
 
@@ -151,20 +163,22 @@ public class BehOption {
             white = w;
         }
     }
-    public class DeleteProp : ValueProp<GCXU<Pred>> {
+    public record DeleteProp : ValueProp<GCXU<Pred>> {
         public DeleteProp(GCXU<Pred> f) : base(f) { }
     }
     
-    public class PlayerBulletProp : ValueProp<PlayerBulletCfg> {
+    public record PlayerBulletProp : ValueProp<PlayerBulletCfg> {
         public PlayerBulletProp(PlayerBulletCfg cfg) : base(cfg) { }
     }
 
-    public class NameProp : ValueProp<string> {
+    public record NameProp : ValueProp<string> {
         public NameProp(string name) : base(name) { }
     }
-    
+
+    public record NoGrazeFlag : BehOption;
+
     #endregion
-    
+
 }
 
 public readonly struct RealizedBehOptions {
@@ -173,6 +187,7 @@ public readonly struct RealizedBehOptions {
     public readonly float scale;
     public readonly int? hp;
     public readonly int? layer;
+    public readonly int? damage; //for npc bullets
     public readonly ItemDrops? drops;
     public readonly BPY? hueShift;
     public readonly BPY? rotator;
@@ -180,6 +195,7 @@ public readonly struct RealizedBehOptions {
     public readonly TP4? tint;
     public readonly Pred? delete;
     public readonly PlayerBullet? playerBullet;
+    public readonly bool grazeAllowed;
 
     public RealizedBehOptions(BehOptions opts, GenCtx gcx, PICustomData fctx, Vector2 parentOffset, V2RV2 localOffset, ICancellee cT) {
         smooth = opts.smooth;
@@ -187,6 +203,7 @@ public readonly struct RealizedBehOptions {
         scale = opts.scale?.Invoke(gcx) ?? 1f;
         hp = (opts.hp?.Invoke(gcx)).FMap(x => (int) x);
         layer = opts.layer;
+        damage = (opts.damage?.Invoke(gcx)).FMap(x => (int)x);
         drops = opts.drops;
         hueShift = opts.hueShift?.Execute(gcx, fctx);
         tint = opts.tint?.Execute(gcx, fctx);
@@ -196,6 +213,7 @@ public readonly struct RealizedBehOptions {
         } else recolor = null;
         delete = opts.delete?.Execute(gcx, fctx);
         playerBullet = opts.playerBullet?.Realize(fctx.PlayerController);
+        grazeAllowed = opts.grazeAllowed;
     }
 
     public RealizedBehOptions(RealizedLaserOptions rlo) {
@@ -204,6 +222,7 @@ public readonly struct RealizedBehOptions {
         smooth = false;
         scale = 1f;
         hp = null;
+        damage = rlo.damage;
         drops = null;
         hueShift = null; //handled by laser renderer
         tint = null;    //likewise
@@ -211,6 +230,7 @@ public readonly struct RealizedBehOptions {
         rotator = null; //not enabled on lasers
         this.delete = rlo.delete;
         playerBullet = rlo.playerBullet;
+        grazeAllowed = rlo.grazeAllowed;
     }
 }
 
@@ -224,6 +244,7 @@ public class BehOptions {
     public readonly StateMachine? sm;
     public readonly GCXF<float>? scale;
     public readonly GCXF<float>? hp;
+    public readonly GCXF<float>? damage;
     public readonly GCXU<Pred>? delete;
     public readonly int? layer = null;
     public readonly ItemDrops? drops = null;
@@ -232,6 +253,7 @@ public class BehOptions {
     public readonly GCXU<BPY>? rotator;
     public readonly (GCXU<TP4> black, GCXU<TP4> white)? recolor;
     public readonly PlayerBulletCfg? playerBullet;
+    public readonly bool grazeAllowed = true;
     private readonly string? id = null;
     public string ID => id ?? "_";
 
@@ -243,6 +265,7 @@ public class BehOptions {
             else if (p is SMProp smp) sm = smp.value;
             else if (p is ScaleProp sp) scale = sp.value;
             else if (p is HPProp hpp) hp = hpp.value;
+            else if (p is DamageProp dpp) damage = dpp.damage;
             else if (p is LayerProp lp) layer = lp.value.Int();
             else if (p is ItemsProp ip) drops = ip.value;
             else if (p is HueShiftProp hsp) hueShift = hsp.value;
@@ -252,6 +275,7 @@ public class BehOptions {
             else if (p is DeleteProp dp) delete = dp.value;
             else if (p is PlayerBulletProp pbp) playerBullet = pbp.value;
             else if (p is NameProp np) id = np.value;
+            else if (p is NoGrazeFlag) grazeAllowed = false;
             else throw new Exception($"Bullet property {p.GetType()} not handled.");
         }
     }

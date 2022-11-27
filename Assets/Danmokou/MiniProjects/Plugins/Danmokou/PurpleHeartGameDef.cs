@@ -15,6 +15,7 @@ using Danmokou.VN;
 using MiniProjects.VN;
 using Newtonsoft.Json;
 using Suzunoya;
+using Suzunoya.ADV;
 using Suzunoya.Assertions;
 using Suzunoya.ControlFlow;
 using Suzunoya.Entities;
@@ -30,61 +31,13 @@ namespace MiniProjects.VN.PurpleHeart {
 
 [CreateAssetMenu(menuName = "Data/ADV/Purple Heart Game")]
 public class PurpleHeartGameDef : ADVGameDef {
-    private class Executing : ExecutingADVGame<Executing.PHIdealizedState, PHADVData> {
-        //--- Entities
-        private readonly ADVDialogueBox md;
-        private readonly Narrator ec;
-        private readonly UnityRenderGroup rg;
-        private readonly UnityRenderGroup rgb;
-        //--- Lerpers
-        private readonly PushLerper<Vector3> dialogueShowOffset = new((p, n) => (n.Y > p.Y) ? 0.3f : 0.5f);
-        private readonly PushLerper<FColor> dialogueShowAlpha = new((p, n) => (n.a > p.a) ? 0.3f : 0.5f);
-
-        private void HideMD() {
-            dialogueShowOffset.Push(new(0f, -0.5f, 0));
-            dialogueShowAlpha.Push(new FColor(1, 1, 1, 0));
-            md.Active.Value = false;
-        }
-        private void ShowMD() {
-            dialogueShowOffset.Push(new(0,0,0));
-            dialogueShowAlpha.Push(new FColor(1, 1, 1, 1));
-            md.Active.Value = true;
-        }
-        
+    private class Executing : DMKExecutingADV<Executing.PHIdealizedState, PHADVData> {
         public Executing(ADVInstance inst) : base(inst) {
-            //probably don't need to add these to tokens as they'll be destroyed with VN destruction.
-            md = VN.Add(new ADVDialogueBox());
-            md.ComputedLocation.AddDisturbance(dialogueShowOffset);
-            md.ComputedTint.AddDisturbance(dialogueShowAlpha);
-            HideMD();
-            
-            VN.ContextStarted.Subscribe(c => {
-                if (VN.Contexts.Count == 1) {
-                    md.Clear();
-                    ShowMD();
-                }
-                //_ = md.MoveTo(Vector3.Zero, 0.5f, M.EOutSine).Task;
-            });
-            VN.ContextFinished.Subscribe(c => {
-                if (VN.Contexts.Count == 0 && inst.eVN.Active) {
-                    HideMD();
-                }
-            });
-            ec = VN.Add(new Narrator());
-            rg = (UnityRenderGroup)VN.DefaultRenderGroup;
-            rgb = new UnityRenderGroup(VN, "black", 1, true);
-            rg.Visible.Value = false;
             tokens.Add(MapWillUpdate.Subscribe(_ => {
                 Logs.Log($"Setting delayed state from {Data.DelayedState} to {Data.State}");
                 Data.DelayedState = Data.State;
             }));
         }
-
-        public override void RegularUpdate() {
-            dialogueShowOffset.Update(ETime.FRAME_TIME);
-            dialogueShowAlpha.Update(ETime.FRAME_TIME);
-        }
-
         record MapData(string key, Func<PHADVData, string> desc, float mapLinkOffset);
 
         private MapData[] maps = {
@@ -103,7 +56,7 @@ public class PurpleHeartGameDef : ADVGameDef {
         /// <returns></returns>
         protected override MapStateManager<PHIdealizedState, PHADVData> ConfigureMapStates() {
             var m = Manager;
-            var ms = new MapStateManager<PHIdealizedState, PHADVData>(() => new(this));
+            var ms = new MapStateManager<PHIdealizedState, PHADVData>(this, () => new(this));
             //Use this proxy function to register BCTXs so they can be inspected and run on load.
             // Top-level contexts should always be <Unit>.
             BoundedContext<Unit> Context(string id, Func<Task> innerTask) {
@@ -312,7 +265,7 @@ public class PurpleHeartGameDef : ADVGameDef {
                     c.ESayC("worry", l124),
                     y.SayC(l125),
                     y.SayC(l125_1),
-                    ec.SayC(l126),
+                    narrator.SayC(l126),
                     c.ESayC("happy", l127),
                     y.ESayC("worry", l128),
                     c.ESayC("", l129),
@@ -813,7 +766,7 @@ public class PurpleHeartGameDef : ADVGameDef {
                 );
                 ServiceLocator.Find<IAudioTrackService>().ClearRunningBGM();
                 await rg.DoTransition(new RenderGroupTransition.Fade(rgb, 2f));
-                completion.SetResult(default);
+                completion.SetResult(new UnitADVCompletion());
             });
 
             var mimaTalk = Context("mimaTalk", async () => {

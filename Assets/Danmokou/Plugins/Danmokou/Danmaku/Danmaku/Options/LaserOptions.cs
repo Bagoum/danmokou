@@ -18,7 +18,7 @@ namespace Danmokou.Danmaku.Options {
 /// Properties that modify the behavior of lasers.
 /// </summary>
 [Reflect]
-public class LaserOption {
+public record LaserOption {
     /// <summary>
     /// Set the length, in time, of a laser.
     /// </summary>
@@ -139,27 +139,37 @@ public class LaserOption {
     /// </summary>
     public static LaserOption Nonpiercing() => new NonpiercingFlag();
     
+    /// <summary>
+    /// Set the amount of damage that an NPC laser does to a player.
+    /// </summary>
+    public static LaserOption Damage(GCXF<float> damage) => new DamageProp(damage);
+
+    /// <summary>
+    /// Set that an NPC laser is not allowed to cause grazes against the player.
+    /// </summary>
+    public static LaserOption NoGraze() => new NoGrazeFlag();
+    
     public static LaserOption Player(int cdFrames, int bossDmg, int stageDmg, string effect) =>
         new PlayerBulletProp(new PlayerBulletCfg(cdFrames, false, bossDmg, stageDmg, ResourceManager.GetEffect(effect)));
     
     #region impl
-    public class CompositeProp : ValueProp<LaserOption[]>, IUnrollable<LaserOption> {
+    public record CompositeProp : ValueProp<LaserOption[]>, IUnrollable<LaserOption> {
         public IEnumerable<LaserOption> Values => value;
         public CompositeProp(params LaserOption[] props) : base(props) { }
     }
     
-    public class ValueProp<T> : LaserOption {
+    public record ValueProp<T> : LaserOption {
         public readonly T value;
         public ValueProp(T value) => this.value = value;
     }
 
-    public class LayerProp : ValueProp<Layer> {
+    public record LayerProp : ValueProp<Layer> {
         public LayerProp(Layer l) : base(l) { }
     }
-    public class EndpointProp : ValueProp<string> {
+    public record EndpointProp : ValueProp<string> {
         public EndpointProp(string f) : base(f) { }
     }
-    public class SfxProp : LaserOption {
+    public record SfxProp : LaserOption {
         public readonly string? onFire;
         public readonly string? onOn;
         public SfxProp(string? onFire, string? onOn) {
@@ -167,28 +177,28 @@ public class LaserOption {
             this.onOn = onOn;
         }
     }
-    public class LengthProp : ValueProp<(GCXF<float>, GCXU<BPY>?)> {
+    public record LengthProp : ValueProp<(GCXF<float>, GCXU<BPY>?)> {
         public LengthProp(GCXF<float> f, GCXU<BPY>? var = null) : base((f, var)) { }
     }
 
-    public class StartProp : ValueProp<GCXU<BPY>> {
+    public record StartProp : ValueProp<GCXU<BPY>> {
         public StartProp(GCXU<BPY> f) : base(f) {}
     }
 
-    public class DeleteProp : ValueProp<GCXU<Pred>> {
+    public record DeleteProp : ValueProp<GCXU<Pred>> {
         public DeleteProp(GCXU<Pred> f) : base(f) { }
     }
-    public class DeactivateProp : ValueProp<GCXU<Pred>> {
+    public record DeactivateProp : ValueProp<GCXU<Pred>> {
         public DeactivateProp(GCXU<Pred> f) : base(f) { }
     }
-    public class RotateOffsetProp : ValueProp<GCXF<float>> {
+    public record RotateOffsetProp : ValueProp<GCXF<float>> {
         public RotateOffsetProp(GCXF<float> f) : base(f) { }
     }
-    public class RotateProp : ValueProp<GCXU<BPY>> {
+    public record RotateProp : ValueProp<GCXU<BPY>> {
         public RotateProp(GCXU<BPY> f) : base(f) { }
     }
 
-    public class CurveProp : LaserOption {
+    public record CurveProp : LaserOption {
         public readonly GCXU<LVTP> curve;
         public readonly bool dynamic;
 
@@ -198,27 +208,27 @@ public class LaserOption {
         }
     }
     
-    public class BeforeDrawProp : ValueProp<GCXU<BPY>> {
+    public record BeforeDrawProp : ValueProp<GCXU<BPY>> {
         public BeforeDrawProp(GCXU<BPY> f) : base(f) { }
     }
-    public class RepeatProp : ValueProp<GCXF<bool>> {
+    public record RepeatProp : ValueProp<GCXF<bool>> {
         public RepeatProp(GCXF<bool> f) : base(f) { }
     }
-    public class SMProp : ValueProp<StateMachine> {
+    public record SMProp : ValueProp<StateMachine> {
         public SMProp(StateMachine f) : base(f) { }
     }
 
-    public class YScaleProp : ValueProp<GCXF<float>> {
+    public record YScaleProp : ValueProp<GCXF<float>> {
         public YScaleProp(GCXF<float> f) : base(f) { }
     }
 
-    public class StaggerProp : ValueProp<float> {
+    public record StaggerProp : ValueProp<float> {
         public StaggerProp(float v) : base(v) { }
     }
-    public class HueShiftProp : ValueProp<GCXU<BPY>> {
+    public record HueShiftProp : ValueProp<GCXU<BPY>> {
         public HueShiftProp(GCXU<BPY> v) : base(v) { }
     }
-    public class RecolorProp : LaserOption {
+    public record RecolorProp : LaserOption {
         public readonly GCXU<TP4> black;
         public readonly GCXU<TP4> white;
 
@@ -227,16 +237,20 @@ public class LaserOption {
             white = w;
         }
     }
-    public class TintProp : ValueProp<GCXU<TP4>> {
+    public record TintProp : ValueProp<GCXU<TP4>> {
         public TintProp(GCXU<TP4> v) : base(v) { }
     }
 
-    public class PlayerBulletProp : ValueProp<PlayerBulletCfg> {
+    public record PlayerBulletProp : ValueProp<PlayerBulletCfg> {
         public PlayerBulletProp(PlayerBulletCfg cfg) : base(cfg) { }
     }
-    
-    public class NonpiercingFlag : LaserOption { }
-    
+
+    public record DamageProp(GCXF<float> damage) : LaserOption;
+
+    public record NonpiercingFlag : LaserOption;
+
+    public record NoGrazeFlag : LaserOption;
+
     #endregion
 }
 
@@ -261,7 +275,9 @@ public readonly struct RealizedLaserOptions {
     public readonly BPY? hueShift;
     public readonly (TP4 black, TP4 white)? recolor;
     public readonly TP4? tint;
+    public readonly int? damage;
     public readonly bool nonpiercing;
+    public readonly bool grazeAllowed;
     public readonly PlayerBullet? playerBullet;
 
     public RealizedBehOptions AsBEH => new(this);
@@ -293,7 +309,9 @@ public readonly struct RealizedLaserOptions {
             recolor = (rc.black.Execute(gcx, fctx), rc.white.Execute(gcx, fctx));
         } else recolor = null;
         tint = opts.tint?.Execute(gcx, fctx);
+        damage = (opts.damage?.Invoke(gcx)).FMap(x => (int)x);
         nonpiercing = opts.nonpiercing;
+        grazeAllowed = opts.grazeAllowed;
         playerBullet = opts.playerBullet?.Realize(fctx.PlayerController);
     }
 }
@@ -324,7 +342,9 @@ public class LaserOptions {
     public readonly GCXU<BPY>? hueShift;
     public readonly (GCXU<TP4> black, GCXU<TP4> white)? recolor;
     public readonly GCXU<TP4>? tint;
+    public readonly GCXF<float>? damage;
     public readonly bool nonpiercing;
+    public readonly bool grazeAllowed = true;
     public readonly PlayerBulletCfg? playerBullet;
 
     public LaserOptions(params LaserOption[] props) : this(props as IEnumerable<LaserOption>) { }
@@ -370,8 +390,12 @@ public class LaserOptions {
                 recolor = (rcp.black, rcp.white);
             else if (p is TintProp tp) 
                 tint = tp.value;
+            else if (p is DamageProp dpp)
+                damage = dpp.damage;
             else if (p is NonpiercingFlag)
                 nonpiercing = true;
+            else if (p is NoGrazeFlag)
+                grazeAllowed = false;
             else if (p is PlayerBulletProp pbp) 
                 playerBullet = pbp.value;
             else throw new Exception($"Laser property {p.GetType()} not handled.");

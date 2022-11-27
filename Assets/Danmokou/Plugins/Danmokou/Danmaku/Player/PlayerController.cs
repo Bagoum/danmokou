@@ -98,7 +98,11 @@ public partial class PlayerController : BehaviorEntity, ICircularSimpleBulletCol
     
     #region ComputedProperties
 
-    public bool ComputeCollisions { get; private set; } = true;
+    /// <summary>
+    /// True iff collisions can occur against the player. This is only false when the player is in the RESPAWN
+    ///  state (ie. has an indeterminate position).
+    /// </summary>
+    public bool ReceivesCollisions { get; private set; } = true;
     public ICancellee BoundingToken => Instance.Request?.InstTracker ?? Cancellable.Null;
     public bool AllowPlayerInput => AllControlEnabled && StateAllowsInput(State);
     private ActiveTeamConfig Team { get; set; } = null!;
@@ -276,7 +280,7 @@ public partial class PlayerController : BehaviorEntity, ICircularSimpleBulletCol
             subshot = Team.Subshot;
             Logs.Log($"Setting shot to {shot.key}:{subshot}");
             if (DestroyExistingShot())
-                ServiceLocator.SFXService.Request(Team.Shot.onSwap);
+                ISFXService.SFXService.Request(Team.Shot.onSwap);
             var realized = Team.Shot.GetSubshot(Team.Subshot);
             spawnedShot = realized.playerChild ? 
                 GameObject.Instantiate(realized.prefab, tr) : 
@@ -401,7 +405,7 @@ public partial class PlayerController : BehaviorEntity, ICircularSimpleBulletCol
         for (int ii = 0; ii < grazeCooldowns.Keys.Count; ++ii)
             if (grazeCooldowns.Keys.GetMarkerIfExistsAt(ii, out var dm))
                 if (--grazeCooldowns[dm.Value] <= 0)
-                    grazeCooldowns.Remove(dm);
+                    dm.MarkForDeletion();
         grazeCooldowns.Keys.Compact();
         collisions = new(0, 0);
         
@@ -449,6 +453,9 @@ public partial class PlayerController : BehaviorEntity, ICircularSimpleBulletCol
         var hb = Hurtbox;
         var deleted = sbc.Deleted;
         var data = sbc.Data;
+        var dmg = sbc.BC.Damage.Value;
+        var allowGraze = sbc.BC.AllowGraze.Value;
+        var destroy = sbc.BC.Destructible.Value;
         for (int ii = 0; ii < sbc.Count; ++ii) {
             if (!deleted[ii]) {
                 ref var sbn = ref data[ii];
@@ -456,12 +463,15 @@ public partial class PlayerController : BehaviorEntity, ICircularSimpleBulletCol
                     //This is also a valid way to do collision, though it's about 5% slower
                     //Collider.CheckGrazeCollision(in sbn.bpi.loc.x, in sbn.bpi.loc.y, in sbn.direction, in sbn.scale, in hitbox);
                     sbc.CheckGrazeCollision(in hb, in sbn);
-                
+                if (cr.graze && !allowGraze)
+                    cr = cr.NoGraze();
                 if ((cr.collide || cr.graze) 
-                    && ProcessCollision(in cr, in sbc.BC.damageAgainstPlayer, in sbn.bpi, in sbc.BC.grazeEveryFrames)
-                    && sbc.BC.destructible) {
-                    sbc.MakeCulledCopy(ii);
-                    sbc.DeleteSB_Collision(ii);
+                    && ProcessCollision(in cr, in dmg, in sbn.bpi, in sbc.BC.grazeEveryFrames)) {
+                    sbc.RunCollisionControls(ii);
+                    if (destroy) {
+                        sbc.MakeCulledCopy(ii);
+                        sbc.DeleteSB(ii);
+                    }
                 }
             }
         }
@@ -471,6 +481,9 @@ public partial class PlayerController : BehaviorEntity, ICircularSimpleBulletCol
         var hb = Hurtbox;
         var deleted = sbc.Deleted;
         var data = sbc.Data;
+        var dmg = sbc.BC.Damage.Value;
+        var allowGraze = sbc.BC.AllowGraze.Value;
+        var destroy = sbc.BC.Destructible.Value;
         for (int y = 0; y < indexBuckets.Height; ++y)
         for (int x = 0; x < indexBuckets.Width; ++x) {
             var bucket = indexBuckets[y, x];
@@ -479,12 +492,15 @@ public partial class PlayerController : BehaviorEntity, ICircularSimpleBulletCol
                 if (deleted[index]) continue;
                 ref var sbn = ref data[index];
                 var cr = sbc.CheckGrazeCollision(in hb, in sbn);
-                
+                if (cr.graze && !allowGraze)
+                    cr = cr.NoGraze();
                 if ((cr.collide || cr.graze) 
-                    && ProcessCollision(in cr, in sbc.BC.damageAgainstPlayer, in sbn.bpi, in sbc.BC.grazeEveryFrames)
-                    && sbc.BC.destructible) {
-                    sbc.MakeCulledCopy(index);
-                    sbc.DeleteSB_Collision(index);
+                    && ProcessCollision(in cr, in dmg, in sbn.bpi, in sbc.BC.grazeEveryFrames)) {
+                    sbc.RunCollisionControls(index);
+                    if (destroy) {
+                        sbc.MakeCulledCopy(index);
+                        sbc.DeleteSB(index);
+                    }
                 }
             }
         }
@@ -573,6 +589,7 @@ public partial class PlayerController : BehaviorEntity, ICircularSimpleBulletCol
 
     public void TakeHit() => collisions = collisions.WithDamage(1);
     
+    //Note that we should not use a dictionary from ID to frame number, since graze cooldowns freeze with the player
     private readonly DictionaryWithKeys<uint, int> grazeCooldowns = new();
     public bool TryGrazeBullet(uint id, int cooldownFrames) {
         if (grazeCooldowns.Data.ContainsKey(id))
@@ -706,7 +723,7 @@ public partial class PlayerController : BehaviorEntity, ICircularSimpleBulletCol
     }
     //Assumption for state enumerators is that the token is not initially cancelled.
     private IEnumerator StateNormal(ICancellee<PlayerState> cT) {
-        ComputeCollisions = true;
+        ReceivesCollisions = true;
         State = PlayerState.NORMAL;
         while (true) {
             if (MaybeCancelState(cT)) yield break;
@@ -721,7 +738,7 @@ public partial class PlayerController : BehaviorEntity, ICircularSimpleBulletCol
         State = PlayerState.RESPAWN;
         spawnedShip.RespawnOnHitEffect.Proc(Hurtbox.location, Hurtbox.location, 0f);
         //The hitbox position doesn't update during respawn, so don't allow collision.
-        ComputeCollisions = false;
+        ReceivesCollisions = false;
         for (float t = 0; t < RespawnFreezeTime; t += ETime.FRAME_TIME) yield return null;
         //Don't update the hitbox location
         tr.position = new Vector2(0f, 100f);
@@ -733,7 +750,7 @@ public partial class PlayerController : BehaviorEntity, ICircularSimpleBulletCol
             yield return null;
         }
         SetLocation(RespawnEndLoc);
-        ComputeCollisions = true;
+        ReceivesCollisions = true;
         
         if (!MaybeCancelState(cT)) RunDroppableRIEnumerator(StateNormal(cT));
     }
@@ -800,24 +817,24 @@ public partial class PlayerController : BehaviorEntity, ICircularSimpleBulletCol
     [UsedImplicitly]
     public Vector2 PastPosition(float timeAgo) =>
         PastPositions.SafeIndexFromBack((int) (timeAgo * ETime.ENGINEFPS_F));
-    public static readonly ExFunction pastPosition = ExFunction.Wrap<PlayerController>("PastPosition", typeof(float));
+    public static readonly ExFunction pastPosition = ExFunction.Wrap<PlayerController>(nameof(PastPosition), typeof(float));
     
     [UsedImplicitly]
     public Vector2 PastDirection(float timeAgo) =>
         PastDirections.SafeIndexFromBack((int) (timeAgo * ETime.ENGINEFPS_F));
-    public static readonly ExFunction pastDirection = ExFunction.Wrap<PlayerController>("PastDirection", typeof(float));
+    public static readonly ExFunction pastDirection = ExFunction.Wrap<PlayerController>(nameof(PastDirection), typeof(float));
     
     [UsedImplicitly]
     public Vector2 MarisaAPosition(float timeAgo) =>
         MarisaAPositions.SafeIndexFromBack((int) (timeAgo * ETime.ENGINEFPS_F));
-    public static readonly ExFunction marisaAPosition = ExFunction.Wrap<PlayerController>("MarisaAPosition", typeof(float));
+    public static readonly ExFunction marisaAPosition = ExFunction.Wrap<PlayerController>(nameof(MarisaAPosition), typeof(float));
     
     [UsedImplicitly]
     public Vector2 MarisaADirection(float timeAgo) =>
         MarisaADirections.SafeIndexFromBack((int) (timeAgo * ETime.ENGINEFPS_F));
-    public static readonly ExFunction marisaADirection = ExFunction.Wrap<PlayerController>("MarisaADirection", typeof(float));
+    public static readonly ExFunction marisaADirection = ExFunction.Wrap<PlayerController>(nameof(MarisaADirection), typeof(float));
     
-    public static readonly ExFunction playerID = ExFunction.Wrap<PlayerController>("PlayerShotItr");
+    public static readonly ExFunction playerID = ExFunction.Wrap<PlayerController>(nameof(PlayerShotItr));
     
     #endregion
     

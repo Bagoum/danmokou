@@ -3,11 +3,14 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using UnityEngine;
 using System.Linq.Expressions;
+using BagoumLib.Events;
 using BagoumLib.Expressions;
 using BagoumLib.Reflection;
 using Danmokou.Behavior;
 using Danmokou.Core;
+using Danmokou.Danmaku.Descriptors;
 using Danmokou.Expressions;
+using Danmokou.GameInstance;
 using Danmokou.Graphics;
 using Danmokou.Player;
 using Danmokou.Services;
@@ -236,7 +239,7 @@ public static partial class ExM {
     /// Randomly returns either -1 or 1.
     /// </summary>
     public static tfloat Randpm1() => Ex.Condition(Rand(EN1, E1).GT0(), E1, EN1);
-    private static readonly ExFunction SeedRandInt = ExFunction.Wrap(typeof(RNG), "GetSeededFloat", new[] {typeof(float), typeof(float), typeof(int)});
+    private static readonly ExFunction SeedRandInt = ExFunction.Wrap(typeof(RNG), nameof(RNG.GetSeededFloat), new[] {typeof(float), typeof(float), typeof(int)});
     /// <summary>
     /// Returns a pseudorandom value based on the seed function.
     /// The seed function only has integer discrimination.
@@ -490,12 +493,17 @@ public static partial class ExM {
     
     #region External
 
+    [DontReflect]
+    public static Ex FrameNumber => Ex.Property(null, typeof(ETime), nameof(ETime.FrameNumber));
+    
+    private static Ex BEHEnemy(this BEHPointer beh) => ExC(beh).Field(nameof(BEHPointer.beh)).Field(nameof(BehaviorEntity.Enemy));
+
     /// <summary>
     /// Get the HP ratio (0-1) of the BehaviorEntity.
     /// <br/>The BEH must be an enemy, or this will cause errors.
     /// </summary>
     public static tfloat HPRatio(BEHPointer beh) =>
-        ExC(beh).Field("beh").Field("Enemy").Field("EffectiveBarRatio");
+        beh.BEHEnemy().Field(nameof(Enemy.EffectiveBarRatio));
 
     /// <summary>
     /// Get the number of photos taken of the given boss.
@@ -503,56 +511,72 @@ public static partial class ExM {
     /// <br/>This number resets every card.
     /// </summary>
     public static tfloat PhotosTaken(BEHPointer beh) => 
-        ExC(beh).Field("beh").Field("Enemy").Field("PhotosTaken").Cast<float>();
+        beh.BEHEnemy().Field(nameof(Enemy.PhotosTaken)).Cast<float>();
 
     /// <summary>
     /// Returns true if the instance has not continued.
     /// </summary>
-    public static tbool Is1CC() => Ex.Not(Ex.Property(null, typeof(GameManagement), "Continued"));
+    public static tbool Is1CC() => Ex.Not(Instance.Field(nameof(InstanceData.Continued)));
 
-    public static Ex Instance => Ex.Property(null, typeof(GameManagement), "Instance");
+    [DontReflect]
+    public static Ex Instance => Ex.Property(null, typeof(GameManagement), nameof(GameManagement.Instance));
 
 
     /// <summary>
     /// Returns the amount of time for which the player has *not* been focusing.
     /// Resets to zero while the player is focusing.
     /// </summary>
-    public static ExBPY PlayerFreeT(Func<TExArgCtx, TEx<PlayerController>> p) => tac => p(tac).Field("TimeFree");
+    public static ExBPY PlayerFreeT(Func<TExArgCtx, TEx<PlayerController>> p) => tac => 
+        p(tac).Field(nameof(PlayerController.TimeFree));
+    
     /// <summary>
     /// Returns the amount of time for which the player has been focusing.
     /// Resets to zero while the player is not focusing.
     /// </summary>
-    public static ExBPY PlayerFocusT(Func<TExArgCtx, TEx<PlayerController>> p) => tac => p(tac).Field("TimeFocus");
+    public static ExBPY PlayerFocusT(Func<TExArgCtx, TEx<PlayerController>> p) => tac => 
+        p(tac).Field(nameof(PlayerController.TimeFocus));
+    
     /// <summary>
     /// Returns the amount of time for which the player has been firing.
     /// Resets to zero while the player is not firing.
     /// </summary>
-    public static ExBPY PlayerFiringT(Func<TExArgCtx, TEx<PlayerController>> p) => tac => p(tac).Field("FiringTime");
+    public static ExBPY PlayerFiringT(Func<TExArgCtx, TEx<PlayerController>> p) => tac => 
+        p(tac).Field(nameof(PlayerController.FiringTime));
+    
     /// <summary>
     /// Returns the amount of time for which the player has been firing while *not* focusing.
     /// Resets to zero while the player is not firing or is focusing.
     /// </summary>
-    public static ExBPY PlayerFiringFreeT(Func<TExArgCtx, TEx<PlayerController>> p) => tac => p(tac).Field("FiringTimeFree");
+    public static ExBPY PlayerFiringFreeT(Func<TExArgCtx, TEx<PlayerController>> p) => tac => 
+        p(tac).Field(nameof(PlayerController.FiringTimeFree));
+    
     /// <summary>
     /// Returns the amount of time for which the player has been firing while focusing.
     /// Resets to zero while the player is not firing or is not focusing.
     /// </summary>
-    public static ExBPY PlayerFiringFocusT(Func<TExArgCtx, TEx<PlayerController>> p) => tac => p(tac).Field("FiringTimeFocus");
+    public static ExBPY PlayerFiringFocusT(Func<TExArgCtx, TEx<PlayerController>> p) => tac => 
+        p(tac).Field(nameof(PlayerController.FiringTimeFocus));
+    
     /// <summary>
     /// Returns the amount of time for which the player has *not* been firing.
     /// Resets to zero while the player is firing.
     /// </summary>
-    public static ExBPY PlayerUnFiringT(Func<TExArgCtx, TEx<PlayerController>> p) => tac => p(tac).Field("UnFiringTime");
+    public static ExBPY PlayerUnFiringT(Func<TExArgCtx, TEx<PlayerController>> p) => tac => 
+        p(tac).Field(nameof(PlayerController.UnFiringTime));
+    
     /// <summary>
     /// Returns the amount of time for which the player has *not* been firing or been focusing.
     /// Resets to zero while the player is firing AND *not* focusing.
     /// </summary>
-    public static ExBPY PlayerUnFiringFreeT(Func<TExArgCtx, TEx<PlayerController>> p) => tac => p(tac).Field("UnFiringTimeFree");
+    public static ExBPY PlayerUnFiringFreeT(Func<TExArgCtx, TEx<PlayerController>> p) => tac => 
+        p(tac).Field(nameof(PlayerController.UnFiringTimeFree));
+    
     /// <summary>
     /// Returns the amount of time for which the player has *not* been firing or *not* been focusing.
     /// Resets to zero while the player is firing AND focusing.
     /// </summary>
-    public static ExBPY PlayerUnFiringFocusT(Func<TExArgCtx, TEx<PlayerController>> p) => tac => p(tac).Field("UnFiringTimeFocus");
+    public static ExBPY PlayerUnFiringFocusT(Func<TExArgCtx, TEx<PlayerController>> p) => tac => 
+        p(tac).Field(nameof(PlayerController.UnFiringTimeFocus));
     
     public static ExBPY PlayerID(Func<TExArgCtx, TEx<PlayerController>> p) =>
         tac => PlayerController.playerID.InstanceOf(p(tac));
@@ -571,10 +595,22 @@ public static partial class ExM {
     //These types are not funcified, so they need to be explicit
     
     /// <summary>
-    /// Returns true if the laser is colliding with an enemy (only applicable to player lasers).
+    /// On a complex bullet, returns true if the bullet is colliding.
     /// </summary>
-    public static ExPred LaserColliding(Func<TExArgCtx, TEx<CurvedTileRenderLaser>> ctr) => tac => 
-        ctr(tac).Field("isColliding");
+    public static ExPred Colliding(Func<TExArgCtx, TEx<Bullet>> ctr) => tac => 
+        ctr(tac).Field(nameof(Bullet.IsColliding));
+        
+    /// <summary>
+    /// On a complex bullet, returns the amount of time that the bullet has been continuously colliding for.
+    /// </summary>
+    public static ExBPY CollidingT(Func<TExArgCtx, TEx<Bullet>> ctr) => tac => 
+        ctr(tac).Field(nameof(Bullet.CollidingTime));
+    
+    /// <summary>
+    /// On a complex bullet, returns the amount of time that the bullet has been continuously *not* colliding for.
+    /// </summary>
+    public static ExBPY UnCollidingT(Func<TExArgCtx, TEx<Bullet>> ctr) => tac => 
+        ctr(tac).Field(nameof(Bullet.UnCollidingTime));
     
     /// <summary>
     /// Returns the last active time of the laser. This is the first time at which the "deactivate" option
@@ -582,35 +618,39 @@ public static partial class ExM {
     /// this returns "effectively infinity".
     /// </summary>
     public static ExBPY LaserLastActiveT(Func<TExArgCtx, TEx<CurvedTileRenderLaser>> ctr) => tac => 
-        ctr(tac).Field("LastActiveTime");
+        ctr(tac).Field(nameof(CurvedTileRenderLaser.LastActiveTime));
     
     
     /// <summary>
     /// Returns the location of the FireOption. Primarily used for player lasers.
     /// </summary>
     public static ExTP OptionLocation(Func<TExArgCtx, TEx<FireOption>> ctr) => tac => 
-        ctr(tac).Field("Location");
+        ctr(tac).Field(nameof(BehaviorEntity.Location));
     
     /// <summary>
     /// Returns the direction of the FireOption. Primarily used for player lasers.
     /// </summary>
     public static ExBPY OptionAngle(Func<TExArgCtx, TEx<FireOption>> ctr) => tac => 
-        ctr(tac).Field("original_angle");
+        ctr(tac).Field(nameof(BehaviorEntity.original_angle));
 
+    private static Ex PowerFeature => Instance.Field(nameof(InstanceData.PowerF));
     /// <summary>
     /// Return the player's power value.
     /// </summary>
-    public static tfloat Power() => Instance.Field("PowerF").Field("Power").Field("Value");
+    public static tfloat Power() => PowerFeature
+        .Field(nameof(IPowerFeature.Power))
+        .Field(nameof(Evented<double>.Value))
+        .As<float>();
     
     /// <summary>
     /// Return the player's power value, floored.
     /// </summary>
-    public static tfloat PowerF() => Floor(Instance.Field("PowerF").Field("PowerInt"));
+    public static tfloat PowerF() => Floor(PowerFeature.Field(nameof(IPowerFeature.PowerInt)));
     
     /// <summary>
     /// Return the player's power index.
     /// </summary>
-    public static tfloat PowerIndex() => Floor(Instance.Field("PowerF").Field("PowerIndex"));
+    public static tfloat PowerIndex() => Floor(PowerFeature.Field(nameof(IPowerFeature.PowerIndex)));
 
     /// <summary>
     /// If the player's power (floored) is strictly than the firing index,
@@ -630,12 +670,14 @@ public static partial class ExM {
     public static Func<TExArgCtx, TEx<T>> Mine<T>() => tac => {
         var t = typeof(T);
         var fctx = tac.FCTX;
-        if (t == typeof(CurvedTileRenderLaser)) {
-            return fctx.Field("LaserController");
+        if (t == typeof(Bullet)) {
+            return fctx.Field(nameof(PICustomData.Bullet));
+        }else if (t == typeof(CurvedTileRenderLaser)) {
+            return fctx.Field(nameof(PICustomData.Laser));
         } else if (t == typeof(PlayerController)) {
-            return fctx.Field("PlayerController");
+            return fctx.Field(nameof(PICustomData.PlayerController));
         } else if (t == typeof(FireOption)) {
-            return fctx.Field("OptionFirer");
+            return fctx.Field(nameof(PICustomData.OptionFirer));
         }
         throw new Exception($"FCTX has no handling for `Mine` constructor of type {t.RName()}");
     };

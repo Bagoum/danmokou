@@ -73,11 +73,11 @@ public class TestLinuxReflection : MonoBehaviour {
         Debug.Log("as xyrv2 raw: " + new TEx<V2RV2>(ex_angrv2)
 	        .BakeAndCompile<Func<float, float, V2RV2>>(null!, x, y)(2, 9));
 
-        Debug.Log("as xy: " + PrepareDelegate<Func<float, float, float>>(selS,
+        Debug.Log("as xy: " + CompileDelegate<Func<float, float, float>>(selS,
 	        new DelegateArg<float>("x"),
 	        new DelegateArg<float>("y")
         )(2, 9));
-        Debug.Log("as xyrv2: " + PrepareDelegate<Func<float, float, V2RV2>>(angS,
+        Debug.Log("as xyrv2: " + CompileDelegate<Func<float, float, V2RV2>>(angS,
 	        new DelegateArg<float>("x"),
 	        new DelegateArg<float>("y")
         )(2, 9));

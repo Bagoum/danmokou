@@ -38,7 +38,11 @@ public class Bullet : BehaviorEntity {
     protected bool collisionActive = false;
 
     public CollisionInfo collisionInfo;
-    public int Damage => 1;
+    public bool GrazeAllowed { get; private set; } = true;
+    public int Damage { get; private set; } = 1;
+    public bool IsColliding { get; set; }
+    public float CollidingTime { get; set; }
+    public float UnCollidingTime { get; set; }
 
     protected void SetMaterial(Material newMat) {
         material = newMat;
@@ -82,16 +86,23 @@ public class Bullet : BehaviorEntity {
     }
 
     public virtual void Initialize(BEHStyleMetadata? style, RealizedBehOptions options, BehaviorEntity? parent, Movement mov, ParametricInfo pi, out int layer) {
+        pi.ctx.bullet = this;
         Target = ServiceLocator.MaybeFind<PlayerController>();
         Player = options.playerBullet;
         base.Initialize(style, mov, pi, options.smr, parent, options: options);
         gameObject.layer = layer = options.layer ?? DefaultLayer;
         hueShift = options.hueShift;
+        Damage = options.damage ?? 1;
+        GrazeAllowed = options.grazeAllowed;
+        IsColliding = false;
+        CollidingTime = 0;
+        UnCollidingTime = 0;
     }
     
 
     public override void RegularUpdateCollision() {
         if (icollider == null) return;
+        IsColliding = false;
         if (Player.Try(out var plb)) {
             var enemies = Enemy.FrozenEnemies;
             for (int ii = 0; ii < enemies.Count; ++ii) {
@@ -99,19 +110,38 @@ public class Bullet : BehaviorEntity {
                     icollider.CheckCollision(in bpi.loc.x, in bpi.loc.y, Direction, 1f,  
                         enemies[ii].location.x, enemies[ii].location.y, enemies[ii].radius)) {
                     enemies[ii].enemy.TakeHit(in plb, in bpi);
+                    myStyle.IterateCollideControls(this);
+                    IsColliding = true;
                     if (collisionInfo.destructible) {
                         InvokeCull();
                         return;
                     }
                 }
             }
-        } else if (Target.Valid) {
+        } else if (Target.Try(out var player) && player.ReceivesCollisions) {
             var coll = icollider.CheckGrazeCollision(in bpi.loc.x, in bpi.loc.y, Direction, 1f, Target.Value.Hurtbox);
-            Target.Value.ProcessCollision(coll, Damage, in bpi, in collisionInfo.grazeEveryFrames);
-            if (coll.collide && collisionInfo.destructible) {
-                InvokeCull();
-                return;
+            if (coll.graze && !GrazeAllowed)
+                coll = coll.NoGraze();
+            Target.Value.ProcessCollision(in coll, Damage, in bpi, in collisionInfo.grazeEveryFrames);
+            if (coll.collide) {
+                myStyle.IterateCollideControls(this);
+                if (collisionInfo.destructible) {
+                    InvokeCull();
+                    return;
+                }
             }
+        }
+        FinalizeCollisionTimings();
+    }
+    
+
+    public void FinalizeCollisionTimings() {
+        if (IsColliding) {
+            CollidingTime += ETime.FRAME_TIME;
+            UnCollidingTime = 0;
+        } else {
+            CollidingTime = 0;
+            UnCollidingTime += ETime.FRAME_TIME;
         }
     }
 

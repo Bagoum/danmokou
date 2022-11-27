@@ -69,7 +69,7 @@ Between gradients, the order looks like this:
 
 To add new bullets, create a prefab (preferably somewhere in `Danmokou/Prefab/Bullets`) and then link the prefab in the `Danmokou/SO/References/Bullet Styles` object. 
 
-You can change the rendering priority of bullets in a script by using the pool control `setrenderqueue`. Note that the base render queue is 3000 for most bullets as defined on the material `Core Firing/Basic`, and this is added to the `Render Priority` value in the `Simple Bullet Empty Script` script on bullet prefabs. Circle bullets have render queue values in the 3600s. 
+You can change the rendering priority of bullets in a script by using the pool control `setrenderqueue`. Note that the base render queue is 3000 for most bullets as defined on the material `Core Firing/Basic`, and this is added to the `Render Priority` value in the `Simple Bullet Empty Script` script on bullet prefabs, and there is another offset for the color. Circle bullets have render queue values in the 3600s. 
 
 # Miscellaneous Bullet Notes
 

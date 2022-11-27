@@ -31,7 +31,7 @@ public class PhasePerformanceStar : CoroutineRegularUpdater {
 
     public void Show(Color? fillColor) {
         if (fillColor.Try(out var c)) {
-            ServiceLocator.SFXService.Request(fillSound);
+            ISFXService.SFXService.Request(fillSound);
             filled.enabled = true;
             filled.color = c;
             var tr = filled.transform;

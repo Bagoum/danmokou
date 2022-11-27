@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using BagoumLib;
 using Danmokou.Behavior;
 using Danmokou.Behavior.Display;
 using Danmokou.Core;
@@ -24,7 +25,7 @@ public class PhasePerformance : PiecewiseAppear {
     public override Vector2 Center => background.transform.position;
     public override (Texture, bool) Texture => (ServiceLocator.Find<IScreenshotter>().Screenshot(
         new CRect(background.transform, background.sprite.bounds),
-        new[] {MainCamera.CamType.UI}), true);
+        new[] {DMKMainCamera.CamType.UI}), true);
 
     public void Initialize(string description, PhaseCompletion pc) {
         if (pc.phase.Boss == null || pc.CaptureStars == null) {

@@ -11,6 +11,7 @@ using Danmokou.Scriptables;
 using Danmokou.Services;
 using Danmokou.UI;
 using Danmokou.VN;
+using Suzunoya.ADV;
 using Suzunoya.ControlFlow;
 using UnityEngine;
 
@@ -52,6 +53,12 @@ public abstract class ADVGameDef : GameDef, IADVGameDef {
     public SceneConfig sceneConfig = null!;
     public ADVBacklogFeatures backlogFeatures = ADVBacklogFeatures.NONE;
     
+    /// <summary>
+    /// Instantiate a process responsible for running the ADV game.
+    /// <br/>Note: This process is responsible for updating itself if required (via <see cref="IRegularUpdater"/>),
+    /// <see cref="IExecutingADV"/> implements <see cref="IRegularUpdater"/>, this process i
+    /// </summary>
+    /// <param name="inst">Information about the execution context.</param>
     public abstract IExecutingADV Setup(ADVInstance inst);
     public abstract ADVData NewGameData();
 

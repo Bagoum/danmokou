@@ -5,12 +5,23 @@ phase 0
 	paction 0
 		shift-phase-to 1
 
-<!> type spell `Helloワールド`
-<!> hp 1000
+##<!> type spell `Helloワールド`
+<!> hp 100000
 <!> bg black
-phase 100
-	saction 0
-		position 0 3
+phase 30
+	paction 0
+		position 0 0
+///
+		gtr {
+			wait 1
+			times _
+			rpp <2>
+			##for 2s
+		} {
+			sync ellipse-green/w <1;:> s tprot cx 2
+			##bullet-control(false, circle-red/w, restyle(circle-blue/w, _))
+		}
+///
 		##move _ nroffset px sine 4 2 t
 ///
 		async star-purple/w <> gcr2 20 _ <3h> {

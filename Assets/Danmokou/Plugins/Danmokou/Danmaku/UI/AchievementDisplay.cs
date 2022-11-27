@@ -81,7 +81,7 @@ public class AchievementDisplay : CoroutineRegularUpdater {
         lowerText.text = acv.Title;
         tr.localPosition = baseLoc + startOffset;
         Show();
-        ServiceLocator.SFXService.Request(sfx);
+        ISFXService.SFXService.Request(sfx);
         var task = tr.GoTo(baseLoc, inTime, InLerp).Run(this);
         while (!task.IsCompleted)
             yield return null;

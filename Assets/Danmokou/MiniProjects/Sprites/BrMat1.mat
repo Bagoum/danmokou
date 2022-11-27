@@ -107,7 +107,7 @@ Material:
     - _Subradius: 0.08
     - _T: 5
     - _TRipple: 1
-    - _TScrub: 54.71
+    - _TScrub: 0
     - _TStart: 0.7
     - _Thick: 0.11
     - _Thickness: 0.5

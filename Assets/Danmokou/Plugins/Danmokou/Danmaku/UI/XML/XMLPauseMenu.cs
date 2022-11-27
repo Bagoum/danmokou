@@ -12,6 +12,7 @@ using Danmokou.Graphics;
 using Danmokou.Scriptables;
 using Danmokou.Services;
 using Danmokou.VN;
+using Suzunoya.ADV;
 using SuzunoyaUnity;
 using UnityEngine;
 using UnityEngine.Scripting;
@@ -47,7 +48,7 @@ public class XMLPauseMenu : PausedGameplayMenu, IPauseMenu {
         OptionsScreen.MenuBackgroundOpacity = 0.8f;
         var advMan = ServiceLocator.FindOrNull<ADVManager>();
         if (!Replayer.RequiresConsistency && advMan != null) {
-            SaveLoadScreen = this.SaveLoadVNScreen(inst => advMan.Restart(inst.GetData()), slot => {
+            SaveLoadScreen = this.SaveLoadVNScreen(inst => advMan.ExecAdv?.Inst.Request.Restart(inst.GetData()) ?? false, slot => {
                 preserveSS = true;
                 return new(advMan.GetSaveReadyADVData(), DateTime.Now, lastSaveLoadSS!, slot,
                     ServiceLocator.Find<IVNWrapper>().TrackedVNs.First().backlog.LastPublished.Value.readableSpeech);
@@ -88,7 +89,7 @@ public class XMLPauseMenu : PausedGameplayMenu, IPauseMenu {
             }
             lastSaveLoadSS = ServiceLocator.Find<IScreenshotter>().Screenshot(
                 new CRect(-LocationHelpers.PlayableBounds.center.x, 0, MainCamera.ScreenWidth / 2f, 
-                    MainCamera.ScreenHeight / 2f, 0), new[] { MainCamera.CamType.UI });
+                    MainCamera.ScreenHeight / 2f, 0), new[] { DMKMainCamera.CamType.UI });
             preserveSS = false;
         }
         base.ShowMe();

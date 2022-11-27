@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Reactive;
 using System.Threading.Tasks;
+using BagoumLib;
 using BagoumLib.Cancellation;
 using Danmokou.Core;
 using Danmokou.Danmaku;

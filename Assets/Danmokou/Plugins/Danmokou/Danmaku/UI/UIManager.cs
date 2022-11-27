@@ -25,7 +25,6 @@ using Danmokou.UI.XML;
 using SuzunoyaUnity;
 using UnityEngine.Serialization;
 using static Danmokou.Services.GameManagement;
-using WaitingUtils = Danmokou.SM.WaitingUtils;
 
 namespace Danmokou.UI {
 [Serializable]
@@ -283,12 +282,16 @@ public class UIManager : CoroutineRegularUpdater, IUIManager, IStageAnnouncer {
     private const int fpsSmooth = 10;
     private int fpsUpdateCounter = fpsSmooth;
     private float accdT = 0f;
+    private float lastFps = -1;
 
     private void Update() {
         profileTime += ETime.dT;
         accdT += Time.unscaledDeltaTime;
         if (--fpsUpdateCounter == 0) {
-            fps.text = string.Format(fpsFormat, fpsSmooth / accdT);
+            var nextFps = Mathf.RoundToInt(fpsSmooth / accdT);
+            if (nextFps != lastFps) {
+                fps.text = StringBuffer.FormatPooled(fpsFormat, lastFps = nextFps);
+            }
             fpsUpdateCounter = fpsSmooth;
             accdT = 0;
         }
@@ -324,7 +327,7 @@ public class UIManager : CoroutineRegularUpdater, IUIManager, IStageAnnouncer {
         var currTimeIdent = -2;
         while (currTime > 0) {
             if (Mathf.RoundToInt(currTime * 10) != currTimeIdent) {
-                timeout.text = string.Format(timeoutTextFormat, currTime);
+                timeout.text = StringBuffer.FormatPooled(timeoutTextFormat, currTime);
                 currTimeIdent = Mathf.RoundToInt(currTime * 10);
             }
             yield return null;
@@ -333,7 +336,7 @@ public class UIManager : CoroutineRegularUpdater, IUIManager, IStageAnnouncer {
             currTime -= ETime.FRAME_TIME;
             if (withSound && currTime < tryCross) {
                 if (0 < tryCross && tryCross <= countdownSounds.Length) {
-                    ServiceLocator.SFXService.Request(countdownSounds[tryCross - 1]);
+                    ISFXService.SFXService.Request(countdownSounds[tryCross - 1]);
                 }
             }
         }
@@ -440,13 +443,13 @@ public class UIManager : CoroutineRegularUpdater, IUIManager, IStageAnnouncer {
             if (s != null) phaseDescription.text = s;
         }
         Set(phase switch {
-            PhaseType.NONSPELL => "NON",
-            PhaseType.SPELL => "SPELL",
-            PhaseType.TIMEOUT => "SURVIVAL",
-            PhaseType.FINAL => "FINAL",
-            PhaseType.STAGE => "STAGE",
+            PhaseType.Nonspell => "NON",
+            PhaseType.Spell => "SPELL",
+            PhaseType.Timeout => "SURVIVAL",
+            PhaseType.FinalSpell => "FINAL",
+            PhaseType.Stage => "STAGE",
             { } p when p.IsStageBoss() => "CHALLENGER\nAPPROACHING",
-            PhaseType.DIALOGUE => null,
+            PhaseType.Dialogue => null,
             null => null,
             _ => ""
         });
@@ -556,7 +559,7 @@ public class UIManager : CoroutineRegularUpdater, IUIManager, IStageAnnouncer {
     public void AnnounceStage(ICancellee cT, out float time) {
         time = 2 * (stageAnnouncer.moveTime + stageAnnouncer.spreadTime) + stageAnnounceStay;
         stageAnnouncer.Queue(new PiecewiseAppear.AppearRequest(PiecewiseAppear.AppearAction.APPEAR, 1f, () => 
-            WaitingUtils.WaitThenCB(this, cT, stageAnnounceStay, false, () => 
+            RUWaitingUtils.WaitThenCB(this, cT, stageAnnounceStay, false, () => 
                 stageAnnouncer.Queue(new PiecewiseAppear.AppearRequest(PiecewiseAppear.AppearAction.DISAPPEAR, 0f, null)))));
     }
 

@@ -1,21 +1,77 @@
 pattern { }
 phase 0
 	paction 0
-		shift-phase-to 1
+		shift-phase-to 3
 
-<!> type(non, `hello world`)
+<!> type(non, `simple bullet collision`)
 phase 0
     paction 0
-		position 0 2
+		position 0 0
+		poolcontrol(fireball*, destructible(false))
+		poolcontrol(fireball*, damage(0))
+		poolcontrol(fireball*, nograze)
+		# Without a "cooldown" limiter, this will run once per frame while the bullet is colliding
 		bullet-control persist fireball* oncollide _
-			sync glcircle-*/w <1;:> gsr2c 10 {
+			sync pather-*/ <0.4;:90> gsr {
 				colorf({ red green blue yellow }, p)
-			} s tprot cx 2
+			} pather(0.3, 0.3, tprot cx 2, { })
 
-		async fireball-*/w <> gcr2 40 _ <360h> {
+		# Collisions with simple bullets occur at the center of the bullet
+		async fireball-*/w <-30> gcr2 120 _ <> {
 			p this
 			colorf({ red green blue yellow }, p)
-		} gsr2c 20 {
-		} s tprot cx 3
-		
+		} gsr2c 3 {
+		} s tprot cx 2
         
+
+<!> type(non, `pather collision`)
+phase 0
+	paction 0
+		position 0 0
+		behcontrol(persist, lightning-*/b, oncollide(cooldown(20, _), 
+			async arrow-*/ <0.3;:10> gcr2 60 1 <> {
+			} gsr2c 2 {
+				colorf({ red green blue }, p)
+			} s tprot cx 2
+		))
+
+		# Collisions with pathers occur at the "front end" of the pather
+		async lightning-*/b <-60> gcr2 360 _ <> {
+		} gsr2c 3 {
+			p this
+			color({ red green blue })
+		} pather(1.5, 1.5, tprot cx 2, {
+			hueshift(if(colliding(mine), 
+				lerp(0, 0.2, collidingt(mine), 20, 120), 
+				lerp(0, 0.2, lerp(0.2, 0.3, t, 1, uncollidingt(mine)), 100, 0)))
+			damage(0)
+			nograze
+			s(4)
+		})
+
+
+<!> type(non, `laser collision`)
+phase 0
+	paction 0
+		position 0 0
+		behcontrol(persist, gdlaser-*/b, oncollide(cooldown(20, _), 
+			async arrow-*/ <1;:10> gcr2 60 1 <> {
+			} gsr2c 2 {
+				colorf({ red green blue }, p)
+			} s tprot cx 2
+		))
+
+		# Collisions with lasers occur at the "root" of the laser
+		async gdlaser-*/b <-90> gsr2c 3 {
+			p this
+			color({ red green blue })
+		} laser(null, 1, 40, { 
+			hueshift(if(colliding(mine), 
+				lerp(0, 0.2, collidingt(mine), 20, 120), 
+				lerp(0, 0.2, lerp(0.2, 0.3, t, 1, uncollidingt(mine)), 100, 0)))
+			rotate(0, 0 * t)
+			dsfx
+			damage(0)
+			nograze
+			s(2)
+		})

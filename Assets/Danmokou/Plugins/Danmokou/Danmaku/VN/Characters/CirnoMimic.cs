@@ -14,7 +14,7 @@ public class Cirno : SZYUCharacter {
     public override Color UIColor => new(.2f, 0.6f, .7f);
     public override LString Name { get; set; } = LocalizedStrings.FindReference("dialogue.cirno");
     
-    public override void RollEvent() => ServiceLocator.SFXService.Request("x-bubble-3", SFXType.TypingSound);
+    public override void RollEvent() => ISFXService.SFXService.Request("x-bubble-3", SFXType.TypingSound);
 }
 
 public class CirnoMimic : PiecewiseCharacterMimic {

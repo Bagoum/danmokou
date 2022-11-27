@@ -13,7 +13,7 @@ public class Mokou : SZYUCharacter {
     public override Color UIColor => new(.63f, .03f, .14f);
     public override LString Name { get; set; } = LocalizedStrings.FindReference("dialogue.mokou");
     
-    public override void RollEvent() => ServiceLocator.SFXService.Request("x-bubble-2", SFXType.TypingSound);
+    public override void RollEvent() => ISFXService.SFXService.Request("x-bubble-2", SFXType.TypingSound);
 }
 
 public class MokouMimic : PiecewiseCharacterMimic {

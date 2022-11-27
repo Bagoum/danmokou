@@ -81,7 +81,7 @@ public abstract class TiledRender {
         locater = locationer;
         parented = locater.HasParent();
         isStatic = is_static;
-        material.enableInstancing = false; //Instancing doesn't work with this, and it has overhead, so disable it.
+        //material.enableInstancing = false; //Instancing doesn't work with this, and it has overhead, so disable it.
         render.sharedMaterial = material;
         render.sortingOrder = renderCounter++;
         render.sortingLayerID = SortingLayer.NameToID(isPlayer ? cfg.playerSortingLayer : cfg.sortingLayer);

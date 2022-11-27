@@ -5,6 +5,7 @@ using BagoumLib.Cancellation;
 using BagoumLib.Culture;
 using Danmokou.Behavior;
 using Danmokou.Core;
+using Danmokou.DMath;
 using Danmokou.Services;
 using Danmokou.GameInstance;
 using JetBrains.Annotations;
@@ -219,8 +220,8 @@ public readonly struct PhaseCompletion {
     private readonly float timeout;
     private float ElapsedRatio => timeout > 0 ? ElapsedTime / timeout : 0;
     private const float ELAPSED_YIELD = 0.58f;
-    private float ElapsedItemMultiplier => phase.Props.phaseType == PhaseType.TIMEOUT ? 1 : 
-        Mathf.Lerp(1, 0.27183f, (ElapsedRatio - ELAPSED_YIELD) / (1 - ELAPSED_YIELD));
+    private float ElapsedItemMultiplier => phase.Props.phaseType == PhaseType.Timeout ? 1 : 
+        M.Lerp(1, 0.27183f, (ElapsedRatio - ELAPSED_YIELD) / (1 - ELAPSED_YIELD));
     private float ItemMultiplier => phase.Props.cardValueMult * ElapsedItemMultiplier;
 
     public string Performance {
@@ -271,7 +272,7 @@ public readonly struct PhaseCompletion {
     public bool? Cleared => StandardCardFinish ?
         (bool?) ((clear.Destructive()) ||
                  //For timeouts, clearing requires no-hit
-                 (phase.Props.phaseType == PhaseType.TIMEOUT && clear == PhaseClearMethod.TIMEOUT && NoHits))
+                 (phase.Props.phaseType == PhaseType.Timeout && clear == PhaseClearMethod.TIMEOUT && NoHits))
         : null;
 
     /// <summary>

@@ -17,7 +17,7 @@ public class PowerAura : SpriteDisplayController {
 
     public void Initialize(in RealizedPowerAuraOptions opts) {
         options = opts;
-        ServiceLocator.SFXService.Request(options.sfx);
+        ISFXService.SFXService.Request(options.sfx);
         sprite.color = new Color(0, 0, 0, 0);
         gameObject.layer = opts.layer ?? beh.DefaultLayer;
         pb.SetFloat(PropConsts.speed, opts.iterations / opts.totalTime);

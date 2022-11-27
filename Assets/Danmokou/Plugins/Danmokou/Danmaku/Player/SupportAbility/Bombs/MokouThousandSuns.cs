@@ -14,7 +14,7 @@ public partial record Ability {
             var fireDisable = DisableFire(bomber);
         
             bomber.MakeInvulnerable(780, true);
-            ServiceLocator.SFXService.Request("mokou-thousandsuns");
+            ISFXService.SFXService.Request("mokou-thousandsuns");
             SpawnCutin();
             BulletManager.SoftScreenClear();
             var task = bomber.RunExternalSM(SMRunner.RunRoot(SM!, bomber.BoundingToken), cancelOnFinish: true);

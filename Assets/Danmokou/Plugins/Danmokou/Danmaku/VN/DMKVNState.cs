@@ -1,4 +1,5 @@
 ﻿using System;
+using BagoumLib;
 using BagoumLib.Cancellation;
 using Danmokou.Core;
 using Danmokou.Core.DInput;
@@ -36,17 +37,17 @@ public class DMKVNState : UnityVNState {
 
     public Action aSFX(string? sfx) => () => {
         if (SkippingMode is null or SkipMode.AUTOPLAY)
-            ServiceLocator.SFXService.Request(sfx);
+            ISFXService.SFXService.Request(sfx);
     };
     
     /// <summary>
     /// Get a looping audio sfx.
     /// </summary>
     public AudioSource Source(string? sfx) => 
-        ServiceLocator.SFXService.RequestSource(sfx, CToken)!;
+        ISFXService.SFXService.RequestSource(sfx, CToken)!;
     
     public LazyAction Source(string? sfx, Action<AudioSource> apply) => new(() => 
-        apply(ServiceLocator.SFXService.RequestSource(sfx, CToken)!));
+        apply(ISFXService.SFXService.RequestSource(sfx, CToken)!));
     
     public VNOperation Wait(double d) => base.Wait((float) d);
 

@@ -37,21 +37,13 @@ public class RebindableInputBinding : IInputBinding {
     [JsonIgnore]
     public string Description {
         get {
-            var result = new StringBuilder();
-            var connector = Locales.TextLocale switch {
-                Locales.JP => "や",
-                _ => " or "
-            };
-            bool foundFirst = false;
-            foreach (var b in Sources) {
-                if (b != null) {
-                    if (foundFirst)
-                        result.Append(connector);
-                    foundFirst = true;
-                    result.Append(b.Description);
-                }
-            }
-            return result.ToString();
+            var pieces = ListCache<string>.Get();
+            foreach (var b in Sources)
+                if (b != null)
+                    pieces.Add(b.Description);
+            var result = StringBuffer.JoinPooled(IInputBinding.OrConnector, pieces);
+            ListCache<string>.Consign(pieces);
+            return result;
         }
     }
     [JsonIgnore]

@@ -62,7 +62,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     public string ID = "";
     private static readonly Dictionary<string, HashSet<BehaviorEntity>> idLookup = new();
     //This is automatically disposed by the state machine that generates it
-    public Cancellable? PhaseShifter { get; set; }
+    public ICancellable? PhaseShifter { get; set; }
     private readonly HashSet<Cancellable> behaviorToken = new();
     public int NumRunningSMs => behaviorToken.Count;
     /// <summary>
@@ -205,7 +205,8 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
             tr.position = bpi.loc;
         }
         if (IsNontrivialID(behName)) ID = behName;
-        _ = RunBehaviorSM(smr);
+        if (smr.sm != null)
+            _ = RunBehaviorSM(smr);
         if (displayer != null) {
             displayer.RotatorF = options?.rotator;
         }

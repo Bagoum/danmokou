@@ -60,7 +60,7 @@ public struct DelegatedCreator {
         forceRoot = root;
     }
 
-    public void SFX() => ServiceLocator.SFXService.Request(style);
+    public void SFX() => ISFXService.SFXService.Request(style);
 
     private (Movement, ParametricInfo) PathHandlers(SyncHandoff sbh, GCXU<VTP> path, uint? id = null) {
         var mov = new Movement(path.Execute(sbh.GCX, out var fctx), ParentOffset, FacedRV2(sbh.RV2));
@@ -72,7 +72,7 @@ public struct DelegatedCreator {
         if (options.player.Try(out var bse)) {
             //TODO add cdframes to sb Player cmd
             var bc = BulletManager.GetMaybeCopyPool(style).BC;
-            pi.ctx.playerBullet = new PlayerBullet(new PlayerBulletCfg(bc.againstEnemyCooldown, bc.destructible, bse.boss, bse.stage, bse.effStrat), pi.ctx.PlayerController);
+            pi.ctx.playerBullet = new PlayerBullet(new PlayerBulletCfg(bc.againstEnemyCooldown, bc.Destructible, bse.boss, bse.stage, bse.effStrat), pi.ctx.PlayerController);
         } else
             pi.ctx.playerBullet = null;
         BulletManager.RequestSimple(style, 

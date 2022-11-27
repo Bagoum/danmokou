@@ -13,7 +13,7 @@ public class Kanako : SZYUCharacter {
     public override Color UIColor => new(0.34f, 0.1f, 0.85f);
     public override LString Name { get; set; } = LocalizedStrings.FindReference("dialogue.kanako");
 
-    public override void RollEvent() => ServiceLocator.SFXService.Request("x-bubble-2", SFXType.TypingSound);
+    public override void RollEvent() => ISFXService.SFXService.Request("x-bubble-2", SFXType.TypingSound);
 }
 
 public class KanakoMimic : PiecewiseCharacterMimic {

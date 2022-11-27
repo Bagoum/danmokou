@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using BagoumLib;
 using BagoumLib.Cancellation;
 using Danmokou.Behavior;
 using Danmokou.Core;
@@ -145,10 +146,10 @@ public class BackgroundOrchestrator : CoroutineRegularUpdater, IBackgroundOrches
             transitionCTS.Remove(cts);
         }
         if (condition == null) {
-            if (timeout > 0) WaitingUtils.WaitThenCBEvenIfCancelled(this, cts, timeout, false, Finish);
+            if (timeout > 0) RUWaitingUtils.WaitThenCBEvenIfCancelled(this, cts, timeout, false, Finish);
             else throw new Exception("Cannot wait for transition without a timeout or condition");
         } else {
-            WaitingUtils.WaitThenCBEvenIfCancelled(this, cts, timeout, condition, Finish);
+            RUWaitingUtils.WaitThenCBEvenIfCancelled(this, cts, timeout, condition, Finish);
         }
     }
 

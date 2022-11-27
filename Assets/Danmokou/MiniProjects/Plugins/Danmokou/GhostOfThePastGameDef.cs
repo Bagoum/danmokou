@@ -21,8 +21,10 @@ using Danmokou.VN;
 using MiniProjects.VN;
 using Newtonsoft.Json;
 using Suzunoya;
+using Suzunoya.ADV;
 using Suzunoya.Assertions;
 using Suzunoya.ControlFlow;
+using Suzunoya.Data;
 using Suzunoya.Entities;
 using SuzunoyaUnity;
 using SuzunoyaUnity.Derived;
@@ -40,70 +42,25 @@ namespace MiniProjects.VN.PurpleHeart {
 public class GhostOfThePastGameDef : ADVGameDef {
     public Sprite evidenceReviewBg = null!;
     
-    private class Executing : ExecutingADVGame<Executing.GOTPIdealizedState, GOTPADVData> {
+    private class Executing : DMKExecutingADV<Executing.GOTPIdealizedState, GOTPADVData> {
         private readonly EvidenceRequest<Evidence> evidenceRequest;
-        private readonly XMLDynamicMenu menu;
-        private readonly UIScreen evidenceScreen;
-        //--- Entities
-        private readonly ADVDialogueBox md;
-        private readonly Narrator ec;
-        private readonly UnityRenderGroup rg;
-        private readonly UnityRenderGroup rgb;
         //--- Lerpers
-        private readonly PushLerper<Vector3> dialogueShowOffset = new((p, n) => (n.Y > p.Y) ? 0.3f : 0.5f);
-        private readonly PushLerper<FColor> dialogueShowAlpha = new((p, n) => (n.a > p.a) ? 0.3f : 0.5f);
-        private readonly PushLerper<float> evSize = new(0.5f, (a, b, t) => Mathf.LerpUnclamped(a, b, Easers.EOutBack(t)));
+        private readonly PushLerper<float> evSize = new(0.5f, (a, b, t) => M.LerpU(a, b, Easers.EOutBack(t)));
 
-        private void HideMD() {
-            dialogueShowOffset.Push(new(0f, -0.5f, 0));
-            dialogueShowAlpha.Push(new FColor(1, 1, 1, 0));
-            md.Active.Value = false;
-        }
-        private void ShowMD() {
-            dialogueShowOffset.Push(new(0,0,0));
-            dialogueShowAlpha.Push(new FColor(1, 1, 1, 1));
-            md.Active.Value = true;
-        }
         
         public Executing(GhostOfThePastGameDef gdef, ADVInstance inst) : base(inst) {
-            evidenceRequest = new(this);
-            //probably don't need to add these to tokens as they'll be destroyed with VN destruction.
-            md = VN.Add(new ADVDialogueBox());
-            md.ComputedLocation.AddDisturbance(dialogueShowOffset);
-            md.ComputedTint.AddDisturbance(dialogueShowAlpha);
-            HideMD();
-            
-            VN.ContextStarted.Subscribe(c => {
-                if (VN.Contexts.Count == 1) {
-                    md.Clear();
-                    ShowMD();
-                }
-                //_ = md.MoveTo(Vector3.Zero, 0.5f, M.EOutSine).Task;
-            });
-            VN.ContextFinished.Subscribe(c => {
-                if (VN.Contexts.Count == 0 && inst.eVN.Active) {
-                    HideMD();
-                }
-            });
-            
+            evidenceRequest = new(VN);
             evSize.Push(1f);
             
-            ec = VN.Add(new Narrator());
-            rg = (UnityRenderGroup)VN.DefaultRenderGroup;
-            rgb = new UnityRenderGroup(VN, "black", 1, true);
-            rg.Visible.Value = false;
             tokens.Add(MapWillUpdate.Subscribe(_ => {
                 Logs.Log($"Setting delayed state from {Data.DelayedState} to {Data.State}");
                 Data.DelayedState = Data.State;
             }));
-            menu = ServiceLocator.Find<XMLDynamicMenu>();
-            tokens.Add(DataChanged.Subscribe(_ => {
-                Data.SnapshotChanges();
-                menu.Redraw();
-            }));
             
-            evidenceScreen = new UIScreen(menu, "EVIDENCE", UIScreen.Display.Basic) { 
+            var evidenceScreen = new UIScreen(menu, "EVIDENCE", UIScreen.Display.Basic) { 
                 Builder = (s, ve) => {
+                    //don't let events fall-through
+                    s.HTML.pickingMode = PickingMode.Position;
                     s.Margin.SetLRMargin(720, 720);
                     //s.HTML.Q("ControlsHelper").RemoveFromHierarchy();
                     var c0 = ve.AddColumn();
@@ -116,18 +73,18 @@ public class GhostOfThePastGameDef : ADVGameDef {
             };
             var evInfo = evidenceScreen.ColumnRender(1);
             var evs = new UIColumn(evidenceScreen, null, 
-                GOTPADVData.maxEvidences.Range().Select(i => new UINode(() => 
-                    Data.Evidences.Try(i) is {} ev ? ev.Title : "---") {
+                Data.Evidences.Select(ev => new UINode(() => 
+                    ev.Enabled ? ev.Title : "---") {
                     ShowHideGroup = new UIColumn(evInfo, 
-                        new UINode(() => Data.Evidences.Try(i) is {} ev ? ev.Description : "I don't have any evidence to put here.") 
+                        new UINode(() => ev.Enabled ? ev.Description : "I don't have any evidence to put here.") 
                             { Prefab = XMLUtils.Prefabs.PureTextNode, Passthrough = true, InlineStyle = (_, n) => n.Style.minHeight = 500 }
                             .With(XMLUtils.fontBiolinumClass, XMLUtils.small1Class),
                         new UIButton("Present Evidence", UIButton.ButtonType.Confirm, 
                             _ => {
-                                var __ = evidenceRequest.Present(Data.Evidences[i]).ContinueWithSync();
+                                var __ = evidenceRequest.Present(ev).ContinueWithSync();
                                 return new UIResult.ReturnToScreenCaller();
                             }) { 
-                                VisibleIf = () => Data.Evidences.Try(i) is {} && evidenceRequest.CanPresent
+                                VisibleIf = () => ev.Enabled && evidenceRequest.CanPresent
                         })
             }));
             evidenceScreen.SetFirst(evs);
@@ -150,13 +107,12 @@ public class GhostOfThePastGameDef : ADVGameDef {
             menu.AddNode(toEvidenceButton);
             tokens.Add(evidenceRequest.RequestsChanged.Subscribe(_ => {
                 evSize.PushIfNotSame(evidenceRequest.CanPresent ? 1.4f : 1f);
-                toEvidenceButton.Redraw();
+                toEvidenceButton.RedrawIfBuilt();
             }));
         }
 
         public override void RegularUpdate() {
-            dialogueShowOffset.Update(ETime.FRAME_TIME);
-            dialogueShowAlpha.Update(ETime.FRAME_TIME);
+            base.RegularUpdate();
             evSize.Update(ETime.FRAME_TIME);
         }
 
@@ -176,28 +132,9 @@ public class GhostOfThePastGameDef : ADVGameDef {
 
         private Marisa Marisa => VN.Find<Marisa>();
         
-        /// <summary>
-        /// Core function that handles the entire game's logical configuration.
-        /// </summary>
-        /// <returns></returns>
         protected override MapStateManager<GOTPIdealizedState, GOTPADVData> ConfigureMapStates() {
             var m = Manager;
-            var ms = new MapStateManager<GOTPIdealizedState, GOTPADVData>(() => new(this));
-            //Use this proxy function to register BCTXs so they can be inspected and run on load.
-            // Top-level contexts should always be <Unit>.
-            //If you provide an unidentifiable id (eg. empty string), it won't be loadable.
-            BoundedContext<Unit> Context(string id, Func<Task> innerTask) {
-                var ctx = new BoundedContext<Unit>(VN, id, async () => {
-                    await innerTask();
-                    return default;
-                });
-                if (ctx.Identifiable) {
-                    if (bctxes.ContainsKey(ctx.ID))
-                        throw new Exception($"Multiple BCTXes are defined for key {ctx.ID}");
-                    bctxes[ctx.ID] = ctx;
-                }
-                return ctx;
-            }
+            var ms = new MapStateManager<GOTPIdealizedState, GOTPADVData>(this, () => new(this));
             //These must be separated out of ConfigureMap since they should not be recreated
             // when the idealized state is recreated.
             var s0main = Context("s0main", async () => {
@@ -433,7 +370,7 @@ public class GhostOfThePastGameDef : ADVGameDef {
                 );
             });
 
-            BoundedContext<InterruptionStatus> yuyu1Interrupt(Evidence ev) => new(VN, "", async () => {
+            StrongBoundedContext<InterruptionStatus> yuyu1Interrupt(Evidence ev) => new(VN, "interrupt_yuyu1", async () => {
                 var m = Marisa;
                 var ym = vn.Find<Youmu>();
                 var yu = vn.Find<Yuyuko>();
@@ -470,8 +407,8 @@ public class GhostOfThePastGameDef : ADVGameDef {
                     await yu.ESayC("worry", l173);
                 }
                 return InterruptionStatus.Abort;
-            });
-            var yuyu1 = Context("", async () => {
+            }) { LoadSafe = false };
+            var yuyu1 = Context("yuyu1", async () => {
                 using var _ = evidenceRequest.Request(yuyu1Interrupt);
                 await vn.Find<Youmu>().ESayC("", l170);
                 await Marisa.ESayC("worry", l171);
@@ -577,7 +514,7 @@ public class GhostOfThePastGameDef : ADVGameDef {
                 var m = Marisa;
                 if (ev is Evidence.Yuyuko or Evidence.Youmu) {
                     //We could use state change to spawn these via assertions, but since there are two it's a bit annoying to create an extra intermediary state. Instead, we'll create them manually and assert on DelayedState
-                    //Don't use using as these ought to persist
+                    //Instead of `using` (which disposes on BCTX finish), use `DisposeWithMap` so it aligns with DelayedState
                     var s = DisposeWithMap(VN.Add(new Murasa()));
                     var n = DisposeWithMap(VN.Add(new Nue()));
                     s.SortingID.Value = -100;
@@ -825,6 +762,7 @@ public class GhostOfThePastGameDef : ADVGameDef {
 
                 await rg.DoTransition(new RenderGroupTransition.Fade(rgb, 2f));
                 completion.SetResult(new UnitADVCompletion());
+                return;
                 
                 fail: ;
                 await vn.Sequential(
@@ -939,11 +877,10 @@ public class GhostOfThePastGameDef : ADVGameDef {
     }
 
     [Serializable]
-    public record GOTPADVData(Suzunoya.Data.InstanceData VNData) : ADVData(VNData) {
+    public record GOTPADVData: ADVData {
         public State State = new();
         public State DelayedState = new();
         public bool EvidenceButtonVisible;
-        public const int maxEvidences = 10;
         public Evidence.Marisa EvMarisa = new() { Enabled = true };
         public Evidence.Mima EvMima = new() { Enabled = true };
         public Evidence.Remilia EvRemilia = new() { Enabled = true };
@@ -954,14 +891,19 @@ public class GhostOfThePastGameDef : ADVGameDef {
         public Evidence.Byakuren EvByakuren = new();
         public Evidence.Nue EvNue = new();
         public Evidence.Murasa EvMurasa = new();
-        
 
         [JsonIgnore] public Evidence[] Evidences = null!;
 
+        public GOTPADVData(InstanceData VNData) : base(VNData) {
+            SnapshotReferences();
+        }
+
         [OnDeserialized]
-        internal void _OnDeserialized(StreamingContext _) => SnapshotChanges();
-        public void SnapshotChanges() {
-            Evidences = new Evidence[] { EvMarisa, EvMima, EvRemilia, EvFlandre, EvSakuya, EvYuyuko, EvYoumu, EvByakuren, EvNue, EvMurasa }.Where(x => x.Enabled).ToArray();
+        internal void _OnDeserialized(StreamingContext _) => SnapshotReferences();
+
+        private void SnapshotReferences() {
+            Evidences = new Evidence[]
+                { EvMarisa, EvMima, EvRemilia, EvFlandre, EvSakuya, EvYuyuko, EvYoumu, EvByakuren, EvNue, EvMurasa };
         }
     }
 

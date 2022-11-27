@@ -4,6 +4,7 @@ using BagoumLib;
 using Danmokou.Achievements;
 using Danmokou.Core;
 using Danmokou.Danmaku;
+using Danmokou.DMath;
 using Danmokou.GameInstance;
 using Danmokou.Scriptables;
 using UnityEngine;
@@ -16,7 +17,6 @@ namespace Danmokou.Danmaku {
 public interface IDanmakuGameDef : IGameDef {
     InstanceFeatures MakeFeatures(DifficultySettings difficulty, long? highScore);
     SceneConfig ReplaySaveMenu { get; }
-    FieldBounds Bounds { get; }
     
     public static IEnumerable<ShipConfig> CampaignShots(CampaignConfig? c) =>
         c == null ? new ShipConfig[0] : c.players;
@@ -63,8 +63,11 @@ public abstract class DanmakuGameDef : GameDef, IDanmakuGameDef {
     };
     public abstract InstanceFeatures MakeFeatures(DifficultySettings difficulty, long? highScore);
     public SceneConfig ReplaySaveMenu => m_replaySaveMenu;
-    public FieldBounds Bounds => m_bounds;
     public abstract IEnumerable<ShipConfig> AllShips { get; }
+
+    public override void ApplyConfigurations() {
+        LocationHelpers.UpdateBounds(m_bounds);
+    }
 }
 
 public abstract class CampaignDanmakuGameDef : DanmakuGameDef, ICampaignDanmakuGameDef {

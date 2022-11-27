@@ -14,7 +14,7 @@ public class Murasa : SZYUCharacter {
     public override Color UIColor => new(.75f, .92f, .77f);
     public override LString Name { get; set; } = LocalizedStrings.FindReference("dialogue.murasa");
     
-    public override void RollEvent() => ServiceLocator.SFXService.Request("x-bubble-2", SFXType.TypingSound);
+    public override void RollEvent() => ISFXService.SFXService.Request("x-bubble-2", SFXType.TypingSound);
 }
 
 public class MurasaMimic : PiecewiseCharacterMimic {

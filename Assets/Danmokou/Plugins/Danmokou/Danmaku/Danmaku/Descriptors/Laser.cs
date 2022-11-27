@@ -5,6 +5,7 @@ using Danmokou.DMath;
 using Danmokou.Graphics;
 using Danmokou.Pooling;
 using Danmokou.Scriptables;
+using Danmokou.Services;
 using UnityEngine;
 
 namespace Danmokou.Danmaku.Descriptors {
@@ -39,7 +40,7 @@ public class Laser : FrameAnimBullet {
             ctr.SetupEndpoint(endpt);
         } else ctr.SetupEndpoint(new PointContainer(null));
         ctr.Initialize(this, config, style.RecolorOrThrow.material, isNew, bpi, ref options);
-        ServiceLocator.SFXService.Request(options.firesfx);
+        ISFXService.SFXService.Request(options.firesfx);
         SetColdHot(cold, hot, options.hotsfx, options.repeat);
         ctr.Activate(); //This invokes UpdateMesh
     }
@@ -50,8 +51,7 @@ public class Laser : FrameAnimBullet {
     public override bool HasNontrivialParallelUpdate => true;
 
     public override void RegularUpdateCollision() {
-        if (collisionActive)
-            ctr.DoRegularUpdateCollision();
+        ctr.DoRegularUpdateCollision(collisionActive);
     }
     public override void RegularUpdateFinalize() {
         ctr.UpdateRender();

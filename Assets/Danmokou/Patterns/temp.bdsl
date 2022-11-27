@@ -4,7 +4,7 @@ pattern({
 })
 phase(0)
 	paction(0)
-		shift-phase-to(2)
+		shift-phase-to(1)
 
 !{ hello(x, y)
 %x + %y
@@ -19,6 +19,7 @@ $%f(%x)
 phase 0
 	paction 0
 		position -3 4
+		bulletcontrol(true, ellipse-red/w, sfx(x-transform-1, onlyonce(> x 0)))
 
 		sync ellipse-red/w <0;:> gsr2 1 <> {
 			start {

@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Linq.Expressions;
+using System.Runtime.CompilerServices;
 using BagoumLib;
 using BagoumLib.Expressions;
+using BagoumLib.Mathematics;
 using Danmokou.Core;
 using Danmokou.Expressions;
 using Danmokou.Scenes;
@@ -52,38 +54,49 @@ public static class RNG {
     public const uint HalfMax = uint.MaxValue / 2;
 
     private const long knuth = 2654435761;
-    public static uint Rehash(uint x) => (uint) (knuth * x);
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static uint Rehash(in uint x) => (uint) (knuth * x);
 
     public static Expression Rehash(Expression uintx) => Expression.Convert(
         Expression.Multiply(Expression.Constant(knuth), Expression.Convert(uintx, typeof(long))), typeof(uint));
 
-    public static int Rehash(int x) => (int) (knuth * x);
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int Rehash(in int x) => (int) (knuth * x);
 
-    private static int GetInt(int low, int high, Random r) {
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int GetInt(in int low, in int high, in Random r) {
         return r.Next(low, high);
     }
 
-    public static int GetInt(int low, int high) => GetInt(low, high, rand);
-    public static int GetIntOffFrame(int low, int high) => GetInt(low, high, offFrame);
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int GetInt(in int low, in int high) => GetInt(low, high, rand);
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int GetIntOffFrame(in int low, in int high) => GetInt(low, high, offFrame);
 
-    private static float GetFloat(float low, float high, Random r) {
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static float GetFloat(in float low, in float high, in Random r) {
         return low + (high - low) * (float) r.NextDouble();
     }
 
+    [UsedImplicitly]
     public static float GetFloat(float low, float high) {
         RNGGuard();
         return GetFloat(low, high, rand);
     }
 
     public static Vector2 GetPointInCircle(float lowR, float highR) =>
-        GetFloat(lowR, highR) * M.CosSin(GetFloat(0, M.TAU));
+        GetFloat(lowR, highR) * M.CosSin(GetFloat(0, BMath.TAU));
 
     private static readonly ExFunction getFloat =
         ExFunction.Wrap(typeof(RNG), "GetFloat", new[] {typeof(float), typeof(float)});
     public static Expression GetFloat(Expression low, Expression high) => getFloat.Of(low, high);
-    public static float GetFloatOffFrame(float low, float high) => GetFloat(low, high, offFrame);
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static float GetFloatOffFrame(in float low, in float high) => GetFloat(low, high, offFrame);
 
-    public static Vector3 GetV3OffFrame(Vector3 low, Vector3 high) => new Vector3(
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Vector3 GetV3OffFrame(in Vector3 low, in Vector3 high) => new Vector3(
         GetFloatOffFrame(low.x, high.x),
         GetFloatOffFrame(low.y, high.y),
         GetFloatOffFrame(low.z, high.z)

@@ -2,9 +2,38 @@
 using UnityEngine;
 
 namespace Danmokou.Graphics {
+public readonly struct KeywordWithToggle {
+    public string Keyword { get; }
+    public int ToggleID { get; }
+    public KeywordWithToggle(string keyword, string toggle) {
+        this.Keyword = keyword;
+        this.ToggleID = Shader.PropertyToID(toggle);
+    }
+
+    public void Enable(Material mat) {
+        mat.EnableKeyword(Keyword);
+        mat.SetFloat(ToggleID, 1);
+    }
+
+    public void Disable(Material mat) {
+        mat.SetFloat(ToggleID, 0);
+        mat.DisableKeyword(Keyword);
+    }
+
+    public void EnableOrDisable(Material mat, bool enable) {
+        if (enable)
+            Enable(mat);
+        else
+            Disable(mat);
+    }
+}
 public static class PropConsts {
-    public const string cycleKW = "FT_CYCLE";
     public const string tintKW = "FT_TINT";
+    public static readonly KeywordWithToggle displacePolarKW = new("FT_DISPLACE_POLAR", "_ToggleDisplacePolar");
+    public static readonly KeywordWithToggle cycleKW = new("FT_CYCLE", "_ToggleCycle");
+    public static readonly KeywordWithToggle fadeInKW = new("FT_FADE_IN", "_ToggleFadeIn");
+    public static readonly KeywordWithToggle hueShiftKW = new("FT_HUESHIFT", "_ToggleHueShift");
+    public static readonly KeywordWithToggle circleCutKW = new("FT_CIRCLECUT", "_ToggleCircleCut");
 
     public static readonly int mainTex = Shader.PropertyToID("_MainTex");
     public static readonly int renderTex = Shader.PropertyToID("_RenderTex");

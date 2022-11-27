@@ -13,7 +13,7 @@ public class Phone : SZYUCharacter {
     public override Color UIColor => new(0.78f, 0.14f, 0.25f);
     public override LString Name { get; set; } = LocalizedStrings.FindReference("dialogue.phone");
     
-    public override void RollEvent() => ServiceLocator.SFXService.Request("x-bubble-3", SFXType.TypingSound);
+    public override void RollEvent() => ISFXService.SFXService.Request("x-bubble-3", SFXType.TypingSound);
 }
 
 public class PhoneMimic : SpriteCharacterMimic {

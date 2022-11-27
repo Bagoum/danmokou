@@ -4,6 +4,7 @@ using UnityEngine;
 using System.Threading.Tasks;
 using System;
 using System.Collections.Concurrent;
+using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
@@ -307,7 +308,7 @@ public class ETime : MonoBehaviour {
             if (Mathf.Abs(UntilNextFrame) < FRAME_YIELD) UntilNextFrame = 0f;
             
             EngineStateManager.UpdateEngineState();
-        } catch (Exception e) {
+        } catch (IOException e) {
             Logs.UnityError("Error thrown in the ETime update loop.");
             Logs.LogException(e);
             throw;
@@ -478,8 +479,8 @@ public class ETime : MonoBehaviour {
             timerMap.Clear();
         }
 
-        public Expression exFrames => Expression.PropertyOrField(Expression.Constant(this), "Frames");
-        public Expression exSeconds => Expression.PropertyOrField(Expression.Constant(this), "Seconds");
+        public Expression exFrames => Expression.PropertyOrField(Expression.Constant(this), nameof(Frames));
+        public Expression exSeconds => Expression.PropertyOrField(Expression.Constant(this), nameof(Seconds));
 
         public override string ToString() => $"Timer {name}";
     }

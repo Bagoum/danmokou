@@ -11,6 +11,8 @@ namespace Danmokou.Core.DInput {
 /// <example><see cref="KBMKeyInputBinding"/>(KeyCode.D) is active while the D key is held down.</example>
 /// </summary>
 public interface IInputBinding {
+    public static readonly LString OrConnector = new LText(" or ", (Locales.JP, "や"));
+    
     /// <summary>
     /// A readable string describing the activation input (eg. "left click").
     /// May change frame-to-frame.
@@ -21,10 +23,7 @@ public interface IInputBinding {
     //Use this combiner when there are multiple keys that do the same thing
     IInputBinding Or(IInputBinding other) => 
         new GenericInputBinding(() => Active || other.Active, 
-            () => Locales.TextLocale switch {
-                Locales.JP => $"{Description}や{other.Description}",
-                _ => $"{Description} or {other.Description}"
-            });
+            () => StringBuffer.JoinPooled(OrConnector, Description, other.Description));
     
     IInputBinding OrSilent(IInputBinding other) => 
         new GenericInputBinding(() => Active || other.Active, () => Description);
@@ -51,7 +50,16 @@ public class GenericInputBinding : IInputBinding {
 /// </summary>
 [Serializable]
 public record SimultaneousInputBinding(params IInspectableInputBinding[] Parts) : IInspectableInputBinding {
-    [JsonIgnore] public string Description => string.Join('+', Parts.Select(p => p.Description));
+    [JsonIgnore] public string Description {
+        get {
+            var pieces = ListCache<string>.Get();
+            foreach (var p in Parts)
+                pieces.Add(p.Description);
+            var result = StringBuffer.JoinPooled("+", pieces);
+            ListCache<string>.Consign(pieces);
+            return result;
+        }
+    }
     [JsonIgnore] public bool Active {
         get {
             foreach (var p in Parts)

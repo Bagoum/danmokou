@@ -14,7 +14,7 @@ public class Nitori : SZYUCharacter {
     public override Color UIColor => new(.15f, .3f, .6f);
     public override LString Name { get; set; } = LocalizedStrings.FindReference("dialogue.nitori");
     
-    public override void RollEvent() => ServiceLocator.SFXService.Request("x-bubble-2", SFXType.TypingSound);
+    public override void RollEvent() => ISFXService.SFXService.Request("x-bubble-2", SFXType.TypingSound);
 }
 
 public class NitoriMimic : PiecewiseCharacterMimic {

@@ -24,6 +24,8 @@ MonoBehaviour:
     type: 3}
   Popup: {fileID: 9197481963319205126, guid: 5abe3063ab4c7ca4a8bf9590d76a2b82, type: 3}
   UINode: {fileID: 9197481963319205126, guid: a814838ea7fd5364e96b285b2bfd246b, type: 3}
+  OptionsColumnUINode: {fileID: 9197481963319205126, guid: 911971cc3f092fd4aba74da671e2b949,
+    type: 3}
   EmptyNode: {fileID: 9197481963319205126, guid: 80c6660fa89cd074a8458082037c46d6,
     type: 3}
   TwoTextUINode: {fileID: 9197481963319205126, guid: 058456922323ca342a74da3c8aaec2cc,

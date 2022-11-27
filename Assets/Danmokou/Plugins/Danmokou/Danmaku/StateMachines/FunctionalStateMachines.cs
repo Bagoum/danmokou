@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reactive;
 using System.Threading.Tasks;
 using BagoumLib.Cancellation;
 using BagoumLib.Tasks;
@@ -16,7 +17,7 @@ using static BagoumLib.Tasks.WaitingUtils;
 namespace Danmokou.SM {
 
 /// <summary>
-/// `gtr2`: Like GTRepeat, but has specific handling for the WAIT, TIMES, and rpp properties.
+/// `gtr2`: Like <see cref="GTRepeat"/>, but has specific handling for the WAIT, TIMES, and rpp properties.
 /// </summary>
 public class GTRepeat2 : GTRepeat {
     /// <param name="wait">Frames to wait between invocations</param>
@@ -35,11 +36,15 @@ public class GTRepeat2 : GTRepeat {
 /// </summary>
 public class GTRepeat : UniversalSM {
     private class SMExecutionTracker {
+        public readonly GTRepeat caller;
         public LoopControl<StateMachine> looper;
         private readonly SMHandoff smh;
         private readonly bool waitChild;
         private readonly bool sequential;
-        public SMExecutionTracker(GenCtxProperties<StateMachine> props, SMHandoff smh, out bool isClipped) {
+        //Task tracker for when all execution is complete
+        public TaskCompletionSource<Unit>? onFinish = null;
+        public SMExecutionTracker(GTRepeat caller, GenCtxProperties<StateMachine> props, SMHandoff smh, out bool isClipped) {
+            this.caller = caller;
             //Make a derived copy for the canPrepend override
             this.smh = new SMHandoff(smh, smh.ch, null, true);
             looper = new LoopControl<StateMachine>(props, this.smh.ch, out isClipped);
@@ -48,6 +53,9 @@ public class GTRepeat : UniversalSM {
             checkIsChildDone = null;
         }
 
+        /// <summary>
+        /// Check if the cancellation token is cancelled. If it is, return true and call <see cref="AllDone"/>.
+        /// </summary>
         public bool CleanupIfCancelled() {
             if (smh.Cancelled) {
                 AllDone(false, false);
@@ -64,103 +72,120 @@ public class GTRepeat : UniversalSM {
 
         private Func<bool>? checkIsChildDone;
 
-        public void DoAIteration(ref float elapsedFrames, IReadOnlyList<StateMachine> target) {
-            bool done = false;
-            Action loop_done = () => {
-                done = true;
-            };
+        //this needs to be pulled into a separate function so it doesn't cause local function->delegate cast overhead
+        // in the standard case
+        private async Task DoAIterationSequentialStep(Action? loopDone) {
+            for (int ii = 0; ii < caller.states.Count; ++ii) {
+                if (looper.Handoff.cT.Cancelled) break;
+                await DoAIteration(ii, null);
+            }
+            loopDone?.Invoke();
+            /*
+            void DoNext(int ii) {
+                ++ii;
+                if (ii >= caller.states.Count || looper.Handoff.cT.Cancelled) {
+                    loopDone?.Invoke();
+                } else 
+                    DoAIteration(ii, ni => DoNext(ni));
+            }
+            DoNext(-1);*/
+        }
+        public void DoAIteration(ref float extraFrames) {
+            Action? loopDone = null;
             if (waitChild) {
+                bool done = false;
+                loopDone = () => done = true;
                 checkIsChildDone = () => done;
-                --elapsedFrames;
+                --extraFrames;
             } else checkIsChildDone = null;
             
             if (looper.props.childSelect == null) {
                 if (sequential) {
-                    void DoNext(int ii) {
-                        if (ii >= target.Count || looper.Handoff.cT.Cancelled) {
-                            loop_done();
-                        } else 
-                            DoAIteration(target[ii], () => DoNext(ii + 1));
-                    }
-                    DoNext(0);
+                    _ = DoAIterationSequentialStep(loopDone);
                 } else {
-                    var loop_fragment_done = GetManyCallback(target.Count, loop_done);
-                    for (int ii = 0; ii < target.Count; ++ii) {
-                        DoAIteration(target[ii], loop_fragment_done);
+                    var loopFragmentDone = loopDone == null ? null : GetManyCallback(caller.states.Count, loopDone);
+                    for (int ii = 0; ii < caller.states.Count; ++ii) {
+                        _ = DoAIteration(caller.states[ii], loopFragmentDone);
                     }
                 }
-            } else DoAIteration(target[(int) looper.props.childSelect(looper.GCX) % target.Count], loop_done);
+            } else 
+                _ = DoAIteration(caller.states[(int) looper.props.childSelect(looper.GCX) % caller.states.Count], loopDone);
         }
 
-        private void DoAIteration(StateMachine target, Action childDone) {
-            var itrSMH = new SMHandoff(smh, looper.Handoff, null);
-            target.Start(itrSMH).ContinueWithSync(() => {
-                itrSMH.Dispose();
-                childDone();
-            });
+        private async Task DoAIteration(int index, Action<int>? childDone) {
+            using var itrSMH = new SMHandoff(smh, looper.Handoff, null);
+            try {
+                await caller.states[index].Start(itrSMH);
+            } finally {
+                childDone?.Invoke(index);
+            }
+        }
+        private async Task DoAIteration(StateMachine target, Action? childDone) {
+            using var itrSMH = new SMHandoff(smh, looper.Handoff, null);
+            try {
+                await target.Start(itrSMH);
+            } finally {
+                childDone?.Invoke();
+            }
         }
 
-        public void DoLastAIteration(IReadOnlyList<StateMachine> target) {
+        public void DoLastAIteration() {
             //Unlike GIR, which hoists its cleanup code into a callback, GTR awaits its last child
             // and calls its cleanup code in Start.
             //Therefore, this code follows the wait-child pattern.
             bool done = false;
+            Action loopDone = () => done = true;
             checkIsChildDone = () => done;
-            Action loop_done = () => {
-                done = true;
-                //AllDone called by Start code
-            };
             if (looper.props.childSelect == null) {
                 if (sequential) {
-                    void DoNext(int ii) {
-                        if (ii >= target.Count || looper.Handoff.cT.Cancelled)
-                            loop_done();
-                        else 
-                            DoAIteration(target[ii], () => DoNext(ii + 1));
-                    }
-                    DoNext(0);
+                    _ = DoAIterationSequentialStep(loopDone);
                 } else {
-                    var loop_fragment_done = GetManyCallback(target.Count, loop_done);
-                    for (int ii = 0; ii < target.Count; ++ii) {
-                        DoAIteration(target[ii], loop_fragment_done);
+                    var loopFragmentDone = GetManyCallback(caller.states.Count, loopDone);
+                    for (int ii = 0; ii < caller.states.Count; ++ii) {
+                        _ = DoAIteration(caller.states[ii], loopFragmentDone);
                     }
                 }
-            } else DoAIteration(target[(int) looper.props.childSelect(looper.GCX) % target.Count], loop_done);
+            } else 
+                _ = DoAIteration(caller.states[(int) looper.props.childSelect(looper.GCX) % caller.states.Count], loopDone);
         }
 
+        /// <summary>
+        /// Call this when the tracker is finished iterating.
+        /// <br/>Called via <see cref="CleanupIfCancelled"/> if cancellation was received.
+        /// <br/>Sets <see cref="onFinish"/>.
+        /// </summary>
+        /// <param name="runFinishIteration">True if looper.FinishIteration should be called.</param>
+        /// <param name="normalEnd">True if looper ending rules should be called.</param>
         public void AllDone(bool? runFinishIteration = null, bool? normalEnd = null) {
             if (runFinishIteration ?? !looper.Handoff.cT.Cancelled) 
                 FinishIteration();
             smh.Dispose();
             //Looper has a separate copied CH to dispose
             looper.IAmDone(normalEnd ?? !looper.Handoff.cT.Cancelled);
+            onFinish?.SetResult(default);
         }
         
-        public static IEnumerator Wait(float elapsedFrames, float waitFrames, LoopControl<StateMachine> looper, Func<bool>? childAwaiter, Action<(float, LoopControl<StateMachine>)> cb, ICancellee cT) {
-            elapsedFrames -= waitFrames;
-            if (cT.Cancelled) { cb((elapsedFrames, looper)); yield break; }
+        private IEnumerator _WaitIEnum(float waitFrames, Action<SMExecutionTracker, float> cb) {
+            if (smh.cT.Cancelled) { cb(this, waitFrames); yield break; }
             bool wasPaused = false;
-            while (!looper.IsUnpaused || !(childAwaiter?.Invoke() ?? true) || elapsedFrames < 0) {
+            waitFrames = -waitFrames;
+            while (!looper.IsUnpaused || !(checkIsChildDone?.Invoke() ?? true) || waitFrames < 0) {
                 yield return null;
-                if (cT.Cancelled) { cb((elapsedFrames, looper)); yield break; }
+                if (smh.cT.Cancelled) { cb(this, waitFrames); yield break; }
                 looper.WaitStep();
                 if (!looper.IsUnpaused) wasPaused = true;
                 else {
                     if (wasPaused && looper.props.unpause != null) {
-                        _ = looper.GCX.exec.RunExternalSM(SMRunner.Run(looper.props.unpause, cT, looper.GCX));
+                        _ = looper.GCX.exec.RunExternalSM(SMRunner.Run(looper.props.unpause, smh.cT, looper.GCX));
                     }
                     wasPaused = false;
-                    if (childAwaiter?.Invoke() ?? true) ++elapsedFrames;
+                    if (checkIsChildDone?.Invoke() ?? true) ++waitFrames;
                 }
             }
-            cb((elapsedFrames, looper));
+            cb(this, waitFrames);
         }
-
-        public Task<(float, LoopControl<StateMachine>)> Wait(float elapsedFrames, float waitFrames) {
-            looper.GCX.exec.RunRIEnumerator(Wait(elapsedFrames, waitFrames, looper, checkIsChildDone, 
-                GetAwaiter(out Task<(float, LoopControl<StateMachine>)> t), smh.cT));
-            return t;
-        }
+        public void Wait(float waitFrames, Action<SMExecutionTracker, float> continuation) =>
+            looper.GCX.exec.RunRIEnumerator(_WaitIEnum(waitFrames, continuation));
 
         public float InitialDelay() => looper.props.delay(looper.GCX);
         public float WaitFrames() => looper.props.wait(looper.GCX);
@@ -172,28 +197,76 @@ public class GTRepeat : UniversalSM {
         this.props = props;
     }
 
+    //Old task-based implementation, replaced with callback-based implementation for garbage efficiency
+    /*
     public override async Task Start(SMHandoff smh) {
-        SMExecutionTracker tracker = new(props, smh, out bool isClipped);
+        SMExecutionTracker tracker = new(this, props, smh, out bool isClipped);
         if (isClipped) {
             tracker.AllDone(false, false);
             return;
         }
         if (tracker.CleanupIfCancelled()) return;
-        float elapsedFrames;
-        (elapsedFrames, tracker.looper) = await tracker.Wait(0f, tracker.InitialDelay());
+        //a number [0, inf) which is the number of extra frames we waited for from the previous loop
+        float extraFrames = await tracker.Wait(tracker.InitialDelay());
         if (tracker.CleanupIfCancelled()) return;
         while (tracker.RemainsExceptLast && tracker.PrepareIteration()) {
-            tracker.DoAIteration(ref elapsedFrames, states);
-            (elapsedFrames, tracker.looper) = await tracker.Wait(elapsedFrames, tracker.WaitFrames());
+            tracker.DoAIteration(ref extraFrames, states);
+            extraFrames = await tracker.Wait(tracker.WaitFrames() - extraFrames);
             if (tracker.CleanupIfCancelled()) return;
             tracker.FinishIteration();
         }
         if (tracker.PrepareLastIteration()) {
             tracker.DoLastAIteration(states);
-            await tracker.Wait(elapsedFrames, 0f); //this only waits for child to finish
+            await tracker.Wait(-extraFrames); //this only waits for child to finish
         }
         tracker.AllDone(true, true);
+    }*/
+    
+    public override Task Start(SMHandoff smh) {
+        SMExecutionTracker tracker = new(this, props, smh, out bool isClipped);
+        if (isClipped) {
+            tracker.AllDone(false, false);
+            return Task.CompletedTask;
+        }
+        if (tracker.CleanupIfCancelled()) return Task.CompletedTask;
+        tracker.onFinish = new TaskCompletionSource<Unit>();
+        //https://github.com/dotnet/roslyn/issues/5835: use lambda to avoid overhead before .NET7
+        tracker.Wait(tracker.InitialDelay(), (x, y) => ContinueFromInitialWait(x, y));
+        return tracker.onFinish.Task;
     }
+
+    private static void ContinueFromInitialWait(SMExecutionTracker tracker, float extraFrames) {
+        if (tracker.CleanupIfCancelled()) return;
+        if (tracker.RemainsExceptLast && tracker.PrepareIteration()) {
+            tracker.DoAIteration(ref extraFrames);
+            tracker.Wait(tracker.WaitFrames() - extraFrames, (x, y) => ContinueFromLoopIteration(x, y));
+        } else
+            LastLoopIteration(tracker, extraFrames);
+    }
+
+    private static void ContinueFromLoopIteration(SMExecutionTracker tracker, float extraFrames) {
+        if (tracker.CleanupIfCancelled()) return;
+        tracker.FinishIteration();
+        if (tracker.RemainsExceptLast && tracker.PrepareIteration()) {
+            tracker.DoAIteration(ref extraFrames);
+            tracker.Wait(tracker.WaitFrames() - extraFrames, (x, y) => ContinueFromLoopIteration(x, y));
+        } else
+            LastLoopIteration(tracker, extraFrames);
+    }
+
+    private static void LastLoopIteration(SMExecutionTracker tracker, float extraFrames) {
+        if (tracker.PrepareLastIteration()) {
+            tracker.DoLastAIteration();
+            //this only waits for child to finish
+            tracker.Wait(-extraFrames, (_, __) => tracker.AllDone(true, true));
+        } else
+            tracker.AllDone(true, true);
+    }
+
+
+
+
+
 }
 
 }

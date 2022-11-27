@@ -38,7 +38,7 @@ public class V2Cutin : CoroutineRegularUpdater {
         core.ScaleBy(2f, 0.34f, M.EOutSine).Run(this);
         for (; t < 1.98f; t += ETime.FRAME_TIME) yield return null;
         core.RotateTo(new Vector3(0f, 0f, -10f), 3f, M.EOutSine).Run(this);
-        ServiceLocator.SFXService.Request("x-metal");
+        ISFXService.SFXService.Request("x-metal");
     }
 }
 }

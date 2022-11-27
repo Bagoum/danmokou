@@ -48,7 +48,7 @@ public partial class BulletManager {
     }
     /// <summary>
     /// A description of a bullet control that could be executed on a simple bullet pool.
-    /// Execute it by calling <see cref="ControlPool(Pred, StyleSelector, cBulletControl, ICancellee)"/>.
+    /// Execute it by calling <see cref="BulletManager.ControlBullets"/>.
     /// </summary>
     public readonly struct cBulletControl {
         public readonly SBCF func;
@@ -558,7 +558,7 @@ public partial class BulletManager {
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
         public static exBulletControl SFX(string sfx, ExPred cond) => new((st, ct, bpi) => 
-            bpi.When(cond, ServiceLocator.SFXRequest(Ex.Constant(sfx))), BulletControl.P_RUN);
+            bpi.When(cond, ISFXService.SFXRequest(Ex.Constant(sfx))), BulletControl.P_RUN);
        
         /// <summary>
         /// Add external velocity to bullets. Note that position-based movement (offset, polar)
@@ -686,12 +686,12 @@ public partial class BulletManager {
 #endif
             return bpi.When(cond, st.sbc.RunINodeAt(st.ii, Ex.Constant(target), ct));
         }, BulletControl.P_ON_COLLIDE);
-
     }
+    
     /// <summary>
     /// Execute a bullet control on a simple bullet pool.
     /// </summary>
-    public static void ControlPool(Pred persist, StyleSelector styles, cBulletControl control, ICancellee cT) {
+    public static void ControlBullets(Pred persist, StyleSelector styles, cBulletControl control, ICancellee cT) {
         BulletControl pc = new BulletControl(control, persist, cT);
         //Since sb controls are cleared immediately after velocity update,
         //it does not matter when in the frame they are added.
@@ -787,6 +787,28 @@ public partial class BulletManager {
         /// </summary>
         public static SPCF SetRenderQueue(int priority) => (pool, cT) =>
             GetMaybeCopyPool(pool).BC.RenderQueue.AddConst(priority);
+        
+        /// <summary>
+        /// Set whether or not bullets in this pool will be destroyed when they collide.
+        /// </summary>
+        public static SPCF Destructible(bool destructible) => (pool, cT) =>
+            GetMaybeCopyPool(pool).BC.Destructible.AddConst(destructible);
+        
+        /// <summary>
+        /// Set the amount of damage bullets in this pool do to the player.
+        /// <br/>Note: bullets will be destroyed if they collide with setDamage(0), though the player will not be hit.
+        /// <br/>Note: currently, the player cannot
+        ///  take more than 1 damage at a time.
+        /// </summary>
+        public static SPCF Damage(int damage) => (pool, cT) =>
+            GetMaybeCopyPool(pool).BC.Damage.AddConst(damage);
+        
+        
+        /// <summary>
+        /// Disallow grazing against bullets in this pool.
+        /// </summary>
+        public static SPCF NoGraze() => (pool, cT) =>
+            GetMaybeCopyPool(pool).BC.AllowGraze.AddConst(false);
     }
     
     /// <summary>

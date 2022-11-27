@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using BagoumLib.Mathematics;
+using UnityEngine;
 using NUnit.Framework;
 using Danmokou.DMath;
 using static Danmokou.DMath.ColorHelpers;
@@ -24,7 +25,7 @@ public static class TestMath {
             rv2 = M.RotateVector(v2, or21, or23);
             Assert.AreEqual(rv2.x, -1, eps);
             Assert.AreEqual(rv2.y, 0, eps);
-            rv2 = M.RotateVector(v2, M.HPI);
+            rv2 = M.RotateVector(v2, BMath.HPI);
             Assert.AreEqual(rv2.y, -or21, eps);
             Assert.AreEqual(rv2.x, -or23, eps);
             

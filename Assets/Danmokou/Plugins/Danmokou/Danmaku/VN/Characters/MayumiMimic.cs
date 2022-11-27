@@ -13,7 +13,7 @@ public class Mayumi : SZYUCharacter {
     public override Color UIColor => new(.90f, .69f, .22f);
     public override LString Name { get; set; } = LocalizedStrings.FindReference("dialogue.mayumi");
     
-    public override void RollEvent() => ServiceLocator.SFXService.Request("x-bubble-2", SFXType.TypingSound);
+    public override void RollEvent() => ISFXService.SFXService.Request("x-bubble-2", SFXType.TypingSound);
 }
 
 public class MayumiMimic : PiecewiseCharacterMimic {

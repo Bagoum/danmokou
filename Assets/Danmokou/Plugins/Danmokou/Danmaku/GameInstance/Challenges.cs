@@ -99,7 +99,7 @@ public readonly struct SceneChallengeReqest : IChallengeRequest {
         ctx.tracker.SetCanceled();
         ServiceLocator.Find<IUIManager>().MessageChallengeEnd(false, out float t);
         if (ctx.exec != null) ctx.exec.ShiftPhase();
-        WaitingUtils.WaitThenCB(ctx.cm, Cancellable.Null, t, false,
+        RUWaitingUtils.WaitThenCB(ctx.cm, Cancellable.Null, t, false,
             () => ServiceLocator.Find<PlayerController>().Hit(999, true));
     }
 

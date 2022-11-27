@@ -106,11 +106,11 @@ public class PhaseProperty {
     /// <summary>
     /// Declares that this phase is a stage announce section.
     /// </summary>
-    public static PhaseProperty Announce() => new PhaseTypeProp(PhaseType.ANNOUNCE);
+    public static PhaseProperty Announce() => new PhaseTypeProp(PhaseType.Announce);
     /// <summary>
     /// Declares that this phase is a stage section.
     /// </summary>
-    public static PhaseProperty Stage() => new PhaseTypeProp(PhaseType.STAGE);
+    public static PhaseProperty Stage() => new PhaseTypeProp(PhaseType.Stage);
 
     /// <summary>
     /// Don't play a sound effect (spellcard clear or stage section clear) when this phase is cleared.
@@ -128,17 +128,17 @@ public class PhaseProperty {
     /// Declare that this phase is a dialogue phase. (Same as TYPE DIALOGUE ``).
     /// </summary>
     /// <returns></returns>
-    public static PhaseProperty Dialogue() => new PhaseTypeProp(PhaseType.DIALOGUE);
+    public static PhaseProperty Dialogue() => new PhaseTypeProp(PhaseType.Dialogue);
     /// <summary>
     /// Declare that this phase is a stage midboss phase.
     /// </summary>
     /// <returns></returns>
-    public static PhaseProperty Midboss() => new PhaseTypeProp(PhaseType.STAGEMIDBOSS);
+    public static PhaseProperty Midboss() => new PhaseTypeProp(PhaseType.StageMidboss);
     /// <summary>
     /// Declare that this phase is a stage endboss phase.
     /// </summary>
     /// <returns></returns>
-    public static PhaseProperty Endboss() => new PhaseTypeProp(PhaseType.STAGEENDBOSS);
+    public static PhaseProperty Endboss() => new PhaseTypeProp(PhaseType.StageEndboss);
     /// <summary>
     /// Declare the type and name of this phase.
     /// </summary>

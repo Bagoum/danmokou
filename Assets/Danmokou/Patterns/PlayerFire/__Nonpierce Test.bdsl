@@ -26,7 +26,7 @@ nonpiercing
 			} laser(nroffset(OptionLocation(mine)),
 				0, _, {
 					$laseropts
-					tint(rgba(1,1,1, 1)) ## if(lasercolliding mine, lerpt(0.2, 0.6, 1, 0), 1)))
+					tint(rgba(1,1,1, 1)) ## if(colliding mine, lerpt(0.2, 0.6, 1, 0), 1)))
 					player(1, 1, 1, oh1-green-pt)
 			})
 		}

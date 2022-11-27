@@ -8,6 +8,7 @@ using UnityEngine.UIElements;
 using UnityEngine;
 using UnityEngine.Scripting;
 using static Danmokou.UI.XML.XMLUtils;
+using static Danmokou.UI.XML.XMLHelpers;
 using static Danmokou.Core.LocalizedStrings.UI;
 using static Danmokou.Core.LocalizedStrings.Generic;
 

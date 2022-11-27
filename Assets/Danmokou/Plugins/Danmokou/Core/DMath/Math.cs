@@ -3,18 +3,10 @@ using System.Runtime.CompilerServices;
 using UnityEngine;
 using Danmokou.Core;
 using Ex = System.Linq.Expressions.Expression;
+using static BagoumLib.Mathematics.BMath;
 
 namespace Danmokou.DMath {
 public static class M {
-    public const float HPI = Mathf.PI * 0.5f;
-    public const float PI = Mathf.PI;
-    public const float NPI =- Mathf.PI;
-    public const float TAU = 2f * PI;
-    public const float TWAU = 4f * PI;
-    public const float PHI = 1.6180339887498948482045868343656381f;
-    public const float IPHI = PHI - 1f;
-    public const float degRad = PI / 180f;
-    public const float radDeg = 180f / PI;
     public const float MAG_ERR = 1e-10f;
     public const int IntFloatMax = int.MaxValue / 2;
 
@@ -28,13 +20,6 @@ public static class M {
     /// </summary>
     public static float MaxA(float a, float b) => Math.Abs(a) > Math.Abs(b) ? a : b;
     
-    public static float Mod(float by, float x) => x - by * Mathf.Floor(x / by);
-
-    public static int Mod(int by, int x) {
-        x %= by;
-        return (x < 0) ? x + by : x;
-    }
-
     /// <summary>
     /// Return 1 if the value is even, and -1 if the value is odd.
     /// </summary>
@@ -77,12 +62,12 @@ public static class M {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static float Sin(float rad) => (float)Math.Sin(rad);
 
-    public static float Sine(float period, float amp, float t) => amp * (float) Math.Sin(t * M.TAU / period);
+    public static float Sine(float period, float amp, float t) => amp * (float) Math.Sin(t * TAU / period);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static float Cos(float rad) => (float)Math.Cos(rad);
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Vector2 CosSin(float rad) => new Vector2(Mathf.Cos(rad), Mathf.Sin(rad));
+    public static Vector2 CosSin(float rad) => new Vector2((float)Math.Cos(rad), (float)Math.Sin(rad));
     
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -91,12 +76,10 @@ public static class M {
     public static float CosDeg(float deg) => (float)Math.Cos(deg * degRad);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Vector2 CosSinDeg(float deg) => CosSin(deg * degRad);
+    public static Vector2 CosSinDeg(float deg) => new((float)Math.Cos(deg * degRad), (float)Math.Sin(deg * degRad));
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Vector2 PolarToXY(float deg) {
-        return new Vector2(CosDeg(deg), SinDeg(deg));
-    }
+    public static Vector2 PolarToXY(float deg) => CosSinDeg(deg);
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector2 PolarToXY(float r, float deg) {
         return new Vector2(r * CosDeg(deg), r * SinDeg(deg));
@@ -110,7 +93,7 @@ public static class M {
     public static float Atan2D(float y, float x) => radDeg * (float)Math.Atan2(y, x);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static float Atan(Vector2 v2) => Mathf.Atan2(v2.y, v2.x);
+    public static float Atan(Vector2 v2) => (float) Math.Atan2(v2.y, v2.x);
 
     /// <summary>
     /// Get a point on the unit sphere.
@@ -119,8 +102,8 @@ public static class M {
     /// <param name="phi">Divergence from the Z axis (pi/2 = XY-plane)</param>
     /// <returns></returns>
     public static Vector3 Spherical(float theta, float phi) {
-        float sp = Mathf.Sin(phi);
-        return new Vector3(Mathf.Cos(theta)*sp, Mathf.Sin(theta)*sp, Mathf.Cos(phi));
+        var sp = Math.Sin(phi);
+        return new Vector3((float)(Math.Cos(theta)*sp), (float)(Math.Sin(theta)*sp), (float)Math.Cos(phi));
     }
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector2 RotateVector(Vector2 init, float cos_rot, float sin_rot) {
@@ -135,8 +118,8 @@ public static class M {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector2 RotateVectorDeg(Vector2 init, float ang_deg) {
         float ang = ang_deg * degRad;
-        float cos_rot = Mathf.Cos(ang);
-        float sin_rot = Mathf.Sin(ang);
+        float cos_rot = (float)Math.Cos(ang);
+        float sin_rot = (float)Math.Sin(ang);
         return new Vector2(cos_rot * init.x - sin_rot * init.y, sin_rot * init.x + cos_rot * init.y);
     }
 
@@ -149,8 +132,8 @@ public static class M {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector2 RotateVectorDeg(float x, float y, float ang_deg) {
         float ang = ang_deg * degRad;
-        float cos_rot = Mathf.Cos(ang);
-        float sin_rot = Mathf.Sin(ang);
+        float cos_rot = (float)Math.Cos(ang);
+        float sin_rot = (float)Math.Sin(ang);
         return new Vector2(cos_rot * x - sin_rot * y, sin_rot * x + cos_rot * y);
     }
     public static Vector2 ConvertBasis(Vector2 source, Vector2 basis1) => RotateVector(source, basis1.x, -basis1.y);
@@ -212,7 +195,7 @@ public static class M {
 
     public static float AngleFromTo(Vector2 src, Vector2 target) {
         Vector2 diff = target - src;
-        return Mathf.Atan2(diff.y, diff.x);
+        return (float)Math.Atan2(diff.y, diff.x);
     }
 
     public static float AngleFromToDeg(Vector2 src, Vector2 target) => AngleFromTo(src, target) * radDeg;
@@ -282,7 +265,7 @@ public static class M {
         var xyd = ConvertBasis(loc, cs);
         float a = xyd.x / R;
         float aRem = 0;
-        if (Mathf.Abs(a) > aMax) {
+        if (Math.Abs(a) > aMax) {
             if (a < 0) aMax *= -1;
             aRem = a - aMax;
             a = aMax;
@@ -298,23 +281,44 @@ public static class M {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static double LerpU(double a, double b, double t) => a * (1 - t) + b * t;
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static double Lerp(double a, double b, double t) => LerpU(a, b, Clamp(0, 1, t));
+    public static double Lerp(double a, double b, double t) {
+        if (t < 0) return a;
+        if (t > 1) return b;
+        return a + (b - a) * t;
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static double Lerp(double low, double high, double controller, double a, double b) =>
         Lerp(a, b, (controller - low) / (high - low));
-    
+
+    /// <summary>
+    /// Unclamped lerp.
+    /// </summary>
+    /// <param name="a">Lower bound</param>
+    /// <param name="b">Upper bound</param>
+    /// <param name="t">0-1 controller (if outside [0, 1], the result will also be outside [a, b])</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static float LerpU(float a, float b, float t) => a * (1 - t) + b * t;
+    public static float LerpU(float a, float b, float t) => a + (b - a) * t;
+    /// <summary>
+    /// Clamped lerp.
+    /// </summary>
+    /// <param name="a">Lower bound</param>
+    /// <param name="b">Upper bound</param>
+    /// <param name="t">0-1 controller (will be clamped to [0,1] if outside)</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static float Lerp(float a, float b, float t) => LerpU(a, b, Clamp(0, 1, t));
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static float Lerp(float low, float high, float controller, float a, float b) =>
-        Lerp(a, b, (controller - low) / (high - low));
+    public static float Lerp(float a, float b, float t) {
+        if (t < 0) return a;
+        if (t > 1) return b;
+        return a + (b - a) * t;
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Vector3 Lerp(float low, float high, float controller, Vector3 a, Vector3 b) =>
-        Vector3.Lerp(a, b, (controller - low) / (high - low));
+    public static float Lerp(float controllerZeroBound, float controllerOneBound, float controller, float a, float b) =>
+        Lerp(a, b, (controller - controllerZeroBound) / (controllerOneBound - controllerZeroBound));
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Vector3 Lerp(float controllerZeroBound, float controllerOneBound, float controller, Vector3 a, Vector3 b) =>
+        Vector3.Lerp(a, b, (controller - controllerZeroBound) / (controllerOneBound - controllerZeroBound));
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static float Lerp3(float lowest, float low, float high, float highest, float controller, float a, float b,
@@ -350,13 +354,13 @@ public static class M {
     public static float EOutSine(float x) => (float) Math.Sin(HPI * x);
     public static float EIOSine(float x) => 0.5f - 0.5f * (float) Math.Cos(PI * x);
     public static float DEOutSine(float x) => HPI * (float) Math.Cos(HPI * x);
-    public static float EOutPow(float x, float pow) => 1f - Mathf.Pow(1f - x, pow);
-    public static float EOutQuad(float x) => 1f - Mathf.Pow(1f - x, 4f);
+    public static float EOutPow(float x, float pow) => 1f - (float)Math.Pow(1f - x, pow);
+    public static float EOutQuad(float x) => 1f - (float)Math.Pow(1f - x, 4f);
 
     public static float Identity(float x) => x;
 
     public static float EOutBack(float a, float x) {
-        return 1 + (a+1) * Mathf.Pow(x - 1, 3) + a * (x - 1) * (x - 1);
+        return 1 + (a+1) * (float)Math.Pow(x - 1, 3) + a * (x - 1) * (x - 1);
     }
     
     public static Vector3 MulBy(this Vector3 x, Vector3 m) => new Vector3(x.x * m.x, x.y * m.y, x.z * m.z);
@@ -686,15 +690,15 @@ public static class Parser {
                 int val = c - zero;
                 if (val < 0 || val > 9) {
                     if (c == CPHI) {
-                        multiplier *= M.PHI;
+                        multiplier *= PHI;
                     } else if (c == CINVPHI) {
-                        multiplier *= M.IPHI;
+                        multiplier *= IPHI;
                     } else if (c == CFRAME) {
                         multiplier *= ETime.FRAME_TIME;
                     } else if (c == CFPS) {
                         multiplier *= ETime.ENGINEFPS_F;
                     } else if (c == CPI) {
-                        multiplier *= M.PI;
+                        multiplier *= PI;
                     } else if (c == C360H) {
                         c360inv = true;
                     } else return false;
@@ -708,7 +712,7 @@ public static class Parser {
             }
         }
         f *= multiplier;
-        if (c360inv) f = 360f * M.IPHI / f;
+        if (c360inv) f = 360f * IPHI / f;
         return true;
     }
 

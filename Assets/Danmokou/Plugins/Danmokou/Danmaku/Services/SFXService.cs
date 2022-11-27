@@ -7,6 +7,7 @@ using BagoumLib.Cancellation;
 using BagoumLib.DataStructures;
 using Danmokou.Behavior;
 using Danmokou.Core;
+using Danmokou.DMath;
 using Danmokou.Expressions;
 using Danmokou.GameInstance;
 using Danmokou.Player;
@@ -80,7 +81,7 @@ public class SFXService : RegularUpdater, ISFXService {
             if (pc.phase.Props.endSound) {
                 if (pc.Captured.Try(out var captured)) {
                     Request(captured ? phaseEndSuccess : phaseEndFail);
-                } else if (pc.phase.Props.phaseType == PhaseType.STAGE && pc.phase.Props.Cleanup) {
+                } else if (pc.phase.Props.phaseType == PhaseType.Stage && pc.phase.Props.Cleanup) {
                     Request(stageSectionEnd);
                 }
             }
@@ -141,7 +142,7 @@ public class SFXService : RegularUpdater, ISFXService {
         private float FeaturePitchMult() {
             if (sfx.feature == SFXConfig.LoopFeature.PLAYER_FIRE_HIT) {
                 float lowHP = Counter.LowHPRequested ? 1.3f : 1f;
-                float shotgun = Mathf.Lerp(1f, 0.7f, Counter.Shotgun);
+                float shotgun = M.Lerp(1f, 0.7f, Counter.Shotgun);
                 return lowHP * shotgun;
             } else return 1f;
         }

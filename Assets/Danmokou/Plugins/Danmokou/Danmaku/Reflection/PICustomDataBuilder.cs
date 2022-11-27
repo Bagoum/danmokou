@@ -37,7 +37,7 @@ public class ConstructedType {
     public BuiltCustomDataDescriptor Descriptor { get; }
     public Type BuiltType { get; }
     public Func<PICustomData> Constructor { get; }
-    public Stack<PICustomData> Cache { get; } = new();
+    private Stack<PICustomData> Cache { get; } = new();
     public int TypeIndex { get; }
     public int Allocated { get; private set; } 
     public int Popped { get; private set; } //Popped and recached should be about equal
@@ -83,10 +83,13 @@ public class ConstructedType {
         data.firer = null;
         data.playerController = null;
         data.laserController = null;
+        data.bullet = null;
         data.playerBullet = null;
         ++Recached;
         Cache.Push(data);
     }
+
+    public void ClearCache() => Cache.Clear();
 
 }
 
@@ -98,6 +101,8 @@ public class PICustomDataBuilder : CustomDataBuilder {
 #else
         true;
 #endif
+    public static readonly PICustomDataBuilder Builder = new();
+    
     private readonly Dictionary<TypeDefKey, ConstructedType> typeMap = new();
     private readonly List<ConstructedType> typeList = new();
     public ConstructedType ConstructedBaseType { get; }
@@ -130,7 +135,10 @@ public class PICustomDataBuilder : CustomDataBuilder {
     public ConstructedType GetCustomDataType(IReadOnlyList<(Type, string)> aliases) => 
         GetCustomDataType(new TypeDefKey(aliases));
 
-
-    public static readonly PICustomDataBuilder Builder = new();
+    public void ClearCustomDataTypeCaches() {
+        //element 0 is the base type that's used most commonly, so we don't clear it as it's very likely to be reused
+        for (int ii = 1; ii < typeList.Count; ++ii)
+            typeList[ii].ClearCache();
+    }
 }
 }

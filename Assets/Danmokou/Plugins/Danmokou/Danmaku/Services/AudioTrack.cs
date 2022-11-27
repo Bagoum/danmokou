@@ -6,6 +6,7 @@ using BagoumLib.Cancellation;
 using BagoumLib.DataStructures;
 using BagoumLib.Events;
 using Danmokou.Core;
+using Danmokou.DMath;
 using UnityEngine;
 using Object = System.Object;
 
@@ -133,7 +134,7 @@ public class NaiveLoopRAT : BaseRunningAudioTrack {
     protected override IEnumerator _FadeIn(float time) {
         if (Active.Cancelled) yield break;
         Logs.Log($"Fading in audio track: {Track.Title}");
-        var fader = new PushLerper<float>(time, Mathf.Lerp);
+        var fader = new PushLerper<float>(time, M.Lerp);
         fader.Push(0);
         fader.Push(1);
         var t1 = Src1Volume.AddDisturbance(fader);
@@ -149,7 +150,7 @@ public class NaiveLoopRAT : BaseRunningAudioTrack {
     protected override IEnumerator _FadeOutThenDestroy(float time) {
         if (Active.Cancelled) yield break;
         Logs.Log($"Fading out audio track: {Track.Title}");
-        var fader = new PushLerper<float>(time, Mathf.Lerp);
+        var fader = new PushLerper<float>(time, M.Lerp);
         fader.Push(1);
         fader.Push(0);
         tokens.Add(Src1Volume.AddDisturbance(fader));
@@ -165,8 +166,8 @@ public class TimedLoopRAT : BaseRunningAudioTrack {
     private const float xfadeTime = 0.3f;
     private const float xfadeOverlap = 0.2f;
     //Two sources are necessary to smoothly loop by crossfading the track into itself.
-    private PushLerper<float> currSrcFadeVol = new(xfadeTime, Mathf.Lerp);
-    private PushLerper<float> nextSrcFadeVol = new(xfadeTime, Mathf.Lerp);
+    private PushLerper<float> currSrcFadeVol = new(xfadeTime, M.Lerp);
+    private PushLerper<float> nextSrcFadeVol = new(xfadeTime, M.Lerp);
     private DisturbedProduct<float> Src2Volume { get; }
     private AudioSource nextSrc;
 
@@ -223,7 +224,7 @@ public class TimedLoopRAT : BaseRunningAudioTrack {
     protected override IEnumerator _FadeIn(float time) {
         if (Active.Cancelled) yield break;
         //Logs.Log($"Fading in audio track: {Track.Title}");
-        var fader = new PushLerper<float>(time, Mathf.Lerp);
+        var fader = new PushLerper<float>(time, M.Lerp);
         fader.Push(0);
         fader.Push(1);
         var t1 = Src1Volume.AddDisturbance(fader);
@@ -242,7 +243,7 @@ public class TimedLoopRAT : BaseRunningAudioTrack {
     protected override IEnumerator _FadeOutThenDestroy(float time) {
         if (Active.Cancelled) yield break;
         //Logs.Log($"Fading out audio track: {Track.Title}");
-        var fader = new PushLerper<float>(time, Mathf.Lerp);
+        var fader = new PushLerper<float>(time, M.Lerp);
         fader.Push(1);
         fader.Push(0);
         tokens.Add(Src1Volume.AddDisturbance(fader));

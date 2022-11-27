@@ -158,12 +158,12 @@ public static partial class Reflector {
             ('r', Facing.ROTVELOCITY)
         });
         SEnum(new[] {
-            ("non", PhaseType.NONSPELL),
-            ("spell", PhaseType.SPELL),
-            ("final", PhaseType.FINAL),
-            ("timeout", PhaseType.TIMEOUT),
-            ("survival", PhaseType.TIMEOUT),
-            ("dialogue", PhaseType.DIALOGUE)
+            ("non", PhaseType.Nonspell),
+            ("spell", PhaseType.Spell),
+            ("final", PhaseType.FinalSpell),
+            ("timeout", PhaseType.Timeout),
+            ("survival", PhaseType.Timeout),
+            ("dialogue", PhaseType.Dialogue)
         });
         SEnum(new[] {
             ("f", ExType.Float),

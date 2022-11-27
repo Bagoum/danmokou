@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using BagoumLib;
 using BagoumLib.Cancellation;
 using BagoumLib.Events;
 using Danmokou.Behavior;

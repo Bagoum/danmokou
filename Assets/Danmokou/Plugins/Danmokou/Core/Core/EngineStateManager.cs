@@ -8,7 +8,7 @@ using JetBrains.Annotations;
 using UnityEngine;
 
 namespace Danmokou.Core {
-public enum EngineState {
+public enum EngineState : int {
     RUN = 1,
     //Freeze frames, etc
     EFFECT_PAUSE = 2,

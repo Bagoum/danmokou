@@ -33,7 +33,7 @@ public static class SaveData {
     private const string REPLAYS_DIR = FileUtils.SAVEDIR + "Replays/";
 
     [Serializable]
-    public class Record {
+    public class Record : IGlobalVNDataProvider {
         public bool TutorialDone = false;
         public Dictionary<string, InstanceRecord> FinishedGames { get; init; } = new();
         public Dictionary<string, State> Achievements { get; init; } = new();
@@ -127,14 +127,14 @@ public static class SaveData {
         }
     }
 
-    public class Settings : IDMKLocaleProvider {
+    public class Settings : IDMKLocaleProvider, IGraphicsSettings {
         public Evented<string?> TextLocale { get; init; } = new(Locales.EN);
         public Evented<string?> VoiceLocale { get; init; } = new(Locales.EN);
         public bool AllowInputLinearization = false;
         public bool Verbose = false;
-        public bool Shaders = true;
+        public bool Shaders { get; set; } = true;
         public bool LegacyRenderer = false;
-        public (int w, int h) Resolution = GraphicsUtils.BestResolution;
+        public (int w, int h) Resolution { get; set; } = GraphicsUtils.BestResolution;
 #if UNITY_EDITOR && !EXBAKE_SAVE && !EXBAKE_LOAD
         public static bool TeleportAtPhaseStart => false;
 #else
@@ -353,11 +353,13 @@ public static class SaveData {
         Logs.Verbose = s.Verbose;
         Logs.Log($"Initial settings: resolution {s.Resolution}, fullscreen {s.Fullscreen}, vsync {s.Vsync}");
         r = ReadRecord() ?? new Record();
+        _ = ServiceLocator.Register<IGlobalVNDataProvider>(r);
         Achievement.AchievementStateUpdated.Subscribe(r.UpdateAchievement);
         p = new Replays();
         v = new VNSaves();
         StartProfiling();
         SettingsEv = new Evented<Settings>(s);
+        _ = SettingsEv.Subscribe(IGraphicsSettings.SettingsEv.OnNext);
     }
 
     private static Record? ReadRecord() => ReadJson<Record>(RECORD);

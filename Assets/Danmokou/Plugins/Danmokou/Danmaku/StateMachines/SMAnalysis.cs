@@ -142,10 +142,10 @@ public static class SMAnalysis {
         public int NontrivialPhaseIndex => parent.Phases.IndexOf(this) + 1;
         public LString Title =>
             type switch {
-                PhaseType.STAGE => practice_stage_section_ls(NontrivialPhaseIndex),
-                PhaseType.STAGEMIDBOSS => practice_midboss,
-                PhaseType.STAGEENDBOSS => practice_endboss,
-                PhaseType.DIALOGUE => title ?? practice_dialogue,
+                PhaseType.Stage => practice_stage_section_ls(NontrivialPhaseIndex),
+                PhaseType.StageMidboss => practice_midboss,
+                PhaseType.StageEndboss => practice_endboss,
+                PhaseType.Dialogue => title ?? practice_dialogue,
                 _ => title ?? (LString)("!!!UNTITLED PHASE (REPORT ME)!!!")
             };
 

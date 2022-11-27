@@ -13,7 +13,7 @@ public class Shinki : SZYUCharacter {
     public override Color UIColor => new(.6f, .4f, .3f);
     public override LString Name { get; set; } = LocalizedStrings.FindReference("dialogue.shinki");
     
-    public override void RollEvent() => ServiceLocator.SFXService.Request("x-bubble-2", SFXType.TypingSound);
+    public override void RollEvent() => ISFXService.SFXService.Request("x-bubble-2", SFXType.TypingSound);
 }
 
 public class ShinkiMimic : PiecewiseCharacterMimic {

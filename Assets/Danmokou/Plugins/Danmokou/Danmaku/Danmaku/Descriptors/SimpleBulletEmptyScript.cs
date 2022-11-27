@@ -110,7 +110,7 @@ public class SimpleBulletEmptyScript : MonoBehaviour {
                 if (displaceMethod == DisplacementMethod.RADIAL) {
                     material.EnableKeyword("FT_DISPLACE_RADIAL");
                 } else if (displaceMethod == DisplacementMethod.POLAR) {
-                    material.EnableKeyword("FT_DISPLACE_POLAR");
+                    PropConsts.displacePolarKW.Enable(material);
                 } else if (displaceMethod == DisplacementMethod.BIVERTICAL) {
                     material.EnableKeyword("FT_DISPLACE_BIVERT");
                 } else

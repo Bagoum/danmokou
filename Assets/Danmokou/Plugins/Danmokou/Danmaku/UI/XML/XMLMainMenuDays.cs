@@ -120,7 +120,7 @@ public class XMLMainMenuDays : XMLMainMenu {
         };
 
         OptionsScreen = this.OptionsScreen(true);
-        GameDetailsScreen = new UIScreen(this, "GAME DETAILS") { Builder = GameResultsScreenBuilder };
+        GameDetailsScreen = new UIScreen(this, "GAME DETAILS") { Builder = XMLHelpers.GameResultsScreenBuilder };
         ReplayScreen = this.ReplayScreen(GameDetailsScreen);
 
         MainScreen = new UIScreen(this, null, UIScreen.Display.Unlined)

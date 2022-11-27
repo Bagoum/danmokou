@@ -1,4 +1,5 @@
-﻿using Danmokou.Behavior;
+﻿using BagoumLib;
+using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Core.DInput;
 using Danmokou.UI.XML;

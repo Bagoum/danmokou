@@ -52,7 +52,7 @@ public class BottomTracker : RegularUpdater {
                 tr.localPosition = p;
                 //Superseded by bottom HP bar
                 //text.color = new Color(1, 1, 1,
-                //    Mathf.Clamp01(Mathf.Lerp(0.1f, 1.5f, enemy == null ? 1 : enemy.DisplayBarRatio)));
+                //    Mathf.Clamp01(M.Lerp(0.1f, 1.5f, enemy == null ? 1 : enemy.DisplayBarRatio)));
             }
         }
     }

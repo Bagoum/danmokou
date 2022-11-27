@@ -8,6 +8,7 @@ using Danmokou.Danmaku;
 using Danmokou.DMath;
 using Danmokou.GameInstance;
 using Danmokou.Player;
+using Suzunoya.ADV;
 using UnityEngine;
 using UnityEngine.UIElements;
 using static Danmokou.Services.GameManagement;
@@ -35,7 +36,7 @@ public class XMLMainMenuVN01 : XMLMainMenu {
         var advMan = ServiceLocator.Find<ADVManager>();
 
         LoadGameScreen = this.SaveLoadVNScreen(s => 
-            advMan.RunCampaign(GameDef, s.GetData()), null, false).WithBG(SecondaryBGConfig);
+            new ADVInstanceRequest(advMan, GameDef, s.GetData()).Run(), null, false).WithBG(SecondaryBGConfig);
         OptionsScreen = this.OptionsScreen(true).WithBG(SecondaryBGConfig);
         LicenseScreen = this.LicenseScreen(References.licenses).WithBG(SecondaryBGConfig);
         
@@ -47,9 +48,9 @@ public class XMLMainMenuVN01 : XMLMainMenu {
         }, SceneObjects = MainScreenOnlyObjects}.WithBG(PrimaryBGConfig);
         _ = new UIColumn(MainScreen, null, new[] {
             new FuncNode(main_newgame, () => 
-                advMan.RunCampaign(GameDef, GameDef.NewGameData())),
-            new FuncNode(main_continue, () => advMan.RunCampaign(GameDef, 
-                SaveData.v.MostRecentSave.GetData())) {
+                new ADVInstanceRequest(advMan, GameDef, GameDef.NewGameData()).Run()),
+            new FuncNode(main_continue, () => 
+                new ADVInstanceRequest(advMan, GameDef, SaveData.v.MostRecentSave.GetData()).Run()) {
                 EnabledIf = () => SaveData.v.Saves.Count > 0
             },
             new TransferNode(main_load, LoadGameScreen),

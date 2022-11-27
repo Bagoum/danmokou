@@ -22,6 +22,8 @@ public class Pather : FrameAnimBullet {
         BPY remember, BEHStyleMetadata style, ref RealizedBehOptions options) {
         ctr.SetYScale(options.scale); //Needs to be done before Colorize sets first frame
         //Order is critical so rBPI override points to initialized data on SM start
+        // As a result we also need to assign ctx.bullet early so ctr.initialize can read it
+        pi.ctx.bullet = this;
         ctr.Initialize(this, config, style.RecolorOrThrow.material, isNew, movement, pi, remember, maxRemember, ref options);
         base.Initialize(style, options, null, movement.WithNoMovement(), pi, out _); // Call after Awake/Reset
         ctr.Activate(); //This invokes UpdateMesh
@@ -38,8 +40,7 @@ public class Pather : FrameAnimBullet {
     protected override bool RegularUpdateCullCheck() => base.RegularUpdateCullCheck() || ctr.CullCheck();
 
     public override void RegularUpdateCollision() {
-        if (collisionActive)
-            ctr.DoRegularUpdateCollision();
+            ctr.DoRegularUpdateCollision(collisionActive);
     }
 
     public override void RegularUpdateFinalize() {

@@ -14,7 +14,7 @@ public class Doremy : SZYUCharacter {
     public override Color UIColor => new(.5f, 0.1f, .65f);
     public override LString Name { get; set; } = LocalizedStrings.FindReference("dialogue.doremy");
     
-    public override void RollEvent() => ServiceLocator.SFXService.Request("x-bubble-2", SFXType.TypingSound);
+    public override void RollEvent() => ISFXService.SFXService.Request("x-bubble-2", SFXType.TypingSound);
 }
 
 public class DoremyMimic : PiecewiseCharacterMimic {

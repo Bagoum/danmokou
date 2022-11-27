@@ -649,7 +649,7 @@ PrefabInstance:
         type: 3}
       propertyPath: references
       value: 
-      objectReference: {fileID: 11400000, guid: 6792f39e6d8abe14fbc536f2537f7c07,
+      objectReference: {fileID: 11400000, guid: f89f5b50405e68643a3e3e030715a621,
         type: 2}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: cca0d5f4466f12c48b79ed20b74f5cef, type: 3}
@@ -974,8 +974,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bd594754dd526c14d88942cd645fad0e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gameDef: {fileID: 11400000, guid: cca91ce8adc3b764f88090a7ca3d68fa, type: 2}
-  saveSlot: 3
+  saveSlot: 0
 --- !u!4 &1044200807
 Transform:
   m_ObjectHideFlags: 0

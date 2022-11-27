@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using BagoumLib;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Danmaku;
@@ -17,7 +18,7 @@ public partial record Ability {
             bomber.MakeInvulnerable((int) (120f * totalTime), true);
             ServiceLocator.Find<IShaderCamera>().ShowBlackHole(bhe);
             ServiceLocator.Find<IRaiko>().Shake(3, null, 1);
-            ServiceLocator.SFXService.Request("mima-blackhole");
+            ISFXService.SFXService.Request("mima-blackhole");
             SpawnCutin();
             float t = 0;
             for (; t < bhe.absorbT; t += ETime.FRAME_TIME)

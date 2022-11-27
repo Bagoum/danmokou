@@ -5,6 +5,7 @@ using System.Linq;
 using UnityEngine;
 using System.Linq.Expressions;
 using BagoumLib.Expressions;
+using BagoumLib.Mathematics;
 using Danmokou.Core;
 using Danmokou.DataHoist;
 using Danmokou.DMath;
@@ -15,6 +16,7 @@ using tfloat = Danmokou.Expressions.TEx<float>;
 using static Danmokou.Expressions.ExUtils;
 using static Danmokou.DMath.Functions.ExM;
 using static Danmokou.DMath.Functions.ExMConversions;
+using static BagoumLib.Mathematics.BMath;
 
 namespace Danmokou.Expressions {
 /// <summary>
@@ -48,16 +50,16 @@ public static class ExMHelpers {
     public static Ex dLookupCosDeg(TEx<double> angleDeg) => Ex.Field(dLookupCosSinDeg(angleDeg), "x");
     public static Ex dLookupSinDeg(TEx<double> angleDeg) => Ex.Field(dLookupCosSinDeg(angleDeg), "y");
     
-    public static readonly Ex hpi = Ex.Constant(M.HPI);
-    public static readonly Ex pi = Ex.Constant(M.PI);
-    public static readonly Ex npi = Ex.Constant(M.NPI);
-    public static readonly Ex tau = Ex.Constant(M.TAU);
-    public static readonly Ex twau = ExC(M.TWAU);
-    public static readonly Ex degRad = ExC(M.degRad);
-    public static readonly Ex radDeg = ExC(M.radDeg);
-    public static readonly Ex phi = Ex.Constant(M.PHI);
-    public static readonly Ex iphi = Ex.Constant(M.IPHI);
-    public static readonly Ex iphi360 = Ex.Constant(360f * M.PHI);
+    public static readonly Ex hpi = Ex.Constant(HPI);
+    public static readonly Ex pi = Ex.Constant(PI);
+    public static readonly Ex npi = Ex.Constant(-PI);
+    public static readonly Ex tau = Ex.Constant(TAU);
+    public static readonly Ex twau = ExC(TWAU);
+    public static readonly Ex degRad = ExC(BMath.degRad);
+    public static readonly Ex radDeg = ExC(BMath.radDeg);
+    public static readonly Ex phi = Ex.Constant(PHI);
+    public static readonly Ex iphi = Ex.Constant(IPHI);
+    public static readonly Ex iphi360 = Ex.Constant(360f * PHI);
 
     public static readonly Ex E0 = Ex.Constant(0.0f);
     public static readonly Ex E05 = Ex.Constant(0.5f);
@@ -73,7 +75,7 @@ public static class ExMHelpers {
 
     
     public static BlockExpression RotateLerp(Ex target, Ex source, TExArgCtx bpi, bool isRate, bool isTrue, Ex rate) {
-        if (isRate) rate = rate.Mul(M.degRad);
+        if (isRate) rate = rate.Mul(BMath.degRad);
         if (isTrue) rate = rate.Mul(ETime.FRAME_TIME);
         TExV2 v = TExV2.Variable();
         TEx<float> ang = ExUtils.VFloat();

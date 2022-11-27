@@ -13,7 +13,7 @@ public class Elly : SZYUCharacter {
     public override Color UIColor => new(0.4f, 0.1f, .24f);
     public override LString Name { get; set; } = LocalizedStrings.FindReference("dialogue.elly");
     
-    public override void RollEvent() => ServiceLocator.SFXService.Request("x-bubble-3", SFXType.TypingSound);
+    public override void RollEvent() => ISFXService.SFXService.Request("x-bubble-3", SFXType.TypingSound);
 }
 
 public class EllyMimic : PiecewiseCharacterMimic {

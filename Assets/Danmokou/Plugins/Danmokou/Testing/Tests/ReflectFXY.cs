@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Linq.Expressions;
+using BagoumLib.Mathematics;
 using NUnit.Framework;
 using Danmokou.DMath;
 using Danmokou.DMath.Functions;
@@ -145,16 +146,16 @@ namespace Danmokou.Testing {
         [Test]
         public static void Sines() {
             FXY sd = "dsine 2 4 t".Into<FXY>(); // = d/dx 4 sin(2pi x/2) = 4pi cos (pi x)
-            Func<float, float> sdc = x => 4 * M.PI * Mathf.Cos(M.PI * x);
+            Func<float, float> sdc = x => 4 * BMath.PI * Mathf.Cos(BMath.PI * x);
             Assert.AreEqual(sd(2.3f), sdc(2.3f), err);
             Assert.AreEqual(sd(9.75f), sdc(9.75f), err);
             Assert.AreEqual(sd(13.75f), sd(17.75f), 0.0001f);
             FXY cd = "dcosine 2 4 t".Into<FXY>(); // = d/dx 4 cos(2pi x/2) = -4pi sin (pi x)
-            Func<float, float> cdc = x => -4 * M.PI * Mathf.Sin(M.PI * x);
+            Func<float, float> cdc = x => -4 * BMath.PI * Mathf.Sin(BMath.PI * x);
             Assert.AreEqual(cd(2.3f), cdc(2.3f), err);
             Assert.AreEqual(cd(9.75f), cdc(9.75f), err);
             Assert.AreEqual(cd(13.75f), cd(17.75f), 0.0001f);
-            Func<float, float> sc = x => 2f * Mathf.Sin(M.PI / 4 * x);
+            Func<float, float> sc = x => 2f * Mathf.Sin(BMath.PI / 4 * x);
             FXY s = FXY(EaseF(ExMEasers.EOutSine, 2, AtomicBPYRepo.X()));
             AreEqual(s(0.2f), sc(0.2f), err);
             AreEqual(s(0.6f), sc(0.6f), err);

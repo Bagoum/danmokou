@@ -77,7 +77,7 @@ public class AyaPinnedPhoto : CoroutineRegularUpdater {
         for (float t = 0; t < timeToPosition; t += ETime.FRAME_TIME) {
             tr.position = loc = Vector2.Lerp(source, target, M.EOutSine(t / timeToPosition));
             tr.eulerAngles = new Vector3(0, 0, ea0 + 360 *
-                Mathf.Lerp(-successRotationLoops, endRotAdjust, M.EOutSine(t / timeToPosition)));
+                M.Lerp(-successRotationLoops, endRotAdjust, M.EOutSine(t / timeToPosition)));
             yield return null;
         }
         tr.position = loc = target;

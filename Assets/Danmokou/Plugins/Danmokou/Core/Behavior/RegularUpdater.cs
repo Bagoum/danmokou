@@ -17,7 +17,7 @@ public abstract class RegularUpdater : MonoBehaviour, IRegularUpdater {
     /// </summary>
     protected void EnableUpdates() {
         if (!Enabled) {
-            tokens.Add(ETime.RegisterRegularUpdater(this));
+            tokens.Add(ETime.RegisterRegularUpdater(this).AllowPooling());
             BindListeners();
             Enabled = true;
         }

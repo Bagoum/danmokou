@@ -14,7 +14,7 @@ public class Narrator : SZYUCharacter {
     public override Color UIColor => new(0.78f, 0.14f, 0.25f);
     public override LString Name { get; set; } = LocalizedStrings.FindReference("dialogue.narrator");
     
-    public override void RollEvent() => ServiceLocator.SFXService.Request("x-bubble-2", SFXType.TypingSound);
+    public override void RollEvent() => ISFXService.SFXService.Request("x-bubble-2", SFXType.TypingSound);
 }
 public class SilentNarrator : SZYUCharacter {
     public override bool MimicRequested => false;

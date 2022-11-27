@@ -1,0 +1,10 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/Danmokou/UXML/nodes/UINode.uss?fileID=7433441132597879392&amp;guid=908aa769b12ea7c44aae7ea3f797c582&amp;type=3#UINode" />
+    <ui:VisualElement class="node optionsselect">
+        <ui:VisualElement name="Selector" class="pointer prefix" style="display: none;" />
+        <ui:VisualElement name="Checkmark" class="checkmark prefix" />
+        <ui:VisualElement name="Body" class="body" style="width: 1500px; height: 200px; justify-content: center; align-items: center;">
+            <ui:Label text="This is a choice." name="Label" class="text coretext" style="height: 100%; padding-left: 0; padding-right: 0; border-bottom-color: rgb(128, 128, 128); -unity-text-align: middle-center; font-size: 90px; max-width: 80%; max-height: 60%; white-space: nowrap; text-shadow: 2px 2px 0 rgb(0, 0, 0); -unity-font-definition: url(&apos;project://database/Assets/SZYU/Fonts/Unity%20SDF/LinBiolinum_R_G%20SDF.asset?fileID=11400000&amp;guid=7139a17b7319bb84494b6e01f410b0a2&amp;type=2#LinBiolinum_R_G SDF&apos;);" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

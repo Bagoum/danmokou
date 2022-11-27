@@ -28,7 +28,7 @@ stagger(0.2)
 			} laser(nroffset(OptionLocation(mine)),
 				0, _, {
 					$laseropts
-					tint(rgba(1,1,1, if(lasercolliding mine, lerpt(0.2, 0.6, 1, 0), 1)))
+					tint(rgba(1,1,1, if(colliding mine, lerpt(0.2, 0.6, 1, 0), 1)))
 					player(12, 33, 33, null)
 			})
 			gsr {
@@ -36,7 +36,7 @@ stagger(0.2)
 			} laser(nroffset(OptionLocation(mine)),
 				0, _, {
 					$laseropts
-					tint(rgba(1,1,1, if(lasercolliding mine, lerpt(0.2, 0.6, 0, 1), 0)))
+					tint(rgba(1,1,1, if(colliding mine, lerpt(0.2, 0.6, 0, 1), 0)))
 					player(3, 0, 0, oh1-red-pt)
 			})
 		}

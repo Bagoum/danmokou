@@ -1,8 +1,10 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using BagoumLib;
 using BagoumLib.Functional;
 using Danmokou.Behavior;
 using Danmokou.Core;
+using Danmokou.DMath;
 using Danmokou.Player;
 using Danmokou.Scriptables;
 using TMPro;
@@ -34,8 +36,7 @@ public class FadeWhenPlayerNearby : CoroutineRegularUpdater {
     private IEnumerator CheckPlayer() {
         while (true) {
             float dist = (player.Location - (Vector2) tr.position).magnitude;
-            float ratio = Mathf.Clamp01((dist - radius.x) / (radius.y - radius.x));
-            float opacity = Mathf.Lerp(fade.x, fade.y, ratio);
+            float opacity = M.Lerp(radius.x, radius.y, dist, fade.x, fade.y);
 
             for (int ii = 0; ii < sprites.Length; ++ii) {
                 var c = sprites[ii].color;

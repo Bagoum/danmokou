@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using BagoumLib.Cancellation;
 using BagoumLib.DataStructures;
+using BagoumLib.Mathematics;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.DMath;
@@ -80,7 +81,7 @@ public class RaikoCamera : RegularUpdater, IRaiko {
     /// Note that this may call DONE earlier than TIME if it is cancelled by another SHAKE call.
     /// </summary>
     public void Shake(float time, FXY? magnitude, float magMul, ICancellee? cT = null, Action? done = null) {
-        magnitude ??= (t => M.Sin(M.PI * (0.4f + 0.6f * t / time)));
+        magnitude ??= (t => M.Sin(BMath.PI * (0.4f + 0.6f * t / time)));
         shakers.Add(new ShakeInProgress(time, magnitude, magMul, cT, done));
     }
 

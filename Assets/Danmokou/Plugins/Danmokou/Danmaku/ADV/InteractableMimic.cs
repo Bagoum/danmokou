@@ -11,8 +11,10 @@ using BagoumLib.Mathematics;
 using BagoumLib.Tasks;
 using Danmokou.Core;
 using Danmokou.DMath;
+using Danmokou.Services;
 using Danmokou.UI;
 using Danmokou.UI.XML;
+using Suzunoya.ADV;
 using Suzunoya.Assertions;
 using Suzunoya.ControlFlow;
 using Suzunoya.Entities;
@@ -28,19 +30,19 @@ public abstract record InteractableType {
     public virtual bool UseWaveEffect => true;
 
     public record Dialogue : InteractableType {
-        public override Sprite Icon => ADVManager.ADVReferences.talkToIcon;
+        public override Sprite Icon => GameManagement.ADVReferences.talkToIcon;
     }
 
     public record Map(bool Current) : InteractableType {
         public override Sprite Icon => 
-            Current ? ADVManager.ADVReferences.mapCurrentIcon : ADVManager.ADVReferences.mapNotCurrentIcon;
+            Current ? GameManagement.ADVReferences.mapCurrentIcon : GameManagement.ADVReferences.mapNotCurrentIcon;
         public override bool UseWaveEffect => false;
     }
 }
 
 /// <summary>
 /// A VN entity that can be clicked on to trigger something (generally a <see cref="BoundedContext{T}"/>).
-/// <br/>By default, the interactable will only be active and clickable during the <see cref="ADVManager.State.Investigation"/> state,
+/// <br/>By default, the interactable will only be active and clickable during the <see cref="ADVManagerWrapper.State.Investigation"/> state,
 ///  but this can be changed via <see cref="InteractableStates"/>.
 /// </summary>
 public class Interactable : Rendered {
@@ -79,11 +81,11 @@ public class InteractableMimic : RenderedMimic, IFixedXMLReceiver {
     
     private Interactable entity = null!;
     
-    private readonly PushLerperF<float> offsetter = new(0.3f, Mathf.LerpUnclamped);
-    private readonly PushLerper<float> borderColor = new(0.2f, (a, b, t) => Mathf.LerpUnclamped(a, b, cssDefaultEase(t)));
+    private readonly PushLerperF<float> offsetter = new(0.3f, M.LerpU);
+    private readonly PushLerper<float> borderColor = new(0.2f, (a, b, t) => M.LerpU(a, b, cssDefaultEase(t)));
     private static readonly Easer cssDefaultEase = Bezier.CBezier(0.25f, 0.1f, 0.25f, 1f);
     private static readonly Easer bEase = Easers.CEOutBounce(0, 0.45f, 0.7f, 0.85f, 1f);
-    private readonly Func<float, float> bounce = t => 160 * (-1f + bEase(Mathf.Clamp01(M.Mod(2f, t) / 1.2f)));
+    private readonly Func<float, float> bounce = t => 160 * (-1f + bEase(Mathf.Clamp01(BMath.Mod(2f, t) / 1.2f)));
     private readonly Func<float, float> _wave = t => 20 * M.SinDeg(50 * t);
     private readonly Func<float, float> _wave0 = t => 0;
     private Func<float, float> Wave => (entity.Type ?? throw new Exception("hello")).UseWaveEffect ? _wave : _wave0;
@@ -140,7 +142,7 @@ public class InteractableMimic : RenderedMimic, IFixedXMLReceiver {
 
     public UIResult OnConfirm(UINode n) {
         if (entity.InteractableStates.Contains(ServiceLocator.Find<ADVManager>().ADVState.Value)) {
-            //OnLeave(n); Implicitly called through UpdatePassthrough > MoveCursorAwayFromNode
+            //OnLeave(n); //Implicitly called through UpdatePassthrough > MoveCursorAwayFromNode
             return entity.OnClick(n) ?? new UIResult.StayOnNode();
         } else
             return new UIResult.StayOnNode(UIResult.StayOnNodeType.Silent);
@@ -161,6 +163,7 @@ public class InteractableMimic : RenderedMimic, IFixedXMLReceiver {
 
     public void OnLeave(UINode n) {
         hoverActiveAction?.Dispose();
+        hoverActiveAction = null;
         offsetter.Push(Wave);
         borderColor.Push(0);
     }

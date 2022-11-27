@@ -1,4 +1,8 @@
-﻿using BagoumLib.Cancellation;
+﻿using System.Linq.Expressions;
+using BagoumLib;
+using BagoumLib.Cancellation;
+using BagoumLib.Expressions;
+using Danmokou.Core;
 using Danmokou.Scriptables;
 using UnityEngine;
 
@@ -22,5 +26,11 @@ public interface ISFXService {
 
     AudioSource? RequestSource(string? key, ICancellee cT);
     AudioSource? RequestSource(SFXConfig? aci, ICancellee cT);
+    
+    public static ISFXService SFXService => ServiceLocator.Find<ISFXService>();
+    public static Expression SFXRequest(Expression style) => 
+        sfxrequest.InstanceOf(Expression.Property(null, typeof(ISFXService), nameof(SFXService)), style);
+
+    private static readonly ExFunction sfxrequest = ExFunction.Wrap<ISFXService>(nameof(ISFXService.Request), new[] {typeof(string)});
 }
 }

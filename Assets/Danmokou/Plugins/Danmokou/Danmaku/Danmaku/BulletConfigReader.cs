@@ -73,11 +73,10 @@ public partial class BulletManager : RegularUpdater {
         private readonly DeferredTextureConstruction deferredRI;
         private bool riLoaded;
         private MeshGenerator.RenderInfo ri;
-        public readonly int damageAgainstPlayer;
         public readonly int againstEnemyCooldown;
-        public readonly bool destructible;
         public readonly CollidableInfo cc;
         public readonly ushort grazeEveryFrames;
+        public OverrideEvented<bool> Destructible { get; private init; }
         public OverrideEvented<bool> Deletable { get; private init; }
         public OverrideEvented<float> CullRadius { get; private init; }
         public OverrideEvented<bool> AllowCameraCull { get; private init; }
@@ -85,6 +84,8 @@ public partial class BulletManager : RegularUpdater {
         public OverrideEvented<TP4?> Tint { get; private init; }
         public OverrideEvented<bool> UseZCompare { get; private init; }
         public OverrideEvented<int> RenderQueue { get; private init; }
+        public OverrideEvented<int> Damage { get; private init; }
+        public DisturbedAnd AllowGraze { get; private init;  }
         public bool Recolorizable => deferredRI.recolorizable;
 
         public SimpleBulletFader FadeIn => deferredRI.sbes.fadeIn;
@@ -96,12 +97,11 @@ public partial class BulletManager : RegularUpdater {
             deferredRI = dfc;
             ri = default;
             riLoaded = false;
-            damageAgainstPlayer = sbes.damage;
             againstEnemyCooldown = sbes.framesPerHit;
-            destructible = sbes.destructible;
             this.cc = new CollidableInfo(cc);
             //Minus 1 to allow for zero offset
             grazeEveryFrames = (ushort)(sbes.grazeEveryFrames - 1);
+            Destructible = new(sbes.destructible);
             Deletable = new OverrideEvented<bool>(sbes.destructible);
             CullRadius = new OverrideEvented<float>(sbes.screenCullRadius);
             AllowCameraCull = new OverrideEvented<bool>(true);
@@ -109,6 +109,8 @@ public partial class BulletManager : RegularUpdater {
             Tint = new OverrideEvented<TP4?>(null);
             UseZCompare = new OverrideEvented<bool>(false);
             RenderQueue = new(dfc.RenderQueue);
+            Damage = new(sbes.damage);
+            AllowGraze = new();
             MakeSubscriptions();
         }
 
@@ -129,13 +131,16 @@ public partial class BulletManager : RegularUpdater {
                 name = newName,
                 ri = ri.Copy(),
                 riLoaded = true,
+                Destructible = CopyOV(Destructible),
                 Deletable = CopyOV(Deletable),
                 CullRadius = CopyOV(CullRadius),
                 AllowCameraCull = CopyOV(AllowCameraCull),
                 Recolor = CopyOV(Recolor),
                 Tint = CopyOV(Tint),
                 UseZCompare = CopyOV(UseZCompare),
-                RenderQueue = CopyOV(RenderQueue)
+                RenderQueue = CopyOV(RenderQueue),
+                Damage = CopyOV(Damage),
+                AllowGraze = CopyAnd(AllowGraze)
             };
             nbc.MakeSubscriptions();
             return nbc;
@@ -143,6 +148,11 @@ public partial class BulletManager : RegularUpdater {
 
         private static OverrideEvented<T> CopyOV<T>(OverrideEvented<T> baseOV) {
             var w = new OverrideEvented<T>(baseOV.BaseValue);
+            w.CopyDisturbances(baseOV);
+            return w;
+        }
+        private static DisturbedAnd CopyAnd(DisturbedAnd baseOV) {
+            var w = new DisturbedAnd(baseOV.BaseValue);
             w.CopyDisturbances(baseOV);
             return w;
         }
@@ -526,14 +536,15 @@ public partial class BulletManager : RegularUpdater {
         private Material NewMaterial(string style) {
             var m = Instantiate(b.material);
             if (b.fadeInTime > 0f) {
-                m.EnableKeyword("FT_FADE_IN");
+                PropConsts.fadeInKW.Enable(m);
                 m.SetFloat(PropConsts.fadeInT, b.fadeInTime);
             }
             if (recolorizable) m.EnableKeyword("FT_RECOLORIZE");
-            m.EnableKeyword("FT_HUESHIFT");
+            PropConsts.hueShiftKW.Enable(m);
             m.SetFloat(PropConsts.cycleSpeed, b.cycleSpeed);
             if (player) m.SetFloat(PropConsts.SharedOpacityMul, PLAYER_FB_OPACITY_MUL);
-            if (Mathf.Abs(b.cycleSpeed) > 0f) m.EnableKeyword(PropConsts.cycleKW);
+            if (Mathf.Abs(b.cycleSpeed) > 0f) 
+                PropConsts.cycleKW.Enable(m);
             b.displacement.SetOnMaterial(m);
             MaterialUtils.SetBlendMode(m, b.renderMode);
             m.renderQueue += b.renderPriority + renderPriorityOffset;

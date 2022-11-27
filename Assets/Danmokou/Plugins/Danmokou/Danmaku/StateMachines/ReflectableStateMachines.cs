@@ -1,6 +1,7 @@
 ﻿using System.Threading.Tasks;
 using System;
 using System.Reactive;
+using BagoumLib;
 using BagoumLib.Tasks;
 using Danmokou.Behavior.Functions;
 using Danmokou.Core;
@@ -57,7 +58,7 @@ public class EventLASM : ReflectableLASM {
             smh2.GCX.SetValue(bindVar, val);
             exec.Start(smh2).ContinueWithSync(smh2.Dispose);
         });
-        await WaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, 0f, true);
+        await RUWaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, 0f, true);
         smh.ThrowIfCancelled();
     };
 
@@ -93,7 +94,7 @@ public class EventLASM : ReflectableLASM {
     public static EventTask PlayerInvuln(int frames) => smh => {
         foreach (var player in ServiceLocator.FindAll<PlayerController>())
             player.MakeInvulnerable(frames, true);
-        ServiceLocator.SFXService.Request("x-invuln");
+        ISFXService.SFXService.Request("x-invuln");
         return Task.CompletedTask;
     };
 
@@ -105,8 +106,8 @@ public class EventLASM : ReflectableLASM {
     public static EventTask BossExplode() => smh => {
         UnityEngine.Object.Instantiate(ResourceManager.GetSummonable("bossexplode")).GetComponent<ExplodeEffect>().Initialize(BossExplodeWait, smh.Exec.rBPI.loc);
         ServiceLocator.FindOrNull<IRaiko>()?.Shake(BossExplodeShake, ShakeMag, 2, smh.cT, null);
-        ServiceLocator.SFXService.RequestSFXEvent(ISFXService.SFXEventType.BossExplode);
-        return WaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, BossExplodeWait, false);
+        ISFXService.SFXService.RequestSFXEvent(ISFXService.SFXEventType.BossExplode);
+        return RUWaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, BossExplodeWait, false);
     };
 
 }
@@ -186,10 +187,18 @@ public class TimerControllerLASM : ReflectableLASM {
 public class BxBCollideLASM : ReflectableLASM {
     public delegate Task ColliderFn(SMHandoff smh);
     public BxBCollideLASM(ColliderFn fn) : base(new TaskPattern(fn)) { }
-
+    
     /// <summary>
     /// Set up collision handlers between simple bullet pools.
+    /// <br/>A collision occurs if a bullet from the left pools overlaps a bullet from the right pools.
     /// </summary>
+    /// <param name="left">Left pools</param>
+    /// <param name="right">Right pools</param>
+    /// <param name="leftPred">Predicate deciding whether a bullet in the left pools should test for collisions</param>
+    /// <param name="rightPred">Predicate deciding whether a bullet in the right pools should test for collisions</param>
+    /// <param name="leftCtrls">Controls to run on left bullets when they collide</param>
+    /// <param name="rightCtrls">Controls to run on right bullets when they collide</param>
+    /// <returns></returns>
     public static ColliderFn SBOnSB(StyleSelector left, StyleSelector right, Pred leftPred, Pred rightPred, cBulletControl[] leftCtrls,
         cBulletControl[] rightCtrls) => smh => {
         var leftPools = left.Simple.MapIntoCachedList(BulletManager.GetMaybeCopyPool);

@@ -151,12 +151,25 @@ public static class DictExtensions {
 
 public static class FuncExtensions {
     public static Func<bool> Or(this Func<bool> x, Func<bool> y) => () => x() || y();
+    public static readonly Action Noop = () => { };
 
-    public static Action Then(this Action a, Action b) => () => {
-        a();
-        b();
-    };
-
+    public static Action Then(this Action? a, Action? b) {
+        if (a == null) return b ?? Noop;
+        if (b == null) return a ?? Noop;
+        return () => {
+            a();
+            b();
+        };
+    }
+    
+    public static Action<T> Then<T>(this Action<T>? a, Action<T>? b) {
+        if (a == null) return b ?? (_ => {});
+        if (b == null) return a ?? (_ => {});
+        return x => {
+            a(x);
+            b(x);
+        };
+    }
 }
 
 public static class FormattingExtensions {

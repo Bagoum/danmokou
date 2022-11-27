@@ -43,7 +43,7 @@ public class PICustomData {
     public ConstructedType Constructor => Metadata.GetTypeDef(this);
 
     //For culled bullets, sb.bpi.t points to a countdown from FADE_TIME to 0, and this points to the
-    // lifetime of the bullet, which is used to calculate direction.
+    // lifetime of the bullet (including the lifetime of the original bullet), which is used to calculate direction.
     public float culledBulletTime;
     
     //Late-bound variables, such as those created for state control in SS0 or onlyonce
@@ -65,17 +65,22 @@ public class PICustomData {
                                 "Please make sure that player bullets are fired in player scripts only.");
 
     [UsedImplicitly]
-    public FireOption OptionFirer {
-        get {
-            if (firer is FireOption fo)
-                return fo;
-            throw new Exception("FiringCtx does not have an option firer");
-        }
-    }
+    public FireOption OptionFirer => 
+        firer as FireOption ?? throw new Exception("FiringCtx does not have an option firer");
 
+    public Bullet? bullet;
+    /// <summary>
+    /// If this data struct is being used for a Bullet GameObject (such as pathers or lasers), then this points to the bullet.
+    /// </summary>
+    public Bullet Bullet => bullet != null ?
+        bullet :
+        throw new Exception("PICustomData is not linked to a bullet, but a bullet-specific function was called.");
+    
     public CurvedTileRenderLaser? laserController;
-    [UsedImplicitly]
-    public CurvedTileRenderLaser LaserController => 
+    /// <summary>
+    /// If this data struct is being used for a Laser, then this points to the laser.
+    /// </summary>
+    public CurvedTileRenderLaser Laser => 
         laserController ?? throw new Exception("FiringCtx does not have a laser controller");
     public PlayerBullet? playerBullet;
 
@@ -94,6 +99,7 @@ public class PICustomData {
         copyee.firer = firer;
         copyee.playerController = playerController;
         copyee.laserController = laserController;
+        copyee.bullet = bullet;
         copyee.playerBullet = playerBullet;
         return copyee;
     }
@@ -107,7 +113,7 @@ public class PICustomData {
     
     /// <summary>
     /// Clone this object.
-    /// <br/>Do not use this method; use <see cref="Clone_NoAlloc"/> instead.
+    /// <br/>This methor makes garbage; use <see cref="Clone_NoAlloc"/> instead.
     /// </summary>
     public virtual PICustomData Clone() => CopyInto(new PICustomData());
 

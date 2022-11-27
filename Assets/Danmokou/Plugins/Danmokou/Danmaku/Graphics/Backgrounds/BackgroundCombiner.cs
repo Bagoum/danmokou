@@ -68,7 +68,10 @@ public class BackgroundCombiner : RegularUpdater {
 
     public override void RegularUpdate() {
         if (ETime.LastUpdateForScreen) UpdateTextures();
-        time += ETime.FRAME_TIME;
+        if (EngineStateManager.State <= EngineState.RUN)
+            time += ETime.FRAME_TIME;
     }
+
+    public override EngineState UpdateDuring => EngineState.MENU_PAUSE;
 }
 }

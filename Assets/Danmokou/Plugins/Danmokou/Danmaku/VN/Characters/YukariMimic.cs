@@ -14,7 +14,7 @@ public class Yukari : SZYUCharacter {
     public override Color UIColor => new(0.70f, 0.14f, 0.77f);
     public override LString Name { get; set; } = LocalizedStrings.FindReference("dialogue.yukari");
     
-    public override void RollEvent() => ServiceLocator.SFXService.Request("x-bubble-3", SFXType.TypingSound);
+    public override void RollEvent() => ISFXService.SFXService.Request("x-bubble-3", SFXType.TypingSound);
 }
 
 public class YukariMimic : PiecewiseCharacterMimic {

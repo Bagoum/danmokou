@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using System.Linq;
 using BagoumLib;
 using BagoumLib.Cancellation;
+using BagoumLib.Mathematics;
 using BagoumLib.Tasks;
 using Danmokou.Behavior;
 using Danmokou.Core;
@@ -261,13 +262,13 @@ public class PhaseSM : SequentialSM {
                 Object.Instantiate(ctx.Boss.bossCutin);
                 bgo?.QueueTransition(ctx.Boss.bossCutinTrIn);
                 bgo?.ConstructTarget(ctx.Boss.bossCutinBg);
-                WaitingUtils.WaitFor(smh, ctx.Boss.bossCutinBgTime, false).ContinueWithSync(() => {
+                RUWaitingUtils.WaitThenCB(smh.Exec, smh.cT, ctx.Boss.bossCutinBgTime, false, () => {
                     if (!smh.Cancelled) {
                         bgo?.QueueTransition(ctx.Boss.bossCutinTrOut);
                         bgo?.ConstructTarget(ctx.Background);
                     }
                 });
-                cutins = WaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, ctx.Boss.bossCutinTime, false);
+                cutins = RUWaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, ctx.Boss.bossCutinTime, false);
                 forcedBG = true;
             } else if (ctx.GetSpellCutin(out var sc)) {
                 ServiceLocator.Find<ISFXService>().RequestSFXEvent(ISFXService.SFXEventType.BossSpellCutin);
@@ -280,14 +281,14 @@ public class PhaseSM : SequentialSM {
     }
 
     private void PrepareTimeout(PhaseContext ctx, IUIManager? ui, IReadOnlyList<Enemy> subbosses, 
-        SMHandoff smh, Cancellable toCancel) {
+        SMHandoff smh, ICancellable toCancel) {
         smh.Exec.PhaseShifter = toCancel;
         var timeout = Timeout(ctx.Boss);
         //Note that the <!> HP(hp) sets invulnTime=0.
-        if (props.invulnTime != null && props.phaseType != PhaseType.TIMEOUT)
-            WaitingUtils.WaitThenCB(smh.Exec, smh.cT, props.invulnTime.Value, false,
+        if (props.invulnTime != null && props.phaseType != PhaseType.Timeout)
+            RUWaitingUtils.WaitThenCB(smh.Exec, smh.cT, props.invulnTime.Value, false,
                 () => smh.Exec.Enemy.SetVulnerable(Vulnerability.VULNERABLE));
-        WaitingUtils.WaitThenCancel(smh.Exec, smh.cT, timeout, true, toCancel);
+        RUWaitingUtils.WaitThenCancel(smh.Exec, smh.cT, timeout, true, toCancel);
         if (props.phaseType?.IsSpell() ?? false) {
             smh.Exec.Enemy.RequestSpellCircle(timeout, smh.cT);
             foreach (var subboss in subbosses)
@@ -298,7 +299,7 @@ public class PhaseSM : SequentialSM {
             ui?.ShowTimeout(props.phaseType?.IsCard() ?? false, timeout, smh.cT);
     }
 
-    public override Task Start(SMHandoff smh) => Start(new PhaseContext(null, 0, props), smh, null, new Enemy[0]);
+    public override Task Start(SMHandoff smh) => Start(new PhaseContext(null, 0, props), smh, null, Array.Empty<Enemy>());
     public async Task Start(PhaseContext ctx, SMHandoff smh, IUIManager? ui, IReadOnlyList<Enemy> subbosses, 
         Action<IBackgroundOrchestrator?>? prePrepareNextPhase=null) {
         foreach (var dispGenerator in props.phaseObjectGenerators)
@@ -323,7 +324,7 @@ public class PhaseSM : SequentialSM {
         if (props.phaseType != null) ServiceLocator.FindOrNull<IChallengeManager>()?.SetupBossPhase(joint_smh);
         try {
             await base.Start(joint_smh);
-            await WaitingUtils.WaitForUnchecked(joint_smh.Exec, joint_smh.cT, 0f,
+            await RUWaitingUtils.WaitForUnchecked(joint_smh.Exec, joint_smh.cT, 0f,
                 true); //Wait for synchronization before returning to parent
             joint_smh.ThrowIfCancelled();
         } catch (OperationCanceledException) {
@@ -371,7 +372,7 @@ public class PhaseSM : SequentialSM {
 
     private const float defaultShakeMag = 0.7f;
     private const float defaultShakeTime = 0.6f;
-    private static readonly FXY defaultShakeMult = x => M.Sin(M.PI * (x + 0.4f));
+    private static readonly FXY defaultShakeMult = x => M.Sin(BMath.PI * (x + 0.4f));
 
     private (float estDelayTime, Task) OnFinish(PhaseContext ctx, SMHandoff smh, ICancellee prepared, 
         CampaignSnapshot start_campaign, IBackgroundOrchestrator? bgo) {
@@ -410,7 +411,7 @@ public class PhaseSM : SequentialSM {
         if (pc.StandardCardFinish && !smh.Cancelled && ctx.Boss != null && pc.CaptureStars.HasValue) {
             Object.Instantiate(GameManagement.References.prefabReferences.phasePerformance)
                 .GetComponent<PhasePerformance>().Initialize($"{ctx.Boss.CasualName} / Boss Card", pc);
-            return (EndOfCardDelayTime, WaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, EndOfCardDelayTime, false));
+            return (EndOfCardDelayTime, RUWaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, EndOfCardDelayTime, false));
         }
         return (0, Task.CompletedTask);
     }
@@ -454,12 +455,14 @@ public class PhaseParallelActionSM : ParallelSM {
     public PhaseParallelActionSM(List<StateMachine> states, float wait) : base(states) {
         this.wait = wait;
     }
-    
-    public override async Task Start(SMHandoff smh) {
-        await WaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, wait, false);
+
+    private async Task WaitThenStart(SMHandoff smh) {
+        await RUWaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, wait, false);
         smh.ThrowIfCancelled();
         await base.Start(smh);
     }
+
+    public override Task Start(SMHandoff smh) => wait > 0 ? WaitThenStart(smh) : base.Start(smh);
 }
 /// <summary>
 /// `saction`: A list of actions that are run in sequence. Place this under <see cref="PhaseSM"/>.
@@ -476,7 +479,7 @@ public class PhaseSequentialActionSM : SequentialSM {
     }
 
     public override async Task Start(SMHandoff smh) {
-        await WaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, wait, false);
+        await RUWaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, wait, false);
         smh.ThrowIfCancelled();
         await base.Start(smh);
     }
@@ -518,7 +521,7 @@ public static class Synchronization {
     /// Wait for some number of seconds.
     /// </summary>
     [Fallthrough(1)]
-    public static Synchronizer Time(GCXF<float> time) => smh => WaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, time(smh.GCX), false);
+    public static Synchronizer Time(GCXF<float> time) => smh => RUWaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, time(smh.GCX), false);
 
     /// <summary>
     /// Wait for the synchronization event, and then wait some number of seconds.
@@ -526,7 +529,7 @@ public static class Synchronization {
     public static Synchronizer Delay(float time, Synchronizer synchr) => async smh => {
         await synchr(smh);
         smh.ThrowIfCancelled();
-        await WaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, time, false);
+        await RUWaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, time, false);
     };
 }
 

@@ -75,12 +75,12 @@ PrefabInstance:
     - target: {fileID: 6140576478511871678, guid: 33512ebca480f4f44bac2105265c3626,
         type: 3}
       propertyPath: hotFrame
-      value: 7
+      value: 8
       objectReference: {fileID: 0}
     - target: {fileID: 6140576478511871678, guid: 33512ebca480f4f44bac2105265c3626,
         type: 3}
       propertyPath: coldFrame
-      value: 6
+      value: 7
       objectReference: {fileID: 0}
     - target: {fileID: 6140576478511871678, guid: 33512ebca480f4f44bac2105265c3626,
         type: 3}

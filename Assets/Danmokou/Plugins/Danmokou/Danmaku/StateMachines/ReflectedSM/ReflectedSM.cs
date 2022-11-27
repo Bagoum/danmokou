@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Linq.Expressions;
+using System.Reactive;
 using System.Threading;
 using System.Threading.Tasks;
 using BagoumLib;
@@ -38,6 +39,7 @@ using ExBPY = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.T
 using ExPred = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<bool>>;
 using ExTP = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<UnityEngine.Vector2>>;
 using static BagoumLib.Tasks.WaitingUtils;
+using static Danmokou.Core.RUWaitingUtils;
 
 namespace Danmokou.SM {
 /// <summary>
@@ -47,7 +49,7 @@ namespace Danmokou.SM {
 public static class SMReflection {
     private static readonly ReflWrap<Func<float, float, float, ParametricInfo, float>> CrosshairOpacity =
         ReflWrap.FromFunc("SMReflection.CrosshairOpacity", () =>
-            PrepareDelegate<Func<float, float, float, ParametricInfo, float>>(@"
+            CompileDelegate<Func<float, float, float, ParametricInfo, float>>(@"
 if (> t &fadein,
     if(> t &homesec,
         c(einsine((t - &homesec) / &sticksec)),
@@ -79,7 +81,7 @@ if (> t &fadein,
             float sticksec = stickSec(smh.GCX);
             locSave.Save((int) cindexer(smh.GCX), locator(smh.GCX));
             if (homesec > 0) 
-                ServiceLocator.SFXService.Request("x-crosshair");
+                ISFXService.SFXService.Request("x-crosshair");
             float fadein = Mathf.Max(0.15f, homesec / 5f);
             _ = Sync(style, _ => V2RV2.Zero, SyncPatterns.Loc0(Summon(path,
                 new ReflectableLASM(smh2 => {
@@ -89,25 +91,25 @@ if (> t &fadein,
                 }), new BehOptions())))(smh);
             await saver(smh);
             smh.ThrowIfCancelled();
-            ServiceLocator.SFXService.Request("x-lockon");
-            await WaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, sticksec, false);
+            ISFXService.SFXService.Request("x-lockon");
+            await RUWaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, sticksec, false);
         };
     }
 
     public static TaskPattern dZaWarudo(GCXF<float> time) => ZaWarudo(time, _ => Vector2.zero, null, null, _ => 20);
     public static TaskPattern ZaWarudo(GCXF<float> time, GCXF<Vector2> loc, GCXF<float>? t1r, GCXF<float>? t2r, GCXF<float> scale) => async smh => {
         float t = time(smh.GCX);
-        ServiceLocator.SFXService.Request("x-zawarudo");
+        ISFXService.SFXService.Request("x-zawarudo");
         var anim = Object.Instantiate(ResourceManager.GetSummonable("negative")).GetComponent<ScaleAnimator>();
         anim.transform.position = loc(smh.GCX);
         anim.AssignScales(0, scale(smh.GCX), 0);
         anim.AssignRatios(t1r?.Invoke(smh.GCX), t2r?.Invoke(smh.GCX));
         anim.Initialize(smh.cT, t);
-        using var token = ServiceLocator.FindAll<PlayerController>()
-            .SelectDisposable(p => p.AllControlEnabled.AddConst(false));
-        foreach (var player in ServiceLocator.FindAll<PlayerController>())
+        var players = ServiceLocator.FindAll<PlayerController>();
+        using var token = players.SelectDisposable(p => p.AllControlEnabled.AddConst(false));
+        foreach (var player in players)
             player.MakeInvulnerable((int)(t * 120), false);
-        await WaitingUtils.WaitFor(smh, t, false);
+        await RUWaitingUtils.WaitFor(smh.Exec, smh.cT, t, false);
     };
 
     #endregion
@@ -188,11 +190,11 @@ if (> t &fadein,
 
     public static TaskPattern StageAnnounce() => smh => {
         ServiceLocator.Find<IStageAnnouncer>().AnnounceStage(smh.cT, out float t);
-        return WaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, t, false);
+        return RUWaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, t, false);
     };
     public static TaskPattern StageDeannounce() => smh => {
         ServiceLocator.Find<IStageAnnouncer>().DeannounceStage(smh.cT, out float t);
-        return WaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, t, false);
+        return RUWaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, t, false);
     };
     
     #endregion
@@ -325,7 +327,7 @@ if (> t &fadein,
     /// Play a sound.
     /// </summary>
     public static TaskPattern SFX(string sfx) => smh => {
-        ServiceLocator.SFXService.Request(sfx);
+        ISFXService.SFXService.Request(sfx);
         return Task.CompletedTask;
     };
 
@@ -340,26 +342,32 @@ if (> t &fadein,
         return Task.CompletedTask;
     };
 
+    /// <summary>
+    /// Apply bullet controls to simple bullet pools.
+    /// </summary>
+    public static TaskPattern BulletControl(Pred persist, BulletManager.StyleSelector style,
+        BulletManager.cBulletControl control) => smh => {
+        BulletManager.ControlBullets(persist, style, control, smh.cT.Root);
+        return Task.CompletedTask;
+    };
     
     /// <summary>
-    /// Apply a controller function to individual entities.
+    /// Apply bullet controls to BEH bullet pools.
     /// </summary>
-    [GAlias("BulletControl", typeof(BulletManager.cBulletControl))]
-    [GAlias("BEHControl", typeof(BehaviorEntity.cBEHControl))]
-    [GAlias("LaserControl", typeof(CurvedTileRenderLaser.cLaserControl))]
-    public static TaskPattern ParticleControl<CF>(Pred persist, BulletManager.StyleSelector style, CF control) {
-        return smh => {
-            if (control is BehaviorEntity.cBEHControl bc)
-                //Use .Root because stage-enemy-generated controls should be bounded by the stage cT
-                BehaviorEntity.ControlPool(persist, style, bc, smh.cT.Root);
-            else if (control is CurvedTileRenderLaser.cLaserControl lc)
-                CurvedTileRenderLaser.ControlPool(persist, style, lc, smh.cT.Root);
-            else if (control is BulletManager.cBulletControl pc)
-                BulletManager.ControlPool(persist, style, pc, smh.cT.Root);
-            else throw new Exception("Couldn't realize bullet-control type");
-            return Task.CompletedTask;
-        };
-    }
+    public static TaskPattern BEHControl(Pred persist, BulletManager.StyleSelector style,
+        BehaviorEntity.cBEHControl control) => smh => {
+        BehaviorEntity.ControlBullets(persist, style, control, smh.cT.Root);
+        return Task.CompletedTask;
+    };
+    
+    /// <summary>
+    /// Apply laser-specific bullet controls to lasers.
+    /// </summary>
+    public static TaskPattern LaserControl(Pred persist, BulletManager.StyleSelector style,
+        CurvedTileRenderLaser.cLaserControl control) => smh => {
+        CurvedTileRenderLaser.ControlLasers(persist, style, control, smh.cT.Root);
+        return Task.CompletedTask;
+    };
 
     /// <summary>
     /// Apply a controller function to a pool of entities.
@@ -590,26 +598,26 @@ if (> t &fadein,
     #region PlayerFiring
 
     public static TaskPattern Fire(StateMachine freeFire, StateMachine freeCancel, StateMachine focusFire,
-        StateMachine focusCancel) =>
-        async smh => {
+        StateMachine focusCancel) => async smh => {
             var o = smh.Exec as FireOption ??
                     throw new Exception("Cannot use fire command on a BehaviorEntity that is not an Option");
-            if (!o.Player.IsFiring) await WaitingUtils.WaitForUnchecked(o, smh.cT, () => o.Player.IsFiring);
+            if (!o.Player.IsFiring) await RUWaitingUtils.WaitForUnchecked(o, smh.cT, () => o.Player.IsFiring);
             smh.ThrowIfCancelled();
             var (firer, onCancel, inputReq) = o.Player.IsFocus ?  
                 (focusFire, focusCancel, (Func<bool>) (() => o.Player.IsFocus)) :
                 (freeFire, freeCancel, (Func<bool>) (() => !o.Player.IsFocus));
-            var joint_smh = smh.CreateJointCancellee(out var fireCTS, null);
+            using var joint_smh = smh.CreateJointCancellee(out var fireCTS, null);
             //order is important to ensure cancellation works on the correct frame
-            var waiter = WaitingUtils.WaitForUnchecked(o, smh.cT, () => !o.Player.IsFiring || !inputReq());
-            _ = firer.Start(joint_smh).ContinueWithSync(joint_smh.Dispose);
-            await waiter;
+            var cancelTask = RUWaitingUtils.WaitForUnchecked(o, smh.cT, () => !o.Player.IsFiring || !inputReq());
+            var fireTask = firer.Start(joint_smh);
+            await cancelTask;
             fireCTS.Cancel();
+            await fireTask; //need to await so we don't dispose joint_smh early
             smh.ThrowIfCancelled();
             if (o.Player.AllowPlayerInput) _ = onCancel.Start(smh);
         };
-    public static TaskPattern FireSame(StateMachine fire, StateMachine cancel) =>
-        async smh => {
+    /*
+    public static TaskPattern FireSame(StateMachine fire, StateMachine cancel) => async smh => {
             var o = smh.Exec as FireOption ??
                     throw new Exception("Cannot use fire command on a BehaviorEntity that is not an Option");
             if (!o.Player.IsFiring) await WaitingUtils.WaitForUnchecked(o, smh.cT, () => o.Player.IsFiring);
@@ -622,7 +630,24 @@ if (> t &fadein,
             fireCTS.Cancel();
             smh.ThrowIfCancelled();
             if (o.Player.AllowPlayerInput) _ = cancel.Start(smh);
-        };
+        };*/
+    
+    
+    public static TaskPattern FireSame(StateMachine fire, StateMachine cancel) => async smh => {
+        var o = smh.Exec as FireOption ??
+                throw new Exception("Cannot use fire command on a BehaviorEntity that is not an Option");
+        if (!o.Player.IsFiring) await RUWaitingUtils.WaitForUnchecked(o, smh.cT, () => o.Player.IsFiring);
+        smh.ThrowIfCancelled();
+        using var joint_smh = smh.CreateJointCancellee(out var fireCTS, null);
+        //order is important to ensure cancellation works on the correct frame
+        var cancelTask = RUWaitingUtils.WaitForUnchecked(o, smh.cT, () => !o.Player.IsFiring);
+        var fireTask = fire.Start(joint_smh);
+        await cancelTask;
+        fireCTS.Cancel();
+        await fireTask; //need to await so we don't dispose joint_smh early
+        smh.ThrowIfCancelled();
+        if (o.Player.AllowPlayerInput) _ = cancel.Start(smh);
+    };
 
 
     public static TaskPattern AssertSimple(string p_pool) => smh => {

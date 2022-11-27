@@ -123,10 +123,17 @@ public static class KeyCodeHelpers {
     /// <br/>Render(KC.LeftShift) => 'LeftShift'</example>
     /// </summary>
     public static string RenderInformative(this KeyCode k) => k switch {
-        _ when k.IsAlphabetic() => ((char)('A' + (k - KC.A))).ToString(),
-        _ when k.IsNumeric() => ((char)('0' + (k - KC.Alpha0))).ToString(),
+        _ when k.IsAlphabetic() => ((char)('A' + (k - KC.A))).MakeString(),
+        _ when k.IsNumeric() => ((char)('0' + (k - KC.Alpha0))).MakeString(),
         KC.Space => "Space",
-        _ => keyCodeRender.TryGetValue(k, out var v) ? v.ToString() : k.ToString()
+        _ => keyCodeRender.TryGetValue(k, out var v) ? v.MakeString() : k.KeyCodeToString()
     };
+
+    private static readonly Dictionary<KeyCode, string> keycodeCache = new(16);
+    private static string KeyCodeToString(this KeyCode k) {
+        if (!keycodeCache.TryGetValue(k, out var s))
+            keycodeCache[k] = s = k.ToString();
+        return s;
+    }
 }
 }

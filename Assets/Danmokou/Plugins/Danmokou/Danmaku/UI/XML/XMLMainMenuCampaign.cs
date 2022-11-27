@@ -156,7 +156,7 @@ public class XMLMainMenuCampaign : XMLMainMenu {
         }, modeCommentator, GetMetadata);
 
         OptionsScreen = this.OptionsScreen(true);
-        GameDetailsScreen = new UIScreen(this, "GAME DETAILS") { Builder = GameResultsScreenBuilder };
+        GameDetailsScreen = new UIScreen(this, "GAME DETAILS") { Builder = XMLHelpers.GameResultsScreenBuilder };
         MusicRoomScreen = this.MusicRoomScreen(References.tracks);
         MainScreen = new UIScreen(this, null, UIScreen.Display.Unlined)
             { Builder = (s, ve) => {
@@ -164,7 +164,7 @@ public class XMLMainMenuCampaign : XMLMainMenu {
                 var c = ve.AddColumn();
                 c.style.maxWidth = 20f.Percent();
                 c.style.paddingTop = 640;
-            }, SceneObjects = MainScreenOnlyObjects, Background = PrimaryBGConfig};
+            }, SceneObjects = MainScreenOnlyObjects}.WithBG(PrimaryBGConfig);
         
         PlayerDataScreen = this.AllPlayerDataScreens(game, GameDetailsScreen, out ReplayScreen, out StatsScreen,
             out AchievementsScreen, out RecordsScreen, AchievementsNodeV);

@@ -24,15 +24,19 @@ public class CoroutineRegularUpdater : RegularUpdater, ICoroutineRunner {
         base.OnDisable();
     }
 
+    private static readonly CoroutineOptions standardOpts = new(ExecType: CoroutineType.AppendToEnd);
+    private static readonly CoroutineOptions tryPrependOpts = new(ExecType: CoroutineType.TryStepPrepend);
+    private static readonly CoroutineOptions prependOpts = new(ExecType: CoroutineType.StepPrepend);
+    private static readonly CoroutineOptions droppableOpts = new(true, CoroutineType.AppendToEnd);
     public void RunRIEnumerator(IEnumerator ienum) => 
-        coroutines.Run(ienum, new CoroutineOptions(ExecType: CoroutineType.AppendToEnd));
+        coroutines.Run(ienum, standardOpts);
     public void RunTryPrependRIEnumerator(IEnumerator ienum) => 
-        coroutines.Run(ienum, new CoroutineOptions(ExecType: CoroutineType.TryStepPrepend));
+        coroutines.Run(ienum, tryPrependOpts);
     public void RunPrependRIEnumerator(IEnumerator ienum) => 
-        coroutines.Run(ienum, new CoroutineOptions(ExecType: CoroutineType.StepPrepend));
+        coroutines.Run(ienum, prependOpts);
 
     public void RunDroppableRIEnumerator(IEnumerator ienum) => 
-        coroutines.Run(ienum, new CoroutineOptions(true, CoroutineType.AppendToEnd));
+        coroutines.Run(ienum, droppableOpts);
 
     public void Run(IEnumerator ienum, CoroutineOptions? flags = null) => coroutines.Run(ienum, flags);
 

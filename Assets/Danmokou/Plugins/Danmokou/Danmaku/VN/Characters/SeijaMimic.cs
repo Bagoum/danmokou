@@ -13,7 +13,7 @@ public class Seija : SZYUCharacter {
     public override Color UIColor => new(0.32f, 0.01f, .4f);
     public override LString Name { get; set; } = LocalizedStrings.FindReference("dialogue.seija");
     
-    public override void RollEvent() => ServiceLocator.SFXService.Request("x-bubble-3", SFXType.TypingSound);
+    public override void RollEvent() => ISFXService.SFXService.Request("x-bubble-3", SFXType.TypingSound);
 }
 
 public class SeijaMimic : PiecewiseCharacterMimic {
