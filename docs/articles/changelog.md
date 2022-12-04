@@ -20,6 +20,8 @@ The following features are planned for future releases.
 
 # v10.0.0 (2022/12/03)
 
+This release includes a large number of miscellaneous features for danmaku and visual novel functionality. There is also a new version of the [VSCode extension](https://marketplace.visualstudio.com/items?itemName=Bagoum.dmkscripting). 
+
 #### Features
 
 - The `oncollide` bullet control can now be run on simple bullets as well as complex bullets (such as pathers or lasers). See `examples/on collide control.bdsl` for some examples.

@@ -39,7 +39,7 @@ namespace Danmokou.Services {
 /// This is the only scene-persistent object in the game.
 /// </summary>
 public class GameManagement : CoroutineRegularUpdater {
-    public static readonly Version EngineVersion = new(9, 0, 0);
+    public static readonly Version EngineVersion = new(10, 0, 0);
     public static readonly int ExecutionNumber = new System.Random().Next();
     public static DifficultySettings Difficulty => Instance.Difficulty;
 
