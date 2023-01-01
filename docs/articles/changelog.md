@@ -18,6 +18,14 @@ The following features are planned for future releases.
 - [Backlog] Implementation of a TH18-like card engine
 - [Backlog] Procedural generation of stages and bullet patterns
 
+# v10.1.0 (2022/12/31)
+
+Happy Christmas and a Merry New Years to everyone.
+
+#### Features
+
+- Added safety guarantees around UI navigation so it is not possible to enqueue two navigation events at the same time.
+
 # v10.0.0 (2022/12/03)
 
 This release includes a large number of miscellaneous features for danmaku and visual novel functionality. There is also a new version of the [VSCode extension](https://marketplace.visualstudio.com/items?itemName=Bagoum.dmkscripting). 

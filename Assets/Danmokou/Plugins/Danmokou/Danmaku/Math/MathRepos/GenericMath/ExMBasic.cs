@@ -12,10 +12,6 @@ using tbool = Danmokou.Expressions.TEx<bool>;
 using tv2 = Danmokou.Expressions.TEx<UnityEngine.Vector2>;
 using tv3 = Danmokou.Expressions.TEx<UnityEngine.Vector3>;
 using trv2 = Danmokou.Expressions.TEx<Danmokou.DMath.V2RV2>;
-using efloat = Danmokou.Expressions.EEx<float>;
-using ev2 = Danmokou.Expressions.EEx<UnityEngine.Vector2>;
-using ev3 = Danmokou.Expressions.EEx<UnityEngine.Vector3>;
-using erv2 = Danmokou.Expressions.EEx<Danmokou.DMath.V2RV2>;
 
 namespace Danmokou.DMath.Functions {
 public static partial class ExM {
@@ -43,7 +39,7 @@ public static partial class ExM {
     /// <summary>
     /// Add two vectypes.
     /// </summary>
-    [Alias("+")] [WarnOnStrict] [Operator]
+    [Alias("+")] [WarnOnStrict] [Operator] [BDSL2Operator]
     public static TEx<T> Add<T>(TEx<T> x, TEx<T> y) => x.Add(y);
     /// <summary>
     /// Add to the nonrotational components of an RV2.
@@ -69,13 +65,19 @@ public static partial class ExM {
     /// <summary>
     /// Subtract two vectypes.
     /// </summary>
-    [Alias("-")] [WarnOnStrict] [Operator]
+    [Alias("-")] [WarnOnStrict] [Operator] [BDSL2Operator]
     public static TEx<T> Sub<T>(TEx<T> x, TEx<T> y) => x.Sub(y);
     /// <summary>
     /// Multiply a vectype by a number.
     /// </summary>
-    [Alias("*")] [WarnOnStrict] [Operator]
+    [Alias("*")] [WarnOnStrict] [Operator] [BDSL2Operator]
     public static TEx<T> Mul<T>(tfloat x, TEx<T> y) => x.Mul(y);
+    
+    /// <summary>
+    /// Multiply a vectype by a number.
+    /// </summary>
+    [BDSL2Operator]
+    public static TEx<T> MulRev<T>(TEx<T> y, tfloat x) => x.Mul(y);
 
     /// <summary>
     /// Convert a number from degrees to radians.
@@ -90,12 +92,13 @@ public static partial class ExM {
     /// <param name="x"></param>
     /// <returns></returns>
     public static tfloat RadDeg(tfloat x) => x.Mul(radDeg);
+    
     /// <summary>
-    /// Divide two numbers. Alias: / x y
+    /// Divide a vectype by a number. Alias: / x y
     /// </summary>
     /// <returns></returns>
-    [Alias("/")] [WarnOnStrict] [Operator]
-    public static tfloat Div(tfloat x, tfloat y) => x.Div(y);
+    [Alias("/")] [WarnOnStrict] [Operator] [BDSL2Operator]
+    public static TEx<T> Div<T>(TEx<T> x, tfloat y) => x.Div(y);
     /// <summary>
     /// Divide two numbers in reverse order (the same as / y x). 
     /// </summary>
@@ -104,7 +107,7 @@ public static partial class ExM {
     /// <summary>
     /// Divide two numbers and returns the floor.
     /// </summary>
-    [Alias("//")] [WarnOnStrict] [Operator]
+    [Alias("//")] [WarnOnStrict] [Operator] [BDSL2Operator]
     public static tfloat FDiv(tfloat x, tfloat y) => Floor(x.Div(y));
     /// <summary>
     /// (1-x)
@@ -141,14 +144,20 @@ public static partial class ExM {
     public static tfloat DecrementSubtract(tfloat x, tfloat y) => x.Sub(E1).Sub(y);
 
     /// <summary>
-    /// Returns -x.
+    /// Returns -1 * x.
     /// </summary>
     public static tfloat Neg(tfloat x) => EN1.Mul(x);
+    
+    /// <summary>
+    /// Returns -x.
+    /// </summary>
+    [BDSL2Operator]
+    public static TEx<T> Negate<T>(TEx<T> x) => Ex.Negate(x);
 
     /// <summary>
     /// Returns -1 if x lt 0 and 1 otherwise. (Note: Sign(0) = 1)
     /// </summary>
-    public static tfloat Sign(efloat x) => EEx.Resolve(x, y => Ex.Condition(y.LT0(), EN1, E1));
+    public static tfloat Sign(tfloat x) => TEx.Resolve(x, y => Ex.Condition(y.LT0(), EN1, E1));
     
     private static readonly ExFunction _ExpDb = ExFunction.Wrap<double>(typeof(Math), "Exp");
     private static TEx<double> ExpDb(tfloat x) => _ExpDb.Of(Ex.Convert(x, typeof(double)));
@@ -181,11 +190,11 @@ public static partial class ExM {
     /// <summary>
     /// Returns the quantity x^2+y^2.
     /// </summary>
-    public static tfloat SqrMag2(efloat x, efloat y) => EEx.Resolve(x,y, (_x, _y) => _x.Mul(_x).Add(_y.Mul(_y)));
+    public static tfloat SqrMag2(tfloat x, tfloat y) => TEx.Resolve(x,y, (_x, _y) => _x.Mul(_x).Add(_y.Mul(_y)));
     /// <summary>
     /// Returns the quantity x^2+y^2+z^2.
     /// </summary>
-    public static tfloat SqrMag3(efloat x, efloat y, efloat z) => EEx.Resolve(x,y,z, (_x, _y,_z) => 
+    public static tfloat SqrMag3(tfloat x, tfloat y, tfloat z) => TEx.Resolve(x,y,z, (_x, _y,_z) => 
         _x.Mul(_x).Add(_y.Mul(_y).Add(_z.Mul(_z))));
 
     /// <summary>
@@ -200,7 +209,7 @@ public static partial class ExM {
     /// <summary>
     /// Normalize a vector.
     /// </summary>
-    public static tv2 Norm(ev2 v2) => EEx.ResolveV2(v2, xy => {
+    public static tv2 Norm(tv2 v2) => TEx.ResolveV2(v2, xy => {
         var mag = VFloat();
         return Ex.Block(new[] {mag},
             mag.Is(Mag(xy)),
@@ -213,7 +222,7 @@ public static partial class ExM {
     /// <summary>
     /// Normalize a vector.
     /// </summary>
-    public static tv3 Norm3(ev3 v3) => EEx.ResolveV3(v3, xyz => {
+    public static tv3 Norm3(tv3 v3) => TEx.ResolveV3(v3, xyz => {
         var mag = VFloat();
         return Ex.Block(new[] {mag},
             mag.Is(v3Mag(xyz)),
@@ -227,18 +236,18 @@ public static partial class ExM {
     /// <summary>
     /// Get the square magnitude of a vector.
     /// </summary>
-    public static tfloat SqrMag(ev2 v2) => EEx.ResolveV2(v2, xy => SqrMag2(xy.x, xy.y));
+    public static tfloat SqrMag(tv2 v2) => TEx.ResolveV2(v2, xy => SqrMag2(xy.x, xy.y));
     /// <summary>
     /// Get the square magnitude of a vector.
     /// </summary>
-    public static tfloat v3SqrMag(ev3 v3) => EEx.ResolveV3(v3, xyz => SqrMag3(xyz.x, xyz.y, xyz.z));
+    public static tfloat v3SqrMag(tv3 v3) => TEx.ResolveV3(v3, xyz => SqrMag3(xyz.x, xyz.y, xyz.z));
     
     private static readonly ExFunction _Pow = ExFunction.Wrap<double>(typeof(Math), "Pow", 2);
 
     /// <summary>
     /// Returns (bas)^(exp).
     /// </summary>
-    [Alias("^")] [WarnOnStrict] [Operator]
+    [Alias("^")] [WarnOnStrict] [Operator] [BDSL2Operator]
     public static tfloat Pow(tfloat bas, tfloat exp) => OfDFD(_Pow, bas, exp);
     /// <summary>
     /// Returns one function raised to the power of the other, subtracted by the first function. (Alias: ^- bas exp)
@@ -263,7 +272,7 @@ public static partial class ExM {
     /// <param name="exp">Exponent</param>
     /// <returns></returns>
     [Alias("^^")] [Operator]
-    public static tfloat NPow(efloat bas, efloat exp) => EEx.Resolve(bas, exp, (x, y) =>
+    public static tfloat NPow(tfloat bas, tfloat exp) => TEx.Resolve(bas, exp, (x, y) =>
         Ex.Condition(Ex.LessThan(x, E0),
             Ex.Negate(Pow(Ex.Negate(x), y)),
             Pow(x, y)));
@@ -280,7 +289,7 @@ public static partial class ExM {
     /// <summary>
     /// = Round(ex / block) * block
     /// </summary>
-    public static tfloat BlockRound(efloat block, tfloat ex) => EEx.Resolve(block,
+    public static tfloat BlockRound(tfloat block, tfloat ex) => TEx.Resolve(block,
         b => Round(ex.Div(b)).Mul(b));
     
     /// <summary>
@@ -290,7 +299,7 @@ public static partial class ExM {
     /// <summary>
     /// = Floor(ex / block) * block
     /// </summary>
-    public static tfloat BlockFloor(efloat block, tfloat ex) => EEx.Resolve(block,
+    public static tfloat BlockFloor(tfloat block, tfloat ex) => TEx.Resolve(block,
         b => Floor(ex.Div(b)).Mul(b));
     public static Ex dFloor(Ex ex) => _Floor.Of(ex);
     /// <summary>
@@ -336,8 +345,8 @@ public static partial class ExM {
     /// Of two numbers, return the one with the smaller absolute value.
     /// Not well-defined when x1 = -x2.
     /// </summary>
-    public static tfloat MinA(efloat x1, efloat x2) =>
-        EEx.Resolve(x1, x2, (a, b) => Ex.Condition(Abs(a).LT(Abs(b)), a, b));
+    public static tfloat MinA(tfloat x1, tfloat x2) =>
+        TEx.Resolve(x1, x2, (a, b) => Ex.Condition(Abs(a).LT(Abs(b)), a, b));
     private static readonly ExFunction _Max = ExFunction.Wrap<float>(typeof(Math), "Max", 2);
     /// <summary>
     /// Return the larger of two numbers.
@@ -347,8 +356,8 @@ public static partial class ExM {
     /// Of two numbers, return the one with the larger absolute value.
     /// Not well-defined when x1 = -x2.
     /// </summary>
-    public static tfloat MaxA(efloat x1, efloat x2) =>
-        EEx.Resolve(x1, x2, (a, b) => Ex.Condition(Abs(a).GT(Abs(b)), a, b));
+    public static tfloat MaxA(tfloat x1, tfloat x2) =>
+        TEx.Resolve(x1, x2, (a, b) => Ex.Condition(Abs(a).GT(Abs(b)), a, b));
 
     /// <summary>
     /// Limit a value x to have absolute value leq by.
@@ -356,19 +365,19 @@ public static partial class ExM {
     /// <param name="by">Positive number for absolute value comparison</param>
     /// <param name="x">Number to be limited</param>
     /// <returns></returns>
-    public static tfloat Limit(efloat by, efloat x) => EEx.Resolve(by, x, (_by, _x) => 
+    public static tfloat Limit(tfloat by, tfloat x) => TEx.Resolve(by, x, (_by, _x) => 
         Ex.Condition(_x.GT0(), Min(_x, _by), Max(_x, Ex.Negate(_by))));
 
     /// <summary>
     /// If x's absolute value is less than by, then return 0 instead.
     /// </summary>
-    public static tfloat HighPass(tfloat by, efloat x) => 
-        EEx.Resolve(x, _x => Ex.Condition(Abs(_x).LT(by), E0, _x));
+    public static tfloat HighPass(tfloat by, tfloat x) => 
+        TEx.Resolve(x, _x => Ex.Condition(Abs(_x).LT(by), E0, _x));
     /// <summary>
     /// If x's absolute value is greater than by, then return 0 instead.
     /// </summary>
-    public static tfloat HighCut(tfloat by, efloat x) => 
-        EEx.Resolve(x, _x => Ex.Condition(Abs(_x).GT(by), E0, _x));
+    public static tfloat HighCut(tfloat by, tfloat x) => 
+        TEx.Resolve(x, _x => Ex.Condition(Abs(_x).GT(by), E0, _x));
     
     private static readonly ExFunction _Clamp = ExFunction.Wrap<Mathf, float>("Clamp", 3);
     
@@ -392,8 +401,8 @@ public static partial class ExM {
     /// </summary>
     /// <param name="ang_rad"></param>
     /// <returns></returns>
-    public static tfloat RadIntoRange(efloat ang_rad) =>
-        EEx.Resolve(ang_rad, a => Ex.Condition(a.GT(pi), 
+    public static tfloat RadIntoRange(tfloat ang_rad) =>
+        TEx.Resolve(ang_rad, a => Ex.Condition(a.GT(pi), 
             a.Sub(tau), 
             Ex.Condition(a.LT(npi), 
                 a.Add(tau), 
@@ -404,22 +413,22 @@ public static partial class ExM {
     /// </summary>
     /// <param name="ang_rad"></param>
     /// <returns></returns>
-    public static tfloat RadToNeg(efloat ang_rad) => EEx.Resolve(ang_rad, a =>
+    public static tfloat RadToNeg(tfloat ang_rad) => TEx.Resolve(ang_rad, a =>
         Ex.Condition(a.GT0(), a.Sub(tau), a));
     /// <summary>
     /// Move a value in the range [-2pi, 2pi] to the range [0,2pi] by adding tau.
     /// </summary>
     /// <param name="ang_rad"></param>
     /// <returns></returns>
-    public static tfloat RadToPos(efloat ang_rad) => EEx.Resolve(ang_rad, a =>
+    public static tfloat RadToPos(tfloat ang_rad) => TEx.Resolve(ang_rad, a =>
         Ex.Condition(a.LT0(), a.Add(tau), a));
     /// <summary>
     /// Move a value in the range [-540, 540] to the range [-180, 180] by adding or subtracting 360.
     /// </summary>
     /// <param name="ang_rad"></param>
     /// <returns></returns>
-    public static tfloat DegIntoRange(efloat ang_rad) =>
-        EEx.Resolve(ang_rad, a => Ex.Condition(a.GT(ExC(180f)), 
+    public static tfloat DegIntoRange(tfloat ang_rad) =>
+        TEx.Resolve(ang_rad, a => Ex.Condition(a.GT(ExC(180f)), 
             a.Sub(ExC(360f)), 
             Ex.Condition(a.LT(ExC(-180f)), 
                 a.Add(ExC(360f)), 
@@ -428,20 +437,20 @@ public static partial class ExM {
     /// <summary>
     /// Get the rotation required, in degrees, to rotate SOURCE to TARGET, in the range [-180,180].
     /// </summary>
-    public static tfloat DegDiff(ev2 target, ev2 source) => DegIntoRange(ATan(target).Sub(ATan(source)));
+    public static tfloat DegDiff(tv2 target, tv2 source) => DegIntoRange(ATan(target).Sub(ATan(source)));
     /// <summary>
     /// Get the rotation required, in radians, to rotate SOURCE to TARGET, in the range [-pi,pi].
     /// </summary>
-    public static tfloat RadDiff(ev2 target, ev2 source) => RadIntoRange(ATanR(target).Sub(ATanR(source)));
+    public static tfloat RadDiff(tv2 target, tv2 source) => RadIntoRange(ATanR(target).Sub(ATanR(source)));
     /// <summary>
     /// Get the rotation required, in radians, to rotate SOURCE to TARGET, in the range [0,2pi].
     /// </summary>
-    public static tfloat RadDiffCCW(ev2 target, ev2 source) => RadToPos(ATanR(target).Sub(ATanR(source)));
+    public static tfloat RadDiffCCW(tv2 target, tv2 source) => RadToPos(ATanR(target).Sub(ATanR(source)));
 
     /// <summary>
     /// Get the rotation required, in radians, to rotate SOURCE to TARGET, in the range [-2pi,0].
     /// </summary>
-    public static tfloat RadDiffCW(ev2 target, ev2 source) => RadToNeg(ATanR(target).Sub(ATanR(source)));
+    public static tfloat RadDiffCW(tv2 target, tv2 source) => RadToNeg(ATanR(target).Sub(ATanR(source)));
     
     #region Sines
     
@@ -553,7 +562,7 @@ public static partial class ExM {
     /// <summary>
     /// Return the angle in radians whose tangent is v2.y/v2.x.
     /// </summary>
-    public static tfloat ATanR(ev2 f) => EEx.Resolve(f, v2 => {
+    public static tfloat ATanR(tv2 f) => TEx.Resolve(f, v2 => {
         var tv2 = new TExV2(v2);
         return _AtanYX.Of(tv2.y, tv2.x);
     });
@@ -564,7 +573,7 @@ public static partial class ExM {
     /// <summary>
     /// Return the angle in degrees whose tangent is v2.y/v2.x.
     /// </summary>
-    public static tfloat ATan(ev2 f) => ATanR(f).Mul(radDeg);
+    public static tfloat ATan(tv2 f) => ATanR(f).Mul(radDeg);
     #endregion
     
     

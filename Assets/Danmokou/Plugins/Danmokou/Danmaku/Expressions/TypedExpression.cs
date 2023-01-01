@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using BagoumLib.Expressions;
 using BagoumLib.Reflection;
 using Danmokou.Core;
 using Danmokou.Danmaku;
@@ -10,6 +11,7 @@ using Danmokou.DMath.Functions;
 using Danmokou.Reflection;
 using JetBrains.Annotations;
 using UnityEngine;
+using Ex = System.Linq.Expressions.Expression;
 using static Danmokou.Expressions.ExUtils;
 
 namespace Danmokou.Expressions {
@@ -17,15 +19,19 @@ namespace Danmokou.Expressions {
 /// <summary>
 /// An arbitrary set of arguments to an expression function.
 /// <br/>Expression functions are written in the general form Func&lt;TExArgCtx, TEx&lt;R&gt;&gt;
-///  and compiled to Func&lt;R, T&gt;, where R is *any type* that has stored its information
+///  and compiled to Func&lt;T1, T2..., R&gt;, where T1,T2... are types that have stored their information
 ///  in TExArgCtx (usually <see cref="ParametricInfo"/> or <see cref="BulletManager.SimpleBullet"/>),
-///  and T is some standard return type like float or Vector2.
+///  and R is some standard return type like float or Vector2.
 /// </summary>
 public class TExArgCtx {
     /// <summary>
     /// Context that is shared by any copies of this.
     /// </summary>
     public class RootCtx {
+        /// <summary>
+        /// A handler that tracks usages of yet-unbound variables in the precompilation step of GCXU.
+        /// <br/>This is *NOT* used for any actual compilation.
+        /// </summary>
         public ReflectEx.ICompileReferenceResolver? ICRR { get; set; }
         /// <summary>
         /// When the type of the custom data (<see cref="PICustomData"/>) is known, this contains
@@ -166,6 +172,15 @@ public class TExArgCtx {
             //Still throw an error in this case
             throw new BadTypeException($"The variable \"{name}\" (#{idx+1}/{args.Length}) is not of type {typeof(T).RName()}");
     }
+    
+    public TEx? MaybeGetByName(Type t, string name) {
+        if (!argNameToIndexMap.TryGetValue(name, out var idx))
+            return null;
+        return args[idx].expr.GetType().GetGenericArguments()[0] == t ?
+            args[idx].expr :
+            //Still throw an error in this case
+            throw new BadTypeException($"The variable \"{name}\" (#{idx+1}/{args.Length}) is not of type {t.RName()}");
+    }
     public Tx GetByExprType<Tx>(out int idx) where Tx : TEx {
         if (!argExTypeToIndexMap.TryGetValue(typeof(Tx), out idx))
             throw new CompileException($"No variable of type {typeof(Tx).RName()} is provided as an argument.");
@@ -223,7 +238,7 @@ public class TExArgCtx {
 }
 
 /// <summary>
-/// Base class for TEx{T} used for type constraints.
+/// Base class for <see cref="TEx{T}"/> used for type constraints.
 /// </summary>
 public class TEx {
     protected readonly Expression ex;
@@ -292,14 +307,81 @@ public class TEx {
     public static implicit operator ParameterExpression(TEx me) {
         return (ParameterExpression)me.ex;
     }
+    
+    private static Ex ResolveCopy(Func<Ex[], Ex> func, params (Ex, bool)[] requiresCopy) {
+        var newvars = ListCache<ParameterExpression>.Get();
+        var setters = ListCache<Expression>.Get();
+        var usevars = new Expression[requiresCopy.Length];
+        for (int ii = 0; ii < requiresCopy.Length; ++ii) {
+            var (ex, reqCopy) = requiresCopy[ii];
+            if (reqCopy) {
+                //Don't name this, as nested TEx should not overlap
+                var copy = V(ex.Type);
+                usevars[ii] = copy;
+                newvars.Add(copy);
+                setters.Add(copy.Is(ex));
+            } else {
+                usevars[ii] = ex;
+            }
+        }
+        setters.Add(func(usevars));
+        var block = Ex.Block(newvars, setters);
+        ListCache<ParameterExpression>.Consign(newvars);
+        ListCache<Expression>.Consign(setters);
+        return setters.Count > 1 ? func(usevars) : block;
+    }
+    public static Ex ResolveF(TEx<float> t1, Func<TEx<float>, Ex> resolver) =>
+        ResolveCopy(x => resolver(x[0]), t1);
+    public static Ex Resolve<T1>(TEx<T1> t1, Func<TEx<T1>, Ex> resolver) =>
+        ResolveCopy(x => resolver(x[0]), t1);
+    public static Ex ResolveV2(TEx<Vector2> t1, Func<TExV2, Ex> resolver) =>
+        ResolveCopy(x => resolver(new TExV2(x[0])), t1);
+    public static Ex ResolveV3(TEx<Vector3> t1, Func<TExV3, Ex> resolver) =>
+        ResolveCopy(x => resolver(new TExV3(x[0])), t1);
+    public static Ex Resolve<T1,T2>(TEx<T1> t1, TEx<T2> t2, Func<TEx<T1>, TEx<T2>, Ex> resolver) =>
+        ResolveCopy(x => resolver(x[0], x[1]), t1, t2);
+    public static Ex ResolveV2(TEx<Vector2> t1, TEx<Vector2> t2, 
+        Func<TExV2, TExV2, Ex> resolver) =>
+        ResolveCopy(x => resolver(new TExV2(x[0]), new TExV2(x[1])), t1, t2);
+    public static Ex ResolveV2(TEx<Vector2> t1, TEx<float> t2, 
+        Func<TExV2, TEx<float>, Ex> resolver) =>
+        ResolveCopy(x => resolver(new TExV2(x[0]), x[1]), t1, t2);
+    /// <inheritdoc cref="Resolve{T1,T2,T3}"/>
+    public static Ex ResolveV3(TEx<Vector3> t1, TEx<Vector3> t2, 
+        Func<TExV3, TExV3, Ex> resolver) =>
+        ResolveCopy(x => resolver(new TExV3(x[0]), new TExV3(x[1])), t1, t2);
+    /// <summary>
+    /// Copy the provided expressions into temporary variables that can be reused without recalculating the expression.
+    /// </summary>
+    public static Ex Resolve<T1,T2,T3>(TEx<T1> t1, TEx<T2> t2, TEx<T3> t3, 
+        Func<TEx<T1>, TEx<T2>, TEx<T3>, Ex> resolver) =>
+        ResolveCopy(x => resolver(x[0], x[1], x[2]), t1, t2, t3);
+    public static Ex ResolveV2(TEx<Vector2> t1, TEx<Vector2> t2, TEx<Vector2> t3, 
+        Func<TExV2, TExV2, TExV2, Ex> resolver) =>
+        ResolveCopy(x => resolver(new TExV2(x[0]), new TExV2(x[1]), new TExV2(x[2])), t1, t2, t3);
+    public static Ex Resolve<T1,T2,T3,T4>(TEx<T1> t1, TEx<T2> t2, TEx<T3> t3, TEx<T4> t4, 
+        Func<TEx<T1>, TEx<T2>, TEx<T3>, TEx<T4>, Ex> resolver) =>
+        ResolveCopy(x => resolver(x[0], x[1], x[2], x[3]), t1, t2, t3, t4);
+    public static Ex Resolve<T1,T2,T3,T4,T5>(TEx<T1> t1, TEx<T2> t2, TEx<T3> t3, TEx<T4> t4, TEx<T5> t5, 
+        Func<TEx<T1>, TEx<T2>, TEx<T3>, TEx<T4>, TEx<T5>, Ex> resolver) =>
+        ResolveCopy(x => resolver(x[0], x[1], x[2], x[3], x[4]), t1, t2, t3, t4, t5);
+    
+    public static bool RequiresCopyOnRepeat(Expression e) => !(
+        e.NodeType == ExpressionType.Parameter ||
+        e.NodeType == ExpressionType.Constant ||
+        e.NodeType == ExpressionType.MemberAccess ||
+        (e.NodeType == ExpressionType.Convert && !RequiresCopyOnRepeat((e as UnaryExpression)!.Operand)));
+    
+    
+    public static implicit operator (Ex, bool)(TEx exx) => (exx.ex, RequiresCopyOnRepeat(exx.ex));
 }
 /// <summary>
 /// A typed expression.
-/// This typing is syntactic sugar: any expression, regardless of type, can be cast as eg. TEx{float}.
-/// However, constructing a parameter expression via TEx{T} will type the expression appropriately.
+/// <br/>This typing is syntactic sugar: any expression, regardless of type, can be cast as eg. TEx{float}.
+/// <br/>However, constructing a parameter expression via TEx{T} will type the expression appropriately.
 /// By default, creates a ParameterExpression.
 /// </summary>
-/// <typeparam name="T">Type of expression.</typeparam>
+/// <typeparam name="T">Type of expression eg(float).</typeparam>
 public class TEx<T> : TEx {
 
     public TEx() : this(ExMode.Parameter, null) {}
@@ -313,9 +395,5 @@ public class TEx<T> : TEx {
     }
 
     public static implicit operator TEx<T>(T obj) => Expression.Constant(obj);
-
-    public Expression GetExprDontUseThisGenerally() {
-        return ex;
-    }
 }
 }

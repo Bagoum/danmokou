@@ -29,9 +29,11 @@ public class PausedGameplayMenu : UIController {
         }
     }
 
-    protected virtual Task HideMe() {
+    [ContextMenu("Hide menu")]
+    protected virtual async Task HideMe() {
+        if (MenuActive)
+            await Close();
         pauseToken?.Dispose();
-        return MenuActive ? Close() : Task.CompletedTask;
     }
 
     [ContextMenu("Animate hide menu")]

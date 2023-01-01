@@ -112,8 +112,7 @@ public static partial class Reflector {
             }
             if (!constr.Try(out var cp))
                 throw new StaticException($"Type {t.RName()} has no applicable constructors.");
-            constructorSigs[t] = args =
-                MethodSignature.FromMethod(cp.c, null, cp.prms);
+            constructorSigs[t] = args = MethodSignature.Get(cp.c);
         }
         return args;
     }
@@ -169,7 +168,7 @@ public static partial class Reflector {
             return new AST.Alias(declPos, aliasPos, AsType(declTyp), alias, ReflectTargetType(p, req_type));
         } else if (UseConstructor(targetType)) {
             //generic struct/tuple handling
-            var sig = GetConstructorSignature(targetType);
+            var sig = GetConstructorSignature(targetType).Call(null);
             var fill = FillASTArray(sig, p);
             var loc = fill.ArgRange ?? p.Position;
             return AST.Failure.MaybeEnclose(new AST.MethodInvoke(loc, new(loc.Start, loc.Start), sig, fill.ASTs), fill.Error);

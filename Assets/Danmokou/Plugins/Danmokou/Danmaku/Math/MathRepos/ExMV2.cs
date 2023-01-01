@@ -16,10 +16,6 @@ using tbool = Danmokou.Expressions.TEx<bool>;
 using tv2 = Danmokou.Expressions.TEx<UnityEngine.Vector2>;
 using tv3 = Danmokou.Expressions.TEx<UnityEngine.Vector3>;
 using trv2 = Danmokou.Expressions.TEx<Danmokou.DMath.V2RV2>;
-using efloat = Danmokou.Expressions.EEx<float>;
-using ev2 = Danmokou.Expressions.EEx<UnityEngine.Vector2>;
-using ev3 = Danmokou.Expressions.EEx<UnityEngine.Vector3>;
-using erv2 = Danmokou.Expressions.EEx<Danmokou.DMath.V2RV2>;
 using static Danmokou.DMath.Functions.ExM;
 
 namespace Danmokou.DMath.Functions {
@@ -42,7 +38,7 @@ public static partial class ExMV2 {
         );
     }
 
-    public static tv2 MulEntry(ev2 v1, ev2 v2) => EEx.ResolveV2(v1, v2, (a, b) => 
+    public static tv2 MulEntry(tv2 v1, tv2 v2) => TEx.ResolveV2(v1, v2, (a, b) => 
         V2(a.x.Mul(b.x), a.y.Mul(b.y)));
 }
 }

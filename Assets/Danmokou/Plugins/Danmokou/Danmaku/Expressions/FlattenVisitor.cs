@@ -45,7 +45,8 @@ class FlattenVisitor : ExpressionVisitor {
         ExpressionType.Assign, ExpressionType.AddAssign, ExpressionType.AndAssign, ExpressionType.AddAssignChecked,
         ExpressionType.DivideAssign, ExpressionType.ModuloAssign, ExpressionType.MultiplyAssign, ExpressionType.OrAssign,
         ExpressionType.PowerAssign, ExpressionType.PowerAssign, ExpressionType.SubtractAssign, ExpressionType.SubtractAssignChecked,
-        ExpressionType.LeftShiftAssign, ExpressionType.ExclusiveOrAssign, ExpressionType.MultiplyAssignChecked, 
+        ExpressionType.LeftShiftAssign, ExpressionType.ExclusiveOrAssign, ExpressionType.MultiplyAssignChecked,
+        ExpressionType.PostIncrementAssign, ExpressionType.PreIncrementAssign,
         ExpressionType.PostDecrementAssign, ExpressionType.PreDecrementAssign, ExpressionType.RightShiftAssign
     };
 
@@ -151,7 +152,11 @@ class FlattenVisitor : ExpressionVisitor {
     };
     
     protected override Expression VisitUnary(UnaryExpression node) {
-        var o = Visit(node.Operand);
+        var o = AssignTypes.Contains(node.NodeType) ? node.Operand : Visit(node.Operand);
+        //Any parameter under this unary is no longer constant
+        if (AssignTypes.Contains(node.NodeType)) {
+            new DeactivateConstantVisitor(ConstValPrmsMap).Visit(o);
+        }
         if (node.NodeType == ExpressionType.Convert) {
             //Null typecasts don't work correctly with nullable types
 #if !EXBAKE_SAVE && !EXBAKE_LOAD
@@ -232,7 +237,7 @@ class FlattenVisitor : ExpressionVisitor {
                     return Ex.Constant(1.0, typeof(double));
                 if (d == 1)
                     return visited[0];
-                if (d == 2 && !EEx.RequiresCopyOnRepeat(visited[0]))
+                if (d == 2 && !TEx.RequiresCopyOnRepeat(visited[0]))
                     return visited[0].Mul(visited[0]);
             }
         }

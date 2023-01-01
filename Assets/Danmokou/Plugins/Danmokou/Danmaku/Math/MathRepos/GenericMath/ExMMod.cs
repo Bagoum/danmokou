@@ -9,10 +9,6 @@ using tbool = Danmokou.Expressions.TEx<bool>;
 using tv2 = Danmokou.Expressions.TEx<UnityEngine.Vector2>;
 using tv3 = Danmokou.Expressions.TEx<UnityEngine.Vector3>;
 using trv2 = Danmokou.Expressions.TEx<Danmokou.DMath.V2RV2>;
-using efloat = Danmokou.Expressions.EEx<float>;
-using ev2 = Danmokou.Expressions.EEx<UnityEngine.Vector2>;
-using ev3 = Danmokou.Expressions.EEx<UnityEngine.Vector3>;
-using erv2 = Danmokou.Expressions.EEx<Danmokou.DMath.V2RV2>;
 using static Danmokou.DMath.Functions.ExM;
 
 namespace Danmokou.DMath.Functions {
@@ -21,19 +17,22 @@ namespace Danmokou.DMath.Functions {
 /// </summary>
 [Reflect]
 public static class ExMMod {
+    [BDSL2Operator]
+    public static tfloat Modulo(tfloat x, tfloat by) => Ex.Modulo(x, by);
+    
     /// <summary>
     /// Get the modulo (nonnegative) of one number by another. 
     /// </summary>
     /// <param name="x">Target value</param>
     /// <param name="by">Modulo value</param>
     /// <returns></returns>
-    public static tfloat Mod(efloat by, efloat x) =>
-        EEx.Resolve(x, by, (val, bym) => val.Sub(bym.Mul(Floor(val.Div(bym)))));
+    public static tfloat Mod(tfloat by, tfloat x) =>
+        TEx.Resolve(x, by, (val, bym) => val.Sub(bym.Mul(Floor(val.Div(bym)))));
 
     /// <summary>
     /// = Mod(1, 1/phi * x)
     /// </summary>
-    public static tfloat Modh(efloat x) => Mod(E1, iphi.Mul(x));
+    public static tfloat Modh(tfloat x) => Mod(E1, iphi.Mul(x));
     
     /// <summary>
     /// Get the modulo (nonnegative) of one number by another in double precision. 
@@ -41,8 +40,8 @@ public static class ExMMod {
     /// <param name="x">Target value</param>
     /// <param name="by">Modulo value</param>
     /// <returns></returns>
-    private static tfloat dMod(EEx<double> by, EEx<double> x) =>
-        EEx.Resolve(x, by, (val, bym) => val.Sub(bym.Mul(dFloor(val.Div(bym)))));
+    private static tfloat dMod(TEx<double> by, TEx<double> x) =>
+        TEx.Resolve(x, by, (val, bym) => val.Sub(bym.Mul(dFloor(val.Div(bym)))));
 
 
     /// <summary>
@@ -59,7 +58,7 @@ public static class ExMMod {
     /// <param name="by">Period</param>
     /// <param name="x">Value</param>
     /// <returns></returns>
-    public static tfloat SoftMod(efloat by, efloat x) => EEx.Resolve(by, _by => {
+    public static tfloat SoftMod(tfloat by, tfloat x) => TEx.Resolve(by, _by => {
         var vd = VFloat();
         return Ex.Block(new[] {vd},
             vd.Is(Mod(E2.Mul(_by), x)),
@@ -81,7 +80,7 @@ public static class ExMMod {
     /// <param name="by"></param>
     /// <param name="x"></param>
     /// <returns></returns>
-    public static tfloat RangeMod(efloat by, tfloat x) => EEx.Resolve(by, _by => Mod(E2.Mul(_by), x.Add(_by)).Sub(_by));
+    public static tfloat RangeMod(tfloat by, tfloat x) => TEx.Resolve(by, _by => Mod(E2.Mul(_by), x.Add(_by)).Sub(_by));
 
     /// <summary>
     /// = RangeMod(1, 2/phi * x)
@@ -102,8 +101,8 @@ public static class ExMMod {
     /// <param name="by"></param>
     /// <param name="x"></param>
     /// <returns></returns>
-    public static tfloat RangeSoftMod(efloat by, tfloat x) =>
-        EEx.Resolve(by, _by => SoftMod(E2.Mul(_by), x.Add(_by)).Sub(_by));
+    public static tfloat RangeSoftMod(tfloat by, tfloat x) =>
+        TEx.Resolve(by, _by => SoftMod(E2.Mul(_by), x.Add(_by)).Sub(_by));
     
     /// <summary>
     /// Periodize the return value of the target function with a "pause" at the value pauseAt for pauseLen units.
@@ -115,8 +114,8 @@ public static class ExMMod {
     /// <param name="pauseLen">Length for which to pause</param>
     /// <param name="x">Target function</param>
     /// <returns></returns>
-    public static tfloat ModWithPause(tfloat by, efloat pauseAt, efloat pauseLen, tfloat x) =>
-        EEx.Resolve(pauseAt, pauseLen, (pi, pl) => _ModWithPause(by, pi, pl, x));
+    public static tfloat ModWithPause(tfloat by, tfloat pauseAt, tfloat pauseLen, tfloat x) =>
+        TEx.Resolve(pauseAt, pauseLen, (pi, pl) => _ModWithPause(by, pi, pl, x));
     private static tfloat _ModWithPause(tfloat by, tfloat pauseAt, tfloat pauseLen, tfloat x) {
         var val = VFloat();
         return Ex.Block(new[] {val},
@@ -145,7 +144,7 @@ public static class ExMMod {
     /// <param name="by">Period (note all values are in the range [0, by/2-0.5]</param>
     /// <param name="x">Value</param>
     /// <returns></returns>
-    public static tfloat HMod(tfloat by, tfloat x) => EEx.Resolve<float>(by.Div(E2), h => {
+    public static tfloat HMod(tfloat by, tfloat x) => TEx.Resolve<float>(by.Div(E2), h => {
         var y = VFloat();
         return Ex.Block(new[] {y},
             y.Is(Mod(h.Mul(E2), x)),
@@ -172,7 +171,7 @@ public static class ExMMod {
     /// <param name="by">Period</param>
     /// <param name="x">Target function</param>
     /// <returns></returns>
-    public static tfloat HNMod(tfloat by, tfloat x) => EEx.Resolve<float>(by.Div(E2), h => {
+    public static tfloat HNMod(tfloat by, tfloat x) => TEx.Resolve<float>(by.Div(E2), h => {
         var y = VFloat();
         return Ex.Block(new[] {y},
             y.Is(Mod(h.Mul(E2), x)),
@@ -227,13 +226,13 @@ public static class ExMMod {
     /// <summary>
     /// Use Fermat's Little Theorem to reindex integers around a prime number mod.
     /// </summary>
-    public static tfloat RemapIndex(efloat mod, tfloat index) => EEx.Resolve(mod, m => Mod(m, index.Mul(m.Sub(E1))));
+    public static tfloat RemapIndex(tfloat mod, tfloat index) => TEx.Resolve(mod, m => Mod(m, index.Mul(m.Sub(E1))));
     
     /// <summary>
     /// Use Fermat's Little Theorem to reindex integers around a prime number mod, localized to the region
     /// [mod\*floor(index/mod), mod+mod\*floor(index/mod)].
     /// </summary>
-    public static tfloat RemapIndexLoop(efloat mod, efloat index) => EEx.Resolve(mod, index, (m, i) => {
+    public static tfloat RemapIndexLoop(tfloat mod, tfloat index) => TEx.Resolve(mod, index, (m, i) => {
         var rem = VFloat();
         return Ex.Block(new[] {rem},
             rem.Is(Mod(m, i)),

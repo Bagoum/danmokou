@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reactive;
 using System.Threading.Tasks;
 using BagoumLib;
 using BagoumLib.Cancellation;
@@ -119,6 +120,7 @@ public abstract class UIController : CoroutineRegularUpdater {
         new(0.5f, (a, b, t) => M.Lerp(a, b, Easers.EIOSine(t)));
     public UIScreen MainScreen { get; protected set; } = null!;
     public DisturbedAnd UpdatesEnabled { get; } = new();
+    public DisturbedAnd TransitionEnabled { get; } = new();
     public Stack<UINode> ScreenCall { get; } = new();
     public Stack<(UIGroup group, UINode? node)> GroupCall { get; } = new();
 
@@ -231,26 +233,29 @@ public abstract class UIController : CoroutineRegularUpdater {
         tokens.Add(BackgroundOpacity.Subscribe(f => UIContainer.style.unityBackgroundImageTintColor = 
             BackgroundTint.WithA(f)));
         BackgroundOpacity.Push(0);
+        tokens.Add(UpdatesEnabled.AddDisturbance(TransitionEnabled));
         if (OpenOnInit) {
-            Open().ContinueWithSync();
-            DoReturn();
+            _ = ((Func<Task>)(async () => {
+                await Open();
+                await DoReturn();
+            }))().ContinueWithSync();
         }
     }
 
-    private void DoReturn() {
+    private async Task DoReturn() {
         if (ReturnTo == null) return;
         if (Current == null)
             throw new Exception("ReturnTo exists, but Current is null");
         foreach (var inst in ReturnTo) {
             switch (inst) {
                 case CacheInstruction.ToGroup toGroup:
-                    OperateOnResult(new UIResult.GoToNode(
+                    await OperateOnResult(new UIResult.GoToNode(
                         toGroup.ScreenIndex == null ? 
                             Current.Group.Screen.Groups[toGroup.GroupIndex].EntryNode :
                             Screens[toGroup.ScreenIndex.Value]!.Groups[toGroup.GroupIndex].EntryNode), null);
                     break;
                 case CacheInstruction.ToGroupNode toGroupNode:
-                    OperateOnResult(new UIResult.GoToNode(Current.Group.Nodes[toGroupNode.NodeIndex]), null);
+                    await OperateOnResult(new UIResult.GoToNode(Current.Group.Nodes[toGroupNode.NodeIndex]), null);
                     break;
                 case CacheInstruction.ToOption toOption:
                     if (Current is IOptionNodeLR opt) {
@@ -315,8 +320,7 @@ public abstract class UIController : CoroutineRegularUpdater {
 
     //public List<(UINode?, UIResult, (UIGroup, UINode?)[])> queries = new();
     //public List<UINode> currents = new();
-    public Task OperateOnResult(UIResult? result, UITransitionOptions? opts) {
-        QueuedEvent = null;
+    private Task _OperateOnResult(UIResult? result, UITransitionOptions? opts) {
         if (result == null || (result is UIResult.GoToNode gTo && gTo.Target == Current) ||
             result is UIResult.StayOnNode) {
             if (result != null) Redraw();
@@ -422,57 +426,73 @@ public abstract class UIController : CoroutineRegularUpdater {
         return TransitionToNode(next, opts, LeftGroups.Except(EnteredGroups), EnteredGroups.Except(LeftGroups))
             .ContinueWithSync(result.OnPostTransition);
     }
+
+    public Task OperateOnResult(UIResult? result, UITransitionOptions? opts) {
+        if (uiOperations.Count == 0 && TransitionEnabled)
+            return _OperateOnResult(result, opts);
+        var tcs = new TaskCompletionSource<Unit>();
+        uiOperations.Enqueue(() => _OperateOnResult(result, opts).Pipe(tcs));
+        return tcs.Task;
+    }
     public override void RegularUpdate() {
         base.RegularUpdate();
         if (ETime.FirstUpdateForScreen && Current != null) {
             UIVisualUpdateEv.OnNext(ETime.ASSUME_SCREEN_FRAME_TIME);
             BackgroundOpacity.Update(ETime.ASSUME_SCREEN_FRAME_TIME);
         }
-        
-        if (RegularUpdateGuard && Current != null && IsActiveCurrentMenu) {
-            bool doCustomSFX = false;
-            UICommand? command = null;
-            UIResult? result = null;
-            bool silence = false;
-            if (QueuedEvent is UIPointerCommand.Goto mgt && mgt.Target.Destroyed)
+
+        while (ETime.FirstUpdateForScreen) {
+            if (TransitionEnabled && uiOperations.TryDequeue(out var nxt))
+                _ = nxt();
+            else if (UpdatesEnabled && IsActiveCurrentMenu && Current != null) {
+                bool doCustomSFX = false;
+                UICommand? command = null;
+                UIResult? result = null;
+                bool silence = false;
+                if (QueuedEvent is UIPointerCommand.Goto mgt && mgt.Target.Destroyed) {
+                } else if (QueuedEvent is UIPointerCommand.Goto mouseGoto && mouseGoto.Target.Screen == Current.Screen &&
+                          mouseGoto.Target != Current) {
+                    result = new UIResult.GoToNode(mouseGoto.Target);
+                    ISFXService.SFXService.Request(
+                        mouseGoto.Target.Group == Current.Group ? upDownSound : leftRightSound);
+                } else if (Current.CustomEventHandling().Try(out var r)) {
+                    result = r;
+                    doCustomSFX = true;
+                } else {
+                    command =
+                        (QueuedEvent is UIPointerCommand.NormalCommand uic && QueuedEvent.ValidForCurrent(Current)) ?
+                            uic.Command :
+                            CurrentInputCommand;
+                    if (command.Try(out var cmd))
+                        result = Current.Navigate(cmd);
+                    silence = (QueuedEvent as UIPointerCommand.NormalCommand)?.Silent ?? silence;
+                }
                 QueuedEvent = null;
-            if (QueuedEvent is UIPointerCommand.Goto mouseGoto && mouseGoto.Target.Screen == Current.Screen && 
-                mouseGoto.Target != Current) {
-                result = new UIResult.GoToNode(mouseGoto.Target);
-                ISFXService.SFXService.Request(
-                    mouseGoto.Target.Group == Current.Group ? upDownSound : leftRightSound);
-            } else if (Current.CustomEventHandling().Try(out var r)) {
-                result = r;
-                doCustomSFX = true;
-            } else {
-                command = (QueuedEvent is UIPointerCommand.NormalCommand uic && QueuedEvent.ValidForCurrent(Current)) ?
-                    uic.Command :
-                    CurrentInputCommand;
-                if (command.Try(out var cmd))
-                    result = Current.Navigate(cmd);
-                silence = (QueuedEvent as UIPointerCommand.NormalCommand)?.Silent ?? silence;
-            }
-            if (result is UIResult.GoToNode gTo && gTo.Target == Current)
-                result = null;
-            if (result != null && !silence) {
-                ISFXService.SFXService.Request(
-                    result switch {
-                        UIResult.StayOnNode{Action: UIResult.StayOnNodeType.NoOp} => failureSound,
-                        UIResult.StayOnNode{Action: UIResult.StayOnNodeType.Silent} => null,
-                        _ => command switch {
-                            UICommand.Left => leftRightSound,
-                            UICommand.Right => leftRightSound,
-                            UICommand.Up => upDownSound,
-                            UICommand.Down => upDownSound,
-                            UICommand.Confirm => confirmSound,
-                            UICommand.Back => backSound,
-                            _ => null
-                        }});
-            } else if (doCustomSFX)
-                //Probably need to get this from the custom node handling? idk
-                ISFXService.SFXService.Request(leftRightSound);
-            if (result != null)
-                OperateOnResult(result, UITransitionOptions.Default).ContinueWithSync();
+                if (result is UIResult.GoToNode gTo && gTo.Target == Current)
+                    result = null;
+                if (result != null && !silence) {
+                    ISFXService.SFXService.Request(
+                        result switch {
+                            UIResult.StayOnNode { Action: UIResult.StayOnNodeType.NoOp } => failureSound,
+                            UIResult.StayOnNode { Action: UIResult.StayOnNodeType.Silent } => null,
+                            _ => command switch {
+                                UICommand.Left => leftRightSound,
+                                UICommand.Right => leftRightSound,
+                                UICommand.Up => upDownSound,
+                                UICommand.Down => upDownSound,
+                                UICommand.Confirm => confirmSound,
+                                UICommand.Back => backSound,
+                                _ => null
+                            }
+                        });
+                } else if (doCustomSFX)
+                    //Probably need to get this from the custom node handling? idk
+                    ISFXService.SFXService.Request(leftRightSound);
+                if (result != null)
+                    OperateOnResult(result, UITransitionOptions.Default).ContinueWithSync();
+                break;
+            } else
+                break;
         }
     }
     
@@ -493,6 +513,7 @@ public abstract class UIController : CoroutineRegularUpdater {
 
     protected Task Close() => OperateOnResult(new UIResult.DestroyMenu(), null);
 
+    private readonly Queue<Func<Task>> uiOperations = new();
     private async Task TransitionToNode(UINode? next, UITransitionOptions opts, IEnumerable<UIGroup> leftGroups, IEnumerable<UIGroup> enteredGroups) {
         var prev = Current;
         if (prev == next) {
@@ -502,7 +523,7 @@ public abstract class UIController : CoroutineRegularUpdater {
         }
         var screenChanged = next?.Screen != prev?.Screen;
         //currents.Add(null!);
-        using var token = UpdatesEnabled.AddConst(false);
+        using var token = TransitionEnabled.AddConst(false);
         prev?.Leave(opts.Animate);
         await Task.WhenAll(leftGroups.Select(l => l.LeaveGroup()));
         if (screenChanged) {
@@ -530,6 +551,7 @@ public abstract class UIController : CoroutineRegularUpdater {
         if (next == null) {
             ScreenCall.Clear();
             GroupCall.Clear();
+            //uiOperations.Clear();
         }
     }
 

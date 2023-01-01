@@ -16,6 +16,7 @@ using JetBrains.Annotations;
 using Ex = System.Linq.Expressions.Expression;
 using static Danmokou.Expressions.ExUtils;
 using ParameterExpression = System.Linq.Expressions.ParameterExpression;
+using Parser = Danmokou.DMath.Parser;
 
 
 namespace Danmokou.Expressions {

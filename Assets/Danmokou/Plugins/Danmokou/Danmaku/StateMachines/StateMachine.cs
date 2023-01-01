@@ -24,6 +24,7 @@ using Mizuhashi;
 using UnityEngine;
 using UnityEngine.Profiling;
 using static BagoumLib.Tasks.WaitingUtils;
+using Parser = Danmokou.DMath.Parser;
 
 namespace Danmokou.SM {
 public class SMContext {
@@ -303,9 +304,9 @@ public abstract class StateMachine {
             args.Select(x => (IAST)new AST.Preconstructed<object?>(default, x)).ToArray());
     }
 
-    private static Reflector.MethodSignature GetSignature(PositionRange loc, string name, ref SMConstruction method, out Type myType) {
+    private static Reflector.InvokedMethod GetSignature(PositionRange loc, string name, ref SMConstruction method, out Type myType) {
         if (!SMInitMap.TryGetValue(name, out myType)) {
-            Reflector.MethodSignature? prms;
+            Reflector.InvokedMethod? prms;
             if (method == SMConstruction.AS_TREFLECTABLE || method == SMConstruction.ANY) {
                 if ((prms = Reflector.TryGetSignature<TTaskPattern>(name)) != null) {
                     method = SMConstruction.AS_TREFLECTABLE;
@@ -321,12 +322,12 @@ public abstract class StateMachine {
                 }
             }
         } else 
-             return Reflector.GetConstructorSignature(myType) with { CalledAs = name };
+             return Reflector.GetConstructorSignature(myType).Call(name);
         throw new ReflectionException(loc, $"{name} is not a StateMachine or applicable auto-reflectable.");
     }
 
     
-    private static IAST<StateMachine> Create(PositionRange loc, PositionRange callLoc, SMConstruction method, Reflector.MethodSignature sig, IAST[] args, bool parenthesized = false) => method switch {
+    private static IAST<StateMachine> Create(PositionRange loc, PositionRange callLoc, SMConstruction method, Reflector.InvokedMethod sig, IAST[] args, bool parenthesized = false) => method switch {
             SMConstruction.AS_REFLECTABLE =>
             new ASTFmap<TaskPattern, StateMachine>(x => new ReflectableLASM(x),
                 new AST.MethodInvoke<TaskPattern>(loc, callLoc, sig, args) 
@@ -390,7 +391,7 @@ public abstract class StateMachine {
                                 "Expected a newline after constructing a StateMachine.")) { Basis = newsm };
                         }
                         children.Add(newsm);
-                        if (newsm is AST.MethodInvoke miAst && miAst.BaseMethod.ReturnType == typeof(BreakSM))
+                        if (newsm is AST.MethodInvoke miAst && miAst.BaseMethod.Mi.ReturnType == typeof(BreakSM))
                             break;
                     }
                     nchildren = children.Count;

@@ -7,8 +7,6 @@ using Danmokou.Scriptables;
 using Ex = System.Linq.Expressions.Expression;
 using tfloat = Danmokou.Expressions.TEx<float>;
 using tv3 = Danmokou.Expressions.TEx<UnityEngine.Vector3>;
-using ev3 = Danmokou.Expressions.EEx<UnityEngine.Vector3>;
-using erv2 = Danmokou.Expressions.EEx<Danmokou.DMath.V2RV2>;
 using tv4 = Danmokou.Expressions.TEx<UnityEngine.Vector4>;
 using static Danmokou.Expressions.ExMHelpers;
 using static Danmokou.Expressions.ExUtils;
@@ -46,7 +44,7 @@ public static partial class ExMV4 {
     /// <summary>
     /// Derive a color from a vector3 containing R, G, B components and an separate alpha component.
     /// </summary>
-    public static tv4 TP3A(tfloat a, ev3 tp) => EEx.ResolveV3(tp, v3 => ExUtils.V4(v3.x, v3.y, v3.z, a));
+    public static tv4 TP3A(tfloat a, tv3 tp) => TEx.ResolveV3(tp, v3 => ExUtils.V4(v3.x, v3.y, v3.z, a));
     
     /// <summary>
     /// Combine the R,G,B components of a vector4 and a separate alpha component.

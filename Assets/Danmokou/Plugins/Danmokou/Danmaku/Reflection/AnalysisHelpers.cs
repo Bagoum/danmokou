@@ -1,9 +1,14 @@
 ﻿using BagoumLib;
+using JetBrains.Annotations;
 using LanguageServer.VsCode.Contracts;
 using Mizuhashi;
 using Position = LanguageServer.VsCode.Contracts.Position;
 
 namespace Danmokou.Reflection {
+/// <summary>
+/// Helpers consumed by the language server project.
+/// </summary>
+[PublicAPI]
 public static class AnalysisHelpers {
     public static Position ToPosition(this Mizuhashi.Position pos) =>
         new(pos.Line - 1, pos.Column - 1);
@@ -31,9 +36,9 @@ public static class AnalysisHelpers {
     public static PositionRange ToDMKRange(this Range r, string source) =>
         new(r.Start.ToDMKPosition(source), r.End.ToDMKPosition(source));
     
-    public static Diagnostic ToDiagnostic(this LocatedParserError err, string source) => 
+    public static Diagnostic ToDiagnostic<T>(this LocatedParserError err, InputStream<T> stream) => 
         new(DiagnosticSeverity.Error, 
-            new PositionRange(new Mizuhashi.Position(source, err.Index), 
-                new Mizuhashi.Position(source, source.Length)).ToRange(), "Parsing", err.Show(source));
+            stream.TokenWitness.ToPosition(err.Index, stream.Source.Length).ToRange(), 
+            "Parsing", err.Show(stream));
 }
 }

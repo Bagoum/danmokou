@@ -308,7 +308,7 @@ public class ETime : MonoBehaviour {
             if (Mathf.Abs(UntilNextFrame) < FRAME_YIELD) UntilNextFrame = 0f;
             
             EngineStateManager.UpdateEngineState();
-        } catch (IOException e) {
+        } catch (Exception e) {
             Logs.UnityError("Error thrown in the ETime update loop.");
             Logs.LogException(e);
             throw;

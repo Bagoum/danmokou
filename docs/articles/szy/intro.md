@@ -65,7 +65,7 @@ The first line of the task code is:
 using var alice = vn.Add(new ExampleCharacter());
 ```
 
-`ExampleCharacter ` is a pure C# object. If you look at the class file, you see that it's `Name` property is set to "Alice". You'll also see the corresponding mimic class, `ExampleCharacterMimic`, defined in the same file. `ExampleCharacterMimic` is a MonoBehavior, and its `CoreTypes` property links it to `ExampleCharacter`. 
+`ExampleCharacter` is a pure C# object. If you look at the class file, you can see that it's `Name` property is set to "Alice". You'll also see the corresponding mimic class, `ExampleCharacterMimic`, defined in the same file. `ExampleCharacterMimic` is a MonoBehavior, and its `CoreTypes` property links it to `ExampleCharacter`. 
 
 When we call `new ExampleCharacter()`, we create an instance of the pure C# object, and nothing else happens. When we call `vn.Add`, the object is added to the VN context, so it receives updates when the VN receives updates. Furthermore, VNWrapper will create an instance of `ExampleCharacterMimic` at this point. The value returned by `vn.Add` is the pure C# object, and in some cases we can access the mimic by accessing the `Mimic` property on it.
 

@@ -153,6 +153,8 @@ public static class FuncExtensions {
     public static Func<bool> Or(this Func<bool> x, Func<bool> y) => () => x() || y();
     public static readonly Action Noop = () => { };
 
+    public static B And<A, B>(this A a, Func<A, B> then) => then(a);
+    
     public static Action Then(this Action? a, Action? b) {
         if (a == null) return b ?? Noop;
         if (b == null) return a ?? Noop;

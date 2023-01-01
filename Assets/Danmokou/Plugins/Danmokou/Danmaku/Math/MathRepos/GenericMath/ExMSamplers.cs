@@ -10,10 +10,6 @@ using tbool = Danmokou.Expressions.TEx<bool>;
 using tv2 = Danmokou.Expressions.TEx<UnityEngine.Vector2>;
 using tv3 = Danmokou.Expressions.TEx<UnityEngine.Vector3>;
 using trv2 = Danmokou.Expressions.TEx<Danmokou.DMath.V2RV2>;
-using efloat = Danmokou.Expressions.EEx<float>;
-using ev2 = Danmokou.Expressions.EEx<UnityEngine.Vector2>;
-using ev3 = Danmokou.Expressions.EEx<UnityEngine.Vector3>;
-using erv2 = Danmokou.Expressions.EEx<Danmokou.DMath.V2RV2>;
 using ExBPY = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<float>>;
 using ExPred = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<bool>>;
 

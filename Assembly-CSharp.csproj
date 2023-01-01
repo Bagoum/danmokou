@@ -118,6 +118,7 @@
      <None Include="Assets\Danmokou\Patterns\Testing\GTR2 Test.txt" />
      <None Include="Assets\Danmokou\MiniProjects\WebGL Demo\110 exploding stars.txt" />
      <None Include="Assets\Danmokou\Patterns\examples\kanako poc.bdsl" />
+     <None Include="Assets\Danmokou\Plugins\DLLs\protobuf-net.xml" />
      <None Include="Assets\Danmokou\MiniProjects\Dialogue\jy.dialogue.1m.txt" />
      <None Include="Assets\Danmokou\Patterns\feature testing\background transition.bdsl" />
      <None Include="Assets\Danmokou\Patterns\examples\structural\examples.bdsl" />
@@ -193,6 +194,7 @@
      <None Include="Assets\Danmokou\CG\Noise.cginc" />
      <None Include="Assets\Danmokou\Patterns\examples\scrolling.bdsl" />
      <None Include="Assets\SiMP\Dialogue\simp.dialogue.5.3.txt" />
+     <None Include="Assets\Danmokou\Plugins\DLLs\protobuf-net.Core.xml" />
      <None Include="Assets\SiMP\Dialogue\simp.dialogue.1.1.txt" />
      <None Include="Assets\Danmokou\Patterns\PlayerFire\Reimu Lazors 0.bdsl" />
      <None Include="Assets\Danmokou\Rendering\Shaders\WIP\Bloom.shader" />
@@ -289,6 +291,7 @@
      <None Include="Assets\Danmokou\MiniProjects\WebGL Demo\080 aimed.txt" />
      <None Include="Assets\Danmokou\Patterns\examples\radius-based 3d.bdsl" />
      <None Include="Assets\Danmokou\Rendering\Shaders\Display\MultiplyColor.shader" />
+     <None Include="Assets\SZYU\Plugins\DLLs\Suzunoya.deps.json" />
      <None Include="Assets\Danmokou\Rendering\Shaders\Display\BG\FireTransition.shader" />
      <None Include="Assets\Danmokou\Patterns\examples\seija screen flip.bdsl" />
      <None Include="Assets\Danmokou\Rendering\Shaders\Display\Radial Flat Bar.shader" />
@@ -690,11 +693,11 @@
      <Reference Include="Suzunoya">
      <HintPath>E:\Workspace\unity\Danmokou\Assets\SZYU\Plugins\DLLs\Suzunoya.dll</HintPath>
      </Reference>
-     <Reference Include="System.Collections.Immutable">
-     <HintPath>E:\Workspace\unity\Danmokou\Assets\Danmokou\Plugins\DLLs\System.Collections.Immutable.dll</HintPath>
-     </Reference>
      <Reference Include="LanguageServer.Contracts">
      <HintPath>E:\Workspace\unity\Danmokou\Assets\Danmokou\Plugins\DLLs\LanguageServer.Contracts.dll</HintPath>
+     </Reference>
+     <Reference Include="System.Collections.Immutable">
+     <HintPath>E:\Workspace\unity\Danmokou\Assets\SZYU\Plugins\DLLs\System.Collections.Immutable.dll</HintPath>
      </Reference>
      <Reference Include="System.Reactive">
      <HintPath>E:\Workspace\unity\Danmokou\Assets\SZYU\Plugins\DLLs\System.Reactive.dll</HintPath>

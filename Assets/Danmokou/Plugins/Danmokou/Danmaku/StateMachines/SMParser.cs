@@ -7,6 +7,7 @@ using System.Linq;
 using System.Reactive;
 using BagoumLib;
 using BagoumLib.Functional;
+using UnityEngine.Profiling;
 using static BagoumLib.Functional.Helpers;
 using LPUOrError = BagoumLib.Functional.Either<Danmokou.SM.Parsing.SMParser.LocatedParseUnit, Mizuhashi.ParserError>;
 
@@ -32,7 +33,7 @@ public static class SMParser {
     public const char NEWLINE = '\n';
     
     private static readonly ParserError macroOLOpenErr = new ParserError.Expected("\"!!{ or !!{}\"");
-    public static readonly Parser<string> MACRO_OL_OPEN = inp => {
+    public static readonly Parser<char, string> MACRO_OL_OPEN = inp => {
         if (inp.Remaining < 3)
             return new(macroOLOpenErr, inp.Index);
         if (inp.CharAt(0) != '!' || inp.CharAt(1) != '!' || inp.CharAt(2) != '{')
@@ -42,14 +43,14 @@ public static class SMParser {
         return new("!!{", null, inp.Index, inp.Step(3));
     };
 
-    public static Parser<string> Bounded(char c) =>
+    public static Parser<char, string> Bounded(char c) =>
         Between(c, ManySatisfy(x => x != c));
 
     public static bool WhiteInline(char c) => c != NEWLINE && char.IsWhiteSpace(c);
 
 
-    private static Parser<char> ArgSep = Char(ARG_SEP);
-    private static Parser<char> WhitespacedArgSep = inp => {
+    private static Parser<char, char> ArgSep = Char(ARG_SEP);
+    private static Parser<char, char> WhitespacedArgSep = inp => {
         var w1 = Whitespace(inp); //cannot fail, so we don't need to check output
         var c = ArgSep(inp);
         if (!c.Result.Valid)
@@ -60,10 +61,10 @@ public static class SMParser {
     /// <summary>
     /// Given an element parser, parse a parentheses sequence of <see cref="ARG_SEP"/>-separated elements.
     /// </summary>
-    public static Parser<List<T>> Paren<T>(Parser<T> p) => 
+    public static Parser<char, List<T>> Paren<T>(Parser<char, T> p) => 
         Paren1(Whitespace.IgThen(p.SepBy(WhitespacedArgSep)));
 
-    public static Parser<T> Paren1<T>(Parser<T> p) {
+    public static Parser<char, T> Paren1<T>(Parser<char, T> p) {
         var p1 = Char(OPEN_ARG);
         var p2 = Char(CLOSE_ARG);
         var err = new ParserError.Failure("Expected parentheses to close here.");
@@ -81,7 +82,7 @@ public static class SMParser {
         };
     }
 
-    public static readonly Parser<Unit> ILSpaces = SkipManySatisfy(WhiteInline);
+    public static readonly Parser<char, Unit> ILSpaces = SkipManySatisfy(WhiteInline);
 
     private static bool IsLetter(char c) =>
         c != COMMENT && c != MACRO_INVOKE && c != MACRO_VAR && c != '!'
@@ -171,7 +172,7 @@ public static class SMParser {
                 return Realize(args, assignLocation);
         }
 
-        public static readonly Parser<string> Prm = 
+        public static readonly Parser<char, string> Prm = 
             Many1Satisfy(c => char.IsLetterOrDigit(c) || c == '_', "letter/digit/underscore");//.Label("macro parameter name");
 
     }
@@ -208,10 +209,10 @@ public static class SMParser {
         public LocatedParserError Locate(ParserError p) => new LocatedParserError(Start.Index, p);
     }
 
-    private static Parser<LocatedParseUnit> Locate(this Parser<ParseUnit> p) =>
+    private static Parser<char, LocatedParseUnit> Locate(this Parser<char, ParseUnit> p) =>
             p.WrapPosition((x, pos) => new LocatedParseUnit(x, pos));
     
-    private static Parser<(T val, PositionRange position)> WrapPosition<T>(this Parser<T> p) =>
+    private static Parser<char, (T val, PositionRange position)> WrapPosition<T>(this Parser<char, T> p) =>
             p.WrapPosition((x, pos) => (x, pos));
         
 
@@ -316,7 +317,7 @@ public static class SMParser {
         COMMENT, MACRO_INVOKE, MACRO_VAR, '!',
         OPEN_ARG, CLOSE_ARG, ARG_SEP, OPEN_PF, CLOSE_PF, QUOTE
     };
-    private static Parser<string> MakeSimpleStringParser(bool atleastOne) {
+    private static Parser<char, string> MakeSimpleStringParser(bool atleastOne) {
         var expected = new ParserError.Expected("basic letter");
         return input => {
             var len = 0;
@@ -335,14 +336,14 @@ public static class SMParser {
         };
     }
 
-    private static readonly Parser<string> simpleString0 = MakeSimpleStringParser(false);
-    private static readonly Parser<string> simpleString1 = MakeSimpleStringParser(true);
+    private static readonly Parser<char, string> simpleString0 = MakeSimpleStringParser(false);
+    private static readonly Parser<char, string> simpleString1 = MakeSimpleStringParser(true);
 
-    private static Parser<List<T>> sepByAll2<T>(Parser<T> p, Parser<T> sep) =>
+    private static Parser<char, List<T>> sepByAll2<T>(Parser<char, T> p, Parser<char, T> sep) =>
         //this is a bit faster than calling p.SepByAll(sep, 2), though the error might be less clear
         Sequential(p, sep, p.SepByAll(sep, 1), (a, b, rest) => rest.Prepend(b).Prepend(a).ToList());
     
-    private static Parser<List<T>> sepByAll1<T>(Parser<T> p, Parser<T> sep) =>
+    private static Parser<char, List<T>> sepByAll1<T>(Parser<char, T> p, Parser<char, T> sep) =>
         //this is a bit faster than calling p.SepByAll(sep, 1), though the error might be less clear
         Sequential(p, sep, p.SepByAll(sep, 0), (a, b, rest) => rest.Prepend(b).Prepend(a).ToList());
 
@@ -364,31 +365,31 @@ public static class SMParser {
     // that will be used
     //There is regrettably not much better way to deal with macros since preserving the
     // macro's original locations would really break the parse tree
-    private static Parser<ParseUnit> InvokeMacroByName(string name, List<LocatedParseUnit> args, PositionRange useLocation) =>
-        GetState<State>().SelectMany(state => state.macros.TryGetValue(name, out var m) ?
-                ReturnOrError(m.Invoke(args, useLocation)) :
-                Fail<LocatedParseUnit>($"No macro exists with name {name}.")
+    private static Parser<char, ParseUnit> InvokeMacroByName(string name, List<LocatedParseUnit> args, PositionRange useLocation) =>
+        GetState<char, State>().SelectMany(state => state.macros.TryGetValue(name, out var m) ?
+                ReturnOrError<char, LocatedParseUnit>(m.Invoke(args, useLocation)) :
+                Fail<char, LocatedParseUnit>($"No macro exists with name {name}.")
             , (s, lpu) => lpu.unit);
 
-    private static readonly Parser<LocatedParseUnit> CNewln =
+    private static readonly Parser<char, LocatedParseUnit> CNewln =
         Char(COMMENT).IgThen(SkipManySatisfy(x => x != NEWLINE)).Optional()
             .IgThen(Newline.WrapPosition())
             .FMap(p => new LocatedParseUnit(ParseUnit.Newline, p.position));
 
-    private static Parser<List<LocatedParseUnit>> Words(bool allowNewline) {
+    private static Parser<char, List<LocatedParseUnit>> Words(bool allowNewline) {
         //This is required to avoid circular object definitions :(
-        Parser<List<LocatedParseUnit>>? lazy = null;
-        Parser<List<LocatedParseUnit>> LoadLazy() =>
+        Parser<char, List<LocatedParseUnit>>? lazy = null;
+        Parser<char, List<LocatedParseUnit>> LoadLazy() =>
             (allowNewline ? MainParserNL : MainParser).ThenIg(ILSpaces).Many1();
         return inp => (lazy ??= LoadLazy())(inp);
     }
 
-    private static readonly Parser<List<LocatedParseUnit>> WordsTopLevel = Words(true);
-    private static readonly Parser<List<LocatedParseUnit>> WordsInBlock = WordsTopLevel;
-    private static readonly Parser<List<LocatedParseUnit>> WordsInline = Words(false);
+    private static readonly Parser<char, List<LocatedParseUnit>> WordsTopLevel = Words(true);
+    private static readonly Parser<char, List<LocatedParseUnit>> WordsInBlock = WordsTopLevel;
+    private static readonly Parser<char, List<LocatedParseUnit>> WordsInline = Words(false);
 
     private static readonly List<LocatedParseUnit> empty = new();
-    private static readonly Parser<List<LocatedParseUnit>> ParenArgs = 
+    private static readonly Parser<char, List<LocatedParseUnit>> ParenArgs = 
         //Strictly speaking, paren args must be nonempty, but it's easier to report that in typechecking
         Paren(WordsInBlock.OptionalOr(empty).FMap(ParseUnit.Nest).Locate()).FMap(eles => {
             if (eles.Count == 1 && eles[0].position.Empty && 
@@ -397,7 +398,7 @@ public static class SMParser {
             return eles;
         });
 
-    private static readonly Parser<MacroArg> MacroPrmDecl =
+    private static readonly Parser<char, MacroArg> MacroPrmDecl =
         Macro.Prm.Pipe(
             Whitespace1.IgThen(
                 WrapPosition(WordsInBlock)).OptionalOrNull(),
@@ -406,7 +407,7 @@ public static class SMParser {
                 new MacroArg(key, null));//.Label("macro parameter");
 
 
-    private static readonly Parser<ParseUnit> OLMacroParser =
+    private static readonly Parser<char, ParseUnit> OLMacroParser =
         Sequential(
                 MACRO_OL_OPEN.IgThen(ILSpaces).IgThen(simpleString1),
                 ILSpaces,
@@ -415,12 +416,12 @@ public static class SMParser {
                 (key, _3, content, _4) => (key, content))
             .SelectMany(
                 kcls =>
-                    UpdateState<State>(s => new State(s.macros.SetItem(kcls.key,
+                    UpdateState<char, State>(s => new State(s.macros.SetItem(kcls.key,
                         Macro.Create(kcls.key, new List<MacroArg>(),
                             new LocatedParseUnit(kcls.content))))),
                 (kcls, _) => ParseUnit.MacroDef(kcls.key));//.Label("single-line macro parser (!!{)");
 
-    private static readonly Parser<ParseUnit> MacroParser =
+    private static readonly Parser<char, ParseUnit> MacroParser =
         Between(MACRO_OPEN,
             Sequential(
                 Whitespace,
@@ -429,14 +430,14 @@ public static class SMParser {
                 Whitespace.IgThen(WordsTopLevel),
                 (_1, key, prms, content) => (key, prms, content))
             .SelectMany(kpcls => 
-                UpdateState<State>(s => new State(s.macros.SetItem(kpcls.key, 
+                UpdateState<char, State>(s => new State(s.macros.SetItem(kpcls.key, 
                     Macro.Create(kpcls.key, kpcls.prms, 
                         new LocatedParseUnit(kpcls.content))))),
                 (kpcls, _) => ParseUnit.MacroDef(kpcls.key)), 
             MACRO_CLOSE
         ).ThenIg(CNewln).Label("macro (bounded with !{ }!)");
 
-    private static Parser<ParseUnit> PropertyParser(string marker, string result) =>
+    private static Parser<char, ParseUnit> PropertyParser(string marker, string result) =>
         Sequential(
             String(marker).WrapPosition(), 
             ILSpaces, 
@@ -444,14 +445,14 @@ public static class SMParser {
             (ps, _2, words) => ParseUnit.Words(words.Prepend(
                 new (ParseUnit.Atom(result), ps.position)).ToList()));
 
-    private static readonly Parser<ParseUnit> MacroReinvokeParser =
+    private static readonly Parser<char, ParseUnit> MacroReinvokeParser =
         Sequential(
             String(MACRO_REINVOKE),
             simpleString1,
             ParenArgs,
             (_, key, args) => ParseUnit.MacroReinvoke(key, args));
 
-    private static readonly Parser<ParseUnit> MacroInvokeParser =
+    private static readonly Parser<char, ParseUnit> MacroInvokeParser =
         Sequential(
             Char(MACRO_INVOKE),
             simpleString1,
@@ -460,7 +461,7 @@ public static class SMParser {
         .WrapPosition()
         .Bind(ka => InvokeMacroByName(ka.val.key, ka.val.args, ka.position));
 
-    private static readonly Parser<LocatedParseUnit> MainParser = Choice(
+    private static readonly Parser<char, LocatedParseUnit> MainParser = Choice(
         String("///").IgThen(SkipManySatisfy(_ => true)).FMap(_ => ParseUnit.End()), //.Label("end of file"),
         String(LAMBDA_MACRO_PRM).Select(_ => ParseUnit.LambdaMacroParam()),
         OLMacroParser,
@@ -490,7 +491,7 @@ public static class SMParser {
         Bounded(QUOTE).FMap(ParseUnit.Quote)
     ).Locate();
     
-    private static readonly Parser<LocatedParseUnit> MainParserNL = CNewln.Or(MainParser);
+    private static readonly Parser<char, LocatedParseUnit> MainParserNL = CNewln.Or(MainParser);
     
 
     private static readonly Dictionary<string, string[]> Replacements = new() {
@@ -537,13 +538,11 @@ public static class SMParser {
                 return new[] {s};
             case ParseUnit.Type.Paren:
                 return ls.Select(pFlatten).AccFailToR()
-                    .FMapL(x => x.SeparateBy(",").Prepend("(").Append(")"))
-                    .FMapR(errs => errs.Join().ToList());
+                    .FMapL(x => x.SeparateBy(",").Prepend("(").Append(")"));
             case ParseUnit.Type.Words:
                 return ls.TakeWhile(l => l.unit.type != ParseUnit.Type.End)
                     .Select(pFlatten).AccFailToR()
-                    .FMapL(t => t.Join())
-                    .FMapR(errs => errs.Join().ToList());
+                    .FMapL(t => t.Join());
             case ParseUnit.Type.NoSpaceWords:
                 return ls.Select(pFlatten).AccFailToR()
                     .FMapL(arrs => {
@@ -557,8 +556,7 @@ public static class SMParser {
                             }
                         }
                         return (IEnumerable<string>) words;
-                    })
-                    .FMapR(errs => errs.Join().ToList());;
+                    });
             case ParseUnit.Type.Newline:
                 return new[] {"\n"};
             case ParseUnit.Type.MacroDef:
@@ -620,15 +618,13 @@ public static class SMParser {
                     .TakeWhile(l => l.unit.type != ParseUnit.Type.End)
                     .Select(pFlatten2)
                     .AccFailToR()
-                    .FMapL(t => t.Join())
-                    .FMapR(es => es.Join().ToList());
+                    .FMapL(t => t.Join());
             case ParseUnit.Type.NoSpaceWords:
                 return ls
                     .Select(pFlatten)
                     .AccFailToR()
                     .FMapL(t => (IEnumerable<ParsedUnit>) 
-                        new[] {S(string.Concat(t.Join()), lpu)})
-                    .FMapR(es => es.Join().ToList());
+                        new[] {S(string.Concat(t.Join()), lpu)});
             case ParseUnit.Type.Newline:
                 return new[] {S("\n", lpu)};
             case ParseUnit.Type.MacroDef:
@@ -648,29 +644,29 @@ public static class SMParser {
         }
     }
 
-    private static readonly Parser<LocatedParseUnit> FullParser =
-        SetState(new State(ImmutableDictionary<string, Macro>.Empty))
+    private static readonly Parser<char, LocatedParseUnit> FullParser =
+        SetState<char, State>(new State(ImmutableDictionary<string, Macro>.Empty))
             .IgThen(WordsTopLevel.FMap(ParseUnit.Words))
-            .ThenIg(EOF.Or(p => new ParseResult<Unit>(
+            .ThenIg(EOF<char>().Or(p => new ParseResult<Unit>(
                 new ParserError.Failure($"The character '{p.Next}' could not be handled."), p.Index, p.Index + 1)))
             .Locate();
         
-    private static Either<LocatedParseUnit, LocatedParserError> RunSMParser(string s) {
-        var result = FullParser(new InputStream("State Machine", s, default!));
+    private static Either<LocatedParseUnit, LocatedParserError> RunSMParser(string s, out InputStream<char> stream) {
+        var result = FullParser(stream = new InputStream<char>("State Machine", s.ToCharArray(), default!));
         return result.Status == ResultStatus.OK ? 
             result.Result.Value : 
             (result.Error ?? new(0, new ParserError.Failure("Parsing failed, but it's unclear why.")));
     }
 
-    public static Either<string, List<LocatedParserError>> RunSMParserAndRemakeAsString(string s) =>
-        RunSMParser(s)
+    public static Either<string, List<LocatedParserError>> RunSMParserAndRemakeAsString(string s, out InputStream<char> stream) =>
+        RunSMParser(s, out stream)
             //We only get at most one error from the base combinatorial parsing
             .FMapR(err => new List<LocatedParserError>(){err})
             .BindL(pFlatten)
             .FMapL(ss => string.Join(" ", ss));
 
-    public static Either<ParsedUnit[], List<LocatedParserError>> ExportSMParserToParsedUnits(string s) =>
-        RunSMParser(s)
+    public static Either<ParsedUnit[], List<LocatedParserError>> ExportSMParserToParsedUnits(string s, out InputStream<char> stream) =>
+        RunSMParser(s, out stream)
             .FMapR(err => new List<LocatedParserError>(){err})
             .BindL(lpu => pFlatten2(lpu)
             .FMapL(x => x.ToArray()));

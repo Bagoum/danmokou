@@ -217,16 +217,16 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
                 yield return p.ToSymbolTree();
         }
     }
-    protected DocumentSymbol MethodToSymbolTree(MethodSignature Method) =>
-        Method.IsFallthrough ? 
+    protected DocumentSymbol MethodToSymbolTree(InvokedMethod Method) =>
+        Method.Mi.IsFallthrough ? 
             Params[0].ToSymbolTree() :
-            new(Method.Name, Method.TypeOnlySignature, SymbolKind.Method, Position.ToRange(),
+            new(Method.Name, Method.Mi.TypeOnlySignature, SymbolKind.Method, Position.ToRange(),
                 FlattenParams());
 
-    protected IEnumerable<SemanticToken> MethodToSemanticTokens(MethodSignature method, PositionRange methodPosition) =>
-        Params.SelectMany(p => p.ToSemanticTokens()).Prepend(SemanticToken.FromMethod(method, methodPosition));
+    protected IEnumerable<SemanticToken> MethodToSemanticTokens(InvokedMethod method, PositionRange methodPosition) =>
+        Params.SelectMany(p => p.ToSemanticTokens()).Prepend(SemanticToken.FromMethod(method.Mi, methodPosition));
 
-    protected IEnumerable<PrintToken> DebugPrintMethod(MethodSignature Method) {
+    protected IEnumerable<PrintToken> DebugPrintMethod(InvokedMethod Method) {
         yield return $"{CompactPosition} {Method.TypeEnclosedName}(";
         if (Params.Length > 1) {
             yield return PrintToken.indent;
@@ -269,14 +269,14 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
     }
 
     public abstract record BaseMethodInvoke(PositionRange Position, PositionRange MethodPosition,
-        MethodSignature BaseMethod, params IAST[] Params) : AST(Position, Params), IAST {
+        InvokedMethod BaseMethod, params IAST[] Params) : AST(Position, Params), IAST {
         /// <summary>
         /// Whether the argument list is provided in parentheses (ie. as `func(arg1, arg2)` as opposed to `func arg1 arg2`).
         /// </summary>
         public bool Parenthesized { get; init; } = false;
-        public override string Explain() => $"{CompactPosition} {BaseMethod.AsSignature}";
+        public override string Explain() => $"{CompactPosition} {BaseMethod.Mi.AsSignature}";
         public override DocumentSymbol ToSymbolTree() {
-            if (BaseMethod.isCtor && BaseMethod.ReturnType == typeof(PhaseSM) && !Params[1].IsUnsound && Params[1].EvaluateObject(new()) is PhaseProperties props) {
+            if (BaseMethod.Mi.IsCtor && BaseMethod.Mi.ReturnType == typeof(PhaseSM) && !Params[1].IsUnsound && Params[1].EvaluateObject(new()) is PhaseProperties props) {
                 return new($"{props.phaseType?.ToString() ?? "Phase"}", props.cardTitle?.Value ?? "",
                     SymbolKind.Method, Position.ToRange(), FlattenParams());
             }
@@ -289,8 +289,8 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
         public override IEnumerable<PrintToken> DebugPrint() => DebugPrintMethod(BaseMethod);
 
         public override IEnumerable<ReflectDiagnostic> WarnUsage(ReflCtx ctx) {
-            if (ctx.Props.warnPrefix && BaseMethod.Mi.GetCustomAttributes<WarnOnStrictAttribute>().Any(wa =>
-                    (int)ctx.Props.strict >= wa.strictness)) {
+            if (ctx.Props.warnPrefix && BaseMethod.Mi.GetAttribute<WarnOnStrictAttribute>() is {} wa 
+                                     && (int)ctx.Props.strict >= wa.strictness) {
                 yield return new ReflectDiagnostic.Warning(Position,
                     $"The method \"{BaseMethod.TypeEnclosedName}\" is not permitted for use in a script with strictness {ctx.Props.strict}. You might accidentally be using the prefix version of an infix function.");
             }
@@ -306,7 +306,7 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
     /// <param name="MethodPosition">Position of the method name alone (ie. just `MethodName`)</param>
     /// <param name="Method">Method signature</param>
     /// <param name="Params">Arguments to the method</param>
-    public record MethodInvoke(PositionRange Position, PositionRange MethodPosition, MethodSignature Method, params IAST[] Params) : BaseMethodInvoke(Position, MethodPosition, Method, Params), IAST {
+    public record MethodInvoke(PositionRange Position, PositionRange MethodPosition, InvokedMethod Method, params IAST[] Params) : BaseMethodInvoke(Position, MethodPosition, Method, Params), IAST {
         public enum InvokeType {
             Normal,
             SM,
@@ -317,9 +317,9 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
 
         public InvokeType Type { get; init; } = InvokeType.Normal;
 
-        public MethodInvoke(IAST nested, MethodSignature sig) : this(nested.Position, new PositionRange(nested.Position.Start, nested.Position.Start), sig, nested) { }
+        public MethodInvoke(IAST nested, InvokedMethod sig) : this(nested.Position, new PositionRange(nested.Position.Start, nested.Position.Start), sig, nested) { }
 
-        public Type ResultType => Method.ReturnType;
+        public Type ResultType => Method.Mi.ReturnType;
 
         private static readonly Type gcxPropsType = typeof(GenCtxProperties);
         private static readonly Type gcxPropArrType = typeof(GenCtxProperty[]);
@@ -351,8 +351,8 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
             for (int ii = 0; ii < prms.Length; ++ii)
                 prms[ii] = Params[ii].EvaluateObject(data);
             construct:
-            var result = Method.InvokeMi(prms);
-            if (Method.Mi.GetCustomAttribute<ExtendGCXUExposedAttribute>() != null && data.ExposedVariables.Count > 0) {
+            var result = Method.Mi.InvokeStatic(prms);
+            if (Method.Mi.GetAttribute<ExtendGCXUExposedAttribute>() != null && data.ExposedVariables.Count > 0) {
                 var gcxu = (result as GCXU ?? throw new StaticException(
                     $"{nameof(ExtendGCXUExposedAttribute)} used on method {Method.Name} that does not return GCXU"));
                 return gcxu with {
@@ -368,7 +368,7 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
     /// An AST that creates an object through method invocation.
     /// <br/>The return type of the method is specified.
     /// </summary>
-    public record MethodInvoke<T>(PositionRange Position, PositionRange MethodPosition, MethodSignature Method, params IAST[] Params) : MethodInvoke(
+    public record MethodInvoke<T>(PositionRange Position, PositionRange MethodPosition, InvokedMethod Method, params IAST[] Params) : MethodInvoke(
         Position, MethodPosition, Method, Params), IAST<T> {
         public T Evaluate(ASTEvaluationData data) => EvaluateObject(data) switch {
             T t => t,
@@ -383,13 +383,13 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
     /// this AST constructs a function T->R that uses T to defuncify the parameters and pass them to member.
     /// </summary>
     public record FuncedMethodInvoke<T, R>
-        (PositionRange Position, PositionRange MethodPosition, FuncedMethodSignature<T, R> Method, IAST[] Params) : BaseMethodInvoke(Position, MethodPosition, Method, Params),
+        (PositionRange Position, PositionRange MethodPosition, LiftedInvokedMethod<T, R> Method, IAST[] Params) : BaseMethodInvoke(Position, MethodPosition, Method, Params),
             IAST<Func<T, R>> {
         public Func<T, R> Evaluate(ASTEvaluationData data) {
             var fprms = new object?[Params.Length];
             for (int ii = 0; ii < fprms.Length; ++ii)
                 fprms[ii] = Params[ii].EvaluateObject(data);
-            return Method.InvokeMiFunced(fprms);
+            return Method.TypedFMi.InvokeMiFunced(null, fprms);
         }
     }
 
@@ -496,7 +496,7 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
                            throw new StaticException($"Couldn't find lambda constructor method for " +
                                                      $"count {Method.Params.Length}");
             return lambdaer.Invoke(null, new object[] {
-                (Func<object?[], object?>)Method.InvokeMi
+                (Func<object?[], object?>)(Method as IMethodSignature).InvokeStatic
             });
         }
 

@@ -19,10 +19,10 @@ public static class THelpers {
     }
 }
 public static class TAssert {
-    public static void ListEq<T>(IReadOnlyList<T> left, IReadOnlyList<T> right) where T : IEquatable<T> {
+    public static void ListEq<T>(IReadOnlyList<T> left, IReadOnlyList<T> right) {
         string extraFail = (left.Count == right.Count) ? "" : $"Lengths are mismatched: {left.Count}, {right.Count}. ";
         for (int ii = 0; ii < left.Count && ii < right.Count; ++ii) {
-            if (!left[ii].Equals(right[ii])) {
+            if (!Equals(left[ii], right[ii])) {
                 Assert.Fail($"{extraFail}At index {ii}, left is {left[ii]} and right is {right[ii]}.");
             }
         }
@@ -37,7 +37,16 @@ public static class TAssert {
         }
     }
 
-    public static void ThrowsMessage(string pattern, Action code) {
+
+    public static void ThrowsMessage(string contents, Action code) {
+        try {
+            code();
+            Assert.Fail("Expected code to fail");
+        } catch (Exception e) {
+            StringContains(contents, Exceptions.PrintNestedException(e));
+        }
+    }
+    public static void ThrowsRegex(string pattern, Action code) {
         try {
             code();
             Assert.Fail("Expected code to fail");
@@ -45,12 +54,25 @@ public static class TAssert {
             RegexMatches(pattern, Exceptions.PrintNestedException(e));
         }
     }
-    public static void RegexMatches(string pattern, string message) {
+
+    public static void StringContains(string pattern, string message) {
+        if (!message.Contains(pattern)) {
+            Assert.Fail($"Could not find substring `{pattern}` in `{message}`");
+        } else {
+            Debug.Log($"Found substring `{pattern}` in:`\n{message}\n`\n");
+        }
+    }
+    public static bool _RegexMatches(string pattern, string message) {
         if (!new Regex(pattern, RegexOptions.Singleline).Match(message).Success) {
-            Assert.Fail($"Could not find pattern `{pattern}` in `{message}`");
+            return false;
         } else {
             Debug.Log($"Found pattern `{pattern}` in:`\n{message}\n`\n");
+            return true;
         }
+    }
+    public static void RegexMatches(string pattern, string message) {
+        if (!_RegexMatches(pattern, message))
+            Assert.Fail($"Could not find pattern `{pattern}` in `{message}`");
     }
     private const float err = 0.0001f;
 

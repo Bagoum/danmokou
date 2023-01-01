@@ -44,6 +44,7 @@
   <ItemGroup>
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\Graphics\ComputeBufferPool.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\Core\Input\AggregateInputSource.cs" />
+     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\UI\XML\Atoms\UITransitionOptions.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\Core\ReflectionUtils.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\Core\Input\KBMInputSource.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\UI\XML\FixedXMLHelper.cs" />
@@ -100,6 +101,7 @@
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\Scriptables\Values\SO.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\Graphics\MaterialUtils.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\Achievements\Providers.cs" />
+     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\Services\MainCamera.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\Scriptables\Values\SOTextAssets.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\Localization\Generated\Tutorial.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\Scriptables\Colors\DerivedGradientMap.cs" />
@@ -124,12 +126,14 @@
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\Core\Input\InputConfig.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\Scriptables\CameraTransitionConfig.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\Scenes\CameraTransition.cs" />
+     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\Core\RUWaitingUtils.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\Core\Input\MainInputSource.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\DMath\RNG.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\UI\XML\XMLUtilsCSS.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\Scriptables\Values\SOInt.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\Expressions\ExUtils.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\Scriptables\Values\SOFloat.cs" />
+     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\Graphics\GraphicsSettings.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\Core\Input\InCodeInputSource.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\Localization\Generated\TestContent1.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\UI\XML\XMLDynamicMenu.cs" />
@@ -149,17 +153,13 @@
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\Core\Input\ControllerInputSource.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\UI\XML\FixedXMLObject.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\Scriptables\Colors\Palette.cs" />
+     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\UI\XML\IUXMLReferences.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\Core\Input\IInputSource.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\Scriptables\Values\SOVec3.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\Achievements\Interfaces.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\DMath\Math.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\Behavior\CoroutineRegularUpdater.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\DMath\MathTypes.cs" />
-     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\Graphics\GraphicsSettings.cs" />
-     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\Services\MainCamera.cs" />
-     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\UI\XML\IUXMLReferences.cs" />
-     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\Core\RUWaitingUtils.cs" />
-     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Core\UI\XML\Atoms\UITransitionOptions.cs" />
      <None Include="Assets\Danmokou\Plugins\Danmokou\Core\Danmokou.Core.asmdef" />
      <Reference Include="UnityEngine">
      <HintPath>C:\Program Files\Unity\Hub\Editor\2021.3.7f1\Editor\Data\Managed\UnityEngine\UnityEngine.dll</HintPath>
@@ -428,11 +428,11 @@
      <Reference Include="Suzunoya">
      <HintPath>E:\Workspace\unity\Danmokou\Assets\SZYU\Plugins\DLLs\Suzunoya.dll</HintPath>
      </Reference>
-     <Reference Include="System.Collections.Immutable">
-     <HintPath>E:\Workspace\unity\Danmokou\Assets\Danmokou\Plugins\DLLs\System.Collections.Immutable.dll</HintPath>
-     </Reference>
      <Reference Include="LanguageServer.Contracts">
      <HintPath>E:\Workspace\unity\Danmokou\Assets\Danmokou\Plugins\DLLs\LanguageServer.Contracts.dll</HintPath>
+     </Reference>
+     <Reference Include="System.Collections.Immutable">
+     <HintPath>E:\Workspace\unity\Danmokou\Assets\SZYU\Plugins\DLLs\System.Collections.Immutable.dll</HintPath>
      </Reference>
      <Reference Include="System.Reactive">
      <HintPath>E:\Workspace\unity\Danmokou\Assets\SZYU\Plugins\DLLs\System.Reactive.dll</HintPath>

@@ -35,7 +35,7 @@ public abstract class IParseQueue {
 
     public PositionRange PositionUpToCurrentObject => CurrentUnitIndex.Try(out var cu) ? PositionUpToObject(cu) : Position;
     public abstract Reflector.ReflCtx Ctx { get; }
-    public string AsFileLink(Reflector.MethodSignature sig) => Ctx.AsFileLink(sig);
+    public string AsFileLink(Reflector.InvokedMethod sig) => Ctx.AsFileLink(sig);
     public abstract IParseQueue NextChild();
 
     /// <summary>
@@ -151,12 +151,12 @@ public abstract class IParseQueue {
     public virtual bool AllowPostAggregate => false;
     
     public static IParseQueue Lex(string s) {
-        Profiler.BeginSample("State Machine Parser");
-        var parsed = SMParser.ExportSMParserToParsedUnits(s);
+        Profiler.BeginSample("SM Parser");
+        var parsed = SMParser.ExportSMParserToParsedUnits(s, out var stream);
         Profiler.EndSample();
         if (parsed.IsLeft)
             return new PUListParseQueue((parsed.Left, parsed.Left.ToRange()), null);
-        throw new Exception(string.Join("\n", parsed.Right.Select(p => p.Show(s))));
+        throw new Exception(string.Join("\n", parsed.Right.Select(p => p.Show(stream))));
     }
 }
 

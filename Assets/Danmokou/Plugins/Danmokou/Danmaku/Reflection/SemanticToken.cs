@@ -90,7 +90,7 @@ public class SemanticTokenModifiers {
 /// <param name="TokenMods">Token modifiers, from <see cref="SemanticTokenModifiers"/></param>
 [PublicAPI]
 public record SemanticToken(PositionRange Position, string TokenType, IList<string>? TokenMods = null) {
-    public static SemanticToken FromMethod(Reflector.MethodSignature mi, PositionRange p, string? tokenType = null) {
+    public static SemanticToken FromMethod(Reflector.IMethodSignature mi, PositionRange p, string? tokenType = null) {
         List<string>? mods = null;
         void AddMod(string? mod) {
             if (mod != null)
@@ -99,15 +99,15 @@ public record SemanticToken(PositionRange Position, string TokenType, IList<stri
         void AddModIf(bool guard, string mod) {
             if (guard) AddMod(mod);
         }
-        AddModIf(mi.Mi.IsStatic, SemanticTokenModifiers.Static);
-        AddModIf(mi.IsDeprecated, SemanticTokenModifiers.Deprecated);
+        AddModIf(mi.IsStatic, SemanticTokenModifiers.Static);
+        AddModIf(mi.GetAttribute<ObsoleteAttribute>() != null, SemanticTokenModifiers.Deprecated);
         if (SemanticTokenModifiers.TypeToMethodMod.TryGetValue(Reflector.RemapExType(mi.ReturnType), out var v))
             AddMod(v);
         else if (mi.ReturnType.IsSubclassOf(typeof(StateMachine)))
             AddMod(SemanticTokenModifiers.SM);
-        if (mi.Mi.GetCustomAttribute<AtomicAttribute>() != null || mi.Mi.DeclaringType?.GetCustomAttribute<AtomicAttribute>() != null)
+        if (mi.GetAttribute<AtomicAttribute>() != null || mi.DeclaringType?.GetCustomAttribute<AtomicAttribute>() != null)
             AddMod(SemanticTokenModifiers.Atomic);
-        var defaultTokenType = mi.Mi.GetCustomAttribute<OperatorAttribute>() != null ?
+        var defaultTokenType = mi.GetAttribute<OperatorAttribute>() != null ?
                 SemanticTokenTypes.Operator :
                 SemanticTokenTypes.Method;
         return new(p, tokenType ?? defaultTokenType, mods);

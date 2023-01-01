@@ -80,7 +80,7 @@ public static partial class Reflector {
         /// Generates a file link for the method signature if permitted by the
         /// <see cref="UseFileLinks"/> property, else just use the method name.
         /// </summary>
-        public string AsFileLink(MethodSignature sig) => 
+        public string AsFileLink(InvokedMethod sig) => 
             UseFileLinks ? sig.FileLink : sig.TypeEnclosedName;
 
         public static ReflCtx Neutral = new ReflCtx();
@@ -99,9 +99,9 @@ public static partial class Reflector {
     /// <param name="sig">Type information of arguments.</param>
     /// <param name="q">Queue from which to parse elements.</param>
     /// <returns>Filled array of ASTs, range covered by the ASTs, and an exception that should enclose the caller if nonnull.</returns>
-    public static ASTArrayFill FillASTArray(IAST[] asts, int starti, MethodSignature sig, IParseQueue q) {
-        int nargs = sig.ExplicitParameterCount(starti);
-        var prms = sig.Params;
+    public static ASTArrayFill FillASTArray(IAST[] asts, int starti, InvokedMethod sig, IParseQueue q) {
+        int nargs = (sig.Mi as MethodSignature)!.ExplicitParameterCount(starti);
+        var prms = sig.Mi.Params;
         if (nargs == 0) {
             if (!(q is ParenParseQueue) && !q.Empty) {
                 //Zero-arg functions may absorb empty parentheses
@@ -178,8 +178,8 @@ public static partial class Reflector {
     }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static ASTArrayFill FillASTArray(MethodSignature sig, IParseQueue q)
-        => FillASTArray(new IAST[sig.Params.Length], 0, sig, q);
+    private static ASTArrayFill FillASTArray(InvokedMethod sig, IParseQueue q)
+        => FillASTArray(new IAST[sig.Mi.Params.Length], 0, sig, q);
 
     
 
@@ -251,7 +251,7 @@ public static partial class Reflector {
     }*/
     
     public static IAST<T> IntoAST<T>(this IParseQueue ctx) => new ASTRuntimeCast<T>(IntoAST(ctx, typeof(T)));
-    private static IAST IntoAST(this IParseQueue ctx, Type t) => ReflectTargetType(ctx, t);
+    public static IAST IntoAST(this IParseQueue ctx, Type t) => ReflectTargetType(ctx, t);
 
     /// <summary>
     /// Remove superfluous ParenParseQueue wrappers,
@@ -360,14 +360,14 @@ public static partial class Reflector {
                 //MakeFallthrough allows the nested lookup to not be required to consume all post-aggregation.
                 var ftype = ftmi.mi.Params[0].Type;
                 ast = ReflectTargetType(MakeFallthrough(q), ftype, postAggregateContinuation);
-                ast = new AST.MethodInvoke(ast, ftmi.mi) { Type = AST.MethodInvoke.InvokeType.Fallthrough };
+                ast = new AST.MethodInvoke(ast, ftmi.mi.Call(null)) { Type = AST.MethodInvoke.InvokeType.Fallthrough };
                 if (ast.IsUnsound)
                     ast = new AST.Failure(q.WrapThrowHighlight(index,
                         $"Failed to construct an object of type {t.SimpRName()}. Instead, tried to construct a" +
                         $" similar object of type {ftype.SimpRName()}, but that also failed."), t) { Basis = ast };
             } else if (TryCompileOption(t, out var cmp)) {
                 ast = ReflectTargetType(MakeFallthrough(q), cmp.source, postAggregateContinuation);
-                ast = new AST.MethodInvoke(ast, cmp.mi) { Type = AST.MethodInvoke.InvokeType.Compiler };
+                ast = new AST.MethodInvoke(ast, cmp.mi.Call(null)) { Type = AST.MethodInvoke.InvokeType.Compiler };
             } else if (ResolveSpecialHandling(q, t) is { } specialTypeAST) {
                 ast = specialTypeAST;
             } else if (t.IsArray)
@@ -442,7 +442,7 @@ public static partial class Reflector {
                     var arg1 = varStack2.Pop();
                     var arg2 = varStack1[ii + 1];
                     varStack2.Push(
-                        new AST.MethodInvoke(arg1.Position.Merge(arg2.Position), op.loc, op.pa.sig, arg1, arg2) 
+                        new AST.MethodInvoke(arg1.Position.Merge(arg2.Position), op.loc, op.pa.sig.Call(null), arg1, arg2) 
                             {Type = AST.MethodInvoke.InvokeType.PostAggregate });
                 } else {
                     varStack2.Push(varStack1[ii + 1]);
@@ -455,15 +455,15 @@ public static partial class Reflector {
         return varStack1.Pop();
     }
     
-    public static MethodSignature? TryGetSignature<T>(string member) => 
+    public static InvokedMethod? TryGetSignature<T>(string member) =>
         TryGetSignature(member, typeof(T));
 
-    public static MethodSignature? TryGetSignature(string member, Type rt) {
+    public static InvokedMethod? TryGetSignature(string member, Type rt) {
         Profiler.BeginSample("Signature lookup");
         var res = ASTTryLookForMethod(rt, member) ??
                ASTTryLookForMethod(rt, Sanitize(member));
         Profiler.EndSample();
-        return res;
+        return res?.Call(member);
     }
 
     private static IAST? ReflectMethod(SMParser.ParsedUnit.Str member, Type rt, IParseQueue q) {

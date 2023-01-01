@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using BagoumLib;
 using BagoumLib.DataStructures;
 
 
@@ -20,6 +22,24 @@ public static class BitCompression {
     }
 
     public static bool NthBool(this byte b, int n) => (b & (1 << n)) > 0;
+}
+
+public readonly struct FreezableArray<T> {
+    public readonly T[] Data;
+    public FreezableArray(T[] data) {
+        this.Data = data;
+    }
+
+    //Call this when using as a persistent key so elements don't get modified later
+    public FreezableArray<T> Freeze() => 
+        new(Data.ToArray());
+
+    public override bool Equals(object obj) =>
+        obj is FreezableArray<T> td && Data.AreSame(td.Data);
+
+    public override int GetHashCode() => Data.ElementWiseHashCode();
+
+    public static readonly FreezableArray<T> Empty = new(Array.Empty<T>());
 }
 
 public class N2Triangle<T> {
@@ -60,7 +80,7 @@ public class N2Triangle<T> {
 }
 
 public static class DictCache<K, V> {
-    private static readonly Stack<Dictionary<K, V>> cached = new Stack<Dictionary<K, V>>();
+    private static readonly Stack<Dictionary<K, V>> cached = new();
 
     public static void Consign(Dictionary<K, V> cacheMe) {
         cacheMe.Clear();
@@ -71,7 +91,7 @@ public static class DictCache<K, V> {
 }
 
 public static class ListCache<T> {
-    private static readonly Stack<List<T>> cached = new Stack<List<T>>();
+    private static readonly Stack<List<T>> cached = new();
 
     public static void Consign(List<T> cacheMe) {
         cacheMe.Clear();

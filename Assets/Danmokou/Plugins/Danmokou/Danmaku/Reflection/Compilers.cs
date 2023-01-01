@@ -13,6 +13,7 @@ using Danmokou.DMath;
 using Danmokou.DMath.Functions;
 using Danmokou.Expressions;
 using Danmokou.Reflection.CustomData;
+using Danmokou.Reflection2;
 using JetBrains.Annotations;
 using UnityEngine;
 using Ex = System.Linq.Expressions.Expression;
@@ -33,17 +34,26 @@ namespace Danmokou.Reflection {
 
 public interface IDelegateArg {
     public TExArgCtx.Arg MakeTExArg(int index);
+    public VarDecl MakeArgDecl();
+    public string? Name { get; }
+    /// <summary>
+    /// Type of function argument, on the level of typeof(float).
+    /// </summary>
+    public Type Type { get; }
 }
 public readonly struct DelegateArg<T> : IDelegateArg {
-    private readonly string? name;
+
+    public string? Name { get; }
+    public Type Type => typeof(T);
     private readonly bool isRef;
     private readonly bool priority;
     public DelegateArg(string? name, bool isRef=false, bool priority=false) {
-        this.name = name;
+        this.Name = name;
         this.isRef = isRef;
         this.priority = priority;
     }
-    public TExArgCtx.Arg MakeTExArg(int index) => TExArgCtx.Arg.Make<T>(name ?? $"arg{index+1}", priority, isRef);
+    public TExArgCtx.Arg MakeTExArg(int index) => TExArgCtx.Arg.Make<T>(Name ?? $"$_arg{index+1}", priority, isRef);
+    public VarDecl MakeArgDecl() => new ArgumentDecl<T>(default, Name);
     public static IDelegateArg New => new DelegateArg<T>(null);
 }
 
@@ -103,7 +113,7 @@ public static class CompilerHelpers {
 
     public static ReadyToCompileExpr<D> PrepareDelegate<D>(Func<TExArgCtx, TEx> func, params IDelegateArg[] args) where D : Delegate =>
         PrepareDelegate<D>(func, args.Select((a, i) => a.MakeTExArg(i)).ToArray());
-    
+
     //Note: while there is a theoretical overhead to deriving the return type at runtime,
     // this function is not called particularly often, so it's not a bottleneck.
     public static D CompileDelegate<D>(string func, params IDelegateArg[] args) where D : Delegate {
@@ -248,12 +258,16 @@ public static class Compilers {
                 tac.GetByExprType<TEx<float>>(),
                 tac,
                 tac.GetByExprType<TExV3>()),
-            new DelegateArg<Movement>("vtp_mov", true, true),
-            new DelegateArg<float>("vtp_dt", true, true),
-            new DelegateArg<ParametricInfo>("vtp_bpi", true, true),
-            new DelegateArg<Vector3>("vtp_delta", true, true)
+            VTPArgs
         );
     }
+
+    public static readonly IDelegateArg[] VTPArgs = {
+        new DelegateArg<Movement>("vtp_mov", true, true),
+        new DelegateArg<float>("vtp_dt", true, true),
+        new DelegateArg<ParametricInfo>("vtp_bpi", true, true),
+        new DelegateArg<Vector3>("vtp_delta", true, true)
+    };
 
     [Fallthrough]
     [ExprCompiler]
@@ -328,7 +342,7 @@ public static class Compilers {
     public static GCXF<T> GCXF<T>(Func<TExArgCtx, TEx<T>> ex) {
         //We don't make a BPI variable, instead it is assigned in the _Fake method.
         // This is because gcx.BPI is a property that creates a random ID every time it is called, which we don't want.
-        return PrepareDelegate<GCXF<T>>(tac => GCXFRepo._Fake(ex)(tac), new DelegateArg<GenCtx>("gcx")).Compile();
+        return PrepareDelegate<GCXF<T>>(tac => GCXFRepo._Fake(ex)(tac) as TEx, new DelegateArg<GenCtx>("gcx")).Compile();
     }
 
     [Fallthrough]

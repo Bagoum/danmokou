@@ -13,6 +13,18 @@ phase(0)
 $%f(%x)
 !}
 
+<!> type non abc
+<!> hp 10000
+phase 0
+	paction 0
+		position 0 2
+		sync ellipse-red/w <1;:> gsr2c 60 {
+			start { speed =f 1 }
+			postloop { speed +=f 0.05 }
+		#you can access vtp_mov, though the type is wrong (Movement not float). vtp_dt works
+		} s tprot px(&speed + &vtp_mov)
+
+///
 
 <!> type non nest
 <!> hp 10000

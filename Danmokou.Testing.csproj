@@ -62,7 +62,9 @@
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Testing\Utils.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Testing\Tests\DataStructures.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Testing\Tests\ReflectPath.cs" />
+     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Testing\Tests\BDSL2ParsingTests.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Testing\Tests\ReflectTP.cs" />
+     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Testing\Tests\BDSL2LexingTests.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Testing\Tests\Localization.cs" />
      <None Include="Assets\Danmokou\Plugins\Danmokou\Testing\Danmokou.Testing.asmdef" />
      <Reference Include="UnityEngine">
@@ -335,11 +337,11 @@
      <Reference Include="Suzunoya">
      <HintPath>E:\Workspace\unity\Danmokou\Assets\SZYU\Plugins\DLLs\Suzunoya.dll</HintPath>
      </Reference>
-     <Reference Include="System.Collections.Immutable">
-     <HintPath>E:\Workspace\unity\Danmokou\Assets\Danmokou\Plugins\DLLs\System.Collections.Immutable.dll</HintPath>
-     </Reference>
      <Reference Include="LanguageServer.Contracts">
      <HintPath>E:\Workspace\unity\Danmokou\Assets\Danmokou\Plugins\DLLs\LanguageServer.Contracts.dll</HintPath>
+     </Reference>
+     <Reference Include="System.Collections.Immutable">
+     <HintPath>E:\Workspace\unity\Danmokou\Assets\SZYU\Plugins\DLLs\System.Collections.Immutable.dll</HintPath>
      </Reference>
      <Reference Include="System.Reactive">
      <HintPath>E:\Workspace\unity\Danmokou\Assets\SZYU\Plugins\DLLs\System.Reactive.dll</HintPath>

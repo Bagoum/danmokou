@@ -50,15 +50,19 @@
      <Compile Include="Assets\SZYU\Plugins\SuzunoyaUnity\Rendering\RenderHelpers.cs" />
      <Compile Include="Assets\SZYU\Plugins\SuzunoyaUnity\Rendering\UnityRenderGroup.cs" />
      <Compile Include="Assets\SZYU\Plugins\SuzunoyaUnity\UnityVNState.cs" />
+     <Compile Include="Assets\SZYU\Plugins\SuzunoyaUnity\Examples\ExampleCharacter2Mimic.cs" />
      <Compile Include="Assets\SZYU\Plugins\SuzunoyaUnity\Mimics\Abstract\RenderedMimic.cs" />
      <Compile Include="Assets\SZYU\Plugins\SuzunoyaUnity\Rendering\Utils.cs" />
+     <Compile Include="Assets\SZYU\Plugins\SuzunoyaUnity\Examples\ExampleVNScript.cs" />
      <Compile Include="Assets\SZYU\Plugins\SuzunoyaUnity\Mimics\ADVDialogueBoxMimic.cs" />
+     <Compile Include="Assets\SZYU\Plugins\SuzunoyaUnity\Examples\ExampleVNUpdater.cs" />
      <Compile Include="Assets\SZYU\Plugins\SuzunoyaUnity\UI\TMPAlphaController.cs" />
      <Compile Include="Assets\SZYU\Plugins\SuzunoyaUnity\Rendering\PropConsts.cs" />
      <Compile Include="Assets\SZYU\Plugins\SuzunoyaUnity\DerivedEntities\ADVDialogueBox.cs" />
      <Compile Include="Assets\SZYU\Plugins\SuzunoyaUnity\Mimics\Abstract\Helpers.cs" />
      <Compile Include="Assets\SZYU\Plugins\SuzunoyaUnity\Helpers.cs" />
      <Compile Include="Assets\SZYU\Plugins\SuzunoyaUnity\Rendering\RenderGroupMimic.cs" />
+     <Compile Include="Assets\SZYU\Plugins\SuzunoyaUnity\Examples\ExampleCharacterMimic.cs" />
      <Compile Include="Assets\SZYU\Plugins\SuzunoyaUnity\DerivedEntities\JointCharacter.cs" />
      <Compile Include="Assets\SZYU\Plugins\SuzunoyaUnity\Mimics\OneSpriteMimic.cs" />
      <Compile Include="Assets\SZYU\Plugins\SuzunoyaUnity\Mimics\PiecewiseCharacterMimic.cs" />
@@ -72,10 +76,6 @@
      <Compile Include="Assets\SZYU\Plugins\SuzunoyaUnity\Events\CharacterSpeakingDisturbance.cs" />
      <Compile Include="Assets\SZYU\Plugins\SuzunoyaUnity\Adapters.cs" />
      <Compile Include="Assets\SZYU\Plugins\SuzunoyaUnity\DerivedEntities\SZYUCharacter.cs" />
-     <Compile Include="Assets\SZYU\Plugins\SuzunoyaUnity\Examples\ExampleVNScript.cs" />
-     <Compile Include="Assets\SZYU\Plugins\SuzunoyaUnity\Examples\ExampleCharacterMimic.cs" />
-     <Compile Include="Assets\SZYU\Plugins\SuzunoyaUnity\Examples\ExampleVNUpdater.cs" />
-     <Compile Include="Assets\SZYU\Plugins\SuzunoyaUnity\Examples\ExampleCharacter2Mimic.cs" />
      <None Include="Assets\SZYU\Plugins\SuzunoyaUnity\SuzunoyaUnity.asmdef" />
      <None Include="Assets\SZYU\Plugins\SuzunoyaUnity\Examples\save_file_vn.txt" />
      <Reference Include="UnityEngine">
@@ -345,11 +345,11 @@
      <Reference Include="Suzunoya">
      <HintPath>E:\Workspace\unity\Danmokou\Assets\SZYU\Plugins\DLLs\Suzunoya.dll</HintPath>
      </Reference>
-     <Reference Include="System.Collections.Immutable">
-     <HintPath>E:\Workspace\unity\Danmokou\Assets\Danmokou\Plugins\DLLs\System.Collections.Immutable.dll</HintPath>
-     </Reference>
      <Reference Include="LanguageServer.Contracts">
      <HintPath>E:\Workspace\unity\Danmokou\Assets\Danmokou\Plugins\DLLs\LanguageServer.Contracts.dll</HintPath>
+     </Reference>
+     <Reference Include="System.Collections.Immutable">
+     <HintPath>E:\Workspace\unity\Danmokou\Assets\SZYU\Plugins\DLLs\System.Collections.Immutable.dll</HintPath>
      </Reference>
      <Reference Include="System.Reactive">
      <HintPath>E:\Workspace\unity\Danmokou\Assets\SZYU\Plugins\DLLs\System.Reactive.dll</HintPath>

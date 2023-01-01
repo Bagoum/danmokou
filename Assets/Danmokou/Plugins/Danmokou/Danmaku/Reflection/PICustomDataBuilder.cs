@@ -12,26 +12,11 @@ using Danmokou.Expressions;
 using Danmokou.Player;
 using UnityEngine;
 using Ex = System.Linq.Expressions.Expression;
+using TypeDefKey = Danmokou.Core.FreezableArray<(System.Type type, string name)>;
+
 #pragma warning disable CS0162
 
 namespace Danmokou.Reflection.CustomData {
-public readonly struct TypeDefKey {
-    public readonly IReadOnlyList<(Type type, string name)> Exposed;
-    public TypeDefKey(IReadOnlyList<(Type, string)> exposed) {
-        this.Exposed = exposed;
-    }
-
-    //Call this when using as a persistent key so elements don't get modified later
-    public TypeDefKey Freeze() => 
-        new(Exposed.ToList());
-
-    public override bool Equals(object obj) =>
-        obj is TypeDefKey td && Exposed.AreSame(td.Exposed);
-
-    public override int GetHashCode() => Exposed.ElementWiseHashCode();
-
-    public static readonly TypeDefKey Empty = new(new List<(Type, string)>());
-}
 
 public class ConstructedType {
     public BuiltCustomDataDescriptor Descriptor { get; }
@@ -123,7 +108,7 @@ public class PICustomDataBuilder : CustomDataBuilder {
         if (typeMap.TryGetValue(key, out var t))
             return t;
         var builtType = Builder.CreateCustomDataType(new(
-            key.Exposed.Select(x => new CustomDataFieldDescriptor(x.name, x.type)
+            key.Data.Select(x => new CustomDataFieldDescriptor(x.name, x.type)
             ).ToArray()
         ) { BaseType = typeof(PICustomData) }, out var builtDesc);
         t = new(builtDesc, builtType, typeList.Count);
@@ -132,7 +117,7 @@ public class PICustomDataBuilder : CustomDataBuilder {
         return typeMap[key.Freeze()] = t;
     }
 
-    public ConstructedType GetCustomDataType(IReadOnlyList<(Type, string)> aliases) => 
+    public ConstructedType GetCustomDataType((Type, string)[] aliases) => 
         GetCustomDataType(new TypeDefKey(aliases));
 
     public void ClearCustomDataTypeCaches() {

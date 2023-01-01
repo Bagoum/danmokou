@@ -34,20 +34,19 @@ public static partial class Reflector {
 #if UNITY_EDITOR
         if (!Application.isPlaying && !RHelper.REFLECT_IN_EDITOR) return;
 #endif
-        foreach (var type in ReflectorUtils.ReflectableAssemblyTypes) {
-            foreach (var ra in type.GetCustomAttributes<ReflectAttribute>()) {
-                ReflectionData.RecordPublic(type, ra.returnType);
-                break;
-            }
-        }
-
-        InitializeEnumResolvers();
         AllowFuncification<TEx<float>>();
         AllowFuncification<TEx<bool>>(); //This will also allow stuff like (if + true false), which will error if you actually use it
         AllowFuncification<TEx<Vector2>>();
         AllowFuncification<TEx<Vector3>>();
         AllowFuncification<TEx<Vector4>>();
         AllowFuncification<TEx<V2RV2>>();
+        
+        foreach (var type in ReflectorUtils.ReflectableAssemblyTypes) {
+            if (type.GetCustomAttribute<ReflectAttribute>(false) is { } ra)
+                ReflectionData.RecordPublic(type, ra.returnType);
+        }
+
+        InitializeEnumResolvers();
 
         void CreatePostAggregates(string method, string shortcut) {
             var mi = typeof(ExPostAggregators).GetMethod(method) ??
@@ -60,7 +59,7 @@ public static partial class Reflector {
                 else if (attr is PASourceTypesAttribute ps) types = ps.types;
             }
             void CreateAggregateMethod(MethodInfo gmi) {
-                var sig = MethodSignature.FromMethod(gmi);
+                var sig = MethodSignature.Get(gmi);
                 if (sig.Params.Length != 2) throw new StaticException($"Post-aggregator \"{method}\" doesn't have exactly 2 arguments");
                 var sourceType = sig.Params[0].Type;
                 var searchType = sig.Params[1].Type;

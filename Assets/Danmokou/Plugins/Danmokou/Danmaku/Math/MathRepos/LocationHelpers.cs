@@ -10,7 +10,6 @@ using Danmokou.Expressions;
 using static Danmokou.DMath.Functions.ExM;
 using tfloat = Danmokou.Expressions.TEx<float>;
 using tv2 = Danmokou.Expressions.TEx<UnityEngine.Vector2>;
-using ev2 = Danmokou.Expressions.EEx<UnityEngine.Vector2>;
 using ExBPY = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<float>>;
 using ExTP = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<UnityEngine.Vector2>>;
 
@@ -22,7 +21,7 @@ public static partial class ExMPred {
     /// </summary>
     /// <param name="loc"></param>
     /// <returns></returns>
-    public static TEx<bool> OnScreen(EEx<Vector2> loc) => EEx.ResolveV2(loc, l =>
+    public static TEx<bool> OnScreen(TEx<Vector2> loc) => TEx.ResolveV2(loc, l =>
             l.x.GT(LocationHelpers.left)
             .And(l.x.LT(LocationHelpers.right))
             .And(l.y.GT(LocationHelpers.bot))
@@ -30,7 +29,7 @@ public static partial class ExMPred {
     /// <summary>
     /// Return true if the location is within BY units (square expansion) of the edge of the playing field.
     /// </summary>
-    public static TEx<bool> OnScreenBy(EEx<float> by, EEx<Vector2> loc) => EEx.ResolveV2(loc, by, (l, f) =>
+    public static TEx<bool> OnScreenBy(TEx<float> by, TEx<Vector2> loc) => TEx.ResolveV2(loc, by, (l, f) =>
             l.x.GT(LocationHelpers.left.Sub(f))
             .And(l.x.LT(LocationHelpers.right.Add(f)))
             .And(l.y.GT(LocationHelpers.bot.Sub(f)))

@@ -16,10 +16,6 @@ using tbool = Danmokou.Expressions.TEx<bool>;
 using tv2 = Danmokou.Expressions.TEx<UnityEngine.Vector2>;
 using tv3 = Danmokou.Expressions.TEx<UnityEngine.Vector3>;
 using trv2 = Danmokou.Expressions.TEx<Danmokou.DMath.V2RV2>;
-using efloat = Danmokou.Expressions.EEx<float>;
-using ev2 = Danmokou.Expressions.EEx<UnityEngine.Vector2>;
-using ev3 = Danmokou.Expressions.EEx<UnityEngine.Vector3>;
-using erv2 = Danmokou.Expressions.EEx<Danmokou.DMath.V2RV2>;
 using static Danmokou.DMath.Functions.ExM;
 using static Danmokou.DMath.Functions.ExMConversions;
 
@@ -32,7 +28,7 @@ public static partial class ExMV3 {
     /// <summary>
     /// Derive a Vector3 from an XY (Vector2) and a Z-component.
     /// </summary>
-    public static tv3 WithZ(ev2 xy, tfloat z) => EEx.ResolveV2(xy, v => ExUtils.V3(v.x, v.y, z));
+    public static tv3 WithZ(tv2 xy, tfloat z) => TEx.ResolveV2(xy, v => ExUtils.V3(v.x, v.y, z));
     /// <summary>
     /// Derive a Vector3 from three floats.
     /// </summary>
@@ -81,7 +77,7 @@ public static partial class ExMV3 {
     /// Rotate a Vector3 by a quaternion. In Unity the rotation order is ZXY.
     /// The z-axis is mapped to IN.
     /// </summary>
-    /// <param name="rotateBy">Quaternion rotation, in degrees, xyz</param>
+    /// <param name="rotateBy">Euler rotation, in degrees, xyz. Transformed to a quaternion.</param>
     /// <param name="target">Target Vector3</param>
     /// <returns></returns>
     public static tv3 QRotate(tv3 rotateBy, tv3 target) => ExMHelpers.QRotate(QuaternionEuler(rotateBy), target);
@@ -92,7 +88,7 @@ public static partial class ExMV3 {
     /// <param name="rotateBy">Direction vector (Normalization not required)</param>
     /// <param name="target">Target v3</param>
     /// <returns></returns>
-    public static tv3 V3Rotate(tv3 rotateBy, tv3 target) => EEx.ResolveV2(ToSphere(rotateBy), r =>
+    public static tv3 V3Rotate(tv3 rotateBy, tv3 target) => TEx.ResolveV2(ToSphere(rotateBy), r =>
         QRotate(PZ(r.x), QRotate(PY(r.y), target)));
 
     /// <summary>
@@ -103,7 +99,7 @@ public static partial class ExMV3 {
     /// <param name="time">Time of rotation (t=0 -> X-axis)</param>
     /// <param name="h">Height (X-axis)</param>
     /// <returns></returns>
-    public static tv3 XZrY(efloat period, efloat radius, efloat time, tfloat h) => EEx.Resolve(period, radius, time,
+    public static tv3 XZrY(tfloat period, tfloat radius, tfloat time, tfloat h) => TEx.Resolve(period, radius, time,
         (p, r, t) =>
             V3(Cosine(p, r, t), h, Sine(p, r, t)));
     
@@ -115,7 +111,7 @@ public static partial class ExMV3 {
     /// <param name="time">Time of rotation (t=0 -> Y-axis)</param>
     /// <param name="h">Height (X-axis)</param>
     /// <returns></returns>
-    public static tv3 YZrX(efloat period, efloat radius, efloat time, tfloat h) => EEx.Resolve(period, radius, time,
+    public static tv3 YZrX(tfloat period, tfloat radius, tfloat time, tfloat h) => TEx.Resolve(period, radius, time,
         (p, r, t) =>
             V3(h, Cosine(p, r, t), Sine(p, r, t)));
     
@@ -127,7 +123,7 @@ public static partial class ExMV3 {
     /// <param name="time">Time of rotation (t=0 -> X-axis)</param>
     /// <param name="h">Height (Z-axis)</param>
     /// <returns></returns>
-    public static tv3 XYrZ(efloat period, efloat radius, efloat time, tfloat h) => EEx.Resolve(period, radius, time,
+    public static tv3 XYrZ(tfloat period, tfloat radius, tfloat time, tfloat h) => TEx.Resolve(period, radius, time,
         (p, r, t) =>
             V3(Cosine(p, r, t), Sine(p, r, t), h));
 
@@ -137,7 +133,7 @@ public static partial class ExMV3 {
     /// <param name="f">Function of input</param>
     /// <param name="tp">Parametric equation</param>
     /// <returns></returns>
-    public static tv3 MultiplyX(tfloat f, ev3 tp) => EEx.ResolveV3(tp, v => Ex.Block(
+    public static tv3 MultiplyX(tfloat f, tv3 tp) => TEx.ResolveV3(tp, v => Ex.Block(
         MulAssign(v.x, f),
         v
     ));
@@ -147,7 +143,7 @@ public static partial class ExMV3 {
     /// <param name="f">Function of input</param>
     /// <param name="tp">Parametric equation</param>
     /// <returns></returns>
-    public static tv3 MultiplyY(tfloat f, ev3 tp) => EEx.ResolveV3(tp, v => Ex.Block(
+    public static tv3 MultiplyY(tfloat f, tv3 tp) => TEx.ResolveV3(tp, v => Ex.Block(
         MulAssign(v.y, f),
         v
     ));
@@ -157,7 +153,7 @@ public static partial class ExMV3 {
     /// <param name="f">Function of input</param>
     /// <param name="tp">Parametric equation</param>
     /// <returns></returns>
-    public static tv3 MultiplyZ(tfloat f, ev3 tp)=> EEx.ResolveV3(tp, v => Ex.Block(
+    public static tv3 MultiplyZ(tfloat f, tv3 tp)=> TEx.ResolveV3(tp, v => Ex.Block(
         MulAssign(v.z, f),
         v
     ));
@@ -172,8 +168,8 @@ public static partial class ExMV3 {
     /// <param name="axisOff">Offset angle (radians) of the axis of the cylinder from the y-axis</param>
     /// <param name="position">Position equation</param>
     /// <returns></returns>
-    public static tv3 CylinderWrap(efloat radius, efloat ang0, efloat maxWrap, efloat axisOff, ev2 position) =>
-        EEx.Resolve(radius, ang0, axisOff, position, (r, a0, axis, _v2) => {
+    public static tv3 CylinderWrap(tfloat radius, tfloat ang0, tfloat maxWrap, tfloat axisOff, tv2 position) =>
+        TEx.Resolve(radius, ang0, axisOff, position, (r, a0, axis, _v2) => {
             var cs = new TExV2();
             var xyd = new TExV2();
             var v2 = new TExV2(_v2);

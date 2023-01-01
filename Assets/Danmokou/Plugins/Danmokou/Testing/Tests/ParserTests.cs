@@ -42,8 +42,8 @@ public static class ParserTests {
 
     [Test]
     public static void Errors() {
-        ThrowsMessage("BPY, but then found extra text", () => "+(x, *(x 2))".Into<FXY>());
-        ThrowsMessage("Couldn't convert the text in ≪≫ to type float.*≪}≫", () => StateMachine.CreateFromDump(
+        ThrowsRegex("BPY, but then found extra text", () => "+(x, *(x 2))".Into<FXY>());
+        ThrowsRegex("Couldn't convert the text in ≪≫ to type float.*≪}≫", () => StateMachine.CreateFromDump(
             @"
 pattern {}
 phase 0
@@ -56,7 +56,7 @@ phase 0
 		}
 		move-target(5, io-sine, py(+(mod 3 4, mod 6 7)))
 "));
-        ThrowsMessage("Couldn't convert the text in ≪≫ to type float.*≪blargh≫", () => StateMachine.CreateFromDump(
+        ThrowsRegex("Couldn't convert the text in ≪≫ to type float.*≪blargh≫", () => StateMachine.CreateFromDump(
             @"
 pattern {}
 phase 0
@@ -69,19 +69,19 @@ phase 0
 		}
 		move-target(5, io-sine, py(+(mod 3 4, mod 6 7)))
 "));
-        ThrowsMessage("Couldn't convert the text in ≪≫ to type float.*≪mode≫", () => "py(+ mode 3 4 5)".Into<TP>());
-        ThrowsMessage("do not enclose the entire function", () => "+ 8 (if = p 0) 0 6".Into<BPY>());
-        ThrowsMessage("must have exactly one argument", () => "(+ 8 * 5, x)".Into<FXY>());
+        ThrowsRegex("Couldn't convert the text in ≪≫ to type float.*≪mode≫", () => "py(+ mode 3 4 5)".Into<TP>());
+        ThrowsRegex("do not enclose the entire function", () => "+ 8 (if = p 0) 0 6".Into<BPY>());
+        ThrowsRegex("must have exactly one argument", () => "(+ 8 * 5, x)".Into<FXY>());
         
     }
 
     [Test]
     public static void GroupingErrors() {
-        ThrowsMessage("BPY, but then found extra text", () => "+(x, (2)())".Into<FXY>());
-        ThrowsMessage("BPY, but then found extra text", () => "modwithpause 5 (6 7) 8".Into<BPY>());
-        ThrowsMessage("Expected 4 explicit arguments.*contains 3", () => "modwithpause(5, (6 7), 8)".Into<BPY>());
-        ThrowsMessage("could not parse the second", () => "mod(3 *, 5)".Into<FXY>());
-        ThrowsMessage("BPY, but then found extra text", () => "+(2 * 5 x)".Into<FXY>());
+        ThrowsRegex("BPY, but then found extra text", () => "+(x, (2)())".Into<FXY>());
+        ThrowsRegex("BPY, but then found extra text", () => "modwithpause 5 (6 7) 8".Into<BPY>());
+        ThrowsRegex("Expected 4 explicit arguments.*contains 3", () => "modwithpause(5, (6 7), 8)".Into<BPY>());
+        ThrowsRegex("could not parse the second", () => "mod(3 *, 5)".Into<FXY>());
+        ThrowsRegex("BPY, but then found extra text", () => "+(2 * 5 x)".Into<FXY>());
     }
     
     private static Vector2 V2(float x, float y) => new Vector2(x, y);
@@ -91,7 +91,7 @@ phase 0
     public static void PreAggregation() {
         var bpi = new ParametricInfo {t = 6};
         AreEqual("(t + 1) * cxy 2 3".Into<TP>()(bpi), V2(14, 21));
-        ThrowsMessage("first creating type BPY", () => "mod(px(3), 5) * cx(2)".Into<TP>());
+        ThrowsRegex("first creating type BPY", () => "mod(px(3), 5) * cx(2)".Into<TP>());
         AreEqual("(t * cxy 2 3)".Into<TP>()(bpi), V2(12, 18));
         AreEqual("t * cxy 2 3".Into<TP>()(bpi), V2(12, 18));
         AreEqual("pxyz(0,0,0)".Into<TP>()(bpi), V2(0, 0));

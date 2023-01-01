@@ -8,10 +8,6 @@ using tbool = Danmokou.Expressions.TEx<bool>;
 using tv2 = Danmokou.Expressions.TEx<UnityEngine.Vector2>;
 using tv3 = Danmokou.Expressions.TEx<UnityEngine.Vector3>;
 using trv2 = Danmokou.Expressions.TEx<Danmokou.DMath.V2RV2>;
-using efloat = Danmokou.Expressions.EEx<float>;
-using ev2 = Danmokou.Expressions.EEx<UnityEngine.Vector2>;
-using ev3 = Danmokou.Expressions.EEx<UnityEngine.Vector3>;
-using erv2 = Danmokou.Expressions.EEx<Danmokou.DMath.V2RV2>;
 using static Danmokou.DMath.Functions.ExMMod;
 
 namespace Danmokou.DMath.Functions {
@@ -37,6 +33,7 @@ public static partial class ExMPred {
     /// <summary>
     /// Return true iff the argument is false.
     /// </summary>
+    [BDSL2Operator]
     public static tbool Not(tbool pred) => Ex.Not(pred);
     /// <summary>
     /// Return true iff both arguments are true.
@@ -44,7 +41,7 @@ public static partial class ExMPred {
     /// <param name="pr1">First predicate</param>
     /// <param name="pr2">Second predicate</param>
     /// <returns></returns>
-    [Alias("&")] [WarnOnStrict] [Operator]
+    [Alias("&")] [WarnOnStrict] [Operator] [BDSL2Operator]
     public static tbool And(tbool pr1, tbool pr2) {
         return Ex.AndAlso(pr1, pr2);
     }
@@ -54,7 +51,7 @@ public static partial class ExMPred {
     /// <param name="pr1">First predicate</param>
     /// <param name="pr2">Second predicate</param>
     /// <returns></returns>
-    [Alias("|")] [WarnOnStrict] [Operator]
+    [Alias("|")] [WarnOnStrict] [Operator] [BDSL2Operator]
     public static tbool Or(tbool pr1, tbool pr2) {
         return Ex.OrElse(pr1, pr2);
     }
@@ -62,13 +59,13 @@ public static partial class ExMPred {
     /// <summary>
     /// Return true iff the first argument is equal to the second.
     /// </summary>
-    [Alias("=")] [Operator]
+    [Alias("=")] [Operator] [BDSL2Operator]
     public static tbool Eq(tfloat b1, tfloat b2) => Ex.Equal(b1, b2);
     
     /// <summary>
     /// Return true iff the first argument is not equal to the second.
     /// </summary>
-    [Alias("=/=")] [Operator]
+    [Alias("=/=")] [Operator] [BDSL2Operator]
     public static tbool Neq(tfloat b1, tfloat b2) => Ex.NotEqual(b1, b2);
 
 
@@ -78,7 +75,7 @@ public static partial class ExMPred {
     /// <param name="b1">First BPY function</param>
     /// <param name="b2">Second BPY function</param>
     /// <returns></returns>
-    [Alias(">")] [Operator]
+    [Alias(">")] [Operator] [BDSL2Operator]
     public static tbool Gt(tfloat b1, tfloat b2) {
         return Ex.GreaterThan(b1, b2);
     }
@@ -88,7 +85,7 @@ public static partial class ExMPred {
     /// <param name="b1">First BPY function</param>
     /// <param name="b2">Second BPY function</param>
     /// <returns></returns>
-    [Alias(">=")] [Operator]
+    [Alias(">=")] [Operator] [BDSL2Operator]
     public static tbool Geq(tfloat b1, tfloat b2) {
         return Ex.GreaterThanOrEqual(b1, b2);
     }
@@ -98,7 +95,7 @@ public static partial class ExMPred {
     /// <param name="b1">First BPY function</param>
     /// <param name="b2">Second BPY function</param>
     /// <returns></returns>
-    [Alias("<")] [Operator]
+    [Alias("<")] [Operator] [BDSL2Operator]
     public static tbool Lt(tfloat b1, tfloat b2) {
         return Ex.LessThan(b1, b2);
     }
@@ -108,7 +105,7 @@ public static partial class ExMPred {
     /// <param name="b1">First BPY function</param>
     /// <param name="b2">Second BPY function</param>
     /// <returns></returns>
-    [Alias("<=")] [Operator]
+    [Alias("<=")] [Operator] [BDSL2Operator]
     public static tbool Leq(tfloat b1, tfloat b2) {
         return Ex.LessThanOrEqual(b1, b2);
     }

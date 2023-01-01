@@ -22,10 +22,6 @@ using tbool = Danmokou.Expressions.TEx<bool>;
 using tv2 = Danmokou.Expressions.TEx<UnityEngine.Vector2>;
 using tv3 = Danmokou.Expressions.TEx<UnityEngine.Vector3>;
 using trv2 = Danmokou.Expressions.TEx<Danmokou.DMath.V2RV2>;
-using efloat = Danmokou.Expressions.EEx<float>;
-using ev2 = Danmokou.Expressions.EEx<UnityEngine.Vector2>;
-using ev3 = Danmokou.Expressions.EEx<UnityEngine.Vector3>;
-using erv2 = Danmokou.Expressions.EEx<Danmokou.DMath.V2RV2>;
 using static Danmokou.DMath.Functions.ExMMod;
 
 using ExBPY = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<float>>;
@@ -277,13 +273,13 @@ public static partial class ExM {
     /// <summary>
     /// Returns `c*x1 + (1-c)*x2`.
     /// </summary>
-    public static TEx<T> SuperposeC<T>(efloat c, TEx<T> x1, TEx<T> x2) =>
-        EEx.Resolve(c, _c => _c.Mul(x1).Add(E1.Sub(c).Mul(x2)));
+    public static TEx<T> SuperposeC<T>(tfloat c, TEx<T> x1, TEx<T> x2) =>
+        TEx.Resolve(c, _c => _c.Mul(x1).Add(E1.Sub(c).Mul(x2)));
 
     /// <summary>
     /// Returns `1-opacity + opacity*x`.
     /// </summary>
-    public static tfloat Opacity(efloat opacity, tfloat x) => EEx.Resolve(opacity, op => E1.Sub(op).Add(op.Mul(x)));
+    public static tfloat Opacity(tfloat opacity, tfloat x) => TEx.Resolve(opacity, op => E1.Sub(op).Add(op.Mul(x)));
 
     #endregion
     
@@ -295,7 +291,7 @@ public static partial class ExM {
     /// Set negative for softmin.</param>
     /// <param name="against">Values</param>
     /// <returns></returns>
-    public static tfloat Softmax(efloat sharpness, tfloat[] against) => EEx.Resolve(sharpness, sharp => {
+    public static tfloat Softmax(tfloat sharpness, tfloat[] against) => TEx.Resolve(sharpness, sharp => {
         var num = V<double>();
         var denom = V<double>();
         var x = VFloat();
@@ -317,7 +313,7 @@ public static partial class ExM {
     /// <param name="sharpness">The higher the absolute value of this, the more quickly the result will converge.</param>
     /// <param name="against">Values</param>
     /// <returns></returns>
-    public static tfloat Logsum(efloat sharpness, tfloat[] against)  => EEx.Resolve(sharpness, sharp => {
+    public static tfloat Logsum(tfloat sharpness, tfloat[] against)  => TEx.Resolve(sharpness, sharp => {
         var num = V<double>();
         List<Ex> stmts = new() { num.Is(ExC(0.0)) };
         for (int ii = 0; ii < against.Length; ++ii) {
@@ -342,7 +338,7 @@ public static partial class ExM {
     /// <param name="peakHeight">Peak height</param>
     /// <param name="x">Time</param>
     /// <returns></returns>
-    public static tfloat SWing(efloat period, efloat peakHeight, tfloat x) => EEx.Resolve(period, peakHeight,
+    public static tfloat SWing(tfloat period, tfloat peakHeight, tfloat x) => TEx.Resolve(period, peakHeight,
         (per, h) => {
             var pt = VFloat();
             return Ex.Block(new[] {pt},
@@ -367,8 +363,8 @@ public static partial class ExM {
     /// <param name="overshoot">The actual maximum value. The function rises from min to overshoot, then slowly returns to max.</param>
     /// <param name="time"></param>
     /// <returns></returns>
-    public static tfloat SWing2(tfloat halfwayRatio, efloat period, efloat min, efloat max, efloat overshoot, tfloat time)
-        => EEx.Resolve(period, min, max, overshoot, (per, h3, h2, h1) => {
+    public static tfloat SWing2(tfloat halfwayRatio, tfloat period, tfloat min, tfloat max, tfloat overshoot, tfloat time)
+        => TEx.Resolve(period, min, max, overshoot, (per, h3, h2, h1) => {
             var pt = VFloat();
             var t1 = VFloat();
             var hm = VFloat();
@@ -414,8 +410,8 @@ public static partial class ExM {
     /// <summary>
     /// Returns the acceleration displacement function `h0 + v0*t + 0.5*g*t^2`.
     /// </summary>
-    public static tfloat Height(tfloat h0, tfloat v0, tfloat g, efloat time) =>
-        EEx.Resolve(time, t => h0.Add(v0.Mul(t)).Add(E05.Mul(g).Mul(t).Mul(t)));
+    public static tfloat Height(tfloat h0, tfloat v0, tfloat g, tfloat time) =>
+        TEx.Resolve(time, t => h0.Add(v0.Mul(t)).Add(E05.Mul(g).Mul(t).Mul(t)));
 
     /// <summary>
     /// Find the radius of a regular polygon at a given ratio relative to one of its vertices (max radius).
@@ -481,12 +477,12 @@ public static partial class ExM {
     /// <summary>
     /// Find the angle of fire such that a ray fired from the source bouncing off the wall X=W would hit the target.
     /// </summary>
-    public static tfloat BounceX(tfloat w, ev2 source, ev2 target) => EEx.ResolveV2(source, target,
+    public static tfloat BounceX(tfloat w, tv2 source, tv2 target) => TEx.ResolveV2(source, target,
         (s, t) => ATan2(t.y.Sub(s.y), w.Mul(E2).Sub(s.x).Sub(t.x)));
     /// <summary>
     /// Find the angle of fire such that a ray fired from the source bouncing off the wall Y=W would hit the target.
     /// </summary>
-    public static tfloat BounceY(tfloat w, ev2 source, ev2 target) => EEx.ResolveV2(source, target,
+    public static tfloat BounceY(tfloat w, tv2 source, tv2 target) => TEx.ResolveV2(source, target,
         (s, t) => ATan2(w.Mul(E2).Sub(s.y).Sub(t.y), t.x.Sub(s.x)));
     
     #endregion
@@ -665,7 +661,7 @@ public static partial class ExM {
     /// <br/>eg. If this is used by a laser fired by a player option, and T = FireOption,
     /// then this function returns the FireOption that created this laser.
     /// </summary>
-    /// <typeparam name="T">One of CurvedTileRenderLaser, PlayerInput, FireOption</typeparam>
+    /// <typeparam name="T">One of Bullet, CurvedTileRenderLaser, PlayerController, FireOption</typeparam>
     /// <returns></returns>
     public static Func<TExArgCtx, TEx<T>> Mine<T>() => tac => {
         var t = typeof(T);

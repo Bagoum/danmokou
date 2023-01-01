@@ -126,6 +126,12 @@ public class ReflectAttribute : FileLinkAttribute {
 }
 
 /// <summary>
+/// The marked method is a BDSL2 operator. It should not be permitted for reflection in BDSL2.
+/// </summary>
+[AttributeUsage(AttributeTargets.Method)]
+public class BDSL2OperatorAttribute : Attribute { }
+
+/// <summary>
 /// On a GameObject or ScriptableObject field or property, Reflect marks that the field may be subject to an
 ///  .Into reflection call. If a type is provided, then the expression baker will treat the field as a string and
 ///  run .Into with the given type. Otherwise, it will simply load the field (eg. for properties that return

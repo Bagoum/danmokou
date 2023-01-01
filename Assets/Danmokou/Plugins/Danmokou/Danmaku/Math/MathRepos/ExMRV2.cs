@@ -9,10 +9,6 @@ using tbool = Danmokou.Expressions.TEx<bool>;
 using tv2 = Danmokou.Expressions.TEx<UnityEngine.Vector2>;
 using tv3 = Danmokou.Expressions.TEx<UnityEngine.Vector3>;
 using trv2 = Danmokou.Expressions.TEx<Danmokou.DMath.V2RV2>;
-using efloat = Danmokou.Expressions.EEx<float>;
-using ev2 = Danmokou.Expressions.EEx<UnityEngine.Vector2>;
-using ev3 = Danmokou.Expressions.EEx<UnityEngine.Vector3>;
-using erv2 = Danmokou.Expressions.EEx<Danmokou.DMath.V2RV2>;
 
 namespace Danmokou.DMath.Functions {
 /// <summary>
@@ -26,7 +22,7 @@ public static partial class ExMRV2 {
     /// <param name="nrot">Nonrotational component</param>
     /// <param name="rot">Rotational component (x,y,angle)</param>
     /// <returns></returns>
-    public static trv2 V2V3(ev2 nrot, ev3 rot) => EEx.Resolve(nrot, rot, (_nr, _r) => {
+    public static trv2 V2V3(tv2 nrot, tv3 rot) => TEx.Resolve(nrot, rot, (_nr, _r) => {
         var nr = new TExV2(_nr);
         var r = new TExV3(_r);
         return VRV2(nr.x, nr.y, r.x, r.y, r.z);
@@ -39,7 +35,7 @@ public static partial class ExMRV2 {
     /// <param name="rot">Rotational x,y</param>
     /// <param name="angle">Rotational angle (degrees)</param>
     /// <returns></returns>
-    public static trv2 V2V2F(ev2 nrot, ev2 rot, tfloat angle) => EEx.Resolve(nrot, rot, (_nr, _r) => {
+    public static trv2 V2V2F(tv2 nrot, tv2 rot, tfloat angle) => TEx.Resolve(nrot, rot, (_nr, _r) => {
         var nr = new TExV2(_nr);
         var r = new TExV2(_r);
         return VRV2(nr.x, nr.y, r.x, r.y, angle);

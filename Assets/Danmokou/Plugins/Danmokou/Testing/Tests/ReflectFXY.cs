@@ -5,6 +5,7 @@ using BagoumLib.Mathematics;
 using NUnit.Framework;
 using Danmokou.DMath;
 using Danmokou.DMath.Functions;
+using Danmokou.Expressions;
 using Danmokou.Reflection;
 using UnityEngine;
 using static Danmokou.Reflection.Compilers;

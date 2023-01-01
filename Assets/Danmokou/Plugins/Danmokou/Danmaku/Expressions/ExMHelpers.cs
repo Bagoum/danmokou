@@ -17,6 +17,7 @@ using static Danmokou.Expressions.ExUtils;
 using static Danmokou.DMath.Functions.ExM;
 using static Danmokou.DMath.Functions.ExMConversions;
 using static BagoumLib.Mathematics.BMath;
+using Parser = Danmokou.DMath.Parser;
 
 namespace Danmokou.Expressions {
 /// <summary>
@@ -151,7 +152,7 @@ public static class ExMHelpers {
     public static Func<TExArgCtx, TEx<float>> SoftmaxShift<S>(Func<TExArgCtx,TEx<float>> sharpness, Func<TExArgCtx,TEx<float>> pivot, Func<TExArgCtx,TEx<float>> f1, Func<TExArgCtx,TEx<float>> f2, string pivotVar) where S: TEx, new()  =>
         PivotShift<S>(ExM.Softmax, sharpness, pivot, f1, f2, pivotVar);
     
-    public static Func<TExArgCtx, TEx<float>> PivotShift<S>(Func<EEx<float>, TEx<float>[], TEx<float>> shifter, 
+    public static Func<TExArgCtx, TEx<float>> PivotShift<S>(Func<TEx<float>, TEx<float>[], TEx<float>> shifter, 
         Func<TExArgCtx,TEx<float>> sharpness, Func<TExArgCtx,TEx<float>> pivot, 
         Func<TExArgCtx,TEx<float>> f1, Func<TExArgCtx,TEx<float>> f2, string pivotVar) where S: TEx, new() {
         if (pivotVar == "t" || pivotVar == "p" || pivotVar == "x") {

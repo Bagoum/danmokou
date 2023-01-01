@@ -11,10 +11,6 @@ using tbool = Danmokou.Expressions.TEx<bool>;
 using tv2 = Danmokou.Expressions.TEx<UnityEngine.Vector2>;
 using tv3 = Danmokou.Expressions.TEx<UnityEngine.Vector3>;
 using trv2 = Danmokou.Expressions.TEx<Danmokou.DMath.V2RV2>;
-using efloat = Danmokou.Expressions.EEx<float>;
-using ev2 = Danmokou.Expressions.EEx<UnityEngine.Vector2>;
-using ev3 = Danmokou.Expressions.EEx<UnityEngine.Vector3>;
-using erv2 = Danmokou.Expressions.EEx<Danmokou.DMath.V2RV2>;
 using static Danmokou.DMath.Functions.ExM;
 using static Danmokou.DMath.Functions.ExMConditionals;
 using static Danmokou.DMath.Functions.ExMConversions;
@@ -35,7 +31,7 @@ public static class ExMLerps {
     /// <param name="b">Upper lerp bound</param>
     /// <param name="x">Resulting lerp value</param>
     /// <returns></returns>
-    public static tfloat Ratio(efloat a, tfloat b, tfloat x) => EEx.Resolve(a, _a => x.Sub(a).Div(b.Sub(a)));
+    public static tfloat Ratio(tfloat a, tfloat b, tfloat x) => TEx.Resolve(a, _a => x.Sub(a).Div(b.Sub(a)));
     
     /// <summary>
     /// Lerp between two functions.
@@ -47,8 +43,8 @@ public static class ExMLerps {
     /// <param name="f1">First function (when controller leq zeroBound, return this)</param>
     /// <param name="f2">Second function (when controller geq oneBound, return this)</param>
     /// <returns></returns>
-    public static TEx<T> Lerp<T>(efloat zeroBound, efloat oneBound, efloat controller, TEx<T> f1, TEx<T> f2) => 
-        EEx.Resolve(zeroBound, oneBound, controller, (z, o, c) => {
+    public static TEx<T> Lerp<T>(tfloat zeroBound, tfloat oneBound, tfloat controller, TEx<T> f1, TEx<T> f2) => 
+        TEx.Resolve(zeroBound, oneBound, controller, (z, o, c) => {
             var rc = VFloat();
             return Ex.Block(new[] {rc},
                 rc.Is(Clamp(z, o, c).Sub(z).Div(o.Sub(z))),
@@ -71,13 +67,13 @@ public static class ExMLerps {
     /// Lerp between two functions with 0-1 as the bounds for the controller.
     /// </summary>
     public static TEx<T> Lerp01<T>(tfloat controller, TEx<T> f1, TEx<T> f2) =>
-        EEx.Resolve<float>(Clamp01(controller), c => c.Mul(f2).Add(((Ex)c).Complement().Mul(f1)));
+        TEx.Resolve<float>(Clamp01(controller), c => c.Mul(f2).Add(((Ex)c).Complement().Mul(f1)));
     /// <summary>
     /// Lerp between two functions with smoothing applied to the controller.
     /// </summary>
     public static TEx<T> LerpSmooth<T>([LookupMethod] Func<tfloat, tfloat> smoother, 
-        efloat zeroBound, efloat oneBound, efloat controller, TEx<T> f1, TEx<T> f2) 
-        => EEx.Resolve(zeroBound, oneBound, controller, (z, o, c) => {
+        tfloat zeroBound, tfloat oneBound, tfloat controller, TEx<T> f1, TEx<T> f2) 
+        => TEx.Resolve(zeroBound, oneBound, controller, (z, o, c) => {
             var rc = VFloat();
             return Ex.Block(new[] {rc},
                 rc.Is(smoother(Clamp(z, o, c).Sub(z).Div(o.Sub(z)))),
@@ -94,8 +90,8 @@ public static class ExMLerps {
     /// <param name="f1">First function</param>
     /// <param name="f2">Second function</param>
     /// <returns></returns>
-    public static TEx<T> LerpU<T>(efloat zeroBound, efloat oneBound, efloat controller, TEx<T> f1, TEx<T> f2) => 
-        EEx.Resolve(zeroBound, oneBound, controller, (z, o, c) => {
+    public static TEx<T> LerpU<T>(tfloat zeroBound, tfloat oneBound, tfloat controller, TEx<T> f1, TEx<T> f2) => 
+        TEx.Resolve(zeroBound, oneBound, controller, (z, o, c) => {
             var rc = VFloat();
             return Ex.Block(new[] {rc},
                 rc.Is(c.Sub(z).Div(o.Sub(z))),
@@ -106,17 +102,17 @@ public static class ExMLerps {
     /// <summary>
     /// Lerp between two functions with 0-1 as the bounds for the controller. The controller is not clamped.
     /// </summary>
-    public static TEx<T> Lerp01U<T>(efloat controller, TEx<T> f1, TEx<T> f2) =>
-        EEx.Resolve(controller, c => c.Mul(f2).Add(((Ex)c).Complement().Mul(f1)));
+    public static TEx<T> Lerp01U<T>(tfloat controller, TEx<T> f1, TEx<T> f2) =>
+        TEx.Resolve(controller, c => c.Mul(f2).Add(((Ex)c).Complement().Mul(f1)));
     
     /// <summary>
     /// Lerp between three functions.
     /// Between zeroBound and oneBound, lerp from the first to the second.
     /// Between zeroBound2 and oneBound2, lerp from the second to the third.
     /// </summary>
-    public static TEx<T> Lerp3<T>(efloat zeroBound, efloat oneBound,
-        efloat zeroBound2, efloat oneBound2, efloat controller, TEx<T> f1, TEx<T> f2, TEx<T> f3) => 
-        EEx.Resolve(zeroBound, oneBound, zeroBound2, oneBound2, controller, (z1, o1, z2, o2, c) => 
+    public static TEx<T> Lerp3<T>(tfloat zeroBound, tfloat oneBound,
+        tfloat zeroBound2, tfloat oneBound2, tfloat controller, TEx<T> f1, TEx<T> f2, TEx<T> f3) => 
+        TEx.Resolve(zeroBound, oneBound, zeroBound2, oneBound2, controller, (z1, o1, z2, o2, c) => 
             Ex.Condition(c.LT(z2), Lerp(z1, o1, c, f1, f2), Lerp(z2, o2, c, f2, f3)));
 
     /// <summary>
@@ -124,8 +120,8 @@ public static class ExMLerps {
     /// Between zeroBound and oneBound, lerp from the first to the second.
     /// Between oneBound and twoBound, lerp from the second to the third.
     /// </summary>
-    public static TEx<T> Lerp3c<T>(tfloat zeroBound, efloat oneBound, tfloat twoBound,
-        tfloat controller, TEx<T> f1, TEx<T> f2, TEx<T> f3) => EEx.Resolve(oneBound,
+    public static TEx<T> Lerp3c<T>(tfloat zeroBound, tfloat oneBound, tfloat twoBound,
+        tfloat controller, TEx<T> f1, TEx<T> f2, TEx<T> f3) => TEx.Resolve(oneBound,
         ob => Lerp3(zeroBound, ob, ob, twoBound, controller, f1, f2, f3));
 
     /// <summary>
@@ -148,7 +144,7 @@ public static class ExMLerps {
     /// <summary>
     /// Lerp between many functions.
     /// </summary>
-    public static TEx<T> LerpMany<T>((tfloat bd, TEx<T> val)[] points, efloat controller) => EEx.Resolve(controller,
+    public static TEx<T> LerpMany<T>((tfloat bd, TEx<T> val)[] points, tfloat controller) => TEx.Resolve(controller,
         x => {
             Ex ifLt = points[0].val;
             for (int ii = 0; ii < points.Length - 1; ++ii) {
@@ -163,7 +159,7 @@ public static class ExMLerps {
     /// Note: this expands to (if i = 0) arr[0] (if i = 1) arr[1] ....
     /// This may sound stupid, but since each value is a function, there's no way to actually store it in an array.
     /// </summary>
-    public static TEx<T> Select<T>(tfloat index, TEx<T>[] points) => EEx.Resolve((EEx<int>) ((Ex) index).Cast<int>(),
+    public static TEx<T> Select<T>(tfloat index, TEx<T>[] points) => TEx.Resolve((TEx<int>) ((Ex) index).Cast<int>(),
         i => {
             Ex ifNeq = points[points.Length - 1];
             for (int ii = points.Length - 2; ii >= 0; --ii) {
@@ -176,12 +172,12 @@ public static class ExMLerps {
     /// Return 0 if the controller is leq the lower bound, 1 if the controller is geq the lower bound, and
     /// a linear interpolation in between.
     /// </summary>
-    public static tfloat SStep(efloat zeroBound, tfloat oneBound, efloat controller) => EEx.Resolve(zeroBound, controller, (z, c) => Clamp01(c.Sub(z).Div(oneBound.Sub(z))));
+    public static tfloat SStep(tfloat zeroBound, tfloat oneBound, tfloat controller) => TEx.Resolve(zeroBound, controller, (z, c) => Clamp01(c.Sub(z).Div(oneBound.Sub(z))));
     
     /// <summary>
     /// Provide a soft ceiling for the value, multiplying any excess by the value RATIO.
     /// </summary>
-    public static tfloat Damp(efloat ceiling, tfloat ratio, efloat value) => EEx.Resolve(ceiling, value, (c, x) =>
+    public static tfloat Damp(tfloat ceiling, tfloat ratio, tfloat value) => TEx.Resolve(ceiling, value, (c, x) =>
         If(x.GT(c), c.Add(ratio.Mul(x.Sub(c))), x));
     
     public static Func<TExArgCtx, TEx<T>> LerpT<T>(ExBPY zeroBound, ExBPY oneBound, 
@@ -241,18 +237,18 @@ public static class ExMLerps {
         => ExMHelpers.Ease(smoother, maxTime, f, bpi => bpi.t, (bpi, t) => bpi.CopyWithT(t));
 
 
-    public static tv2 RotateLerp(efloat zeroBound, efloat oneBound, efloat controller, ev2 source, ev2 target) =>
-        EEx.Resolve(zeroBound, oneBound, controller, source, target, (z, o, c, f1, f2) => RotateRad(
+    public static tv2 RotateLerp(tfloat zeroBound, tfloat oneBound, tfloat controller, tv2 source, tv2 target) =>
+        TEx.Resolve(zeroBound, oneBound, controller, source, target, (z, o, c, f1, f2) => RotateRad(
             Clamp(z, o, c).Sub(z).Div(o.Sub(z)).Mul(RadDiff(f2, f1)),
             f1
         ));
-    public static tv2 RotateLerpCCW(efloat zeroBound, efloat oneBound, efloat controller, ev2 source, ev2 target) =>
-        EEx.Resolve(zeroBound, oneBound, controller, source, target, (z, o, c, f1, f2) => RotateRad(
+    public static tv2 RotateLerpCCW(tfloat zeroBound, tfloat oneBound, tfloat controller, tv2 source, tv2 target) =>
+        TEx.Resolve(zeroBound, oneBound, controller, source, target, (z, o, c, f1, f2) => RotateRad(
             Clamp(z, o, c).Sub(z).Div(o.Sub(z)).Mul(RadDiffCCW(f2, f1)),
             f1
         ));
-    public static tv2 RotateLerpCW(efloat zeroBound, efloat oneBound, efloat controller, ev2 source, ev2 target) =>
-        EEx.Resolve(zeroBound, oneBound, controller, source, target, (z, o, c, f1, f2) => RotateRad(
+    public static tv2 RotateLerpCW(tfloat zeroBound, tfloat oneBound, tfloat controller, tv2 source, tv2 target) =>
+        TEx.Resolve(zeroBound, oneBound, controller, source, target, (z, o, c, f1, f2) => RotateRad(
             Clamp(z, o, c).Sub(z).Div(o.Sub(z)).Mul(RadDiffCW(f2, f1)),
             f1
         ));
@@ -295,8 +291,8 @@ public static class ExMLerps {
     public static tfloat SmoothIO(
         [LookupMethod] Func<tfloat, tfloat> smoother1, 
         [LookupMethod] Func<tfloat, tfloat> smoother2, 
-        efloat total, efloat smth1, efloat smth2, efloat controller) 
-        => EEx.Resolve(total, smth1, smth2, controller,
+        tfloat total, tfloat smth1, tfloat smth2, tfloat controller) 
+        => TEx.Resolve(total, smth1, smth2, controller,
             (T, s1, s2, t) => Ex.Condition(t.LT(T.Sub(smth2)), 
                     SmoothC(smoother1, t.Div(s1)),
                     E1.Sub(SmoothC(smoother2, t.Sub(T.Sub(s2)).Div(s2)))
@@ -306,8 +302,8 @@ public static class ExMLerps {
     /// Apply SmoothIO where name=name1=name2 and smth=smth1=smth2.
     /// </summary>
     public static tfloat SmoothIOe([LookupMethod] Func<tfloat, tfloat> smoother,
-        tfloat total, efloat smth, tfloat controller) 
-        => EEx.Resolve(smth, s => SmoothIO(smoother, smoother, total, s, s, controller));
+        tfloat total, tfloat smth, tfloat controller) 
+        => TEx.Resolve(smth, s => SmoothIO(smoother, smoother, total, s, s, controller));
 
     /// <summary>
     /// Get the value of an easer at a given point between 0 and 1.
@@ -316,8 +312,8 @@ public static class ExMLerps {
     /// <param name="smoother">Smoothing function (<see cref="ExMEasers"/>)</param>
     /// <param name="controller"></param>
     /// <returns></returns>
-    public static tfloat SmoothLoop([LookupMethod] Func<tfloat, tfloat> smoother, efloat controller) 
-        => EEx.Resolve(controller, x => {
+    public static tfloat SmoothLoop([LookupMethod] Func<tfloat, tfloat> smoother, tfloat controller) 
+        => TEx.Resolve(controller, x => {
             var per = VFloat();
             return Ex.Block(new[] {per},
                 per.Is(Floor(x)),
@@ -333,14 +329,14 @@ public static class ExMLerps {
     /// <param name="range">Range</param>
     /// <param name="controller">0-R value</param>
     /// <returns></returns>
-    public static tfloat SmoothR([LookupMethod] Func<tfloat, tfloat> smoother, efloat range, tfloat controller) =>
-        EEx.Resolve(range, r => r.Mul(smoother(controller.Div(r))));
+    public static tfloat SmoothR([LookupMethod] Func<tfloat, tfloat> smoother, tfloat range, tfloat controller) =>
+        TEx.Resolve(range, r => r.Mul(smoother(controller.Div(r))));
     
     /// <summary>
     /// Returns R * SmoothLoop(name, controller/R).
     /// </summary>
-    public static tfloat SmoothLoopR([LookupMethod] Func<tfloat, tfloat> smoother, efloat range, tfloat controller) =>
-        EEx.Resolve(range, r => r.Mul(SmoothLoop(smoother, controller.Div(r))));
+    public static tfloat SmoothLoopR([LookupMethod] Func<tfloat, tfloat> smoother, tfloat range, tfloat controller) =>
+        TEx.Resolve(range, r => r.Mul(SmoothLoop(smoother, controller.Div(r))));
     
     
     /// <summary>
@@ -350,7 +346,7 @@ public static class ExMLerps {
     /// <param name="period"></param>
     /// <param name="controller"></param>
     /// <returns></returns>
-    public static tfloat EQuad0m10(efloat midp, tfloat period, tfloat controller) => EEx.Resolve(midp, m => {
+    public static tfloat EQuad0m10(tfloat midp, tfloat period, tfloat controller) => TEx.Resolve(midp, m => {
         var t = VFloat();
         return Ex.Block(new[] {t},
             t.Is(controller.Sub(m)),
@@ -368,7 +364,7 @@ public static class ExMLerps {
     /// <param name="end">Ending point</param>
     /// <param name="time">0-1 lerp controller (automatically clamped)</param>
     public static TEx<T> Bezier<T>(TEx<T> start, TEx<T> ctrl, TEx<T> end, TEx<float> time) => 
-        EEx.Resolve<float>(Clamp01(time), t => {
+        TEx.Resolve<float>(Clamp01(time), t => {
             var c = E1.Sub(t);
             return c.Mul(c).Mul(start)
                 .Add(E2.Mul(c).Mul(t).Mul(ctrl))
@@ -387,7 +383,7 @@ public static class ExMLerps {
     /// <param name="end">Ending point</param>
     /// <param name="time">0-1 lerp controller (automatically clamped)</param>
     public static TEx<T> Bezier3<T>(TEx<T> start, TEx<T> ctrl1, TEx<T> ctrl2, TEx<T> end, TEx<float> time)
-        => EEx.Resolve<float>(Clamp01(time), t => {
+        => TEx.Resolve<float>(Clamp01(time), t => {
             var c = E1.Sub(t);
             return c.Mul(c).Mul(c).Mul(start)
                 .Add(ExC(3f).Mul(c).Mul(c).Mul(t).Mul(ctrl1))
