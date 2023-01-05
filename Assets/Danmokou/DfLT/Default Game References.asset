@@ -12,38 +12,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8d7768018aff40589017a165e079b3c1, type: 3}
   m_Name: Default Game References
   m_EditorClassIdentifier: 
-  gameIdentifier: DfLT
-  gameVersion:
-    major: 0
-    minor: 0
-    patch: 0
+  gameDefinition: {fileID: 11400000, guid: a65e4aa1c72fcf648911c5e98d3340ea, type: 2}
   mainMenu: {fileID: 0}
-  replaySaveMenu: {fileID: 11400000, guid: 4eb8b66bd76d4d94fa90176835284503, type: 2}
-  defaultMenuBackground: {fileID: 0}
   defaultUIFrame: {fileID: 21300000, guid: fd60a7ae3ce4be640b9b311d9d70969e, type: 3}
   unitScene: {fileID: 0}
-  tutorial: {fileID: 0}
-  miniTutorial: {fileID: 0}
-  endcard: {fileID: 11400000, guid: 8d6f4f35b7d2da942a254e43329ca03c, type: 2}
-  campaign: {fileID: 0}
-  exCampaign: {fileID: 0}
-  dayCampaign: {fileID: 0}
   defaultTransition: {fileID: 11400000, guid: 517222e0dbe56264a8bcd878fc9e4e27, type: 2}
-  bounds:
-    left: -3.6
-    right: 3.6
-    top: 4.1
-    bot: -4.5
-    center: {x: -1.9, y: 0}
   dialogue: []
   bossMetadata:
   - {fileID: 11400000, guid: 061f122427d8e1e418fbe6a8e4252d31, type: 2}
-  dialogueProfiles: []
   tracks: []
   items: {fileID: 11400000, guid: 18e6de6e951f4114e8823af9e617bff7, type: 2}
   prefabReferences: {fileID: 11400000, guid: 842bcc7c616103e4c9880c49f9735bb4, type: 2}
+  suzunoyaReferences: {fileID: 0}
+  advReferences: {fileID: 0}
   uxmlDefaults: {fileID: 11400000, guid: b4213b3830762944fbcb9250a4b73463, type: 2}
+  SFX: []
   summonables:
   - {fileID: 11400000, guid: 38afc312ddb0ac242b8cfb301b1b4237, type: 2}
   fileStateMachines: []
+  licenses: []
   scriptFolders: []
+  fastParsing: 0
