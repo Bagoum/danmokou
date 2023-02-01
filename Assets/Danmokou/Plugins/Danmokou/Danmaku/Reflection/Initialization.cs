@@ -58,21 +58,24 @@ public static partial class Reflector {
                 if (attr is PAPriorityAttribute pp) priority = pp.priority;
                 else if (attr is PASourceTypesAttribute ps) types = ps.types;
             }
-            void CreateAggregateMethod(MethodInfo gmi) {
+            void CreateAggregateMethod(MethodInfo gmi, Type? specialize = null) {
                 var sig = MethodSignature.Get(gmi);
+                if (specialize != null)
+                    sig = (sig as GenericMethodSignature)!.Specialize(specialize);
                 if (sig.Params.Length != 2) throw new StaticException($"Post-aggregator \"{method}\" doesn't have exactly 2 arguments");
                 var sourceType = sig.Params[0].Type;
                 var searchType = sig.Params[1].Type;
-                if (gmi.ReturnType != sourceType)
+                if (sig.ReturnType != sourceType)
                     throw new StaticException($"Post-aggregator \"{method}\" has a different return and first argument type");
                 postAggregators.SetDefaultSet(sourceType, shortcut,
                     new PostAggregate(priority, sourceType, searchType, sig));
             }
-            if (types == null) CreateAggregateMethod(mi);
+            if (types == null) 
+                CreateAggregateMethod(mi);
             else {
                 //types = [ (float), (v2) ... ]
                 foreach (var rt in types) {
-                    CreateAggregateMethod(mi.MakeGenericMethod(rt));
+                    CreateAggregateMethod(mi, rt);
                 }
             }
         }

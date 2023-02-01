@@ -56,6 +56,9 @@ public class RebindableInputBinding : IInputBinding {
         }
     }
 
+    /// <summary>
+    /// Disallow the binding at the provided index in <see cref="Sources"/> from being rebound.
+    /// </summary>
     public RebindableInputBinding Protect(int index) {
         ProtectedIndices.Add(index);
         return this;

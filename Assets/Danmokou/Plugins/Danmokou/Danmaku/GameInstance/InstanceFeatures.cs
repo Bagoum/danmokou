@@ -1,8 +1,12 @@
-﻿namespace Danmokou.GameInstance {
+﻿using Danmokou.Core;
+
+namespace Danmokou.GameInstance {
 /// <summary>
 /// A container for all <see cref="IFeatureCreator{T}"/>s required to construct a game instance.
 /// </summary>
 public record InstanceFeatures {
+    public IFeatureCreator<IBasicFeature> Basic { get; init; } = new BasicFeatureCreator();
+    public IFeatureCreator<IConfigurationFeature> Configuration { get; init; } = new ConfigurationFeatureCreator();
     public IFeatureCreator<IScoreFeature> Score { get; init; } = new ScoreFeatureCreator(null);
     //Power is disabled by default
     public IFeatureCreator<IPowerFeature> Power { get; init; } = new DisabledPowerFeatureCreator();

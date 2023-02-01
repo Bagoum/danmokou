@@ -3,10 +3,13 @@ using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Reflection;
 using BagoumLib.Reflection;
+using BagoumLib.Unification;
+using Danmokou.Core;
 using Danmokou.Expressions;
 using Danmokou.Reflection;
+using Mizuhashi;
 using Ex = System.Linq.Expressions.Expression;
-using static BagoumLib.Reflection.TypeDesignation;
+using static BagoumLib.Unification.TypeDesignation;
 
 namespace Danmokou.Reflection2 {
 public static class Helpers {
@@ -14,8 +17,8 @@ public static class Helpers {
     /// <summary>
     /// Make the type TExArgCtx->TEx&lt;T&gt;.
     /// </summary>
-    public static TypeDesignation MakeTExFunc(this TypeDesignation simpleType) =>
-        new Known(typeof(Func<,>),
+    public static Known MakeTExFunc(this TypeDesignation simpleType) =>
+        new (typeof(Func<,>),
             new Known(typeof(TExArgCtx)),
             new Known(typeof(TEx<>),
                 simpleType
@@ -86,6 +89,58 @@ public static class Helpers {
             var conv = converters.TryGetValue(t, out var c) ? c : converters[t] = mi.MakeGenericMethod(t);
             return (conv.Invoke(null, new object[] { f }) as Func<TExArgCtx, TEx>)!;
         }
+    }
+    
+    public class NotWriteableException : Exception {
+        public int ArgIndex { get; }
+
+        public NotWriteableException(int argIndex, string err) : base(err) {
+            this.ArgIndex = argIndex;
+        }
+
+        public NotWriteableException(int argIndex, string err, Exception inner) : base(err) {
+            this.ArgIndex = argIndex;
+        }
+    }
+
+    /// <summary>
+    /// Return an exception if the provided expression is not writeable.
+    /// <br/>Implementation based on https://source.dot.net/#System.Linq.Expressions/System/Linq/Expressions/Expression.cs,241
+    /// </summary>
+    public static NotWriteableException? AssertWriteable(int argIndex, object prm) {
+        NotWriteableException Err(string err) => new(argIndex, err);
+        Expression ex;
+        try {
+            if (prm is TEx tex)
+                ex = tex;
+            else
+                ex = (Ex)prm;
+        } catch (Exception ecx) {
+            return new(argIndex, $"Failure: this is not an expression. Please report this.", ecx);
+        }
+        switch (ex) {
+            case IndexExpression iex:
+                if (iex.Indexer?.CanWrite is false)
+                    return Err("This is an indexing expression, but the indexer is not writeable.");
+                return null;
+            case MemberExpression mex:
+                return mex.Member switch {
+                    PropertyInfo p => p.CanWrite ?
+                        null :
+                        Err($"The property {p.Name} is not writeable."),
+                    FieldInfo f => !(f.IsInitOnly || f.IsLiteral) ?
+                        null :
+                        Err($"The field {f.Name} is not writeable."),
+                    { } m => Err($"Member {m.Name} is of an unhandled type {m.GetType().RName()}")
+                };
+            case ParameterExpression:
+                return null;
+            default:
+                return Err($"This expression has type {ex.GetType().RName()}:{ex.NodeType}, which is not writeable." +
+                           " A writeable expression is an array indexer, property, field, or variable.");
+            
+        }
+        
     }
     
 }

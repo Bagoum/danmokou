@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using UnityEngine;
 using System.Linq.Expressions;
+using BagoumLib;
 using BagoumLib.Events;
 using BagoumLib.Expressions;
 using BagoumLib.Reflection;
@@ -492,13 +493,13 @@ public static partial class ExM {
     [DontReflect]
     public static Ex FrameNumber => Ex.Property(null, typeof(ETime), nameof(ETime.FrameNumber));
     
-    private static Ex BEHEnemy(this BEHPointer beh) => ExC(beh).Field(nameof(BEHPointer.beh)).Field(nameof(BehaviorEntity.Enemy));
+    private static Ex BEHEnemy(this TEx<BehaviorEntity> beh) => beh.Field(nameof(BehaviorEntity.Enemy));
 
     /// <summary>
     /// Get the HP ratio (0-1) of the BehaviorEntity.
     /// <br/>The BEH must be an enemy, or this will cause errors.
     /// </summary>
-    public static tfloat HPRatio(BEHPointer beh) =>
+    public static tfloat HPRatio(TEx<BehaviorEntity> beh) =>
         beh.BEHEnemy().Field(nameof(Enemy.EffectiveBarRatio));
 
     /// <summary>
@@ -506,7 +507,7 @@ public static partial class ExM {
     /// <br/>The BEH must be an enemy, or this will cause errors.
     /// <br/>This number resets every card.
     /// </summary>
-    public static tfloat PhotosTaken(BEHPointer beh) => 
+    public static tfloat PhotosTaken(TEx<BehaviorEntity> beh) => 
         beh.BEHEnemy().Field(nameof(Enemy.PhotosTaken)).Cast<float>();
 
     /// <summary>
@@ -657,11 +658,13 @@ public static partial class ExM {
     
 
     /// <summary>
-    /// Returns the object of type T associated with the object calling this function.
+    /// Returns the object of type T associated with the entity calling this function.
     /// <br/>eg. If this is used by a laser fired by a player option, and T = FireOption,
-    /// then this function returns the FireOption that created this laser.
+    ///  then this function returns the FireOption that created this laser.
+    /// <br/>eg. If this is used by a bullet fired by a boss, and T = BehaviorEntity,
+    ///  then this function returns the boss that fired this bullet.
     /// </summary>
-    /// <typeparam name="T">One of Bullet, CurvedTileRenderLaser, PlayerController, FireOption</typeparam>
+    /// <typeparam name="T">One of Bullet, CurvedTileRenderLaser, PlayerController, FireOption, BehaviorEntity</typeparam>
     /// <returns></returns>
     public static Func<TExArgCtx, TEx<T>> Mine<T>() => tac => {
         var t = typeof(T);
@@ -674,10 +677,16 @@ public static partial class ExM {
             return fctx.Field(nameof(PICustomData.PlayerController));
         } else if (t == typeof(FireOption)) {
             return fctx.Field(nameof(PICustomData.OptionFirer));
+        } else if (t == typeof(BehaviorEntity)) {
+            return fctx.Field(nameof(PICustomData.Firer));
         }
         throw new Exception($"FCTX has no handling for `Mine` constructor of type {t.RName()}");
     };
-    
+
+    [Fallthrough(1)]
+    public static Func<TExArgCtx, TEx<BehaviorEntity>> FromID(string id) => tac =>
+        Ex.Constant(BehaviorEntity.GetPointerForID(id)).Field(nameof(BEHPointer.Beh));
+
     /*
     [Alias("mine?")]
     public static Func<TExArgCtx, TEx<T>> MineOrNull<T>() => tac => {

@@ -22,7 +22,7 @@ MonoBehaviour:
     hardcoded:
       en: 
       jp: 
-  volume: 0.17
+  volume: 0.15
   pitch: 1
   stopOnPause: 0
   loopMode: 1

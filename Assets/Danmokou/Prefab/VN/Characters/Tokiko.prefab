@@ -1,27 +1,11 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &1776383064325185743
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5466135841841681093}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3d683eb6870f4f828cd999077db77a6d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ADVSpeakerIcon: {fileID: 21300000, guid: 1bc5e117d70edce49aba3921e33cf174, type: 3}
-  pieces:
-  - {fileID: 3938963659613347399}
-  - {fileID: 2291325347389896490}
-  defaultPiece: {fileID: 2291325347389896490}
 --- !u!1001 &6921585264875452769
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 2869238025069884022, guid: c49533a826fdb13409ee106e66235e02,
@@ -163,25 +147,14 @@ PrefabInstance:
         type: 3}
     m_RemovedComponents:
     - {fileID: 5380628742521391622, guid: c49533a826fdb13409ee106e66235e02, type: 3}
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 3158699776333818788, guid: c49533a826fdb13409ee106e66235e02,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1776383064325185743}
   m_SourcePrefab: {fileID: 100100000, guid: c49533a826fdb13409ee106e66235e02, type: 3}
---- !u!1 &5466135841841681093 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 3158699776333818788, guid: c49533a826fdb13409ee106e66235e02,
-    type: 3}
-  m_PrefabInstance: {fileID: 6921585264875452769}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &3938963659613347399 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 6243233405909575462, guid: c49533a826fdb13409ee106e66235e02,
-    type: 3}
-  m_PrefabInstance: {fileID: 6921585264875452769}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c4fa8568a2a04c9cabded3d5d1289d6a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &2291325347389896490 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 9205926511721270859, guid: c49533a826fdb13409ee106e66235e02,
@@ -194,3 +167,53 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c4fa8568a2a04c9cabded3d5d1289d6a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &3938963659613347399 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6243233405909575462, guid: c49533a826fdb13409ee106e66235e02,
+    type: 3}
+  m_PrefabInstance: {fileID: 6921585264875452769}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c4fa8568a2a04c9cabded3d5d1289d6a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!1 &5466135841841681093 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3158699776333818788, guid: c49533a826fdb13409ee106e66235e02,
+    type: 3}
+  m_PrefabInstance: {fileID: 6921585264875452769}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1776383064325185743
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5466135841841681093}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3d683eb6870f4f828cd999077db77a6d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_ADVSpeakerIcon: {fileID: 0}
+  advIcons:
+  - emote: normal
+    sprite: {fileID: 21300000, guid: a7b1983d3991f5d40a23c990d35d5679, type: 3}
+  - emote: angry
+    sprite: {fileID: 21300000, guid: fb111cbc20c173646bac9960d1ba304d, type: 3}
+  - emote: cry
+    sprite: {fileID: 21300000, guid: 24e2a6015ace7504095825a13398164a, type: 3}
+  - emote: happy
+    sprite: {fileID: 21300000, guid: a4f38b25fd1316a4ea49f1fca67646f1, type: 3}
+  - emote: surprise
+    sprite: {fileID: 21300000, guid: 7a7032bb7d822c94aa54a94f6981087b, type: 3}
+  - emote: worry
+    sprite: {fileID: 21300000, guid: fc5e9e5c6077d1e44827d4ecc5461ae3, type: 3}
+  - emote: smug
+    sprite: {fileID: 21300000, guid: a8666c9d020347140a6c5eebbde7816a, type: 3}
+  pieces:
+  - {fileID: 3938963659613347399}
+  - {fileID: 2291325347389896490}
+  defaultPiece: {fileID: 2291325347389896490}

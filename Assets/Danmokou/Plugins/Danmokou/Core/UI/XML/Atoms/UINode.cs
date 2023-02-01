@@ -56,6 +56,8 @@ public class UINode {
             _group = value;
             if (ShowHideGroup != null)
                 ShowHideGroup.Parent = _group;
+            if (tooltip != null)
+                tooltip.Parent = _group;
         }
     }
     /// <summary>
@@ -78,6 +80,7 @@ public class UINode {
     /// </summary>
     public bool Built { get; private set; }
     public VisualElement BodyHTML => NodeHTML.Q("Body");
+    public VisualElement BodyOrNodeHTML => BodyHTML ?? NodeHTML;
 
     /// <summary>
     /// Parent of HTML. Either Render.HTML or a descendant of Render.HTML.
@@ -105,7 +108,7 @@ public class UINode {
     /// </summary>
     public IFixedXMLObject? AbsoluteLocationSource { get; private set; } = null;
 
-    public void ConfigureAbsoluteLocation(IFixedXMLObject source, Pivot pivot = Pivot.Center, Action<UINode>? extraOnBuild = null) {
+    public void ConfigureAbsoluteLocation(IFixedXMLObject source, Pivot pivot = Pivot.Center, Action<UINode>? extraOnBuild = null, bool useVisiblityPassthrough = true) {
         if (AbsoluteLocationSource != null)
             throw new Exception($"Duplicate defintion of {nameof(AbsoluteLocationSource)}");
         this.AbsoluteLocationSource = source;
@@ -114,7 +117,8 @@ public class UINode {
         var existingOnBuild = OnBuilt;
         OnBuilt = n => {
             _ = source.IsVisible.Subscribe(b => {
-                UpdatePassthrough(!b);
+                if (useVisiblityPassthrough)
+                    UpdatePassthrough(!b);
                 //MONKEYPATCH-- you can normally use display=b.ToStyle instead of these two
                 n.HTML.pickingMode = b ? PickingMode.Position : PickingMode.Ignore;
                 n.HTML.style.opacity = b ? 1 : 0;
@@ -242,6 +246,9 @@ public class UINode {
             _showHideGroup = value;
         } 
     }
+
+    private UIGroup? tooltip;
+    
     /// <summary>
     /// List of CSS classes to apply to the node HTML.
     /// </summary>
@@ -277,7 +284,20 @@ public class UINode {
     public UINode() : this(() => LString.Empty) { }
 
     #region Construction
-    
+
+    public UINode MakeTooltip(UIScreen s, UINode element) {
+        OnBuilt = OnBuilt.Then(_ => 
+            tooltip = new UIColumn(
+                    new UIRenderConstructed(new UIRenderExplicit(s, this), XMLUtils.Prefabs.Tooltip)
+                        { AnimateOnShowHide = true },
+                    element)
+                { Interactable = false });
+        return this;
+    }
+
+    public UINode MakeTooltip(UIScreen s, LString text) =>
+        MakeTooltip(s, new UINode(text) { Prefab = XMLUtils.Prefabs.PureTextNode }.With(XMLUtils.highVisClass));
+
     //float MONKEYPATCH_mouseDelay = 0;
     protected virtual void RegisterEvents() {
         //IEnumerator MONKEYPATCH_trackDelay() {
@@ -291,7 +311,9 @@ public class UINode {
         
         bool isInElement = false;
         bool startedClickHere = false;
-        NodeHTML.RegisterCallback<PointerEnterEvent>(evt => {
+        //It's a bit more mouse-friendly to use BodyHTML when possible so empty space on rows doesn't draw events
+        var evtBinder = BodyOrNodeHTML;
+        evtBinder.RegisterCallback<PointerEnterEvent>(evt => {
             //Logs.Log($"Enter {Description()} {MONKEYPATCH_mouseDelay} {evt.position} {evt.localPosition}");
             //if (MONKEYPATCH_mouseDelay > 0f) return;
         #if !UNITY_EDITOR && (UNITY_ANDROID || UNITY_IOS)
@@ -305,7 +327,7 @@ public class UINode {
             }
             isInElement = true;
         });
-        NodeHTML.RegisterCallback<PointerLeaveEvent>(evt => {
+        evtBinder.RegisterCallback<PointerLeaveEvent>(evt => {
             //Logs.Log($"Leave {Description()}");
             //For freeform groups ONLY, moving the cursor off a node should deselect it.
             if (AllowInteraction && Group is UIFreeformGroup && Controller.Current == this)
@@ -313,13 +335,13 @@ public class UINode {
             isInElement = false;
             startedClickHere = false;
         });
-        NodeHTML.RegisterCallback<PointerDownEvent>(evt => {
+        evtBinder.RegisterCallback<PointerDownEvent>(evt => {
             //Logs.Log($"Down {Description()}");
             if (AllowInteraction)
                 OnMouseDown?.Invoke(this, evt);
             startedClickHere = true;
         });
-        NodeHTML.RegisterCallback<PointerUpEvent>(evt => {
+        evtBinder.RegisterCallback<PointerUpEvent>(evt => {
             //Logs.Log($"Click {Description()}");
             //button 0, 1, 2 = left, right, middle click
             //Right click is handled as UIBack in InputManager. UIBack is global (it does not depend
@@ -386,6 +408,11 @@ public class UINode {
         //This makes structures such as save/load (~1/10 of nodes are rendered at a time) much more efficient.
         var thisFrameRender = _visible && Group.Visible;
         if (!lastFrameRendered && !thisFrameRender)
+            return;
+        
+        //If the render target is going invisible, then don't bother redrawing
+        // (Note: this is important for non-blocking animations like popup scale-out to work)
+        if (!Render.IsVisible)
             return;
         
         lastFrameRendered = thisFrameRender;
@@ -462,6 +489,7 @@ public class UINode {
             }
         }
         ShowHideGroup?.EnterShow();
+        tooltip?.EnterShow();
         OnEnter?.Invoke(this);
         Group.EnteredNode(this, animate);
     }
@@ -477,6 +505,7 @@ public class UINode {
             }
         }
         ShowHideGroup?.LeaveHide();
+        tooltip?.LeaveHide();
         OnLeave?.Invoke(this);
     }
     protected virtual IEnumerable<Func<ICancellee, Task>> EnterAnimations() {

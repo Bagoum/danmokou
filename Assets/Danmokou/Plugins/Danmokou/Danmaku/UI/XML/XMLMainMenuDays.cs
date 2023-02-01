@@ -60,9 +60,7 @@ public class XMLMainMenuDays : XMLMainMenu {
         var defaultSupport = defaultPlayer.supports[0];
 
         TeamConfig Team() => new(0, Subshot.TYPE_D, defaultSupport.ability, (defaultPlayer, defaultShot.shot));
-        //TODO I currently don't have a story around game-specific configurations of meter/etc,
-        // this disabling is a stopgap measure until then.
-        SharedInstanceMetadata Meta() => new(Team(), new DifficultySettings(dfc) {meterEnabled = false});
+        SharedInstanceMetadata Meta() => new(Team(), new(dfc));
 
         var photoBoard = ServiceLocator.FindOrNull<IAyaPhotoBoard>();
         IDisposable? photoBoardToken = null;
@@ -146,8 +144,10 @@ public class XMLMainMenuDays : XMLMainMenu {
             }.With(large1Class),
             new TransferNode(main_options, OptionsScreen)
                 .With(large1Class),
+#if !WEBGL
             new FuncNode(main_quit, Application.Quit)
                 .With(large1Class),
+#endif
             new OpenUrlNode(main_twitter, "https://twitter.com/rdbatz")
                 .With(large1Class));
 

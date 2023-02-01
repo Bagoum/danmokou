@@ -40,6 +40,8 @@ public readonly struct FreezableArray<T> {
     public override int GetHashCode() => Data.ElementWiseHashCode();
 
     public static readonly FreezableArray<T> Empty = new(Array.Empty<T>());
+
+    public override string ToString() => $"Frozen[{string.Join(", ", Data.Select(d => d?.ToString() ?? "<null>"))}]";
 }
 
 public class N2Triangle<T> {

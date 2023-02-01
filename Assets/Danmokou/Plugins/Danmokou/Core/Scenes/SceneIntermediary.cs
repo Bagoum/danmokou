@@ -47,7 +47,8 @@ public class SceneIntermediary : CoroutineRegularUpdater, ISceneIntermediary {
             var loader = new SceneLoading(new(), new(), new());
             RunRIEnumerator(WaitForSceneLoad(stateToken, req, loader, true));
             return loader;
-        } else Logs.Log($"REJECTED scene load for {req}.", true, LogLevel.WARNING);
+        } else Logs.Log($"REJECTED scene load for {req}. Current game state is {EngineStateManager.State} " +
+                        $"(loading: {LOADING})", true, LogLevel.WARNING);
         return null;
     }
 

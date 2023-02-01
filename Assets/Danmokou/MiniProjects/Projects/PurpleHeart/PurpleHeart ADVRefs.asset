@@ -12,6 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5a2478f0d5ba4d01ac338ecb67830707, type: 3}
   m_Name: PurpleHeart ADVRefs
   m_EditorClassIdentifier: 
+  evidenceTargetIcon: {fileID: 21300000, guid: aa8d70f9e6beb50409a073237642d7b2, type: 3}
   talkToIcon: {fileID: 21300000, guid: 1c042a97020f1dc47a42af69c2ec451e, type: 3}
+  talkToObjectIcon: {fileID: 21300000, guid: 65189125f136d9942bbbea42979cbefd, type: 3}
   mapCurrentIcon: {fileID: 21300000, guid: 9eb9f29c4cf430f4e974291945a1ecd5, type: 3}
   mapNotCurrentIcon: {fileID: 21300000, guid: 9032c976a55ef3e48bff2c8fb0f59bbf, type: 3}

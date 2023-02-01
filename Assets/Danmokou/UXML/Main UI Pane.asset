@@ -16,13 +16,14 @@ MonoBehaviour:
     type: 3}
   m_TargetTexture: {fileID: 8400000, guid: be218fb1d1df0224384ea0f2654dd964, type: 2}
   m_ScaleMode: 0
-  m_Scale: 0.16666667
+  m_ReferenceSpritePixelsPerUnit: 100
+  m_Scale: 1
   m_ReferenceDpi: 96
   m_FallbackDpi: 96
   m_ReferenceResolution: {x: 3840, y: 2160}
   m_ScreenMatchMode: 0
   m_Match: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 1
   m_TargetDisplay: 0
   m_ClearDepthStencil: 1
   m_ClearColor: 1

@@ -208,8 +208,8 @@ public class Tutorial : BehaviorEntity {
         yield return confirm();
         yield return shift();
         Prompt(text10, lifeitems35);
-        int currLives = Instance.Lives;
-        yield return waitlf(() => Instance.Lives > currLives);
+        int currLives = Instance.BasicF.Lives;
+        yield return waitlf(() => Instance.BasicF.Lives > currLives);
         yield return shift();
         Message(text10, valueitems36(Instance.ScoreF.ValueItemPoints));
         yield return confirm();

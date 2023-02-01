@@ -25,6 +25,7 @@ public class GTRepeat2 : GTRepeat {
     /// <param name="rpp">Amount to increment rv2 between invocations</param>
     /// <param name="props">Other properties</param>
     /// <param name="target">Child StateMachines to run</param>
+    [CreatesInternalScope(3)]
     public GTRepeat2(GCXF<float> wait, GCXF<float> times, GCXF<V2RV2> rpp, GenCtxProperty[] props, StateMachine[] target) :
         base(new GenCtxProperties<StateMachine>(props.Append(GenCtxProperty.Async(wait, times, rpp))), target) { }
 
@@ -98,18 +99,19 @@ public class GTRepeat : UniversalSM {
                 checkIsChildDone = () => done;
                 --extraFrames;
             } else checkIsChildDone = null;
-            
+
             if (looper.props.childSelect == null) {
                 if (sequential) {
-                    _ = DoAIterationSequentialStep(loopDone);
+                    _ = DoAIterationSequentialStep(loopDone).ContinueWithSync();
                 } else {
                     var loopFragmentDone = loopDone == null ? null : GetManyCallback(caller.states.Count, loopDone);
                     for (int ii = 0; ii < caller.states.Count; ++ii) {
-                        _ = DoAIteration(caller.states[ii], loopFragmentDone);
+                        _ = DoAIteration(caller.states[ii], loopFragmentDone).ContinueWithSync();
                     }
                 }
-            } else 
-                _ = DoAIteration(caller.states[(int) looper.props.childSelect(looper.GCX) % caller.states.Count], loopDone);
+            } else
+                _ = DoAIteration(caller.states[(int)looper.props.childSelect(looper.GCX) % caller.states.Count],
+                    loopDone).ContinueWithSync();
         }
 
         private async Task DoAIteration(int index, Action<int>? childDone) {
@@ -138,15 +140,15 @@ public class GTRepeat : UniversalSM {
             checkIsChildDone = () => done;
             if (looper.props.childSelect == null) {
                 if (sequential) {
-                    _ = DoAIterationSequentialStep(loopDone);
+                    _ = DoAIterationSequentialStep(loopDone).ContinueWithSync();
                 } else {
                     var loopFragmentDone = GetManyCallback(caller.states.Count, loopDone);
                     for (int ii = 0; ii < caller.states.Count; ++ii) {
-                        _ = DoAIteration(caller.states[ii], loopFragmentDone);
+                        _ = DoAIteration(caller.states[ii], loopFragmentDone).ContinueWithSync();
                     }
                 }
             } else 
-                _ = DoAIteration(caller.states[(int) looper.props.childSelect(looper.GCX) % caller.states.Count], loopDone);
+                _ = DoAIteration(caller.states[(int) looper.props.childSelect(looper.GCX) % caller.states.Count], loopDone).ContinueWithSync();
         }
 
         /// <summary>
@@ -193,6 +195,7 @@ public class GTRepeat : UniversalSM {
 
     private readonly GenCtxProperties<StateMachine> props;
     
+    [CreatesInternalScope(0)]
     public GTRepeat(GenCtxProperties<StateMachine> props, StateMachine[] target) : base(target.ToList()) {
         this.props = props;
     }

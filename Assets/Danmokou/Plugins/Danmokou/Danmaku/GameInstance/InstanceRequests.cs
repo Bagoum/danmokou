@@ -142,7 +142,7 @@ public abstract class ReplayMode {
 public record InstanceRequest {
     private readonly Cancellable instTracker = new();
     public IDanmakuGameDef GameDef => lowerRequest.Game;
-    public InstanceFeatures Features => GameDef.MakeFeatures(metadata.difficulty, SaveData.r.GetHighScore(this));
+    public InstanceFeatures Features => GameDef.MakeFeatures(metadata.difficulty, lowerRequest.Mode, SaveData.r.GetHighScore(this));
     /// <summary>
     /// Callback to run when this instance is complete.
     /// <br/>Note: I use this instead of having <see cref="Run"/> return a task because callbacks can be preserved
@@ -384,7 +384,10 @@ public record InstanceRequest {
     public static bool RunCampaign(SMAnalysis.AnalyzedCampaign? campaign, Action? cb, 
         SharedInstanceMetadata metadata) {
         if (campaign == null) return false;
-        var req = new InstanceRequest((req, __) => DefaultReturn(req), metadata, new CampaignRequest(campaign));
+        var req = new InstanceRequest((req, __) => {
+            cb?.Invoke();
+            DefaultReturn(req);
+        }, metadata, new CampaignRequest(campaign));
 
         if (SaveData.r.TutorialDone || campaign.Game.MiniTutorial == null) return req.Run();
         //Note: if you Restart within the mini-tutorial, it will send you to stage 1.
@@ -401,7 +404,7 @@ public record InstanceRequest {
         if (game.Tutorial == null) return false;
         return ServiceLocator.Find<ISceneIntermediary>().LoadScene(
             new SceneRequest(game.Tutorial, SceneRequest.Reason.START_ONE,
-            () => GameManagement.NewInstance(InstanceMode.TUTORIAL, game.MakeFeatures(defaultDifficulty, null)))) is {};
+            () => GameManagement.NewInstance(InstanceMode.TUTORIAL, game.MakeFeatures(defaultDifficulty, InstanceMode.TUTORIAL, null)))) is {};
     }
 
     /// <summary>

@@ -112,19 +112,19 @@ public struct DelegatedCreator {
 
     public void SummonRect(SyncHandoff sbh, string behid, TP4 color, BPRV2 loc, SMRunner sm, uint bpiid) {
         BulletManager.RequestRect(color, loc, 
-            new ParametricInfo(Vector2.zero, sbh.index, bpiid), behid, transformParent, sm);
+            new ParametricInfo(Vector2.zero, sbh.index, bpiid, firer:sbh.GCX), behid, transformParent, sm);
     }
     public void SummonCirc(SyncHandoff sbh, string behid, TP4 color, BPRV2 loc, SMRunner sm, uint bpiid) {
         BulletManager.RequestCirc(color, loc, 
-            new ParametricInfo(Vector2.zero, sbh.index, bpiid), behid, transformParent, sm);
+            new ParametricInfo(Vector2.zero, sbh.index, bpiid, firer:sbh.GCX), behid, transformParent, sm);
     }
     public void SummonPowerAura(SyncHandoff sbh, PowerAuraOptions options, uint bpiid) {
         var _style = style;
         var index = sbh.index;
         Action SummonWithRealized(RealizedPowerAuraOptions rap) => () =>
-            BulletManager.RequestPowerAura(_style!, index, bpiid, rap);
+            BulletManager.RequestPowerAura(_style!, index, bpiid, sbh.GCX, rap);
         
-        BulletManager.RequestPowerAura(style, sbh.index, bpiid, 
+        BulletManager.RequestPowerAura(style, sbh.index, bpiid, sbh.GCX,
             new RealizedPowerAuraOptions(options, sbh.GCX, ParentOffset, sbh.ch.cT, SummonWithRealized));
     }
     public void SummonDarkness(SyncHandoff sbh, string behid, TP loc, BPY radius, TP4 color, SMRunner sm, uint bpiid) {
@@ -225,9 +225,9 @@ public partial class BulletManager {
         return dark;
     }
 
-    public static PowerAura RequestPowerAura(string style, int firingIndex, uint bpiid, in RealizedPowerAuraOptions opts) {
+    public static PowerAura RequestPowerAura(string style, int firingIndex, uint bpiid, GenCtx firer, in RealizedPowerAuraOptions opts) {
         Movement mov = new Movement(opts.offset, 0f);
-        var pw = RequestSummon(true, style, mov, new ParametricInfo(in mov, firingIndex, bpiid), "_", opts.parent,
+        var pw = RequestSummon(true, style, mov, new ParametricInfo(in mov, firingIndex, bpiid, firer:firer), "_", opts.parent,
             new SMRunner(), null).GetComponent<PowerAura>();
         pw.Initialize(in opts);
         return pw;

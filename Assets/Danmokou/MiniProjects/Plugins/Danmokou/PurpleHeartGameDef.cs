@@ -504,7 +504,7 @@ public class PurpleHeartGameDef : ADVGameDef {
                 sc.Alpha = 0;
                 using var y2 = VN.Add(new Yukari());
                 y2.Alpha = 0;
-                y2.Location.Value += V3(0, 1);
+                y2.LocalLocation.Value += V3(0, 1);
                 y2.Name = "Other Yukari";
                 await VN.Sequential(
                     y.ESayC("surprise", l275),
@@ -566,14 +566,14 @@ public class PurpleHeartGameDef : ADVGameDef {
 
             var s10main = Context("s10main", async () => {
                 var r = VN.Find<Reimu>();
-                using var rgp = new UnityRenderGroup(VN, "pool", 2, false);
+                using var rgp = vn.Add(new UnityRenderGroup("pool", 2, false));
                 using var p = VN.Add(new PoolBG());
                 using var m = VN.Add(new Marisa());
                 m.Alpha = 0.6f;
                 m.RenderGroup.Value = rgp;
                 await m.SetEmote("surprise");
                 using var rr = VN.Add(new Reimu());
-                rr.Location.Value = V3(4, 0);
+                rr.LocalLocation.Value = V3(4, 0);
                 rr.Alpha = 0.6f;
                 rr.RenderGroup.Value = rgp;
                 p.RenderGroup.Value = rgp;
@@ -621,7 +621,7 @@ public class PurpleHeartGameDef : ADVGameDef {
             });
 
             var s11main = Context("s11main", async () => {
-                using var rgp = new UnityRenderGroup(VN, "pool", 2, false);
+                using var rgp = vn.Add(new UnityRenderGroup("pool", 2, false));
                 using var p = VN.Add(new PoolBG());
                 using var m = VN.Add(new Marisa());
                 m.Visible.Value = false;
@@ -685,7 +685,7 @@ public class PurpleHeartGameDef : ADVGameDef {
                 using var s = VN.Add(new Seiga());
                 using var u = VN.Add(new Unknown());
                 s.Alpha = 0;
-                s.Location.Value = V3(3, 1);
+                s.LocalLocation.Value = V3(3, 1);
                 DMKVNState.RunningAudioTrackProxy? sbgm = null;
                 await VN.Sequential(
                     y.ESayC("worry", l362),
@@ -712,7 +712,7 @@ public class PurpleHeartGameDef : ADVGameDef {
                     y.ESayC("", l379)
                 );
                 HideMD();
-                sbgm?.FadeOut(1);
+                sbgm?.FadeOutDestroy(1);
                 await rg.DoTransition(new RenderGroupTransition.Fade(rgb, 1f)).And(
                     VN.SFX("vn-yukari-power").AsVnOp(VN).Then(VN.Wait(0.8f))
                         .Then(VN.SFX("vn-yukari-power").AsVnOp(VN)));
@@ -740,7 +740,7 @@ public class PurpleHeartGameDef : ADVGameDef {
                 using var r = VN.Add(new Reimu());
                 using var m = VN.Add(new Seiga());
                 m.Name += " (Memory of a Dream)";
-                r.Location.Value = V3(1, 0);
+                r.LocalLocation.Value = V3(1, 0);
                 r.Alpha = 0;
                 m.Alpha = 0;
                 await VN.Sequential(
@@ -825,7 +825,7 @@ public class PurpleHeartGameDef : ADVGameDef {
                     var isCurr = map.key == mapName;
                     i.Assert(new InteractableAssertion(m, () => GoToMap(map.key), $"go to {map.key}") {
                         Location = V3(7.3f, 1.8f + map.mapLinkOffset),
-                        Type = new InteractableType.Map(isCurr),
+                        Info = new InteractableInfo.Map(isCurr),
                         Hover = new Interactable.HoverAction.VNOp(() => 
                             VN.Find<Yukari>().Say(isCurr ? 
                                 $"I'm currently at {map.desc(d)}." :

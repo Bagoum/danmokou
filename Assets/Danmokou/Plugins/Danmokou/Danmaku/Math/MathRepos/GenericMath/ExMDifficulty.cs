@@ -64,6 +64,15 @@ public static class ExMDifficulty {
     /// </summary>
     /// <returns></returns>
     public static tfloat D3d1() => ResolveD3(EN1, E0, E1);
+
+    /// <summary>
+    /// Minumum possible rank value (inclusive).
+    /// </summary>
+    public static tfloat MinRank() => Ex.Constant((float) Instance.RankF!.MinRankLevel);
+    /// <summary>
+    /// Maximum possible rank value (inclusive).
+    /// </summary>
+    public static tfloat MaxRank() => Ex.Constant((float) Instance.RankF!.MaxRankLevel);
     
     #endregion
     
@@ -123,15 +132,6 @@ public static class ExMDifficulty {
     public static tfloat Rank() => RankFeature.Field(nameof(IRankFeature.RankLevel)).Cast<float>();
 
     public static tfloat RankRatio() => RankFeature.Field(nameof(IRankFeature.RankRatio)).Cast<float>();
-
-    /// <summary>
-    /// Minumum possible rank value (inclusive).
-    /// </summary>
-    public static tfloat MinRank() => Ex.Constant((float) Instance.RankF!.MinRankLevel);
-    /// <summary>
-    /// Maximum possible rank value (inclusive).
-    /// </summary>
-    public static tfloat MaxRank() => Ex.Constant((float) Instance.RankF!.MaxRankLevel);
 
     
     #endregion

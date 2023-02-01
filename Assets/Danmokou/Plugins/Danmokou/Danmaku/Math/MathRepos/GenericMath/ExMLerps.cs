@@ -201,7 +201,7 @@ public static class ExMLerps {
     /// <returns></returns>
     public static Func<TExArgCtx, TEx<T>> SwitchH<T>(ExBPY switchVar, ExBPY at, Func<TExArgCtx, TEx<T>> f1, Func<TExArgCtx, TEx<T>> f2) => bpi => {
         var pivot = VFloat();
-        var pivotT = bpi.MakeCopyForType<TExPI>(out var currEx, out var pivotEx);
+        var pivotT = bpi.MakeCopyForExType<TExPI>(out var currEx, out var pivotEx);
         return Ex.Block(new[] { pivot }, 
             pivot.Is(at(bpi)),
             Ex.Condition(Ex.GreaterThan(switchVar(bpi), pivot), 
@@ -413,12 +413,7 @@ public static class ExMLerps {
         if (!f.Visit(prog2(tac)).TryAsConst(out float p2))
             throw new Exception("CubicBezier argument prog2 is not a constant.");
         var easer = BagoumLib.Mathematics.Bezier.CBezier(t1, p1, t2, p2);
-#if EXBAKE_SAVE
-        tac.Ctx.ProxyTypes.Add(easer.GetType());
-        tac.Ctx.HoistedReplacements[Ex.Constant(easer)] = Ex.Variable(easer.GetType(), tac.Ctx.NextProxyArg());  
-#elif EXBAKE_LOAD
-        tac.Ctx.ProxyArguments.Add(easer);
-#endif
+        tac.Proxy(easer);
         return new ExFunction(easer.GetType().GetMethod("Invoke")!).InstanceOf(Ex.Constant(easer), Clamp01(time(tac)));
     };
 

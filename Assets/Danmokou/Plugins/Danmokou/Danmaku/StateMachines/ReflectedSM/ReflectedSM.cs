@@ -76,6 +76,8 @@ if (> t &fadein,
             new[] { GenCtxProperty.SaveV2((locSave, cindexer, locator)) }, new[] {AtomicPatterns.Noop()}
         ));
         var path = Compilers.GCXU(VTPRepo.NROffset(RetrieveHoisted(locSave, indexer)));
+        //AOT handling requires compiling this now
+        path.CompileDelegate();
         return async smh => {
             float homesec = homeSec(smh.GCX);
             float sticksec = stickSec(smh.GCX);
@@ -531,8 +533,8 @@ if (> t &fadein,
     /// <summary>
     /// Link this entity's HP pool to another enemy. The other enemy will serve as the source and this will simply redirect damage.
     /// </summary>
-    public static TaskPattern DivertHP(BEHPointer target) => smh => {
-        smh.Exec.Enemy.DivertHP(target.Beh.Enemy);
+    public static TaskPattern DivertHP(GCXF<BehaviorEntity> target) => smh => {
+        smh.Exec.Enemy.DivertHP(target(smh.GCX).Enemy);
         return Task.CompletedTask;
     };
 
@@ -698,7 +700,7 @@ if (> t &fadein,
     };
 
     private static IEnumerator _LifeToScore(int value, ICancellee cT, Action done) {
-        while (GameManagement.Instance.Lives > 1 && !cT.Cancelled) {
+        while (GameManagement.Instance.BasicF.Lives > 1 && !cT.Cancelled) {
             GameManagement.Instance.SwapLifeScore(value, true);
             for (int ii = 0; ii < 60; ++ii) {
                 yield return null;

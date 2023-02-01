@@ -8,6 +8,7 @@ using BagoumLib;
 using BagoumLib.Expressions;
 using BagoumLib.Functional;
 using BagoumLib.Reflection;
+using BagoumLib.Unification;
 using Danmokou.Core;
 using Danmokou.DMath.Functions;
 using Danmokou.Reflection;
@@ -119,8 +120,8 @@ public abstract record ST(PositionRange Position) : IDebugPrint {
         public override IAST Annotate(LexicalScope scope) {
             if (scope.DeclareVariable(Declaration) is { IsRight:true} r)
                 return new AST.Failure(new(Position, 
-                    $"The declaration ({Declaration.Type?.RName() ?? "(type undetermined)"} {Declaration.Name}) " +
-                    $"conflicts with the declaration ({r.Right.Type?.RName() ?? "(type undetermined)"} " +
+                    $"The declaration ({Declaration.KnownType?.RName() ?? "(type undetermined)"} {Declaration.Name}) " +
+                    $"conflicts with the declaration ({r.Right.KnownType?.RName() ?? "(type undetermined)"} " +
                     $"{r.Right.Name}) at {r.Right.Position}"), scope);
             return Assignment.Annotate(scope);
         }
@@ -208,7 +209,7 @@ public abstract record ST(PositionRange Position) : IDebugPrint {
             argsl.Reverse();
             var args = argsl.ToArray();
 
-            (string name, IEnumerable<int>)? ArgCounts(ST func) {
+            (string name, IEnumerable<(int reqArgs, IEnumerable<Reflector.InvokedMethod> methods)>)? ArgCounts(ST func) {
                 if (func switch {
                         FnIdent fn => fn.Func,
                         Ident id => scope.FindStaticMethodDeclaration(id.Name.ToLower()) is { } decls ?
@@ -219,7 +220,7 @@ public abstract record ST(PositionRange Position) : IDebugPrint {
                     return null;
                 }
                 return (overloads[0].CalledAs ?? overloads[0].Name,
-                    overloads.Select(o => o.Params.Length).Distinct().OrderBy(x => x));
+                    overloads.GroupBy(o => o.Params.Length).Select(g => (g.Key, g as IEnumerable<Reflector.InvokedMethod>)));
             }
             
             IEnumerable<(ImmutableList<(int index, int argCt)> pArgs, int endsAt)>
@@ -234,13 +235,13 @@ public abstract record ST(PositionRange Position) : IDebugPrint {
                     //Note that we may want to prepend `preceding.Add((index, 0)), index + 1)` to this,
                     // which is the case of using a function name as a lambda
                     return counts.Item2
-                        .Where(consumed => index + 1 + consumed <= args.Length)
+                        .Where(consumed => index + 1 + consumed.reqArgs <= args.Length)
                         .SelectMany(consumed => {
                             IEnumerable<(ImmutableList<(int, int)>, int)> cac = new[]
                                 //This function eventually consumes `consumed` args, but the index we start at
                                 // is just index+1, since only the function at `index` has been consumed so far
-                                { (preceding.Add((index, consumed)), index + 1) };
-                            for (int ii = 0; ii < consumed; ++ii) {
+                                { (preceding.Add((index, consumed.reqArgs)), index + 1) };
+                            for (int ii = 0; ii < consumed.reqArgs; ++ii) {
                                 cac = cac.SelectMany(ca => PossibleArgCounts(ca.Item2, ca.Item1));
                             }
                             return cac;
@@ -261,6 +262,29 @@ public abstract record ST(PositionRange Position) : IDebugPrint {
                     "named static function. Please replace this with a parenthesized" +
                     "function call."), scope);
             }
+            //Do a quick check to see if the function grouping makes sense in terms of types
+            // This is a weak check, so it may return True if the grouping is actually unsound
+            bool GroupingIsTypeFeasible(ImmutableList<(int index, int argCt)> grouping) {
+                (TypeTree.ITree tree, int nextIndex) MakeForIndex(int index) {
+                    //Don't bother type-enforcement on non-function idents
+                    if (ArgCounts(index >= 0 ? args[index] : leftmost) is not { } cts)
+                        return (new TypeTree.AtomicWithType(new TypeDesignation.Variable()), index + 1);
+                    var ct = grouping[index + 1].argCt;
+                    var overloads = cts.Item2
+                        .First(x => x.reqArgs == ct).methods
+                        .Select(x => x.Method);
+                    var nextIndex = index + 1;
+                    var prms = new TypeTree.ITree[ct];
+                    for (int ii = 0; ii < ct; ++ii) {
+                        (prms[ii], nextIndex) = MakeForIndex(nextIndex);
+                    }
+                    return (new TypeTree.Method(overloads.ToArray(), prms), nextIndex);
+                }
+                var (tree, last) = MakeForIndex(-1);
+                if (last != args.Length)
+                    return false;
+                return tree.PossibleUnifiers(scope.Root.Resolver, Unifier.Empty).IsLeft;
+            }
             //If there are overloads that match the numerical requirements, use them
             var sameArgsReq = overloads.Where(f => f.Params.Length == args.Length).ToArray();
             if (sameArgsReq.Length > 0)
@@ -272,15 +296,31 @@ public abstract record ST(PositionRange Position) : IDebugPrint {
                 var possibleArgGroupings = PossibleArgCounts(-1, ImmutableList<(int, int)>.Empty)
                     .Where(cac => cac.endsAt == args.Length)
                     .ToList();
+                bool typeFiltered = false;
+                if (possibleArgGroupings.Count > 1) {
+                    //Only filter by type if we are required to
+                    possibleArgGroupings = possibleArgGroupings
+                        .Where(p => GroupingIsTypeFeasible(p.pArgs)).ToList();
+                    typeFiltered = true;
+                }
                 if (possibleArgGroupings.Count != 1) {
                     var plural = possibleArgGroupings.Count == 0 ? "no combination" : "multiple combinations";
                     var argsErr = string.Join("\n\t", args.Length.Range().SelectNotNull(ArgCountErrForIndex));
+                    if (typeFiltered && possibleArgGroupings.Count == 0) {
+                        return new AST.Failure(new(leftmost.Position,
+                            $"When resolving the partial method invocation for `{overloads[0].CalledAs ?? overloads[0].Name}`," +
+                            $" {argsl.Count} parameters were provided, but overloads were only found with " +
+                            $"{string.Join(", ", overloads.Select(o => o.Params.Length).Distinct().OrderBy(x => x))} parameters." +
+                            $"\nAttempted to automatically group functions, but multiple combinations of the following functions" +
+                            $"combined to {argsl.Count} parameters, and none of them appear to pass type-checking." +
+                            $" Please try using parentheses.\n\t{argsErr}"), scope);
+                    }
                     return new AST.Failure(new(leftmost.Position,
                         $"When resolving the partial method invocation for `{overloads[0].CalledAs ?? overloads[0].Name}`," +
                         $" {argsl.Count} parameters were provided, but overloads were only found with " +
                         $"{string.Join(", ", overloads.Select(o => o.Params.Length).Distinct().OrderBy(x => x))} parameters." +
                         $"\nAttempted to automatically group functions, but {plural} of the following functions " +
-                        $"combined to {argsl.Count} parameters:\n\t{argsErr}"), scope);
+                        $"combined to {argsl.Count} parameters. Please try using parentheses.\n\t{argsErr}"), scope);
                 }
                 var argsCts = possibleArgGroupings[0].pArgs.ToDictionary(kv => kv.index, kv => kv.argCt);
                 var argStack = new Stack<IAST>();
@@ -343,14 +383,22 @@ public abstract record ST(PositionRange Position) : IDebugPrint {
         public Block(IReadOnlyList<ST> args) : this(args[0].Position.Merge(args[^1].Position), args.ToArray()) { }
         
         public override IAST Annotate(LexicalScope scope) {
-            var localScope = new LexicalScope(scope, true);
+            var localScope = new LexicalScope(scope);
             return new AST.Block(Position, scope, localScope, Args.Select(a => a.Annotate(localScope)).ToArray());
         }
 
-        public AST.Block AnnotateTopLevel(LexicalScope gs) {
+        public AST.Block AnnotateTopLevel(LexicalScope gs, IDelegateArg[] topLevelArgs) {
             if (gs.Parent is not DMKScope)
                 throw new Exception("Top-level block scope parent should be DMKScope");
-            return new AST.Block(Position, gs.Parent, gs, Args.Select(a => a.Annotate(gs)).ToArray());
+            //top-level args are declared as variables and copied into the top-level envframe
+            var decls = new (VarDecl, ImplicitArgDecl)[topLevelArgs.Length];
+            for (int ii = 0; ii < topLevelArgs.Length; ++ii) {
+                var arg = topLevelArgs[ii];
+                gs.DeclareVariable((decls[ii] = 
+                    (new VarDecl(default, arg.Type, arg.Name), arg.MakeImplicitArgDecl())).Item1);
+            }
+            return new AST.Block(Position, gs.Parent, gs, Args.Select(a => a.Annotate(gs)).ToArray())
+                .WithTopLevelArgs(decls);
         }
 
         public override IEnumerable<PrintToken> DebugPrint() {
@@ -366,9 +414,7 @@ public abstract record ST(PositionRange Position) : IDebugPrint {
     /// </summary>
     public record Array(PositionRange Position, ST[] Args) : ST(Position) {
         public override IAST Annotate(LexicalScope scope) {
-            //TODO this needs to be pruned except in SM/AsyncP/SyncP cases
-            var localScope = new LexicalScope(scope);
-            return new AST.Array(Position, scope, localScope, Args.Select(a => a.Annotate(localScope)).ToArray());
+            return new AST.Array(Position, scope, Args.Select(a => a.Annotate(scope)).ToArray());
         }
 
         public override IEnumerable<PrintToken> DebugPrint() {

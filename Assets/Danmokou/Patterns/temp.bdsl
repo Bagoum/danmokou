@@ -18,11 +18,26 @@ $%f(%x)
 phase 0
 	paction 0
 		position 0 2
-		sync ellipse-red/w <1;:> gsr2c 60 {
-			start { speed =f 1 }
-			postloop { speed +=f 0.05 }
-		#you can access vtp_mov, though the type is wrong (Movement not float). vtp_dt works
-		} s tprot px(&speed + &vtp_mov)
+		async(arrow-*/w, <0;0:0;0:0>, girepeat({
+			wait(180)
+			times(2)
+			bindItr(i1)
+			color({ red blue })
+			rv2incr(<56>)
+		}, girepeat({
+			wait(60)
+			times(8)
+			rv2incr(a(pm1(&i1) * 16))
+		}, gcrepeat({
+			wait(4)
+			times(8)
+			rv2incr(a(pm1(&i1) * 1.5))
+			bindItr(i2)
+		}, gsrepeat({
+			times(8)
+			circle
+		}, s(rvelocity(pxy(lerpt(0.5, 1, 3, 3.35 - &i2 * 0.05) + 0.4 * &i1, 0))))
+		))))
 
 ///
 

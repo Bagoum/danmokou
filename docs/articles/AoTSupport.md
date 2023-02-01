@@ -4,6 +4,8 @@ DMK makes extensive use of expression trees and runtime reflection to handle scr
 
 As of v7.0.0, DMK supports using an *expression precompilation* model for IL2CPP. Before exporting your project, you can use the precompilation pipeline to convert all of your expressions into source code, which can then be compiled into the final export and used as a replacement for those same expressions.
 
+Note that if you are using DMK as a base library for building ADV/VN games with Suzunoya, you generally do not need to do any of this, as Suzunoya does not make use of expression trees.
+
 ## Precompilation Limitations
 
 - Any usage of expression compilation with variable values at runtime cannot be encoded. For example, consider `FXY CreateAdder(float addTo) => "+ {addTo} x".Into<FXY>()`. Since the compiled expression cannot be determined at precompile time, there is no way to precompile this function. You should be able to get around this by using generic compilation (see the CrosshairOpacity function) or writing a lambda yourself.

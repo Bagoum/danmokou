@@ -15,7 +15,7 @@ namespace Danmokou.Danmaku {
 /// Game definition for danmaku games (base interface for campaign games and scene games).
 /// </summary>
 public interface IDanmakuGameDef : IGameDef {
-    InstanceFeatures MakeFeatures(DifficultySettings difficulty, long? highScore);
+    InstanceFeatures MakeFeatures(DifficultySettings difficulty, InstanceMode mode, long? highScore);
     SceneConfig ReplaySaveMenu { get; }
     
     public static IEnumerable<ShipConfig> CampaignShots(CampaignConfig? c) =>
@@ -61,7 +61,7 @@ public abstract class DanmakuGameDef : GameDef, IDanmakuGameDef {
         bot = -4.5f,
         center = new Vector2(-1.9f, 0),
     };
-    public abstract InstanceFeatures MakeFeatures(DifficultySettings difficulty, long? highScore);
+    public abstract InstanceFeatures MakeFeatures(DifficultySettings difficulty, InstanceMode mode, long? highScore);
     public SceneConfig ReplaySaveMenu => m_replaySaveMenu;
     public abstract IEnumerable<ShipConfig> AllShips { get; }
 

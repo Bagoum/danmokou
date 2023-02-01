@@ -25,6 +25,7 @@ public abstract class BaseCampaignConfig : ScriptableObject, ICampaignMeta {
     public bool replayable = true;
     public bool allowDialogueSkip = true;
     public int startLives;
+    public int? StartLives => startLives > 0 ? startLives : null;
     public ShipConfig[] players = null!;
     public StageConfig[] stages = null!;
     public BossConfig[] practiceBosses = null!;

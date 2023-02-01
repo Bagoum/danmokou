@@ -1,5 +1,6 @@
 ﻿using Danmokou;
 using Danmokou.Achievements;
+using Danmokou.Core;
 using Danmokou.Danmaku;
 using Danmokou.GameInstance;
 using UnityEngine;
@@ -7,7 +8,7 @@ using UnityEngine;
 namespace Danmokou.Miniprojects {
 [CreateAssetMenu(menuName = "Data/GameDef/BHA3")]
 public class BHA3GameDef : CampaignDanmakuGameDef {
-    public override InstanceFeatures MakeFeatures(DifficultySettings d, long? highScore) => new() {
+    public override InstanceFeatures MakeFeatures(DifficultySettings d, InstanceMode m, long? highScore) => new() {
         Score = new ScoreFeatureCreator(highScore),
         Power = new DisabledPowerFeatureCreator(),
         Faith = new FaithFeatureCreator(),

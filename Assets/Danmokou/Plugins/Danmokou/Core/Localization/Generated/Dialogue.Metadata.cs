@@ -183,13 +183,33 @@ public static partial class LocalizedStrings {
 			(Locales.JP, "レミリア・スカーレット"))
 			{ ID = "dialogue.remilia" };
 		
-		public static readonly LString murasa = new LText("Minamitsu Murasa",
+		public static readonly LString murasa = new LText("Murasa Minamitsu",
 			(Locales.JP, "村紗水蜜"))
 			{ ID = "dialogue.murasa" };
 		
 		public static readonly LString nue = new LText("Houjuu Nue",
 			(Locales.JP, "封獣ぬえ"))
 			{ ID = "dialogue.nue" };
+		
+		public static readonly LString letty = new LText("Letty Whiterock",
+			(Locales.JP, "レティ・ホワイトロック"))
+			{ ID = "dialogue.letty" };
+		
+		public static readonly LString lilywhite = new LText("Lily White",
+			(Locales.JP, "リリーホワイト"))
+			{ ID = "dialogue.lilywhite" };
+		
+		public static readonly LString star = new LText("Star Sapphire",
+			(Locales.JP, "スターサファイア"))
+			{ ID = "dialogue.star" };
+		
+		public static readonly LString sunny = new LText("Sunny Milk",
+			(Locales.JP, "サニーミルク"))
+			{ ID = "dialogue.sunny" };
+		
+		public static readonly LString luna = new LText("Luna Child",
+			(Locales.JP, "ルナチャイルド"))
+			{ ID = "dialogue.luna" };
 		
 	}
 }

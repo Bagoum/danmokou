@@ -112,7 +112,8 @@ public class XMLMainMenuCampaign : XMLMainMenu {
         (UINode?, FixedDifficulty?) MakeDifficultyNode(FixedDifficulty? fd) =>
             SpriteForDFC(fd) == null ? (null, fd) : 
                 (new UINode {
-                    OnConfirm = _ => fd == null ? new UIResult.GoToNode(CustomDifficultyScreen) : dfcContinuation(new(fd)),
+                    OnConfirm = _ => fd == null ? 
+                        new UIResult.GoToNode(CustomDifficultyScreen) : dfcContinuation(new(fd)),
                     Prefab = floater,
                     OnBuilt = n => XMLUtils.ConfigureFloatingImage(n.NodeHTML, SpriteForDFC(fd)!)
                 }, fd);
@@ -174,18 +175,20 @@ public class XMLMainMenuCampaign : XMLMainMenu {
             if (s != MainScreen)
                 s?.WithBG(SecondaryBGConfig);
 
-        _ = new UIColumn(MainScreen, null, new UINode[] {
+        MainScreen.SetFirst(new UIColumn(MainScreen, null, new UINode[] {
             new TransferNode(main_gamestart, PlaymodeScreen),
             new TransferNode(main_playerdata, PlayerDataScreen),
             //new TransferNode(main_musicroom, MusicRoomScreen)
             //        {EnabledIf = () => MusicRoomScreen.Groups[0].Nodes.Count > 0}
             new TransferNode(main_options, OptionsScreen),
             new TransferNode(main_licenses, LicenseScreen),
+        #if !WEBGL
             new FuncNode(main_quit, Application.Quit),
+        #endif
             new OpenUrlNode(main_twitter, "https://twitter.com/rdbatz")
         }.Select(x => x.With(large1Class, centerTextClass))) {
             ExitIndexOverride = -2
-        };
+        });
 
         bool doAnim = ReturnTo == null;
         base.FirstFrame();

@@ -14,7 +14,7 @@ public class PoC : RegularUpdater {
 
     private void Awake() {
         tr = transform;
-        tr.localPosition += (Vector3) direction.Direction() * (float)GameManagement.Difficulty.pocOffset;
+        tr.localPosition = (Vector3)direction.Direction() * GameManagement.Instance.ConfigurationF.PoCLocation;
     }
 
     protected override void BindListeners() {

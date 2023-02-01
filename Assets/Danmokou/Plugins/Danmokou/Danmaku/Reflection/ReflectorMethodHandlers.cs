@@ -6,6 +6,7 @@ using BagoumLib;
 using BagoumLib.Expressions;
 using BagoumLib.Functional;
 using BagoumLib.Reflection;
+using BagoumLib.Unification;
 using Danmokou.Core;
 using Danmokou.DMath;
 using Danmokou.DMath.Functions;
@@ -65,7 +66,7 @@ public static partial class Reflector {
         public override string Print(Type t) {
             if (exTypeRemap.TryGetValue(t, out var v))
                 return Print(v);
-            if (t.IsGenericType) {
+            if (t.IsConstructedGenericType) {
                 if (t.GetGenericTypeDefinition() == typeof(Func<,>) && t.GenericTypeArguments[0] == typeof(TExArgCtx)) {
                     return Print(t.GenericTypeArguments[1]);
                 }
@@ -98,11 +99,13 @@ public static partial class Reflector {
     //instead, TypeDesignation is copied at the InvokedMethod level, preventing cross-contamination
     public interface IMethodSignature {
         /// <summary>
-        /// Get a representation of this method's type that can be used for unification.
+        /// Get a representation of this method's type. This should not directly be used for unification, as
+        ///  its variable types should not be shared between all invocations.
+        ///  Call <see cref="TypeDesignation.RecreateVariables"/> before using for unification.
         /// <br/>Note that lifted methods return a lifted type here.
         /// <br/>Note that instance methods should prepend the instance type at the beginning of the argument array.
         /// </summary>
-        TypeDesignation.Dummy Type { get; }
+        TypeDesignation.Dummy SharedType { get; }
         
         /// <summary>
         /// The parameters of the method signature.
@@ -155,12 +158,12 @@ public static partial class Reflector {
         /// <summary>
         /// Invoke this method.
         /// </summary>
-        object? InvokeStatic(params object?[] args) => Invoke(null, args);
+        object? InvokeStatic(Reflection2.AST.MethodCall? ast, params object?[] args) => Invoke(ast, null, args);
 
         /// <summary>
         /// Invoke this method.
         /// </summary>
-        object? Invoke(object? over, params object?[] args);
+        object? Invoke(Reflection2.AST.MethodCall? ast, object? instance, params object?[] args);
 
         /// <summary>
         /// If this method is defined in a file, make a link to the file.
@@ -188,16 +191,16 @@ public static partial class Reflector {
         /// <summary>Simplified description of the method parameters.</summary>
         public NamedParam[] Params { get; init; }
         /// <inheritdoc/>
-        public TypeDesignation.Dummy Type { get; }
-        /// <inheritdoc cref="IGenericMethodSignature.GenericTypes"/>
-        public TypeDesignation.Variable[] GenericTypes { get; }
+        public TypeDesignation.Dummy SharedType { get; }
+        /// <inheritdoc cref="IGenericMethodSignature.SharedGenericTypes"/>
+        public TypeDesignation.Variable[] SharedGenericTypes { get; }
 
         protected MethodSignature(MethodBase Mi, NamedParam[] Params) {
             this.Mi = Mi;
             this.Params = Params;
-            Type = TypeDesignation.FromMethod(ReturnType, 
+            SharedType = TypeDesignation.FromMethod(ReturnType, 
                 Params.Select(p => p.Type).And(p => Mi.IsStatic ? p : p.Prepend(Mi.DeclaringType)) , out var map);
-            GenericTypes = 
+            SharedGenericTypes = 
                 Mi.IsGenericMethodDefinition ? 
                     Mi.GetGenericArguments()
                     //it's possible for t to not be in map if it's "useless", eg. int Method<T>(int x).
@@ -248,12 +251,14 @@ public static partial class Reflector {
 
         public T? GetAttribute<T>() where T : Attribute => Mi.GetCustomAttribute<T>();
 
-        public virtual object? Invoke(object? over, params object?[] args) => InvokeMi(over, Mi, args);
+        public virtual object? Invoke(Reflection2.AST.MethodCall? ast, object? instance, params object?[] args) => 
+            InvokeMi(ast, instance, Mi, args);
         
-        protected static object? InvokeMi(object? over, MethodBase mi, object?[] args) => mi switch {
-            ConstructorInfo cI => cI.Invoke(args),
-            _ => mi.Invoke(over, args)
-        };
+        protected static object? InvokeMi(Reflection2.AST.MethodCall? ast, object? instance, MethodBase mi, object?[] args) 
+            => mi switch {
+                ConstructorInfo cI => cI.Invoke(args),
+                _ => mi.Invoke(instance, args)
+            };
 
         public string? MakeFileLink(string typName) =>
             Mi.DeclaringType!.GetCustomAttribute<ReflectAttribute>(false)?.FileLink(typName);
@@ -279,7 +284,7 @@ public static partial class Reflector {
         public virtual LiftedMethodSignature<T> Lift<T>() => LiftedMethodSignature<T>.Lift(this);
     }
 
-    public interface IGenericMethodSignature {
+    public interface IGenericMethodSignature : IMethodSignature {
         /// <summary>
         /// Make a concrete method out of a generic one using the provided type parameter.
         /// </summary>
@@ -287,19 +292,20 @@ public static partial class Reflector {
         
         /// <summary>
         /// Get the type designations for each of the generic types of this method.
+        /// Note this should not be used for unification, as it is shared between all invocations.
         /// </summary>
-        TypeDesignation.Variable[] GenericTypes { get; }
+        TypeDesignation.Variable[] SharedGenericTypes { get; }
     }
 
     /// <inheritdoc cref="MethodSignature"/>
     public record GenericMethodSignature(MethodInfo Minf, NamedParam[] Params) : MethodSignature(Minf, Params), IGenericMethodSignature {
         public static readonly Dictionary<(FreezableArray<Type>, MethodSignature), MethodSignature> specializeCache = new();
-
-        public override object? Invoke(object? over, params object?[] prms) {
+        
+        public override object? Invoke(Reflection2.AST.MethodCall? ast, object? instance, params object?[] prms) {
             throw new Exception("A generic method signature cannot be invoked");
         }
 
-        public MethodSignature Specialize(Type[] t) {
+        public MethodSignature Specialize(params Type[] t) {
             var typDef = new FreezableArray<Type>(t);
             return specializeCache.TryGetValue((typDef, this), out var m) ?
                 m :
@@ -331,7 +337,7 @@ public static partial class Reflector {
 
         public override InvokedMethod Call(string? calledAs) => new LiftedInvokedMethod(this, calledAs);
         
-        public override object? Invoke(object? over, params object?[] prms) {
+        public override object? Invoke(Reflection2.AST.MethodCall? ast, object? instance, params object?[] prms) {
             throw new Exception(
                 "This lifted method signature does not have a specified return type and therefore cannot be invoked");
         }
@@ -392,7 +398,7 @@ public static partial class Reflector {
     public record GenericLiftedMethodSignature<T>(MethodInfo Minf, NamedParam[] FuncedParams, NamedParam[] BaseParams) : LiftedMethodSignature<T>(Minf, FuncedParams, BaseParams), IGenericMethodSignature  {
         public override Type ReturnType => Func2Type(typeof(T), base.ReturnType);
 
-        public override object? Invoke(object? over, params object?[] prms)
+        public override object? Invoke(Reflection2.AST.MethodCall? ast, object? instance, params object?[] prms)
             => throw new Exception("A generic lifted method cannot be invoked");
         
         public LiftedMethodSignature<T> Specialize(Type[] t) {
@@ -418,22 +424,26 @@ public static partial class Reflector {
             ReflectionData.LiftType(typeof(T), Mi.DeclaringType!, out var result) ? result : Mi.DeclaringType!;
         public override Type ReturnType => typeof(Func<T, R>);
 
-        public override object? Invoke(object? over, params object?[] prms)
-            => InvokeMiFunced(over, prms);
-        public Func<T,R> InvokeMiFunced(object? over, params object?[] fprms) => 
+        public override object? Invoke(Reflection2.AST.MethodCall? ast, object? instance, params object?[] prms)
+            => InvokeMiFunced(ast, instance, prms);
+        public Func<T,R> InvokeMiFunced(Reflection2.AST.MethodCall? ast, object? instance, params object?[] fprms) => 
             //Note: this lambda capture generally prevents using ArrayCache
             bpi => {
-                if (IsStatic && over != null)
+                if (IsStatic && instance != null)
                     throw new Exception($"Static method {Name} provided with an instance argument");
-                if (!IsStatic && over == null)
+                if (!IsStatic && instance == null)
                     throw new Exception($"Instance method {Name} provided with no instance argument");
                 var baseArgs = new object?[BaseParams.Length];
                 for (int ii = 0; ii < baseArgs.Length; ++ii)
                     //Convert from funced object to base object (eg. TExArgCtx->TEx<float> to TEx<float>)
                     baseArgs[ii] = ReflectionData.Defuncify(BaseParams[ii].Type, FuncedParams[ii].Type, fprms[ii]!, bpi!);
-                if (over != null)
-                    over = ReflectionData.Defuncify(DeclaringType!, LiftedInstanceType!, over, bpi!);
-                return (R)InvokeMi(over, Mi, baseArgs)!;
+                foreach (var writeable in Mi.GetCustomAttribute<AssignsAttribute>()?.Indices ?? Array.Empty<int>()) {
+                    if (Reflection2.Helpers.AssertWriteable(writeable, baseArgs[writeable]!) is { } exc)
+                        throw ast?.Raise(exc) as Exception ?? exc;
+                }
+                if (instance != null)
+                    instance = ReflectionData.Defuncify(DeclaringType!, LiftedInstanceType!, instance, bpi!);
+                return (R)InvokeMi(ast, instance, Mi, baseArgs)!;
             };
 
         public override InvokedMethod Call(string? calledAs) => new LiftedInvokedMethod<T,R>(this, calledAs);
@@ -461,8 +471,8 @@ public static partial class Reflector {
         /// </summary>
         public IMethodSignature Mi { get; } = Mi;
         //important to ensure that multiple invocations don't share the same variable bindings!
-        TypeDesignation.Dummy IMethodDesignation.Method { get; } = 
-            (Mi.Type.RecreateVariables() as TypeDesignation.Dummy)!;
+        public TypeDesignation.Dummy Method { get; } = 
+            (Mi.SharedType.RecreateVariables() as TypeDesignation.Dummy)!;
         
         /// <summary>
         /// The name by which the user called the method (which may be an alias).
@@ -548,10 +558,7 @@ public static partial class Reflector {
         if (funcifiableTypes.TryGetValue(rt, out var fs) && fs(member) is { } funcedSig) {
             return funcedSig;
         }
-        if (ReflectionData.HasMember(rt, member)) {
-            return ReflectionData.GetArgTypes(rt, member);
-        }
-        return null;
+        return ReflectionData.TryGetMember(rt, member);
     }
 
     private static readonly Dictionary<Type, Func<string, object>> letFuncs =
@@ -565,16 +572,16 @@ public static partial class Reflector {
     public static object? ExtInvokeMethod(Type t, string member, object[] prms) {
         member = Sanitize(member);
         if (TryCompileOption(t, out var compiler)) {
-            return compiler.mi.InvokeStatic(ExtInvokeMethod(compiler.source, member, prms));
+            return compiler.mi.InvokeStatic(null, ExtInvokeMethod(compiler.source, member, prms));
         } else if (t == typeof(StateMachine)) {
             return StateMachine.Create(member, prms).Evaluate(new());
         }
         if (ASTTryLookForMethod(t, member) is { } result)
-            return result.InvokeStatic(prms);
+            return result.InvokeStatic(null, prms);
         //this also requires fallthrough support, which is handled through parent methods in the inner call.
         if (FallThroughOptions.TryGetValue(t, out var ftmi)) {
             if ((result = ASTTryLookForMethod(ftmi.mi.Params[0].Type, member)) != null)
-                return ftmi.mi.InvokeStatic(result.InvokeStatic(prms));
+                return ftmi.mi.InvokeStatic(null, result.InvokeStatic(null, prms));
         }
         throw new Exception($"External method invocation failed for type {t.RName()}, method {member}. " +
                             "This is probably an error in static code.");

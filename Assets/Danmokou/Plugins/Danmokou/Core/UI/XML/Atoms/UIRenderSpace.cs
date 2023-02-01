@@ -2,10 +2,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using BagoumLib.Cancellation;
+using BagoumLib.DataStructures;
 using BagoumLib.Events;
+using BagoumLib.Mathematics;
 using BagoumLib.Tasks;
 using BagoumLib.Transitions;
 using Danmokou.Core;
+using Danmokou.DMath;
 using SuzunoyaUnity;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -17,18 +21,47 @@ public abstract class UIRenderSpace {
     public abstract VisualElement HTML { get; }
     public UIScreen Screen { get; }
     public UIRenderSpace? Parent { get; }
-    public virtual bool Visible => true;
+    public LazyEvented<bool> IsVisible { get; }
+    public virtual bool ShouldBeVisible => true;
     public UIController Controller => Screen.Controller;
+    /// <summary>
+    /// Run a nonblocking scale-in/out animation when the renderer visibility is changed.
+    /// </summary>
+    public bool AnimateOnShowHide { get; set; } = false;
+    private ICancellable? animateToken;
 
     public UIRenderSpace(UIScreen screen, UIRenderSpace? parent) {
         this.Screen = screen;
         this.Parent = parent;
+        IsVisible = new(() => ShouldBeVisible);
     }
 
     protected void UpdateVisibility() {
-        if (_html != null) 
-            HTML.style.display = Visible.ToStyle();
+        var oldVis = IsVisible.Value;
+        IsVisible.Recompute();
+        var newVis = IsVisible.Value;
+        if (_html != null) {
+            HTML.style.display = newVis.ToStyle();
+            if (newVis != oldVis && AnimateOnShowHide) {
+                animateToken?.Cancel();
+                var cT = animateToken = new Cancellable();
+                //Keep it visible so the animate-out can play
+                if (!newVis)
+                    HTML.style.display = true.ToStyle();
+                _ = MakeTask(
+                        HTML.transform.ScaleTo(newVis ? Vector3.one : Vector3.zero, newVis ? 0.4f : 0.25f, 
+                            newVis ? Easers.EOutBack : null, cT),
+                        HTML.style.FadeTo(newVis ? 1 : 0, 0.25f, cT: cT)
+                    ).ContinueWithSync(() => {
+                    if (!cT.Cancelled)
+                        HTML.style.display = newVis.ToStyle();
+                });
+            }
+        }
     }
+
+    private Task MakeTask(params ITransition[] tweens) =>
+        Task.WhenAll(tweens.Select(t => t.Run(Controller, CoroutineOptions.DroppableDefault)));
 
     public void AddSource(UIGroup grp) {
         if (!Sources.Contains(grp)) {
@@ -69,6 +102,8 @@ public class UIRenderExplicit : UIRenderSpace {
     public UIRenderExplicit(UIScreen screen, Func<VisualElement, VisualElement> htmlFinder) : base(screen, null) {
         this.htmlFinder = htmlFinder;
     }
+    
+    public UIRenderExplicit(UIScreen screen, UINode parent) : this(screen, _ => parent.BodyOrNodeHTML) { }
 }
 /// <summary>
 /// A render space that renders directly to the screen container.
@@ -90,12 +125,12 @@ public class UIRenderAbsoluteTerritory : UIRenderSpace {
     private readonly Color bgc;
     private readonly DisturbedOr isTransitioning = new();
     public float Alpha { get; set; } = 0.3f;
-    public override bool Visible => Sources.Count > 0;
+    public override bool ShouldBeVisible => Sources.Count > 0;
 
     public Task FadeIn() {
         var token = isTransitioning.AddConst(true);
         return TransitionHelpers.TweenTo(HTML.style.backgroundColor.value.a, Alpha, 0.1f, 
-                a => HTML.style.backgroundColor = bgc.WithA(a))
+                a => HTML.style.backgroundColor = Helpers.WithA(bgc, a))
             .Run(Controller)
             .ContinueWithSync(() => {
                 token.Dispose();
@@ -105,7 +140,7 @@ public class UIRenderAbsoluteTerritory : UIRenderSpace {
     public Task FadeOutIfNoOtherDependencies(UIGroup g) {
         if (Sources.Count == 1 && Sources[0] == g && HTML.style.display == DisplayStyle.Flex) {
             var token = isTransitioning.AddConst(true);
-            TransitionHelpers.TweenTo(Alpha, 0, 0.1f, a => HTML.style.backgroundColor = bgc.WithA(a))
+            TransitionHelpers.TweenTo(Alpha, 0, 0.1f, a => HTML.style.backgroundColor = Helpers.WithA(bgc, a))
                 .Run(Controller)
                 .ContinueWithSync(() => {
                     token.Dispose();
@@ -170,7 +205,7 @@ public class UIRenderConstructed : UIRenderSpace {
             return _html;
         }
     }
-    public override bool Visible => Sources.Any(g => g.Visible);
+    public override bool ShouldBeVisible => Sources.Any(g => g.Visible);
 
     public UIRenderConstructed(UIRenderSpace parent, VisualTreeAsset prefab, Action<UIRenderConstructed, VisualElement>? builder = null) : base(parent.Screen, parent) {
         this.parent = parent;

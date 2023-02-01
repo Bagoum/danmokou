@@ -10,6 +10,7 @@ public interface IUXMLReferences {
     public VisualTreeAsset UIScreenRow { get; }
     public VisualTreeAsset UIScreenRowNoStretch { get; }
     public VisualTreeAsset Popup { get; }
+    public VisualTreeAsset Tooltip { get; }
     public VisualTreeAsset AbsoluteTerritory { get; }
     public VisualTreeAsset PureTextNode { get; }
 

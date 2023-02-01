@@ -29,10 +29,6 @@ MonoBehaviour:
     files:
     - locale: 0
       file: {fileID: 4900000, guid: 27652c3ce365fb14196f3df80a97688f, type: 3}
-  - name: insert.child
-    files:
-    - locale: 0
-      file: {fileID: 4900000, guid: 5b9bd5a5fd86b0e49b096ddb37293a5e, type: 3}
   - name: jy.1m
     files:
     - locale: 0

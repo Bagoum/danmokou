@@ -104,9 +104,9 @@ public static partial class ExM {
         Ex.Property(null, typeof(LocationHelpers), nameof(LocationHelpers.VisiblePlayerLocation));
 
     /// <summary>
-    /// Get the location of the BehaviorEntity with the given ID.
+    /// Get the location of the BehaviorEntity.
     /// </summary>
-    public static TEx<Vector2> LBEH(BEHPointer beh) => Ex.Constant(beh).Field("beh").Field("BPI").Field("LocV2");
+    public static TEx<Vector2> LBEH(TEx<BehaviorEntity> beh) => beh.Field(nameof(BehaviorEntity.Location));
     
     private static readonly ExFunction distToWall =
         ExFunction.Wrap(typeof(LocationHelpers), "DistToWall", typeof(Vector2), typeof(Vector2));

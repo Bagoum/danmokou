@@ -50,9 +50,17 @@ Camera:
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
+  m_Iso: 200
+  m_ShutterSpeed: 0.005
+  m_Aperture: 16
+  m_FocusDistance: 10
+  m_FocalLength: 50
+  m_BladeCount: 5
+  m_Curvature: {x: 2, y: 11}
+  m_BarrelClipping: 0.25
+  m_Anamorphism: 0
   m_SensorSize: {x: 36, y: 24}
   m_LensShift: {x: 0, y: 0}
-  m_FocalLength: 50
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
@@ -274,7 +282,7 @@ MonoBehaviour:
     serializedVersion: 2
     key0: {r: 0, g: 0.5568628, b: 0.18431373, a: 1}
     key1: {r: 0, g: 0.5221699, b: 0.764151, a: 1}
-    key2: {r: 0.50500274, g: 0.03760237, b: 0.6132076, a: 1}
+    key2: {r: 0.50500274, g: 0.03760237, b: 0.6132076, a: 0}
     key3: {r: 0.6509804, g: 0.047058824, b: 0.047058824, a: 0}
     key4: {r: 0.79607844, g: 0.08235294, b: 0.6313726, a: 0}
     key5: {r: 0, g: 0, b: 0, a: 0}
@@ -290,13 +298,14 @@ MonoBehaviour:
     ctime7: 0
     atime0: 0
     atime1: 65535
-    atime2: 65535
+    atime2: 0
     atime3: 0
     atime4: 0
     atime5: 0
     atime6: 0
     atime7: 0
     m_Mode: 0
+    m_ColorSpace: -1
     m_NumColorKeys: 5
     m_NumAlphaKeys: 2
   spellnameFadeIn: 1
@@ -389,6 +398,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4f231c4fb786f3946a6b90b886c48677, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_SendPointerHoverToParent: 1
   m_HorizontalAxis: DeadButton
   m_VerticalAxis: DeadButton
   m_SubmitButton: DeadButton
@@ -3907,7 +3917,7 @@ MonoBehaviour:
   m_ParentUI: {fileID: 0}
   sourceAsset: {fileID: 9197481963319205126, guid: e49b073a71eaa5b42abc32228551e3c9,
     type: 3}
-  m_SortingOrder: -5
+  m_SortingOrder: 0
 --- !u!1 &2618226677045358825
 GameObject:
   m_ObjectHideFlags: 0
@@ -7598,7 +7608,6 @@ MonoBehaviour:
   - {fileID: 1940402593045784125}
   texts:
   - {fileID: 1597624124941566470}
-  player: {fileID: 11400000, guid: d20af02baec12db42baba53da24bff95, type: 2}
   radius: {x: 1.2, y: 1.5}
   fade: {x: 0.2, y: 1}
 --- !u!1 &6166292026109367839

@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using BagoumLib;
 using BagoumLib.Assertions;
 using BagoumLib.Cancellation;
+using BagoumLib.Culture;
 using BagoumLib.DataStructures;
 using BagoumLib.Events;
 using BagoumLib.Mathematics;
@@ -25,15 +26,24 @@ using UnityEngine.UIElements;
 
 namespace Danmokou.ADV {
 
-public abstract record InteractableType {
+public abstract record InteractableInfo {
     public abstract Sprite Icon { get; }
     public virtual bool UseWaveEffect => true;
+    public abstract LString? Tooltip { get; init; }
 
-    public record Dialogue : InteractableType {
+    public record Dialogue(LString? Tooltip = null) : InteractableInfo {
         public override Sprite Icon => GameManagement.ADVReferences.talkToIcon;
     }
+    
+    public record DialogueObject(LString? Tooltip = null) : InteractableInfo {
+        public override Sprite Icon => GameManagement.ADVReferences.talkToObjectIcon;
+    }
 
-    public record Map(bool Current) : InteractableType {
+    public record EvidenceTarget(LString? Tooltip = null) : InteractableInfo {
+        public override Sprite Icon => GameManagement.ADVReferences.evidenceTargetIcon;
+    }
+
+    public record Map(bool Current, LString? Tooltip = null) : InteractableInfo {
         public override Sprite Icon => 
             Current ? GameManagement.ADVReferences.mapCurrentIcon : GameManagement.ADVReferences.mapNotCurrentIcon;
         public override bool UseWaveEffect => false;
@@ -42,14 +52,15 @@ public abstract record InteractableType {
 
 /// <summary>
 /// A VN entity that can be clicked on to trigger something (generally a <see cref="BoundedContext{T}"/>).
-/// <br/>By default, the interactable will only be active and clickable during the <see cref="ADVManagerWrapper.State.Investigation"/> state,
+/// <br/>By default, the interactable will only be active and clickable during the <see cref="ADVManager.State.Investigation"/> state,
 ///  but this can be changed via <see cref="InteractableStates"/>.
 /// </summary>
 public class Interactable : Rendered {
     public ADVManager Manager { get; set; } = null!;
+    public IFixedXMLObjectContainer? XMLContainer { get; set; } = null;
     public Func<UINode, UIResult?> OnClick { get; set; } = null!;
     public Evented<bool> Exhausted { get; set; } = new(false);
-    public InteractableType Type { get; set; } = null!;
+    public InteractableInfo Metadata { get; set; } = null!;
     public HoverAction? Hover { get; set; }
     public ADVManager.State[] InteractableStates { get; set; } = { ADVManager.State.Investigation };
     
@@ -70,6 +81,11 @@ public class Interactable : Rendered {
             }
         }
     }
+
+    public override void Delete() {
+        base.Delete();
+        Visible.OnCompleted();
+    }
 }
 
 
@@ -78,6 +94,7 @@ public class InteractableMimic : RenderedMimic, IFixedXMLReceiver {
     public override string SortingLayerFromPrefab => "";
 
     public FixedXMLHelper xml = null!;
+    public LString? Tooltip => entity.Metadata.Tooltip;
     
     private Interactable entity = null!;
     
@@ -88,7 +105,7 @@ public class InteractableMimic : RenderedMimic, IFixedXMLReceiver {
     private readonly Func<float, float> bounce = t => 160 * (-1f + bEase(Mathf.Clamp01(BMath.Mod(2f, t) / 1.2f)));
     private readonly Func<float, float> _wave = t => 20 * M.SinDeg(50 * t);
     private readonly Func<float, float> _wave0 = t => 0;
-    private Func<float, float> Wave => (entity.Type ?? throw new Exception("hello")).UseWaveEffect ? _wave : _wave0;
+    private Func<float, float> Wave => (entity.Metadata ?? throw new Exception("hello")).UseWaveEffect ? _wave : _wave0;
     private VisualElement? w = null!;
 
     private IDisposable? hoverActiveAction;
@@ -98,6 +115,7 @@ public class InteractableMimic : RenderedMimic, IFixedXMLReceiver {
     
     private void Initialize(Interactable c) {
         base.Initialize(entity = c);
+        xml.Container = c.XMLContainer;
         offsetter.Push(Wave);
         borderColor.Push(0f);
 
@@ -128,7 +146,7 @@ public class InteractableMimic : RenderedMimic, IFixedXMLReceiver {
         wb.Add(w);
         w.style.width = 160;
         w.style.height = 160;
-        w.style.backgroundImage = new(entity.Type.Icon);
+        w.style.backgroundImage = new(entity.Metadata.Icon);
         w.style.unityBackgroundImageTintColor = entity.ComputedTint.Value._();
 
         //TransitionHelpers.Apply(t => 40 * M.SinDeg(70 * t), float.PositiveInfinity, x => w.style.top = x)
@@ -193,7 +211,9 @@ public record InteractableAssertion(ADVManager Manager, Func<UINode, UIResult?> 
         onClick();
         return null;
     }, id) { }
-    public InteractableType Type { get; init; } = new InteractableType.Dialogue();
+    
+    public IFixedXMLObjectContainer? XMLContainer { get; set; } = null;
+    public InteractableInfo Info { get; set; } = new InteractableInfo.Dialogue();
     public bool Exhausted { get; init; }
     public Interactable.HoverAction? Hover { get; init; }
     public ADVManager.State[] InteractableStates { get; init; } = { ADVManager.State.Investigation };
@@ -202,10 +222,16 @@ public record InteractableAssertion(ADVManager Manager, Func<UINode, UIResult?> 
         base.Bind(ie);
         ie.Exhausted.OnNext(Exhausted);
         ie.Manager = Manager;
+        ie.XMLContainer = XMLContainer;
         ie.OnClick = OnClick;
         ie.Hover = Hover;
-        ie.Type = Type;
+        ie.Metadata = Info;
         ie.InteractableStates = InteractableStates;
+    }
+
+    public InteractableAssertion AsObject() {
+        Info = new InteractableInfo.DialogueObject();
+        return this;
     }
     
     Task IAssertion.Inherit(IAssertion prev) => AssertionHelpers.Inherit<InteractableAssertion>(prev, this);
@@ -224,6 +250,24 @@ public record InteractableBCtxAssertion : InteractableAssertion, IAssertion<Inte
     Task IAssertion.Inherit(IAssertion prev) => AssertionHelpers.Inherit<InteractableBCtxAssertion>(prev, this);
 
     public Task _Inherit(InteractableBCtxAssertion prev) => base._Inherit(prev);
+}
+
+public record InteractableEvidenceTargetA<E, T> : InteractableAssertion, IAssertion<InteractableEvidenceTargetA<E, T>> 
+    where E: class where T : IEvidenceTarget {
+    
+    public InteractableEvidenceTargetA(ADVManager Manager, EvidenceTargetProxy<E, T> Handler, T Target, string? ID = null) : 
+        base(Manager, _ => Handler.Present(Target), ID ?? $"{Target}") {
+        Info = new InteractableInfo.EvidenceTarget(Target.Tooltip);
+        InteractableStates = ADVManager.AllStates;
+        //currently don't have any good way to implement Exhausted 
+        // since PresentToTarget functionality may change depending on Data
+        //We could do a minimal setup where we locally store (Evidence, Target) pairs, so they get cleared
+        // when the data (and assertions) change
+    }
+
+    Task IAssertion.Inherit(IAssertion prev) => AssertionHelpers.Inherit<InteractableEvidenceTargetA<E, T>>(prev, this);
+
+    public Task _Inherit(InteractableEvidenceTargetA<E, T> prev) => base._Inherit(prev);
 }
 
 

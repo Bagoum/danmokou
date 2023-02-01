@@ -126,6 +126,50 @@ public class ReflectAttribute : FileLinkAttribute {
 }
 
 /// <summary>
+/// The marked method is an expression function that modifies some of its arguments.
+/// </summary>
+[AttributeUsage(AttributeTargets.Method)]
+public class AssignsAttribute : Attribute {
+    public int[] Indices { get; }
+
+    public AssignsAttribute(params int[] indices) {
+        this.Indices = indices;
+    }
+}
+
+/// <summary>
+/// The marked method can only be reflected in BDSL2.
+/// </summary>
+[AttributeUsage(AttributeTargets.Method)]
+public class BDSL2OnlyAttribute : Attribute { }
+
+/// <summary>
+/// (BDSL2) The marked method has a lexical scope governing its arguments, and the `index`th argument
+///  is either GenCtxProperty[] or GenCtxProperties and may have a <see cref="ScopeRaiseSourceAttribute"/>
+///  in one of its descendants. Used on GXR repeaters.
+/// </summary>
+[AttributeUsage(AttributeTargets.Method | AttributeTargets.Constructor)]
+public class CreatesInternalScopeAttribute : Attribute {
+    public int Index { get; }
+
+    public CreatesInternalScopeAttribute(int i) {
+        this.Index = i;
+    }
+}
+
+/// <summary>
+/// (BDSL2) The `index`th argument of the marked method may generate a lexical scope that should be raised
+///  up to an ancestor <see cref="CreatesInternalScopeAttribute"/>.
+/// </summary>
+[AttributeUsage(AttributeTargets.Method)]
+public class ScopeRaiseSourceAttribute : Attribute {
+    public int Index { get; }
+    public ScopeRaiseSourceAttribute(int i) {
+        this.Index = i;
+    }
+}
+
+/// <summary>
 /// The marked method is a BDSL2 operator. It should not be permitted for reflection in BDSL2.
 /// </summary>
 [AttributeUsage(AttributeTargets.Method)]

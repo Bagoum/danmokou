@@ -45,7 +45,7 @@ public class XMLPauseMenu : PausedGameplayMenu, IPauseMenu {
         //Display the standard patterned bg
         OptionsScreen.BackgroundOpacity = 1f;
         //Keep this around to avoid opacity fade oddities
-        OptionsScreen.MenuBackgroundOpacity = 0.8f;
+        OptionsScreen.MenuBackgroundOpacity = UIScreen.DefaultMenuBGOpacity;
         var advMan = ServiceLocator.FindOrNull<ADVManager>();
         if (!Replayer.RequiresConsistency && advMan != null) {
             SaveLoadScreen = this.SaveLoadVNScreen(inst => advMan.ExecAdv?.Inst.Request.Restart(inst.GetData()) ?? false, slot => {
@@ -54,12 +54,12 @@ public class XMLPauseMenu : PausedGameplayMenu, IPauseMenu {
                     ServiceLocator.Find<IVNWrapper>().TrackedVNs.First().backlog.LastPublished.Value.readableSpeech);
             });
             SaveLoadScreen.BackgroundOpacity = 1f;
-            SaveLoadScreen.MenuBackgroundOpacity = 0.8f;
+            SaveLoadScreen.MenuBackgroundOpacity = UIScreen.DefaultMenuBGOpacity;
         }
         unpause = new FuncNode(LocalizedStrings.UI.unpause, ProtectHide);
         MainScreen = new UIScreen(this, pause_header, UIScreen.Display.OverlayTH)  { Builder = (s, ve) => {
             ve.AddColumn();
-        }, MenuBackgroundOpacity = 0.8f  };
+        }, MenuBackgroundOpacity = UIScreen.DefaultMenuBGOpacity };
         _ = new UIColumn(MainScreen, null,
             new TransferNode(main_options, OptionsScreen),
             Replayer.RequiresConsistency ? null : new TransferNode(saveload_header, SaveLoadScreen!),

@@ -9,6 +9,7 @@ using Danmokou.Danmaku;
 using Danmokou.DMath;
 using Danmokou.DMath.Functions;
 using Danmokou.Reflection;
+using Danmokou.Reflection2;
 using JetBrains.Annotations;
 using UnityEngine;
 using Ex = System.Linq.Expressions.Expression;
@@ -31,8 +32,10 @@ public class TExArgCtx {
         /// <summary>
         /// A handler that tracks usages of yet-unbound variables in the precompilation step of GCXU.
         /// <br/>This is *NOT* used for any actual compilation.
+        /// <br/>It is set to <see cref="CompilerHelpers.GCXUCompileResolver"/> in the first phase of GCXU compilation,
+        ///  and <see cref="CompilerHelpers.GCXUDummyResolver"/> in the second phase of GCXU compilation.
         /// </summary>
-        public ReflectEx.ICompileReferenceResolver? ICRR { get; set; }
+        public ReflectEx.ICompileReferenceResolver? GCXURefs { get; set; }
         /// <summary>
         /// When the type of the custom data (<see cref="PICustomData"/>) is known, this contains
         ///  the type, as well as a function to get the custom data downcast to that type.
@@ -56,7 +59,25 @@ public class TExArgCtx {
 #elif EXBAKE_LOAD
         public List<object> ProxyArguments { get; } = new List<object>();
 #endif
+
+        /// <summary>
+        /// Handle baking/loading an argument to an expression-reflected function that is not itself an expression
+        ///  and cannot be trivially converted into a code representation.
+        /// <br/>Returns the argument for chaining convenience.
+        /// </summary>
+        public T Proxy<T>(T replacee) {
+#if EXBAKE_SAVE
+            ProxyTypes.Add(typeof(T));
+            HoistedReplacements[Ex.Constant(replacee)] = Ex.Variable(typeof(T), NextProxyArg());  
+#elif EXBAKE_LOAD
+            ProxyArguments.Add(replacee);
+#endif
+            return replacee;
+        }
     }
+
+    /// <inheritdoc cref="RootCtx.Proxy{T}"/>
+    public T Proxy<T>(T replacee) => Ctx.Proxy(replacee);
     public readonly struct Arg {
         public readonly string name;
         //typeof(TExPI)
@@ -105,7 +126,7 @@ public class TExArgCtx {
     //Maps typeof(TExPI) to index
     private readonly Dictionary<Type, int> argExTypeToIndexMap;
     //Maps typeof(ParametricInfo) to index
-    //private readonly Dictionary<Type, int> argTypeToIndexMap;
+    private readonly Dictionary<Type, int> argTypeToIndexMap;
 
     private readonly RootCtx? ctx;
     private readonly TExArgCtx? parent;
@@ -127,6 +148,7 @@ public class TExArgCtx {
     public TEx<float> FloatVal => GetByExprType<TEx<float>>();
     public TExSB SB => GetByExprType<TExSB>();
     public TExGCX GCX => GetByExprType<TExGCX>();
+    public TEx EnvFrame => GetByType<EnvFrame>();
 
     public TExArgCtx(params Arg[] args) : this(null, args) { }
     public TExArgCtx(TExArgCtx? parent, params Arg[] args) {
@@ -134,28 +156,26 @@ public class TExArgCtx {
         if (parent == null) this.ctx = new RootCtx();
         this.args = args;
         argNameToIndexMap = new Dictionary<string, int>();
-        //argTypeToIndexMap = new Dictionary<Type, int>();
+        argTypeToIndexMap = new Dictionary<Type, int>();
         argExTypeToIndexMap = new Dictionary<Type, int>();
         for (int ii = 0; ii < args.Length; ++ii) {
             if (argNameToIndexMap.ContainsKey(args[ii].name)) {
                 throw new CompileException($"Duplicate argument name: {args[ii].name}");
             }
             argNameToIndexMap[args[ii].name] = ii;
-            /*
+            
             if (!argTypeToIndexMap.TryGetValue(args[ii].expr.type, out var i)
                 || !args[i].hasTypePriority
                 || args[ii].hasTypePriority) {
                 argTypeToIndexMap[args[ii].expr.type] = ii;
-            }*/
-            if (!argExTypeToIndexMap.TryGetValue(args[ii].texType, out var i)
+            }
+            if (!argExTypeToIndexMap.TryGetValue(args[ii].texType, out i)
                 || !args[i].hasTypePriority
                 || args[ii].hasTypePriority) {
                 argExTypeToIndexMap[args[ii].texType] = ii;
             }
         }
     }
-
-    public static TExArgCtx FromBPI(TExPI bpi, string name) => new(Arg.Make(name, bpi, true));
 
     public TEx<T> GetByName<T>(string name) {
         if (!argNameToIndexMap.TryGetValue(name, out var idx))
@@ -181,12 +201,23 @@ public class TExArgCtx {
             //Still throw an error in this case
             throw new BadTypeException($"The variable \"{name}\" (#{idx+1}/{args.Length}) is not of type {t.RName()}");
     }
+    
+    public TEx GetByType<T>(out int idx) {
+        if (!argTypeToIndexMap.TryGetValue(typeof(T), out idx))
+            throw new CompileException($"No variable of type {typeof(T).RName()} is provided as an argument.");
+        return args[idx].expr;
+    }
+    public TEx GetByType<T>() => GetByType<T>(out _);
+    public TEx? MaybeGetByType<T>(out int idx) => 
+        argTypeToIndexMap.TryGetValue(typeof(T), out idx) ? 
+            args[idx].expr : 
+            null;
+    
     public Tx GetByExprType<Tx>(out int idx) where Tx : TEx {
         if (!argExTypeToIndexMap.TryGetValue(typeof(Tx), out idx))
             throw new CompileException($"No variable of type {typeof(Tx).RName()} is provided as an argument.");
         return (Tx)args[idx].expr;
     }
-
     public Tx GetByExprType<Tx>() where Tx : TEx => GetByExprType<Tx>(out _);
     public Tx? MaybeGetByExprType<Tx>(out int idx) where Tx : TEx => 
         argExTypeToIndexMap.TryGetValue(typeof(Tx), out idx) ? 
@@ -208,13 +239,24 @@ public class TExArgCtx {
         return new TExArgCtx(this, newargs);
     }
 
-    public TExArgCtx MakeCopyForType<T>(out T currEx, out T copyEx) where T : TEx, new() {
+    public TExArgCtx MakeCopyForType<T>(out TEx<T> currEx, out TEx<T> copyEx)  {
+        currEx = (Expression)GetByType<T>(out int idx);
+        copyEx = new TEx<T>();
+        return MakeCopyWith(idx, Arg.Make(args[idx].name, copyEx, args[idx].hasTypePriority));
+    }
+    
+    public TExArgCtx MakeCopyForType<T>(TEx<T> newEx) {
+        _ = GetByType<T>(out int idx);
+        return MakeCopyWith(idx, Arg.Make(args[idx].name, newEx, args[idx].hasTypePriority));
+    }
+    
+    public TExArgCtx MakeCopyForExType<T>(out T currEx, out T copyEx) where T: TEx, new() {
         currEx = GetByExprType<T>(out int idx);
         copyEx = new T();
         return MakeCopyWith(idx, Arg.Make(args[idx].name, copyEx, args[idx].hasTypePriority));
     }
     
-    public TExArgCtx MakeCopyForType<T>(T newEx) where T: TEx {
+    public TExArgCtx MakeCopyForExType<T>(T newEx) where T: TEx {
         _ = GetByExprType<T>(out int idx);
         return MakeCopyWith(idx, Arg.Make(args[idx].name, newEx, args[idx].hasTypePriority));
     }

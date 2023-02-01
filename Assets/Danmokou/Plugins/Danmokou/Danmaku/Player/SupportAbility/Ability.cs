@@ -40,7 +40,7 @@ public abstract partial record Ability {
             if (PowerRequired.Try(out var rp) && !GameManagement.Instance.PowerF.TryConsumePower(-rp * mult))
                 return false;
             if (BombsRequired.Try(out var rb) &&
-                !GameManagement.Instance.TryConsumeBombs((int) Math.Round(-rb * mult)))
+                !GameManagement.Instance.BasicF.TryConsumeBombs((int) Math.Round(-rb * mult)))
                 return false;
             ++GameManagement.Instance.BombsUsed;
             PlayerController.BombFired.OnNext((this, ctx));

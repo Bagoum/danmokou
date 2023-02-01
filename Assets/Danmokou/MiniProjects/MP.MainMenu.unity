@@ -306,7 +306,7 @@ PrefabInstance:
         type: 3}
       propertyPath: references
       value: 
-      objectReference: {fileID: 11400000, guid: 1e32573acad029e49bb5f1156b983784,
+      objectReference: {fileID: 11400000, guid: 02205812fcd8bcc44b602e265d26f64c,
         type: 2}
     - target: {fileID: 9097257417429825779, guid: cca0d5f4466f12c48b79ed20b74f5cef,
         type: 3}
@@ -779,12 +779,6 @@ MonoBehaviour:
   cullableRadius:
     cullable: 0
     cullRadius: {fileID: 0}
-  collisionInfo:
-    collisionRadius: 0
-    CollisionActiveOnInit: 0
-    destructible: 0
-    grazeEveryFrames: 0
-    allowGraze: 0
   displayer: {fileID: 0}
 --- !u!4 &1429847394
 Transform:

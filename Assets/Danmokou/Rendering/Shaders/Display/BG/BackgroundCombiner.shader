@@ -1,9 +1,9 @@
 ﻿Shader "_Misc/BackgroundCombiner" {
 	Properties {
-		[PerRendererData] _MainTex("Sprite Texture", 2D) = "white" {}
-		[PerRendererData] _FromTex("From Texture", 2D) = "white" {}
-		[PerRendererData] _ToTex("To Texture", 2D) = "white" {}
-		[PerRendererData] _FaderTex("Fade Texture", 2D) = "white" {}
+		[PerRendererData] _MainTex("Sprite Texture", 2D) = "black" {}
+		[PerRendererData] _FromTex("From Texture", 2D) = "black" {}
+		[PerRendererData] _ToTex("To Texture", 2D) = "black" {}
+		[PerRendererData] _FaderTex("Fade Texture", 2D) = "black" {}
 		[PerRendererData] _T("Time", Range(0, 10)) = 1
 		[PerRendererData] _A0("Angle0", Range(0, 10)) = 1
 		[PerRendererData] _PMDir("PM Direction", Range(0, 10)) = 1
@@ -65,7 +65,7 @@
                 return smoothstep(-smooth, smooth, x - ref);
             }
 
-			float4 frag(fragment f) : SV_Target { 
+			float4 frag(fragment f) : SV_Target {
         #ifdef MIX_FROM_ONLY
 				return tex2D(_FromTex, f.uv);
         #endif

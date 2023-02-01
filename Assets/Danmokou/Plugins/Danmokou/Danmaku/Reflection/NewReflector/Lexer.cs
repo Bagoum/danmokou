@@ -25,7 +25,7 @@ public static class Lexer {
     private static readonly HashSet<string> operators = new[] {
         "++", "--",
         "!", 
-        "*", "/", "//", "%", "^",
+        "*", "/", "%", "^", //no // as that's comment :(
         "+", "-",
         "<", ">", "<=", ">=", 
         "==", "!=", 
@@ -200,6 +200,8 @@ public static class Lexer {
     
     private static readonly RegexLexer<Token> lexer = new(
             T(@"[^\S\n]+", TokenType.InlineWhitespace),
+            //`b{` is short for `block {`
+            T(@"b\{", (p, s) => (new Token(TokenType.Keyword, p, "b"), 1)),
             T($@"{uLetter}({uLetter}|{num}|[_'])*", (p, s) =>
                 new Token(keywords.Contains(s.Value) ? TokenType.Keyword : TokenType.Identifier, p, s)),
             //Preprocess out other newlines
@@ -220,6 +222,8 @@ public static class Lexer {
             //This is to make basic cases like 5-6 vs 5+ -6 easier to handle
             T($@"(({num}+(\.{num}+)?)|(\.{num}+))({numMult})?", TokenType.Number),
             T(@"[!@#$%^&*+\-.<=>?/\\|~:]+", (p, s) => {
+                if (s.Value.StartsWith("//")) //this is a comment, not an operator
+                    return Maybe<(Token, int)>.None;
                 var op = operatorTrie.FindLongestSubstring(s.Value);
                 if (op is null) return Maybe<(Token, int)>.None;
                 return (new Token(specialOps.Contains(op) ? TokenType.SpecialOperator : TokenType.Operator, 
@@ -252,7 +256,7 @@ public static class Lexer {
             new InputStream<Token>("Lexer postprocessing", tokens.ToArray(), null!, new TokenWitnessCreator(source));
         var result = postprocessor(stream);
         if (result.Status != ResultStatus.OK)
-            throw new Exception(result.ErrorOrThrow.Show(stream));
+            throw new Exception(stream.ShowAllFailures(result.ErrorOrThrow));
         tokens = result.Result.Value;
         
         //Manual postprocessing: strip whitespace/NLs, balance parens, and add flags
@@ -377,13 +381,11 @@ public static class Lexer {
     private record TokenWitness(string Source, InputStream<Token> Stream) : ITokenWitness {
         public string SourceStream => Source;
         
-        public string ShowError(LocatedParserError error) {
+        public string ShowErrorPosition(LocatedParserError error) {
             var pos = Stream.Source.Try(error.Index, out var token) ?
                 token.Position :
                 new PositionRange(new(Source, Source.Length), new(Source, Source.Length));
-            return $"Error at {pos.ToString()}:\n" +
-                   pos.Start.PrettyPrintLocation(Source) +
-                   $"\n{error.Error.Flatten().Show(Stream)}";
+            return ITokenWitness.ShowErrorPositionInSource(error.Error, pos, Source);
         }
 
         public ParserError Unexpected(int index) => new ParserError.Unexpected(Stream.Source[index].ToString());
@@ -448,6 +450,26 @@ public static class Lexer {
                 return new(new(input.Next), null, input.Index, input.Step(1));
         };
     }
+    
+    public static Parser<Token, Token> TokenOfTypeValueNotFlag(TokenType typ, string value, TokenFlags flag, string desc) {
+        var err = new ParserError.Expected(desc);
+        var flagErr = new ParserError.Expected(flag switch {
+            TokenFlags.PrecededByWhitespace => $"no whitespace before {desc}",
+            TokenFlags.PostcededByWhitespace => $"no whitespace after {desc}",
+            _ => throw new NotImplementedException()
+        });
+        return input => {
+            if (input.Empty || input.Next.Type != typ || input.Next.Content != value)
+                return new(err, input.Index);
+            else if ((input.Next.Flags & flag) > 0) {
+                //this is too noisy-- maybe there's a better way to do this
+                //input.Rollback(input.Stative, new(input.Index, flagErr));
+                return new(flagErr, input.Index);
+            }
+            else
+                return new(new(input.Next), null, input.Index, input.Step(1));
+        };
+    }
 
     private static Token JoinTokens(this Token a, Maybe<Token> b) {
         if (b.Valid) {
@@ -500,7 +522,7 @@ public static class Lexer {
         //Ident, followed by one of:
         //  ([])+
         //  <(Ident|TypeIdent)+>([])*
-        Ident.ThenTry(ChoiceL("Type identifier", 
+        Ident.ThenTryFast(ChoiceL("Type identifier", 
                 Sequential(
                     TokenOfValue("<"),
                     ((Parser<Token,Token>)ParseTypeIdentifier).Or(Ident).SepByAll(
@@ -519,7 +541,7 @@ public static class Lexer {
     private static readonly Parser<Token, Token> parseV2RV2 =
         Sequential(
             TokenOfValue("<"),
-            //attempt on this so in cases like <RX;RY:A> it doesn't parse the A
+            //attempt on this so in cases like <RX;RY:A> it doesn't parse and fatal on A during 2nd repeat
             Sequential(Num.Opt(), Semicolon, Num.Opt(), TokenOfValue(":"),
                 (x, sc, y, c) => x.JoinTokens(sc).JoinTokens(y).JoinTokens(c)).Attempt().Repeat(0, 2),
             Num.Opt(),

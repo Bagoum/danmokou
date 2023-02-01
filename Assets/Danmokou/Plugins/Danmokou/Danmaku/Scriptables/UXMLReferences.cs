@@ -13,6 +13,7 @@ public class UXMLReferences : ScriptableObject, IUXMLReferences {
     public VisualTreeAsset UIScreenRow = null!;
     public VisualTreeAsset UIScreenRowNoStretch = null!;
     public VisualTreeAsset Popup = null!;
+    public VisualTreeAsset Tooltip = null!;
     
     public VisualTreeAsset UINode = null!;
     public VisualTreeAsset OptionsColumnUINode = null!;
@@ -60,7 +61,8 @@ public class UXMLReferences : ScriptableObject, IUXMLReferences {
     VisualTreeAsset IUXMLReferences.UIScreenRow => UIScreenRow;
     VisualTreeAsset IUXMLReferences.UIScreenRowNoStretch => UIScreenRowNoStretch;
     VisualTreeAsset IUXMLReferences.Popup => Popup;
+    VisualTreeAsset IUXMLReferences.Tooltip => Tooltip;
     VisualTreeAsset IUXMLReferences.AbsoluteTerritory => AbsoluteTerritory;
-    VisualTreeAsset IUXMLReferences.PureTextNode => UIScreenRow;
+    VisualTreeAsset IUXMLReferences.PureTextNode => PureTextNode;
 }
 }

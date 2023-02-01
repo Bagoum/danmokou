@@ -8,7 +8,8 @@
     --violetsub0: rgba(127, 18, 150, 0);
     --violetsub30: rgba(127, 18, 150, 0.5);
     --violetliner: rgb(108, 68, 125);
-    --violetbg: rgba(92, 22, 106, 0.7);
+    --violetbg70: rgba(92, 22, 106, 0.7);
+    --darkvioletbg80: rgba(74, 16, 84, 0.8);
 }
 
 .unity-label {
@@ -135,11 +136,11 @@
     color: rgb(172, 255, 205);
 }
 
-.node.nopointer .pointer {
+.node.nopointer > .pointer {
     display: none;
 }
 
-.node.nospaceprefix .prefix {
+.node.nospaceprefix > .prefix {
     margin-left: -100px;
 }
 
@@ -156,24 +157,24 @@
     -unity-background-image-tint-color: var(--goldsub);
 }
 
-.node.focus .pointer {
+.node.focus > .pointer {
     opacity: 1;
 }
 
-.node.unchecked .checkmark {
+.node.unchecked > .checkmark {
     display: flex;
 }
 
-.node.checked .checkmark {
+.node.checked > .checkmark {
     opacity: 1;
     display: flex;
 }
 
-.node.small1 .prefix {
+.node.small1 > .prefix {
     width: 80px;
 }
 
-.node.small2 .prefix {
+.node.small2 > .prefix {
     width: 65px;
 }
 
@@ -207,7 +208,7 @@
     -unity-background-image-tint-color: rgb(178, 178, 178);
 }
 
-.node .body {
+.node > .body {
     transition-property: border-color;
     transition-duration: 0.1s;
     border-top-width: 6px;
@@ -220,27 +221,27 @@
     padding-right: 10px;
 }
 
-.node.small1 .body {
+.node.small1 > .body {
     border-top-width: 5px;
     border-bottom-width: 5px;
 }
 
-.node.small2 .body {
+.node.small2 > .body {
     border-top-width: 4px;
     border-bottom-width: 4px;
 }
 
-.node.small3 .body {
+.node.small3 > .body {
     border-top-width: 4px;
     border-bottom-width: 4px;
 }
 
-.node.focus .body {
+.node.focus > .body {
     border-color: var(--goldsub);
-    -unity-background-image-tint-color: var(--violetbg);
+    -unity-background-image-tint-color: var(--violetbg70);
 }
 
-.node.header.selected .body {
+.node.header.selected > .body {
     border-bottom-color: var(--goldsub);
 }
 
@@ -367,7 +368,7 @@
     border-right-width: 0;
     border-top-width: 0;
     border-bottom-width: 0;
-    -unity-background-image-tint-color: rgba(184, 148, 179, 255);
+    -unity-background-image-tint-color: rgb(184, 148, 179);
     transition-property: -unity-background-image-tint-color;
     transition-duration: 0.3s;
 }
@@ -375,5 +376,26 @@
 .optionsselect.focus .body {
     text-overflow: ellipsis;
     background-image: url('project://database/Assets/Danmokou/Sprites/UI/UITK/optionsselectbox.png?fileID=21300000&guid=b45ebdf23b6201047bf3f6fe2d8d1ffa&type=3#optionsselectbox');
-    -unity-background-image-tint-color: rgba(255, 255, 255, 255);
+    -unity-background-image-tint-color: rgb(255, 255, 255);
+}
+
+.tooltip {
+    padding-left: 36px;
+    padding-right: 36px;
+    padding-top: 20px;
+    padding-bottom: 20px;
+    background-color: var(--darkvioletbg80);
+    border-color: var(--goldsub);
+    border-bottom-right-radius: 40px;
+    border-top-right-radius: 40px;
+    border-top-left-radius: 40px;
+    border-left-width: 6px;
+    border-right-width: 6px;
+    border-top-width: 6px;
+    border-bottom-width: 6px;
+    translate: 0 -100%;
+    left: 100%;
+    position: absolute;
+    max-width: 800px;
+    min-width: 100px;
 }

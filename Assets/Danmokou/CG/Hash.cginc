@@ -1,4 +1,4 @@
-﻿// Hash without Sine
+﻿// Hash without Sine https://www.shadertoy.com/view/4djSRW
 // MIT License...
 /* Copyright (c)2014 David Hoskins.
 

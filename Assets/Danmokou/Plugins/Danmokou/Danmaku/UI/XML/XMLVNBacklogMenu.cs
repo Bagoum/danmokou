@@ -45,7 +45,7 @@ public class XMLVNBacklogMenu : PausedGameplayMenu, IVNBacklog {
         MainScreen = new UIScreen(this, "BACKLOG", UIScreen.Display.OverlayTH)  { Builder = (s, ve) => {
             s.Margin.SetLRMargin(720, 720);
             ve.AddScrollColumn().style.backgroundColor = new Color(0, 0, 0, .25f);
-        }, MenuBackgroundOpacity = 0.8f  };
+        }, MenuBackgroundOpacity = UIScreen.DefaultMenuBGOpacity  };
         backlogEntries = new UIColumn(MainScreen, null) {
             EntryIndexOverride = () => -1
         };

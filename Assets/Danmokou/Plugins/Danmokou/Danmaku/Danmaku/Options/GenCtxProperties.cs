@@ -9,6 +9,7 @@ using Danmokou.DMath.Functions;
 using Danmokou.Expressions;
 using BagoumLib.Reflection;
 using Danmokou.Reflection;
+using Danmokou.Reflection2;
 using Danmokou.SM;
 using JetBrains.Annotations;
 using UnityEngine;
@@ -399,6 +400,18 @@ public record GenCtxProperty {
     public static GenCtxProperty Expose((Reflector.ExType, string)[] variables) => new ExposeProp(variables);
 
     /// <summary>
+    /// Run arbitrary code before each iteration loop on an environment frame specific to that loop.
+    /// </summary>
+    [BDSL2Only] [ScopeRaiseSource(0)]
+    public static GenCtxProperty Scoped(ErasedGCXF initializer) => new ScopedProp(initializer);
+
+    /// <summary>
+    /// (Internal BDSL2 usage) Specify the lexical scope for a GenCtxProperties that is not yet created.
+    /// </summary>
+    [DontReflect]
+    public static GenCtxProperty _AssignLexicalScope(LexicalScope scope) => new _LexicalScopeProp(scope);
+
+    /// <summary>
     /// Reset the summonTime variable (&amp;st) provided in GCX every iteration.
     /// </summary>
     public static GenCtxProperty TimeReset() => new TimeResetTag();
@@ -448,22 +461,17 @@ public record GenCtxProperty {
     public static GenCtxProperty BindItr(string value) => new BindItrTag(value);
 
 
-    public record CompositeProp : ValueProp<GenCtxProperty[]>, IUnrollable<GenCtxProperty> {
+    public record CompositeProp(params GenCtxProperty[] value) : ValueProp<GenCtxProperty[]>(value), IUnrollable<GenCtxProperty> {
         public IEnumerable<GenCtxProperty> Values => value;
-        public CompositeProp(params GenCtxProperty[] props) : base(props) { }
     }
     
     #region Impls
 
-    public abstract record BPYProp : ValueProp<GCXF<float>> {
-        public BPYProp(GCXF<float> f) : base(f) { } 
-    }
-    public abstract record PredProp : ValueProp<GCXF<bool>> {
-        public PredProp(GCXF<bool> f) : base(f) { }
-    }
-    public abstract record TPProp : ValueProp<GCXF<Vector2>> {
-        public TPProp(GCXF<Vector2> f) : base(f) { }
-    }
+    public abstract record BPYProp(GCXF<float> value) : ValueProp<GCXF<float>>(value);
+
+    public abstract record PredProp(GCXF<bool> value) : ValueProp<GCXF<bool>>(value);
+
+    public abstract record TPProp(GCXF<Vector2> value) : ValueProp<GCXF<Vector2>>(value);
 
     public record TimesProp : ValueProp<GCXF<float>?> {
         public readonly int? max;
@@ -478,9 +486,7 @@ public record GenCtxProperty {
     public record DelayProp : BPYProp {
         public DelayProp(GCXF<float> f) : base(f) { }
     }
-    public record FRV2Prop : ValueProp<GCXF<V2RV2>> {
-        public FRV2Prop(GCXF<V2RV2> f) : base(f) { }
-    }
+    public record FRV2Prop(GCXF<V2RV2> value) : ValueProp<GCXF<V2RV2>>(value);
 
     public record AlternateProp : BPYProp {
         public AlternateProp(GCXF<float> f) : base(f) { }
@@ -488,16 +494,11 @@ public record GenCtxProperty {
     public record WhileProp : PredProp {
         public WhileProp(GCXF<bool> f) : base(f) { }
     }
-    public record UnpauseProp : ValueProp<StateMachine> {
-        public UnpauseProp(StateMachine f) : base(f) { }
-    }
+    public record UnpauseProp(StateMachine value) : ValueProp<StateMachine>(value);
 
-    public record ClipProp : ValueProp<GCXF<bool>> {
-        public ClipProp(GCXF<bool> val) : base(val) { }
-    }
-    public record CancelProp : ValueProp<GCXF<bool>> {
-        public CancelProp(GCXF<bool> val) : base(val) { }
-    }
+    public record ClipProp(GCXF<bool> value) : ValueProp<GCXF<bool>>(value);
+
+    public record CancelProp(GCXF<bool> value) : ValueProp<GCXF<bool>>(value);
 
     public record TargetProp : TPProp {
         public readonly RV2ControlMethod method;
@@ -518,8 +519,9 @@ public record GenCtxProperty {
         }
     }
 
-    public record WaitChildFlag : GenCtxProperty { }
-    public record SequentialFlag : GenCtxProperty { }
+    public record WaitChildFlag : GenCtxProperty;
+
+    public record SequentialFlag : GenCtxProperty;
 
     public record RootProp : TPProp {
         public readonly bool doAdjust;
@@ -529,9 +531,10 @@ public record GenCtxProperty {
         }
     }
 
-    public record BankProp(bool toZero, GCXF<V2RV2> banker) : GenCtxProperty { }
+    public record BankProp(bool toZero, GCXF<V2RV2> banker) : GenCtxProperty;
 
-    public record ValueProp<T>(T value) : GenCtxProperty { }
+    public record ValueProp<T>(T value) : GenCtxProperty;
+
     public record ParametrizationProp : ValueProp<Parametrization> {
         public readonly GCXF<float>? mutater;
 
@@ -549,7 +552,7 @@ public record GenCtxProperty {
             this.reverse = reverse;
         }
     }
-    public abstract record RuleProp(GCRule rule) : ValueProp<GCRule>(rule) {}
+
     public abstract record RuleListProp : GenCtxProperty {
         public readonly List<GCRule> rules;
         public RuleListProp(GCRule[] rules) => this.rules = new List<GCRule>(rules);
@@ -572,54 +575,47 @@ public record GenCtxProperty {
     /// <summary>
     /// RV2Incr X is the same as adding `rv2 += X` at the end of PostLoopProp.
     /// </summary>
-    public record RV2IncrProp : ValueProp<GCXF<V2RV2>> {
-        public RV2IncrProp(GCXF<V2RV2> rule) : base(rule) { }
+    public record RV2IncrProp(GCXF<V2RV2> value) : ValueProp<GCXF<V2RV2>>(value) {
         public RV2IncrProp(V2RV2 rv2) : this(_ => rv2) { }
     }
 
-    public record MAngProp : BPYProp {
-        public MAngProp(GCXF<float> mutater) : base(mutater) { }
-    }
+    public record MAngProp(GCXF<float> value) : BPYProp(value);
 
-    public record SAHandlerProp : ValueProp<SummonAlongHandler> {
-        public SAHandlerProp(SummonAlongHandler sah) : base(sah) { }
-    }
+    public record SAHandlerProp(SummonAlongHandler value) : ValueProp<SummonAlongHandler>(value);
 
-    public record SaveFProp((ReflectEx.Hoist<float>, GCXF<float>, GCXF<float>)[] targets) : GenCtxProperty { }
-    public record SaveV2Prop((ReflectEx.Hoist<Vector2>, GCXF<float>, GCXF<Vector2>)[] targets) : GenCtxProperty { }
+    public record SaveFProp((ReflectEx.Hoist<float>, GCXF<float>, GCXF<float>)[] targets) : GenCtxProperty;
 
-    public record ExposeProp : ValueProp<(Reflector.ExType, string)[]> {
-        public ExposeProp((Reflector.ExType, string)[] value) : base(value) { }
-    }
+    public record SaveV2Prop((ReflectEx.Hoist<Vector2>, GCXF<float>, GCXF<Vector2>)[] targets) : GenCtxProperty;
 
+    public record ExposeProp((Reflector.ExType, string)[] value) : ValueProp<(Reflector.ExType, string)[]>(value);
 
-    public record TimerProp : ValueProp<ETime.Timer> {
-        public TimerProp(ETime.Timer t) : base(t) { } 
-    }
-
-    public record OnLaserProp : ValueProp<GCXF<float>> {
-        public OnLaserProp(GCXF<float> f) : base(f) { }
-    }
-
-    public record RV2CircleTag : GenCtxProperty { }
-
-    public record RV2SpreadProp : ValueProp<GCXF<V2RV2>> { 
-        public RV2SpreadProp(GCXF<V2RV2> f) : base(f) { }
-        
-    }
-    public record TimeResetTag : GenCtxProperty { }
-    public record CenterTag : GenCtxProperty { }
-
-    public record BindArrowTag : GenCtxProperty { }
-    public record BindLRTag : GenCtxProperty { }
-    public record BindUDTag : GenCtxProperty { }
-    public record BindAngleTag : GenCtxProperty { }
-
-    public record BindItrTag : ValueProp<string> {
-        public BindItrTag(string value): base(value) { }
-    }
+    public record ScopedProp(ErasedGCXF Initializer) : GenCtxProperty;
     
-    public record ResetColorTag : GenCtxProperty { }
+    public record _LexicalScopeProp(LexicalScope scope) : GenCtxProperty;
+
+    public record TimerProp(ETime.Timer value) : ValueProp<ETime.Timer>(value);
+
+    public record OnLaserProp(GCXF<float> value) : ValueProp<GCXF<float>>(value);
+
+    public record RV2CircleTag : GenCtxProperty;
+
+    public record RV2SpreadProp(GCXF<V2RV2> value) : ValueProp<GCXF<V2RV2>>(value);
+
+    public record TimeResetTag : GenCtxProperty;
+
+    public record CenterTag : GenCtxProperty;
+
+    public record BindArrowTag : GenCtxProperty;
+
+    public record BindLRTag : GenCtxProperty;
+
+    public record BindUDTag : GenCtxProperty;
+
+    public record BindAngleTag : GenCtxProperty;
+
+    public record BindItrTag(string value) : ValueProp<string>(value);
+
+    public record ResetColorTag : GenCtxProperty;
 
     #endregion
 
@@ -639,6 +635,17 @@ public static class GenCtxUtils {
 /// </summary>
 public abstract class GenCtxProperties {
     public (Reflector.ExType, string)[]? Expose { get; protected init; }
+    
+    /// <summary>
+    /// In BDSL2, this points to the lexical scope of the children array.
+    /// <br/>Commands like <see cref="GenCtxProperty.BindItr"/> bind to 
+    /// </summary>
+    public LexicalScope? IterationScope { get; set; }
+    
+    /// <summary>
+    /// In BDSL2, this is the code executed within <see cref="IterationScope"/> before children are run.
+    /// </summary>
+    public ErasedGCXF? IterationInitializer { get; init; }
 }
 
 /// <inheritdoc cref="GenCtxProperties"/>
@@ -787,7 +794,6 @@ public class GenCtxProperties<T> : GenCtxProperties {
             else if (prop is AlternateProp ap) childSelect = ap.value;
             else if (prop is ClipProp clipper) clipIf = clipper.value;
             else if (prop is CancelProp canceller) cancelIf = canceller.value;
-            else if (prop is ExposeProp exp) Expose = exp.value;
             else if (prop is TimeResetTag) resetTime = true;
             else if (prop is TimerProp trp) timer = trp.value;
             else if (prop is OnLaserProp olp) {
@@ -799,6 +805,9 @@ public class GenCtxProperties<T> : GenCtxProperties {
             else if (prop is BindAngleTag) bindAngle = true;
             else if (prop is BindItrTag bit) bindItr = bit.value;
             else if (prop is ResetColorTag) resetColor = true;
+            else if (prop is ExposeProp exp) Expose = exp.value;
+            else if (prop is ScopedProp scoped) IterationInitializer = scoped.Initializer;
+            else if (prop is _LexicalScopeProp scope) IterationScope = scope.scope;
             else throw new Exception($"{t.RName()} is not allowed to have properties of type {prop.GetType()}.");
         }
         if (sah != null) {

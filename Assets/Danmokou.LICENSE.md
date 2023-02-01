@@ -48,6 +48,7 @@ The project incorporates code or references packages from the following projects
 - [TonyViT/CurvedTextMeshPro](https://github.com/TonyViT/CurvedTextMeshPro) ([MIT](https://github.com/TonyViT/CurvedTextMeshPro/blob/96767f3394b71043da4ae8f42de114bb37f738b5/LICENSE))
 - [liortal53/MissingReferencesUnity](https://github.com/liortal53/MissingReferencesUnity) ([Apache 2.0](https://github.com/liortal53/MissingReferencesUnity/blob/25449e5bcfe0ba917ff730f870e234cc147a19ba/LICENSE))
 - [MikePopoloski/StringFormatter](https://github.com/MikePopoloski/StringFormatter) ([MIT](https://github.com/MikePopoloski/StringFormatter/blob/master/LICENSE))
+- [Hash Without Sine](https://www.shadertoy.com/view/4djSRW) (MIT)
 - [taisei-project/taisei](https://github.com/taisei-project/taisei) ([MIT-ish](https://github.com/taisei-project/taisei/blob/master/COPYING))
   - This project also incorporates some non-code resources from Taisei Project, listed below under "Non-Code Resources".
 
@@ -75,6 +76,7 @@ Sound effects (Assets/Danmokou/Audio/SFX)
 - Many sound effects in "SFX/_SO/usedfiles" were created by Kenny Vleugels (kenney.nl) and are licensed thereby under CC0.
 - Many sound effects in "SFX/_SO/usedfiles" by OSA (license text below).
 - taisei: by Taisei Project (with modification) (license text below).
+- sonniss: from the Sonniss GDC bundle, [licensed openly](https://sonniss.com/gdc-bundle-license/)
 - sourced:
 	- "fire shaker*" under CC0 from [here](https://freesound.org/people/shpira/sounds/317102/)
 	- "crow caw" under CC0 from [here](https://freesound.org/people/_nuel/sounds/54973/)
@@ -83,6 +85,7 @@ Sound effects (Assets/Danmokou/Audio/SFX)
 	- "meter-activated" under CC-BY from [here](https://freesound.org/people/hykenfreak/sounds/248182/)
 	- "achievement-1" under CC-BY from [here](https://freesound.org/people/LittleRobotSoundFactory/sounds/274179/)
 	- "rain on windows" under CC-BY from [here](https://freesound.org/people/InspectorJ/sounds/346642/)
+	- "birdflap1" under CC-BY from [here](https://freesound.org/people/AgentDD/sounds/246225/)
 
 All assets under Assets/Danmokou/Kenney were created by Kenny Vleugels (kenney.nl) and are licensed thereby under CC0.
 
@@ -106,7 +109,7 @@ Images (Assets/Danmokou/Sprites)
 - entity/taisei_*: by Taisei Project (with modification).
 - DD/*: by [DD](https://www.pixiv.net/en/users/4650367) . Noncommercial use only. 
 - .py: Python scripts licensed by Bagoum under MIT.
-- UI/faIcons/*: icons from [FontAwesome](https://github.com/FortAwesome/Font-Awesome), licensed under CC-BY 4. Modifications made.
+- UI/faIcons/*: icons from [FontAwesome](https://github.com/FortAwesome/Font-Awesome), licensed under CC-BY 4. Modifications made to original SVG files.
 - [UI/trophy.png](https://pixabay.com/vectors/success-badge-trophy-award-winner-5974538/)
 - UI/pins/crow*: stock by Roy3D on [DeviantArt](https://www.deviantart.com/roy3d/art/Crows-2-PNG-Stock-412584565), modifications made.
 - UI/commense: Yukari sprites by [dairi](https://www.pixiv.net/en/users/4920496). Noncommercial use only. 
@@ -126,12 +129,17 @@ Images (Assets/Danmokou/Sprites)
     - [misty-lake](https://pixabay.com/photos/lake-fog-mist-sunrise-grass-haze-5722650/)
     - [bedroom-normal](https://pixabay.com/photos/bedroom-bed-apartment-room-416062/)
     - [pool](https://pixabay.com/photos/pool-rain-water-surface-background-4332152/)
-  - Others:
-    - []
+    - [snow1](https://unsplash.com/photos/IWenq-4JHqo)
+    - [snow2](https://unsplash.com/photos/yNaGxHqjOuw)
+    - [snow house](https://unsplash.com/photos/EdRJSZaH8Xk)
+    - [snow hill](https://unsplash.com/photos/IGFaSal4jmQ)
 - VN/Objects:
   - [yellowlily.png](https://commons.wikimedia.org/wiki/File:Lilium_canadense_(lit).jpg): Public domain
   - [yellowiris.png](https://commons.wikimedia.org/wiki/File:20140504Iris_pseudacorus2.jpg): CC0
   - [fleurdelys.png](https://commons.wikimedia.org/wiki/File:Fleur_de_lys_(or).svg): CC-BY
+  - [chest1.png](https://opengameart.org/content/2d-platform-accessories): CC-BY 3.0 from Marta Nowaczyk
+  - [book1.png, book2.png](https://opengameart.org/content/books): CC-BY 4.0
+  - [KeyIcons.png](https://opengameart.org/content/key-icons): CC-BY 4.0
 - items/gems*: under CC-BY from [Code Inferno Games (codeinferno.com)](https://opengameart.org/content/animated-spinning-gems)
 - player/focus: by Taisei Project (with modification).
 - bullets/straight-png/taisei_scythe: by Taisei Project (with modification).

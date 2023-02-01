@@ -3,14 +3,19 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reactive;
+using System.Reflection;
 using BagoumLib;
 using BagoumLib.Expressions;
 using BagoumLib.Functional;
 using BagoumLib.Reflection;
+using BagoumLib.Unification;
 using Danmokou.Core;
+using Danmokou.Danmaku.Options;
+using Danmokou.Danmaku.Patterns;
 using Danmokou.DMath;
 using Danmokou.Expressions;
 using Danmokou.Reflection;
+using Danmokou.SM;
 using Mizuhashi;
 using Ex = System.Linq.Expressions.Expression;
 using ExVTP = System.Func<Danmokou.Expressions.ITexMovement, Danmokou.Expressions.TEx<float>, Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TExV3, Danmokou.Expressions.TEx>;
@@ -18,32 +23,61 @@ using ExVTP = System.Func<Danmokou.Expressions.ITexMovement, Danmokou.Expression
 
 namespace Danmokou.Reflection2 {
 /// <summary>
-/// A class defining a lexical scope in script code.
+/// A lexical scope in script code.
 /// </summary>
 public class LexicalScope {
-    public LexicalScope? Parent { get; set; }
-    private readonly Dictionary<string, VarDecl> varsAndFns = new();
+    public DMKScope Root { get; protected set; }
+    public LexicalScope? Parent { get; private set; }
+    public readonly Dictionary<string, VarDecl> varsAndFns = new();
     private readonly Dictionary<string, VarDeclPromise> varPromises = new();
     private List<LexicalScope> Children { get; } = new();
-    private readonly bool? isExpression;
+
     /// <summary>
-    /// True iff this scope is defined within an expression.
+    /// True iff this scope is instantiated by an environment frame
+    /// (false iff it is instantiated by Expression.Block).
+    /// <br/>This is finalized in <see cref="FinalizeVariableTypes"/>.
     /// </summary>
-    public bool IsExpression => isExpression ?? Parent?.IsExpression ?? false;
+    public bool UseEF { get; private set; } = true;
 
-    public IEnumerable<VarDecl> VariableDecls => varsAndFns.Values.OfType<VarDecl>();
+    /// <summary>
+    /// True iff this scope is or is contained within a <see cref="ScopedConversionScope"/> with a scope kind
+    ///  that disabled environment-frames.
+    /// <br/>This is finalized in <see cref="FinalizeVariableTypes"/>.
+    /// </summary>
+    public bool WithinDisabledEFScope { get; private set; } = false;
 
-    public LexicalScope(LexicalScope? parent, bool? isExpression = null) {
+    /// <summary>
+    /// The final set of variables declared in this scope. 
+    /// <br/>This is only non-empty after <see cref="FinalizeVariableTypes"/> is called.
+    /// </summary>
+    public (Type type, VarDecl[] decls)[] VariableDecls { get; private set; } = null!;
+
+    //Constructor for DMKScope
+    protected LexicalScope() {
+        Root = null!;
+    }
+    
+    public LexicalScope(LexicalScope parent) {
         this.Parent = parent;
+        this.Root = parent.Root;
         if (parent is not DMKScope)
-            parent?.Children.Add(this);
-        this.isExpression = isExpression;
+            parent.Children.Add(this);
     }
 
-    public virtual void DeclareArgs(params IDelegateArg[] args) {
+    public void UpdateParent(LexicalScope newParent) {
+        Parent?.Children.Remove(this);
+        Parent = newParent;
+        if (Parent is not DMKScope)
+            Parent.Children.Add(this);
+    }
+
+    public virtual void DeclareImplicitArgs(params IDelegateArg[] args) {
         foreach (var a in args)
-            if (!string.IsNullOrWhiteSpace(a.Name))
-                varsAndFns[a.Name!] = a.MakeArgDecl();
+            if (!string.IsNullOrWhiteSpace(a.Name)) {
+                var decl = a.MakeImplicitArgDecl();
+                decl.DeclarationScope = this;
+                varsAndFns[a.Name!] = decl;
+            }
     }
 
     /// <summary>
@@ -55,6 +89,7 @@ public class LexicalScope {
         if (varsAndFns.TryGetValue(decl.Name, out var prev))
             return prev;
         varsAndFns[decl.Name] = decl;
+        decl.DeclarationScope = this;
         return Unit.Default;
     }
 
@@ -83,6 +118,10 @@ public class LexicalScope {
     }
 
     public virtual Either<Unit, TypeUnifyErr> FinalizeVariableTypes(Unifier u) {
+        if (this is ScopedConversionScope { Converter: { Kind: not ScopedConversionKind.Trivial } })
+            WithinDisabledEFScope = true;
+        else
+            WithinDisabledEFScope = Parent?.WithinDisabledEFScope ?? false;
         return varsAndFns.Values
             .Select(v => v.FinalizeType(u))
             .SequenceL()
@@ -91,22 +130,101 @@ public class LexicalScope {
                 .SequenceL())
             .BindL(_ => Children
                 .Select(c => c.FinalizeVariableTypes(u))
-                .SequenceL()
-                .FMapL(_ => Unit.Default));
+                .SequenceL())
+            .FMapL(_ => {
+                //note that Identifier is not necessarily ordered
+                // since dict.Values as well as GroupBy may not be stable.
+                VariableDecls = varsAndFns.Values.OfType<VarDecl>()
+                    .GroupBy(v => v.FinalizedType!)
+                    .Select((g, ti) => {
+                        var decls = g.OrderBy(d => d.Position.Start.Index).ToArray();
+                        for (int ii = 0; ii < decls.Length; ++ii) {
+                            decls[ii].TypeIndex = ti;
+                            decls[ii].Index = ii;
+                        }
+                        return (g.Key, decls);
+                    })
+                    .ToArray();
+                //TODO: (optimization) if all variables are unchanging AND
+                // none are referenced by function declarations or compiled functions (hard part), use Ex.Block
+                UseEF = !WithinDisabledEFScope && VariableDecls.Length > 0;
+                return Unit.Default;
+            });
     }
+
+
+    /// <summary>
+    /// Get an expression representing a readable/writeable variable
+    ///  stored locally in an environment frame for this scope,
+    ///  or stored locally in any parent environment frame.
+    /// </summary>
+    public Ex GetLocalOrParent(TExArgCtx tac, Ex envFrame, VarDecl variable) {
+        //todo skip-parent handling
+        if (varsAndFns.TryGetValue(variable.Name, out var v) && v == variable) {
+            return variable.Value(envFrame, tac);
+        }
+        if (Parent is null)
+            throw new Exception($"Could not find a scope containing variable {variable}");
+        return Parent.GetLocalOrParent(tac, UseEF ? envFrame.Field(nameof(EnvFrame.Parent)) : envFrame, variable);
+    }
+
+}
+
+public class ScopedConversionScope : LexicalScope {
+    public IScopedTypeConverter Converter { get; }
+
+    public ScopedConversionScope(IScopedTypeConverter conv, LexicalScope parent) : base(parent) {
+        this.Converter = conv;
+    }
+
+    //declareArgs ok
+    public override Either<Unit, VarDecl> DeclareVariable(VarDecl decl) =>
+        throw new Exception("Do not declare variables in ImplicitArgScope");
+
+    public override VarDeclPromise RequestDeclaration(PositionRange usedAt, string name)  =>
+        throw new Exception("Do not request declarations in ImplicitArgScope");
 }
 
 /// <summary>
 /// The scope that contains all DMK reflection methods. Variables cannot be declared in this scope.
 /// </summary>
 public class DMKScope : LexicalScope {
-    public static readonly DMKScope Singleton = new();
-    public static readonly IImplicitTypeConverter[] TypeConversions = {
-        new ConstantToExprConv(),
-        new FixedImplicitTypeConv<ExVTP, GCXU<VTP>>(Compilers.GCXU) { ScopeArgs = Compilers.VTPArgs },
-        new FixedImplicitTypeConv<ExVTP, VTP>(Compilers.VTP) { ScopeArgs = Compilers.VTPArgs }
-    };
-    public DMKScope() : base(null, false) { }
+    private static DMKScope? _singleton;
+    public static DMKScope Singleton => _singleton ??= new DMKScope();
+
+    private static Reflector.GenericMethodSignature GetCompilerMethod(string name) =>
+        Reflector.MethodSignature.Get(
+            typeof(Compilers).GetMethod(name, BindingFlags.Public | BindingFlags.Static) ??
+            throw new StaticException($"Compiler method `{name}` not found")) 
+            as Reflector.GenericMethodSignature ?? 
+        throw new StaticException($"Compiler method `{name}` is not generic");
+            
+    public TypeResolver Resolver { get; } = new(new IImplicitTypeConverter[] {
+            new ConstantToExprConv(),
+            new GenericMethodConv1(GetCompilerMethod("GCXF"))
+                { ScopeArgs = Compilers.GCXFArgs, Kind = ScopedConversionKind.GCXFFunction },
+            new GenericMethodConv1(GetCompilerMethod("ErasedGCXF"))
+                { ScopeArgs = Compilers.GCXFArgs, Kind = ScopedConversionKind.GCXFFunction },
+            new FixedImplicitTypeConv<ExVTP, GCXU<VTP>>(Compilers.GCXU) 
+                { ScopeArgs = Compilers.VTPArgs, Kind = ScopedConversionKind.GCXUFunction },
+            new FixedImplicitTypeConv<ExVTP, VTP>(Compilers.VTP) 
+                { ScopeArgs = Compilers.VTPArgs, Kind = ScopedConversionKind.SimpleFunction },
+            
+            //these are from Reflector.autoConstructorTypes
+            new FixedImplicitTypeConv<GenCtxProperty[],GenCtxProperties<SyncPattern>>(props => new(props)),
+            new FixedImplicitTypeConv<GenCtxProperty[],GenCtxProperties<AsyncPattern>>(props => new(props)),
+            new FixedImplicitTypeConv<GenCtxProperty[],GenCtxProperties<StateMachine>>(props => new(props)),
+            new FixedImplicitTypeConv<SBOption[],SBOptions>(props => new(props)),
+            new FixedImplicitTypeConv<LaserOption[],LaserOptions>(props => new(props)),
+            new FixedImplicitTypeConv<BehOption[],BehOptions>(props => new(props)),
+            new FixedImplicitTypeConv<PowerAuraOption[],PowerAuraOptions>(props => new(props)),
+            new FixedImplicitTypeConv<PatternProperty[],PatternProperties>(props => new(props)),
+        }
+    );
+
+    private DMKScope() : base() {
+        Root = this;
+    }
     public override VarDecl? FindDeclaration(string name) {
         return null;
     }
@@ -117,7 +235,7 @@ public class DMKScope : LexicalScope {
         return null;
     }
 
-    public override void DeclareArgs(params IDelegateArg[] args) =>
+    public override void DeclareImplicitArgs(params IDelegateArg[] args) =>
         throw new Exception("Do not declare arguments in DMKScope");
 
     public override Either<Unit, VarDecl> DeclareVariable(VarDecl decl) =>
@@ -134,79 +252,177 @@ public interface IUsedVariable {
     string Name { get; }
     TypeDesignation TypeDesignation { get; }
     bool IsBound => true;
-    ParameterExpression Parameter(TExArgCtx tac);
+    VarDecl Bound { get; }
 }
 
 public record UntypedVariable(VarDecl Declaration) : TypeUnifyErr;
 
 public record UnboundPromise(VarDeclPromise Promise) : TypeUnifyErr;
 
+public record PromiseBindingFailure(VarDeclPromise Promise, VarDecl Bound, TypeUnifyErr Err) : TypeUnifyErr;
+
 /// <summary>
 /// A declaration of a variable.
 /// </summary>
-public record VarDecl(PositionRange Position, Type? Type, string Name) : IUsedVariable {
-    public TypeDesignation TypeDesignation { get; } = Type == null ?
-        new TypeDesignation.Variable() : TypeDesignation.FromType(Type);
-    public TypeDesignation? FinalizedType { get; protected set; }
-    public virtual bool IsFunctionArgument => false;
-    private ParameterExpression? _Parameter { get; set; }
-    public virtual ParameterExpression Parameter(TExArgCtx tac) => 
-        _Parameter ?? throw new ReflectionException(Position, $"Variable declaration {Name} not finalized");
+public class VarDecl : IUsedVariable {
+    public PositionRange Position { get; }
+    
+    /// <summary>
+    /// The type of this variable as provided in the declaration. May be empty, in which case it will be inferred.
+    /// </summary>
+    public Type? KnownType { get; }
+    public string Name { get; }
+    public TypeDesignation TypeDesignation { get; }
+    public VarDecl Bound => this;
+
+    /// <summary>
+    /// The scope in which this variable is declared. Assigned by <see cref="LexicalScope.DeclareVariable"/>
+    /// </summary>
+    public LexicalScope DeclarationScope { get; set; } = null!;
+
+    /// <summary>
+    /// The expression pointing to this variable (null if the scope is an Ex.Block scope).
+    /// </summary>
+    private ParameterExpression? _parameter;
+    
+    /// <summary>
+    /// The final non-ambiguous type of this variable. Only present after <see cref="FinalizeType"/> is called.
+    /// </summary>
+    public TypeDesignation? FinalizedTypeDesignation { get; protected set; }
+    
+    /// <summary>
+    /// The final non-ambiguous type of this variable. Only present after <see cref="FinalizeType"/> is called.
+    /// </summary>
+    public Type? FinalizedType { get; protected set; }
+    
+    /// <summary>
+    /// The index of this declaration's type among the types of all declarations in the same <see cref="LexicalScope"/>.
+    /// <br/>The ordering of indexes is arbitrary and may not correspond to the order of declarations.
+    /// <br/>Assigned by <see cref="LexicalScope.FinalizeVariableTypes"/>.
+    /// </summary>
+    public int TypeIndex { get; set; }
+    
+    /// <summary>
+    /// The index of this declaration among all declarations
+    ///  with the same <see cref="FinalizedType"/> declared in the same <see cref="LexicalScope"/>.
+    /// <br/>The ordering of indexes is arbitrary and may not correspond to the order of declarations.
+    /// <br/>Assigned by <see cref="LexicalScope.FinalizeVariableTypes"/>.
+    /// </summary>
+    public int Index { get; set; }
+    
+    /// <summary>
+    /// The number of times this declaration receives an assignment.
+    /// <br/>Set during the AST <see cref="IAST.Verify"/> step.
+    /// <br/>This should always be at least 1.
+    /// </summary>
+    public int Assignments { get; set; }
+    
+    /// <summary>
+    /// A declaration of a variable.
+    /// </summary>
+    public VarDecl(PositionRange Position, Type? knownType, string Name) {
+        this.Position = Position;
+        this.KnownType = knownType;
+        this.Name = Name;
+        TypeDesignation = knownType == null ?
+            new TypeDesignation.Variable() : TypeDesignation.FromType(knownType);
+    }
+
+    /// <summary>
+    /// If this is a local variable for an Ex.Block (rather than an implicit variable),
+    /// return the parameter definition.
+    /// </summary>
+    public virtual ParameterExpression? DeclaredParameter(TExArgCtx tac) =>
+        DeclarationScope.UseEF ? null : _parameter ??= Ex.Variable(
+                FinalizedType ?? 
+                throw new ReflectionException(Position, $"Variable declaration {Name} not finalized"), Name);
+
+    /// <summary>
+    /// Get the expression representing this variable, where `envFrame` is the frame in which
+    ///  this variable was declared (and tac.EnvFrame is the frame of usage).
+    /// </summary>
+    public virtual Expression Value(Ex envFrame, TExArgCtx tac) =>
+        DeclarationScope.UseEF ?
+            //(ef.Variables[var.FinalizedType] as VariableStore<var.FinalizedType>).Values[var.Index]
+            envFrame
+                //.Field(nameof(EnvFrame.Variables))
+                .DictGet(Ex.Constant(TypeIndex))
+                .As(FrameVars.GetVarStoreType(FinalizedType!))
+                .Field("Values")
+                //dict[index] also works for list[index]
+                .DictGet(Ex.Constant(Index)) :
+            _parameter ?? throw new StaticException($"{nameof(Value)} called before {nameof(DeclaredParameter)}");
+
 
     public virtual Either<Unit, TypeUnifyErr> FinalizeType(Unifier u) {
-        FinalizedType = TypeDesignation.Simplify(u);
-        var td = FinalizedType.Resolve(u);
+        FinalizedTypeDesignation = TypeDesignation.Simplify(u);
+        var td = FinalizedTypeDesignation.Resolve(u);
         if (td.IsRight)
             return new UntypedVariable(this);
-        _Parameter = Ex.Variable(td.Left, Name);
+        FinalizedType = td.Left;
         return Unit.Default;
     }
         
     public IEnumerable<PrintToken> DebugPrint() {
-        if (Type == null)
+        if (KnownType == null)
             yield return $"var &{Name}";
         else
-            yield return $"var &{Name}::{Type.RName()}";
+            yield return $"var &{Name}::{KnownType.RName()}";
     }
 }
 
-public record ArgumentDecl<T> : VarDecl {
-    public override bool IsFunctionArgument => true;
-    public override ParameterExpression Parameter(TExArgCtx tac) =>
-        tac.GetByName<T>(Name);
+public class ImplicitArgDecl : VarDecl {
+    public ImplicitArgDecl(PositionRange Position, Type? knownType, string Name) : base(Position, knownType, Name) { }
+}
+
+/// <summary>
+/// A declaration implicitly provided through TExArgCtx.
+/// </summary>
+public class ImplicitArgDecl<T> : ImplicitArgDecl {
+    public override ParameterExpression? DeclaredParameter(TExArgCtx tac) => null;
+    public override Expression Value(Ex envFrame, TExArgCtx tac) =>
+            tac.GetByName<T>(Name);
     
-    public ArgumentDecl(PositionRange Position, string Name) : base(Position, typeof(T), Name) {
-        FinalizedType = TypeDesignation;
+    public ImplicitArgDecl(PositionRange Position, string Name) : base(Position, typeof(T), Name) {
+        FinalizedTypeDesignation = TypeDesignation;
+        FinalizedType = typeof(T);
     }
     public override Either<Unit, TypeUnifyErr> FinalizeType(Unifier u) {
         return Unit.Default;
     }
+
+    public override string ToString() => $"{Name}<{typeof(T).RName()}>";
 }
 
 /// <summary>
 /// A variable declaration that has not yet been made. 
 /// </summary>
 public record VarDeclPromise(PositionRange UsedAt, string Name) : IUsedVariable {
-    public TypeDesignation TypeDesignation { get; private set; } = new TypeDesignation.Variable();
+    public TypeDesignation TypeDesignation { get; } = new TypeDesignation.Variable();
     public TypeDesignation? FinalizedType { get; private set; }
     private VarDecl? _binding;
     public bool IsBound => _binding != null;
-    public virtual ParameterExpression Parameter(TExArgCtx tac) => 
-         (_binding ?? throw new Exception($"The variable {Name} is unbound.")).Parameter(tac);
-    
+    public VarDecl Bound => _binding ?? throw new Exception($"The variable {Name} is unbound.");
+
     public Either<Unit, TypeUnifyErr> FinalizeType(Unifier u) {
         if (!IsBound) {
             FinalizedType = TypeDesignation.Simplify(u);
             return new UnboundPromise(this);
         } else {
-            FinalizedType = _binding!.FinalizedType;
+            FinalizedType = _binding!.FinalizedTypeDesignation;
             return Unit.Default;
         }
     }
 
-    public void MaybeBind(LexicalScope scope) {
-        if (scope.FindDeclaration(Name) is { } decl)
+    public Either<Unifier, TypeUnifyErr> MaybeBind(LexicalScope scope, in Unifier u) {
+        if (scope.FindDeclaration(Name) is { } decl) {
             _binding = decl;
+            var uerr = _binding.TypeDesignation.Unify(TypeDesignation, u);
+            if (uerr.IsLeft)
+                return uerr.Left;
+            else
+                return new PromiseBindingFailure(this, decl, uerr.Right);
+        } else return u;
     }
 
     public override string ToString() => _binding?.ToString() ?? $"Unbound variable {Name}";

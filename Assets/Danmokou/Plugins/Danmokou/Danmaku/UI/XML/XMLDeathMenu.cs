@@ -19,20 +19,20 @@ public class XMLDeathMenu : PausedGameplayMenu {
     public override void FirstFrame() {
         MainScreen = new UIScreen(this, death_header, UIScreen.Display.OverlayTH)  { Builder = (s, ve) => {
             ve.AddColumn();
-        }, MenuBackgroundOpacity = 0.8f  };
+        }, MenuBackgroundOpacity = UIScreen.DefaultMenuBGOpacity  };
         
         _ = new UIColumn(MainScreen, null,
-            new FuncNode(() => death_continue_ls(GameManagement.Instance.Continues), () => {
-                if (GameManagement.Instance.TryContinue()) {
+            new FuncNode(() => death_continue_ls(GameManagement.Instance.BasicF.Continues), () => {
+                if (GameManagement.Instance.BasicF.TryContinue()) {
                     ProtectHide();
                     return new UIResult.StayOnNode();
                 } else return new UIResult.StayOnNode(true);
-            }) {EnabledIf = (() => GameManagement.Instance.Continues > 0)},
+            }) {EnabledIf = (() => GameManagement.Instance.BasicF.Continues > 0)},
             new ConfirmFuncNode(restart, GameManagement.Restart)
                 {EnabledIf = (() => GameManagement.CanRestart)},
             new ConfirmFuncNode(to_menu, GameManagement.GoToMainMenu)) {
             ExitIndexOverride = 0,
-            EntryIndexOverride = () => GameManagement.Instance.Continues > 0 ? 0 : 1
+            EntryIndexOverride = () => GameManagement.Instance.BasicF.Continues > 0 ? 0 : 1
         };
         
         base.FirstFrame();

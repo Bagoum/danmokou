@@ -98,23 +98,25 @@ public class PatternSM : SequentialSM {
             (subbosses, subsummons) = ConfigureAllBosses(ui, jsmh, Props.boss, Props.bosses);
         }
         bool firstBoss = true;
-        for (var next = jsmh.Exec.phaseController.GoToNextPhase();
-            next > -1 && next < Phases.Length;
-            next = jsmh.Exec.phaseController.GoToNextPhase(next + 1)) {
-            if (Phases[next].props.skip) 
-                continue;
-            jsmh.ThrowIfCancelled();
-            ServiceLocator.Find<IAudioTrackService>().InvokeBGM(Props.bgms?.GetBounded(next, null));
-            if (Props.boss != null && next >= Props.setUIFrom) {
-                SetUniqueBossUI(ui, firstBoss, jsmh, 
-                    Props.bosses == null ? Props.boss : 
-                        Props.bosses[Props.bossUI?.GetBounded(next, 0) ?? 0]);
-                firstBoss = false;
-                //don't show lives on setup phase
-                if (next > 0) 
-                    ui?.ShowBossLives(Phases[next].props.livesOverride ?? RemainingLives(next));
-            }
-            try {
+        try {
+
+            for (var next = jsmh.Exec.phaseController.GoToNextPhase(); 
+                    next > -1 && next < Phases.Length; 
+                    next = jsmh.Exec.phaseController.GoToNextPhase(next + 1)) {
+                if (Phases[next].props.skip)
+                    continue;
+                jsmh.ThrowIfCancelled();
+                ServiceLocator.Find<IAudioTrackService>().InvokeBGM(Props.bgms?.GetBounded(next, null));
+                if (Props.boss != null && next >= Props.setUIFrom) {
+                    SetUniqueBossUI(ui, firstBoss, jsmh,
+                        Props.bosses == null ?
+                            Props.boss :
+                            Props.bosses[Props.bossUI?.GetBounded(next, 0) ?? 0]);
+                    firstBoss = false;
+                    //don't show lives on setup phase
+                    if (next > 0)
+                        ui?.ShowBossLives(Phases[next].props.livesOverride ?? RemainingLives(next));
+                }
                 var nxtPhaseInd = jsmh.Exec.phaseController.ScanNextPhase(next + 1);
                 var nxtPhase = Phases.Try(nxtPhaseInd);
                 Action<IBackgroundOrchestrator?>? nextPrePrepare = null;
@@ -122,17 +124,15 @@ public class PatternSM : SequentialSM {
                     nextPrePrepare = bg => nxtPhase.PrePrepareBackgroundGraphics(nxtPhase.MakeContext(ctx), bg);
                 }
                 await Phases[next].Start(Phases[next].MakeContext(ctx), jsmh, ui, subbosses, nextPrePrepare);
-            } catch (OperationCanceledException) {
-                //Runs the cleanup code if we were cancelled
-                break;
             }
-        }
-        cts.Cancel();
-        if (Props.boss != null && !SceneIntermediary.LOADING) {
-            ui?.CloseBoss();
-            if (!firstBoss) ui?.CloseProfile();
-            foreach (var subsummon in subsummons) {
-                subsummon.InvokeCull();
+        } finally {
+            cts.Cancel();
+            if (Props.boss != null && !SceneIntermediary.LOADING) {
+                ui?.CloseBoss();
+                if (!firstBoss) ui?.CloseProfile();
+                foreach (var subsummon in subsummons) {
+                    subsummon.InvokeCull();
+                }
             }
         }
     }
@@ -393,7 +393,7 @@ public class PhaseSM : SequentialSM {
         var pc = new PhaseCompletion(ctx, completedBy, smh.Exec, start_campaign, Timeout(ctx.Boss));
         if (pc.StandardCardFinish) {
             if (ctx.Boss != null) {
-                BulletManager.RequestPowerAura("powerup1", 0, 0, new RealizedPowerAuraOptions(
+                BulletManager.RequestPowerAura("powerup1", 0, 0, smh.GCX, new RealizedPowerAuraOptions(
                     new PowerAuraOptions(new[] {
                         PowerAuraOption.Color(_ => ColorHelpers.CV4(ctx.Boss.colors.powerAuraColor)),
                         PowerAuraOption.Time(_ => 1f),
@@ -401,7 +401,7 @@ public class PhaseSM : SequentialSM {
                         PowerAuraOption.Scale(_ => 4.5f),
                         PowerAuraOption.Static(), 
                         PowerAuraOption.High(), 
-                    }), GenCtx.Empty, smh.Exec.GlobalPosition(), smh.cT, null!));
+                    }), smh.GCX, smh.Exec.GlobalPosition(), smh.cT, null!));
             }
             smh.Exec.DropItems(pc.DropItems, 1.4f, 0.6f, 1f, 0.2f, 2f);
             ServiceLocator.FindOrNull<IRaiko>()

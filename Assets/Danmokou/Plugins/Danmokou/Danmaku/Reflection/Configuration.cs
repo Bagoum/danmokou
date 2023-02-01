@@ -37,8 +37,7 @@ public static partial class Reflector {
         public static readonly Dictionary<string, List<IMethodSignature>> AllBDSL2Methods = new();
         
         /// <summary>
-        /// Contains non-generic methods, whether non-generic in source or computed via .MakeGenericMethod,
-        /// keyed by return type.
+        /// Contains non-generic methods keyed by return type.
         /// </summary>
         private static readonly Dictionary<Type, Dictionary<string, MethodInfo>> methodsByReturnType
             = new();
@@ -49,10 +48,9 @@ public static partial class Reflector {
         public static Dictionary<Type, Dictionary<string, MethodInfo>> MethodsByReturnType => methodsByReturnType;
     #endif
         /// <summary>
-        /// Array of all generic methods recorded.
+        /// All generic methods recorded, keyed by method name.
         /// </summary>
-        private static readonly List<(string method, MethodInfo mi)> genericMethods
-            = new();
+        private static readonly Dictionary<string, MethodInfo> genericMethods = new();
         
         [PublicAPI]
         public static Dictionary<string, MethodInfo> AllMethods() {
@@ -64,25 +62,6 @@ public static partial class Reflector {
             return dict;
         }
 
-        /// <summary>
-        /// Retrieves all methods for a given return type. Note that this does not handle funcification,
-        /// so if your return type is ExBPY, this will not returns basic math methods such as
-        /// <see cref="Danmokou.DMath.Functions.ExM.Max"/>.
-        /// </summary>
-        /// <param name="rt"></param>
-        /// <returns></returns>
-        [PublicAPI]
-        public static Dictionary<string, MethodInfo> AllMethodsForReturnType(Type rt) {
-            ResolveGeneric(rt);
-            return methodsByReturnType.TryGetValue(rt, out var d) ? d : new();
-        }
-
-        /// <summary>
-        /// Generics are lazily matched against types, and the computed .MakeGenericMethod is only then sent to
-        /// methodsByReturnType. This set contains all return types that have been matched.
-        /// </summary>
-        private static readonly HashSet<Type> computedGenericsTypes = new();
-        
         /// <summary>
         /// Record public static methods in a class for reflection use.
         /// </summary>
@@ -100,17 +79,22 @@ public static partial class Reflector {
 
         private static void RecordMethod(MethodInfo mi) {
             void AddBDSL2(string name, MethodInfo method) {
-                var sig = MethodSignature.Get(method);
+                AddBDSL2_Sig(name, MethodSignature.Get(method));
+            }
+            void AddBDSL2_Sig(string name, MethodSignature sig) {
                 var rt = sig.ReturnType;
                 if (rt.IsGenericType && rt.GetGenericTypeDefinition() == typeof(TEx<>))
                     sig = sig.Lift<TExArgCtx>();
                 AllBDSL2Methods.AddToList(name.ToLower(), sig);
             }
             void AddMI(string name, MethodInfo method) {
+                name = name.ToLower();
                 if (method.IsGenericMethodDefinition) {
-                    genericMethods.Add((name.ToLower(), method));
+                    if (genericMethods.ContainsKey(name))
+                        throw new Exception($"Duplicate generic method by name {name}");
+                    genericMethods[name] = method;
                 } else {
-                    methodsByReturnType.SetDefaultSet(method.ReturnType, name.ToLower(), method);
+                    methodsByReturnType.SetDefaultSet(method.ReturnType, name, method);
                 }
             }
             var attrs = Attribute.GetCustomAttributes(mi);
@@ -123,9 +107,10 @@ public static partial class Reflector {
                     AddMI(aa.alias, mi);
                     if (addBDSL2) AddBDSL2(aa.alias, mi);
                 } else if (attr is GAliasAttribute ga) {
-                    var gmi = mi.MakeGenericMethod(ga.type);
-                    AddMI(ga.alias, gmi);
-                    if (addBDSL2) AddBDSL2(ga.alias, gmi);
+                    var gsig = MethodSignature.Get(mi) as GenericMethodSignature;
+                    var rsig = gsig!.Specialize(ga.type);
+                    AddMI(ga.alias, (MethodInfo)rsig.Mi);
+                    if (addBDSL2) AddBDSL2_Sig(ga.alias, gsig);
                     addNormal = false;
                 } else if (attr is FallthroughAttribute fa) {
                     var sig = MethodSignature.Get(mi);
@@ -148,42 +133,33 @@ public static partial class Reflector {
             }
         }
 
-        public static bool HasMember(Type returnType, string member) {
-            ResolveGeneric(returnType);
-            return methodsByReturnType.Has2(returnType, member);
-        }
-
-        public static bool HasMember<R>(string member) => HasMember(typeof(R), member);
+        /// <inheritdoc cref="TryGetMember"/>
+        public static MethodSignature? TryGetMember<R>(string member) => TryGetMember(typeof(R), member);
 
         /// <summary>
+        /// Get the method description for a method named `member` that returns type `rt`
+        /// (or return null if it does not exist).
+        /// <br/>If the method is generic, will specialize it before returning.
         /// </summary>
-        /// <param name="rt">Desired return type</param>
-        private static void ResolveGeneric(Type rt) {
-            if (computedGenericsTypes.Contains(rt) || !rt.IsConstructedGenericType) return;
-            for (int ii = 0; ii < genericMethods.Count; ++ii) {
-                var (member, mi) = genericMethods[ii];
-                if (ConstructedGenericTypeMatch(rt, mi.ReturnType, out var typeMap)) {
-                    var constrMethod = mi.MakeGeneric(typeMap);
-                    methodsByReturnType.SetDefaultSet(rt, member, constrMethod);
-                }
+        public static MethodSignature? TryGetMember(Type rt, string member) {
+            if (getArgTypesCache.TryGetValue((member, rt), out var res))
+                return res;
+            if (methodsByReturnType.TryGetValue(rt, out var dct) && dct.TryGetValue(member, out var mi))
+                return getArgTypesCache[(member, rt)] = MethodSignature.Get(mi);
+            else if (genericMethods.TryGetValue(member, out var gmi)) {
+                if (ConstructedGenericTypeMatch(rt, gmi.ReturnType, out var mapper)) {
+                    var sig = (MethodSignature.Get(gmi) as GenericMethodSignature)!;
+                    return getArgTypesCache[(member, rt)] = sig.Specialize(
+                        gmi.GetGenericArguments().Select(p => mapper.TryGetValue(p, out var mt) ? mt :
+                            throw new StaticException($"{sig.AsSignature} cannot be thoroughly specialized in BDSL1")).ToArray());
+                //Memo the null result in this case since we don't want to recompute ConstructedGenTypeMatch
+                } else return getArgTypesCache[(member, rt)] = null;
             }
-            computedGenericsTypes.Add(rt);
+            //Don't memo the null result in the trivial case
+            return null;
         }
 
-        /// <summary>
-        /// Get the method description for a member that returns type rt.
-        /// </summary>
-        public static MethodSignature GetArgTypes(Type rt, string member) {
-            if (!getArgTypesCache.ContainsKey((member, rt))) {
-                ResolveGeneric(rt);
-                if (methodsByReturnType.TryGetValue(rt, out var dct) && dct.TryGetValue(member, out var mi))
-                    getArgTypesCache[(member, rt)] = MethodSignature.Get(mi);
-                else
-                    throw new NotImplementedException($"Couldn't find a method with name \"{member}\" returning type {rt.SimpRName()}.");
-            }
-            return getArgTypesCache[(member, rt)];
-        }
-        private static readonly Dictionary<(string method, Type returnType), MethodSignature> getArgTypesCache 
+        private static readonly Dictionary<(string method, Type returnType), MethodSignature?> getArgTypesCache 
             = new();
 
 
@@ -202,8 +178,10 @@ public static partial class Reflector {
         }
 
         public static LiftedMethodSignature<T, R>? GetFuncedSignature<T, R>(string member) {
-            if (!HasMember<R>(member)) return null;
-            return LiftedMethodSignature<T, R>.Lift(GetArgTypes(typeof(R), member));
+            if (TryGetMember<R>(member) is { } sig)
+                return LiftedMethodSignature<T, R>.Lift(sig);
+            return null;
+            
         }
 
         /// <summary>

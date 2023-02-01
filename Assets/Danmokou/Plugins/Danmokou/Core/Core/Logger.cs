@@ -13,20 +13,21 @@ using BagoumLib.Expressions;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
 using static Danmokou.Core.LogUtils;
+using Logger = BagoumLib.Logger;
 
 namespace Danmokou.Core {
 public static class Logs {
-    private const int MIN_LEVEL = (int) LogLevel.DEBUG1;
-    private const int BUILD_MIN = (int) LogLevel.DEBUG2;
+    private const LogLevel MIN_LEVEL = LogLevel.DEBUG1;
+    private const LogLevel BUILD_MIN = LogLevel.DEBUG2;
 
-    public static readonly ISubject<LogMessage> DMKLogs = new Event<LogMessage>();
+    public static readonly Logger DMKLogs = new();
 
     public static readonly string? logFile;
     private static StreamWriter? fileStream;
     private const string LOGDIR = "DMK_Logs/";
     private static readonly List<IDisposable> listeners = new List<IDisposable>();
 
-    public static bool Verbose { get; set; } = true;
+    public static bool Verbose { get; set; } = false;
 
     static Logs() {
 #if UNITY_EDITOR
@@ -36,56 +37,65 @@ public static class Logs {
         logFile = $"{LOGDIR}log_{d.Year}-{d.Month}-{d.Day}-{d.Hour}-{d.Minute}-{DateTime.Now.Second}.log";
         FileUtils.CheckPath(ref logFile);
         fileStream = new StreamWriter(logFile);
-        listeners.Add(Logging.Logs.Subscribe(PrintToUnityLog));
-        listeners.Add(DMKLogs.Subscribe(PrintToUnityLog));
+        listeners.Add(Logging.Logs.RegisterListener(DMKLogs));
+        listeners.Add(DMKLogs.RegisterListener(LogToUnityAndFileImpl));
         Log($"Opened log file {logFile}.");
     }
 
-    public static void CloseLog() {
-        Log($"Closing log file {logFile}.");
-        fileStream?.Close();
-        fileStream = null;
-        foreach (var t in listeners)
-            t.Dispose();
-        listeners.Clear();
-    }
-
-    private const bool DEFAULT_USE_STACKTRACE =
 #if UNITY_EDITOR
-        true;
-#else
-        false;
+    public static void SetupTestMode() {
+        listeners.Add(Logging.Logs.RegisterListener(DMKLogs));
+        listeners.Add(DMKLogs.RegisterListener(LogToUnityAndFileImpl));
+    }
 #endif
+
+    public static void CloseLog() {
+        if (fileStream != null) {
+            Log($"Closing log file {logFile}.");
+            fileStream.Close();
+            fileStream = null;
+        }
+        listeners.DisposeAll();
+    }
     
-    public static void Log(string msg, bool stackTrace = DEFAULT_USE_STACKTRACE, LogLevel level = LogLevel.INFO) =>
-        DMKLogs.OnNext(new LogMessage(msg, level, null, stackTrace));
+    public static void Log(string msg, bool? stackTrace = null, LogLevel level = LogLevel.INFO) =>
+        DMKLogs.Log(msg, level, stackTrace);
 
     public static void LogException(Exception e) => 
-        DMKLogs.OnNext(new LogMessage("", LogLevel.ERROR, e, true));
+        DMKLogs.Error(e);
 
     public static void UnityError(string msg) {
         Log(msg, true, LogLevel.ERROR);
     }
 
+    private static readonly LogImpl LogToUnityAndFileImpl = new();
+    private class LogImpl : ILogListener {
+        public void OnCompleted() { }
 
-    private static void PrintToUnityLog(LogMessage lm) {
-        if (!Verbose && (int) lm.Level < MIN_LEVEL) return;
+        public void OnError(Exception error) { }
+
+        public void OnNext(LogMessage lm) {
+            if (CanSkipMessage(lm.Level, lm.Exception)) return;
+            var useStacktrace = Verbose || (lm.ShowStackTrace ?? (lm.Exception != null));
+            var msg = (lm.Exception == null) ? lm.Message : PrintException(lm.Exception, lm.Message);
+            msg = $"Frame {ETime.FrameNumber}: {msg}";
+            if (useStacktrace)
+                msg = $"{msg}\n{GenerateStackTrace()}";    
+            fileStream?.WriteLine(msg);
+            Debug.LogFormat(lm.Level switch {
+                LogLevel.ERROR => LogType.Error,
+                LogLevel.WARNING => LogType.Warning,
+                _ => LogType.Log
+            }, LogOption.NoStacktrace, null, msg.Replace("{", "{{").Replace("}", "}}"));
+        }
+
+        public bool CanSkipMessage(LogLevel level, Exception? exc) {
 #if UNITY_EDITOR
-        var useStacktrace = lm.ShowStackTrace ?? true;
+            return !Verbose && level < MIN_LEVEL && exc == null;
 #else
-        if (!Verbose && (int) lm.Level < BUILD_MIN) return;
-        var useStacktrace = Verbose || (lm.ShowStackTrace ?? (lm.Exception != null));
+            return !Verbose && level < BUILD_MIN && exc == null;
 #endif
-        var msg = (lm.Exception == null) ? lm.Message : PrintException(lm.Exception, lm.Message);
-        msg = $"Frame {ETime.FrameNumber}: {msg}";
-        if (useStacktrace)
-            msg = $"{msg}\n{GenerateStackTrace()}";    
-        fileStream?.WriteLine(msg);
-        Debug.LogFormat(lm.Level switch {
-            LogLevel.ERROR => LogType.Error,
-            LogLevel.WARNING => LogType.Warning,
-            _ => LogType.Log
-        }, LogOption.NoStacktrace, null, msg.Replace("{", "{{").Replace("}", "}}"));
+        }
     }
 }
 

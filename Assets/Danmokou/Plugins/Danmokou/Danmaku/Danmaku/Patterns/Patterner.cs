@@ -152,6 +152,12 @@ public struct AsyncHandoff {
 [SuppressMessage("ReSharper", "UnusedMember.Global")]
 [Reflect] [Atomic]
 public static partial class AtomicPatterns {
+    #region Erasers
+
+    public static SyncPattern Erase<T>(GCXF<T> meth) => sbh => meth(sbh.GCX);
+    
+    #endregion
+    
     #region GCXUCompileHelpers
     
     /// <inheritdoc cref="GCXU.ShareTypeAndCompile"/>
@@ -161,7 +167,7 @@ public static partial class AtomicPatterns {
     
     /// <inheritdoc cref="GCXU.ShareTypeAndCompile"/>
     private static void ShareTypeAndCompile(GCXU<VTP> path, LaserOptions options) {
-        GCXU.ShareTypeAndCompile(path, options.start, options.delete, options.deactivate, options.curve, options.beforeDraw, options.rotate, options.hueShift, options.recolor?.black, options.recolor?.white, options.tint);
+        GCXU.ShareTypeAndCompile(path, options.length?.var, options.start, options.delete, options.deactivate, options.curve, options.beforeDraw, options.rotate, options.hueShift, options.recolor?.black, options.recolor?.white, options.tint);
     }
     
     
@@ -373,8 +379,8 @@ public static partial class AtomicPatterns {
         sbh.bc.SummonCirc(sbh, behId, color, DrawerLoc(sbh, locScaleAngle, loc), WaitForPhase(sbh.ch.cT), id);
     };
 
-    public static SyncPattern RelCirc(string behId, BEHPointer beh, BPRV2 locScaleAngle, TP4 color) =>
-        gRelCirc(behId, _ => beh.Loc, locScaleAngle, color);
+    public static SyncPattern RelCirc(string behId, Func<TExArgCtx, TEx<BehaviorEntity>> beh, BPRV2 locScaleAngle, TP4 color) =>
+        gRelCirc(behId, TP(tac => beh(tac).Field(nameof(BehaviorEntity.Location))), locScaleAngle, color);
     public static SyncPattern Rect(TP4 color, BPRV2 locScaleAngle) => sbh => {
         uint id = sbh.GCX.NextID();
         sbh.bc.SummonRect(sbh, "_", color, DrawerLoc(sbh, locScaleAngle), WaitForPhase(sbh.ch.cT), id);
@@ -384,8 +390,8 @@ public static partial class AtomicPatterns {
         sbh.bc.SummonRect(sbh, behId, color, DrawerLoc(sbh, locScaleAngle, loc), WaitForPhase(sbh.ch.cT), id);
     };
 
-    public static SyncPattern RelRect(string behId, BEHPointer beh, BPRV2 locScaleAngle, TP4 color) =>
-        gRelRect(behId, _ => beh.Loc, locScaleAngle, color);
+    public static SyncPattern RelRect(string behId, Func<TExArgCtx, TEx<BehaviorEntity>> beh, BPRV2 locScaleAngle, TP4 color) =>
+        gRelRect(behId, TP(tac => beh(tac).Field(nameof(BehaviorEntity.Location))), locScaleAngle, color);
 
     
     public static SyncPattern Darkness(TP loc, BPY radius, TP4 color) => sbh => {

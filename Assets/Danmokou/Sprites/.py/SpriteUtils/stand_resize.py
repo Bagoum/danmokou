@@ -3,19 +3,23 @@ import numpy as np
 import shutil
 from PIL import Image
 
+#Usage note: now that ADV sprites are also emote-distinguished,
+# instead of using adv_icon_cutter separately, just make one set of icons
+# to be used for ADV and piecewise-switching.
+
 src = "img/stand-source/"
 out = "img/stand-output/"
 root = "normal.png"
 
-root_left = 40
-root_left2 = 676
-root_top = 24
-root_top2 = 1164
+root_left = 0
+root_left2 = 716
+root_top = 0
+root_top2 = 1024
 
-left = 288
-left2 = 460
-top = 220
-top2 = 344
+left = 232
+left2 = 504
+top = 92
+top2 = 396
 
 def root_convert(fromfile, tofile):
     img = Image.open(fromfile)

@@ -68,28 +68,29 @@ public class DMKVNState : UnityVNState {
             this.vn = vn;
         }
 
-        public void FadeOut(float time = 3f) {
+        public void FadeOutDestroy(float time = 2f) {
+            if (track.State.Value >= AudioTrackState.DestroyPrepare)
+                return;
             if (vn.SkippingMode == SkipMode.LOADING)
                 track.Cancel();
             else
-                track.FadeOutThenDestroy(time);
+                track.FadeOut(time, AudioTrackState.DestroyReady);
         }
 
-        public void FadeIn(float time = 3f) => track.FadeIn(time);
+        public void FadeIn(float time = 2f) => track.FadeIn(time);
 
-        public void Dispose() {
-            if (!track.Active.Cancelled)
-                track.Cancel();
-        }
+        public void Dispose() => FadeOutDestroy(1f);
     }
 
-    public RunningAudioTrackProxy RunBGM(string key) {
-        var track = ServiceLocator.Find<IAudioTrackService>().InvokeBGM(key, new BGMInvokeFlags(SkippingMode != null ? 0 : 2)) ?? 
+    public RunningAudioTrackProxy RunBGM(string key, float fadeIn = 2f) {
+        var track = ServiceLocator.Find<IAudioTrackService>().InvokeBGM(key, 
+                        new BGMInvokeFlags(SkippingMode != null ? 0 : 2, fadeIn), CToken) ?? 
                     throw new Exception($"No track for key {key}");
-        var proxy = new RunningAudioTrackProxy(track, this);
-        Tokens.Add(proxy);
-        return proxy;
+        //don't need to add to Tokens since lifetime is bound by CToken
+        return new RunningAudioTrackProxy(track, this);
     }
+
+    public RunningAudioTrackProxy RunBGMFast(string key) => RunBGM(key, 0.5f);
 
     public override string ToString() => $"{id}:{base.ToString()}";
 }

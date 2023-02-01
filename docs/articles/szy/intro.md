@@ -91,7 +91,7 @@ await alice.Say("Hello world").C;
 
 To make dialogue, we first need to make a dialogue box. Then, our characters can speak into the dialogue box. We can provide the dialogue box as an argument to the `Say` function, but if we don't, then the VNState will default to the first created dialogue box. 
 
-`alice.Say("Hello world")` is an asynchronous operation (VNOperation) for gradually printing the text "Hello world" into the dialogue box. We could just await this operation, but in general we want to wait for a user confirm input, such as a mouse click, before going to the next dialogue line. By attaching `.C`, the VNOperation is transformed into a VNConfirmTask, which will wait for the user confirmation before proceeding to the next line.
+`alice.Say("Hello world")` is an asynchronous operation (VNOperation) for gradually printing the text "Hello world" into the dialogue box. We could just await this operation, but in general we want to wait for a user confirm input, such as a mouse click, before going to the next dialogue line. By attaching `.C`, the VNOperation is transformed into a VNConfirmTask, which will wait for user confirmation before proceeding to the next line.
 
 ```
 await alice.EmoteSay("happy", "Foo bar").C;

@@ -34,8 +34,8 @@ namespace Danmokou.Reflection {
 
 public interface IDelegateArg {
     public TExArgCtx.Arg MakeTExArg(int index);
-    public VarDecl MakeArgDecl();
-    public string? Name { get; }
+    public ImplicitArgDecl MakeImplicitArgDecl();
+    public string Name { get; }
     /// <summary>
     /// Type of function argument, on the level of typeof(float).
     /// </summary>
@@ -43,18 +43,17 @@ public interface IDelegateArg {
 }
 public readonly struct DelegateArg<T> : IDelegateArg {
 
-    public string? Name { get; }
+    public string Name { get; }
     public Type Type => typeof(T);
     private readonly bool isRef;
     private readonly bool priority;
-    public DelegateArg(string? name, bool isRef=false, bool priority=false) {
+    public DelegateArg(string name, bool isRef=false, bool priority=false) {
         this.Name = name;
         this.isRef = isRef;
         this.priority = priority;
     }
     public TExArgCtx.Arg MakeTExArg(int index) => TExArgCtx.Arg.Make<T>(Name ?? $"$_arg{index+1}", priority, isRef);
-    public VarDecl MakeArgDecl() => new ArgumentDecl<T>(default, Name);
-    public static IDelegateArg New => new DelegateArg<T>(null);
+    public ImplicitArgDecl MakeImplicitArgDecl() => new ImplicitArgDecl<T>(default, Name!);
 }
 
 /// <summary>
@@ -91,6 +90,21 @@ public static class CompilerHelpers {
     #region RawCompilers
 
     public static ReadyToCompileExpr<D> PrepareDelegate<D>(Func<TExArgCtx, TEx> exConstructor, params TExArgCtx.Arg[] args) where D : Delegate {
+        //Implicitly add an EnvFrame argument if ParametricInfo or GCX is present
+        Ex? bpiArg = null;
+        Ex? gcxArg = null;
+        var hasEFArg = false;
+        for (int ii = 0; ii < args.Length; ++ii) {
+            bpiArg ??= args[ii].expr.type == typeof(ParametricInfo) ? (Ex)args[ii].expr : null;
+            gcxArg ??= args[ii].expr.type == typeof(GenCtx) ? (Ex)args[ii].expr : null;
+            hasEFArg |= args[ii].expr.type == typeof(EnvFrame);
+        }
+        if (!hasEFArg) {
+            if (bpiArg != null)
+                args = args.Append(TExArgCtx.Arg.Make("ef", new TExPI(bpiArg).EnvFrame, false)).ToArray();
+            else if (gcxArg != null)
+                args = args.Append(TExArgCtx.Arg.Make("ef", new TExGCX(gcxArg).EnvFrame, false)).ToArray();
+        }
         var tac = new TExArgCtx(args);
         return new(exConstructor(tac), tac, args);
     }
@@ -139,7 +153,12 @@ public static class CompilerHelpers {
     #endregion
     
     
-    private class GCXCompileResolver : ReflectEx.ICompileReferenceResolver {
+    /// <summary>
+    /// Tracks references to variables from GCX which have not been exposed.
+    /// <br/>This is used in the first phase of GCXU compilation, and marked variables
+    ///  will be automatically exposed during the second phase.
+    /// </summary>
+    private class GCXUCompileResolver : ReflectEx.ICompileReferenceResolver {
         public int TotalUsages { get; private set; } = 0;
         private readonly List<(Type, string)> bound = new();
         public IReadOnlyList<(Type, string)> Bound => bound;
@@ -175,6 +194,21 @@ public static class CompilerHelpers {
         }
     }
 
+    /// <summary>
+    /// A dummy reference resolver that always returns false.
+    /// <br/>This is used to mark that the GCXU compilation is in its second phase.
+    /// </summary>
+    public class GCXUDummyResolver : ReflectEx.ICompileReferenceResolver {
+        public static readonly GCXUDummyResolver Singleton = new();
+        public bool TryResolve(Type t, string alias, out Expression ex) {
+            ex = default!;
+            return false;
+        }
+
+        public void MarkDirty(Type t, string alias) {
+            throw new NotImplementedException();
+        }
+    }
 
     /// <summary>
     /// Detect if there are any bound variables in the provided expression function,
@@ -188,9 +222,9 @@ public static class CompilerHelpers {
     /// <typeparam name="T">Delegate type (eg. BPY)</typeparam>
     /// <returns></returns>
     public static GCXU<T> Automatic<S, T>(Func<S, ReadyToCompileExpr<T>> compiler, S exp, Func<S, ReflectEx.Alias[], S> modifyLets, Func<S, Func<TExArgCtx, TExArgCtx>, S> modifyArgBag) where T : Delegate {
-        var resolver = new GCXCompileResolver();
+        var resolver = new GCXUCompileResolver();
         _ = compiler(modifyArgBag(exp, tac => {
-            tac.Ctx.ICRR = resolver;
+            tac.Ctx.GCXURefs = resolver;
             return tac;
         }));
         return new GCXU<T>(resolver.Bound, type => {
@@ -206,6 +240,7 @@ public static class CompilerHelpers {
                 exp = modifyLets(exp, resolver.ToAliases(bpiAsTypeAlias));
             }
             return compiler(modifyArgBag(exp, tac => {
+                tac.Ctx.GCXURefs = GCXUDummyResolver.Singleton;
                 tac.Ctx.CustomDataType = (type.BuiltType,
                     bpiAsTypeAlias.Try(out var alias) ?
                         //Read the local variable for (bpi.data as CustomDataType) if we set it above
@@ -228,7 +263,7 @@ public static class Compilers {
     /// </summary>
     public static Func<TExArgCtx, TEx<T>> Expose<T>((Reflector.ExType, string)[] variables, Func<TExArgCtx, TEx<T>> inner) => tac => {
         foreach (var (ext, name) in variables)
-            tac.Ctx.ICRR?.TryResolve(ext.AsType(), name, out _);
+            tac.Ctx.GCXURefs?.TryResolve(ext.AsType(), name, out _);
         return inner(tac);
     };
     
@@ -337,12 +372,25 @@ public static class Compilers {
             new DelegateArg<ICancellee>("sbcf_ct", true)
         ).Compile();
 
+    public static readonly IDelegateArg[] GCXFArgs = {
+        new DelegateArg<GenCtx>("gcx")
+    };
+    
     [Fallthrough]
     [ExprCompiler]
     public static GCXF<T> GCXF<T>(Func<TExArgCtx, TEx<T>> ex) {
         //We don't make a BPI variable, instead it is assigned in the _Fake method.
         // This is because gcx.BPI is a property that creates a random ID every time it is called, which we don't want.
-        return PrepareDelegate<GCXF<T>>(tac => GCXFRepo._Fake(ex)(tac) as TEx, new DelegateArg<GenCtx>("gcx")).Compile();
+        return PrepareDelegate<GCXF<T>>(tac => GCXFRepo._Fake(ex)(tac), GCXFArgs).Compile();
+    }
+    
+    [Fallthrough]
+    [ExprCompiler]
+    public static ErasedGCXF ErasedGCXF<T>(Func<TExArgCtx, TEx<T>> ex) {
+        //We don't make a BPI variable, instead it is assigned in the _Fake method.
+        // This is because gcx.BPI is a property that creates a random ID every time it is called, which we don't want.
+        return PrepareDelegate<ErasedGCXF>(tac => Ex.Block(GCXFRepo._Fake(ex)(tac), Ex.Empty()), 
+            GCXFArgs).Compile();
     }
 
     [Fallthrough]
@@ -404,13 +452,13 @@ public static class Compilers {
     [ExprCompiler]
     [ExtendGCXUExposed]
     public static Func<T1, T2, R> Compile<T1, T2, R>(Func<TExArgCtx, TEx<R>> ex) =>
-        PrepareDelegate<Func<T1, T2, R>>(ex, DelegateArg<T1>.New, DelegateArg<T2>.New).Compile();
+        PrepareDelegate<Func<T1, T2, R>>(ex, new DelegateArg<T1>("arg1"), new DelegateArg<T2>("arg2")).Compile();
 
     [Fallthrough]
     [ExprCompiler]
     [ExtendGCXUExposed]
     public static GCXU<Func<T1, T2, R>> CompileGCXU<T1, T2, R>(Func<TExArgCtx, TEx<R>> ex) =>
-        CompileGCXU<Func<T1, T2, R>>(ex, DelegateArg<T1>.New, DelegateArg<T2>.New);
+        CompileGCXU<Func<T1, T2, R>>(ex, new DelegateArg<T1>("arg1"), new DelegateArg<T2>("arg2"));
     
     #endregion
 

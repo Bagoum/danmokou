@@ -1,5 +1,6 @@
 ﻿using System;
 using BagoumLib;
+using BagoumLib.Culture;
 using BagoumLib.Events;
 
 namespace Danmokou.UI.XML {
@@ -28,7 +29,8 @@ public interface IFixedXMLObject {
 /// A freeform UITK menu that contains dynamically added/removed nodes.
 /// </summary>
 public interface IFixedXMLObjectContainer {
-    void AddNode(UINode n);
+    void AddNodeDynamic(UINode n);
+    UIScreen Screen { get; }
 } 
 
 /// <inheritdoc cref="IFixedXMLObject"/>

@@ -15,7 +15,6 @@ using Danmokou.Player;
 using Danmokou.Scriptables;
 using Danmokou.Services;
 using Danmokou.VN;
-using static Danmokou.GameInstance.InstanceConsts;
 using JetBrains.Annotations;
 using UnityEngine;
 using Observable = System.Reactive.Linq.Observable;
@@ -29,7 +28,6 @@ public class InstanceData {
     
     public readonly Event<Unit> UselessPowerupCollected = new();
     public readonly Event<Unit> TeamUpdated = new();
-    public readonly Event<Unit> PlayerTookHit = new();
     public readonly Event<CardRecord> CardHistoryUpdated = new();
     public readonly Event<ExtendType> ExtendAcquired = new();
     public readonly Event<PhaseCompletion> PhaseCompleted = new();
@@ -58,19 +56,35 @@ public class InstanceData {
      *  variant (such as PowerFeature.Disabled).
      */
     public List<IInstanceFeature> Features { get; } = new();
+    
+    /// <inheritdoc cref="IBasicFeature"/>
+    public IBasicFeature BasicF { get; }
+    
+    /// <inheritdoc cref="IConfigurationFeature"/>
+    public IConfigurationFeature ConfigurationF { get; }
+    
+    /// <inheritdoc cref="IScoreFeature"/>
     public IScoreFeature ScoreF { get; }
+    
+    /// <inheritdoc cref="IPowerFeature"/>
     public IPowerFeature PowerF { get; }
+    
+    /// <inheritdoc cref="ILifeItemFeature"/>
     public ILifeItemFeature LifeItemF { get; }
+    
+    /// <inheritdoc cref="IScoreExtendFeature"/>
     public IScoreExtendFeature ScoreExtendF { get; }
+    
+    /// <inheritdoc cref="IRankFeature"/>
     public IRankFeature RankF { get; }
+    
+    /// <inheritdoc cref="IFaithFeature"/>
     public IFaithFeature FaithF { get; }
+    
+    /// <inheritdoc cref="IMeterFeature"/>
     public IMeterFeature MeterF { get; }
-    public Evented<int> Lives { get; }
-    public Evented<int> Bombs { get; }
+    
     public Evented<long> Graze { get; }
-    public int Continues { get; private set; }
-    public int ContinuesUsed { get; private set; } = 0;
-    public int HitsTaken { get; private set; }
     public readonly InstanceMode mode;
     /// <summary>
     /// Set to false after eg. a game is completed, but before starting a new game
@@ -115,7 +129,6 @@ public class InstanceData {
     public int TotalFrames { get; private set; }
     public int PlayerActiveFrames { get; private set; }
     public int LastMeterStartFrame { get; set; }
-    public int LastTookHitFrame { get; private set; }
     public int BombsUsed { get; set; }
     public int SubshotSwitches { get; set; }
     public int OneUpItemsCollected { get; private set; }
@@ -127,7 +140,7 @@ public class InstanceData {
     public ShipConfig? Player => TeamCfg?.Ship;
     public Subshot? Subshot => TeamCfg?.Subshot;
     public string MultishotString => (TeamCfg?.HasMultishot == true) ? (Subshot?.Describe() ?? "") : "";
-    public bool Continued => ContinuesUsed > 0;
+    public bool Continued => BasicF.ContinuesUsed > 0;
     public bool IsCampaign => mode == InstanceMode.CAMPAIGN;
     public bool IsAtleastNormalCampaign => IsCampaign && Difficulty.standard >= FixedDifficulty.Normal;
     
@@ -147,18 +160,13 @@ public class InstanceData {
         campaign = req?.lowerRequest is CampaignRequest cr ? cr.campaign.campaign : null;
         campaignKey = req?.lowerRequest.Campaign.Key ?? "null_campaign";
         TeamCfg = req?.metadata.team != null ? new ActiveTeamConfig(req.metadata.team) : null;
-        var dfltLives = campaign != null ?
-            (campaign.startLives > 0 ? campaign.startLives : StartLives(mode)) :
-            StartLives(mode);
-        Lives = new Evented<int>(Difficulty.startingLives ?? dfltLives);
-        Bombs = new Evented<int>(StartBombs(mode));
         Graze = new Evented<long>(0);
         CardHistory = new CardHistory();
-        Continues = mode.OneLife() ? 0 : defltContinues;
-        HitsTaken = 0;
         EnemiesDestroyed = 0;
         CurrentBoss = null;
 
+        Features.Add(BasicF = features.Basic.Create(this));
+        Features.Add(ConfigurationF = features.Configuration.Create(this));
         Features.Add(ScoreF = features.Score.Create(this));
         Features.Add(PowerF = features.Power.Create(this));
         Features.Add(LifeItemF = features.ItemExt.Create(this));
@@ -166,25 +174,6 @@ public class InstanceData {
         Features.Add(RankF = features.Rank.Create(this));
         Features.Add(FaithF = features.Faith.Create(this));
         Features.Add(MeterF = features.Meter.Create(this));
-    }
-
-    public bool TryContinue() {
-        if (Continues > 0) {
-            //We can allow continues in replays! But in the current impl, the watcher will have to press continue.
-            //Replayer.Cancel();
-            --Continues;
-            ++ContinuesUsed;
-            CardHistory.Clear();//Partial game is saved when lives=0. Don't double on captures.
-            if (campaign != null) {
-                Lives.Value = campaign.startLives > 0 ? campaign.startLives : StartLives(mode);
-            } else {
-                Lives.Value = StartLives(mode);
-            }
-            Bombs.Value = StartBombs(mode);
-            foreach (var f in Features)
-                f.OnContinue();
-            return true;
-        } else return false;
     }
 
     public (int success, int total)? LookForSpellHistory(string bossKey, int phaseIndex) {
@@ -196,19 +185,6 @@ public class InstanceData {
         return PreviousSpellHistory.TryGetValue(key, out var rate) ? rate : ((int, int)?)null;
     }
 
-
-    /// <summary>
-    /// Delta should be negative.
-    /// Note: powerbombs do not call this routine.
-    /// </summary>
-    public bool TryConsumeBombs(int delta) {
-        if (Bombs + delta >= 0) {
-            Bombs.Value += delta;
-            return true;
-        }
-        return false;
-    }
-
     public void SwapLifeScore(long score, bool usePIVMultiplier) {
         AddLives(-1, false);
         if (usePIVMultiplier) score = (long) (score * ScoreF.PIV);
@@ -216,21 +192,8 @@ public class InstanceData {
         LifeSwappedForScore.OnNext(default);
     }
     public void AddLives(int delta, bool asHit = true) {
-        //if (mode == CampaignMode.NULL) return;
-        Logs.Log($"Adding player lives: {delta}");
-        if (delta < 0 && asHit) {
-            ++HitsTaken;
-            LastTookHitFrame = ETime.FrameNumber;
-            Bombs.Value = Math.Max(Bombs, StartBombs(mode));
-            foreach (var f in Features)
-                f.OnDied();
-            PlayerTookHit.OnNext(default);
-        }
-        if (delta < 0 && mode.OneLife()) 
-            Lives.Value = 0;
-        else 
-            Lives.Value = Math.Max(0, Lives + delta);
-        if (Lives == 0) {
+        BasicF.AddLives(delta, asHit);
+        if (BasicF.Lives == 0) {
             //Record failure
             if (Request?.Saveable == true) {
                 //Special-case boss practice handling
@@ -253,7 +216,7 @@ public class InstanceData {
     /// <summary>
     /// Don't use this in the main campaign-- it will interfere with stats
     /// </summary>
-    public void SetLives(int to) => AddLives(to - Lives, false);
+    public void SetLives(int to) => BasicF.AddLives(to - BasicF.Lives, false);
 
     public void UpdatePlayerFrame(PlayerController.PlayerState state) {
         ++PlayerActiveFrames;
@@ -284,14 +247,9 @@ public class InstanceData {
 
     public void AddOneUpItem() {
         ++OneUpItemsCollected;
-        LifeExtend(ExtendType.ONEUP_ITEM);
+        BasicF.LifeExtend(ExtendType.ONEUP_ITEM);
         foreach (var f in Features)
             f.OnItemOneUp();
-    }
-
-    public void LifeExtend(ExtendType method) {
-        ++Lives.Value;
-        ExtendAcquired.OnNext(method);
     }
 
     public void PhaseEnd(PhaseCompletion pc) {

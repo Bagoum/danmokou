@@ -18,13 +18,27 @@ The following features are planned for future releases.
 - [Backlog] Implementation of a TH18-like card engine
 - [Backlog] Procedural generation of stages and bullet patterns
 
-# v10.1.0 (2022/12/31)
+# [Future] v11.0.0
 
-Happy Christmas and a Merry New Years to everyone.
+The goal for this version is to have a fully functional implementation of the new scripting language, tentatively titled BDSL2, 
+
+#### Pending Issues
+
+- When spawning danmaku in WebGL, there is a chance to get very significant lag spikes a small number of times. This issue is due to some deep problems with WebGL ([see this thread](https://forum.unity.com/threads/webgl-performance-and-getprogramparameter.991766/) as well as [this bug](https://issuetracker.unity3d.com/issues/cpu-spike-in-batchrenderer-dot-flush-when-using-graphics-dot-drawmeshinstanced-on-webgl)) and seems unlikely to be fixed in the near future. There are some potential mitigations involving preloading bullet textures.
 
 #### Features
 
 - Added safety guarantees around UI navigation so it is not possible to enqueue two navigation events at the same time.
+
+#### Changes
+
+- Reflected functions using `BEHPointer` now instead use `TEx<BehaviorEntity>`. This is backwards-compatible, so you can still do things like `hpratio(yukari)`, but now you can also use `mine` to get the BehaviorEntity associated with the function caller. For example, `hpratio(mine)` will get the HP ratio of the BehaviorEntity calling the function, or if it is called by a bullet, it will get the HP ratio of the BehaviorEntity that fired the bullet.
+
+#### Fixes
+
+- In Suzunoya: Tint modifiers, such as `FadeTo`, now work on render groups, so you can write code like `await vn.DefaultRenderGroup.FadeTo(0f, 1f)`. In previous versions, this would not actually cause the tint to change.
+- Fixed a regression with the `Darkness` command that would cause the shadow to appear incorrectly.
+- Improved WebGL handling. It is now possible to build an ADV/VN game for WebGL without going through [AoT handling](AoTSupport.md). 
 
 # v10.0.0 (2022/12/03)
 

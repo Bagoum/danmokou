@@ -22,7 +22,7 @@ public class XMLPracticeSuccessMenu : PausedGameplayMenu {
     public override void FirstFrame() {
         MainScreen = new UIScreen(this, "YOU HUNTED", UIScreen.Display.OverlayTH)  { Builder = (s, ve) => {
             ve.AddColumn();
-        }, MenuBackgroundOpacity = 0.8f };
+        }, MenuBackgroundOpacity = UIScreen.DefaultMenuBGOpacity };
         _ = new UIColumn(MainScreen, null,
             new FuncNode(restart, GameManagement.Restart)
                 {EnabledIf = (() => GameManagement.CanRestart)},

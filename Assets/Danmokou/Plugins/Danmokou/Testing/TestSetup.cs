@@ -1,4 +1,5 @@
-﻿using Danmokou.Reflection;
+﻿using Danmokou.Core;
+using Danmokou.Reflection;
 using NUnit.Framework;
 
 namespace Danmokou.Testing {
@@ -6,10 +7,15 @@ namespace Danmokou.Testing {
 public class TestSetup {
 
     [OneTimeSetUp]
-    public void RunBeforeAnyTests() => RHelper.REFLECT_IN_EDITOR = true;
+    public void RunBeforeAnyTests() {
+        RHelper.REFLECT_IN_EDITOR = true;
+        Logs.SetupTestMode();
+    }
 
     [OneTimeTearDown]
-    public void RunAfterAnyTests() => RHelper.REFLECT_IN_EDITOR = false;
-
+    public void RunAfterAnyTests() {
+        RHelper.REFLECT_IN_EDITOR = false;
+        Logs.CloseLog();
+    }
 }    
 }

@@ -50,6 +50,7 @@ public class ExampleADVExecuting : BaseExecutingADV<ADVIdealizedState, ADVData> 
                 HideMD();
             }
         });
+        SetupMapStates();
     }
     
     protected void HideMD() {
@@ -62,7 +63,9 @@ public class ExampleADVExecuting : BaseExecutingADV<ADVIdealizedState, ADVData> 
         dialogueShowAlpha.Push(new FColor(1, 1, 1, 1));
         md.Active.Value = true;
     }
-    
+
+    public override void ADVDataFinalized() { }
+
     protected override MapStateManager<ADVIdealizedState, ADVData> ConfigureMapStates() {
         var red_alice = Context("red_alice", async () => {
             var alice = vn.Find<ExampleCharacter>();
@@ -93,12 +96,12 @@ public class ExampleADVSetup : MonoBehaviour, IGlobalVNDataProvider {
 
     void Start() {
         //Redirect logs from the libraries to Debug.Log
-        tokens.Add(Logging.Logs.Subscribe(lm => {
+        tokens.Add(Logging.Logs.RegisterListener(new TrivialLogListener(lm => {
             if (lm.Exception != null)
                 Debug.LogException(lm.Exception);
             else
                 Debug.Log(lm.Message);
-        }));
+        })));
         
         var advData = loadFrom == null ?
             new ADVData(new InstanceData(GlobalVNData)) { CurrentMap = "Red" } :
@@ -111,9 +114,11 @@ public class ExampleADVSetup : MonoBehaviour, IGlobalVNDataProvider {
         tokens.DisposeAll();
     }
 
+#if UNITY_EDITOR
     [ContextMenu("Save")]
     public void Save() {
         File.WriteAllText(AssetDatabase.GetAssetPath(saveTo), Serialization.SerializeJson(manager.GetSaveReadyADVData()));
     }
+#endif
 }
 }

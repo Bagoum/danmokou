@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using BagoumLib;
 using BagoumLib.Cancellation;
 using BagoumLib.Culture;
@@ -228,7 +229,7 @@ public abstract class Challenge {
 
         private static ReflWrap<TaskPattern> StayInRange(BehaviorEntity beh, float f) =>
             ReflWrap.FromFunc($"Challenge.StayInRange.{f}", () => SMReflection.Sync("_", GCXFRepo.RV2Zero,
-                AtomicPatterns.RelCirc("_", new BEHPointer("_", beh), _ => V2RV2.Rot(f, f), StayInColor)));
+                AtomicPatterns.RelCirc("_", _ => Expression.Constant(beh), _ => V2RV2.Rot(f, f), StayInColor)));
         
         
 
@@ -256,7 +257,7 @@ public abstract class Challenge {
 
         private static ReflWrap<TaskPattern> StayOutRange(BehaviorEntity beh, float f) =>
             ReflWrap.FromFunc($"Challenge.StayOutRange.{f}", () => SMReflection.Sync("_", GCXFRepo.RV2Zero,
-                AtomicPatterns.RelCirc("_", new BEHPointer("_", beh), _ => V2RV2.Rot(f, f), StayOutColor)));
+                AtomicPatterns.RelCirc("_", _ => Expression.Constant(beh), _ => V2RV2.Rot(f, f), StayOutColor)));
 
         public override void SetupPhase(SMHandoff smh) {
             StayOutRange(smh.Exec, units).Value(smh);

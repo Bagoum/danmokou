@@ -23,7 +23,7 @@ public static class FXYRepo {
     /// <param name="f">Target function</param>
     /// <returns></returns>
     public static ExBPY EaseF([LookupMethod] Func<TEx<float>, TEx<float>> smoother, float maxTime, ExBPY f) 
-    => ExMHelpers.Ease(smoother, maxTime, f, x => x.FloatVal, (x, y) => x.MakeCopyForType<TEx<float>>(y));
+    => ExMHelpers.Ease(smoother, maxTime, f, x => x.FloatVal, (x, y) => x.MakeCopyForType<float>(y));
 
 
     /// <summary>
@@ -34,7 +34,7 @@ public static class FXYRepo {
     /// <param name="fd">Target function</param>
     /// <returns></returns>
     public static ExBPY EaseFD([LookupMethod] Func<TEx<float>, TEx<float>> smoother, float maxTime, ExBPY fd) 
-        => ExMHelpers.EaseD(smoother, maxTime, fd, x => x.FloatVal, (x, y) => x.MakeCopyForType<TEx<float>>(y));
+        => ExMHelpers.EaseD(smoother, maxTime, fd, x => x.FloatVal, (x, y) => x.MakeCopyForType<float>(y));
 
     /// <summary>
     /// See <see cref="BPYRepo.SoftmaxShift"/>.

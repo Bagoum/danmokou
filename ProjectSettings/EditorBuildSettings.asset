@@ -5,13 +5,7 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 1
-    path: Assets/Danmokou/MiniProjects/Scenes/Working Scene.unity
-    guid: 32ef6304b6f00674e8c734431b9af0d6
   - enabled: 0
-    path: Assets/SiMP/Scenes/Working Scene.unity
-    guid: 2cda990e2423bbf4892e6590ba056729
-  - enabled: 1
     path: Assets/Danmokou/MiniProjects/Projects/GOTP/GOTP MainMenu VN.unity
     guid: 039e2ac449c981e4f85e0ed1171a50b9
   - enabled: 0
@@ -24,9 +18,12 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/SiMP/Scenes/SiMP.MainMenu.unity
     guid: 6b2d775f9661bd44da76415034461224
-  - enabled: 0
+  - enabled: 1
     path: Assets/Danmokou/MiniProjects/MP.MainMenu.unity
     guid: 6ce87ca5eeaeca643beda1e510b20d3b
+  - enabled: 0
+    path: Assets/Danmokou/MiniProjects/Projects/WP/WP MainMenu VN.unity
+    guid: 5504889f1c92e2f4b85b1da709eed33c
   - enabled: 0
     path: Assets/Danmokou/MiniProjects/Projects/CrimsonVermilion/MP.CV.MainMenu VN.unity
     guid: 66fdd3715a4ea8543bad4617a2fb083e
@@ -39,10 +36,10 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/LuA/LuA.MainMenu.unity
     guid: f624112b2f76c62478ebd6d443131775
-  - enabled: 1
+  - enabled: 0
     path: Assets/Danmokou/MiniProjects/Scenes/MiniprojectLevel VN.unity
     guid: bbf652916aa38874a9909ebe7e057289
-  - enabled: 0
+  - enabled: 1
     path: Assets/Danmokou/MiniProjects/Scenes/MiniprojectLevel.unity
     guid: 2a1f4e4cd49e99341855fa916af2cc1f
   - enabled: 1

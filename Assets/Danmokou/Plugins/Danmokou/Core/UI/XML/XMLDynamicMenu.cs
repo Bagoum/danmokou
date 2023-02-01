@@ -15,6 +15,7 @@ namespace Danmokou.UI.XML {
 /// <br/>When there are no added nodes, any inputs will result in a silent no-op.
 /// </summary>
 public class XMLDynamicMenu : UIController, IFixedXMLObjectContainer {
+    UIScreen IFixedXMLObjectContainer.Screen => MainScreen;
     private class UnselectorFixedXML : IFixedXMLObject {
         public string Descriptor => "Unselector";
         public ICObservable<float> Top { get; } = new ConstantObservable<float>(0);
@@ -29,9 +30,7 @@ public class XMLDynamicMenu : UIController, IFixedXMLObjectContainer {
     protected override UIScreen?[] Screens => dynamicScreens.Prepend(MainScreen).ToArray();
     
     public UINode Unselect { get; private set; } = null!;
-    public UIResult GoToUnselect => new UIResult.GoToNode(Unselect);
-    private List<UINode>? _addNodeQueue = new();
-    private List<UIScreen> dynamicScreens = new();
+    private readonly List<UIScreen> dynamicScreens = new();
     
     public Func<UINode, UIResult?>? HandleUnselectConfirm { get; set; }
     public UIFreeformGroup FreeformGroup { get; private set; } = null!;
@@ -42,7 +41,9 @@ public class XMLDynamicMenu : UIController, IFixedXMLObjectContainer {
         RegisterService(this);
     }
 
-    public override void FirstFrame() {
+    //most menus are defined in FirstFrame, but since XMLDynamicMenu is consumed as a service, it's useful
+    // to construct it in Awake
+    private void Awake() {
         Unselect = new EmptyNode(new UnselectorFixedXML()) {
             OnConfirm = UnselectorConfirm
         };
@@ -57,8 +58,27 @@ public class XMLDynamicMenu : UIController, IFixedXMLObjectContainer {
         };
 
         FreeformGroup = new UIFreeformGroup(MainScreen, Unselect);
-        base.FirstFrame();
+    }
 
+    public (UIScreen, UIFreeformGroup) MakeBlockingScreen(Func<UINode, UIResult?> unselectConfirm) {
+        var unselect = new EmptyNode(new UnselectorFixedXML()) {
+            OnConfirm = n => unselectConfirm?.Invoke(n) ?? UIGroup.SilentNoOp
+        };
+        var s = new UIScreen(this, null, UIScreen.Display.Unlined) {
+            Builder = (s, ve) => {
+                s.HTML.pickingMode = PickingMode.Position;
+                s.Margin.SetLRMargin(0, 0);
+            },
+            UseControlHelper = false
+        };
+        var gr = new UIFreeformGroup(s, unselect);
+        AddScreen(s);
+        return (s, gr);
+    }
+
+    public override void FirstFrame() {
+        base.FirstFrame();
+        
         if (!CaptureFallthroughInteraction) {
             //Normally, the UI container will capture any pointer events not on nodes,
             //but for the persistent interactive menu, we want such events to fall through
@@ -66,12 +86,7 @@ public class XMLDynamicMenu : UIController, IFixedXMLObjectContainer {
             UIRoot.pickingMode = PickingMode.Ignore;
             UIContainer.pickingMode = PickingMode.Ignore;
         }
-        
-        if (_addNodeQueue != null)
-            foreach (var n in _addNodeQueue)
-                FreeformGroup.AddNodeDynamic(n);
-        _addNodeQueue = null;
-        
+
         //testing
         /*
         g.AddNodeDynamic(new EmptyNode(new FixedXMLObject(500, 0) {
@@ -93,18 +108,16 @@ public class XMLDynamicMenu : UIController, IFixedXMLObjectContainer {
         g.AddNodeDynamic(new EmptyNode(new FixedXMLObject(300, 1900)));
         g.AddNodeDynamic(new EmptyNode(new FixedXMLObject(1900, 1700)));
         g.AddNodeDynamic(new EmptyNode(new FixedXMLObject(3400, 1800)));*/
+
     }
 
-    public void AddNode(UINode n) {
-        if (_addNodeQueue != null)
-            _addNodeQueue.Add(n);
-        else
-            FreeformGroup.AddNodeDynamic(n);
+    public void AddNodeDynamic(UINode n) {
+        FreeformGroup.AddNodeDynamic(n);
     }
 
     public void AddScreen(UIScreen s) {
         dynamicScreens.Add(s);
-        if (_addNodeQueue == null) // initial building has completed
+        if (Built)
             BuildLate(s);
     }
 

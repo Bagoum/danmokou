@@ -81,7 +81,7 @@ public class ConstructedType {
 public class PICustomDataBuilder : CustomDataBuilder {
     //For AOT cases, we should fall back to always using dictionary lookups (dynamic lookup).
     public const bool DISABLE_TYPE_BUILDING = 
-#if !EXBAKE_SAVE && !EXBAKE_LOAD
+#if !EXBAKE_SAVE && !EXBAKE_LOAD && !WEBGL
         false;
 #else
         true;
@@ -94,7 +94,12 @@ public class PICustomDataBuilder : CustomDataBuilder {
     public IReadOnlyList<ConstructedType> TypeList => typeList;
 
     public PICustomDataBuilder() : base(
-        typeof(PICustomData), "DanmokouDynamic", null, typeof(float), typeof(int), typeof(Vector2), typeof(Vector3), typeof(V2RV2)) {
+#if !EXBAKE_SAVE && !EXBAKE_LOAD && !WEBGL
+        typeof(PICustomData), "DanmokouDynamic", null, typeof(float), typeof(int), typeof(Vector2), typeof(Vector3), typeof(V2RV2)
+#else
+        typeof(PICustomData)
+#endif
+        ) {
         var consType = ConstructedBaseType = new ConstructedType(customDataDescriptors[CustomDataBaseType], CustomDataBaseType, 0, () => new());
         typeList.Add(consType);
         typeMap[TypeDefKey.Empty] = consType;

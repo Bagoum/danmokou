@@ -569,15 +569,7 @@ public partial class BulletManager {
         /// <returns></returns>
         public static exBulletControl Force(ExPred cond, VTP path) {
             Movement vel = new Movement(path);
-            return new exBulletControl((st, ct, bpi) => {
-#if EXBAKE_SAVE
-                bpi.Ctx.ProxyTypes.Add(typeof(Movement));
-                bpi.Ctx.HoistedReplacements[Ex.Constant(vel)] = Ex.Variable(typeof(Movement), bpi.Ctx.NextProxyArg());  
-#elif EXBAKE_LOAD
-                bpi.Ctx.ProxyArguments.Add(vel);
-#endif
-                return bpi.When(cond, vel.UpdateDeltaNoTime(st));
-            }, BulletControl.P_MOVE_2);
+            return new exBulletControl((st, ct, bpi) => bpi.When(cond, bpi.Proxy(vel).UpdateDeltaNoTime(st)), BulletControl.P_MOVE_2);
         }
 
         /// <summary>
@@ -664,28 +656,14 @@ public partial class BulletManager {
         /// <summary>
         /// If the condition is true, spawn an iNode at the position and run an SM on it.
         /// </summary>
-        public static exBulletControl SM(ExPred cond, StateMachine target) => new((st, ct, bpi) => {
-#if EXBAKE_SAVE
-            bpi.Ctx.ProxyTypes.Add(typeof(StateMachine));
-            bpi.Ctx.HoistedReplacements[Ex.Constant(target)] = Ex.Variable(typeof(StateMachine), bpi.Ctx.NextProxyArg());  
-#elif EXBAKE_LOAD
-            bpi.Ctx.ProxyArguments.Add(target);
-#endif
-            return bpi.When(cond, st.sbc.RunINodeAt(st.ii, Ex.Constant(target), ct));
-        }, BulletControl.P_RUN);
+        public static exBulletControl SM(ExPred cond, StateMachine target) => new((st, ct, bpi) => 
+            bpi.When(cond, st.sbc.RunINodeAt(st.ii, Ex.Constant(bpi.Proxy(target)), ct)), BulletControl.P_RUN);
         
         /// <summary>
         /// When a bullet collides, if the condition is true, spawn an iNode at the position and run an SM on it.
         /// </summary>
-        public static exBulletControl OnCollide(ExPred cond, StateMachine target) => new((st, ct, bpi) => {
-#if EXBAKE_SAVE
-            bpi.Ctx.ProxyTypes.Add(typeof(StateMachine));
-            bpi.Ctx.HoistedReplacements[Ex.Constant(target)] = Ex.Variable(typeof(StateMachine), bpi.Ctx.NextProxyArg());  
-#elif EXBAKE_LOAD
-            bpi.Ctx.ProxyArguments.Add(target);
-#endif
-            return bpi.When(cond, st.sbc.RunINodeAt(st.ii, Ex.Constant(target), ct));
-        }, BulletControl.P_ON_COLLIDE);
+        public static exBulletControl OnCollide(ExPred cond, StateMachine target) => new((st, ct, bpi) => 
+            bpi.When(cond, st.sbc.RunINodeAt(st.ii, Ex.Constant(bpi.Proxy(target)), ct)), BulletControl.P_ON_COLLIDE);
     }
     
     /// <summary>

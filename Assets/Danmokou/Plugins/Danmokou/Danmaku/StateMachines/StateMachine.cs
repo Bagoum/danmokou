@@ -460,7 +460,7 @@ public abstract class StateMachine {
     }
 
     public static StateMachine CreateFromDump(string dump) {
-        using var __ = BakeCodeGenerator.OpenContext(BakeCodeGenerator.CookingContext.KeyType.SM, dump);
+        using var _ = BakeCodeGenerator.OpenContext(BakeCodeGenerator.CookingContext.KeyType.SM, dump);
         var p = IParseQueue.Lex(dump);
         Profiler.BeginSample("SM AST construction");
         var ast = Create(p);

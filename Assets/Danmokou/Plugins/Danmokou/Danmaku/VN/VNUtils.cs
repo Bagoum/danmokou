@@ -53,7 +53,7 @@ public static class VNUtils {
                     return n as UINode;
                 }).ToArray();
                 menu.OperateOnResult(new UIResult.GoToScreen(optsScreen, menu.Unselect), new() {
-                    ScreenTransitionTime = 1f, DelayScreenFadeIn = false
+                    ScreenTransitionTime = 0.7f, DelayScreenFadeIn = false
                 }).ContinueWithSync();
             }
         });

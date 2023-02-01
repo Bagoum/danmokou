@@ -1,0 +1,5 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/Danmokou/UXML/UIScreen.uss?fileID=7433441132597879392&amp;guid=6f4a2bd40c2da0143a9f109ca63431b9&amp;type=3#UIScreen" />
+    <Style src="project://database/Assets/Danmokou/UXML/nodes/UINode.uss?fileID=7433441132597879392&amp;guid=908aa769b12ea7c44aae7ea3f797c582&amp;type=3#UINode" />
+    <ui:VisualElement picking-mode="Ignore" class="tooltip" style="flex-direction: row; justify-content: space-around; position: absolute; transform-origin: left bottom;" />
+</ui:UXML>

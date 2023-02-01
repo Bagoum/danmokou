@@ -23,6 +23,7 @@ MonoBehaviour:
   UIScreenRowNoStretch: {fileID: 9197481963319205126, guid: ec9196b6a00d0be4282ebe5f816e1c5c,
     type: 3}
   Popup: {fileID: 9197481963319205126, guid: 5abe3063ab4c7ca4a8bf9590d76a2b82, type: 3}
+  Tooltip: {fileID: 9197481963319205126, guid: 2f4b73a7f027154428bae4f3654aefa4, type: 3}
   UINode: {fileID: 9197481963319205126, guid: a814838ea7fd5364e96b285b2bfd246b, type: 3}
   OptionsColumnUINode: {fileID: 9197481963319205126, guid: 911971cc3f092fd4aba74da671e2b949,
     type: 3}

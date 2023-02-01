@@ -29,7 +29,12 @@ using static FileUtils;
 namespace Danmokou.Core {
 public static class SaveData {
     private const string SETTINGS = FileUtils.SAVEDIR + "settings.json";
-    private static string RECORD => FileUtils.SAVEDIR + $"record-{GameManagement.References.gameDefinition.Key}.json";
+    private static string RECORD => 
+        //This is required for some cases around testing, where GameManagement is not loaded
+        GameManagement.Main != null ?
+            FileUtils.SAVEDIR + $"record-{GameManagement.References.gameDefinition.Key}.json"
+            : FileUtils.SAVEDIR + "unbound-record.json";
+    
     private const string REPLAYS_DIR = FileUtils.SAVEDIR + "Replays/";
 
     [Serializable]
@@ -212,12 +217,11 @@ public static class SaveData {
 #if WEBGL
                     Shaders = false,
                     AllowInputLinearization = false,
-                    SaveAsBinary = false,
                     Fullscreen = FullScreenMode.Windowed,
                     LegacyRenderer = true,
                     UnfocusedHitbox = false,
-                    Vsync = 0,
-                    Resolution = (1600, 900),
+                    Vsync = 1,
+                    Resolution = (1920, 1080),
 #else
                     Resolution = Resolution,
 #endif
@@ -395,6 +399,10 @@ public static class SaveData {
     }
 
     private static void StartProfiling() {
+        if (Debug.isDebugBuild) {
+            Debug.Log("Updating memory");
+            Profiler.maxUsedMemory = 536_870_912;
+        }
         if (s.ProfilingEnabled) {
             Profiler.logFile = "profilerLog";
             Profiler.enableBinaryLog = true;

@@ -51,6 +51,10 @@
 				float2 aspect = float2(_BY / _BX * _MainTex_TexelSize.z / _MainTex_TexelSize.w, 1);
 				float2 uvScroll = float2(0, 0.24 * t);
 				float2 uv = fuv * float2(_BX, _BY) + uvScroll;
+				//if (abs(frac(uv.x)) < 0.01)
+				//	return float3(1,0,0);
+				//if (abs(frac(uv.y)) < 0.01)
+				//	return float3(1,0,0);
 				float2 block = floor(uv);
 				if (block.y < _BY)
 					return float3(0, 0, 0);

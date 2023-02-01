@@ -69,7 +69,7 @@ public class GhostOfThePastGameDef : ADVGameDef {
                     c1.style.maxWidth = 60f.Percent();
                     c1.style.alignItems = Align.Center;
                 },
-                MenuBackgroundOpacity = 0.8f
+                MenuBackgroundOpacity = UIScreen.DefaultMenuBGOpacity
             };
             var evInfo = evidenceScreen.ColumnRender(1);
             var evs = new UIColumn(evidenceScreen, null, 
@@ -104,7 +104,7 @@ public class GhostOfThePastGameDef : ADVGameDef {
                 VisibleIf = () => Data.EvidenceButtonVisible
             };
             toEvidenceButton.ConfigureAbsoluteLocation(new FixedXMLObject(120, 90, null, null), XMLUtils.Pivot.TopLeft);
-            menu.AddNode(toEvidenceButton);
+            menu.AddNodeDynamic(toEvidenceButton);
             tokens.Add(evidenceRequest.RequestsChanged.Subscribe(_ => {
                 evSize.PushIfNotSame(evidenceRequest.CanPresent ? 1.4f : 1f);
                 toEvidenceButton.RedrawIfBuilt();
@@ -140,7 +140,7 @@ public class GhostOfThePastGameDef : ADVGameDef {
             var s0main = Context("s0main", async () => {
                 var m98 = VN.Find<Marisa98>();
                 var m = Marisa;
-                m.Location.Value -= V3(0, 3);
+                m.LocalLocation.Value -= V3(0, 3);
                 using var sc = VN.Add(new ScreenColor());
                 sc.Tint.Value = Color.black._();
                 sc.Alpha = 0.95f;
@@ -520,8 +520,8 @@ public class GhostOfThePastGameDef : ADVGameDef {
                     s.SortingID.Value = -100;
                     n.SortingID.Value = -50;
                     s.Alpha = n.Alpha = 0;
-                    s.Location.Value = V3(6, 4);
-                    n.Location.Value = V3(0, 2);
+                    s.LocalLocation.Value = V3(6, 4);
+                    n.LocalLocation.Value = V3(0, 2);
                     n.Emote.Value = "happy";
                     await vn.Sequential(
                         m.ESayC("angry", l371),
@@ -653,7 +653,7 @@ public class GhostOfThePastGameDef : ADVGameDef {
                 );
                 ev = await evidenceRequest.WaitForEvidence("gev3");
                 if (ev is Evidence.Mima) {
-                    mi.Location.Value = V3(-3, -3);
+                    mi.LocalLocation.Value = V3(-3, -3);
                     await vn.Sequential(
                         m.EmoteSay("surprise", l254).And(g.FadeTo(0, 1f)).C,
                         mi.SayC(l255, flags: SpeakFlags.Anonymous),
@@ -683,7 +683,7 @@ public class GhostOfThePastGameDef : ADVGameDef {
                         mi.ESayC("worry", l279),
                         mi.EmoteSay("happy", l280).And(mi.MoveBy(V3(-2, 0), 0.8f), mi.FadeTo(0, 0.8f)).C,
                         new LazyAction(() => {
-                            mi!.Location.Value = V3(-3, 6);
+                            mi!.LocalLocation.Value = V3(-3, 6);
                             mi!.EulerAnglesD.Value = V3(0, 0, 180);
                         }),
                         mi.MoveBy(V3(0, -2), 1f).And(mi.FadeTo(1, 1), mi.EmoteSay("happy", l281)).C,
@@ -696,7 +696,7 @@ public class GhostOfThePastGameDef : ADVGameDef {
                         mi.Say(l288).And(mi.MoveBy(V3(0, 2), 0.5f), mi.FadeTo(0, 0.5f)).C
                     );
                 } else if (ev is Evidence.Marisa) {
-                    mi.Location.Value = V3(-6, 0);
+                    mi.LocalLocation.Value = V3(-6, 0);
                     mi.Emote.Value = "angry";
                     await vn.Sequential(
                         g.SetEmote("smug"),
@@ -780,7 +780,7 @@ public class GhostOfThePastGameDef : ADVGameDef {
                     var isCurr = map.key == mapName;
                     i.Assert(new InteractableAssertion(m, _ => GoToMapUI(map.key), $"go to {map.key}") {
                         Location = V3(7.3f, 1.8f + map.mapLinkOffset),
-                        Type = new InteractableType.Map(isCurr),
+                        Info = new InteractableInfo.Map(isCurr),
                         Hover = new Interactable.HoverAction.VNOp(() => 
                             VN.Find<Marisa>().Say(isCurr ? 
                                 $"I'm currently at {map.desc(d)}." :

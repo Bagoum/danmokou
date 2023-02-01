@@ -173,7 +173,7 @@ public static class SMParser {
         }
 
         public static readonly Parser<char, string> Prm = 
-            Many1Satisfy(c => char.IsLetterOrDigit(c) || c == '_', "letter/digit/underscore");//.Label("macro parameter name");
+            Many1Satisfy(c => char.IsLetterOrDigit(c) || c == '_', "letter/digit/underscore").LabelV("macro parameter name");
 
     }
     public readonly struct MacroArg {
@@ -435,7 +435,7 @@ public static class SMParser {
                         new LocatedParseUnit(kpcls.content))))),
                 (kpcls, _) => ParseUnit.MacroDef(kpcls.key)), 
             MACRO_CLOSE
-        ).ThenIg(CNewln).Label("macro (bounded with !{ }!)");
+        ).ThenIg(CNewln).LabelV("macro (bounded with !{ }!)");
 
     private static Parser<char, ParseUnit> PropertyParser(string marker, string result) =>
         Sequential(

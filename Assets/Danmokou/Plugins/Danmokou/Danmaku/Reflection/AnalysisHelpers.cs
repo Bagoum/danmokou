@@ -39,6 +39,6 @@ public static class AnalysisHelpers {
     public static Diagnostic ToDiagnostic<T>(this LocatedParserError err, InputStream<T> stream) => 
         new(DiagnosticSeverity.Error, 
             stream.TokenWitness.ToPosition(err.Index, stream.Source.Length).ToRange(), 
-            "Parsing", err.Show(stream));
+            "Parsing", stream.ShowAllFailures(err));
 }
 }

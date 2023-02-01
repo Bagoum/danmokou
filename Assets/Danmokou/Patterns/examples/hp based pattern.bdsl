@@ -1,0 +1,24 @@
+<#> strict(comma)
+pattern({ })
+phase(0)
+	paction(0)
+		shift-phase-to(1)
+
+<!> hp 10000
+phase 0
+	paction 0
+		position 0 2
+		bullet-control persist circle-blue/w sm onlyonce > t 1
+			sync ellipse-*/w <> gsr2c 10 {
+				colorf({ red green }, &colorIndex)
+			} s tprot cx 1
+		async circle-blue/w <> gcr {
+			wait if(< hpratio mine 0.7, 40, 120)
+			times _
+			rpp <5>
+		} gsr {
+			circle
+			times if(< hpratio mine 0.9, 12, 4)
+			bindItr(colorIndex)
+			expose({ f colorIndex })
+		} s tprot cx 4

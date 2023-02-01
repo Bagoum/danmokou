@@ -50,7 +50,7 @@
 			sampler2D _MainTex;
             float4 _MainTex_TexelSize;
 
-			float4 frag(fragment f) : SV_Target { 
+			float4 frag(fragment f) : SV_Target {
 				float4 c = tex2D(_MainTex, f.uv) * f.color;
                 float r = length(f.uv - center) * _ScaleX;
 				c *= smoothstep(-_Smooth, _Smooth, r - _R);

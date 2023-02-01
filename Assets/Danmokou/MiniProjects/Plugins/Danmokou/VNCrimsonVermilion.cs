@@ -59,7 +59,7 @@ public static class _VNCrimsonVermilion {
             var o = new SharedObjects() {
                 vn = vn,
                 rg = (UnityRenderGroup) vn.DefaultRenderGroup,
-                rgb = new UnityRenderGroup(vn, "black", 1, false),
+                rgb = vn.Add(new UnityRenderGroup( "black", 1, false)),
                 footstep = null!,
                 mainDialogue = vn.Add(new ADVDialogueBox()),
                 blackScreenDialogue = vn.Add(new ADVDialogueBox()), 
@@ -98,7 +98,7 @@ public static class _VNCrimsonVermilion {
             var db = o.blackScreenDialogue;
             
             //code
-            reimu.Location.Value = V3(0, -7);
+            reimu.LocalLocation.Value = V3(0, -7);
             await reimu.SetEmote("satisfied");
             await vn.Sequential(
                 room.FadeTo(0.2f, 1f).And(reimu.FadeTo(1f, 1f), md.FadeTo(1f, 1f)),
@@ -131,11 +131,11 @@ public static class _VNCrimsonVermilion {
                 o.GetBGM("s02-2"),
                 vn.Wait(0.5f),
                 Lazy(() => {
-                    kasen.Location.Value = V3(-5, 0);
+                    kasen.LocalLocation.Value = V3(-5, 0);
                     kasen.Alpha = 1;
-                    yukari.Location.Value = V3(-2, 0);
+                    yukari.LocalLocation.Value = V3(-2, 0);
                     yukari.Alpha = 1;
-                    reimu.Location.Value = V3(12, 0);
+                    reimu.LocalLocation.Value = V3(12, 0);
                     room.Alpha = 0;
                     courtyard.Alpha = 1;
                 }),
@@ -205,7 +205,7 @@ public static class _VNCrimsonVermilion {
                 yukari.EmoteSayC("", l51),
                 marisa.SayC(l52, flags: SpeakFlags.Anonymous),
                 Lazy(() => {
-                    marisa.Location.Value = V3(5, 12);
+                    marisa.LocalLocation.Value = V3(5, 12);
                 }),
                 marisa.MoveTo(V3(5, 0), 1f, CBezier(.4, .62, .45, 1.24))
                     .And(marisa.FadeTo(1f, 0.5f))
@@ -237,7 +237,7 @@ public static class _VNCrimsonVermilion {
                 vn.Wait(0.4f),
                 marisa.EmoteSayC("", l64),
                 reimu.SayC(l65),
-                Lazy(() => o.bgm.FadeOut()),
+                Lazy(() => o.bgm.FadeOutDestroy()),
                 o.rg.DoTransition(new RenderGroupTransition.Fade(o.rgb, 1f)),
                 db.Say("After eating brunch, Reimu and Marisa head to the human village...").C
             );
@@ -275,7 +275,7 @@ public static class _VNCrimsonVermilion {
             await vn.Sequential(
                 Lazy(() => {
                     town.Alpha = 1;
-                    yachie.Location.Value = V3(-7, 0);
+                    yachie.LocalLocation.Value = V3(-7, 0);
                     reimu.Emote.Value = "";
                     marisa.Emote.Value = "";
                     md.Clear();
@@ -305,16 +305,16 @@ public static class _VNCrimsonVermilion {
             Lazy(() => {
                 town.Alpha = 0;
                 library.Alpha = 1;
-                yachie.Location.Value = V3(-12, 0);
+                yachie.LocalLocation.Value = V3(-12, 0);
                 yachie.Alpha = 1;
-                kosuzu.Location.Value = V3(6, 0);
+                kosuzu.LocalLocation.Value = V3(6, 0);
                 kosuzu.Alpha = 1;
                 reimu.Emote.Value = "";
                 marisa.Emote.Value = "";
-                reimu.Location.Value = V3(-9, 0);
-                marisa.Location.Value = V3(-6, 0);
-                komakusa.Location.Value = V3(-3, 0);
-                kaguya.Location.Value = V3(-2, 0);
+                reimu.LocalLocation.Value = V3(-9, 0);
+                marisa.LocalLocation.Value = V3(-6, 0);
+                komakusa.LocalLocation.Value = V3(-3, 0);
+                kaguya.LocalLocation.Value = V3(-2, 0);
                 md.Clear();
             }),
             o.rgb.DoTransition(new RenderGroupTransition.Fade(o.rg, 1f)),
@@ -422,7 +422,7 @@ public static class _VNCrimsonVermilion {
             reimu.SayC(l122),
             Lazy(() => db.Clear()),
             o.rg.DoTransition(new RenderGroupTransition.Fade(o.rgb, 1f)),
-            Lazy(() => o.bgm.FadeOut()),
+            Lazy(() => o.bgm.FadeOutDestroy()),
             db.Say("Reimu and Marisa leave Suzunaan, only to wander aimlessly around the outskirts of the village...").C
             );
 
@@ -455,14 +455,14 @@ public static class _VNCrimsonVermilion {
             
             await vn.Sequential(Lazy(() => {
                     field.Alpha = 1;
-                    kurokoma.Location.Value = V3(-3.5, 0);
+                    kurokoma.LocalLocation.Value = V3(-3.5, 0);
                     kurokoma.Alpha = 1;
                     miko.Alpha = 1;
-                    miko.Location.Value = V3(-2, 12);
+                    miko.LocalLocation.Value = V3(-2, 12);
                     reimu.Emote.Value = "";
                     marisa.Emote.Value = "";
-                    reimu.Location.Value = V3(12, 0);
-                    marisa.Location.Value = V3(15, 0);
+                    reimu.LocalLocation.Value = V3(12, 0);
+                    marisa.LocalLocation.Value = V3(15, 0);
                     md.Clear();
                 }),
                 o.rgb.DoTransition(new RenderGroupTransition.Fade(o.rg, 1f)),
@@ -505,7 +505,7 @@ public static class _VNCrimsonVermilion {
                 ).C,
                 kurokoma.SayC(l144),
                 kurokoma.AlsoSayN(l145).C,
-                Lazy(() => o.bgm.FadeOut()),
+                Lazy(() => o.bgm.FadeOutDestroy()),
                 kurokoma.SetEmote("surprise"),
                 reimu.SetEmote("surprise"),
                 marisa.SetEmote("surprise"),
@@ -545,7 +545,7 @@ public static class _VNCrimsonVermilion {
                 miko.SetEmote("emb1"),
                 miko.AlsoSay(l164_1).C,
                 kurokoma.ESayC("", l165),
-                Lazy(() => o.bgm.FadeOut()),
+                Lazy(() => o.bgm.FadeOutDestroy()),
                 miko.EmoteSay("surprise", l166).And(
                     kurokoma.MoveBy(V3(3, 12), 1.6f, CBezier(.37, -.41, .85, .68)),
                     vn.Wait(0.6).Then(vn.aSFX("vn-impact-1")),
@@ -560,7 +560,7 @@ public static class _VNCrimsonVermilion {
                 Lazy(() => {
                     reimu.Emote.Value = "";
                     marisa.Emote.Value = "";
-                    mokou.Location.Value = V3(-4, 0);
+                    mokou.LocalLocation.Value = V3(-4, 0);
                     md.Clear();
                 }),
                 o.rgb.DoTransition(new RenderGroupTransition.Fade(o.rg, 1f)),
@@ -617,12 +617,12 @@ public static class _VNCrimsonVermilion {
                 Lazy(() => {
                     field.Alpha = 0;
                     farm.Alpha = 1;
-                    kutaka.Location.Value = V3(-3.5, 0);
+                    kutaka.LocalLocation.Value = V3(-3.5, 0);
                     kutaka.Alpha = 1;
                     reimu.Emote.Value = "";
                     marisa.Emote.Value = "";
-                    reimu.Location.Value = V3(12, 0);
-                    marisa.Location.Value = V3(15, 0);
+                    reimu.LocalLocation.Value = V3(12, 0);
+                    marisa.LocalLocation.Value = V3(15, 0);
                     md.Clear();
                 }),
                 o.rgb.DoTransition(new RenderGroupTransition.Fade(o.rg, 1f)),
@@ -679,7 +679,7 @@ public static class _VNCrimsonVermilion {
                 kutaka.ESayC("happy", l257),
                 chicken.SayC(l258),
                 Lazy(() => db.Clear()),
-                Lazy(() => o.bgm.FadeOut()),
+                Lazy(() => o.bgm.FadeOutDestroy()),
                 o.rg.DoTransition(new RenderGroupTransition.Fade(o.rgb, 1f)),
                 db.Say("Reimu and Marisa head back to the village...").C
                 );
@@ -696,11 +696,11 @@ public static class _VNCrimsonVermilion {
             using var mayumi = vn.Add(new Mayumi());
             using var yuuka = vn.Add(new Yuuka());
             using var lily = vn.Add(new YellowLily());
-            lily.Location.Value = Vector3.Zero;
+            lily.LocalLocation.Value = Vector3.Zero;
             using var iris = vn.Add(new YellowIris());
-            iris.Location.Value = V3(-1, 0);
+            iris.LocalLocation.Value = V3(-1, 0);
             using var lys = vn.Add(new FleurDeLys());
-            lys.Location.Value = V3(1.7, 0);
+            lys.LocalLocation.Value = V3(1.7, 0);
             flower.Alpha = 0;
             youmu.Alpha = 0;
             mayumi.Alpha = 0;
@@ -719,14 +719,14 @@ public static class _VNCrimsonVermilion {
                 Lazy(() => {
                     flower.Alpha = 1;
                     mayumi.Alpha = 1;
-                    mayumi.Location.Value = V3(-5, 0);
+                    mayumi.LocalLocation.Value = V3(-5, 0);
                     mayumi.Emote.Value = "worry";
                     reimu.Emote.Value = "";
                     marisa.Emote.Value = "";
-                    reimu.Location.Value = V3(12, 0);
-                    marisa.Location.Value = V3(15, 0);
-                    yuuka.Location.Value = V3(7, 0);
-                    youmu.Location.Value = V3(-12, 0);
+                    reimu.LocalLocation.Value = V3(12, 0);
+                    marisa.LocalLocation.Value = V3(15, 0);
+                    yuuka.LocalLocation.Value = V3(7, 0);
+                    youmu.LocalLocation.Value = V3(-12, 0);
                     youmu.Alpha = 1;
                     md.Clear();
                 }),
@@ -915,7 +915,7 @@ public static class _VNCrimsonVermilion {
                 reimu.ESayC("surprise", l382),
                 yuuka.ESayC("happy", l383),
                 Lazy(() => db.Clear()),
-                Lazy(() => o.bgm.FadeOut()),
+                Lazy(() => o.bgm.FadeOutDestroy()),
                 o.rg.DoTransition(new RenderGroupTransition.Fade(o.rgb, 1f)),
                 db.Say("Reimu and Marisa return to the shrine to end their uneventful journey...").C
             );
@@ -945,10 +945,10 @@ public static class _VNCrimsonVermilion {
                     room.Alpha = 1;
                     reimu.Emote.Value = "";
                     marisa.Emote.Value = "";
-                    reimu.Location.Value = V3(-1, 0);
-                    marisa.Location.Value = V3(3, 0);
-                    kasen.Location.Value = V3(-5, 1);
-                    yukari.Location.Value = V3(-2, 1);
+                    reimu.LocalLocation.Value = V3(-1, 0);
+                    marisa.LocalLocation.Value = V3(3, 0);
+                    kasen.LocalLocation.Value = V3(-5, 1);
+                    yukari.LocalLocation.Value = V3(-2, 1);
                     md.Clear();
                 }),
                 o.rgb.DoTransition(new RenderGroupTransition.Fade(o.rg, 1f)),
@@ -1031,7 +1031,7 @@ public static class _VNCrimsonVermilion {
                 reimu.Say(l431).And(reimu.MoveBy(V3(0.8, 0), 1)).C,
                 marisa.Say(l432).And(marisa.MoveBy(V3(-0.8, 0), 1)).C,
                 Lazy(() => db.Clear()),
-                Lazy(() => o.bgm.FadeOut()),
+                Lazy(() => o.bgm.FadeOutDestroy()),
                 o.rg.DoTransition(new RenderGroupTransition.Fade(o.rgb, 1f)),
                 db.Say("The End. Thanks for reading!").C
             );

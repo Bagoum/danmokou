@@ -39,7 +39,7 @@ public class DifficultySettings {
     public double playerDamageMod;
     
     public double bossHPMod;
-    public bool respawnOnDeath;
+    public bool? respawnOnDeath;
     public double faithDecayMultiplier;
     public double faithAcquireMultiplier;
     public double meterUsageMultiplier;
@@ -65,7 +65,6 @@ public class DifficultySettings {
     /// </summary>
     [Obsolete]
     public DifficultySettings() : this(FixedDifficulty.Normal) { }
-    public DifficultySettings(FixedDifficulty standard) : this((FixedDifficulty?)standard) { }
 
     public void SetCustomDifficulty(int value) {
         customValueSlider = value;
@@ -73,7 +72,7 @@ public class DifficultySettings {
     }
     public DifficultySettings(FixedDifficulty? standard, int slider=DEFAULT_SLIDER, int? rank = null, 
         int numSuicideBullets = 0,
-        double playerDamageMod=1f, float bulletSpeedMod=1f, double bossHPMod=1f, bool respawnOnDeath = false, 
+        double playerDamageMod=1f, float bulletSpeedMod=1f, double bossHPMod=1f, bool? respawnOnDeath = null, 
         double faithDecayMult=1, double faithAcquireMult=1, double meterUsageMult=1, double meterAcquireMult=1, 
         bool bombsEnabled=true, bool meterEnabled=true, 
         float playerSpeedMult=1f, float playerHitboxMult=1f, float playerGrazeboxMult=1f,
@@ -199,7 +198,7 @@ public readonly struct CampaignSnapshot {
     public readonly int frame;
     public readonly int bombsUsed;
     public CampaignSnapshot(InstanceData data) {
-        hitsTaken = data.HitsTaken;
+        hitsTaken = data.BasicF.HitsTaken;
         meterFrames = data.MeterF.MeterFrames;
         frame = ETime.FrameNumber;
         bombsUsed = data.BombsUsed;
@@ -301,7 +300,7 @@ public readonly struct PhaseCompletion {
         this.clear = clear;
         this.exec = exec;
         this.timeout = timeout;
-        this.hits = GameManagement.Instance.HitsTaken - snap.hitsTaken;
+        this.hits = GameManagement.Instance.BasicF.HitsTaken - snap.hitsTaken;
         this.noMeter = GameManagement.Instance.MeterF.MeterFrames == snap.meterFrames;
         this.noBombs = GameManagement.Instance.BombsUsed == snap.bombsUsed;
         this.elapsedFrames = ETime.FrameNumber - snap.frame;

@@ -165,15 +165,15 @@ public class UIManager : CoroutineRegularUpdater, IUIManager, IStageAnnouncer {
         Listen(EvInstance, i => i.ScoreF.MaxScore, s => maxScore.text = string.Format(scoreFormat, s));
         Listen(EvInstance, i => i.ScoreF.PIV, p => pivMult.text = string.Format(pivMultFormat, p));
         Listen(EvInstance, i => i.PowerF.Power, p => power.text = string.Format(powerFormat, p, EvInstance.Value.PowerF.PowerMax));
-        Listen(EvInstance, i => i.Lives, l => {
+        Listen(EvInstance, i => i.BasicF.Lives, l => {
             for (int ii = 0; ii < healthPoints.Length; ++ii) healthPoints[ii].sprite = healthEmpty;
             for (int hi = 0; hi < healthItrs.Length; ++hi) {
-                for (int ii = 0; ii + hi * healthPoints.Length < Instance.Lives && ii < healthPoints.Length; ++ii) {
+                for (int ii = 0; ii + hi * healthPoints.Length < Instance.BasicF.Lives && ii < healthPoints.Length; ++ii) {
                     healthPoints[ii].sprite = healthItrs[hi];
                 }
             }
         });
-        Listen(EvInstance, i => i.Bombs, b => {
+        Listen(EvInstance, i => i.BasicF.Bombs, b => {
             var color = Instance.TeamCfg?.Support is Ability.Bomb { BombsRequired: not null } ?
                 Color.white :
                 new Color(0.5f, 0.5f, 0.5f, 0.9f);
@@ -182,7 +182,7 @@ public class UIManager : CoroutineRegularUpdater, IUIManager, IStageAnnouncer {
                 bombPoints[ii].color = color;
             }
             for (int bi = 0; bi < bombItrs.Length; ++bi) {
-                for (int ii = 0; ii + bi * bombPoints.Length < Instance.Bombs && ii < bombPoints.Length; ++ii) {
+                for (int ii = 0; ii + bi * bombPoints.Length < Instance.BasicF.Bombs && ii < bombPoints.Length; ++ii) {
                     bombPoints[ii].sprite = bombItrs[bi];
                 }
             }

@@ -39,7 +39,7 @@ namespace Danmokou.Services {
 /// This is the only scene-persistent object in the game.
 /// </summary>
 public class GameManagement : CoroutineRegularUpdater {
-    public static readonly Version EngineVersion = new(10, 0, 0);
+    public static readonly Version EngineVersion = new(10, 1, 0);
     public static readonly int ExecutionNumber = new System.Random().Next();
     public static DifficultySettings Difficulty => Instance.Difficulty;
 
@@ -88,7 +88,11 @@ public class GameManagement : CoroutineRegularUpdater {
 
     private static InstanceFeatures DefaultFeatures => 
         References.gameDefinition is IDanmakuGameDef g ?
-            g.MakeFeatures(defaultDifficulty, null) :
+            g.MakeFeatures(defaultDifficulty, 
+#if UNITY_EDITOR
+                Main.OpenAsDebugMode ? InstanceMode.DEBUG : 
+#endif
+                    InstanceMode.NULL, null) :
             InstanceFeatures.InactiveFeatures;
 
     private void Awake() {
@@ -350,8 +354,8 @@ public class GameManagement : CoroutineRegularUpdater {
     [ContextMenu("Bake Expressions")]
     public void BakeExpressions() {
         BakeCodeGenerator.BakeExpressions();
-        //Reflector.GenerateAoT();
-        //EditorApplication.ExitPlaymode();
+        Reflector.GenerateAoT();
+        EditorApplication.ExitPlaymode();
     }
 //#endif
 #endif

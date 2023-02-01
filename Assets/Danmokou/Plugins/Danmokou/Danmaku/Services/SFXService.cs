@@ -200,6 +200,10 @@ public class SFXService : RegularUpdater, ISFXService {
 
     public void Request(SFXConfig? aci, SFXType type = SFXType.Default) {
         if (aci == null) return;
+        if (aci.clip == null) {
+            Logs.Log($"SFXConfig {aci} does not have any associated sound file.", true, level: LogLevel.WARNING);
+            return;
+        }
         if (aci.loop) {
             RequestLoop(aci);
             return;

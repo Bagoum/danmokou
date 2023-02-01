@@ -33,7 +33,6 @@ using UnityEngine.Profiling;
 using UnityEngine.Serialization;
 using static Danmokou.Services.GameManagement;
 using static Danmokou.DMath.LocationHelpers;
-using static Danmokou.GameInstance.InstanceConsts;
 
 namespace Danmokou.Player {
 /// <summary>
@@ -106,7 +105,7 @@ public partial class PlayerController : BehaviorEntity, ICircularSimpleBulletCol
     public ICancellee BoundingToken => Instance.Request?.InstTracker ?? Cancellable.Null;
     public bool AllowPlayerInput => AllControlEnabled && StateAllowsInput(State);
     private ActiveTeamConfig Team { get; set; } = null!;
-    private bool RespawnOnHit => GameManagement.Difficulty.respawnOnDeath;
+    private bool RespawnOnHit => GameManagement.Instance.ConfigurationF.UseTraditionalRespawn;
     public int HitInvulnFrames => Mathf.CeilToInt(hitInvuln * ETime.ENGINEFPS_F);
     public Vector2 DesiredMovement01 {
         get {
@@ -389,6 +388,9 @@ public partial class PlayerController : BehaviorEntity, ICircularSimpleBulletCol
                 SetMovementDelta(Vector2.zero);
                 spawnedShip.SetMovementDelta(Vector2.zero);
             }
+        } else {
+            SetMovementDelta(Vector2.zero);
+            spawnedShip.SetMovementDelta(Vector2.zero);
         }
     }
     
@@ -623,7 +625,7 @@ public partial class PlayerController : BehaviorEntity, ICircularSimpleBulletCol
     
     private void _DoHit(int dmg) {
         BulletManager.AutodeleteCircleOverTime(SoftcullProperties.OverTimeDefault(BPI.loc, 1.35f, 0f, 12f));
-        BulletManager.RequestPowerAura("powerup1", 0, 0, new RealizedPowerAuraOptions(
+        BulletManager.RequestPowerAura("powerup1", 0, 0, GenCtx.Empty, new RealizedPowerAuraOptions(
             new PowerAuraOptions(new[] {
                 PowerAuraOption.Color(_ => ColorHelpers.CV4(spawnedShip.meterDisplay)),
                 PowerAuraOption.Time(_ => 1.5f),
@@ -646,7 +648,7 @@ public partial class PlayerController : BehaviorEntity, ICircularSimpleBulletCol
     private IEnumerator WaitDeathbomb(int dmg, int frames) {
         spawnedShip.OnPreHitEffect.Proc(bpi.loc, bpi.loc, 1f);
         using var gcx = GenCtx.New(this, V2RV2.Zero);
-        BulletManager.RequestPowerAura("powerup1", 0, 0, new RealizedPowerAuraOptions(
+        BulletManager.RequestPowerAura("powerup1", 0, 0, gcx, new RealizedPowerAuraOptions(
             new PowerAuraOptions(new[] {
                 PowerAuraOption.Color(_ => ColorHelpers.CV4(spawnedShip.meterDisplay.WithA(1.5f))),
                 PowerAuraOption.InitialTime(_ => 0.7f * frames / 120f), 

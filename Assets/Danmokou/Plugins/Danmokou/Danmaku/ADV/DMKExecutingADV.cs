@@ -16,6 +16,7 @@ using Danmokou.UI.XML;
 using Danmokou.VN;
 using Suzunoya.ADV;
 using Suzunoya.ControlFlow;
+using Suzunoya.Entities;
 using SuzunoyaUnity.Rendering;
 using UnityEngine.UIElements;
 // ReSharper disable AccessToModifiedClosure
@@ -56,25 +57,34 @@ public abstract class DMKExecutingADV<I, D> : BaseExecutingADV<I, D>, IRegularUp
         HideMD();
         narrator = VN.Add(new Narrator());
         rg = (UnityRenderGroup)VN.DefaultRenderGroup;
-        rgb = new UnityRenderGroup(VN, "black", 1, true);
+        rgb = vn.Add(new UnityRenderGroup("black", 1, true));
         rg.Visible.Value = false;
+
+        bool showOnNextDialogue = false;
         
         //Listen to common events
-        VN.ContextStarted.Subscribe(c => {
+        tokens.Add(VN.ContextStarted.Subscribe(c => {
             if (VN.Contexts.Count == 0) {
-                md.Clear();
+                md.Clear(SpeakFlags.None);
+                showOnNextDialogue = true;
+            }
+        }));
+        tokens.Add(md.DialogueStarted.Subscribe(_ => {
+            if (showOnNextDialogue) {
+                showOnNextDialogue = false;
                 ShowMD();
             }
-        });
-        VN.ContextFinished.Subscribe(c => {
+        }));
+        tokens.Add(VN.ContextFinished.Subscribe(c => {
             if (VN.Contexts.Count == 0 && VN.VNStateActive) {
                 HideMD();
             }
-        });
+        }));
         menu = ServiceLocator.Find<XMLDynamicMenu>();
         tokens.Add(DataChanged.Subscribe(_ => {
             menu.Redraw();
         }));
+        SetupMapStates();
     }
     
     
@@ -103,6 +113,9 @@ public abstract class DMKExecutingADV<I, D> : BaseExecutingADV<I, D>, IRegularUp
         dialogueShowOffset.Update(ETime.FRAME_TIME);
         dialogueShowAlpha.Update(ETime.FRAME_TIME);
     }
+    
+    /// <inheritdoc/>
+    public override void ADVDataFinalized() { }
 
     protected SelectionRequest<string> SetupSelector() => SetupSelector<string>(x => x);
     protected SelectionRequest<C> SetupSelector<C>(Func<C, LString> displayer) {
@@ -110,6 +123,11 @@ public abstract class DMKExecutingADV<I, D> : BaseExecutingADV<I, D>, IRegularUp
         tokens.Add(token);
         return selector;
     }
+
+    // --- Helpers
+
+    protected InteractableBCtxAssertion InteractableBCTX(BoundedContext<Unit> bctx, Vector3 location = default) =>
+        new InteractableBCtxAssertion(Manager, bctx) { Location = location };
 
 }
 

@@ -295,6 +295,7 @@ public static partial class SyncPatterns {
     /// <param name="target">Child SyncPatterns to run</param>
     /// <returns></returns>
     [Alias("GSR")]
+    [CreatesInternalScope(0)]
     public static SyncPattern GSRepeat(GenCtxProperties<SyncPattern> props, SyncPattern[] target) {
         return sbh => {
             SPExecutionTracker exec = new SPExecutionTracker(props, sbh, out bool isClipped);
@@ -320,6 +321,7 @@ public static partial class SyncPatterns {
     /// <param name="target">Child SyncPatterns to run</param>
     /// <returns></returns>
     [Alias("GSR2")]
+    [CreatesInternalScope(2)]
     public static SyncPattern GSRepeat2(GCXF<float> times, GCXF<V2RV2> rpp, GenCtxProperty[] props, SyncPattern[] target) =>
         GSRepeat(new GenCtxProperties<SyncPattern>(props.Append(GenCtxProperty.Sync(times, rpp))), target);
     
@@ -333,6 +335,7 @@ public static partial class SyncPatterns {
     /// <param name="target">Child SyncPatterns to run</param>
     /// <returns></returns>
     [Alias("GSRf")]
+    [CreatesInternalScope(2)]
     public static SyncPattern GSRepeatFRV2(GCXF<float> times, GCXF<V2RV2> frv2, GenCtxProperty[] props, SyncPattern[] target) =>
         GSRepeat(new GenCtxProperties<SyncPattern>(props.Append(GenCtxProperty.Times(times)).Append(GenCtxProperty.FRV2(frv2))), target);
     
@@ -346,6 +349,7 @@ public static partial class SyncPatterns {
     /// <param name="target">Child SyncPatterns to run</param>
     /// <returns></returns>
     [Alias("GSR2c")]
+    [CreatesInternalScope(1)]
     public static SyncPattern GSRepeat2c(GCXF<float> times, GenCtxProperty[] props, SyncPattern[] target) =>
         GSRepeat(new GenCtxProperties<SyncPattern>(props.Append(GenCtxProperty.TimesCircle(times))), target);
     
@@ -353,6 +357,7 @@ public static partial class SyncPatterns {
     /// Like GSRepeat, but has specific handling for the TIMES and rpp properties, where both are mutated by the difficulty.
     /// </summary>
     [Alias("GSR2dr")]
+    [CreatesInternalScope(3)]
     public static SyncPattern GSRepeat2dr(ExBPY difficulty, ExBPY times, ExBPRV2 rpp, GenCtxProperty[] props, SyncPattern[] target) =>
         GSRepeat(new GenCtxProperties<SyncPattern>(props.Append(GenCtxProperty.SyncDR(difficulty, times, rpp))), target);
 

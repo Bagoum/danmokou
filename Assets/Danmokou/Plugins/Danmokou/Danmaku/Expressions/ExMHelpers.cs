@@ -149,15 +149,17 @@ public static class ExMHelpers {
             );
     }
 
-    public static Func<TExArgCtx, TEx<float>> SoftmaxShift<S>(Func<TExArgCtx,TEx<float>> sharpness, Func<TExArgCtx,TEx<float>> pivot, Func<TExArgCtx,TEx<float>> f1, Func<TExArgCtx,TEx<float>> f2, string pivotVar) where S: TEx, new()  =>
-        PivotShift<S>(ExM.Softmax, sharpness, pivot, f1, f2, pivotVar);
+    //note these methods need to use Sx:TEx because in the case of Sx=TExPI,
+    // they couldn't autogenerate type TExPI from S=ParametricInfo
+    public static Func<TExArgCtx, TEx<float>> SoftmaxShift<Sx>(Func<TExArgCtx,TEx<float>> sharpness, Func<TExArgCtx,TEx<float>> pivot, Func<TExArgCtx,TEx<float>> f1, Func<TExArgCtx,TEx<float>> f2, string pivotVar) where Sx: TEx, new()  =>
+        PivotShift<Sx>(ExM.Softmax, sharpness, pivot, f1, f2, pivotVar);
     
-    public static Func<TExArgCtx, TEx<float>> PivotShift<S>(Func<TEx<float>, TEx<float>[], TEx<float>> shifter, 
+    public static Func<TExArgCtx, TEx<float>> PivotShift<Sx>(Func<TEx<float>, TEx<float>[], TEx<float>> shifter, 
         Func<TExArgCtx,TEx<float>> sharpness, Func<TExArgCtx,TEx<float>> pivot, 
-        Func<TExArgCtx,TEx<float>> f1, Func<TExArgCtx,TEx<float>> f2, string pivotVar) where S: TEx, new() {
+        Func<TExArgCtx,TEx<float>> f1, Func<TExArgCtx,TEx<float>> f2, string pivotVar) where Sx: TEx, new() {
         if (pivotVar == "t" || pivotVar == "p" || pivotVar == "x") {
             return t => {
-                var pivotT = t.MakeCopyForType<S>(out var currEx, out var pivotEx);
+                var pivotT = t.MakeCopyForExType<Sx>(out var currEx, out var pivotEx);
                 return Ex.Block(new ParameterExpression[] {pivotEx},
                     Ex.Assign(pivotEx, currEx),
                     Ex.Assign(pivotVar.Into<Func<TExArgCtx, TEx<float>>>()(pivotT), pivot(t)),
@@ -173,15 +175,15 @@ public static class ExMHelpers {
             });
         } else throw new Exception($"{pivotVar} is not a valid pivoting target.");
     }
-    public static Func<TExArgCtx, TEx<float>> LogSumShift<S>(Func<TExArgCtx, TEx<float>> sharpness, 
+    public static Func<TExArgCtx, TEx<float>> LogSumShift<Sx>(Func<TExArgCtx, TEx<float>> sharpness, 
         Func<TExArgCtx, TEx<float>> pivot, Func<TExArgCtx, TEx<float>> f1, Func<TExArgCtx, TEx<float>> f2, 
-        string pivotVar) where S : TEx, new() =>
-        PivotShift<S>(ExM.Logsum, sharpness, pivot, f1, f2, pivotVar);
+        string pivotVar) where Sx : TEx, new() =>
+        PivotShift<Sx>(ExM.Logsum, sharpness, pivot, f1, f2, pivotVar);
     
-    public static Func<TExArgCtx,TEx<T>> Pivot<S, T>(Func<TExArgCtx,TEx<float>> pivot, Func<TExArgCtx,TEx<T>> f1, Func<TExArgCtx,TEx<T>> f2, Func<TExArgCtx, TEx> pivotVar) 
-        where S: TEx, new() => t => {
+    public static Func<TExArgCtx,TEx<T>> Pivot<Sx, T>(Func<TExArgCtx,TEx<float>> pivot, Func<TExArgCtx,TEx<T>> f1, Func<TExArgCtx,TEx<T>> f2, Func<TExArgCtx, TEx> pivotVar) 
+        where Sx: TEx, new() => t => {
         var pv = VFloat();
-        var pivotT = t.MakeCopyForType<S>(out var currEx, out var pivotEx);
+        var pivotT = t.MakeCopyForExType<Sx>(out var currEx, out var pivotEx);
         return Ex.Block(new[] {pv},
             pv.Is(pivot(t)),
             Ex.Condition(pv.LT(pivotVar(t)), 

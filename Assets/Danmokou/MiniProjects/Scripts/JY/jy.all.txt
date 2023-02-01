@@ -27,7 +27,7 @@ phase 0
 			position -15 0
 		@ { $other }
 			diverthp $me
-		shift-phase-to 2
+		shift-phase-to 12
 
 
 !{ power1()
@@ -605,7 +605,7 @@ phase 42
 !!{ spd 3.5
 		@ $other
 			$jpower1
-		_ 1.5 sync _ <> relcirc _ $me
+		_ 1.5 sync _ <> relcirc _ mine
 				rxy($t1 * $spd, $t1 * $spd)
 				witha lerpt -1 1 0 0.8 blue
 		_ 1.5 bullet-control persist lcircle-purple/w batch in (t - $t1) 0 2f {

@@ -75,7 +75,6 @@ public static partial class Reflector {
             {typeof(V2RV2), arg => Parser.ParseV2RV2(arg)},
             {typeof(CRect), arg => Parser.ParseRect(arg)},
             {typeof(CCircle), arg => Parser.ParseCircle(arg)},
-            {typeof(BEHPointer), BehaviorEntity.GetPointerForID},
             {typeof(ETime.Timer), ETime.Timer.GetTimer},
         };
 
@@ -101,20 +100,22 @@ public static partial class Reflector {
     /// </summary>
     /// <exception cref="StaticException">Thrown if the type has no public constructors.</exception>
     public static MethodSignature GetConstructorSignature(Type t) {
-        if (!constructorSigs.TryGetValue(t, out var args)) {
-            var constrs = t.GetConstructors();
-            (ConstructorInfo c, ParameterInfo[] prms)? constr = null;
-            foreach (var c in constrs) {
-                if (c.GetCustomAttribute<DontReflectAttribute>() == null &&
-                    c.GetParameters() is { } prms && (prms.Length > 0 || constr == null)) {
-                    constr = (c, prms);
-                }
+        if (constructorSigs.TryGetValue(t, out var args)) return args;
+        return constructorSigs[t] = GetConstructorSignature_Uncached(t);
+    }
+
+    public static MethodSignature GetConstructorSignature_Uncached(Type t) {
+        var constrs = t.GetConstructors();
+        (ConstructorInfo c, ParameterInfo[] prms)? constr = null;
+        foreach (var c in constrs) {
+            if (c.GetCustomAttribute<DontReflectAttribute>() == null &&
+                c.GetParameters() is { } prms && (prms.Length > 0 || constr == null)) {
+                constr = (c, prms);
             }
-            if (!constr.Try(out var cp))
-                throw new StaticException($"Type {t.RName()} has no applicable constructors.");
-            constructorSigs[t] = args = MethodSignature.Get(cp.c);
         }
-        return args;
+        if (!constr.Try(out var cp))
+            throw new StaticException($"Type {t.RName()} has no applicable constructors.");
+        return MethodSignature.Get(cp.c);
     }
 
     private static IAST? ResolveSpecialHandling(IParseQueue p, Type targetType) {
@@ -175,10 +176,11 @@ public static partial class Reflector {
         } else return null;
     }
 
-    public static bool UseConstructor(Type t) => classAutoReflectTypes.Contains(t) ||
+    public static bool UseConstructor(Type t) => autoConstructorTypes.Contains(t) ||
                                                  (t.IsValueType && !t.IsPrimitive && !t.IsEnum);
 
-    private static readonly HashSet<Type> classAutoReflectTypes = new() {
+    //note: duplicated in Reflector2.DMKScope
+    public static readonly HashSet<Type> autoConstructorTypes = new() {
         typeof(GenCtxProperties<SyncPattern>),
         typeof(GenCtxProperties<AsyncPattern>),
         typeof(GenCtxProperties<StateMachine>),

@@ -11,7 +11,7 @@ using UnityEngine;
 namespace Danmokou.Reflection {
 public static partial class Reflector {
 #if UNITY_EDITOR
-    private const string AOT_GEN = "Assets/Danmokou/Plugins/Danmokou/Danmaku/AoTHelper_CG.cs";
+    private const string AOT_GEN = "Assets/Danmokou/Plugins/Danmokou/Danmaku/Expressions/Generated/AoTHelper_CG.cs";
     private static readonly Type[] autogenGenerics = {
         typeof(float), typeof(bool), typeof(Vector2), typeof(Vector3),
         typeof(Vector4), typeof(V2RV2)
@@ -37,33 +37,23 @@ public static class AoTHelper_CG {{
 }}
 }}
 ";
-    
+
     public static void GenerateAoT() {
         List<string> funcs = new();
-        HashSet<MethodInfo> mis = new(); //weed out alias duplicates
         var typePrinter = new CSharpTypePrinter { PrintTypeNamespace = _ => true };
-        void AddConstructedMethod(MethodInfo mi) {
-            if (mis.Contains(mi)) return;
-            mis.Add(mi);
-            var type_prms = string.Join(", ", mi.GetGenericArguments().Select(typePrinter.Print));
+        void AddConstructedMethod(MethodInfo mi, Type[] typArgs) {
+            var type_prms = string.Join(", ", typArgs.Select(typePrinter.Print));
             var args = string.Join(", ", mi.GetParameters().Length.Range().Select(_ => "default"));
             funcs.Add($"{typePrinter.Print(mi.DeclaringType!)}.{mi.Name}<{type_prms}>({args});");
         }
-        foreach (var mi in postAggregators.Values.SelectMany(v => v.Values).Select(pa => pa.sig.Mi as MethodInfo).Concat(ReflectionData.MethodsByReturnType.Values.SelectMany(v => v.Values))) {
-            if (!mi!.IsGenericMethod) continue;
-            if (mi.IsGenericMethodDefinition) {
-                //nonconstructed method (eg. StopSampling<T>)
-                if (mi.GetGenericArguments().Length == 1) {
-                    foreach (var t in autogenGenerics) {
-                        AddConstructedMethod(mi.MakeGenericMethod(t));
-                    }
-                } else {
-                    //pray
-                }
-            } else {
-                //constructed method (eg. ParticleControl)
-                AddConstructedMethod(mi);
-            }
+        foreach (var (gmib, ts) in GenericMethodSignature.specializeCache
+                     .Select(kv => (kv.Key.Item2.Mi, kv.Key.Item1))
+                     .Distinct()
+                     .OrderBy(g => g.Mi.Name)) {
+            if (gmib is MethodInfo gmi)
+                AddConstructedMethod(gmi, ts.Data);
+            else
+                throw new Exception($"Can't bake {gmib.GetType()}");
         }
         FileUtils.WriteString(AOT_GEN, GenerateFile(funcs));
     }

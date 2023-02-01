@@ -69,10 +69,18 @@ public abstract class UIGroup {
     public bool Visible { get; private set; } = false;
     public UIScreen Screen { get; }
     public UIRenderSpace Render { get; }
-    public UIGroup? Parent { get; set; }
+    
     /// <summary>
-    /// Groups that are directly dependent on this group for Show/Hide control.
-    /// <br/>Such groups do not call Show/Hide on their own.
+    /// The UI group that contains this UI group, and to which navigation delegates if internal navigation fails.
+    /// <br/>Note that the parent does not neccessarily know about the child's existence,
+    ///  unless it is set via <see cref="DependentParent"/>.
+    /// </summary>
+    public UIGroup? Parent { get; set; }
+    
+    /// <summary>
+    /// Groups that should share the same display behavior as this group; ie.
+    ///  if this group is visible, then listed groups here should be visible.
+    /// <br/>Used by composite groups and show/hide handling in Node.
     /// </summary>
     public List<UIGroup> DependentGroups { get; } = new();
     private bool IsDependentGroup = false;
@@ -216,6 +224,11 @@ public abstract class UIGroup {
     }
 
 
+    /// <summary>
+    /// Make the group visible (it is being entered).
+    /// </summary>
+    /// <param name="callIfDependent">If false, this will noop for dependent groups
+    /// (their enterShow should be controlled by the parent).</param>
     public void EnterShow(bool callIfDependent = false) {
         if (IsDependentGroup && !callIfDependent) return;
         Visible = true;
@@ -228,6 +241,11 @@ public abstract class UIGroup {
             g.EnterShow(true);
     }
 
+    /// <summary>
+    /// Make the group invisible (it is being left).
+    /// </summary>
+    /// <param name="callIfDependent">If false, this will noop for dependent groups
+    /// (their leaveHide should be controlled by the parent).</param>
     public void LeaveHide(bool callIfDependent = false) {
         if (IsDependentGroup && !callIfDependent) return;
         Visible = false;
@@ -465,6 +483,8 @@ public class PopupUIGroup : CompositeUIGroup {
         return false;
     }
 
+    //note: we don't handle these tasks in UIRenderConstructed since UIRenderConstructed creates nonblocking tasks;
+    // these are blocking.
     public override Task EnterGroup() {
         render.HTML.transform.scale = new Vector3(1, 0, 0);
         return Task.WhenAll(base.EnterGroup() ?? Task.CompletedTask,

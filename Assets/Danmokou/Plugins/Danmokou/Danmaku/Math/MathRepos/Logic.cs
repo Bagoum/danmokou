@@ -1,4 +1,5 @@
-﻿using BagoumLib.Expressions;
+﻿using System;
+using BagoumLib.Expressions;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.DataHoist;
@@ -60,12 +61,13 @@ public static partial class PredicateLogic {
     /// <param name="beh">Target BehaviorEntity</param>
     /// <param name="circ">Relative circle</param>
     /// <returns></returns>
-    public static ExPred RelCirc(BEHPointer beh, ExTP3 circ) {
+    public static ExPred RelCirc(Func<TExArgCtx, TEx<BehaviorEntity>> beh, ExTP3 circ) {
         return bpi => CollisionMath.pointInCircle.Of(
-            Ex.Subtract(bpi.LocV2, LBEH(beh)),
+            Ex.Subtract(bpi.LocV2, LBEH(beh(bpi))),
             Ex.Convert(circ(bpi), typeof(CCircle))
         );
     }
+    
     /// <summary>
     /// Return true if the object is in the given circle.
     /// </summary>
@@ -82,9 +84,9 @@ public static partial class PredicateLogic {
     /// <param name="beh">Target BehaviorEntity</param>
     /// <param name="rect">Relative rectangle</param>
     /// <returns></returns>
-    public static ExPred RelRect(BEHPointer beh, CRect rect) {
+    public static ExPred RelRect(Func<TExArgCtx, TEx<BehaviorEntity>> beh, CRect rect) {
         return bpi => CollisionMath.pointInRect.Of(
-            Ex.Subtract(bpi.LocV2, LBEH(beh)),
+            Ex.Subtract(bpi.LocV2, LBEH(beh(bpi))),
             ExC(rect)
         );
     }

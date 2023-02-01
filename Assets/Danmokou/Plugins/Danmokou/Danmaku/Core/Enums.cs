@@ -362,13 +362,6 @@ public static class EnumHelpers2 {
             _ => 0
         };
 
-    public static int DefaultRank(this FixedDifficulty d) => d switch {
-        FixedDifficulty.Lunatic => 22,
-        FixedDifficulty.Hard => 15,
-        FixedDifficulty.Normal => 9,
-        _ => 3
-    };
-
     public static LString Describe(this FixedDifficulty d) => d switch {
             FixedDifficulty.Lunatic => difficulty_lunatic,
             FixedDifficulty.Hard => difficulty_hard,

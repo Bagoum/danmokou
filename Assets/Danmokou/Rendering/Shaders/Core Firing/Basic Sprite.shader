@@ -84,7 +84,7 @@
         
             static float circleCutSmooth = 0.002;
 
-			float4 frag(fragment f) : SV_Target { 
+			float4 frag(fragment f) : SV_Target {
 	            DISPLACE(f.uv, _T);
 				float4 c = tex2D(_MainTex, f.uv) * f.c;
             #ifdef FT_HUESHIFT
@@ -97,7 +97,7 @@
                 float r = length(f.uv - float2(0.5, 0.5));
                 c = lerp(c, float4(0,0,0,0), smoothstep(-circleCutSmooth, circleCutSmooth, r - 0.5));
             #endif
-				c.rgb *= c.a; //Premultiply
+				c.rgb *= c.a; //Premultiply, note this corresponds with logic in Core/Graphics/MaterialUtils.cs
 				return c;
 			}
 			ENDCG

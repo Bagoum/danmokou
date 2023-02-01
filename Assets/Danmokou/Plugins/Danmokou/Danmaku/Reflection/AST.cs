@@ -351,7 +351,7 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
             for (int ii = 0; ii < prms.Length; ++ii)
                 prms[ii] = Params[ii].EvaluateObject(data);
             construct:
-            var result = Method.Mi.InvokeStatic(prms);
+            var result = Method.Mi.InvokeStatic(null, prms);
             if (Method.Mi.GetAttribute<ExtendGCXUExposedAttribute>() != null && data.ExposedVariables.Count > 0) {
                 var gcxu = (result as GCXU ?? throw new StaticException(
                     $"{nameof(ExtendGCXUExposedAttribute)} used on method {Method.Name} that does not return GCXU"));
@@ -389,7 +389,7 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
             var fprms = new object?[Params.Length];
             for (int ii = 0; ii < fprms.Length; ++ii)
                 fprms[ii] = Params[ii].EvaluateObject(data);
-            return Method.TypedFMi.InvokeMiFunced(null, fprms);
+            return Method.TypedFMi.InvokeMiFunced(null, null, fprms);
         }
     }
 
@@ -471,11 +471,11 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
             FuncAllTypes = funcType.GenericTypeArguments;
             FuncRetType = FuncAllTypes[^1];
             //Look for methods returning type R
-            if (!ReflectionData.HasMember(FuncRetType, methodName))
+            if (ReflectionData.TryGetMember(FuncRetType, methodName) is not { } meth)
                 throw new ReflectionException(p,
                     $"Method lookup for type {FuncType.SimpRName()} failed because no there is no function named " +
                     $"\"{methodName}\" with a return type of {FuncRetType.SimpRName()}.");
-            Method = ReflectionData.GetArgTypes(FuncRetType, methodName);
+            Method = meth;
             if (FuncAllTypes.Length - 1 != Method.Params.Length)
                 throw new ReflectionException(p,
                     $"Provided method {methodName} has {FuncAllTypes.Length - 1} parameters " +
@@ -496,7 +496,7 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
                            throw new StaticException($"Couldn't find lambda constructor method for " +
                                                      $"count {Method.Params.Length}");
             return lambdaer.Invoke(null, new object[] {
-                (Func<object?[], object?>)(Method as IMethodSignature).InvokeStatic
+                (Func<object?[], object?>)(prms => (Method as IMethodSignature).InvokeStatic(null, prms))
             });
         }
 

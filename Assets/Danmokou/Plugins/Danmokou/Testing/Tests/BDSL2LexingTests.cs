@@ -24,13 +24,6 @@ namespace Danmokou.Testing {
 
 public static class BDSL2LexingTests {
     [Test]
-    public static void tmp() {
-        var str = "gsr2c 10 { bindItr(i1) } s tprot rotate(&i1, :: { a 4 } px(&a + &a))";
-        var p = IParseQueue.Lex(str);
-        var ast = p.IntoAST(typeof(SyncPattern));
-        int k = 5;
-    }
-    [Test]
     public static void TestLexingFailures() {
         ThrowsMessage(@"The previous token ""15.42"" (Number) and this token ""world"" (Identifier) must be separated by whitespace", () => Lexer.Lex("15.42world"));
         ThrowsMessage("This closing parenthesis is not matched to an opening parenthesis.\nThe last successfully parsed parenthesis started at Line 1, Col 3 and ended at Line 1, Col 9", () => Lexer.Lex("fn(\")))\"), )"));
@@ -39,7 +32,6 @@ public static class BDSL2LexingTests {
                       "\nThere are also other unclosed parentheses at: Line 1, Col 2; Line 1, Col 3", () => 
             Lexer.Lex("m((y<type>(fn()"));
         ThrowsMessage("The previous token \"List\" (Identifier) and this token \"<>\" (V2RV2) must be separated by whitespace or an operator", () => Lexer.Lex("List<>"));
-        int w = 5;
     }
 
     private const TokenType id = TokenType.Identifier;
@@ -62,7 +54,6 @@ public static class BDSL2LexingTests {
         ListEq(Lexer.Lex("List<int[][]>[]"), MakeFromSequence((TokenType.TypeIdentifier, "List<int[][]>[]")));
         ListEq(Lexer.Lex("int[][]"), MakeFromSequence((TokenType.TypeIdentifier, "int[][]")));
         ListEq(Lexer.Lex("int"), MakeFromSequence((TokenType.Identifier, "int")));
-        int w = 5;
     }
     
     
@@ -71,7 +62,7 @@ public static class BDSL2LexingTests {
         ListEq(Lexer.Lex("<12;24:;:>"), MakeFromSequence((TokenType.V2RV2, "<12;24:;:>")));
         var w = "<;23:4>";
         ListEq(Lexer.Lex(ref w, out var s), MakeFromSequence((TokenType.V2RV2, "<;23:4>")));
-        Debug.Log(string.Join("\n", s.Rollbacks.Select(r => s.TokenWitness.ShowError(r)).ToArray()));
+        Debug.Log(string.Join("\n", s.Rollbacks.Select(r => r.Show(s)).ToArray()));
         ListEq(Lexer.Lex("<40h>"), MakeFromSequence((TokenType.V2RV2, "<40h>")));
         ListEq(Lexer.Lex("<>"), MakeFromSequence((TokenType.V2RV2, "<>")));
     }

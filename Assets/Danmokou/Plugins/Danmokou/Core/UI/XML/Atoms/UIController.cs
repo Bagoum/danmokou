@@ -86,7 +86,7 @@ public abstract record UIResult {
         public ReturnToTargetGroupCaller(UINode node) : this(node.Group) { }
     }
 
-    public record ReturnToScreenCaller : UIResult;
+    public record ReturnToScreenCaller(int Ascensions = 1) : UIResult;
 
     public static implicit operator UIResult(UINode node) => new GoToNode(node);
     public static implicit operator UIResult(UIGroup group) => new GoToNode(group);
@@ -99,6 +99,12 @@ public abstract class UIController : CoroutineRegularUpdater {
 
         public record ToGroupNode(int NodeIndex) : CacheInstruction;
     }
+
+    /// <summary>
+    /// True if the UI HTML has been built (in FirstFrame)
+    /// </summary>
+    protected bool Built { get; private set; } = false;
+    
     /// <summary>
     /// Points to TemplateContainer
     /// </summary>
@@ -220,7 +226,7 @@ public abstract class UIController : CoroutineRegularUpdater {
             uiRenderer = ServiceLocator.Find<UIBuilderRenderer>();
         var uid = GetComponent<UIDocument>();
         //higher sort order is more visible, so give them lower priority
-        tokens.Add(uiRenderer.RegisterController(this, -(int)uid.sortingOrder));
+        tokens.Add(uiRenderer.RegisterController(this, -(int)(uid.panelSettings.sortingOrder * 1000 + uid.sortingOrder)));
         UIRoot = uid.rootVisualElement;
         UIContainer = UIRoot.Q("UIContainer");
         UISettings = uid.panelSettings;
@@ -274,6 +280,7 @@ public abstract class UIController : CoroutineRegularUpdater {
         foreach (var s in Screens)
             if (s != null)
                 UIContainer.Add(s.Build(XMLUtils.Prefabs.TypeMap));
+        Built = true;
     }
     protected void BuildLate(UIScreen s) => 
         UIContainer.Add(s.Build(XMLUtils.Prefabs.TypeMap));
@@ -409,15 +416,16 @@ public abstract class UIController : CoroutineRegularUpdater {
                     if (next == null)
                         throw new Exception("Return-to-target resulted in a null node");
                     break;
-                case UIResult.ReturnToScreenCaller:
+                case UIResult.ReturnToScreenCaller sc:
                     if (prev == null) throw new Exception("Current must be present for return-to-screen op");
                     var ngn = (prev.Group, (UINode?)prev);
-                    if (ScreenCall.TryPop(out var s)) {
-                        while (GroupCall.TryPeek(out var g) && (g.group.Screen == prev.Screen))
-                            PopGroupCall(ngn.Group, out ngn);
-                        LeftGroups.Add(ngn.Group);
-                        next = s;
-                    }
+                    for (int ii = 0; ii < sc.Ascensions; ++ii)
+                        if (ScreenCall.TryPop(out var s)) {
+                            while (GroupCall.TryPeek(out var g) && (g.group.Screen == prev.Screen))
+                                PopGroupCall(ngn.Group, out ngn);
+                            LeftGroups.Add(ngn.Group);
+                            ngn = (s.Group, next = s);
+                        }
                     if (next == null)
                         throw new Exception("Return-to-screen resulted in a null node");
                     break;

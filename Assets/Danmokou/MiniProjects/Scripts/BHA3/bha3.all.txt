@@ -11,7 +11,7 @@ pattern {
 
 phase 0
 	paction 0
-		shift-phase-to 2
+		shift-phase-to 9
 
 
 !{ power1()
@@ -79,7 +79,7 @@ phase 35
 			sync ellyscythe <> gsr {
 				root zero
 			} guideempty .scythe p { sloc loc } { } #{
-					nroffset(Lbeh $me + tp qrotate px(40) rx(lerpt3(0, 1.5, $scythet1, $scythet2, 0, 2, 0), 180p * &lr * t + brand(0, 360))) {
+					nroffset(Lbeh mine + tp qrotate px(40) rx(lerpt3(0, 1.5, $scythet1, $scythet2, 0, 2, 0), 180p * &lr * t + brand(0, 360))) {
 						inode nroffset @ sloc p
 							async _ <> gcr {
 								times(8)
@@ -457,6 +457,7 @@ phase 42
 <!> root 0 0
 phase 42
 	paction 0
+	    pool-control {{ apple-* sakura-* }} allowdelete false
 		$power1atk
 	paction 0
 		async lstar-*/ <4.2;:> gir2 60 _ <120h> { wait-child sfx x-metal } gcr {
@@ -512,7 +513,6 @@ polar(
 	$rot)
 !}
 				gsr2 $crpt <> {
-					##TODO: apple bullets
 					colorr apple-*/
 					p add
 					bindAngle

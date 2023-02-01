@@ -1,5 +1,6 @@
 ﻿using System;
 using BagoumLib;
+using BagoumLib.Culture;
 using Danmokou.Behavior;
 using Danmokou.UI.XML;
 using UnityEditor;
@@ -11,6 +12,7 @@ namespace Danmokou.UI {
 /// A class for MonoBehaviors that can receive events from UITK.
 /// </summary>
 public interface IFixedXMLReceiver {
+    public LString? Tooltip => null;
     public void OnBuilt(EmptyNode n) { }
     public UIResult OnConfirm(UINode n);
     public void OnEnter(UINode n);
@@ -56,7 +58,10 @@ public class FixedXMLHelper : CoroutineRegularUpdater {
         Node.With(xmlClasses);
     }
     public override void FirstFrame() {
-        (Container ?? ServiceLocator.Find<XMLDynamicMenu>()).AddNode(Node);
+        var menu = Container ?? ServiceLocator.Find<XMLDynamicMenu>();
+        if (Receiver.Tooltip is { } tt)
+            Node.MakeTooltip(menu.Screen, tt);
+        menu.AddNodeDynamic(Node);
     }
 
     protected override void OnDisable() {

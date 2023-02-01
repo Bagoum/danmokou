@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d93352a2326d43b7a9bc247638c5ec1c, type: 3}
+  m_Name: WP Game Def
+  m_EditorClassIdentifier: 
+  m_key: WP
+  m_version:
+    major: 1
+    minor: 0
+    patch: 2
+  m_tutorial: {fileID: 0}
+  m_miniTutorial: {fileID: 0}
+  sceneConfig: {fileID: 11400000, guid: 42ef27f070f320e479dfb42d670b57b7, type: 2}
+  backlogFeatures: 0
+  evidenceReviewBg: {fileID: 21300000, guid: abcc4e9b544c03042bf4326bf6a7c024, type: 3}

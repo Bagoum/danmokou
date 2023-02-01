@@ -167,8 +167,8 @@ public class InstanceRecord {
     public void Update(InstanceData end) {
         Score = end.ScoreF.Score;
         CardHistory = new CardHistory(end.CardHistory);
-        ContinuesUsed = end.ContinuesUsed;
-        HitsTaken = end.HitsTaken;
+        ContinuesUsed = end.BasicF.ContinuesUsed;
+        HitsTaken = end.BasicF.HitsTaken;
         TotalFrames = end.TotalFrames;
         MeterFrames = end.MeterF.MeterFrames;
         BombsUsed = end.BombsUsed;

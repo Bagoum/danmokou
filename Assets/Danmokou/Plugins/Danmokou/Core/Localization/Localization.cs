@@ -55,10 +55,10 @@ public class LocalizedStringReference {
     public LString ValueOrEmpty => MaybeValue ?? LString.Empty;
     public LString Value => MaybeValue ??
         throw new Exception($"Couldn't resolve LocalizedString reference {reference}");
-    
-    public LString SetDefault(LString? save) => 
-        _value ??= MaybeValue ?? save ?? 
-            throw new Exception("Couldn't load LocalizedString as a reference, hardcoded value, or default");
+
+    public LString SetDefault(LString? save) =>
+        _value ??= MaybeValue ?? save ??
+            throw new Exception($"Couldn't find a LocalizedString by key '{reference}'");
     public LString SetDefaultOrEmpty(LString? save) => 
         _value ??= MaybeValue ?? save ?? LString.Empty;
 }

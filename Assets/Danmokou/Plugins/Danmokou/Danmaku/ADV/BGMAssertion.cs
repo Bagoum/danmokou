@@ -15,7 +15,7 @@ public record BGMAssertion(DMKVNState vn, string key) : IAssertion<BGMAssertion>
     public Task ActualizeOnNoPreceding() => ActualizeOnNewState();
 
     public Task DeactualizeOnEndState() {
-        track.FadeOut(1f);
+        track.FadeOutDestroy(1f);
         return Task.CompletedTask;
     }
 

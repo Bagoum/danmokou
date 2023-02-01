@@ -549,23 +549,26 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
             if (!(e is OperationCanceledException)) {
                 Logs.UnityError(Exceptions.PrintNestedException(e)); //This is only here for the vaguest of debugging purposes.
             }
+            throw;
         } finally {
+            if (GameManagement.Instance.Request?.InstTracker.Cancelled is not true) {
+                if (IsNontrivialID(ID)) {
+                    Logs.Log(
+                        $"BehaviorEntity {ID} finished running its SM{(sm.cullOnFinish ? " and will destroy itself." : ".")}",
+                        level: LogLevel.DEBUG1);
+                }
+                if (sm.cullOnFinish) {
+                    if (PoofOnPhaseEnd) Poof();
+                    else {
+                        if (DeathEffectOnParentCull && sm.cT.Root.Cancelled) TryDeathEffect();
+                        InvokeCull();
+                    }
+                }
+            }
             //It is possible for tasks to still be running at this point (most critically if
             // using ~), so we cancel to make sure they get destroyed
             cT.Cancel();
             behaviorToken.Remove(cT);
-        }
-        if (IsNontrivialID(ID)) {
-            Logs.Log(
-                $"BehaviorEntity {ID} finished running its SM{(sm.cullOnFinish ? " and will destroy itself." : ".")}",
-                level: LogLevel.DEBUG1);
-        }
-        if (sm.cullOnFinish) {
-            if (PoofOnPhaseEnd) Poof();
-            else {
-                if (DeathEffectOnParentCull && sm.cT.Root.Cancelled) TryDeathEffect();
-                InvokeCull();
-            }
         }
     }
 

@@ -42,7 +42,7 @@ public static class VTPConstructors {
             fxy(Ex.Subtract(Ex.Multiply(c, v2.x), Ex.Multiply(s, v2.y)),
                 Ex.Add(Ex.Multiply(s, v2.x), Ex.Multiply(c, v2.y)),
                 ExMHelpers.E0),
-            Expression.Empty()
+            Ex.Empty()
         );
     };
 
@@ -58,7 +58,7 @@ public static class VTPConstructors {
         return Ex.Block(new ParameterExpression[] { nrv },
             Ex.Assign(nrv, enrv(bpi)),
             fxy(nrv.x, nrv.y, ExMHelpers.E0),
-            Expression.Empty());
+            Ex.Empty());
     };
 
     // ReSharper disable once RedundantAssignment
@@ -366,7 +366,7 @@ public static class VTPRepo {
     /// </summary>
     public static ExVTP Expose((Reflector.ExType, string)[] variables, ExVTP inner) => (v, dt, tac, delta) => {
         foreach (var (ext, name) in variables)
-            tac.Ctx.ICRR?.TryResolve(ext.AsType(), name, out _);
+            tac.Ctx.GCXURefs?.TryResolve(ext.AsType(), name, out _);
         return inner(v, dt, tac, delta);
     };
     

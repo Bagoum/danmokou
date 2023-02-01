@@ -70,6 +70,8 @@ public static class Parser {
         (x, t) => new ST.FunctionCall(x.Position.Merge(t.Position), FnIdentFor(t, overloads), x);
     
     private static Parser<Token, Token> op(string op) => TokenOfTypeValue(TokenType.Operator, op);
+    private static Parser<Token, Token> opNoFlag(string op, TokenFlags f, string desc) => 
+        TokenOfTypeValueNotFlag(TokenType.Operator, op, f, desc);
     private static Op infix(string op, Associativity assoc, int precedence,
         params Reflector.MethodSignature[] overloads) => 
         new Op.Infix(TokenOfTypeValue(TokenType.Operator, op), InfixCaller(overloads), assoc, precedence);
@@ -78,24 +80,30 @@ public static class Parser {
         new Op.Prefix(TokenOfTypeValue(TokenType.Operator, op), PrefixCaller(overloads), precedence);
 
     private static Op assigner(string op, string method) =>
-        infix("=", Associativity.Right, 2, Lift(typeof(ExMAssign), method));
+        infix(op, Associativity.Right, 2, Lift(typeof(ExMAssign), method));
     
 
     //these operators are higher precedence than partial function application.
     // eg. f x op y = f(x op y)
     public static readonly Op[] tightOperators = {
-        new Op.Postfix(NoWhitespace.IgThen(op("++")), PostfixCaller(Lift(typeof(ExMAssign), nameof(ExMAssign.PostIncr))), 20),
-        new Op.Postfix(NoWhitespace.IgThen(op("--")), PostfixCaller(Lift(typeof(ExMAssign), nameof(ExMAssign.PostDecr))), 20),
+        new Op.Postfix(opNoFlag("++", TokenFlags.PrecededByWhitespace, "postfix operator `++`"), 
+            PostfixCaller(Lift(typeof(ExMAssign), nameof(ExMAssign.PostIncr))), 20),
+        new Op.Postfix(opNoFlag("--", TokenFlags.PrecededByWhitespace, "postfix operator `--`"), 
+            PostfixCaller(Lift(typeof(ExMAssign), nameof(ExMAssign.PostDecr))), 20),
         
-        new Op.Prefix(NoWhitespaceAfter.IgThen(op("++")), PrefixCaller(Lift(typeof(ExMAssign), nameof(ExMAssign.PreIncr))), 18),
-        new Op.Prefix(NoWhitespaceAfter.IgThen(op("--")), PrefixCaller(Lift(typeof(ExMAssign), nameof(ExMAssign.PreDecr))), 18),
+        new Op.Prefix(opNoFlag("++", TokenFlags.PostcededByWhitespace, "prefix operator `++`"), 
+            PrefixCaller(Lift(typeof(ExMAssign), nameof(ExMAssign.PreIncr))), 18),
+        new Op.Prefix(opNoFlag("--", TokenFlags.PostcededByWhitespace, "prefix operator `--`"), 
+            PrefixCaller(Lift(typeof(ExMAssign), nameof(ExMAssign.PreDecr))), 18),
         
         //NB: It is critical to have the noWhitespace parse for +/- operators, because if we don't,
         // then partial function application of a unary number becomes higher precedence than arithmetic.
         // eg. `x - y` has higher precedence as Partial(x, Negate(y)) than Subtract(x, y).
         //F# handles this quite well by parsing only no-whitespace +/- as unary.
-        new Op.Prefix(NoWhitespaceAfter.IgThen(op("+")), (t, x) => x with { Position = t.Position.Merge(x.Position) }, 18),
-        new Op.Prefix(NoWhitespaceAfter.IgThen(op("-")), PrefixCaller(Lift(typeof(ExM), nameof(ExM.Negate))), 18),
+        new Op.Prefix(opNoFlag("+", TokenFlags.PostcededByWhitespace, "prefix operator `+`"), 
+            (t, x) => x with { Position = t.Position.Merge(x.Position) }, 18),
+        new Op.Prefix(opNoFlag("-", TokenFlags.PostcededByWhitespace, "prefix operator `-`"), 
+            PrefixCaller(Lift(typeof(ExM), nameof(ExM.Negate))), 18),
         prefix("!", 18, Lift(typeof(ExMPred), nameof(ExMPred.Not))),
     };
     //these operators are lower precedence than partial function application.
@@ -109,7 +117,7 @@ public static class Parser {
         infix("*", Associativity.Left, 14, Lift(typeof(ExM), nameof(ExM.Mul)),
             Lift(typeof(ExM), nameof(ExM.MulRev))),
         infix("/", Associativity.Left, 14, Lift(typeof(ExM), nameof(ExM.Div))),
-        infix("//", Associativity.Left, 14, Lift(typeof(ExM), nameof(ExM.FDiv))),
+        //infix("//", Associativity.Left, 14, Lift(typeof(ExM), nameof(ExM.FDiv))),
         infix("^", Associativity.Left, 14, Lift(typeof(ExM), nameof(ExM.Pow))),
 
         infix("+", Associativity.Left, 12, Lift(typeof(ExM), nameof(ExM.Add))),
@@ -129,12 +137,12 @@ public static class Parser {
         infix("|", Associativity.Left, 6, Lift(typeof(ExMPred), nameof(ExMPred.Or))),
 
         assigner("=", nameof(ExMAssign.Is)),
-        assigner("+=", nameof(ExMAssign.IsMul)),
+        assigner("+=", nameof(ExMAssign.IsAdd)),
         assigner("-=", nameof(ExMAssign.IsSub)),
         assigner("*=", nameof(ExMAssign.IsMul)),
         assigner("/=", nameof(ExMAssign.IsDiv)),
         assigner("%=", nameof(ExMAssign.IsMod)),
-        assigner("&=", nameof(ExMAssign.IsAdd)),
+        assigner("&=", nameof(ExMAssign.IsAnd)),
         assigner("|=", nameof(ExMAssign.IsOr))
     };
 
@@ -176,8 +184,16 @@ public static class Parser {
     private static readonly Reflector.MethodSignature constFloat =
         Reflector.MethodSignature.Get(ExFunction.WrapAny(typeof(AtomicBPYRepo), "Const").Mi);
 
+    private static readonly ParserError blockKWErr = new ParserError.Expected("`block` or `b{` keyword");
+    private static readonly Parser<Token, Token> blockKW = input => {
+        if (input.Empty || input.Next.Type != TokenType.Keyword || (input.Next.Content != "block" && input.Next.Content != "b"))
+            return new(blockKWErr, input.Index);
+        else
+            return new(new(input.Next), null, input.Index, input.Step(1));
+    };
+    
     //Atom: identifier; number/string/etc; parenthesized value; block 
-    private static readonly Parser<Token, ST> atom = Choice(
+    private static readonly Parser<Token, ST> atom = ChoiceL("atom (identifier, number, array, block, or parenthesized expression)",
         //Identifier
         IdentOrType.FMap(id => new ST.Ident(id) as ST),
         //num/string/v2rv2
@@ -187,15 +203,15 @@ public static class Parser {
         //Parenthesized value
         Paren1(Value),
         //Block
-        Sequential(Kw("block"), openBrace, Statements, closeBrace,
-            (o, _, stmts, c) => new ST.Block(o.Position.Merge(c.Position), stmts.ToArray()) as ST),
+        Sequential(blockKW, openBrace, Statements, closeBrace,
+            (o, _, stmts, c) => new ST.Block(o.Position.Merge(c.Position), stmts.ToArray()) as ST).LabelV("block"),
         //Array
         Sequential(openBrace, ((Parser<Token,ST>)Value).SepBy(ImplicitBreak(TokenType.Comma)), closeBrace,
-            (o, vals, c) => new ST.Array(o.Position.Merge(c.Position), vals.ToArray()) as ST)
+            (o, vals, c) => new ST.Array(o.Position.Merge(c.Position), vals.ToArray()) as ST).LabelV("array")
     );
-    
+
     //Term: member access `x.y`; C#-style function application `f(x, y)`.
-    //Haskell-style function application `f x y` is handled as an operator.
+    //Haskell-style function application `f x y` is handled in term2.
     private static readonly Parser<Token, ST> term =
         Sequential(atom,
             Either(op(".").IgThen(Ident), NoWhitespace.IgThen(Paren(Value))).Many(),
@@ -224,14 +240,14 @@ public static class Parser {
     //Value: Operator over term/partial fn app, or lambda
     //Note that this would be called an "expression" in most parsers but I won't call it that to avoid ambiguity
     // with Linq.Expression
-    private static readonly Parser<Token, ST> value = Choice(
+    private static readonly Parser<Token, ST> value = ChoiceL("value expression",
         ParseOperators(looseOperators, term2)
         //todo lambda
-    ).Label("value expression");
+    );
     private static ParseResult<ST> Value(InputStream<Token> inp) => value(inp);
     
     //Statement: value, variable declaration, or void-type block (if/else, for, while)
-    private static readonly Parser<Token, ST> statement = Choice(
+    private static readonly Parser<Token, ST> statement = ChoiceL("statement",
         value,
         //var is required even with type specified to avoid parsing `type name` as a partial function application
         Kw("var").IgThen(IdentOrType).Then(Ident.Opt()).ThenIg(op("=")).Then(value).Bind(decl => {
@@ -261,8 +277,9 @@ public static class Parser {
             }
         })
         //todo
-    ).Label("statement");
-    private static readonly Parser<Token, List<ST>> statements = statement.SepBy(ImplicitBreak(TokenType.Semicolon));
+    );
+    private static readonly Parser<Token, List<ST>> statements = 
+        statement.SepBy(ImplicitBreak(TokenType.Semicolon)).Label("statement block");
     private static ParseResult<List<ST>> Statements(InputStream<Token> inp) => statements(inp);
 
     private static readonly Parser<Token, ST.Block> fullScript = 

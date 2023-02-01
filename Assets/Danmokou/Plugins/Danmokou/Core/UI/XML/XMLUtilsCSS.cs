@@ -13,6 +13,7 @@ using UnityEngine.UIElements;
 namespace Danmokou.UI.XML {
 
 public static partial class XMLUtils {
+    public const string highVisClass = "highvis";
     public const string nodeClass = "node";
     public const string noPointerClass = "nopointer";
     public const string disabledClass = "disabled";

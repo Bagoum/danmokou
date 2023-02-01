@@ -354,11 +354,13 @@ public static class XMLHelpers {
                         (generic_off, 0),
                         (generic_on, 1),
                         //(vsync_double, 2)
-                    }, SaveData.s.Vsync),
-                    new OptionNodeLR<bool>(LocalizedStrings.UI.renderer, b => SaveData.s.LegacyRenderer = b, new[] {
+                    }, SaveData.s.Vsync)
+#if !WEBGL
+                    , new OptionNodeLR<bool>(LocalizedStrings.UI.renderer, b => SaveData.s.LegacyRenderer = b, new[] {
                         (renderer_legacy, true),
                         (renderer_normal, false)
                     }, SaveData.s.LegacyRenderer)
+#endif
                 )
             },
             new UINode("<cspace=16>SOUND</cspace>") {
@@ -845,6 +847,7 @@ public static class XMLHelpers {
         
         var optSliderHelper = new PassthroughNode(() =>
             desc_effective_ls(effective, DifficultySettings.FancifySlider(dfc.customValueSlider)));
+        dfc.respawnOnDeath = false;
         screen.SetFirst(new UIColumn(screen, null,
             MakeOption(scaling, (DifficultySettings.MIN_SLIDER, DifficultySettings.MAX_SLIDER + 1).Range()
                 .Select(x => ((LString)($"{x}"), x)), () => dfc.customValueSlider, dfc.SetCustomDifficulty,
@@ -854,7 +857,7 @@ public static class XMLHelpers {
                 x => dfc.numSuicideBullets = x, desc_suicide),
             MakePctOption(p_dmg, () => dfc.playerDamageMod, x => dfc.playerDamageMod = x, desc_p_dmg),
             MakePctOption(boss_hp, () => dfc.bossHPMod, x => dfc.bossHPMod = x, desc_boss_hp),
-            MakeOnOffOption(respawn, () => dfc.respawnOnDeath, x => dfc.respawnOnDeath = x, desc_respawn),
+            MakeOnOffOption(respawn, () => dfc.respawnOnDeath.Value, x => dfc.respawnOnDeath = x, desc_respawn),
             MakePctOption(faith_decay, () => dfc.faithDecayMultiplier, x => dfc.faithDecayMultiplier = x, desc_faith_decay),
             MakePctOption(faith_acquire, () => dfc.faithAcquireMultiplier, x => dfc.faithAcquireMultiplier = x, desc_faith_acquire),
             MakePctOption(meter_usage, () => dfc.meterUsageMultiplier, x => dfc.meterUsageMultiplier = x, desc_meter_usage),

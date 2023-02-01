@@ -17,6 +17,7 @@ using Danmokou.Graphics;
 using Danmokou.Player;
 using Danmokou.Reflection;
 using Danmokou.Reflection.CustomData;
+using Danmokou.Reflection2;
 using Danmokou.Scriptables;
 using JetBrains.Annotations;
 using UnityEngine.Profiling;
@@ -46,6 +47,10 @@ public class PICustomData {
     // lifetime of the bullet (including the lifetime of the original bullet), which is used to calculate direction.
     public float culledBulletTime;
     
+    //Variables bound in environment frames. These variables are at a higher scope, and may be changed
+    // by other actors.
+    public EnvFrame envFrame = EnvFrame.Empty;
+    
     //Late-bound variables, such as those created for state control in SS0 or onlyonce
     // In the DISABLE_TYPE_BUILDING case, this is used for all bound variables
     public readonly Dictionary<int, int> boundInts = new();
@@ -55,18 +60,24 @@ public class PICustomData {
     public readonly Dictionary<int, V2RV2> boundRV2s = new();
 
     public BehaviorEntity? firer; //Note this may be repooled or otherwise destroyed during execution
+
+    [UsedImplicitly]
+    public BehaviorEntity Firer => 
+        firer != null ? firer : 
+            throw new Exception("PICustomData is not a bullet or a GenCtx proxy, " +
+                                $"and therefore does not have a {nameof(Firer)}.");
     
     public PlayerController? playerController; //For player bullets
     [UsedImplicitly]
     public PlayerController PlayerController =>
         playerController != null ?
             playerController :
-            throw new Exception("FiringCtx does not have a player controller. " +
+            throw new Exception("PICustomData does not have a player controller. " +
                                 "Please make sure that player bullets are fired in player scripts only.");
 
     [UsedImplicitly]
     public FireOption OptionFirer => 
-        firer as FireOption ?? throw new Exception("FiringCtx does not have an option firer");
+         firer as FireOption ?? throw new Exception("PICustomData is not a bullet fired by a player shot option.");
 
     public Bullet? bullet;
     /// <summary>
@@ -81,7 +92,7 @@ public class PICustomData {
     /// If this data struct is being used for a Laser, then this points to the laser.
     /// </summary>
     public CurvedTileRenderLaser Laser => 
-        laserController ?? throw new Exception("FiringCtx does not have a laser controller");
+        laserController ?? throw new Exception("PICustomData is not a laser.");
     public PlayerBullet? playerBullet;
 
     /// <summary>
@@ -192,6 +203,7 @@ public class PICustomData {
     }
 
     public void Dispose() {
+        envFrame.Dispose();
         if (this == Empty) return;
         Constructor.Return(this);
     }
@@ -648,14 +660,14 @@ public struct ParametricInfo {
     public static ParametricInfo WithRandomId(Vector3 position, int findex, float t) => new(position, findex, RNG.GetUInt(), t);
     public static ParametricInfo WithRandomId(Vector3 position, int findex) => WithRandomId(position, findex, 0f);
 
-    public ParametricInfo(in Movement mov, int findex = 0, uint? id = null, float t = 0) : 
-        this(mov.rootPos, findex, id, t) { }
-    public ParametricInfo(Vector3 position, int findex = 0, uint? id = null, float t = 0) {
+    public ParametricInfo(in Movement mov, int findex = 0, uint? id = null, float t = 0, GenCtx? firer = null) : 
+        this(mov.rootPos, findex, id, t, firer) { }
+    public ParametricInfo(Vector3 position, int findex = 0, uint? id = null, float t = 0, GenCtx? firer = null) {
         loc = position;
         index = findex;
         this.id = id ?? RNG.GetUInt();
         this.t = t;
-        this.ctx = PICustomData.New();
+        this.ctx = PICustomData.New(firer);
     }
     public ParametricInfo(PICustomData ctx, in Movement mov, int findex = 0, uint? id = null, float t = 0) : 
         this(ctx, mov.rootPos, findex, id, t) { }
@@ -776,11 +788,15 @@ public delegate bool Pred(ParametricInfo bpi);
 public delegate bool LPred(ParametricInfo bpi, float lT);
 
 /// <summary>
-/// A wrapper type used for functions that operate over a GCX.
+/// A wrapper type used for functions that operate over a <see cref="GenCtx"/>.
 /// </summary>
 /// <typeparam name="T">Return object type (eg. float, v2, rv2)</typeparam>
 public delegate T GCXF<T>(GenCtx gcx);
 
+/// <summary>
+/// A wrapper around <see cref="GCXF{T}"/> whose return value is discarded.
+/// </summary>
+public delegate void ErasedGCXF(GenCtx gcx);
 
 //public delegate Fn GCXUFn<Fn>(GenCtx gcx, out FiringCtx fctx);
 

@@ -36,7 +36,7 @@ public static class _VNBlessedRain {
     }
     private static BoundedContext<Unit> _TopLevel(DMKVNState vn) => new(vn, "TOP", async () => {
         var o = new Shared(vn, vn.Add(new ADVDialogueBox()), (UnityRenderGroup)vn.DefaultRenderGroup, 
-            new UnityRenderGroup(vn, "black", 1, true));
+            vn.Add(new UnityRenderGroup("black", 1, true)));
         o.rg.Visible.Value = false;
         o.md.Alpha = 1;
         await o.GetRain();
@@ -55,7 +55,7 @@ public static class _VNBlessedRain {
         using var kasen = vn.Add(new Kasen());
         kasen.Alpha = 0;
         using var narr = vn.Add(new SilentNarrator());
-        reimu.Location.Value = V3(2.5f, 0);
+        reimu.LocalLocation.Value = V3(2.5f, 0);
         await o.rgb.DoTransition(new RenderGroupTransition.Fade(o.rg, 1))
             .And(reimu.EmoteSay("cry", l0))
             .And(vn.Wait(0.1).Then(o.GetBGM("br.bgm1").AsVnOp(vn))).C;
@@ -75,7 +75,7 @@ public static class _VNBlessedRain {
             reimu.SayC(l12),
             narr.SayC(l13),
             Lazy(() => {
-                yukari.Location.Value = V3(-2.5f, 6);
+                yukari.LocalLocation.Value = V3(-2.5f, 6);
                 yukari.EulerAnglesD.Value = V3(0, 0, 180);
             }),
             yukari.SetEmote("worry"),
@@ -103,9 +103,9 @@ public static class _VNBlessedRain {
             kasen.ESayC("worry", l30),
             yukari.SetEmote("normal"),
             Lazy(() => {
-                yukari.Location.Value = V3(-6, 0);
+                yukari.LocalLocation.Value = V3(-6, 0);
                 yukari.EulerAnglesD.Value = V3(0);
-                kasen.Location.Value = V3(-3, 0);
+                kasen.LocalLocation.Value = V3(-3, 0);
             }),
             vn.SFX("vn-yukari-power"),
             kasen.MoveBy(V3(1, 0), 0.8f).And(kasen.FadeTo(1, 0.8f)).And(vn.Wait(0.6).Then(
@@ -160,7 +160,7 @@ public static class _VNBlessedRain {
             kasen.ESayC("happy", l75),
             narr.SayC(l76),
             vn.SFX("vn-yukari-power"),
-            Lazy(() => o.bgm.FadeOut(2f)),
+            Lazy(() => o.bgm.FadeOutDestroy(2f)),
             o.rg.DoTransition(new RenderGroupTransition.Fade(o.rgb, 2))
         );
         return default;
@@ -178,11 +178,11 @@ public static class _VNBlessedRain {
         k.Alpha = 0;
         using var n = vn.Add(new SilentNarrator());
         await o.GetBGM("br.moriya");
-        s.Location.Value = V3(3, 0);
+        s.LocalLocation.Value = V3(3, 0);
         await s.SetEmote("happy");
         await o.rgb.DoTransition(new RenderGroupTransition.Fade(o.rg, 1)).And(s.Say(l77)).C;
-        r.Location.Value = V3(-2, 0);
-        y.Location.Value = V3(-5.5, 0);
+        r.LocalLocation.Value = V3(-2, 0);
+        y.LocalLocation.Value = V3(-5.5, 0);
         await vn.Sequential(
             vn.SFX("vn-yukari-power"),
             r.MoveBy(V3(1, 0), 0.8f).And(r.FadeTo(1, 0.8f)).And(vn.Wait(0.6).Then(
@@ -221,7 +221,7 @@ public static class _VNBlessedRain {
             r.ESayC("worry", l104),
             s.SayC(l105),
             s.ESayC("happy", l106),
-            Lazy(() => o.bgm.FadeOut()),
+            Lazy(() => o.bgm.FadeOutDestroy()),
             s.MoveBy(V3(1.5f, 0), 1f).And(s.FadeTo(0, 1)),
             y.ESayC("angry", l107),
             r.RotateTo(V3(0, 180), 0.6f).And(r.EmoteSay("", l108)).C,
@@ -229,7 +229,7 @@ public static class _VNBlessedRain {
             r.ESayC("worry", l110),
             o.GetBGM("br.kanako"),
             Lazy(() => {
-                k.Location.Value = V3(5.3, 0);
+                k.LocalLocation.Value = V3(5.3, 0);
             }),
             k.MoveBy(V3(-1.5f, 0), 1f).And(k.FadeTo(1, 1)).And(k.Say(l111)).C,
             y.ESayC("surprise", l112),
@@ -320,7 +320,7 @@ public static class _VNBlessedRain {
             r.RotateTo(V3(0), 0.6f).And(r.EmoteSay("happy", l194)).C,
             k.Say(l195).And(k.MoveBy(V3(1.5f, 0), 1f))
                 .And(k.FadeTo(0, 1f))
-                .And(Lazy(() => o.bgm.FadeOut()).AsVnOp(vn)).C,
+                .And(Lazy(() => o.bgm.FadeOutDestroy()).AsVnOp(vn)).C,
             r.EmoteSayC("satisfied", l197),
             y.ESayC("surprise", l198),
             r.ESayC("worry", l199),
@@ -355,13 +355,13 @@ public static class _VNBlessedRain {
         using var m = vn.Add(new Marisa());
         m.Alpha = 0;
         using var n = vn.Add(new SilentNarrator());
-        r.Location.Value = V3(3, 2);
+        r.LocalLocation.Value = V3(3, 2);
         await o.rgb.DoTransition(new RenderGroupTransition.Fade(o.rg, 1));
-        y.Location.Value = V3(0, 6);
+        y.LocalLocation.Value = V3(0, 6);
         y.EulerAnglesD.Value = V3(0, 0, 180);
-        a.Location.Value = V3(-3.5, 0);
-        m.Location.Value = V3(-4.5, 0);
-        s.Location.Value = V3(-1, 0);
+        a.LocalLocation.Value = V3(-3.5, 0);
+        m.LocalLocation.Value = V3(-4.5, 0);
+        s.LocalLocation.Value = V3(-1, 0);
         await vn.Sequential(
             vn.SFX("vn-yukari-power"),
             r.MoveBy(V3(0, -2), 1.4f).And(r.FadeTo(1, 0.8f))
@@ -385,7 +385,7 @@ public static class _VNBlessedRain {
             a.ESayC("smug", l224),
             r.ESayC("worry", l225),
             a.SayC(l226),
-            Lazy(() => o.bgm.FadeOut(1.5f)),
+            Lazy(() => o.bgm.FadeOutDestroy(1.5f)),
             n.SayC(l227),
             o.GetBGM("br.fight"),
             a.SetEmote("surprise"),
@@ -411,7 +411,7 @@ public static class _VNBlessedRain {
             a.ESayC("worry", l241),
             r.ESayC("angry", l242),
             a.ESayC("smug", l243),
-            Lazy(() => o.bgm.FadeOut(1.5f)),
+            Lazy(() => o.bgm.FadeOutDestroy(1.5f)),
             r.ESayC("satisfied", l244),
             o.GetBGM("br.aya"),
             r.SayC(l245),
@@ -449,7 +449,7 @@ public static class _VNBlessedRain {
             a.SetEmote("worry"),
             r.EmoteSay("surprise", l277).And(r.RotateTo(V3(0, 540), 1)).C,
             s.FadeTo(1, 1).And(s.MoveBy(V3(1, 0), 1)).And(vn.Wait(0.5).Then(r.MoveBy(V3(0.5, 0), 0.5f))),
-            Lazy(() => o.bgm.FadeOut()),
+            Lazy(() => o.bgm.FadeOutDestroy()),
             s.ESayC("worry", l278),
             a.SayC(l279),
             s.SayC(l280),
@@ -548,7 +548,7 @@ public static class _VNBlessedRain {
             a.ESayC("cry", l360),
             a.SayC(l361),
             a.ESayC("happy", l362),
-            Lazy(() => o.bgm.FadeOut()),
+            Lazy(() => o.bgm.FadeOutDestroy()),
             a.MoveBy(V3(-1.5, 0), 1f).And(a.FadeTo(0, 1)),
             r.ESayC("worry", l363),
             r.ESayC("surprise", l364),
@@ -588,8 +588,8 @@ public static class _VNBlessedRain {
             r.SetEmote(""),
             m.MoveTo(V3(-16, 0), 3).And(vn.Wait(0.5).Then(r.MoveTo(V3(-12, 0), 2.8f))),
             Lazy(() => {
-                m.Location.Value = V3(11, 0);
-                r.Location.Value = V3(14, 0);
+                m.LocalLocation.Value = V3(11, 0);
+                r.LocalLocation.Value = V3(14, 0);
             }),
             m.MoveTo(V3(-2, 0), 3).And(vn.Wait(0.5).Then(r.MoveTo(V3(2, 0), 3))),
             o.StopFootstep(),
@@ -610,8 +610,8 @@ public static class _VNBlessedRain {
             o.GetFootstep(),
             m.MoveTo(V3(-14, 0), 3).And(vn.Wait(0.5).Then(r.MoveTo(V3(-11, 0), 3f))),
             Lazy(() => {
-                m.Location.Value = V3(11, 0);
-                r.Location.Value = V3(14, 0);
+                m.LocalLocation.Value = V3(11, 0);
+                r.LocalLocation.Value = V3(14, 0);
             }),
             m.MoveTo(V3(-2, 0), 3).And(vn.Wait(0.5).Then(r.MoveTo(V3(2, 0), 3))),
             o.StopFootstep(),
@@ -647,8 +647,8 @@ public static class _VNBlessedRain {
             o.GetFootstep(),
             m.MoveTo(V3(-15, 0), 3).And(vn.Wait(0.5).Then(r.MoveTo(V3(-11, 0), 3f))),
             Lazy(() => {
-                m.Location.Value = V3(11, 0);
-                r.Location.Value = V3(14, 0);
+                m.LocalLocation.Value = V3(11, 0);
+                r.LocalLocation.Value = V3(14, 0);
             }),
             m.MoveTo(V3(-2, 0), 3).And(vn.Wait(0.5).Then(r.MoveTo(V3(2, 0), 3))),
             o.StopFootstep(),
@@ -660,8 +660,8 @@ public static class _VNBlessedRain {
             o.GetFootstep(),
             m.MoveTo(V3(-15, 0), 3).And(vn.Wait(0.5).Then(r.MoveTo(V3(-11, 0), 3f))),
             Lazy(() => {
-                m.Location.Value = V3(11, 0);
-                r.Location.Value = V3(14, 0);
+                m.LocalLocation.Value = V3(11, 0);
+                r.LocalLocation.Value = V3(14, 0);
             }),
             m.SetEmote(""),
             r.SetEmote("worry"),
@@ -678,7 +678,7 @@ public static class _VNBlessedRain {
             m.MoveTo(V3(-2, 0), 3).And(vn.Wait(0.5).Then(r.MoveTo(V3(2, 0), 3))),
             o.StopFootstep(),
             r.ESayC("worry", l431),
-            Lazy(() => o.bgm.FadeOut()),
+            Lazy(() => o.bgm.FadeOutDestroy()),
             o.rg.DoTransition(new RenderGroupTransition.Fade(o.rgb, 3))
         );
         return default;

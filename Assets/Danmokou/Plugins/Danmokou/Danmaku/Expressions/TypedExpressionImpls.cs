@@ -32,7 +32,8 @@ public class TExPI : TEx<ParametricInfo> {
     /// A float-cast of the index which can be used for parametric float operations like protate.
     /// </summary>
     public readonly UnaryExpression findex;
-    public Ex FiringCtx => ex.Field("ctx");
+    public Ex FiringCtx => ex.Field(nameof(ParametricInfo.ctx));
+    public Ex EnvFrame => FiringCtx.Field(nameof(PICustomData.envFrame));
     private static readonly ExFunction rehash = ExFunction.Wrap<ParametricInfo, int>("Rehash", 0);
     private static readonly ExFunction copyWithT = ExFunction.Wrap<ParametricInfo, float>("CopyWithT", 1);
     private static readonly ExFunction flipSimple =
@@ -151,6 +152,8 @@ public class TExGCX : TEx<GenCtx> {
     public readonly Expression pi_float;
     public readonly MemberExpression beh_loc;
     public readonly MemberExpression bpi;
+    public MemberExpression exec => Ex.Field(ex, "exec");
+    public Expression EnvFrame => ex.Field(nameof(GenCtx.envFrame));
     public TExGCX(Expression ex_) : base(ex_) {
         fs = Ex.Field(ex, "fs");
         v2s = Ex.Field(ex, "v2s");

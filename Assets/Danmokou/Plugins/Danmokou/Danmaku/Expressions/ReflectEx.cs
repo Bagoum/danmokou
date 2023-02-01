@@ -52,7 +52,7 @@ public static class ReflectEx {
     public static Ex Let<L>((string alias, Func<TExArgCtx, TEx<L>> content)[] aliases, Func<Ex> inner, TExArgCtx applier) {
         var stmts = new Ex[aliases.Length + 1];
         var vars = new ParameterExpression[aliases.Length];
-        var lets = new List<IDisposable>();
+        var lets = new List<TExArgCtx.LocalLet>();
         for (int ii = 0; ii < aliases.Length; ++ii) {
             Ex alias_value = aliases[ii].content(applier);
             lets.Add(applier.Let(aliases[ii].alias, vars[ii] = 
@@ -60,7 +60,7 @@ public static class ReflectEx {
             stmts[ii] = Ex.Assign(vars[ii], alias_value);
         }
         stmts[aliases.Length] = inner();
-        for (int ii = 0; ii < lets.Count; ++ii)
+        for (int ii = lets.Count - 1; ii >= 0; --ii)
             lets[ii].Dispose();
         return Ex.Block(vars, stmts);
     }
@@ -68,7 +68,7 @@ public static class ReflectEx {
     public static Ex LetAlias(IEnumerable<Alias> aliases, Func<Ex> inner, TExArgCtx applier) {
         var stmts = new List<Ex>();
         var vars = new List<ParameterExpression>();
-        var lets = new List<IDisposable>();
+        var lets = new List<TExArgCtx.LocalLet>();
         foreach (var a in aliases) {
             Ex alias_value = a.func(applier);
             if (a.DirectAssignment) {
@@ -81,7 +81,7 @@ public static class ReflectEx {
             }
         }
         stmts.Add(inner());
-        for (int ii = 0; ii < lets.Count; ++ii)
+        for (int ii = lets.Count - 1; ii >= 0; --ii)
             lets[ii].Dispose();
         return Ex.Block(vars, stmts);
     }
@@ -89,8 +89,8 @@ public static class ReflectEx {
     public static Ex SetAlias(Alias[] aliases, Func<Ex> inner, TExArgCtx tac) {
         var stmts = new List<Ex>();
         foreach (var a in aliases) {
-            if (tac.Ctx.ICRR != null && tac.Ctx.ICRR.TryResolve(a.type, a.alias, out var ex)) {
-                tac.Ctx.ICRR.MarkDirty(a.type, a.alias);
+            if (tac.Ctx.GCXURefs != null && tac.Ctx.GCXURefs.TryResolve(a.type, a.alias, out var ex)) {
+                tac.Ctx.GCXURefs.MarkDirty(a.type, a.alias);
                 _ = a.func(tac); //if the call requires any aliases
                 //pass-- we can't assign to this temp var
             } else
@@ -115,7 +115,6 @@ public static class ReflectEx {
         ///  recomputed by every reader.
         /// </summary>
         void MarkDirty(Type t, string alias);
-        //bool TryResolve(Reflector.ExType ext, string alias, out Ex ex);
     }
 
     public static Expression? GetAliasFromStack(string alias, TExArgCtx tac) {
@@ -139,7 +138,7 @@ public static class ReflectEx {
         if (tac.MaybeGetByName<T>(alias).Try(out var prm))
             return prm;
         //Automatic GCXPath.expose resolution
-        if (tac.Ctx.ICRR != null && tac.Ctx.ICRR.TryResolve<T>(alias, out ex))
+        if (tac.Ctx.GCXURefs != null && tac.Ctx.GCXURefs.TryResolve<T>(alias, out ex))
             return ex;
         //In functions not scoped by the GCX (eg. bullet controls)
         //The reason for using the special marker is that we cannot give good errors if an incorrect value is entered

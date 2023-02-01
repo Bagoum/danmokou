@@ -8,6 +8,7 @@ using Danmokou.DMath;
 using Danmokou.Expressions;
 using Danmokou.Player;
 using Danmokou.Reflection;
+using Danmokou.Reflection2;
 using JetBrains.Annotations;
 using UnityEngine;
 
@@ -19,10 +20,20 @@ namespace Danmokou.Danmaku {
 ///  and will generally eventually be frozen into a <see cref="ParametricInfo"/>.
 /// </summary>
 public class GenCtx : IDisposable {
+    public static readonly GenCtx Empty = new();
+    
+    //BDSL1
     public readonly Dictionary<string, float> fs = new();
     public readonly Dictionary<string, Vector2> v2s = new();
-    public static readonly GenCtx Empty = new();
-
+    public IReadOnlyDictionary<string, Vector2> V2s => v2s;
+    public readonly Dictionary<string, Vector3> v3s = new();
+    public IReadOnlyDictionary<string, Vector3> V3s => v3s;
+    public readonly Dictionary<string, V2RV2> rv2s = new();
+    public IReadOnlyDictionary<string, V2RV2> RV2s => rv2s;
+    //BDSL2
+    public EnvFrame envFrame = EnvFrame.Empty;
+    
+    
     public float? MaybeGetFloat(string key) {
         //Note: duplicate all entries here in TExGCX
         if (key == "i") return i;
@@ -30,12 +41,7 @@ public class GenCtx : IDisposable {
         else if (fs.TryGetValue(key, out var f)) return f;
         else return null;
     }
-
-    public IReadOnlyDictionary<string, Vector2> V2s => v2s;
-    public readonly Dictionary<string, Vector3> v3s = new();
-    public IReadOnlyDictionary<string, Vector3> V3s => v3s;
-    public readonly Dictionary<string, V2RV2> rv2s = new();
-    public IReadOnlyDictionary<string, V2RV2> RV2s => rv2s;
+    
     //No longer supported as of DMK v9.2.0
     //public readonly List<(Reflector.ExType, string)> exposed = new();
     /// <summary>
@@ -140,6 +146,8 @@ public class GenCtx : IDisposable {
         exec = null!;
         playerController = null;
         idOverride = null;
+        envFrame.Dispose();
+        envFrame = EnvFrame.Empty;
         cache.Push(this);
         //++recachedCount;
     }
@@ -156,6 +164,7 @@ public class GenCtx : IDisposable {
         cp.index = this.index;
         cp.idOverride = this.idOverride;
         cp.playerController = playerController;
+        //todo handle envframe? depends on whether this is for a new scope or not
         return cp;
     }
 

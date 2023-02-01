@@ -41,9 +41,9 @@ public class BossConfig : ScriptableObject {
     /// </summary>
     public LocalizedStringReference replayNameOverride = null!;
     public LString ReplayName => 
-        replayNameOverride.SetDefaultOrEmpty(FromBaseKey(".replay")).Or(CasualName);
+        replayNameOverride.SetDefaultOrEmpty(FromBaseKey(".replay")).Or(BossPracticeName);
     /// <summary>
-    /// For display in the bottom margin when the boss in on screen. Defaults to BossPracticeName.
+    /// For display in the bottom margin when the boss in on screen. Defaults to CasualName.
     /// </summary>
     public LocalizedStringReference bottomTrackerNameOverride = null!;
     public LString BottomTrackerName => 

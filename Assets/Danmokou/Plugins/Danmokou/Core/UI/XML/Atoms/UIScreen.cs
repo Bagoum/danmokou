@@ -58,6 +58,8 @@ public class UIScreen {
     /// <br/>The visibility of the menu's background is dependent on the current screen.
     /// </summary>
     public float MenuBackgroundOpacity { private get; set; }
+    public const float DefaultMenuBGOpacity = 0.85f;
+    
     /// <summary>
     /// The opacity of the HTML background image of the uiScreen.
     /// <br/>In the default setup, this is a patterned background with opacity 1.
