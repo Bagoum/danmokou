@@ -15,6 +15,7 @@ using Danmokou.Player;
 using Danmokou.Scriptables;
 using UnityEngine.UIElements;
 using UnityEngine;
+using UnityEngine.Profiling;
 using UnityEngine.Scripting;
 using static Danmokou.Services.GameManagement;
 using static Danmokou.UI.XML.XMLUtils;
@@ -169,7 +170,9 @@ public class XMLMainMenuCampaign : XMLMainMenu {
         
         PlayerDataScreen = this.AllPlayerDataScreens(game, GameDetailsScreen, out ReplayScreen, out StatsScreen,
             out AchievementsScreen, out RecordsScreen, AchievementsNodeV);
+        Profiler.BeginSample("Licenses");
         LicenseScreen = this.LicenseScreen(References.licenses);
+        Profiler.EndSample();
         
         foreach (var s in Screens)
             if (s != MainScreen)

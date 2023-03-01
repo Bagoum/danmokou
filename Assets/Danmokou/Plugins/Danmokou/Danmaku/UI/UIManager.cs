@@ -22,9 +22,9 @@ using Danmokou.Scriptables;
 using Danmokou.Services;
 using Danmokou.SM;
 using Danmokou.UI.XML;
-using SuzunoyaUnity;
 using UnityEngine.Serialization;
 using static Danmokou.Services.GameManagement;
+using static Danmokou.DMath.ColorHelpers;
 
 namespace Danmokou.UI {
 [Serializable]
@@ -488,8 +488,8 @@ public class UIManager : CoroutineRegularUpdater, IUIManager, IStageAnnouncer {
 
     private void InStayOutSpriteFade(TextMeshPro tmp, float timeIn, float timeStay, float timeOut, ICancellee cT,
         Action? done = null) {
-        var m0 = Helpers.WithA(tmp.color, 0);
-        var m1 = Helpers.WithA(m0, 1);
+        var m0 = tmp.color.WithA(0);
+        var m1 = m0.WithA(1);
         new Tweener<Color>(m0, m1, timeIn, c => tmp.color = c, null, cT)
             .Then(new Tweener<float>(0, 0, timeStay, _ => { }, null, cT))
             .Then(new Tweener<Color>(m1, m0, timeOut, c => tmp.color = c, null, cT))

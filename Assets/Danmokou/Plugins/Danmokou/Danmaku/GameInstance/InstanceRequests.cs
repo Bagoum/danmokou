@@ -13,6 +13,7 @@ using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Danmaku;
 using Danmokou.DMath;
+using Danmokou.Graphics;
 using Danmokou.Graphics.Backgrounds;
 using Danmokou.Player;
 using Danmokou.Scenes;
@@ -155,12 +156,14 @@ public record InstanceRequest {
     public ReplayMode replay { get; }
     public ILowInstanceRequest lowerRequest { get; }
     public int seed { get; }
+    public ICameraTransitionConfig? PreferredCameraTransition { get; init; }
     public ICancellee InstTracker => instTracker;
     public bool Saveable => replay is not ReplayMode.Replaying;
     public InstanceMode Mode => lowerRequest.Mode;
 
-    public InstanceRequest(Action<InstanceRequest, InstanceRecord> finalize, ILowInstanceRequest lowerRequest, Replay replay) : 
-        this(finalize, replay.metadata.Record.SharedInstanceMetadata, lowerRequest, new ReplayMode.Replaying(replay)) {}
+    public InstanceRequest(Action<InstanceRequest, InstanceRecord> finalize, Replay replay) : 
+        this(finalize, replay.Metadata.Record.SharedInstanceMetadata, 
+            replay.Metadata.Record.ReconstructedRequest, new ReplayMode.Replaying(replay)) {}
     public InstanceRequest(Action<InstanceRequest, InstanceRecord> finalize, SharedInstanceMetadata metadata, ILowInstanceRequest lowReq) : 
         this(finalize, metadata, lowReq, null) { }
 
@@ -171,7 +174,7 @@ public record InstanceRequest {
             new ReplayMode.RecordingReplay() : 
             new ReplayMode.NotRecordingReplay());
         this.lowerRequest = lowerRequest;
-        this.seed = this.replay is ReplayMode.Replaying r ? r.replay.metadata.Record.Seed : new Random().Next();
+        this.seed = this.replay is ReplayMode.Replaying r ? r.replay.Metadata.Record.Seed : new Random().Next();
     }
 
     /// <summary>
@@ -186,10 +189,7 @@ public record InstanceRequest {
             ReplayMode.RecordingReplay _ => Replayer.BeginRecording(),
             ReplayMode.Replaying r =>
                 Replayer.BeginReplaying(
-                    new Replayer.ReplayerConfig(
-                        r.replay.metadata.Debug ?
-                            Replayer.ReplayerConfig.FinishMethod.STOP :
-                            Replayer.ReplayerConfig.FinishMethod.ERROR, r.replay.frames)),
+                    new Replayer.ReplayerConfig(r.replay)),
             _ => throw new Exception($"Unhandled replay type: {replay}")
         };
         GameManagement.NewInstance(Mode, Features, this, actor);
@@ -238,7 +238,7 @@ public record InstanceRequest {
     public bool Run() {
         RNG.Seed(seed);
         if (replay is ReplayMode.Replaying r)
-            r.replay.metadata.ApplySettings();
+            r.replay.Metadata.ApplySettings();
         InstancedRequested.OnNext(this);
 
         if (lowerRequest switch {
@@ -256,8 +256,10 @@ public record InstanceRequest {
     }
 
     public void Cancel() {
-        GameManagement.DeactivateInstance();
-        instTracker.Cancel();
+        if (!instTracker.Cancelled) {
+            instTracker.Cancel();
+            GameManagement.DeactivateInstance();
+        }
     }
 
 
@@ -273,7 +275,7 @@ public record InstanceRequest {
                 () => StateMachineManager.FromText(s.stage.stage.stateMachine),
                 () => ServiceLocator.Find<LevelController>()
                     .RunLevel(new(s.phase, s.method, s.stage.stage, InstTracker)),
-                out var tcs)) is { }) {
+                out var tcs).With(PreferredCameraTransition)) is { }) {
             async Task<InstanceRecord> Rest() {
                 await tcs.Task;
                 return CompileAndSaveRecord();
@@ -296,7 +298,7 @@ public record InstanceRequest {
                     beh.phaseController.Override(ab.phase.index);
                     await beh.RunBehaviorSM(SMRunner.RunRoot(b.stateMachine, InstTracker));
                     return Unit.Default;
-                }, out var tcs)) is { }) {
+                }, out var tcs).With(PreferredCameraTransition)) is { }) {
             async Task<InstanceRecord> Rest() {
                 await tcs.Task;
                 //Allow slight delay for item collection
@@ -319,7 +321,7 @@ public record InstanceRequest {
                 () => {
                     var beh = UnityEngine.Object.Instantiate(cr.Boss.boss).GetComponent<BehaviorEntity>();
                     ServiceLocator.Find<IChallengeManager>().LinkBoss(beh, InstTracker);
-                }, out var tcs)) is { }) {
+                }, out var tcs).With(PreferredCameraTransition)) is { }) {
             async Task<InstanceRecord> Rest() {
                 var rec = await tcs.Task;
                 //Allow slight delay for item collection
@@ -362,7 +364,7 @@ public record InstanceRequest {
 
     private static SceneRequest DefaultReturnScene(InstanceRequest req) => ReturnScene(
         MaybeSaveReplayScene(req.replay is ReplayMode.RecordingReplay, req.lowerRequest.Game));
-    private static SceneRequest ReturnScene(SceneConfig sc) => new(sc, SceneRequest.Reason.FINISH_RETURN);
+    public static SceneRequest ReturnScene(SceneConfig sc) => new(sc, SceneRequest.Reason.FINISH_RETURN);
     public static bool DefaultReturn(InstanceRequest req) => 
         ServiceLocator.Find<ISceneIntermediary>().LoadScene(DefaultReturnScene(req)) is {};
     
@@ -372,7 +374,7 @@ public record InstanceRequest {
     public static bool ViewReplay(Replay? r) {
         if (r == null) return false;
         return new InstanceRequest((_, __) => ServiceLocator.Find<ISceneIntermediary>().LoadScene(
-            ReturnScene(References.mainMenu)), r.metadata.Record.ReconstructedRequest, r).Run();
+            ReturnScene(References.mainMenu)), r).Run();
     }
 
     /// <summary>

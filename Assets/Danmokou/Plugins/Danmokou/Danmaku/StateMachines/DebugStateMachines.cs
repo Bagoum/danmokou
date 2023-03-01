@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
+using Danmokou.Core;
 using Danmokou.DMath;
 
 namespace Danmokou.SM {
@@ -13,6 +14,7 @@ public class DebugFloat : LineActionSM {
 
     public override Task Start(SMHandoff smh) {
         values.Add(f(smh.GCX));
+        Logs.Log($"DebugFloat value: {values[^1]}");
         return Task.CompletedTask;
     }
 }

@@ -175,6 +175,10 @@ public partial class BulletManager {
             Empty,
             Normal,
             /// <summary>
+            /// Bullets created to represent trivial items when normal bullets are cleared via bombs or photos. These home to the player and add points when they collide with the player.
+            /// </summary>
+            BulletClearFlake,
+            /// <summary>
             /// Bullets such as cwheel representing animations played when a normal bullet is destroyed
             /// </summary>
             Softcull,
@@ -263,7 +267,7 @@ public partial class BulletManager {
 
         public BulletInCode CopyBC(string newPool) => BC.Copy(newPool);
         public SimpleBulletCollection CopySimplePool(List<SimpleBulletCollection> target, string newPool) => new(target, BC.Copy(newPool));
-        public SimpleBulletCollection CopyPool(List<SimpleBulletCollection> target, string newPool) => GetCollectionForColliderType(target, BC.Copy(newPool));
+        public SimpleBulletCollection CopyPool(List<SimpleBulletCollection> target, string newPool) => GetCollection(target, BC.Copy(newPool));
         
         #endregion
 
@@ -432,6 +436,8 @@ public partial class BulletManager {
                     } else
                         sb.direction = sb.dirFunc(ref sb);
                     
+                    //TODO there's technically an inconsistency in ordering when parallelism is enabled or not of when culling is done relative to post-dir ctrls
+                    //this is a problem if parallelism is considered a per-computer setting
                     if (!PARALLELISM_ENABLED)
                         //Post-vel controls may destroy the bullet. As soon as this occurs, stop iterating
                         for (int pi = state.postDirPcs; pi < numPcs && !Deleted[state.ii]; ++pi) 
@@ -839,6 +845,14 @@ public partial class BulletManager {
 #endif
     }
 
+
+
+    private class BulletFlakeSBC : CircleSBC {
+        public override CollectionType MetaType => CollectionType.BulletClearFlake;
+        
+        public BulletFlakeSBC(List<SimpleBulletCollection> target, BulletInCode bc) : base(target, bc) { }
+    }
+    
     private class EmptySBC : NoCollSBC {
         public override CollectionType MetaType => CollectionType.Empty;
         
@@ -895,6 +909,7 @@ public partial class BulletManager {
         }
 
         public void AddCulled(ref SimpleBullet sb) {
+            if (Fade.MaxTime <= 0) return;
             Activate();
             var sbn = new SimpleBullet(ref sb);
             sbn.bpi.ctx.culledBulletTime = sbn.bpi.t;

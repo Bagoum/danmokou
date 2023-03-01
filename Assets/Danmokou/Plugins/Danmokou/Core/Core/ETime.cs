@@ -104,19 +104,26 @@ public static class UpdatePriorities {
 }
 
 public class ETime : MonoBehaviour {
+    private static ETime Main { get; set; } = null!;
     public static float ASSUME_SCREEN_FRAME_TIME { get; private set; } = 1 / 60f;
-    private static bool UsePauseHandling => EngineStateManager.State > EngineState.RUN;
+    private static bool GameTimeIsPaused => EngineStateManager.State > EngineState.RUN;
     private float untilNextRegularFrame = 0f;
     private float untilNextPauseFrame = 0f;
     private float UntilNextFrame {
-        get => UsePauseHandling ? untilNextPauseFrame : untilNextRegularFrame;
+        get => GameTimeIsPaused ? untilNextPauseFrame : untilNextRegularFrame;
         set {
-            if (UsePauseHandling)
+            if (GameTimeIsPaused)
                 untilNextPauseFrame = value;
             else
                 untilNextRegularFrame = value;
         }
     }
+    
+    /// <summary>
+    /// Process the provided amount of time instantaneously.
+    /// </summary>
+    public static void SkipTime(float t) => Main.untilNextRegularFrame += t;
+    
     public const int ENGINEFPS = 120;
     public const float ENGINEFPS_F = ENGINEFPS;
     public const float FRAME_TIME = 1f / ENGINEFPS_F;
@@ -129,9 +136,9 @@ public class ETime : MonoBehaviour {
     /// </summary>
     //Note: we dynamically query Slowdown.Value in dT because it might update during the frame,
     // and such updates should be handled ASAP to be responsive. (I do not believe it affects correctness/replays.)
-    public static float dT => UsePauseHandling ? 0 : (ASSUME_SCREEN_FRAME_TIME * Slowdown.Value);
+    public static float dT => GameTimeIsPaused ? 0 : (ASSUME_SCREEN_FRAME_TIME * Slowdown.Value);
     private static float EngineStepTime =>
-        UsePauseHandling ? ASSUME_SCREEN_FRAME_TIME : (ASSUME_SCREEN_FRAME_TIME * Slowdown.Value);
+        GameTimeIsPaused ? ASSUME_SCREEN_FRAME_TIME : (ASSUME_SCREEN_FRAME_TIME * Slowdown.Value);
     public static int FrameNumber { get; private set; }
 
     public static void ResetFrameNumber() {
@@ -153,6 +160,7 @@ public class ETime : MonoBehaviour {
     private static readonly DMCompactingArray<(Action cb, EngineState state)> persistentUnitySofInvokes = new();
 
     private void Awake() {
+        Main = this;
         TransitionHelpers.DefaultDeltaTimeProvider = () => FRAME_TIME;
         GenericOps.RegisterType<Vector2>(Vector2.LerpUnclamped, (x, y) => x * y, 
             (Vector2.zero, (x, y) => x + y), (Vector2.one, (x, y) => x * y));
@@ -405,7 +413,7 @@ public class ETime : MonoBehaviour {
     public class Timer : IRegularUpdater {
         private static readonly Dictionary<string, Timer> timerMap = new Dictionary<string, Timer>();
         public static Timer PhaseTimer => GetTimer("phaset");
-        private readonly DeletionMarker<IRegularUpdater> token;
+        private DeletionMarker<IRegularUpdater>? token;
         public string name;
         /// <summary>
         /// Frame counter, with multiplier built-in.
@@ -416,37 +424,34 @@ public class ETime : MonoBehaviour {
         /// Speed multiplier.
         /// </summary>
         private float multiplier = 1f;
-        /// <summary>
-        /// True iff the timer is currently accumulating.
-        /// </summary>
-        private bool enabled = false;
         
         public int UpdatePriority => UpdatePriorities.SYSTEM;
         public EngineState UpdateDuring => EngineState.RUN;
         
         private Timer(string name) {
             this.name = name;
-            token = RegisterRegularUpdater(this);
         }
 
         private void Start(float mult) {
             multiplier = mult;
-            enabled = true;
+            token ??= RegisterRegularUpdater(this);
         }
 
         public void Restart(float mult = 1f) {
             Frames = 0;
-            multiplier = mult;
-            enabled = true;
+            Start(mult);
         }
 
         private void Stop() {
-            enabled = false;
+            token?.MarkForDeletion();
+            token = null;
         }
 
 
         public void RegularUpdate() {
-            if (enabled) Frames += multiplier;
+            Profiler.BeginSample("Timer update");
+            Frames += multiplier;
+            Profiler.EndSample();
         }
 
         public void FirstFrame() { }
@@ -470,13 +475,13 @@ public class ETime : MonoBehaviour {
             }
             return t;
         }
-
-
-        public static void DestroyAll() {
-            foreach (var v in timerMap.Values.ToArray()) {
-                v.token.MarkForDeletion();
-            }
-            timerMap.Clear();
+        
+        /// <summary>
+        /// Stop all executing timers.
+        /// </summary>
+        public static void StopAll() {
+            foreach (var v in timerMap.Values)
+                v.Stop();
         }
 
         public Expression exFrames => Expression.PropertyOrField(Expression.Constant(this), nameof(Frames));

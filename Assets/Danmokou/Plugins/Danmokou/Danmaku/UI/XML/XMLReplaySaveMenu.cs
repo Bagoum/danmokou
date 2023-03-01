@@ -36,7 +36,7 @@ public class XMLReplaySaveMenu : UIController {
                         }, nameEntry.With(noSpacePrefixClass, centerTextClass)),
                         null, new UINode[] {
                             UIButton.Save(() => {
-                                rec.metadata.Record.AssignName(nameEntry.DataWIP);
+                                rec.Metadata.Record.AssignName(nameEntry.DataWIP);
                                 //The name edit changes the name under the record 
                                 SaveData.SaveRecord();
                                 SaveData.p.SaveNewReplay(rec);

@@ -22,13 +22,10 @@ public class ReplayMetadata {
     /// Serializing the record in the replay file allows transferring replays.
     /// </summary>
     public InstanceRecord Record { get; set; }
-    [JsonIgnore] public string RecordUuid => Record.Uuid;
     //Frozen options
     public float DialogueSpeed { get; set; }
     public bool SmoothInput { get; set; }
     public string? Locale { get; set; } = null;
-    // Not important but it's convenient
-    public int Length { get; set; }
     
     public bool Debug { get; set; }
 
@@ -54,22 +51,18 @@ public class ReplayMetadata {
     public string AsFilename => $"{Record.Mode}_{Record.SavedMetadata.difficulty.DescribeSafe()}_{Record.Uuid}";
 
 }
-public class Replay {
-    public readonly Func<FrameInput[]> frames;
-    public readonly ReplayMetadata metadata;
-
+public record Replay(Func<FrameInput[]> Frames, ReplayMetadata Metadata) {
     public Replay(FrameInput[] frames, InstanceRecord rec, bool? debug=null) :
         this(() => frames, new ReplayMetadata(rec, debug ?? false)) {
-        metadata.Length = frames.Length;
     }
 
-    public Replay(Func<FrameInput[]> frames, ReplayMetadata metadata) {
-        this.frames = frames;
-        this.metadata = metadata;
-    }
 }
 
+/// <summary>
+/// An agent that follows game execution and either provides replay control data or records replay control data.
+/// </summary>
 public abstract class ReplayActor {
+    protected bool Loaded { get; set; } = false;
     public bool Cancelled { get; protected set; } = false;
     public int LastFrame { get; set; }= -1;
     private int? replayStartFrame;
@@ -79,6 +72,8 @@ public abstract class ReplayActor {
                 ETime.ResetFrameNumber();
                 replayStartFrame = 0;
             }
+            if (!Loaded)
+                Load();
             return replayStartFrame.Value;
         }
     }
@@ -87,7 +82,10 @@ public abstract class ReplayActor {
         -ReplayStartFrame + (LastFrame = ETime.FrameNumber);
 
     public abstract void Step();
-    public virtual void Load() { }
+
+    public virtual void Load() {
+        Loaded = true;
+    }
 
     public virtual void Cancel() => Cancelled = true;
 
@@ -124,31 +122,34 @@ public class ReplayRecorder : ReplayActor {
 public class ReplayPlayerInputSource : ReplayActor, IInputSource {
     public readonly Replayer.ReplayerConfig replaying;
     private FrameInput[]? loadedFrames;
-    private FrameInput[] LoadedFrames => loadedFrames ??= replaying.frames();
+    private FrameInput[] LoadedFrames => loadedFrames ??= replaying.Frames();
     private FrameInput CurrentFrame => LoadedFrames[ReplayIndex];
     
     private readonly List<IDisposable> tokens = new();
 
     public ReplayPlayerInputSource(Replayer.ReplayerConfig replaying) {
-        tokens.Add(Achievement.ACHIEVEMENT_PROGRESS_ENABLED.AddConst(false));
-        tokens.Add(InputManager.PlayerInput.AddSource(this, AggregateInputSource.REPLAY_PRIORITY));
+        if (replaying.DisableAchievements)
+            tokens.Add(Achievement.ACHIEVEMENT_PROGRESS_ENABLED.AddConst(false));
         this.replaying = replaying;
     }
 
     public override void Load() {
+        if (Loaded) return;
+        Loaded = true;
+        tokens.Add(InputManager.PlayerInput.AddSource(this, AggregateInputSource.REPLAY_PRIORITY));
         var _ = LoadedFrames;
     }
     
     public override void Step() {
         if (ReplayIndex >= LoadedFrames.Length) {
-            replaying.onFinish?.Invoke();
-            if (replaying.finishMethod == Replayer.ReplayerConfig.FinishMethod.REPEAT) {
+            replaying.OnFinish?.Invoke();
+            if (replaying.FinishMethod == Replayer.ReplayFinishMethod.REPEAT) {
                 Logs.Log("Restarting replay.");
                 ResetState();
                 return;
             }
             Cancel();
-            if (replaying.finishMethod != Replayer.ReplayerConfig.FinishMethod.STOP)
+            if (replaying.FinishMethod != Replayer.ReplayFinishMethod.STOP)
                 Logs.UnityError($"Ran out of replay data. On frame {LastFrame}, requested index {ReplayIndex}, " +
                                $"but there are only {LoadedFrames.Length}.");
         }
@@ -172,7 +173,7 @@ public class ReplayPlayerInputSource : ReplayActor, IInputSource {
     public bool? DialogueSkipAll => CurrentFrame.dialogueSkipAll;
 
     //handled by Step
-    public void OncePerUnityFrameToggleControls() {}
+    public bool OncePerUnityFrameToggleControls() => false;
 }
 
 public static class Replayer {
@@ -185,29 +186,21 @@ public static class Replayer {
         REPLAYING,
         NONE
     }
+    public enum ReplayFinishMethod {
+        ERROR,
+        REPEAT,
+        STOP
+    }
 
-    public readonly struct ReplayerConfig {
-        public enum FinishMethod {
-            ERROR,
-            REPEAT,
-            STOP
+    public record ReplayerConfig(ReplayFinishMethod FinishMethod, Func<FrameInput[]> Frames) {
+        public Action? OnFinish { get; init; } = null;
+        public bool DisableAchievements { get; init; } = false;
+
+        public ReplayerConfig(Replay r) : this(
+            r.Metadata.Debug ? ReplayFinishMethod.STOP : ReplayFinishMethod.ERROR,
+            r.Frames) {
+            DisableAchievements = true;
         }
-
-        public readonly FinishMethod finishMethod;
-        public readonly Func<FrameInput[]> frames;
-        public readonly Action? onFinish;
-        public ReplayerConfig(FinishMethod finishMethod, Func<FrameInput[]> frames, Action? onFinish = null) {
-            this.finishMethod = finishMethod;
-            this.frames = frames;
-            this.onFinish = onFinish;
-        }
-
-        private (FinishMethod, Func<FrameInput[]>) Tuple => (finishMethod, frames);
-
-        public static bool operator ==(ReplayerConfig b1, ReplayerConfig b2) => b1.Tuple == b2.Tuple;
-        public static bool operator !=(ReplayerConfig b1, ReplayerConfig b2) => !(b1 == b2);
-        public override int GetHashCode() => Tuple.GetHashCode();
-        public override bool Equals(object o) => o is ReplayerConfig bc && this == bc;
     }
 
     private static ReplayActor? actor;
@@ -251,9 +244,9 @@ public static class Replayer {
     public static void SaveDebugReplay() {
         if (Actor is ReplayRecorder rr && GameManagement.Instance.Request != null) {
             var r = rr.Compile(GameManagement.Instance.Request.MakeGameRecord(), true);
-            r.metadata.Record.AssignName($"Debug{RNG.RandStringOffFrame()}");
+            r.Metadata.Record.AssignName($"Debug{RNG.RandStringOffFrame()}");
             SaveData.p.SaveNewReplay(r);
-            Logs.Log($"Saved a debug replay {r.metadata.Record.CustomName}");
+            Logs.Log($"Saved a debug replay {r.Metadata.Record.CustomName}");
         }
 
     }

@@ -50,12 +50,18 @@ float softmod(float x, float by) {
 float rehash(float x, int ii) {
     return x + REHASH * ii;
 }
-			
+
+/** A function that modifies a 0-1 lerp controller so using it in `lerp` produces smooth ends.
+ */
 float cq(float w) {
+    //return w * w * w * (10.0 + w * (-15.0 + 6.0 * w));
     return w * w * (3.0 - 2.0 * w);
 }	
 float2 cq2(float2 xy) {
     return float2(cq(xy.x), cq(xy.y));
+}
+float3 cq3(float3 xyz) {
+    return float3(cq(xyz.x), cq(xyz.y), cq(xyz.z));
 }
 float c01(float x) {
     return clamp(x, 0, 1);

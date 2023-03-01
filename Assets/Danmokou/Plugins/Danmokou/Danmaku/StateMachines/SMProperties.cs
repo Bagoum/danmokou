@@ -379,6 +379,10 @@ public record SoftcullProperties {
     public float maxDist { get; }
     public string? autocullTarget { get; }
     private string autocullDefault { get; }
+    /// <summary>
+    /// True iff the cleared bullets should be converted to flake items that grant the player extra points.
+    /// </summary>
+    public bool UseFlakeItems { get; init; } = false;
     public string? DefaultPool => autocullTarget == null ? null : $"{autocullTarget}-{autocullDefault}";
     public readonly bool sendToC;
 
@@ -438,7 +442,8 @@ public class PhaseProperties {
     public SoftcullProperties SoftcullPropsBeh(BehaviorEntity exec) =>
         SoftcullProperties.SynchronousDefault(exec.GlobalPosition(), 0.4f, 0.5f, 4f, autocullBehTarget, autocullDefault);
     public SoftcullProperties SoftcullPropsOverTime(BehaviorEntity exec, float advance) =>
-        SoftcullProperties.OverTimeDefault(exec.GlobalPosition(), advance, 0.5f, 8f, autocullTarget, autocullDefault);
+        SoftcullProperties.OverTimeDefault(exec.GlobalPosition(), advance, 0.5f, 8f, autocullTarget, autocullDefault)
+         with { UseFlakeItems = true };
     
     public readonly int? livesOverride = null;
     public readonly StateMachine? rootMove = null;

@@ -48,7 +48,7 @@ public static partial class ExM {
     /// </summary>
     /// <returns></returns>
     [Alias(Parser.SM_REF_KEY)]
-    public static Func<TExArgCtx, TEx<T>> Reference<T>(string alias) => ReflectEx.ReferenceLet<T>(alias);
+    public static Func<TExArgCtx, TEx<T>> Reference<T>(string alias) => ReflectEx.ReferenceExpr<T>(alias);
     
     /// <summary>
     /// Reference a value saved within bullet data, or return a default value if it does not exist.

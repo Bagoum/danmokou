@@ -23,7 +23,7 @@ public class PhasePerformance : PiecewiseAppear {
     public PhasePerformanceStar[] stars = null!;
     public override Bounds Bounds => background.sprite.bounds.MulBy(background.transform.lossyScale);
     public override Vector2 Center => background.transform.position;
-    public override (Texture, bool) Texture => (ServiceLocator.Find<IScreenshotter>().Screenshot(
+    public override (Texture, bool) Texture() => (ServiceLocator.Find<IScreenshotter>().Screenshot(
         new CRect(background.transform, background.sprite.bounds),
         new[] {DMKMainCamera.CamType.UI}), true);
 

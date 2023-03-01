@@ -34,8 +34,7 @@ public class XMLPauseMenu : PausedGameplayMenu, IPauseMenu {
     private UINode unpause = null!;
     private UIScreen OptionsScreen = null!;
     private UIScreen? SaveLoadScreen;
-    private Texture2D? lastSaveLoadSS;
-    private bool preserveSS = false;
+    private RenderTexture? lastSaveLoadSS;
     protected override UINode? StartingNode => unpause;
     
     protected override UIScreen?[] Screens => new[] {MainScreen, OptionsScreen, SaveLoadScreen};
@@ -48,11 +47,8 @@ public class XMLPauseMenu : PausedGameplayMenu, IPauseMenu {
         OptionsScreen.MenuBackgroundOpacity = UIScreen.DefaultMenuBGOpacity;
         var advMan = ServiceLocator.FindOrNull<ADVManager>();
         if (!Replayer.RequiresConsistency && advMan != null) {
-            SaveLoadScreen = this.SaveLoadVNScreen(inst => advMan.ExecAdv?.Inst.Request.Restart(inst.GetData()) ?? false, slot => {
-                preserveSS = true;
-                return new(advMan.GetSaveReadyADVData(), DateTime.Now, lastSaveLoadSS!, slot,
-                    ServiceLocator.Find<IVNWrapper>().TrackedVNs.First().backlog.LastPublished.Value.readableSpeech);
-            });
+            SaveLoadScreen = this.SaveLoadVNScreen(inst => advMan.ExecAdv?.Inst.Request.Restart(inst.GetData()) ?? false, slot => new(advMan.GetSaveReadyADVData(), DateTime.Now, lastSaveLoadSS!.IntoTex(), slot,
+                ServiceLocator.Find<IVNWrapper>().TrackedVNs.First().backlog.LastPublished.Value.readableSpeech));
             SaveLoadScreen.BackgroundOpacity = 1f;
             SaveLoadScreen.MenuBackgroundOpacity = UIScreen.DefaultMenuBGOpacity;
         }
@@ -83,14 +79,13 @@ public class XMLPauseMenu : PausedGameplayMenu, IPauseMenu {
         if (SaveLoadScreen != null) {
             ServiceLocator.Find<IVNWrapper>().UpdateAllVNSaves();
             SaveData.SaveRecord();
-            if (lastSaveLoadSS != null && !preserveSS) {
+            if (lastSaveLoadSS != null) {
                 Logs.Log("Destroying VN save texture", level:LogLevel.DEBUG1);
                 lastSaveLoadSS.DestroyTexOrRT();
             }
             lastSaveLoadSS = ServiceLocator.Find<IScreenshotter>().Screenshot(
                 new CRect(-LocationHelpers.PlayableBounds.center.x, 0, MainCamera.ScreenWidth / 2f, 
                     MainCamera.ScreenHeight / 2f, 0), new[] { DMKMainCamera.CamType.UI });
-            preserveSS = false;
         }
         base.ShowMe();
     }

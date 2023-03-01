@@ -9,6 +9,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 using BagoumLib;
 using Danmokou.Core;
 using Danmokou.Core.DInput;
+using Danmokou.Graphics;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
@@ -150,13 +151,20 @@ public static class FileUtils {
     }
     
 
-    public static void WriteTex(string file, Texture2D tex, ImageFormat format = ImageFormat.JPG) {
+    public static void WriteTex(string file, Texture tex, ImageFormat format = ImageFormat.JPG) {
         CheckPath(ref file);
+        var (dispose, t2d) = tex switch {
+            Texture2D tex2d => (false, tex2d),
+            RenderTexture rt => (true, rt.IntoTex()),
+            _ => throw new Exception($"Texture of type {tex.GetType()} cannot be saved to disk")
+        };
         File.WriteAllBytes(file, format switch {
-            ImageFormat.JPG => tex.EncodeToJPG(95),
-            ImageFormat.PNG => tex.EncodeToPNG(),
+            ImageFormat.JPG => t2d.EncodeToJPG(95),
+            ImageFormat.PNG => t2d.EncodeToPNG(),
             _ => throw new ArgumentOutOfRangeException(nameof(format), format, null)
         });
+        if (dispose)
+            t2d.DestroyTexOrRT();
     }
     
     public static void WriteString(string file, string text) {

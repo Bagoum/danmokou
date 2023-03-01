@@ -36,7 +36,7 @@ This is a shader feature `FT_FRAME_ANIM`.
 
 This shader is used for most standard objects, such as enemies, lasers, and pathers. It is a fairly normal 2D shader with no fancy instancing support. The supported features are largely similar to Bullet Indirect in order to try to keep parity between simple bullets and lasers/pathers.
 
-**It does not support uniform frame animation**. If you're using this material, you should be using some kind of animation helper like FrameAnimBullet (Laser) or BehaviorEntity.Animate. 
+**It does not support uniform frame animation**. If you're using this material, you should be using some kind of animation helper like FrameAnimBullet (eg. Laser) or BehaviorEntity.Animate. 
 
 It supports hue shifting, which is a pretty cool rendering feature. The current implementation shifts the hue by `X * T` where X is a float value, default zero, set in the bullet option `hueShift` when an applicable object is created, and T is the lifetime of the object. I have not been able to implement this for Bullet Indirect since it would require another array of variables...
 

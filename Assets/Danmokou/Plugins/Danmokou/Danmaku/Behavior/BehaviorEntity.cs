@@ -259,22 +259,19 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         if (!idLookup.ContainsKey(ID)) { idLookup[ID] = new HashSet<BehaviorEntity>(); }
         idLookup[ID].Add(this);
         if (IsNontrivialID(ID)) {
-            if (pointersToResolve.TryGetValue(ID, out BEHPointer behp)) {
+            if (pointers.TryGetValue(ID, out BEHPointer behp) && !behp.Attached) {
                 behp.Attach(this);
-                pointersToResolve.Remove(ID);
-                attachedPointers[ID] = behp;
             }
         }
     }
+    
     /// <summary>
     /// Safe to call twice.
     /// </summary>
     private void UnregisterID() {
         if (idLookup.TryGetValue(ID, out var dct)) dct.Remove(this);
-        if (attachedPointers.TryGetValue(ID, out var behp)) {
+        if (pointers.TryGetValue(ID, out var behp) && behp.beh == this) {
             behp.Detach();
-            pointersToResolve[ID] = behp;
-            attachedPointers.Remove(ID);
         }
     }
     
@@ -573,7 +570,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     }
 
     private bool AmIOutOfHP => enemy != null && enemy.HP <= 0;
-    private bool PoofOnPhaseEnd => AmIOutOfHP && !(this is BossBEH);
+    private bool PoofOnPhaseEnd => AmIOutOfHP && this is not BossBEH;
     private bool DeathEffectOnParentCull => true;
 
     /// <summary>
@@ -672,22 +669,17 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         throw new Exception("Could not find beh for ID: " + id);
     }
 
-    private static readonly Dictionary<string, BEHPointer> pointersToResolve = new();
-    private static readonly Dictionary<string, BEHPointer> attachedPointers = new();
+    private static readonly Dictionary<string, BEHPointer> pointers = new();
 
-    public static void ClearPointers() {
-        pointersToResolve.Clear();
-        attachedPointers.Clear();
-    }
     public static BEHPointer GetPointerForID(string id) {
-        if (attachedPointers.ContainsKey(id)) return attachedPointers[id];
-        if (idLookup.ContainsKey(id)) {
+        if (!pointers.TryGetValue(id, out var p))
+            pointers[id] = p = new(id);
+        if (!p.Attached && idLookup.ContainsKey(id))
             foreach (BehaviorEntity beh in idLookup[id]) {
-                return new BEHPointer(id, beh);
+                p.Attach(beh);
+                break;
             }
-        }
-        if (!pointersToResolve.ContainsKey(id)) pointersToResolve[id] = new BEHPointer(id);
-        return pointersToResolve[id];
+        return p;
     }
 
     public static BehaviorEntity[] GetExecsForIDs(string[] ids) {
@@ -724,23 +716,23 @@ public class BEHPointer {
     public readonly string id;
     public BehaviorEntity? beh;
     public BehaviorEntity Beh => (beh != null) ? beh : throw new Exception($"BEHPointer {id} has not been bound");
-    private bool found;
+    public bool Attached { get; private set; }
     public Vector2 Loc => Beh.Location;
 
     public BEHPointer(string id, BehaviorEntity? beh = null) {
         this.id = id;
         this.beh = beh;
-        found = beh != null;
+        Attached = beh != null;
     }
 
     public void Attach(BehaviorEntity new_beh) {
-        if (found) throw new Exception("Cannot attach BEHPointer twice");
+        if (Attached) throw new Exception("Cannot attach BEHPointer twice");
         beh = new_beh;
-        found = true;
+        Attached = true;
     }
 
     public void Detach() {
-        found = false;
+        Attached = false;
         beh = null;
     }
 }

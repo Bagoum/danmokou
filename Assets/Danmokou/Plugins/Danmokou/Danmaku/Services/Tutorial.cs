@@ -25,6 +25,8 @@ using static Danmokou.Core.LocalizedStrings.Tutorial;
 
 namespace Danmokou.Services {
 public class Tutorial : BehaviorEntity {
+    public static ReflWrap<StateMachine> greenRectSm =
+        new("sync _ <> relrect greenrect level <-2;2.5:1.4;1.4:0> witha 0.7 green");
     // Start is called before the first frame update
     public TextMeshPro text00 = null!;
     public TextMeshPro text10 = null!;
@@ -123,8 +125,7 @@ public class Tutorial : BehaviorEntity {
         mov = new Movement(new Vector2(3, 5), -90);
         BulletManager.RequestLaser(null, "zonelaser-green/b", mov, new ParametricInfo(in mov), 999, 0,
             ref nrx);
-        "sync _ <> relrect greenrect level <-2;2.5:1.4;1.4:0> witha 0.7 green".Into<StateMachine>()
-            .Start(new SMHandoff(this));
+        greenRectSm.Value.Start(new SMHandoff(this));
         Message(text10, redcircle12);
         yield return confirm();
         Message(text10, legacy13);

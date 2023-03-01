@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using CommunityToolkit.HighPerformance.Buffers;
 using Danmokou.Core;
 using Danmokou.DMath;
@@ -52,36 +54,67 @@ public static partial class Reflector {
         return typeof(TEx<float>);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static char Lower(char c) {
         if (c >= 'A' && c <= 'Z') return (char) (c + 32);
         return c;
     }
 
-    private static char[] temp = new char[256];
-
-    private static string Sanitize(string raw_name) {
-        //return $"{raw_name[0].ToString().ToLower()}{raw_name.Substring(1).ToLower().Replace("-", "")}";
-        int len = raw_name.Length;
-        if (len == 0) return raw_name;
-        while (len > temp.Length) 
-            temp = new char[temp.Length * 2];
-        int ti = 0;
-        temp[ti++] = Lower(raw_name[0]);
-        bool requiresChange = temp[0] != raw_name[0];
-        for (int ii = 1; ii < len; ++ii) {
-            if (raw_name[ii] == '-') {
-                requiresChange = true;
-            } else {
-                temp[ti++] = Lower(raw_name[ii]);
-                requiresChange |= temp[ti - 1] != raw_name[ii];
+    /// <summary>
+    /// String comparer that is case-insensitive and ignores '-' when preceded by a letter.
+    /// </summary>
+    public class SanitizedStringComparer : IEqualityComparer<string> {
+        public static IEqualityComparer<string> Singleton { get; } = new SanitizedStringComparer();
+        public bool Equals(string x, string y) {
+            var xi = 0;
+            var yi = 0;
+            var ignoreNextXDash = false;
+            var ignoreNextYDash = false;
+            while (xi < x.Length && yi < y.Length) {
+                var xc = x[xi];
+                while (xc == '-' && ignoreNextXDash) {
+                    xc = x[++xi];
+                }
+                var yc = y[yi];
+                while (yc == '-' && ignoreNextYDash) {
+                    yc = y[++yi];
+                }
+                if (xc >= 'A' && xc <= 'Z') xc = (char)(xc + 32);
+                if (yc >= 'A' && yc <= 'Z') yc = (char)(yc + 32);
+                if (xc != yc)
+                    return false;
+                ignoreNextXDash = (xc >= 'a' && xc <= 'z');
+                ignoreNextYDash = (yc >= 'a' && yc <= 'z');
+                ++xi;
+                ++yi;
             }
+            while (xi < x.Length && x[xi] == '-' && ignoreNextXDash)
+                ++xi;
+            while (yi < y.Length && y[yi] == '-' && ignoreNextYDash)
+                ++yi;
+            return xi == x.Length && yi == y.Length;
         }
-        Profiler.BeginSample("Sanitize");
-        var output = requiresChange ? 
-            temp.MakeString(0, ti)
-            : raw_name;
-        Profiler.EndSample();
-        return output;
+
+        public int GetHashCode(string s) {
+            int num1 = 352654597;
+            int num2 = num1;
+            var l = s.Length;
+            var ct = 0;
+            var ignoreNextDash = false;
+            for (int i = 0; i < l; ++i) {
+                var c = s[i];
+                if (c == '-' && ignoreNextDash)
+                    continue;
+                if (c >= 'A' && c <= 'Z') c = (char)(c + 32);
+                if (ct % 2 == 0)
+                    num1 = (num1 << 5) + num1 + (num1 >> 27) ^ c;
+                else
+                    num2 = (num2 << 5) + num2 + (num2 >> 27) ^ c;
+                ignoreNextDash = (c >= 'a' && c <= 'z');
+                ++ct;
+            }
+            return num1 + num2 * 1566083941;
+        }
     }
 
 }

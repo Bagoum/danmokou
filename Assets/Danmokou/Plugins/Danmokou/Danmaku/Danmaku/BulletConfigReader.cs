@@ -10,6 +10,7 @@ using Danmokou.Core;
 using Danmokou.Danmaku.Descriptors;
 using Danmokou.DMath;
 using Danmokou.Graphics;
+using Danmokou.Reflection;
 using Danmokou.Scenes;
 using Danmokou.Scriptables;
 using Danmokou.Services;
@@ -102,7 +103,7 @@ public partial class BulletManager : RegularUpdater {
             //Minus 1 to allow for zero offset
             grazeEveryFrames = (ushort)(sbes.grazeEveryFrames - 1);
             Destructible = new(sbes.destructible);
-            Deletable = new OverrideEvented<bool>(sbes.destructible);
+            Deletable = new OverrideEvented<bool>(sbes.deletable);
             CullRadius = new OverrideEvented<float>(sbes.screenCullRadius);
             AllowCameraCull = new OverrideEvented<bool>(true);
             Recolor = new OverrideEvented<(TP4, TP4)?>(null);
@@ -321,7 +322,7 @@ public partial class BulletManager : RegularUpdater {
         if (sbes.TTL > 0) {
             AddSimpleStyle(new DummySoftcullSBC(activeNpc, bc, sbes.TTL, sbes.timeRandomization, sbes.rotateRandomization));
         } else {
-            AddSimpleStyle(GetCollectionForColliderType(activeNpc, bc));
+            AddSimpleStyle(GetCollection(activeNpc, bc));
         }
     }
     private void RecolorTextures() {
@@ -516,6 +517,7 @@ public partial class BulletManager : RegularUpdater {
 
         public FrameAnimBullet.Recolor GetOrLoadRecolor() {
             if (!loaded) {
+                Profiler.BeginSample("Frame-anim bullet recolor loading");
                 var fb = b as FrameAnimBullet;
                 var frames = fb != null ? fb.Frames : new FrameAnimBullet.BulletAnimSprite[0];
                 var sprites = new FrameAnimBullet.BulletAnimSprite[frames.Length];
@@ -529,6 +531,7 @@ public partial class BulletManager : RegularUpdater {
                 }
                 recolor = new FrameAnimBullet.Recolor(sprites, recolor.prefab, NewMaterial(recolor.style), recolor.style);
                 loaded = true;
+                Profiler.EndSample();
             }
             return recolor;
         }
@@ -599,13 +602,22 @@ public partial class BulletManager : RegularUpdater {
     /// <summary>
     /// NPC simple bullets only.
     /// </summary>
-    private static SimpleBulletCollection GetCollectionForColliderType(List<SimpleBulletCollection> target, BulletInCode bc) =>
-        bc.cc.colliderType switch {
+    private static SimpleBulletCollection GetCollection(List<SimpleBulletCollection> target, BulletInCode bc) {
+        if (bc.name == BulletFlakeName)
+            return new BulletFlakeSBC(target, bc);
+        return bc.cc.colliderType switch {
             GenericColliderInfo.ColliderType.Circle => new CircleSBC(target, bc),
             GenericColliderInfo.ColliderType.Rectangle => new RectSBC(target, bc),
             GenericColliderInfo.ColliderType.Line => new LineSBC(target, bc),
             GenericColliderInfo.ColliderType.None => new NoCollSBC(target, bc),
             _ => throw new NotImplementedException()
         };
+    }
+
+    public const string BulletFlakeName = "$flakeBulletClear";
+    private static readonly ReflWrap<VTP> FlakeMovement = new(
+        ":: { mt ss0(lerp(2, 12, distto(lplayertrue), 0.5, 1.4)) } " +
+        "nrvelocity(switchH(t, &mt, py(lerpt(0, &mt, 0.4, 0)), vhome(lerpt(0, 0.2, 4, 14), lplayertrue)))");
+    private static readonly ReflWrap<SBV2> FlakeRot = new("cx(1)");
 }
 }

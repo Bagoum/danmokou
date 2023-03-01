@@ -7,7 +7,13 @@ using BagoumLib.Events;
 namespace Danmokou.Core {
 public static class Locales {
     public const string? EN = null;
+    public const string FR = "fr";
+    public const string ES = "es";
+    public const string PT = "pt";
+    public const string DE = "de";
     public const string JP = "jp";
+    public const string ZH = "zh";
+    
 
     public static readonly string?[] AllLocales = {EN, JP};
 

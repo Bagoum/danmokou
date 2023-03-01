@@ -16,6 +16,7 @@ public interface ISFXService {
         BossSpellCutin,
         BossCutin,
         BossExplode,
+        FlakeItemCollected
     }
     void Request(string? key);
     void Request(string? key, SFXType type);

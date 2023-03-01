@@ -17,7 +17,7 @@ using Logger = BagoumLib.Logger;
 
 namespace Danmokou.Core {
 public static class Logs {
-    private const LogLevel MIN_LEVEL = LogLevel.DEBUG1;
+    private const LogLevel MIN_LEVEL = LogLevel.DEBUG2;
     private const LogLevel BUILD_MIN = LogLevel.DEBUG2;
 
     public static readonly Logger DMKLogs = new();

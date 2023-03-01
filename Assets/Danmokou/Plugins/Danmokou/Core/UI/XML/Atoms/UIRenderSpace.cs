@@ -157,7 +157,7 @@ public class UIRenderAbsoluteTerritory : UIRenderSpace {
         _html.RegisterCallback<PointerUpEvent>(evt => {
             Logs.Log($"Clicked on absolute territory");
             if (screen.Controller.Current == null || isTransitioning) return;
-            screen.Controller.QueuedEvent = new UIPointerCommand.NormalCommand(UICommand.Back, null);
+            screen.Controller.QueueEvent(new UIPointerCommand.NormalCommand(UICommand.Back, null));
             evt.StopPropagation();
         });
     }
@@ -198,7 +198,7 @@ public class UIRenderConstructed : UIRenderSpace {
     public override VisualElement HTML {
         get {
             if (_html == null) {
-                parent.HTML.Add(_html = prefab.CloneTreeWithoutContainer());
+                parent.HTML.Add(_html = prefab.CloneTreeNoContainer());
                 builder?.Invoke(this, _html);
                 UpdateVisibility();
             }

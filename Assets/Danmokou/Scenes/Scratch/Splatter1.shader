@@ -56,16 +56,16 @@
 			float4 frag(fragment f) : SV_Target { 
 			    float2 uv = f.uv;
 				float4 c = tex2D(_MainTex, uv) * f.c;
-                float3 suvt = float3(s(uv, _BX, _BY), _T + _Time.y);
+                float3 suvt = float3(s(uv, _BX, _BY), _T + 0 * _Time.y);
             #ifdef FT_VORONOI
                 float noise = voronoi3D(suvt).x;
             #else
                 float noise = perlin3D01(suvt);
             #endif
-                noise = lerp(0, _F, noise);
-            
-                c = lerp(c, float4(0,1,.6,1), smoothstep(.35, .55, noise));
-                c = lerp(c, float4(0,0.6, 1,1), smoothstep(.65, .85, noise));
+                //noise = lerp(0, _F, noise);
+				c = lerp(float4(0,0,0,1), float4(1,1,1,1), noise);
+                //c = lerp(c, float4(0,1,.6,1), smoothstep(.35, .55, noise));
+                //c = lerp(c, float4(0,0.6, 1,1), smoothstep(.65, .85, noise));
 				return c;
 			}
 			ENDCG

@@ -10,7 +10,7 @@ using UnityEngine;
 public class CreateReplays : RegularUpdater {
     public string saveReplayTo = null!;
     public TextAsset runReplay = null!;
-    public Replayer.ReplayerConfig.FinishMethod replayFinishMethod = Replayer.ReplayerConfig.FinishMethod.REPEAT;
+    public Replayer.ReplayFinishMethod replayFinishMethod = Replayer.ReplayFinishMethod.REPEAT;
 
     private ReplayActor? actor = null;
 

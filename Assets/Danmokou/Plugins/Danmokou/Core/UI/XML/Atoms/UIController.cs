@@ -93,6 +93,7 @@ public abstract record UIResult {
 }
 
 public abstract class UIController : CoroutineRegularUpdater {
+    public static readonly Event<Unit> UIEventQueued = new();
     public abstract record CacheInstruction {
         public record ToOption(int OptionIndex) : CacheInstruction;
         public record ToGroup(int? ScreenIndex, int GroupIndex) : CacheInstruction;
@@ -135,7 +136,12 @@ public abstract class UIController : CoroutineRegularUpdater {
 
     //Fields for event-based changes 
     //Not sure if I want to generalize these to properly event-based...
-    public UIPointerCommand? QueuedEvent { get; set; }
+    public UIPointerCommand? QueuedEvent { get; private set; }
+
+    public void QueueEvent(UIPointerCommand cmd) {
+        QueuedEvent = cmd;
+        UIEventQueued.OnNext(default);
+    }
 
     protected virtual UINode? StartingNode => null;
     
@@ -622,12 +628,15 @@ public abstract class UIController : CoroutineRegularUpdater {
     ///  or for any other reason needs to ensure that it is not the current node,
     ///  it should call this function.
     /// </summary>
-    public void MoveCursorAwayFromNode(UINode n) {
+    /// <returns>True iff the cursor was moved (which also redraws the screen).</returns>
+    public bool MoveCursorAwayFromNode(UINode n) {
         if (n == Current) {
             if (!n.Destroyed) n.Leave(false);
             Current = n.Group.ExitNode;
-        }
-        Redraw();
+            Redraw();
+            return true;
+        } else
+            return false;
     }
     
     public override int UpdatePriority => UpdatePriorities.UI;

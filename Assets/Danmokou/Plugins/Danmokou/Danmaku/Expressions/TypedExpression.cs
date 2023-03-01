@@ -350,12 +350,12 @@ public class TEx {
         return (ParameterExpression)me.ex;
     }
     
-    private static Ex ResolveCopy(Func<Ex[], Ex> func, params (Ex, bool)[] requiresCopy) {
+    private static Ex ResolveCopy(Func<Ex[], Ex> func, params (Ex ex, bool reqCopy)[] args) {
         var newvars = ListCache<ParameterExpression>.Get();
         var setters = ListCache<Expression>.Get();
-        var usevars = new Expression[requiresCopy.Length];
-        for (int ii = 0; ii < requiresCopy.Length; ++ii) {
-            var (ex, reqCopy) = requiresCopy[ii];
+        var usevars = new Expression[args.Length];
+        for (int ii = 0; ii < args.Length; ++ii) {
+            var (ex, reqCopy) = args[ii];
             if (reqCopy) {
                 //Don't name this, as nested TEx should not overlap
                 var copy = V(ex.Type);

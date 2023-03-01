@@ -13,6 +13,20 @@ phase(0)
 $%f(%x)
 !}
 
+<!> type non abcd
+<!> hp 10000
+phase 0
+	saction 0
+		position 0 2
+		timer start hello
+		timer startm world 2
+		wait(2)
+		timer stop hello
+		timer stop world
+		wait(2)
+		debugf(timersec(hello))
+		debugf(timersec(world))
+
 <!> type non abc
 <!> hp 10000
 phase 0
@@ -39,7 +53,6 @@ phase 0
 		}, s(rvelocity(pxy(lerpt(0.5, 1, 3, 3.35 - &i2 * 0.05) + 0.4 * &i1, 0))))
 		))))
 
-///
 
 <!> type non nest
 <!> hp 10000
@@ -75,28 +88,6 @@ phase 0
 			hp 1000
 		}
 
-<!> type non depthsort
-<!> hp 1000
-<!> root 2 1
-phase 0
-	paction 0
-		async *-green/w <> gcr2 200 _ <> {
-		} gsr2c 30 {
-		} gsr2 3 <> {
-			color ({ ellipse circle amulet })
-		} s rvelocity px 2
-///
-		async scircle-red/w <0.5;:> gcr2 60 _ <5> {
-			} gsr2c 15 {
-			} s rvelocity px lerp(0, 2, t, 0, redd)
-
-<!> dialogue #{
-phase 0
-	saction 0
-		dialogue simp.dialogue.e-good
-		shift-phase
-#}
-
 
 <!> type non cbezier
 <!> hp 1000
@@ -114,13 +105,13 @@ phase 0
 		move-target 2 io-sine cxy(3, 2) 
 		
 
-#<!> type(spell, `sc`)
+<!> type(spell, `sc`)
 <!> hp(1000)
 phase(0)
 	paction 0
 		position 0 2
-		async sakura-green/ <1;:> gcr2 2 _ <4p> {
-		} s rvelocity cx 1.2
+		async dot-green/ <2;:> gcr2 0.25 _ <4p> {
+		} s rvelocity cx 2
 		
 		gtr2 300 _ <> {
 		} {
@@ -129,6 +120,7 @@ phase(0)
 	
 <!> type(non, `DRAiko test`)
 <!> hp(2000)
+<!> root(0, 2)
 phase(0)
 	paction 0
 		async circle-blue/w <1;:> gcr2 30 _ <> {

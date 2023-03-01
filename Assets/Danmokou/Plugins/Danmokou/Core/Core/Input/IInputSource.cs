@@ -37,6 +37,38 @@ public interface IInputSource {
     bool ? DialogueConfirm => null;
     bool? DialogueSkipAll => null;
 
-    void OncePerUnityFrameToggleControls();
+    /// <summary>
+    /// Update all controls (called once per Unity frame).
+    /// </summary>
+    /// <returns>True iff any input was pressed this frame.</returns>
+    bool OncePerUnityFrameToggleControls();
 }
+
+/// <summary>
+/// An input source that returns false for all inputs.
+/// </summary>
+public class NullInputSource : IInputSource {
+    public short? HorizontalSpeed => 0;
+    public short? VerticalSpeed => 0;
+    public bool? Firing => false;
+    public bool? Focus => false;
+    public bool? Bomb => false;
+    public bool? Meter => false;
+    public bool? Swap => false;
+
+    public bool? Pause => false;
+    public bool? VNBacklogPause => false;
+    public bool? UIConfirm => false;
+    public bool? UIBack => false;
+    public bool? UILeft => false;
+    public bool? UIRight => false;
+    public bool? UIUp => false;
+    public bool? UIDown => false;
+    public bool ? DialogueConfirm => false;
+    public bool? DialogueSkipAll => false;
+    public bool OncePerUnityFrameToggleControls() {
+        return false;
+    }
+}
+
 }

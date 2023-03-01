@@ -57,7 +57,7 @@ public class SceneIntermediary : CoroutineRegularUpdater, ISceneIntermediary {
         var currScene = SceneManager.GetActiveScene().name;
         float waitOut = 0f;
         if (transitionOnSame || currScene != req.scene.sceneName) {
-            var transition = req.scene.transitionIn == null ? defaultTransition : req.scene.transitionIn;
+            var transition = req.Transition ?? (req.scene.transitionIn == null ? defaultTransition : req.scene.transitionIn);
             ServiceLocator.Find<ICameraTransition>().Fade(transition, out var waitIn, out waitOut);
             Logs.Log($"Performing fade transition for {waitIn}s before loading scene.");
             for (; waitIn > ETime.FRAME_YIELD; waitIn -= ETime.FRAME_TIME) yield return null;
@@ -80,6 +80,7 @@ public class SceneIntermediary : CoroutineRegularUpdater, ISceneIntermediary {
         stateToken.Dispose();
         for (; waitOut > ETime.FRAME_YIELD; waitOut -= ETime.FRAME_TIME) yield return null;
         LOADING = false;
+        yield return null;
     }
     
     public override EngineState UpdateDuring => EngineState.LOADING_PAUSE;
@@ -89,7 +90,7 @@ public class SceneIntermediary : CoroutineRegularUpdater, ISceneIntermediary {
     //Static stuff
     public static Event<Unit> PreSceneUnload { get; } = new Event<Unit>();
     public static Event<Unit> SceneUnloaded { get; } = new Event<Unit>();
-    public static Event<Unit> SceneLoaded { get; } = new Event<Unit>();
+    public static Event<Scene> SceneLoaded { get; } = new();
 
     public static void Attach() {
         SceneManager.sceneUnloaded += s => {
@@ -98,7 +99,7 @@ public class SceneIntermediary : CoroutineRegularUpdater, ISceneIntermediary {
         };
         SceneManager.sceneLoaded += (s, m) => {
             Logs.Log($"Unity scene {s.name} was loaded via mode {m.ToString()}");
-            SceneLoaded.OnNext(default);
+            SceneLoaded.OnNext(s);
         };
     }
 }

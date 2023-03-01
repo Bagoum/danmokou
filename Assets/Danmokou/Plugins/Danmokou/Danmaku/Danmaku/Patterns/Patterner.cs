@@ -586,12 +586,14 @@ public struct LoopControl<T> {
             GCX.RV2 = GCX.BaseRV2 + props.frv2(GCX);
         }
         if (props.saveF != null) {
-            foreach (var (h, i, v) in props.saveF) {
+            for (int ii = 0; ii < props.saveF.Count; ++ii) {
+                var (h, i, v) = props.saveF[ii];
                 h.Save((int) i(GCX), v(GCX));
             }
         }
         if (props.saveV2 != null) {
-            foreach (var (h, i, v) in props.saveV2) {
+            for (int ii = 0; ii < props.saveV2.Count; ++ii) {
+                var (h, i, v) = props.saveV2[ii];
                 h.Save((int) i(GCX), v(GCX));
             }
         }

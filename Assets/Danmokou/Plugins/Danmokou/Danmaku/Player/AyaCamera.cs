@@ -7,6 +7,7 @@ using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Danmaku;
 using Danmokou.DMath;
+using Danmokou.Graphics;
 using Danmokou.Scriptables;
 using Danmokou.Services;
 using Danmokou.SM;
@@ -232,7 +233,7 @@ public class AyaCamera : BehaviorEntity {
     }
     private void TakePicture_Delete(float scale) {
         var rect = ViewfinderRect(scale);
-        BulletManager.Autodelete(new SoftcullProperties(null, null), 
+        BulletManager.Autodelete(new SoftcullProperties(null, null) { UseFlakeItems = true }, 
             b => CollisionMath.PointInRect(b.loc, rect));
     }
 
@@ -244,8 +245,9 @@ public class AyaCamera : BehaviorEntity {
         text.enabled = false;
         var photoRect = ViewfinderRect(scale);
         var photoTex = ServiceLocator.Find<IScreenshotter>().Screenshot(photoRect);
-        var photo = new AyaPhoto(photoTex, photoRect, success && GameManagement.Instance.Request?.replay is null);
+        var photo = new AyaPhoto(photoTex.IntoTex(), photoRect, success && GameManagement.Instance.Request?.replay is null);
         PhotoTaken.OnNext((photo, success));
+        photoTex.Release();
         var pphoto = GameObject.Instantiate(pinnedPhotoPrefab).GetComponent<AyaPinnedPhoto>();
         pphoto.Initialize(photo, location, success ? 
             ServiceLocator.FindOrNull<IAyaPhotoBoard>()?.NextPinLoc(pphoto) : 

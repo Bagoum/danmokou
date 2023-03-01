@@ -391,7 +391,7 @@ public partial class BulletManager {
         }
 
         /// <summary>
-        /// Softcull but without expressions. Used internally for runtime bullet controls.
+        /// <see cref="Softcull"/> but without expressions. Used internally for runtime bullet controls.
         /// </summary>
         [DontReflect]
         public static cBulletControl Softcull_noexpr(SoftcullProperties props, string? target, Pred cond) {
@@ -399,9 +399,16 @@ public partial class BulletManager {
             if (toPool != null && toPool.MetaType != SimpleBulletCollection.CollectionType.Softcull) {
                 throw new InvalidOperationException("Cannot softcull to a non-softcull pool: " + target);
             }
+            var flakePool = GetMaybeCopyPool(BulletFlakeName);
             return new((in SimpleBulletCollection.VelocityUpdateState st, in ParametricInfo bpi, in ICancellee ct) => {
                 if (cond(bpi)) {
+                    if (props.UseFlakeItems && LocationHelpers.OnPlayableScreen(bpi.loc)) {
+                        var sb = new SimpleBullet(null, FlakeRot, new Movement(FlakeMovement),
+                            new ParametricInfo(bpi.loc, bpi.index, bpi.id));
+                        flakePool.Add(ref sb, true);
+                    }
                     st.sbc.Softcull(NullableGetMaybeCopyPool(target), st.ii, props);
+                    
                 }
             }, BulletControl.P_CULL);
         }
@@ -836,7 +843,7 @@ public partial class BulletManager {
     public static void SoftScreenClear() => Autodelete(new SoftcullProperties(null, null), _ => true);
     
     /// <summary>
-    /// For end-of-phase autoculling (from v8 onwards).
+    /// For end-of-phase autoculling.
     /// <br/>This will operate over time using props.advance.
     /// <br/>Does not affect empty bullets, but does cull undeletable bullets (like sun).
     /// </summary>

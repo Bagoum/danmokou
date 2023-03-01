@@ -121,7 +121,7 @@ public static partial class XMLUtils {
     }
 
     public static VisualElement AddVTA(this VisualElement root, VisualTreeAsset? child) =>
-        root.AddVE(child == null ? null : child.CloneTreeWithoutContainer());
+        root.AddVE(child == null ? null : child.CloneTreeNoContainer());
 
     public static VisualElement AddColumn(this VisualElement root) => root.AddVTA(Prefabs.UIScreenColumn);
     public static VisualElement AddScrollColumn(this VisualElement root) {
@@ -139,7 +139,7 @@ public static partial class XMLUtils {
         //node.style.marginLeft = node.style.marginRight = -s.rect.width / 2;
     }
 
-    public static VisualElement CloneTreeWithoutContainer(this VisualTreeAsset vta) {
+    public static VisualElement CloneTreeNoContainer(this VisualTreeAsset vta) {
         //Unity constructs a templateContainer around the result of any CloneTree operation.
         //This interferes with styling in many cases, since we often want the constructed object
         // to be a direct child of something else (critical in cases featuring position:absolute).
@@ -147,7 +147,7 @@ public static partial class XMLUtils {
         // template container.
         //Note that a VisualTreeAsset may contain multiple root objects, which is not handled by this.
         // See https://forum.unity.com/threads/why-isnt-templatecontainer-flex-grow-1-by-default.613324/
-        var ve = vta.CloneTree();
+        var ve = vta.Instantiate();
         //You may need a .Any(c => c.GetType().Name != "UnityBuilderSelectionMarker") 
         if (ve.Children().Skip(1).Any())
             throw new Exception($"Clone tree operation resulted in {ve.childCount} children; expected 1");

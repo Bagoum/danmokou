@@ -191,7 +191,7 @@ public readonly struct SMHandoff : IDisposable {
 public abstract class StateMachine {
     #region InitStuff
 
-    public static readonly Dictionary<string, Type> SMInitMap = new() {
+    public static readonly Dictionary<string, Type> SMInitMap = new(StringComparer.OrdinalIgnoreCase) {
         {"pattern", typeof(PatternSM)},
         {"phase", typeof(PhaseSM)},
         {"phased", typeof(DialoguePhaseSM)},

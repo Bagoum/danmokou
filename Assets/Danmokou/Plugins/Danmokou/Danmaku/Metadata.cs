@@ -6,6 +6,7 @@ using BagoumLib.Culture;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.DMath;
+using Danmokou.DMath.Functions;
 using Danmokou.Services;
 using Danmokou.GameInstance;
 using JetBrains.Annotations;
@@ -51,14 +52,33 @@ public class DifficultySettings {
     public double playerGrazeboxMultiplier;
     public double pocOffset;
     public int? startingLives;
+    [JsonIgnore] [ProtoIgnore]
+    public float Value { get; private set; }
     [JsonIgnore] [ProtoIgnore] 
-    public FixedDifficulty ApproximateStandard => standard ?? customStandard;
+    public FixedDifficulty ApproximateStandard { get; private set; }
     [JsonIgnore] [ProtoIgnore]
-    private float CustomValue => DifficultyForSlider(customValueSlider);
+    public float Counter { get; private set; }
+    
     [JsonIgnore] [ProtoIgnore]
-    public float Value => standard?.Value() ?? CustomValue;
+    public float ValueRelNormal { get; private set; }
     [JsonIgnore] [ProtoIgnore]
-    public float Counter => ApproximateStandard.Counter();
+    public float ValueRelHard { get; private set; }
+    [JsonIgnore] [ProtoIgnore]
+    public float ValueRelLunatic { get; private set; }
+
+    /// <summary>
+    /// Set derivative difficulty information, such as "difficulty relative to Lunatic standard",
+    ///  such that it can be easily queried by reflected difficulty functions in <see cref="ExMDifficulty"/>.
+    /// </summary>
+    public void FixVariables() {
+        Value = standard?.Value() ?? DifficultyForSlider(customValueSlider);
+        ApproximateStandard = standard ?? customStandard;
+        Counter = ApproximateStandard.Counter();
+        ValueRelNormal = Value / FixedDifficulty.Normal.Value();
+        ValueRelHard = Value / FixedDifficulty.Hard.Value();
+        ValueRelLunatic = Value / FixedDifficulty.Lunatic.Value();
+    }
+    
     
     /// <summary>
     /// JSON constructor, do not use

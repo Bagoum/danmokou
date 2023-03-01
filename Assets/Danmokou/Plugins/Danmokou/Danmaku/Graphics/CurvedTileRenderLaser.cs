@@ -386,7 +386,8 @@ public class CurvedTileRenderLaser : CurvedTileRender {
                 laser.IsColliding |= coll.collide;
                 if (coll.graze && !laser.GrazeAllowed)
                     coll = coll.NoGraze();
-                player.ProcessCollision(in coll, laser.Damage, in bpi, in laser.collisionInfo.grazeEveryFrames);
+                player.ProcessCollision(BulletManager.SimpleBulletCollection.CollectionType.Normal, 
+                    in coll, laser.Damage, in bpi, in laser.collisionInfo.grazeEveryFrames);
                 if (coll.collide) 
                     laser.myStyle.IterateCollideControls(laser);
             }

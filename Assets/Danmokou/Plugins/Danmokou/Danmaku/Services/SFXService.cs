@@ -34,6 +34,7 @@ public class SFXService : RegularUpdater, ISFXService {
     public SFXConfig meterActivated = null!;
     public SFXConfig meterDeActivated = null!;
     public SFXConfig swapHPScore = null!;
+    public SFXConfig flakeItemCollected = null!;
     public SFXConfig rankUp = null!;
     public SFXConfig rankDown = null!;
     public SFXConfig[] SFX = null!;
@@ -267,12 +268,13 @@ public class SFXService : RegularUpdater, ISFXService {
     }
 
     public void RequestSFXEvent(ISFXService.SFXEventType ev) {
-        if      (ev == ISFXService.SFXEventType.BossCutin)
-            Request(bossCutin);
-        else if (ev == ISFXService.SFXEventType.BossSpellCutin)
-            Request(bossSpellCutin);
-        else if (ev == ISFXService.SFXEventType.BossExplode)
-            Request(bossExplode);
+        Request(ev switch {
+            ISFXService.SFXEventType.BossCutin => bossCutin,
+            ISFXService.SFXEventType.BossSpellCutin => bossSpellCutin,
+            ISFXService.SFXEventType.BossExplode => bossExplode,
+            ISFXService.SFXEventType.FlakeItemCollected => flakeItemCollected,
+            _ => null
+        });
     }
 
     private void ClearConstructed() {

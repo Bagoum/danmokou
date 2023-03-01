@@ -88,8 +88,8 @@ public class FireOption : BehaviorEntity {
             focusOpacity = ReflWrap<BPY>.Wrap(opacityFocus);
             rootColor = sr.color;
         }
-        freeOffsetPower = powerOffsetFree.Select(ReflWrap<TP3>.Wrap).ToArray();
-        focusOffsetPower = powerOffsetFocus.Select(ReflWrap<TP3>.Wrap).ToArray();
+        freeOffsetPower = powerOffsetFree.Select(x => ReflWrap<TP3>.Wrap(x)).ToArray();
+        focusOffsetPower = powerOffsetFocus.Select(x => ReflWrap<TP3>.Wrap(x)).ToArray();
         if (!string.IsNullOrWhiteSpace(spriteRotation)) rotator = ReflWrap<BPY>.Wrap(spriteRotation);
         if (!string.IsNullOrWhiteSpace(freeAngleOffset)) freeAngle = ReflWrap<BPY>.Wrap(freeAngleOffset);
         if (!string.IsNullOrWhiteSpace(focusAngleOffset)) focusAngle = ReflWrap<BPY>.Wrap(focusAngleOffset);

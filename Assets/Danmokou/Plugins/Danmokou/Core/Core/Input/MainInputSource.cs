@@ -11,6 +11,7 @@ namespace Danmokou.Core.DInput {
 /// </summary>
 public interface IPrimaryInputSource : IDescriptiveInputSource {
     public MainInputSource Container { set; }
+    public bool AnyKeyPressedThisFrame { get; }
 }
 
 /// <summary>
@@ -81,7 +82,7 @@ public class MainInputSource {
         nextCurrent ??= src;
     }
 
-    public void OncePerUnityFrameToggleControls() {
+    public bool OncePerUnityFrameToggleControls() {
         //Use inner frame count since ETime.FrameNumber does not account for pause menus
         if (++frameCt % ETime.ENGINEFPS == 0 && RecheckControllers())
             Current = sources[0];
@@ -91,6 +92,7 @@ public class MainInputSource {
                 sources[ii].OncePerUnityFrameToggleControls();
         sources.Compact();
         Current = nextCurrent ?? Current;
+        return Current.AnyKeyPressedThisFrame;
         //Logs.Log($"Current method: {Current}, updated {nextCurrent}");
     }
 }

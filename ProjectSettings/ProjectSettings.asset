@@ -702,7 +702,7 @@ PlayerSettings:
     PS4: UNITY_POST_PROCESSING_STACK_V2
     Stadia: UNITY_POST_PROCESSING_STACK_V2
     Standalone: 
-    WebGL: WEBGL;EXBAKE_LOAD
+    WebGL: WEBGL
     XboxOne: UNITY_POST_PROCESSING_STACK_V2
     tvOS: UNITY_POST_PROCESSING_STACK_V2
   additionalCompilerArguments: {}

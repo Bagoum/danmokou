@@ -7,10 +7,15 @@ using UnityEngine;
 namespace Danmokou.Core.DInput {
 /// <summary>
 /// A top-level input source that combines a <see cref="MainSource"/> with any number
-/// of override sources, such as <see cref="ReplayPlayerInputSource"/> or
+/// of override sources, such as <see cref="Danmokou.Services.ReplayPlayerInputSource"/> or
 /// <see cref="InCodeInputSource"/>.
 /// </summary>
 public class AggregateInputSource : IInputHandlerInputSource, IInputSource {
+    public bool AnyKeyPressedThisFrame { get; private set; }
+    bool IInputHandlerInputSource.AnyKeyPressedThisFrame {
+        get => AnyKeyPressedThisFrame;
+        set => AnyKeyPressedThisFrame = value;
+    }
     public const int REPLAY_PRIORITY = -100;
     private DMCompactingArray<IInputSource> Sources { get; } = new(8);
     public MainInputSource MainSource { get; }
@@ -37,13 +42,15 @@ public class AggregateInputSource : IInputHandlerInputSource, IInputSource {
         return map(MainSource.Current);
     }
 
-    public void OncePerUnityFrameToggleControls() {
+    public bool OncePerUnityFrameToggleControls() {
+        bool AnyKeyPressed = false;
         for (int ii = 0; ii < Sources.Count; ++ii)
             if (Sources.ExistsAt(ii))
-                Sources[ii].OncePerUnityFrameToggleControls();
+                AnyKeyPressed |= Sources[ii].OncePerUnityFrameToggleControls();
         Sources.Compact();
-        MainSource.OncePerUnityFrameToggleControls();
-        ((IInputHandlerInputSource)this).OncePerUnityFrameUpdateHandlers();
+        AnyKeyPressedThisFrame |= MainSource.OncePerUnityFrameToggleControls();
+        AnyKeyPressedThisFrame |= ((IInputHandlerInputSource)this).OncePerUnityFrameUpdateHandlers();
+        return AnyKeyPressedThisFrame = AnyKeyPressed;
     }
     
     public IInputHandler GetKeyTrigger(KeyCode key) {

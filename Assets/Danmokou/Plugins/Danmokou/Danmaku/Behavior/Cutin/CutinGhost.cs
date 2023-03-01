@@ -34,11 +34,10 @@ public class CutinGhost : Pooled<CutinGhost> {
         RegularUpdate();
     }
 
-    // Update is called once per frame
     public override void RegularUpdate() {
+        time += ETime.FRAME_TIME;
+        tr.localPosition += velocity * ETime.FRAME_TIME;
         if (ETime.LastUpdateForScreen) {
-            time += ETime.dT;
-            tr.localPosition += velocity * ETime.dT;
             float ratio = time / cfg.ttl;
             Color c = Color.Lerp(cfg.startColor, cfg.endColor, ratio);
             c.a *= 1f - ratio;

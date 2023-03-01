@@ -47,69 +47,21 @@ public static partial class LocalizedStrings {
 			{ ID = "generic.generic_na" };
 		
 		public static string render_hoursminssecs(object arg0, object arg1, object arg2) => Locales.Provider.TextLocale.Value switch {
-			Locales.JP => Render(Locales.Provider.TextLocale.Value, new[] {
-				"{0}",
-				"時",
-				"{1}",
-				"分",
-				"{2}",
-				"秒",
-			}, arg0, arg1, arg2),
-			_ => Render(Locales.Provider.TextLocale.Value, new[] {
-				"{0}",
-				"h ",
-				"{1}",
-				"m ",
-				"{2}",
-				"s",
-			}, arg0, arg1, arg2),
+			Locales.JP => Render(Locales.JP, "{0}時{1}分{2}秒", arg0, arg1, arg2),
+			_ => Render(null, "{0}h {1}m {2}s", arg0, arg1, arg2),
 		};
 		
-		public static LString render_hoursminssecs_ls(object arg0, object arg1, object arg2) => new LText(Render(null, new[] {
-				"{0}",
-				"h ",
-				"{1}",
-				"m ",
-				"{2}",
-				"s",
-			}, arg0, arg1, arg2),
-			(Locales.JP, Render(Locales.JP, new[] {
-				"{0}",
-				"時",
-				"{1}",
-				"分",
-				"{2}",
-				"秒",
-			}, arg0, arg1, arg2)))
+		public static LString render_hoursminssecs_ls(object arg0, object arg1, object arg2) => new LText(Render(null, "{0}h {1}m {2}s", arg0, arg1, arg2),
+			(Locales.JP, Render(Locales.JP, "{0}時{1}分{2}秒", arg0, arg1, arg2)))
 			{ ID = "generic.render_hoursminssecs" };
 		
 		public static string render_minssecs(object arg0, object arg1) => Locales.Provider.TextLocale.Value switch {
-			Locales.JP => Render(Locales.Provider.TextLocale.Value, new[] {
-				"{0}",
-				"分",
-				"{1}",
-				"秒",
-			}, arg0, arg1),
-			_ => Render(Locales.Provider.TextLocale.Value, new[] {
-				"{0}",
-				"m ",
-				"{1}",
-				"s",
-			}, arg0, arg1),
+			Locales.JP => Render(Locales.JP, "{0}分{1}秒", arg0, arg1),
+			_ => Render(null, "{0}m {1}s", arg0, arg1),
 		};
 		
-		public static LString render_minssecs_ls(object arg0, object arg1) => new LText(Render(null, new[] {
-				"{0}",
-				"m ",
-				"{1}",
-				"s",
-			}, arg0, arg1),
-			(Locales.JP, Render(Locales.JP, new[] {
-				"{0}",
-				"分",
-				"{1}",
-				"秒",
-			}, arg0, arg1)))
+		public static LString render_minssecs_ls(object arg0, object arg1) => new LText(Render(null, "{0}m {1}s", arg0, arg1),
+			(Locales.JP, Render(Locales.JP, "{0}分{1}秒", arg0, arg1)))
 			{ ID = "generic.render_minssecs" };
 		
 		public static readonly LString generic_cancel = new LText("Cancel",

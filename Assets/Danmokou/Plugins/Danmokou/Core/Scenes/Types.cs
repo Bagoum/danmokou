@@ -35,13 +35,12 @@ public record SceneLoading(TaskCompletionSource<Unit> Preloading, TaskCompletion
 public record SceneRequest(SceneConfig scene, SceneRequest.Reason reason, Action? onPreLoad = null, Action? onLoaded = null, 
     Action? onFinished = null) {
     public enum Reason {
-        RELOAD,
         START_ONE,
         RUN_SEQUENCE,
-        ENDCARD,
         ABORT_RETURN,
         FINISH_RETURN
     }
+    public ICameraTransitionConfig? Transition { get; init; }
 
     //we can't directly return onLoaded() since onLoaded will get executed at a later point, that's why we 
     // use a TCS for indirection
@@ -55,6 +54,11 @@ public record SceneRequest(SceneConfig scene, SceneRequest.Reason reason, Action
         Func<Task<T>> onFinished, out TaskCompletionSource<T> awaiter) {
         var tcs = awaiter = new TaskCompletionSource<T>();
         return new SceneRequest(sc, reason, onPreLoad, onLoaded, () => onFinished().Pipe(tcs));
+    }
+
+    public SceneRequest With(ICameraTransitionConfig? transition) {
+        if (transition is null) return this;
+        return this with { Transition = transition };
     }
 
     public override string ToString() => $"{scene.sceneName} ({reason})";

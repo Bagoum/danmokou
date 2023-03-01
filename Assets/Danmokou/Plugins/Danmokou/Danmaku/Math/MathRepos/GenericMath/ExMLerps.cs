@@ -151,7 +151,7 @@ public static class ExMLerps {
                 ifLt = Ex.Condition(x.LT(points[ii].bd), ifLt,
                     LerpU(points[ii].bd, points[ii + 1].bd, x, points[ii].val, points[ii + 1].val));
             }
-            return Ex.Condition(x.LT(points[points.Length - 1].bd), ifLt, points[points.Length - 1].val);
+            return Ex.Condition(x.LT(points[^1].bd), ifLt, points[^1].val);
         });
 
     /// <summary>
@@ -161,7 +161,7 @@ public static class ExMLerps {
     /// </summary>
     public static TEx<T> Select<T>(tfloat index, TEx<T>[] points) => TEx.Resolve((TEx<int>) ((Ex) index).Cast<int>(),
         i => {
-            Ex ifNeq = points[points.Length - 1];
+            Ex ifNeq = points[^1];
             for (int ii = points.Length - 2; ii >= 0; --ii) {
                 ifNeq = Ex.Condition(Ex.Equal(i, ExC(ii)), points[ii], ifNeq);
             }
@@ -372,7 +372,7 @@ public static class ExMLerps {
     });
 
     /// <summary>
-    /// Perform a cubic bezier interpolation.
+    /// Perform a cubic bezier interpolation between points in N-dimensional space.
     /// <br/>This is the same as CalcBezier in BagoumLib when start=0 and end=1.
     /// <br/>This is not the same as the cubic bezier interpolation used in CSS and
     ///  most animation engines. For that functionality, use CubicBezier.

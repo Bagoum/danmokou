@@ -26,7 +26,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>Temp\Bin\Debug\Assembly-CSharp\</OutputPath>
-    <DefineConstants>UNITY_2021_3_17;UNITY_2021_3;UNITY_2021;UNITY_5_3_OR_NEWER;UNITY_5_4_OR_NEWER;UNITY_5_5_OR_NEWER;UNITY_5_6_OR_NEWER;UNITY_2017_1_OR_NEWER;UNITY_2017_2_OR_NEWER;UNITY_2017_3_OR_NEWER;UNITY_2017_4_OR_NEWER;UNITY_2018_1_OR_NEWER;UNITY_2018_2_OR_NEWER;UNITY_2018_3_OR_NEWER;UNITY_2018_4_OR_NEWER;UNITY_2019_1_OR_NEWER;UNITY_2019_2_OR_NEWER;UNITY_2019_3_OR_NEWER;UNITY_2019_4_OR_NEWER;UNITY_2020_1_OR_NEWER;UNITY_2020_2_OR_NEWER;UNITY_2020_3_OR_NEWER;UNITY_2021_1_OR_NEWER;UNITY_2021_2_OR_NEWER;UNITY_2021_3_OR_NEWER;UNITY_INCLUDE_TESTS;ENABLE_AUDIO;ENABLE_CACHING;ENABLE_CLOTH;ENABLE_MULTIPLE_DISPLAYS;ENABLE_PHYSICS;ENABLE_TEXTURE_STREAMING;ENABLE_UNET;ENABLE_UNITYEVENTS;ENABLE_VR;ENABLE_WEBCAM;ENABLE_UNITYWEBREQUEST;ENABLE_WWW;ENABLE_CLOUD_SERVICES;ENABLE_CLOUD_SERVICES_COLLAB;ENABLE_CLOUD_SERVICES_COLLAB_SOFTLOCKS;ENABLE_CLOUD_SERVICES_ADS;ENABLE_CLOUD_SERVICES_USE_WEBREQUEST;ENABLE_CLOUD_SERVICES_CRASH_REPORTING;ENABLE_CLOUD_SERVICES_PURCHASING;ENABLE_CLOUD_SERVICES_ANALYTICS;ENABLE_CLOUD_SERVICES_UNET;ENABLE_CLOUD_SERVICES_BUILD;ENABLE_CLOUD_LICENSE;ENABLE_EDITOR_HUB_LICENSE;ENABLE_WEBSOCKET_CLIENT;ENABLE_DIRECTOR_AUDIO;ENABLE_DIRECTOR_TEXTURE;ENABLE_MANAGED_JOBS;ENABLE_MANAGED_TRANSFORM_JOBS;ENABLE_MANAGED_ANIMATION_JOBS;ENABLE_MANAGED_AUDIO_JOBS;ENABLE_ENGINE_CODE_STRIPPING;ENABLE_MANAGED_UNITYTLS;RENDER_SOFTWARE_CURSOR;ENABLE_VIDEO;ENABLE_ACCELERATOR_CLIENT_DEBUGGING;PLATFORM_WEBGL;TEXTCORE_1_0_OR_NEWER;UNITY_WEBGL;UNITY_WEBGL_API;UNITY_DISABLE_WEB_VERIFICATION;UNITY_GFX_USE_PLATFORM_VSYNC;ENABLE_CRUNCH_TEXTURE_COMPRESSION;ENABLE_SPATIALTRACKING;ENABLE_MONO;NET_4_6;NET_UNITY_4_8;ENABLE_PROFILER;DEBUG;TRACE;UNITY_ASSERTIONS;UNITY_EDITOR;UNITY_EDITOR_64;UNITY_EDITOR_WIN;ENABLE_UNITY_COLLECTIONS_CHECKS;ENABLE_BURST_AOT;UNITY_TEAM_LICENSE;ENABLE_CUSTOM_RENDER_TEXTURE;ENABLE_DIRECTOR;ENABLE_LOCALIZATION;ENABLE_SPRITES;ENABLE_TERRAIN;ENABLE_TILEMAP;ENABLE_TIMELINE;ENABLE_LEGACY_INPUT_MANAGER;TEXTCORE_FONT_ENGINE_1_5_OR_NEWER;WEBGL;EXBAKE_LOAD;CSHARP_7_OR_LATER;CSHARP_7_3_OR_NEWER</DefineConstants>
+    <DefineConstants>UNITY_2021_3_17;UNITY_2021_3;UNITY_2021;UNITY_5_3_OR_NEWER;UNITY_5_4_OR_NEWER;UNITY_5_5_OR_NEWER;UNITY_5_6_OR_NEWER;UNITY_2017_1_OR_NEWER;UNITY_2017_2_OR_NEWER;UNITY_2017_3_OR_NEWER;UNITY_2017_4_OR_NEWER;UNITY_2018_1_OR_NEWER;UNITY_2018_2_OR_NEWER;UNITY_2018_3_OR_NEWER;UNITY_2018_4_OR_NEWER;UNITY_2019_1_OR_NEWER;UNITY_2019_2_OR_NEWER;UNITY_2019_3_OR_NEWER;UNITY_2019_4_OR_NEWER;UNITY_2020_1_OR_NEWER;UNITY_2020_2_OR_NEWER;UNITY_2020_3_OR_NEWER;UNITY_2021_1_OR_NEWER;UNITY_2021_2_OR_NEWER;UNITY_2021_3_OR_NEWER;PLATFORM_ARCH_64;UNITY_64;UNITY_INCLUDE_TESTS;ENABLE_AR;ENABLE_AUDIO;ENABLE_CACHING;ENABLE_CLOTH;ENABLE_EVENT_QUEUE;ENABLE_MICROPHONE;ENABLE_MULTIPLE_DISPLAYS;ENABLE_PHYSICS;ENABLE_TEXTURE_STREAMING;ENABLE_VIRTUALTEXTURING;ENABLE_UNET;ENABLE_LZMA;ENABLE_UNITYEVENTS;ENABLE_VR;ENABLE_WEBCAM;ENABLE_UNITYWEBREQUEST;ENABLE_WWW;ENABLE_CLOUD_SERVICES;ENABLE_CLOUD_SERVICES_COLLAB;ENABLE_CLOUD_SERVICES_COLLAB_SOFTLOCKS;ENABLE_CLOUD_SERVICES_ADS;ENABLE_CLOUD_SERVICES_USE_WEBREQUEST;ENABLE_CLOUD_SERVICES_CRASH_REPORTING;ENABLE_CLOUD_SERVICES_PURCHASING;ENABLE_CLOUD_SERVICES_ANALYTICS;ENABLE_CLOUD_SERVICES_UNET;ENABLE_CLOUD_SERVICES_BUILD;ENABLE_CLOUD_LICENSE;ENABLE_EDITOR_HUB_LICENSE;ENABLE_WEBSOCKET_CLIENT;ENABLE_DIRECTOR_AUDIO;ENABLE_DIRECTOR_TEXTURE;ENABLE_MANAGED_JOBS;ENABLE_MANAGED_TRANSFORM_JOBS;ENABLE_MANAGED_ANIMATION_JOBS;ENABLE_MANAGED_AUDIO_JOBS;ENABLE_MANAGED_UNITYTLS;INCLUDE_DYNAMIC_GI;ENABLE_SCRIPTING_GC_WBARRIERS;PLATFORM_SUPPORTS_MONO;RENDER_SOFTWARE_CURSOR;ENABLE_VIDEO;ENABLE_ACCELERATOR_CLIENT_DEBUGGING;PLATFORM_STANDALONE;TEXTCORE_1_0_OR_NEWER;PLATFORM_STANDALONE_WIN;UNITY_STANDALONE_WIN;UNITY_STANDALONE;ENABLE_RUNTIME_GI;ENABLE_MOVIES;ENABLE_NETWORK;ENABLE_NVIDIA;ENABLE_CRUNCH_TEXTURE_COMPRESSION;ENABLE_UNITY_GAME_SERVICES_ANALYTICS_SUPPORT;ENABLE_OUT_OF_PROCESS_CRASH_HANDLER;ENABLE_CLUSTER_SYNC;ENABLE_CLUSTERINPUT;PLATFORM_UPDATES_TIME_OUTSIDE_OF_PLAYER_LOOP;GFXDEVICE_WAITFOREVENT_MESSAGEPUMP;ENABLE_WEBSOCKET_HOST;ENABLE_MONO;NET_4_6;NET_UNITY_4_8;ENABLE_PROFILER;DEBUG;TRACE;UNITY_ASSERTIONS;UNITY_EDITOR;UNITY_EDITOR_64;UNITY_EDITOR_WIN;ENABLE_UNITY_COLLECTIONS_CHECKS;ENABLE_BURST_AOT;UNITY_TEAM_LICENSE;ENABLE_CUSTOM_RENDER_TEXTURE;ENABLE_DIRECTOR;ENABLE_LOCALIZATION;ENABLE_SPRITES;ENABLE_TERRAIN;ENABLE_TILEMAP;ENABLE_TIMELINE;ENABLE_LEGACY_INPUT_MANAGER;TEXTCORE_FONT_ENGINE_1_5_OR_NEWER;CSHARP_7_OR_LATER;CSHARP_7_3_OR_NEWER</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <NoWarn>0169,0649</NoWarn>
@@ -46,6 +46,7 @@
      <Compile Include="Assets\Danmokou\Models\MirrorShatter\MirrorBreak.cs" />
      <Compile Include="Assets\Danmokou\Scenes\Scratch\SetT.cs" />
      <Compile Include="Assets\tmp_addaudio.cs" />
+     <Compile Include="Assets\tmp_TestLogSkip.cs" />
      <Folder Include="Assets" />
      <None Include="Assets\Danmokou\Patterns\examples\bullet on bullet collision.bdsl" />
      <None Include="Assets\Danmokou\Patterns\Phase Bounding Test.bdsl" />
@@ -96,6 +97,7 @@
      <Folder Include="Assets\Danmokou\Rendering\Materials\WIP" />
      <None Include="Assets\Danmokou\Patterns\feature testing\global slowdown.bdsl" />
      <Folder Include="Assets\SiMP\Endings" />
+     <None Include="Assets\SiMP\Replays\1 BOSS_PRACTICE_Lunatic_fRqIv3EaAoXJwPWB.txt" />
      <None Include="Assets\Danmokou\Rendering\Shaders\Display\RippleFader.shader" />
      <None Include="Assets\Danmokou\UXML\nodes\PopupButton.uxml" />
      <Folder Include="Assets\Danmokou\MiniProjects\raw" />
@@ -356,6 +358,7 @@
      <None Include="Assets\SZYU\Plugins\DLLs\Mizuhashi.xml" />
      <Folder Include="Assets\Danmokou\Sprites\VN\Characters\dairi_yuyuko\icons" />
      <None Include="Assets\Danmokou\Patterns\Tutorial\DMK Tutorial Example Boss Script.bdsl" />
+     <None Include="Assets\SiMP\Replays\3 BOSS_PRACTICE_Lunatic_TWa8UfIqxmeHwCOD.txt" />
      <None Include="Assets\SZYU\Fonts\ubuntu-font-family-0.83\CONTRIBUTING.txt" />
      <None Include="Assets\BRuH\Dialogue\en\sagume.2.txt" />
      <None Include="Assets\Danmokou\Patterns\feature testing\sm control.bdsl" />
@@ -446,6 +449,7 @@
      <None Include="Assets\Danmokou\Patterns\Testing\OnlyOnce Test.txt" />
      <None Include="Assets\Danmokou\Patterns\PlayerFire\Mokou Lazors 0.bdsl" />
      <None Include="Assets\Danmokou\UXML\nodes\UINode.uxml" />
+     <None Include="Assets\SiMP\Replays\3 BOSS_PRACTICE_Lunatic_TWa8UfIqxmeHwCOD.dat.txt" />
      <Folder Include="Assets\Danmokou\SFX\manual" />
      <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Mobile SSD.shader" />
      <Folder Include="Assets\Danmokou\MiniProjects\Projects\BHA3" />
@@ -486,6 +490,7 @@
      <Folder Include="Assets\Danmokou\Prefab\Bullets\cull" />
      <None Include="Assets\Danmokou\Patterns\PlayerFire\Reimu Home and Laser 1234 (Experimental).bdsl" />
      <None Include="Assets\Danmokou\Rendering\Shaders\WIP\Basic Raw.shader" />
+     <None Include="Assets\SiMP\Replays\2 BOSS_PRACTICE_Lunatic_Oy4bG5IAAs9Wtrhg.dat.txt" />
      <Folder Include="Assets\Danmokou\Rendering" />
      <None Include="Assets\Danmokou\Patterns\cutin slides\PlayerSpellCutins\opacity u to d (right).bdsl" />
      <None Include="Assets\Danmokou\Rendering\Shaders\Display\ShowIn.shader" />
@@ -496,6 +501,7 @@
      <None Include="Assets\SZYU\Plugins\DLLs\Suzunoya.deps.json" />
      <Folder Include="Assets\Danmokou\Sprites\VN\Characters\dairi_yukari2" />
      <Folder Include="Assets\Danmokou\Prefab\Bullets\large" />
+     <Folder Include="Assets\SiMP\Replays" />
      <None Include="Assets\Danmokou\Rendering\Shaders\Display\BG\FireTransition.shader" />
      <Folder Include="Assets\Danmokou\MiniProjects\Projects" />
      <None Include="Assets\Danmokou\Patterns\examples\seija screen flip.bdsl" />
@@ -677,6 +683,7 @@
      <Folder Include="Assets\Danmokou\DfLT" />
      <None Include="Assets\Danmokou\Rendering\Shaders\Display\RainShader.shader" />
      <None Include="Assets\SZYU\Rendering\Shaders\BasicSpriteShader.shader" />
+     <None Include="Assets\SiMP\Replays\1 BOSS_PRACTICE_Lunatic_fRqIv3EaAoXJwPWB.dat.txt" />
      <Folder Include="Assets\SZYU\Fonts\SDF" />
      <None Include="Assets\Danmokou\Patterns\examples\resummon polar.bdsl" />
      <None Include="Assets\Danmokou\Patterns\feature testing\summon testing 2.bdsl" />
@@ -701,6 +708,7 @@
      <None Include="Assets\Danmokou\UXML\tests\test_abs_var.uxml" />
      <Folder Include="Assets\Danmokou\Scenes" />
      <None Include="Assets\Danmokou\Patterns\colors.bdsl" />
+     <None Include="Assets\SiMP\Replays\2 BOSS_PRACTICE_Lunatic_Oy4bG5IAAs9Wtrhg.txt" />
      <None Include="Assets\Danmokou\Fonts\YoZ\Readme.txt" />
      <Folder Include="Assets\Danmokou\Sprites\UI\faIcons" />
      <None Include="Assets\Danmokou\Rendering\Shaders\WIP\Displacement Test.shader" />
@@ -788,6 +796,9 @@
      <Reference Include="UnityEngine.AIModule">
      <HintPath>C:\Program Files\Unity\Hub\Editor\2021.3.17f1\Editor\Data\Managed\UnityEngine\UnityEngine.AIModule.dll</HintPath>
      </Reference>
+     <Reference Include="UnityEngine.ARModule">
+     <HintPath>C:\Program Files\Unity\Hub\Editor\2021.3.17f1\Editor\Data\Managed\UnityEngine\UnityEngine.ARModule.dll</HintPath>
+     </Reference>
      <Reference Include="UnityEngine.AccessibilityModule">
      <HintPath>C:\Program Files\Unity\Hub\Editor\2021.3.17f1\Editor\Data\Managed\UnityEngine\UnityEngine.AccessibilityModule.dll</HintPath>
      </Reference>
@@ -805,6 +816,12 @@
      </Reference>
      <Reference Include="UnityEngine.ClothModule">
      <HintPath>C:\Program Files\Unity\Hub\Editor\2021.3.17f1\Editor\Data\Managed\UnityEngine\UnityEngine.ClothModule.dll</HintPath>
+     </Reference>
+     <Reference Include="UnityEngine.ClusterInputModule">
+     <HintPath>C:\Program Files\Unity\Hub\Editor\2021.3.17f1\Editor\Data\Managed\UnityEngine\UnityEngine.ClusterInputModule.dll</HintPath>
+     </Reference>
+     <Reference Include="UnityEngine.ClusterRendererModule">
+     <HintPath>C:\Program Files\Unity\Hub\Editor\2021.3.17f1\Editor\Data\Managed\UnityEngine\UnityEngine.ClusterRendererModule.dll</HintPath>
      </Reference>
      <Reference Include="UnityEngine.CoreModule">
      <HintPath>C:\Program Files\Unity\Hub\Editor\2021.3.17f1\Editor\Data\Managed\UnityEngine\UnityEngine.CoreModule.dll</HintPath>
@@ -965,8 +982,8 @@
      <Reference Include="UnityEngine.VideoModule">
      <HintPath>C:\Program Files\Unity\Hub\Editor\2021.3.17f1\Editor\Data\Managed\UnityEngine\UnityEngine.VideoModule.dll</HintPath>
      </Reference>
-     <Reference Include="UnityEngine.WebGLModule">
-     <HintPath>C:\Program Files\Unity\Hub\Editor\2021.3.17f1\Editor\Data\PlaybackEngines\WebGLSupport\Managed\UnityEngine.WebGLModule.dll</HintPath>
+     <Reference Include="UnityEngine.VirtualTexturingModule">
+     <HintPath>C:\Program Files\Unity\Hub\Editor\2021.3.17f1\Editor\Data\Managed\UnityEngine\UnityEngine.VirtualTexturingModule.dll</HintPath>
      </Reference>
      <Reference Include="UnityEngine.WindModule">
      <HintPath>C:\Program Files\Unity\Hub\Editor\2021.3.17f1\Editor\Data\Managed\UnityEngine\UnityEngine.WindModule.dll</HintPath>

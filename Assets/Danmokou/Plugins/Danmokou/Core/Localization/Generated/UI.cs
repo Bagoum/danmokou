@@ -176,28 +176,12 @@ public static partial class LocalizedStrings {
 			{ ID = "replay_window" };
 		
 		public static string replay_what_do(object arg0) => Locales.Provider.TextLocale.Value switch {
-			Locales.JP => Render(Locales.Provider.TextLocale.Value, new[] {
-				"リプレイ「",
-				"{0}",
-				"」で何をする？",
-			}, arg0),
-			_ => Render(Locales.Provider.TextLocale.Value, new[] {
-				"What would you like to do with replay \"",
-				"{0}",
-				"\"?",
-			}, arg0),
+			Locales.JP => Render(Locales.JP, "リプレイ「{0}」で何をする？", arg0),
+			_ => Render(null, "What would you like to do with replay \"{0}\"?", arg0),
 		};
 		
-		public static LString replay_what_do_ls(object arg0) => new LText(Render(null, new[] {
-				"What would you like to do with replay \"",
-				"{0}",
-				"\"?",
-			}, arg0),
-			(Locales.JP, Render(Locales.JP, new[] {
-				"リプレイ「",
-				"{0}",
-				"」で何をする？",
-			}, arg0)))
+		public static LString replay_what_do_ls(object arg0) => new LText(Render(null, "What would you like to do with replay \"{0}\"?", arg0),
+			(Locales.JP, Render(Locales.JP, "リプレイ「{0}」で何をする？", arg0)))
 			{ ID = "replay_what_do" };
 		
 		public static readonly LString view_details = new LText("Details",
@@ -209,28 +193,12 @@ public static partial class LocalizedStrings {
 			{ ID = "record_header" };
 		
 		public static string record_what_do(object arg0) => Locales.Provider.TextLocale.Value switch {
-			Locales.JP => Render(Locales.Provider.TextLocale.Value, new[] {
-				"ゲーム履歴「",
-				"{0}",
-				"」で何をする？",
-			}, arg0),
-			_ => Render(Locales.Provider.TextLocale.Value, new[] {
-				"What would you like to do with record \"",
-				"{0}",
-				"\"?",
-			}, arg0),
+			Locales.JP => Render(Locales.JP, "ゲーム履歴「{0}」で何をする？", arg0),
+			_ => Render(null, "What would you like to do with record \"{0}\"?", arg0),
 		};
 		
-		public static LString record_what_do_ls(object arg0) => new LText(Render(null, new[] {
-				"What would you like to do with record \"",
-				"{0}",
-				"\"?",
-			}, arg0),
-			(Locales.JP, Render(Locales.JP, new[] {
-				"ゲーム履歴「",
-				"{0}",
-				"」で何をする？",
-			}, arg0)))
+		public static LString record_what_do_ls(object arg0) => new LText(Render(null, "What would you like to do with record \"{0}\"?", arg0),
+			(Locales.JP, Render(Locales.JP, "ゲーム履歴「{0}」で何をする？", arg0)))
 			{ ID = "record_what_do" };
 		
 		public static readonly LString record_view_replay = new LText("Go to replay",
@@ -242,49 +210,21 @@ public static partial class LocalizedStrings {
 			{ ID = "saveload_header" };
 		
 		public static string saveload_what_do(object arg0) => Locales.Provider.TextLocale.Value switch {
-			Locales.JP => Render(Locales.Provider.TextLocale.Value, new[] {
-				"サーブファイル",
-				"{0}",
-				"で何をする？",
-			}, arg0),
-			_ => Render(Locales.Provider.TextLocale.Value, new[] {
-				"What would you like to do with save file ",
-				"{0}",
-				"?",
-			}, arg0),
+			Locales.JP => Render(Locales.JP, "サーブファイル{0}で何をする？", arg0),
+			_ => Render(null, "What would you like to do with save file {0}?", arg0),
 		};
 		
-		public static LString saveload_what_do_ls(object arg0) => new LText(Render(null, new[] {
-				"What would you like to do with save file ",
-				"{0}",
-				"?",
-			}, arg0),
-			(Locales.JP, Render(Locales.JP, new[] {
-				"サーブファイル",
-				"{0}",
-				"で何をする？",
-			}, arg0)))
+		public static LString saveload_what_do_ls(object arg0) => new LText(Render(null, "What would you like to do with save file {0}?", arg0),
+			(Locales.JP, Render(Locales.JP, "サーブファイル{0}で何をする？", arg0)))
 			{ ID = "saveload_what_do" };
 		
 		public static string practice_stage(object arg0) => Locales.Provider.TextLocale.Value switch {
-			Locales.JP => Render(Locales.Provider.TextLocale.Value, new[] {
-				"{0}",
-				"面",
-			}, arg0),
-			_ => Render(Locales.Provider.TextLocale.Value, new[] {
-				"Stage ",
-				"{0}",
-			}, arg0),
+			Locales.JP => Render(Locales.JP, "{0}面", arg0),
+			_ => Render(null, "Stage {0}", arg0),
 		};
 		
-		public static LString practice_stage_ls(object arg0) => new LText(Render(null, new[] {
-				"Stage ",
-				"{0}",
-			}, arg0),
-			(Locales.JP, Render(Locales.JP, new[] {
-				"{0}",
-				"面",
-			}, arg0)))
+		public static LString practice_stage_ls(object arg0) => new LText(Render(null, "Stage {0}", arg0),
+			(Locales.JP, Render(Locales.JP, "{0}面", arg0)))
 			{ ID = "practice_stage" };
 		
 		public static readonly LString practice_fullstage = new LText("Full Stage",
@@ -292,26 +232,12 @@ public static partial class LocalizedStrings {
 			{ ID = "practice_fullstage" };
 		
 		public static string practice_stage_section(object arg0) => Locales.Provider.TextLocale.Value switch {
-			Locales.JP => Render(Locales.Provider.TextLocale.Value, new[] {
-				"第",
-				"{0}",
-				"幕",
-			}, arg0),
-			_ => Render(Locales.Provider.TextLocale.Value, new[] {
-				"Stage Section ",
-				"{0}",
-			}, arg0),
+			Locales.JP => Render(Locales.JP, "第{0}幕", arg0),
+			_ => Render(null, "Stage Section {0}", arg0),
 		};
 		
-		public static LString practice_stage_section_ls(object arg0) => new LText(Render(null, new[] {
-				"Stage Section ",
-				"{0}",
-			}, arg0),
-			(Locales.JP, Render(Locales.JP, new[] {
-				"第",
-				"{0}",
-				"幕",
-			}, arg0)))
+		public static LString practice_stage_section_ls(object arg0) => new LText(Render(null, "Stage Section {0}", arg0),
+			(Locales.JP, Render(Locales.JP, "第{0}幕", arg0)))
 			{ ID = "practice_stage_section" };
 		
 		public static readonly LString practice_midboss = new LText("Midboss",
@@ -327,70 +253,30 @@ public static partial class LocalizedStrings {
 			{ ID = "practice_dialogue" };
 		
 		public static string challenge_day_intro(object arg0) => Locales.Provider.TextLocale.Value switch {
-			Locales.JP => Render(Locales.Provider.TextLocale.Value, new[] {
-				"{0}",
-				"紹介",
-			}, arg0),
-			_ => Render(Locales.Provider.TextLocale.Value, new[] {
-				"{0}",
-				" Intro",
-			}, arg0),
+			Locales.JP => Render(Locales.JP, "{0}紹介", arg0),
+			_ => Render(null, "{0} Intro", arg0),
 		};
 		
-		public static LString challenge_day_intro_ls(object arg0) => new LText(Render(null, new[] {
-				"{0}",
-				" Intro",
-			}, arg0),
-			(Locales.JP, Render(Locales.JP, new[] {
-				"{0}",
-				"紹介",
-			}, arg0)))
+		public static LString challenge_day_intro_ls(object arg0) => new LText(Render(null, "{0} Intro", arg0),
+			(Locales.JP, Render(Locales.JP, "{0}紹介", arg0)))
 			{ ID = "challenge_day_intro" };
 		
 		public static string challenge_day_end(object arg0) => Locales.Provider.TextLocale.Value switch {
-			Locales.JP => Render(Locales.Provider.TextLocale.Value, new[] {
-				"{0}",
-				"結末",
-			}, arg0),
-			_ => Render(Locales.Provider.TextLocale.Value, new[] {
-				"{0}",
-				" End",
-			}, arg0),
+			Locales.JP => Render(Locales.JP, "{0}結末", arg0),
+			_ => Render(null, "{0} End", arg0),
 		};
 		
-		public static LString challenge_day_end_ls(object arg0) => new LText(Render(null, new[] {
-				"{0}",
-				" End",
-			}, arg0),
-			(Locales.JP, Render(Locales.JP, new[] {
-				"{0}",
-				"結末",
-			}, arg0)))
+		public static LString challenge_day_end_ls(object arg0) => new LText(Render(null, "{0} End", arg0),
+			(Locales.JP, Render(Locales.JP, "{0}結末", arg0)))
 			{ ID = "challenge_day_end" };
 		
 		public static string challenge_day_card(object arg0, object arg1) => Locales.Provider.TextLocale.Value switch {
-			Locales.JP => Render(Locales.Provider.TextLocale.Value, new[] {
-				"{0}",
-				"-",
-				"{1}",
-			}, arg0, arg1),
-			_ => Render(Locales.Provider.TextLocale.Value, new[] {
-				"{0}",
-				" ",
-				"{1}",
-			}, arg0, arg1),
+			Locales.JP => Render(Locales.JP, "{0}-{1}", arg0, arg1),
+			_ => Render(null, "{0} {1}", arg0, arg1),
 		};
 		
-		public static LString challenge_day_card_ls(object arg0, object arg1) => new LText(Render(null, new[] {
-				"{0}",
-				" ",
-				"{1}",
-			}, arg0, arg1),
-			(Locales.JP, Render(Locales.JP, new[] {
-				"{0}",
-				"-",
-				"{1}",
-			}, arg0, arg1)))
+		public static LString challenge_day_card_ls(object arg0, object arg1) => new LText(Render(null, "{0} {1}", arg0, arg1),
+			(Locales.JP, Render(Locales.JP, "{0}-{1}", arg0, arg1)))
 			{ ID = "challenge_day_card" };
 		
 		public static readonly LString practice_m_boss = new LText("Boss Practice")
@@ -438,66 +324,30 @@ public static partial class LocalizedStrings {
 			{ ID = "shotsel_support" };
 		
 		public static string shotsel_type(object arg0) => Locales.Provider.TextLocale.Value switch {
-			Locales.JP => Render(Locales.Provider.TextLocale.Value, new[] {
-				"タイプ",
-				"{0}",
-			}, arg0),
-			_ => Render(Locales.Provider.TextLocale.Value, new[] {
-				"Type ",
-				"{0}",
-			}, arg0),
+			Locales.JP => Render(Locales.JP, "タイプ{0}", arg0),
+			_ => Render(null, "Type {0}", arg0),
 		};
 		
-		public static LString shotsel_type_ls(object arg0) => new LText(Render(null, new[] {
-				"Type ",
-				"{0}",
-			}, arg0),
-			(Locales.JP, Render(Locales.JP, new[] {
-				"タイプ",
-				"{0}",
-			}, arg0)))
+		public static LString shotsel_type_ls(object arg0) => new LText(Render(null, "Type {0}", arg0),
+			(Locales.JP, Render(Locales.JP, "タイプ{0}", arg0)))
 			{ ID = "shotsel_type" };
 		
 		public static string shotsel_variant(object arg0) => Locales.Provider.TextLocale.Value switch {
-			Locales.JP => Render(Locales.Provider.TextLocale.Value, new[] {
-				"バリアント",
-				"{0}",
-			}, arg0),
-			_ => Render(Locales.Provider.TextLocale.Value, new[] {
-				"Variant ",
-				"{0}",
-			}, arg0),
+			Locales.JP => Render(Locales.JP, "バリアント{0}", arg0),
+			_ => Render(null, "Variant {0}", arg0),
 		};
 		
-		public static LString shotsel_variant_ls(object arg0) => new LText(Render(null, new[] {
-				"Variant ",
-				"{0}",
-			}, arg0),
-			(Locales.JP, Render(Locales.JP, new[] {
-				"バリアント",
-				"{0}",
-			}, arg0)))
+		public static LString shotsel_variant_ls(object arg0) => new LText(Render(null, "Variant {0}", arg0),
+			(Locales.JP, Render(Locales.JP, "バリアント{0}", arg0)))
 			{ ID = "shotsel_variant" };
 		
 		public static string shotsel_multi(object arg0) => Locales.Provider.TextLocale.Value switch {
-			Locales.JP => Render(Locales.Provider.TextLocale.Value, new[] {
-				"可変ショット",
-				"{0}",
-			}, arg0),
-			_ => Render(Locales.Provider.TextLocale.Value, new[] {
-				"Multishot ",
-				"{0}",
-			}, arg0),
+			Locales.JP => Render(Locales.JP, "可変ショット{0}", arg0),
+			_ => Render(null, "Multishot {0}", arg0),
 		};
 		
-		public static LString shotsel_multi_ls(object arg0) => new LText(Render(null, new[] {
-				"Multishot ",
-				"{0}",
-			}, arg0),
-			(Locales.JP, Render(Locales.JP, new[] {
-				"可変ショット",
-				"{0}",
-			}, arg0)))
+		public static LString shotsel_multi_ls(object arg0) => new LText(Render(null, "Multishot {0}", arg0),
+			(Locales.JP, Render(Locales.JP, "可変ショット{0}", arg0)))
 			{ ID = "shotsel_multi" };
 		
 		public static readonly LString shotsel_prefix = new LText("Shot:",
@@ -513,28 +363,12 @@ public static partial class LocalizedStrings {
 			{ ID = "shotsel_support_prefix" };
 		
 		public static string death_continue(object arg0) => Locales.Provider.TextLocale.Value switch {
-			Locales.JP => Render(Locales.Provider.TextLocale.Value, new[] {
-				"続ける（後",
-				"{0}",
-				"回）",
-			}, arg0),
-			_ => Render(Locales.Provider.TextLocale.Value, new[] {
-				"Continue [",
-				"{0}",
-				"]",
-			}, arg0),
+			Locales.JP => Render(Locales.JP, "続ける（後{0}回）", arg0),
+			_ => Render(null, "Continue [{0}]", arg0),
 		};
 		
-		public static LString death_continue_ls(object arg0) => new LText(Render(null, new[] {
-				"Continue [",
-				"{0}",
-				"]",
-			}, arg0),
-			(Locales.JP, Render(Locales.JP, new[] {
-				"続ける（後",
-				"{0}",
-				"回）",
-			}, arg0)))
+		public static LString death_continue_ls(object arg0) => new LText(Render(null, "Continue [{0}]", arg0),
+			(Locales.JP, Render(Locales.JP, "続ける（後{0}回）", arg0)))
 			{ ID = "death_continue" };
 		
 		public static readonly LString death_header = new LText("YOU DIED",

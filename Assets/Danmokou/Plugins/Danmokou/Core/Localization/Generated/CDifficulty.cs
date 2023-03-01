@@ -104,168 +104,60 @@ public static partial class LocalizedStrings {
 			{ ID = "setting" };
 		
 		public static string setting_what_do(object arg0) => Locales.Provider.TextLocale.Value switch {
-			Locales.JP => Render(Locales.Provider.TextLocale.Value, new[] {
-				"プリセット「",
-				"{0}",
-				"」で何をする？",
-			}, arg0),
-			_ => Render(Locales.Provider.TextLocale.Value, new[] {
-				"What would you like to do with preset \"",
-				"{0}",
-				"\"?",
-			}, arg0),
+			Locales.JP => Render(Locales.JP, "プリセット「{0}」で何をする？", arg0),
+			_ => Render(null, "What would you like to do with preset \"{0}\"?", arg0),
 		};
 		
-		public static LString setting_what_do_ls(object arg0) => new LText(Render(null, new[] {
-				"What would you like to do with preset \"",
-				"{0}",
-				"\"?",
-			}, arg0),
-			(Locales.JP, Render(Locales.JP, new[] {
-				"プリセット「",
-				"{0}",
-				"」で何をする？",
-			}, arg0)))
+		public static LString setting_what_do_ls(object arg0) => new LText(Render(null, "What would you like to do with preset \"{0}\"?", arg0),
+			(Locales.JP, Render(Locales.JP, "プリセット「{0}」で何をする？", arg0)))
 			{ ID = "setting_what_do" };
 		
-		public static readonly LString desc_scaling = new LText(Render(null, new[] {
-				"Set the base difficulty scaling variable.",
-				"\n",
-				"This primarily affects the number and firing rate of bullets at an exponential rate.",
-			}))
+		public static readonly LString desc_scaling = new LText("Set the base difficulty scaling variable.\nThis primarily affects the number and firing rate of bullets at an exponential rate.")
 			{ ID = "desc_scaling" };
 		
 		public static string desc_effective(object arg0, object arg1) => Locales.Provider.TextLocale.Value switch {
-			Locales.JP => Render(Locales.Provider.TextLocale.Value, new[] {
-				"    ",
-				"{0}",
-				": ",
-				"{1}",
-			}, arg0, arg1),
-			_ => Render(Locales.Provider.TextLocale.Value, new[] {
-				"    ",
-				"{0}",
-				": ",
-				"{1}",
-			}, arg0, arg1),
+			Locales.JP => Render(Locales.JP, "    {0}: {1}", arg0, arg1),
+			_ => Render(null, "    {0}: {1}", arg0, arg1),
 		};
 		
-		public static LString desc_effective_ls(object arg0, object arg1) => new LText(Render(null, new[] {
-				"    ",
-				"{0}",
-				": ",
-				"{1}",
-			}, arg0, arg1),
-			(Locales.JP, Render(Locales.JP, new[] {
-				"    ",
-				"{0}",
-				": ",
-				"{1}",
-			}, arg0, arg1)))
+		public static LString desc_effective_ls(object arg0, object arg1) => new LText(Render(null, "    {0}: {1}", arg0, arg1),
+			(Locales.JP, Render(Locales.JP, "    {0}: {1}", arg0, arg1)))
 			{ ID = "desc_effective" };
 		
 		public static string desc_effective_ratio(object arg0, object arg1, object arg2, object arg3) => Locales.Provider.TextLocale.Value switch {
-			Locales.JP => Render(Locales.Provider.TextLocale.Value, new[] {
-				"{0}",
-				"% ",
-				"{1}",
-				", ",
-				"{2}",
-				"% ",
-				"{3}",
-			}, arg0, arg1, arg2, arg3),
-			_ => Render(Locales.Provider.TextLocale.Value, new[] {
-				"{0}",
-				"% ",
-				"{1}",
-				", ",
-				"{2}",
-				"% ",
-				"{3}",
-			}, arg0, arg1, arg2, arg3),
+			Locales.JP => Render(Locales.JP, "{0}% {1}, {2}% {3}", arg0, arg1, arg2, arg3),
+			_ => Render(null, "{0}% {1}, {2}% {3}", arg0, arg1, arg2, arg3),
 		};
 		
-		public static LString desc_effective_ratio_ls(object arg0, object arg1, object arg2, object arg3) => new LText(Render(null, new[] {
-				"{0}",
-				"% ",
-				"{1}",
-				", ",
-				"{2}",
-				"% ",
-				"{3}",
-			}, arg0, arg1, arg2, arg3),
-			(Locales.JP, Render(Locales.JP, new[] {
-				"{0}",
-				"% ",
-				"{1}",
-				", ",
-				"{2}",
-				"% ",
-				"{3}",
-			}, arg0, arg1, arg2, arg3)))
+		public static LString desc_effective_ratio_ls(object arg0, object arg1, object arg2, object arg3) => new LText(Render(null, "{0}% {1}, {2}% {3}", arg0, arg1, arg2, arg3),
+			(Locales.JP, Render(Locales.JP, "{0}% {1}, {2}% {3}", arg0, arg1, arg2, arg3)))
 			{ ID = "desc_effective_ratio" };
 		
 		public static string desc_effective_exact(object arg0) => Locales.Provider.TextLocale.Value switch {
-			Locales.JP => Render(Locales.Provider.TextLocale.Value, new[] {
-				"丁度",
-				"{0}",
-			}, arg0),
-			_ => Render(Locales.Provider.TextLocale.Value, new[] {
-				"Exactly ",
-				"{0}",
-			}, arg0),
+			Locales.JP => Render(Locales.JP, "丁度{0}", arg0),
+			_ => Render(null, "Exactly {0}", arg0),
 		};
 		
-		public static LString desc_effective_exact_ls(object arg0) => new LText(Render(null, new[] {
-				"Exactly ",
-				"{0}",
-			}, arg0),
-			(Locales.JP, Render(Locales.JP, new[] {
-				"丁度",
-				"{0}",
-			}, arg0)))
+		public static LString desc_effective_exact_ls(object arg0) => new LText(Render(null, "Exactly {0}", arg0),
+			(Locales.JP, Render(Locales.JP, "丁度{0}", arg0)))
 			{ ID = "desc_effective_exact" };
 		
 		public static string desc_effective_less(object arg0) => Locales.Provider.TextLocale.Value switch {
-			Locales.JP => Render(Locales.Provider.TextLocale.Value, new[] {
-				"{0}",
-				"以下",
-			}, arg0),
-			_ => Render(Locales.Provider.TextLocale.Value, new[] {
-				"Less than ",
-				"{0}",
-			}, arg0),
+			Locales.JP => Render(Locales.JP, "{0}以下", arg0),
+			_ => Render(null, "Less than {0}", arg0),
 		};
 		
-		public static LString desc_effective_less_ls(object arg0) => new LText(Render(null, new[] {
-				"Less than ",
-				"{0}",
-			}, arg0),
-			(Locales.JP, Render(Locales.JP, new[] {
-				"{0}",
-				"以下",
-			}, arg0)))
+		public static LString desc_effective_less_ls(object arg0) => new LText(Render(null, "Less than {0}", arg0),
+			(Locales.JP, Render(Locales.JP, "{0}以下", arg0)))
 			{ ID = "desc_effective_less" };
 		
 		public static string desc_effective_more(object arg0) => Locales.Provider.TextLocale.Value switch {
-			Locales.JP => Render(Locales.Provider.TextLocale.Value, new[] {
-				"{0}",
-				"以上",
-			}, arg0),
-			_ => Render(Locales.Provider.TextLocale.Value, new[] {
-				"More than ",
-				"{0}",
-			}, arg0),
+			Locales.JP => Render(Locales.JP, "{0}以上", arg0),
+			_ => Render(null, "More than {0}", arg0),
 		};
 		
-		public static LString desc_effective_more_ls(object arg0) => new LText(Render(null, new[] {
-				"More than ",
-				"{0}",
-			}, arg0),
-			(Locales.JP, Render(Locales.JP, new[] {
-				"{0}",
-				"以上",
-			}, arg0)))
+		public static LString desc_effective_more_ls(object arg0) => new LText(Render(null, "More than {0}", arg0),
+			(Locales.JP, Render(Locales.JP, "{0}以上", arg0)))
 			{ ID = "desc_effective_more" };
 		
 		public static readonly LString desc_suicide = new LText("Stage enemies fire suicide bullets in a spread pattern aimed at the player when they are killed.")

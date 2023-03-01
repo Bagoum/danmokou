@@ -10,15 +10,15 @@ using Danmokou.Scriptables;
 using Danmokou.Services;
 using JetBrains.Annotations;
 using UnityEngine;
-using FT = Danmokou.Scriptables.CameraTransitionConfig.TransitionConfig.FixedType;
+using FT = Danmokou.Scriptables.TransitionConfig.FixedType;
 
 namespace Danmokou.Scenes {
 public interface ICameraTransition {
-    void Fade(CameraTransitionConfig? cfg, out float waitIn, out float waitOut);
+    void Fade(ICameraTransitionConfig? cfg, out float waitIn, out float waitOut);
     public void StallFadeOutUntil(Func<bool> cond);
 }
 public class CameraTransition : RegularUpdater, ICameraTransition {
-    private static CameraTransitionConfig? inherited;
+    private static ICameraTransitionConfig? inherited;
 
     public CameraTransitionConfig defaultConfig = null!;
     private MaterialPropertyBlock pb = null!;
@@ -50,15 +50,15 @@ public class CameraTransition : RegularUpdater, ICameraTransition {
         sr.enabled = true;
     }
 
-    public void Fade(CameraTransitionConfig? cfg, out float waitIn, out float waitOut) {
-        inherited = (cfg != null) ? cfg : defaultConfig;
-        waitIn = inherited.fadeIn.time;
-        waitOut = inherited.fadeOut.time;
+    public void Fade(ICameraTransitionConfig? cfg, out float waitIn, out float waitOut) {
+        inherited = cfg ?? defaultConfig;
+        waitIn = inherited.FadeIn.time;
+        waitOut = inherited.FadeOut.time;
         StartCoroutine(FadeIn(inherited));
     }
 
 
-    private void SetReverse(Material mat, CameraTransitionConfig.TransitionConfig cfg) {
+    private void SetReverse(Material mat, TransitionConfig cfg) {
         EnableDisableKW(mat, cfg.reverseKeyword, "FT_REVERSE");
         EnableDisableKW(mat, cfg.fixedType == FT.CIRCLEWIPE, "REQ_CIRCLE");
         EnableDisableKW(mat, cfg.fixedType == FT.YWIPE, "REQ_Y");
@@ -70,15 +70,15 @@ public class CameraTransition : RegularUpdater, ICameraTransition {
         else mat.DisableKeyword(kw);
     }
 
-    private IEnumerator FadeIn(CameraTransitionConfig cfg) {
-        sr.sharedMaterial = cfg.fadeIn.material;
-        pb.SetTexture(PropConsts.trueTex, cfg.fadeToTex);
-        pb.SetTexture(PropConsts.faderTex, cfg.fadeIn.transitionTexture);
-        SetReverse(cfg.fadeIn.material, cfg.fadeIn);
+    private IEnumerator FadeIn(ICameraTransitionConfig cfg) {
+        sr.sharedMaterial = cfg.FadeIn.material;
+        pb.SetTexture(PropConsts.trueTex, cfg.FadeToTex);
+        pb.SetTexture(PropConsts.faderTex, cfg.FadeIn.transitionTexture);
+        SetReverse(cfg.FadeIn.material, cfg.FadeIn);
         Activate();
-        ServiceLocator.Find<ISFXService>().Request(cfg.fadeIn.sfx);
-        for (float t = 0; t < cfg.fadeIn.time; t += ETime.ASSUME_SCREEN_FRAME_TIME) {
-            pb.SetFloat(PropConsts.fillRatio, cfg.fadeIn.Value(t));
+        ServiceLocator.Find<ISFXService>().Request(cfg.FadeIn.sfx);
+        for (float t = 0; t < cfg.FadeIn.time; t += ETime.ASSUME_SCREEN_FRAME_TIME) {
+            pb.SetFloat(PropConsts.fillRatio, cfg.FadeIn.Value(t));
             sr.SetPropertyBlock(pb);
             yield return null;
         }
@@ -86,15 +86,15 @@ public class CameraTransition : RegularUpdater, ICameraTransition {
         sr.SetPropertyBlock(pb);
     }
 
-    private IEnumerator FadeOut(CameraTransitionConfig cfg) {
-        sr.sharedMaterial = cfg.fadeOut.material;
-        pb.SetTexture(PropConsts.trueTex, cfg.fadeToTex);
-        pb.SetTexture(PropConsts.faderTex, cfg.fadeOut.transitionTexture);
-        SetReverse(cfg.fadeOut.material, cfg.fadeOut);
+    private IEnumerator FadeOut(ICameraTransitionConfig cfg) {
+        sr.sharedMaterial = cfg.FadeOut.material;
+        pb.SetTexture(PropConsts.trueTex, cfg.FadeToTex);
+        pb.SetTexture(PropConsts.faderTex, cfg.FadeOut.transitionTexture);
+        SetReverse(cfg.FadeOut.material, cfg.FadeOut);
         Activate();
         bool didSfx = false;
         //Give an extra frame before opening up, to allow Stall calls if necessary
-        for (float t = -ETime.FRAME_TIME; t < cfg.fadeOut.time - ETime.FRAME_TIME; t += ETime.ASSUME_SCREEN_FRAME_TIME) {
+        for (float t = -ETime.FRAME_TIME; t < cfg.FadeOut.time - ETime.FRAME_TIME; t += ETime.ASSUME_SCREEN_FRAME_TIME) {
             if (t > 0 && fadeOutStallers.Count > 0) {
                 while (fadeOutStallers.Any(f => !f())) {
                     yield return null;
@@ -102,17 +102,19 @@ public class CameraTransition : RegularUpdater, ICameraTransition {
                 fadeOutStallers.Clear();
             }
             
-            pb.SetFloat(PropConsts.fillRatio, cfg.fadeOut.Value(Math.Max(t, 0)));
+            pb.SetFloat(PropConsts.fillRatio, cfg.FadeOut.Value(Math.Max(t, 0)));
             sr.SetPropertyBlock(pb);
             yield return null;
             //Put this here so it works well with "long first frames"
             if (!didSfx) 
-                ServiceLocator.Find<ISFXService>().Request(cfg.fadeOut.sfx);
+                ServiceLocator.Find<ISFXService>().Request(cfg.FadeOut.sfx);
             didSfx = true;
         }
         pb.SetFloat(PropConsts.fillRatio, 0);
+        pb.SetTexture(PropConsts.trueTex, sr.sprite.texture);
         sr.SetPropertyBlock(pb);
         Deactivate();
+        cfg.OnTransitionComplete?.Invoke();
     }
 
     private readonly List<Func<bool>> fadeOutStallers = new();

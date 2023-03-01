@@ -19,6 +19,13 @@ public static class StringAllocator {
         USE_POOLED_ALLOC ?
             allocator.GetOrAdd(new ReadOnlySpan<char>(chars, start, end)) :
             new string(chars, start, end);
+    
+    public static string MakeString(this ReadOnlySpan<char> chars) =>
+        //Span doesn't work in the language server since it got moved to a different repository in NET Core
+        // as such, when building for language server, use new string
+        USE_POOLED_ALLOC ?
+            allocator.GetOrAdd(chars) :
+            new string(chars);
 
     /// <summary>
     /// Create a cached string from a char.

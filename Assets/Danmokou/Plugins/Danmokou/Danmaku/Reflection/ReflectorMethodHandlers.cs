@@ -288,7 +288,7 @@ public static partial class Reflector {
         /// <summary>
         /// Make a concrete method out of a generic one using the provided type parameter.
         /// </summary>
-        MethodSignature Specialize(Type[] t);
+        MethodSignature Specialize(params Type[] t);
         
         /// <summary>
         /// Get the type designations for each of the generic types of this method.
@@ -561,16 +561,15 @@ public static partial class Reflector {
         return ReflectionData.TryGetMember(rt, member);
     }
 
-    private static readonly Dictionary<Type, Func<string, object>> letFuncs =
+    private static readonly Dictionary<Type, Func<string, object>> referenceVarFuncs =
         new() {
-            {typeof(ExBPY), ReflectEx.ReferenceLet<float>},
-            {typeof(ExTP), ReflectEx.ReferenceLet<Vector2>},
-            {typeof(ExTP3), ReflectEx.ReferenceLet<Vector3>},
-            {typeof(ExBPRV2), ReflectEx.ReferenceLet<V2RV2>},
+            {typeof(ExBPY), ReflectEx.ReferenceExpr<float>},
+            {typeof(ExTP), ReflectEx.ReferenceExpr<Vector2>},
+            {typeof(ExTP3), ReflectEx.ReferenceExpr<Vector3>},
+            {typeof(ExBPRV2), ReflectEx.ReferenceExpr<V2RV2>},
         };
 
     public static object? ExtInvokeMethod(Type t, string member, object[] prms) {
-        member = Sanitize(member);
         if (TryCompileOption(t, out var compiler)) {
             return compiler.mi.InvokeStatic(null, ExtInvokeMethod(compiler.source, member, prms));
         } else if (t == typeof(StateMachine)) {

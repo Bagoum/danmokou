@@ -15,10 +15,10 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/PlumWine/PlumWine.MainMenu VN.unity
     guid: 690bcd289d9bccd4f9e3219246aa7ee7
-  - enabled: 0
+  - enabled: 1
     path: Assets/SiMP/Scenes/SiMP.MainMenu.unity
     guid: 6b2d775f9661bd44da76415034461224
-  - enabled: 1
+  - enabled: 0
     path: Assets/Danmokou/MiniProjects/MP.MainMenu.unity
     guid: 6ce87ca5eeaeca643beda1e510b20d3b
   - enabled: 0
@@ -36,10 +36,10 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/LuA/LuA.MainMenu.unity
     guid: f624112b2f76c62478ebd6d443131775
-  - enabled: 0
+  - enabled: 1
     path: Assets/Danmokou/MiniProjects/Scenes/MiniprojectLevel VN.unity
     guid: bbf652916aa38874a9909ebe7e057289
-  - enabled: 1
+  - enabled: 0
     path: Assets/Danmokou/MiniProjects/Scenes/MiniprojectLevel.unity
     guid: 2a1f4e4cd49e99341855fa916af2cc1f
   - enabled: 1
@@ -51,28 +51,28 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Danmokou/Scenes/Generic/ReplaySave.unity
     guid: 6ef108d406e850541ab9eae35c53288a
-  - enabled: 0
+  - enabled: 1
     path: Assets/SiMP/Scenes/Tutorial.unity
     guid: 87ca619c61e1cae45a2a3be45c7b4706
-  - enabled: 0
+  - enabled: 1
     path: Assets/SiMP/Scenes/MiniTutorial.unity
     guid: cb5ec701c023b754ca7dc2b3dee6454c
-  - enabled: 0
+  - enabled: 1
     path: Assets/SiMP/Scenes/SiMP.Stage1.unity
     guid: 511cf8e2ba0cc0c4eac7a1f104f0347b
-  - enabled: 0
+  - enabled: 1
     path: Assets/SiMP/Scenes/SiMP.Stage2.unity
     guid: f232d8cf815f74e4c9499bb5a3bfbe47
-  - enabled: 0
+  - enabled: 1
     path: Assets/SiMP/Scenes/SiMP.Stage3.unity
     guid: b65501f33208af54184b3843776e3894
-  - enabled: 0
+  - enabled: 1
     path: Assets/SiMP/Scenes/SiMP.Stage4.unity
     guid: 47ec1af8aa1819b488c04f3b213404cb
-  - enabled: 0
+  - enabled: 1
     path: Assets/SiMP/Scenes/SiMP.Stage5.unity
     guid: b661a4f65e40e64419ff1a6ca8a2c9c6
-  - enabled: 0
+  - enabled: 1
     path: Assets/SiMP/Scenes/SiMP.StageExtra.unity
     guid: 20d3967e96a90074bafb766ea2992624
   - enabled: 0

@@ -2,14 +2,16 @@
 %TAG !u! tag:unity3d.com,2011:
 --- !u!21 &2100000
 Material:
-  serializedVersion: 6
+  serializedVersion: 8
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Ripple Fade
   m_Shader: {fileID: 4800000, guid: 01bf2e18c84b79d43ab3d3da4e0f197d, type: 3}
-  m_ShaderKeywords: FT_FADE_IN
+  m_ValidKeywords:
+  - FT_FADE_IN
+  m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0

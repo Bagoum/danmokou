@@ -364,12 +364,10 @@ private static {TypePrinter.Print(f.returnType)} {f.fnName}({string.Join(", ",
     }
     
 #if UNITY_EDITOR
-    [SuppressMessage("ReSharper", "ObjectCreationAsStatement")]
-    [SuppressMessage("ReSharper", "InvokeAsExtensionMethod")]
     public static void BakeExpressions() {
         //These calls ensure that static reflections are correctly initialized
-        new Challenge.WithinC(0);
-        new Challenge.WithoutC(0);
+        _ = new Challenge.WithinC(0);
+        _ = new Challenge.WithoutC(0);
         
         
         var typFieldsCache = new Dictionary<Type, List<(MemberInfo, ReflectIntoAttribute)>>();

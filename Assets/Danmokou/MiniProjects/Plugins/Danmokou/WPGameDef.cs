@@ -298,12 +298,21 @@ public class WPGameDef : ADVGameDef {
                 } else await cirnoInterruptF;
                 return InterruptionStatus.Abort;
             }) { LoadSafe = false };
-            StrongBoundedContext<InterruptionStatus> tokikoIntF = new(VN, "tokiko_intf", async () => {
+            StrongBoundedContext<InterruptionStatus> tokikoIntF(Evidence ev) => new(VN, "tokiko_intf", async () => {
                 var c = vn.Find<Tokiko>();
-                await vn.Sequential(
-                    c.ESayC("worry", "Okay, one more rung..."),
-                    R.ESayC("angry", "She's not even listening!")
-                );
+                if (ev is Evidence.OSHA) {
+                    await vn.Sequential(
+                        R.ESayC("worry", "Hmm, this would work if she was actually violating regulations, but right" +
+                                         " now she's holding the ladder correctly."),
+                        R.SayC("If I can get her to let go of the ladder or turn around, then I should immediately" +
+                               " use this evidence in the middle of our conversation.")
+                    );
+                } else {
+                    await vn.Sequential(
+                        c.ESayC("worry", "Okay, one more rung..."),
+                        R.ESayC("angry", "She's not even listening!")
+                    );
+                }
                 return InterruptionStatus.Abort;
             }) { LoadSafe = false };
             StrongBoundedContext<InterruptionStatus> tokikoInt(Evidence ev) => new(VN, "tokiko_int", async () => {
@@ -336,7 +345,7 @@ public class WPGameDef : ADVGameDef {
                     );
                     UpdateDataV(d => d.State = d.State with { RemovedTokiko = true });
                     return InterruptionStatus.Abort;
-                } else return await tokikoIntF;
+                } else return await tokikoIntF(ev);
             }) { LoadSafe = false };
             var cirno = Context("cirno", async () => {
                 var c = vn.Find<Cirno>();
@@ -379,7 +388,7 @@ public class WPGameDef : ADVGameDef {
                     R.Say(l38)
                 );
                 var (i, _) = await selector.WaitForSelection("s1", l40, l57);
-                using var _ = evidenceRequest.Request(_ => tokikoIntF);
+                using var _ = evidenceRequest.Request(tokikoIntF);
                 if (i == 0) {
                     await vn.Sequential(
                         R.SayC(l41),
@@ -689,7 +698,7 @@ public class WPGameDef : ADVGameDef {
                 } else if (t is Target.Cirno) {
                     await cirnoInterrupt(ev);
                 } else if (t is Target.Tokiko) {
-                    await tokikoIntF;
+                    await tokikoIntF(ev);
                 } else if (t is Target.LilyAndLetty) {
                     await lilyInt(ev);
                 } else if (t is Target.Star) {

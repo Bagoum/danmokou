@@ -4,48 +4,50 @@ The currently implemented bullet types are as follows, in increasing order of re
 
 Note: if a bullet name starts with "G", that means it is a glowy style (usually rendered additively).
 
-| Bullet Type                                 | Notes                             |
-| ------------------------------------------- | --------------------------------- |
-| **Lasers** (`laser` command)                |                                   |
-| Laser                                       |                                   |
-| StretchLaser                                |                                   |
-| ArrowLaser                                  |                                   |
-| SunnyLaser                                  |                                   |
-| GLaser                                      | Additive rendering                |
-| GStretchLaser                               | Additive rendering                |
-| GDLaser                                     | Additive rendering                |
-| MuLaser                                     | Should not be given a hitbox      |
-| ZoneLaser                                   | Should not be given a hitbox      |
-| **Pathers** (`pather` command)              |                                   |
-| Pather                                      |                                   |
-| ArrowPather                                 |                                   |
-| Lightning                                   |                                   |
-| GPather                                     | Additive rendering                |
-| **Simple Bullets** (`s`, `simple` commands) |                                   |
-| SCircle                                     | Nonrotational                     |
-| EllyScythe                                  |                                   |
-| StellDecagon                                |                                   |
-| LCircle                                     |                                   |
-| LEllipse                                    |                                   |
-| LStar                                       |                                   |
-| Fireball                                    |                                   |
-| Sakura                                      |                                   |
-| Apple                                       |                                   |
-| Amulet                                      | Also AmuletReimu                  |
-| Circle                                      |                                   |
-| Ellipse                                     |                                   |
-| Gem                                         |                                   |
-| Shell                                       |                                   |
-| Arrow                                       |                                   |
-| Star                                        |                                   |
-| Triangle                                    | Default suicide bullet style      |
-| Dot                                         |                                   |
-| Strip                                       |                                   |
-| Sun                                         | Additive rendering, nonrotational |
-| GLCircle                                    | Additive rendering                |
-| Keine                                       | Additive rendering                |
-| GCircle                                     | Additive rendering                |
-| GDCircle                                    | Additive rendering                |
+| Bullet Type                                 | Notes                                                        |
+| ------------------------------------------- | ------------------------------------------------------------ |
+| **Lasers** (`laser` command)                |                                                              |
+| Laser                                       |                                                              |
+| StretchLaser                                |                                                              |
+| ArrowLaser                                  |                                                              |
+| SunnyLaser                                  |                                                              |
+| GLaser                                      | Additive rendering                                           |
+| GStretchLaser                               | Additive rendering                                           |
+| GDLaser                                     | Additive rendering                                           |
+| MuLaser                                     | Should not be given a hitbox                                 |
+| ZoneLaser                                   | Should not be given a hitbox                                 |
+| **Pathers** (`pather` command)              |                                                              |
+| Pather                                      |                                                              |
+| ArrowPather                                 |                                                              |
+| Lightning                                   |                                                              |
+| GPather                                     | Additive rendering                                           |
+| **Flake Bullets** (internal)                |                                                              |
+| $flakeBulletClear                           | Created when bullets are cleared (by default, via camera or end-of-phase, configurable as SoftcullProperties.UseFlakeItems); homes after the player and grants 42 points on contact (configurable in IScoreFeature.AddBulletFlakeItem) |
+| **Simple Bullets** (`s`, `simple` commands) |                                                              |
+| SCircle                                     | Nonrotational                                                |
+| EllyScythe                                  |                                                              |
+| StellDecagon                                |                                                              |
+| LCircle                                     |                                                              |
+| LEllipse                                    |                                                              |
+| LStar                                       |                                                              |
+| Fireball                                    |                                                              |
+| Sakura                                      |                                                              |
+| Apple                                       |                                                              |
+| Amulet                                      | Also AmuletReimu                                             |
+| Circle                                      |                                                              |
+| Ellipse                                     |                                                              |
+| Gem                                         |                                                              |
+| Shell                                       |                                                              |
+| Arrow                                       |                                                              |
+| Star                                        |                                                              |
+| Triangle                                    | Default suicide bullet style                                 |
+| Dot                                         |                                                              |
+| Strip                                       |                                                              |
+| Sun                                         | Additive rendering, nonrotational                            |
+| GLCircle                                    | Additive rendering                                           |
+| Keine                                       | Additive rendering                                           |
+| GCircle                                     | Additive rendering                                           |
+| GDCircle                                    | Additive rendering                                           |
 
 When summoning bullets, use the format: `{SHAPE}-{COLOR}{GRADIENT}`, where:
 

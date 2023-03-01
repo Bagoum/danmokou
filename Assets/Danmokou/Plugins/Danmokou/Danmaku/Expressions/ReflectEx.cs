@@ -161,7 +161,7 @@ public static class ReflectEx {
             $"The reference {alias} is used, but does not have a value.{maybe_outofscope}");
     }
 
-    public static Func<TExArgCtx, TEx<T>> ReferenceLet<T>(string alias) => bpi => ReferenceExpr<T>(alias, bpi);
+    public static Func<TExArgCtx, TEx<T>> ReferenceExpr<T>(string alias) => bpi => ReferenceExpr<T>(alias, bpi);
 
     //TODO consider replacing SafeResizeable here with a dictionary
     

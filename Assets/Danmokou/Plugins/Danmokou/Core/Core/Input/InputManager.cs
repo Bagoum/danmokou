@@ -186,7 +186,7 @@ public static class InputManager {
 
     public static InCodeInputSource InCodeInput { get; } = new();
     public static AggregateInputSource PlayerInput { get; } = new(new MainInputSource());
-    public static IDescriptiveInputSource MainSource => PlayerInput.MainSource.Current;
+    public static IPrimaryInputSource MainSource => PlayerInput.MainSource.Current;
 
 }
 }

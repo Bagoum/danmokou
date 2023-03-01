@@ -6,7 +6,7 @@ phase(0)
 
 <!> hp 10000
 phase 0
-	paction 0
+	Paction 0
 		position 0 2
 		bullet-control persist circle-blue/w sm onlyonce > t 1
 			sync ellipse-*/w <> gsr2c 10 {

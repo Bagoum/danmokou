@@ -48,7 +48,7 @@ public abstract class BaseCampaignConfig : ScriptableObject, ICampaignMeta {
             () => _ = stage.StateMachine,
             () => ServiceLocator.Find<LevelController>()
                 .RunLevel(new(1, LevelController.LevelRunMethod.CONTINUE, stage, req.InstTracker)),
-            out tcs));
+            out tcs).With(req.PreferredCameraTransition));
 
     protected TaskCompletionSource<Unit> LoadStageSceneOrThrow(InstanceRequest req, IStageConfig stage) {
         if (LoadStageScene(req, stage, out var tcs) is null)

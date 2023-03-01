@@ -8,7 +8,13 @@ namespace Danmokou.Core.DInput {
 
 public class KBMInputSource : IKeyedInputSource, IPrimaryInputSource {
     public List<IInputHandler> Handlers { get; } = new();
+    public bool AnyKeyPressedThisFrame { get; private set; }
+    bool IInputHandlerInputSource.AnyKeyPressedThisFrame {
+        get => AnyKeyPressedThisFrame;
+        set => AnyKeyPressedThisFrame = value;
+    }
     public MainInputSource Container { get; set; } = null!;
+
     public KBMInputSource() {
         ((IKeyedInputSource)this).AddUpdaters();
     }
@@ -37,10 +43,12 @@ public class KBMInputSource : IKeyedInputSource, IPrimaryInputSource {
     public short? VerticalSpeed =>
         i.Up.Active ? IInputSource.maxSpeed : i.Down.Active ? IInputSource.minSpeed : (short)0;
     
-    void IInputSource.OncePerUnityFrameToggleControls() {
+    bool IInputSource.OncePerUnityFrameToggleControls() {
         if (((IInputHandlerInputSource)this).OncePerUnityFrameUpdateHandlers()) {
             Container.MarkActive(this);
-        }
+            return true;
+        } else
+            return false;
     }
 }
 

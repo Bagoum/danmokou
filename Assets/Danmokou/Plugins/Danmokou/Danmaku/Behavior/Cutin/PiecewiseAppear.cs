@@ -100,7 +100,7 @@ public class PiecewiseAppear : CoroutineRegularUpdater {
 
     public virtual Bounds Bounds => sr.sprite.bounds.MulBy(transform.lossyScale);
     public virtual Vector2 Center => transform.position;
-    public virtual (Texture, bool isTemp) Texture => (sr.sprite.texture, false);
+    public virtual (Texture, bool isTemp) Texture() => (sr.sprite.texture, false);
 
     private IEnumerable<Fragment> GenerateFragments(bool invert) {
         var bounds = Bounds;
@@ -155,7 +155,7 @@ public class PiecewiseAppear : CoroutineRegularUpdater {
     [ContextMenu("Disappear")]
     public void Disappear() {
         Show();
-        var (tex, temp) = Texture;
+        var (tex, temp) = Texture();
         var fri = new FragmentRenderInstance(config, GenerateFragments(false), uiLayer, tex, () => {
                 if (temp)
                     tex.DestroyTexOrRT();
@@ -169,7 +169,7 @@ public class PiecewiseAppear : CoroutineRegularUpdater {
     [ContextMenu("Appear")]
     public void Appear() {
         Show();
-        var (tex, temp) = Texture;
+        var (tex, temp) = Texture();
         var fri = new FragmentRenderInstance(config, GenerateFragments(true), uiLayer, tex, () => {
                 if (temp)
                     tex.DestroyTexOrRT();

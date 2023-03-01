@@ -61,6 +61,11 @@ public class ControllerRebindingProxy : IPurposefulInputBinding {
 }
 public class ControllerInputSource : IKeyedInputSource, IPrimaryInputSource {
     public List<IInputHandler> Handlers { get; } = new();
+    public bool AnyKeyPressedThisFrame { get; private set; }
+    bool IInputHandlerInputSource.AnyKeyPressedThisFrame {
+        get => AnyKeyPressedThisFrame;
+        set => AnyKeyPressedThisFrame = value;
+    }
     public MainInputSource Container { get; set; } = null!;
     public InputObject.Controller Source { get; }
 
@@ -132,10 +137,12 @@ public class ControllerInputSource : IKeyedInputSource, IPrimaryInputSource {
             (short)(IInputSource.maxSpeed * AccumulateSources(pdown, pup)));
 
 
-    void IInputSource.OncePerUnityFrameToggleControls() {
+    bool IInputSource.OncePerUnityFrameToggleControls() {
         if (((IInputHandlerInputSource)this).OncePerUnityFrameUpdateHandlers()) {
             Container.MarkActive(this);
-        }
+            return true;
+        } else
+            return false;
     }
 }
 }

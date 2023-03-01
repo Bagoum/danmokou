@@ -28,13 +28,16 @@ public static partial class Reflector {
     private static readonly Dictionary<(Type, Type), Type> func2TypeCache = new();
 
     public static class ReflectionData {
+        public static Dictionary<string, T> SanitizedKeyDict<T>() => new(SanitizedStringComparer.Singleton);
         /// <summary>
         /// Contains all reflectable methods, generic and non-generic, except those tagged as BDSL2Operator.
         /// <br/>Methods are keyed by lowercase method name and may be overloaded.
-        /// <br/>Liftable methods are lifted, and generic methods are non-specialized except when specializations
-        ///  are specified via <see cref="GAliasAttribute"/>.
+        /// <br/>Liftable methods (specifically those returning TEx{TYPE}) are lifted,
+        ///   and generic methods are non-specialized except when specializations
+        ///   are specified via <see cref="GAliasAttribute"/>.
         /// </summary>
-        public static readonly Dictionary<string, List<IMethodSignature>> AllBDSL2Methods = new();
+        public static readonly Dictionary<string, List<IMethodSignature>> AllBDSL2Methods =
+            SanitizedKeyDict<List<IMethodSignature>>();
         
         /// <summary>
         /// Contains non-generic methods keyed by return type.
@@ -50,7 +53,8 @@ public static partial class Reflector {
         /// <summary>
         /// All generic methods recorded, keyed by method name.
         /// </summary>
-        private static readonly Dictionary<string, MethodInfo> genericMethods = new();
+        private static readonly Dictionary<string, MethodInfo> genericMethods =
+            SanitizedKeyDict<MethodInfo>();
         
         [PublicAPI]
         public static Dictionary<string, MethodInfo> AllMethods() {
@@ -94,7 +98,9 @@ public static partial class Reflector {
                         throw new Exception($"Duplicate generic method by name {name}");
                     genericMethods[name] = method;
                 } else {
-                    methodsByReturnType.SetDefaultSet(method.ReturnType, name, method);
+                    if (!methodsByReturnType.TryGetValue(method.ReturnType, out var d))
+                        methodsByReturnType[method.ReturnType] = d = SanitizedKeyDict<MethodInfo>();
+                    d[name] = method;
                 }
             }
             var attrs = Attribute.GetCustomAttributes(mi);
@@ -162,9 +168,9 @@ public static partial class Reflector {
         private static readonly Dictionary<(string method, Type returnType), MethodSignature?> getArgTypesCache 
             = new();
 
-
         private static readonly Dictionary<(Type toType, Type fromFuncType), Func<object, object, object>> funcConversions =
             new();
+        
         /// <summary>
         /// De-funcify a source object whose type involves functions of one argument (eg. [TExArgCtx->tfloat]) into an
         ///  target type (eg. [tfloat]) by applying an object of that argument type (TExArgCtx) to the

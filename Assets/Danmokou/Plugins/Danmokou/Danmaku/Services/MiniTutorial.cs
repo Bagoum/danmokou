@@ -74,8 +74,7 @@ public class MiniTutorial : BehaviorEntity {
         BulletManager.RequestSimple("lcircle-red/", _ => 4f, null, mov, new ParametricInfo(in mov));
         var nrx = new RealizedLaserOptions(new LaserOptions(), GenCtx.New(this, V2RV2.Zero), PICustomData.New(), new Vector2(3, 5),
             V2RV2.Angle(-90), Cancellable.Null);
-        "sync _ <> relrect greenrect level <-2;2.5:1.4;1.4:0> witha 0.7 green".Into<StateMachine>()
-            .Start(new SMHandoff(this, Cancellable.Null));
+        Tutorial.greenRectSm.Value.Start(new SMHandoff(this, Cancellable.Null));
         Message(text10, mtcirc1(MainSource.uiConfirm.Description, MainSource.pause.Description));
         yield return confirm();
         BulletManager.ClearAllBullets();

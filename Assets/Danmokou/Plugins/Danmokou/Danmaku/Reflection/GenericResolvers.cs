@@ -350,7 +350,7 @@ public static partial class Reflector {
             else if (ReflectMethod(arg, t, q) is { } methodAST) {
                 //this advances inside
                 ast = methodAST;
-            } else if (letFuncs.TryGetValue(t, out var f) && arg.Item[0] == Parser.SM_REF_KEY_C) {
+            } else if (referenceVarFuncs.TryGetValue(t, out var f) && arg.Item[0] == Parser.SM_REF_KEY_C) {
                 q.Advance();
                 ast = new AST.Preconstructed<object?>(arg.Position, f(arg.Item), arg.Item);
             } else if (FuncTypeResolve(q, arg, t) is { } simpleParsedAST) {
@@ -460,8 +460,7 @@ public static partial class Reflector {
 
     public static InvokedMethod? TryGetSignature(string member, Type rt) {
         Profiler.BeginSample("Signature lookup");
-        var res = ASTTryLookForMethod(rt, member) ??
-               ASTTryLookForMethod(rt, Sanitize(member));
+        var res = ASTTryLookForMethod(rt, member);
         Profiler.EndSample();
         return res?.Call(member);
     }

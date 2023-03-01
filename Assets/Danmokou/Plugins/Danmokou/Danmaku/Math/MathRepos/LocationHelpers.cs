@@ -102,6 +102,13 @@ public static partial class ExM {
     /// <returns></returns>
     public static TEx<Vector2> LPlayer() =>
         Ex.Property(null, typeof(LocationHelpers), nameof(LocationHelpers.VisiblePlayerLocation));
+    
+    /// <summary>
+    /// Get the true location of the player.
+    /// </summary>
+    /// <returns></returns>
+    public static TEx<Vector2> LPlayerTrue() =>
+        Ex.Property(null, typeof(LocationHelpers), nameof(LocationHelpers.TruePlayerLocation));
 
     /// <summary>
     /// Get the location of the BehaviorEntity.

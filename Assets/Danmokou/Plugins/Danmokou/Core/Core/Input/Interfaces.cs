@@ -8,6 +8,7 @@ namespace Danmokou.Core.DInput {
 /// </summary>
 public interface IInputHandlerInputSource {
     List<IInputHandler> Handlers { get; }
+    public bool AnyKeyPressedThisFrame { get; protected set; }
 
     /// <summary>
     /// Update all linked <see cref="IInputHandler"/>s, and returns true if any of them were set to true.
@@ -17,7 +18,7 @@ public interface IInputHandlerInputSource {
         bool anyActive = false;
         for (int ii = 0; ii < Handlers.Count; ++ii)
             anyActive |= Handlers[ii].OncePerUnityFrameUpdate();
-        return anyActive;
+        return AnyKeyPressedThisFrame = anyActive;
     }
 }
 

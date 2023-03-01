@@ -42,17 +42,17 @@ public class MultiPaletteMap : ColorMap {
         gg ??= green.Gradient.Modify(greenMod);
         bg ??= blue.Gradient.Modify(blueMod);
         for (int ii = 0; ii < len; ++ii) {
-            Color32 pixel = pixels[ii];
+            ref Color32 pixel = ref pixels[ii];
             if (pixel.a > byte.MinValue) {
                 float total = pixel.r + pixel.g + pixel.b + 1;
                 //This method assumes that any mixture of channels is a blend operation.
                 float evalAt = Math.Max(Math.Max(pixel.r, pixel.g), pixel.b) / 255f;
-                Color32 newc = 
-                    rg.Evaluate(evalAt) * ((pixel.r + 1) / total) + 
-                    gg.Evaluate(evalAt) * (pixel.g / total) + 
-                    bg.Evaluate(evalAt) * (pixel.b / total);
-                newc.a = pixel.a;
-                pixels[ii] = newc;
+                var r = rg.Evaluate(evalAt) * ((pixel.r + 1) / total);
+                var g = gg.Evaluate(evalAt) * (pixel.g / total);
+                var b = bg.Evaluate(evalAt) * (pixel.b / total);
+                pixel.r = M.Float01ToByte(r.r + g.r + b.r);
+                pixel.g = M.Float01ToByte(r.g + g.g + b.g);
+                pixel.b = M.Float01ToByte(r.b + g.b + b.b);
             }
         }
     }

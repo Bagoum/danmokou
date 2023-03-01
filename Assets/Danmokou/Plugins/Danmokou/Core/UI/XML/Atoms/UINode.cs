@@ -119,7 +119,7 @@ public class UINode {
             _ = source.IsVisible.Subscribe(b => {
                 if (useVisiblityPassthrough)
                     UpdatePassthrough(!b);
-                //MONKEYPATCH-- you can normally use display=b.ToStyle instead of these two
+                //Allows opacity fade-out
                 n.HTML.pickingMode = b ? PickingMode.Position : PickingMode.Ignore;
                 n.HTML.style.opacity = b ? 1 : 0;
             });
@@ -147,6 +147,7 @@ public class UINode {
     public void UpdatePassthrough(bool? b) {
         //if ((b != true) && (Passthrough == true))
         //    MONKEYPATCH_mouseDelay = 0.5f;
+        if (Passthrough == b) return;
         Passthrough = b;
         if (b is true)
             Controller.MoveCursorAwayFromNode(this);
@@ -322,7 +323,7 @@ public class UINode {
                 return;
         #endif
             if (AllowInteraction) {
-                Controller.QueuedEvent = new UIPointerCommand.Goto(this);
+                Controller.QueueEvent(new UIPointerCommand.Goto(this));
                 evt.StopPropagation();
             }
             isInElement = true;
@@ -331,7 +332,7 @@ public class UINode {
             //Logs.Log($"Leave {Description()}");
             //For freeform groups ONLY, moving the cursor off a node should deselect it.
             if (AllowInteraction && Group is UIFreeformGroup && Controller.Current == this)
-                Controller.QueuedEvent = new UIPointerCommand.NormalCommand(UICommand.Back, this) { Silent = true };
+                Controller.QueueEvent(new UIPointerCommand.NormalCommand(UICommand.Back, this) { Silent = true });
             isInElement = false;
             startedClickHere = false;
         });
@@ -348,7 +349,7 @@ public class UINode {
             // on the current UINode), but click-to-confirm is done via callbacks specific to the UINode.
             if (AllowInteraction && evt.button == 0) {
                 if (isInElement && startedClickHere)
-                    Controller.QueuedEvent = new UIPointerCommand.NormalCommand(UICommand.Confirm, this);
+                    Controller.QueueEvent(new UIPointerCommand.NormalCommand(UICommand.Confirm, this));
                 OnMouseUp?.Invoke(this, evt);
                 evt.StopPropagation();
             }
@@ -356,7 +357,7 @@ public class UINode {
         });
     }
     public void Build(Dictionary<Type, VisualTreeAsset> map) {
-        NodeHTML = (Prefab != null ? Prefab : map.SearchByType(this, true)).CloneTreeWithoutContainer();
+        NodeHTML = (Prefab != null ? Prefab : map.SearchByType(this, true)).CloneTreeNoContainer();
         //NodeHTML = HTML.Q<VisualElement>(null!, nodeClass);
         Label = NodeHTML.Query<Label>().ToList().FirstOrDefault();
         boundClasses = NodeHTML.GetClasses().ToArray();
@@ -653,11 +654,11 @@ public abstract class BaseLROptionUINode<T> : UINode {
     protected override void RegisterEvents() {
         base.RegisterEvents();
         NodeHTML.Q("Left").RegisterCallback<PointerUpEvent>(evt => {
-            Controller.QueuedEvent =  new UIPointerCommand.NormalCommand(UICommand.Left, this);
+            Controller.QueueEvent(new UIPointerCommand.NormalCommand(UICommand.Left, this));
             evt.StopPropagation();
         });
         NodeHTML.Q("Right").RegisterCallback<PointerUpEvent>(evt => {
-            Controller.QueuedEvent = new UIPointerCommand.NormalCommand(UICommand.Right, this);
+            Controller.QueueEvent(new UIPointerCommand.NormalCommand(UICommand.Right, this));
             evt.StopPropagation();
         });
     }
@@ -762,7 +763,7 @@ public class ComplexLROptionUINode<T> : BaseLROptionUINode<T>, IComplexOptionNod
         NodeHTML.Q<Label>("Key").text = Description();
         NodeHTML.Q("LR2ChildContainer").Clear();
         foreach (var (i, v) in values().Enumerate()) {
-            var ve = objectTree.CloneTreeWithoutContainer();
+            var ve = objectTree.CloneTreeNoContainer();
             NodeHTML.Q("LR2ChildContainer").Add(ve);
             binder(v, ve, i == index);
         }

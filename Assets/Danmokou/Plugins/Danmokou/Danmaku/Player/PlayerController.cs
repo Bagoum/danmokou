@@ -321,7 +321,7 @@ public partial class PlayerController : BehaviorEntity, ICircularSimpleBulletCol
     private void SetLocation(Vector2 next) {
         bpi.loc = tr.position = next;
         Hurtbox = new(next, Hurtbox.radius, Hurtbox.largeRadius);
-        LocationHelpers.UpdateVisiblePlayerLocation(next);
+        LocationHelpers.UpdatePlayerLocation(next, next);
     }
     
     private void MovementUpdate(float dT) {
@@ -410,6 +410,7 @@ public partial class PlayerController : BehaviorEntity, ICircularSimpleBulletCol
                     dm.MarkForDeletion();
         grazeCooldowns.Keys.Compact();
         collisions = new(0, 0);
+        pickedUpFlakes = 0;
         
         //Hilarious issue. If running a bomb that disables and then re-enables firing,
         //then IsFiring will return false in the movement update and true in the options code.
@@ -443,11 +444,16 @@ public partial class PlayerController : BehaviorEntity, ICircularSimpleBulletCol
     }
 
     private CollisionsAccumulation collisions;
+    private int pickedUpFlakes = 0;
     public override void RegularUpdateFinalize() {
         if (collisions.damage > 0)
             Hit(1);
         else
             AddGraze(collisions.graze);
+        if (pickedUpFlakes > 0) {
+            Instance.ScoreF.AddBulletFlakeItem(pickedUpFlakes);
+            ISFXService.SFXService.RequestSFXEvent(ISFXService.SFXEventType.FlakeItemCollected);
+        }
         base.RegularUpdateFinalize();
     }
 
@@ -458,6 +464,7 @@ public partial class PlayerController : BehaviorEntity, ICircularSimpleBulletCol
         var dmg = sbc.BC.Damage.Value;
         var allowGraze = sbc.BC.AllowGraze.Value;
         var destroy = sbc.BC.Destructible.Value;
+        var meta = sbc.MetaType;
         for (int ii = 0; ii < sbc.Count; ++ii) {
             if (!deleted[ii]) {
                 ref var sbn = ref data[ii];
@@ -468,7 +475,7 @@ public partial class PlayerController : BehaviorEntity, ICircularSimpleBulletCol
                 if (cr.graze && !allowGraze)
                     cr = cr.NoGraze();
                 if ((cr.collide || cr.graze) 
-                    && ProcessCollision(in cr, in dmg, in sbn.bpi, in sbc.BC.grazeEveryFrames)) {
+                    && ProcessCollision(in meta, in cr, in dmg, in sbn.bpi, in sbc.BC.grazeEveryFrames)) {
                     sbc.RunCollisionControls(ii);
                     if (destroy) {
                         sbc.MakeCulledCopy(ii);
@@ -486,6 +493,7 @@ public partial class PlayerController : BehaviorEntity, ICircularSimpleBulletCol
         var dmg = sbc.BC.Damage.Value;
         var allowGraze = sbc.BC.AllowGraze.Value;
         var destroy = sbc.BC.Destructible.Value;
+        var meta = sbc.MetaType;
         for (int y = 0; y < indexBuckets.Height; ++y)
         for (int x = 0; x < indexBuckets.Width; ++x) {
             var bucket = indexBuckets[y, x];
@@ -497,7 +505,7 @@ public partial class PlayerController : BehaviorEntity, ICircularSimpleBulletCol
                 if (cr.graze && !allowGraze)
                     cr = cr.NoGraze();
                 if ((cr.collide || cr.graze) 
-                    && ProcessCollision(in cr, in dmg, in sbn.bpi, in sbc.BC.grazeEveryFrames)) {
+                    && ProcessCollision(in meta, in cr, in dmg, in sbn.bpi, in sbc.BC.grazeEveryFrames)) {
                     sbc.RunCollisionControls(index);
                     if (destroy) {
                         sbc.MakeCulledCopy(index);
@@ -572,17 +580,23 @@ public partial class PlayerController : BehaviorEntity, ICircularSimpleBulletCol
     /// <summary>
     /// Process a collision event with an NPC bullet by checking that it is not on graze cooldown, then append it to the accumulation of events <see cref="collisions"/>.
     /// </summary>
+    /// <param name="meta">Type of the bullet collection.</param>
     /// <param name="coll">Collision result.</param>
     /// <param name="damage">Damage dealt by this collision.</param>
     /// <param name="bulletBPI">Bullet information.</param>
     /// <param name="grazeEveryFrames">The number of frames between successive graze events on this bullet.</param>
     /// <returns>Whether or not a hit was taken (ie. a collision occurred).</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool ProcessCollision(in CollisionResult coll, in int damage, in ParametricInfo bulletBPI, in ushort grazeEveryFrames) {
+    public bool ProcessCollision(in BulletManager.SimpleBulletCollection.CollectionType meta, 
+        in CollisionResult coll, in int damage, in ParametricInfo bulletBPI, in ushort grazeEveryFrames) {
         if (coll.collide) {
-            collisions = collisions.WithDamage(damage);
+            if (meta == BulletManager.SimpleBulletCollection.CollectionType.BulletClearFlake)
+                ++pickedUpFlakes;
+            else
+                collisions = collisions.WithDamage(damage);
             return true;
-        } else if (coll.graze && TryGrazeBullet(bulletBPI.id, grazeEveryFrames)) {
+        } else if (coll.graze && meta != BulletManager.SimpleBulletCollection.CollectionType.BulletClearFlake &&
+                   TryGrazeBullet(bulletBPI.id, grazeEveryFrames)) {
             collisions = collisions.WithGraze(1);
             return false;
         } else

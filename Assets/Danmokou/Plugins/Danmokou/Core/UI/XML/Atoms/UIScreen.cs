@@ -105,7 +105,7 @@ public class UIScreen {
 
     public VisualElement Build(Dictionary<Type, VisualTreeAsset> map) {
         buildMap = map;
-        HTML = (Prefab != null ? Prefab : map.SearchByType(this, true)).CloneTreeWithoutContainer();
+        HTML = (Prefab != null ? Prefab : map.SearchByType(this, true)).CloneTreeNoContainer();
         if (HeaderText == null)
             Header.parent.Remove(Header);
         else
@@ -118,7 +118,7 @@ public class UIScreen {
             HTML.AddToClassList("pauseThin");
         if (Type.HasFlag(Display.PauseLined))
             HTML.AddToClassList("pauseLined");
-        HTML.Add(XMLUtils.Prefabs.AbsoluteTerritory.CloneTreeWithoutContainer());
+        HTML.Add(XMLUtils.Prefabs.AbsoluteTerritory.CloneTreeNoContainer());
         AbsoluteTerritory = new UIRenderAbsoluteTerritory(this);
         Builder?.Invoke(this, Container);
         //Controls helper may be removed by builder for screens that don't need it

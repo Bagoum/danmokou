@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using BagoumLib;
@@ -469,11 +470,11 @@ public static class XMLHelpers {
         };
         s.SetFirst(new UIColumn(s, null) {
             LazyNodes = () => SaveData.p.ReplayData.Select(rep => {
-                return new FuncNode(rep.metadata.Record.AsDisplay(true, true), n => {
+                return new FuncNode(rep.Metadata.Record.AsDisplay(true, true), n => {
                     var ind = n.Group.Nodes.IndexOf(n);
                     return PopupUIGroup.LRB2(n, () => replay_window,
                         r => new UIColumn(r,
-                                new UINode(replay_what_do_ls(rep.metadata.Record.CustomName))
+                                new UINode(replay_what_do_ls(rep.Metadata.Record.CustomName))
                                     { Prefab = Prefabs.PureTextNode })
                             { Interactable = false },
                         null, new UINode[] {
@@ -484,7 +485,7 @@ public static class XMLHelpers {
                                 } else return false;
                             }, () => new UIResult.GoToNode(n.Group, ind)),
                             new UIButton(view_details, UIButton.ButtonType.Confirm, _ => 
-                                n.ReturnGroup.Then(CreateGameResultsView(rep.metadata.Record, gameDetails))),
+                                n.ReturnGroup.Then(CreateGameResultsView(rep.Metadata.Record, gameDetails))),
                             new UIButton(replay_view, UIButton.ButtonType.Confirm, _ => {
                                 s.Controller.ConfirmCache();
                                 return new UIResult.StayOnNode(!InstanceRequest.ViewReplay(rep));
@@ -573,10 +574,10 @@ public static class XMLHelpers {
                                 n.ReturnGroup.Then(CreateGameResultsView(g, detailsScreen))),
                             new UIButton(record_view_replay, UIButton.ButtonType.Confirm, _ => {
                                 foreach (var (ir, replay) in SaveData.p.ReplayData.Enumerate())
-                                    if (replay.metadata.Record.Uuid == g.Uuid)
+                                    if (replay.Metadata.Record.Uuid == g.Uuid)
                                         return  n.ReturnGroup.Then(new UIResult.GoToNode(replayScreen.Groups[0], ir));
                                 return new UIResult.StayOnNode(true);
-                            }) { EnabledIf = () =>SaveData.p.ReplayData.Any(rep => rep.metadata.Record.Uuid == g.Uuid) }
+                            }) { EnabledIf = () =>SaveData.p.ReplayData.Any(rep => rep.Metadata.Record.Uuid == g.Uuid) }
                         }
                     )) {
                     VisibleIf = () => Matches(g.RequestKey)
@@ -627,6 +628,7 @@ public static class XMLHelpers {
         return screen;
     }
     
+    [SuppressMessage("ReSharper", "AccessToModifiedClosure")]
     public static UIScreen CreatePlayerScreen(this UIController m, SMAnalysis.AnalyzedCampaign c, 
         BehaviorEntity? demoSetup, GameObject? demoPlayerPrefab, Transform shotDisplayContainer, Func<TeamConfig, bool> continuation) {
         foreach (var sc in c.campaign.players
@@ -669,10 +671,9 @@ public static class XMLHelpers {
             ReplayActor r;
             if (effShot.demoReplay != null) {
                 r = Replayer.BeginReplaying(new Replayer.ReplayerConfig(
-                    Replayer.ReplayerConfig.FinishMethod.REPEAT, 
-                    effShot.demoReplay.Frames,
-                    () => demoPlayer!.transform.position = new Vector2(0, -3)
-                ));
+                    Replayer.ReplayFinishMethod.REPEAT, 
+                    effShot.demoReplay.Frames
+                ) { OnFinish = () => demoPlayer!.transform.position = new Vector2(0, -3) });
                 demoCT?.Cancel();
                 demoCT = new Cancellable();
                 if (effShot.demoSetupSM != null) {
@@ -680,12 +681,12 @@ public static class XMLHelpers {
                 }
             } else {
                 r = Replayer.BeginReplaying(new Replayer.ReplayerConfig(
-                    Replayer.ReplayerConfig.FinishMethod.REPEAT,
+                    Replayer.ReplayFinishMethod.REPEAT,
                     () => new []{new InputManager.FrameInput(0, 0, false, false, false, false, false, false, false)}
                 ));
             }
             GameManagement.NewInstance(InstanceMode.NULL, InstanceFeatures.ShotDemoFeatures, 
-                new InstanceRequest((_, __) => { }, smeta, new CampaignRequest(c!)), r);
+                new InstanceRequest((_, __) => { }, smeta, new CampaignRequest(c)), r);
             if (demoPlayer == null) {
                 demoPlayer = UnityEngine.Object.Instantiate(demoPlayerPrefab).GetComponent<PlayerController>();
             }
@@ -707,7 +708,7 @@ public static class XMLHelpers {
                 //Only show the selected player on entry so the others don't randomly appear on screen during swipe
                 display.Show(!first || i == index);
                 display.SetRelative(i, index, first);
-            };
+            }
         }
 
         void _ShowShot(bool first = false) {
@@ -742,8 +743,8 @@ public static class XMLHelpers {
                 CleanupDemo();
                 foreach (var (player, display) in displays) {
                     if (player != playerSelect.Value) display.Show(false);
-                };
-            },
+                }
+            }
         };
         _ = new UIColumn(screen, null,
             new PassthroughNode(shotsel_player).With(centerTextClass),
@@ -1204,10 +1205,10 @@ public static class XMLHelpers {
             opts.style.marginBottom = 40;
         }};
         var contRender = new UIRenderExplicit(screen, ve => ve.Q("VContainer"));
-        var ls = licenses.Where(l => l.file != null)
-            .Select(l => (l.name, MarkdownParser.Parse(l.file.text))).ToArray();
-        screen.SetFirst(new UIRow(new UIRenderExplicit(screen, ve => ve.Q("Options")), 
-                ls.Select(l => {
+        screen.SetFirst(new UIRow(new UIRenderExplicit(screen, ve => ve.Q("Options"))) {
+            LazyNodes = () => licenses
+                .Where(l => l.file != null)
+                .Select(l => {
                     var render = new UIRenderConstructed(contRender, Prefabs.UIScreenScrollColumn, 
                         (_, ve) => {
                             ve.style.width = 100f.Percent();
@@ -1216,13 +1217,13 @@ public static class XMLHelpers {
                     return new UINode(l.name) {
                         ShowHideGroup = new UIColumn(render),
                         OnBuilt = _ => {
-                            foreach (var b in l.Item2) {
+                            foreach (var b in MarkdownParser.Parse(l.file.text)) {
                                 render.HTML.Q<ScrollView>().Add(RenderMarkdown(b));
                             }
                         }
                     };
                 })
-            ));
+        });
         return screen;
     }
 
@@ -1233,7 +1234,7 @@ public static class XMLHelpers {
         bool italic = false;
         void CommitString() {
             if (sb.Length == 0) return;
-            var ve = Prefabs.MkLineText.CloneTreeWithoutContainer();
+            var ve = Prefabs.MkLineText.CloneTreeNoContainer();
             var s = (ve as Label)!.text = sb.ToString();
             sb.Clear();
             int ii = 0;
@@ -1289,7 +1290,7 @@ public static class XMLHelpers {
                     break;
                 case Markdown.TextRun.InlineCode inlineCode:
                     CommitString();
-                    var ve = Prefabs.MkLineCode.CloneTreeWithoutContainer();
+                    var ve = Prefabs.MkLineCode.CloneTreeNoContainer();
                     ApplyFontStyleToVE(ve);
                     (ve as Label)!.text = inlineCode.Text;
                     into.Add(ve);
@@ -1303,7 +1304,7 @@ public static class XMLHelpers {
                     break;
                 case Markdown.TextRun.Link(var textRun, var url):
                     CommitString();
-                    ve = Prefabs.MkLineLink.CloneTreeWithoutContainer();
+                    ve = Prefabs.MkLineLink.CloneTreeNoContainer();
                     ApplyFontStyleToVE(ve);
                     Stringify(textRun, ve, breakOnSpace);
                     ve.RegisterCallback<PointerUpEvent>(evt => {
@@ -1330,27 +1331,33 @@ public static class XMLHelpers {
     private static VisualElement RenderMarkdown(Markdown.Block b) {
         switch (b) {
             case Markdown.Block.CodeBlock(var language, var contents):
-                var ve = Prefabs.MkCodeBlock.CloneTreeWithoutContainer();
+                var ve = Prefabs.MkCodeBlock.CloneTreeNoContainer();
                 var cont = ve.Q("CodeContainer");
-                foreach (var line in contents.Split('\n')) {
-                    var lve = Prefabs.MkCodeBlockText.CloneTreeWithoutContainer();
-                    (lve as Label)!.text = line;
+                var step = 1;
+                var clines = contents.Split('\n');
+                //we cannot make one text block for the entire contents since we will get the error
+                // 'A VisualElement must not allocate more than 65535 vertices.'
+                //Instead we split them into smaller groups.
+                //Experimentally, it seems like giving each line its own prefab is fastest.
+                for (int ii = 0; ii < clines.Length; ii += step) {
+                    var lve = Prefabs.MkCodeBlockText.CloneTreeNoContainer();
+                    (lve as Label)!.text = string.Join("\n", clines[ii..Math.Min(ii + step, clines.Length)]);
                     cont.Add(lve);
                 }
                 return ve;
             case Markdown.Block.Empty empty:
-                return Prefabs.MkEmpty.CloneTreeWithoutContainer();
+                return Prefabs.MkEmpty.CloneTreeNoContainer();
             case Markdown.Block.Header header:
-                ve = Prefabs.MkHeader.CloneTreeWithoutContainer();
+                ve = Prefabs.MkHeader.CloneTreeNoContainer();
                 ve.AddToClassList($"mkHeader{header.Size}");
                 Stringify(header.Text, ve);
                 return ve;
             case Markdown.Block.HRule hRule:
                 throw new Exception("HRule not handled");
             case Markdown.Block.List(var ordered, var lines):
-                ve = Prefabs.MkList.CloneTreeWithoutContainer();
+                ve = Prefabs.MkList.CloneTreeNoContainer();
                 foreach (var (i, opt) in lines.Enumerate()) {
-                    var optHtml = Prefabs.MkListOption.CloneTreeWithoutContainer();
+                    var optHtml = Prefabs.MkListOption.CloneTreeNoContainer();
                     optHtml.Q<Label>("Marker").text = ordered ? $"{i + 1}." : "-";
                     foreach (var block in opt)
                         optHtml.Q("Blocks").Add(RenderMarkdown(block));
@@ -1358,9 +1365,9 @@ public static class XMLHelpers {
                 }
                 return ve;
             case Markdown.Block.Paragraph paragraph:
-                ve = Prefabs.MkParagraph.CloneTreeWithoutContainer();
+                ve = Prefabs.MkParagraph.CloneTreeNoContainer();
                 foreach (var line in paragraph.Lines) {
-                    var html = Prefabs.MkLine.CloneTreeWithoutContainer();
+                    var html = Prefabs.MkLine.CloneTreeNoContainer();
                     Stringify(line, html);
                     ve.Add(html);
                 }

@@ -94,6 +94,7 @@ public class InstanceData {
     public void Deactivate() {
         if (InstanceActive) {
             InstanceActive = false;
+            Request?.Cancel();
             Replay?.Cancel();
         }
     }
@@ -157,6 +158,7 @@ public class InstanceData {
         
         this.mode = mode;
         this.Difficulty = req?.metadata.difficulty ?? GameManagement.defaultDifficulty;
+        Difficulty.FixVariables();
         campaign = req?.lowerRequest is CampaignRequest cr ? cr.campaign.campaign : null;
         campaignKey = req?.lowerRequest.Campaign.Key ?? "null_campaign";
         TeamCfg = req?.metadata.team != null ? new ActiveTeamConfig(req.metadata.team) : null;

@@ -22,6 +22,7 @@ public interface IScoreFeature : IInstanceFeature {
     long AddValueItems(int delta, double multiplier);
 
     long AddSmallValueItems(int delta, double multiplier);
+    long AddBulletFlakeItem(int delta);
     void AddPointPlusItems(int delta, double multiplier);
     void AddScore(long delta);
 }
@@ -31,7 +32,8 @@ public class ScoreFeature : BaseInstanceFeature, IScoreFeature {
     public const long valueItemPoints = 3142;
     public long ValueItemPoints => valueItemPoints;
     public const double smallValueRatio = 0.1;
-    public double SmallValueRatio => 0.1;
+    public double SmallValueRatio => smallValueRatio;
+    public const long flakeItemPoints = 42;
     public const double pivPerPPP = 0.01;
     private InstanceData Inst { get; }
     public Evented<long> MaxScore { get; }
@@ -69,6 +71,12 @@ public class ScoreFeature : BaseInstanceFeature, IScoreFeature {
         AddScore(scoreDelta);
         foreach (var f in Inst.Features)
             f.OnItemSmallValue(delta, multiplier);
+        return scoreDelta;
+    }
+
+    public long AddBulletFlakeItem(int delta) {
+        long scoreDelta = flakeItemPoints * delta;
+        AddScore(scoreDelta);
         return scoreDelta;
     }
     public void AddPointPlusItems(int delta, double multiplier) {

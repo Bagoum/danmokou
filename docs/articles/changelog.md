@@ -13,14 +13,20 @@ To get the newest version from git, run:
 The following features are planned for future releases. 
 
 - [10.1.0] Safeguards around control rebinding
-- [10.1.0] UI improvements: tooltips and custom cursors
-- [Backlog] Default handling for graze flake items and bullet cancel flake items
+- [10.1.0] UI improvements: custom cursors
+- [Backlog] Default handling for graze flake items
 - [Backlog] Implementation of a TH18-like card engine
 - [Backlog] Procedural generation of stages and bullet patterns
 
 # [Future] v11.0.0
 
-The goal for this version is to have a fully functional implementation of the new scripting language, tentatively titled BDSL2, 
+The goal for this version is to have a fully functional implementation of the new scripting language, tentatively titled BDSL2.
+
+
+
+# v10.1.0 (2022/02/26)
+
+This release includes code for [Reimu the Boomer](https://bagoum.itch.io/boomer), an Ace Attorney-style point-and-click game, in the MiniProjects folder. There is also some work-in-progress code in `Danmokou/Danmaku/Reflection/NewReflector` for BDSL2, a more generalized scripting language.
 
 #### Pending Issues
 
@@ -28,17 +34,32 @@ The goal for this version is to have a fully functional implementation of the ne
 
 #### Features
 
+- Added scoring items that are generated when bullets are cleared (by default, via photo shot or end-of-phase, configurable as SoftcullProperties.UseFlakeItems); homes after the player and grants 42 points on contact (configurable in IScoreFeature.AddBulletFlakeItem).
 - Added safety guarantees around UI navigation so it is not possible to enqueue two navigation events at the same time.
+- Enhanced logging to reduce allocations/string formatting in cases where logging calls would be ignored.
+- Added support for easy show-on-hover tooltips on UI nodes, by calling `myUINode.MakeTooltip(myUIScreen, myTooltipText)`.
+- Added support for targeting evidence (in Ace Attorney-style ADV games) at objects or entities in the environment, via `InteractableEvidenceTargetA<E, T>` and `EvidenceTargetProxy<E, T>`.
+- Generalized AudioTrackService.InvokeBGM so that BGM tracks are effectively stored in a stack where only the topmost one is executing. This allows temporarily overriding the BGM.
+- In Suzunoya: Added the boolean `Trivial` on `BoundedContext<T>`. This can be set to true if a bounded context does not modify any save-data anywhere within it, and the effect is to speed up the startup time for ADV top-level VN execution.
+- Changed some handling around reflection so that reflected scripts can be preserved between Unity scenes.
+- Added an attract/demo mode that loops through a sequence of replays if the main menu is left unattended for some time. This can be configured via the "Attract Mode" child object on the "GameManagement" persistent object. See `SiMP.MainMenu` for an example.
 
 #### Changes
 
 - Reflected functions using `BEHPointer` now instead use `TEx<BehaviorEntity>`. This is backwards-compatible, so you can still do things like `hpratio(yukari)`, but now you can also use `mine` to get the BehaviorEntity associated with the function caller. For example, `hpratio(mine)` will get the HP ratio of the BehaviorEntity calling the function, or if it is called by a bullet, it will get the HP ratio of the BehaviorEntity that fired the bullet.
+- Removed the `EEx` helper class. Replaced all usages with `TEx`. `EEx.Resolve` is now `TEx.Resolve`.
 
 #### Fixes
 
-- In Suzunoya: Tint modifiers, such as `FadeTo`, now work on render groups, so you can write code like `await vn.DefaultRenderGroup.FadeTo(0f, 1f)`. In previous versions, this would not actually cause the tint to change.
+- In Suzunoya:
+  - Tint modifiers, such as `FadeTo`, now work on render groups, so you can write code like `await vn.DefaultRenderGroup.FadeTo(0f, 1f)`. In previous versions, this would not actually cause the tint to change.
+  - Fixed some bugs regarding calculation of location for entities with parents.
 - Fixed a regression with the `Darkness` command that would cause the shadow to appear incorrectly.
+- Fixed some cases where errors in GTRepeat would not be logged.
+- Fixed a bug where replays could start one frame early if restarted.
 - Improved WebGL handling. It is now possible to build an ADV/VN game for WebGL without going through [AoT handling](AoTSupport.md). 
+- Improved code generation from Localization-Utils to cost less memory.
+- Simplified AoTGenerator (a helper for precompiled expressions) and fixed some edge-cases.
 
 # v10.0.0 (2022/12/03)
 

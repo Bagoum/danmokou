@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using BagoumLib.Culture;
 using Danmokou.GameInstance;
 using Danmokou.Services;
@@ -302,6 +303,17 @@ public enum Subshot {
 
 public static class EnumHelpers2 {
     public static readonly IReadOnlyList<Subshot> Subshots = new[] {Subshot.TYPE_D, Subshot.TYPE_M, Subshot.TYPE_K};
+    
+    private static readonly Dictionary<Layer, int> layerMap = new();
+    public static void SetupUnityContextDependencies() {
+        foreach (var l in Enum.GetValues(typeof(Layer)).Cast<Layer>())
+            layerMap[l] = LayerMask.NameToLayer(l switch {
+                Layer.LowFX => "LowEffects",
+                Layer.HighFX => "TransparentFX",
+                Layer.LowProjectile => "LowProjectile",
+                _ => "HighProjectile"
+            });
+    }
 
     public static LString Describe(this InstanceMode m) => m switch {
         InstanceMode.NULL => "Null",
@@ -341,12 +353,8 @@ public static class EnumHelpers2 {
         if (st == PhaseType.Timeout || st == PhaseType.Dialogue) return 1000000000;
         return null;
     }
-    public static int Int(this Layer l) => LayerMask.NameToLayer(l switch {
-            Layer.LowFX => "LowEffects",
-            Layer.HighFX => "TransparentFX",
-            Layer.LowProjectile => "LowProjectile",
-            _ => "HighProjectile"
-        });
+
+    public static int Int(this Layer l) => layerMap[l];
 
     public static float Value(this FixedDifficulty d) => d switch {
             FixedDifficulty.Lunatic => 2.828f, //2^1.5

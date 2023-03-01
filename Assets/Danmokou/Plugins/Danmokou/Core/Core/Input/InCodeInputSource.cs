@@ -3,6 +3,11 @@
 namespace Danmokou.Core.DInput {
 public class InCodeInputSource : IInputHandlerInputSource, IInputSource {
     public List<IInputHandler> Handlers { get; } = new();
+    public bool AnyKeyPressedThisFrame { get; private set; }
+    bool IInputHandlerInputSource.AnyKeyPressedThisFrame {
+        get => AnyKeyPressedThisFrame;
+        set => AnyKeyPressedThisFrame = value;
+    }
     private readonly Queue<(MockInputBinding, bool)> delayedEnables = new();
     public InCodeInputSource() {
         mDialogueConfirm = new(this);
@@ -14,7 +19,7 @@ public class InCodeInputSource : IInputHandlerInputSource, IInputSource {
         });
     }
     
-    public void OncePerUnityFrameToggleControls() {
+    public bool OncePerUnityFrameToggleControls() {
         var nUpdates = delayedEnables.Count;
         while (nUpdates-- > 0) {
             var (m, e) = delayedEnables.Dequeue();
@@ -22,7 +27,7 @@ public class InCodeInputSource : IInputHandlerInputSource, IInputSource {
             if (e)
                 delayedEnables.Enqueue((m, false));
         }
-        ((IInputHandlerInputSource)this).OncePerUnityFrameUpdateHandlers();
+        return ((IInputHandlerInputSource)this).OncePerUnityFrameUpdateHandlers();
     }
 
     public void SetActive(MockInputBinding m) => delayedEnables.Enqueue((m, true));

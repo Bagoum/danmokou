@@ -89,7 +89,7 @@ public static class RNG {
         GetFloat(lowR, highR) * M.CosSin(GetFloat(0, BMath.TAU));
 
     private static readonly ExFunction getFloat =
-        ExFunction.Wrap(typeof(RNG), "GetFloat", new[] {typeof(float), typeof(float)});
+        ExFunction.Wrap(typeof(RNG), nameof(GetFloat), new[] {typeof(float), typeof(float)});
     public static Expression GetFloat(Expression low, Expression high) => getFloat.Of(low, high);
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

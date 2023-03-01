@@ -256,6 +256,8 @@ public static class SMAnalysis {
 
     public static List<Phase> Analyze(AnalyzedPhasedConstruct parent, TextAsset? sm) {
         if (sm == null) return new List<Phase>();
+        if (StateMachineManager.GetIfAlreadyLoaded(sm) is PatternSM psm)
+            return Analyze(parent, psm);
 #if !EXBAKE_LOAD
         if (GameManagement.References.fastParsing)
             return Analyze(parent, StateMachine.ParsePhases(sm.text));

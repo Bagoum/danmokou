@@ -50,9 +50,14 @@ public class GameManagement : CoroutineRegularUpdater {
         new DifficultySettings(FixedDifficulty.Normal);
 #endif
 
-    public static InstanceData Instance => EvInstance.Value;
+    public static InstanceData Instance { get; private set; } = null!;
     public static Evented<InstanceData> EvInstance { get; } = new(null!);
 
+    static GameManagement() {
+        //This is somewhat faster for reflection consumption than Instance => EvInstance.Value
+        _ = EvInstance.Subscribe(x => Instance = x);
+    }
+    
     public static void DeactivateInstance() {
         //Actually null on startup
         // ReSharper disable once ConstantConditionalAccessQualifier
@@ -123,7 +128,8 @@ public class GameManagement : CoroutineRegularUpdater {
         SceneIntermediary.SceneUnloaded.Subscribe(_ => ClearScene());
         
         RegisterService<IUXMLReferences>(UXMLPrefabs);
-        
+
+        EnumHelpers2.SetupUnityContextDependencies();
         //The reason we do this instead of Awake is that we want all resources to be
         //loaded before any State Machines are constructed, which may occur in other entities' Awake calls.
         // I tried to get rid of those constructions, but with the presence of ResetValues, it's not easy.
@@ -154,6 +160,11 @@ public class GameManagement : CoroutineRegularUpdater {
         new SceneRequest(References.mainMenu,
             //This cancels the replay and deactivates the instance as well
             SceneRequest.Reason.ABORT_RETURN, () => Instance.Request?.Cancel())) is { };
+    
+    public static bool QuickFadeToMainMenu() => ServiceLocator.Find<ISceneIntermediary>().LoadScene(
+        new SceneRequest(References.mainMenu,
+            SceneRequest.Reason.ABORT_RETURN, () => Instance.Request?.Cancel())
+                { Transition = GameManagement.References.defaultTransition.AsQuickFade(false) }) is { };
 
     /// <summary>
     /// Restarts the game instance.
@@ -168,17 +179,16 @@ public class GameManagement : CoroutineRegularUpdater {
     public static bool CanRestart => Instance.Request != null;
 
     public static void ClearScene() {
-        //TODO: is this required? or can we assume that disposables are handled correctly on scene change?
+        //TODO: this is necessary because PlayerController/AyaCamera can add tokens to Slowdown in droppable coroutines.
+        // Ideally we shouldn't allow that.
         ETime.Slowdown.ClearDisturbances();
-        ETime.Timer.DestroyAll();
+        ETime.Timer.StopAll();
         BulletManager.OrphanAll(); //Also clears pool controls
-        PublicDataHoisting.DestroyAll();
+        PublicDataHoisting.ClearAllValues();
         //PICustomData.ClearNames();
         ReflWrap.ClearWrappers();
         StateMachineManager.ClearCachedSMs();
-        BehaviorEntity.ClearPointers();
         PICustomDataBuilder.Builder.ClearCustomDataTypeCaches();
-        GC.Collect();
         Events.SceneCleared.OnNext(default);
     }
 
@@ -186,9 +196,9 @@ public class GameManagement : CoroutineRegularUpdater {
 
     public static void LocalReset() {
         ETime.Slowdown.ClearDisturbances();
-        ETime.Timer.DestroyAll();
+        ETime.Timer.StopAll();
         BehaviorEntity.DestroyAllSummons();
-        PublicDataHoisting.DestroyAll();
+        PublicDataHoisting.ClearAllValues();
         //PICustomData.ClearNames();
         ReflWrap.ClearWrappers();
         StateMachineManager.ClearCachedSMs();

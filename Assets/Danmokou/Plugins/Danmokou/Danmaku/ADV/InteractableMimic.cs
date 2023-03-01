@@ -76,7 +76,7 @@ public class Interactable : Rendered {
                     i.Manager.VNState.Run(WaitingUtils.Spin(WaitingUtils.GetCompletionAwaiter(out var t), ct));
                     await t;
                     return default;
-                }), true)?.ContinueWithSync(null);
+                }) { Trivial = true }, true)?.ContinueWithSync(null);
                 return t == null ? null : cts;
             }
         }

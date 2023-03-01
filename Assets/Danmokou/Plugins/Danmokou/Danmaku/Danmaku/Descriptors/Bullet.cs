@@ -122,7 +122,8 @@ public class Bullet : BehaviorEntity {
             var coll = icollider.CheckGrazeCollision(in bpi.loc.x, in bpi.loc.y, Direction, 1f, Target.Value.Hurtbox);
             if (coll.graze && !GrazeAllowed)
                 coll = coll.NoGraze();
-            Target.Value.ProcessCollision(in coll, Damage, in bpi, in collisionInfo.grazeEveryFrames);
+            Target.Value.ProcessCollision(BulletManager.SimpleBulletCollection.CollectionType.Normal, 
+                coll, Damage, in bpi, in collisionInfo.grazeEveryFrames);
             if (coll.collide) {
                 myStyle.IterateCollideControls(this);
                 if (collisionInfo.destructible) {

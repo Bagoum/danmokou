@@ -124,7 +124,7 @@ public record GenericMethodConv1(Reflector.IGenericMethodSignature GMi) : Generi
 
     public override object? ConvertForType(Type t, object? castee) =>
         //gmi.specialize is cached
-        GMi.Specialize(new[] { t }).Invoke(null, null, castee);
+        GMi.Specialize(t).Invoke(null, null, castee);
 }
 
 public record ConstantToExprConv() : GenericTypeConv1(new TypeDesignation.Variable().And(v =>
@@ -132,7 +132,4 @@ public record ConstantToExprConv() : GenericTypeConv1(new TypeDesignation.Variab
     public override object? Convert<T>(object? castee) =>
         (Func<TExArgCtx, TEx<T>>)(_ => Ex.Constant(castee, typeof(T)));
 }
-
-
-//todo: for generic type conversions, I'd prefer to actually call the methods like GCXF<T> by specifying them
 }

@@ -13,6 +13,7 @@ public static class LocationHelpers {
         bot = -4.5f
     };
     public static Vector2 VisiblePlayerLocation { get; private set; }
+    public static Vector2 TruePlayerLocation { get; private set; }
 
     public static void UpdatePlayableScreenCenter(Vector2 nLoc) {
         PlayableScreenCenter = nLoc;
@@ -27,7 +28,10 @@ public static class LocationHelpers {
         UpdatePlayableScreenCenter(PlayableScreenCenter);
     }
 
-    public static void UpdateVisiblePlayerLocation(Vector2 nLoc) => VisiblePlayerLocation = nLoc;
+    public static void UpdatePlayerLocation(Vector2 trueLoc, Vector2 enemyVisibleLoc) {
+        TruePlayerLocation = trueLoc;
+        VisiblePlayerLocation = enemyVisibleLoc;
+    }
 
     static LocationHelpers() {
         UpdatePlayableScreenCenter(Vector2.zero);

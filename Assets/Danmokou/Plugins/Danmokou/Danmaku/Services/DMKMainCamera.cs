@@ -16,7 +16,22 @@ using PropConsts = Danmokou.Graphics.PropConsts;
 namespace Danmokou.Services {
 
 public interface IScreenshotter {
-    Texture2D Screenshot(CRect rect, DMKMainCamera.CamType[]? cameras = null);
+    public CRect FullScreenArea { get; }
+    
+    /// <summary>
+    /// Take a screenshot of the entire screen area.
+    /// <br/>By default, captures all cameras except UI.
+    /// <br/>Caller must dispose the return value via Object.Destroy.
+    /// </summary>
+    RenderTexture Screenshot(DMKMainCamera.CamType[]? cameras = null) => 
+        Screenshot(FullScreenArea, cameras);
+    
+    /// <summary>
+    /// Take a screenshot of the screen area described by `rect`.
+    /// <br/>By default, captures all cameras except UI.
+    /// <br/>Caller must dispose the return value via Object.Destroy.
+    /// </summary>
+    RenderTexture Screenshot(CRect rect, DMKMainCamera.CamType[]? cameras = null);
 }
 
 public class DMKMainCamera : MainCamera, IScreenshotter {
@@ -68,6 +83,11 @@ public class DMKMainCamera : MainCamera, IScreenshotter {
         CamType.Background, CamType.LowDirectRender, CamType.Middle,
         CamType.HighDirectRender, CamType.Top, CamType.Effects3D, CamType.Shader
     };
+    public static readonly CamType[] AllCameras = {
+        CamType.Background, CamType.LowDirectRender, CamType.Middle,
+        CamType.HighDirectRender, CamType.Top, CamType.Effects3D, CamType.Shader,
+        CamType.UI
+    };
 
     public Camera FindCamera(CamType type) => type switch {
         CamType.Background => BackgroundCamera,
@@ -93,24 +113,25 @@ public class DMKMainCamera : MainCamera, IScreenshotter {
 
     [ContextMenu("Screenshot all")]
     public void ScreenshotAll() {
-        var tex = Screenshot(new CRect(0, 0, DMKMainCamera.HorizRadius, DMKMainCamera.VertRadius, 0),
-            AyaCameras.Append(CamType.UI).ToArray());
+        var tex = (this as IScreenshotter).Screenshot(AyaCameras.Append(CamType.UI).ToArray());
         FileUtils.WriteTex("DMK_Saves/Aya/screenshotAll.png", tex, FileUtils.ImageFormat.PNG);
         tex.DestroyTexOrRT();
     }
     
     [ContextMenu("Screenshot all except BG")]
     public void ScreenshotAllExceptBG() {
-        var tex = Screenshot(new CRect(0, 0, DMKMainCamera.HorizRadius, DMKMainCamera.VertRadius, 0), 
-            AyaCameras.Append(CamType.UI).Skip(1).ToArray());
+        var tex = (this as IScreenshotter).Screenshot(AyaCameras.Append(CamType.UI).Skip(1).ToArray());
         FileUtils.WriteTex("DMK_Saves/Aya/screenshotAllExceptWall.png", tex, FileUtils.ImageFormat.PNG);
         tex.DestroyTexOrRT();
     }
 
+    public CRect FullScreenArea => new CRect(transform.position.x, transform.position.y,
+        MainCamera.HorizRadius, MainCamera.VertRadius, 0);
+
     /// <summary>
     /// Caller must dispose the return value via Object.Destroy.
     /// </summary>
-    public Texture2D Screenshot(CRect rect, CamType[]? cameras=null) {
+    public RenderTexture Screenshot(CRect rect, CamType[]? cameras=null) {
         Profiler.BeginSample("Screenshot");
         var offset = transform.position;
         ayaMaterial.SetFloat(PropConsts.OffsetX, (rect.x - offset.x) / ScreenWidth);
@@ -145,9 +166,9 @@ public class DMKMainCamera : MainCamera, IScreenshotter {
         RenderTo.Release();
         RenderTo = originalRenderTo;
         Profiler.BeginSample("Commit");
-        var tex = ss.IntoTex();
+        //var tex = ss.IntoTex();
+        //ss.Release();
         Profiler.EndSample();
-        ss.Release();
         //For debugging
         //FileUtils.WriteTex("DMK_Saves/Aya/temp.jpg", tex);
         
@@ -155,7 +176,7 @@ public class DMKMainCamera : MainCamera, IScreenshotter {
         // instead of converting it immediately to a tex. IDK but be warned
         RenderTexture.active = originalRT;
         Profiler.EndSample();
-        return tex;
+        return ss;
     }
 }
 }

@@ -144,7 +144,7 @@ public static class SaveData {
         public static bool TeleportAtPhaseStart => false;
 #else
         //Don't change this! TeleportAtPhaseStart is a editor utility and should not be enabled in builds.
-        public static bool TeleportAtPhaseStart => false;
+        public const bool TeleportAtPhaseStart = false;
 #endif
         public float Screenshake = 1f;
         public FullScreenMode Fullscreen = FullScreenMode.FullScreenWindow;
@@ -301,16 +301,16 @@ public static class SaveData {
                         return null;
                     }
                 })
-                .OrderByDescending(r => r.metadata.Record.Date).ToList();
+                .OrderByDescending(r => r.Metadata.Record.Date).ToList();
         }
 
         public void SaveNewReplay(Replay r) {
             var filename = ReplayFilename(r);
-            var f = r.frames();
+            var f = r.Frames();
             Logs.Log($"Saving replay {filename} with {f.Length} frames.");
-            WriteJson(filename + RMETAEXT, r.metadata);
+            WriteJson(filename + RMETAEXT, r.Metadata);
             SaveReplayFrames(filename, f);
-            ReplayData.Insert(0, new Replay(LoadReplayFrames(filename), r.metadata));
+            ReplayData.Insert(0, new Replay(LoadReplayFrames(filename), r.Metadata));
         }
         public bool TryDeleteReplay(Replay r) {
             if (!ReplayData.Contains(r)) return false;
@@ -324,7 +324,7 @@ public static class SaveData {
             ReplayData.Remove(r);
             return true;
         }
-        private static string ReplayFilename(Replay r) => REPLAYS_DIR + r.metadata.AsFilename;
+        private static string ReplayFilename(Replay r) => REPLAYS_DIR + r.Metadata.AsFilename;
 
         private static InputManager.FrameInput[] AssertReplayLength(InputManager.FrameInput[] frames) {
             if (frames.Length == 0) throw new Exception("Loaded a replay with zero length");

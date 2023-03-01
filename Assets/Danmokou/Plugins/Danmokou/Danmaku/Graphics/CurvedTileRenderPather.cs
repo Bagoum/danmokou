@@ -235,7 +235,8 @@ public class CurvedTileRenderPather : CurvedTileRender {
                 pather.IsColliding |= coll.collide;
                 if (coll.graze && !pather.GrazeAllowed)
                     coll = coll.NoGraze();
-                player.ProcessCollision(in coll, pather.Damage, in bpi, in pather.collisionInfo.grazeEveryFrames);
+                player.ProcessCollision(BulletManager.SimpleBulletCollection.CollectionType.Normal, 
+                    coll, pather.Damage, in bpi, in pather.collisionInfo.grazeEveryFrames);
                 if (coll.collide) 
                     pather.myStyle.IterateCollideControls(pather);
             }
