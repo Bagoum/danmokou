@@ -26,7 +26,9 @@ public enum ScopedConversionKind {
     /// A conversion method that converts ag. ExTP to TP.
     /// </summary>
     SimpleFunction,
-    
+    /// <summary>
+    /// A conversion method not interfacing with expressions, such as GenCtxProperty[] to GenCtxProperties{X}.
+    /// </summary>
     Trivial
 }
 
@@ -78,7 +80,7 @@ public class FixedImplicitTypeConv<T, R> : FixedImplicitTypeConv {
             TypeDesignation.FromType(typeof(T)));
     }
 
-    public override object? Convert(object? castee) => converter((T)castee);
+    public override object? Convert(object? castee) => converter((T)castee!);
 }
 
 public abstract record GenericTypeConv1 : IScopedTypeConverter {

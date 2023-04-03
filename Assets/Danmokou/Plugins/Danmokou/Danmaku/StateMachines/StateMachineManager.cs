@@ -11,6 +11,8 @@ namespace Danmokou.SM {
 
 public class LoadedStateMachine {
     public StateMachine? SM { get; set; } = null;
+    //As of DMK v10.1 it is possible to preserve state machines and reflected objects between scenes.
+    // However, it is generally good hygeine to destroy them in order to prevent hanging allocations.
     public bool Preserve { get; set; } = false;
 }
 

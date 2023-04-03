@@ -14,7 +14,6 @@ The following features are planned for future releases.
 
 - [10.1.0] Safeguards around control rebinding
 - [10.1.0] UI improvements: custom cursors
-- [Backlog] Default handling for graze flake items
 - [Backlog] Implementation of a TH18-like card engine
 - [Backlog] Procedural generation of stages and bullet patterns
 
@@ -24,13 +23,17 @@ The goal for this version is to have a fully functional implementation of the ne
 
 
 
-# v10.1.0 (2022/02/26)
+# v10.1.0 (2023/04/02)
 
 This release includes code for [Reimu the Boomer](https://bagoum.itch.io/boomer), an Ace Attorney-style point-and-click game, in the MiniProjects folder. There is also some work-in-progress code in `Danmokou/Danmaku/Reflection/NewReflector` for BDSL2, a more generalized scripting language.
+
+Unity version 2022.2.13 fixes some pending issues with UITK. As such, it is recommended to upgrade to 2022.2.13.
 
 #### Pending Issues
 
 - When spawning danmaku in WebGL, there is a chance to get very significant lag spikes a small number of times. This issue is due to some deep problems with WebGL ([see this thread](https://forum.unity.com/threads/webgl-performance-and-getprogramparameter.991766/) as well as [this bug](https://issuetracker.unity3d.com/issues/cpu-spike-in-batchrenderer-dot-flush-when-using-graphics-dot-drawmeshinstanced-on-webgl)) and seems unlikely to be fixed in the near future. There are some potential mitigations involving preloading bullet textures.
+- The UITK issue where some elements take extra newlines for no reason has been **resolved** as of 2022.2.13. [See ticket](https://issuetracker.unity3d.com/issues/ui-toolkit-labels-width-is-not-extended-causing-additional-empty-lines-when-using-specific-resolutions)
+- The UITK issue where mouse scrolling is slow has been **resolved** as of 2022.2.13, using the property `mouseWheelScrollSize` on the `ScrollView` class. In DMK, the function `AddScrollColumn` sets `mouseWheelScrollSize` to 1000 by default. [See ticket](https://issuetracker.unity3d.com/issues/slow-scroll-view-scrolling-when-entering-play-mode-and-in-builds)
 
 #### Features
 
@@ -43,6 +46,7 @@ This release includes code for [Reimu the Boomer](https://bagoum.itch.io/boomer)
 - In Suzunoya: Added the boolean `Trivial` on `BoundedContext<T>`. This can be set to true if a bounded context does not modify any save-data anywhere within it, and the effect is to speed up the startup time for ADV top-level VN execution.
 - Changed some handling around reflection so that reflected scripts can be preserved between Unity scenes.
 - Added an attract/demo mode that loops through a sequence of replays if the main menu is left unattended for some time. This can be configured via the "Attract Mode" child object on the "GameManagement" persistent object. See `SiMP.MainMenu` for an example.
+- Added a "quickfade" scene change functionality (ie. changing the scene without a separate loading screen image). Use the function `AsQuickFade` on `ICameraTransitionConfig` to skip the loading screen image. This is currently used for switching between replays in attract mode.
 
 #### Changes
 
@@ -57,6 +61,7 @@ This release includes code for [Reimu the Boomer](https://bagoum.itch.io/boomer)
 - Fixed a regression with the `Darkness` command that would cause the shadow to appear incorrectly.
 - Fixed some cases where errors in GTRepeat would not be logged.
 - Fixed a bug where replays could start one frame early if restarted.
+- Fixed a bug where certain achievements could not be gotten due to erroneous configuration of the shot demo screen.
 - Improved WebGL handling. It is now possible to build an ADV/VN game for WebGL without going through [AoT handling](AoTSupport.md). 
 - Improved code generation from Localization-Utils to cost less memory.
 - Simplified AoTGenerator (a helper for precompiled expressions) and fixed some edge-cases.

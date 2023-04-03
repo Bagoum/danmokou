@@ -48,8 +48,8 @@ public class AggregateInputSource : IInputHandlerInputSource, IInputSource {
             if (Sources.ExistsAt(ii))
                 AnyKeyPressed |= Sources[ii].OncePerUnityFrameToggleControls();
         Sources.Compact();
-        AnyKeyPressedThisFrame |= MainSource.OncePerUnityFrameToggleControls();
-        AnyKeyPressedThisFrame |= ((IInputHandlerInputSource)this).OncePerUnityFrameUpdateHandlers();
+        AnyKeyPressed |= MainSource.OncePerUnityFrameToggleControls();
+        AnyKeyPressed |= ((IInputHandlerInputSource)this).OncePerUnityFrameUpdateHandlers();
         return AnyKeyPressedThisFrame = AnyKeyPressed;
     }
     

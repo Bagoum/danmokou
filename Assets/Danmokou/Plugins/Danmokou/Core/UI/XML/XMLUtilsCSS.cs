@@ -126,7 +126,8 @@ public static partial class XMLUtils {
     public static VisualElement AddColumn(this VisualElement root) => root.AddVTA(Prefabs.UIScreenColumn);
     public static VisualElement AddScrollColumn(this VisualElement root) {
         var s = root.AddVTA(Prefabs.UIScreenScrollColumn);
-        s.Q<ScrollView>().verticalPageSize = 10000;
+        s.Q<ScrollView>().verticalPageSize = 1000;
+        s.Q<ScrollView>().mouseWheelScrollSize = 1000;
         return s;
     }
 
